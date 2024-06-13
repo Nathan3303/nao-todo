@@ -1,0 +1,1 @@
+const r="useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict";let o=(t=21)=>{let n="",l=crypto.getRandomValues(new Uint8Array(t));for(;t--;)n+=r[l[t]&63];return n};function u(t,n){let l=null;for(let e=0;e<t.length;e++)if(n(t[e],e)){l=t[e];break}return l}export{u as f,o as n};

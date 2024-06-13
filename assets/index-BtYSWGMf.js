@@ -1,0 +1,1 @@
+import{d as t,c as o,w as n,r as a,o as s,b as r}from"./index-DednGyhX.js";const p=t({name:"InboxView",__name:"index",setup(c){return(_,x)=>{const e=a("nue-text");return s(),o(e,{size:"xlarge",weight:"bold"},{default:n(()=>[r(" Inbox View ")]),_:1})}}});export{p as default};

@@ -1,0 +1,1 @@
+import{d as t,c as o,w as n,r as a,o as c,b as s}from"./index-DednGyhX.js";const m=t({name:"MyActivityView",__name:"index",setup(i){return(r,_)=>{const e=a("nue-text");return c(),o(e,{size:"xlarge",weight:"bold"},{default:n(()=>[s(" My Activity View ")]),_:1})}}});export{m as default};
