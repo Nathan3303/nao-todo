@@ -9,9 +9,12 @@
             <nue-div align="center" justify="space-between" wrap="nowrap">
                 <nue-div vertical gap="4px" flex>
                     <nue-text size="24px" weight="bold"> {{ currentProject.name }} </nue-text>
-                    <nue-text size="12px" color="gray">
+                    <nue-text v-if="currentProject.description" size="12px" color="gray">
                         {{ currentProject.description }}
                     </nue-text>
+                    <nue-button v-else theme="pure" icon="plus" @click="handleAddDescription">
+                        Add description
+                    </nue-button>
                 </nue-div>
                 <nue-div align="center" justify="end" flex gap="8px">
                     <nue-text size="12px">Create by</nue-text>
@@ -197,6 +200,21 @@ function handleDeleteProject() {
         },
         () => NueMessage({ message: 'Operation canceled', type: 'info' })
     )
+}
+
+function handleAddDescription() {
+    NuePrompt({
+        title: 'Add description',
+        placeholder: 'Please input description here...',
+        confirmButtonText: 'Save',
+        cancelButtonText: 'Cancel',
+        validator: (value: any) => value
+    })
+        .then((description) => {
+            projectStore.update(currentProject.value.id, { description: description as string })
+        })
+        .then((result) => NueMessage.success('Description saved successfully'))
+        .catch((error) => NueMessage.error('Failed to save description.'))
 }
 
 // provide

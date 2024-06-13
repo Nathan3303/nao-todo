@@ -1,8 +1,5 @@
 <template>
     <nue-div class="app-aside" vertical align="stretch" flex>
-        <!-- Search input -->
-        <!-- <nue-input class="search-input" v-model="searchText" placeholder="Search" icon="search" /> -->
-
         <!-- Mainly links -->
         <nue-div vertical gap="8px" align="stretch">
             <nue-link theme="btnlike" icon="mail" route="/inbox"> Inbox </nue-link>
@@ -41,30 +38,9 @@
                     :route="`/project/${p.id}`"
                 >
                     {{ p.name }}
-                    <!-- <template #append>
-                        <nue-dropdown align="right">
-                            <template #default="{ switchVisible }">
-                                <nue-icon
-                                    name="more"
-                                    size="16px"
-                                    color="white"
-                                    @click.stop="switchVisible"
-                                ></nue-icon>
-                            </template>
-                            <template #dropdown>
-                                <li data-executeid="delete">Delete project</li>
-                            </template>
-                        </nue-dropdown>
-                    </template> -->
                 </nue-link>
             </nue-collapse-item>
         </nue-collapse>
-
-        <!-- Footer -->
-        <!-- <nue-div vertical align="stretch" gap="8px" style="margin-top: auto">
-            <link-button icon="help"> Help </link-button>
-            <link-button icon="setting"> Settings </link-button>
-        </nue-div> -->
     </nue-div>
 </template>
 

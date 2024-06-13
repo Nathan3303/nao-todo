@@ -62,6 +62,24 @@ export const useProjectStore = defineStore('projectStore', () => {
         })
     }
 
+    function update(id: Project['id'], paylod: Partial<Project>) {
+        return new Promise((resolve, reject) => {
+            const project = projects.value.find((p) => p.id === id)
+            if (project) {
+                const index = projects.value.indexOf(project)
+                const updated = {
+                    ...project,
+                    ...paylod,
+                    updateAt: new Date().toString()
+                }
+                projects.value.splice(index, 1, updated)
+                resolve('Project updated successfully')
+            } else {
+                reject('Project not found')
+            }
+        })
+    }
+
     function read() {
         const string = localStorage.getItem(LOCAL_STORAGE_KEY)
         if (string) {
@@ -91,6 +109,7 @@ export const useProjectStore = defineStore('projectStore', () => {
         selectedProject,
         create,
         remove,
+        update,
         read,
         filter
     }
