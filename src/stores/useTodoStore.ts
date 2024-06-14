@@ -6,17 +6,18 @@ import { findOne } from '@/utils/utils'
 const LOCAL_STORAGE_KEY = '@todos'
 
 export type TodoStatus = 'todo' | 'in progress' | 'done'
-export type TodoProgress = {
-    total: number
-    finished: number
-}
+export type TodoState = 'To Do' | 'In Progress' | 'Done'
+export type TodoProgress = { total: number; finished: number }
+export type TodoPriority = 'Low' | 'Medium' | 'High'
 export type Todo = {
     id: string
     projectId: string
     name: string
     description: string
     status: TodoStatus
+    state: TodoState
     progress: TodoProgress
+    priority: TodoPriority
     createdAt: string
     updatedAt: string
     tags: string[]
@@ -35,6 +36,8 @@ export const useTodoStore = defineStore('todoStore', () => {
             name,
             description: '',
             status,
+            state: 'To Do',
+            priority: 'Low',
             progress: { total: 0, finished: 0 },
             createdAt: timeString,
             updatedAt: timeString,
@@ -74,6 +77,28 @@ export const useTodoStore = defineStore('todoStore', () => {
                     const newStatus = currentStatus === 'done' ? 'todo' : 'done'
                     todos.value[index].status = newStatus
                     resolve(newStatus)
+                } else {
+                    reject('Todo not found')
+                }
+            } else {
+                reject('Todo not found')
+            }
+        })
+    }
+
+    function update(id: Todo['id'], todo: Partial<Todo>) {
+        return new Promise((resolve, reject) => {
+            const _todo = findOne(todos.value, (t) => t.id === id)
+            if (_todo) {
+                const index = todos.value.indexOf(_todo)
+                if (index >= 0) {
+                    const updatedTodo = {
+                        ..._todo,
+                        ...todo,
+                        updatedAt: new Date().toString()
+                    }
+                    todos.value[index] = updatedTodo
+                    resolve(updatedTodo)
                 } else {
                     reject('Todo not found')
                 }
@@ -124,13 +149,5 @@ export const useTodoStore = defineStore('todoStore', () => {
         { deep: true }
     )
 
-    return {
-        todos,
-        selectedTodoId,
-        create,
-        remove,
-        filter,
-        read,
-        check
-    }
+    return { todos, selectedTodoId, create, remove, update, filter, read, check }
 })

@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "nanoid": "^5.0.7",
-    "nue-ui": "^0.4.83",
+    "nue-ui": "^0.4.87",
     "pinia": "^2.1.7",
     "vue": "^3.4.21",
     "vue-router": "^4.3.0"

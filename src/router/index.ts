@@ -1,7 +1,7 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 
 const router = createRouter({
-    history: createWebHistory(import.meta.env.BASE_URL),
+    history: createWebHashHistory(import.meta.env.BASE_URL),
     routes: [
         {
             path: '/',
@@ -24,18 +24,24 @@ const router = createRouter({
                     props: true,
                     component: () => import('../views/index/project/index.vue'),
                     redirect(to) {
-                        return { name: 'board', params: { projectId: to.params.projectId } }
+                        return { name: 'list', params: { projectId: to.params.projectId } }
                     },
                     children: [
                         {
-                            path: 'board',
-                            name: 'board',
+                            path: 'list',
+                            name: 'list',
                             props: true,
-                            component: () => import('../views/index/project/board/index.vue')
+                            component: () => import('../views/index/project/list/index.vue')
                         }
                     ]
                 }
             ]
+        },
+        {
+            path: '/authentication/:operation?',
+            name: 'authentication',
+            props: true,
+            component: () => import('../views/authentication/index.vue')
         }
     ]
 })

@@ -6,13 +6,13 @@
     <template v-else>
         <nue-div vertical wrap="nowrap" height="100%">
             <!-- Project title -->
-            <nue-div align="center" justify="space-between" wrap="nowrap">
+            <nue-div justify="space-between" wrap="nowrap" style="min-height: 56px">
                 <nue-div vertical gap="4px" flex>
                     <nue-text size="24px" weight="bold"> {{ currentProject.name }} </nue-text>
-                    <nue-text v-if="currentProject.description" size="12px" color="gray">
+                    <nue-text v-if="currentProject.description" size="14px" color="gray">
                         {{ currentProject.description }}
                     </nue-text>
-                    <nue-button v-else theme="pure" icon="plus" @click="handleAddDescription">
+                    <nue-button v-else theme="pure" @click="handleAddDescription">
                         Add description
                     </nue-button>
                 </nue-div>
@@ -27,12 +27,9 @@
             <!-- Project navigation -->
             <nue-div style="margin-top: 16px" justify="space-between" wrap="nowrap" align="center">
                 <nue-div flex>
-                    <nue-link theme="btnlike" disabled> Dashboard </nue-link>
-                    <nue-link theme="btnlike" route="board"> Board </nue-link>
-                    <nue-link theme="btnlike" disabled> List </nue-link>
-                    <nue-link theme="btnlike" disabled> Timeline </nue-link>
-                    <nue-link theme="btnlike" disabled> Menbers </nue-link>
-                    <nue-link theme="btnlike" disabled> Files </nue-link>
+                    <nue-link theme="btnlike" disabled> Overview </nue-link>
+                    <nue-link theme="btnlike" route="list"> List View </nue-link>
+                    <nue-link theme="btnlike" disabled> Board View </nue-link>
                 </nue-div>
                 <nue-div flex width="fit-content">
                     <nue-button theme="pure" icon="delete" @click="handleDeleteProject">
@@ -55,9 +52,14 @@
                                 placeholder="Filter tasks"
                                 icon="filter"
                                 clearable
+                                disabled
                             ></nue-input>
-                            <nue-button theme="small" icon="plus-circle">Status</nue-button>
-                            <nue-button theme="small" icon="plus-circle">Priority</nue-button>
+                            <nue-button theme="small" icon="plus-circle" disabled
+                                >Status</nue-button
+                            >
+                            <nue-button theme="small" icon="plus-circle" disabled
+                                >Priority</nue-button
+                            >
                         </nue-div>
                         <nue-div justify="end" flex="none" width="fit-content" gap="12px">
                             <nue-button
@@ -66,7 +68,7 @@
                                 @click="showAddTodoPopup('todo')"
                                 >Add</nue-button
                             >
-                            <nue-button theme="small" icon="menu">View</nue-button>
+                            <nue-button theme="small" icon="menu" disabled>View</nue-button>
                         </nue-div>
                     </nue-div>
                 </nue-header>
@@ -77,7 +79,9 @@
                 <!-- sub-view footer -->
                 <nue-footer style="padding: 4px; border: none; height: fit-content">
                     <nue-div align="center" justify="space-between" wrap="nowrap">
-                        <nue-text size="12px" color="gray" flex>0 of 100 row(s) selected.</nue-text>
+                        <nue-text size="12px" color="gray" flex>
+                            0 of 100 row(s) selected.
+                        </nue-text>
                         <nue-div
                             align="center"
                             justify="end"
@@ -95,10 +99,18 @@
                             </nue-div>
                             <nue-text size="12px">Page 1 of 10</nue-text>
                             <nue-div width="fit-content" gap="8px">
-                                <nue-button theme="small" icon="arrow-left-more"></nue-button>
-                                <nue-button theme="small" icon="arrow-left"></nue-button>
-                                <nue-button theme="small" icon="arrow-right"></nue-button>
-                                <nue-button theme="small" icon="arrow-right-more"></nue-button>
+                                <nue-button
+                                    theme="small"
+                                    icon="arrow-left-more"
+                                    disabled
+                                ></nue-button>
+                                <nue-button theme="small" icon="arrow-left" disabled></nue-button>
+                                <nue-button theme="small" icon="arrow-right" disabled></nue-button>
+                                <nue-button
+                                    theme="small"
+                                    icon="arrow-right-more"
+                                    disabled
+                                ></nue-button>
                             </nue-div>
                         </nue-div>
                     </nue-div>
@@ -114,7 +126,6 @@ import { useRouter } from 'vue-router'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useTodoStore } from '@/stores/useTodoStore'
 import { findOne } from '@/utils/utils'
-import TodoDetailsDrawer from '@/components/project/todo-details-drawer.vue'
 import ProjectNotFound from '@/components/project/project-not-found.vue'
 import { NueMessage, NuePrompt, NueConfirm } from 'nue-ui'
 import { storeToRefs } from 'pinia'
@@ -224,6 +235,6 @@ provide('showTodoDetailsDrawer', showTodoDetailsDrawer)
 
 // onMounted
 onMounted(() => {
-    router.replace({ name: 'board' })
+    router.replace({ name: 'list' })
 })
 </script>

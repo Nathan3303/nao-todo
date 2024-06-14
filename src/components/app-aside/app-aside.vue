@@ -2,8 +2,10 @@
     <nue-div class="app-aside" vertical align="stretch" flex>
         <!-- Mainly links -->
         <nue-div vertical gap="8px" align="stretch">
-            <nue-link theme="btnlike" icon="mail" route="/inbox"> Inbox </nue-link>
-            <nue-link theme="btnlike" icon="calendar" route="/myactivity"> My Activity </nue-link>
+            <nue-link theme="btnlike" icon="mail" route="/inbox" disabled> Inbox </nue-link>
+            <nue-link theme="btnlike" icon="calendar" route="/myactivity" disabled>
+                My Activity
+            </nue-link>
         </nue-div>
 
         <!-- Category collapse -->

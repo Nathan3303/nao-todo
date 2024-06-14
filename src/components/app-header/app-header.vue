@@ -7,16 +7,18 @@
         </template>
         <template #nav>
             <nue-div>
-                <nue-link theme="btnlike" icon="board">Dashboard</nue-link>
+                <nue-link theme="btnlike" icon="board" disabled>Dashboard</nue-link>
                 <nue-link theme="btnlike,actived" icon="projects">Projects</nue-link>
-                <nue-link theme="btnlike" icon="todo">Tasks</nue-link>
+                <nue-link theme="btnlike" icon="todo" disabled>Tasks</nue-link>
             </nue-div>
         </template>
         <template #ops>
-            <nue-button theme="icon-only" icon="search"></nue-button>
-            <nue-badge dot>
-                <nue-button theme="icon-only" icon="ring"></nue-button>
-            </nue-badge>
+            <nue-div>
+                <nue-button theme="icon-only" icon="search" disabled></nue-button>
+                <nue-badge dot>
+                    <nue-button theme="icon-only" icon="ring" disabled></nue-button>
+                </nue-badge>
+            </nue-div>
         </template>
         <template #user>
             <nue-dropdown trigger="hover" align="right">
@@ -33,10 +35,10 @@
                             <nue-text> HAHAHA </nue-text>
                         </nue-div>
                         <nue-div vertical align="stretch" gap="8px">
-                            <nue-link theme="btnlike">Profile</nue-link>
-                            <nue-link theme="btnlike">Settings</nue-link>
+                            <nue-link theme="btnlike" disabled>Profile</nue-link>
+                            <nue-link theme="btnlike" disabled>Settings</nue-link>
                             <nue-divider></nue-divider>
-                            <nue-link theme="btnlike">Logout</nue-link>
+                            <nue-link theme="btnlike" disabled>Logout</nue-link>
                         </nue-div>
                     </nue-div>
                 </template>
