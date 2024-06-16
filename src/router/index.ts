@@ -9,16 +9,6 @@ const router = createRouter({
             component: () => import('../views/index/index.vue'),
             children: [
                 {
-                    path: '/inbox',
-                    name: 'inbox',
-                    component: () => import('../views/index/inbox/index.vue')
-                },
-                {
-                    path: '/myactivity',
-                    name: 'myactivity',
-                    component: () => import('../views/index/my-activity/index.vue')
-                },
-                {
                     path: '/project/:projectId',
                     name: 'project',
                     props: true,

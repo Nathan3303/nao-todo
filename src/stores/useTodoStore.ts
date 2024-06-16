@@ -28,14 +28,14 @@ export const useTodoStore = defineStore('todoStore', () => {
     const todos = ref<Todo[]>([])
     const selectedTodoId = ref<Todo['id']>()
 
-    function _build(projectId: string, name: string, status: TodoStatus) {
+    function _build(projectId: string, name: string) {
         const timeString = new Date().toString()
         const todo: Todo = {
             id: nanoid(),
             projectId,
             name,
             description: '',
-            status,
+            status: 'todo',
             state: 'To Do',
             priority: 'Low',
             progress: { total: 0, finished: 0 },
@@ -46,7 +46,7 @@ export const useTodoStore = defineStore('todoStore', () => {
         return todo
     }
 
-    function create(projectId: string, name: string, status: TodoStatus) {
+    function create(projectId: string, name: string) {
         return new Promise((resolve, reject) => {
             projectId = projectId.trim()
             name = name.trim()
@@ -55,7 +55,7 @@ export const useTodoStore = defineStore('todoStore', () => {
             } else if (name === '') {
                 reject('Todo name cannot be empty')
             } else {
-                const newTodo = _build(projectId, name, status)
+                const newTodo = _build(projectId, name)
                 const _todo = findOne(todos.value, (t) => t.name === newTodo.name)
                 if (_todo) {
                     reject('Todo already exists')

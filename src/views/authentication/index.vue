@@ -29,15 +29,14 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import SignIn from './sign-in.vue'
-import SignUp from './sign-up.vue'
+import { AuthSignIn, AuthSignUp } from '@/layers'
 import './index.css'
 
 const props = defineProps<{ operation?: string }>()
 
 const isLogin = computed(() => props.operation === 'login')
 const switchButtonText = computed(() => (isLogin.value ? 'Sign Up' : 'Sign In'))
-const subView = computed(() => (isLogin.value ? SignIn : SignUp))
+const subView = computed(() => (isLogin.value ? AuthSignIn : AuthSignUp))
 const switchRoute = computed(() =>
     isLogin.value ? '/authentication/signup' : '/authentication/login'
 )
