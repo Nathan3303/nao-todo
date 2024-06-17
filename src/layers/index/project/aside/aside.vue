@@ -2,9 +2,8 @@
     <nue-div class="app-aside" vertical align="stretch" flex>
         <!-- Mainly links -->
         <nue-div vertical gap="8px" align="stretch">
-            <nue-link theme="btnlike" icon="mail" route="/inbox" disabled> Inbox </nue-link>
-            <nue-link theme="btnlike" icon="calendar" route="/myactivity" disabled>
-                My Activity
+            <nue-link theme="btnlike" icon="board" :route="{ name: 'project-dashboard' }">
+                Dashboard
             </nue-link>
         </nue-div>
 
@@ -37,7 +36,7 @@
                     theme="btnlike"
                     v-for="(p, idx) in projectStore.projects"
                     :key="idx"
-                    :route="`/project/${p.id}`"
+                    :route="{ name: 'project-main', params: { projectId: p.id } }"
                 >
                     {{ p.name }}
                 </nue-link>
@@ -47,16 +46,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref } from 'vue'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { NueMessage, NuePrompt } from 'nue-ui'
 
 const projectStore = useProjectStore()
-projectStore.read()
 
-const popupVisible = ref(false)
-const newProject = reactive({ name: '', description: '' })
 const collapseItemsRecord = ref(['projects'])
+
+projectStore.read()
 
 function handleAddProject() {
     NuePrompt({
@@ -66,22 +64,10 @@ function handleAddProject() {
         cancelButtonText: 'Cancel',
         validator: (value: any) => value
     }).then((value: any) => {
-        newProject.name = value
-        handleConfirmPopup()
+        projectStore.create(value as string, '').then(
+            () => NueMessage.success('Created new project successfully'),
+            (err) => NueMessage.error(err)
+        )
     })
-}
-
-function handleConfirmPopup() {
-    projectStore.create(newProject.name, newProject.description).then(
-        () => {
-            NueMessage({ message: 'Created new project successfully', type: 'success' })
-            popupVisible.value = false
-            setTimeout(() => {
-                newProject.name = ''
-                newProject.description = ''
-            }, 300)
-        },
-        (err) => NueMessage({ message: err, type: 'error' })
-    )
 }
 </script>

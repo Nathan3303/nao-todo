@@ -1,5 +1,13 @@
 <template>
-    <nue-div vertical align="stretch" justify="center" flex width="320px" gap="24px">
+    <nue-div
+        vertical
+        align="stretch"
+        justify="center"
+        flex
+        width="320px"
+        gap="24px"
+        @keydown.enter="handleSignIn"
+    >
         <nue-div vertical gap="4px" align="center">
             <nue-text size="24px" weight="bold"> Login to NaoTodo </nue-text>
             <nue-text size="12px" color="grey"> Sign in with your email and password </nue-text>
@@ -16,6 +24,7 @@
                 placeholder="Your password"
                 type="password"
                 :disabled="loading"
+                allow-show-password
             ></nue-input>
             <nue-button theme="primary" @click="handleSignIn" :loading="loading"
                 >Sign In</nue-button
@@ -30,20 +39,26 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import type { SubmitPayload } from '@/stores/use-user-token'
 import { NueMessage } from 'nue-ui'
 
-const router = useRouter()
+const props = defineProps<{ loading: boolean }>()
+const emit = defineEmits<{
+    (event: 'submit', payload: SubmitPayload): void
+}>()
 
 const email = ref('')
 const password = ref('')
-const loading = ref(false)
 
 function handleSignIn() {
-    loading.value = true
-    NueMessage.success('login success')
-    setTimeout(() => {
-        router.push('/')
-    }, 1000)
+    if (email.value === '') {
+        NueMessage.error('Please enter your email')
+        return
+    }
+    if (password.value === '') {
+        NueMessage.error('Please enter your password')
+        return
+    }
+    emit('submit', { email: email.value, password: password.value })
 }
 </script>

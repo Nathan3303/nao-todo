@@ -1,5 +1,13 @@
 <template>
-    <nue-div vertical align="stretch" justify="center" flex width="320px" gap="24px">
+    <nue-div
+        vertical
+        align="stretch"
+        justify="center"
+        flex
+        width="320px"
+        gap="24px"
+        @keydown.enter="handleSignUp"
+    >
         <nue-div vertical gap="4px" align="center">
             <nue-text size="24px" weight="bold"> Create an Account </nue-text>
             <nue-text size="12px" color="grey" align="center">
@@ -44,21 +52,31 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import type { SubmitPayload } from '@/stores/use-user-token'
 import { NueMessage } from 'nue-ui'
 
-const router = useRouter()
+const props = defineProps<{ loading: boolean }>()
+const emit = defineEmits<{
+    (event: 'submit', payload: SubmitPayload): void
+}>()
 
 const email = ref('')
 const password = ref('')
 const passwordConfirm = ref('')
-const loading = ref(false)
 
 function handleSignUp() {
-    loading.value = true
-    NueMessage.success('Sign up successful')
-    setTimeout(() => {
-        router.push('/authentication/login')
-    }, 1000)
+    if (email.value === '') {
+        NueMessage.error('Email is required')
+        return
+    }
+    if (password.value === '') {
+        NueMessage.error('Password is required')
+        return
+    }
+    if (passwordConfirm.value !== password.value) {
+        NueMessage.error('Passwords do not match')
+        return
+    }
+    emit('submit', { email: email.value, password: password.value })
 }
 </script>

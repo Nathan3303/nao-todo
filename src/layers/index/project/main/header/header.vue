@@ -21,8 +21,12 @@
     <!-- Project navigation -->
     <nue-div style="margin-top: 16px" justify="space-between" wrap="nowrap" align="center">
         <nue-div flex>
-            <nue-link theme="btnlike" disabled> Overview </nue-link>
-            <nue-link theme="btnlike" route="list"> List View </nue-link>
+            <nue-link theme="btnlike" :route="{ name: 'project-main-overview' }">
+                Overview
+            </nue-link>
+            <nue-link theme="btnlike" :route="{ name: 'project-main-table' }">
+                Table View
+            </nue-link>
             <nue-link theme="btnlike" disabled> Board View </nue-link>
         </nue-div>
         <nue-div flex width="fit-content">

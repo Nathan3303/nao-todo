@@ -6,7 +6,7 @@
         width="64%"
         gap="12px"
         height="100%"
-        style="overflow: auto;min-width: 256px"
+        style="overflow: auto; min-width: 256px"
         wrap="nowrap"
     >
         <nue-div align="center" justify="space-between">
@@ -24,14 +24,18 @@
         </nue-div>
         <nue-div vertical align="stretch" gap="4px">
             <nue-text size="12px" color="gray">Name</nue-text>
-            <nue-input v-model="todo.name" placeholder="Input task name here..."></nue-input>
+            <nue-textarea
+                v-model="todo.name"
+                placeholder="Input task name here..."
+                autosize
+            ></nue-textarea>
         </nue-div>
         <nue-div vertical align="stretch" gap="4px">
             <nue-text size="12px" color="gray"> Description </nue-text>
             <nue-textarea
                 v-model="todo.description"
                 placeholder="Input task description here..."
-                rows="3"
+                rows="5"
             ></nue-textarea>
         </nue-div>
         <nue-div>

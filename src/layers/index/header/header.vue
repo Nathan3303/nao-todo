@@ -7,9 +7,8 @@
         </template>
         <template #nav>
             <nue-div>
-                <nue-link theme="btnlike" icon="board" disabled>Dashboard</nue-link>
-                <nue-link theme="btnlike,actived" icon="projects">Projects</nue-link>
-                <nue-link theme="btnlike" icon="todo" disabled>Tasks</nue-link>
+                <nue-link theme="btnlike" icon="projects" route="/project">Projects</nue-link>
+                <nue-link theme="btnlike" icon="todo" route="/tasks">Tasks</nue-link>
             </nue-div>
         </template>
         <template #ops>
