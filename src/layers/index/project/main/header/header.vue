@@ -2,12 +2,17 @@
     <!-- Project title -->
     <nue-div justify="space-between" wrap="nowrap" style="min-height: 56px">
         <nue-div vertical gap="4px" flex>
-            <nue-text size="24px" weight="bold"> {{ project?.name }} </nue-text>
-            <nue-text v-if="project?.description" size="14px" color="gray">
-                {{ project?.description }}
-            </nue-text>
-            <nue-button v-else theme="pure" @click="handleAddDescription">
-                Add description
+            <nue-button theme="pure" title="Click to edit project name" @click="handleEditName">
+                <nue-text size="28px" weight="bold"> {{ project?.name }} </nue-text>
+            </nue-button>
+            <nue-button
+                theme="pure"
+                title="Click to edit project description"
+                @click="handleEditDescription"
+            >
+                <nue-text size="14px" color="gray">
+                    {{ project?.description }}
+                </nue-text>
             </nue-button>
         </nue-div>
         <nue-div align="center" justify="end" flex gap="8px">
@@ -24,10 +29,7 @@
             <nue-link theme="btnlike" :route="{ name: 'project-main-overview' }">
                 Overview
             </nue-link>
-            <nue-link theme="btnlike" :route="{ name: 'project-main-table' }">
-                Table View
-            </nue-link>
-            <nue-link theme="btnlike" disabled> Board View </nue-link>
+            <nue-link theme="btnlike" :route="{ name: 'project-main-table' }"> Tasks </nue-link>
         </nue-div>
         <nue-div flex width="fit-content">
             <nue-button theme="pure" icon="delete" @click="handleDeleteProject">
@@ -41,10 +43,11 @@
 import type { Project } from '@/stores/useProjectStore'
 import { NuePrompt, NueConfirm, NueMessage } from 'nue-ui'
 
-defineProps<{ project: Project }>()
+const props = defineProps<{ project: Project }>()
 const emit = defineEmits<{
     (event: 'deleteProject'): void
-    (event: 'addDescription', description: Project['description']): void
+    (event: 'editName', name: Project['name']): void
+    (event: 'editDescription', description: Project['description']): void
 }>()
 
 function handleDeleteProject() {
@@ -57,15 +60,31 @@ function handleDeleteProject() {
     )
 }
 
-function handleAddDescription() {
+function handleEditName() {
     NuePrompt({
-        title: 'Add description',
+        title: 'Edit project name',
+        placeholder: 'Please input name here...',
+        confirmButtonText: 'Save',
+        cancelButtonText: 'Cancel',
+        inputValue: props.project.name,
+        validator: (value: any) => value
+    }).then(
+        (name) => emit('editName', name as string),
+        () => NueMessage.info('Operation canceled')
+    )
+}
+
+function handleEditDescription() {
+    NuePrompt({
+        title: 'Edit project description',
         placeholder: 'Please input description here...',
         confirmButtonText: 'Save',
         cancelButtonText: 'Cancel',
+        inputType: 'textarea',
+        inputValue: props.project.description,
         validator: (value: any) => value
     }).then(
-        (description) => emit('addDescription', description as string),
+        (description) => emit('editDescription', description as string),
         () => NueMessage.info('Operation canceled')
     )
 }

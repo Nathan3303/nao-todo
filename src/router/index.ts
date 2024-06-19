@@ -1,4 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
+import { useUserStore } from '@/stores/use-user-token'
+import { NueMessage } from 'nue-ui'
 
 const router = createRouter({
     history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -12,6 +14,15 @@ const router = createRouter({
         {
             path: '/',
             name: 'index',
+            beforeEnter: async (to, from, next) => {
+                const userStore = useUserStore()
+                await userStore.checkin()
+                if (userStore.isAuthenticated) {
+                    next()
+                } else {
+                    next('/authentication/login')
+                }
+            },
             component: () => import('@/views/index/index.vue'),
             redirect: { name: 'project' },
             children: [

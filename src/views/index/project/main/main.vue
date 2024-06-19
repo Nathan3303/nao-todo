@@ -5,26 +5,27 @@
             <project-header
                 :project="currentProject"
                 @delete-project="handleDeleteProject"
-                @add-description="handleAddDescription"
+                @edit-name="handleEditName"
+                @edit-description="handleEditDescription"
             ></project-header>
             <nue-divider></nue-divider>
-            <router-view :key="currentProject.id"></router-view>
+            <router-view :key="projectId"></router-view>
         </nue-div>
     </template>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, provide, onMounted } from 'vue'
+import { computed, provide } from 'vue'
 import { useProjectStore, type Project } from '@/stores/useProjectStore'
 import { findOne } from '@/utils/utils'
 import ProjectNotFound from '@/components/project/project-not-found.vue'
 import { NueMessage } from 'nue-ui'
-import type { ProjectViewContext } from '../types'
-import { useRouter } from 'vue-router'
+import type { ProjectViewContext } from './types'
 import { ProjectHeader } from '@/layers/index'
+import { useRouter } from 'vue-router'
 
 defineOptions({ name: 'ProjectView' })
-const props = withDefaults(defineProps<{ projectId: string }>(), {})
+const props = defineProps<{ projectId: string }>()
 
 const router = useRouter()
 const projectStore = useProjectStore()
@@ -39,12 +40,25 @@ const currentProject = computed<Project>(() => {
 
 function handleDeleteProject() {
     projectStore.remove(currentProject.value.id).then(
-        () => NueMessage.success('Project deleted successfully'),
+        () => {
+            NueMessage.success('Project deleted successfully')
+            router.push({
+                name: 'project-main',
+                params: { projectId: projectStore.projects[0].id }
+            })
+        },
         (err) => NueMessage.error(err)
     )
 }
 
-function handleAddDescription(description: Project['description']) {
+function handleEditName(name: Project['name']) {
+    projectStore.update(currentProject.value.id, { name }).then(
+        () => NueMessage.success('Project name updated successfully'),
+        (err) => NueMessage.error(err)
+    )
+}
+
+function handleEditDescription(description: Project['description']) {
     projectStore.update(currentProject.value.id, { description }).then(
         () => NueMessage.success('Project description updated successfully'),
         (err) => NueMessage.error(err)
@@ -52,9 +66,6 @@ function handleAddDescription(description: Project['description']) {
 }
 
 provide<ProjectViewContext>('projectViewContext', {
-    projectId: props.projectId,
-    currentProject: currentProject.value
+    currentProject: currentProject
 })
 </script>
-
-<style scoped></style>

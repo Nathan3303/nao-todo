@@ -29,7 +29,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { AuthSignIn, AuthSignUp } from '@/layers'
+import { AuthSignIn, AuthSignUp } from '@/layers/authentication'
 import { useUserStore, type SubmitPayload } from '@/stores/use-user-token'
 import { NueMessage } from 'nue-ui'
 import { useRouter } from 'vue-router'
@@ -49,36 +49,32 @@ const switchRoute = computed(() =>
     isLogin.value ? '/authentication/signup' : '/authentication/login'
 )
 
-function handleSubmit(payload: SubmitPayload) {
+async function handleSubmit(payload: SubmitPayload) {
     loading.value = true
     if (isLogin.value) {
-        userStore.login(payload).then(
-            () => {
-                NueMessage.success('Login successful')
-                setTimeout(() => {
-                    router.push('/')
-                    loading.value = false
-                }, 1000)
-            },
-            () => {
-                NueMessage.error('Invalid username or password')
+        const res = await userStore.login(payload)
+        if (res.code === '20000') {
+            NueMessage.success('Login successful')
+            setTimeout(() => {
+                router.push({ name: 'index' })
                 loading.value = false
-            }
-        )
+            }, 1000)
+        } else {
+            NueMessage.error(res.message)
+            loading.value = false
+        }
     } else {
-        userStore.signup(payload).then(
-            () => {
-                NueMessage.success('Sign up successful')
-                setTimeout(() => {
-                    router.push('/authentication/login')
-                    loading.value = false
-                }, 1000)
-            },
-            () => {
-                NueMessage.error('Username already exists')
+        const res = await userStore.signup(payload)
+        if (res.code === '20000') {
+            NueMessage.success('Sign up successful')
+            setTimeout(() => {
+                router.push('/authentication/login')
                 loading.value = false
-            }
-        )
+            }, 1000)
+        } else {
+            NueMessage.error(res.message)
+            loading.value = false
+        }
     }
 }
 </script>

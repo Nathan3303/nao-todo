@@ -28,7 +28,7 @@ import { computed, ref, reactive, inject, toRaw } from 'vue'
 import { useTodoStore, type Todo } from '@/stores/useTodoStore'
 import { NueMessage } from 'nue-ui'
 import { onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router'
-import type { ProjectViewContext } from '../types'
+import type { ProjectViewContext } from './types'
 import {
     ProjectTableHeader,
     ProjectTableMain,
@@ -78,7 +78,7 @@ const todo = computed<Todo>(() => {
 })
 
 function handleAddTodo(todoName: Todo['name']) {
-    todoStore.create(currentProject.id, todoName).then(
+    todoStore.create(currentProject.value.id, todoName).then(
         () => NueMessage.success('Create todo successfully'),
         (err) => NueMessage.error(err)
     )

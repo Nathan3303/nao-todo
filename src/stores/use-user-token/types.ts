@@ -1,11 +1,9 @@
 export type User = {
-    name: string
+    id: string
     email: string
+    _id?: string
+    nickName: string
 }
-
-export type InnerUserAccount = {
-    password: string
-} & User
 
 export type SubmitPayload = {
     email: string

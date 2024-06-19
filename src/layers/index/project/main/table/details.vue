@@ -51,7 +51,7 @@
                 <nue-text size="12px" color="gray">State</nue-text>
                 <nue-select v-model="todo.state">
                     <p data-executeid="To Do">To Do</p>
-                    <p data-executeid="In progress">In progress</p>
+                    <p data-executeid="In Progress">In progress</p>
                     <li data-executeid="Done">Done</li>
                 </nue-select>
             </nue-div>

@@ -64,7 +64,7 @@ function handleAddProject() {
         cancelButtonText: 'Cancel',
         validator: (value: any) => value
     }).then((value: any) => {
-        projectStore.create(value as string, '').then(
+        projectStore.create(value as string, 'This project has no description yet.').then(
             () => NueMessage.success('Created new project successfully'),
             (err) => NueMessage.error(err)
         )

@@ -16,7 +16,7 @@ const iconName = computed(() => {
     switch (state) {
         case 'Done':
             return 'success-fill'
-        case 'In progress':
+        case 'In Progress':
             return 'in-progress'
         case 'To Do':
             return 'circle'
