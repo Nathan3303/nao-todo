@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
 import { computed, provide } from 'vue'
-import { useProjectStore, type Project } from '@/stores/useProjectStore'
+import { useProjectStore, type Project } from '@/stores/use-project-store'
 import { findOne } from '@/utils/utils'
 import ProjectNotFound from '@/components/project/project-not-found.vue'
 import { NueMessage } from 'nue-ui'
@@ -38,31 +38,20 @@ const currentProject = computed<Project>(() => {
     )
 })
 
-function handleDeleteProject() {
-    projectStore.remove(currentProject.value.id).then(
-        () => {
-            NueMessage.success('Project deleted successfully')
-            router.push({
-                name: 'project-main',
-                params: { projectId: projectStore.projects[0].id }
-            })
-        },
-        (err) => NueMessage.error(err)
-    )
+async function handleDeleteProject() {
+    const { projectId } = props
+    console.log(projectId)
+    await projectStore.deleteProject(projectId)
 }
 
-function handleEditName(name: Project['name']) {
-    projectStore.update(currentProject.value.id, { name }).then(
-        () => NueMessage.success('Project name updated successfully'),
-        (err) => NueMessage.error(err)
-    )
+async function handleEditName(name: Project['name']) {
+    const { projectId } = props
+    await projectStore.updateProject(projectId, { name })
 }
 
-function handleEditDescription(description: Project['description']) {
-    projectStore.update(currentProject.value.id, { description }).then(
-        () => NueMessage.success('Project description updated successfully'),
-        (err) => NueMessage.error(err)
-    )
+async function handleEditDescription(description: Project['description']) {
+    const { projectId } = props
+    await projectStore.updateProject(projectId, { description })
 }
 
 provide<ProjectViewContext>('projectViewContext', {

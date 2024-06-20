@@ -11,7 +11,7 @@
                 @click="handleEditDescription"
             >
                 <nue-text size="14px" color="gray">
-                    {{ project?.description }}
+                    {{ project?.description || 'Click to add description' }}
                 </nue-text>
             </nue-button>
         </nue-div>

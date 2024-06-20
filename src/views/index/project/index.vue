@@ -1,5 +1,5 @@
 <template>
-    <nue-main aside-width="200px">
+    <nue-main aside-width="256px">
         <template #aside>
             <project-aside></project-aside>
         </template>

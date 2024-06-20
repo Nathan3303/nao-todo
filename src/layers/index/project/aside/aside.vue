@@ -21,7 +21,7 @@
                             <nue-div>
                                 <nue-text size="12px">Projects</nue-text>
                                 <nue-text size="12px" color="gray">
-                                    {{ projectStore.projects.length }} items
+                                    {{ projects.length }} items
                                 </nue-text>
                             </nue-div>
                         </template>
@@ -29,45 +29,72 @@
                     <nue-button
                         theme="pure"
                         icon="plus"
-                        @click.stop="handleAddProject"
+                        @click.stop="dialogData.visible = true"
                     ></nue-button>
                 </template>
                 <nue-link
                     theme="btnlike"
-                    v-for="(p, idx) in projectStore.projects"
-                    :key="idx"
-                    :route="{ name: 'project-main', params: { projectId: p.id } }"
+                    v-for="project in projects"
+                    :key="project.id"
+                    :route="{ name: 'project-main', params: { projectId: project.id } }"
                 >
-                    {{ p.name }}
+                    {{ project.name }}
                 </nue-link>
             </nue-collapse-item>
         </nue-collapse>
+
+        <!-- Add project dialog -->
+        <nue-dialog
+            v-model="dialogData.visible"
+            title="Create new project"
+            @confirm="handleAddProject"
+        >
+            <nue-div vertical align="stretch">
+                <nue-input
+                    v-model="dialogData.projectName"
+                    title="Project name"
+                    placeholder="Project name (required)"
+                ></nue-input>
+                <nue-textarea
+                    v-model="dialogData.projectDescription"
+                    title="Project description"
+                    placeholder="Project description"
+                    :rows="4"
+                    autosize
+                ></nue-textarea>
+            </nue-div>
+            <template #footer="{ cancel, confirm }">
+                <nue-button @click.stop="cancel">Cancel</nue-button>
+                <nue-button theme="primary" @click.stop="confirm">Create</nue-button>
+            </template>
+        </nue-dialog>
     </nue-div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useProjectStore } from '@/stores/useProjectStore'
+import { ref, reactive } from 'vue'
+import { useProjectStore, type Project } from '@/stores/use-project-store'
 import { NueMessage, NuePrompt } from 'nue-ui'
+import { storeToRefs } from 'pinia'
+
+const emit = defineEmits<{
+    (event: 'addProject', payload: Project): void
+}>()
 
 const projectStore = useProjectStore()
 
+const { projects } = storeToRefs(projectStore)
 const collapseItemsRecord = ref(['projects'])
+const dialogData = reactive({
+    visible: false,
+    projectName: '',
+    projectDescription: ''
+})
 
-projectStore.read()
-
-function handleAddProject() {
-    NuePrompt({
-        title: 'Create new project',
-        placeholder: 'Input project name here...',
-        confirmButtonText: 'Create',
-        cancelButtonText: 'Cancel',
-        validator: (value: any) => value
-    }).then((value: any) => {
-        projectStore.create(value as string, 'This project has no description yet.').then(
-            () => NueMessage.success('Created new project successfully'),
-            (err) => NueMessage.error(err)
-        )
+async function handleAddProject() {
+    await projectStore.createProject({
+        name: dialogData.projectName,
+        description: dialogData.projectDescription
     })
 }
 </script>
