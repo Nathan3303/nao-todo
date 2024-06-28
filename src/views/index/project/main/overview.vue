@@ -1,29 +1,14 @@
 <template>
-    <project-overview :todos="currentTodos"></project-overview>
+    <project-overview :todos="todos"></project-overview>
 </template>
 
 <script setup lang="ts">
-import { inject, computed } from 'vue'
-import { useTodoStore, type Todo } from '@/stores/useTodoStore'
+import { useTodoStore } from '@/stores/use-todo-store'
 import { ProjectOverview } from '@/layers/index'
-import type { ProjectViewContext } from './types'
+import { storeToRefs } from 'pinia'
 
-const projectViewContext = inject<ProjectViewContext>('projectViewContext')!
 const todoStore = useTodoStore()
-
-const currentTodos = computed<Todo[]>(() => {
-    const result: Todo[] = []
-    const { id: pid } = projectViewContext.currentProject.value
-    if (pid) {
-        todoStore.read().filter((todo) => {
-            if (todo.projectId === pid) {
-                result.push(todo)
-            }
-            return false
-        })
-    }
-    return result
-})
+const { todos } = storeToRefs(todoStore)
 </script>
 
 <style scoped></style>

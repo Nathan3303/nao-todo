@@ -1,25 +1,25 @@
 <template>
-    <nue-div align="center" style="width: 96px" gap="4px">
-        <nue-icon :name="iconName"></nue-icon>
-        <nue-text size="12px">{{ state }}</nue-text>
+    <nue-div align="center" style="width: 90px" gap="4px">
+        <nue-icon :name="info[0]"></nue-icon>
+        <nue-text size="12px">{{ info[1] }}</nue-text>
     </nue-div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Todo } from '../../stores/useTodoStore'
+import type { Todo } from '../../stores/use-todo-store'
 
 const props = defineProps<{ state: Todo['state'] }>()
 
-const iconName = computed(() => {
+const info = computed(() => {
     const { state } = props
     switch (state) {
-        case 'Done':
-            return 'success-fill'
-        case 'In Progress':
-            return 'in-progress'
-        case 'To Do':
-            return 'circle'
+        case 'todo':
+            return ['circle', 'To Do']
+        case 'in-progress':
+            return ['in-progress', 'In Progress']
+        case 'done':
+            return ['success-fill', 'Done']
     }
 })
 </script>

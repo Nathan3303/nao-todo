@@ -1,114 +1,90 @@
 <template>
-    <nue-container style="height: 100%">
-        <project-table-header
-            @add-todo="handleAddTodo"
-            @filter-todos="handleFilterTodos"
-        ></project-table-header>
-        <nue-main style="margin: 16px 0 0">
-            <nue-div wrap="nowrap" height="100%" style="overflow-x: auto">
-                <project-table-main
-                    :todos="currentTodos"
-                    @show-todo-details="handleShowTodoDetails"
-                    @delete-todo="handleDeleteTodo"
-                ></project-table-main>
-                <nue-divider v-if="todo" direction="vertical" style="height: 100%"></nue-divider>
-                <project-table-details
-                    v-if="todo"
-                    :todo="todo"
-                    @close-todo-details="selectedTodoId = null"
-                ></project-table-details>
-            </nue-div>
-        </nue-main>
-        <project-table-footer :total="currentTodos.length"></project-table-footer>
-    </nue-container>
+    <nue-div wrap="nowrap" flex style="overflow: hidden">
+        <nue-container style="height: 100%">
+            <project-table-header
+                @add-todo="handleAddTodo"
+                @filter-todos="handleFilterTodos"
+            ></project-table-header>
+            <nue-main style="margin: 16px 0 0">
+                <nue-div wrap="nowrap" flex style="overflow-y: auto">
+                    <project-table-main
+                        :todos="todos"
+                        @show-todo-details="handleShowTodoDetails"
+                        @delete-todo="handleDeleteTodo"
+                    ></project-table-main>
+                </nue-div>
+            </nue-main>
+            <project-table-footer
+                :total="todos.length"
+                :page-info="pageInfo"
+                :count-info="countInfo"
+                @perpage-change="handlePerPageChange"
+                @page-change="handlePageChange"
+            ></project-table-footer>
+        </nue-container>
+        <nue-divider v-if="todo" direction="vertical" style="height: 100%"></nue-divider>
+        <project-table-details
+            v-if="todo"
+            :todo="todo"
+            @close-todo-details="todo = undefined"
+        ></project-table-details>
+    </nue-div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, reactive, inject, toRaw } from 'vue'
-import { useTodoStore, type Todo } from '@/stores/useTodoStore'
-import { NueMessage } from 'nue-ui'
+import { ref, reactive, onMounted } from 'vue'
+import { useTodoStore, type Todo, type TodoFilter } from '@/stores/use-todo-store'
 import { onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router'
-import type { ProjectViewContext } from './types'
 import {
     ProjectTableHeader,
     ProjectTableMain,
     ProjectTableDetails,
     ProjectTableFooter
 } from '@/layers/index'
+import { storeToRefs } from 'pinia'
 
 defineOptions({ name: 'ProjectTableView' })
 const props = defineProps<{ projectId: string }>()
 
-const { currentProject } = inject<ProjectViewContext>('projectViewContext')!
 const route = useRoute()
 const router = useRouter()
 const todoStore = useTodoStore()
 
-const selectedTodoId = ref<string | null>(null)
-const filterInfo = reactive<{ name?: string; state?: string; priority?: string }>({})
+todoStore.getTodosByProjectId(props.projectId)
 
-const currentTodos = computed(() => {
-    const result: Todo[] = []
-    if (props.projectId) {
-        todoStore.read().filter((todo) => {
-            if (todo.projectId === props.projectId) {
-                if (filterInfo.name && !todo.name.includes(filterInfo.name)) {
-                    return false
-                }
-                if (filterInfo.state && filterInfo.state !== todo.state) {
-                    return false
-                }
-                if (filterInfo.priority && filterInfo.priority !== todo.priority) {
-                    return false
-                }
-                result.push(
-                    // toRaw(todo)
-                    todo
-                )
-            }
-            return false
-        })
+const { todo, todos, pageInfo, countInfo, filterInfo } = storeToRefs(todoStore)
+
+async function handleAddTodo(name: Todo['name']) {
+    const { projectId } = props
+    const res = await todoStore.createTodo(projectId, name)
+    if (res.code === '20000') {
+        todoStore.getTodosByProjectId(projectId)
     }
-    return result
-})
-
-const todo = computed<Todo>(() => {
-    const todos = currentTodos.value.find((t) => t.id === selectedTodoId.value)
-    return todos as Todo
-})
-
-function handleAddTodo(todoName: Todo['name']) {
-    todoStore.create(currentProject.value.id, todoName).then(
-        () => NueMessage.success('Create todo successfully'),
-        (err) => NueMessage.error(err)
-    )
 }
 
-function handleFilterTodos(todoName: string) {
-    let newQuery = { ...route.query }
-    if (todoName === '') {
-        delete newQuery.name
-    } else {
-        newQuery.name = todoName
-    }
-    router.push({ query: newQuery })
+function handleFilterTodos(payload: TodoFilter) {
+    const { projectId } = props
+    const newFilterInfo = { ...filterInfo.value, ...payload }
+    filterInfo.value = newFilterInfo
+    todoStore.getTodosByProjectId(projectId)
 }
 
-function handleShowTodoDetails(id: string) {
-    selectedTodoId.value = id
+async function handleShowTodoDetails(id: Todo['id']) {
+    await todoStore.getTodoById(id)
 }
 
-function handleDeleteTodo(id: string) {
-    todoStore.remove(id).then(
-        () => NueMessage.success('Task deleted successfully'),
-        (err) => NueMessage.error(err)
-    )
+async function handleDeleteTodo(id: Todo['id']) {
+    await todoStore.remove(id)
 }
 
-onBeforeRouteUpdate((to, _, next) => {
-    filterInfo.name = to.query.name as string
-    filterInfo.state = to.query.state as string
-    filterInfo.priority = to.query.priority as string
-    next()
-})
+async function handlePerPageChange(perPage: number) {
+    pageInfo.value.page = 1
+    pageInfo.value.limit = perPage
+    todoStore.getTodosByProjectId(props.projectId)
+}
+
+async function handlePageChange(page: number) {
+    pageInfo.value.page = page
+    todoStore.getTodosByProjectId(props.projectId)
+}
 </script>

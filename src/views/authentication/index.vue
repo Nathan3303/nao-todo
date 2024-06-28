@@ -54,11 +54,10 @@ async function handleSubmit(payload: SubmitPayload) {
     if (isLogin.value) {
         const res = await userStore.login(payload)
         if (res.code === '20000') {
+            router.push({ name: 'index' })
+            loading.value = false
             NueMessage.success('Login successful')
-            setTimeout(() => {
-                router.push({ name: 'index' })
-                loading.value = false
-            }, 1000)
+            // setTimeout(() => {}, 1000)
         } else {
             NueMessage.error(res.message)
             loading.value = false
@@ -66,11 +65,10 @@ async function handleSubmit(payload: SubmitPayload) {
     } else {
         const res = await userStore.signup(payload)
         if (res.code === '20000') {
+            router.push('/authentication/login')
+            loading.value = false
             NueMessage.success('Sign up successful')
-            setTimeout(() => {
-                router.push('/authentication/login')
-                loading.value = false
-            }, 1000)
+            // setTimeout(() => {}, 1000)
         } else {
             NueMessage.error(res.message)
             loading.value = false
