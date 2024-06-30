@@ -42,7 +42,7 @@ const router = createRouter({
                             name: 'project-main',
                             props: true,
                             component: () => import('@/views/index/project/main/main.vue'),
-                            redirect: { name: 'project-main-overview' },
+                            redirect: { name: 'project-main-table' },
                             children: [
                                 {
                                     path: 'overview',

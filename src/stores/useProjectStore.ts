@@ -9,8 +9,10 @@ export type Project = {
     id: string
     name: string
     description?: string
-    createAt: string
-    updateAt: string
+    createdAt: string
+    updatedAt: string
+    created_at?: string
+    updated_at?: string
 }
 
 export const useProjectStore = defineStore('projectStore', () => {
@@ -23,8 +25,8 @@ export const useProjectStore = defineStore('projectStore', () => {
             id: nanoid(),
             name,
             description,
-            createAt: timeString,
-            updateAt: timeString
+            createdAt: timeString,
+            updatedAt: timeString
         }
         return project
     }

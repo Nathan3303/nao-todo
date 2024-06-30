@@ -8,11 +8,11 @@
                 <nue-div align="center" width="fit-content" gap="8px">
                     <nue-text size="12px">Rows per page</nue-text>
                     <nue-select size="small" v-model="perpage" @change="handlePerPageChange">
-                        <nue-select-option label="10" value="10"></nue-select-option>
-                        <nue-select-option label="20" value="20"></nue-select-option>
-                        <nue-select-option label="30" value="30"></nue-select-option>
-                        <nue-select-option label="40" value="40"></nue-select-option>
-                        <nue-select-option label="50" value="50"></nue-select-option>
+                        <nue-select-option label="10" :value="10"></nue-select-option>
+                        <nue-select-option label="20" :value="20"></nue-select-option>
+                        <nue-select-option label="30" :value="30"></nue-select-option>
+                        <nue-select-option label="40" :value="40"></nue-select-option>
+                        <nue-select-option label="50" :value="50"></nue-select-option>
                     </nue-select>
                 </nue-div>
                 <nue-text size="12px">
