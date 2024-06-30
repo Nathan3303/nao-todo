@@ -54,11 +54,10 @@
 </template>
 
 <script setup lang="ts">
-import { useTodoStore } from '@/stores/useTodoStore'
+import { useTodoStore } from '@/stores/use-todo-store'
 
 const todoStore = useTodoStore()
 
-todoStore.read()
 </script>
 
 <style scoped>

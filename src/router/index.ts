@@ -60,11 +60,11 @@ const router = createRouter({
                         }
                     ]
                 },
-                {
-                    path: 'tasks',
-                    name: 'tasks',
-                    component: () => import('@/views/index/tasks/index.vue')
-                }
+                // {
+                //     path: 'tasks',
+                //     name: 'tasks',
+                //     component: () => import('@/views/index/tasks/index.vue')
+                // }
             ]
         }
     ]

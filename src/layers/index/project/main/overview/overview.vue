@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Todo } from '@/stores/useTodoStore'
+import type { Todo } from '@/stores/use-todo-store'
 
 const props = defineProps<{ todos?: Todo[] }>()
 
@@ -48,13 +48,13 @@ const todosInfo = computed(() => {
     let done = 0
     todos.forEach((todo) => {
         switch (todo.state) {
-            case 'To Do':
+            case 'todo':
                 toDo++
                 break
-            case 'In Progress':
+            case 'in-progress':
                 inProgress++
                 break
-            case 'Done':
+            case 'done':
                 done++
                 break
         }

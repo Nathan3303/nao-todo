@@ -9,8 +9,8 @@ export type Project = {
     id: string
     name: string
     description?: string
-    createdAt: string
-    updatedAt: string
+    createdAt?: string
+    updatedAt?: string
     created_at?: string
     updated_at?: string
 }
