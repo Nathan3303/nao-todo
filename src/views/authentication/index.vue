@@ -7,9 +7,11 @@
                         <nue-text size="32px" color="white">NaoTodo</nue-text>
                     </nue-div>
                     <nue-text size="16px" color="white">
-                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Atque quod porro ex
-                        fuga. Possimus sequi dolorem laborum? Eveniet, vero molestiae error ut quam
-                        laborum, debitis cumque hic assumenda pariatur voluptatum!
+                        Discover a new way to live efficiently with NaoTodo, the smart to-do list
+                        app tailored just for you. Whether it's work, study, or daily life, NaoTodo
+                        helps you easily manage tasks and boost productivity. With its intuitive
+                        interface and powerful features, you can effortlessly add, edit, and track
+                        tasks, set reminders, and never miss an important detail.
                     </nue-text>
                 </nue-div>
             </template>

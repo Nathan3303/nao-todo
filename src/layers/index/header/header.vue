@@ -1,16 +1,14 @@
 <template>
     <nue-header>
-        <template #logo>
-            <nue-link href="/">
-                <nue-text size="26px">NaoTodo</nue-text>
-            </nue-link>
-        </template>
         <template #nav>
             <nue-div>
                 <nue-link theme="btnlike" icon="projects" route="/project">Projects</nue-link>
-                <nue-link theme="btnlike" icon="todo" route="/tasks" disabled>Tasks</nue-link>
+                <nue-link theme="btnlike" icon="todo" route="/tasks">Tasks</nue-link>
             </nue-div>
         </template>
+        <nue-link href="/">
+            <nue-text size="26px">NaoTodo</nue-text>
+        </nue-link>
         <template #ops>
             <nue-div>
                 <nue-button theme="icon-only" icon="search" disabled></nue-button>

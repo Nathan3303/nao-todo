@@ -1,13 +1,13 @@
 <template>
     <nue-div align="center" style="width: 72px" gap="4px">
-        <nue-icon :name="info[0]"></nue-icon>
+        <nue-icon :name="info[0]" style="--icon-weight: normal"></nue-icon>
         <nue-text size="12px">{{ info[1] }}</nue-text>
     </nue-div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Todo } from '../../stores/use-todo-store'
+import type { Todo } from '@/stores/use-todo-store'
 
 const props = defineProps<{ priority: Todo['priority'] }>()
 

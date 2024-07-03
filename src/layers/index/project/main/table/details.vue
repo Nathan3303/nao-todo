@@ -1,15 +1,10 @@
 <template>
-    <nue-div
-        v-if="shadowTodo"
-        vertical
-        align="stretch"
-        flex
-        width="64%"
-        gap="12px"
-        height="100%"
-        style="overflow: auto; min-width: 256px"
-        wrap="nowrap"
-    >
+    <!-- <loading
+            v-if="detailsLoading"
+            :loading="detailsLoading"
+            style="width: 64%; flex-wrap: nowrap"
+        ></loading> -->
+    <nue-div class="details-wrapper" v-if="shadowTodo">
         <nue-div align="center" justify="space-between">
             <nue-div align="center" width="fit-content" gap="8px">
                 <nue-text size="16px">Task details</nue-text>
@@ -28,6 +23,7 @@
                 v-model="shadowTodo.name"
                 placeholder="Input task name here..."
                 autosize
+                theme="noshape"
             ></nue-textarea>
         </nue-div>
         <nue-div vertical align="stretch" gap="4px">
@@ -35,7 +31,9 @@
             <nue-textarea
                 v-model="shadowTodo.description"
                 placeholder="Input task description here..."
-                rows="5"
+                :rows="0"
+                autosize
+                theme="noshape"
             ></nue-textarea>
         </nue-div>
         <nue-div>
@@ -49,7 +47,7 @@
             </nue-div> -->
             <nue-div vertical gap="4px" width="fit-content">
                 <nue-text size="12px" color="gray">State</nue-text>
-                <nue-select v-model="shadowTodo.state">
+                <nue-select v-model="shadowTodo.state" size="small">
                     <nue-select-option label="To Do" value="todo"></nue-select-option>
                     <nue-select-option label="In Progress" value="in-progress"></nue-select-option>
                     <nue-select-option label="Done" value="done"></nue-select-option>
@@ -57,7 +55,7 @@
             </nue-div>
             <nue-div vertical gap="4px" width="fit-content">
                 <nue-text size="12px" color="gray">Priority</nue-text>
-                <nue-select v-model="shadowTodo.priority">
+                <nue-select v-model="shadowTodo.priority" size="small">
                     <nue-select-option label="Low" :value="0"></nue-select-option>
                     <nue-select-option label="Medium" :value="1"></nue-select-option>
                     <nue-select-option label="High" :value="2"></nue-select-option>
@@ -149,3 +147,17 @@ onBeforeUnmount(() => {
     if (shadowTodoUnWatch) shadowTodoUnWatch()
 })
 </script>
+
+<style scoped>
+.details-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+    flex: auto;
+    width: 64%;
+    height: 100%;
+    overflow: auto;
+    min-width: 256px;
+    overflow: auto;
+    flex-wrap: nowrap;
+}
+</style>
