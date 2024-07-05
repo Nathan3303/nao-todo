@@ -77,13 +77,13 @@
                 <nue-div vertical align="stretch" gap="4px" flex>
                     <nue-text size="12px" color="gray"> Created at </nue-text>
                     <nue-text size="14px">
-                        {{ moment(project?.created_at).format('YYYY-MM-DD HH:mm:ss') }}
+                        {{ moment(project?.createAt).format('YYYY-MM-DD HH:mm:ss') }}
                     </nue-text>
                 </nue-div>
                 <nue-div vertical align="stretch" gap="4px" flex>
                     <nue-text size="12px" color="gray"> Updated at </nue-text>
                     <nue-text size="14px">
-                        {{ moment(project?.updated_at).format('YYYY-MM-DD HH:mm:ss') }}
+                        {{ moment(project?.updateAt).format('YYYY-MM-DD HH:mm:ss') }}
                     </nue-text>
                 </nue-div>
             </nue-div>
@@ -146,4 +146,4 @@ function handleEditDescription() {
 }
 </script>
 
-<style ></style>
+<style></style>
