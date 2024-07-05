@@ -10,5 +10,12 @@
 </template>
 
 <script setup lang="ts">
-import { ProjectAside } from '@/layers/index';
+import { ProjectAside } from '@/layers/index'
+import { useProjectStore } from '@/stores/use-project-store'
+import { useLoadingScreen } from '@/hooks/use-loading-screen'
+
+const projectStore = useProjectStore()
+
+await projectStore.getProjects()
+useLoadingScreen().stopLoading()
 </script>

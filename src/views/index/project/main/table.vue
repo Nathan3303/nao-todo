@@ -2,15 +2,19 @@
     <nue-div wrap="nowrap" flex style="overflow: hidden">
         <nue-container style="height: 100%">
             <project-table-header
+                :collumns="tableCollumns"
+                :count-info="countInfo"
                 :filter-info="filterInfo"
                 @add-todo="handleAddTodo"
                 @filter-todos="handleFilterTodos"
+                @toggle-collumns="handleToggleCollumns"
             ></project-table-header>
             <nue-main style="margin: 16px 0 0">
                 <nue-div wrap="nowrap" flex style="overflow-y: auto">
                     <project-table-main
                         :todos="todos"
                         :loading="tableLoading"
+                        :collumns="tableCollumns"
                         @show-todo-details="handleShowTodoDetails"
                         @delete-todo="handleDeleteTodo"
                     ></project-table-main>
@@ -24,10 +28,11 @@
                 @page-change="handlePageChange"
             ></project-table-footer>
         </nue-container>
-        <template v-if="todo">
+        <template v-if="todo || detailsLoading">
             <nue-divider direction="vertical" style="height: 100%"></nue-divider>
             <project-table-details
                 :todo="todo"
+                :loading="detailsLoading"
                 @close-todo-details="todo = undefined"
             ></project-table-details>
         </template>
@@ -45,20 +50,37 @@ import {
 } from '@/layers/index'
 import { storeToRefs } from 'pinia'
 
+type ToggleCollumnsPayload = {
+    createdAt: boolean
+    priority: boolean
+    state: boolean
+    description: boolean
+}
+
 defineOptions({ name: 'ProjectTableView' })
 const props = defineProps<{ projectId: string }>()
 
 const todoStore = useTodoStore()
 
-const { todo, todos, pageInfo, countInfo, filterInfo } = storeToRefs(todoStore)
+const { todos, pageInfo, countInfo, filterInfo } = storeToRefs(todoStore)
+const todo = ref<Todo | undefined>()
 const tableLoading = ref(false)
 const detailsLoading = ref(false)
+const tableCollumns = ref<ToggleCollumnsPayload>({
+    createdAt: false,
+    priority: true,
+    state: true,
+    description: false
+})
 
 async function handleGetTodos() {
     tableLoading.value = true
     await todoStore.getTodosByProjectId(props.projectId)
-    tableLoading.value = false
+    setTimeout(() => {
+        tableLoading.value = false
+    }, 512)
 }
+handleGetTodos()
 
 async function handleAddTodo(name: Todo['name']) {
     const { projectId } = props
@@ -77,7 +99,10 @@ function handleFilterTodos(payload: TodoFilter) {
 
 async function handleShowTodoDetails(id: Todo['id']) {
     detailsLoading.value = true
-    await todoStore.getTodoById(id)
+    const response = await todoStore.getTodoById(id)
+    if (response.code === '20000') {
+        todo.value = response.data
+    }
     detailsLoading.value = false
 }
 
@@ -94,5 +119,9 @@ async function handlePerPageChange(perPage: number) {
 async function handlePageChange(page: number) {
     pageInfo.value.page = page
     handleGetTodos()
+}
+
+function handleToggleCollumns(payload: any) {
+    tableCollumns.value = payload
 }
 </script>

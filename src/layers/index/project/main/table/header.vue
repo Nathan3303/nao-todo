@@ -3,28 +3,61 @@
         <nue-div align="center" justify="space-between" wrap="nowrap" gap="16px">
             <nue-div align="center" wrap="nowrap" flex="none" width="fit-content" gap="12px">
                 <nue-input
-                    :theme="filterText ? 'small,actived' : 'small'"
+                    theme="small"
                     v-model="filterText"
                     placeholder="Filter tasks"
                     icon="filter"
-                    clearable
                     :debounce-time="300"
                 ></nue-input>
-                <!-- <nue-button theme="small" icon="plus-circle" disabled>Status</nue-button> -->
                 <combo-box
                     :framework="statusComboBoxOptions"
-                    @change="handleChangeOption"
+                    @change="handleChangeStatusOption"
                 ></combo-box>
-                <nue-button theme="small" icon="plus-circle" disabled>Priority</nue-button>
-                <!-- <nue-text v-if="filterValue" size="12px" color="orange" decoration="underline">
-                    Your are in the filtering mode!
-                </nue-text> -->
+                <combo-box
+                    trigger-title="Priority"
+                    :framework="priorityComboBoxOptions"
+                    @change="handleChangePriorityOption"
+                ></combo-box>
+                <nue-button
+                    v-if="hasFilter"
+                    theme="small,pure"
+                    icon="clear"
+                    @click="handleResetFilter"
+                >
+                    Reset
+                </nue-button>
             </nue-div>
             <nue-div justify="end" flex="none" width="fit-content" gap="12px">
                 <nue-button theme="small,primary" icon="plus-circle" @click="handleAddTodo">
                     Add
                 </nue-button>
-                <nue-button theme="small" icon="menu" disabled>View</nue-button>
+                <nue-dropdown
+                    class="toggle-collumns-dropdown"
+                    align="right"
+                    @execute="handleToggleCollumns"
+                >
+                    <template #default="{ clickTrigger }">
+                        <nue-button theme="small" icon="menu" @click.stop="clickTrigger">
+                            View
+                        </nue-button>
+                    </template>
+                    <template #dropdown>
+                        <nue-container>
+                            <nue-header>
+                                <nue-text size="14px">Toggle collumns</nue-text>
+                            </nue-header>
+                            <nue-main>
+                                <checkbox
+                                    v-for="(value, key) in collumns"
+                                    :label="key"
+                                    :value="key"
+                                    :checked="value"
+                                    @check="handleToggleCollumns"
+                                ></checkbox>
+                            </nue-main>
+                        </nue-container>
+                    </template>
+                </nue-dropdown>
             </nue-div>
         </nue-div>
     </nue-header>
@@ -32,52 +65,71 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import type { Todo, TodoFilter } from '@/stores/use-todo-store'
+import type {
+    Todo,
+    TodoCountInfo,
+    TodoFilter,
+    TodoPriority,
+    TodoState
+} from '@/stores/use-todo-store'
 import { NuePrompt, NueMessage } from 'nue-ui'
-import { ComboBox } from '@/components'
+import { ComboBox, Checkbox } from '@/components'
+
+type ToggleCollumnsPayload = {
+    createdAt: boolean
+    priority: boolean
+    state: boolean
+    description: boolean
+}
+type ToggleCollumnKeys = keyof ToggleCollumnsPayload
 
 const props = defineProps<{
+    countInfo: TodoCountInfo
     filterInfo: TodoFilter
+    collumns: ToggleCollumnsPayload
 }>()
 const emit = defineEmits<{
     (event: 'addTodo', todoName: Todo['name']): void
     (event: 'filterTodos', payload: TodoFilter): void
+    (event: 'toggleCollumns', payload: ToggleCollumnsPayload): void
 }>()
 
 const filterText = ref('')
+
 const statusComboBoxOptions = computed({
     get() {
-        const options = [
+        type Option<T> = { label: string; value: T; icon: string; suffix: number; checked: boolean }
+        const options: Option<TodoState>[] = [
             {
                 label: 'Todo',
                 value: 'todo',
                 icon: 'circle',
-                suffix: 21,
+                suffix: 0,
                 checked: false
             },
             {
                 label: 'In Progress',
                 value: 'in-progress',
                 icon: 'in-progress',
-                suffix: 20,
+                suffix: 0,
                 checked: false
             },
             {
                 label: 'Done',
                 value: 'done',
                 icon: 'success',
-                suffix: 19,
+                suffix: 0,
                 checked: false
             }
         ]
         const { state } = props.filterInfo
-        if (!state) {
-            return options
-        }
-        const splitedState = state.split(',')
+        const splitedState = state?.split(',')
         options.forEach((option) => {
-            if (splitedState.includes(option.value)) {
+            if (splitedState?.includes(option.value)) {
                 option.checked = true
+            }
+            if (props.countInfo.byState) {
+                option.suffix = props.countInfo.byState[option.value] || 0
             }
         })
         return options
@@ -89,9 +141,62 @@ const statusComboBoxOptions = computed({
                 filterState += (filterState === '' ? '' : ',') + option.value
             }
         })
-        // console.log(filterState)
         emit('filterTodos', { state: filterState } as TodoFilter)
     }
+})
+
+const priorityComboBoxOptions = computed({
+    get() {
+        type Option<T> = { label: string; value: T; icon: string; suffix: number; checked: boolean }
+        const options: Option<TodoPriority>[] = [
+            {
+                label: 'Low',
+                value: 'low',
+                icon: 'priority-1',
+                suffix: 0,
+                checked: false
+            },
+            {
+                label: 'Medium',
+                value: 'medium',
+                icon: 'priority-2',
+                suffix: 0,
+                checked: false
+            },
+            {
+                label: 'High',
+                value: 'high',
+                icon: 'priority-3',
+                suffix: 0,
+                checked: false
+            }
+        ]
+        const { priority } = props.filterInfo
+        const splitedPriority = priority?.split(',')
+        options.forEach((option) => {
+            if (splitedPriority?.includes(option.value as string)) {
+                option.checked = true
+            }
+            if (props.countInfo.byPriority) {
+                option.suffix = props.countInfo.byPriority[option.value] || 0
+            }
+        })
+        return options
+    },
+    set(newValue: any) {
+        let filterPriority = ''
+        newValue.forEach((option: any) => {
+            if (option.checked) {
+                filterPriority += (filterPriority === '' ? '' : ',') + option.value
+            }
+        })
+        emit('filterTodos', { priority: filterPriority } as TodoFilter)
+    }
+})
+
+const hasFilter = computed(() => {
+    const { name, state, priority } = props.filterInfo
+    return name || state || priority
 })
 
 function handleAddTodo() {
@@ -110,15 +215,36 @@ function handleAddTodo() {
     )
 }
 
-function handleChangeOption(value: unknown, payload: any) {
+function handleChangeStatusOption(value: unknown, payload: any) {
     const _options = [...statusComboBoxOptions.value]
     _options.forEach((option, index) => {
         if (option.value === value) {
             _options[index] = { ...option, ...payload }
         }
     })
-    // console.log(_options)
     statusComboBoxOptions.value = _options
+}
+
+function handleChangePriorityOption(value: unknown, payload: any) {
+    const _options = [...priorityComboBoxOptions.value]
+    _options.forEach((option, index) => {
+        if (option.value === value) {
+            _options[index] = { ...option, ...payload }
+        }
+    })
+    priorityComboBoxOptions.value = _options
+}
+
+function handleResetFilter() {
+    filterText.value = ''
+    emit('filterTodos', { name: '', state: '', priority: '' } as TodoFilter)
+}
+
+function handleToggleCollumns(checked: boolean, value: unknown) {
+    // console.log('handleToggleCollumns', checked, value)
+    const newCollumns = { ...props.collumns }
+    newCollumns[value as ToggleCollumnKeys] = checked
+    emit('toggleCollumns', newCollumns)
 }
 
 watch(
@@ -133,5 +259,25 @@ watch(
 .nue-input--actived {
     border-color: orange;
     box-shadow: var(--secondary-shadow);
+}
+
+.toggle-collumns-dropdown {
+    &:deep().nue-dropdown {
+        padding: 0px;
+    }
+    .nue-container {
+        width: 192px;
+        padding: 0px;
+
+        .nue-header {
+            height: 43px;
+            padding: 12px;
+        }
+
+        .nue-main {
+            flex-direction: column;
+            padding: 4px;
+        }
+    }
 }
 </style>

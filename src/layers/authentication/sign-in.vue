@@ -39,7 +39,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { SubmitPayload } from '@/stores/use-user-token'
+import type { SubmitPayload } from '@/stores/use-user-store'
 import { NueMessage } from 'nue-ui'
 
 const props = defineProps<{ loading: boolean }>()

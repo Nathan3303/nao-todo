@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from '@/stores/use-user-token'
+import { useUserStore } from '@/stores/use-user-store'
 import { NueConfirm, NueMessage } from 'nue-ui'
 
 defineOptions({ name: 'AppHeader' })

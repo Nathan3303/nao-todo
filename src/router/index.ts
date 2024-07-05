@@ -1,6 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import { useUserStore } from '@/stores/use-user-token'
-import { NueMessage } from 'nue-ui'
+import { useUserStore } from '@/stores/use-user-store'
+import { useLoadingScreen } from '@/hooks/use-loading-screen'
 
 const router = createRouter({
     history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -16,12 +16,23 @@ const router = createRouter({
             name: 'index',
             beforeEnter: async (to, from, next) => {
                 const userStore = useUserStore()
-                await userStore.checkin()
+                const loadingScreen = useLoadingScreen()
                 if (userStore.isAuthenticated) {
                     next()
-                } else {
-                    next('/authentication/login')
+                    return
                 }
+                const isLoggedIn = await userStore.isLoggedIn()
+                if (isLoggedIn) {
+                    loadingScreen.startLoading()
+                    await userStore.checkin()
+                    if (userStore.isAuthenticated) {
+                        next()
+                        return
+                    } else {
+                        loadingScreen.stopLoading()
+                    }
+                }
+                next('/authentication/login')
             },
             component: () => import('@/views/index/index.vue'),
             redirect: { name: 'project' },

@@ -30,7 +30,7 @@ export const useUserStore = defineStore('userStore', () => {
     async function login(payload: SubmitPayload) {
         const { email, password } = payload
         const response = await $axios.post('/signin', {
-            email: email,
+            email: email.toLowerCase(),
             password: md5(password)
         })
         if (response.data.code === '20000') {
@@ -43,17 +43,22 @@ export const useUserStore = defineStore('userStore', () => {
     async function signup(payload: SubmitPayload) {
         const { email, password } = payload
         const response = await $axios.post('/signup', {
-            email: email,
+            email: email.toLowerCase(),
             password: md5(password)
         })
         return response.data
+    }
+
+    async function isLoggedIn() {
+        const jwt = localStorage.getItem('jwt@user')
+        return !!jwt
     }
 
     async function checkin() {
         const jwt = localStorage.getItem('jwt@user')
         if (!jwt) {
             _removeToken()
-            return
+            return null
         }
         const response = await $axios.get('/checkin' + `?jwt=${jwt}`)
         if (response.data.code === '20000') {
@@ -80,5 +85,5 @@ export const useUserStore = defineStore('userStore', () => {
         }
     }
 
-    return { user, token, isAuthenticated, checkin, login, signup, signout }
+    return { user, token, isAuthenticated, isLoggedIn, checkin, login, signup, signout }
 })

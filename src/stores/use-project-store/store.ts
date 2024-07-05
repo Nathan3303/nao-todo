@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { CreateProjectPayload, Project } from './types'
-import { useUserStore } from '../use-user-token'
+import { useUserStore } from '../use-user-store'
 import { NueMessage } from 'nue-ui'
 import $axios from './axios'
 

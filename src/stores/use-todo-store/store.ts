@@ -1,15 +1,20 @@
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive } from 'vue'
 import { defineStore } from 'pinia'
-import type { Todo, TodoFilter } from './types'
+import type { Todo, TodoFilter, TodoCountInfo } from './types'
 import $axios from './axios'
-import { useProjectStore, type Project } from '../use-project-store'
+import type { Project } from '../use-project-store'
 import { NueMessage } from 'nue-ui'
 
 export const useTodoStore = defineStore('todoStore', () => {
     const todo = ref<Todo>()
     const todos = ref<Todo[]>([])
+    const countInfo = reactive<TodoCountInfo>({
+        count: 0,
+        total: 0,
+        byState: { todo: 0, 'in-progress': 0, done: 0 },
+        byPriority: { low: 0, medium: 0, high: 0 }
+    })
     const pageInfo = reactive({ page: 1, limit: 10, totalPages: 0 })
-    const countInfo = reactive({ count: 0, total: 0 })
     const filterInfo = ref<TodoFilter>({ name: '', state: '', priority: '' })
 
     function parseFilterInfoToQuery() {
@@ -25,16 +30,17 @@ export const useTodoStore = defineStore('todoStore', () => {
         const { page, limit } = pageInfo
         const filterQuery = parseFilterInfoToQuery()
         const uri = `/todos?projectId=${projectId}&page=${page}&limit=${limit}&${filterQuery}`
-        // const uri = `/todos?projectId=${projectId}&page=${page}&limit=${limit}`
         const response = await $axios.get(uri)
         if (response.data.code === '20000') {
             const { todos: _tds, payload: _pl } = response.data.data
             todos.value = _tds
-            pageInfo.page = _pl.page
-            pageInfo.limit = _pl.limit
-            pageInfo.totalPages = _pl.totalPages
-            countInfo.count = _pl.count
-            countInfo.total = _pl.total
+            countInfo.count = _pl.countInfo.count
+            countInfo.total = _pl.countInfo.total
+            countInfo.byState = _pl.countInfo.byState
+            countInfo.byPriority = _pl.countInfo.byPriority
+            pageInfo.page = _pl.pageInfo.page
+            pageInfo.limit = _pl.pageInfo.limit
+            pageInfo.totalPages = _pl.pageInfo.totalPages
         } else {
             NueMessage.error(response.data.message)
         }
@@ -53,6 +59,7 @@ export const useTodoStore = defineStore('todoStore', () => {
     }
 
     async function remove(id: Todo['id']) {
+        if (todo.value && id === todo.value.id) return
         const response = await $axios.delete('/todo' + `?id=${id}`)
         if (response.data.code === '20000') {
             const index = todos.value.findIndex((todo) => todo.id === id)
@@ -72,12 +79,13 @@ export const useTodoStore = defineStore('todoStore', () => {
         return response.data
     }
 
-    async function update(id: Todo['id'], todo: Partial<Todo>) {
-        const response = await $axios.put('/todo' + `?id=${id}`, todo)
+    async function update(id: Todo['id'], newTodo: Partial<Todo>) {
+        const response = await $axios.put('/todo' + `?id=${id}`, newTodo)
         if (response.data.code === '20000') {
             const index = todos.value.findIndex((t) => t.id === id)
-            const _todo = { ...todos.value[index], ...todo }
-            todos.value.splice(index, 1, _todo)
+            todos.value.splice(index, 1, response.data.data)
+            // todo.value = response.data.data
+            todo.value!.updatedAt = response.data.data.updatedAt
             NueMessage.success('Todo updated successfully')
         } else {
             NueMessage.error(response.data.message)

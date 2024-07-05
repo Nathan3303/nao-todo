@@ -91,7 +91,7 @@
 import { computed, ref } from 'vue'
 import { TodoStateInfo, TodoPriorityInfo } from '@/components'
 import { useTodoStore, type Todo } from '@/stores/use-todo-store'
-import { useUserStore } from '@/stores/use-user-token'
+import { useUserStore } from '@/stores/use-user-store'
 import { storeToRefs } from 'pinia'
 import moment from 'moment'
 

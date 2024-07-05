@@ -31,12 +31,20 @@
             </nue-link>
             <nue-link theme="btnlike" :route="{ name: 'project-main-table' }"> Tasks </nue-link>
         </nue-div>
-        <nue-div flex width="fit-content" wrap="nowrap">
-            <nue-button theme="pure" icon="warning" @click="infoDialogVisible = true">
-                Details
+        <nue-div flex width="fit-content" wrap="nowrap" gap="4px">
+            <nue-button
+                theme="icon-only"
+                icon="warning"
+                @click="infoDialogVisible = true"
+                title="Project information"
+            >
             </nue-button>
-            <nue-button theme="pure" icon="delete" @click="handleDeleteProject" style="color: red">
-                Delete
+            <nue-button
+                theme="icon-only"
+                icon="delete"
+                @click="handleDeleteProject"
+                style="color: red"
+            >
             </nue-button>
         </nue-div>
     </nue-div>
@@ -85,7 +93,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { Project } from '@/stores/useProjectStore'
+import type { Project } from '@/stores/use-project-store'
 import { NuePrompt, NueConfirm, NueMessage } from 'nue-ui'
 import moment from 'moment'
 
@@ -137,3 +145,5 @@ function handleEditDescription() {
     )
 }
 </script>
+
+<style ></style>

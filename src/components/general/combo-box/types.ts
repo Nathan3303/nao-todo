@@ -8,5 +8,7 @@ export type FrameworkOption = {
 }
 
 export type ComboBoxProps = {
+    triggerTitle?: string
+    triggerIcon?: string
     framework: FrameworkOption[]
 }

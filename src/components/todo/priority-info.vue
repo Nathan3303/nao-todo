@@ -12,16 +12,13 @@ import type { Todo } from '@/stores/use-todo-store'
 const props = defineProps<{ priority: Todo['priority'] }>()
 
 const info = computed(() => {
-    let { priority } = props
-    if (typeof priority !== 'number') {
-        priority = parseInt(priority)
-    }
+    const { priority } = props
     switch (priority) {
-        case 2:
+        case 'high':
             return ['priority-3', 'High']
-        case 1:
+        case 'medium':
             return ['priority-2', 'Medium']
-        case 0:
+        case 'low':
             return ['priority-1', 'Low']
         default:
             return ['priority-1', 'Low']
