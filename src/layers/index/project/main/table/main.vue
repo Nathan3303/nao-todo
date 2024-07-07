@@ -6,7 +6,7 @@
             <!-- <nue-button icon="circle" theme="pure" disabled></nue-button> -->
             <nue-text size="12px" color="gray" flex>Name</nue-text>
             <nue-text v-if="collumns.createdAt" size="12px" color="gray" style="width: 132px">
-                Created at
+                Create at
             </nue-text>
             <nue-text v-if="collumns.priority" size="12px" color="gray" style="width: 72px">
                 Priority

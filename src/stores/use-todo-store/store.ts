@@ -85,8 +85,8 @@ export const useTodoStore = defineStore('todoStore', () => {
             const index = todos.value.findIndex((t) => t.id === id)
             todos.value.splice(index, 1, response.data.data)
             // todo.value = response.data.data
-            todo.value!.updatedAt = response.data.data.updatedAt
-            NueMessage.success('Todo updated successfully')
+            // todo.value!.updatedAt = response.data.data.updatedAt
+            // NueMessage.success('Todo updated successfully')
         } else {
             NueMessage.error(response.data.message)
         }

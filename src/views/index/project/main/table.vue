@@ -1,6 +1,6 @@
 <template>
-    <nue-div wrap="nowrap" flex style="overflow: hidden">
-        <nue-container style="height: 100%">
+    <nue-div wrap="nowrap" flex style="overflow: hidden; position: relative">
+        <nue-container style="width: 100%">
             <project-table-header
                 :collumns="tableCollumns"
                 :count-info="countInfo"
@@ -28,14 +28,13 @@
                 @page-change="handlePageChange"
             ></project-table-footer>
         </nue-container>
-        <template v-if="todo || detailsLoading">
+        <nue-div class="todo-details-wrapper">
             <nue-divider direction="vertical" style="height: 100%"></nue-divider>
             <project-table-details
                 :todo="todo"
-                :loading="detailsLoading"
                 @close-todo-details="todo = undefined"
             ></project-table-details>
-        </template>
+        </nue-div>
     </nue-div>
 </template>
 
@@ -67,7 +66,7 @@ const todo = ref<Todo | undefined>()
 const tableLoading = ref(false)
 const detailsLoading = ref(false)
 const tableCollumns = ref<ToggleCollumnsPayload>({
-    createdAt: false,
+    createdAt: true,
     priority: true,
     state: true,
     description: false
@@ -125,3 +124,11 @@ function handleToggleCollumns(payload: any) {
     tableCollumns.value = payload
 }
 </script>
+
+<style scoped>
+.todo-details-wrapper {
+    width: 480px;
+    height: 100%;
+    flex-wrap: nowrap;
+}
+</style>

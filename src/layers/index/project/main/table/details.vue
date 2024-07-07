@@ -95,6 +95,9 @@
                         </template>
                     </nue-div>
                 </nue-div>
+                <nue-div v-if="dueDateHint">
+                    <nue-text size="13px" color="gray"> {{ dueDateHint }} </nue-text>
+                </nue-div>
             </nue-div>
             <nue-div theme="card">
                 <nue-div vertical gap="4px" width="fit-content">
@@ -147,7 +150,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, reactive, watch, computed } from 'vue'
 import { Loading } from '@/components/general'
 import { useTodoStore, type Todo } from '@/stores/use-todo-store'
 import moment from 'moment'
@@ -168,7 +171,16 @@ const dateInfo = useDateInfo()
 const shadowTodo = ref<Todo | undefined>()
 const loadingState = ref(false)
 let timer: number | null = null
-const date = ref({ startAt: '', endAt: '' })
+const date = reactive({ startAt: '', endAt: '' })
+
+const dueDateHint = computed(() => {
+    const { startAt, endAt } = date
+    if (startAt === '' || endAt === '') return false
+    const _startAt = moment(startAt)
+    const _endAt = moment(endAt)
+    const diff = _endAt.diff(_startAt, 'd')
+    return `* According to the end date, This task will end in ${diff === 0 ? 'today' : `${diff} day(s)`}.`
+})
 
 function parseDate(datestring: string) {
     return moment(datestring).format('YYYY-MM-DD HH:mm')
@@ -180,14 +192,17 @@ function updateTodo() {
     timer = setTimeout(async () => {
         const { todo } = props
         if (!shadowTodo.value && !todo) return
-        await todoStore.update(todo?.id!, shadowTodo.value!)
+        const response = await todoStore.update(todo?.id!, shadowTodo.value!)
+        if (response.code === '20000') {
+            shadowTodo.value = response.data
+        }
         loadingState.value = false
         timer = null
-    }, 1024)
+    }, 512)
 }
 
 function handleChangeDate() {
-    const dueDate = dateInfo.reConvert(date.value)
+    const dueDate = dateInfo.reConvert(date)
     shadowTodo.value!.dueDate = dueDate
     // console.log(shadowTodo.value!.dueDate)
     updateTodo()
@@ -195,18 +210,18 @@ function handleChangeDate() {
 
 function handleSwitchStartDate(flag: 0 | 1) {
     if (flag) {
-        date.value.startAt = dateInfo.parseDate(0)
+        date.startAt = dateInfo.parseDate(0)
     } else {
-        date.value.startAt = ''
+        date.startAt = ''
     }
     handleChangeDate()
 }
 
 function handleSwitchEndDate(flag: 0 | 1) {
     if (flag) {
-        date.value.endAt = dateInfo.parseDate(0)
+        date.endAt = dateInfo.parseDate(0)
     } else {
-        date.value.endAt = ''
+        date.endAt = ''
     }
     handleChangeDate()
 }
@@ -215,7 +230,9 @@ watch(
     () => props.todo,
     (newValue) => {
         shadowTodo.value = newValue ? { ...newValue } : void 0
-        date.value = dateInfo.convert(shadowTodo.value?.dueDate)
+        const _date = dateInfo.convert(shadowTodo.value?.dueDate)
+        date.startAt = _date.startAt
+        date.endAt = _date.endAt
     },
     { immediate: true }
 )
@@ -224,13 +241,9 @@ watch(
 <style scoped>
 .details-wrapper {
     flex-direction: column;
-    align-items: stretch;
-    flex: auto;
-    width: 50%;
     height: 100%;
     overflow: auto;
-    min-width: 256px;
-    overflow: auto;
     flex-wrap: nowrap;
+    flex: auto;
 }
 </style>

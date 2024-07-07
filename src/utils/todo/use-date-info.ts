@@ -10,13 +10,14 @@ export function useDateInfo() {
 
     const parseDate = (date: string | number) => {
         const _date = date === 0 ? moment() : moment(date)
-        const isoString = _date.utcOffset('+08:00').toISOString()
+        const isoString = _date.toISOString(true)
         const sliced = isoString.slice(0, 16)
         // console.log(sliced)
         return sliced
     }
 
     function convert(dueDate?: Todo['dueDate']) {
+        // console.log(dueDate)
         if (!dueDate) {
             return dateInfo as DateInfo
         }
@@ -28,8 +29,8 @@ export function useDateInfo() {
     const reConvert = (dateInfo: DateInfo) => {
         const { startAt, endAt } = dateInfo
         const dueDate = {
-            startAt: startAt === '' ? null : moment(startAt).toISOString(),
-            endAt: endAt === '' ? null : moment(endAt).toISOString()
+            startAt: startAt === '' ? null : moment(startAt).toISOString(true),
+            endAt: endAt === '' ? null : moment(endAt).toISOString(true)
         }
         // console.log(dueDate)
         return dueDate
