@@ -18,52 +18,35 @@
             </nue-div>
         </template>
         <template #user>
-            <nue-dropdown trigger="hover" align="right">
-                <nue-avatar
-                    src="https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif?imageView2/1/w/80/h/80"
-                ></nue-avatar>
-                <template #dropdown>
-                    <nue-div vertical align="center" justify="center" width="240px" gap="32px">
-                        <nue-div vertical align="center">
-                            <nue-avatar
-                                src="https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif?imageView2/1/w/80/h/80"
-                                size="64px"
-                            ></nue-avatar>
-                            <nue-text> {{ userStore.user?.nickName }} </nue-text>
-                        </nue-div>
-                        <nue-div vertical align="stretch" gap="8px">
-                            <nue-link theme="btnlike" disabled>Profile</nue-link>
-                            <nue-link theme="btnlike" disabled>Settings</nue-link>
-                            <nue-divider></nue-divider>
-                            <nue-link theme="btnlike" @click="handleLogout">Logout</nue-link>
-                        </nue-div>
-                    </nue-div>
-                </template>
-            </nue-dropdown>
+            <user-dropdown :user="user" @logout="handleLogout"></user-dropdown>
         </template>
     </nue-header>
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from '@/stores/use-user-store'
 import { NueConfirm, NueMessage } from 'nue-ui'
+import { UserDropdown } from '@/components/user'
+import { useUserStore } from '@/stores'
+import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 
 defineOptions({ name: 'AppHeader' })
-const emit = defineEmits<{
-    (event: 'logout'): void
-}>()
 
+const router = useRouter()
 const userStore = useUserStore()
 
-function handleLogout() {
+const { user } = storeToRefs(userStore)
+
+const handleLogout = () => {
     NueConfirm({
         title: 'Logout',
         content: 'Are you sure to logout?'
     }).then(
-        () => emit('logout'),
+        async () => {
+            await userStore.signout()
+            router.push('/authentication/login')
+        },
         () => NueMessage.info('Operation canceled')
     )
 }
 </script>
-
-<style scoped></style>

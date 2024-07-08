@@ -1,0 +1,5 @@
+.todo-details-wrapper {
+    width: 520px;
+    height: 100%;
+    flex-wrap: nowrap;
+}

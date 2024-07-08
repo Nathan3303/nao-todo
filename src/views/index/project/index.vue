@@ -1,7 +1,7 @@
 <template>
     <nue-main aside-width="256px">
         <template #aside>
-            <project-aside></project-aside>
+            <projects-aside></projects-aside>
         </template>
         <template #content>
             <router-view></router-view>
@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-import { ProjectAside } from '@/layers/index'
+import { ProjectsAside } from '@/layers/index/projects'
 import { useProjectStore } from '@/stores/use-project-store'
 import { useLoadingScreen } from '@/hooks/use-loading-screen'
 

@@ -83,7 +83,7 @@ export const useTodoStore = defineStore('todoStore', () => {
         const response = await $axios.put('/todo' + `?id=${id}`, newTodo)
         if (response.data.code === '20000') {
             const index = todos.value.findIndex((t) => t.id === id)
-            todos.value.splice(index, 1, response.data.data)
+            todos.value.splice(index, 1, { ...response.data.data, justUpdated: true })
             // todo.value = response.data.data
             // todo.value!.updatedAt = response.data.data.updatedAt
             // NueMessage.success('Todo updated successfully')

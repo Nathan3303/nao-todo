@@ -1,0 +1,30 @@
+.details-wrapper {
+    flex-direction: column;
+    height: 100%;
+    overflow: auto;
+    flex-wrap: nowrap;
+    flex: auto;
+
+    .nue-header {
+        padding: 0px 4px;
+        align-items: start;
+        justify-content: space-between;
+
+        .nue-text {
+            line-height: 28px;
+        }
+    }
+
+    .nue-main {
+        &:deep().nue-main__content {
+            display: flex;
+            flex-direction: column;
+            padding: 0px;
+            gap: 16px;
+        }
+    }
+
+    .nue-footer {
+        padding: 0px;
+    }
+}

@@ -1,0 +1,34 @@
+.overview-wrapper {
+    width: 100%;
+    height: 100%;
+    /* overflow: hidden; */
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    grid-template-rows: auto 64px 1fr;
+    grid-gap: 16px;
+
+    & > .nue-div {
+        &:hover {
+            box-shadow: 0 2px 3px rgba(100, 100, 100, 0.3);
+        }
+    }
+
+    .pinned-tasks {
+        grid-column: 1;
+        grid-row: 1 / 3;
+    }
+
+    .state-overview {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .third-block {
+        grid-column: 1;
+    }
+
+    .fourth-block {
+        grid-column: 2;
+        grid-row: 2 / 4;
+    }
+}

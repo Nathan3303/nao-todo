@@ -19,7 +19,8 @@ export type Todo = {
     createdAt: string
     updatedAt: string
     tags: string[]
-    dueDate: { startAt: string | null; endAt: string | null }
+    dueDate: { startAt: string | null; endAt: string | null },
+    justUpdated?: boolean
 }
 
 export type ShadowTodo = Partial<Todo>

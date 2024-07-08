@@ -6,10 +6,10 @@
                 {{ project.description || 'No description' }}
             </nue-text>
         </nue-div>
-        <nue-div style="margin-top: 36px" gap="6px">
+        <!-- <nue-div style="margin-top: 36px" gap="6px">
             <nue-button theme="small">Study</nue-button>
             <nue-button theme="small">UI Design</nue-button>
-        </nue-div>
+        </nue-div> -->
         <nue-divider></nue-divider>
         <nue-div wrap="nowrap">
             <nue-text size="12px" color="gray">4/16</nue-text>
@@ -35,6 +35,8 @@ function handleGoToProject() {
 
 <style scoped>
 .project-card {
+    max-width: 320px;
+
     &:hover {
         background-color: #f5f5f5;
         cursor: pointer;
