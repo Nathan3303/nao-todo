@@ -10,7 +10,7 @@
                     ></todo-filter-bar>
                     <nue-div justify="end" flex="none" width="fit-content" gap="12px">
                         <nue-button theme="small,primary" icon="plus-circle" @click="handleAddTodo">
-                            Add
+                            新增
                         </nue-button>
                         <list-column-switcher
                             v-model="columns"
@@ -21,7 +21,7 @@
             </nue-header>
             <nue-main style="margin: 16px 0 0">
                 <nue-div wrap="nowrap" flex style="overflow-y: auto">
-                    <Loading v-if="tableLoading" placeholder="Loading tasks..."></Loading>
+                    <Loading v-if="tableLoading" placeholder="正在加载任务列表..."></Loading>
                     <todo-table
                         v-else
                         :todos="todos"
@@ -125,10 +125,10 @@ const handlePageChange = (page: number) => {
 
 const handleAddTodo = async (name: Todo['name']) => {
     NuePrompt({
-        title: 'Create new todo',
-        placeholder: 'Please input todo name here...',
-        confirmButtonText: 'Create',
-        cancelButtonText: 'Cancel',
+        title: '创建任务',
+        placeholder: '填写任务名称',
+        confirmButtonText: '创建',
+        cancelButtonText: '取消',
         validator: (value: any) => value
     }).then(
         async (value) => {
@@ -138,7 +138,7 @@ const handleAddTodo = async (name: Todo['name']) => {
                 handleGetTodos()
             }
         },
-        () => NueMessage.info('Operation cancelled.')
+        () => {}
     )
 }
 
@@ -153,13 +153,15 @@ const handleShowTodoDetails = async (id: Todo['id']) => {
 
 const handleDeleteTodo = async (id: Todo['id']) => {
     NueConfirm({
-        title: 'Delete confirmation',
-        content: 'Are you sure to delete this task?'
+        title: '删除任务',
+        content: '确定要删除该任务吗？',
+        confirmButtonText: '确定',
+        cancelButtonText: '取消'
     }).then(
         async () => {
             await todoStore.remove(id)
         },
-        () => NueMessage.info('Operation canceled')
+        () => {}
     )
 }
 

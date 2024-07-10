@@ -8,10 +8,10 @@
                     <nue-text> {{ user?.nickName }} </nue-text>
                 </nue-div>
                 <nue-div vertical align="stretch" gap="8px">
-                    <nue-link theme="btnlike" disabled>Profile</nue-link>
-                    <nue-link theme="btnlike" disabled>Settings</nue-link>
+                    <nue-link theme="btnlike" disabled>个人信息</nue-link>
+                    <nue-link theme="btnlike" disabled>设置</nue-link>
                     <nue-divider></nue-divider>
-                    <nue-link theme="btnlike" @click="emit('logout', user?.id)">Logout</nue-link>
+                    <nue-link theme="btnlike" @click="emit('logout', user?.id)">退出登录</nue-link>
                 </nue-div>
             </nue-div>
         </template>

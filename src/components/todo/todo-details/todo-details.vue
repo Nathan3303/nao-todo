@@ -1,39 +1,39 @@
 <template>
     <empty
         :empty="!shadowTodo"
-        message="Click on a task to see its details."
+        message="点击左侧列表中的任务名称查看详情。"
         text-size="12px"
         full-height
     >
         <nue-container class="details-wrapper" v-if="shadowTodo" :key="shadowTodo?.id">
             <nue-header align="center" justify="space-between" height="36px">
                 <nue-div align="center" width="fit-content" gap="8px">
-                    <nue-text size="16px">Task details</nue-text>
+                    <nue-text size="16px">任务详情</nue-text>
                     <nue-icon name="loading" v-if="loadingState" :spin="loadingState"></nue-icon>
                 </nue-div>
                 <nue-button theme="small" @click="emit('closeTodoDetails')" icon="clear">
-                    Close
+                    关闭
                 </nue-button>
             </nue-header>
             <nue-main style="flex-direction: column; gap: 16px; padding: 16px 0">
                 <template #content>
-                    <Loading v-if="loading" placeholder="Loading task details..."></Loading>
-                    <empty v-else :empty="!shadowTodo" message="Task not found.">
+                    <Loading v-if="loading" placeholder="正在加载任务详情..."></Loading>
+                    <empty v-else :empty="!shadowTodo" message="无法获取任务详情。">
                         <nue-div vertical theme="card" align="stretch" gap="8px">
                             <details-row label="Id" :text="shadowTodo?.id"></details-row>
-                            <details-row label="Name">
+                            <details-row label="名称">
                                 <nue-textarea
                                     v-model="shadowTodo.name"
-                                    placeholder="Input task name here..."
+                                    placeholder="输入您的任务名称..."
                                     autosize
                                     theme="noshape"
                                     @blur="updateTodo"
                                 ></nue-textarea>
                             </details-row>
-                            <details-row label="Description">
+                            <details-row label="描述">
                                 <nue-textarea
                                     v-model="shadowTodo.description"
-                                    placeholder="Input task description here..."
+                                    placeholder="输入您的任务描述..."
                                     :rows="0"
                                     autosize
                                     theme="noshape"
@@ -42,7 +42,7 @@
                             </details-row>
                         </nue-div>
                         <nue-div theme="card">
-                            <details-row label="Start at" flex="1">
+                            <details-row label="开始于" flex="1">
                                 <nue-div gap="4px">
                                     <nue-button
                                         v-if="date.startAt === ''"
@@ -50,7 +50,7 @@
                                         icon="plus"
                                         @click="handleSwitchStartDate(1)"
                                     >
-                                        Add date
+                                        添加日期
                                     </nue-button>
                                     <template v-else>
                                         <nue-input
@@ -58,6 +58,7 @@
                                             type="datetime-local"
                                             v-model="date.startAt"
                                             @change="handleChangeDate"
+                                            style="width: 170px"
                                         ></nue-input>
                                         <nue-button
                                             theme="small"
@@ -67,7 +68,7 @@
                                     </template>
                                 </nue-div>
                             </details-row>
-                            <details-row label="End at" flex="1">
+                            <details-row label="结束于" flex="1">
                                 <nue-div gap="4px">
                                     <nue-button
                                         v-if="date.endAt === ''"
@@ -75,7 +76,7 @@
                                         icon="plus"
                                         @click="handleSwitchEndDate(1)"
                                     >
-                                        Add date
+                                        添加日期
                                     </nue-button>
                                     <template v-else>
                                         <nue-input
@@ -83,6 +84,7 @@
                                             type="datetime-local"
                                             v-model="date.endAt"
                                             @change="handleChangeDate"
+                                            style="width: 170px"
                                         ></nue-input>
                                         <nue-button
                                             theme="small"
@@ -94,12 +96,12 @@
                             </details-row>
                             <details-row
                                 v-if="dueDateHint"
-                                label="Hint"
+                                label="提示"
                                 :text="dueDateHint"
                             ></details-row>
                         </nue-div>
                         <nue-div theme="card">
-                            <details-row label="Priority" flex="1">
+                            <details-row label="优先级" flex="1">
                                 <nue-select
                                     v-model="shadowTodo.priority"
                                     size="small"
@@ -116,7 +118,7 @@
                                     ></nue-select-option>
                                 </nue-select>
                             </details-row>
-                            <details-row label="State" flex="1">
+                            <details-row label="状态" flex="1">
                                 <nue-select
                                     v-model="shadowTodo.state"
                                     size="small"
@@ -140,13 +142,13 @@
                         <nue-div theme="card">
                             <details-row
                                 v-if="shadowTodo?.createdAt"
-                                label="Created at"
+                                label="创建于"
                                 :text="parseDate(shadowTodo?.createdAt)"
                                 flex="1"
                             ></details-row>
                             <details-row
                                 v-if="shadowTodo?.updatedAt"
-                                label="Updated at"
+                                label="更新于"
                                 :text="parseDate(shadowTodo?.updatedAt)"
                                 flex="1"
                             ></details-row>
@@ -154,9 +156,6 @@
                     </empty>
                 </template>
             </nue-main>
-            <!-- <nue-footer>
-                <nue-button theme="small">Move to</nue-button>
-            </nue-footer> -->
         </nue-container>
     </empty>
 </template>
@@ -187,7 +186,7 @@ const dueDateHint = computed(() => {
     const _startAt = moment(startAt)
     const _endAt = moment(endAt)
     const diff = _endAt.diff(_startAt, 'd')
-    return `* According to the end date, This task will end in ${diff === 0 ? 'today' : `${diff} day(s)`}.`
+    return `* 根据所设置的结束日期，任务将在${diff === 0 ? '今天' : `${diff} 日后`}结束.`
 })
 
 function parseDate(datestring: string) {

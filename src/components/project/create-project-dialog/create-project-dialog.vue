@@ -1,23 +1,23 @@
 <template>
-    <nue-dialog v-model="visible" title="Create new project" @confirm="handleCreateProject">
+    <nue-dialog v-model="visible" title="创建项目" @confirm="handleCreateProject">
         <nue-div vertical align="stretch">
             <nue-input
                 ref="projectNameInputRef"
                 v-model="newProjectPayload.name"
                 title="Project name"
-                placeholder="Project name (required)"
+                placeholder="项目名称 (必填)"
             ></nue-input>
             <nue-textarea
                 v-model="newProjectPayload.description"
                 title="Project description"
-                placeholder="Project description"
+                placeholder="项目描述"
                 :rows="0"
                 autosize
             ></nue-textarea>
         </nue-div>
         <template #footer="{ cancel, confirm }">
-            <nue-button @click.stop="cancel">Cancel</nue-button>
-            <nue-button theme="primary" @click.stop="confirm">Create</nue-button>
+            <nue-button @click.stop="cancel">取消</nue-button>
+            <nue-button theme="primary" @click.stop="confirm">创建</nue-button>
         </template>
     </nue-dialog>
 </template>

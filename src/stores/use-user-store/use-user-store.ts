@@ -2,8 +2,8 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { User, SubmitPayload } from './types'
 import md5 from 'md5'
-import $axios from './axios'
 import { NueMessage } from 'nue-ui'
+import { naoServer as $axios } from '@/axios'
 
 export const useUserStore = defineStore('userStore', () => {
     const user = ref<User>()

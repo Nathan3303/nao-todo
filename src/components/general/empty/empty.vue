@@ -19,7 +19,7 @@ import type { EmptyProps } from './types'
 
 defineOptions({ name: 'Empty' })
 withDefaults(defineProps<EmptyProps>(), {
-    message: 'No data.',
+    message: '没有数据',
     textSize: '14px',
     textColor: 'gray',
     align: 'center',

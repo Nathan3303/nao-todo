@@ -7,11 +7,11 @@
                         <nue-text size="32px" color="white">NaoTodo</nue-text>
                     </nue-div>
                     <nue-text size="16px" color="white">
-                        Discover a new way to live efficiently with NaoTodo, the smart to-do list
-                        app tailored just for you. Whether it's work, study, or daily life, NaoTodo
-                        helps you easily manage tasks and boost productivity. With its intuitive
-                        interface and powerful features, you can effortlessly add, edit, and track
-                        tasks, set reminders, and never miss an important detail.
+                        使用专门为您量身定制的智能待办事项列表应用程序NaoTodo，
+                        探索高效生活的新方式。无论是工作、学习还是日常生活，
+                        NaoTodo都能帮助您轻松管理任务，提高生产力。
+                        凭借其直观的界面和强大的功能，您可以毫不费力地添加、
+                        编辑和跟踪任务、设置提醒，并且永远不会错过重要的细节。
                     </nue-text>
                 </nue-div>
             </template>
@@ -45,7 +45,7 @@ const userStore = useUserStore()
 const loading = ref(false)
 
 const isLogin = computed(() => props.operation === 'login')
-const switchButtonText = computed(() => (isLogin.value ? 'Sign Up' : 'Sign In'))
+const switchButtonText = computed(() => (isLogin.value ? '注册' : '登录'))
 const subView = computed(() => (isLogin.value ? AuthSignIn : AuthSignUp))
 const switchRoute = computed(() =>
     isLogin.value ? '/authentication/signup' : '/authentication/login'

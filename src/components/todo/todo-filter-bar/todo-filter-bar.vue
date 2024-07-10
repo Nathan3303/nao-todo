@@ -3,21 +3,22 @@
         <nue-input
             theme="small"
             v-model="filterText"
-            placeholder="Filter tasks"
+            placeholder="筛选任务"
             icon="filter"
             :debounce-time="360"
         ></nue-input>
         <combo-box
+            trigger-title="状态"
             :framework="statusComboBoxOptions"
             @change="handleChangeStatusOption"
         ></combo-box>
         <combo-box
-            trigger-title="Priority"
+            trigger-title="优先级"
             :framework="priorityComboBoxOptions"
             @change="handleChangePriorityOption"
         ></combo-box>
         <nue-button v-if="hasFilter" theme="small,pure" icon="clear" @click="handleResetFilter">
-            Reset
+            重置
         </nue-button>
     </nue-div>
 </template>
@@ -44,21 +45,21 @@ const statusComboBoxOptions = computed({
         type Option<T> = { label: string; value: T; icon: string; suffix: number; checked: boolean }
         const options: Option<TodoState>[] = [
             {
-                label: 'Todo',
+                label: '待办(todo)',
                 value: 'todo',
                 icon: 'circle',
                 suffix: 0,
                 checked: false
             },
             {
-                label: 'In Progress',
+                label: '正在进行(in-progress)',
                 value: 'in-progress',
                 icon: 'in-progress',
                 suffix: 0,
                 checked: false
             },
             {
-                label: 'Done',
+                label: '已完成(done)',
                 value: 'done',
                 icon: 'success',
                 suffix: 0,
@@ -93,21 +94,21 @@ const priorityComboBoxOptions = computed({
         type Option<T> = { label: string; value: T; icon: string; suffix: number; checked: boolean }
         const options: Option<TodoPriority>[] = [
             {
-                label: 'Low',
+                label: '低(low)',
                 value: 'low',
                 icon: 'priority-1',
                 suffix: 0,
                 checked: false
             },
             {
-                label: 'Medium',
+                label: '中(medium)',
                 value: 'medium',
                 icon: 'priority-2',
                 suffix: 0,
                 checked: false
             },
             {
-                label: 'High',
+                label: '高(high)',
                 value: 'high',
                 icon: 'priority-3',
                 suffix: 0,

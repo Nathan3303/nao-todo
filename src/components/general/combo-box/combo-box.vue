@@ -15,7 +15,7 @@
                     <nue-input
                         theme="noshape"
                         icon="search"
-                        :placeholder="`Filter ${triggerTitle.toLowerCase()} options`"
+                        :placeholder="`筛选${triggerTitle.toLowerCase()}`"
                         v-model="filterText"
                     ></nue-input>
                 </nue-header>

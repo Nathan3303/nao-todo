@@ -9,43 +9,41 @@
         @keydown.enter="handleSignUp"
     >
         <nue-div vertical gap="4px" align="center">
-            <nue-text size="24px" weight="bold"> Create an Account </nue-text>
+            <nue-text size="24px" weight="bold"> 创建您的账户 </nue-text>
             <nue-text size="12px" color="grey" align="center">
-                Enter your email and password below to create
+                在下面输入您的电子邮件和密码以创建账户
             </nue-text>
         </nue-div>
         <nue-div vertical align="stretch">
             <nue-input
                 v-model="email"
-                placeholder="name@example.com"
+                placeholder="电子邮箱 (name@example.com)"
                 type="email"
                 :disabled="loading"
             ></nue-input>
             <nue-input
                 v-model="password"
-                placeholder="Your password"
+                placeholder="密码"
                 type="password"
                 :disabled="loading"
                 allow-show-password
             ></nue-input>
             <nue-input
                 v-model="passwordConfirm"
-                placeholder="Confirm your password"
+                placeholder="确认密码"
                 type="password"
                 :disabled="loading"
                 allow-show-password
             ></nue-input>
-            <nue-button theme="primary" @click="handleSignUp" :loading="loading">
-                Sign Up
-            </nue-button>
+            <nue-button theme="primary" @click="handleSignUp" :loading="loading"> 注册 </nue-button>
         </nue-div>
         <nue-divider align="center">
-            <nue-text color="grey" size="12px">OR SIGN UP WITH</nue-text>
+            <nue-text color="grey" size="12px">或以其他方式注册</nue-text>
         </nue-divider>
         <nue-button icon="logo">NueUI</nue-button>
         <nue-text size="12px" color="gray" align="center">
-            By clicking continue, you agree to our
-            <nue-link>Terms of Service</nue-link> and <nue-link>Privacy Policy</nue-link>.
+            点击注册按钮后，即表示您同意我们站点的
+            <nue-link>服务条款</nue-link> 和 <nue-link>隐私政策</nue-link>。
         </nue-text>
     </nue-div>
 </template>

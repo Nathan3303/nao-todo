@@ -9,29 +9,27 @@
         @keydown.enter="handleSignIn"
     >
         <nue-div vertical gap="4px" align="center">
-            <nue-text size="24px" weight="bold"> Login to NaoTodo </nue-text>
-            <nue-text size="12px" color="grey"> Sign in with your email and password </nue-text>
+            <nue-text size="24px" weight="bold"> 登录到 NaoTodo </nue-text>
+            <nue-text size="12px" color="grey"> 使用您的电子邮件和密码进行登录 </nue-text>
         </nue-div>
         <nue-div vertical align="stretch">
             <nue-input
                 v-model="email"
-                placeholder="name@example.com"
+                placeholder="电子邮箱 (name@example.com)"
                 type="email"
                 :disabled="loading"
             ></nue-input>
             <nue-input
                 v-model="password"
-                placeholder="Your password"
+                placeholder="密码"
                 type="password"
                 :disabled="loading"
                 allow-show-password
             ></nue-input>
-            <nue-button theme="primary" @click="handleSignIn" :loading="loading"
-                >Sign In</nue-button
-            >
+            <nue-button theme="primary" @click="handleSignIn" :loading="loading"> 登录 </nue-button>
         </nue-div>
         <nue-divider align="center">
-            <nue-text color="grey" size="12px">OR SIGN IN WITH</nue-text>
+            <nue-text color="grey" size="12px">或以其他方式登录</nue-text>
         </nue-divider>
         <nue-button icon="logo">NueUI</nue-button>
     </nue-div>

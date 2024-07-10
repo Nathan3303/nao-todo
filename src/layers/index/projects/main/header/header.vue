@@ -27,7 +27,7 @@
             >
             </nue-button>
             <nue-div align="center" gap="8px" width="fit-content" style="margin-left: 4px">
-                <nue-text size="12px">Create by</nue-text>
+                <nue-text size="12px">创建者</nue-text>
                 <nue-avatar
                     src="https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif?imageView2/1/w/80/h/80"
                 ></nue-avatar>
@@ -39,9 +39,9 @@
     <nue-div style="margin-top: 6px" justify="space-between" wrap="nowrap" align="center">
         <nue-div flex>
             <nue-link theme="btnlike" :route="{ name: 'project-main-overview' }">
-                Overview
+                总览视图
             </nue-link>
-            <nue-link theme="btnlike" :route="{ name: 'project-main-table' }"> Tasks </nue-link>
+            <nue-link theme="btnlike" :route="{ name: 'project-main-table' }"> 任务列表 </nue-link>
         </nue-div>
     </nue-div>
 
@@ -72,8 +72,8 @@ const showProjectDetailsDialog = () => {
 
 const handleDeleteProject = () => {
     NueConfirm({
-        title: 'Delete project',
-        content: 'Are you sure to delete this project?'
+        title: '删除项目',
+        content: '确定要删除该项目吗？'
     }).then(
         async () => {
             const { id } = props.project

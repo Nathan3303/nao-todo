@@ -1,12 +1,12 @@
 <template>
     <nue-div align="center" width="fit-content">
         <nue-div align="center" width="fit-content" gap="8px">
-            <nue-text size="12px">Rows per page</nue-text>
+            <nue-text size="12px">每页条数</nue-text>
             <nue-select size="small" v-model="perpage" @change="handlePerPageChange">
                 <nue-select-option v-for="i in 5" :label="`${i * 10}`" :value="i * 10" />
             </nue-select>
         </nue-div>
-        <nue-text size="12px"> Page {{ page }} of {{ totalPages }} </nue-text>
+        <nue-text size="12px"> 第 {{ page }} 页，共 {{ totalPages }} 页。</nue-text>
         <nue-div width="fit-content" gap="8px" align="center">
             <nue-button
                 theme="small"

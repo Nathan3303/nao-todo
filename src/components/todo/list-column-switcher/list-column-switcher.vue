@@ -1,12 +1,12 @@
 <template>
     <nue-dropdown class="toggle-columns-dropdown" align="right">
         <template #default="{ clickTrigger }">
-            <nue-button theme="small" icon="menu" @click.stop="clickTrigger"> View </nue-button>
+            <nue-button theme="small" icon="menu" @click.stop="clickTrigger"> 列设置 </nue-button>
         </template>
         <template #dropdown>
             <nue-container>
                 <nue-header>
-                    <nue-text size="14px">Toggle columns</nue-text>
+                    <nue-text size="14px">显示/隐藏列</nue-text>
                 </nue-header>
                 <nue-main>
                     <empty :empty="!modelValue">

@@ -15,13 +15,13 @@ const info = computed(() => {
     const { priority } = props
     switch (priority) {
         case 'high':
-            return ['priority-3', 'High']
+            return ['priority-3', '高']
         case 'medium':
-            return ['priority-2', 'Medium']
+            return ['priority-2', '中']
         case 'low':
-            return ['priority-1', 'Low']
+            return ['priority-1', '低']
         default:
-            return ['priority-1', 'Low']
+            return ['priority-1', '低']
     }
 })
 </script>

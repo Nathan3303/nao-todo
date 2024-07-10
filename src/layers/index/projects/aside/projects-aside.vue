@@ -3,14 +3,14 @@
         <!-- Mainly links -->
         <nue-div vertical gap="8px" align="stretch">
             <nue-link theme="btnlike" icon="board" :route="{ name: 'project-dashboard' }">
-                Dashboard
+                仪表盘(Dashboard)
             </nue-link>
         </nue-div>
 
         <!-- Category collapse -->
         <nue-collapse v-model="collapseItemsRecord">
             <!-- Projects collapse -->
-            <nue-collapse-item name="projects" title="Projects">
+            <nue-collapse-item name="projects">
                 <template #header="{ collapse, state }">
                     <nue-button
                         theme="pure"
@@ -19,9 +19,9 @@
                     >
                         <template #default>
                             <nue-div>
-                                <nue-text size="12px">Projects</nue-text>
+                                <nue-text size="12px">项目清单</nue-text>
                                 <nue-text size="12px" color="gray">
-                                    {{ projects.length }} items
+                                    {{ projects.length }}
                                 </nue-text>
                             </nue-div>
                         </template>

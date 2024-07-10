@@ -15,11 +15,11 @@ const info = computed(() => {
     const { state } = props
     switch (state) {
         case 'todo':
-            return ['circle', 'To Do']
+            return ['circle', '待办']
         case 'in-progress':
-            return ['in-progress', 'In Progress']
+            return ['in-progress', '正在进行']
         case 'done':
-            return ['success-fill', 'Done']
+            return ['success-fill', '已完成']
     }
 })
 </script>

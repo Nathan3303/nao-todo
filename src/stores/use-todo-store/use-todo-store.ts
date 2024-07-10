@@ -1,9 +1,9 @@
 import { ref, reactive } from 'vue'
 import { defineStore } from 'pinia'
 import type { Todo, TodoFilter, TodoCountInfo } from './types'
-import $axios from './axios'
 import type { Project } from '../use-project-store'
 import { NueMessage } from 'nue-ui'
+import { naoTodoServer as $axios } from '@/axios'
 
 export const useTodoStore = defineStore('todoStore', () => {
     const todo = ref<Todo>()
@@ -93,6 +93,14 @@ export const useTodoStore = defineStore('todoStore', () => {
         return response.data
     }
 
+    async function getTodoStatesAnalysis() {
+        const response = await $axios.get('/analysis?target=todo-overview')
+        if (response.data.code === '20000') {
+            console.log(response.data.data)
+        }
+        return response.data
+    }
+
     return {
         todos,
         todo,
@@ -103,6 +111,7 @@ export const useTodoStore = defineStore('todoStore', () => {
         createTodo,
         remove,
         getTodoById,
-        update
+        update,
+        getTodoStatesAnalysis
     }
 })

@@ -1,4 +1,4 @@
-import { useProjectStore } from './store'
+import { useProjectStore } from './use-project-store'
 import type { Project } from './types'
 
 export { useProjectStore }

@@ -1,14 +1,14 @@
 <template>
     <div class="overview-wrapper">
         <nue-div class="pinned-tasks" vertical theme="card">
-            <nue-text>Pinned Tasks</nue-text>
+            <nue-text>被固定的任务</nue-text>
             <nue-divider></nue-divider>
             <nue-div vertical gap="12px" align="stretch">
-                <nue-text size="12px" color="gray" align="center">No pinned tasks</nue-text>
+                <nue-text size="12px" color="gray" align="center">没有任务被固定</nue-text>
             </nue-div>
         </nue-div>
         <nue-div class="state-overview" vertical theme="card">
-            <nue-text>State Overview</nue-text>
+            <nue-text>状态计数</nue-text>
             <nue-divider></nue-divider>
             <nue-div vertical gap="12px">
                 <state-row icon="todo" title="Total" :count="countInfo.total"></state-row>
@@ -22,11 +22,12 @@
             </nue-div>
         </nue-div>
         <nue-div class="third-block" vertical theme="card">
-            <nue-text>Third Block</nue-text>
+            <nue-text>任务分析</nue-text>
             <nue-divider></nue-divider>
+            <todo-analysis></todo-analysis>
         </nue-div>
         <nue-div class="fourth-block" vertical theme="card">
-            <nue-text>Project Details</nue-text>
+            <nue-text>项目详情</nue-text>
             <nue-divider></nue-divider>
             <project-details :project="project" />
         </nue-div>
@@ -39,6 +40,7 @@ import { useTodoStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { ProjectDetails } from '@/components/project'
 import StateRow from './state-row.vue'
+import TodoAnalysis from './todo-analysis.vue'
 
 defineProps<ProjectsMainOverviewProps>()
 

@@ -1,6 +1,6 @@
 <template>
     <nue-div vertical>
-        <nue-text theme="h3">My Recent Projects</nue-text>
+        <nue-text theme="h3">最近的项目</nue-text>
         <empty :empty="!projects.length" align="left">
             <nue-div>
                 <project-card

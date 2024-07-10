@@ -3,7 +3,7 @@
     height: 100%;
     /* overflow: hidden; */
     display: grid;
-    grid-template-columns: 3fr 2fr;
+    grid-template-columns: 5fr 3fr;
     grid-template-rows: auto 64px 1fr;
     grid-gap: 16px;
 
@@ -25,6 +25,7 @@
 
     .third-block {
         grid-column: 1;
+        overflow: hidden;
     }
 
     .fourth-block {
