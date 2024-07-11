@@ -1,4 +1,2 @@
-import { useTodoStore } from './use-todo-store'
-
-export { useTodoStore }
+export * from './use-todo-store'
 export type * from './types'

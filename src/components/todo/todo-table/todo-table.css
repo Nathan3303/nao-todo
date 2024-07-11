@@ -30,7 +30,7 @@
     .todo-table-main__row__name {
         width: 100%;
 
-        &:deep().nue-button__text {
+        .nue-button__text {
             text-align: left;
             overflow: hidden;
             text-overflow: ellipsis;

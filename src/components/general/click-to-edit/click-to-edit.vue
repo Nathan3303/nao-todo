@@ -10,7 +10,7 @@
 
 <script setup lang="ts">
 import type { ClickToEditEmits, ClickToEditProps } from './types'
-import { NuePrompt, NueMessage } from 'nue-ui'
+import { NuePrompt } from 'nue-ui'
 
 defineOptions({ name: 'ClickToEdit' })
 const props = withDefaults(defineProps<ClickToEditProps>(), {
@@ -42,4 +42,8 @@ function handleEdit() {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.nue-button:deep(.nue-button__text) {
+    text-align: left;
+}
+</style>

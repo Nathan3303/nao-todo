@@ -42,7 +42,7 @@
                             </details-row>
                         </nue-div>
                         <nue-div theme="card">
-                            <details-row label="开始于" flex="1">
+                            <details-row label="开始于" width="fit-content">
                                 <nue-div gap="4px">
                                     <nue-button
                                         v-if="date.startAt === ''"
@@ -68,7 +68,7 @@
                                     </template>
                                 </nue-div>
                             </details-row>
-                            <details-row label="结束于" flex="1">
+                            <details-row label="结束于" width="fit-content">
                                 <nue-div gap="4px">
                                     <nue-button
                                         v-if="date.endAt === ''"

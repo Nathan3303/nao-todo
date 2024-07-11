@@ -68,7 +68,6 @@ body {
     line-height: 1.6;
     @font-face {
         font-family: poppins;
-        src: url('./poppins.ttf');
     }
     font-family:
         'poppins',

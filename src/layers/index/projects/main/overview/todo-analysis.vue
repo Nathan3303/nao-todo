@@ -63,19 +63,19 @@ const fetchData = async () => {
     const response = await todoStore.getTodoStatesAnalysis()
     if (response.code === '20000') {
         const newData = sequalizeResponseData(response.data)
-        console.log(newData)
-        newData.forEach((data) => {
-            option.xAxis.data.push(data.name)
-            option.series[0].data.push(data.count.done)
-            option.series[1].data.push(data.count.total)
+        // console.log(newData)
+        newData.forEach((data: any) => {
+            option.xAxis.data.push(data.name as never)
+            option.series[0].data.push(data.count.done as never)
+            option.series[1].data.push(data.count.total as never)
         })
     }
 }
 
-const sequalizeResponseData = (data) => {
-    return data.map((item) => {
+const sequalizeResponseData = (data: any) => {
+    return data.map((item: any) => {
         const count = { todo: 0, done: 0, total: 0 }
-        item.states.map((state) => {
+        item.states.map((state: any) => {
             if (state.state === 'done') {
                 count.done += state.count
             } else {

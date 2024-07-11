@@ -2,14 +2,14 @@
     <nue-div class="todo-table">
         <nue-div class="todo-table-header">
             <nue-text theme="col" flex>名称</nue-text>
-            <nue-text v-if="columns.createdAt" theme="col" style="width: 132px">
+            <nue-text v-if="columns.createdAt" theme="col" style="width: 120px">
                 创建时间
             </nue-text>
-            <nue-text v-if="columns.updatedAt" theme="col" style="width: 132px">
+            <nue-text v-if="columns.updatedAt" theme="col" style="width: 120px">
                 最后修改时间
             </nue-text>
-            <nue-text v-if="columns.priority" theme="col" style="width: 72px"> 优先级 </nue-text>
-            <nue-text v-if="columns.state" theme="col" style="width: 90px"> 状态 </nue-text>
+            <nue-text v-if="columns.priority" theme="col" style="width: 50px"> 优先级 </nue-text>
+            <nue-text v-if="columns.state" theme="col" style="width: 80px"> 状态 </nue-text>
             <nue-icon name="more" style="opacity: 0"></nue-icon>
         </nue-div>
         <nue-divider></nue-divider>
@@ -23,15 +23,16 @@
                         align="left"
                     >
                         {{ todo.name }}
-                        <template v-if="todo.justUpdated" #append>
+                        <!-- <template v-if="todo.justUpdated" #append>
                             <nue-text
+                                class="todo-table-main__row__name__updated"
                                 size="12px"
                                 color="orange"
                                 @click.stop="todo.justUpdated = false"
                             >
                                 (刚刚更新)
                             </nue-text>
-                        </template>
+                        </template> -->
                     </nue-button>
                     <nue-text
                         v-if="columns.description && todo.description"
@@ -42,12 +43,12 @@
                         {{ todo.description }}
                     </nue-text>
                 </nue-div>
-                <nue-div v-if="columns.createdAt" style="width: 132px">
+                <nue-div v-if="columns.createdAt" style="width: 120px">
                     <nue-text size="12px" color="gray">
                         {{ moment(todo.createdAt).format('YYYY-MM-DD HH:mm:ss') }}
                     </nue-text>
                 </nue-div>
-                <nue-div v-if="columns.updatedAt" style="width: 132px">
+                <nue-div v-if="columns.updatedAt" style="width: 120px">
                     <nue-text size="12px" color="gray">
                         {{ moment(todo.updatedAt).format('YYYY-MM-DD HH:mm:ss') }}
                     </nue-text>

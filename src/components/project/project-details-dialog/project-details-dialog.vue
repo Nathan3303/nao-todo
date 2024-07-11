@@ -1,6 +1,6 @@
 <template>
-    <nue-dialog v-model="visible" title="Project information">
-        <project-details :project="project"></project-details>
+    <nue-dialog v-model="visible" title="项目详情">
+        <project-details :project="project" style="width: 400px"></project-details>
     </nue-dialog>
 </template>
 
@@ -22,4 +22,8 @@ defineExpose({
 })
 </script>
 
-<style scoped></style>
+<style scoped>
+.nue-dialog-wrapper {
+    --dialog-min-width: 400px;
+}
+</style>

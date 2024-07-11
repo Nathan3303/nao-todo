@@ -19,6 +19,7 @@
                     :count="countInfo.byState['in-progress']"
                 ></state-row>
                 <state-row icon="success" title="Done" :count="countInfo.byState.done"></state-row>
+                <!-- <state-analysis></state-analysis> -->
             </nue-div>
         </nue-div>
         <nue-div class="third-block" vertical theme="card">
@@ -41,6 +42,7 @@ import { storeToRefs } from 'pinia'
 import { ProjectDetails } from '@/components/project'
 import StateRow from './state-row.vue'
 import TodoAnalysis from './todo-analysis.vue'
+import StateAnalysis from './state-analysis.vue'
 
 defineProps<ProjectsMainOverviewProps>()
 

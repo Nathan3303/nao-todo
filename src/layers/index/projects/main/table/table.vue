@@ -34,7 +34,8 @@
             <nue-footer style="padding: 4px; border: none; height: fit-content">
                 <nue-div align="center" justify="space-between">
                     <nue-text size="12px" color="gray" flex>
-                        {{ countInfo?.count }} of {{ countInfo?.total }} row(s)
+                        当前列表 {{ countInfo?.length || 0 }} 项， 共计
+                        {{ countInfo?.count || 0 }} 项。
                     </nue-text>
                     <pager
                         :page="pageInfo.page"
@@ -46,7 +47,7 @@
                 </nue-div>
             </nue-footer>
         </nue-container>
-        <nue-div class="todo-details-wrapper">
+        <nue-div class="todo-details-wrapper" :data-empty="!todo">
             <nue-divider direction="vertical" style="height: 100%"></nue-divider>
             <todo-details
                 :todo="todo"

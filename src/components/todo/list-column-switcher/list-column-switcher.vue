@@ -44,7 +44,7 @@ const handleCheck = (checked: boolean, value: unknown) => {
 
 <style scoped>
 .toggle-columns-dropdown {
-    &:deep().nue-dropdown {
+    &:deep(.nue-dropdown) {
         padding: 0px;
     }
     .nue-container {

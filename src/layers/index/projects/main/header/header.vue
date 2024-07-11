@@ -2,12 +2,20 @@
     <!-- Project title -->
     <nue-div justify="space-between" wrap="nowrap" style="min-height: 56px">
         <nue-div vertical gap="4px" flex>
-            <click-to-edit
-                :text="project?.name"
-                @edit="handleEditName"
-                size="28px"
-                weight="bold"
-            ></click-to-edit>
+            <nue-div align="center" width="fit-content" gap="8px">
+                <nue-button
+                    theme="icon-only"
+                    icon="more2"
+                    @click="hideProjectAside"
+                    style="--icon-size: 22px"
+                ></nue-button>
+                <click-to-edit
+                    :text="project?.name"
+                    @edit="handleEditName"
+                    size="28px"
+                    weight="bold"
+                ></click-to-edit>
+            </nue-div>
             <click-to-edit
                 :text="project?.description"
                 emptyholder="Click to add description"
@@ -56,13 +64,15 @@
 import { ref } from 'vue'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import type { ProjectsMainHeaderEmits, ProjectsMainHeaderProps } from './types'
-import { ClickToEdit } from '@/components/general'
-import { ProjectDetailsDialog } from '@/components/project'
+import { ClickToEdit, ProjectDetailsDialog } from '@/components'
 import { useProjectStore } from '@/stores'
+import { useProjectAside } from '@/hooks'
 
 const props = defineProps<ProjectsMainHeaderProps>()
 const emit = defineEmits<ProjectsMainHeaderEmits>()
+
 const projectStore = useProjectStore()
+const projectAside = useProjectAside()
 
 const projectDetailsDialogRef = ref<InstanceType<typeof ProjectDetailsDialog>>()
 
@@ -91,5 +101,10 @@ const handleEditDescription = async (newValue: string) => {
 const handleEditName = async (newValue: string) => {
     const { id } = props.project
     await projectStore.updateProject(id, { name: newValue })
+}
+
+const hideProjectAside = () => {
+    projectAside.switchIsHide()
+    // console.log('hideProjectAside');
 }
 </script>

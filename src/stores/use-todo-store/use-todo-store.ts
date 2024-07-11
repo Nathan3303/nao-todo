@@ -9,6 +9,7 @@ export const useTodoStore = defineStore('todoStore', () => {
     const todo = ref<Todo>()
     const todos = ref<Todo[]>([])
     const countInfo = reactive<TodoCountInfo>({
+        length: 0,
         count: 0,
         total: 0,
         byState: { todo: 0, 'in-progress': 0, done: 0 },
@@ -34,6 +35,7 @@ export const useTodoStore = defineStore('todoStore', () => {
         if (response.data.code === '20000') {
             const { todos: _tds, payload: _pl } = response.data.data
             todos.value = _tds
+            countInfo.length = _pl.countInfo.length
             countInfo.count = _pl.countInfo.count
             countInfo.total = _pl.countInfo.total
             countInfo.byState = _pl.countInfo.byState

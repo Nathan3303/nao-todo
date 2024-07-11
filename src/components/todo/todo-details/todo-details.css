@@ -16,7 +16,7 @@
     }
 
     .nue-main {
-        &:deep().nue-main__content {
+        &:deep(.nue-main__content) {
             display: flex;
             flex-direction: column;
             padding: 0px;

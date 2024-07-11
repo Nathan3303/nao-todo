@@ -1,5 +1,2 @@
-import { useProjectStore } from './use-project-store'
-import type { Project } from './types'
-
-export { useProjectStore }
-export type { Project }
+export * from './use-project-store'
+export type * from './types'
