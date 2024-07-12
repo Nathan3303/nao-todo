@@ -1,6 +1,6 @@
 import { ref, reactive } from 'vue'
 import { defineStore } from 'pinia'
-import type { Todo, TodoFilter, TodoCountInfo } from './types'
+import type { Todo, TodoFilter, TodoCountInfo, TodoEvent } from './types'
 import type { Project } from '../use-project-store'
 import { NueMessage } from 'nue-ui'
 import { naoTodoServer as $axios } from '@/axios'
@@ -103,6 +103,60 @@ export const useTodoStore = defineStore('todoStore', () => {
         return response.data
     }
 
+    const createTodoEvent = async (todoId: Todo['id'], newTodoEvent: Partial<TodoEvent>) => {
+        const data = { todoId, ...newTodoEvent }
+        const response = await $axios.post('/event', data)
+        if (response.data.code === '20000') {
+            if (!todo.value?.events) {
+                todo.value!.events = []
+            }
+            const _n_todo: TodoEvent = {
+                title: newTodoEvent.title as string,
+                id: response.data.data._id,
+                isDone: false,
+                isTopped: false
+            }
+            todo.value!.events.unshift(_n_todo)
+        }
+        return response.data
+    }
+
+    const updateTodoEvent = async (id: TodoEvent['id'], newTodoEvent: Partial<TodoEvent>) => {
+        const response = await $axios.put('/event', newTodoEvent, { params: { id } })
+        if (response.data.code === '20000') {
+            // console.log(response.data.data)
+            if (!todo.value?.events) {
+                todo.value!.events = []
+            }
+            for (let i = 0, event; i < todo.value!.events.length; i++) {
+                event = todo.value!.events[i]
+                if (event.id === id) {
+                    event = { ...event, ...newTodoEvent }
+                    todo.value!.events.splice(i, 1, event)
+                    break
+                }
+            }
+        }
+        return response.data
+    }
+
+    const deleteTodoEvent = async (id: TodoEvent['id']) => {
+        const response = await $axios.delete('/event', { params: { id } })
+        if (response.data.code === '20000') {
+            if (!todo.value?.events) {
+                todo.value!.events = []
+            }
+            for (let i = 0, event; i < todo.value!.events.length; i++) {
+                event = todo.value!.events[i]
+                if (event.id === id) {
+                    todo.value!.events.splice(i, 1)
+                    break
+                }
+            }
+        }
+        return response.data
+    }
+
     return {
         todos,
         todo,
@@ -114,6 +168,9 @@ export const useTodoStore = defineStore('todoStore', () => {
         remove,
         getTodoById,
         update,
-        getTodoStatesAnalysis
+        getTodoStatesAnalysis,
+        createTodoEvent,
+        updateTodoEvent,
+        deleteTodoEvent
     }
 })

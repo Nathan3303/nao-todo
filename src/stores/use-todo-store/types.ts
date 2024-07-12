@@ -6,6 +6,13 @@ export type TodoProgress = { total: number; finished: number }
 
 export type TodoPriority = 0 | 1 | 2 | number | 'low' | 'medium' | 'high'
 
+export type TodoEvent = {
+    id: string
+    isDone: boolean
+    isTopped: boolean
+    title: string
+}
+
 export type Todo = {
     _id?: string
     id: string
@@ -21,6 +28,7 @@ export type Todo = {
     tags: string[]
     dueDate: { startAt: string | null; endAt: string | null }
     justUpdated?: boolean
+    events: TodoEvent[]
 }
 
 export type ShadowTodo = Partial<Todo>

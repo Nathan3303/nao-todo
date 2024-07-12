@@ -19,6 +19,7 @@
                 <template #content>
                     <Loading v-if="loading" placeholder="正在加载任务详情..."></Loading>
                     <empty v-else :empty="!shadowTodo" message="无法获取任务详情。">
+                        <!-- 基本数据 -->
                         <nue-div vertical theme="card" align="stretch" gap="8px">
                             <details-row label="Id" :text="shadowTodo?.id"></details-row>
                             <details-row label="名称">
@@ -41,6 +42,26 @@
                                 ></nue-textarea>
                             </details-row>
                         </nue-div>
+                        <!-- 检查事项设置 -->
+                        <nue-div vertical theme="card" align="stretch" gap="8px">
+                            <details-row label="检查事项">
+                                <todo-event-row
+                                    v-for="event in shadowTodo.events"
+                                    :key="event.id"
+                                    :event="event"
+                                    @update="handleUpdateTodoEvent"
+                                    @delete="handleDeleteTodoEvent"
+                                ></todo-event-row>
+                                <input-button
+                                    icon="plus-circle"
+                                    button-text="添加检查事项"
+                                    theme="pure,noshape"
+                                    :submit-on-blur="false"
+                                    @submit="handleInputButtonSubmit"
+                                ></input-button>
+                            </details-row>
+                        </nue-div>
+                        <!-- 日期设置 -->
                         <nue-div theme="card">
                             <details-row label="开始于" width="fit-content">
                                 <nue-div gap="4px">
@@ -100,6 +121,7 @@
                                 :text="dueDateHint"
                             ></details-row>
                         </nue-div>
+                        <!-- 其他设置 -->
                         <nue-div theme="card">
                             <details-row label="优先级" flex="1">
                                 <nue-select
@@ -139,6 +161,7 @@
                                 </nue-select>
                             </details-row>
                         </nue-div>
+                        <!-- 时间数据 -->
                         <nue-div theme="card">
                             <details-row
                                 v-if="shadowTodo?.createdAt"
@@ -162,8 +185,15 @@
 
 <script setup lang="ts">
 import { ref, reactive, watch, computed } from 'vue'
-import { Loading, Empty } from '@/components'
-import { useTodoStore, type Todo } from '@/stores/use-todo-store'
+import {
+    Loading,
+    Empty,
+    InputButton,
+    TodoEventRow,
+    type InputButtonSubmitPayload,
+    type TodoEventRowUpdatePayload
+} from '@/components'
+import { useTodoStore, type Todo, type TodoEvent } from '@/stores/use-todo-store'
 import moment from 'moment'
 import { useDateInfo } from '@/utils/todo/use-date-info'
 import DetailsRow from './details-row.vue'
@@ -186,14 +216,14 @@ const dueDateHint = computed(() => {
     const _startAt = moment(startAt)
     const _endAt = moment(endAt)
     const diff = _endAt.diff(_startAt, 'd')
-    return `* 根据所设置的结束日期，任务将在${diff === 0 ? '今天' : `${diff} 日后`}结束.`
+    return `* 根据所设置的结束日期，任务将在${diff === 0 ? '今天' : ` ${diff} 日后`}结束.`
 })
 
-function parseDate(datestring: string) {
+const parseDate = (datestring: string) => {
     return moment(datestring).format('YYYY-MM-DD HH:mm')
 }
 
-function updateTodo() {
+const updateTodo = () => {
     loadingState.value = true
     if (timer) clearTimeout(timer)
     timer = setTimeout(async () => {
@@ -208,13 +238,13 @@ function updateTodo() {
     }, 512)
 }
 
-function handleChangeDate() {
+const handleChangeDate = () => {
     const dueDate = dateInfo.reConvert(date)
     shadowTodo.value!.dueDate = dueDate
     updateTodo()
 }
 
-function handleSwitchStartDate(flag: 0 | 1) {
+const handleSwitchStartDate = (flag: 0 | 1) => {
     if (flag) {
         date.startAt = dateInfo.parseDate(0)
     } else {
@@ -223,13 +253,37 @@ function handleSwitchStartDate(flag: 0 | 1) {
     handleChangeDate()
 }
 
-function handleSwitchEndDate(flag: 0 | 1) {
+const handleSwitchEndDate = (flag: 0 | 1) => {
     if (flag) {
         date.endAt = dateInfo.parseDate(0)
     } else {
         date.endAt = ''
     }
     handleChangeDate()
+}
+
+const handleInputButtonSubmit = (payload: InputButtonSubmitPayload) => {
+    if (!props.todo) return
+    const { id: todoId } = props.todo
+    const { value } = payload
+    loadingState.value = true
+    emit('createTodoEvent', todoId, { title: value })
+    setTimeout(() => (loadingState.value = false), 512)
+}
+
+const handleUpdateTodoEvent = (event: TodoEventRowUpdatePayload) => {
+    const id = event.id
+    const newTodoEvent = event
+    loadingState.value = true
+    emit('updateTodoEvent', id, newTodoEvent)
+    setTimeout(() => (loadingState.value = false), 512)
+}
+
+const handleDeleteTodoEvent = async (id: TodoEvent['id']) => {
+    loadingState.value = true
+    // emit('updateTodoEvent', id, newTodoEvent)
+    const res = await todoStore.deleteTodoEvent(id);
+    setTimeout(() => (loadingState.value = false), 512)
 }
 
 watch(

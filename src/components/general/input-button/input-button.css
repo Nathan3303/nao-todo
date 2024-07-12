@@ -1,0 +1,11 @@
+.nue-button--pure {
+    height: 28px;
+    padding: 0px 2px;
+}
+
+.nue-input--small {
+    padding: 0px 2px;
+    height: 28px;
+    font-size: var(--text-xs);
+    border-width: 0px;
+}

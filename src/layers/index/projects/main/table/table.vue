@@ -53,6 +53,8 @@
                 :todo="todo"
                 :loading="detailsLoading"
                 @close-todo-details="todo = undefined"
+                @create-todo-event="handleCreateTodoEvent"
+                @update-todo-event="handleUpdateTodoEvent"
             ></todo-details>
         </nue-div>
     </nue-div>
@@ -60,7 +62,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useTodoStore, type Todo, type TodoFilter } from '@/stores/use-todo-store'
+import { useTodoStore, type Todo, type TodoEvent, type TodoFilter } from '@/stores/use-todo-store'
 import { storeToRefs } from 'pinia'
 import { NueConfirm, NueMessage, NuePrompt } from 'nue-ui'
 import {
@@ -164,6 +166,14 @@ const handleDeleteTodo = async (id: Todo['id']) => {
         },
         () => {}
     )
+}
+
+const handleCreateTodoEvent = async (todoId: Todo['id'], newTodoEvent: Partial<TodoEvent>) => {
+    const response = await todoStore.createTodoEvent(todoId, newTodoEvent)
+}
+
+const handleUpdateTodoEvent = async (id: TodoEvent['id'], newTodoEvent: Partial<TodoEvent>) => {
+    const response = await todoStore.updateTodoEvent(id, newTodoEvent)
 }
 
 handleGetTodos()
