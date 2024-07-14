@@ -11,9 +11,22 @@
                     <nue-text size="16px">任务详情</nue-text>
                     <nue-icon name="loading" v-if="loadingState" :spin="loadingState"></nue-icon>
                 </nue-div>
-                <nue-button theme="small" @click="emit('closeTodoDetails')" icon="clear">
-                    关闭
-                </nue-button>
+                <nue-div width="fit-content" gap="8px" align="center">
+                    <!-- <nue-button theme="small">移动到</nue-button> -->
+                    <switch-button
+                        v-model="shadowTodo.isPinned"
+                        size="small"
+                        icon="heart"
+                        active-icon="heart-fill"
+                        text="收藏"
+                        active-text="取消收藏"
+                        @change="updateTodo"
+                    ></switch-button>
+                    <nue-divider direction="vertical"></nue-divider>
+                    <nue-button theme="small" @click="emit('closeTodoDetails')" icon="clear">
+                        关闭
+                    </nue-button>
+                </nue-div>
             </nue-header>
             <nue-main style="flex-direction: column; gap: 16px; padding: 16px 0">
                 <template #content>
@@ -21,8 +34,7 @@
                     <empty v-else :empty="!shadowTodo" message="无法获取任务详情。">
                         <!-- 基本数据 -->
                         <nue-div vertical theme="card" align="stretch" gap="8px">
-                            <details-row label="Id" :text="shadowTodo?.id"></details-row>
-                            <details-row label="名称">
+                            <details-row label="任务名称">
                                 <nue-textarea
                                     v-model="shadowTodo.name"
                                     placeholder="输入您的任务名称..."
@@ -31,7 +43,7 @@
                                     @blur="updateTodo"
                                 ></nue-textarea>
                             </details-row>
-                            <details-row label="描述">
+                            <details-row label="任务描述">
                                 <nue-textarea
                                     v-model="shadowTodo.description"
                                     placeholder="输入您的任务描述..."
@@ -44,7 +56,7 @@
                         </nue-div>
                         <!-- 检查事项设置 -->
                         <nue-div vertical theme="card" align="stretch" gap="8px">
-                            <details-row label="检查事项">
+                            <details-row :label="`检查事项 ${eventsProgress}`">
                                 <todo-event-row
                                     v-for="event in shadowTodo.events"
                                     :key="event.id"
@@ -63,8 +75,8 @@
                         </nue-div>
                         <!-- 日期设置 -->
                         <nue-div theme="card">
-                            <details-row label="开始于" width="fit-content">
-                                <nue-div gap="4px">
+                            <!-- <details-row label="开始于" width="fit-content">
+                                <nue-div gap="4px" align="center">
                                     <nue-button
                                         v-if="date.startAt === ''"
                                         theme="small"
@@ -75,29 +87,29 @@
                                     </nue-button>
                                     <template v-else>
                                         <nue-input
-                                            theme="small"
+                                            theme="small,noshape"
                                             type="datetime-local"
                                             v-model="date.startAt"
                                             @change="handleChangeDate"
                                             style="width: 170px"
                                         ></nue-input>
                                         <nue-button
-                                            theme="small"
+                                            theme="small,pure"
                                             icon="clear"
                                             @click="handleSwitchStartDate(0)"
                                         ></nue-button>
                                     </template>
                                 </nue-div>
-                            </details-row>
-                            <details-row label="结束于" width="fit-content">
-                                <nue-div gap="4px">
+                            </details-row> -->
+                            <details-row :label="`任务结束时间 ${dueDateHint}`" width="fit-content">
+                                <nue-div gap="4px" align="center">
                                     <nue-button
                                         v-if="date.endAt === ''"
                                         theme="small"
                                         icon="plus"
                                         @click="handleSwitchEndDate(1)"
                                     >
-                                        添加日期
+                                        添加结束时间
                                     </nue-button>
                                     <template v-else>
                                         <nue-input
@@ -105,7 +117,7 @@
                                             type="datetime-local"
                                             v-model="date.endAt"
                                             @change="handleChangeDate"
-                                            style="width: 170px"
+                                            style="width: 180px"
                                         ></nue-input>
                                         <nue-button
                                             theme="small"
@@ -115,47 +127,39 @@
                                     </template>
                                 </nue-div>
                             </details-row>
-                            <details-row
-                                v-if="dueDateHint"
-                                label="提示"
-                                :text="dueDateHint"
-                            ></details-row>
                         </nue-div>
                         <!-- 其他设置 -->
-                        <nue-div theme="card">
-                            <details-row label="优先级" flex="1">
+                        <nue-div theme="card" gap="24px">
+                            <details-row label="任务优先级" width="fit-content">
                                 <nue-select
                                     v-model="shadowTodo.priority"
                                     size="small"
                                     @change="updateTodo"
                                 >
-                                    <nue-select-option label="Low" value="low"></nue-select-option>
+                                    <nue-select-option label="低" value="low"></nue-select-option>
                                     <nue-select-option
-                                        label="Medium"
+                                        label="中"
                                         value="medium"
                                     ></nue-select-option>
-                                    <nue-select-option
-                                        label="High"
-                                        value="high"
-                                    ></nue-select-option>
+                                    <nue-select-option label="高" value="high"></nue-select-option>
                                 </nue-select>
                             </details-row>
-                            <details-row label="状态" flex="1">
+                            <details-row label="任务状态" width="fit-content">
                                 <nue-select
                                     v-model="shadowTodo.state"
                                     size="small"
                                     @change="updateTodo"
                                 >
                                     <nue-select-option
-                                        label="To Do"
+                                        label="待办"
                                         value="todo"
                                     ></nue-select-option>
                                     <nue-select-option
-                                        label="In Progress"
+                                        label="正在进行"
                                         value="in-progress"
                                     ></nue-select-option>
                                     <nue-select-option
-                                        label="Done"
+                                        label="已完成"
                                         value="done"
                                     ></nue-select-option>
                                 </nue-select>
@@ -165,13 +169,13 @@
                         <nue-div theme="card">
                             <details-row
                                 v-if="shadowTodo?.createdAt"
-                                label="创建于"
+                                label="创建时间"
                                 :text="parseDate(shadowTodo?.createdAt)"
                                 flex="1"
                             ></details-row>
                             <details-row
                                 v-if="shadowTodo?.updatedAt"
-                                label="更新于"
+                                label="最后修改时间"
                                 :text="parseDate(shadowTodo?.updatedAt)"
                                 flex="1"
                             ></details-row>
@@ -190,6 +194,7 @@ import {
     Empty,
     InputButton,
     TodoEventRow,
+    SwitchButton,
     type InputButtonSubmitPayload,
     type TodoEventRowUpdatePayload
 } from '@/components'
@@ -212,15 +217,59 @@ const date = reactive({ startAt: '', endAt: '' })
 
 const dueDateHint = computed(() => {
     const { startAt, endAt } = date
-    if (startAt === '' || endAt === '') return void 0
-    const _startAt = moment(startAt)
-    const _endAt = moment(endAt)
-    const diff = _endAt.diff(_startAt, 'd')
-    return `* 根据所设置的结束日期，任务将在${diff === 0 ? '今天' : ` ${diff} 日后`}结束.`
+    let result = ''
+    if (endAt !== '') {
+        // const _startAt = moment(startAt)
+        const _endAt = moment(endAt)
+        const diff = _endAt.diff(moment(), 'days')
+        // console.log(endAt, diff)
+        if (diff === 0) {
+            const minuteDiff = _endAt.diff(moment(), 'minutes')
+            if (minuteDiff >= 0) {
+                result = '任务即将结束，不到1天'
+            } else if (minuteDiff < 0) {
+                result = '任务已结束，不到1天'
+            }
+        } else if (diff < 0) {
+            result = `任务已结束，${Math.abs(diff)} 天前`
+        } else {
+            result = `任务将在 ${diff} 天后结束`
+        }
+    }
+    return result === '' ? '' : `(${result})`
+})
+
+const eventsProgress = computed(() => {
+    if (!shadowTodo.value) return ''
+    const events = shadowTodo.value.events
+    const progress = events ? events.filter((event) => event.isDone).length : 0
+    const total = events ? events.length : 0
+    const percentage = total ? Math.floor((progress / total) * 100) : 0
+    // console.log(events, progress, total, percentage)
+    return `(${progress}/${total}, ${percentage}%)`
 })
 
 const parseDate = (datestring: string) => {
     return moment(datestring).format('YYYY-MM-DD HH:mm')
+}
+
+const updateCompare = (oldTodo: Todo, newTodo: Todo) => {
+    const nameCompare = oldTodo.name === newTodo.name
+    const descriptionCompare = oldTodo.description === newTodo.description
+    const priorityCompare = oldTodo.priority === newTodo.priority
+    const stateCompare = oldTodo.state === newTodo.state
+    const dueDateCompare = oldTodo.dueDate === newTodo.dueDate
+    const eventsCompare = oldTodo.events.length === newTodo.events.length
+    const pinnedCompare = oldTodo.isPinned === newTodo.isPinned
+    return (
+        nameCompare &&
+        descriptionCompare &&
+        priorityCompare &&
+        stateCompare &&
+        dueDateCompare &&
+        eventsCompare &&
+        pinnedCompare
+    )
 }
 
 const updateTodo = () => {
@@ -229,9 +278,12 @@ const updateTodo = () => {
     timer = setTimeout(async () => {
         const { todo } = props
         if (!shadowTodo.value && !todo) return
-        const response = await todoStore.update(todo?.id!, shadowTodo.value!)
-        if (response.code === '20000') {
-            shadowTodo.value = response.data
+        const isSame = updateCompare(todo!, shadowTodo.value!)
+        if (!isSame) {
+            const response = await todoStore.update(todo?.id!, shadowTodo.value!)
+            if (response.code === '20000') {
+                shadowTodo.value = response.data
+            }
         }
         loadingState.value = false
         timer = null
@@ -239,6 +291,8 @@ const updateTodo = () => {
 }
 
 const handleChangeDate = () => {
+    // const isValid = dateInfo.checkDate(date);
+    // console.log(isValid)
     const dueDate = dateInfo.reConvert(date)
     shadowTodo.value!.dueDate = dueDate
     updateTodo()
@@ -282,7 +336,7 @@ const handleUpdateTodoEvent = (event: TodoEventRowUpdatePayload) => {
 const handleDeleteTodoEvent = async (id: TodoEvent['id']) => {
     loadingState.value = true
     // emit('updateTodoEvent', id, newTodoEvent)
-    const res = await todoStore.deleteTodoEvent(id);
+    const res = await todoStore.deleteTodoEvent(id)
     setTimeout(() => (loadingState.value = false), 512)
 }
 

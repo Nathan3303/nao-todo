@@ -2,8 +2,8 @@
     <nue-header style="position: relative">
         <template #nav>
             <nue-div>
-                <nue-link theme="btnlike" icon="projects" route="/project">项目(Projects)</nue-link>
-                <nue-link theme="btnlike" icon="todo" route="/tasks" disabled>任务(Tasks)</nue-link>
+                <nue-link theme="btnlike" icon="projects" route="/project">项目</nue-link>
+                <nue-link theme="btnlike" icon="todo" route="/tasks">任务</nue-link>
             </nue-div>
         </template>
         <nue-link href="/" style="position: absolute; left: 50%; transform: translateX(-50%)">
@@ -52,3 +52,5 @@ const handleLogout = () => {
     )
 }
 </script>
+
+<style scoped></style>

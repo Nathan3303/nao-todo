@@ -74,24 +74,25 @@ import {
     type Columns,
     TodoDetails
 } from '@/components'
+import { useUserStore } from '@/stores'
 
 defineOptions({ name: 'ProjectsMainList' })
 const props = defineProps<{ projectId: string }>()
 
 const todoStore = useTodoStore()
+const userStore = useUserStore()
 
 const { todos, pageInfo, countInfo, filterInfo } = storeToRefs(todoStore)
+const { user } = storeToRefs(userStore)
 const todo = ref<Todo | undefined>()
 const tableLoading = ref(false)
 const detailsLoading = ref(false)
 const columns = ref<Columns>({
     createdAt: true,
-    updatedAt: false,
-    startAt: false,
-    endAt: false,
+    updatedAt: true,
     priority: true,
     state: true,
-    description: false
+    description: true
 })
 
 const handleGetTodos = async () => {
@@ -126,7 +127,7 @@ const handlePageChange = (page: number) => {
     handleGetTodos()
 }
 
-const handleAddTodo = async (name: Todo['name']) => {
+const handleAddTodo = async () => {
     NuePrompt({
         title: '创建任务',
         placeholder: '填写任务名称',
@@ -136,7 +137,8 @@ const handleAddTodo = async (name: Todo['name']) => {
     }).then(
         async (value) => {
             const { projectId } = props
-            const res = await todoStore.createTodo(projectId, value as string)
+            const { id: userId } = user.value!
+            const res = await todoStore.createTodo(projectId, value as string, userId)
             if (res.code === '20000') {
                 handleGetTodos()
             }

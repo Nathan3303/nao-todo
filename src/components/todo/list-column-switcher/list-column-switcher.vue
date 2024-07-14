@@ -12,7 +12,7 @@
                     <empty :empty="!modelValue">
                         <checkbox
                             v-for="(value, key) in modelValue"
-                            :label="key"
+                            :label="parseLabel(key)"
                             :value="key"
                             :checked="value"
                             @check="handleCheck"
@@ -32,6 +32,23 @@ import { Checkbox, Empty } from '@/components'
 defineOptions({ name: 'ListColumnSwitcher' })
 const props = defineProps<ListColumnSwitcherProps>()
 const emit = defineEmits<ListColumnSwitcherEmits>()
+
+const parseLabel = (label: string) => {
+    switch (label) {
+        case 'createdAt':
+            return '创建时间'
+        case 'updatedAt':
+            return '更新时间'
+        case 'priority':
+            return '优先级'
+        case 'state':
+            return '状态'
+        case 'description':
+            return '描述'
+        default:
+            return label
+    }
+}
 
 const handleCheck = (checked: boolean, value: unknown) => {
     const { modelValue } = props

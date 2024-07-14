@@ -1,7 +1,11 @@
 <template>
     <nue-div vertical>
         <nue-text theme="h3">最近的项目</nue-text>
-        <empty :empty="!projects.length" align="left">
+        <empty
+            :empty="!projects.length"
+            align="left"
+            message="最近没有项目，可以通过左侧项目清单头部中的 '+' 按钮创建新项目。"
+        >
             <div class="project-card-container">
                 <project-card
                     v-for="project in projects"

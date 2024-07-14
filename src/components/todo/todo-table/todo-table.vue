@@ -2,10 +2,10 @@
     <nue-div class="todo-table">
         <nue-div class="todo-table-header">
             <nue-text theme="col" flex>名称</nue-text>
-            <nue-text v-if="columns.createdAt" theme="col" style="width: 120px">
+            <nue-text v-if="columns.createdAt" theme="col" style="width: 130px">
                 创建时间
             </nue-text>
-            <nue-text v-if="columns.updatedAt" theme="col" style="width: 120px">
+            <nue-text v-if="columns.updatedAt" theme="col" style="width: 130px">
                 最后修改时间
             </nue-text>
             <nue-text v-if="columns.priority" theme="col" style="width: 50px"> 优先级 </nue-text>
@@ -23,16 +23,6 @@
                         align="left"
                     >
                         {{ todo.name }}
-                        <!-- <template v-if="todo.justUpdated" #append>
-                            <nue-text
-                                class="todo-table-main__row__name__updated"
-                                size="12px"
-                                color="orange"
-                                @click.stop="todo.justUpdated = false"
-                            >
-                                (刚刚更新)
-                            </nue-text>
-                        </template> -->
                     </nue-button>
                     <nue-text
                         v-if="columns.description && todo.description"
@@ -43,12 +33,12 @@
                         {{ todo.description }}
                     </nue-text>
                 </nue-div>
-                <nue-div v-if="columns.createdAt" style="width: 120px">
+                <nue-div v-if="columns.createdAt" style="width: 130px">
                     <nue-text size="12px" color="gray">
                         {{ moment(todo.createdAt).format('YYYY-MM-DD HH:mm:ss') }}
                     </nue-text>
                 </nue-div>
-                <nue-div v-if="columns.updatedAt" style="width: 120px">
+                <nue-div v-if="columns.updatedAt" style="width: 130px">
                     <nue-text size="12px" color="gray">
                         {{ moment(todo.updatedAt).format('YYYY-MM-DD HH:mm:ss') }}
                     </nue-text>

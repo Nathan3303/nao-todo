@@ -66,7 +66,7 @@ const handleDelete = () => {
 
         &[data-is-done="true"] {
             text-decoration: line-through;
-            color: var(--primary-disabled);
+            color: #999;
         }
     }
 

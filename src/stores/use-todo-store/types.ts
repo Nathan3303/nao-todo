@@ -29,6 +29,8 @@ export type Todo = {
     dueDate: { startAt: string | null; endAt: string | null }
     justUpdated?: boolean
     events: TodoEvent[]
+    isPinned: boolean
+    isDone: boolean
 }
 
 export type ShadowTodo = Partial<Todo>

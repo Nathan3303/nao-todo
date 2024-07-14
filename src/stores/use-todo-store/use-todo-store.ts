@@ -1,7 +1,7 @@
 import { ref, reactive } from 'vue'
 import { defineStore } from 'pinia'
 import type { Todo, TodoFilter, TodoCountInfo, TodoEvent } from './types'
-import type { Project } from '../use-project-store'
+import type { Project, User } from '..'
 import { NueMessage } from 'nue-ui'
 import { naoTodoServer as $axios } from '@/axios'
 
@@ -49,11 +49,11 @@ export const useTodoStore = defineStore('todoStore', () => {
         return response.data
     }
 
-    async function createTodo(projectId: string, name: string) {
-        const data = { name, projectId }
+    async function createTodo(projectId: string, name: string, userId: User['id']) {
+        const data = { name, projectId, userId }
         const response = await $axios.post('/todo', data)
         if (response.data.code === '20000') {
-            NueMessage.success('Todo created successfully')
+            NueMessage.success('待办创建成功')
         } else {
             NueMessage.error(response.data.message)
         }
@@ -66,7 +66,7 @@ export const useTodoStore = defineStore('todoStore', () => {
         if (response.data.code === '20000') {
             const index = todos.value.findIndex((todo) => todo.id === id)
             todos.value.splice(index, 1)
-            NueMessage.success('Todo removed successfully')
+            NueMessage.success('待办删除成功')
         } else {
             NueMessage.error(response.data.message)
         }
@@ -84,11 +84,10 @@ export const useTodoStore = defineStore('todoStore', () => {
     async function update(id: Todo['id'], newTodo: Partial<Todo>) {
         const response = await $axios.put('/todo' + `?id=${id}`, newTodo)
         if (response.data.code === '20000') {
-            const index = todos.value.findIndex((t) => t.id === id)
-            todos.value.splice(index, 1, { ...response.data.data, justUpdated: true })
-            // todo.value = response.data.data
-            // todo.value!.updatedAt = response.data.data.updatedAt
-            // NueMessage.success('Todo updated successfully')
+            // console.log(todo.value, response.data.data)
+            todo.value = response.data.data
+            const index = todos.value.findIndex((todo) => todo.id === id)
+            todos.value[index] = response.data.data
         } else {
             NueMessage.error(response.data.message)
         }
@@ -116,7 +115,7 @@ export const useTodoStore = defineStore('todoStore', () => {
                 isDone: false,
                 isTopped: false
             }
-            todo.value!.events.unshift(_n_todo)
+            todo.value!.events.push(_n_todo)
         }
         return response.data
     }
@@ -130,9 +129,12 @@ export const useTodoStore = defineStore('todoStore', () => {
             }
             for (let i = 0, event; i < todo.value!.events.length; i++) {
                 event = todo.value!.events[i]
+                // console.log(event, newTodoEvent)
                 if (event.id === id) {
                     event = { ...event, ...newTodoEvent }
-                    todo.value!.events.splice(i, 1, event)
+                    todo.value!.events[i].title = event.title
+                    todo.value!.events[i].isDone = event.isDone
+                    todo.value!.events[i].isTopped = event.isTopped
                     break
                 }
             }
@@ -157,6 +159,30 @@ export const useTodoStore = defineStore('todoStore', () => {
         return response.data
     }
 
+    const getTodosByDate = async (userId: User['id'], startDate: string, endDate: string) => {}
+
+    const getAllTodos = async (userId: User['id']) => {
+        const { page, limit } = pageInfo
+        const filterQuery = parseFilterInfoToQuery()
+        const uri = `/todos?&page=${page}&limit=${limit}&${filterQuery}`
+        const response = await $axios.get(uri)
+        if (response.data.code === '20000') {
+            const { todos: _tds, payload: _pl } = response.data.data
+            todos.value = _tds
+            countInfo.length = _pl.countInfo.length
+            countInfo.count = _pl.countInfo.count
+            countInfo.total = _pl.countInfo.total
+            countInfo.byState = _pl.countInfo.byState
+            countInfo.byPriority = _pl.countInfo.byPriority
+            pageInfo.page = _pl.pageInfo.page
+            pageInfo.limit = _pl.pageInfo.limit
+            pageInfo.totalPages = _pl.pageInfo.totalPages
+        } else {
+            NueMessage.error(response.data.message)
+        }
+        return response.data
+    }
+
     return {
         todos,
         todo,
@@ -171,6 +197,8 @@ export const useTodoStore = defineStore('todoStore', () => {
         getTodoStatesAnalysis,
         createTodoEvent,
         updateTodoEvent,
-        deleteTodoEvent
+        deleteTodoEvent,
+        getTodosByDate,
+        getAllTodos
     }
 })

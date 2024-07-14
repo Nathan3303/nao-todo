@@ -12,7 +12,7 @@ export const useProjectStore = defineStore('projectStore', () => {
     async function getProjects() {
         const userId = userStore.user?.id
         if (!userId) {
-            NueMessage.error('Please login first')
+            NueMessage.error('请先登录')
             return
         }
         const response = await naoTodoServer.get(`/projects?userId=${userId}`)
@@ -28,9 +28,9 @@ export const useProjectStore = defineStore('projectStore', () => {
         const response = await naoTodoServer.post('/project', { userId, ...payload })
         // console.log(response.data)
         if (response.data.code === '20000') {
-            console.log(response.data.data)
+            // console.log(response.data.data)
             projects.value.push(response.data.data as Project)
-            NueMessage.success('Project created successfully')
+            NueMessage.success('项目创建成功')
         } else {
             NueMessage.error(response.data.message)
         }
@@ -42,7 +42,7 @@ export const useProjectStore = defineStore('projectStore', () => {
         if (response.data.code === '20000') {
             const index = projects.value.findIndex((project) => project.id === projectId)
             projects.value.splice(index, 1)
-            NueMessage.success('Project deleted successfully')
+            NueMessage.success('项目删除成功')
         } else {
             NueMessage.error(response.data.message)
         }
@@ -55,7 +55,7 @@ export const useProjectStore = defineStore('projectStore', () => {
             const index = projects.value.findIndex((project) => project.id === projectId)
             const newProject = { ...projects.value[index], ...payload }
             projects.value[index] = newProject as Project
-            NueMessage.success('Project updated successfully')
+            NueMessage.success('项目更新成功')
         } else {
             NueMessage.error(response.data.message)
         }

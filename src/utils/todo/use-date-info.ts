@@ -36,5 +36,11 @@ export function useDateInfo() {
         return dueDate
     }
 
-    return { parseDate, convert, reConvert }
+    const checkDate = (dateInfo: DateInfo) => {
+        const { startAt, endAt } = dateInfo
+        const isValid = endAt !== '' && moment(startAt).isBefore(endAt)
+        return isValid
+    }
+
+    return { parseDate, convert, reConvert, checkDate }
 }
