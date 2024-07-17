@@ -64,15 +64,15 @@ const passwordConfirm = ref('')
 
 function handleSignUp() {
     if (email.value === '') {
-        NueMessage.error('Email is required')
+        NueMessage.error('请输入邮箱')
         return
     }
     if (password.value === '') {
-        NueMessage.error('Password is required')
+        NueMessage.error('请输入密码')
         return
     }
     if (passwordConfirm.value !== password.value) {
-        NueMessage.error('Passwords do not match')
+        NueMessage.error('两次输入的密码不一致')
         return
     }
     emit('submit', { email: email.value, password: password.value })

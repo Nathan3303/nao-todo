@@ -78,7 +78,7 @@ export const useUserStore = defineStore('userStore', () => {
         const response = await $axios.delete('/signout' + `?jwt=${jwt}`)
         if (response.data.code === '20000') {
             _removeToken()
-            NueMessage.success('Logout successfully')
+            NueMessage.success('登出成功')
             return true
         } else {
             NueMessage.error(response.data.message)

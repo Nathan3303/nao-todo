@@ -50,11 +50,11 @@ const password = ref('')
 
 function handleSignIn() {
     if (email.value === '') {
-        NueMessage.error('Please enter your email')
+        NueMessage.error('请输入邮箱')
         return
     }
     if (password.value === '') {
-        NueMessage.error('Please enter your password')
+        NueMessage.error('请输入密码')
         return
     }
     emit('submit', { email: email.value, password: password.value })
