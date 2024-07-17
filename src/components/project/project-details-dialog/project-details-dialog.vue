@@ -1,6 +1,6 @@
 <template>
     <nue-dialog v-model="visible" title="项目详情">
-        <project-details :project="project" style="width: 400px"></project-details>
+        <project-details :project="project"></project-details>
     </nue-dialog>
 </template>
 

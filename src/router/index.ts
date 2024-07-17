@@ -66,6 +66,12 @@ const router = createRouter({
                                     name: 'project-main-table',
                                     props: true,
                                     component: () => import('@/views/index/project/main/table.vue')
+                                },
+                                {
+                                    path: 'kanban',
+                                    name: 'project-main-kanban',
+                                    props: true,
+                                    component: () => import('@/views/index/project/main/kanban.vue')
                                 }
                             ]
                         }

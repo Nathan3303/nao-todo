@@ -11,7 +11,10 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 defineOptions({ name: 'ProjectNotFound' })
+const router = useRouter()
+router.push('project-dashboard')
 </script>
 
 <style scoped>

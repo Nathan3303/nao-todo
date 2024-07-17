@@ -17,6 +17,7 @@ export const useProjectStore = defineStore('projectStore', () => {
         }
         const response = await naoTodoServer.get(`/projects?userId=${userId}`)
         if (response.data.code === '20000') {
+            // console.log(response.data.data)
             projects.value = response.data.data
         }
         return response.data

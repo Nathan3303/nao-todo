@@ -68,7 +68,7 @@ const searchText = ref('')
 const collapseValue = ref(['todo', 'in-progress'])
 
 await projectStore.getProjects()
-todoStore.getAllTodos(user.value!.id)
+await todoStore.getAllTodos(user.value!.id)
 useLoadingScreen().stopLoading()
 
 // const categoriedTodos = computed(() => {

@@ -49,8 +49,13 @@ const handleCreateProject = () => {
     emit('create', newProjectPayload.value)
 }
 
+const handleClearInputValues = () => {
+    newProjectPayload.value = { name: '', description: '' }
+}
+
 defineExpose({
-    show: showCreateProjectDialog
+    show: showCreateProjectDialog,
+    clear: handleClearInputValues
 })
 </script>
 

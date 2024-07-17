@@ -1,7 +1,7 @@
 <template>
     <nue-div class="project-card" vertical theme="card" @click="handleGoToProject">
         <nue-div vertical gap="4px" flex>
-            <nue-text size="16px">{{ project.name }}</nue-text>
+            <nue-text size="16px">{{ project.title }}</nue-text>
             <nue-text size="12px" color="gray">
                 {{ project.description || 'No description' }}
             </nue-text>

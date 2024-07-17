@@ -1,16 +1,16 @@
 <template>
     <!-- Project title -->
-    <nue-div justify="space-between" wrap="nowrap" style="min-height: 56px">
+    <nue-div justify="space-between" wrap="nowrap">
         <nue-div vertical gap="4px" flex>
             <nue-div align="center" width="fit-content" gap="8px">
                 <nue-button
                     theme="icon-only"
                     icon="more2"
-                    @click="hideProjectAside"
+                    @click="handleHideProjectAside"
                     style="--icon-size: 22px"
                 ></nue-button>
                 <click-to-edit
-                    :text="project?.name"
+                    :text="project?.title"
                     @edit="handleEditName"
                     size="28px"
                     weight="bold"
@@ -44,12 +44,17 @@
     </nue-div>
 
     <!-- Project navigation -->
-    <nue-div style="margin-top: 6px" justify="space-between" wrap="nowrap" align="center">
+    <nue-div
+        v-if="!sph"
+        style="margin-top: 6px"
+        justify="space-between"
+        wrap="nowrap"
+        align="center"
+    >
         <nue-div flex>
-            <nue-link theme="btnlike" :route="{ name: 'project-main-overview' }">
-                总览视图
-            </nue-link>
-            <nue-link theme="btnlike" :route="{ name: 'project-main-table' }"> 任务列表 </nue-link>
+            <nue-link theme="btnlike" :route="{ name: 'project-main-overview' }"> 总览 </nue-link>
+            <nue-link theme="btnlike" :route="{ name: 'project-main-table' }"> 列表 </nue-link>
+            <nue-link theme="btnlike" :route="{ name: 'project-main-kanban' }"> 看板 </nue-link>
         </nue-div>
     </nue-div>
 
@@ -65,15 +70,16 @@ import { ref } from 'vue'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import type { ProjectsMainHeaderEmits, ProjectsMainHeaderProps } from './types'
 import { ClickToEdit, ProjectDetailsDialog } from '@/components'
-import { useProjectStore } from '@/stores'
-import { useProjectAside } from '@/hooks'
+import { useProjectStore, useViewStore } from '@/stores'
+import { storeToRefs } from 'pinia'
 
 const props = defineProps<ProjectsMainHeaderProps>()
 const emit = defineEmits<ProjectsMainHeaderEmits>()
 
 const projectStore = useProjectStore()
-const projectAside = useProjectAside()
+const viewStore = useViewStore()
 
+const { simpleProjectHeader: sph } = storeToRefs(viewStore)
 const projectDetailsDialogRef = ref<InstanceType<typeof ProjectDetailsDialog>>()
 
 const showProjectDetailsDialog = () => {
@@ -100,11 +106,11 @@ const handleEditDescription = async (newValue: string) => {
 
 const handleEditName = async (newValue: string) => {
     const { id } = props.project
-    await projectStore.updateProject(id, { name: newValue })
+    await projectStore.updateProject(id, { title: newValue })
 }
 
-const hideProjectAside = () => {
-    projectAside.switchIsHide()
+const handleHideProjectAside = () => {
+    viewStore.toggleProjectAsideVisible()
     // console.log('hideProjectAside');
 }
 </script>

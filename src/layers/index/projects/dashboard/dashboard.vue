@@ -1,6 +1,11 @@
 <template>
     <nue-div vertical>
-        <nue-text theme="h3">最近的项目</nue-text>
+        <nue-div align="center" justify="space-between">
+            <nue-text theme="h3">最近的项目</nue-text>
+            <nue-button theme="primary,small" icon="plus" @click="handleCreateProject"
+                >创建新项目</nue-button
+            >
+        </nue-div>
         <empty
             :empty="!projects.length"
             align="left"
@@ -23,6 +28,14 @@ import { ProjectCard, Empty } from '@/components'
 
 defineOptions({ name: 'ProjectsDashboard' })
 defineProps<{ projects: Project[] }>()
+
+const handleCreateProject = () => {
+    const createProjectBtn = document.querySelector(
+        '#create-project-btn'
+    ) as HTMLButtonElement | null
+    // console.log(createProjectBtn)
+    createProjectBtn?.click()
+}
 </script>
 
 <style scoped>
@@ -30,7 +43,7 @@ defineProps<{ projects: Project[] }>()
     width: 100%;
     height: 100%;
     display: grid;
-    grid-template-columns: repeat(auto-fit, 300px);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     grid-template-rows: 240px;
     gap: 20px;
 }

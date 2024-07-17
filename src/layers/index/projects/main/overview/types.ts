@@ -2,7 +2,7 @@ import type { Project, TodoCountInfo } from '@/stores'
 
 export type ProjectsMainOverviewProps = {
     countInfo?: TodoCountInfo
-    project?: Project
+    project: Project
 }
 
 export type StateOverviewRowProps = {

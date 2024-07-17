@@ -19,11 +19,13 @@ export const useTodoStore = defineStore('todoStore', () => {
     const filterInfo = ref<TodoFilter>({ name: '', state: '', priority: '' })
 
     function parseFilterInfoToQuery() {
-        const { name, state, priority } = filterInfo.value
+        const { id, name, state, priority, isPinned } = filterInfo.value
         const query = []
+        if (id) query.push(`id=${id}`)
         if (name) query.push(`name=${name}`)
         if (state) query.push(`state=${state}`)
         if (priority) query.push(`priority=${priority}`)
+        if (isPinned) query.push('isPinned=1')
         return query.join('&')
     }
 
@@ -61,7 +63,7 @@ export const useTodoStore = defineStore('todoStore', () => {
     }
 
     async function remove(id: Todo['id']) {
-        if (todo.value && id === todo.value.id) return
+        // if (todo.value && id === todo.value.id) return
         const response = await $axios.delete('/todo' + `?id=${id}`)
         if (response.data.code === '20000') {
             const index = todos.value.findIndex((todo) => todo.id === id)
@@ -94,10 +96,10 @@ export const useTodoStore = defineStore('todoStore', () => {
         return response.data
     }
 
-    async function getTodoStatesAnalysis() {
-        const response = await $axios.get('/analysis?target=todo-overview')
+    async function getTodoStatesAnalysis(projectId: Project['id']) {
+        const response = await $axios.get(`/analysis?target=todo-overview&projectId=${projectId}`)
         if (response.data.code === '20000') {
-            console.log(response.data.data)
+            // console.log(response.data.data)
         }
         return response.data
     }
@@ -183,6 +185,19 @@ export const useTodoStore = defineStore('todoStore', () => {
         return response.data
     }
 
+    const getTodosByFilterInfo = async (
+        userId: User['id'],
+        projectId: Project['id'],
+        specFilterInfo: TodoFilter
+    ) => {
+        const oldFilterInfo = filterInfo.value
+        const newFilterInfo = { ...oldFilterInfo, ...specFilterInfo }
+        filterInfo.value = newFilterInfo
+        const response = await getTodosByProjectId(projectId)
+        filterInfo.value = oldFilterInfo
+        return response
+    }
+
     return {
         todos,
         todo,
@@ -199,6 +214,7 @@ export const useTodoStore = defineStore('todoStore', () => {
         updateTodoEvent,
         deleteTodoEvent,
         getTodosByDate,
-        getAllTodos
+        getAllTodos,
+        getTodosByFilterInfo
     }
 })

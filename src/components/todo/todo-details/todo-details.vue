@@ -226,9 +226,9 @@ const dueDateHint = computed(() => {
         if (diff === 0) {
             const minuteDiff = _endAt.diff(moment(), 'minutes')
             if (minuteDiff >= 0) {
-                result = '任务即将结束，不到1天'
+                result = '任务即将结束，不到 1 天'
             } else if (minuteDiff < 0) {
-                result = '任务已结束，不到1天'
+                result = '任务已结束，不到 1 天'
             }
         } else if (diff < 0) {
             result = `任务已结束，${Math.abs(diff)} 天前`

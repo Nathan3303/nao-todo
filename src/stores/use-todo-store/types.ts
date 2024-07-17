@@ -36,10 +36,12 @@ export type Todo = {
 export type ShadowTodo = Partial<Todo>
 
 export type TodoFilter = {
+    id?: Todo['id']
     name?: Todo['name'] | ''
     state?: string
     priority?: string
     tags?: Todo['tags'] | ''
+    isPinned?: boolean
 }
 
 export type TodoCountByState = {

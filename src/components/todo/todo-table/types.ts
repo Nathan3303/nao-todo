@@ -15,6 +15,7 @@ export type ColumnsKeys = keyof Columns
 export type TodoTableProps = {
     todos: Todo[]
     columns: Columns
+    simple?: boolean
 }
 
 export type TodoTableEmits = {

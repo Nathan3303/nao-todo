@@ -1,7 +1,7 @@
 <template>
     <nue-div vertical align="center" justify="center" wrap="nowrap" flex>
         <nue-text size="12px" color="gray">
-            * 这是已完成任务和过去15天每天的所有任务的条形图。
+            * 过去15天已完成任务和每天的所有任务的条形图。
         </nue-text>
         <div id="todo-analysis"></div>
     </nue-div>
@@ -21,7 +21,9 @@ import {
 } from 'echarts/components'
 import { LabelLayout, UniversalTransition } from 'echarts/features'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useTodoStore } from '@/stores'
+import { useTodoStore, type Project } from '@/stores'
+
+const props = defineProps<{ projectId: Project['id'] }>()
 
 echarts.use([
     TitleComponent,
@@ -60,7 +62,7 @@ const option = {
 }
 
 const fetchData = async () => {
-    const response = await todoStore.getTodoStatesAnalysis()
+    const response = await todoStore.getTodoStatesAnalysis(props.projectId)
     if (response.code === '20000') {
         const newData = sequalizeResponseData(response.data)
         // console.log(newData)

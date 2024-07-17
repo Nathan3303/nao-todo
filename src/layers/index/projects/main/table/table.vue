@@ -2,7 +2,7 @@
     <nue-div wrap="nowrap" flex style="overflow: hidden; position: relative">
         <nue-container>
             <nue-header style="padding: 0; border: none; height: fit-content" :key="$route.path">
-                <nue-div align="center" justify="space-between" wrap="nowrap" gap="16px">
+                <nue-div align="start" justify="space-between" wrap="nowrap" gap="16px">
                     <todo-filter-bar
                         :count-info="countInfo"
                         :filter-info="filterInfo"
@@ -16,6 +16,11 @@
                             v-model="columns"
                             :change="handleChangeColumns"
                         ></list-column-switcher>
+                        <nue-button
+                            theme="small"
+                            icon="switch"
+                            @click="handleSwitchView"
+                        ></nue-button>
                     </nue-div>
                 </nue-div>
             </nue-header>
@@ -24,6 +29,7 @@
                     <Loading v-if="tableLoading" placeholder="正在加载任务列表..."></Loading>
                     <todo-table
                         v-else
+                        ref="todoTableRef"
                         :todos="todos"
                         :columns="columns"
                         @delete-todo="handleDeleteTodo"
@@ -52,7 +58,7 @@
             <todo-details
                 :todo="todo"
                 :loading="detailsLoading"
-                @close-todo-details="todo = undefined"
+                @close-todo-details="handleCloseTodoDetails"
                 @create-todo-event="handleCreateTodoEvent"
                 @update-todo-event="handleUpdateTodoEvent"
             ></todo-details>
@@ -74,26 +80,29 @@ import {
     type Columns,
     TodoDetails
 } from '@/components'
-import { useUserStore } from '@/stores'
+import { useUserStore, useViewStore } from '@/stores'
 
 defineOptions({ name: 'ProjectsMainList' })
 const props = defineProps<{ projectId: string }>()
 
 const todoStore = useTodoStore()
 const userStore = useUserStore()
+const viewStore = useViewStore()
 
 const { todos, pageInfo, countInfo, filterInfo } = storeToRefs(todoStore)
 const { user } = storeToRefs(userStore)
+const { simpleProjectHeader } = storeToRefs(viewStore)
 const todo = ref<Todo | undefined>()
 const tableLoading = ref(false)
 const detailsLoading = ref(false)
 const columns = ref<Columns>({
-    createdAt: true,
-    updatedAt: true,
+    createdAt: false,
+    updatedAt: false,
     priority: true,
     state: true,
     description: true
 })
+const todoTableRef = ref<InstanceType<typeof TodoTable>>()
 
 const handleGetTodos = async () => {
     tableLoading.value = true
@@ -156,6 +165,11 @@ const handleShowTodoDetails = async (id: Todo['id']) => {
     detailsLoading.value = false
 }
 
+const handleCloseTodoDetails = () => {
+    todo.value = void 0
+    todoTableRef.value?.reset()
+}
+
 const handleDeleteTodo = async (id: Todo['id']) => {
     NueConfirm({
         title: '删除任务',
@@ -176,6 +190,10 @@ const handleCreateTodoEvent = async (todoId: Todo['id'], newTodoEvent: Partial<T
 
 const handleUpdateTodoEvent = async (id: TodoEvent['id'], newTodoEvent: Partial<TodoEvent>) => {
     const response = await todoStore.updateTodoEvent(id, newTodoEvent)
+}
+
+const handleSwitchView = () => {
+    viewStore.toggleSimpleProjectHeader()
 }
 
 handleGetTodos()

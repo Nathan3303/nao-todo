@@ -1,6 +1,6 @@
 <template>
     <nue-main aside-width="256px">
-        <template #aside v-if="!isHide">
+        <template #aside v-if="projectAsideVisible">
             <projects-aside></projects-aside>
         </template>
         <template #content>
@@ -10,15 +10,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { ProjectsAside } from '@/layers/index/projects'
-import { useProjectStore } from '@/stores/use-project-store'
-import { useLoadingScreen, useProjectAside } from '@/hooks'
+import { useProjectStore, useViewStore } from '@/stores'
+import { useLoadingScreen } from '@/hooks'
+import { storeToRefs } from 'pinia'
 
 const projectStore = useProjectStore()
-const projectAside = useProjectAside()
+const viewStore = useViewStore()
 
-const isHide = computed(() => projectAside.isHide.value)
+const { projectAsideVisible } = storeToRefs(viewStore)
 
 await projectStore.getProjects()
 useLoadingScreen().stopLoading()

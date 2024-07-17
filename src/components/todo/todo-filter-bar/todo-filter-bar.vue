@@ -1,12 +1,17 @@
 <template>
-    <nue-div align="center" wrap="nowrap" flex="none" width="fit-content" gap="12px">
-        <nue-input
-            theme="small"
-            v-model="filterText"
-            placeholder="筛选任务"
-            icon="filter"
-            :debounce-time="360"
-        ></nue-input>
+    <nue-div align="start" width="fit-content" gap="12px">
+        <nue-div vertical width="fit-content" gap="4px">
+            <nue-input
+                theme="small"
+                v-model="filterText"
+                placeholder="筛选任务"
+                icon="filter"
+                :debounce-time="360"
+            ></nue-input>
+            <nue-text v-if="props.filterInfo.id" size="12px" color="gray">
+                Id:{{ props.filterInfo.id }}
+            </nue-text>
+        </nue-div>
         <combo-box
             trigger-title="状态"
             :framework="statusComboBoxOptions"
@@ -17,7 +22,7 @@
             :framework="priorityComboBoxOptions"
             @change="handleChangePriorityOption"
         ></combo-box>
-        <nue-button v-if="hasFilter" theme="small,pure" icon="clear" @click="handleResetFilter">
+        <nue-button v-if="hasFilter" theme="small" icon="clear" @click="handleResetFilter">
             重置
         </nue-button>
     </nue-div>
@@ -36,8 +41,8 @@ const emit = defineEmits<TodoFilterBarEmits>()
 const filterText = ref('')
 
 const hasFilter = computed(() => {
-    const { name, state, priority } = props.filterInfo
-    return name || state || priority
+    const { id, name, state, priority } = props.filterInfo
+    return id || name || state || priority
 })
 
 const statusComboBoxOptions = computed({
@@ -160,7 +165,7 @@ function handleChangePriorityOption(value: unknown, payload: any) {
 
 function handleResetFilter() {
     filterText.value = ''
-    emit('filter', { name: '', state: '', priority: '' } as TodoFilter)
+    emit('filter', { id: '', name: '', state: '', priority: '' } as TodoFilter)
 }
 
 watch(
@@ -175,5 +180,10 @@ watch(
 .nue-input--actived {
     border-color: orange;
     box-shadow: var(--secondary-shadow);
+}
+
+.nue-input--small {
+    width: 240px;
+    font-size: var(--text-xs);
 }
 </style>

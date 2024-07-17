@@ -1,13 +1,13 @@
 <template>
     <empty :empty="!project">
         <nue-div vertical>
-            <nue-div vertical align="stretch" gap="4px" flex>
+            <!-- <nue-div vertical align="stretch" gap="4px" flex>
                 <nue-text size="12px" color="gray"> Id </nue-text>
                 <nue-text size="14px"> {{ project?.id }} </nue-text>
-            </nue-div>
+            </nue-div> -->
             <nue-div vertical align="stretch" gap="4px" flex>
                 <nue-text size="12px" color="gray"> 名称 </nue-text>
-                <nue-text size="14px"> {{ project?.name }} </nue-text>
+                <nue-text size="14px"> {{ project?.title }} </nue-text>
             </nue-div>
             <nue-div vertical align="stretch" gap="4px">
                 <nue-text size="12px" color="gray"> 描述 </nue-text>
@@ -26,13 +26,13 @@
                 <nue-div vertical align="stretch" gap="4px" flex>
                     <nue-text size="12px" color="gray"> 创建于 </nue-text>
                     <nue-text size="14px">
-                        {{ moment(project?.createAt).format('YYYY-MM-DD HH:mm:ss') }}
+                        {{ moment(project?.createdAt).format('YYYY-MM-DD HH:mm:ss') }}
                     </nue-text>
                 </nue-div>
                 <nue-div vertical align="stretch" gap="4px" flex>
                     <nue-text size="12px" color="gray"> 更新于 </nue-text>
                     <nue-text size="14px">
-                        {{ moment(project?.updateAt).format('YYYY-MM-DD HH:mm:ss') }}
+                        {{ moment(project?.updatedAt).format('YYYY-MM-DD HH:mm:ss') }}
                     </nue-text>
                 </nue-div>
             </nue-div>
