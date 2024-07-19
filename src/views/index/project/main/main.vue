@@ -3,7 +3,6 @@
     <template v-else>
         <nue-div vertical wrap="nowrap" height="100%">
             <projects-main-header :project="currentProject"></projects-main-header>
-            <nue-divider></nue-divider>
             <router-view :key="projectId"></router-view>
         </nue-div>
     </template>

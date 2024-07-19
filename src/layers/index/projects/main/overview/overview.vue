@@ -68,7 +68,7 @@ const columns = ref<Columns>({
     updatedAt: false,
     priority: true,
     state: true,
-    description: true
+    description: false
 })
 
 await todoStore.getTodosByFilterInfo(user.value!.id, props.project!.id, { isPinned: true })

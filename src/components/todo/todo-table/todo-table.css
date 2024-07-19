@@ -25,7 +25,7 @@
         align-items: stretch;
         flex-direction: column;
         width: 100%;
-        gap: 8px;
+        gap: 0px;
         flex-wrap: nowrap;
 
         .todo-table__body__row {
@@ -49,7 +49,7 @@
                 height: 100%;
                 align-items: center;
 
-                .nue-text {
+                &:deep(.nue-text) {
                     color: gray;
                     font-size: 12px;
                 }
@@ -70,7 +70,7 @@
         .todo-table-main__row__name {
             width: 100%;
 
-            .nue-button__text {
+            &:deep(.nue-button__text) {
                 text-align: left;
                 overflow: hidden;
                 text-overflow: ellipsis;

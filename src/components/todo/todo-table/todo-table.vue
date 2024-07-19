@@ -1,5 +1,6 @@
 <template>
     <nue-div class="todo-table" :data-simple="simple">
+        <!-- 表格头部 -->
         <nue-div class="todo-table__header" wrap="nowrap">
             <div class="todo-table__header__col col-name">
                 <nue-text>名称</nue-text>
@@ -20,7 +21,9 @@
                 <nue-icon name="more" style="opacity: 0"></nue-icon>
             </div>
         </nue-div>
+        <!-- 分隔符 -->
         <nue-divider class="todo-table__divider"></nue-divider>
+        <!-- 表格内容 -->
         <nue-div class="todo-table__body">
             <empty
                 :empty="!todos.length"
@@ -76,7 +79,7 @@
                     <nue-icon
                         name="delete"
                         color="red"
-                        @click.stop="handleDeleteTodo(todo.id)"
+                        @click.stop="handleDelete(todo.id)"
                     ></nue-icon>
                 </nue-div>
             </nue-div>
@@ -85,36 +88,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import type { TodoTableEmits, TodoTableProps } from './types'
 import { TodoPriorityInfo, TodoStateInfo, Empty } from '@/components'
+import { useTodoTable } from './use-todo-table'
 import moment from 'moment'
-import './todo-table.css'
 
 defineOptions({ name: 'TodoTable' })
 const props = defineProps<TodoTableProps>()
 const emit = defineEmits<TodoTableEmits>()
 
-const selectedId = ref<string | null>(null)
-
-const handleDeleteTodo = (id: string) => {
-    if (props.simple) return
-    emit('deleteTodo', id)
-}
-
-const handleShowDetails = (id: string) => {
-    // if (props.simple) return
-    if (selectedId.value === id) return
-    selectedId.value = id
-    emit('showTodoDetails', id)
-}
-
-const handleResetSelected = () => {
-    if (props.simple) return
-    selectedId.value = null
-}
+const { selectedId, handleDelete, handleShowDetails, handleClearSelectedId } = useTodoTable(
+    props,
+    emit
+)
 
 defineExpose({
-    reset: handleResetSelected
+    reset: handleClearSelectedId
 })
 </script>
+
+<style scoped>
+@import url('./todo-table.css');
+</style>

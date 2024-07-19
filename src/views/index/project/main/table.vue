@@ -1,5 +1,7 @@
 <template>
-    <projects-main-list :project-id="project.id"></projects-main-list>
+    <!-- <nue-div theme="card" wrap="nowrap" flex align="stretch"> -->
+        <projects-main-list :project-id="project.id"></projects-main-list>
+    <!-- </nue-div> -->
 </template>
 
 <script setup lang="ts">

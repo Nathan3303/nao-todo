@@ -1,13 +1,15 @@
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { defineStore } from 'pinia'
 import type { Todo, TodoFilter, TodoCountInfo, TodoEvent } from './types'
 import type { Project, User } from '..'
 import { NueMessage } from 'nue-ui'
 import { naoTodoServer as $axios } from '@/axios'
+import moment from 'moment'
 
 export const useTodoStore = defineStore('todoStore', () => {
     const todo = ref<Todo>()
     const todos = ref<Todo[]>([])
+    const AllTodos = ref<Todo[]>([])
     const countInfo = reactive<TodoCountInfo>({
         length: 0,
         count: 0,
@@ -17,6 +19,8 @@ export const useTodoStore = defineStore('todoStore', () => {
     })
     const pageInfo = reactive({ page: 1, limit: 10, totalPages: 0 })
     const filterInfo = ref<TodoFilter>({ name: '', state: '', priority: '' })
+    const reminderQueen = ref<{ index: number; id: Todo['id']; time: string }[]>([])
+    let reminderTimer: number | null = null
 
     function parseFilterInfoToQuery() {
         const { id, name, state, priority, isPinned } = filterInfo.value
@@ -166,11 +170,12 @@ export const useTodoStore = defineStore('todoStore', () => {
     const getAllTodos = async (userId: User['id']) => {
         const { page, limit } = pageInfo
         const filterQuery = parseFilterInfoToQuery()
-        const uri = `/todos?&page=${page}&limit=${limit}&${filterQuery}`
+        const uri = `/todos?userId=${userId}&page=${page}&limit=${limit}&${filterQuery}`
         const response = await $axios.get(uri)
         if (response.data.code === '20000') {
             const { todos: _tds, payload: _pl } = response.data.data
-            todos.value = _tds
+            // todos.value = _tds
+            AllTodos.value = _tds
             countInfo.length = _pl.countInfo.length
             countInfo.count = _pl.countInfo.count
             countInfo.total = _pl.countInfo.total
@@ -198,9 +203,55 @@ export const useTodoStore = defineStore('todoStore', () => {
         return response
     }
 
+    watch(
+        () => AllTodos.value,
+        () => {
+            if (!AllTodos.value.length) return
+            reminderQueen.value = []
+            for (let i = 0; i < AllTodos.value.length; i++) {
+                const todo = AllTodos.value[i]
+                if (!todo.isDone && todo.state !== 'done' && todo.dueDate.endAt) {
+                    if (moment(todo.dueDate.endAt).isAfter(moment())) {
+                        reminderQueen.value?.push({
+                            index: i,
+                            id: todo.id,
+                            time: todo.dueDate.endAt
+                        })
+                    }
+                }
+            }
+            startReminder()
+        }
+    )
+
+    const startReminder = () => {
+        reminderQueen.value?.sort((a, b) => {
+            const aDate = new Date(a.time)
+            const bDate = new Date(b.time)
+            return aDate.getTime() - bDate.getTime()
+        })
+        if (reminderTimer) {
+            clearInterval(reminderTimer)
+        }
+        reminderTimer = setInterval(() => {
+            if (reminderQueen.value?.length) {
+                requestIdleCallback(() => {
+                    const { index, id, time } = reminderQueen.value[0]
+                    if (moment(time).isSameOrBefore(moment())) {
+                        reminderQueen.value.shift()
+                        console.log(`Reminder Message: ${id} is due`)
+                        console.log('Target Todo:', AllTodos.value[index])
+                        console.log('Reminder Queen:', reminderQueen.value)
+                    }
+                })
+            }
+        }, 10000)
+    }
+
     return {
         todos,
         todo,
+        AllTodos,
         pageInfo,
         countInfo,
         filterInfo,

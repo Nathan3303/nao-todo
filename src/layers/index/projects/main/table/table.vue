@@ -2,7 +2,7 @@
     <nue-div wrap="nowrap" flex style="overflow: hidden; position: relative">
         <nue-container>
             <nue-header style="padding: 0; border: none; height: fit-content" :key="$route.path">
-                <nue-div align="start" justify="space-between" wrap="nowrap" gap="16px">
+                <nue-div align="start" justify="space-between" gap="16px">
                     <todo-filter-bar
                         :count-info="countInfo"
                         :filter-info="filterInfo"
@@ -165,11 +165,6 @@ const handleShowTodoDetails = async (id: Todo['id']) => {
     detailsLoading.value = false
 }
 
-const handleCloseTodoDetails = () => {
-    todo.value = void 0
-    todoTableRef.value?.reset()
-}
-
 const handleDeleteTodo = async (id: Todo['id']) => {
     NueConfirm({
         title: '删除任务',
@@ -182,6 +177,11 @@ const handleDeleteTodo = async (id: Todo['id']) => {
         },
         () => {}
     )
+}
+
+const handleCloseTodoDetails = () => {
+    todo.value = void 0
+    todoTableRef.value?.reset()
 }
 
 const handleCreateTodoEvent = async (todoId: Todo['id'], newTodoEvent: Partial<TodoEvent>) => {

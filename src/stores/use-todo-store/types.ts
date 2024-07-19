@@ -4,7 +4,7 @@ export type TodoState = 'todo' | 'in-progress' | 'done'
 
 export type TodoProgress = { total: number; finished: number }
 
-export type TodoPriority = 0 | 1 | 2 | number | 'low' | 'medium' | 'high'
+export type TodoPriority = 'low' | 'medium' | 'high'
 
 export type TodoEvent = {
     id: string

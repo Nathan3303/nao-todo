@@ -80,7 +80,36 @@ const router = createRouter({
                 {
                     path: 'tasks',
                     name: 'tasks',
-                    component: () => import('@/views/index/tasks/index.vue')
+                    component: () => import('@/views/index/tasks/index.vue'),
+                    children: [
+                        {
+                            path: 'all',
+                            name: 'tasks-all',
+                            component: () => import('@/views/index/tasks/all/index.vue'),
+                            redirect: { name: 'tasks-all-table' },
+                            children: [
+                                {
+                                    path: 'table',
+                                    name: 'tasks-all-table',
+                                    component: () => import('@/views/index/tasks/all/table.vue'),
+                                    children: [
+                                        {
+                                            path: ':taskId',
+                                            name: 'tasks-all-table-task',
+                                            props: true,
+                                            component: () =>
+                                                import('@/views/index/tasks/all/task.vue')
+                                        }
+                                    ]
+                                },
+                                {
+                                    path: 'kanban',
+                                    name: 'tasks-all-kanban',
+                                    component: () => import('@/views/index/tasks/all/kanban.vue')
+                                }
+                            ]
+                        }
+                    ]
                 }
             ]
         }

@@ -1,0 +1,13 @@
+.tasks-view {
+    .nue-main__content {
+        flex: auto;
+    }
+
+    #TasksViewRightAside {
+        max-width: 24%;
+        min-width: 256px;
+        padding: 16px;
+        box-sizing: content-box;
+        border-left: 1px solid var(--aside-border-color);
+    }
+}

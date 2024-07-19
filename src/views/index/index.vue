@@ -1,9 +1,13 @@
 <template>
     <nue-container id="global" class="app-container">
+        <!-- 主页头部 -->
         <index-header></index-header>
-        <suspense>
-            <router-view></router-view>
-        </suspense>
+        <!-- 主页内容 -->
+        <nue-main>
+            <suspense>
+                <router-view></router-view>
+            </suspense>
+        </nue-main>
     </nue-container>
 </template>
 
