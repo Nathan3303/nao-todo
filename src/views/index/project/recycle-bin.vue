@@ -46,7 +46,7 @@
                         <todo-table
                             v-else
                             ref="todoTableRef"
-                            :todos="AllTodos"
+                            :todos="todos"
                             :columns="columns"
                             @delete-todo="handleRestoreTodo"
                             @show-todo-details="handleShowTodoDetails"
@@ -104,7 +104,8 @@ const viewStore = useViewStore()
 const todoStore = useTodoStore()
 const userStore = useUserStore()
 
-const { AllTodos, countInfo, filterInfo, pageInfo } = storeToRefs(todoStore)
+const { todos, countInfo, filterInfo, pageInfo } = storeToRefs(todoStore)
+const { user } = storeToRefs(userStore)
 const tableLoading = ref(false)
 const detailsLoading = ref(false)
 const todo = ref<Todo | undefined>()
@@ -123,11 +124,15 @@ const handleHideProjectAside = () => {
     viewStore.toggleProjectAsideVisible()
 }
 
-const getDeletedTodos = async () => {
-    const userId = userStore.user!.id
+const getDeletedTodos = async (isReload = false) => {
+    const userId = user.value!.id
     tableLoading.value = true
     filterInfo.value.isDeleted = true
-    await todoStore.getAllTodos(userId)
+    if (isReload) {
+        await todoStore.get(userId)
+    } else {
+        await todoStore.init(userId, { isDeleted: true })
+    }
     tableLoading.value = false
     filterInfo.value.isDeleted = false
 }
@@ -135,7 +140,7 @@ const getDeletedTodos = async () => {
 const handleFilterTodos = (payload: TodoFilter) => {
     const newFilterInfo = { ...filterInfo.value, ...payload }
     filterInfo.value = newFilterInfo
-    getDeletedTodos()
+    getDeletedTodos(true)
 }
 
 const handleChangeColumns = (payload: Columns) => {
@@ -146,11 +151,13 @@ const handleChangeColumns = (payload: Columns) => {
 }
 
 const handleRestoreTodo = async (todoId: string) => {
-    const response = await todoStore.update(todoId, { isDeleted: false })
+    const userId = user.value!.id
+    const response = await todoStore.update2(userId, todoId, {
+        isDeleted: false
+    })
     if (response.code === '20000') {
         NueMessage.success('任务恢复成功')
-        const newTodos = AllTodos.value.filter((todo) => todo.id !== todoId)
-        AllTodos.value = newTodos
+        getDeletedTodos(true)
     }
 }
 
@@ -166,12 +173,12 @@ const handleShowTodoDetails = async (id: Todo['id']) => {
 const handlePerPageChange = (perPage: number) => {
     pageInfo.value.page = 1
     pageInfo.value.limit = perPage
-    getDeletedTodos()
+    getDeletedTodos(true)
 }
 
 const handlePageChange = (page: number) => {
     pageInfo.value.page = page
-    getDeletedTodos()
+    getDeletedTodos(true)
 }
 
 const handleCloseTodoDetails = () => {

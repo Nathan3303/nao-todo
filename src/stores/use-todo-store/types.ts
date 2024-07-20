@@ -1,3 +1,5 @@
+import type { Project } from '../use-project-store'
+
 export type TodoStatus = 'todo' | 'in progress' | 'done'
 
 export type TodoState = 'todo' | 'in-progress' | 'done'
@@ -32,16 +34,18 @@ export type Todo = {
     isPinned: boolean
     isDone: boolean
     isDeleted: boolean
+    project: Project
 }
 
 export type ShadowTodo = Partial<Todo>
 
 export type TodoFilter = {
+    projectId?: Project['id']
     id?: Todo['id']
-    name?: Todo['name'] | ''
+    name?: Todo['name']
     state?: string
     priority?: string
-    tags?: Todo['tags'] | ''
+    tags?: Todo['tags']
     isPinned?: boolean
     isDeleted?: boolean
 }

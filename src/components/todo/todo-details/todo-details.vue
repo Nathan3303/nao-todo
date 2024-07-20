@@ -8,7 +8,7 @@
         <nue-container class="details-wrapper" v-if="shadowTodo" :key="shadowTodo?.id">
             <nue-header align="end" justify="space-between" height="48px">
                 <nue-div align="center" width="fit-content" gap="8px" height="100%">
-                    <nue-text size="16px">任务详情</nue-text>
+                    <nue-text size="18px">任务详情</nue-text>
                     <nue-div v-if="loadingState" width="fit-content" align="center" gap="4px">
                         <nue-icon name="loading" :spin="loadingState"></nue-icon>
                         <nue-text size="12px" color="gray">同步中...</nue-text>
@@ -167,6 +167,28 @@
                     </empty>
                 </template>
             </nue-main>
+            <nue-footer>
+                <nue-dropdown theme="move-to-dropdown">
+                    <template #default="{ clickTrigger }">
+                        <nue-button size="small" icon="switch" @click="clickTrigger">
+                            {{ shadowTodo.project.title }}
+                        </nue-button>
+                    </template>
+                    <template #dropdown>
+                        <nue-button
+                            theme="pure,small"
+                            v-for="project in projects"
+                            :data-selected="project.id === shadowTodo.projectId"
+                            @click="handleMoveToProject(project.id)"
+                        >
+                            {{ project.title }}
+                            <template #append>
+                                <nue-icon name="check"></nue-icon>
+                            </template>
+                        </nue-button>
+                    </template>
+                </nue-dropdown>
+            </nue-footer>
         </nue-container>
     </empty>
 </template>
@@ -181,6 +203,7 @@ const props = defineProps<TodoDetailsProps>()
 const emit = defineEmits<TodoDetailsEmits>()
 
 const {
+    projects,
     shadowTodo,
     loadingState,
     date,
@@ -194,7 +217,8 @@ const {
     handleInputButtonSubmit,
     handleUpdateTodoEvent,
     handleDeleteTodoEvent,
-    handleClose
+    handleClose,
+    handleMoveToProject
 } = useTodoDetails(props, emit)
 </script>
 

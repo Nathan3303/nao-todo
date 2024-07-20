@@ -1,12 +1,14 @@
 import { ref, reactive, watch } from 'vue'
 import { defineStore } from 'pinia'
-import type { Todo, TodoFilter, TodoCountInfo, TodoEvent } from './types'
-import type { Project, User } from '..'
 import { NueMessage } from 'nue-ui'
 import { naoTodoServer as $axios } from '@/axios'
+import { useUserStore } from '..'
 import moment from 'moment'
+import type { Todo, TodoFilter, TodoCountInfo, TodoEvent } from './types'
+import type { Project, User } from '..'
 
 export const useTodoStore = defineStore('todoStore', () => {
+    const userStore = useUserStore()
     const todo = ref<Todo>()
     const todos = ref<Todo[]>([])
     const AllTodos = ref<Todo[]>([])
@@ -18,26 +20,27 @@ export const useTodoStore = defineStore('todoStore', () => {
         byPriority: { low: 0, medium: 0, high: 0 }
     })
     const pageInfo = reactive({ page: 1, limit: 10, totalPages: 0 })
-    const filterInfo = ref<TodoFilter>({ name: '', state: '', priority: '' })
+    const filterInfo = ref<TodoFilter>({})
     const reminderQueen = ref<{ index: number; id: Todo['id']; time: string }[]>([])
     let reminderTimer: number | null = null
 
     function parseFilterInfoToQuery() {
-        const { id, name, state, priority, isPinned, isDeleted } = filterInfo.value
-        const query = []
-        if (id) query.push(`id=${id}`)
-        if (name) query.push(`name=${name}`)
-        if (state) query.push(`state=${state}`)
-        if (priority) query.push(`priority=${priority}`)
-        if (isPinned) query.push('isPinned=true')
-        if (isDeleted) query.push('isDeleted=true')
-        return query.join('&')
+        const query: string[] = []
+        Object.keys(filterInfo.value).forEach((key) => {
+            const value = filterInfo.value[key as keyof TodoFilter]
+            // if (!value) return
+            query.push(`${key}=${value}`)
+        })
+        const queryString = query.join('&')
+        // console.log(queryString)
+        return queryString
     }
 
     async function getTodosByProjectId(projectId: Project['id']) {
         const { page, limit } = pageInfo
         const filterQuery = parseFilterInfoToQuery()
         const uri = `/todos?projectId=${projectId}&page=${page}&limit=${limit}&${filterQuery}`
+        console.log(uri)
         const response = await $axios.get(uri)
         if (response.data.code === '20000') {
             const { todos: _tds, payload: _pl } = response.data.data
@@ -225,6 +228,70 @@ export const useTodoStore = defineStore('todoStore', () => {
         }
     )
 
+    /** New API Start */
+
+    const _mergeFilterInfo = (newOne: Partial<TodoFilter>) => {
+        const newFilterInfo = { ...filterInfo.value, ...newOne }
+        // console.log(newFilterInfo)
+        filterInfo.value = newFilterInfo
+    }
+
+    const _getData = async (userId: User['id']) => {
+        const { page, limit } = pageInfo
+        const filterQueryString = parseFilterInfoToQuery()
+        const pageQueryString = `page=${page}&limit=${limit}`
+        const URI = `/todos?userId=${userId}&${pageQueryString}&${filterQueryString}`
+        console.log(URI)
+        const response = await $axios.get(URI)
+        return response.data
+    }
+
+    const reset = () => {
+        todos.value = []
+        filterInfo.value = {}
+    }
+
+    const init = async (userId: User['id'], filterInfo: Partial<TodoFilter>) => {
+        reset()
+        _mergeFilterInfo(filterInfo)
+        return await get(userId)
+    }
+
+    const get = async (userId: User['id']) => {
+        const response = await _getData(userId)
+        if (response.code === '20000') {
+            // console.log(response.data)
+            const { payload } = response.data
+            todos.value = response.data.todos
+            countInfo.total = payload.countInfo.total
+            countInfo.count = payload.countInfo.count
+            countInfo.length = payload.countInfo.length
+            countInfo.byState = payload.countInfo.byState
+            countInfo.byPriority = payload.countInfo.byPriority
+            pageInfo.page = payload.pageInfo.page
+            pageInfo.limit = payload.pageInfo.limit
+            pageInfo.totalPages = payload.pageInfo.totalPages
+        }
+        return response
+    }
+
+    const update2 = async (userId: User['id'], id: Todo['id'], updateInfo: Partial<Todo>) => {
+        const URI = `/todo?userId=${userId}&id=${id}`
+        const todoIdx = todos.value.findIndex((todo) => todo.id === id)
+        const todo = todos.value[todoIdx]
+        const newTodo = { ...todo, ...updateInfo }
+        // console.log(userId, id, updateInfo, newTodo)
+        const response = await $axios.put(URI, newTodo)
+        if (response.data.code === '20000') {
+            // todos.value[todoIdx] = response.data.data
+            // console.log(filterInfo.value)
+            // await get(userId)
+        }
+        return response.data
+    }
+
+    /** New API End */
+
     const startReminder = () => {
         reminderQueen.value?.sort((a, b) => {
             const aDate = new Date(a.time)
@@ -267,6 +334,11 @@ export const useTodoStore = defineStore('todoStore', () => {
         deleteTodoEvent,
         getTodosByDate,
         getAllTodos,
-        getTodosByFilterInfo
+        getTodosByFilterInfo,
+        // New APIs
+        reset,
+        init,
+        get,
+        update2
     }
 })

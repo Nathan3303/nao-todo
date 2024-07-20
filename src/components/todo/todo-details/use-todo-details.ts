@@ -1,16 +1,19 @@
 import { ref, reactive, watch, computed } from 'vue'
 import type { InputButtonSubmitPayload, TodoEventRowUpdatePayload } from '@/components'
 import moment from 'moment'
-import { useTodoStore } from '@/stores'
-import type { Todo, TodoEvent } from '@/stores'
+import { useTodoStore, useProjectStore } from '@/stores'
+import type { Project, Todo, TodoEvent } from '@/stores'
 import { useDateInfo } from '@/utils/todo/use-date-info'
 import type { TodoDetailsEmits, TodoDetailsProps } from './types'
-import { NueMessage } from 'nue-ui'
+import { NueConfirm, NueMessage } from 'nue-ui'
+import { storeToRefs } from 'pinia'
 
+const projectStore = useProjectStore()
 const todoStore = useTodoStore()
 const dateInfo = useDateInfo()
 
 export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) => {
+    const { projects } = storeToRefs(projectStore)
     const shadowTodo = ref<Todo | undefined>()
     const loadingState = ref(false)
     const date = reactive({ startAt: '', endAt: '' })
@@ -52,30 +55,32 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
     }
 
     const updateCompare = (oldTodo: Todo, newTodo: Todo) => {
+        const projectIdCompare = oldTodo.projectId === newTodo.projectId
         const nameCompare = oldTodo.name === newTodo.name
         const descriptionCompare = oldTodo.description === newTodo.description
         const priorityCompare = oldTodo.priority === newTodo.priority
         const stateCompare = oldTodo.state === newTodo.state
         const dueDateCompare = oldTodo.dueDate === newTodo.dueDate
-        const eventsCompare = oldTodo.events.length === newTodo.events.length
+        // const eventsCompare = oldTodo.events.length === newTodo.events.length
         const pinnedCompare = oldTodo.isPinned === newTodo.isPinned
         return (
+            projectIdCompare &&
             nameCompare &&
             descriptionCompare &&
             priorityCompare &&
             stateCompare &&
             dueDateCompare &&
-            eventsCompare &&
+            // eventsCompare &&
             pinnedCompare
         )
     }
 
     const updateTodo = (delay?: any) => {
-        delay = delay === 0 ? 0 : 1000
-        loadingState.value = true
-        if (timer) clearTimeout(timer)
-        timer = setTimeout(() => {
-            requestIdleCallback(async () => {
+        return new Promise((resolve) => {
+            delay = delay === 0 ? 0 : 1000
+            if (timer) clearTimeout(timer)
+            timer = setTimeout(async () => {
+                loadingState.value = true
                 const { todo } = props
                 if (!shadowTodo.value && !todo) return
                 const isSame = updateCompare(todo!, shadowTodo.value!)
@@ -83,13 +88,14 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
                     const response = await todoStore.update(todo?.id!, shadowTodo.value!)
                     if (response.code === '20000') {
                         shadowTodo.value = response.data
-                        NueMessage.success('任务更新成功')
+                        resolve(response)
+                        // NueMessage.success('任务更新成功')
                     }
                 }
                 loadingState.value = false
                 timer = null
-            })
-        }, delay)
+            }, delay)
+        })
     }
 
     const handleChangeDate = () => {
@@ -143,6 +149,28 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         emit('closeTodoDetails')
     }
 
+    const handleMoveToProject = async (projectId: string) => {
+        // const project = projects.value.find((item) => item.id === projectId)
+        shadowTodo.value!.projectId = projectId
+        await updateTodo(0)
+        emit('refresh')
+        // console.log(project);
+        // NueConfirm({
+        //     title: '移动任务',
+        //     content: `确定要移动任务到 "${project?.title}" 项目吗？`,
+        //     confirmButtonText: '确定',
+        //     cancelButtonText: '取消'
+        // }).then(
+        //     async () => {
+        //         shadowTodo.value!.projectId = projectId
+        //         // shadowTodo.value!.project = project as Project
+        //         await updateTodo(0)
+        //         emit('refresh')
+        //     },
+        //     () => {}
+        // )
+    }
+
     watch(
         () => props.todo,
         (newValue) => {
@@ -155,6 +183,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
     )
 
     return {
+        projects,
         shadowTodo,
         loadingState,
         date,
@@ -168,6 +197,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         handleInputButtonSubmit,
         handleUpdateTodoEvent,
         handleDeleteTodoEvent,
-        handleClose
+        handleClose,
+        handleMoveToProject
     }
 }

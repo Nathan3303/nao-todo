@@ -61,6 +61,7 @@
                 @close-todo-details="handleCloseTodoDetails"
                 @create-todo-event="handleCreateTodoEvent"
                 @update-todo-event="handleUpdateTodoEvent"
+                @refresh="handleRefresh"
             ></todo-details>
         </nue-div>
     </nue-div>
@@ -104,18 +105,24 @@ const columns = ref<Columns>({
 })
 const todoTableRef = ref<InstanceType<typeof TodoTable>>()
 
-const handleGetTodos = async () => {
+const handleGetTodos = async (isReload = false) => {
+    const userId = user.value!.id
     tableLoading.value = true
-    await todoStore.getTodosByProjectId(props.projectId)
-    setTimeout(() => {
-        tableLoading.value = false
-    }, 512)
+    if (isReload) {
+        await todoStore.get(userId)
+    } else {
+        await todoStore.init(userId, {
+            projectId: props.projectId,
+            isDeleted: false
+        })
+    }
+    tableLoading.value = false
 }
 
 const handleFilterTodos = (payload: TodoFilter) => {
     const newFilterInfo = { ...filterInfo.value, ...payload }
     filterInfo.value = newFilterInfo
-    handleGetTodos()
+    handleGetTodos(true)
 }
 
 const handleChangeColumns = (payload: Columns) => {
@@ -128,12 +135,12 @@ const handleChangeColumns = (payload: Columns) => {
 const handlePerPageChange = (perPage: number) => {
     pageInfo.value.page = 1
     pageInfo.value.limit = perPage
-    handleGetTodos()
+    handleGetTodos(true)
 }
 
 const handlePageChange = (page: number) => {
     pageInfo.value.page = page
-    handleGetTodos()
+    handleGetTodos(true)
 }
 
 const handleAddTodo = async () => {
@@ -149,7 +156,7 @@ const handleAddTodo = async () => {
             const { id: userId } = user.value!
             const res = await todoStore.createTodo(projectId, value as string, userId)
             if (res.code === '20000') {
-                handleGetTodos()
+                handleGetTodos(true)
             }
         },
         () => {}
@@ -173,7 +180,13 @@ const handleDeleteTodo = async (id: Todo['id']) => {
         cancelButtonText: '取消'
     }).then(
         async () => {
-            await todoStore.remove(id)
+            const userId = user.value!.id
+            const response = await todoStore.update2(userId, id, {
+                isDeleted: true
+            })
+            if (response.code === '20000') {
+                await todoStore.get(userId)
+            }
         },
         () => {}
     )
@@ -194,6 +207,10 @@ const handleUpdateTodoEvent = async (id: TodoEvent['id'], newTodoEvent: Partial<
 
 const handleSwitchView = () => {
     viewStore.toggleSimpleProjectHeader()
+}
+
+const handleRefresh = async () => {
+    await todoStore.get(user.value!.id)
 }
 
 handleGetTodos()
