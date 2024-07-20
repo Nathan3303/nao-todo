@@ -6,13 +6,21 @@
         full-height
     >
         <nue-container class="details-wrapper" v-if="shadowTodo" :key="shadowTodo?.id">
-            <nue-header align="center" justify="space-between" height="36px">
-                <nue-div align="center" width="fit-content" gap="8px">
+            <nue-header align="end" justify="space-between" height="48px">
+                <nue-div align="center" width="fit-content" gap="8px" height="100%">
                     <nue-text size="16px">任务详情</nue-text>
-                    <nue-icon name="loading" v-if="loadingState" :spin="loadingState"></nue-icon>
+                    <nue-div v-if="loadingState" width="fit-content" align="center" gap="4px">
+                        <nue-icon name="loading" :spin="loadingState"></nue-icon>
+                        <nue-text size="12px" color="gray">同步中...</nue-text>
+                    </nue-div>
                 </nue-div>
-                <nue-div width="fit-content" gap="8px" align="center">
-                    <nue-button theme="small" @click="emit('closeTodoDetails')" icon="clear">
+                <nue-div width="fit-content" gap="8px" align="center" height="100%">
+                    <nue-button
+                        theme="small"
+                        @click="handleClose"
+                        icon="clear"
+                        :disabled="loadingState"
+                    >
                         关闭
                     </nue-button>
                 </nue-div>
@@ -98,7 +106,7 @@
                                         active-icon="heart-fill"
                                         text="收藏"
                                         active-text="取消收藏"
-                                        @change="updateTodo"
+                                        @change="() => updateTodo()"
                                     ></switch-button>
                                 </details-row>
                             </nue-div>
@@ -185,7 +193,8 @@ const {
     handleSwitchEndDate,
     handleInputButtonSubmit,
     handleUpdateTodoEvent,
-    handleDeleteTodoEvent
+    handleDeleteTodoEvent,
+    handleClose
 } = useTodoDetails(props, emit)
 </script>
 

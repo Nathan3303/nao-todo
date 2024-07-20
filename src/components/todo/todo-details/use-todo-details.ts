@@ -5,6 +5,7 @@ import { useTodoStore } from '@/stores'
 import type { Todo, TodoEvent } from '@/stores'
 import { useDateInfo } from '@/utils/todo/use-date-info'
 import type { TodoDetailsEmits, TodoDetailsProps } from './types'
+import { NueMessage } from 'nue-ui'
 
 const todoStore = useTodoStore()
 const dateInfo = useDateInfo()
@@ -69,22 +70,26 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         )
     }
 
-    const updateTodo = () => {
+    const updateTodo = (delay?: any) => {
+        delay = delay === 0 ? 0 : 1000
         loadingState.value = true
         if (timer) clearTimeout(timer)
-        timer = setTimeout(async () => {
-            const { todo } = props
-            if (!shadowTodo.value && !todo) return
-            const isSame = updateCompare(todo!, shadowTodo.value!)
-            if (!isSame) {
-                const response = await todoStore.update(todo?.id!, shadowTodo.value!)
-                if (response.code === '20000') {
-                    shadowTodo.value = response.data
+        timer = setTimeout(() => {
+            requestIdleCallback(async () => {
+                const { todo } = props
+                if (!shadowTodo.value && !todo) return
+                const isSame = updateCompare(todo!, shadowTodo.value!)
+                if (!isSame) {
+                    const response = await todoStore.update(todo?.id!, shadowTodo.value!)
+                    if (response.code === '20000') {
+                        shadowTodo.value = response.data
+                        NueMessage.success('任务更新成功')
+                    }
                 }
-            }
-            loadingState.value = false
-            timer = null
-        }, 512)
+                loadingState.value = false
+                timer = null
+            })
+        }, delay)
     }
 
     const handleChangeDate = () => {
@@ -130,8 +135,12 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
 
     const handleDeleteTodoEvent = async (id: TodoEvent['id']) => {
         loadingState.value = true
-        const res = await todoStore.deleteTodoEvent(id)
+        await todoStore.deleteTodoEvent(id)
         setTimeout(() => (loadingState.value = false), 512)
+    }
+
+    const handleClose = () => {
+        emit('closeTodoDetails')
     }
 
     watch(
@@ -158,6 +167,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         handleSwitchEndDate,
         handleInputButtonSubmit,
         handleUpdateTodoEvent,
-        handleDeleteTodoEvent
+        handleDeleteTodoEvent,
+        handleClose
     }
 }

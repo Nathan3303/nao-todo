@@ -1,15 +1,16 @@
 <template>
-    <nue-div class="project-card" vertical theme="card" @click="handleGoToProject">
+    <nue-div class="project-card" vertical theme="card" @click="handleClick">
         <nue-div vertical gap="4px" flex>
-            <nue-text size="16px">{{ project.title }}</nue-text>
+            <nue-div align="center" justify="space-between">
+                <nue-text size="16px">{{ project.title }}</nue-text>
+                <nue-div align="center" width="fit-content">
+                    <slot name="ops"></slot>
+                </nue-div>
+            </nue-div>
             <nue-text size="12px" color="gray">
                 {{ project.description || 'No description' }}
             </nue-text>
         </nue-div>
-        <!-- <nue-div style="margin-top: 36px" gap="6px">
-            <nue-button theme="small">Study</nue-button>
-            <nue-button theme="small">UI Design</nue-button>
-        </nue-div> -->
         <nue-divider></nue-divider>
         <nue-div wrap="nowrap">
             <nue-text size="12px" color="gray">4/16</nue-text>
@@ -20,17 +21,14 @@
 </template>
 
 <script setup lang="ts">
-import type { Project } from '@/stores/use-project-store'
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
+import { useProjectCard } from './use-project-card'
+import type { ProjectCardProps, ProjectCardEmits } from './types'
 
 defineOptions({ name: 'ProjectCard' })
-const props = defineProps<{ project: Project }>()
+const props = defineProps<ProjectCardProps>()
+const emit = defineEmits<ProjectCardEmits>()
 
-function handleGoToProject() {
-    router.push({ name: 'project-main', params: { projectId: props.project.id } })
-}
+const { handleClick } = useProjectCard(props, emit)
 </script>
 
 <style scoped>

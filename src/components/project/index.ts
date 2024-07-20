@@ -1,3 +1,4 @@
+export * from './project-board'
 export * from './project-card'
 export * from './project-details'
 export * from './create-project-dialog'

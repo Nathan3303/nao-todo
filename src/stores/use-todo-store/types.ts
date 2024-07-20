@@ -31,6 +31,7 @@ export type Todo = {
     events: TodoEvent[]
     isPinned: boolean
     isDone: boolean
+    isDeleted: boolean
 }
 
 export type ShadowTodo = Partial<Todo>
@@ -42,6 +43,7 @@ export type TodoFilter = {
     priority?: string
     tags?: Todo['tags'] | ''
     isPinned?: boolean
+    isDeleted?: boolean
 }
 
 export type TodoCountByState = {

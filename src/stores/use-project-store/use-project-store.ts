@@ -8,6 +8,7 @@ import { naoTodoServer } from '@/axios'
 export const useProjectStore = defineStore('projectStore', () => {
     const userStore = useUserStore()
     const projects = ref<Project[]>([])
+    const archivedProjects = ref<Project[]>([])
 
     async function getProjects() {
         const userId = userStore.user?.id
@@ -18,7 +19,25 @@ export const useProjectStore = defineStore('projectStore', () => {
         const response = await naoTodoServer.get(`/projects?userId=${userId}`)
         if (response.data.code === '20000') {
             // console.log(response.data.data)
-            projects.value = response.data.data
+            response.data.data.forEach((project: Project) => {
+                if (project.isArchived) {
+                    // archivedProjects.value.push(project)
+                } else {
+                    projects.value.push(project)
+                }
+            })
+            // projects.value = response.data.data
+        }
+        return response.data
+    }
+
+    const getArchivedProjects = async () => {
+        const { id: userId } = userStore.user!
+        const URI = `/projects?userId=${userId}&isArchived=true`
+        // console.log(URI)
+        const response = await naoTodoServer.get(URI)
+        if (response.data.code === '20000') {
+            archivedProjects.value = response.data.data
         }
         return response.data
     }
@@ -63,5 +82,37 @@ export const useProjectStore = defineStore('projectStore', () => {
         return response.data
     }
 
-    return { projects, getProjects, createProject, deleteProject, updateProject }
+    async function archiveProject(projectId: string) {
+        const response = await updateProject(projectId, { isArchived: true })
+        if (response.code === '20000') {
+            const index = projects.value.findIndex((project) => project.id === projectId)
+            const project = projects.value[index]
+            projects.value.splice(index, 1)
+            archivedProjects.value.push(project)
+        }
+        return response
+    }
+
+    const unarchiveProject = async (projectId: string) => {
+        const response = await updateProject(projectId, { isArchived: false })
+        if (response.code === '20000') {
+            const index = archivedProjects.value.findIndex((project) => project.id === projectId)
+            const project = archivedProjects.value[index]
+            projects.value.push(project)
+            archivedProjects.value.splice(index, 1)
+        }
+        return response
+    }
+
+    return {
+        projects,
+        archivedProjects,
+        getProjects,
+        createProject,
+        deleteProject,
+        updateProject,
+        getArchivedProjects,
+        archiveProject,
+        unarchiveProject
+    }
 })

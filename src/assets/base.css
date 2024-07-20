@@ -94,3 +94,8 @@ body {
     width: 100vw;
     height: 100vh;
 }
+
+.nue-link--disabled {
+    opacity: 0.6;
+    background-color: #f5f5f5;
+}

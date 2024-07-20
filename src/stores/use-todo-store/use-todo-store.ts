@@ -23,13 +23,14 @@ export const useTodoStore = defineStore('todoStore', () => {
     let reminderTimer: number | null = null
 
     function parseFilterInfoToQuery() {
-        const { id, name, state, priority, isPinned } = filterInfo.value
+        const { id, name, state, priority, isPinned, isDeleted } = filterInfo.value
         const query = []
         if (id) query.push(`id=${id}`)
         if (name) query.push(`name=${name}`)
         if (state) query.push(`state=${state}`)
         if (priority) query.push(`priority=${priority}`)
-        if (isPinned) query.push('isPinned=1')
+        if (isPinned) query.push('isPinned=true')
+        if (isDeleted) query.push('isDeleted=true')
         return query.join('&')
     }
 

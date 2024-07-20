@@ -1,16 +1,15 @@
 <template>
     <nue-div class="app-aside" vertical align="stretch" flex>
-        <!-- 顶部菜单 -->
         <nue-div vertical gap="8px" align="stretch">
             <nue-link theme="btnlike" icon="board" :route="{ name: 'project-dashboard' }">
                 仪表盘
             </nue-link>
-            <nue-link theme="btnlike" icon="board" disabled> 收集箱 </nue-link>
+            <nue-link theme="btnlike" icon="archive2" :route="{ name: 'project-archived' }">
+                已归档
+            </nue-link>
+            <!-- <nue-divider></nue-divider> -->
         </nue-div>
-
-        <!-- 清单列表 -->
         <nue-collapse v-model="collapseItemsRecord">
-            <!-- Projects collapse -->
             <nue-collapse-item name="projects">
                 <template #header="{ collapse, state }">
                     <nue-button
@@ -45,16 +44,14 @@
                 </nue-link>
             </nue-collapse-item>
         </nue-collapse>
-
-        <!-- 底部菜单 -->
         <nue-div vertical gap="8px" align="stretch" style="margin-top: auto">
-            <nue-link theme="btnlike" icon="success" disabled> 已完成 </nue-link>
-            <nue-link theme="btnlike" icon="delete" disabled> 回收站 </nue-link>
+            <nue-link theme="btnlike" icon="inbox" disabled> 收集箱 </nue-link>
+            <nue-link theme="btnlike" icon="delete" :route="{ name: 'project-recycle-bin' }">
+                回收站
+            </nue-link>
             <nue-divider></nue-divider>
             <nue-link theme="btnlike" icon="setting" disabled> 设置 </nue-link>
         </nue-div>
-
-        <!-- Add project dialog -->
         <create-project-dialog
             ref="createProjectDialogRef"
             @create="handleCreateProject"
@@ -63,10 +60,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { useProjectStore, type Project } from '@/stores/use-project-store'
-import { CreateProjectDialog, type NewProjectPayload } from '@/components/project'
-import { NueMessage, NuePrompt } from 'nue-ui'
+import { ref } from 'vue'
+import { useProjectStore } from '@/stores'
+import { CreateProjectDialog } from '@/components'
+import type { NewProjectPayload } from '@/components'
 import { storeToRefs } from 'pinia'
 
 const projectStore = useProjectStore()
@@ -98,10 +95,5 @@ const handleCreateProject = async (payload: NewProjectPayload) => {
         text-overflow: ellipsis;
         white-space: nowrap;
     }
-}
-
-.nue-link--disabled {
-    opacity: 0.6;
-    background-color: #f5f5f5;
 }
 </style>

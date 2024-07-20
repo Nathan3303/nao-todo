@@ -49,6 +49,11 @@ const router = createRouter({
                             component: () => import('@/views/index/project/dashboard.vue')
                         },
                         {
+                            path: 'archived',
+                            name: 'project-archived',
+                            component: () => import('@/views/index/project/archived.vue')
+                        },
+                        {
                             path: ':projectId',
                             name: 'project-main',
                             props: true,
@@ -74,43 +79,48 @@ const router = createRouter({
                                     component: () => import('@/views/index/project/main/kanban.vue')
                                 }
                             ]
-                        }
-                    ]
-                },
-                {
-                    path: 'tasks',
-                    name: 'tasks',
-                    component: () => import('@/views/index/tasks/index.vue'),
-                    children: [
+                        },
                         {
-                            path: 'all',
-                            name: 'tasks-all',
-                            component: () => import('@/views/index/tasks/all/index.vue'),
-                            redirect: { name: 'tasks-all-table' },
-                            children: [
-                                {
-                                    path: 'table',
-                                    name: 'tasks-all-table',
-                                    component: () => import('@/views/index/tasks/all/table.vue'),
-                                    children: [
-                                        {
-                                            path: ':taskId',
-                                            name: 'tasks-all-table-task',
-                                            props: true,
-                                            component: () =>
-                                                import('@/views/index/tasks/all/task.vue')
-                                        }
-                                    ]
-                                },
-                                {
-                                    path: 'kanban',
-                                    name: 'tasks-all-kanban',
-                                    component: () => import('@/views/index/tasks/all/kanban.vue')
-                                }
-                            ]
+                            path: 'recycle-bin',
+                            name: 'project-recycle-bin',
+                            component: () => import('@/views/index/project/recycle-bin.vue')
                         }
                     ]
                 }
+                // {
+                //     path: 'tasks',
+                //     name: 'tasks',
+                //     component: () => import('@/views/index/tasks/index.vue'),
+                //     children: [
+                //         {
+                //             path: 'all',
+                //             name: 'tasks-all',
+                //             component: () => import('@/views/index/tasks/all/index.vue'),
+                //             redirect: { name: 'tasks-all-table' },
+                //             children: [
+                //                 {
+                //                     path: 'table',
+                //                     name: 'tasks-all-table',
+                //                     component: () => import('@/views/index/tasks/all/table.vue'),
+                //                     children: [
+                //                         {
+                //                             path: ':taskId',
+                //                             name: 'tasks-all-table-task',
+                //                             props: true,
+                //                             component: () =>
+                //                                 import('@/views/index/tasks/all/task.vue')
+                //                         }
+                //                     ]
+                //                 },
+                //                 {
+                //                     path: 'kanban',
+                //                     name: 'tasks-all-kanban',
+                //                     component: () => import('@/views/index/tasks/all/kanban.vue')
+                //                 }
+                //             ]
+                //         }
+                //     ]
+                // }
             ]
         }
     ]

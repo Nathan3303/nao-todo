@@ -1,46 +1,47 @@
 <template>
     <!-- Project title -->
-    <nue-div justify="space-between" wrap="nowrap">
-        <nue-div vertical gap="4px" flex>
+    <nue-div vertical gap="4px">
+        <nue-div justify="space-between" wrap="nowrap">
             <nue-div align="center" width="fit-content" gap="8px">
-                <nue-button
-                    theme="icon-only"
-                    icon="more2"
-                    @click="handleHideProjectAside"
-                    style="--icon-size: 22px"
-                ></nue-button>
+                <tooltip :content="`${pav ? '收起' : '展开'}菜单侧栏`" align="left">
+                    <nue-button
+                        theme="icon-only"
+                        :icon="pav ? 'menu-close' : 'menu-open'"
+                        @click="handleHideProjectAside"
+                    ></nue-button>
+                </tooltip>
                 <click-to-edit
                     :text="project?.title"
                     @edit="handleEditName"
-                    size="26px"
-                    weight="bold"
+                    size="24px"
                 ></click-to-edit>
             </nue-div>
-            <click-to-edit
-                :text="project?.description"
-                emptyholder="Click to add description"
-                @edit="handleEditDescription"
-                size="14px"
-                color="gray"
-            ></click-to-edit>
-        </nue-div>
-        <nue-div align="center" justify="end" width="fit-content" gap="8px">
-            <nue-button theme="icon-only" icon="warning" @click="showProjectDetailsDialog">
-            </nue-button>
-            <nue-button
-                theme="icon-only"
-                icon="delete"
-                @click="handleDeleteProject"
-                style="color: red"
-            >
-            </nue-button>
-            <nue-div align="center" gap="8px" width="fit-content" style="margin-left: 4px">
-                <!-- <nue-text size="12px">创建者</nue-text> -->
+            <nue-div align="center" justify="end" width="fit-content">
+                <tooltip content="归档项目">
+                    <nue-button theme="icon-only" icon="archive" @click="handleArchiveProject" />
+                </tooltip>
+                <tooltip content="项目详情">
+                    <nue-button
+                        theme="icon-only"
+                        icon="warning"
+                        @click="showProjectDetailsDialog"
+                    />
+                </tooltip>
+                <tooltip content="删除项目">
+                    <nue-button theme="icon-only" icon="delete" @click="handleDeleteProject" />
+                </tooltip>
                 <nue-avatar
                     src="https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif?imageView2/1/w/80/h/80"
                 ></nue-avatar>
             </nue-div>
         </nue-div>
+        <click-to-edit
+            :text="project?.description"
+            emptyholder="Click to add description"
+            @edit="handleEditDescription"
+            size="14px"
+            color="gray"
+        ></click-to-edit>
     </nue-div>
 
     <!-- Project navigation -->
@@ -63,19 +64,21 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import type { ProjectsMainHeaderEmits, ProjectsMainHeaderProps } from './types'
-import { ClickToEdit, ProjectDetailsDialog } from '@/components'
+import { ClickToEdit, ProjectDetailsDialog, Tooltip } from '@/components'
 import { useProjectStore, useViewStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 
 const props = defineProps<ProjectsMainHeaderProps>()
 const emit = defineEmits<ProjectsMainHeaderEmits>()
 
+const router = useRouter()
 const projectStore = useProjectStore()
 const viewStore = useViewStore()
 
-const { simpleProjectHeader: sph } = storeToRefs(viewStore)
+const { simpleProjectHeader: sph, projectAsideVisible: pav } = storeToRefs(viewStore)
 const projectDetailsDialogRef = ref<InstanceType<typeof ProjectDetailsDialog>>()
 
 const showProjectDetailsDialog = () => {
@@ -85,13 +88,15 @@ const showProjectDetailsDialog = () => {
 const handleDeleteProject = () => {
     NueConfirm({
         title: '删除项目',
-        content: '确定要删除该项目吗？'
+        content: '确定要删除该项目吗？',
+        confirmButtonText: '确定',
+        cancelButtonText: '取消'
     }).then(
         async () => {
             const { id } = props.project
             await projectStore.deleteProject(id)
         },
-        () => NueMessage.info('Operation canceled')
+        () => NueMessage.info('操作取消')
     )
 }
 
@@ -109,9 +114,30 @@ const handleHideProjectAside = () => {
     viewStore.toggleProjectAsideVisible()
     // console.log('hideProjectAside');
 }
+
+const handleArchiveProject = async () => {
+    NueConfirm({
+        title: '归档项目',
+        content: '确定要归档该项目吗？归档后的项目将无法再进行编辑、删除等操作。',
+        confirmButtonText: '确定',
+        cancelButtonText: '取消'
+    }).then(
+        async () => {
+            const { id } = props.project
+            await projectStore.archiveProject(id)
+            router.replace({ name: 'project-dashboard' })
+        },
+        () => NueMessage.info('操作取消')
+    )
+}
 </script>
 
 <style scoped>
+.nue-button--icon-only {
+    --icon-weight: 600;
+    --icon-size: 16px;
+}
+
 .project-navigations {
     width: fit-content;
     gap: 0px;

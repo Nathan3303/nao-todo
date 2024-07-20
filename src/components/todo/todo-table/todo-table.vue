@@ -77,8 +77,7 @@
                 </nue-div>
                 <nue-div class="todo-table__body__col col-actions">
                     <nue-icon
-                        name="delete"
-                        color="red"
+                        :name="todo.isDeleted ? 'restore' : 'delete'"
                         @click.stop="handleDelete(todo.id)"
                     ></nue-icon>
                 </nue-div>
