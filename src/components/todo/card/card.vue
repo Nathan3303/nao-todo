@@ -20,7 +20,7 @@
                     <nue-div class="todo-card__actions">
                         <nue-button
                             theme="pure"
-                            icon="delete"
+                            :icon="todo.isDeleted ? 'restore' : 'delete'"
                             @click.stop="handleDelete"
                         ></nue-button>
                     </nue-div>
@@ -72,8 +72,12 @@ const handleClick = () => {
 }
 
 const handleDelete = () => {
-    const { id: todoId } = props.todo
-    emit('delete', todoId)
+    const { id: todoId, isDeleted } = props.todo
+    if (isDeleted) {
+        emit('restore', todoId)
+    } else {
+        emit('delete', todoId)
+    }
 }
 
 const handleFinish = () => {

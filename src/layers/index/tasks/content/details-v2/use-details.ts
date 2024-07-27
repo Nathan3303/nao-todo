@@ -133,6 +133,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
     const handleUpdateTodoEvent = (event: TodoEventRowUpdatePayload) => {
         const id = event.id
         const newTodoEvent = event
+        console.log(newTodoEvent)
         loadingState.value = true
         emit('updateTodoEvent', id, newTodoEvent)
         setTimeout(() => (loadingState.value = false), 512)

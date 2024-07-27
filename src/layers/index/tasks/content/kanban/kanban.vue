@@ -17,6 +17,11 @@
                     ></list-column-switcher>
                     <nue-button
                         theme="small"
+                        icon="switch"
+                        @click="viewStore.toggleSimpleProjectHeader()"
+                    ></nue-button>
+                    <nue-button
+                        theme="small"
                         icon="refresh"
                         @click="handleRefresh"
                         :loading="kanbanLoading || !!refreshTimer"
@@ -33,10 +38,18 @@
                     <content-kanban-column
                         :category="key"
                         :todos="value"
+                        :data-category="key"
                         @show-todo-details="handleShowTodoDetails"
                         @delete-todo="handleDeleteTodo"
+                        @restore-todo="handleRestoreTodo"
                         @finish-todo="handleFinishTodo"
                         @unfinish-todo="handleUnfinishTodo"
+                        data-droppable="true"
+                        @dragstart="handleDragStart"
+                        @dragenter="handleDragEnter"
+                        @dragover="handleDragOver"
+                        @dragend="handleDragEnd"
+                        @drop="handleDrop"
                     ></content-kanban-column>
                 </template>
             </template>
@@ -50,7 +63,7 @@ import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { Loading, TodoFilterBar, ListColumnSwitcher } from '@/components'
 import { ContentKanbanColumn } from '../kanban-column'
-import { useTodoStore, useUserStore } from '@/stores'
+import { useTodoStore, useUserStore, useViewStore } from '@/stores'
 import { NueConfirm, NueMessage, NuePrompt } from 'nue-ui'
 import type { ContentKanbanProps, ContentKanbanEmits } from './types'
 import type { Columns } from '@/components'
@@ -62,11 +75,13 @@ const emit = defineEmits<ContentKanbanEmits>()
 const router = useRouter()
 const userStore = useUserStore()
 const todoStore = useTodoStore()
+const viewStore = useViewStore()
 
 const { todos, countInfo, filterInfo } = storeToRefs(todoStore)
 const { user } = storeToRefs(userStore)
 const kanbanLoading = ref(false)
 const refreshTimer = ref<number | null>(null)
+const draggingTodoId = ref('abc')
 const columns = ref<Columns>(
     props.columns || {
         state: true,
@@ -151,12 +166,20 @@ const handleDeleteTodo = async (todoId: Todo['id']) => {
     NueMessage.success('任务删除成功')
 }
 
+const handleRestoreTodo = async (todoId: Todo['id']) => {
+    const userId = user.value!.id
+    const res = await todoStore.update2(userId, todoId, { isDeleted: false })
+    if (res.code !== '20000') return
+    await todoStore.removeLocal(todoId)
+    NueMessage.success('任务恢复成功')
+}
+
 const handleFinishTodo = async (todoId: Todo['id']) => {
     const userId = user.value!.id
     const res = await todoStore.update2(userId, todoId, { state: 'done', isDone: true })
     if (res.code !== '20000') return
     await todoStore.updateLocal(todoId, { state: 'done', isDone: true })
-    NueMessage.success('任务更新成功')
+    // NueMessage.success('任务更新成功')
 }
 
 const handleUnfinishTodo = async (todoId: Todo['id']) => {
@@ -164,7 +187,76 @@ const handleUnfinishTodo = async (todoId: Todo['id']) => {
     const res = await todoStore.update2(userId, todoId, { isDone: false, state: 'todo' })
     if (res.code !== '20000') return
     await todoStore.updateLocal(todoId, { isDone: false, state: 'todo' })
-    NueMessage.success('任务更新成功')
+    // NueMessage.success('任务更新成功')
+}
+
+const handleDragStart = (event: DragEvent) => {
+    const target = event.target as HTMLElement
+    draggingTodoId.value = target.dataset.todoid as string
+}
+
+const handleDragOver = (event: DragEvent) => {
+    event.preventDefault()
+    event.dataTransfer!.dropEffect = 'move'
+}
+
+const handleRemoveDragOverClass = () => {
+    document.querySelectorAll('.kanban-column__main--drag-over').forEach((element) => {
+        element.classList.remove('kanban-column__main--drag-over')
+    })
+}
+
+const getDropNode = (node: HTMLElement) => {
+    while (node) {
+        if (node.dataset.droppable === 'true') {
+            return node
+        }
+        if (node.parentNode) {
+            node = node.parentNode as HTMLElement
+        }
+    }
+}
+
+const getTargetNode = (node: HTMLElement) => {
+    while (node) {
+        if (node.dataset.category) {
+            return node
+        }
+        if (node.parentNode) {
+            node = node.parentNode as HTMLElement
+        }
+    }
+}
+
+const handleDragEnter = (event: DragEvent) => {
+    event.preventDefault()
+    handleRemoveDragOverClass()
+    const element = getDropNode(event.target as HTMLElement)
+    if (element && element.dataset.droppable === 'true') {
+        element.classList.add('kanban-column__main--drag-over')
+    }
+}
+
+const handleDragEnd = () => {
+    handleRemoveDragOverClass()
+}
+
+const handleDrop = (event: DragEvent) => {
+    handleRemoveDragOverClass()
+    const element = getTargetNode(event.target as HTMLElement)
+    if (!element) return
+    const category = element.dataset.category as string
+    if (!category) return
+    const userId = user.value!.id
+    const todoId = draggingTodoId.value
+    const updateInfo = { state: category as Todo['state'] }
+    todoStore.update2(userId, todoId, updateInfo).then(
+        async () => {
+            await todoStore.updateLocal(todoId, updateInfo)
+            // NueMessage.success('任务状态更新成功')
+        },
+        () => {}
+    )
 }
 
 handleGetTodos()

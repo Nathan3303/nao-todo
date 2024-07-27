@@ -17,6 +17,11 @@
                     ></list-column-switcher>
                     <nue-button
                         theme="small"
+                        icon="switch"
+                        @click="viewStore.toggleSimpleProjectHeader()"
+                    ></nue-button>
+                    <nue-button
+                        theme="small"
                         icon="refresh"
                         @click="handleRefresh"
                         :loading="tableLoading || !!refreshTimer"
@@ -61,7 +66,7 @@
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { TodoTable, Loading, TodoFilterBar, ListColumnSwitcher, Pager } from '@/components'
-import { useTodoStore, useUserStore } from '@/stores'
+import { useTodoStore, useUserStore, useViewStore } from '@/stores'
 import { NueConfirm, NueMessage, NuePrompt } from 'nue-ui'
 import { storeToRefs } from 'pinia'
 import type { Columns } from '@/components'
@@ -75,6 +80,7 @@ const emit = defineEmits<ContentTableEmits>()
 const router = useRouter()
 const todoStore = useTodoStore()
 const userStore = useUserStore()
+const viewStore = useViewStore()
 
 const { todos, pageInfo, countInfo, filterInfo } = storeToRefs(todoStore)
 const { user } = storeToRefs(userStore)

@@ -45,6 +45,7 @@
                     </nue-div>
                 </nue-div>
                 <click-to-edit
+                    v-if="!sph"
                     :text="project?.description"
                     emptyholder="点击添加清单描述"
                     @edit="handleEditDescription"
@@ -64,7 +65,7 @@
                         ></nue-button>
                         <nue-text size="24px"> {{ title }} </nue-text>
                     </nue-div>
-                    <nue-text size="14px" color="gray">
+                    <nue-text v-if="!sph" size="14px" color="gray">
                         <slot name="subTitle"> {{ subTitle }} </slot>
                     </nue-text>
                 </nue-div>
@@ -73,7 +74,7 @@
                 </nue-div>
             </nue-div>
         </template>
-        <nue-div wrap="nowrap" align="center">
+        <nue-div v-if="!sph" wrap="nowrap" align="center">
             <nue-div class="project-navigations">
                 <slot name="navigations"> </slot>
             </nue-div>
@@ -101,7 +102,7 @@ const viewStore = useViewStore()
 const projectStore = useProjectStore()
 const userStore = useUserStore()
 
-const { projectAsideVisible: pav } = storeToRefs(viewStore)
+const { projectAsideVisible: pav, simpleProjectHeader: sph } = storeToRefs(viewStore)
 
 const handleHideProjectAside = () => {
     viewStore.toggleProjectAsideVisible()

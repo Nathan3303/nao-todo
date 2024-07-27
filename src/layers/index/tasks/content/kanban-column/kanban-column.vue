@@ -11,8 +11,11 @@
                 :key="todo.id"
                 :todo="todo"
                 :actived="todo.id === currentTaskId"
+                :data-todoId="todo.id"
+                draggable="true"
                 @click="handleShowTodoDetails"
                 @delete="(todoId) => emit('delete-todo', todoId)"
+                @restore="(todoId) => emit('restore-todo', todoId)"
                 @unfinish="(todoId) => emit('unfinish-todo', todoId)"
                 @finish="(todoId) => emit('finish-todo', todoId)"
                 @heart="(todoId) => emit('heart-todo', todoId)"
@@ -22,22 +25,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { TodoCard, TodoStateInfo, Empty } from '@/components'
 import type { Todo } from '@/stores'
+import type { KanbanColumnProps, KanbanColumnEmits } from './types'
+import type { NueMain } from 'nue-ui'
 
-const props = defineProps<{
-    category: string
-    todos: Todo[]
-}>()
-const emit = defineEmits<{
-    (event: 'show-todo-details', todoId: Todo['id']): void
-    (event: 'delete-todo', todoId: Todo['id']): void
-    (event: 'finish-todo', todoId: Todo['id']): void
-    (event: 'unfinish-todo', todoId: Todo['id']): void
-    (event: 'heart-todo', todoId: Todo['id']): void
-}>()
+const props = defineProps<KanbanColumnProps>()
+const emit = defineEmits<KanbanColumnEmits>()
 
 const route = useRoute()
 
