@@ -1,0 +1,151 @@
+.todo-table {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 4px;
+    flex: auto;
+    overflow: auto;
+    min-width: 480px;
+    flex-wrap: nowrap;
+    height: 100%;
+
+    .todo-table__header {
+        align-items: center;
+        padding: 4px 16px;
+        gap: 24px;
+
+        .todo-table__header__col {
+            .nue-text {
+                color: gray;
+                font-size: 12px;
+            }
+        }
+    }
+
+    .todo-table__body {
+        align-items: stretch;
+        flex-direction: column;
+        width: 100%;
+        gap: 0px;
+        flex-wrap: nowrap;
+
+        .todo-table__body__row {
+            overflow: hidden;
+            flex-wrap: nowrap;
+            border: 1px solid transparent;
+            border-radius: var(--primary-radius);
+            gap: 24px;
+            padding: 8px 16px;
+            width: 100%;
+            position: relative;
+
+            &:hover {
+                border: 1px solid #ccc;
+            }
+
+            &[data-selected='true'] {
+                background-color: var(--aside-border-color);
+            }
+
+            .todo-table__body__row__color-block {
+                position: absolute;
+                width: 6px;
+                height: 6px;
+                background: black;
+                border-radius: 6px;
+                left: 6px;
+                margin-top: 8px;
+
+                &[data-priority='low'] {
+                    background: #00bfff;
+                }
+
+                &[data-priority='medium'] {
+                    background: #ff8c00;
+                }
+
+                &[data-priority='high'] {
+                    background: #ff0000;
+                }
+            }
+
+            .todo-table__body__col {
+                height: 100%;
+                align-items: center;
+
+                &:deep(.nue-text) {
+                    color: gray;
+                    font-size: 12px;
+                }
+
+                &.col-actions .nue-icon {
+                    cursor: pointer;
+                }
+            }
+        }
+    }
+
+    .col-name {
+        width: auto;
+        flex: auto;
+        gap: 4px;
+        overflow: hidden;
+
+        .todo-table-main__row__name {
+            width: 100%;
+
+            &:deep(.nue-button__text) {
+                text-align: left;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+        }
+
+        .todo-table-main__row__description {
+            width: 100%;
+            white-space: pre;
+            word-break: break-all;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+    .col-created-at,
+    .col-updated-at,
+    .col-end-at {
+        flex: none;
+        width: 130px;
+        line-height: 21px;
+    }
+    .col-priority {
+        width: 50px;
+        line-height: 21px;
+    }
+    .col-state {
+        width: 80px;
+        line-height: 21px;
+    }
+    .col-project {
+        width: 120px;
+        line-height: 21px;
+    }
+    .col-actions {
+        width: auto;
+        line-height: 21px;
+    }
+
+    &[data-simple='true'] {
+        .todo-table__header,
+        .todo-table__divider,
+        .todo-table__body .col-actions {
+            display: none;
+        }
+
+        .todo-table__body__row {
+            padding: 4px 0px;
+
+            &:hover {
+                border-color: transparent;
+            }
+        }
+    }
+}

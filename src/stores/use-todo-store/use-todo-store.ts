@@ -19,20 +19,19 @@ export const useTodoStore = defineStore('todoStore', () => {
         byState: { todo: 0, 'in-progress': 0, done: 0 },
         byPriority: { low: 0, medium: 0, high: 0 }
     })
-    const pageInfo = reactive({ page: 1, limit: 10, totalPages: 0 })
+    const pageInfo = reactive({ page: 1, limit: 20, totalPages: 0 })
     const filterInfo = ref<TodoFilter>({})
     const reminderQueen = ref<{ index: number; id: Todo['id']; time: string }[]>([])
     let reminderTimer: number | null = null
 
-    function parseFilterInfoToQuery() {
+    function parseFilterInfoToQuery(specFilterInfo?: TodoFilter) {
         const query: string[] = []
-        Object.keys(filterInfo.value).forEach((key) => {
-            const value = filterInfo.value[key as keyof TodoFilter]
-            // if (!value) return
+        const _filterInfo = specFilterInfo || filterInfo.value
+        Object.keys(_filterInfo).forEach((key) => {
+            const value = _filterInfo[key as keyof TodoFilter]
             query.push(`${key}=${value}`)
         })
         const queryString = query.join('&')
-        // console.log(queryString)
         return queryString
     }
 
@@ -116,16 +115,16 @@ export const useTodoStore = defineStore('todoStore', () => {
         const data = { todoId, ...newTodoEvent }
         const response = await $axios.post('/event', data)
         if (response.data.code === '20000') {
-            if (!todo.value?.events) {
-                todo.value!.events = []
-            }
-            const _n_todo: TodoEvent = {
-                title: newTodoEvent.title as string,
-                id: response.data.data._id,
-                isDone: false,
-                isTopped: false
-            }
-            todo.value!.events.push(_n_todo)
+            // if (!todo.value?.events) {
+            //     todo.value!.events = []
+            // }
+            // const _n_todo: TodoEvent = {
+            //     title: newTodoEvent.title as string,
+            //     id: response.data.data._id,
+            //     isDone: false,
+            //     isTopped: false
+            // }
+            // todo.value!.events.push(_n_todo)
         }
         return response.data
     }
@@ -194,15 +193,12 @@ export const useTodoStore = defineStore('todoStore', () => {
         return response.data
     }
 
-    const getTodosByFilterInfo = async (
-        userId: User['id'],
-        projectId: Project['id'],
-        specFilterInfo: TodoFilter
-    ) => {
+    const getTodosByFilterInfo = async (userId: User['id'], specFilterInfo: TodoFilter) => {
         const oldFilterInfo = filterInfo.value
         const newFilterInfo = { ...oldFilterInfo, ...specFilterInfo }
         filterInfo.value = newFilterInfo
-        const response = await getTodosByProjectId(projectId)
+        // const response = await getTodosByProjectId(projectId)
+        const response = await get(userId)
         filterInfo.value = oldFilterInfo
         return response
     }
@@ -230,9 +226,10 @@ export const useTodoStore = defineStore('todoStore', () => {
 
     /** New API Start */
 
-    const _mergeFilterInfo = (newOne: Partial<TodoFilter>) => {
+    const mergeFilterInfo = (newOne: Partial<TodoFilter>) => {
         const newFilterInfo = { ...filterInfo.value, ...newOne }
         // console.log(newFilterInfo)
+        
         filterInfo.value = newFilterInfo
     }
 
@@ -241,7 +238,7 @@ export const useTodoStore = defineStore('todoStore', () => {
         const filterQueryString = parseFilterInfoToQuery()
         const pageQueryString = `page=${page}&limit=${limit}`
         const URI = `/todos?userId=${userId}&${pageQueryString}&${filterQueryString}`
-        console.log(URI)
+        // console.log(URI)
         const response = await $axios.get(URI)
         return response.data
     }
@@ -253,7 +250,7 @@ export const useTodoStore = defineStore('todoStore', () => {
 
     const init = async (userId: User['id'], filterInfo: Partial<TodoFilter>) => {
         reset()
-        _mergeFilterInfo(filterInfo)
+        mergeFilterInfo(filterInfo)
         return await get(userId)
     }
 
@@ -275,6 +272,26 @@ export const useTodoStore = defineStore('todoStore', () => {
         return response
     }
 
+    const find = async (userId: User['id']) => {}
+
+    const toFind = async (userId: User['id'], filterInfo: TodoFilter) => {
+        const { page, limit } = pageInfo
+        const filterQueryString = parseFilterInfoToQuery(filterInfo)
+        const pageQueryString = `page=${page}&limit=${limit}`
+        const URI = `/todos?userId=${userId}&${pageQueryString}&${filterQueryString}`
+        const response = await $axios.get(URI)
+        return response.data
+    }
+
+    const toFindOne = async (userId: User['id'], id: Todo['id']) => {
+        const { page, limit } = pageInfo
+        const filterQueryString = parseFilterInfoToQuery({ id })
+        const pageQueryString = `page=${page}&limit=${limit}`
+        const URI = `/todo?userId=${userId}&${pageQueryString}&${filterQueryString}`
+        const response = await $axios.get(URI)
+        return response.data
+    }
+
     const update2 = async (userId: User['id'], id: Todo['id'], updateInfo: Partial<Todo>) => {
         const URI = `/todo?userId=${userId}&id=${id}`
         const todoIdx = todos.value.findIndex((todo) => todo.id === id)
@@ -289,6 +306,17 @@ export const useTodoStore = defineStore('todoStore', () => {
         }
         return response.data
     }
+
+    const create2 = async (userId: User['id'], newTodo: Partial<Todo>) => {
+        console.log(userId, newTodo)
+        const response = await $axios.post('/todo', newTodo)
+        if (response.data.code === '20000') {
+            const todo = response.data.data
+        }
+        return response.data
+    }
+
+    const remove2 = async (userId: User['id'], id: Todo['id']) => {}
 
     /** New API End */
 
@@ -336,9 +364,13 @@ export const useTodoStore = defineStore('todoStore', () => {
         getAllTodos,
         getTodosByFilterInfo,
         // New APIs
+        mergeFilterInfo,
         reset,
         init,
         get,
-        update2
+        update2,
+        toFind,
+        toFindOne,
+        create2
     }
 })

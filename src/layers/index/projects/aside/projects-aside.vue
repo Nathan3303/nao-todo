@@ -2,14 +2,14 @@
     <nue-div class="app-aside" vertical align="stretch" flex>
         <nue-div vertical gap="8px" align="stretch">
             <nue-link theme="btnlike" icon="board" :route="{ name: 'project-dashboard' }">
-                仪表盘
+                我的清单
             </nue-link>
-            <nue-link theme="btnlike" icon="archive2" :route="{ name: 'project-archived' }">
+            <!-- <nue-link theme="btnlike" icon="archive2" :route="{ name: 'project-archived' }">
                 已归档
-            </nue-link>
-            <!-- <nue-divider></nue-divider> -->
+            </nue-link> -->
+            <nue-link theme="btnlike" icon="inbox" disabled> 收集箱 </nue-link>
         </nue-div>
-        <nue-collapse v-model="collapseItemsRecord">
+        <nue-collapse v-model="collapseItemsRecord" style="margin-bottom: auto">
             <nue-collapse-item name="projects">
                 <template #header="{ collapse, state }">
                     <nue-button
@@ -19,7 +19,7 @@
                     >
                         <template #default>
                             <nue-div>
-                                <nue-text size="12px">项目清单</nue-text>
+                                <nue-text size="12px">清单</nue-text>
                                 <nue-text size="12px" color="gray">
                                     {{ projects.length }}
                                 </nue-text>
@@ -44,10 +44,9 @@
                 </nue-link>
             </nue-collapse-item>
         </nue-collapse>
-        <nue-div vertical gap="8px" align="stretch" style="margin-top: auto">
-            <nue-link theme="btnlike" icon="inbox" disabled> 收集箱 </nue-link>
+        <nue-div vertical gap="8px" align="stretch">
             <nue-link theme="btnlike" icon="delete" :route="{ name: 'project-recycle-bin' }">
-                回收站
+                垃圾桶
             </nue-link>
             <nue-divider></nue-divider>
             <nue-link theme="btnlike" icon="setting" disabled> 设置 </nue-link>
@@ -63,8 +62,8 @@
 import { ref } from 'vue'
 import { useProjectStore } from '@/stores'
 import { CreateProjectDialog } from '@/components'
-import type { NewProjectPayload } from '@/components'
 import { storeToRefs } from 'pinia'
+import type { NewProjectPayload } from '@/components'
 
 const projectStore = useProjectStore()
 

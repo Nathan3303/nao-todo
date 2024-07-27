@@ -20,14 +20,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { TodoCard, TodoStateInfo, Empty } from '@/components'
-import { useTodoStore, type Project, type Todo } from '@/stores'
+import { useTodoStore, useUserStore, type Project, type Todo } from '@/stores'
 import { storeToRefs } from 'pinia'
 
 defineOptions({ name: 'ProjectKanban' })
 const props = defineProps<{ projectId: Project['id'] }>()
 
+const userStore = useUserStore()
 const todoStore = useTodoStore()
-await todoStore.getTodosByProjectId(props.projectId)
+
+const { user } = storeToRefs(userStore)
+await todoStore.init(user.value!.id, { projectId: props.projectId, isDeleted: false })
 const { todos } = storeToRefs(todoStore)
 
 const categoriedTodos = computed(() => {

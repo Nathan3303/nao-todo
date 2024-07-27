@@ -1,5 +1,7 @@
 <template>
-    <projects-main-overview :project="project"></projects-main-overview>
+    <suspense>
+        <projects-main-overview :project="project"></projects-main-overview>
+    </suspense>
 </template>
 
 <script setup lang="ts">

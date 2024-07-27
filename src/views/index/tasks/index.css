@@ -4,10 +4,32 @@
     }
 
     #TasksViewRightAside {
-        max-width: 24%;
-        min-width: 256px;
-        padding: 16px;
+        width: 24%;
+        min-width: 360px;
+        padding: 0px 16px;
         box-sizing: content-box;
         border-left: 1px solid var(--aside-border-color);
+        transition: all 0.16s ease-in-out;
+        position: relative;
+
+        .empty-text {
+            position: absolute;
+            left: 0px;
+            z-index: 0;
+        }
+    }
+
+    @media screen and (max-width: 1200px) {
+        #TasksViewRightAside {
+            width: 0px;
+            min-width: 0px;
+            padding: 0px;
+            border-left: none;
+            position: relative;
+
+            .empty-text {
+                display: none;
+            }
+        }
     }
 }

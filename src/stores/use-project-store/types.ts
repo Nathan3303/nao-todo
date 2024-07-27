@@ -20,3 +20,13 @@ export type CreateProjectPayload = {
     title: Project['title']
     description?: Project['description']
 }
+
+export type ProjectFilterOptions = Partial<Project>
+
+export type ProjectUpdateOptions = Partial<Omit<Project, 'id'>>
+
+export type PageInfo = {
+    page: number
+    limit: number
+    total: number
+}

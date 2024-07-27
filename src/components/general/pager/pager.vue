@@ -43,7 +43,7 @@ import type { PagerEmits, PagerProps } from './types'
 const props = defineProps<PagerProps>()
 const emit = defineEmits<PagerEmits>()
 
-const perpage = ref(10)
+const perpage = ref(props.limit)
 
 const prevButtonDisabled = computed(() => props.page === 1)
 const nextButtonDisabled = computed(() => props.page === props.totalPages)

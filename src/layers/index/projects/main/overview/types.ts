@@ -8,5 +8,5 @@ export type ProjectsMainOverviewProps = {
 export type StateOverviewRowProps = {
     icon?: string
     title: string
-    count: number
+    count?: number
 }

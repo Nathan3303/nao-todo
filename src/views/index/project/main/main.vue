@@ -11,7 +11,7 @@
 <script setup lang="ts">
 import { computed, provide } from 'vue'
 import { useProjectStore, type Project } from '@/stores/use-project-store'
-import ProjectNotFound from '@/components/project/project-not-found.vue'
+import ProjectNotFound from '@/components/project/not-found/not-found.vue'
 import type { ProjectViewContext } from './types'
 import { ProjectsMainHeader } from '@/layers/index/projects'
 

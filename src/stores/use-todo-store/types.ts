@@ -18,6 +18,7 @@ export type TodoEvent = {
 export type Todo = {
     _id?: string
     id: string
+    userId: string
     projectId: string
     name: string
     description: string
@@ -40,14 +41,16 @@ export type Todo = {
 export type ShadowTodo = Partial<Todo>
 
 export type TodoFilter = {
-    projectId?: Project['id']
-    id?: Todo['id']
-    name?: Todo['name']
+    id?: string
+    projectId?: string
+    userId?: string
+    name?: string
     state?: string
-    priority?: string
-    tags?: Todo['tags']
     isPinned?: boolean
+    isDone?: boolean
     isDeleted?: boolean
+    priority?: string
+    relativeDate?: 'today' | 'tomorrow' | 'week'
 }
 
 export type TodoCountByState = {

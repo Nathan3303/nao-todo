@@ -11,18 +11,16 @@
 
 <script setup lang="ts">
 import { ProjectsAside } from '@/layers/index/projects'
-import { useProjectStore, useTodoStore, useViewStore, useUserStore } from '@/stores'
+import { useViewStore, useProjectStore, useUserStore } from '@/stores'
 import { useLoadingScreen } from '@/hooks'
 import { storeToRefs } from 'pinia'
 
-const userStore = useUserStore()
-const projectStore = useProjectStore()
-const todoStore = useTodoStore()
 const viewStore = useViewStore()
+const projectStore = useProjectStore()
+const userStore = useUserStore()
 
 const { projectAsideVisible } = storeToRefs(viewStore)
 
-await projectStore.getProjects()
-await todoStore.getAllTodos(userStore.user!.id)
+await projectStore.init(userStore.user!.id, { isDeleted: false })
 useLoadingScreen().stopLoading()
 </script>

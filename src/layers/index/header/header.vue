@@ -3,7 +3,7 @@
         <template #nav>
             <nue-div>
                 <nue-link theme="btnlike" icon="projects" route="/project">项目</nue-link>
-                <nue-link theme="btnlike" icon="todo" route="/tasks" disabled>任务</nue-link>
+                <nue-link theme="btnlike" icon="todo" route="/tasks">任务</nue-link>
                 <nue-link theme="btnlike" icon="calendar2" disabled>日历</nue-link>
             </nue-div>
         </template>

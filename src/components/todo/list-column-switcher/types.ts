@@ -1,4 +1,4 @@
-import type { Columns } from '../todo-table'
+import type { Columns } from '../table'
 
 export type ListColumnSwitcherProps = {
     modelValue: Columns

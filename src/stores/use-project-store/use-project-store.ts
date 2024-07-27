@@ -1,14 +1,26 @@
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { CreateProjectPayload, Project } from './types'
 import { useUserStore } from '../use-user-store'
 import { NueMessage } from 'nue-ui'
-import { naoTodoServer } from '@/axios'
+import { naoTodoServer as $axios } from '@/axios'
+import type { User } from '@/stores'
+import type {
+    PageInfo,
+    CreateProjectPayload,
+    Project,
+    ProjectFilterOptions,
+    ProjectUpdateOptions
+} from './types'
 
 export const useProjectStore = defineStore('projectStore', () => {
     const userStore = useUserStore()
+    const project = ref<Project>()
     const projects = ref<Project[]>([])
     const archivedProjects = ref<Project[]>([])
+    const AllProjects = ref<Project[]>([])
+
+    const filterInfo = ref<ProjectFilterOptions>({})
+    const pageInfo = reactive<PageInfo>({ page: 1, limit: 10, total: 0 })
 
     async function getProjects() {
         const userId = userStore.user?.id
@@ -16,7 +28,7 @@ export const useProjectStore = defineStore('projectStore', () => {
             NueMessage.error('请先登录')
             return
         }
-        const response = await naoTodoServer.get(`/projects?userId=${userId}`)
+        const response = await $axios.get(`/projects?userId=${userId}`)
         if (response.data.code === '20000') {
             // console.log(response.data.data)
             response.data.data.forEach((project: Project) => {
@@ -35,7 +47,7 @@ export const useProjectStore = defineStore('projectStore', () => {
         const { id: userId } = userStore.user!
         const URI = `/projects?userId=${userId}&isArchived=true`
         // console.log(URI)
-        const response = await naoTodoServer.get(URI)
+        const response = await $axios.get(URI)
         if (response.data.code === '20000') {
             archivedProjects.value = response.data.data
         }
@@ -45,7 +57,7 @@ export const useProjectStore = defineStore('projectStore', () => {
     async function createProject(payload: CreateProjectPayload) {
         // console.log(payload)
         const userId = userStore.user?.id
-        const response = await naoTodoServer.post('/project', { userId, ...payload })
+        const response = await $axios.post('/project', { userId, ...payload })
         // console.log(response.data)
         if (response.data.code === '20000') {
             // console.log(response.data.data)
@@ -58,7 +70,7 @@ export const useProjectStore = defineStore('projectStore', () => {
     }
 
     async function deleteProject(projectId: string) {
-        const response = await naoTodoServer.delete('/project' + `?projectId=${projectId}`)
+        const response = await $axios.delete('/project' + `?projectId=${projectId}`)
         if (response.data.code === '20000') {
             const index = projects.value.findIndex((project) => project.id === projectId)
             projects.value.splice(index, 1)
@@ -70,7 +82,7 @@ export const useProjectStore = defineStore('projectStore', () => {
     }
 
     async function updateProject(projectId: string, payload: Partial<Project>) {
-        const response = await naoTodoServer.put('/project' + `?projectId=${projectId}`, payload)
+        const response = await $axios.put('/project' + `?projectId=${projectId}`, payload)
         if (response.data.code === '20000') {
             const index = projects.value.findIndex((project) => project.id === projectId)
             const newProject = { ...projects.value[index], ...payload }
@@ -104,15 +116,111 @@ export const useProjectStore = defineStore('projectStore', () => {
         return response
     }
 
+    /** New API Start */
+
+    const parseFilterInfoToQuery = (specFilterInfo?: ProjectFilterOptions) => {
+        const query: string[] = []
+        const _filterInfo = specFilterInfo || filterInfo.value
+        // console.log(_filterInfo)
+        Object.keys(_filterInfo).forEach((key) => {
+            const value = _filterInfo[key as keyof ProjectFilterOptions]
+            query.push(`${key}=${value}`)
+        })
+        const queryString = query.join('&')
+        return queryString
+    }
+
+    const _mergeFilterInfo = (newOne: ProjectFilterOptions) => {
+        filterInfo.value = {
+            ...filterInfo.value,
+            ...newOne
+        }
+    }
+
+    const _getData = async (userId: User['id']) => {
+        const { page, limit } = pageInfo
+        const filterQueryString = parseFilterInfoToQuery()
+        const pageQueryString = `page=${page}&limit=${limit}`
+        const URI = `/projects?userId=${userId}&${pageQueryString}&${filterQueryString}`
+        // console.log(URI)
+        const response = await $axios.get(URI)
+        return response.data
+    }
+
+    const reset = () => {
+        projects.value = []
+        filterInfo.value = {}
+    }
+
+    const init = async (userId: User['id'], filterInfo: ProjectFilterOptions) => {
+        reset()
+        _mergeFilterInfo(filterInfo)
+        return await reload(userId)
+    }
+
+    const reload = async (userId: User['id']) => {
+        const response = await _getData(userId)
+        if (response.code === '20000') {
+            projects.value = response.data
+        }
+        return response
+    }
+
+    const get = async (userId: User['id'], filterInfo?: ProjectFilterOptions) => {
+        const { page, limit } = pageInfo
+        const filterQueryString = parseFilterInfoToQuery(filterInfo)
+        const pageQueryString = `page=${page}&limit=${limit}`
+        const URI = `/projects?userId=${userId}&${pageQueryString}&${filterQueryString}`
+        // console.log(URI)
+        const response = await $axios.get(URI)
+        return response.data
+    }
+
+    const toFindLocally = (id: Project['id']) => {
+        const project = projects.value.find((project) => project.id === id)
+        if (!project) return null
+        return project
+    }
+
+    const update = async (
+        userId: User['id'],
+        id: Project['id'],
+        updateOptions: ProjectUpdateOptions
+    ) => {
+        const URI = `/project?userId=${userId}&id=${id}`
+        const idx = projects.value.findIndex((project) => project.id === id)
+        const project = projects.value[idx]
+        const newProject = { ...project, ...updateOptions }
+        // console.log(userId, id, updateInfo, newTodo)
+        const response = await $axios.put(URI, newProject)
+        if (response.data.code === '20000') {
+            // todos.value[todoIdx] = response.data.data
+            // console.log(filterInfo.value)
+            // await get(userId)
+        }
+        return response.data
+    }
+
+    /** New API End */
+
     return {
+        project,
         projects,
         archivedProjects,
+        AllProjects,
+        filterInfo,
+        pageInfo,
         getProjects,
         createProject,
         deleteProject,
         updateProject,
         getArchivedProjects,
         archiveProject,
-        unarchiveProject
+        unarchiveProject,
+        init,
+        reload,
+        update,
+        get,
+        toFindLocally
     }
 })

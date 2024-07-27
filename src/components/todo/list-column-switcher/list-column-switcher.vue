@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Columns, ColumnsKeys } from '../todo-table/types'
+import type { Columns, ColumnsKeys } from '../table/types'
 import { type ListColumnSwitcherEmits, type ListColumnSwitcherProps } from './types'
 import { Checkbox, Empty } from '@/components'
 
@@ -45,6 +45,10 @@ const parseLabel = (label: string) => {
             return '状态'
         case 'description':
             return '描述'
+        case 'endAt':
+            return '结束日期'
+        case 'project':
+            return '所属清单'
         default:
             return label
     }
@@ -54,7 +58,6 @@ const handleCheck = (checked: boolean, value: unknown) => {
     const { modelValue } = props
     const newColumns = { ...modelValue }
     newColumns[value as ColumnsKeys] = checked
-    // console.log(newColumns)
     emit('update:modelValue', newColumns as Columns)
 }
 </script>

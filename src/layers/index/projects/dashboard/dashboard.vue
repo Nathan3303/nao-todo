@@ -1,30 +1,17 @@
 <template>
     <div class="project-dashboard">
-        <nue-div align="stretch" class="project-dashboard__projects">
-            <nue-div align="center" justify="space-between">
-                <nue-text theme="h3">我的项目</nue-text>
-                <nue-button theme="primary,small" icon="plus" @click="handleCreateProject">
-                    创建新项目
-                </nue-button>
-            </nue-div>
-            <project-board :projects="projects" allow-route></project-board>
-        </nue-div>
+        <suspense>
+            <my-projects class="project-dashboard__projects"></my-projects>
+        </suspense>
     </div>
 </template>
 
 <script setup lang="ts">
+import MyProjects from './my-projects.vue'
 import type { Project } from '@/stores/use-project-store'
-import { ProjectBoard } from '@/components'
 
 defineOptions({ name: 'ProjectsDashboard' })
 defineProps<{ projects: Project[] }>()
-
-const handleCreateProject = () => {
-    const createProjectBtn = document.querySelector(
-        '#create-project-btn'
-    ) as HTMLButtonElement | null
-    createProjectBtn?.click()
-}
 </script>
 
 <style scoped>

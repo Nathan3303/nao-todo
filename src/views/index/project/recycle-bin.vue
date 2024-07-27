@@ -11,12 +11,12 @@
                                 @click="handleHideProjectAside"
                             ></nue-button>
                         </tooltip>
-                        <nue-text size="24px">任务回收站</nue-text>
+                        <nue-text size="24px">垃圾桶</nue-text>
                     </nue-div>
                     <nue-div align="center" justify="end" width="fit-content"></nue-div>
                 </nue-div>
                 <nue-text size="14px" color="gray">
-                    "任务回收站" 板块存放着您已删除的任务，您可以在这里选择性地恢复已删除的任务。
+                    "垃圾桶" 板块存放着您已删除的任务，您可以在这里选择性地恢复已删除的任务。
                 </nue-text>
             </nue-div>
         </nue-header>
@@ -48,6 +48,7 @@
                             ref="todoTableRef"
                             :todos="todos"
                             :columns="columns"
+                            empty-message="暂无被删除的任务。"
                             @delete-todo="handleRestoreTodo"
                             @show-todo-details="handleShowTodoDetails"
                         ></todo-table>
@@ -207,6 +208,10 @@ await getDeletedTodos()
         padding: 0px;
         height: auto;
         border-bottom: none;
+    }
+
+    .nue-main {
+        gap: 16px;
     }
 }
 
