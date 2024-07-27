@@ -7,9 +7,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Todo } from '../../stores/use-todo-store'
+import type { Todo } from '@/stores/use-todo-store'
 
-const props = defineProps<{ state: Todo['state'],  }>()
+const props = defineProps<{ state: Todo['state'] }>()
 
 const info = computed(() => {
     const { state } = props

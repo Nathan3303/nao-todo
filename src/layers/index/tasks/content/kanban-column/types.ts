@@ -1,7 +1,7 @@
-import type { Todo } from '@/stores'
+import type { Todo, TodoState } from '@/stores'
 
 export type KanbanColumnProps = {
-    category: string
+    category: TodoState
     todos: Todo[]
 }
 

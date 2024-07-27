@@ -69,19 +69,19 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useTodoStore, type Todo, type TodoEvent, type TodoFilter } from '@/stores/use-todo-store'
+import { useTodoStore, useUserStore, useViewStore } from '@/stores'
 import { storeToRefs } from 'pinia'
-import { NueConfirm, NueMessage, NuePrompt } from 'nue-ui'
+import { NueConfirm, NuePrompt } from 'nue-ui'
 import {
     TodoTable,
     Loading,
     TodoFilterBar,
     ListColumnSwitcher,
     Pager,
-    type Columns,
     TodoDetails
 } from '@/components'
-import { useUserStore, useViewStore } from '@/stores'
+import type { Columns } from '@/components'
+import type { Todo, TodoEvent, TodoFilter } from '@/stores'
 
 defineOptions({ name: 'ProjectsMainList' })
 const props = defineProps<{ projectId: string }>()
@@ -92,7 +92,6 @@ const viewStore = useViewStore()
 
 const { todos, pageInfo, countInfo, filterInfo } = storeToRefs(todoStore)
 const { user } = storeToRefs(userStore)
-const { simpleProjectHeader } = storeToRefs(viewStore)
 const todo = ref<Todo | undefined>()
 const tableLoading = ref(false)
 const detailsLoading = ref(false)
@@ -198,11 +197,11 @@ const handleCloseTodoDetails = () => {
 }
 
 const handleCreateTodoEvent = async (todoId: Todo['id'], newTodoEvent: Partial<TodoEvent>) => {
-    const response = await todoStore.createTodoEvent(todoId, newTodoEvent)
+    await todoStore.createTodoEvent(todoId, newTodoEvent)
 }
 
 const handleUpdateTodoEvent = async (id: TodoEvent['id'], newTodoEvent: Partial<TodoEvent>) => {
-    const response = await todoStore.updateTodoEvent(id, newTodoEvent)
+    await todoStore.updateTodoEvent(id, newTodoEvent)
 }
 
 const handleSwitchView = () => {

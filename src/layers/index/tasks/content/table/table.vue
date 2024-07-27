@@ -198,5 +198,5 @@ handleGetTodos()
 </script>
 
 <style scoped>
-@import url('./table.css');
+/* @import url('./table.css'); */
 </style>

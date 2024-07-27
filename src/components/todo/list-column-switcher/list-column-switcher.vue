@@ -25,9 +25,9 @@
 </template>
 
 <script setup lang="ts">
-import type { Columns, ColumnsKeys } from '../table/types'
-import { type ListColumnSwitcherEmits, type ListColumnSwitcherProps } from './types'
 import { Checkbox, Empty } from '@/components'
+import type { Columns, ColumnsKeys } from '../table/types'
+import type { ListColumnSwitcherEmits, ListColumnSwitcherProps } from './types'
 
 defineOptions({ name: 'ListColumnSwitcher' })
 const props = defineProps<ListColumnSwitcherProps>()
