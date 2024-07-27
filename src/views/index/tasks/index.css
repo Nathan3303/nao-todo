@@ -4,9 +4,10 @@
     }
 
     #TasksViewRightAside {
-        width: 24%;
+        width: 32%;
         min-width: 360px;
-        padding: 0px 16px;
+        max-width: 480px;
+        padding: 0px;
         box-sizing: content-box;
         border-left: 1px solid var(--aside-border-color);
         transition: all 0.16s ease-in-out;

@@ -1,0 +1,47 @@
+.kanban-column {
+    min-width: 320px;
+    height: 100%;
+    flex: 1 1 auto;
+    /* box-shadow: 1px 0px var(--aside-border-color); */
+    /* padding: 0px 12px; */
+    gap: 12px;
+
+    .kanban-column__header {
+        height: 32px;
+        align-items: center;
+        padding: 0px;
+        border: none;
+
+        .nue-text--count {
+            min-width: 24px;
+            height: 24px;
+            line-height: 24px;
+            font-size: 14px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: var(--primary-radius);
+            text-align: center;
+        }
+    }
+
+    .kanban-column__main {
+        flex-direction: column;
+        gap: 12px;
+        overflow-y: auto;
+        padding-bottom: 8px;
+
+        .empty {
+            height: auto;
+            font-size: 12px;
+            flex: none;
+            width: 100%;
+            background-color: #f5f5f5;
+            border-radius: var(--primary-radius);
+
+            &:deep().nue-text {
+                font-size: 12px;
+                margin: 8px;
+            }
+        }
+    }
+}

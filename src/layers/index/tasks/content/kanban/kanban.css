@@ -1,0 +1,15 @@
+.content-kanban {
+    width: 100%;
+    gap: 16px;
+
+    .nue-header {
+        height: auto;
+        border-bottom: none;
+    }
+
+    .nue-main {
+        overflow: hidden;
+        overflow-x: auto;
+        gap: 16px;
+    }
+}

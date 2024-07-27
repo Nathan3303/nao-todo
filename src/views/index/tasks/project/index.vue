@@ -1,6 +1,6 @@
 <template>
     <nue-container class="tasks-today-view tasks-sub-view">
-        <content-header :title="project?.title">
+        <content-header :title="project?.title" :project="project">
             <template #subTitle>
                 {{ project?.description }}
             </template>
@@ -29,11 +29,11 @@ const props = defineProps<{ projectId: Project['id'] }>()
 
 const projectStore = useProjectStore()
 
-const project = computed(() => {
+const project = computed<Project>(() => {
     const { projectId } = props
     const project = projectStore.toFindLocally(projectId)
     document.title = 'NaoTodo - ' + project?.title
-    return project
+    return project as Project
 })
 </script>
 

@@ -2,13 +2,11 @@ import { ref, reactive, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { NueMessage } from 'nue-ui'
 import { naoTodoServer as $axios } from '@/axios'
-import { useUserStore } from '..'
 import moment from 'moment'
 import type { Todo, TodoFilter, TodoCountInfo, TodoEvent } from './types'
 import type { Project, User } from '..'
 
 export const useTodoStore = defineStore('todoStore', () => {
-    const userStore = useUserStore()
     const todo = ref<Todo>()
     const todos = ref<Todo[]>([])
     const AllTodos = ref<Todo[]>([])
@@ -133,20 +131,20 @@ export const useTodoStore = defineStore('todoStore', () => {
         const response = await $axios.put('/event', newTodoEvent, { params: { id } })
         if (response.data.code === '20000') {
             // console.log(response.data.data)
-            if (!todo.value?.events) {
-                todo.value!.events = []
-            }
-            for (let i = 0, event; i < todo.value!.events.length; i++) {
-                event = todo.value!.events[i]
-                // console.log(event, newTodoEvent)
-                if (event.id === id) {
-                    event = { ...event, ...newTodoEvent }
-                    todo.value!.events[i].title = event.title
-                    todo.value!.events[i].isDone = event.isDone
-                    todo.value!.events[i].isTopped = event.isTopped
-                    break
-                }
-            }
+            // if (!todo.value?.events) {
+            //     todo.value!.events = []
+            // }
+            // for (let i = 0, event; i < todo.value!.events.length; i++) {
+            //     // event = todo.value!.events[i]
+            //     // // console.log(event, newTodoEvent)
+            //     // if (event.id === id) {
+            //     //     event = { ...event, ...newTodoEvent }
+            //     //     todo.value!.events[i].title = event.title
+            //     //     todo.value!.events[i].isDone = event.isDone
+            //     //     todo.value!.events[i].isTopped = event.isTopped
+            //     //     break
+            //     // }
+            // }
         }
         return response.data
     }
@@ -154,16 +152,16 @@ export const useTodoStore = defineStore('todoStore', () => {
     const deleteTodoEvent = async (id: TodoEvent['id']) => {
         const response = await $axios.delete('/event', { params: { id } })
         if (response.data.code === '20000') {
-            if (!todo.value?.events) {
-                todo.value!.events = []
-            }
-            for (let i = 0, event; i < todo.value!.events.length; i++) {
-                event = todo.value!.events[i]
-                if (event.id === id) {
-                    todo.value!.events.splice(i, 1)
-                    break
-                }
-            }
+            // if (!todo.value?.events) {
+            //     todo.value!.events = []
+            // }
+            // for (let i = 0, event; i < todo.value!.events.length; i++) {
+            //     event = todo.value!.events[i]
+            //     if (event.id === id) {
+            //         todo.value!.events.splice(i, 1)
+            //         break
+            //     }
+            // }
         }
         return response.data
     }
@@ -229,7 +227,7 @@ export const useTodoStore = defineStore('todoStore', () => {
     const mergeFilterInfo = (newOne: Partial<TodoFilter>) => {
         const newFilterInfo = { ...filterInfo.value, ...newOne }
         // console.log(newFilterInfo)
-        
+
         filterInfo.value = newFilterInfo
     }
 
@@ -307,6 +305,14 @@ export const useTodoStore = defineStore('todoStore', () => {
         return response.data
     }
 
+    const updateLocal = async (id: Todo['id'], updateInfo: Partial<Todo>) => {
+        const todoIdx = todos.value.findIndex((todo) => todo.id === id)
+        const todo = todos.value[todoIdx]
+        const newTodo = { ...todo, ...updateInfo }
+        todos.value[todoIdx] = newTodo
+        return true
+    }
+
     const create2 = async (userId: User['id'], newTodo: Partial<Todo>) => {
         console.log(userId, newTodo)
         const response = await $axios.post('/todo', newTodo)
@@ -317,6 +323,12 @@ export const useTodoStore = defineStore('todoStore', () => {
     }
 
     const remove2 = async (userId: User['id'], id: Todo['id']) => {}
+
+    const removeLocal = async (id: Todo['id']) => {
+        const index = todos.value.findIndex((todo) => todo.id === id)
+        todos.value.splice(index, 1)
+        return true
+    }
 
     /** New API End */
 
@@ -371,6 +383,8 @@ export const useTodoStore = defineStore('todoStore', () => {
         update2,
         toFind,
         toFindOne,
-        create2
+        create2,
+        removeLocal,
+        updateLocal
     }
 })

@@ -1,5 +1,6 @@
 <template>
     <nue-div
+        class="empty"
         v-if="empty"
         warp="nowrap"
         align="center"

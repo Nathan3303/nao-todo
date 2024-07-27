@@ -1,29 +1,47 @@
 <template>
-    <nue-div class="todo-card" theme="card" wrap="nowrap" :data-is-done="isDone">
-        <nue-icon
-            class="todo-card__check-icon"
-            :name="checkIconName"
-            size="22px"
-            color="lightgray"
-        ></nue-icon>
+    <nue-div
+        class="todo-card"
+        theme="card"
+        :data-is-done="isDone"
+        @click.stop="handleClick"
+        :data-actived="actived"
+    >
+        <nue-div vertical width="fit-content" gap="0px">
+            <nue-icon
+                class="todo-card__check-icon"
+                :name="checkIconName"
+                @click.stop="handleFinish"
+            ></nue-icon>
+        </nue-div>
         <nue-div vertical gap="8px" flex>
-            <nue-text class="todo-card__name" size="15px">{{ todo.name }}</nue-text>
-            <nue-text v-if="todo.description" size="12px" color="gray">
-                {{ todo.description }}
-            </nue-text>
-            <nue-div align="center" gap="8px">
-                <nue-div v-if="todo.dueDate.endAt" align="center" gap="4px" width="fit-content">
+            <nue-div class="todo-card__info">
+                <nue-div align="center" gap="4px" justify="space-between">
+                    <nue-text class="todo-card__name">{{ todo.name }}</nue-text>
+                    <nue-div class="todo-card__actions">
+                        <nue-button
+                            theme="pure"
+                            icon="delete"
+                            @click.stop="handleDelete"
+                        ></nue-button>
+                    </nue-div>
+                </nue-div>
+                <nue-text class="todo-card__description" v-if="todo.description">
+                    {{ todo.description }}
+                </nue-text>
+            </nue-div>
+            <nue-div class="todo-card__attrs" align="center" gap="4px">
+                <nue-div v-if="todo.dueDate.endAt" align="center" gap="4px">
                     <nue-icon name="calendar" color="gray"></nue-icon>
                     <nue-text size="12px" color="gray">
-                        {{ moment(todo.dueDate.endAt).format('YYYY-MM-DD') }}
+                        {{ moment(todo.dueDate.endAt).format('YYYY-MM-DD HH:mm') }}
                     </nue-text>
                 </nue-div>
-                <todo-priority-info :priority="todo.priority" colored></todo-priority-info>
-                <nue-icon
-                    v-if="todo.isPinned"
-                    class="todo-card__favorite-icon"
-                    name="heart-fill"
-                ></nue-icon>
+                <nue-div align="center" gap="4px">
+                    <nue-icon name="inbox-fill" color="gray"></nue-icon>
+                    <nue-text size="12px" color="gray">{{
+                        todo.project?.title || '收集箱'
+                    }}</nue-text>
+                </nue-div>
             </nue-div>
         </nue-div>
     </nue-div>
@@ -31,12 +49,12 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { TodoCardProps } from './types'
-import { TodoStateInfo, TodoPriorityInfo } from '@/components'
 import moment from 'moment'
+import type { TodoCardEmits, TodoCardProps } from './types'
 
 defineOptions({ name: 'TodoCard' })
 const props = defineProps<TodoCardProps>()
+const emit = defineEmits<TodoCardEmits>()
 
 const isDone = computed(() => {
     const { isDone, state } = props.todo
@@ -47,25 +65,27 @@ const isDone = computed(() => {
 const checkIconName = computed(() => {
     return isDone.value ? 'square-check-fill' : 'square'
 })
+
+const handleClick = () => {
+    const todoId = props.todo.id
+    emit('click', todoId)
+}
+
+const handleDelete = () => {
+    const { id: todoId } = props.todo
+    emit('delete', todoId)
+}
+
+const handleFinish = () => {
+    const { id: todoId, isDone, state } = props.todo
+    if (isDone || state === 'done') {
+        emit('unfinish', todoId)
+    } else {
+        emit('finish', todoId)
+    }
+}
 </script>
 
 <style scoped>
-.todo-card {
-    .todo-card__check-icon {
-        cursor: pointer;
-    }
-    .todo-card__favorite-icon {
-        --icon-color: #ee537f;
-    }
-}
-
-.todo-card[data-is-done='true'] {
-    .todo-card__check-icon {
-        --icon-color: var(--primary-color);
-    }
-    .todo-card__name {
-        text-decoration: line-through;
-        color: gray;
-    }
-}
+@import url('./card.css');
 </style>

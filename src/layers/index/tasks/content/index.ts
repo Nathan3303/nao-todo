@@ -1,2 +1,6 @@
+export * from './details'
+export * from './details-v2'
 export * from './header'
+export * from './kanban'
+export * from './kanban-column'
 export * from './table'

@@ -1,20 +1,20 @@
 <template>
     <teleport to="#TasksViewRightAside">
         <nue-div class="todo-details-wrapper" :data-empty="!todo">
-            <todo-details
+            <content-todo-details-v2
                 :todo="todo"
                 :loading="detailsLoading"
                 @close-todo-details="handleCloseTodoDetails"
                 @create-todo-event="handleCreateTodoEvent"
                 @update-todo-event="handleUpdateTodoEvent"
-            ></todo-details>
+            ></content-todo-details-v2>
         </nue-div>
     </teleport>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { TodoDetails } from '@/components'
+import { ContentTodoDetailsV2 } from '@/layers/index'
 import { useTodoStore, useUserStore } from '@/stores'
 import { useRoute, useRouter } from 'vue-router'
 import type { Todo, TodoEvent } from '@/stores'
@@ -78,7 +78,8 @@ await handleGetTodo()
     transition: all 0.32s ease-in-out;
     background-color: white;
     overflow: hidden;
-    z-index: 1;
+    z-index: 0;
+    padding: 0px;
 }
 
 @media screen and (max-width: 1200px) {
@@ -89,7 +90,7 @@ await handleGetTodo()
         right: 0;
         box-shadow: -2px 0px 10px rgba(0, 0, 0, 0.1);
         overflow: hidden;
-        padding: 0px 16px;
+        padding: 0px;
     }
 
     .todo-details-wrapper[data-empty='true'] {

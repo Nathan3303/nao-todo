@@ -36,8 +36,8 @@ const columns: Columns = {
     createdAt: false,
     updatedAt: false,
     endAt: true,
-    state: true,
     priority: true,
+    state: true,
     description: true
 }
 

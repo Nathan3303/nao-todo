@@ -65,7 +65,7 @@ import { useTodoStore, useUserStore } from '@/stores'
 import { NueConfirm, NueMessage, NuePrompt } from 'nue-ui'
 import { storeToRefs } from 'pinia'
 import type { Columns } from '@/components'
-import type { Todo, TodoEvent, TodoFilter } from '@/stores'
+import type { Todo, TodoFilter } from '@/stores'
 import type { ContentTableProps, ContentTableEmits } from './types'
 
 defineOptions({ name: 'ContentTableLayer' })
