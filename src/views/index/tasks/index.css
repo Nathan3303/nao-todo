@@ -1,6 +1,7 @@
 .tasks-view {
     .nue-main__content {
-        flex: auto;
+        min-width: 375px;
+        overflow-x: hidden;
     }
 
     #TasksViewRightAside {
@@ -19,8 +20,10 @@
             z-index: 0;
         }
     }
+}
 
-    @media screen and (max-width: 1200px) {
+@media screen and (max-width: 1200px) {
+    .tasks-view {
         #TasksViewRightAside {
             width: 0px;
             min-width: 0px;
@@ -34,3 +37,18 @@
         }
     }
 }
+
+/* @media screen and (max-width: 768px) {
+    .tasks-view {
+        position: relative;
+
+        &:deep().nue-main__aside {
+            position: absolute;
+            left: 0px;
+            background-color: white;
+            z-index: 1;
+            height: 100vh;
+            box-shadow: 2px 0px 5px 3px rgba(0, 0, 0, 0.1);
+        }
+    }
+} */

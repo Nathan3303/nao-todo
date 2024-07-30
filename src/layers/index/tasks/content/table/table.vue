@@ -17,17 +17,17 @@
                     ></list-column-switcher>
                     <nue-button
                         theme="small"
-                        icon="switch"
-                        @click="viewStore.toggleSimpleProjectHeader()"
-                    ></nue-button>
-                    <nue-button
-                        theme="small"
                         icon="refresh"
                         @click="handleRefresh"
                         :loading="tableLoading || !!refreshTimer"
                     >
                         刷新
                     </nue-button>
+                    <nue-button
+                        theme="small"
+                        :icon="sph ? 'arrow-down' : 'arrow-up'"
+                        @click="viewStore.toggleSimpleProjectHeader()"
+                    ></nue-button>
                 </nue-div>
             </nue-div>
         </nue-header>
@@ -84,6 +84,7 @@ const viewStore = useViewStore()
 
 const { todos, pageInfo, countInfo, filterInfo } = storeToRefs(todoStore)
 const { user } = storeToRefs(userStore)
+const { simpleProjectHeader: sph } = storeToRefs(viewStore)
 const tableLoading = ref(false)
 const selectedTaskId = ref<Todo['id']>('')
 const columns = ref<Columns>(

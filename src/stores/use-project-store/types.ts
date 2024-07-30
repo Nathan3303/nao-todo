@@ -21,7 +21,10 @@ export type CreateProjectPayload = {
     description?: Project['description']
 }
 
-export type ProjectFilterOptions = Partial<Project>
+export type ProjectFilterOptions = Partial<Project> & {
+    papge?: number
+    limit?: number
+}
 
 export type ProjectUpdateOptions = Partial<Omit<Project, 'id'>>
 

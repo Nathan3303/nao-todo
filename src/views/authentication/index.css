@@ -6,3 +6,13 @@
         }
     }
 }
+
+@media screen and (max-width: 768px) {
+    .authentication-view {
+        .nue-main {
+            .nue-main__aside {
+                display: none;
+            }
+        }
+    }
+}

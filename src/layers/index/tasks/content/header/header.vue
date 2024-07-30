@@ -25,13 +25,6 @@
                                 @click="handleArchiveProject"
                             />
                         </tooltip>
-                        <!-- <tooltip content="项目详情">
-                            <nue-button
-                                theme="icon-only"
-                                icon="warning"
-                                @click="showProjectDetailsDialog"
-                            />
-                        </tooltip> -->
                         <tooltip content="删除项目">
                             <nue-button
                                 theme="icon-only"
@@ -39,9 +32,9 @@
                                 @click="handleDeleteProject"
                             />
                         </tooltip>
-                        <nue-avatar
+                        <!-- <nue-avatar
                             src="https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif?imageView2/1/w/80/h/80"
-                        ></nue-avatar>
+                        ></nue-avatar> -->
                     </nue-div>
                 </nue-div>
                 <click-to-edit
@@ -56,8 +49,8 @@
         </template>
         <template v-else>
             <nue-div align="center" justify="space-between" wrap="nowrap">
-                <nue-div vertical width="fit-content" gap="4px" flex>
-                    <nue-div align="center" width="fit-content" gap="8px">
+                <nue-div vertical width="fit-content" gap="4px">
+                    <nue-div align="center" width="fit-content" gap="8px" height="36px">
                         <nue-button
                             theme="icon-only"
                             :icon="pav ? 'menu-close' : 'menu-open'"
@@ -69,7 +62,7 @@
                         <slot name="subTitle"> {{ subTitle }} </slot>
                     </nue-text>
                 </nue-div>
-                <nue-div align="center" justify="end" width="fit-content" gap="8px">
+                <nue-div align="center" width="fit-content" gap="8px">
                     <slot name="actions"></slot>
                 </nue-div>
             </nue-div>
@@ -100,7 +93,6 @@ const props = withDefaults(defineProps<ContentHeaderProps>(), {
 const router = useRouter()
 const viewStore = useViewStore()
 const projectStore = useProjectStore()
-const userStore = useUserStore()
 
 const { projectAsideVisible: pav, simpleProjectHeader: sph } = storeToRefs(viewStore)
 

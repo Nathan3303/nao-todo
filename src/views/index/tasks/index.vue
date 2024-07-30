@@ -36,5 +36,5 @@ useLoadingScreen().stopLoading()
 </script>
 
 <style scoped>
-@import './index.css';
+@import url('./index.css');
 </style>

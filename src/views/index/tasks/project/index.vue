@@ -1,5 +1,5 @@
 <template>
-    <nue-container class="tasks-today-view tasks-sub-view">
+    <nue-container class="tasks-project-view tasks-sub-view">
         <content-header :title="project?.title" :project="project">
             <template #subTitle>
                 {{ project?.description }}
