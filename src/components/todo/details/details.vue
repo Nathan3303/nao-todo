@@ -177,7 +177,7 @@
             <nue-dropdown theme="move-to-dropdown">
                 <template #default="{ clickTrigger }">
                     <nue-button size="small" icon="switch" @click="clickTrigger">
-                        {{ shadowTodo.project?.title || "收集箱" }}
+                        {{ shadowTodo.project?.title || '收集箱' }}
                     </nue-button>
                 </template>
                 <template #dropdown>

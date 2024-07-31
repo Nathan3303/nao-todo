@@ -41,6 +41,41 @@
                         {{ project.title }}
                     </aside-link>
                 </nue-collapse-item>
+                <nue-collapse-item name="tags">
+                    <template #header="{ collapse, state }">
+                        <nue-button
+                            theme="pure"
+                            :icon="state ? 'arrow-right' : 'arrow-down'"
+                            @click="collapse"
+                        >
+                            <template #default>
+                                <nue-div>
+                                    <nue-text size="12px">标签</nue-text>
+                                    <nue-text size="12px" color="gray">
+                                        {{ tags.length }}
+                                    </nue-text>
+                                </nue-div>
+                            </template>
+                        </nue-button>
+                        <nue-button
+                            id="create-tag-btn"
+                            theme="pure"
+                            icon="plus"
+                            @click.stop="showCreateTagDialog"
+                        ></nue-button>
+                    </template>
+                    <aside-link
+                        v-for="tag in tags"
+                        icon="tag"
+                        :key="tag.id"
+                        :route="{ name: 'tasks-tag', params: { tagId: tag.id } }"
+                    >
+                        {{ tag.name }}
+                        <template #append>
+                            <tag-color-dot :color="tag.color" size="small"></tag-color-dot>
+                        </template>
+                    </aside-link>
+                </nue-collapse-item>
             </nue-collapse>
         </nue-main>
         <nue-footer>
@@ -53,25 +88,34 @@
         ref="createProjectDialogRef"
         @create="handleCreateProject"
     ></create-project-dialog>
+    <create-tag-dialog ref="createTagDialogRef" @create="handleCreateTag"></create-tag-dialog>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useProjectStore } from '@/stores'
+import { useProjectStore, useTagStore, useUserStore } from '@/stores'
 import { storeToRefs } from 'pinia'
-import { CreateProjectDialog, AsideLink } from '@/components'
+import { CreateProjectDialog, CreateTagDialog, AsideLink, TagColorDot } from '@/components'
 import type { NewProjectPayload } from '@/components'
 
 defineOptions({ name: 'TasksViewAside' })
 
 const projectStore = useProjectStore()
+const tagStore = useTagStore()
+const userStore = useUserStore()
 
 const { projects } = storeToRefs(projectStore)
-const collapseItemsRecord = ref(['projects'])
+const { tags } = storeToRefs(tagStore)
+const collapseItemsRecord = ref(['projects', 'tags'])
 const createProjectDialogRef = ref<InstanceType<typeof CreateProjectDialog>>()
+const createTagDialogRef = ref<InstanceType<typeof CreateTagDialog>>()
 
 const showCreateProjectDialog = () => {
     createProjectDialogRef.value?.show()
+}
+
+const showCreateTagDialog = () => {
+    createTagDialogRef.value?.show()
 }
 
 const handleCreateProject = async (payload: NewProjectPayload) => {
@@ -80,6 +124,15 @@ const handleCreateProject = async (payload: NewProjectPayload) => {
         description: payload.description
     })
     createProjectDialogRef.value?.clear()
+}
+
+const handleCreateTag = async (payload: any) => {
+    console.log(payload)
+    const userId = userStore.user!.id
+    const res = await tagStore.create(userId, payload.name, payload.color)
+    if (res.code === '20000') {
+        createTagDialogRef.value?.clear()
+    }
 }
 </script>
 

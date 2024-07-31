@@ -1,15 +1,17 @@
 import { ref, reactive, watch, computed } from 'vue'
-import type { InputButtonSubmitPayload, TodoEventRowUpdatePayload } from '@/components'
-import moment from 'moment'
-import { useTodoStore, useProjectStore } from '@/stores'
-import type { Todo, TodoEvent } from '@/stores'
+import { useTodoStore, useProjectStore, useUserStore, useTagStore } from '@/stores'
 import { useDateInfo } from '@/utils/todo/use-date-info'
-import type { TodoDetailsEmits, TodoDetailsProps } from './types'
 import { storeToRefs } from 'pinia'
+import moment from 'moment'
+import type { InputButtonSubmitPayload, TodoEventRowUpdatePayload } from '@/components'
+import type { TodoDetailsEmits, TodoDetailsProps } from './types'
+import type { Tag, Todo, TodoEvent } from '@/stores'
 
 const projectStore = useProjectStore()
 const todoStore = useTodoStore()
+const userStore = useUserStore()
 const dateInfo = useDateInfo()
+const tagStore = useTagStore()
 
 export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) => {
     const { projects } = storeToRefs(projectStore)
@@ -49,6 +51,13 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         return `已完成 ${progress}/${total}, ${percentage}%`
     })
 
+    const tagsInfo = computed(() => {
+        if (!shadowTodo.value) return []
+        const result = shadowTodo.value.tags?.map((tagId) => {
+            
+        })
+    })
+
     const parseDate = (datestring: string) => {
         return moment(datestring).format('YYYY-MM-DD HH:mm')
     }
@@ -62,6 +71,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         const dueDateCompare = oldTodo.dueDate === newTodo.dueDate
         // const eventsCompare = oldTodo.events.length === newTodo.events.length
         const pinnedCompare = oldTodo.isPinned === newTodo.isPinned
+        const tagsCompare = oldTodo.tags?.length === newTodo.tags?.length
         return (
             projectIdCompare &&
             nameCompare &&
@@ -70,7 +80,8 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
             stateCompare &&
             dueDateCompare &&
             // eventsCompare &&
-            pinnedCompare
+            pinnedCompare &&
+            tagsCompare
         )
     }
 
@@ -156,6 +167,16 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         emit('refresh')
     }
 
+    const handleDeleteTag = async (tagId: Tag['id']) => {
+        if (!shadowTodo.value?.tags) return
+        const _tags = shadowTodo.value?.tags?.filter((id) => {
+            return id !== tagId
+        })
+        console.log(_tags)
+        shadowTodo.value!.tags = _tags
+        updateTodo(0)
+    }
+
     watch(
         () => props.todo,
         (newValue) => {
@@ -183,6 +204,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         handleUpdateTodoEvent,
         handleDeleteTodoEvent,
         handleClose,
-        handleMoveToProject
+        handleMoveToProject,
+        handleDeleteTag
     }
 }

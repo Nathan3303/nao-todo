@@ -22,16 +22,18 @@
 import { TasksViewAside } from '@/layers/index/tasks'
 import { storeToRefs } from 'pinia'
 import { useLoadingScreen } from '@/hooks'
-import { useViewStore, useProjectStore, useUserStore } from '@/stores'
+import { useViewStore, useProjectStore, useUserStore, useTagStore } from '@/stores'
 import { Empty } from '@/components'
 
 const viewStore = useViewStore()
 const projectStore = useProjectStore()
 const userStore = useUserStore()
+const tagStore = useTagStore()
 
 const { projectAsideVisible: pav } = storeToRefs(viewStore)
 
 await projectStore.init(userStore.user!.id, { isDeleted: false, isArchived: false })
+await tagStore.init(userStore.user!.id, { isDeleted: false })
 useLoadingScreen().stopLoading()
 </script>
 

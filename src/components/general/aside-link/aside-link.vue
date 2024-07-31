@@ -1,6 +1,9 @@
 <template>
     <nue-link theme="btnlike,plink" v-bind="$attrs">
         <slot></slot>
+        <template #append>
+            <slot name="append"></slot>
+        </template>
     </nue-link>
 </template>
 

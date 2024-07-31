@@ -41,7 +41,6 @@
                 :data-selected="todo.id === selectedId"
                 @click.stop="handleShowDetails(todo.id)"
             >
-                <!-- <div class="todo-table__body__row__color-block" :data-priority="todo.priority"></div> -->
                 <nue-div class="todo-table__body__col col-name" vertical>
                     <nue-button
                         class="todo-table-main__row__name"

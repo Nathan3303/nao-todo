@@ -47,6 +47,27 @@
                 ></click-to-edit>
             </nue-div>
         </template>
+        <template v-else-if="tag">
+            <nue-div vertical gap="4px">
+                <nue-div justify="space-between" wrap="nowrap">
+                    <nue-div align="center" width="fit-content" gap="8px">
+                        <tooltip :content="`${pav ? '收起' : '展开'}菜单侧栏`" align="left">
+                            <nue-button
+                                theme="icon-only"
+                                :icon="pav ? 'menu-close' : 'menu-open'"
+                                @click="handleHideProjectAside"
+                            ></nue-button>
+                        </tooltip>
+                        <nue-text>#</nue-text>
+                        <click-to-edit
+                            :text="tag?.name"
+                            size="24px"
+                            @edit="handleEditTagName"
+                        ></click-to-edit>
+                    </nue-div>
+                </nue-div>
+            </nue-div>
+        </template>
         <template v-else>
             <nue-div align="center" justify="space-between" wrap="nowrap">
                 <nue-div vertical width="fit-content" gap="4px">
@@ -76,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-import { useViewStore, useProjectStore, useUserStore } from '@/stores'
+import { useViewStore, useProjectStore, useUserStore, useTagStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { ClickToEdit, Tooltip } from '@/components'
 import { NueConfirm, NueMessage } from 'nue-ui'
@@ -93,6 +114,8 @@ const props = withDefaults(defineProps<ContentHeaderProps>(), {
 const router = useRouter()
 const viewStore = useViewStore()
 const projectStore = useProjectStore()
+const tagStore = useTagStore()
+const userStore = useUserStore()
 
 const { projectAsideVisible: pav, simpleProjectHeader: sph } = storeToRefs(viewStore)
 
@@ -104,6 +127,13 @@ const handleEditProjectName = async (newValue: string) => {
     const projectId = props.project?.id
     if (!projectId) return
     await projectStore.updateProject(projectId, { title: newValue })
+}
+
+const handleEditTagName = async (newValue: string) => {
+    const userId = userStore.user?.id
+    const tagId = props.tag?.id
+    if (!tagId || !userId) return
+    await tagStore.update(userId, tagId, { name: newValue })
 }
 
 const handleArchiveProject = async () => {

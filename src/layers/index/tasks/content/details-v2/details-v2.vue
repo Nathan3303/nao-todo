@@ -105,10 +105,12 @@
                 ></input-button>
             </nue-div>
             <nue-div flex></nue-div>
-            <nue-divider></nue-divider>
-            <nue-div>
-                <nue-text size="12px">标签栏</nue-text>
-            </nue-div>
+            <template v-if="shadowTodo.tagsInfo">
+                <nue-divider></nue-divider>
+                <nue-div>
+                    <tag-bar :tags="shadowTodo.tagsInfo" @delete-tag="handleDeleteTag"></tag-bar>
+                </nue-div>
+            </template>
             <nue-divider></nue-divider>
             <nue-div gap="8px">
                 <details-row
@@ -171,7 +173,7 @@
 <script setup lang="ts">
 import type { TodoDetailsEmits, TodoDetailsProps } from './types'
 import { useTodoDetails } from './use-details'
-import { Loading, Empty, InputButton, TodoEventRow, SwitchButton } from '@/components'
+import { Loading, Empty, InputButton, TodoEventRow, SwitchButton, TagBar } from '@/components'
 import DetailsRow from './row.vue'
 
 defineOptions({ name: 'ContentTodoDetailsV2' })
@@ -193,7 +195,8 @@ const {
     handleUpdateTodoEvent,
     handleDeleteTodoEvent,
     handleClose,
-    handleMoveToProject
+    handleMoveToProject,
+    handleDeleteTag
 } = useTodoDetails(props, emit)
 </script>
 

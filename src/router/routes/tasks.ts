@@ -252,7 +252,8 @@ const links = [
     { path: 'tomorrow', meta: { title: '明日任务' }, dirName: 'tomorrow' },
     { path: 'week', meta: { title: '最近7天' }, dirName: 'week' },
     { path: 'inbox', meta: { title: '收集箱' }, dirName: 'inbox' },
-    { path: ':projectId', meta: {}, dirName: 'project' },
+    { path: '$p:projectId', meta: {}, dirName: 'project' },
+    { path: '$t:tagId', meta: {}, dirName: 'tag' },
     { path: 'recycle', meta: { title: '垃圾桶' }, dirName: 'recycle' }
 ]
 

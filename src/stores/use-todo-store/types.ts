@@ -1,4 +1,5 @@
 import type { Project } from '../use-project-store'
+import type { Tag } from '../use-tag-store'
 
 export type TodoStatus = 'todo' | 'in progress' | 'done'
 
@@ -28,7 +29,6 @@ export type Todo = {
     priority: TodoPriority
     createdAt: string
     updatedAt: string
-    tags: string[]
     dueDate: { startAt: string | null; endAt: string | null }
     justUpdated?: boolean
     events: TodoEvent[]
@@ -36,6 +36,8 @@ export type Todo = {
     isDone: boolean
     isDeleted: boolean
     project: Project
+    tags: Tag['id'][]
+    tagsInfo: Tag[]
 }
 
 export type ShadowTodo = Partial<Todo>
@@ -51,6 +53,7 @@ export type TodoFilter = {
     isDeleted?: boolean
     priority?: string
     relativeDate?: 'today' | 'tomorrow' | 'week'
+    tagId?: Tag['id']
 }
 
 export type TodoCountByState = {

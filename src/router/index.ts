@@ -16,7 +16,7 @@ const router = createRouter({
         {
             path: '/',
             name: 'index',
-            beforeEnter: async (to, from, next) => {
+            beforeEnter: async (_to, _from, next) => {
                 const userStore = useUserStore()
                 const loadingScreen = useLoadingScreen()
                 if (userStore.isAuthenticated) {
@@ -37,7 +37,7 @@ const router = createRouter({
                 next('/authentication/login')
             },
             component: () => import('@/views/index/index.vue'),
-            redirect: { name: 'project' },
+            redirect: { name: 'tasks' },
             children: [projectsRoutes, tasksRoutes]
         }
     ]

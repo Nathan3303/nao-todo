@@ -20,7 +20,7 @@ import { useRoute, useRouter } from 'vue-router'
 import type { Todo, TodoEvent } from '@/stores'
 
 defineOptions({ name: 'TasksAllTableTaskView' })
-const props = defineProps<{ taskId: string; projectId?: string }>()
+const props = defineProps<{ taskId: string; projectId?: string; tagId?: string }>()
 
 const route = useRoute()
 const router = useRouter()
