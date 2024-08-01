@@ -1,5 +1,5 @@
 <template>
-    <nue-dropdown class="combo-box-wrapper">
+    <nue-dropdown class="combo-box-wrapper" :align="align">
         <template #default="{ clickTrigger }">
             <nue-button size="small" :icon="triggerIcon" @click="clickTrigger">
                 {{ triggerTitle }}
@@ -32,8 +32,8 @@
                             @check="handleCheck"
                         ></checkbox>
                     </template>
-                    <nue-text v-else size="14px" color="gray" align="center">
-                        No options found.
+                    <nue-text v-else size="12px" color="gray" align="center">
+                        暂无数据
                     </nue-text>
                 </nue-main>
             </nue-container>

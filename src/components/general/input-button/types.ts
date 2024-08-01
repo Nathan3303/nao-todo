@@ -17,6 +17,7 @@ export type InputButtonProps = {
     theme?: string | string[]
     size?: ButtonSize
     submitOnBlur?: boolean
+    disabled?: boolean
     onButtonClick?: (event: MouseEvent, payload: OnButtonClickPayload) => void | Promise<any>
 }
 

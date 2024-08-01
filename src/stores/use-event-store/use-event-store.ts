@@ -1,26 +1,27 @@
-import { reactive, ref, watch } from 'vue'
+import { reactive, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { naoTodoServer as $axios } from '@/axios'
-import type { Tag, TagFilterOptions } from './types'
-import type { User } from '..'
+import type { Event, EventFilterOptions } from './types'
+import type { User } from '../use-user-store'
+import type { Todo } from '../use-todo-store'
 
-export const useTagStore = defineStore('tagStore', () => {
-    const tags = ref<Tag[]>([])
-    const filterInfo = ref<TagFilterOptions>({})
+export const useEventStore = defineStore('eventStore', () => {
+    const events = ref<Event[]>([])
+    const filterInfo = ref<EventFilterOptions>({})
     const pageInfo = reactive({ page: 1, limit: 10 })
 
-    const parseFilterInfoToQuery = (specFilterInfo?: TagFilterOptions) => {
+    const parseFilterInfoToQuery = (specFilterInfo?: EventFilterOptions) => {
         const query: string[] = []
         const _filterInfo = specFilterInfo || filterInfo.value
         Object.keys(_filterInfo).forEach((key) => {
-            const value = _filterInfo[key as keyof TagFilterOptions]
+            const value = _filterInfo[key as keyof EventFilterOptions]
             query.push(`${key}=${value}`)
         })
         const queryString = query.join('&')
         return queryString
     }
 
-    const mergeFilterInfo = (newOne: TagFilterOptions) => {
+    const mergeFilterInfo = (newOne: EventFilterOptions) => {
         filterInfo.value = {
             ...filterInfo.value,
             ...newOne
@@ -32,18 +33,18 @@ export const useTagStore = defineStore('tagStore', () => {
         pageQueryString: string,
         filterQueryString: string
     ) => {
-        const URI = `/tags?userId=${userId}&${pageQueryString}&${filterQueryString}`
+        const URI = `/events?userId=${userId}&${pageQueryString}&${filterQueryString}`
         const response = await $axios.get(URI)
         return response.data
     }
 
     const reset = () => {
-        tags.value = []
+        events.value = []
         filterInfo.value = {}
     }
 
-    const init = async (userId: User['id'], filterInfo: TagFilterOptions) => {
-        reset()
+    const init = async (userId: User['id'], filterInfo: EventFilterOptions) => {
+        // reset()
         mergeFilterInfo(filterInfo)
         return await reload(userId)
     }
@@ -54,56 +55,55 @@ export const useTagStore = defineStore('tagStore', () => {
         const pageQueryString = `page=${page}&limit=${limit}`
         const response = await getData(userId, filterQueryString, pageQueryString)
         if (response.code === '20000') {
-            tags.value = response.data
+            events.value = response.data
         }
         return response
     }
 
-    const get = async (userId: User['id'], filterInfo?: TagFilterOptions) => {
+    const get = async (userId: User['id'], filterInfo?: EventFilterOptions) => {
         const { page, limit } = pageInfo
         const filterQueryString = parseFilterInfoToQuery(filterInfo)
         const pageQueryString = `page=${page}&limit=${limit}`
         return await getData(userId, filterQueryString, pageQueryString)
     }
 
-    const create = async (userId: User['id'], name: Tag['name'], color: Tag['color']) => {
-        const data = { userId, name, color }
-        const response = await $axios.post('/tag', data)
+    const create = async (userId: User['id'], todoId: Todo['id'], title: Event['title']) => {
+        const data = { userId, todoId, title }
+        const response = await $axios.post('/event', data)
         if (response.data.code === '20000') {
-            tags.value.push(response.data.data)
+            events.value.push(response.data.data)
         }
         return response.data
     }
 
-    const toFindLocally = (tagId: Tag['id']) => {
-        return tags.value.find((tag) => tag.id === tagId)
+    const toFindLocally = (eventId: Event['id']) => {
+        return events.value.find((event) => event.id === eventId)
     }
 
-    const update = async (userId: User['id'], tagId: Tag['id'], updateInfo: Partial<Tag>) => {
-        const response = await $axios.put(`/tag?userId=${userId}&tagId=${tagId}`, updateInfo)
+    const update = async (userId: User['id'], eventId: Event['id'], updateInfo: Partial<Event>) => {
+        const response = await $axios.put(`/event?userId=${userId}&id=${eventId}`, updateInfo)
         if (response.data.code === '20000') {
             console.log(response.data.data)
-            const tag = tags.value.find((tag) => tag.id === tagId)
-            if (tag) {
-                Object.assign(tag, updateInfo)
+            const event = events.value.find((event) => event.id === eventId)
+            if (event) {
+                Object.assign(event, updateInfo)
             }
         }
         return response.data
     }
 
-    const remove = async (userId: User['id'], tagId: Tag['id']) => {
-        const response = await $axios.delete(`/tag?userId=${userId}&id=${tagId}`)
+    const remove = async (userId: User['id'], eventId: Event['id']) => {
+        const response = await $axios.delete(`/event?userId=${userId}&id=${eventId}`)
         if (response.data.code === '20000') {
-            const index = tags.value.findIndex((tag) => tag.id === tagId)
+            const index = events.value.findIndex((event) => event.id === eventId)
             if (index !== -1) {
-                tags.value.splice(index, 1)
+                events.value.splice(index, 1)
             }
         }
-        return response.data
     }
 
     return {
-        tags,
+        events,
         filterInfo,
         pageInfo,
         init,

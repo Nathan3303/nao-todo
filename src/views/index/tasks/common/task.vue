@@ -5,8 +5,6 @@
                 :todo="todo"
                 :loading="detailsLoading"
                 @close-todo-details="handleCloseTodoDetails"
-                @create-todo-event="handleCreateTodoEvent"
-                @update-todo-event="handleUpdateTodoEvent"
             ></content-todo-details-v2>
         </nue-div>
     </teleport>
@@ -15,9 +13,9 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { ContentTodoDetailsV2 } from '@/layers/index'
-import { useTodoStore, useUserStore } from '@/stores'
+import { useTodoStore, useUserStore, useEventStore } from '@/stores'
 import { useRoute, useRouter } from 'vue-router'
-import type { Todo, TodoEvent } from '@/stores'
+import { storeToRefs } from 'pinia'
 
 defineOptions({ name: 'TasksAllTableTaskView' })
 const props = defineProps<{ taskId: string; projectId?: string; tagId?: string }>()
@@ -26,41 +24,25 @@ const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const todoStore = useTodoStore()
+const eventStore = useEventStore()
 
-const todo = ref<Todo | undefined>()
+const { todo } = storeToRefs(todoStore)
 const detailsLoading = ref(false)
 
 const handleGetTodo = async () => {
-    const id = props.taskId
-    const response = await todoStore.toFindOne(userStore.user!.id, id)
-    if (response.code === '20000') {
-        todo.value = response.data
-    }
+    const { taskId } = props
+    detailsLoading.value = true
+    await todoStore.findLocal(taskId)
+    await eventStore.init(userStore.user!.id, { todoId: taskId })
+    detailsLoading.value = false
 }
 
 const handleCloseTodoDetails = () => {
     todo.value = void 0
-    // console.log(route.matched)
     const prevRoute = route.matched[route.matched.length - 2]
     if (prevRoute) {
         setTimeout(() => router.push(prevRoute), 320)
-        // router.push(prevRoute.path)
     }
-}
-
-const handleCreateTodoEvent = async (todoId: Todo['id'], newTodoEvent: Partial<TodoEvent>) => {
-    const response = await todoStore.createTodoEvent(todoId, newTodoEvent)
-    console.log(todo.value)
-    todo.value!.events.push(response.data)
-}
-
-const handleUpdateTodoEvent = async (id: TodoEvent['id'], newTodoEvent: Partial<TodoEvent>) => {
-    const response = await todoStore.updateTodoEvent(id, newTodoEvent)
-    todo.value?.events.forEach((event) => {
-        if (event.id === id) {
-            Object.assign(event, response.data)
-        }
-    })
 }
 
 watch(

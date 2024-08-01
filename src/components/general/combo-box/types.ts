@@ -10,5 +10,6 @@ export type FrameworkOption = {
 export type ComboBoxProps = {
     triggerTitle?: string
     triggerIcon?: string
+    align?: 'left' | 'center' | 'right'
     framework: FrameworkOption[]
 }

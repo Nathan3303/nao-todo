@@ -290,6 +290,18 @@ export const useTodoStore = defineStore('todoStore', () => {
         return response.data
     }
 
+    const findLocal = async (todoId: Todo['id']) => {
+        let _t = null
+        for (let i = 0; i < todos.value.length; i++) {
+            if (todos.value[i].id === todoId) {
+                todo.value = todos.value[i]
+                _t = todo.value
+                break
+            }
+        }
+        return _t
+    }
+
     const update2 = async (userId: User['id'], id: Todo['id'], updateInfo: Partial<Todo>) => {
         const URI = `/todo?userId=${userId}&id=${id}`
         const todoIdx = todos.value.findIndex((todo) => todo.id === id)
@@ -328,6 +340,32 @@ export const useTodoStore = defineStore('todoStore', () => {
         const index = todos.value.findIndex((todo) => todo.id === id)
         todos.value.splice(index, 1)
         return true
+    }
+
+    const removeTag = async (userId: User['id'], id: Todo['id'], tagId: string) => {
+        const todo = await findLocal(id)
+        if (!todo) return
+        const tags = todo.tags
+        const index = tags.findIndex((id) => id === tagId)
+        if (index === -1) return
+        tags.splice(index, 1)
+        const response = await update2(userId, id, { tags })
+        if (response.code === '20000') {
+            todo.tags = tags
+        }
+        return response
+    }
+
+    const addTag = async (userId: User['id'], id: Todo['id'], tagId: string) => {
+        const todo = await findLocal(id)
+        if (!todo) return
+        const tags = todo.tags
+        tags.push(tagId)
+        const response = await update2(userId, id, { tags })
+        if (response.code === '20000') {
+            todo.tags = tags
+        }
+        return response
     }
 
     /** New API End */
@@ -383,8 +421,11 @@ export const useTodoStore = defineStore('todoStore', () => {
         update2,
         toFind,
         toFindOne,
+        findLocal,
         create2,
         removeLocal,
-        updateLocal
+        updateLocal,
+        removeTag,
+        addTag
     }
 })

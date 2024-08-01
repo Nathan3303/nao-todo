@@ -11,28 +11,10 @@
             <nue-div align="center" wrap="nowrap" width="fit-content">
                 <nue-button theme="pure" icon="square"></nue-button>
                 <nue-divider direction="vertical"></nue-divider>
-                <nue-div class="date-selector" gap="4px" align="center">
-                    <nue-button
-                        v-if="date.endAt === ''"
-                        theme="small,pure"
-                        @click="handleSwitchEndDate(1)"
-                    >
-                        设置结束时间
-                    </nue-button>
-                    <template v-else>
-                        <nue-input
-                            theme="small,noshape"
-                            type="datetime-local"
-                            v-model="date.endAt"
-                            @change="handleChangeDate"
-                        ></nue-input>
-                        <nue-button
-                            theme="small,pure"
-                            icon="clear"
-                            @click="handleSwitchEndDate(0)"
-                        ></nue-button>
-                    </template>
-                </nue-div>
+                <todo-date-selector
+                    :date="shadowTodo.dueDate.endAt"
+                    @change="handleChangeEndAt"
+                ></todo-date-selector>
             </nue-div>
             <nue-div align="center" wrap="nowrap" width="fit-content">
                 <nue-button
@@ -48,16 +30,24 @@
         <nue-main>
             <nue-div justify="space-between">
                 <nue-div width="fit-content" align="center">
-                    <nue-select v-model="shadowTodo.priority" size="small" @change="updateTodo">
-                        <nue-select-option label="低" value="low"></nue-select-option>
-                        <nue-select-option label="中" value="medium"></nue-select-option>
-                        <nue-select-option label="高" value="high"></nue-select-option>
-                    </nue-select>
-                    <nue-select v-model="shadowTodo.state" size="small" @change="updateTodo">
-                        <nue-select-option label="待办" value="todo"></nue-select-option>
-                        <nue-select-option label="正在进行" value="in-progress"></nue-select-option>
-                        <nue-select-option label="已完成" value="done"></nue-select-option>
-                    </nue-select>
+                    <todo-selector
+                        :value="shadowTodo.priority"
+                        :options="[
+                            { label: '低', value: 'low' },
+                            { label: '中', value: 'medium' },
+                            { label: '高', value: 'high' }
+                        ]"
+                        @change="handleChangePriority"
+                    ></todo-selector>
+                    <todo-selector
+                        :value="shadowTodo.state"
+                        :options="[
+                            { label: '代办', value: 'todo' },
+                            { label: '正在进行', value: 'in-progress' },
+                            { label: '已完成', value: 'done' }
+                        ]"
+                        @change="handleChangeState"
+                    ></todo-selector>
                 </nue-div>
                 <switch-button
                     v-model="shadowTodo.isPinned"
@@ -88,29 +78,9 @@
                     @blur="updateTodo"
                 ></nue-textarea>
             </nue-div>
-            <nue-div vertical gap="4px">
-                <todo-event-row
-                    v-for="event in shadowTodo.events"
-                    :key="event.id"
-                    :event="event"
-                    @update="handleUpdateTodoEvent"
-                    @delete="handleDeleteTodoEvent"
-                ></todo-event-row>
-                <input-button
-                    icon="plus-circle"
-                    button-text="添加检查事项"
-                    theme="pure,noshape"
-                    :submit-on-blur="false"
-                    @submit="handleInputButtonSubmit"
-                ></input-button>
-            </nue-div>
+            <todo-event-details></todo-event-details>
             <nue-div flex></nue-div>
-            <template v-if="shadowTodo.tagsInfo">
-                <nue-divider></nue-divider>
-                <nue-div>
-                    <tag-bar :tags="shadowTodo.tagsInfo" @delete-tag="handleDeleteTag"></tag-bar>
-                </nue-div>
-            </template>
+            <todo-tag-details></todo-tag-details>
             <nue-divider></nue-divider>
             <nue-div gap="8px">
                 <details-row
@@ -155,15 +125,6 @@
                 </template>
             </nue-dropdown>
             <nue-div wrap="nowrap" width="fit-content" gap="4px">
-                <switch-button
-                    v-model="shadowTodo.isDone"
-                    size="small"
-                    icon="square"
-                    active-icon="square-check-fill"
-                    text="标记为结束"
-                    active-text="取消结束"
-                    @change="() => updateTodo()"
-                ></switch-button>
                 <nue-button theme="small" icon="delete">删除任务</nue-button>
             </nue-div>
         </nue-footer>
@@ -171,10 +132,11 @@
 </template>
 
 <script setup lang="ts">
-import type { TodoDetailsEmits, TodoDetailsProps } from './types'
 import { useTodoDetails } from './use-details'
-import { Loading, Empty, InputButton, TodoEventRow, SwitchButton, TagBar } from '@/components'
+import { Empty, SwitchButton, TodoDateSelector, TodoSelector } from '@/components'
+import { TodoEventDetails, TodoTagDetails } from '@/layers/index'
 import DetailsRow from './row.vue'
+import type { TodoDetailsEmits, TodoDetailsProps } from './types'
 
 defineOptions({ name: 'ContentTodoDetailsV2' })
 const props = defineProps<TodoDetailsProps>()
@@ -184,19 +146,14 @@ const {
     projects,
     shadowTodo,
     loadingState,
-    date,
-    dueDateHint,
     eventsProgress,
     parseDate,
     updateTodo,
-    handleChangeDate,
-    handleSwitchEndDate,
-    handleInputButtonSubmit,
-    handleUpdateTodoEvent,
-    handleDeleteTodoEvent,
+    handleChangeEndAt,
+    handleChangePriority,
+    handleChangeState,
     handleClose,
-    handleMoveToProject,
-    handleDeleteTag
+    handleMoveToProject
 } = useTodoDetails(props, emit)
 </script>
 
