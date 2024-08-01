@@ -253,7 +253,6 @@ const handleDrop = (event: DragEvent) => {
     todoStore.update2(userId, todoId, updateInfo).then(
         async () => {
             await todoStore.updateLocal(todoId, updateInfo)
-            // NueMessage.success('任务状态更新成功')
         },
         () => {}
     )
