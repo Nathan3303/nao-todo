@@ -29,5 +29,5 @@ const proxyValue = computed({
 </script>
 
 <style scoped>
-@import url('./selector.css');
+/* @import url('./selector.css'); */
 </style>

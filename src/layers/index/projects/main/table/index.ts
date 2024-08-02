@@ -1,3 +1,3 @@
-import ProjectsMainList from "./table.vue";
+import ProjectsTable from './table.vue'
 
-export { ProjectsMainList }
+export const ProjectsMainList = ProjectsTable

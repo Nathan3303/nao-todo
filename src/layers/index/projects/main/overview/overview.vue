@@ -34,7 +34,6 @@
         <nue-div class="third-block" vertical theme="card">
             <nue-text>任务分析</nue-text>
             <nue-divider></nue-divider>
-            <todo-analysis :project-id="project.id"></todo-analysis>
         </nue-div>
         <nue-div class="fourth-block" vertical theme="card">
             <nue-text>项目详情</nue-text>
@@ -46,13 +45,12 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { ProjectsMainOverviewProps } from './types'
 import { useTodoStore, useUserStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { ProjectDetails, TodoTable, Empty, type Columns } from '@/components'
 import StateRow from './state-row.vue'
-import TodoAnalysis from './todo-analysis.vue'
 import { useRouter } from 'vue-router'
+import type { ProjectsMainOverviewProps } from './types'
 
 const props = defineProps<ProjectsMainOverviewProps>()
 
@@ -71,11 +69,14 @@ const columns = ref<Columns>({
     description: false
 })
 
-await todoStore.getTodosByFilterInfo(user.value!.id, { isPinned: true, projectId: props.project!.id })
+await todoStore.getTodosByFilterInfo(user.value!.id, {
+    isPinned: true,
+    projectId: props.project!.id
+})
 
 const handleShowTodoDetails = async (id: string) => {
     filterInfo.value.id = id
-    router.push({name: 'project-main-table'})
+    router.push({ name: 'project-main-table' })
 }
 </script>
 
