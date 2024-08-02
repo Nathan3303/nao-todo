@@ -34,5 +34,5 @@ const { events } = storeToRefs(eventStore)
 </script>
 
 <style scoped>
-@import url('./event-details.css');
+/* @import url('./event-details.css'); */
 </style>

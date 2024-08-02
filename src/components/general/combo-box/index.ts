@@ -1,3 +1,3 @@
-import ComboBox from './combo-box.vue'
+import CB from './combo-box.vue'
 
-export { ComboBox }
+export const ComboBox = CB

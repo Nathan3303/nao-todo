@@ -1,3 +1,3 @@
-import ListColumnSwitcher from './list-column-switcher.vue'
+import LCS from './list-column-switcher.vue'
 
-export { ListColumnSwitcher }
+export const ListColumnSwitcher = LCS
