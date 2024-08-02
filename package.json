@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 8080",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
@@ -14,8 +14,13 @@
     "test": "run-p lint format"
   },
   "dependencies": {
+    "@types/md5": "^2.3.5",
+    "axios": "^1.7.2",
+    "echarts": "^5.5.1",
+    "md5": "^2.3.0",
+    "moment": "^2.30.1",
     "nanoid": "^5.0.7",
-    "nue-ui": "^0.4.83",
+    "nue-ui": "^0.5.39",
     "pinia": "^2.1.7",
     "vue": "^3.4.21",
     "vue-router": "^4.3.0"

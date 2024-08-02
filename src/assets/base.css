@@ -68,7 +68,6 @@ body {
     line-height: 1.6;
     @font-face {
         font-family: poppins;
-        src: url('./poppins.ttf');
     }
     font-family:
         'poppins',
@@ -94,4 +93,9 @@ body {
 #app {
     width: 100vw;
     height: 100vh;
+}
+
+.nue-link--disabled {
+    opacity: 0.6;
+    background-color: #f5f5f5;
 }

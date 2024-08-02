@@ -1,17 +1,12 @@
 <template>
     <nue-container id="global" class="app-container">
-        <app-header></app-header>
-        <nue-main aside-width="200px">
-            <template #aside>
-                <app-aside></app-aside>
-            </template>
-            <template #content>
-                <router-view></router-view>
-            </template>
-        </nue-main>
+        <index-header></index-header>
+        <suspense>
+            <router-view></router-view>
+        </suspense>
     </nue-container>
 </template>
 
 <script setup lang="ts">
-import { AppHeader, AppAside } from '@/components'
+import { IndexHeader } from '@/layers/index'
 </script>

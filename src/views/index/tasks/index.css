@@ -1,0 +1,54 @@
+.tasks-view {
+    .nue-main__content {
+        min-width: 375px;
+        overflow-x: hidden;
+    }
+
+    #TasksViewRightAside {
+        width: 32%;
+        min-width: 360px;
+        max-width: 480px;
+        padding: 0px;
+        box-sizing: content-box;
+        border-left: 1px solid var(--aside-border-color);
+        transition: all 0.16s ease-in-out;
+        position: relative;
+
+        .empty-text {
+            position: absolute;
+            left: 0px;
+            z-index: 0;
+        }
+    }
+}
+
+@media screen and (max-width: 1200px) {
+    .tasks-view {
+        #TasksViewRightAside {
+            width: 0px;
+            min-width: 0px;
+            padding: 0px;
+            border-left: none;
+            position: relative;
+
+            .empty-text {
+                display: none;
+            }
+        }
+    }
+}
+
+/* @media screen and (max-width: 768px) {
+    .tasks-view {
+        position: relative;
+
+        &:deep().nue-main__aside {
+            position: absolute;
+            left: 0px;
+            background-color: white;
+            z-index: 1;
+            height: 100vh;
+            box-shadow: 2px 0px 5px 3px rgba(0, 0, 0, 0.1);
+        }
+    }
+} */

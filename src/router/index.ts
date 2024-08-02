@@ -1,43 +1,55 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
+import { useUserStore } from '@/stores/use-user-store'
+import { useLoadingScreen } from '@/hooks/use-loading-screen'
+import projectsRoutes from './routes/projects'
+import tasksRoutes from './routes/tasks'
 
 const router = createRouter({
-    history: createWebHistory(import.meta.env.BASE_URL),
+    history: createWebHashHistory(import.meta.env.BASE_URL),
     routes: [
         {
+            path: '/authentication/:operation?',
+            name: 'authentication',
+            props: true,
+            component: () => import('../views/authentication/index.vue')
+        },
+        {
             path: '/',
-            name: 'home',
-            component: () => import('../views/index/index.vue'),
-            children: [
-                {
-                    path: '/inbox',
-                    name: 'inbox',
-                    component: () => import('../views/index/inbox/index.vue')
-                },
-                {
-                    path: '/myactivity',
-                    name: 'myactivity',
-                    component: () => import('../views/index/my-activity/index.vue')
-                },
-                {
-                    path: '/project/:projectId',
-                    name: 'project',
-                    props: true,
-                    component: () => import('../views/index/project/index.vue'),
-                    redirect(to) {
-                        return { name: 'board', params: { projectId: to.params.projectId } }
-                    },
-                    children: [
-                        {
-                            path: 'board',
-                            name: 'board',
-                            props: true,
-                            component: () => import('../views/index/project/board/index.vue')
-                        }
-                    ]
+            name: 'index',
+            beforeEnter: async (_to, _from, next) => {
+                const userStore = useUserStore()
+                const loadingScreen = useLoadingScreen()
+                if (userStore.isAuthenticated) {
+                    next()
+                    return
                 }
-            ]
+                const isLoggedIn = await userStore.isLoggedIn()
+                if (isLoggedIn) {
+                    loadingScreen.startLoading()
+                    await userStore.checkin()
+                    if (userStore.isAuthenticated) {
+                        next()
+                        return
+                    } else {
+                        loadingScreen.stopLoading()
+                    }
+                }
+                next('/authentication/login')
+            },
+            component: () => import('@/views/index/index.vue'),
+            redirect: { name: 'tasks' },
+            children: [projectsRoutes, tasksRoutes]
         }
     ]
+})
+
+router.afterEach((to) => {
+    const { meta } = to
+    if (meta && meta.title) {
+        document.title = ('NaoTodo - ' + meta.title) as string
+    } else {
+        document.title = 'NaoTodo'
+    }
 })
 
 export default router
