@@ -4,10 +4,9 @@
             <nue-link theme="btnlike" icon="board" :route="{ name: 'project-dashboard' }">
                 我的清单
             </nue-link>
-            <!-- <nue-link theme="btnlike" icon="archive2" :route="{ name: 'project-archived' }">
-                已归档
-            </nue-link> -->
-            <nue-link theme="btnlike" icon="inbox" disabled> 收集箱 </nue-link>
+            <nue-link theme="btnlike" icon="inbox" :route="{ name: 'project-archived' }">
+                已归档清单
+            </nue-link>
         </nue-div>
         <nue-collapse v-model="collapseItemsRecord" style="margin-bottom: auto">
             <nue-collapse-item name="projects">

@@ -22,7 +22,7 @@ const tagStore = useTagStore()
 
 const { projectAsideVisible } = storeToRefs(viewStore)
 
-await projectStore.init(userStore.user!.id, { isDeleted: false })
+await projectStore.init(userStore.user!.id, { isDeleted: false, isArchived: false })
 await tagStore.init(userStore.user!.id, { isDeleted: false })
 useLoadingScreen().stopLoading()
 </script>

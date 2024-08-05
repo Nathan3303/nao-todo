@@ -1,7 +1,6 @@
 import type { Todo, TodoEvent } from '@/stores'
 
 export type TodoDetailsProps = {
-    todo?: Todo
     loading?: boolean
 }
 

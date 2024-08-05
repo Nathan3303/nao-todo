@@ -12,10 +12,9 @@
             </nue-text>
         </nue-div>
         <nue-divider></nue-divider>
-        <nue-div wrap="nowrap">
+        <nue-div align="center" wrap="nowrap">
             <nue-text size="12px" color="gray">4/16</nue-text>
-            <nue-text size="12px" flex align="center">NueProgress</nue-text>
-            <nue-text size="12px">100%</nue-text>
+            <nue-progress :percentage="36" color="#424242"></nue-progress>
         </nue-div>
     </nue-div>
 </template>

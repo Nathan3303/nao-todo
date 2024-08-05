@@ -7,19 +7,15 @@
             <router-view></router-view>
         </template>
         <nue-div id="TasksViewRightAside">
-            <empty
-                class="empty-text"
-                empty
-                message="点击左侧列表中的任务以查看任务详细。"
-                text-size="12px"
-                full-height
-            ></empty>
+            <nue-div class="todo-details-wrapper" :data-empty="!$route.params.taskId">
+                <content-todo-details-v2 />
+            </nue-div>
         </nue-div>
     </nue-main>
 </template>
 
 <script setup lang="ts">
-import { TasksViewAside } from '@/layers/index/tasks'
+import { TasksViewAside, ContentTodoDetailsV2 } from '@/layers/index/tasks'
 import { storeToRefs } from 'pinia'
 import { useLoadingScreen } from '@/hooks'
 import { useViewStore, useProjectStore, useUserStore, useTagStore } from '@/stores'

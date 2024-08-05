@@ -22,15 +22,17 @@ import { storeToRefs } from 'pinia'
 import { InputButton, TodoEventRow } from '@/components'
 import { useEventStore } from '@/stores'
 import { useEventDetails } from './use-event-details'
-import type { Todo } from '@/stores'
+import type { TodoEventDetailsProps } from './types'
 
 defineOptions({ name: 'TodoEventDetails' })
+const props = defineProps<TodoEventDetailsProps>()
 
 const eventStore = useEventStore()
-const { loadingState, init, handleCreateEvent, handleUpdateEvent, handleDeleteEvent } =
-    useEventDetails()
+const { init, handleCreateEvent, handleUpdateEvent, handleDeleteEvent } = useEventDetails(props)
 
 const { events } = storeToRefs(eventStore)
+
+await init();
 </script>
 
 <style scoped>

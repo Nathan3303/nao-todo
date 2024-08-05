@@ -38,22 +38,25 @@ const columns: Columns = {
     endAt: true,
     priority: true,
     state: true,
-    description: true
+    description: true,
+    project: true
 }
 
 const handleCreateTodo = async (todoName: Todo['name']) => {
-    // const projectId = route.params.projectId as string
-    // const userId = userStore.user!.id
-    // const newTodo: Partial<Todo> = {
-    //     userId,
-    //     projectId: projectId,
-    //     name: todoName
-    // }
-    // const res = await todoStore.create2(userId, newTodo)
-    // if (res.code === '20000') {
-    //     await todoStore.get(userId)
-    //     NueMessage.success('任务创建成功')
-    // }
+    const tagId = route.params.tagId as string
+    const projectId = userStore.user!.id
+    const userId = userStore.user!.id
+    const newTodo: Partial<Todo> = {
+        userId,
+        projectId: projectId,
+        tags: [tagId],
+        name: todoName
+    }
+    const res = await todoStore.create2(userId, newTodo)
+    if (res.code === '20000') {
+        await todoStore.get(userId)
+        NueMessage.success('任务创建成功')
+    }
 }
 </script>
 

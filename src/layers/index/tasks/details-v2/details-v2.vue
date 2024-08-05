@@ -9,7 +9,11 @@
     <nue-container class="details-wrapper" v-if="shadowTodo" :key="shadowTodo?.id">
         <nue-header>
             <nue-div align="center" wrap="nowrap" width="fit-content">
-                <nue-button theme="pure" icon="square"></nue-button>
+                <nue-button
+                    theme="pure"
+                    :icon="shadowTodo.isDone ? 'square-check-fill' : 'square'"
+                    @click="handleCheckTodo"
+                ></nue-button>
                 <nue-divider direction="vertical"></nue-divider>
                 <todo-date-selector
                     :date="shadowTodo.dueDate.endAt"
@@ -78,7 +82,7 @@
                     @blur="updateTodo"
                 ></nue-textarea>
             </nue-div>
-            <todo-event-details></todo-event-details>
+            <todo-event-details :todo-id="shadowTodo.id"></todo-event-details>
             <nue-div flex></nue-div>
             <todo-tag-details></todo-tag-details>
             <nue-divider></nue-divider>
@@ -153,7 +157,8 @@ const {
     handleChangePriority,
     handleChangeState,
     handleClose,
-    handleMoveToProject
+    handleMoveToProject,
+    handleCheckTodo
 } = useTodoDetails(props, emit)
 </script>
 

@@ -19,7 +19,6 @@ const buildTaskRoute = (path: string, meta: RouteMeta, dirName: string) => {
                         path: ':taskId',
                         name: `tasks-${dirName}-table-task`,
                         props: true,
-                        component: () => import('@/views/index/tasks/common/task.vue')
                     }
                 ]
             },
@@ -32,7 +31,6 @@ const buildTaskRoute = (path: string, meta: RouteMeta, dirName: string) => {
                         path: ':taskId',
                         name: `tasks-${dirName}-kanban-task`,
                         props: true,
-                        component: () => import('@/views/index/tasks/common/task.vue')
                     }
                 ]
             }

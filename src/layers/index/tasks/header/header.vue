@@ -25,7 +25,7 @@
                                 @click="handleArchiveProject"
                             />
                         </tooltip>
-                        <tooltip content="删除项目">
+                        <tooltip content="删除项目" align="right">
                             <nue-button
                                 theme="icon-only"
                                 icon="delete"

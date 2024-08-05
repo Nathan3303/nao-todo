@@ -1,25 +1,27 @@
 import { ref } from 'vue'
-import { useEventStore, useUserStore, useTodoStore } from '@/stores'
+import { useEventStore, useUserStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import type { Event } from '@/stores'
 import type { InputButtonSubmitPayload, TodoEventRowUpdatePayload } from '@/components'
+import type { TodoEventDetailsProps } from './types'
 
-export const useEventDetails = () => {
+export const useEventDetails = (props: TodoEventDetailsProps) => {
     const eventStore = useEventStore()
     const userStore = useUserStore()
-    const todoStore = useTodoStore()
 
     const loadingState = ref(false)
 
     const init = async () => {
         loadingState.value = true
-        await eventStore.init(userStore.user!.id, { todoId: todoStore.todo!.id })
+        const { todoId } = props
+        await eventStore.init(userStore.user!.id, { todoId })
         loadingState.value = true
     }
 
     const handleCreateEvent = async (payload: InputButtonSubmitPayload) => {
         const { value: title } = payload
-        await eventStore.create(userStore.user!.id, todoStore.todo!.id, title)
+        const { todoId } = props
+        await eventStore.create(userStore.user!.id, todoId, title)
     }
 
     const handleUpdateEvent = async (event: TodoEventRowUpdatePayload) => {
