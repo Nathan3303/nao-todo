@@ -1,7 +1,7 @@
 <template>
     <content-kanban
         :filter-info="filterInfo"
-        base-route="tasks-recycle-kanban-task"
+        base-route="tasks-recycle-kanban"
     ></content-kanban>
     <suspense>
         <router-view></router-view>

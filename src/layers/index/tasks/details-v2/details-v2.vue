@@ -129,7 +129,11 @@
                 </template>
             </nue-dropdown>
             <nue-div wrap="nowrap" width="fit-content" gap="4px">
-                <nue-button theme="small" icon="delete">删除任务</nue-button>
+                <todo-delete-button
+                    :is-deleted="shadowTodo.isDeleted"
+                    @delete="handleDeleteTodo"
+                    @restore="handleRestoreTodo"
+                ></todo-delete-button>
             </nue-div>
         </nue-footer>
     </nue-container>
@@ -137,7 +141,7 @@
 
 <script setup lang="ts">
 import { useTodoDetails } from './use-details'
-import { Empty, SwitchButton, TodoDateSelector, TodoSelector } from '@/components'
+import { Empty, SwitchButton, TodoDateSelector, TodoSelector, TodoDeleteButton } from '@/components'
 import { TodoEventDetails, TodoTagDetails } from '@/layers/index'
 import DetailsRow from './row.vue'
 import type { TodoDetailsEmits, TodoDetailsProps } from './types'
@@ -158,7 +162,9 @@ const {
     handleChangeState,
     handleClose,
     handleMoveToProject,
-    handleCheckTodo
+    handleCheckTodo,
+    handleDeleteTodo,
+    handleRestoreTodo
 } = useTodoDetails(props, emit)
 </script>
 

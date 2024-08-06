@@ -1,5 +1,5 @@
 <template>
-    <content-kanban :filter-info="filterInfo" base-route="tasks-inbox-kanban-task"></content-kanban>
+    <content-kanban :filter-info="filterInfo" base-route="tasks-inbox-kanban"></content-kanban>
     <suspense>
         <router-view></router-view>
     </suspense>

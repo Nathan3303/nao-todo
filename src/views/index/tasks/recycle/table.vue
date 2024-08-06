@@ -1,7 +1,7 @@
 <template>
     <content-table
         :filter-info="filterInfo"
-        base-route="tasks-recycle-table-task"
+        base-route="tasks-recycle-table"
         @create-todo="handleCreateTodo"
     ></content-table>
     <suspense>

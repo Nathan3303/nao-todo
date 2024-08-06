@@ -1,7 +1,7 @@
 <template>
     <content-table
         :filter-info="filterInfo"
-        base-route="tasks-today-table-task"
+        base-route="tasks-today-table"
         @create-todo="handleCreateTodo"
     ></content-table>
     <suspense>

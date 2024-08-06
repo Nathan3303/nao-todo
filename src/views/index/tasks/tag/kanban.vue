@@ -2,7 +2,7 @@
     <content-kanban
         :key="route.params.tagId.toString()"
         :filter-info="filterInfo"
-        base-route="tasks-tag-kanban-task"
+        base-route="tasks-tag-kanban"
     ></content-kanban>
     <suspense>
         <router-view></router-view>

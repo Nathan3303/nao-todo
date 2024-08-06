@@ -2,6 +2,7 @@
     overflow: hidden;
 
     &:deep(span) {
+        width: 100%;
         text-align: left;
         overflow: hidden;
         text-overflow: ellipsis;

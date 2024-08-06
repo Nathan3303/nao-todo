@@ -2,7 +2,7 @@
     <content-table
         :key="route.params.tagId.toString()"
         :filter-info="filterInfo"
-        base-route="tasks-tag-table-task"
+        base-route="tasks-tag-table"
         :columns="columns"
         @create-todo="handleCreateTodo"
     ></content-table>

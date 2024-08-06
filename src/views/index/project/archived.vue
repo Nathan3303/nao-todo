@@ -1,48 +1,26 @@
 <template>
-    <nue-container class="project-archived-view">
-        <nue-header>
-            <nue-text theme="h3">已归档的项目</nue-text>
-        </nue-header>
-        <nue-main>
-            <project-board :loading-state="projectBoardLoading">
-                <project-card
-                    v-for="project in archivedProjects"
-                    :key="project.id"
-                    :project="project"
-                >
-                    <template #ops>
-                        <tooltip content="取消归档" align="right">
-                            <nue-button
-                                theme="pure,unarchived"
-                                icon="archive"
-                                @click="handleUnarchiveProject(project.id)"
-                            ></nue-button>
-                        </tooltip>
-                    </template>
-                </project-card>
-            </project-board>
-        </nue-main>
-    </nue-container>
+    <project-content title="已归档清单" :filter-info="filterInfo">
+        <template #subTitle>
+            “已归档清单” 板块是一个专门用于存储和管理已经完成或不再需要积极跟进的任务和项目的区域。
+            通过将完成的任务归档，你可以保持当前工作空间的整洁和有序，同时也可以在需要时轻松找到和查看过去的工作成果。
+        </template>
+    </project-content>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/stores'
-import { ProjectBoard, ProjectCard, Tooltip } from '@/components'
+import { ProjectContent } from '@/layers/index'
 import { NueMessage, NueConfirm } from 'nue-ui'
-import type { Project } from '@/stores'
+import type { Project, ProjectFilterOptions } from '@/stores'
 
 const projectStore = useProjectStore()
 
-const { archivedProjects } = storeToRefs(projectStore)
 const projectBoardLoading = ref(false)
-
-const handleGetArchivedProjects = async () => {
-    projectBoardLoading.value = true
-    await projectStore.getArchivedProjects()
-    projectBoardLoading.value = false
-}
+const filterInfo = ref<ProjectFilterOptions>({
+    isDeleted: false,
+    isArchived: true
+})
 
 const handleUnarchiveProject = async (projectId: Project['id']) => {
     NueConfirm({
@@ -51,15 +29,10 @@ const handleUnarchiveProject = async (projectId: Project['id']) => {
         confirmButtonText: '确定',
         cancelButtonText: '取消'
     }).then(
-        async () => {
-            console.log('unarchive project', projectId)
-            await projectStore.unarchiveProject(projectId)
-        },
+        async () => {},
         () => NueMessage.info('操作取消')
     )
 }
-
-await handleGetArchivedProjects()
 </script>
 
 <style scoped>

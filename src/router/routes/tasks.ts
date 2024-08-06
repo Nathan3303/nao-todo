@@ -11,28 +11,14 @@ const buildTaskRoute = (path: string, meta: RouteMeta, dirName: string) => {
         redirect: { name: `tasks-${dirName}-table` },
         children: [
             {
-                path: 'table',
+                path: 'table/:taskId?',
                 name: `tasks-${dirName}-table`,
-                component: () => import(`@/views/index/tasks/${dirName}/table.vue`),
-                children: [
-                    {
-                        path: ':taskId',
-                        name: `tasks-${dirName}-table-task`,
-                        props: true,
-                    }
-                ]
+                component: () => import(`@/views/index/tasks/${dirName}/table.vue`)
             },
             {
-                path: 'kanban',
+                path: 'kanban/:taskId?',
                 name: `tasks-${dirName}-kanban`,
-                component: () => import(`@/views/index/tasks/${dirName}/kanban.vue`),
-                children: [
-                    {
-                        path: ':taskId',
-                        name: `tasks-${dirName}-kanban-task`,
-                        props: true,
-                    }
-                ]
+                component: () => import(`@/views/index/tasks/${dirName}/kanban.vue`)
             }
         ]
     } as RouteLocationRaw
