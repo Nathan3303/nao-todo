@@ -1,4 +1,9 @@
 .tasks-view {
+
+    &:deep().nue-main__aside {
+        overflow: auto;
+    }
+
     .nue-main__content {
         min-width: 375px;
         overflow-x: hidden;

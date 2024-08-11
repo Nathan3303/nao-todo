@@ -1,3 +1,3 @@
-import ProjectsAside from './projects-aside.vue'
+import Aside from './aside.vue'
 
-export { ProjectsAside }
+export const ProjectsAside = Aside

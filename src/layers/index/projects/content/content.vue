@@ -22,20 +22,36 @@
         <nue-container class="project-content__main">
             <nue-header class="project-content__main__header">
                 <project-filter-bar :filter-info="filterInfo" />
-                <nue-button theme="primary,small" icon="plus" @click="handleCreateProject">
+                <nue-button
+                    theme="primary,small"
+                    icon="plus"
+                    @click="handleShowCreateProjectDialog"
+                >
                     创建清单
                 </nue-button>
             </nue-header>
-            <project-board :projects="projects" allow-route />
+            <project-board
+                :projects="projects"
+                allow-route
+                @archive-project="handleArchiveProject"
+                @unarchive-project="handleUnarchiveProject"
+                @delete-project="handleDeleteProject"
+                @restore-project="handleRestoreProject"
+            />
         </nue-container>
     </nue-container>
+    <create-project-dialog
+        ref="createProjectDialogRef"
+        @create="handleCreateProject"
+    ></create-project-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useViewStore, useProjectStore, useUserStore } from '@/stores'
+import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { ProjectFilterBar, ProjectBoard } from '@/components'
+import { useViewStore, useProjectStore, useUserStore } from '@/stores'
+import { ProjectFilterBar, ProjectBoard, CreateProjectDialog } from '@/components'
+import { useProjectHandler } from '@/utils'
 import type { ProjectContentProps } from './types'
 
 defineOptions({ name: 'ProjectContent' })
@@ -45,26 +61,24 @@ const props = withDefaults(defineProps<ProjectContentProps>(), {
 
 const viewStore = useViewStore()
 const projectStore = useProjectStore()
-const userStore = useUserStore()
+const {
+    handleGetProjects,
+    handleCreateProject,
+    handleArchiveProject,
+    handleUnarchiveProject,
+    handleDeleteProject,
+    handleRestoreProject
+} = useProjectHandler()
 
 const { projectAsideVisible: pav } = storeToRefs(viewStore)
-const { filterInfo, projects } = storeToRefs(projectStore)
+const { projects } = storeToRefs(projectStore)
+const createProjectDialogRef = ref<InstanceType<typeof CreateProjectDialog>>()
 
-const handleCreateProject = () => {
-    const createProjectBtn = document.querySelector(
-        '#create-project-btn'
-    ) as HTMLButtonElement | null
-    createProjectBtn?.click()
+const handleShowCreateProjectDialog = () => {
+    createProjectDialogRef.value?.show()
 }
 
-const getProjects = async () => {
-    const userId = userStore.user!.id
-    const { filterInfo } = props
-    console.log(filterInfo)
-    await projectStore.init(userId, { ...filterInfo })
-}
-
-await getProjects()
+await handleGetProjects(props.filterInfo)
 </script>
 
 <style scoped>

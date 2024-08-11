@@ -3,7 +3,7 @@
         <nue-div vertical align="stretch">
             <nue-input
                 ref="projectNameInputRef"
-                v-model="newProjectPayload.name"
+                v-model="newProjectPayload.title"
                 title="Project name"
                 placeholder="项目名称 (必填)"
             ></nue-input>
@@ -24,14 +24,15 @@
 
 <script setup lang="ts">
 import { ref, nextTick } from 'vue'
-import type { CreateProjectDialogEmits, NewProjectPayload } from './types'
+import type { CreateProjectDialogEmits } from './types'
 import { NueMessage, NueInput } from 'nue-ui'
+import type { ProjectCreateOptions } from '@/stores'
 
 defineOptions({ name: 'CreateProjectDialog' })
 const emit = defineEmits<CreateProjectDialogEmits>()
 
 const visible = ref(false)
-const newProjectPayload = ref<NewProjectPayload>({ name: '', description: '' })
+const newProjectPayload = ref<ProjectCreateOptions>({ title: '', description: '' })
 const projectNameInputRef = ref<InstanceType<typeof NueInput>>()
 
 const showCreateProjectDialog = () => {
@@ -42,7 +43,7 @@ const showCreateProjectDialog = () => {
 }
 
 const handleCreateProject = () => {
-    if (!newProjectPayload.value.name) {
+    if (!newProjectPayload.value.title) {
         NueMessage.error('Project name is required')
         return
     }
@@ -50,7 +51,7 @@ const handleCreateProject = () => {
 }
 
 const handleClearInputValues = () => {
-    newProjectPayload.value = { name: '', description: '' }
+    newProjectPayload.value = { title: '', description: '' }
 }
 
 defineExpose({

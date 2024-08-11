@@ -9,7 +9,20 @@
                     :key="project.id"
                     :project="project"
                     :allow-route="allowRoute"
-                ></project-card>
+                >
+                    <template #ops>
+                        <project-archive-button
+                            :is-archived="project.isArchived"
+                            @archive="emit('archiveProject', project.id)"
+                            @unarchive="emit('unarchiveProject', project.id)"
+                        />
+                        <project-delete-button
+                            :is-deleted="project.isDeleted"
+                            @delete="emit('deleteProject', project.id)"
+                            @resotre="emit('restoreProject', project.id)"
+                        />
+                    </template>
+                </project-card>
             </slot>
         </div>
     </div>
@@ -17,8 +30,15 @@
 
 <script setup lang="ts">
 import { computed, useSlots } from 'vue'
-import { Loading, Empty, ProjectCard } from '@/components'
+import {
+    Loading,
+    Empty,
+    ProjectCard,
+    ProjectArchiveButton,
+    ProjectDeleteButton
+} from '@/components'
 import type { ProjectBoardProps, ProjectBoardEmits } from './types'
+import type { Project } from '@/stores'
 
 defineOptions({ name: 'ProjectBoard' })
 const props = defineProps<ProjectBoardProps>()

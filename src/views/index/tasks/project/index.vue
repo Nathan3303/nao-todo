@@ -31,7 +31,7 @@ const projectStore = useProjectStore()
 
 const project = computed<Project>(() => {
     const { projectId } = props
-    const project = projectStore.toFindLocally(projectId)
+    const project = projectStore._toFinded(projectId)
     document.title = 'NaoTodo - ' + project?.title
     return project as Project
 })

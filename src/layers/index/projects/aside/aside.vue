@@ -1,8 +1,8 @@
 <template>
     <nue-div class="app-aside" vertical align="stretch" flex>
         <nue-div vertical gap="8px" align="stretch">
-            <nue-link theme="btnlike" icon="board" :route="{ name: 'project-dashboard' }">
-                我的清单
+            <nue-link theme="btnlike" icon="board" :route="{ name: 'project-all' }">
+                所有
             </nue-link>
             <nue-link theme="btnlike" icon="inbox" :route="{ name: 'project-archived' }">
                 已归档清单
@@ -25,12 +25,12 @@
                             </nue-div>
                         </template>
                     </nue-button>
-                    <nue-button
+                    <!-- <nue-button
                         id="create-project-btn"
                         theme="pure"
                         icon="plus"
                         @click.stop="showCreateProjectDialog"
-                    ></nue-button>
+                    ></nue-button> -->
                 </template>
                 <nue-link
                     theme="btnlike,plink"
@@ -50,37 +50,19 @@
             <nue-divider></nue-divider>
             <nue-link theme="btnlike" icon="setting" disabled> 设置 </nue-link>
         </nue-div>
-        <create-project-dialog
-            ref="createProjectDialogRef"
-            @create="handleCreateProject"
-        ></create-project-dialog>
     </nue-div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useProjectStore } from '@/stores'
-import { CreateProjectDialog } from '@/components'
-import { storeToRefs } from 'pinia'
-import type { NewProjectPayload } from '@/components'
+import { useProjectStore, useUserStore } from '@/stores'
+import type { Project } from '@/stores'
 
 const projectStore = useProjectStore()
+const userStore = useUserStore()
 
-const { projects } = storeToRefs(projectStore)
 const collapseItemsRecord = ref(['projects'])
-const createProjectDialogRef = ref<InstanceType<typeof CreateProjectDialog>>()
-
-const showCreateProjectDialog = () => {
-    createProjectDialogRef.value?.show()
-}
-
-const handleCreateProject = async (payload: NewProjectPayload) => {
-    await projectStore.createProject({
-        title: payload.name,
-        description: payload.description
-    })
-    createProjectDialogRef.value?.clear()
-}
+const projects = ref<Project[]>([])
 </script>
 
 <style scoped>

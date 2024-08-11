@@ -9,16 +9,15 @@
     <nue-container class="details-wrapper" v-if="shadowTodo" :key="shadowTodo?.id">
         <nue-header>
             <nue-div align="center" wrap="nowrap" width="fit-content">
-                <nue-button
-                    theme="pure"
-                    :icon="shadowTodo.isDone ? 'square-check-fill' : 'square'"
+                <!-- <nue-icon
+                    size="16px"
+                    style="cursor: pointer"
+                    :name="shadowTodo.isDone ? 'square-check-fill' : 'square'"
                     @click="handleCheckTodo"
-                ></nue-button>
+                ></nue-icon> -->
+                <todo-check-button :is-done="shadowTodo.isDone" @change="handleCheckTodo" />
                 <nue-divider direction="vertical"></nue-divider>
-                <todo-date-selector
-                    :date="shadowTodo.dueDate.endAt"
-                    @change="handleChangeEndAt"
-                ></todo-date-selector>
+                <todo-date-selector :date="shadowTodo.dueDate.endAt" @change="handleChangeEndAt" />
             </nue-div>
             <nue-div align="center" wrap="nowrap" width="fit-content">
                 <nue-button
@@ -141,7 +140,14 @@
 
 <script setup lang="ts">
 import { useTodoDetails } from './use-details'
-import { Empty, SwitchButton, TodoDateSelector, TodoSelector, TodoDeleteButton } from '@/components'
+import {
+    Empty,
+    SwitchButton,
+    TodoDateSelector,
+    TodoSelector,
+    TodoDeleteButton,
+    TodoCheckButton
+} from '@/components'
 import { TodoEventDetails, TodoTagDetails } from '@/layers/index'
 import DetailsRow from './row.vue'
 import type { TodoDetailsEmits, TodoDetailsProps } from './types'

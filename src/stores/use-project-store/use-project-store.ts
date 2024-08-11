@@ -1,8 +1,14 @@
-import { reactive, ref } from 'vue'
+import { reactive, ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { naoTodoServer as $axios } from '@/axios'
 import type { User } from '@/stores'
-import type { PageInfo, Project, ProjectFilterOptions, ProjectUpdateOptions } from './types'
+import type {
+    PageInfo,
+    Project,
+    ProjectFilterOptions,
+    ProjectUpdateOptions,
+    ProjectCreateOptions
+} from './types'
 
 export const useProjectStore = defineStore('projectStore', () => {
     const project = ref<Project>()
@@ -50,6 +56,19 @@ export const useProjectStore = defineStore('projectStore', () => {
         return response
     }
 
+    const create = async (userId: User['id'], createOptions: ProjectCreateOptions) => {
+        const URI = `/project`
+        const newProject = { userId, ...createOptions }
+        const response = await $axios.post(URI, newProject)
+        return response.data
+    }
+
+    const remove = async (userId: User['id'], id: Project['id']) => {
+        const URI = `/project?userId=${userId}&projectId=${id}`
+        const response = await $axios.delete(URI)
+        return response.data
+    }
+
     const update = async (
         userId: User['id'],
         id: Project['id'],
@@ -60,19 +79,7 @@ export const useProjectStore = defineStore('projectStore', () => {
         const project = projects.value[idx]
         const newProject = { ...project, ...updateOptions }
         const response = await $axios.put(URI, newProject)
-        if (response.data.code === '20000') {
-            _update(id, updateOptions)
-        }
         return response.data
-    }
-
-    const _update = (id: Project['id'], updateOptions: ProjectUpdateOptions) => {
-        requestIdleCallback(() => {
-            const projectIdx = projects.value.findIndex((project) => project.id === id)
-            const newProject = { ...projects.value[projectIdx], ...updateOptions }
-            projects.value.splice(projectIdx, 1, newProject)
-            return newProject
-        })
     }
 
     const toGetted = async (userId: User['id'], filterInfo?: ProjectFilterOptions) => {
@@ -82,10 +89,39 @@ export const useProjectStore = defineStore('projectStore', () => {
         return response.data
     }
 
+    const _create = (createOptions: ProjectCreateOptions) => {
+        const newProject = { ...createOptions }
+        projects.value.push(newProject as Project)
+        return newProject
+    }
+
+    const _remove = (id: Project['id']) => {
+        const idx = projects.value.findIndex((project) => project.id === id)
+        projects.value.splice(idx, 1)
+    }
+
+    const _update = (id: Project['id'], updateOptions: ProjectUpdateOptions) => {
+        const projectIdx = projects.value.findIndex((project) => project.id === id)
+        const newProject = { ...projects.value[projectIdx], ...updateOptions }
+        projects.value.splice(projectIdx, 1, newProject)
+        return newProject
+    }
+
     const _toFinded = (id: Project['id']) => {
         const project = projects.value.find((project) => project.id === id)
         if (!project) return null
         return project
+    }
+
+    const _toFiltered = (filterOptions: ProjectFilterOptions) => {
+        const newProjects = projects.value.filter((project) => {
+            const keys = Object.keys(filterOptions)
+            return keys.every((key) => {
+                const value = filterOptions[key as keyof ProjectFilterOptions]
+                return project[key as keyof Project] === value
+            })
+        })
+        return newProjects
     }
 
     return {
@@ -95,9 +131,14 @@ export const useProjectStore = defineStore('projectStore', () => {
         pageInfo,
         init,
         get,
+        create,
+        remove,
         update,
         toGetted,
+        _create,
+        _remove,
         _update,
-        _toFinded
+        _toFinded,
+        _toFiltered
     }
 })

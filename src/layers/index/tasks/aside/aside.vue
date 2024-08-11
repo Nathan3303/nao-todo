@@ -7,6 +7,7 @@
             <aside-link icon="week" :route="{ name: 'tasks-week' }"> 最近 7 天 </aside-link>
             <aside-link icon="inbox" :route="{ name: 'tasks-inbox' }"> 收集箱 </aside-link>
         </nue-header>
+        <nue-divider></nue-divider>
         <nue-main>
             <nue-collapse v-model="collapseItemsRecord">
                 <nue-collapse-item name="projects">
@@ -78,10 +79,11 @@
                 </nue-collapse-item>
             </nue-collapse>
         </nue-main>
+        <nue-divider></nue-divider>
         <nue-footer>
             <aside-link icon="delete" :route="{ name: 'tasks-recycle' }"> 垃圾桶 </aside-link>
-            <nue-divider></nue-divider>
-            <aside-link icon="setting" disabled> 设置 </aside-link>
+            <!-- <nue-divider></nue-divider> -->
+            <!-- <aside-link icon="setting" disabled> 设置 </aside-link> -->
         </nue-footer>
     </nue-container>
     <create-project-dialog
@@ -96,7 +98,6 @@ import { ref } from 'vue'
 import { useProjectStore, useTagStore, useUserStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { CreateProjectDialog, CreateTagDialog, AsideLink, TagColorDot } from '@/components'
-import type { NewProjectPayload } from '@/components'
 
 defineOptions({ name: 'TasksViewAside' })
 

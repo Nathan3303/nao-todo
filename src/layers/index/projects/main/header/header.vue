@@ -66,10 +66,11 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { NueConfirm, NueMessage } from 'nue-ui'
-import type { ProjectsMainHeaderEmits, ProjectsMainHeaderProps } from './types'
 import { ClickToEdit, ProjectDetailsDialog, Tooltip } from '@/components'
-import { useProjectStore, useViewStore } from '@/stores'
+import { useProjectStore, useViewStore, useUserStore } from '@/stores'
 import { storeToRefs } from 'pinia'
+import type { ProjectsMainHeaderEmits, ProjectsMainHeaderProps } from './types'
+import moment from 'moment'
 
 const props = defineProps<ProjectsMainHeaderProps>()
 const emit = defineEmits<ProjectsMainHeaderEmits>()
@@ -77,6 +78,7 @@ const emit = defineEmits<ProjectsMainHeaderEmits>()
 const router = useRouter()
 const projectStore = useProjectStore()
 const viewStore = useViewStore()
+const userStore = useUserStore()
 
 const { simpleProjectHeader: sph, projectAsideVisible: pav } = storeToRefs(viewStore)
 const projectDetailsDialogRef = ref<InstanceType<typeof ProjectDetailsDialog>>()
@@ -93,21 +95,24 @@ const handleDeleteProject = () => {
         cancelButtonText: '取消'
     }).then(
         async () => {
+            const userId = userStore.user!.id
             const { id } = props.project
-            await projectStore.deleteProject(id)
+            await projectStore.remove(userId, id)
         },
         () => NueMessage.info('操作取消')
     )
 }
 
 const handleEditDescription = async (newValue: string) => {
+    const userId = userStore.user!.id
     const { id } = props.project
-    await projectStore.updateProject(id, { description: newValue })
+    await projectStore.update(userId, id, { description: newValue })
 }
 
 const handleEditName = async (newValue: string) => {
+    const userId = userStore.user!.id
     const { id } = props.project
-    await projectStore.updateProject(id, { title: newValue })
+    await projectStore.update(userId, id, { title: newValue })
 }
 
 const handleHideProjectAside = () => {
@@ -123,9 +128,13 @@ const handleArchiveProject = async () => {
         cancelButtonText: '取消'
     }).then(
         async () => {
+            const userId = userStore.user!.id
             const { id } = props.project
-            await projectStore.archiveProject(id)
-            router.replace({ name: 'project-dashboard' })
+            const updateInfo = { isArchived: true }
+            const res = await projectStore.update(userId, id, updateInfo)
+            if (res.code !== '20000') return
+            projectStore._update(id, updateInfo)
+            router.replace({ name: 'project-all' })
         },
         () => NueMessage.info('操作取消')
     )

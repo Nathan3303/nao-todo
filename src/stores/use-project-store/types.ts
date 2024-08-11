@@ -16,20 +16,16 @@ export type Project = {
     archivedAt: Date | null
 }
 
-export type CreateProjectPayload = {
-    title: Project['title']
-    description?: Project['description']
-}
+export type ProjectFilterOptionsRaw = Partial<Project>
 
-export type ProjectFilterOptions = Partial<Project> & {
-    papge?: number
-    limit?: number
-}
+export type ProjectPageOptions = { page?: number; limit?: number }
+
+export type ProjectFilterOptions = ProjectFilterOptionsRaw & ProjectPageOptions
 
 export type ProjectUpdateOptions = Partial<Omit<Project, 'id'>>
 
-export type PageInfo = {
-    page: number
-    limit: number
-    total: number
-}
+export type ProjectCreateOptions = { title: Project['title']; description?: Project['description'] }
+
+export type CreateProjectPayload = ProjectCreateOptions
+
+export type PageInfo = { page: number; limit: number; total: number }

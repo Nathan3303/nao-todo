@@ -124,9 +124,17 @@ const handleHideProjectAside = () => {
 }
 
 const handleEditProjectName = async (newValue: string) => {
+    const userId = userStore.user!.id
     const projectId = props.project?.id
     if (!projectId) return
-    await projectStore.updateProject(projectId, { title: newValue })
+    await projectStore.update(userId, projectId, { title: newValue })
+}
+
+const handleEditDescription = async (newValue: string) => {
+    const userId = userStore.user!.id
+    const projectId = props.project?.id
+    if (!projectId) return
+    await projectStore.update(userId, projectId, { description: newValue })
 }
 
 const handleEditTagName = async (newValue: string) => {
@@ -144,10 +152,12 @@ const handleArchiveProject = async () => {
         cancelButtonText: '取消'
     }).then(
         async () => {
+            const userId = userStore.user!.id
             const projectId = props.project?.id
             if (!projectId) return
-            const res = await projectStore.archiveProject(projectId)
+            const res = await projectStore.update(userId, projectId, { isArchived: true })
             if (res.code !== '20000') return
+            projectStore._remove(projectId)
             const topProject = projectStore.projects[0]
             let route: RouteLocationRaw = { name: 'tasks-all' }
             if (topProject) {
@@ -167,18 +177,13 @@ const handleDeleteProject = () => {
         cancelButtonText: '取消'
     }).then(
         async () => {
+            const userId = userStore.user!.id
             const projectId = props.project?.id
             if (!projectId) return
-            await projectStore.deleteProject(projectId)
+            await projectStore.update(userId, projectId, { isDeleted: true })
         },
         () => NueMessage.info('操作取消')
     )
-}
-
-const handleEditDescription = async (newValue: string) => {
-    const projectId = props.project?.id
-    if (!projectId) return
-    await projectStore.updateProject(projectId, { description: newValue })
 }
 </script>
 

@@ -14,7 +14,7 @@
 import { useRouter } from 'vue-router'
 defineOptions({ name: 'ProjectNotFound' })
 const router = useRouter()
-router.replace({ name: 'project-dashboard' })
+router.replace({ name: 'project-all' })
 </script>
 
 <style scoped>

@@ -9,59 +9,13 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useProjectStore } from '@/stores'
 import { ProjectContent } from '@/layers/index'
-import { NueMessage, NueConfirm } from 'nue-ui'
-import type { Project, ProjectFilterOptions } from '@/stores'
+import type { ProjectFilterOptions } from '@/stores'
 
-const projectStore = useProjectStore()
-
-const projectBoardLoading = ref(false)
 const filterInfo = ref<ProjectFilterOptions>({
-    isDeleted: false,
-    isArchived: true
+    isArchived: true,
+    isDeleted: false
 })
-
-const handleUnarchiveProject = async (projectId: Project['id']) => {
-    NueConfirm({
-        title: '取消项目归档确认',
-        content: '确定要取消项目归档吗？',
-        confirmButtonText: '确定',
-        cancelButtonText: '取消'
-    }).then(
-        async () => {},
-        () => NueMessage.info('操作取消')
-    )
-}
 </script>
 
-<style scoped>
-.project-archived-view {
-    gap: 16px;
-
-    .nue-header {
-        padding: 0px;
-        height: auto;
-        border-bottom: none;
-    }
-
-    .nue-main {
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        padding: 0px;
-
-        .nue-button--unarchived:deep(.nue-icon)::after {
-            display: block;
-            width: 100%;
-            height: 2px;
-            background-color: #007aff;
-            content: '';
-            position: absolute;
-            transform: rotate(45deg);
-            top: 4px;
-            left: 1px;
-        }
-    }
-}
-</style>
+<style scoped></style>

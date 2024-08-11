@@ -2,12 +2,12 @@ const projectsRoutes = {
     path: 'project',
     name: 'project',
     component: () => import('@/views/index/project/index.vue'),
-    redirect: { name: 'project-dashboard' },
+    redirect: { name: 'project-all' },
     children: [
         {
-            path: 'dashboard',
-            name: 'project-dashboard',
-            component: () => import('@/views/index/project/dashboard.vue')
+            path: 'all',
+            name: 'project-all',
+            component: () => import('@/views/index/project/all/index.vue')
         },
         {
             path: 'archived',
@@ -43,7 +43,7 @@ const projectsRoutes = {
         {
             path: 'recycle-bin',
             name: 'project-recycle-bin',
-            component: () => import('@/views/index/project/recycle-bin.vue')
+            component: () => import('@/views/index/project/recycle/index.vue')
         }
     ]
 }
