@@ -82,13 +82,11 @@
         <nue-divider></nue-divider>
         <nue-footer>
             <aside-link icon="delete" :route="{ name: 'tasks-recycle' }"> 垃圾桶 </aside-link>
-            <!-- <nue-divider></nue-divider> -->
-            <!-- <aside-link icon="setting" disabled> 设置 </aside-link> -->
         </nue-footer>
     </nue-container>
     <create-project-dialog
         ref="createProjectDialogRef"
-        @create="handleCreateProject"
+        :handler="handleCreateProject"
     ></create-project-dialog>
     <create-tag-dialog ref="createTagDialogRef" @create="handleCreateTag"></create-tag-dialog>
 </template>
@@ -98,12 +96,15 @@ import { ref } from 'vue'
 import { useProjectStore, useTagStore, useUserStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { CreateProjectDialog, CreateTagDialog, AsideLink, TagColorDot } from '@/components'
+import { useProjectHandler } from '@/utils'
+// import type { CreateProjectPayload } from '@/stores'
 
 defineOptions({ name: 'TasksViewAside' })
 
 const projectStore = useProjectStore()
 const tagStore = useTagStore()
 const userStore = useUserStore()
+const { handleCreateProject } = useProjectHandler()
 
 const { projects } = storeToRefs(projectStore)
 const { tags } = storeToRefs(tagStore)
@@ -119,13 +120,14 @@ const showCreateTagDialog = () => {
     createTagDialogRef.value?.show()
 }
 
-const handleCreateProject = async (payload: NewProjectPayload) => {
-    await projectStore.createProject({
-        title: payload.name,
-        description: payload.description
-    })
-    createProjectDialogRef.value?.clear()
-}
+// const handleCreateProject = async (payload: CreateProjectPayload) => {
+//     const userId = userStore.user!.id
+//     const res = await projectStore.create(userId, {
+//         title: payload.title,
+//         description: payload.description
+//     })
+//     return res
+// }
 
 const handleCreateTag = async (payload: any) => {
     console.log(payload)

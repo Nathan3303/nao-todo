@@ -1,5 +1,5 @@
 <template>
-    <nue-main class="tasks-view" aside-width="256px" allow-resize-aside>
+    <nue-main class="tasks-view" aside-width="240px">
         <template #aside v-if="pav">
             <tasks-view-aside></tasks-view-aside>
         </template>
@@ -19,7 +19,6 @@ import { TasksViewAside, ContentTodoDetailsV2 } from '@/layers/index/tasks'
 import { storeToRefs } from 'pinia'
 import { useLoadingScreen } from '@/hooks'
 import { useViewStore, useProjectStore, useUserStore, useTagStore } from '@/stores'
-import { Empty } from '@/components'
 
 const viewStore = useViewStore()
 const projectStore = useProjectStore()

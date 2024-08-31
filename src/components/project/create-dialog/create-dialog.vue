@@ -1,63 +1,92 @@
 <template>
-    <nue-dialog v-model="visible" title="创建项目" @confirm="handleCreateProject">
+    <nue-dialog ref="dialogRef" v-model="visible" title="创建项目">
         <nue-div vertical align="stretch">
-            <nue-input
-                ref="projectNameInputRef"
-                v-model="newProjectPayload.title"
-                title="Project name"
-                placeholder="项目名称 (必填)"
-            ></nue-input>
-            <nue-textarea
-                v-model="newProjectPayload.description"
-                title="Project description"
-                placeholder="项目描述"
-                :rows="0"
-                autosize
-            ></nue-textarea>
+            <nue-div vertical align="stretch" gap="4px">
+                <nue-input
+                    ref="projectNameInputRef"
+                    v-model="newProjectPayload.title"
+                    title="项目名称"
+                    placeholder="请输入项目名称"
+                    :debounce-time="240"
+                    :disabled="loading"
+                    clearable
+                />
+                <nue-text v-if="isProjectTitleEmpty" size="12px" color="#f56c6c">
+                    * 项目名称不能为空
+                </nue-text>
+            </nue-div>
+            <nue-div vertical align="stretch" gap="8px">
+                <nue-checkbox v-model="isAddDescription" size="small" :disabled="loading">
+                    添加项目备注
+                </nue-checkbox>
+                <nue-textarea
+                    v-if="isAddDescription"
+                    v-model="newProjectPayload.description"
+                    title="Project description"
+                    placeholder="项目描述"
+                    :rows="0"
+                    autosize
+                ></nue-textarea>
+            </nue-div>
         </nue-div>
-        <template #footer="{ cancel, confirm }">
+        <template #footer="{ cancel }">
             <nue-button @click.stop="cancel">取消</nue-button>
-            <nue-button theme="primary" @click.stop="confirm">创建</nue-button>
+            <nue-button theme="primary" :loading="loading" @click.stop="handleAddProject">
+                创建
+            </nue-button>
         </template>
     </nue-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick } from 'vue'
-import type { CreateProjectDialogEmits } from './types'
-import { NueMessage, NueInput } from 'nue-ui'
+import { ref, nextTick, watch } from 'vue'
+import type { CreateProjectDialogEmits, CreateProjectDialogProps } from './types'
+import { NueMessage, NueInput, NueConfirm } from 'nue-ui'
 import type { ProjectCreateOptions } from '@/stores'
 
 defineOptions({ name: 'CreateProjectDialog' })
+const props = defineProps<CreateProjectDialogProps>()
 const emit = defineEmits<CreateProjectDialogEmits>()
 
 const visible = ref(false)
+const loading = ref(false)
+const isProjectTitleEmpty = ref(false)
+const isAddDescription = ref(false)
 const newProjectPayload = ref<ProjectCreateOptions>({ title: '', description: '' })
 const projectNameInputRef = ref<InstanceType<typeof NueInput>>()
 
 const showCreateProjectDialog = () => {
     visible.value = true
-    nextTick(() => {
-        projectNameInputRef.value?.innerInputRef?.focus()
-    })
-}
-
-const handleCreateProject = () => {
-    if (!newProjectPayload.value.title) {
-        NueMessage.error('Project name is required')
-        return
-    }
-    emit('create', newProjectPayload.value)
+    nextTick(() => projectNameInputRef.value?.innerInputRef?.focus())
 }
 
 const handleClearInputValues = () => {
+    isProjectTitleEmpty.value = false
     newProjectPayload.value = { title: '', description: '' }
 }
+
+const handleAddProject = async () => {
+    const { handler } = props
+    loading.value = true
+    if (!newProjectPayload.value.title) {
+        isProjectTitleEmpty.value = true
+        return
+    }
+    const response = await handler(newProjectPayload.value)
+    if (response.code === '20000') {
+        visible.value = false
+        handleClearInputValues()
+    }
+    loading.value = false
+}
+
+watch(
+    () => newProjectPayload.value.title,
+    (newVal) => (isProjectTitleEmpty.value = !newVal)
+)
 
 defineExpose({
     show: showCreateProjectDialog,
     clear: handleClearInputValues
 })
 </script>
-
-<style scoped></style>

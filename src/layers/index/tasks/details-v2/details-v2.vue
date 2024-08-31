@@ -4,17 +4,10 @@
         message="点击左侧列表中的任务以查看任务详细。"
         text-size="12px"
         full-height
-    >
-    </empty>
+    />
     <nue-container class="details-wrapper" v-if="shadowTodo" :key="shadowTodo?.id">
         <nue-header>
             <nue-div align="center" wrap="nowrap" width="fit-content">
-                <!-- <nue-icon
-                    size="16px"
-                    style="cursor: pointer"
-                    :name="shadowTodo.isDone ? 'square-check-fill' : 'square'"
-                    @click="handleCheckTodo"
-                ></nue-icon> -->
                 <todo-check-button :is-done="shadowTodo.isDone" @change="handleCheckTodo" />
                 <nue-divider direction="vertical"></nue-divider>
                 <todo-date-selector :date="shadowTodo.dueDate.endAt" @change="handleChangeEndAt" />
@@ -41,7 +34,7 @@
                             { label: '高', value: 'high' }
                         ]"
                         @change="handleChangePriority"
-                    ></todo-selector>
+                    />
                     <todo-selector
                         :value="shadowTodo.state"
                         :options="[
@@ -60,9 +53,12 @@
                     text="收藏"
                     active-text="取消收藏"
                     @change="() => updateTodo()"
-                ></switch-button>
+                />
             </nue-div>
-            <nue-divider></nue-divider>
+            <nue-divider />
+            <div>
+                <nue-progress :percentage="eventsProgress.percentage" :stroke-width="2" hide-text />
+            </div>
             <nue-div vertical gap="0px" align="stretch">
                 <nue-textarea
                     class="inputer--name"
@@ -71,7 +67,7 @@
                     autosize
                     theme="noshape,large"
                     @blur="updateTodo"
-                ></nue-textarea>
+                />
                 <nue-textarea
                     v-model="shadowTodo.description"
                     placeholder="输入您的任务描述..."
@@ -79,52 +75,64 @@
                     autosize
                     theme="noshape"
                     @blur="updateTodo"
-                ></nue-textarea>
+                />
             </nue-div>
-            <todo-event-details :todo-id="shadowTodo.id"></todo-event-details>
-            <nue-div flex></nue-div>
-            <todo-tag-details></todo-tag-details>
-            <nue-divider></nue-divider>
+            <todo-event-details :todo-id="shadowTodo.id" />
+            <nue-div flex />
+            <todo-tag-details />
+            <nue-divider />
             <nue-div gap="8px">
                 <details-row
                     v-if="shadowTodo?.updatedAt"
                     label="检查事项进度"
-                    :text="eventsProgress"
+                    :text="eventsProgress.text"
                     flex="1"
-                ></details-row>
+                />
                 <details-row
                     v-if="shadowTodo?.createdAt"
                     label="创建时间"
                     :text="parseDate(shadowTodo?.createdAt)"
                     flex="1"
-                ></details-row>
+                />
                 <details-row
                     v-if="shadowTodo?.updatedAt"
                     label="最后修改时间"
                     :text="parseDate(shadowTodo?.updatedAt)"
                     flex="1"
-                ></details-row>
+                />
             </nue-div>
         </nue-main>
         <nue-footer>
-            <nue-dropdown theme="move-to-dropdown">
+            <nue-dropdown theme="move-to-dropdown" :hide-on-click="false">
                 <template #default="{ clickTrigger }">
                     <nue-button size="small" icon="switch" @click="clickTrigger">
                         {{ shadowTodo.project?.title || '收集箱' }}
                     </nue-button>
                 </template>
                 <template #dropdown>
-                    <nue-button
-                        theme="pure,small"
-                        v-for="project in projects"
-                        :data-selected="project.id === shadowTodo.projectId"
-                        @click="handleMoveToProject(project.id)"
+                    <nue-div
+                        class="nue-dropdown-item"
+                        @click="handleMoveToProject(userStore.user!.id, '')"
+                        gap="8px"
+                        align="center"
                     >
-                        {{ project.title }}
-                        <template #append>
-                            <nue-icon name="check"></nue-icon>
-                        </template>
-                    </nue-button>
+                        <nue-icon name="inbox" size="12px" />
+                        <nue-text size="12px" style="flex: auto">收集箱</nue-text>
+                        <nue-icon v-if="shadowTodo.projectId === userStore.user!.id" name="check" />
+                    </nue-div>
+                    <nue-divider />
+                    <nue-div
+                        v-for="project in projects"
+                        class="nue-dropdown-item"
+                        @click="handleMoveToProject(project.id, project.title)"
+                        style="min-width: 128px"
+                        gap="8px"
+                        align="center"
+                    >
+                        <nue-icon name="more2" size="12px" />
+                        <nue-text size="12px" style="flex: auto">{{ project.title }}</nue-text>
+                        <nue-icon v-if="project.id === shadowTodo.projectId" name="check" />
+                    </nue-div>
                 </template>
             </nue-dropdown>
             <nue-div wrap="nowrap" width="fit-content" gap="4px">
@@ -132,7 +140,7 @@
                     :is-deleted="shadowTodo.isDeleted"
                     @delete="handleDeleteTodo"
                     @restore="handleRestoreTodo"
-                ></todo-delete-button>
+                />
             </nue-div>
         </nue-footer>
     </nue-container>
@@ -149,12 +157,15 @@ import {
     TodoCheckButton
 } from '@/components'
 import { TodoEventDetails, TodoTagDetails } from '@/layers/index'
+import { useUserStore } from '@/stores'
 import DetailsRow from './row.vue'
 import type { TodoDetailsEmits, TodoDetailsProps } from './types'
 
 defineOptions({ name: 'ContentTodoDetailsV2' })
 const props = defineProps<TodoDetailsProps>()
 const emit = defineEmits<TodoDetailsEmits>()
+
+const userStore = useUserStore()
 
 const {
     projects,
@@ -164,8 +175,8 @@ const {
     parseDate,
     updateTodo,
     handleChangeEndAt,
-    handleChangePriority,
     handleChangeState,
+    handleChangePriority,
     handleClose,
     handleMoveToProject,
     handleCheckTodo,

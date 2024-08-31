@@ -23,11 +23,11 @@
                     >
                         刷新
                     </nue-button>
-                    <nue-button
+                    <!-- <nue-button
                         theme="small"
                         :icon="sph ? 'arrow-down' : 'arrow-up'"
                         @click="viewStore.toggleSimpleProjectHeader()"
-                    ></nue-button>
+                    ></nue-button> -->
                 </nue-div>
             </nue-div>
         </nue-header>

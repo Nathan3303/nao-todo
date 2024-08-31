@@ -1,3 +1,3 @@
-import IndexHeader from './header.vue'
+import Header from './header.vue'
 
-export { IndexHeader }
+export const IndexHeaderLayer = Header

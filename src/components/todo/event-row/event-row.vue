@@ -3,7 +3,7 @@
         <nue-icon
             class="todo-event-row__check-icon"
             :name="iconName"
-            size="15px"
+            size="16px"
             @click="handleUpdate(true)"
         ></nue-icon>
         <nue-input
@@ -48,50 +48,5 @@ const handleDelete = () => {
 </script>
 
 <style scoped>
-.todo-event-row {
-    height: 28px;
-    padding: 0px 1px;
-    flex-wrap: nowrap;
-    align-items: center;
-    gap: 6px;
-
-    .todo-event-row__check-icon {
-        cursor: pointer;
-    }
-
-    .nue-input--small {
-        font-size: var(--text-xs);
-        padding: 0;
-        flex: 1;
-
-        &[data-is-done="true"] {
-            text-decoration: line-through;
-            color: #999;
-        }
-    }
-
-    .todo-event-row__actions {
-        width: fit-content;
-        display: none;
-
-        & > .nue-icon {
-            cursor: pointer;
-        }
-    }
-
-    &:hover {
-        /* background-color: #f5f5f5; */
-        /* border-radius: var(--primary-radius); */
-        box-shadow: 0px 1px rgba(0, 0, 0, 0.3);
-
-        .todo-event-row__actions {
-            display: flex;
-        }
-    }
-
-    &:focus-within {
-        /* background-color: #f5f5f5; */
-        box-shadow: 0px 1px rgba(0, 0, 0, 0.3);
-    }
-}
+@import url("./event-row.css");
 </style>

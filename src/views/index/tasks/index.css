@@ -1,5 +1,4 @@
 .tasks-view {
-
     &:deep().nue-main__aside {
         overflow: auto;
     }

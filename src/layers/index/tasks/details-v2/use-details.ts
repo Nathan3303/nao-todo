@@ -26,7 +26,10 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         const progress = _e ? _e.filter((event) => event.isDone).length : 0
         const total = _e ? _e.length : 0
         const percentage = total ? Math.floor((progress / total) * 100) : 0
-        return `已完成 ${progress}/${total}, ${percentage}%`
+        return {
+            percentage,
+            text: `已完成 ${progress}/${total}, ${percentage}%`
+        }
     })
 
     const parseDate = (datestring: string) => {
@@ -64,7 +67,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
                 const newTodo = { ...shadowTodo.value }
                 const response = await todoStore.update2(userId, todoId, newTodo)
                 if (response.code === '20000') {
-                    handleUpdateLocal(newTodo)
+                    handleUpdateLocal(response.data)
                     resolve(response)
                 }
                 loadingState.value = false
@@ -99,8 +102,9 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         }
     }
 
-    const handleMoveToProject = async (projectId: string) => {
+    const handleMoveToProject = async (projectId: string, projectTitle: string) => {
         shadowTodo.value!.projectId = projectId
+        shadowTodo.value!.project.title = projectTitle
         await updateTodo(0)
         document.querySelector('body')?.click()
         emit('refresh')
@@ -115,9 +119,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
     const handleUpdateLocal = async (updateInfo: Partial<Todo>) => {
         if (!shadowTodo.value) return
         const todoId = shadowTodo.value.id
-        requestIdleCallback(() => {
-            todoStore.updateLocal(todoId, updateInfo)
-        })
+        todoStore.updateLocal(todoId, updateInfo)
     }
 
     const handleDeleteTodo = async () => {
@@ -133,10 +135,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
             const todoId = shadowTodo.value?.id
             const response = await todoStore.update2(userId, todoId, { isDeleted: true })
             if (response.code === '20000') {
-                // await todoStore.removeLocal(todoId)
-                requestIdleCallback(async () => {
-                    await todoStore.get(userId)
-                })
+                await todoStore.get(userId)
                 handleClose()
             }
         } catch (e) {
@@ -157,10 +156,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
             const todoId = shadowTodo.value?.id
             const response = await todoStore.update2(userId, todoId, { isDeleted: false })
             if (response.code === '20000') {
-                // await todoStore.removeLocal(todoId)
-                requestIdleCallback(async () => {
-                    await todoStore.get(userId)
-                })
+                await todoStore.get(userId)
                 handleClose()
             }
         } catch (e) {

@@ -2,9 +2,11 @@
     <nue-header style="position: relative">
         <template #nav>
             <nue-div>
-                <nue-link theme="btnlike" icon="todo" route="/tasks">任务</nue-link>
-                <nue-link theme="btnlike" icon="projects" route="/project">项目</nue-link>
-                <nue-link theme="btnlike" icon="calendar2" disabled>日历</nue-link>
+                <nue-link theme="btnlike,plink" icon="square-check-fill" route="/tasks"
+                    >任务</nue-link
+                >
+                <nue-link theme="btnlike,plink" icon="projects" route="/project">项目</nue-link>
+                <nue-link theme="btnlike,plink" icon="calendar2" disabled>日历</nue-link>
             </nue-div>
         </template>
         <nue-link href="/" style="position: absolute; left: 50%; transform: translateX(-50%)">
@@ -12,20 +14,20 @@
         </nue-link>
         <template #ops>
             <nue-div>
-                <nue-button theme="icon-only" icon="search" disabled></nue-button>
+                <nue-button theme="icon-only" icon="search" disabled />
                 <nue-badge dot>
-                    <nue-button theme="icon-only" icon="ring" disabled></nue-button>
+                    <nue-button theme="icon-only" icon="ring" disabled />
                 </nue-badge>
             </nue-div>
         </template>
         <template #user>
-            <user-dropdown :user="user" @logout="handleLogout"></user-dropdown>
+            <user-dropdown :user="user" @logout="handleLogout" />
         </template>
     </nue-header>
 </template>
 
 <script setup lang="ts">
-import { NueConfirm, NueMessage } from 'nue-ui'
+import { NueConfirm } from 'nue-ui'
 import { UserDropdown } from '@/components/user'
 import { useUserStore } from '@/stores'
 import { useRouter } from 'vue-router'
@@ -53,5 +55,3 @@ const handleLogout = () => {
     )
 }
 </script>
-
-<style scoped></style>
