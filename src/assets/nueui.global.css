@@ -60,3 +60,7 @@
         padding: 0px !important; 
     }
 }
+
+.nue-text--pointer {
+    cursor: pointer;
+}

@@ -20,14 +20,7 @@
                         icon="refresh"
                         @click="handleRefresh"
                         :loading="tableLoading || !!refreshTimer"
-                    >
-                        刷新
-                    </nue-button>
-                    <!-- <nue-button
-                        theme="small"
-                        :icon="sph ? 'arrow-down' : 'arrow-up'"
-                        @click="viewStore.toggleSimpleProjectHeader()"
-                    ></nue-button> -->
+                    />
                 </nue-div>
             </nue-div>
         </nue-header>
@@ -39,8 +32,8 @@
                     ref="todoTableRef"
                     :todos="todos"
                     :columns="columns"
-                    @delete-todo="handleDeleteTodo"
-                    @restore-todo="handleRestoreTodo"
+                    @delete-todo="removeTodoWithConfirm"
+                    @restore-todo="restoreTodoWithConfirm"
                     @show-todo-details="handleShowTodoDetails"
                 ></todo-table>
             </nue-div>
@@ -69,6 +62,7 @@ import { TodoTable, Loading, TodoFilterBar, ListColumnSwitcher, Pager } from '@/
 import { useTodoStore, useUserStore, useViewStore } from '@/stores'
 import { NueConfirm, NueMessage, NuePrompt } from 'nue-ui'
 import { storeToRefs } from 'pinia'
+import { removeTodoWithConfirm, restoreTodoWithConfirm } from '@/utils/todo-handlers'
 import type { Columns } from '@/components'
 import type { Todo, TodoFilter } from '@/stores'
 import type { ContentTableProps, ContentTableEmits } from './types'
@@ -103,7 +97,7 @@ const refreshTimer = ref<number | null>(null)
 const handleGetTodos = async () => {
     const { filterInfo } = props
     tableLoading.value = true
-    const res = await todoStore.init(user.value!.id, filterInfo)
+    const res = await todoStore.initialize(user.value!.id, filterInfo)
     tableLoading.value = false
     return res
 }
@@ -128,36 +122,36 @@ const handleChangeColumns = (payload: Columns) => {
     columns.value.description = payload.description
 }
 
-const handleDeleteTodo = async (id: Todo['id']) => {
-    NueConfirm({
-        title: '删除任务',
-        content: '确定要删除该任务吗？',
-        confirmButtonText: '确定',
-        cancelButtonText: '取消'
-    }).then(
-        async () => await todoStore.remove(id),
-        () => {}
-    )
-}
+// const handleDeleteTodo = async (id: Todo['id']) => {
+//     NueConfirm({
+//         title: '删除任务',
+//         content: '确定要删除该任务吗？',
+//         confirmButtonText: '确定',
+//         cancelButtonText: '取消'
+//     }).then(
+//         async () => await todoStore.remove(id),
+//         () => {}
+//     )
+// }
 
-const handleRestoreTodo = async (id: Todo['id']) => {
-    const userId = user.value!.id
-    NueConfirm({
-        title: '恢复任务',
-        content: '确定要恢复该任务吗？',
-        confirmButtonText: '确定',
-        cancelButtonText: '取消'
-    }).then(
-        async () => {
-            const res = await todoStore.update2(userId, id, { isDeleted: false })
-            if (res.code === '20000') {
-                await todoStore.get(userId)
-                NueMessage.success('恢复成功')
-            }
-        },
-        () => {}
-    )
-}
+// const handleRestoreTodo = async (id: Todo['id']) => {
+//     const userId = user.value!.id
+//     NueConfirm({
+//         title: '恢复任务',
+//         content: '确定要恢复该任务吗？',
+//         confirmButtonText: '确定',
+//         cancelButtonText: '取消'
+//     }).then(
+//         async () => {
+//             const res = await todoStore.update2(userId, id, { isDeleted: false })
+//             if (res.code === '20000') {
+//                 await todoStore.get(userId)
+//                 NueMessage.success('恢复成功')
+//             }
+//         },
+//         () => {}
+//     )
+// }
 
 const handleShowTodoDetails = (id: Todo['id']) => {
     if (id === selectedTaskId.value) return
@@ -185,19 +179,9 @@ const handleFilter = async (newTodoFliter: TodoFilter) => {
 }
 
 const handleRefresh = async () => {
-    // const userId = user.value!.id
     if (refreshTimer.value) return
     const res = await handleGetTodos()
-    if (res.code === '20000') {
-        refreshTimer.value = setTimeout(() => {
-            refreshTimer.value = null
-        }, 5000)
-    }
 }
 
 handleGetTodos()
 </script>
-
-<style scoped>
-/* @import url('./table.css'); */
-</style>

@@ -79,7 +79,7 @@
             </nue-div>
             <todo-event-details :todo-id="shadowTodo.id" />
             <nue-div flex />
-            <todo-tag-details />
+            <!-- <todo-tag-details /> -->
             <nue-divider />
             <nue-div gap="8px">
                 <details-row
@@ -91,13 +91,13 @@
                 <details-row
                     v-if="shadowTodo?.createdAt"
                     label="创建时间"
-                    :text="parseDate(shadowTodo?.createdAt)"
+                    :text="formatDate(shadowTodo?.createdAt)"
                     flex="1"
                 />
                 <details-row
                     v-if="shadowTodo?.updatedAt"
                     label="最后修改时间"
-                    :text="parseDate(shadowTodo?.updatedAt)"
+                    :text="formatDate(shadowTodo?.updatedAt)"
                     flex="1"
                 />
             </nue-div>
@@ -156,7 +156,7 @@ import {
     TodoDeleteButton,
     TodoCheckButton
 } from '@/components'
-import { TodoEventDetails, TodoTagDetails } from '@/layers/index'
+import { TodoEventDetails } from '@/layers/index'
 import { useUserStore } from '@/stores'
 import DetailsRow from './row.vue'
 import type { TodoDetailsEmits, TodoDetailsProps } from './types'
@@ -172,7 +172,7 @@ const {
     shadowTodo,
     loadingState,
     eventsProgress,
-    parseDate,
+    formatDate,
     updateTodo,
     handleChangeEndAt,
     handleChangeState,

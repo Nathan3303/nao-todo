@@ -11,11 +11,9 @@
                                 @click="handleHideProjectAside"
                             ></nue-button>
                         </nue-tooltip>
-                        <click-to-edit
-                            :text="project?.title"
-                            @edit="handleEditProjectName"
-                            size="24px"
-                        ></click-to-edit>
+                        <nue-text theme="pointer" size="24px" @click="renameProject">
+                            {{ project?.title }}
+                        </nue-text>
                     </nue-div>
                     <nue-div align="center" justify="end" width="fit-content">
                         <nue-tooltip content="归档项目">
@@ -30,14 +28,9 @@
                         </nue-tooltip>
                     </nue-div>
                 </nue-div>
-                <click-to-edit
-                    v-if="!sph"
-                    :text="project?.description"
-                    emptyholder="点击添加清单描述"
-                    @edit="handleEditDescription"
-                    size="14px"
-                    color="gray"
-                ></click-to-edit>
+                <nue-text theme="pointer" size="14px" color="gray" @click="redescProject">
+                    {{ project?.description }}
+                </nue-text>
             </nue-div>
         </template>
         <template v-else-if="tag">
@@ -109,7 +102,8 @@ const viewStore = useViewStore()
 const projectStore = useProjectStore()
 const tagStore = useTagStore()
 const userStore = useUserStore()
-const { handleDeleteProject, handleArchiveProject } = useProjectHandler()
+const { handleRenameProject, handleRedescProject, handleDeleteProject, handleArchiveProject } =
+    useProjectHandler()
 
 const { projectAsideVisible: pav, simpleProjectHeader: sph } = storeToRefs(viewStore)
 
@@ -117,18 +111,18 @@ const handleHideProjectAside = () => {
     viewStore.toggleProjectAsideVisible()
 }
 
-const handleEditProjectName = async (newValue: string) => {
-    const userId = userStore.user!.id
+const renameProject = () => {
+    if (!props.project) return
     const projectId = props.project?.id
-    if (!projectId) return
-    await projectStore.update(userId, projectId, { title: newValue })
+    const projectName = props.project?.title
+    handleRenameProject(projectId, projectName)
 }
 
-const handleEditDescription = async (newValue: string) => {
-    const userId = userStore.user!.id
+const redescProject = () => {
+    if (!props.project) return
     const projectId = props.project?.id
-    if (!projectId) return
-    await projectStore.update(userId, projectId, { description: newValue })
+    const projectDescription = props.project?.description
+    handleRedescProject(projectId, projectDescription)
 }
 
 const deleteProject = async () => {

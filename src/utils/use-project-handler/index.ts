@@ -1,1 +1,1 @@
-export * from './use-project-handler'
+export { useProjectHandler } from './use-project-handler'

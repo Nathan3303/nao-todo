@@ -36,7 +36,7 @@ const handleCreateTodo = async (todoName: Todo['name']) => {
             endAt: now.endOf('day').toISOString()
         }
     }
-    const res = await todoStore.create2(userId, newTodo)
+    const res = await todoStore.create(userId, newTodo)
     if (res.code === '20000') {
         await todoStore.get(userId)
     }

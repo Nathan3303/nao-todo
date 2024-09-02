@@ -97,7 +97,6 @@ import { useProjectStore, useTagStore, useUserStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { CreateProjectDialog, CreateTagDialog, AsideLink, TagColorDot } from '@/components'
 import { useProjectHandler } from '@/utils'
-// import type { CreateProjectPayload } from '@/stores'
 
 defineOptions({ name: 'TasksViewAside' })
 
@@ -119,15 +118,6 @@ const showCreateProjectDialog = () => {
 const showCreateTagDialog = () => {
     createTagDialogRef.value?.show()
 }
-
-// const handleCreateProject = async (payload: CreateProjectPayload) => {
-//     const userId = userStore.user!.id
-//     const res = await projectStore.create(userId, {
-//         title: payload.title,
-//         description: payload.description
-//     })
-//     return res
-// }
 
 const handleCreateTag = async (payload: any) => {
     console.log(payload)

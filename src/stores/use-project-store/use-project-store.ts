@@ -74,7 +74,7 @@ export const useProjectStore = defineStore('projectStore', () => {
         id: Project['id'],
         updateOptions: ProjectUpdateOptions
     ) => {
-        const URI = `/project?userId=${userId}&id=${id}`
+        const URI = `/project?userId=${userId}&projectId=${id}`
         const idx = projects.value.findIndex((project) => project.id === id)
         const project = projects.value[idx]
         const newProject = { ...project, ...updateOptions }

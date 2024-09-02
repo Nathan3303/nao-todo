@@ -49,7 +49,7 @@ const handleCreateTodo = async (todoName: Todo['name']) => {
         projectId: projectId,
         name: todoName
     }
-    const res = await todoStore.create2(userId, newTodo)
+    const res = await todoStore.create(userId, newTodo)
     if (res.code === '20000') {
         await todoStore.get(userId)
         NueMessage.success('任务创建成功')
