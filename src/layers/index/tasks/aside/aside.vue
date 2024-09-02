@@ -86,7 +86,7 @@
     </nue-container>
     <create-project-dialog
         ref="createProjectDialogRef"
-        :handler="handleCreateProject"
+        :handler="createProject"
     ></create-project-dialog>
     <create-tag-dialog ref="createTagDialogRef" @create="handleCreateTag"></create-tag-dialog>
 </template>
@@ -96,14 +96,13 @@ import { ref } from 'vue'
 import { useProjectStore, useTagStore, useUserStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { CreateProjectDialog, CreateTagDialog, AsideLink, TagColorDot } from '@/components'
-import { useProjectHandler } from '@/utils'
+import { createProject, createTag } from '@/utils'
 
 defineOptions({ name: 'TasksViewAside' })
 
 const projectStore = useProjectStore()
 const tagStore = useTagStore()
 const userStore = useUserStore()
-const { handleCreateProject } = useProjectHandler()
 
 const { projects } = storeToRefs(projectStore)
 const { tags } = storeToRefs(tagStore)
@@ -120,12 +119,7 @@ const showCreateTagDialog = () => {
 }
 
 const handleCreateTag = async (payload: any) => {
-    console.log(payload)
-    const userId = userStore.user!.id
-    const res = await tagStore.create(userId, payload.name, payload.color)
-    if (res.code === '20000') {
-        createTagDialogRef.value?.clear()
-    }
+    await createTag(payload.name, payload.color)
 }
 </script>
 

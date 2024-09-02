@@ -79,7 +79,11 @@
             </nue-div>
             <todo-event-details :todo-id="shadowTodo.id" />
             <nue-div flex />
-            <!-- <todo-tag-details /> -->
+            <todo-tag-details
+                :todo-id="shadowTodo.id"
+                :todo-tags="shadowTodo.tags || []"
+                @update-tags="handleUpdateTags"
+            />
             <nue-divider />
             <nue-div gap="8px">
                 <details-row
@@ -156,7 +160,7 @@ import {
     TodoDeleteButton,
     TodoCheckButton
 } from '@/components'
-import { TodoEventDetails } from '@/layers/index'
+import { TodoEventDetails, TodoTagDetails } from '@/layers/index'
 import { useUserStore } from '@/stores'
 import DetailsRow from './row.vue'
 import type { TodoDetailsEmits, TodoDetailsProps } from './types'
@@ -181,7 +185,8 @@ const {
     handleMoveToProject,
     handleCheckTodo,
     handleDeleteTodo,
-    handleRestoreTodo
+    handleRestoreTodo,
+    handleUpdateTags
 } = useTodoDetails(props, emit)
 </script>
 

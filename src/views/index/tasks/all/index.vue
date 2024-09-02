@@ -24,5 +24,4 @@ import { ContentHeader } from '@/layers/index'
 
 <style scoped>
 @import url('../common/index.css');
-/* @import url('./index.css'); */
 </style>

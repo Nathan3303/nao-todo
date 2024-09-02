@@ -37,7 +37,7 @@ const handleUpdate = (updateIsDone = false) => {
     const { id, title, isDone } = props.event
     if (title === inputValue.value && !updateIsDone) return
     const _n_isDone = updateIsDone ? !isDone : isDone
-    const payload = { id, title, isDone: _n_isDone }
+    const payload = { id, title: inputValue.value, isDone: _n_isDone }
     emit('update', payload)
 }
 
@@ -48,5 +48,5 @@ const handleDelete = () => {
 </script>
 
 <style scoped>
-@import url("./event-row.css");
+@import url('./event-row.css');
 </style>

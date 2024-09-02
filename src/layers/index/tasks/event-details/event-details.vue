@@ -32,9 +32,5 @@ const { init, handleCreateEvent, handleUpdateEvent, handleDeleteEvent } = useEve
 
 const { events } = storeToRefs(eventStore)
 
-await init();
+await init()
 </script>
-
-<style scoped>
-/* @import url('./event-details.css'); */
-</style>

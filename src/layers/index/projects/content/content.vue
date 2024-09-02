@@ -42,16 +42,23 @@
     </nue-container>
     <create-project-dialog
         ref="createProjectDialogRef"
-        @create="handleCreateProject"
+        :handler="createProject"
     ></create-project-dialog>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useViewStore, useProjectStore, useUserStore } from '@/stores'
+import { useViewStore, useProjectStore } from '@/stores'
 import { ProjectFilterBar, ProjectBoard, CreateProjectDialog } from '@/components'
-import { useProjectHandler } from '@/utils'
+import {
+    getProjects,
+    createProject,
+    handleArchiveProject,
+    handleUnarchiveProject,
+    handleDeleteProject,
+    handleRestoreProject
+} from '@/utils/project-handlers'
 import type { ProjectContentProps } from './types'
 
 defineOptions({ name: 'ProjectContent' })
@@ -61,14 +68,6 @@ const props = withDefaults(defineProps<ProjectContentProps>(), {
 
 const viewStore = useViewStore()
 const projectStore = useProjectStore()
-const {
-    handleGetProjects,
-    handleCreateProject,
-    handleArchiveProject,
-    handleUnarchiveProject,
-    handleDeleteProject,
-    handleRestoreProject
-} = useProjectHandler()
 
 const { projectAsideVisible: pav } = storeToRefs(viewStore)
 const { projects } = storeToRefs(projectStore)
@@ -78,7 +77,7 @@ const handleShowCreateProjectDialog = () => {
     createProjectDialogRef.value?.show()
 }
 
-await handleGetProjects(props.filterInfo)
+await getProjects(props.filterInfo)
 </script>
 
 <style scoped>

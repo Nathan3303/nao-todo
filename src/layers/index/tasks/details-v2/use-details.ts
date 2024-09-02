@@ -89,7 +89,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         shadowTodo.value.projectId = projectId
         shadowTodo.value.project!.title = projectTitle
         debouncedUpdateTodo()
-        emit('refresh')
+        // emit('refresh')
     }
 
     const handleCheckTodo = async () => {
@@ -110,6 +110,12 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         const todoId = shadowTodo.value?.id
         await restoreTodoWithConfirm(todoId)
         handleClose()
+    }
+
+    const handleUpdateTags = async (tags: Todo['tags']) => {
+        if (!shadowTodo.value) return;
+        shadowTodo.value.tags = tags
+        debouncedUpdateTodo()
     }
 
     const handleClose = () => {
@@ -144,6 +150,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         handleMoveToProject,
         handleCheckTodo,
         handleDeleteTodo,
-        handleRestoreTodo
+        handleRestoreTodo,
+        handleUpdateTags
     }
 }

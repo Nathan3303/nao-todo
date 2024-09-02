@@ -1,36 +1,29 @@
 import { ref } from 'vue'
-import { useEventStore, useUserStore } from '@/stores'
-import { storeToRefs } from 'pinia'
+import { getEvents, createEvent, updateEvent, removeEvent } from '@/utils'
 import type { Event } from '@/stores'
 import type { InputButtonSubmitPayload, TodoEventRowUpdatePayload } from '@/components'
 import type { TodoEventDetailsProps } from './types'
 
 export const useEventDetails = (props: TodoEventDetailsProps) => {
-    const eventStore = useEventStore()
-    const userStore = useUserStore()
-
     const loadingState = ref(false)
 
     const init = async () => {
         loadingState.value = true
-        const { todoId } = props
-        await eventStore.init(userStore.user!.id, { todoId })
+        await getEvents({ todoId: props.todoId })
         loadingState.value = true
     }
 
     const handleCreateEvent = async (payload: InputButtonSubmitPayload) => {
-        const { value: title } = payload
-        const { todoId } = props
-        await eventStore.create(userStore.user!.id, todoId, title)
+        await createEvent(props.todoId, payload.value)
     }
 
     const handleUpdateEvent = async (event: TodoEventRowUpdatePayload) => {
-        const eventId = event.id
-        await eventStore.update(userStore.user!.id, eventId, { ...event })
+        console.log('[useEventDetails] handleUpdateEvent:', event)
+        await updateEvent(event.id, { ...event })
     }
 
     const handleDeleteEvent = async (eventId: Event['id']) => {
-        await eventStore.remove(userStore.user!.id, eventId)
+        await removeEvent(eventId)
     }
 
     return {

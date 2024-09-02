@@ -86,9 +86,13 @@
 import { useViewStore, useProjectStore, useUserStore, useTagStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { ClickToEdit } from '@/components'
-import { NueConfirm, NueMessage } from 'nue-ui'
 import { useRouter } from 'vue-router'
-import { useProjectHandler } from '@/utils'
+import {
+    handleArchiveProject,
+    handleRenameProject,
+    handleRedescProject,
+    handleDeleteProject
+} from '@/utils/project-handlers'
 import type { ContentHeaderProps } from './types'
 
 defineOptions({ name: 'ContentHeader' })
@@ -99,11 +103,8 @@ const props = withDefaults(defineProps<ContentHeaderProps>(), {
 
 const router = useRouter()
 const viewStore = useViewStore()
-const projectStore = useProjectStore()
 const tagStore = useTagStore()
 const userStore = useUserStore()
-const { handleRenameProject, handleRedescProject, handleDeleteProject, handleArchiveProject } =
-    useProjectHandler()
 
 const { projectAsideVisible: pav, simpleProjectHeader: sph } = storeToRefs(viewStore)
 

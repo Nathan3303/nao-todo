@@ -47,7 +47,9 @@ export const useTodoStore = defineStore('todoStore', () => {
             const {
                 data: { data, code }
             } = await $axios.get(URI)
-            return code === '20000' ? data : null
+            const res = code === '20000' ? data.todos : null
+            // console.log('[todoStore] _get:', URI, res);
+            return res
         } catch (e) {
             console.warn('[todoStore] _get:', e)
         }
@@ -59,7 +61,9 @@ export const useTodoStore = defineStore('todoStore', () => {
             const {
                 data: { data, code }
             } = await $axios.put(URI, updateInfo)
-            return code === '20000' ? data : null
+            const res = code === '20000' ? data : null
+            // console.log('[todoStore] _update:', URI, updateInfo, res)
+            return res
         } catch (e) {
             console.warn('[todoStore] _update:', e)
         }
@@ -79,11 +83,13 @@ export const useTodoStore = defineStore('todoStore', () => {
 
     const _create = async (userId: User['id'], createInfo: Partial<Todo>) => {
         try {
-            const URI = `/todo?userId=${userId}`
+            createInfo = { ...createInfo, userId }
             const {
                 data: { data, code }
-            } = await $axios.post(URI, createInfo)
-            return code === '20000' ? data : null
+            } = await $axios.post('/todo', createInfo)
+            const res = code === '20000' ? { ...data, id: data._id } : null
+            // console.log('[todoStore] _create:', createInfo, res)
+            return res
         } catch (e) {
             console.warn('[todoStore] _create:', e)
         }

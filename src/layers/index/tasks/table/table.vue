@@ -56,13 +56,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { TodoTable, Loading, TodoFilterBar, ListColumnSwitcher, Pager } from '@/components'
-import { useTodoStore, useUserStore, useViewStore } from '@/stores'
-import { NueConfirm, NueMessage, NuePrompt } from 'nue-ui'
+import { useTodoStore, useUserStore } from '@/stores'
 import { storeToRefs } from 'pinia'
-import { removeTodoWithConfirm, restoreTodoWithConfirm } from '@/utils/todo-handlers'
+import {
+    removeTodoWithConfirm,
+    restoreTodoWithConfirm,
+    createTodoWithPrompt
+} from '@/utils/todo-handlers'
 import type { Columns } from '@/components'
 import type { Todo, TodoFilter } from '@/stores'
 import type { ContentTableProps, ContentTableEmits } from './types'
@@ -71,14 +74,13 @@ defineOptions({ name: 'ContentTableLayer' })
 const props = defineProps<ContentTableProps>()
 const emit = defineEmits<ContentTableEmits>()
 
+const route = useRoute()
 const router = useRouter()
 const todoStore = useTodoStore()
 const userStore = useUserStore()
-const viewStore = useViewStore()
 
 const { todos, pageInfo, countInfo, filterInfo } = storeToRefs(todoStore)
 const { user } = storeToRefs(userStore)
-const { simpleProjectHeader: sph } = storeToRefs(viewStore)
 const tableLoading = ref(false)
 const selectedTaskId = ref<Todo['id']>('')
 const columns = ref<Columns>(
@@ -103,16 +105,8 @@ const handleGetTodos = async () => {
 }
 
 const handleAddTodo = async () => {
-    NuePrompt({
-        title: '创建任务',
-        placeholder: '填写任务名称',
-        confirmButtonText: '创建',
-        cancelButtonText: '取消',
-        validator: (value: any) => value
-    }).then(
-        (value) => emit('createTodo', value as string),
-        () => {}
-    )
+    const projectId = route.params.projectId as Todo['projectId'];
+    await createTodoWithPrompt(projectId)
 }
 
 const handleChangeColumns = (payload: Columns) => {
@@ -121,37 +115,6 @@ const handleChangeColumns = (payload: Columns) => {
     columns.value.state = payload.state
     columns.value.description = payload.description
 }
-
-// const handleDeleteTodo = async (id: Todo['id']) => {
-//     NueConfirm({
-//         title: '删除任务',
-//         content: '确定要删除该任务吗？',
-//         confirmButtonText: '确定',
-//         cancelButtonText: '取消'
-//     }).then(
-//         async () => await todoStore.remove(id),
-//         () => {}
-//     )
-// }
-
-// const handleRestoreTodo = async (id: Todo['id']) => {
-//     const userId = user.value!.id
-//     NueConfirm({
-//         title: '恢复任务',
-//         content: '确定要恢复该任务吗？',
-//         confirmButtonText: '确定',
-//         cancelButtonText: '取消'
-//     }).then(
-//         async () => {
-//             const res = await todoStore.update2(userId, id, { isDeleted: false })
-//             if (res.code === '20000') {
-//                 await todoStore.get(userId)
-//                 NueMessage.success('恢复成功')
-//             }
-//         },
-//         () => {}
-//     )
-// }
 
 const handleShowTodoDetails = (id: Todo['id']) => {
     if (id === selectedTaskId.value) return

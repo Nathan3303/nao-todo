@@ -2,116 +2,201 @@ import { reactive, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { naoTodoServer as $axios } from '@/axios'
 import type { Tag, TagFilterOptions } from './types'
-import type { User } from '..'
+import type { TagBarEmits } from '@/components/tag/bar/types'
 
 export const useTagStore = defineStore('tagStore', () => {
     const tags = ref<Tag[]>([])
     const filterInfo = ref<TagFilterOptions>({})
     const pageInfo = reactive({ page: 1, limit: 10 })
 
-    const parseFilterInfoToQuery = (specFilterInfo?: TagFilterOptions) => {
+    // Inner methods
+
+    const _stringifyFilterInfo = (specFilterInfo?: TagFilterOptions) => {
         const query: string[] = []
         const _filterInfo = specFilterInfo || filterInfo.value
         Object.keys(_filterInfo).forEach((key) => {
             const value = _filterInfo[key as keyof TagFilterOptions]
             query.push(`${key}=${value}`)
         })
-        const queryString = query.join('&')
-        return queryString
+        return query.join('&')
     }
 
-    const mergeFilterInfo = (newOne: TagFilterOptions) => {
-        filterInfo.value = {
-            ...filterInfo.value,
-            ...newOne
-        }
+    const _mergeFilterInfo = (newOne: Partial<TagFilterOptions>) => {
+        const newFilterInfo = { ...filterInfo.value, ...newOne }
+        filterInfo.value = newFilterInfo
     }
 
-    const getData = async (
-        userId: User['id'],
-        pageQueryString: string,
-        filterQueryString: string
-    ) => {
-        const URI = `/tags?userId=${userId}&${pageQueryString}&${filterQueryString}`
-        const response = await $axios.get(URI)
-        return response.data
-    }
-
-    const reset = () => {
+    const _reset = () => {
         tags.value = []
         filterInfo.value = {}
     }
 
-    const init = async (userId: User['id'], filterInfo: TagFilterOptions) => {
-        reset()
-        mergeFilterInfo(filterInfo)
-        return await reload(userId)
-    }
-
-    const reload = async (userId: User['id']) => {
-        const { page, limit } = pageInfo
-        const filterQueryString = parseFilterInfoToQuery()
-        const pageQueryString = `page=${page}&limit=${limit}`
-        const response = await getData(userId, filterQueryString, pageQueryString)
-        if (response.code === '20000') {
-            tags.value = response.data
+    const _get = async (userId: Tag['userId'], specFilterInfo?: TagFilterOptions) => {
+        try {
+            const { page, limit } = pageInfo
+            const filterQueryString = _stringifyFilterInfo(specFilterInfo)
+            const pageQueryString = `page=${page}&limit=${limit}`
+            const URI = `/tags?userId=${userId}&${pageQueryString}&${filterQueryString}`
+            const {
+                data: { data, code }
+            } = await $axios.get(URI)
+            const res = code === '20000' ? data : null
+            // console.log('[tagStore] _get:', URI, res);
+            return res
+        } catch (e) {
+            console.warn('[tagStore] _get:', e)
         }
-        return response
     }
 
-    const get = async (userId: User['id'], filterInfo?: TagFilterOptions) => {
-        const { page, limit } = pageInfo
-        const filterQueryString = parseFilterInfoToQuery(filterInfo)
-        const pageQueryString = `page=${page}&limit=${limit}`
-        return await getData(userId, filterQueryString, pageQueryString)
-    }
-
-    const create = async (userId: User['id'], name: Tag['name'], color: Tag['color']) => {
-        const data = { userId, name, color }
-        const response = await $axios.post('/tag', data)
-        if (response.data.code === '20000') {
-            tags.value.push(response.data.data)
+    const _update = async (userId: Tag['userId'], tagId: Tag['id'], updateInfo: Partial<Tag>) => {
+        try {
+            const URI = `/tag?userId=${userId}&tagId=${tagId}`
+            const {
+                data: { data, code }
+            } = await $axios.put(URI, updateInfo)
+            const res = code === '20000' ? data : null
+            // console.log('[tagStore] _update:', URI, updateInfo, res)
+            return res
+        } catch (e) {
+            console.warn('[tagStore] _update:', e)
         }
-        return response.data
     }
 
-    const toFindLocally = (tagId: Tag['id']) => {
-        return tags.value.find((tag) => tag.id === tagId)
-    }
-
-    const update = async (userId: User['id'], tagId: Tag['id'], updateInfo: Partial<Tag>) => {
-        const response = await $axios.put(`/tag?userId=${userId}&tagId=${tagId}`, updateInfo)
-        if (response.data.code === '20000') {
-            console.log(response.data.data)
-            const tag = tags.value.find((tag) => tag.id === tagId)
-            if (tag) {
-                Object.assign(tag, updateInfo)
-            }
+    const _remove = async (userId: Tag['userId'], tagId: Tag['id']) => {
+        try {
+            const URI = `/tag?userId=${userId}&tagId=${tagId}`
+            const {
+                data: { data, code }
+            } = await $axios.delete(URI)
+            return code === '20000' ? data : null
+        } catch (e) {
+            console.warn('[tagStore] _remove:', e)
         }
-        return response.data
     }
 
-    const remove = async (userId: User['id'], tagId: Tag['id']) => {
-        const response = await $axios.delete(`/tag?userId=${userId}&id=${tagId}`)
-        if (response.data.code === '20000') {
-            const index = tags.value.findIndex((tag) => tag.id === tagId)
-            if (index !== -1) {
-                tags.value.splice(index, 1)
-            }
+    const _create = async (userId: Tag['userId'], createInfo: Partial<Tag>) => {
+        try {
+            createInfo = { ...createInfo, userId }
+            const {
+                data: { data, code }
+            } = await $axios.post('/tag', createInfo)
+            const res = code === '20000' ? data : null
+            // console.log('[tagStore] _create:', createInfo, res)
+            return res
+        } catch (e) {
+            console.warn('[tagStore] _create:', e)
         }
-        return response.data
+    }
+
+    // Getter which from backend
+
+    const get = async (userId: Tag['userId'], filterInfo?: Partial<TagFilterOptions>) => {
+        if (filterInfo) _mergeFilterInfo(filterInfo)
+        const getResult = await toGetted(userId)
+        if (!getResult) return
+        tags.value = getResult
+        return getResult
+    }
+
+    const initialize = async (userId: Tag['userId'], filterInfo: Partial<TagFilterOptions>) => {
+        _reset()
+        await get(userId, filterInfo)
+    }
+
+    const update = async (userId: Tag['userId'], tagId: Tag['id'], updateInfo: Partial<Tag>) => {
+        const updateResult = await _update(userId, tagId, updateInfo)
+        if (!updateResult) return
+        updateLocal(tagId, updateInfo)
+        return updateResult
+    }
+
+    const remove = async (userId: Tag['userId'], tagId: Tag['id']) => {
+        const removeResult = await _remove(userId, tagId)
+        if (!removeResult) return
+        removeLocal(tagId)
+        return removeResult
+    }
+
+    const create = async (userId: Tag['userId'], createInfo: Partial<Tag>) => {
+        const createResult = await _create(userId, createInfo)
+        if (!createResult) return
+        createLocal(createResult)
+        return createResult
+    }
+
+    // Getter which from local
+
+    const findIndexLocal = (tagId: Tag['id']) => {
+        return tags.value.findIndex((tag) => tag.id === tagId)
+    }
+
+    const findLocal = (tagId: Tag['id']) => {
+        const tagIndex = findIndexLocal(tagId)
+        const res = tagIndex !== -1 ? tags.value[tagIndex] : null
+        return res as Tag | null
+    }
+
+    const updateLocal = (tagId: Tag['id'], updateInfo: Partial<Tag>) => {
+        const oldTagIndex = findIndexLocal(tagId)
+        const oldTag = tags.value[oldTagIndex]
+        if (!oldTag) return
+        const newTag = { ...oldTag, ...updateInfo }
+        tags.value[oldTagIndex] = newTag
+    }
+
+    const removeLocal = async (tagId: Tag['id']) => {
+        const tagIndex = findIndexLocal(tagId)
+        tags.value.splice(tagIndex, 1)
+    }
+
+    const createLocal = (createInfo: Partial<Tag>) => {
+        const newTagTemplate: Tag = {
+            id: '',
+            userId: '',
+            name: '',
+            color: '',
+            createdAt: '',
+            updatedAt: '',
+            isDeleted: false
+        }
+        const newTag = { ...newTagTemplate, ...createInfo }
+        tags.value.push(newTag)
+    }
+
+    // Getter which is pure function and from backend
+
+    const toGetted = async (userId: Tag['userId']) => {
+        const getted = await _get(userId)
+        return getted as Tag[] | null
+    }
+
+    const toFinded = async (userId: Tag['userId'], filterInfo: TagFilterOptions) => {
+        const finded = await _get(userId, filterInfo)
+        return finded as Tag[] | null
+    }
+
+    const toFindedOne = async (userId: Tag['userId'], tagId: Tag['id']) => {
+        const finded = await _get(userId, { id: tagId })
+        const res = Array.isArray(finded) ? finded[0] : finded
+        return res as Tag | null
     }
 
     return {
         tags,
         filterInfo,
         pageInfo,
-        init,
         get,
-        reload,
-        create,
-        toFindLocally,
+        initialize,
         update,
-        remove
+        remove,
+        create,
+        findIndexLocal,
+        findLocal,
+        updateLocal,
+        removeLocal,
+        createLocal,
+        toGetted,
+        toFinded,
+        toFindedOne
     }
 })
