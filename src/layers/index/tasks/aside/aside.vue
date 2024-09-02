@@ -96,13 +96,13 @@ import { ref } from 'vue'
 import { useProjectStore, useTagStore, useUserStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { CreateProjectDialog, CreateTagDialog, AsideLink, TagColorDot } from '@/components'
-import { createProject, createTag } from '@/utils'
+import { createProject} from '@/utils/project-handlers'
+import { createTag } from '@/utils/tag-handlers'
 
 defineOptions({ name: 'TasksViewAside' })
 
 const projectStore = useProjectStore()
 const tagStore = useTagStore()
-const userStore = useUserStore()
 
 const { projects } = storeToRefs(projectStore)
 const { tags } = storeToRefs(tagStore)

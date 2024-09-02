@@ -61,11 +61,8 @@ import { useRouter, useRoute } from 'vue-router'
 import { TodoTable, Loading, TodoFilterBar, ListColumnSwitcher, Pager } from '@/components'
 import { useTodoStore, useUserStore } from '@/stores'
 import { storeToRefs } from 'pinia'
-import {
-    removeTodoWithConfirm,
-    restoreTodoWithConfirm,
-    createTodoWithPrompt
-} from '@/utils/todo-handlers'
+import { removeTodoWithConfirm, restoreTodoWithConfirm } from '@/utils/todo-handlers'
+import { NuePrompt } from 'nue-ui'
 import type { Columns } from '@/components'
 import type { Todo, TodoFilter } from '@/stores'
 import type { ContentTableProps, ContentTableEmits } from './types'
@@ -105,8 +102,15 @@ const handleGetTodos = async () => {
 }
 
 const handleAddTodo = async () => {
-    const projectId = route.params.projectId as Todo['projectId'];
-    await createTodoWithPrompt(projectId)
+    NuePrompt({
+        title: '创建待办事项',
+        placeholder: '请输入待办事项名称',
+        confirmButtonText: '创建',
+        cancelButtonText: '取消',
+        validator: (value: string) => value
+    }).then((todoName) => {
+        emit('createTodo', todoName as string)
+    })
 }
 
 const handleChangeColumns = (payload: Columns) => {

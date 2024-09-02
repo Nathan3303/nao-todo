@@ -12,6 +12,7 @@
 <script setup lang="ts">
 import { ContentTable } from '@/layers/index'
 import { useTodoStore, useUserStore } from '@/stores'
+import { createTodoWithOptions } from '@/utils'
 import moment from 'moment'
 import type { Todo, TodoFilter } from '@/stores'
 
@@ -23,23 +24,6 @@ const filterInfo: TodoFilter = {
 }
 
 const handleCreateTodo = async (todoName: Todo['name']) => {
-    // NueMessage.log(`handleCreateTodo: ${todoName}`)
-    const now = moment()
-    const userId = userStore.user!.id
-    const newTodo: Partial<Todo> = {
-        userId,
-        projectId: userId,
-        name: todoName,
-        dueDate: {
-            startAt: now.toISOString(),
-            endAt: now.endOf('day').toISOString()
-        }
-    }
-    const res = await todoStore.create(userId, newTodo)
-    if (res.code === '20000') {
-        await todoStore.get(userId)
-    }
+    await createTodoWithOptions(null, { name: todoName })
 }
 </script>
-
-<style scoped></style>

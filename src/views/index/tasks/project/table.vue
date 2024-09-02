@@ -12,17 +12,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { ContentTable } from '@/layers/index'
-import { useTodoStore, useUserStore } from '@/stores'
 import { useRoute } from 'vue-router'
+import { createTodoWithOptions } from '@/utils'
 import type { Todo, TodoFilter } from '@/stores'
 import type { Columns } from '@/components'
-import { NueMessage } from 'nue-ui'
 
 const route = useRoute()
-const userStore = useUserStore()
-const todoStore = useTodoStore()
 
 const filterInfo = computed<TodoFilter>(() => {
     const projectId = route.params.projectId as string
@@ -43,18 +40,6 @@ const columns: Columns = {
 
 const handleCreateTodo = async (todoName: Todo['name']) => {
     const projectId = route.params.projectId as string
-    const userId = userStore.user!.id
-    const newTodo: Partial<Todo> = {
-        userId,
-        projectId: projectId,
-        name: todoName
-    }
-    const res = await todoStore.create(userId, newTodo)
-    if (res.code === '20000') {
-        await todoStore.get(userId)
-        NueMessage.success('任务创建成功')
-    }
+    await createTodoWithOptions(projectId, { name: todoName })
 }
 </script>
-
-<style scoped></style>

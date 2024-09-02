@@ -59,7 +59,6 @@ export const createTodoWithPrompt = async (projectId: Project['id']) => {
         cancelButtonText: '取消',
         validator: (value: string) => value
     }).then(async (todoName) => {
-        // console.log('[todoHandlers] createTodoWithPrompt:', todoName)
         todoName = (todoName as string).trim()
         if (!todoName) return
         await createTodo(projectId, todoName as Todo['name'])

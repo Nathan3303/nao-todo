@@ -25,12 +25,6 @@
                             </nue-div>
                         </template>
                     </nue-button>
-                    <!-- <nue-button
-                        id="create-project-btn"
-                        theme="pure"
-                        icon="plus"
-                        @click.stop="showCreateProjectDialog"
-                    ></nue-button> -->
                 </template>
                 <nue-link
                     theme="btnlike,plink"
