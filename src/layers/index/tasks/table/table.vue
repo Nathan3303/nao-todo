@@ -139,7 +139,6 @@ const handlePageChange = (page: number) => {
 }
 
 const handleFilter = async (newTodoFliter: TodoFilter) => {
-    console.log(newTodoFliter)
     const userId = user.value!.id
     todoStore.mergeFilterInfo(newTodoFliter)
     await todoStore.get(userId)

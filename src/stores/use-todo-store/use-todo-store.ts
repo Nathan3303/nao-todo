@@ -47,7 +47,7 @@ export const useTodoStore = defineStore('todoStore', () => {
             const {
                 data: { data, code }
             } = await $axios.get(URI)
-            const res = code === '20000' ? data.todos : null
+            const res = code === '20000' ? data : null
             // console.log('[todoStore] _get:', URI, res);
             return res
         } catch (e) {
@@ -99,10 +99,18 @@ export const useTodoStore = defineStore('todoStore', () => {
 
     const get = async (userId: User['id'], filterInfo?: Partial<TodoFilter>) => {
         if (filterInfo) _mergeFilterInfo(filterInfo)
-        const getResult = await toGetted(userId)
-        if (!getResult) return
-        todos.value = getResult
-        return getResult
+        const { todos: _tds, payload } = await _get(userId)
+        if (!todos) return
+        todos.value = _tds as Todo[]
+        pageInfo.limit = payload.pageInfo.limit
+        pageInfo.page = payload.pageInfo.page
+        pageInfo.totalPages = payload.pageInfo.totalPages
+        countInfo.count = payload.countInfo.count
+        countInfo.byPriority = payload.countInfo.byPriority
+        countInfo.byState = payload.countInfo.byState
+        countInfo.length = payload.countInfo.length
+        countInfo.total = payload.countInfo.total
+        return todos
     }
 
     const initialize = async (userId: User['id'], filterInfo: Partial<TodoFilter>) => {
