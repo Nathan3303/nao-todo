@@ -55,16 +55,27 @@
             </nue-div>
         </nue-footer>
     </nue-container>
+    <todo-create-dialog ref="todoCreateDialogRef" :handler="handleCreateTodo" />
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { TodoTable, Loading, TodoFilterBar, ListColumnSwitcher, Pager } from '@/components'
+import { useRouter } from 'vue-router'
+import {
+    TodoTable,
+    Loading,
+    TodoFilterBar,
+    ListColumnSwitcher,
+    Pager,
+    TodoCreateDialog
+} from '@/components'
 import { useTodoStore, useUserStore } from '@/stores'
 import { storeToRefs } from 'pinia'
-import { removeTodoWithConfirm, restoreTodoWithConfirm } from '@/utils/todo-handlers'
-import { NuePrompt } from 'nue-ui'
+import {
+    createTodoWithOptions,
+    removeTodoWithConfirm,
+    restoreTodoWithConfirm
+} from '@/utils/todo-handlers'
 import type { Columns } from '@/components'
 import type { Todo, TodoFilter, TodoSortOptions } from '@/stores'
 import type { ContentTableProps, ContentTableEmits } from './types'
@@ -73,13 +84,12 @@ defineOptions({ name: 'ContentTableLayer' })
 const props = defineProps<ContentTableProps>()
 const emit = defineEmits<ContentTableEmits>()
 
-const route = useRoute()
 const router = useRouter()
 const todoStore = useTodoStore()
 const userStore = useUserStore()
 
-const { todos, pageInfo, countInfo, filterInfo, sortInfo } = storeToRefs(todoStore)
 const { user } = storeToRefs(userStore)
+const { todos, pageInfo, countInfo, filterInfo, sortInfo } = storeToRefs(todoStore)
 const tableLoading = ref(false)
 const selectedTaskId = ref<Todo['id']>('')
 const columns = ref<Columns>(
@@ -94,6 +104,7 @@ const columns = ref<Columns>(
     }
 )
 const refreshTimer = ref<number | null>(null)
+const todoCreateDialogRef = ref<InstanceType<typeof TodoCreateDialog>>()
 
 const handleGetTodos = async () => {
     const { filterInfo } = props
@@ -103,16 +114,13 @@ const handleGetTodos = async () => {
     return res
 }
 
-const handleAddTodo = async () => {
-    NuePrompt({
-        title: '创建待办事项',
-        placeholder: '请输入待办事项名称',
-        confirmButtonText: '创建',
-        cancelButtonText: '取消',
-        validator: (value: string) => value
-    }).then((todoName) => {
-        emit('createTodo', todoName as string)
-    })
+const handleAddTodo = () => {
+    if (!todoCreateDialogRef.value) return
+    emit('createTodoByDialog', todoCreateDialogRef.value.show)
+}
+
+const handleCreateTodo = async (newTodo: Partial<Todo>) => {
+    await createTodoWithOptions(newTodo.projectId || null, newTodo)
 }
 
 const handleChangeColumns = (payload: Columns) => {

@@ -1,6 +1,6 @@
 import { useUserStore, useTodoStore } from '@/stores'
 import { NueConfirm, NueMessage, NuePrompt } from 'nue-ui'
-import type { Project, Tag, Todo, TodoFilter } from '@/stores'
+import type { Project, Todo, TodoFilter } from '@/stores'
 
 const userStore = useUserStore()
 const todoStore = useTodoStore()
@@ -40,7 +40,7 @@ export const createTodoWithOptions = async (
 ) => {
     const userId = userStore.user!.id
     projectId = projectId || userId
-    createOptions = { projectId, ...createOptions }
+    createOptions = { ...createOptions, projectId }
     const res = await todoStore.create(userId, createOptions)
     // console.log(createOptions)
     if (res) {
