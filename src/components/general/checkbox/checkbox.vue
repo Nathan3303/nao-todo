@@ -2,7 +2,7 @@
     <nue-div class="checkbox" @click.stop="handleCheck">
         <nue-icon size="18px" :name="iconName"></nue-icon>
         <nue-icon v-if="icon" size="18px" :name="icon" color="gray"></nue-icon>
-        <nue-text size="14px" flex>{{ label }}</nue-text>
+        <nue-text size="13px" style="flex: auto">{{ label }}</nue-text>
         <nue-div width="auto">
             <nue-text size="14px" weight="400">{{ count }}</nue-text>
         </nue-div>

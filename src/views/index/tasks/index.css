@@ -1,4 +1,8 @@
 .tasks-view {
+    &:deep().nue-main__aside {
+        overflow: auto;
+    }
+
     .nue-main__content {
         min-width: 375px;
         overflow-x: hidden;
@@ -18,6 +22,34 @@
             position: absolute;
             left: 0px;
             z-index: 0;
+        }
+
+        .todo-details-wrapper {
+            height: 100%;
+            flex-wrap: nowrap;
+            transition: all 0.32s ease-in-out;
+            background-color: white;
+            overflow: hidden;
+            z-index: 0;
+            padding: 0px;
+        }
+
+        @media screen and (max-width: 1200px) {
+            .todo-details-wrapper {
+                width: 440px;
+                transform: translateX(0);
+                position: absolute;
+                right: 0;
+                box-shadow: -2px 0px 10px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+                padding: 0px;
+            }
+
+            .todo-details-wrapper[data-empty='true'] {
+                transform: translateX(100%);
+                overflow: hidden;
+                box-shadow: none;
+            }
         }
     }
 }

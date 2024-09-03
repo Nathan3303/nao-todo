@@ -20,14 +20,7 @@
                         icon="refresh"
                         @click="handleRefresh"
                         :loading="tableLoading || !!refreshTimer"
-                    >
-                        刷新
-                    </nue-button>
-                    <nue-button
-                        theme="small"
-                        :icon="sph ? 'arrow-down' : 'arrow-up'"
-                        @click="viewStore.toggleSimpleProjectHeader()"
-                    ></nue-button>
+                    />
                 </nue-div>
             </nue-div>
         </nue-header>
@@ -39,9 +32,11 @@
                     ref="todoTableRef"
                     :todos="todos"
                     :columns="columns"
-                    @delete-todo="handleDeleteTodo"
-                    @restore-todo="handleRestoreTodo"
+                    :sort-info="sortInfo"
+                    @delete-todo="removeTodoWithConfirm"
+                    @restore-todo="restoreTodoWithConfirm"
                     @show-todo-details="handleShowTodoDetails"
+                    @sort-todo="handleSortTodo"
                 ></todo-table>
             </nue-div>
         </nue-main>
@@ -63,28 +58,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { TodoTable, Loading, TodoFilterBar, ListColumnSwitcher, Pager } from '@/components'
-import { useTodoStore, useUserStore, useViewStore } from '@/stores'
-import { NueConfirm, NueMessage, NuePrompt } from 'nue-ui'
+import { useTodoStore, useUserStore } from '@/stores'
 import { storeToRefs } from 'pinia'
+import { removeTodoWithConfirm, restoreTodoWithConfirm } from '@/utils/todo-handlers'
+import { NuePrompt } from 'nue-ui'
 import type { Columns } from '@/components'
-import type { Todo, TodoFilter } from '@/stores'
+import type { Todo, TodoFilter, TodoSortOptions } from '@/stores'
 import type { ContentTableProps, ContentTableEmits } from './types'
 
 defineOptions({ name: 'ContentTableLayer' })
 const props = defineProps<ContentTableProps>()
 const emit = defineEmits<ContentTableEmits>()
 
+const route = useRoute()
 const router = useRouter()
 const todoStore = useTodoStore()
 const userStore = useUserStore()
-const viewStore = useViewStore()
 
-const { todos, pageInfo, countInfo, filterInfo } = storeToRefs(todoStore)
+const { todos, pageInfo, countInfo, filterInfo, sortInfo } = storeToRefs(todoStore)
 const { user } = storeToRefs(userStore)
-const { simpleProjectHeader: sph } = storeToRefs(viewStore)
 const tableLoading = ref(false)
 const selectedTaskId = ref<Todo['id']>('')
 const columns = ref<Columns>(
@@ -103,22 +98,21 @@ const refreshTimer = ref<number | null>(null)
 const handleGetTodos = async () => {
     const { filterInfo } = props
     tableLoading.value = true
-    const res = await todoStore.init(user.value!.id, filterInfo)
+    const res = await todoStore.initialize(user.value!.id, filterInfo)
     tableLoading.value = false
     return res
 }
 
 const handleAddTodo = async () => {
     NuePrompt({
-        title: '创建任务',
-        placeholder: '填写任务名称',
+        title: '创建待办事项',
+        placeholder: '请输入待办事项名称',
         confirmButtonText: '创建',
         cancelButtonText: '取消',
-        validator: (value: any) => value
-    }).then(
-        (value) => emit('createTodo', value as string),
-        () => {}
-    )
+        validator: (value: string) => value
+    }).then((todoName) => {
+        emit('createTodo', todoName as string)
+    })
 }
 
 const handleChangeColumns = (payload: Columns) => {
@@ -126,37 +120,6 @@ const handleChangeColumns = (payload: Columns) => {
     columns.value.priority = payload.priority
     columns.value.state = payload.state
     columns.value.description = payload.description
-}
-
-const handleDeleteTodo = async (id: Todo['id']) => {
-    NueConfirm({
-        title: '删除任务',
-        content: '确定要删除该任务吗？',
-        confirmButtonText: '确定',
-        cancelButtonText: '取消'
-    }).then(
-        async () => await todoStore.remove(id),
-        () => {}
-    )
-}
-
-const handleRestoreTodo = async (id: Todo['id']) => {
-    const userId = user.value!.id
-    NueConfirm({
-        title: '恢复任务',
-        content: '确定要恢复该任务吗？',
-        confirmButtonText: '确定',
-        cancelButtonText: '取消'
-    }).then(
-        async () => {
-            const res = await todoStore.update2(userId, id, { isDeleted: false })
-            if (res.code === '20000') {
-                await todoStore.get(userId)
-                NueMessage.success('恢复成功')
-            }
-        },
-        () => {}
-    )
 }
 
 const handleShowTodoDetails = (id: Todo['id']) => {
@@ -178,26 +141,23 @@ const handlePageChange = (page: number) => {
 }
 
 const handleFilter = async (newTodoFliter: TodoFilter) => {
-    console.log(newTodoFliter)
     const userId = user.value!.id
     todoStore.mergeFilterInfo(newTodoFliter)
     await todoStore.get(userId)
 }
 
 const handleRefresh = async () => {
-    // const userId = user.value!.id
-    if (refreshTimer.value) return
-    const res = await handleGetTodos()
-    if (res.code === '20000') {
-        refreshTimer.value = setTimeout(() => {
-            refreshTimer.value = null
-        }, 5000)
-    }
+    const userId = user.value!.id
+    await todoStore.get(userId)
+}
+
+const handleSortTodo = async (newSortInfo: TodoSortOptions) => {
+    // console.log(newSortInfo)
+    const userId = user.value!.id
+    sortInfo.value.field = newSortInfo.field
+    sortInfo.value.order = newSortInfo.order
+    await todoStore.get(userId)
 }
 
 handleGetTodos()
 </script>
-
-<style scoped>
-/* @import url('./table.css'); */
-</style>

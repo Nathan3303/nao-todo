@@ -1,11 +1,14 @@
+import type { User } from "../use-user-store"
+
 export type Tag = {
     id: string
+    userId: User['id']
     name: string
     color: string
     isDeleted?: boolean
-    deletedAt?: Date
-    createdAt: Date
-    updatedAt: Date
+    deletedAt?: string
+    createdAt: string
+    updatedAt: string
 }
 
 export type PageInfo = {

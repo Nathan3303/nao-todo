@@ -2,7 +2,7 @@
     <content-table
         :key="route.params.projectId.toString()"
         :filter-info="filterInfo"
-        base-route="tasks-project-table-task"
+        base-route="tasks-project-table"
         :columns="columns"
         @create-todo="handleCreateTodo"
     ></content-table>
@@ -12,17 +12,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { ContentTable } from '@/layers/index'
-import { useTodoStore, useUserStore } from '@/stores'
 import { useRoute } from 'vue-router'
+import { createTodoWithOptions } from '@/utils'
+import { useProjectStore } from '@/stores'
 import type { Todo, TodoFilter } from '@/stores'
 import type { Columns } from '@/components'
-import { NueMessage } from 'nue-ui'
 
 const route = useRoute()
-const userStore = useUserStore()
-const todoStore = useTodoStore()
+const projectStore = useProjectStore()
 
 const filterInfo = computed<TodoFilter>(() => {
     const projectId = route.params.projectId as string
@@ -43,18 +42,8 @@ const columns: Columns = {
 
 const handleCreateTodo = async (todoName: Todo['name']) => {
     const projectId = route.params.projectId as string
-    const userId = userStore.user!.id
-    const newTodo: Partial<Todo> = {
-        userId,
-        projectId: projectId,
-        name: todoName
-    }
-    const res = await todoStore.create2(userId, newTodo)
-    if (res.code === '20000') {
-        await todoStore.get(userId)
-        NueMessage.success('任务创建成功')
-    }
+    const project = projectStore._toFinded(projectId)
+    const createOptions = { name: todoName, project: { title: project ? project.title : '' } }
+    await createTodoWithOptions(projectId, createOptions)
 }
 </script>
-
-<style scoped></style>

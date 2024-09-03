@@ -1,5 +1,5 @@
 <template>
-    <nue-dropdown class="combo-box-wrapper" :align="align">
+    <nue-dropdown theme="combo-box">
         <template #default="{ clickTrigger }">
             <nue-button size="small" :icon="triggerIcon" @click="clickTrigger">
                 {{ triggerTitle }}
@@ -10,31 +10,34 @@
             </nue-button>
         </template>
         <template #dropdown>
-            <nue-container>
-                <nue-header height="43px">
+            <nue-container class="combo-box-container">
+                <nue-header>
                     <nue-input
-                        theme="noshape"
+                        theme="noshape,small"
                         icon="search"
                         :placeholder="`筛选${triggerTitle.toLowerCase()}`"
                         v-model="filterText"
+                        clearable
                     ></nue-input>
                 </nue-header>
                 <nue-main>
-                    <template v-if="filteredOptions && filteredOptions.length">
-                        <checkbox
-                            v-for="option in filteredOptions"
-                            :key="option.value + option.checked"
-                            :label="option.label"
-                            :value="option.value"
-                            :icon="option.icon"
-                            :count="option.suffix"
-                            :checked="option.checked"
-                            @check="handleCheck"
-                        ></checkbox>
-                    </template>
-                    <nue-text v-else size="12px" color="gray" align="center">
-                        暂无数据
-                    </nue-text>
+                    <nue-div vertical align="stretch" gap="4px">
+                        <template v-if="filteredOptions && filteredOptions.length">
+                            <checkbox
+                                v-for="option in filteredOptions"
+                                :key="option.value + option.checked"
+                                :label="option.label"
+                                :value="option.value"
+                                :icon="option.icon"
+                                :count="option.suffix"
+                                :checked="option.checked"
+                                @check="handleCheck"
+                            ></checkbox>
+                        </template>
+                        <nue-text v-else size="12px" color="gray" align="center">
+                            暂无数据
+                        </nue-text>
+                    </nue-div>
                 </nue-main>
             </nue-container>
         </template>
@@ -75,28 +78,3 @@ function handleCheck(checked: boolean, value: unknown) {
     emit('change', value, { checked })
 }
 </script>
-
-<style scoped>
-.combo-box-wrapper {
-    &:deep(.nue-dropdown) {
-        padding: 0;
-    }
-
-    .nue-button {
-        border-style: dashed;
-    }
-
-    .nue-container {
-        padding: 0;
-
-        .nue-header {
-            padding: 0px 12px;
-        }
-
-        .nue-main {
-            flex-direction: column;
-            padding: 4px;
-        }
-    }
-}
-</style>

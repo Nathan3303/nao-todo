@@ -1,5 +1,5 @@
 <template>
-    <nue-dropdown class="toggle-columns-dropdown" align="right">
+    <nue-dropdown theme="combo-box">
         <template #default="{ clickTrigger }">
             <nue-button theme="small" icon="menu" @click.stop="clickTrigger"> 列设置 </nue-button>
         </template>
@@ -9,15 +9,17 @@
                     <nue-text size="14px">显示/隐藏列</nue-text>
                 </nue-header>
                 <nue-main>
-                    <empty :empty="!modelValue">
-                        <checkbox
-                            v-for="(value, key) in modelValue"
-                            :label="parseLabel(key)"
-                            :value="key"
-                            :checked="value"
-                            @check="handleCheck"
-                        ></checkbox>
-                    </empty>
+                    <nue-div vertical gap="4px">
+                        <empty :empty="!modelValue">
+                            <checkbox
+                                v-for="(value, key) in modelValue"
+                                :label="parseLabel(key)"
+                                :value="key"
+                                :checked="value"
+                                @check="handleCheck"
+                            ></checkbox>
+                        </empty>
+                    </nue-div>
                 </nue-main>
             </nue-container>
         </template>
@@ -62,7 +64,7 @@ const handleCheck = (checked: boolean, value: unknown) => {
 }
 </script>
 
-<style scoped>
+<!-- <style scoped>
 .toggle-columns-dropdown {
     &:deep(.nue-dropdown) {
         padding: 0px;
@@ -82,4 +84,4 @@ const handleCheck = (checked: boolean, value: unknown) => {
         }
     }
 }
-</style>
+</style> -->

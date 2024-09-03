@@ -16,9 +16,10 @@
   "dependencies": {
     "@types/md5": "^2.3.5",
     "axios": "^1.7.2",
+    "jsstore": "^4.8.1",
     "md5": "^2.3.0",
     "moment": "^2.30.1",
-    "nue-ui": "^0.5.39",
+    "nue-ui": "^0.6.34",
     "pinia": "^2.1.7",
     "vue": "^3.4.21",
     "vue-router": "^4.3.0"
@@ -37,6 +38,8 @@
     "prettier": "^3.2.5",
     "typescript": "~5.4.0",
     "vite": "^5.2.8",
+    "vite-plugin-externals": "^0.6.2",
+    "vite-plugin-file": "^1.0.5",
     "vue-tsc": "^2.0.11"
   }
 }

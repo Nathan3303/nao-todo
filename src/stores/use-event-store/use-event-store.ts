@@ -3,14 +3,15 @@ import { defineStore } from 'pinia'
 import { naoTodoServer as $axios } from '@/axios'
 import type { Event, EventFilterOptions } from './types'
 import type { User } from '../use-user-store'
-import type { Todo } from '../use-todo-store'
 
 export const useEventStore = defineStore('eventStore', () => {
     const events = ref<Event[]>([])
     const filterInfo = ref<EventFilterOptions>({})
     const pageInfo = reactive({ page: 1, limit: 10 })
 
-    const parseFilterInfoToQuery = (specFilterInfo?: EventFilterOptions) => {
+    // Inner methods
+
+    const _stringifyFilterInfo = (specFilterInfo?: EventFilterOptions) => {
         const query: string[] = []
         const _filterInfo = specFilterInfo || filterInfo.value
         Object.keys(_filterInfo).forEach((key) => {
@@ -21,97 +22,189 @@ export const useEventStore = defineStore('eventStore', () => {
         return queryString
     }
 
-    const mergeFilterInfo = (newOne: EventFilterOptions) => {
+    const _mergeFilterInfo = (newOne: EventFilterOptions) => {
         filterInfo.value = {
             ...filterInfo.value,
             ...newOne
         }
     }
 
-    const getData = async (
-        userId: User['id'],
-        pageQueryString: string,
-        filterQueryString: string
-    ) => {
-        const URI = `/events?userId=${userId}&${pageQueryString}&${filterQueryString}`
-        const response = await $axios.get(URI)
-        return response.data
-    }
-
-    const reset = () => {
+    const _reset = () => {
         events.value = []
         filterInfo.value = {}
     }
 
-    const init = async (userId: User['id'], filterInfo: EventFilterOptions) => {
-        // reset()
-        mergeFilterInfo(filterInfo)
-        return await reload(userId)
+    const _get = async (userId: User['id'], specFilterInfo?: EventFilterOptions) => {
+        try {
+            const { page, limit } = pageInfo
+            const filterQueryString = _stringifyFilterInfo(specFilterInfo)
+            const pageQueryString = `page=${page}&limit=${limit}`
+            const URI = `/events?userId=${userId}&${pageQueryString}&${filterQueryString}`
+            const {
+                data: { data, code }
+            } = await $axios.get(URI)
+            const res = code === '20000' ? data : null
+            // console.log('[EventStore] _get:', URI, res)
+            return res
+        } catch (e) {
+            console.warn('[EventStore] _get:', e)
+        }
     }
 
-    const reload = async (userId: User['id']) => {
-        const { page, limit } = pageInfo
-        const filterQueryString = parseFilterInfoToQuery()
-        const pageQueryString = `page=${page}&limit=${limit}`
-        const response = await getData(userId, filterQueryString, pageQueryString)
-        if (response.code === '20000') {
-            events.value = response.data
+    const _update = async (
+        userId: User['id'],
+        eventId: Event['id'],
+        updateInfo: Partial<Event>
+    ) => {
+        try {
+            const URI = `/event?userId=${userId}&eventId=${eventId}`
+            const {
+                data: { data, code }
+            } = await $axios.put(URI, updateInfo)
+            const res = code === '20000' ? data : null
+            console.log('[EventStore] _update:', URI, updateInfo, res)
+            return res
+        } catch (e) {
+            console.warn('[EventStore] _update:', e)
         }
-        return response
     }
+
+    const _remove = async (userId: User['id'], eventId: Event['id']) => {
+        try {
+            const URI = `/event?userId=${userId}&eventId=${eventId}`
+            const {
+                data: { data, code }
+            } = await $axios.delete(URI)
+            return code === '20000' ? data : null
+        } catch (e) {
+            console.warn('[EventStore] _remove:', e)
+        }
+    }
+
+    const _create = async (userId: User['id'], createInfo: Partial<Event>) => {
+        try {
+            createInfo = { ...createInfo, userId }
+            const {
+                data: { data, code }
+            } = await $axios.post('/event', createInfo)
+            const res = code === '20000' ? data : null
+            console.log('[EventStore] _create:', createInfo, res)
+            return res
+        } catch (e) {
+            console.warn('[EventStore] _create:', e)
+        }
+    }
+
+    // Getter which from backend
 
     const get = async (userId: User['id'], filterInfo?: EventFilterOptions) => {
-        const { page, limit } = pageInfo
-        const filterQueryString = parseFilterInfoToQuery(filterInfo)
-        const pageQueryString = `page=${page}&limit=${limit}`
-        return await getData(userId, filterQueryString, pageQueryString)
+        if (filterInfo) _mergeFilterInfo(filterInfo)
+        const getResult = await toGetted(userId)
+        if (!getResult) return
+        events.value = getResult
+        return getResult
     }
 
-    const create = async (userId: User['id'], todoId: Todo['id'], title: Event['title']) => {
-        const data = { userId, todoId, title }
-        const response = await $axios.post('/event', data)
-        if (response.data.code === '20000') {
-            events.value.push(response.data.data)
-        }
-        return response.data
-    }
-
-    const toFindLocally = (eventId: Event['id']) => {
-        return events.value.find((event) => event.id === eventId)
+    const initialize = async (userId: User['id'], filterInfo: EventFilterOptions) => {
+        _reset()
+        return await get(userId, filterInfo)
     }
 
     const update = async (userId: User['id'], eventId: Event['id'], updateInfo: Partial<Event>) => {
-        const response = await $axios.put(`/event?userId=${userId}&id=${eventId}`, updateInfo)
-        if (response.data.code === '20000') {
-            console.log(response.data.data)
-            const event = events.value.find((event) => event.id === eventId)
-            if (event) {
-                Object.assign(event, updateInfo)
-            }
-        }
-        return response.data
+        const updateResult = await _update(userId, eventId, updateInfo)
+        if (!updateResult) return
+        updateLocal(eventId, updateInfo)
+        return updateResult
     }
 
     const remove = async (userId: User['id'], eventId: Event['id']) => {
-        const response = await $axios.delete(`/event?userId=${userId}&id=${eventId}`)
-        if (response.data.code === '20000') {
-            const index = events.value.findIndex((event) => event.id === eventId)
-            if (index !== -1) {
-                events.value.splice(index, 1)
-            }
+        const removeResult = await _remove(userId, eventId)
+        if (!removeResult) return
+        removeLocal(eventId)
+        return removeResult
+    }
+
+    const create = async (userId: User['id'], createInfo: Partial<Event>) => {
+        const createResult = await _create(userId, createInfo)
+        if (!createResult) return
+        createLocal(createResult)
+        return createResult
+    }
+
+    // Getter which from local
+
+    const findIndexLocal = (eventId: Event['id']) => {
+        return events.value.findIndex((event) => event.id === eventId)
+    }
+
+    const findLocal = (eventId: Event['id']) => {
+        const eventIndex = findIndexLocal(eventId)
+        const res = eventIndex !== -1 ? events.value[eventIndex] : null
+        return res as Event | null
+    }
+
+    const updateLocal = (eventId: Event['id'], updateInfo: Partial<Event>) => {
+        const oldEventIndex = findIndexLocal(eventId)
+        const oldEvent = events.value[oldEventIndex]
+        if (!oldEvent) return
+        const newEvent = { ...oldEvent, ...updateInfo }
+        events.value[oldEventIndex] = newEvent
+    }
+
+    const removeLocal = async (eventId: Event['id']) => {
+        const eventIndex = findIndexLocal(eventId)
+        events.value.splice(eventIndex, 1)
+    }
+
+    const createLocal = (createInfo: Partial<Event>) => {
+        const newEventTemplate: Event = {
+            id: '',
+            userId: '',
+            todoId: '',
+            title: '',
+            createdAt: '',
+            updatedAt: '',
+            isDone: false,
+            isTopped: false
         }
+        const newEvent = { ...newEventTemplate, ...createInfo }
+        events.value.push(newEvent)
+    }
+
+    // Getter which is pure function and from backend
+
+    const toGetted = async (userId: User['id']) => {
+        const getted = await _get(userId)
+        return getted as Event[] | null
+    }
+
+    const toFinded = async (userId: User['id'], filterInfo: EventFilterOptions) => {
+        const finded = await _get(userId, filterInfo)
+        return finded as Event[] | null
+    }
+
+    const toFindedOne = async (userId: User['id'], eventId: Event['id']) => {
+        const finded = await _get(userId, { id: eventId })
+        const res = Array.isArray(finded) ? finded[0] : finded
+        return res as Event | null
     }
 
     return {
         events,
         filterInfo,
         pageInfo,
-        init,
         get,
-        reload,
-        create,
-        toFindLocally,
+        initialize,
         update,
-        remove
+        remove,
+        create,
+        findIndexLocal,
+        findLocal,
+        updateLocal,
+        removeLocal,
+        createLocal,
+        toGetted,
+        toFinded,
+        toFindedOne
     }
 })

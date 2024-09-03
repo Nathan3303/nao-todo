@@ -1,10 +1,11 @@
 import type { Columns } from '@/components'
-import type { TodoFilter } from '@/stores'
+import type { Project, TodoFilter } from '@/stores'
 
 export type ContentTableProps = {
     filterInfo: TodoFilter
     baseRoute: string
     columns?: Columns
+    // projectId: Project['id']
 }
 
 export type ContentTableEmits = {

@@ -35,7 +35,7 @@ export type Todo = {
     isPinned: boolean
     isDone: boolean
     isDeleted: boolean
-    project: Project
+    project?: Partial<Project>
     tags: Tag['id'][]
     tagsInfo: Tag[]
 }
@@ -54,6 +54,11 @@ export type TodoFilter = {
     priority?: string
     relativeDate?: 'today' | 'tomorrow' | 'week'
     tagId?: Tag['id']
+}
+
+export type TodoSortOptions = {
+    field: keyof Todo | 'endAt' | ''
+    order: 'asc' | 'desc' | ''
 }
 
 export type TodoCountByState = {

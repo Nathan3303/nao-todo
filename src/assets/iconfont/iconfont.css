@@ -1,7 +1,7 @@
 @font-face {
   font-family: "iconfont"; /* Project id 4627189 */
-  src: url('iconfont.woff2?t=1721911301701') format('woff2'),
-       url('iconfont.ttf?t=1721911301701') format('truetype');
+  src: url('iconfont.woff2?t=1723003802315') format('woff2'),
+       url('iconfont.ttf?t=1723003802315') format('truetype');
 }
 
 .iconfont {
@@ -10,6 +10,14 @@
   font-style: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-archive:before {
+  content: "\e640";
+}
+
+.icon-unarchive:before {
+  content: "\e663";
 }
 
 .icon-week:before {
@@ -94,10 +102,6 @@
 
 .icon-arrow-right:before {
   content: "\e9ce";
-}
-
-.icon-archive:before {
-  content: "\e628";
 }
 
 .icon-arrow-up:before {

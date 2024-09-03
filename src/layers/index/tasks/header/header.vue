@@ -4,60 +4,54 @@
             <nue-div vertical gap="4px">
                 <nue-div justify="space-between" wrap="nowrap">
                     <nue-div align="center" width="fit-content" gap="8px">
-                        <tooltip :content="`${pav ? '收起' : '展开'}菜单侧栏`" align="left">
+                        <nue-tooltip
+                            size="small"
+                            :content="`${pav ? '收起' : '展开'}菜单侧栏`"
+                            placement="top-start"
+                        >
                             <nue-button
                                 theme="icon-only"
                                 :icon="pav ? 'menu-close' : 'menu-open'"
                                 @click="handleHideProjectAside"
-                            ></nue-button>
-                        </tooltip>
-                        <click-to-edit
-                            :text="project?.title"
-                            @edit="handleEditProjectName"
-                            size="24px"
-                        ></click-to-edit>
+                            />
+                        </nue-tooltip>
+                        <nue-text theme="pointer" size="24px" @click="renameProject">
+                            {{ project?.title || '修改清单标题' }}
+                        </nue-text>
                     </nue-div>
                     <nue-div align="center" justify="end" width="fit-content">
-                        <tooltip content="归档项目">
+                        <!-- <nue-tooltip size="small" content="归档清单">
                             <nue-button
                                 theme="icon-only"
                                 icon="archive"
-                                @click="handleArchiveProject"
+                                @click="handleArchiveProject(project.id)"
                             />
-                        </tooltip>
-                        <tooltip content="删除项目">
-                            <nue-button
-                                theme="icon-only"
-                                icon="delete"
-                                @click="handleDeleteProject"
-                            />
-                        </tooltip>
-                        <!-- <nue-avatar
-                            src="https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif?imageView2/1/w/80/h/80"
-                        ></nue-avatar> -->
+                        </nue-tooltip> -->
+                        <nue-tooltip size="small" content="删除清单">
+                            <nue-button theme="icon-only" icon="delete" @click="deleteProject" />
+                        </nue-tooltip>
                     </nue-div>
                 </nue-div>
-                <click-to-edit
-                    v-if="!sph"
-                    :text="project?.description"
-                    emptyholder="点击添加清单描述"
-                    @edit="handleEditDescription"
-                    size="14px"
-                    color="gray"
-                ></click-to-edit>
+                <nue-text theme="pointer" size="14px" color="gray" @click="redescProject">
+                    {{ project?.description || '该清单没有设置描述信息，点此设置清单描述' }}
+                </nue-text>
             </nue-div>
         </template>
         <template v-else-if="tag">
             <nue-div vertical gap="4px">
                 <nue-div justify="space-between" wrap="nowrap">
                     <nue-div align="center" width="fit-content" gap="8px">
-                        <tooltip :content="`${pav ? '收起' : '展开'}菜单侧栏`" align="left">
+                        <nue-tooltip
+                            size="small"
+                            :content="`${pav ? '收起' : '展开'}菜单侧栏`"
+                            placement="top-start"
+                        >
                             <nue-button
                                 theme="icon-only"
                                 :icon="pav ? 'menu-close' : 'menu-open'"
                                 @click="handleHideProjectAside"
-                            ></nue-button>
-                        </tooltip>
+                            />
+                        </nue-tooltip>
                         <nue-text>#</nue-text>
                         <click-to-edit
                             :text="tag?.name"
@@ -72,11 +66,17 @@
             <nue-div align="center" justify="space-between" wrap="nowrap">
                 <nue-div vertical width="fit-content" gap="4px">
                     <nue-div align="center" width="fit-content" gap="8px" height="36px">
-                        <nue-button
-                            theme="icon-only"
-                            :icon="pav ? 'menu-close' : 'menu-open'"
-                            @click="handleHideProjectAside"
-                        ></nue-button>
+                        <nue-tooltip
+                            size="small"
+                            :content="`${pav ? '收起' : '展开'}菜单侧栏`"
+                            placement="top-start"
+                        >
+                            <nue-button
+                                theme="icon-only"
+                                :icon="pav ? 'menu-close' : 'menu-open'"
+                                @click="handleHideProjectAside"
+                            />
+                        </nue-tooltip>
                         <nue-text size="24px"> {{ title }} </nue-text>
                     </nue-div>
                     <nue-text v-if="!sph" size="14px" color="gray">
@@ -99,11 +99,15 @@
 <script setup lang="ts">
 import { useViewStore, useProjectStore, useUserStore, useTagStore } from '@/stores'
 import { storeToRefs } from 'pinia'
-import { ClickToEdit, Tooltip } from '@/components'
-import { NueConfirm, NueMessage } from 'nue-ui'
+import { ClickToEdit } from '@/components'
 import { useRouter } from 'vue-router'
+import {
+    handleArchiveProject,
+    handleRenameProject,
+    handleRedescProject,
+    handleDeleteProject
+} from '@/utils/project-handlers'
 import type { ContentHeaderProps } from './types'
-import type { RouteLocationRaw } from 'vue-router'
 
 defineOptions({ name: 'ContentHeader' })
 const props = withDefaults(defineProps<ContentHeaderProps>(), {
@@ -113,7 +117,6 @@ const props = withDefaults(defineProps<ContentHeaderProps>(), {
 
 const router = useRouter()
 const viewStore = useViewStore()
-const projectStore = useProjectStore()
 const tagStore = useTagStore()
 const userStore = useUserStore()
 
@@ -123,10 +126,27 @@ const handleHideProjectAside = () => {
     viewStore.toggleProjectAsideVisible()
 }
 
-const handleEditProjectName = async (newValue: string) => {
+const renameProject = () => {
+    if (!props.project) return
+    const projectId = props.project?.id
+    const projectName = props.project?.title
+    handleRenameProject(projectId, projectName)
+}
+
+const redescProject = () => {
+    if (!props.project) return
+    const projectId = props.project?.id
+    const projectDescription = props.project?.description
+    handleRedescProject(projectId, projectDescription)
+}
+
+const deleteProject = async () => {
     const projectId = props.project?.id
     if (!projectId) return
-    await projectStore.updateProject(projectId, { title: newValue })
+    const deleteResult = await handleDeleteProject(projectId)
+    if (deleteResult.code === '20000') {
+        router.push('/tasks/all')
+    }
 }
 
 const handleEditTagName = async (newValue: string) => {
@@ -134,51 +154,6 @@ const handleEditTagName = async (newValue: string) => {
     const tagId = props.tag?.id
     if (!tagId || !userId) return
     await tagStore.update(userId, tagId, { name: newValue })
-}
-
-const handleArchiveProject = async () => {
-    NueConfirm({
-        title: '归档项目',
-        content: '确定要归档该项目吗？归档后的项目将无法再进行编辑、删除等操作。',
-        confirmButtonText: '确定',
-        cancelButtonText: '取消'
-    }).then(
-        async () => {
-            const projectId = props.project?.id
-            if (!projectId) return
-            const res = await projectStore.archiveProject(projectId)
-            if (res.code !== '20000') return
-            const topProject = projectStore.projects[0]
-            let route: RouteLocationRaw = { name: 'tasks-all' }
-            if (topProject) {
-                route = { name: 'tasks-project', params: { projectId: topProject.id } }
-            }
-            router.replace(route)
-        },
-        () => NueMessage.info('操作取消')
-    )
-}
-
-const handleDeleteProject = () => {
-    NueConfirm({
-        title: '删除项目',
-        content: '确定要删除该项目吗？',
-        confirmButtonText: '确定',
-        cancelButtonText: '取消'
-    }).then(
-        async () => {
-            const projectId = props.project?.id
-            if (!projectId) return
-            await projectStore.deleteProject(projectId)
-        },
-        () => NueMessage.info('操作取消')
-    )
-}
-
-const handleEditDescription = async (newValue: string) => {
-    const projectId = props.project?.id
-    if (!projectId) return
-    await projectStore.updateProject(projectId, { description: newValue })
 }
 </script>
 

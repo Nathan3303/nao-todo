@@ -12,6 +12,7 @@
         align-items: center;
         padding: 4px 16px;
         gap: 24px;
+        border: 1px solid transparent;
 
         .todo-table__header__col {
             .nue-text {
@@ -117,7 +118,7 @@
         line-height: 21px;
     }
     .col-priority {
-        width: 50px;
+        width: 60px;
         line-height: 21px;
     }
     .col-state {
@@ -125,12 +126,8 @@
         line-height: 21px;
     }
     .col-project {
-        width: 120px;
+        width: 100px;
         line-height: 21px;
-        white-space: pre;
-        word-break: break-all;
-        overflow: hidden;
-        text-overflow: ellipsis;
     }
     .col-actions {
         width: auto;

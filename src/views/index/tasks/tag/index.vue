@@ -28,7 +28,7 @@ const tagStore = useTagStore()
 
 const tag = computed(() => {
     const { tagId } = props
-    const tag = tagStore.toFindLocally(tagId)
+    const tag = tagStore.findLocal(tagId)
     if (!tag) return void 0
     document.title = 'NaoTodo - #' + tag.name
     return tag as Tag

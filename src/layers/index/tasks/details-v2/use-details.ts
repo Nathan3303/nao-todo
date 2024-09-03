@@ -1,86 +1,137 @@
 import { ref, watch, computed } from 'vue'
-import { useTodoStore, useProjectStore, useUserStore, useEventStore } from '@/stores'
+import { useTodoStore, useProjectStore, useEventStore } from '@/stores'
 import { storeToRefs } from 'pinia'
+import { useRoute, useRouter } from 'vue-router'
+import { NueConfirm } from 'nue-ui'
+import { updateTodo, removeTodoWithConfirm, restoreTodoWithConfirm } from '@/utils/todo-handlers'
 import moment from 'moment'
 import type { TodoDetailsEmits, TodoDetailsProps } from './types'
 import type { Todo } from '@/stores'
 
-const projectStore = useProjectStore()
-const todoStore = useTodoStore()
-const userStore = useUserStore()
-const eventStore = useEventStore()
-
 export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) => {
+    const route = useRoute()
+    const router = useRouter()
+    const projectStore = useProjectStore()
+    const todoStore = useTodoStore()
+    const eventStore = useEventStore()
+
     const { projects } = storeToRefs(projectStore)
     const { events } = storeToRefs(eventStore)
     const shadowTodo = ref<Todo | undefined>()
     const loadingState = ref(false)
-    let timer: number | null = null
 
     const eventsProgress = computed(() => {
         const _e = events.value
         const progress = _e ? _e.filter((event) => event.isDone).length : 0
         const total = _e ? _e.length : 0
         const percentage = total ? Math.floor((progress / total) * 100) : 0
-        return `已完成 ${progress}/${total}, ${percentage}%`
+        return {
+            percentage,
+            text: `已完成 ${progress}/${total}, ${percentage}%`
+        }
     })
 
-    const parseDate = (datestring: string) => {
-        return moment(datestring).format('YYYY-MM-DD HH:mm')
+    const _getTodo = async (todoId: Todo['id']) => {
+        if (!todoId) {
+            shadowTodo.value = void 0
+            return
+        }
+        let todo = todoStore.findLocal(todoId)
+        shadowTodo.value = todo as Todo
     }
 
-    const updateTodo = (delay?: any) => {
-        return new Promise((resolve) => {
-            delay = delay === 0 ? 0 : 1000
+    const _debounce = (delay: number, callback: () => void | Promise<any>) => {
+        let timer: number | null = null
+        return () => {
             if (timer) clearTimeout(timer)
             timer = setTimeout(async () => {
-                loadingState.value = true
-                const { todo } = props
-                if (!shadowTodo.value || !todo) return
-                const response = await todoStore.update(todo.id!, shadowTodo.value)
-                if (response.code === '20000') {
-                    shadowTodo.value = response.data
-                    resolve(response)
-                }
-                loadingState.value = false
-                timer = null
+                await callback()
             }, delay)
-        })
+        }
+    }
+
+    const _updateTodo = async () => {
+        loadingState.value = true
+        if (shadowTodo.value) {
+            const todoId = shadowTodo.value.id
+            await updateTodo(todoId, { ...shadowTodo.value })
+        }
+        loadingState.value = false
+    }
+
+    const debouncedUpdateTodo = _debounce(500, _updateTodo)
+
+    const formatDate = (datestring: string) => {
+        const dateString = moment(datestring).format('YYYY-MM-DD HH:mm')
+        return dateString
     }
 
     const handleChangeEndAt = (value: string | null) => {
-        // console.log(value)
-        shadowTodo.value!.dueDate.endAt = value
-        updateTodo()
+        if (!shadowTodo.value) return
+        shadowTodo.value.dueDate.endAt = value
+        debouncedUpdateTodo()
     }
 
     const handleChangePriority = (value: unknown) => {
-        // console.log(value)
-        shadowTodo.value!.priority = value as Todo['priority']
-        updateTodo()
+        if (!shadowTodo.value) return
+        shadowTodo.value.priority = value as Todo['priority']
+        debouncedUpdateTodo()
     }
 
     const handleChangeState = (value: unknown) => {
-        // console.log(value)
-        shadowTodo.value!.state = value as Todo['state']
-        updateTodo()
+        if (!shadowTodo.value) return
+        shadowTodo.value.state = value as Todo['state']
+        debouncedUpdateTodo()
+    }
+
+    const handleMoveToProject = async (projectId: string, projectTitle: string) => {
+        if (!shadowTodo.value) return
+        shadowTodo.value.projectId = projectId
+        shadowTodo.value.project = { title: projectTitle }
+        debouncedUpdateTodo()
+        // emit('refresh')
+    }
+
+    const handleCheckTodo = async () => {
+        if (!shadowTodo.value) return
+        shadowTodo.value.isDone = !shadowTodo.value.isDone
+        debouncedUpdateTodo()
+    }
+
+    const handleDeleteTodo = async () => {
+        if (!shadowTodo.value) return
+        const todoId = shadowTodo.value.id
+        await removeTodoWithConfirm(todoId)
+        handleClose()
+    }
+
+    const handleRestoreTodo = async () => {
+        if (!shadowTodo.value) return
+        const todoId = shadowTodo.value?.id
+        await restoreTodoWithConfirm(todoId)
+        handleClose()
+    }
+
+    const handleUpdateTags = async (tags: Todo['tags']) => {
+        if (!shadowTodo.value) return
+        shadowTodo.value.tags = tags
+        debouncedUpdateTodo()
     }
 
     const handleClose = () => {
-        emit('closeTodoDetails')
-    }
-
-    const handleMoveToProject = async (projectId: string) => {
-        shadowTodo.value!.projectId = projectId
-        await updateTodo(0)
-        document.querySelector('body')?.click()
-        emit('refresh')
+        shadowTodo.value = void 0
+        const prevRoute = route.matched[route.matched.length - 2]
+        if (prevRoute) {
+            router.push(prevRoute)
+        }
     }
 
     watch(
-        () => props.todo,
+        () => route.params.taskId,
         (newValue) => {
-            shadowTodo.value = newValue ? { ...newValue } : void 0
+            requestIdleCallback(() => {
+                _getTodo(newValue as string)
+            })
         },
         { immediate: true }
     )
@@ -90,12 +141,16 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         shadowTodo,
         loadingState,
         eventsProgress,
-        parseDate,
-        updateTodo,
+        formatDate,
+        updateTodo: debouncedUpdateTodo,
         handleChangeEndAt,
         handleChangePriority,
         handleChangeState,
         handleClose,
-        handleMoveToProject
+        handleMoveToProject,
+        handleCheckTodo,
+        handleDeleteTodo,
+        handleRestoreTodo,
+        handleUpdateTags
     }
 }

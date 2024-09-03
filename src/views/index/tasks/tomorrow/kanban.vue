@@ -1,7 +1,7 @@
 <template>
     <content-kanban
         :filter-info="filterInfo"
-        base-route="tasks-tomorrow-kanban-task"></content-kanban>
+        base-route="tasks-tomorrow-kanban"></content-kanban>
     <suspense>
         <router-view></router-view>
     </suspense>

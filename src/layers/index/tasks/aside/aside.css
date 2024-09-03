@@ -1,5 +1,7 @@
 .tasks-view-aside {
-    gap: 16px;
+    gap: 8px;
+    height: auto;
+    overflow: unset;
 
     .nue-header {
         flex-direction: column;
@@ -13,6 +15,11 @@
 
     .nue-main {
         overflow: initial;
+
+        &:deep().nue-collapse-item__header {
+            border: none;
+            box-shadow: none;
+        }
     }
 
     .nue-link--plink {
@@ -31,7 +38,6 @@
         align-items: stretch;
         gap: 8px;
         padding: 0px;
-        padding-top: 16px;
         height: auto !important;
         border: none;
     }

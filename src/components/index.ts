@@ -1,5 +1,5 @@
 export * from './general'
-export * from './project'
 export * from './tag'
 export * from './todo'
 export * from './user'
+export * from './project'

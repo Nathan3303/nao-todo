@@ -13,6 +13,7 @@ export type Event = {
 }
 
 export type EventFilterOptions = {
+    id?: Event['id']
     todoId?: Event['todoId']
     title?: Event['title']
     isDone?: Event['isDone']

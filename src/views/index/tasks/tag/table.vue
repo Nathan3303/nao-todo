@@ -2,7 +2,7 @@
     <content-table
         :key="route.params.tagId.toString()"
         :filter-info="filterInfo"
-        base-route="tasks-tag-table-task"
+        base-route="tasks-tag-table"
         :columns="columns"
         @create-todo="handleCreateTodo"
     ></content-table>
@@ -16,9 +16,10 @@ import { ref, computed } from 'vue'
 import { ContentTable } from '@/layers/index'
 import { useTodoStore, useUserStore } from '@/stores'
 import { useRoute } from 'vue-router'
+import { NueMessage } from 'nue-ui'
+import { createTodoWithOptions } from '@/utils'
 import type { Todo, TodoFilter } from '@/stores'
 import type { Columns } from '@/components'
-import { NueMessage } from 'nue-ui'
 
 const route = useRoute()
 const userStore = useUserStore()
@@ -38,22 +39,13 @@ const columns: Columns = {
     endAt: true,
     priority: true,
     state: true,
-    description: true
+    description: true,
+    project: true
 }
 
 const handleCreateTodo = async (todoName: Todo['name']) => {
-    // const projectId = route.params.projectId as string
-    // const userId = userStore.user!.id
-    // const newTodo: Partial<Todo> = {
-    //     userId,
-    //     projectId: projectId,
-    //     name: todoName
-    // }
-    // const res = await todoStore.create2(userId, newTodo)
-    // if (res.code === '20000') {
-    //     await todoStore.get(userId)
-    //     NueMessage.success('任务创建成功')
-    // }
+    const tagId = route.params.tagId as string
+    await createTodoWithOptions(null, { name: todoName, tags: [tagId] })
 }
 </script>
 

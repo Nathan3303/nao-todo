@@ -1,10 +1,9 @@
-export type NewProjectPayload = {
-    name: string
-    description?: string
+import type { ProjectCreateOptions } from '@/stores'
+
+export type CreateProjectDialogProps = {
+    handler: (payload: ProjectCreateOptions) => Promise<any>
 }
 
-export type CreateProjectDialogProps = {}
-
 export type CreateProjectDialogEmits = {
-    (event: 'create', payload: NewProjectPayload): void
+    (event: 'create', payload: ProjectCreateOptions): void
 }

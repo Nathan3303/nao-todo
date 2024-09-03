@@ -40,8 +40,8 @@
                         :todos="value"
                         :data-category="key"
                         @show-todo-details="handleShowTodoDetails"
-                        @delete-todo="handleDeleteTodo"
-                        @restore-todo="handleRestoreTodo"
+                        @delete-todo="removeTodoWithConfirm"
+                        @restore-todo="restoreTodoWithConfirm"
                         @finish-todo="handleFinishTodo"
                         @unfinish-todo="handleUnfinishTodo"
                         data-droppable="true"
@@ -65,6 +65,7 @@ import { Loading, TodoFilterBar, ListColumnSwitcher } from '@/components'
 import { ContentKanbanColumn } from '../kanban-column'
 import { useTodoStore, useUserStore, useViewStore } from '@/stores'
 import { NueConfirm, NueMessage, NuePrompt } from 'nue-ui'
+import { removeTodoWithConfirm, restoreTodoWithConfirm } from '@/utils/todo-handlers'
 import type { ContentKanbanProps, ContentKanbanEmits } from './types'
 import type { Columns } from '@/components'
 import type { Todo, TodoFilter } from '@/stores'
@@ -109,7 +110,7 @@ const categoriedTodos = computed(() => {
 const handleGetTodos = async () => {
     const { filterInfo } = props
     kanbanLoading.value = true
-    const res = await todoStore.init(userStore.user!.id, filterInfo)
+    const res = await todoStore.initialize(userStore.user!.id, filterInfo)
     kanbanLoading.value = false
     return res
 }
@@ -150,44 +151,27 @@ const handleChangeColumns = (payload: Columns) => {
 
 const handleRefresh = async () => {
     if (refreshTimer.value) return
-    const res = await handleGetTodos()
-    if (res.code === '20000') {
-        refreshTimer.value = setTimeout(() => {
-            refreshTimer.value = null
-        }, 5000)
-    }
+    await handleGetTodos()
 }
 
 const handleDeleteTodo = async (todoId: Todo['id']) => {
     const userId = user.value!.id
-    const res = await todoStore.update2(userId, todoId, { isDeleted: true })
-    if (res.code !== '20000') return
-    await todoStore.removeLocal(todoId)
-    NueMessage.success('任务删除成功')
+    await todoStore.update(userId, todoId, { isDeleted: true })
 }
 
 const handleRestoreTodo = async (todoId: Todo['id']) => {
     const userId = user.value!.id
-    const res = await todoStore.update2(userId, todoId, { isDeleted: false })
-    if (res.code !== '20000') return
-    await todoStore.removeLocal(todoId)
-    NueMessage.success('任务恢复成功')
+    await todoStore.update(userId, todoId, { isDeleted: false })
 }
 
 const handleFinishTodo = async (todoId: Todo['id']) => {
     const userId = user.value!.id
-    const res = await todoStore.update2(userId, todoId, { state: 'done', isDone: true })
-    if (res.code !== '20000') return
-    await todoStore.updateLocal(todoId, { state: 'done', isDone: true })
-    // NueMessage.success('任务更新成功')
+    await todoStore.update(userId, todoId, { state: 'done', isDone: true })
 }
 
 const handleUnfinishTodo = async (todoId: Todo['id']) => {
     const userId = user.value!.id
-    const res = await todoStore.update2(userId, todoId, { isDone: false, state: 'todo' })
-    if (res.code !== '20000') return
-    await todoStore.updateLocal(todoId, { isDone: false, state: 'todo' })
-    // NueMessage.success('任务更新成功')
+    await todoStore.update(userId, todoId, { isDone: false, state: 'todo' })
 }
 
 const handleDragStart = (event: DragEvent) => {
@@ -250,12 +234,7 @@ const handleDrop = (event: DragEvent) => {
     const userId = user.value!.id
     const todoId = draggingTodoId.value
     const updateInfo = { state: category as Todo['state'] }
-    todoStore.update2(userId, todoId, updateInfo).then(
-        async () => {
-            await todoStore.updateLocal(todoId, updateInfo)
-        },
-        () => {}
-    )
+    todoStore.update(userId, todoId, updateInfo)
 }
 
 handleGetTodos()
