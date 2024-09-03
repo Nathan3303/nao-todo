@@ -94,7 +94,7 @@
                     <todo-state-info :state="todo.state" :key="todo.state"></todo-state-info>
                 </nue-div>
                 <nue-div class="todo-table__body__col col-project" v-if="columns.project">
-                    <nue-text size="12px" color="gray">
+                    <nue-text size="12px" color="gray" :clamped="1">
                         {{ todo.project?.title || '收集箱' }}
                     </nue-text>
                 </nue-div>

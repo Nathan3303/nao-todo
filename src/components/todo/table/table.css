@@ -128,10 +128,6 @@
     .col-project {
         width: 100px;
         line-height: 21px;
-        white-space: pre;
-        word-break: break-all;
-        overflow: hidden;
-        text-overflow: ellipsis;
     }
     .col-actions {
         width: auto;

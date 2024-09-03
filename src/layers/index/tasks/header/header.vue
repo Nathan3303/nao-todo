@@ -4,32 +4,36 @@
             <nue-div vertical gap="4px">
                 <nue-div justify="space-between" wrap="nowrap">
                     <nue-div align="center" width="fit-content" gap="8px">
-                        <nue-tooltip :content="`${pav ? '收起' : '展开'}菜单侧栏`">
+                        <nue-tooltip
+                            size="small"
+                            :content="`${pav ? '收起' : '展开'}菜单侧栏`"
+                            placement="top-start"
+                        >
                             <nue-button
                                 theme="icon-only"
                                 :icon="pav ? 'menu-close' : 'menu-open'"
                                 @click="handleHideProjectAside"
-                            ></nue-button>
+                            />
                         </nue-tooltip>
                         <nue-text theme="pointer" size="24px" @click="renameProject">
-                            {{ project?.title || "修改清单标题" }}
+                            {{ project?.title || '修改清单标题' }}
                         </nue-text>
                     </nue-div>
                     <nue-div align="center" justify="end" width="fit-content">
-                        <nue-tooltip content="归档清单">
+                        <!-- <nue-tooltip size="small" content="归档清单">
                             <nue-button
                                 theme="icon-only"
                                 icon="archive"
                                 @click="handleArchiveProject(project.id)"
                             />
-                        </nue-tooltip>
-                        <nue-tooltip content="删除清单" align="right">
+                        </nue-tooltip> -->
+                        <nue-tooltip size="small" content="删除清单">
                             <nue-button theme="icon-only" icon="delete" @click="deleteProject" />
                         </nue-tooltip>
                     </nue-div>
                 </nue-div>
                 <nue-text theme="pointer" size="14px" color="gray" @click="redescProject">
-                    {{ project?.description || "该清单没有设置描述信息，点此设置" }}
+                    {{ project?.description || '该清单没有设置描述信息，点此设置清单描述' }}
                 </nue-text>
             </nue-div>
         </template>
@@ -37,12 +41,16 @@
             <nue-div vertical gap="4px">
                 <nue-div justify="space-between" wrap="nowrap">
                     <nue-div align="center" width="fit-content" gap="8px">
-                        <nue-tooltip :content="`${pav ? '收起' : '展开'}菜单侧栏`" align="left">
+                        <nue-tooltip
+                            size="small"
+                            :content="`${pav ? '收起' : '展开'}菜单侧栏`"
+                            placement="top-start"
+                        >
                             <nue-button
                                 theme="icon-only"
                                 :icon="pav ? 'menu-close' : 'menu-open'"
                                 @click="handleHideProjectAside"
-                            ></nue-button>
+                            />
                         </nue-tooltip>
                         <nue-text>#</nue-text>
                         <click-to-edit
@@ -58,11 +66,17 @@
             <nue-div align="center" justify="space-between" wrap="nowrap">
                 <nue-div vertical width="fit-content" gap="4px">
                     <nue-div align="center" width="fit-content" gap="8px" height="36px">
-                        <nue-button
-                            theme="icon-only"
-                            :icon="pav ? 'menu-close' : 'menu-open'"
-                            @click="handleHideProjectAside"
-                        ></nue-button>
+                        <nue-tooltip
+                            size="small"
+                            :content="`${pav ? '收起' : '展开'}菜单侧栏`"
+                            placement="top-start"
+                        >
+                            <nue-button
+                                theme="icon-only"
+                                :icon="pav ? 'menu-close' : 'menu-open'"
+                                @click="handleHideProjectAside"
+                            />
+                        </nue-tooltip>
                         <nue-text size="24px"> {{ title }} </nue-text>
                     </nue-div>
                     <nue-text v-if="!sph" size="14px" color="gray">
