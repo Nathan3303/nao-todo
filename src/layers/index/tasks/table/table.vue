@@ -32,9 +32,11 @@
                     ref="todoTableRef"
                     :todos="todos"
                     :columns="columns"
+                    :sort-info="sortInfo"
                     @delete-todo="removeTodoWithConfirm"
                     @restore-todo="restoreTodoWithConfirm"
                     @show-todo-details="handleShowTodoDetails"
+                    @sort-todo="handleSortTodo"
                 ></todo-table>
             </nue-div>
         </nue-main>
@@ -64,7 +66,7 @@ import { storeToRefs } from 'pinia'
 import { removeTodoWithConfirm, restoreTodoWithConfirm } from '@/utils/todo-handlers'
 import { NuePrompt } from 'nue-ui'
 import type { Columns } from '@/components'
-import type { Todo, TodoFilter } from '@/stores'
+import type { Todo, TodoFilter, TodoSortOptions } from '@/stores'
 import type { ContentTableProps, ContentTableEmits } from './types'
 
 defineOptions({ name: 'ContentTableLayer' })
@@ -76,7 +78,7 @@ const router = useRouter()
 const todoStore = useTodoStore()
 const userStore = useUserStore()
 
-const { todos, pageInfo, countInfo, filterInfo } = storeToRefs(todoStore)
+const { todos, pageInfo, countInfo, filterInfo, sortInfo } = storeToRefs(todoStore)
 const { user } = storeToRefs(userStore)
 const tableLoading = ref(false)
 const selectedTaskId = ref<Todo['id']>('')
@@ -145,8 +147,16 @@ const handleFilter = async (newTodoFliter: TodoFilter) => {
 }
 
 const handleRefresh = async () => {
-    if (refreshTimer.value) return
-    const res = await handleGetTodos()
+    const userId = user.value!.id
+    await todoStore.get(userId)
+}
+
+const handleSortTodo = async (newSortInfo: TodoSortOptions) => {
+    // console.log(newSortInfo)
+    const userId = user.value!.id
+    sortInfo.value.field = newSortInfo.field
+    sortInfo.value.order = newSortInfo.order
+    await todoStore.get(userId)
 }
 
 handleGetTodos()

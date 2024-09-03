@@ -56,6 +56,11 @@ export type TodoFilter = {
     tagId?: Tag['id']
 }
 
+export type TodoSortOptions = {
+    field: keyof Todo | 'endAt' | ''
+    order: 'asc' | 'desc' | ''
+}
+
 export type TodoCountByState = {
     [key in TodoState]: number
 }

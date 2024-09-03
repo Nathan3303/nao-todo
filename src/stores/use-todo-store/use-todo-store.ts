@@ -1,13 +1,14 @@
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive } from 'vue'
 import { defineStore } from 'pinia'
 import { naoTodoServer as $axios } from '@/axios'
-import type { Todo, TodoFilter, TodoCountInfo, TodoEvent } from './types'
-import type { Project, User } from '..'
+import type { Todo, TodoFilter, TodoCountInfo, TodoSortOptions } from './types'
+import type { User } from '..'
 
 export const useTodoStore = defineStore('todoStore', () => {
     const todos = ref<Todo[]>([])
     const filterInfo = ref<TodoFilter>({})
     const pageInfo = reactive({ page: 1, limit: 20, totalPages: 0 })
+    const sortInfo = reactive<TodoSortOptions>({ field: '', order: '' })
     const countInfo = reactive<TodoCountInfo>({
         length: 0,
         count: 0,
@@ -43,7 +44,8 @@ export const useTodoStore = defineStore('todoStore', () => {
             const { page, limit } = pageInfo
             const filterQueryString = _stringifyFilterInfo(specFilterInfo)
             const pageQueryString = `page=${page}&limit=${limit}`
-            const URI = `/todos?userId=${userId}&${pageQueryString}&${filterQueryString}`
+            const sortQueryString = `sort=${sortInfo.field}:${sortInfo.order}`
+            const URI = `/todos?userId=${userId}&${pageQueryString}&${filterQueryString}&${sortQueryString}`
             const {
                 data: { data, code }
             } = await $axios.get(URI)
@@ -210,6 +212,7 @@ export const useTodoStore = defineStore('todoStore', () => {
     return {
         todos,
         filterInfo,
+        sortInfo,
         pageInfo,
         countInfo,
         mergeFilterInfo: _mergeFilterInfo,

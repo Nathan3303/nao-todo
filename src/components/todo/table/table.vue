@@ -2,28 +2,34 @@
     <nue-div class="todo-table" :data-simple="simple">
         <nue-div class="todo-table__header" wrap="nowrap">
             <div class="todo-table__header__col col-name">
-                <nue-text>名称</nue-text>
+                <order-button prop="name">名称</order-button>
             </div>
             <div class="todo-table__header__col col-created-at" v-if="columns.createdAt">
-                <nue-text>创建时间</nue-text>
+                <order-button prop="createdAt">创建时间</order-button>
             </div>
             <div class="todo-table__header__col col-updated-at" v-if="columns.updatedAt">
-                <nue-text>最后修改时间</nue-text>
+                <order-button prop="updatedAt">最后修改时间</order-button>
             </div>
             <div class="todo-table__header__col col-end-at" v-if="columns.endAt">
-                <nue-text>结束日期</nue-text>
+                <order-button prop="endAt">结束日期</order-button>
             </div>
             <div class="todo-table__header__col col-priority" v-if="columns.priority">
-                <nue-text>优先级</nue-text>
+                <order-button prop="priority">优先级</order-button>
             </div>
             <div class="todo-table__header__col col-state" v-if="columns.state">
-                <nue-text>状态</nue-text>
+                <order-button prop="state">状态</order-button>
             </div>
             <div class="todo-table__header__col col-project" v-if="columns.project">
-                <nue-text>所属清单</nue-text>
+                <order-button prop="project">所属清单</order-button>
             </div>
             <div class="todo-table__header__col col-actions">
-                <nue-icon name="more" style="opacity: 0"></nue-icon>
+                <nue-icon
+                    v-if="sortInfo.field"
+                    name="clear"
+                    color="gray"
+                    @click="handleClearSortInfo"
+                />
+                <nue-icon v-else name="more" style="opacity: 0" />
             </div>
         </nue-div>
         <nue-divider class="todo-table__divider"></nue-divider>
@@ -104,10 +110,12 @@
 </template>
 
 <script setup lang="ts">
-import type { TodoTableEmits, TodoTableProps } from './types'
+import { ref, reactive, provide, watch } from 'vue'
 import { TodoPriorityInfo, TodoStateInfo, Empty } from '@/components'
 import { useTodoTable } from './use-table'
+import OrderButton from './order-button.vue'
 import moment from 'moment'
+import type { TodoTableEmits, TodoTableProps, TodoTableContext } from './types'
 
 defineOptions({ name: 'TodoTable' })
 const props = withDefaults(defineProps<TodoTableProps>(), {
@@ -115,9 +123,27 @@ const props = withDefaults(defineProps<TodoTableProps>(), {
 })
 const emit = defineEmits<TodoTableEmits>()
 
+const sortInfo = reactive(props.sortInfo)
+
 const { selectedId, handleDeleteBtnClk, handleShowDetails, handleClearSelectedId } = useTodoTable(
     props,
     emit
+)
+
+const handleClearSortInfo = () => {
+    sortInfo.field = ''
+    sortInfo.order = ''
+}
+
+provide<TodoTableContext>('TodoTableContext', {
+    showDetailsHandler: handleShowDetails,
+    sortInfo: sortInfo
+})
+
+watch(
+    () => sortInfo,
+    (newValue) => emit('sortTodo', { ...newValue }),
+    { deep: true }
 )
 
 defineExpose({
