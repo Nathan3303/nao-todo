@@ -1,5 +1,4 @@
 export * from './aside'
-export * from './details'
 export * from './details-v2'
 export * from './header'
 export * from './kanban'
