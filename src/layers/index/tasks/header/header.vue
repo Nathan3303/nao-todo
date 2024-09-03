@@ -12,24 +12,24 @@
                             ></nue-button>
                         </nue-tooltip>
                         <nue-text theme="pointer" size="24px" @click="renameProject">
-                            {{ project?.title }}
+                            {{ project?.title || "修改清单标题" }}
                         </nue-text>
                     </nue-div>
                     <nue-div align="center" justify="end" width="fit-content">
-                        <nue-tooltip content="归档项目">
+                        <nue-tooltip content="归档清单">
                             <nue-button
                                 theme="icon-only"
                                 icon="archive"
                                 @click="handleArchiveProject(project.id)"
                             />
                         </nue-tooltip>
-                        <nue-tooltip content="删除项目" align="right">
+                        <nue-tooltip content="删除清单" align="right">
                             <nue-button theme="icon-only" icon="delete" @click="deleteProject" />
                         </nue-tooltip>
                     </nue-div>
                 </nue-div>
                 <nue-text theme="pointer" size="14px" color="gray" @click="redescProject">
-                    {{ project?.description }}
+                    {{ project?.description || "该清单没有设置描述信息，点此设置" }}
                 </nue-text>
             </nue-div>
         </template>

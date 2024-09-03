@@ -109,7 +109,11 @@
         <nue-footer>
             <nue-dropdown theme="move-to-dropdown" :hide-on-click="false">
                 <template #default="{ clickTrigger }">
-                    <nue-button size="small" icon="switch" @click="clickTrigger">
+                    <nue-button
+                        size="small"
+                        :icon="shadowTodo.project?.title ? 'more2' : 'inbox'"
+                        @click="clickTrigger"
+                    >
                         {{ shadowTodo.project?.title || '收集箱' }}
                     </nue-button>
                 </template>

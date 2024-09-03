@@ -87,7 +87,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
     const handleMoveToProject = async (projectId: string, projectTitle: string) => {
         if (!shadowTodo.value) return
         shadowTodo.value.projectId = projectId
-        shadowTodo.value.project!.title = projectTitle
+        shadowTodo.value.project = { title: projectTitle }
         debouncedUpdateTodo()
         // emit('refresh')
     }
@@ -113,7 +113,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
     }
 
     const handleUpdateTags = async (tags: Todo['tags']) => {
-        if (!shadowTodo.value) return;
+        if (!shadowTodo.value) return
         shadowTodo.value.tags = tags
         debouncedUpdateTodo()
     }

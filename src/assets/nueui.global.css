@@ -64,3 +64,8 @@
 .nue-text--pointer {
     cursor: pointer;
 }
+
+.nue-dialog-wrapper {
+    --dialog-width: auto;
+    --dialog-max-width: auto;
+}

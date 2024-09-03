@@ -2,10 +2,9 @@
     <nue-header style="position: relative">
         <template #nav>
             <nue-div>
-                <nue-link theme="btnlike,plink" icon="square-check-fill" route="/tasks"
-                    >任务</nue-link
-                >
-                <nue-link theme="btnlike,plink" icon="projects" route="/project">项目</nue-link>
+                <nue-link theme="btnlike,plink" icon="square-check-fill" route="/tasks">
+                    任务
+                </nue-link>
                 <nue-link theme="btnlike,plink" icon="calendar2" disabled>日历</nue-link>
             </nue-div>
         </template>

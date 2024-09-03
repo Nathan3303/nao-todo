@@ -137,7 +137,7 @@ export const useTodoStore = defineStore('todoStore', () => {
     const create = async (userId: User['id'], createInfo: Partial<Todo>) => {
         const createResult = await _create(userId, createInfo)
         if (!createResult) return
-        createLocal(createResult)
+        createLocal({ ...createInfo, ...createResult })
         return createResult
     }
 
@@ -167,6 +167,10 @@ export const useTodoStore = defineStore('todoStore', () => {
     }
 
     const createLocal = (createInfo: Partial<Todo>) => {
+        if (countInfo.length >= pageInfo.limit) {
+            countInfo.total++
+            return
+        }
         const newTodoTemplate: Todo = {
             id: '',
             userId: '',
@@ -185,7 +189,8 @@ export const useTodoStore = defineStore('todoStore', () => {
             isDone: false,
             isDeleted: false,
             tags: [],
-            tagsInfo: []
+            tagsInfo: [],
+            project: {}
         }
         const newTodo = { ...newTodoTemplate, ...createInfo }
         todos.value.push(newTodo)

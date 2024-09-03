@@ -16,10 +16,12 @@ import { computed } from 'vue'
 import { ContentTable } from '@/layers/index'
 import { useRoute } from 'vue-router'
 import { createTodoWithOptions } from '@/utils'
+import { useProjectStore } from '@/stores'
 import type { Todo, TodoFilter } from '@/stores'
 import type { Columns } from '@/components'
 
 const route = useRoute()
+const projectStore = useProjectStore()
 
 const filterInfo = computed<TodoFilter>(() => {
     const projectId = route.params.projectId as string
@@ -40,6 +42,8 @@ const columns: Columns = {
 
 const handleCreateTodo = async (todoName: Todo['name']) => {
     const projectId = route.params.projectId as string
-    await createTodoWithOptions(projectId, { name: todoName })
+    const project = projectStore._toFinded(projectId)
+    const createOptions = { name: todoName, project: { title: project ? project.title : '' } }
+    await createTodoWithOptions(projectId, createOptions)
 }
 </script>

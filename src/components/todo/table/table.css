@@ -126,7 +126,7 @@
         line-height: 21px;
     }
     .col-project {
-        width: 120px;
+        width: 100px;
         line-height: 21px;
         white-space: pre;
         word-break: break-all;
@@ -136,12 +136,6 @@
     .col-actions {
         width: auto;
         line-height: 21px;
-
-        /* &::after {
-            content: '';
-            display: block;
-            width: 1px;
-        } */
     }
 
     &[data-simple='true'] {

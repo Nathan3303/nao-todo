@@ -35,7 +35,7 @@ export type Todo = {
     isPinned: boolean
     isDone: boolean
     isDeleted: boolean
-    project?: Project
+    project?: Partial<Project>
     tags: Tag['id'][]
     tagsInfo: Tag[]
 }

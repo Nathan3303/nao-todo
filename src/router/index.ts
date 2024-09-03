@@ -1,7 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { useUserStore } from '@/stores/use-user-store'
 import { useLoadingScreen } from '@/hooks/use-loading-screen'
-import projectsRoutes from './routes/projects'
 import tasksRoutes from './routes/tasks'
 
 const router = createRouter({
@@ -38,7 +37,7 @@ const router = createRouter({
             },
             component: () => import('@/views/index/index.vue'),
             redirect: { name: 'tasks' },
-            children: [projectsRoutes, tasksRoutes]
+            children: [tasksRoutes]
         }
     ]
 })
