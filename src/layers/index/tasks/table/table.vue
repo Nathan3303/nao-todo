@@ -6,7 +6,7 @@
                     :count-info="countInfo"
                     :filter-info="filterInfo"
                     @filter="handleFilter"
-                ></todo-filter-bar>
+                />
                 <nue-div justify="end" flex="none" width="fit-content" gap="12px">
                     <nue-button
                         v-if="!disabledCreateTodo"
@@ -16,22 +16,21 @@
                     >
                         新增
                     </nue-button>
-                    <list-column-switcher
-                        v-model="columns"
-                        :change="handleChangeColumns"
-                    ></list-column-switcher>
-                    <nue-button
-                        theme="small"
-                        icon="refresh"
-                        @click="handleRefresh"
-                        :loading="tableLoading || !!refreshTimer"
-                    />
+                    <list-column-switcher v-model="columns" :change="handleChangeColumns" />
+                    <nue-tooltip size="small" content="重新请求数据">
+                        <nue-button
+                            theme="small"
+                            icon="refresh"
+                            @click="handleRefresh"
+                            :loading="tableLoading || !!refreshTimer"
+                        />
+                    </nue-tooltip>
                 </nue-div>
             </nue-div>
         </nue-header>
         <nue-main style="margin: 16px 0 0">
             <nue-div wrap="nowrap" flex style="overflow-y: auto">
-                <Loading v-if="tableLoading" placeholder="正在加载任务列表..."></Loading>
+                <Loading v-if="tableLoading" placeholder="正在加载任务列表..." />
                 <todo-table
                     v-else
                     ref="todoTableRef"
@@ -42,7 +41,7 @@
                     @restore-todo="restoreTodoWithConfirm"
                     @show-todo-details="handleShowTodoDetails"
                     @sort-todo="handleSortTodo"
-                ></todo-table>
+                />
             </nue-div>
         </nue-main>
         <nue-footer style="padding: 4px; border: none; height: fit-content">
@@ -56,7 +55,7 @@
                     :total-pages="pageInfo.totalPages"
                     @perpage-change="handlePerPageChange"
                     @page-change="handlePageChange"
-                ></pager>
+                />
             </nue-div>
         </nue-footer>
     </nue-container>

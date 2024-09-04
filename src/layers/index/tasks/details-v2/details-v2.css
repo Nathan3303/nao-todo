@@ -1,3 +1,7 @@
+.nue-empty {
+    height: 100%;
+}
+
 .details-wrapper {
     flex-direction: column;
     height: 100%;

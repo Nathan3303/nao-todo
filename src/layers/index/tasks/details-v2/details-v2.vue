@@ -1,11 +1,5 @@
 <template>
-    <empty
-        :empty="!shadowTodo"
-        message="点击左侧列表中的任务以查看任务详细。"
-        text-size="12px"
-        full-height
-    />
-    <nue-container class="details-wrapper" v-if="shadowTodo" :key="shadowTodo?.id">
+    <nue-container v-if="shadowTodo" class="details-wrapper" :key="shadowTodo?.id">
         <nue-header>
             <nue-div align="center" wrap="nowrap" width="fit-content">
                 <todo-check-button :is-done="shadowTodo.isDone" @change="handleCheckTodo" />
@@ -152,12 +146,16 @@
             </nue-div>
         </nue-footer>
     </nue-container>
+    <nue-empty
+        v-else
+        description="点击左侧列表中的任务以查看任务详细"
+        image-src="/images/to-do.png"
+    />
 </template>
 
 <script setup lang="ts">
 import { useTodoDetails } from './use-details'
 import {
-    Empty,
     SwitchButton,
     TodoDateSelector,
     TodoSelector,

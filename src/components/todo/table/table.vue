@@ -110,7 +110,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, provide, watch } from 'vue'
+import { reactive, provide, watch } from 'vue'
 import { TodoPriorityInfo, TodoStateInfo, Empty } from '@/components'
 import { useTodoTable } from './use-table'
 import OrderButton from './order-button.vue'

@@ -27,17 +27,21 @@
                             </template>
                         </nue-button>
                         <nue-div width="fit-content" gap="8px">
-                            <nue-button
-                                theme="pure"
-                                icon="setting"
-                                @click.stop="showProjectManageDialog"
-                            />
-                            <nue-button
-                                id="create-project-btn"
-                                theme="pure"
-                                icon="plus"
-                                @click.stop="showCreateProjectDialog"
-                            />
+                            <nue-tooltip size="small" content="打开清单管理器">
+                                <nue-button
+                                    theme="pure"
+                                    icon="setting"
+                                    @click.stop="showProjectManageDialog"
+                                />
+                            </nue-tooltip>
+                            <nue-tooltip size="small" content="创建新清单">
+                                <nue-button
+                                    id="create-project-btn"
+                                    theme="pure"
+                                    icon="plus"
+                                    @click.stop="showCreateProjectDialog"
+                                />
+                            </nue-tooltip>
                         </nue-div>
                     </template>
                     <aside-link
@@ -66,17 +70,21 @@
                             </template>
                         </nue-button>
                         <nue-div width="fit-content" gap="8px">
-                            <nue-button
-                                theme="pure"
-                                icon="setting"
-                                @click.stop="showTagManageDialog"
-                            />
-                            <nue-button
-                                id="create-tag-btn"
-                                theme="pure"
-                                icon="plus"
-                                @click.stop="showCreateTagDialog"
-                            />
+                            <nue-tooltip size="small" content="打开标签管理器">
+                                <nue-button
+                                    theme="pure"
+                                    icon="setting"
+                                    @click.stop="showTagManageDialog"
+                                />
+                            </nue-tooltip>
+                            <nue-tooltip size="small" content="创建新标签">
+                                <nue-button
+                                    id="create-tag-btn"
+                                    theme="pure"
+                                    icon="plus"
+                                    @click.stop="showCreateTagDialog"
+                                />
+                            </nue-tooltip>
                         </nue-div>
                     </template>
                     <aside-link
