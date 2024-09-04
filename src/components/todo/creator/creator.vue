@@ -10,7 +10,7 @@
             </nue-div>
             <nue-div align="center" gap="0px">
                 <nue-text size="12px">任务过期时间：</nue-text>
-                <todo-date-selector v-model="todoData.dueDate.endAt" />
+                <todo-date-selector v-model="endDate" />
             </nue-div>
             <nue-div wrap="nowrap">
                 <todo-selector
@@ -79,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import TodoDateSelector from '../date-selector/date-selector.vue'
 import TodoSelector from '../selector/selector.vue'
 import TodoTagBar from '../tag-bar/tag-bar.vue'
@@ -89,7 +89,7 @@ defineOptions({ name: 'TodoCreator' })
 const props = defineProps<TodoCreatorProps>()
 const emit = defineEmits<TodoCreatorEmits>()
 
-const setMoreData = ref(false)
+const setMoreData = ref(!!props.presetInfo)
 const todoData = reactive({
     name: '',
     dueDate: { endAt: '' },
@@ -100,6 +100,17 @@ const todoData = reactive({
     description: '',
     tags: [],
     ...props.presetInfo
+})
+
+const endDate = computed({
+    get() {
+        const sliced = todoData.dueDate.endAt!.slice(0, 16)
+        // console.log(sliced)
+        return sliced
+    },
+    set(value) {
+        todoData.dueDate.endAt = value
+    }
 })
 
 const setProjectInfo = (projectId: string, projectTitle: string) => {

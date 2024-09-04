@@ -56,7 +56,6 @@ const handleDropTag = async (tagId: string) => {
 <style scoped>
 .todo-tag-bar {
     align-items: center;
-    flex-wrap: nowrap;
     gap: 12px;
 }
 </style>

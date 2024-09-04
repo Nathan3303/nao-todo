@@ -5,6 +5,7 @@ export type ContentKanbanProps = {
     filterInfo: TodoFilter
     baseRoute: string
     columns?: Columns
+    disabledCreateTodo?: boolean
 }
 
 export type ContentKanbanEmits = {

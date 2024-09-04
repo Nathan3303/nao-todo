@@ -1,4 +1,6 @@
-export type CreateTagDialogProps = {}
+export type CreateTagDialogProps = {
+    handler: Function
+}
 
 export type CreateTagPayload = {
     name: string

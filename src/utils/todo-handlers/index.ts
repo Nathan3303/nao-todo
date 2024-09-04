@@ -86,14 +86,14 @@ export const removeTodo = async (todoId: Todo['id']) => {
 }
 
 export const removeTodoWithConfirm = async (todoId: Todo['id']) => {
-    NueConfirm({
+    return await NueConfirm({
         title: '删除待办事项',
         content: '确定要删除该待办事项吗？',
         confirmButtonText: '删除',
         cancelButtonText: '取消'
     }).then(async () => {
         // console.log('[todoHandlers] removeTodoWithConfirm:', todoId)
-        await removeTodo(todoId)
+        return await removeTodo(todoId)
     })
 }
 

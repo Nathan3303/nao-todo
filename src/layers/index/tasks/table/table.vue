@@ -8,7 +8,12 @@
                     @filter="handleFilter"
                 ></todo-filter-bar>
                 <nue-div justify="end" flex="none" width="fit-content" gap="12px">
-                    <nue-button theme="small,primary" icon="plus-circle" @click="handleAddTodo">
+                    <nue-button
+                        v-if="!disabledCreateTodo"
+                        theme="small,primary"
+                        icon="plus-circle"
+                        @click="handleAddTodo"
+                    >
                         新增
                     </nue-button>
                     <list-column-switcher

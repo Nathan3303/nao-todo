@@ -100,7 +100,7 @@
     </nue-container>
     <create-project-dialog ref="createProjectDialogRef" :handler="createProject" />
     <project-manage-dialog ref="projectManageDialogRef" />
-    <create-tag-dialog ref="createTagDialogRef" @create="handleCreateTag" />
+    <create-tag-dialog ref="createTagDialogRef" :handler="handleCreateTag" />
     <tag-manage-dialog ref="tagManageDialogRef" />
 </template>
 
@@ -149,7 +149,7 @@ const showTagManageDialog = () => {
 }
 
 const handleCreateTag = async (payload: any) => {
-    await createTag(payload.name, payload.color)
+    return await createTag(payload.name, payload.color)
 }
 </script>
 

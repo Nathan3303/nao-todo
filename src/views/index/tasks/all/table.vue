@@ -12,14 +12,12 @@
 
 <script setup lang="ts">
 import { ContentTable } from '@/layers/index'
-import { useTodoStore, useUserStore, useProjectStore, useTagStore } from '@/stores'
+import { useUserStore, useProjectStore, useTagStore } from '@/stores'
 import { createTodoWithOptions } from '@/utils'
-import moment from 'moment'
 import type { Todo, TodoFilter } from '@/stores'
 import type { TodoCreateDialogArgs } from '@/components/todo/create-dialog/types'
 
 const userStore = useUserStore()
-const todoStore = useTodoStore()
 const projectStore = useProjectStore()
 const tagStore = useTagStore()
 

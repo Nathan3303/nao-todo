@@ -7,6 +7,7 @@ export type ContentTableProps = {
     baseRoute: string
     columns?: Columns
     // projectId: Project['id']
+    disabledCreateTodo?: boolean
 }
 
 export type ContentTableEmits = {

@@ -5,6 +5,7 @@
         base-route="tasks-tag-table"
         :columns="columns"
         @create-todo="handleCreateTodo"
+        @create-todo-by-dialog="handleCreateTodoByDialog"
     ></content-table>
     <suspense>
         <router-view></router-view>
@@ -12,18 +13,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { ContentTable } from '@/layers/index'
-import { useTodoStore, useUserStore } from '@/stores'
+import { useUserStore, useTagStore, useProjectStore } from '@/stores'
 import { useRoute } from 'vue-router'
-import { NueMessage } from 'nue-ui'
 import { createTodoWithOptions } from '@/utils'
 import type { Todo, TodoFilter } from '@/stores'
 import type { Columns } from '@/components'
+import type { TodoCreateDialogArgs } from '@/components/todo/create-dialog/types'
 
 const route = useRoute()
 const userStore = useUserStore()
-const todoStore = useTodoStore()
+const projectStore = useProjectStore()
+const tagStore = useTagStore()
 
 const filterInfo = computed<TodoFilter>(() => {
     const tagId = route.params.tagId as string
@@ -46,6 +48,16 @@ const columns: Columns = {
 const handleCreateTodo = async (todoName: Todo['name']) => {
     const tagId = route.params.tagId as string
     await createTodoWithOptions(null, { name: todoName, tags: [tagId] })
+}
+
+const handleCreateTodoByDialog = async (caller: (args: TodoCreateDialogArgs) => void) => {
+    const tagId = route.params.tagId as string
+    caller({
+        userId: userStore.user!.id,
+        projects: projectStore.projects,
+        tags: tagStore.tags,
+        presetInfo: { tags: [tagId] }
+    })
 }
 </script>
 

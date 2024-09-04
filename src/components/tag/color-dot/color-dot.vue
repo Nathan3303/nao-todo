@@ -25,7 +25,7 @@ const classes = computed(() => {
     background-color: v-bind(color);
 
     &.tag-color-dot--small {
-        width: 12px;
+        width: 13px;
     }
 
     &.tag-color-dot--large {

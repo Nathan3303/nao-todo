@@ -1,6 +1,12 @@
 <template>
-    <nue-dialog v-model="visible" title="创建待办事项">
-        <todo-creator :projects="projects" :userId="userId" :tags="tags" ref="todoCreatorRef" />
+    <nue-dialog theme="create-todo" v-model="visible" title="创建待办事项">
+        <todo-creator
+            :presetInfo="presetInfo"
+            :projects="projects"
+            :userId="userId"
+            :tags="tags"
+            ref="todoCreatorRef"
+        />
         <template #footer="{ cancel }">
             <nue-button :disabled="loading" @click.stop="cancel">取消</nue-button>
             <nue-button theme="primary" :loading="loading" @click.stop="confirm">创建</nue-button>
@@ -22,6 +28,7 @@ const loading = ref(false)
 const projects = ref<TodoCreateDialogArgs['projects']>([])
 const tags = ref<TodoCreateDialogArgs['tags']>([])
 const userId = ref('')
+const presetInfo = ref<TodoCreateDialogArgs['presetInfo']>()
 const todoCreatorRef = ref<InstanceType<typeof TodoCreator>>()
 
 const confirm = async () => {
@@ -37,6 +44,7 @@ const show = (args: TodoCreateDialogArgs) => {
     projects.value = args.projects
     tags.value = args.tags
     userId.value = args.userId
+    presetInfo.value = args.presetInfo
     visible.value = true
 }
 
@@ -45,4 +53,8 @@ defineExpose({
 })
 </script>
 
-<style scoped></style>
+<style>
+.nue-dialog--create-todo {
+    max-width: 512px;
+}
+</style>

@@ -41,7 +41,7 @@
 <script setup lang="ts">
 import { ref, nextTick, watch } from 'vue'
 import type { CreateProjectDialogEmits, CreateProjectDialogProps } from './types'
-import { NueMessage, NueInput, NueConfirm } from 'nue-ui'
+import { NueInput } from 'nue-ui'
 import type { ProjectCreateOptions } from '@/stores'
 
 defineOptions({ name: 'CreateProjectDialog' })
@@ -67,11 +67,11 @@ const handleClearInputValues = () => {
 
 const handleAddProject = async () => {
     const { handler } = props
-    loading.value = true
     if (!newProjectPayload.value.title) {
         isProjectTitleEmpty.value = true
         return
     }
+    loading.value = true
     const response = await handler(newProjectPayload.value)
     if (response.code === '20000') {
         visible.value = false

@@ -9,7 +9,7 @@
         <nue-header>
             <nue-div align="center" wrap="nowrap" width="fit-content">
                 <todo-check-button :is-done="shadowTodo.isDone" @change="handleCheckTodo" />
-                <nue-divider direction="vertical"></nue-divider>
+                <nue-divider direction="vertical" />
                 <todo-date-selector :date="shadowTodo.dueDate.endAt" @change="handleChangeEndAt" />
             </nue-div>
             <nue-div align="center" wrap="nowrap" width="fit-content">
@@ -66,7 +66,7 @@
                     placeholder="输入您的任务名称..."
                     autosize
                     theme="noshape,large"
-                    @blur="updateTodo"
+                    @change="updateTodo"
                 />
                 <nue-textarea
                     v-model="shadowTodo.description"
@@ -74,7 +74,7 @@
                     :rows="0"
                     autosize
                     theme="noshape"
-                    @blur="updateTodo"
+                    @change="updateTodo"
                 />
             </nue-div>
             <todo-event-details :todo-id="shadowTodo.id" />

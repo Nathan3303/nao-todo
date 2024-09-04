@@ -6,33 +6,28 @@
                     :count-info="countInfo"
                     :filter-info="filterInfo"
                     @filter="handleFilter"
-                ></todo-filter-bar>
+                />
                 <nue-div justify="end" flex="none" width="fit-content" gap="12px">
-                    <nue-button theme="small,primary" icon="plus-circle" @click="handleAddTodo">
+                    <nue-button
+                        v-if="!disabledCreateTodo"
+                        theme="small,primary"
+                        icon="plus-circle"
+                        @click="handleAddTodo"
+                    >
                         新增
                     </nue-button>
-                    <list-column-switcher
-                        v-model="columns"
-                        :change="handleChangeColumns"
-                    ></list-column-switcher>
-                    <nue-button
-                        theme="small"
-                        icon="switch"
-                        @click="viewStore.toggleSimpleProjectHeader()"
-                    ></nue-button>
+                    <list-column-switcher v-model="columns" :change="handleChangeColumns" />
                     <nue-button
                         theme="small"
                         icon="refresh"
                         @click="handleRefresh"
                         :loading="kanbanLoading || !!refreshTimer"
-                    >
-                        刷新
-                    </nue-button>
+                    />
                 </nue-div>
             </nue-div>
         </nue-header>
         <nue-main>
-            <Loading v-if="kanbanLoading" placeholder="正在加载任务看板..."></Loading>
+            <Loading v-if="kanbanLoading" placeholder="正在加载任务看板..." />
             <template v-else>
                 <template v-for="(value, key) in categoriedTodos" :key="key">
                     <content-kanban-column
@@ -50,7 +45,7 @@
                         @dragover="handleDragOver"
                         @dragend="handleDragEnd"
                         @drop="handleDrop"
-                    ></content-kanban-column>
+                    />
                 </template>
             </template>
         </nue-main>
@@ -64,7 +59,7 @@ import { useRouter } from 'vue-router'
 import { Loading, TodoFilterBar, ListColumnSwitcher } from '@/components'
 import { ContentKanbanColumn } from '../kanban-column'
 import { useTodoStore, useUserStore, useViewStore } from '@/stores'
-import { NueConfirm, NueMessage, NuePrompt } from 'nue-ui'
+import { NuePrompt } from 'nue-ui'
 import { removeTodoWithConfirm, restoreTodoWithConfirm } from '@/utils/todo-handlers'
 import type { ContentKanbanProps, ContentKanbanEmits } from './types'
 import type { Columns } from '@/components'
