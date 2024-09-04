@@ -135,9 +135,7 @@ const handleChangeColumns = (payload: Columns) => {
 }
 
 const handleShowTodoDetails = (id: Todo['id']) => {
-    if (id === selectedTaskId.value) return
     const { baseRoute } = props
-    selectedTaskId.value = id
     router.push({ name: baseRoute, params: { taskId: id } })
 }
 

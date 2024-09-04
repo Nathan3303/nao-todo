@@ -14,7 +14,7 @@
         max-width: 480px;
         padding: 0px;
         box-sizing: content-box;
-        border-left: 1px solid var(--aside-border-color);
+        border-left: 1px solid var(--divider-color);
         transition: all 0.16s ease-in-out;
         position: relative;
 

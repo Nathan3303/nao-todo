@@ -1,5 +1,9 @@
 <template>
-    <nue-container v-if="shadowTodo" class="details-wrapper" :key="shadowTodo?.id">
+    <nue-div v-if="isGetting" style="height: 100%" align="center" justify="center">
+        <nue-icon name="loading" color="gray" spin />
+        <nue-text size="12px" color="gray">加载中 ...</nue-text>
+    </nue-div>
+    <nue-container v-else-if="shadowTodo" class="details-wrapper" :key="shadowTodo?.id">
         <nue-header>
             <nue-div align="center" wrap="nowrap" width="fit-content">
                 <todo-check-button :is-done="shadowTodo.isDone" @change="handleCheckTodo" />
@@ -177,6 +181,7 @@ const {
     projects,
     shadowTodo,
     loadingState,
+    isGetting,
     eventsProgress,
     formatDate,
     updateTodo,

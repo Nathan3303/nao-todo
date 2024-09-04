@@ -210,7 +210,8 @@ export const useTodoStore = defineStore('todoStore', () => {
 
     const toFindedOne = async (userId: User['id'], todoId: Todo['id']) => {
         const finded = await _get(userId, { id: todoId })
-        const res = Array.isArray(finded) ? finded[0] : finded
+        const { todos } = finded
+        const res = Array.isArray(todos) ? todos[0] : todos
         return res as Todo | null
     }
 
