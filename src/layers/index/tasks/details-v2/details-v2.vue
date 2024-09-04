@@ -1,15 +1,13 @@
 <template>
-    <empty
-        :empty="!shadowTodo"
-        message="点击左侧列表中的任务以查看任务详细。"
-        text-size="12px"
-        full-height
-    />
-    <nue-container class="details-wrapper" v-if="shadowTodo" :key="shadowTodo?.id">
+    <nue-div v-if="isGetting" style="height: 100%" align="center" justify="center">
+        <nue-icon name="loading" color="gray" spin />
+        <nue-text size="12px" color="gray">加载中 ...</nue-text>
+    </nue-div>
+    <nue-container v-else-if="shadowTodo" class="details-wrapper" :key="shadowTodo?.id">
         <nue-header>
             <nue-div align="center" wrap="nowrap" width="fit-content">
                 <todo-check-button :is-done="shadowTodo.isDone" @change="handleCheckTodo" />
-                <nue-divider direction="vertical"></nue-divider>
+                <nue-divider direction="vertical" />
                 <todo-date-selector :date="shadowTodo.dueDate.endAt" @change="handleChangeEndAt" />
             </nue-div>
             <nue-div align="center" wrap="nowrap" width="fit-content">
@@ -66,7 +64,7 @@
                     placeholder="输入您的任务名称..."
                     autosize
                     theme="noshape,large"
-                    @blur="updateTodo"
+                    @change="updateTodo"
                 />
                 <nue-textarea
                     v-model="shadowTodo.description"
@@ -74,7 +72,7 @@
                     :rows="0"
                     autosize
                     theme="noshape"
-                    @blur="updateTodo"
+                    @change="updateTodo"
                 />
             </nue-div>
             <todo-event-details :todo-id="shadowTodo.id" />
@@ -152,12 +150,16 @@
             </nue-div>
         </nue-footer>
     </nue-container>
+    <nue-empty
+        v-else
+        description="点击左侧列表中的任务以查看任务详细"
+        image-src="/images/to-do.png"
+    />
 </template>
 
 <script setup lang="ts">
 import { useTodoDetails } from './use-details'
 import {
-    Empty,
     SwitchButton,
     TodoDateSelector,
     TodoSelector,
@@ -179,6 +181,7 @@ const {
     projects,
     shadowTodo,
     loadingState,
+    isGetting,
     eventsProgress,
     formatDate,
     updateTodo,

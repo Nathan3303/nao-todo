@@ -1,9 +1,13 @@
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { useTodoStore, useProjectStore, useEventStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
-import { NueConfirm } from 'nue-ui'
-import { updateTodo, removeTodoWithConfirm, restoreTodoWithConfirm } from '@/utils/todo-handlers'
+import {
+    getTodo,
+    updateTodo,
+    removeTodoWithConfirm,
+    restoreTodoWithConfirm
+} from '@/utils/todo-handlers'
 import moment from 'moment'
 import type { TodoDetailsEmits, TodoDetailsProps } from './types'
 import type { Todo } from '@/stores'
@@ -19,6 +23,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
     const { events } = storeToRefs(eventStore)
     const shadowTodo = ref<Todo | undefined>()
     const loadingState = ref(false)
+    const isGetting = ref(false)
 
     const eventsProgress = computed(() => {
         const _e = events.value
@@ -36,16 +41,22 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
             shadowTodo.value = void 0
             return
         }
-        let todo = todoStore.findLocal(todoId)
-        shadowTodo.value = todo as Todo
+        let res = todoStore.findLocal(todoId)
+        if (!res) {
+            isGetting.value = true
+            res = await getTodo(todoId)
+        }
+        shadowTodo.value = res as Todo
+        isGetting.value = false
     }
 
     const _debounce = (delay: number, callback: () => void | Promise<any>) => {
         let timer: number | null = null
         return () => {
             if (timer) clearTimeout(timer)
-            timer = setTimeout(async () => {
-                await callback()
+            timer = setTimeout(() => {
+                callback()
+                timer = null
             }, delay)
         }
     }
@@ -59,7 +70,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         loadingState.value = false
     }
 
-    const debouncedUpdateTodo = _debounce(500, _updateTodo)
+    const debouncedUpdateTodo = _debounce(1024, _updateTodo)
 
     const formatDate = (datestring: string) => {
         const dateString = moment(datestring).format('YYYY-MM-DD HH:mm')
@@ -101,15 +112,23 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
     const handleDeleteTodo = async () => {
         if (!shadowTodo.value) return
         const todoId = shadowTodo.value.id
-        await removeTodoWithConfirm(todoId)
-        handleClose()
+        try {
+            await removeTodoWithConfirm(todoId)
+            handleClose()
+        } catch (error) {
+            console.info('handleDeleteTodo error: ', error)
+        }
     }
 
     const handleRestoreTodo = async () => {
         if (!shadowTodo.value) return
         const todoId = shadowTodo.value?.id
-        await restoreTodoWithConfirm(todoId)
-        handleClose()
+        try {
+            await restoreTodoWithConfirm(todoId)
+            handleClose()
+        } catch (error) {
+            console.info('handleRestoreTodo error: ', error)
+        }
     }
 
     const handleUpdateTags = async (tags: Todo['tags']) => {
@@ -128,18 +147,21 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
 
     watch(
         () => route.params.taskId,
-        (newValue) => {
-            requestIdleCallback(() => {
-                _getTodo(newValue as string)
-            })
-        },
+        (newValue) => setTimeout(async () => await _getTodo(newValue as string), 256),
         { immediate: true }
     )
+
+    // onMounted(() => {
+    //     const taskId = route.params.taskId
+    //     if (!taskId) return
+    //     setTimeout(async () => await _getTodo(taskId as string))
+    // })
 
     return {
         projects,
         shadowTodo,
         loadingState,
+        isGetting,
         eventsProgress,
         formatDate,
         updateTodo: debouncedUpdateTodo,

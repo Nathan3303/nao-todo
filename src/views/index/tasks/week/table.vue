@@ -3,6 +3,7 @@
         :filter-info="filterInfo"
         base-route="tasks-week-table"
         @create-todo="handleCreateTodo"
+        @create-todo-by-dialog="handleCreateTodoByDialog"
     ></content-table>
     <suspense>
         <router-view></router-view>
@@ -12,8 +13,14 @@
 <script setup lang="ts">
 import { ContentTable } from '@/layers/index'
 import { createTodoWithOptions } from '@/utils'
+import { useUserStore, useTagStore, useProjectStore } from '@/stores'
 import moment from 'moment'
 import type { Todo, TodoFilter } from '@/stores'
+import type { TodoCreateDialogArgs } from '@/components/todo/create-dialog/types'
+
+const userStore = useUserStore()
+const projectStore = useProjectStore()
+const tagStore = useTagStore()
 
 const filterInfo: TodoFilter = {
     isDeleted: false,
@@ -26,7 +33,22 @@ const handleCreateTodo = async (todoName: Todo['name']) => {
         name: todoName,
         dueDate: {
             startAt: now.toISOString(),
-            endAt: now.add(7, 'd').endOf('d').toISOString()
+            endAt: now.add(7, 'd').endOf('d').toISOString(true)
+        }
+    })
+}
+
+const handleCreateTodoByDialog = async (caller: (args: TodoCreateDialogArgs) => void) => {
+    const now = moment()
+    caller({
+        userId: userStore.user!.id,
+        projects: projectStore.projects,
+        tags: tagStore.tags,
+        presetInfo: {
+            dueDate: {
+                startAt: now.toISOString(),
+                endAt: now.add(7, 'd').endOf('d').toISOString(true)
+            }
         }
     })
 }

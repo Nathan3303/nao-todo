@@ -2,6 +2,7 @@
     <content-kanban
         :filter-info="filterInfo"
         base-route="tasks-recycle-kanban"
+        disabled-create-todo
     ></content-kanban>
     <suspense>
         <router-view></router-view>
@@ -10,11 +11,7 @@
 
 <script setup lang="ts">
 import { ContentKanban } from '@/layers/index'
-import { useTodoStore, useUserStore } from '@/stores'
-import type { Todo, TodoFilter } from '@/stores'
-
-const userStore = useUserStore()
-const todoStore = useTodoStore()
+import type { TodoFilter } from '@/stores'
 
 const filterInfo: TodoFilter = {
     isDeleted: true

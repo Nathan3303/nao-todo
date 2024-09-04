@@ -1,6 +1,6 @@
 import { useUserStore, useTodoStore } from '@/stores'
 import { NueConfirm, NueMessage, NuePrompt } from 'nue-ui'
-import type { Project, Tag, Todo, TodoFilter } from '@/stores'
+import type { Project, Todo, TodoFilter } from '@/stores'
 
 const userStore = useUserStore()
 const todoStore = useTodoStore()
@@ -40,7 +40,7 @@ export const createTodoWithOptions = async (
 ) => {
     const userId = userStore.user!.id
     projectId = projectId || userId
-    createOptions = { projectId, ...createOptions }
+    createOptions = { ...createOptions, projectId }
     const res = await todoStore.create(userId, createOptions)
     // console.log(createOptions)
     if (res) {
@@ -86,14 +86,14 @@ export const removeTodo = async (todoId: Todo['id']) => {
 }
 
 export const removeTodoWithConfirm = async (todoId: Todo['id']) => {
-    NueConfirm({
+    return await NueConfirm({
         title: '删除待办事项',
         content: '确定要删除该待办事项吗？',
         confirmButtonText: '删除',
         cancelButtonText: '取消'
     }).then(async () => {
         // console.log('[todoHandlers] removeTodoWithConfirm:', todoId)
-        await removeTodo(todoId)
+        return await removeTodo(todoId)
     })
 }
 

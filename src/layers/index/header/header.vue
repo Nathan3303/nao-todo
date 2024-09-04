@@ -11,14 +11,6 @@
         <nue-link href="/" style="position: absolute; left: 50%; transform: translateX(-50%)">
             <nue-text size="26px">NaoTodo</nue-text>
         </nue-link>
-        <template #ops>
-            <nue-div>
-                <nue-button theme="icon-only" icon="search" disabled />
-                <nue-badge dot>
-                    <nue-button theme="icon-only" icon="ring" disabled />
-                </nue-badge>
-            </nue-div>
-        </template>
         <template #user>
             <user-dropdown :user="user" @logout="handleLogout" />
         </template>

@@ -20,13 +20,6 @@
                         </nue-text>
                     </nue-div>
                     <nue-div align="center" justify="end" width="fit-content">
-                        <!-- <nue-tooltip size="small" content="归档清单">
-                            <nue-button
-                                theme="icon-only"
-                                icon="archive"
-                                @click="handleArchiveProject(project.id)"
-                            />
-                        </nue-tooltip> -->
                         <nue-tooltip size="small" content="删除清单">
                             <nue-button theme="icon-only" icon="delete" @click="deleteProject" />
                         </nue-tooltip>
@@ -38,27 +31,33 @@
             </nue-div>
         </template>
         <template v-else-if="tag">
-            <nue-div vertical gap="4px">
-                <nue-div justify="space-between" wrap="nowrap">
-                    <nue-div align="center" width="fit-content" gap="8px">
-                        <nue-tooltip
-                            size="small"
-                            :content="`${pav ? '收起' : '展开'}菜单侧栏`"
-                            placement="top-start"
-                        >
-                            <nue-button
-                                theme="icon-only"
-                                :icon="pav ? 'menu-close' : 'menu-open'"
-                                @click="handleHideProjectAside"
-                            />
-                        </nue-tooltip>
-                        <nue-text>#</nue-text>
-                        <click-to-edit
-                            :text="tag?.name"
-                            size="24px"
-                            @edit="handleEditTagName"
-                        ></click-to-edit>
-                    </nue-div>
+            <nue-div justify="space-between" wrap="nowrap">
+                <nue-div align="center" width="fit-content" gap="8px">
+                    <nue-tooltip
+                        size="small"
+                        :content="`${pav ? '收起' : '展开'}菜单侧栏`"
+                        placement="top-start"
+                    >
+                        <nue-button
+                            theme="icon-only"
+                            :icon="pav ? 'menu-close' : 'menu-open'"
+                            @click="handleHideProjectAside"
+                        />
+                    </nue-tooltip>
+                    <nue-text>#</nue-text>
+                    <nue-text theme="pointer" size="24px" @click="handleRenameTag">
+                        {{ tag?.name || '设置标签名称' }}
+                    </nue-text>
+                </nue-div>
+                <nue-div align="center" width="fit-content" gap="8px">
+                    <slot name="actions" />
+                    <nue-tooltip size="small" content="删除标签">
+                        <nue-button
+                            theme="icon-only"
+                            icon="delete"
+                            @click="handleDeleteTag(tag?.id)"
+                        />
+                    </nue-tooltip>
                 </nue-div>
             </nue-div>
         </template>
@@ -77,36 +76,35 @@
                                 @click="handleHideProjectAside"
                             />
                         </nue-tooltip>
-                        <nue-text size="24px"> {{ title }} </nue-text>
+                        <nue-text size="24px">{{ title }}</nue-text>
                     </nue-div>
                     <nue-text v-if="!sph" size="14px" color="gray">
-                        <slot name="subTitle"> {{ subTitle }} </slot>
+                        <slot name="subTitle">{{ subTitle }}</slot>
                     </nue-text>
                 </nue-div>
                 <nue-div align="center" width="fit-content" gap="8px">
-                    <slot name="actions"></slot>
+                    <slot name="actions" />
                 </nue-div>
             </nue-div>
         </template>
         <nue-div v-if="!sph" wrap="nowrap" align="center">
             <nue-div class="project-navigations">
-                <slot name="navigations"> </slot>
+                <slot name="navigations" />
             </nue-div>
         </nue-div>
     </nue-header>
 </template>
 
 <script setup lang="ts">
-import { useViewStore, useProjectStore, useUserStore, useTagStore } from '@/stores'
+import { useViewStore } from '@/stores'
 import { storeToRefs } from 'pinia'
-import { ClickToEdit } from '@/components'
 import { useRouter } from 'vue-router'
 import {
-    handleArchiveProject,
     handleRenameProject,
     handleRedescProject,
     handleDeleteProject
 } from '@/utils/project-handlers'
+import { removeTagWithConfirm, renameTagWithPrompt } from '@/utils/tag-handlers'
 import type { ContentHeaderProps } from './types'
 
 defineOptions({ name: 'ContentHeader' })
@@ -117,8 +115,6 @@ const props = withDefaults(defineProps<ContentHeaderProps>(), {
 
 const router = useRouter()
 const viewStore = useViewStore()
-const tagStore = useTagStore()
-const userStore = useUserStore()
 
 const { projectAsideVisible: pav, simpleProjectHeader: sph } = storeToRefs(viewStore)
 
@@ -149,11 +145,19 @@ const deleteProject = async () => {
     }
 }
 
-const handleEditTagName = async (newValue: string) => {
-    const userId = userStore.user?.id
-    const tagId = props.tag?.id
-    if (!tagId || !userId) return
-    await tagStore.update(userId, tagId, { name: newValue })
+const handleRenameTag = async () => {
+    const { tag } = props
+    if (!tag) return
+    const tagId = tag.id
+    const tagName = tag.name
+    return await renameTagWithPrompt(tagId, tagName)
+}
+
+const handleDeleteTag = async (tagId: string) => {
+    if (!tagId) return
+    const removeResult = await removeTagWithConfirm(tagId)
+    if (removeResult._id !== tagId) return
+    router.push('/tasks/all')
 }
 </script>
 

@@ -1,5 +1,4 @@
 import { useUserStore, useProjectStore } from '@/stores'
-import { useRouter } from 'vue-router'
 import { NueConfirm, NueMessage, NuePrompt } from 'nue-ui'
 import type { Project, ProjectCreateOptions, ProjectFilterOptions } from '@/stores'
 

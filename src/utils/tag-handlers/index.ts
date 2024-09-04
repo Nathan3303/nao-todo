@@ -46,3 +46,29 @@ export const removeTag = async (tagId: Tag['id']) => {
 }
 
 // Extends
+
+export const removeTagWithConfirm = async (tagId: Tag['id']) => {
+    return await NueConfirm({
+        title: '删除标签',
+        content: '确定要删除该标签吗？',
+        confirmButtonText: '删除',
+        cancelButtonText: '取消'
+    }).then(
+        async () => await removeTag(tagId),
+        (err) => err
+    )
+}
+
+export const renameTagWithPrompt = async (tagId: Tag['id'], oldTagName?: Tag['name']) => {
+    return await NuePrompt({
+        title: '重命名标签',
+        content: '请输入新的标签名称',
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputValue: oldTagName,
+        validator: (value: string) => value
+    }).then(
+        async (newTagName) => await updateTag(tagId, { name: newTagName as Tag['name'] }),
+        (err) => err
+    )
+}

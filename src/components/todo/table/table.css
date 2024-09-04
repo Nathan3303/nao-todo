@@ -44,7 +44,7 @@
             }
 
             &[data-selected='true'] {
-                background-color: var(--aside-border-color);
+                background-color: #f2f2f2;
             }
 
             .todo-table__body__row__color-block {

@@ -6,27 +6,31 @@
                     :count-info="countInfo"
                     :filter-info="filterInfo"
                     @filter="handleFilter"
-                ></todo-filter-bar>
+                />
                 <nue-div justify="end" flex="none" width="fit-content" gap="12px">
-                    <nue-button theme="small,primary" icon="plus-circle" @click="handleAddTodo">
+                    <nue-button
+                        v-if="!disabledCreateTodo"
+                        theme="small,primary"
+                        icon="plus-circle"
+                        @click="handleAddTodo"
+                    >
                         新增
                     </nue-button>
-                    <list-column-switcher
-                        v-model="columns"
-                        :change="handleChangeColumns"
-                    ></list-column-switcher>
-                    <nue-button
-                        theme="small"
-                        icon="refresh"
-                        @click="handleRefresh"
-                        :loading="tableLoading || !!refreshTimer"
-                    />
+                    <list-column-switcher v-model="columns" :change="handleChangeColumns" />
+                    <nue-tooltip size="small" content="重新请求数据">
+                        <nue-button
+                            theme="small"
+                            icon="refresh"
+                            @click="handleRefresh"
+                            :loading="tableLoading || !!refreshTimer"
+                        />
+                    </nue-tooltip>
                 </nue-div>
             </nue-div>
         </nue-header>
         <nue-main style="margin: 16px 0 0">
             <nue-div wrap="nowrap" flex style="overflow-y: auto">
-                <Loading v-if="tableLoading" placeholder="正在加载任务列表..."></Loading>
+                <Loading v-if="tableLoading" placeholder="正在加载任务列表..." />
                 <todo-table
                     v-else
                     ref="todoTableRef"
@@ -37,7 +41,7 @@
                     @restore-todo="restoreTodoWithConfirm"
                     @show-todo-details="handleShowTodoDetails"
                     @sort-todo="handleSortTodo"
-                ></todo-table>
+                />
             </nue-div>
         </nue-main>
         <nue-footer style="padding: 4px; border: none; height: fit-content">
@@ -51,20 +55,31 @@
                     :total-pages="pageInfo.totalPages"
                     @perpage-change="handlePerPageChange"
                     @page-change="handlePageChange"
-                ></pager>
+                />
             </nue-div>
         </nue-footer>
     </nue-container>
+    <todo-create-dialog ref="todoCreateDialogRef" :handler="handleCreateTodo" />
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { TodoTable, Loading, TodoFilterBar, ListColumnSwitcher, Pager } from '@/components'
+import { useRouter } from 'vue-router'
+import {
+    TodoTable,
+    Loading,
+    TodoFilterBar,
+    ListColumnSwitcher,
+    Pager,
+    TodoCreateDialog
+} from '@/components'
 import { useTodoStore, useUserStore } from '@/stores'
 import { storeToRefs } from 'pinia'
-import { removeTodoWithConfirm, restoreTodoWithConfirm } from '@/utils/todo-handlers'
-import { NuePrompt } from 'nue-ui'
+import {
+    createTodoWithOptions,
+    removeTodoWithConfirm,
+    restoreTodoWithConfirm
+} from '@/utils/todo-handlers'
 import type { Columns } from '@/components'
 import type { Todo, TodoFilter, TodoSortOptions } from '@/stores'
 import type { ContentTableProps, ContentTableEmits } from './types'
@@ -73,13 +88,12 @@ defineOptions({ name: 'ContentTableLayer' })
 const props = defineProps<ContentTableProps>()
 const emit = defineEmits<ContentTableEmits>()
 
-const route = useRoute()
 const router = useRouter()
 const todoStore = useTodoStore()
 const userStore = useUserStore()
 
-const { todos, pageInfo, countInfo, filterInfo, sortInfo } = storeToRefs(todoStore)
 const { user } = storeToRefs(userStore)
+const { todos, pageInfo, countInfo, filterInfo, sortInfo } = storeToRefs(todoStore)
 const tableLoading = ref(false)
 const selectedTaskId = ref<Todo['id']>('')
 const columns = ref<Columns>(
@@ -94,6 +108,7 @@ const columns = ref<Columns>(
     }
 )
 const refreshTimer = ref<number | null>(null)
+const todoCreateDialogRef = ref<InstanceType<typeof TodoCreateDialog>>()
 
 const handleGetTodos = async () => {
     const { filterInfo } = props
@@ -103,16 +118,13 @@ const handleGetTodos = async () => {
     return res
 }
 
-const handleAddTodo = async () => {
-    NuePrompt({
-        title: '创建待办事项',
-        placeholder: '请输入待办事项名称',
-        confirmButtonText: '创建',
-        cancelButtonText: '取消',
-        validator: (value: string) => value
-    }).then((todoName) => {
-        emit('createTodo', todoName as string)
-    })
+const handleAddTodo = () => {
+    if (!todoCreateDialogRef.value) return
+    emit('createTodoByDialog', todoCreateDialogRef.value.show)
+}
+
+const handleCreateTodo = async (newTodo: Partial<Todo>) => {
+    await createTodoWithOptions(newTodo.projectId || null, newTodo)
 }
 
 const handleChangeColumns = (payload: Columns) => {
@@ -123,9 +135,7 @@ const handleChangeColumns = (payload: Columns) => {
 }
 
 const handleShowTodoDetails = (id: Todo['id']) => {
-    if (id === selectedTaskId.value) return
     const { baseRoute } = props
-    selectedTaskId.value = id
     router.push({ name: baseRoute, params: { taskId: id } })
 }
 
