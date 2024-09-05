@@ -1,6 +1,6 @@
 <template>
     <nue-container class="tasks-today-view tasks-sub-view">
-        <content-header title="垃圾桶">
+        <todo-view-header title="垃圾桶">
             <template #subTitle>
                 "垃圾桶" 板块存放着您已删除的任务，您可以在这里选择性地恢复已删除的任务。
             </template>
@@ -12,7 +12,7 @@
                     任务看板
                 </nue-link>
             </template>
-        </content-header>
+        </todo-view-header>
         <nue-main>
             <router-view></router-view>
         </nue-main>
@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { ContentHeader } from '@/layers/index'
+import { TodoViewHeader } from '@/layers'
 </script>
 
 <style scoped>

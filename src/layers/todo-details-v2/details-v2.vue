@@ -150,15 +150,12 @@
             </nue-div>
         </nue-footer>
     </nue-container>
-    <nue-empty
-        v-else
-        description="点击左侧列表中的任务以查看任务详细"
-        image-src="/images/to-do.png"
-    />
+    <nue-empty v-else description="点击左侧列表中的任务查看详细" image-src="/images/to-do.png" />
 </template>
 
 <script setup lang="ts">
 import { useTodoDetails } from './use-details'
+import { useUserStore } from '@/stores'
 import {
     SwitchButton,
     TodoDateSelector,
@@ -166,8 +163,8 @@ import {
     TodoDeleteButton,
     TodoCheckButton
 } from '@/components'
-import { TodoEventDetails, TodoTagDetails } from '@/layers/index'
-import { useUserStore } from '@/stores'
+import TodoEventDetails from '../todo-event-details/event-details.vue'
+import TodoTagDetails from '../todo-tag-details/tag-details.vue'
 import DetailsRow from './row.vue'
 import type { TodoDetailsEmits, TodoDetailsProps } from './types'
 

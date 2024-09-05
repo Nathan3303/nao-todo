@@ -1,12 +1,12 @@
 <template>
-    <content-kanban :filter-info="filterInfo" base-route="tasks-all-kanban"></content-kanban>
+    <todo-view-kanban :filter-info="filterInfo" base-route="tasks-all-kanban" />
     <suspense>
-        <router-view></router-view>
+        <router-view />
     </suspense>
 </template>
 
 <script setup lang="ts">
-import { ContentKanban } from '@/layers/index'
+import { TodoViewKanban } from '@/layers'
 import type { TodoFilter } from '@/stores'
 
 const filterInfo: TodoFilter = {

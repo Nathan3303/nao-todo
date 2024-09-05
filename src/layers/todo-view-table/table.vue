@@ -95,7 +95,6 @@ const userStore = useUserStore()
 const { user } = storeToRefs(userStore)
 const { todos, pageInfo, countInfo, filterInfo, sortInfo } = storeToRefs(todoStore)
 const tableLoading = ref(false)
-const selectedTaskId = ref<Todo['id']>('')
 const columns = ref<Columns>(
     props.columns || {
         state: true,
@@ -162,7 +161,6 @@ const handleRefresh = async () => {
 }
 
 const handleSortTodo = async (newSortInfo: TodoSortOptions) => {
-    // console.log(newSortInfo)
     const userId = user.value!.id
     sortInfo.value.field = newSortInfo.field
     sortInfo.value.order = newSortInfo.order

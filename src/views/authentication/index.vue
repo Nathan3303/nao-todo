@@ -31,7 +31,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { AuthSignIn, AuthSignUp } from '@/layers/authentication'
+import { AuthSignIn, AuthSignUp } from '@/layers'
 import { useUserStore, type SubmitPayload } from '@/stores/use-user-store'
 import { NueMessage } from 'nue-ui'
 import { useRouter } from 'vue-router'

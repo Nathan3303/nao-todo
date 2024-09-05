@@ -1,12 +1,12 @@
 <template>
-    <content-table
+    <todo-view-table
         :key="route.params.tagId.toString()"
         :filter-info="filterInfo"
         base-route="tasks-tag-table"
         :columns="columns"
         @create-todo="handleCreateTodo"
         @create-todo-by-dialog="handleCreateTodoByDialog"
-    ></content-table>
+    ></todo-view-table>
     <suspense>
         <router-view></router-view>
     </suspense>
@@ -14,7 +14,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ContentTable } from '@/layers/index'
+import { TodoViewTable } from '@/layers'
 import { useUserStore, useTagStore, useProjectStore } from '@/stores'
 import { useRoute } from 'vue-router'
 import { createTodoWithOptions } from '@/utils'

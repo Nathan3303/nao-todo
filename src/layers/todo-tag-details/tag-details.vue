@@ -10,11 +10,11 @@ import { TagNode, ComboBox } from '@/components'
 import { useTagStore } from '@/stores'
 import { computed, ref } from 'vue'
 import type { Todo, Tag } from '@/stores'
-import type { UnusedTagOption } from './types'
+import type { UnusedTagOption, TodoTagDetailsProps, TodoTagDetailsEmits } from './types'
 
 defineOptions({ name: 'TodoTagDetails' })
-const props = defineProps<{ todoId: Todo['id']; todoTags: Todo['tags'] }>()
-const emit = defineEmits<{ (event: 'updateTags', tags: Todo['tags']): void }>()
+const props = defineProps<TodoTagDetailsProps>()
+const emit = defineEmits<TodoTagDetailsEmits>()
 
 const tagStore = useTagStore()
 
@@ -23,19 +23,18 @@ const unusedTagOptions = ref<UnusedTagOption[]>([])
 const tags = computed<Todo['tagsInfo']>(() => {
     const tags = props.todoTags
     const _tags: Tag[] = []
-    if (tags) {
-        unusedTagOptions.value = []
-        tagStore.tags.map((tag) => {
-            if (tags.includes(tag.id)) {
-                _tags.push(tag)
-            } else {
-                unusedTagOptions.value.push({
-                    label: tag.name,
-                    value: tag.id
-                })
-            }
-        })
-    }
+    if (!tags) return _tags
+    unusedTagOptions.value = []
+    tagStore.tags.map((tag) => {
+        if (tags.includes(tag.id)) {
+            _tags.push(tag)
+        } else {
+            unusedTagOptions.value.push({
+                label: tag.name,
+                value: tag.id
+            })
+        }
+    })
     return _tags
 })
 

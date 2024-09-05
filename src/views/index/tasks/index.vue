@@ -1,21 +1,21 @@
 <template>
     <nue-main class="tasks-view" aside-width="240px">
         <template #aside v-if="pav">
-            <tasks-view-aside></tasks-view-aside>
+            <todo-view-aside />
         </template>
         <template #content>
-            <router-view></router-view>
+            <router-view />
         </template>
         <nue-div id="TasksViewRightAside">
             <nue-div class="todo-details-wrapper" :data-empty="!$route.params.taskId">
-                <content-todo-details-v2 />
+                <todo-details-v2 />
             </nue-div>
         </nue-div>
     </nue-main>
 </template>
 
 <script setup lang="ts">
-import { TasksViewAside, ContentTodoDetailsV2 } from '@/layers/index/tasks'
+import { TodoViewAside, TodoDetailsV2 } from '@/layers'
 import { storeToRefs } from 'pinia'
 import { useLoadingScreen } from '@/hooks'
 import { useViewStore, useProjectStore, useUserStore, useTagStore } from '@/stores'

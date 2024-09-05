@@ -107,7 +107,7 @@
         </nue-footer>
     </nue-container>
     <create-project-dialog ref="createProjectDialogRef" :handler="createProject" />
-    <project-manage-dialog ref="projectManageDialogRef" />
+    <project-manager ref="projectManageDialogRef" />
     <create-tag-dialog ref="createTagDialogRef" :handler="handleCreateTag" />
     <tag-manage-dialog ref="tagManageDialogRef" />
 </template>
@@ -118,12 +118,12 @@ import { useProjectStore, useTagStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import {
     CreateProjectDialog,
-    ProjectManageDialog,
     CreateTagDialog,
     TagManageDialog,
     AsideLink,
     TagColorDot
 } from '@/components'
+import ProjectManager from '../project-manager/project-manager.vue'
 import { createProject } from '@/utils/project-handlers'
 import { createTag } from '@/utils/tag-handlers'
 

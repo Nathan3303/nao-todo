@@ -1,17 +1,13 @@
 <template>
-    <content-kanban :filter-info="filterInfo" base-route="tasks-week-kanban"></content-kanban>
+    <todo-view-kanban :filter-info="filterInfo" base-route="tasks-week-kanban"></todo-view-kanban>
     <suspense>
         <router-view></router-view>
     </suspense>
 </template>
 
 <script setup lang="ts">
-import { ContentKanban } from '@/layers/index'
-import { useTodoStore, useUserStore } from '@/stores'
-import type { Todo, TodoFilter } from '@/stores'
-
-const userStore = useUserStore()
-const todoStore = useTodoStore()
+import { TodoViewKanban } from '@/layers'
+import type { TodoFilter } from '@/stores'
 
 const filterInfo: TodoFilter = {
     isDeleted: false,
