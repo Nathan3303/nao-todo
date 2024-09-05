@@ -97,7 +97,8 @@ export const useProjectStore = defineStore('projectStore', () => {
 
     const _remove = (id: Project['id']) => {
         const idx = projects.value.findIndex((project) => project.id === id)
-        projects.value.splice(idx, 1)
+        if (idx === -1) return null
+        return projects.value.splice(idx, 1)
     }
 
     const _update = (id: Project['id'], updateOptions: ProjectUpdateOptions) => {

@@ -107,7 +107,7 @@
         </nue-footer>
     </nue-container>
     <create-project-dialog ref="createProjectDialogRef" :handler="createProject" />
-    <project-manager ref="projectManageDialogRef" />
+    <project-manager ref="projectManagerRef" />
     <create-tag-dialog ref="createTagDialogRef" :handler="handleCreateTag" />
     <tag-manage-dialog ref="tagManageDialogRef" />
 </template>
@@ -136,7 +136,7 @@ const { projects } = storeToRefs(projectStore)
 const { tags } = storeToRefs(tagStore)
 const collapseItemsRecord = ref(['projects', 'tags'])
 const createProjectDialogRef = ref<InstanceType<typeof CreateProjectDialog>>()
-const projectManageDialogRef = ref<InstanceType<typeof ProjectManageDialog>>()
+const projectManagerRef = ref<InstanceType<typeof ProjectManager>>()
 const createTagDialogRef = ref<InstanceType<typeof CreateTagDialog>>()
 const tagManageDialogRef = ref<InstanceType<typeof TagManageDialog>>()
 
@@ -149,7 +149,7 @@ const showCreateTagDialog = () => {
 }
 
 const showProjectManageDialog = () => {
-    projectManageDialogRef.value?.show()
+    projectManagerRef.value?.show()
 }
 
 const showTagManageDialog = () => {

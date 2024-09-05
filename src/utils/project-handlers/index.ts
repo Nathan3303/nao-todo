@@ -13,10 +13,11 @@ export const _handleUpdateProject = async (
 ) => {
     try {
         const userId = userStore.user!.id
+        const targetProject = projectStore._toFinded(projectId)
         const res = await projectStore.update(userId, projectId, updateInfo)
         if (res.code === '20000') {
             projectStore._update(projectId, updateInfo)
-            if (onSuccess) onSuccess(res.data)
+            if (onSuccess) onSuccess({ _target: targetProject, response: res })
         } else {
             if (onFailed) onFailed(res.message)
         }
@@ -27,6 +28,13 @@ export const _handleUpdateProject = async (
 }
 
 // Standards
+
+export const toGettedProjects = async (filterOptions?: ProjectFilterOptions) => {
+    const userId = userStore.user!.id
+    const getResult = await projectStore.toGetted(userId, filterOptions)
+    if (getResult.code !== '20000') return []
+    return getResult.data
+}
 
 export const getProjects = async (filterOptions: ProjectFilterOptions) => {
     const userId = userStore.user!.id
@@ -58,7 +66,10 @@ export const handleArchiveProject = async (projectId: Project['id']) => {
         return _handleUpdateProject(
             projectId,
             { isArchived: true },
-            () => NueMessage.success('清单归档成功'),
+            () => {
+                projectStore._remove(projectId)
+                NueMessage.success('清单归档成功')
+            },
             (err) => NueMessage.error('清单归档失败' + `(${err})`)
         )
     } catch (e) {
@@ -77,7 +88,10 @@ export const handleUnarchiveProject = async (projectId: Project['id']) => {
         return await _handleUpdateProject(
             projectId,
             { isArchived: false },
-            () => NueMessage.success('清单取消归档成功'),
+            (payload) => {
+                console.log(payload)
+                NueMessage.success('清单取消归档成功')
+            },
             (err) => NueMessage.error('清单取消归档失败' + `(${err})`)
         )
     } catch (e) {
