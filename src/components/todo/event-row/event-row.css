@@ -10,6 +10,7 @@
     }
 
     .nue-input--small {
+        --disabled-background-color: transparent;
         font-size: var(--text-xs);
         padding: 0;
         flex: 1;

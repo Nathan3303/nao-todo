@@ -51,7 +51,7 @@ export const createProject = async (createOptions: ProjectCreateOptions) => {
         }
         return res
     } catch (e) {
-        NueMessage.info('操作取消')
+        console.log('[ProjectHandler] Create project failed:', e)
     }
 }
 
@@ -73,7 +73,7 @@ export const handleArchiveProject = async (projectId: Project['id']) => {
             (err) => NueMessage.error('清单归档失败' + `(${err})`)
         )
     } catch (e) {
-        NueMessage.info('操作取消')
+        console.log('[ProjectHandler] Archive project failed:', e)
     }
 }
 
@@ -95,7 +95,7 @@ export const handleUnarchiveProject = async (projectId: Project['id']) => {
             (err) => NueMessage.error('清单取消归档失败' + `(${err})`)
         )
     } catch (e) {
-        NueMessage.info('操作取消')
+        console.log('[ProjectHandler] Unarchive project failed:', e)
     }
 }
 
@@ -117,7 +117,7 @@ export const handleDeleteProject = async (projectId: Project['id']) => {
             (err) => NueMessage.error('清单删除失败' + `(${err})`)
         )
     } catch (e) {
-        NueMessage.info('操作取消')
+        console.log('[ProjectHandler] Delete project failed:', e)
     }
 }
 
@@ -136,7 +136,7 @@ export const handleRestoreProject = async (projectId: Project['id']) => {
             (err) => NueMessage.error('清单恢复失败' + `(${err})`)
         )
     } catch (e) {
-        NueMessage.info('操作取消')
+        console.log('[ProjectHandler] Restore project failed:', e)
     }
 }
 
@@ -159,7 +159,7 @@ export const handleRenameProject = async (projectId: Project['id'], name: Projec
             (err) => NueMessage.error('清单名称修改失败' + `(${err})`)
         )
     } catch (e) {
-        NueMessage.info('操作取消')
+        console.log('[ProjectHandler] Rename project failed:', e)
     }
 }
 
@@ -186,6 +186,6 @@ export const handleRedescProject = async (
             (err) => NueMessage.error('清单描述修改失败' + `(${err})`)
         )
     } catch (e) {
-        NueMessage.info('操作取消')
+        console.log('[ProjectHandler] Redesc project failed:', e)
     }
 }

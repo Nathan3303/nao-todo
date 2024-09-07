@@ -64,12 +64,16 @@ const handleCreateTag = async () => {
         return
     }
     loading.value = true
-    const response = await handler({ ...newTag.value })
-    if (response) {
+    try {
+        const response = await handler({ ...newTag.value })
+        if (!response) return
         visible.value = false
         handleClearInputValues()
+    } catch (e) {
+        console.warn('[CreateProjectDialog] confirm error:', e)
+    } finally {
+        loading.value = false
     }
-    loading.value = false
 }
 
 const handleSelectColor = (color: string) => {

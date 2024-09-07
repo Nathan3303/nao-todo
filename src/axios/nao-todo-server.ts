@@ -3,8 +3,8 @@ import { NueMessage } from 'nue-ui'
 import { useUserStore } from '@/stores'
 
 const axiosInstance = axios.create({
-    baseURL: 'http://localhost:3002/api'
-    // baseURL: 'https://nathan33.xyz:3002/api'
+    // baseURL: 'http://localhost:3002/api'
+    baseURL: 'https://nathan33.xyz:3002/api'
 })
 
 axiosInstance.interceptors.request.use((config) => {
@@ -18,7 +18,7 @@ axiosInstance.interceptors.request.use((config) => {
 axiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {
-        NueMessage.error(error)
+        NueMessage.error('网络错误，请稍后再试')
         return Promise.reject(error)
     }
 )

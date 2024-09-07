@@ -8,6 +8,8 @@ export type TodoEventRowUpdatePayload = {
 
 export type TodoEventRowProps = {
     event: TodoEvent
+    onUpdate: (payload: TodoEventRowUpdatePayload) => Promise<any>
+    onDelete: (id: TodoEvent['id']) => Promise<any>
 }
 
 export type TodoEventRowEmits = {

@@ -30,8 +30,8 @@
             </nue-div>
         </nue-div>
         <template #footer="{ cancel }">
-            <nue-button @click.stop="cancel">取消</nue-button>
-            <nue-button theme="primary" :loading="loading" @click.stop="handleAddProject">
+            <nue-button :disabled="loading" @click.stop="cancel">取消</nue-button>
+            <nue-button theme="primary" :loading="loading" @click="handleAddProject">
                 创建
             </nue-button>
         </template>
@@ -72,12 +72,16 @@ const handleAddProject = async () => {
         return
     }
     loading.value = true
-    const response = await handler(newProjectPayload.value)
-    if (response.code === '20000') {
+    try {
+        const response = await handler(newProjectPayload.value)
+        if (!response && response.code !== '20000') return
         visible.value = false
         handleClearInputValues()
+    } catch (e) {
+        console.warn('[CreateProjectDialog] confirm error:', e)
+    } finally {
+        loading.value = false
     }
-    loading.value = false
 }
 
 watch(

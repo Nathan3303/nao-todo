@@ -123,7 +123,7 @@ const handleAddTodo = () => {
 }
 
 const handleCreateTodo = async (newTodo: Partial<Todo>) => {
-    await createTodoWithOptions(newTodo.projectId || null, newTodo)
+    return await createTodoWithOptions(newTodo.projectId || null, newTodo)
 }
 
 const handleChangeColumns = (payload: Columns) => {
