@@ -40,6 +40,7 @@
                 v-for="todo in todos"
                 :key="todo.id"
                 :data-selected="todo.id === selectedId"
+                :data-done="todo.isDone || todo.state === 'done'"
                 @click.stop="handleShowDetails(todo.id)"
             >
                 <nue-div class="todo-table__body__col col-name" vertical>
