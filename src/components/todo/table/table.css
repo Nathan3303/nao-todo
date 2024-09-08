@@ -76,6 +76,10 @@
                 &:deep(.nue-text) {
                     color: gray;
                     font-size: 12px;
+
+                    &[data-expired="true"] {
+                        color: rgb(224, 86, 86);
+                    }
                 }
 
                 &.col-actions .nue-icon {

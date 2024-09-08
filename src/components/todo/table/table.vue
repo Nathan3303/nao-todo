@@ -1,5 +1,5 @@
 <template>
-    <nue-div class="todo-table" :data-simple="simple">
+    <nue-div class="todo-table" :data-simple="simple" :key="refreshKeyIdx">
         <nue-div class="todo-table__header" wrap="nowrap">
             <div class="todo-table__header__col col-name">
                 <order-button prop="name">名称</order-button>
@@ -32,14 +32,9 @@
                 <nue-icon v-else name="more" style="opacity: 0" />
             </div>
         </nue-div>
-        <nue-divider class="todo-table__divider"></nue-divider>
+        <nue-divider class="todo-table__divider" />
         <nue-div class="todo-table__body">
-            <empty
-                :empty="!todos.length"
-                text-size="12px"
-                full-height
-                :message="emptyMessage"
-            ></empty>
+            <empty :empty="!todos.length" text-size="12px" full-height :message="emptyMessage" />
             <nue-div
                 class="todo-table__body__row"
                 v-for="todo in todos"
@@ -60,41 +55,33 @@
                         v-if="columns.description && todo.description"
                         class="todo-table-main__row__description"
                         size="12px"
-                        color="gray"
                     >
                         {{ todo.description }}
                     </nue-text>
                 </nue-div>
                 <nue-div class="todo-table__body__col col-created-at" v-if="columns.createdAt">
-                    <nue-text size="12px" color="gray">
-                        {{ moment(todo.createdAt).format('YYYY-MM-DD HH:mm:ss') }}
+                    <nue-text size="12px">
+                        {{ useRelativeDate(todo.createdAt) }}
                     </nue-text>
                 </nue-div>
                 <nue-div class="todo-table__body__col col-updated-at" v-if="columns.updatedAt">
-                    <nue-text size="12px" color="gray">
-                        {{ moment(todo.updatedAt).format('YYYY-MM-DD HH:mm:ss') }}
+                    <nue-text size="12px">
+                        {{ useRelativeDate(todo.updatedAt) }}
                     </nue-text>
                 </nue-div>
                 <nue-div class="todo-table__body__col col-end-at" v-if="columns.endAt">
-                    <nue-text size="12px" color="gray">
-                        {{
-                            todo.dueDate.endAt
-                                ? moment(todo.dueDate.endAt).format('YYYY-MM-DD HH:mm:ss')
-                                : '无日期'
-                        }}
+                    <nue-text size="12px" :data-expired="isTodoExpired(todo)">
+                        {{ useRelativeDate(todo.dueDate.endAt) }}
                     </nue-text>
                 </nue-div>
                 <nue-div class="todo-table__body__col col-priority" v-if="columns.priority">
-                    <todo-priority-info
-                        :priority="todo.priority"
-                        :key="todo.priority"
-                    ></todo-priority-info>
+                    <todo-priority-info :priority="todo.priority" :key="todo.priority" />
                 </nue-div>
                 <nue-div class="todo-table__body__col col-state" v-if="columns.state">
-                    <todo-state-info :state="todo.state" :key="todo.state"></todo-state-info>
+                    <todo-state-info :state="todo.state" :key="todo.state" />
                 </nue-div>
                 <nue-div class="todo-table__body__col col-project" v-if="columns.project">
-                    <nue-text size="12px" color="gray" :clamped="1">
+                    <nue-text size="12px" :clamped="1">
                         {{ todo.project?.title || '收集箱' }}
                     </nue-text>
                 </nue-div>
@@ -102,7 +89,7 @@
                     <nue-icon
                         :name="todo.isDeleted ? 'restore' : 'delete'"
                         @click.stop="handleDeleteBtnClk(todo.id, todo.isDeleted)"
-                    ></nue-icon>
+                    />
                 </nue-div>
             </nue-div>
         </nue-div>
@@ -110,11 +97,13 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, provide, watch } from 'vue'
+import { reactive, provide, watch, ref, onMounted, onBeforeMount } from 'vue'
 import { TodoPriorityInfo, TodoStateInfo, Empty } from '@/components'
 import { useTodoTable } from './use-table'
+import { useRelativeDate } from '@/hooks/use-relative-date'
+import { isExpired } from '@/utils/date-handlers'
+import { useMinuteTask } from '@/hooks/use-minute-task'
 import OrderButton from './order-button.vue'
-import moment from 'moment'
 import type { TodoTableEmits, TodoTableProps, TodoTableContext } from './types'
 
 defineOptions({ name: 'TodoTable' })
@@ -123,12 +112,18 @@ const props = withDefaults(defineProps<TodoTableProps>(), {
 })
 const emit = defineEmits<TodoTableEmits>()
 
+const refreshKeyIdx = ref(0)
 const sortInfo = reactive(props.sortInfo)
 
 const { selectedId, handleDeleteBtnClk, handleShowDetails, handleClearSelectedId } = useTodoTable(
     props,
     emit
 )
+const { run: refresh, stop: stopRefresh } = useMinuteTask(() => refreshKeyIdx.value++)
+
+const isTodoExpired = (todo: (typeof props.todos)[0]) => {
+    return isExpired(todo.dueDate.endAt) && !todo.isDone && todo.state !== 'done'
+}
 
 const handleClearSortInfo = () => {
     sortInfo.field = ''
@@ -145,6 +140,14 @@ watch(
     (newValue) => emit('sortTodo', { ...newValue }),
     { deep: true }
 )
+
+onMounted(() => {
+    refresh()
+})
+
+onBeforeMount(() => {
+    stopRefresh()
+})
 
 defineExpose({
     reset: handleClearSelectedId
