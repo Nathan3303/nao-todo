@@ -11,9 +11,9 @@
             :key="event.id"
             theme="small,noshape"
             v-model="inputValue"
-            @blur="handleUpdate(false)"
             :data-is-done="event.isDone"
             :disabled="updateLoading"
+            @blur="handleUpdate(false)"
         />
         <nue-div class="todo-event-row__actions">
             <nue-icon name="delete" :color="updateLoading ? 'gray' : 'red'" @click="handleDelete" />

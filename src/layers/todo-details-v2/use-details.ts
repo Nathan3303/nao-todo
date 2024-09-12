@@ -1,4 +1,4 @@
-import { ref, watch, computed, onMounted } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useTodoStore, useProjectStore, useEventStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
@@ -10,7 +10,7 @@ import {
 } from '@/utils/todo-handlers'
 import moment from 'moment'
 import type { TodoDetailsEmits, TodoDetailsProps } from './types'
-import type { Todo } from '@/stores'
+import type { ProjectFilterOptions, Todo } from '@/stores'
 
 export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) => {
     const route = useRoute()
@@ -34,6 +34,14 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
             percentage,
             text: `已完成 ${progress}/${total}, ${percentage}%`
         }
+    })
+
+    const activeProjects = computed(() => {
+        const filterInfo: ProjectFilterOptions = {
+            isArchived: false,
+            isDeleted: false
+        }
+        return projectStore._toFiltered(filterInfo)
     })
 
     const _getTodo = async (todoId: Todo['id']) => {
@@ -100,7 +108,6 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         shadowTodo.value.projectId = projectId
         shadowTodo.value.project = { title: projectTitle }
         debouncedUpdateTodo()
-        // emit('refresh')
     }
 
     const handleCheckTodo = async () => {
@@ -158,7 +165,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
     // })
 
     return {
-        projects,
+        projects: activeProjects,
         shadowTodo,
         loadingState,
         isGetting,

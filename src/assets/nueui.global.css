@@ -59,9 +59,18 @@
     padding: 12px;
 }
 
+.nue-dropdown--project-selector {
+    .nue-dropdown-item {
+        min-width: 140px;
+        gap: 8px;
+        align-items: center;
+        cursor: pointer;
+    }
+}
+
 .nue-progress--line {
     .nue-progress__inner-bar {
-        padding: 0px !important; 
+        padding: 0px !important;
     }
 }
 

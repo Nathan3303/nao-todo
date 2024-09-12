@@ -41,7 +41,7 @@
                             { label: '已完成', value: 'done' }
                         ]"
                         @change="handleChangeState"
-                    ></todo-selector>
+                    />
                 </nue-div>
                 <switch-button
                     v-model="shadowTodo.isPinned"
@@ -105,42 +105,13 @@
             </nue-div>
         </nue-main>
         <nue-footer>
-            <nue-dropdown theme="move-to-dropdown" :hide-on-click="false">
-                <template #default="{ clickTrigger }">
-                    <nue-button
-                        size="small"
-                        :icon="shadowTodo.project?.title ? 'more2' : 'inbox'"
-                        @click="clickTrigger"
-                    >
-                        {{ shadowTodo.project?.title || '收集箱' }}
-                    </nue-button>
-                </template>
-                <template #dropdown>
-                    <nue-div
-                        class="nue-dropdown-item"
-                        @click="handleMoveToProject(userStore.user!.id, '')"
-                        gap="8px"
-                        align="center"
-                    >
-                        <nue-icon name="inbox" size="12px" />
-                        <nue-text size="12px" style="flex: auto">收集箱</nue-text>
-                        <nue-icon v-if="shadowTodo.projectId === userStore.user!.id" name="check" />
-                    </nue-div>
-                    <nue-divider />
-                    <nue-div
-                        v-for="project in projects"
-                        class="nue-dropdown-item"
-                        @click="handleMoveToProject(project.id, project.title)"
-                        style="min-width: 128px"
-                        gap="8px"
-                        align="center"
-                    >
-                        <nue-icon name="more2" size="12px" />
-                        <nue-text size="12px" style="flex: auto">{{ project.title }}</nue-text>
-                        <nue-icon v-if="project.id === shadowTodo.projectId" name="check" />
-                    </nue-div>
-                </template>
-            </nue-dropdown>
+            <todo-project-selector
+                :user-id="userStore.user!.id"
+                :projects="projects"
+                :project-id="shadowTodo.projectId"
+                :project-title="shadowTodo.project?.title"
+                @select="handleMoveToProject"
+            />
             <nue-div wrap="nowrap" width="fit-content" gap="4px">
                 <todo-delete-button
                     :is-deleted="shadowTodo.isDeleted"
@@ -161,7 +132,8 @@ import {
     TodoDateSelector,
     TodoSelector,
     TodoDeleteButton,
-    TodoCheckButton
+    TodoCheckButton,
+    TodoProjectSelector
 } from '@/components'
 import TodoEventDetails from '../todo-event-details/event-details.vue'
 import TodoTagDetails from '../todo-tag-details/tag-details.vue'
@@ -185,8 +157,8 @@ const {
     handleChangeEndAt,
     handleChangeState,
     handleChangePriority,
-    handleClose,
     handleMoveToProject,
+    handleClose,
     handleCheckTodo,
     handleDeleteTodo,
     handleRestoreTodo,

@@ -5,6 +5,7 @@
         :size="size"
         @click="handleClick"
         :theme="theme || buttonTheme"
+        style="gap: 8px"
     >
         {{ buttonText }}
     </nue-button>
@@ -12,7 +13,7 @@
         wrap="nowrap"
         v-show="isInput"
         align="center"
-        gap="4px"
+        gap="6px"
         style="padding-left: 2px"
         @keydown.enter.prevent="handleKeydown"
     >
@@ -24,23 +25,23 @@
             :size="size"
             :theme="theme || inputTheme"
             :disabled="loading"
-            @blur="handleBlur"
             style="flex: 1"
+            @blur="handleBlur"
         />
         <template v-if="!submitOnBlur">
             <nue-button
                 icon="check"
-                @click="handleSubmit"
                 :theme="theme || buttonTheme"
                 :size="size"
                 :disabled="loading"
+                @click="handleSubmit"
             />
             <nue-button
                 icon="clear"
-                @click="handleCancel"
                 :theme="theme || buttonTheme"
                 :size="size"
                 :disabled="loading"
+                @click="handleCancel"
             />
         </template>
     </nue-div>
@@ -54,7 +55,6 @@ import { NueInput } from 'nue-ui'
 defineOptions({ name: 'InputButton' })
 const props = withDefaults(defineProps<InputButtonProps>(), {
     buttonText: 'Click to input text',
-    icon: 'write',
     size: 'small',
     submitOnBlur: true,
     onButtonClick: () => {}
@@ -94,6 +94,7 @@ const handleSubmit = async (cancelOnSubmitted = false) => {
             emit('submit', { value })
         }
         inputValue.value = ''
+        nextTick(() => inputRef.value?.innerInputRef?.focus())
     }
     if (cancelOnSubmitted) {
         handleCancel()
