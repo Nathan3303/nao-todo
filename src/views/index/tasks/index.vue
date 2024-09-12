@@ -28,8 +28,8 @@ const tagStore = useTagStore()
 const { projectAsideVisible: pav } = storeToRefs(viewStore)
 
 await projectStore.init(userStore.user!.id, {
-    isDeleted: false,
-    isArchived: false,
+    // isDeleted: false,
+    // isArchived: false,
     page: 1,
     limit: 99
 })

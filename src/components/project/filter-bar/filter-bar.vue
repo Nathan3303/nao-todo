@@ -7,19 +7,8 @@
                 placeholder="筛选任务"
                 icon="filter"
                 :debounce-time="360"
-                clearable
             />
         </nue-div>
-        <combo-box
-            trigger-title="状态"
-            :framework="stateComboBoxOptions"
-            @change="handleChangeStatusOption"
-        />
-        <combo-box
-            trigger-title="优先级"
-            :framework="priorityComboBoxOptions"
-            @change="handleChangePriorityOption"
-        />
         <nue-text v-if="props.filterInfo.id" size="12px" color="gray">
             Id: {{ props.filterInfo.id }}
         </nue-text>
@@ -30,23 +19,14 @@
 </template>
 
 <script setup lang="ts">
-import { ComboBox } from '@/components/general'
 import { useTodoFilterBar } from './use-filter-bar'
-import type { TodoFilterBarProps, TodoFilterBarEmits } from './types'
+import type { ProjectFilterBarProps, ProjectFilterBarEmits } from './types'
 
-defineOptions({ name: 'ProjectFilterBar' })
-const props = defineProps<TodoFilterBarProps>()
-const emit = defineEmits<TodoFilterBarEmits>()
+defineOptions({ name: 'TodoFilterBar' })
+const props = defineProps<ProjectFilterBarProps>()
+const emit = defineEmits<ProjectFilterBarEmits>()
 
-const {
-    filterText,
-    isFiltering,
-    stateComboBoxOptions,
-    priorityComboBoxOptions,
-    handleChangeStatusOption,
-    handleChangePriorityOption,
-    handleResetFilter
-} = useTodoFilterBar(props, emit)
+const { filterText, isFiltering, handleResetFilter } = useTodoFilterBar(props, emit)
 </script>
 
 <style scoped>

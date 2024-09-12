@@ -10,49 +10,7 @@
         <nue-divider />
         <nue-main>
             <nue-collapse v-model="collapseItemsRecord">
-                <nue-collapse-item name="projects">
-                    <template #header="{ collapse, state }">
-                        <nue-button
-                            theme="pure"
-                            :icon="state ? 'arrow-right' : 'arrow-down'"
-                            @click="collapse"
-                        >
-                            <template #default>
-                                <nue-div>
-                                    <nue-text size="12px">清单</nue-text>
-                                    <nue-text size="12px" color="gray">
-                                        {{ projects.length }}
-                                    </nue-text>
-                                </nue-div>
-                            </template>
-                        </nue-button>
-                        <nue-div width="fit-content" gap="8px">
-                            <nue-tooltip size="small" content="打开清单管理器">
-                                <nue-button
-                                    theme="pure"
-                                    icon="setting"
-                                    @click.stop="showProjectManageDialog"
-                                />
-                            </nue-tooltip>
-                            <nue-tooltip size="small" content="创建新清单">
-                                <nue-button
-                                    id="create-project-btn"
-                                    theme="pure"
-                                    icon="plus"
-                                    @click.stop="showCreateProjectDialog"
-                                />
-                            </nue-tooltip>
-                        </nue-div>
-                    </template>
-                    <aside-link
-                        v-for="project in projects"
-                        icon="more2"
-                        :key="project.id"
-                        :route="{ name: 'tasks-project', params: { projectId: project.id } }"
-                    >
-                        {{ project.title }}
-                    </aside-link>
-                </nue-collapse-item>
+                <project-smart-list />
                 <nue-collapse-item name="tags">
                     <template #header="{ collapse, state }">
                         <nue-button
@@ -106,50 +64,29 @@
             <aside-link icon="delete" :route="{ name: 'tasks-recycle' }">垃圾桶</aside-link>
         </nue-footer>
     </nue-container>
-    <create-project-dialog ref="createProjectDialogRef" :handler="createProject" />
-    <project-manager ref="projectManagerRef" />
     <create-tag-dialog ref="createTagDialogRef" :handler="handleCreateTag" />
     <tag-manage-dialog ref="tagManageDialogRef" />
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useProjectStore, useTagStore } from '@/stores'
+import { useTagStore } from '@/stores'
 import { storeToRefs } from 'pinia'
-import {
-    CreateProjectDialog,
-    CreateTagDialog,
-    TagManageDialog,
-    AsideLink,
-    TagColorDot
-} from '@/components'
-import ProjectManager from '../project-manager/project-manager.vue'
-import { createProject } from '@/utils/project-handlers'
+import { CreateTagDialog, TagManageDialog, AsideLink, TagColorDot } from '@/components'
+import ProjectSmartList from '../project-smart-list/project-smart-list.vue'
 import { createTag } from '@/utils/tag-handlers'
 
 defineOptions({ name: 'TasksViewAside' })
 
-const projectStore = useProjectStore()
 const tagStore = useTagStore()
 
-const { projects } = storeToRefs(projectStore)
 const { tags } = storeToRefs(tagStore)
 const collapseItemsRecord = ref(['projects', 'tags'])
-const createProjectDialogRef = ref<InstanceType<typeof CreateProjectDialog>>()
-const projectManagerRef = ref<InstanceType<typeof ProjectManager>>()
 const createTagDialogRef = ref<InstanceType<typeof CreateTagDialog>>()
 const tagManageDialogRef = ref<InstanceType<typeof TagManageDialog>>()
 
-const showCreateProjectDialog = () => {
-    createProjectDialogRef.value?.show()
-}
-
 const showCreateTagDialog = () => {
     createTagDialogRef.value?.show()
-}
-
-const showProjectManageDialog = () => {
-    projectManagerRef.value?.show()
 }
 
 const showTagManageDialog = () => {

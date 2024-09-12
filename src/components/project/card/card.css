@@ -1,0 +1,14 @@
+.project-card {
+    &[data-actived='false'] {
+        background-color: #f2f2f2;
+
+        & > * {
+            opacity: 0.8;
+        }
+
+        .project-card__footer-ops,
+        .project-card__ops {
+            opacity: 1;
+        }
+    }
+}

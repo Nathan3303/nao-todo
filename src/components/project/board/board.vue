@@ -1,7 +1,7 @@
 <template>
     <div class="project-board-wrapper">
         <loading v-if="loadingState" />
-        <template v-else-if="projects">
+        <template v-else-if="projects && projects.length">
             <div class="project-board">
                 <project-card
                     v-for="project in projects"
@@ -11,6 +11,7 @@
                 >
                     <template #ops>
                         <project-archive-button
+                            v-if="!project.isDeleted"
                             :is-archived="project.isArchived"
                             @archive="emit('archiveProject', project.id)"
                             @unarchive="emit('unarchiveProject', project.id)"
@@ -29,15 +30,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, useSlots } from 'vue'
 import { Loading, ProjectCard, ProjectArchiveButton, ProjectDeleteButton } from '@/components'
 import type { ProjectBoardProps, ProjectBoardEmits } from './types'
 
 defineOptions({ name: 'ProjectBoard' })
-const props = defineProps<ProjectBoardProps>()
+defineProps<ProjectBoardProps>()
 const emit = defineEmits<ProjectBoardEmits>()
-
-const slots = useSlots()
 </script>
 
 <style scoped>

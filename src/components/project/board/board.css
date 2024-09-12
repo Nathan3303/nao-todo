@@ -1,11 +1,11 @@
 .project-board {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    grid-template-rows: repeat(auto-fit, minmax(200px, 1fr));
-    grid-gap: 20px;
+    grid-template-rows: repeat(auto-fit, minmax(160px, 1fr));
+    grid-gap: 12px;
 
     .project-card {
         /* max-width: 220px; */
-        min-height: 200px;
+        min-height: 160px;
     }
 }

@@ -41,6 +41,12 @@ export const getProjects = async (filterOptions: ProjectFilterOptions) => {
     await projectStore.init(userId, filterOptions)
 }
 
+export const getProjectsWithNewFitlerOptions = async (newFilterOptions: ProjectFilterOptions) => {
+    const userId = userStore.user!.id
+    projectStore.mergeFilterInfo(newFilterOptions)
+    await projectStore.get(userId)
+}
+
 export const createProject = async (createOptions: ProjectCreateOptions) => {
     try {
         const userId = userStore.user!.id
@@ -66,10 +72,7 @@ export const handleArchiveProject = async (projectId: Project['id']) => {
         return _handleUpdateProject(
             projectId,
             { isArchived: true },
-            () => {
-                projectStore._remove(projectId)
-                NueMessage.success('清单归档成功')
-            },
+            () => NueMessage.success('清单归档成功'),
             (err) => NueMessage.error('清单归档失败' + `(${err})`)
         )
     } catch (e) {
@@ -88,10 +91,7 @@ export const handleUnarchiveProject = async (projectId: Project['id']) => {
         return await _handleUpdateProject(
             projectId,
             { isArchived: false },
-            (payload) => {
-                console.log(payload)
-                NueMessage.success('清单取消归档成功')
-            },
+            () => NueMessage.success('清单取消归档成功'),
             (err) => NueMessage.error('清单取消归档失败' + `(${err})`)
         )
     } catch (e) {
@@ -110,10 +110,7 @@ export const handleDeleteProject = async (projectId: Project['id']) => {
         return _handleUpdateProject(
             projectId,
             { isDeleted: true },
-            () => {
-                projectStore._remove(projectId)
-                NueMessage.success('清单删除成功')
-            },
+            () => NueMessage.success('清单删除成功'),
             (err) => NueMessage.error('清单删除失败' + `(${err})`)
         )
     } catch (e) {

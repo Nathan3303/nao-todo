@@ -4,16 +4,23 @@
             <nue-text size="12px" color="gray">
                 "清单管理"能够清楚地展示出所有的清单，方便执行清单的增删改查。
             </nue-text>
-            <nue-div class="project-navigations">
+            <!-- <nue-div class="project-navigations">
                 <nue-link theme="btnlike,actived">看板</nue-link>
                 <nue-link theme="btnlike">列表</nue-link>
+            </nue-div> -->
+            <nue-div align="center" justify="space-between">
+                <project-filter-bar :filter-info="filterInfo" @filter="handleFilter" />
+                <nue-div width="fit-content">
+                    <nue-button
+                        theme="small,primary"
+                        icon="plus-circle"
+                        @click="handleShowCreateProjectDialog"
+                    >
+                        新增
+                    </nue-button>
+                    <nue-button theme="small" icon="refresh" @click="refresh"> 刷新 </nue-button>
+                </nue-div>
             </nue-div>
-            <nue-input
-                v-model="filterInfo.title"
-                placeholder="搜索清单"
-                icon="search"
-                :debounce-time="500"
-            />
             <nue-div class="project-manager" vertical align="stretch">
                 <project-board
                     :projects="projects"
@@ -26,22 +33,25 @@
             </nue-div>
         </nue-div>
     </nue-dialog>
+    <create-project-dialog ref="createProjectDialogRef" :handler="createProject" />
 </template>
 
 <script setup lang="ts">
-import { ref, watch, reactive } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
-    toGettedProjects,
+    getProjects,
+    getProjectsWithNewFitlerOptions,
+    createProject,
     handleArchiveProject,
     handleUnarchiveProject,
     handleDeleteProject,
     handleRestoreProject
 } from '@/utils/project-handlers'
-import { ProjectBoard } from '@/components/project'
-import { NueMessage, NueInput, NueConfirm } from 'nue-ui'
-import type { CreateProjectDialogEmits, CreateProjectDialogProps } from './types'
-import type { ProjectFilterOptions, Project } from '@/stores'
+import { useProjectStore } from '@/stores'
+import { ProjectBoard, ProjectFilterBar, CreateProjectDialog } from '@/components/project'
+import type { Project, ProjectFilterOptions } from '@/stores'
+import { storeToRefs } from 'pinia'
 
 defineOptions({ name: 'ProjectManager' })
 // const props = defineProps<CreateProjectDialogProps>()
@@ -49,48 +59,70 @@ defineOptions({ name: 'ProjectManager' })
 
 const route = useRoute()
 const router = useRouter()
+const projectStore = useProjectStore()
 
 const visible = ref(false)
-const loading = ref(true)
+const loading = ref(false)
+const createProjectDialogRef = ref<InstanceType<typeof CreateProjectDialog>>()
+const filterInfo = ref<ProjectFilterOptions>({})
 const projects = ref<Project[]>([])
-const filterInfo = reactive<ProjectFilterOptions>({
-    title: '',
-    page: 1,
-    limit: 20
-})
 
-const init = async () => {
+const init = () => {
+    const res = projectStore._toFiltered(filterInfo.value)
+    projects.value = res
+}
+
+const refresh = async () => {
     loading.value = true
-    projects.value = await toGettedProjects({ ...filterInfo })
+    await getProjects({ page: 1, limit: 99 })
+    init()
     loading.value = false
+}
+
+const handleShowDialog = () => {
+    visible.value = true
+    init()
+}
+
+const handleFilter = async (newFilterInfo: ProjectFilterOptions) => {
+    filterInfo.value = newFilterInfo
+    init()
+}
+
+const handleShowCreateProjectDialog = async () => {
+    createProjectDialogRef.value?.show()
 }
 
 const archiveProject = async (projectId: Project['id']) => {
     const archiveResult = await handleArchiveProject(projectId)
-    if (archiveResult.code !== '20000') return
+    if (archiveResult && archiveResult.code !== '20000') return
     const projectIdInRoute = route.params.projectId
     if (projectIdInRoute !== projectId) return
     router.push('/tasks/all')
+    init()
 }
 
 const unarchiveProject = async (projectId: Project['id']) => {
-    console.log(projectId);
-    const unarchiveResult = await handleUnarchiveProject(projectId)
-    console.log(unarchiveResult)
+    await handleUnarchiveProject(projectId)
+    init()
 }
 
-const deleteProject = async () => {}
+const deleteProject = async (projectId: Project['id']) => {
+    const archiveResult = await handleDeleteProject(projectId)
+    if (archiveResult && archiveResult.code !== '20000') return
+    const projectIdInRoute = route.params.projectId
+    if (projectIdInRoute !== projectId) return
+    router.push('/tasks/all')
+    init()
+}
 
-const restoreProject = async () => {}
-
-watch(
-    () => filterInfo,
-    async () => await init(),
-    { deep: true, immediate: true }
-)
+const restoreProject = async (projectId: Project['id']) => {
+    await handleRestoreProject(projectId)
+    init()
+}
 
 defineExpose({
-    show: () => (visible.value = true)
+    show: handleShowDialog
 })
 </script>
 

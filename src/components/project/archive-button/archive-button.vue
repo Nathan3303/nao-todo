@@ -1,10 +1,14 @@
 <template>
-    <nue-button
-        class="project-archive-button"
-        theme="pure"
-        :icon="iconName"
-        @click.stop="handleClick"
-    />
+    <nue-tooltip size="small" :content="tooltipContent">
+        <nue-button
+            class="project-archive-button"
+            :theme="$slots.default ? 'small' : 'pure'"
+            :icon="iconName"
+            @click.stop="handleClick"
+        >
+            <slot />
+        </nue-button>
+    </nue-tooltip>
 </template>
 
 <script setup lang="ts">
@@ -20,6 +24,11 @@ const emit = defineEmits<{
 const iconName = computed(() => {
     const { isArchived } = props
     return isArchived ? 'unarchive' : 'archive'
+})
+
+const tooltipContent = computed(() => {
+    const { isArchived } = props
+    return isArchived ? '取消归档清单' : '归档清单'
 })
 
 const handleClick = () => {

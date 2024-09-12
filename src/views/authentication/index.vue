@@ -54,26 +54,32 @@ const switchRoute = computed(() =>
 async function handleSubmit(payload: SubmitPayload) {
     loading.value = true
     if (isLogin.value) {
-        const res = await userStore.login(payload)
-        if (res.code === '20000') {
-            router.push({ name: 'index' })
-            loading.value = false
-            NueMessage.success('Login successful')
-            // setTimeout(() => {}, 1000)
-        } else {
-            NueMessage.error(res.message)
-            loading.value = false
+        try {
+            const res = await userStore.login(payload)
+            if (res.code === '20000') {
+                router.push({ name: 'index' })
+                setTimeout(() => {
+                    NueMessage.success('登录成功')
+                }, 256)
+            }
+        } catch (e) {
+            NueMessage.error('登录失败')
+            setTimeout(() => (loading.value = false), 128)
         }
     } else {
-        const res = await userStore.signup(payload)
-        if (res.code === '20000') {
-            router.push('/authentication/login')
-            loading.value = false
-            NueMessage.success('Sign up successful')
-            // setTimeout(() => {}, 1000)
-        } else {
-            NueMessage.error(res.message)
-            loading.value = false
+        try {
+            const res = await userStore.signup(payload)
+            if (res.code === '20000') {
+                router.push('/authentication/login')
+                setTimeout(() => {
+                    NueMessage.success('注册成功')
+                    loading.value = false
+                }, 256)
+            }
+        } catch (e) {
+            // @ts-ignore
+            NueMessage.error(`注册失败, ${e.message}`)
+            setTimeout(() => (loading.value = false), 128)
         }
     }
 }
