@@ -4,13 +4,9 @@
             <nue-text size="12px" color="gray">
                 "清单管理"能够清楚地展示出所有的清单，方便执行清单的增删改查。
             </nue-text>
-            <!-- <nue-div class="project-navigations">
-                <nue-link theme="btnlike,actived">看板</nue-link>
-                <nue-link theme="btnlike">列表</nue-link>
-            </nue-div> -->
             <nue-div align="center" justify="space-between">
                 <project-filter-bar :filter-info="filterInfo" @filter="handleFilter" />
-                <nue-div width="fit-content">
+                <nue-div width="fit-content" gap="12px">
                     <nue-button
                         theme="small,primary"
                         icon="plus-circle"
@@ -37,11 +33,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
     getProjects,
-    getProjectsWithNewFitlerOptions,
     createProject,
     handleArchiveProject,
     handleUnarchiveProject,
@@ -51,11 +46,8 @@ import {
 import { useProjectStore } from '@/stores'
 import { ProjectBoard, ProjectFilterBar, CreateProjectDialog } from '@/components/project'
 import type { Project, ProjectFilterOptions } from '@/stores'
-import { storeToRefs } from 'pinia'
 
 defineOptions({ name: 'ProjectManager' })
-// const props = defineProps<CreateProjectDialogProps>()
-// const emit = defineEmits<CreateProjectDialogEmits>()
 
 const route = useRoute()
 const router = useRouter()
@@ -95,11 +87,11 @@ const handleShowCreateProjectDialog = async () => {
 
 const archiveProject = async (projectId: Project['id']) => {
     const archiveResult = await handleArchiveProject(projectId)
+    init()
     if (archiveResult && archiveResult.code !== '20000') return
     const projectIdInRoute = route.params.projectId
     if (projectIdInRoute !== projectId) return
     router.push('/tasks/all')
-    init()
 }
 
 const unarchiveProject = async (projectId: Project['id']) => {
@@ -109,11 +101,11 @@ const unarchiveProject = async (projectId: Project['id']) => {
 
 const deleteProject = async (projectId: Project['id']) => {
     const archiveResult = await handleDeleteProject(projectId)
+    init()
     if (archiveResult && archiveResult.code !== '20000') return
     const projectIdInRoute = route.params.projectId
     if (projectIdInRoute !== projectId) return
     router.push('/tasks/all')
-    init()
 }
 
 const restoreProject = async (projectId: Project['id']) => {

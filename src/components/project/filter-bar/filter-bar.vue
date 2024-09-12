@@ -9,9 +9,12 @@
                 :debounce-time="360"
             />
         </nue-div>
-        <nue-text v-if="props.filterInfo.id" size="12px" color="gray">
-            Id: {{ props.filterInfo.id }}
-        </nue-text>
+        <nue-button size="small" :icon="archivedOnlyIconName" @click="handleIsArchived">
+            仅已归档
+        </nue-button>
+        <nue-button size="small" :icon="deletedOnlyIconName" @click="handleIsDeleted">
+            仅已删除
+        </nue-button>
         <nue-button v-if="isFiltering" theme="small" icon="clear" @click="handleResetFilter">
             重置
         </nue-button>
@@ -26,7 +29,15 @@ defineOptions({ name: 'TodoFilterBar' })
 const props = defineProps<ProjectFilterBarProps>()
 const emit = defineEmits<ProjectFilterBarEmits>()
 
-const { filterText, isFiltering, handleResetFilter } = useTodoFilterBar(props, emit)
+const {
+    filterText,
+    isFiltering,
+    archivedOnlyIconName,
+    deletedOnlyIconName,
+    handleResetFilter,
+    handleIsArchived,
+    handleIsDeleted
+} = useTodoFilterBar(props, emit)
 </script>
 
 <style scoped>

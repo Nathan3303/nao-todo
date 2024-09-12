@@ -1,12 +1,6 @@
 <template>
-    <nue-div
-        class="project-card"
-        vertical
-        theme="card"
-        @click="handleClick"
-        :data-actived="!project.isArchived && !project.isDeleted"
-    >
-        <nue-div vertical gap="4px" flex>
+    <nue-div class="project-card" theme="card" :data-actived="isActived" @click="handleClick">
+        <nue-div vertical gap="8px" flex>
             <nue-div align="center" justify="space-between">
                 <nue-text size="16px" :clamped="1">
                     {{ project.title }}
@@ -35,6 +29,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import type { ProjectCardProps, ProjectCardEmits } from './types'
 
@@ -43,6 +38,11 @@ const props = defineProps<ProjectCardProps>()
 const emit = defineEmits<ProjectCardEmits>()
 
 const router = useRouter()
+
+const isActived = computed(() => {
+    const { project } = props
+    return !project.isArchived && !project.isDeleted
+})
 
 const handleClick = () => {
     const { project, allowRoute } = props
