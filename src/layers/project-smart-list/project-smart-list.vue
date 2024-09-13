@@ -23,7 +23,7 @@
                 </nue-tooltip>
             </nue-div>
         </template>
-        
+
         <template v-if="projects && projects.length">
             <aside-link
                 v-for="project in projects"
@@ -63,9 +63,4 @@ const showCreateProjectDialog = () => {
 const showProjectManageDialog = () => {
     projectManagerRef.value?.show()
 }
-
 </script>
-
-<style scoped>
-@import url('./project-smart-list.css');
-</style>

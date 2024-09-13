@@ -1,4 +1,4 @@
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { naoTodoServer as $axios } from '@/axios'
 import type { Tag, TagFilterOptions } from './types'
@@ -163,6 +163,17 @@ export const useTagStore = defineStore('tagStore', () => {
         tags.value.push(newTag)
     }
 
+    const filterLocal = (filterOptions: TagFilterOptions) => {
+        const newTags: Tag[] = []
+        tags.value.forEach((tag) => {
+            const isMatched = Object.entries(filterOptions).every(([key, value]) => {
+                return tag[key as keyof Tag] === value
+            })
+            if (isMatched) newTags.push(tag)
+        })
+        return newTags
+    }
+
     // Getter which is pure function and from backend
 
     const toGetted = async (userId: Tag['userId']) => {
@@ -181,8 +192,28 @@ export const useTagStore = defineStore('tagStore', () => {
         return res as Tag | null
     }
 
+    // Other getters
+
+    const smartListData = computed(() => {
+        const filterOptions: TagFilterOptions = {
+            isDeleted: false,
+            page: 1,
+            limit: 99
+        }
+        const newTags: Tag[] = []
+        tags.value.forEach((tag) => {
+            const isMatched = Object.keys(filterOptions).every((key) => {
+                const value = filterOptions[key as keyof TagFilterOptions]
+                return tag[key as keyof Tag] === value
+            })
+            if (isMatched) newTags.push(tag)
+        })
+        return newTags
+    })
+
     return {
         tags,
+        smartListData,
         filterInfo,
         pageInfo,
         get,
@@ -195,6 +226,7 @@ export const useTagStore = defineStore('tagStore', () => {
         updateLocal,
         removeLocal,
         createLocal,
+        filterLocal,
         toGetted,
         toFinded,
         toFindedOne
