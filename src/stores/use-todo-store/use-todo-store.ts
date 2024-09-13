@@ -57,6 +57,16 @@ export const useTodoStore = defineStore('todoStore', () => {
         }
     }
 
+    const _updatingCompare = (todoId: Todo['id'], updateInfo: Partial<Todo>) => {
+        const targetIdx = findIndexLocal(todoId)
+        const target = todos.value[targetIdx]
+        const isNeedToUpdate = Object.keys(updateInfo).some((key) => {
+            const value = updateInfo[key as keyof Todo]
+            return target[key as keyof Todo] !== value
+        })
+        return { targetIdx, isNeedToUpdate }
+    }
+
     const _update = async (userId: User['id'], todoId: Todo['id'], updateInfo: Partial<Todo>) => {
         try {
             const URI = `/todo?userId=${userId}&todoId=${todoId}`
@@ -222,6 +232,7 @@ export const useTodoStore = defineStore('todoStore', () => {
         pageInfo,
         countInfo,
         mergeFilterInfo: _mergeFilterInfo,
+        updatingCompare: _updatingCompare,
         get,
         initialize,
         update,

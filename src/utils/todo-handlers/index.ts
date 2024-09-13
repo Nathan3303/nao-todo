@@ -66,6 +66,8 @@ export const createTodoWithPrompt = async (projectId: Project['id']) => {
 }
 
 export const updateTodo = async (todoId: Todo['id'], updateInfo: Partial<Todo>) => {
+    const { isNeedToUpdate } = todoStore.updatingCompare(todoId, updateInfo)
+    if (!isNeedToUpdate) return
     const userId = userStore.user!.id
     const res = await todoStore.update(userId, todoId, updateInfo)
     // console.log('[todoHandlers] updateTodo:', res)

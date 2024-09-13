@@ -58,9 +58,9 @@ import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { Loading, TodoFilterBar, ListColumnSwitcher } from '@/components'
 import { ContentKanbanColumn } from './kanban-column'
-import { useTodoStore, useUserStore, useViewStore } from '@/stores'
+import { useTodoStore, useUserStore } from '@/stores'
 import { NuePrompt } from 'nue-ui'
-import { removeTodoWithConfirm, restoreTodoWithConfirm } from '@/utils/todo-handlers'
+import { removeTodoWithConfirm, restoreTodoWithConfirm, updateTodo } from '@/utils/todo-handlers'
 import type { ContentKanbanProps, ContentKanbanEmits } from './types'
 import type { Columns } from '@/components'
 import type { Todo, TodoFilter } from '@/stores'
@@ -71,7 +71,6 @@ const emit = defineEmits<ContentKanbanEmits>()
 const router = useRouter()
 const userStore = useUserStore()
 const todoStore = useTodoStore()
-const viewStore = useViewStore()
 
 const { todos, countInfo, filterInfo } = storeToRefs(todoStore)
 const { user } = storeToRefs(userStore)
@@ -149,15 +148,15 @@ const handleRefresh = async () => {
     await handleGetTodos()
 }
 
-const handleDeleteTodo = async (todoId: Todo['id']) => {
-    const userId = user.value!.id
-    await todoStore.update(userId, todoId, { isDeleted: true })
-}
+// const handleDeleteTodo = async (todoId: Todo['id']) => {
+//     const userId = user.value!.id
+//     await todoStore.update(userId, todoId, { isDeleted: true })
+// }
 
-const handleRestoreTodo = async (todoId: Todo['id']) => {
-    const userId = user.value!.id
-    await todoStore.update(userId, todoId, { isDeleted: false })
-}
+// const handleRestoreTodo = async (todoId: Todo['id']) => {
+//     const userId = user.value!.id
+//     await todoStore.update(userId, todoId, { isDeleted: false })
+// }
 
 const handleFinishTodo = async (todoId: Todo['id']) => {
     const userId = user.value!.id
@@ -220,16 +219,14 @@ const handleDragEnd = () => {
     handleRemoveDragOverClass()
 }
 
-const handleDrop = (event: DragEvent) => {
+const handleDrop = async (event: DragEvent) => {
     handleRemoveDragOverClass()
     const element = getTargetNode(event.target as HTMLElement)
     if (!element) return
     const category = element.dataset.category as string
     if (!category) return
-    const userId = user.value!.id
     const todoId = draggingTodoId.value
-    const updateInfo = { state: category as Todo['state'] }
-    todoStore.update(userId, todoId, updateInfo)
+    await updateTodo(todoId, { state: category as Todo['state'] })
 }
 
 handleGetTodos()
