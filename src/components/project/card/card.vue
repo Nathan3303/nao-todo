@@ -10,7 +10,7 @@
                 </nue-div>
             </nue-div>
             <nue-text size="12px" color="gray" :clamped="3">
-                {{ project.description || '-' }}
+                {{ project.description || '无描述' }}
             </nue-text>
         </nue-div>
         <nue-text size="12px" color="gray">

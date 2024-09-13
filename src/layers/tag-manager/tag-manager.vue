@@ -5,6 +5,7 @@
                 "标签管理"能够清楚地展示出所有的标签，方便执行标签的增删改查。
             </nue-text>
             <nue-div align="center" justify="space-between">
+                <tag-filter-bar :filter-info="filterInfo" @filter="handleFilter" />
                 <nue-div width="fit-content" gap="12px">
                     <nue-button
                         theme="small,primary"
@@ -16,7 +17,14 @@
                     <nue-button theme="small" icon="refresh">刷新</nue-button>
                 </nue-div>
             </nue-div>
-            <nue-div class="tag-manager" vertical align="stretch"> </nue-div>
+            <nue-div class="tag-manager" vertical align="stretch">
+                <tag-board
+                    :tags="tags"
+                    :loading-state="loading"
+                    @delete="handleDeleteTag"
+                    @recolor="handleRecolorTag"
+                />
+            </nue-div>
         </nue-div>
     </nue-dialog>
     <create-tag-dialog ref="createTagDialogRef" :handler="handleCreateTag" />
@@ -25,9 +33,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { CreateTagDialog } from '@/components'
-import { createTag } from '@/utils/tag-handlers'
+import { CreateTagDialog, TagFilterBar, TagBoard } from '@/components'
+import { createTag, removeTagWithConfirm } from '@/utils/tag-handlers'
 import { useTagStore } from '@/stores'
+import { NueMessage } from 'nue-ui'
 import type { Tag, TagFilterOptions } from '@/stores'
 
 defineOptions({ name: 'TagManager' })
@@ -46,12 +55,37 @@ const showCreateTagDialog = () => {
     createTagDialogRef.value?.show()
 }
 
+const handleFilter = async (newFilterOptions: TagFilterOptions) => {
+    filterInfo.value = newFilterOptions
+    init()
+}
+
 const handleCreateTag = async (payload: any) => {
-    return await createTag(payload.name, payload.color)
+    const createResult = await createTag(payload.name, payload.color)
+    init()
+    return createResult
+}
+
+const handleRecolorTag = async (tagId: Tag['id']) => {
+    NueMessage.info('功能正在开发中...')
+}
+
+const init = () => {
+    const res = tagStore.filterLocal(filterInfo.value)
+    tags.value = res
 }
 
 const handleShowDialog = () => {
     visible.value = true
+    init()
+}
+
+const handleDeleteTag = async (tagId: Tag['id']) => {
+    const removeResult = await removeTagWithConfirm(tagId)
+    init()
+    if (removeResult && removeResult.code !== '20000') return
+    if (route.params.tagId !== tagId) return
+    router.push('/tasks/all')
 }
 
 defineExpose({

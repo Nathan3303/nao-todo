@@ -1,11 +1,14 @@
 .project-board {
+    --column-width: 240px;
+    --row-height: calc(var(--column-width) * 3 / 4);
+
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    grid-template-rows: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(var(--column-width), 1fr));
+    grid-template-rows: repeat(auto-fit, minmax(var(--row-height), 1fr));
     grid-gap: 12px;
+    flex: auto;
 
     .project-card {
-        /* max-width: 220px; */
-        min-height: 160px;
+        min-height: var(--row-height);
     }
 }

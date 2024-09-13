@@ -1,6 +1,6 @@
 <template>
-    <nue-dialog ref="dialogRef" v-model="visible" title="清单管理">
-        <nue-div vertical align="stretch">
+    <nue-dialog theme="project-manager" ref="dialogRef" v-model="visible" title="清单管理">
+        <nue-div class="project-manager">
             <nue-text size="12px" color="gray">
                 "清单管理"能够清楚地展示出所有的清单，方便执行清单的增删改查。
             </nue-text>
@@ -17,16 +17,14 @@
                     <nue-button theme="small" icon="refresh" @click="refresh"> 刷新 </nue-button>
                 </nue-div>
             </nue-div>
-            <nue-div class="project-manager" vertical align="stretch">
-                <project-board
-                    :projects="projects"
-                    :loading-state="loading"
-                    @archive-project="archiveProject"
-                    @unarchive-project="unarchiveProject"
-                    @delete-project="deleteProject"
-                    @restore-project="restoreProject"
-                />
-            </nue-div>
+            <project-board
+                :projects="projects"
+                :loading-state="loading"
+                @archive-project="archiveProject"
+                @unarchive-project="unarchiveProject"
+                @delete-project="deleteProject"
+                @restore-project="restoreProject"
+            />
         </nue-div>
     </nue-dialog>
     <create-project-dialog ref="createProjectDialogRef" :handler="createProject" />

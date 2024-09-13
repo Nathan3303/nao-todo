@@ -1,7 +1,7 @@
 import { ref, watch, computed } from 'vue'
-import type { ProjectFilterBarProps, ProjectFilterBarEmits, FilterOptions } from './types'
+import type { ProjectFilterBarProps, ProjectFilterBarEmits } from './types'
 
-export const useTodoFilterBar = (props: ProjectFilterBarProps, emit: ProjectFilterBarEmits) => {
+export const useProjectFilterBar = (props: ProjectFilterBarProps, emit: ProjectFilterBarEmits) => {
     const filterText = ref<string>(props.filterInfo?.title || '')
 
     const isFiltering = computed(() => {
@@ -55,7 +55,14 @@ export const useTodoFilterBar = (props: ProjectFilterBarProps, emit: ProjectFilt
     watch(
         () => filterText.value,
         (newValue) => {
-            emit('filter', { title: newValue })
+            const { filterInfo } = props
+            const newFilterInfo = { ...filterInfo }
+            if (newValue === '') {
+                delete newFilterInfo.title
+            } else {
+                Object.assign(newFilterInfo, { title: newValue })
+            }
+            emit('filter', newFilterInfo)
         }
     )
 

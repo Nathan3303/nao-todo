@@ -165,8 +165,14 @@ export const useTagStore = defineStore('tagStore', () => {
 
     const filterLocal = (filterOptions: TagFilterOptions) => {
         const newTags: Tag[] = []
+        if (Object.keys(filterOptions).length === 0) {
+            return tags.value
+        }
         tags.value.forEach((tag) => {
             const isMatched = Object.entries(filterOptions).every(([key, value]) => {
+                if (key === 'name') {
+                    return tag.name.includes(value as string)
+                }
                 return tag[key as keyof Tag] === value
             })
             if (isMatched) newTags.push(tag)

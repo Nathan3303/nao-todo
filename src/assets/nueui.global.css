@@ -27,6 +27,13 @@
     }
 }
 
+.nue-button--pure-icon {
+    --icon-size: 16px;
+    --icon-weight: normal;
+    cursor: pointer;
+    transition: all 0.16s;
+}
+
 .nue-link--disabled {
     opacity: 0.6;
     background-color: #f5f5f5;
@@ -66,6 +73,10 @@
         align-items: center;
         cursor: pointer;
     }
+}
+
+.nue-dropdown--project-manager {
+    overflow: hidden;
 }
 
 .nue-progress--line {

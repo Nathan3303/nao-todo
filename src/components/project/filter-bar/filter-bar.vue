@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { useTodoFilterBar } from './use-filter-bar'
+import { useProjectFilterBar } from './use-filter-bar'
 import type { ProjectFilterBarProps, ProjectFilterBarEmits } from './types'
 
 defineOptions({ name: 'TodoFilterBar' })
@@ -37,7 +37,7 @@ const {
     handleResetFilter,
     handleIsArchived,
     handleIsDeleted
-} = useTodoFilterBar(props, emit)
+} = useProjectFilterBar(props, emit)
 </script>
 
 <style scoped>
