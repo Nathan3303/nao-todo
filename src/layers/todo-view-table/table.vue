@@ -106,15 +106,21 @@ const columns = ref<Columns>(
         updatedAt: false
     }
 )
-const refreshTimer = ref<number | null>(null)
 const todoCreateDialogRef = ref<InstanceType<typeof TodoCreateDialog>>()
+let refreshTimer: number | null = null
+
+const handleInitTodos = async () => {
+    const { filterInfo } = props
+    tableLoading.value = true
+    await todoStore.initialize(user.value!.id, filterInfo)
+    tableLoading.value = false
+}
 
 const handleGetTodos = async () => {
     const { filterInfo } = props
     tableLoading.value = true
-    const res = await todoStore.get(user.value!.id, filterInfo)
+    await todoStore.get(user.value!.id, filterInfo)
     tableLoading.value = false
-    return res
 }
 
 const handleAddTodo = () => {
@@ -156,8 +162,7 @@ const handleFilter = async (newTodoFliter: TodoFilter) => {
 }
 
 const handleRefresh = async () => {
-    const userId = user.value!.id
-    await todoStore.get(userId)
+    await handleGetTodos()
 }
 
 const handleSortTodo = async (newSortInfo: TodoSortOptions) => {
@@ -167,5 +172,5 @@ const handleSortTodo = async (newSortInfo: TodoSortOptions) => {
     await todoStore.get(userId)
 }
 
-await todoStore.initialize(user.value!.id, props.filterInfo)
+handleInitTodos()
 </script>

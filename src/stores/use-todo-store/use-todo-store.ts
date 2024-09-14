@@ -46,17 +46,18 @@ export const useTodoStore = defineStore('todoStore', () => {
         filterInfo.value = {}
         pageInfo.page = 1
         pageInfo.limit = 20
-        sortInfo.field = 'createdAt'
-        sortInfo.order = 'desc'
+        sortInfo.field = ''
+        sortInfo.order = ''
     }
 
     const _get = async (userId: User['id'], specFilterInfo?: TodoFilter) => {
         try {
             const { page, limit } = pageInfo
-            const pageQueryString = `page=${page}&limit=${limit}`
-            const filterQueryString = _stringifyFilterInfo(specFilterInfo)
+            let URI = `/todos?userId=${userId}`
+            URI += `&page=${page}&limit=${limit}`
+            URI += '&' + _stringifyFilterInfo(specFilterInfo)
             const sortQueryString = _stringifySortInfo()
-            const URI = `/todos?userId=${userId}&${pageQueryString}&${filterQueryString}&${sortQueryString}`
+            URI += sortQueryString ? `&${sortQueryString}` : ''
             const {
                 data: { data, code }
             } = await $axios.get(URI)
