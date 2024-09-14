@@ -9,7 +9,7 @@
                             <tag-color-dot
                                 :color="tag.color"
                                 @click="emit('recolor', tag.id)"
-                                style="cursor: pointer"
+                                style="cursor: pointer; width: 13px"
                             />
                         </nue-tooltip>
                         <nue-tooltip size="small" content="删除标签">

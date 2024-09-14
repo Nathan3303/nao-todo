@@ -19,7 +19,24 @@ defineOptions({ name: 'TagColorSelector' })
 const props = defineProps<TagColorSelectorProps>()
 const emit = defineEmits<TagColorSelectorEmits>()
 
-const tagColors = ['#ff6161', '#ff9800', '#ffd324', '#4caf50', '#2196f3', '#9c27b0', '#673ab7']
+const tagColors = [
+    '#2196f3',
+    '#9c27b0',
+    '#673ab7',
+    '#3f51b5',
+    '#00bcd4',
+    '#009688',
+    '#8bc34a',
+    '#cddc39',
+    '#ffeb3b',
+    '#ffc107',
+    '#ff9800',
+    '#ff6161',
+    '#ff5722',
+    '#795548',
+    '#9e9e9e',
+    '#607d8b'
+]
 
 const selectedColor = computed({
     get() {

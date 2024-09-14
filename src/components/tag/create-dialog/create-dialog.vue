@@ -1,5 +1,5 @@
 <template>
-    <nue-dialog v-model="visible" title="创建标签">
+    <nue-dialog v-model="visible" title="创建标签" :closable="!loading">
         <nue-div vertical>
             <nue-div vertical align="stretch" gap="4px">
                 <nue-input
@@ -13,7 +13,7 @@
                     * 标签名称不能为空
                 </nue-text>
             </nue-div>
-            <nue-div align="center" gap="8px">
+            <nue-div vertical align="stretch" gap="8px">
                 <nue-text size="12px" color="gray">选择标签颜色：</nue-text>
                 <tag-color-selector v-model="newTag.color" />
             </nue-div>

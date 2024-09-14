@@ -1,5 +1,5 @@
 <template>
-    <nue-dialog ref="dialogRef" v-model="visible" title="创建项目">
+    <nue-dialog ref="dialogRef" v-model="visible" title="创建项目" :closable="!loading">
         <nue-div vertical align="stretch">
             <nue-div vertical align="stretch" gap="4px">
                 <nue-input

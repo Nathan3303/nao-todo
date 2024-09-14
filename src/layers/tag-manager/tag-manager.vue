@@ -28,12 +28,13 @@
         </nue-div>
     </nue-dialog>
     <create-tag-dialog ref="createTagDialogRef" :handler="handleCreateTag" />
+    <tag-color-select-dialog ref="tagColorSelectDialogRef" />
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { CreateTagDialog, TagFilterBar, TagBoard } from '@/components'
+import { CreateTagDialog, TagFilterBar, TagBoard, TagColorSelectDialog } from '@/components'
 import { createTag, removeTagWithConfirm } from '@/utils/tag-handlers'
 import { useTagStore } from '@/stores'
 import { NueMessage } from 'nue-ui'
@@ -48,6 +49,7 @@ const tagStore = useTagStore()
 const visible = ref(false)
 const loading = ref(false)
 const createTagDialogRef = ref<InstanceType<typeof CreateTagDialog>>()
+const tagColorSelectDialogRef = ref<InstanceType<typeof TagColorSelectDialog>>()
 const filterInfo = ref<TagFilterOptions>({})
 const tags = ref<Tag[]>([])
 
@@ -67,7 +69,8 @@ const handleCreateTag = async (payload: any) => {
 }
 
 const handleRecolorTag = async (tagId: Tag['id']) => {
-    NueMessage.info('功能正在开发中...')
+    // NueMessage.info('功能正在开发中...')
+    tagColorSelectDialogRef.value?.show(tagId)
 }
 
 const init = () => {
