@@ -112,7 +112,7 @@ const todoCreateDialogRef = ref<InstanceType<typeof TodoCreateDialog>>()
 const handleGetTodos = async () => {
     const { filterInfo } = props
     tableLoading.value = true
-    const res = await todoStore.initialize(user.value!.id, filterInfo)
+    const res = await todoStore.get(user.value!.id, filterInfo)
     tableLoading.value = false
     return res
 }
@@ -167,5 +167,5 @@ const handleSortTodo = async (newSortInfo: TodoSortOptions) => {
     await todoStore.get(userId)
 }
 
-handleGetTodos()
+await todoStore.initialize(user.value!.id, props.filterInfo)
 </script>

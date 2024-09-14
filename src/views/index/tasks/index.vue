@@ -27,18 +27,8 @@ const tagStore = useTagStore()
 
 const { projectAsideVisible: pav } = storeToRefs(viewStore)
 
-await projectStore.init(userStore.user!.id, {
-    // isDeleted: false,
-    // isArchived: false,
-    page: 1,
-    limit: 99
-})
-await tagStore.initialize(userStore.user!.id, {
-    isDeleted: false,
-    // isArchived: false,
-    page: 1,
-    limit: 99
-})
+await projectStore.init(userStore.user!.id, { page: 1, limit: 99 })
+await tagStore.initialize(userStore.user!.id, { page: 1, limit: 99 })
 useLoadingScreen().stopLoading()
 </script>
 

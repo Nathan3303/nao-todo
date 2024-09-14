@@ -1,5 +1,5 @@
 <template>
-    <nue-div class="todo-table" :data-simple="simple" :key="refreshKeyIdx">
+    <nue-div class="todo-table" :data-simple="simple">
         <nue-div class="todo-table__header" wrap="nowrap">
             <div class="todo-table__header__col col-name">
                 <order-button prop="name">名称</order-button>
@@ -70,7 +70,11 @@
                         {{ useRelativeDate(todo.updatedAt) }}
                     </nue-text>
                 </nue-div>
-                <nue-div class="todo-table__body__col col-end-at" v-if="columns.endAt">
+                <nue-div
+                    class="todo-table__body__col col-end-at"
+                    v-if="columns.endAt"
+                    :key="refreshKeyIdx"
+                >
                     <nue-text size="12px" :data-expired="isTodoExpired(todo)">
                         {{ useRelativeDate(todo.dueDate.endAt) }}
                     </nue-text>
@@ -98,7 +102,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, provide, watch, ref, onMounted, onBeforeMount } from 'vue'
+import { reactive, provide, watch, ref, onMounted, onBeforeUnmount } from 'vue'
 import { TodoPriorityInfo, TodoStateInfo, Empty } from '@/components'
 import { useTodoTable } from './use-table'
 import { useRelativeDate } from '@/hooks/use-relative-date'
@@ -146,7 +150,7 @@ onMounted(() => {
     refresh()
 })
 
-onBeforeMount(() => {
+onBeforeUnmount(() => {
     stopRefresh()
 })
 

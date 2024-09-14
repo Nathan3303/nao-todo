@@ -14,7 +14,7 @@
             </nue-text>
         </nue-div>
         <nue-text size="12px" color="gray">
-            清单状态：{{ project.isArchived ? '已归档' : project.isDeleted ? '已删除' : '正常' }}
+            清单状态：{{ project.isDeleted ? '已删除' : project.isArchived ? '已归档' : '正常' }}
         </nue-text>
         <nue-divider />
         <nue-div align="center" wrap="nowrap">

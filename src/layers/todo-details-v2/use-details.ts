@@ -19,7 +19,6 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
     const todoStore = useTodoStore()
     const eventStore = useEventStore()
 
-    const { projects } = storeToRefs(projectStore)
     const { events } = storeToRefs(eventStore)
     const shadowTodo = ref<Todo | undefined>()
     const loadingState = ref(false)
@@ -49,7 +48,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
             shadowTodo.value = void 0
             return
         }
-        let res = todoStore.findLocal(todoId)
+        let res = todoStore.toFilterLocal(todoId)
         if (!res) {
             isGetting.value = true
             res = await getTodo(todoId)
@@ -154,7 +153,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
 
     watch(
         () => route.params.taskId,
-        (newValue) => setTimeout(async () => await _getTodo(newValue as string), 256),
+        (newValue) => setTimeout(async () => await _getTodo(newValue as string)),
         { immediate: true }
     )
 

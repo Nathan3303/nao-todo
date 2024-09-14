@@ -29,6 +29,13 @@ export const useTodoStore = defineStore('todoStore', () => {
         return query.join('&')
     }
 
+    const _stringifySortInfo = (specSortInfo?: TodoSortOptions) => {
+        let { field, order } = specSortInfo || sortInfo
+        if (!field && !order) return ''
+        order = order || 'asc'
+        return `sort=${field}:${order}`
+    }
+
     const _mergeFilterInfo = (newOne: Partial<TodoFilter>) => {
         const newFilterInfo = { ...filterInfo.value, ...newOne }
         filterInfo.value = newFilterInfo
@@ -37,14 +44,18 @@ export const useTodoStore = defineStore('todoStore', () => {
     const _reset = () => {
         todos.value = []
         filterInfo.value = {}
+        pageInfo.page = 1
+        pageInfo.limit = 20
+        sortInfo.field = 'createdAt'
+        sortInfo.order = 'desc'
     }
 
     const _get = async (userId: User['id'], specFilterInfo?: TodoFilter) => {
         try {
             const { page, limit } = pageInfo
-            const filterQueryString = _stringifyFilterInfo(specFilterInfo)
             const pageQueryString = `page=${page}&limit=${limit}`
-            const sortQueryString = `sort=${sortInfo.field}:${sortInfo.order}`
+            const filterQueryString = _stringifyFilterInfo(specFilterInfo)
+            const sortQueryString = _stringifySortInfo()
             const URI = `/todos?userId=${userId}&${pageQueryString}&${filterQueryString}&${sortQueryString}`
             const {
                 data: { data, code }
@@ -60,6 +71,7 @@ export const useTodoStore = defineStore('todoStore', () => {
     const _updatingCompare = (todoId: Todo['id'], updateInfo: Partial<Todo>) => {
         const targetIdx = findIndexLocal(todoId)
         const target = todos.value[targetIdx]
+        console.log('[useTodoStore] _updatingCompare:', target, updateInfo)
         const isNeedToUpdate = Object.keys(updateInfo).some((key) => {
             const value = updateInfo[key as keyof Todo]
             return target[key as keyof Todo] !== value
@@ -163,6 +175,12 @@ export const useTodoStore = defineStore('todoStore', () => {
         return res as Todo | null
     }
 
+    const toFilterLocal = (todoId: Todo['id']) => {
+        const todo = findLocal(todoId)
+        if (!todo) return null
+        return { ...todo }
+    }
+
     const updateLocal = (todoId: Todo['id'], updateInfo: Partial<Todo>) => {
         const oldTodoIndex = findIndexLocal(todoId)
         const oldTodo = todos.value[oldTodoIndex]
@@ -240,6 +258,7 @@ export const useTodoStore = defineStore('todoStore', () => {
         create,
         findIndexLocal,
         findLocal,
+        toFilterLocal,
         updateLocal,
         removeLocal,
         createLocal,

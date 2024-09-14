@@ -60,7 +60,11 @@ import { Loading, TodoFilterBar, ListColumnSwitcher } from '@/components'
 import { ContentKanbanColumn } from './kanban-column'
 import { useTodoStore, useUserStore } from '@/stores'
 import { NuePrompt } from 'nue-ui'
-import { removeTodoWithConfirm, restoreTodoWithConfirm, updateTodo } from '@/utils/todo-handlers'
+import {
+    removeTodoWithConfirm,
+    restoreTodoWithConfirm,
+    updateTodoWithCompare
+} from '@/utils/todo-handlers'
 import type { ContentKanbanProps, ContentKanbanEmits } from './types'
 import type { Columns } from '@/components'
 import type { Todo, TodoFilter } from '@/stores'
@@ -148,16 +152,6 @@ const handleRefresh = async () => {
     await handleGetTodos()
 }
 
-// const handleDeleteTodo = async (todoId: Todo['id']) => {
-//     const userId = user.value!.id
-//     await todoStore.update(userId, todoId, { isDeleted: true })
-// }
-
-// const handleRestoreTodo = async (todoId: Todo['id']) => {
-//     const userId = user.value!.id
-//     await todoStore.update(userId, todoId, { isDeleted: false })
-// }
-
 const handleFinishTodo = async (todoId: Todo['id']) => {
     const userId = user.value!.id
     await todoStore.update(userId, todoId, { state: 'done', isDone: true })
@@ -226,7 +220,7 @@ const handleDrop = async (event: DragEvent) => {
     const category = element.dataset.category as string
     if (!category) return
     const todoId = draggingTodoId.value
-    await updateTodo(todoId, { state: category as Todo['state'] })
+    await updateTodoWithCompare(todoId, { state: category as Todo['state'] })
 }
 
 handleGetTodos()
