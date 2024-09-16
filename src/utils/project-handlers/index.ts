@@ -13,10 +13,11 @@ export const _handleUpdateProject = async (
 ) => {
     try {
         const userId = userStore.user!.id
+        const targetProject = projectStore._toFinded(projectId)
         const res = await projectStore.update(userId, projectId, updateInfo)
         if (res.code === '20000') {
             projectStore._update(projectId, updateInfo)
-            if (onSuccess) onSuccess(res.data)
+            if (onSuccess) onSuccess({ _target: targetProject, response: res })
         } else {
             if (onFailed) onFailed(res.message)
         }
@@ -28,9 +29,22 @@ export const _handleUpdateProject = async (
 
 // Standards
 
+export const toGettedProjects = async (filterOptions?: ProjectFilterOptions) => {
+    const userId = userStore.user!.id
+    const getResult = await projectStore.toGetted(userId, filterOptions)
+    if (getResult.code !== '20000') return []
+    return getResult.data
+}
+
 export const getProjects = async (filterOptions: ProjectFilterOptions) => {
     const userId = userStore.user!.id
     await projectStore.init(userId, filterOptions)
+}
+
+export const getProjectsWithNewFitlerOptions = async (newFilterOptions: ProjectFilterOptions) => {
+    const userId = userStore.user!.id
+    projectStore.mergeFilterInfo(newFilterOptions)
+    await projectStore.get(userId)
 }
 
 export const createProject = async (createOptions: ProjectCreateOptions) => {
@@ -43,7 +57,7 @@ export const createProject = async (createOptions: ProjectCreateOptions) => {
         }
         return res
     } catch (e) {
-        NueMessage.info('操作取消')
+        console.log('[ProjectHandler] Create project failed:', e)
     }
 }
 
@@ -62,7 +76,7 @@ export const handleArchiveProject = async (projectId: Project['id']) => {
             (err) => NueMessage.error('清单归档失败' + `(${err})`)
         )
     } catch (e) {
-        NueMessage.info('操作取消')
+        console.log('[ProjectHandler] Archive project failed:', e)
     }
 }
 
@@ -81,7 +95,7 @@ export const handleUnarchiveProject = async (projectId: Project['id']) => {
             (err) => NueMessage.error('清单取消归档失败' + `(${err})`)
         )
     } catch (e) {
-        NueMessage.info('操作取消')
+        console.log('[ProjectHandler] Unarchive project failed:', e)
     }
 }
 
@@ -96,14 +110,11 @@ export const handleDeleteProject = async (projectId: Project['id']) => {
         return _handleUpdateProject(
             projectId,
             { isDeleted: true },
-            () => {
-                projectStore._remove(projectId)
-                NueMessage.success('清单删除成功')
-            },
+            () => NueMessage.success('清单删除成功'),
             (err) => NueMessage.error('清单删除失败' + `(${err})`)
         )
     } catch (e) {
-        NueMessage.info('操作取消')
+        console.log('[ProjectHandler] Delete project failed:', e)
     }
 }
 
@@ -122,7 +133,7 @@ export const handleRestoreProject = async (projectId: Project['id']) => {
             (err) => NueMessage.error('清单恢复失败' + `(${err})`)
         )
     } catch (e) {
-        NueMessage.info('操作取消')
+        console.log('[ProjectHandler] Restore project failed:', e)
     }
 }
 
@@ -145,7 +156,7 @@ export const handleRenameProject = async (projectId: Project['id'], name: Projec
             (err) => NueMessage.error('清单名称修改失败' + `(${err})`)
         )
     } catch (e) {
-        NueMessage.info('操作取消')
+        console.log('[ProjectHandler] Rename project failed:', e)
     }
 }
 
@@ -172,6 +183,6 @@ export const handleRedescProject = async (
             (err) => NueMessage.error('清单描述修改失败' + `(${err})`)
         )
     } catch (e) {
-        NueMessage.info('操作取消')
+        console.log('[ProjectHandler] Redesc project failed:', e)
     }
 }

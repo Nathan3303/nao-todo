@@ -1,17 +1,17 @@
 <template>
-    <content-table
+    <todo-view-table
         :filter-info="filterInfo"
         base-route="tasks-today-table"
         @create-todo="handleCreateTodo"
         @create-todo-by-dialog="handleCreateTodoByDialog"
-    ></content-table>
+    ></todo-view-table>
     <suspense>
         <router-view></router-view>
     </suspense>
 </template>
 
 <script setup lang="ts">
-import { ContentTable } from '@/layers/index'
+import { TodoViewTable } from '@/layers'
 import { createTodoWithOptions } from '@/utils'
 import { useUserStore, useTagStore, useProjectStore } from '@/stores'
 import moment from 'moment'

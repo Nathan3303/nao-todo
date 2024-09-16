@@ -76,6 +76,10 @@
                 &:deep(.nue-text) {
                     color: gray;
                     font-size: 12px;
+
+                    &[data-expired='true'] {
+                        color: rgb(224, 86, 86);
+                    }
                 }
 
                 &.col-actions .nue-icon {
@@ -118,15 +122,15 @@
         line-height: 21px;
     }
     .col-priority {
-        width: 60px;
+        width: 54px;
         line-height: 21px;
     }
     .col-state {
-        width: 80px;
+        width: 72px;
         line-height: 21px;
     }
     .col-project {
-        width: 100px;
+        width: 84px;
         line-height: 21px;
     }
     .col-actions {
@@ -147,6 +151,14 @@
             &:hover {
                 border-color: transparent;
             }
+        }
+    }
+
+    .todo-table__body__row[data-done='true'] {
+        opacity: 0.6;
+
+        .col-name {
+            text-decoration: line-through;
         }
     }
 }

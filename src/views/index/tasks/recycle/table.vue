@@ -1,16 +1,16 @@
 <template>
-    <content-table
+    <todo-view-table
         :filter-info="filterInfo"
         base-route="tasks-recycle-table"
         disabled-create-todo
-    ></content-table>
+    ></todo-view-table>
     <suspense>
         <router-view></router-view>
     </suspense>
 </template>
 
 <script setup lang="ts">
-import { ContentTable } from '@/layers/index'
+import { TodoViewTable } from '@/layers'
 import type { TodoFilter } from '@/stores'
 
 const filterInfo: TodoFilter = {

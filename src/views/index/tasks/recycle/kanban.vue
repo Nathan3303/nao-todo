@@ -1,16 +1,16 @@
 <template>
-    <content-kanban
+    <todo-view-kanban
         :filter-info="filterInfo"
         base-route="tasks-recycle-kanban"
         disabled-create-todo
-    ></content-kanban>
+    ></todo-view-kanban>
     <suspense>
         <router-view></router-view>
     </suspense>
 </template>
 
 <script setup lang="ts">
-import { ContentKanban } from '@/layers/index'
+import { TodoViewKanban } from '@/layers'
 import type { TodoFilter } from '@/stores'
 
 const filterInfo: TodoFilter = {

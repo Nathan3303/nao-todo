@@ -1,6 +1,6 @@
 <template>
     <nue-container id="global" class="app-container">
-        <index-header-layer></index-header-layer>
+        <index-header></index-header>
         <suspense>
             <router-view></router-view>
         </suspense>
@@ -8,5 +8,5 @@
 </template>
 
 <script setup lang="ts">
-import { IndexHeaderLayer } from '@/layers/index'
+import { IndexHeader } from '@/layers'
 </script>

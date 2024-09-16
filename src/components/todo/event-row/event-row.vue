@@ -2,19 +2,21 @@
     <nue-div class="todo-event-row">
         <nue-icon
             class="todo-event-row__check-icon"
-            :name="iconName"
+            :name="updateLoading ? 'loading' : iconName"
+            :spin="updateLoading"
             size="16px"
             @click="handleUpdate(true)"
-        ></nue-icon>
+        />
         <nue-input
             :key="event.id"
             theme="small,noshape"
             v-model="inputValue"
-            @blur="handleUpdate(false)"
             :data-is-done="event.isDone"
-        ></nue-input>
+            :disabled="updateLoading"
+            @blur="handleUpdate(false)"
+        />
         <nue-div class="todo-event-row__actions">
-            <nue-icon name="delete" color="red" @click="handleDelete"></nue-icon>
+            <nue-icon name="delete" :color="updateLoading ? 'gray' : 'red'" @click="handleDelete" />
         </nue-div>
     </nue-div>
 </template>
@@ -28,22 +30,39 @@ const props = defineProps<TodoEventRowProps>()
 const emit = defineEmits<TodoEventRowEmits>()
 
 const inputValue = ref(props.event.title)
+const updateLoading = ref(false)
 
 const iconName = computed(() => {
     return props.event.isDone ? 'square-check-fill' : 'square'
 })
 
-const handleUpdate = (updateIsDone = false) => {
+const handleUpdate = async (updateIsDone = false) => {
     const { id, title, isDone } = props.event
     if (title === inputValue.value && !updateIsDone) return
+    if (updateLoading.value) return
     const _n_isDone = updateIsDone ? !isDone : isDone
     const payload = { id, title: inputValue.value, isDone: _n_isDone }
-    emit('update', payload)
+    const { onUpdate } = props
+    if (onUpdate) {
+        updateLoading.value = true
+        await onUpdate(payload)
+        updateLoading.value = false
+    } else {
+        emit('update', payload)
+    }
 }
 
-const handleDelete = () => {
+const handleDelete = async () => {
     const { id } = props.event
-    emit('delete', id)
+    if (updateLoading.value) return
+    const { onDelete } = props
+    if (onDelete) {
+        updateLoading.value = true
+        await onDelete(id)
+        updateLoading.value = false
+    } else {
+        emit('delete', id)
+    }
 }
 </script>
 

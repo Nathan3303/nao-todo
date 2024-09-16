@@ -7,18 +7,19 @@
                 placeholder="筛选任务"
                 icon="filter"
                 :debounce-time="360"
-            ></nue-input>
+                clearable
+            />
         </nue-div>
         <combo-box
             trigger-title="状态"
             :framework="stateComboBoxOptions"
             @change="handleChangeStatusOption"
-        ></combo-box>
+        />
         <combo-box
             trigger-title="优先级"
             :framework="priorityComboBoxOptions"
             @change="handleChangePriorityOption"
-        ></combo-box>
+        />
         <nue-text v-if="props.filterInfo.id" size="12px" color="gray">
             Id: {{ props.filterInfo.id }}
         </nue-text>
@@ -33,7 +34,7 @@ import { ComboBox } from '@/components/general'
 import { useTodoFilterBar } from './use-filter-bar'
 import type { TodoFilterBarProps, TodoFilterBarEmits } from './types'
 
-defineOptions({ name: 'TodoFilterBar' })
+defineOptions({ name: 'ProjectFilterBar' })
 const props = defineProps<TodoFilterBarProps>()
 const emit = defineEmits<TodoFilterBarEmits>()
 

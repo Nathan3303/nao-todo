@@ -12,8 +12,8 @@ export type Tag = {
 }
 
 export type PageInfo = {
-    page: 1
-    limit: 10
+    page: number
+    limit: number
 }
 
 export type TagFilterOptions = Partial<Tag> & Partial<PageInfo>

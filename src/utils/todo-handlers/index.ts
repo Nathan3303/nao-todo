@@ -16,7 +16,8 @@ export const getTodo = async (todoId: Todo['id']) => {
     const userId = userStore.user!.id
     const res = await todoStore.toFindedOne(userId, todoId)
     // console.log('[todoHandlers] getTodo:', res)
-    return res as Todo | null
+    if (!res) return null
+    return { ...res } as Todo
 }
 
 export const createTodo = async (
@@ -75,6 +76,12 @@ export const updateTodo = async (todoId: Todo['id'], updateInfo: Partial<Todo>) 
         NueMessage.error('更新失败')
     }
     return res
+}
+
+export const updateTodoWithCompare = async (todoId: Todo['id'], updateInfo: Partial<Todo>) => {
+    const { isNeedToUpdate } = todoStore.updatingCompare(todoId, updateInfo)
+    if (!isNeedToUpdate) return
+    return await updateTodo(todoId, updateInfo)
 }
 
 // Extends

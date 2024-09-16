@@ -1,6 +1,6 @@
 <template>
     <nue-container class="tasks-project-view tasks-sub-view">
-        <content-header :title="project?.title" :project="project">
+        <todo-view-header :title="project?.title" :project="project">
             <template #subTitle>
                 {{ project?.description }}
             </template>
@@ -12,7 +12,7 @@
                     任务看板
                 </nue-link>
             </template>
-        </content-header>
+        </todo-view-header>
         <nue-main>
             <router-view></router-view>
         </nue-main>
@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ContentHeader } from '@/layers/index'
+import { TodoViewHeader } from '@/layers'
 import { useProjectStore } from '@/stores'
 import type { Project } from '@/stores'
 

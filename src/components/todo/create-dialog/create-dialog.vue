@@ -17,6 +17,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import TodoCreator from '../creator/creator.vue'
+import { NueMessage } from 'nue-ui'
 import type { TodoCreateDialogProps, TodoCreateDialogEmits, TodoCreateDialogArgs } from './types'
 
 defineOptions({ name: 'TodoCreateDialog' })
@@ -34,10 +35,20 @@ const todoCreatorRef = ref<InstanceType<typeof TodoCreator>>()
 const confirm = async () => {
     const { handler } = props
     const newTodo = { ...todoCreatorRef.value?.todoData }
+    if (!newTodo.name) {
+        NueMessage.error('待办事项名称不能为空')
+        return
+    }
     loading.value = true
-    await handler(newTodo)
-    loading.value = false
-    visible.value = false
+    try {
+        const res = await handler(newTodo)
+        if (!res) throw new Error('Create todo failed')
+        visible.value = false
+    } catch (e) {
+        console.warn('[CreateTodoDialog] confirm error:', e)
+    } finally {
+        loading.value = false
+    }
 }
 
 const show = (args: TodoCreateDialogArgs) => {

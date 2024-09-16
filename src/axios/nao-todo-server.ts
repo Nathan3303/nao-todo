@@ -18,7 +18,7 @@ axiosInstance.interceptors.request.use((config) => {
 axiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {
-        NueMessage.error(error)
+        NueMessage.error('网络错误，请稍后再试')
         return Promise.reject(error)
     }
 )

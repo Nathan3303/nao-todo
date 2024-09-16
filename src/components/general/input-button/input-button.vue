@@ -5,6 +5,7 @@
         :size="size"
         @click="handleClick"
         :theme="theme || buttonTheme"
+        style="gap: 8px"
     >
         {{ buttonText }}
     </nue-button>
@@ -12,32 +13,36 @@
         wrap="nowrap"
         v-show="isInput"
         align="center"
-        gap="4px"
+        gap="6px"
+        style="padding-left: 2px"
         @keydown.enter.prevent="handleKeydown"
     >
+        <nue-icon size="14px" :name="loading ? 'loading' : icon" :spin="loading" />
         <nue-input
             ref="inputRef"
             v-model="inputValue"
             :placeholder="buttonText"
             :size="size"
-            :icon="icon"
             :theme="theme || inputTheme"
-            @blur="handleBlur"
+            :disabled="loading"
             style="flex: 1"
-        ></nue-input>
+            @blur="handleBlur"
+        />
         <template v-if="!submitOnBlur">
             <nue-button
                 icon="check"
-                @click="handleSubmit"
                 :theme="theme || buttonTheme"
                 :size="size"
-            ></nue-button>
+                :disabled="loading"
+                @click="handleSubmit"
+            />
             <nue-button
                 icon="clear"
-                @click="handleCancel"
                 :theme="theme || buttonTheme"
                 :size="size"
-            ></nue-button>
+                :disabled="loading"
+                @click="handleCancel"
+            />
         </template>
     </nue-div>
 </template>
@@ -50,7 +55,6 @@ import { NueInput } from 'nue-ui'
 defineOptions({ name: 'InputButton' })
 const props = withDefaults(defineProps<InputButtonProps>(), {
     buttonText: 'Click to input text',
-    icon: 'write',
     size: 'small',
     submitOnBlur: true,
     onButtonClick: () => {}
@@ -60,6 +64,7 @@ const emit = defineEmits<InputButtonEmits>()
 const isInput = ref(false)
 const inputValue = ref('')
 const inputRef = ref<InstanceType<typeof NueInput>>()
+const loading = ref(false)
 
 const handleClick = async (event: MouseEvent) => {
     const { onButtonClick } = props
@@ -77,11 +82,19 @@ const handleBlur = () => {
     }
 }
 
-const handleSubmit = (cancelOnSubmitted = false) => {
+const handleSubmit = async (cancelOnSubmitted = false) => {
     const value = inputValue.value.trim()
     if (value !== '') {
-        emit('submit', { value })
+        const { onSubmit } = props
+        if (onSubmit) {
+            loading.value = true
+            await onSubmit({ value })
+            loading.value = false
+        } else {
+            emit('submit', { value })
+        }
         inputValue.value = ''
+        nextTick(() => inputRef.value?.innerInputRef?.focus())
     }
     if (cancelOnSubmitted) {
         handleCancel()

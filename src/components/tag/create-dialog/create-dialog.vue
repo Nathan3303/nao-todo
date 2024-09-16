@@ -1,5 +1,5 @@
 <template>
-    <nue-dialog v-model="visible" title="创建标签">
+    <nue-dialog v-model="visible" title="创建标签" :closable="!loading">
         <nue-div vertical>
             <nue-div vertical align="stretch" gap="4px">
                 <nue-input
@@ -13,15 +13,9 @@
                     * 标签名称不能为空
                 </nue-text>
             </nue-div>
-            <nue-div align="center">
+            <nue-div vertical align="stretch" gap="8px">
                 <nue-text size="12px" color="gray">选择标签颜色：</nue-text>
-                <tag-color-dot
-                    v-for="color in tagColors"
-                    :key="color"
-                    :color="color"
-                    :class="{ selected: newTag.color === color }"
-                    @click="handleSelectColor(color)"
-                />
+                <tag-color-selector v-model="newTag.color" />
             </nue-div>
         </nue-div>
         <template #footer="{ cancel }">
@@ -36,7 +30,7 @@
 <script setup lang="ts">
 import { ref, nextTick } from 'vue'
 import { NueInput } from 'nue-ui'
-import { TagColorDot } from '@/components'
+import { TagColorSelector } from '@/components'
 import type { CreateTagDialogProps, CreateTagDialogEmits, CreateTagPayload } from './types'
 
 defineOptions({ name: 'CreateTagDialog' })
@@ -46,8 +40,7 @@ const emit = defineEmits<CreateTagDialogEmits>()
 const visible = ref(false)
 const loading = ref(false)
 const isTagNameEmpty = ref(false)
-const tagColors = ['#ff6161', '#ff9800', '#ffd324', '#4caf50', '#2196f3', '#9c27b0', '#673ab7']
-const newTag = ref<CreateTagPayload>({ name: '', color: tagColors[0] })
+const newTag = ref<CreateTagPayload>({ name: '', color: '' })
 const tagNameInputRef = ref<InstanceType<typeof NueInput>>()
 
 const showCreateTagDialog = () => {
@@ -64,20 +57,20 @@ const handleCreateTag = async () => {
         return
     }
     loading.value = true
-    const response = await handler({ ...newTag.value })
-    if (response) {
+    try {
+        const response = await handler({ ...newTag.value })
+        if (!response) return
         visible.value = false
         handleClearInputValues()
+    } catch (e) {
+        console.warn('[CreateProjectDialog] confirm error:', e)
+    } finally {
+        loading.value = false
     }
-    loading.value = false
-}
-
-const handleSelectColor = (color: string) => {
-    newTag.value.color = color
 }
 
 const handleClearInputValues = () => {
-    newTag.value = { name: '', color: tagColors[0] }
+    newTag.value = { name: '', color: '' }
 }
 
 defineExpose({
@@ -85,7 +78,3 @@ defineExpose({
     clear: handleClearInputValues
 })
 </script>
-
-<style scoped>
-@import url('./create-dialog.css');
-</style>

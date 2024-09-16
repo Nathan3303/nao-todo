@@ -62,7 +62,7 @@ export const useEventStore = defineStore('eventStore', () => {
                 data: { data, code }
             } = await $axios.put(URI, updateInfo)
             const res = code === '20000' ? data : null
-            console.log('[EventStore] _update:', URI, updateInfo, res)
+            // console.log('[EventStore] _update:', URI, updateInfo, res)
             return res
         } catch (e) {
             console.warn('[EventStore] _update:', e)
@@ -88,7 +88,7 @@ export const useEventStore = defineStore('eventStore', () => {
                 data: { data, code }
             } = await $axios.post('/event', createInfo)
             const res = code === '20000' ? data : null
-            console.log('[EventStore] _create:', createInfo, res)
+            // console.log('[EventStore] _create:', createInfo, res)
             return res
         } catch (e) {
             console.warn('[EventStore] _create:', e)

@@ -1,4 +1,4 @@
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { naoTodoServer as $axios } from '@/axios'
 import type { User } from '@/stores'
@@ -38,7 +38,7 @@ export const useProjectStore = defineStore('projectStore', () => {
     }
 
     const reset = () => {
-        projects.value = []
+        // projects.value = []
         filterInfo.value = {}
     }
 
@@ -97,7 +97,8 @@ export const useProjectStore = defineStore('projectStore', () => {
 
     const _remove = (id: Project['id']) => {
         const idx = projects.value.findIndex((project) => project.id === id)
-        projects.value.splice(idx, 1)
+        if (idx === -1) return null
+        return projects.value.splice(idx, 1)
     }
 
     const _update = (id: Project['id'], updateOptions: ProjectUpdateOptions) => {
@@ -118,17 +119,35 @@ export const useProjectStore = defineStore('projectStore', () => {
             const keys = Object.keys(filterOptions)
             return keys.every((key) => {
                 const value = filterOptions[key as keyof ProjectFilterOptions]
+                if (key === 'title') {
+                    return project['title'] && project['title'].includes(value as string)
+                }
                 return project[key as keyof Project] === value
             })
         })
         return newProjects
     }
 
+    const smartListData = computed(() => {
+        const newProjects: Project[] = []
+        const filterOptions = { isDeleted: false, isArchived: false } as ProjectFilterOptions
+        projects.value.forEach((project) => {
+            const isMatched = Object.keys(filterOptions).every((key) => {
+                const value = filterOptions[key as keyof ProjectFilterOptions]
+                return project[key as keyof Project] === value
+            })
+            if (isMatched) newProjects.push(project)
+        })
+        return newProjects
+    })
+
     return {
         project,
         projects,
         filterInfo,
         pageInfo,
+        smartListData,
+        mergeFilterInfo,
         init,
         get,
         create,
