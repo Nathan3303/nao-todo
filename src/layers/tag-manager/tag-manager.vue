@@ -37,7 +37,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { CreateTagDialog, TagFilterBar, TagBoard, TagColorSelectDialog } from '@/components'
 import { createTag, removeTagWithConfirm } from '@/utils/tag-handlers'
 import { useTagStore } from '@/stores'
-import { NueMessage } from 'nue-ui'
 import type { Tag, TagFilterOptions } from '@/stores'
 
 defineOptions({ name: 'TagManager' })
@@ -69,7 +68,6 @@ const handleCreateTag = async (payload: any) => {
 }
 
 const handleRecolorTag = async (tagId: Tag['id']) => {
-    // NueMessage.info('功能正在开发中...')
     tagColorSelectDialogRef.value?.show(tagId)
 }
 
@@ -86,7 +84,8 @@ const handleShowDialog = () => {
 const handleDeleteTag = async (tagId: Tag['id']) => {
     const removeResult = await removeTagWithConfirm(tagId)
     init()
-    if (removeResult && removeResult.code !== '20000') return
+    console.log(removeResult)
+    if (removeResult && removeResult._id !== tagId) return
     if (route.params.tagId !== tagId) return
     router.push('/tasks/all')
 }

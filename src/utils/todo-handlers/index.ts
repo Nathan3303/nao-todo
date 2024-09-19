@@ -27,11 +27,13 @@ export const createTodo = async (
     const userId = userStore.user!.id
     projectId = projectId || userId
     const res = await todoStore.create(userId, { projectId, name: todoName })
-    if (res) {
-        NueMessage.success('创建成功')
-    } else {
-        NueMessage.error('创建失败')
-    }
+    requestIdleCallback(() => {
+        if (res) {
+            NueMessage.success('创建成功')
+        } else {
+            NueMessage.error('创建失败')
+        }
+    })
     return res
 }
 
@@ -44,11 +46,13 @@ export const createTodoWithOptions = async (
     createOptions = { ...createOptions, projectId }
     const res = await todoStore.create(userId, createOptions)
     // console.log(createOptions)
-    if (res) {
-        NueMessage.success('创建成功')
-    } else {
-        NueMessage.error('创建失败')
-    }
+    requestIdleCallback(() => {
+        if (res) {
+            NueMessage.success('创建成功')
+        } else {
+            NueMessage.error('创建失败')
+        }
+    })
     return res
 }
 
@@ -70,11 +74,13 @@ export const updateTodo = async (todoId: Todo['id'], updateInfo: Partial<Todo>) 
     const userId = userStore.user!.id
     const res = await todoStore.update(userId, todoId, updateInfo)
     // console.log('[todoHandlers] updateTodo:', res)
-    if (res) {
-        NueMessage.success('更新成功')
-    } else {
-        NueMessage.error('更新失败')
-    }
+    requestIdleCallback(() => {
+        if (res) {
+            NueMessage.success('更新成功')
+        } else {
+            NueMessage.error('更新失败')
+        }
+    })
     return res
 }
 
@@ -97,11 +103,12 @@ export const removeTodoWithConfirm = async (todoId: Todo['id']) => {
         title: '删除待办事项',
         content: '确定要删除该待办事项吗？',
         confirmButtonText: '删除',
-        cancelButtonText: '取消'
-    }).then(async () => {
-        // console.log('[todoHandlers] removeTodoWithConfirm:', todoId)
-        return await removeTodo(todoId)
-    })
+        cancelButtonText: '取消',
+        onConfirm: async () => await removeTodo(todoId)
+    }).then(
+        (res) => res,
+        (err) => err
+    )
 }
 
 export const restoreTodo = async (todoId: Todo['id']) => {
@@ -115,11 +122,12 @@ export const restoreTodoWithConfirm = async (todoId: Todo['id']) => {
         title: '恢复待办事项',
         content: '确定要恢复该待办事项吗？',
         confirmButtonText: '恢复',
-        cancelButtonText: '取消'
-    }).then(async () => {
-        // console.log('[todoHandlers] restoreTodoWithConfirm:', todoId)
-        await restoreTodo(todoId)
-    })
+        cancelButtonText: '取消',
+        onConfirm: async () => await restoreTodo(todoId)
+    }).then(
+        (res) => res,
+        (err) => err
+    )
 }
 
 export const finishTodo = async (todoId: Todo['id']) => {

@@ -61,10 +61,13 @@ async function handleSubmit(payload: SubmitPayload) {
                 setTimeout(() => {
                     NueMessage.success('登录成功')
                 }, 256)
+            } else {
+                NueMessage.error(res.message)
+                loading.value = false
             }
         } catch (e) {
             NueMessage.error('登录失败')
-            setTimeout(() => (loading.value = false), 128)
+            requestIdleCallback(() => (loading.value = false))
         }
     } else {
         try {
@@ -75,11 +78,13 @@ async function handleSubmit(payload: SubmitPayload) {
                     NueMessage.success('注册成功')
                     loading.value = false
                 }, 256)
+            } else {
+                NueMessage.error(res.message)
+                loading.value = false
             }
         } catch (e) {
-            // @ts-ignore
-            NueMessage.error(`注册失败, ${e.message}`)
-            setTimeout(() => (loading.value = false), 128)
+            NueMessage.error(`注册失败, ${(e as Error).message}`)
+            requestIdleCallback(() => (loading.value = false))
         }
     }
 }

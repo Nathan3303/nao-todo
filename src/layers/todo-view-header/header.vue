@@ -100,9 +100,9 @@ import { useViewStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import {
-    handleRenameProject,
-    handleRedescProject,
-    handleDeleteProject
+    renameProjectWithPrompt,
+    redescProjectWithPrompt,
+    deleteProjectWithConfirm
 } from '@/utils/project-handlers'
 import { removeTagWithConfirm, renameTagWithPrompt } from '@/utils/tag-handlers'
 import type { ContentHeaderProps } from './types'
@@ -126,20 +126,20 @@ const renameProject = () => {
     if (!props.project) return
     const projectId = props.project?.id
     const projectName = props.project?.title
-    handleRenameProject(projectId, projectName)
+    renameProjectWithPrompt(projectId, projectName)
 }
 
 const redescProject = () => {
     if (!props.project) return
     const projectId = props.project?.id
     const projectDescription = props.project?.description
-    handleRedescProject(projectId, projectDescription)
+    redescProjectWithPrompt(projectId, projectDescription)
 }
 
 const deleteProject = async () => {
     const projectId = props.project?.id
     if (!projectId) return
-    const deleteResult = await handleDeleteProject(projectId)
+    const deleteResult = await deleteProjectWithConfirm(projectId)
     if (deleteResult.code === '20000') {
         router.push('/tasks/all')
     }
