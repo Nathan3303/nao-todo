@@ -79,6 +79,10 @@
     overflow: hidden;
 }
 
+.nue-dialog--update-log {
+    --dialog-width: 50%;
+}
+
 .nue-progress--line {
     .nue-progress__inner-bar {
         padding: 0px !important;

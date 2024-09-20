@@ -8,18 +8,21 @@
                 <nue-link theme="btnlike,plink" icon="calendar2" disabled>日历</nue-link>
             </nue-div>
         </template>
-        <nue-link href="/" style="position: absolute; left: 50%; transform: translateX(-50%)">
-            <nue-text size="26px">NaoTodo</nue-text>
+        <nue-link style="position: absolute; left: 50%; transform: translateX(-50%)">
+            <nue-text size="26px" @click="showUpdateLogDialog">NaoTodo</nue-text>
         </nue-link>
         <template #user>
             <user-dropdown :user="user" @logout="handleLogout" />
         </template>
     </nue-header>
+    <update-log-dialog ref="updateLogDialogRef" />
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { NueConfirm } from 'nue-ui'
 import { UserDropdown } from '@/components/user'
+import { UpdateLogDialog } from '../update-log-dialog'
 import { useUserStore } from '@/stores'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
@@ -30,6 +33,11 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const { user } = storeToRefs(userStore)
+const updateLogDialogRef = ref<InstanceType<typeof UpdateLogDialog>>()
+
+const showUpdateLogDialog = () => {
+    updateLogDialogRef.value?.show()
+}
 
 const handleLogout = () => {
     NueConfirm({
