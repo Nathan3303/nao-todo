@@ -4,6 +4,7 @@ import { defineStore } from 'pinia'
 export const useViewStore = defineStore('viewStore', () => {
     const projectAsideVisible = ref(true)
     const simpleProjectHeader = ref(false)
+    // const tasksBasicViewData = reactive({})
 
     const toggleProjectAsideVisible = () => {
         projectAsideVisible.value = !projectAsideVisible.value

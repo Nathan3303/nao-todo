@@ -36,8 +36,3 @@ const project = computed<Project>(() => {
     return project as Project
 })
 </script>
-
-<style scoped>
-@import url('../common/index.css');
-/* @import url('./index.css'); */
-</style>

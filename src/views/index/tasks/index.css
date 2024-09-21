@@ -1,5 +1,5 @@
 .tasks-view {
-    &:deep().nue-main__aside {
+    .nue-main__aside {
         overflow: auto;
     }
 
@@ -54,6 +54,69 @@
     }
 }
 
+.tasks-basic-view,
+.tasks-sub-view {
+    gap: 16px;
+
+    .nue-header {
+        align-items: stretch;
+        padding: 0px;
+        flex-direction: column;
+        border: none !important;
+        height: auto;
+
+        .nue-input--add-task {
+            width: 100%;
+            height: 36px;
+            box-shadow: none;
+            --border-color: transparent;
+            --background-color: #f4f4f5;
+        }
+    }
+}
+
+.tasks-kanban-view {
+    .nue-header {
+        padding: 0px;
+        border-bottom: none;
+    }
+}
+
+.tasks-all-table-view {
+    padding-top: 24px;
+    width: 100%;
+    flex: auto;
+    overflow: hidden;
+}
+
+.todo-details-wrapper {
+    height: 100%;
+    flex-wrap: nowrap;
+    transition: all 0.32s ease-in-out;
+    background-color: white;
+    overflow: hidden;
+    z-index: 0;
+    padding: 0px;
+}
+
+@media screen and (max-width: 1200px) {
+    .todo-details-wrapper {
+        width: 440px;
+        transform: translateX(0);
+        position: absolute;
+        right: 0;
+        box-shadow: -2px 0px 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        padding: 0px;
+    }
+
+    .todo-details-wrapper[data-empty='true'] {
+        transform: translateX(100%);
+        overflow: hidden;
+        box-shadow: none;
+    }
+}
+
 @media screen and (max-width: 1200px) {
     .tasks-view {
         #TasksViewRightAside {
@@ -69,18 +132,3 @@
         }
     }
 }
-
-/* @media screen and (max-width: 768px) {
-    .tasks-view {
-        position: relative;
-
-        &:deep().nue-main__aside {
-            position: absolute;
-            left: 0px;
-            background-color: white;
-            z-index: 1;
-            height: 100vh;
-            box-shadow: 2px 0px 5px 3px rgba(0, 0, 0, 0.1);
-        }
-    }
-} */

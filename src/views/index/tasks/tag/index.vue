@@ -32,8 +32,3 @@ const tag = computed(() => {
     return tag as Tag
 })
 </script>
-
-<style scoped>
-@import url('../common/index.css');
-/* @import url('./index.css'); */
-</style>
