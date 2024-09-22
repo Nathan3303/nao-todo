@@ -1,5 +1,5 @@
 <template>
-    <nue-main class="tasks-view" aside-width="240px">
+    <nue-main class="tasks-view">
         <template #aside v-if="pav">
             <todo-view-aside />
         </template>

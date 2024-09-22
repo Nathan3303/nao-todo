@@ -1,4 +1,4 @@
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { naoTodoServer as $axios } from '@/axios'
 import type { Todo, TodoFilter, TodoCountInfo, TodoSortOptions } from './types'
@@ -193,13 +193,11 @@ export const useTodoStore = defineStore('todoStore', () => {
     const removeLocal = async (todoId: Todo['id']) => {
         const todoIndex = findIndexLocal(todoId)
         todos.value.splice(todoIndex, 1)
+        countInfo.length--
+        countInfo.count--
     }
 
     const createLocal = (createInfo: Partial<Todo>) => {
-        if (countInfo.length >= pageInfo.limit) {
-            countInfo.total++
-            return
-        }
         const newTodoTemplate: Todo = {
             id: '',
             userId: '',
@@ -222,7 +220,13 @@ export const useTodoStore = defineStore('todoStore', () => {
             project: {}
         }
         const newTodo = { ...newTodoTemplate, ...createInfo }
-        todos.value.push(newTodo)
+        if (sortInfo.field === '' && sortInfo.order === '') {
+            todos.value.shift()
+            todos.value.unshift(newTodo)
+        } else {
+            todos.value.push(newTodo)
+        }
+        countInfo.count++
     }
 
     // Getter which is pure function and from backend
