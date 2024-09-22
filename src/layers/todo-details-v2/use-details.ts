@@ -157,11 +157,12 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         { immediate: true }
     )
 
-    // onMounted(() => {
-    //     const taskId = route.params.taskId
-    //     if (!taskId) return
-    //     setTimeout(async () => await _getTodo(taskId as string))
-    // })
+    const unSubscribe = todoStore.$subscribe((mutation) => {
+        if (mutation.type !== 'direct') return
+        const newValue = mutation.events.newValue
+        if (newValue.id !== route.params.taskId) return
+        shadowTodo.value = newValue
+    })
 
     return {
         projects: activeProjects,
@@ -179,6 +180,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         handleCheckTodo,
         handleDeleteTodo,
         handleRestoreTodo,
-        handleUpdateTags
+        handleUpdateTags,
+        unSubscribeTodoStore: unSubscribe
     }
 }

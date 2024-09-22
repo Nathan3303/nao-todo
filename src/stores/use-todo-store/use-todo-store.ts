@@ -181,7 +181,7 @@ export const useTodoStore = defineStore('todoStore', () => {
     const toFilterLocal = (todoId: Todo['id']) => {
         const todo = findLocal(todoId)
         if (!todo) return null
-        return { ...todo }
+        return todo
     }
 
     const updateLocal = (todoId: Todo['id'], updateInfo: Partial<Todo>) => {

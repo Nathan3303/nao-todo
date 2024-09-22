@@ -125,6 +125,7 @@
 </template>
 
 <script setup lang="ts">
+import { onBeforeUnmount } from 'vue'
 import { useTodoDetails } from './use-details'
 import { useUserStore } from '@/stores'
 import {
@@ -162,8 +163,11 @@ const {
     handleCheckTodo,
     handleDeleteTodo,
     handleRestoreTodo,
-    handleUpdateTags
+    handleUpdateTags,
+    unSubscribeTodoStore
 } = useTodoDetails(props, emit)
+
+onBeforeUnmount(() => unSubscribeTodoStore())
 </script>
 
 <style scoped>
