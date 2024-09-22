@@ -72,7 +72,7 @@ export const useTodoStore = defineStore('todoStore', () => {
     const _updatingCompare = (todoId: Todo['id'], updateInfo: Partial<Todo>) => {
         const targetIdx = findIndexLocal(todoId)
         const target = todos.value[targetIdx]
-        console.log('[useTodoStore] _updatingCompare:', target, updateInfo)
+        // console.log('[useTodoStore] _updatingCompare:', target, updateInfo)
         const isNeedToUpdate = Object.keys(updateInfo).some((key) => {
             const value = updateInfo[key as keyof Todo]
             return target[key as keyof Todo] !== value

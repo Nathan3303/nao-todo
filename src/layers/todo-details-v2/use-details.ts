@@ -1,4 +1,4 @@
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useTodoStore, useProjectStore, useEventStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
@@ -23,6 +23,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
     const shadowTodo = ref<Todo | undefined>()
     const loadingState = ref(false)
     const isGetting = ref(false)
+    let unSubscribe: Function | null = null
 
     const eventsProgress = computed(() => {
         const _e = events.value
@@ -157,11 +158,19 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         { immediate: true }
     )
 
-    const unSubscribe = todoStore.$subscribe((mutation) => {
-        if (mutation.type !== 'direct') return
-        const newValue = mutation.events.newValue
-        if (newValue.id !== route.params.taskId) return
-        shadowTodo.value = newValue
+    onMounted(() => {
+        unSubscribe = todoStore.$subscribe((mutation) => {
+            if (mutation.type !== 'direct') return
+            const newValue = mutation.events.newValue
+            if (Array.isArray(newValue)) return
+            if (newValue.id && newValue.id === shadowTodo.value?.id) {
+                shadowTodo.value = newValue
+            }
+        })
+    })
+
+    onBeforeUnmount(() => {
+        if (unSubscribe) unSubscribe()
     })
 
     return {
@@ -180,7 +189,6 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         handleCheckTodo,
         handleDeleteTodo,
         handleRestoreTodo,
-        handleUpdateTags,
-        unSubscribeTodoStore: unSubscribe
+        handleUpdateTags
     }
 }
