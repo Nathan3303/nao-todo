@@ -12,6 +12,7 @@
                 :todo="todo"
                 :actived="todo.id === currentTaskId"
                 :data-todoId="todo.id"
+                :columns="columns"
                 draggable="true"
                 @click="handleShowTodoDetails"
                 @delete="(todoId) => emit('delete-todo', todoId)"
@@ -25,14 +26,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { TodoCard, TodoStateInfo, Empty } from '@/components'
 import type { Todo } from '@/stores'
 import type { KanbanColumnProps, KanbanColumnEmits } from './types'
-import type { NueMain } from 'nue-ui'
 
-const props = defineProps<KanbanColumnProps>()
+defineProps<KanbanColumnProps>()
 const emit = defineEmits<KanbanColumnEmits>()
 
 const route = useRoute()

@@ -28,6 +28,7 @@ export type Todo = {
     project?: Partial<Project>
     tags: Tag['id'][]
     tagsInfo: Tag[]
+    isNew?: boolean
 }
 
 export type TodoFilter = {

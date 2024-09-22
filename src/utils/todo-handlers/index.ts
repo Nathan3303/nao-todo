@@ -93,9 +93,13 @@ export const updateTodoWithCompare = async (todoId: Todo['id'], updateInfo: Part
 // Extends
 
 export const removeTodo = async (todoId: Todo['id']) => {
+    const userId = userStore.user!.id
     const res = await updateTodo(todoId, { isDeleted: true })
     // console.log('[todoHandlers] removeTodo:', res)
-    if (res) todoStore.removeLocal(todoId)
+    if (res) {
+        await todoStore.get(userId)
+        // todoStore.removeLocal(todoId)
+    }
 }
 
 export const removeTodoWithConfirm = async (todoId: Todo['id']) => {

@@ -153,14 +153,16 @@ export const useTodoStore = defineStore('todoStore', () => {
     const remove = async (userId: User['id'], todoId: Todo['id']) => {
         const removeResult = await _remove(userId, todoId)
         if (!removeResult) return
-        removeLocal(todoId)
+        // removeLocal(todoId)
+        get(userId)
         return removeResult
     }
 
     const create = async (userId: User['id'], createInfo: Partial<Todo>) => {
         const createResult = await _create(userId, createInfo)
         if (!createResult) return
-        createLocal({ ...createInfo, ...createResult })
+        // createLocal({ ...createInfo, ...createResult })
+        get(userId)
         return createResult
     }
 
@@ -218,13 +220,14 @@ export const useTodoStore = defineStore('todoStore', () => {
             tags: [],
             tagsInfo: [],
             project: {}
+            // isNew: true
         }
         const newTodo = { ...newTodoTemplate, ...createInfo }
-        if (sortInfo.field === '' && sortInfo.order === '') {
-            todos.value.shift()
-            todos.value.unshift(newTodo)
+        todos.value.unshift(newTodo)
+        if (todos.value.length >= pageInfo.limit) {
+            todos.value.pop()
         } else {
-            todos.value.push(newTodo)
+            countInfo.length++
         }
         countInfo.count++
     }

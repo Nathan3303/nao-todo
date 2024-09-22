@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@types/md5": "^2.3.5",
-    "axios": "^1.7.4",
+    "axios": "^1.7.7",
     "jsstore": "^4.8.1",
     "md5": "^2.3.0",
     "moment": "^2.30.1",

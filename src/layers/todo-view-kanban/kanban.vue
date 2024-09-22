@@ -34,6 +34,7 @@
                         :category="key"
                         :todos="value"
                         :data-category="key"
+                        :columns="columns"
                         @show-todo-details="handleShowTodoDetails"
                         @delete-todo="removeTodoWithConfirm"
                         @restore-todo="restoreTodoWithConfirm"
@@ -50,17 +51,19 @@
             </template>
         </nue-main>
     </nue-container>
+    <todo-create-dialog ref="todoCreateDialogRef" :handler="handleCreateTodo" />
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
-import { Loading, TodoFilterBar, ListColumnSwitcher } from '@/components'
+import { Loading, TodoFilterBar, ListColumnSwitcher, TodoCreateDialog } from '@/components'
 import { ContentKanbanColumn } from './kanban-column'
 import { useTodoStore, useUserStore } from '@/stores'
 import { NuePrompt } from 'nue-ui'
 import {
+    createTodoWithOptions,
     removeTodoWithConfirm,
     restoreTodoWithConfirm,
     updateTodoWithCompare
@@ -81,15 +84,16 @@ const { user } = storeToRefs(userStore)
 const kanbanLoading = ref(false)
 const refreshTimer = ref<number | null>(null)
 const draggingTodoId = ref('abc')
+const todoCreateDialogRef = ref<InstanceType<typeof TodoCreateDialog>>()
 const columns = ref<Columns>(
     props.columns || {
-        state: true,
+        state: false,
         priority: true,
         project: true,
         description: true,
         endAt: true,
         createdAt: false,
-        updatedAt: false
+        updatedAt: true
     }
 )
 
@@ -121,17 +125,13 @@ const handleShowTodoDetails = (todoId: Todo['id']) => {
     })
 }
 
-const handleAddTodo = async () => {
-    NuePrompt({
-        title: '创建任务',
-        placeholder: '填写任务名称',
-        confirmButtonText: '创建',
-        cancelButtonText: '取消',
-        validator: (value: any) => value
-    }).then(
-        (value) => emit('createTodo', value as string),
-        () => {}
-    )
+const handleAddTodo = () => {
+    if (!todoCreateDialogRef.value) return
+    emit('createTodoByDialog', todoCreateDialogRef.value.show)
+}
+
+const handleCreateTodo = async (newTodo: Partial<Todo>) => {
+    return await createTodoWithOptions(newTodo.projectId || null, newTodo)
 }
 
 const handleFilter = async (newTodoFliter: TodoFilter) => {

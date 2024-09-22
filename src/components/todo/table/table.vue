@@ -51,6 +51,15 @@
                         align="left"
                     >
                         {{ todo.name }}
+                        <template #append>
+                            <nue-icon
+                                name="warning"
+                                size="13px"
+                                color="orange"
+                                v-if="todo.isNew"
+                                title="新任务"
+                            />
+                        </template>
                     </nue-button>
                     <nue-text
                         v-if="columns.description && todo.description"

@@ -11,7 +11,7 @@
                 class="todo-card__check-icon"
                 :name="checkIconName"
                 @click.stop="handleFinish"
-            ></nue-icon>
+            />
         </nue-div>
         <nue-div vertical gap="8px" flex>
             <nue-div class="todo-card__info">
@@ -22,25 +22,44 @@
                             theme="pure"
                             :icon="todo.isDeleted ? 'restore' : 'delete'"
                             @click.stop="handleDelete"
-                        ></nue-button>
+                        />
                     </nue-div>
                 </nue-div>
-                <nue-text class="todo-card__description" v-if="todo.description">
+                <nue-text
+                    class="todo-card__description"
+                    v-if="todo.description && columns?.description"
+                >
                     {{ todo.description }}
                 </nue-text>
             </nue-div>
             <nue-div class="todo-card__attrs" align="center" gap="4px">
-                <nue-div v-if="todo.dueDate.endAt" align="center" gap="4px">
-                    <nue-icon name="calendar" color="gray"></nue-icon>
+                <nue-div align="center" gap="4px">
+                    <todo-state-info v-if="columns?.state" :state="todo.state" />
+                    <todo-priority-info v-if="columns?.priority" :priority="todo.priority" />
+                </nue-div>
+                <nue-div v-if="columns?.endAt" align="center" gap="4px">
+                    <nue-icon name="calendar" color="gray" />
                     <nue-text size="12px" color="gray">
-                        {{ moment(todo.dueDate.endAt).format('YYYY-MM-DD HH:mm') }}
+                        {{ useRelativeDate(todo.dueDate.endAt) }}
                     </nue-text>
                 </nue-div>
-                <nue-div align="center" gap="4px">
-                    <nue-icon name="inbox-fill" color="gray"></nue-icon>
-                    <nue-text size="12px" color="gray">{{
-                        todo.project?.title || '收集箱'
-                    }}</nue-text>
+                <nue-div v-if="columns?.project" align="center" gap="4px">
+                    <nue-icon name="inbox-fill" color="gray" />
+                    <nue-text size="12px" color="gray">
+                        {{ todo.project?.title || '收集箱' }}
+                    </nue-text>
+                </nue-div>
+                <nue-div v-if="columns?.createdAt" align="center" gap="4px">
+                    <nue-icon name="time" color="gray" />
+                    <nue-text size="12px" color="gray">
+                        创建于 {{ useRelativeDate(todo.createdAt) }}
+                    </nue-text>
+                </nue-div>
+                <nue-div v-if="columns?.updatedAt" align="center" gap="4px">
+                    <nue-icon name="time" color="gray" />
+                    <nue-text size="12px" color="gray">
+                        最后修改于 {{ useRelativeDate(todo.updatedAt) }}
+                    </nue-text>
                 </nue-div>
             </nue-div>
         </nue-div>
@@ -49,7 +68,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import moment from 'moment'
+import { useRelativeDate } from '@/hooks/use-relative-date'
+import { TodoStateInfo } from '../state-info'
+import { TodoPriorityInfo } from '../priority-info'
 import type { TodoCardEmits, TodoCardProps } from './types'
 
 defineOptions({ name: 'TodoCard' })

@@ -69,6 +69,10 @@
         }
     }
 
+    .todo-card__attrs * {
+        color: gray
+    }
+
     .todo-card__check-icon {
         padding: 2px;
         cursor: pointer;

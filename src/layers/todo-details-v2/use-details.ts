@@ -145,7 +145,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
 
     const handleClose = () => {
         shadowTodo.value = void 0
-        const prevRoute = route.matched[route.matched.length - 2]
+        const prevRoute = route.matched[route.matched.length - 1]
         if (prevRoute) {
             router.push(prevRoute)
         }
