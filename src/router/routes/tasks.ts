@@ -35,16 +35,18 @@ const tasksRoutes = {
             name: `tasks-project`,
             props: true,
             component: () => import(`@/views/index/tasks/project/index.vue`),
-            redirect: { name: `tasks-project-table` },
+            // redirect: { name: `tasks-project-table` },
             children: [
                 {
                     path: 'table/:taskId?',
                     name: `tasks-project-table`,
+                    meta: { viewType: 'table' },
                     component: () => import(`@/views/index/tasks/project/table.vue`)
                 },
                 {
                     path: 'kanban/:taskId?',
                     name: `tasks-project-kanban`,
+                    meta: { viewType: 'kanban' },
                     component: () => import(`@/views/index/tasks/project/kanban.vue`)
                 }
             ]

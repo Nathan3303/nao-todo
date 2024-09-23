@@ -93,28 +93,17 @@ const todoStore = useTodoStore()
 const userStore = useUserStore()
 
 const { user } = storeToRefs(userStore)
-const { todos, pageInfo, countInfo, filterInfo, sortInfo } = storeToRefs(todoStore)
+const {
+    todos,
+    pageInfo,
+    countInfo,
+    filterInfo,
+    sortInfo,
+    columnOptions: columns
+} = storeToRefs(todoStore)
 const tableLoading = ref(false)
-const columns = ref<Columns>(
-    props.columns || {
-        state: true,
-        priority: true,
-        project: true,
-        description: true,
-        endAt: true,
-        createdAt: false,
-        updatedAt: false
-    }
-)
 const todoCreateDialogRef = ref<InstanceType<typeof TodoCreateDialog>>()
 let refreshTimer: number | null = null
-
-const handleInitTodos = async () => {
-    const { filterInfo } = props
-    tableLoading.value = true
-    await todoStore.initialize(user.value!.id, filterInfo)
-    tableLoading.value = false
-}
 
 const handleGetTodos = async () => {
     const { filterInfo } = props
@@ -172,5 +161,5 @@ const handleSortTodo = async (newSortInfo: TodoSortOptions) => {
     await todoStore.get(userId)
 }
 
-handleInitTodos()
+handleGetTodos();
 </script>

@@ -1,7 +1,8 @@
 <template>
     <todo-view-kanban
         :key="route.params.projectId.toString()"
-        :filter-info="filterInfo"
+        :filter-info="todoStore.filterInfo"
+        :columns="todoStore.columnOptions"
         base-route="tasks-project-kanban"
         @create-todo="handleCreateTodo"
         @create-todo-by-dialog="handleCreateTodoByDialog"
@@ -12,26 +13,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
 import { TodoViewKanban } from '@/layers'
-import { useProjectStore, useUserStore, useTagStore } from '@/stores'
+import { useProjectStore, useUserStore, useTagStore, useTodoStore } from '@/stores'
 import { useRoute } from 'vue-router'
-import type { Todo, TodoFilter } from '@/stores'
 import { createTodoWithOptions } from '@/utils'
+import type { Todo } from '@/stores'
 import type { TodoCreateDialogArgs } from '@/components/todo/create-dialog/types'
 
 const route = useRoute()
 const userStore = useUserStore()
 const projectStore = useProjectStore()
+const todoStore = useTodoStore()
 const tagStore = useTagStore()
-
-const filterInfo = computed<TodoFilter>(() => {
-    const projectId = route.params.projectId as string
-    return {
-        isDeleted: false,
-        projectId
-    }
-})
 
 const handleCreateTodo = async (todoName: Todo['name']) => {
     const projectId = route.params.projectId as string
@@ -54,5 +47,3 @@ const handleCreateTodoByDialog = async (caller: (args: TodoCreateDialogArgs) => 
     })
 }
 </script>
-
-<style scoped></style>

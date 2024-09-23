@@ -25,15 +25,18 @@ import { useRoute } from 'vue-router'
 import { TasksBasicViewContent, TasksBasicViewContentKey } from './constants'
 import { handlers } from './handler'
 import { TodoViewHeader } from '@/layers'
+import { useTodoStore } from '@/stores'
 import type { TasksBasicViewContext, TasksBasicViewContentType } from './types'
 
 const route = useRoute()
+const todoStore = useTodoStore()
 
 const viewContent = computed<TasksBasicViewContentType>(() => {
     const routeName = route.meta.type as string
     const _viewContent = TasksBasicViewContent[
         routeName as keyof typeof TasksBasicViewContent
     ] as TasksBasicViewContentType
+    todoStore.resetOptions()
     return (
         _viewContent || {
             title: '',

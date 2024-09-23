@@ -45,6 +45,17 @@ export type TodoFilter = {
     tagId?: Tag['id']
 }
 
+export type TodoColumnOptions = {
+    createdAt: boolean
+    priority: boolean
+    state: boolean
+    description: boolean
+    updatedAt: boolean
+    startAt?: boolean
+    endAt?: boolean
+    project?: boolean
+}
+
 export type ShadowTodo = Partial<Todo>
 export type TodoSortOptions = { field: keyof Todo | 'endAt' | ''; order: 'asc' | 'desc' | '' }
 export type TodoCountByState = { [key in TodoState]: number }

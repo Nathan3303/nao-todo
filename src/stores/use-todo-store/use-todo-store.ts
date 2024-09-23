@@ -1,8 +1,8 @@
 import { ref, reactive, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { naoTodoServer as $axios } from '@/axios'
-import type { Todo, TodoFilter, TodoCountInfo, TodoSortOptions } from './types'
-import type { User } from '..'
+import type { Todo, TodoFilter, TodoCountInfo, TodoSortOptions, TodoColumnOptions } from './types'
+import type { Project, User } from '..'
 
 export const useTodoStore = defineStore('todoStore', () => {
     const todos = ref<Todo[]>([])
@@ -15,6 +15,15 @@ export const useTodoStore = defineStore('todoStore', () => {
         total: 0,
         byState: { todo: 0, 'in-progress': 0, done: 0 },
         byPriority: { low: 0, medium: 0, high: 0 }
+    })
+    const columnOptions = ref<TodoColumnOptions>({
+        state: false,
+        priority: true,
+        project: true,
+        description: true,
+        endAt: true,
+        createdAt: false,
+        updatedAt: true
     })
 
     // Inner methods
@@ -48,6 +57,15 @@ export const useTodoStore = defineStore('todoStore', () => {
         pageInfo.limit = 20
         sortInfo.field = ''
         sortInfo.order = ''
+        columnOptions.value = {
+            state: false,
+            priority: true,
+            project: true,
+            description: true,
+            endAt: true,
+            createdAt: false,
+            updatedAt: false
+        }
     }
 
     const _get = async (userId: User['id'], specFilterInfo?: TodoFilter) => {
@@ -251,14 +269,32 @@ export const useTodoStore = defineStore('todoStore', () => {
         return res as Todo | null
     }
 
+    // Others
+
+    const setOptionsByProjectPreference = (preference: Project['preference']) => {
+        if (!preference) return
+        if (preference.filterInfo) {
+            filterInfo.value = preference.filterInfo
+        }
+        if (preference.sortInfo) {
+            sortInfo.field = preference.sortInfo.field
+            sortInfo.order = preference.sortInfo.order
+        }
+        if (preference.columns) {
+            columnOptions.value = preference.columns
+        }
+    }
+
     return {
         todos,
         filterInfo,
         sortInfo,
         pageInfo,
         countInfo,
+        columnOptions,
         mergeFilterInfo: _mergeFilterInfo,
         updatingCompare: _updatingCompare,
+        resetOptions: _reset,
         get,
         initialize,
         update,
@@ -272,6 +308,7 @@ export const useTodoStore = defineStore('todoStore', () => {
         createLocal,
         toGetted,
         toFinded,
-        toFindedOne
+        toFindedOne,
+        setOptionsByProjectPreference
     }
 })

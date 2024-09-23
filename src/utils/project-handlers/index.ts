@@ -372,3 +372,20 @@ export const redescProjectWithPrompt = async (
         }
     )
 }
+
+// Update project preference
+
+export const handleUpdatePreference = async (
+    projectId: Project['id'],
+    newPreference: Project['preference']
+) => {
+    const res = await _handleUpdateProject(projectId, { preference: newPreference })
+    // console.log(res);
+    requestIdleCallback(() => {
+        if (res.code === '20000') {
+            NueMessage.success('清单偏好修改成功')
+        } else {
+            NueMessage.error('清单偏好修改失败')
+        }
+    })
+}

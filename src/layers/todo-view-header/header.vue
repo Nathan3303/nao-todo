@@ -23,6 +23,7 @@
                         <nue-tooltip size="small" content="删除清单">
                             <nue-button theme="icon-only" icon="delete" @click="deleteProject" />
                         </nue-tooltip>
+                        <slot name="actions"></slot>
                     </nue-div>
                 </nue-div>
                 <nue-text theme="pointer" size="14px" color="gray" @click="redescProject">
@@ -50,7 +51,6 @@
                     </nue-text>
                 </nue-div>
                 <nue-div align="center" width="fit-content" gap="8px">
-                    <slot name="actions" />
                     <nue-tooltip size="small" content="删除标签">
                         <nue-button
                             theme="icon-only"
@@ -58,6 +58,7 @@
                             @click="handleDeleteTag(tag?.id)"
                         />
                     </nue-tooltip>
+                    <slot name="actions"></slot>
                 </nue-div>
             </nue-div>
         </template>
