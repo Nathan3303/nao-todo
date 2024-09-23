@@ -36,6 +36,7 @@ const tasksRoutes = {
             props: true,
             component: () => import(`@/views/index/tasks/project/index.vue`),
             // redirect: { name: `tasks-project-table` },
+            
             children: [
                 {
                     path: 'table/:taskId?',

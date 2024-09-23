@@ -39,7 +39,7 @@
 <script setup lang="ts">
 import { computed, provide, ref, watch, watchEffect } from 'vue'
 import { TodoViewHeader } from '@/layers'
-import { useRoute, useRouter } from 'vue-router'
+import { onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router'
 import { useProjectStore, useTodoStore } from '@/stores'
 import { handleUpdatePreference } from '@/utils/project-handlers'
 import { TasksProjectViewContextKey } from './constants'
@@ -87,12 +87,23 @@ const handleDropdownExecute = async (executeId: string) => {
     }
 }
 
-const handleLoadProjectPreference = (project: Project | null) => {
-    if (project?.preference) {
-        todoStore.setOptionsByProjectPreference(project.preference)
+const handleLoadProjectPreference = () => {
+    const projectPreference = project.value?.preference
+    if (projectPreference) {
+        todoStore.setOptionsByProjectPreference(projectPreference)
     } else {
         todoStore.resetOptions()
-        todoStore.filterInfo = { isDeleted: false, projectId: project?.id }
+        todoStore.filterInfo = { isDeleted: false, projectId: project.value?.id }
+    }
+}
+
+const handleGoToDefaulView = () => {
+    const _project = project.value
+    document.title = 'NaoTodo - ' + _project?.title
+    if (!_project) {
+        router.replace({ name: 'tasks-all' })
+    } else {
+        router.replace({ name: `tasks-project-${_project.preference?.viewType || 'table'}` })
     }
 }
 
@@ -102,17 +113,24 @@ provide<TasksProjectViewContext>(TasksProjectViewContextKey, {
 })
 
 watch(
-    () => route.params.projectId as string,
-    (newProjectId) => {
-        const _project = projectStore._toFinded(newProjectId)
-        document.title = 'NaoTodo - ' + _project?.title
-        if (!_project) {
-            router.replace({ name: 'tasks-all' })
-        } else {
-            router.replace({ name: `tasks-project-${_project.preference?.viewType || 'table'}` })
-        }
-        handleLoadProjectPreference(_project)
+    () => props.projectId as Project['id'],
+    () => {
+        const { projectId } = props
+        if (projectId === project.value?.id) return
+        if (!projectId) return
+        const _project = projectStore._toFinded(projectId)
         project.value = _project || void 0
+        handleLoadProjectPreference()
+    },
+    { immediate: true }
+)
+
+watch(
+    () => route.name,
+    (newName) => {
+        if (newName === 'tasks-project') {
+            handleGoToDefaulView()
+        }
     },
     { immediate: true }
 )

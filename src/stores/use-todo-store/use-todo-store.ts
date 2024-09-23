@@ -142,7 +142,9 @@ export const useTodoStore = defineStore('todoStore', () => {
 
     const get = async (userId: User['id'], filterInfo?: Partial<TodoFilter>) => {
         if (filterInfo) _mergeFilterInfo(filterInfo)
-        const { todos: _tds, payload } = await _get(userId)
+        const responseData = await _get(userId)
+        if (!responseData) return
+        const { todos: _tds, payload } = responseData
         if (!todos) return
         todos.value = _tds as Todo[]
         pageInfo.limit = payload.pageInfo.limit
