@@ -1,5 +1,5 @@
 <template>
-    <nue-container class="tasks-basic-view">
+    <nue-container theme="vertical,inner" id="Index/Tasks/Basic">
         <todo-view-header :title="viewContent.title">
             <template #subTitle>
                 {{ viewContent.description }}
@@ -13,8 +13,8 @@
                 </nue-link>
             </template>
         </todo-view-header>
-        <nue-main>
-            <router-view />
+        <nue-main style="border: none">
+            <router-view></router-view>
         </nue-main>
     </nue-container>
 </template>

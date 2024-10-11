@@ -1,8 +1,8 @@
 <template>
+    <nue-container id="IndexView" theme="horizontal">
         <index-header></index-header>
-        <suspense>
-            <router-view></router-view>
-        </suspense>
+        <router-view></router-view>
+    </nue-container>
 </template>
 
 <script setup lang="ts">

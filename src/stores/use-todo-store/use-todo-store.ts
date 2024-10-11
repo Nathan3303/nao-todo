@@ -50,8 +50,7 @@ export const useTodoStore = defineStore('todoStore', () => {
         filterInfo.value = newFilterInfo
     }
 
-    const _reset = () => {
-        todos.value = []
+    const _resetOptions = () => {
         filterInfo.value = {}
         pageInfo.page = 1
         pageInfo.limit = 20
@@ -66,6 +65,11 @@ export const useTodoStore = defineStore('todoStore', () => {
             createdAt: false,
             updatedAt: false
         }
+    }
+
+    const _reset = () => {
+        todos.value = []
+        _resetOptions()
     }
 
     const _get = async (userId: User['id'], specFilterInfo?: TodoFilter) => {
@@ -296,7 +300,8 @@ export const useTodoStore = defineStore('todoStore', () => {
         columnOptions,
         mergeFilterInfo: _mergeFilterInfo,
         updatingCompare: _updatingCompare,
-        resetOptions: _reset,
+        resetOptions: _resetOptions,
+        reset: _reset,
         get,
         initialize,
         update,

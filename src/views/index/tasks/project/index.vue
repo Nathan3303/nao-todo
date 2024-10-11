@@ -1,5 +1,5 @@
 <template>
-    <nue-container class="tasks-project-view tasks-sub-view">
+    <nue-container theme="vertical,inner" id="Index/Tasks/Project">
         <todo-view-header :title="project?.title" :project="project">
             <template #subTitle>
                 {{ project?.description }}
@@ -30,7 +30,7 @@
                 </nue-link>
             </template>
         </todo-view-header>
-        <nue-main>
+        <nue-main style="border: none">
             <router-view></router-view>
         </nue-main>
     </nue-container>

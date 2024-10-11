@@ -1,6 +1,6 @@
 <template>
     <nue-container class="authentication-view">
-        <nue-main aside-width="45%">
+        <nue-main aside-width="45%" :allow-resize-aside="false">
             <template #aside>
                 <nue-div vertical justify="space-between" flex>
                     <nue-div align="center">

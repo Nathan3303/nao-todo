@@ -1,16 +1,13 @@
 <template>
     <nue-header style="position: relative">
-        <template #nav>
-            <nue-div>
-                <nue-link theme="btnlike,plink" icon="square-check-fill" route="/tasks">
-                    任务
-                </nue-link>
-                <nue-link theme="btnlike,plink" icon="calendar2" disabled>日历</nue-link>
-            </nue-div>
+        <template #navigators>
+            <nue-tooltip size="small" content="任务" placement="right-center">
+                <nue-link theme="btnlike,plink" icon="square-check-fill" route="/tasks" />
+            </nue-tooltip>
+            <nue-tooltip size="small" content="日历" placement="right-center">
+                <nue-link theme="btnlike,plink" icon="calendar2" disabled />
+            </nue-tooltip>
         </template>
-        <nue-link style="position: absolute; left: 50%; transform: translateX(-50%)">
-            <nue-text size="26px" @click="showUpdateLogDialog">NaoTodo</nue-text>
-        </nue-link>
         <template #user>
             <user-dropdown :user="user" @logout="handleLogout" />
         </template>

@@ -1,5 +1,5 @@
 <template>
-    <nue-header>
+    <nue-header height="auto" style="flex-direction: column; gap: 16px; box-sizing: border-box">
         <template v-if="project">
             <nue-div vertical gap="4px">
                 <nue-div justify="space-between" wrap="nowrap">
@@ -90,7 +90,7 @@
         </template>
         <nue-div v-if="!sph" wrap="nowrap" align="center">
             <nue-div class="project-navigations">
-                <slot name="navigations" />
+                <slot name="navigations"></slot>
             </nue-div>
         </nue-div>
     </nue-header>

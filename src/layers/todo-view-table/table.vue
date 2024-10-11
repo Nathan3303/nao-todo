@@ -1,6 +1,6 @@
 <template>
-    <nue-container class="content-table">
-        <nue-header style="padding: 0; border: none; height: fit-content" :key="$route.path">
+    <nue-container theme="vertical,inner" id="Index/Tasks/Basic/Table">
+        <nue-header height="auto" :key="$route.path" style="box-sizing: border-box">
             <nue-div align="start" justify="space-between" gap="16px">
                 <todo-filter-bar
                     :count-info="countInfo"
@@ -28,7 +28,7 @@
                 </nue-div>
             </nue-div>
         </nue-header>
-        <nue-main style="margin: 16px 0 0">
+        <nue-main style="border: none">
             <nue-div wrap="nowrap" flex style="overflow-y: auto">
                 <Loading v-if="tableLoading" placeholder="正在加载任务列表..." />
                 <todo-table
@@ -44,7 +44,7 @@
                 />
             </nue-div>
         </nue-main>
-        <nue-footer style="padding: 4px; border: none; height: fit-content">
+        <nue-footer>
             <nue-div align="center" justify="space-between">
                 <nue-text size="12px" color="gray" flex>
                     当前列表 {{ countInfo?.length || 0 }} 项， 共计 {{ countInfo?.count || 0 }} 项。
@@ -161,5 +161,11 @@ const handleSortTodo = async (newSortInfo: TodoSortOptions) => {
     await todoStore.get(userId)
 }
 
-handleGetTodos();
+handleGetTodos()
 </script>
+
+<style scoped>
+.nue-main:deep(.nue-main__content) {
+    padding: 0px 16px;
+}
+</style>
