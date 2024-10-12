@@ -19,8 +19,10 @@
             <aside-link icon="inbox" :route="{ name: 'tasks-inbox' }">收集箱</aside-link>
             <nue-collapse v-model="collapseItemsRecord">
                 <project-smart-list />
+                <todo-filter-list />
                 <tag-smart-list />
             </nue-collapse>
+            <nue-divider />
             <aside-link icon="delete" :route="{ name: 'tasks-recycle' }">垃圾桶</aside-link>
         </template>
         <template #content>
@@ -34,21 +36,18 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { TodoDetailsV2, ProjectSmartList, TagSmartList } from '@/layers'
+import { TodoDetailsV2, ProjectSmartList, TagSmartList, TodoFilterList } from '@/layers'
 import { storeToRefs } from 'pinia'
 import { useViewStore } from '@/stores'
 import { AsideLink } from '@/components'
-import './index.css'
 
 const viewStore = useViewStore()
 
 const { projectAsideVisible: pav } = storeToRefs(viewStore)
 
-const collapseItemsRecord = ref(['projects', 'tags'])
+const collapseItemsRecord = ref(['projects', 'tags', 'filters'])
 </script>
 
 <style scoped>
-.nue-main:deep(.nue-main__outline) {
-    padding: 0px;
-}
+@import url('./index.css');
 </style>

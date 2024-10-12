@@ -1,75 +1,9 @@
-.tasks-view {
-    --aside-width: 230px;
-
-    .nue-main__content {
-        .tasks-basic-view,
-        .tasks-sub-view {
-            gap: 16px;
-
-            & > .nue-header {
-                align-items: stretch;
-                padding: 0px;
-                flex-direction: column;
-                border: none !important;
-                height: auto;
-            }
-        }
+.nue-main {
+    &:deep().nue-main__aside-wrapper .nue-main__aside {
+        gap: 8px;
     }
 
-    #TasksViewRightAside {
-        width: 32%;
-        min-width: 360px;
-        max-width: 480px;
+    &:deep().nue-main__outline-wrapper .nue-main__outline {
         padding: 0px;
-        box-sizing: content-box;
-        border-left: 1px solid var(--divider-color);
-        transition: all 0.16s ease-in-out;
-        position: relative;
-
-        .empty-text {
-            position: absolute;
-            left: 0px;
-            z-index: 0;
-        }
-
-        .todo-details-wrapper {
-            height: 100%;
-            flex-wrap: nowrap;
-            transition: all 0.32s ease-in-out;
-            background-color: white;
-            overflow: hidden;
-            z-index: 0;
-            padding: 0px;
-        }
-
-        @media screen and (max-width: 1200px) {
-            & {
-                width: 0px;
-                min-width: 0px;
-                padding: 0px;
-                border-left: none;
-                position: relative;
-
-                .empty-text {
-                    display: none;
-                }
-            }
-
-            .todo-details-wrapper {
-                width: 440px;
-                transform: translateX(0);
-                position: absolute;
-                right: 0;
-                box-shadow: -2px 0px 10px rgba(0, 0, 0, 0.1);
-                overflow: hidden;
-                padding: 0px;
-            }
-
-            .todo-details-wrapper[data-empty='true'] {
-                transform: translateX(100%);
-                overflow: hidden;
-                box-shadow: none;
-            }
-        }
     }
 }
