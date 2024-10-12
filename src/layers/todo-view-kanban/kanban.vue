@@ -1,6 +1,6 @@
 <template>
-    <nue-container class="content-kanban">
-        <nue-header style="padding: 0; border: none; height: fit-content" :key="$route.path">
+    <nue-container theme="vertical,inner" class="content-kanban" id="Index/Tasks/Kanban">
+        <nue-header height="auto" :key="$route.path" style="box-sizing: border-box">
             <nue-div align="start" justify="space-between" gap="16px">
                 <todo-filter-bar
                     :count-info="countInfo"
@@ -26,7 +26,7 @@
                 </nue-div>
             </nue-div>
         </nue-header>
-        <nue-main>
+        <nue-main style="border: none">
             <Loading v-if="kanbanLoading" placeholder="正在加载任务看板..." />
             <template v-else>
                 <template v-for="(value, key) in categoriedTodos" :key="key">

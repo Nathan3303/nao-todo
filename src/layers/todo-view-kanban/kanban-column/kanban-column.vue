@@ -1,10 +1,10 @@
 <template>
-    <nue-container class="kanban-column">
-        <nue-header class="kanban-column__header">
+    <nue-container theme="vertical,inner" class="kanban-column">
+        <nue-header height="32px" class="kanban-column__header" style="box-sizing: border-box">
             <todo-state-info :state="category"></todo-state-info>
             <nue-text size="12px" color="gray">{{ todos.length }}</nue-text>
         </nue-header>
-        <nue-main class="kanban-column__main">
+        <nue-main class="kanban-column__main" style="border: none">
             <empty :empty="!todos.length" message="没有数据。"></empty>
             <todo-card
                 v-for="todo in todos"

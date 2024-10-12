@@ -120,8 +120,8 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         if (!shadowTodo.value) return
         const todoId = shadowTodo.value.id
         try {
-            await removeTodoWithConfirm(todoId)
-            handleClose()
+            const removeResult = await removeTodoWithConfirm(todoId)
+            if (removeResult.id === todoId) handleClose()
         } catch (error) {
             console.info('handleDeleteTodo error: ', error)
         }
@@ -131,8 +131,8 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         if (!shadowTodo.value) return
         const todoId = shadowTodo.value?.id
         try {
-            await restoreTodoWithConfirm(todoId)
-            handleClose()
+            const restoreResult = await restoreTodoWithConfirm(todoId)
+            if (restoreResult.id === todoId) handleClose()
         } catch (error) {
             console.info('handleRestoreTodo error: ', error)
         }

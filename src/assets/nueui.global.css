@@ -58,6 +58,10 @@
 
         .nue-main {
             padding: 4px;
+
+            .nue-main__content {
+                padding: 0px;
+            }
         }
     }
 }

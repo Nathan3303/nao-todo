@@ -100,6 +100,7 @@ export const removeTodo = async (todoId: Todo['id']) => {
         await todoStore.get(userId)
         // todoStore.removeLocal(todoId)
     }
+    return res
 }
 
 export const removeTodoWithConfirm = async (todoId: Todo['id']) => {
@@ -119,10 +120,11 @@ export const restoreTodo = async (todoId: Todo['id']) => {
     const res = await updateTodo(todoId, { isDeleted: false })
     // console.log('[todoHandlers] restoreTodo:', res)
     if (res) todoStore.removeLocal(todoId)
+    return res
 }
 
 export const restoreTodoWithConfirm = async (todoId: Todo['id']) => {
-    NueConfirm({
+    return await NueConfirm({
         title: '恢复待办事项',
         content: '确定要恢复该待办事项吗？',
         confirmButtonText: '恢复',

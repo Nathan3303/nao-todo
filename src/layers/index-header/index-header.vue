@@ -1,5 +1,14 @@
 <template>
     <nue-header style="position: relative">
+        <template #logo>
+            <img
+                class="logo"
+                src="/favicon.ico"
+                alt="logo"
+                style="width: 24px; aspect-ratio: 1; margin-top: 6px; cursor: pointer"
+                @click.stop="showUpdateLogDialog"
+            />
+        </template>
         <template #navigators>
             <nue-tooltip size="small" content="任务" placement="right-center">
                 <nue-link theme="btnlike,plink" icon="square-check-fill" route="/tasks" />

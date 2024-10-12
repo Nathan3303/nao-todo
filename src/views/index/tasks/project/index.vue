@@ -37,9 +37,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, provide, ref, watch, watchEffect } from 'vue'
+import { computed, provide, ref, watch } from 'vue'
 import { TodoViewHeader } from '@/layers'
-import { onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useProjectStore, useTodoStore } from '@/stores'
 import { handleUpdatePreference } from '@/utils/project-handlers'
 import { TasksProjectViewContextKey } from './constants'
@@ -114,24 +114,19 @@ provide<TasksProjectViewContext>(TasksProjectViewContextKey, {
 
 watch(
     () => props.projectId as Project['id'],
-    () => {
-        const { projectId } = props
-        if (projectId === project.value?.id) return
-        if (!projectId) return
-        const _project = projectStore._toFinded(projectId)
+    (newProjectId) => {
+        if (newProjectId === project.value?.id) return
+        if (!newProjectId) return
+        const _project = projectStore._toFinded(newProjectId)
         project.value = _project || void 0
         handleLoadProjectPreference()
+        handleGoToDefaulView()
     },
     { immediate: true }
 )
 
 watch(
     () => route.name,
-    (newName) => {
-        if (newName === 'tasks-project') {
-            handleGoToDefaulView()
-        }
-    },
-    { immediate: true }
+    (newName) => newName === 'tasks-project' && handleGoToDefaulView()
 )
 </script>
