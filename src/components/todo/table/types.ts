@@ -18,11 +18,17 @@ export type TodoTableProps = {
     sortInfo: TodoSortOptions
 }
 
+export type TodoTableMultiSelectEmitPayload = {
+    selectedIds: Todo['id'][]
+    selectRange: { start: number; end: number }
+}
+
 export type TodoTableEmits = {
     (event: 'deleteTodo', id: Todo['id']): void
     (event: 'restoreTodo', id: Todo['id']): void
     (event: 'showTodoDetails', id: Todo['id']): void
     (event: 'sortTodo', sortInfo: TodoSortOptions): void
+    (event: 'multiSelect', payload: TodoTableMultiSelectEmitPayload): void
 }
 
 export type TodoTableContext = {

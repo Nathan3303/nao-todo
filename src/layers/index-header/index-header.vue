@@ -13,8 +13,11 @@
             <nue-tooltip size="small" content="任务" placement="right-center">
                 <nue-link theme="btnlike,plink" icon="square-check-fill" route="/tasks" />
             </nue-tooltip>
-            <nue-tooltip size="small" content="日历" placement="right-center">
+            <nue-tooltip size="small" content="日历视图" placement="right-center">
                 <nue-link theme="btnlike,plink" icon="calendar2" disabled />
+            </nue-tooltip>
+            <nue-tooltip size="small" content="番茄专注" placement="right-center">
+                <nue-link theme="btnlike,plink" icon="scan" disabled />
             </nue-tooltip>
         </template>
         <template #user>

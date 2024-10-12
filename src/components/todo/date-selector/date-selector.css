@@ -2,7 +2,7 @@
     width: fit-content;
     align-items: center;
     gap: 4px;
-    flex: auto;
+    /* flex: auto; */
     border-radius: var(--primary-radius);
     padding: 0px 8px;
     /* margin-left: -10px; */

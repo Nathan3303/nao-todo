@@ -36,8 +36,8 @@ const props = withDefaults(defineProps<TodoProjectSelectorProps>(), {})
 const emit = defineEmits<TodoProjectSelectorEmits>()
 
 const buttonIconName = computed(() => {
-    const { projectTitle } = props
-    return projectTitle ? 'more2' : 'inbox'
+    const { projectId, userId } = props
+    return projectId !== userId ? 'more2' : 'inbox'
 })
 
 const handleSelect = async (projectId?: Project['id'], projectTitle?: Project['title']) => {

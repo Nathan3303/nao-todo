@@ -42,7 +42,7 @@ const project = computed(() => {
 
 const handleCreateTodo = async (todoName: Todo['name']) => {
     if (!project.value) return
-    console.log(project.value);
+    // console.log(project.value);
     const { id, title } = project.value
     await createTodoWithOptions(id, {
         name: todoName,
@@ -53,9 +53,11 @@ const handleCreateTodo = async (todoName: Todo['name']) => {
 const handleCreateTodoByDialog = async (caller: (args: TodoCreateDialogArgs) => void) => {
     if (!project.value) return
     const { id, title } = project.value
+    const avalibleProjects = projectStore._toFiltered({ isDeleted: false, isArchived: false })
+    console.log(avalibleProjects)
     caller({
         userId: userStore.user!.id,
-        projects: projectStore.projects,
+        projects: avalibleProjects,
         tags: tagStore.tags,
         presetInfo: {
             projectId: id,

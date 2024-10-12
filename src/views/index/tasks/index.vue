@@ -29,23 +29,44 @@
             <router-view />
         </template>
         <template #outline>
-            <todo-details-v2 />
+            <todo-multi-details v-if="isShowMultiDetails" :selected-ids="selectedIds" />
+            <todo-details-v2 v-else />
         </template>
     </nue-main>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { TodoDetailsV2, ProjectSmartList, TagSmartList, TodoFilterList } from '@/layers'
+import { ref, provide } from 'vue'
+import {
+    TodoDetailsV2,
+    ProjectSmartList,
+    TagSmartList,
+    TodoFilterList,
+    TodoMultiDetails
+} from '@/layers'
 import { storeToRefs } from 'pinia'
 import { useViewStore } from '@/stores'
 import { AsideLink } from '@/components'
+import { TasksViewContextKey } from './constants'
+import type { Todo } from '@/stores'
+import type { TasksViewContext } from './types'
 
 const viewStore = useViewStore()
 
 const { projectAsideVisible: pav } = storeToRefs(viewStore)
-
 const collapseItemsRecord = ref(['projects', 'tags', 'filters'])
+const isShowMultiDetails = ref(false)
+const selectedIds = ref<Todo['id'][]>([])
+
+const handleShowMultiDetails = (_selectedIds: Todo['id'][]) => {
+    isShowMultiDetails.value = true
+    selectedIds.value = _selectedIds
+}
+
+provide<TasksViewContext>(TasksViewContextKey, {
+    handleShowMultiDetails,
+    handleHideMultiDetails: () => (isShowMultiDetails.value = false)
+})
 </script>
 
 <style scoped>

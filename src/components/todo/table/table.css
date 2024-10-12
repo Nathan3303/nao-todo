@@ -8,6 +8,9 @@
     flex-wrap: nowrap;
     height: 100%;
 
+    -webkit-user-select: none;
+    user-select: none;
+
     .todo-table__header {
         align-items: center;
         padding: 4px 16px;

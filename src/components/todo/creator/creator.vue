@@ -32,45 +32,13 @@
                     @change="(s) => (todoData.state = s as string)"
                 />
                 <nue-div flex></nue-div>
-                <nue-dropdown theme="move-to-dropdown" :hide-on-click="false">
-                    <template #default="{ clickTrigger }">
-                        <nue-button
-                            size="small"
-                            :icon="todoData.project.title ? 'more2' : 'inbox'"
-                            @click="clickTrigger"
-                        >
-                            {{ todoData.project.title || '收集箱' }}
-                        </nue-button>
-                    </template>
-                    <template #dropdown>
-                        <nue-div
-                            class="nue-dropdown-item"
-                            @click="setProjectInfo(userId, '')"
-                            gap="8px"
-                            align="center"
-                        >
-                            <nue-icon name="inbox" size="12px" />
-                            <nue-text size="12px" style="flex: auto">收集箱</nue-text>
-                            <nue-icon
-                                v-if="todoData.projectId === userId || !todoData.projectId"
-                                name="check"
-                            />
-                        </nue-div>
-                        <nue-divider v-if="projects" />
-                        <nue-div
-                            v-for="project in projects"
-                            class="nue-dropdown-item"
-                            @click="setProjectInfo(project.id, project.title)"
-                            style="min-width: 128px"
-                            gap="8px"
-                            align="center"
-                        >
-                            <nue-icon name="more2" size="12px" />
-                            <nue-text size="12px" style="flex: auto">{{ project.title }}</nue-text>
-                            <nue-icon v-if="project.id === todoData.projectId" name="check" />
-                        </nue-div>
-                    </template>
-                </nue-dropdown>
+                <todo-project-selector
+                    :user-id="userId"
+                    :projects="projects"
+                    :project-id="todoData.projectId"
+                    :project-title="todoData.project.title"
+                    @select="setProjectInfo"
+                />
             </nue-div>
             <todo-tag-bar :tags="tags" :todo-tags="todoData.tags" @update-tags="handleUpdateTags" />
             <nue-textarea v-model="todoData.description" placeholder="添加待办事项备注" :rows="4" />
@@ -83,6 +51,7 @@ import { ref, reactive, computed } from 'vue'
 import TodoDateSelector from '../date-selector/date-selector.vue'
 import TodoSelector from '../selector/selector.vue'
 import TodoTagBar from '../tag-bar/tag-bar.vue'
+import TodoProjectSelector from '../project-selector/project-selector.vue'
 import type { TodoCreatorProps, TodoCreatorEmits } from './types'
 
 defineOptions({ name: 'TodoCreator' })
@@ -104,6 +73,7 @@ const todoData = reactive({
 
 const endDate = computed({
     get() {
+        if (!todoData.dueDate.endAt) return ''
         const sliced = todoData.dueDate.endAt!.slice(0, 16)
         // console.log(sliced)
         return sliced

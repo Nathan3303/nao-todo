@@ -37,17 +37,17 @@
             <empty :empty="!todos.length" text-size="12px" full-height :message="emptyMessage" />
             <nue-div
                 class="todo-table__body__row"
-                v-for="todo in todos"
+                v-for="(todo, idx) in todos"
                 :key="todo.id"
-                :data-selected="todo.id === selectedId"
+                :data-selected="idx >= selectRange.start && idx <= selectRange.end"
                 :data-done="todo.isDone || todo.state === 'done'"
-                @click.stop="handleShowDetails(todo.id)"
+                @click.stop.exact="handleShowDetails(todo.id, idx)"
+                @click.shift.exact="handleMultiSelect(idx)"
             >
                 <nue-div class="todo-table__body__col col-name" vertical>
                     <nue-button
                         class="todo-table-main__row__name"
                         theme="pure"
-                        @click.stop="handleShowDetails(todo.id)"
                         align="left"
                     >
                         {{ todo.name }}
@@ -129,10 +129,14 @@ const emit = defineEmits<TodoTableEmits>()
 const refreshKeyIdx = ref(0)
 const sortInfo = reactive(props.sortInfo)
 
-const { selectedId, handleDeleteBtnClk, handleShowDetails, handleClearSelectedId } = useTodoTable(
-    props,
-    emit
-)
+const {
+    selectedId,
+    selectRange,
+    handleDeleteBtnClk,
+    handleShowDetails,
+    handleMultiSelect,
+    handleClearSelectedId
+} = useTodoTable(props, emit)
 const { run: refresh, stop: stopRefresh } = useMinuteTask(() => refreshKeyIdx.value++)
 
 const isTodoExpired = (todo: (typeof props.todos)[0]) => {

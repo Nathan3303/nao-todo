@@ -36,9 +36,11 @@ const handleCreateTodo = async (todoName: Todo['name']) => {
 const handleCreateTodoByDialog = async (caller: (args: TodoCreateDialogArgs) => void) => {
     const projectId = route.params.projectId as string
     const project = projectStore._toFinded(projectId)
+    const avalibleProjects = projectStore._toFiltered({ isDeleted: false, isArchived: false })
+    console.log(avalibleProjects)
     caller({
         userId: userStore.user!.id,
-        projects: projectStore.projects,
+        projects: avalibleProjects,
         tags: tagStore.tags,
         presetInfo: {
             projectId,

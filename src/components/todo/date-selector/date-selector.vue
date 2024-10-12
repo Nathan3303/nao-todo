@@ -26,7 +26,7 @@ const dateMoment = computed<string | null>({
     get() {
         const { modelValue, date } = props
         if (modelValue && moment(modelValue).isValid()) {
-            console.log(modelValue)
+            // console.log(modelValue)
             return modelValue
         }
         if (date) {

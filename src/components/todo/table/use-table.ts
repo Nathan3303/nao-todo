@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import type { Todo } from '@/stores'
 import type { TodoTableEmits, TodoTableProps } from './types'
@@ -6,6 +6,7 @@ import type { TodoTableEmits, TodoTableProps } from './types'
 export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
     const route = useRoute()
     const selectedId = ref<Todo['id']>()
+    const selectRange = reactive({ start: -1, end: -1 })
 
     const handleDeleteBtnClk = (todoId: Todo['id'], isDeleted: boolean) => {
         if (isDeleted) {
@@ -27,11 +28,26 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
         emit('restoreTodo', todoId)
     }
 
-    const handleShowDetails = (todoId: Todo['id']) => {
+    const handleShowDetails = (todoId: Todo['id'], idx: number) => {
         const taskId = route.params.taskId
         if (selectedId.value === todoId && taskId) return
         selectedId.value = todoId
+        selectRange.start = selectRange.end = idx
         emit('showTodoDetails', todoId)
+    }
+
+    const handleMultiSelect = (idx: number) => {
+        if (selectRange.start === -1 || selectRange.start === idx) return
+        if (selectRange.start > idx) {
+            selectRange.end = selectRange.start
+            selectRange.start = idx
+        } else {
+            selectRange.end = idx
+        }
+        const selectedIds = props.todos
+            .slice(selectRange.start, selectRange.end + 1)
+            .map((todo) => todo.id)
+        emit('multiSelect', { selectedIds, selectRange })
     }
 
     const handleClearSelectedId = () => {
@@ -42,10 +58,12 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
 
     return {
         selectedId,
+        selectRange,
         handleDeleteBtnClk,
         handleDelete,
         handleRestore,
         handleShowDetails,
+        handleMultiSelect,
         handleClearSelectedId
     }
 }
