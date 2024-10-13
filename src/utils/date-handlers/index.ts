@@ -17,6 +17,10 @@ export const isIn7DaysFromNow = (date: Moment) => {
     return date.isBetween(moment().subtract(7, 'days'), moment().add(1, 'day'))
 }
 
+export const isIn30DaysFromNow = (date: Moment) => {
+    return date.isBetween(moment().subtract(30, 'days'), moment().add(1, 'day'))
+}
+
 export const isAfterThisYear = (date: Moment) => {
     return date.isAfter(moment().endOf('year'))
 }

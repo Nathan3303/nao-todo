@@ -114,7 +114,7 @@ let refreshTimer: number | null = null
 const isMultiSelecting = ref(false)
 const multiSelectCount = ref(0)
 const { handleShowMultiDetails, handleHideMultiDetails } =
-    inject<TasksViewContext>(TasksViewContextKey)
+    inject<TasksViewContext>(TasksViewContextKey)!
 
 const handleGetTodos = async () => {
     const { filterInfo } = props
@@ -147,9 +147,9 @@ const handleShowTodoDetails = (id: Todo['id']) => {
 }
 
 const handleMultiSelect = (payload: TodoTableMultiSelectEmitPayload) => {
-    console.log(payload)
+    // console.log(payload)
     isMultiSelecting.value = true
-    const { selectedIds, selectRange } = payload
+    const { selectedIds } = payload
     multiSelectCount.value = selectedIds.length
     handleShowMultiDetails(selectedIds)
 }

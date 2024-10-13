@@ -2,7 +2,7 @@
     <nue-dropdown theme="project-selector" :hide-on-click="false">
         <template #default="{ clickTrigger }">
             <nue-button size="small" :icon="buttonIconName" @click="clickTrigger">
-                {{ projectTitle || '收集箱' }}
+                {{ buttonText }}
             </nue-button>
         </template>
         <template #dropdown>
@@ -37,7 +37,14 @@ const emit = defineEmits<TodoProjectSelectorEmits>()
 
 const buttonIconName = computed(() => {
     const { projectId, userId } = props
+    if (projectId === '') return 'switch'
     return projectId !== userId ? 'more2' : 'inbox'
+})
+
+const buttonText = computed(() => {
+    const { projectId, projectTitle, placeholder } = props
+    if (projectId === '') return placeholder || '移动到'
+    return projectTitle || '收集箱'
 })
 
 const handleSelect = async (projectId?: Project['id'], projectTitle?: Project['title']) => {

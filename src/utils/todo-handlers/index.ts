@@ -155,3 +155,10 @@ export const moveTodo = async (todoId: Todo['id'], newProjectId: Todo['projectId
 export const updateTodoTags = async (todoId: Todo['id'], newTags: Todo['tags']) => {
     await updateTodo(todoId, { tags: newTags })
 }
+
+export const updateTodos = async (todoIds: Todo['id'][], updateInfo: Partial<Todo>) => {
+    // console.log(todoIds, updateInfo)
+    for (const todoId of todoIds) {
+        todoStore.updateLocal(todoId, updateInfo)
+    }
+}

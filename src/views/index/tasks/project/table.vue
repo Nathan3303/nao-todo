@@ -54,7 +54,7 @@ const handleCreateTodoByDialog = async (caller: (args: TodoCreateDialogArgs) => 
     if (!project.value) return
     const { id, title } = project.value
     const avalibleProjects = projectStore._toFiltered({ isDeleted: false, isArchived: false })
-    console.log(avalibleProjects)
+    // console.log(avalibleProjects)
     caller({
         userId: userStore.user!.id,
         projects: avalibleProjects,

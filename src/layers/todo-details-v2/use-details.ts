@@ -58,7 +58,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         isGetting.value = false
     }
 
-    const _debounce = (delay: number, callback: () => void | Promise<any>) => {
+    const _debounce = (callback: () => void | Promise<any>, delay: number) => {
         let timer: number | null = null
         return () => {
             if (timer) clearTimeout(timer)
@@ -78,7 +78,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         loadingState.value = false
     }
 
-    const debouncedUpdateTodo = _debounce(1024, _updateTodo)
+    const debouncedUpdateTodo = _debounce(_updateTodo, 1024)
 
     const formatDate = (datestring: string) => {
         const dateString = moment(datestring).format('YYYY-MM-DD HH:mm')
