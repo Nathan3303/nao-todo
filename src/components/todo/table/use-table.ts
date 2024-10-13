@@ -48,6 +48,7 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
             .slice(selectRange.start, selectRange.end + 1)
             .map((todo) => todo.id)
         emit('multiSelect', { selectedIds, selectRange })
+        selectedId.value = void 0 // clear single select
     }
 
     const handleClearSelectedId = () => {

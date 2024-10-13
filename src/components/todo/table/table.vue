@@ -130,7 +130,6 @@ const refreshKeyIdx = ref(0)
 const sortInfo = reactive(props.sortInfo)
 
 const {
-    selectedId,
     selectRange,
     handleDeleteBtnClk,
     handleShowDetails,

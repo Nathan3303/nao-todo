@@ -29,8 +29,8 @@
             <router-view />
         </template>
         <template #outline>
+            <todo-details-v2 :style="isShowMultiDetails && { height: '0px' }" />
             <todo-multi-details v-if="isShowMultiDetails" :selected-ids="selectedIds" />
-            <todo-details-v2 v-else />
         </template>
     </nue-main>
 </template>

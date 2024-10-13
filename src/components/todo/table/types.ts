@@ -35,6 +35,6 @@ export type TodoTableContext = {
     // todos: Todo[]
     // columns: Columns
     // deleteHandler: (id: Todo['id']) => void
-    showDetailsHandler: (id: Todo['id']) => void
+    showDetailsHandler: (id: Todo['id'], idx: number) => void
     sortInfo: Reactive<TodoSortOptions>
 }
