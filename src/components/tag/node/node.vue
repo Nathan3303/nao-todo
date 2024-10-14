@@ -2,10 +2,11 @@
     <nue-div class="tag-node" width="fit-content">
         <nue-text size="12px" color="white">{{ tag.name }}</nue-text>
         <nue-icon
+            v-if="!readonly"
             class="tag-node__delete-button"
             name="clear"
             @click="handleDelete(tag.id)"
-        ></nue-icon>
+        />
     </nue-div>
 </template>
 
@@ -16,6 +17,7 @@ defineOptions({ name: 'TagNode' })
 const props = defineProps<{
     tag: Tag
     deletable?: boolean
+    readonly?: boolean
 }>()
 const emit = defineEmits<{
     (event: 'delete', id: Tag['id']): void
@@ -37,6 +39,10 @@ const handleDelete = (id: Tag['id']) => {
     border-radius: 16px;
     position: relative;
     cursor: default;
+    
+    & > .nue-text {
+        color: white !important;
+    }
 
     .tag-node__delete-button {
         --icon-size: 14px;

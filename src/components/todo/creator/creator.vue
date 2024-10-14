@@ -40,7 +40,12 @@
                     @select="setProjectInfo"
                 />
             </nue-div>
-            <todo-tag-bar :tags="tags" :todo-tags="todoData.tags" @update-tags="handleUpdateTags" />
+            <todo-tag-bar
+                :tags="tags"
+                :todo-tags="todoData.tags"
+                :clamped="5"
+                @update-tags="handleUpdateTags"
+            />
             <nue-textarea v-model="todoData.description" placeholder="添加待办事项备注" :rows="4" />
         </nue-div>
     </nue-div>

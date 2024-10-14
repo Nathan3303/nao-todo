@@ -1,5 +1,5 @@
 import type { Reactive } from 'vue'
-import type { Todo, TodoColumnOptions, TodoSortOptions } from '@/stores'
+import type { Tag, Todo, TodoColumnOptions, TodoSortOptions } from '@/stores'
 
 export type Columns = TodoColumnOptions
 
@@ -12,6 +12,7 @@ export type OrderInfo = {
 
 export type TodoTableProps = {
     todos: Todo[]
+    tags: Tag[]
     columns: TodoColumnOptions
     simple?: boolean
     emptyMessage?: string

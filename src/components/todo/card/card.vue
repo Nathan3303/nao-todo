@@ -33,8 +33,14 @@
                     {{ todo.description }}
                 </nue-text>
             </nue-div>
-            <nue-div class="todo-card__attrs" align="center" gap="4px">
-                <nue-div class="todo-card__infos" align="center" gap="4px">
+            <nue-div class="todo-card__attrs" align="center" gap="6px">
+                <nue-div class="todo-card__infos" align="center" gap="6px">
+                    <todo-tag-bar
+                        :tags="tagStore.tags"
+                        :todoTags="todo.tags"
+                        :clamped="3"
+                        readonly
+                    />
                     <todo-state-info v-if="columns?.state" :state="todo.state" />
                     <todo-priority-info v-if="columns?.priority" :priority="todo.priority" />
                 </nue-div>
@@ -72,6 +78,7 @@ import { computed } from 'vue'
 import { useRelativeDate } from '@/hooks/use-relative-date'
 import { TodoStateInfo } from '../state-info'
 import { TodoPriorityInfo } from '../priority-info'
+import { TodoTagBar } from '../tag-bar'
 import moment from 'moment'
 import type { TodoCardEmits, TodoCardProps } from './types'
 import type { Todo } from '@/stores'
@@ -79,6 +86,9 @@ import type { Todo } from '@/stores'
 defineOptions({ name: 'TodoCard' })
 const props = defineProps<TodoCardProps>()
 const emit = defineEmits<TodoCardEmits>()
+
+import { useTagStore } from '@/stores'
+const tagStore = useTagStore()
 
 const isDone = computed(() => {
     const { isDone, state } = props.todo

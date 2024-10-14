@@ -48,12 +48,12 @@
                     <nue-button class="todo-table-main__row__name" theme="pure" align="left">
                         {{ todo.name }}
                         <template #append>
-                            <nue-icon
-                                name="warning"
-                                size="13px"
-                                color="orange"
-                                v-if="todo.isNew"
-                                title="新任务"
+                            <todo-tag-bar
+                                :tags="tags"
+                                :todoTags="todo.tags"
+                                :clamped="2"
+                                readonly
+                                style="scale: 0.8"
                             />
                         </template>
                     </nue-button>
@@ -108,7 +108,7 @@
 
 <script setup lang="ts">
 import { reactive, provide, watch, ref, onMounted, onBeforeUnmount } from 'vue'
-import { TodoPriorityInfo, TodoStateInfo, Empty } from '@/components'
+import { TodoPriorityInfo, TodoStateInfo, Empty, TodoTagBar } from '@/components'
 import { useTodoTable } from './use-table'
 import { useRelativeDate } from '@/hooks/use-relative-date'
 import { isExpired } from '@/utils/date-handlers'

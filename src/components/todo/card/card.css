@@ -69,8 +69,34 @@
         }
     }
 
-    .todo-card__infos * {
-        color: gray
+    .todo-card__attrs {
+        & * {
+            color: gray;
+        }
+
+        & > .nue-div {
+            min-width: 20%;
+        }
+
+        .todo-tag-bar {
+            min-width: 20%;
+
+            &:deep(.tag-node) {
+                height: 18px;
+                padding: 0px 6px;
+
+                & > .nue-text {
+                    font-size: 0.62rem;
+                }
+            }
+
+            &:deep(.todo-tag-bar__clamped-text) {
+                height: 18px;
+                line-height: 18px;
+                padding: 0px 6px;
+                font-size: 0.6rem;
+            }
+        }
     }
 
     .todo-card__check-icon {

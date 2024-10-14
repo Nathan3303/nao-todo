@@ -35,6 +35,7 @@
                     v-else
                     ref="todoTableRef"
                     :todos="todos"
+                    :tags="tagStore.tags"
                     :columns="columns"
                     :sort-info="sortInfo"
                     @delete-todo="removeTodoWithConfirm"
@@ -70,7 +71,7 @@
 import { ref, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { useTodoStore, useUserStore } from '@/stores'
+import { useTodoStore, useUserStore, useTagStore } from '@/stores'
 import { TasksViewContextKey } from '@/views/index/tasks/constants'
 import {
     TodoTable,
@@ -96,8 +97,9 @@ const props = defineProps<ContentTableProps>()
 const emit = defineEmits<ContentTableEmits>()
 
 const router = useRouter()
-const todoStore = useTodoStore()
 const userStore = useUserStore()
+const todoStore = useTodoStore()
+const tagStore = useTagStore()
 
 const { user } = storeToRefs(userStore)
 const {

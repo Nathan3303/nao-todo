@@ -3,6 +3,8 @@ import type { Tag, Todo } from "@/stores"
 export type TodoTagBarProps = {
     tags: Tag[]
     todoTags: Todo['tags']
+    clamped?: number
+    readonly?: boolean
 }
 
 export type TodoTagBarEmits = {

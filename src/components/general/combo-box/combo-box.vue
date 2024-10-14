@@ -3,9 +3,11 @@
         <template #default="{ clickTrigger }">
             <nue-button size="small" :icon="triggerIcon" @click="clickTrigger">
                 {{ triggerTitle }}
-                <template v-if="checkedOptionsCount" #append>
+                <template v-if="!hideCounter && checkedOptionsCount" #append>
                     <nue-divider direction="vertical" style="height: 12px"></nue-divider>
-                    <nue-text size="12px" color="orange">+ {{ checkedOptionsCount }}</nue-text>
+                    <nue-text size="12px" color="orange">
+                        + {{ checkedOptionsCount }}
+                    </nue-text>
                 </template>
             </nue-button>
         </template>
@@ -52,7 +54,8 @@ import { Checkbox } from '@/components'
 defineOptions({ name: 'ComboBox' })
 const props = withDefaults(defineProps<ComboBoxProps>(), {
     triggerIcon: 'plus-circle',
-    triggerTitle: 'Status'
+    triggerTitle: 'Status',
+    hideCounter: false
 })
 const emit = defineEmits<{
     (event: 'change', value: unknown, payload: Partial<FrameworkOption>): void
