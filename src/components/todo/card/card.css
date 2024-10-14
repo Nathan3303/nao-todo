@@ -61,7 +61,7 @@
         .todo-card__description {
             display: -webkit-box;
             -webkit-box-orient: vertical;
-            -webkit-line-clamp: 3;
+            /* -webkit-line-clamp: 3; */
             overflow: hidden;
             text-overflow: ellipsis;
             font-size: 12px;
@@ -69,7 +69,7 @@
         }
     }
 
-    .todo-card__attrs * {
+    .todo-card__infos * {
         color: gray
     }
 

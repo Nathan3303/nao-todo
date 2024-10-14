@@ -162,6 +162,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         unSubscribe = todoStore.$subscribe((mutation) => {
             if (mutation.type !== 'direct') return
             const newValue = mutation.events.newValue
+            if (!newValue) return
             if (Array.isArray(newValue)) return
             if (newValue.id && newValue.id === shadowTodo.value?.id) {
                 shadowTodo.value = newValue

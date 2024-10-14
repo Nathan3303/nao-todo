@@ -26,20 +26,21 @@
                     </nue-div>
                 </nue-div>
                 <nue-text
-                    class="todo-card__description"
                     v-if="todo.description && columns?.description"
+                    class="todo-card__description"
+                    :clamped="3"
                 >
                     {{ todo.description }}
                 </nue-text>
             </nue-div>
             <nue-div class="todo-card__attrs" align="center" gap="4px">
-                <nue-div align="center" gap="4px">
+                <nue-div class="todo-card__infos" align="center" gap="4px">
                     <todo-state-info v-if="columns?.state" :state="todo.state" />
                     <todo-priority-info v-if="columns?.priority" :priority="todo.priority" />
                 </nue-div>
                 <nue-div v-if="columns?.endAt" align="center" gap="4px">
                     <nue-icon name="calendar" color="gray" />
-                    <nue-text size="12px" color="gray">
+                    <nue-text size="12px" :color="isTodoExpired(todo) ? '#ec5555' : 'gray'">
                         {{ useRelativeDate(todo.dueDate.endAt) }}
                     </nue-text>
                 </nue-div>
@@ -71,7 +72,9 @@ import { computed } from 'vue'
 import { useRelativeDate } from '@/hooks/use-relative-date'
 import { TodoStateInfo } from '../state-info'
 import { TodoPriorityInfo } from '../priority-info'
+import moment from 'moment'
 import type { TodoCardEmits, TodoCardProps } from './types'
+import type { Todo } from '@/stores'
 
 defineOptions({ name: 'TodoCard' })
 const props = defineProps<TodoCardProps>()
@@ -86,6 +89,13 @@ const isDone = computed(() => {
 const checkIconName = computed(() => {
     return isDone.value ? 'square-check-fill' : 'square'
 })
+
+const isTodoExpired = (todo: Todo) => {
+    const endAt = todo.dueDate.endAt
+    if (!endAt || todo.state === 'done' || todo.isDone) return false
+    const date = moment(endAt)
+    return date.isBefore(moment())
+}
 
 const handleClick = () => {
     const todoId = props.todo.id
