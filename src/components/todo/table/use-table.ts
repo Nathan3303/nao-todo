@@ -1,4 +1,4 @@
-import { reactive, ref } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import type { Todo } from '@/stores'
 import type { TodoTableEmits, TodoTableProps } from './types'
@@ -48,7 +48,7 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
             .slice(selectRange.start, selectRange.end + 1)
             .map((todo) => todo.id)
         emit('multiSelect', { selectedIds, selectRange })
-        selectedId.value = void 0 // clear single select
+        selectedId.value = void 0
     }
 
     const handleClearSelectedId = () => {
@@ -56,6 +56,17 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
         if (simple) return
         selectedId.value = void 0
     }
+
+    const handleClearSelect = () => {
+        handleClearSelectedId()
+        selectRange.start = selectRange.end = -1
+        emit('multiSelect', { selectedIds: [], selectRange })
+    }
+
+    watch(
+        () => props.todos,
+        () => handleClearSelect()
+    )
 
     return {
         selectedId,
@@ -65,6 +76,7 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
         handleRestore,
         handleShowDetails,
         handleMultiSelect,
-        handleClearSelectedId
+        handleClearSelectedId,
+        handleClearSelect
     }
 }

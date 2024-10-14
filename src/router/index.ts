@@ -39,13 +39,4 @@ const router = createRouter({
     ]
 })
 
-router.afterEach((to) => {
-    const { meta } = to
-    if (meta && meta.title) {
-        document.title = ('NaoTodo - ' + meta.title) as string
-    } else {
-        document.title = 'NaoTodo'
-    }
-})
-
 export default router

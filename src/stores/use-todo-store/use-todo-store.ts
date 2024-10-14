@@ -116,6 +116,24 @@ export const useTodoStore = defineStore('todoStore', () => {
         }
     }
 
+    const _updateBatch = async (
+        userId: User['id'],
+        todoIds: Todo['id'][],
+        updateInfo: Partial<Todo>
+    ) => {
+        try {
+            const URI = `/todos?userId=${userId}`
+            const {
+                data: { data, code }
+            } = await $axios.put(URI, { todoIds, updateInfo })
+            const res = code === '20000' ? data : null
+            // console.log('[todoStore] _updateBatch:', URI, updateInfo, res)
+            return res
+        } catch (e) {
+            console.warn('[todoStore] _updateBatch:', e)
+        }
+    }
+
     const _remove = async (userId: User['id'], todoId: Todo['id']) => {
         try {
             const URI = `/todo?userId=${userId}&todoId=${todoId}`
@@ -174,6 +192,17 @@ export const useTodoStore = defineStore('todoStore', () => {
         return updateResult
     }
 
+    const updateBatch = async (
+        userId: User['id'],
+        todoIds: Todo['id'][],
+        updateInfo: Partial<Todo>
+    ) => {
+        const updateResult = await _updateBatch(userId, todoIds, updateInfo)
+        if (!updateResult) return
+        updateBatchLocal(todoIds, updateInfo)
+        return updateResult
+    }
+
     const remove = async (userId: User['id'], todoId: Todo['id']) => {
         const removeResult = await _remove(userId, todoId)
         if (!removeResult) return
@@ -214,6 +243,12 @@ export const useTodoStore = defineStore('todoStore', () => {
         if (!oldTodo) return
         const newTodo = { ...oldTodo, ...updateInfo }
         todos.value[oldTodoIndex] = newTodo
+    }
+
+    const updateBatchLocal = (todoIds: Todo['id'][], updateInfo: Partial<Todo>) => {
+        todoIds.forEach((todoId) => {
+            updateLocal(todoId, updateInfo)
+        })
     }
 
     const removeLocal = async (todoId: Todo['id']) => {
@@ -305,12 +340,14 @@ export const useTodoStore = defineStore('todoStore', () => {
         get,
         initialize,
         update,
+        updateBatch,
         remove,
         create,
         findIndexLocal,
         findLocal,
         toFilterLocal,
         updateLocal,
+        updateBatchLocal,
         removeLocal,
         createLocal,
         toGetted,

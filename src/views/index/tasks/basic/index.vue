@@ -1,8 +1,8 @@
 <template>
-    <nue-container theme="vertical,inner" id="Index/Tasks/Basic">
-        <todo-view-header :title="viewContent.title">
+    <nue-container id="tasks/basic" theme="vertical,inner">
+        <todo-view-header :title="viewInfo.title">
             <template #subTitle>
-                {{ viewContent.description }}
+                {{ viewInfo.description }}
             </template>
             <template #navigations>
                 <nue-link theme="btnlike" :route="{ name: `tasks-${$route.meta.type}-table` }">
@@ -20,40 +20,28 @@
 </template>
 
 <script setup lang="ts">
-import { computed, provide } from 'vue'
+import { ref, provide, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
-import { TasksBasicViewContent, TasksBasicViewContentKey } from './constants'
-import { handlers } from './handler'
+import { basicViewContextKey, basicViewsInfo } from './constants'
 import { TodoViewHeader } from '@/layers'
 import { useTodoStore } from '@/stores'
-import type { TasksBasicViewContext, TasksBasicViewContentType } from './types'
+import type { BasicViewContext, BasicViewInfo } from './types'
 
 const route = useRoute()
 const todoStore = useTodoStore()
 
-const viewContent = computed<TasksBasicViewContentType>(() => {
-    const routeName = route.meta.type as string
-    const _viewContent = TasksBasicViewContent[
-        routeName as keyof typeof TasksBasicViewContent
-    ] as TasksBasicViewContentType
+const viewInfo = ref<BasicViewInfo>({
+    title: '',
+    description: '',
+    default: { viewType: 'table', filterInfo: {} }
+})
+
+watchEffect(() => {
+    const { meta } = route
     todoStore.resetOptions()
-    return (
-        _viewContent || {
-            title: '',
-            description: '',
-            default: { viewType: 'table', filterInfo: {} }
-        }
-    )
+    document.title = 'NaoTodo - ' + meta.title
+    viewInfo.value = basicViewsInfo[meta.type as string]
 })
 
-const viewHandlers = computed(() => {
-    const routeName = route.meta.type as string
-    const _viewHandlers = handlers[routeName as keyof typeof handlers]
-    return _viewHandlers || {}
-})
-
-provide<TasksBasicViewContext>(TasksBasicViewContentKey, {
-    viewContent,
-    viewHandlers
-})
+provide<BasicViewContext>(basicViewContextKey, { viewInfo })
 </script>

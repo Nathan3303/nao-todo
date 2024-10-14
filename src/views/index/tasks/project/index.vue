@@ -1,5 +1,5 @@
 <template>
-    <nue-container theme="vertical,inner" id="Index/Tasks/Project">
+    <nue-container id="tasks/project" theme="vertical,inner">
         <todo-view-header :title="project?.title" :project="project">
             <template #subTitle>
                 {{ project?.description }}
@@ -37,34 +37,26 @@
 </template>
 
 <script setup lang="ts">
-import { computed, provide, ref, watch } from 'vue'
+import { provide, ref, watchEffect } from 'vue'
 import { TodoViewHeader } from '@/layers'
 import { useRoute, useRouter } from 'vue-router'
 import { useProjectStore, useTodoStore } from '@/stores'
 import { handleUpdatePreference } from '@/utils/project-handlers'
-import { TasksProjectViewContextKey } from './constants'
+import { projectViewContextKey } from './constants'
 import type { Project } from '@/stores'
-import type { TasksProjectViewContext } from './types'
+import type { ProjectViewContext } from './types'
 
-const props = defineProps<{ projectId: Project['id'] }>()
+defineProps<{ projectId: Project['id'] }>()
 
 const route = useRoute()
 const router = useRouter()
 const todoStore = useTodoStore()
 const projectStore = useProjectStore()
 
-const project = ref<Project>()
-
-const getViewType = () => {
-    const viewType = (route.name as string).split('-')[2]
-    if (['table', 'kanban'].includes(viewType)) {
-        return viewType as 'table' | 'kanban'
-    }
-    return 'table'
-}
+const project = ref<Project | null>(null)
 
 const handleSaveAsPreference = async (projectId: Project['id']) => {
-    const viewType = getViewType()
+    const viewType = ((route.name as string).split('-')[2] as 'table' | 'kanban') || 'table'
     const preference: Project['preference'] = {
         viewType,
         filterInfo: todoStore.filterInfo,
@@ -88,45 +80,40 @@ const handleDropdownExecute = async (executeId: string) => {
 }
 
 const handleLoadProjectPreference = () => {
-    const projectPreference = project.value?.preference
+    if (!project.value) return
+    const projectPreference = project.value.preference
     if (projectPreference) {
         todoStore.setOptionsByProjectPreference(projectPreference)
-    } else {
-        todoStore.resetOptions()
-        todoStore.filterInfo = { isDeleted: false, projectId: project.value?.id }
+        return
     }
+    todoStore.resetOptions()
+    todoStore.filterInfo = { isDeleted: false, projectId: project.value.id }
 }
 
 const handleGoToDefaulView = () => {
-    const _project = project.value
-    document.title = 'NaoTodo - ' + _project?.title
-    if (!_project) {
+    if (!project.value) {
         router.replace({ name: 'tasks-all' })
-    } else {
-        router.replace({ name: `tasks-project-${_project.preference?.viewType || 'table'}` })
+        return
     }
+    router.replace({
+        name: `tasks-project-${project.value.preference?.viewType || 'table'}`
+    })
 }
 
-provide<TasksProjectViewContext>(TasksProjectViewContextKey, {
-    projectId: computed(() => props.projectId),
-    project
+watchEffect(() => {
+    const { params, name } = route
+    const { projectId } = params
+    project.value = projectStore._toFinded(projectId as Project['id'])
+    if (name !== 'tasks-project') {
+        if (project.value) {
+            document.title = 'NaoTodo - ' + project.value.title
+            handleLoadProjectPreference()
+        }
+    }
+    if (!['tasks-project-table', 'tasks-project-kanban'].includes(name as string)) {
+        handleGoToDefaulView()
+    }
 })
 
-watch(
-    () => props.projectId as Project['id'],
-    (newProjectId) => {
-        if (newProjectId === project.value?.id) return
-        if (!newProjectId) return
-        const _project = projectStore._toFinded(newProjectId)
-        project.value = _project || void 0
-        handleLoadProjectPreference()
-        handleGoToDefaulView()
-    },
-    { immediate: true }
-)
-
-watch(
-    () => route.name,
-    (newName) => newName === 'tasks-project' && handleGoToDefaulView()
-)
+provide<ProjectViewContext>(projectViewContextKey, { project })
 </script>

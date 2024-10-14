@@ -1,7 +1,6 @@
 import type { Project } from '@/stores'
-import type { ComputedRef, Ref } from 'vue'
+import type { Ref } from 'vue'
 
-export type TasksProjectViewContext = {
-    projectId: ComputedRef<Project['id']>
-    project: Ref<Project | undefined>
+export type ProjectViewContext = {
+    project: Ref<Project | null>
 }

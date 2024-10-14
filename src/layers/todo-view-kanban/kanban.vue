@@ -1,5 +1,5 @@
 <template>
-    <nue-container theme="vertical,inner" class="content-kanban" id="Index/Tasks/Kanban">
+    <nue-container id="tasks/basic/kanban" theme="vertical,inner" class="content-kanban">
         <nue-header height="auto" :key="$route.path" style="box-sizing: border-box">
             <nue-div align="start" justify="space-between" gap="16px">
                 <todo-filter-bar
@@ -35,12 +35,12 @@
                         :todos="value"
                         :data-category="key"
                         :columns="columns"
+                        data-droppable="true"
                         @show-todo-details="handleShowTodoDetails"
                         @delete-todo="removeTodoWithConfirm"
                         @restore-todo="restoreTodoWithConfirm"
                         @finish-todo="handleFinishTodo"
                         @unfinish-todo="handleUnfinishTodo"
-                        data-droppable="true"
                         @dragstart="handleDragStart"
                         @dragenter="handleDragEnter"
                         @dragover="handleDragOver"
@@ -61,7 +61,6 @@ import { useRouter } from 'vue-router'
 import { Loading, TodoFilterBar, ListColumnSwitcher, TodoCreateDialog } from '@/components'
 import { ContentKanbanColumn } from './kanban-column'
 import { useTodoStore, useUserStore } from '@/stores'
-import { NuePrompt } from 'nue-ui'
 import {
     createTodoWithOptions,
     removeTodoWithConfirm,
@@ -81,6 +80,7 @@ const todoStore = useTodoStore()
 
 const { todos, countInfo, filterInfo } = storeToRefs(todoStore)
 const { user } = storeToRefs(userStore)
+
 const kanbanLoading = ref(false)
 const refreshTimer = ref<number | null>(null)
 const draggingTodoId = ref('abc')

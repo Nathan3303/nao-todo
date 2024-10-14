@@ -51,7 +51,11 @@
             </nue-div>
         </nue-main>
         <nue-footer style="justify-content: space-between">
-            <todo-delete-button />
+            <todo-delete-button
+                :is-deleted="commonData.isDeleted"
+                @delete="handleRemove"
+                @restore="handleRestore"
+            />
         </nue-footer>
     </nue-container>
 </template>
@@ -83,7 +87,9 @@ const {
     handleChangeEndDate,
     handleUpdateTags,
     handleChangeState,
-    handleChangePriority
+    handleChangePriority,
+    handleRemove,
+    handleRestore
 } = useMultiDetails(props)
 </script>
 

@@ -1,11 +1,11 @@
 <template>
     <todo-view-kanban
         :key="`${$route.meta.type}`"
-        :filter-info="filterInfo"
+        :filter-info="viewInfo.default.filterInfo"
         :base-route="`tasks-${$route.meta.type}-kanban`"
         :disabled-create-todo="$route.meta.type === 'recycle'"
-        @create-todo="viewHandler.handleCreateTodo"
-        @create-todo-by-dialog="viewHandler.handleCreateTodoByDialog"
+        @create-todo="viewInfo.handleCreateTodo"
+        @create-todo-by-dialog="viewInfo.handleCreateTodoByDialog"
     />
     <suspense>
         <router-view />
@@ -14,21 +14,10 @@
 
 <script setup lang="ts">
 import { TodoViewKanban } from '@/layers'
-import { computed, inject } from 'vue'
-import { TasksBasicViewContentKey } from './constants'
-import type { TodoFilter } from '@/stores'
-import type { TasksBasicViewContext } from './types'
+import { inject } from 'vue'
+import { basicViewContextKey } from './constants'
+import type { BasicViewContext } from './types'
 
-const tasksBasicViewContext = inject<TasksBasicViewContext>(TasksBasicViewContentKey)
-
-const filterInfo = computed<TodoFilter>(() => {
-    const _default = tasksBasicViewContext?.viewContent.value.default.filterInfo
-    return _default ?? { isDeleted: false }
-})
-
-const viewHandler = computed(() => {
-    return tasksBasicViewContext?.viewHandlers.value!
-})
+const { viewInfo } = inject<BasicViewContext>(basicViewContextKey)!
 </script>
 
-<style scoped></style>

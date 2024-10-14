@@ -90,6 +90,21 @@ export const updateTodoWithCompare = async (todoId: Todo['id'], updateInfo: Part
     return await updateTodo(todoId, updateInfo)
 }
 
+export const updateTodos = async (todoIds: Todo['id'][], updateInfo: Partial<Todo>) => {
+    const userId = userStore.user!.id
+    const updateResult = await todoStore.updateBatch(userId, todoIds, updateInfo)
+    // console.log('[todoHandlers] updateTodos:', updateResult)
+    requestIdleCallback(() => {
+        if (updateResult === 'Update successful') {
+            NueMessage.success('更新成功')
+            todoStore.get(userId)
+        } else {
+            NueMessage.error('更新失败')
+        }
+    })
+    return updateResult === 'Update successful'
+}
+
 // Extends
 
 export const removeTodo = async (todoId: Todo['id']) => {
@@ -116,6 +131,22 @@ export const removeTodoWithConfirm = async (todoId: Todo['id']) => {
     )
 }
 
+export const removeTodosWithConfirm = async (todoIds: Todo['id'][]) => {
+    return await NueConfirm({
+        title: '批量删除待办事项',
+        content: '确定要删除这些待办事项吗？',
+        confirmButtonText: '删除',
+        cancelButtonText: '取消',
+        onConfirm: async () => {
+            // console.log('[todoHandlers] removeTodosWithConfirm:', todoIds)
+            return await updateTodos(todoIds, { isDeleted: true })
+        }
+    }).then(
+        (res) => res,
+        (err) => err
+    )
+}
+
 export const restoreTodo = async (todoId: Todo['id']) => {
     const res = await updateTodo(todoId, { isDeleted: false })
     // console.log('[todoHandlers] restoreTodo:', res)
@@ -130,6 +161,21 @@ export const restoreTodoWithConfirm = async (todoId: Todo['id']) => {
         confirmButtonText: '恢复',
         cancelButtonText: '取消',
         onConfirm: async () => await restoreTodo(todoId)
+    }).then(
+        (res) => res,
+        (err) => err
+    )
+}
+
+export const restoreTodosWithConfirm = async (todoIds: Todo['id'][]) => {
+    return await NueConfirm({
+        title: '批量恢复待办事项',
+        content: '确定要恢复这些待办事项吗？',
+        confirmButtonText: '恢复',
+        cancelButtonText: '取消',
+        onConfirm: async () => {
+            return await updateTodos(todoIds, { isDeleted: false })
+        }
     }).then(
         (res) => res,
         (err) => err
@@ -154,11 +200,4 @@ export const moveTodo = async (todoId: Todo['id'], newProjectId: Todo['projectId
 
 export const updateTodoTags = async (todoId: Todo['id'], newTags: Todo['tags']) => {
     await updateTodo(todoId, { tags: newTags })
-}
-
-export const updateTodos = async (todoIds: Todo['id'][], updateInfo: Partial<Todo>) => {
-    // console.log(todoIds, updateInfo)
-    for (const todoId of todoIds) {
-        todoStore.updateLocal(todoId, updateInfo)
-    }
 }

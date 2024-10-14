@@ -1,5 +1,5 @@
 <template>
-    <nue-container theme="vertical,inner" id="Index/Tasks/Basic/Table">
+    <nue-container id="tasks/basic/table" theme="vertical,inner">
         <nue-header height="auto" :key="$route.path" style="box-sizing: border-box">
             <nue-div align="start" justify="space-between" gap="16px">
                 <todo-filter-bar
@@ -49,7 +49,7 @@
             <nue-div align="center" justify="space-between">
                 <nue-text size="12px" color="gray" flex>
                     当前列表 {{ countInfo?.length || 0 }} 项， 共计 {{ countInfo?.count || 0 }} 项。
-                    <nue-text v-if="isMultiSelecting" size="12px" color="orange">
+                    <nue-text v-if="isShowMultiDetails" size="12px" color="orange">
                         已选择 {{ multiSelectCount }} 项。
                     </nue-text>
                 </nue-text>
@@ -69,6 +69,9 @@
 <script setup lang="ts">
 import { ref, inject } from 'vue'
 import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
+import { useTodoStore, useUserStore } from '@/stores'
+import { TasksViewContextKey } from '@/views/index/tasks/constants'
 import {
     TodoTable,
     Loading,
@@ -77,14 +80,11 @@ import {
     Pager,
     TodoCreateDialog
 } from '@/components'
-import { useTodoStore, useUserStore } from '@/stores'
-import { storeToRefs } from 'pinia'
 import {
     createTodoWithOptions,
     removeTodoWithConfirm,
     restoreTodoWithConfirm
 } from '@/utils/todo-handlers'
-import { TasksViewContextKey } from '@/views/index/tasks/constants'
 import type { Columns } from '@/components'
 import type { Todo, TodoFilter, TodoSortOptions } from '@/stores'
 import type { ContentTableProps, ContentTableEmits } from './types'
@@ -108,12 +108,13 @@ const {
     sortInfo,
     columnOptions: columns
 } = storeToRefs(todoStore)
+
 const tableLoading = ref(false)
+const todoTableRef = ref<InstanceType<typeof TodoTable>>()
 const todoCreateDialogRef = ref<InstanceType<typeof TodoCreateDialog>>()
 let refreshTimer: number | null = null
-const isMultiSelecting = ref(false)
 const multiSelectCount = ref(0)
-const { handleShowMultiDetails, handleHideMultiDetails } =
+const { isShowMultiDetails, handleHideMultiDetails, handleShowMultiDetails } =
     inject<TasksViewContext>(TasksViewContextKey)!
 
 const handleGetTodos = async () => {
@@ -142,14 +143,16 @@ const handleChangeColumns = (payload: Columns) => {
 const handleShowTodoDetails = (id: Todo['id']) => {
     const { baseRoute } = props
     router.push({ name: baseRoute, params: { taskId: id } })
-    isMultiSelecting.value = false
     handleHideMultiDetails()
 }
 
 const handleMultiSelect = (payload: TodoTableMultiSelectEmitPayload) => {
     // console.log(payload)
-    isMultiSelecting.value = true
-    const { selectedIds } = payload
+    const { selectedIds, selectRange } = payload
+    if (selectedIds.length === 0 || selectRange.start === -1) {
+        handleHideMultiDetails()
+        return
+    }
     multiSelectCount.value = selectedIds.length
     handleShowMultiDetails(selectedIds)
 }

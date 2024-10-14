@@ -35,8 +35,6 @@ const tasksRoutes = {
             name: `tasks-project`,
             props: true,
             component: () => import(`@/views/index/tasks/project/index.vue`),
-            // redirect: { name: `tasks-project-table` },
-            
             children: [
                 {
                     path: 'table/:taskId?',
@@ -80,8 +78,6 @@ const links = [
     { path: 'tomorrow', meta: { title: '明日任务', type: 'tomorrow' } },
     { path: 'week', meta: { title: '最近7天', type: 'week' } },
     { path: 'inbox', meta: { title: '收集箱', type: 'inbox' } },
-    // { path: '$p:projectId', meta: {}, dirName: 'project' },
-    // { path: '$t:tagId', meta: {}, dirName: 'tag' },
     { path: 'recycle', meta: { title: '垃圾桶', type: 'recycle' } }
 ]
 

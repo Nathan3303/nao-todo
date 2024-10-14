@@ -1,16 +1,35 @@
-import { useUserStore } from '@/stores'
+import type { BasicViewInfo } from './types'
+import { createTodoWithOptions } from '@/utils'
+import { useUserStore, useProjectStore, useTagStore } from '@/stores'
+import moment from 'moment'
+import type { TodoCreateDialogArgs } from '@/components/todo/create-dialog/types'
+import type { Todo } from '@/stores'
 
 const userStore = useUserStore()
+const projectStore = useProjectStore()
+const tagStore = useTagStore()
 
-export const TasksBasicViewContentKey = 'TASKS_BASIC_VIEW_CONTENT'
+export const basicViewContextKey = 'TASKS_BASIC_VIEW_CONTEXT_KEY'
 
-export const TasksBasicViewContent = {
+export const basicViewsInfo: {
+    [key: string]: BasicViewInfo
+} = {
     all: {
         title: '所有',
         description: '所有板块是专门展示和管理工作所有需要完成的任务的地方。',
         default: {
             viewType: 'table',
             filterInfo: { isDeleted: false }
+        },
+        handleCreateTodo: async (todoName: Todo['name']) => {
+            await createTodoWithOptions(null, { name: todoName })
+        },
+        handleCreateTodoByDialog: async (caller: (args: TodoCreateDialogArgs) => void) => {
+            caller({
+                userId: userStore.user!.id,
+                projects: projectStore.projects,
+                tags: tagStore.tags
+            })
         }
     },
     today: {
@@ -22,6 +41,30 @@ export const TasksBasicViewContent = {
                 isDeleted: false,
                 relativeDate: 'today'
             }
+        },
+        handleCreateTodo: async (todoName: Todo['name']) => {
+            const now = moment()
+            await createTodoWithOptions(null, {
+                name: todoName,
+                dueDate: {
+                    startAt: now.toISOString(),
+                    endAt: now.endOf('day').toISOString()
+                }
+            })
+        },
+        handleCreateTodoByDialog: async (caller: (args: TodoCreateDialogArgs) => void) => {
+            const now = moment()
+            caller({
+                userId: userStore.user!.id,
+                projects: projectStore.projects,
+                tags: tagStore.tags,
+                presetInfo: {
+                    dueDate: {
+                        startAt: now.toISOString(),
+                        endAt: now.endOf('day').toISOString(true)
+                    }
+                }
+            })
         }
     },
     tomorrow: {
@@ -33,6 +76,30 @@ export const TasksBasicViewContent = {
                 isDeleted: false,
                 relativeDate: 'tomorrow'
             }
+        },
+        handleCreateTodo: async (todoName: Todo['name']) => {
+            const tomorrow = moment().add(1, 'day')
+            await createTodoWithOptions(null, {
+                name: todoName,
+                dueDate: {
+                    startAt: tomorrow.toISOString(),
+                    endAt: tomorrow.endOf('day').toISOString()
+                }
+            })
+        },
+        handleCreateTodoByDialog: async (caller: (args: TodoCreateDialogArgs) => void) => {
+            const tomorrow = moment().add(1, 'day')
+            caller({
+                userId: userStore.user!.id,
+                projects: projectStore.projects,
+                tags: tagStore.tags,
+                presetInfo: {
+                    dueDate: {
+                        startAt: tomorrow.toISOString(),
+                        endAt: tomorrow.endOf('day').toISOString(true)
+                    }
+                }
+            })
         }
     },
     week: {
@@ -44,6 +111,30 @@ export const TasksBasicViewContent = {
                 isDeleted: false,
                 relativeDate: 'week'
             }
+        },
+        handleCreateTodo: async (todoName: Todo['name']) => {
+            const now = moment()
+            await createTodoWithOptions(null, {
+                name: todoName,
+                dueDate: {
+                    startAt: now.toISOString(),
+                    endAt: now.add(7, 'd').endOf('d').toISOString(true)
+                }
+            })
+        },
+        handleCreateTodoByDialog: async (caller: (args: TodoCreateDialogArgs) => void) => {
+            const now = moment()
+            caller({
+                userId: userStore.user!.id,
+                projects: projectStore.projects,
+                tags: tagStore.tags,
+                presetInfo: {
+                    dueDate: {
+                        startAt: now.toISOString(),
+                        endAt: now.add(7, 'd').endOf('d').toISOString(true)
+                    }
+                }
+            })
         }
     },
     inbox: {
@@ -55,6 +146,16 @@ export const TasksBasicViewContent = {
                 isDeleted: false,
                 projectId: userStore.user!.id
             }
+        },
+        handleCreateTodo: async (todoName: Todo['name']) => {
+            await createTodoWithOptions(null, { name: todoName })
+        },
+        handleCreateTodoByDialog: async (caller: (args: TodoCreateDialogArgs) => void) => {
+            caller({
+                userId: userStore.user!.id,
+                projects: projectStore.projects,
+                tags: tagStore.tags
+            })
         }
     },
     recycle: {

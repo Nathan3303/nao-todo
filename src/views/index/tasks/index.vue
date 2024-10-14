@@ -64,6 +64,7 @@ const handleShowMultiDetails = (_selectedIds: Todo['id'][]) => {
 }
 
 provide<TasksViewContext>(TasksViewContextKey, {
+    isShowMultiDetails,
     handleShowMultiDetails,
     handleHideMultiDetails: () => (isShowMultiDetails.value = false)
 })

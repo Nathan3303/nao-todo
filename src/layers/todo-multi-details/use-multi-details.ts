@@ -1,14 +1,21 @@
-import { computed, reactive, ref, watch, watchEffect } from 'vue'
+import { computed, ref, watchEffect, inject } from 'vue'
 import { useUserStore, useProjectStore, useTagStore, useTodoStore, type Todo } from '@/stores'
-import { updateTodos } from '@/utils/todo-handlers'
+import { updateTodos, removeTodosWithConfirm, restoreTodosWithConfirm } from '@/utils/todo-handlers'
 import { debounce } from '@/utils'
+import { TasksViewContextKey } from '@/views/index/tasks/constants'
+import { useRoute, useRouter } from 'vue-router'
 import type { TodoMultiDetailsProps } from './types'
+import type { TasksViewContext } from '@/views/index/tasks/types'
 
 export const useMultiDetails = (props: TodoMultiDetailsProps) => {
+    const route = useRoute()
+    const router = useRouter()
     const userStore = useUserStore()
     const projectStore = useProjectStore()
     const todoStore = useTodoStore()
     const tagStore = useTagStore()
+
+    const { handleHideMultiDetails } = inject<TasksViewContext>(TasksViewContextKey)!
 
     const commonData = ref({
         dueDate: { startAt: '', endAt: '' },
@@ -16,7 +23,8 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
         state: '',
         projectId: '',
         project: { title: '' },
-        tags: ['']
+        tags: [''],
+        isDeleted: false
     })
 
     const priorityOptions = [
@@ -102,22 +110,40 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
         insertOptionsAndUpdate({ tags })
     }
 
+    const handleRemove = async () => {
+        const removeResult = await removeTodosWithConfirm(props.selectedIds)
+        if (!removeResult) return
+        const prevRoute = route.matched[route.matched.length - 1]
+        if (prevRoute) router.push(prevRoute)
+        handleHideMultiDetails()
+    }
+
+    const handleRestore = async () => {
+        const removeResult = await restoreTodosWithConfirm(props.selectedIds)
+        if (!removeResult) return
+        const prevRoute = route.matched[route.matched.length - 1]
+        if (prevRoute) router.push(prevRoute)
+        handleHideMultiDetails()
+    }
+
     watchEffect(() => {
         const _selectedTodos = getSelectedTodos()
         const _commonData = {
-            dueDate: _selectedTodos[0].dueDate,
+            dueDate: { startAt: '', endAt: _selectedTodos[0].dueDate.endAt },
             priority: _selectedTodos[0].priority,
             state: _selectedTodos[0].state,
             projectId: _selectedTodos[0].projectId,
             project: _selectedTodos[0].project,
-            tags: _selectedTodos[0].tags
+            tags: _selectedTodos[0].tags,
+            isDeleted: _selectedTodos[0].isDeleted
         }
         const _commonDataCheckFlag = {
             dueDate: true,
             priority: true,
             state: true,
             projectId: true,
-            tags: true
+            tags: true,
+            isDeleted: true
         }
         for (const todo of _selectedTodos) {
             if (_commonDataCheckFlag.dueDate && _commonData.dueDate.endAt !== todo.dueDate.endAt) {
@@ -151,6 +177,10 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
                     _commonDataCheckFlag.tags = false
                 }
             }
+            if (_commonDataCheckFlag.isDeleted && _commonData.isDeleted !== todo.isDeleted) {
+                _commonData.isDeleted = false
+                _commonDataCheckFlag.isDeleted = false
+            }
         }
         commonData.value = _commonData as any
     })
@@ -167,6 +197,8 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
         handleChangeEndDate,
         handleUpdateTags,
         handleChangeState,
-        handleChangePriority
+        handleChangePriority,
+        handleRemove,
+        handleRestore
     }
 }
