@@ -35,17 +35,11 @@
         <nue-divider class="todo-table__divider" />
         <nue-div class="todo-table__body">
             <slot name="empty">
-                <!-- <empty
-                    :empty="!todos.length"
-                    :message="emptyMessage"
-                    text-size="12px"
-                    full-height
-                /> -->
                 <nue-empty
                     v-if="!todos.length"
                     image-src="/images/relaxation.png"
                     description="没有待办事项，放松一下吧！"
-                    style="height: 100%;flex: auto"
+                    style="height: 100%; flex: auto"
                 />
             </slot>
             <nue-div
@@ -91,7 +85,7 @@
                 <nue-div
                     class="todo-table__body__col col-end-at"
                     v-if="columns.endAt"
-                    :key="refreshKeyIdx"
+                    :key="refreshKey"
                 >
                     <nue-text size="12px" :data-expired="isTodoExpired(todo)">
                         {{ useRelativeDate(todo.dueDate.endAt) }}
@@ -120,54 +114,32 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, provide, watch, ref, onMounted, onBeforeUnmount } from 'vue'
-import { TodoPriorityInfo, TodoStateInfo, Empty, TodoTagBar } from '@/components'
+import { onMounted, onBeforeUnmount } from 'vue'
+import { TodoPriorityInfo, TodoStateInfo, TodoTagBar } from '@/components'
 import { useTodoTable } from './use-table'
 import { useRelativeDate } from '@/hooks/use-relative-date'
-import { isExpired } from '@/utils/date-handlers'
-import { useMinuteTask } from '@/hooks/use-minute-task'
 import OrderButton from './order-button.vue'
-import type { TodoTableEmits, TodoTableProps, TodoTableContext } from './types'
+import { useRefreshKey } from './use-refresh-key'
+import type { TodoTableEmits, TodoTableProps } from './types'
 
 defineOptions({ name: 'TodoTable' })
 const props = defineProps<TodoTableProps>()
 const emit = defineEmits<TodoTableEmits>()
 
-const refreshKeyIdx = ref(0)
-const sortInfo = reactive(props.sortInfo)
-
 const {
     selectRange,
+    isTodoExpired,
     handleDeleteBtnClk,
     handleShowDetails,
     handleMultiSelect,
     handleClearSelectedId,
-    handleClearSelect
+    handleClearSelect,
+    handleClearSortInfo
 } = useTodoTable(props, emit)
 
-const { run: refresh, stop: stopRefresh } = useMinuteTask(() => refreshKeyIdx.value++)
+const { refreshKey, startRefresh, stopRefresh } = useRefreshKey()
 
-const isTodoExpired = (todo: (typeof props.todos)[0]) => {
-    return isExpired(todo.dueDate.endAt) && !todo.isDone && todo.state !== 'done'
-}
-
-const handleClearSortInfo = () => {
-    sortInfo.field = ''
-    sortInfo.order = ''
-}
-
-provide<TodoTableContext>('TodoTableContext', {
-    showDetailsHandler: handleShowDetails,
-    sortInfo: sortInfo
-})
-
-watch(
-    () => sortInfo,
-    (newValue) => emit('sortTodo', { ...newValue }),
-    { deep: true }
-)
-
-onMounted(() => refresh())
+onMounted(() => startRefresh())
 
 onBeforeUnmount(() => stopRefresh())
 

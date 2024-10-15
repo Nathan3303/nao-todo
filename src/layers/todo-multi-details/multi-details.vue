@@ -8,7 +8,7 @@
                 </nue-text>
                 个待办事项
             </nue-text>
-            <nue-button icon="clear" size="small">关闭</nue-button>
+            <nue-button icon="clear" size="small" @click="handleCancelMultiSelect">关闭</nue-button>
         </nue-header>
         <nue-main>
             <nue-div vertical>
@@ -86,7 +86,8 @@ const {
     handleChangeState,
     handleChangePriority,
     handleRemove,
-    handleRestore
+    handleRestore,
+    handleCancelMultiSelect
 } = useMultiDetails(props)
 </script>
 

@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, inject } from 'vue'
+import { ref, inject, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useTodoStore, useUserStore, useTagStore } from '@/stores'
@@ -125,6 +125,7 @@ const handleGetTodos = async () => {
     await todoStore.get(user.value!.id, filterInfo)
     tableLoading.value = false
 }
+handleGetTodos()
 
 const handleAddTodo = () => {
     if (!todoCreateDialogRef.value) return
@@ -149,7 +150,6 @@ const handleShowTodoDetails = (id: Todo['id']) => {
 }
 
 const handleMultiSelect = (payload: TodoTableMultiSelectEmitPayload) => {
-    // console.log(payload)
     const { selectedIds, selectRange } = payload
     if (selectedIds.length === 0 || selectRange.start === -1) {
         handleHideMultiDetails()
@@ -177,6 +177,7 @@ const handleFilter = async (newTodoFliter: TodoFilter) => {
 }
 
 const handleRefresh = async () => {
+    handleHideMultiDetails()
     await handleGetTodos()
 }
 
@@ -187,7 +188,10 @@ const handleSortTodo = async (newSortInfo: TodoSortOptions) => {
     await todoStore.get(userId)
 }
 
-handleGetTodos()
+watch(
+    () => isShowMultiDetails.value,
+    (newValue) => !newValue && todoTableRef.value?.resetSelect()
+)
 </script>
 
 <style scoped>

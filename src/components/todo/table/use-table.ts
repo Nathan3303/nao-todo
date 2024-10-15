@@ -1,12 +1,19 @@
-import { reactive, ref, watch } from 'vue'
+import { reactive, ref, watch, provide } from 'vue'
 import { useRoute } from 'vue-router'
+import { isExpired } from '@/utils/date-handlers'
 import type { Todo } from '@/stores'
-import type { TodoTableEmits, TodoTableProps } from './types'
+import type { TodoTableEmits, TodoTableProps, TodoTableContext } from './types'
 
 export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
     const route = useRoute()
+
     const selectedId = ref<Todo['id']>()
-    const selectRange = reactive({ start: -1, end: -1 })
+    const selectRange = reactive({ start: -1, end: -1, original: -1 })
+    const sortInfo = reactive(props.sortInfo)
+
+    const isTodoExpired = (todo: (typeof props.todos)[0]) => {
+        return isExpired(todo.dueDate.endAt) && !todo.isDone && todo.state !== 'done'
+    }
 
     const handleDeleteBtnClk = (todoId: Todo['id'], isDeleted: boolean) => {
         if (isDeleted) {
@@ -32,16 +39,17 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
         const taskId = route.params.taskId
         if (selectedId.value === todoId && taskId) return
         selectedId.value = todoId
-        selectRange.start = selectRange.end = idx
+        selectRange.original = selectRange.start = selectRange.end = idx
         emit('showTodoDetails', todoId)
     }
 
     const handleMultiSelect = (idx: number) => {
-        if (selectRange.start === -1 || selectRange.start === idx) return
-        if (selectRange.start > idx) {
-            selectRange.end = selectRange.start
+        if (selectRange.original === -1 || selectRange.original === idx) return
+        if (selectRange.original > idx) {
             selectRange.start = idx
+            selectRange.end = selectRange.original
         } else {
+            selectRange.start = selectRange.original
             selectRange.end = idx
         }
         const selectedIds = props.todos
@@ -59,8 +67,14 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
 
     const handleClearSelect = () => {
         handleClearSelectedId()
-        selectRange.start = selectRange.end = -1
-        emit('multiSelect', { selectedIds: [], selectRange })
+        selectRange.start = selectRange.original
+        selectRange.end = selectRange.original
+        // emit('multiSelect', { selectedIds: [], selectRange })
+    }
+
+    const handleClearSortInfo = () => {
+        sortInfo.field = ''
+        sortInfo.order = ''
     }
 
     watch(
@@ -68,15 +82,28 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
         () => handleClearSelect()
     )
 
+    watch(
+        () => sortInfo,
+        (newValue) => emit('sortTodo', { ...newValue }),
+        { deep: true }
+    )
+
+    provide<TodoTableContext>('TodoTableContext', {
+        showDetailsHandler: handleShowDetails,
+        sortInfo: sortInfo
+    })
+
     return {
         selectedId,
         selectRange,
+        isTodoExpired,
         handleDeleteBtnClk,
         handleDelete,
         handleRestore,
         handleShowDetails,
         handleMultiSelect,
         handleClearSelectedId,
-        handleClearSelect
+        handleClearSelect,
+        handleClearSortInfo
     }
 }

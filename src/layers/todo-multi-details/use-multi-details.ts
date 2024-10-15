@@ -52,12 +52,12 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
         const _selectedIds = [...props.selectedIds]
         const _selectedTodos: Todo[] = []
         for (const todo of todoStore.todos) {
+            if (_selectedIds.length === 0) break
             const idx = _selectedIds.indexOf(todo.id)
             if (idx > -1) {
                 _selectedIds.splice(idx, 1)
                 _selectedTodos.push(todo)
             }
-            if (_selectedIds.length === 0) break
         }
         return _selectedTodos
     }
@@ -112,6 +112,11 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
         const prevRoute = route.matched[route.matched.length - 1]
         if (prevRoute) router.push(prevRoute)
         handleHideMultiDetails()
+    }
+
+    const handleCancelMultiSelect = () => {
+        // console.log('000');
+        handleHideMultiDetails();
     }
 
     watchEffect(() => {
@@ -185,6 +190,7 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
         handleChangeState,
         handleChangePriority,
         handleRemove,
-        handleRestore
+        handleRestore,
+        handleCancelMultiSelect
     }
 }

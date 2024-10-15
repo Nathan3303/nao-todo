@@ -97,7 +97,9 @@ export const updateTodos = async (todoIds: Todo['id'][], updateInfo: Partial<Tod
     requestIdleCallback(() => {
         if (updateResult === 'Update successful') {
             NueMessage.success('更新成功')
-            todoStore.get(userId)
+            if (updateInfo.hasOwnProperty('isDeleted')) {
+                todoStore.get(userId)
+            }
         } else {
             NueMessage.error('更新失败')
         }
