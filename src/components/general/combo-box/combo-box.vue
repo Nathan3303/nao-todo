@@ -1,5 +1,5 @@
 <template>
-    <nue-dropdown theme="combo-box">
+    <nue-dropdown theme="combo-box" v-bind="$attrs">
         <template #default="{ clickTrigger }">
             <nue-button size="small" :icon="triggerIcon" @click="clickTrigger">
                 {{ triggerTitle }}

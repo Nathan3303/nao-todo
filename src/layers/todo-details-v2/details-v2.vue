@@ -1,11 +1,11 @@
 <template>
-    <nue-div v-if="isGetting" style="height: 100%" align="center" justify="center">
+    <nue-div v-if="isGetting" height="100%" align="center" justify="center">
         <nue-icon name="loading" color="gray" spin />
         <nue-text size="12px" color="gray">加载中 ...</nue-text>
     </nue-div>
     <nue-container
         v-else-if="shadowTodo"
-        id="Index/Tasks/Details"
+        id="tasks/details"
         theme="vertical,inner"
         :key="shadowTodo?.id"
     >
@@ -18,9 +18,9 @@
             <nue-div align="center" wrap="nowrap" width="fit-content">
                 <nue-button
                     theme="small"
-                    @click="handleClose"
                     icon="clear"
                     :disabled="loadingState"
+                    @click="handleClose"
                 >
                     关闭
                 </nue-button>
@@ -28,27 +28,16 @@
         </nue-header>
         <nue-main>
             <nue-container theme="vertical,inner">
-                <nue-header
-                    height="auto"
-                    style="justify-content: space-between; box-sizing: border-box"
-                >
+                <nue-header height="auto" style="justify-content: space-between">
                     <nue-div width="fit-content" align="center">
                         <todo-selector
                             :value="shadowTodo.priority"
-                            :options="[
-                                { label: '低', value: 'low' },
-                                { label: '中', value: 'medium' },
-                                { label: '高', value: 'high' }
-                            ]"
+                            :options="priorityOptions"
                             @change="handleChangePriority"
                         />
                         <todo-selector
                             :value="shadowTodo.state"
-                            :options="[
-                                { label: '代办', value: 'todo' },
-                                { label: '正在进行', value: 'in-progress' },
-                                { label: '已完成', value: 'done' }
-                            ]"
+                            :options="stateOptions"
                             @change="handleChangeState"
                         />
                     </nue-div>
@@ -169,6 +158,8 @@ const {
     loadingState,
     isGetting,
     eventsProgress,
+    priorityOptions,
+    stateOptions,
     formatDate,
     updateTodo,
     handleChangeEndAt,

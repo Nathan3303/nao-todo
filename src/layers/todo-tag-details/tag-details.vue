@@ -1,7 +1,12 @@
 <template>
     <nue-div class="todo-tag-details">
         <tag-node v-for="tag in tags" :key="tag.id" :tag="tag" @delete="handleDropTag" />
-        <combo-box trigger-title="标签" :framework="unusedTagOptions" @change="handleAddTag" />
+        <combo-box
+            trigger-title="标签"
+            :framework="unusedTagOptions"
+            hide-on-click
+            @change="handleAddTag"
+        />
     </nue-div>
 </template>
 

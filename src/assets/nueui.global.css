@@ -107,3 +107,9 @@
     --dialog-width: auto;
     --dialog-max-width: auto;
 }
+
+.nue-textarea--noshape {
+    padding: 0px;
+    --padding-x: 0px;
+    --padding-y: 0px;
+}

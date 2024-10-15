@@ -22,6 +22,7 @@
             trigger-title="标签"
             :framework="comboBoxOptions"
             hide-counter
+            hide-on-click
             @change="handleAddTag"
         />
     </nue-div>
