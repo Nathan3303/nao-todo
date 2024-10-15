@@ -4,7 +4,7 @@
             <nue-div align="center" justify="space-between">
                 <nue-text size="16px" :clamped="1">{{ tag.name }}</nue-text>
                 <nue-div class="tag-card__ops" align="center" width="fit-content">
-                    <slot name="ops" />
+                    <slot name="ops"></slot>
                 </nue-div>
             </nue-div>
         </nue-div>

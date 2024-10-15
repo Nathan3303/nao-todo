@@ -6,10 +6,10 @@
             </template>
             <template #navigations>
                 <nue-link theme="btnlike" :route="{ name: `tasks-${$route.meta.type}-table` }">
-                    任务列表
+                    列表视图
                 </nue-link>
                 <nue-link theme="btnlike" :route="{ name: `tasks-${$route.meta.type}-kanban` }">
-                    任务看板
+                    看板视图
                 </nue-link>
             </template>
         </todo-view-header>

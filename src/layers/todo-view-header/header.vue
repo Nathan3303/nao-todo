@@ -1,5 +1,5 @@
 <template>
-    <nue-header height="auto" style="flex-direction: column; gap: 16px; box-sizing: border-box">
+    <nue-header height="auto" style="flex-direction: column; gap: 16px">
         <template v-if="project">
             <nue-div vertical gap="4px">
                 <nue-div justify="space-between" wrap="nowrap">

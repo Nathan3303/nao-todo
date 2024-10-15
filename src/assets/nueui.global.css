@@ -3,6 +3,12 @@
     --primary-font-weight: 500;
 }
 
+.nue-container--inner {
+    .nue-header {
+        box-sizing: border-box;
+    }
+}
+
 .nue-link--plink {
     overflow: hidden;
 

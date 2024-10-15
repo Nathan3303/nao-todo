@@ -53,7 +53,7 @@
                                 :todoTags="todo.tags"
                                 :clamped="2"
                                 readonly
-                                style="scale: 0.8"
+                                small
                             />
                         </template>
                     </nue-button>

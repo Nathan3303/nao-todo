@@ -1,5 +1,5 @@
 <template>
-    <nue-div class="todo-tag-bar" width="fit-content">
+    <nue-div class="todo-tag-bar" :class="{ 'todo-tag-bar--small': small }" width="fit-content">
         <nue-div v-if="visibleTags.length" align="center" width="fit-content" gap="8px">
             <tag-node
                 v-for="tag in visibleTags"
@@ -33,28 +33,12 @@ import { TagNode, ComboBox } from '@/components'
 import type { TodoTagBarProps, TodoTagBarEmits } from './types'
 
 defineOptions({ name: 'TodoTagBar' })
-const props = withDefaults(defineProps<TodoTagBarProps>(), {
-    clamped: Infinity
-})
+const props = withDefaults(defineProps<TodoTagBarProps>(), { clamped: Infinity, small: false })
 const emit = defineEmits<TodoTagBarEmits>()
 
-const { visibleTags, comboBoxOptions, handleAddTag, handleDropTag } = useTagBar(
-    props,
-    emit
-)
+const { visibleTags, comboBoxOptions, handleAddTag, handleDropTag } = useTagBar(props, emit)
 </script>
 
 <style scoped>
-.todo-tag-bar {
-    align-items: center;
-    gap: 12px;
-    text-decoration: none !important;
-
-    .todo-tag-bar__clamped-text {
-        background-color: #a1a1a1;
-        border-radius: 99px;
-        padding: 3px 8px;
-        color: white !important;
-    }
-}
+@import url('./tag-bar.css');
 </style>

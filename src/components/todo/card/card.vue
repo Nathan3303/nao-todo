@@ -40,6 +40,7 @@
                         :todoTags="todo.tags"
                         :clamped="3"
                         readonly
+                        small
                     />
                     <todo-state-info v-if="columns?.state" :state="todo.state" />
                     <todo-priority-info v-if="columns?.priority" :priority="todo.priority" />

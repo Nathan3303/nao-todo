@@ -2,9 +2,9 @@
     <nue-container theme="vertical,inner" class="tasks-tag-view tasks-sub-view">
         <todo-view-header :tag="tag">
             <template #navigations>
-                <nue-link theme="btnlike" :route="{ name: 'tasks-tag-table' }"> 任务列表 </nue-link>
+                <nue-link theme="btnlike" :route="{ name: 'tasks-tag-table' }">列表视图</nue-link>
                 <nue-link theme="btnlike" :route="{ name: 'tasks-tag-kanban' }">
-                    任务看板
+                    看板视图
                 </nue-link>
             </template>
         </todo-view-header>

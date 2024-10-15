@@ -5,6 +5,7 @@ export type TodoTagBarProps = {
     todoTags: Todo['tags']
     clamped?: number
     readonly?: boolean
+    small?: boolean
 }
 
 export type TodoTagBarEmits = {

@@ -158,10 +158,8 @@
     }
 
     .todo-table__body__row[data-done='true'] {
-        opacity: 0.6;
-
-        .col-name {
-            text-decoration: line-through;
+        & * {
+            opacity: 0.84;
         }
     }
 }
