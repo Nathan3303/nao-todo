@@ -2,11 +2,10 @@
     <todo-view-kanban
         :key="route.params.projectId.toString()"
         :filter-info="todoStore.filterInfo"
-        :columns="todoStore.columnOptions"
         base-route="tasks-project-kanban"
         @create-todo="handleCreateTodo"
         @create-todo-by-dialog="handleCreateTodoByDialog"
-    ></todo-view-kanban>
+    />
     <suspense>
         <router-view></router-view>
     </suspense>

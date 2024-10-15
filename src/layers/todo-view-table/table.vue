@@ -16,7 +16,10 @@
                     >
                         新增
                     </nue-button>
-                    <list-column-switcher v-model="columns" :change="handleChangeColumns" />
+                    <list-column-switcher
+                        v-model="todoStore.columnOptions"
+                        :change="handleChangeColumns"
+                    />
                     <nue-tooltip size="small" content="重新请求数据">
                         <nue-button
                             theme="small"
@@ -36,7 +39,7 @@
                     ref="todoTableRef"
                     :todos="todos"
                     :tags="tagStore.tags"
-                    :columns="columns"
+                    :columns="todoStore.columnOptions"
                     :sort-info="sortInfo"
                     @delete-todo="removeTodoWithConfirm"
                     @restore-todo="restoreTodoWithConfirm"
@@ -102,14 +105,7 @@ const todoStore = useTodoStore()
 const tagStore = useTagStore()
 
 const { user } = storeToRefs(userStore)
-const {
-    todos,
-    pageInfo,
-    countInfo,
-    filterInfo,
-    sortInfo,
-    columnOptions: columns
-} = storeToRefs(todoStore)
+const { todos, pageInfo, countInfo, filterInfo, sortInfo } = storeToRefs(todoStore)
 
 const tableLoading = ref(false)
 const todoTableRef = ref<InstanceType<typeof TodoTable>>()
@@ -137,10 +133,7 @@ const handleCreateTodo = async (newTodo: Partial<Todo>) => {
 }
 
 const handleChangeColumns = (payload: Columns) => {
-    columns.value.createdAt = payload.createdAt
-    columns.value.priority = payload.priority
-    columns.value.state = payload.state
-    columns.value.description = payload.description
+    todoStore.mergeColumnOptions(payload)
 }
 
 const handleShowTodoDetails = (id: Todo['id']) => {

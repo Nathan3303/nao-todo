@@ -80,9 +80,9 @@
                     </nue-div>
                     <todo-event-details :todo-id="shadowTodo.id" />
                     <nue-div flex />
-                    <todo-tag-details
-                        :todo-id="shadowTodo.id"
-                        :todo-tags="shadowTodo.tags || []"
+                    <todo-tag-bar
+                        :tags="tagStore.tags"
+                        :todo-tags="shadowTodo.tags"
                         @update-tags="handleUpdateTags"
                     />
                 </nue-main>
@@ -132,9 +132,9 @@
 
 <script setup lang="ts">
 import { useTodoDetails } from './use-details'
-import { useUserStore } from '@/stores'
+import { useUserStore, useTagStore } from '@/stores'
 import DetailsRow from './row.vue'
-import { TodoEventDetails, TodoTagDetails } from '@/layers'
+import { TodoEventDetails } from '@/layers'
 import {
     TodoSelector,
     TodoStateSelectOptions,
@@ -145,7 +145,8 @@ import {
     TodoDateSelector,
     TodoDeleteButton,
     TodoCheckButton,
-    TodoProjectSelector
+    TodoProjectSelector,
+    TodoTagBar
 } from '@/components'
 import type { TodoDetailsEmits, TodoDetailsProps } from './types'
 
@@ -154,6 +155,7 @@ const props = defineProps<TodoDetailsProps>()
 const emit = defineEmits<TodoDetailsEmits>()
 
 const userStore = useUserStore()
+const tagStore = useTagStore()
 
 const {
     projects,

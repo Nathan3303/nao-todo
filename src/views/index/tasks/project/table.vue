@@ -3,7 +3,6 @@
         :key="route.params.projectId.toString()"
         :filter-info="todoStore.filterInfo"
         base-route="tasks-project-table"
-        :columns="todoStore.columnOptions"
         @create-todo="handleCreateTodo"
         @create-todo-by-dialog="handleCreateTodoByDialog"
     />

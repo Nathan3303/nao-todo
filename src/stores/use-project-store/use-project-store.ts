@@ -104,6 +104,7 @@ export const useProjectStore = defineStore('projectStore', () => {
     const _update = (id: Project['id'], updateOptions: ProjectUpdateOptions) => {
         const projectIdx = projects.value.findIndex((project) => project.id === id)
         const newProject = { ...projects.value[projectIdx], ...updateOptions }
+        // console.log(newProject);
         projects.value.splice(projectIdx, 1, newProject)
         return newProject
     }

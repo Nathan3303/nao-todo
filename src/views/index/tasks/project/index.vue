@@ -64,6 +64,7 @@ const handleSaveAsPreference = async (projectId: Project['id']) => {
         sortInfo: todoStore.sortInfo,
         columns: todoStore.columnOptions
     }
+    console.log(preference);
     await handleUpdatePreference(projectId, preference)
 }
 

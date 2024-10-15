@@ -24,11 +24,14 @@ export const useTagBar = (props: TodoTagBarProps, emit: TodoTagBarEmits) => {
     })
 
     const handleAddTag = async (tagId: unknown, { checked }: Partial<FrameworkOption>) => {
-        if (checked) {
-            emit('updateTags', [...props.todoTags, tagId as string])
-        } else {
+        if (!checked) {
             handleDropTag(tagId as string)
+            return
         }
+        const { todoTags } = props
+        const newTags = todoTags.filter((id) => id)
+        newTags.push(tagId as string)
+        emit('updateTags', newTags)
     }
 
     const handleDropTag = async (tagId: string) => {

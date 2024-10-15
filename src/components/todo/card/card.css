@@ -77,6 +77,11 @@
         & > .nue-div {
             min-width: 20%;
         }
+
+        .todo-tag-bar {
+            min-width: 20%;
+            margin-right: 4px;
+        }
     }
 
     .todo-card__check-icon {

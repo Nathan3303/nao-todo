@@ -1,6 +1,7 @@
 import { ref, reactive, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { naoTodoServer as $axios } from '@/axios'
+import { defaultColumns, defaultTodo } from './constants'
 import type { Todo, TodoFilter, TodoCountInfo, TodoSortOptions, TodoColumnOptions } from './types'
 import type { Project, User } from '..'
 
@@ -16,15 +17,7 @@ export const useTodoStore = defineStore('todoStore', () => {
         byState: { todo: 0, 'in-progress': 0, done: 0 },
         byPriority: { low: 0, medium: 0, high: 0 }
     })
-    const columnOptions = ref<TodoColumnOptions>({
-        state: false,
-        priority: true,
-        project: true,
-        description: true,
-        endAt: true,
-        createdAt: false,
-        updatedAt: true
-    })
+    const columnOptions = ref<TodoColumnOptions>(defaultColumns)
 
     // Inner methods
 
@@ -50,21 +43,17 @@ export const useTodoStore = defineStore('todoStore', () => {
         filterInfo.value = newFilterInfo
     }
 
+    const _mergeColumnOptions = (newOne: Partial<TodoColumnOptions>) => {
+        columnOptions.value = { ...columnOptions.value, ...newOne } as TodoColumnOptions
+    }
+
     const _resetOptions = () => {
         filterInfo.value = {}
         pageInfo.page = 1
         pageInfo.limit = 20
         sortInfo.field = ''
         sortInfo.order = ''
-        columnOptions.value = {
-            state: false,
-            priority: true,
-            project: true,
-            description: true,
-            endAt: true,
-            createdAt: false,
-            updatedAt: false
-        }
+        columnOptions.value = defaultColumns
     }
 
     const _reset = () => {
@@ -259,28 +248,7 @@ export const useTodoStore = defineStore('todoStore', () => {
     }
 
     const createLocal = (createInfo: Partial<Todo>) => {
-        const newTodoTemplate: Todo = {
-            id: '',
-            userId: '',
-            projectId: '',
-            name: '',
-            description: '',
-            status: 'todo',
-            state: 'todo',
-            progress: { total: 0, finished: 0 },
-            priority: 'low',
-            createdAt: '',
-            updatedAt: '',
-            dueDate: { startAt: null, endAt: null },
-            events: [],
-            isPinned: false,
-            isDone: false,
-            isDeleted: false,
-            tags: [],
-            tagsInfo: [],
-            project: {}
-            // isNew: true
-        }
+        const newTodoTemplate = defaultTodo as Todo
         const newTodo = { ...newTodoTemplate, ...createInfo }
         todos.value.unshift(newTodo)
         if (todos.value.length >= pageInfo.limit) {
@@ -334,6 +302,7 @@ export const useTodoStore = defineStore('todoStore', () => {
         countInfo,
         columnOptions,
         mergeFilterInfo: _mergeFilterInfo,
+        mergeColumnOptions: _mergeColumnOptions,
         updatingCompare: _updatingCompare,
         resetOptions: _resetOptions,
         reset: _reset,

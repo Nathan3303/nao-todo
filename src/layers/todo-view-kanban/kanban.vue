@@ -16,7 +16,7 @@
                     >
                         新增
                     </nue-button>
-                    <list-column-switcher v-model="columns" :change="handleChangeColumns" />
+                    <list-column-switcher v-model="columnOptions" />
                     <nue-button
                         theme="small"
                         icon="refresh"
@@ -34,7 +34,7 @@
                         :category="key"
                         :todos="value"
                         :data-category="key"
-                        :columns="columns"
+                        :columns="columnOptions"
                         data-droppable="true"
                         @show-todo-details="handleShowTodoDetails"
                         @delete-todo="removeTodoWithConfirm"
@@ -68,7 +68,6 @@ import {
     updateTodoWithCompare
 } from '@/utils/todo-handlers'
 import type { ContentKanbanProps, ContentKanbanEmits } from './types'
-import type { Columns } from '@/components'
 import type { Todo, TodoFilter } from '@/stores'
 
 const props = defineProps<ContentKanbanProps>()
@@ -78,24 +77,15 @@ const router = useRouter()
 const userStore = useUserStore()
 const todoStore = useTodoStore()
 
-const { todos, countInfo, filterInfo } = storeToRefs(todoStore)
+const { todos, countInfo, filterInfo, columnOptions } = storeToRefs(todoStore)
 const { user } = storeToRefs(userStore)
+
+console.log(columnOptions)
 
 const kanbanLoading = ref(false)
 const refreshTimer = ref<number | null>(null)
 const draggingTodoId = ref('abc')
 const todoCreateDialogRef = ref<InstanceType<typeof TodoCreateDialog>>()
-const columns = ref<Columns>(
-    props.columns || {
-        state: false,
-        priority: true,
-        project: true,
-        description: true,
-        endAt: true,
-        createdAt: false,
-        updatedAt: true
-    }
-)
 
 const categoriedTodos = computed(() => {
     const result: { [key in Todo['state']]: Todo[] } = {
@@ -140,12 +130,10 @@ const handleFilter = async (newTodoFliter: TodoFilter) => {
     await todoStore.get(userId)
 }
 
-const handleChangeColumns = (payload: Columns) => {
-    columns.value.createdAt = payload.createdAt
-    columns.value.priority = payload.priority
-    columns.value.state = payload.state
-    columns.value.description = payload.description
-}
+// const handleChangeColumns = (payload: Columns) => {
+//     console.log(payload)
+//     todoStore.mergeColumnOptions(payload)
+// }
 
 const handleRefresh = async () => {
     if (refreshTimer.value) return

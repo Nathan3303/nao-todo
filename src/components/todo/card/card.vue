@@ -36,6 +36,7 @@
             <nue-div class="todo-card__attrs" align="center" gap="6px">
                 <nue-div class="todo-card__infos" align="center" gap="6px">
                     <todo-tag-bar
+                        v-if="todo.tags.length"
                         :tags="tagStore.tags"
                         :todoTags="todo.tags"
                         :clamped="3"
