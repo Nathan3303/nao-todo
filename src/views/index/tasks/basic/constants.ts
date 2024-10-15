@@ -158,6 +158,25 @@ export const basicViewsInfo: {
             })
         }
     },
+    favorite: {
+        title: '已收藏',
+        description: '收藏板块是展示收藏待办的地方。',
+        default: {
+            viewType: 'table',
+            filterInfo: { isPinned: true }
+        },
+        handleCreateTodo: async (todoName: Todo['name']) => {
+            await createTodoWithOptions(null, { name: todoName, isPinned: true })
+        },
+        handleCreateTodoByDialog: async (caller: (args: TodoCreateDialogArgs) => void) => {
+            caller({
+                userId: userStore.user!.id,
+                projects: projectStore.projects,
+                tags: tagStore.tags,
+                presetInfo: { isPinned: true }
+            })
+        }
+    },
     recycle: {
         title: '垃圾桶',
         description: '垃圾桶板块是专门展示和管理工作所有已经删除的任务的地方。',

@@ -1,9 +1,9 @@
 <template>
     <nue-main
         style="z-index: 0"
-        aside-width="230px"
+        aside-width="240px"
         aside-min-width="200px"
-        aside-max-width="400px"
+        aside-max-width="300px"
         :allow-collapse-aside="false"
         :allow-hide-aside="false"
         outline-width="480px"
@@ -17,12 +17,14 @@
             <aside-link icon="tomorrow2" :route="{ name: 'tasks-tomorrow' }">明天</aside-link>
             <aside-link icon="week" :route="{ name: 'tasks-week' }">最近 7 天</aside-link>
             <aside-link icon="inbox" :route="{ name: 'tasks-inbox' }">收集箱</aside-link>
+            <nue-divider />
             <nue-collapse v-model="collapseItemsRecord">
                 <project-smart-list />
                 <todo-filter-list />
                 <tag-smart-list />
             </nue-collapse>
             <nue-divider />
+            <aside-link icon="heart" :route="{ name: 'tasks-favorite' }">已收藏</aside-link>
             <aside-link icon="delete" :route="{ name: 'tasks-recycle' }">垃圾桶</aside-link>
         </template>
         <template #content>

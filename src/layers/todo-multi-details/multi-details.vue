@@ -23,13 +23,13 @@
                     <todo-selector
                         placeholder="待办状态"
                         :value="commonData.state"
-                        :options="stateOptions"
+                        :options="TodoStateSelectOptions"
                         @change="handleChangeState"
                     />
                     <todo-selector
                         placeholder="待办优先级"
                         :value="commonData.priority"
-                        :options="priorityOptions"
+                        :options="TodoPrioritySelectOptions"
                         @change="handleChangePriority"
                     />
                     <nue-div flex />
@@ -61,16 +61,15 @@
 </template>
 
 <script setup lang="ts">
-import {
-    TodoDateSelector,
-    TodoSelector,
-    TodoProjectSelector,
-    TodoTagBar,
-    TodoDeleteButton
-} from '@/components'
-import type { TodoMultiDetailsProps } from './types'
 import { useMultiDetails } from './use-multi-details'
 import { useRelativeDate } from '@/hooks/use-relative-date'
+import { TodoDateSelector, TodoProjectSelector, TodoTagBar, TodoDeleteButton } from '@/components'
+import {
+    TodoSelector,
+    TodoStateSelectOptions,
+    TodoPrioritySelectOptions
+} from '@/components/todo/selector'
+import type { TodoMultiDetailsProps } from './types'
 
 defineOptions({ name: 'TodoMultiDetails' })
 const props = defineProps<TodoMultiDetailsProps>()
@@ -81,8 +80,6 @@ const {
     commonData,
     endDate,
     userStore,
-    priorityOptions,
-    stateOptions,
     setProjectInfo,
     handleChangeEndDate,
     handleUpdateTags,

@@ -78,6 +78,7 @@ const links = [
     { path: 'tomorrow', meta: { title: '明日任务', type: 'tomorrow' } },
     { path: 'week', meta: { title: '最近7天', type: 'week' } },
     { path: 'inbox', meta: { title: '收集箱', type: 'inbox' } },
+    { path: 'favorite', meta: { title: '已收藏', type: 'favorite' } },
     { path: 'recycle', meta: { title: '垃圾桶', type: 'recycle' } }
 ]
 

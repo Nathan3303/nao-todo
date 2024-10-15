@@ -31,14 +31,14 @@
                 <nue-header height="auto" style="justify-content: space-between">
                     <nue-div width="fit-content" align="center">
                         <todo-selector
-                            :value="shadowTodo.priority"
-                            :options="priorityOptions"
-                            @change="handleChangePriority"
+                            :value="shadowTodo.state"
+                            :options="TodoStateSelectOptions"
+                            @change="handleChangeState"
                         />
                         <todo-selector
-                            :value="shadowTodo.state"
-                            :options="stateOptions"
-                            @change="handleChangeState"
+                            :value="shadowTodo.priority"
+                            :options="TodoPrioritySelectOptions"
+                            @change="handleChangePriority"
                         />
                     </nue-div>
                     <switch-button
@@ -133,17 +133,20 @@
 <script setup lang="ts">
 import { useTodoDetails } from './use-details'
 import { useUserStore } from '@/stores'
+import DetailsRow from './row.vue'
+import { TodoEventDetails, TodoTagDetails } from '@/layers'
+import {
+    TodoSelector,
+    TodoStateSelectOptions,
+    TodoPrioritySelectOptions
+} from '@/components/todo/selector'
 import {
     SwitchButton,
     TodoDateSelector,
-    TodoSelector,
     TodoDeleteButton,
     TodoCheckButton,
     TodoProjectSelector
 } from '@/components'
-import TodoEventDetails from '../todo-event-details/event-details.vue'
-import TodoTagDetails from '../todo-tag-details/tag-details.vue'
-import DetailsRow from './row.vue'
 import type { TodoDetailsEmits, TodoDetailsProps } from './types'
 
 defineOptions({ name: 'ContentTodoDetailsV2' })
@@ -158,8 +161,6 @@ const {
     loadingState,
     isGetting,
     eventsProgress,
-    priorityOptions,
-    stateOptions,
     formatDate,
     updateTodo,
     handleChangeEndAt,
