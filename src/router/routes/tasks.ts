@@ -28,11 +28,12 @@ const tasksRoutes = {
     path: 'tasks',
     name: 'tasks',
     component: () => import('@/views/index/tasks/index.vue'),
-    redirect: { name: 'tasks-all' },
+    redirect: { name: 'tasks-today' },
     children: [
         {
             path: '$p:projectId',
             name: `tasks-project`,
+            meta: { category: 'project' },
             props: true,
             component: () => import(`@/views/index/tasks/project/index.vue`),
             children: [
@@ -73,13 +74,13 @@ const tasksRoutes = {
 }
 
 const links = [
-    { path: 'all', meta: { title: '所有', type: 'all' } },
-    { path: 'today', meta: { title: '今日任务', type: 'today' } },
-    { path: 'tomorrow', meta: { title: '明日任务', type: 'tomorrow' } },
-    { path: 'week', meta: { title: '最近7天', type: 'week' } },
-    { path: 'inbox', meta: { title: '收集箱', type: 'inbox' } },
-    { path: 'favorite', meta: { title: '已收藏', type: 'favorite' } },
-    { path: 'recycle', meta: { title: '垃圾桶', type: 'recycle' } }
+    { path: 'all', meta: { category: 'basic', title: '所有', type: 'all' } },
+    { path: 'today', meta: { category: 'basic', title: '今日任务', type: 'today' } },
+    { path: 'tomorrow', meta: { category: 'basic', title: '明日任务', type: 'tomorrow' } },
+    { path: 'week', meta: { category: 'basic', title: '最近7天', type: 'week' } },
+    { path: 'inbox', meta: { category: 'basic', title: '收集箱', type: 'inbox' } },
+    { path: 'favorite', meta: { category: 'basic', title: '已收藏', type: 'favorite' } },
+    { path: 'recycle', meta: { category: 'basic', title: '垃圾桶', type: 'recycle' } }
 ]
 
 links.forEach((link) => {

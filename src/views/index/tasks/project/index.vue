@@ -53,6 +53,7 @@ const router = useRouter()
 const todoStore = useTodoStore()
 const projectStore = useProjectStore()
 
+let projectIdTemp: string | null = null
 const project = ref<Project | null>(null)
 
 const handleSaveAsPreference = async (projectId: Project['id']) => {
@@ -101,18 +102,18 @@ const handleGoToDefaulView = () => {
 }
 
 watchEffect(() => {
-    const { params, name } = route
-    const { projectId } = params
-    project.value = projectStore._toFinded(projectId as Project['id'])
-    if (name !== 'tasks-project') {
-        if (project.value) {
-            document.title = 'NaoTodo - ' + project.value.title
-            handleLoadProjectPreference()
-        }
-    }
+    const { meta, params, name } = route
+    const pid = params.projectId as Project['id']
+    project.value = projectStore._toFinded(pid)
     if (!['tasks-project-table', 'tasks-project-kanban'].includes(name as string)) {
         handleGoToDefaulView()
     }
+    if (projectIdTemp === pid && meta.category === 'project') return
+    if (project.value) {
+        document.title = 'NaoTodo - ' + project.value.title
+        handleLoadProjectPreference()
+    }
+    projectIdTemp = pid
 })
 
 provide<ProjectViewContext>(projectViewContextKey, { project })

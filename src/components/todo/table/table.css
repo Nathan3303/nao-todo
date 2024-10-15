@@ -29,6 +29,7 @@
         align-items: stretch;
         flex-direction: column;
         width: 100%;
+        flex: auto;
         gap: 0px;
         flex-wrap: nowrap;
 

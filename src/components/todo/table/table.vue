@@ -34,7 +34,20 @@
         </nue-div>
         <nue-divider class="todo-table__divider" />
         <nue-div class="todo-table__body">
-            <empty :empty="!todos.length" text-size="12px" full-height :message="emptyMessage" />
+            <slot name="empty">
+                <!-- <empty
+                    :empty="!todos.length"
+                    :message="emptyMessage"
+                    text-size="12px"
+                    full-height
+                /> -->
+                <nue-empty
+                    v-if="!todos.length"
+                    image-src="/images/relaxation.png"
+                    description="没有待办事项，放松一下吧！"
+                    style="height: 100%;flex: auto"
+                />
+            </slot>
             <nue-div
                 class="todo-table__body__row"
                 v-for="(todo, idx) in todos"
@@ -117,9 +130,7 @@ import OrderButton from './order-button.vue'
 import type { TodoTableEmits, TodoTableProps, TodoTableContext } from './types'
 
 defineOptions({ name: 'TodoTable' })
-const props = withDefaults(defineProps<TodoTableProps>(), {
-    emptyMessage: '当前列表无数据。'
-})
+const props = defineProps<TodoTableProps>()
 const emit = defineEmits<TodoTableEmits>()
 
 const refreshKeyIdx = ref(0)

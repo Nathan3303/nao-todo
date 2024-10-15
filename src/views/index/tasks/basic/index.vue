@@ -30,6 +30,7 @@ import type { BasicViewContext, BasicViewInfo } from './types'
 const route = useRoute()
 const todoStore = useTodoStore()
 
+let typeTemp: string = ''
 const viewInfo = ref<BasicViewInfo>({
     title: '',
     description: '',
@@ -38,9 +39,12 @@ const viewInfo = ref<BasicViewInfo>({
 
 watchEffect(() => {
     const { meta } = route
+    const type = meta.type as string
+    if (typeTemp === type) return
     todoStore.resetOptions()
     document.title = 'NaoTodo - ' + meta.title
-    viewInfo.value = basicViewsInfo[meta.type as string]
+    viewInfo.value = basicViewsInfo[type as string]
+    typeTemp = type
 })
 
 provide<BasicViewContext>(basicViewContextKey, { viewInfo })
