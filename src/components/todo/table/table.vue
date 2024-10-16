@@ -38,6 +38,7 @@
                 <nue-empty
                     v-if="!todos.length"
                     image-src="/images/relaxation.png"
+                    image-size="64px"
                     description="没有待办事项，放松一下吧！"
                     style="height: 100%; flex: auto"
                 />

@@ -32,7 +32,7 @@ import { TodoCard, TodoStateInfo, Empty } from '@/components'
 import type { Todo } from '@/stores'
 import type { KanbanColumnProps, KanbanColumnEmits } from './types'
 
-defineProps<KanbanColumnProps>()
+const props = defineProps<KanbanColumnProps>()
 const emit = defineEmits<KanbanColumnEmits>()
 
 const route = useRoute()

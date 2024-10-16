@@ -280,7 +280,7 @@ export const useTodoStore = defineStore('todoStore', () => {
 
     // Others
 
-    const setOptionsByProjectPreference = (preference: Project['preference']) => {
+    const setOptionsByProjectPreference = (preference: Partial<Project['preference']>) => {
         if (!preference) return
         if (preference.filterInfo) {
             filterInfo.value = preference.filterInfo

@@ -18,6 +18,7 @@
                         <li class="nue-dropdown-item" data-executeid="save-as-preference">
                             将当前视图保存为偏好
                         </li>
+                        <li class="nue-dropdown-item" data-executeid="archive">归档该清单</li>
                     </template>
                 </nue-dropdown>
             </template>
@@ -41,19 +42,17 @@ import { provide, ref, watchEffect } from 'vue'
 import { TodoViewHeader } from '@/layers'
 import { useRoute, useRouter } from 'vue-router'
 import { useProjectStore, useTodoStore } from '@/stores'
-import { handleUpdatePreference } from '@/utils/project-handlers'
+import { handleUpdatePreference, archiveProjectWithConfirm } from '@/utils/project-handlers'
 import { projectViewContextKey } from './constants'
 import type { Project } from '@/stores'
 import type { ProjectViewContext } from './types'
-
-defineProps<{ projectId: Project['id'] }>()
 
 const route = useRoute()
 const router = useRouter()
 const todoStore = useTodoStore()
 const projectStore = useProjectStore()
 
-let projectIdTemp: string | null = null
+let firstLoadFlag: string | null = null
 const project = ref<Project | null>(null)
 
 const handleSaveAsPreference = async (projectId: Project['id']) => {
@@ -64,16 +63,19 @@ const handleSaveAsPreference = async (projectId: Project['id']) => {
         sortInfo: todoStore.sortInfo,
         columns: todoStore.columnOptions
     }
-    console.log(preference);
     await handleUpdatePreference(projectId, preference)
 }
 
 const handleDropdownExecute = async (executeId: string) => {
     try {
+        const projectId = project.value?.id as string
         switch (executeId) {
             case 'save-as-preference':
-                const projectId = project.value?.id as string
                 await handleSaveAsPreference(projectId)
+                break
+            case 'archive':
+                await archiveProjectWithConfirm(projectId)
+                router.replace({ name: 'tasks-all' })
                 break
         }
     } catch (e) {
@@ -83,13 +85,15 @@ const handleDropdownExecute = async (executeId: string) => {
 
 const handleLoadProjectPreference = () => {
     if (!project.value) return
-    const projectPreference = project.value.preference
-    if (projectPreference) {
-        todoStore.setOptionsByProjectPreference(projectPreference)
-        return
-    }
-    todoStore.resetOptions()
-    todoStore.filterInfo = { isDeleted: false, projectId: project.value.id }
+    const projectPreference = project.value.preference || { viewType: 'table' }
+    if (projectPreference) todoStore.resetOptions()
+    Object.assign(projectPreference, {
+        filterInfo: {
+            isDeleted: false,
+            projectId: project.value.id
+        }
+    })
+    todoStore.setOptionsByProjectPreference(projectPreference)
 }
 
 const handleGoToDefaulView = () => {
@@ -109,12 +113,13 @@ watchEffect(() => {
     if (!['tasks-project-table', 'tasks-project-kanban'].includes(name as string)) {
         handleGoToDefaulView()
     }
-    if (projectIdTemp === pid && meta.category === 'project') return
+    const firstLoadId = `${pid}|${name as string}` as string
+    if (firstLoadFlag === firstLoadId && meta.category === 'project') return
     if (project.value) {
         document.title = 'NaoTodo - ' + project.value.title
         handleLoadProjectPreference()
     }
-    projectIdTemp = pid
+    firstLoadFlag = firstLoadId
 })
 
 provide<ProjectViewContext>(projectViewContextKey, { project })

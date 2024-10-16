@@ -16,7 +16,7 @@
                     >
                         新增
                     </nue-button>
-                    <list-column-switcher v-model="columnOptions" />
+                    <list-column-switcher v-model="todoStore.columnOptions" />
                     <nue-button
                         theme="small"
                         icon="refresh"
@@ -34,7 +34,7 @@
                         :category="key"
                         :todos="value"
                         :data-category="key"
-                        :columns="columnOptions"
+                        :columns="todoStore.columnOptions"
                         data-droppable="true"
                         @show-todo-details="handleShowTodoDetails"
                         @delete-todo="removeTodoWithConfirm"
@@ -77,10 +77,8 @@ const router = useRouter()
 const userStore = useUserStore()
 const todoStore = useTodoStore()
 
-const { todos, countInfo, filterInfo, columnOptions } = storeToRefs(todoStore)
+const { todos, countInfo, filterInfo } = storeToRefs(todoStore)
 const { user } = storeToRefs(userStore)
-
-console.log(columnOptions)
 
 const kanbanLoading = ref(false)
 const refreshTimer = ref<number | null>(null)
@@ -102,7 +100,7 @@ const categoriedTodos = computed(() => {
 const handleGetTodos = async () => {
     const { filterInfo } = props
     kanbanLoading.value = true
-    const res = await todoStore.initialize(userStore.user!.id, filterInfo)
+    const res = await todoStore.get(userStore.user!.id, filterInfo)
     kanbanLoading.value = false
     return res
 }
