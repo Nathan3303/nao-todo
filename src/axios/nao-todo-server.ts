@@ -3,8 +3,8 @@ import { NueMessage } from 'nue-ui'
 import { useUserStore } from '@/stores'
 
 const axiosInstance = axios.create({
-    baseURL: 'http://localhost:3002/api'
-    // baseURL: 'https://nathan33.xyz:3002/api'
+    // baseURL: 'http://localhost:3002/api'
+    baseURL: 'https://nathan33.xyz:3002/api'
 })
 
 axiosInstance.interceptors.request.use((config) => {
