@@ -1,12 +1,15 @@
 <template>
-    <nue-container id="global" class="app-container">
+    <nue-container id="IndexView" theme="horizontal">
         <index-header></index-header>
-        <suspense>
-            <router-view></router-view>
-        </suspense>
+        <router-view></router-view>
     </nue-container>
 </template>
 
 <script setup lang="ts">
 import { IndexHeader } from '@/layers'
+import { useViewStore } from '@/stores'
+
+const { indexViewInitTask } = useViewStore()
+
+await indexViewInitTask()
 </script>

@@ -1,3 +1,5 @@
+import type { TodoColumnOptions, TodoFilter, TodoSortOptions } from '../use-todo-store'
+
 export type Project = {
     id: string
     userId: string
@@ -14,6 +16,12 @@ export type Project = {
     deletedAt: Date | null
     finishedAt: Date | null
     archivedAt: Date | null
+    preference?: {
+        viewType: 'table' | 'kanban'
+        filterInfo: TodoFilter
+        sortInfo: TodoSortOptions
+        columns: TodoColumnOptions
+    }
 }
 
 export type ProjectFilterOptionsRaw = Partial<Project>

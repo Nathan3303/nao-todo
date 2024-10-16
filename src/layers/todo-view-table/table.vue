@@ -1,6 +1,6 @@
 <template>
-    <nue-container class="content-table">
-        <nue-header style="padding: 0; border: none; height: fit-content" :key="$route.path">
+    <nue-container id="tasks/basic/table" theme="vertical,inner">
+        <nue-header height="auto" :key="$route.path" style="box-sizing: border-box">
             <nue-div align="start" justify="space-between" gap="16px">
                 <todo-filter-bar
                     :count-info="countInfo"
@@ -16,7 +16,10 @@
                     >
                         新增
                     </nue-button>
-                    <list-column-switcher v-model="columns" :change="handleChangeColumns" />
+                    <list-column-switcher
+                        v-model="todoStore.columnOptions"
+                        :change="handleChangeColumns"
+                    />
                     <nue-tooltip size="small" content="重新请求数据">
                         <nue-button
                             theme="small"
@@ -28,26 +31,31 @@
                 </nue-div>
             </nue-div>
         </nue-header>
-        <nue-main style="margin: 16px 0 0">
+        <nue-main style="border: none">
             <nue-div wrap="nowrap" flex style="overflow-y: auto">
                 <Loading v-if="tableLoading" placeholder="正在加载任务列表..." />
                 <todo-table
                     v-else
                     ref="todoTableRef"
                     :todos="todos"
-                    :columns="columns"
+                    :tags="tagStore.tags"
+                    :columns="todoStore.columnOptions"
                     :sort-info="sortInfo"
                     @delete-todo="removeTodoWithConfirm"
                     @restore-todo="restoreTodoWithConfirm"
                     @show-todo-details="handleShowTodoDetails"
                     @sort-todo="handleSortTodo"
+                    @multi-select="handleMultiSelect"
                 />
             </nue-div>
         </nue-main>
-        <nue-footer style="padding: 4px; border: none; height: fit-content">
+        <nue-footer>
             <nue-div align="center" justify="space-between">
                 <nue-text size="12px" color="gray" flex>
                     当前列表 {{ countInfo?.length || 0 }} 项， 共计 {{ countInfo?.count || 0 }} 项。
+                    <nue-text v-if="isShowMultiDetails" size="12px" color="orange">
+                        已选择 {{ multiSelectCount }} 项。
+                    </nue-text>
                 </nue-text>
                 <pager
                     :page="pageInfo.page"
@@ -63,8 +71,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, inject, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
+import { useTodoStore, useUserStore, useTagStore } from '@/stores'
+import { TasksViewContextKey } from '@/views/index/tasks/constants'
 import {
     TodoTable,
     Loading,
@@ -73,8 +84,6 @@ import {
     Pager,
     TodoCreateDialog
 } from '@/components'
-import { useTodoStore, useUserStore } from '@/stores'
-import { storeToRefs } from 'pinia'
 import {
     createTodoWithOptions,
     removeTodoWithConfirm,
@@ -83,38 +92,28 @@ import {
 import type { Columns } from '@/components'
 import type { Todo, TodoFilter, TodoSortOptions } from '@/stores'
 import type { ContentTableProps, ContentTableEmits } from './types'
+import type { TodoTableMultiSelectEmitPayload } from '@/components/todo/table'
+import type { TasksViewContext } from '@/views/index/tasks/types'
 
 defineOptions({ name: 'ContentTableLayer' })
 const props = defineProps<ContentTableProps>()
 const emit = defineEmits<ContentTableEmits>()
 
 const router = useRouter()
-const todoStore = useTodoStore()
 const userStore = useUserStore()
+const todoStore = useTodoStore()
+const tagStore = useTagStore()
 
 const { user } = storeToRefs(userStore)
 const { todos, pageInfo, countInfo, filterInfo, sortInfo } = storeToRefs(todoStore)
+
 const tableLoading = ref(false)
-const columns = ref<Columns>(
-    props.columns || {
-        state: true,
-        priority: true,
-        project: true,
-        description: true,
-        endAt: true,
-        createdAt: false,
-        updatedAt: false
-    }
-)
+const todoTableRef = ref<InstanceType<typeof TodoTable>>()
 const todoCreateDialogRef = ref<InstanceType<typeof TodoCreateDialog>>()
 let refreshTimer: number | null = null
-
-const handleInitTodos = async () => {
-    const { filterInfo } = props
-    tableLoading.value = true
-    await todoStore.initialize(user.value!.id, filterInfo)
-    tableLoading.value = false
-}
+const multiSelectCount = ref(0)
+const { isShowMultiDetails, handleHideMultiDetails, handleShowMultiDetails } =
+    inject<TasksViewContext>(TasksViewContextKey)!
 
 const handleGetTodos = async () => {
     const { filterInfo } = props
@@ -122,6 +121,7 @@ const handleGetTodos = async () => {
     await todoStore.get(user.value!.id, filterInfo)
     tableLoading.value = false
 }
+handleGetTodos()
 
 const handleAddTodo = () => {
     if (!todoCreateDialogRef.value) return
@@ -133,15 +133,23 @@ const handleCreateTodo = async (newTodo: Partial<Todo>) => {
 }
 
 const handleChangeColumns = (payload: Columns) => {
-    columns.value.createdAt = payload.createdAt
-    columns.value.priority = payload.priority
-    columns.value.state = payload.state
-    columns.value.description = payload.description
+    todoStore.mergeColumnOptions(payload)
 }
 
 const handleShowTodoDetails = (id: Todo['id']) => {
     const { baseRoute } = props
     router.push({ name: baseRoute, params: { taskId: id } })
+    handleHideMultiDetails()
+}
+
+const handleMultiSelect = (payload: TodoTableMultiSelectEmitPayload) => {
+    const { selectedIds, selectRange } = payload
+    if (selectedIds.length === 0 || selectRange.start === -1) {
+        handleHideMultiDetails()
+        return
+    }
+    multiSelectCount.value = selectedIds.length
+    handleShowMultiDetails(selectedIds)
 }
 
 const handlePerPageChange = (perPage: number) => {
@@ -162,6 +170,7 @@ const handleFilter = async (newTodoFliter: TodoFilter) => {
 }
 
 const handleRefresh = async () => {
+    handleHideMultiDetails()
     await handleGetTodos()
 }
 
@@ -172,5 +181,14 @@ const handleSortTodo = async (newSortInfo: TodoSortOptions) => {
     await todoStore.get(userId)
 }
 
-handleInitTodos()
+watch(
+    () => isShowMultiDetails.value,
+    (newValue) => !newValue && todoTableRef.value?.resetSelect()
+)
 </script>
+
+<style scoped>
+.nue-main:deep(.nue-main__content) {
+    padding: 0px 16px;
+}
+</style>

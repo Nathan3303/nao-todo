@@ -18,7 +18,7 @@ export const useEventDetails = (props: TodoEventDetailsProps) => {
     }
 
     const handleUpdateEvent = async (event: TodoEventRowUpdatePayload) => {
-        console.log('[useEventDetails] handleUpdateEvent:', event)
+        // console.log('[useEventDetails] handleUpdateEvent:', event)
         await updateEvent(event.id, { ...event })
     }
 

@@ -61,6 +61,8 @@ export const createProject = async (createOptions: ProjectCreateOptions) => {
     }
 }
 
+// Archive & Unarchive
+
 export const handleArchiveProject = async (projectId: Project['id']) => {
     try {
         await NueConfirm({
@@ -78,6 +80,35 @@ export const handleArchiveProject = async (projectId: Project['id']) => {
     } catch (e) {
         console.log('[ProjectHandler] Archive project failed:', e)
     }
+}
+
+const archiveProject = async (projectId: Project['id']) => {
+    return await _handleUpdateProject(projectId, { isArchived: true })
+}
+
+export const archiveProjectWithConfirm = async (projectId: Project['id']) => {
+    return await NueConfirm({
+        title: '归档清单确认',
+        content: '确认归档该清单吗？',
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        onConfirm: async () => await archiveProject(projectId)
+    }).then(
+        (res: any) => {
+            requestIdleCallback(() => {
+                if (res.code === '20000') {
+                    NueMessage.success('清单归档成功')
+                }
+            })
+            return res
+        },
+        (err) => {
+            if (!err) return
+            requestIdleCallback(() => {
+                NueMessage.error(`清单归档失败 (${err})`)
+            })
+        }
+    )
 }
 
 export const handleUnarchiveProject = async (projectId: Project['id']) => {
@@ -99,6 +130,37 @@ export const handleUnarchiveProject = async (projectId: Project['id']) => {
     }
 }
 
+const unarchiveProject = async (projectId: Project['id']) => {
+    return await _handleUpdateProject(projectId, { isArchived: false })
+}
+
+export const unarchiveProjectWithConfirm = async (projectId: Project['id']) => {
+    return await NueConfirm({
+        title: '取消归档确认',
+        content: '确认取消归档该清单吗？',
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        onConfirm: async () => await unarchiveProject(projectId)
+    }).then(
+        (res: any) => {
+            requestIdleCallback(() => {
+                if (res.code === '20000') {
+                    NueMessage.success('清单取消归档成功')
+                }
+            })
+            return res
+        },
+        (err) => {
+            if (!err) return
+            requestIdleCallback(() => {
+                NueMessage.error(`清单取消归档失败 (${err})`)
+            })
+        }
+    )
+}
+
+// Delete & Restore
+
 export const handleDeleteProject = async (projectId: Project['id']) => {
     try {
         await NueConfirm({
@@ -116,6 +178,35 @@ export const handleDeleteProject = async (projectId: Project['id']) => {
     } catch (e) {
         console.log('[ProjectHandler] Delete project failed:', e)
     }
+}
+
+const deleteProject = async (projectId: Project['id']) => {
+    return await _handleUpdateProject(projectId, { isDeleted: true })
+}
+
+export const deleteProjectWithConfirm = async (projectId: Project['id']) => {
+    return await NueConfirm({
+        title: '删除清单确认',
+        content: '确认删除该清单吗？',
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        onConfirm: async () => await deleteProject(projectId)
+    }).then(
+        (res: any) => {
+            requestIdleCallback(() => {
+                if (res.code === '20000') {
+                    NueMessage.success('清单删除成功')
+                }
+            })
+            return res
+        },
+        (err) => {
+            if (!err) return
+            requestIdleCallback(() => {
+                NueMessage.error(`清单删除失败 (${err})`)
+            })
+        }
+    )
 }
 
 export const handleRestoreProject = async (projectId: Project['id']) => {
@@ -136,6 +227,37 @@ export const handleRestoreProject = async (projectId: Project['id']) => {
         console.log('[ProjectHandler] Restore project failed:', e)
     }
 }
+
+const restoreProject = async (projectId: Project['id']) => {
+    return await _handleUpdateProject(projectId, { isDeleted: false })
+}
+
+export const restoreProjectWithConfirm = async (projectId: Project['id']) => {
+    return await NueConfirm({
+        title: '恢复清单确认',
+        content: '确认恢复该清单吗？',
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        onConfirm: async () => await restoreProject(projectId)
+    }).then(
+        (res: any) => {
+            requestIdleCallback(() => {
+                if (res.code === '20000') {
+                    NueMessage.success('清单恢复成功')
+                }
+            })
+            return res
+        },
+        (err) => {
+            if (!err) return
+            requestIdleCallback(() => {
+                NueMessage.error(`清单恢复失败 (${err})`)
+            })
+        }
+    )
+}
+
+// Rename
 
 export const handleRenameProject = async (projectId: Project['id'], name: Project['title']) => {
     try {
@@ -159,6 +281,37 @@ export const handleRenameProject = async (projectId: Project['id'], name: Projec
         console.log('[ProjectHandler] Rename project failed:', e)
     }
 }
+
+const renameProject = async (projectId: Project['id'], name: Project['title']) => {
+    return await _handleUpdateProject(projectId, { title: name })
+}
+
+export const renameProjectWithPrompt = async (projectId: Project['id'], name: Project['title']) => {
+    return await NuePrompt({
+        title: '修改清单名称',
+        placeholder: '请输入新的清单名称',
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        inputValue: name,
+        validator: (value: string) => value,
+        onConfirm: async (name: string) => await renameProject(projectId, name)
+    }).then(
+        (res: any) => {
+            requestIdleCallback(() => {
+                NueMessage.success('清单名称修改成功')
+            })
+            return res
+        },
+        (err) => {
+            if (!err) return
+            requestIdleCallback(() => {
+                NueMessage.error(`清单名称修改失败 (${err})`)
+            })
+        }
+    )
+}
+
+// Redesc
 
 export const handleRedescProject = async (
     projectId: Project['id'],
@@ -185,4 +338,54 @@ export const handleRedescProject = async (
     } catch (e) {
         console.log('[ProjectHandler] Redesc project failed:', e)
     }
+}
+
+const redescProject = async (projectId: Project['id'], description: Project['description']) => {
+    return await _handleUpdateProject(projectId, { description })
+}
+
+export const redescProjectWithPrompt = async (
+    projectId: Project['id'],
+    description: Project['description']
+) => {
+    return await NuePrompt({
+        title: '修改清单描述',
+        placeholder: '请输入新的清单描述',
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        inputType: 'textarea',
+        inputValue: description,
+        validator: (value: string) => value,
+        onConfirm: async (description: string) => await redescProject(projectId, description)
+    }).then(
+        (res: any) => {
+            requestIdleCallback(() => {
+                NueMessage.success('清单描述修改成功')
+            })
+            return res
+        },
+        (err) => {
+            if (!err) return
+            requestIdleCallback(() => {
+                NueMessage.error(`清单描述修改失败 (${err})`)
+            })
+        }
+    )
+}
+
+// Update project preference
+
+export const handleUpdatePreference = async (
+    projectId: Project['id'],
+    newPreference: Project['preference']
+) => {
+    const res = await _handleUpdateProject(projectId, { preference: newPreference })
+    // console.log(res);
+    requestIdleCallback(() => {
+        if (res.code === '20000') {
+            NueMessage.success('清单偏好修改成功')
+        } else {
+            NueMessage.error('清单偏好修改失败')
+        }
+    })
 }

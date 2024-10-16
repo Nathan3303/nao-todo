@@ -8,6 +8,9 @@
     flex-wrap: nowrap;
     height: 100%;
 
+    -webkit-user-select: none;
+    user-select: none;
+
     .todo-table__header {
         align-items: center;
         padding: 4px 16px;
@@ -26,6 +29,7 @@
         align-items: stretch;
         flex-direction: column;
         width: 100%;
+        flex: auto;
         gap: 0px;
         flex-wrap: nowrap;
 
@@ -78,7 +82,7 @@
                     font-size: 12px;
 
                     &[data-expired='true'] {
-                        color: rgb(224, 86, 86);
+                        color: #ec5555;
                     }
                 }
 
@@ -155,10 +159,8 @@
     }
 
     .todo-table__body__row[data-done='true'] {
-        opacity: 0.6;
-
-        .col-name {
-            text-decoration: line-through;
+        & * {
+            opacity: 0.84;
         }
     }
 }

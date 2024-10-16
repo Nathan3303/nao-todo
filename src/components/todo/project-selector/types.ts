@@ -5,6 +5,7 @@ export type TodoProjectSelectorProps = {
     projects: Project[]
     projectId?: Project['id']
     projectTitle?: Project['title']
+    placeholder?: string
 }
 
 export type TodoProjectSelectorEmits = {

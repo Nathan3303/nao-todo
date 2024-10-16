@@ -36,10 +36,10 @@ import { useRoute, useRouter } from 'vue-router'
 import {
     getProjects,
     createProject,
-    handleArchiveProject,
-    handleUnarchiveProject,
-    handleDeleteProject,
-    handleRestoreProject
+    deleteProjectWithConfirm,
+    restoreProjectWithConfirm,
+    archiveProjectWithConfirm,
+    unarchiveProjectWithConfirm
 } from '@/utils/project-handlers'
 import { useProjectStore } from '@/stores'
 import { ProjectBoard, ProjectFilterBar, CreateProjectDialog } from '@/components/project'
@@ -84,7 +84,8 @@ const handleShowCreateProjectDialog = async () => {
 }
 
 const archiveProject = async (projectId: Project['id']) => {
-    const archiveResult = await handleArchiveProject(projectId)
+    const archiveResult = await archiveProjectWithConfirm(projectId)
+    // console.log(archiveResult)
     init()
     if (archiveResult && archiveResult.code !== '20000') return
     const projectIdInRoute = route.params.projectId
@@ -93,21 +94,21 @@ const archiveProject = async (projectId: Project['id']) => {
 }
 
 const unarchiveProject = async (projectId: Project['id']) => {
-    await handleUnarchiveProject(projectId)
+    await unarchiveProjectWithConfirm(projectId)
     init()
 }
 
 const deleteProject = async (projectId: Project['id']) => {
-    const archiveResult = await handleDeleteProject(projectId)
+    const deleteResult = await deleteProjectWithConfirm(projectId)
     init()
-    if (archiveResult && archiveResult.code !== '20000') return
+    if (deleteResult && deleteResult.code !== '20000') return
     const projectIdInRoute = route.params.projectId
     if (projectIdInRoute !== projectId) return
     router.push('/tasks/all')
 }
 
 const restoreProject = async (projectId: Project['id']) => {
-    await handleRestoreProject(projectId)
+    await restoreProjectWithConfirm(projectId)
     init()
 }
 

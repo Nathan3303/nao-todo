@@ -15,33 +15,39 @@ export const getTags = async (filterOptions: TagFilterOptions) => {
 export const createTag = async (tagName: Tag['name'], tagColor: Tag['color']) => {
     const userId = userStore.user!.id
     const res = await tagStore.create(userId, { name: tagName, color: tagColor })
-    if (res) {
-        NueMessage.success('创建成功')
-    } else {
-        NueMessage.error('创建失败')
-    }
+    requestIdleCallback(() => {
+        if (res) {
+            NueMessage.success('创建成功')
+        } else {
+            NueMessage.error('创建失败')
+        }
+    })
     return res
 }
 
 export const updateTag = async (tagId: Tag['id'], updateInfo: Partial<Tag>) => {
     const userId = userStore.user!.id
     const res = await tagStore.update(userId, tagId, updateInfo)
-    if (res) {
-        NueMessage.success('更新成功')
-    } else {
-        NueMessage.error('更新失败')
-    }
+    requestIdleCallback(() => {
+        if (res) {
+            NueMessage.success('更新成功')
+        } else {
+            NueMessage.error('更新失败')
+        }
+    })
     return res
 }
 
 export const removeTag = async (tagId: Tag['id']) => {
     const userId = userStore.user!.id
     const res = await tagStore.remove(userId, tagId)
-    if (res) {
-        NueMessage.success('删除成功')
-    } else {
-        NueMessage.error('删除失败')
-    }
+    requestIdleCallback(() => {
+        if (res) {
+            NueMessage.success('删除成功')
+        } else {
+            NueMessage.error('删除失败')
+        }
+    })
     return res
 }
 
@@ -52,9 +58,10 @@ export const removeTagWithConfirm = async (tagId: Tag['id']) => {
         title: '删除标签',
         content: '确定要删除该标签吗？',
         confirmButtonText: '删除',
-        cancelButtonText: '取消'
+        cancelButtonText: '取消',
+        onConfirm: async () => await removeTag(tagId)
     }).then(
-        async () => await removeTag(tagId),
+        (res) => res,
         (err) => err
     )
 }
@@ -66,9 +73,10 @@ export const renameTagWithPrompt = async (tagId: Tag['id'], oldTagName?: Tag['na
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         inputValue: oldTagName,
-        validator: (value: string) => value
+        validator: (value: string) => value,
+        onConfirm: async (newTagName: Tag['name']) => await updateTag(tagId, { name: newTagName })
     }).then(
-        async (newTagName) => await updateTag(tagId, { name: newTagName as Tag['name'] }),
+        (res) => res,
         (err) => err
     )
 }

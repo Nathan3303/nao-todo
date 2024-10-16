@@ -1,5 +1,5 @@
 <template>
-    <nue-select v-model="proxyValue" size="small">
+    <nue-select v-model="proxyValue" size="small" v-bind="$attrs">
         <nue-select-option
             v-for="option in options"
             :key="option.value"

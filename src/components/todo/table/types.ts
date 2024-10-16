@@ -1,18 +1,9 @@
 import type { Reactive } from 'vue'
-import type { Todo, TodoFilter, TodoSortOptions } from '@/stores'
+import type { Tag, Todo, TodoColumnOptions, TodoSortOptions } from '@/stores'
 
-export type Columns = {
-    createdAt: boolean
-    priority: boolean
-    state: boolean
-    description: boolean
-    updatedAt: boolean
-    startAt?: boolean
-    endAt?: boolean
-    project?: boolean
-}
+export type Columns = TodoColumnOptions
 
-export type ColumnsKeys = keyof Columns
+export type ColumnsKeys = keyof TodoColumnOptions
 
 export type OrderInfo = {
     column: ColumnsKeys
@@ -21,10 +12,16 @@ export type OrderInfo = {
 
 export type TodoTableProps = {
     todos: Todo[]
-    columns: Columns
+    tags: Tag[]
+    columns: TodoColumnOptions
     simple?: boolean
     emptyMessage?: string
     sortInfo: TodoSortOptions
+}
+
+export type TodoTableMultiSelectEmitPayload = {
+    selectedIds: Todo['id'][]
+    selectRange: { start: number; end: number }
 }
 
 export type TodoTableEmits = {
@@ -32,12 +29,13 @@ export type TodoTableEmits = {
     (event: 'restoreTodo', id: Todo['id']): void
     (event: 'showTodoDetails', id: Todo['id']): void
     (event: 'sortTodo', sortInfo: TodoSortOptions): void
+    (event: 'multiSelect', payload: TodoTableMultiSelectEmitPayload): void
 }
 
 export type TodoTableContext = {
     // todos: Todo[]
     // columns: Columns
     // deleteHandler: (id: Todo['id']) => void
-    showDetailsHandler: (id: Todo['id']) => void
+    showDetailsHandler: (id: Todo['id'], idx: number) => void
     sortInfo: Reactive<TodoSortOptions>
 }

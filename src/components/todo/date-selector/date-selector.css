@@ -2,14 +2,22 @@
     width: fit-content;
     align-items: center;
     gap: 4px;
-    flex: auto;
+    /* flex: auto; */
     border-radius: var(--primary-radius);
-    padding: 0px 8px;
+    /* padding: 0px 8px; */
     /* margin-left: -10px; */
     height: 28px;
 
     &:hover {
         background-color: #f5f5f5;
+    }
+
+    .date-selector__input-wrapper {
+        gap: 4px;
+        padding: 0px 8px;
+        border-radius: var(--primary-radius);
+        border: 1px solid var(--divider-color);
+        box-shadow: var(--secondary-shadow);
     }
 
     .nue-input--noshape {

@@ -1,8 +1,10 @@
+import type { Columns } from '@/components'
 import type { Todo, TodoState } from '@/stores'
 
 export type KanbanColumnProps = {
     category: TodoState
     todos: Todo[]
+    columns?: Columns
 }
 
 export type KanbanColumnEmits = {

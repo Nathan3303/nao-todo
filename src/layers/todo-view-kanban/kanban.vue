@@ -1,6 +1,6 @@
 <template>
-    <nue-container class="content-kanban">
-        <nue-header style="padding: 0; border: none; height: fit-content" :key="$route.path">
+    <nue-container id="tasks/basic/kanban" theme="vertical,inner" class="content-kanban">
+        <nue-header height="auto" :key="$route.path" style="box-sizing: border-box">
             <nue-div align="start" justify="space-between" gap="16px">
                 <todo-filter-bar
                     :count-info="countInfo"
@@ -16,7 +16,7 @@
                     >
                         新增
                     </nue-button>
-                    <list-column-switcher v-model="columns" :change="handleChangeColumns" />
+                    <list-column-switcher v-model="todoStore.columnOptions" />
                     <nue-button
                         theme="small"
                         icon="refresh"
@@ -26,7 +26,7 @@
                 </nue-div>
             </nue-div>
         </nue-header>
-        <nue-main>
+        <nue-main style="border: none">
             <Loading v-if="kanbanLoading" placeholder="正在加载任务看板..." />
             <template v-else>
                 <template v-for="(value, key) in categoriedTodos" :key="key">
@@ -34,12 +34,13 @@
                         :category="key"
                         :todos="value"
                         :data-category="key"
+                        :columns="todoStore.columnOptions"
+                        data-droppable="true"
                         @show-todo-details="handleShowTodoDetails"
                         @delete-todo="removeTodoWithConfirm"
                         @restore-todo="restoreTodoWithConfirm"
                         @finish-todo="handleFinishTodo"
                         @unfinish-todo="handleUnfinishTodo"
-                        data-droppable="true"
                         @dragstart="handleDragStart"
                         @dragenter="handleDragEnter"
                         @dragover="handleDragOver"
@@ -50,23 +51,23 @@
             </template>
         </nue-main>
     </nue-container>
+    <todo-create-dialog ref="todoCreateDialogRef" :handler="handleCreateTodo" />
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
-import { Loading, TodoFilterBar, ListColumnSwitcher } from '@/components'
+import { Loading, TodoFilterBar, ListColumnSwitcher, TodoCreateDialog } from '@/components'
 import { ContentKanbanColumn } from './kanban-column'
 import { useTodoStore, useUserStore } from '@/stores'
-import { NuePrompt } from 'nue-ui'
 import {
+    createTodoWithOptions,
     removeTodoWithConfirm,
     restoreTodoWithConfirm,
     updateTodoWithCompare
 } from '@/utils/todo-handlers'
 import type { ContentKanbanProps, ContentKanbanEmits } from './types'
-import type { Columns } from '@/components'
 import type { Todo, TodoFilter } from '@/stores'
 
 const props = defineProps<ContentKanbanProps>()
@@ -78,20 +79,11 @@ const todoStore = useTodoStore()
 
 const { todos, countInfo, filterInfo } = storeToRefs(todoStore)
 const { user } = storeToRefs(userStore)
+
 const kanbanLoading = ref(false)
 const refreshTimer = ref<number | null>(null)
 const draggingTodoId = ref('abc')
-const columns = ref<Columns>(
-    props.columns || {
-        state: true,
-        priority: true,
-        project: true,
-        description: true,
-        endAt: true,
-        createdAt: false,
-        updatedAt: false
-    }
-)
+const todoCreateDialogRef = ref<InstanceType<typeof TodoCreateDialog>>()
 
 const categoriedTodos = computed(() => {
     const result: { [key in Todo['state']]: Todo[] } = {
@@ -108,7 +100,7 @@ const categoriedTodos = computed(() => {
 const handleGetTodos = async () => {
     const { filterInfo } = props
     kanbanLoading.value = true
-    const res = await todoStore.initialize(userStore.user!.id, filterInfo)
+    const res = await todoStore.get(userStore.user!.id, filterInfo)
     kanbanLoading.value = false
     return res
 }
@@ -121,17 +113,13 @@ const handleShowTodoDetails = (todoId: Todo['id']) => {
     })
 }
 
-const handleAddTodo = async () => {
-    NuePrompt({
-        title: '创建任务',
-        placeholder: '填写任务名称',
-        confirmButtonText: '创建',
-        cancelButtonText: '取消',
-        validator: (value: any) => value
-    }).then(
-        (value) => emit('createTodo', value as string),
-        () => {}
-    )
+const handleAddTodo = () => {
+    if (!todoCreateDialogRef.value) return
+    emit('createTodoByDialog', todoCreateDialogRef.value.show)
+}
+
+const handleCreateTodo = async (newTodo: Partial<Todo>) => {
+    return await createTodoWithOptions(newTodo.projectId || null, newTodo)
 }
 
 const handleFilter = async (newTodoFliter: TodoFilter) => {
@@ -140,12 +128,10 @@ const handleFilter = async (newTodoFliter: TodoFilter) => {
     await todoStore.get(userId)
 }
 
-const handleChangeColumns = (payload: Columns) => {
-    columns.value.createdAt = payload.createdAt
-    columns.value.priority = payload.priority
-    columns.value.state = payload.state
-    columns.value.description = payload.description
-}
+// const handleChangeColumns = (payload: Columns) => {
+//     console.log(payload)
+//     todoStore.mergeColumnOptions(payload)
+// }
 
 const handleRefresh = async () => {
     if (refreshTimer.value) return

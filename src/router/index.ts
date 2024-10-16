@@ -1,6 +1,5 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { useUserStore } from '@/stores/use-user-store'
-import { useLoadingScreen } from '@/hooks/use-loading-screen'
 import tasksRoutes from './routes/tasks'
 
 const router = createRouter({
@@ -15,40 +14,29 @@ const router = createRouter({
         {
             path: '/',
             name: 'index',
-            beforeEnter: async (_to, _from, next) => {
+            beforeEnter: async (to, from, next) => {
                 const userStore = useUserStore()
-                const loadingScreen = useLoadingScreen()
-                if (userStore.isAuthenticated) {
-                    next()
+                const isLoggedIn = userStore.isLoggedIn()
+                if (!isLoggedIn) {
+                    next('/authentication/login')
                     return
                 }
-                const isLoggedIn = await userStore.isLoggedIn()
-                if (isLoggedIn) {
-                    loadingScreen.startLoading()
+                try {
                     await userStore.checkin()
                     if (userStore.isAuthenticated) {
                         next()
                         return
-                    } else {
-                        loadingScreen.stopLoading()
                     }
+                    throw new Error('User is not authenticated')
+                } catch (e) {
+                    next('/authentication/login')
                 }
-                next('/authentication/login')
             },
             component: () => import('@/views/index/index.vue'),
             redirect: { name: 'tasks' },
             children: [tasksRoutes]
         }
     ]
-})
-
-router.afterEach((to) => {
-    const { meta } = to
-    if (meta && meta.title) {
-        document.title = ('NaoTodo - ' + meta.title) as string
-    } else {
-        document.title = 'NaoTodo'
-    }
 })
 
 export default router

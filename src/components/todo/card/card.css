@@ -61,11 +61,26 @@
         .todo-card__description {
             display: -webkit-box;
             -webkit-box-orient: vertical;
-            -webkit-line-clamp: 3;
+            /* -webkit-line-clamp: 3; */
             overflow: hidden;
             text-overflow: ellipsis;
             font-size: 12px;
             color: #aaa;
+        }
+    }
+
+    .todo-card__attrs {
+        & * {
+            color: gray;
+        }
+
+        & > .nue-div {
+            min-width: 20%;
+        }
+
+        .todo-tag-bar {
+            min-width: 20%;
+            margin-right: 4px;
         }
     }
 

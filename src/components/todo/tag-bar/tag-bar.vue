@@ -1,61 +1,45 @@
 <template>
-    <nue-div class="todo-tag-bar">
-        <tag-node v-for="tag in tags" :key="tag.id" :tag="tag" @delete="handleDropTag" />
-        <combo-box trigger-title="标签" :framework="unusedTagOptions" @change="handleAddTag" />
+    <nue-div class="todo-tag-bar" :class="{ 'todo-tag-bar--small': small }" width="fit-content">
+        <nue-div v-if="visibleTags.length" align="center" width="fit-content" gap="8px">
+            <tag-node
+                v-for="tag in visibleTags"
+                :key="tag.id"
+                :tag="tag"
+                :readonly="readonly"
+                @delete="handleDropTag"
+            />
+            <nue-text
+                class="todo-tag-bar__clamped-text"
+                v-if="todoTags.length > clamped"
+                size="12px"
+                color="orange"
+            >
+                + {{ todoTags.length - clamped }}
+            </nue-text>
+        </nue-div>
+        <combo-box
+            v-if="!readonly"
+            trigger-title="标签"
+            :framework="comboBoxOptions"
+            hide-counter
+            hide-on-click
+            @change="handleAddTag"
+        />
     </nue-div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import TagNode from '@/components/tag/node/node.vue'
-import ComboBox from '@/components/general/combo-box/combo-box.vue'
+import { useTagBar } from './use-tag-bar'
+import { TagNode, ComboBox } from '@/components'
 import type { TodoTagBarProps, TodoTagBarEmits } from './types'
-import type { FrameworkOption } from '@/components/general/combo-box/types'
 
 defineOptions({ name: 'TodoTagBar' })
-const props = defineProps<TodoTagBarProps>()
+const props = withDefaults(defineProps<TodoTagBarProps>(), { clamped: Infinity, small: false })
 const emit = defineEmits<TodoTagBarEmits>()
 
-const unusedTagOptions = ref<FrameworkOption[]>([])
-
-const tags = computed<typeof props.tags>(() => {
-    const { tags: globalTags, todoTags } = props
-    const _tags: typeof props.tags = []
-    if (globalTags) {
-        unusedTagOptions.value = []
-        globalTags.map((tag) => {
-            if (todoTags.includes(tag.id)) {
-                _tags.push(tag)
-            } else {
-                unusedTagOptions.value.push({
-                    label: tag.name,
-                    value: tag.id
-                })
-            }
-        })
-    }
-    return _tags
-})
-
-const handleAddTag = async (tagId: unknown) => {
-    const newTags = tags.value.map((tag) => tag.id)
-    newTags.push(tagId as string)
-    emit('updateTags', newTags)
-}
-
-const handleDropTag = async (tagId: string) => {
-    const newTags = tags.value.map((tag) => {
-        if (tag.id && tag.id !== tagId) {
-            return tag.id
-        }
-    })
-    emit('updateTags', newTags as string[])
-}
+const { visibleTags, comboBoxOptions, handleAddTag, handleDropTag } = useTagBar(props, emit)
 </script>
 
 <style scoped>
-.todo-tag-bar {
-    align-items: center;
-    gap: 12px;
-}
+@import url('./tag-bar.css');
 </style>

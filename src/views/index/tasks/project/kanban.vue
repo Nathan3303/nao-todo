@@ -1,32 +1,50 @@
 <template>
     <todo-view-kanban
         :key="route.params.projectId.toString()"
-        :filter-info="filterInfo"
+        :filter-info="todoStore.filterInfo"
         base-route="tasks-project-kanban"
-    ></todo-view-kanban>
+        @create-todo="handleCreateTodo"
+        @create-todo-by-dialog="handleCreateTodoByDialog"
+    />
     <suspense>
         <router-view></router-view>
     </suspense>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
 import { TodoViewKanban } from '@/layers'
-import { useTodoStore, useUserStore } from '@/stores'
+import { useProjectStore, useUserStore, useTagStore, useTodoStore } from '@/stores'
 import { useRoute } from 'vue-router'
-import type { Todo, TodoFilter } from '@/stores'
+import { createTodoWithOptions } from '@/utils'
+import type { Todo } from '@/stores'
+import type { TodoCreateDialogArgs } from '@/components/todo/create-dialog/types'
 
 const route = useRoute()
 const userStore = useUserStore()
+const projectStore = useProjectStore()
 const todoStore = useTodoStore()
+const tagStore = useTagStore()
 
-const filterInfo = computed<TodoFilter>(() => {
+const handleCreateTodo = async (todoName: Todo['name']) => {
     const projectId = route.params.projectId as string
-    return {
-        isDeleted: false,
-        projectId
-    }
-})
-</script>
+    const project = projectStore._toFinded(projectId)
+    const createOptions = { name: todoName, project: { title: project ? project.title : '' } }
+    await createTodoWithOptions(projectId, createOptions)
+}
 
-<style scoped></style>
+const handleCreateTodoByDialog = async (caller: (args: TodoCreateDialogArgs) => void) => {
+    const projectId = route.params.projectId as string
+    const project = projectStore._toFinded(projectId)
+    const avalibleProjects = projectStore._toFiltered({ isDeleted: false, isArchived: false })
+    // console.log(avalibleProjects)
+    caller({
+        userId: userStore.user!.id,
+        projects: avalibleProjects,
+        tags: tagStore.tags,
+        presetInfo: {
+            projectId,
+            project: { title: project ? project.title : '' }
+        }
+    })
+}
+</script>

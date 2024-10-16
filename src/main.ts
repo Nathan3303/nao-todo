@@ -5,7 +5,6 @@ import router from './router'
 import NueUI from 'nue-ui'
 
 import 'nue-ui/dist/index.css'
-import './assets/base.css'
 import './assets/iconfont/iconfont.css'
 import './assets/nueui.global.css'
 

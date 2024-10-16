@@ -1,6 +1,6 @@
 <template>
     <nue-div class="date-selector">
-        <template v-if="dateMoment">
+        <nue-div v-if="dateMoment" class="date-selector__input-wrapper">
             <nue-input
                 theme="small,noshape"
                 type="datetime-local"
@@ -8,8 +8,8 @@
                 :debounce-time="1000"
             ></nue-input>
             <nue-button theme="small,pure" icon="clear" @click="dateMoment = null"></nue-button>
-        </template>
-        <nue-button v-else theme="small,pure" @click="handleSetDate"> 设置结束时间 </nue-button>
+        </nue-div>
+        <nue-button v-else theme="small" @click="handleSetDate"> 设置结束时间 </nue-button>
     </nue-div>
 </template>
 
@@ -26,7 +26,7 @@ const dateMoment = computed<string | null>({
     get() {
         const { modelValue, date } = props
         if (modelValue && moment(modelValue).isValid()) {
-            console.log(modelValue)
+            // console.log(modelValue)
             return modelValue
         }
         if (date) {

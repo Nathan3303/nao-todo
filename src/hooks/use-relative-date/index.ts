@@ -4,6 +4,7 @@ import {
     isTomorrow,
     isYesterday,
     isIn7DaysFromNow,
+    isIn30DaysFromNow,
     isAfterThisYear
 } from '@/utils/date-handlers'
 import type { Moment } from 'moment'
@@ -49,6 +50,9 @@ export const useRelativeDate = (date: Moment | Date | string | null) => {
             return `${weekday}, ${date.format('M月D日, HH:mm')}`
         }
         return `${weekday}, ${date.format('YYYY年MM月DD日, HH:mm')}`
+    }
+    if (isIn30DaysFromNow(date)) {
+        return `${date.format('M月D日, HH:mm')}`
     }
     if (isAfterThisYear(date)) {
         return `${date.format('YYYY年M月D日, HH:mm')}`

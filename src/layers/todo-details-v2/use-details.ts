@@ -1,4 +1,4 @@
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useTodoStore, useProjectStore, useEventStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
@@ -23,6 +23,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
     const shadowTodo = ref<Todo | undefined>()
     const loadingState = ref(false)
     const isGetting = ref(false)
+    let unSubscribe: Function | null = null
 
     const eventsProgress = computed(() => {
         const _e = events.value
@@ -57,7 +58,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         isGetting.value = false
     }
 
-    const _debounce = (delay: number, callback: () => void | Promise<any>) => {
+    const _debounce = (callback: () => void | Promise<any>, delay: number) => {
         let timer: number | null = null
         return () => {
             if (timer) clearTimeout(timer)
@@ -77,7 +78,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         loadingState.value = false
     }
 
-    const debouncedUpdateTodo = _debounce(1024, _updateTodo)
+    const debouncedUpdateTodo = _debounce(_updateTodo, 1024)
 
     const formatDate = (datestring: string) => {
         const dateString = moment(datestring).format('YYYY-MM-DD HH:mm')
@@ -119,8 +120,8 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         if (!shadowTodo.value) return
         const todoId = shadowTodo.value.id
         try {
-            await removeTodoWithConfirm(todoId)
-            handleClose()
+            const removeResult = await removeTodoWithConfirm(todoId)
+            if (removeResult.id === todoId) handleClose()
         } catch (error) {
             console.info('handleDeleteTodo error: ', error)
         }
@@ -130,8 +131,8 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         if (!shadowTodo.value) return
         const todoId = shadowTodo.value?.id
         try {
-            await restoreTodoWithConfirm(todoId)
-            handleClose()
+            const restoreResult = await restoreTodoWithConfirm(todoId)
+            if (restoreResult.id === todoId) handleClose()
         } catch (error) {
             console.info('handleRestoreTodo error: ', error)
         }
@@ -140,12 +141,13 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
     const handleUpdateTags = async (tags: Todo['tags']) => {
         if (!shadowTodo.value) return
         shadowTodo.value.tags = tags
+        console.log(tags);
         debouncedUpdateTodo()
     }
 
     const handleClose = () => {
         shadowTodo.value = void 0
-        const prevRoute = route.matched[route.matched.length - 2]
+        const prevRoute = route.matched[route.matched.length - 1]
         if (prevRoute) {
             router.push(prevRoute)
         }
@@ -157,11 +159,21 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         { immediate: true }
     )
 
-    // onMounted(() => {
-    //     const taskId = route.params.taskId
-    //     if (!taskId) return
-    //     setTimeout(async () => await _getTodo(taskId as string))
-    // })
+    onMounted(() => {
+        unSubscribe = todoStore.$subscribe((mutation) => {
+            if (mutation.type !== 'direct') return
+            const newValue = mutation.events.newValue
+            if (!newValue) return
+            if (Array.isArray(newValue)) return
+            if (newValue.id && newValue.id === shadowTodo.value?.id) {
+                shadowTodo.value = newValue
+            }
+        })
+    })
+
+    onBeforeUnmount(() => {
+        if (unSubscribe) unSubscribe()
+    })
 
     return {
         projects: activeProjects,

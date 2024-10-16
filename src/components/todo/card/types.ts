@@ -1,8 +1,10 @@
 import type { Todo } from '@/stores'
+import type { Columns } from '../table'
 
 export type TodoCardProps = {
     todo: Todo
     actived?: boolean
+    columns?: Columns
 }
 
 export type TodoCardEmits = {

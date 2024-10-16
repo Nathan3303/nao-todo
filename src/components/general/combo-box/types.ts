@@ -12,4 +12,5 @@ export type ComboBoxProps = {
     triggerIcon?: string
     align?: 'left' | 'center' | 'right'
     framework: FrameworkOption[]
+    hideCounter?: boolean
 }

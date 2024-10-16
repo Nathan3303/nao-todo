@@ -1,8 +1,9 @@
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { naoTodoServer as $axios } from '@/axios'
-import type { Todo, TodoFilter, TodoCountInfo, TodoSortOptions } from './types'
-import type { User } from '..'
+import { defaultColumns, defaultTodo } from './constants'
+import type { Todo, TodoFilter, TodoCountInfo, TodoSortOptions, TodoColumnOptions } from './types'
+import type { Project, User } from '..'
 
 export const useTodoStore = defineStore('todoStore', () => {
     const todos = ref<Todo[]>([])
@@ -16,6 +17,7 @@ export const useTodoStore = defineStore('todoStore', () => {
         byState: { todo: 0, 'in-progress': 0, done: 0 },
         byPriority: { low: 0, medium: 0, high: 0 }
     })
+    const columnOptions = ref<TodoColumnOptions>(defaultColumns)
 
     // Inner methods
 
@@ -41,13 +43,22 @@ export const useTodoStore = defineStore('todoStore', () => {
         filterInfo.value = newFilterInfo
     }
 
-    const _reset = () => {
-        todos.value = []
+    const _mergeColumnOptions = (newOne: Partial<TodoColumnOptions>) => {
+        columnOptions.value = { ...columnOptions.value, ...newOne } as TodoColumnOptions
+    }
+
+    const _resetOptions = () => {
         filterInfo.value = {}
         pageInfo.page = 1
         pageInfo.limit = 20
         sortInfo.field = ''
         sortInfo.order = ''
+        columnOptions.value = defaultColumns
+    }
+
+    const _reset = () => {
+        todos.value = []
+        _resetOptions()
     }
 
     const _get = async (userId: User['id'], specFilterInfo?: TodoFilter) => {
@@ -72,7 +83,7 @@ export const useTodoStore = defineStore('todoStore', () => {
     const _updatingCompare = (todoId: Todo['id'], updateInfo: Partial<Todo>) => {
         const targetIdx = findIndexLocal(todoId)
         const target = todos.value[targetIdx]
-        console.log('[useTodoStore] _updatingCompare:', target, updateInfo)
+        // console.log('[useTodoStore] _updatingCompare:', target, updateInfo)
         const isNeedToUpdate = Object.keys(updateInfo).some((key) => {
             const value = updateInfo[key as keyof Todo]
             return target[key as keyof Todo] !== value
@@ -91,6 +102,24 @@ export const useTodoStore = defineStore('todoStore', () => {
             return res
         } catch (e) {
             console.warn('[todoStore] _update:', e)
+        }
+    }
+
+    const _updateBatch = async (
+        userId: User['id'],
+        todoIds: Todo['id'][],
+        updateInfo: Partial<Todo>
+    ) => {
+        try {
+            const URI = `/todos?userId=${userId}`
+            const {
+                data: { data, code }
+            } = await $axios.put(URI, { todoIds, updateInfo })
+            const res = code === '20000' ? data : null
+            // console.log('[todoStore] _updateBatch:', URI, updateInfo, res)
+            return res
+        } catch (e) {
+            console.warn('[todoStore] _updateBatch:', e)
         }
     }
 
@@ -124,7 +153,9 @@ export const useTodoStore = defineStore('todoStore', () => {
 
     const get = async (userId: User['id'], filterInfo?: Partial<TodoFilter>) => {
         if (filterInfo) _mergeFilterInfo(filterInfo)
-        const { todos: _tds, payload } = await _get(userId)
+        const responseData = await _get(userId)
+        if (!responseData) return
+        const { todos: _tds, payload } = responseData
         if (!todos) return
         todos.value = _tds as Todo[]
         pageInfo.limit = payload.pageInfo.limit
@@ -150,17 +181,30 @@ export const useTodoStore = defineStore('todoStore', () => {
         return updateResult
     }
 
+    const updateBatch = async (
+        userId: User['id'],
+        todoIds: Todo['id'][],
+        updateInfo: Partial<Todo>
+    ) => {
+        const updateResult = await _updateBatch(userId, todoIds, updateInfo)
+        if (!updateResult) return
+        updateBatchLocal(todoIds, updateInfo)
+        return updateResult
+    }
+
     const remove = async (userId: User['id'], todoId: Todo['id']) => {
         const removeResult = await _remove(userId, todoId)
         if (!removeResult) return
-        removeLocal(todoId)
+        // removeLocal(todoId)
+        get(userId)
         return removeResult
     }
 
     const create = async (userId: User['id'], createInfo: Partial<Todo>) => {
         const createResult = await _create(userId, createInfo)
         if (!createResult) return
-        createLocal({ ...createInfo, ...createResult })
+        // createLocal({ ...createInfo, ...createResult })
+        get(userId)
         return createResult
     }
 
@@ -179,7 +223,7 @@ export const useTodoStore = defineStore('todoStore', () => {
     const toFilterLocal = (todoId: Todo['id']) => {
         const todo = findLocal(todoId)
         if (!todo) return null
-        return { ...todo }
+        return todo
     }
 
     const updateLocal = (todoId: Todo['id'], updateInfo: Partial<Todo>) => {
@@ -190,39 +234,29 @@ export const useTodoStore = defineStore('todoStore', () => {
         todos.value[oldTodoIndex] = newTodo
     }
 
+    const updateBatchLocal = (todoIds: Todo['id'][], updateInfo: Partial<Todo>) => {
+        todoIds.forEach((todoId) => {
+            updateLocal(todoId, updateInfo)
+        })
+    }
+
     const removeLocal = async (todoId: Todo['id']) => {
         const todoIndex = findIndexLocal(todoId)
         todos.value.splice(todoIndex, 1)
+        countInfo.length--
+        countInfo.count--
     }
 
     const createLocal = (createInfo: Partial<Todo>) => {
-        if (countInfo.length >= pageInfo.limit) {
-            countInfo.total++
-            return
-        }
-        const newTodoTemplate: Todo = {
-            id: '',
-            userId: '',
-            projectId: '',
-            name: '',
-            description: '',
-            status: 'todo',
-            state: 'todo',
-            progress: { total: 0, finished: 0 },
-            priority: 'low',
-            createdAt: '',
-            updatedAt: '',
-            dueDate: { startAt: null, endAt: null },
-            events: [],
-            isPinned: false,
-            isDone: false,
-            isDeleted: false,
-            tags: [],
-            tagsInfo: [],
-            project: {}
-        }
+        const newTodoTemplate = defaultTodo as Todo
         const newTodo = { ...newTodoTemplate, ...createInfo }
-        todos.value.push(newTodo)
+        todos.value.unshift(newTodo)
+        if (todos.value.length >= pageInfo.limit) {
+            todos.value.pop()
+        } else {
+            countInfo.length++
+        }
+        countInfo.count++
     }
 
     // Getter which is pure function and from backend
@@ -244,27 +278,50 @@ export const useTodoStore = defineStore('todoStore', () => {
         return res as Todo | null
     }
 
+    // Others
+
+    const setOptionsByProjectPreference = (preference: Partial<Project['preference']>) => {
+        if (!preference) return
+        if (preference.filterInfo) {
+            filterInfo.value = preference.filterInfo
+        }
+        if (preference.sortInfo) {
+            sortInfo.field = preference.sortInfo.field
+            sortInfo.order = preference.sortInfo.order
+        }
+        if (preference.columns) {
+            columnOptions.value = preference.columns
+        }
+    }
+
     return {
         todos,
         filterInfo,
         sortInfo,
         pageInfo,
         countInfo,
+        columnOptions,
         mergeFilterInfo: _mergeFilterInfo,
+        mergeColumnOptions: _mergeColumnOptions,
         updatingCompare: _updatingCompare,
+        resetOptions: _resetOptions,
+        reset: _reset,
         get,
         initialize,
         update,
+        updateBatch,
         remove,
         create,
         findIndexLocal,
         findLocal,
         toFilterLocal,
         updateLocal,
+        updateBatchLocal,
         removeLocal,
         createLocal,
         toGetted,
         toFinded,
-        toFindedOne
+        toFindedOne,
+        setOptionsByProjectPreference
     }
 })

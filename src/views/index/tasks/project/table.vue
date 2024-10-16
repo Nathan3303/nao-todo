@@ -1,66 +1,55 @@
 <template>
     <todo-view-table
         :key="route.params.projectId.toString()"
-        :filter-info="filterInfo"
+        :filter-info="todoStore.filterInfo"
         base-route="tasks-project-table"
-        :columns="columns"
         @create-todo="handleCreateTodo"
         @create-todo-by-dialog="handleCreateTodoByDialog"
-    ></todo-view-table>
+    />
     <suspense>
         <router-view></router-view>
     </suspense>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { inject } from 'vue'
 import { TodoViewTable } from '@/layers'
 import { useRoute } from 'vue-router'
 import { createTodoWithOptions } from '@/utils'
-import { useProjectStore, useTagStore, useUserStore } from '@/stores'
-import type { Todo, TodoFilter } from '@/stores'
-import type { Columns } from '@/components'
+import { useProjectStore, useTagStore, useUserStore, useTodoStore } from '@/stores'
+import { projectViewContextKey } from './constants'
+import type { Todo } from '@/stores'
 import type { TodoCreateDialogArgs } from '@/components/todo/create-dialog/types'
+import type { ProjectViewContext } from './types'
 
 const route = useRoute()
 const userStore = useUserStore()
 const projectStore = useProjectStore()
+const todoStore = useTodoStore()
 const tagStore = useTagStore()
 
-const filterInfo = computed<TodoFilter>(() => {
-    const projectId = route.params.projectId as string
-    return {
-        isDeleted: false,
-        projectId
-    }
-})
-
-const columns: Columns = {
-    createdAt: false,
-    updatedAt: false,
-    endAt: true,
-    priority: true,
-    state: true,
-    description: true
-}
+const { project } = inject<ProjectViewContext>(projectViewContextKey)!
 
 const handleCreateTodo = async (todoName: Todo['name']) => {
-    const projectId = route.params.projectId as string
-    const project = projectStore._toFinded(projectId)
-    const createOptions = { name: todoName, project: { title: project ? project.title : '' } }
-    await createTodoWithOptions(projectId, createOptions)
+    if (!project.value) return
+    const { id, title } = project.value
+    await createTodoWithOptions(id, {
+        name: todoName,
+        project: { title: title || '' }
+    })
 }
 
 const handleCreateTodoByDialog = async (caller: (args: TodoCreateDialogArgs) => void) => {
-    const projectId = route.params.projectId as string
-    const project = projectStore._toFinded(projectId)
+    if (!project.value) return
+    const { id, title } = project.value
+    const avalibleProjects = projectStore._toFiltered({ isDeleted: false, isArchived: false })
     caller({
         userId: userStore.user!.id,
-        projects: projectStore.projects,
+        projects: avalibleProjects,
         tags: tagStore.tags,
         presetInfo: {
-            projectId,
-            project: { title: project ? project.title : '' }
+            projectId: id,
+            project: { title: title || '' }
         }
     })
 }

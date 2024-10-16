@@ -1,5 +1,5 @@
 <template>
-    <nue-header>
+    <nue-header height="auto" style="flex-direction: column; gap: 16px">
         <template v-if="project">
             <nue-div vertical gap="4px">
                 <nue-div justify="space-between" wrap="nowrap">
@@ -23,6 +23,7 @@
                         <nue-tooltip size="small" content="删除清单">
                             <nue-button theme="icon-only" icon="delete" @click="deleteProject" />
                         </nue-tooltip>
+                        <slot name="actions"></slot>
                     </nue-div>
                 </nue-div>
                 <nue-text theme="pointer" size="14px" color="gray" @click="redescProject">
@@ -50,7 +51,6 @@
                     </nue-text>
                 </nue-div>
                 <nue-div align="center" width="fit-content" gap="8px">
-                    <slot name="actions" />
                     <nue-tooltip size="small" content="删除标签">
                         <nue-button
                             theme="icon-only"
@@ -58,6 +58,7 @@
                             @click="handleDeleteTag(tag?.id)"
                         />
                     </nue-tooltip>
+                    <slot name="actions"></slot>
                 </nue-div>
             </nue-div>
         </template>
@@ -89,7 +90,7 @@
         </template>
         <nue-div v-if="!sph" wrap="nowrap" align="center">
             <nue-div class="project-navigations">
-                <slot name="navigations" />
+                <slot name="navigations"></slot>
             </nue-div>
         </nue-div>
     </nue-header>
@@ -100,9 +101,9 @@ import { useViewStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import {
-    handleRenameProject,
-    handleRedescProject,
-    handleDeleteProject
+    renameProjectWithPrompt,
+    redescProjectWithPrompt,
+    deleteProjectWithConfirm
 } from '@/utils/project-handlers'
 import { removeTagWithConfirm, renameTagWithPrompt } from '@/utils/tag-handlers'
 import type { ContentHeaderProps } from './types'
@@ -126,20 +127,20 @@ const renameProject = () => {
     if (!props.project) return
     const projectId = props.project?.id
     const projectName = props.project?.title
-    handleRenameProject(projectId, projectName)
+    renameProjectWithPrompt(projectId, projectName)
 }
 
 const redescProject = () => {
     if (!props.project) return
     const projectId = props.project?.id
     const projectDescription = props.project?.description
-    handleRedescProject(projectId, projectDescription)
+    redescProjectWithPrompt(projectId, projectDescription)
 }
 
 const deleteProject = async () => {
     const projectId = props.project?.id
     if (!projectId) return
-    const deleteResult = await handleDeleteProject(projectId)
+    const deleteResult = await deleteProjectWithConfirm(projectId)
     if (deleteResult.code === '20000') {
         router.push('/tasks/all')
     }

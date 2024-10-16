@@ -67,5 +67,3 @@ const handleCreateTag = async (payload: any) => {
     return await createTag(payload.name, payload.color)
 }
 </script>
-
-<style scoped></style>

@@ -1,9 +1,7 @@
 .content-kanban {
     width: 100%;
-    gap: 16px;
 
     .nue-header {
-        height: auto;
         border-bottom: none;
     }
 
@@ -11,5 +9,11 @@
         overflow: hidden;
         overflow-x: auto;
         gap: 16px;
+
+        &:deep(> .nue-main__content) {
+            flex-direction: row;
+            padding: 0px 16px;
+            gap: 16px;
+        }
     }
 }

@@ -1,5 +1,10 @@
 <template>
-    <loading-screen :loading="loading"></loading-screen>
+    <loading-screen
+        :loading="indexViewLoader.loading"
+        :error="indexViewLoader.error"
+        :error-message="indexViewLoader.errorMessage"
+        @refresh="indexViewInitTask"
+    />
     <suspense>
         <router-view></router-view>
     </suspense>
@@ -7,7 +12,7 @@
 
 <script setup lang="ts">
 import { LoadingScreen } from '@/components/general/loading-screen'
-import { useLoadingScreen } from '@/hooks/use-loading-screen'
+import { useViewStore } from '@/stores'
 
-const { loading } = useLoadingScreen()
+const { indexViewLoader, indexViewInitTask } = useViewStore()
 </script>

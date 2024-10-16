@@ -3,6 +3,12 @@
     --primary-font-weight: 500;
 }
 
+.nue-container--inner {
+    .nue-header {
+        box-sizing: border-box;
+    }
+}
+
 .nue-link--plink {
     overflow: hidden;
 
@@ -58,6 +64,10 @@
 
         .nue-main {
             padding: 4px;
+
+            .nue-main__content {
+                padding: 0px;
+            }
         }
     }
 }
@@ -79,6 +89,10 @@
     overflow: hidden;
 }
 
+.nue-dialog--update-log {
+    --dialog-width: 50%;
+}
+
 .nue-progress--line {
     .nue-progress__inner-bar {
         padding: 0px !important;
@@ -92,4 +106,10 @@
 .nue-dialog-wrapper {
     --dialog-width: auto;
     --dialog-max-width: auto;
+}
+
+.nue-textarea--noshape {
+    padding: 0px;
+    --padding-x: 0px;
+    --padding-y: 0px;
 }

@@ -1,39 +1,43 @@
 <template>
-    <nue-container class="tasks-tag-view tasks-sub-view">
+    <nue-container theme="vertical,inner" class="tasks-tag-view tasks-sub-view">
         <todo-view-header :tag="tag">
             <template #navigations>
-                <nue-link theme="btnlike" :route="{ name: 'tasks-tag-table' }"> 任务列表 </nue-link>
+                <nue-link theme="btnlike" :route="{ name: 'tasks-tag-table' }">列表视图</nue-link>
                 <nue-link theme="btnlike" :route="{ name: 'tasks-tag-kanban' }">
-                    任务看板
+                    看板视图
                 </nue-link>
             </template>
         </todo-view-header>
-        <nue-main>
+        <nue-main style="border: none">
             <router-view></router-view>
         </nue-main>
     </nue-container>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, provide } from 'vue'
 import { TodoViewHeader } from '@/layers'
-import { useTagStore } from '@/stores'
+import { useTodoStore, useTagStore } from '@/stores'
+import { TasksTagViewContextKey } from './constants'
 import type { Tag } from '@/stores'
+import type { TasksTagViewContext } from './types'
 
 const props = defineProps<{ tagId: Tag['id'] }>()
 
+const todoStore = useTodoStore()
 const tagStore = useTagStore()
 
 const tag = computed(() => {
     const { tagId } = props
     const tag = tagStore.findLocal(tagId)
+    todoStore.resetOptions()
     if (!tag) return void 0
     document.title = 'NaoTodo - #' + tag.name
     return tag as Tag
 })
-</script>
 
-<style scoped>
-@import url('../common/index.css');
-/* @import url('./index.css'); */
-</style>
+provide<TasksTagViewContext>(TasksTagViewContextKey, {
+    tagId: computed(() => props.tagId),
+    tag
+})
+</script>
