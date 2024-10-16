@@ -85,13 +85,11 @@ const handleDropdownExecute = async (executeId: string) => {
 
 const handleLoadProjectPreference = () => {
     if (!project.value) return
-    const projectPreference = project.value.preference || { viewType: 'table' }
+    const projectPreference = project.value.preference || { viewType: 'table', filterInfo: {} }
     if (projectPreference) todoStore.resetOptions()
-    Object.assign(projectPreference, {
-        filterInfo: {
-            isDeleted: false,
-            projectId: project.value.id
-        }
+    Object.assign(projectPreference.filterInfo, {
+        isDeleted: false,
+        projectId: project.value.id
     })
     todoStore.setOptionsByProjectPreference(projectPreference)
 }
