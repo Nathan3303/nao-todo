@@ -65,8 +65,9 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
         selectedId.value = void 0
     }
 
-    const handleClearSelect = () => {
+    const handleClearSelect = (fullClear: boolean = false) => {
         handleClearSelectedId()
+        if (fullClear) selectRange.original = -1
         selectRange.start = selectRange.original
         selectRange.end = selectRange.original
         // emit('multiSelect', { selectedIds: [], selectRange })
@@ -79,7 +80,7 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
 
     watch(
         () => props.todos,
-        () => handleClearSelect()
+        () => handleClearSelect(true)
     )
 
     watch(
