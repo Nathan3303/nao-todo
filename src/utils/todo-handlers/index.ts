@@ -1,9 +1,27 @@
 import { useUserStore, useTodoStore } from '@/stores'
 import { NueConfirm, NueMessage, NuePrompt } from 'nue-ui'
+import type { MessagePayloadType } from 'nue-ui'
 import type { Project, Todo, TodoFilter } from '@/stores'
 
 const userStore = useUserStore()
 const todoStore = useTodoStore()
+
+// Utils
+
+const _message = (
+    flag: boolean,
+    successMsg: string,
+    errorMsg: string,
+    options?: MessagePayloadType
+) => {
+    const _options: MessagePayloadType = {
+        type: flag ? 'success' : 'error',
+        message: flag ? successMsg : errorMsg,
+        size: 'small',
+        ...options
+    }
+    requestIdleCallback(() => NueMessage(_options))
+}
 
 // Standards
 
@@ -15,7 +33,6 @@ export const getTodos = async (filterOptions: TodoFilter) => {
 export const getTodo = async (todoId: Todo['id']) => {
     const userId = userStore.user!.id
     const res = await todoStore.toFindedOne(userId, todoId)
-    // console.log('[todoHandlers] getTodo:', res)
     if (!res) return null
     return { ...res } as Todo
 }
@@ -27,13 +44,7 @@ export const createTodo = async (
     const userId = userStore.user!.id
     projectId = projectId || userId
     const res = await todoStore.create(userId, { projectId, name: todoName })
-    requestIdleCallback(() => {
-        if (res) {
-            NueMessage.success('创建成功')
-        } else {
-            NueMessage.error('创建失败')
-        }
-    })
+    _message(res, '创建成功', '创建失败')
     return res
 }
 
@@ -45,14 +56,7 @@ export const createTodoWithOptions = async (
     projectId = projectId || userId
     createOptions = { ...createOptions, projectId }
     const res = await todoStore.create(userId, createOptions)
-    // console.log(createOptions)
-    requestIdleCallback(() => {
-        if (res) {
-            NueMessage.success('创建成功')
-        } else {
-            NueMessage.error('创建失败')
-        }
-    })
+    _message(res, '创建成功', '创建失败')
     return res
 }
 
@@ -73,14 +77,7 @@ export const createTodoWithPrompt = async (projectId: Project['id']) => {
 export const updateTodo = async (todoId: Todo['id'], updateInfo: Partial<Todo>) => {
     const userId = userStore.user!.id
     const res = await todoStore.update(userId, todoId, updateInfo)
-    // console.log('[todoHandlers] updateTodo:', res)
-    requestIdleCallback(() => {
-        if (res) {
-            NueMessage.success('更新成功')
-        } else {
-            NueMessage.error('更新失败')
-        }
-    })
+    _message(res, '更新成功', '更新失败')
     return res
 }
 
@@ -93,17 +90,9 @@ export const updateTodoWithCompare = async (todoId: Todo['id'], updateInfo: Part
 export const updateTodos = async (todoIds: Todo['id'][], updateInfo: Partial<Todo>) => {
     const userId = userStore.user!.id
     const updateResult = await todoStore.updateBatch(userId, todoIds, updateInfo)
-    // console.log('[todoHandlers] updateTodos:', updateResult)
-    requestIdleCallback(() => {
-        if (updateResult === 'Update successful') {
-            NueMessage.success('更新成功')
-            if (updateInfo.hasOwnProperty('isDeleted')) {
-                todoStore.get(userId)
-            }
-        } else {
-            NueMessage.error('更新失败')
-        }
-    })
+    const updateFlag = updateResult === 'Update successful'
+    _message(updateFlag, '更新成功', '更新失败')
+    if (updateFlag && updateInfo.hasOwnProperty('isDeleted')) todoStore.get(userId)
     return updateResult === 'Update successful'
 }
 
@@ -112,11 +101,7 @@ export const updateTodos = async (todoIds: Todo['id'][], updateInfo: Partial<Tod
 export const removeTodo = async (todoId: Todo['id']) => {
     const userId = userStore.user!.id
     const res = await updateTodo(todoId, { isDeleted: true })
-    // console.log('[todoHandlers] removeTodo:', res)
-    if (res) {
-        await todoStore.get(userId)
-        // todoStore.removeLocal(todoId)
-    }
+    res && (await todoStore.get(userId))
     return res
 }
 
@@ -139,10 +124,7 @@ export const removeTodosWithConfirm = async (todoIds: Todo['id'][]) => {
         content: '确定要删除这些待办事项吗？',
         confirmButtonText: '删除',
         cancelButtonText: '取消',
-        onConfirm: async () => {
-            // console.log('[todoHandlers] removeTodosWithConfirm:', todoIds)
-            return await updateTodos(todoIds, { isDeleted: true })
-        }
+        onConfirm: async () => await updateTodos(todoIds, { isDeleted: true })
     }).then(
         (res) => res,
         (err) => err
@@ -151,8 +133,7 @@ export const removeTodosWithConfirm = async (todoIds: Todo['id'][]) => {
 
 export const restoreTodo = async (todoId: Todo['id']) => {
     const res = await updateTodo(todoId, { isDeleted: false })
-    // console.log('[todoHandlers] restoreTodo:', res)
-    if (res) todoStore.removeLocal(todoId)
+    res && todoStore.removeLocal(todoId)
     return res
 }
 
