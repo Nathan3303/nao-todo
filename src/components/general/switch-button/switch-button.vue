@@ -1,6 +1,6 @@
 <template>
     <div class="switch-button">
-        <nue-button :theme="theme" :icon="iconName" v-bind="$attrs" @click="handleClick">
+        <nue-button :theme="themes" :icon="iconName" v-bind="$attrs" @click="handleClick">
             {{ modelValue ? activeText : text }}
         </nue-button>
     </div>
@@ -19,9 +19,18 @@ const iconName = computed(() => {
     return modelValue ? activeIcon : icon
 })
 
-const theme = computed(() => {
-    const { modelValue } = props
-    return modelValue ? 'actived' : 'inactived'
+const themes = computed(() => {
+    const { modelValue, theme } = props
+    const activeTheme = modelValue ? 'actived' : 'inactived'
+    // console.log(activeTheme, theme)
+    let _return: string[] = []
+    if (Array.isArray(theme)) {
+        _return = theme.concat(activeTheme)
+    } else {
+        _return = [theme as string, activeTheme]
+    }
+    console.log(_return)
+    return _return.filter((Boolean) as any) as string[]
 })
 
 const handleClick = () => {
