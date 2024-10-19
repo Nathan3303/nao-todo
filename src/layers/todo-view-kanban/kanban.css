@@ -1,11 +1,12 @@
 .content-kanban {
     width: 100%;
 
-    .nue-header {
+    & > .nue-header {
         border-bottom: none;
+        padding-top: 8px;
     }
 
-    .nue-main {
+    & > .nue-main {
         overflow: hidden;
         overflow-x: auto;
         gap: 16px;

@@ -1,5 +1,5 @@
 <template>
-    <nue-header style="position: relative">
+    <nue-header>
         <template #logo>
             <img
                 class="logo"

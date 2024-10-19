@@ -1,6 +1,10 @@
 <template>
     <nue-container id="tasks/basic/table" theme="vertical,inner">
-        <nue-header height="auto" :key="$route.path" style="box-sizing: border-box">
+        <nue-header
+            height="auto"
+            :key="$route.path"
+            style="box-sizing: border-box; padding-top: 8px"
+        >
             <nue-div align="start" justify="space-between" gap="16px">
                 <todo-filter-bar
                     :count-info="countInfo"
