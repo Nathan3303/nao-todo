@@ -60,25 +60,32 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
 
     const _debounce = (callback: () => void | Promise<any>, delay: number) => {
         let timer: number | null = null
-        return () => {
+        const debouncedFn = () => {
             if (timer) clearTimeout(timer)
             timer = setTimeout(() => {
                 callback()
                 timer = null
             }, delay)
         }
-    }
-
-    const _updateTodo = async () => {
-        loadingState.value = true
-        if (shadowTodo.value) {
-            const todoId = shadowTodo.value.id
-            await updateTodo(todoId, { ...shadowTodo.value })
+        const cancelTimer = (execute: boolean = false) => {
+            if (!timer) return
+            execute && callback()
+            clearTimeout(timer)
+            timer = null
         }
-        loadingState.value = false
+        return { debouncedFn, cancelTimer }
     }
 
-    const debouncedUpdateTodo = _debounce(_updateTodo, 1024)
+    const _updateTodo = () => {
+        // loadingState.value = true
+        if (!shadowTodo.value) return
+        const todoId = shadowTodo.value.id
+        // await updateTodo(todoId, { ...shadowTodo.value })
+        updateTodo(todoId, { ...shadowTodo.value })
+        // loadingState.value = false
+    }
+
+    const { debouncedFn: debouncedUpdateTodo, cancelTimer } = _debounce(_updateTodo, 1024)
 
     const formatDate = (datestring: string) => {
         const dateString = moment(datestring).format('YYYY-MM-DD HH:mm')
@@ -141,11 +148,12 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
     const handleUpdateTags = async (tags: Todo['tags']) => {
         if (!shadowTodo.value) return
         shadowTodo.value.tags = tags
-        console.log(tags);
+        console.log(tags)
         debouncedUpdateTodo()
     }
 
     const handleClose = () => {
+        cancelTimer(true)
         shadowTodo.value = void 0
         const prevRoute = route.matched[route.matched.length - 1]
         if (prevRoute) {
@@ -155,7 +163,10 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
 
     watch(
         () => route.params.taskId,
-        (newValue) => setTimeout(async () => await _getTodo(newValue as string)),
+        (newValue) => {
+            cancelTimer(true)
+            setTimeout(async () => await _getTodo(newValue as string))
+        },
         { immediate: true }
     )
 

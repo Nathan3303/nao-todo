@@ -1,6 +1,11 @@
 import { computed, ref, watchEffect, inject } from 'vue'
 import { useUserStore, useProjectStore, useTagStore, useTodoStore, type Todo } from '@/stores'
-import { updateTodos, removeTodosWithConfirm, restoreTodosWithConfirm } from '@/utils/todo-handlers'
+import {
+    getTodos,
+    updateTodos,
+    removeTodosWithConfirm,
+    restoreTodosWithConfirm
+} from '@/utils/todo-handlers'
 import { debounce } from '@/utils'
 import { TasksViewContextKey } from '@/views/index/tasks/constants'
 import { useRoute, useRouter } from 'vue-router'
@@ -62,11 +67,22 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
         return _selectedTodos
     }
 
-    const debouncedUpdateTodos = debounce(async () => {
+    const _updateTodos = async () => {
         const updateResult = await updateTodos(props.selectedIds, updateOptions)
-        // console.log('[debouncedUpdateTodos]', updateResult)
+        if (
+            updateResult &&
+            updateOptions.hasOwnProperty('projectId') &&
+            updateOptions.projectId !== (route.params.projectId as string)
+        ) {
+            todoStore.get(userStore.user!.id)
+            const prevRoute = route.matched[route.matched.length - 1]
+            prevRoute && router.push(prevRoute)
+            handleHideMultiDetails()
+        }
         updateOptions = {}
-    }, 1024)
+    }
+
+    const debouncedUpdateTodos = debounce(_updateTodos, 1024)
 
     const insertOptionsAndUpdate = (options: Partial<Todo>) => {
         Object.assign(updateOptions, options)
@@ -116,7 +132,7 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
 
     const handleCancelMultiSelect = () => {
         // console.log('000');
-        handleHideMultiDetails();
+        handleHideMultiDetails()
     }
 
     watchEffect(() => {

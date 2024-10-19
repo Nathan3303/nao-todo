@@ -2,10 +2,11 @@ import type { IconNameType } from 'nue-ui'
 
 export type SwitchButtonProps = {
     modelValue: boolean
-    icon?: IconNameType
-    activeIcon?: IconNameType
+    icon?: IconNameType | string
+    activeIcon?: IconNameType | string
     text?: string
     activeText?: string
+    theme?: string | string[]
 }
 
 export type SwitchButtonEmits = {

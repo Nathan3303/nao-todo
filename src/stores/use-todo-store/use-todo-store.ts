@@ -19,8 +19,11 @@ export const useTodoStore = defineStore('todoStore', () => {
     })
     const columnOptions = ref<TodoColumnOptions>(defaultColumns)
 
-    // Inner methods
-
+    /**
+     * Stringify filter info
+     * @param specFilterInfo specify filter info
+     * @returns string
+     */
     const _stringifyFilterInfo = (specFilterInfo?: TodoFilter) => {
         const query: string[] = []
         const _filterInfo = specFilterInfo || filterInfo.value

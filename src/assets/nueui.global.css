@@ -27,6 +27,9 @@
 }
 
 .nue-button--icon-only {
+    .nue-button__text {
+        display: none;
+    }
     .nue-icon::before {
         font-size: 16px;
         font-weight: 500;

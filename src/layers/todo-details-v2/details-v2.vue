@@ -67,7 +67,7 @@
                             autosize
                             theme="noshape,large"
                             @change="updateTodo"
-                            style="padding: 0px"
+                            style="padding: 0px; flex: auto"
                         />
                         <nue-textarea
                             v-model="shadowTodo.description"
@@ -149,6 +149,7 @@ import {
     TodoTagBar
 } from '@/components'
 import type { TodoDetailsEmits, TodoDetailsProps } from './types'
+import { ref } from 'vue'
 
 defineOptions({ name: 'ContentTodoDetailsV2' })
 const props = defineProps<TodoDetailsProps>()
@@ -156,6 +157,8 @@ const emit = defineEmits<TodoDetailsEmits>()
 
 const userStore = useUserStore()
 const tagStore = useTagStore()
+
+const eventFlag = ref(false)
 
 const {
     projects,
