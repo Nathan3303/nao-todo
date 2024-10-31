@@ -24,6 +24,7 @@
                 @unarchive-project="unarchiveProject"
                 @delete-project="deleteProject"
                 @restore-project="restoreProject"
+                @delete-project-permanently="deleteProjectPermanently"
             />
         </nue-div>
     </nue-dialog>
@@ -39,7 +40,8 @@ import {
     deleteProjectWithConfirm,
     restoreProjectWithConfirm,
     archiveProjectWithConfirm,
-    unarchiveProjectWithConfirm
+    unarchiveProjectWithConfirm,
+    deleteProjectPermanentlyWithConfirm
 } from '@/utils/project-handlers'
 import { useProjectStore } from '@/stores'
 import { ProjectBoard, ProjectFilterBar, CreateProjectDialog } from '@/components/project'
@@ -102,6 +104,15 @@ const deleteProject = async (projectId: Project['id']) => {
     const deleteResult = await deleteProjectWithConfirm(projectId)
     init()
     if (deleteResult && deleteResult.code !== '20000') return
+    const projectIdInRoute = route.params.projectId
+    if (projectIdInRoute !== projectId) return
+    router.push('/tasks/all')
+}
+
+const deleteProjectPermanently = async (projectId: Project['id']) => {
+    const deleteResult = await deleteProjectPermanentlyWithConfirm(projectId)
+    init()
+    if (!deleteResult) return
     const projectIdInRoute = route.params.projectId
     if (projectIdInRoute !== projectId) return
     router.push('/tasks/all')

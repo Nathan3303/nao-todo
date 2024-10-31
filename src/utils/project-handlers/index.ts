@@ -209,6 +209,32 @@ export const deleteProjectWithConfirm = async (projectId: Project['id']) => {
     )
 }
 
+export const deleteProjectPermanentlyWithConfirm = async (projectId: Project['id']) => {
+    const userId = userStore.user!.id
+    return await NueConfirm({
+        title: '永久删除清单确认',
+        content: '确认永久删除该清单吗？',
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        onConfirm: async () => await projectStore.remove(userId, projectId)
+    }).then(
+        (res: any) => {
+            requestIdleCallback(() => {
+                if (res.code === '20000') {
+                    NueMessage.success('清单删除成功')
+                }
+            })
+            return res.code === '20000'
+        },
+        (err) => {
+            if (!err) return
+            requestIdleCallback(() => {
+                NueMessage.error(`清单删除失败 (${err})`)
+            })
+        }
+    )
+}
+
 export const handleRestoreProject = async (projectId: Project['id']) => {
     try {
         await NueConfirm({

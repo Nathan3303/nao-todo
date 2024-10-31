@@ -22,14 +22,12 @@ const iconName = computed(() => {
 const themes = computed(() => {
     const { modelValue, theme } = props
     const activeTheme = modelValue ? 'actived' : 'inactived'
-    // console.log(activeTheme, theme)
     let _return: string[] = []
     if (Array.isArray(theme)) {
         _return = theme.concat(activeTheme)
     } else {
         _return = [theme as string, activeTheme]
     }
-    console.log(_return)
     return _return.filter((Boolean) as any) as string[]
 })
 

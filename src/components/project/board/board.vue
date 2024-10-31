@@ -21,6 +21,18 @@
                             @delete="emit('deleteProject', project.id)"
                             @resotre="emit('restoreProject', project.id)"
                         />
+                        <nue-tooltip
+                            v-if="project.isDeleted"
+                            class="project-board__delete-permanently"
+                            size="small"
+                            content="永久删除清单"
+                        >
+                            <nue-button
+                                theme="pure"
+                                icon="delete"
+                                @click="emit('deleteProjectPermanently', project.id)"
+                            />
+                        </nue-tooltip>
                     </template>
                 </project-card>
             </div>

@@ -6,7 +6,8 @@ import {
     getTodo,
     updateTodo,
     removeTodoWithConfirm,
-    restoreTodoWithConfirm
+    restoreTodoWithConfirm,
+    deleteTodoWithConfirm
 } from '@/utils/todo-handlers'
 import moment from 'moment'
 import type { TodoDetailsEmits, TodoDetailsProps } from './types'
@@ -145,6 +146,17 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         }
     }
 
+    const handleDeleteTodoPermanently = async () => {
+        if (!shadowTodo.value) return
+        const todoId = shadowTodo.value.id
+        try {
+            const deleteResult = await deleteTodoWithConfirm(todoId)
+            if (deleteResult) handleClose()
+        } catch (error) {
+            console.info('handleDeleteTodoPermanently error: ', error)
+        }
+    }
+
     const handleUpdateTags = async (tags: Todo['tags']) => {
         if (!shadowTodo.value) return
         shadowTodo.value.tags = tags
@@ -201,6 +213,7 @@ export const useTodoDetails = (props: TodoDetailsProps, emit: TodoDetailsEmits) 
         handleMoveToProject,
         handleCheckTodo,
         handleDeleteTodo,
+        handleDeleteTodoPermanently,
         handleRestoreTodo,
         handleUpdateTags
     }

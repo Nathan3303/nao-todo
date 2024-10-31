@@ -131,6 +131,23 @@ export const removeTodosWithConfirm = async (todoIds: Todo['id'][]) => {
     )
 }
 
+export const deleteTodoWithConfirm = async (todoId: Todo['id']) => {
+    const userId = userStore.user!.id
+    return await NueConfirm({
+        title: '永久删除待办事项',
+        content: '确定要永久删除该待办事项吗？',
+        confirmButtonText: '删除',
+        cancelButtonText: '取消',
+        onConfirm: async () => await todoStore.remove(userId, todoId)
+    }).then(
+        (res: any) => {
+            _message(res.data.id === todoId, '删除成功', '删除失败')
+            return res.data.id === todoId
+        },
+        (err) => err
+    )
+}
+
 export const restoreTodo = async (todoId: Todo['id']) => {
     const res = await updateTodo(todoId, { isDeleted: false })
     res && todoStore.removeLocal(todoId)

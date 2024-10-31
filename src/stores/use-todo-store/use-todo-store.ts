@@ -129,10 +129,8 @@ export const useTodoStore = defineStore('todoStore', () => {
     const _remove = async (userId: User['id'], todoId: Todo['id']) => {
         try {
             const URI = `/todo?userId=${userId}&todoId=${todoId}`
-            const {
-                data: { data, code }
-            } = await $axios.delete(URI)
-            return code === '20000' ? data : null
+            const res = await $axios.delete(URI)
+            return res.data
         } catch (e) {
             console.warn('[todoStore] _remove:', e)
         }
@@ -197,9 +195,8 @@ export const useTodoStore = defineStore('todoStore', () => {
 
     const remove = async (userId: User['id'], todoId: Todo['id']) => {
         const removeResult = await _remove(userId, todoId)
-        if (!removeResult) return
+        if (removeResult.code === '20000') get(userId)
         // removeLocal(todoId)
-        get(userId)
         return removeResult
     }
 

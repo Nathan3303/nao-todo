@@ -11,4 +11,5 @@ export type ProjectBoardEmits = {
     (event: 'unarchiveProject', projectId: Project['id']): void
     (event: 'deleteProject', projectId: Project['id']): void
     (event: 'restoreProject', projectId: Project['id']): void
+    (event: 'deleteProjectPermanently', projectId: Project['id']): void
 }

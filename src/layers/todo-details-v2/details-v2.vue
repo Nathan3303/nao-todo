@@ -119,6 +119,15 @@
                 @select="handleMoveToProject"
             />
             <nue-div wrap="nowrap" width="fit-content" gap="4px">
+                <nue-button
+                    v-if="shadowTodo.isDeleted"
+                    size="small"
+                    theme="error"
+                    icon="delete"
+                    @click="handleDeleteTodoPermanently"
+                >
+                    永久删除
+                </nue-button>
                 <todo-delete-button
                     :is-deleted="shadowTodo.isDeleted"
                     @delete="handleDeleteTodo"
@@ -175,6 +184,7 @@ const {
     handleClose,
     handleCheckTodo,
     handleDeleteTodo,
+    handleDeleteTodoPermanently,
     handleRestoreTodo,
     handleUpdateTags
 } = useTodoDetails(props, emit)
