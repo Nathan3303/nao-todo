@@ -1,4 +1,4 @@
-import type { Project, ProjectFilterOptions } from '@/stores'
+import type { Project, ProjectFilterOptions } from '@nao-todo/stores'
 
 export type ProjectContentProps = {
     title?: string

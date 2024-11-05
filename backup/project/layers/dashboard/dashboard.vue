@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
 import MyProjects from './my-projects.vue'
-import type { Project } from '@/stores/use-project-store'
+import type { Project } from '@nao-todo/stores/use-project-store'
 
 defineOptions({ name: 'ProjectsDashboard' })
 defineProps<{ projects: Project[] }>()

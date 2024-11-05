@@ -1,4 +1,4 @@
-import type { Project } from "@/stores";
+import type { Project } from "@nao-todo/stores";
 
 export type ProjectsMainHeaderProps = {
     project: Project;

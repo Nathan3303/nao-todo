@@ -1,17 +1,11 @@
 {
-  "name": "naotodo",
+  "name": "nao-todo",
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@9.12.2",
   "scripts": {
-    "dev": "vite --port 8080",
-    "build": "run-p type-check \"build-only {@}\" --",
-    "preview": "vite preview",
-    "build-only": "vite build",
-    "type-check": "vue-tsc --build --force",
-    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
-    "format": "prettier --write src/",
-    "test": "run-p lint format"
+    "dev": "pnpm --filter @nao-todo/main-app dev"
   },
   "dependencies": {
     "@types/md5": "^2.3.5",
@@ -22,7 +16,14 @@
     "nue-ui": "^0.6.65",
     "pinia": "^2.1.7",
     "vue": "^3.4.21",
-    "vue-router": "^4.3.0"
+    "vue-router": "^4.3.0",
+    "@nao-todo/components": "workspace:*",
+    "@nao-todo/hooks": "workspace:*",
+    "@nao-todo/layers": "workspace:*",
+    "@nao-todo/stores": "workspace:*",
+    "@nao-todo/utils": "workspace:*",
+    "@nao-todo/handlers": "workspace:*",
+    "@nao-todo/main-app": "workspace:*"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.8.0",

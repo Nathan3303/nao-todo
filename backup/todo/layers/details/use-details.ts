@@ -1,11 +1,11 @@
 import { ref, reactive, watch, computed } from 'vue'
-import { useTodoStore, useProjectStore } from '@/stores'
-import { useDateInfo } from '@/utils/todo/use-date-info'
+import { useTodoStore, useProjectStore } from '@nao-todo/stores'
+import { useDateInfo } from '@nao-todo/utils/todo/use-date-info'
 import { storeToRefs } from 'pinia'
 import moment from 'moment'
-import type { Todo, TodoEvent } from '@/stores'
+import type { Todo, TodoEvent } from '@nao-todo/stores'
 import type { TodoDetailsEmits, TodoDetailsProps } from './types'
-import type { InputButtonSubmitPayload, TodoEventRowUpdatePayload } from '@/components'
+import type { InputButtonSubmitPayload, TodoEventRowUpdatePayload } from '@nao-todo/components'
 
 const projectStore = useProjectStore()
 const todoStore = useTodoStore()

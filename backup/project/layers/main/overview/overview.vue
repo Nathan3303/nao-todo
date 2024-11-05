@@ -45,9 +45,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useTodoStore, useUserStore } from '@/stores'
+import { useTodoStore, useUserStore } from '@nao-todo/stores'
 import { storeToRefs } from 'pinia'
-import { ProjectDetails, TodoTable, Empty, type Columns } from '@/components'
+import { ProjectDetails, TodoTable, Empty, type Columns } from '@nao-todo/components'
 import StateRow from './state-row.vue'
 import { useRouter } from 'vue-router'
 import type { ProjectsMainOverviewProps } from './types'

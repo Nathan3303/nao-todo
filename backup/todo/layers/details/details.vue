@@ -201,7 +201,7 @@
 <script setup lang="ts">
 import type { TodoDetailsEmits, TodoDetailsProps } from './types'
 import { useTodoDetails } from './use-details'
-import { Loading, Empty, InputButton, TodoEventRow, SwitchButton } from '@/components'
+import { Loading, Empty, InputButton, TodoEventRow, SwitchButton } from '@nao-todo/components'
 import DetailsRow from './row.vue'
 
 const props = defineProps<TodoDetailsProps>()

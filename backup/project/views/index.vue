@@ -10,9 +10,9 @@
 </template>
 
 <script setup lang="ts">
-import { ProjectsAside } from '@/layers/index/projects'
-import { useViewStore, useProjectStore, useUserStore, useTagStore } from '@/stores'
-import { useLoadingScreen } from '@/hooks'
+import { ProjectsAside } from '@nao-todo/layers/index/projects'
+import { useViewStore, useProjectStore, useUserStore, useTagStore } from '@nao-todo/stores'
+import { useLoadingScreen } from '@nao-todo/hooks'
 import { storeToRefs } from 'pinia'
 
 const viewStore = useViewStore()

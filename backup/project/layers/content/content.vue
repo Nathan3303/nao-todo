@@ -49,8 +49,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useViewStore, useProjectStore } from '@/stores'
-import { ProjectFilterBar, ProjectBoard, CreateProjectDialog } from '@/components'
+import { useViewStore, useProjectStore } from '@nao-todo/stores'
+import { ProjectFilterBar, ProjectBoard, CreateProjectDialog } from '@nao-todo/components'
 import {
     getProjects,
     createProject,
@@ -58,7 +58,7 @@ import {
     handleUnarchiveProject,
     handleDeleteProject,
     handleRestoreProject
-} from '@/utils/project-handlers'
+} from '@nao-todo/handlers/project-handlers'
 import type { ProjectContentProps } from './types'
 
 defineOptions({ name: 'ProjectContent' })

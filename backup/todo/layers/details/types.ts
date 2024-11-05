@@ -1,4 +1,4 @@
-import type { Todo, TodoEvent } from '@/stores'
+import type { Todo, TodoEvent } from '@nao-todo/stores'
 
 export type TodoDetailsProps = {
     todo?: Todo

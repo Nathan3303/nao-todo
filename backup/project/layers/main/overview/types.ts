@@ -1,4 +1,4 @@
-import type { Project, TodoCountInfo } from '@/stores'
+import type { Project, TodoCountInfo } from '@nao-todo/stores'
 
 export type ProjectsMainOverviewProps = {
     countInfo?: TodoCountInfo

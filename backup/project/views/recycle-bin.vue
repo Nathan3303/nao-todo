@@ -94,11 +94,11 @@ import {
     Loading,
     Pager,
     TodoDetails
-} from '@/components'
-import { useViewStore, useTodoStore, useUserStore } from '@/stores'
+} from '@nao-todo/components'
+import { useViewStore, useTodoStore, useUserStore } from '@nao-todo/stores'
 import { storeToRefs } from 'pinia'
-import type { Columns } from '@/components'
-import type { Todo, TodoFilter, TodoEvent } from '@/stores'
+import type { Columns } from '@nao-todo/components'
+import type { Todo, TodoFilter, TodoEvent } from '@nao-todo/stores'
 import { NueMessage } from 'nue-ui'
 
 const viewStore = useViewStore()

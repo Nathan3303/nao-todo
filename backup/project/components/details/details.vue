@@ -43,7 +43,7 @@
 <script setup lang="ts">
 import type { ProjectDetailsProps } from './types'
 import moment from 'moment'
-import { Empty } from '@/components/general'
+import { Empty } from '@nao-todo/components/general'
 
 defineOptions({ name: 'ProjectDetails' })
 defineProps<ProjectDetailsProps>()

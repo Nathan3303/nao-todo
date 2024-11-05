@@ -10,10 +10,10 @@
 
 <script setup lang="ts">
 import { computed, provide } from 'vue'
-import { useProjectStore, type Project } from '@/stores/use-project-store'
-import ProjectNotFound from '@/components/project/not-found/not-found.vue'
+import { useProjectStore, type Project } from '@nao-todo/stores/use-project-store'
+import ProjectNotFound from '@nao-todo/components/project/not-found/not-found.vue'
 import type { ProjectViewContext } from './types'
-import { ProjectsMainHeader } from '@/layers/index/projects'
+import { ProjectsMainHeader } from '@nao-todo/layers/index/projects'
 
 defineOptions({ name: 'ProjectView' })
 const props = defineProps<{ projectId: string }>()

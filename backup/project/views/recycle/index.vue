@@ -9,8 +9,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { ProjectContent } from '@/layers/index'
-import type { ProjectFilterOptions } from '@/stores'
+import { ProjectContent } from '@nao-todo/layers/index'
+import type { ProjectFilterOptions } from '@nao-todo/stores'
 
 const filterInfo = ref<ProjectFilterOptions>({
     isDeleted: true

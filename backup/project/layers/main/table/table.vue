@@ -69,7 +69,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useTodoStore, useUserStore, useViewStore } from '@/stores'
+import { useTodoStore, useUserStore, useViewStore } from '@nao-todo/stores'
 import { storeToRefs } from 'pinia'
 import { NueConfirm, NuePrompt } from 'nue-ui'
 import {
@@ -79,9 +79,9 @@ import {
     ListColumnSwitcher,
     Pager,
     TodoDetails
-} from '@/components'
-import type { Columns } from '@/components'
-import type { Todo, TodoEvent, TodoFilter } from '@/stores'
+} from '@nao-todo/components'
+import type { Columns } from '@nao-todo/components'
+import type { Todo, TodoEvent, TodoFilter } from '@nao-todo/stores'
 
 defineOptions({ name: 'ProjectsMainList' })
 const props = defineProps<{ projectId: string }>()

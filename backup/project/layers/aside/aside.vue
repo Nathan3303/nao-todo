@@ -49,8 +49,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useProjectStore, useUserStore } from '@/stores'
-import type { Project } from '@/stores'
+import { useProjectStore, useUserStore } from '@nao-todo/stores'
+import type { Project } from '@nao-todo/stores'
 
 const projectStore = useProjectStore()
 const userStore = useUserStore()

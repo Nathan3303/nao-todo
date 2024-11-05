@@ -1,6 +1,6 @@
 <template>
     <nue-div class="project-not-found" vertical>
-        <img src="@/assets/not-found.webp" alt="" />
+        <img src="@nao-todo/assets/not-found.webp" alt="" />
         <nue-text align="center" size="medium" color="gray">
             Unfortunately, the project you are looking for does not exist.
         </nue-text>
