@@ -44,15 +44,12 @@
 import { ref } from 'vue'
 import ProjectManager from '../project-manager/project-manager.vue'
 import { CreateProjectDialog, AsideLink } from '@nao-todo/components'
-import { createProject } from '@nao-todo/handlers/project-handlers'
-import { storeToRefs } from 'pinia'
-import { useProjectStore } from '@nao-todo/stores'
+import { getSmartListData } from '@nao-todo/handlers'
+import { Project } from '@nao-todo/stores/use-project-store/v2/types'
 
 defineOptions({ name: 'ProjectSmartList' })
 
-const projectStore = useProjectStore()
-
-const { smartListData: projects } = storeToRefs(projectStore)
+const projects = ref<Project[]>([])
 const createProjectDialogRef = ref<InstanceType<typeof CreateProjectDialog>>()
 const projectManagerRef = ref<InstanceType<typeof ProjectManager>>()
 
@@ -63,4 +60,6 @@ const showCreateProjectDialog = () => {
 const showProjectManageDialog = () => {
     projectManagerRef.value?.show()
 }
+
+projects.value = await getSmartListData()
 </script>

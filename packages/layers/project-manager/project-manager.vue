@@ -17,15 +17,7 @@
                     <nue-button theme="small" icon="refresh" @click="refresh"> 刷新 </nue-button>
                 </nue-div>
             </nue-div>
-            <project-board
-                :projects="projects"
-                :loading-state="loading"
-                @archive-project="archiveProject"
-                @unarchive-project="unarchiveProject"
-                @delete-project="deleteProject"
-                @restore-project="restoreProject"
-                @delete-project-permanently="deleteProjectPermanently"
-            />
+            <project-board :projects="projects" :loading-state="loading" />
         </nue-div>
     </nue-dialog>
     <create-project-dialog ref="createProjectDialogRef" :handler="createProject" />
@@ -33,94 +25,26 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import {
-    getProjects,
-    createProject,
-    deleteProjectWithConfirm,
-    restoreProjectWithConfirm,
-    archiveProjectWithConfirm,
-    unarchiveProjectWithConfirm,
-    deleteProjectPermanentlyWithConfirm
-} from '@nao-todo/handlers/project-handlers'
-import { useProjectStore } from '@nao-todo/stores'
 import { ProjectBoard, ProjectFilterBar, CreateProjectDialog } from '@nao-todo/components/project'
-import type { Project, ProjectFilterOptions } from '@nao-todo/stores'
+import { useProjectManagerStore } from './store'
+import { storeToRefs } from 'pinia'
 
 defineOptions({ name: 'ProjectManager' })
 
-const route = useRoute()
-const router = useRouter()
-const projectStore = useProjectStore()
+const projectManagerStore = useProjectManagerStore()
 
 const visible = ref(false)
 const loading = ref(false)
 const createProjectDialogRef = ref<InstanceType<typeof CreateProjectDialog>>()
-const filterInfo = ref<ProjectFilterOptions>({})
-const projects = ref<Project[]>([])
-
-const init = () => {
-    const res = projectStore._toFiltered(filterInfo.value)
-    projects.value = res
-}
-
-const refresh = async () => {
-    loading.value = true
-    await getProjects({ page: 1, limit: 99 })
-    init()
-    loading.value = false
-}
+const { projects } = storeToRefs(projectManagerStore)
 
 const handleShowDialog = () => {
     visible.value = true
-    init()
-}
-
-const handleFilter = async (newFilterInfo: ProjectFilterOptions) => {
-    filterInfo.value = newFilterInfo
-    init()
+    projectManagerStore.init()
 }
 
 const handleShowCreateProjectDialog = async () => {
     createProjectDialogRef.value?.show()
-}
-
-const archiveProject = async (projectId: Project['id']) => {
-    const archiveResult = await archiveProjectWithConfirm(projectId)
-    // console.log(archiveResult)
-    init()
-    if (archiveResult && archiveResult.code !== '20000') return
-    const projectIdInRoute = route.params.projectId
-    if (projectIdInRoute !== projectId) return
-    router.push('/tasks/all')
-}
-
-const unarchiveProject = async (projectId: Project['id']) => {
-    await unarchiveProjectWithConfirm(projectId)
-    init()
-}
-
-const deleteProject = async (projectId: Project['id']) => {
-    const deleteResult = await deleteProjectWithConfirm(projectId)
-    init()
-    if (deleteResult && deleteResult.code !== '20000') return
-    const projectIdInRoute = route.params.projectId
-    if (projectIdInRoute !== projectId) return
-    router.push('/tasks/all')
-}
-
-const deleteProjectPermanently = async (projectId: Project['id']) => {
-    const deleteResult = await deleteProjectPermanentlyWithConfirm(projectId)
-    init()
-    if (!deleteResult) return
-    const projectIdInRoute = route.params.projectId
-    if (projectIdInRoute !== projectId) return
-    router.push('/tasks/all')
-}
-
-const restoreProject = async (projectId: Project['id']) => {
-    await restoreProjectWithConfirm(projectId)
-    init()
 }
 
 defineExpose({

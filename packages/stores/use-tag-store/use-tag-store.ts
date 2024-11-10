@@ -40,7 +40,7 @@ export const useTagStore = defineStore('tagStore', () => {
             const {
                 data: { data, code }
             } = await $axios.get(URI)
-            const res = code === '20000' ? data : null
+            const res = code === 20000 ? data : null
             // console.log('[tagStore] _get:', URI, res);
             return res
         } catch (e) {
@@ -54,7 +54,7 @@ export const useTagStore = defineStore('tagStore', () => {
             const {
                 data: { data, code }
             } = await $axios.put(URI, updateInfo)
-            const res = code === '20000' ? data : null
+            const res = code === 20000 ? data : null
             // console.log('[tagStore] _update:', URI, updateInfo, res)
             return res
         } catch (e) {
@@ -68,7 +68,7 @@ export const useTagStore = defineStore('tagStore', () => {
             const {
                 data: { data, code }
             } = await $axios.delete(URI)
-            return code === '20000' ? data : null
+            return code === 20000 ? data : null
         } catch (e) {
             console.warn('[tagStore] _remove:', e)
         }
@@ -80,7 +80,7 @@ export const useTagStore = defineStore('tagStore', () => {
             const {
                 data: { data, code }
             } = await $axios.post('/tag', createInfo)
-            const res = code === '20000' ? data : null
+            const res = code === 20000 ? data : null
             // console.log('[tagStore] _create:', createInfo, res)
             return res
         } catch (e) {

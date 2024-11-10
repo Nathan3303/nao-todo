@@ -1,89 +1,93 @@
+import md5 from 'md5'
+import $axios from '@nao-todo/utils/axios'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { User, SubmitPayload } from './types'
-import md5 from 'md5'
-import { NueMessage } from 'nue-ui'
-import $axios from '@nao-todo/utils/axios'
+import type { User, SigninPayload, SignupPayload, ResponseData } from './types'
+
+const getJWTPayload = (jwt: string) => {
+    const jwtPayload = jwt.split('.')[1]
+    const decodedPayload = JSON.parse(atob(jwtPayload))
+    return decodedPayload as User
+}
 
 export const useUserStore = defineStore('userStore', () => {
     const user = ref<User>()
     const token = ref<string>()
     const isAuthenticated = ref(false)
 
-    async function _saveToken(jwt: string) {
-        token.value = jwt
-        const jwtPayload = jwt.split('.')[1]
-        const decodedPayload = JSON.parse(atob(jwtPayload))
-        user.value = decodedPayload as User
-        localStorage.setItem('jwt@user', jwt)
-        isAuthenticated.value = true
-    }
-
-    async function _removeToken() {
-        token.value = ''
-        user.value = undefined
-        isAuthenticated.value = false
-        localStorage.removeItem('jwt@user')
-        isAuthenticated.value = false
-    }
-
-    async function login(payload: SubmitPayload) {
-        const { email, password } = payload
-        const response = await $axios.post('/signin', {
-            email: email.toLowerCase(),
-            password: md5(password)
-        })
-        if (response.data.code === '20000') {
-            const jwt = response.data.data
-            _saveToken(jwt)
-        }
-        return response.data
-    }
-
-    async function signup(payload: SubmitPayload) {
-        const { email, password } = payload
-        const response = await $axios.post('/signup', {
-            email: email.toLowerCase(),
-            password: md5(password)
-        })
-        return response.data
-    }
-
-    async function isLoggedIn() {
-        const jwt = localStorage.getItem('jwt@user')
-        return !!jwt
-    }
-
-    async function checkin() {
-        const jwt = localStorage.getItem('jwt@user')
-        if (!jwt) {
-            _removeToken()
-            return null
-        }
-        const response = await $axios.get('/checkin' + `?jwt=${jwt}`)
-        if (response.data.code === '20000') {
-            _saveToken(response.data.data)
-        } else {
-            _removeToken()
-            NueMessage.error(response.data.message)
+    const signin = async (payload: SigninPayload) => {
+        try {
+            const { email, password } = payload
+            const response = await $axios.post('/signin', {
+                email: email.trim().toLowerCase(),
+                password: md5(password)
+            })
+            const responseData = response.data as ResponseData
+            if (responseData.code === 20000) {
+                const jwt = responseData.data.token as string
+                localStorage.setItem('USER_JWT', jwt)
+                user.value = getJWTPayload(jwt)
+                token.value = jwt
+                isAuthenticated.value = true
+            }
+            return response.data as ResponseData
+        } catch (error) {
+            console.log('[UseUserStore/Signin]:', error)
+            return { code: 50001, message: '服务器错误' } as ResponseData
         }
     }
 
-    async function signout() {
-        const jwt = token.value
-        if (!jwt) {
-            NueMessage.error('Sign in first')
-            return
-        }
-        const response = await $axios.delete('/signout' + `?jwt=${jwt}`)
-        if (response.data.code === '20000') {
-            _removeToken()
-            NueMessage.success('登出成功')
-            return true
-        } else {
-            NueMessage.error(response.data.message)
+    const signup = async (payload: SignupPayload) => {
+        try {
+            const { email, password, nickname } = payload
+            const response = await $axios.post('/signup', {
+                email: email.trim().toLowerCase(),
+                password: md5(password),
+                nickname: nickname ? nickname.trim() : undefined
+            })
+            return response.data as ResponseData
+        } catch (error) {
+            console.log('[UseUserStore/Signup]:', error)
+            return { code: 50001, message: '服务器错误' } as ResponseData
         }
     }
 
-    return { user, token, isAuthenticated, isLoggedIn, checkin, login, signup, signout }
+    const checkin = async () => {
+        try {
+            const jwt = localStorage.getItem('USER_JWT') || ''
+            const response = await $axios.get('/checkin' + `?jwt=${jwt}`)
+            const responseData = response.data as ResponseData
+            if (responseData.code === 20000) {
+                const jwt = responseData.data.token as string
+                localStorage.setItem('USER_JWT', jwt)
+                user.value = getJWTPayload(jwt)
+                token.value = jwt
+                isAuthenticated.value = true
+            }
+            return response.data as ResponseData
+        } catch (error) {
+            console.log('[UseUserStore/Checkin]:', error)
+            return { code: 50001, message: '服务器错误' } as ResponseData
+        }
+    }
+
+    const signout = async () => {
+        try {
+            const jwt = localStorage.getItem('USER_JWT') || ''
+            const response = await $axios.get('/signout' + `?jwt=${jwt}`)
+            const responseData = response.data as ResponseData
+            if (responseData.code === 20000) {
+                localStorage.removeItem('USER_JWT')
+                user.value = undefined
+                token.value = undefined
+                isAuthenticated.value = false
+            }
+            return response.data as ResponseData
+        } catch (error) {
+            console.log('[UseUserStore/Signout]:', error)
+            return { code: 50001, message: '服务器错误' } as ResponseData
+        }
+    }
+
+    return { user, token, isAuthenticated, signin, signup, checkin, signout }
 })

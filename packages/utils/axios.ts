@@ -9,20 +9,14 @@ const axiosInstance = axios.create({
 
 // Add token to request header
 axiosInstance.interceptors.request.use((config) => {
-    const userStore = useUserStore()
-    if (userStore.token) {
-        config.headers.Authorization = `Bearer ${userStore.token}`
-    }
+    config.headers.Authorization = `Bearer ${useUserStore().token || ''}`
     return config
 })
 
 // Handle response errors
 axiosInstance.interceptors.response.use(
     (response) => response,
-    (error) => {
-        NueMessage.error('网络错误，请稍后再试')
-        return Promise.reject(error)
-    }
+    (error) => Promise.reject(error)
 )
 
 export default axiosInstance

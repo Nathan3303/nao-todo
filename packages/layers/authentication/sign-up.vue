@@ -20,21 +20,22 @@
                 placeholder="电子邮箱 (name@example.com)"
                 type="email"
                 :disabled="loading"
-            ></nue-input>
+            />
             <nue-input
                 v-model="password"
                 placeholder="密码"
                 type="password"
                 :disabled="loading"
                 allow-show-password
-            ></nue-input>
+            />
             <nue-input
                 v-model="passwordConfirm"
                 placeholder="确认密码"
                 type="password"
                 :disabled="loading"
                 allow-show-password
-            ></nue-input>
+            />
+            <nue-input v-model="nickname" placeholder="昵称（可选）" :disabled="loading" />
             <nue-button theme="primary" @click="handleSignUp" :loading="loading"> 注册 </nue-button>
         </nue-div>
         <nue-divider align="center">
@@ -50,17 +51,18 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { SubmitPayload } from '@nao-todo/stores/use-user-store'
+import type { SignupPayload } from '@nao-todo/stores/use-user-store'
 import { NueMessage } from 'nue-ui'
 
-const props = defineProps<{ loading: boolean }>()
+defineProps<{ loading: boolean }>()
 const emit = defineEmits<{
-    (event: 'submit', payload: SubmitPayload): void
+    (event: 'submit', payload: SignupPayload): void
 }>()
 
 const email = ref('')
 const password = ref('')
 const passwordConfirm = ref('')
+const nickname = ref('')
 
 function handleSignUp() {
     if (email.value === '') {
@@ -75,6 +77,6 @@ function handleSignUp() {
         NueMessage.error('两次输入的密码不一致')
         return
     }
-    emit('submit', { email: email.value, password: password.value })
+    emit('submit', { email: email.value, password: password.value, nickname: nickname.value })
 }
 </script>

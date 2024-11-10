@@ -1,23 +1,25 @@
 <template>
     <nue-header>
         <template #logo>
-            <img
-                class="logo"
-                src="/favicon.ico"
-                alt="logo"
-                style="width: 24px; aspect-ratio: 1; margin-top: 6px; cursor: pointer"
-                @click.stop="showUpdateLogDialog"
-            />
+            <nue-tooltip size="small" content="更新日志" placement="right-center">
+                <img
+                    class="logo"
+                    src="/favicon.ico"
+                    alt="logo"
+                    style="width: 24px; aspect-ratio: 1; margin-top: 6px; cursor: pointer"
+                    @click.stop="showUpdateLogDialog"
+                />
+            </nue-tooltip>
         </template>
         <template #navigators>
             <nue-tooltip size="small" content="任务" placement="right-center">
-                <nue-link theme="btnlike,plink" icon="square-check-fill" route="/tasks" />
+                <nue-link theme="btnlike" icon="square-check-fill" route="/tasks" />
             </nue-tooltip>
             <nue-tooltip size="small" content="日历视图" placement="right-center">
-                <nue-link theme="btnlike,plink" icon="calendar2" disabled />
+                <nue-link theme="btnlike" icon="calendar2" disabled />
             </nue-tooltip>
             <nue-tooltip size="small" content="番茄专注" placement="right-center">
-                <nue-link theme="btnlike,plink" icon="scan" disabled />
+                <nue-link theme="btnlike" icon="scan" disabled />
             </nue-tooltip>
         </template>
         <template #user>

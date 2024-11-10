@@ -75,7 +75,7 @@ export const useTodoStore = defineStore('todoStore', () => {
             const {
                 data: { data, code }
             } = await $axios.get(URI)
-            const res = code === '20000' ? data : null
+            const res = code === 20000 ? data : null
             // console.log('[todoStore] _get:', URI, res);
             return res
         } catch (e) {
@@ -100,7 +100,7 @@ export const useTodoStore = defineStore('todoStore', () => {
             const {
                 data: { data, code }
             } = await $axios.put(URI, updateInfo)
-            const res = code === '20000' ? data : null
+            const res = code === 20000 ? data : null
             // console.log('[todoStore] _update:', URI, updateInfo, res)
             return res
         } catch (e) {
@@ -118,7 +118,7 @@ export const useTodoStore = defineStore('todoStore', () => {
             const {
                 data: { data, code }
             } = await $axios.put(URI, { todoIds, updateInfo })
-            const res = code === '20000' ? data : null
+            const res = code === 20000 ? data : null
             // console.log('[todoStore] _updateBatch:', URI, updateInfo, res)
             return res
         } catch (e) {
@@ -142,7 +142,7 @@ export const useTodoStore = defineStore('todoStore', () => {
             const {
                 data: { data, code }
             } = await $axios.post('/todo', createInfo)
-            const res = code === '20000' ? { ...data, id: data._id } : null
+            const res = code === 20000 ? { ...data, id: data._id } : null
             // console.log('[todoStore] _create:', createInfo, res)
             return res
         } catch (e) {
@@ -195,7 +195,7 @@ export const useTodoStore = defineStore('todoStore', () => {
 
     const remove = async (userId: User['id'], todoId: Todo['id']) => {
         const removeResult = await _remove(userId, todoId)
-        if (removeResult.code === '20000') get(userId)
+        if (removeResult.code === 20000) get(userId)
         // removeLocal(todoId)
         return removeResult
     }

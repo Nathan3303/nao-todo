@@ -20,15 +20,15 @@
             <nue-divider />
             <nue-collapse v-model="collapseItemsRecord">
                 <project-smart-list />
-                <todo-filter-list />
-                <tag-smart-list />
+                <!-- <todo-filter-list /> -->
+                <!-- <tag-smart-list /> -->
             </nue-collapse>
             <nue-divider />
             <aside-link icon="heart" :route="{ name: 'tasks-favorite' }">已收藏</aside-link>
             <aside-link icon="delete" :route="{ name: 'tasks-recycle' }">垃圾桶</aside-link>
         </template>
         <template #content>
-            <router-view />
+            <!-- <router-view /> -->
         </template>
         <template #outline>
             <todo-multi-details v-if="isShowMultiDetails" :selected-ids="selectedIds" />

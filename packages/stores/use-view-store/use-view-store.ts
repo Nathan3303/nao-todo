@@ -1,12 +1,11 @@
 import { reactive, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useProjectStore, useTagStore, useUserStore } from '..'
-import { useRouter } from 'vue-router'
+import { useProjectStoreV2 } from '..'
 
 export const useViewStore = defineStore('viewStore', () => {
-    const router = useRouter()
     const userStore = useUserStore()
-    const projectStore = useProjectStore()
+    const projectStore = useProjectStoreV2()
     const tagStore = useTagStore()
 
     const indexViewLoader = reactive({
@@ -26,26 +25,13 @@ export const useViewStore = defineStore('viewStore', () => {
         simpleProjectHeader.value = !simpleProjectHeader.value
     }
 
-    const handleCheckIn = async () => {
-        if (!userStore.isAuthenticated) return false
-        await userStore.checkin()
-        if (!userStore.isAuthenticated) return false
-        return true
-        // const isLoggedIn = await userStore.isLoggedIn()
-        // if (!isLoggedIn) return false
-        // if (!userStore.isAuthenticated) {
-        //     router.replace('/authentication/login')
-        // }
-    }
-
     const indexViewInitTask = async () => {
-        // const userStore = useUserStore()
-        // const loadingScreen = useLoadingScreen()
         try {
             indexViewLoader.loading = true
-            const userId = userStore.user!.id
-            await projectStore.init(userId, { page: 1, limit: 99 })
-            await tagStore.initialize(userId, { page: 1, limit: 99 })
+            // const userId = userStore.user!.id
+            // await projectStore.init(userId, { page: 1, limit: 99 })
+            await projectStore.fetchProjects()
+            // await tagStore.initialize(userId, { page: 1, limit: 99 })
         } catch (e) {
             indexViewLoader.error = true
             indexViewLoader.errorMessage = e as Error

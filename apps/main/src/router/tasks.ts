@@ -27,7 +27,7 @@ const buildTaskRoute = (path: string, meta: RouteMeta) => {
 const tasksRoutes = {
     path: 'tasks',
     name: 'tasks',
-    component: () => import('@/views/index/tasks/index.vue'),
+    component: () => import('../views/index/tasks/index.vue'),
     redirect: { name: 'tasks-today' },
     children: [
         {
@@ -35,19 +35,19 @@ const tasksRoutes = {
             name: `tasks-project`,
             meta: { category: 'project' },
             props: true,
-            component: () => import(`@/views/index/tasks/project/index.vue`),
+            component: () => import(`../views/index/tasks/project/index.vue`),
             children: [
                 {
                     path: 'table/:taskId?',
                     name: `tasks-project-table`,
                     meta: { viewType: 'table' },
-                    component: () => import(`@/views/index/tasks/project/table.vue`)
+                    component: () => import(`../views/index/tasks/project/table.vue`)
                 },
                 {
                     path: 'kanban/:taskId?',
                     name: `tasks-project-kanban`,
                     meta: { viewType: 'kanban' },
-                    component: () => import(`@/views/index/tasks/project/kanban.vue`)
+                    component: () => import(`../views/index/tasks/project/kanban.vue`)
                 }
             ]
         },
@@ -55,18 +55,18 @@ const tasksRoutes = {
             path: '$t:tagId',
             name: `tasks-tag`,
             props: true,
-            component: () => import(`@/views/index/tasks/tag/index.vue`),
+            component: () => import(`../views/index/tasks/tag/index.vue`),
             redirect: { name: `tasks-tag-table` },
             children: [
                 {
                     path: 'table/:taskId?',
                     name: `tasks-tag-table`,
-                    component: () => import(`@/views/index/tasks/tag/table.vue`)
+                    component: () => import(`../views/index/tasks/tag/table.vue`)
                 },
                 {
                     path: 'kanban/:taskId?',
                     name: `tasks-tag-kanban`,
-                    component: () => import(`@/views/index/tasks/tag/kanban.vue`)
+                    component: () => import(`../views/index/tasks/tag/kanban.vue`)
                 }
             ]
         }

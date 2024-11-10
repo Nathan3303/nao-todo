@@ -32,9 +32,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { AuthSignIn, AuthSignUp } from '@nao-todo/layers'
-import { useUserStore, type SubmitPayload } from '@nao-todo/stores/use-user-store'
+import { useUserStore } from '@nao-todo/stores/use-user-store'
 import { NueMessage } from 'nue-ui'
 import { useRouter } from 'vue-router'
+import type { SigninPayload, SignupPayload } from '@nao-todo/stores/use-user-store'
 import './index.css'
 
 const props = defineProps<{ operation?: string }>()
@@ -51,41 +52,36 @@ const switchRoute = computed(() =>
     isLogin.value ? '/authentication/signup' : '/authentication/login'
 )
 
-async function handleSubmit(payload: SubmitPayload) {
+const handleSignin = async (payload: SigninPayload) => {
+    const res = await userStore.signin(payload)
+    if (res.code !== 20000) throw new Error(res.message)
+    router.push({ name: 'index' })
+    requestIdleCallback(() => NueMessage.success('登录成功'))
+}
+
+const handleSignup = async (payload: SignupPayload) => {
+    const res = await userStore.signup(payload)
+    if (res.code !== 20000) throw new Error(res.message)
+    router.push('/authentication/login')
+    requestIdleCallback(() => NueMessage.success('注册成功'))
+}
+
+async function handleSubmit(payload: SigninPayload | SignupPayload) {
     loading.value = true
-    if (isLogin.value) {
-        try {
-            const res = await userStore.login(payload)
-            if (res.code === '20000') {
-                router.push({ name: 'index' })
-                setTimeout(() => {
-                    NueMessage.success('登录成功')
-                }, 256)
-            } else {
-                NueMessage.error(res.message)
-                loading.value = false
-            }
-        } catch (e) {
-            NueMessage.error('登录失败')
-            requestIdleCallback(() => (loading.value = false))
+    try {
+        if (isLogin.value) {
+            await handleSignin(payload as SigninPayload)
+        } else {
+            await handleSignup(payload as SignupPayload)
         }
-    } else {
-        try {
-            const res = await userStore.signup(payload)
-            if (res.code === '20000') {
-                router.push('/authentication/login')
-                setTimeout(() => {
-                    NueMessage.success('注册成功')
-                    loading.value = false
-                }, 256)
-            } else {
-                NueMessage.error(res.message)
-                loading.value = false
-            }
-        } catch (e) {
-            NueMessage.error(`注册失败, ${(e as Error).message}`)
-            requestIdleCallback(() => (loading.value = false))
+    } catch (e) {
+        if (e instanceof Error) {
+            NueMessage.error((e as Error).message)
+            return
         }
+        console.log('[/authentication/index.vue]:handleSubmit', e)
+    } finally {
+        loading.value = false
     }
 }
 </script>

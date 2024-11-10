@@ -1,6 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { useUserStore } from '@nao-todo/stores/use-user-store'
-import tasksRoutes from './routes/tasks'
+import tasksRoutes from './tasks'
 
 const router = createRouter({
     history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -16,23 +16,16 @@ const router = createRouter({
             name: 'index',
             beforeEnter: async (to, from, next) => {
                 const userStore = useUserStore()
-                const isLoggedIn = userStore.isLoggedIn()
-                if (!isLoggedIn) {
-                    next('/authentication/login')
-                    return
-                }
-                try {
-                    await userStore.checkin()
-                    if (userStore.isAuthenticated) {
-                        next()
+                if (!userStore.isAuthenticated) {
+                    const checkinResult = await userStore.checkin()
+                    if (checkinResult.code !== 20000 || !userStore.isAuthenticated) {
+                        next('/authentication/login')
                         return
                     }
-                    throw new Error('User is not authenticated')
-                } catch (e) {
-                    next('/authentication/login')
                 }
+                next()
             },
-            component: () => import('@/views/index/index.vue'),
+            component: () => import('../views/index/index.vue'),
             redirect: { name: 'tasks' },
             children: [tasksRoutes]
         }

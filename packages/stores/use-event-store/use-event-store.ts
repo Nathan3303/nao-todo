@@ -43,7 +43,7 @@ export const useEventStore = defineStore('eventStore', () => {
             const {
                 data: { data, code }
             } = await $axios.get(URI)
-            const res = code === '20000' ? data : null
+            const res = code === 20000 ? data : null
             // console.log('[EventStore] _get:', URI, res)
             return res
         } catch (e) {
@@ -61,7 +61,7 @@ export const useEventStore = defineStore('eventStore', () => {
             const {
                 data: { data, code }
             } = await $axios.put(URI, updateInfo)
-            const res = code === '20000' ? data : null
+            const res = code === 20000 ? data : null
             // console.log('[EventStore] _update:', URI, updateInfo, res)
             return res
         } catch (e) {
@@ -75,7 +75,7 @@ export const useEventStore = defineStore('eventStore', () => {
             const {
                 data: { data, code }
             } = await $axios.delete(URI)
-            return code === '20000' ? data : null
+            return code === 20000 ? data : null
         } catch (e) {
             console.warn('[EventStore] _remove:', e)
         }
@@ -87,7 +87,7 @@ export const useEventStore = defineStore('eventStore', () => {
             const {
                 data: { data, code }
             } = await $axios.post('/event', createInfo)
-            const res = code === '20000' ? data : null
+            const res = code === 20000 ? data : null
             // console.log('[EventStore] _create:', createInfo, res)
             return res
         } catch (e) {

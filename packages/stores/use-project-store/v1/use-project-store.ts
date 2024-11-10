@@ -50,7 +50,7 @@ export const useProjectStore = defineStore('projectStore', () => {
 
     const get = async (userId: User['id']) => {
         const response = await getData(userId)
-        if (response.code === '20000') {
+        if (response.code === 20000) {
             projects.value = response.data
         }
         return response
@@ -66,7 +66,7 @@ export const useProjectStore = defineStore('projectStore', () => {
     const remove = async (userId: User['id'], id: Project['id']) => {
         const URI = `/project?userId=${userId}&projectId=${id}`
         const response = await $axios.delete(URI)
-        if (response.data.code === '20000') get(userId)
+        if (response.data.code === 20000) get(userId)
         return response.data
     }
 
