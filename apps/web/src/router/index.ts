@@ -9,7 +9,7 @@ const router = createRouter({
             path: '/auth/:operation?',
             name: 'authentication',
             props: true,
-            component: () => import('../views/auth/index.vue')
+            component: () => import('@/views/auth/index.vue')
         },
         {
             path: '/',
@@ -25,19 +25,19 @@ const router = createRouter({
                 }
                 next()
             },
-            component: () => import('../views/index/index.vue'),
+            component: () => import('@/views/index/index.vue'),
             redirect: { name: 'tasks' },
             children: [
                 tasksRoutes,
                 {
                     path: 'calendar',
                     name: 'calendar',
-                    component: () => import('@/views/calendar/index.vue')
+                    component: () => import('@/views/index/calendar/index.vue')
                 },
                 {
                     path: 'fqfocus',
                     name: 'fqfocus',
-                    component: () => import('@/views/fqfocus/index.vue')
+                    component: () => import('@/views/index/fqfocus/index.vue')
                 }
             ]
         }

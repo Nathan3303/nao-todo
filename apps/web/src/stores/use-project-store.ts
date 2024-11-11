@@ -19,6 +19,11 @@ export const useProjectStore = defineStore('projectStore', () => {
         sort: { field: 'createdAt', order: 'desc' }
     })
 
+    // 修改选项
+    const updateGetOptions = (newOptions: Partial<GetProjectsOptions>) => {
+        Object.assign(getOptions.value, newOptions)
+    }
+
     // 智能清单列表
     const smartListData = computed<Project[]>(() => {
         return projects.value.filter((project) => {
@@ -68,6 +73,8 @@ export const useProjectStore = defineStore('projectStore', () => {
 
     return {
         projects,
+        getOptions,
+        updateGetOptions,
         smartListData,
         doCreateProject,
         doUpdateProject,

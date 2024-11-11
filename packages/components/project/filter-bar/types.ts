@@ -1,11 +1,11 @@
-import type { ProjectFilterOptions } from '@/stores'
+import type { GetProjectsOptions } from '@nao-todo/types'
 
 export type ProjectFilterBarProps = {
-    filterInfo: ProjectFilterOptions
+    filterInfo: GetProjectsOptions
 }
 
 export type ProjectFilterBarEmits = {
-    (event: 'filter', payload: ProjectFilterOptions): void
+    (event: 'filter', payload: GetProjectsOptions): void
 }
 
 export type FilterOption<T> = {

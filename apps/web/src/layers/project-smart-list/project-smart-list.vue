@@ -38,10 +38,6 @@
     <!-- Dialogs -->
     <create-project-dialog ref="createProjectDialogRef" :handler="handleCreateProject" />
     <project-manager ref="projectManagerRef" />
-    
-    <nue-dialog theme="project-manager" ref="dialogRef" v-model="visible" title="清单管理">
-        
-    </nue-dialog>
 </template>
 
 <script setup lang="ts">
@@ -50,13 +46,13 @@ import { ProjectManager } from '../project-manager'
 import { CreateProjectDialog } from '../create-project-dialog'
 import { createProjectWithConfirmation } from '@/handlers/project-handlers/v2'
 import { AsideLink } from '@nao-todo/components'
-import { useProjectStoreV2 } from '@/stores'
-import type { CreateProjectOptions } from '@/stores/use-project-store/v2/types'
+import { useProjectStore } from '@/stores'
+import type { CreateProjectOptions } from '@nao-todo/types'
 import { storeToRefs } from 'pinia'
 
 defineOptions({ name: 'ProjectSmartList' })
 
-const projectStore = useProjectStoreV2()
+const projectStore = useProjectStore()
 
 const { smartListData: projects } = storeToRefs(projectStore)
 const createProjectDialogRef = ref<InstanceType<typeof CreateProjectDialog>>()
@@ -68,4 +64,5 @@ const showProjectManageDialog = () => projectManagerRef.value?.show()
 const handleCreateProject = async (payload: CreateProjectOptions) => {
     return await createProjectWithConfirmation(payload)
 }
+
 </script>

@@ -44,7 +44,7 @@ import { storeToRefs } from 'pinia'
 import { useViewStore } from '@/stores'
 import { AsideLink } from '@nao-todo/components'
 import { TasksViewContextKey } from './constants'
-import type { Todo } from '@/stores'
+import type { Todo } from '@nao-todo/types'
 import type { TasksViewContext } from './types'
 
 const viewStore = useViewStore()

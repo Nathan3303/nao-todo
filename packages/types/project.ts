@@ -1,10 +1,10 @@
 import type { GetRequestPageOptions } from './common'
+import type { GetTodosOptions } from './todo'
 import type { User } from './user'
 
 type ProjectPreference = {
     viewType: string
-    filterInfo: unknown
-    sortInfo: unknown
+    getTodosOptions: GetTodosOptions
     columns: unknown
 }
 

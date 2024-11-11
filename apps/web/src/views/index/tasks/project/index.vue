@@ -41,29 +41,29 @@
 import { provide, ref, watchEffect } from 'vue'
 import { TodoViewHeader } from '@/layers'
 import { useRoute, useRouter } from 'vue-router'
-import { useProjectStoreV2, useTodoStore } from '@/stores'
+import { useProjectStore, useTodoStore } from '@/stores'
 import { projectViewContextKey } from './constants'
 import { archiveProjectWithConfirmation, updateProjectPreference } from '@/handlers'
-import type { Project } from '@/stores'
+import type { Project } from '@nao-todo/types'
 import type { ProjectViewContext } from './types'
 
 const route = useRoute()
 const router = useRouter()
 const todoStore = useTodoStore()
-const projectStore = useProjectStoreV2()
+const projectStore = useProjectStore()
 
 let firstLoadFlag: string | null = null
 const project = ref<Project | null>(null)
 
 const handleSaveAsPreference = async (projectId: Project['id']) => {
-    const viewType = ((route.name as string).split('-')[2] as 'table' | 'kanban') || 'table'
-    const preference: Project['preference'] = {
-        viewType,
-        filterInfo: todoStore.filterInfo,
-        sortInfo: todoStore.sortInfo,
-        columns: todoStore.columnOptions
-    }
-    await updateProjectPreference(projectId, preference)
+    // const viewType = ((route.name as string).split('-')[2] as 'table' | 'kanban') || 'table'
+    // const preference: Project['preference'] = {
+    //     viewType,
+    //     filterInfo: todoStore.filterInfo,
+    //     sortInfo: todoStore.sortInfo,
+    //     columns: todoStore.columnOptions
+    // }
+    // await updateProjectPreference(projectId, preference)
 }
 
 const handleDropdownExecute = async (executeId: string) => {
@@ -84,14 +84,14 @@ const handleDropdownExecute = async (executeId: string) => {
 }
 
 const handleLoadProjectPreference = () => {
-    if (!project.value) return
-    const projectPreference = project.value.preference || { viewType: 'table', filterInfo: {} }
-    if (projectPreference) todoStore.resetOptions()
-    Object.assign(projectPreference.filterInfo, {
-        isDeleted: false,
-        projectId: project.value.id
-    })
-    todoStore.setOptionsByProjectPreference(projectPreference)
+    // if (!project.value) return
+    // const projectPreference = project.value.preference || { viewType: 'table', filterInfo: {} }
+    // if (projectPreference) todoStore.resetOptions()
+    // Object.assign(projectPreference.filterInfo, {
+    //     isDeleted: false,
+    //     projectId: project.value.id
+    // })
+    // todoStore.setOptionsByProjectPreference(projectPreference)
 }
 
 const handleGoToDefaulView = () => {
@@ -105,19 +105,19 @@ const handleGoToDefaulView = () => {
 }
 
 watchEffect(async () => {
-    const { meta, params, name } = route
-    const pid = params.projectId as Project['id']
-    project.value = (await projectStore.fetchProject({ id: pid })).data as Project
-    if (!['tasks-project-table', 'tasks-project-kanban'].includes(name as string)) {
-        handleGoToDefaulView()
-    }
-    const firstLoadId = `${pid}|${name as string}` as string
-    if (firstLoadFlag === firstLoadId && meta.category === 'project') return
-    if (project.value) {
-        document.title = 'NaoTodo - ' + project.value.title
-        handleLoadProjectPreference()
-    }
-    firstLoadFlag = firstLoadId
+    // const { meta, params, name } = route
+    // const pid = params.projectId as Project['id']
+    // project.value = (await projectStore.fetchProject({ id: pid })).data as Project
+    // if (!['tasks-project-table', 'tasks-project-kanban'].includes(name as string)) {
+    //     handleGoToDefaulView()
+    // }
+    // const firstLoadId = `${pid}|${name as string}` as string
+    // if (firstLoadFlag === firstLoadId && meta.category === 'project') return
+    // if (project.value) {
+    //     document.title = 'NaoTodo - ' + project.value.title
+    //     handleLoadProjectPreference()
+    // }
+    // firstLoadFlag = firstLoadId
 })
 
 provide<ProjectViewContext>(projectViewContextKey, { project })
