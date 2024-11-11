@@ -1,4 +1,4 @@
-import type { TagFilterOptions } from '@nao-todo/stores'
+import type { TagFilterOptions } from '@/stores'
 
 export type TagFilterBarProps = {
     filterInfo: TagFilterOptions

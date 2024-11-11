@@ -1,4 +1,4 @@
-import type { Project } from '@nao-todo/stores'
+import type { Project } from '@/stores'
 
 export type TodoProjectSelectorProps = {
     userId: Project['userId']

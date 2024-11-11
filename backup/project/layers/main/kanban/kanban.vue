@@ -20,7 +20,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { TodoCard, TodoStateInfo, Empty } from '@nao-todo/components'
-import { useTodoStore, useUserStore, type Project, type Todo } from '@nao-todo/stores'
+import { useTodoStore, useUserStore, type Project, type Todo } from '@/stores'
 import { storeToRefs } from 'pinia'
 
 defineOptions({ name: 'ProjectKanban' })

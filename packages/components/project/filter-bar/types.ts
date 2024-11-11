@@ -1,4 +1,4 @@
-import type { ProjectFilterOptions } from '@nao-todo/stores'
+import type { ProjectFilterOptions } from '@/stores'
 
 export type ProjectFilterBarProps = {
     filterInfo: ProjectFilterOptions

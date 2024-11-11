@@ -1,5 +1,5 @@
 import type { Reactive } from 'vue'
-import type { Tag, Todo, TodoColumnOptions, TodoSortOptions } from '@nao-todo/stores'
+import type { Tag, Todo, TodoColumnOptions, TodoSortOptions } from '@/stores'
 
 export type Columns = TodoColumnOptions
 

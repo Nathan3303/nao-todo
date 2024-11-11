@@ -7,7 +7,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Todo } from '@nao-todo/stores/use-todo-store'
+import type { Todo } from '@/stores/use-todo-store'
 
 const props = defineProps<{ priority: Todo['priority']; colored?: boolean }>()
 

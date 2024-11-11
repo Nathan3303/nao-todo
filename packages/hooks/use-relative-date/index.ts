@@ -6,7 +6,7 @@ import {
     isIn7DaysFromNow,
     isIn30DaysFromNow,
     isAfterThisYear
-} from '@nao-todo/handlers/date-handlers'
+} from '@/handlers/date-handlers'
 import type { Moment } from 'moment'
 
 let oldDate = null

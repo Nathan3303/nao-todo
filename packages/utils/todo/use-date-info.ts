@@ -1,4 +1,4 @@
-import type { Todo } from '@nao-todo/stores/use-todo-store'
+import type { Todo } from '@/stores/use-todo-store'
 import moment from 'moment'
 
 export type DateInfo = { startAt: string; endAt: string }

@@ -1,4 +1,4 @@
-import type { TodoCountInfo, TodoFilter } from '@nao-todo/stores'
+import type { TodoCountInfo, TodoFilter } from '@/stores'
 
 export type TodoFilterBarProps = {
     filterInfo: TodoFilter

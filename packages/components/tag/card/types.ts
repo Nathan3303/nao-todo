@@ -1,4 +1,4 @@
-import type { Tag } from '@nao-todo/stores'
+import type { Tag } from '@/stores'
 
 export type TagCardProps = {
     tag: Tag

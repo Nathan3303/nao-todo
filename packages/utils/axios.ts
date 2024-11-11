@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { NueMessage } from 'nue-ui'
-import { useUserStore } from '@nao-todo/stores'
+import { useUserStore } from '@/stores'
 
 const axiosInstance = axios.create({
     baseURL: 'http://localhost:3002/api' // Base URL in development mode

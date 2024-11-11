@@ -1,7 +1,7 @@
 import { reactive, ref, watch, provide } from 'vue'
 import { useRoute } from 'vue-router'
-import { isExpired } from '@nao-todo/handlers/date-handlers'
-import type { Todo } from '@nao-todo/stores'
+import { isExpired } from '@/handlers/date-handlers'
+import type { Todo } from '@/stores'
 import type { TodoTableEmits, TodoTableProps, TodoTableContext } from './types'
 
 export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {

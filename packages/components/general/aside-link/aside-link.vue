@@ -9,4 +9,5 @@
 
 <script setup lang="ts">
 defineOptions({ name: 'AsideLink' })
+defineProps<{ routeName?: string }>()
 </script>

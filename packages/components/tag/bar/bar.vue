@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Tag } from '@nao-todo/stores'
+import type { Tag } from '@/stores'
 import { TagNode } from '../node'
 import type { TagBarProps, TagBarEmits } from './types'
 

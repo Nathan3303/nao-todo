@@ -11,27 +11,24 @@ importers:
       '@eslint/js':
         specifier: ^9.13.0
         version: 9.14.0
+      '@nao-todo/apis':
+        specifier: workspace:*
+        version: link:packages/apis
       '@nao-todo/components':
         specifier: workspace:*
         version: link:packages/components
-      '@nao-todo/handlers':
-        specifier: workspace:*
-        version: link:packages/handlers
       '@nao-todo/hooks':
         specifier: workspace:*
         version: link:packages/hooks
-      '@nao-todo/layers':
+      '@nao-todo/types':
         specifier: workspace:*
-        version: link:packages/layers
-      '@nao-todo/main-app':
-        specifier: workspace:*
-        version: link:apps/main
-      '@nao-todo/stores':
-        specifier: workspace:*
-        version: link:packages/stores
+        version: link:packages/types
       '@nao-todo/utils':
         specifier: workspace:*
         version: link:packages/utils
+      '@nao-todo/webapp':
+        specifier: workspace:*
+        version: link:apps/web
       '@types/md5':
         specifier: ^2.3.5
         version: 2.3.5
@@ -124,21 +121,21 @@ importers:
         specifier: ^2.0.11
         version: 2.1.10(typescript@5.4.5)
 
-  apps/main:
+  apps/mobile: {}
+
+  apps/web:
     dependencies:
       vite:
         specifier: ^5.3.6
         version: 5.4.10(@types/node@20.17.4)
 
-  packages/components: {}
+  packages/apis: {}
 
-  packages/handlers: {}
+  packages/components: {}
 
   packages/hooks: {}
 
-  packages/layers: {}
-
-  packages/stores: {}
+  packages/types: {}
 
   packages/utils: {}
 

@@ -49,7 +49,7 @@
 import { inject, computed } from 'vue'
 import { ref } from 'vue'
 import type { TodoTableContext } from './types'
-import type { Todo, TodoSortOptions } from '@nao-todo/stores'
+import type { Todo, TodoSortOptions } from '@/stores'
 
 defineOptions({ name: 'TodoTableOrderButton' })
 const props = defineProps<{ prop: TodoSortOptions['field']; text?: string }>()

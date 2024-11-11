@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { useProjectStore, useViewStore, useUserStore } from '@nao-todo/stores'
+import { useProjectStore, useViewStore, useUserStore } from '@/stores'
 import { ProjectBoard, ProjectFilterBar } from '@nao-todo/components'
 
 defineOptions({ name: 'MyProjects' })

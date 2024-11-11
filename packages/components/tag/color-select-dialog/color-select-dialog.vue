@@ -14,9 +14,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import ColorSelector from '../color-selector/color-selector.vue'
-import { useTagStore } from '@nao-todo/stores'
-import { updateTag } from '@nao-todo/handlers/tag-handlers'
-import type { Tag } from '@nao-todo/stores'
+import { useTagStore } from '@/stores'
+import { updateTag } from '@/handlers/tag-handlers'
+import type { Tag } from '@/stores'
 
 defineOptions({ name: 'TagColorSelectDialog' })
 

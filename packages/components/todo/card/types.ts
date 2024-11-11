@@ -1,4 +1,4 @@
-import type { Todo } from '@nao-todo/stores'
+import type { Todo } from '@/stores'
 import type { Columns } from '../table'
 
 export type TodoCardProps = {

@@ -83,13 +83,13 @@ import { TodoPriorityInfo } from '../priority-info'
 import { TodoTagBar } from '../tag-bar'
 import moment from 'moment'
 import type { TodoCardEmits, TodoCardProps } from './types'
-import type { Todo } from '@nao-todo/stores'
+import type { Todo } from '@/stores'
 
 defineOptions({ name: 'TodoCard' })
 const props = defineProps<TodoCardProps>()
 const emit = defineEmits<TodoCardEmits>()
 
-import { useTagStore } from '@nao-todo/stores'
+import { useTagStore } from '@/stores'
 const tagStore = useTagStore()
 
 const isDone = computed(() => {

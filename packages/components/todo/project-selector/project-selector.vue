@@ -28,7 +28,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Project } from '@nao-todo/stores'
+import type { Project } from '@/stores'
 import type { TodoProjectSelectorProps, TodoProjectSelectorEmits } from './types'
 
 defineOptions({ name: 'TodoProjectSelector' })

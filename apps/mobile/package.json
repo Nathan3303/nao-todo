@@ -1,0 +1,11 @@
+{
+    "name": "@nao-todo/mobileapp",
+    "version": "0.1.0",
+    "description": "Mobile app for Nao Todo",
+    "author": "Nathan Lee",
+    "license": "MIT",
+    "private": true,
+    "type": "module",
+    "scripts": {},
+    "dependencies": {}
+}

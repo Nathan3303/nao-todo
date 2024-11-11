@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { ProjectKanban } from '@nao-todo/layers/index'
+import { ProjectKanban } from '@/layers/index'
 defineProps<{ projectId: string }>()
 </script>
 

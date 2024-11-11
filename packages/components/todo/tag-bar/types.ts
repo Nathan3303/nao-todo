@@ -1,4 +1,4 @@
-import type { Tag, Todo } from "@nao-todo/stores"
+import type { Tag, Todo } from "@/stores"
 
 export type TodoTagBarProps = {
     tags: Tag[]

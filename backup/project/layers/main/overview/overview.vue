@@ -45,7 +45,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useTodoStore, useUserStore } from '@nao-todo/stores'
+import { useTodoStore, useUserStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { ProjectDetails, TodoTable, Empty, type Columns } from '@nao-todo/components'
 import StateRow from './state-row.vue'

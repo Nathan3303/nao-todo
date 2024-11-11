@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Tag } from '@nao-todo/stores'
+import type { Tag } from '@/stores'
 
 defineOptions({ name: 'TagNode' })
 const props = defineProps<{

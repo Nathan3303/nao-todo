@@ -1,4 +1,4 @@
-import type { TodoEvent } from '@nao-todo/stores'
+import type { TodoEvent } from '@/stores'
 
 export type TodoEventRowUpdatePayload = {
     id: TodoEvent['id']

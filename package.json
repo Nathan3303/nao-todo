@@ -1,11 +1,12 @@
 {
   "name": "nao-todo",
+  "description": "NaoTodo, a simple TODO app, including web, mobile and desktop",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@9.12.2",
   "scripts": {
-    "dev": "pnpm --filter @nao-todo/main-app dev"
+    "dev": "pnpm --filter @nao-todo/webapp dev"
   },
   "dependencies": {
     "@types/md5": "^2.3.5",
@@ -17,14 +18,15 @@
     "pinia": "^2.1.7",
     "vue": "^3.4.21",
     "vue-router": "^4.3.0",
-    "@nao-todo/components": "workspace:*",
-    "@nao-todo/hooks": "workspace:*",
-    "@nao-todo/utils": "workspace:*",
-    "@nao-todo/handlers": "workspace:*",
-    "@nao-todo/main-app": "workspace:*",
     "@eslint/js": "^9.13.0",
     "@typescript-eslint/eslint-plugin": "^8.12.2",
-    "@typescript-eslint/parser": "^8.12.2"
+    "@typescript-eslint/parser": "^8.12.2",
+    "@nao-todo/apis": "workspace:*",
+    "@nao-todo/components": "workspace:*",
+    "@nao-todo/hooks": "workspace:*",
+    "@nao-todo/types": "workspace:*",
+    "@nao-todo/utils": "workspace:*",
+    "@nao-todo/webapp": "workspace:*"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.8.0",

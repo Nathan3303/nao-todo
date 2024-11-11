@@ -1,6 +1,6 @@
 import { ref, watch, computed } from 'vue'
 import type { TodoFilterBarProps, TodoFilterBarEmits, FilterOptions } from './types'
-import type { TodoFilter, TodoPriority, TodoState } from '@nao-todo/stores'
+import type { TodoFilter, TodoPriority, TodoState } from '@/stores'
 
 const stateOptions: FilterOptions<TodoState> = [
     {

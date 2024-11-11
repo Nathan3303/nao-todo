@@ -3,8 +3,8 @@
 </template>
 
 <script setup lang="ts">
-import { ProjectsDashboard } from '@nao-todo/layers/index/projects'
-import { useProjectStore } from '@nao-todo/stores/use-project-store'
+import { ProjectsDashboard } from '@/layers/index/projects'
+import { useProjectStore } from '@/stores/use-project-store'
 import { storeToRefs } from 'pinia'
 
 const projectStore = useProjectStore()
