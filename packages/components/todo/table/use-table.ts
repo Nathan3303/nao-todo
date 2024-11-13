@@ -1,7 +1,7 @@
 import { reactive, ref, watch, provide } from 'vue'
 import { useRoute } from 'vue-router'
 import { isExpired } from '@/handlers/date-handlers'
-import type { Todo } from '@/stores'
+import type { Todo } from '@nao-todo/types'
 import type { TodoTableEmits, TodoTableProps, TodoTableContext } from './types'
 
 export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
@@ -12,7 +12,7 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
     const sortInfo = reactive(props.sortInfo)
 
     const isTodoExpired = (todo: (typeof props.todos)[0]) => {
-        return isExpired(todo.dueDate.endAt) && !todo.isDone && todo.state !== 'done'
+        return isExpired(todo.dueDate.endAt) && todo.state !== 'done'
     }
 
     const handleDeleteBtnClk = (todoId: Todo['id'], isDeleted: boolean) => {
@@ -74,8 +74,8 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
     }
 
     const handleClearSortInfo = () => {
-        sortInfo.field = ''
-        sortInfo.order = ''
+        sortInfo.field = 'createdAt'
+        sortInfo.order = 'desc'
     }
 
     watch(

@@ -18,7 +18,16 @@ export const stringifyGetOptions = <T>(
     const queryPairs: string[] = []
     for (const key in options) {
         if (!eachHandler) {
-            queryPairs.push(`${key}=${options[key as keyof T]}`)
+            const valRaw = options[key as keyof T]
+            let val: string = ''
+            if (typeof valRaw === 'object') {
+                val = JSON.stringify(valRaw)
+            } else if (Array.isArray(valRaw)) {
+                val = (valRaw as unknown[]).join(',')
+            } else {
+                val = valRaw as string
+            }
+            queryPairs.push(`${key}=${val}`)
             continue
         }
         const handleResult = eachHandler(key, options[key as keyof T])

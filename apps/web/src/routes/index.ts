@@ -7,7 +7,7 @@ const router = createRouter({
     routes: [
         {
             path: '/auth/:operation?',
-            name: 'authentication',
+            name: 'auth',
             props: true,
             component: () => import('@/views/auth/index.vue')
         },

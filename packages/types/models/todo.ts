@@ -1,11 +1,12 @@
-import type { GetRequestPageOptions } from './common'
+import type { GetRequestPageOptions } from '../axios/common'
 import type { User } from './user'
 import type { Project } from './project'
 import type { Tag } from './tag'
+import type { Moment } from 'moment'
 
 type TodoDueDate = {
-    startAt: Date | string | null
-    endAt: Date | string | null
+    startAt: Moment | string | null
+    endAt: Moment | string | null
 }
 
 interface Todo {
@@ -20,7 +21,7 @@ interface Todo {
     dueDate: TodoDueDate
     isDeleted: boolean
     isArchived: boolean
-    isFavorite: boolean
+    isFavorited: boolean
     createdAt: Date
     updatedAt: Date
 }
@@ -44,7 +45,9 @@ type GetTodosOptionsRaw = {
     priority?: string
     isArchived?: Todo['isArchived']
     isDeleted?: Todo['isDeleted']
+    isFavorited?: Todo['isFavorited']
     sort?: GetTodosSortOptions
+    relativeDate?: 'today' | 'tomorrow' | 'week'
 }
 
 type UpdateTodoOptionsRaw = {
@@ -57,7 +60,7 @@ type UpdateTodoOptionsRaw = {
     dueDate?: TodoDueDate
     isDeleted?: Todo['isDeleted']
     isArchived?: Todo['isArchived']
-    isFavorite?: Todo['isFavorite']
+    isFavorited?: Todo['isFavorited']
 }
 
 type CreateTodoOptions = UpdateTodoOptions
@@ -83,7 +86,17 @@ type GetTodosOverview = {
     pageInfo: { page: number; totalPages: number }
 }
 
-type TodoColumnOptions = Partial<Record<keyof Todo, boolean>>
+type TodoColumnOptions = Partial<{
+    name: boolean
+    description: boolean
+    state: boolean
+    priority: boolean
+    tags: boolean
+    endAt: boolean
+    createdAt: boolean
+    updatedAt: boolean
+    project: boolean
+}>
 
 export type {
     Todo,

@@ -1,7 +1,7 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import { createPinia } from 'pinia'
-import router from './router'
+import router from './routes'
 import NueUI from 'nue-ui'
 
 import 'nue-ui/dist/index.css'

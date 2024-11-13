@@ -3,7 +3,7 @@ import { createTodoWithOptions } from '@/handlers/todo-handlers'
 import { useUserStore, useProjectStore, useTagStore } from '@/stores'
 import moment from 'moment'
 import type { TodoCreateDialogArgs } from '@nao-todo/components/todo/create-dialog/types'
-import type { Todo } from '@/stores'
+import type { Todo } from '@nao-todo/types'
 
 const userStore = useUserStore()
 const projectStore = useProjectStore()
