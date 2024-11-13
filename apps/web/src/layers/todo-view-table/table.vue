@@ -6,11 +6,7 @@
             style="box-sizing: border-box; padding-top: 8px"
         >
             <nue-div align="start" justify="space-between" gap="16px">
-                <todo-filter-bar
-                    :count-info="getOverview.countInfo"
-                    :filter-info="getOptions"
-                    @filter="handleFilter"
-                />
+                <todo-filter-bar :filter-options="getOptions" @filter="handleFilter" />
                 <nue-div justify="end" flex="none" width="fit-content" gap="12px">
                     <nue-button
                         v-if="!disabledCreateTodo"
@@ -67,7 +63,7 @@
                     </nue-text>
                 </nue-text>
                 <pager
-                    :page="getOverview.pageInfo.page"
+                    :page="getOverview.pageInfo.page * 1"
                     :limit="getOptions.limit"
                     :total-pages="getOverview.pageInfo.totalPages"
                     @perpage-change="handlePerPageChange"
@@ -101,47 +97,37 @@ const tagStore = useTagStore()
 const tasksViewStore = useTasksViewStore()
 
 const { todos, getOptions, getOverview } = storeToRefs(todoStore)
-const { viewInfo } = storeToRefs(tasksViewStore)
 const tableLoading = ref(false)
 const todoTableRef = ref<InstanceType<typeof TodoTable>>()
 const createTodoDialogRef = ref<InstanceType<typeof CreateTodoDialog>>()
 let refreshTimer: number | null = null
 const multiSelectCount = ref(0)
 
-const handleFilter = async (newTodoFliter: GetTodosOptions) => {
-    todoStore.updateGetOptions(newTodoFliter)
-    await todoStore.doGetTodos()
-}
-
-const doFirstLoad = async () => {
-    if (!viewInfo.value) return
-    const { preference } = viewInfo.value
-    console.log(viewInfo.value.preference)
-    todoStore.setGetOptionsByPreference(preference)
-    await todoStore.doGetTodos()
-}
-doFirstLoad()
-
-const handleGetTodos = async () => {
-    const { filterInfo } = props
-    tableLoading.value = true
-    await handleFilter(filterInfo)
-    tableLoading.value = false
-}
-
 const showCreateTodoDialog = () => {
     if (!createTodoDialogRef.value) return
     emit('createTodoByDialog', createTodoDialogRef.value.show)
-}
-
-const handleChangeColumns = (payload: TodoColumnOptions) => {
-    todoStore.updateColumnOptions(payload)
 }
 
 const showTodoDetails = (id: Todo['id']) => {
     const { baseRoute } = props
     router.push({ name: baseRoute, params: { taskId: id } })
     tasksViewStore.hideMultiDetails()
+}
+
+const handleGetTodos = async () => {
+    tableLoading.value = true
+    await todoStore.doGetTodos()
+    tableLoading.value = false
+}
+handleGetTodos()
+
+const handleFilter = async (newOptions: GetTodosOptions) => {
+    todoStore.updateGetOptions(newOptions)
+    await handleGetTodos()
+}
+
+const handleChangeColumns = (options: TodoColumnOptions) => {
+    todoStore.updateColumnOptions(options)
 }
 
 const handleMultiSelect = (payload: TodoTableMultiSelectEmitPayload) => {

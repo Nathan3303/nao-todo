@@ -9,7 +9,7 @@ const eventStore = useEventStore()
 
 export const getEvents = async (filterOptions: EventFilterOptions) => {
     const userId = userStore.user!.id
-    await eventStore.initialize(userId, filterOptions)
+await eventStore.initialize(userId, filterOptions)
 }
 
 export const createEvent = async (todoId: Event['todoId'], eventTitle: Event['title']) => {

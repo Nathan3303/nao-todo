@@ -1,15 +1,15 @@
-import { computed, ref, watchEffect, inject } from 'vue'
-import { useUserStore, useProjectStore, useTagStore, useTodoStore, type Todo } from '@/stores'
+import { computed, ref, watchEffect } from 'vue'
+import { useUserStore, useProjectStore, useTagStore, useTodoStore } from '@/stores'
 import {
     updateTodos,
     removeTodosWithConfirm,
     restoreTodosWithConfirm
 } from '@/handlers/todo-handlers'
 import { debounce } from '@nao-todo/utils'
-import { TasksViewContextKey } from '@/views/index/tasks/constants'
 import { useRoute, useRouter } from 'vue-router'
 import type { TodoMultiDetailsProps } from './types'
-import type { TasksViewContext } from '@/views/index/tasks/types'
+import type { Todo } from '@nao-todo/types'
+import { useTasksViewStore } from '@/views/index/tasks/stores'
 
 export const useMultiDetails = (props: TodoMultiDetailsProps) => {
     const route = useRoute()
@@ -18,8 +18,7 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
     const projectStore = useProjectStore()
     const todoStore = useTodoStore()
     const tagStore = useTagStore()
-
-    const { handleHideMultiDetails } = inject<TasksViewContext>(TasksViewContextKey)!
+    const tasksViewStore = useTasksViewStore()
 
     const commonData = ref({
         dueDate: { startAt: '', endAt: '' },
@@ -73,10 +72,10 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
             Object.prototype.hasOwnProperty.call(updateOptions, 'projectId') &&
             updateOptions.projectId !== (route.params.projectId as string)
         ) {
-            todoStore.get(userStore.user!.id)
+            todoStore.doGetTodos()
             const prevRoute = route.matched[route.matched.length - 1]
             if (prevRoute) router.push(prevRoute)
-            handleHideMultiDetails()
+            tasksViewStore.hideMultiDetails()
         }
         updateOptions = {}
     }
@@ -118,7 +117,7 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
         if (!removeResult) return
         const prevRoute = route.matched[route.matched.length - 1]
         if (prevRoute) router.push(prevRoute)
-        handleHideMultiDetails()
+        tasksViewStore.hideMultiDetails()
     }
 
     const handleRestore = async () => {
@@ -126,12 +125,12 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
         if (!removeResult) return
         const prevRoute = route.matched[route.matched.length - 1]
         if (prevRoute) router.push(prevRoute)
-        handleHideMultiDetails()
+        tasksViewStore.hideMultiDetails()
     }
 
     const handleCancelMultiSelect = () => {
         // console.log('000');
-        handleHideMultiDetails()
+        tasksViewStore.hideMultiDetails()
     }
 
     watchEffect(() => {

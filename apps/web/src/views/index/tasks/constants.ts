@@ -1,26 +1,37 @@
+import moment from 'moment'
 import { createTodoWithOptions } from '@/handlers/todo-handlers'
 import { useUserStore, useProjectStore, useTagStore } from '@/stores'
-import moment from 'moment'
 import type { TodoCreateDialogArgs } from '@nao-todo/components/todo/create-dialog/types'
-import type { Todo, TasksMainBasicViewNames, TasksMainViewInfo } from '@nao-todo/types'
+import type {
+    Todo,
+    TasksMainBasicViewNames,
+    TasksMainViewInfo,
+    TodoColumnOptions
+} from '@nao-todo/types'
 
 const userStore = useUserStore()
 const projectStore = useProjectStore()
 const tagStore = useTagStore()
 
-export const basicViewContextKey = 'TASKS_BASIC_VIEW_CONTEXT_KEY'
+export const defaultColumnOptions: TodoColumnOptions = {
+    name: true,
+    endAt: true,
+    state: true,
+    priority: true,
+    project: true
+}
 
 export const basicViewsInfo: {
     [key in TasksMainBasicViewNames]: TasksMainViewInfo
 } = {
     all: {
         id: 'all',
-        title: '所有',
+        title: '所有待办',
         description: '所有板块是专门展示和管理工作所有需要完成的任务的地方。',
         preference: {
             viewType: 'table',
             getTodosOptions: { isDeleted: false },
-            columns: {}
+            columns: defaultColumnOptions
         },
         createTodoOptions: {},
         handlers: {
@@ -38,7 +49,7 @@ export const basicViewsInfo: {
     },
     today: {
         id: 'today',
-        title: '今日',
+        title: '今日待办',
         description: '今日板块是专门展示和管理工作当天需要完成的任务的地方。',
         preference: {
             viewType: 'table',
@@ -46,7 +57,7 @@ export const basicViewsInfo: {
                 isDeleted: false,
                 relativeDate: 'today'
             },
-            columns: {}
+            columns: defaultColumnOptions
         },
         createTodoOptions: {},
         handlers: {
@@ -78,7 +89,7 @@ export const basicViewsInfo: {
     },
     tomorrow: {
         id: 'tomorrow',
-        title: '明日',
+        title: '明日待办',
         description: '明日板块是专门展示和管理工作明天需要完成的任务的地方。',
         preference: {
             viewType: 'table',
@@ -86,7 +97,7 @@ export const basicViewsInfo: {
                 isDeleted: false,
                 relativeDate: 'tomorrow'
             },
-            columns: {}
+            columns: defaultColumnOptions
         },
         createTodoOptions: {},
         handlers: {
@@ -118,7 +129,7 @@ export const basicViewsInfo: {
     },
     week: {
         id: 'week',
-        title: '本周',
+        title: '本周待办',
         description: '本周板块是专门展示和管理工作本周需要完成的任务的地方。',
         preference: {
             viewType: 'table',
@@ -126,7 +137,7 @@ export const basicViewsInfo: {
                 isDeleted: false,
                 relativeDate: 'week'
             },
-            columns: {}
+            columns: defaultColumnOptions
         },
         createTodoOptions: {},
         handlers: {
@@ -163,10 +174,9 @@ export const basicViewsInfo: {
         preference: {
             viewType: 'table',
             getTodosOptions: {
-                isDeleted: false,
-                projectId: userStore.user!.id
+                isDeleted: false
             },
-            columns: {}
+            columns: defaultColumnOptions
         },
         createTodoOptions: {},
         handlers: {
@@ -184,12 +194,12 @@ export const basicViewsInfo: {
     },
     favorite: {
         id: 'favorite',
-        title: '已收藏',
+        title: '已收藏的待办',
         description: '收藏板块是展示收藏待办的地方。',
         preference: {
             viewType: 'table',
             getTodosOptions: { isFavorited: true },
-            columns: {}
+            columns: defaultColumnOptions
         },
         createTodoOptions: {},
         handlers: {
@@ -213,7 +223,7 @@ export const basicViewsInfo: {
         preference: {
             viewType: 'table',
             getTodosOptions: { isDeleted: true },
-            columns: {}
+            columns: defaultColumnOptions
         },
         createTodoOptions: {}
     }

@@ -11,7 +11,10 @@
     >
         <nue-header height="auto" style="justify-content: space-between; box-sizing: border-box">
             <nue-div align="center" wrap="nowrap" width="fit-content">
-                <todo-check-button :is-done="shadowTodo.isDone" @change="handleCheckTodo" />
+                <todo-check-button
+                    :is-done="shadowTodo.state === 'done'"
+                    @change="handleCheckTodo"
+                />
                 <nue-divider direction="vertical" />
                 <todo-date-selector :date="shadowTodo.dueDate.endAt" @change="handleChangeEndAt" />
             </nue-div>
@@ -42,7 +45,7 @@
                         />
                     </nue-div>
                     <switch-button
-                        v-model="shadowTodo.isPinned"
+                        v-model="shadowTodo.isFavorited"
                         size="small"
                         icon="heart"
                         active-icon="heart-fill"
@@ -157,17 +160,11 @@ import {
     TodoProjectSelector,
     TodoTagBar
 } from '@nao-todo/components'
-import type { TodoDetailsEmits, TodoDetailsProps } from './types'
-import { ref } from 'vue'
 
 defineOptions({ name: 'ContentTodoDetailsV2' })
-const props = defineProps<TodoDetailsProps>()
-const emit = defineEmits<TodoDetailsEmits>()
 
 const userStore = useUserStore()
 const tagStore = useTagStore()
-
-const eventFlag = ref(false)
 
 const {
     projects,
@@ -187,7 +184,7 @@ const {
     handleDeleteTodoPermanently,
     handleRestoreTodo,
     handleUpdateTags
-} = useTodoDetails(props, emit)
+} = useTodoDetails()
 </script>
 
 <style scoped>

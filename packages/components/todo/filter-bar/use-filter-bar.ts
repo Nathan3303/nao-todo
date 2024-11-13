@@ -7,21 +7,18 @@ const stateOptions: FilterOptions<Todo['state']> = [
         label: '待办(todo)',
         value: 'todo',
         icon: 'circle',
-        suffix: 0,
         checked: false
     },
     {
         label: '正在进行(in-progress)',
         value: 'in-progress',
         icon: 'in-progress',
-        suffix: 0,
         checked: false
     },
     {
         label: '已完成(done)',
         value: 'done',
         icon: 'success',
-        suffix: 0,
         checked: false
     }
 ]
@@ -32,40 +29,37 @@ const priorityOptions: FilterOptions<Todo['priority']> = [
         value: 'low',
         checked: false,
         icon: 'priority-1',
-        suffix: 0
     },
     {
         label: '中(medium)',
         value: 'medium',
         icon: 'priority-2',
-        suffix: 0,
         checked: false
     },
     {
         label: '高(high)',
         value: 'high',
         icon: 'priority-3',
-        suffix: 0,
         checked: false
     }
 ]
 
 export const useTodoFilterBar = (props: TodoFilterBarProps, emit: TodoFilterBarEmits) => {
-    const filterText = ref<string>(props.filterInfo?.name || '')
+    const filterText = ref<string>(props.filterOptions?.name || '')
 
     const isFiltering = computed(() => {
-        if (!props.filterInfo) return false
-        const { name, state, priority } = props.filterInfo
+        if (!props.filterOptions) return false
+        const { name, state, priority } = props.filterOptions
         return name || state || priority
     })
 
     const stateComboBoxOptions = computed({
         get() {
-            const { state } = props.filterInfo
+            if (!props.filterOptions?.state) return stateOptions
+            const { state } = props.filterOptions
             const splitedState = state?.split(',')
             return stateOptions.map((option) => {
                 option.checked = splitedState?.includes(option.value) || false
-                option.suffix = props.countInfo.byState[option.value] || 0
                 return option
             })
         },
@@ -77,11 +71,11 @@ export const useTodoFilterBar = (props: TodoFilterBarProps, emit: TodoFilterBarE
 
     const priorityComboBoxOptions = computed({
         get() {
-            const { priority } = props.filterInfo
+            if (!props.filterOptions?.priority) return priorityOptions
+            const { priority } = props.filterOptions
             const splitedPriority = priority?.split(',')
             return priorityOptions.map((option) => {
                 option.checked = splitedPriority?.includes(option.value as string) || false
-                option.suffix = props.countInfo.byPriority[option.value] || 0
                 return option
             })
         },
@@ -113,7 +107,7 @@ export const useTodoFilterBar = (props: TodoFilterBarProps, emit: TodoFilterBarE
 
     const handleResetFilter = () => {
         filterText.value = ''
-        const emptyFilterInfo = { id: '', name: '', state: '', priority: '' }
+        const emptyFilterInfo = { name: '', state: '', priority: '' }
         emit('filter', emptyFilterInfo)
     }
 

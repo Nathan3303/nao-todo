@@ -57,7 +57,11 @@ export const getProject = async (options: GetProjectOptions) => {
 // 获取清单（s）
 export const getProjects = async (options: GetProjectsOptions = defaultGetProjectsOptions) => {
     try {
-        const queryString = stringifyGetOptions(options)
+        const queryString = stringifyGetOptions(options, (key, value) => {
+            if (key === 'sort' && value) {
+                return `${key}=${value.field}:${value.order}`
+            }
+        })
         const response = await $axios.get(`/projects?${queryString}`)
         return response.data as ResponseData
     } catch (error) {

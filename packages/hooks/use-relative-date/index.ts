@@ -6,11 +6,11 @@ import {
     isIn7DaysFromNow,
     isIn30DaysFromNow,
     isAfterThisYear
-} from '@/handlers/date-handlers'
+} from '@nao-todo/utils/date'
 import type { Moment } from 'moment'
 
-let oldDate = null
-let oldRelativeDate = ''
+const oldDate = null
+const oldRelativeDate = ''
 
 moment.updateLocale('zh-CN', {
     relativeTime: {

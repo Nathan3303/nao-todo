@@ -1,49 +1,39 @@
 <template>
     <todo-view-kanban
-        :key="route.params.projectId.toString()"
-        :filter-info="todoStore.getOptions"
-        base-route="tasks-project-kanban"
-        @create-todo="handleCreateTodo"
+        :key="viewInfo?.id"
+        :base-route="baseRouteName"
         @create-todo-by-dialog="handleCreateTodoByDialog"
     />
-    <suspense>
-        <router-view></router-view>
-    </suspense>
 </template>
 
 <script setup lang="ts">
 import { TodoViewKanban } from '@/layers'
-import { useProjectStore, useUserStore, useTagStore, useTodoStore } from '@/stores'
-import { useRoute } from 'vue-router'
-import { createTodoWithOptions } from '@/handlers/todo-handlers'
-import type { Todo } from '@nao-todo/types'
+import { useProjectStore, useUserStore, useTagStore } from '@/stores'
+import { useTasksViewStore } from '../stores'
+import { storeToRefs } from 'pinia'
 import type { TodoCreateDialogArgs } from '@nao-todo/components/todo/create-dialog/types'
 
-const route = useRoute()
 const userStore = useUserStore()
 const projectStore = useProjectStore()
-const todoStore = useTodoStore()
 const tagStore = useTagStore()
+const tasksViewStore = useTasksViewStore()
 
-const handleCreateTodo = async (todoName: Todo['name']) => {
-    const projectId = route.params.projectId as string
-    const project = projectStore.getProjectByIdFromLocal(projectId)
-    const createOptions = { name: todoName, project: { title: project ? project.title : '' } }
-    await createTodoWithOptions(projectId, createOptions)
-}
+const { viewInfo, baseRouteName } = storeToRefs(tasksViewStore)
 
 const handleCreateTodoByDialog = async (caller: (args: TodoCreateDialogArgs) => void) => {
-    const projectId = route.params.projectId as string
-    const project = projectStore.getProjectByIdFromLocal(projectId)
-    const avalibleProjects = projectStore.findProjectsFromLocal({ isDeleted: false, isArchived: false })
-    // console.log(avalibleProjects)
+    if (!viewInfo.value) return
+    const { id, title } = viewInfo.value
+    const avalibleProjects = projectStore.findProjectsFromLocal({
+        isDeleted: false,
+        isArchived: false
+    })
     caller({
         userId: userStore.user!.id,
         projects: avalibleProjects,
         tags: tagStore.tags,
         presetInfo: {
-            projectId,
-            project: { title: project ? project.title : '' }
+            projectId: id,
+            project: { title: title || '' }
         }
     })
 }

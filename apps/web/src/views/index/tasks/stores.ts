@@ -17,7 +17,9 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
 
     // 当前视图信息
     const category = ref<TasksMainRouteCategory>('basic')
+    const baseRouteName = ref<string>('')
     const viewInfo = ref<TasksMainViewInfo | null>(null)
+    let viewLoadedTag = ''
 
     // 多选状态
     const multiSelectStates = ref<TasksMultiSelectInfo>({
@@ -80,37 +82,59 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
     //     router.push('/tasks/all')
     // }
 
+    // 获取基础视图信息
+    const getBasicViewInfo = () => {
+        const { meta } = route
+        if (viewLoadedTag === meta.id) return
+        viewLoadedTag = meta.id as string
+        const id = meta.id as keyof typeof basicViewsInfo
+        viewInfo.value = basicViewsInfo[id]
+        baseRouteName.value = 'tasks-' + meta.id + '-' + viewInfo.value.preference.viewType
+        router.push({ name: baseRouteName.value })
+    }
+
+    // 获取清单视图信息
+    const getProjectViewInfo = () => {
+        const { meta, params } = route
+        const id = params.projectId as Project['id']
+        if (viewLoadedTag === id) return
+        viewLoadedTag = id as string
+        const project = projectStore.getProjectByIdFromLocal(id) ?? null
+        if (!project) return (viewInfo.value = null)
+        viewInfo.value = {
+            id: project.id,
+            title: project.title,
+            description: project.description,
+            preference: project.preference || { viewType: 'table' },
+            createTodoOptions: { projectId: project.id },
+            handlers: {
+                updateTitle: handleUpdateProjectTitle,
+                updateDescription: handleUpdateProjectDescription,
+                remove: handleRemoveProject
+            }
+        }
+        baseRouteName.value = 'tasks-' + meta.id + '-' + viewInfo.value.preference.viewType
+        router.push({ name: baseRouteName.value })
+    }
+
     // 获取页面信息
     const getViewInfo = async () => {
-        const { meta, params } = route
+        const { meta } = route
         category.value = meta.category as TasksMainRouteCategory
-        if (meta.category === 'basic') {
-            const id = meta.id as keyof typeof basicViewsInfo
-            viewInfo.value = basicViewsInfo[id]
-        } else if (meta.category === 'project') {
-            const id = params.projectId as Project['id']
-            const project = projectStore.getProjectByIdFromLocal(id) ?? null
-            if (!project) {
+        switch (meta.category) {
+            case 'basic':
+                getBasicViewInfo()
+                break
+            case 'project':
+                getProjectViewInfo()
+                break
+            case 'tag':
+                // TODO
                 viewInfo.value = null
-                return
-            }
-            viewInfo.value = {
-                id: project.id,
-                title: project.title,
-                description: project.description,
-                preference: project.preference,
-                createTodoOptions: { projectId: project.id },
-                handlers: {
-                    updateTitle: handleUpdateProjectTitle,
-                    updateDescription: handleUpdateProjectDescription,
-                    remove: handleRemoveProject
-                }
-            }
-        } else if (meta.category === 'tag') {
-            // TODO
-            viewInfo.value = null
-        } else {
-            viewInfo.value = null
+                break
+            default:
+                viewInfo.value = null
+                break
         }
         document.title = viewInfo.value?.title ? 'NaoTodo - ' + viewInfo.value.title : 'NaoTodo'
     }
@@ -118,6 +142,7 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
     return {
         category,
         viewInfo,
+        baseRouteName,
         multiSelectStates,
         showMultiDetails,
         hideMultiDetails,

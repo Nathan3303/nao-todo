@@ -40,4 +40,11 @@ type GetEventsOptions = GetEventsOptionsRaw
 
 type DeleteEventOptions = { id: Event['id'] }
 
-export type { Event, CreateEventOptions, UpdateEventOptions, GetEventsOptions, DeleteEventOptions }
+export type {
+    Event,
+    CreateEventOptions,
+    UpdateEventOptionsRaw,
+    UpdateEventOptions,
+    GetEventsOptions,
+    DeleteEventOptions
+}

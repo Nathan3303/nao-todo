@@ -44,17 +44,17 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { useViewStore } from '@/stores'
-import { useTasksMainViewStore } from '@/views/index/tasks/main/stores'
+import { useTasksViewStore } from '@/views/index/tasks/stores'
 import type { ContentHeaderProps } from './types'
 
 defineOptions({ name: 'ContentHeader' })
 defineProps<ContentHeaderProps>()
 
 const viewStore = useViewStore()
-const tasksMainViewStore = useTasksMainViewStore()
+const tasksViewStore = useTasksViewStore()
 
 const { projectAsideVisible: pav, simpleProjectHeader: sph } = storeToRefs(viewStore)
-const { category, viewInfo } = storeToRefs(tasksMainViewStore)
+const { category, viewInfo } = storeToRefs(tasksViewStore)
 
 const handleHideProjectAside = () => {
     viewStore.toggleProjectAsideVisible()

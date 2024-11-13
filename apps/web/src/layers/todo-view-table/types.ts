@@ -1,12 +1,7 @@
-import type { Columns } from '@nao-todo/components'
-import type { TodoFilter } from '@/stores'
 import type { TodoCreateDialogArgs } from '@nao-todo/components/todo/create-dialog/types'
 
 export type ContentTableProps = {
-    filterInfo: TodoFilter
     baseRoute: string
-    columns?: Columns
-    // projectId: Project['id']
     disabledCreateTodo?: boolean
 }
 

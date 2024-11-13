@@ -13,27 +13,27 @@ export const debounce = (callback: (...args: any) => void | Promise<any>, delay:
 
 export const stringifyGetOptions = <T>(
     options: T,
-    eachHandler?: (key: string, value: unknown) => string
+    eachHandler?: <U>(key: U, value: T[keyof T]) => string | undefined
 ) => {
     const queryPairs: string[] = []
     for (const key in options) {
-        if (!eachHandler) {
-            const valRaw = options[key as keyof T]
-            let val: string = ''
-            if (typeof valRaw === 'object') {
-                val = JSON.stringify(valRaw)
-            } else if (Array.isArray(valRaw)) {
-                val = (valRaw as unknown[]).join(',')
-            } else {
-                val = valRaw as string
+        if (eachHandler) {
+            const handleResult = eachHandler(key, options[key])
+            if (handleResult) {
+                queryPairs.push(handleResult)
+                continue
             }
-            queryPairs.push(`${key}=${val}`)
-            continue
         }
-        const handleResult = eachHandler(key, options[key as keyof T])
-        if (handleResult) {
-            queryPairs.push(handleResult)
+        const valRaw = options[key as keyof T]
+        let val: string = ''
+        if (typeof valRaw === 'object') {
+            val = JSON.stringify(valRaw)
+        } else if (Array.isArray(valRaw)) {
+            val = (valRaw as unknown[]).join(',')
+        } else {
+            val = valRaw as string
         }
+        queryPairs.push(`${key}=${val}`)
     }
     return queryPairs.join('&')
 }

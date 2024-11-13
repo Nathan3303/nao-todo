@@ -5,7 +5,7 @@
                 "清单管理"能够清楚地展示出所有的清单，方便执行清单的增删改查。
             </nue-text>
             <nue-div align="center" justify="space-between">
-                <project-filter-bar :filter-info="getOptions" @filter="handleFilter" />
+                <project-filter-bar :filter-options="getOptions" @filter="handleFilter" />
                 <nue-div width="fit-content" gap="12px">
                     <nue-button
                         theme="small,primary"
@@ -57,8 +57,16 @@ const handleCreateProject = async (payload: CreateProjectOptions) => {
     await projectStore.doCreateProject(payload)
 }
 
-const handleFilter = (payload: GetProjectsOptions) => {
+const handleFilter = async (payload: GetProjectsOptions) => {
+    if (!payload) {
+        const currentOptions = { ...projectStore.getOptions }
+        delete currentOptions.title
+        delete currentOptions.isDeleted
+        delete currentOptions.isArchived
+        payload = currentOptions
+    }
     projectStore.updateGetOptions(payload)
+    await projectStore.doGetProjects()
 }
 
 defineExpose({

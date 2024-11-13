@@ -2,17 +2,13 @@
     <nue-container id="tasks/basic/kanban" theme="vertical,inner" class="content-kanban">
         <nue-header height="auto" :key="$route.path" style="box-sizing: border-box">
             <nue-div align="start" justify="space-between" gap="16px">
-                <todo-filter-bar
-                    :count-info="getOverview.countInfo"
-                    :filter-info="getOptions"
-                    @filter="handleFilter"
-                />
+                <todo-filter-bar :filter-options="getOptions" @filter="handleFilter" />
                 <nue-div justify="end" flex="none" width="fit-content" gap="12px">
                     <nue-button
                         v-if="!disabledCreateTodo"
                         theme="small,primary"
                         icon="plus-circle"
-                        @click="handleAddTodo"
+                        @click="showCreateTodoDialog"
                     >
                         新增
                     </nue-button>
@@ -36,9 +32,9 @@
                         :data-category="key"
                         :columns="todoStore.columnOptions"
                         data-droppable="true"
-                        @show-todo-details="handleShowTodoDetails"
-                        @delete-todo="removeTodoWithConfirm"
-                        @restore-todo="restoreTodoWithConfirm"
+                        @show-todo-details="showTodoDetails"
+                        @delete-todo="todoStore.deleteTodoWithConfirmation"
+                        @restore-todo="todoStore.restoreTodoWithConfirmation"
                         @finish-todo="handleFinishTodo"
                         @unfinish-todo="handleUnfinishTodo"
                         @dragstart="handleDragStart"
@@ -51,7 +47,7 @@
             </template>
         </nue-main>
     </nue-container>
-    <todo-create-dialog ref="todoCreateDialogRef" :handler="handleCreateTodo" />
+    <todo-create-dialog ref="todoCreateDialogRef" :handler="todoStore.doCreateTodo" />
 </template>
 
 <script setup lang="ts">
@@ -61,12 +57,6 @@ import { useRouter } from 'vue-router'
 import { Loading, TodoFilterBar, ListColumnSwitcher, TodoCreateDialog } from '@nao-todo/components'
 import { ContentKanbanColumn } from './kanban-column'
 import { useTodoStore } from '@/stores'
-import {
-    createTodoWithOptions,
-    removeTodoWithConfirm,
-    restoreTodoWithConfirm,
-    updateTodoWithCompare
-} from '@/handlers/todo-handlers'
 import type { ContentKanbanProps, ContentKanbanEmits } from './types'
 import type { Todo, GetTodosOptions } from '@nao-todo/types'
 
@@ -76,7 +66,7 @@ const emit = defineEmits<ContentKanbanEmits>()
 const router = useRouter()
 const todoStore = useTodoStore()
 
-const { todos, getOptions, getOverview } = storeToRefs(todoStore)
+const { todos, getOptions } = storeToRefs(todoStore)
 
 const kanbanLoading = ref(false)
 const refreshTimer = ref<number | null>(null)
@@ -95,14 +85,7 @@ const categoriedTodos = computed(() => {
     return result
 })
 
-const handleGetTodos = async () => {
-    const { filterInfo } = props
-    kanbanLoading.value = true
-    await handleFilter(filterInfo)
-    kanbanLoading.value = false
-}
-
-const handleShowTodoDetails = (todoId: Todo['id']) => {
+const showTodoDetails = (todoId: Todo['id']) => {
     const { baseRoute } = props
     router.push({
         name: baseRoute,
@@ -110,14 +93,17 @@ const handleShowTodoDetails = (todoId: Todo['id']) => {
     })
 }
 
-const handleAddTodo = () => {
+const showCreateTodoDialog = () => {
     if (!todoCreateDialogRef.value) return
     emit('createTodoByDialog', todoCreateDialogRef.value.show)
 }
 
-const handleCreateTodo = async (newTodo: Partial<Todo>) => {
-    return await createTodoWithOptions(newTodo.projectId || null, newTodo)
+const handleGetTodos = async () => {
+    kanbanLoading.value = true
+    await todoStore.doGetTodos()
+    kanbanLoading.value = false
 }
+handleGetTodos()
 
 const handleFilter = async (newTodoFliter: GetTodosOptions) => {
     todoStore.updateGetOptions(newTodoFliter)
@@ -195,10 +181,10 @@ const handleDrop = async (event: DragEvent) => {
     const category = element.dataset.category as string
     if (!category) return
     const todoId = draggingTodoId.value
-    await updateTodoWithCompare(todoId, { state: category as Todo['state'] })
+    const todo = todoStore.getTodoByIdFromLocal(todoId)
+    if (todo && todo.state === category) return
+    await todoStore.doUpdateTodo(todoId, { state: category as Todo['state'] })
 }
-
-handleGetTodos()
 </script>
 
 <style scoped>

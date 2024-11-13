@@ -7,7 +7,8 @@ import type {
     GetTodosOptions,
     UpdateTodoOptions,
     CreateTodoOptions,
-    ResponseData
+    ResponseData,
+    GetTodosSortOptions
 } from '@nao-todo/types'
 
 // 添加待办
@@ -58,7 +59,11 @@ export const getTodo = async (options: GetTodoOptions) => {
 // 获取待办（s）
 export const getTodos = async (options: GetTodosOptions = defaultGetTodosOptions) => {
     try {
-        const queryString = stringifyGetOptions(options)
+        const queryString = stringifyGetOptions(options, (key, value) => {
+            if (key === 'sort' && value) {
+                return `${key}=${(value as GetTodosSortOptions).field}:${(value as GetTodosSortOptions).order}`
+            }
+        })
         const response = await $axios.get(`/todos?${queryString}`)
         return response.data as ResponseData
     } catch (error) {

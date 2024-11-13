@@ -20,8 +20,7 @@ export const useTodoStore = defineStore('todoStore', () => {
     // 获取选项
     const getOptions = ref<GetTodosOptions>({
         page: 1,
-        limit: 20,
-        sort: { field: 'createdAt', order: 'desc' }
+        limit: 20
     })
 
     // 获取结果总览
@@ -38,7 +37,6 @@ export const useTodoStore = defineStore('todoStore', () => {
 
     // 显示列选项
     const columnOptions = ref<TodoColumnOptions>({
-        name: true,
         state: true,
         priority: true,
         project: true,
@@ -147,6 +145,27 @@ export const useTodoStore = defineStore('todoStore', () => {
         }
     }
 
+    // 永久删除指定待办（带确认）
+    const deleteTodoPermanentlyWithConfirmation = async (todoId: Todo['id']) => {
+        try {
+            await NueConfirm({
+                title: '永久删除待办确认',
+                content: '确认永久删除该待办吗？',
+                confirmButtonText: '确认',
+                cancelButtonText: '取消'
+            })
+            const result = await doDeleteTodo(todoId)
+            if (result) {
+                NueMessage.success('待办永久删除成功')
+                return true
+            }
+        } catch (error) {
+            console.warn('[UseTodoStore] deleteTodoPermanentlyWithConfirmation:', error)
+            NueMessage.error('待办永久删除失败')
+            return false
+        }
+    }
+
     // 根据清单偏好设置获取选项
     const setGetOptionsByPreference = (preference: Project['preference']) => {
         if (!preference) return
@@ -176,6 +195,7 @@ export const useTodoStore = defineStore('todoStore', () => {
         doCreateTodo,
         deleteTodoWithConfirmation,
         restoreTodoWithConfirmation,
+        deleteTodoPermanentlyWithConfirmation,
         setGetOptionsByPreference,
         getTodoByIdFromLocal
     }

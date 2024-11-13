@@ -1,11 +1,15 @@
-import type { GetProjectsOptions } from '@nao-todo/types'
+type FilterOptions = {
+    title?: string
+    isDeleted?: boolean
+    isArchived?: boolean
+}
 
 export type ProjectFilterBarProps = {
-    filterInfo: GetProjectsOptions
+    filterOptions: FilterOptions
 }
 
 export type ProjectFilterBarEmits = {
-    (event: 'filter', payload: GetProjectsOptions): void
+    (event: 'filter', payload: FilterOptions | null): void
 }
 
 export type FilterOption<T> = {
@@ -16,4 +20,4 @@ export type FilterOption<T> = {
     suffix?: number
 }
 
-export type FilterOptions<T> = Array<FilterOption<T>>
+// export type FilterOptions<T> = Array<FilterOption<T>>

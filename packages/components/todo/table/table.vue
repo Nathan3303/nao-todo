@@ -35,13 +35,15 @@
         <nue-divider class="todo-table__divider" />
         <nue-div class="todo-table__body">
             <slot name="empty">
-                <nue-empty
+                <nue-text
                     v-if="!todos.length"
-                    image-src="/images/relaxation.png"
-                    image-size="64px"
-                    description="没有待办事项，放松一下吧！"
-                    style="height: 100%; flex: auto"
-                />
+                    size="12px"
+                    color="gray"
+                    align="center"
+                    style="margin-top: 16px"
+                >
+                    没有待办事项，放松一下吧！
+                </nue-text>
             </slot>
             <nue-div
                 class="todo-table__body__row"

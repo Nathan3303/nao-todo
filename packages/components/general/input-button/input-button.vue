@@ -68,7 +68,7 @@ const loading = ref(false)
 
 const handleClick = async (event: MouseEvent) => {
     const { onButtonClick } = props
-    const onButtonClickResult = await onButtonClick(event, { inputValue })
+    await onButtonClick(event, { inputValue })
     isInput.value = true
     nextTick(() => {
         inputRef.value?.innerInputRef?.focus()

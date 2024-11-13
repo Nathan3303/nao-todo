@@ -1,15 +1,15 @@
 import type { GetRequestPageOptions } from '../axios/common'
 import type { User } from './user'
 import type { Project } from './project'
+import type { Event } from './event'
 import type { Tag } from './tag'
-import type { Moment } from 'moment'
 
 type TodoDueDate = {
-    startAt: Moment | string | null
-    endAt: Moment | string | null
+    startAt: Date | string | null
+    endAt: Date | string | null
 }
 
-interface Todo {
+type Todo = {
     id: string
     userId: User['id']
     projectId: Project['id']
@@ -22,8 +22,11 @@ interface Todo {
     isDeleted: boolean
     isArchived: boolean
     isFavorited: boolean
-    createdAt: Date
-    updatedAt: Date
+    createdAt: string
+    updatedAt: string
+    // Additional fields
+    project?: { title: Project['title'] }
+    events?: Event[]
 }
 
 type GetTodoOptionsRaw = {

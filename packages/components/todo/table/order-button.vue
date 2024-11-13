@@ -34,11 +34,6 @@
                         <nue-text size="12px" style="flex: auto">降序</nue-text>
                         <nue-icon v-if="checkNumber === -1" size="12px" name="check" />
                     </nue-div>
-                    <!-- <nue-divider style="margin: 4px 0px" />
-                    <nue-div align="center" class="nue-dropdown-item">
-                        <nue-icon size="14px" name="eye-close" />
-                        <nue-text size="13px">隐藏</nue-text>
-                    </nue-div> -->
                 </nue-main>
             </nue-container>
         </template>
