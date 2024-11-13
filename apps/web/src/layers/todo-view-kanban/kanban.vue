@@ -3,8 +3,8 @@
         <nue-header height="auto" :key="$route.path" style="box-sizing: border-box">
             <nue-div align="start" justify="space-between" gap="16px">
                 <todo-filter-bar
-                    :count-info="countInfo"
-                    :filter-info="filterInfo"
+                    :count-info="getOverview.countInfo"
+                    :filter-info="getOptions"
                     @filter="handleFilter"
                 />
                 <nue-div justify="end" flex="none" width="fit-content" gap="12px">
@@ -60,7 +60,7 @@ import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { Loading, TodoFilterBar, ListColumnSwitcher, TodoCreateDialog } from '@nao-todo/components'
 import { ContentKanbanColumn } from './kanban-column'
-import { useTodoStore, useUserStore } from '@/stores'
+import { useTodoStore } from '@/stores'
 import {
     createTodoWithOptions,
     removeTodoWithConfirm,
@@ -68,17 +68,15 @@ import {
     updateTodoWithCompare
 } from '@/handlers/todo-handlers'
 import type { ContentKanbanProps, ContentKanbanEmits } from './types'
-import type { Todo, TodoFilter } from '@/stores'
+import type { Todo, GetTodosOptions } from '@nao-todo/types'
 
 const props = defineProps<ContentKanbanProps>()
 const emit = defineEmits<ContentKanbanEmits>()
 
 const router = useRouter()
-const userStore = useUserStore()
 const todoStore = useTodoStore()
 
-const { todos, countInfo, filterInfo } = storeToRefs(todoStore)
-const { user } = storeToRefs(userStore)
+const { todos, getOptions, getOverview } = storeToRefs(todoStore)
 
 const kanbanLoading = ref(false)
 const refreshTimer = ref<number | null>(null)
@@ -100,9 +98,8 @@ const categoriedTodos = computed(() => {
 const handleGetTodos = async () => {
     const { filterInfo } = props
     kanbanLoading.value = true
-    const res = await todoStore.get(userStore.user!.id, filterInfo)
+    await handleFilter(filterInfo)
     kanbanLoading.value = false
-    return res
 }
 
 const handleShowTodoDetails = (todoId: Todo['id']) => {
@@ -122,16 +119,10 @@ const handleCreateTodo = async (newTodo: Partial<Todo>) => {
     return await createTodoWithOptions(newTodo.projectId || null, newTodo)
 }
 
-const handleFilter = async (newTodoFliter: TodoFilter) => {
-    const userId = user.value!.id
-    todoStore.mergeFilterInfo(newTodoFliter)
-    await todoStore.get(userId)
+const handleFilter = async (newTodoFliter: GetTodosOptions) => {
+    todoStore.updateGetOptions(newTodoFliter)
+    await todoStore.doGetTodos()
 }
-
-// const handleChangeColumns = (payload: Columns) => {
-//     console.log(payload)
-//     todoStore.mergeColumnOptions(payload)
-// }
 
 const handleRefresh = async () => {
     if (refreshTimer.value) return
@@ -139,13 +130,11 @@ const handleRefresh = async () => {
 }
 
 const handleFinishTodo = async (todoId: Todo['id']) => {
-    const userId = user.value!.id
-    await todoStore.update(userId, todoId, { state: 'done', isDone: true })
+    await todoStore.doUpdateTodo(todoId, { state: 'done' })
 }
 
 const handleUnfinishTodo = async (todoId: Todo['id']) => {
-    const userId = user.value!.id
-    await todoStore.update(userId, todoId, { isDone: false, state: 'todo' })
+    await todoStore.doUpdateTodo(todoId, { state: 'todo' })
 }
 
 const handleDragStart = (event: DragEvent) => {

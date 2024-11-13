@@ -37,12 +37,12 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { SubmitPayload } from '@/stores/use-user-store'
 import { NueMessage } from 'nue-ui'
+import type { SigninOptions } from '@nao-todo/types'
 
-const props = defineProps<{ loading: boolean }>()
+defineProps<{ loading: boolean }>()
 const emit = defineEmits<{
-    (event: 'submit', payload: SubmitPayload): void
+    (event: 'submit', payload: SigninOptions): void
 }>()
 
 const email = ref('')

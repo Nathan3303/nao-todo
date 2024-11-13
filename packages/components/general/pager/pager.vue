@@ -3,7 +3,7 @@
         <nue-div align="center" width="fit-content" gap="8px">
             <nue-text size="12px">每页条数</nue-text>
             <nue-select size="small" v-model="perpage" @change="handlePerPageChange">
-                <nue-select-option v-for="i in 5" :label="`${i * 10}`" :value="i * 10" />
+                <nue-select-option v-for="i in 5" :key="i" :label="`${i * 10}`" :value="i * 10" />
             </nue-select>
         </nue-div>
         <nue-text size="12px"> 第 {{ page }} 页，共 {{ totalPages }} 页。</nue-text>
@@ -43,7 +43,7 @@ import type { PagerEmits, PagerProps } from './types'
 const props = defineProps<PagerProps>()
 const emit = defineEmits<PagerEmits>()
 
-const perpage = ref(props.limit)
+const perpage = ref<number>(props.limit || 20)
 
 const prevButtonDisabled = computed(() => props.page === 1)
 const nextButtonDisabled = computed(() => props.page === props.totalPages)

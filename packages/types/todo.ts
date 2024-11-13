@@ -14,7 +14,7 @@ interface Todo {
     projectId: Project['id']
     name: string
     description: string
-    state: 'todo' | 'doing' | 'done'
+    state: 'todo' | 'in-progress' | 'done'
     priority: 'low' | 'medium' | 'high' | 'urgent'
     tags: Tag['id'][]
     dueDate: TodoDueDate
@@ -31,19 +31,24 @@ type GetTodoOptionsRaw = {
     description?: Todo['description']
 }
 
+type GetTodosSortOptions = {
+    field: keyof Todo
+    order: 'asc' | 'desc'
+}
+
 type GetTodosOptionsRaw = {
+    projectId?: Todo['projectId']
     name?: Todo['name']
     description?: Todo['description']
+    state?: string
+    priority?: string
     isArchived?: Todo['isArchived']
     isDeleted?: Todo['isDeleted']
-    sort?: {
-        field: keyof Todo
-        order: 'asc' | 'desc'
-    }
+    sort?: GetTodosSortOptions
 }
 
 type UpdateTodoOptionsRaw = {
-    projectId: Project['id']
+    projectId?: Project['id']
     name?: Todo['name']
     description?: Todo['description']
     state?: Todo['state']
@@ -65,12 +70,32 @@ type GetTodoOptions = GetTodoOptionsRaw
 
 type GetTodosOptions = GetTodosOptionsRaw & GetRequestPageOptions
 
+type GetTodosResponseData = { todos: Todo[]; payload: GetTodosOverview }
+
+type GetTodosOverview = {
+    countInfo: {
+        byPriority: Record<string, number>
+        byState: Record<string, number>
+        count: number
+        length: number
+        total: number
+    }
+    pageInfo: { page: number; totalPages: number }
+}
+
+type TodoColumnOptions = Partial<Record<keyof Todo, boolean>>
+
 export type {
     Todo,
     TodoDueDate,
     CreateTodoOptions,
     DeleteTodoOptions,
+    UpdateTodoOptionsRaw,
     UpdateTodoOptions,
     GetTodoOptions,
-    GetTodosOptions
+    GetTodosSortOptions,
+    GetTodosOptions,
+    GetTodosResponseData,
+    GetTodosOverview,
+    TodoColumnOptions
 }

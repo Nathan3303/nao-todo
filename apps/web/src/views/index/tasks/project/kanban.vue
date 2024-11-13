@@ -1,7 +1,7 @@
 <template>
     <todo-view-kanban
         :key="route.params.projectId.toString()"
-        :filter-info="todoStore.filterInfo"
+        :filter-info="todoStore.getOptions"
         base-route="tasks-project-kanban"
         @create-todo="handleCreateTodo"
         @create-todo-by-dialog="handleCreateTodoByDialog"
@@ -16,7 +16,7 @@ import { TodoViewKanban } from '@/layers'
 import { useProjectStore, useUserStore, useTagStore, useTodoStore } from '@/stores'
 import { useRoute } from 'vue-router'
 import { createTodoWithOptions } from '@/handlers/todo-handlers'
-import type { Todo } from '@/stores'
+import type { Todo } from '@nao-todo/types'
 import type { TodoCreateDialogArgs } from '@nao-todo/components/todo/create-dialog/types'
 
 const route = useRoute()
@@ -27,15 +27,15 @@ const tagStore = useTagStore()
 
 const handleCreateTodo = async (todoName: Todo['name']) => {
     const projectId = route.params.projectId as string
-    const project = projectStore._toFinded(projectId)
+    const project = projectStore.getProjectByIdFromLocal(projectId)
     const createOptions = { name: todoName, project: { title: project ? project.title : '' } }
     await createTodoWithOptions(projectId, createOptions)
 }
 
 const handleCreateTodoByDialog = async (caller: (args: TodoCreateDialogArgs) => void) => {
     const projectId = route.params.projectId as string
-    const project = projectStore._toFinded(projectId)
-    const avalibleProjects = projectStore._toFiltered({ isDeleted: false, isArchived: false })
+    const project = projectStore.getProjectByIdFromLocal(projectId)
+    const avalibleProjects = projectStore.findProjectsFromLocal({ isDeleted: false, isArchived: false })
     // console.log(avalibleProjects)
     caller({
         userId: userStore.user!.id,

@@ -41,7 +41,7 @@
 <script setup lang="ts">
 import { ref, nextTick, watch } from 'vue'
 import { NueInput } from 'nue-ui'
-import type { CreateProjectOptions } from '@/stores/use-project-store/v2/types'
+import type { CreateProjectOptions } from '@nao-todo/types'
 
 defineOptions({ name: 'CreateProjectDialog' })
 const props = defineProps<{

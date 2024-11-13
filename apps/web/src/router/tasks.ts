@@ -35,19 +35,19 @@ const tasksRoutes = {
             name: `tasks-project`,
             meta: { category: 'project' },
             props: true,
-            component: () => import(`../views/index/tasks/project/index.vue`),
+            component: () => import(`@/views/index/tasks/project/index.vue`),
             children: [
                 {
                     path: 'table/:taskId?',
                     name: `tasks-project-table`,
                     meta: { viewType: 'table' },
-                    component: () => import(`../views/index/tasks/project/table.vue`)
+                    component: () => import(`@/views/index/tasks/project/table.vue`)
                 },
                 {
                     path: 'kanban/:taskId?',
                     name: `tasks-project-kanban`,
                     meta: { viewType: 'kanban' },
-                    component: () => import(`../views/index/tasks/project/kanban.vue`)
+                    component: () => import(`@/views/index/tasks/project/kanban.vue`)
                 }
             ]
         }

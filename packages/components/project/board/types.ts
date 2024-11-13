@@ -1,4 +1,4 @@
-import type { Project } from '@/stores/use-project-store/v2/types'
+import type { Project } from '@nao-todo/types'
 
 export type ProjectBoardProps = {
     projects?: Project[]

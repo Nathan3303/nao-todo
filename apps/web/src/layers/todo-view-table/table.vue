@@ -7,8 +7,8 @@
         >
             <nue-div align="start" justify="space-between" gap="16px">
                 <todo-filter-bar
-                    :count-info="countInfo"
-                    :filter-info="filterInfo"
+                    :count-info="getOverview.countInfo"
+                    :filter-info="getOptions"
                     @filter="handleFilter"
                 />
                 <nue-div justify="end" flex="none" width="fit-content" gap="12px">
@@ -44,7 +44,7 @@
                     :todos="todos"
                     :tags="tagStore.tags"
                     :columns="todoStore.columnOptions"
-                    :sort-info="sortInfo"
+                    :sort-info="getOptions.sort || { field: 'id', order: 'desc' }"
                     @delete-todo="removeTodoWithConfirm"
                     @restore-todo="restoreTodoWithConfirm"
                     @show-todo-details="handleShowTodoDetails"
@@ -56,15 +56,16 @@
         <nue-footer>
             <nue-div align="center" justify="space-between">
                 <nue-text size="12px" color="gray" flex>
-                    当前列表 {{ countInfo?.length || 0 }} 项， 共计 {{ countInfo?.count || 0 }} 项。
+                    当前列表 {{ getOverview.countInfo?.length || 0 }} 项， 共计
+                    {{ getOverview.countInfo?.count || 0 }} 项。
                     <nue-text v-if="isShowMultiDetails" size="12px" color="orange">
                         已选择 {{ multiSelectCount }} 项。
                     </nue-text>
                 </nue-text>
                 <pager
-                    :page="pageInfo.page"
-                    :limit="pageInfo.limit"
-                    :total-pages="pageInfo.totalPages"
+                    :page="getOverview.pageInfo.page"
+                    :limit="getOptions.limit"
+                    :total-pages="getOverview.pageInfo.totalPages"
                     @perpage-change="handlePerPageChange"
                     @page-change="handlePageChange"
                 />
@@ -78,7 +79,7 @@
 import { ref, inject, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { useTodoStore, useUserStore, useTagStore } from '@/stores'
+import { useTodoStore, useTagStore } from '@/stores'
 import { TasksViewContextKey } from '@/views/index/tasks/constants'
 import {
     TodoTable,
@@ -93,8 +94,7 @@ import {
     removeTodoWithConfirm,
     restoreTodoWithConfirm
 } from '@/handlers/todo-handlers'
-import type { Columns } from '@nao-todo/components'
-import type { Todo, TodoFilter, TodoSortOptions } from '@/stores'
+import type { Todo, GetTodosOptions, TodoColumnOptions } from '@nao-todo/types'
 import type { ContentTableProps, ContentTableEmits } from './types'
 import type { TodoTableMultiSelectEmitPayload } from '@nao-todo/components/todo/table'
 import type { TasksViewContext } from '@/views/index/tasks/types'
@@ -104,12 +104,10 @@ const props = defineProps<ContentTableProps>()
 const emit = defineEmits<ContentTableEmits>()
 
 const router = useRouter()
-const userStore = useUserStore()
 const todoStore = useTodoStore()
 const tagStore = useTagStore()
 
-const { user } = storeToRefs(userStore)
-const { todos, pageInfo, countInfo, filterInfo, sortInfo } = storeToRefs(todoStore)
+const { todos, getOptions, getOverview } = storeToRefs(todoStore)
 
 const tableLoading = ref(false)
 const todoTableRef = ref<InstanceType<typeof TodoTable>>()
@@ -119,10 +117,16 @@ const multiSelectCount = ref(0)
 const { isShowMultiDetails, handleHideMultiDetails, handleShowMultiDetails } =
     inject<TasksViewContext>(TasksViewContextKey)!
 
+const handleFilter = async (newTodoFliter: GetTodosOptions) => {
+    todoStore.updateGetOptions(newTodoFliter)
+    await todoStore.doGetTodos()
+}
+
 const handleGetTodos = async () => {
     const { filterInfo } = props
     tableLoading.value = true
-    await todoStore.get(user.value!.id, filterInfo)
+    // await todoStore.doGetTodos()
+    await handleFilter(filterInfo)
     tableLoading.value = false
 }
 handleGetTodos()
@@ -136,8 +140,8 @@ const handleCreateTodo = async (newTodo: Partial<Todo>) => {
     return await createTodoWithOptions(newTodo.projectId || null, newTodo)
 }
 
-const handleChangeColumns = (payload: Columns) => {
-    todoStore.mergeColumnOptions(payload)
+const handleChangeColumns = (payload: TodoColumnOptions) => {
+    todoStore.updateColumnOptions(payload)
 }
 
 const handleShowTodoDetails = (id: Todo['id']) => {
@@ -157,20 +161,14 @@ const handleMultiSelect = (payload: TodoTableMultiSelectEmitPayload) => {
 }
 
 const handlePerPageChange = (perPage: number) => {
-    pageInfo.value.page = 1
-    pageInfo.value.limit = perPage
+    getOptions.value.page = 1
+    getOptions.value.limit = perPage
     handleGetTodos()
 }
 
 const handlePageChange = (page: number) => {
-    pageInfo.value.page = page
+    getOptions.value.page = page
     handleGetTodos()
-}
-
-const handleFilter = async (newTodoFliter: TodoFilter) => {
-    const userId = user.value!.id
-    todoStore.mergeFilterInfo(newTodoFliter)
-    await todoStore.get(userId)
 }
 
 const handleRefresh = async () => {
@@ -178,11 +176,9 @@ const handleRefresh = async () => {
     await handleGetTodos()
 }
 
-const handleSortTodo = async (newSortInfo: TodoSortOptions) => {
-    const userId = user.value!.id
-    sortInfo.value.field = newSortInfo.field
-    sortInfo.value.order = newSortInfo.order
-    await todoStore.get(userId)
+const handleSortTodo = async (newSortInfo: GetTodosOptions['sort']) => {
+    getOptions.value.sort = newSortInfo
+    await todoStore.doGetTodos()
 }
 
 watch(

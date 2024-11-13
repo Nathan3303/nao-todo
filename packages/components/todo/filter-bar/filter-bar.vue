@@ -20,9 +20,9 @@
             :framework="priorityComboBoxOptions"
             @change="handleChangePriorityOption"
         />
-        <nue-text v-if="props.filterInfo.id" size="12px" color="gray">
+        <!-- <nue-text v-if="props.filterInfo.id" size="12px" color="gray">
             Id: {{ props.filterInfo.id }}
-        </nue-text>
+        </nue-text> -->
         <nue-button v-if="isFiltering" theme="small" icon="clear" @click="handleResetFilter">
             重置
         </nue-button>

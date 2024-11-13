@@ -1,11 +1,11 @@
 import { reactive, ref } from 'vue'
 import { defineStore } from 'pinia'
 // import { useTagStore, useUserStore } from '..'
-import { useProjectStoreV2 } from '../use-project-store'
+import { useProjectStore } from '../use-project-store'
 
 export const useViewStore = defineStore('viewStore', () => {
     // const userStore = useUserStore()
-    const projectStore = useProjectStoreV2()
+    const projectStore = useProjectStore()
     // const tagStore = useTagStore()
 
     const indexViewLoader = reactive({
@@ -30,7 +30,7 @@ export const useViewStore = defineStore('viewStore', () => {
             indexViewLoader.loading = true
             // const userId = userStore.user!.id
             // await projectStore.init(userId, { page: 1, limit: 99 })
-            await projectStore.fetchProjects()
+            await projectStore.doGetProjects()
             // await tagStore.initialize(userId, { page: 1, limit: 99 })
         } catch (e) {
             indexViewLoader.error = true

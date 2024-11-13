@@ -47,19 +47,19 @@ const loading = ref(false)
 const isLogin = computed(() => props.operation === 'login')
 const switchButtonText = computed(() => (isLogin.value ? '注册' : '登录'))
 const subView = computed(() => (isLogin.value ? AuthSignIn : AuthSignUp))
-const switchRoute = computed(() => ('/authentication' + isLogin.value ? '/signup' : '/login'))
+const switchRoute = computed(() => ('/auth' + isLogin.value ? '/signup' : '/login'))
 
 const handleSignin = async (options: SigninOptions) => {
     const res = await userStore.doSignin(options)
-    if (res) throw new Error('登录失败')
+    if (!res) throw new Error('登录失败')
     router.push({ name: 'index' })
     requestIdleCallback(() => NueMessage.success('登录成功'))
 }
 
 const handleSignup = async (payload: SignupOptions) => {
     const res = await userStore.doSignup(payload)
-    if (res) throw new Error('注册失败')
-    router.push('/authentication/login')
+    if (!res) throw new Error('注册失败')
+    router.push('/auth/login')
     requestIdleCallback(() => NueMessage.success('注册成功'))
 }
 
@@ -75,14 +75,14 @@ async function handleSubmit(payload: SigninOptions | SignupOptions) {
         if (e instanceof Error) {
             NueMessage.error(e.message)
         }
-        console.log('[/authentication/index.vue]:handleSubmit', e)
+        console.log('[/auth/index.vue]:handleSubmit', e)
     } finally {
         loading.value = false
     }
 }
 </script>
 
-<style scoped>
+<style>
 .authentication-view {
     .nue-main {
         .nue-main__aside {

@@ -32,7 +32,7 @@
             </template>
         </todo-view-header>
         <nue-main style="border: none">
-            <!-- <router-view></router-view> -->
+            <router-view></router-view>
         </nue-main>
     </nue-container>
 </template>
@@ -43,8 +43,7 @@ import { TodoViewHeader } from '@/layers'
 import { useRoute, useRouter } from 'vue-router'
 import { useProjectStore, useTodoStore } from '@/stores'
 import { projectViewContextKey } from './constants'
-import { archiveProjectWithConfirmation, updateProjectPreference } from '@/handlers'
-import type { Project } from '@nao-todo/types'
+import type { GetTodosOptions, Project } from '@nao-todo/types'
 import type { ProjectViewContext } from './types'
 
 const route = useRoute()
@@ -56,14 +55,13 @@ let firstLoadFlag: string | null = null
 const project = ref<Project | null>(null)
 
 const handleSaveAsPreference = async (projectId: Project['id']) => {
-    // const viewType = ((route.name as string).split('-')[2] as 'table' | 'kanban') || 'table'
-    // const preference: Project['preference'] = {
-    //     viewType,
-    //     filterInfo: todoStore.filterInfo,
-    //     sortInfo: todoStore.sortInfo,
-    //     columns: todoStore.columnOptions
-    // }
-    // await updateProjectPreference(projectId, preference)
+    const viewType = ((route.name as string).split('-')[2] as 'table' | 'kanban') || 'table'
+    const preference: Project['preference'] = {
+        viewType,
+        getTodosOptions: { page: 1, limit: 20, projectId, isDeleted: false },
+        columns: {}
+    }
+    await projectStore.updateProjectPreference(projectId, preference)
 }
 
 const handleDropdownExecute = async (executeId: string) => {
@@ -74,7 +72,7 @@ const handleDropdownExecute = async (executeId: string) => {
                 await handleSaveAsPreference(projectId)
                 break
             case 'archive':
-                await archiveProjectWithConfirmation(projectId)
+                await projectStore.archiveProjectWithConfirmation(projectId)
                 router.replace({ name: 'tasks-all' })
                 break
         }
@@ -84,14 +82,12 @@ const handleDropdownExecute = async (executeId: string) => {
 }
 
 const handleLoadProjectPreference = () => {
-    // if (!project.value) return
-    // const projectPreference = project.value.preference || { viewType: 'table', filterInfo: {} }
-    // if (projectPreference) todoStore.resetOptions()
-    // Object.assign(projectPreference.filterInfo, {
-    //     isDeleted: false,
-    //     projectId: project.value.id
-    // })
-    // todoStore.setOptionsByProjectPreference(projectPreference)
+    if (!project.value) return
+    const preference = {
+        viewType: 'table',
+        getTodosOptions: { page: 1, limit: 20, isDeleted: false, projectId: project.value.id }
+    } as unknown as GetTodosOptions
+    todoStore.setGetOptionsByPreference(preference)
 }
 
 const handleGoToDefaulView = () => {
@@ -105,19 +101,19 @@ const handleGoToDefaulView = () => {
 }
 
 watchEffect(async () => {
-    // const { meta, params, name } = route
-    // const pid = params.projectId as Project['id']
-    // project.value = (await projectStore.fetchProject({ id: pid })).data as Project
-    // if (!['tasks-project-table', 'tasks-project-kanban'].includes(name as string)) {
-    //     handleGoToDefaulView()
-    // }
-    // const firstLoadId = `${pid}|${name as string}` as string
-    // if (firstLoadFlag === firstLoadId && meta.category === 'project') return
-    // if (project.value) {
-    //     document.title = 'NaoTodo - ' + project.value.title
-    //     handleLoadProjectPreference()
-    // }
-    // firstLoadFlag = firstLoadId
+    const { meta, params, name } = route
+    const pid = params.projectId as Project['id']
+    project.value = projectStore.getProjectByIdFromLocal(pid) ?? null
+    if (!['tasks-project-table', 'tasks-project-kanban'].includes(name as string)) {
+        handleGoToDefaulView()
+    }
+    const firstLoadId = `${pid}|${name as string}` as string
+    if (firstLoadFlag === firstLoadId && meta.category === 'project') return
+    if (project.value) {
+        document.title = 'NaoTodo - ' + project.value.title
+        handleLoadProjectPreference()
+    }
+    firstLoadFlag = firstLoadId
 })
 
 provide<ProjectViewContext>(projectViewContextKey, { project })

@@ -5,6 +5,6 @@ export type ResponseData = {
 }
 
 export type GetRequestPageOptions = {
-    page: number
-    limit: number
+    page?: number
+    limit?: number
 }

@@ -20,7 +20,7 @@
             <nue-divider />
             <nue-collapse v-model="collapseItemsRecord">
                 <project-smart-list />
-                <!-- <todo-filter-list /> -->
+                <todo-filter-list />
                 <!-- <tag-smart-list /> -->
             </nue-collapse>
             <nue-divider />
@@ -39,7 +39,7 @@
 
 <script setup lang="ts">
 import { ref, provide } from 'vue'
-import { TodoDetailsV2, ProjectSmartList, TodoMultiDetails } from '@/layers'
+import { TodoDetailsV2, ProjectSmartList, TodoMultiDetails, TodoFilterList } from '@/layers'
 import { storeToRefs } from 'pinia'
 import { useViewStore } from '@/stores'
 import { AsideLink } from '@nao-todo/components'

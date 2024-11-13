@@ -106,14 +106,9 @@
 </template>
 
 <script setup lang="ts">
-import { useViewStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
-import {
-    updateProjectTitleWithPromt,
-    updateProjectDescriptionWithPromt,
-    removeProjectWithConfirmation
-} from '@/handlers/project-handlers'
+import { useViewStore, useProjectStore } from '@/stores'
 import { removeTagWithConfirm, renameTagWithPrompt } from '@/handlers/tag-handlers'
 import type { ContentHeaderProps } from './types'
 
@@ -125,6 +120,7 @@ const props = withDefaults(defineProps<ContentHeaderProps>(), {
 
 const router = useRouter()
 const viewStore = useViewStore()
+const projectStore = useProjectStore()
 
 const { projectAsideVisible: pav, simpleProjectHeader: sph } = storeToRefs(viewStore)
 
@@ -136,20 +132,20 @@ const handleUpdateProjectTitle = () => {
     if (!props.project) return
     const projectId = props.project?.id
     const projectName = props.project?.title
-    updateProjectTitleWithPromt(projectId, projectName)
+    projectStore.updateProjectTitleWithPromt(projectId, projectName)
 }
 
 const handleUpdateProjectDescription = () => {
     if (!props.project) return
     const projectId = props.project?.id
     const projectDescription = props.project?.description
-    updateProjectDescriptionWithPromt(projectId, projectDescription)
+    projectStore.updateProjectDescriptionWithPromt(projectId, projectDescription)
 }
 
 const handleRemoveProject = async () => {
     const projectId = props.project?.id
     if (!projectId) return
-    const deleteResult = await removeProjectWithConfirmation(projectId)
+    const deleteResult = await projectStore.removeProjectWithConfirmation(projectId)
     if (deleteResult) router.push('/tasks/all')
 }
 

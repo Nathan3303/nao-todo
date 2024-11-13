@@ -7,20 +7,35 @@
             <nue-div align="center" justify="space-between">
                 <project-filter-bar :filter-info="getOptions" @filter="handleFilter" />
                 <nue-div width="fit-content" gap="12px">
-                    <nue-button theme="small,primary" icon="plus-circle"> 新增 </nue-button>
+                    <nue-button
+                        theme="small,primary"
+                        icon="plus-circle"
+                        @click="showCreateProjectDialog"
+                    >
+                        新增
+                    </nue-button>
                     <!-- <nue-button theme="small" icon="refresh" @click="refresh"> 刷新 </nue-button> -->
                 </nue-div>
             </nue-div>
-            <project-board :projects="projects" :loading-state="loading" />
+            <project-board
+                :projects="projects"
+                :loading-state="loading"
+                @delete-project="projectStore.removeProjectWithConfirmation"
+                @restore-project="projectStore.restoreProjectWithConfirmation"
+                @delete-project-permanently="projectStore.removeProjectPermanently"
+                @archive-project="projectStore.archiveProjectWithConfirmation"
+                @unarchive-project="projectStore.unarchiveProjectWithConfirmation"
+            />
         </nue-div>
     </nue-dialog>
+    <create-project-dialog ref="createProjectDialogRef" :handler="handleCreateProject" />
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { createProjectWithConfirmation } from '@/handlers'
 import { useProjectStore } from '@/stores/use-project-store'
+import { CreateProjectDialog } from '../create-project-dialog'
 import { ProjectBoard, ProjectFilterBar } from '@nao-todo/components/project'
 import type { CreateProjectOptions, GetProjectsOptions } from '@nao-todo/types'
 
@@ -32,9 +47,14 @@ const { projects, getOptions } = storeToRefs(projectStore)
 
 const visible = ref(false)
 const loading = ref(false)
+const createProjectDialogRef = ref<InstanceType<typeof CreateProjectDialog>>()
+
+const showCreateProjectDialog = () => {
+    createProjectDialogRef.value?.show()
+}
 
 const handleCreateProject = async (payload: CreateProjectOptions) => {
-    await createProjectWithConfirmation(payload)
+    await projectStore.doCreateProject(payload)
 }
 
 const handleFilter = (payload: GetProjectsOptions) => {

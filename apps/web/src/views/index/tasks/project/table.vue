@@ -1,7 +1,7 @@
 <template>
     <todo-view-table
         :key="route.params.projectId.toString()"
-        :filter-info="todoStore.filterInfo"
+        :filter-info="todoStore.getOptions"
         base-route="tasks-project-table"
         @create-todo="handleCreateTodo"
         @create-todo-by-dialog="handleCreateTodoByDialog"
@@ -18,7 +18,7 @@ import { useRoute } from 'vue-router'
 import { createTodoWithOptions } from '@/handlers/todo-handlers'
 import { useProjectStore, useTagStore, useUserStore, useTodoStore } from '@/stores'
 import { projectViewContextKey } from './constants'
-import type { Todo } from '@/stores'
+import type { Todo } from '@nao-todo/types'
 import type { TodoCreateDialogArgs } from '@nao-todo/components/todo/create-dialog/types'
 import type { ProjectViewContext } from './types'
 
@@ -42,7 +42,10 @@ const handleCreateTodo = async (todoName: Todo['name']) => {
 const handleCreateTodoByDialog = async (caller: (args: TodoCreateDialogArgs) => void) => {
     if (!project.value) return
     const { id, title } = project.value
-    const avalibleProjects = projectStore._toFiltered({ isDeleted: false, isArchived: false })
+    const avalibleProjects = projectStore.findProjectsFromLocal({
+        isDeleted: false,
+        isArchived: false
+    })
     caller({
         userId: userStore.user!.id,
         projects: avalibleProjects,

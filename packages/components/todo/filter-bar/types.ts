@@ -1,12 +1,12 @@
-import type { TodoCountInfo, TodoFilter } from '@/stores'
+import type { GetTodosOptions, GetTodosOverview } from '@nao-todo/types'
 
 export type TodoFilterBarProps = {
-    filterInfo: TodoFilter
-    countInfo: TodoCountInfo
+    filterInfo: GetTodosOptions
+    countInfo: GetTodosOverview['countInfo']
 }
 
 export type TodoFilterBarEmits = {
-    (event: 'filter', payload: TodoFilter): void
+    (event: 'filter', payload: GetTodosOptions): void
 }
 
 export type FilterOption<T> = {

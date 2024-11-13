@@ -1,11 +1,11 @@
 import type { GetRequestPageOptions } from './common'
-import type { GetTodosOptions } from './todo'
+import type { GetTodosOptions, TodoColumnOptions } from './todo'
 import type { User } from './user'
 
 type ProjectPreference = {
     viewType: string
     getTodosOptions: GetTodosOptions
-    columns: unknown
+    columns: TodoColumnOptions
 }
 
 type Project = {
@@ -33,7 +33,7 @@ type GetProjectOptionsRaw = {
 type GetProjectsOptionsRaw = {
     title?: string
     description?: string
-    isArrchived?: boolean
+    isArchived?: boolean
     isDeleted?: boolean
     sort?: {
         field: keyof Project
@@ -62,6 +62,7 @@ export type {
     Project,
     ProjectPreference,
     GetProjectOptions,
+    GetProjectsOptionsRaw,
     GetProjectsOptions,
     UpdateProjectOptionsRaw,
     UpdateProjectOptions,

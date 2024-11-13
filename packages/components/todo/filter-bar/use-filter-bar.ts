@@ -1,8 +1,8 @@
 import { ref, watch, computed } from 'vue'
 import type { TodoFilterBarProps, TodoFilterBarEmits, FilterOptions } from './types'
-import type { TodoFilter, TodoPriority, TodoState } from '@/stores'
+import type { Todo, GetTodosOptions } from '@nao-todo/types'
 
-const stateOptions: FilterOptions<TodoState> = [
+const stateOptions: FilterOptions<Todo['state']> = [
     {
         label: '待办(todo)',
         value: 'todo',
@@ -26,7 +26,7 @@ const stateOptions: FilterOptions<TodoState> = [
     }
 ]
 
-const priorityOptions: FilterOptions<TodoPriority> = [
+const priorityOptions: FilterOptions<Todo['priority']> = [
     {
         label: '低(low)',
         value: 'low',
@@ -55,8 +55,8 @@ export const useTodoFilterBar = (props: TodoFilterBarProps, emit: TodoFilterBarE
 
     const isFiltering = computed(() => {
         if (!props.filterInfo) return false
-        const { id, name, state, priority } = props.filterInfo
-        return id || name || state || priority
+        const { name, state, priority } = props.filterInfo
+        return name || state || priority
     })
 
     const stateComboBoxOptions = computed({
@@ -64,12 +64,12 @@ export const useTodoFilterBar = (props: TodoFilterBarProps, emit: TodoFilterBarE
             const { state } = props.filterInfo
             const splitedState = state?.split(',')
             return stateOptions.map((option) => {
-                option.checked = splitedState?.includes(option.value)!
+                option.checked = splitedState?.includes(option.value) || false
                 option.suffix = props.countInfo.byState[option.value] || 0
                 return option
             })
         },
-        set(newValue: FilterOptions<TodoState>) {
+        set(newValue: FilterOptions<Todo['state']>) {
             const fs = buildFilterString(newValue)
             emit('filter', { state: fs })
         }
@@ -80,12 +80,12 @@ export const useTodoFilterBar = (props: TodoFilterBarProps, emit: TodoFilterBarE
             const { priority } = props.filterInfo
             const splitedPriority = priority?.split(',')
             return priorityOptions.map((option) => {
-                option.checked = splitedPriority?.includes(option.value as string)!
+                option.checked = splitedPriority?.includes(option.value as string) || false
                 option.suffix = props.countInfo.byPriority[option.value] || 0
                 return option
             })
         },
-        set(newValue: FilterOptions<TodoPriority>) {
+        set(newValue: FilterOptions<Todo['priority']>) {
             const fs = buildFilterString(newValue)
             emit('filter', { priority: fs })
         }
@@ -120,7 +120,7 @@ export const useTodoFilterBar = (props: TodoFilterBarProps, emit: TodoFilterBarE
     watch(
         () => filterText.value,
         (newValue) => {
-            emit('filter', { name: newValue } as TodoFilter)
+            emit('filter', { name: newValue } as GetTodosOptions)
         }
     )
 

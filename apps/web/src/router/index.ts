@@ -18,8 +18,9 @@ const router = createRouter({
                 const userStore = useUserStore()
                 if (!userStore.isAuthenticated) {
                     const checkinResult = await userStore.doCheckin()
-                    if (checkinResult || !userStore.isAuthenticated) {
-                        next('/authentication/login')
+                    console.log(checkinResult, userStore.isAuthenticated)
+                    if (!checkinResult && !userStore.isAuthenticated) {
+                        next('/auth/login')
                         return
                     }
                 }

@@ -42,13 +42,12 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { storeToRefs } from 'pinia'
 import { ProjectManager } from '../project-manager'
 import { CreateProjectDialog } from '../create-project-dialog'
-import { createProjectWithConfirmation } from '@/handlers/project-handlers/v2'
-import { AsideLink } from '@nao-todo/components'
 import { useProjectStore } from '@/stores'
+import { AsideLink } from '@nao-todo/components'
 import type { CreateProjectOptions } from '@nao-todo/types'
-import { storeToRefs } from 'pinia'
 
 defineOptions({ name: 'ProjectSmartList' })
 
@@ -62,7 +61,6 @@ const showCreateProjectDialog = () => createProjectDialogRef.value?.show()
 const showProjectManageDialog = () => projectManagerRef.value?.show()
 
 const handleCreateProject = async (payload: CreateProjectOptions) => {
-    return await createProjectWithConfirmation(payload)
+    return await projectStore.doCreateProject(payload)
 }
-
 </script>
