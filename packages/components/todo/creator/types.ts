@@ -1,4 +1,4 @@
-import type { Project, Tag, Todo } from '@/stores'
+import type { Project, Tag, Todo } from '@nao-todo/types'
 
 export type TodoCreatorProps = {
     presetInfo?: Partial<Todo>

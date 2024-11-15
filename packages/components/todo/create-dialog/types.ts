@@ -1,7 +1,7 @@
 import type { TodoCreatorEmits, TodoCreatorProps } from '../creator/types'
 
 export type TodoCreateDialogProps = {
-    handler: Function
+    handler: (TodoCreatorProps) => Promise<any>
 }
 
 export type TodoCreateDialogEmits = {} & TodoCreatorEmits

@@ -1,15 +1,8 @@
 <template>
     <nue-div class="todo-creator-wrapper" vertical align="stretch">
         <nue-input v-model="todoData.name" placeholder="待办事项名称" clearable />
-        <!-- <nue-checkbox v-model="setMoreData" size="small">设置更多</nue-checkbox> -->
-        <!-- <nue-divider v-if="setMoreData" /> -->
         <nue-div v-if="setMoreData" vertical align="stretch">
-            <!-- <nue-div align="center" justify="space-between">
-                <nue-text>更多设置</nue-text>
-                <nue-button theme="pure" size="small" @click="handleClearData">清除设置</nue-button>
-            </nue-div> -->
             <nue-div align="center">
-                <!-- <nue-text size="12px">任务过期时间：</nue-text> -->
                 <todo-date-selector v-model="endDate" />
                 <nue-text v-if="endDate" size="12px" color="gray">
                     ( {{ useRelativeDate(endDate) }} )
@@ -47,13 +40,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import TodoDateSelector from '../date-selector/date-selector.vue'
-import { TodoSelector, TodoStateSelectOptions, TodoPrioritySelectOptions } from '../selector'
+import { TodoPrioritySelectOptions, TodoSelector, TodoStateSelectOptions } from '../selector'
 import TodoTagBar from '../tag-bar/tag-bar.vue'
 import TodoProjectSelector from '../project-selector/project-selector.vue'
 import { useRelativeDate } from '@nao-todo/hooks/use-relative-date'
-import type { TodoCreatorProps, TodoCreatorEmits } from './types'
+import type { TodoCreatorEmits, TodoCreatorProps } from './types'
 
 defineOptions({ name: 'TodoCreator' })
 const props = defineProps<TodoCreatorProps>()
@@ -75,9 +68,7 @@ const todoData = reactive({
 const endDate = computed({
     get() {
         if (!todoData.dueDate.endAt) return ''
-        const sliced = todoData.dueDate.endAt!.slice(0, 16)
-        // console.log(sliced)
-        return sliced
+        return todoData.dueDate.endAt!.slice(0, 16)
     },
     set(value) {
         todoData.dueDate.endAt = value

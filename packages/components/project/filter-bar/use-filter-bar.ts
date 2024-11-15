@@ -11,43 +11,44 @@ export const useProjectFilterBar = (props: ProjectFilterBarProps, emit: ProjectF
     })
 
     const archivedOnlyIconName = computed(() => {
-        if (!props.filterOptions) return
-        const { isArchived } = props.filterOptions
+        const isArchived = props.filterOptions.isArchived
         return isArchived ? 'square-check-fill' : 'square'
     })
 
     const deletedOnlyIconName = computed(() => {
-        if (!props.filterOptions) return
-        const { isDeleted } = props.filterOptions
+        const isDeleted = props.filterOptions.isDeleted
         return isDeleted ? 'square-check-fill' : 'square'
     })
 
     const handleResetFilter = () => {
         filterText.value = ''
-        emit('filter', null)
+        const newFilterOptions = { ...props.filterOptions }
+        delete newFilterOptions.title
+        delete newFilterOptions.isDeleted
+        delete newFilterOptions.isArchived
+        // console.log(newFilterOptions)
+        emit('filter', newFilterOptions)
     }
 
     const handleIsArchived = () => {
-        if (!props.filterOptions) return
-        const { filterOptions } = props
-        const newFilterOptions = { ...filterOptions }
-        if (filterOptions.isArchived) {
+        const newFilterOptions = { ...props.filterOptions }
+        if (newFilterOptions.isArchived) {
             delete newFilterOptions.isArchived
         } else {
             Object.assign(newFilterOptions, { isArchived: true })
         }
+        // console.log(newFilterOptions)
         emit('filter', newFilterOptions)
     }
 
     const handleIsDeleted = () => {
-        if (!props.filterOptions) return false
-        const { filterOptions } = props
-        const newFilterOptions = { ...filterOptions }
-        if (filterOptions.isDeleted) {
+        const newFilterOptions = { ...props.filterOptions }
+        if (newFilterOptions.isDeleted) {
             delete newFilterOptions.isDeleted
         } else {
             Object.assign(newFilterOptions, { isDeleted: true })
         }
+        // console.log(newFilterOptions)
         emit('filter', newFilterOptions)
     }
 

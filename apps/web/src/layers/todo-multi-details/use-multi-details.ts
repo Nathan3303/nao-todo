@@ -1,15 +1,10 @@
 import { computed, ref, watchEffect } from 'vue'
-import { useUserStore, useProjectStore, useTagStore, useTodoStore } from '@/stores'
-import {
-    updateTodos,
-    removeTodosWithConfirm,
-    restoreTodosWithConfirm
-} from '@/handlers/todo-handlers'
+import { useProjectStore, useTagStore, useTodoStore, useUserStore } from '@/stores'
 import { debounce } from '@nao-todo/utils'
 import { useRoute, useRouter } from 'vue-router'
+import { useTasksViewStore } from '@/views/index/tasks/stores'
 import type { TodoMultiDetailsProps } from './types'
 import type { Todo } from '@nao-todo/types'
-import { useTasksViewStore } from '@/views/index/tasks/stores'
 
 export const useMultiDetails = (props: TodoMultiDetailsProps) => {
     const route = useRoute()
@@ -33,7 +28,7 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
     let updateOptions: Partial<Todo> = {}
 
     const avalibleProjects = computed(() => {
-        return projectStore._toFiltered({ isDeleted: false, isArchived: false })
+        return projectStore.findProjectsFromLocal({ isDeleted: false, isArchived: false })
     })
 
     const avalibleTags = computed(() => {
@@ -43,8 +38,7 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
     const endDate = computed({
         get() {
             if (!commonData.value.dueDate.endAt) return ''
-            const sliced = commonData.value.dueDate.endAt!.slice(0, 16)
-            return sliced
+            return commonData.value.dueDate.endAt!.slice(0, 16)
         },
         set(value) {
             commonData.value.dueDate.endAt = value
@@ -66,13 +60,13 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
     }
 
     const _updateTodos = async () => {
-        const updateResult = await updateTodos(props.selectedIds, updateOptions)
+        const updateResult = await todoStore.doUpdateTodos(props.selectedIds, updateOptions)
         if (
             updateResult &&
             Object.prototype.hasOwnProperty.call(updateOptions, 'projectId') &&
             updateOptions.projectId !== (route.params.projectId as string)
         ) {
-            todoStore.doGetTodos()
+            await todoStore.doGetTodos()
             const prevRoute = route.matched[route.matched.length - 1]
             if (prevRoute) router.push(prevRoute)
             tasksViewStore.hideMultiDetails()
@@ -113,7 +107,7 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
     }
 
     const handleRemove = async () => {
-        const removeResult = await removeTodosWithConfirm(props.selectedIds)
+        const removeResult = await todoStore.deleteTodosWithConfirmation(props.selectedIds)
         if (!removeResult) return
         const prevRoute = route.matched[route.matched.length - 1]
         if (prevRoute) router.push(prevRoute)
@@ -121,7 +115,7 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
     }
 
     const handleRestore = async () => {
-        const removeResult = await restoreTodosWithConfirm(props.selectedIds)
+        const removeResult = await todoStore.restoreTodosWithConfirmation(props.selectedIds)
         if (!removeResult) return
         const prevRoute = route.matched[route.matched.length - 1]
         if (prevRoute) router.push(prevRoute)

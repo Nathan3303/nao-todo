@@ -1,33 +1,33 @@
 <template>
-    <todo-tag-bar :tags="tagStore.tags" :todoTags="todoTags" @update-tags="" />
+    <todo-tag-bar :tags="tagStore.tags" :todoTags="todoTags" />
 </template>
 
 <script setup lang="ts">
 import { useTagStore } from '@/stores'
 import { TodoTagBar } from '@nao-todo/components'
-import type { Todo, Tag } from '@/stores'
+// import type { Todo, Tag } from '@nao-todo/types'
 import type { TodoTagDetailsProps, TodoTagDetailsEmits } from './types'
 
 defineOptions({ name: 'TodoTagDetails' })
-const props = defineProps<TodoTagDetailsProps>()
-const emit = defineEmits<TodoTagDetailsEmits>()
+defineProps<TodoTagDetailsProps>()
+defineEmits<TodoTagDetailsEmits>()
 
 const tagStore = useTagStore()
 
-const handleAddTag = async (tagId: unknown) => {
-    // const newTags = tags.value.map((tag) => tag.id)
-    // newTags.push(tagId as Tag['id'])
-    const newTags = [...props.todoTags, tagId as Tag['id']]
-    emit('updateTags', newTags as Todo['tags'])
-}
-
-const handleDropTag = async (tagId: Tag['id']) => {
-    // const newTags = tags.value.map((tag) => {
-    //     if (tag.id !== tagId) return tag.id
-    // })
-    const newTags = props.todoTags.filter((id) => id !== tagId)
-    emit('updateTags', newTags)
-}
+// const handleAddTag = async (tagId: unknown) => {
+//     // const newTags = tags.value.map((tag) => tag.id)
+//     // newTags.push(tagId as Tag['id'])
+//     const newTags = [...props.todoTags, tagId as Tag['id']]
+//     emit('updateTags', newTags as Todo['tags'])
+// }
+//
+// const handleDropTag = async (tagId: Tag['id']) => {
+//     // const newTags = tags.value.map((tag) => {
+//     //     if (tag.id !== tagId) return tag.id
+//     // })
+//     const newTags = props.todoTags.filter((id) => id !== tagId)
+//     emit('updateTags', newTags)
+// }
 </script>
 
 <style scoped>

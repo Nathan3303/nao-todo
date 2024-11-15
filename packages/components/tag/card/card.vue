@@ -19,7 +19,7 @@ import type { TagCardProps, TagCardEmits } from './types'
 
 defineOptions({ name: 'TagCard' })
 defineProps<TagCardProps>()
-const emit = defineEmits<TagCardEmits>()
+defineEmits<TagCardEmits>()
 </script>
 
 <style scoped>

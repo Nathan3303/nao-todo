@@ -1,4 +1,4 @@
-import type { GetRequestPageOptions } from './common'
+import type { GetRequestPageOptions } from '../axios/common'
 import type { GetTodosOptions, TodoColumnOptions } from './todo'
 import type { User } from './user'
 
@@ -30,15 +30,17 @@ type GetProjectOptionsRaw = {
     description?: string
 }
 
+type GetProjectsSortOptions = {
+    field: keyof Project
+    order: 'asc' | 'desc'
+}
+
 type GetProjectsOptionsRaw = {
     title?: string
     description?: string
     isArchived?: boolean
     isDeleted?: boolean
-    sort?: {
-        field: keyof Project
-        order: 'asc' | 'desc'
-    }
+    sort?: GetProjectsSortOptions
 }
 
 type UpdateProjectOptionsRaw = {
@@ -62,6 +64,7 @@ export type {
     Project,
     ProjectPreference,
     GetProjectOptions,
+    GetProjectsSortOptions,
     GetProjectsOptionsRaw,
     GetProjectsOptions,
     UpdateProjectOptionsRaw,

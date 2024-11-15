@@ -49,7 +49,7 @@ export const checkin = async (jwt: string) => {
 export const signout = async (jwt: string) => {
     try {
         // const jwt = localStorage.getItem('USER_JWT') || ''
-        const response = await $axios.get(`/signout?jwt=${jwt}`)
+        const response = await $axios.delete(`/signout?jwt=${jwt}`)
         return response.data as ResponseData
     } catch (error) {
         console.log('[@nao-todo/apis/signout]:', error)

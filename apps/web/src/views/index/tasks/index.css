@@ -12,6 +12,6 @@
 
     &:deep().nue-main__outline-wrapper .nue-main__outline {
         /* position: relative; */
-        padding: 0px;
+        padding: 0;
     }
 }

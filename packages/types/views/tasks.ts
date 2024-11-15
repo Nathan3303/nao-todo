@@ -1,6 +1,6 @@
 import type { CreateTodoOptions, GetTodosOptions, Todo, TodoColumnOptions } from '../models/todo'
 
-type TasksMainRouteCategory = 'basic' | 'project' | 'tag'
+type TasksMainRouteCategory = 'basic' | 'project' | 'tag' | 'unknown'
 
 type TasksMainViewInfo = {
     id: string

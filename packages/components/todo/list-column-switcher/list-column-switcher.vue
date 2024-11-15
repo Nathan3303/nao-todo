@@ -1,7 +1,7 @@
 <template>
     <nue-dropdown theme="combo-box">
         <template #default="{ clickTrigger }">
-            <nue-button theme="small" icon="menu" @click.stop="clickTrigger"> 列设置 </nue-button>
+            <nue-button theme="small" icon="menu" @click.stop="clickTrigger"> 列设置</nue-button>
         </template>
         <template #dropdown>
             <nue-container>
@@ -13,6 +13,7 @@
                         <empty :empty="!modelValue">
                             <checkbox
                                 v-for="(value, key) in modelValue"
+                                :key="key"
                                 :label="parseLabel(key)"
                                 :value="key"
                                 :checked="value"
@@ -28,7 +29,7 @@
 
 <script setup lang="ts">
 import { Checkbox, Empty } from '@nao-todo/components'
-import type { Columns, ColumnsKeys } from '../table/types'
+import type { Columns, ColumnsKeys } from '../table'
 import type { ListColumnSwitcherEmits, ListColumnSwitcherProps } from './types'
 
 defineOptions({ name: 'ListColumnSwitcher' })

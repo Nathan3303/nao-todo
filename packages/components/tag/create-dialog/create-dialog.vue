@@ -35,7 +35,7 @@ import type { CreateTagDialogProps, CreateTagDialogEmits, CreateTagPayload } fro
 
 defineOptions({ name: 'CreateTagDialog' })
 const props = defineProps<CreateTagDialogProps>()
-const emit = defineEmits<CreateTagDialogEmits>()
+defineEmits<CreateTagDialogEmits>()
 
 const visible = ref(false)
 const loading = ref(false)

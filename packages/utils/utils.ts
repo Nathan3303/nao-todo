@@ -13,14 +13,16 @@ export const debounce = (callback: (...args: any) => void | Promise<any>, delay:
 
 export const stringifyGetOptions = <T>(
     options: T,
-    eachHandler?: <U>(key: U, value: T[keyof T]) => string | undefined
+    eachHandler?: <U>(key: U, value: T[keyof T]) => string | undefined | null
 ) => {
     const queryPairs: string[] = []
     for (const key in options) {
         if (eachHandler) {
             const handleResult = eachHandler(key, options[key])
-            if (handleResult) {
+            if (typeof handleResult === 'string') {
                 queryPairs.push(handleResult)
+                continue
+            } else if (handleResult === null) {
                 continue
             }
         }

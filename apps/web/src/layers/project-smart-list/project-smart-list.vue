@@ -4,8 +4,8 @@
             <nue-button theme="pure" :icon="state ? 'arrow-right' : 'arrow-down'" @click="collapse">
                 <template #default>
                     <nue-div>
-                        <nue-text size="12px">智能清单</nue-text>
-                        <nue-text size="12px" color="gray"> {{ projects.length }} </nue-text>
+                        <nue-text size="12px">清单</nue-text>
+                        <nue-text size="12px" color="gray"> {{ projects.length }}</nue-text>
                     </nue-div>
                 </template>
             </nue-button>
@@ -33,7 +33,9 @@
                 {{ project.title }}
             </aside-link>
         </template>
-        <nue-empty v-else description="暂无清单" />
+        <nue-text v-else class="empty-text" size="11px" color="#a5a5a5">
+            用清单来分类收集、组织和管理你的待办任务。
+        </nue-text>
     </nue-collapse-item>
     <!-- Dialogs -->
     <create-project-dialog ref="createProjectDialogRef" :handler="handleCreateProject" />
@@ -64,3 +66,11 @@ const handleCreateProject = async (payload: CreateProjectOptions) => {
     return await projectStore.doCreateProject(payload)
 }
 </script>
+
+<style scoped>
+.empty-text {
+    padding: 8px;
+    background-color: #f5f5f5;
+    border-radius: var(--primary-radius);
+}
+</style>

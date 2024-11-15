@@ -33,7 +33,8 @@ const handleCreateTodoByDialog = async (caller: (args: TodoCreateDialogArgs) => 
         tags: tagStore.tags,
         presetInfo: {
             projectId: id,
-            project: { title: title || '' }
+            project: { title: title || '' },
+            ...viewInfo.value.createTodoOptions
         }
     })
 }

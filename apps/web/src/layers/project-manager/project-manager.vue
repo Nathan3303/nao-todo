@@ -14,7 +14,6 @@
                     >
                         新增
                     </nue-button>
-                    <!-- <nue-button theme="small" icon="refresh" @click="refresh"> 刷新 </nue-button> -->
                 </nue-div>
             </nue-div>
             <project-board
@@ -28,50 +27,38 @@
             />
         </nue-div>
     </nue-dialog>
-    <create-project-dialog ref="createProjectDialogRef" :handler="handleCreateProject" />
+    <create-project-dialog ref="createProjectDialogRef" :handler="projectStore.doCreateProject" />
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { storeToRefs } from 'pinia'
+import { computed, ref, shallowRef } from 'vue'
 import { useProjectStore } from '@/stores/use-project-store'
-import { CreateProjectDialog } from '../create-project-dialog'
+import { CreateProjectDialog } from '@/layers'
 import { ProjectBoard, ProjectFilterBar } from '@nao-todo/components/project'
-import type { CreateProjectOptions, GetProjectsOptions } from '@nao-todo/types'
+import type { Project, GetProjectsOptions, GetProjectsOptionsRaw } from '@nao-todo/types'
 
 defineOptions({ name: 'ProjectManager' })
 
 const projectStore = useProjectStore()
 
-const { projects, getOptions } = storeToRefs(projectStore)
-
 const visible = ref(false)
 const loading = ref(false)
 const createProjectDialogRef = ref<InstanceType<typeof CreateProjectDialog>>()
+const getOptions = shallowRef<GetProjectsOptionsRaw>({})
 
-const showCreateProjectDialog = () => {
-    createProjectDialogRef.value?.show()
-}
-
-const handleCreateProject = async (payload: CreateProjectOptions) => {
-    await projectStore.doCreateProject(payload)
-}
-
-const handleFilter = async (payload: GetProjectsOptions) => {
-    if (!payload) {
-        const currentOptions = { ...projectStore.getOptions }
-        delete currentOptions.title
-        delete currentOptions.isDeleted
-        delete currentOptions.isArchived
-        payload = currentOptions
-    }
-    projectStore.updateGetOptions(payload)
-    await projectStore.doGetProjects()
-}
-
-defineExpose({
-    show: () => (visible.value = true)
+const projects = computed<Project[]>(() => {
+    return projectStore.findProjectsFromLocal(getOptions.value, (key, project, options) => {
+        if (key === 'title' && options[key]) {
+            return project[key].includes(options[key] as string)
+        }
+    })
 })
+
+const showCreateProjectDialog = () => createProjectDialogRef.value?.show()
+const handleFilter = async (payload: GetProjectsOptions | null) =>
+    (getOptions.value = payload || {})
+
+defineExpose({ show: () => (visible.value = true) })
 </script>
 
 <style scoped>

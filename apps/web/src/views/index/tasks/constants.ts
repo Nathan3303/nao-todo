@@ -1,24 +1,32 @@
 import moment from 'moment'
-import { createTodoWithOptions } from '@/handlers/todo-handlers'
-import { useUserStore, useProjectStore, useTagStore } from '@/stores'
+import { useUserStore, useProjectStore, useTagStore, useTodoStore } from '@/stores'
 import type { TodoCreateDialogArgs } from '@nao-todo/components/todo/create-dialog/types'
 import type {
     Todo,
     TasksMainBasicViewNames,
     TasksMainViewInfo,
-    TodoColumnOptions
+    TodoColumnOptions,
+    ProjectPreference
 } from '@nao-todo/types'
 
 const userStore = useUserStore()
 const projectStore = useProjectStore()
 const tagStore = useTagStore()
+const todoStore = useTodoStore()
 
 export const defaultColumnOptions: TodoColumnOptions = {
-    name: true,
     endAt: true,
     state: true,
     priority: true,
-    project: true
+    project: true,
+    createdAt: false,
+    updatedAt: false
+}
+
+export const defaultPreference: ProjectPreference = {
+    viewType: 'table',
+    getTodosOptions: { page: 1, limit: 20, isDeleted: false },
+    columns: defaultColumnOptions
 }
 
 export const basicViewsInfo: {
@@ -36,7 +44,7 @@ export const basicViewsInfo: {
         createTodoOptions: {},
         handlers: {
             handleCreateTodo: async (todoName: Todo['name']) => {
-                await createTodoWithOptions(null, { name: todoName })
+                await todoStore.doCreateTodo({ name: todoName })
             },
             handleCreateTodoByDialog: async (caller: (args: TodoCreateDialogArgs) => void) => {
                 caller({
@@ -59,11 +67,16 @@ export const basicViewsInfo: {
             },
             columns: defaultColumnOptions
         },
-        createTodoOptions: {},
+        createTodoOptions: {
+            dueDate: {
+                startAt: moment().startOf('day').toISOString(true),
+                endAt: moment().endOf('day').toISOString(true)
+            }
+        },
         handlers: {
             handleCreateTodo: async (todoName: Todo['name']) => {
                 const now = moment()
-                await createTodoWithOptions(null, {
+                await todoStore.doCreateTodo({
                     name: todoName,
                     dueDate: {
                         startAt: now.toISOString(),
@@ -99,11 +112,16 @@ export const basicViewsInfo: {
             },
             columns: defaultColumnOptions
         },
-        createTodoOptions: {},
+        createTodoOptions: {
+            dueDate: {
+                startAt: moment().add(1, 'day').startOf('day').toISOString(true),
+                endAt: moment().add(1, 'day').endOf('day').toISOString(true)
+            }
+        },
         handlers: {
             handleCreateTodo: async (todoName: Todo['name']) => {
                 const tomorrow = moment().add(1, 'day')
-                await createTodoWithOptions(null, {
+                await todoStore.doCreateTodo({
                     name: todoName,
                     dueDate: {
                         startAt: tomorrow.toISOString(),
@@ -139,11 +157,16 @@ export const basicViewsInfo: {
             },
             columns: defaultColumnOptions
         },
-        createTodoOptions: {},
+        createTodoOptions: {
+            dueDate: {
+                startAt: moment().startOf('day').toISOString(true),
+                endAt: moment().endOf('isoWeek').toISOString(true)
+            }
+        },
         handlers: {
             handleCreateTodo: async (todoName: Todo['name']) => {
                 const now = moment()
-                await createTodoWithOptions(null, {
+                await todoStore.doCreateTodo({
                     name: todoName,
                     dueDate: {
                         startAt: now.toISOString(),
@@ -181,7 +204,7 @@ export const basicViewsInfo: {
         createTodoOptions: {},
         handlers: {
             handleCreateTodo: async (todoName: Todo['name']) => {
-                await createTodoWithOptions(null, { name: todoName })
+                await todoStore.doCreateTodo({ name: todoName })
             },
             handleCreateTodoByDialog: async (caller: (args: TodoCreateDialogArgs) => void) => {
                 caller({
@@ -201,17 +224,19 @@ export const basicViewsInfo: {
             getTodosOptions: { isFavorited: true },
             columns: defaultColumnOptions
         },
-        createTodoOptions: {},
+        createTodoOptions: {
+            isFavorited: true
+        },
         handlers: {
             handleCreateTodo: async (todoName: Todo['name']) => {
-                await createTodoWithOptions(null, { name: todoName, isPinned: true })
+                await todoStore.doCreateTodo({ name: todoName, isFavorited: true })
             },
             handleCreateTodoByDialog: async (caller: (args: TodoCreateDialogArgs) => void) => {
                 caller({
                     userId: userStore.user!.id,
                     projects: projectStore.projects,
                     tags: tagStore.tags,
-                    presetInfo: { isPinned: true }
+                    presetInfo: { isFavorited: true }
                 })
             }
         }

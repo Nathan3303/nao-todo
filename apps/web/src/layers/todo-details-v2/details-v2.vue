@@ -118,7 +118,6 @@
                 :user-id="userStore.user!.id"
                 :projects="projects"
                 :project-id="shadowTodo.projectId"
-                :project-title="shadowTodo.project?.title"
                 @select="handleMoveToProject"
             />
             <nue-div wrap="nowrap" width="fit-content" gap="4px">

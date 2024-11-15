@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { useEventStore } from '@/stores'
 import type { CreateEventOptions, Event, UpdateEventOptions } from '@nao-todo/types'
 import type { TodoEventDetailsProps } from './types'
-import type { InputButtonSubmitPayload } from '@nao-todo/components'
+import type { InputButtonSubmitPayload, TodoEventRowUpdatePayload } from '@nao-todo/components'
 
 export const useEventDetails = (props: TodoEventDetailsProps) => {
     const loadingState = ref(false)
@@ -23,9 +23,12 @@ export const useEventDetails = (props: TodoEventDetailsProps) => {
         return await eventStore.doCreateEvent(options)
     }
 
-    const handleUpdateEvent = async (options: UpdateEventOptions) => {
-        // console.log('[useEventDetails] handleUpdateEvent:', event)
-        // await eventStore.doUpdateEvent()
+    const handleUpdateEvent = async (payload: TodoEventRowUpdatePayload) => {
+        const options: UpdateEventOptions = {
+            title: payload.title,
+            isDone: payload.isDone
+        }
+        await eventStore.doUpdateEvent(payload.id, options)
     }
 
     const handleDeleteEvent = async (eventId: Event['id']) => {

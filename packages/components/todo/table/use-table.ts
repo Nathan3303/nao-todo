@@ -13,7 +13,7 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
 
     const isTodoExpired = (todo: Todo) => {
         const endAt = todo.dueDate.endAt || ''
-        return isExpired(endAt) && todo.state !== 'done'
+        return isExpired(endAt as string) && todo.state !== 'done'
     }
 
     const handleDeleteBtnClk = (todoId: Todo['id'], isDeleted: boolean) => {
@@ -75,8 +75,8 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
     }
 
     const handleClearSortInfo = () => {
-        sortInfo.field = 'createdAt'
-        sortInfo.order = 'desc'
+        sortInfo.field = ''
+        sortInfo.order = ''
     }
 
     watch(

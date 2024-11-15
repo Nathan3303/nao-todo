@@ -5,7 +5,7 @@ const defaultOptions: UseMinuteTaskOptions = {
     once: false
 }
 
-export const useMinuteTask = (task: Function, options?: UseMinuteTaskOptions) => {
+export const useMinuteTask = (task: () => void, options?: UseMinuteTaskOptions) => {
     options = options || defaultOptions
 
     const { once } = options
@@ -19,7 +19,7 @@ export const useMinuteTask = (task: Function, options?: UseMinuteTaskOptions) =>
         taskTimerId = null
     }
 
-    const callTask = (diffTime: number, callback: Function) => {
+    const callTask = (diffTime: number, callback: () => void) => {
         taskTimerId = setTimeout(() => {
             // console.log('[UseMinuteTask] Task run. Diff time is: (' + diffTime + 'ms)')
             requestIdleCallback(() => {

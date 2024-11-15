@@ -7,6 +7,7 @@ export * from './project-manager'
 export * from './project-smart-list'
 
 // todo
+export * from './todo-card'
 export * from './create-project-dialog'
 export * from './todo-details-v2'
 export * from './todo-event-details'

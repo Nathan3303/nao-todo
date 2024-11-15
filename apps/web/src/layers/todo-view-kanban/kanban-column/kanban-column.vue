@@ -28,11 +28,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { TodoCard, TodoStateInfo, Empty } from '@nao-todo/components'
-import type { Todo } from '@/stores'
+import { TodoCard } from '@/layers'
+import { TodoStateInfo, Empty } from '@nao-todo/components'
+import type { Todo } from '@nao-todo/types'
 import type { KanbanColumnProps, KanbanColumnEmits } from './types'
 
-const props = defineProps<KanbanColumnProps>()
+defineProps<KanbanColumnProps>()
 const emit = defineEmits<KanbanColumnEmits>()
 
 const route = useRoute()

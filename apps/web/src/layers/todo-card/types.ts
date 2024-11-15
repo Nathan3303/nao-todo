@@ -1,5 +1,5 @@
 import type { Todo } from '@/stores'
-import type { Columns } from '../table'
+import type { Columns } from '../../../../../packages/components/todo/table'
 
 export type TodoCardProps = {
     todo: Todo

@@ -1,4 +1,4 @@
-import type { Project } from '@/stores'
+import type { Project } from '@nao-todo/types'
 
 export type ProjectCardProps = {
     project: Project

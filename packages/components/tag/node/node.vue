@@ -11,10 +11,10 @@
 </template>
 
 <script setup lang="ts">
-import type { Tag } from '@/stores'
+import type { Tag } from '@nao-todo/types'
 
 defineOptions({ name: 'TagNode' })
-const props = defineProps<{
+defineProps<{
     tag: Tag
     deletable?: boolean
     readonly?: boolean
@@ -39,7 +39,7 @@ const handleDelete = (id: Tag['id']) => {
     border-radius: 16px;
     position: relative;
     cursor: default;
-    
+
     & > .nue-text {
         color: white !important;
     }
@@ -48,7 +48,6 @@ const handleDelete = (id: Tag['id']) => {
         --icon-size: 14px;
         --icon-color: white;
         --icon-weight: 600;
-        display: flex;
         align-items: center;
         justify-content: center;
         width: 24px;

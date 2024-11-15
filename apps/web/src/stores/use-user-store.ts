@@ -1,10 +1,14 @@
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { defineStore } from 'pinia'
 import { signin, signup, checkin, signout } from '@nao-todo/apis'
 import { getJWTPayload } from '@nao-todo/utils'
+import { NueConfirm, NueMessage } from 'nue-ui'
 import type { User, SigninOptions, SignupOptions } from '@nao-todo/types'
 
 export const useUserStore = defineStore('userStore', () => {
+    const router = useRouter()
+
     const user = ref<User>()
     const token = ref<string>()
     const isAuthenticated = ref(false)
@@ -55,5 +59,37 @@ export const useUserStore = defineStore('userStore', () => {
         return true
     }
 
-    return { user, token, isAuthenticated, doSignin, doSignup, doCheckin, doSignout }
+    // 用户登出（带确认）
+    const signOutWithConfirmation = async () => {
+        try {
+            await NueConfirm({
+                title: '退出登录',
+                content: '你确定要退出登录吗？',
+                confirmButtonText: '确认',
+                cancelButtonText: '取消'
+            })
+            const result = await doSignout()
+            if (result) {
+                NueMessage.success('退出登录成功')
+                router.push('/auth/login')
+                return true
+            } else {
+                NueMessage.error('退出登录失败')
+            }
+        } catch (err) {
+            console.log('[UserStore] signOutWithConfirmation:', err)
+        }
+        return false
+    }
+
+    return {
+        user,
+        token,
+        isAuthenticated,
+        doSignin,
+        doSignup,
+        doCheckin,
+        doSignout,
+        signOutWithConfirmation
+    }
 })

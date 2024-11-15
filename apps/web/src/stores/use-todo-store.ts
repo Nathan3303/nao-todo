@@ -1,6 +1,6 @@
-import { ref } from 'vue'
+import { ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
-import { getTodos, updateTodo, deleteTodo, createTodo } from '@nao-todo/apis'
+import { getTodos, updateTodo, deleteTodo, createTodo, updateTodos } from '@nao-todo/apis'
 import type {
     Todo,
     GetTodosOverview,
@@ -13,18 +13,19 @@ import type {
     Project
 } from '@nao-todo/types'
 import { NueConfirm, NueMessage } from 'nue-ui'
+import moment from 'moment'
 
 export const useTodoStore = defineStore('todoStore', () => {
     const todos = ref<Todo[]>([])
 
     // 获取选项
-    const getOptions = ref<GetTodosOptions>({
+    const getOptions = shallowRef<GetTodosOptions>({
         page: 1,
         limit: 20
     })
 
     // 获取结果总览
-    const getOverview = ref<GetTodosOverview>({
+    const getOverview = shallowRef<GetTodosOverview>({
         countInfo: {
             byPriority: {},
             byState: {},
@@ -36,21 +37,29 @@ export const useTodoStore = defineStore('todoStore', () => {
     })
 
     // 显示列选项
-    const columnOptions = ref<TodoColumnOptions>({
+    const columnOptions = shallowRef<TodoColumnOptions>({
         state: true,
         priority: true,
         project: true,
-        endAt: true
+        endAt: true,
+        description: true,
+        createdAt: false,
+        updatedAt: false
     })
 
     // 修改获取选项
     const updateGetOptions = (newOptions: Partial<GetTodosOptions>) => {
+        getOptions.value = newOptions
+    }
+
+    // 合并获取选项
+    const mergeGetOptions = (newOptions: GetTodosOptions) => {
         Object.assign(getOptions.value, newOptions)
     }
 
     // 修改显示列选项
     const updateColumnOptions = (newOptions: Partial<TodoColumnOptions>) => {
-        Object.assign(columnOptions.value, newOptions)
+        columnOptions.value = newOptions
     }
 
     // 添加待办
@@ -58,15 +67,13 @@ export const useTodoStore = defineStore('todoStore', () => {
         const result = await createTodo(options)
         if (result.code !== 20000) return false
         const newTodo = result.data as Todo
-        console.log('[UseTodoStore] doCreateTodo:', newTodo)
+        // console.log('[UseTodoStore] doCreateTodo:', newTodo)
         todos.value.unshift(newTodo)
         return true
     }
 
-    // 更新待办
-    const doUpdateTodo = async (todoId: Todo['id'], options: UpdateTodoOptions) => {
-        const result = await updateTodo(todoId, options)
-        if (result.code !== 20000) return false
+    // 更新本地待办
+    const updateLocalTodo = (todoId: Todo['id'], options: UpdateTodoOptions) => {
         const index = todos.value.findIndex((todo) => todo.id === todoId)
         if (index === -1) return false
         Object.keys(todos.value[index]).forEach((key) => {
@@ -75,6 +82,31 @@ export const useTodoStore = defineStore('todoStore', () => {
                 // @ts-ignore
                 todos.value[index][key] = options[key as keyof UpdateTodoOptionsRaw]
             }
+        })
+        return true
+    }
+
+    // 删除本地代办
+    const deleteLocalTodo = (todoId: Todo['id']) => {
+        const index = todos.value.findIndex((todo) => todo.id === todoId)
+        if (index === -1) return false
+        todos.value.splice(index, 1)
+        return true
+    }
+
+    // 更新待办
+    const doUpdateTodo = async (todoId: Todo['id'], options: UpdateTodoOptions) => {
+        const result = await updateTodo(todoId, options)
+        if (result.code !== 20000) return false
+        return updateLocalTodo(todoId, options)
+    }
+
+    // 更新待办（s）
+    const doUpdateTodos = async (todoIds: Todo['id'][], options: UpdateTodoOptions) => {
+        const result = await updateTodos(todoIds, options)
+        if (result.code !== 20000) return false
+        todoIds.forEach((todoId) => {
+            updateLocalTodo(todoId, options)
         })
         return true
     }
@@ -106,19 +138,20 @@ export const useTodoStore = defineStore('todoStore', () => {
                 confirmButtonText: '确认',
                 cancelButtonText: '取消'
             })
-            const updateOptions = { isDeleted: true, deletedAt: Date.now() }
+            const now = moment().toISOString(true)
+            const updateOptions = { isDeleted: true, deletedAt: now } as UpdateTodoOptions
             const result = await doUpdateTodo(todoId, updateOptions)
             if (result) {
                 NueMessage.success('待办删除成功')
+                deleteLocalTodo(todoId)
                 return true
             } else {
-                throw new Error('delete todo failed')
+                NueMessage.error('待办删除失败')
             }
         } catch (error) {
             console.warn('[UseTodoStore] deleteTodoWithConfirmation:', error)
-            NueMessage.error('待办删除失败')
-            return false
         }
+        return false
     }
 
     // 恢复指定待办（带确认）
@@ -134,15 +167,58 @@ export const useTodoStore = defineStore('todoStore', () => {
             const result = await doUpdateTodo(todoId, updateOptions)
             if (result) {
                 NueMessage.success('待办恢复成功')
-                return true
+                return deleteLocalTodo(todoId)
             } else {
-                throw new Error('restore todo failed')
+                NueMessage.error('待办恢复失败')
             }
         } catch (error) {
             console.warn('[UseTodoStore] restoreTodoWithConfirmation:', error)
-            NueMessage.error('待办恢复失败')
-            return false
         }
+        return false
+    }
+
+    // 删除指定待办(s)（带确认）
+    const deleteTodosWithConfirmation = async (todoIds: Todo['id'][]) => {
+        try {
+            await NueConfirm({
+                title: '删除多个待办确认',
+                content: '确认删除这些待办吗？',
+                confirmButtonText: '确认',
+                cancelButtonText: '取消'
+            })
+            const now = moment().toISOString(true)
+            const result = await doUpdateTodos(todoIds, { isDeleted: true, deletedAt: now })
+            if (result) {
+                return NueMessage.success('更新成功')
+            } else {
+                NueMessage.error('更新失败')
+            }
+        } catch (error) {
+            console.warn('[UseTodoStore] deleteTodosWithConfirmation:', error)
+        }
+        return false
+    }
+
+    // 恢复指定待办(s)（带确认）
+    const restoreTodosWithConfirmation = async (todoIds: Todo['id'][]) => {
+        try {
+            await NueConfirm({
+                title: '恢复多个待办确认',
+                content: '确认恢复这些待办吗？',
+                confirmButtonText: '确认',
+                cancelButtonText: '取消'
+            })
+            const result = await doUpdateTodos(todoIds, { isDeleted: false, deletedAt: null })
+            if (result) {
+                NueMessage.success('更新成功')
+                return true
+            } else {
+                NueMessage.error('更新失败')
+            }
+        } catch (error) {
+            console.warn('[UseTodoStore] restoreTodosWithConfirmation:', error)
+        }
+        return false
     }
 
     // 永久删除指定待办（带确认）
@@ -158,23 +234,21 @@ export const useTodoStore = defineStore('todoStore', () => {
             if (result) {
                 NueMessage.success('待办永久删除成功')
                 return true
+            } else {
+                NueMessage.error('待办永久删除失败')
             }
         } catch (error) {
             console.warn('[UseTodoStore] deleteTodoPermanentlyWithConfirmation:', error)
-            NueMessage.error('待办永久删除失败')
-            return false
         }
+        return false
     }
 
     // 根据清单偏好设置获取选项
     const setGetOptionsByPreference = (preference: Project['preference']) => {
         if (!preference) return
-        if (preference.getTodosOptions) {
-            getOptions.value = preference.getTodosOptions
-        }
-        if (preference.columns) {
-            columnOptions.value = preference.columns
-        }
+        // console.log('[UseTodoStore] setGetOptionsByPreference:', preference)
+        updateGetOptions(preference.getTodosOptions)
+        updateColumnOptions(preference.columns)
     }
 
     // 获取本地待办
@@ -188,13 +262,17 @@ export const useTodoStore = defineStore('todoStore', () => {
         getOverview,
         columnOptions,
         updateGetOptions,
+        mergeGetOptions,
         updateColumnOptions,
         doGetTodos,
         doUpdateTodo,
+        doUpdateTodos,
         doDeleteTodo,
         doCreateTodo,
         deleteTodoWithConfirmation,
         restoreTodoWithConfirmation,
+        deleteTodosWithConfirmation,
+        restoreTodosWithConfirmation,
         deleteTodoPermanentlyWithConfirmation,
         setGetOptionsByPreference,
         getTodoByIdFromLocal

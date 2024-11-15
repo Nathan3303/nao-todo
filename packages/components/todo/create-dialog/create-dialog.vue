@@ -22,7 +22,7 @@ import type { TodoCreateDialogProps, TodoCreateDialogEmits, TodoCreateDialogArgs
 
 defineOptions({ name: 'TodoCreateDialog' })
 const props = defineProps<TodoCreateDialogProps>()
-const emit = defineEmits<TodoCreateDialogEmits>()
+defineEmits<TodoCreateDialogEmits>()
 
 const visible = ref(false)
 const loading = ref(false)
@@ -41,9 +41,7 @@ const confirm = async () => {
     }
     loading.value = true
     try {
-        const res = await handler(newTodo)
-        if (!res) throw new Error('Create todo failed')
-        visible.value = false
+        await handler(newTodo)
     } catch (e) {
         console.warn('[CreateTodoDialog] confirm error:', e)
     } finally {

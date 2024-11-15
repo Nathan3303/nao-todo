@@ -18,7 +18,7 @@
                 </nue-tooltip>
             </template>
             <template #user>
-                <user-dropdown :user="user" @logout="signoutWithComfirmation" />
+                <user-dropdown :user="user" @logout="userStore.signOutWithConfirmation" />
             </template>
         </nue-header>
         <router-view></router-view>
@@ -33,7 +33,6 @@ import { storeToRefs } from 'pinia'
 import { UpdateLogDialog } from '@/layers'
 import { useUserStore, useViewStore } from '@/stores'
 import { UserDropdown } from '@nao-todo/components'
-import { signoutWithComfirmation } from '@/handlers/auth'
 
 const userStore = useUserStore()
 const viewStore = useViewStore()

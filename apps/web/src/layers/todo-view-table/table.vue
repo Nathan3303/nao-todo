@@ -6,7 +6,7 @@
             style="box-sizing: border-box; padding-top: 8px"
         >
             <nue-div align="start" justify="space-between" gap="16px">
-                <todo-filter-bar :filter-options="getOptions" @filter="handleFilter" />
+                <todo-filter-bar :filter-options="todofilterBarOptions" @filter="handleFilter" />
                 <nue-div justify="end" flex="none" width="fit-content" gap="12px">
                     <nue-button
                         v-if="!disabledCreateTodo"
@@ -40,7 +40,7 @@
                     :todos="todos"
                     :tags="tagStore.tags"
                     :columns="todoStore.columnOptions"
-                    :sort-info="getOptions.sort || { field: 'id', order: 'desc' }"
+                    :sort-info="getOptions.sort || { field: '', order: '' }"
                     @delete-todo="todoStore.deleteTodoWithConfirmation"
                     @restore-todo="todoStore.restoreTodoWithConfirmation"
                     @show-todo-details="showTodoDetails"
@@ -76,16 +76,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useTodoStore, useTagStore } from '@/stores'
 import { TodoTable, Loading, TodoFilterBar, ListColumnSwitcher, Pager } from '@nao-todo/components'
 import { CreateTodoDialog } from '@/layers'
 import { useTasksViewStore } from '@/views/index/tasks/stores'
-import type { Todo, GetTodosOptions, TodoColumnOptions } from '@nao-todo/types'
+import type {Todo, GetTodosOptions, TodoColumnOptions, CreateTodoOptions} from '@nao-todo/types'
 import type { ContentTableProps, ContentTableEmits } from './types'
 import type { TodoTableMultiSelectEmitPayload } from '@nao-todo/components/todo/table'
+import type { TodoFilterOptions } from '@nao-todo/components/todo/filter-bar/types'
 
 defineOptions({ name: 'ContentTableLayer' })
 const props = defineProps<ContentTableProps>()
@@ -102,6 +103,14 @@ const todoTableRef = ref<InstanceType<typeof TodoTable>>()
 const createTodoDialogRef = ref<InstanceType<typeof CreateTodoDialog>>()
 let refreshTimer: number | null = null
 const multiSelectCount = ref(0)
+
+const todofilterBarOptions = computed<TodoFilterOptions>(() => {
+    return {
+        name: getOptions.value.name || '',
+        state: getOptions.value.state || '',
+        priority: getOptions.value.priority || ''
+    }
+})
 
 const showCreateTodoDialog = () => {
     if (!createTodoDialogRef.value) return
@@ -121,9 +130,19 @@ const handleGetTodos = async () => {
 }
 handleGetTodos()
 
-const handleFilter = async (newOptions: GetTodosOptions) => {
-    todoStore.updateGetOptions(newOptions)
-    await handleGetTodos()
+// 处理筛选
+const handleFilter = async (newTodoFilter: TodoFilterOptions) => {
+    const options: GetTodosOptions = { ...getOptions.value }
+    Object.keys(newTodoFilter).forEach((key) => {
+        const _k = key as keyof TodoFilterOptions
+        if (newTodoFilter[_k]) {
+            options[_k] = newTodoFilter[_k]
+        } else if (Object.prototype.hasOwnProperty.call(options, _k)) {
+            delete options[_k]
+        }
+    })
+    todoStore.updateGetOptions(options)
+    await todoStore.doGetTodos()
 }
 
 const handleChangeColumns = (options: TodoColumnOptions) => {
@@ -156,9 +175,9 @@ const handleRefresh = async () => {
     await handleGetTodos()
 }
 
-const sortTodo = async (newSortInfo: GetTodosOptions['sort']) => {
+const sortTodo = (newSortInfo: { field: string; order: string }) => {
     getOptions.value.sort = newSortInfo
-    await todoStore.doGetTodos()
+    handleGetTodos()
 }
 
 watch(
@@ -169,6 +188,6 @@ watch(
 
 <style scoped>
 .nue-main:deep(.nue-main__content) {
-    padding: 0px 16px;
+    padding: 0 16px;
 }
 </style>

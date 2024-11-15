@@ -76,26 +76,23 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRelativeDate } from '@nao-todo/hooks/use-relative-date'
-import { TodoStateInfo } from '../state-info'
-import { TodoPriorityInfo } from '../priority-info'
-import { TodoTagBar } from '../tag-bar'
 import moment from 'moment'
+import { computed } from 'vue'
+import { useTagStore } from '@/stores'
+import { useRelativeDate } from '@nao-todo/hooks'
+import { TodoStateInfo, TodoPriorityInfo, TodoTagBar } from '@nao-todo/components'
 import type { TodoCardEmits, TodoCardProps } from './types'
-import type { Todo } from '@/stores'
+import type { Todo } from '@nao-todo/types'
 
 defineOptions({ name: 'TodoCard' })
 const props = defineProps<TodoCardProps>()
 const emit = defineEmits<TodoCardEmits>()
 
-import { useTagStore } from '@/stores'
 const tagStore = useTagStore()
 
 const isDone = computed(() => {
     const { isDone, state } = props.todo
-    const _done = isDone || state === 'done'
-    return _done
+    return isDone || state === 'done'
 })
 
 const checkIconName = computed(() => {
@@ -104,7 +101,7 @@ const checkIconName = computed(() => {
 
 const isTodoExpired = (todo: Todo) => {
     const endAt = todo.dueDate.endAt
-    if (!endAt || todo.state === 'done' || todo.isDone) return false
+    if (!endAt || todo.state === 'done') return false
     const date = moment(endAt)
     return date.isBefore(moment())
 }
@@ -134,5 +131,5 @@ const handleFinish = () => {
 </script>
 
 <style scoped>
-@import url('./card.css');
+@import url('card.css');
 </style>

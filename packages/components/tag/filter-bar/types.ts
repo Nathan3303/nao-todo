@@ -1,11 +1,11 @@
-import type { TagFilterOptions } from '@/stores'
+import type { GetTagsOptions } from '@nao-todo/types'
 
 export type TagFilterBarProps = {
-    filterInfo: TagFilterOptions
+    filterOptions: GetTagsOptions
 }
 
 export type TagFilterBarEmits = {
-    (event: 'filter', payload: TagFilterOptions): void
+    (event: 'filter', payload: GetTagsOptions): void
 }
 
 export type FilterOption<T> = {

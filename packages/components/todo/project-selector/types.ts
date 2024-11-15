@@ -1,10 +1,9 @@
-import type { Project } from '@/stores'
+import type { Project } from '@nao-todo/types'
 
 export type TodoProjectSelectorProps = {
     userId: Project['userId']
     projects: Project[]
     projectId?: Project['id']
-    projectTitle?: Project['title']
     placeholder?: string
 }
 

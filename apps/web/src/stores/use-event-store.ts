@@ -2,11 +2,11 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { createEvent, deleteEvent, getEvents, updateEvent } from '@nao-todo/apis'
 import type {
-    GetEventsOptions,
-    Event,
-    UpdateEventOptionsRaw,
     CreateEventOptions,
-    UpdateEventOptions
+    Event,
+    GetEventsOptions,
+    UpdateEventOptions,
+    UpdateEventOptionsRaw
 } from '@nao-todo/types'
 
 export const useEventStore = defineStore('eventStore', () => {
@@ -44,8 +44,7 @@ export const useEventStore = defineStore('eventStore', () => {
     const doGetEvents = async () => {
         const result = await getEvents(getOptions.value)
         if (result.code !== 20000) return false
-        const data = result.data as Event[]
-        events.value = data
+        events.value = result.data as Event[]
         return true
     }
 

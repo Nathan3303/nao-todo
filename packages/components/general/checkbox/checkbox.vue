@@ -40,7 +40,7 @@ function handleCheck() {
 .checkbox {
     align-items: center;
     gap: 8px;
-    padding: 0px 8px;
+    padding: 0 8px;
     height: 32px;
     opacity: 0.96;
 

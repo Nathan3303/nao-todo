@@ -14,27 +14,21 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import ColorSelector from '../color-selector/color-selector.vue'
-import { useTagStore } from '@/stores'
-import { updateTag } from '@/handlers/tag-handlers'
-import type { Tag } from '@/stores'
+import type { Tag } from '@nao-todo/types'
 
 defineOptions({ name: 'TagColorSelectDialog' })
-
-const tagStore = useTagStore()
+const props = defineProps<{
+    handler?: (tagId: Tag['id'], color: Tag['color']) => Promise<boolean>
+}>()
 
 const visible = ref(false)
 const loading = ref(false)
 const tagColor = ref('')
 let tagIdTemp: Tag['id'] = ''
 
-const getTagColor = async (tagId: Tag['id']) => {
-    const tag = tagStore.findLocal(tagId)
-    tagColor.value = tag && tag.color ? tag.color : ''
-}
-
-const handleShow = (tagId: Tag['id']) => {
+const handleShow = (tagId: Tag['id'], currentColor: Tag['color']) => {
     visible.value = true
-    getTagColor(tagId)
+    tagColor.value = currentColor
     tagIdTemp = tagId
 }
 
@@ -42,7 +36,8 @@ const handleSelect = async () => {
     const newColor = tagColor.value || 'transparent'
     try {
         loading.value = true
-        await updateTag(tagIdTemp, { color: newColor })
+        if (!props.handler) return
+        await props.handler(tagIdTemp, newColor)
         visible.value = false
     } catch (e) {
         console.warn('[TagColorSelectDialog] handleSelect:', e)

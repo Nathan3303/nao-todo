@@ -41,8 +41,7 @@ const confirm = async () => {
     }
     loading.value = true
     try {
-        const res = await handler(newTodo)
-        if (!res) throw new Error('Create todo failed')
+        await handler(newTodo)
         visible.value = false
     } catch (e) {
         console.warn('[CreateTodoDialog] confirm error:', e)
@@ -52,6 +51,7 @@ const confirm = async () => {
 }
 
 const show = (args: TodoCreateDialogArgs) => {
+    console.log("[CreateDialog/show] args:", args)
     projects.value = args.projects
     tags.value = args.tags
     userId.value = args.userId

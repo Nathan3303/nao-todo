@@ -23,12 +23,12 @@ defineOptions({ name: 'TagFilterBar' })
 const props = defineProps<TagFilterBarProps>()
 const emit = defineEmits<TagFilterBarEmits>()
 
-const filterText = ref<string>(props.filterInfo?.name || '')
+const filterText = ref<string>(props.filterOptions?.name || '')
 
 const isFiltering = computed(() => {
-    if (!props.filterInfo) return false
-    const { id, name } = props.filterInfo
-    return id || name
+    if (!props.filterOptions) return false
+    const { name } = props.filterOptions
+    return name
 })
 
 const handleResetFilter = () => {
@@ -39,8 +39,8 @@ const handleResetFilter = () => {
 watch(
     () => filterText.value,
     (newValue) => {
-        const { filterInfo } = props
-        const newFilterInfo = { ...filterInfo }
+        const { filterOptions } = props
+        const newFilterInfo = { ...filterOptions }
         if (newValue === '') {
             delete newFilterInfo.name
         } else {

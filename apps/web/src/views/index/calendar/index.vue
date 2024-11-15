@@ -1,5 +1,9 @@
 <template>
-    <nue-text>尚未开发</nue-text>
+    <nue-main>
+        <template #content>
+            日历视图筹备中...
+        </template>
+    </nue-main>
 </template>
 
 <script setup lang='ts'>

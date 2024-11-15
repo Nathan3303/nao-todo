@@ -1,4 +1,4 @@
-import type { Project, Tag } from '@/stores'
+import type { Project, Tag } from '@nao-todo/types'
 
 export type ContentHeaderProps = {
     title?: string

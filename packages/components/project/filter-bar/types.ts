@@ -1,4 +1,4 @@
-type FilterOptions = {
+export type FilterOptions = {
     title?: string
     isDeleted?: boolean
     isArchived?: boolean

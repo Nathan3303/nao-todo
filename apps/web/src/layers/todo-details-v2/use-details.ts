@@ -1,10 +1,11 @@
-import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue'
-import { useTodoStore, useProjectStore, useEventStore } from '@/stores'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useEventStore, useProjectStore, useTodoStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import moment from 'moment'
 import { getTodo } from '@nao-todo/apis'
 import type { Todo } from '@nao-todo/types'
+import { NueMessage } from 'nue-ui'
 
 export const useTodoDetails = () => {
     const route = useRoute()
@@ -79,7 +80,10 @@ export const useTodoDetails = () => {
         if (!shadowTodo.value) return
         const todoId = shadowTodo.value.id
         // await updateTodo(todoId, { ...shadowTodo.value })
-        todoStore.doUpdateTodo(todoId, { ...shadowTodo.value })
+        todoStore.doUpdateTodo(todoId, { ...shadowTodo.value }).then((res) => {
+            if (res) NueMessage.success('更新成功')
+            else NueMessage.error('更新失败')
+        })
         // loadingState.value = false
     }
 
@@ -87,8 +91,7 @@ export const useTodoDetails = () => {
 
     // 格式化日期
     const formatDate = (datestring: string) => {
-        const dateString = moment(datestring).format('YYYY-MM-DD HH:mm')
-        return dateString
+        return moment(datestring).format('YYYY-MM-DD HH:mm')
     }
 
     // 设置结束日期

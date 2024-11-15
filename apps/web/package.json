@@ -1,22 +1,19 @@
 {
-    "name": "@nao-todo/webapp",
-    "version": "0.1.0",
-    "description": "Web app for Nao Todo",
-    "author": "Nathan Lee",
-    "license": "MIT",
-    "private": true,
-    "type": "module",
-    "scripts": {
-        "dev": "vite --port 8080",
-        "build": "run-p type-check \"build-only {@}\" --",
-        "preview": "vite preview",
-        "build-only": "vite build",
-        "type-check": "vue-tsc --build --force",
-        "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
-        "format": "prettier --write src/",
-        "test": "run-p lint format"
-    },
-    "dependencies": {
-        "vite": "^5.3.6"
-    }
+  "name": "@nao-todo/webapp",
+  "version": "0.1.0",
+  "description": "Web app for Nao Todo",
+  "author": "Nathan Lee",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 8080",
+    "build": "run-p type-check \"build-only {@}\" --",
+    "preview": "vite preview",
+    "build-only": "vite build",
+    "type-check": "vue-tsc --build --force"
+  },
+  "dependencies": {
+    "vite": "^5.3.6"
+  }
 }

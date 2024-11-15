@@ -2,7 +2,7 @@
     <nue-container id="tasks/basic/kanban" theme="vertical,inner" class="content-kanban">
         <nue-header height="auto" :key="$route.path" style="box-sizing: border-box">
             <nue-div align="start" justify="space-between" gap="16px">
-                <todo-filter-bar :filter-options="getOptions" @filter="handleFilter" />
+                <todo-filter-bar :filter-options="todoFilterBarOptions" @filter="handleFilter" />
                 <nue-div justify="end" flex="none" width="fit-content" gap="12px">
                     <nue-button
                         v-if="!disabledCreateTodo"
@@ -59,6 +59,7 @@ import { ContentKanbanColumn } from './kanban-column'
 import { useTodoStore } from '@/stores'
 import type { ContentKanbanProps, ContentKanbanEmits } from './types'
 import type { Todo, GetTodosOptions } from '@nao-todo/types'
+import type { TodoFilterOptions } from '@nao-todo/components/todo/filter-bar/types'
 
 const props = defineProps<ContentKanbanProps>()
 const emit = defineEmits<ContentKanbanEmits>()
@@ -72,6 +73,15 @@ const kanbanLoading = ref(false)
 const refreshTimer = ref<number | null>(null)
 const draggingTodoId = ref('abc')
 const todoCreateDialogRef = ref<InstanceType<typeof TodoCreateDialog>>()
+
+// 计算 TodoFilterBar 的过滤选项
+const todoFilterBarOptions = computed<TodoFilterOptions>(() => {
+    return {
+        name: getOptions.value.name || '',
+        state: getOptions.value.state || '',
+        priority: getOptions.value.priority || ''
+    }
+})
 
 const categoriedTodos = computed(() => {
     const result: { [key in Todo['state']]: Todo[] } = {
@@ -105,8 +115,18 @@ const handleGetTodos = async () => {
 }
 handleGetTodos()
 
-const handleFilter = async (newTodoFliter: GetTodosOptions) => {
-    todoStore.updateGetOptions(newTodoFliter)
+// 处理筛选
+const handleFilter = async (newTodoFilter: TodoFilterOptions) => {
+    const options: GetTodosOptions = { ...getOptions.value }
+    Object.keys(newTodoFilter).forEach((key) => {
+        const _k = key as keyof TodoFilterOptions
+        if (newTodoFilter[_k]) {
+            options[_k] = newTodoFilter[_k]
+        } else if (Object.prototype.hasOwnProperty.call(options, _k)) {
+            delete options[_k]
+        }
+    })
+    todoStore.updateGetOptions(options)
     await todoStore.doGetTodos()
 }
 

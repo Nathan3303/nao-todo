@@ -50,7 +50,7 @@
                 v-for="(todo, idx) in todos"
                 :key="todo.id"
                 :data-selected="idx >= selectRange.start && idx <= selectRange.end"
-                :data-done="todo.isDone || todo.state === 'done'"
+                :data-done="todo.state === 'done'"
                 @click.stop.exact="handleShowDetails(todo.id, idx)"
                 @click.stop.shift.exact="handleMultiSelect(idx)"
             >

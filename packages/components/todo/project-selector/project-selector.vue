@@ -13,7 +13,8 @@
             </nue-div>
             <nue-divider />
             <nue-div
-                v-for="project in projects"
+                v-for="(project, index) in projects"
+                :key="index"
                 class="nue-dropdown-item"
                 :data-selected="project.id === projectId"
                 @click="handleSelect(project.id, project.title)"
@@ -28,7 +29,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Project } from '@/stores'
+import type { Project } from '@nao-todo/types'
 import type { TodoProjectSelectorProps, TodoProjectSelectorEmits } from './types'
 
 defineOptions({ name: 'TodoProjectSelector' })
@@ -42,7 +43,8 @@ const buttonIconName = computed(() => {
 })
 
 const buttonText = computed(() => {
-    const { projectId, projectTitle, placeholder } = props
+    const { projectId, placeholder } = props
+    const projectTitle = props.projects.find(project => project.id === projectId)?.title
     if (projectId === '') return placeholder || '移动到'
     return projectTitle || '收集箱'
 })

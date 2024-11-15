@@ -1,10 +1,11 @@
-import { ref } from 'vue'
+import { onBeforeUnmount, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
-import { basicViewsInfo } from './constants'
-import { useProjectStore } from '@/stores'
+import { basicViewsInfo, defaultPreference } from './constants'
+import { useProjectStore, useTagStore, useTodoStore, useUserStore } from '@/stores'
 import type {
     Project,
+    Tag,
     TasksMainRouteCategory,
     TasksMainViewInfo,
     TasksMultiSelectInfo
@@ -14,6 +15,9 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
     const route = useRoute()
     const router = useRouter()
     const projectStore = useProjectStore()
+    const tagStore = useTagStore()
+    const todoStore = useTodoStore()
+    const userStore = useUserStore()
 
     // 当前视图信息
     const category = ref<TasksMainRouteCategory>('basic')
@@ -39,73 +43,107 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
         multiSelectStates.value.selectedTodoIds = []
     }
 
-    // 删除项目
+    // 删除清单
     const handleRemoveProject = async () => {
         if (category.value !== 'project') return
         if (!viewInfo.value) return
         const { id } = viewInfo.value
         const deleteResult = await projectStore.removeProjectWithConfirmation(id)
-        if (deleteResult) router.push('/tasks/all')
+        if (deleteResult) await router.push('/tasks/all')
     }
 
-    // 更新项目标题
-    const handleUpdateProjectTitle = () => {
+    // 更新清单标题
+    const handleUpdateProjectTitle = async () => {
         if (category.value !== 'project') return
         if (!viewInfo.value) return
         const { id, title } = viewInfo.value
-        projectStore.updateProjectTitleWithPromt(id, title)
+        await projectStore.updateProjectTitleWithPrompt(id, title)
     }
 
-    // 更新项目描述
-    const handleUpdateProjectDescription = () => {
+    // 更新清单描述
+    const handleUpdateProjectDescription = async () => {
         if (category.value !== 'project') return
         if (!viewInfo.value) return
         const { id, description } = viewInfo.value
-        projectStore.updateProjectDescriptionWithPromt(id, description)
+        await projectStore.updateProjectDescriptionWithPrompt(id, description)
+    }
+
+    // 更新清单偏好
+    const handleUpdateProjectPreference = async () => {
+        if (category.value !== 'project') return
+        if (!viewInfo.value) return
+        const projectId = route.params.projectId as Project['id']
+        const viewType = (route.name as string).split('-')[2] as string
+        const newPreference: Project['preference'] = {
+            viewType,
+            getTodosOptions: todoStore.getOptions,
+            columns: todoStore.columnOptions
+        }
+        await projectStore.updateProjectPreference(projectId, newPreference)
+    }
+
+    // 归档清单
+    const handleArchiveProject = async () => {
+        if (category.value !== 'project') return
+        if (!viewInfo.value) return
+        const projectId = viewInfo.value.id as Project['id']
+        const result = await projectStore.archiveProjectWithConfirmation(projectId)
+        if (result) await router.push('/tasks/all')
     }
 
     // 重命名标签
-    // const handleRenameTag = async () => {
-    //     if (category.value !== 'tag') return
-    //     if (!viewInfo.value) return
-    //     const { id, title } = viewInfo.value
-    //     return await renameTagWithPrompt(id, title)
-    // }
+    const handleUpdateTagName = async () => {
+        if (category.value !== 'tag') return
+        if (!viewInfo.value) return
+        const { id, title } = viewInfo.value
+        await tagStore.updateTagNameWithPrompt(id, title)
+    }
 
     // 删除标签
-    // const handleDeleteTag = async (tagId: string) => {
-    //     if (category.value !== 'tag') return
-    //     if (!viewInfo.value) return
-    //     const { id } = viewInfo.value
-    //     const removeResult = await removeTagWithConfirm(id)
-    //     if (removeResult._id !== tagId) return
-    //     router.push('/tasks/all')
-    // }
+    const handleDeleteTag = async () => {
+        if (category.value !== 'tag') return
+        if (!viewInfo.value) return
+        const { id } = viewInfo.value
+        const deleteResult = await tagStore.deleteTagWithConfirmation(id)
+        if (deleteResult) await router.push('/tasks/all')
+    }
 
     // 获取基础视图信息
-    const getBasicViewInfo = () => {
+    const getBasicViewInfo = async () => {
         const { meta } = route
-        if (viewLoadedTag === meta.id) return
-        viewLoadedTag = meta.id as string
         const id = meta.id as keyof typeof basicViewsInfo
-        viewInfo.value = basicViewsInfo[id]
+        const _viewInfo = { ...basicViewsInfo[id] }
+        _viewInfo.createTodoOptions.projectId = userStore.user?.id
+        _viewInfo.preference.getTodosOptions.projectId = userStore.user?.id
+        console.log('[UseTasksViewStore/getBasicViewInfo] _viewInfo:', _viewInfo)
+        viewInfo.value = _viewInfo
+        todoStore.setGetOptionsByPreference(viewInfo.value.preference)
         baseRouteName.value = 'tasks-' + meta.id + '-' + viewInfo.value.preference.viewType
-        router.push({ name: baseRouteName.value })
+        await router.push({ name: baseRouteName.value })
     }
 
     // 获取清单视图信息
-    const getProjectViewInfo = () => {
+    const getProjectViewInfo = async () => {
         const { meta, params } = route
-        const id = params.projectId as Project['id']
-        if (viewLoadedTag === id) return
-        viewLoadedTag = id as string
-        const project = projectStore.getProjectByIdFromLocal(id) ?? null
+        const projectId = params.projectId as Project['id']
+        const project = projectStore.getProjectByIdFromLocal(projectId)
         if (!project) return (viewInfo.value = null)
-        viewInfo.value = {
+        // console.log('[UseTasksViewStore/getProjectViewInfo] project:', project)
+        const _viewInfo: TasksMainViewInfo = {
             id: project.id,
             title: project.title,
             description: project.description,
-            preference: project.preference || { viewType: 'table' },
+            preference: {
+                viewType: project.preference.viewType || defaultPreference.viewType,
+                getTodosOptions: {
+                    ...defaultPreference.getTodosOptions,
+                    ...(project.preference.getTodosOptions || {})
+                },
+                columns: {
+                    ...defaultPreference.columns,
+                    ...(project.preference.columns || {})
+                }
+            },
             createTodoOptions: { projectId: project.id },
             handlers: {
                 updateTitle: handleUpdateProjectTitle,
@@ -113,31 +151,97 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
                 remove: handleRemoveProject
             }
         }
+        _viewInfo.preference.getTodosOptions.projectId = projectId
+        viewInfo.value = _viewInfo
+        // console.log('[UseTasksViewStore/getProjectViewInfo] _viewInfo:', _viewInfo)
+        todoStore.setGetOptionsByPreference(_viewInfo.preference)
+        baseRouteName.value = 'tasks-' + meta.id + '-' + _viewInfo.preference.viewType
+        await router.push({ name: baseRouteName.value })
+    }
+
+    // 获取标签视图信息
+    const getTagViewInfo = async () => {
+        const { meta, params } = route
+        const id = params.tagId as Tag['id']
+        const tag = tagStore.getTagByIdFromLocal(id) ?? null
+        if (!tag) return (viewInfo.value = null)
+        defaultPreference.getTodosOptions.tagId = id
+        defaultPreference.getTodosOptions.isDeleted = false
+        viewInfo.value = {
+            id: tag.id,
+            title: tag.name,
+            description: tag.description,
+            preference: defaultPreference,
+            createTodoOptions: { tags: [tag.id] },
+            handlers: {
+                updateTitle: handleUpdateTagName,
+                remove: handleDeleteTag
+            }
+        }
+        // console.log('[UseTasksViewStore] getTagViewInfo:', viewInfo.value.preference)
+        todoStore.setGetOptionsByPreference(viewInfo.value.preference)
         baseRouteName.value = 'tasks-' + meta.id + '-' + viewInfo.value.preference.viewType
-        router.push({ name: baseRouteName.value })
+        await router.push({ name: baseRouteName.value })
     }
 
     // 获取页面信息
     const getViewInfo = async () => {
-        const { meta } = route
+        const { meta, params } = route
         category.value = meta.category as TasksMainRouteCategory
         switch (meta.category) {
             case 'basic':
-                getBasicViewInfo()
+                if (viewLoadedTag === meta.id) return
+                viewLoadedTag = meta.id as string
+                await getBasicViewInfo()
                 break
             case 'project':
-                getProjectViewInfo()
+                if (viewLoadedTag === (params.projectId as Project['id'])) return
+                viewLoadedTag = params.projectId as Project['id']
+                await getProjectViewInfo()
                 break
             case 'tag':
-                // TODO
-                viewInfo.value = null
+                if (viewLoadedTag === (params.tagId as Tag['id'])) return
+                viewLoadedTag = params.tagId as Tag['id']
+                await getTagViewInfo()
                 break
             default:
+                category.value = 'unknown'
                 viewInfo.value = null
                 break
         }
-        document.title = viewInfo.value?.title ? 'NaoTodo - ' + viewInfo.value.title : 'NaoTodo'
+        document.title = viewInfo.value?.title ? 'NaoTodo - ' + viewInfo.value?.title : 'NaoTodo'
     }
+
+    // 监听 ProjectStore 更新 -> 更新视图信息
+    const unsubscribeProjectStoresAction = projectStore.$onAction(({ name, after }) => {
+        if (['updateProjectTitleWithPrompt', 'updateProjectDescriptionWithPrompt'].includes(name)) {
+            after(() => {
+                const projectId = route.params.projectId as Project['id']
+                const project = projectStore.getProjectByIdFromLocal(projectId)
+                if (!project || !viewInfo.value) return
+                viewInfo.value.title = project.title
+                viewInfo.value.description = project.description
+            })
+        }
+    })
+
+    // 监听 TagStore 更新 -> 更新视图信息
+    const unsubscribeTagStoresAction = tagStore.$onAction(({ name, after }) => {
+        if (['updateTagNameWithPrompt'].includes(name)) {
+            after(() => {
+                const tagId = route.params.tagId as Tag['id']
+                const tag = tagStore.getTagByIdFromLocal(tagId)
+                if (!tag || !viewInfo.value) return
+                viewInfo.value.title = tag.name
+            })
+        }
+    })
+
+    // 卸载钩子
+    onBeforeUnmount(() => {
+        unsubscribeProjectStoresAction()
+        unsubscribeTagStoresAction()
+    })
 
     return {
         category,
@@ -147,6 +251,8 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
         showMultiDetails,
         hideMultiDetails,
         getViewInfo,
-        handleRemoveProject
+        handleRemoveProject,
+        handleUpdateProjectPreference,
+        handleArchiveProject
     }
 })

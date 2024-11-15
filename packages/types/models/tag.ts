@@ -1,4 +1,4 @@
-import type { GetRequestPageOptions } from './common'
+import type { GetRequestPageOptions } from '../axios/common'
 import type { User } from './user'
 
 type Tag = {
@@ -26,11 +26,13 @@ type UpdateTagOptionsRaw = {
     deletedAt?: Date | null
 }
 
+type GetTagsOptionsRaw = UpdateTagOptionsRaw
+
 type CreateTagOptions = CreateTagOptionsRaw
 
 type UpdateTagOptions = UpdateTagOptionsRaw
 
-type GetTagsOptions = UpdateTagOptionsRaw & GetRequestPageOptions
+type GetTagsOptions = GetTagsOptionsRaw & GetRequestPageOptions
 
 type GetTagOptions = { id?: Tag['id']; name?: Tag['name'] }
 
@@ -41,6 +43,8 @@ export type {
     CreateTagOptions,
     UpdateTagOptions,
     GetTagOptions,
+    GetTagsOptionsRaw,
+    UpdateTagOptionsRaw,
     GetTagsOptions,
     DeleteTagOptions
 }

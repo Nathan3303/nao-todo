@@ -10,12 +10,12 @@
 </template>
 
 <script setup lang="ts">
-import type { Tag } from '@/stores'
+import type { Tag } from '@nao-todo/types'
 import { TagNode } from '../node'
 import type { TagBarProps, TagBarEmits } from './types'
 
 defineOptions({ name: 'TagBar' })
-const props = defineProps<TagBarProps>()
+defineProps<TagBarProps>()
 const emit = defineEmits<TagBarEmits>()
 
 const handleDeleteTag = (tagId: Tag['id']) => {

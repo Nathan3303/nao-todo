@@ -2,13 +2,13 @@ import $axios from '@nao-todo/utils/axios'
 import { stringifyGetOptions } from '@nao-todo/utils'
 import { defaultGetTodosOptions } from './constants'
 import type {
-    Todo,
+    CreateTodoOptions,
     GetTodoOptions,
     GetTodosOptions,
-    UpdateTodoOptions,
-    CreateTodoOptions,
+    GetTodosSortOptions,
     ResponseData,
-    GetTodosSortOptions
+    Todo,
+    UpdateTodoOptions
 } from '@nao-todo/types'
 
 // 添加待办
@@ -44,6 +44,20 @@ export const updateTodo = async (id: Todo['id'], options: UpdateTodoOptions) => 
     }
 }
 
+// 更新待办(s)
+export const updateTodos = async (ids: Todo['id'][], options: UpdateTodoOptions) => {
+    try {
+        const response = await $axios.put(`/todos`, {
+            todoIds: ids,
+            updateInfo: options
+        })
+        return response.data as ResponseData
+    } catch (error) {
+        console.error('[@nao-todo/apis/todo] updateTodos:', error)
+        return { code: 50001, message: '服务器错误' } as ResponseData
+    }
+}
+
 // 获取待办
 export const getTodo = async (options: GetTodoOptions) => {
     try {
@@ -61,6 +75,8 @@ export const getTodos = async (options: GetTodosOptions = defaultGetTodosOptions
     try {
         const queryString = stringifyGetOptions(options, (key, value) => {
             if (key === 'sort' && value) {
+                const v = value as GetTodosSortOptions
+                if (!v.field) return null
                 return `${key}=${(value as GetTodosSortOptions).field}:${(value as GetTodosSortOptions).order}`
             }
         })

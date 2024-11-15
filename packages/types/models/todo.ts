@@ -20,7 +20,9 @@ type Todo = {
     tags: Tag['id'][]
     dueDate: TodoDueDate
     isDeleted: boolean
+    deletedAt: Date | string | null
     isArchived: boolean
+    archivedAt: Date | string | null
     isFavorited: boolean
     createdAt: string
     updatedAt: string
@@ -51,6 +53,7 @@ type GetTodosOptionsRaw = {
     isFavorited?: Todo['isFavorited']
     sort?: GetTodosSortOptions
     relativeDate?: 'today' | 'tomorrow' | 'week'
+    tagId?: Tag['id']
 }
 
 type UpdateTodoOptionsRaw = {
@@ -62,7 +65,9 @@ type UpdateTodoOptionsRaw = {
     tags?: Todo['tags']
     dueDate?: TodoDueDate
     isDeleted?: Todo['isDeleted']
+    deletedAt?: Todo['deletedAt']
     isArchived?: Todo['isArchived']
+    archivedAt?: Todo['archivedAt']
     isFavorited?: Todo['isFavorited']
 }
 

@@ -1,7 +1,7 @@
-type TodoFilterOptions = {
-    name?: string
-    state?: string
-    priority?: string
+export type TodoFilterOptions = {
+    name: string
+    state: string
+    priority: string
 }
 
 export type TodoFilterBarProps = {

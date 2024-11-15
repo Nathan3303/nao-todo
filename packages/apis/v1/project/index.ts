@@ -7,7 +7,8 @@ import type {
     GetProjectsOptions,
     UpdateProjectOptions,
     CreateProjectOptions,
-    ResponseData
+    ResponseData,
+    GetProjectsSortOptions
 } from '@nao-todo/types'
 
 // 添加清单
@@ -59,7 +60,7 @@ export const getProjects = async (options: GetProjectsOptions = defaultGetProjec
     try {
         const queryString = stringifyGetOptions(options, (key, value) => {
             if (key === 'sort' && value) {
-                return `${key}=${value.field}:${value.order}`
+                return `${key}=${(value as GetProjectsSortOptions).field}:${(value as GetProjectsSortOptions).order}`
             }
         })
         const response = await $axios.get(`/projects?${queryString}`)

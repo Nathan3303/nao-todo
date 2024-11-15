@@ -5,7 +5,7 @@
                 "标签管理"能够清楚地展示出所有的标签，方便执行标签的增删改查。
             </nue-text>
             <nue-div align="center" justify="space-between">
-                <tag-filter-bar :filter-info="filterInfo" @filter="handleFilter" />
+                <tag-filter-bar :filter-options="filterInfo" @filter="handleFilter" />
                 <nue-div width="fit-content" gap="12px">
                     <nue-button
                         theme="small,primary"
@@ -14,7 +14,6 @@
                     >
                         新增
                     </nue-button>
-                    <nue-button theme="small" icon="refresh">刷新</nue-button>
                 </nue-div>
             </nue-div>
             <nue-div class="tag-manager" vertical align="stretch">
@@ -22,22 +21,21 @@
                     :tags="tags"
                     :loading-state="loading"
                     @delete="handleDeleteTag"
-                    @recolor="handleRecolorTag"
+                    @recolor="showUpdateColorDialog"
                 />
             </nue-div>
         </nue-div>
     </nue-dialog>
     <create-tag-dialog ref="createTagDialogRef" :handler="handleCreateTag" />
-    <tag-color-select-dialog ref="tagColorSelectDialogRef" />
+    <tag-color-select-dialog ref="tagColorSelectDialogRef" :handler="tagStore.updateTagColor" />
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { CreateTagDialog, TagFilterBar, TagBoard, TagColorSelectDialog } from '@nao-todo/components'
-import { createTag, removeTagWithConfirm } from '@/handlers/tag-handlers'
+import { CreateTagDialog, TagBoard, TagColorSelectDialog, TagFilterBar } from '@nao-todo/components'
 import { useTagStore } from '@/stores'
-import type { Tag, TagFilterOptions } from '@/stores'
+import type { CreateTagOptions, GetTagsOptions, Tag } from '@nao-todo/types'
 
 defineOptions({ name: 'TagManager' })
 
@@ -49,31 +47,28 @@ const visible = ref(false)
 const loading = ref(false)
 const createTagDialogRef = ref<InstanceType<typeof CreateTagDialog>>()
 const tagColorSelectDialogRef = ref<InstanceType<typeof TagColorSelectDialog>>()
-const filterInfo = ref<TagFilterOptions>({})
+const filterInfo = ref<GetTagsOptions>({})
 const tags = ref<Tag[]>([])
 
-const showCreateTagDialog = () => {
-    createTagDialogRef.value?.show()
+const showCreateTagDialog = () => createTagDialogRef.value?.show()
+const showUpdateColorDialog = async (tagId: Tag['id']) => {
+    const tag = tagStore.getTagByIdFromLocal(tagId)
+    tagColorSelectDialogRef.value?.show(tagId, tag?.color || 'transparent')
 }
 
-const handleFilter = async (newFilterOptions: TagFilterOptions) => {
+const handleFilter = async (newFilterOptions: GetTagsOptions) => {
     filterInfo.value = newFilterOptions
     init()
 }
 
-const handleCreateTag = async (payload: any) => {
-    const createResult = await createTag(payload.name, payload.color)
+const handleCreateTag = async (payload: CreateTagOptions) => {
+    const createResult = await tagStore.doCreateTag(payload)
     init()
     return createResult
 }
 
-const handleRecolorTag = async (tagId: Tag['id']) => {
-    tagColorSelectDialogRef.value?.show(tagId)
-}
-
 const init = () => {
-    const res = tagStore.filterLocal(filterInfo.value)
-    tags.value = res
+    tags.value = tagStore.findTagsFromLocal(filterInfo.value)
 }
 
 const handleShowDialog = () => {
@@ -82,10 +77,8 @@ const handleShowDialog = () => {
 }
 
 const handleDeleteTag = async (tagId: Tag['id']) => {
-    const removeResult = await removeTagWithConfirm(tagId)
-    init()
-    console.log(removeResult)
-    if (removeResult && removeResult._id !== tagId) return
+    const removeResult = await tagStore.deleteTagWithConfirmation(tagId)
+    if (!removeResult) return
     if (route.params.tagId !== tagId) return
     router.push('/tasks/all')
 }

@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import type { SwitchButtonProps, SwitchButtonEmits } from './types'
 
 defineOptions({ name: 'SwitchButton' })
@@ -22,7 +22,7 @@ const iconName = computed(() => {
 const themes = computed(() => {
     const { modelValue, theme } = props
     const activeTheme = modelValue ? 'actived' : 'inactived'
-    let _return: string[] = []
+    let _return: string[]
     if (Array.isArray(theme)) {
         _return = theme.concat(activeTheme)
     } else {
@@ -47,6 +47,6 @@ const handleClick = () => {
     color: #fff;
     background-color: #ee537f;
     border-color: #ee537f;
-    box-shadow: 0px 0px 2px #ee537f;
+    box-shadow: 0px 0 2px #ee537f;
 }
 </style>

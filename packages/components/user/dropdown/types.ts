@@ -1,4 +1,4 @@
-import type { User } from '@/stores'
+import type { User } from '@nao-todo/types'
 
 export type UserDropdownProps = {
     user?: User & { avatarUrl?: string }
