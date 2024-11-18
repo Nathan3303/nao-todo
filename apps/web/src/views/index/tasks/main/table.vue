@@ -11,7 +11,7 @@ import { TodoViewTable } from '@/layers'
 import { useProjectStore, useTagStore, useUserStore } from '@/stores'
 import { useTasksViewStore } from '../stores'
 import { storeToRefs } from 'pinia'
-import type { TodoCreateDialogArgs } from '@/layers/create-todo-dialog/types'
+import type { CreateTodoDialogCallerArgs } from '@/layers/create-todo-dialog/types'
 
 const userStore = useUserStore()
 const projectStore = useProjectStore()
@@ -20,7 +20,7 @@ const tasksViewStore = useTasksViewStore()
 
 const { viewInfo, baseRouteName } = storeToRefs(tasksViewStore)
 
-const handleCreateTodoByDialog = async (caller: (args: TodoCreateDialogArgs) => void) => {
+const handleCreateTodoByDialog = async (caller: (args: CreateTodoDialogCallerArgs) => void) => {
     if (!viewInfo.value) return
     const { id } = viewInfo.value
     const avalibleProjects = projectStore.findProjectsFromLocal({

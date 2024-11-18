@@ -3,7 +3,6 @@ import { defineStore } from 'pinia'
 import { useProjectStore, useTagStore } from '@/stores'
 
 export const useViewStore = defineStore('viewStore', () => {
-    // const userStore = useUserStore()
     const projectStore = useProjectStore()
     const tagStore = useTagStore()
 
@@ -14,14 +13,9 @@ export const useViewStore = defineStore('viewStore', () => {
         checkedIn: false
     })
     const projectAsideVisible = ref(true)
-    const simpleProjectHeader = ref(false)
 
     const toggleProjectAsideVisible = () => {
         projectAsideVisible.value = !projectAsideVisible.value
-    }
-
-    const toggleSimpleProjectHeader = () => {
-        simpleProjectHeader.value = !simpleProjectHeader.value
     }
 
     const indexViewInitTask = async () => {
@@ -40,9 +34,7 @@ export const useViewStore = defineStore('viewStore', () => {
     return {
         indexViewLoader,
         projectAsideVisible,
-        simpleProjectHeader,
         toggleProjectAsideVisible,
-        toggleSimpleProjectHeader,
         indexViewInitTask
     }
 })

@@ -1,14 +1,12 @@
-import type { Todo } from '@nao-todo/types'
-import type { Columns } from '@nao-todo/components'
+import type { Todo, TodoColumnOptions } from '@nao-todo/types'
 
 export type TodoCardProps = {
     todo: Todo
     actived?: boolean
-    columns?: Columns
+    columns?: TodoColumnOptions
 }
 
 export type TodoCardEmits = {
-    // deleteTodo: (todo: Todo) => void
     (event: 'click', todoId: Todo['id']): void
     (event: 'delete', todoId: Todo['id']): void
     (event: 'restore', todoId: Todo['id']): void

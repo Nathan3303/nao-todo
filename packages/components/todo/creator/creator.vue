@@ -53,7 +53,7 @@ const props = defineProps<TodoCreatorProps>()
 const setMoreData = ref(true)
 const todoData = reactive<CreateTodoOptions>({
     name: '',
-    dueDate: { startAt: moment().toISOString(true), endAt: '' },
+    dueDate: { endAt: '' },
     priority: 'low',
     state: 'todo',
     projectId: '',

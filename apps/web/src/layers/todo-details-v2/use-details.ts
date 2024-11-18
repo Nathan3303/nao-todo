@@ -5,7 +5,6 @@ import { useRoute, useRouter } from 'vue-router'
 import moment from 'moment'
 import { getTodo } from '@nao-todo/apis'
 import type { Todo } from '@nao-todo/types'
-import { NueMessage } from 'nue-ui'
 
 export const useTodoDetails = () => {
     const route = useRoute()
@@ -28,16 +27,14 @@ export const useTodoDetails = () => {
         const total = _e ? _e.length : 0
         const percentage = total ? Math.floor((progress / total) * 100) : 0
         return {
-            percentage,
-            text: `已完成 ${progress}/${total}, ${percentage}%`
+            percentage, text: `已完成 ${progress}/${total}, ${percentage}%`
         }
     })
 
     // 获取可用清单
     const activeProjects = computed(() => {
         return projectStore.findProjectsFromLocal({
-            isArchived: false,
-            isDeleted: false
+            isArchived: false, isDeleted: false
         })
     })
 
@@ -75,19 +72,13 @@ export const useTodoDetails = () => {
         return { debouncedFn, cancelTimer }
     }
 
-    const _updateTodo = () => {
-        // loadingState.value = true
+    const _updateTodo = async () => {
         if (!shadowTodo.value) return
         const todoId = shadowTodo.value.id
-        // await updateTodo(todoId, { ...shadowTodo.value })
-        todoStore.doUpdateTodo(todoId, { ...shadowTodo.value }).then((res) => {
-            if (res) NueMessage.success('更新成功')
-            else NueMessage.error('更新失败')
-        })
-        // loadingState.value = false
+        return await todoStore.doUpdateTodo(todoId, { ...shadowTodo.value })
     }
 
-    const { debouncedFn: debouncedUpdateTodo, cancelTimer } = _debounce(_updateTodo, 1024)
+    const { debouncedFn: debouncedUpdateTodo, cancelTimer } = _debounce(_updateTodo, 512)
 
     // 格式化日期
     const formatDate = (datestring: string) => {
@@ -140,7 +131,7 @@ export const useTodoDetails = () => {
         const todoId = shadowTodo.value.id
         try {
             const result = await todoStore.deleteTodoWithConfirmation(todoId)
-            if (result) handleClose()
+            if (result) await handleClose()
         } catch (error) {
             console.info('handleDeleteTodo error: ', error)
         }
@@ -152,7 +143,7 @@ export const useTodoDetails = () => {
         const todoId = shadowTodo.value?.id
         try {
             const result = await todoStore.restoreTodoWithConfirmation(todoId)
-            if (result) handleClose()
+            if (result) await handleClose()
         } catch (error) {
             console.info('handleRestoreTodo error: ', error)
         }
@@ -164,7 +155,7 @@ export const useTodoDetails = () => {
         const todoId = shadowTodo.value.id
         try {
             const result = await todoStore.deleteTodoPermanentlyWithConfirmation(todoId)
-            if (result) handleClose()
+            if (result) await handleClose()
         } catch (error) {
             console.info('handleDeleteTodoPermanently error: ', error)
         }
@@ -179,24 +170,18 @@ export const useTodoDetails = () => {
     }
 
     // 关闭详情
-    const handleClose = () => {
+    const handleClose = async () => {
         cancelTimer(true)
         shadowTodo.value = void 0
         const prevRoute = route.matched[route.matched.length - 1]
-        if (prevRoute) {
-            router.push(prevRoute)
-        }
+        if (prevRoute) await router.push(prevRoute)
     }
 
     // 获取详情
-    watch(
-        () => route.params.taskId,
-        (newValue) => {
-            cancelTimer(true)
-            setTimeout(async () => await _getTodo(newValue as string))
-        },
-        { immediate: true }
-    )
+    watch(() => route.params.taskId, (newValue) => {
+        cancelTimer(true)
+        setTimeout(async () => await _getTodo(newValue as string))
+    }, { immediate: true })
 
     onMounted(() => {
         unSubscribe = todoStore.$subscribe((mutation) => {

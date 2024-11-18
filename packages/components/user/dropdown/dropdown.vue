@@ -28,10 +28,10 @@ import type { User } from '@nao-todo/types'
 
 defineOptions({ name: 'UserDropdown' })
 const props = defineProps<{
-    user: {
+    user?: {
         id: string
         nickname: string
-        avatarUrl: string
+        avatarUrl?: string
     }
 }>()
 const emit = defineEmits<{
@@ -40,7 +40,7 @@ const emit = defineEmits<{
 
 const userAvatarUrl = computed(() => {
     return (
-        props.user.avatarUrl ||
+        props.user?.avatarUrl ||
         'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif?imageView2/1/w/80/h/80'
     )
 })

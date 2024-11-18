@@ -18,17 +18,18 @@
 import { ref } from 'vue'
 import { TodoCreator } from '@nao-todo/components/todo'
 import { NueMessage } from 'nue-ui'
-import type { TodoCreateDialogProps, TodoCreateDialogArgs } from './types'
+import type { CreateTodoDialogProps, CreateTodoDialogCallerArgs } from './types'
+import type { CreateTodoOptions } from '@nao-todo/types'
 
 defineOptions({ name: 'CreateTodoDialog' })
-const props = defineProps<TodoCreateDialogProps>()
+const props = defineProps<CreateTodoDialogProps>()
 
 const visible = ref(false)
 const loading = ref(false)
-const projects = ref<TodoCreateDialogArgs['projects']>([])
-const tags = ref<TodoCreateDialogArgs['tags']>([])
+const projects = ref<CreateTodoDialogCallerArgs['projects']>([])
+const tags = ref<CreateTodoDialogCallerArgs['tags']>([])
 const userId = ref('')
-const presetInfo = ref<TodoCreateDialogArgs['presetInfo']>()
+const presetInfo = ref<CreateTodoDialogCallerArgs['presetInfo']>()
 const todoCreatorRef = ref<InstanceType<typeof TodoCreator>>()
 
 const confirm = async () => {
@@ -40,7 +41,7 @@ const confirm = async () => {
     }
     loading.value = true
     try {
-        await handler(newTodo)
+        await handler(newTodo as CreateTodoOptions)
         visible.value = false
     } catch (e) {
         console.warn('[CreateTodoDialog] confirm error:', e)
@@ -49,8 +50,8 @@ const confirm = async () => {
     }
 }
 
-const show = (args: TodoCreateDialogArgs) => {
-    console.log("[CreateDialog/show] args:", args)
+const show = (args: CreateTodoDialogCallerArgs) => {
+    console.log('[CreateDialog/show] args:', args)
     projects.value = args.projects
     tags.value = args.tags
     userId.value = args.userId

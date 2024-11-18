@@ -1,23 +1,23 @@
 <template>
-    <nue-container id="tasks/basic/kanban" theme="vertical,inner" class="content-kanban">
-        <nue-header height="auto" :key="$route.path" style="box-sizing: border-box">
-            <nue-div align="start" justify="space-between" gap="16px">
+    <nue-container id="tasks/basic/kanban" class="content-kanban" theme="vertical,inner">
+        <nue-header :key="$route.path" height="auto" style="box-sizing: border-box">
+            <nue-div align="start" gap="16px" justify="space-between">
                 <todo-filter-bar :filter-options="todoFilterBarOptions" @filter="handleFilter" />
-                <nue-div justify="end" flex="none" width="fit-content" gap="12px">
+                <nue-div flex="none" gap="12px" justify="end" width="fit-content">
                     <nue-button
                         v-if="!disabledCreateTodo"
-                        theme="small,primary"
                         icon="plus-circle"
+                        theme="small,primary"
                         @click="showCreateTodoDialog"
                     >
                         新增
                     </nue-button>
-                    <todo-table-column-selector v-model="todoStore.columnOptions" />
+                    <todo-table-column-selector v-model="todoStore.columnOptions" :change="handleChangeColumns" />
                     <nue-button
-                        theme="small"
-                        icon="refresh"
-                        @click="handleRefresh"
                         :loading="kanbanLoading || !!refreshTimer"
+                        icon="refresh"
+                        theme="small"
+                        @click="handleRefresh"
                     />
                 </nue-div>
             </nue-div>
@@ -28,20 +28,20 @@
                 <template v-for="(value, key) in categoriedTodos" :key="key">
                     <content-kanban-column
                         :category="key"
-                        :todos="value"
+                        :columnOptions="todoStore.columnOptions"
                         :data-category="key"
-                        :columns="todoStore.columnOptions"
+                        :todos="value"
                         data-droppable="true"
+                        @dragend="handleDragEnd"
+                        @dragenter="handleDragEnter"
+                        @dragover="handleDragOver"
+                        @dragstart="handleDragStart"
+                        @drop="handleDrop"
                         @show-todo-details="showTodoDetails"
                         @delete-todo="todoStore.deleteTodoWithConfirmation"
                         @restore-todo="todoStore.restoreTodoWithConfirmation"
                         @finish-todo="handleFinishTodo"
                         @unfinish-todo="handleUnfinishTodo"
-                        @dragstart="handleDragStart"
-                        @dragenter="handleDragEnter"
-                        @dragover="handleDragOver"
-                        @dragend="handleDragEnd"
-                        @drop="handleDrop"
                     />
                 </template>
             </template>
@@ -50,20 +50,26 @@
     <create-todo-dialog ref="todoCreateDialogRef" :handler="todoStore.doCreateTodo" />
 </template>
 
-<script setup lang="ts">
-import { ref, computed } from 'vue'
+<script lang="ts" setup>
+import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { Loading, TodoFilterBar } from '@nao-todo/components'
 import { ContentKanbanColumn } from './kanban-column'
 import { CreateTodoDialog, TodoTableColumnSelector } from '@/layers'
 import { useTodoStore } from '@/stores'
-import type { ContentKanbanProps, ContentKanbanEmits } from './types'
-import type { Todo, GetTodosOptions } from '@nao-todo/types'
+import type { CreateTodoDialogCallerArgs } from '@/layers/create-todo-dialog/types'
+import type { GetTodosOptions, Todo, TodoColumnOptions } from '@nao-todo/types'
 import type { TodoFilterOptions } from '@nao-todo/components/todo/filter-bar/types'
 
-const props = defineProps<ContentKanbanProps>()
-const emit = defineEmits<ContentKanbanEmits>()
+const props = defineProps<{
+    baseRoute: string
+    disabledCreateTodo?: boolean
+}>()
+const emit = defineEmits<{
+    (event: 'createTodo', newTodoName: string): void
+    (event: 'createTodoByDialog', caller: (args: CreateTodoDialogCallerArgs) => void): void
+}>()
 
 const router = useRouter()
 const todoStore = useTodoStore()
@@ -129,6 +135,10 @@ const handleFilter = async (newTodoFilter: TodoFilterOptions) => {
     })
     todoStore.updateGetOptions(options)
     await todoStore.doGetTodos()
+}
+
+const handleChangeColumns = (options: TodoColumnOptions) => {
+    todoStore.updateColumnOptions(options)
 }
 
 const handleRefresh = async () => {
@@ -209,5 +219,25 @@ const handleDrop = async (event: DragEvent) => {
 </script>
 
 <style scoped>
-@import url('./kanban.css');
+.content-kanban {
+    width: 100%;
+
+    & > .nue-header {
+        border-bottom: none;
+        padding-top: 8px;
+    }
+
+    & > .nue-main {
+        overflow: hidden;
+        overflow-x: auto;
+        gap: 16px;
+
+        &:deep(> .nue-main__content) {
+            flex-direction: row;
+            padding: 0 16px;
+            gap: 16px;
+        }
+    }
+}
+
 </style>

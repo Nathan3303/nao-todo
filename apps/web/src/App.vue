@@ -6,7 +6,7 @@
         @refresh="indexViewInitTask"
     />
     <suspense>
-        <router-view></router-view>
+        <router-view />
     </suspense>
 </template>
 

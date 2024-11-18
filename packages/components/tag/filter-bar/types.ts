@@ -1,5 +1,5 @@
 type FilterOptions = {
-    name: string | null
+    name?: string
 }
 
 type TagFilterBarProps = {

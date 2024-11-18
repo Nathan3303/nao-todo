@@ -9,8 +9,8 @@
         @keydown.enter="handleSignIn"
     >
         <nue-div vertical gap="4px" align="center">
-            <nue-text size="24px" weight="bold"> 登录到 NaoTodo </nue-text>
-            <nue-text size="12px" color="grey"> 使用您的电子邮件和密码进行登录 </nue-text>
+            <nue-text size="24px" weight="bold">登录到 NaoTodo</nue-text>
+            <nue-text size="12px" color="grey">使用您的电子邮件和密码进行登录</nue-text>
         </nue-div>
         <nue-div vertical align="stretch">
             <nue-input
@@ -18,15 +18,15 @@
                 placeholder="电子邮箱 (name@example.com)"
                 type="email"
                 :disabled="loading"
-            ></nue-input>
+            />
             <nue-input
                 v-model="password"
                 placeholder="密码"
                 type="password"
                 :disabled="loading"
                 allow-show-password
-            ></nue-input>
-            <nue-button theme="primary" @click="handleSignIn" :loading="loading"> 登录 </nue-button>
+            />
+            <nue-button theme="primary" @click="handleSignIn" :loading="loading">登录</nue-button>
         </nue-div>
         <nue-divider align="center">
             <nue-text color="grey" size="12px">或以其他方式登录</nue-text>
@@ -40,7 +40,9 @@ import { ref } from 'vue'
 import { NueMessage } from 'nue-ui'
 import type { SigninOptions } from '@nao-todo/types'
 
-defineProps<{ loading: boolean }>()
+defineProps<{
+    loading: boolean
+}>()
 const emit = defineEmits<{
     (event: 'submit', payload: SigninOptions): void
 }>()

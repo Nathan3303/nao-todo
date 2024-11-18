@@ -1,23 +1,23 @@
 <template>
-    <nue-div align="center" width="fit-content" gap="12px">
-        <nue-div vertical width="fit-content" gap="4px">
+    <nue-div align="center" gap="12px" width="fit-content">
+        <nue-div gap="4px" vertical width="fit-content">
             <nue-input
-                theme="small"
                 v-model="filterText"
-                placeholder="筛选标签"
-                icon="filter"
                 :debounce-time="360"
+                icon="filter"
+                placeholder="筛选标签"
+                theme="small"
             />
         </nue-div>
-        <nue-button v-if="isFiltering" theme="small" icon="clear" @click="handleResetFilter">
+        <nue-button v-if="isFiltering" icon="clear" theme="small" @click="handleResetFilter">
             重置
         </nue-button>
     </nue-div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed, ref, watch } from 'vue'
-import type { TagFilterBarProps, TagFilterBarEmits } from './types'
+import type { TagFilterBarEmits, TagFilterBarProps } from './types'
 
 defineOptions({ name: 'TagFilterBar' })
 const props = defineProps<TagFilterBarProps>()
@@ -32,17 +32,21 @@ const isFiltering = computed(() => {
 
 const handleResetFilter = () => {
     filterText.value = ''
-    emit('filter', {
-        name: null
-    })
+    emit('filter', {})
 }
 
 watch(
     () => filterText.value,
     (newValue) => {
         const newFilterInfo = { ...props.filterOptions }
-        newFilterInfo.name = newValue === '' ? null : newValue
+        // newFilterInfo.name = newValue === '' ? null : newValue
+        if (newValue === '') {
+            delete newFilterInfo.name
+        } else {
+            newFilterInfo.name = newValue
+        }
         emit('filter', newFilterInfo)
+
     }
 )
 </script>

@@ -88,7 +88,6 @@ const buildTaskRoute = (path: string, meta: RouteMeta) => {
         meta,
         props: true,
         component: () => import(`@/views/index/tasks/main/index.vue`),
-        // redirect: { name: `tasks-${meta.id}-table` },
         children: [
             {
                 path: 'table/:taskId?',

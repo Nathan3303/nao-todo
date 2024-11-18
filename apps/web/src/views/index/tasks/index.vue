@@ -62,12 +62,27 @@ import { useMoment } from '@nao-todo/utils'
 const viewStore = useViewStore()
 const tasksViewStore = useTasksViewStore()
 
-const now = useMoment();
+const now = useMoment()
 
 const { projectAsideVisible: pav } = storeToRefs(viewStore)
 const collapseItemsRecord = ref(['projects', 'tags', 'filters'])
 </script>
 
 <style scoped>
-@import url('./index.css');
+.nue-main {
+    &:deep().nue-main__aside-wrapper .nue-main__aside {
+        gap: 8px;
+
+        .nue-collapse .nue-collapse-item .nue-collapse-item__header {
+            box-shadow: none;
+            border-color: transparent;
+            height: auto;
+            min-height: auto;
+        }
+    }
+
+    &:deep().nue-main__outline-wrapper .nue-main__outline {
+        padding: 0;
+    }
+}
 </style>

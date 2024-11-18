@@ -80,7 +80,7 @@ const handleDeleteTag = async (tagId: Tag['id']) => {
     const removeResult = await tagStore.deleteTagWithConfirmation(tagId)
     if (!removeResult) return
     if (route.params.tagId !== tagId) return
-    router.push('/tasks/all')
+    await router.push('/tasks/all')
 }
 
 defineExpose({

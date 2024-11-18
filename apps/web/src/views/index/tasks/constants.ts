@@ -1,12 +1,12 @@
 import moment from 'moment'
-import { useUserStore, useProjectStore, useTagStore, useTodoStore } from '@/stores'
-import type { TodoCreateDialogArgs } from '@/layers/create-todo-dialog/types'
+import { useProjectStore, useTagStore, useTodoStore, useUserStore } from '@/stores'
+import type { CreateTodoDialogCallerArgs } from '@/layers/create-todo-dialog/types'
 import type {
-    Todo,
+    ProjectPreference,
     TasksMainBasicViewNames,
     TasksMainViewInfo,
-    TodoColumnOptions,
-    ProjectPreference
+    Todo,
+    TodoColumnOptions
 } from '@nao-todo/types'
 
 const userStore = useUserStore()
@@ -46,7 +46,7 @@ export const basicViewsInfo: {
             handleCreateTodo: async (todoName: Todo['name']) => {
                 await todoStore.doCreateTodo({ dueDate: {}, name: todoName })
             },
-            handleCreateTodoByDialog: async (caller: (args: TodoCreateDialogArgs) => void) => {
+            handleCreateTodoByDialog: async (caller: (args: CreateTodoDialogCallerArgs) => void) => {
                 caller({
                     userId: userStore.user!.id,
                     projects: projectStore.projects,
@@ -84,7 +84,7 @@ export const basicViewsInfo: {
                     }
                 })
             },
-            handleCreateTodoByDialog: async (caller: (args: TodoCreateDialogArgs) => void) => {
+            handleCreateTodoByDialog: async (caller: (args: CreateTodoDialogCallerArgs) => void) => {
                 const now = moment()
                 caller({
                     userId: userStore.user!.id,
@@ -129,7 +129,7 @@ export const basicViewsInfo: {
                     }
                 })
             },
-            handleCreateTodoByDialog: async (caller: (args: TodoCreateDialogArgs) => void) => {
+            handleCreateTodoByDialog: async (caller: (args: CreateTodoDialogCallerArgs) => void) => {
                 const tomorrow = moment().add(1, 'day')
                 caller({
                     userId: userStore.user!.id,
@@ -174,7 +174,7 @@ export const basicViewsInfo: {
                     }
                 })
             },
-            handleCreateTodoByDialog: async (caller: (args: TodoCreateDialogArgs) => void) => {
+            handleCreateTodoByDialog: async (caller: (args: CreateTodoDialogCallerArgs) => void) => {
                 const now = moment()
                 caller({
                     userId: userStore.user!.id,
@@ -206,7 +206,7 @@ export const basicViewsInfo: {
             handleCreateTodo: async (todoName: Todo['name']) => {
                 await todoStore.doCreateTodo({ dueDate: {}, name: todoName })
             },
-            handleCreateTodoByDialog: async (caller: (args: TodoCreateDialogArgs) => void) => {
+            handleCreateTodoByDialog: async (caller: (args: CreateTodoDialogCallerArgs) => void) => {
                 caller({
                     userId: userStore.user!.id,
                     projects: projectStore.projects,
@@ -232,7 +232,7 @@ export const basicViewsInfo: {
             handleCreateTodo: async (todoName: Todo['name']) => {
                 await todoStore.doCreateTodo({ dueDate: {}, name: todoName, isFavorited: true })
             },
-            handleCreateTodoByDialog: async (caller: (args: TodoCreateDialogArgs) => void) => {
+            handleCreateTodoByDialog: async (caller: (args: CreateTodoDialogCallerArgs) => void) => {
                 caller({
                     userId: userStore.user!.id,
                     projects: projectStore.projects,

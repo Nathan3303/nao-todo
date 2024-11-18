@@ -21,7 +21,7 @@
                 <user-dropdown :user="user" @logout="userStore.signOutWithConfirmation" />
             </template>
         </nue-header>
-        <router-view></router-view>
+        <router-view />
     </nue-container>
     <!-- Dialogs -->
     <update-log-dialog ref="updateLogDialogRef" />

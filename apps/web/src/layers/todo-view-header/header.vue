@@ -20,7 +20,7 @@
                     </nue-text>
                 </nue-div>
                 <nue-div align="center" justify="end" width="fit-content">
-                    <slot name="actions"></slot>
+                    <slot name="actions" />
                 </nue-div>
             </nue-div>
             <nue-text
@@ -33,9 +33,9 @@
                 {{ viewInfo?.description || '该清单没有设置描述信息，点此设置清单描述' }}
             </nue-text>
         </nue-div>
-        <nue-div v-if="!sph" wrap="nowrap" align="center">
+        <nue-div wrap="nowrap" align="center">
             <nue-div class="project-navigations">
-                <slot name="navigations"></slot>
+                <slot name="navigations" />
             </nue-div>
         </nue-div>
     </nue-header>
@@ -45,22 +45,51 @@
 import { storeToRefs } from 'pinia'
 import { useViewStore } from '@/stores'
 import { useTasksViewStore } from '@/views/index/tasks/stores'
-import type { ContentHeaderProps } from './types'
+import type { Project, Tag } from '@nao-todo/types'
 
 defineOptions({ name: 'ContentHeader' })
-defineProps<ContentHeaderProps>()
+defineProps<{
+    title?: string
+    subTitle?: string
+    project?: Project | null
+    tag?: Tag
+}>()
 
 const viewStore = useViewStore()
 const tasksViewStore = useTasksViewStore()
 
-const { projectAsideVisible: pav, simpleProjectHeader: sph } = storeToRefs(viewStore)
+const { projectAsideVisible: pav } = storeToRefs(viewStore)
 const { category, viewInfo } = storeToRefs(tasksViewStore)
 
-const handleHideProjectAside = () => {
-    viewStore.toggleProjectAsideVisible()
-}
+const handleHideProjectAside = () => viewStore.toggleProjectAsideVisible()
+
 </script>
 
 <style scoped>
-@import url('./header.css');
+.project-navigations {
+    width: fit-content;
+    gap: 0;
+    padding: 4px;
+    background-color: #f4f4f5;
+    border-radius: var(--primary-radius);
+
+    &:deep().nue-link {
+        padding: 4px 12px;
+        height: auto;
+        color: #66666e;
+        border-color: transparent;
+        justify-content: center;
+        font-size: 14px;
+
+        --hover-background-color: transparent;
+        --active-background-color: transparent;
+    }
+
+    &:deep().nue-link--actived {
+        background-color: white;
+        color: #131315;
+        box-shadow: var(--secondary-shadow);
+    }
+}
+
 </style>

@@ -22,7 +22,7 @@
                             {{ switchButtonText }}
                         </nue-button>
                     </nue-div>
-                    <component :is="subView" @submit="handleSubmit" :loading="loading"></component>
+                    <component :is="subView" @submit="handleSubmit" :loading="loading" />
                 </nue-div>
             </template>
         </nue-main>
@@ -37,7 +37,9 @@ import { NueMessage } from 'nue-ui'
 import { useRouter } from 'vue-router'
 import type { SigninOptions, SignupOptions } from '@nao-todo/types'
 
-const props = defineProps<{ operation?: string }>()
+const props = defineProps<{
+    operation?: string
+}>()
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -52,14 +54,14 @@ const switchRoute = computed(() => ('/auth' + isLogin.value ? '/signup' : '/logi
 const handleSignin = async (options: SigninOptions) => {
     const res = await userStore.doSignin(options)
     if (!res) throw new Error('登录失败')
-    router.push({ name: 'index' })
+    await router.push({ name: 'index' })
     requestIdleCallback(() => NueMessage.success('登录成功'))
 }
 
 const handleSignup = async (payload: SignupOptions) => {
     const res = await userStore.doSignup(payload)
     if (!res) throw new Error('注册失败')
-    router.push('/auth/login')
+    await router.push('/auth/login')
     requestIdleCallback(() => NueMessage.success('注册成功'))
 }
 
@@ -74,6 +76,7 @@ async function handleSubmit(payload: SigninOptions | SignupOptions) {
     } catch (e) {
         if (e instanceof Error) {
             NueMessage.error(e.message)
+            return
         }
         console.log('[/auth/index.vue]:handleSubmit', e)
     } finally {

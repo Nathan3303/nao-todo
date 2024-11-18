@@ -1,10 +1,11 @@
 type CreateOptions = {
     name: string
     color: string
+    description: string
 }
 
-type CreateTagDialogProps = CreateOptions & {
-    handler: (options: CreateOptions) => Promise<any>
+type CreateTagDialogProps = {
+    handler: (options: CreateOptions) => Promise<boolean>
 }
 
 export type { CreateOptions, CreateTagDialogProps }

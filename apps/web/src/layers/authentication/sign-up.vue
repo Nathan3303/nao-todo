@@ -9,7 +9,7 @@
         @keydown.enter="handleSignUp"
     >
         <nue-div vertical gap="4px" align="center">
-            <nue-text size="24px" weight="bold"> 创建您的账户 </nue-text>
+            <nue-text size="24px" weight="bold">创建您的账户</nue-text>
             <nue-text size="12px" color="grey" align="center">
                 在下面输入您的电子邮件和密码以创建账户
             </nue-text>
@@ -36,7 +36,7 @@
                 allow-show-password
             />
             <nue-input v-model="nickname" placeholder="昵称（可选）" :disabled="loading" />
-            <nue-button theme="primary" @click="handleSignUp" :loading="loading"> 注册 </nue-button>
+            <nue-button theme="primary" @click="handleSignUp" :loading="loading">注册</nue-button>
         </nue-div>
         <nue-divider align="center">
             <nue-text color="grey" size="12px">或以其他方式注册</nue-text>
@@ -44,7 +44,10 @@
         <nue-button icon="logo">NueUI</nue-button>
         <nue-text size="12px" color="gray" align="center">
             点击注册按钮后，即表示您同意我们站点的
-            <nue-link>服务条款</nue-link> 和 <nue-link>隐私政策</nue-link>。
+            <nue-link>服务条款</nue-link>
+            和
+            <nue-link>隐私政策</nue-link>
+            。
         </nue-text>
     </nue-div>
 </template>
@@ -54,7 +57,9 @@ import { ref } from 'vue'
 import { NueMessage } from 'nue-ui'
 import type { SignupOptions } from '@nao-todo/types'
 
-defineProps<{ loading: boolean }>()
+defineProps<{
+    loading: boolean
+}>()
 const emit = defineEmits<{
     (event: 'submit', payload: SignupOptions): void
 }>()

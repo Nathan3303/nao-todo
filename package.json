@@ -10,16 +10,12 @@
     "webapp:build": "cross-env NODE_ENV=production pnpm --filter @nao-todo/webapp build"
   },
   "dependencies": {
-    "@eslint/js": "^9.13.0",
     "@nao-todo/apis": "workspace:*",
     "@nao-todo/components": "workspace:*",
     "@nao-todo/hooks": "workspace:*",
     "@nao-todo/types": "workspace:*",
     "@nao-todo/utils": "workspace:*",
     "@nao-todo/webapp": "workspace:*",
-    "@types/md5": "^2.3.5",
-    "@typescript-eslint/eslint-plugin": "^8.12.2",
-    "@typescript-eslint/parser": "^8.12.2",
     "axios": "^1.7.7",
     "jsstore": "^4.8.1",
     "md5": "^2.3.0",
@@ -30,10 +26,14 @@
     "vue-router": "^4.3.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "@typescript-eslint/eslint-plugin": "^8.12.2",
+    "@typescript-eslint/parser": "^8.12.2",
     "@rollup/plugin-terser": "^0.4.4",
     "@rushstack/eslint-patch": "^1.8.0",
     "@tsconfig/node20": "^20.1.4",
     "@types/node": "^20.12.5",
+    "@types/md5": "^2.3.5",
     "@vitejs/plugin-vue": "^5.0.4",
     "@volar/language-core": "^2.4.10",
     "@vue/eslint-config-prettier": "^9.0.0",
