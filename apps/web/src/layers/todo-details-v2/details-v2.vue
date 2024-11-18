@@ -1,16 +1,16 @@
 <template>
-    <nue-div v-if="isGetting" height="100%" align="center" justify="center">
-        <nue-icon name="loading" color="gray" spin />
-        <nue-text size="12px" color="gray">加载中 ...</nue-text>
+    <nue-div v-if="isGetting" align="center" height="100%" justify="center">
+        <nue-icon color="gray" name="loading" spin />
+        <nue-text color="gray" size="12px">加载中 ...</nue-text>
     </nue-div>
     <nue-container
         v-else-if="shadowTodo"
         id="tasks/details"
-        theme="vertical,inner"
         :key="shadowTodo?.id"
+        theme="vertical,inner"
     >
         <nue-header height="auto" style="justify-content: space-between; box-sizing: border-box">
-            <nue-div align="center" wrap="nowrap" width="fit-content">
+            <nue-div align="center" width="fit-content" wrap="nowrap">
                 <todo-check-button
                     :is-done="shadowTodo.state === 'done'"
                     @change="handleCheckTodo"
@@ -18,11 +18,11 @@
                 <nue-divider direction="vertical" />
                 <todo-date-selector :date="shadowTodo.dueDate.endAt" @change="handleChangeEndAt" />
             </nue-div>
-            <nue-div align="center" wrap="nowrap" width="fit-content">
+            <nue-div align="center" width="fit-content" wrap="nowrap">
                 <nue-button
-                    theme="small"
-                    icon="clear"
                     :disabled="loadingState"
+                    icon="clear"
+                    theme="small"
                     @click="handleClose"
                 >
                     关闭
@@ -32,25 +32,25 @@
         <nue-main>
             <nue-container theme="vertical,inner">
                 <nue-header height="auto" style="justify-content: space-between">
-                    <nue-div width="fit-content" align="center">
+                    <nue-div align="center" width="fit-content">
                         <todo-selector
-                            :value="shadowTodo.state"
                             :options="TodoStateSelectOptions"
+                            :value="shadowTodo.state"
                             @change="handleChangeState"
                         />
                         <todo-selector
-                            :value="shadowTodo.priority"
                             :options="TodoPrioritySelectOptions"
+                            :value="shadowTodo.priority"
                             @change="handleChangePriority"
                         />
                     </nue-div>
                     <switch-button
                         v-model="shadowTodo.isFavorited"
-                        size="small"
-                        icon="heart"
                         active-icon="heart-fill"
-                        text="收藏"
                         active-text="取消收藏"
+                        icon="heart"
+                        size="small"
+                        text="收藏"
                         @change="() => updateTodo()"
                     />
                 </nue-header>
@@ -62,21 +62,22 @@
                             hide-text
                         />
                     </nue-div>
-                    <nue-div vertical gap="0px" align="stretch">
+                    <nue-div align="stretch" gap="8px" vertical>
                         <nue-textarea
-                            class="inputer--name"
                             v-model="shadowTodo.name"
-                            placeholder="输入您的任务名称..."
                             autosize
+                            class="inputer--name"
+                            placeholder="输入您的任务名称..."
+                            style="padding: 0; flex: auto; font-size: var(--text-lg);"
                             theme="noshape,large"
                             @change="updateTodo"
-                            style="padding: 0px; flex: auto"
                         />
                         <nue-textarea
                             v-model="shadowTodo.description"
-                            placeholder="输入您的任务描述..."
                             :rows="0"
                             autosize
+                            placeholder="输入您的任务描述..."
+                            style="padding: 0; flex: auto; color: #696969;"
                             theme="noshape"
                             @change="updateTodo"
                         />
@@ -93,21 +94,21 @@
                     <nue-div gap="8px">
                         <details-row
                             v-if="shadowTodo?.updatedAt"
-                            label="检查事项进度"
                             :text="eventsProgress.text"
                             flex="1"
+                            label="检查事项进度"
                         />
                         <details-row
                             v-if="shadowTodo?.createdAt"
-                            label="创建时间"
                             :text="formatDate(shadowTodo?.createdAt)"
                             flex="1"
+                            label="创建时间"
                         />
                         <details-row
                             v-if="shadowTodo?.updatedAt"
-                            label="最后修改时间"
                             :text="formatDate(shadowTodo?.updatedAt)"
                             flex="1"
+                            label="最后修改时间"
                         />
                     </nue-div>
                 </nue-footer>
@@ -115,17 +116,17 @@
         </nue-main>
         <nue-footer style="justify-content: space-between">
             <todo-project-selector
-                :user-id="userStore.user!.id"
-                :projects="projects"
                 :project-id="shadowTodo.projectId"
+                :projects="projects"
+                :user-id="userStore.user!.id"
                 @select="handleMoveToProject"
             />
-            <nue-div wrap="nowrap" width="fit-content" gap="4px">
+            <nue-div gap="4px" width="fit-content" wrap="nowrap">
                 <nue-button
                     v-if="shadowTodo.isDeleted"
+                    icon="delete"
                     size="small"
                     theme="error"
-                    icon="delete"
                     @click="handleDeleteTodoPermanently"
                 >
                     永久删除
@@ -141,24 +142,21 @@
     <nue-empty v-else description="点击左侧列表中的任务查看详细" image-src="/images/to-do.png" />
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { useTodoDetails } from './use-details'
-import { useUserStore, useTagStore } from '@/stores'
+import { useTagStore, useUserStore } from '@/stores'
 import DetailsRow from './row.vue'
 import { TodoEventDetails } from '@/layers'
-import {
-    TodoSelector,
-    TodoStateSelectOptions,
-    TodoPrioritySelectOptions
-} from '@nao-todo/components/todo/selector'
+import { TodoPrioritySelectOptions, TodoSelector, TodoStateSelectOptions } from '@nao-todo/components/todo/selector'
 import {
     SwitchButton,
+    TodoCheckButton,
     TodoDateSelector,
     TodoDeleteButton,
-    TodoCheckButton,
     TodoProjectSelector,
     TodoTagBar
 } from '@nao-todo/components'
+import { NueContainer } from 'nue-ui'
 
 defineOptions({ name: 'ContentTodoDetailsV2' })
 

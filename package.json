@@ -7,7 +7,8 @@
   "packageManager": "pnpm@9.12.2",
   "scripts": {
     "webapp:dev": "cross-env NODE_ENV=development pnpm --filter @nao-todo/webapp dev",
-    "webapp:build": "cross-env NODE_ENV=production pnpm --filter @nao-todo/webapp build"
+    "webapp:build": "cross-env NODE_ENV=production pnpm --filter @nao-todo/webapp build",
+    "webapp:preview": "pnpm --filter @nao-todo/webapp preview"
   },
   "dependencies": {
     "@nao-todo/apis": "workspace:*",

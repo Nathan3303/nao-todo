@@ -66,7 +66,7 @@
                     :limit="getOptions.limit"
                     :page="getOverview.pageInfo.page * 1"
                     :total-pages="getOverview.pageInfo.totalPages"
-                    @perpage-change="handlePerPageChange"
+                    @per-page-change="handlePerPageChange"
                     @page-change="handlePageChange"
                 />
             </nue-div>

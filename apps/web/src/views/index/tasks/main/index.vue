@@ -1,22 +1,22 @@
 <template>
     <nue-container id="tasks/main" theme="vertical,inner">
         <todo-view-header>
-            <template #actions v-if="category !== 'basic'">
-                <nue-tooltip size="small" content="删除清单">
+            <template v-if="category !== 'basic'" #actions>
+                <nue-tooltip content="删除清单" size="small">
                     <nue-button
-                        theme="icon-only"
                         icon="delete"
+                        theme="icon-only"
                         @click="viewInfo?.handlers?.remove"
                     />
                 </nue-tooltip>
                 <nue-dropdown
+                    hide-on-click
                     placement="bottom-end"
                     size="small"
                     @execute="handleDropdownExecute"
-                    hide-on-click
                 >
                     <template #default="{ clickTrigger }">
-                        <nue-button theme="icon-only" icon="more" @click="clickTrigger" />
+                        <nue-button icon="more" theme="icon-only" @click="clickTrigger" />
                     </template>
                     <template #dropdown>
                         <li class="nue-dropdown-item" data-executeid="save-as-preference">
@@ -27,21 +27,23 @@
                 </nue-dropdown>
             </template>
             <template #navigations>
-                <nue-link theme="btnlike" :route="{ name: `tasks-${$route.meta.id}-table` }">
+                <nue-link :route="{ name: `tasks-${$route.meta.id}-table` }" theme="btnlike">
                     列表视图
                 </nue-link>
-                <nue-link theme="btnlike" :route="{ name: `tasks-${$route.meta.id}-kanban` }">
+                <nue-link :route="{ name: `tasks-${$route.meta.id}-kanban` }" theme="btnlike">
                     看板视图
                 </nue-link>
             </template>
         </todo-view-header>
         <nue-main style="border: none">
-            <router-view />
+            <suspense>
+                <router-view />
+            </suspense>
         </nue-main>
     </nue-container>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { watchEffect } from 'vue'
 import { TodoViewHeader } from '@/layers'
 import { useTasksViewStore } from '../stores'
@@ -66,6 +68,7 @@ const handleDropdownExecute = async (executeId: string) => {
 
 // 处理路由重复问题
 onBeforeRouteUpdate((to, from, next) => {
+    console.log(to, from)
     const toName = (to.name as string).split('-').slice(0, 2).join('-')
     const fromName = from.name as string
     if ((fromName.endsWith('kanban') || fromName.endsWith('table')) && to.name === toName) {

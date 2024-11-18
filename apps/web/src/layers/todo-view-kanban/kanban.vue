@@ -120,7 +120,6 @@ const handleGetTodos = async () => {
     await todoStore.doGetTodos()
     kanbanLoading.value = false
 }
-handleGetTodos()
 
 // 处理筛选
 const handleFilter = async (newTodoFilter: TodoFilterOptions) => {
@@ -216,6 +215,8 @@ const handleDrop = async (event: DragEvent) => {
     if (todo && todo.state === category) return
     await todoStore.doUpdateTodo(todoId, { state: category as Todo['state'] })
 }
+
+await handleGetTodos()
 </script>
 
 <style scoped>

@@ -1,12 +1,13 @@
 <template>
     <todo-view-table
         :key="viewInfo?.id"
-        :base-route="baseRouteName"
+        :base-route="baseRoute"
         @create-todo-by-dialog="handleCreateTodoByDialog"
     />
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
+import { computed } from 'vue'
 import { TodoViewTable } from '@/layers'
 import { useProjectStore, useTagStore, useUserStore } from '@/stores'
 import { useTasksViewStore } from '../stores'
@@ -18,7 +19,20 @@ const projectStore = useProjectStore()
 const tagStore = useTagStore()
 const tasksViewStore = useTasksViewStore()
 
-const { viewInfo, baseRouteName } = storeToRefs(tasksViewStore)
+const { viewInfo, category } = storeToRefs(tasksViewStore)
+
+const baseRoute = computed(() => {
+    switch (category.value) {
+        case 'basic':
+            return `tasks-${viewInfo.value?.id}-table`
+        case 'project':
+            return `tasks-project-table`
+        case 'tag':
+            return `tasks-tag-table`
+        default:
+            return `tasks-all-table`
+    }
+})
 
 const handleCreateTodoByDialog = async (caller: (args: CreateTodoDialogCallerArgs) => void) => {
     if (!viewInfo.value) return

@@ -1,17 +1,17 @@
 <template>
     <nue-main
-        style="z-index: 0"
-        aside-width="240px"
-        aside-min-width="200px"
-        aside-max-width="300px"
         :allow-collapse-aside="false"
-        :allow-hide-aside="false"
-        outline-width="480px"
-        outline-min-width="400px"
-        outline-max-width="600px"
         :allow-collapse-outline="false"
+        :allow-hide-aside="false"
+        aside-max-width="300px"
+        aside-min-width="200px"
+        aside-width="240px"
+        outline-max-width="600px"
+        outline-min-width="400px"
+        outline-width="480px"
+        style="z-index: 0"
     >
-        <template #aside v-if="pav">
+        <template v-if="pav" #aside>
             <aside-link icon="more2" route-name="tasks-all">所有</aside-link>
             <aside-link icon="calendar2" route-name="tasks-today">
                 今天（ {{ now.format('MM月DD日') }} ）
@@ -32,7 +32,9 @@
             <aside-link icon="delete" route-name="tasks-recycle">垃圾桶</aside-link>
         </template>
         <template #content>
-            <router-view />
+            <suspense>
+                <router-view />
+            </suspense>
         </template>
         <template #outline>
             <todo-multi-details
@@ -44,15 +46,9 @@
     </nue-main>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { ref } from 'vue'
-import {
-    TodoDetailsV2,
-    ProjectSmartList,
-    TodoMultiDetails,
-    TodoFilterList,
-    TagSmartList
-} from '@/layers'
+import { ProjectSmartList, TagSmartList, TodoDetailsV2, TodoFilterList, TodoMultiDetails } from '@/layers'
 import { storeToRefs } from 'pinia'
 import { useViewStore } from '@/stores'
 import { useTasksViewStore } from './stores'
