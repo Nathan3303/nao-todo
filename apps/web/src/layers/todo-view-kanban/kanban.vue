@@ -117,6 +117,7 @@ const showCreateTodoDialog = () => {
 
 const handleGetTodos = async () => {
     kanbanLoading.value = true
+    console.log("222")
     await todoStore.doGetTodos()
     kanbanLoading.value = false
 }

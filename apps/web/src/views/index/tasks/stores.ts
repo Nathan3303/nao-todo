@@ -3,13 +3,7 @@ import { defineStore } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import { basicViewsInfo, defaultPreference } from './constants'
 import { useProjectStore, useTagStore, useTodoStore, useUserStore } from '@/stores'
-import type {
-    Project,
-    Tag,
-    TasksMainRouteCategory,
-    TasksMainViewInfo,
-    TasksMultiSelectInfo
-} from '@nao-todo/types'
+import type { Project, Tag, TasksMainRouteCategory, TasksMainViewInfo, TasksMultiSelectInfo } from '@nao-todo/types'
 
 export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
     const route = useRoute()
@@ -112,10 +106,24 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
     const getBasicViewInfo = async () => {
         const { meta } = route
         const id = meta.id as keyof typeof basicViewsInfo
-        const _viewInfo = { ...basicViewsInfo[id] }
-        _viewInfo.createTodoOptions.projectId = userStore.user?.id
-        _viewInfo.preference.getTodosOptions.projectId = userStore.user?.id
-        console.log('[UseTasksViewStore/getBasicViewInfo] _viewInfo:', _viewInfo)
+        const basicInfo = basicViewsInfo[id]
+        const _viewInfo = {
+            id: basicInfo.id,
+            title: basicInfo.title,
+            description: basicInfo.description,
+            preference: {
+                viewType: defaultPreference.viewType,
+                getTodosOptions: {
+                    ...defaultPreference.getTodosOptions,
+                    ...(basicInfo.preference.getTodosOptions || {})
+                },
+                columns: basicInfo.preference.columns
+            },
+            createTodoOptions: { dueDate: {}, projectId: userStore.user?.id },
+            handlers: basicInfo.handlers
+        }
+        if (id === 'inbox') _viewInfo.preference.getTodosOptions.projectId = userStore.user?.id
+        // console.log('[UseTasksViewStore/getBasicViewInfo] _viewInfo:', _viewInfo)
         viewInfo.value = _viewInfo
         todoStore.setGetOptionsByPreference(viewInfo.value.preference)
         baseRouteName.value = 'tasks-' + meta.id + '-' + viewInfo.value.preference.viewType
@@ -156,7 +164,7 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
         // console.log('[UseTasksViewStore/getProjectViewInfo] _viewInfo:', _viewInfo)
         todoStore.setGetOptionsByPreference(_viewInfo.preference)
         baseRouteName.value = 'tasks-' + meta.id + '-' + _viewInfo.preference.viewType
-        await router.push({ name: baseRouteName.value })
+        await router.push({ name: baseRouteName.value, params })
     }
 
     // 获取标签视图信息

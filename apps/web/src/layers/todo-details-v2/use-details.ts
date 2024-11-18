@@ -1,4 +1,4 @@
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
 import { useEventStore, useProjectStore, useTodoStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
@@ -178,10 +178,11 @@ export const useTodoDetails = () => {
     }
 
     // 获取详情
-    watch(() => route.params.taskId, (newValue) => {
+    watchEffect(() => {
+        const todoId = route.params.taskId as string
         cancelTimer(true)
-        setTimeout(async () => await _getTodo(newValue as string))
-    }, { immediate: true })
+        setTimeout(async () => await _getTodo(todoId))
+    })
 
     onMounted(() => {
         unSubscribe = todoStore.$subscribe((mutation) => {

@@ -1,43 +1,43 @@
 <template>
     <nue-div align="center" width="fit-content">
-        <nue-div align="center" width="fit-content" gap="8px">
+        <nue-div align="center" gap="8px" width="fit-content">
             <nue-text size="12px">每页条数</nue-text>
-            <nue-select size="small" v-model="perPage" @change="handlePerPageChange">
-                <nue-select-option v-for="i in 5" :key="i" :label="`${i * 10}`" :value="i * 10" />
+            <nue-select v-model="perPage" size="small" @change="handlePerPageChange">
+                <nue-select-option v-for="i in [10, 20, 50, 100]" :key="i" :label="i" :value="i" />
             </nue-select>
         </nue-div>
         <nue-text size="12px"> 第 {{ page }} 页，共 {{ totalPages }} 页。</nue-text>
-        <nue-div width="fit-content" gap="8px" align="center">
+        <nue-div align="center" gap="8px" width="fit-content">
             <nue-button
-                theme="small"
-                icon="arrow-left-more"
                 :disabled="prevButtonDisabled"
+                icon="arrow-left-more"
+                theme="small"
                 @click="handleGoToPage(1)"
             />
             <nue-button
-                theme="small"
-                icon="arrow-left"
                 :disabled="prevButtonDisabled"
+                icon="arrow-left"
+                theme="small"
                 @click="handlePrevPage"
             />
             <nue-button
-                theme="small"
-                icon="arrow-right"
                 :disabled="nextButtonDisabled"
+                icon="arrow-right"
+                theme="small"
                 @click="handleNextPage"
             />
             <nue-button
-                theme="small"
-                icon="arrow-right-more"
                 :disabled="nextButtonDisabled"
+                icon="arrow-right-more"
+                theme="small"
                 @click="handleGoToPage(totalPages)"
             />
         </nue-div>
     </nue-div>
 </template>
 
-<script setup lang="ts">
-import { ref, computed } from 'vue'
+<script lang="ts" setup>
+import { computed, ref } from 'vue'
 
 const props = defineProps<{
     page: number
