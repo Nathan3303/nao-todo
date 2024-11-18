@@ -18,11 +18,10 @@
 import { ref } from 'vue'
 import { TodoCreator } from '@nao-todo/components/todo'
 import { NueMessage } from 'nue-ui'
-import type { TodoCreateDialogProps, TodoCreateDialogEmits, TodoCreateDialogArgs } from './types'
+import type { TodoCreateDialogProps, TodoCreateDialogArgs } from './types'
 
 defineOptions({ name: 'CreateTodoDialog' })
 const props = defineProps<TodoCreateDialogProps>()
-defineEmits<TodoCreateDialogEmits>()
 
 const visible = ref(false)
 const loading = ref(false)

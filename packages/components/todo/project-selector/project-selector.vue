@@ -30,11 +30,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Project } from '@nao-todo/types'
-import type { TodoProjectSelectorProps, TodoProjectSelectorEmits } from './types'
 
 defineOptions({ name: 'TodoProjectSelector' })
-const props = withDefaults(defineProps<TodoProjectSelectorProps>(), {})
-const emit = defineEmits<TodoProjectSelectorEmits>()
+const props = defineProps<{
+    userId: Project['userId']
+    projects: Project[]
+    projectId?: Project['id']
+    placeholder?: string
+}>()
+const emit = defineEmits<{
+    (event: 'select', projectId: Project['id'], projectTitle: Project['title']): void
+}>()
 
 const buttonIconName = computed(() => {
     const { projectId, userId } = props
@@ -44,7 +50,7 @@ const buttonIconName = computed(() => {
 
 const buttonText = computed(() => {
     const { projectId, placeholder } = props
-    const projectTitle = props.projects.find(project => project.id === projectId)?.title
+    const projectTitle = props.projects.find((project) => project.id === projectId)?.title
     if (projectId === '') return placeholder || '移动到'
     return projectTitle || '收集箱'
 })

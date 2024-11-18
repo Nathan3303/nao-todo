@@ -1,6 +1,11 @@
 <template>
     <div class="switch-button">
-        <nue-button :theme="themes" :icon="iconName" v-bind="$attrs" @click="handleClick">
+        <nue-button
+            :theme="themes"
+            :icon="modelValue ? activeIcon : icon"
+            v-bind="$attrs"
+            @click="handleClick"
+        >
             {{ modelValue ? activeText : text }}
         </nue-button>
     </div>
@@ -8,16 +13,21 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { SwitchButtonProps, SwitchButtonEmits } from './types'
+import type { IconNameType } from 'nue-ui'
 
 defineOptions({ name: 'SwitchButton' })
-const props = defineProps<SwitchButtonProps>()
-const emit = defineEmits<SwitchButtonEmits>()
-
-const iconName = computed(() => {
-    const { modelValue, icon, activeIcon } = props
-    return modelValue ? activeIcon : icon
-})
+const props = defineProps<{
+    modelValue: boolean
+    icon?: IconNameType | string
+    activeIcon?: IconNameType | string
+    text?: string
+    activeText?: string
+    theme?: string | string[]
+}>()
+const emit = defineEmits<{
+    (event: 'update:modelValue', value: boolean): void
+    (event: 'change', value: boolean): void
+}>()
 
 const themes = computed(() => {
     const { modelValue, theme } = props
@@ -28,7 +38,7 @@ const themes = computed(() => {
     } else {
         _return = [theme as string, activeTheme]
     }
-    return _return.filter((Boolean) as any) as string[]
+    return _return.filter(Boolean as any) as string[]
 })
 
 const handleClick = () => {

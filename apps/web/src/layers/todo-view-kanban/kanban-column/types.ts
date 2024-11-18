@@ -1,10 +1,9 @@
-import type { Columns } from '@nao-todo/components'
-import type { Todo, TodoState } from '@/stores'
+import type { Todo, TodoColumnOptions } from '@nao-todo/types'
 
 export type KanbanColumnProps = {
-    category: TodoState
+    category: Todo['state']
     todos: Todo[]
-    columns?: Columns
+    columnOptions?: TodoColumnOptions
 }
 
 export type KanbanColumnEmits = {

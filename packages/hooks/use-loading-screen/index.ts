@@ -1,3 +1,3 @@
-import { useLoadingScreen } from './use-loading-screen'
+import useLoadingScreen from './use-loading-screen'
 
 export { useLoadingScreen }

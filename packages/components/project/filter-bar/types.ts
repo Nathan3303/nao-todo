@@ -1,18 +1,18 @@
-export type FilterOptions = {
+type FilterOptions = {
     title?: string
     isDeleted?: boolean
     isArchived?: boolean
 }
 
-export type ProjectFilterBarProps = {
+type ProjectFilterBarProps = {
     filterOptions: FilterOptions
 }
 
-export type ProjectFilterBarEmits = {
+type ProjectFilterBarEmits = {
     (event: 'filter', payload: FilterOptions | null): void
 }
 
-export type FilterOption<T> = {
+type FilterOption<T> = {
     label: string
     value: T
     checked: boolean
@@ -20,4 +20,4 @@ export type FilterOption<T> = {
     suffix?: number
 }
 
-// export type FilterOptions<T> = Array<FilterOption<T>>
+export type { ProjectFilterBarProps, ProjectFilterBarEmits, FilterOption }

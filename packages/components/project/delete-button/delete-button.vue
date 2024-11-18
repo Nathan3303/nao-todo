@@ -1,9 +1,9 @@
 <template>
-    <nue-tooltip size="small" :content="tooltipContent">
+    <nue-tooltip size="small" :content="isDeleted ? '恢复清单' : '删除清单'">
         <nue-button
             class="project-delete-button"
             :theme="$slots.default ? 'small' : 'pure'"
-            :icon="iconName"
+            :icon="isDeleted ? 'restore' : 'delete'"
             @click.stop="handleClick"
         >
             <slot />
@@ -12,24 +12,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-
 defineOptions({ name: 'ProjectDeleteButton' })
-const props = defineProps<{ isDeleted?: boolean }>()
+const props = defineProps<{
+    isDeleted?: boolean
+}>()
 const emit = defineEmits<{
     (event: 'delete'): void
     (event: 'resotre'): void
 }>()
-
-const iconName = computed(() => {
-    const { isDeleted } = props
-    return isDeleted ? 'restore' : 'delete'
-})
-
-const tooltipContent = computed(() => {
-    const { isDeleted } = props
-    return isDeleted ? '恢复清单' : '删除清单'
-})
 
 const handleClick = () => {
     if (props.isDeleted) {

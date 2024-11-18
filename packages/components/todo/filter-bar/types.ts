@@ -1,18 +1,18 @@
-export type TodoFilterOptions = {
+type FilterOptions = {
     name: string
     state: string
     priority: string
 }
 
-export type TodoFilterBarProps = {
-    filterOptions: TodoFilterOptions
+type TodoFilterBarProps = {
+    filterOptions: FilterOptions
 }
 
-export type TodoFilterBarEmits = {
-    (event: 'filter', payload: TodoFilterOptions): void
+type TodoFilterBarEmits = {
+    (event: 'filter', payload: FilterOptions): void
 }
 
-export type FilterOption<T> = {
+type FrameworkOption<T> = {
     label: string
     value: T
     checked: boolean
@@ -20,4 +20,11 @@ export type FilterOption<T> = {
     suffix?: number
 }
 
-export type FilterOptions<T> = Array<FilterOption<T>>
+type FrameworkOptions<T> = FrameworkOption<T>[]
+
+export type {
+    TodoFilterBarProps,
+    TodoFilterBarEmits,
+    FilterOptions as TodoFilterOptions,
+    FrameworkOptions
+}

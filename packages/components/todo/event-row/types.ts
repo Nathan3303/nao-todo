@@ -1,18 +1,20 @@
-import type { Event } from '@nao-todo/types'
-
-export type TodoEventRowUpdatePayload = {
-    id: Event['id']
-    title: Event['title']
-    isDone: Event['isDone']
+type TodoEventInfo = {
+    id: string
+    title: string
+    isDone: boolean
 }
 
-export type TodoEventRowProps = {
-    event: Event
+type TodoEventRowUpdatePayload = TodoEventInfo
+
+type TodoEventRowProps = {
+    event: TodoEventInfo
     onUpdate: (payload: TodoEventRowUpdatePayload) => Promise<any>
-    onDelete: (id: Event['id']) => Promise<any>
+    onDelete: (id: string) => Promise<any>
 }
 
-export type TodoEventRowEmits = {
+type TodoEventRowEmits = {
     (event: 'update', payload: TodoEventRowUpdatePayload): void
-    (event: 'delete', id: Event['id']): void
+    (event: 'delete', id: string): void
 }
+
+export type { TodoEventRowProps, TodoEventRowEmits, TodoEventRowUpdatePayload }

@@ -49,37 +49,33 @@
 
 <script setup lang="ts">
 import { nextTick, ref } from 'vue'
-import type { InputButtonProps, InputButtonEmits } from './types'
 import { NueInput } from 'nue-ui'
+import type { InputButtonProps, InputButtonEmits } from './types'
 
 defineOptions({ name: 'InputButton' })
 const props = withDefaults(defineProps<InputButtonProps>(), {
-    buttonText: 'Click to input text',
+    buttonText: '点击以输入文本',
     size: 'small',
     submitOnBlur: true,
     onButtonClick: () => {}
 })
 const emit = defineEmits<InputButtonEmits>()
 
-const isInput = ref(false)
-const inputValue = ref('')
 const inputRef = ref<InstanceType<typeof NueInput>>()
+const inputValue = ref('')
+const isInput = ref(false)
 const loading = ref(false)
 
 const handleClick = async (event: MouseEvent) => {
-    const { onButtonClick } = props
-    await onButtonClick(event, { inputValue })
+    await props.onButtonClick(event, { inputValue })
     isInput.value = true
-    nextTick(() => {
+    await nextTick(() => {
         inputRef.value?.innerInputRef?.focus()
     })
 }
 
 const handleBlur = () => {
-    const { submitOnBlur } = props
-    if (submitOnBlur) {
-        handleSubmit()
-    }
+    if (props.submitOnBlur) handleSubmit()
 }
 
 const handleSubmit = async (cancelOnSubmitted = false) => {
@@ -94,16 +90,13 @@ const handleSubmit = async (cancelOnSubmitted = false) => {
             emit('submit', { value })
         }
         inputValue.value = ''
-        nextTick(() => inputRef.value?.innerInputRef?.focus())
+        await nextTick(() => inputRef.value?.innerInputRef?.focus())
     }
-    if (cancelOnSubmitted) {
-        handleCancel()
-    }
+    if (cancelOnSubmitted) handleCancel()
 }
 
 const handleKeydown = () => {
-    const { submitOnBlur } = props
-    if (submitOnBlur) {
+    if (props.submitOnBlur) {
         handleSubmit(true)
     } else {
         handleSubmit(false)
@@ -116,5 +109,17 @@ const handleCancel = () => {
 </script>
 
 <style scoped>
-@import url('./input-button.css');
+.nue-button--pure {
+    --disable-background-color: transparent;
+    height: 28px;
+    padding: 0 2px;
+}
+
+.nue-input--small {
+    --disabled-background-color: transparent;
+    padding: 0 2px;
+    height: 28px;
+    font-size: var(--text-xs);
+    border-width: 0;
+}
 </style>

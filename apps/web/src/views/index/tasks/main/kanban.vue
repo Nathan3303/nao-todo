@@ -11,7 +11,7 @@ import { TodoViewKanban } from '@/layers'
 import { useProjectStore, useUserStore, useTagStore } from '@/stores'
 import { useTasksViewStore } from '../stores'
 import { storeToRefs } from 'pinia'
-import type { TodoCreateDialogArgs } from '@nao-todo/components/todo/create-dialog/types'
+import type { TodoCreateDialogArgs } from '@/layers/create-todo-dialog/types'
 
 const userStore = useUserStore()
 const projectStore = useProjectStore()

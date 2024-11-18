@@ -1,8 +1,8 @@
 import { ref, watch, computed } from 'vue'
-import type { TodoFilterBarProps, TodoFilterBarEmits, FilterOptions } from './types'
+import type { TodoFilterBarProps, TodoFilterBarEmits, FrameworkOptions } from './types'
 import type { Todo } from '@nao-todo/types'
 
-const stateOptions: FilterOptions<Todo['state']> = [
+const stateOptions: FrameworkOptions<Todo['state']> = [
     {
         label: '待办(todo)',
         value: 'todo',
@@ -23,7 +23,7 @@ const stateOptions: FilterOptions<Todo['state']> = [
     }
 ]
 
-const priorityOptions: FilterOptions<Todo['priority']> = [
+const priorityOptions: FrameworkOptions<Todo['priority']> = [
     {
         label: '低(low)',
         value: 'low',
@@ -44,7 +44,7 @@ const priorityOptions: FilterOptions<Todo['priority']> = [
     }
 ]
 
-const buildFilterString = <T>(filterOptions: FilterOptions<T>) => {
+const buildFilterString = <T>(filterOptions: FrameworkOptions<T>) => {
     let filterString = ''
     filterOptions.forEach((option: any) => {
         if (option.checked) {
@@ -73,7 +73,7 @@ export const useTodoFilterBar = (props: TodoFilterBarProps, emit: TodoFilterBarE
                 return option
             })
         },
-        set(newValue: FilterOptions<Todo['state']>) {
+        set(newValue: FrameworkOptions<Todo['state']>) {
             const filterOptions = { ...props.filterOptions }
             filterOptions.state = buildFilterString(newValue)
             emit('filter', filterOptions)
@@ -89,7 +89,7 @@ export const useTodoFilterBar = (props: TodoFilterBarProps, emit: TodoFilterBarE
                 return option
             })
         },
-        set(newValue: FilterOptions<Todo['priority']>) {
+        set(newValue: FrameworkOptions<Todo['priority']>) {
             const filterOptions = { ...props.filterOptions }
             filterOptions.priority = buildFilterString(newValue)
             emit('filter', filterOptions)

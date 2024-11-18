@@ -1,4 +1,4 @@
-export type FrameworkOption = {
+type FrameworkOption = {
     label: string
     value: string
     icon?: string
@@ -7,10 +7,16 @@ export type FrameworkOption = {
     checked?: boolean
 }
 
-export type ComboBoxProps = {
+type ComboBoxProps = {
     triggerTitle?: string
     triggerIcon?: string
     align?: 'left' | 'center' | 'right'
     framework: FrameworkOption[]
     hideCounter?: boolean
 }
+
+type ComboBoxEmits = {
+    (event: 'change', value: unknown, payload: Partial<FrameworkOption>): void
+}
+
+export type { ComboBoxProps, ComboBoxEmits, FrameworkOption }

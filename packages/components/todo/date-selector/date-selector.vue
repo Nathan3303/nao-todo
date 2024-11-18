@@ -6,49 +6,72 @@
                 type="datetime-local"
                 v-model="dateMoment"
                 :debounce-time="1000"
-            ></nue-input>
-            <nue-button theme="small,pure" icon="clear" @click="dateMoment = null"></nue-button>
+            />
+            <nue-button theme="small,pure" icon="clear" @click="dateMoment = null" />
         </nue-div>
-        <nue-button v-else theme="small" @click="handleSetDate"> 设置结束时间 </nue-button>
+        <nue-button v-else theme="small" @click="handleSetDate"> 设置结束时间</nue-button>
     </nue-div>
 </template>
 
 <script setup lang="ts">
 import moment from 'moment'
 import { computed } from 'vue'
-import type { TodoDateSelectorEmits, TodoDateSelectorProps } from './types'
 
 defineOptions({ name: 'TodoDateSelector' })
-const props = defineProps<TodoDateSelectorProps>()
-const emit = defineEmits<TodoDateSelectorEmits>()
+const props = defineProps<{
+    modelValue?: string | null
+    date?: Date | string | null
+}>()
+const emit = defineEmits<{
+    (event: 'update:modelValue', value: string | null): void
+    (event: 'change', value: string | null): void
+}>()
 
 const dateMoment = computed<string | null>({
     get() {
         const { modelValue, date } = props
         if (modelValue && moment(modelValue).isValid()) {
-            // console.log(modelValue)
             return modelValue
         }
         if (date) {
             const _m = moment(date).utcOffset(8)
-            // console.log(date, _m, _m.isValid(), _m.format('YYYY-MM-DDTHH:mm'))
             return _m.isValid() ? _m.format('YYYY-MM-DDTHH:mm') : null
         }
         return null
     },
     set(value) {
-        // console.log(value)
         emit('update:modelValue', value)
         emit('change', value)
     }
 })
 
 const handleSetDate = () => {
-    const now = moment().utcOffset(8).toISOString(true)
-    dateMoment.value = now
+    dateMoment.value = moment().utcOffset(8).toISOString(true)
 }
 </script>
 
 <style scoped>
-@import url('./date-selector.css');
+.date-selector {
+    width: fit-content;
+    align-items: center;
+    gap: 4px;
+    border-radius: var(--primary-radius);
+    height: 28px;
+
+    &:hover {
+        background-color: #f5f5f5;
+    }
+
+    .date-selector__input-wrapper {
+        gap: 4px;
+        padding: 0 8px;
+        border-radius: var(--primary-radius);
+        border: 1px solid var(--divider-color);
+        box-shadow: var(--secondary-shadow);
+    }
+
+    .nue-input--noshape {
+        padding: 0;
+    }
+}
 </style>

@@ -31,23 +31,24 @@
 import { ref, nextTick } from 'vue'
 import { NueInput } from 'nue-ui'
 import { TagColorSelector } from '@nao-todo/components'
-import type { CreateTagDialogProps, CreateTagDialogEmits, CreateTagPayload } from './types'
+import type { CreateOptions, CreateTagDialogProps } from './types'
 
 defineOptions({ name: 'CreateTagDialog' })
 const props = defineProps<CreateTagDialogProps>()
-defineEmits<CreateTagDialogEmits>()
 
+const tagNameInputRef = ref<InstanceType<typeof NueInput>>()
+const newTag = ref<CreateOptions>({ name: '', color: '' })
 const visible = ref(false)
 const loading = ref(false)
 const isTagNameEmpty = ref(false)
-const newTag = ref<CreateTagPayload>({ name: '', color: '' })
-const tagNameInputRef = ref<InstanceType<typeof NueInput>>()
 
-const showCreateTagDialog = () => {
+const showCreateTagDialog = async () => {
     visible.value = true
-    nextTick(() => {
-        tagNameInputRef.value?.innerInputRef?.focus()
-    })
+    await nextTick(() => tagNameInputRef.value?.innerInputRef?.focus())
+}
+
+const handleClearInputValues = () => {
+    newTag.value = { name: '', color: '' }
 }
 
 const handleCreateTag = async () => {
@@ -67,10 +68,6 @@ const handleCreateTag = async () => {
     } finally {
         loading.value = false
     }
-}
-
-const handleClearInputValues = () => {
-    newTag.value = { name: '', color: '' }
 }
 
 defineExpose({

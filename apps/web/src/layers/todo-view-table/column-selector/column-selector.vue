@@ -1,7 +1,7 @@
 <template>
     <nue-dropdown theme="combo-box">
         <template #default="{ clickTrigger }">
-            <nue-button theme="small" icon="menu" @click.stop="clickTrigger"> 列设置</nue-button>
+            <nue-button theme="small" icon="menu" @click.stop="clickTrigger">列设置</nue-button>
         </template>
         <template #dropdown>
             <nue-container>
@@ -18,7 +18,7 @@
                                 :value="key"
                                 :checked="value"
                                 @check="handleCheck"
-                            ></checkbox>
+                            />
                         </empty>
                     </nue-div>
                 </nue-main>
@@ -29,12 +29,15 @@
 
 <script setup lang="ts">
 import { Checkbox, Empty } from '@nao-todo/components'
-import type { Columns, ColumnsKeys } from '../table'
-import type { ListColumnSwitcherEmits, ListColumnSwitcherProps } from './types'
+import type { TodoColumnOptions } from '@nao-todo/types'
 
-defineOptions({ name: 'ListColumnSwitcher' })
-const props = defineProps<ListColumnSwitcherProps>()
-const emit = defineEmits<ListColumnSwitcherEmits>()
+defineOptions({ name: 'TodoTableColumnSelector' })
+const props = defineProps<{
+    modelValue: TodoColumnOptions
+}>()
+const emit = defineEmits<{
+    (event: 'update:modelValue', value: TodoColumnOptions): void
+}>()
 
 const parseLabel = (label: string) => {
     switch (label) {
@@ -58,31 +61,8 @@ const parseLabel = (label: string) => {
 }
 
 const handleCheck = (checked: boolean, value: unknown) => {
-    const { modelValue } = props
-    const newColumns = { ...modelValue }
-    newColumns[value as ColumnsKeys] = checked
-    emit('update:modelValue', newColumns as Columns)
+    const newColumns = { ...props.modelValue }
+    newColumns[value as keyof TodoColumnOptions] = checked
+    emit('update:modelValue', newColumns as TodoColumnOptions)
 }
 </script>
-
-<!-- <style scoped>
-.toggle-columns-dropdown {
-    &:deep(.nue-dropdown) {
-        padding: 0px;
-    }
-    .nue-container {
-        width: 192px;
-        padding: 0px;
-
-        .nue-header {
-            height: 43px;
-            padding: 12px;
-        }
-
-        .nue-main {
-            flex-direction: column;
-            padding: 4px;
-        }
-    }
-}
-</style> -->

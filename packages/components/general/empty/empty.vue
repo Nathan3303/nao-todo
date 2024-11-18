@@ -12,20 +12,28 @@
             {{ message }}
         </nue-text>
     </nue-div>
-    <slot v-else></slot>
+    <slot v-else />
 </template>
 
 <script setup lang="ts">
-import type { EmptyProps } from './types'
-
 defineOptions({ name: 'Empty' })
-withDefaults(defineProps<EmptyProps>(), {
-    message: '没有数据',
-    textSize: '14px',
-    textColor: 'gray',
-    align: 'center',
-    fullHeight: false
-})
+withDefaults(
+    defineProps<{
+        empty?: boolean
+        message?: string
+        textSize?: string
+        textColor?: string
+        align?: 'left' | 'center' | 'right'
+        fullHeight?: boolean
+    }>(),
+    {
+        message: '没有数据',
+        textSize: '14px',
+        textColor: 'gray',
+        align: 'center',
+        fullHeight: false
+    }
+)
 </script>
 
 <style scoped>

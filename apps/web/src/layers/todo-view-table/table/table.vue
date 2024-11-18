@@ -4,27 +4,27 @@
             <div class="todo-table__header__col col-name">
                 <order-button prop="name">名称</order-button>
             </div>
-            <div class="todo-table__header__col col-created-at" v-if="columns.createdAt">
+            <div class="todo-table__header__col col-created-at" v-if="columnOptions.createdAt">
                 <order-button prop="createdAt">创建时间</order-button>
             </div>
-            <div class="todo-table__header__col col-updated-at" v-if="columns.updatedAt">
+            <div class="todo-table__header__col col-updated-at" v-if="columnOptions.updatedAt">
                 <order-button prop="updatedAt">最后修改时间</order-button>
             </div>
-            <div class="todo-table__header__col col-end-at" v-if="columns.endAt">
+            <div class="todo-table__header__col col-end-at" v-if="columnOptions.endAt">
                 <order-button prop="endAt">结束日期</order-button>
             </div>
-            <div class="todo-table__header__col col-priority" v-if="columns.priority">
+            <div class="todo-table__header__col col-priority" v-if="columnOptions.priority">
                 <order-button prop="priority">优先级</order-button>
             </div>
-            <div class="todo-table__header__col col-state" v-if="columns.state">
+            <div class="todo-table__header__col col-state" v-if="columnOptions.state">
                 <order-button prop="state">状态</order-button>
             </div>
-            <div class="todo-table__header__col col-project" v-if="columns.project">
+            <div class="todo-table__header__col col-project" v-if="columnOptions.project">
                 <order-button prop="project">所属清单</order-button>
             </div>
             <div class="todo-table__header__col col-actions">
                 <nue-icon
-                    v-if="sortInfo.field"
+                    v-if="sortOptions?.field"
                     name="clear"
                     color="gray"
                     @click="handleClearSortInfo"
@@ -68,39 +68,45 @@
                         </template>
                     </nue-button>
                     <nue-text
-                        v-if="columns.description && todo.description"
+                        v-if="columnOptions.description && todo.description"
                         class="todo-table-main__row__description"
                         size="12px"
                     >
                         {{ todo.description }}
                     </nue-text>
                 </nue-div>
-                <nue-div class="todo-table__body__col col-created-at" v-if="columns.createdAt">
+                <nue-div
+                    class="todo-table__body__col col-created-at"
+                    v-if="columnOptions.createdAt"
+                >
                     <nue-text size="12px">
                         {{ useRelativeDate(todo.createdAt) }}
                     </nue-text>
                 </nue-div>
-                <nue-div class="todo-table__body__col col-updated-at" v-if="columns.updatedAt">
+                <nue-div
+                    class="todo-table__body__col col-updated-at"
+                    v-if="columnOptions.updatedAt"
+                >
                     <nue-text size="12px">
                         {{ useRelativeDate(todo.updatedAt) }}
                     </nue-text>
                 </nue-div>
                 <nue-div
                     class="todo-table__body__col col-end-at"
-                    v-if="columns.endAt"
+                    v-if="columnOptions.endAt"
                     :key="refreshKey"
                 >
                     <nue-text size="12px" :data-expired="isTodoExpired(todo)">
                         {{ useRelativeDate(todo.dueDate.endAt) }}
                     </nue-text>
                 </nue-div>
-                <nue-div class="todo-table__body__col col-priority" v-if="columns.priority">
+                <nue-div class="todo-table__body__col col-priority" v-if="columnOptions.priority">
                     <todo-priority-info :priority="todo.priority" :key="todo.priority" />
                 </nue-div>
-                <nue-div class="todo-table__body__col col-state" v-if="columns.state">
+                <nue-div class="todo-table__body__col col-state" v-if="columnOptions.state">
                     <todo-state-info :state="todo.state" :key="todo.state" />
                 </nue-div>
-                <nue-div class="todo-table__body__col col-project" v-if="columns.project">
+                <nue-div class="todo-table__body__col col-project" v-if="columnOptions.project">
                     <nue-text size="12px" :clamped="1">
                         {{ todo.project?.title || '收集箱' }}
                     </nue-text>
@@ -120,7 +126,7 @@
 import { onMounted, onBeforeUnmount } from 'vue'
 import { TodoPriorityInfo, TodoStateInfo, TodoTagBar } from '@nao-todo/components'
 import { useTodoTable } from './use-table'
-import { useRelativeDate } from '@nao-todo/hooks/use-relative-date'
+import { useRelativeDate } from '@nao-todo/hooks'
 import OrderButton from './order-button.vue'
 import { useRefreshKey } from './use-refresh-key'
 import type { TodoTableEmits, TodoTableProps } from './types'
@@ -153,5 +159,5 @@ defineExpose({
 </script>
 
 <style scoped>
-@import url('./table.css');
+@import url('table.css');
 </style>

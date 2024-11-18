@@ -31,13 +31,28 @@
 import TagCard from '../card/card.vue'
 import { Loading } from '@nao-todo/components/general'
 import TagColorDot from '../color-dot/color-dot.vue'
-import type { TagBoardProps, TagBoardEmits } from './types'
+import type { Tag } from '@nao-todo/types'
 
 defineOptions({ name: 'TagBoard' })
-defineProps<TagBoardProps>()
-const emit = defineEmits<TagBoardEmits>()
+defineProps<{
+    loadingState?: boolean
+    tags: Tag[]
+}>()
+const emit = defineEmits<{
+    (event: 'delete', tagId: Tag['id']): void
+    (event: 'recolor', tagId: Tag['id']): void
+}>()
 </script>
 
 <style scoped>
-@import url('./board.css');
+.tag-board {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-gap: 12px;
+
+    .tag-card {
+        /* max-width: 220px; */
+        min-height: fit-content;
+    }
+}
 </style>

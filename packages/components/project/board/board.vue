@@ -42,14 +42,53 @@
 </template>
 
 <script setup lang="ts">
-import { Loading, ProjectCard, ProjectArchiveButton, ProjectDeleteButton } from '@nao-todo/components'
-import type { ProjectBoardProps, ProjectBoardEmits } from './types'
+import {
+    Loading,
+    ProjectCard,
+    ProjectArchiveButton,
+    ProjectDeleteButton
+} from '@nao-todo/components'
+import type { Project } from '@nao-todo/types'
 
 defineOptions({ name: 'ProjectBoard' })
-defineProps<ProjectBoardProps>()
-const emit = defineEmits<ProjectBoardEmits>()
+defineProps<{
+    projects?: Project[]
+    loadingState?: boolean
+    allowRoute?: boolean
+}>()
+const emit = defineEmits<{
+    (event: 'archiveProject', projectId: Project['id']): void
+    (event: 'unarchiveProject', projectId: Project['id']): void
+    (event: 'deleteProject', projectId: Project['id']): void
+    (event: 'restoreProject', projectId: Project['id']): void
+    (event: 'deleteProjectPermanently', projectId: Project['id']): void
+}>()
 </script>
 
 <style scoped>
-@import url(./board.css);
+.project-board {
+    --column-width: 240px;
+    --row-height: calc(var(--column-width) * 3 / 4);
+
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(var(--column-width), 1fr));
+    grid-template-rows: repeat(auto-fit, minmax(var(--row-height), 1fr));
+    grid-gap: 12px;
+    flex: auto;
+
+    .project-card {
+        min-height: var(--row-height);
+    }
+
+    .project-board__delete-permanently {
+        .nue-button--pure {
+            --icon-size: 16px;
+            --icon-weight: normal;
+            cursor: pointer;
+            transition: all 0.16s;
+            color: red;
+            margin-right: 6px;
+        }
+    }
+}
 </style>

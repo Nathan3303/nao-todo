@@ -12,12 +12,16 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import TagColorDot from '../color-dot/color-dot.vue'
-import type { TagColorSelectorProps, TagColorSelectorEmits } from './types'
+import { TagColorDot } from '@nao-todo/components'
 
 defineOptions({ name: 'TagColorSelector' })
-const props = defineProps<TagColorSelectorProps>()
-const emit = defineEmits<TagColorSelectorEmits>()
+const props = defineProps<{
+    disabled?: boolean
+    modelValue?: string
+}>()
+const emit = defineEmits<{
+    (event: 'update:modelValue', color: string): void
+}>()
 
 const tagColors = [
     '#2196f3',
@@ -51,5 +55,26 @@ const selectedColor = computed({
 </script>
 
 <style scoped>
-@import url('./color-selector.css');
+.tag-color-selector {
+    width: fit-content;
+
+    &:deep().tag-color-dot {
+        cursor: pointer;
+        position: relative;
+        width: 20px !important;
+
+        &[data-selected='true']::after {
+            content: '';
+            display: block;
+            aspect-ratio: 1;
+            width: 12px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            position: absolute;
+            border: 2px solid white;
+            border-radius: 50%;
+        }
+    }
+}
 </style>

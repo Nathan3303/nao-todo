@@ -12,25 +12,24 @@
                 <todo-selector
                     :value="todoData.state"
                     :options="TodoStateSelectOptions"
-                    @change="(s) => (todoData.state = s as string)"
+                    @change="(s) => (todoData.state = s as CreateTodoOptions['state'])"
                 />
                 <todo-selector
                     :value="todoData.priority"
                     :options="TodoPrioritySelectOptions"
-                    @change="(p) => (todoData.priority = p as string)"
+                    @change="(p) => (todoData.priority = p as CreateTodoOptions['priority'])"
                 />
-                <nue-div flex></nue-div>
+                <nue-div flex />
                 <todo-project-selector
                     :user-id="userId"
                     :projects="projects"
                     :project-id="todoData.projectId"
-                    :project-title="todoData.project.title"
                     @select="setProjectInfo"
                 />
             </nue-div>
             <todo-tag-bar
                 :tags="tags"
-                :todo-tags="todoData.tags"
+                :todo-tags="todoData.tags!"
                 :clamped="5"
                 @update-tags="handleUpdateTags"
             />
@@ -41,25 +40,23 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
-import TodoDateSelector from '../date-selector/date-selector.vue'
+import { TodoDateSelector, TodoTagBar, TodoProjectSelector } from '@nao-todo/components'
 import { TodoPrioritySelectOptions, TodoSelector, TodoStateSelectOptions } from '../selector'
-import TodoTagBar from '../tag-bar/tag-bar.vue'
-import TodoProjectSelector from '../project-selector/project-selector.vue'
 import { useRelativeDate } from '@nao-todo/hooks/use-relative-date'
-import type { TodoCreatorEmits, TodoCreatorProps } from './types'
+import moment from 'moment'
+import type { CreateTodoOptions } from '@nao-todo/types'
+import type { TodoCreatorProps } from './types'
 
 defineOptions({ name: 'TodoCreator' })
 const props = defineProps<TodoCreatorProps>()
-defineEmits<TodoCreatorEmits>()
 
 const setMoreData = ref(true)
-const todoData = reactive({
+const todoData = reactive<CreateTodoOptions>({
     name: '',
-    dueDate: { endAt: '' },
+    dueDate: { startAt: moment().toISOString(true), endAt: '' },
     priority: 'low',
     state: 'todo',
     projectId: '',
-    project: { title: '' },
     description: '',
     tags: [],
     ...props.presetInfo
@@ -67,17 +64,16 @@ const todoData = reactive({
 
 const endDate = computed({
     get() {
-        if (!todoData.dueDate.endAt) return ''
-        return todoData.dueDate.endAt!.slice(0, 16)
+        if (!todoData.dueDate) return ''
+        return (todoData.dueDate.endAt! as string).slice(0, 16)
     },
     set(value) {
         todoData.dueDate.endAt = value
     }
 })
 
-const setProjectInfo = (projectId: string, projectTitle: string) => {
+const setProjectInfo = (projectId: string) => {
     todoData.projectId = projectId
-    todoData.project.title = projectTitle
 }
 
 const handleUpdateTags = (tags: string[]) => {
@@ -89,7 +85,6 @@ const handleClearData = () => {
     todoData.priority = 'low'
     todoData.state = 'todo'
     todoData.projectId = ''
-    todoData.project.title = ''
     todoData.description = ''
     todoData.tags = []
 }
@@ -99,5 +94,3 @@ defineExpose({
     clear: handleClearData
 })
 </script>
-
-<style scoped></style>

@@ -1,13 +1,15 @@
 <template>
-    <div class="tag-color-dot" :class="classes"></div>
+    <div class="tag-color-dot" :class="classes" />
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { TagColorDotProps } from './types'
 
 defineOptions({ name: 'TagColorDot' })
-const props = defineProps<TagColorDotProps>()
+const props = defineProps<{
+    color: string
+    size?: 'small' | 'large'
+}>()
 
 const classes = computed(() => {
     const classes = []

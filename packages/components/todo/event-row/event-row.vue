@@ -2,7 +2,7 @@
     <nue-div class="todo-event-row">
         <nue-icon
             class="todo-event-row__check-icon"
-            :name="updateLoading ? 'loading' : iconName"
+            :name="updateLoading ? 'loading' : event.isDone ? 'square-check-fill' : 'square'"
             :spin="updateLoading"
             size="16px"
             @click="handleUpdate(true)"
@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import type { TodoEventRowEmits, TodoEventRowProps } from './types'
 
 defineOptions({ name: 'TodoEventRow' })
@@ -31,10 +31,6 @@ const emit = defineEmits<TodoEventRowEmits>()
 
 const inputValue = ref(props.event.title)
 const updateLoading = ref(false)
-
-const iconName = computed(() => {
-    return props.event.isDone ? 'square-check-fill' : 'square'
-})
 
 const handleUpdate = async (updateIsDone = false) => {
     const { id, title, isDone } = props.event
@@ -67,5 +63,48 @@ const handleDelete = async () => {
 </script>
 
 <style scoped>
-@import url('./event-row.css');
+.todo-event-row {
+    height: 28px;
+    padding: 0 1px;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 6px;
+
+    .todo-event-row__check-icon {
+        cursor: pointer;
+    }
+
+    .nue-input--small {
+        --disabled-background-color: transparent;
+        font-size: var(--text-xs);
+        padding: 0;
+        flex: 1;
+
+        &[data-is-done='true'] {
+            text-decoration: line-through;
+            color: #999;
+        }
+    }
+
+    .todo-event-row__actions {
+        width: fit-content;
+        display: none;
+
+        & > .nue-icon {
+            cursor: pointer;
+        }
+    }
+
+    &:hover {
+        box-shadow: 0 1px rgba(0, 0, 0, 0.3);
+
+        .todo-event-row__actions {
+            display: flex;
+        }
+    }
+
+    &:focus-within {
+        box-shadow: 0 1px rgba(0, 0, 0, 0.3);
+    }
+}
 </style>

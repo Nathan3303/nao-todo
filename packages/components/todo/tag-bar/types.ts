@@ -1,6 +1,6 @@
-import type { Tag, Todo } from "@nao-todo/types"
+import type { Tag, Todo } from '@nao-todo/types'
 
-export type TodoTagBarProps = {
+type TagBarProps = {
     tags: Tag[]
     todoTags: Todo['tags']
     clamped?: number
@@ -8,6 +8,8 @@ export type TodoTagBarProps = {
     small?: boolean
 }
 
-export type TodoTagBarEmits = {
+type TagBarEmits = {
     (event: 'updateTags', tags: Todo['tags']): void
 }
+
+export type { TagBarProps, TagBarEmits }

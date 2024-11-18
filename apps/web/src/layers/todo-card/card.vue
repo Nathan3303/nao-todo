@@ -79,7 +79,7 @@
 import moment from 'moment'
 import { computed } from 'vue'
 import { useTagStore } from '@/stores'
-import { useRelativeDate } from '@nao-todo/hooks'
+import { useRelativeDate } from '@nao-todo/hooks/use-relative-date'
 import { TodoStateInfo, TodoPriorityInfo, TodoTagBar } from '@nao-todo/components'
 import type { TodoCardEmits, TodoCardProps } from './types'
 import type { Todo } from '@nao-todo/types'
@@ -91,8 +91,8 @@ const emit = defineEmits<TodoCardEmits>()
 const tagStore = useTagStore()
 
 const isDone = computed(() => {
-    const { isDone, state } = props.todo
-    return isDone || state === 'done'
+    const { state } = props.todo
+    return state === 'done'
 })
 
 const checkIconName = computed(() => {
@@ -121,11 +121,10 @@ const handleDelete = () => {
 }
 
 const handleFinish = () => {
-    const { id: todoId, isDone, state } = props.todo
-    if (isDone || state === 'done') {
-        emit('unfinish', todoId)
+    if (isDone.value) {
+        emit('unfinish', props.todo.id)
     } else {
-        emit('finish', todoId)
+        emit('finish', props.todo.id)
     }
 }
 </script>

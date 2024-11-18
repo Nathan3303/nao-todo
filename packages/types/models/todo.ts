@@ -38,7 +38,7 @@ type GetTodoOptionsRaw = {
 }
 
 type GetTodosSortOptions = {
-    field: keyof Todo
+    field: Omit<keyof Todo, 'dueDate'> | 'endAt' | 'startAt'
     order: 'asc' | 'desc'
 }
 
@@ -71,7 +71,22 @@ type UpdateTodoOptionsRaw = {
     isFavorited?: Todo['isFavorited']
 }
 
-type CreateTodoOptions = UpdateTodoOptions
+type CreateTodoOptionsRaw = {
+    projectId?: Project['id']
+    name?: Todo['name']
+    description?: Todo['description']
+    state?: Todo['state']
+    priority?: Todo['priority']
+    tags?: Todo['tags']
+    dueDate: Partial<TodoDueDate>
+    isDeleted?: Todo['isDeleted']
+    deletedAt?: Todo['deletedAt']
+    isArchived?: Todo['isArchived']
+    archivedAt?: Todo['archivedAt']
+    isFavorited?: Todo['isFavorited']
+}
+
+type CreateTodoOptions = CreateTodoOptionsRaw
 
 type DeleteTodoOptions = GetTodoOptions
 

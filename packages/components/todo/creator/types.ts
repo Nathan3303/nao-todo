@@ -1,10 +1,10 @@
-import type { Project, Tag, Todo } from '@nao-todo/types'
+import type { CreateTodoOptions, Project, Tag, Todo } from '@nao-todo/types'
 
-export type TodoCreatorProps = {
-    presetInfo?: Partial<Todo>
+type TodoCreatorProps = {
+    presetInfo?: Partial<CreateTodoOptions> & { project?: { title: string } }
     userId: Todo['userId']
     projects: Project[]
     tags: Tag[]
 }
 
-export type TodoCreatorEmits = {}
+export type { TodoCreatorProps }

@@ -1,5 +1,10 @@
 <template>
-    <nue-div class="project-card" theme="card" :data-actived="isActived" @click="handleClick">
+    <nue-div
+        class="project-card"
+        theme="card"
+        :data-actived="!project.isArchived && !project.isDeleted"
+        @click="handleClick"
+    >
         <nue-div vertical gap="8px" flex>
             <nue-div align="center" justify="space-between">
                 <nue-text size="16px" :clamped="1">
@@ -29,35 +34,49 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import type { ProjectCardProps, ProjectCardEmits } from './types'
+import type { Project } from '@nao-todo/types'
 
 defineOptions({ name: 'ProjectCard' })
-const props = defineProps<ProjectCardProps>()
-const emit = defineEmits<ProjectCardEmits>()
+const props = defineProps<{
+    project: Project
+    allowRoute?: boolean
+}>()
+const emit = defineEmits<{
+    (event: 'click', project: Project): void
+    (event: 'unarchiveProject', projectId: Project['id']): void
+}>()
 
 const router = useRouter()
 
-const isActived = computed(() => {
-    const { project } = props
-    return !project.isArchived && !project.isDeleted
-})
-
 const handleClick = () => {
     const { project, allowRoute } = props
-    if (allowRoute) {
-        router.push({
-            name: 'project-main',
-            params: {
-                projectId: props.project.id
-            }
-        })
-    }
     emit('click', project)
+    if (!allowRoute) return
+    router.push({
+        name: 'project-main',
+        params: {
+            projectId: project.id
+        }
+    })
 }
 </script>
 
 <style scoped>
-@import url('./card.css');
+.project-card {
+    flex-direction: column;
+
+    &[data-actived='false'] {
+        background-color: #f2f2f2;
+
+        & > * {
+            opacity: 0.8;
+        }
+
+        .project-card__footer-ops,
+        .project-card__ops {
+            opacity: 1;
+        }
+    }
+}
 </style>

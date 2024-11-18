@@ -11,19 +11,21 @@
 </template>
 
 <script setup lang="ts">
-import type { Tag } from '@nao-todo/types'
-
 defineOptions({ name: 'TagNode' })
 defineProps<{
-    tag: Tag
+    tag: {
+        id: string
+        name: string
+        color: string
+    }
     deletable?: boolean
     readonly?: boolean
 }>()
 const emit = defineEmits<{
-    (event: 'delete', id: Tag['id']): void
+    (event: 'delete', id: string): void
 }>()
 
-const handleDelete = (id: Tag['id']) => {
+const handleDelete = (id: string) => {
     emit('delete', id)
 }
 </script>
@@ -33,7 +35,7 @@ const handleDelete = (id: Tag['id']) => {
     width: fit-content;
     height: 24px;
     line-height: 23px;
-    padding: 0px 8px;
+    padding: 0 8px;
     align-items: center;
     background-color: v-bind('tag.color');
     border-radius: 16px;
@@ -53,8 +55,8 @@ const handleDelete = (id: Tag['id']) => {
         width: 24px;
         height: 24px;
         position: absolute;
-        right: 0px;
-        top: 0px;
+        right: 0;
+        top: 0;
         transform: translate(40%, -40%) scale(0.66);
         transform-origin: center;
         border-radius: 50%;

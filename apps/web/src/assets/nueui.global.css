@@ -32,6 +32,7 @@
     .nue-button__text {
         display: none;
     }
+
     .nue-icon::before {
         font-size: 16px;
         font-weight: 500;
@@ -63,7 +64,7 @@
 }
 
 .nue-dropdown--combo-box {
-    padding: 0px;
+    padding: 0;
 
     .nue-container {
         min-width: 140px;
@@ -75,7 +76,7 @@
             .nue-text {
                 height: 28px;
                 line-height: 28px;
-                padding: 0px 6px;
+                padding: 0 6px;
             }
         }
 
@@ -83,7 +84,7 @@
             padding: 4px;
 
             .nue-main__content {
-                padding: 0px;
+                padding: 0;
             }
         }
     }
@@ -112,7 +113,7 @@
 
 .nue-progress--line {
     .nue-progress__inner-bar {
-        padding: 0px !important;
+        padding: 0 !important;
     }
 }
 
@@ -126,7 +127,7 @@
 }
 
 .nue-textarea--noshape {
-    padding: 0px;
+    padding: 0;
     --padding-x: 0px;
     --padding-y: 0px;
 }

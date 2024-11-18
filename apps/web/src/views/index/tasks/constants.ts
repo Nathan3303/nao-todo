@@ -1,6 +1,6 @@
 import moment from 'moment'
 import { useUserStore, useProjectStore, useTagStore, useTodoStore } from '@/stores'
-import type { TodoCreateDialogArgs } from '@nao-todo/components/todo/create-dialog/types'
+import type { TodoCreateDialogArgs } from '@/layers/create-todo-dialog/types'
 import type {
     Todo,
     TasksMainBasicViewNames,
@@ -41,10 +41,10 @@ export const basicViewsInfo: {
             getTodosOptions: { isDeleted: false },
             columns: defaultColumnOptions
         },
-        createTodoOptions: {},
+        createTodoOptions: { dueDate: {} },
         handlers: {
             handleCreateTodo: async (todoName: Todo['name']) => {
-                await todoStore.doCreateTodo({ name: todoName })
+                await todoStore.doCreateTodo({ dueDate: {}, name: todoName })
             },
             handleCreateTodoByDialog: async (caller: (args: TodoCreateDialogArgs) => void) => {
                 caller({
@@ -201,10 +201,10 @@ export const basicViewsInfo: {
             },
             columns: defaultColumnOptions
         },
-        createTodoOptions: {},
+        createTodoOptions: { dueDate: {} },
         handlers: {
             handleCreateTodo: async (todoName: Todo['name']) => {
-                await todoStore.doCreateTodo({ name: todoName })
+                await todoStore.doCreateTodo({ dueDate: {}, name: todoName })
             },
             handleCreateTodoByDialog: async (caller: (args: TodoCreateDialogArgs) => void) => {
                 caller({
@@ -225,11 +225,12 @@ export const basicViewsInfo: {
             columns: defaultColumnOptions
         },
         createTodoOptions: {
+            dueDate: {},
             isFavorited: true
         },
         handlers: {
             handleCreateTodo: async (todoName: Todo['name']) => {
-                await todoStore.doCreateTodo({ name: todoName, isFavorited: true })
+                await todoStore.doCreateTodo({ dueDate: {}, name: todoName, isFavorited: true })
             },
             handleCreateTodoByDialog: async (caller: (args: TodoCreateDialogArgs) => void) => {
                 caller({
@@ -250,6 +251,6 @@ export const basicViewsInfo: {
             getTodosOptions: { isDeleted: true },
             columns: defaultColumnOptions
         },
-        createTodoOptions: {}
+        createTodoOptions: { dueDate: {} }
     }
 }

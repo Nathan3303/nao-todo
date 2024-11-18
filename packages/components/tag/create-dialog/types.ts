@@ -1,12 +1,10 @@
-export type CreateTagDialogProps = {
-    handler: Function
-}
-
-export type CreateTagPayload = {
+type CreateOptions = {
     name: string
     color: string
 }
 
-export type CreateTagDialogEmits = {
-    (event: 'create', payload: CreateTagPayload): void
+type CreateTagDialogProps = CreateOptions & {
+    handler: (options: CreateOptions) => Promise<any>
 }
+
+export type { CreateOptions, CreateTagDialogProps }

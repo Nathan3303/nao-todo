@@ -6,7 +6,7 @@
             style="box-sizing: border-box; padding-top: 8px"
         >
             <nue-div align="start" justify="space-between" gap="16px">
-                <todo-filter-bar :filter-options="todofilterBarOptions" @filter="handleFilter" />
+                <todo-filter-bar :filter-options="todoFilterBarOptions" @filter="handleFilter" />
                 <nue-div justify="end" flex="none" width="fit-content" gap="12px">
                     <nue-button
                         v-if="!disabledCreateTodo"
@@ -16,7 +16,7 @@
                     >
                         新增
                     </nue-button>
-                    <list-column-switcher
+                    <todo-table-column-selector
                         v-model="todoStore.columnOptions"
                         :change="handleChangeColumns"
                     />
@@ -39,8 +39,8 @@
                     ref="todoTableRef"
                     :todos="todos"
                     :tags="tagStore.tags"
-                    :columns="todoStore.columnOptions"
-                    :sort-info="getOptions.sort || { field: '', order: '' }"
+                    :sort-options="getOptions.sort || { field: '', order: 'asc' }"
+                    :column-options="todoStore.columnOptions"
                     @delete-todo="todoStore.deleteTodoWithConfirmation"
                     @restore-todo="todoStore.restoreTodoWithConfirmation"
                     @show-todo-details="showTodoDetails"
@@ -80,12 +80,14 @@ import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useTodoStore, useTagStore } from '@/stores'
-import { TodoTable, Loading, TodoFilterBar, ListColumnSwitcher, Pager } from '@nao-todo/components'
+import { Loading, TodoFilterBar, Pager } from '@nao-todo/components'
+import { TodoTable } from './table'
+import { TodoTableColumnSelector } from './column-selector'
 import { CreateTodoDialog } from '@/layers'
 import { useTasksViewStore } from '@/views/index/tasks/stores'
-import type {Todo, GetTodosOptions, TodoColumnOptions, CreateTodoOptions} from '@nao-todo/types'
+import type { Todo, GetTodosOptions, TodoColumnOptions, GetTodosSortOptions } from '@nao-todo/types'
 import type { ContentTableProps, ContentTableEmits } from './types'
-import type { TodoTableMultiSelectEmitPayload } from '@nao-todo/components/todo/table'
+import type { TodoTableMultiSelectPayload } from './table/types'
 import type { TodoFilterOptions } from '@nao-todo/components/todo/filter-bar/types'
 
 defineOptions({ name: 'ContentTableLayer' })
@@ -104,7 +106,7 @@ const createTodoDialogRef = ref<InstanceType<typeof CreateTodoDialog>>()
 let refreshTimer: number | null = null
 const multiSelectCount = ref(0)
 
-const todofilterBarOptions = computed<TodoFilterOptions>(() => {
+const todoFilterBarOptions = computed<TodoFilterOptions>(() => {
     return {
         name: getOptions.value.name || '',
         state: getOptions.value.state || '',
@@ -149,7 +151,7 @@ const handleChangeColumns = (options: TodoColumnOptions) => {
     todoStore.updateColumnOptions(options)
 }
 
-const handleMultiSelect = (payload: TodoTableMultiSelectEmitPayload) => {
+const handleMultiSelect = (payload: TodoTableMultiSelectPayload) => {
     const { selectedIds, selectRange } = payload
     if (selectedIds.length === 0 || selectRange.start === -1) {
         tasksViewStore.hideMultiDetails()
@@ -175,7 +177,7 @@ const handleRefresh = async () => {
     await handleGetTodos()
 }
 
-const sortTodo = (newSortInfo: { field: string; order: string }) => {
+const sortTodo = (newSortInfo: GetTodosSortOptions) => {
     getOptions.value.sort = newSortInfo
     handleGetTodos()
 }

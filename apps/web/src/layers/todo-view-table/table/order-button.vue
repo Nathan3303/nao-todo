@@ -53,19 +53,19 @@ const todoTableContext = inject<TodoTableContext>('TodoTableContext')
 const checkNumber = computed(() => {
     const { prop } = props
     if (!todoTableContext) return
-    const { sortInfo } = todoTableContext
-    if (prop !== sortInfo.field) return
-    return sortInfo.order === 'asc' ? 1 : -1
+    const { sortOptions } = todoTableContext
+    if (prop !== sortOptions.field) return
+    return sortOptions.order === 'asc' ? 1 : -1
 })
 
 const handleUpdateSortInfo = (flag: 1 | -1) => {
     if (!todoTableContext) return
-    const { sortInfo } = todoTableContext
+    const { sortOptions } = todoTableContext
     const { prop } = props
     const order = flag === 1 ? 'asc' : 'desc'
-    if (sortInfo.field === prop && sortInfo.order === order) return
-    sortInfo.field = prop
-    sortInfo.order = order
+    if (sortOptions.field === prop && sortOptions.order === order) return
+    sortOptions.field = prop
+    sortOptions.order = order
 }
 </script>
 

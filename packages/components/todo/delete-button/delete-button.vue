@@ -6,15 +6,16 @@
 
 <script setup lang="ts">
 defineOptions({ name: 'TodoDeleteButton' })
-const props = defineProps<{ isDeleted?: boolean }>()
+const props = defineProps<{
+    isDeleted?: boolean
+}>()
 const emit = defineEmits<{
     (event: 'delete'): void
     (event: 'restore'): void
 }>()
 
 const handleClick = () => {
-    const { isDeleted } = props
-    if (isDeleted) {
+    if (props.isDeleted) {
         emit('restore')
     } else {
         emit('delete')

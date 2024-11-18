@@ -2,12 +2,10 @@ import { ref } from 'vue'
 
 const loading = ref(false)
 
-export function useLoadingScreen() {
-    function startLoading() {
-        loading.value = true
-    }
+const useLoadingScreen = () => {
+    const startLoading = () => (loading.value = true)
 
-    function stopLoading() {
+    const stopLoading = () => {
         requestIdleCallback(() => {
             loading.value = false
         })
@@ -15,3 +13,5 @@ export function useLoadingScreen() {
 
     return { loading, startLoading, stopLoading }
 }
+
+export default useLoadingScreen

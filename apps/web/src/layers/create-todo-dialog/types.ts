@@ -1,10 +1,8 @@
-import type { TodoCreatorEmits, TodoCreatorProps } from '@nao-todo/components/todo/creator/types'
+import type { TodoCreatorProps } from '@nao-todo/components/todo/creator/types'
+import type { CreateTodoOptions } from '@nao-todo/types'
 
 export type TodoCreateDialogProps = {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-    handler: Function
+    handler: (options: CreateTodoOptions) => Promise<boolean>
 }
-
-export type TodoCreateDialogEmits = {} & TodoCreatorEmits
 
 export type TodoCreateDialogArgs = {} & TodoCreatorProps

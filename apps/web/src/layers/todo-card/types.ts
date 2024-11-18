@@ -1,5 +1,5 @@
-import type { Todo } from '@/stores'
-import type { Columns } from '../../../../../packages/components/todo/table'
+import type { Todo } from '@nao-todo/types'
+import type { Columns } from '@nao-todo/components'
 
 export type TodoCardProps = {
     todo: Todo

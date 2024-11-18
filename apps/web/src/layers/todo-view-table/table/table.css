@@ -30,7 +30,7 @@
         flex-direction: column;
         width: 100%;
         flex: auto;
-        gap: 0px;
+        gap: 0;
         flex-wrap: nowrap;
 
         .todo-table__body__row {
@@ -118,6 +118,7 @@
             text-overflow: ellipsis;
         }
     }
+
     .col-created-at,
     .col-updated-at,
     .col-end-at {
@@ -125,18 +126,22 @@
         width: 130px;
         line-height: 21px;
     }
+
     .col-priority {
         width: 54px;
         line-height: 21px;
     }
+
     .col-state {
         width: 72px;
         line-height: 21px;
     }
+
     .col-project {
         width: 84px;
         line-height: 21px;
     }
+
     .col-actions {
         width: auto;
         line-height: 21px;
@@ -150,7 +155,7 @@
         }
 
         .todo-table__body__row {
-            padding: 4px 0px;
+            padding: 4px 0;
 
             &:hover {
                 border-color: transparent;

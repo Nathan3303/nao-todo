@@ -1,14 +1,16 @@
-import type { GetTagsOptions } from '@nao-todo/types'
-
-export type TagFilterBarProps = {
-    filterOptions: GetTagsOptions
+type FilterOptions = {
+    name: string | null
 }
 
-export type TagFilterBarEmits = {
-    (event: 'filter', payload: GetTagsOptions): void
+type TagFilterBarProps = {
+    filterOptions: FilterOptions
 }
 
-export type FilterOption<T> = {
+type TagFilterBarEmits = {
+    (event: 'filter', payload: FilterOptions): void
+}
+
+type FrameworkOption<T> = {
     label: string
     value: T
     checked: boolean
@@ -16,4 +18,6 @@ export type FilterOption<T> = {
     suffix?: number
 }
 
-export type FilterOptions<T> = Array<FilterOption<T>>
+type FrameworkOptions<T> = FrameworkOption<T>[]
+
+export type { TagFilterBarProps, TagFilterBarEmits, FrameworkOptions }

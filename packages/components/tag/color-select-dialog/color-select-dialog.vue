@@ -2,7 +2,7 @@
     <nue-dialog v-model="visible" title="标签颜色修改" :closable="!loading">
         <nue-div vertical align="stretch">
             <nue-text size="12px" color="gray">请选择新的标签颜色:</nue-text>
-            <color-selector v-model="tagColor" />
+            <tag-color-selector v-model="tagColor" />
         </nue-div>
         <template #footer="{ cancel }">
             <nue-button @click="cancel">取消</nue-button>
@@ -13,7 +13,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import ColorSelector from '../color-selector/color-selector.vue'
+import { TagColorSelector } from '@nao-todo/components'
 import type { Tag } from '@nao-todo/types'
 
 defineOptions({ name: 'TagColorSelectDialog' })
@@ -36,8 +36,7 @@ const handleSelect = async () => {
     const newColor = tagColor.value || 'transparent'
     try {
         loading.value = true
-        if (!props.handler) return
-        await props.handler(tagIdTemp, newColor)
+        if (props.handler) await props.handler(tagIdTemp, newColor)
         visible.value = false
     } catch (e) {
         console.warn('[TagColorSelectDialog] handleSelect:', e)

@@ -12,7 +12,7 @@
                     >
                         新增
                     </nue-button>
-                    <list-column-switcher v-model="todoStore.columnOptions" />
+                    <todo-table-column-selector v-model="todoStore.columnOptions" />
                     <nue-button
                         theme="small"
                         icon="refresh"
@@ -47,15 +47,16 @@
             </template>
         </nue-main>
     </nue-container>
-    <todo-create-dialog ref="todoCreateDialogRef" :handler="todoStore.doCreateTodo" />
+    <create-todo-dialog ref="todoCreateDialogRef" :handler="todoStore.doCreateTodo" />
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
-import { Loading, TodoFilterBar, ListColumnSwitcher, TodoCreateDialog } from '@nao-todo/components'
+import { Loading, TodoFilterBar } from '@nao-todo/components'
 import { ContentKanbanColumn } from './kanban-column'
+import { CreateTodoDialog, TodoTableColumnSelector } from '@/layers'
 import { useTodoStore } from '@/stores'
 import type { ContentKanbanProps, ContentKanbanEmits } from './types'
 import type { Todo, GetTodosOptions } from '@nao-todo/types'
@@ -72,7 +73,7 @@ const { todos, getOptions } = storeToRefs(todoStore)
 const kanbanLoading = ref(false)
 const refreshTimer = ref<number | null>(null)
 const draggingTodoId = ref('abc')
-const todoCreateDialogRef = ref<InstanceType<typeof TodoCreateDialog>>()
+const todoCreateDialogRef = ref<InstanceType<typeof CreateTodoDialog>>()
 
 // 计算 TodoFilterBar 的过滤选项
 const todoFilterBarOptions = computed<TodoFilterOptions>(() => {

@@ -144,7 +144,7 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
                     ...(project.preference.columns || {})
                 }
             },
-            createTodoOptions: { projectId: project.id },
+            createTodoOptions: { dueDate: {}, projectId: project.id },
             handlers: {
                 updateTitle: handleUpdateProjectTitle,
                 updateDescription: handleUpdateProjectDescription,
@@ -172,7 +172,7 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
             title: tag.name,
             description: tag.description,
             preference: defaultPreference,
-            createTodoOptions: { tags: [tag.id] },
+            createTodoOptions: { dueDate: {}, tags: [tag.id] },
             handlers: {
                 updateTitle: handleUpdateTagName,
                 remove: handleDeleteTag

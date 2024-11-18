@@ -1,8 +1,8 @@
 import { ref, computed } from 'vue'
-import type { TodoTagBarProps, TodoTagBarEmits } from './types'
+import type { TagBarProps, TagBarEmits } from './types'
 import type { FrameworkOption } from '@nao-todo/components/general/combo-box/types'
 
-export const useTagBar = (props: TodoTagBarProps, emit: TodoTagBarEmits) => {
+export const useTagBar = (props: TagBarProps, emit: TagBarEmits) => {
     const comboBoxOptions = ref<FrameworkOption[]>([])
 
     const visibleTags = computed<typeof props.tags>(() => {
@@ -25,17 +25,17 @@ export const useTagBar = (props: TodoTagBarProps, emit: TodoTagBarEmits) => {
 
     const handleAddTag = async (tagId: unknown, { checked }: Partial<FrameworkOption>) => {
         if (!checked) {
-            handleDropTag(tagId as string)
+            await handleDropTag(tagId as string)
             return
         }
-        const { todoTags } = props
+        const todoTags = props.todoTags || []
         const newTags = todoTags.filter((id) => id)
         newTags.push(tagId as string)
         emit('updateTags', newTags)
     }
 
     const handleDropTag = async (tagId: string) => {
-        const { todoTags } = props
+        const todoTags = props.todoTags || []
         const newTags = todoTags.filter((id) => id !== tagId)
         emit('updateTags', newTags as string[])
     }

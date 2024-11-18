@@ -1,4 +1,4 @@
-import type { TodoCreateDialogArgs } from '@nao-todo/components/todo/create-dialog/types'
+import type { TodoCreateDialogArgs } from '@/layers/create-todo-dialog/types'
 
 export type ContentTableProps = {
     baseRoute: string

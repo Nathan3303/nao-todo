@@ -1,5 +1,9 @@
 <template>
-    <nue-link theme="btnlike,plink" :route="route" v-bind="$attrs">
+    <nue-link
+        theme="btnlike,plink"
+        :route="routeName ? { name: routeName } : void 0"
+        v-bind="$attrs"
+    >
         <slot />
         <template #append>
             <slot name="append" />
@@ -8,13 +12,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-
 defineOptions({ name: 'AsideLink' })
-const props = defineProps<{ routeName?: string }>()
-
-const route = computed(() => {
-    const { routeName } = props
-    return routeName ? { name: routeName } : undefined
-})
+defineProps<{ routeName?: string }>()
 </script>
+
+<style scoped>
+.nue-link--plink {
+    overflow: hidden;
+
+    .nue-icon {
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        --font-size: 16px;
+    }
+
+    & span {
+        width: 100%;
+        text-align: left;
+        font-size: var(--text-xs);
+    }
+}
+</style>

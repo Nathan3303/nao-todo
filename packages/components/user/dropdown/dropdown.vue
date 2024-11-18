@@ -7,13 +7,15 @@
             <nue-div vertical align="center" justify="center" width="240px" gap="32px">
                 <nue-div vertical align="center" style="margin-top: 32px">
                     <nue-avatar :src="userAvatarUrl" size="64px" />
-                    <nue-text> {{ user?.nickName }} </nue-text>
+                    <nue-text>{{ user?.nickname }}</nue-text>
                 </nue-div>
                 <nue-div vertical align="stretch" gap="8px">
                     <nue-link theme="btnlike" disabled>个人信息</nue-link>
                     <nue-link theme="btnlike" disabled>设置</nue-link>
                     <nue-divider />
-                    <nue-link theme="btnlike" @click="emit('logout', user?.id)">退出登录</nue-link>
+                    <nue-link theme="btnlike" @click="emit('logout', user?.id)">
+                        退出登录
+                    </nue-link>
                 </nue-div>
             </nue-div>
         </template>
@@ -22,15 +24,23 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { UserDropdownProps, UserDropdownEmits } from './types'
+import type { User } from '@nao-todo/types'
 
 defineOptions({ name: 'UserDropdown' })
-const props = defineProps<UserDropdownProps>()
-const emit = defineEmits<UserDropdownEmits>()
+const props = defineProps<{
+    user: {
+        id: string
+        nickname: string
+        avatarUrl: string
+    }
+}>()
+const emit = defineEmits<{
+    (event: 'logout', id?: User['id']): void
+}>()
 
 const userAvatarUrl = computed(() => {
     return (
-        props.user?.avatarUrl ||
+        props.user.avatarUrl ||
         'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif?imageView2/1/w/80/h/80'
     )
 })

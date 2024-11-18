@@ -1,18 +1,18 @@
 <template>
     <nue-container theme="vertical,inner" class="kanban-column">
         <nue-header height="32px" class="kanban-column__header" style="box-sizing: border-box">
-            <todo-state-info :state="category"></todo-state-info>
+            <todo-state-info :state="category" />
             <nue-text size="12px" color="gray">{{ todos.length }}</nue-text>
         </nue-header>
         <nue-main class="kanban-column__main" style="border: none">
-            <empty :empty="!todos.length" message="没有数据。"></empty>
+            <empty :empty="!todos.length" message="没有数据。" />
             <todo-card
                 v-for="todo in todos"
                 :key="todo.id"
                 :todo="todo"
                 :actived="todo.id === currentTaskId"
                 :data-todoId="todo.id"
-                :columns="columns"
+                :columns="columnOptions"
                 draggable="true"
                 @click="handleShowTodoDetails"
                 @delete="(todoId) => emit('delete-todo', todoId)"
@@ -20,7 +20,7 @@
                 @unfinish="(todoId) => emit('unfinish-todo', todoId)"
                 @finish="(todoId) => emit('finish-todo', todoId)"
                 @heart="(todoId) => emit('heart-todo', todoId)"
-            ></todo-card>
+            />
         </nue-main>
     </nue-container>
 </template>

@@ -1,5 +1,5 @@
 <template>
-    <nue-button theme="pure" title="Click to edit" @click="handleEdit">
+    <nue-button theme="pure" title="点击修改" @click="handleEdit">
         <slot>
             <nue-text :size="size" :weight="weight" :color="color">
                 {{ text || emptyholder }}
@@ -9,20 +9,33 @@
 </template>
 
 <script setup lang="ts">
-import type { ClickToEditEmits, ClickToEditProps } from './types'
 import { NuePrompt } from 'nue-ui'
 
 defineOptions({ name: 'ClickToEdit' })
-const props = withDefaults(defineProps<ClickToEditProps>(), {
-    emptyholder: '编辑',
-    placeholder: '输入内容...',
-    title: '编辑输入框',
-    size: '14px',
-    color: 'black'
-})
-const emit = defineEmits<ClickToEditEmits>()
+const props = withDefaults(
+    defineProps<{
+        text?: string
+        placeholder?: string
+        title?: string
+        preventDefault?: boolean
+        size?: string
+        color?: string
+        weight?: string
+        emptyholder?: string
+    }>(),
+    {
+        emptyholder: '编辑',
+        placeholder: '输入内容...',
+        title: '编辑框',
+        size: '14px',
+        color: 'black'
+    }
+)
+const emit = defineEmits<{
+    (event: 'edit', payload: string): void
+}>()
 
-function handleEdit() {
+const handleEdit = () => {
     const { title, placeholder, text, preventDefault } = props
     if (preventDefault) {
         emit('edit', text as string)
@@ -37,7 +50,7 @@ function handleEdit() {
         validator: (value: any) => value
     }).then(
         (value) => emit('edit', value as string),
-        () => {}
+        (e) => console.log('[ClickToEdit/handleEdit] NuePromptCanceled:', e)
     )
 }
 </script>
