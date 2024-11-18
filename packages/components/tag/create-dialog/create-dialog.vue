@@ -37,7 +37,7 @@ defineOptions({ name: 'CreateTagDialog' })
 const props = defineProps<CreateTagDialogProps>()
 
 const tagNameInputRef = ref<InstanceType<typeof NueInput>>()
-const newTag = ref<CreateOptions>({ name: '', color: '', description: '' })
+const newTag = ref<CreateOptions>({ name: '', color: 'transparent', description: '' })
 const visible = ref(false)
 const loading = ref(false)
 const isTagNameEmpty = ref(false)

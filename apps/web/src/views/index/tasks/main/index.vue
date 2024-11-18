@@ -68,7 +68,7 @@ const handleDropdownExecute = async (executeId: string) => {
 
 // 处理路由重复问题
 onBeforeRouteUpdate((to, from, next) => {
-    console.log(to, from)
+    // console.log(to, from)
     const toName = (to.name as string).split('-').slice(0, 2).join('-')
     const fromName = from.name as string
     if ((fromName.endsWith('kanban') || fromName.endsWith('table')) && to.name === toName) {

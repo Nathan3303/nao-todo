@@ -10,9 +10,9 @@
                 </nue-div>
             </nue-div>
         </nue-div>
-        <nue-text size="12px" color="gray">
-            标签状态：{{ tag.isDeleted ? '已删除' : '正常' }}
-        </nue-text>
+<!--        <nue-text size="12px" color="gray">-->
+<!--            标签状态：{{ tag.isDeleted ? '已删除' : '正常' }}-->
+<!--        </nue-text>-->
     </nue-div>
 </template>
 

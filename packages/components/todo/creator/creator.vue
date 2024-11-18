@@ -43,7 +43,6 @@ import { computed, reactive, ref } from 'vue'
 import { TodoDateSelector, TodoTagBar, TodoProjectSelector } from '@nao-todo/components'
 import { TodoPrioritySelectOptions, TodoSelector, TodoStateSelectOptions } from '../selector'
 import { useRelativeDate } from '@nao-todo/hooks/use-relative-date'
-import moment from 'moment'
 import type { CreateTodoOptions } from '@nao-todo/types'
 import type { TodoCreatorProps } from './types'
 
@@ -65,7 +64,7 @@ const todoData = reactive<CreateTodoOptions>({
 const endDate = computed({
     get() {
         if (!todoData.dueDate) return ''
-        return (todoData.dueDate.endAt! as string).slice(0, 16)
+        return ((todoData.dueDate.endAt as string) || '').slice(0, 16)
     },
     set(value) {
         todoData.dueDate.endAt = value

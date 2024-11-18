@@ -3,7 +3,13 @@ import { defineStore } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import { basicViewsInfo, defaultPreference } from './constants'
 import { useProjectStore, useTagStore, useTodoStore, useUserStore } from '@/stores'
-import type { Project, Tag, TasksMainRouteCategory, TasksMainViewInfo, TasksMultiSelectInfo } from '@nao-todo/types'
+import type {
+    Project,
+    Tag,
+    TasksMainRouteCategory,
+    TasksMainViewInfo,
+    TasksMultiSelectInfo
+} from '@nao-todo/types'
 
 export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
     const route = useRoute()
@@ -123,7 +129,7 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
             handlers: basicInfo.handlers
         }
         if (id === 'inbox') _viewInfo.preference.getTodosOptions.projectId = userStore.user?.id
-        // console.log('[UseTasksViewStore/getBasicViewInfo] _viewInfo:', _viewInfo)
+        console.log('[UseTasksViewStore/getBasicViewInfo] _viewInfo:', _viewInfo)
         viewInfo.value = _viewInfo
         todoStore.setGetOptionsByPreference(viewInfo.value.preference)
         baseRouteName.value = 'tasks-' + meta.id + '-' + viewInfo.value.preference.viewType
@@ -161,7 +167,7 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
         }
         _viewInfo.preference.getTodosOptions.projectId = projectId
         viewInfo.value = _viewInfo
-        // console.log('[UseTasksViewStore/getProjectViewInfo] _viewInfo:', _viewInfo)
+        console.log('[UseTasksViewStore/getProjectViewInfo] _viewInfo:', _viewInfo)
         todoStore.setGetOptionsByPreference(_viewInfo.preference)
         baseRouteName.value = 'tasks-' + meta.id + '-' + _viewInfo.preference.viewType
         await router.push({ name: baseRouteName.value, params })
@@ -186,7 +192,7 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
                 remove: handleDeleteTag
             }
         }
-        // console.log('[UseTasksViewStore] getTagViewInfo:', viewInfo.value.preference)
+        console.log('[UseTasksViewStore] getTagViewInfo:', viewInfo.value.preference)
         todoStore.setGetOptionsByPreference(viewInfo.value.preference)
         baseRouteName.value = 'tasks-' + meta.id + '-' + viewInfo.value.preference.viewType
         await router.push({ name: baseRouteName.value })

@@ -68,7 +68,7 @@ const emit = defineEmits<{
 <style scoped>
 .project-board {
     --column-width: 240px;
-    --row-height: calc(var(--column-width) * 3 / 4);
+    --row-height: calc(var(--column-width) * 0.5);
 
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(var(--column-width), 1fr));

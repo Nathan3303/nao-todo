@@ -49,7 +49,7 @@ const loading = ref(false)
 const isLogin = computed(() => props.operation === 'login')
 const switchButtonText = computed(() => (isLogin.value ? '注册' : '登录'))
 const subView = computed(() => (isLogin.value ? AuthSignIn : AuthSignUp))
-const switchRoute = computed(() => ('/auth' + isLogin.value ? '/signup' : '/login'))
+const switchRoute = computed(() => '/auth' + (isLogin.value ? '/signup' : '/login'))
 
 const handleSignin = async (options: SigninOptions) => {
     const res = await userStore.doSignin(options)

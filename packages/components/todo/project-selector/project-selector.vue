@@ -1,5 +1,5 @@
 <template>
-    <nue-dropdown theme="project-selector" :hide-on-click="false">
+    <nue-dropdown theme="project-selector" :hide-on-click="false" placement="bottom-end">
         <template #default="{ clickTrigger }">
             <nue-button size="small" :icon="buttonIconName" @click="clickTrigger">
                 {{ buttonText }}
@@ -12,17 +12,22 @@
                 <nue-icon v-if="projectId === userId" name="check" />
             </nue-div>
             <nue-divider />
-            <nue-div
-                v-for="(project, index) in projects"
-                :key="index"
-                class="nue-dropdown-item"
-                :data-selected="project.id === projectId"
-                @click="handleSelect(project.id, project.title)"
-            >
-                <nue-icon name="more2" size="12px" />
-                <nue-text size="12px" style="flex: auto">{{ project.title }}</nue-text>
-                <nue-icon v-if="project.id === projectId" name="check" />
-            </nue-div>
+            <template v-if="projects && projects.length">
+                <nue-div
+                    v-for="(project, index) in projects"
+                    :key="index"
+                    class="nue-dropdown-item"
+                    :data-selected="project.id === projectId"
+                    @click="handleSelect(project.id, project.title)"
+                >
+                    <nue-icon name="more2" size="12px" />
+                    <nue-text size="12px" style="flex: auto">{{ project.title }}</nue-text>
+                    <nue-icon v-if="project.id === projectId" name="check" />
+                </nue-div>
+            </template>
+            <nue-text v-else size="11px" color="gray" style="padding: 8px" align="center">
+                暂无自建清单
+            </nue-text>
         </template>
     </nue-dropdown>
 </template>
