@@ -1,16 +1,16 @@
 import { ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
-import { getTodos, updateTodo, deleteTodo, createTodo, updateTodos } from '@nao-todo/apis'
+import { createTodo, deleteTodo, getTodos, updateTodo, updateTodos } from '@nao-todo/apis'
 import type {
-    Todo,
-    GetTodosOverview,
+    CreateTodoOptions,
     GetTodosOptions,
+    GetTodosOverview,
+    GetTodosResponseData,
+    Project,
+    Todo,
     TodoColumnOptions,
     UpdateTodoOptions,
-    UpdateTodoOptionsRaw,
-    GetTodosResponseData,
-    CreateTodoOptions,
-    Project
+    UpdateTodoOptionsRaw
 } from '@nao-todo/types'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import moment from 'moment'

@@ -1,4 +1,4 @@
-import type { CreateTodoOptions, GetTodosOptions, Todo, TodoColumnOptions } from '../models/todo'
+import type { CreateTodoOptions, GetTodosOptions, Todo, TodoColumnOptions } from '@nao-todo/types'
 
 type TasksMainRouteCategory = 'basic' | 'project' | 'tag' | 'unknown'
 
@@ -14,6 +14,7 @@ type TasksMainViewInfo = {
     createTodoOptions: CreateTodoOptions
     // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     handlers?: Record<string, Function>
+    payload?: Record<string, unknown>
 }
 
 type TasksMainBasicViewNames =

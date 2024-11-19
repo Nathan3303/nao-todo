@@ -1,46 +1,46 @@
 <template>
-    <nue-div class="todo-creator-wrapper" vertical align="stretch">
-        <nue-input v-model="todoData.name" placeholder="待办事项名称" clearable />
-        <nue-div v-if="setMoreData" vertical align="stretch">
-            <nue-div align="center">
-                <todo-date-selector v-model="endDate" />
-                <nue-text v-if="endDate" size="12px" color="gray">
-                    ( {{ useRelativeDate(endDate) }} )
-                </nue-text>
-            </nue-div>
+    <nue-div align="stretch" class="todo-creator-wrapper" vertical>
+        <nue-input v-model="todoData.name" clearable placeholder="待办事项名称" />
+        <nue-div v-if="setMoreData" align="stretch" vertical>
             <nue-div wrap="nowrap">
                 <todo-selector
-                    :value="todoData.state"
                     :options="TodoStateSelectOptions"
+                    :value="todoData.state"
                     @change="(s) => (todoData.state = s as CreateTodoOptions['state'])"
                 />
                 <todo-selector
-                    :value="todoData.priority"
                     :options="TodoPrioritySelectOptions"
+                    :value="todoData.priority"
                     @change="(p) => (todoData.priority = p as CreateTodoOptions['priority'])"
                 />
                 <nue-div flex />
                 <todo-project-selector
-                    :user-id="userId"
-                    :projects="projects"
                     :project-id="todoData.projectId"
+                    :projects="projects"
+                    :user-id="userId"
                     @select="setProjectInfo"
                 />
             </nue-div>
+            <nue-div align="center">
+                <todo-date-selector v-model="endDate" />
+                <nue-text v-if="endDate" color="gray" size="12px">
+                    ( {{ useRelativeDate(endDate) }} )
+                </nue-text>
+            </nue-div>
             <todo-tag-bar
+                :clamped="5"
                 :tags="tags"
                 :todo-tags="todoData.tags!"
-                :clamped="5"
                 @update-tags="handleUpdateTags"
             />
-            <nue-textarea v-model="todoData.description" placeholder="添加待办事项备注" :rows="4" />
+            <nue-textarea v-model="todoData.description" :rows="4" placeholder="添加待办事项备注（可选）" />
         </nue-div>
     </nue-div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
-import { TodoDateSelector, TodoTagBar, TodoProjectSelector } from '@nao-todo/components'
+import { TodoDateSelector, TodoProjectSelector, TodoTagBar } from '@nao-todo/components'
 import { TodoPrioritySelectOptions, TodoSelector, TodoStateSelectOptions } from '../selector'
 import { useRelativeDate } from '@nao-todo/hooks/use-relative-date'
 import type { CreateTodoOptions } from '@nao-todo/types'
@@ -80,6 +80,7 @@ const handleUpdateTags = (tags: string[]) => {
 }
 
 const handleClearData = () => {
+    todoData.name = ''
     todoData.dueDate = { endAt: '' }
     todoData.priority = 'low'
     todoData.state = 'todo'

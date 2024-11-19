@@ -1,17 +1,16 @@
 <template>
-    <nue-dropdown theme="user-dropdown">
+    <nue-dropdown theme="user-dropdown" hide-on-click>
         <template #default="{ clickTrigger }">
-            <nue-avatar :src="userAvatarUrl" @click.stop="clickTrigger" style="cursor: pointer" />
+            <nue-avatar :src="user?.avatar" style="cursor: pointer" @click.stop="clickTrigger" />
         </template>
-        <template #dropdown v-if="user">
-            <nue-div vertical align="center" justify="center" width="240px" gap="32px">
-                <nue-div vertical align="center" style="margin-top: 32px">
-                    <nue-avatar :src="userAvatarUrl" size="64px" />
-                    <nue-text>{{ user?.nickname }}</nue-text>
+        <template v-if="user" #dropdown>
+            <nue-div align="center" gap="32px" justify="center" vertical width="240px">
+                <nue-div align="center" style="margin-top: 32px" vertical>
+                    <nue-avatar :src="user?.avatar" size="64px" />
+                    <nue-text>{{ user?.nickname || '' }}</nue-text>
                 </nue-div>
-                <nue-div vertical align="stretch" gap="8px">
-                    <nue-link theme="btnlike" disabled>个人信息</nue-link>
-                    <nue-link theme="btnlike" disabled>设置</nue-link>
+                <nue-div align="stretch" gap="8px" vertical>
+                    <nue-button style="border: none;" @click="emit('showProfile')">个人信息</nue-button>
                     <nue-divider />
                     <nue-link theme="btnlike" @click="emit('logout', user?.id)">
                         退出登录
@@ -22,28 +21,17 @@
     </nue-dropdown>
 </template>
 
-<script setup lang="ts">
-import { computed } from 'vue'
-import type { User } from '@nao-todo/types'
-
+<script lang="ts" setup>
 defineOptions({ name: 'UserDropdown' })
-const props = defineProps<{
+defineProps<{
     user?: {
         id: string
         nickname: string
-        avatarUrl?: string
+        avatar: string
     }
 }>()
 const emit = defineEmits<{
-    (event: 'logout', id?: User['id']): void
+    (event: 'logout', id?: string): void
+    (event: 'showProfile'): void
 }>()
-
-const userAvatarUrl = computed(() => {
-    return (
-        props.user?.avatarUrl ||
-        'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif?imageView2/1/w/80/h/80'
-    )
-})
 </script>
-
-<style scoped></style>

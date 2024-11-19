@@ -19,6 +19,7 @@ export const defaultColumnOptions: TodoColumnOptions = {
     state: true,
     priority: true,
     project: true,
+    description: true,
     createdAt: false,
     updatedAt: false
 }

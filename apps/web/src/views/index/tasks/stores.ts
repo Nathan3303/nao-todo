@@ -3,13 +3,7 @@ import { defineStore } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import { basicViewsInfo, defaultPreference } from './constants'
 import { useProjectStore, useTagStore, useTodoStore, useUserStore } from '@/stores'
-import type {
-    Project,
-    Tag,
-    TasksMainRouteCategory,
-    TasksMainViewInfo,
-    TasksMultiSelectInfo
-} from '@nao-todo/types'
+import type { Project, Tag, TasksMainRouteCategory, TasksMainViewInfo, TasksMultiSelectInfo } from '@nao-todo/types'
 
 export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
     const route = useRoute()
@@ -109,93 +103,91 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
     }
 
     // 获取基础视图信息
-    const getBasicViewInfo = async () => {
-        const { meta } = route
-        const id = meta.id as keyof typeof basicViewsInfo
-        const basicInfo = basicViewsInfo[id]
-        const _viewInfo = {
-            id: basicInfo.id,
-            title: basicInfo.title,
-            description: basicInfo.description,
-            preference: {
-                viewType: defaultPreference.viewType,
-                getTodosOptions: {
-                    ...defaultPreference.getTodosOptions,
-                    ...(basicInfo.preference.getTodosOptions || {})
+    const getBasicViewInfo = () => {
+        let _viewInfo = null
+        const basicInfo = basicViewsInfo[route.meta.id as keyof typeof basicViewsInfo]
+        if (basicInfo) {
+            _viewInfo = {
+                id: basicInfo.id,
+                title: basicInfo.title,
+                description: basicInfo.description,
+                preference: {
+                    viewType: defaultPreference.viewType,
+                    getTodosOptions: {
+                        ...defaultPreference.getTodosOptions,
+                        ...(basicInfo.preference.getTodosOptions || {})
+                    },
+                    columns: basicInfo.preference.columns
                 },
-                columns: basicInfo.preference.columns
-            },
-            createTodoOptions: { dueDate: {}, projectId: userStore.user?.id },
-            handlers: basicInfo.handlers
+                createTodoOptions: { dueDate: {}, projectId: userStore.user?.id },
+                handlers: basicInfo.handlers
+            } as TasksMainViewInfo
+            if (basicInfo.id === 'inbox') {
+                _viewInfo.preference.getTodosOptions.projectId = userStore.user?.id
+            }
         }
-        if (id === 'inbox') _viewInfo.preference.getTodosOptions.projectId = userStore.user?.id
-        console.log('[UseTasksViewStore/getBasicViewInfo] _viewInfo:', _viewInfo)
         viewInfo.value = _viewInfo
-        todoStore.setGetOptionsByPreference(viewInfo.value.preference)
-        baseRouteName.value = 'tasks-' + meta.id + '-' + viewInfo.value.preference.viewType
-        await router.push({ name: baseRouteName.value })
     }
 
     // 获取清单视图信息
-    const getProjectViewInfo = async () => {
-        const { meta, params } = route
-        const projectId = params.projectId as Project['id']
-        const project = projectStore.getProjectByIdFromLocal(projectId)
-        if (!project) return (viewInfo.value = null)
-        // console.log('[UseTasksViewStore/getProjectViewInfo] project:', project)
-        const _viewInfo: TasksMainViewInfo = {
-            id: project.id,
-            title: project.title,
-            description: project.description,
-            preference: {
-                viewType: project.preference.viewType || defaultPreference.viewType,
-                getTodosOptions: {
-                    ...defaultPreference.getTodosOptions,
-                    ...(project.preference.getTodosOptions || {})
+    const getProjectViewInfo = () => {
+        let _viewInfo = null
+        const project = projectStore.getProjectByIdFromLocal(route.params.projectId as Project['id'])
+        if (project) {
+            _viewInfo = {
+                id: project.id,
+                title: project.title,
+                description: project.description,
+                preference: {
+                    viewType: project.preference?.viewType || defaultPreference.viewType,
+                    getTodosOptions: {
+                        ...defaultPreference.getTodosOptions,
+                        ...(project.preference?.getTodosOptions || {}),
+                        projectId: project.id
+                    },
+                    columns: {
+                        ...defaultPreference.columns,
+                        ...(project.preference?.columns || {})
+                    }
                 },
-                columns: {
-                    ...defaultPreference.columns,
-                    ...(project.preference.columns || {})
+                createTodoOptions: { dueDate: {}, projectId: project.id },
+                handlers: {
+                    updateTitle: handleUpdateProjectTitle,
+                    updateDescription: handleUpdateProjectDescription,
+                    remove: handleRemoveProject
                 }
-            },
-            createTodoOptions: { dueDate: {}, projectId: project.id },
-            handlers: {
-                updateTitle: handleUpdateProjectTitle,
-                updateDescription: handleUpdateProjectDescription,
-                remove: handleRemoveProject
-            }
+            } as TasksMainViewInfo
         }
-        _viewInfo.preference.getTodosOptions.projectId = projectId
         viewInfo.value = _viewInfo
-        console.log('[UseTasksViewStore/getProjectViewInfo] _viewInfo:', _viewInfo)
-        todoStore.setGetOptionsByPreference(_viewInfo.preference)
-        baseRouteName.value = 'tasks-' + meta.id + '-' + _viewInfo.preference.viewType
-        await router.push({ name: baseRouteName.value, params })
     }
 
     // 获取标签视图信息
-    const getTagViewInfo = async () => {
-        const { meta, params } = route
-        const id = params.tagId as Tag['id']
-        const tag = tagStore.getTagByIdFromLocal(id) ?? null
-        if (!tag) return (viewInfo.value = null)
-        defaultPreference.getTodosOptions.tagId = id
-        defaultPreference.getTodosOptions.isDeleted = false
-        viewInfo.value = {
-            id: tag.id,
-            title: tag.name,
-            description: tag.description,
-            preference: defaultPreference,
-            createTodoOptions: { dueDate: {}, tags: [tag.id] },
-            handlers: {
-                updateTitle: handleUpdateTagName,
-                remove: handleDeleteTag
-            }
+    const getTagViewInfo = () => {
+        let _viewInfo = null
+        const tag = tagStore.getTagByIdFromLocal(route.params.tagId as Tag['id'])
+        if (tag) {
+            _viewInfo = {
+                id: tag.id,
+                title: tag.name,
+                description: tag.description,
+                preference: {
+                    viewType: defaultPreference.viewType,
+                    getTodosOptions: {
+                        ...defaultPreference.getTodosOptions,
+                        tagId: tag.id,
+                        isDeleted: false
+                    },
+                    columns: defaultPreference.columns
+                },
+                createTodoOptions: { dueDate: {}, tags: [tag.id] },
+                handlers: {
+                    updateTitle: handleUpdateTagName,
+                    remove: handleDeleteTag
+                },
+                payload: { color: tag.color }
+            } as TasksMainViewInfo
         }
-        console.log('[UseTasksViewStore] getTagViewInfo:', viewInfo.value.preference)
-        todoStore.setGetOptionsByPreference(viewInfo.value.preference)
-        baseRouteName.value = 'tasks-' + meta.id + '-' + viewInfo.value.preference.viewType
-        await router.push({ name: baseRouteName.value })
+        viewInfo.value = _viewInfo
     }
 
     // 获取页面信息
@@ -206,48 +198,56 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
             case 'basic':
                 if (viewLoadedTag === meta.id) return
                 viewLoadedTag = meta.id as string
-                await getBasicViewInfo()
+                getBasicViewInfo()
                 break
             case 'project':
                 if (viewLoadedTag === (params.projectId as Project['id'])) return
                 viewLoadedTag = params.projectId as Project['id']
-                await getProjectViewInfo()
+                getProjectViewInfo()
                 break
             case 'tag':
                 if (viewLoadedTag === (params.tagId as Tag['id'])) return
                 viewLoadedTag = params.tagId as Tag['id']
-                await getTagViewInfo()
+                getTagViewInfo()
                 break
             default:
-                category.value = 'unknown'
-                viewInfo.value = null
+                category.value = 'basic'
+                viewInfo.value = {
+                    id: basicViewsInfo['all'].id,
+                    title: basicViewsInfo['all'].title,
+                    description: basicViewsInfo['all'].description,
+                    preference: {
+                        viewType: defaultPreference.viewType,
+                        getTodosOptions: {
+                            ...defaultPreference.getTodosOptions,
+                            ...(basicViewsInfo['all'].preference.getTodosOptions || {})
+                        },
+                        columns: basicViewsInfo['all'].preference.columns
+                    },
+                    createTodoOptions: { dueDate: {}, projectId: userStore.user?.id },
+                    handlers: basicViewsInfo['all'].handlers
+                }
                 break
         }
+        console.log('[UseTasksViewStore/getViewInfo] category:', category.value)
+        console.log('[UseTasksViewStore/getViewInfo] viewInfo:', viewInfo.value)
+        todoStore.setGetOptionsByPreference(viewInfo.value!.preference)
+        baseRouteName.value = 'tasks-' + meta.id + '-' + viewInfo.value!.preference.viewType
+        await router.push({ name: baseRouteName.value, params })
         document.title = viewInfo.value?.title ? 'NaoTodo - ' + viewInfo.value?.title : 'NaoTodo'
     }
 
     // 监听 ProjectStore 更新 -> 更新视图信息
     const unsubscribeProjectStoresAction = projectStore.$onAction(({ name, after }) => {
         if (['updateProjectTitleWithPrompt', 'updateProjectDescriptionWithPrompt'].includes(name)) {
-            after(() => {
-                const projectId = route.params.projectId as Project['id']
-                const project = projectStore.getProjectByIdFromLocal(projectId)
-                if (!project || !viewInfo.value) return
-                viewInfo.value.title = project.title
-                viewInfo.value.description = project.description
-            })
+            after(() => getProjectViewInfo())
         }
     })
 
     // 监听 TagStore 更新 -> 更新视图信息
     const unsubscribeTagStoresAction = tagStore.$onAction(({ name, after }) => {
-        if (['updateTagNameWithPrompt'].includes(name)) {
-            after(() => {
-                const tagId = route.params.tagId as Tag['id']
-                const tag = tagStore.getTagByIdFromLocal(tagId)
-                if (!tag || !viewInfo.value) return
-                viewInfo.value.title = tag.name
-            })
+        if (['updateTagNameWithPrompt', 'updateTagColor'].includes(name)) {
+            after(() => getTagViewInfo())
         }
     })
 

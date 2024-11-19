@@ -1,13 +1,7 @@
 import { computed, ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
-import { createTag, deleteTag, updateTag, getTags } from '@nao-todo/apis'
-import type {
-    Tag,
-    CreateTagOptions,
-    UpdateTagOptions,
-    GetTagsOptions,
-    GetTagsOptionsRaw
-} from '@nao-todo/types'
+import { createTag, deleteTag, getTags, updateTag } from '@nao-todo/apis'
+import type { CreateTagOptions, GetTagsOptions, GetTagsOptionsRaw, Tag, UpdateTagOptions } from '@nao-todo/types'
 import { NueConfirm, NueMessage, NuePrompt } from 'nue-ui'
 
 export const useTagStore = defineStore('tagStore', () => {
@@ -107,7 +101,7 @@ export const useTagStore = defineStore('tagStore', () => {
         } else {
             NueMessage.error('标签颜色修改失败')
         }
-        return result;
+        return result
     }
 
     // 删除标签（带确认）
@@ -134,9 +128,7 @@ export const useTagStore = defineStore('tagStore', () => {
 
     // 查找本地标签
     const getTagByIdFromLocal = (tagId: Tag['id']) => {
-        const index = tags.value.findIndex((tag) => tag.id === tagId)
-        if (index === -1) return null
-        return tags.value[index]
+        return tags.value.find((tag) => tag.id === tagId) || null
     }
 
     // 查找本地标签(s)
