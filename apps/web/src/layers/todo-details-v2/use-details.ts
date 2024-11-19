@@ -27,14 +27,16 @@ export const useTodoDetails = () => {
         const total = _e ? _e.length : 0
         const percentage = total ? Math.floor((progress / total) * 100) : 0
         return {
-            percentage, text: `已完成 ${progress}/${total}, ${percentage}%`
+            percentage,
+            text: `已完成 ${progress}/${total}, ${percentage}%`
         }
     })
 
     // 获取可用清单
     const activeProjects = computed(() => {
         return projectStore.findProjectsFromLocal({
-            isArchived: false, isDeleted: false
+            isArchived: false,
+            isDeleted: false
         })
     })
 
@@ -75,7 +77,9 @@ export const useTodoDetails = () => {
     const _updateTodo = async () => {
         if (!shadowTodo.value) return
         const todoId = shadowTodo.value.id
-        return await todoStore.doUpdateTodo(todoId, { ...shadowTodo.value })
+        const newTodo = { ...shadowTodo.value }
+        console.log('[UseDetails/_updateTodo] newTodo', newTodo)
+        return await todoStore.doUpdateTodo(todoId, newTodo)
     }
 
     const { debouncedFn: debouncedUpdateTodo, cancelTimer } = _debounce(_updateTodo, 512)
