@@ -68,7 +68,7 @@
                             autosize
                             class="inputer--name"
                             placeholder="输入您的任务名称..."
-                            style="padding: 0; flex: auto; font-size: var(--text-lg);"
+                            style="padding: 0; flex: auto"
                             theme="noshape,large"
                             @change="updateTodo"
                         />
@@ -77,7 +77,7 @@
                             :rows="0"
                             autosize
                             placeholder="输入您的任务描述..."
-                            style="padding: 0; flex: auto; color: #696969;"
+                            style="padding: 0; flex: auto; color: #696969"
                             theme="noshape"
                             @change="updateTodo"
                         />
@@ -147,7 +147,11 @@ import { useTodoDetails } from './use-details'
 import { useTagStore, useUserStore } from '@/stores'
 import DetailsRow from './row.vue'
 import { TodoEventDetails } from '@/layers'
-import { TodoPrioritySelectOptions, TodoSelector, TodoStateSelectOptions } from '@nao-todo/components/todo/selector'
+import {
+    TodoPrioritySelectOptions,
+    TodoSelector,
+    TodoStateSelectOptions
+} from '@nao-todo/components/todo/selector'
 import {
     SwitchButton,
     TodoCheckButton,
