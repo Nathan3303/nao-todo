@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "composite": true,
+        "incremental": true,
+
+        "declaration": true,
+        "declarationMap": true,
+        "emitDeclarationOnly": true,
+        "noEmitOnError": true,
+        "skipLibCheck": true,
+        "sourceMap": true,
+
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+
+        "strict": true,
+        "forceConsistentCasingInFileNames": true,
+    },
+}

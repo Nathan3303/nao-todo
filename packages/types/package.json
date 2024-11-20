@@ -1,0 +1,8 @@
+{
+    "name": "@nao-todo/types",
+    "description": "Types for Nao Todo",
+    "version": "0.1.0",
+    "author": "Nathan Lee",
+    "license": "MIT",
+    "main": "index.ts"
+}
