@@ -85,11 +85,13 @@ export const useProjectStore = defineStore('projectStore', () => {
         // 遍历项目对象的属性，根据options更新项目信息
         Object.keys(project).forEach((key) => {
             // 如果options中包含当前属性的值，则更新项目对象的对应属性
-            if (Object.prototype.hasOwnProperty.call(options, key as keyof UpdateProjectOptionsRaw)) {
-                console.log('[UseProjectStore/doUpdateProject] Update forEach log:', key, project[key as keyof Project], options[key as keyof UpdateProjectOptionsRaw])
+            if (
+                Object.prototype.hasOwnProperty.call(options, key as keyof UpdateProjectOptionsRaw)
+            ) {
+                // console.log('[UseProjectStore/doUpdateProject] Update forEach log:', key, project[key as keyof Project], options[key as keyof UpdateProjectOptionsRaw])
                 project[key as keyof Project] = options[
                     key as keyof UpdateProjectOptionsRaw
-                    ] as never
+                ] as never
             }
         })
 
@@ -138,7 +140,6 @@ export const useProjectStore = defineStore('projectStore', () => {
         return true
     }
 
-
     /**
      * 异步函数：通过用户提示更新项目标题
      *
@@ -184,7 +185,6 @@ export const useProjectStore = defineStore('projectStore', () => {
         // 如果执行到此处，表示更新失败或出现异常，返回false
         return false
     }
-
 
     /**
      * 异步函数：通过提示框更新项目描述
@@ -267,7 +267,6 @@ export const useProjectStore = defineStore('projectStore', () => {
         // 返回更新操作的结果
         return result
     }
-
 
     /**
      * 异步函数，用于在用户确认后标记项目为删除
@@ -465,7 +464,6 @@ export const useProjectStore = defineStore('projectStore', () => {
             })
         })
     }
-
 
     /**
      * 删除本地项目

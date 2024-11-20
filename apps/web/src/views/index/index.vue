@@ -27,6 +27,7 @@
                     :user="user"
                     placement="right-end"
                     @logout="userStore.signOutWithConfirmation"
+                    @show-profile="showProfileDialog"
                 />
             </template>
         </nue-header>
@@ -34,7 +35,7 @@
     </nue-container>
     <!-- Dialogs -->
     <update-log-dialog ref="updateLogDialogRef" />
-    <!--    <user-profile-dialog ref="userProfileDialogRef" />-->
+    <user-profile-dialog ref="userProfileDialogRef" />
 </template>
 
 <script lang="ts" setup>
@@ -43,7 +44,7 @@ import { storeToRefs } from 'pinia'
 import { UpdateLogDialog } from '@/layers'
 import { useUserStore, useViewStore } from '@/stores'
 import { UserDropdown } from '@nao-todo/components'
-// import { UserProfileDialog } from '@/layers/user-profile-dialog'
+import { UserProfileDialog } from '@/layers/user-profile-dialog'
 
 const userStore = useUserStore()
 const viewStore = useViewStore()
@@ -52,13 +53,13 @@ await viewStore.indexViewInitTask()
 
 const { user } = storeToRefs(userStore)
 const updateLogDialogRef = ref<InstanceType<typeof UpdateLogDialog>>()
-// const userProfileDialogRef = ref<InstanceType<typeof UserProfileDialog>>()
+const userProfileDialogRef = ref<InstanceType<typeof UserProfileDialog>>()
 
 const showUpdateLogDialog = () => updateLogDialogRef.value?.show()
 
-// const showProfileDialog = () => {
-//     userProfileDialogRef.value?.show()
-// }
+const showProfileDialog = () => {
+    userProfileDialogRef.value?.show()
+}
 </script>
 
 <style scoped>

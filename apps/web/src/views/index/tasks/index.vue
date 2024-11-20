@@ -48,7 +48,13 @@
 
 <script lang="ts" setup>
 import { ref } from 'vue'
-import { ProjectSmartList, TagSmartList, TodoDetailsV2, TodoFilterList, TodoMultiDetails } from '@/layers'
+import {
+    ProjectSmartList,
+    TagSmartList,
+    TodoDetailsV2,
+    TodoFilterList,
+    TodoMultiDetails
+} from '@/layers'
 import { storeToRefs } from 'pinia'
 import { useViewStore } from '@/stores'
 import { useTasksViewStore } from './stores'

@@ -47,7 +47,9 @@ export const basicViewsInfo: {
             handleCreateTodo: async (todoName: Todo['name']) => {
                 await todoStore.doCreateTodo({ dueDate: {}, name: todoName })
             },
-            handleCreateTodoByDialog: async (caller: (args: CreateTodoDialogCallerArgs) => void) => {
+            handleCreateTodoByDialog: async (
+                caller: (args: CreateTodoDialogCallerArgs) => void
+            ) => {
                 caller({
                     userId: userStore.user!.id,
                     projects: projectStore.projects,
@@ -85,7 +87,9 @@ export const basicViewsInfo: {
                     }
                 })
             },
-            handleCreateTodoByDialog: async (caller: (args: CreateTodoDialogCallerArgs) => void) => {
+            handleCreateTodoByDialog: async (
+                caller: (args: CreateTodoDialogCallerArgs) => void
+            ) => {
                 const now = moment()
                 caller({
                     userId: userStore.user!.id,
@@ -130,7 +134,9 @@ export const basicViewsInfo: {
                     }
                 })
             },
-            handleCreateTodoByDialog: async (caller: (args: CreateTodoDialogCallerArgs) => void) => {
+            handleCreateTodoByDialog: async (
+                caller: (args: CreateTodoDialogCallerArgs) => void
+            ) => {
                 const tomorrow = moment().add(1, 'day')
                 caller({
                     userId: userStore.user!.id,
@@ -175,7 +181,9 @@ export const basicViewsInfo: {
                     }
                 })
             },
-            handleCreateTodoByDialog: async (caller: (args: CreateTodoDialogCallerArgs) => void) => {
+            handleCreateTodoByDialog: async (
+                caller: (args: CreateTodoDialogCallerArgs) => void
+            ) => {
                 const now = moment()
                 caller({
                     userId: userStore.user!.id,
@@ -207,7 +215,9 @@ export const basicViewsInfo: {
             handleCreateTodo: async (todoName: Todo['name']) => {
                 await todoStore.doCreateTodo({ dueDate: {}, name: todoName })
             },
-            handleCreateTodoByDialog: async (caller: (args: CreateTodoDialogCallerArgs) => void) => {
+            handleCreateTodoByDialog: async (
+                caller: (args: CreateTodoDialogCallerArgs) => void
+            ) => {
                 caller({
                     userId: userStore.user!.id,
                     projects: projectStore.projects,
@@ -233,7 +243,9 @@ export const basicViewsInfo: {
             handleCreateTodo: async (todoName: Todo['name']) => {
                 await todoStore.doCreateTodo({ dueDate: {}, name: todoName, isFavorited: true })
             },
-            handleCreateTodoByDialog: async (caller: (args: CreateTodoDialogCallerArgs) => void) => {
+            handleCreateTodoByDialog: async (
+                caller: (args: CreateTodoDialogCallerArgs) => void
+            ) => {
                 caller({
                     userId: userStore.user!.id,
                     projects: projectStore.projects,

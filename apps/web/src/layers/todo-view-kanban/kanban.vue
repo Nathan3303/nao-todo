@@ -12,7 +12,10 @@
                     >
                         新增
                     </nue-button>
-                    <todo-table-column-selector v-model="todoStore.columnOptions" :change="handleChangeColumns" />
+                    <todo-table-column-selector
+                        v-model="todoStore.columnOptions"
+                        :change="handleChangeColumns"
+                    />
                     <nue-button
                         :loading="kanbanLoading || !!refreshTimer"
                         icon="refresh"
@@ -117,7 +120,6 @@ const showCreateTodoDialog = () => {
 
 const handleGetTodos = async () => {
     kanbanLoading.value = true
-    console.log("222")
     await todoStore.doGetTodos()
     kanbanLoading.value = false
 }
@@ -217,7 +219,7 @@ const handleDrop = async (event: DragEvent) => {
     await todoStore.doUpdateTodo(todoId, { state: category as Todo['state'] })
 }
 
-await handleGetTodos()
+setTimeout(() => handleGetTodos())
 </script>
 
 <style scoped>
@@ -241,5 +243,4 @@ await handleGetTodos()
         }
     }
 }
-
 </style>

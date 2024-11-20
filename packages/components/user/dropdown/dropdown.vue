@@ -1,5 +1,5 @@
 <template>
-    <nue-dropdown theme="user-dropdown" hide-on-click>
+    <nue-dropdown hide-on-click theme="user-dropdown">
         <template #default="{ clickTrigger }">
             <nue-avatar :src="user?.avatar" style="cursor: pointer" @click.stop="clickTrigger" />
         </template>
@@ -10,7 +10,8 @@
                     <nue-text>{{ user?.nickname || '' }}</nue-text>
                 </nue-div>
                 <nue-div align="stretch" gap="8px" vertical>
-                    <nue-button style="border: none;" @click="emit('showProfile')">个人信息</nue-button>
+                    <nue-button theme="noshape" @click="emit('showProfile')">用户信息</nue-button>
+                    <nue-button theme="noshape" @click="emit('updatePasswd')">修改密码</nue-button>
                     <nue-divider />
                     <nue-link theme="btnlike" @click="emit('logout', user?.id)">
                         退出登录
@@ -33,5 +34,14 @@ defineProps<{
 const emit = defineEmits<{
     (event: 'logout', id?: string): void
     (event: 'showProfile'): void
+    (event: 'updatePasswd'): void
 }>()
 </script>
+
+<style scoped>
+.nue-button--noshape {
+    border: none;
+    box-shadow: none;
+    --hover-background-color: var(--primary-color-300);
+}
+</style>

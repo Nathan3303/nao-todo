@@ -5,6 +5,7 @@ export interface User {
     nickname: string
     avatar: string
     role: string
+    createdAt: string | Date
 }
 
 export type SigninOptions = {

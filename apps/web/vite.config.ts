@@ -28,7 +28,6 @@ export default defineConfig({
                 semicolons: false,
                 shorthand: isProd,
                 braces: !isProd,
-                beautify: !isProd,
                 comments: !isProd
             },
             mangle: {

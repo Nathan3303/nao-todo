@@ -1,6 +1,9 @@
 // auth
 export * from './authentication'
 
+// user
+export * from './user-profile-dialog'
+
 // project
 export * from './create-todo-dialog'
 export * from './project-manager'

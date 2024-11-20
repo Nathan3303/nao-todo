@@ -1,24 +1,24 @@
 <template>
-    <nue-dialog theme="create-todo" v-model="visible" title="创建待办事项">
+    <nue-dialog v-model="visible" theme="create-todo" title="创建待办事项">
         <todo-creator
+            ref="todoCreatorRef"
             :presetInfo="presetInfo"
             :projects="projects"
-            :userId="userId"
             :tags="tags"
-            ref="todoCreatorRef"
+            :userId="userId"
         />
         <template #footer="{ cancel }">
             <nue-button :disabled="loading" @click.stop="cancel">取消</nue-button>
-            <nue-button theme="primary" :loading="loading" @click.stop="confirm">创建</nue-button>
+            <nue-button :loading="loading" theme="primary" @click.stop="confirm">创建</nue-button>
         </template>
     </nue-dialog>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { ref } from 'vue'
 import { TodoCreator } from '@nao-todo/components/todo'
 import { NueMessage } from 'nue-ui'
-import type { CreateTodoDialogProps, CreateTodoDialogCallerArgs } from './types'
+import type { CreateTodoDialogCallerArgs, CreateTodoDialogProps } from './types'
 import type { CreateTodoOptions } from '@nao-todo/types'
 
 defineOptions({ name: 'CreateTodoDialog' })
@@ -51,7 +51,7 @@ const confirm = async () => {
 }
 
 const show = (args: CreateTodoDialogCallerArgs) => {
-    console.log('[CreateDialog/show] args:', args)
+    // console.log('[CreateDialog/show] args:', args)
     projects.value = args.projects
     tags.value = args.tags
     userId.value = args.userId

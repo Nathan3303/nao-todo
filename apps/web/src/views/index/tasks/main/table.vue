@@ -2,6 +2,7 @@
     <todo-view-table
         :key="viewInfo?.id"
         :base-route="baseRoute"
+        :disabledCreateTodo="category === 'basic' && viewInfo?.id === 'recycle'"
         @create-todo-by-dialog="handleCreateTodoByDialog"
     />
 </template>

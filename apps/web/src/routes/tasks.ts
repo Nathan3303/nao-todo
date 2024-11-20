@@ -4,7 +4,7 @@ const tasksRoutes = {
     path: 'tasks',
     name: 'tasks',
     component: () => import('../views/index/tasks/index.vue'),
-    redirect: { name: 'tasks-today' },
+    redirect: { name: 'tasks-today-table' },
     children: [
         // {
         //     path: 'all',
@@ -86,7 +86,6 @@ const buildTaskRoute = (path: string, meta: RouteMeta) => {
         path,
         name: `tasks-${meta.id}`,
         meta,
-        props: true,
         component: () => import(`@/views/index/tasks/main/index.vue`),
         children: [
             {

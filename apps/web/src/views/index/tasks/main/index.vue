@@ -80,7 +80,10 @@ const tagColorSelectDialogRef = ref<InstanceType<typeof TagColorSelectDialog>>()
 // 显示标签颜色选择对话框
 const showUpdateColorDialog = async () => {
     if (!viewInfo.value) return
-    tagColorSelectDialogRef.value?.show(viewInfo.value.id, viewInfo.value.payload?.color as string || 'transparent')
+    tagColorSelectDialogRef.value?.show(
+        viewInfo.value.id,
+        (viewInfo.value.payload?.color as string) || 'transparent'
+    )
 }
 
 // 清单操作菜单处理函数
@@ -112,5 +115,5 @@ onBeforeRouteUpdate((to, from, next) => {
     next()
 })
 
-watchEffect(async () => await tasksViewStore.getViewInfo())
+watchEffect(() => tasksViewStore.getViewInfo())
 </script>

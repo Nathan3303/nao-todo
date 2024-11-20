@@ -78,7 +78,7 @@ export const useTodoDetails = () => {
         if (!shadowTodo.value) return
         const todoId = shadowTodo.value.id
         const newTodo = { ...shadowTodo.value }
-        console.log('[UseDetails/_updateTodo] newTodo', newTodo)
+        // console.log('[UseDetails/_updateTodo] newTodo', newTodo)
         return await todoStore.doUpdateTodo(todoId, newTodo)
     }
 

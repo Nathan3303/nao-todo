@@ -3,7 +3,13 @@ import { defineStore } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import { basicViewsInfo, defaultPreference } from './constants'
 import { useProjectStore, useTagStore, useTodoStore, useUserStore } from '@/stores'
-import type { Project, Tag, TasksMainRouteCategory, TasksMainViewInfo, TasksMultiSelectInfo } from '@nao-todo/types'
+import type {
+    Project,
+    Tag,
+    TasksMainRouteCategory,
+    TasksMainViewInfo,
+    TasksMultiSelectInfo
+} from '@nao-todo/types'
 
 export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
     const route = useRoute()
@@ -132,7 +138,9 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
     // 获取清单视图信息
     const getProjectViewInfo = () => {
         let _viewInfo = null
-        const project = projectStore.getProjectByIdFromLocal(route.params.projectId as Project['id'])
+        const project = projectStore.getProjectByIdFromLocal(
+            route.params.projectId as Project['id']
+        )
         if (project) {
             _viewInfo = {
                 id: project.id,
@@ -229,8 +237,8 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
                 }
                 break
         }
-        console.log('[UseTasksViewStore/getViewInfo] category:', category.value)
-        console.log('[UseTasksViewStore/getViewInfo] viewInfo:', viewInfo.value)
+        // console.log('[UseTasksViewStore/getViewInfo] category:', category.value)
+        // console.log('[UseTasksViewStore/getViewInfo] viewInfo:', viewInfo.value)
         todoStore.setGetOptionsByPreference(viewInfo.value!.preference)
         baseRouteName.value = 'tasks-' + meta.id + '-' + viewInfo.value!.preference.viewType
         await router.push({ name: baseRouteName.value, params })
@@ -240,14 +248,18 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
     // 监听 ProjectStore 更新 -> 更新视图信息
     const unsubscribeProjectStoresAction = projectStore.$onAction(({ name, after }) => {
         if (['updateProjectTitleWithPrompt', 'updateProjectDescriptionWithPrompt'].includes(name)) {
-            after(() => getProjectViewInfo())
+            after(() => {
+                if (category.value === 'project') getProjectViewInfo()
+            })
         }
     })
 
     // 监听 TagStore 更新 -> 更新视图信息
     const unsubscribeTagStoresAction = tagStore.$onAction(({ name, after }) => {
         if (['updateTagNameWithPrompt', 'updateTagColor'].includes(name)) {
-            after(() => getTagViewInfo())
+            after(() => {
+                if (category.value === 'tag') getTagViewInfo()
+            })
         }
     })
 

@@ -2,6 +2,7 @@
     <todo-view-kanban
         :key="viewInfo?.id"
         :base-route="baseRoute"
+        :disabledCreateTodo="category === 'basic' && viewInfo?.id === 'recycle'"
         @create-todo-by-dialog="handleCreateTodoByDialog"
     />
 </template>
