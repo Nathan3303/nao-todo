@@ -1,10 +1,9 @@
 import axios from 'axios'
-import { NueMessage } from 'nue-ui'
-import { useUserStore } from '@/stores'
+import { useUserStore } from '@nao-todo/webapp/src/stores'
 
 const axiosInstance = axios.create({
-    baseURL: 'http://localhost:3002/api' // Base URL in development mode
-    // baseURL: 'https://nathan33.xyz:3002/api' // Base URL in production mode
+    baseURL: 'https://nathan33.xyz:3002/api'
+    // baseURL: 'http://localhost:3002/api'
 })
 
 // Add token to request header
