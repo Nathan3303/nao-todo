@@ -1,7 +1,8 @@
-#!/bin/bash
+# stop docker container mynginx for reduce memory usage
+docker stop mynginx
 
 # install pnpm
-npm install -g pnpm@9.12.2 --registry=https://registry.npmmirror.com/
+npm install -g pnpm --registry=https://registry.npmmirror.com/
 
 # install (dev)dependencies
 pnpm install --registry=https://registry.npmmirror.com/
@@ -14,6 +15,12 @@ rm -rf /opt/shares/naotodo
 
 # copy new dist files
 cp -r apps/web/dist /opt/shares/naotodo
+
+# start docker container mynginx
+docker start mynginx
+
+# reload nginx
+#docker exec -i mynginx /bin/bash -c "nginx -s reload"
 
 # stop original docker container
 #docker stop naotodoApp
