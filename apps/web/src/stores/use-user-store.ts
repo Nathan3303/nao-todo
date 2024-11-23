@@ -47,7 +47,7 @@ export const useUserStore = defineStore('userStore', () => {
             user.value = undefined
             token.value = undefined
             isAuthenticated.value = false
-            NueMessage.success('凭据认证失败：' + result.message)
+            NueMessage.error('凭据认证失败：' + result.message)
             return false
         }
         const newJWT = (result.data as { token: string }).token
@@ -87,7 +87,7 @@ export const useUserStore = defineStore('userStore', () => {
             if (result) await router.push('/auth/login')
             return result
         } catch (err) {
-            console.log('[UserStore] signOutWithConfirmation:', err)
+            console.log('[UserStore] signOutWithConfirmation: canceled!')
         }
         return false
     }
