@@ -1,14 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;0,800&display=swap');
-
-@font-face {
-    font-family: "pf";
-    src: url("./pf.woff") format("woff");
-}
-
 .nue-html {
     --primary-font-size-base: 16px;
     --primary-font-weight: 400;
-    --primary-font-family: "Poppins", "pf", sans-serif;
+    --primary-font-family: "Poppins", "pf", "Microsoft Yahei", sans-serif;
 }
 
 .nue-container--inner {

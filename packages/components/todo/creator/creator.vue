@@ -33,7 +33,11 @@
                 :todo-tags="todoData.tags!"
                 @update-tags="handleUpdateTags"
             />
-            <nue-textarea v-model="todoData.description" :rows="4" placeholder="添加待办事项备注（可选）" />
+            <nue-textarea
+                v-model="todoData.description"
+                :rows="4"
+                placeholder="添加待办事项备注（可选）"
+            />
         </nue-div>
     </nue-div>
 </template>
@@ -52,7 +56,7 @@ const props = defineProps<TodoCreatorProps>()
 const setMoreData = ref(true)
 const todoData = reactive<CreateTodoOptions>({
     name: '',
-    dueDate: { endAt: '' },
+    dueDate: { endAt: null },
     priority: 'low',
     state: 'todo',
     projectId: '',

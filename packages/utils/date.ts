@@ -25,8 +25,8 @@ moment.updateLocale('zh-CN', {
     }
 })
 
-export const useMoment = () => {
-    return moment().locale('zh-CN')
+export const useMoment = (payload?: moment.MomentInput) => {
+    return moment(payload).utcOffset(8).locale('zh-CN')
 }
 
 export const isToday = (date: Moment) => {

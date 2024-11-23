@@ -29,11 +29,12 @@
             <nue-button :loading="loading" theme="primary" @click="handleSignIn">登录</nue-button>
         </nue-div>
         <!--        <nue-divider align="center">-->
-        <!--            <nue-text color="grey" size="12px">或以其他方式登录</nue-text>-->
+        <!--            <nue-text color="grey" size="12px">关于免密登录</nue-text>-->
         <!--        </nue-divider>-->
         <!--        <nue-button icon="logo">NueUI</nue-button>-->
         <nue-text align="center" color="gray" size="12px">
-            点击登录按钮后，您可以在接下来的 30 天内免密访问您的账户，直到您退出或在别处登录。
+            点击登录按钮并成功认证后，您可以在接下来 7
+            日的期限内免密访问您的账户，直到您退出或在别处登录。
         </nue-text>
     </nue-div>
 </template>

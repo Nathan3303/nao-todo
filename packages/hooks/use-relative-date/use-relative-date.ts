@@ -1,4 +1,3 @@
-import moment from 'moment'
 import {
     isToday,
     isTomorrow,
@@ -7,38 +6,16 @@ import {
     isIn30DaysFromNow,
     isAfterThisYear
 } from '@nao-todo/utils/date'
+import { useMoment } from '@nao-todo/utils/date'
 import type { Moment } from 'moment'
 
 const oldDate = null
 const oldRelativeDate = ''
 
-moment.updateLocale('zh-CN', {
-    relativeTime: {
-        future: '%s后',
-        past: '%s前',
-        s: '1 秒',
-        ss: '%d 秒',
-        m: '1 分钟',
-        mm: '%d 分钟',
-        h: '1 小时',
-        hh: '%d 小时',
-        d: '1 天',
-        dd: '%d 天',
-        w: '1 周',
-        ww: '%d 周',
-        M: '1 月',
-        MM: '%d 月',
-        y: '1 年',
-        yy: '%d 年'
-    }
-})
-
 const useRelativeDate = (date: Moment | Date | string | null) => {
     if (date === null) return '-'
     if (date === oldDate) return oldRelativeDate
-    if (date instanceof Date || typeof date === 'string') {
-        date = moment(date).locale('zh-CN')
-    }
+    if (date instanceof Date || typeof date === 'string') date = useMoment(date)
 
     if (isYesterday(date)) return `昨天, ${date.format('M月D日, HH:mm')}`
     if (isToday(date)) return `今天, ${date.format('M月D日, HH:mm')}`
@@ -46,7 +23,7 @@ const useRelativeDate = (date: Moment | Date | string | null) => {
     if (isIn7DaysFromNow(date)) {
         const weekdayString = '日一二三四五六'
         const weekday = `周${weekdayString[date.day()]}`
-        if (date.isSame(moment(), 'year')) {
+        if (date.isSame(useMoment(), 'year')) {
             return `${weekday}, ${date.format('M月D日, HH:mm')}`
         }
         return `${weekday}, ${date.format('YYYY年MM月DD日, HH:mm')}`
