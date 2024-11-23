@@ -2,20 +2,21 @@
     <nue-div class="date-selector">
         <nue-div v-if="dateMoment" class="date-selector__input-wrapper">
             <nue-input
-                theme="small,noshape"
-                type="datetime-local"
                 v-model="dateMoment"
                 :debounce-time="1000"
+                theme="small,noshape"
+                type="datetime-local"
             />
-            <nue-button theme="small,pure" icon="clear" @click="dateMoment = null" />
+            <nue-button icon="clear" theme="small,pure" @click="dateMoment = null" />
         </nue-div>
-        <nue-button v-else theme="small" @click="handleSetDate"> 设置结束时间</nue-button>
+        <nue-button v-else theme="small" @click="handleSetDate">设置结束时间</nue-button>
     </nue-div>
 </template>
 
-<script setup lang="ts">
-import moment from 'moment'
+<script lang="ts" setup>
 import { computed } from 'vue'
+import { useMoment } from '@nao-todo/utils'
+import moment from 'moment'
 
 defineOptions({ name: 'TodoDateSelector' })
 const props = defineProps<{
@@ -30,23 +31,24 @@ const emit = defineEmits<{
 const dateMoment = computed<string | null>({
     get() {
         const { modelValue, date } = props
-        if (modelValue && moment(modelValue).isValid()) {
+        if (modelValue && useMoment(modelValue).isValid()) {
             return modelValue
         }
         if (date) {
-            const _m = moment(date).utcOffset(8)
-            return _m.isValid() ? _m.format('YYYY-MM-DDTHH:mm') : null
+            const m1 = useMoment(date)
+            return m1.isValid() ? m1.toISOString(true).slice(0, 16) : null
         }
         return null
     },
     set(value) {
+        value = moment(value).toISOString(true).slice(0, 16)
         emit('update:modelValue', value)
         emit('change', value)
     }
 })
 
 const handleSetDate = () => {
-    dateMoment.value = moment().utcOffset(8).toISOString(true)
+    dateMoment.value = useMoment().toISOString(true).slice(0, 16)
 }
 </script>
 
