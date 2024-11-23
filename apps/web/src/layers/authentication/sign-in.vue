@@ -29,7 +29,7 @@
             <nue-button :loading="loading" theme="primary" @click="handleSignIn">登录</nue-button>
         </nue-div>
         <!--        <nue-divider align="center">-->
-        <!--            <nue-text color="grey" size="12px">或以其他方式登录</nue-text>-->
+        <!--            <nue-text color="grey" size="12px">关于免密登录</nue-text>-->
         <!--        </nue-divider>-->
         <!--        <nue-button icon="logo">NueUI</nue-button>-->
         <nue-text align="center" color="gray" size="12px">

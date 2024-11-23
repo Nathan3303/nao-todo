@@ -15,18 +15,28 @@ export const useUserStore = defineStore('userStore', () => {
 
     const doSignin = async (options: SigninOptions) => {
         const result = await signin(options)
-        if (result.code !== 20000) return false
+        if (result.code !== 20000) {
+            NueMessage.error('登录失败：' + result.message)
+            return false
+        }
         const jwt = (result.data as { token: string }).token
         localStorage.setItem('USER_JWT', jwt)
         user.value = getJWTPayload(jwt)
         token.value = jwt
         isAuthenticated.value = true
+        NueMessage.success('登录成功')
         return true
     }
 
     const doSignup = async (options: SignupOptions) => {
         const result = await signup(options)
-        return result.code === 20000
+        if (result.code === 20000) {
+            NueMessage.success('注册成功')
+            return true
+        } else {
+            NueMessage.error('注册失败：' + result.message)
+            return false
+        }
     }
 
     const doCheckin = async () => {
@@ -37,6 +47,7 @@ export const useUserStore = defineStore('userStore', () => {
             user.value = undefined
             token.value = undefined
             isAuthenticated.value = false
+            NueMessage.success('凭据认证失败：' + result.message)
             return false
         }
         const newJWT = (result.data as { token: string }).token
@@ -49,13 +60,17 @@ export const useUserStore = defineStore('userStore', () => {
 
     const doSignout = async () => {
         if (token.value) {
-            const response = await signout(token.value)
-            if (response.code !== 20000) return false
+            const result = await signout(token.value)
+            if (result.code !== 20000) {
+                NueMessage.error('退出登录失败：' + result.message)
+                return false
+            }
         }
         localStorage.removeItem('USER_JWT')
         user.value = undefined
         token.value = undefined
         isAuthenticated.value = false
+        NueMessage.success('退出登录成功')
         return true
     }
 
@@ -69,13 +84,8 @@ export const useUserStore = defineStore('userStore', () => {
                 cancelButtonText: '取消'
             })
             const result = await doSignout()
-            if (result) {
-                NueMessage.success('退出登录成功')
-                router.push('/auth/login')
-                return true
-            } else {
-                NueMessage.error('退出登录失败')
-            }
+            if (result) await router.push('/auth/login')
+            return result
         } catch (err) {
             console.log('[UserStore] signOutWithConfirmation:', err)
         }

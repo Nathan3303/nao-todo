@@ -1,35 +1,35 @@
 <template>
     <nue-container class="authentication-view">
-        <nue-main aside-width="45%" :allow-resize-aside="false">
+        <nue-main :allow-resize-aside="false" aside-width="45%">
             <template #aside>
-                <nue-div vertical justify="space-between" flex>
+                <nue-div flex justify="space-between" vertical>
                     <nue-div align="center">
-                        <nue-text size="32px" color="white">NaoTodo</nue-text>
+                        <nue-text color="white" size="32px">NaoTodo</nue-text>
                     </nue-div>
-                    <nue-text size="16px" color="white">
-                        使用专门为您量身定制的智能待办事项列表应用程序NaoTodo，
-                        探索高效生活的新方式。无论是工作、学习还是日常生活，
-                        NaoTodo都能帮助您轻松管理任务，提高生产力。
+                    <nue-text color="white" size="16px">
+                        使用专门为您量身定制的智能待办事项列表应用程序 NaoTodo，
+                        探索高效生活的新方式。无论是工作、学习还是日常生活， NaoTodo
+                        都能帮助您轻松管理任务，提高生产力。
                         凭借其直观的界面和强大的功能，您可以毫不费力地添加、
                         编辑和跟踪任务、设置提醒，并且永远不会错过重要的细节。
                     </nue-text>
                 </nue-div>
             </template>
             <template #content>
-                <nue-div vertical height="100%" align="center" gap="0px">
-                    <nue-div align="center" justify="end" height="0px">
+                <nue-div align="center" gap="0px" height="100%" vertical>
+                    <nue-div align="center" height="0px" justify="end">
                         <nue-button @click="$router.push(switchRoute)">
                             {{ switchButtonText }}
                         </nue-button>
                     </nue-div>
-                    <component :is="subView" @submit="handleSubmit" :loading="loading" />
+                    <component :is="subView" :loading="loading" @submit="handleSubmit" />
                 </nue-div>
             </template>
         </nue-main>
     </nue-container>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { ref, computed } from 'vue'
 import { AuthSignIn, AuthSignUp } from '@/layers'
 import { useUserStore } from '@/stores/use-user-store'
@@ -53,16 +53,14 @@ const switchRoute = computed(() => '/auth' + (isLogin.value ? '/signup' : '/logi
 
 const handleSignin = async (options: SigninOptions) => {
     const res = await userStore.doSignin(options)
-    if (!res) throw new Error('登录失败')
+    if (!res) return false
     await router.push({ name: 'index' })
-    requestIdleCallback(() => NueMessage.success('登录成功'))
 }
 
 const handleSignup = async (payload: SignupOptions) => {
     const res = await userStore.doSignup(payload)
-    if (!res) throw new Error('注册失败')
+    if (!res) return false
     await router.push('/auth/login')
-    requestIdleCallback(() => NueMessage.success('注册成功'))
 }
 
 async function handleSubmit(payload: SigninOptions | SignupOptions) {
