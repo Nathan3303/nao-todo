@@ -1,6 +1,6 @@
 <template>
     <nue-div class="tag-node" width="fit-content">
-        <nue-text size="12px" color="white">{{ tag.name }}</nue-text>
+        <nue-text color="white">{{ tag.name }}</nue-text>
         <nue-icon
             v-if="!readonly"
             class="tag-node__delete-button"
@@ -10,7 +10,7 @@
     </nue-div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 defineOptions({ name: 'TagNode' })
 defineProps<{
     tag: {
@@ -44,6 +44,7 @@ const handleDelete = (id: string) => {
 
     & > .nue-text {
         color: white !important;
+        font-size: 12px;
     }
 
     .tag-node__delete-button {
