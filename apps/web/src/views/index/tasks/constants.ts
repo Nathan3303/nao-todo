@@ -19,7 +19,7 @@ export const defaultColumnOptions: TodoColumnOptions = {
     state: true,
     priority: true,
     project: true,
-    description: true,
+    description: false,
     createdAt: false,
     updatedAt: false
 }
@@ -42,7 +42,7 @@ export const basicViewsInfo: {
             getTodosOptions: { isDeleted: false },
             columns: defaultColumnOptions
         },
-        createTodoOptions: { dueDate: {} },
+        createTodoOptions: { projectId: userStore.user!.id, dueDate: {} },
         handlers: {
             handleCreateTodo: async (todoName: Todo['name']) => {
                 await todoStore.doCreateTodo({ dueDate: {}, name: todoName })
@@ -71,6 +71,7 @@ export const basicViewsInfo: {
             columns: defaultColumnOptions
         },
         createTodoOptions: {
+            projectId: userStore.user!.id,
             dueDate: {
                 startAt: moment().startOf('day').toISOString(true),
                 endAt: moment().endOf('day').toISOString(true)
@@ -118,6 +119,7 @@ export const basicViewsInfo: {
             columns: defaultColumnOptions
         },
         createTodoOptions: {
+            projectId: userStore.user!.id,
             dueDate: {
                 startAt: moment().add(1, 'day').startOf('day').toISOString(true),
                 endAt: moment().add(1, 'day').endOf('day').toISOString(true)
@@ -165,6 +167,7 @@ export const basicViewsInfo: {
             columns: defaultColumnOptions
         },
         createTodoOptions: {
+            projectId: userStore.user!.id,
             dueDate: {
                 startAt: moment().startOf('day').toISOString(true),
                 endAt: moment().endOf('isoWeek').toISOString(true)
@@ -210,7 +213,7 @@ export const basicViewsInfo: {
             },
             columns: defaultColumnOptions
         },
-        createTodoOptions: { dueDate: {} },
+        createTodoOptions: { projectId: userStore.user!.id, dueDate: {} },
         handlers: {
             handleCreateTodo: async (todoName: Todo['name']) => {
                 await todoStore.doCreateTodo({ dueDate: {}, name: todoName })
@@ -236,6 +239,7 @@ export const basicViewsInfo: {
             columns: defaultColumnOptions
         },
         createTodoOptions: {
+            projectId: userStore.user!.id,
             dueDate: {},
             isFavorited: true
         },
