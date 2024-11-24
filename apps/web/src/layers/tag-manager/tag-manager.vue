@@ -79,6 +79,7 @@ const handleShowDialog = () => {
 const handleDeleteTag = async (tagId: Tag['id']) => {
     const removeResult = await tagStore.deleteTagWithConfirmation(tagId)
     if (!removeResult) return
+    init()
     if (route.params.tagId !== tagId) return
     await router.push('/tasks/all')
 }
