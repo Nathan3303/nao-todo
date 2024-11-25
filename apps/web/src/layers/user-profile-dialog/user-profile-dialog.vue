@@ -1,18 +1,40 @@
 <script lang="ts" setup>
 import { reactive, ref, shallowRef } from 'vue'
 import { useUserStore } from '@/stores'
-import { NueDiv } from 'nue-ui'
+import { NueInput, NueMessage } from 'nue-ui'
 import moment from 'moment'
 
 defineOptions({ name: 'UserProfileDialog' })
 
 const userStore = useUserStore()
 
+const nicknameInputRef = ref<InstanceType<typeof NueInput>>()
 const visible = ref(false)
 const user = shallowRef({ ...userStore.user })
 const updatingFlags = reactive({
     nickname: false
 })
+
+// 更新用户昵称处理函数
+const handleUpdateNickname = async () => {
+    const newNickname = (user.value.nickname as string).trim()
+    if (!newNickname) {
+        NueMessage.error('用户昵称不能为空')
+        return
+    }
+    if (newNickname !== userStore.user?.nickname) {
+        const res = await userStore.doUpdateNickname(newNickname)
+        updatingFlags.nickname = !res
+    } else {
+        updatingFlags.nickname = false
+    }
+}
+
+// 取消更新用户昵称处理函数
+const handleCancelUpdateNickname = () => {
+    user.value.nickname = userStore.user?.nickname
+    updatingFlags.nickname = false
+}
 
 defineExpose({
     show: () => (visible.value = true)
@@ -30,14 +52,13 @@ defineExpose({
                 <template v-if="updatingFlags.nickname">
                     <nue-div align="center" gap="8px">
                         <nue-input
+                            ref="nicknameInputRef"
                             v-model="user.nickname"
                             :readonly="!updatingFlags.nickname"
                             theme="small"
                         />
-                        <nue-button theme="small" @click="updatingFlags.nickname = false">
-                            更新
-                        </nue-button>
-                        <nue-button theme="small" @click="updatingFlags.nickname = false">
+                        <nue-button theme="small" @click="handleUpdateNickname"> 更新</nue-button>
+                        <nue-button theme="small" @click="handleCancelUpdateNickname">
                             取消
                         </nue-button>
                     </nue-div>

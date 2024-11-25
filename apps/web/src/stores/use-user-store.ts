@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { defineStore } from 'pinia'
-import { signin, signup, checkin, signout } from '@nao-todo/apis'
+import { signin, signup, checkin, signout, updateNickname } from '@nao-todo/apis'
 import { getJWTPayload } from '@nao-todo/utils'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import type { User, SigninOptions, SignupOptions } from '@nao-todo/types'
@@ -92,6 +92,19 @@ export const useUserStore = defineStore('userStore', () => {
         return false
     }
 
+    // 更新昵称
+    const doUpdateNickname = async (newNickname: string) => {
+        const _nickname = newNickname.trim()
+        const result = await updateNickname(_nickname)
+        if (result.code === 20000) {
+            if (user.value) user.value.nickname = _nickname
+            NueMessage.success('更新昵称成功')
+            return true
+        }
+        NueMessage.error('更新昵称失败')
+        return false
+    }
+
     return {
         user,
         token,
@@ -100,6 +113,7 @@ export const useUserStore = defineStore('userStore', () => {
         doSignup,
         doCheckin,
         doSignout,
-        signOutWithConfirmation
+        signOutWithConfirmation,
+        doUpdateNickname
     }
 })
