@@ -42,7 +42,7 @@ export const basicViewsInfo: {
             getTodosOptions: { isDeleted: false },
             columns: defaultColumnOptions
         },
-        createTodoOptions: { projectId: userStore.user!.id, dueDate: {} },
+        createTodoOptions: { projectId: userStore.user?.id, dueDate: {} },
         handlers: {
             handleCreateTodo: async (todoName: Todo['name']) => {
                 await todoStore.doCreateTodo({ dueDate: {}, name: todoName })
@@ -51,7 +51,7 @@ export const basicViewsInfo: {
                 caller: (args: CreateTodoDialogCallerArgs) => void
             ) => {
                 caller({
-                    userId: userStore.user!.id,
+                    userId: userStore.user?.id || '',
                     projects: projectStore.projects,
                     tags: tagStore.tags
                 })
@@ -71,7 +71,7 @@ export const basicViewsInfo: {
             columns: defaultColumnOptions
         },
         createTodoOptions: {
-            projectId: userStore.user!.id,
+            projectId: userStore.user?.id,
             dueDate: {
                 startAt: moment().startOf('day').toISOString(true),
                 endAt: moment().endOf('day').toISOString(true)
@@ -93,7 +93,7 @@ export const basicViewsInfo: {
             ) => {
                 const now = moment()
                 caller({
-                    userId: userStore.user!.id,
+                    userId: userStore.user?.id || '',
                     projects: projectStore.projects,
                     tags: tagStore.tags,
                     presetInfo: {
@@ -119,7 +119,7 @@ export const basicViewsInfo: {
             columns: defaultColumnOptions
         },
         createTodoOptions: {
-            projectId: userStore.user!.id,
+            projectId: userStore.user?.id,
             dueDate: {
                 startAt: moment().add(1, 'day').startOf('day').toISOString(true),
                 endAt: moment().add(1, 'day').endOf('day').toISOString(true)
@@ -141,7 +141,7 @@ export const basicViewsInfo: {
             ) => {
                 const tomorrow = moment().add(1, 'day')
                 caller({
-                    userId: userStore.user!.id,
+                    userId: userStore.user?.id || '',
                     projects: projectStore.projects,
                     tags: tagStore.tags,
                     presetInfo: {
@@ -167,7 +167,7 @@ export const basicViewsInfo: {
             columns: defaultColumnOptions
         },
         createTodoOptions: {
-            projectId: userStore.user!.id,
+            projectId: userStore.user?.id,
             dueDate: {
                 startAt: moment().startOf('day').toISOString(true),
                 endAt: moment().endOf('isoWeek').toISOString(true)
@@ -189,7 +189,7 @@ export const basicViewsInfo: {
             ) => {
                 const now = moment()
                 caller({
-                    userId: userStore.user!.id,
+                    userId: userStore.user?.id || '',
                     projects: projectStore.projects,
                     tags: tagStore.tags,
                     presetInfo: {
@@ -213,7 +213,7 @@ export const basicViewsInfo: {
             },
             columns: defaultColumnOptions
         },
-        createTodoOptions: { projectId: userStore.user!.id, dueDate: {} },
+        createTodoOptions: { projectId: userStore.user?.id, dueDate: {} },
         handlers: {
             handleCreateTodo: async (todoName: Todo['name']) => {
                 await todoStore.doCreateTodo({ dueDate: {}, name: todoName })
@@ -222,7 +222,7 @@ export const basicViewsInfo: {
                 caller: (args: CreateTodoDialogCallerArgs) => void
             ) => {
                 caller({
-                    userId: userStore.user!.id,
+                    userId: userStore.user?.id || '',
                     projects: projectStore.projects,
                     tags: tagStore.tags
                 })
@@ -239,7 +239,7 @@ export const basicViewsInfo: {
             columns: defaultColumnOptions
         },
         createTodoOptions: {
-            projectId: userStore.user!.id,
+            projectId: userStore.user?.id,
             dueDate: {},
             isFavorited: true
         },
@@ -251,7 +251,7 @@ export const basicViewsInfo: {
                 caller: (args: CreateTodoDialogCallerArgs) => void
             ) => {
                 caller({
-                    userId: userStore.user!.id,
+                    userId: userStore.user?.id || '',
                     projects: projectStore.projects,
                     tags: tagStore.tags,
                     presetInfo: { isFavorited: true }
