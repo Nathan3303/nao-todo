@@ -1,34 +1,29 @@
 <template>
-    <nue-div class="todo-tag-bar" :class="{ 'todo-tag-bar--small': small }" width="fit-content">
-        <nue-div v-if="visibleTags.length" align="center" width="fit-content" gap="8px">
+    <nue-div :class="{ 'todo-tag-bar--small': small }" class="todo-tag-bar" width="fit-content">
+        <nue-div v-if="visibleTags.length" align="center" gap="8px" width="fit-content">
             <tag-node
                 v-for="tag in visibleTags"
                 :key="tag.id"
-                :tag="tag"
                 :readonly="readonly"
+                :tag="tag"
                 @delete="handleDropTag"
             />
-            <nue-text
-                class="todo-tag-bar__clamped-text"
-                v-if="todoTags.length > clamped"
-                size="12px"
-                color="orange"
-            >
-                + {{ todoTags.length - clamped }}
-            </nue-text>
+            <nue-div v-if="todoTags.length > clamped" class="todo-tag-bar__clamped-text">
+                <nue-text color="white">+{{ todoTags.length - clamped }}</nue-text>
+            </nue-div>
         </nue-div>
         <combo-box
             v-if="!readonly"
-            trigger-title="标签"
             :framework="comboBoxOptions"
             hide-counter
             hide-on-click
+            trigger-title="标签"
             @change="handleAddTag"
         />
     </nue-div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { useTagBar } from './use-tag-bar'
 import { TagNode, ComboBox } from '@nao-todo/components'
 import type { TagBarProps, TagBarEmits } from './types'
@@ -50,32 +45,29 @@ const { visibleTags, comboBoxOptions, handleAddTag, handleDropTag } = useTagBar(
     text-decoration: none !important;
 
     .todo-tag-bar__clamped-text {
+        width: fit-content;
         background-color: #a1a1a1;
         border-radius: 99px;
         padding: 3px 8px;
-        color: white !important;
+
+        & > .nue-text {
+            font-size: 12px;
+            color: white !important;
+        }
     }
 }
 
 .todo-tag-bar--small {
-    .tag-node {
-        height: 18px;
-        padding: 0 6px;
-        text-decoration: none !important;
-
-        &:deep(.nue-text) {
-            font-size: 0.6rem !important;
-            line-height: 18px;
-            text-decoration: none !important;
-        }
-    }
-
+    .tag-node,
     .todo-tag-bar__clamped-text {
         height: 18px;
         line-height: 18px;
-        padding: 0 6px;
-        font-size: 0.6rem;
-        text-decoration: none !important;
+        padding: 0 4px;
+
+        &:deep().nue-text {
+            scale: 0.9;
+            line-height: 18px;
+        }
     }
 }
 </style>

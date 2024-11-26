@@ -21,13 +21,20 @@
                 placeholder="电子邮箱 (name@example.com)"
                 type="email"
             />
-            <nue-input
-                v-model="password"
-                :disabled="loading"
-                allow-show-password
-                placeholder="密码"
-                type="password"
-            />
+            <nue-tooltip
+                content="格式要求为 8 至 24 位字母、数字以及特殊符号（特殊符号包括：! @ # $ % ^ & * ? . ）。"
+                placement="right-start"
+                size="small"
+                theme="password-rule"
+            >
+                <nue-input
+                    v-model="password"
+                    :disabled="loading"
+                    allow-show-password
+                    placeholder="密码"
+                    type="password"
+                />
+            </nue-tooltip>
             <nue-input
                 v-model="passwordConfirm"
                 :disabled="loading"
@@ -54,8 +61,9 @@
 
 <script lang="ts" setup>
 import { ref } from 'vue'
-import { NueMessage } from 'nue-ui'
+import { NueIcon, NueMessage } from 'nue-ui'
 import type { SignupOptions } from '@nao-todo/types'
+import validator from 'validator'
 
 defineProps<{
     loading: boolean
@@ -68,20 +76,31 @@ const email = ref('')
 const password = ref('')
 const passwordConfirm = ref('')
 const nickname = ref('')
+const matchPattern = /^\S*(?=\S{8})(?=\S*\d)(?=\S*[a-z])(?=\S*[!@#$%^&*?.])\S*$/
 
 function handleSignUp() {
     if (email.value === '') {
         NueMessage.error('请输入邮箱')
         return
     }
-    if (password.value === '') {
-        NueMessage.error('请输入密码')
+    if (password.value.length < 8 || password.value.length > 24) {
+        NueMessage.error('密码格式有误，需要 8 至 24 位的长度')
         return
     }
-    if (passwordConfirm.value !== password.value) {
+    if (!validator.matches(password.value, matchPattern)) {
+        NueMessage.error('密码格式有误，需要包含字母、数字以及特殊符号')
+        return
+    }
+    if (!validator.equals(password.value, passwordConfirm.value)) {
         NueMessage.error('两次输入的密码不一致')
         return
     }
     emit('submit', { email: email.value, password: password.value, nickname: nickname.value })
 }
 </script>
+
+<style>
+.nue-tooltip--password-rule {
+    width: 256px;
+}
+</style>

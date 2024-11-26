@@ -1,3 +1,8 @@
+@font-face {
+    font-family: "pf";
+    src: url('/pf.woff') format('woff');
+}
+
 .nue-html {
     --primary-font-size-base: 16px;
     --primary-font-weight: 400;

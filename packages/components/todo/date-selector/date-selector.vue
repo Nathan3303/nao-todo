@@ -41,7 +41,7 @@ const dateMoment = computed<string | null>({
         return null
     },
     set(value) {
-        value = moment(value).toISOString(true).slice(0, 16)
+        value = value ? moment(value).toISOString(true).slice(0, 16) : null
         emit('update:modelValue', value)
         emit('change', value)
     }

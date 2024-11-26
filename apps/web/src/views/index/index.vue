@@ -28,6 +28,7 @@
                     placement="right-end"
                     @logout="userStore.signOutWithConfirmation"
                     @show-profile="showProfileDialog"
+                    @update-passwd="showUpdatePasswordDialog"
                 />
             </template>
         </nue-header>
@@ -36,12 +37,13 @@
     <!-- Dialogs -->
     <update-log-dialog ref="updateLogDialogRef" />
     <user-profile-dialog ref="userProfileDialogRef" />
+    <update-password-dialog ref="updatePasswordDialogRef" />
 </template>
 
 <script lang="ts" setup>
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { UpdateLogDialog } from '@/layers'
+import { UpdateLogDialog, UpdatePasswordDialog } from '@/layers'
 import { useUserStore, useViewStore } from '@/stores'
 import { UserDropdown } from '@nao-todo/components'
 import { UserProfileDialog } from '@/layers/user-profile-dialog'
@@ -54,12 +56,11 @@ await viewStore.indexViewInitTask()
 const { user } = storeToRefs(userStore)
 const updateLogDialogRef = ref<InstanceType<typeof UpdateLogDialog>>()
 const userProfileDialogRef = ref<InstanceType<typeof UserProfileDialog>>()
+const updatePasswordDialogRef = ref<InstanceType<typeof UpdatePasswordDialog>>()
 
 const showUpdateLogDialog = () => updateLogDialogRef.value?.show()
-
-const showProfileDialog = () => {
-    userProfileDialogRef.value?.show()
-}
+const showProfileDialog = () => userProfileDialogRef.value?.show()
+const showUpdatePasswordDialog = () => updatePasswordDialogRef.value?.show()
 </script>
 
 <style scoped>

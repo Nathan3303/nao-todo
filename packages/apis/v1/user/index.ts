@@ -56,3 +56,25 @@ export const signout = async (jwt: string) => {
         return { code: 50001, message: '服务器错误' } as ResponseData
     }
 }
+
+// 修改昵称
+export const updateNickname = async (newNickname: string) => {
+    try {
+        const response = await $axios.post('/user/nickname', { nickname: newNickname })
+        return response.data as ResponseData
+    } catch (error) {
+        console.log('[@nao-todo/apis/updateNickname]:', error)
+        return { code: 50001, message: '服务器错误' } as ResponseData
+    }
+}
+
+// 修改密码
+export const updatePassword = async (newPasswordRaw: string, phoneNumber?: number) => {
+    try {
+        const response = await $axios.post('/user/password', { password: md5(newPasswordRaw) })
+        return response.data as ResponseData
+    } catch (error) {
+        console.log('[@nao-todo/apis/updatePassword]:', error)
+        return { code: 50001, message: '服务器错误' } as ResponseData
+    }
+}

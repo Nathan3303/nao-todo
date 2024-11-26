@@ -169,7 +169,7 @@ export const useTodoDetails = () => {
     const handleUpdateTags = async (tags: Todo['tags']) => {
         if (!shadowTodo.value) return
         shadowTodo.value.tags = tags
-        console.log(tags)
+        // console.log(tags)
         debouncedUpdateTodo()
     }
 

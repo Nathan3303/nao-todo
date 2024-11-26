@@ -3,6 +3,7 @@ export * from './authentication'
 
 // user
 export * from './user-profile-dialog'
+export * from './update-password-dialog'
 
 // project
 export * from './create-todo-dialog'
