@@ -19,8 +19,8 @@ cp -r apps/web/dist /opt/shares/naotodo
 # start docker container mynginx
 docker start mynginx
 
-# reload nginx
-#docker exec -i mynginx /bin/bash -c "nginx -s reload"
+# reload deploy
+#docker exec -i mynginx /bin/bash -c "deploy -s reload"
 
 # stop original docker container
 #docker stop naotodoApp
