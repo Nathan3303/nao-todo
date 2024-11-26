@@ -1,6 +1,7 @@
 import { reactive, ref, watch, provide } from 'vue'
 import { useRoute } from 'vue-router'
 import { isExpired } from '@nao-todo/utils'
+import { useProjectStore } from '@/stores'
 import type { Todo } from '@nao-todo/types'
 import type {
     TodoTableEmits,
@@ -11,6 +12,7 @@ import type {
 
 export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
     const route = useRoute()
+    const projectStore = useProjectStore()
 
     const selectedId = ref<Todo['id']>()
     const sortInfo = reactive<TodoTableProps['sortOptions']>(props.sortOptions)
@@ -84,6 +86,13 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
         sortInfo.order = 'asc'
     }
 
+    // 查找清单名称
+    const getProjectNameByIdFromLocal = (projectId: string) => {
+        const targetProject = projectStore.projects.find((p) => p.id === projectId)
+        if (!targetProject) return
+        return targetProject.title
+    }
+
     watch(
         () => props.todos,
         () => handleClearSelect(true)
@@ -111,6 +120,7 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
         handleMultiSelect,
         handleClearSelectedId,
         handleClearSelect,
-        handleClearSortInfo
+        handleClearSortInfo,
+        getProjectNameByIdFromLocal
     }
 }

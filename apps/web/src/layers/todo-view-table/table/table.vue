@@ -108,7 +108,11 @@
                 </nue-div>
                 <nue-div v-if="columnOptions.project" class="todo-table__body__col col-project">
                     <nue-text :clamped="1" size="12px">
-                        {{ todo.project?.title || '收集箱' }}
+                        {{
+                            todo.project?.title ||
+                            getProjectNameByIdFromLocal(todo.projectId) ||
+                            '收集箱'
+                        }}
                     </nue-text>
                 </nue-div>
                 <nue-div class="todo-table__body__col col-actions">
@@ -143,7 +147,8 @@ const {
     handleMultiSelect,
     handleClearSelectedId,
     handleClearSelect,
-    handleClearSortInfo
+    handleClearSortInfo,
+    getProjectNameByIdFromLocal
 } = useTodoTable(props, emit)
 
 const { refreshKey, startRefresh, stopRefresh } = useRefreshKey()
