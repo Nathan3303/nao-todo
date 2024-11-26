@@ -13,8 +13,7 @@
         "preview": "vite preview --config vite.config.ts"
     },
     "dependencies": {
-        "vite": "^5.3.6",
-        "pinia": "^2.2.6"
+        "vite": "^5.3.6"
     },
     "devDependencies": {
         "vite-plugin-externals": "^0.6.2",
