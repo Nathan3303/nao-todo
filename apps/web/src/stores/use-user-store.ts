@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { defineStore } from 'pinia'
-import { signin, signup, checkin, signout, updateNickname } from '@nao-todo/apis'
+import { signin, signup, checkin, signout, updateNickname, updatePassword } from '@nao-todo/apis'
 import { getJWTPayload } from '@nao-todo/utils'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import type { User, SigninOptions, SignupOptions } from '@nao-todo/types'
@@ -44,8 +44,8 @@ export const useUserStore = defineStore('userStore', () => {
         const result = await checkin(jwt)
         if (result.code !== 20000) {
             localStorage.removeItem('USER_JWT')
-            user.value = undefined
-            token.value = undefined
+            user.value = void 0
+            token.value = void 0
             isAuthenticated.value = false
             NueMessage.error('凭据认证失败：' + result.message)
             return false
@@ -61,16 +61,12 @@ export const useUserStore = defineStore('userStore', () => {
     const doSignout = async () => {
         if (token.value) {
             const result = await signout(token.value)
-            if (result.code !== 20000) {
-                NueMessage.error('退出登录失败：' + result.message)
-                return false
-            }
+            if (result.code !== 20000) return false
         }
         localStorage.removeItem('USER_JWT')
-        user.value = undefined
-        token.value = undefined
+        user.value = void 0
+        token.value = void 0
         isAuthenticated.value = false
-        NueMessage.success('退出登录成功')
         return true
     }
 
@@ -84,7 +80,12 @@ export const useUserStore = defineStore('userStore', () => {
                 cancelButtonText: '取消'
             })
             const result = await doSignout()
-            if (result) await router.push('/auth/login')
+            if (result) {
+                await router.push('/auth/login')
+                NueMessage.success('退出登录成功')
+            } else {
+                NueMessage.error('退出登录失败')
+            }
             return result
         } catch (err) {
             console.log('[UserStore] signOutWithConfirmation: canceled!')
@@ -105,6 +106,33 @@ export const useUserStore = defineStore('userStore', () => {
         return false
     }
 
+    // 更新密码
+    const updatePasswordWithConfirmation = async (newPasswordRaw: string) => {
+        try {
+            await NueConfirm({
+                title: '提交更新密码',
+                content: '确定要更新密码吗？（更新成功后需要重新登录）',
+                confirmButtonText: '确认',
+                cancelButtonText: '取消'
+            })
+            const _password = newPasswordRaw.trim()
+            const result = await updatePassword(_password)
+            // const result = { code: 20000 }
+            if (result.code === 20000) {
+                NueMessage.success('更新密码成功')
+                const signoutRes = await doSignout()
+                if (signoutRes) await router.push('/auth/login')
+                return true
+            }
+            NueMessage.error('更新密码失败')
+            return false
+        } catch (error) {
+            console.warn('[UserStore] updatePasswordWithConfirmation: canceled!')
+        }
+    }
+
+    //
+
     return {
         user,
         token,
@@ -114,6 +142,7 @@ export const useUserStore = defineStore('userStore', () => {
         doCheckin,
         doSignout,
         signOutWithConfirmation,
-        doUpdateNickname
+        doUpdateNickname,
+        updatePasswordWithConfirmation
     }
 })
