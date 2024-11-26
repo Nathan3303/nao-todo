@@ -2,21 +2,15 @@
     <nue-dialog v-model="visible" title="修改密码">
         <template #default>
             <nue-div align="stretch" vertical>
-                <!--                <nue-text color="gray" size="12px">-->
-                <!--                    目前暂不支持通过邮件或短信等方式验证修改人的身份。-->
-                <!--                    ，需要输入旧的密码。-->
-                <!--                </nue-text>-->
-                <!--                <nue-input-->
-                <!--                    v-model="oldPassword"-->
-                <!--                    allow-show-password-->
-                <!--                    clearable-->
-                <!--                    placeholder="旧密码"-->
-                <!--                    type="password"-->
-                <!--                />-->
-                <nue-text color="gray" size="12px">
-                    在下方输入新密码两次，格式要求为 8 至 24
-                    位字母、数字以及特殊符号（特殊符号包括：! @ # $ % ^ & * ? . ）。
-                </nue-text>
+                <nue-div gap="8px" vertical>
+                    <nue-text color="gray" size="12px">
+                        在下方输入新密码两次，点击修改按钮提交修改。
+                    </nue-text>
+                    <nue-text color="gray" size="12px">
+                        密码格式要求长度为 8 - 24
+                        位，且包含字母、数字以及特殊符号。（特殊符号包括：! @ # $ % ^ & * ? . ）
+                    </nue-text>
+                </nue-div>
                 <nue-input
                     v-model="password"
                     allow-show-password
@@ -55,7 +49,6 @@ defineOptions({ name: 'UpdatePasswordDialog' })
 const userStore = useUserStore()
 
 const visible = ref(false)
-// const oldPassword = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 const loading = ref(false)
