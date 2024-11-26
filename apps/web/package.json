@@ -1,17 +1,24 @@
 {
     "name": "@nao-todo/webapp",
-    "version": "0.1.0",
     "description": "Web app for Nao Todo",
+    "version": "0.1.0",
     "author": "Nathan Lee",
     "license": "MIT",
     "private": true,
     "type": "module",
+    "packageManager": "pnpm@9.12.2",
     "scripts": {
         "dev": "vite --config vite.config.ts",
         "build": "vite build --config vite.config.ts",
         "preview": "vite preview --config vite.config.ts"
     },
     "dependencies": {
-        "vite": "^5.3.6"
+        "vite": "^5.3.6",
+        "pinia": "^2.2.6"
+    },
+    "devDependencies": {
+        "vite-plugin-externals": "^0.6.2",
+        "vite-plugin-file": "^1.0.5",
+        "@vitejs/plugin-vue": "^5.2.0"
     }
 }
