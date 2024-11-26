@@ -15,7 +15,7 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue'
-import { useMoment } from '@nao-todo/utils'
+import { useMoment, formatForDateTimeInput } from '@nao-todo/utils'
 import moment from 'moment'
 
 defineOptions({ name: 'TodoDateSelector' })
@@ -31,24 +31,25 @@ const emit = defineEmits<{
 const dateMoment = computed<string | null>({
     get() {
         const { modelValue, date } = props
-        if (modelValue && useMoment(modelValue).isValid()) {
-            return modelValue
+        if (modelValue) {
+            const m1 = useMoment(modelValue)
+            return formatForDateTimeInput(m1)
         }
         if (date) {
             const m1 = useMoment(date)
-            return m1.isValid() ? m1.toISOString(true).slice(0, 16) : null
+            return formatForDateTimeInput(m1)
         }
         return null
     },
     set(value) {
-        value = value ? moment(value).toISOString(true).slice(0, 16) : null
+        value = value ? moment(value).toISOString() : null
         emit('update:modelValue', value)
         emit('change', value)
     }
 })
 
 const handleSetDate = () => {
-    dateMoment.value = useMoment().toISOString(true).slice(0, 16)
+    dateMoment.value = formatForDateTimeInput(moment())
 }
 </script>
 
