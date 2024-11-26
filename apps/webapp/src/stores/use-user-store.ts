@@ -41,6 +41,7 @@ export const useUserStore = defineStore('userStore', () => {
 
     const doCheckin = async () => {
         const jwt = localStorage.getItem('USER_JWT') || ''
+        if (!jwt) return false
         const result = await checkin(jwt)
         if (result.code !== 20000) {
             localStorage.removeItem('USER_JWT')
