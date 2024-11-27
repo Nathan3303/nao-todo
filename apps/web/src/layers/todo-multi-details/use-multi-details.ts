@@ -37,16 +37,6 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
         return tagStore.tags
     })
 
-    const endDate = computed({
-        get() {
-            if (!commonData.value.dueDate.endAt) return ''
-            return commonData.value.dueDate.endAt!.slice(0, 16)
-        },
-        set(value) {
-            commonData.value.dueDate.endAt = value
-        }
-    })
-
     const getSelectedTodos = () => {
         const _selectedIds = [...props.selectedIds]
         const _selectedTodos: Todo[] = []
@@ -70,7 +60,7 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
         ) {
             await todoStore.doGetTodos()
             const prevRoute = route.matched[route.matched.length - 1]
-            if (prevRoute) router.push(prevRoute)
+            if (prevRoute) await router.push(prevRoute)
             tasksViewStore.hideMultiDetails()
         }
         updateOptions = {}
@@ -112,7 +102,7 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
         const removeResult = await todoStore.deleteTodosWithConfirmation(props.selectedIds)
         if (!removeResult) return
         const prevRoute = route.matched[route.matched.length - 1]
-        if (prevRoute) router.push(prevRoute)
+        if (prevRoute) await router.push(prevRoute)
         tasksViewStore.hideMultiDetails()
     }
 
@@ -120,7 +110,7 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
         const removeResult = await todoStore.restoreTodosWithConfirmation(props.selectedIds)
         if (!removeResult) return
         const prevRoute = route.matched[route.matched.length - 1]
-        if (prevRoute) router.push(prevRoute)
+        if (prevRoute) await router.push(prevRoute)
         tasksViewStore.hideMultiDetails()
     }
 
