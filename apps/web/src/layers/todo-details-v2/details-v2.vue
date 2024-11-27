@@ -57,7 +57,7 @@
                         @change="() => updateTodo()"
                     />
                 </nue-header>
-                <nue-main>
+                <nue-main class="todo-details__main-content">
                     <nue-div class="details-v2__progress">
                         <nue-progress
                             :percentage="eventsProgress.percentage"
@@ -65,7 +65,7 @@
                             hide-text
                         />
                     </nue-div>
-                    <nue-div align="stretch" gap="8px" vertical>
+                    <nue-div align="stretch" gap="0px" style="padding: 16px" vertical>
                         <nue-textarea
                             v-model="shadowTodo.name"
                             autosize
@@ -85,16 +85,33 @@
                             @change="updateTodo"
                         />
                     </nue-div>
-                    <todo-event-details :todo-id="shadowTodo.id" />
-                    <nue-div flex />
-                    <todo-tag-bar
-                        :tags="tagStore.tags"
-                        :todo-tags="shadowTodo.tags"
-                        @update-tags="handleUpdateTags"
-                    />
+                    <nue-div flex style="padding: 0 16px" vertical>
+                        <todo-event-details :todo-id="shadowTodo.id" />
+                    </nue-div>
+                    <nue-div style="padding: 16px" vertical>
+                        <todo-tag-bar
+                            :tags="tagStore.tags"
+                            :todo-tags="shadowTodo.tags"
+                            @update-tags="handleUpdateTags"
+                        />
+                    </nue-div>
+                    <nue-div v-if="commentsCount" class="todo-comments-wrapper">
+                        <todo-comment-details />
+                    </nue-div>
                 </nue-main>
-                <nue-footer>
-                    <nue-div gap="8px">
+                <nue-footer height="auto" style="flex-direction: column; padding: 0; gap: 0">
+                    <nue-div v-if="isCommenting" align="stretch" style="padding: 16px" vertical>
+                        <nue-textarea
+                            ref="leaveCommentInputRef"
+                            v-model="commentContent"
+                            :rows="0"
+                            autosize
+                            placeholder="添加评论"
+                            theme="small"
+                            @keydown.enter.exact="handleLeaveComment"
+                        />
+                    </nue-div>
+                    <nue-div v-else gap="8px" style="padding: 16px">
                         <details-row
                             v-if="shadowTodo?.updatedAt"
                             :text="eventsProgress.text"
@@ -124,6 +141,9 @@
                 :user-id="userStore.user!.id"
                 @select="handleMoveToProject"
             />
+            <nue-button icon="chat" theme="small" @click="handleStartLeaveComment">
+                评论
+            </nue-button>
             <nue-div gap="4px" width="fit-content" wrap="nowrap">
                 <nue-button
                     v-if="shadowTodo.isDeleted"
@@ -146,10 +166,12 @@
 </template>
 
 <script lang="ts" setup>
+import { ref, nextTick } from 'vue'
 import { useTodoDetails } from './use-details'
+import { useCommentDetails } from './use-comment-details'
 import { useTagStore, useUserStore } from '@/stores'
 import DetailsRow from './row.vue'
-import { TodoEventDetails } from '@/layers'
+import { TodoEventDetails, TodoCommentDetails } from '@/layers'
 import {
     TodoPrioritySelectOptions,
     TodoSelector,
@@ -163,12 +185,14 @@ import {
     TodoProjectSelector,
     TodoTagBar
 } from '@nao-todo/components'
-import { NueContainer } from 'nue-ui'
+import { NueTextarea } from 'nue-ui'
 
-defineOptions({ name: 'ContentTodoDetailsV2' })
+defineOptions({ name: 'TodoDetailsV2' })
 
 const userStore = useUserStore()
 const tagStore = useTagStore()
+
+const leaveCommentInputRef = ref<InstanceType<typeof NueTextarea>>()
 
 const {
     projects,
@@ -189,6 +213,13 @@ const {
     handleRestoreTodo,
     handleUpdateTags
 } = useTodoDetails()
+const { isCommenting, commentContent, commentsCount, handleLeaveComment, handleEnterNewLine } =
+    useCommentDetails()
+
+const handleStartLeaveComment = () => {
+    isCommenting.value = !isCommenting.value
+    if (isCommenting.value) nextTick(() => leaveCommentInputRef.value?.innerInputRef.focus())
+}
 </script>
 
 <style scoped>
@@ -206,5 +237,15 @@ const {
     top: 0;
     left: 0;
     width: 100%;
+}
+
+.todo-details__main-content:deep(> .nue-main__content) {
+    padding: 0;
+    gap: 0;
+}
+
+.todo-comments-wrapper {
+    border-top: 1px solid var(--divider-color);
+    padding: 8px;
 }
 </style>
