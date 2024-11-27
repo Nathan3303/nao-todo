@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import moment from 'moment'
 import { getTodo } from '@nao-todo/apis'
+import { useUpdateQueue } from './use-update-queue'
 import type { Todo } from '@nao-todo/types'
 
 export const useTodoDetails = () => {
@@ -12,6 +13,7 @@ export const useTodoDetails = () => {
     const projectStore = useProjectStore()
     const todoStore = useTodoStore()
     const eventStore = useEventStore()
+    const updateQueue = useUpdateQueue()
 
     const { events } = storeToRefs(eventStore)
     const shadowTodo = ref<Todo | undefined>()
@@ -40,7 +42,19 @@ export const useTodoDetails = () => {
         })
     })
 
-    // 获取待办信息
+    // 结束日期代理
+    // const endAt = computed({
+    //     get: () => {
+    //         if (!shadowTodo.value) return null
+    //         return shadowTodo.value.dueDate.endAt
+    //     },
+    //     set: (dateString: string | null) => {
+    //         if (!shadowTodo.value) return
+    //         shadowTodo.value.dueDate.endAt = dateString
+    //     }
+    // })
+
+    // 获取待办
     const _getTodo = async (todoId: Todo['id']) => {
         if (!todoId) {
             shadowTodo.value = void 0
@@ -73,7 +87,6 @@ export const useTodoDetails = () => {
         }
         return { debouncedFn, cancelTimer }
     }
-
     const _updateTodo = async () => {
         if (!shadowTodo.value) return
         const todoId = shadowTodo.value.id
@@ -93,21 +106,36 @@ export const useTodoDetails = () => {
     const handleChangeEndAt = (value: string | null) => {
         if (!shadowTodo.value) return
         shadowTodo.value.dueDate.endAt = value
-        debouncedUpdateTodo()
+        updateQueue.insertItem({
+            todoId: shadowTodo.value.id,
+            updateOptions: {
+                dueDate: { startAt: shadowTodo.value.dueDate.startAt, endAt: value }
+            }
+        })
     }
 
     // 设置优先级
     const handleChangePriority = (value: unknown) => {
         if (!shadowTodo.value) return
         shadowTodo.value.priority = value as Todo['priority']
-        debouncedUpdateTodo()
+        updateQueue.insertItem({
+            todoId: shadowTodo.value.id,
+            updateOptions: {
+                priority: value as Todo['priority']
+            }
+        })
     }
 
     // 设置状态
     const handleChangeState = (value: unknown) => {
         if (!shadowTodo.value) return
         shadowTodo.value.state = value as Todo['state']
-        debouncedUpdateTodo()
+        updateQueue.insertItem({
+            todoId: shadowTodo.value.id,
+            updateOptions: {
+                state: value as Todo['state']
+            }
+        })
     }
 
     // 设置所属清单
@@ -115,62 +143,57 @@ export const useTodoDetails = () => {
         if (!shadowTodo.value) return
         shadowTodo.value.projectId = projectId
         shadowTodo.value.project = { title: projectTitle }
-        debouncedUpdateTodo()
+        updateQueue.insertItem({
+            todoId: shadowTodo.value.id,
+            updateOptions: {
+                projectId
+                // project: { title: projectTitle }
+            }
+        })
     }
 
     // 设置完成
     const handleCheckTodo = async () => {
         if (!shadowTodo.value) return
-        if (shadowTodo.value.state === 'done') {
-            shadowTodo.value.state = 'todo'
-        } else {
-            shadowTodo.value.state = 'done'
-        }
-        debouncedUpdateTodo()
+        const newState = (shadowTodo.value.state === 'done' ? 'todo' : 'done') as Todo['state']
+        shadowTodo.value.state = newState
+        updateQueue.insertItem({
+            todoId: shadowTodo.value.id,
+            updateOptions: {
+                state: newState
+            }
+        })
+    }
+
+    // 设置标签
+    const handleUpdateTags = async (tags: Todo['tags']) => {
+        if (!shadowTodo.value) return
+        shadowTodo.value.tags = tags
+        updateQueue.insertItem({
+            todoId: shadowTodo.value.id,
+            updateOptions: { tags }
+        })
     }
 
     // 删除
     const handleDeleteTodo = async () => {
         if (!shadowTodo.value) return
-        const todoId = shadowTodo.value.id
-        try {
-            const result = await todoStore.deleteTodoWithConfirmation(todoId)
-            if (result) await handleClose()
-        } catch (error) {
-            console.info('handleDeleteTodo error: ', error)
-        }
+        const result = await todoStore.deleteTodoWithConfirmation(shadowTodo.value.id)
+        if (result) await handleClose()
     }
 
     // 恢复
     const handleRestoreTodo = async () => {
         if (!shadowTodo.value) return
-        const todoId = shadowTodo.value?.id
-        try {
-            const result = await todoStore.restoreTodoWithConfirmation(todoId)
-            if (result) await handleClose()
-        } catch (error) {
-            console.info('handleRestoreTodo error: ', error)
-        }
+        const result = await todoStore.restoreTodoWithConfirmation(shadowTodo.value.id)
+        if (result) await handleClose()
     }
 
     // 永久删除
     const handleDeleteTodoPermanently = async () => {
         if (!shadowTodo.value) return
-        const todoId = shadowTodo.value.id
-        try {
-            const result = await todoStore.deleteTodoPermanentlyWithConfirmation(todoId)
-            if (result) await handleClose()
-        } catch (error) {
-            console.info('handleDeleteTodoPermanently error: ', error)
-        }
-    }
-
-    // 更新标签
-    const handleUpdateTags = async (tags: Todo['tags']) => {
-        if (!shadowTodo.value) return
-        shadowTodo.value.tags = tags
-        // console.log(tags)
-        debouncedUpdateTodo()
+        const result = await todoStore.deleteTodoPermanentlyWithConfirmation(shadowTodo.value.id)
+        if (result) await handleClose()
     }
 
     // 关闭详情
@@ -188,6 +211,7 @@ export const useTodoDetails = () => {
         setTimeout(async () => await _getTodo(todoId))
     })
 
+    // 订阅 Store 更新
     onMounted(() => {
         unSubscribe = todoStore.$subscribe((mutation) => {
             if (mutation.type !== 'direct') return
@@ -199,11 +223,11 @@ export const useTodoDetails = () => {
             }
         })
     })
-
     onBeforeUnmount(() => {
         if (unSubscribe) unSubscribe()
     })
 
+    // 返回
     return {
         projects: activeProjects,
         shadowTodo,
