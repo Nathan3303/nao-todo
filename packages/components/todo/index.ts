@@ -1,5 +1,4 @@
 export * from './filter-bar'
-export * from '../../../apps/web/src/layers/todo-view-table/column-selector'
 export * from './event-row'
 export * from './priority-info'
 export * from './state-info'

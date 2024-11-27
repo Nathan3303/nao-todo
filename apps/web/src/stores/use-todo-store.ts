@@ -138,7 +138,7 @@ export const useTodoStore = defineStore('todoStore', () => {
                 confirmButtonText: '确认',
                 cancelButtonText: '取消'
             })
-            const now = moment().toISOString(true)
+            const now = useMoment().toISOString()
             const updateOptions = { isDeleted: true, deletedAt: now } as UpdateTodoOptions
             const result = await doUpdateTodo(todoId, updateOptions)
             if (result) {
@@ -186,7 +186,7 @@ export const useTodoStore = defineStore('todoStore', () => {
                 confirmButtonText: '确认',
                 cancelButtonText: '取消'
             })
-            const now = moment().toISOString(true)
+            const now = useMoment().toISOString()
             const result = await doUpdateTodos(todoIds, { isDeleted: true, deletedAt: now })
             if (result) {
                 return NueMessage.success('更新成功')

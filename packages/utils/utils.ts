@@ -42,6 +42,6 @@ export const stringifyGetOptions = <T>(
 
 export const getJWTPayload = (jwt: string) => {
     const jwtPayload = jwt.split('.')[1]
-    const decodedPayload = JSON.parse(atob(jwtPayload))
+    const decodedPayload = JSON.parse(decodeURIComponent(atob(jwtPayload)))
     return decodedPayload as User
 }

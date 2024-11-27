@@ -22,9 +22,9 @@
                 />
             </nue-div>
             <nue-div align="center">
-                <todo-date-selector v-model="endDate" />
-                <nue-text v-if="endDate" color="gray" size="12px">
-                    ( {{ useRelativeDate(endDate) }} )
+                <todo-date-selector v-model="todoData.dueDate.endAt" />
+                <nue-text v-if="todoData.dueDate.endAt" color="gray" size="12px">
+                    ( {{ useRelativeDate(todoData.dueDate.endAt) }} )
                 </nue-text>
             </nue-div>
             <todo-tag-bar
@@ -43,7 +43,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { TodoDateSelector, TodoProjectSelector, TodoTagBar } from '@nao-todo/components'
 import { TodoPrioritySelectOptions, TodoSelector, TodoStateSelectOptions } from '../selector'
 import { useRelativeDate } from '@nao-todo/hooks/use-relative-date'
@@ -65,15 +65,7 @@ const todoData = reactive<CreateTodoOptions>({
     ...props.presetInfo
 })
 
-const endDate = computed({
-    get() {
-        if (!todoData.dueDate) return ''
-        return ((todoData.dueDate.endAt as string) || '').slice(0, 16)
-    },
-    set(value) {
-        todoData.dueDate.endAt = value
-    }
-})
+const endDate = ref<string | null>(null)
 
 const setProjectInfo = (projectId: string) => {
     todoData.projectId = projectId

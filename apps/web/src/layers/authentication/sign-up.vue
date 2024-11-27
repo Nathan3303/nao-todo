@@ -61,7 +61,7 @@
 
 <script lang="ts" setup>
 import { ref } from 'vue'
-import { NueIcon, NueMessage } from 'nue-ui'
+import { NueMessage } from 'nue-ui'
 import type { SignupOptions } from '@nao-todo/types'
 import validator from 'validator'
 

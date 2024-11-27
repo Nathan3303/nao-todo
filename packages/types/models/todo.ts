@@ -5,8 +5,8 @@ import type { Event } from './event'
 import type { Tag } from './tag'
 
 type TodoDueDate = {
-    startAt: Date | string | null
-    endAt: Date | string | null
+    startAt: string | null
+    endAt: string | null
 }
 
 type Todo = {
@@ -20,9 +20,9 @@ type Todo = {
     tags: Tag['id'][]
     dueDate: TodoDueDate
     isDeleted: boolean
-    deletedAt: Date | string | null
+    deletedAt: string | null
     isArchived: boolean
-    archivedAt: Date | string | null
+    archivedAt: string | null
     isFavorited: boolean
     createdAt: string
     updatedAt: string

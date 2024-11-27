@@ -46,7 +46,7 @@
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { ProjectManager } from '../project-manager'
-import { CreateProjectDialog } from '../create-project-dialog'
+import { CreateProjectDialog } from '@/layers'
 import { useProjectStore } from '@/stores'
 import { AsideLink } from '@nao-todo/components'
 import type { CreateProjectOptions } from '@nao-todo/types'
