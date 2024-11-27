@@ -17,9 +17,9 @@ const useRelativeDate = (date: Moment | Date | string | null) => {
     if (date === oldDate) return oldRelativeDate
     if (date instanceof Date || typeof date === 'string') date = useMoment(date)
 
-    if (isYesterday(date)) return `昨天, ${date.format('M月D日, HH:mm')}`
-    if (isToday(date)) return `今天, ${date.format('M月D日, HH:mm')}`
-    if (isTomorrow(date)) return `明天, ${date.format('M月D日, HH:mm')}`
+    if (isYesterday(date)) return `昨天, ${date.format('HH:mm')}`
+    if (isToday(date)) return `今天, ${date.format('HH:mm')}`
+    if (isTomorrow(date)) return `明天, ${date.format('HH:mm')}`
     if (isIn7DaysFromNow(date)) {
         const weekdayString = '日一二三四五六'
         const weekday = `周${weekdayString[date.day()]}`

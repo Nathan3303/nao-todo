@@ -16,7 +16,10 @@
                     @change="handleCheckTodo"
                 />
                 <nue-divider direction="vertical" />
-                <todo-date-selector :date="shadowTodo.dueDate.endAt" @change="handleChangeEndAt" />
+                <todo-date-selector
+                    v-model="shadowTodo.dueDate.endAt"
+                    @change="handleChangeEndAt"
+                />
             </nue-div>
             <nue-div align="center" width="fit-content" wrap="nowrap">
                 <nue-button

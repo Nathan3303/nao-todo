@@ -7,9 +7,9 @@
                 theme="small,noshape"
                 type="datetime-local"
             />
-            <nue-button icon="clear" theme="small,pure" @click="dateMoment = null" />
+            <nue-button icon="clear" theme="small,pure" @click="(dateMoment = null)" />
         </nue-div>
-        <nue-button v-else theme="small" @click="handleSetDate">设置结束时间</nue-button>
+        <nue-button v-else theme="small" @click="handleAddDateByNow">设置结束时间</nue-button>
     </nue-div>
 </template>
 
@@ -31,25 +31,23 @@ const emit = defineEmits<{
 const dateMoment = computed<string | null>({
     get() {
         const { modelValue, date } = props
-        if (modelValue) {
-            const m1 = useMoment(modelValue)
-            return formatForDateTimeInput(m1)
-        }
-        if (date) {
-            const m1 = useMoment(date)
-            return formatForDateTimeInput(m1)
-        }
+        if (modelValue) return formatForDateTimeInput(useMoment(modelValue))
+        if (date) return formatForDateTimeInput(useMoment(date))
         return null
     },
     set(value) {
-        value = value ? moment(value).toISOString() : null
+        if (value === 'NOW') {
+            value = moment().toISOString()
+        } else {
+            value = value ? moment(value).toISOString() : null
+        }
         emit('update:modelValue', value)
         emit('change', value)
     }
 })
 
-const handleSetDate = () => {
-    dateMoment.value = formatForDateTimeInput(moment())
+const handleAddDateByNow = () => {
+    dateMoment.value = 'NOW'
 }
 </script>
 

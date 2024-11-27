@@ -25,6 +25,8 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
         isDeleted: false
     })
 
+    const endAt = ref<Todo['dueDate']['endAt']>(null)
+
     let updateOptions: Partial<Todo> = {}
 
     const avalibleProjects = computed(() => {
@@ -190,7 +192,7 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
         avalibleProjects,
         avalibleTags,
         commonData,
-        endDate,
+        endAt,
         userStore,
         setProjectInfo,
         handleChangeEndDate,
