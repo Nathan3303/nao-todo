@@ -101,14 +101,9 @@
                 </nue-main>
                 <nue-footer height="auto" style="flex-direction: column; padding: 0; gap: 0">
                     <nue-div v-if="isCommenting" align="stretch" style="padding: 16px" vertical>
-                        <nue-textarea
-                            ref="leaveCommentInputRef"
-                            v-model="commentContent"
-                            :rows="0"
-                            autosize
-                            placeholder="添加评论"
-                            theme="small"
-                            @keydown.enter.exact="handleLeaveComment"
+                        <comment-creator
+                            :handler="handleLeaveComment"
+                            @cancel="(isCommenting = false)"
                         />
                     </nue-div>
                     <nue-div v-else gap="8px" style="padding: 16px">
@@ -183,7 +178,8 @@ import {
     TodoDateSelector,
     TodoDeleteButton,
     TodoProjectSelector,
-    TodoTagBar
+    TodoTagBar,
+    CommentCreator
 } from '@nao-todo/components'
 import { NueTextarea } from 'nue-ui'
 
@@ -213,8 +209,7 @@ const {
     handleRestoreTodo,
     handleUpdateTags
 } = useTodoDetails()
-const { isCommenting, commentContent, commentsCount, handleLeaveComment, handleEnterNewLine } =
-    useCommentDetails()
+const { isCommenting, commentsCount, handleLeaveComment } = useCommentDetails()
 
 const handleStartLeaveComment = () => {
     isCommenting.value = !isCommenting.value
