@@ -125,7 +125,10 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
                     },
                     columns: basicInfo.preference.columns
                 },
-                createTodoOptions: basicInfo.createTodoOptions,
+                createTodoOptions: {
+                    ...basicInfo.createTodoOptions,
+                    projectId: userStore.user?.id
+                },
                 handlers: basicInfo.handlers
             } as TasksMainViewInfo
             if (basicInfo.id === 'inbox') {
@@ -187,7 +190,11 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
                     },
                     columns: defaultPreference.columns
                 },
-                createTodoOptions: { dueDate: {}, tags: [tag.id] },
+                createTodoOptions: {
+                    projectId: userStore.user?.id,
+                    dueDate: {},
+                    tags: [tag.id]
+                },
                 handlers: {
                     updateTitle: handleUpdateTagName,
                     remove: handleDeleteTag
