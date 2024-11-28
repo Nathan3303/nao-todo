@@ -28,9 +28,10 @@ export const useTodoDetails = () => {
         const progress = _e ? _e.filter((event) => event.isDone).length : 0
         const total = _e ? _e.length : 0
         const percentage = total ? Math.floor((progress / total) * 100) : 0
+        const text = total ? `已完成 ${progress}/${total}, ${percentage}%` : '待办目前无检查事项'
         return {
             percentage,
-            text: `已完成 ${progress}/${total}, ${percentage}%`
+            text
         }
     })
 
