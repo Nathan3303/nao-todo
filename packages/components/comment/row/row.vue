@@ -27,6 +27,8 @@
                         v-model="shadowContent"
                         :rows="0"
                         autosize
+                        counter="word-limit"
+                        maxlength="256"
                         theme="small"
                     />
                     <nue-div gap="4px">
@@ -38,7 +40,7 @@
                         </nue-button>
                     </nue-div>
                 </template>
-                <nue-text v-else color="#363636" size="12px">
+                <nue-text v-else color="#363636" size="12px" theme="pre">
                     {{ shadowContent }}
                 </nue-text>
             </nue-div>
@@ -132,6 +134,10 @@ const handleCancelEdit = () => {
             cursor: pointer;
             color: var(--primary-color-900);
         }
+    }
+
+    .nue-text--pre {
+        white-space: pre-wrap;
     }
 
     &:hover {
