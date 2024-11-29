@@ -16,23 +16,17 @@ export const useCommentDetails = () => {
         // commentContent.value += '\n'
     }
 
-    const handleLeaveComment = async (e: Event) => {
-        e.preventDefault()
-        if (!commentContent.value) {
-            NueMessage.warn('评论内容不能为空')
-            return
-        }
+    const handleLeaveComment = async (content: string) => {
         const createResult = await commentStore.doCreateComment({
             todoId: route.params.taskId as string,
-            content: commentContent.value
+            content: content
         })
         if (createResult) {
-            isCommenting.value = false
-            commentContent.value = ''
             NueMessage.success('添加评论成功')
         } else {
             NueMessage.error('添加评论失败')
         }
+        return createResult
     }
 
     watchEffect(() => {

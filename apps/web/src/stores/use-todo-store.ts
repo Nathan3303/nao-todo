@@ -1,6 +1,13 @@
 import { ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
-import { createTodo, deleteTodo, getTodos, updateTodo, updateTodos } from '@nao-todo/apis'
+import {
+    createTodo,
+    deleteTodo,
+    duplicateTodo,
+    getTodos,
+    updateTodo,
+    updateTodos
+} from '@nao-todo/apis'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { useMoment } from '@nao-todo/utils'
 import type {
@@ -129,6 +136,15 @@ export const useTodoStore = defineStore('todoStore', () => {
         return true
     }
 
+    // 复制待办
+    const doDuplicateTodo = async (todoId: Todo['id']) => {
+        const result = await duplicateTodo(todoId)
+        if (result.code !== 20000) return false
+        const newTodo = result.data as Todo
+        todos.value.unshift(newTodo)
+        return true
+    }
+
     // 删除指定待办（带确认）
     const deleteTodoWithConfirmation = async (todoId: Todo['id']) => {
         try {
@@ -243,6 +259,28 @@ export const useTodoStore = defineStore('todoStore', () => {
         return false
     }
 
+    // 复制任务（带确认）
+    const duplicateTodoWithConfirmation = async (todoId: Todo['id']) => {
+        try {
+            await NueConfirm({
+                title: '复制待办确认',
+                content: '确认复制该待办吗？',
+                confirmButtonText: '确认',
+                cancelButtonText: '取消'
+            })
+            const result = await doDuplicateTodo(todoId)
+            if (result) {
+                NueMessage.success('待办复制成功')
+                return true
+            } else {
+                NueMessage.error('待办复制失败')
+            }
+        } catch (error) {
+            console.warn('[UseTodoStore] duplicateTodoWithConfirmation:', error)
+        }
+        return false
+    }
+
     // 根据清单偏好设置获取选项
     const setGetOptionsByPreference = (preference: Project['preference']) => {
         if (!preference) return
@@ -269,11 +307,13 @@ export const useTodoStore = defineStore('todoStore', () => {
         doUpdateTodos,
         doDeleteTodo,
         doCreateTodo,
+        doDuplicateTodo,
         deleteTodoWithConfirmation,
         restoreTodoWithConfirmation,
         deleteTodosWithConfirmation,
         restoreTodosWithConfirmation,
         deleteTodoPermanentlyWithConfirmation,
+        duplicateTodoWithConfirmation,
         setGetOptionsByPreference,
         getTodoByIdFromLocal
     }

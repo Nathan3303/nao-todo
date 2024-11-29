@@ -24,7 +24,7 @@
             <nue-divider />
             <nue-collapse v-model="collapseItemsRecord">
                 <project-smart-list />
-                <todo-filter-list />
+                <!--                <todo-filter-list />-->
                 <tag-smart-list />
             </nue-collapse>
             <nue-divider />

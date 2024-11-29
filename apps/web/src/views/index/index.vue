@@ -18,9 +18,9 @@
                 </nue-tooltip>
             </template>
             <template #actions>
-                <nue-tooltip content="设置" placement="right-center" size="small">
-                    <nue-link icon="setting" theme="btnlike" />
-                </nue-tooltip>
+                <!--                <nue-tooltip content="设置" placement="right-center" size="small">-->
+                <!--                    <nue-link icon="setting" theme="btnlike" />-->
+                <!--                </nue-tooltip>-->
             </template>
             <template #user>
                 <user-dropdown

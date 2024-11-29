@@ -28,9 +28,10 @@ export const useTodoDetails = () => {
         const progress = _e ? _e.filter((event) => event.isDone).length : 0
         const total = _e ? _e.length : 0
         const percentage = total ? Math.floor((progress / total) * 100) : 0
+        const text = total ? `已完成 ${progress}/${total}, ${percentage}%` : '待办目前无检查事项'
         return {
             percentage,
-            text: `已完成 ${progress}/${total}, ${percentage}%`
+            text
         }
     })
 
@@ -196,6 +197,12 @@ export const useTodoDetails = () => {
         if (result) await handleClose()
     }
 
+    // 复制
+    const handleDuplicateTodo = async () => {
+        if (!shadowTodo.value) return
+        await todoStore.duplicateTodoWithConfirmation(shadowTodo.value.id)
+    }
+
     // 关闭详情
     const handleClose = async () => {
         cancelTimer(true)
@@ -245,6 +252,7 @@ export const useTodoDetails = () => {
         handleDeleteTodo,
         handleDeleteTodoPermanently,
         handleRestoreTodo,
-        handleUpdateTags
+        handleUpdateTags,
+        handleDuplicateTodo
     }
 }
