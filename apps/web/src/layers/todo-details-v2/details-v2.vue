@@ -136,9 +136,14 @@
                 :user-id="userStore.user!.id"
                 @select="handleMoveToProject"
             />
-            <nue-button icon="chat" theme="small" @click="handleStartLeaveComment">
-                评论
-            </nue-button>
+            <nue-div gap="4px" width="fit-content" wrap="nowrap">
+                <nue-button icon="chat" theme="small" @click="handleStartLeaveComment">
+                    评论
+                </nue-button>
+                <nue-button icon="files" theme="small" @click="handleDuplicateTodo">
+                    复制
+                </nue-button>
+            </nue-div>
             <nue-div gap="4px" width="fit-content" wrap="nowrap">
                 <nue-button
                     v-if="shadowTodo.isDeleted"
@@ -207,7 +212,8 @@ const {
     handleDeleteTodo,
     handleDeleteTodoPermanently,
     handleRestoreTodo,
-    handleUpdateTags
+    handleUpdateTags,
+    handleDuplicateTodo
 } = useTodoDetails()
 const { isCommenting, commentsCount, handleLeaveComment } = useCommentDetails()
 

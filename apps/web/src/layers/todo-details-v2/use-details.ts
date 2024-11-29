@@ -197,6 +197,12 @@ export const useTodoDetails = () => {
         if (result) await handleClose()
     }
 
+    // 复制
+    const handleDuplicateTodo = async () => {
+        if (!shadowTodo.value) return
+        await todoStore.duplicateTodoWithConfirmation(shadowTodo.value.id)
+    }
+
     // 关闭详情
     const handleClose = async () => {
         cancelTimer(true)
@@ -246,6 +252,7 @@ export const useTodoDetails = () => {
         handleDeleteTodo,
         handleDeleteTodoPermanently,
         handleRestoreTodo,
-        handleUpdateTags
+        handleUpdateTags,
+        handleDuplicateTodo
     }
 }

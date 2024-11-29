@@ -87,3 +87,14 @@ export const getTodos = async (options: GetTodosOptions = defaultGetTodosOptions
         return { code: 50001, message: '服务器错误' } as ResponseData
     }
 }
+
+// 复制待办
+export const duplicateTodo = async (todoId: Todo['id']) => {
+    try {
+        const response = await $axios.get(`/todo/duplicate?todoId=${todoId}`)
+        return response.data as ResponseData
+    } catch (error) {
+        console.error('[@nao-todo/apis/todo] duplicateTodo:', error)
+        return { code: 50001, message: '服务器错误' } as ResponseData
+    }
+}
