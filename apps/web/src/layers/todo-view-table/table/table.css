@@ -82,10 +82,13 @@
 .col-name .col-name__name {
     width: 100%;
     color: var(--primary-text-color);
-    font-size: var(--text-sm);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.col-name .col-name__name .nue-text {
+    font-size: var(--text-sm);
 }
 
 .col-name .col-name__description {

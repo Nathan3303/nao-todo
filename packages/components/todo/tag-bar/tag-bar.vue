@@ -66,7 +66,7 @@ const { visibleTags, comboBoxOptions, handleAddTag, handleDropTag } = useTagBar(
 
 .todo-tag-bar--small .tag-node:deep(.nue-text),
 .todo-tag-bar--small .todo-tag-bar__clamped-text:deep(.nue-text) {
-    scale: 0.9;
+    scale: 0.88;
     line-height: 18px;
 }
 </style>

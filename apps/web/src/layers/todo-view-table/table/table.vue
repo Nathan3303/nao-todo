@@ -49,18 +49,18 @@
                 @click.stop.shift.exact="handleMultiSelect(idx)"
             >
                 <nue-div class="todo-table__main__col col-name" vertical>
-                    <nue-text class="col-name__name">
-                        {{ todo.name }}
-                        <template #append>
-                            <todo-tag-bar
-                                :clamped="2"
-                                :tags="tags"
-                                :todoTags="todo.tags"
-                                readonly
-                                small
-                            />
-                        </template>
-                    </nue-text>
+                    <nue-div align="center" wrap="nowrap">
+                        <nue-div width="auto" flex class="col-name__name">
+                            <nue-text>{{ todo.name }}</nue-text>
+                        </nue-div>
+                        <todo-tag-bar
+                            :clamped="2"
+                            :tags="tags"
+                            :todoTags="todo.tags"
+                            readonly
+                            small
+                        />
+                    </nue-div>
                     <nue-text
                         v-if="columnOptions.description && todo.description"
                         class="col-name__description"
