@@ -79,7 +79,7 @@ const todoStore = useTodoStore()
 
 const { todos, getOptions } = storeToRefs(todoStore)
 
-const kanbanLoading = ref(false)
+const kanbanLoading = ref(true)
 const refreshTimer = ref<number | null>(null)
 const draggingTodoId = ref('abc')
 const todoCreateDialogRef = ref<InstanceType<typeof CreateTodoDialog>>()

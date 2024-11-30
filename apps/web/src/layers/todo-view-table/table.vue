@@ -104,7 +104,7 @@ const tagStore = useTagStore()
 const tasksViewStore = useTasksViewStore()
 
 const { todos, getOptions, getOverview } = storeToRefs(todoStore)
-const tableLoading = ref(false)
+const tableLoading = ref(true)
 const todoTableRef = ref<InstanceType<typeof TodoTable>>()
 const createTodoDialogRef = ref<InstanceType<typeof CreateTodoDialog>>()
 let refreshTimer: number | null = null
