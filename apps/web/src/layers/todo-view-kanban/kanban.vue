@@ -50,19 +50,20 @@
             </template>
         </nue-main>
     </nue-container>
-    <create-todo-dialog ref="todoCreateDialogRef" :handler="todoStore.doCreateTodo" />
+    <!-- dialogs -->
+    <create-todo-dialog ref="todoCreateDialogRef" :handler="handleCreateTodo" />
 </template>
 
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { Loading, TodoFilterBar } from '@nao-todo/components'
 import { ContentKanbanColumn } from './kanban-column'
 import { CreateTodoDialog, TodoTableColumnSelector } from '@/layers'
 import { useTodoStore } from '@/stores'
 import type { CreateTodoDialogCallerArgs } from '@/layers/create-todo-dialog/types'
-import type { GetTodosOptions, Todo, TodoColumnOptions } from '@nao-todo/types'
+import type { CreateTodoOptions, GetTodosOptions, Todo, TodoColumnOptions } from '@nao-todo/types'
 import type { TodoFilterOptions } from '@nao-todo/components/todo/filter-bar/types'
 
 const props = defineProps<{
@@ -75,10 +76,10 @@ const emit = defineEmits<{
 }>()
 
 const router = useRouter()
+const route = useRoute()
 const todoStore = useTodoStore()
 
 const { todos, getOptions } = storeToRefs(todoStore)
-
 const kanbanLoading = ref(true)
 const refreshTimer = ref<number | null>(null)
 const draggingTodoId = ref('abc')
@@ -217,6 +218,15 @@ const handleDrop = async (event: DragEvent) => {
     const todo = todoStore.getTodoByIdFromLocal(todoId)
     if (todo && todo.state === category) return
     await todoStore.doUpdateTodo(todoId, { state: category as Todo['state'] })
+}
+
+const handleCreateTodo = async (options: CreateTodoOptions) => {
+    const result = (await todoStore.doCreateTodo(options)) as Todo
+    if (result) {
+        await router.push({ name: route.name, params: { taskId: result.id } })
+        return true
+    }
+    return false
 }
 
 setTimeout(() => handleGetTodos())

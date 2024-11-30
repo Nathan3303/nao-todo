@@ -69,12 +69,12 @@
         </nue-footer>
     </nue-container>
     <!-- containers -->
-    <create-todo-dialog ref="createTodoDialogRef" :handler="todoStore.doCreateTodo" />
+    <create-todo-dialog ref="createTodoDialogRef" :handler="handleCreateTodo" />
 </template>
 
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useTagStore, useTodoStore } from '@/stores'
 import { Loading, Pager, TodoFilterBar } from '@nao-todo/components'
@@ -82,11 +82,17 @@ import { TodoTable } from './table'
 import { TodoTableColumnSelector } from './column-selector'
 import { CreateTodoDialog } from '@/layers'
 import { useTasksViewStore } from '@/views/index/tasks/stores'
-import type { GetTodosOptions, GetTodosSortOptions, Todo, TodoColumnOptions } from '@nao-todo/types'
+import type {
+    CreateTodoOptions,
+    GetTodosOptions,
+    GetTodosSortOptions,
+    Todo,
+    TodoColumnOptions
+} from '@nao-todo/types'
 import type { CreateTodoDialogCallerArgs } from '@/layers/create-todo-dialog/types'
 import type { TodoTableMultiSelectPayload } from './table/types'
 import type { TodoFilterOptions } from '@nao-todo/components/todo/filter-bar/types'
-import "./table.css"
+import './table.css'
 
 defineOptions({ name: 'ContentTableLayer' })
 const props = defineProps<{
@@ -99,6 +105,7 @@ const emit = defineEmits<{
 }>()
 
 const router = useRouter()
+const route = useRoute()
 const todoStore = useTodoStore()
 const tagStore = useTagStore()
 const tasksViewStore = useTasksViewStore()
@@ -184,6 +191,15 @@ const handleRefresh = async () => {
 const sortTodo = (newSortInfo: GetTodosSortOptions) => {
     getOptions.value.sort = newSortInfo
     handleGetTodos()
+}
+
+const handleCreateTodo = async (options: CreateTodoOptions) => {
+    const result = (await todoStore.doCreateTodo(options)) as Todo
+    if (result) {
+        await router.push({ name: route.name, params: { taskId: result.id } })
+        return true
+    }
+    return false
 }
 
 watch(
