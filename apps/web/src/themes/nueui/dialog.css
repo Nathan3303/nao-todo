@@ -1,0 +1,10 @@
+/* patches */
+.nue-dialog-wrapper {
+    --dialog-width: auto;
+    --dialog-max-width: auto;
+}
+
+/* update-log */
+.nue-dialog--update-log {
+    --dialog-width: 50%;
+}

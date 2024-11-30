@@ -105,45 +105,43 @@ const handleCancelEdit = () => {
 .comment-row {
     flex-wrap: nowrap;
     padding: 4px 8px;
+}
 
-    .comment-row__avatar {
-        margin-top: 4px;
-    }
+.comment-row__avatar {
+    margin-top: 4px;
+}
 
-    .comment-row__details {
-        flex-direction: column;
-        flex: auto;
-        gap: 4px;
-    }
+.comment-row__details {
+    flex-direction: column;
+    flex: auto;
+    gap: 4px;
+}
 
-    .comment-row__details__title {
-        align-items: center;
-        gap: 16px;
-    }
+.comment-row__details__title {
+    align-items: center;
+    gap: 16px;
+}
 
-    .comment-row__details__actions {
-        opacity: 0;
-        align-items: center;
-        flex: auto;
-        gap: 12px;
-        justify-content: end;
-        width: fit-content;
-        color: var(--primary-color-600);
+.comment-row__details__actions {
+    opacity: 0;
+    align-items: center;
+    flex: auto;
+    gap: 12px;
+    justify-content: end;
+    width: fit-content;
+    color: var(--primary-color-600);
+}
 
-        .nue-icon:hover {
-            cursor: pointer;
-            color: var(--primary-color-900);
-        }
-    }
+.comment-row__details__actions .nue-icon:hover {
+    cursor: pointer;
+    color: var(--primary-color-900);
+}
 
-    .nue-text--pre {
-        white-space: pre-wrap;
-    }
+.comment-row .nue-text--pre {
+    white-space: pre-wrap;
+}
 
-    &:hover {
-        .comment-row__details__actions {
-            opacity: 1;
-        }
-    }
+.comment-row:hover .comment-row__details__actions {
+    opacity: 1;
 }
 </style>

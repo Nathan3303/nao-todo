@@ -49,5 +49,3 @@ defineExpose({
     show: handleShow
 })
 </script>
-
-<style scoped></style>

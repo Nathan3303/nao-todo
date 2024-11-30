@@ -1,0 +1,120 @@
+/* 组件库样式补充 */
+@import url('nueui/tooltip.css');
+@import url('nueui/link.css');
+@import url('nueui/div.css');
+@import url('nueui/dropdown.css');
+@import url('nueui/button.css');
+@import url('nueui/container.css');
+@import url('nueui/dialog.css');
+@import url('nueui/progress.css');
+@import url('nueui/text.css');
+@import url('nueui/textarea.css');
+
+/* 全局 */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import url('iconfont/iconfont.css');
+
+@font-face {
+    font-family: "pingfang";
+    src: url("/pf.woff") format("woff");
+    font-weight: normal;
+    font-style: normal;
+    font-display: fallback;
+}
+
+.nue-html {
+    --primary-font-size-base: 16px;
+    --primary-font-weight: 400;
+    --primary-font-family: "Poppins", "pingfang", "Noto Sans SC", sans-serif;
+}
+
+
+/* 登录界面 */
+.auth-view__main {
+    border: none !important;
+}
+
+.auth-view__main .nue-main__aside {
+    background-color: var(--primary-color-900);
+    padding: 32px;
+}
+
+/* 主页 */
+.index-view__header__logo {
+    width: 24px;
+    height: 24px;
+}
+
+.index-view__main {
+    border-left: 1px solid var(--divider-color);
+}
+
+.index-view__main .nue-main__content {
+    padding: 0;
+}
+
+/* 主页 - 任务子页 */
+.tasks-view__main {
+    border: none !important;
+    z-index: 0;
+}
+
+.tasks-view__main .nue-main__aside-wrapper .nue-main__aside {
+    gap: 8px;
+}
+
+.tasks-view__main .nue-main__aside .nue-collapse-item__header {
+    box-shadow: none;
+    border-color: transparent;
+    height: auto;
+    min-height: auto;
+}
+
+.tasks-view__main .nue-main__outline-wrapper .nue-main__outline {
+    padding: 0;
+}
+
+.tasks-view__main .nue-main__aside .nue-collapse-item__empty-text {
+    padding: 8px;
+    background-color: var(--primary-color-200);
+    border-radius: var(--primary-radius);
+}
+
+.tasks-main-view .tasks-main-view__header {
+    box-sizing: border-box;
+    height: auto;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.tasks-main-view__header__title-bar {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 4px;
+}
+
+.tasks-main-view__header__title-bar__title {
+    align-items: center;
+    width: auto;
+    flex: 1 1 auto;
+    gap: 8px;
+}
+
+.tasks-main-view__header__title-bar__actions {
+    align-items: center;
+    width: auto;
+    flex-shrink: 0;
+    gap: 8px;
+}
+
+.tasks-main-view__main {
+    border: none !important;
+}
+
+
+/* 768px 媒体查询 */
+@media screen and (max-width: 768px) {
+    .auth-view__main .nue-main__aside-wrapper {
+        display: none;
+    }
+}

@@ -1,6 +1,6 @@
 <template>
-    <nue-container class="authentication-view">
-        <nue-main :allow-resize-aside="false" aside-width="45%">
+    <nue-container class="auth-view">
+        <nue-main class="auth-view__main" :allow-resize-aside="false" aside-width="45%">
             <template #aside>
                 <nue-div flex justify="space-between" vertical>
                     <nue-div align="center">
@@ -31,10 +31,10 @@
 
 <script lang="ts" setup>
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { NueMessage } from 'nue-ui'
 import { AuthSignIn, AuthSignUp } from '@/layers'
 import { useUserStore } from '@/stores/use-user-store'
-import { NueMessage } from 'nue-ui'
-import { useRouter } from 'vue-router'
 import type { SigninOptions, SignupOptions } from '@nao-todo/types'
 
 const props = defineProps<{
@@ -82,24 +82,3 @@ async function handleSubmit(payload: SigninOptions | SignupOptions) {
     }
 }
 </script>
-
-<style>
-.authentication-view {
-    .nue-main {
-        .nue-main__aside {
-            background-color: #18181b;
-            padding: 32px;
-        }
-    }
-}
-
-@media screen and (max-width: 768px) {
-    .authentication-view {
-        .nue-main {
-            .nue-main__aside {
-                display: none;
-            }
-        }
-    }
-}
-</style>

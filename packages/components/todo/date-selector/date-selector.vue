@@ -7,7 +7,7 @@
                 theme="small,noshape"
                 type="datetime-local"
             />
-            <nue-button icon="clear" theme="small,pure" @click="(dateMoment = null)" />
+            <nue-button icon="clear" theme="small,pure" @click="dateMoment = null" />
         </nue-div>
         <nue-button v-else theme="small" @click="handleAddDateByNow">设置结束时间</nue-button>
     </nue-div>
@@ -58,21 +58,21 @@ const handleAddDateByNow = () => {
     gap: 4px;
     border-radius: var(--primary-radius);
     height: 28px;
+}
 
-    &:hover {
-        background-color: #f5f5f5;
-    }
+.date-selector:hover {
+    background-color: #f5f5f5;
+}
 
-    .date-selector__input-wrapper {
-        gap: 4px;
-        padding: 0 8px;
-        border-radius: var(--primary-radius);
-        border: 1px solid var(--divider-color);
-        box-shadow: var(--secondary-shadow);
-    }
+.date-selector .date-selector__input-wrapper {
+    gap: 4px;
+    padding: 0 8px;
+    border-radius: var(--primary-radius);
+    border: 1px solid var(--divider-color);
+    box-shadow: var(--secondary-shadow);
+}
 
-    .nue-input--noshape {
-        padding: 0;
-    }
+.date-selector .nue-input--noshape {
+    padding: 0;
 }
 </style>

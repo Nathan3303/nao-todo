@@ -1,0 +1,5 @@
+/* 登录界面密码复杂度提示 */
+.nue-tooltip--password-rule {
+    width: 256px;
+    max-width: 256px;
+}

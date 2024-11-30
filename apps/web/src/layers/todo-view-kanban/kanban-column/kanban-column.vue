@@ -31,6 +31,7 @@ import { useRoute } from 'vue-router'
 import { TodoCard } from '@/layers'
 import { Empty, TodoStateInfo } from '@nao-todo/components'
 import type { Todo, TodoColumnOptions } from '@nao-todo/types'
+import './kanban-column.css'
 
 defineProps<{
     category: Todo['state']
@@ -56,85 +57,3 @@ const handleShowTodoDetails = (todoId: Todo['id']) => {
     emit('show-todo-details', todoId)
 }
 </script>
-
-<style scoped>
-.kanban-column {
-    min-width: 260px;
-    height: 100%;
-    flex: 1 1 auto;
-
-    .kanban-column__header {
-        align-items: center;
-        padding: 0;
-        border: none;
-
-        .nue-text--count {
-            min-width: 24px;
-            height: 24px;
-            line-height: 24px;
-            font-size: 14px;
-            background-color: var(--primary-color);
-            color: white;
-            border-radius: var(--primary-radius);
-            text-align: center;
-        }
-    }
-
-    .kanban-column__main {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-        overflow-y: auto;
-        margin-top: 16px;
-
-        .empty {
-            height: auto;
-            font-size: 12px;
-            flex: none;
-            width: 100%;
-            background-color: #f5f5f5;
-            border-radius: var(--primary-radius);
-
-            &:deep().nue-text {
-                font-size: 12px;
-                margin: 8px;
-            }
-        }
-
-        &:deep(.nue-main__content) {
-            padding: 0;
-            gap: 8px;
-        }
-    }
-}
-
-.kanban-column__main--drag-over {
-    .kanban-column__header {
-        background-color: #f5f5f5;
-        position: relative;
-
-        &::after {
-            display: block;
-            width: 100%;
-            height: 32px;
-            line-height: 32px;
-            content: '将任务移动到此栏';
-            position: absolute;
-            left: 0;
-            top: 0;
-            background-color: white;
-            color: gray;
-            text-align: center;
-            font-size: 12px;
-            font-weight: bold;
-        }
-    }
-
-    .kanban-column__main {
-        background-color: #f5f5f5;
-        box-shadow: 0 0 1px 1px #33333333;
-        opacity: 0.6;
-    }
-}
-
-</style>

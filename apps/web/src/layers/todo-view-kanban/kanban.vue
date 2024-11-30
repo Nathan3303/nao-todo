@@ -225,22 +225,22 @@ setTimeout(() => handleGetTodos())
 <style scoped>
 .content-kanban {
     width: 100%;
+}
 
-    & > .nue-header {
-        border-bottom: none;
-        padding-top: 8px;
-    }
+.content-kanban > .nue-header {
+    border-bottom: none;
+    padding-top: 8px;
+}
 
-    & > .nue-main {
-        overflow: hidden;
-        overflow-x: auto;
-        gap: 16px;
+.content-kanban > .nue-main {
+    overflow: hidden;
+    overflow-x: auto;
+    gap: 16px;
+}
 
-        &:deep(> .nue-main__content) {
-            flex-direction: row;
-            padding: 0 16px;
-            gap: 16px;
-        }
-    }
+.content-kanban > .nue-main:deep(> .nue-main__content) {
+    flex-direction: row;
+    padding: 0 16px;
+    gap: 16px;
 }
 </style>

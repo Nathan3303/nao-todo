@@ -39,11 +39,11 @@ function handleCheck() {
     padding: 0 8px;
     height: 32px;
     opacity: 0.96;
+}
 
-    &:hover {
-        background-color: #f5f5f5;
-        border-radius: var(--primary-radius);
-        cursor: pointer;
-    }
+.checkbox:hover {
+    background-color: #f5f5f5;
+    border-radius: var(--primary-radius);
+    cursor: pointer;
 }
 </style>

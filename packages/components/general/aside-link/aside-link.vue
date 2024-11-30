@@ -19,18 +19,18 @@ defineProps<{ routeName?: string }>()
 <style scoped>
 .nue-link--plink {
     overflow: hidden;
+}
 
-    .nue-icon {
-        line-height: 1;
-        display: flex;
-        align-items: center;
-        --font-size: 16px;
-    }
+.nue-link--plink .nue-icon {
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    --font-size: 16px;
+}
 
-    & span {
-        width: 100%;
-        text-align: left;
-        font-size: var(--text-xs);
-    }
+.nue-link--plink span {
+    width: 100%;
+    text-align: left;
+    font-size: var(--text-xs);
 }
 </style>

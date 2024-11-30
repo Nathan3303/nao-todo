@@ -1,0 +1,6 @@
+/* noshape */
+.nue-textarea--noshape {
+    padding: 0;
+    --padding-x: 0px;
+    --padding-y: 0px;
+}

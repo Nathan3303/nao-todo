@@ -1,0 +1,45 @@
+/* Combo box*/
+.nue-dropdown--combo-box {
+    padding: 0;
+}
+
+.nue-dropdown--combo-box .nue-container {
+    min-width: 140px;
+}
+
+.nue-dropdown--combo-box .nue-container .nue-header {
+    padding: 4px 6px;
+    height: auto;
+}
+
+.nue-dropdown--combo-box .nue-container.nue-header .nue-text {
+    height: 28px;
+    line-height: 28px;
+    padding: 0 6px;
+}
+
+.nue-dropdown--combo-box .nue-container .nue-main {
+    padding: 4px;
+}
+
+.nue-dropdown--combo-box .nue-container .nue-main .nue-main__content {
+    padding: 0;
+}
+
+/* user-dropdown */
+.nue-dropdown--user-dropdown {
+    padding: 12px;
+}
+
+/* project-selector */
+.nue-dropdown--project-selector .nue-dropdown-item {
+    min-width: 140px;
+    gap: 8px;
+    align-items: center;
+    cursor: pointer;
+}
+
+/* project-manager */
+.nue-dropdown--project-manager {
+    overflow: hidden;
+}

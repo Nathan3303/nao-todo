@@ -86,7 +86,6 @@ const {
     avalibleProjects,
     avalibleTags,
     commonData,
-    endAt,
     userStore,
     setProjectInfo,
     handleChangeEndDate,
@@ -98,5 +97,3 @@ const {
     handleCancelMultiSelect
 } = useMultiDetails(props)
 </script>
-
-<style scoped></style>

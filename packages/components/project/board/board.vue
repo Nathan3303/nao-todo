@@ -75,20 +75,18 @@ const emit = defineEmits<{
     grid-template-rows: repeat(auto-fit, minmax(var(--row-height), 1fr));
     grid-gap: 12px;
     flex: auto;
+}
 
-    .project-card {
-        min-height: var(--row-height);
-    }
+.project-board .project-card {
+    min-height: var(--row-height);
+}
 
-    .project-board__delete-permanently {
-        .nue-button--pure {
-            --icon-size: 16px;
-            --icon-weight: normal;
-            cursor: pointer;
-            transition: all 0.16s;
-            color: red;
-            margin-right: 6px;
-        }
-    }
+.project-board .project-board__delete-permanently .nue-button--pure {
+    --icon-size: 16px;
+    --icon-weight: normal;
+    cursor: pointer;
+    transition: all 0.16s;
+    color: red;
+    margin-right: 6px;
 }
 </style>

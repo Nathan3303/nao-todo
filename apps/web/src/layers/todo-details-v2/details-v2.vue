@@ -5,12 +5,12 @@
     </nue-div>
     <nue-container
         v-else-if="shadowTodo"
-        id="tasks/details"
+        class="tasks-details-view"
         :key="shadowTodo?.id"
         theme="vertical,inner"
     >
-        <nue-header height="auto" style="justify-content: space-between; box-sizing: border-box">
-            <nue-div align="center" width="fit-content" wrap="nowrap">
+        <nue-header class="tasks-details-view__header">
+            <nue-div align="center" width="auto" wrap="nowrap">
                 <todo-check-button
                     :is-done="shadowTodo.state === 'done'"
                     @change="handleCheckTodo"
@@ -21,7 +21,7 @@
                     @change="handleChangeEndAt"
                 />
             </nue-div>
-            <nue-div align="center" width="fit-content" wrap="nowrap">
+            <nue-div align="center" width="auto" wrap="nowrap">
                 <nue-button
                     :disabled="loadingState"
                     icon="clear"
@@ -34,7 +34,7 @@
         </nue-header>
         <nue-main>
             <nue-container theme="vertical,inner">
-                <nue-header height="auto" style="justify-content: space-between">
+                <nue-header class="tasks-details-view__status">
                     <nue-div align="center" width="fit-content">
                         <todo-selector
                             :options="TodoStateSelectOptions"
@@ -56,16 +56,16 @@
                         text="收藏"
                         @change="() => updateTodo()"
                     />
-                </nue-header>
-                <nue-main class="todo-details__main-content">
-                    <nue-div class="details-v2__progress">
+                    <nue-div class="tasks-details-view__progress">
                         <nue-progress
                             :percentage="eventsProgress.percentage"
                             :stroke-width="2"
                             hide-text
                         />
                     </nue-div>
-                    <nue-div align="stretch" gap="0px" style="padding: 16px" vertical>
+                </nue-header>
+                <nue-main style="border-top: none">
+                    <nue-div align="stretch" style="padding: 16px" vertical>
                         <nue-textarea
                             v-model="shadowTodo.name"
                             autosize
@@ -103,7 +103,7 @@
                     <nue-div v-if="isCommenting" align="stretch" style="padding: 16px" vertical>
                         <comment-creator
                             :handler="handleLeaveComment"
-                            @cancel="(isCommenting = false)"
+                            @cancel="isCommenting = false"
                         />
                     </nue-div>
                     <nue-div v-else gap="8px" style="padding: 16px">
@@ -187,6 +187,7 @@ import {
     CommentCreator
 } from '@nao-todo/components'
 import { NueTextarea } from 'nue-ui'
+import './details-v2.css'
 
 defineOptions({ name: 'TodoDetailsV2' })
 
@@ -222,31 +223,3 @@ const handleStartLeaveComment = () => {
     if (isCommenting.value) nextTick(() => leaveCommentInputRef.value?.innerInputRef.focus())
 }
 </script>
-
-<style scoped>
-.nue-empty {
-    height: 100%;
-}
-
-.nue-main:deep(.nue-main__content) {
-    align-items: start;
-    gap: 16px;
-}
-
-.details-v2__progress {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-}
-
-.todo-details__main-content:deep(> .nue-main__content) {
-    padding: 0;
-    gap: 0;
-}
-
-.todo-comments-wrapper {
-    border-top: 1px solid var(--divider-color);
-    padding: 8px;
-}
-</style>

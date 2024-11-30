@@ -49,10 +49,10 @@ const emit = defineEmits<{
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     grid-gap: 12px;
+}
 
-    .tag-card {
-        /* max-width: 220px; */
-        min-height: fit-content;
-    }
+.tag-board .tag-card {
+    /* max-width: 220px; */
+    min-height: fit-content;
 }
 </style>

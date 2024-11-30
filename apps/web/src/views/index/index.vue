@@ -1,27 +1,34 @@
 <template>
-    <nue-container theme="horizontal">
-        <nue-header>
+    <nue-container class="index-view" theme="horizontal">
+        <nue-header class="index-view__header">
             <template #logo>
                 <nue-tooltip content="更新日志" placement="right-center" size="small">
-                    <img alt="logo" src="/favicon.ico" @click.stop="showUpdateLogDialog" />
+                    <img
+                        class="index-view__header__logo"
+                        alt="logo"
+                        src="/favicon.ico"
+                        @click.stop="showUpdateLogDialog"
+                    />
                 </nue-tooltip>
             </template>
             <template #navigators>
-                <nue-tooltip content="任务" placement="right-center" size="small">
-                    <nue-link icon="square-check-fill" route="/tasks" theme="btnlike" />
-                </nue-tooltip>
-                <nue-tooltip content="日历视图" placement="right-center" size="small">
-                    <nue-link icon="calendar2" route="/calendar" theme="btnlike" />
-                </nue-tooltip>
-                <nue-tooltip content="番茄专注" placement="right-center" size="small">
-                    <nue-link icon="scan" route="/fqfocus" theme="btnlike" />
-                </nue-tooltip>
+                <nue-div vertical>
+                    <nue-tooltip content="任务" placement="right-center" size="small">
+                        <nue-link
+                            icon="square-check-fill"
+                            route="/tasks"
+                            theme="index-header-link"
+                        />
+                    </nue-tooltip>
+                    <nue-tooltip content="日历视图" placement="right-center" size="small">
+                        <nue-link icon="calendar2" route="/calendar" theme="index-header-link" />
+                    </nue-tooltip>
+                    <nue-tooltip content="番茄专注" placement="right-center" size="small">
+                        <nue-link icon="scan" route="/fqfocus" theme="index-header-link" />
+                    </nue-tooltip>
+                </nue-div>
             </template>
-            <template #actions>
-                <!--                <nue-tooltip content="设置" placement="right-center" size="small">-->
-                <!--                    <nue-link icon="setting" theme="btnlike" />-->
-                <!--                </nue-tooltip>-->
-            </template>
+            <template #actions></template>
             <template #user>
                 <user-dropdown
                     :user="user"
@@ -32,7 +39,9 @@
                 />
             </template>
         </nue-header>
-        <router-view />
+        <nue-main class="index-view__main">
+            <router-view />
+        </nue-main>
     </nue-container>
     <!-- Dialogs -->
     <update-log-dialog ref="updateLogDialogRef" />
@@ -62,19 +71,3 @@ const showUpdateLogDialog = () => updateLogDialogRef.value?.show()
 const showProfileDialog = () => userProfileDialogRef.value?.show()
 const showUpdatePasswordDialog = () => updatePasswordDialogRef.value?.show()
 </script>
-
-<style scoped>
-.nue-header {
-    &:deep(.nue-header__logo img) {
-        width: 24px;
-        height: 24px;
-    }
-
-    &:deep(.nue-header__navigators),
-    &:deep(.nue-header__actions) {
-        & .nue-link--btnlike {
-            --font-size: 18px;
-        }
-    }
-}
-</style>

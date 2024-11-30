@@ -1,7 +1,7 @@
 <template>
     <nue-div align="center" style="width: 80px" gap="4px">
         <nue-icon :name="info[0]" style="--icon-weight: normal" />
-        <nue-text size="12px">{{ info[1] }}</nue-text>
+        <nue-text size="12px" color="var(--primary-color-800)">{{ info[1] }}</nue-text>
     </nue-div>
 </template>
 

@@ -1,10 +1,6 @@
 <template>
-    <nue-container id="tasks/basic/table" theme="vertical,inner">
-        <nue-header
-            :key="$route.path"
-            height="auto"
-            style="box-sizing: border-box; padding-top: 8px"
-        >
+    <nue-container class="tasks-main-table-view" theme="vertical,inner">
+        <nue-header class="tasks-main-table-view__header" :key="$route.path">
             <nue-div align="start" gap="16px" justify="space-between">
                 <todo-filter-bar :filter-options="todoFilterBarOptions" @filter="handleFilter" />
                 <nue-div flex="none" gap="12px" justify="end" width="fit-content">
@@ -31,7 +27,7 @@
                 </nue-div>
             </nue-div>
         </nue-header>
-        <nue-main style="border: none">
+        <nue-main class="tasks-main-table-view__main">
             <nue-div flex style="overflow-y: auto" wrap="nowrap">
                 <Loading v-if="tableLoading" placeholder="正在加载任务列表..." />
                 <todo-table
@@ -72,6 +68,7 @@
             </nue-div>
         </nue-footer>
     </nue-container>
+    <!-- containers -->
     <create-todo-dialog ref="createTodoDialogRef" :handler="todoStore.doCreateTodo" />
 </template>
 
@@ -89,6 +86,7 @@ import type { GetTodosOptions, GetTodosSortOptions, Todo, TodoColumnOptions } fr
 import type { CreateTodoDialogCallerArgs } from '@/layers/create-todo-dialog/types'
 import type { TodoTableMultiSelectPayload } from './table/types'
 import type { TodoFilterOptions } from '@nao-todo/components/todo/filter-bar/types'
+import "./table.css"
 
 defineOptions({ name: 'ContentTableLayer' })
 const props = defineProps<{
@@ -193,9 +191,3 @@ watch(
     (newValue) => !newValue && todoTableRef.value?.resetSelect()
 )
 </script>
-
-<style scoped>
-.nue-main:deep(.nue-main__content) {
-    padding: 0 16px;
-}
-</style>

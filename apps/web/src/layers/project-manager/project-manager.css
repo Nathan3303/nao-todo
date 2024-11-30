@@ -5,9 +5,9 @@
     flex-direction: column;
     align-items: stretch;
     flex-wrap: nowrap;
+}
 
-    .project-board-wrapper {
-        overflow: auto;
-        height: 100%;
-    }
+.project-manager .project-board-wrapper {
+    overflow: auto;
+    height: 100%;
 }

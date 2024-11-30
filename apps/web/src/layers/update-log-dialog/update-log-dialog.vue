@@ -55,5 +55,3 @@ defineExpose({
     show: () => (visible.value = true)
 })
 </script>
-
-<style scoped></style>
