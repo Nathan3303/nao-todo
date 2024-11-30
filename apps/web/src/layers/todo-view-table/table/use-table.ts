@@ -79,6 +79,7 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
         if (fullClear) selectRange.original = -1
         selectRange.start = selectRange.original
         selectRange.end = selectRange.original
+        console.log(selectRange)
     }
 
     const handleClearSortInfo = () => {
@@ -91,6 +92,19 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
         const targetProject = projectStore.projects.find((p) => p.id === projectId)
         if (!targetProject) return
         return targetProject.title
+    }
+
+    // 根据路由中的待办 ID 获取表格下标
+    const getIndexByTodoIdFromRoute = () => {
+        const todoId = route.params.taskId as string
+        return props.todos.findIndex((todo) => todo.id === todoId)
+    }
+
+    // 根据路由中的待办 ID 激活表格项
+    const activeRowByTodoIdFromRoute = () => {
+        const idx = getIndexByTodoIdFromRoute()
+        if (idx === -1) return
+        handleShowDetails(props.todos[idx].id, idx)
     }
 
     watch(
@@ -121,6 +135,7 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
         handleClearSelectedId,
         handleClearSelect,
         handleClearSortInfo,
-        getProjectNameByIdFromLocal
+        getProjectNameByIdFromLocal,
+        activeRowByTodoIdFromRoute
     }
 }

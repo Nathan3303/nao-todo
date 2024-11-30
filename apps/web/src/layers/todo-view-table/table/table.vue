@@ -89,7 +89,7 @@
                     <nue-text>{{ useRelativeDate(todo.dueDate.endAt) }}</nue-text>
                 </nue-div>
                 <nue-div v-if="columnOptions.priority" class="todo-table__main__col col-priority">
-                    <todo-priority-info class="tpi" :key="todo.priority" :priority="todo.priority" />
+                    <todo-priority-info :key="todo.priority" :priority="todo.priority" />
                 </nue-div>
                 <nue-div v-if="columnOptions.state" class="todo-table__main__col col-state">
                     <todo-state-info :key="todo.state" :state="todo.state" />
@@ -136,12 +136,16 @@ const {
     handleClearSelectedId,
     handleClearSelect,
     handleClearSortInfo,
-    getProjectNameByIdFromLocal
+    getProjectNameByIdFromLocal,
+    activeRowByTodoIdFromRoute
 } = useTodoTable(props, emit)
 
 const { refreshKey, startRefresh, stopRefresh } = useRefreshKey()
 
-onMounted(() => startRefresh())
+onMounted(() => {
+    startRefresh()
+    activeRowByTodoIdFromRoute()
+})
 
 onBeforeUnmount(() => stopRefresh())
 
