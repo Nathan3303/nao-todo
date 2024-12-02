@@ -1,0 +1,41 @@
+/* 主视图切换链接 */
+.nue-link--index-header-link {
+    --hover-text-decoration: none;
+    --hover-color: var(--primary-color-900);
+    --actived-color: var(--primary-color-900);
+    color: var(--primary-color-500);
+    text-decoration: none;
+}
+
+.nue-link--index-header-link.nue-link--actived {
+    color: var(--primary-color-900);
+}
+
+.nue-link--index-header-link .nue-icon {
+    font-size: 22px;
+}
+
+/* plink */
+.nue-link--plink {
+    overflow: hidden;
+}
+
+.nue-link--plink .nue-icon {
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    --font-size: 16px;
+}
+
+.nue-link--plink span {
+    width: 100%;
+    text-align: left;
+    font-size: var(--text-xs);
+}
+
+/* disabled */
+.nue-link--disabled {
+    opacity: 0.6;
+    background-color: #f5f5f5;
+}
+

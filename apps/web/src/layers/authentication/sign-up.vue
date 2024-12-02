@@ -45,10 +45,6 @@
             <nue-input v-model="nickname" :disabled="loading" placeholder="昵称（可选）" />
             <nue-button :loading="loading" theme="primary" @click="handleSignUp">注册</nue-button>
         </nue-div>
-        <!--        <nue-divider align="center">-->
-        <!--            <nue-text color="grey" size="12px">或以其他方式注册</nue-text>-->
-        <!--        </nue-divider>-->
-        <!--        <nue-button icon="logo">NueUI</nue-button>-->
         <nue-text align="center" color="gray" size="12px">
             点击注册按钮后，即表示您同意我们站点的
             <nue-link>服务条款</nue-link>
@@ -98,9 +94,3 @@ function handleSignUp() {
     emit('submit', { email: email.value, password: password.value, nickname: nickname.value })
 }
 </script>
-
-<style>
-.nue-tooltip--password-rule {
-    width: 256px;
-}
-</style>

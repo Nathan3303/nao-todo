@@ -1,0 +1,13 @@
+.nue-container--vertical > .nue-main {
+    border-top: 1px solid var(--nue-main-border-color);
+    border-bottom: 1px solid var(--nue-main-border-color);
+}
+
+.nue-container--horizontal > .nue-main {
+    border-left: 1px solid var(--nue-main-border-color);
+    border-right: 1px solid var(--nue-main-border-color);
+}
+
+.nue-container--inner .nue-header {
+    box-sizing: border-box;
+}

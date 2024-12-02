@@ -12,17 +12,19 @@ const router = createRouter({
             component: () => import('@/views/auth/index.vue')
         },
         {
+            path: '/checkin/:fromUrlBase64?',
+            name: 'checkin',
+            props: true,
+            component: () => import('@/views/checkin/index.vue')
+        },
+        {
             path: '/',
             name: 'index',
-            beforeEnter: async (to, from, next) => {
+            beforeEnter: (to, from, next) => {
                 const userStore = useUserStore()
                 if (!userStore.isAuthenticated) {
-                    const checkinResult = await userStore.doCheckin()
-                    // console.log(checkinResult, userStore.isAuthenticated)
-                    if (!checkinResult && !userStore.isAuthenticated) {
-                        next('/auth/login')
-                        return
-                    }
+                    next({ name: 'checkin', params: { fromUrlBase64: btoa(to.fullPath) } })
+                    return
                 }
                 next()
             },

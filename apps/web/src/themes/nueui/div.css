@@ -1,17 +1,13 @@
-.tag-manager {
-    aspect-ratio: 16 / 9;
-    min-height: 520px;
-}
-
-.tag-navigations {
+/* 项目视图切换 */
+.nue-div--view-type-switcher {
     width: fit-content;
-    gap: 0px;
+    gap: 0;
     padding: 4px;
     background-color: #f4f4f5;
     border-radius: var(--primary-radius);
 }
 
-.tag-navigations:deep(.nue-link) {
+.nue-div--view-type-switcher .nue-link {
     padding: 4px 12px;
     height: auto;
     color: #66666e;
@@ -23,7 +19,7 @@
     --active-background-color: transparent;
 }
 
-.tag-navigations:deep(.nue-link--actived) {
+.nue-div--view-type-switcher .nue-link--actived {
     background-color: white;
     color: #131315;
     box-shadow: var(--secondary-shadow);

@@ -50,19 +50,20 @@
             </template>
         </nue-main>
     </nue-container>
-    <create-todo-dialog ref="todoCreateDialogRef" :handler="todoStore.doCreateTodo" />
+    <!-- dialogs -->
+    <create-todo-dialog ref="todoCreateDialogRef" :handler="handleCreateTodo" />
 </template>
 
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { Loading, TodoFilterBar } from '@nao-todo/components'
 import { ContentKanbanColumn } from './kanban-column'
 import { CreateTodoDialog, TodoTableColumnSelector } from '@/layers'
 import { useTodoStore } from '@/stores'
 import type { CreateTodoDialogCallerArgs } from '@/layers/create-todo-dialog/types'
-import type { GetTodosOptions, Todo, TodoColumnOptions } from '@nao-todo/types'
+import type { CreateTodoOptions, GetTodosOptions, Todo, TodoColumnOptions } from '@nao-todo/types'
 import type { TodoFilterOptions } from '@nao-todo/components/todo/filter-bar/types'
 
 const props = defineProps<{
@@ -75,11 +76,11 @@ const emit = defineEmits<{
 }>()
 
 const router = useRouter()
+const route = useRoute()
 const todoStore = useTodoStore()
 
 const { todos, getOptions } = storeToRefs(todoStore)
-
-const kanbanLoading = ref(false)
+const kanbanLoading = ref(true)
 const refreshTimer = ref<number | null>(null)
 const draggingTodoId = ref('abc')
 const todoCreateDialogRef = ref<InstanceType<typeof CreateTodoDialog>>()
@@ -219,28 +220,37 @@ const handleDrop = async (event: DragEvent) => {
     await todoStore.doUpdateTodo(todoId, { state: category as Todo['state'] })
 }
 
+const handleCreateTodo = async (options: CreateTodoOptions) => {
+    const result = (await todoStore.doCreateTodo(options)) as Todo
+    if (result) {
+        await router.push({ name: route.name, params: { taskId: result.id } })
+        return true
+    }
+    return false
+}
+
 setTimeout(() => handleGetTodos())
 </script>
 
 <style scoped>
 .content-kanban {
     width: 100%;
+}
 
-    & > .nue-header {
-        border-bottom: none;
-        padding-top: 8px;
-    }
+.content-kanban > .nue-header {
+    border-bottom: none;
+    padding-top: 8px;
+}
 
-    & > .nue-main {
-        overflow: hidden;
-        overflow-x: auto;
-        gap: 16px;
+.content-kanban > .nue-main {
+    overflow: hidden;
+    overflow-x: auto;
+    gap: 16px;
+}
 
-        &:deep(> .nue-main__content) {
-            flex-direction: row;
-            padding: 0 16px;
-            gap: 16px;
-        }
-    }
+.content-kanban > .nue-main:deep(> .nue-main__content) {
+    flex-direction: row;
+    padding: 0 16px;
+    gap: 16px;
 }
 </style>

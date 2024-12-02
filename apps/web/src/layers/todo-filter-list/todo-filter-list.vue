@@ -19,7 +19,7 @@
             </nue-div>
         </template>
         <template #default>
-            <nue-text class="empty-text" size="11px" color="#a5a5a5">
+            <nue-text class="nue-collapse-item__empty-text" size="11px" color="#a5a5a5">
                 根据清单、时间、优先级、标签等属性过滤出符合条件的特定任务。
             </nue-text>
         </template>
@@ -27,13 +27,5 @@
 </template>
 
 <script setup lang="ts">
-defineOptions({ name: 'TodoFitlerList' })
+defineOptions({ name: 'TodoFilterList' })
 </script>
-
-<style scoped>
-.empty-text {
-    padding: 8px;
-    background-color: #f5f5f5;
-    border-radius: var(--primary-radius);
-}
-</style>

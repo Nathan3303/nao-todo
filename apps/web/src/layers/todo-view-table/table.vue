@@ -1,10 +1,6 @@
 <template>
-    <nue-container id="tasks/basic/table" theme="vertical,inner">
-        <nue-header
-            :key="$route.path"
-            height="auto"
-            style="box-sizing: border-box; padding-top: 8px"
-        >
+    <nue-container class="tasks-main-table-view" theme="vertical,inner">
+        <nue-header class="tasks-main-table-view__header" :key="$route.path">
             <nue-div align="start" gap="16px" justify="space-between">
                 <todo-filter-bar :filter-options="todoFilterBarOptions" @filter="handleFilter" />
                 <nue-div flex="none" gap="12px" justify="end" width="fit-content">
@@ -31,7 +27,7 @@
                 </nue-div>
             </nue-div>
         </nue-header>
-        <nue-main style="border: none">
+        <nue-main class="tasks-main-table-view__main">
             <nue-div flex style="overflow-y: auto" wrap="nowrap">
                 <Loading v-if="tableLoading" placeholder="正在加载任务列表..." />
                 <todo-table
@@ -72,12 +68,13 @@
             </nue-div>
         </nue-footer>
     </nue-container>
-    <create-todo-dialog ref="createTodoDialogRef" :handler="todoStore.doCreateTodo" />
+    <!-- containers -->
+    <create-todo-dialog ref="createTodoDialogRef" :handler="handleCreateTodo" />
 </template>
 
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useTagStore, useTodoStore } from '@/stores'
 import { Loading, Pager, TodoFilterBar } from '@nao-todo/components'
@@ -85,10 +82,17 @@ import { TodoTable } from './table'
 import { TodoTableColumnSelector } from './column-selector'
 import { CreateTodoDialog } from '@/layers'
 import { useTasksViewStore } from '@/views/index/tasks/stores'
-import type { GetTodosOptions, GetTodosSortOptions, Todo, TodoColumnOptions } from '@nao-todo/types'
+import type {
+    CreateTodoOptions,
+    GetTodosOptions,
+    GetTodosSortOptions,
+    Todo,
+    TodoColumnOptions
+} from '@nao-todo/types'
 import type { CreateTodoDialogCallerArgs } from '@/layers/create-todo-dialog/types'
 import type { TodoTableMultiSelectPayload } from './table/types'
 import type { TodoFilterOptions } from '@nao-todo/components/todo/filter-bar/types'
+import './table.css'
 
 defineOptions({ name: 'ContentTableLayer' })
 const props = defineProps<{
@@ -101,12 +105,13 @@ const emit = defineEmits<{
 }>()
 
 const router = useRouter()
+const route = useRoute()
 const todoStore = useTodoStore()
 const tagStore = useTagStore()
 const tasksViewStore = useTasksViewStore()
 
 const { todos, getOptions, getOverview } = storeToRefs(todoStore)
-const tableLoading = ref(false)
+const tableLoading = ref(true)
 const todoTableRef = ref<InstanceType<typeof TodoTable>>()
 const createTodoDialogRef = ref<InstanceType<typeof CreateTodoDialog>>()
 let refreshTimer: number | null = null
@@ -188,14 +193,17 @@ const sortTodo = (newSortInfo: GetTodosSortOptions) => {
     handleGetTodos()
 }
 
+const handleCreateTodo = async (options: CreateTodoOptions) => {
+    const result = (await todoStore.doCreateTodo(options)) as Todo
+    if (result) {
+        await router.push({ name: route.name, params: { taskId: result.id } })
+        return true
+    }
+    return false
+}
+
 watch(
     () => tasksViewStore.multiSelectStates.isShowMultiDetails,
     (newValue) => !newValue && todoTableRef.value?.resetSelect()
 )
 </script>
-
-<style scoped>
-.nue-main:deep(.nue-main__content) {
-    padding: 0 16px;
-}
-</style>

@@ -37,7 +37,7 @@
                 </template>
             </aside-link>
         </template>
-        <nue-text v-else class="empty-text" size="11px" color="#a5a5a5">
+        <nue-text v-else class="nue-collapse-item__empty-text" size="11px" color="#a5a5a5">
             以标签的维度展示不同清单的待办任务。
         </nue-text>
     </nue-collapse-item>
@@ -66,11 +66,3 @@ const tags = computed<Tag[]>(() => {
 const showCreateTagDialog = () => createTagDialogRef.value?.show()
 const showTagManageDialog = () => tagManagerRef.value?.show()
 </script>
-
-<style scoped>
-.empty-text {
-    padding: 8px;
-    background-color: #f5f5f5;
-    border-radius: var(--primary-radius);
-}
-</style>

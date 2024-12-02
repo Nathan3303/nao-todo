@@ -11,17 +11,7 @@
             <nue-button icon="clear" size="small" @click="handleCancelMultiSelect">关闭</nue-button>
         </nue-header>
         <nue-main>
-            <nue-div vertical>
-                <nue-div align="center">
-                    <todo-date-selector
-                        v-model="commonData.dueDate.endAt"
-                        @change="handleChangeEndDate"
-                    />
-                    <nue-text v-if="commonData.dueDate.endAt" color="gray" size="12px">
-                        ( {{ useRelativeDate(commonData.dueDate.endAt) }} )
-                    </nue-text>
-                </nue-div>
-                <nue-divider />
+            <nue-div style="padding: 16px" vertical>
                 <nue-div align="center" wrap="nowrap">
                     <todo-selector
                         :options="TodoStateSelectOptions"
@@ -45,7 +35,17 @@
                         @select="setProjectInfo"
                     />
                 </nue-div>
-                <nue-divider />
+                <!--                <nue-divider />-->
+                <nue-div align="center">
+                    <todo-date-selector
+                        v-model="commonData.dueDate.endAt"
+                        @change="handleChangeEndDate"
+                    />
+                    <nue-text v-if="commonData.dueDate.endAt" color="gray" size="12px">
+                        (截止于 {{ useRelativeDate(commonData.dueDate.endAt) }} )
+                    </nue-text>
+                </nue-div>
+                <!--                <nue-divider />-->
                 <todo-tag-bar
                     :tags="avalibleTags"
                     :todo-tags="commonData.tags"
@@ -86,7 +86,6 @@ const {
     avalibleProjects,
     avalibleTags,
     commonData,
-    endAt,
     userStore,
     setProjectInfo,
     handleChangeEndDate,
@@ -98,5 +97,3 @@ const {
     handleCancelMultiSelect
 } = useMultiDetails(props)
 </script>
-
-<style scoped></style>

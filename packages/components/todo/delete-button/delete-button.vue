@@ -22,5 +22,3 @@ const handleClick = () => {
     }
 }
 </script>
-
-<style scoped></style>

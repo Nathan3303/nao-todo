@@ -43,31 +43,30 @@ const { visibleTags, comboBoxOptions, handleAddTag, handleDropTag } = useTagBar(
     align-items: center;
     gap: 12px;
     text-decoration: none !important;
-
-    .todo-tag-bar__clamped-text {
-        width: fit-content;
-        background-color: #a1a1a1;
-        border-radius: 99px;
-        padding: 3px 8px;
-
-        & > .nue-text {
-            font-size: 12px;
-            color: white !important;
-        }
-    }
 }
 
-.todo-tag-bar--small {
-    .tag-node,
-    .todo-tag-bar__clamped-text {
-        height: 18px;
-        line-height: 18px;
-        padding: 0 4px;
+.todo-tag-bar__clamped-text {
+    width: fit-content;
+    background-color: #a1a1a1;
+    border-radius: 99px;
+    padding: 3px 8px;
+}
 
-        &:deep().nue-text {
-            scale: 0.9;
-            line-height: 18px;
-        }
-    }
+.todo-tag-bar__clamped-text > .nue-text {
+    font-size: 12px;
+    color: white !important;
+}
+
+.todo-tag-bar--small .tag-node,
+.todo-tag-bar--small .todo-tag-bar__clamped-text {
+    height: 18px;
+    line-height: 18px;
+    padding: 0 4px;
+}
+
+.todo-tag-bar--small .tag-node:deep(.nue-text),
+.todo-tag-bar--small .todo-tag-bar__clamped-text:deep(.nue-text) {
+    scale: 0.88;
+    line-height: 18px;
 }
 </style>

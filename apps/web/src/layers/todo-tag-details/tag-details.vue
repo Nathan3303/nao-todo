@@ -15,5 +15,8 @@ const tagStore = useTagStore()
 </script>
 
 <style scoped>
-@import url('./tag-details.css');
+.todo-tag-details {
+    align-items: center;
+    gap: 12px;
+}
 </style>

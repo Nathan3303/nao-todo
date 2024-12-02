@@ -24,7 +24,7 @@
             <nue-div align="center">
                 <todo-date-selector v-model="todoData.dueDate.endAt" />
                 <nue-text v-if="todoData.dueDate.endAt" color="gray" size="12px">
-                    ( {{ useRelativeDate(todoData.dueDate.endAt) }} )
+                    （截止于 {{ useRelativeDate(todoData.dueDate.endAt) }}）
                 </nue-text>
             </nue-div>
             <todo-tag-bar
@@ -64,8 +64,6 @@ const todoData = reactive<CreateTodoOptions>({
     tags: [],
     ...props.presetInfo
 })
-
-const endDate = ref<string | null>(null)
 
 const setProjectInfo = (projectId: string) => {
     todoData.projectId = projectId

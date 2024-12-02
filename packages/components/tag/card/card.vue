@@ -10,9 +10,9 @@
                 </nue-div>
             </nue-div>
         </nue-div>
-<!--        <nue-text size="12px" color="gray">-->
-<!--            标签状态：{{ tag.isDeleted ? '已删除' : '正常' }}-->
-<!--        </nue-text>-->
+        <!--        <nue-text size="12px" color="gray">-->
+        <!--            标签状态：{{ tag.isDeleted ? '已删除' : '正常' }}-->
+        <!--        </nue-text>-->
     </nue-div>
 </template>
 
@@ -28,18 +28,18 @@ defineProps<{
 <style scoped>
 .tag-card {
     flex-direction: column;
+}
 
-    &[data-actived='false'] {
-        background-color: #f2f2f2;
+.tag-card[data-actived='false'] {
+    background-color: #f2f2f2;
+}
 
-        & > * {
-            opacity: 0.8;
-        }
+.tag-card[data-actived='false'] > * {
+    opacity: 0.8;
+}
 
-        .tag-card__footer-ops,
-        .tag-card__ops {
-            opacity: 1;
-        }
-    }
+.tag-card[data-actived='false'] .tag-card__footer-ops,
+.tag-card[data-actived='false'] .tag-card__ops {
+    opacity: 1;
 }
 </style>

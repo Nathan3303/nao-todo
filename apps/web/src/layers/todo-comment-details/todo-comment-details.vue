@@ -21,7 +21,6 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
 import { useCommentStore } from '@/stores'
 import { CommentRow } from '@nao-todo/components'
 import { storeToRefs } from 'pinia'
@@ -53,9 +52,9 @@ const handleDeleteComment = async (id: Comment['id']) => {
 .nue-main {
     border: none !important;
     padding-bottom: 8px;
+}
 
-    .nue-main:deep(.nue-main__content) {
-        padding: 0;
-    }
+.nue-main:deep(.nue-main__content) {
+    padding: 0;
 }
 </style>

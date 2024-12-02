@@ -1,5 +1,5 @@
 <template>
-    <nue-div align="center" style="width: 50px" gap="4px">
+    <nue-div align="center" width="auto" gap="4px">
         <nue-icon :name="info[0]" style="--icon-weight: normal" :color="color" />
         <nue-text size="12px" :color="color">{{ info[1] }}</nue-text>
     </nue-div>
@@ -28,6 +28,6 @@ const info = computed(() => {
 })
 
 const color = computed(() => {
-    return props.colored ? info.value[2] : void 0
+    return props.colored ? info.value[2] : 'var(--primary-color-800)'
 })
 </script>

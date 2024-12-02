@@ -1,64 +1,67 @@
 <template>
-    <nue-container id="tasks/main" theme="vertical,inner">
-        <todo-view-header>
-            <template #actions>
-                <template v-if="category === 'project'">
-                    <nue-tooltip content="删除清单" size="small">
-                        <nue-button
-                            icon="delete"
-                            theme="icon-only"
-                            @click="viewInfo?.handlers?.remove"
-                        />
-                    </nue-tooltip>
-                    <nue-dropdown
-                        hide-on-click
-                        placement="bottom-end"
-                        size="small"
-                        @execute="handleDropdownExecute"
-                    >
-                        <template #default="{ clickTrigger }">
-                            <nue-button icon="more" theme="icon-only" @click="clickTrigger" />
-                        </template>
-                        <template #dropdown>
-                            <li class="nue-dropdown-item" data-executeid="save-as-preference">
-                                将当前视图保存为偏好
-                            </li>
-                            <li class="nue-dropdown-item" data-executeid="archive">归档该清单</li>
-                        </template>
-                    </nue-dropdown>
+    <nue-container class="tasks-main-view" theme="vertical,inner">
+        <nue-header class="tasks-main-view__header">
+            <todo-view-header>
+                <template #actions>
+                    <template v-if="category === 'project'">
+                        <nue-tooltip content="删除清单" size="small">
+                            <nue-button
+                                icon="delete"
+                                theme="icon-only"
+                                @click="viewInfo?.handlers?.remove"
+                            />
+                        </nue-tooltip>
+                        <nue-dropdown
+                            hide-on-click
+                            placement="bottom-end"
+                            size="small"
+                            @execute="handleDropdownExecute"
+                        >
+                            <template #default="{ clickTrigger }">
+                                <nue-button icon="more" theme="icon-only" @click="clickTrigger" />
+                            </template>
+                            <template #dropdown>
+                                <li class="nue-dropdown-item" data-executeid="save-as-preference">
+                                    将当前视图保存为偏好
+                                </li>
+                                <li class="nue-dropdown-item" data-executeid="archive">
+                                    归档该清单
+                                </li>
+                            </template>
+                        </nue-dropdown>
+                    </template>
+                    <template v-else-if="category === 'tag'">
+                        <nue-tooltip content="修改标签提示色" size="small">
+                            <tag-color-dot
+                                :color="viewInfo?.payload?.color as string"
+                                style="cursor: pointer; width: 13px"
+                                @click="showUpdateColorDialog"
+                            />
+                        </nue-tooltip>
+                        <nue-tooltip content="删除标签" size="small">
+                            <nue-button
+                                icon="delete"
+                                theme="icon-only"
+                                @click="viewInfo?.handlers?.remove"
+                            />
+                        </nue-tooltip>
+                    </template>
                 </template>
-                <template v-else-if="category === 'tag'">
-                    <nue-tooltip content="修改标签提示色" size="small">
-                        <tag-color-dot
-                            :color="viewInfo?.payload?.color as string"
-                            style="cursor: pointer; width: 13px"
-                            @click="showUpdateColorDialog"
-                        />
-                    </nue-tooltip>
-                    <nue-tooltip content="删除标签" size="small">
-                        <nue-button
-                            icon="delete"
-                            theme="icon-only"
-                            @click="viewInfo?.handlers?.remove"
-                        />
-                    </nue-tooltip>
+                <template #navigations>
+                    <nue-link :route="{ name: `tasks-${$route.meta.id}-table` }" theme="btnlike">
+                        列表视图
+                    </nue-link>
+                    <nue-link :route="{ name: `tasks-${$route.meta.id}-kanban` }" theme="btnlike">
+                        看板视图
+                    </nue-link>
                 </template>
-            </template>
-            <template #navigations>
-                <nue-link :route="{ name: `tasks-${$route.meta.id}-table` }" theme="btnlike">
-                    列表视图
-                </nue-link>
-                <nue-link :route="{ name: `tasks-${$route.meta.id}-kanban` }" theme="btnlike">
-                    看板视图
-                </nue-link>
-            </template>
-        </todo-view-header>
-        <nue-main style="border: none">
-            <suspense>
-                <router-view />
-            </suspense>
+            </todo-view-header>
+        </nue-header>
+        <nue-main class="tasks-main-view__main">
+            <router-view />
         </nue-main>
     </nue-container>
+    <!-- containers -->
     <tag-color-select-dialog ref="tagColorSelectDialogRef" :handler="tagStore.updateTagColor" />
 </template>
 

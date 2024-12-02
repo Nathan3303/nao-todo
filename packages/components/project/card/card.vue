@@ -21,11 +21,11 @@
         <nue-text size="12px" color="gray">
             清单状态：{{ project.isDeleted ? '已删除' : project.isArchived ? '已归档' : '正常' }}
         </nue-text>
-<!--        <nue-divider />-->
-<!--        <nue-div align="center" wrap="nowrap">-->
-<!--            <nue-text size="12px" color="gray">4/16</nue-text>-->
-<!--            <nue-progress :percentage="36" color="#424242" />-->
-<!--        </nue-div>-->
+        <!--        <nue-divider />-->
+        <!--        <nue-div align="center" wrap="nowrap">-->
+        <!--            <nue-text size="12px" color="gray">4/16</nue-text>-->
+        <!--            <nue-progress :percentage="36" color="#424242" />-->
+        <!--        </nue-div>-->
         <nue-div v-if="$slots.footerOps" class="project-card__footer-ops" align="center">
             <nue-divider />
             <slot name="footerOps" />
@@ -65,18 +65,18 @@ const handleClick = () => {
 <style scoped>
 .project-card {
     flex-direction: column;
+}
 
-    &[data-actived='false'] {
-        background-color: #f2f2f2;
+.project-card[data-actived='false'] {
+    background-color: #f2f2f2;
+}
 
-        & > * {
-            opacity: 0.8;
-        }
+.project-card[data-actived='false'] > * {
+    opacity: 0.8;
+}
 
-        .project-card__footer-ops,
-        .project-card__ops {
-            opacity: 1;
-        }
-    }
+.project-card[data-actived='false'] .project-card__footer-ops,
+.project-card[data-actived='false'] .project-card__ops {
+    opacity: 1;
 }
 </style>

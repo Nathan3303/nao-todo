@@ -76,7 +76,7 @@ export const useTodoStore = defineStore('todoStore', () => {
         const newTodo = result.data as Todo
         // console.log('[UseTodoStore] doCreateTodo:', newTodo)
         todos.value.unshift(newTodo)
-        return true
+        return newTodo
     }
 
     // 更新本地待办

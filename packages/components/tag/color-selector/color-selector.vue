@@ -57,24 +57,24 @@ const selectedColor = computed({
 <style scoped>
 .tag-color-selector {
     width: fit-content;
+}
 
-    &:deep().tag-color-dot {
-        cursor: pointer;
-        position: relative;
-        width: 20px !important;
+.tag-color-selector:deep(.tag-color-dot) {
+    cursor: pointer;
+    position: relative;
+    width: 20px !important;
+}
 
-        &[data-selected='true']::after {
-            content: '';
-            display: block;
-            aspect-ratio: 1;
-            width: 12px;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            position: absolute;
-            border: 2px solid white;
-            border-radius: 50%;
-        }
-    }
+.tag-color-selector:deep(.tag-color-dot)[data-selected='true']::after {
+    content: '';
+    display: block;
+    aspect-ratio: 1;
+    width: 12px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    position: absolute;
+    border: 2px solid white;
+    border-radius: 50%;
 }
 </style>

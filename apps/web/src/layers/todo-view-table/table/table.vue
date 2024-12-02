@@ -1,5 +1,5 @@
 <template>
-    <nue-div :data-simple="simple" class="todo-table">
+    <nue-div class="todo-table">
         <nue-div class="todo-table__header" wrap="nowrap">
             <div class="todo-table__header__col col-name">
                 <order-button prop="name">名称</order-button>
@@ -32,81 +32,69 @@
                 <nue-icon v-else name="more" style="opacity: 0" />
             </div>
         </nue-div>
-        <nue-divider class="todo-table__divider" />
-        <nue-div class="todo-table__body">
+        <nue-divider />
+        <nue-div class="todo-table__main">
             <slot name="empty">
-                <nue-text
-                    v-if="!todos.length"
-                    align="center"
-                    color="gray"
-                    size="12px"
-                    style="margin-top: 16px"
-                >
+                <nue-text class="todo-table__main__empty-text" v-if="!todos.length">
                     没有待办事项，放松一下吧！
                 </nue-text>
             </slot>
             <nue-div
                 v-for="(todo, idx) in todos"
+                class="todo-table__main__row"
                 :key="todo.id"
                 :data-done="todo.state === 'done'"
                 :data-selected="idx >= selectRange.start && idx <= selectRange.end"
-                class="todo-table__body__row"
                 @click.stop.exact="handleShowDetails(todo.id, idx)"
                 @click.stop.shift.exact="handleMultiSelect(idx)"
             >
-                <nue-div class="todo-table__body__col col-name" vertical>
-                    <nue-button align="left" class="todo-table-main__row__name" theme="pure">
-                        {{ todo.name }}
-                        <template #append>
-                            <todo-tag-bar
-                                :clamped="2"
-                                :tags="tags"
-                                :todoTags="todo.tags"
-                                readonly
-                                small
-                            />
-                        </template>
-                    </nue-button>
+                <nue-div class="todo-table__main__col col-name" vertical>
+                    <nue-div align="center" wrap="nowrap">
+                        <nue-div width="auto" flex class="col-name__name">
+                            <nue-text>{{ todo.name }}</nue-text>
+                        </nue-div>
+                        <todo-tag-bar
+                            :clamped="2"
+                            :tags="tags"
+                            :todoTags="todo.tags"
+                            readonly
+                            small
+                        />
+                    </nue-div>
                     <nue-text
                         v-if="columnOptions.description && todo.description"
-                        class="todo-table-main__row__description"
-                        size="12px"
+                        class="col-name__description"
                     >
                         {{ todo.description }}
                     </nue-text>
                 </nue-div>
                 <nue-div
                     v-if="columnOptions.createdAt"
-                    class="todo-table__body__col col-created-at"
+                    class="todo-table__main__col col-created-at"
                 >
-                    <nue-text size="12px">
-                        {{ useRelativeDate(todo.createdAt) }}
-                    </nue-text>
+                    <nue-text>{{ useRelativeDate(todo.createdAt) }}</nue-text>
                 </nue-div>
                 <nue-div
                     v-if="columnOptions.updatedAt"
-                    class="todo-table__body__col col-updated-at"
+                    class="todo-table__main__col col-updated-at"
                 >
-                    <nue-text size="12px">
-                        {{ useRelativeDate(todo.updatedAt) }}
-                    </nue-text>
+                    <nue-text>{{ useRelativeDate(todo.updatedAt) }}</nue-text>
                 </nue-div>
                 <nue-div
                     v-if="columnOptions.endAt"
                     :key="refreshKey"
-                    class="todo-table__body__col col-end-at"
+                    class="todo-table__main__col col-end-at"
+                    :data-expired="isTodoExpired(todo)"
                 >
-                    <nue-text :data-expired="isTodoExpired(todo)" size="12px">
-                        {{ useRelativeDate(todo.dueDate.endAt) }}
-                    </nue-text>
+                    <nue-text>{{ useRelativeDate(todo.dueDate.endAt) }}</nue-text>
                 </nue-div>
-                <nue-div v-if="columnOptions.priority" class="todo-table__body__col col-priority">
+                <nue-div v-if="columnOptions.priority" class="todo-table__main__col col-priority">
                     <todo-priority-info :key="todo.priority" :priority="todo.priority" />
                 </nue-div>
-                <nue-div v-if="columnOptions.state" class="todo-table__body__col col-state">
+                <nue-div v-if="columnOptions.state" class="todo-table__main__col col-state">
                     <todo-state-info :key="todo.state" :state="todo.state" />
                 </nue-div>
-                <nue-div v-if="columnOptions.project" class="todo-table__body__col col-project">
+                <nue-div v-if="columnOptions.project" class="todo-table__main__col col-project">
                     <nue-text :clamped="1" size="12px">
                         {{
                             todo.project?.title ||
@@ -115,7 +103,7 @@
                         }}
                     </nue-text>
                 </nue-div>
-                <nue-div class="todo-table__body__col col-actions">
+                <nue-div class="todo-table__main__col col-actions">
                     <nue-icon
                         :name="todo.isDeleted ? 'restore' : 'delete'"
                         @click.stop="handleDeleteBtnClk(todo.id, todo.isDeleted)"
@@ -148,12 +136,16 @@ const {
     handleClearSelectedId,
     handleClearSelect,
     handleClearSortInfo,
-    getProjectNameByIdFromLocal
+    getProjectNameByIdFromLocal,
+    activeRowByTodoIdFromRoute
 } = useTodoTable(props, emit)
 
 const { refreshKey, startRefresh, stopRefresh } = useRefreshKey()
 
-onMounted(() => startRefresh())
+onMounted(() => {
+    startRefresh()
+    activeRowByTodoIdFromRoute()
+})
 
 onBeforeUnmount(() => stopRefresh())
 

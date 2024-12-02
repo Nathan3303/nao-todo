@@ -69,42 +69,42 @@ const handleDelete = async () => {
     flex-wrap: nowrap;
     align-items: center;
     gap: 6px;
+}
 
-    .todo-event-row__check-icon {
-        cursor: pointer;
-    }
+.todo-event-row__check-icon {
+    cursor: pointer;
+}
 
-    .nue-input--small {
-        --disabled-background-color: transparent;
-        font-size: var(--text-xs);
-        padding: 0;
-        flex: 1;
+.todo-event-row .nue-input--small {
+    --disabled-background-color: transparent;
+    font-size: var(--text-xs);
+    padding: 0;
+    flex: 1;
+}
 
-        &[data-is-done='true'] {
-            text-decoration: line-through;
-            color: #999;
-        }
-    }
+.todo-event-row .nue-input--small[data-is-done='true'] {
+    text-decoration: line-through;
+    color: #999;
+}
 
-    .todo-event-row__actions {
-        width: fit-content;
-        display: none;
+.todo-event-row__actions {
+    width: fit-content;
+    display: none;
+}
 
-        & > .nue-icon {
-            cursor: pointer;
-        }
-    }
+.todo-event-row__actions .nue-icon {
+    cursor: pointer;
+}
 
-    &:hover {
-        box-shadow: 0 1px rgba(0, 0, 0, 0.3);
+.todo-event-row:hover {
+    box-shadow: 0 1px rgba(0, 0, 0, 0.3);
+}
 
-        .todo-event-row__actions {
-            display: flex;
-        }
-    }
+.todo-event-row:hover .todo-event-row__actions {
+    display: flex;
+}
 
-    &:focus-within {
-        box-shadow: 0 1px rgba(0, 0, 0, 0.3);
-    }
+.todo-event-row:focus-within {
+    box-shadow: 0 1px rgba(0, 0, 0, 0.3);
 }
 </style>
