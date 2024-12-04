@@ -1,11 +1,16 @@
 <template>
     <nue-div class="tag-color-selector" gap="12px">
-        <nue-tooltip v-for="color in tagColors" :key="color" size="small" :content="color">
+        <nue-tooltip
+            v-for="color in tagColors"
+            :key="color.value"
+            size="small"
+            :content="color.name"
+        >
             <tag-color-dot
-                :color="color"
-                :data-selected="selectedColor === color"
+                :color="color.value"
+                :data-selected="selectedColor === color.value"
                 size="xlarge"
-                @click="selectedColor = color"
+                @click="selectedColor = color.value"
             />
         </nue-tooltip>
     </nue-div>
@@ -25,20 +30,22 @@ const emit = defineEmits<{
 }>()
 
 const tagColors = [
-    'transparent',
-    '#2196f3',
-    '#3f51b5',
-    '#00bcd4',
-    '#009688',
-    '#8bc34a',
-    '#cddc39',
-    '#ffc107',
-    '#ff9800',
-    '#ff6161',
-    '#ff5722',
-    '#795548',
-    '#9e9e9e',
-    '#607d8b'
+    { value: 'transparent', name: '无颜色' },
+    { value: '#FF5733', name: '番茄红 (Tomato Red)' },
+    { value: '#D35400', name: '橘棕色 (Tangerine Brown)' },
+    { value: '#E74C3C', name: '珊瑚红 (Coral Red)' },
+    { value: '#800000', name: '马鞍棕色 (Saddle Brown)' },
+    { value: '#640000', name: '巧克力色 (Chocolate)' },
+    { value: '#F1C40F', name: '鲜黄色 (Mustard Yellow)' },
+    { value: '#32CD32', name: '苜蓿绿 (Lawn Green)' },
+    { value: '#2ECC71', name: '鲜绿宝石 (Emerald Green)' },
+    { value: '#1ABC9C', name: '强绿松石色 (Robust Turquoise)' },
+    { value: '#8FBC8F', name: '老绿色 (Old Lace)' },
+    { value: '#3498DB', name: '亮天蓝 (Bright Cerulean)' },
+    { value: '#483D8B', name: '深蓝色 (Dark Blue)' },
+    { value: '#4B0082', name: '靛蓝色 (Indigo)' },
+    { value: '#9B59B6', name: '中紫罗兰色 (Medium Violet-Magenta)' },
+    { value: '#8E44AD', name: '深紫罗兰色 (Deep Violet-Magenta)' },
 ]
 
 const selectedColor = computed({
