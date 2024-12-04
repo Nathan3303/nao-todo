@@ -287,7 +287,6 @@ export const useProjectStore = defineStore('projectStore', () => {
             // 根据更新结果，显示相应的消息提示
             if (result) {
                 NueMessage.success('清单删除成功')
-
                 return true
             } else {
                 NueMessage.error('清单删除失败')

@@ -1,15 +1,15 @@
 <template>
-    <nue-dialog theme="project-manager" ref="dialogRef" v-model="visible" title="清单管理">
+    <nue-dialog ref="dialogRef" v-model="visible" theme="project-manager" title="清单管理">
         <nue-div class="project-manager">
-            <nue-text size="12px" color="gray">
+            <nue-text color="gray" size="12px">
                 "清单管理"能够清楚地展示出所有的清单，方便执行清单的增删改查。
             </nue-text>
             <nue-div align="center" justify="space-between">
                 <project-filter-bar :filter-options="getOptions" @filter="handleFilter" />
-                <nue-div width="fit-content" gap="12px">
+                <nue-div gap="12px" width="fit-content">
                     <nue-button
-                        theme="small,primary"
                         icon="plus-circle"
+                        theme="small,primary"
                         @click="showCreateProjectDialog"
                     >
                         新增
@@ -17,12 +17,12 @@
                 </nue-div>
             </nue-div>
             <project-board
-                :projects="projects"
                 :loading-state="loading"
-                @delete-project="projectStore.removeProjectWithConfirmation"
+                :projects="projects"
+                @delete-project="handleDeleteProject"
                 @restore-project="projectStore.restoreProjectWithConfirmation"
-                @delete-project-permanently="projectStore.removeProjectPermanently"
-                @archive-project="projectStore.archiveProjectWithConfirmation"
+                @delete-project-permanently="handleDeleteProjectPermanently"
+                @archive-project="handleArchiveProject"
                 @unarchive-project="projectStore.unarchiveProjectWithConfirmation"
             />
         </nue-div>
@@ -30,8 +30,9 @@
     <create-project-dialog ref="createProjectDialogRef" :handler="projectStore.doCreateProject" />
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed, ref, shallowRef } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useProjectStore } from '@/stores/use-project-store'
 import { CreateProjectDialog } from '@/layers'
 import { ProjectBoard, ProjectFilterBar } from '@nao-todo/components/project'
@@ -39,6 +40,8 @@ import type { Project, GetProjectsOptions, GetProjectsOptionsRaw } from '@nao-to
 
 defineOptions({ name: 'ProjectManager' })
 
+const route = useRoute()
+const router = useRouter()
 const projectStore = useProjectStore()
 
 const visible = ref(false)
@@ -57,6 +60,29 @@ const projects = computed<Project[]>(() => {
 const showCreateProjectDialog = () => createProjectDialogRef.value?.show()
 const handleFilter = async (payload: GetProjectsOptions | null) =>
     (getOptions.value = payload || {})
+
+const switchRouteIfRemoved = async (comparedProjectId: Project['id']) => {
+    const projectIdOnRoute = route.params.projectId as string
+    if (projectIdOnRoute !== comparedProjectId) return
+    await router.replace({
+        name: 'tasks-all'
+    })
+}
+
+const handleDeleteProject = async (projectId: Project['id']) => {
+    const result = await projectStore.removeProjectWithConfirmation(projectId)
+    if (result) await switchRouteIfRemoved(projectId)
+}
+
+const handleDeleteProjectPermanently = async (projectId: Project['id']) => {
+    const result = await projectStore.removeProjectPermanently(projectId)
+    if (result) await switchRouteIfRemoved(projectId)
+}
+
+const handleArchiveProject = async (projectId: Project['id']) => {
+    const result = await projectStore.archiveProjectWithConfirmation(projectId)
+    if (result) await switchRouteIfRemoved(projectId)
+}
 
 defineExpose({ show: () => (visible.value = true) })
 </script>
