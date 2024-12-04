@@ -222,12 +222,9 @@ export const useTodoDetails = () => {
     onMounted(() => {
         unSubscribe = todoStore.$subscribe((mutation) => {
             if (mutation.type !== 'direct') return
-            const newValue = mutation.events.newValue
-            if (!newValue) return
-            if (Array.isArray(newValue)) return
-            if (newValue.id && newValue.id === shadowTodo.value?.id) {
-                shadowTodo.value = newValue
-            }
+            const todoId = route.params.taskId as string
+            cancelTimer(true)
+            setTimeout(async () => await _getTodo(todoId))
         })
     })
     onBeforeUnmount(() => {
