@@ -35,22 +35,22 @@
         <nue-divider />
         <nue-div class="todo-table__main">
             <slot name="empty">
-                <nue-text class="todo-table__main__empty-text" v-if="!todos.length">
+                <nue-text v-if="!todos.length" class="todo-table__main__empty-text">
                     没有待办事项，放松一下吧！
                 </nue-text>
             </slot>
             <nue-div
                 v-for="(todo, idx) in todos"
-                class="todo-table__main__row"
                 :key="todo.id"
                 :data-done="todo.state === 'done'"
                 :data-selected="idx >= selectRange.start && idx <= selectRange.end"
+                class="todo-table__main__row"
                 @click.stop.exact="handleShowDetails(todo.id, idx)"
                 @click.stop.shift.exact="handleMultiSelect(idx)"
             >
                 <nue-div class="todo-table__main__col col-name" vertical>
                     <nue-div align="center" wrap="nowrap">
-                        <nue-div width="auto" flex class="col-name__name">
+                        <nue-div class="col-name__name" flex width="auto">
                             <nue-text>{{ todo.name }}</nue-text>
                         </nue-div>
                         <todo-tag-bar
@@ -83,8 +83,8 @@
                 <nue-div
                     v-if="columnOptions.endAt"
                     :key="refreshKey"
-                    class="todo-table__main__col col-end-at"
                     :data-expired="isTodoExpired(todo)"
+                    class="todo-table__main__col col-end-at"
                 >
                     <nue-text>{{ useRelativeDate(todo.dueDate.endAt) }}</nue-text>
                 </nue-div>
@@ -136,17 +136,12 @@ const {
     handleClearSelectedId,
     handleClearSelect,
     handleClearSortInfo,
-    getProjectNameByIdFromLocal,
-    activeRowByTodoIdFromRoute
+    getProjectNameByIdFromLocal
 } = useTodoTable(props, emit)
 
 const { refreshKey, startRefresh, stopRefresh } = useRefreshKey()
 
-onMounted(() => {
-    startRefresh()
-    activeRowByTodoIdFromRoute()
-})
-
+onMounted(() => startRefresh())
 onBeforeUnmount(() => stopRefresh())
 
 defineExpose({
