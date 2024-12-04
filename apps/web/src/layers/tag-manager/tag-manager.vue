@@ -68,7 +68,9 @@ const handleCreateTag = async (payload: CreateTagOptions) => {
 }
 
 const init = () => {
-    tags.value = tagStore.findTagsFromLocal(filterInfo.value)
+    tags.value = tagStore.findTagsFromLocal(filterInfo.value, (key, tag, options) => {
+        if (key === 'name') return tag.name.includes(options.name || '')
+    })
 }
 
 const handleShowDialog = () => {
