@@ -34,13 +34,14 @@
         </nue-div>
         <nue-divider />
         <nue-div class="todo-table__main">
-            <slot name="empty">
+            <slot v-if="!todos.length" name="empty">
                 <nue-text v-if="!todos.length" class="todo-table__main__empty-text">
                     没有待办事项，放松一下吧！
                 </nue-text>
             </slot>
             <nue-div
                 v-for="(todo, idx) in todos"
+                v-else
                 :key="todo.id"
                 :data-done="todo.state === 'done'"
                 :data-selected="idx >= selectRange.start && idx <= selectRange.end"
