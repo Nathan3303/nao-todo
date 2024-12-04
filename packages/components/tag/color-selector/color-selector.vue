@@ -45,7 +45,7 @@ const tagColors = [
     { value: '#483D8B', name: '深蓝色 (Dark Blue)' },
     { value: '#4B0082', name: '靛蓝色 (Indigo)' },
     { value: '#9B59B6', name: '中紫罗兰色 (Medium Violet-Magenta)' },
-    { value: '#8E44AD', name: '深紫罗兰色 (Deep Violet-Magenta)' },
+    { value: '#8E44AD', name: '深紫罗兰色 (Deep Violet-Magenta)' }
 ]
 
 const selectedColor = computed({
