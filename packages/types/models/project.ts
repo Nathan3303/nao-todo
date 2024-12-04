@@ -15,9 +15,9 @@ type Project = {
     description: string
     state: number
     isArchived: boolean
-    archivedAt: Date | null
+    archivedAt: Date | string | null
     isDeleted: boolean
-    DeletedAt: Date | null
+    deletedAt: Date | string | null
     preference: ProjectPreference
     createdAt: Date
     updatedAt: Date
@@ -48,7 +48,9 @@ type UpdateProjectOptionsRaw = {
     description?: string
     state?: number
     isArchived?: boolean
+    archivedAt?: Project['archivedAt']
     isDeleted?: boolean
+    deletedAt?: Project['deletedAt']
     preference?: ProjectPreference
 }
 
