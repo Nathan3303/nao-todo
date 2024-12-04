@@ -4,6 +4,7 @@
             <tag-color-dot
                 :color="color"
                 :data-selected="selectedColor === color"
+                size="xlarge"
                 @click="selectedColor = color"
             />
         </nue-tooltip>
@@ -24,15 +25,13 @@ const emit = defineEmits<{
 }>()
 
 const tagColors = [
+    'transparent',
     '#2196f3',
-    '#9c27b0',
-    '#673ab7',
     '#3f51b5',
     '#00bcd4',
     '#009688',
     '#8bc34a',
     '#cddc39',
-    '#ffeb3b',
     '#ffc107',
     '#ff9800',
     '#ff6161',
@@ -62,7 +61,6 @@ const selectedColor = computed({
 .tag-color-selector:deep(.tag-color-dot) {
     cursor: pointer;
     position: relative;
-    width: 20px !important;
 }
 
 .tag-color-selector:deep(.tag-color-dot)[data-selected='true']::after {
@@ -76,5 +74,9 @@ const selectedColor = computed({
     position: absolute;
     border: 2px solid white;
     border-radius: 50%;
+}
+
+.tag-color-selector:deep(.tag-color-dot.tag-color-dot--transparent)[data-selected='true']::after {
+    background-color: rgba(180, 102, 102, 0.4);
 }
 </style>

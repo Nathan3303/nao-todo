@@ -34,7 +34,7 @@
                         <nue-tooltip content="修改标签提示色" size="small">
                             <tag-color-dot
                                 :color="viewInfo?.payload?.color as string"
-                                style="cursor: pointer; width: 13px"
+                                style="cursor: pointer"
                                 @click="showUpdateColorDialog"
                             />
                         </nue-tooltip>
