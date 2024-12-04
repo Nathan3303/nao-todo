@@ -411,7 +411,7 @@ export const useProjectStore = defineStore('projectStore', () => {
         try {
             const result = await NueConfirm({
                 title: '永久删除清单确认',
-                content: '确认永久删除该清单吗？',
+                content: '确认永久删除该清单吗？（清单内的待办任务都将删除）',
                 confirmButtonText: '确认',
                 cancelButtonText: '取消',
                 onConfirm: async () => await doDeleteProject(projectId)
