@@ -142,7 +142,7 @@ export const useTodoStore = defineStore('todoStore', () => {
         if (result.code !== 20000) return false
         const newTodo = result.data as Todo
         todos.value.unshift(newTodo)
-        return true
+        return newTodo
     }
 
     // 删除指定待办（带确认）
@@ -277,7 +277,7 @@ export const useTodoStore = defineStore('todoStore', () => {
             })
             if (result) {
                 NueMessage.success('待办复制成功')
-                return true
+                return result
             } else {
                 NueMessage.error('待办复制失败')
             }
