@@ -1,24 +1,28 @@
 <template>
     <nue-collapse-item name="tags">
         <template #header="{ collapse, state }">
-            <nue-button theme="pure" :icon="state ? 'arrow-right' : 'arrow-down'" @click="collapse">
+            <nue-button :icon="state ? 'arrow-right' : 'arrow-down'" theme="pure" @click="collapse">
                 <template #default>
                     <nue-div>
                         <nue-text size="12px">标签</nue-text>
-                        <nue-text size="12px" color="gray"> {{ tags.length }}</nue-text>
+                        <nue-text color="gray" size="12px"> {{ tags.length }}</nue-text>
                     </nue-div>
                 </template>
             </nue-button>
-            <nue-div width="fit-content" gap="8px">
-                <nue-tooltip size="small" content="打开标签管理器">
-                    <nue-button theme="pure" icon="setting" @click.stop="showTagManageDialog" />
+            <nue-div gap="8px" width="fit-content">
+                <nue-tooltip content="打开标签管理器" size="small">
+                    <nue-button
+                        icon="setting"
+                        theme="pure"
+                        @click.stop="tasksDialogStore.showTagManagerDialog"
+                    />
                 </nue-tooltip>
-                <nue-tooltip size="small" content="创建新标签">
+                <nue-tooltip content="创建新标签" size="small">
                     <nue-button
                         id="create-tag-btn"
-                        theme="pure"
                         icon="plus"
-                        @click.stop="showCreateTagDialog"
+                        theme="pure"
+                        @click.stop="tasksDialogStore.showCreateTagDialog"
                     />
                 </nue-tooltip>
             </nue-div>
@@ -27,9 +31,9 @@
         <template v-if="tags && tags.length">
             <aside-link
                 v-for="tag in tags"
-                icon="tag"
                 :key="tag.id"
                 :route="{ name: 'tasks-tag', params: { tagId: tag.id } }"
+                icon="tag"
             >
                 {{ tag.name }}
                 <template #append>
@@ -37,32 +41,23 @@
                 </template>
             </aside-link>
         </template>
-        <nue-text v-else class="nue-collapse-item__empty-text" size="11px" color="#a5a5a5">
+        <nue-text v-else class="nue-collapse-item__empty-text" color="#a5a5a5" size="11px">
             以标签的维度展示不同清单的待办任务。
         </nue-text>
     </nue-collapse-item>
-    <create-tag-dialog ref="createTagDialogRef" :handler="tagStore.doCreateTag" />
-    <tag-manager ref="tagManagerRef" />
 </template>
 
-<script setup lang="ts">
-import { ref, computed } from 'vue'
+<script lang="ts" setup>
+import { computed } from 'vue'
 import { useTagStore } from '@/stores'
-import { CreateTagDialog, AsideLink, TagColorDot } from '@nao-todo/components'
-import TagManager from '../tag-manager/tag-manager.vue'
+import { AsideLink, TagColorDot } from '@nao-todo/components'
+import { useTasksDialogStore } from '@/views/index/tasks'
 import type { Tag } from '@nao-todo/types'
 
 defineOptions({ name: 'TagSmartList' })
 
 const tagStore = useTagStore()
+const tasksDialogStore = useTasksDialogStore()
 
-const createTagDialogRef = ref<InstanceType<typeof CreateTagDialog>>()
-const tagManagerRef = ref<InstanceType<typeof TagManager>>()
-
-const tags = computed<Tag[]>(() => {
-    return tagStore.findTagsFromLocal({}) || []
-})
-
-const showCreateTagDialog = () => createTagDialogRef.value?.show()
-const showTagManageDialog = () => tagManagerRef.value?.show()
+const tags = computed<Tag[]>(() => tagStore.findTagsFromLocal({}) || [])
 </script>

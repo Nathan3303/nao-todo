@@ -35,7 +35,7 @@
                             <tag-color-dot
                                 :color="viewInfo?.payload?.color as string"
                                 style="cursor: pointer"
-                                @click="showUpdateColorDialog"
+                                @click="tasksDialogStore.showTagColorSelectDialog"
                             />
                         </nue-tooltip>
                         <nue-tooltip content="删除标签" size="small">
@@ -61,42 +61,30 @@
             <router-view />
         </nue-main>
     </nue-container>
-    <!-- containers -->
-    <tag-color-select-dialog ref="tagColorSelectDialogRef" :handler="tagStore.updateTagColor" />
 </template>
 
 <script lang="ts" setup>
-import { ref, watchEffect } from 'vue'
+import { watchEffect } from 'vue'
 import { TodoViewHeader } from '@/layers'
-import { useTagStore } from '@/stores'
-import { useTasksViewStore } from '../stores'
 import { storeToRefs } from 'pinia'
 import { onBeforeRouteUpdate } from 'vue-router'
-import { TagColorDot, TagColorSelectDialog } from '@nao-todo/components'
+import { TagColorDot } from '@nao-todo/components'
+import { useTasksDialogStore, useTasksHandlerStore, useTasksViewStore } from '..'
 
 const tasksViewStore = useTasksViewStore()
-const tagStore = useTagStore()
+const tasksDialogStore = useTasksDialogStore()
+const tasksHandlerStore = useTasksHandlerStore()
 
 const { category, viewInfo } = storeToRefs(tasksViewStore)
-const tagColorSelectDialogRef = ref<InstanceType<typeof TagColorSelectDialog>>()
-
-// 显示标签颜色选择对话框
-const showUpdateColorDialog = async () => {
-    if (!viewInfo.value) return
-    tagColorSelectDialogRef.value?.show(
-        viewInfo.value.id,
-        (viewInfo.value.payload?.color as string) || 'transparent'
-    )
-}
 
 // 清单操作菜单处理函数
 const handleDropdownExecute = async (executeId: string) => {
     switch (executeId) {
         case 'save-as-preference':
-            await tasksViewStore.handleUpdateProjectPreference()
+            await tasksHandlerStore.handleUpdateProjectPreference()
             break
         case 'archive':
-            await tasksViewStore.handleArchiveProject()
+            await tasksHandlerStore.handleArchiveProject()
             break
     }
 }
@@ -118,5 +106,6 @@ onBeforeRouteUpdate((to, from, next) => {
     next()
 })
 
+// 获取视图信息
 watchEffect(() => tasksViewStore.getViewInfo())
 </script>

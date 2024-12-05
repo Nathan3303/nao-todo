@@ -27,3 +27,4 @@ export * from './todo-comment-details'
 // tag
 export * from './tag-manager'
 export * from './tag-smart-list'
+export * from './create-tag-dialog'

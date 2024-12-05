@@ -5,8 +5,8 @@
     </nue-div>
     <nue-container
         v-else-if="shadowTodo"
-        class="tasks-details-view"
         :key="shadowTodo?.id"
+        class="tasks-details-view"
         theme="vertical,inner"
     >
         <nue-header class="tasks-details-view__header">
@@ -103,7 +103,7 @@
                     <nue-div v-if="isCommenting" align="stretch" style="padding: 16px" vertical>
                         <comment-creator
                             :handler="handleLeaveComment"
-                            @cancel="isCommenting = false"
+                            @cancel="(isCommenting = false)"
                         />
                     </nue-div>
                     <nue-div v-else gap="8px" style="padding: 16px">
@@ -133,7 +133,7 @@
             <todo-project-selector
                 :project-id="shadowTodo.projectId"
                 :projects="projects"
-                :user-id="userStore.user!.id"
+                :user-id="userStore.user?.id || ''"
                 @select="handleMoveToProject"
             />
             <nue-div gap="4px" width="fit-content" wrap="nowrap">
@@ -162,29 +162,34 @@
             </nue-div>
         </nue-footer>
     </nue-container>
-    <nue-empty v-else description="点击左侧列表中的任务查看详细" image-src="/images/to-do.png" />
+    <nue-empty
+        v-else
+        description="选择左侧的任务以查看详细"
+        image-size="64px"
+        image-src="/images/to-do.png"
+    />
 </template>
 
 <script lang="ts" setup>
-import { ref, nextTick } from 'vue'
+import { nextTick, ref } from 'vue'
 import { useTodoDetails } from './use-details'
 import { useCommentDetails } from './use-comment-details'
 import { useTagStore, useUserStore } from '@/stores'
 import DetailsRow from './row.vue'
-import { TodoEventDetails, TodoCommentDetails } from '@/layers'
+import { TodoCommentDetails, TodoEventDetails } from '@/layers'
 import {
     TodoPrioritySelectOptions,
     TodoSelector,
     TodoStateSelectOptions
 } from '@nao-todo/components/todo/selector'
 import {
+    CommentCreator,
     SwitchButton,
     TodoCheckButton,
     TodoDateSelector,
     TodoDeleteButton,
     TodoProjectSelector,
-    TodoTagBar,
-    CommentCreator
+    TodoTagBar
 } from '@nao-todo/components'
 import { NueTextarea } from 'nue-ui'
 import './details-v2.css'

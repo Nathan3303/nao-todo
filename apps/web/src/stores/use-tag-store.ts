@@ -35,10 +35,10 @@ export const useTagStore = defineStore('tagStore', () => {
     const doCreateTag = async (options: CreateTagOptions) => {
         const result = await createTag(options)
         if (result.code !== 20000) return false
-        const newProject = result.data as Tag
-        // console.log('[UseTagStore] doCreateTag:', newProject)
-        tags.value.push(newProject)
-        return true
+        const newTag = result.data as Tag
+        // console.log('[UseTagStore] doCreateTag:', newTag)
+        tags.value.push(newTag)
+        return newTag
     }
 
     // 更新标签

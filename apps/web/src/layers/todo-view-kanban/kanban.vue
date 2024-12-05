@@ -8,7 +8,7 @@
                         v-if="!disabledCreateTodo"
                         icon="plus-circle"
                         theme="small,primary"
-                        @click="showCreateTodoDialog"
+                        @click="tasksDialogStore.showCreateTodoDialog"
                     >
                         新增
                     </nue-button>
@@ -50,40 +50,33 @@
             </template>
         </nue-main>
     </nue-container>
-    <!-- dialogs -->
-    <create-todo-dialog ref="todoCreateDialogRef" :handler="handleCreateTodo" />
 </template>
 
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { Loading, TodoFilterBar } from '@nao-todo/components'
 import { ContentKanbanColumn } from './kanban-column'
-import { CreateTodoDialog, TodoTableColumnSelector } from '@/layers'
+import { TodoTableColumnSelector } from '@/layers'
 import { useTodoStore } from '@/stores'
-import type { CreateTodoDialogCallerArgs } from '@/layers/create-todo-dialog/types'
-import type { CreateTodoOptions, GetTodosOptions, Todo, TodoColumnOptions } from '@nao-todo/types'
+import { useTasksDialogStore } from '@/views/index/tasks'
+import type { GetTodosOptions, Todo, TodoColumnOptions } from '@nao-todo/types'
 import type { TodoFilterOptions } from '@nao-todo/components/todo/filter-bar/types'
 
 const props = defineProps<{
     baseRoute: string
     disabledCreateTodo?: boolean
 }>()
-const emit = defineEmits<{
-    (event: 'createTodo', newTodoName: string): void
-    (event: 'createTodoByDialog', caller: (args: CreateTodoDialogCallerArgs) => void): void
-}>()
 
 const router = useRouter()
-const route = useRoute()
 const todoStore = useTodoStore()
+const tasksDialogStore = useTasksDialogStore()
 
 const { todos, getOptions } = storeToRefs(todoStore)
 const kanbanLoading = ref(true)
 const refreshTimer = ref<number | null>(null)
 const draggingTodoId = ref('abc')
-const todoCreateDialogRef = ref<InstanceType<typeof CreateTodoDialog>>()
 
 // 计算 TodoFilterBar 的过滤选项
 const todoFilterBarOptions = computed<TodoFilterOptions>(() => {
@@ -112,11 +105,6 @@ const showTodoDetails = (todoId: Todo['id']) => {
         name: baseRoute,
         params: { taskId: todoId }
     })
-}
-
-const showCreateTodoDialog = () => {
-    if (!todoCreateDialogRef.value) return
-    emit('createTodoByDialog', todoCreateDialogRef.value.show)
 }
 
 const handleGetTodos = async () => {
@@ -218,15 +206,6 @@ const handleDrop = async (event: DragEvent) => {
     const todo = todoStore.getTodoByIdFromLocal(todoId)
     if (todo && todo.state === category) return
     await todoStore.doUpdateTodo(todoId, { state: category as Todo['state'] })
-}
-
-const handleCreateTodo = async (options: CreateTodoOptions) => {
-    const result = (await todoStore.doCreateTodo(options)) as Todo
-    if (result) {
-        await router.push({ name: route.name, params: { taskId: result.id } })
-        return true
-    }
-    return false
 }
 
 setTimeout(() => handleGetTodos())

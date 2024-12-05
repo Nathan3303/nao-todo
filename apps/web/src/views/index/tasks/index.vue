@@ -1,13 +1,13 @@
 <template>
     <nue-container class="tasks-view" theme="vertical,inner">
         <nue-main
-            class="tasks-view__main"
             :allow-collapse-aside="false"
             :allow-collapse-outline="false"
             :allow-hide-aside="false"
             aside-max-width="300px"
             aside-min-width="200px"
             aside-width="240px"
+            class="tasks-view__main"
             outline-max-width="600px"
             outline-min-width="400px"
             outline-width="480px"
@@ -45,22 +45,63 @@
             </template>
         </nue-main>
     </nue-container>
+    <!-- Dialogs -->
+    <project-manager ref="projectManagerRef" />
+    <tag-manager ref="tagManagerRef" />
+    <create-project-dialog
+        ref="createProjectDialogRef"
+        :handler="tasksHandlerStore.handleCreateProject"
+    />
+    <create-todo-dialog ref="createTodoDialogRef" :handler="tasksHandlerStore.handleCreateTodo" />
+    <create-tag-dialog ref="createTagDialogRef" :handler="tasksHandlerStore.handleCreateTag" />
+    <tag-color-select-dialog
+        ref="tagColorSelectDialogRef"
+        :handler="tasksHandlerStore.handleSelectTagColor"
+    />
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
-import { ProjectSmartList, TagSmartList, TodoDetailsV2, TodoMultiDetails } from '@/layers'
+import { onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useViewStore } from '@/stores'
-import { useTasksViewStore } from './stores'
-import { AsideLink } from '@nao-todo/components'
+import { AsideLink, TagColorSelectDialog } from '@nao-todo/components'
 import { useMoment } from '@nao-todo/utils'
+import { useTasksDialogStore, useTasksHandlerStore, useTasksViewStore } from '.'
+import {
+    CreateProjectDialog,
+    CreateTagDialog,
+    CreateTodoDialog,
+    ProjectManager,
+    ProjectSmartList,
+    TagManager,
+    TagSmartList,
+    TodoDetailsV2,
+    TodoMultiDetails
+} from '@/layers'
 
 const viewStore = useViewStore()
 const tasksViewStore = useTasksViewStore()
+const tasksDialogStore = useTasksDialogStore()
+const tasksHandlerStore = useTasksHandlerStore()
 
 const now = useMoment()
+const projectManagerRef = ref<InstanceType<typeof ProjectManager>>()
+const tagManagerRef = ref<InstanceType<typeof TagManager>>()
+const createProjectDialogRef = ref<InstanceType<typeof CreateProjectDialog>>()
+const createTodoDialogRef = ref<InstanceType<typeof CreateTodoDialog>>()
+const createTagDialogRef = ref<InstanceType<typeof CreateTagDialog>>()
+const tagColorSelectDialogRef = ref<InstanceType<typeof TagColorSelectDialog>>()
 
 const { projectAsideVisible: pav } = storeToRefs(viewStore)
 const collapseItemsRecord = ref(['projects', 'tags', 'filters'])
+
+// 挂载后钩子 -> 注册对话框
+onMounted(() => {
+    tasksDialogStore.projectManagerRef = projectManagerRef.value
+    tasksDialogStore.tagManagerRef = tagManagerRef.value
+    tasksDialogStore.createProjectDialogRef = createProjectDialogRef.value
+    tasksDialogStore.createTodoDialogRef = createTodoDialogRef.value
+    tasksDialogStore.createTagDialogRef = createTagDialogRef.value
+    tasksDialogStore.tagColorSelectDialogRef = tagColorSelectDialogRef.value
+})
 </script>
