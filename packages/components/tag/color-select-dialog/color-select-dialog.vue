@@ -5,8 +5,8 @@
             <tag-color-selector v-model="tagColor" />
         </nue-div>
         <template #footer="{ cancel }">
-            <nue-button @click="cancel">取消</nue-button>
-            <nue-button theme="primary" @click="handleSelect">确认</nue-button>
+            <nue-button :disabled="loading" @click="cancel">取消</nue-button>
+            <nue-button :loading="loading" theme="primary" @click="handleSelect">确认</nue-button>
         </template>
     </nue-dialog>
 </template>

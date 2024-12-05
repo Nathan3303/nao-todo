@@ -64,7 +64,8 @@
 }
 
 .todo-table__main__row[data-done='true'] * {
-    opacity: 0.68;
+    opacity: 0.8;
+    transition: opacity 0.16s ease;
 }
 
 .todo-table__main__col {

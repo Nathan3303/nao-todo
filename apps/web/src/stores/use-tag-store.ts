@@ -1,7 +1,13 @@
 import { computed, ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
 import { createTag, deleteTag, getTags, updateTag } from '@nao-todo/apis'
-import type { CreateTagOptions, GetTagsOptions, GetTagsOptionsRaw, Tag, UpdateTagOptions } from '@nao-todo/types'
+import type {
+    CreateTagOptions,
+    GetTagsOptions,
+    GetTagsOptionsRaw,
+    Tag,
+    UpdateTagOptions
+} from '@nao-todo/types'
 import { NueConfirm, NueMessage, NuePrompt } from 'nue-ui'
 
 export const useTagStore = defineStore('tagStore', () => {
@@ -71,17 +77,16 @@ export const useTagStore = defineStore('tagStore', () => {
     const updateTagNameWithPrompt = async (tagId: Tag['id'], currentName: Tag['name']) => {
         try {
             // 尝试更新项目标题
-            const newName = await NuePrompt({
+            const result = await NuePrompt({
                 title: '修改标签名称',
                 placeholder: '请输入新的标签名称',
                 confirmButtonText: '确认',
                 cancelButtonText: '取消',
                 inputValue: currentName,
-                validator: (value: string) => value
+                validator: (value: string) => value,
+                onConfirm: async (newName: string) => doUpdateTag(tagId, { name: newName })
             })
-
-            const updateOptions = { name: newName } as UpdateTagOptions
-            if (await doUpdateTag(tagId, updateOptions)) {
+            if (result) {
                 NueMessage.success('标签名称修改成功')
                 return true
             } else {
@@ -108,13 +113,14 @@ export const useTagStore = defineStore('tagStore', () => {
     const deleteTagWithConfirmation = async (tagId: Tag['id']) => {
         try {
             // 尝试删除项目
-            await NueConfirm({
+            const result = await NueConfirm({
                 title: '删除标签',
                 content: '确定要删除此标签吗？',
                 confirmButtonText: '确认',
-                cancelButtonText: '取消'
+                cancelButtonText: '取消',
+                onConfirm: async () => await doDeleteTag(tagId)
             })
-            if (await doDeleteTag(tagId)) {
+            if (result) {
                 NueMessage.success('标签删除成功')
                 return true
             } else {

@@ -28,6 +28,10 @@
     --primary-font-family: "Poppins", "pingfang", "Noto Sans SC", sans-serif;
 }
 
+* {
+    font-family: var(--primary-font-family) sans-serif;
+    -moz-osx-font-smoothing: grayscale;
+}
 
 /* 登录界面 */
 .auth-view__main {

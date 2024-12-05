@@ -200,7 +200,9 @@ export const useTodoDetails = () => {
     // 复制
     const handleDuplicateTodo = async () => {
         if (!shadowTodo.value) return
-        await todoStore.duplicateTodoWithConfirmation(shadowTodo.value.id)
+        const result = await todoStore.duplicateTodoWithConfirmation(shadowTodo.value.id)
+        if (!result) return
+        await router.push({ name: route.name, params: { taskId: (result as Todo).id as string } })
     }
 
     // 关闭详情
@@ -222,12 +224,9 @@ export const useTodoDetails = () => {
     onMounted(() => {
         unSubscribe = todoStore.$subscribe((mutation) => {
             if (mutation.type !== 'direct') return
-            const newValue = mutation.events.newValue
-            if (!newValue) return
-            if (Array.isArray(newValue)) return
-            if (newValue.id && newValue.id === shadowTodo.value?.id) {
-                shadowTodo.value = newValue
-            }
+            const todoId = route.params.taskId as string
+            cancelTimer(true)
+            setTimeout(async () => await _getTodo(todoId))
         })
     })
     onBeforeUnmount(() => {

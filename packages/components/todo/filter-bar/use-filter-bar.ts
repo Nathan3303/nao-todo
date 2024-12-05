@@ -4,19 +4,19 @@ import type { Todo } from '@nao-todo/types'
 
 const stateOptions: FrameworkOptions<Todo['state']> = [
     {
-        label: '待办(todo)',
+        label: '待办 (todo)',
         value: 'todo',
         icon: 'circle',
         checked: false
     },
     {
-        label: '正在进行(in-progress)',
+        label: '正在进行 (in-progress)',
         value: 'in-progress',
         icon: 'in-progress',
         checked: false
     },
     {
-        label: '已完成(done)',
+        label: '已完成 (done)',
         value: 'done',
         icon: 'success',
         checked: false
@@ -25,19 +25,19 @@ const stateOptions: FrameworkOptions<Todo['state']> = [
 
 const priorityOptions: FrameworkOptions<Todo['priority']> = [
     {
-        label: '低(low)',
+        label: '低优先级 (low)',
         value: 'low',
         checked: false,
         icon: 'priority-1'
     },
     {
-        label: '中(medium)',
+        label: '中优先级 (medium)',
         value: 'medium',
         icon: 'priority-2',
         checked: false
     },
     {
-        label: '高(high)',
+        label: '高优先级 (high)',
         value: 'high',
         icon: 'priority-3',
         checked: false

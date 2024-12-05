@@ -244,6 +244,10 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
                 }
                 break
         }
+        if (!viewInfo.value) {
+            await router.replace('/tasks/all')
+            return
+        }
         // console.log('[UseTasksViewStore/getViewInfo] category:', category.value)
         // console.log('[UseTasksViewStore/getViewInfo] viewInfo:', viewInfo.value)
         todoStore.setGetOptionsByPreference(viewInfo.value!.preference)

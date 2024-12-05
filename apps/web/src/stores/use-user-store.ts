@@ -4,7 +4,7 @@ import { defineStore } from 'pinia'
 import { signin, signup, checkin, signout, updateNickname, updatePassword } from '@nao-todo/apis'
 import { getJWTPayload } from '@nao-todo/utils'
 import { NueConfirm, NueMessage } from 'nue-ui'
-import type { User, SigninOptions, SignupOptions } from '@nao-todo/types'
+import type { User, SigninOptions, SignupOptions, ResponseData } from '@nao-todo/types'
 
 export const useUserStore = defineStore('userStore', () => {
     const router = useRouter()
@@ -74,13 +74,13 @@ export const useUserStore = defineStore('userStore', () => {
     // 用户登出（带确认）
     const signOutWithConfirmation = async () => {
         try {
-            await NueConfirm({
+            const result = await NueConfirm({
                 title: '退出登录',
                 content: '你确定要退出登录吗？',
                 confirmButtonText: '确认',
-                cancelButtonText: '取消'
+                cancelButtonText: '取消',
+                onConfirm: async () => await doSignout()
             })
-            const result = await doSignout()
             if (result) {
                 await router.push('/auth/login')
                 NueMessage.success('退出登录成功')
@@ -88,8 +88,8 @@ export const useUserStore = defineStore('userStore', () => {
                 NueMessage.error('退出登录失败')
             }
             return result
-        } catch (err) {
-            console.log('[UserStore] signOutWithConfirmation: canceled!')
+        } catch (e) {
+            console.log('[UserStore] signOutWithConfirmation:', e)
         }
         return false
     }
@@ -110,15 +110,13 @@ export const useUserStore = defineStore('userStore', () => {
     // 更新密码
     const updatePasswordWithConfirmation = async (newPasswordRaw: string) => {
         try {
-            await NueConfirm({
+            const result = (await NueConfirm({
                 title: '提交更新密码',
                 content: '确定要更新密码吗？（更新成功后需要重新登录）',
                 confirmButtonText: '确认',
-                cancelButtonText: '取消'
-            })
-            const _password = newPasswordRaw.trim()
-            const result = await updatePassword(_password)
-            // const result = { code: 20000 }
+                cancelButtonText: '取消',
+                onConfirm: async () => await updatePassword(newPasswordRaw.trim())
+            })) as ResponseData
             if (result.code === 20000) {
                 NueMessage.success('更新密码成功')
                 const signoutRes = await doSignout()
@@ -127,8 +125,8 @@ export const useUserStore = defineStore('userStore', () => {
             }
             NueMessage.error('更新密码失败')
             return false
-        } catch (error) {
-            console.warn('[UserStore] updatePasswordWithConfirmation: canceled!')
+        } catch (e) {
+            console.warn('[UserStore] updatePasswordWithConfirmation:', e)
         }
     }
 

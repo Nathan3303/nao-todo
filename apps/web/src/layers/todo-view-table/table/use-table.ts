@@ -1,7 +1,7 @@
-import { reactive, ref, watch, provide } from 'vue'
+import { reactive, ref, watch, provide, onBeforeUnmount, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { isExpired } from '@nao-todo/utils'
-import { useProjectStore } from '@/stores'
+import { useProjectStore, useTodoStore } from '@/stores'
 import type { Todo } from '@nao-todo/types'
 import type {
     TodoTableEmits,
@@ -13,6 +13,7 @@ import type {
 export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
     const route = useRoute()
     const projectStore = useProjectStore()
+    const todoStore = useTodoStore()
 
     const selectedId = ref<Todo['id']>()
     const sortInfo = reactive<TodoTableProps['sortOptions']>(props.sortOptions)
@@ -21,6 +22,7 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
         end: -1,
         original: -1
     })
+    let unSubscribe: () => void
 
     const isTodoExpired = (todo: Todo) => {
         const endAt = (todo.dueDate.endAt || '') as string
@@ -47,9 +49,9 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
 
     const handleShowDetails = (todoId: Todo['id'], idx: number) => {
         const taskId = route.params.taskId
+        selectRange.original = selectRange.start = selectRange.end = idx
         if (selectedId.value === todoId && taskId) return
         selectedId.value = todoId
-        selectRange.original = selectRange.start = selectRange.end = idx
         emit('showTodoDetails', todoId)
     }
 
@@ -79,7 +81,6 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
         if (fullClear) selectRange.original = -1
         selectRange.start = selectRange.original
         selectRange.end = selectRange.original
-        console.log(selectRange)
     }
 
     const handleClearSortInfo = () => {
@@ -103,20 +104,30 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
     // 根据路由中的待办 ID 激活表格项
     const activeRowByTodoIdFromRoute = () => {
         const idx = getIndexByTodoIdFromRoute()
-        if (idx === -1) return
+        if (idx === -1) {
+            handleClearSelect(true)
+            return
+        }
         handleShowDetails(props.todos[idx].id, idx)
     }
-
-    watch(
-        () => props.todos,
-        () => handleClearSelect(true)
-    )
 
     watch(
         () => sortInfo,
         (newValue) => emit('sortTodo', { ...newValue }),
         { deep: true }
     )
+
+    onMounted(() => {
+        activeRowByTodoIdFromRoute()
+        unSubscribe = todoStore.$subscribe((mutation) => {
+            if (mutation.type !== 'direct') return
+            setTimeout(() => activeRowByTodoIdFromRoute())
+        })
+    })
+
+    onBeforeUnmount(() => {
+        if (unSubscribe) unSubscribe()
+    })
 
     provide<TodoTableContext>('TodoTableContext', {
         showDetailsHandler: handleShowDetails,
@@ -135,7 +146,6 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
         handleClearSelectedId,
         handleClearSelect,
         handleClearSortInfo,
-        getProjectNameByIdFromLocal,
-        activeRowByTodoIdFromRoute
+        getProjectNameByIdFromLocal
     }
 }

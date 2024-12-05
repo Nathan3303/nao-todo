@@ -11,6 +11,7 @@ import type {
     UpdateProjectOptionsRaw
 } from '@nao-todo/types'
 import { NueConfirm, NueMessage, NuePrompt } from 'nue-ui'
+import moment from 'moment'
 
 export const useProjectStore = defineStore('projectStore', () => {
     const projects = ref<Project[]>([])
@@ -156,21 +157,18 @@ export const useProjectStore = defineStore('projectStore', () => {
     ) => {
         try {
             // 显示用户提示对话框，让用户输入新的项目标题
-            const newTitle = await NuePrompt({
+            const result = await NuePrompt({
                 title: '修改清单名称',
                 placeholder: '请输入新的清单名称',
                 confirmButtonText: '确认',
                 cancelButtonText: '取消',
                 inputValue: currentTitle,
                 // 简单的验证器，确保输入值不为空
-                validator: (value: string) => value
+                validator: (value: string) => value,
+                onConfirm: async (newTitle: string) =>
+                    await doUpdateProject(projectId, { title: newTitle })
             })
-
-            // 准备更新项目的参数
-            const updateOptions = { title: newTitle } as UpdateProjectOptions
-
-            // 尝试更新项目标题
-            if (await doUpdateProject(projectId, updateOptions)) {
+            if (result) {
                 // 如果更新成功，显示成功消息
                 NueMessage.success('清单名称修改成功')
                 return true
@@ -180,7 +178,7 @@ export const useProjectStore = defineStore('projectStore', () => {
             }
         } catch (error) {
             // 捕获异常并打印错误信息
-            console.warn('[UseProjectStore] updateProjectTitleWithPromt:', error)
+            console.warn('[UseProjectStore] updateProjectTitleWithPrompt:', error)
         }
         // 如果执行到此处，表示更新失败或出现异常，返回false
         return false
@@ -203,21 +201,16 @@ export const useProjectStore = defineStore('projectStore', () => {
     ) => {
         try {
             // 显示提示框，获取用户输入的新描述
-            const newDescription = await NuePrompt({
+            const result = await NuePrompt({
                 title: '修改清单描述',
                 placeholder: '请输入新的清单描述',
                 confirmButtonText: '确认',
                 cancelButtonText: '取消',
                 inputValue: currentDescription,
-                validator: (value: string) => value
+                validator: (value: string) => value,
+                onConfirm: async (newDescription: string) =>
+                    await doUpdateProject(projectId, { description: newDescription })
             })
-
-            // 准备更新选项对象
-            const updateOptions = { description: newDescription } as UpdateProjectOptions
-
-            // 调用更新项目描述的函数，并等待结果
-            const result = await doUpdateProject(projectId, updateOptions)
-
             // 根据更新结果，显示相应的消息
             if (result) {
                 NueMessage.success('清单描述修改成功')
@@ -280,16 +273,17 @@ export const useProjectStore = defineStore('projectStore', () => {
     const removeProjectWithConfirmation = async (projectId: Project['id']) => {
         try {
             // 显示确认对话框，提示用户确认是否删除项目
-            await NueConfirm({
+            const result = await NueConfirm({
                 title: '删除清单确认',
                 content: '确认删除该清单吗？',
                 confirmButtonText: '确认',
-                cancelButtonText: '取消'
+                cancelButtonText: '取消',
+                onConfirm: async () =>
+                    await doUpdateProject(projectId, {
+                        isDeleted: true,
+                        deletedAt: moment().toDate()
+                    })
             })
-            // 定义更新项目的选项，标记项目为已删除
-            const updateOptions = { isDeleted: true, deletedAt: Date.now() }
-            // 调用doUpdateProject函数，尝试更新项目状态为已删除
-            const result = await doUpdateProject(projectId, updateOptions)
             // 根据更新结果，显示相应的消息提示
             if (result) {
                 NueMessage.success('清单删除成功')
@@ -316,15 +310,14 @@ export const useProjectStore = defineStore('projectStore', () => {
     const restoreProjectWithConfirmation = async (projectId: Project['id']) => {
         try {
             // 显示确认对话框，用户需确认是否恢复项目
-            await NueConfirm({
+            const result = await NueConfirm({
                 title: '恢复清单确认',
                 content: '确认恢复该清单吗？',
                 confirmButtonText: '确认',
-                cancelButtonText: '取消'
+                cancelButtonText: '取消',
+                onConfirm: async () =>
+                    await doUpdateProject(projectId, { isDeleted: false, deletedAt: null })
             })
-            // 更新项目的删除状态，以恢复项目
-            const updateOptions = { isDeleted: false, deletedAt: null }
-            const result = await doUpdateProject(projectId, updateOptions)
             // 根据更新结果，显示相应的消息
             if (result) {
                 NueMessage.success('清单恢复成功')
@@ -352,16 +345,17 @@ export const useProjectStore = defineStore('projectStore', () => {
     const archiveProjectWithConfirmation = async (projectId: Project['id']) => {
         try {
             // 显示确认对话框，询问用户是否确认归档该项目
-            await NueConfirm({
+            const result = await NueConfirm({
                 title: '归档清单确认',
                 content: '确认归档该清单吗？',
                 confirmButtonText: '确认',
-                cancelButtonText: '取消'
+                cancelButtonText: '取消',
+                onConfirm: async () =>
+                    await doUpdateProject(projectId, {
+                        isArchived: true,
+                        archivedAt: moment().toDate()
+                    })
             })
-            // 如果用户确认归档，准备更新项目的归档状态和归档时间
-            const updateOptions = { isArchived: true, archivedAt: Date.now() }
-            // 执行项目更新操作，并等待结果
-            const result = await doUpdateProject(projectId, updateOptions)
             // 根据更新结果，显示相应的消息
             if (result) {
                 NueMessage.success('清单归档成功')
@@ -389,16 +383,14 @@ export const useProjectStore = defineStore('projectStore', () => {
     const unarchiveProjectWithConfirmation = async (projectId: Project['id']) => {
         try {
             // 显示确认对话框，让用户确认是否要取消归档项目
-            await NueConfirm({
+            const result = await NueConfirm({
                 title: '取消归档清单确认',
                 content: '确认取消归档该清单吗？',
                 confirmButtonText: '确认',
-                cancelButtonText: '取消'
+                cancelButtonText: '取消',
+                onConfirm: async () =>
+                    await doUpdateProject(projectId, { isArchived: false, archivedAt: null })
             })
-            // 定义更新项目的选项，设置项目为未归档状态
-            const updateOptions = { isArchived: false, archivedAt: null }
-            // 调用更新项目的方法，并等待结果
-            const result = await doUpdateProject(projectId, updateOptions)
             // 根据更新结果，显示相应的消息
             if (result) {
                 NueMessage.success('清单取消归档成功')
@@ -417,13 +409,13 @@ export const useProjectStore = defineStore('projectStore', () => {
     // 永久删除指定清单（带确认）
     const removeProjectPermanently = async (projectId: Project['id']) => {
         try {
-            await NueConfirm({
+            const result = await NueConfirm({
                 title: '永久删除清单确认',
-                content: '确认永久删除该清单吗？',
+                content: '确认永久删除该清单吗？（清单内的待办任务都将删除）',
                 confirmButtonText: '确认',
-                cancelButtonText: '取消'
+                cancelButtonText: '取消',
+                onConfirm: async () => await doDeleteProject(projectId)
             })
-            const result = await doDeleteProject(projectId)
             if (result) {
                 NueMessage.success('清单永久删除成功')
                 return true

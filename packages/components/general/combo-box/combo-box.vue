@@ -12,7 +12,7 @@
         </template>
         <template #dropdown>
             <nue-container class="combo-box-container">
-                <nue-header>
+                <nue-header @click.stop>
                     <nue-input
                         theme="noshape,small"
                         icon="search"

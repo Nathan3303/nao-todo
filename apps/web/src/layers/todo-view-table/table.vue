@@ -1,6 +1,6 @@
 <template>
     <nue-container class="tasks-main-table-view" theme="vertical,inner">
-        <nue-header class="tasks-main-table-view__header" :key="$route.path">
+        <nue-header :key="$route.path" class="tasks-main-table-view__header">
             <nue-div align="start" gap="16px" justify="space-between">
                 <todo-filter-bar :filter-options="todoFilterBarOptions" @filter="handleFilter" />
                 <nue-div flex="none" gap="12px" justify="end" width="fit-content">
@@ -42,7 +42,15 @@
                     @show-todo-details="showTodoDetails"
                     @sort-todo="sortTodo"
                     @multi-select="handleMultiSelect"
-                />
+                >
+                    <template #empty>
+                        <nue-empty
+                            description="没有待办事项，放松一下吧！"
+                            image-size="48px"
+                            image-src="/images/coffeecup.png"
+                        />
+                    </template>
+                </todo-table>
             </nue-div>
         </nue-main>
         <nue-footer>

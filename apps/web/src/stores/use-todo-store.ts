@@ -142,21 +142,23 @@ export const useTodoStore = defineStore('todoStore', () => {
         if (result.code !== 20000) return false
         const newTodo = result.data as Todo
         todos.value.unshift(newTodo)
-        return true
+        return newTodo
     }
 
     // 删除指定待办（带确认）
     const deleteTodoWithConfirmation = async (todoId: Todo['id']) => {
         try {
-            await NueConfirm({
+            const result = await NueConfirm({
                 title: '删除待办确认',
                 content: '确认删除该待办吗？',
                 confirmButtonText: '确认',
-                cancelButtonText: '取消'
+                cancelButtonText: '取消',
+                onConfirm: async () =>
+                    await doUpdateTodo(todoId, {
+                        isDeleted: true,
+                        deletedAt: useMoment().toISOString()
+                    })
             })
-            const now = useMoment().toISOString()
-            const updateOptions = { isDeleted: true, deletedAt: now } as UpdateTodoOptions
-            const result = await doUpdateTodo(todoId, updateOptions)
             if (result) {
                 NueMessage.success('待办删除成功')
                 deleteLocalTodo(todoId)
@@ -173,14 +175,14 @@ export const useTodoStore = defineStore('todoStore', () => {
     // 恢复指定待办（带确认）
     const restoreTodoWithConfirmation = async (todoId: Todo['id']) => {
         try {
-            await NueConfirm({
+            const result = await NueConfirm({
                 title: '恢复待办确认',
                 content: '确认恢复该待办吗？',
                 confirmButtonText: '确认',
-                cancelButtonText: '取消'
+                cancelButtonText: '取消',
+                onConfirm: async () =>
+                    await doUpdateTodo(todoId, { isDeleted: false, deletedAt: null })
             })
-            const updateOptions = { isDeleted: false, deletedAt: null }
-            const result = await doUpdateTodo(todoId, updateOptions)
             if (result) {
                 NueMessage.success('待办恢复成功')
                 return deleteLocalTodo(todoId)
@@ -196,14 +198,17 @@ export const useTodoStore = defineStore('todoStore', () => {
     // 删除指定待办(s)（带确认）
     const deleteTodosWithConfirmation = async (todoIds: Todo['id'][]) => {
         try {
-            await NueConfirm({
+            const result = await NueConfirm({
                 title: '删除多个待办确认',
                 content: '确认删除这些待办吗？',
                 confirmButtonText: '确认',
-                cancelButtonText: '取消'
+                cancelButtonText: '取消',
+                onConfirm: async () =>
+                    await doUpdateTodos(todoIds, {
+                        isDeleted: true,
+                        deletedAt: useMoment().toISOString()
+                    })
             })
-            const now = useMoment().toISOString()
-            const result = await doUpdateTodos(todoIds, { isDeleted: true, deletedAt: now })
             if (result) {
                 return NueMessage.success('更新成功')
             } else {
@@ -218,13 +223,14 @@ export const useTodoStore = defineStore('todoStore', () => {
     // 恢复指定待办(s)（带确认）
     const restoreTodosWithConfirmation = async (todoIds: Todo['id'][]) => {
         try {
-            await NueConfirm({
+            const result = await NueConfirm({
                 title: '恢复多个待办确认',
                 content: '确认恢复这些待办吗？',
                 confirmButtonText: '确认',
-                cancelButtonText: '取消'
+                cancelButtonText: '取消',
+                onConfirm: async () =>
+                    await doUpdateTodos(todoIds, { isDeleted: false, deletedAt: null })
             })
-            const result = await doUpdateTodos(todoIds, { isDeleted: false, deletedAt: null })
             if (result) {
                 NueMessage.success('更新成功')
                 return true
@@ -240,13 +246,13 @@ export const useTodoStore = defineStore('todoStore', () => {
     // 永久删除指定待办（带确认）
     const deleteTodoPermanentlyWithConfirmation = async (todoId: Todo['id']) => {
         try {
-            await NueConfirm({
+            const result = await NueConfirm({
                 title: '永久删除待办确认',
                 content: '确认永久删除该待办吗？',
                 confirmButtonText: '确认',
-                cancelButtonText: '取消'
+                cancelButtonText: '取消',
+                onConfirm: async () => await doDeleteTodo(todoId)
             })
-            const result = await doDeleteTodo(todoId)
             if (result) {
                 NueMessage.success('待办永久删除成功')
                 return true
@@ -262,16 +268,16 @@ export const useTodoStore = defineStore('todoStore', () => {
     // 复制任务（带确认）
     const duplicateTodoWithConfirmation = async (todoId: Todo['id']) => {
         try {
-            await NueConfirm({
+            const result = await NueConfirm({
                 title: '复制待办确认',
                 content: '确认复制该待办吗？',
                 confirmButtonText: '确认',
-                cancelButtonText: '取消'
+                cancelButtonText: '取消',
+                onConfirm: async () => await doDuplicateTodo(todoId)
             })
-            const result = await doDuplicateTodo(todoId)
             if (result) {
                 NueMessage.success('待办复制成功')
-                return true
+                return result
             } else {
                 NueMessage.error('待办复制失败')
             }
