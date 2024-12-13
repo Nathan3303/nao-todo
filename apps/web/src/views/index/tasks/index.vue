@@ -12,15 +12,13 @@
             outline-min-width="400px"
             outline-width="480px"
         >
-            <template v-if="pav" #aside>
+            <template v-if="projectAsideVisible" #aside>
                 <aside-link icon="more2" route-name="tasks-all">所有</aside-link>
                 <aside-link icon="calendar2" route-name="tasks-today">
-                    今天（ {{ now.format('MM月DD日') }} ）
+                    今天（ {{ now.format('MM月DD日, dddd') }} ）
                 </aside-link>
                 <aside-link icon="tomorrow2" route-name="tasks-tomorrow">明天</aside-link>
-                <aside-link icon="week" route-name="tasks-week">
-                    本周（ {{ now.format('dddd') }} ）
-                </aside-link>
+                <aside-link icon="week" route-name="tasks-week">本周</aside-link>
                 <aside-link icon="inbox" route-name="tasks-inbox">收集箱</aside-link>
                 <nue-divider />
                 <nue-collapse v-model="collapseItemsRecord">
@@ -92,8 +90,8 @@ const createTodoDialogRef = ref<InstanceType<typeof CreateTodoDialog>>()
 const createTagDialogRef = ref<InstanceType<typeof CreateTagDialog>>()
 const tagColorSelectDialogRef = ref<InstanceType<typeof TagColorSelectDialog>>()
 
-const { projectAsideVisible: pav } = storeToRefs(viewStore)
-const collapseItemsRecord = ref(['projects', 'tags', 'filters'])
+const { projectAsideVisible } = storeToRefs(viewStore)
+const collapseItemsRecord = ref(['projects', 'tags'])
 
 // 挂载后钩子 -> 注册对话框
 onMounted(() => {
