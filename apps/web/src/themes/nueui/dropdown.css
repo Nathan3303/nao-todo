@@ -1,3 +1,9 @@
+.nue-dropdown .nue-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 /* Combo box*/
 .nue-dropdown--combo-box {
     padding: 0;
