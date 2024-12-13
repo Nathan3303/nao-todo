@@ -11,24 +11,6 @@
                                 @click="viewInfo?.handlers?.remove"
                             />
                         </nue-tooltip>
-                        <nue-dropdown
-                            hide-on-click
-                            placement="bottom-end"
-                            size="small"
-                            @execute="handleDropdownExecute"
-                        >
-                            <template #default="{ clickTrigger }">
-                                <nue-button icon="more" theme="icon-only" @click="clickTrigger" />
-                            </template>
-                            <template #dropdown>
-                                <li class="nue-dropdown-item" data-executeid="save-as-preference">
-                                    将当前视图保存为偏好
-                                </li>
-                                <li class="nue-dropdown-item" data-executeid="archive">
-                                    归档该清单
-                                </li>
-                            </template>
-                        </nue-dropdown>
                     </template>
                     <template v-else-if="category === 'tag'">
                         <nue-tooltip content="修改标签提示色" size="small">
@@ -46,6 +28,33 @@
                             />
                         </nue-tooltip>
                     </template>
+
+                    <nue-dropdown
+                        hide-on-click
+                        placement="bottom-end"
+                        size="small"
+                        @execute="handleDropdownExecute"
+                    >
+                        <template #default="{ clickTrigger }">
+                            <nue-button icon="more" theme="icon-only" @click="clickTrigger" />
+                        </template>
+                        <template #dropdown>
+                            <template v-if="category === 'project'">
+                                <li class="nue-dropdown-item" data-executeid="save-as-preference">
+                                    将当前视图保存为偏好
+                                </li>
+                                <li class="nue-dropdown-item" data-executeid="archive">
+                                    归档该清单
+                                </li>
+                            </template>
+                            <template v-else>
+                                <li class="nue-dropdown-item" data-executeid="hide-which-is-done">
+                                    <nue-icon name="eye-close" />
+                                    隐藏已完成
+                                </li>
+                            </template>
+                        </template>
+                    </nue-dropdown>
                 </template>
                 <template #navigations>
                     <nue-link :route="{ name: `tasks-${$route.meta.id}-table` }" theme="btnlike">
@@ -65,9 +74,9 @@
 
 <script lang="ts" setup>
 import { watchEffect } from 'vue'
-import { TodoViewHeader } from '@/layers'
 import { storeToRefs } from 'pinia'
 import { onBeforeRouteUpdate } from 'vue-router'
+import { TodoViewHeader } from '@/layers'
 import { TagColorDot } from '@nao-todo/components'
 import { useTasksDialogStore, useTasksHandlerStore, useTasksViewStore } from '..'
 
@@ -86,12 +95,14 @@ const handleDropdownExecute = async (executeId: string) => {
         case 'archive':
             await tasksHandlerStore.handleArchiveProject()
             break
+        case 'hide-which-is-done':
+            await tasksHandlerStore.handleHideTodosWhichIsDone()
+            break
     }
 }
 
 // 处理路由重复问题
 onBeforeRouteUpdate((to, from, next) => {
-    // console.log(to, from)
     const toName = (to.name as string).split('-').slice(0, 2).join('-')
     const fromName = from.name as string
     if ((fromName.endsWith('kanban') || fromName.endsWith('table')) && to.name === toName) {

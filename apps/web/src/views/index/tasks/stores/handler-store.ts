@@ -129,6 +129,13 @@ export const useTasksHandlerStore = defineStore('TasksHandlerStore', () => {
         return true
     }
 
+    // 隐藏已完成的待办
+    const handleHideTodosWhichIsDone = async () => {
+        const options = { state: 'todo,in-progress' }
+        todoStore.mergeGetOptions(options)
+        await todoStore.doGetTodos()
+    }
+
     return {
         handleUpdateProjectTitle,
         handleUpdateProjectDescription,
@@ -140,6 +147,7 @@ export const useTasksHandlerStore = defineStore('TasksHandlerStore', () => {
         handleDeleteTag,
         handleCreateTag,
         handleSelectTagColor,
-        handleCreateTodo
+        handleCreateTodo,
+        handleHideTodosWhichIsDone
     }
 })
