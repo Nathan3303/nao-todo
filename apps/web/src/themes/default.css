@@ -10,6 +10,7 @@
 @import url('nueui/text.css');
 @import url('nueui/textarea.css');
 @import url('nueui/empty.css');
+@import url('nueui/icon.css');
 
 /* 全局 */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
@@ -83,6 +84,14 @@
     padding: 8px;
     background-color: var(--primary-color-200);
     border-radius: var(--primary-radius);
+}
+
+.tasks-view__main .nue-main__content {
+    overflow: hidden;
+}
+
+.tasks-main-view {
+    min-width: 680px;
 }
 
 .tasks-main-view .tasks-main-view__header {

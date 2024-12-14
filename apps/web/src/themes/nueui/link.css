@@ -12,7 +12,7 @@
 }
 
 .nue-link--index-header-link .nue-icon {
-    font-size: 22px;
+    --icon-size: 22px;
 }
 
 /* plink */

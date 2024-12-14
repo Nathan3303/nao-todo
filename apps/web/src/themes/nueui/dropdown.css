@@ -2,6 +2,12 @@
     display: flex;
     align-items: center;
     gap: 8px;
+
+    .nue-button {
+        .nue-button__icon {
+            --icon-size: 16px;
+        }
+    }
 }
 
 /* Combo box*/

@@ -1,0 +1,14 @@
+.nue-icon {
+    --icon-size: inherit;
+    font-size: var(--icon-size) !important;
+
+    &.iconfont:before {
+        --icon-size: unset;
+    }
+
+    &::before {
+        display: unset !important;
+        font-size: var(--icon-size) !important;
+        aspect-ratio: unset !important;
+    }
+}

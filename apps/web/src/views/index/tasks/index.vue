@@ -6,16 +6,16 @@
             :allow-hide-aside="false"
             aside-max-width="300px"
             aside-min-width="200px"
-            aside-width="240px"
+            aside-width="250px"
             class="tasks-view__main"
-            outline-max-width="600px"
-            outline-min-width="400px"
+            outline-max-width="540px"
+            outline-min-width="420px"
             outline-width="480px"
         >
             <template v-if="projectAsideVisible" #aside>
                 <aside-link icon="more2" route-name="tasks-all">所有</aside-link>
                 <aside-link icon="calendar2" route-name="tasks-today">
-                    今天（ {{ now.format('MM月DD日, dddd') }} ）
+                    今天 - {{ now.format('MM月DD日, dddd') }}
                 </aside-link>
                 <aside-link icon="tomorrow2" route-name="tasks-tomorrow">明天</aside-link>
                 <aside-link icon="week" route-name="tasks-week">本周</aside-link>
