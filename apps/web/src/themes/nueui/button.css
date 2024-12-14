@@ -1,7 +1,11 @@
 .nue-button {
     .nue-button__icon {
-        --icon-size: inherit;
-        font-size: var(--icon-size);
+        display: block;
+        line-height: normal;
+
+        &.iconfont {
+            font-size: var(--icon-size);
+        }
     }
 }
 
