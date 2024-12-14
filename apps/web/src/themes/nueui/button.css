@@ -1,11 +1,20 @@
-/* icon-only */
-.nue-button--icon-only .nue-button__text {
-    display: none;
+.nue-button {
+    .nue-button__icon {
+        --icon-size: inherit;
+        font-size: var(--icon-size);
+    }
 }
 
-.nue-button--icon-only .nue-icon::before {
-    font-size: 16px;
-    font-weight: 500;
+/* icon-only */
+.nue-button--icon-only {
+    .nue-button__text {
+        display: none;
+    }
+
+    .nue-icon::before {
+        font-size: 16px;
+        font-weight: 500;
+    }
 }
 
 /* pure-icon */

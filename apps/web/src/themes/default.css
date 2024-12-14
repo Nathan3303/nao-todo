@@ -85,6 +85,14 @@
     border-radius: var(--primary-radius);
 }
 
+.tasks-view__main .nue-main__content {
+    overflow: hidden;
+}
+
+.tasks-main-view {
+    min-width: 680px;
+}
+
 .tasks-main-view .tasks-main-view__header {
     box-sizing: border-box;
     height: auto;
