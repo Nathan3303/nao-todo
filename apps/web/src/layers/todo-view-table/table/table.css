@@ -97,7 +97,13 @@
 .col-created-at,
 .col-updated-at,
 .col-end-at {
-    width: 11%;
+    width: 8%;
+
+    .nue-text {
+        text-overflow: unset;
+        overflow: initial;
+        white-space: initial;
+    }
 }
 
 .col-end-at[data-expired='true'] .nue-text {
