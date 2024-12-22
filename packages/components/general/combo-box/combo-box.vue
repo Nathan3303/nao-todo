@@ -1,4 +1,3 @@
-<!--suppress VueUnrecognizedSlot -->
 <template>
     <nue-dropdown theme="combo-box" v-bind="$attrs">
         <template #default="{ clickTrigger }">
@@ -18,7 +17,7 @@
                         :placeholder="`筛选${triggerTitle.toLowerCase()}`"
                         clearable
                         icon="search"
-                        theme="noshape,small"
+                        theme="noshape"
                     />
                 </nue-header>
                 <nue-main>
