@@ -55,7 +55,7 @@
                             <nue-text>{{ todo.name }}</nue-text>
                         </nue-div>
                         <todo-tag-bar
-                            :clamped="2"
+                            :clamped="3"
                             :tags="tags"
                             :todoTags="todo.tags"
                             readonly

@@ -8,9 +8,15 @@
                 :tag="tag"
                 @delete="handleDropTag"
             />
-            <nue-div v-if="todoTags.length > clamped" class="todo-tag-bar__clamped-text">
-                <nue-text color="white">+{{ todoTags.length - clamped }}</nue-text>
-            </nue-div>
+            <tag-node
+                v-if="todoTags.length > clamped"
+                :tag="{
+                    id: 'overflow-tag',
+                    name: `+${todoTags.length - clamped}`,
+                    color: '#a1a1a1'
+                }"
+                readonly
+            />
         </nue-div>
         <combo-box
             v-if="!readonly"
@@ -45,20 +51,7 @@ const { visibleTags, comboBoxOptions, handleAddTag, handleDropTag } = useTagBar(
     text-decoration: none !important;
 }
 
-.todo-tag-bar__clamped-text {
-    width: fit-content;
-    background-color: #a1a1a1;
-    border-radius: 99px;
-    padding: 3px 8px;
-}
-
-.todo-tag-bar__clamped-text > .nue-text {
-    font-size: 12px;
-    color: white !important;
-}
-
-.todo-tag-bar--small .tag-node,
-.todo-tag-bar--small .todo-tag-bar__clamped-text {
+.todo-tag-bar--small .tag-node {
     --tag-node-vgap: 6px;
     --tag-node-fs: calc(var(--text-xs) - 0.08rem);
 }
