@@ -141,3 +141,32 @@
     font-size: 12px !important;
     margin-top: 16px;
 }
+
+
+/* scrollbar */
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--divider-color) transparent;
+
+    &::-webkit-scrollbar {
+        width: var(--primary-radius);
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: var(--divider-color);
+        border-radius: var(--primary-radius);
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-button {
+        display: none;
+    }
+
+    &::-webkit-scrollbar-corner {
+        background: transparent;
+    }
+}

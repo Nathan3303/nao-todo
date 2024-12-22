@@ -60,6 +60,6 @@ const { visibleTags, comboBoxOptions, handleAddTag, handleDropTag } = useTagBar(
 .todo-tag-bar--small .tag-node,
 .todo-tag-bar--small .todo-tag-bar__clamped-text {
     --tag-node-vgap: 6px;
-    --tag-node-fs: var(--text-xs);
+    --tag-node-fs: calc(var(--text-xs) - 0.08rem);
 }
 </style>

@@ -1,5 +1,5 @@
 .tag-node {
-    --tag-node-fs: var(--text-sm);
+    --tag-node-fs: var(--text-xs);
     --tag-node-vgap: 8px;
     --tag-node-bg: unset;
 }
