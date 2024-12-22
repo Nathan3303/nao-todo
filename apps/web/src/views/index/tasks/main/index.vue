@@ -13,7 +13,11 @@
                         </nue-tooltip>
                     </template>
                     <template v-else-if="category === 'tag'">
-                        <nue-tooltip content="修改标签提示色" size="small">
+                        <nue-tooltip
+                            content="修改标签提示色"
+                            size="small"
+                            style="margin-right: 12px"
+                        >
                             <tag-color-dot
                                 :color="viewInfo?.payload?.color as string"
                                 style="cursor: pointer"
