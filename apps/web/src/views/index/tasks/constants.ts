@@ -14,6 +14,7 @@ const projectStore = useProjectStore()
 const tagStore = useTagStore()
 const todoStore = useTodoStore()
 
+// 默认列选项
 export const defaultColumnOptions: TodoColumnOptions = {
     endAt: true,
     state: true,
@@ -24,12 +25,14 @@ export const defaultColumnOptions: TodoColumnOptions = {
     updatedAt: false
 }
 
+// 默认偏好
 export const defaultPreference: ProjectPreference = {
     viewType: 'table',
     getTodosOptions: { page: 1, limit: 20, isDeleted: false },
     columns: defaultColumnOptions
 }
 
+// 基础视图信息预设
 export const basicViewsInfo: {
     [key in TasksMainBasicViewNames]: TasksMainViewInfo
 } = {

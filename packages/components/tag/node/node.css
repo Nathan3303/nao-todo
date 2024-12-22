@@ -1,0 +1,60 @@
+.tag-node {
+    --tag-node-fs: var(--text-xs);
+    --tag-node-vgap: 8px;
+    --tag-node-bg: unset;
+}
+
+.tag-node {
+    width: auto;
+    background-color: var(--tag-node-bg);
+    border-radius: 99px;
+    position: relative;
+    cursor: default;
+    flex: none;
+    gap: var(--tag-node-vgap);
+    padding: calc(var(--tag-node-vgap) * 0.5) var(--tag-node-vgap);
+
+    .tag-node__name {
+        color: white;
+        font-size: var(--tag-node-fs);
+        line-height: 1.1;
+    }
+
+    .tag-node__delete-button {
+        display: block;
+        position: absolute;
+        top: calc(0px - var(--tag-node-vgap) * 0.5);
+        right: calc(0px - var(--tag-node-vgap) * 0.5);
+        background-color: rgba(0, 0, 0, 0.6);
+        height: calc(var(--tag-node-fs) + 3px);
+        line-height: calc(var(--tag-node-fs) + 3px);
+        text-align: center;
+        aspect-ratio: 1 / 1;
+        color: white;
+        border-radius: 99px;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.16s ease;
+        --icon-size: var(--text-xs);
+
+        &::before {
+            line-height: 1.1;
+        }
+
+        &:hover {
+            opacity: 1;
+        }
+    }
+
+    &:hover .tag-node__delete-button {
+        opacity: 1;
+    }
+}
+
+.tag-node--transparent {
+    border: 1px solid #696969;
+
+    & > .tag-node__name {
+        color: #696969;
+    }
+}

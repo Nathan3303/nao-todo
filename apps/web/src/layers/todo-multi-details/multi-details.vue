@@ -11,7 +11,17 @@
             <nue-button icon="clear" size="small" @click="handleCancelMultiSelect">关闭</nue-button>
         </nue-header>
         <nue-main>
-            <nue-div style="padding: 16px" vertical>
+            <nue-div flex style="padding: 16px" vertical>
+                <nue-div align="center">
+                    <todo-date-selector
+                        v-model="commonData.dueDate.endAt"
+                        @change="handleChangeEndDate"
+                    />
+                    <nue-text v-if="commonData.dueDate.endAt" color="gray" size="12px">
+                        (截止于 {{ useRelativeDate(commonData.dueDate.endAt) }} )
+                    </nue-text>
+                </nue-div>
+                <nue-divider />
                 <nue-div align="center" wrap="nowrap">
                     <todo-selector
                         :options="TodoStateSelectOptions"
@@ -25,27 +35,8 @@
                         placeholder="待办优先级"
                         @change="handleChangePriority"
                     />
-                    <nue-div flex />
-                    <todo-project-selector
-                        :project-id="commonData.projectId"
-                        :project-title="commonData.project.title"
-                        :projects="avalibleProjects"
-                        :user-id="userStore.user!.id"
-                        placeholder="移动到清单"
-                        @select="setProjectInfo"
-                    />
                 </nue-div>
-                <!--                <nue-divider />-->
-                <nue-div align="center">
-                    <todo-date-selector
-                        v-model="commonData.dueDate.endAt"
-                        @change="handleChangeEndDate"
-                    />
-                    <nue-text v-if="commonData.dueDate.endAt" color="gray" size="12px">
-                        (截止于 {{ useRelativeDate(commonData.dueDate.endAt) }} )
-                    </nue-text>
-                </nue-div>
-                <!--                <nue-divider />-->
+                <nue-div flex />
                 <todo-tag-bar
                     :tags="avalibleTags"
                     :todo-tags="commonData.tags"
@@ -54,11 +45,23 @@
             </nue-div>
         </nue-main>
         <nue-footer style="justify-content: space-between">
-            <todo-delete-button
-                :is-deleted="commonData.isDeleted"
-                @delete="handleRemove"
-                @restore="handleRestore"
+            <todo-project-selector
+                :project-id="commonData.projectId"
+                :projects="avalibleProjects"
+                :user-id="userStore.user!.id"
+                placeholder="移动到清单"
+                @select="setProjectInfo"
             />
+            <nue-div width="auto">
+                <nue-button icon="delete" size="small" theme="error" @click="handleDelete">
+                    永久删除
+                </nue-button>
+                <todo-delete-button
+                    :is-deleted="commonData.isDeleted"
+                    @delete="handleRemove"
+                    @restore="handleRestore"
+                />
+            </nue-div>
         </nue-footer>
     </nue-container>
 </template>
@@ -94,6 +97,7 @@ const {
     handleChangePriority,
     handleRemove,
     handleRestore,
+    handleDelete,
     handleCancelMultiSelect
 } = useMultiDetails(props)
 </script>

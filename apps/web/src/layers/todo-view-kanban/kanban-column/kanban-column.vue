@@ -2,10 +2,10 @@
     <nue-container class="kanban-column" theme="vertical,inner">
         <nue-header class="kanban-column__header" height="32px" style="box-sizing: border-box">
             <todo-state-info :state="category" />
-            <nue-text color="gray" size="12px">{{ todos.length }}</nue-text>
+            <nue-text color="gray" size="var(--text-sm)">{{ todos.length }}</nue-text>
         </nue-header>
         <nue-main class="kanban-column__main" style="border: none">
-            <empty :empty="!todos.length" message="没有数据。" />
+            <empty :empty="!todos.length" message="没有待办任务" />
             <todo-card
                 v-for="todo in todos"
                 :key="todo.id"

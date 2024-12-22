@@ -3,20 +3,20 @@
         <nue-tooltip
             v-for="color in tagColors"
             :key="color.value"
-            size="small"
             :content="color.name"
+            size="small"
         >
             <tag-color-dot
                 :color="color.value"
                 :data-selected="selectedColor === color.value"
                 size="xlarge"
-                @click="selectedColor = color.value"
+                @click="(selectedColor = color.value)"
             />
         </nue-tooltip>
     </nue-div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts" setup>
 import { computed } from 'vue'
 import { TagColorDot } from '@nao-todo/components'
 

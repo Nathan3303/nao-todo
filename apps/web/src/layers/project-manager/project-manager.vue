@@ -10,7 +10,7 @@
                     <nue-button
                         icon="plus-circle"
                         theme="small,primary"
-                        @click="showCreateProjectDialog"
+                        @click="tasksDialogStore.showCreateProjectDialog"
                     >
                         新增
                     </nue-button>
@@ -27,26 +27,25 @@
             />
         </nue-div>
     </nue-dialog>
-    <create-project-dialog ref="createProjectDialogRef" :handler="projectStore.doCreateProject" />
 </template>
 
 <script lang="ts" setup>
 import { computed, ref, shallowRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useProjectStore } from '@/stores/use-project-store'
-import { CreateProjectDialog } from '@/layers'
+import { useTasksDialogStore } from '@/views/index/tasks'
 import { ProjectBoard, ProjectFilterBar } from '@nao-todo/components/project'
-import type { Project, GetProjectsOptions, GetProjectsOptionsRaw } from '@nao-todo/types'
+import type { GetProjectsOptions, GetProjectsOptionsRaw, Project } from '@nao-todo/types'
 
 defineOptions({ name: 'ProjectManager' })
 
 const route = useRoute()
 const router = useRouter()
 const projectStore = useProjectStore()
+const tasksDialogStore = useTasksDialogStore()
 
 const visible = ref(false)
 const loading = ref(false)
-const createProjectDialogRef = ref<InstanceType<typeof CreateProjectDialog>>()
 const getOptions = shallowRef<GetProjectsOptionsRaw>({})
 
 const projects = computed<Project[]>(() => {
@@ -57,7 +56,6 @@ const projects = computed<Project[]>(() => {
     })
 })
 
-const showCreateProjectDialog = () => createProjectDialogRef.value?.show()
 const handleFilter = async (payload: GetProjectsOptions | null) =>
     (getOptions.value = payload || {})
 

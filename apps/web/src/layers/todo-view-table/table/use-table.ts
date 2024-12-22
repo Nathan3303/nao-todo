@@ -121,6 +121,8 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
         activeRowByTodoIdFromRoute()
         unSubscribe = todoStore.$subscribe((mutation) => {
             if (mutation.type !== 'direct') return
+            if (mutation.events.type === 'set') return
+            // console.log(mutation);
             setTimeout(() => activeRowByTodoIdFromRoute())
         })
     })

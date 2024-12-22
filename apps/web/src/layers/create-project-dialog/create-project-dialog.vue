@@ -1,45 +1,45 @@
 <template>
-    <nue-dialog ref="dialogRef" v-model="visible" title="创建项目" :closable="!loading">
-        <nue-div vertical align="stretch">
-            <nue-div vertical align="stretch" gap="4px">
+    <nue-dialog ref="dialogRef" v-model="visible" :closable="!loading" title="创建清单">
+        <nue-div align="stretch" vertical>
+            <nue-div align="stretch" gap="4px" vertical>
                 <nue-input
                     ref="projectNameInputRef"
                     v-model="newProjectPayload.title"
-                    title="项目名称"
-                    placeholder="请输入项目名称"
                     :debounce-time="240"
                     :disabled="loading"
                     clearable
+                    placeholder="请输入清单名称"
+                    title="清单名称"
                 />
-                <nue-text v-if="isProjectTitleEmpty" size="12px" color="#f56c6c">
-                    * 项目名称不能为空
+                <nue-text v-if="isProjectTitleEmpty" color="#f56c6c" size="12px">
+                    * 清单名称不能为空
                 </nue-text>
             </nue-div>
-            <nue-div vertical align="stretch" gap="8px">
-                <nue-checkbox v-model="isAddDescription" size="small" :disabled="loading">
-                    添加项目备注
+            <nue-div align="stretch" gap="8px" vertical>
+                <nue-checkbox v-model="isAddDescription" :disabled="loading" size="small">
+                    添加清单备注
                 </nue-checkbox>
                 <nue-textarea
                     v-if="isAddDescription"
                     v-model="newProjectPayload.description"
-                    title="Project description"
-                    placeholder="项目描述"
                     :rows="0"
                     autosize
+                    placeholder="清单描述"
+                    title="Project description"
                 ></nue-textarea>
             </nue-div>
         </nue-div>
         <template #footer="{ cancel }">
             <nue-button :disabled="loading" @click.stop="cancel">取消</nue-button>
-            <nue-button theme="primary" :loading="loading" @click="handleAddProject">
+            <nue-button :loading="loading" theme="primary" @click="handleAddProject">
                 创建
             </nue-button>
         </template>
     </nue-dialog>
 </template>
 
-<script setup lang="ts">
-import { ref, nextTick, watch } from 'vue'
+<script lang="ts" setup>
+import { nextTick, ref, watch } from 'vue'
 import { NueInput } from 'nue-ui'
 import type { CreateProjectOptions } from '@nao-todo/types'
 

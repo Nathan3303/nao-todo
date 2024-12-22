@@ -48,11 +48,6 @@ const visible = ref(false)
 const loading = ref(false)
 const isTagNameEmpty = ref(false)
 
-const showCreateTagDialog = async () => {
-    visible.value = true
-    await nextTick(() => tagNameInputRef.value?.innerInputRef?.focus())
-}
-
 const handleClearInputValues = () => {
     newTag.value = { ...defaultTagTemplate }
 }
@@ -77,7 +72,10 @@ const handleCreateTag = async () => {
 }
 
 defineExpose({
-    show: showCreateTagDialog,
+    show: () => {
+        visible.value = true
+        nextTick(() => tagNameInputRef.value?.innerInputRef?.focus())
+    },
     clear: handleClearInputValues
 })
 </script>

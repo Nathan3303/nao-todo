@@ -2,14 +2,7 @@
     <nue-container class="index-view" theme="horizontal">
         <nue-header class="index-view__header">
             <template #logo>
-                <nue-tooltip content="更新日志" placement="right-center" size="small">
-                    <img
-                        class="index-view__header__logo"
-                        alt="logo"
-                        src="/favicon.ico"
-                        @click.stop="showUpdateLogDialog"
-                    />
-                </nue-tooltip>
+                <img alt="logo" class="index-view__header__logo" src="/favicon.ico" />
             </template>
             <template #navigators>
                 <nue-div vertical>
@@ -44,7 +37,6 @@
         </nue-main>
     </nue-container>
     <!-- Dialogs -->
-    <update-log-dialog ref="updateLogDialogRef" />
     <user-profile-dialog ref="userProfileDialogRef" />
     <update-password-dialog ref="updatePasswordDialogRef" />
 </template>
@@ -52,7 +44,7 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { UpdateLogDialog, UpdatePasswordDialog } from '@/layers'
+import { UpdatePasswordDialog } from '@/layers'
 import { useUserStore, useViewStore } from '@/stores'
 import { UserDropdown } from '@nao-todo/components'
 import { UserProfileDialog } from '@/layers/user-profile-dialog'
@@ -63,11 +55,9 @@ const viewStore = useViewStore()
 await viewStore.indexViewInitTask()
 
 const { user } = storeToRefs(userStore)
-const updateLogDialogRef = ref<InstanceType<typeof UpdateLogDialog>>()
 const userProfileDialogRef = ref<InstanceType<typeof UserProfileDialog>>()
 const updatePasswordDialogRef = ref<InstanceType<typeof UpdatePasswordDialog>>()
 
-const showUpdateLogDialog = () => updateLogDialogRef.value?.show()
 const showProfileDialog = () => userProfileDialogRef.value?.show()
 const showUpdatePasswordDialog = () => updatePasswordDialogRef.value?.show()
 </script>

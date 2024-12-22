@@ -52,7 +52,7 @@ const parseLabel = (label: string) => {
         case 'description':
             return '描述'
         case 'endAt':
-            return '结束日期'
+            return '结束时间'
         case 'project':
             return '所属清单'
         default:

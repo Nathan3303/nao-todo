@@ -1,93 +1,80 @@
 <template>
     <nue-dialog ref="dialogRef" v-model="visible" title="标签管理">
-        <nue-div vertical align="stretch">
-            <nue-text size="12px" color="gray">
+        <nue-div align="stretch" vertical>
+            <nue-text color="gray" size="12px">
                 "标签管理"能够清楚地展示出所有的标签，方便执行标签的增删改查。
             </nue-text>
             <nue-div align="center" justify="space-between">
                 <tag-filter-bar :filter-options="filterInfo" @filter="handleFilter" />
-                <nue-div width="fit-content" gap="12px">
+                <nue-div gap="12px" width="fit-content">
                     <nue-button
-                        theme="small,primary"
                         icon="plus-circle"
-                        @click="showCreateTagDialog"
+                        theme="small,primary"
+                        @click="tasksDialogStore.showCreateTagDialog"
                     >
                         新增
                     </nue-button>
+                    <nue-button icon="refresh" theme="small" @click="getData" />
                 </nue-div>
             </nue-div>
-            <nue-div class="tag-manager" vertical align="stretch">
+            <nue-div align="stretch" class="tag-manager" vertical>
                 <tag-board
-                    :tags="tags"
                     :loading-state="loading"
-                    @delete="handleDeleteTag"
-                    @recolor="showUpdateColorDialog"
+                    :tags="tags"
+                    @delete="tasksHandlerStore.handleDeleteTag"
+                    @recolor="tasksDialogStore.showTagColorSelectDialog"
                 />
             </nue-div>
         </nue-div>
     </nue-dialog>
-    <create-tag-dialog ref="createTagDialogRef" :handler="handleCreateTag" />
-    <tag-color-select-dialog ref="tagColorSelectDialogRef" :handler="tagStore.updateTagColor" />
 </template>
 
-<script setup lang="ts">
-import { ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { CreateTagDialog, TagBoard, TagColorSelectDialog, TagFilterBar } from '@nao-todo/components'
+<script lang="ts" setup>
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { TagBoard, TagFilterBar } from '@nao-todo/components'
 import { useTagStore } from '@/stores'
-import type { CreateTagOptions, GetTagsOptions, Tag } from '@nao-todo/types'
+import { useTasksDialogStore, useTasksHandlerStore } from '@/views/index/tasks'
+import type { GetTagsOptions, Tag } from '@nao-todo/types'
 
 defineOptions({ name: 'TagManager' })
 
-const route = useRoute()
-const router = useRouter()
 const tagStore = useTagStore()
+const tasksDialogStore = useTasksDialogStore()
+const tasksHandlerStore = useTasksHandlerStore()
 
 const visible = ref(false)
 const loading = ref(false)
-const createTagDialogRef = ref<InstanceType<typeof CreateTagDialog>>()
-const tagColorSelectDialogRef = ref<InstanceType<typeof TagColorSelectDialog>>()
 const filterInfo = ref<GetTagsOptions>({})
 const tags = ref<Tag[]>([])
+let unSubscribe: () => void
 
-const showCreateTagDialog = () => createTagDialogRef.value?.show()
-const showUpdateColorDialog = async (tagId: Tag['id']) => {
-    const tag = tagStore.getTagByIdFromLocal(tagId)
-    tagColorSelectDialogRef.value?.show(tagId, tag?.color || 'transparent')
-}
-
-const handleFilter = async (newFilterOptions: GetTagsOptions) => {
-    filterInfo.value = newFilterOptions
-    init()
-}
-
-const handleCreateTag = async (payload: CreateTagOptions) => {
-    const createResult = await tagStore.doCreateTag(payload)
-    init()
-    return createResult
-}
-
-const init = () => {
+const getData = () => {
     tags.value = tagStore.findTagsFromLocal(filterInfo.value, (key, tag, options) => {
         if (key === 'name') return tag.name.includes(options.name || '')
     })
 }
 
-const handleShowDialog = () => {
-    visible.value = true
-    init()
+const handleFilter = async (newFilterOptions: GetTagsOptions) => {
+    filterInfo.value = newFilterOptions
+    getData()
 }
 
-const handleDeleteTag = async (tagId: Tag['id']) => {
-    const removeResult = await tagStore.deleteTagWithConfirmation(tagId)
-    if (!removeResult) return
-    init()
-    if (route.params.tagId !== tagId) return
-    await router.push('/tasks/all')
-}
+onMounted(() => {
+    unSubscribe = tagStore.$subscribe((mutation) => {
+        if (mutation.type !== 'direct') return
+        setTimeout(() => getData())
+    })
+})
+
+onBeforeUnmount(() => {
+    if (unSubscribe) unSubscribe()
+})
 
 defineExpose({
-    show: handleShowDialog
+    show: () => {
+        visible.value = true
+        getData()
+    }
 })
 </script>
 

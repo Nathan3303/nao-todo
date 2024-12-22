@@ -1,8 +1,9 @@
 import { onBeforeUnmount, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
-import { basicViewsInfo, defaultPreference } from './constants'
+import { basicViewsInfo, defaultPreference } from '../constants'
 import { useProjectStore, useTagStore, useTodoStore, useUserStore } from '@/stores'
+import { useTasksHandlerStore } from './handler-store'
 import type {
     Project,
     Tag,
@@ -11,13 +12,14 @@ import type {
     TasksMultiSelectInfo
 } from '@nao-todo/types'
 
-export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
+export const useTasksViewStore = defineStore('TasksViewStore', () => {
     const route = useRoute()
     const router = useRouter()
     const projectStore = useProjectStore()
     const tagStore = useTagStore()
     const todoStore = useTodoStore()
     const userStore = useUserStore()
+    const tasksHandlerStore = useTasksHandlerStore()
 
     // 当前视图信息
     const category = ref<TasksMainRouteCategory>('basic')
@@ -41,71 +43,6 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
     const hideMultiDetails = () => {
         multiSelectStates.value.isShowMultiDetails = false
         multiSelectStates.value.selectedTodoIds = []
-    }
-
-    // 删除清单
-    const handleRemoveProject = async () => {
-        if (category.value !== 'project') return
-        if (!viewInfo.value) return
-        const { id } = viewInfo.value
-        const deleteResult = await projectStore.removeProjectWithConfirmation(id)
-        if (deleteResult) await router.push('/tasks/all')
-    }
-
-    // 更新清单标题
-    const handleUpdateProjectTitle = async () => {
-        if (category.value !== 'project') return
-        if (!viewInfo.value) return
-        const { id, title } = viewInfo.value
-        await projectStore.updateProjectTitleWithPrompt(id, title)
-    }
-
-    // 更新清单描述
-    const handleUpdateProjectDescription = async () => {
-        if (category.value !== 'project') return
-        if (!viewInfo.value) return
-        const { id, description } = viewInfo.value
-        await projectStore.updateProjectDescriptionWithPrompt(id, description)
-    }
-
-    // 更新清单偏好
-    const handleUpdateProjectPreference = async () => {
-        if (category.value !== 'project') return
-        if (!viewInfo.value) return
-        const projectId = route.params.projectId as Project['id']
-        const viewType = (route.name as string).split('-')[2] as string
-        const newPreference: Project['preference'] = {
-            viewType,
-            getTodosOptions: todoStore.getOptions,
-            columns: todoStore.columnOptions
-        }
-        await projectStore.updateProjectPreference(projectId, newPreference)
-    }
-
-    // 归档清单
-    const handleArchiveProject = async () => {
-        if (category.value !== 'project') return
-        if (!viewInfo.value) return
-        const projectId = viewInfo.value.id as Project['id']
-        const result = await projectStore.archiveProjectWithConfirmation(projectId)
-        if (result) await router.push('/tasks/all')
-    }
-
-    // 重命名标签
-    const handleUpdateTagName = async () => {
-        if (category.value !== 'tag') return
-        if (!viewInfo.value) return
-        const { id, title } = viewInfo.value
-        await tagStore.updateTagNameWithPrompt(id, title)
-    }
-
-    // 删除标签
-    const handleDeleteTag = async () => {
-        if (category.value !== 'tag') return
-        if (!viewInfo.value) return
-        const { id } = viewInfo.value
-        const deleteResult = await tagStore.deleteTagWithConfirmation(id)
-        if (deleteResult) await router.push('/tasks/all')
     }
 
     // 获取基础视图信息
@@ -163,9 +100,9 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
                 },
                 createTodoOptions: { dueDate: {}, projectId: project.id },
                 handlers: {
-                    updateTitle: handleUpdateProjectTitle,
-                    updateDescription: handleUpdateProjectDescription,
-                    remove: handleRemoveProject
+                    updateTitle: tasksHandlerStore.handleUpdateProjectTitle,
+                    updateDescription: tasksHandlerStore.handleUpdateProjectDescription,
+                    remove: tasksHandlerStore.handleRemoveProject
                 }
             } as TasksMainViewInfo
         }
@@ -196,8 +133,8 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
                     tags: [tag.id]
                 },
                 handlers: {
-                    updateTitle: handleUpdateTagName,
-                    remove: handleDeleteTag
+                    updateTitle: tasksHandlerStore.handleUpdateTagName,
+                    remove: tasksHandlerStore.handleDeleteTag
                 },
                 payload: { color: tag.color }
             } as TasksMainViewInfo
@@ -287,9 +224,6 @@ export const useTasksViewStore = defineStore('tasksMainViewStore', () => {
         multiSelectStates,
         showMultiDetails,
         hideMultiDetails,
-        getViewInfo,
-        handleRemoveProject,
-        handleUpdateProjectPreference,
-        handleArchiveProject
+        getViewInfo
     }
 })

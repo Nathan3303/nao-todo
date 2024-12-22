@@ -3,21 +3,15 @@
         :key="viewInfo?.id"
         :base-route="baseRoute"
         :disabledCreateTodo="category === 'basic' && viewInfo?.id === 'recycle'"
-        @create-todo-by-dialog="handleCreateTodoByDialog"
     />
 </template>
 
 <script lang="ts" setup>
 import { computed } from 'vue'
 import { TodoViewTable } from '@/layers'
-import { useProjectStore, useTagStore, useUserStore } from '@/stores'
-import { useTasksViewStore } from '../stores'
 import { storeToRefs } from 'pinia'
-import type { CreateTodoDialogCallerArgs } from '@/layers/create-todo-dialog/types'
+import { useTasksViewStore } from '..'
 
-const userStore = useUserStore()
-const projectStore = useProjectStore()
-const tagStore = useTagStore()
 const tasksViewStore = useTasksViewStore()
 
 const { viewInfo, category } = storeToRefs(tasksViewStore)
@@ -34,22 +28,4 @@ const baseRoute = computed(() => {
             return `tasks-all-table`
     }
 })
-
-const handleCreateTodoByDialog = async (caller: (args: CreateTodoDialogCallerArgs) => void) => {
-    if (!viewInfo.value) return
-    const { id } = viewInfo.value
-    const avalibleProjects = projectStore.findProjectsFromLocal({
-        isDeleted: false,
-        isArchived: false
-    })
-    caller({
-        userId: userStore.user!.id,
-        projects: avalibleProjects,
-        tags: tagStore.tags,
-        presetInfo: {
-            projectId: id,
-            ...viewInfo.value.createTodoOptions
-        }
-    })
-}
 </script>

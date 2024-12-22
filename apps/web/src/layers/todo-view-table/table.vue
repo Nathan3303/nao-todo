@@ -8,7 +8,7 @@
                         v-if="!disabledCreateTodo"
                         icon="plus-circle"
                         theme="small,primary"
-                        @click="showCreateTodoDialog"
+                        @click="tasksDialogStore.showCreateTodoDialog"
                     >
                         新增
                     </nue-button>
@@ -37,7 +37,7 @@
                     :sort-options="getOptions.sort || { field: '', order: 'asc' }"
                     :tags="tagStore.tags"
                     :todos="todos"
-                    @delete-todo="todoStore.deleteTodoWithConfirmation"
+                    @delete-todo="handleDeleteTodo"
                     @restore-todo="todoStore.restoreTodoWithConfirmation"
                     @show-todo-details="showTodoDetails"
                     @sort-todo="sortTodo"
@@ -45,7 +45,14 @@
                 >
                     <template #empty>
                         <nue-empty
-                            description="没有待办事项，放松一下吧！"
+                            v-if="tasksViewStore.viewInfo?.id === 'recycle'"
+                            description="垃圾桶很干净，没有被删除的待办事项！"
+                            image-size="48px"
+                            image-src="/images/empty_trash.png"
+                        />
+                        <nue-empty
+                            v-else
+                            description="当前暂无待办事项，放松一下自己吧！"
                             image-size="48px"
                             image-src="/images/coffeecup.png"
                         />
@@ -76,28 +83,18 @@
             </nue-div>
         </nue-footer>
     </nue-container>
-    <!-- containers -->
-    <create-todo-dialog ref="createTodoDialogRef" :handler="handleCreateTodo" />
 </template>
 
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useTagStore, useTodoStore } from '@/stores'
 import { Loading, Pager, TodoFilterBar } from '@nao-todo/components'
 import { TodoTable } from './table'
 import { TodoTableColumnSelector } from './column-selector'
-import { CreateTodoDialog } from '@/layers'
-import { useTasksViewStore } from '@/views/index/tasks/stores'
-import type {
-    CreateTodoOptions,
-    GetTodosOptions,
-    GetTodosSortOptions,
-    Todo,
-    TodoColumnOptions
-} from '@nao-todo/types'
-import type { CreateTodoDialogCallerArgs } from '@/layers/create-todo-dialog/types'
+import { useTasksDialogStore, useTasksViewStore } from '@/views/index/tasks'
+import type { GetTodosOptions, GetTodosSortOptions, Todo, TodoColumnOptions } from '@nao-todo/types'
 import type { TodoTableMultiSelectPayload } from './table/types'
 import type { TodoFilterOptions } from '@nao-todo/components/todo/filter-bar/types'
 import './table.css'
@@ -107,21 +104,17 @@ const props = defineProps<{
     baseRoute: string
     disabledCreateTodo?: boolean
 }>()
-const emit = defineEmits<{
-    (event: 'createTodo', todoName: string): void
-    (event: 'createTodoByDialog', caller: (args: CreateTodoDialogCallerArgs) => void): void
-}>()
 
-const router = useRouter()
 const route = useRoute()
+const router = useRouter()
 const todoStore = useTodoStore()
 const tagStore = useTagStore()
 const tasksViewStore = useTasksViewStore()
+const tasksDialogStore = useTasksDialogStore()
 
 const { todos, getOptions, getOverview } = storeToRefs(todoStore)
 const tableLoading = ref(true)
 const todoTableRef = ref<InstanceType<typeof TodoTable>>()
-const createTodoDialogRef = ref<InstanceType<typeof CreateTodoDialog>>()
 let refreshTimer: number | null = null
 const multiSelectCount = ref(0)
 
@@ -132,11 +125,6 @@ const todoFilterBarOptions = computed<TodoFilterOptions>(() => {
         priority: getOptions.value.priority || ''
     }
 })
-
-const showCreateTodoDialog = () => {
-    if (!createTodoDialogRef.value) return
-    emit('createTodoByDialog', createTodoDialogRef.value.show)
-}
 
 const showTodoDetails = (id: Todo['id']) => {
     const { baseRoute } = props
@@ -164,6 +152,11 @@ const handleFilter = async (newTodoFilter: TodoFilterOptions) => {
     })
     todoStore.updateGetOptions(options)
     await todoStore.doGetTodos()
+}
+
+const handleDeleteTodo = async (todoId: Todo['id']) => {
+    const result = await todoStore.deleteTodoWithConfirmation(todoId)
+    if (result) await router.replace({ name: route.name, params: { taskId: void 0 } })
 }
 
 const handleChangeColumns = (options: TodoColumnOptions) => {
@@ -199,15 +192,6 @@ const handleRefresh = async () => {
 const sortTodo = (newSortInfo: GetTodosSortOptions) => {
     getOptions.value.sort = newSortInfo
     handleGetTodos()
-}
-
-const handleCreateTodo = async (options: CreateTodoOptions) => {
-    const result = (await todoStore.doCreateTodo(options)) as Todo
-    if (result) {
-        await router.push({ name: route.name, params: { taskId: result.id } })
-        return true
-    }
-    return false
 }
 
 watch(

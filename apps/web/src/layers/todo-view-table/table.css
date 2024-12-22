@@ -1,14 +1,16 @@
-.tasks-main-table-view__header {
-    height: auto;
-    box-sizing: border-box;
-    padding-top: 8px;
-}
+.tasks-main-table-view {
+    & > .nue-header {
+        height: auto;
+        box-sizing: border-box;
+        padding-top: 0;
+    }
 
-.tasks-main-table-view__main {
-    border: none !important;
-}
+    & > .nue-main {
+        border: none !important;
 
-.tasks-main-table-view__main .nue-main__content {
-    padding: 0 16px;
-    border: none;
+        .nue-main__content {
+            padding: 0 16px;
+            border: none;
+        }
+    }
 }

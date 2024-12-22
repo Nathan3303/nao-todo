@@ -1,4 +1,4 @@
-import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useEventStore, useProjectStore, useTodoStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
@@ -6,6 +6,7 @@ import moment from 'moment'
 import { getTodo } from '@nao-todo/apis'
 import { useUpdateQueue } from './use-update-queue'
 import type { Todo } from '@nao-todo/types'
+import { debounce } from '@nao-todo/utils'
 
 export const useTodoDetails = () => {
     const route = useRoute()
@@ -43,34 +44,28 @@ export const useTodoDetails = () => {
         })
     })
 
-    // 结束日期代理
-    // const endAt = computed({
-    //     get: () => {
-    //         if (!shadowTodo.value) return null
-    //         return shadowTodo.value.dueDate.endAt
-    //     },
-    //     set: (dateString: string | null) => {
-    //         if (!shadowTodo.value) return
-    //         shadowTodo.value.dueDate.endAt = dateString
-    //     }
-    // })
-
     // 获取待办
     const _getTodo = async (todoId: Todo['id']) => {
         if (!todoId) {
             shadowTodo.value = void 0
+            // console.log('[UseDetails/_getTodo] No todo found', todoId)
             return
+        }
+        if (!shadowTodo.value) {
+            isGetting.value = true
         }
         let res = todoStore.getTodoByIdFromLocal(todoId)
         if (!res) {
-            isGetting.value = true
             res = (await getTodo({ id: todoId })).data as Todo
         }
         shadowTodo.value = res as Todo
         isGetting.value = false
     }
+    const deboucedGetTodo = debounce(_getTodo, 32)
 
     // 更新防抖
+
+    // 防抖函数
     const _debounce = (callback: () => void | Promise<any>, delay: number) => {
         let timer: number | null = null
         const debouncedFn = () => {
@@ -95,7 +90,6 @@ export const useTodoDetails = () => {
         // console.log('[UseDetails/_updateTodo] newTodo', newTodo)
         return await todoStore.doUpdateTodo(todoId, newTodo)
     }
-
     const { debouncedFn: debouncedUpdateTodo, cancelTimer } = _debounce(_updateTodo, 512)
 
     // 格式化日期
@@ -209,16 +203,15 @@ export const useTodoDetails = () => {
     const handleClose = async () => {
         cancelTimer(true)
         shadowTodo.value = void 0
-        const prevRoute = route.matched[route.matched.length - 1]
-        if (prevRoute) await router.push(prevRoute)
+        await router.replace({ name: route.name, params: { taskId: void 0 } })
     }
 
     // 获取详情
-    watchEffect(() => {
-        const todoId = route.params.taskId as string
-        cancelTimer(true)
-        setTimeout(async () => await _getTodo(todoId))
-    })
+    watch(
+        () => route.params.taskId as string,
+        (newTaskId) => deboucedGetTodo(newTaskId),
+        { immediate: true }
+    )
 
     // 订阅 Store 更新
     onMounted(() => {

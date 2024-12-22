@@ -33,7 +33,7 @@ export const useCommentDetails = () => {
         const todoId = route.params.taskId as string
         if (!todoId) return
         commentStore.getOptions = { todoId }
-        setTimeout(async () => await commentStore.doGetComments())
+        commentStore.doGetComments()
     })
 
     return {
