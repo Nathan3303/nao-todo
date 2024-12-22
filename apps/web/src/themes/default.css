@@ -132,3 +132,12 @@
         display: none;
     }
 }
+
+/* table 空文本 */
+
+.todo-table__main__empty-text {
+    text-align: center;
+    color: gray;
+    font-size: 12px !important;
+    margin-top: 16px;
+}

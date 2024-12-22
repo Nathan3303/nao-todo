@@ -8,10 +8,10 @@
                 <order-button prop="createdAt">创建时间</order-button>
             </div>
             <div v-if="columnOptions.updatedAt" class="todo-table__header__col col-updated-at">
-                <order-button prop="updatedAt">最后修改时间</order-button>
+                <order-button prop="updatedAt">更新时间</order-button>
             </div>
             <div v-if="columnOptions.endAt" class="todo-table__header__col col-end-at">
-                <order-button prop="endAt">结束日期</order-button>
+                <order-button prop="endAt">结束时间</order-button>
             </div>
             <div v-if="columnOptions.priority" class="todo-table__header__col col-priority">
                 <order-button prop="priority">优先级</order-button>
@@ -36,7 +36,7 @@
         <nue-div class="todo-table__main">
             <slot v-if="!todos.length" name="empty">
                 <nue-text v-if="!todos.length" class="todo-table__main__empty-text">
-                    没有待办事项，放松一下吧！
+                    当前列表无待办任务！
                 </nue-text>
             </slot>
             <nue-div
@@ -73,13 +73,17 @@
                     v-if="columnOptions.createdAt"
                     class="todo-table__main__col col-created-at"
                 >
-                    <nue-text>{{ useRelativeDate(todo.createdAt) }}</nue-text>
+                    <nue-text :title="useRelativeDate(todo.createdAt)">
+                        {{ useRelativeDate(todo.createdAt) }}
+                    </nue-text>
                 </nue-div>
                 <nue-div
                     v-if="columnOptions.updatedAt"
                     class="todo-table__main__col col-updated-at"
                 >
-                    <nue-text>{{ useRelativeDate(todo.updatedAt) }}</nue-text>
+                    <nue-text :title="useRelativeDate(todo.updatedAt)">
+                        {{ useRelativeDate(todo.updatedAt) }}
+                    </nue-text>
                 </nue-div>
                 <nue-div
                     v-if="columnOptions.endAt"
@@ -87,7 +91,9 @@
                     :data-expired="isTodoExpired(todo)"
                     class="todo-table__main__col col-end-at"
                 >
-                    <nue-text>{{ useRelativeDate(todo.dueDate.endAt) }}</nue-text>
+                    <nue-text :title="useRelativeDate(todo.dueDate.endAt)">
+                        {{ useRelativeDate(todo.dueDate.endAt) }}
+                    </nue-text>
                 </nue-div>
                 <nue-div v-if="columnOptions.priority" class="todo-table__main__col col-priority">
                     <todo-priority-info :key="todo.priority" :priority="todo.priority" />

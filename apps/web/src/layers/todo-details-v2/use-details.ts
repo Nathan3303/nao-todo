@@ -48,10 +48,12 @@ export const useTodoDetails = () => {
     const _getTodo = async (todoId: Todo['id']) => {
         if (!todoId) {
             shadowTodo.value = void 0
-            console.log('[UseDetails/_getTodo] No todo found', todoId)
+            // console.log('[UseDetails/_getTodo] No todo found', todoId)
             return
         }
-        isGetting.value = true
+        if (!shadowTodo.value) {
+            isGetting.value = true
+        }
         let res = todoStore.getTodoByIdFromLocal(todoId)
         if (!res) {
             res = (await getTodo({ id: todoId })).data as Todo

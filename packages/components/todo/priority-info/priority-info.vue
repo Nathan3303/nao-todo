@@ -17,13 +17,13 @@ const props = defineProps<{
 const info = computed(() => {
     switch (props.priority) {
         case 'high':
-            return ['priority-3', '高', 'red']
+            return ['priority-3', '高优先级', 'red']
         case 'medium':
-            return ['priority-2', '中', 'orange']
+            return ['priority-2', '中优先级', 'orange']
         case 'low':
-            return ['priority-1', '低', '#6363ff']
+            return ['priority-1', '低优先级', '#6363ff']
         default:
-            return ['priority-1', '无', 'gray']
+            return ['priority-1', '无优先级', 'gray']
     }
 })
 

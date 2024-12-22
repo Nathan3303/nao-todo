@@ -67,7 +67,7 @@
                 <nue-div v-if="columns?.updatedAt" align="center" gap="4px">
                     <nue-icon name="time" color="gray" />
                     <nue-text size="12px" color="gray">
-                        最后修改于 {{ useRelativeDate(todo.updatedAt) }}
+                        修改于 {{ useRelativeDate(todo.updatedAt) }}
                     </nue-text>
                 </nue-div>
             </nue-div>

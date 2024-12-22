@@ -4,12 +4,13 @@
     flex-wrap: nowrap;
     min-width: 260px;
     transition: all 0.16s ease;
+    background-color: var(--primary-color-50);
 }
 
 .todo-card:hover,
 .todo-card[data-actived='true'] {
     border-color: #66667f;
-    background-color: #fcfcfc;
+    background-color: var(--primary-color-100);
     cursor: pointer;
 }
 
@@ -27,15 +28,21 @@
     background-color: #f2f2f2;
 }
 
-
 .todo-card__check-icon {
-    font-size: 20px;
-    color: gray;
+    --icon-size: 19px;
+    color: var(--primary-color-500);
+    padding: 2px;
+    transition: all 0.16s ease;
+    margin-top: 1px;
+
+    &:hover {
+        color: var(--primary-color-700);
+    }
 }
 
 .todo-card__info {
     flex-direction: column;
-    gap: 0px;
+    gap: 0;
 }
 
 
@@ -52,7 +59,7 @@
 
 .todo-card__actions {
     width: fit-content;
-    margin: 0px 4px;
+    margin: 0 4px;
     display: none;
 }
 
@@ -85,18 +92,11 @@
     margin-right: 4px;
 }
 
-.todo-card__check-icon {
-    padding: 2px;
-    cursor: pointer;
-    color: #cacaca;
-}
-
 .todo-card__favorite-icon {
     --icon-color: #ee537f;
 }
 
-.todo-card[data-is-done='true']
-.todo-card__check-icon {
+.todo-card[data-is-done='true'] .todo-card__check-icon {
     --icon-color: var(--primary-color);
 }
 
