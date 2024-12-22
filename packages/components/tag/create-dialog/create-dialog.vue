@@ -36,8 +36,14 @@ import type { CreateOptions, CreateTagDialogProps } from './types'
 defineOptions({ name: 'CreateTagDialog' })
 const props = defineProps<CreateTagDialogProps>()
 
+const defaultTagTemplate = {
+    name: '',
+    color: 'transparent',
+    description: ''
+}
+
 const tagNameInputRef = ref<InstanceType<typeof NueInput>>()
-const newTag = ref<CreateOptions>({ name: '', color: 'transparent', description: '' })
+const newTag = ref<CreateOptions>({ ...defaultTagTemplate })
 const visible = ref(false)
 const loading = ref(false)
 const isTagNameEmpty = ref(false)
@@ -48,11 +54,7 @@ const showCreateTagDialog = async () => {
 }
 
 const handleClearInputValues = () => {
-    newTag.value = {
-        name: '',
-        color: '',
-        description: ''
-    }
+    newTag.value = { ...defaultTagTemplate }
 }
 
 const handleCreateTag = async () => {
