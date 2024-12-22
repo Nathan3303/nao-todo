@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { defineStore } from 'pinia'
 import { signin, signup, checkin, signout, updateNickname, updatePassword } from '@nao-todo/apis'
-import { getJWTPayload } from '@nao-todo/utils'
+import { getJWTPayload, throttle } from '@nao-todo/utils'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import type { User, SigninOptions, SignupOptions, ResponseData } from '@nao-todo/types'
 
@@ -59,15 +59,27 @@ export const useUserStore = defineStore('userStore', () => {
         return true
     }
 
+    const checkout = async () => {
+        localStorage.removeItem('USER_JWT')
+        user.value = void 0
+        token.value = void 0
+        isAuthenticated.value = false
+        return true
+    }
+
+    const doCheckout = throttle(async (checkoutMsg: string) => {
+        await checkout()
+        await router.push('/auth/login')
+        await NueMessage.error(checkoutMsg)
+        return true
+    }, 4000)
+
     const doSignout = async () => {
         if (token.value) {
             const result = await signout(token.value)
             if (result.code !== 20000) return false
         }
-        localStorage.removeItem('USER_JWT')
-        user.value = void 0
-        token.value = void 0
-        isAuthenticated.value = false
+        await checkout()
         return true
     }
 
@@ -82,7 +94,6 @@ export const useUserStore = defineStore('userStore', () => {
                 onConfirm: async () => await doSignout()
             })
             if (result) {
-                await router.push('/auth/login')
                 NueMessage.success('退出登录成功')
             } else {
                 NueMessage.error('退出登录失败')
@@ -139,6 +150,7 @@ export const useUserStore = defineStore('userStore', () => {
         doSignin,
         doSignup,
         doCheckin,
+        doCheckout,
         doSignout,
         signOutWithConfirmation,
         doUpdateNickname,

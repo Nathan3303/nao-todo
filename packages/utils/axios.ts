@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { useUserStore } from '@nao-todo/webapp/src/stores'
 
+// Create Axios instance
 const axiosInstance = axios.create({
     baseURL: 'https://nathan33.xyz:3002/api'
     // baseURL: 'http://localhost:3002/api'
@@ -14,7 +15,14 @@ axiosInstance.interceptors.request.use((config) => {
 
 // Handle response errors
 axiosInstance.interceptors.response.use(
-    (response) => response,
+    async (response) => {
+        switch (response.data.code) {
+            case 40300:
+                await useUserStore().doCheckout('用户凭证无效，请重新登录')
+                break
+        }
+        return response
+    },
     (error) => Promise.reject(error)
 )
 
