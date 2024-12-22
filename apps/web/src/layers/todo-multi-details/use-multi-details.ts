@@ -201,6 +201,11 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
                     attrName: 'isDeleted',
                     initValue: false,
                     validator: (a, b) => a === b
+                },
+                {
+                    attrName: 'projectId',
+                    initValue: '',
+                    validator: (a, b) => a === b
                 }
             ])
         },

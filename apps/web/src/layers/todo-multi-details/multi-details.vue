@@ -47,7 +47,6 @@
         <nue-footer style="justify-content: space-between">
             <todo-project-selector
                 :project-id="commonData.projectId"
-                :project-title="commonData.project.title"
                 :projects="avalibleProjects"
                 :user-id="userStore.user!.id"
                 placeholder="移动到清单"
