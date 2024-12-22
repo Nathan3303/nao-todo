@@ -45,7 +45,14 @@
                 >
                     <template #empty>
                         <nue-empty
-                            description="没有待办事项，放松一下吧！"
+                            v-if="tasksViewStore.viewInfo?.id === 'recycle'"
+                            description="垃圾桶很干净，没有被删除的待办事项！"
+                            image-size="48px"
+                            image-src="/images/empty_trash.png"
+                        />
+                        <nue-empty
+                            v-else
+                            description="当前暂无待办事项，放松一下自己吧！"
                             image-size="48px"
                             image-src="/images/coffeecup.png"
                         />
