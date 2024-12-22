@@ -97,7 +97,7 @@
 .col-created-at,
 .col-updated-at,
 .col-end-at {
-    width: 8%;
+    width: 9%;
 
     .nue-text {
         text-overflow: unset;
