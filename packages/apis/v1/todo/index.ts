@@ -98,3 +98,14 @@ export const duplicateTodo = async (todoId: Todo['id']) => {
         return { code: 50001, message: '服务器错误' } as ResponseData
     }
 }
+
+// 永久删除待办（s）
+export const deleteTodos = async (todoIds: Todo['id'][]) => {
+    try {
+        const response = await $axios.delete(`/todos`, {data: {todoIds}})
+        return response.data as ResponseData
+    } catch (error) {
+        console.error('[@nao-todo/apis/todo] deleteTodos:', error)
+        return {code: 50001, message: '服务器错误'} as ResponseData
+    }
+}

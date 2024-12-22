@@ -6,7 +6,8 @@ import {
     duplicateTodo,
     getTodos,
     updateTodo,
-    updateTodos
+    updateTodos,
+    deleteTodos
 } from '@nao-todo/apis'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { useMoment } from '@nao-todo/utils'
@@ -133,6 +134,16 @@ export const useTodoStore = defineStore('todoStore', () => {
         const result = await deleteTodo(todoId)
         if (result.code !== 20000) return false
         todos.value = todos.value.filter((todo) => todo.id !== todoId)
+        return true
+    }
+
+    // 删除待办（s）
+    const doDeleteTodos = async (todoIds: Todo['id'][]) => {
+        const result = await deleteTodos(todoIds)
+        if (result.code !== 20000) return false
+        todos.value = todos.value.filter((todo) => {
+            return !todoIds.includes(todo.id)
+        })
         return true
     }
 
@@ -265,6 +276,28 @@ export const useTodoStore = defineStore('todoStore', () => {
         return false
     }
 
+    // 永久删除任务（s）（带确认）
+    const deleteTodosPermanentlyWithConfirmation = async (todoIds: Todo['id'][]) => {
+        try {
+            const result = await NueConfirm({
+                title: '永久删除多个待办确认',
+                content: '确认永久删除这些待办吗？',
+                confirmButtonText: '确认',
+                cancelButtonText: '取消',
+                onConfirm: async () => await doDeleteTodos(todoIds)
+            })
+            if (result) {
+                NueMessage.success('待办永久删除成功')
+                return true
+            } else {
+                NueMessage.error('待办永久删除失败')
+            }
+        } catch (error) {
+            console.warn('[UseTodoStore] deleteTodosPermanentlyWithConfirmation:', error)
+        }
+        return false
+    }
+
     // 复制任务（带确认）
     const duplicateTodoWithConfirmation = async (todoId: Todo['id']) => {
         try {
@@ -319,6 +352,7 @@ export const useTodoStore = defineStore('todoStore', () => {
         deleteTodosWithConfirmation,
         restoreTodosWithConfirmation,
         deleteTodoPermanentlyWithConfirmation,
+        deleteTodosPermanentlyWithConfirmation,
         duplicateTodoWithConfirmation,
         setGetOptionsByPreference,
         getTodoByIdFromLocal

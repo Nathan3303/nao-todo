@@ -1,4 +1,4 @@
-import { computed, ref, watchEffect } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useProjectStore, useTagStore, useTodoStore, useUserStore } from '@/stores'
 import { debounce } from '@nao-todo/utils'
 import { useRoute, useRouter } from 'vue-router'
@@ -39,6 +39,7 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
 
     const getSelectedTodos = () => {
         const _selectedIds = [...props.selectedIds]
+        if (!_selectedIds.length) return [] as Todo[]
         const _selectedTodos: Todo[] = []
         for (const todo of todoStore.todos) {
             if (_selectedIds.length === 0) break
@@ -106,12 +107,22 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
         tasksViewStore.hideMultiDetails()
     }
 
-    const handleRestore = async () => {
-        const removeResult = await todoStore.restoreTodosWithConfirmation(props.selectedIds)
+    const handleDelete = async () => {
+        const removeResult = await todoStore.deleteTodosPermanentlyWithConfirmation(
+            props.selectedIds
+        )
         if (!removeResult) return
         const prevRoute = route.matched[route.matched.length - 1]
         if (prevRoute) await router.push(prevRoute)
         tasksViewStore.hideMultiDetails()
+    }
+
+    const handleRestore = async () => {
+        const removeResult = await todoStore.restoreTodosWithConfirmation(props.selectedIds)
+        if (!removeResult) return
+        tasksViewStore.hideMultiDetails()
+        const prevRoute = route.matched[route.matched.length - 1]
+        if (prevRoute) await router.push(prevRoute)
     }
 
     const handleCancelMultiSelect = () => {
@@ -119,18 +130,16 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
         tasksViewStore.hideMultiDetails()
     }
 
-    watchEffect(() => {
-        const _selectedTodos = getSelectedTodos()
-        const _commonData = {
-            dueDate: { startAt: '', endAt: _selectedTodos[0].dueDate.endAt },
-            priority: _selectedTodos[0].priority,
-            state: _selectedTodos[0].state,
-            projectId: _selectedTodos[0].projectId,
-            project: _selectedTodos[0].project,
-            tags: _selectedTodos[0].tags,
-            isDeleted: _selectedTodos[0].isDeleted
+    // 属性匹配检查
+    const checkTodosAttrs = (
+        target: Todo[],
+        chkList: {
+            attrName: string
+            initValue: unknown
         }
-        const _commonDataCheckFlag = {
+    ) => {
+        const _commonData = { ...target[0] }
+        const _commonDataChkFlag = {
             dueDate: true,
             priority: true,
             state: true,
@@ -138,45 +147,65 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
             tags: true,
             isDeleted: true
         }
-        for (const todo of _selectedTodos) {
-            if (_commonDataCheckFlag.dueDate && _commonData.dueDate.endAt !== todo.dueDate.endAt) {
-                _commonData.dueDate = { startAt: '', endAt: '' }
-                _commonDataCheckFlag.dueDate = false
-            }
-            if (_commonDataCheckFlag.priority && _commonData.priority !== todo.priority) {
-                _commonData.priority = '' as Todo['priority']
-                _commonDataCheckFlag.priority = false
-            }
-            if (_commonDataCheckFlag.state && _commonData.state !== todo.state) {
-                _commonData.state = '' as Todo['state']
-                _commonDataCheckFlag.state = false
-            }
-            if (_commonDataCheckFlag.projectId && _commonData.projectId !== todo.projectId) {
-                _commonData.projectId = '' as Todo['projectId']
-                _commonData.project = { title: '' }
-                _commonDataCheckFlag.projectId = false
-            }
-            if (_commonDataCheckFlag.tags) {
-                if (_commonData.tags.length === todo.tags.length) {
-                    for (const tagId of _commonData.tags) {
-                        if (!todo.tags.includes(tagId)) {
-                            _commonData.tags = ['']
-                            _commonDataCheckFlag.tags = false
-                            break
-                        }
-                    }
-                } else {
-                    _commonData.tags = ['']
-                    _commonDataCheckFlag.tags = false
+        for (const todo of target) {
+            for (const chkItem of chkList) {
+                if (!_commonDataChkFlag[chkItem.attrName]) continue
+                if (!Object.prototype.hasOwnProperty.call(todo, chkItem.attrName)) {
+                    _commonData[chkItem.attrName] = chkItem.initValue
+                    _commonDataChkFlag[chkItem.attrName] = false
+                    continue
+                }
+                if (!chkItem.validator(_commonData[chkItem.attrName], todo[chkItem.attrName])) {
+                    _commonData[chkItem.attrName] = chkItem.initValue
+                    _commonDataChkFlag[chkItem.attrName] = false
+                    // console.log('Attribute', chkItem.attrName, 'is different')
                 }
             }
-            if (_commonDataCheckFlag.isDeleted && _commonData.isDeleted !== todo.isDeleted) {
-                _commonData.isDeleted = false
-                _commonDataCheckFlag.isDeleted = false
-            }
         }
-        commonData.value = _commonData as any
-    })
+        return _commonData
+    }
+
+    watch(
+        () => props.selectedIds,
+        () => {
+            const _selectedTodos = getSelectedTodos()
+            if (!_selectedTodos) return
+            commonData.value = checkTodosAttrs(_selectedTodos, [
+                {
+                    attrName: 'dueDate',
+                    initValue: { startAt: '', endAt: '' },
+                    validator: (a, b) => a.endAt === b.endAt
+                },
+                {
+                    attrName: 'state',
+                    initValue: '',
+                    validator: (a, b) => a === b
+                },
+                {
+                    attrName: 'priority',
+                    initValue: '',
+                    validator: (a, b) => a === b
+                },
+                {
+                    attrName: 'tags',
+                    initValue: [],
+                    validator: (a, b) => {
+                        if (a.length !== b.length) return false
+                        for (const tagId of a) {
+                            if (!b.includes(tagId)) return false
+                        }
+                        return true
+                    }
+                },
+                {
+                    attrName: 'isDeleted',
+                    initValue: false,
+                    validator: (a, b) => a === b
+                }
+            ])
+        },
+        { immediate: true, deep: true }
+    )
 
     return {
         avalibleProjects,
@@ -191,6 +220,7 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
         handleChangePriority,
         handleRemove,
         handleRestore,
+        handleDelete,
         handleCancelMultiSelect
     }
 }
