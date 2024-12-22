@@ -1,6 +1,6 @@
 <template>
     <nue-container id="tasks/basic/kanban" class="content-kanban" theme="vertical,inner">
-        <nue-header :key="$route.path" height="auto" style="box-sizing: border-box">
+        <nue-header :key="$route.path" height="auto">
             <nue-div align="start" gap="16px" justify="space-between">
                 <todo-filter-bar :filter-options="todoFilterBarOptions" @filter="handleFilter" />
                 <nue-div flex="none" gap="12px" justify="end" width="fit-content">
@@ -214,22 +214,22 @@ setTimeout(() => handleGetTodos())
 <style scoped>
 .content-kanban {
     width: 100%;
-}
 
-.content-kanban > .nue-header {
-    border-bottom: none;
-    padding-top: 8px;
-}
+    & > .nue-header {
+        border-bottom: none;
+        padding-top: 0;
+    }
 
-.content-kanban > .nue-main {
-    overflow: hidden;
-    overflow-x: auto;
-    gap: 16px;
-}
+    & > .nue-main {
+        overflow: hidden;
+        overflow-x: auto;
+        gap: 16px;
 
-.content-kanban > .nue-main:deep(> .nue-main__content) {
-    flex-direction: row;
-    padding: 0 16px;
-    gap: 16px;
+        &:deep(> .nue-main__content) {
+            flex-direction: row;
+            padding: 0 16px;
+            gap: 16px;
+        }
+    }
 }
 </style>
