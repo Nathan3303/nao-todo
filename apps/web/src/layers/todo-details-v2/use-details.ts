@@ -209,12 +209,9 @@ export const useTodoDetails = () => {
     // 获取详情
     watch(
         () => route.params.taskId as string,
-        (newTaskId) => deboucedGetTodo(newTaskId)
+        (newTaskId) => deboucedGetTodo(newTaskId),
+        { immediate: true }
     )
-    // watchEffect(async () => {
-    //     cancelTimer(true)
-    //     await _getTodo(route.params.taskId as string)
-    // })
 
     // 订阅 Store 更新
     onMounted(() => {
