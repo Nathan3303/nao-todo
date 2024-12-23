@@ -45,6 +45,7 @@
                 :key="todo.id"
                 :data-done="todo.state === 'done'"
                 :data-selected="idx >= selectRange.start && idx <= selectRange.end"
+                :data-deleted="useDeletedLine && todo.isDeleted"
                 class="todo-table__main__row"
                 @click.stop.exact="handleShowDetails(todo.id, idx)"
                 @click.stop.shift.exact="handleMultiSelect(idx)"

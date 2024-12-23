@@ -57,6 +57,23 @@
     transition: opacity 0.16s ease;
 }
 
+.todo-table__main__row[data-deleted='true'] {
+    opacity: 0.8;
+    transition: opacity 0.16s ease;
+
+    &::after {
+        width: 98%;
+        height: 1px;
+        background-color: var(--primary-color-500);
+        display: block;
+        content: '';
+        position: absolute;
+        top: calc(50% - 1px);
+        left: 1%;
+        z-index: -1;
+    }
+}
+
 .todo-table__main__col {
     line-height: 21px;
     overflow: hidden;
