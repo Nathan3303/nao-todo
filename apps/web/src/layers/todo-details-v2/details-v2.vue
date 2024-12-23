@@ -129,36 +129,38 @@
                 </nue-footer>
             </nue-container>
         </nue-main>
-        <nue-footer style="justify-content: space-between">
-            <todo-project-selector
-                :project-id="shadowTodo.projectId"
-                :projects="projects"
-                :user-id="userStore.user?.id || ''"
-                @select="handleMoveToProject"
-            />
-            <nue-div gap="4px" width="fit-content" wrap="nowrap">
-                <nue-button icon="chat" theme="small" @click="handleStartLeaveComment">
-                    评论
-                </nue-button>
-                <nue-button icon="files" theme="small" @click="handleDuplicateTodo">
-                    复制
-                </nue-button>
-            </nue-div>
-            <nue-div gap="4px" width="fit-content" wrap="nowrap">
-                <nue-button
-                    v-if="shadowTodo.isDeleted"
-                    icon="delete"
-                    size="small"
-                    theme="error"
-                    @click="handleDeleteTodoPermanently"
-                >
-                    永久删除
-                </nue-button>
-                <todo-delete-button
-                    :is-deleted="shadowTodo.isDeleted"
-                    @delete="handleDeleteTodo"
-                    @restore="handleRestoreTodo"
+        <nue-footer>
+            <nue-div align="center" gap="4px" justify="space-between">
+                <todo-project-selector
+                    :project-id="shadowTodo.projectId"
+                    :projects="projects"
+                    :user-id="userStore.user?.id || ''"
+                    @select="handleMoveToProject"
                 />
+                <nue-div gap="4px" width="fit-content" wrap="nowrap">
+                    <nue-button icon="chat" theme="small" @click="handleStartLeaveComment">
+                        评论
+                    </nue-button>
+                    <nue-button icon="files" theme="small" @click="handleDuplicateTodo">
+                        复制
+                    </nue-button>
+                </nue-div>
+                <nue-div gap="4px" width="fit-content" wrap="nowrap">
+                    <nue-button
+                        v-if="shadowTodo.isDeleted"
+                        icon="delete"
+                        size="small"
+                        theme="error"
+                        @click="handleDeleteTodoPermanently"
+                    >
+                        永久删除
+                    </nue-button>
+                    <todo-delete-button
+                        :is-deleted="shadowTodo.isDeleted"
+                        @delete="handleDeleteTodo"
+                        @restore="handleRestoreTodo"
+                    />
+                </nue-div>
             </nue-div>
         </nue-footer>
     </nue-container>
