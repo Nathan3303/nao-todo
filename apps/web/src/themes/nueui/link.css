@@ -1,19 +1,31 @@
 /* 主视图切换链接 */
 .nue-link--index-header-link {
+    display: block;
     --hover-text-decoration: none;
     --hover-color: var(--primary-color-900);
     --actived-color: var(--primary-color-900);
     color: var(--primary-color-500);
     text-decoration: none;
+
+    .nue-icon {
+        display: flex;
+        align-items: center;
+        --icon-size: var(--text-xxl);
+
+        &::before {
+            line-height: 1;
+        }
+    }
+
+    .nue-link__content {
+        display: none;
+    }
+
+    &.nue-link--actived {
+        color: var(--primary-color-900);
+    }
 }
 
-.nue-link--index-header-link.nue-link--actived {
-    color: var(--primary-color-900);
-}
-
-.nue-link--index-header-link .nue-icon {
-    --icon-size: 22px;
-}
 
 /* plink */
 .nue-link--plink {
