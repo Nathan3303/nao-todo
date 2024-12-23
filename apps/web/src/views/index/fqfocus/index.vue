@@ -1,15 +1,9 @@
 <template>
-    <nue-main>
-        <template #content>
-            番茄钟视图筹备中...
-        </template>
-    </nue-main>
+    <nue-div align="center" height="100%" justify="center">
+        <nue-empty description="番茄钟视图筹备中" />
+    </nue-div>
 </template>
 
-<script setup lang='ts'>
+<script lang="ts" setup></script>
 
-</script>
-
-<style scoped>
-    
-</style>
+<style scoped></style>
