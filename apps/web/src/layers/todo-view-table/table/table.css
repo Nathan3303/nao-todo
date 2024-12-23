@@ -4,7 +4,7 @@
     gap: 4px;
     flex: auto;
     overflow: auto;
-    min-width: 480px;
+    min-width: 600px;
     flex-wrap: nowrap;
     height: 100%;
 
@@ -22,10 +22,6 @@
 .todo-table__header__col .nue-text,
 .todo-table__main__col .nue-text {
     color: var(--primary-color-800);
-    font-size: var(--text-xs);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
 .todo-table__main {
@@ -73,25 +69,9 @@
     gap: 4px;
 }
 
-.col-name .col-name__name {
-    width: 100%;
-    color: var(--primary-text-color);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.col-name .col-name__name .nue-text {
-    font-size: var(--text-sm);
-}
-
 .col-name .col-name__description {
-    width: 100%;
     color: var(--primary-color-600);
-    white-space: pre;
-    word-break: break-all;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: break-spaces;
 }
 
 .col-created-at,

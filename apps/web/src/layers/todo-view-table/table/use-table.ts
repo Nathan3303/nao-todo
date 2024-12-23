@@ -1,4 +1,4 @@
-import { reactive, ref, watch, provide, onBeforeUnmount, onMounted } from 'vue'
+import { reactive, ref, watch, provide, onBeforeUnmount, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { isExpired } from '@nao-todo/utils'
 import { useProjectStore, useTodoStore } from '@/stores'
@@ -23,6 +23,16 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
         original: -1
     })
     let unSubscribe: () => void
+
+    const tagBarClamped = computed(() => {
+        let trueCount = 0
+        Object.keys(todoStore.columnOptions).forEach((key: string) => {
+            if (todoStore.columnOptions[key as keyof TodoTableProps['columnOptions']]) {
+                trueCount++
+            }
+        })
+        return Math.ceil(7 / trueCount)
+    })
 
     const isTodoExpired = (todo: Todo) => {
         const endAt = (todo.dueDate.endAt || '') as string
@@ -139,6 +149,7 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
     return {
         selectedId,
         selectRange,
+        tagBarClamped,
         isTodoExpired,
         handleDeleteBtnClk,
         handleDelete,
