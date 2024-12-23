@@ -27,7 +27,7 @@
 .nue-html {
     --primary-font-size-base: 16px;
     --primary-font-weight: 400;
-    --primary-font-family: "Poppins", "pingfang", "Noto Sans SC", sans-serif;
+    --primary-font-family: "Poppins", "pingfang", "Noto Sans SC", sans-serif, ui-sans-serif, system-ui, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
 * {
