@@ -172,7 +172,6 @@ export const useTodoStore = defineStore('todoStore', () => {
             })
             if (result) {
                 NueMessage.success('待办删除成功')
-                deleteLocalTodo(todoId)
                 return true
             } else {
                 NueMessage.error('待办删除失败')
@@ -196,7 +195,8 @@ export const useTodoStore = defineStore('todoStore', () => {
             })
             if (result) {
                 NueMessage.success('待办恢复成功')
-                return deleteLocalTodo(todoId)
+                // return deleteLocalTodo(todoId)
+                return true
             } else {
                 NueMessage.error('待办恢复失败')
             }
