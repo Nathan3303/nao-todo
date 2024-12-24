@@ -118,7 +118,8 @@
     color: var(--primary-color-600);
 }
 
-.col-actions .nue-icon {
+.col-actions .nue-icon,
+.col-actions:deep(.nue-icon) {
     cursor: pointer;
 }
 
