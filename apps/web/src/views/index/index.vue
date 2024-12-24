@@ -5,7 +5,7 @@
                 <img alt="logo" class="index-view__header__logo" src="/favicon.ico" />
             </template>
             <template #navigators>
-                <nue-div vertical>
+                <nue-div vertical gap="24px">
                     <nue-tooltip content="任务" placement="right-center" size="small">
                         <nue-link
                             icon="square-check-fill"

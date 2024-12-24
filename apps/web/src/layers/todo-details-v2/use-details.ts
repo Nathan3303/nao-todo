@@ -48,7 +48,6 @@ export const useTodoDetails = () => {
     const _getTodo = async (todoId: Todo['id']) => {
         if (!todoId) {
             shadowTodo.value = void 0
-            // console.log('[UseDetails/_getTodo] No todo found', todoId)
             return
         }
         if (!shadowTodo.value) {
@@ -173,15 +172,13 @@ export const useTodoDetails = () => {
     // 删除
     const handleDeleteTodo = async () => {
         if (!shadowTodo.value) return
-        const result = await todoStore.deleteTodoWithConfirmation(shadowTodo.value.id)
-        if (result) await handleClose()
+        await todoStore.deleteTodoWithConfirmation(shadowTodo.value.id)
     }
 
     // 恢复
     const handleRestoreTodo = async () => {
         if (!shadowTodo.value) return
-        const result = await todoStore.restoreTodoWithConfirmation(shadowTodo.value.id)
-        if (result) await handleClose()
+        await todoStore.restoreTodoWithConfirmation(shadowTodo.value.id)
     }
 
     // 永久删除

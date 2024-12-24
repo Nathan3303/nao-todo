@@ -4,7 +4,7 @@
     gap: 4px;
     flex: auto;
     overflow: auto;
-    min-width: 480px;
+    min-width: 600px;
     flex-wrap: nowrap;
     height: 100%;
 
@@ -22,10 +22,6 @@
 .todo-table__header__col .nue-text,
 .todo-table__main__col .nue-text {
     color: var(--primary-color-800);
-    font-size: var(--text-xs);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
 .todo-table__main {
@@ -61,6 +57,23 @@
     transition: opacity 0.16s ease;
 }
 
+.todo-table__main__row[data-deleted='true'] {
+    opacity: 0.8;
+    transition: opacity 0.16s ease;
+
+    &::after {
+        width: 98%;
+        height: 1px;
+        background-color: var(--primary-color-500);
+        display: block;
+        content: '';
+        position: absolute;
+        top: calc(50% - 1px);
+        left: 1%;
+        z-index: -1;
+    }
+}
+
 .todo-table__main__col {
     line-height: 21px;
     overflow: hidden;
@@ -73,31 +86,15 @@
     gap: 4px;
 }
 
-.col-name .col-name__name {
-    width: 100%;
-    color: var(--primary-text-color);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.col-name .col-name__name .nue-text {
-    font-size: var(--text-sm);
-}
-
 .col-name .col-name__description {
-    width: 100%;
     color: var(--primary-color-600);
-    white-space: pre;
-    word-break: break-all;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: break-spaces;
 }
 
 .col-created-at,
 .col-updated-at,
 .col-end-at {
-    width: 9%;
+    width: 10%;
 
     .nue-text {
         text-overflow: unset;
@@ -121,7 +118,8 @@
     color: var(--primary-color-600);
 }
 
-.col-actions .nue-icon {
+.col-actions .nue-icon,
+.col-actions:deep(.nue-icon) {
     cursor: pointer;
 }
 

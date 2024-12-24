@@ -35,7 +35,7 @@
         <nue-divider />
         <nue-div class="todo-table__main">
             <slot v-if="!todos.length" name="empty">
-                <nue-text v-if="!todos.length" class="todo-table__main__empty-text">
+                <nue-text class="todo-table__main__empty-text">
                     当前列表无待办任务！
                 </nue-text>
             </slot>
@@ -45,6 +45,7 @@
                 :key="todo.id"
                 :data-done="todo.state === 'done'"
                 :data-selected="idx >= selectRange.start && idx <= selectRange.end"
+                :data-deleted="useDeletedLine && todo.isDeleted"
                 class="todo-table__main__row"
                 @click.stop.exact="handleShowDetails(todo.id, idx)"
                 @click.stop.shift.exact="handleMultiSelect(idx)"
@@ -52,28 +53,33 @@
                 <nue-div class="todo-table__main__col col-name" vertical>
                     <nue-div align="center" wrap="nowrap">
                         <nue-div class="col-name__name" flex width="auto">
-                            <nue-text>{{ todo.name }}</nue-text>
+                            <nue-text
+                                :clamped="1"
+                                color="var(--primary-text-color)"
+                                size="var(--text-sm)"
+                            >
+                                {{ todo.name }}
+                            </nue-text>
                         </nue-div>
                         <todo-tag-bar
-                            :clamped="3"
+                            :clamped="tagBarClamped"
                             :tags="tags"
                             :todoTags="todo.tags"
                             readonly
                             small
                         />
                     </nue-div>
-                    <nue-text
-                        v-if="columnOptions.description && todo.description"
-                        class="col-name__description"
-                    >
-                        {{ todo.description }}
-                    </nue-text>
+                    <nue-div v-if="columnOptions.description && todo.description" vertical>
+                        <nue-text :clamped="2" class="col-name__description" size="var(--text-xs)">
+                            {{ todo.description }}
+                        </nue-text>
+                    </nue-div>
                 </nue-div>
                 <nue-div
                     v-if="columnOptions.createdAt"
                     class="todo-table__main__col col-created-at"
                 >
-                    <nue-text :title="useRelativeDate(todo.createdAt)">
+                    <nue-text :title="useRelativeDate(todo.createdAt)" size="var(--text-xs)">
                         {{ useRelativeDate(todo.createdAt) }}
                     </nue-text>
                 </nue-div>
@@ -81,7 +87,7 @@
                     v-if="columnOptions.updatedAt"
                     class="todo-table__main__col col-updated-at"
                 >
-                    <nue-text :title="useRelativeDate(todo.updatedAt)">
+                    <nue-text :title="useRelativeDate(todo.updatedAt)" size="var(--text-xs)">
                         {{ useRelativeDate(todo.updatedAt) }}
                     </nue-text>
                 </nue-div>
@@ -91,15 +97,19 @@
                     :data-expired="isTodoExpired(todo)"
                     class="todo-table__main__col col-end-at"
                 >
-                    <nue-text :title="useRelativeDate(todo.dueDate.endAt)">
+                    <nue-text :title="useRelativeDate(todo.dueDate.endAt)" size="var(--text-xs)">
                         {{ useRelativeDate(todo.dueDate.endAt) }}
                     </nue-text>
                 </nue-div>
                 <nue-div v-if="columnOptions.priority" class="todo-table__main__col col-priority">
-                    <todo-priority-info :key="todo.priority" :priority="todo.priority" />
+                    <todo-priority-info
+                        :key="todo.priority"
+                        :priority="todo.priority"
+                        use-clamped
+                    />
                 </nue-div>
                 <nue-div v-if="columnOptions.state" class="todo-table__main__col col-state">
-                    <todo-state-info :key="todo.state" :state="todo.state" />
+                    <todo-state-info :key="todo.state" :state="todo.state" use-clamped />
                 </nue-div>
                 <nue-div v-if="columnOptions.project" class="todo-table__main__col col-project">
                     <nue-text :clamped="1" size="12px">
@@ -111,10 +121,12 @@
                     </nue-text>
                 </nue-div>
                 <nue-div class="todo-table__main__col col-actions">
-                    <nue-icon
-                        :name="todo.isDeleted ? 'restore' : 'delete'"
-                        @click.stop="handleDeleteBtnClk(todo.id, todo.isDeleted)"
-                    />
+                    <slot :todo="todo" name="row-actions">
+                        <nue-icon
+                            :name="todo.isDeleted ? 'restore' : 'delete'"
+                            @click.stop="handleDeleteBtnClk(todo.id, todo.isDeleted)"
+                        />
+                    </slot>
                 </nue-div>
             </nue-div>
         </nue-div>
@@ -136,6 +148,7 @@ const emit = defineEmits<TodoTableEmits>()
 
 const {
     selectRange,
+    tagBarClamped,
     isTodoExpired,
     handleDeleteBtnClk,
     handleShowDetails,

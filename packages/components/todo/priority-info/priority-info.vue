@@ -1,7 +1,9 @@
 <template>
-    <nue-div align="center" width="auto" gap="4px">
+    <nue-div align="center" gap="4px" wrap="nowrap">
         <nue-icon :name="info[0]" style="--icon-weight: normal" :color="color" />
-        <nue-text size="12px" :color="color">{{ info[1] }}</nue-text>
+        <nue-text :clamped="useClamped ? 1 : void 0" :color="color" size="12px">
+            {{ info[1] }}
+        </nue-text>
     </nue-div>
 </template>
 
@@ -12,6 +14,7 @@ import type { Todo } from '@nao-todo/types'
 const props = defineProps<{
     priority: Todo['priority']
     colored?: boolean
+    useClamped?: boolean
 }>()
 
 const info = computed(() => {

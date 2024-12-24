@@ -44,15 +44,15 @@ import { NueInput } from 'nue-ui'
 import type { CreateProjectOptions } from '@nao-todo/types'
 
 defineOptions({ name: 'CreateProjectDialog' })
-const props = defineProps<{
-    handler: (payload: CreateProjectOptions) => Promise<any>
-}>()
+const props = defineProps<{ handler: (payload: CreateProjectOptions) => Promise<any> }>()
+
+const defaultNewProjectPayload: CreateProjectOptions = { title: '', description: '' }
 
 const visible = ref(false)
 const loading = ref(false)
 const isProjectTitleEmpty = ref(false)
 const isAddDescription = ref(false)
-const newProjectPayload = ref<CreateProjectOptions>({ title: '', description: '' })
+const newProjectPayload = ref<CreateProjectOptions>({ ...defaultNewProjectPayload })
 const projectNameInputRef = ref<InstanceType<typeof NueInput>>()
 
 const showCreateProjectDialog = () => {
@@ -62,7 +62,8 @@ const showCreateProjectDialog = () => {
 
 const handleClearInputValues = () => {
     isProjectTitleEmpty.value = false
-    newProjectPayload.value = { title: '', description: '' }
+    isAddDescription.value = false
+    newProjectPayload.value = { ...defaultNewProjectPayload }
 }
 
 const handleAddProject = async () => {
@@ -86,7 +87,7 @@ const handleAddProject = async () => {
 
 watch(
     () => newProjectPayload.value.title,
-    (newVal) => (isProjectTitleEmpty.value = !newVal)
+    (newVal) => newVal && (isProjectTitleEmpty.value = !newVal)
 )
 
 defineExpose({

@@ -8,6 +8,7 @@ type TodoTableProps = {
     emptyMessage?: string
     sortOptions: GetTodosSortOptions
     columnOptions: TodoColumnOptions
+    useDeletedLine?: boolean
 }
 
 type TodoTableMultiSelectPayload = {

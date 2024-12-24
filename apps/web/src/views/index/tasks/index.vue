@@ -56,6 +56,7 @@
         ref="tagColorSelectDialogRef"
         :handler="tasksHandlerStore.handleSelectTagColor"
     />
+    <todo-history-dialog ref="todoHistoryDialogRef" />
 </template>
 
 <script lang="ts" setup>
@@ -74,7 +75,8 @@ import {
     TagManager,
     TagSmartList,
     TodoDetailsV2,
-    TodoMultiDetails
+    TodoMultiDetails,
+    TodoHistoryDialog
 } from '@/layers'
 
 const viewStore = useViewStore()
@@ -89,6 +91,7 @@ const createProjectDialogRef = ref<InstanceType<typeof CreateProjectDialog>>()
 const createTodoDialogRef = ref<InstanceType<typeof CreateTodoDialog>>()
 const createTagDialogRef = ref<InstanceType<typeof CreateTagDialog>>()
 const tagColorSelectDialogRef = ref<InstanceType<typeof TagColorSelectDialog>>()
+const todoHistoryDialogRef = ref<InstanceType<typeof TodoHistoryDialog>>()
 
 const { projectAsideVisible } = storeToRefs(viewStore)
 const collapseItemsRecord = ref(['projects', 'tags'])
@@ -101,5 +104,6 @@ onMounted(() => {
     tasksDialogStore.createTodoDialogRef = createTodoDialogRef.value
     tasksDialogStore.createTagDialogRef = createTagDialogRef.value
     tasksDialogStore.tagColorSelectDialogRef = tagColorSelectDialogRef.value
+    tasksDialogStore.todoHistoryDialogRef = todoHistoryDialogRef.value
 })
 </script>

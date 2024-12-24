@@ -1,0 +1,11 @@
+/* for-icon-only */
+
+.nue-badge--for-icon-only {
+    .nue-badge__content {
+        top: 4%;
+        right: 2%;
+        bottom: auto;
+        left: auto;
+        width: 8px;
+    }
+}

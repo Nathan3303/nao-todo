@@ -37,6 +37,7 @@
                     :sort-options="getOptions.sort || { field: '', order: 'asc' }"
                     :tags="tagStore.tags"
                     :todos="todos"
+                    :use-deleted-line="tasksViewStore.viewInfo?.id !== 'recycle'"
                     @delete-todo="handleDeleteTodo"
                     @restore-todo="todoStore.restoreTodoWithConfirmation"
                     @show-todo-details="showTodoDetails"
@@ -87,7 +88,7 @@
 
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useTagStore, useTodoStore } from '@/stores'
 import { Loading, Pager, TodoFilterBar } from '@nao-todo/components'
@@ -105,7 +106,6 @@ const props = defineProps<{
     disabledCreateTodo?: boolean
 }>()
 
-const route = useRoute()
 const router = useRouter()
 const todoStore = useTodoStore()
 const tagStore = useTagStore()
@@ -155,8 +155,7 @@ const handleFilter = async (newTodoFilter: TodoFilterOptions) => {
 }
 
 const handleDeleteTodo = async (todoId: Todo['id']) => {
-    const result = await todoStore.deleteTodoWithConfirmation(todoId)
-    if (result) await router.replace({ name: route.name, params: { taskId: void 0 } })
+    await todoStore.deleteTodoWithConfirmation(todoId)
 }
 
 const handleChangeColumns = (options: TodoColumnOptions) => {
