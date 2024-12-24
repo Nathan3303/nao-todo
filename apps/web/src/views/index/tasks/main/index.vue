@@ -3,6 +3,15 @@
         <nue-header class="tasks-main-view__header">
             <todo-view-header>
                 <template #actions>
+                    <template v-if="category === 'basic' && viewInfo?.id === 'today'">
+                        <nue-tooltip content="查看并顺延已过期的待办" size="small">
+                            <nue-button
+                                icon="history"
+                                theme="icon-only"
+                                @click="tasksDialogStore.showTodoHistoryDialog"
+                            />
+                        </nue-tooltip>
+                    </template>
                     <template v-if="category === 'project'">
                         <nue-tooltip content="删除清单" size="small">
                             <nue-button
@@ -120,6 +129,20 @@ onBeforeRouteUpdate((to, from, next) => {
     }
     next()
 })
+
+// 判断是否是 “今日视图” 且首次打开，是则显示过期任务处理对话框
+// onBeforeRouteUpdate((to, from, next) => {
+//     if (!viewInfo.value) return
+//     if (viewInfo.value.id !== 'today') return
+//     const lastTimeOpenedTodayView = localStorage.getItem('lastTimeOpenedTodayView')
+//     const now = useMoment()
+//     if (!lastTimeOpenedTodayView || now.isBefore(lastTimeOpenedTodayView, 'd')) {
+//         requestIdleCallback(() => {
+//             setTimeout(() => tasksDialogStore.showTodoHistoryDialog(true), 128)
+//             localStorage.setItem('lastTimeOpenedTodayView', now.toISOString(true))
+//         })
+//     }
+// })
 
 // 获取视图信息
 watchEffect(() => tasksViewStore.getViewInfo())

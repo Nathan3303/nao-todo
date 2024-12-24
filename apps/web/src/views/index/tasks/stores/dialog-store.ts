@@ -5,7 +5,8 @@ import {
     CreateTagDialog,
     CreateTodoDialog,
     ProjectManager,
-    TagManager
+    TagManager,
+    TodoHistoryDialog
 } from '@/layers'
 import { useProjectStore, useTagStore, useUserStore } from '@/stores'
 import { useTasksViewStore } from './view-store'
@@ -17,23 +18,13 @@ export const useTasksDialogStore = defineStore('TasksDialogStore', () => {
     const userStore = useUserStore()
     const tasksViewStore = useTasksViewStore()
 
-    // 创建清单对话框
-    const createProjectDialogRef = ref<InstanceType<typeof CreateProjectDialog>>()
-
-    // 创建待办对话框
-    const createTodoDialogRef = ref<InstanceType<typeof CreateTodoDialog>>()
-
-    // 创建标签对话框
-    const createTagDialogRef = ref<InstanceType<typeof CreateTagDialog>>()
-
-    // 标签颜色选择对话框
-    const tagColorSelectDialogRef = ref<InstanceType<typeof TagColorSelectDialog>>()
-
-    // 清单管理对话框
-    const projectManagerRef = ref<InstanceType<typeof ProjectManager>>()
-
-    // 标签管理对话框
-    const tagManagerRef = ref<InstanceType<typeof TagManager>>()
+    const createProjectDialogRef = ref<InstanceType<typeof CreateProjectDialog>>() // 创建清单对话框
+    const createTodoDialogRef = ref<InstanceType<typeof CreateTodoDialog>>() // 创建待办对话框
+    const createTagDialogRef = ref<InstanceType<typeof CreateTagDialog>>() // 创建标签对话框
+    const tagColorSelectDialogRef = ref<InstanceType<typeof TagColorSelectDialog>>() // 标签颜色选择对话框
+    const projectManagerRef = ref<InstanceType<typeof ProjectManager>>() // 清单管理对话框
+    const tagManagerRef = ref<InstanceType<typeof TagManager>>() // 标签管理对话框
+    const todoHistoryDialogRef = ref<InstanceType<typeof TodoHistoryDialog>>() // 历史已过期待办处理对话框
 
     // 显示创建清单对话框
     const showCreateProjectDialog = () => {
@@ -86,6 +77,12 @@ export const useTasksDialogStore = defineStore('TasksDialogStore', () => {
         tagManagerRef.value.show()
     }
 
+    // 显示历史已过期待办处理对话框
+    const showTodoHistoryDialog = (force: boolean) => {
+        if (!todoHistoryDialogRef.value) return
+        todoHistoryDialogRef.value.show(force)
+    }
+
     return {
         createProjectDialogRef,
         createTodoDialogRef,
@@ -93,11 +90,13 @@ export const useTasksDialogStore = defineStore('TasksDialogStore', () => {
         tagColorSelectDialogRef,
         projectManagerRef,
         tagManagerRef,
+        todoHistoryDialogRef,
         showCreateProjectDialog,
         showCreateTodoDialog,
         showCreateTagDialog,
         showTagColorSelectDialog,
         showProjectManagerDialog,
-        showTagManagerDialog
+        showTagManagerDialog,
+        showTodoHistoryDialog
     }
 })

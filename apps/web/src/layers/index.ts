@@ -23,6 +23,7 @@ export * from './update-log-dialog'
 export * from './todo-filter-list'
 export * from './todo-multi-details'
 export * from './todo-comment-details'
+export * from './todo-history-dialog'
 
 // tag
 export * from './tag-manager'
