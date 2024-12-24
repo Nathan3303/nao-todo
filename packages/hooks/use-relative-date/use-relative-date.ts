@@ -21,12 +21,12 @@ const useRelativeDate = (date: Moment | Date | string | null) => {
     if (isToday(date)) return `今天, ${date.format('HH:mm')}`
     if (isTomorrow(date)) return `明天, ${date.format('HH:mm')}`
     if (isIn7DaysFromNow(date)) {
-        const weekdayString = '日一二三四五六'
-        const weekday = `周${weekdayString[date.day()]}`
+        // const weekdayString = '日一二三四五六'
+        // const weekday = `周${weekdayString[date.day()]}`
         if (date.isSame(useMoment(), 'year')) {
-            return `${weekday}, ${date.format('M月D日, HH:mm')}`
+            return `${date.format('M月D日, HH:mm')}`
         }
-        return `${weekday}, ${date.format('YYYY年MM月DD日, HH:mm')}`
+        return `${date.format('YYYY年MM月DD日, HH:mm')}`
     }
     if (isIn30DaysFromNow(date)) {
         return `${date.format('M月D日, HH:mm')}`
