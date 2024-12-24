@@ -1,12 +1,11 @@
 {
     "name": "@nao-todo/webapp",
-    "description": "Web app for Nao Todo",
-    "version": "0.1.0",
+    "version": "1.0.0",
+    "description": "WEB version of NaoTodo",
     "author": "Nathan Lee",
     "license": "MIT",
     "private": true,
     "type": "module",
-    "packageManager": "pnpm@9.12.2",
     "scripts": {
         "dev": "vite --config vite.config.ts",
         "build": "vite build --config vite.config.ts",
