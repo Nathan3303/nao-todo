@@ -35,7 +35,7 @@
         <nue-divider />
         <nue-div class="todo-table__main">
             <slot v-if="!todos.length" name="empty">
-                <nue-text v-if="!todos.length" class="todo-table__main__empty-text">
+                <nue-text class="todo-table__main__empty-text">
                     当前列表无待办任务！
                 </nue-text>
             </slot>
@@ -121,10 +121,12 @@
                     </nue-text>
                 </nue-div>
                 <nue-div class="todo-table__main__col col-actions">
-                    <nue-icon
-                        :name="todo.isDeleted ? 'restore' : 'delete'"
-                        @click.stop="handleDeleteBtnClk(todo.id, todo.isDeleted)"
-                    />
+                    <slot :todo="todo" name="row-actions">
+                        <nue-icon
+                            :name="todo.isDeleted ? 'restore' : 'delete'"
+                            @click.stop="handleDeleteBtnClk(todo.id, todo.isDeleted)"
+                        />
+                    </slot>
                 </nue-div>
             </nue-div>
         </nue-div>
