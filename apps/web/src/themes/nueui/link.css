@@ -11,6 +11,7 @@
         display: flex;
         align-items: center;
         --icon-size: var(--text-xxl);
+        height: 25px;
 
         &::before {
             line-height: 1;

@@ -6,17 +6,17 @@
             </template>
             <template #navigators>
                 <nue-div vertical gap="24px">
-                    <nue-tooltip content="任务" placement="right-end" size="small">
+                    <nue-tooltip content="任务" placement="right-center" size="small">
                         <nue-link
                             icon="square-check-fill"
                             route="/tasks"
                             theme="index-header-link"
                         />
                     </nue-tooltip>
-                    <nue-tooltip content="日历视图" placement="right-end" size="small">
+                    <nue-tooltip content="日历视图" placement="right-center" size="small">
                         <nue-link icon="calendar2" route="/calendar" theme="index-header-link" />
                     </nue-tooltip>
-                    <nue-tooltip content="番茄专注" placement="right-end" size="small">
+                    <nue-tooltip content="番茄专注" placement="right-center" size="small">
                         <nue-link icon="scan" route="/fqfocus" theme="index-header-link" />
                     </nue-tooltip>
                 </nue-div>
