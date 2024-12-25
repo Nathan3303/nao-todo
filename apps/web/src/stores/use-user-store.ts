@@ -70,7 +70,7 @@ export const useUserStore = defineStore('userStore', () => {
     const doCheckout = throttle(async (checkoutMsg: string) => {
         await checkout()
         await router.push('/auth/login')
-        await NueMessage.error(checkoutMsg)
+        NueMessage.error(checkoutMsg)
         return true
     }, 4000)
 
@@ -95,6 +95,7 @@ export const useUserStore = defineStore('userStore', () => {
             })
             if (result) {
                 NueMessage.success('退出登录成功')
+                await router.push('/auth/login')
             } else {
                 NueMessage.error('退出登录失败')
             }
