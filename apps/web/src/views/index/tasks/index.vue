@@ -18,7 +18,7 @@
                     今天 - {{ now.format('MM月DD日, dddd') }}
                 </aside-link>
                 <aside-link icon="tomorrow2" route-name="tasks-tomorrow">明天</aside-link>
-                <aside-link icon="week" route-name="tasks-week">本周</aside-link>
+                <aside-link icon="week3" route-name="tasks-week">本周</aside-link>
                 <aside-link icon="inbox" route-name="tasks-inbox">收集箱</aside-link>
                 <nue-divider />
                 <nue-collapse v-model="collapseItemsRecord">

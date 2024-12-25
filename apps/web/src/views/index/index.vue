@@ -2,7 +2,13 @@
     <nue-container class="index-view" theme="horizontal">
         <nue-header class="index-view__header">
             <template #logo>
-                <img alt="logo" class="index-view__header__logo" src="/favicon.ico" />
+                <user-dropdown
+                    :user="user"
+                    placement="right-start"
+                    @logout="userStore.signOutWithConfirmation"
+                    @show-profile="showProfileDialog"
+                    @update-passwd="showUpdatePasswordDialog"
+                />
             </template>
             <template #navigators>
                 <nue-div vertical gap="24px">
@@ -14,23 +20,18 @@
                         />
                     </nue-tooltip>
                     <nue-tooltip content="日历视图" placement="right-center" size="small">
-                        <nue-link icon="calendar2" route="/calendar" theme="index-header-link" />
+                        <nue-link icon="calendar" route="/calendar" theme="index-header-link" />
                     </nue-tooltip>
                     <nue-tooltip content="番茄专注" placement="right-center" size="small">
-                        <nue-link icon="scan" route="/fqfocus" theme="index-header-link" />
+                        <nue-link icon="focus2" route="/fqfocus" theme="index-header-link" />
+                    </nue-tooltip>
+                    <nue-tooltip content="搜索" placement="right-center" size="small">
+                        <nue-link icon="search2" route="/search" theme="index-header-link" />
                     </nue-tooltip>
                 </nue-div>
             </template>
             <template #actions></template>
-            <template #user>
-                <user-dropdown
-                    :user="user"
-                    placement="right-end"
-                    @logout="userStore.signOutWithConfirmation"
-                    @show-profile="showProfileDialog"
-                    @update-passwd="showUpdatePasswordDialog"
-                />
-            </template>
+            <template #user></template>
         </nue-header>
         <nue-main class="index-view__main">
             <router-view />
