@@ -61,7 +61,8 @@
 }
 
 /* 主页 - 任务子页 */
-.tasks-view__main {
+.tasks-view__main,
+.search-view__main {
     border: none !important;
     z-index: 0;
 }
@@ -77,7 +78,8 @@
     min-height: auto;
 }
 
-.tasks-view__main .nue-main__outline-wrapper .nue-main__outline {
+.tasks-view__main .nue-main__outline-wrapper .nue-main__outline,
+.search-view__main .nue-main__outline-wrapper .nue-main__outline {
     padding: 0;
 }
 

@@ -41,6 +41,11 @@ const router = createRouter({
                     path: 'fqfocus',
                     name: 'fqfocus',
                     component: () => import('@/views/index/fqfocus/index.vue')
+                },
+                {
+                    path: 'search',
+                    name: 'search',
+                    component: () => import('@/views/index/search/index.vue')
                 }
             ]
         }
