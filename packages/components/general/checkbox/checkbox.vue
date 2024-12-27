@@ -1,8 +1,8 @@
 <template>
-    <nue-div class="checkbox" @click="handleCheck">
+    <nue-div class="checkbox" wrap="nowrap" @click="handleCheck">
         <nue-icon size="18px" :name="checked ? 'square-check-fill' : 'square'" />
         <nue-icon v-if="icon" size="18px" :name="icon" color="gray" />
-        <nue-text size="13px" style="flex: auto">{{ label }}</nue-text>
+        <nue-text :clamped="1" size="13px">{{ label }}</nue-text>
         <nue-div width="auto">
             <nue-text size="14px" weight="400">{{ count }}</nue-text>
         </nue-div>

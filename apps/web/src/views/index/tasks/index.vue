@@ -4,13 +4,14 @@
             :allow-collapse-aside="false"
             :allow-collapse-outline="false"
             :allow-hide-aside="false"
+            :allow-resize-aside="responsiveFlag > 1"
             aside-max-width="300px"
             aside-min-width="200px"
             aside-width="250px"
             class="tasks-view__main"
             outline-max-width="540px"
-            outline-min-width="420px"
-            outline-width="480px"
+            outline-min-width="375px"
+            outline-width="minmax(480px, 100%)"
         >
             <template v-if="projectAsideVisible" #aside>
                 <aside-link icon="more2" route-name="tasks-all">所有</aside-link>
@@ -34,13 +35,26 @@
                     <router-view />
                 </suspense>
             </template>
-            <template #outline>
+            <template v-if="tasksOutlineVisible" #outline>
                 <todo-multi-details
                     v-if="tasksViewStore.multiSelectStates.isShowMultiDetails"
                     :selected-ids="tasksViewStore.multiSelectStates.selectedTodoIds"
                 />
                 <todo-details-v2 v-else />
             </template>
+            <!-- Outline Drawer (For mobile device) -->
+            <nue-drawer
+                v-if="!tasksOutlineVisible"
+                v-model:visible="outlineDrawerVisible"
+                class="nue-drawer--no-header"
+                span="100%"
+            >
+                <todo-multi-details
+                    v-if="tasksViewStore.multiSelectStates.isShowMultiDetails"
+                    :selected-ids="tasksViewStore.multiSelectStates.selectedTodoIds"
+                />
+                <todo-details-v2 v-else />
+            </nue-drawer>
         </nue-main>
     </nue-container>
     <!-- Dialogs -->
@@ -60,7 +74,8 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useViewStore } from '@/stores'
 import { AsideLink, TagColorSelectDialog } from '@nao-todo/components'
@@ -79,12 +94,14 @@ import {
     TodoHistoryDialog
 } from '@/layers'
 
+const route = useRoute()
 const viewStore = useViewStore()
 const tasksViewStore = useTasksViewStore()
 const tasksDialogStore = useTasksDialogStore()
 const tasksHandlerStore = useTasksHandlerStore()
 
 const now = useMoment()
+const { projectAsideVisible, responsiveFlag, tasksOutlineVisible } = storeToRefs(viewStore)
 const projectManagerRef = ref<InstanceType<typeof ProjectManager>>()
 const tagManagerRef = ref<InstanceType<typeof TagManager>>()
 const createProjectDialogRef = ref<InstanceType<typeof CreateProjectDialog>>()
@@ -92,9 +109,8 @@ const createTodoDialogRef = ref<InstanceType<typeof CreateTodoDialog>>()
 const createTagDialogRef = ref<InstanceType<typeof CreateTagDialog>>()
 const tagColorSelectDialogRef = ref<InstanceType<typeof TagColorSelectDialog>>()
 const todoHistoryDialogRef = ref<InstanceType<typeof TodoHistoryDialog>>()
-
-const { projectAsideVisible } = storeToRefs(viewStore)
 const collapseItemsRecord = ref(['projects', 'tags'])
+const outlineDrawerVisible = ref(false)
 
 // 挂载后钩子 -> 注册对话框
 onMounted(() => {
@@ -106,4 +122,10 @@ onMounted(() => {
     tasksDialogStore.tagColorSelectDialogRef = tagColorSelectDialogRef.value
     tasksDialogStore.todoHistoryDialogRef = todoHistoryDialogRef.value
 })
+
+watch(
+    () => route.params.taskId,
+    (newTasksId) => (outlineDrawerVisible.value = !!newTasksId),
+    { immediate: true }
+)
 </script>

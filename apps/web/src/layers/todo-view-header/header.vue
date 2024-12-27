@@ -13,7 +13,12 @@
                         @click="handleHideProjectAside"
                     />
                 </nue-tooltip>
-                <nue-text size="24px" theme="pointer" @click="viewInfo?.handlers?.updateTitle">
+                <nue-text
+                    :clamped="1"
+                    size="24px"
+                    theme="pointer"
+                    @click="viewInfo?.handlers?.updateTitle"
+                >
                     {{ category === 'tag' ? '#' : '' }}
                     {{ viewInfo?.title || '设置清单标题' }}
                 </nue-text>
@@ -28,6 +33,7 @@
             size="14px"
             theme="pointer"
             @click="viewInfo?.handlers?.updateDescription"
+            :clamped="2"
         >
             {{ viewInfo?.description || '该清单没有设置描述信息，点此设置清单描述' }}
         </nue-text>

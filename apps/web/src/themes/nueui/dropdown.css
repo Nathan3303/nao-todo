@@ -1,11 +1,21 @@
-.nue-dropdown .nue-dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.nue-dropdown-pool {
+    z-index: 99;
+}
 
-    .nue-button {
-        .nue-button__icon {
-            --icon-size: 16px;
+.nue-dropdown {
+    min-width: unset;
+    max-width: unset;
+
+    .nue-dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: unset;
+
+        .nue-button {
+            .nue-button__icon {
+                --icon-size: 16px;
+            }
         }
     }
 }
@@ -15,20 +25,25 @@
     padding: 0;
 
     .nue-container {
-        min-width: 120px;
 
         .nue-header {
             padding: 2px 12px;
             height: auto;
+            box-sizing: border-box;
 
-            .nue-input__icon {
-                --icon-size: var(--text-md);
+            .nue-input {
+                width: 128px;
+
+                .nue-input__icon {
+                    --icon-size: var(--text-md);
+                }
             }
 
             .nue-text {
                 height: 28px;
                 line-height: 28px;
             }
+
         }
 
         .nue-main {
@@ -44,6 +59,8 @@
 /* user-dropdown */
 .nue-dropdown--user-dropdown {
     padding: 12px;
+    width: auto;
+    max-width: unset;
 }
 
 /* project-selector */

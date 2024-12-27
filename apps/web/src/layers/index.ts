@@ -29,3 +29,6 @@ export * from './todo-history-dialog'
 export * from './tag-manager'
 export * from './tag-smart-list'
 export * from './create-tag-dialog'
+
+// index
+export * from './index-aside'

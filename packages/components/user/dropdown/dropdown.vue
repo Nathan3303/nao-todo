@@ -1,11 +1,27 @@
 <template>
     <nue-dropdown hide-on-click theme="user-dropdown">
         <template #default="{ clickTrigger }">
-            <nue-avatar :src="user?.avatar" style="cursor: pointer" @click.stop="clickTrigger" />
+            <nue-div v-if="isOnMobile" align="center" @click="clickTrigger">
+                <nue-avatar :src="user?.avatar" style="cursor: pointer" />
+                <nue-text :clamped="1" size="var(--text-sm)">{{ user?.nickname }}</nue-text>
+                <nue-icon name="select" size="var(--text-sm)" style="margin-left: auto" />
+            </nue-div>
+            <nue-avatar
+                v-else
+                :src="user?.avatar"
+                style="cursor: pointer"
+                @click="clickTrigger"
+            />
         </template>
         <template v-if="user" #dropdown>
-            <nue-div align="center" gap="32px" justify="center" vertical width="240px">
-                <nue-div align="center" style="margin-top: 32px" vertical>
+            <nue-div
+                :width="isOnMobile ? '217px' : '256px'"
+                align="center"
+                gap="32px"
+                justify="center"
+                vertical
+            >
+                <nue-div v-if="!isOnMobile" align="center" style="margin-top: 32px" vertical>
                     <nue-avatar :src="user?.avatar" size="64px" />
                     <nue-text>{{ user?.nickname || '' }}</nue-text>
                 </nue-div>
@@ -30,6 +46,7 @@ defineProps<{
         nickname: string
         avatar: string
     }
+    isOnMobile?: boolean
 }>()
 const emit = defineEmits<{
     (event: 'logout', id?: string): void

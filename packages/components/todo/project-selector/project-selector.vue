@@ -1,5 +1,9 @@
 <template>
-    <nue-dropdown theme="project-selector" :hide-on-click="false" placement="bottom-end">
+    <nue-dropdown
+        :hide-on-click="false"
+        :placement="placement ?? 'bottom-end'"
+        theme="project-selector"
+    >
         <template #default="{ clickTrigger }">
             <nue-button size="small" :icon="buttonIconName" @click="clickTrigger">
                 {{ buttonText }}
@@ -42,6 +46,7 @@ const props = defineProps<{
     projects: Project[]
     projectId?: Project['id']
     placeholder?: string
+    placement?: string
 }>()
 const emit = defineEmits<{
     (event: 'select', projectId: Project['id'], projectTitle: Project['title']): void

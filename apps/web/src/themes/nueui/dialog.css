@@ -1,7 +1,16 @@
 /* patches */
 .nue-dialog-wrapper {
-    --dialog-width: auto;
-    --dialog-max-width: auto;
+    z-index: 98;
+
+    .nue-dialog {
+        box-sizing: border-box;
+        width: auto;
+        height: auto;
+        min-width: 320px;
+        min-height: auto;
+        max-width: calc(100% - var(--primary-padding) * 2);
+        max-height: calc(100% - var(--primary-padding) * 2);
+    }
 }
 
 /* update-log */
