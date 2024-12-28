@@ -2,7 +2,11 @@
     <nue-container class="tasks-main-table-view" theme="vertical,inner">
         <nue-header :key="$route.path" class="tasks-main-table-view__header">
             <nue-div align="start" gap="16px" justify="space-between">
-                <todo-filter-bar :filter-options="todoFilterBarOptions" @filter="handleFilter" />
+                <todo-filter-bar
+                    :filter-options="todoFilterBarOptions"
+                    :simple="viewStore.responsiveFlag < 1"
+                    @filter="handleFilter"
+                />
                 <nue-div flex="none" gap="12px" justify="end" width="fit-content">
                     <nue-button
                         v-if="!disabledCreateTodo"
@@ -63,7 +67,7 @@
         </nue-main>
         <nue-footer>
             <nue-div align="center" justify="space-between">
-                <nue-text color="gray" flex size="12px">
+                <nue-text v-if="viewStore.responsiveFlag > 0" color="gray" flex size="12px">
                     当前列表 {{ getOverview.countInfo?.length || 0 }} 项， 共计
                     {{ getOverview.countInfo?.count || 0 }} 项。
                     <nue-text
@@ -74,10 +78,22 @@
                         已选择 {{ multiSelectCount }} 项。
                     </nue-text>
                 </nue-text>
+                <nue-text v-else color="gray" flex size="12px">
+                    {{ getOverview.countInfo?.length || 0 }}/{{ getOverview.countInfo?.count || 0 }}
+                    项
+                    <nue-text
+                        v-if="tasksViewStore.multiSelectStates.isShowMultiDetails"
+                        color="orange"
+                        size="12px"
+                    >
+                        （{{ multiSelectCount }}）
+                    </nue-text>
+                </nue-text>
                 <pager
                     :limit="getOptions.limit"
                     :page="getOverview.pageInfo.page * 1"
                     :total-pages="getOverview.pageInfo.totalPages"
+                    :simple="viewStore.responsiveFlag < 1"
                     @per-page-change="handlePerPageChange"
                     @page-change="handlePageChange"
                 />
@@ -90,7 +106,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { useTagStore, useTodoStore } from '@/stores'
+import { useTagStore, useTodoStore, useViewStore } from '@/stores'
 import { Loading, Pager, TodoFilterBar } from '@nao-todo/components'
 import { TodoTable } from './table'
 import { TodoTableColumnSelector } from './column-selector'
@@ -108,6 +124,7 @@ const props = defineProps<{
 
 const router = useRouter()
 const todoStore = useTodoStore()
+const viewStore = useViewStore()
 const tagStore = useTagStore()
 const tasksViewStore = useTasksViewStore()
 const tasksDialogStore = useTasksDialogStore()

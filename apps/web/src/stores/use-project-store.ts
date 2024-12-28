@@ -207,6 +207,7 @@ export const useProjectStore = defineStore('projectStore', () => {
                 confirmButtonText: '确认',
                 cancelButtonText: '取消',
                 inputValue: currentDescription,
+                inputType: 'textarea',
                 validator: (value: string) => value,
                 onConfirm: async (newDescription: string) =>
                     await doUpdateProject(projectId, { description: newDescription })

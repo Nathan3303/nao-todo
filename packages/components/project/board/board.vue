@@ -37,7 +37,7 @@
                 </project-card>
             </div>
         </template>
-        <nue-empty v-else />
+        <nue-empty v-else image-size="48px" style="margin-top: 36px" />
     </div>
 </template>
 

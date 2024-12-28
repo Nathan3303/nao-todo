@@ -1,5 +1,5 @@
 <template>
-    <nue-div align="center" gap="4px" wrap="nowrap">
+    <nue-div align="center" gap="4px" wrap="nowrap" width="fit-content">
         <nue-icon :name="info[0]" color="var(--primary-color-800)" style="--icon-weight: normal" />
         <nue-text :clamped="useClamped ? 1 : void 0" color="var(--primary-color-800)" size="12px">
             {{ info[1] }}

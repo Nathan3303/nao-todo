@@ -16,7 +16,7 @@
             @blur="handleUpdate(false)"
         />
         <nue-div class="todo-event-row__actions">
-            <nue-icon name="delete" :color="updateLoading ? 'gray' : 'red'" @click="handleDelete" />
+            <nue-icon name="delete" :color="updateLoading ? 'gray' : '#ff6f6f'" @click="handleDelete" />
         </nue-div>
     </nue-div>
 </template>
@@ -90,6 +90,10 @@ const handleDelete = async () => {
 .todo-event-row__actions {
     width: fit-content;
     display: none;
+
+    @media (max-width: 445px) {
+        display: block;
+    }
 }
 
 .todo-event-row__actions .nue-icon {

@@ -86,9 +86,9 @@ const {
 } = useHistoryDialog()
 
 defineExpose({
-    show: async (force: boolean) => {
-        const todosLength = await getExpiredTodosWithLoading()
-        visible.value = force || !!todosLength
+    show: () => {
+        visible.value = true
+        getExpiredTodosWithLoading()
     }
 })
 </script>

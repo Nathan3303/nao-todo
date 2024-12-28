@@ -1,14 +1,17 @@
 <template>
-    <nue-div align="center" width="fit-content">
+    <nue-div :gap="simple ? '8px' : '16px'" align="center" width="fit-content" wrap="nowarp">
         <nue-div align="center" gap="8px" width="fit-content">
-            <nue-text size="12px">每页条数</nue-text>
+            <nue-text v-if="!simple" size="12px">每页条数</nue-text>
             <nue-select v-model="perPage" size="small" @change="handlePerPageChange">
                 <nue-select-option v-for="i in [10, 20, 50, 100]" :key="i" :label="i" :value="i" />
             </nue-select>
+            <nue-text v-if="simple" size="12px">条/页</nue-text>
         </nue-div>
-        <nue-text size="12px"> 第 {{ page }} 页，共 {{ totalPages }} 页。</nue-text>
+        <nue-text v-if="simple" size="12px">{{ page }}/{{ totalPages }} 页</nue-text>
+        <nue-text v-else size="12px">第 {{ page }} 页，共 {{ totalPages }} 页。</nue-text>
         <nue-div align="center" gap="8px" width="fit-content">
             <nue-button
+                v-if="!simple"
                 :disabled="prevButtonDisabled"
                 icon="arrow-left-more"
                 theme="small"
@@ -27,6 +30,7 @@
                 @click="handleNextPage"
             />
             <nue-button
+                v-if="!simple"
                 :disabled="nextButtonDisabled"
                 icon="arrow-right-more"
                 theme="small"
@@ -44,6 +48,7 @@ const props = defineProps<{
     total?: number
     limit?: number
     totalPages: number
+    simple?: boolean
 }>()
 const emit = defineEmits<{
     (event: 'perPageChange', value: number): void

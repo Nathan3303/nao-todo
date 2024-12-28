@@ -2,7 +2,11 @@
     <nue-container id="tasks/basic/kanban" class="content-kanban" theme="vertical,inner">
         <nue-header :key="$route.path" height="auto">
             <nue-div align="start" gap="16px" justify="space-between">
-                <todo-filter-bar :filter-options="todoFilterBarOptions" @filter="handleFilter" />
+                <todo-filter-bar
+                    :filter-options="todoFilterBarOptions"
+                    :simple="viewStore.responsiveFlag < 1"
+                    @filter="handleFilter"
+                />
                 <nue-div flex="none" gap="12px" justify="end" width="fit-content">
                     <nue-button
                         v-if="!disabledCreateTodo"
@@ -59,7 +63,7 @@ import { useRouter } from 'vue-router'
 import { Loading, TodoFilterBar } from '@nao-todo/components'
 import { ContentKanbanColumn } from './kanban-column'
 import { TodoTableColumnSelector } from '@/layers'
-import { useTodoStore } from '@/stores'
+import { useTodoStore, useViewStore } from '@/stores'
 import { useTasksDialogStore } from '@/views/index/tasks'
 import type { GetTodosOptions, Todo, TodoColumnOptions } from '@nao-todo/types'
 import type { TodoFilterOptions } from '@nao-todo/components/todo/filter-bar/types'
@@ -70,6 +74,7 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const viewStore = useViewStore()
 const todoStore = useTodoStore()
 const tasksDialogStore = useTasksDialogStore()
 
@@ -222,13 +227,14 @@ setTimeout(() => handleGetTodos())
 
     & > .nue-main {
         overflow: hidden;
-        overflow-x: auto;
         gap: 16px;
 
         &:deep(> .nue-main__content) {
             flex-direction: row;
             padding: 0 16px;
             gap: 16px;
+            overflow: hidden;
+            overflow-x: auto;
         }
     }
 }

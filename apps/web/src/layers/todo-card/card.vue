@@ -3,7 +3,7 @@
         class="todo-card"
         theme="card"
         :data-is-done="isDone"
-        @click.stop="handleClick"
+        @click="handleClick"
         :data-actived="actived"
     >
         <nue-div vertical width="fit-content" gap="0px">
@@ -43,8 +43,10 @@
                         readonly
                         small
                     />
-                    <todo-state-info v-if="columns?.state" :state="todo.state" />
-                    <todo-priority-info v-if="columns?.priority" :priority="todo.priority" />
+                    <nue-div align="center" wrap="nowrap">
+                        <todo-state-info v-if="columns?.state" :state="todo.state" />
+                        <todo-priority-info v-if="columns?.priority" :priority="todo.priority" />
+                    </nue-div>
                 </nue-div>
                 <nue-div v-if="columns?.endAt" align="center" gap="4px">
                     <nue-icon name="calendar" color="gray" />

@@ -130,6 +130,10 @@ const handleCancelEdit = () => {
     justify-content: end;
     width: fit-content;
     color: var(--primary-color-600);
+
+    @media (max-width: 445px) {
+        opacity: 1;
+    }
 }
 
 .comment-row__details__actions .nue-icon:hover {
