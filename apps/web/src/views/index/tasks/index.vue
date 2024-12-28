@@ -46,7 +46,7 @@
             <nue-drawer
                 v-if="!tasksOutlineVisible"
                 v-model:visible="outlineDrawerVisible"
-                class="nue-drawer--no-header"
+                class="nue-drawer--no-header nue-drawer--tasks-outline"
                 span="100%"
             >
                 <todo-multi-details

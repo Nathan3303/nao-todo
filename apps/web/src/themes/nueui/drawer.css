@@ -21,3 +21,16 @@
         border: none !important;
     }
 }
+
+.nue-drawer--tasks-outline {
+    .nue-drawer {
+        max-width: 64%;
+        min-width: 375px;
+    }
+
+    @media (max-width: 445px) {
+        .nue-drawer {
+            max-width: 100%;
+        }
+    }
+}
