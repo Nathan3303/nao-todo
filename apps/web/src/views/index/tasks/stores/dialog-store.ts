@@ -78,9 +78,9 @@ export const useTasksDialogStore = defineStore('TasksDialogStore', () => {
     }
 
     // 显示历史已过期待办处理对话框
-    const showTodoHistoryDialog = (force: boolean) => {
+    const showTodoHistoryDialog = () => {
         if (!todoHistoryDialogRef.value) return
-        todoHistoryDialogRef.value.show(force)
+        todoHistoryDialogRef.value.show()
     }
 
     return {
