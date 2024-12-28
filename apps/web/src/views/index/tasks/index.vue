@@ -49,11 +49,7 @@
                 class="nue-drawer--no-header nue-drawer--tasks-outline"
                 span="100%"
             >
-                <todo-multi-details
-                    v-if="tasksViewStore.multiSelectStates.isShowMultiDetails"
-                    :selected-ids="tasksViewStore.multiSelectStates.selectedTodoIds"
-                />
-                <todo-details-v2 v-else />
+                <todo-details-v2 />
             </nue-drawer>
         </nue-main>
     </nue-container>
