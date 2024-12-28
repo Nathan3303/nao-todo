@@ -7,8 +7,8 @@
                 placement="bottom-start"
                 style="width: 100%"
                 @logout="userStore.signOutWithConfirmation"
-                @show-profile="showProfileDialog"
-                @update-passwd="showUpdatePasswordDialog"
+                @show-profile="indexViewCtx?.dialogsRef.userProfile.value?.show"
+                @update-passwd="indexViewCtx?.dialogsRef.updatePassword.value?.show"
             />
         </nue-header>
         <nue-main>
@@ -28,32 +28,30 @@
             <aside-link icon="heart" route-name="tasks-favorite">已收藏</aside-link>
             <aside-link icon="delete" route-name="tasks-recycle">垃圾桶</aside-link>
             <nue-divider />
-            <aside-link icon="focus2" route-name="fqfocus">番茄专注</aside-link>
-            <aside-link icon="search2" route-name="search">搜索</aside-link>
+            <aside-link disabled icon="focus2" route-name="fqfocus">番茄专注</aside-link>
+            <aside-link disabled icon="search2" route-name="search">搜索</aside-link>
         </nue-main>
     </nue-container>
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { inject, ref } from 'vue'
 import { AsideLink, UserDropdown } from '@nao-todo/components'
-import { ProjectSmartList, TagSmartList, UpdatePasswordDialog, UserProfileDialog } from '@/layers'
+import { ProjectSmartList, TagSmartList } from '@/layers'
 import { useMoment } from '@nao-todo/utils'
 import { useUserStore, useViewStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { onBeforeRouteUpdate } from 'vue-router'
+import { type IndexViewCtx, IndexViewCtxKey } from '@nao-todo/types/views/index-view'
 
 const userStore = useUserStore()
 const viewStore = useViewStore()
 
+const indexViewCtx = inject<IndexViewCtx>(IndexViewCtxKey)
+
 const now = useMoment()
 const { user } = storeToRefs(userStore)
-const userProfileDialogRef = ref<InstanceType<typeof UserProfileDialog>>()
-const updatePasswordDialogRef = ref<InstanceType<typeof UpdatePasswordDialog>>()
 const collapseItemsRecord = ref(['projects', 'tags'])
-
-const showProfileDialog = () => userProfileDialogRef.value?.show()
-const showUpdatePasswordDialog = () => updatePasswordDialogRef.value?.show()
 
 onBeforeRouteUpdate((to, from, next) => {
     next()

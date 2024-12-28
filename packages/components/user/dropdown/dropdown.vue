@@ -6,16 +6,11 @@
                 <nue-text :clamped="1" size="var(--text-sm)">{{ user?.nickname }}</nue-text>
                 <nue-icon name="select" size="var(--text-sm)" style="margin-left: auto" />
             </nue-div>
-            <nue-avatar
-                v-else
-                :src="user?.avatar"
-                style="cursor: pointer"
-                @click="clickTrigger"
-            />
+            <nue-avatar v-else :src="user?.avatar" style="cursor: pointer" @click="clickTrigger" />
         </template>
         <template v-if="user" #dropdown>
             <nue-div
-                :width="isOnMobile ? '217px' : '256px'"
+                :width="isOnMobile ? '200px' : '256px'"
                 align="center"
                 gap="32px"
                 justify="center"
@@ -29,9 +24,9 @@
                     <nue-button theme="noshape" @click="emit('showProfile')">用户信息</nue-button>
                     <nue-button theme="noshape" @click="emit('updatePasswd')">修改密码</nue-button>
                     <nue-divider />
-                    <nue-link theme="btnlike" @click="emit('logout', user?.id)">
+                    <nue-button theme="noshape" @click="emit('logout', user?.id)">
                         退出登录
-                    </nue-link>
+                    </nue-button>
                 </nue-div>
             </nue-div>
         </template>
