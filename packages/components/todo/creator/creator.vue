@@ -2,7 +2,7 @@
     <nue-div align="stretch" class="todo-creator-wrapper" vertical>
         <nue-input v-model="todoData.name" clearable placeholder="待办事项名称" />
         <nue-div v-if="setMoreData" align="stretch" vertical>
-            <nue-div wrap="nowrap">
+            <nue-div wrap="nowrap" gap="8px">
                 <todo-selector
                     :options="TodoStateSelectOptions"
                     :value="todoData.state"
@@ -24,7 +24,7 @@
             <nue-div align="center">
                 <todo-date-selector v-model="todoData.dueDate.endAt" />
                 <nue-text v-if="todoData.dueDate.endAt" color="gray" size="12px">
-                    （截止于 {{ useRelativeDate(todoData.dueDate.endAt) }}）
+                    {{ useRelativeDate(todoData.dueDate.endAt) }}
                 </nue-text>
             </nue-div>
             <todo-tag-bar

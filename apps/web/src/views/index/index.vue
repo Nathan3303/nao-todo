@@ -1,13 +1,13 @@
 <template>
     <nue-container class="index-view" theme="horizontal">
-        <nue-header class="index-view__header">
+        <nue-header v-if="viewStore.indexHeaderVisible" class="index-view__header">
             <template #logo>
                 <user-dropdown
                     :user="user"
                     placement="right-start"
                     @logout="userStore.signOutWithConfirmation"
-                    @show-profile="showProfileDialog"
-                    @update-passwd="showUpdatePasswordDialog"
+                    @show-profile="userProfileDialogRef?.show"
+                    @update-passwd="updatePasswordDialogRef?.show"
                 />
             </template>
             <template #navigators>
@@ -30,11 +30,20 @@
                     </nue-tooltip>
                 </nue-div>
             </template>
-            <template #actions></template>
-            <template #user></template>
         </nue-header>
         <nue-main class="index-view__main">
             <router-view />
+            <!-- Index aside (For mobile device) -->
+            <nue-drawer
+                v-if="!viewStore.projectAsideVisible"
+                v-model:visible="viewStore.indexAsideVisible"
+                class="nue-drawer--no-header"
+                min-span="240px"
+                open-from="left"
+                span="260px"
+            >
+                <index-aside />
+            </nue-drawer>
         </nue-main>
     </nue-container>
     <!-- Dialogs -->
@@ -43,12 +52,13 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { provide, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { UpdatePasswordDialog } from '@/layers'
+import { UpdatePasswordDialog, IndexAside } from '@/layers'
 import { useUserStore, useViewStore } from '@/stores'
 import { UserDropdown } from '@nao-todo/components'
 import { UserProfileDialog } from '@/layers/user-profile-dialog'
+import { type IndexViewCtx, IndexViewCtxKey } from '@nao-todo/types/views/index-view'
 
 const userStore = useUserStore()
 const viewStore = useViewStore()
@@ -59,6 +69,10 @@ const { user } = storeToRefs(userStore)
 const userProfileDialogRef = ref<InstanceType<typeof UserProfileDialog>>()
 const updatePasswordDialogRef = ref<InstanceType<typeof UpdatePasswordDialog>>()
 
-const showProfileDialog = () => userProfileDialogRef.value?.show()
-const showUpdatePasswordDialog = () => updatePasswordDialogRef.value?.show()
+provide<IndexViewCtx>(IndexViewCtxKey, {
+    dialogsRef: {
+        userProfile: userProfileDialogRef,
+        updatePassword: updatePasswordDialogRef
+    }
+})
 </script>

@@ -22,7 +22,7 @@
                 type="email"
             />
             <nue-tooltip
-                content="格式要求为 8 至 24 位字母、数字以及特殊符号（特殊符号包括：! @ # $ % ^ & * ? . ）。"
+                content="格式要求为 8 至 24 位字母、数字以及特殊符号（特殊符号包括：! @ # $ % ^ & * ? . - ）。"
                 placement="right-start"
                 size="small"
                 theme="password-rule"
@@ -72,7 +72,7 @@ const email = ref('')
 const password = ref('')
 const passwordConfirm = ref('')
 const nickname = ref('')
-const matchPattern = /^\S*(?=\S{8})(?=\S*\d)(?=\S*[a-z])(?=\S*[!@#$%^&*?.])\S*$/
+const matchPattern = /^\S*(?=\S{8})(?=\S*\d)(?=\S*[a-z])(?=\S*[!@#$%^&*?.-])\S*$/
 
 function handleSignUp() {
     if (email.value === '') {

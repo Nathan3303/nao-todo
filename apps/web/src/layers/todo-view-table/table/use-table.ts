@@ -15,6 +15,7 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
     const projectStore = useProjectStore()
     const todoStore = useTodoStore()
 
+    const isOnMobile = ref(false)
     const selectedId = ref<Todo['id']>()
     const sortInfo = reactive<TodoTableProps['sortOptions']>(props.sortOptions)
     const selectRange = reactive<TodoTableMultiSelectPayload['selectRange']>({
@@ -150,6 +151,7 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
         selectedId,
         selectRange,
         tagBarClamped,
+        isOnMobile,
         isTodoExpired,
         handleDeleteBtnClk,
         handleDelete,

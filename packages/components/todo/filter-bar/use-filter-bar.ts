@@ -61,7 +61,11 @@ export const useTodoFilterBar = (props: TodoFilterBarProps, emit: TodoFilterBarE
     const isFiltering = computed(() => {
         if (!props.filterOptions) return false
         const { name, state, priority } = props.filterOptions
-        return name || state || priority
+        let res = 0
+        res += name ? 1 : 0
+        res += state ? 1 : 0
+        res += priority ? 1 : 0
+        return res
     })
 
     const stateComboBoxOptions = computed({

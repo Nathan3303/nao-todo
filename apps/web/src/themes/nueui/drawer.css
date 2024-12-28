@@ -1,0 +1,36 @@
+.nue-drawer-wrapper .nue-drawer {
+    /*transition: all 0.36s cubic-bezier(.45,.05,.55,.95);*/
+    /*transition: all 0.36s ease-in-out;*/
+}
+
+.nue-drawer--filter-bar {
+    gap: 8px;
+    padding: 16px;
+
+    .nue-input--small {
+        width: 100%;
+    }
+}
+
+.nue-drawer--no-header {
+    .nue-drawer__header {
+        display: none;
+    }
+
+    .nue-drawer > .nue-main {
+        border: none !important;
+    }
+}
+
+.nue-drawer--tasks-outline {
+    .nue-drawer {
+        max-width: 64%;
+        min-width: 375px;
+    }
+
+    @media (max-width: 445px) {
+        .nue-drawer {
+            max-width: 100%;
+        }
+    }
+}

@@ -1,7 +1,7 @@
 import type { User } from '@nao-todo/types'
 
 // throttle
-export const throttle = (callback: (...args: any[]) => void | Promise<any>, delay: number): T => {
+export const throttle = (callback: (...args: any[]) => void | Promise<any>, delay: number) => {
     let timer: number | null = null
     return async (...args: any[]) => {
         if (timer) return;
@@ -56,4 +56,10 @@ export const getJWTPayload = (jwt: string) => {
     const jwtPayload = jwt.split('.')[1]
     const decodedPayload = JSON.parse(decodeURIComponent(atob(jwtPayload)))
     return decodedPayload as User
+}
+
+export function generateId(length: number = 6) {
+    return Math.random()
+        .toString(36)
+        .slice(2, 2 + length);
 }

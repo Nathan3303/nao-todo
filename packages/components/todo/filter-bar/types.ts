@@ -6,6 +6,7 @@ type FilterOptions = {
 
 type TodoFilterBarProps = {
     filterOptions: FilterOptions
+    simple?: boolean
 }
 
 type TodoFilterBarEmits = {

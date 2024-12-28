@@ -135,6 +135,7 @@
                     :project-id="shadowTodo.projectId"
                     :projects="projects"
                     :user-id="userStore.user?.id || ''"
+                    placement="top-start"
                     @select="handleMoveToProject"
                 />
                 <nue-div gap="4px" width="fit-content" wrap="nowrap">

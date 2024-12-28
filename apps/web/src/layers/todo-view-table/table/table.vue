@@ -1,5 +1,5 @@
 <template>
-    <nue-div class="todo-table">
+    <nue-div :id="tableId" :class="['todo-table', { 'todo-table--mobile': isOnMobile }]">
         <nue-div class="todo-table__header" wrap="nowrap">
             <div class="todo-table__header__col col-name">
                 <order-button prop="name">名称</order-button>
@@ -32,12 +32,10 @@
                 <nue-icon v-else name="more" style="opacity: 0" />
             </div>
         </nue-div>
-        <nue-divider />
+        <nue-divider v-if="!isOnMobile" />
         <nue-div class="todo-table__main">
             <slot v-if="!todos.length" name="empty">
-                <nue-text class="todo-table__main__empty-text">
-                    当前列表无待办任务！
-                </nue-text>
+                <nue-text class="todo-table__main__empty-text"> 当前列表无待办任务！</nue-text>
             </slot>
             <nue-div
                 v-for="(todo, idx) in todos"
@@ -134,17 +132,22 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, onBeforeUnmount } from 'vue'
+import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { TodoPriorityInfo, TodoStateInfo, TodoTagBar } from '@nao-todo/components'
 import { useTodoTable } from './use-table'
 import { useRelativeDate } from '@nao-todo/hooks'
 import OrderButton from './order-button.vue'
 import { useRefreshKey } from './use-refresh-key'
+import { generateId } from '@nao-todo/utils'
 import type { TodoTableEmits, TodoTableProps } from './types'
 
 defineOptions({ name: 'TodoTable' })
 const props = defineProps<TodoTableProps>()
 const emit = defineEmits<TodoTableEmits>()
+
+const tableId = generateId()
+const isOnMobile = ref(false)
+let resizeObserver: ResizeObserver | null = null
 
 const {
     selectRange,
@@ -159,10 +162,38 @@ const {
     getProjectNameByIdFromLocal
 } = useTodoTable(props, emit)
 
+// 监听元素宽度
+const useTableResizeObserver = () => {
+    if (!window.ResizeObserver) return
+    const todoTable = document.getElementById(tableId)
+    if (!todoTable) return
+    resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+            isOnMobile.value = entry.target.clientWidth < 800
+        }
+    })
+    resizeObserver.observe(todoTable)
+}
+
+// 取消监听元素宽度
+const unUseTableResizeObserver = () => {
+    if (!resizeObserver) return
+    const todoTable = document.getElementById(tableId)
+    if (!todoTable) return
+    resizeObserver.unobserve(todoTable)
+    resizeObserver = null
+}
+
 const { refreshKey, startRefresh, stopRefresh } = useRefreshKey()
 
-onMounted(() => startRefresh())
-onBeforeUnmount(() => stopRefresh())
+onMounted(() => {
+    startRefresh()
+    useTableResizeObserver()
+})
+onBeforeUnmount(() => {
+    stopRefresh()
+    unUseTableResizeObserver()
+})
 
 defineExpose({
     reset: handleClearSelectedId,
