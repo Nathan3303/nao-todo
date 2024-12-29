@@ -1,6 +1,6 @@
 <template>
     <nue-div :id="tableId" :class="['todo-table', { 'todo-table--mobile': isOnMobile }]">
-        <nue-div class="todo-table__header" wrap="nowrap">
+        <nue-div v-if="!isOnMobile" class="todo-table__header" wrap="nowrap">
             <div class="todo-table__header__col col-name">
                 <order-button prop="name">名称</order-button>
             </div>
@@ -31,6 +31,9 @@
                 />
                 <nue-icon v-else name="more" style="opacity: 0" />
             </div>
+        </nue-div>
+        <nue-div v-else class="todo-table__mobile-header">
+            <order-bar :sort-options="sortOptions" />
         </nue-div>
         <nue-divider v-if="!isOnMobile" />
         <nue-div class="todo-table__main">
@@ -137,6 +140,7 @@ import { TodoPriorityInfo, TodoStateInfo, TodoTagBar } from '@nao-todo/component
 import { useTodoTable } from './use-table'
 import { useRelativeDate } from '@nao-todo/hooks'
 import OrderButton from './order-button.vue'
+import OrderBar from './order-bar.vue'
 import { useRefreshKey } from './use-refresh-key'
 import { generateId } from '@nao-todo/utils'
 import type { TodoTableEmits, TodoTableProps } from './types'
@@ -161,6 +165,7 @@ const {
     handleClearSortInfo,
     getProjectNameByIdFromLocal
 } = useTodoTable(props, emit)
+const { refreshKey, startRefresh, stopRefresh } = useRefreshKey()
 
 // 监听元素宽度
 const useTableResizeObserver = () => {
@@ -183,8 +188,6 @@ const unUseTableResizeObserver = () => {
     resizeObserver.unobserve(todoTable)
     resizeObserver = null
 }
-
-const { refreshKey, startRefresh, stopRefresh } = useRefreshKey()
 
 onMounted(() => {
     startRefresh()

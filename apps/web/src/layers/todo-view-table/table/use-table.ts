@@ -26,6 +26,7 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
     let unSubscribe: () => void
 
     const tagBarClamped = computed(() => {
+        if (isOnMobile.value) return 3
         let trueCount = 0
         Object.keys(todoStore.columnOptions).forEach((key: string) => {
             if (todoStore.columnOptions[key as keyof TodoTableProps['columnOptions']]) {
