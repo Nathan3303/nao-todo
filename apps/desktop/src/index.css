@@ -4,6 +4,7 @@ html {
     width: 100vw;
     height: 100vh;
     overflow: hidden;
+    font-family: "Poppins", "Noto Sans SC", sans-serif;
 }
 
 body {
@@ -13,6 +14,7 @@ body {
     flex-direction: column;
     align-items: stretch;
     margin: 0;
+    position: relative;
 }
 
 .title-bar {
@@ -25,7 +27,6 @@ body {
     app-region: drag;
     width: 100%;
     flex: none;
-    font-family: "Poppins", "Noto Sans SC", sans-serif;
     padding: 0 16px;
     font-weight: bold;
 }
@@ -33,4 +34,94 @@ body {
 iframe {
     width: 100%;
     flex: auto;
+}
+
+#appLoadError {
+    width: 100%;
+    height: calc(100% - 37px);
+    position: absolute;
+    top: 37px;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+
+    &[data-visible="1"] {
+        opacity: 1;
+        transition: opacity 0.16s ease-out;
+    }
+
+    & img {
+        width: 64px;
+        height: 64px;
+    }
+
+    & span {
+        font-size: 16px;
+        color: #212121;
+    }
+
+    & button {
+        --vgap: 8px;
+        --icon-size: 14px;
+        --color: white;
+        --border-color: transparent;
+        --background-color: #212121;
+        --hover-background-color: #424242;
+        --active-background-color: #424242;
+        --flex: 0 1 auto;
+        --alignment: start;
+        --hover-color: var(--color);
+        --hover-border-color: var(--border-color);
+        --active-color: var(--color);
+        --active-border-color: var(--border-color);
+        --disable-color: #9e9e9e;
+        --disable-border-color: var(--border-color);
+        --disable-background-color: #eeeeee;
+        display: flex;
+        align-items: center;
+        justify-content: var(--alignment);
+        gap: calc(var(--vgap) * 0.5);
+        flex: var(--flex);
+        width: auto;
+        height: auto;
+        box-sizing: border-box;
+        padding: calc(var(--vgap) * 0.2) var(--vgap);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background-color: var(--background-color);
+        box-shadow: 1px 1px 3px rgba(200, 200, 200, 0.2);
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+        transition: all 0.16s ease-out;
+        color: var(--color);
+        font-family: inherit;
+        line-height: normal;
+        font-size: 14px;
+
+        &:hover {
+            color: var(--hover-color);
+            background-color: var(--hover-background-color);
+            border-color: var(--hover-border-color);
+        }
+
+        &:active {
+            color: var(--active-color);
+            background-color: var(--active-background-color);
+            border-color: var(--active-border-color);
+        }
+
+        .button-text {
+            color: var(--color);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            word-break: break-all;
+        }
+    }
 }
