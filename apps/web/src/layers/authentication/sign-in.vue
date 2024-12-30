@@ -12,22 +12,26 @@
             <nue-text size="24px" weight="bold">登录到 NaoTodo</nue-text>
             <nue-text color="grey" size="12px">使用您的电子邮件和密码进行登录</nue-text>
         </nue-div>
-        <nue-div align="stretch" vertical>
-            <nue-input
-                v-model="email"
-                :disabled="loading"
-                placeholder="电子邮箱 (name@example.com)"
-                type="email"
-            />
-            <nue-input
-                v-model="password"
-                :disabled="loading"
-                allow-show-password
-                placeholder="密码"
-                type="password"
-            />
-            <nue-button :loading="loading" theme="primary" @click="handleSignIn">登录</nue-button>
-        </nue-div>
+        <form action="" autocomplete="off" name="NaoTodoSignInForm">
+            <nue-div align="stretch" vertical>
+                <nue-input
+                    v-model="email"
+                    :disabled="loading"
+                    placeholder="电子邮箱 (name@example.com)"
+                    type="email"
+                />
+                <nue-input
+                    v-model="password"
+                    :disabled="loading"
+                    allow-show-password
+                    placeholder="密码"
+                    type="password"
+                />
+                <nue-button :loading="loading" theme="primary" type="submit" @click="handleSignIn">
+                    登录
+                </nue-button>
+            </nue-div>
+        </form>
         <nue-text align="center" color="gray" size="12px">
             点击登录按钮并成功认证后，您可以在接下来 7
             日的期限内免密访问您的账户，直到您退出或在别处登录。

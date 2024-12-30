@@ -11,22 +11,26 @@
                         位，且包含字母、数字以及特殊符号。（特殊符号包括：! @ # $ % ^ & * ? . ）
                     </nue-text>
                 </nue-div>
-                <nue-input
-                    v-model="password"
-                    allow-show-password
-                    clearable
-                    maxlength="16"
-                    placeholder="新密码"
-                    type="password"
-                />
-                <nue-input
-                    v-model="confirmPassword"
-                    allow-show-password
-                    clearable
-                    maxlength="16"
-                    placeholder="确认新密码"
-                    type="password"
-                />
+                <form action="" autocomplete="off" method="post" name="UpdatePasswordForm">
+                    <nue-div align="stretch" vertical>
+                        <nue-input
+                            v-model="password"
+                            allow-show-password
+                            clearable
+                            maxlength="16"
+                            placeholder="新密码"
+                            type="password"
+                        />
+                        <nue-input
+                            v-model="confirmPassword"
+                            allow-show-password
+                            clearable
+                            maxlength="16"
+                            placeholder="确认新密码"
+                            type="password"
+                        />
+                    </nue-div>
+                </form>
             </nue-div>
         </template>
         <template #footer>

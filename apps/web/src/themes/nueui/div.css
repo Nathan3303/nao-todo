@@ -24,3 +24,11 @@
     color: #131315;
     box-shadow: var(--secondary-shadow);
 }
+
+/* 密码提示 */
+.nue-div--signup-password-hint {
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: var(--primary-radius);
+    background-color: var(--primary-color-800);
+}

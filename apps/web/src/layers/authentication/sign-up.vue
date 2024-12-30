@@ -14,37 +14,45 @@
                 在下面输入您的电子邮件和密码以创建账户
             </nue-text>
         </nue-div>
-        <nue-div align="stretch" vertical>
-            <nue-input
-                v-model="email"
-                :disabled="loading"
-                placeholder="电子邮箱 (name@example.com)"
-                type="email"
-            />
-            <nue-tooltip
-                content="格式要求为 8 至 24 位字母、数字以及特殊符号（特殊符号包括：! @ # $ % ^ & * ? . - ）。"
-                placement="right-start"
-                size="small"
-                theme="password-rule"
-            >
+        <form action="" autocomplete="off" name="NaoTodoSignUpForm">
+            <nue-div align="stretch" vertical>
+                <nue-input
+                    v-model="email"
+                    :disabled="loading"
+                    clearable
+                    name="SignUpEmail"
+                    placeholder="电子邮箱 (name@example.com)"
+                    type="email"
+                />
+                <nue-div theme="signup-password-hint">
+                    <nue-icon color="white" name="priority-1" />
+                    <nue-text color="white" size="var(--text-xs)">
+                        格式要求为 8 至 24 位字母、数字以及特殊符号。 <br />
+                        特殊符号包括：! @ # $ % ^ & * ? . -
+                    </nue-text>
+                </nue-div>
                 <nue-input
                     v-model="password"
                     :disabled="loading"
                     allow-show-password
+                    clearable
                     placeholder="密码"
                     type="password"
                 />
-            </nue-tooltip>
-            <nue-input
-                v-model="passwordConfirm"
-                :disabled="loading"
-                allow-show-password
-                placeholder="确认密码"
-                type="password"
-            />
-            <nue-input v-model="nickname" :disabled="loading" placeholder="昵称（可选）" />
-            <nue-button :loading="loading" theme="primary" @click="handleSignUp">注册</nue-button>
-        </nue-div>
+                <nue-input
+                    v-model="passwordConfirm"
+                    :disabled="loading"
+                    allow-show-password
+                    clearable
+                    placeholder="确认密码"
+                    type="password"
+                />
+                <nue-input v-model="nickname" :disabled="loading" placeholder="昵称（可选）" />
+                <nue-button :loading="loading" theme="primary" type="submit" @click="handleSignUp">
+                    注册
+                </nue-button>
+            </nue-div>
+        </form>
         <nue-text align="center" color="gray" size="12px">
             点击注册按钮后，即表示您同意我们站点的
             <nue-link>服务条款</nue-link>
