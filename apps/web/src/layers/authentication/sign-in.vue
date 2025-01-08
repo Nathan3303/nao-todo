@@ -10,7 +10,7 @@
     >
         <nue-div align="center" gap="4px" vertical>
             <nue-text size="24px" weight="bold">登录到 NaoTodo</nue-text>
-            <nue-text color="grey" size="12px">使用您的电子邮件和密码进行登录</nue-text>
+            <nue-text color="gray" size="12px">使用您的电子邮件和密码进行登录</nue-text>
         </nue-div>
         <form action="" autocomplete="off" name="NaoTodoSignInForm">
             <nue-div align="stretch" vertical>
