@@ -54,7 +54,10 @@
     "@dcloudio/uni-mp-weixin": "3.0.0-4030620241128001",
     "@dcloudio/uni-mp-xhs": "3.0.0-4030620241128001",
     "@dcloudio/uni-quickapp-webview": "3.0.0-4030620241128001",
-    "vue-i18n": "^9.1.9"
+    "@nao-todo/webapp": "workspace:*",
+    "spark-md5": "^3.0.2",
+    "vue-i18n": "^9.1.9",
+    "wot-design-uni": "^1.5.1"
   },
   "devDependencies": {
     "@dcloudio/types": "^3.4.8",
@@ -62,6 +65,8 @@
     "@dcloudio/uni-cli-shared": "3.0.0-4030620241128001",
     "@dcloudio/uni-stacktracey": "3.0.0-4030620241128001",
     "@dcloudio/vite-plugin-uni": "3.0.0-4030620241128001",
-    "@vue/runtime-core": "^3.4.21"
+    "@types/spark-md5": "^3.0.5",
+    "@vue/runtime-core": "^3.4.21",
+    "sass": "1.78.0"
   }
 }
