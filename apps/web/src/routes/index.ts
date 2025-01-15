@@ -3,7 +3,7 @@ import { useUserStore } from '@/stores/use-user-store'
 import tasksRoutes from './tasks'
 
 const router = createRouter({
-    history: createWebHashHistory(import.meta.env.BASE_URL),
+    history: createWebHashHistory(),
     routes: [
         {
             path: '/auth/:operation?',

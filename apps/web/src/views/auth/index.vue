@@ -30,55 +30,10 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { NueMessage } from 'nue-ui'
-import { AuthSignIn, AuthSignUp } from '@/layers'
-import { useUserStore } from '@/stores/use-user-store'
-import type { SigninOptions, SignupOptions } from '@nao-todo/types'
+import useAuthView from './use-auth-view'
+import type { AuthViewProps } from './use-auth-view'
 
-const props = defineProps<{
-    operation?: string
-}>()
+const props = defineProps<AuthViewProps>()
 
-const router = useRouter()
-const userStore = useUserStore()
-
-const loading = ref(false)
-
-const isLogin = computed(() => props.operation === 'login')
-const switchButtonText = computed(() => (isLogin.value ? '注册' : '登录'))
-const subView = computed(() => (isLogin.value ? AuthSignIn : AuthSignUp))
-const switchRoute = computed(() => '/auth' + (isLogin.value ? '/signup' : '/login'))
-
-const handleSignin = async (options: SigninOptions) => {
-    const res = await userStore.doSignin(options)
-    if (!res) return false
-    await router.push({ name: 'index' })
-}
-
-const handleSignup = async (payload: SignupOptions) => {
-    const res = await userStore.doSignup(payload)
-    if (!res) return false
-    await router.push('/auth/login')
-}
-
-async function handleSubmit(payload: SigninOptions | SignupOptions) {
-    loading.value = true
-    try {
-        if (isLogin.value) {
-            await handleSignin(payload as SigninOptions)
-        } else {
-            await handleSignup(payload as SignupOptions)
-        }
-    } catch (e) {
-        if (e instanceof Error) {
-            NueMessage.error(e.message)
-            return
-        }
-        console.log('[/auth/index.vue]:handleSubmit', e)
-    } finally {
-        loading.value = false
-    }
-}
+const { loading, switchButtonText, subView, switchRoute, handleSubmit } = useAuthView(props)
 </script>

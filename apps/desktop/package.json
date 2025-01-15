@@ -1,7 +1,7 @@
 {
     "name": "@nao-todo/desktop",
     "version": "1.0.0",
-    "description": "Desktop version of NaoTodo",
+    "description": "Desktop version of NaoTodo (Electron)",
     "author": "Nathan Lee",
     "license": "MIT",
     "private": true,

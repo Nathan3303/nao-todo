@@ -5,68 +5,7 @@ const tasksRoutes = {
     name: 'tasks',
     component: () => import('../views/index/tasks/index.vue'),
     redirect: { name: 'tasks-today-table' },
-    children: [
-        // {
-        //     path: 'all',
-        //     name: `tasks-all`,
-        //     meta: { category: 'basic', title: '所有', id: 'all' },
-        //     props: true,
-        //     component: () => import(`@/views/index/tasks/main/index.vue`),
-        //     redirect: { name: `tasks-all-table` },
-        //     children: [
-        //         {
-        //             path: 'table/:taskId?',
-        //             name: `tasks-all-table`,
-        //             component: () => import(`@/views/index/tasks/main/table.vue`)
-        //         },
-        //         {
-        //             path: 'kanban/:taskId?',
-        //             name: `tasks-all-kanban`,
-        //             component: () => import(`@/views/index/tasks/main/kanban.vue`)
-        //         }
-        //     ]
-        // },
-        // {
-        //     path: ':projectId?',
-        //     name: `tasks-project`,
-        //     meta: { category: 'project' },
-        //     props: true,
-        //     component: () => import(`@/views/index/tasks/main/index.vue`),
-        //     children: [
-        //         {
-        //             path: 'table/:taskId?',
-        //             name: `tasks-project-table`,
-        //             meta: { viewType: 'table' },
-        //             component: () => import(`@/views/index/tasks/main/table.vue`)
-        //         },
-        //         {
-        //             path: 'kanban/:taskId?',
-        //             name: `tasks-project-kanban`,
-        //             meta: { viewType: 'kanban' },
-        //             component: () => import(`@/views/index/tasks/main/kanban.vue`)
-        //         }
-        //     ]
-        // },
-        // {
-        //     path: ':tagId?',
-        //     name: `tasks-tag`,
-        //     props: true,
-        //     component: () => import(`../views/index/tasks/main/index.vue`),
-        //     redirect: { name: `tasks-tag-table` },
-        //     children: [
-        //         {
-        //             path: 'table/:taskId?',
-        //             name: `tasks-tag-table`,
-        //             component: () => import(`../views/index/tasks/main/table.vue`)
-        //         },
-        //         {
-        //             path: 'kanban/:taskId?',
-        //             name: `tasks-tag-kanban`,
-        //             component: () => import(`../views/index/tasks/main/kanban.vue`)
-        //         }
-        //     ]
-        // }
-    ]
+    children: []
 }
 
 const links = [
@@ -105,7 +44,8 @@ const buildTaskRoute = (path: string, meta: RouteMeta) => {
 links.forEach((link) => {
     const { path, meta } = link
     const route = buildTaskRoute(path, meta)
-    ;(tasksRoutes.children as RouteLocationRaw[]).push(route)
+    const children = tasksRoutes.children as RouteLocationRaw[]
+    children.push(route)
 })
 
 export default tasksRoutes
