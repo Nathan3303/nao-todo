@@ -1,3 +1,3 @@
-import TagSmartList from './tag-smart-list.vue'
+import SmartList from './tag-smart-list.vue'
 
-export { TagSmartList }
+export const TagSmartList = SmartList
