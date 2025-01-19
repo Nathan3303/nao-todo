@@ -54,9 +54,9 @@
             </nue-drawer>
         </nue-main>
     </nue-container>
+    <!-- DialogManager -->
+    <nao-dialog-manager ref="naoDialogManagerRef" />
     <!-- Dialogs -->
-    <project-manager ref="projectManagerRef" />
-    <tag-manager ref="tagManagerRef" />
     <create-project-dialog
         ref="createProjectDialogRef"
         :handler="tasksHandlerStore.handleCreateProject"
@@ -67,7 +67,6 @@
         ref="tagColorSelectDialogRef"
         :handler="tasksHandlerStore.handleSelectTagColor"
     />
-    <todo-history-dialog ref="todoHistoryDialogRef" />
 </template>
 
 <script lang="ts" setup>
@@ -78,17 +77,15 @@ import { useViewStore } from '@/stores'
 import { AsideLink, TagColorSelectDialog } from '@nao-todo/components'
 import { useMoment } from '@nao-todo/utils'
 import { useTasksDialogStore, useTasksHandlerStore, useTasksViewStore } from '.'
+import { NaoDialogManager } from '@/layouts/dialog-manager'
 import {
     CreateProjectDialog,
     CreateTagDialog,
     CreateTodoDialog,
-    ProjectManager,
     ProjectSmartList,
-    TagManager,
     TagSmartList,
     TodoDetailsV2,
-    TodoMultiDetails,
-    TodoHistoryDialog
+    TodoMultiDetails
 } from '@/layers'
 
 const route = useRoute()
@@ -99,25 +96,21 @@ const tasksHandlerStore = useTasksHandlerStore()
 
 const now = useMoment()
 const { projectAsideVisible, responsiveFlag, tasksOutlineVisible } = storeToRefs(viewStore)
-const projectManagerRef = ref<InstanceType<typeof ProjectManager>>()
-const tagManagerRef = ref<InstanceType<typeof TagManager>>()
 const createProjectDialogRef = ref<InstanceType<typeof CreateProjectDialog>>()
 const createTodoDialogRef = ref<InstanceType<typeof CreateTodoDialog>>()
 const createTagDialogRef = ref<InstanceType<typeof CreateTagDialog>>()
 const tagColorSelectDialogRef = ref<InstanceType<typeof TagColorSelectDialog>>()
-const todoHistoryDialogRef = ref<InstanceType<typeof TodoHistoryDialog>>()
+const naoDialogManagerRef = ref<InstanceType<typeof NaoDialogManager>>()
 const collapseItemsRecord = ref(['projects', 'tags'])
 const outlineDrawerVisible = ref(false)
 
 // 挂载后钩子 -> 注册对话框
 onMounted(() => {
-    tasksDialogStore.projectManagerRef = projectManagerRef.value
-    tasksDialogStore.tagManagerRef = tagManagerRef.value
     tasksDialogStore.createProjectDialogRef = createProjectDialogRef.value
     tasksDialogStore.createTodoDialogRef = createTodoDialogRef.value
     tasksDialogStore.createTagDialogRef = createTagDialogRef.value
     tasksDialogStore.tagColorSelectDialogRef = tagColorSelectDialogRef.value
-    tasksDialogStore.todoHistoryDialogRef = todoHistoryDialogRef.value
+    tasksDialogStore.dialogManagerRef = naoDialogManagerRef.value
 })
 
 watch(

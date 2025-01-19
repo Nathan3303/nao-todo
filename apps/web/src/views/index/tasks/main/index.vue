@@ -8,7 +8,9 @@
                             <nue-button
                                 icon="history"
                                 theme="icon-only"
-                                @click="tasksDialogStore.showTodoHistoryDialog"
+                                @click="
+                                    () => tasksDialogStore.dialogManagerShow('OverdueTodoManager')
+                                "
                             />
                         </nue-tooltip>
                     </template>
