@@ -31,8 +31,7 @@ export const useViewStore = defineStore('viewStore', () => {
     const indexViewInitTask = async () => {
         try {
             indexViewLoader.loading = true
-            await projectStore.doGetProjects()
-            await tagStore.doGetTags()
+            await Promise.all([projectStore.doGetProjects(), tagStore.doGetTags()])
         } catch (e) {
             indexViewLoader.error = true
             indexViewLoader.errorMessage = e as Error
