@@ -13,5 +13,9 @@
     },
     "devDependencies": {
         "rollup-plugin-visualizer": "^5.14.0"
+    },
+    "dependencies": {
+        "@types/markdown-it": "^14.1.2",
+        "markdown-it": "^14.1.0"
     }
 }
