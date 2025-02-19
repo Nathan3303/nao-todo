@@ -1,3 +1,3 @@
-import TodoTagDetails from './tag-details.vue'
+import TagDetails from './tag-details.vue'
 
-export { TodoTagDetails }
+export const TodoTagDetails = TagDetails

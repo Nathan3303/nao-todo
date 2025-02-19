@@ -9,9 +9,9 @@
             aside-min-width="200px"
             aside-width="250px"
             class="tasks-view__main"
-            outline-max-width="540px"
-            outline-min-width="375px"
-            outline-width="480px"
+            outline-max-width="480px"
+            outline-min-width="360px"
+            outline-width="36%"
         >
             <template v-if="projectAsideVisible" #aside>
                 <aside-link icon="more2" route-name="tasks-all">所有</aside-link>
@@ -31,9 +31,7 @@
                 <aside-link icon="delete" route-name="tasks-recycle">垃圾桶</aside-link>
             </template>
             <template #content>
-                <suspense>
-                    <router-view />
-                </suspense>
+                <router-view />
             </template>
             <template v-if="tasksOutlineVisible" #outline>
                 <todo-multi-details

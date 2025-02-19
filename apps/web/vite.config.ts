@@ -27,7 +27,7 @@ export default defineConfig({
                 eval: true
             }
         }),
-        visualizer({ open: true })
+        visualizer({ open: false })
     ],
     resolve: {
         alias: {

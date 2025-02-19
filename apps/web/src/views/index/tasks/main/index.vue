@@ -149,3 +149,42 @@ onBeforeRouteUpdate((to, from, next) => {
 // 获取视图信息
 watchEffect(() => tasksViewStore.getViewInfo())
 </script>
+
+<style>
+.tasks-main-view {
+    box-sizing: border-box;
+    min-width: 375px;
+
+    .tasks-main-view__header {
+        box-sizing: border-box;
+        height: auto;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .tasks-main-view__header__title-bar {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        gap: 4px;
+
+        .tasks-main-view__header__title-bar__title {
+            align-items: center;
+            width: auto;
+            flex: 1 1 auto;
+            flex-wrap: nowrap;
+            gap: 8px;
+        }
+
+        .tasks-main-view__header__title-bar__actions {
+            align-items: center;
+            width: auto;
+            flex-shrink: 0;
+            gap: 8px;
+        }
+    }
+
+    .tasks-main-view__main {
+        border: none !important;
+    }
+}
+</style>

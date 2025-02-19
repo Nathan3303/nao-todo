@@ -27,7 +27,6 @@
                 </nue-tooltip>
             </nue-div>
         </template>
-
         <template v-if="tags && tags.length">
             <aside-link
                 v-for="tag in tags"

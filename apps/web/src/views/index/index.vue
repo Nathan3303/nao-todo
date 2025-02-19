@@ -54,7 +54,7 @@
 <script lang="ts" setup>
 import { provide, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { UpdatePasswordDialog, IndexAside } from '@/layers'
+import { IndexAside, UpdatePasswordDialog } from '@/layers'
 import { useUserStore, useViewStore } from '@/stores'
 import { UserDropdown } from '@nao-todo/components'
 import { UserProfileDialog } from '@/layers/user-profile-dialog'
@@ -76,3 +76,18 @@ provide<IndexViewCtx>(IndexViewCtxKey, {
     }
 })
 </script>
+
+<style scoped>
+.index-view__header__logo {
+    width: 24px;
+    height: 24px;
+}
+
+.index-view__main {
+    border-left: 1px solid var(--divider-color);
+}
+
+.index-view__main .nue-main__content {
+    padding: 0;
+}
+</style>

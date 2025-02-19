@@ -1,0 +1,39 @@
+.tasks-details-view .nue-header {
+    box-sizing: border-box;
+}
+
+.tasks-details-view .nue-empty {
+    height: 100%;
+}
+
+.tasks-details-view .nue-main .nue-main__content {
+    align-items: start;
+    padding: 0;
+    gap: 0;
+    overflow: hidden;
+    overflow-y: auto;
+}
+
+.tasks-details-view__header {
+    height: auto;
+    justify-content: space-between;
+    box-sizing: border-box;
+}
+
+.tasks-details-view__progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+}
+
+.tasks-details-view__status {
+    height: auto !important;
+    padding-bottom: 0 !important;
+    justify-content: space-between;
+}
+
+.todo-comments-wrapper {
+    border-top: 1px solid var(--divider-color);
+    padding: 8px;
+}

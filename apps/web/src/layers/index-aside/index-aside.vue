@@ -58,3 +58,14 @@ onBeforeRouteUpdate((to, from, next) => {
     setTimeout(() => (viewStore.indexAsideVisible = false), 128)
 })
 </script>
+
+<style scoped>
+.index-aside:deep(.nue-main__content) {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    overflow-y: auto;
+    padding: 16px;
+    gap: 8px;
+}
+</style>

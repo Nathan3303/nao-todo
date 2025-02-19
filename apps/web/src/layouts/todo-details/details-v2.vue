@@ -169,7 +169,7 @@
         v-else
         description="选择左侧的任务以查看详细"
         image-size="64px"
-        image-src="/images/todo.webp"
+        image-src="/images/to-do.png"
     />
 </template>
 
