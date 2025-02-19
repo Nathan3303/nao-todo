@@ -38,11 +38,11 @@
             {{ viewInfo?.description || '该清单没有设置描述信息，点此设置清单描述' }}
         </nue-text>
     </nue-div>
-    <nue-div align="center" class="tasks-main-view__header__sub-bar" wrap="nowrap">
+    <!-- <nue-div align="center" class="tasks-main-view__header__sub-bar" wrap="nowrap">
         <nue-div theme="view-type-switcher">
             <slot name="navigations" />
         </nue-div>
-    </nue-div>
+    </nue-div> -->
 </template>
 
 <script lang="ts" setup>

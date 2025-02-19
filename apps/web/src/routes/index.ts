@@ -23,7 +23,10 @@ const router = createRouter({
             beforeEnter: (to, from, next) => {
                 const userStore = useUserStore()
                 if (!userStore.isAuthenticated) {
-                    next({ name: 'checkin', params: { fromUrlBase64: btoa(to.fullPath) } })
+                    next({
+                        name: 'checkin',
+                        params: { fromUrlBase64: btoa(to.fullPath) }
+                    })
                     return
                 }
                 next()
@@ -46,6 +49,11 @@ const router = createRouter({
                     path: 'search',
                     name: 'search',
                     component: () => import('@/views/index/search/index.vue')
+                },
+                {
+                    path: 'ai',
+                    name: 'ai',
+                    component: () => import('@/views/index/ai/index.vue')
                 }
             ]
         }
