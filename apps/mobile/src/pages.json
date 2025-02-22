@@ -1,0 +1,75 @@
+{
+	"easycom": {
+		"autoscan": true,
+		"custom": {
+			"^wd-(.*)": "wot-design-uni/components/wd-$1/wd-$1.vue"
+		}
+	},
+	"pages": [
+		{
+			"path": "pages/tasks/index",
+			"style": {
+				"navigationBarTitleText": "待办"
+			}
+		},
+		{
+			"path": "pages/calendar/index",
+			"style": {
+				"navigationBarTitleText": "日历视图"
+			}
+		},
+		{
+			"path": "pages/fqfocus/index",
+			"style": {
+				"navigationBarTitleText": "番茄专注"
+			}
+		},
+		{
+			"path": "pages/setting/index",
+			"style": {
+				"navigationBarTitleText": "设置"
+			}
+		},
+		{
+			"path": "pages/auth/index",
+			"style": {
+				"navigationBarTitleText": "登录"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "uni-app",
+		"navigationBarBackgroundColor": "#F8F8F8",
+		"backgroundColor": "#F8F8F8",
+		"navigationStyle": "custom"
+	},
+	"tabBar": {
+		"color": "#333333",
+		"selectedColor": "#007AFF",
+		"backgroundColor": "#F8F8F8",
+		"borderStyle": "white",
+		"list": [
+			{
+				"pagePath": "pages/tasks/index",
+				"iconPath": "static/images/tabbar/todo.png",
+				"selectedIconPath": "static/images/tabbar/todo-active.png"
+			},
+			{
+				"pagePath": "pages/calendar/index",
+				"iconPath": "static/images/tabbar/calendar.png",
+				"selectedIconPath": "static/images/tabbar/calendar-active.png"
+			},
+			{
+				"pagePath": "pages/fqfocus/index",
+				"iconPath": "static/images/tabbar/fqfocus.png",
+				"selectedIconPath": "static/images/tabbar/fqfocus-active.png"
+			},
+			{
+				"pagePath": "pages/setting/index",
+				"iconPath": "static/images/tabbar/setting.png",
+				"selectedIconPath": "static/images/tabbar/setting-active.png"
+			}
+		]
+	}
+}

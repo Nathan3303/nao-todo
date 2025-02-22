@@ -53,7 +53,7 @@ export const useViewStore = defineStore('viewStore', () => {
             }
         }
         indexHeaderVisible.value = responsiveFlag.value > 1
-        projectAsideVisible.value = responsiveFlag.value > 1 && projectAsideVisible.value
+        projectAsideVisible.value = responsiveFlag.value > 1
         tasksOutlineVisible.value = responsiveFlag.value > 2
     }
 

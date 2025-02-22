@@ -126,8 +126,8 @@
 .todo-table--mobile {
     min-width: 300px;
 
-    .todo-table__header {
-        display: none;
+    .todo-table__mobile-header {
+        flex-wrap: nowrap;
     }
 
     .todo-table__main {

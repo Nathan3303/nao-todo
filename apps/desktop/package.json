@@ -5,9 +5,9 @@
     "author": "Nathan Lee",
     "license": "MIT",
     "private": true,
-    "main": "src/index.js",
+    "main": "src/main.js",
     "scripts": {
-        "start": "electron .",
+        "dev": "electron .",
         "build": "electron-builder"
     },
     "build": {
@@ -31,7 +31,7 @@
         }
     },
     "devDependencies": {
-        "electron": "30.5.1",
-        "electron-builder": "24.13.3"
+        "electron": "^33.2.1",
+        "electron-builder": "^24.13.3"
     }
 }

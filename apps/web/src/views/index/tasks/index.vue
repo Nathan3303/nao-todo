@@ -11,7 +11,7 @@
             class="tasks-view__main"
             outline-max-width="540px"
             outline-min-width="375px"
-            outline-width="minmax(480px, 100%)"
+            outline-width="480px"
         >
             <template v-if="projectAsideVisible" #aside>
                 <aside-link icon="more2" route-name="tasks-all">所有</aside-link>
@@ -47,7 +47,8 @@
                 v-if="!tasksOutlineVisible"
                 v-model:visible="outlineDrawerVisible"
                 class="nue-drawer--no-header nue-drawer--tasks-outline"
-                span="100%"
+                min-span="375px"
+                span="480px"
             >
                 <todo-details-v2 />
             </nue-drawer>

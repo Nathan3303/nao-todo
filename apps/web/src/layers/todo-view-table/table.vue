@@ -12,7 +12,7 @@
                         v-if="!disabledCreateTodo"
                         icon="plus-circle"
                         theme="small,primary"
-                        @click="tasksDialogStore.showCreateTodoDialog"
+                        @click="() => tasksDialogStore.showCreateTodoDialog()"
                     >
                         新增
                     </nue-button>
@@ -207,7 +207,7 @@ const handleRefresh = async () => {
 
 const sortTodo = (newSortInfo: GetTodosSortOptions) => {
     getOptions.value.sort = newSortInfo
-    handleGetTodos()
+    todoStore.doGetTodos()
 }
 
 watch(
