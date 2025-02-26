@@ -11,7 +11,7 @@ defineExpose({ show, register: setComponentInfoById })
 </script>
 
 <template>
-    <nue-dialog theme="widely" v-model="visible" :title="dialogInfo.title">
+    <nue-dialog theme="large" v-model="visible" :title="dialogInfo.title">
         <component :is="dialogInfo.component" v-bind="dialogInfo.payload" />
         <template v-if="useClassicButtons" #footer="{ cancel }">
             <nue-button :disabled="loading" @click.stop="cancel">取消</nue-button>
