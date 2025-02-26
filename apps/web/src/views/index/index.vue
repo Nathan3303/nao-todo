@@ -16,57 +16,15 @@
             <template #navigators>
                 <nue-div vertical gap="24px">
                     <nue-tooltip
-                        content="任务"
+                        v-for="(rl, idx) in routeLinks"
+                        :key="idx"
+                        :content="rl.name"
                         placement="right-center"
                         size="small"
                     >
                         <nue-link
-                            icon="square-check-fill"
-                            route="/tasks"
-                            theme="index-header-link"
-                        />
-                    </nue-tooltip>
-                    <nue-tooltip
-                        content="日历视图"
-                        placement="right-center"
-                        size="small"
-                    >
-                        <nue-link
-                            icon="calendar"
-                            route="/calendar"
-                            theme="index-header-link"
-                        />
-                    </nue-tooltip>
-                    <nue-tooltip
-                        content="番茄专注"
-                        placement="right-center"
-                        size="small"
-                    >
-                        <nue-link
-                            icon="focus2"
-                            route="/fqfocus"
-                            theme="index-header-link"
-                        />
-                    </nue-tooltip>
-                    <nue-tooltip
-                        content="搜索"
-                        placement="right-center"
-                        size="small"
-                    >
-                        <nue-link
-                            icon="search2"
-                            route="/search"
-                            theme="index-header-link"
-                        />
-                    </nue-tooltip>
-                    <nue-tooltip
-                        content="对话大模型"
-                        placement="right-center"
-                        size="small"
-                    >
-                        <nue-link
-                            icon="chat"
-                            route="/ai"
+                            :icon="rl.icon"
+                            :route="rl.route"
                             theme="index-header-link"
                         />
                     </nue-tooltip>
@@ -113,6 +71,14 @@ await viewStore.indexViewInitTask()
 const { user } = storeToRefs(userStore)
 const userProfileDialogRef = ref<InstanceType<typeof UserProfileDialog>>()
 const updatePasswordDialogRef = ref<InstanceType<typeof UpdatePasswordDialog>>()
+
+const routeLinks = [
+    { name: '任务', icon: 'square-check-fill', route: '/tasks' },
+    { name: '日历视图', icon: 'calendar', route: '/calendar' },
+    { name: '番茄专注', icon: 'focus2', route: '/fqfocus' },
+    { name: '搜索', icon: 'search2', route: '/search' },
+    { name: '对话大模型', icon: 'ai-chat-fill', route: '/ai' }
+]
 
 provide<IndexViewCtx>(IndexViewCtxKey, {
     dialogsRef: {

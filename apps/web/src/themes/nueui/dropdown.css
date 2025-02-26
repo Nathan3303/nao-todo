@@ -11,6 +11,8 @@
         align-items: center;
         gap: 8px;
         min-width: unset;
+        -webkit-user-select: none;
+        user-select: none;
 
         .nue-button {
             .nue-button__icon {
