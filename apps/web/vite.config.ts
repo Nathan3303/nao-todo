@@ -14,7 +14,9 @@ export default defineConfig({
                 arguments: true,
                 drop_console: ['log'],
                 drop_debugger: true,
-                passes: 4
+                passes: 4,
+                ecma: 2015,
+                toplevel: true,
             },
             format: {
                 semicolons: false,
@@ -36,21 +38,26 @@ export default defineConfig({
     },
     build: {
         outDir: 'dist',
-        minify: false,
+        minify: true,
         cssCodeSplit: true,
+        cssMinify: true,
         rollupOptions: {
             output: {
                 assetFileNames: (assetInfo) => {
-                    if (assetInfo.type === 'asset' && (assetInfo.name as string).endsWith('.css'))
+                    if (
+                        assetInfo.type === 'asset' &&
+                        (assetInfo.name as string).endsWith('.css')
+                    )
                         return 'css/[name].[hash].[ext]'
                     return assetInfo.name as string
                 },
                 chunkFileNames: 'js/[name].[hash].js',
                 manualChunks: (path) => {
                     if (path.includes('node_modules')) return 'vendor'
-                    else if (path.includes('/apps/web/src/themes')) return 'theme'
-                    else if (path.includes('/apps/web/src/routes')) return 'routes'
-                    else if (path.includes('/apps/web/src/stores')) return 'stores'
+                    else if (path.includes('/apps/web/src/routes'))
+                        return 'routes'
+                    else if (path.includes('/apps/web/src/stores'))
+                        return 'stores'
                     return void 0
                 }
             }
