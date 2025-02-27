@@ -51,8 +51,8 @@ const handleDropdownExecute = (executeId: string) => {
 
 <style scoped>
 .nue-dropdown-item[data-disabled='true'] {
-    background-color: #f2f2f2;
-    opacity: 0.7;
+    background-color: #e2e2e2;
+    opacity: 0.6;
     cursor: not-allowed;
 }
 </style>
