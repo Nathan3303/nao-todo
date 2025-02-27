@@ -1,8 +1,8 @@
 <template>
-    <li class="nue-dropdown-item" :data-execute-id="executeId">
-        <nue-icon :name="icon" />
+    <li class="nue-dropdown-item" :data-executeid="executeId">
+        <nue-icon :name="icon" size="14px" />
         {{ title }}
-        <nue-icon v-if="checked" name="check" />
+        <nue-icon v-if="checked" name="check" style="margin-left: auto" />
     </li>
 </template>
 

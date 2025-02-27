@@ -1,13 +1,17 @@
 <template>
-    <nue-container id="tasks/basic/kanban" class="content-kanban" theme="vertical,inner">
+    <nue-container
+        id="tasks/basic/kanban"
+        class="content-kanban"
+        theme="vertical,inner"
+    >
         <nue-header :key="$route.path" height="auto">
             <nue-div align="start" gap="16px" justify="space-between">
-                <todo-filter-bar
-                    :filter-options="todoFilterBarOptions"
-                    :simple="viewStore.responsiveFlag < 1"
-                    @filter="handleFilter"
-                />
-                <nue-div flex="none" gap="12px" justify="end" width="fit-content">
+                <nue-div
+                    flex="none"
+                    gap="12px"
+                    justify="end"
+                    width="fit-content"
+                >
                     <nue-button
                         v-if="!disabledCreateTodo"
                         icon="plus-circle"
@@ -60,13 +64,12 @@
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
-import { Loading, TodoFilterBar } from '@nao-todo/components'
+import { Loading } from '@nao-todo/components'
 import { ContentKanbanColumn } from './kanban-column'
 import { TodoTableColumnSelector } from '@/layers'
-import { useTodoStore, useViewStore } from '@/stores'
+import { useTodoStore } from '@/stores'
 import { useTasksDialogStore } from '@/views/index/tasks'
-import type { GetTodosOptions, Todo, TodoColumnOptions } from '@nao-todo/types'
-import type { TodoFilterOptions } from '@nao-todo/components/todo/filter-bar/types'
+import type { Todo, TodoColumnOptions } from '@nao-todo/types'
 
 const props = defineProps<{
     baseRoute: string
@@ -74,23 +77,14 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
-const viewStore = useViewStore()
+// const viewStore = useViewStore()
 const todoStore = useTodoStore()
 const tasksDialogStore = useTasksDialogStore()
 
-const { todos, getOptions } = storeToRefs(todoStore)
+const { todos } = storeToRefs(todoStore)
 const kanbanLoading = ref(true)
 const refreshTimer = ref<number | null>(null)
 const draggingTodoId = ref('abc')
-
-// 计算 TodoFilterBar 的过滤选项
-const todoFilterBarOptions = computed<TodoFilterOptions>(() => {
-    return {
-        name: getOptions.value.name || '',
-        state: getOptions.value.state || '',
-        priority: getOptions.value.priority || ''
-    }
-})
 
 const categoriedTodos = computed(() => {
     const result: { [key in Todo['state']]: Todo[] } = {
@@ -116,21 +110,6 @@ const handleGetTodos = async () => {
     kanbanLoading.value = true
     await todoStore.doGetTodos()
     kanbanLoading.value = false
-}
-
-// 处理筛选
-const handleFilter = async (newTodoFilter: TodoFilterOptions) => {
-    const options: GetTodosOptions = { ...getOptions.value }
-    Object.keys(newTodoFilter).forEach((key) => {
-        const _k = key as keyof TodoFilterOptions
-        if (newTodoFilter[_k]) {
-            options[_k] = newTodoFilter[_k]
-        } else if (Object.prototype.hasOwnProperty.call(options, _k)) {
-            delete options[_k]
-        }
-    })
-    todoStore.updateGetOptions(options)
-    await todoStore.doGetTodos()
 }
 
 const handleChangeColumns = (options: TodoColumnOptions) => {
@@ -161,9 +140,11 @@ const handleDragOver = (event: DragEvent) => {
 }
 
 const handleRemoveDragOverClass = () => {
-    document.querySelectorAll('.kanban-column__main--drag-over').forEach((element) => {
-        element.classList.remove('kanban-column__main--drag-over')
-    })
+    document
+        .querySelectorAll('.kanban-column__main--drag-over')
+        .forEach((element) => {
+            element.classList.remove('kanban-column__main--drag-over')
+        })
 }
 
 const getDropNode = (node: HTMLElement) => {
