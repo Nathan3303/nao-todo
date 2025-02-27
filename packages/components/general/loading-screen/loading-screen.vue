@@ -2,10 +2,21 @@
     <transition name="fade" mode="out-in" appear>
         <nue-div v-if="loading || error" class="loading-screen">
             <nue-div vertical width="fit-content" align="center">
-                <nue-text size="26px">NaoTodo</nue-text>
-                <nue-icon name="loading" spin size="32px" />
+                <nue-avatar
+                    src="/favicon.ico"
+                    size="5rem"
+                    style="background-color: #212121"
+                    theme="rounded"
+                />
+                <nue-text size="1.5rem">NaoTodo</nue-text>
+                <nue-div align="center" justify="center" gap=".5rem">
+                    <nue-icon name="loading" spin size="1rem" />
+                    <nue-text size=".75rem">加载中 ...</nue-text>
+                </nue-div>
                 <template v-if="error">
-                    <nue-text size="14px" color="red">{{ errorMessage?.message }}</nue-text>
+                    <nue-text size="14px" color="red">
+                        {{ errorMessage?.message }}
+                    </nue-text>
                     <nue-button @click="emit('refresh')">Refresh</nue-button>
                 </template>
             </nue-div>

@@ -14,7 +14,7 @@
                     <nue-button
                         icon="setting"
                         theme="pure"
-                        @click.stop="tasksDialogStore.showTagManagerDialog"
+                        @click.stop="() => tasksDialogStore.dialogManagerShow('TagManager')"
                     />
                 </nue-tooltip>
                 <nue-tooltip content="创建新标签" size="small">
@@ -27,7 +27,6 @@
                 </nue-tooltip>
             </nue-div>
         </template>
-
         <template v-if="tags && tags.length">
             <aside-link
                 v-for="tag in tags"

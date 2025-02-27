@@ -1,3 +1,9 @@
-import TagSmartList from './tag-smart-list.vue'
+import SmartList from './tag-smart-list.vue'
 
-export { TagSmartList }
+export const TagSmartList = SmartList
+
+// import { defineAsyncComponent } from 'vue'
+//
+// export const TagSmartList = defineAsyncComponent(async () => {
+//     return await import('./tag-smart-list.vue')
+// })

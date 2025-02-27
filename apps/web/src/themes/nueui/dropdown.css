@@ -11,6 +11,8 @@
         align-items: center;
         gap: 8px;
         min-width: unset;
+        -webkit-user-select: none;
+        user-select: none;
 
         .nue-button {
             .nue-button__icon {
@@ -74,4 +76,34 @@
 /* project-manager */
 .nue-dropdown--project-manager {
     overflow: hidden;
+}
+
+/* menu */
+.nue-dropdown--menu {
+    padding: 2px 0;
+
+    .nue-div--block {
+        gap: 4px;
+        flex-direction: column;
+        align-items: stretch;
+        padding: 4px;
+    }
+
+    .nue-text--title {
+        font-size: var(--text-xs);
+        font-weight: 500;
+        color: var(--primary-color-500);
+        padding: 2px 6px;
+        cursor: default;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    .nue-dropdown-item {
+        cursor: pointer;
+
+        .nue-icon {
+            --icon-size: var(--text-sm);
+        }
+    }
 }

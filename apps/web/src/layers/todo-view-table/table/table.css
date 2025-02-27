@@ -13,7 +13,7 @@
 
     .todo-table__header {
         align-items: center;
-        padding: 4px 16px;
+        padding: 4px 12px;
         gap: 24px;
         border: 1px solid transparent;
     }
@@ -38,7 +38,7 @@
         border: 1px solid transparent;
         border-radius: var(--primary-radius);
         gap: 24px;
-        padding: 8px 16px;
+        padding: 8px 12px;
         width: 100%;
         position: relative;
     }
@@ -139,7 +139,24 @@
             gap: 4px;
             align-items: center;
             padding: 8px;
-            background-color: var(--primary-color-50);
+            background-color: var(--primary-color-100);
+
+            &[data-selected="true"] {
+                border: 1px solid #ffbd64;
+                position: relative;
+
+                &::after {
+                    content: '';
+                    display: block;
+                    position: absolute;
+                    width: calc(100% - 4px);
+                    height: calc(100% - 4px);
+                    top: 0;
+                    left: 0;
+                    border: 2px solid white;
+                    border-radius: var(--primary-radius);
+                }
+            }
 
             .todo-table__main__col {
                 height: auto;

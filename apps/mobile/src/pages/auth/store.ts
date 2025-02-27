@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { ApiBaseURL } from '@/constants'
 import sparkMD5 from 'spark-md5'
 import { getJWTPayload } from '@nao-todo/utils'
+import useRequester from '@nao-todo/hooks/use-requester'
 import type { ResponseData, SigninOptions, User } from '@nao-todo/types'
 
 export const useAuthStore = defineStore('AuthStore', () => {
@@ -10,14 +11,12 @@ export const useAuthStore = defineStore('AuthStore', () => {
     const token = ref<string>()
     const isAuthenticated = ref(false)
 
+    const requester = useRequester()
+
     const signin = async (options: SigninOptions) => {
-        const response = await uni.request({
-            method: 'POST',
-            url: ApiBaseURL + '/signin',
-            data: {
-                email: options.email.trim().toLowerCase(),
-                password: sparkMD5.hash(options.password)
-            }
+        const response = await requester.post('/signin', {
+            email: options.email.trim().toLowerCase(),
+            password: sparkMD5.hash(options.password)
         })
         const responseData = response.data as ResponseData
         if (responseData.code === 20000) {

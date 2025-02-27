@@ -1,0 +1,10 @@
+{
+    "name": "@nao-todo/stores",
+    "version": "0.1.0",
+    "description": "Pinia stores for Nao Todo",
+    "author": "Nathan Lee",
+    "license": "MIT",
+    "main": "index.ts",
+    "private": true,
+    "type": "module"
+}

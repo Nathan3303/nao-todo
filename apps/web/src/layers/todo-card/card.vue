@@ -28,7 +28,7 @@
                 <nue-text
                     v-if="todo.description && columns?.description"
                     class="todo-card__description"
-                    :clamped="3"
+                    :clamped="2"
                 >
                     {{ todo.description }}
                 </nue-text>

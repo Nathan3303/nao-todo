@@ -1,3 +1,9 @@
-import TodoCommentDetails from './todo-comment-details.vue'
+import CommentDetails from './todo-comment-details.vue'
 
-export { TodoCommentDetails }
+export const TodoCommentDetails = CommentDetails
+
+// import { defineAsyncComponent } from 'vue'
+//
+// export const TodoCommentDetails = defineAsyncComponent(async () => {
+//     return await import('./todo-comment-details.vue')
+// })

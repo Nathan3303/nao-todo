@@ -11,3 +11,6 @@ export type * from './models/comment'
 
 // views
 export type * from './views/tasks'
+
+// requester
+export type * from './requester'

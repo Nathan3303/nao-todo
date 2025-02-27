@@ -43,7 +43,7 @@ const emit = defineEmits<{
 <style scoped>
 .tag-board {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
     grid-gap: 12px;
 }
 

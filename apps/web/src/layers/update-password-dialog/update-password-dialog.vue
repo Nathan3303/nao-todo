@@ -46,7 +46,6 @@
 import { ref } from 'vue'
 import { useUserStore } from '@/stores'
 import { NueMessage } from 'nue-ui'
-import validator from 'validator'
 
 defineOptions({ name: 'UpdatePasswordDialog' })
 
@@ -69,11 +68,11 @@ const handleUpdatePassword = async () => {
         NueMessage.warn('密码格式有误，需要 8 至 24 位的长度')
         return
     }
-    if (!validator.matches(password.value, matchPattern)) {
+    if (!RegExp(matchPattern).test(password.value)) {
         NueMessage.warn('密码格式有误，需要包含字母、数字以及特殊符号')
         return
     }
-    if (!validator.equals(password.value, confirmPassword.value)) {
+    if (password.value !== confirmPassword.value) {
         NueMessage.warn('两次输入的密码不一致')
         return
     }
