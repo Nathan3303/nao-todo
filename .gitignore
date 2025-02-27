@@ -31,4 +31,4 @@ package-lock.json
 **/.temp/
 **/.rn_temp/
 **/.swc
-**/stats.html
+apps/web/stats.html
