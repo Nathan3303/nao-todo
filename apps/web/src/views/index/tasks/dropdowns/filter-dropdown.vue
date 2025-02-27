@@ -172,9 +172,15 @@ const handleStateDropdownExecute = (field: string) => {
 }
 
 const handleSortFieldDropdownExecute = (field: string) => {
-    todoStore.mergeGetOptions({
-        sort: { field, order: getOptions.value.sort?.order || 'asc' }
-    })
+    if (field === getOptions.value.sort?.field) {
+        todoStore.mergeGetOptions({
+            sort: { field: '', order: 'asc' }
+        })
+    } else {
+        todoStore.mergeGetOptions({
+            sort: { field, order: getOptions.value.sort?.order || 'asc' }
+        })
+    }
     todoStore.doGetTodos()
 }
 
