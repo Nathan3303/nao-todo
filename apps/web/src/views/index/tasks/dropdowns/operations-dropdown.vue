@@ -70,7 +70,7 @@ const handleDropdownExecute = async (executeId: string) => {
             <nue-button icon="more" theme="icon-only" @click="clickTrigger" />
         </template>
         <template #dropdown>
-            <nue-div theme="block">
+            <nue-div theme="block" style="min-width: 10rem">
                 <nue-text theme="title">切换视图</nue-text>
                 <nue-div gap="4px" justify="space-around">
                     <li
@@ -96,7 +96,7 @@ const handleDropdownExecute = async (executeId: string) => {
                 </nue-div>
             </nue-div>
             <nue-divider />
-            <nue-div theme="block" style="max-width: 10rem">
+            <nue-div theme="block">
                 <nue-text theme="title">视图操作</nue-text>
                 <li
                     class="nue-dropdown-item"
