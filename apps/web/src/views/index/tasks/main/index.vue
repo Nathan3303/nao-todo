@@ -44,6 +44,13 @@
                             />
                         </nue-tooltip>
                     </template>
+                    <nue-tooltip content="新增待办" size="small">
+                        <nue-button
+                            icon="plus"
+                            theme="icon-only"
+                            @click="tasksDialogStore.showCreateTodoDialog"
+                        />
+                    </nue-tooltip>
                     <tasks-filter-dropdown />
                     <tasks-operations-dropdown />
                 </template>
@@ -62,7 +69,7 @@ import { onBeforeRouteUpdate } from 'vue-router'
 import { TodoViewHeader } from '@/layers'
 import { TagColorDot } from '@nao-todo/components'
 import { useTasksDialogStore, useTasksViewStore } from '..'
-import { TasksOperationsDropdown, TasksFilterDropdown } from '../dropdowns'
+import { TasksFilterDropdown, TasksOperationsDropdown } from '../dropdowns'
 
 const tasksViewStore = useTasksViewStore()
 const tasksDialogStore = useTasksDialogStore()

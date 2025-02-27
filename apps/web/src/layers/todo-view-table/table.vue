@@ -1,38 +1,32 @@
 <template>
     <nue-container class="tasks-main-table-view" theme="vertical,inner">
-        <nue-header :key="$route.path" class="tasks-main-table-view__header">
-            <nue-div align="start" gap="16px" justify="space-between">
-                <nue-div
-                    flex="none"
-                    gap="12px"
-                    justify="end"
-                    width="fit-content"
-                >
-                    <nue-button
-                        v-if="!disabledCreateTodo"
-                        icon="plus-circle"
-                        theme="small,primary"
-                        @click="() => tasksDialogStore.showCreateTodoDialog()"
-                    >
-                        新增
-                    </nue-button>
-                    <todo-table-column-selector
-                        v-model="todoStore.columnOptions"
-                        :change="handleChangeColumns"
-                    />
-                    <nue-tooltip content="重新请求数据" size="small">
-                        <nue-button
-                            :loading="tableLoading || !!refreshTimer"
-                            icon="refresh"
-                            theme="small"
-                            @click="handleRefresh"
-                        />
-                    </nue-tooltip>
-                </nue-div>
-            </nue-div>
-        </nue-header>
+        <!--        <nue-header :key="$route.path" class="tasks-main-table-view__header">-->
+        <!--            <nue-div align="start" gap="16px" justify="space-between">-->
+        <!--                <nue-div flex="none" gap="12px" justify="end" wrap="nowrap">-->
+        <!--                                        <nue-input-->
+        <!--                                            v-model="filterText"-->
+        <!--                                            theme="small"-->
+        <!--                                            flex="1"-->
+        <!--                                            placeholder="通过名称查找待办"-->
+        <!--                                            clearable-->
+        <!--                                        />-->
+        <!--                                        <nue-button-->
+        <!--                                            v-if="!disabledCreateTodo"-->
+        <!--                                            icon="plus-circle"-->
+        <!--                                            theme="small,primary"-->
+        <!--                                            @click="() => tasksDialogStore.showCreateTodoDialog()"-->
+        <!--                                        >-->
+        <!--                                            新增-->
+        <!--                                        </nue-button>-->
+        <!--                                        <todo-table-column-selector-->
+        <!--                                            v-model="todoStore.columnOptions"-->
+        <!--                                            :change="handleChangeColumns"-->
+        <!--                                        />-->
+        <!--                </nue-div>-->
+        <!--            </nue-div>-->
+        <!--        </nue-header>-->
         <nue-main class="tasks-main-table-view__main">
-            <nue-div flex style="overflow-y: auto" wrap="nowrap">
+            <nue-div flex="1" style="overflow-y: auto" wrap="nowrap">
                 <Loading
                     v-if="tableLoading"
                     placeholder="正在加载任务列表..."
@@ -127,13 +121,9 @@ import { storeToRefs } from 'pinia'
 import { useTagStore, useTodoStore, useViewStore } from '@/stores'
 import { Loading, Pager } from '@nao-todo/components'
 import { TodoTable } from './table'
-import { TodoTableColumnSelector } from './column-selector'
-import { useTasksDialogStore, useTasksViewStore } from '@/views/index/tasks'
-import type {
-    GetTodosSortOptions,
-    Todo,
-    TodoColumnOptions
-} from '@nao-todo/types'
+// import { TodoTableColumnSelector } from './column-selector'
+import { useTasksViewStore } from '@/views/index/tasks'
+import type { GetTodosSortOptions, Todo } from '@nao-todo/types'
 import type { TodoTableMultiSelectPayload } from './table/types'
 import './table.css'
 
@@ -148,13 +138,13 @@ const todoStore = useTodoStore()
 const viewStore = useViewStore()
 const tagStore = useTagStore()
 const tasksViewStore = useTasksViewStore()
-const tasksDialogStore = useTasksDialogStore()
+// const tasksDialogStore = useTasksDialogStore()
 
 const { todos, getOptions, getOverview } = storeToRefs(todoStore)
 const tableLoading = ref(true)
 const todoTableRef = ref<InstanceType<typeof TodoTable>>()
-let refreshTimer: number | null = null
 const multiSelectCount = ref(0)
+// const filterText = ref('')
 
 const showTodoDetails = (id: Todo['id']) => {
     const { baseRoute } = props
@@ -173,9 +163,9 @@ const handleDeleteTodo = async (todoId: Todo['id']) => {
     await todoStore.deleteTodoWithConfirmation(todoId)
 }
 
-const handleChangeColumns = (options: TodoColumnOptions) => {
-    todoStore.updateColumnOptions(options)
-}
+// const handleChangeColumns = (options: TodoColumnOptions) => {
+//     todoStore.updateColumnOptions(options)
+// }
 
 const handleMultiSelect = (payload: TodoTableMultiSelectPayload) => {
     const { selectedIds, selectRange } = payload
@@ -196,11 +186,6 @@ const handlePerPageChange = (perPage: number) => {
 const handlePageChange = (page: number) => {
     getOptions.value.page = page
     handleGetTodos()
-}
-
-const handleRefresh = async () => {
-    tasksViewStore.hideMultiDetails()
-    await handleGetTodos()
 }
 
 const sortTodo = (newSortInfo: GetTodosSortOptions) => {

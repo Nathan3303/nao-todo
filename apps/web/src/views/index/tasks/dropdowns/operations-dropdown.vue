@@ -2,6 +2,7 @@
 import { useTasksHandlerStore, useTasksViewStore } from '@/views/index/tasks'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
+import { ref } from 'vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -9,6 +10,13 @@ const tasksViewStore = useTasksViewStore()
 const tasksHandlerStore = useTasksHandlerStore()
 
 const { category } = storeToRefs(tasksViewStore)
+const isRefreshing = ref(false)
+
+const handleRefreshData = async () => {
+    isRefreshing.value = true
+    await tasksHandlerStore.handleGetTodos()
+    isRefreshing.value = false
+}
 
 // 清单操作菜单处理函数
 const handleDropdownExecute = async (executeId: string) => {
@@ -31,6 +39,9 @@ const handleDropdownExecute = async (executeId: string) => {
         case 'delete-project':
             await tasksHandlerStore.handleRemoveProject()
             break
+        case 'refresh-data':
+            await handleRefreshData()
+            break
     }
 }
 </script>
@@ -48,7 +59,7 @@ const handleDropdownExecute = async (executeId: string) => {
         </template>
         <template #dropdown>
             <nue-div theme="block">
-                <nue-text theme="title">视图</nue-text>
+                <nue-text theme="title">切换视图</nue-text>
                 <nue-div gap="4px" justify="space-around">
                     <li
                         class="nue-dropdown-item"
@@ -74,7 +85,26 @@ const handleDropdownExecute = async (executeId: string) => {
             </nue-div>
             <nue-divider />
             <nue-div theme="block">
-                <nue-text theme="title">操作</nue-text>
+                <nue-text theme="title">视图操作</nue-text>
+                <li
+                    class="nue-dropdown-item"
+                    :data-disabled="isRefreshing"
+                    data-executeid="refresh-data"
+                >
+                    <nue-icon name="refresh" />
+                    重新获取数据
+                </li>
+                <li
+                    class="nue-dropdown-item"
+                    data-executeid="hide-which-is-done"
+                >
+                    <nue-icon name="eye-close" />
+                    隐藏已完成
+                </li>
+            </nue-div>
+            <nue-divider />
+            <nue-div theme="block">
+                <nue-text theme="title">清单操作</nue-text>
                 <li
                     class="nue-dropdown-item"
                     data-executeid="save-as-preference"
@@ -85,22 +115,12 @@ const handleDropdownExecute = async (executeId: string) => {
                 </li>
                 <li
                     class="nue-dropdown-item"
-                    data-executeid="hide-which-is-done"
-                >
-                    <nue-icon name="eye-close" />
-                    隐藏已完成
-                </li>
-                <li
-                    class="nue-dropdown-item"
                     data-executeid="archive"
                     v-if="category === 'project'"
                 >
                     <nue-icon name="archive" />
                     归档该清单
                 </li>
-            </nue-div>
-            <nue-divider />
-            <nue-div theme="block">
                 <li
                     class="nue-dropdown-item"
                     data-executeid="delete-project"

@@ -4,35 +4,35 @@
         class="content-kanban"
         theme="vertical,inner"
     >
-        <nue-header :key="$route.path" height="auto">
-            <nue-div align="start" gap="16px" justify="space-between">
-                <nue-div
-                    flex="none"
-                    gap="12px"
-                    justify="end"
-                    width="fit-content"
-                >
-                    <nue-button
-                        v-if="!disabledCreateTodo"
-                        icon="plus-circle"
-                        theme="small,primary"
-                        @click="tasksDialogStore.showCreateTodoDialog"
-                    >
-                        新增
-                    </nue-button>
-                    <todo-table-column-selector
-                        v-model="todoStore.columnOptions"
-                        :change="handleChangeColumns"
-                    />
-                    <nue-button
-                        :loading="kanbanLoading || !!refreshTimer"
-                        icon="refresh"
-                        theme="small"
-                        @click="handleRefresh"
-                    />
-                </nue-div>
-            </nue-div>
-        </nue-header>
+        <!--        <nue-header :key="$route.path" height="auto">-->
+        <!--            <nue-div align="start" gap="16px" justify="space-between">-->
+        <!--                <nue-div-->
+        <!--                    flex="none"-->
+        <!--                    gap="12px"-->
+        <!--                    justify="end"-->
+        <!--                    width="fit-content"-->
+        <!--                >-->
+        <!--                    <nue-button-->
+        <!--                        v-if="!disabledCreateTodo"-->
+        <!--                        icon="plus-circle"-->
+        <!--                        theme="small,primary"-->
+        <!--                        @click="tasksDialogStore.showCreateTodoDialog"-->
+        <!--                    >-->
+        <!--                        新增-->
+        <!--                    </nue-button>-->
+        <!--                    <todo-table-column-selector-->
+        <!--                        v-model="todoStore.columnOptions"-->
+        <!--                        :change="handleChangeColumns"-->
+        <!--                    />-->
+        <!--                    <nue-button-->
+        <!--                        :loading="kanbanLoading || !!refreshTimer"-->
+        <!--                        icon="refresh"-->
+        <!--                        theme="small"-->
+        <!--                        @click="handleRefresh"-->
+        <!--                    />-->
+        <!--                </nue-div>-->
+        <!--            </nue-div>-->
+        <!--        </nue-header>-->
         <nue-main style="border: none">
             <Loading v-if="kanbanLoading" placeholder="正在加载任务看板..." />
             <template v-else>
@@ -66,10 +66,8 @@ import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { Loading } from '@nao-todo/components'
 import { ContentKanbanColumn } from './kanban-column'
-import { TodoTableColumnSelector } from '@/layers'
 import { useTodoStore } from '@/stores'
-import { useTasksDialogStore } from '@/views/index/tasks'
-import type { Todo, TodoColumnOptions } from '@nao-todo/types'
+import type { Todo } from '@nao-todo/types'
 
 const props = defineProps<{
     baseRoute: string
@@ -79,11 +77,11 @@ const props = defineProps<{
 const router = useRouter()
 // const viewStore = useViewStore()
 const todoStore = useTodoStore()
-const tasksDialogStore = useTasksDialogStore()
+// const tasksDialogStore = useTasksDialogStore()
 
 const { todos } = storeToRefs(todoStore)
 const kanbanLoading = ref(true)
-const refreshTimer = ref<number | null>(null)
+// const refreshTimer = ref<number | null>(null)
 const draggingTodoId = ref('abc')
 
 const categoriedTodos = computed(() => {
@@ -112,14 +110,14 @@ const handleGetTodos = async () => {
     kanbanLoading.value = false
 }
 
-const handleChangeColumns = (options: TodoColumnOptions) => {
-    todoStore.updateColumnOptions(options)
-}
+// const handleChangeColumns = (options: TodoColumnOptions) => {
+//     todoStore.updateColumnOptions(options)
+// }
 
-const handleRefresh = async () => {
-    if (refreshTimer.value) return
-    await handleGetTodos()
-}
+// const handleRefresh = async () => {
+//     if (refreshTimer.value) return
+//     await handleGetTodos()
+// }
 
 const handleFinishTodo = async (todoId: Todo['id']) => {
     await todoStore.doUpdateTodo(todoId, { state: 'done' })
