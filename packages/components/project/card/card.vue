@@ -14,7 +14,7 @@
                     <slot name="ops" />
                 </nue-div>
             </nue-div>
-            <nue-text size="12px" color="gray" :clamped="3">
+            <nue-text size="12px" color="gray" :clamped="2">
                 {{ project.description || '无描述' }}
             </nue-text>
         </nue-div>

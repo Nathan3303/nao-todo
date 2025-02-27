@@ -1,5 +1,10 @@
 import moment from 'moment'
-import { useProjectStore, useTagStore, useTodoStore, useUserStore } from '@/stores'
+import {
+    useProjectStore,
+    useTagStore,
+    useTodoStore,
+    useUserStore
+} from '@/stores'
 import type { CreateTodoDialogCallerArgs } from '@/layers/create-todo-dialog/types'
 import type {
     ProjectPreference,
@@ -23,6 +28,20 @@ export const defaultColumnOptions: TodoColumnOptions = {
     description: false,
     createdAt: false,
     updatedAt: false
+}
+
+// 列选项中文
+
+export const columnOptionsInfoMap = {
+    endAt: '截止日期',
+    state: '状态',
+    priority: '优先级',
+    project: '所属清单',
+    description: '描述',
+    createdAt: '创建时间',
+    updatedAt: '更新时间',
+    name: '名称',
+    tags: '标签'
 }
 
 // 默认偏好
@@ -122,7 +141,10 @@ export const basicViewsInfo: {
         },
         createTodoOptions: {
             dueDate: {
-                startAt: moment().add(1, 'day').startOf('day').toISOString(true),
+                startAt: moment()
+                    .add(1, 'day')
+                    .startOf('day')
+                    .toISOString(true),
                 endAt: moment().add(1, 'day').endOf('day').toISOString(true)
             }
         },
@@ -244,7 +266,11 @@ export const basicViewsInfo: {
         },
         handlers: {
             handleCreateTodo: async (todoName: Todo['name']) => {
-                await todoStore.doCreateTodo({ dueDate: {}, name: todoName, isFavorited: true })
+                await todoStore.doCreateTodo({
+                    dueDate: {},
+                    name: todoName,
+                    isFavorited: true
+                })
             },
             handleCreateTodoByDialog: async (
                 caller: (args: CreateTodoDialogCallerArgs) => void

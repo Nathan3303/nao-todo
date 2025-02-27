@@ -1,4 +1,4 @@
-import md5 from 'md5'
+import SparkMD5 from "spark-md5";
 import $axios from '@nao-todo/utils/axios'
 import type { ResponseData, SigninOptions, SignupOptions } from '@nao-todo/types'
 
@@ -8,7 +8,7 @@ export const signin = async (options: SigninOptions) => {
         const { email, password } = options
         const response = await $axios.post('/signin', {
             email: email.trim().toLowerCase(),
-            password: md5(password)
+            password: SparkMD5.hash(password)
         })
         return response.data as ResponseData
     } catch (error) {
@@ -23,7 +23,7 @@ export const signup = async (payload: SignupOptions) => {
         const { email, password, nickname } = payload
         const response = await $axios.post('/signup', {
             email: email.trim().toLowerCase(),
-            password: md5(password),
+            password: SparkMD5.hash(password),
             nickname: nickname ? nickname.trim() : undefined
         })
         return response.data as ResponseData
@@ -71,7 +71,7 @@ export const updateNickname = async (newNickname: string) => {
 // 修改密码
 export const updatePassword = async (newPasswordRaw: string, phoneNumber?: number) => {
     try {
-        const response = await $axios.post('/user/password', { password: md5(newPasswordRaw) })
+        const response = await $axios.post('/user/password', { password: SparkMD5.hash(newPasswordRaw) })
         return response.data as ResponseData
     } catch (error) {
         console.log('[@nao-todo/apis/updatePassword]:', error)

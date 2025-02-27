@@ -1,3 +1,9 @@
-import TodoEventDetails from './event-details.vue'
+import EventDetails from './event-details.vue'
 
-export { TodoEventDetails }
+export const TodoEventDetails = EventDetails
+
+// import { defineAsyncComponent } from 'vue'
+//
+// export const TodoEventDetails = defineAsyncComponent(async () => {
+//     return await import('./event-details.vue')
+// })

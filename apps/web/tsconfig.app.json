@@ -15,6 +15,9 @@
             "@/*": [
                 "src/*"
             ]
-        }
+        },
+        "types": [
+            "nue-ui/dist/global.d.ts"
+        ]
     }
 }

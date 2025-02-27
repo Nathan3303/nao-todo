@@ -1,34 +1,38 @@
 <template>
-    <nue-container id="tasks/basic/kanban" class="content-kanban" theme="vertical,inner">
-        <nue-header :key="$route.path" height="auto">
-            <nue-div align="start" gap="16px" justify="space-between">
-                <todo-filter-bar
-                    :filter-options="todoFilterBarOptions"
-                    :simple="viewStore.responsiveFlag < 1"
-                    @filter="handleFilter"
-                />
-                <nue-div flex="none" gap="12px" justify="end" width="fit-content">
-                    <nue-button
-                        v-if="!disabledCreateTodo"
-                        icon="plus-circle"
-                        theme="small,primary"
-                        @click="tasksDialogStore.showCreateTodoDialog"
-                    >
-                        新增
-                    </nue-button>
-                    <todo-table-column-selector
-                        v-model="todoStore.columnOptions"
-                        :change="handleChangeColumns"
-                    />
-                    <nue-button
-                        :loading="kanbanLoading || !!refreshTimer"
-                        icon="refresh"
-                        theme="small"
-                        @click="handleRefresh"
-                    />
-                </nue-div>
-            </nue-div>
-        </nue-header>
+    <nue-container
+        id="tasks/basic/kanban"
+        class="content-kanban"
+        theme="vertical,inner"
+    >
+        <!--        <nue-header :key="$route.path" height="auto">-->
+        <!--            <nue-div align="start" gap="16px" justify="space-between">-->
+        <!--                <nue-div-->
+        <!--                    flex="none"-->
+        <!--                    gap="12px"-->
+        <!--                    justify="end"-->
+        <!--                    width="fit-content"-->
+        <!--                >-->
+        <!--                    <nue-button-->
+        <!--                        v-if="!disabledCreateTodo"-->
+        <!--                        icon="plus-circle"-->
+        <!--                        theme="small,primary"-->
+        <!--                        @click="tasksDialogStore.showCreateTodoDialog"-->
+        <!--                    >-->
+        <!--                        新增-->
+        <!--                    </nue-button>-->
+        <!--                    <todo-table-column-selector-->
+        <!--                        v-model="todoStore.columnOptions"-->
+        <!--                        :change="handleChangeColumns"-->
+        <!--                    />-->
+        <!--                    <nue-button-->
+        <!--                        :loading="kanbanLoading || !!refreshTimer"-->
+        <!--                        icon="refresh"-->
+        <!--                        theme="small"-->
+        <!--                        @click="handleRefresh"-->
+        <!--                    />-->
+        <!--                </nue-div>-->
+        <!--            </nue-div>-->
+        <!--        </nue-header>-->
         <nue-main style="border: none">
             <Loading v-if="kanbanLoading" placeholder="正在加载任务看板..." />
             <template v-else>
@@ -60,13 +64,10 @@
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
-import { Loading, TodoFilterBar } from '@nao-todo/components'
+import { Loading } from '@nao-todo/components'
 import { ContentKanbanColumn } from './kanban-column'
-import { TodoTableColumnSelector } from '@/layers'
-import { useTodoStore, useViewStore } from '@/stores'
-import { useTasksDialogStore } from '@/views/index/tasks'
-import type { GetTodosOptions, Todo, TodoColumnOptions } from '@nao-todo/types'
-import type { TodoFilterOptions } from '@nao-todo/components/todo/filter-bar/types'
+import { useTodoStore } from '@/stores'
+import type { Todo } from '@nao-todo/types'
 
 const props = defineProps<{
     baseRoute: string
@@ -74,23 +75,14 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
-const viewStore = useViewStore()
+// const viewStore = useViewStore()
 const todoStore = useTodoStore()
-const tasksDialogStore = useTasksDialogStore()
+// const tasksDialogStore = useTasksDialogStore()
 
-const { todos, getOptions } = storeToRefs(todoStore)
+const { todos } = storeToRefs(todoStore)
 const kanbanLoading = ref(true)
-const refreshTimer = ref<number | null>(null)
+// const refreshTimer = ref<number | null>(null)
 const draggingTodoId = ref('abc')
-
-// 计算 TodoFilterBar 的过滤选项
-const todoFilterBarOptions = computed<TodoFilterOptions>(() => {
-    return {
-        name: getOptions.value.name || '',
-        state: getOptions.value.state || '',
-        priority: getOptions.value.priority || ''
-    }
-})
 
 const categoriedTodos = computed(() => {
     const result: { [key in Todo['state']]: Todo[] } = {
@@ -118,29 +110,14 @@ const handleGetTodos = async () => {
     kanbanLoading.value = false
 }
 
-// 处理筛选
-const handleFilter = async (newTodoFilter: TodoFilterOptions) => {
-    const options: GetTodosOptions = { ...getOptions.value }
-    Object.keys(newTodoFilter).forEach((key) => {
-        const _k = key as keyof TodoFilterOptions
-        if (newTodoFilter[_k]) {
-            options[_k] = newTodoFilter[_k]
-        } else if (Object.prototype.hasOwnProperty.call(options, _k)) {
-            delete options[_k]
-        }
-    })
-    todoStore.updateGetOptions(options)
-    await todoStore.doGetTodos()
-}
+// const handleChangeColumns = (options: TodoColumnOptions) => {
+//     todoStore.updateColumnOptions(options)
+// }
 
-const handleChangeColumns = (options: TodoColumnOptions) => {
-    todoStore.updateColumnOptions(options)
-}
-
-const handleRefresh = async () => {
-    if (refreshTimer.value) return
-    await handleGetTodos()
-}
+// const handleRefresh = async () => {
+//     if (refreshTimer.value) return
+//     await handleGetTodos()
+// }
 
 const handleFinishTodo = async (todoId: Todo['id']) => {
     await todoStore.doUpdateTodo(todoId, { state: 'done' })
@@ -161,9 +138,11 @@ const handleDragOver = (event: DragEvent) => {
 }
 
 const handleRemoveDragOverClass = () => {
-    document.querySelectorAll('.kanban-column__main--drag-over').forEach((element) => {
-        element.classList.remove('kanban-column__main--drag-over')
-    })
+    document
+        .querySelectorAll('.kanban-column__main--drag-over')
+        .forEach((element) => {
+            element.classList.remove('kanban-column__main--drag-over')
+        })
 }
 
 const getDropNode = (node: HTMLElement) => {

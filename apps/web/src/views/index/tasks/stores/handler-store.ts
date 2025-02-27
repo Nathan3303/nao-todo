@@ -62,7 +62,9 @@ export const useTasksHandlerStore = defineStore('TasksHandlerStore', () => {
         const tasksViewStore = useTasksViewStore()
         if (tasksViewStore.category !== 'project') return
         if (!tasksViewStore.viewInfo) return
-        const result = await projectStore.archiveProjectWithConfirmation(tasksViewStore.viewInfo.id)
+        const result = await projectStore.archiveProjectWithConfirmation(
+            tasksViewStore.viewInfo.id
+        )
         if (result) await router.push('/tasks/all')
     }
 
@@ -71,7 +73,9 @@ export const useTasksHandlerStore = defineStore('TasksHandlerStore', () => {
         const tasksViewStore = useTasksViewStore()
         if (tasksViewStore.category !== 'project') return
         if (!tasksViewStore.viewInfo) return
-        const result = await projectStore.removeProjectWithConfirmation(tasksViewStore.viewInfo.id)
+        const result = await projectStore.removeProjectWithConfirmation(
+            tasksViewStore.viewInfo.id
+        )
         if (result) await router.push('/tasks/all')
     }
 
@@ -79,7 +83,10 @@ export const useTasksHandlerStore = defineStore('TasksHandlerStore', () => {
     const handleCreateProject = async (options: CreateProjectOptions) => {
         const result = await projectStore.doCreateProject(options)
         if (!result) return false
-        await router.push({ name: 'tasks-project', params: { projectId: result.id } })
+        await router.push({
+            name: 'tasks-project',
+            params: { projectId: result.id }
+        })
         return true
     }
 
@@ -115,7 +122,10 @@ export const useTasksHandlerStore = defineStore('TasksHandlerStore', () => {
     }
 
     // 选择标签颜色
-    const handleSelectTagColor = async (tagId: Tag['id'], color: Tag['color']) => {
+    const handleSelectTagColor = async (
+        tagId: Tag['id'],
+        color: Tag['color']
+    ) => {
         return await tagStore.updateTagColor(tagId, color)
     }
 
@@ -136,6 +146,9 @@ export const useTasksHandlerStore = defineStore('TasksHandlerStore', () => {
         await todoStore.doGetTodos()
     }
 
+    // 重新获取待办
+    const handleGetTodos = async () => await todoStore.doGetTodos()
+
     return {
         handleUpdateProjectTitle,
         handleUpdateProjectDescription,
@@ -148,6 +161,7 @@ export const useTasksHandlerStore = defineStore('TasksHandlerStore', () => {
         handleCreateTag,
         handleSelectTagColor,
         handleCreateTodo,
-        handleHideTodosWhichIsDone
+        handleHideTodosWhichIsDone,
+        handleGetTodos
     }
 })

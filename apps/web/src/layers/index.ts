@@ -1,6 +1,3 @@
-// auth
-export * from './authentication'
-
 // user
 export * from './user-profile-dialog'
 export * from './update-password-dialog'

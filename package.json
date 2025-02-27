@@ -14,18 +14,18 @@
     "dependencies": {
         "@nao-todo/apis": "workspace:*",
         "@nao-todo/components": "workspace:*",
-        "@nao-todo/desktop": "workspace:*",
         "@nao-todo/hooks": "workspace:*",
         "@nao-todo/types": "workspace:*",
         "@nao-todo/utils": "workspace:*",
+        "@nao-todo/stores": "workspace:*",
         "@nao-todo/webapp": "workspace:*",
+        "@nao-todo/desktop": "workspace:*",
         "axios": "^1.7.8",
-        "md5": "^2.3.0",
         "moment": "^2.30.1",
-        "nue-ui": "0.7.0",
+        "nue-ui": "0.7.0-bp.2",
         "pinia": "^2.2.6",
-        "validator": "^13.12.0",
-        "vue": "3.4.21",
+        "spark-md5": "^3.0.2",
+        "vue": "^3.5.13",
         "vue-router": "^4.5.0"
     },
     "devDependencies": {
@@ -35,6 +35,7 @@
         "@tsconfig/node20": "^20.1.4",
         "@types/md5": "^2.3.5",
         "@types/node": "^20.17.8",
+        "@types/spark-md5": "^3.0.5",
         "@types/validator": "^13.12.2",
         "@typescript-eslint/eslint-plugin": "^8.16.0",
         "@typescript-eslint/parser": "^8.16.0",
@@ -51,6 +52,7 @@
         "typescript": "~5.4.5",
         "typescript-eslint": "^8.16.0",
         "vite": "^5.4.6",
-        "vue-tsc": "^2.1.10"
+        "vue-tsc": "^2.1.10",
+        "@dcloudio/types": "^3.4.8"
     }
 }

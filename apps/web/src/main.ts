@@ -5,7 +5,7 @@ import router from './routes'
 import NueUI from 'nue-ui'
 
 import 'nue-ui/dist/index.css'
-import './themes/default.css'
+import './themes'
 
 const app = createApp(App)
 app.use(NueUI)

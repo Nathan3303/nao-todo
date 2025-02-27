@@ -1,7 +1,7 @@
 {
     "name": "@nao-todo/desktop",
     "version": "1.0.0",
-    "description": "Desktop version of NaoTodo",
+    "description": "Desktop version of NaoTodo (Electron)",
     "author": "Nathan Lee",
     "license": "MIT",
     "private": true,
@@ -31,7 +31,7 @@
         }
     },
     "devDependencies": {
-        "electron": "^33.2.1",
-        "electron-builder": "^24.13.3"
+        "electron": "^34.2.0",
+        "electron-builder": "^25.1.8"
     }
 }

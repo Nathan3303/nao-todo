@@ -30,7 +30,9 @@
                             <nue-button
                                 theme="pure"
                                 icon="delete"
-                                @click="emit('deleteProjectPermanently', project.id)"
+                                @click="
+                                    emit('deleteProjectPermanently', project.id)
+                                "
                             />
                         </nue-tooltip>
                     </template>
@@ -44,8 +46,8 @@
 <script setup lang="ts">
 import {
     Loading,
-    ProjectCard,
     ProjectArchiveButton,
+    ProjectCard,
     ProjectDeleteButton
 } from '@nao-todo/components'
 import type { Project } from '@nao-todo/types'
@@ -67,18 +69,15 @@ const emit = defineEmits<{
 
 <style scoped>
 .project-board {
-    --column-width: 240px;
-    --row-height: calc(var(--column-width) * 0.5);
-
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(var(--column-width), 1fr));
-    grid-template-rows: repeat(auto-fit, minmax(var(--row-height), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
     grid-gap: 12px;
     flex: auto;
 }
 
 .project-board .project-card {
-    min-height: var(--row-height);
+    height: 180px;
+    overflow: hidden;
 }
 
 .project-board .project-board__delete-permanently .nue-button--pure {

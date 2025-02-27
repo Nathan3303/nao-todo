@@ -14,7 +14,7 @@
                     <nue-button
                         icon="setting"
                         theme="pure"
-                        @click.stop="tasksDialogStore.showProjectManagerDialog"
+                        @click.stop="() => tasksDialogStore.dialogManagerShow('ProjectManager')"
                     />
                 </nue-tooltip>
                 <nue-tooltip content="创建新清单" size="small">

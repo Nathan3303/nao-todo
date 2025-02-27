@@ -10,5 +10,14 @@
         "dev": "vite --config vite.config.ts",
         "build": "vite build --config vite.config.ts",
         "preview": "vite preview --config vite.config.ts"
+    },
+    "devDependencies": {
+        "@fullhuman/postcss-purgecss": "^7.0.2",
+        "postcss": "^8.5.3",
+        "rollup-plugin-visualizer": "^5.14.0"
+    },
+    "dependencies": {
+        "@types/markdown-it": "^14.1.2",
+        "markdown-it": "^14.1.0"
     }
 }

@@ -8,7 +8,7 @@
                     </nue-div>
                     <nue-text color="white" size="16px">
                         使用专门为您量身定制的智能待办事项列表应用程序 NaoTodo，
-                        探索高效生活的新方式。无论是工作、学习还是日常生活， NaoTodo
+                        探索高效生活的新方式。无论是工作、学习还是日常生活，NaoTodo
                         都能帮助您轻松管理任务，提高生产力。
                         凭借其直观的界面和强大的功能，您可以毫不费力地添加、
                         编辑和跟踪任务、设置提醒，并且永远不会错过重要的细节。
@@ -30,55 +30,27 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { NueMessage } from 'nue-ui'
-import { AuthSignIn, AuthSignUp } from '@/layers'
-import { useUserStore } from '@/stores/use-user-store'
-import type { SigninOptions, SignupOptions } from '@nao-todo/types'
+import type { AuthViewProps } from './use-auth-view'
+import useAuthView from './use-auth-view'
 
-const props = defineProps<{
-    operation?: string
-}>()
+const props = defineProps<AuthViewProps>()
 
-const router = useRouter()
-const userStore = useUserStore()
+const { loading, switchButtonText, subView, switchRoute, handleSubmit } = useAuthView(props)
+</script>
 
-const loading = ref(false)
-
-const isLogin = computed(() => props.operation === 'login')
-const switchButtonText = computed(() => (isLogin.value ? '注册' : '登录'))
-const subView = computed(() => (isLogin.value ? AuthSignIn : AuthSignUp))
-const switchRoute = computed(() => '/auth' + (isLogin.value ? '/signup' : '/login'))
-
-const handleSignin = async (options: SigninOptions) => {
-    const res = await userStore.doSignin(options)
-    if (!res) return false
-    await router.push({ name: 'index' })
+<style scoped>
+.auth-view__main {
+    border: none !important;
 }
 
-const handleSignup = async (payload: SignupOptions) => {
-    const res = await userStore.doSignup(payload)
-    if (!res) return false
-    await router.push('/auth/login')
+.auth-view__main:deep(.nue-main__aside) {
+    background-color: var(--primary-color-900);
+    padding: 32px;
 }
 
-async function handleSubmit(payload: SigninOptions | SignupOptions) {
-    loading.value = true
-    try {
-        if (isLogin.value) {
-            await handleSignin(payload as SigninOptions)
-        } else {
-            await handleSignup(payload as SignupOptions)
-        }
-    } catch (e) {
-        if (e instanceof Error) {
-            NueMessage.error(e.message)
-            return
-        }
-        console.log('[/auth/index.vue]:handleSubmit', e)
-    } finally {
-        loading.value = false
+@media screen and (max-width: 768px) {
+    .auth-view__main:deep(.nue-main__aside-wrapper) {
+        display: none;
     }
 }
-</script>
+</style>

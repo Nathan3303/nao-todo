@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useUserStore } from './use-user-store'
-import { createComment, deleteComment, getComments, updateComment } from '@nao-todo/apis'
+import { createCommentV2, deleteCommentV2, getCommentsV2, updateCommentV2 } from '@nao-todo/apis'
 import type {
     CreateCommentOptions,
     Comment,
@@ -19,7 +19,7 @@ export const useCommentStore = defineStore('commentStore', () => {
 
     // 创建检查事项
     const doCreateComment = async (options: CreateCommentOptions) => {
-        const result = await createComment(options)
+        const result = await createCommentV2(options)
         if (result.code !== 20000) return false
         const newComment = result.data as Comment
         newComment.user = userStore.user!
@@ -27,9 +27,17 @@ export const useCommentStore = defineStore('commentStore', () => {
         return true
     }
 
+    // 删除检查事项
+    const doDeleteComment = async (commentId: Comment['id']) => {
+        const result = await deleteCommentV2(commentId)
+        if (result.code !== 20000) return false
+        comments.value = comments.value.filter((comment) => comment.id !== commentId)
+        return true
+    }
+
     // 更新检查事项
     const doUpdateComment = async (commentId: Comment['id'], options: UpdateCommentOptions) => {
-        const result = await updateComment(commentId, options)
+        const result = await updateCommentV2(commentId, options)
         if (result.code !== 20000) return false
         const index = comments.value.findIndex((comment) => comment.id === commentId)
         if (index === -1) return false
@@ -45,17 +53,9 @@ export const useCommentStore = defineStore('commentStore', () => {
 
     // 获取检查事项
     const doGetComments = async () => {
-        const result = await getComments(getOptions.value)
+        const result = await getCommentsV2(getOptions.value)
         if (result.code !== 20000) return false
         comments.value = result.data as Comment[]
-        return true
-    }
-
-    // 删除检查事项
-    const doDeleteComment = async (commentId: Comment['id']) => {
-        const result = await deleteComment(commentId)
-        if (result.code !== 20000) return false
-        comments.value = comments.value.filter((comment) => comment.id !== commentId)
         return true
     }
 
