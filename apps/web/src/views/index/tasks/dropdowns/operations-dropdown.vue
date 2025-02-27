@@ -1,15 +1,21 @@
 <script setup lang="ts">
-import { useTasksHandlerStore, useTasksViewStore } from '@/views/index/tasks'
+import {
+    useTasksDialogStore,
+    useTasksHandlerStore,
+    useTasksViewStore
+} from '@/views/index/tasks'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import { ref } from 'vue'
+import { TagColorDot } from '@nao-todo/components'
 
 const router = useRouter()
 const route = useRoute()
 const tasksViewStore = useTasksViewStore()
 const tasksHandlerStore = useTasksHandlerStore()
+const tasksDialogStore = useTasksDialogStore()
 
-const { category } = storeToRefs(tasksViewStore)
+const { category, viewInfo } = storeToRefs(tasksViewStore)
 const isRefreshing = ref(false)
 
 const handleRefreshData = async () => {
@@ -41,6 +47,12 @@ const handleDropdownExecute = async (executeId: string) => {
             break
         case 'refresh-data':
             await handleRefreshData()
+            break
+        case 'change-tag-color':
+            await tasksDialogStore.showTagColorSelectDialog()
+            break
+        case 'delete-tag':
+            await tasksHandlerStore.handleDeleteTag()
             break
     }
 }
@@ -84,7 +96,7 @@ const handleDropdownExecute = async (executeId: string) => {
                 </nue-div>
             </nue-div>
             <nue-divider />
-            <nue-div theme="block">
+            <nue-div theme="block" style="max-width: 10rem">
                 <nue-text theme="title">视图操作</nue-text>
                 <li
                     class="nue-dropdown-item"
@@ -102,34 +114,52 @@ const handleDropdownExecute = async (executeId: string) => {
                     隐藏已完成
                 </li>
             </nue-div>
-            <nue-divider />
-            <nue-div theme="block">
-                <nue-text theme="title">清单操作</nue-text>
-                <li
-                    class="nue-dropdown-item"
-                    data-executeid="save-as-preference"
-                    v-if="category === 'project'"
-                >
-                    <nue-icon name="picture" />
-                    将当前视图布局保存为偏好
-                </li>
-                <li
-                    class="nue-dropdown-item"
-                    data-executeid="archive"
-                    v-if="category === 'project'"
-                >
-                    <nue-icon name="archive" />
-                    归档该清单
-                </li>
-                <li
-                    class="nue-dropdown-item"
-                    data-executeid="delete-project"
-                    v-if="category === 'project'"
-                >
-                    <nue-icon name="delete" color="#f22" />
-                    <span style="color: #f22">删除清单</span>
-                </li>
-            </nue-div>
+            <template v-if="category === 'project'">
+                <nue-divider />
+                <nue-div theme="block">
+                    <nue-text theme="title">清单操作</nue-text>
+                    <li
+                        class="nue-dropdown-item"
+                        data-executeid="save-as-preference"
+                    >
+                        <nue-icon name="picture" />
+                        将当前视图布局保存为偏好
+                    </li>
+                    <li class="nue-dropdown-item" data-executeid="archive">
+                        <nue-icon name="archive" />
+                        归档该清单
+                    </li>
+                    <li
+                        class="nue-dropdown-item"
+                        data-executeid="delete-project"
+                    >
+                        <nue-icon name="delete" color="#f22" />
+                        <span style="color: #f22">删除清单</span>
+                    </li>
+                </nue-div>
+            </template>
+            <template v-else-if="category === 'tag'">
+                <nue-divider />
+                <nue-div theme="block">
+                    <nue-text theme="title">标签操作</nue-text>
+                    <li
+                        class="nue-dropdown-item"
+                        data-executeid="change-tag-color"
+                    >
+                        <nue-icon name="theme" />
+                        修改标签颜色
+                        <tag-color-dot
+                            :color="viewInfo?.payload?.color as string"
+                            style="margin-left: auto;"
+                            size="small"
+                        />
+                    </li>
+                    <li class="nue-dropdown-item" data-executeid="delete-tag">
+                        <nue-icon name="delete" color="#f22" />
+                        <span style="color: #f22">删除标签</span>
+                    </li>
+                </nue-div>
+            </template>
         </template>
     </nue-dropdown>
 </template>

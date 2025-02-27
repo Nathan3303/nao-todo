@@ -3,47 +3,22 @@
         <nue-header class="tasks-main-view__header">
             <todo-view-header>
                 <template #actions>
-                    <template
-                        v-if="category === 'basic' && viewInfo?.id === 'today'"
+                    <nue-tooltip
+                        content="查看并顺延已过期的待办"
+                        size="small"
+                        v-if="viewInfo?.id === 'today'"
                     >
-                        <nue-tooltip
-                            content="查看并顺延已过期的待办"
-                            size="small"
-                        >
-                            <nue-button
-                                icon="history"
-                                theme="icon-only"
-                                @click="
-                                    () =>
-                                        tasksDialogStore.dialogManagerShow(
-                                            'OverdueTodoManager'
-                                        )
-                                "
-                            />
-                        </nue-tooltip>
-                    </template>
-                    <template v-else-if="category === 'tag'">
-                        <nue-tooltip
-                            content="修改标签提示色"
-                            size="small"
-                            style="margin-right: 12px"
-                        >
-                            <tag-color-dot
-                                :color="viewInfo?.payload?.color as string"
-                                style="cursor: pointer"
-                                @click="
-                                    tasksDialogStore.showTagColorSelectDialog
-                                "
-                            />
-                        </nue-tooltip>
-                        <nue-tooltip content="删除标签" size="small">
-                            <nue-button
-                                icon="delete"
-                                theme="icon-only"
-                                @click="viewInfo?.handlers?.remove"
-                            />
-                        </nue-tooltip>
-                    </template>
+                        <nue-button
+                            icon="history"
+                            theme="icon-only"
+                            @click="
+                                () =>
+                                    tasksDialogStore.dialogManagerShow(
+                                        'OverdueTodoManager'
+                                    )
+                            "
+                        />
+                    </nue-tooltip>
                     <nue-tooltip content="新增待办" size="small">
                         <nue-button
                             icon="plus"
@@ -67,7 +42,6 @@ import { watchEffect } from 'vue'
 import { storeToRefs } from 'pinia'
 import { onBeforeRouteUpdate } from 'vue-router'
 import { TodoViewHeader } from '@/layers'
-import { TagColorDot } from '@nao-todo/components'
 import { useTasksDialogStore, useTasksViewStore } from '..'
 import { TasksFilterDropdown, TasksOperationsDropdown } from '../dropdowns'
 
