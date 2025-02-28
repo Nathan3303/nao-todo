@@ -6,7 +6,7 @@
         @click="handleClick"
     >
         <nue-div vertical gap="8px" flex>
-            <nue-div align="center" justify="space-between">
+            <nue-div align="center" justify="space-between" wrap="nowrap">
                 <nue-text size="16px" :clamped="1">
                     {{ project.title }}
                 </nue-text>

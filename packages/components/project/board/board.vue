@@ -68,6 +68,10 @@ const emit = defineEmits<{
 </script>
 
 <style scoped>
+.project-board-wrapper {
+    overflow: auto;
+}
+
 .project-board {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
@@ -76,7 +80,7 @@ const emit = defineEmits<{
 }
 
 .project-board .project-card {
-    height: 180px;
+    height: 140px;
     overflow: hidden;
 }
 
