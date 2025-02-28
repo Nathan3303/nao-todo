@@ -52,13 +52,13 @@
                     <template #empty>
                         <nue-empty
                             v-if="tasksViewStore.viewInfo?.id === 'recycle'"
-                            description="垃圾桶很干净，没有被删除的待办事项！"
+                            description="当前暂无待办"
                             image-size="48px"
                             image-src="/images/trash.webp"
                         />
                         <nue-empty
                             v-else
-                            description="当前暂无待办事项，放松一下自己吧！"
+                            description="当前暂无待办，放松一下吧!"
                             image-size="48px"
                             image-src="/images/coffee.webp"
                         />
