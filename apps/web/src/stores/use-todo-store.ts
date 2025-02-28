@@ -76,7 +76,7 @@ export const useTodoStore = defineStore('todoStore', () => {
         if (result.code !== 20000) return false
         const newTodo = result.data as Todo
         // console.log('[UseTodoStore] doCreateTodo:', newTodo)
-        todos.value.unshift(newTodo)
+        // todos.value.unshift(newTodo)
         return newTodo
     }
 
@@ -333,6 +333,11 @@ export const useTodoStore = defineStore('todoStore', () => {
         return todos.value.find((todo) => todo.id === id)
     }
 
+    // 新增本地待办
+    const addTodoToLocal = (todo: Todo) => {
+        todos.value.push(todo)
+    }
+
     return {
         todos,
         getOptions,
@@ -355,6 +360,7 @@ export const useTodoStore = defineStore('todoStore', () => {
         deleteTodosPermanentlyWithConfirmation,
         duplicateTodoWithConfirmation,
         setGetOptionsByPreference,
-        getTodoByIdFromLocal
+        getTodoByIdFromLocal,
+        addTodoToLocal
     }
 })

@@ -17,6 +17,7 @@ export const useTasksHandlerStore = defineStore('TasksHandlerStore', () => {
     const projectStore = useProjectStore()
     const tagStore = useTagStore()
     const todoStore = useTodoStore()
+    const tasksViewStore = useTasksViewStore()
 
     // 清单
 
@@ -135,6 +136,16 @@ export const useTasksHandlerStore = defineStore('TasksHandlerStore', () => {
     const handleCreateTodo = async (options: CreateTodoOptions) => {
         const result = (await todoStore.doCreateTodo(options)) as Todo
         if (!result) return false
+        const isSameProjectId =
+            tasksViewStore.category === 'project' &&
+            tasksViewStore.viewInfo?.id === options.projectId
+        const isContainTagId =
+            tasksViewStore.category === 'tag' &&
+            options.tags?.includes(tasksViewStore.viewInfo?.id ?? '')
+        const isOnBasicView = tasksViewStore.category === 'basic'
+        if (isSameProjectId || isContainTagId || isOnBasicView) {
+            await todoStore.doGetTodos()
+        }
         await router.push({ name: route.name, params: { taskId: result.id } })
         return true
     }
