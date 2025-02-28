@@ -1,13 +1,13 @@
 @font-face {
     font-family: 'pingfang';
-    src: url('/pf.woff') format('woff');
-    font-display: fallback;
+    src: url('/PingFang.woff2') format('woff2');
+    font-display: swap;
 }
 
 .nue-html {
     --primary-font-family: 
         'Poppins', 
-        'pingfang', 
+        'pingfang',
         'Noto Color Emoji',
         system-ui;
 }
