@@ -1,10 +1,10 @@
 import useAxios from './use-axios'
 import useUniRequest from './use-uni-request'
 
-const developmentBaseURL = 'http://localhost:3002/api'
-// const productionBaseURL = 'https://nathan33.xyz:3002/api'
+// const developmentBaseURL = 'http://localhost:3002/api'
+const productionBaseURL = 'https://nathan33.xyz:3002/api'
 
-const ApiBaseURL = developmentBaseURL
+const ApiBaseURL = productionBaseURL
 
 const shadowRequester = (() => {
     try {

@@ -3,8 +3,8 @@ import { useUserStore } from '@nao-todo/webapp/src/stores'
 
 // Create Axios instance
 const axiosInstance = axios.create({
-    // baseURL: 'https://nathan33.xyz:3002/api'
-    baseURL: 'http://localhost:3002/api'
+    baseURL: 'https://nathan33.xyz:3002/api'
+    // baseURL: 'http://localhost:3002/api'
 })
 
 // Add token to request header
