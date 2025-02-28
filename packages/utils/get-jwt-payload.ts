@@ -20,7 +20,7 @@ const myAtob = (input: string): string => {
 
 const getJWTPayload = (jwt: string) => {
     const jwtPayload = jwt.split('.')[1]
-    const decodedPayload = JSON.parse(decodeURIComponent(myAtob(jwtPayload)))
+    const decodedPayload = JSON.parse(decodeURIComponent(atob(jwtPayload)))
     return decodedPayload as User
 }
 
