@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useTodoStore } from '@/stores'
 import {
     useTasksDialogStore,
     useTasksHandlerStore,
@@ -6,17 +7,44 @@ import {
 } from '@/views/index/tasks'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { TagColorDot } from '@nao-todo/components'
+import { InnerDropdown, InnerDropdownOption } from './inner-dropdown'
+import { columnOptionsInfoMap } from '@/views/index/tasks/constants'
+import type { InnerDropdownOptionVO } from './inner-dropdown/types'
+import type { TodoColumnOptions } from '@nao-todo/types'
 
 const router = useRouter()
 const route = useRoute()
+const todoStore = useTodoStore()
 const tasksViewStore = useTasksViewStore()
 const tasksHandlerStore = useTasksHandlerStore()
 const tasksDialogStore = useTasksDialogStore()
 
 const { category, viewInfo } = storeToRefs(tasksViewStore)
+const { columnOptions } = storeToRefs(todoStore)
 const isRefreshing = ref(false)
+
+const sortFieldDropdownOptions = computed<{
+    options: InnerDropdownOptionVO[]
+    count: number
+}>(() => {
+    const _fields: InnerDropdownOptionVO[] = []
+    let count = 0
+    Object.keys(columnOptions.value).forEach((key) => {
+        const isChecked = columnOptions.value[key as keyof TodoColumnOptions]
+        if (isChecked) count++
+        _fields.push({
+            icon: 'plus-circle',
+            label: columnOptionsInfoMap[
+                key as keyof typeof columnOptionsInfoMap
+            ],
+            value: key,
+            checked: isChecked
+        })
+    })
+    return { options: _fields, count }
+})
 
 const handleRefreshData = async () => {
     isRefreshing.value = true
@@ -24,7 +52,6 @@ const handleRefreshData = async () => {
     isRefreshing.value = false
 }
 
-// 清单操作菜单处理函数
 const handleDropdownExecute = async (executeId: string) => {
     switch (executeId) {
         case 'save-as-preference':
@@ -55,6 +82,14 @@ const handleDropdownExecute = async (executeId: string) => {
             await tasksHandlerStore.handleDeleteTag()
             break
     }
+}
+
+const handleColumnDropdownExecute = (field: string) => {
+    const oldValue = columnOptions.value[field as keyof TodoColumnOptions]
+    todoStore.updateColumnOptions({
+        ...columnOptions.value,
+        [field]: !oldValue
+    })
 }
 </script>
 
@@ -113,6 +148,21 @@ const handleDropdownExecute = async (executeId: string) => {
                     <nue-icon name="eye-close" />
                     隐藏已完成
                 </li>
+                <inner-dropdown
+                    @execute="handleColumnDropdownExecute"
+                    title="显示与隐藏列"
+                    @click.stop
+                    :suffix="sortFieldDropdownOptions.count"
+                >
+                    <inner-dropdown-option
+                        v-for="option in sortFieldDropdownOptions.options"
+                        :key="option.label"
+                        :icon="option.icon"
+                        :title="option.label"
+                        :execute-id="option.value"
+                        :checked="option.checked"
+                    />
+                </inner-dropdown>
             </nue-div>
             <template v-if="category === 'project'">
                 <nue-divider />
@@ -150,7 +200,7 @@ const handleDropdownExecute = async (executeId: string) => {
                         修改标签颜色
                         <tag-color-dot
                             :color="viewInfo?.payload?.color as string"
-                            style="margin-left: auto;"
+                            style="margin-left: auto"
                             size="small"
                         />
                     </li>

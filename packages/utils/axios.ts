@@ -1,11 +1,11 @@
 import axios from 'axios'
 import { useUserStore } from '@nao-todo/webapp/src/stores'
 
+export const baseURL = 'https://nathan33.xyz:3002/api'
+// export const baseURL = 'http://localhost:3002/api'
+
 // Create Axios instance
-const axiosInstance = axios.create({
-    baseURL: 'https://nathan33.xyz:3002/api'
-    // baseURL: 'http://localhost:3002/api'
-})
+const axiosInstance = axios.create({ baseURL })
 
 // Add token to request header
 axiosInstance.interceptors.request.use((config) => {
