@@ -75,11 +75,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onBeforeUnmount } from 'vue'
+import { onBeforeUnmount, ref } from 'vue'
 import { useSSE } from '@nao-todo/hooks'
 import MarkdownIt from 'markdown-it'
+import { baseURL } from '@nao-todo/utils/axios'
 
-const { connect, close } = useSSE('http://localhost:3002/api/ai/chat')
+const { connect, close } = useSSE(`${baseURL}/ai/chat`)
 
 const waitingForCompletion = ref(false)
 const message = ref('比较 9.9 和 9.11 哪个大。')

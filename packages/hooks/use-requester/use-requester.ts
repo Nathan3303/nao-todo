@@ -1,10 +1,8 @@
 import useAxios from './use-axios'
 import useUniRequest from './use-uni-request'
+import { baseURL } from '@nao-todo/utils/axios'
 
-// const developmentBaseURL = 'http://localhost:3002/api'
-const productionBaseURL = 'https://nathan33.xyz:3002/api'
-
-const ApiBaseURL = productionBaseURL
+const ApiBaseURL = baseURL
 
 const shadowRequester = (() => {
     try {
