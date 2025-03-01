@@ -27,6 +27,7 @@ export default () => {
         if (!pool.length) return
         for (const dropdownRef of pool) {
             if (!dropdownRef.value) continue
+            if (!dropdownRef.value.visible) continue
             dropdownRef.value.hide()
         }
     }
