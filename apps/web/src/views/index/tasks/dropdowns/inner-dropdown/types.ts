@@ -1,9 +1,12 @@
+import type { IconNameType } from "nue-ui"
+
 export type InnerDropdownProps = {
     title?: string
-    icon?: string
+    icon?: IconNameType
     hideOnClicked?: boolean
     suffix?: number | boolean
     disabled?: boolean
+    groupName?: string
 }
 
 export type InnerDropdownEmits = {
