@@ -11,7 +11,7 @@
             <nue-button icon="clear" size="small" @click="handleCancelMultiSelect">关闭</nue-button>
         </nue-header>
         <nue-main>
-            <nue-div flex style="padding: 16px" vertical>
+            <nue-div flex vertical>
                 <nue-div align="center">
                     <todo-date-selector
                         v-model="commonData.dueDate.endAt"

@@ -11,12 +11,7 @@
                         <nue-button
                             icon="history"
                             theme="icon-only"
-                            @click="
-                                () =>
-                                    tasksDialogStore.dialogManagerShow(
-                                        'OverdueTodoManager'
-                                    )
-                            "
+                            @click="() => tasksDialogStore.dialogManagerShow('OverdueTodoManager')"
                         />
                     </nue-tooltip>
                     <nue-tooltip content="新增待办" size="small">
@@ -54,14 +49,8 @@ const { category, viewInfo } = storeToRefs(tasksViewStore)
 onBeforeRouteUpdate((to, from, next) => {
     const toName = (to.name as string).split('-').slice(0, 2).join('-')
     const fromName = from.name as string
-    if (
-        (fromName.endsWith('kanban') || fromName.endsWith('table')) &&
-        to.name === toName
-    ) {
-        if (
-            category.value === 'project' &&
-            to.params.projectId !== from.params.projectId
-        ) {
+    if ((fromName.endsWith('kanban') || fromName.endsWith('table')) && to.name === toName) {
+        if (category.value === 'project' && to.params.projectId !== from.params.projectId) {
             return next()
         }
         if (category.value === 'tag' && to.params.tagId !== from.params.tagId) {

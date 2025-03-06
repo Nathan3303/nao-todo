@@ -1,48 +1,16 @@
 <template>
     <nue-container class="tasks-main-table-view" theme="vertical,inner">
-        <!--        <nue-header :key="$route.path" class="tasks-main-table-view__header">-->
-        <!--            <nue-div align="start" gap="16px" justify="space-between">-->
-        <!--                <nue-div flex="none" gap="12px" justify="end" wrap="nowrap">-->
-        <!--                                        <nue-input-->
-        <!--                                            v-model="filterText"-->
-        <!--                                            theme="small"-->
-        <!--                                            flex="1"-->
-        <!--                                            placeholder="通过名称查找待办"-->
-        <!--                                            clearable-->
-        <!--                                        />-->
-        <!--                                        <nue-button-->
-        <!--                                            v-if="!disabledCreateTodo"-->
-        <!--                                            icon="plus-circle"-->
-        <!--                                            theme="small,primary"-->
-        <!--                                            @click="() => tasksDialogStore.showCreateTodoDialog()"-->
-        <!--                                        >-->
-        <!--                                            新增-->
-        <!--                                        </nue-button>-->
-        <!--                                        <todo-table-column-selector-->
-        <!--                                            v-model="todoStore.columnOptions"-->
-        <!--                                            :change="handleChangeColumns"-->
-        <!--                                        />-->
-        <!--                </nue-div>-->
-        <!--            </nue-div>-->
-        <!--        </nue-header>-->
         <nue-main class="tasks-main-table-view__main">
             <nue-div flex="1" style="overflow-y: auto" wrap="nowrap">
-                <Loading
-                    v-if="tableLoading"
-                    placeholder="正在加载任务列表..."
-                />
+                <Loading v-if="tableLoading" placeholder="正在加载任务列表..." />
                 <todo-table
                     v-else
                     ref="todoTableRef"
                     :column-options="todoStore.columnOptions"
-                    :sort-options="
-                        getOptions.sort || { field: '', order: 'asc' }
-                    "
+                    :sort-options="getOptions.sort || { field: '', order: 'asc' }"
                     :tags="tagStore.tags"
                     :todos="todos"
-                    :use-deleted-line="
-                        tasksViewStore.viewInfo?.id !== 'recycle'
-                    "
+                    :use-deleted-line="tasksViewStore.viewInfo?.id !== 'recycle'"
                     @delete-todo="handleDeleteTodo"
                     @restore-todo="todoStore.restoreTodoWithConfirmation"
                     @show-todo-details="showTodoDetails"
@@ -68,18 +36,11 @@
         </nue-main>
         <nue-footer>
             <nue-div align="center" justify="space-between">
-                <nue-text
-                    v-if="viewStore.responsiveFlag > 0"
-                    color="gray"
-                    flex
-                    size="12px"
-                >
+                <nue-text v-if="viewStore.responsiveFlag > 0" color="gray" flex size="12px">
                     当前列表 {{ getOverview.countInfo?.length || 0 }} 项， 共计
                     {{ getOverview.countInfo?.count || 0 }} 项。
                     <nue-text
-                        v-if="
-                            tasksViewStore.multiSelectStates.isShowMultiDetails
-                        "
+                        v-if="tasksViewStore.multiSelectStates.isShowMultiDetails"
                         color="orange"
                         size="12px"
                     >
@@ -92,9 +53,7 @@
                     {{ getOverview.countInfo?.count || 0 }}
                     项
                     <nue-text
-                        v-if="
-                            tasksViewStore.multiSelectStates.isShowMultiDetails
-                        "
+                        v-if="tasksViewStore.multiSelectStates.isShowMultiDetails"
                         color="orange"
                         size="12px"
                     >
@@ -121,7 +80,6 @@ import { storeToRefs } from 'pinia'
 import { useTagStore, useTodoStore, useViewStore } from '@/stores'
 import { Loading, Pager } from '@nao-todo/components'
 import { TodoTable } from './table'
-// import { TodoTableColumnSelector } from './column-selector'
 import { useTasksViewStore } from '@/views/index/tasks'
 import type { GetTodosSortOptions, Todo } from '@nao-todo/types'
 import type { TodoTableMultiSelectPayload } from './table/types'
@@ -138,13 +96,11 @@ const todoStore = useTodoStore()
 const viewStore = useViewStore()
 const tagStore = useTagStore()
 const tasksViewStore = useTasksViewStore()
-// const tasksDialogStore = useTasksDialogStore()
 
 const { todos, getOptions, getOverview } = storeToRefs(todoStore)
 const tableLoading = ref(true)
 const todoTableRef = ref<InstanceType<typeof TodoTable>>()
 const multiSelectCount = ref(0)
-// const filterText = ref('')
 
 const showTodoDetails = (id: Todo['id']) => {
     const { baseRoute } = props
@@ -162,10 +118,6 @@ handleGetTodos()
 const handleDeleteTodo = async (todoId: Todo['id']) => {
     await todoStore.deleteTodoWithConfirmation(todoId)
 }
-
-// const handleChangeColumns = (options: TodoColumnOptions) => {
-//     todoStore.updateColumnOptions(options)
-// }
 
 const handleMultiSelect = (payload: TodoTableMultiSelectPayload) => {
     const { selectedIds, selectRange } = payload
@@ -197,4 +149,9 @@ watch(
     () => tasksViewStore.multiSelectStates.isShowMultiDetails,
     (newValue) => !newValue && todoTableRef.value?.resetSelect()
 )
+
+todoStore.$onAction(({ name, after }) => {
+    if (name !== 'mergeGetOptions') return
+    after(handleGetTodos)
+})
 </script>
