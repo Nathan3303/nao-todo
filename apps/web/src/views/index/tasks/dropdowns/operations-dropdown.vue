@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { useTodoStore } from '@/stores'
-import {
-    useTasksDialogStore,
-    useTasksHandlerStore,
-    useTasksViewStore
-} from '@/views/index/tasks'
+import { useTasksDialogStore, useTasksHandlerStore, useTasksViewStore } from '@/views/index/tasks'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import { computed, ref } from 'vue'
@@ -36,21 +32,13 @@ const sortFieldDropdownOptions = computed<{
         if (isChecked) count++
         _fields.push({
             icon: 'plus-circle',
-            label: columnOptionsInfoMap[
-                key as keyof typeof columnOptionsInfoMap
-            ],
+            label: columnOptionsInfoMap[key as keyof typeof columnOptionsInfoMap],
             value: key,
             checked: isChecked
         })
     })
     return { options: _fields, count }
 })
-
-const handleRefreshData = async () => {
-    isRefreshing.value = true
-    await tasksHandlerStore.handleGetTodos()
-    isRefreshing.value = false
-}
 
 const handleDropdownExecute = async (executeId: string) => {
     switch (executeId) {
@@ -73,7 +61,11 @@ const handleDropdownExecute = async (executeId: string) => {
             await tasksHandlerStore.handleRemoveProject()
             break
         case 'refresh-data':
-            await handleRefreshData()
+            {
+                isRefreshing.value = true
+                await tasksHandlerStore.handleRefresh()
+                isRefreshing.value = false
+            }
             break
         case 'change-tag-color':
             await tasksDialogStore.showTagColorSelectDialog()
@@ -108,24 +100,12 @@ const handleColumnDropdownExecute = (field: string) => {
             <nue-div theme="block" style="min-width: 10rem">
                 <nue-text theme="title">切换视图</nue-text>
                 <nue-div gap="4px" justify="space-around">
-                    <li
-                        class="nue-dropdown-item"
-                        data-executeid="switch-view-to-table"
-                    >
-                        <nue-icon
-                            v-if="$route.name!.toString().endsWith('table')"
-                            name="check"
-                        />
+                    <li class="nue-dropdown-item" data-executeid="switch-view-to-table">
+                        <nue-icon v-if="$route.name!.toString().endsWith('table')" name="check" />
                         列表视图
                     </li>
-                    <li
-                        class="nue-dropdown-item"
-                        data-executeid="switch-view-to-kanban"
-                    >
-                        <nue-icon
-                            v-if="$route.name!.toString().endsWith('kanban')"
-                            name="check"
-                        />
+                    <li class="nue-dropdown-item" data-executeid="switch-view-to-kanban">
+                        <nue-icon v-if="$route.name!.toString().endsWith('kanban')" name="check" />
                         看板视图
                     </li>
                 </nue-div>
@@ -141,10 +121,7 @@ const handleColumnDropdownExecute = (field: string) => {
                     <nue-icon name="refresh" />
                     重新获取数据
                 </li>
-                <li
-                    class="nue-dropdown-item"
-                    data-executeid="hide-which-is-done"
-                >
+                <li class="nue-dropdown-item" data-executeid="hide-which-is-done">
                     <nue-icon name="eye-close" />
                     隐藏已完成
                 </li>
@@ -168,10 +145,7 @@ const handleColumnDropdownExecute = (field: string) => {
                 <nue-divider />
                 <nue-div theme="block">
                     <nue-text theme="title">清单操作</nue-text>
-                    <li
-                        class="nue-dropdown-item"
-                        data-executeid="save-as-preference"
-                    >
+                    <li class="nue-dropdown-item" data-executeid="save-as-preference">
                         <nue-icon name="picture" />
                         将当前视图布局保存为偏好
                     </li>
@@ -179,10 +153,7 @@ const handleColumnDropdownExecute = (field: string) => {
                         <nue-icon name="archive" />
                         归档该清单
                     </li>
-                    <li
-                        class="nue-dropdown-item"
-                        data-executeid="delete-project"
-                    >
+                    <li class="nue-dropdown-item" data-executeid="delete-project">
                         <nue-icon name="delete" color="#f22" />
                         <span style="color: #f22">删除清单</span>
                     </li>
@@ -192,10 +163,7 @@ const handleColumnDropdownExecute = (field: string) => {
                 <nue-divider />
                 <nue-div theme="block">
                     <nue-text theme="title">标签操作</nue-text>
-                    <li
-                        class="nue-dropdown-item"
-                        data-executeid="change-tag-color"
-                    >
+                    <li class="nue-dropdown-item" data-executeid="change-tag-color">
                         <nue-icon name="theme" />
                         修改标签颜色
                         <tag-color-dot
@@ -213,5 +181,3 @@ const handleColumnDropdownExecute = (field: string) => {
         </template>
     </nue-dropdown>
 </template>
-
-<style scoped></style>

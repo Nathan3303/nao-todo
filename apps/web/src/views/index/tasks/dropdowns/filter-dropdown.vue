@@ -90,6 +90,7 @@
 import { useTodoStore } from '@/stores'
 import { InnerDropdown, InnerDropdownOption } from './inner-dropdown'
 import { storeToRefs } from 'pinia'
+import { useRoute } from 'vue-router'
 import {
     priorityOptions,
     stateOptions
@@ -98,6 +99,7 @@ import { computed } from 'vue'
 import { columnOptionsInfoMap } from '@/views/index/tasks/constants'
 import type { InnerDropdownOptionVO } from './inner-dropdown/types'
 
+const route = useRoute()
 const todoStore = useTodoStore()
 
 const { getOptions, columnOptions } = storeToRefs(todoStore)
@@ -160,7 +162,9 @@ const handlePriorityOrState = (isPriority: boolean, field: string) => {
     }
     todoStore.mergeGetOptions({ [opKey]: splitRes.join(',') })
     counter.value[opKey] = splitRes.length
-    todoStore.doGetTodos()
+    const viewType = route.meta.viewType as string
+    if (!isPriority && ['kanban'].includes(viewType)) return
+    // todoStore.doGetTodos()
 }
 
 const handlePriorityDropdownExecute = (field: string) => {
@@ -181,7 +185,7 @@ const handleSortFieldDropdownExecute = (field: string) => {
             sort: { field, order: getOptions.value.sort?.order || 'asc' }
         })
     }
-    todoStore.doGetTodos()
+    // todoStore.doGetTodos()
 }
 
 const handleSortOrderDropdownExecute = (order: string) => {
@@ -191,7 +195,7 @@ const handleSortOrderDropdownExecute = (order: string) => {
             order: order === 'desc' ? 'desc' : 'asc'
         }
     })
-    todoStore.doGetTodos()
+    // todoStore.doGetTodos()
 }
 </script>
 
