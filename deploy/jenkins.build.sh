@@ -1,21 +1,20 @@
-# stop docker container mynginx for reduce memory usage
-docker stop mynginx
+# stop docker container mynginx, mynode and mymongo
+docker stop mynginx mynode mymongo
 
-# install pnpm
-npm install -g pnpm --registry=https://registry.npmmirror.com/
-
-# install (dev)dependencies
-pnpm install -w --registry=https://registry.npmmirror.com/
-pnpm webapp install --registry=https://registry.npmmirror.com/
+# install pnpm, and install (dev)dependencies
+npm install -g pnpm --registry=https://registry.npmjs.org/
+pnpm install -w --registry=https://registry.npmjs.org/
+pnpm webapp install --registry=https://registry.npmjs.org/
 
 # build dist
 pnpm webapp build
 
-# remove original dist files
+# remove original dist files, and copy new dist files
 rm -rf /opt/shares/naotodo
-
-# copy new dist files
 cp -r apps/web/dist /opt/shares/naotodo
 
-# start docker container mynginx
-docker start mynginx
+# start docker container mynginx, mynode and mymongo
+docker start mynginx mynode mymongo
+
+# bash into docker container mynode
+docker exec -i mynode /bin/bash -c "cd /opt/shares/naotodoserver && npm install && npm run start"
