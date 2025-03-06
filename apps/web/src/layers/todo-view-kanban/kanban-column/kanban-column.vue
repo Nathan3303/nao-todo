@@ -27,14 +27,21 @@
                     @restore="(todoId) => emit('restore-todo', todoId)"
                     @unfinish="(todoId) => emit('unfinish-todo', todoId)"
                 />
-                <Loading v-if="isLoading" placeholder="正在加载任务" />
-                <nue-div v-else vertical gap="0" style="min-height: 34px">
-                    <empty :empty="!todos.length" message="当前没有待办任务" />
-                    <!-- <empty :empty="!!todos.length && isAllLoaded" message="待办任务加载完毕" /> -->
+                <nue-div
+                    v-if="isLoading || !todos.length"
+                    vertical
+                    gap="0"
+                    style="min-height: 34px"
+                >
+                    <Loading v-if="isLoading" placeholder="正在加载任务" />
+                    <template v-else>
+                        <empty :empty="!todos.length" message="当前没有待办任务" />
+                    </template>
                 </nue-div>
             </nue-main>
         </nue-infinite-scroll>
     </nue-container>
+    <!-- <empty :empty="!!todos.length && isAllLoaded" message="待办任务加载完毕" /> -->
 </template>
 
 <script lang="ts" setup>
