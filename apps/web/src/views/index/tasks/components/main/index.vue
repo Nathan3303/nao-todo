@@ -1,9 +1,13 @@
 <template>
     <nue-container class="tasks-main-view" theme="vertical,inner">
         <nue-header class="tasks-main-view__header">
-            <nue-div class="tasks-main-view__header__title-bar">
+            <nue-div class="tasks-main-view__header__title-bar" theme="view-header">
                 <nue-div wrap="nowrap">
-                    <nue-div class="tasks-main-view__header__title-bar__title">
+                    <nue-div
+                        class="tasks-main-view__header__title-bar__title"
+                        flex="1"
+                        wrap="nowrap"
+                    >
                         <nue-tooltip
                             :content="`${pav ? '收起' : '展开'}菜单侧栏`"
                             placement="top-start"
@@ -130,14 +134,6 @@ watchEffect(() => tasksViewStore.getViewInfo())
         flex-direction: column;
         flex-wrap: nowrap;
         gap: 4px;
-
-        .tasks-main-view__header__title-bar__title {
-            align-items: center;
-            width: auto;
-            flex: 1 1 auto;
-            flex-wrap: nowrap;
-            gap: 8px;
-        }
 
         .tasks-main-view__header__title-bar__actions {
             align-items: center;
