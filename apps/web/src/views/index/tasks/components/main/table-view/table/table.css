@@ -168,6 +168,7 @@
                 &::before {
                     font-size: var(--text-xs);
                     color: var(--primary-color-700);
+                    line-height: 1;
                 }
             }
 
