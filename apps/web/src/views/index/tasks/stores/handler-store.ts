@@ -127,7 +127,7 @@ export const useTasksHandlerStore = defineStore('TasksHandlerStore', () => {
 
     // 创建待办
 
-    const handleCreateTodoOnTable = async (options: CreateTodoOptions) => {
+    const handleCreateTodo = async (options: CreateTodoOptions) => {
         const result = (await todoStore.doCreateTodo(options)) as Todo
         if (!result) return false
         const isSameProjectId =
@@ -138,28 +138,19 @@ export const useTasksHandlerStore = defineStore('TasksHandlerStore', () => {
             options.tags?.includes(tasksViewStore.viewInfo?.id ?? '')
         const isOnBasicView = tasksViewStore.category === 'basic'
         if (isSameProjectId || isContainTagId || isOnBasicView) {
-            await todoStore.doGetTodos()
+            switch (route.meta.viewType as string) {
+                case 'table':
+                    await todoStore.doGetTodos()
+                    break
+                case 'kanban':
+                    todoStore.addTodoToLocal(result)
+                    break
+                default:
+                    break
+            }
         }
         await router.push({ name: route.name, params: { taskId: result.id } })
         return true
-    }
-
-    const handleCreateTodoOnKanban = async (options: CreateTodoOptions) => {
-        const result = (await todoStore.doCreateTodo(options, true)) as Todo
-        await router.push({ name: route.name, params: { taskId: result.id } })
-        return true
-    }
-
-    const handleCreateTodo = async (options: CreateTodoOptions) => {
-        const viewType = route.meta.viewType as string
-        switch (viewType) {
-            case 'table':
-                return await handleCreateTodoOnTable(options)
-            case 'kanban':
-                return await handleCreateTodoOnKanban(options)
-            default:
-                return false
-        }
     }
 
     // 隐藏已完成的待办

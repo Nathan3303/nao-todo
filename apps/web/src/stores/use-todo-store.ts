@@ -381,6 +381,7 @@ export const useTodoStore = defineStore('todoStore', () => {
         getTodoByIdFromLocal,
         addTodoToLocal,
         deleteAllLocalTodos,
-        addTodosToLocal
+        addTodosToLocal,
+        updateLocalTodo
     }
 })
