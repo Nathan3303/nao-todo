@@ -7,7 +7,7 @@
         empty-text="以标签的维度展示不同清单的待办任务"
         :links="links"
         @manage="() => tasksDialogStore.dialogManagerShow('TagManager')"
-        @create="tasksDialogStore.showCreateProjectDialog"
+        @create="tasksDialogStore.showCreateTagDialog"
     >
         <template #linkAppend="{ link }">
             <tag-color-dot :color="link.payload?.color" size="small" />
