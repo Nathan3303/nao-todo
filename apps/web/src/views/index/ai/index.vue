@@ -1,21 +1,26 @@
 <template>
     <nue-container theme="vertical,inner" class="index-ai-view">
         <nue-header>
-            <nue-text size="var(--text-lg)">对话大模型</nue-text>
+            <nue-div theme="view-header">
+                <nue-tooltip
+                    :content="`${pav ? '收起' : '展开'}菜单侧栏`"
+                    placement="top-start"
+                    size="small"
+                >
+                    <nue-button
+                        :icon="pav ? 'menu-close' : 'menu-open'"
+                        theme="icon-only"
+                        @click="() => viewStore.toggleProjectAsideVisible()"
+                    />
+                </nue-tooltip>
+                <nue-text :clamped="1" size="24px">对话大模型</nue-text>
+            </nue-div>
         </nue-header>
         <nue-main>
             <template #content>
-                <nue-div
-                    theme="card"
-                    vertical
-                    align="stretch"
-                    style="overflow: hidden"
-                >
+                <nue-div theme="card" vertical align="stretch" style="overflow: hidden">
                     <nue-div v-if="thinktext" vertical gap="8px">
-                        <nue-button
-                            theme="pure"
-                            @click="isCollapseThinking = !isCollapseThinking"
-                        >
+                        <nue-button theme="pure" @click="isCollapseThinking = !isCollapseThinking">
                             {{ isCollapseThinking ? '展开' : '收起' }}推理文本
                         </nue-button>
                         <nue-text
@@ -33,21 +38,12 @@
                             border-width="2px"
                             border-type="dashed"
                         />
-                        <nue-button
-                            theme="pure"
-                            @click="isShowRawText = !isShowRawText"
-                        >
+                        <nue-button theme="pure" @click="isShowRawText = !isShowRawText">
                             显示{{ isShowRawText ? 'Markdown' : '原文' }}
                         </nue-button>
                         <div
-                            v-html="
-                                isShowRawText ? completion : markdownContent
-                            "
-                            :style="
-                                isShowRawText
-                                    ? { whiteSpace: 'pre-wrap' }
-                                    : void 0
-                            "
+                            v-html="isShowRawText ? completion : markdownContent"
+                            :style="isShowRawText ? { whiteSpace: 'pre-wrap' } : void 0"
                         ></div>
                     </template>
                 </nue-div>
@@ -63,15 +59,14 @@
                     placeholder="请输入消息"
                     :disabled="waitingForCompletion"
                 />
-                <nue-button
-                    @click="sendMessage"
-                    :loading="waitingForCompletion"
-                >
+                <nue-button @click="sendMessage" :loading="waitingForCompletion">
                     {{ waitingForCompletion ? '回复中 ...' : '发送' }}
                 </nue-button>
             </nue-div>
         </nue-footer>
     </nue-container>
+    <!-- Drawers -->
+    <float-aside v-if="!viewStore.projectAsideVisible" />
 </template>
 
 <script setup lang="ts">
@@ -79,9 +74,14 @@ import { onBeforeUnmount, ref } from 'vue'
 import { useSSE } from '@nao-todo/hooks'
 import MarkdownIt from 'markdown-it'
 import { baseURL } from '@nao-todo/utils/axios'
+import { useViewStore } from '@/stores'
+import { storeToRefs } from 'pinia'
+import FloatAside from './float-aside.vue'
 
+const viewStore = useViewStore()
 const { connect, close } = useSSE(`${baseURL}/ai/chat`)
 
+const { projectAsideVisible: pav } = storeToRefs(viewStore)
 const waitingForCompletion = ref(false)
 const message = ref('比较 9.9 和 9.11 哪个大。')
 const thinktext = ref('')
@@ -154,8 +154,6 @@ onBeforeUnmount(() => {
 }
 
 .nue-div--card {
-    margin: 1rem;
-    width: calc(100% - 2rem);
     font-size: var(--text-sm);
 
     .nue-button--pure {

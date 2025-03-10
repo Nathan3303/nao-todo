@@ -33,7 +33,7 @@
                     {{ todo.description }}
                 </nue-text>
             </nue-div>
-            <nue-div class="todo-card__attrs" align="center" gap="6px">
+            <nue-div v-if="!isAttrsNone" class="todo-card__attrs" align="center" gap="6px">
                 <nue-div class="todo-card__infos" align="center" gap="6px">
                     <todo-tag-bar
                         v-if="todo.tags.length"
@@ -84,13 +84,26 @@ import { useTagStore } from '@/stores'
 import { useRelativeDate } from '@nao-todo/hooks/use-relative-date'
 import { TodoStateInfo, TodoPriorityInfo, TodoTagBar } from '@nao-todo/components'
 import type { TodoCardEmits, TodoCardProps } from './types'
-import type { Todo } from '@nao-todo/types'
+import type {Todo, TodoColumnOptions} from '@nao-todo/types'
 
 defineOptions({ name: 'TodoCard' })
 const props = defineProps<TodoCardProps>()
 const emit = defineEmits<TodoCardEmits>()
 
 const tagStore = useTagStore()
+
+const isAttrsNone = computed(() => {
+    if (!props.columns) return true;
+    let isNoColumnSelected = true;
+    for (const column in props.columns) {
+        if (column === 'description') continue
+        if (props.columns[column as keyof TodoColumnOptions]) {
+            isNoColumnSelected = false;
+            break;
+        }
+    }
+    return isNoColumnSelected && !props.todo.tags.length
+})
 
 const isDone = computed(() => {
     const { state } = props.todo

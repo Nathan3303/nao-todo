@@ -1,0 +1,200 @@
+.todo-table {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 4px;
+    flex: auto;
+    overflow: auto;
+    flex-wrap: nowrap;
+    height: 100%;
+    box-sizing: border-box;
+
+    -webkit-user-select: none;
+    user-select: none;
+
+    .todo-table__header {
+        align-items: center;
+        padding: 4px 12px;
+        gap: 24px;
+        border: 1px solid transparent;
+    }
+
+    .todo-table__header__col .nue-text,
+    .todo-table__main__col .nue-text {
+        color: var(--primary-color-800);
+    }
+
+    .todo-table__main {
+        align-items: stretch;
+        flex-direction: column;
+        width: 100%;
+        flex: auto;
+        gap: 0;
+        flex-wrap: nowrap;
+    }
+
+    .todo-table__main__row {
+        overflow: hidden;
+        flex-wrap: nowrap;
+        border: 1px solid transparent;
+        border-radius: var(--primary-radius);
+        gap: 24px;
+        padding: 8px 12px;
+        width: 100%;
+        position: relative;
+    }
+
+    .todo-table__main__row:hover {
+        border: 1px solid #ccc;
+    }
+
+    .todo-table__main__row[data-selected='true'] {
+        background-color: #f2f2f2;
+    }
+
+    .todo-table__main__row[data-done='true'] * {
+        opacity: 0.8;
+        transition: opacity 0.16s ease;
+    }
+
+    .todo-table__main__row[data-deleted='true'] {
+        opacity: 0.8;
+        transition: opacity 0.16s ease;
+
+        &::after {
+            width: 98%;
+            height: 1px;
+            background-color: var(--primary-color-500);
+            display: block;
+            content: '';
+            position: absolute;
+            top: calc(50% - 1px);
+            left: 1%;
+            z-index: -1;
+        }
+    }
+
+    .todo-table__main__col {
+        line-height: 21px;
+        overflow: hidden;
+        height: 100%;
+        align-items: center;
+    }
+
+    .col-name {
+        flex: auto;
+        gap: 4px;
+    }
+
+    .col-name .col-name__description {
+        color: var(--primary-color-600);
+        white-space: break-spaces;
+    }
+
+    .col-created-at,
+    .col-updated-at,
+    .col-end-at {
+        width: 10%;
+
+        .nue-text {
+            text-overflow: unset;
+            overflow: initial;
+            white-space: initial;
+        }
+    }
+
+    .col-end-at[data-expired='true'] .nue-text {
+        color: #e74646;
+    }
+
+    .col-state,
+    .col-project,
+    .col-priority {
+        width: 8%;
+    }
+
+    .col-actions {
+        width: auto;
+        color: var(--primary-color-600);
+    }
+
+    .col-actions .nue-icon,
+    .col-actions:deep(.nue-icon) {
+        cursor: pointer;
+    }
+}
+
+.todo-table--mobile {
+    min-width: 300px;
+
+    .todo-table__mobile-header {
+        flex-wrap: nowrap;
+    }
+
+    .todo-table__main {
+        gap: 8px;
+
+        .todo-table__main__row {
+            flex-wrap: wrap;
+            flex-direction: row;
+            gap: 4px;
+            align-items: center;
+            padding: 8px;
+            background-color: var(--primary-color-100);
+
+            &[data-selected="true"] {
+                border: 1px solid #ffbd64;
+                position: relative;
+
+                &::after {
+                    content: '';
+                    display: block;
+                    position: absolute;
+                    width: calc(100% - 4px);
+                    height: calc(100% - 4px);
+                    top: 0;
+                    left: 0;
+                    border: 2px solid white;
+                    border-radius: var(--primary-radius);
+                }
+            }
+
+            .todo-table__main__col {
+                height: auto;
+                width: auto;
+                gap: 2px;
+                margin: 0 4px;
+                align-items: center;
+
+                &::before {
+                    font-size: var(--text-xs);
+                    color: var(--primary-color-700);
+                    line-height: 1;
+                }
+            }
+
+            .col-name {
+                width: 100%;
+            }
+
+            .col-created-at::before {
+                content: '创建时间：';
+            }
+
+            .col-updated-at::before {
+                content: '更新时间：';
+            }
+
+            .col-end-at::before {
+                content: '结束时间：';
+            }
+
+            .col-project::before {
+                content: '清单：';
+            }
+
+            .col-actions {
+                margin-left: auto;
+            }
+        }
+    }
+}

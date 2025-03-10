@@ -64,7 +64,7 @@
 
 <script lang="ts" setup>
 import { onMounted } from 'vue'
-import { TodoTable, TodoTableColumnSelector } from '@/layers'
+import { TodoTable, TodoTableColumnSelector } from '@/views/index/tasks'
 import { useOverdueTodoManager } from './use-overdue-todo-manager'
 import { Loading } from '@nao-todo/components'
 import './overdue-todo-manager.css'

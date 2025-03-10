@@ -63,9 +63,7 @@ export const useTasksHandlerStore = defineStore('TasksHandlerStore', () => {
         const tasksViewStore = useTasksViewStore()
         if (tasksViewStore.category !== 'project') return
         if (!tasksViewStore.viewInfo) return
-        const result = await projectStore.archiveProjectWithConfirmation(
-            tasksViewStore.viewInfo.id
-        )
+        const result = await projectStore.archiveProjectWithConfirmation(tasksViewStore.viewInfo.id)
         if (result) await router.push('/tasks/all')
     }
 
@@ -74,9 +72,7 @@ export const useTasksHandlerStore = defineStore('TasksHandlerStore', () => {
         const tasksViewStore = useTasksViewStore()
         if (tasksViewStore.category !== 'project') return
         if (!tasksViewStore.viewInfo) return
-        const result = await projectStore.removeProjectWithConfirmation(
-            tasksViewStore.viewInfo.id
-        )
+        const result = await projectStore.removeProjectWithConfirmation(tasksViewStore.viewInfo.id)
         if (result) await router.push('/tasks/all')
     }
 
@@ -123,16 +119,14 @@ export const useTasksHandlerStore = defineStore('TasksHandlerStore', () => {
     }
 
     // 选择标签颜色
-    const handleSelectTagColor = async (
-        tagId: Tag['id'],
-        color: Tag['color']
-    ) => {
+    const handleSelectTagColor = async (tagId: Tag['id'], color: Tag['color']) => {
         return await tagStore.updateTagColor(tagId, color)
     }
 
     // 待办
 
     // 创建待办
+
     const handleCreateTodo = async (options: CreateTodoOptions) => {
         const result = (await todoStore.doCreateTodo(options)) as Todo
         if (!result) return false
@@ -144,7 +138,16 @@ export const useTasksHandlerStore = defineStore('TasksHandlerStore', () => {
             options.tags?.includes(tasksViewStore.viewInfo?.id ?? '')
         const isOnBasicView = tasksViewStore.category === 'basic'
         if (isSameProjectId || isContainTagId || isOnBasicView) {
-            await todoStore.doGetTodos()
+            switch (route.meta.viewType as string) {
+                case 'table':
+                    await todoStore.doGetTodos()
+                    break
+                case 'kanban':
+                    todoStore.addTodoToLocal(result)
+                    break
+                default:
+                    break
+            }
         }
         await router.push({ name: route.name, params: { taskId: result.id } })
         return true
@@ -152,13 +155,15 @@ export const useTasksHandlerStore = defineStore('TasksHandlerStore', () => {
 
     // 隐藏已完成的待办
     const handleHideTodosWhichIsDone = async () => {
-        const options = { state: 'todo,in-progress' }
-        todoStore.mergeGetOptions(options)
+        todoStore.mergeGetOptions({ state: 'todo,in-progress' })
         await todoStore.doGetTodos()
     }
 
     // 重新获取待办
-    const handleGetTodos = async () => await todoStore.doGetTodos()
+    const handleRefresh = async () => {
+        if (route.meta.viewType === 'kanban') return
+        await todoStore.doGetTodos()
+    }
 
     return {
         handleUpdateProjectTitle,
@@ -173,6 +178,6 @@ export const useTasksHandlerStore = defineStore('TasksHandlerStore', () => {
         handleSelectTagColor,
         handleCreateTodo,
         handleHideTodosWhichIsDone,
-        handleGetTodos
+        handleRefresh
     }
 })

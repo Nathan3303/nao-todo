@@ -1,9 +1,6 @@
 <template>
     <nue-container class="index-view" theme="horizontal">
-        <nue-header
-            v-if="viewStore.indexHeaderVisible"
-            class="index-view__header"
-        >
+        <nue-header v-if="viewStore.indexHeaderVisible" class="index-view__header">
             <template #logo>
                 <user-dropdown
                     :user="user"
@@ -22,28 +19,13 @@
                         placement="right-center"
                         size="small"
                     >
-                        <nue-link
-                            :icon="rl.icon"
-                            :route="rl.route"
-                            theme="index-header-link"
-                        />
+                        <nue-link :icon="rl.icon" :route="rl.route" theme="index-header-link" />
                     </nue-tooltip>
                 </nue-div>
             </template>
         </nue-header>
         <nue-main class="index-view__main">
             <router-view />
-            <!-- Index aside (For mobile device) -->
-            <nue-drawer
-                v-if="!viewStore.projectAsideVisible"
-                v-model:visible="viewStore.indexAsideVisible"
-                class="nue-drawer--no-header"
-                min-span="240px"
-                open-from="left"
-                span="260px"
-            >
-                <index-aside />
-            </nue-drawer>
         </nue-main>
     </nue-container>
     <!-- Dialogs -->
@@ -54,14 +36,11 @@
 <script lang="ts" setup>
 import { provide, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { IndexAside, UpdatePasswordDialog } from '@/layers'
+import { UpdatePasswordDialog } from '@/layers'
 import { useUserStore, useViewStore } from '@/stores'
 import { UserDropdown } from '@nao-todo/components'
 import { UserProfileDialog } from '@/layers/user-profile-dialog'
-import {
-    type IndexViewCtx,
-    IndexViewCtxKey
-} from '@nao-todo/types/views/index-view'
+import { type IndexViewCtx, IndexViewCtxKey } from '@nao-todo/types/views/index-view'
 
 const userStore = useUserStore()
 const viewStore = useViewStore()

@@ -1,4 +1,4 @@
-import { onBeforeUnmount, ref } from 'vue'
+import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import { basicViewsInfo, defaultPreference } from '../constants'
@@ -194,7 +194,7 @@ export const useTasksViewStore = defineStore('TasksViewStore', () => {
     }
 
     // 监听 ProjectStore 更新 -> 更新视图信息
-    const unsubscribeProjectStoresAction = projectStore.$onAction(({ name, after }) => {
+    projectStore.$onAction(({ name, after }) => {
         if (['updateProjectTitleWithPrompt', 'updateProjectDescriptionWithPrompt'].includes(name)) {
             after(() => {
                 if (category.value === 'project') getProjectViewInfo()
@@ -203,18 +203,12 @@ export const useTasksViewStore = defineStore('TasksViewStore', () => {
     })
 
     // 监听 TagStore 更新 -> 更新视图信息
-    const unsubscribeTagStoresAction = tagStore.$onAction(({ name, after }) => {
+    tagStore.$onAction(({ name, after }) => {
         if (['updateTagNameWithPrompt', 'updateTagColor'].includes(name)) {
             after(() => {
                 if (category.value === 'tag') getTagViewInfo()
             })
         }
-    })
-
-    // 卸载钩子
-    onBeforeUnmount(() => {
-        unsubscribeProjectStoresAction()
-        unsubscribeTagStoresAction()
     })
 
     return {

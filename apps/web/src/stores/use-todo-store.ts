@@ -3,11 +3,11 @@ import { defineStore } from 'pinia'
 import {
     createTodo,
     deleteTodo,
+    deleteTodos,
     duplicateTodo,
     getTodos,
     updateTodo,
-    updateTodos,
-    deleteTodos
+    updateTodos
 } from '@nao-todo/apis'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { useMoment } from '@nao-todo/utils'
@@ -71,12 +71,12 @@ export const useTodoStore = defineStore('todoStore', () => {
     }
 
     // 添加待办
-    const doCreateTodo = async (options: CreateTodoOptions) => {
+    const doCreateTodo = async (options: CreateTodoOptions, push?: boolean) => {
         const result = await createTodo(options)
         if (result.code !== 20000) return false
         const newTodo = result.data as Todo
         // console.log('[UseTodoStore] doCreateTodo:', newTodo)
-        // todos.value.unshift(newTodo)
+        if (push) addTodoToLocal(newTodo)
         return newTodo
     }
 
@@ -102,6 +102,9 @@ export const useTodoStore = defineStore('todoStore', () => {
         return true
     }
 
+    // 删除所有本地代办
+    const deleteAllLocalTodos = () => (todos.value = [])
+
     // 更新待办
     const doUpdateTodo = async (todoId: Todo['id'], options: UpdateTodoOptions) => {
         const result = await updateTodo(todoId, options)
@@ -120,13 +123,17 @@ export const useTodoStore = defineStore('todoStore', () => {
     }
 
     // 获取待办
-    const doGetTodos = async () => {
+    const doGetTodos = async (push?: boolean) => {
         const result = await getTodos(getOptions.value)
         if (result.code !== 20000) return false
         const data = result.data as GetTodosResponseData
-        todos.value = data.todos
+        if (push) {
+            todos.value.push(...data.todos)
+        } else {
+            todos.value = data.todos
+        }
         getOverview.value = data.payload
-        return true
+        return { ...data.payload }
     }
 
     // 删除待办
@@ -191,7 +198,10 @@ export const useTodoStore = defineStore('todoStore', () => {
                 confirmButtonText: '确认',
                 cancelButtonText: '取消',
                 onConfirm: async () =>
-                    await doUpdateTodo(todoId, { isDeleted: false, deletedAt: null })
+                    await doUpdateTodo(todoId, {
+                        isDeleted: false,
+                        deletedAt: null
+                    })
             })
             if (result) {
                 NueMessage.success('待办恢复成功')
@@ -240,7 +250,10 @@ export const useTodoStore = defineStore('todoStore', () => {
                 confirmButtonText: '确认',
                 cancelButtonText: '取消',
                 onConfirm: async () =>
-                    await doUpdateTodos(todoIds, { isDeleted: false, deletedAt: null })
+                    await doUpdateTodos(todoIds, {
+                        isDeleted: false,
+                        deletedAt: null
+                    })
             })
             if (result) {
                 NueMessage.success('更新成功')
@@ -338,6 +351,11 @@ export const useTodoStore = defineStore('todoStore', () => {
         todos.value.push(todo)
     }
 
+    // 批量新增本地待办
+    const addTodosToLocal = (newTodos: Todo[]) => {
+        todos.value.push(...newTodos)
+    }
+
     return {
         todos,
         getOptions,
@@ -361,6 +379,9 @@ export const useTodoStore = defineStore('todoStore', () => {
         duplicateTodoWithConfirmation,
         setGetOptionsByPreference,
         getTodoByIdFromLocal,
-        addTodoToLocal
+        addTodoToLocal,
+        deleteAllLocalTodos,
+        addTodosToLocal,
+        updateLocalTodo
     }
 })
