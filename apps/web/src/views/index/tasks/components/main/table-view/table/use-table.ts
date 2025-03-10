@@ -1,13 +1,13 @@
-import { reactive, ref, watch, provide, onBeforeUnmount, onMounted, computed } from 'vue'
+import { computed, onMounted, provide, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { isExpired } from '@nao-todo/utils'
 import { useProjectStore, useTodoStore } from '@/stores'
 import type { Todo } from '@nao-todo/types'
 import type {
-    TodoTableEmits,
-    TodoTableProps,
     TodoTableContext,
-    TodoTableMultiSelectPayload
+    TodoTableEmits,
+    TodoTableMultiSelectPayload,
+    TodoTableProps
 } from './types'
 
 export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
@@ -23,7 +23,6 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
         end: -1,
         original: -1
     })
-    let unSubscribe: () => void
 
     const tagBarClamped = computed(() => {
         if (isOnMobile.value) return 3
@@ -131,16 +130,6 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
 
     onMounted(() => {
         activeRowByTodoIdFromRoute()
-        unSubscribe = todoStore.$subscribe((mutation) => {
-            if (mutation.type !== 'direct') return
-            if (mutation.events.type === 'set') return
-            // console.log(mutation);
-            setTimeout(() => activeRowByTodoIdFromRoute())
-        })
-    })
-
-    onBeforeUnmount(() => {
-        if (unSubscribe) unSubscribe()
     })
 
     provide<TodoTableContext>('TodoTableContext', {
