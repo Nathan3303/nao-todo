@@ -10,7 +10,7 @@
             :shadow-todo="shadowTodo"
             :disable-close="isGetting || loadingState"
             @finish-todo="handleCheckTodo"
-            @change-todo-end-at="handleChangeEndAt"
+            @update-todo-end-at="handleChangeEndAt"
             @close="handleClose"
         />
         <details-main
