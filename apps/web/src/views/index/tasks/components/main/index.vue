@@ -38,16 +38,14 @@
                             <nue-button
                                 icon="history"
                                 theme="icon-only"
-                                @click="
-                                    () => tasksDialogStore.dialogManagerShow('OverdueTodoManager')
-                                "
+                                @click="handleShowOverdueTodoManager"
                             />
                         </nue-tooltip>
                         <nue-tooltip content="新增待办" size="small">
                             <nue-button
                                 icon="plus"
                                 theme="icon-only"
-                                @click="tasksDialogStore.showCreateTodoDialog"
+                                @click="handleShowTodoCreator"
                             />
                         </nue-tooltip>
                         <tasks-filter-dropdown />
@@ -76,7 +74,7 @@
 import { watchEffect } from 'vue'
 import { storeToRefs } from 'pinia'
 import { onBeforeRouteUpdate } from 'vue-router'
-import { useTasksDialogStore, useTasksViewStore } from '../../stores'
+import { useTasksDialogStore, useTasksHandlerStore, useTasksViewStore } from '../../stores'
 import { TasksFilterDropdown, TasksOperationsDropdown } from '../dropdowns'
 import { useViewStore } from '@/stores'
 import type { Project, Tag } from '@nao-todo/types'
@@ -92,11 +90,30 @@ defineProps<{
 const viewStore = useViewStore()
 const tasksViewStore = useTasksViewStore()
 const tasksDialogStore = useTasksDialogStore()
+const tasksHandlerStore = useTasksHandlerStore()
 
 const { projectAsideVisible: pav } = storeToRefs(viewStore)
 const { category, viewInfo } = storeToRefs(tasksViewStore)
 
 const handleHideProjectAside = () => viewStore.toggleProjectAsideVisible()
+
+const handleShowOverdueTodoManager = () => {
+    tasksDialogStore.dialogManagerShow('OverdueTodoManager')
+}
+
+const handleShowTodoCreator = () => {
+    if (!tasksViewStore.viewInfo) return
+    tasksDialogStore.dialogManagerShow('TodoCreator', {
+        dialogSize: 'small',
+        confirmHandler: tasksHandlerStore.handleCreateTodo,
+        props: {
+            presetInfo: {
+                projectId: tasksViewStore.viewInfo.id,
+                ...tasksViewStore.viewInfo.createTodoOptions
+            }
+        }
+    })
+}
 
 // 处理路由重复问题
 onBeforeRouteUpdate((to, from, next) => {

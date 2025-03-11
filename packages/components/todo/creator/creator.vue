@@ -50,7 +50,7 @@ import { useRelativeDate } from '@nao-todo/hooks/use-relative-date'
 import type { CreateTodoOptions } from '@nao-todo/types'
 import type { TodoCreatorProps } from './types'
 
-defineOptions({ name: 'TodoCreator' })
+defineOptions({ name: 'TodoCreatorUI' })
 const props = defineProps<TodoCreatorProps>()
 
 const setMoreData = ref(true)

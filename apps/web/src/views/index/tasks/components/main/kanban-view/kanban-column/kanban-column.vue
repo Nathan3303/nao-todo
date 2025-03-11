@@ -46,7 +46,7 @@
 
 <script lang="ts" setup>
 import { onMounted } from 'vue'
-import { TodoCard } from '@/layers'
+import { TodoCard } from './todo-card'
 import { Empty, Loading, TodoStateInfo } from '@nao-todo/components'
 import { NueInfiniteScroll } from 'nue-ui'
 import { useColumnLoader } from './use-column-loader'

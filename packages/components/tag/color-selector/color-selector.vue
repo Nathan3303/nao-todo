@@ -1,5 +1,5 @@
 <template>
-    <nue-div class="tag-color-selector" gap="12px">
+    <nue-div class="tag-color-selector" gap="14px">
         <nue-tooltip
             v-for="color in tagColors"
             :key="color.value"
@@ -10,7 +10,7 @@
                 :color="color.value"
                 :data-selected="selectedColor === color.value"
                 size="xlarge"
-                @click="(selectedColor = color.value)"
+                @click="selectedColor = color.value"
             />
         </nue-tooltip>
     </nue-div>
