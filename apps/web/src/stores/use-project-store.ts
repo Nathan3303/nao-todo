@@ -11,7 +11,7 @@ import type {
     UpdateProjectOptionsRaw
 } from '@nao-todo/types'
 import { NueConfirm, NueMessage, NuePrompt } from 'nue-ui'
-import moment from 'moment'
+import { useMoment } from '@nao-todo/utils'
 
 export const useProjectStore = defineStore('projectStore', () => {
     const projects = ref<Project[]>([])
@@ -282,7 +282,7 @@ export const useProjectStore = defineStore('projectStore', () => {
                 onConfirm: async () =>
                     await doUpdateProject(projectId, {
                         isDeleted: true,
-                        deletedAt: moment().toDate()
+                        deletedAt: useMoment().toDate()
                     })
             })
             // 根据更新结果，显示相应的消息提示
@@ -354,7 +354,7 @@ export const useProjectStore = defineStore('projectStore', () => {
                 onConfirm: async () =>
                     await doUpdateProject(projectId, {
                         isArchived: true,
-                        archivedAt: moment().toDate()
+                        archivedAt: useMoment().toDate()
                     })
             })
             // 根据更新结果，显示相应的消息
@@ -499,3 +499,4 @@ export const useProjectStore = defineStore('projectStore', () => {
         deleteLocalProject
     }
 })
+

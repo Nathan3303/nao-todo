@@ -2,7 +2,7 @@
 import { reactive, ref, shallowRef } from 'vue'
 import { useUserStore } from '@/stores'
 import { NueInput, NueMessage } from 'nue-ui'
-import moment from 'moment'
+import { useMoment } from '@nao-todo/utils'
 
 defineOptions({ name: 'UserProfileDialog' })
 
@@ -105,7 +105,7 @@ defineExpose({
             <nue-div align="stretch" gap="4px" vertical>
                 <nue-text color="gray" size="12px">注册时间</nue-text>
                 <nue-text size="14px">
-                    {{ moment(user.createdAt).format('YYYY年MM月DD日 HH时mm分') }}
+                    {{ useMoment(user.createdAt).format('YYYY年MM月DD日 HH时mm分') }}
                 </nue-text>
             </nue-div>
         </nue-div>

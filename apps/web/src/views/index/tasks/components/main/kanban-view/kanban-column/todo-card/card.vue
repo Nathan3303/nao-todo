@@ -78,13 +78,13 @@
 </template>
 
 <script setup lang="ts">
-import moment from 'moment'
+import { useMoment } from '@nao-todo/utils'
 import { computed } from 'vue'
 import { useTagStore } from '@/stores'
 import { useRelativeDate } from '@nao-todo/hooks/use-relative-date'
 import { TodoStateInfo, TodoPriorityInfo, TodoTagBar } from '@nao-todo/components'
 import type { TodoCardEmits, TodoCardProps } from './types'
-import type {Todo, TodoColumnOptions} from '@nao-todo/types'
+import type { Todo, TodoColumnOptions } from '@nao-todo/types'
 
 defineOptions({ name: 'TodoCard' })
 const props = defineProps<TodoCardProps>()
@@ -93,13 +93,13 @@ const emit = defineEmits<TodoCardEmits>()
 const tagStore = useTagStore()
 
 const isAttrsNone = computed(() => {
-    if (!props.columns) return true;
-    let isNoColumnSelected = true;
+    if (!props.columns) return true
+    let isNoColumnSelected = true
     for (const column in props.columns) {
         if (column === 'description') continue
         if (props.columns[column as keyof TodoColumnOptions]) {
-            isNoColumnSelected = false;
-            break;
+            isNoColumnSelected = false
+            break
         }
     }
     return isNoColumnSelected && !props.todo.tags.length
@@ -117,8 +117,8 @@ const checkIconName = computed(() => {
 const isTodoExpired = (todo: Todo) => {
     const endAt = todo.dueDate.endAt
     if (!endAt || todo.state === 'done') return false
-    const date = moment(endAt)
-    return date.isBefore(moment())
+    const date = useMoment(endAt)
+    return date.isBefore(useMoment())
 }
 
 const handleClick = () => {
@@ -147,3 +147,4 @@ const handleFinish = () => {
 <style scoped>
 @import url('card.css');
 </style>
+

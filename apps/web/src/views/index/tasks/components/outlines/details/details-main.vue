@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import moment from 'moment/moment'
+import { useMoment } from '@nao-todo/utils'
 import {
     CommentCreator,
     SwitchButton,
@@ -21,7 +21,7 @@ const emit = defineEmits<DetailsMainEmits>()
 const tagStore = useTagStore()
 
 const formatDate = (dateString: string) => {
-    return moment(dateString).format('YYYY-MM-DD HH:mm')
+    return useMoment(dateString).format('YYYY-MM-DD HH:mm')
 }
 </script>
 
