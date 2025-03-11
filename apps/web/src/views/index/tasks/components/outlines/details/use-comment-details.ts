@@ -1,4 +1,4 @@
-import { computed, ref, watchEffect } from 'vue'
+import { computed, ref } from 'vue'
 import { useCommentStore } from '@/stores'
 import { useRoute } from 'vue-router'
 import { NueMessage } from 'nue-ui'
@@ -28,13 +28,6 @@ export const useCommentDetails = () => {
         }
         return createResult
     }
-
-    watchEffect(() => {
-        const todoId = route.params.taskId as string
-        if (!todoId) return
-        commentStore.getOptions = { todoId }
-        commentStore.doGetComments()
-    })
 
     return {
         isCommenting,

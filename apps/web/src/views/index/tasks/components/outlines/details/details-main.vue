@@ -8,9 +8,7 @@ import {
     TodoStateSelectOptions,
     TodoTagBar
 } from '@nao-todo/components'
-import DetailsRow from './details-row.vue'
-import DetailsMainComments from './details-main-comments.vue'
-import DetailsMainEvents from './details-main-events.vue'
+import { DetailsRow, DetailsMainComments, DetailsMainEvents } from '.'
 import { useTagStore } from '@/stores'
 import type { DetailsMainEmits, DetailsMainProps } from './types'
 import type { Todo } from '@nao-todo/types'

@@ -1,5 +1,5 @@
 import { computed, ref, watch } from 'vue'
-import { useEventStore, useTodoStore } from '@/stores'
+import { useCommentStore, useEventStore, useTodoStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import { getTodo } from '@nao-todo/apis'
@@ -12,6 +12,7 @@ export const useTodoDetails = () => {
     const router = useRouter()
     const todoStore = useTodoStore()
     const eventStore = useEventStore()
+    const commentStore = useCommentStore()
     const updateQueue = useUpdateQueue()
 
     const { events } = storeToRefs(eventStore)
@@ -41,6 +42,9 @@ export const useTodoDetails = () => {
             res = (await getTodo({ id: todoId })).data as Todo
         }
         shadowTodo.value = res as Todo
+        commentStore.getOptions.todoId = todoId
+        eventStore.getOptions.todoId = todoId
+        await Promise.allSettled([commentStore.doGetComments(), eventStore.doGetEvents()])
         isGetting.value = false
     }
 
