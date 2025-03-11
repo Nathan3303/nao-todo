@@ -54,7 +54,7 @@ const emit = defineEmits<{
 
 const buttonIconName = computed(() => {
     const { projectId, userId } = props
-    if (projectId === '') return 'switch'
+    if (projectId === '') return 'projects'
     return projectId !== userId ? 'more2' : 'inbox'
 })
 

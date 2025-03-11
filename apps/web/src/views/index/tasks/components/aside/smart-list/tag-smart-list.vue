@@ -6,8 +6,8 @@
         create-btn-tooltip="创建新的标签"
         empty-text="以标签的维度展示不同清单的待办任务"
         :links="links"
-        @manage="() => tasksDialogStore.dialogManagerShow('TagManager')"
-        @create="tasksDialogStore.showCreateTagDialog"
+        @manage="handleManage"
+        @create="handleCreate"
     >
         <template #linkAppend="{ link }">
             <tag-color-dot :color="link.payload?.color" size="small" />
@@ -19,7 +19,7 @@
 import { computed } from 'vue'
 import { useTagStore } from '@/stores'
 import { TagColorDot } from '@nao-todo/components'
-import { useTasksDialogStore } from '@/views/index/tasks'
+import { useTasksDialogStore, useTasksHandlerStore } from '@/views/index/tasks'
 import SmartList from './smart-list.vue'
 import type { Tag } from '@nao-todo/types'
 import type { SmartListLinkVO } from './types'
@@ -28,6 +28,7 @@ defineOptions({ name: 'TagSmartList' })
 
 const tagStore = useTagStore()
 const tasksDialogStore = useTasksDialogStore()
+const tasksHandlerStore = useTasksHandlerStore()
 
 const tags = computed<Tag[]>(() => tagStore.findTagsFromLocal({}) || [])
 
@@ -42,4 +43,15 @@ const links = computed<SmartListLinkVO[]>(() => {
         } as SmartListLinkVO
     })
 })
+
+const handleManage = () => {
+    tasksDialogStore.dialogManagerShow('TagManager', { dialogSize: 'large' })
+}
+
+const handleCreate = () => {
+    tasksDialogStore.dialogManagerShow('TagCreator', {
+        confirmHandler: tasksHandlerStore.handleCreateTag,
+        dialogSize: 'small'
+    })
+}
 </script>

@@ -1,3 +1,7 @@
+.nue-dialog {
+    max-width: unset;
+}
+
 /* update-log */
 .nue-dialog--update-log {
     --dialog-width: 50%;
@@ -5,15 +9,45 @@
 
 /* large */
 .nue-dialog--large {
-    box-sizing: border-box;
     width: 72vw;
-    height: 72vh;
     min-width: 360px;
-    min-height: 720px;
-    max-width: unset;
-    max-height: unset;
+    min-height: 72vh;
 
     .nue-dialog__content {
+        height: 100%;
+        overflow: hidden;
+        margin-bottom: 0;
+    }
+
+    .nue-dialog__footer {
+        display: none;
+    }
+}
+
+/* normal */
+.nue-dialog--normal {
+    width: 54vw;
+    min-width: 320px;
+    min-height: 54vh;
+
+    .nue-dialog__content {
+        height: 100%;
+        overflow: hidden;
+        margin-bottom: 0;
+    }
+
+    .nue-dialog__footer {
+        display: none;
+    }
+}
+
+/* small */
+.nue-dialog--small {
+    width: 36vw;
+    min-width: 280px;
+
+    .nue-dialog__content {
+        height: 100%;
         overflow: hidden;
         margin-bottom: 0;
     }

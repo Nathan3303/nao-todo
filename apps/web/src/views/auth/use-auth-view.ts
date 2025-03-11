@@ -1,8 +1,9 @@
-import { ref, computed, defineAsyncComponent } from 'vue'
+import { computed, ref } from 'vue'
 import { useUserStoreV2 } from '@nao-todo/stores'
 import { NueMessage } from 'nue-ui'
 import { useRouter } from 'vue-router'
 import type { SigninOptions, SignupOptions } from '@nao-todo/types'
+import { AuthSignIn, AuthSignUp } from './components'
 
 export type AuthViewProps = { operation?: string }
 
@@ -19,16 +20,8 @@ export default (props: AuthViewProps) => {
         return isLogin.value ? '注册' : '登录'
     })
 
-    const AsyncNaoSignIn = defineAsyncComponent(() => {
-        return import('@/layouts/authentication/sign-in.vue')
-    })
-
-    const AsyncNaoSignUp = defineAsyncComponent(() => {
-        return import('@/layouts/authentication/sign-up.vue')
-    })
-
     const subView = computed(() => {
-        return isLogin.value ? AsyncNaoSignIn : AsyncNaoSignUp
+        return isLogin.value ? AuthSignIn : AuthSignUp
     })
 
     const switchRoute = computed(() => {

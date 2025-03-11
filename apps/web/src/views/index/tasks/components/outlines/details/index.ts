@@ -10,3 +10,6 @@ export { DetailsEmpty, DetailsHeader, DetailsLoading, DetailsRow, DetailsMain, D
 export const TasksDetails = defineAsyncComponent({
     loader: () => import('./details.vue')
 })
+export const TasksFloatDetails = defineAsyncComponent({
+    loader: () => import('./float-details.vue')
+})

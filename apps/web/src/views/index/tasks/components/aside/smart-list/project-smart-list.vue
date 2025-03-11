@@ -6,21 +6,22 @@
         create-btn-tooltip="创建新的清单"
         empty-text="用清单来分类收集、组织和管理你的待办任务"
         :links="links"
-        @manage="() => tasksDialogStore.dialogManagerShow('ProjectManager')"
-        @create="tasksDialogStore.showCreateProjectDialog"
+        @manage="handleManage"
+        @create="handleCreate"
     />
 </template>
 
 <script lang="ts" setup>
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/stores'
-import { useTasksDialogStore } from '@/views/index/tasks/stores'
+import { useTasksDialogStore, useTasksHandlerStore } from '../../../stores'
 import { computed } from 'vue'
 import SmartList from './smart-list.vue'
 import type { SmartListLinkVO } from './types'
 
 const projectStore = useProjectStore()
 const tasksDialogStore = useTasksDialogStore()
+const tasksHandlerStore = useTasksHandlerStore()
 
 const { smartListData: projects } = storeToRefs(projectStore)
 
@@ -34,4 +35,18 @@ const links = computed<SmartListLinkVO[]>(() => {
         } as SmartListLinkVO
     })
 })
+
+const handleManage = () => {
+    tasksDialogStore.dialogManagerShow('ProjectManager', {
+        dialogSize: 'large'
+    })
+}
+
+const handleCreate = () => {
+    tasksDialogStore.dialogManagerShow('ProjectCreator', {
+        useFooter: true,
+        confirmHandler: tasksHandlerStore.handleCreateProject,
+        dialogSize: 'small'
+    })
+}
 </script>

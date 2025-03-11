@@ -16,7 +16,7 @@
             @after-outline-resize="tasksLayoutStore.handleAfterOutlineResize"
         >
             <template v-if="projectAsideVisible" #aside>
-                <index-aside />
+                <tasks-aside />
             </template>
             <template #content>
                 <router-view />
@@ -31,21 +31,15 @@
         </nue-main>
     </nue-container>
     <!-- DialogManager -->
-    <nao-dialog-manager ref="naoDialogManagerRef" />
+    <tasks-dialog-loader ref="naoDialogManagerRef" />
     <!-- Dialogs -->
-    <create-project-dialog
-        ref="createProjectDialogRef"
-        :handler="tasksHandlerStore.handleCreateProject"
-    />
-    <create-todo-dialog ref="createTodoDialogRef" :handler="tasksHandlerStore.handleCreateTodo" />
-    <create-tag-dialog ref="createTagDialogRef" :handler="tasksHandlerStore.handleCreateTag" />
     <tag-color-select-dialog
         ref="tagColorSelectDialogRef"
         :handler="tasksHandlerStore.handleSelectTagColor"
     />
     <!-- Drawers -->
-    <float-aside v-if="!projectAsideVisible" />
-    <float-details v-if="!tasksOutlineVisible" />
+    <tasks-float-aside v-if="indexAsideVisible" />
+    <tasks-float-details v-if="!tasksOutlineVisible" />
 </template>
 
 <script lang="ts" setup>
@@ -59,11 +53,14 @@ import {
     useTasksLayoutStore,
     useTasksViewStore
 } from '.'
-import { NaoDialogManager } from '@/layouts/dialog-manager'
-import { CreateProjectDialog, CreateTagDialog, CreateTodoDialog } from '@/layers'
-import { IndexAside, TasksDetails, TasksMultiSelect } from './components'
-import FloatAside from './components/aside/float-aside.vue'
-import FloatDetails from './components/outlines/details/float-details.vue'
+import {
+    TasksAside,
+    TasksDetails,
+    TasksDialogLoader,
+    TasksFloatAside,
+    TasksFloatDetails,
+    TasksMultiSelect
+} from './components'
 
 const viewStore = useViewStore()
 const tasksViewStore = useTasksViewStore()
@@ -71,19 +68,13 @@ const tasksDialogStore = useTasksDialogStore()
 const tasksHandlerStore = useTasksHandlerStore()
 const tasksLayoutStore = useTasksLayoutStore()
 
-const { projectAsideVisible, responsiveFlag, tasksOutlineVisible } = storeToRefs(viewStore)
+const { projectAsideVisible, indexAsideVisible, responsiveFlag, tasksOutlineVisible } =
+    storeToRefs(viewStore)
 const { asideWidth, outlineWidth } = storeToRefs(tasksLayoutStore)
-const createProjectDialogRef = ref<InstanceType<typeof CreateProjectDialog>>()
-const createTodoDialogRef = ref<InstanceType<typeof CreateTodoDialog>>()
-const createTagDialogRef = ref<InstanceType<typeof CreateTagDialog>>()
 const tagColorSelectDialogRef = ref<InstanceType<typeof TagColorSelectDialog>>()
-const naoDialogManagerRef = ref<InstanceType<typeof NaoDialogManager>>()
+const naoDialogManagerRef = ref<InstanceType<typeof TasksDialogLoader>>()
 
-// 挂载后钩子 -> 注册对话框
 onMounted(() => {
-    tasksDialogStore.createProjectDialogRef = createProjectDialogRef.value
-    tasksDialogStore.createTodoDialogRef = createTodoDialogRef.value
-    tasksDialogStore.createTagDialogRef = createTagDialogRef.value
     tasksDialogStore.tagColorSelectDialogRef = tagColorSelectDialogRef.value
     tasksDialogStore.dialogManagerRef = naoDialogManagerRef.value
 })

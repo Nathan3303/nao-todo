@@ -1,3 +1,3 @@
 import Creator from './creator.vue'
 
-export const TodoCreator = Creator;
+export const TodoCreatorUi = Creator;
