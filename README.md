@@ -7,7 +7,7 @@ NaoTodo 是一个仿滴答清单的待办任务管理平台，旨在为用户提
 
 ## 🌐 站点地址
 
-- [NaoTodo](https://nathan33.xyz/)
+- [NaoTodo](https://nathan33.site/)
 
 ## 👨‍💻 开发者信息
 
