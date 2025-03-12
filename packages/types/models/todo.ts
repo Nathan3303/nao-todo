@@ -44,7 +44,7 @@ type GetTodosSortOptions = {
 
 type GetTodosOptionsRaw = {
     projectId?: Todo['projectId']
-    name?: Todo['name']
+    name?: Todo['name'] | null
     description?: Todo['description']
     state?: string
     priority?: string
@@ -135,3 +135,4 @@ export type {
     GetTodosOverview,
     TodoColumnOptions
 }
+

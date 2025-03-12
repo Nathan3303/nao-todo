@@ -4,5 +4,8 @@ const appLoadErrorRefreshButton = document.getElementById('appLoadErrorRefreshBu
 appIframe.addEventListener('error', () => {
     appLoadError.dataset.visible = '1'
 })
-const refreshWindow = () => window.location.reload()
+const refreshWindow = () => {
+    appLoadError.dataset.visible = '0'
+    window.location.reload()
+}
 appLoadErrorRefreshButton.addEventListener('click', refreshWindow)

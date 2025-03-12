@@ -4,19 +4,23 @@
             <nue-badge
                 theme="for-ico"
                 dot
-                :hidden="!(counter.priority + counter.state) && !isSorting"
+                :hidden="!(counter.priority + counter.state) && !searchText && !isSorting"
             >
-                <nue-button
-                    icon="filter"
-                    theme="icon-only"
-                    @click.stop="clickTrigger"
-                />
+                <nue-button icon="filter" theme="icon-only" @click.stop="clickTrigger" />
             </nue-badge>
         </template>
         <template #dropdown>
             <nue-div style="max-width: 10rem" gap="4px">
                 <nue-div theme="block">
                     <nue-text theme="title">筛选</nue-text>
+                    <nue-input
+                        theme="noshape,small"
+                        placeholder="根据名称筛选"
+                        v-model="searchText"
+                        clearable
+                        icon="search"
+                        :debounce-time="360"
+                    />
                     <inner-dropdown
                         @execute="handleStateDropdownExecute"
                         title="状态"
@@ -87,14 +91,12 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue'
 import { useTodoStore } from '@/stores'
 import { InnerDropdown, InnerDropdownOption } from './inner-dropdown'
 import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
-import {
-    priorityOptions,
-    stateOptions
-} from '@nao-todo/components/todo/selector/constants'
+import { priorityOptions, stateOptions } from '@nao-todo/components/todo/selector/constants'
 import { computed } from 'vue'
 import { columnOptionsInfoMap } from '@/views/index/tasks/constants'
 import type { InnerDropdownOptionVO } from './inner-dropdown/types'
@@ -103,6 +105,7 @@ const route = useRoute()
 const todoStore = useTodoStore()
 
 const { getOptions, columnOptions } = storeToRefs(todoStore)
+const searchText = ref('')
 
 const isSorting = computed(() => !!getOptions.value.sort?.field)
 
@@ -132,9 +135,7 @@ const sortFieldDropdownOptions = computed<InnerDropdownOptionVO[]>(() => {
     Object.keys(columnOptions.value).forEach((key) => {
         _fields.push({
             icon: 'plus-circle',
-            label: columnOptionsInfoMap[
-                key as keyof typeof columnOptionsInfoMap
-            ],
+            label: columnOptionsInfoMap[key as keyof typeof columnOptionsInfoMap],
             value: key,
             checked: getOptions.value.sort?.field === key || false
         })
@@ -164,7 +165,6 @@ const handlePriorityOrState = (isPriority: boolean, field: string) => {
     counter.value[opKey] = splitRes.length
     const viewType = route.meta.viewType as string
     if (!isPriority && ['kanban'].includes(viewType)) return
-    // todoStore.doGetTodos()
 }
 
 const handlePriorityDropdownExecute = (field: string) => {
@@ -197,12 +197,29 @@ const handleSortOrderDropdownExecute = (order: string) => {
     })
     // todoStore.doGetTodos()
 }
+
+watch(
+    () => searchText.value,
+    (newValue) => {
+        todoStore.mergeGetOptions({ name: newValue || null })
+    }
+)
 </script>
 
 <style scoped>
+.nue-input {
+    border: none;
+    border-radius: 0;
+    --icon-size: var(--text-sm);
+    --font-size: var(--text-sm);
+    padding: 0 8px;
+    gap: 8px;
+}
+
 .nue-badge--for-ico:deep(.nue-badge__content) {
     width: 12px;
     left: calc(100% - 12px);
     bottom: calc(100% - 12px);
 }
 </style>
+

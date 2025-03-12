@@ -78,6 +78,8 @@ export const getTodos = async (options: GetTodosOptions = defaultGetTodosOptions
                 const v = value as GetTodosSortOptions
                 if (!v.field) return null
                 return `${key}=${(value as GetTodosSortOptions).field}:${(value as GetTodosSortOptions).order}`
+            } else if (key === 'name') {
+                return value === null ? null : `${key}=${value}`
             }
         })
         const response = await $axios.get(`/todos?${queryString}`)

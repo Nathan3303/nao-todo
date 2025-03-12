@@ -4,7 +4,7 @@ html {
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-    font-family: "Poppins", "Noto Sans SC", sans-serif;
+    font-family: 'Poppins', 'Noto Sans SC', sans-serif;
 }
 
 body {
@@ -47,9 +47,11 @@ iframe {
     align-items: center;
     justify-content: center;
     gap: 16px;
+    display: none;
 
-    &[data-visible="1"] {
-        opacity: 1;
+    &[data-visible='1'] {
+        /* opacity: 1; */
+        display: flex;
         transition: opacity 0.16s ease-out;
     }
 
