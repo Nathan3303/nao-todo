@@ -48,7 +48,17 @@ export default defineConfig({
                         return 'css/[name].[hash].[ext]'
                     return assetInfo.name as string
                 },
-                chunkFileNames: 'js/[name].[hash].js'
+                chunkFileNames: 'js/[name].[hash].js',
+                manualChunks: (id) => {
+                    if (id.includes('node_modules')) {
+                        const packageNames = id.toString().split('node_modules/')[1].split('/')
+                        const truePackageName =
+                            packageNames[0] === '.pnpm' ? packageNames[1] : packageNames[0]
+                        if (truePackageName.includes('vue') || truePackageName.includes('pinia'))
+                            return 'vue-ecosystem'
+                        else return truePackageName
+                    }
+                }
             }
         }
     }
