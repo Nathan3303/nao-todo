@@ -95,12 +95,12 @@ export const useTodoStore = defineStore('todoStore', () => {
     }
 
     // 删除本地代办
-    const deleteLocalTodo = (todoId: Todo['id']) => {
-        const index = todos.value.findIndex((todo) => todo.id === todoId)
-        if (index === -1) return false
-        todos.value.splice(index, 1)
-        return true
-    }
+    // const deleteLocalTodo = (todoId: Todo['id']) => {
+    //     const index = todos.value.findIndex((todo) => todo.id === todoId)
+    //     if (index === -1) return false
+    //     todos.value.splice(index, 1)
+    //     return true
+    // }
 
     // 删除所有本地代办
     const deleteAllLocalTodos = () => (todos.value = [])
