@@ -1,16 +1,12 @@
-import type { User } from '@nao-todo/types'
-
-// throttle
 export const throttle = (callback: (...args: any[]) => void | Promise<any>, delay: number) => {
     let timer: number | null = null
     return async (...args: any[]) => {
-        if (timer) return;
+        if (timer) return
         const result = await callback(...args)
         timer = setTimeout(() => (timer = null), delay) as unknown as number
         return result
     }
-
-};
+}
 
 export const debounce = (callback: (...args: any) => void | Promise<any>, delay: number) => {
     let timer: number | null = null
@@ -55,5 +51,5 @@ export const stringifyGetOptions = <T>(
 export function generateId(length: number = 6) {
     return Math.random()
         .toString(36)
-        .slice(2, 2 + length);
+        .slice(2, 2 + length)
 }
