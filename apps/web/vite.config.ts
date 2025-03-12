@@ -56,6 +56,12 @@ export default defineConfig({
                             packageNames[0] === '.pnpm' ? packageNames[1] : packageNames[0]
                         if (truePackageName.includes('vue') || truePackageName.includes('pinia'))
                             return 'vue-ecosystem'
+                        else if (
+                            truePackageName.includes('axios') ||
+                            truePackageName.includes('moment') ||
+                            truePackageName.includes('spark')
+                        )
+                            return 'fs-utils'
                         else return truePackageName
                     }
                 }
