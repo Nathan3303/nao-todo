@@ -11,8 +11,9 @@
         "build": "electron-builder"
     },
     "build": {
-        "appId": "xyz.nathan33.naotodo",
+        "appId": "site.nathan33.naotodo",
         "productName": "NaoTodoDesktop",
+        "npmRebuild": false,
         "win": {
             "icon": "./src/logo.png",
             "target": [
@@ -32,6 +33,10 @@
     },
     "devDependencies": {
         "electron": "^34.2.0",
-        "electron-builder": "^25.1.8"
+        "electron-builder": "25.1.8",
+        "@types/node": "^20.12.7"
+    },
+    "dependencies": {
+        "read-config-file": "^6.0.0"
     }
 }
