@@ -1,25 +1,29 @@
 <!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
-          name="viewport">
-    <meta content="ie=edge" http-equiv="X-UA-Compatible">
-    <meta content="default-src 'self' https://nathan33.xyz/; style-src 'self' https://fonts.googleapis.com; font-src *; script-src 'self'"
-          http-equiv="Content-Security-Policy">
-    <title>NaoTodo 桌面端</title>
-    <link href="./index.css" rel="stylesheet">
-</head>
-<body>
-<div class="title-bar">NaoTodo 桌面端</div>
-<iframe id="appIframe" frameborder="0" loading="eager" src="https://nathan33.xyz"></iframe>
-<div id="appLoadError">
-    <img alt="Error" src="./error.png">
-    <span>加载失败，请检查网络连接，或稍后再试。</span>
-    <button id="appLoadErrorRefreshButton">
-        <span class="button-text">重新加载</span>
-    </button>
-</div>
-</body>
-<script src="./index.js"></script>
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
+            name="viewport"
+        />
+        <meta content="ie=edge" http-equiv="X-UA-Compatible" />
+        <meta
+            content="default-src 'self' https://nathan33.site/; style-src 'self' https://fonts.googleapis.com; font-src *; script-src 'self'"
+            http-equiv="Content-Security-Policy"
+        />
+        <title>NaoTodo 桌面端</title>
+        <link href="./index.css" rel="stylesheet" />
+    </head>
+    <body>
+        <div class="title-bar">NaoTodo 桌面端</div>
+        <iframe id="appIframe" frameborder="0" loading="eager" src="https://nathan33.site"></iframe>
+        <div id="appLoadError">
+            <img alt="Error" src="./error.png" />
+            <span>加载失败，请检查网络连接，或稍后再试。</span>
+            <button id="appLoadErrorRefreshButton">
+                <span class="button-text">重新加载</span>
+            </button>
+        </div>
+    </body>
+    <script src="./index.js"></script>
 </html>
