@@ -46,6 +46,7 @@ export type DetailsFooterEmits = {
 
 export type DetailsMainEventsProps = {
     todoId: Todo['id']
+    loading?: boolean
 }
 
 export type UnusedTagOption = {

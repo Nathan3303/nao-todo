@@ -27,8 +27,6 @@ import { storeToRefs } from 'pinia'
 import { NueMessage } from 'nue-ui'
 import type { Comment } from '@nao-todo/types'
 
-defineOptions({ name: 'TodoCommentsDetails' })
-
 const commentStore = useCommentStore()
 
 const { comments } = storeToRefs(commentStore)

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import moment from 'moment/moment'
+import { useMoment } from '@nao-todo/utils'
 import {
     CommentCreator,
     SwitchButton,
@@ -8,9 +8,7 @@ import {
     TodoStateSelectOptions,
     TodoTagBar
 } from '@nao-todo/components'
-import DetailsRow from './details-row.vue'
-import DetailsMainComments from './details-main-comments.vue'
-import DetailsMainEvents from './details-main-events.vue'
+import { DetailsRow, DetailsMainComments, DetailsMainEvents } from '.'
 import { useTagStore } from '@/stores'
 import type { DetailsMainEmits, DetailsMainProps } from './types'
 import type { Todo } from '@nao-todo/types'
@@ -21,7 +19,7 @@ const emit = defineEmits<DetailsMainEmits>()
 const tagStore = useTagStore()
 
 const formatDate = (dateString: string) => {
-    return moment(dateString).format('YYYY-MM-DD HH:mm')
+    return useMoment(dateString).format('YYYY-MM-DD HH:mm')
 }
 </script>
 

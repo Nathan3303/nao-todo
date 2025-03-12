@@ -1,11 +1,5 @@
-import moment from 'moment'
-import {
-    useProjectStore,
-    useTagStore,
-    useTodoStore,
-    useUserStore
-} from '@/stores'
-import type { CreateTodoDialogCallerArgs } from '@/layers/create-todo-dialog/types'
+import { useMoment } from '@nao-todo/utils'
+import { useProjectStore, useTagStore, useTodoStore, useUserStore } from '@/stores'
 import type {
     ProjectPreference,
     TasksMainBasicViewNames,
@@ -13,6 +7,7 @@ import type {
     Todo,
     TodoColumnOptions
 } from '@nao-todo/types'
+import type { TodoCreatorProps } from '@nao-todo/components/todo/creator/types'
 
 const userStore = useUserStore()
 const projectStore = useProjectStore()
@@ -69,9 +64,7 @@ export const basicViewsInfo: {
             handleCreateTodo: async (todoName: Todo['name']) => {
                 await todoStore.doCreateTodo({ dueDate: {}, name: todoName })
             },
-            handleCreateTodoByDialog: async (
-                caller: (args: CreateTodoDialogCallerArgs) => void
-            ) => {
+            handleCreateTodoByDialog: async (caller: (args: TodoCreatorProps) => void) => {
                 caller({
                     userId: userStore.user?.id || '',
                     projects: projectStore.projects,
@@ -94,13 +87,13 @@ export const basicViewsInfo: {
         },
         createTodoOptions: {
             dueDate: {
-                startAt: moment().startOf('day').toISOString(true),
-                endAt: moment().endOf('day').toISOString(true)
+                startAt: useMoment().startOf('day').toISOString(true),
+                endAt: useMoment().endOf('day').toISOString(true)
             }
         },
         handlers: {
             handleCreateTodo: async (todoName: Todo['name']) => {
-                const now = moment()
+                const now = useMoment()
                 await todoStore.doCreateTodo({
                     name: todoName,
                     dueDate: {
@@ -109,10 +102,8 @@ export const basicViewsInfo: {
                     }
                 })
             },
-            handleCreateTodoByDialog: async (
-                caller: (args: CreateTodoDialogCallerArgs) => void
-            ) => {
-                const now = moment()
+            handleCreateTodoByDialog: async (caller: (args: TodoCreatorProps) => void) => {
+                const now = useMoment()
                 caller({
                     userId: userStore.user?.id || '',
                     projects: projectStore.projects,
@@ -141,16 +132,13 @@ export const basicViewsInfo: {
         },
         createTodoOptions: {
             dueDate: {
-                startAt: moment()
-                    .add(1, 'day')
-                    .startOf('day')
-                    .toISOString(true),
-                endAt: moment().add(1, 'day').endOf('day').toISOString(true)
+                startAt: useMoment().add(1, 'day').startOf('day').toISOString(true),
+                endAt: useMoment().add(1, 'day').endOf('day').toISOString(true)
             }
         },
         handlers: {
             handleCreateTodo: async (todoName: Todo['name']) => {
-                const tomorrow = moment().add(1, 'day')
+                const tomorrow = useMoment().add(1, 'day')
                 await todoStore.doCreateTodo({
                     name: todoName,
                     dueDate: {
@@ -159,10 +147,8 @@ export const basicViewsInfo: {
                     }
                 })
             },
-            handleCreateTodoByDialog: async (
-                caller: (args: CreateTodoDialogCallerArgs) => void
-            ) => {
-                const tomorrow = moment().add(1, 'day')
+            handleCreateTodoByDialog: async (caller: (args: TodoCreatorProps) => void) => {
+                const tomorrow = useMoment().add(1, 'day')
                 caller({
                     userId: userStore.user?.id || '',
                     projects: projectStore.projects,
@@ -191,13 +177,13 @@ export const basicViewsInfo: {
         },
         createTodoOptions: {
             dueDate: {
-                startAt: moment().startOf('day').toISOString(true),
-                endAt: moment().endOf('isoWeek').toISOString(true)
+                startAt: useMoment().startOf('day').toISOString(true),
+                endAt: useMoment().endOf('isoWeek').toISOString(true)
             }
         },
         handlers: {
             handleCreateTodo: async (todoName: Todo['name']) => {
-                const now = moment()
+                const now = useMoment()
                 await todoStore.doCreateTodo({
                     name: todoName,
                     dueDate: {
@@ -206,10 +192,8 @@ export const basicViewsInfo: {
                     }
                 })
             },
-            handleCreateTodoByDialog: async (
-                caller: (args: CreateTodoDialogCallerArgs) => void
-            ) => {
-                const now = moment()
+            handleCreateTodoByDialog: async (caller: (args: TodoCreatorProps) => void) => {
+                const now = useMoment()
                 caller({
                     userId: userStore.user?.id || '',
                     projects: projectStore.projects,
@@ -240,9 +224,7 @@ export const basicViewsInfo: {
             handleCreateTodo: async (todoName: Todo['name']) => {
                 await todoStore.doCreateTodo({ dueDate: {}, name: todoName })
             },
-            handleCreateTodoByDialog: async (
-                caller: (args: CreateTodoDialogCallerArgs) => void
-            ) => {
+            handleCreateTodoByDialog: async (caller: (args: TodoCreatorProps) => void) => {
                 caller({
                     userId: userStore.user?.id || '',
                     projects: projectStore.projects,
@@ -272,9 +254,7 @@ export const basicViewsInfo: {
                     isFavorited: true
                 })
             },
-            handleCreateTodoByDialog: async (
-                caller: (args: CreateTodoDialogCallerArgs) => void
-            ) => {
+            handleCreateTodoByDialog: async (caller: (args: TodoCreatorProps) => void) => {
                 caller({
                     userId: userStore.user?.id || '',
                     projects: projectStore.projects,
@@ -296,3 +276,4 @@ export const basicViewsInfo: {
         createTodoOptions: { dueDate: {} }
     }
 }
+
