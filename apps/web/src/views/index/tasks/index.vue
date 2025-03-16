@@ -44,6 +44,7 @@
 
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
+import { onBeforeRouteLeave } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useViewStore } from '@/stores'
 import { TagColorSelectDialog } from '@nao-todo/components'
@@ -74,8 +75,12 @@ const { asideWidth, outlineWidth } = storeToRefs(tasksLayoutStore)
 const tagColorSelectDialogRef = ref<InstanceType<typeof TagColorSelectDialog>>()
 const naoDialogManagerRef = ref<InstanceType<typeof TasksDialogLoader>>()
 
-onMounted(() => {
+onMounted(async () => {
     tasksDialogStore.tagColorSelectDialogRef = tagColorSelectDialogRef.value
     tasksDialogStore.dialogManagerRef = naoDialogManagerRef.value
+})
+
+onBeforeRouteLeave((to, from) => {
+    localStorage.setItem('tasks/lastRouteWhenLeave', from.fullPath)
 })
 </script>
