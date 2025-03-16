@@ -60,8 +60,12 @@ export const useUserStore = defineStore('userStore', () => {
         return true
     }
 
-    const checkout = async () => {
+    const removeUserData = () => {
         localStorage.removeItem('USER_JWT')
+        localStorage.removeItem('tasks/lastRouteWhenLeave')
+    }
+
+    const checkout = async () => {
         user.value = void 0
         token.value = void 0
         isAuthenticated.value = false
@@ -72,6 +76,7 @@ export const useUserStore = defineStore('userStore', () => {
         await checkout()
         await router.push('/auth/login')
         NueMessage.error(checkoutMsg)
+        removeUserData()
         return true
     }, 4000)
 
@@ -97,6 +102,7 @@ export const useUserStore = defineStore('userStore', () => {
             if (result) {
                 NueMessage.success('退出登录成功')
                 await router.push('/auth/login')
+                removeUserData()
             } else {
                 NueMessage.error('退出登录失败')
             }
