@@ -29,7 +29,7 @@ export default defineConfig({
                 eval: true
             }
         }),
-        visualizer({ open: false })
+        visualizer({ open: true })
     ],
     resolve: {
         alias: {
@@ -54,15 +54,26 @@ export default defineConfig({
                         const packageNames = id.toString().split('node_modules/')[1].split('/')
                         const truePackageName =
                             packageNames[0] === '.pnpm' ? packageNames[1] : packageNames[0]
-                        if (truePackageName.includes('vue') || truePackageName.includes('pinia'))
-                            return 'vue-ecosystem'
+                        if (truePackageName.includes('nue-ui')) return 'nue-ui'
+                        else if (truePackageName.includes('vue')) return 'vue-ecosystem'
                         else if (
                             truePackageName.includes('axios') ||
-                            truePackageName.includes('moment') ||
-                            truePackageName.includes('spark')
+                            truePackageName.includes('spark-md5')
                         )
-                            return 'fs-utils'
+                            return 'axios'
+                        else if (
+                            truePackageName.includes('markdown-it') ||
+                            truePackageName.includes('mdurl') ||
+                            truePackageName.includes('linkify-it')
+                        )
+                            return 'markdown-it'
                         else return truePackageName
+                    } else if (id.includes('src/views/auth')) {
+                        // const packageName = id.toString().split('src/views/auth')[1]
+                        // if (packageName.includes('sign-in')) return 'auth-view_sign-in'
+                        // else if (packageName.includes('sign-up')) return 'auth-view_sign-up'
+                        // else
+                        return 'auth-view'
                     }
                 }
             }
