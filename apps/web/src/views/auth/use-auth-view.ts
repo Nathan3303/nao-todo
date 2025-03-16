@@ -12,21 +12,10 @@ export default (props: AuthViewProps) => {
     const router = useRouter()
     const loading = ref(false)
 
-    const isLogin = computed(() => {
-        return props.operation === 'login'
-    })
-
-    const switchButtonText = computed(() => {
-        return isLogin.value ? '注册' : '登录'
-    })
-
-    const subView = computed(() => {
-        return isLogin.value ? AuthSignIn : AuthSignUp
-    })
-
-    const switchRoute = computed(() => {
-        return '/auth' + (isLogin.value ? '/signup' : '/login')
-    })
+    const isLogin = computed(() => props.operation === 'login')
+    const switchButtonText = computed(() => (isLogin.value ? '注册' : '登录'))
+    const subView = computed(() => (isLogin.value ? AuthSignIn : AuthSignUp))
+    const switchRoute = computed(() => '/auth' + (isLogin.value ? '/signup' : '/login'))
 
     const handleSignIn = async (options: SigninOptions) => {
         const result = await userStore.signIn(options)
@@ -52,8 +41,8 @@ export default (props: AuthViewProps) => {
     }
 
     const handleSubmit = async (options: SigninOptions | SignupOptions) => {
-        loading.value = true
         try {
+            loading.value = true
             if (isLogin.value) {
                 await handleSignIn(options as SigninOptions)
             } else {
