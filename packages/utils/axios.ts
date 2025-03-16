@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { useUserStore } from '@nao-todo/webapp/src/stores'
 
-export const baseURL = 'https://nathan33.site:3002/api'
+export const baseURL = 'https://todo.nathan33.site:3002/api'
 // export const baseURL = 'http://localhost:3002/api'
 
 // Create Axios instance

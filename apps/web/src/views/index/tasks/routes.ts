@@ -39,7 +39,11 @@ const routes: RouteRecordRaw = {
     path: 'tasks',
     name: 'tasks',
     component: () => import('./index.vue'),
-    redirect: { name: 'tasks-today-table' },
+    beforeEnter: (to) => {
+        const lastRouteWhenLeave = localStorage.getItem('tasks/lastRouteWhenLeave')
+        if (lastRouteWhenLeave && lastRouteWhenLeave !== to.path)
+            return { path: lastRouteWhenLeave }
+    },
     children: []
 }
 

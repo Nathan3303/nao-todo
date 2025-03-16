@@ -25,7 +25,7 @@
             </template>
         </nue-header>
         <nue-main class="index-view__main">
-            <router-view />
+            <router-view></router-view>
         </nue-main>
     </nue-container>
     <!-- Dialogs -->
