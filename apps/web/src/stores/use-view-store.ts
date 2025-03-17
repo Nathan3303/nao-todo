@@ -28,15 +28,31 @@ export const useViewStore = defineStore('viewStore', () => {
         }
     }
 
+    const hideFirstLoadingScreen = () => {
+        const _fn = () => {
+            const fls = document.getElementById('firstLoadingScreen')
+            if (!fls) return
+            fls.style.transition = 'opacity 320ms ease-in-out'
+            fls.style.opacity = '0'
+            setTimeout(() => (fls.style.display = 'none'), 320)
+        }
+        if (window.requestIdleCallback) {
+            window.requestIdleCallback(_fn)
+        } else {
+            _fn()
+        }
+    }
+
     const indexViewInitTask = async () => {
         try {
-            indexViewLoader.loading = true
+            // indexViewLoader.loading = true
             await Promise.all([projectStore.doGetProjects(), tagStore.doGetTags()])
         } catch (e) {
             indexViewLoader.error = true
             indexViewLoader.errorMessage = e as Error
         } finally {
-            indexViewLoader.loading = false
+            // indexViewLoader.loading = false
+            hideFirstLoadingScreen()
         }
     }
 
@@ -69,6 +85,7 @@ export const useViewStore = defineStore('viewStore', () => {
         responsiveFlag,
         tasksOutlineVisible,
         toggleProjectAsideVisible,
-        indexViewInitTask
+        indexViewInitTask,
+        hideFirstLoadingScreen
     }
 })
