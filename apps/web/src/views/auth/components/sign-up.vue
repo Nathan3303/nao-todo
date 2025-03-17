@@ -14,7 +14,7 @@
                 在下面输入您的电子邮件和密码以创建账户
             </nue-text>
         </nue-div>
-        <form action="" autocomplete="off" name="NaoTodoSignUpForm">
+        <form autocomplete="off" name="NaoTodoSignUpForm">
             <nue-div align="stretch" vertical>
                 <nue-input
                     v-model="email"
@@ -28,7 +28,8 @@
                     <nue-icon color="white" name="priority-2" />
                     <nue-text color="white" size="var(--text-xs)">
                         密码格式要求为 8 至 24 位字母、数字以及特殊符号的组合。
-                        其中字母和数字是必须的，特殊符号可选。可用的特殊符号包括：! @ # $ % ^ & * ? . -
+                        其中字母和数字是必须的，特殊符号可选。可用的特殊符号包括：! @ # $ % ^ & * ?
+                        . -
                     </nue-text>
                 </nue-div>
                 <nue-input
@@ -68,12 +69,8 @@ import { ref } from 'vue'
 import { NueMessage } from 'nue-ui'
 import type { SignupOptions } from '@nao-todo/types'
 
-defineProps<{
-    loading: boolean
-}>()
-const emit = defineEmits<{
-    (event: 'submit', payload: SignupOptions): void
-}>()
+defineProps<{ loading: boolean }>()
+const emit = defineEmits<{ (event: 'submit', payload: SignupOptions): void }>()
 
 const email = ref('')
 const password = ref('')
@@ -81,7 +78,8 @@ const passwordConfirm = ref('')
 const nickname = ref('')
 const matchPattern = /^\S*(?=\S{8})(?=\S*\d)(?=\S*[a-z])(?=\S*[!@#$%^&*?.-])\S*$/
 
-function handleSignUp() {
+function handleSignUp(e: Event) {
+    e.preventDefault()
     if (email.value === '') {
         NueMessage.error('请输入邮箱')
         return
