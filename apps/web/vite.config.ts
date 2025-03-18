@@ -3,6 +3,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import terser from '@rollup/plugin-terser'
 import { visualizer } from 'rollup-plugin-visualizer'
+import htmlTransformPlugin from './html-transform-plugin'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -29,7 +30,8 @@ export default defineConfig({
                 eval: true
             }
         }),
-        visualizer({ open: true })
+        visualizer({ open: true }),
+        htmlTransformPlugin()
     ],
     resolve: {
         alias: {
@@ -54,26 +56,26 @@ export default defineConfig({
                         const packageNames = id.toString().split('node_modules/')[1].split('/')
                         const truePackageName =
                             packageNames[0] === '.pnpm' ? packageNames[1] : packageNames[0]
-                        if (truePackageName.includes('nue-ui')) return 'nue-ui'
-                        else if (truePackageName.includes('vue')) return 'vue-ecosystem'
-                        else if (
-                            truePackageName.includes('axios') ||
-                            truePackageName.includes('spark-md5')
-                        )
-                            return 'axios'
-                        else if (
-                            truePackageName.includes('markdown-it') ||
-                            truePackageName.includes('mdurl') ||
-                            truePackageName.includes('linkify-it')
-                        )
-                            return 'markdown-it'
-                        else return truePackageName
+                        if (truePackageName.includes('nue-ui')) return 'vender/nue-ui'
+                        else if (truePackageName.includes('pinia')) return 'vender/pinia'
+                        else if (truePackageName.includes('vue-router')) return 'vender/vue-router'
+                        else if (truePackageName.includes('vue')) return 'vender/vue-ecosystem'
+                        else return `vender/${truePackageName}`
+                    } else if (id.includes('src/stores')) {
+                        // const packageName = id.toString().split('src/stores')[1]
+                        // const truePackageName = packageName.split('-')[1]
+                        // if (['project', 'tag', 'view', 'todo'].includes(truePackageName))
+                        //     return 'app-stores/tasks-main'
+                        // if (['comment', 'event'].includes(truePackageName))
+                        //     return 'app-stores/tasks-detail'
+                        // if (truePackageName) return `app-stores/${truePackageName}`
+                        // else return 'app-stores/index'
                     } else if (id.includes('src/views/auth')) {
                         // const packageName = id.toString().split('src/views/auth')[1]
                         // if (packageName.includes('sign-in')) return 'auth-view_sign-in'
                         // else if (packageName.includes('sign-up')) return 'auth-view_sign-up'
                         // else
-                        return 'auth-view'
+                        // return 'auth-view'
                     }
                 }
             }
