@@ -77,6 +77,6 @@ export const useColumnLoader = (name: string) => {
         isAllLoaded,
         isTheFirstLoading,
         isDisabled,
-        loadMore: debounce(loadMore, 360)
+        loadMore: debounce(loadMore, 64)
     }
 }
