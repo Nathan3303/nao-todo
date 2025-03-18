@@ -81,6 +81,7 @@ import { useTagStore, useTodoStore, useViewStore } from '@/stores'
 import { Loading, Pager } from '@nao-todo/components'
 import { TodoTable } from './table'
 import { useTasksViewStore } from '../../../stores'
+import { debounce } from '@nao-todo/utils'
 import type { GetTodosSortOptions, Todo } from '@nao-todo/types'
 import type { TodoTableMultiSelectPayload } from './table/types'
 import './table.css'
@@ -115,12 +116,12 @@ const showTodoDetails = (id: Todo['id']) => {
     tasksViewStore.hideMultiDetails()
 }
 
-const handleGetTodos = async () => {
+const handleGetTodos = debounce(() => {
     tableLoading.value = true
-    await todoStore.doGetTodos()
-    tableLoading.value = false
-}
-handleGetTodos()
+    todoStore.doGetTodos().finally(() => {
+        tableLoading.value = false
+    })
+}, 360)
 
 const handleDeleteTodo = async (todoId: Todo['id']) => {
     await todoStore.deleteTodoWithConfirmation(todoId)
@@ -157,6 +158,7 @@ watch(
     (newValue) => !newValue && todoTableRef.value?.resetSelect()
 )
 
+handleGetTodos()
 todoStore.$onAction(({ name, after }) => {
     if (name !== 'mergeGetOptions') return
     after(handleGetTodos)

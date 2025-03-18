@@ -3,6 +3,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import terser from '@rollup/plugin-terser'
 import { visualizer } from 'rollup-plugin-visualizer'
+import htmlTransformPlugin from './html-transform-plugin'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -29,7 +30,8 @@ export default defineConfig({
                 eval: true
             }
         }),
-        visualizer({ open: true })
+        visualizer({ open: true }),
+        htmlTransformPlugin()
     ],
     resolve: {
         alias: {

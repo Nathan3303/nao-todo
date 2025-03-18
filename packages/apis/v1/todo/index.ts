@@ -1,3 +1,4 @@
+import axios from 'axios'
 import $axios from '@nao-todo/utils/axios'
 import { stringifyGetOptions } from '@nao-todo/utils'
 import { defaultGetTodosOptions } from './constants'
@@ -71,7 +72,10 @@ export const getTodo = async (options: GetTodoOptions) => {
 }
 
 // 获取待办（s）
-export const getTodos = async (options: GetTodosOptions = defaultGetTodosOptions) => {
+export const getTodos = async (
+    options: GetTodosOptions = defaultGetTodosOptions,
+    abortSignal?: AbortSignal
+) => {
     try {
         const queryString = stringifyGetOptions(options, (key, value) => {
             if (key === 'sort' && value) {
@@ -82,9 +86,14 @@ export const getTodos = async (options: GetTodosOptions = defaultGetTodosOptions
                 return value === null ? null : `${key}=${value}`
             }
         })
-        const response = await $axios.get(`/todos?${queryString}`)
+        const requestConfig = abortSignal ? { signal: abortSignal } : {}
+        const response = await $axios.get(`/todos?${queryString}`, requestConfig)
         return response.data as ResponseData
     } catch (error) {
+        if (axios.isCancel(error)) {
+            console.warn('[@nao-todo/apis/todo] getTodos: 请求已取消')
+            return { code: 50002, message: '请求已取消' } as ResponseData
+        }
         console.error('[@nao-todo/apis/todo] getTodos:', error)
         return { code: 50001, message: '服务器错误' } as ResponseData
     }
@@ -104,10 +113,10 @@ export const duplicateTodo = async (todoId: Todo['id']) => {
 // 永久删除待办（s）
 export const deleteTodos = async (todoIds: Todo['id'][]) => {
     try {
-        const response = await $axios.delete(`/todos`, {data: {todoIds}})
+        const response = await $axios.delete(`/todos`, { data: { todoIds } })
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/todo] deleteTodos:', error)
-        return {code: 50001, message: '服务器错误'} as ResponseData
+        return { code: 50001, message: '服务器错误' } as ResponseData
     }
 }
