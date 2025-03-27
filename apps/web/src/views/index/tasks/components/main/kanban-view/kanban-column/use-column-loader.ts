@@ -3,6 +3,7 @@ import { useTodoStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { getTodos } from '@nao-todo/apis'
 import { useTasksHandlerStore } from '@/views/index/tasks/stores'
+import { debounce } from '@nao-todo/utils'
 import type { GetTodosOptions, GetTodosResponseData } from '@nao-todo/types'
 
 const todoStore = useTodoStore()
@@ -56,15 +57,17 @@ export const useColumnLoader = (name: string) => {
         await loadMore()
     }
 
+    const debouncedLoadMore = debounce(resetAndLoad, 360)
+
     todoStore.$onAction(({ name: actionName, after }) => {
         if (actionName !== 'mergeGetOptions') return
         // console.log(name, actionName)
-        after(resetAndLoad)
+        after(debouncedLoadMore)
     })
 
     handlerStore.$onAction(({ name: actionName, after }) => {
         if (actionName !== 'handleRefresh') return
-        after(resetAndLoad)
+        after(debouncedLoadMore)
     })
 
     return {
@@ -74,6 +77,6 @@ export const useColumnLoader = (name: string) => {
         isAllLoaded,
         isTheFirstLoading,
         isDisabled,
-        loadMore
+        loadMore: debounce(loadMore, 64)
     }
 }
