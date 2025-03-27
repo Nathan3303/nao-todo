@@ -1,16 +1,11 @@
-@font-face {
-    font-family: 'pingfang';
-    src: url('/PingFang.woff2') format('woff2');
-    font-display: swap;
-}
-
-.nue-html {
-    --primary-font-family: 'Poppins', 'pingfang', 'Segoe UI Emoji', 'Apple Color Emoji', 'Twemoji',
-        'Noto Color Emoji', system-ui;
-}
-
 * {
-    font-family: var(--primary-font-family) sans-serif;
+    font-family: 'Poppins', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
+    line-height: 1.4;
+    font-weight: 400;
+    font-style: normal;
+    font-variant: normal;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
