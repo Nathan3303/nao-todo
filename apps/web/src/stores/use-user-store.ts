@@ -149,7 +149,11 @@ export const useUserStore = defineStore('userStore', () => {
         }
     }
 
-    //
+    // 更新用户头像链接
+    const updateUserAvatar = (avatarUrl: string) => {
+        if (!user.value) return
+        user.value.avatar = avatarUrl
+    }
 
     return {
         user,
@@ -162,6 +166,7 @@ export const useUserStore = defineStore('userStore', () => {
         doSignout,
         signOutWithConfirmation,
         doUpdateNickname,
-        updatePasswordWithConfirmation
+        updatePasswordWithConfirmation,
+        updateUserAvatar
     }
 })
