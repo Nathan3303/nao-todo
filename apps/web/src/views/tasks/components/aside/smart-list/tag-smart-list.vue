@@ -19,7 +19,7 @@
 import { computed } from 'vue'
 import { useTagStore } from '@/stores'
 import { TagColorDot } from '@nao-todo/components'
-import { useTasksDialogStore, useTasksHandlerStore } from '@/views/index/tasks'
+import { useTasksDialogStore, useTasksHandlerStore } from '@/views/tasks'
 import SmartList from './smart-list.vue'
 import type { Tag } from '@nao-todo/types'
 import type { SmartListLinkVO } from './types'

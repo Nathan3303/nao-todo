@@ -31,7 +31,7 @@
 import { computed, ref, shallowRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useProjectStore } from '@/stores/use-project-store'
-import { useTasksDialogStore } from '@/views/index/tasks'
+import { useTasksDialogStore } from '@/views/tasks'
 import { ProjectBoard, ProjectFilterBar } from '@nao-todo/components/project'
 import type { GetProjectsOptions, GetProjectsOptionsRaw, Project } from '@nao-todo/types'
 

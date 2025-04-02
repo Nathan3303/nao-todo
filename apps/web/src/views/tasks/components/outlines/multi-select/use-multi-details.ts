@@ -2,7 +2,7 @@ import { computed, ref, watch } from 'vue'
 import { useProjectStore, useTagStore, useTodoStore, useUserStore } from '@/stores'
 import { debounce } from '@nao-todo/utils'
 import { useRoute, useRouter } from 'vue-router'
-import { useTasksViewStore } from '@/views/index/tasks'
+import { useTasksViewStore } from '@/views/tasks'
 import type { TodoMultiDetailsProps } from './types'
 import type { Todo } from '@nao-todo/types'
 

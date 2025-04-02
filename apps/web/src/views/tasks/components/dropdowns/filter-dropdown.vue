@@ -98,7 +98,7 @@ import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 import { priorityOptions, stateOptions } from '@nao-todo/components/todo/selector/constants'
 import { computed } from 'vue'
-import { columnOptionsInfoMap } from '@/views/index/tasks/constants'
+import { columnOptionsInfoMap } from '@/views/tasks/constants'
 import type { InnerDropdownOptionVO } from './inner-dropdown/types'
 
 const route = useRoute()
