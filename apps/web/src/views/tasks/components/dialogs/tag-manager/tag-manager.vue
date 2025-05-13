@@ -31,7 +31,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { TagBoard, TagFilterBar } from '@nao-todo/components'
 import { useTagStore } from '@/stores'
-import { useTasksDialogStore, useTasksHandlerStore } from '@/views/index/tasks'
+import { useTasksDialogStore, useTasksHandlerStore } from '@/views/tasks'
 import type { GetTagsOptions, Tag } from '@nao-todo/types'
 
 defineOptions({ name: 'TagManager' })

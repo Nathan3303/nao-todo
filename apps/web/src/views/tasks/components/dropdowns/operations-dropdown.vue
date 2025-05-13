@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { useTodoStore } from '@/stores'
-import { useTasksDialogStore, useTasksHandlerStore, useTasksViewStore } from '@/views/index/tasks'
+import { useTasksDialogStore, useTasksHandlerStore, useTasksViewStore } from '@/views/tasks'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import { computed, ref } from 'vue'
 import { TagColorDot } from '@nao-todo/components'
 import { InnerDropdown, InnerDropdownOption } from './inner-dropdown'
-import { columnOptionsInfoMap } from '@/views/index/tasks/constants'
+import { columnOptionsInfoMap } from '@/views/tasks/constants'
 import type { InnerDropdownOptionVO } from './inner-dropdown/types'
 import type { TodoColumnOptions } from '@nao-todo/types'
 

@@ -1,81 +1,31 @@
-<script lang="ts" setup>
-import { reactive, ref, shallowRef } from 'vue'
-import { useUserStore } from '@/stores'
-import { NueInput, NueMessage } from 'nue-ui'
-import { useMoment } from '@nao-todo/utils'
-
-defineOptions({ name: 'UserProfileDialog' })
-
-const userStore = useUserStore()
-
-const nicknameInputRef = ref<InstanceType<typeof NueInput>>()
-const visible = ref(false)
-const user = shallowRef({ ...userStore.user })
-const updatingFlags = reactive({
-    nickname: false
-})
-
-// 更新用户昵称处理函数
-const handleUpdateNickname = async () => {
-    const newNickname = (user.value.nickname as string).trim()
-    if (!newNickname) {
-        NueMessage.error('用户昵称不能为空')
-        return
-    }
-    if (newNickname !== userStore.user?.nickname) {
-        const res = await userStore.doUpdateNickname(newNickname)
-        updatingFlags.nickname = !res
-    } else {
-        updatingFlags.nickname = false
-    }
-}
-
-// 取消更新用户昵称处理函数
-const handleCancelUpdateNickname = () => {
-    user.value.nickname = userStore.user?.nickname
-    updatingFlags.nickname = false
-}
-
-defineExpose({
-    show: () => (visible.value = true)
-})
-</script>
-
 <template>
-    <nue-dialog v-model="visible" theme="user-profile" title="用户信息">
-        <nue-div gap="24px" width="360px">
-            <!--            <nue-div justify="center">-->
-            <!--                <nue-avatar :src="user?.avatar" rounded size="72px" />-->
-            <!--            </nue-div>-->
-            <nue-div align="stretch" gap="4px" vertical>
-                <nue-text color="gray" size="12px">用户昵称</nue-text>
-                <template v-if="updatingFlags.nickname">
-                    <nue-div align="center" gap="8px">
-                        <nue-input
-                            ref="nicknameInputRef"
-                            v-model="user.nickname"
-                            :readonly="!updatingFlags.nickname"
-                            theme="small"
-                        />
-                        <nue-button theme="small" @click="handleUpdateNickname"> 更新</nue-button>
-                        <nue-button theme="small" @click="handleCancelUpdateNickname">
-                            取消
-                        </nue-button>
-                    </nue-div>
-                </template>
-                <template v-else>
-                    <nue-div align="center">
-                        <nue-text size="14px">{{ user.nickname }}</nue-text>
-                        <nue-button
-                            icon="edit"
-                            theme="icon-only,pure"
-                            @click="updatingFlags.nickname = true"
-                        />
-                    </nue-div>
-                </template>
+    <nue-dialog v-model="vo.dialogVisible" theme="small" title="用户信息">
+        <nue-div gap="1rem" width="360px">
+            <nue-div wrap="nowrap" align="center">
+                <nue-div vertical gap="4px" flex="1">
+                    <nue-avatar
+                        :src="vo.avatar"
+                        size="4rem"
+                        style="cursor: pointer"
+                        rounded
+                        @click="handleUpdateAvatar"
+                    />
+                    <input
+                        ref="avatarFileInputRef"
+                        type="file"
+                        accept="image/*"
+                        hidden
+                        @change="handleAvatarFileInputChange"
+                    />
+                </nue-div>
+                <nue-div vertical gap="4px" width="75%">
+                    <nue-text size="1rem">{{ vo.nickname }}</nue-text>
+                    <nue-text size=".875rem" color="#c4c4c4">{{ vo.email }}</nue-text>
+                </nue-div>
             </nue-div>
-            <nue-div align="stretch" gap="4px" vertical>
-                <nue-div align="center">
+            <nue-divider />
+            <nue-div wrap="nowrap" align="center" justify="space-between">
+                <nue-div align="center" flex="1">
                     <nue-text color="gray" size="12px">用户 ID</nue-text>
                     <nue-tooltip
                         content="该用户在 NaoTodo 上的唯一标识"
@@ -85,35 +35,125 @@ defineExpose({
                         <nue-icon color="gray" name="help" size="14px" />
                     </nue-tooltip>
                 </nue-div>
-                <nue-text size="14px">{{ user.id }}</nue-text>
-            </nue-div>
-            <nue-div align="stretch" gap="4px" vertical>
-                <nue-div align="center">
-                    <nue-text color="gray" size="12px">用户角色</nue-text>
-                    <nue-tooltip
-                        content="该用户在 NaoTodo 上的所属角色"
-                        placement="right-center"
-                        size="small"
-                    >
-                        <nue-icon color="gray" name="help" size="14px" />
-                    </nue-tooltip>
+                <nue-div align="center" width="75%">
+                    <nue-text size="14px">{{ vo.userId }}</nue-text>
                 </nue-div>
-                <nue-text size="14px">
-                    {{ user.role === 'user' ? 'NaoTodo 个人用户' : '其他角色' }}
-                </nue-text>
             </nue-div>
-            <nue-div align="stretch" gap="4px" vertical>
+            <nue-div wrap="nowrap" align="center" justify="space-between">
                 <nue-text color="gray" size="12px">注册时间</nue-text>
-                <nue-text size="14px">
-                    {{ useMoment(user.createdAt).format('YYYY年MM月DD日 HH时mm分') }}
-                </nue-text>
+                <nue-div align="center" width="75%">
+                    <nue-text size="14px">
+                        {{ useMoment(vo.signUpAt).format('YYYY年MM月DD日 HH时mm分') }}
+                    </nue-text>
+                </nue-div>
+            </nue-div>
+            <nue-divider />
+            <nue-div wrap="nowrap" align="center" justify="space-between">
+                <nue-text color="gray" size="12px">用户昵称</nue-text>
+                <nue-div align="center" width="calc(75% + 12px)">
+                    <nue-input ref="nicknameInputRef" v-model="vo.newNickname" flex="1" />
+                </nue-div>
+            </nue-div>
+            <nue-divider />
+            <nue-div justify="end">
+                <nue-button theme="noshape" @click="vo.dialogVisible = false">取消</nue-button>
+                <nue-button
+                    theme="primary"
+                    :disabled="!isNew"
+                    :loading="vo.updateLoading"
+                    @click="handleUpdateNickname"
+                >
+                    保存修改
+                </nue-button>
             </nue-div>
         </nue-div>
     </nue-dialog>
 </template>
 
-<style>
-.nue-dialog--user-profile {
-    gap: 24px;
+<script lang="ts" setup>
+import { reactive, ref, computed } from 'vue'
+import { useUserStore } from '@/stores'
+import { NueInput, NueMessage } from 'nue-ui'
+import { useMoment } from '@nao-todo/utils'
+import type { UserProfileDialogVO } from './types'
+
+defineOptions({ name: 'UserProfileDialog' })
+
+const userStore = useUserStore()
+
+const nicknameInputRef = ref<InstanceType<typeof NueInput>>()
+const avatarFileInputRef = ref<HTMLInputElement>()
+const vo = reactive<UserProfileDialogVO>({
+    avatar: userStore.user?.avatar,
+    nickname: userStore.user?.nickname,
+    email: userStore.user?.email,
+    userId: userStore.user?.id,
+    signUpAt: userStore.user?.createdAt.toString(),
+    newNickname: userStore.user?.nickname,
+    updateLoading: false,
+    dialogVisible: false
+})
+
+const isNew = computed(() => {
+    return vo.nickname !== vo.newNickname
+})
+
+const handleUpdateNickname = async () => {
+    if (!vo.newNickname) {
+        NueMessage.error('用户昵称不能为空')
+        return
+    }
+    try {
+        const newNickname = vo.newNickname.trim()
+        vo.updateLoading = true
+        const res = await userStore.doUpdateNickname(newNickname)
+        if (res) {
+            vo.nickname = newNickname
+        }
+    } catch (e) {
+        console.warn('[UserProfileDialog] handleUpdateNickname error:', e)
+    } finally {
+        vo.updateLoading = false
+    }
 }
-</style>
+
+const handleUpdateAvatar = () => {
+    if (!avatarFileInputRef.value) return
+    avatarFileInputRef.value.click()
+}
+
+const handleAvatarFileInputChange = async () => {
+    if (!avatarFileInputRef.value) return
+    const file = avatarFileInputRef.value.files?.[0]
+    if (!file) return
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+        NueMessage.error('图片格式不正确')
+        return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+        NueMessage.error('图片大小不能超过 2 M')
+        return
+    }
+    try {
+        const formData = new FormData()
+        formData.append('avatar', file)
+        const response = await fetch('http://localhost:3002/api/user/avatar', {
+            method: 'POST',
+            body: formData,
+            headers: { Authorization: `Bearer ${userStore.token}` }
+        })
+        const req = await response.json()
+        if (req.code === 20000) {
+            vo.avatar = req.data.url
+            userStore.updateUserAvatar(req.data.url)
+            avatarFileInputRef.value.value = ''
+        }
+    } catch (e) {
+        console.warn(e)
+    }
+}
+
+defineExpose({
+    show: () => (vo.dialogVisible = true)
+})
+</script>

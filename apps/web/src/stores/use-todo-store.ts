@@ -46,6 +46,7 @@ export const useTodoStore = defineStore('todoStore', () => {
 
     // 显示列选项
     const columnOptions = shallowRef<TodoColumnOptions>({
+        name: true,
         state: true,
         priority: true,
         project: true,

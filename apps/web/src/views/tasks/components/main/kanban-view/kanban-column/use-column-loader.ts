@@ -2,7 +2,7 @@ import { computed, ref, shallowReactive } from 'vue'
 import { useTodoStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { getTodos } from '@nao-todo/apis'
-import { useTasksHandlerStore } from '@/views/index/tasks/stores'
+import { useTasksHandlerStore } from '@/views/tasks/stores'
 import { debounce } from '@nao-todo/utils'
 import type { GetTodosOptions, GetTodosResponseData } from '@nao-todo/types'
 
