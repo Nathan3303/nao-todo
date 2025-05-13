@@ -1,6 +1,6 @@
 <template>
     <nue-dialog v-model="vo.dialogVisible" theme="small" title="用户信息">
-        <nue-div gap="1rem" width="360px">
+        <nue-div gap="1rem">
             <nue-div wrap="nowrap" align="center">
                 <nue-div vertical gap="4px" flex="1">
                     <nue-avatar
