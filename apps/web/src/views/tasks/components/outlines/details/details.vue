@@ -33,6 +33,8 @@
             @delete-todo-permanently="handleDeleteTodoPermanently"
             @delete-todo="handleDeleteTodo"
             @restore-todo="handleRestoreTodo"
+            @give-up-todo="handleGiveUpTodo"
+            @cancel-give-up-todo="handleCancelGiveUpTodo"
         />
     </nue-container>
     <details-empty v-else />
@@ -65,7 +67,9 @@ const {
     handleDeleteTodoPermanently,
     handleRestoreTodo,
     handleUpdateTags,
-    handleDuplicateTodo
+    handleDuplicateTodo,
+    handleGiveUpTodo,
+    handleCancelGiveUpTodo
 } = useTodoDetails()
 const { isCommenting, commentsCount, handleLeaveComment } = useCommentDetails()
 

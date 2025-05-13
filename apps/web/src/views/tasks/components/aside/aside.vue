@@ -24,6 +24,7 @@ const collapseItemsRecord = ref(['projects', 'filters', 'tags'])
     </nue-collapse>
     <nue-divider />
     <aside-link icon="heart" route-name="tasks-favorite">已收藏</aside-link>
+    <aside-link icon="clear" route-name="tasks-giveup">已放弃</aside-link>
     <aside-link icon="delete" route-name="tasks-recycle">垃圾桶</aside-link>
 </template>
 

@@ -42,6 +42,8 @@ export type DetailsFooterEmits = {
     (e: 'deleteTodoPermanently'): void
     (e: 'deleteTodo'): void
     (e: 'restoreTodo'): void
+    (e: 'giveUpTodo'): void
+    (e: 'cancelGiveUpTodo'): void
 }
 
 export type DetailsMainEventsProps = {

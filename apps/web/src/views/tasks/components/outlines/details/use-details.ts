@@ -148,6 +148,18 @@ export const useTodoDetails = () => {
         await router.push({ name: route.name, params: { taskId: (result as Todo).id as string } })
     }
 
+    const handleGiveUpTodo = async () => {
+        if (!shadowTodo.value) return
+        const result = await todoStore.giveUpTodoWithConfirmation(shadowTodo.value.id)
+        if (result) await handleClose()
+    }
+    
+    const handleCancelGiveUpTodo = async () => {
+        if (!shadowTodo.value) return
+        const result = await todoStore.cancelGiveUpTodoWithConfirmation(shadowTodo.value.id)
+        if (result) await handleClose()
+    }
+
     const handleClose = async () => {
         cancelTimer(true)
         shadowTodo.value = void 0
@@ -177,6 +189,8 @@ export const useTodoDetails = () => {
         handleDeleteTodoPermanently,
         handleRestoreTodo,
         handleUpdateTags,
-        handleDuplicateTodo
+        handleDuplicateTodo,
+        handleGiveUpTodo,
+        handleCancelGiveUpTodo
     }
 }

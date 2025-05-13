@@ -20,6 +20,7 @@ watch(
         class="nue-drawer--no-header nue-drawer--tasks-outline"
         min-span="375px"
         span="480px"
+        close-by-button-only
     >
         <tasks-details />
     </nue-drawer>

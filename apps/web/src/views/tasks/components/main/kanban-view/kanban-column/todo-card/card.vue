@@ -5,6 +5,7 @@
         :data-is-done="isDone"
         @click="handleClick"
         :data-actived="actived"
+        :data-giveup="todo.isGivenUp"
     >
         <nue-div vertical width="fit-content" gap="0px">
             <nue-icon
@@ -16,6 +17,7 @@
         <nue-div vertical gap="8px" flex>
             <nue-div class="todo-card__info">
                 <nue-div align="center" gap="4px" justify="space-between">
+                    <span class="todo-card__giveup-tag" v-if="todo.isGivenUp">已放弃</span>
                     <nue-text class="todo-card__name">{{ todo.name }}</nue-text>
                     <nue-div class="todo-card__actions">
                         <nue-button

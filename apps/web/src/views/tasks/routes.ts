@@ -9,6 +9,7 @@ const routeLinks = [
     { path: '$p:projectId?', meta: { category: 'project', id: 'project' } },
     { path: '$t:tagId?', meta: { category: 'tag', id: 'tag' } },
     { path: 'favorite', meta: { category: 'basic', title: '已收藏', id: 'favorite' } },
+    { path: 'giveup', meta: { category: 'basic', title: '已放弃', id: 'giveup' } },
     { path: 'recycle', meta: { category: 'basic', title: '垃圾桶', id: 'recycle' } }
 ]
 

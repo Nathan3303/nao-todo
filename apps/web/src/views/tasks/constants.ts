@@ -43,7 +43,7 @@ export const columnOptionsInfoMap = {
 // 默认偏好
 export const defaultPreference: ProjectPreference = {
     viewType: 'table',
-    getTodosOptions: { page: 1, limit: 20, isDeleted: false },
+    getTodosOptions: { page: 1, limit: 20, isDeleted: false, isGivenUp: false },
     columns: defaultColumnOptions
 }
 
@@ -57,7 +57,7 @@ export const basicViewsInfo: {
         description: '所有板块是专门展示和管理工作所有需要完成的任务的地方。',
         preference: {
             viewType: 'table',
-            getTodosOptions: { isDeleted: false },
+            getTodosOptions: { isDeleted: false, isGivenUp: false },
             columns: defaultColumnOptions
         },
         createTodoOptions: { dueDate: {} },
@@ -82,7 +82,8 @@ export const basicViewsInfo: {
             viewType: 'table',
             getTodosOptions: {
                 isDeleted: false,
-                relativeDate: 'today'
+                relativeDate: 'today',
+                isGivenUp: false
             },
             columns: defaultColumnOptions
         },
@@ -127,7 +128,8 @@ export const basicViewsInfo: {
             viewType: 'table',
             getTodosOptions: {
                 isDeleted: false,
-                relativeDate: 'tomorrow'
+                relativeDate: 'tomorrow',
+                isGivenUp: false
             },
             columns: defaultColumnOptions
         },
@@ -172,7 +174,8 @@ export const basicViewsInfo: {
             viewType: 'table',
             getTodosOptions: {
                 isDeleted: false,
-                relativeDate: 'week'
+                relativeDate: 'week',
+                isGivenUp: false
             },
             columns: defaultColumnOptions
         },
@@ -216,7 +219,8 @@ export const basicViewsInfo: {
         preference: {
             viewType: 'table',
             getTodosOptions: {
-                isDeleted: false
+                isDeleted: false,
+                isGivenUp: false
             },
             columns: defaultColumnOptions
         },
@@ -265,6 +269,35 @@ export const basicViewsInfo: {
             }
         }
     },
+    giveup: {
+        id: 'giveup',
+        title: '已放弃的待办',
+        description: '下方是已放弃的待办。',
+        preference: {
+            viewType: 'table',
+            getTodosOptions: { isGivenUp: true, isDeleted: false },
+            columns: defaultColumnOptions
+        },
+        createTodoOptions: {
+            dueDate: {}
+        },
+        handlers: {
+            handleCreateTodo: async (todoName: Todo['name']) => {
+                await todoStore.doCreateTodo({
+                    dueDate: {},
+                    name: todoName
+                })
+            },
+            handleCreateTodoByDialog: async (caller: (args: TodoCreatorProps) => void) => {
+                caller({
+                    userId: userStore.user?.id || '',
+                    projects: projectStore.projects,
+                    tags: tagStore.tags,
+                    presetInfo: {}
+                })
+            }
+        }
+    },
     recycle: {
         id: 'recycle',
         title: '垃圾桶',
@@ -277,4 +310,3 @@ export const basicViewsInfo: {
         createTodoOptions: { dueDate: {} }
     }
 }
-
