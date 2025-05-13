@@ -124,33 +124,10 @@ const handleUpdateAvatar = () => {
 
 const handleAvatarFileInputChange = async () => {
     if (!avatarFileInputRef.value) return
-    const file = avatarFileInputRef.value.files?.[0]
-    if (!file) return
-    if (!['image/jpeg', 'image/png'].includes(file.type)) {
-        NueMessage.error('图片格式不正确')
-        return
-    }
-    if (file.size > 2 * 1024 * 1024) {
-        NueMessage.error('图片大小不能超过 2 M')
-        return
-    }
-    try {
-        const formData = new FormData()
-        formData.append('avatar', file)
-        const response = await fetch('http://localhost:3002/api/user/avatar', {
-            method: 'POST',
-            body: formData,
-            headers: { Authorization: `Bearer ${userStore.token}` }
-        })
-        const req = await response.json()
-        if (req.code === 20000) {
-            vo.avatar = req.data.url
-            userStore.updateUserAvatar(req.data.url)
-            avatarFileInputRef.value.value = ''
-        }
-    } catch (e) {
-        console.warn(e)
-    }
+    const result = await userStore.updateUserAvatar(avatarFileInputRef.value.files?.[0])
+    console.log('[UserProfileDialog] handleAvatarFileInputChange', result)
+    vo.avatar = result
+    avatarFileInputRef.value.value = ''
 }
 
 defineExpose({
