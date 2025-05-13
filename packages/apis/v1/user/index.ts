@@ -1,4 +1,4 @@
-import SparkMD5 from "spark-md5";
+import SparkMD5 from 'spark-md5'
 import $axios from '@nao-todo/utils/axios'
 import type { ResponseData, SigninOptions, SignupOptions } from '@nao-todo/types'
 
@@ -71,10 +71,23 @@ export const updateNickname = async (newNickname: string) => {
 // 修改密码
 export const updatePassword = async (newPasswordRaw: string, phoneNumber?: number) => {
     try {
-        const response = await $axios.post('/user/password', { password: SparkMD5.hash(newPasswordRaw) })
+        const response = await $axios.post('/user/password', {
+            password: SparkMD5.hash(newPasswordRaw)
+        })
         return response.data as ResponseData
     } catch (error) {
         console.log('[@nao-todo/apis/updatePassword]:', error)
+        return { code: 50001, message: '服务器错误' } as ResponseData
+    }
+}
+
+// 更新用户头像
+export const updateAvatar = async (formData: FormData) => {
+    try {
+        const response = await $axios.post('/user/avatar', formData)
+        return response.data as ResponseData
+    } catch (error) {
+        console.log('[@nao-todo/apis/updateAvatar]:', error)
         return { code: 50001, message: '服务器错误' } as ResponseData
     }
 }

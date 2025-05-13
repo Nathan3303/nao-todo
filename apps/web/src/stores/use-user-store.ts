@@ -1,7 +1,15 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { defineStore } from 'pinia'
-import { signin, signup, checkin, signout, updateNickname, updatePassword } from '@nao-todo/apis'
+import {
+    signin,
+    signup,
+    checkin,
+    signout,
+    updateNickname,
+    updatePassword,
+    updateAvatar
+} from '@nao-todo/apis'
 import { throttle } from '@nao-todo/utils'
 import getJWTPayload from '@nao-todo/utils/get-jwt-payload'
 import { NueConfirm, NueMessage } from 'nue-ui'
@@ -150,9 +158,43 @@ export const useUserStore = defineStore('userStore', () => {
     }
 
     // 更新用户头像链接
-    const updateUserAvatar = (avatarUrl: string) => {
-        if (!user.value) return
-        user.value.avatar = avatarUrl
+    const updateUserAvatar = async (avatar: File | undefined) => {
+        if (!avatar || !user.value) return
+        if (!['image/jpeg', 'image/png', 'image/gif'].includes(avatar.type)) {
+            NueMessage.error('图片格式不正确')
+            return
+        }
+        if (avatar.size > 2 * 1024 * 1024) {
+            NueMessage.error('图片大小不能超过 2 M')
+            return
+        }
+        try {
+            const formData = new FormData()
+            formData.append('avatar', avatar)
+            const result = await updateAvatar(formData)
+            const responseData = result.data as { url: string }
+            if (result.code === 20000) {
+                user.value.avatar = responseData.url
+                // vo.avatar = responseData.url
+                // userStore.updateUserAvatar(result.data.url)
+                // avatarFileInputRef.value.value = ''
+            }
+            console.log(result)
+            // const response = await fetch('http://localhost:3002/api/user/avatar', {
+            //     method: 'POST',
+            //     body: formData,
+            //     headers: { Authorization: `Bearer ${userStore.token}` }
+            // })
+            // const req = await response.json()
+            // if (req.code === 20000) {
+            //     vo.avatar = req.data.url
+            //     userStore.updateUserAvatar(req.data.url)
+            //     avatarFileInputRef.value.value = ''
+            // }
+            return responseData.url || void 0
+        } catch (e) {
+            console.warn(e)
+        }
     }
 
     return {
