@@ -24,6 +24,7 @@ type Todo = {
     isArchived: boolean
     archivedAt: string | null
     isFavorited: boolean
+    isGivenUp: boolean
     createdAt: string
     updatedAt: string
     // Additional fields
@@ -51,6 +52,7 @@ type GetTodosOptionsRaw = {
     isArchived?: Todo['isArchived']
     isDeleted?: Todo['isDeleted']
     isFavorited?: Todo['isFavorited']
+    isGivenUp?: Todo['isFavorited']
     sort?: GetTodosSortOptions
     relativeDate?: 'today' | 'tomorrow' | 'week' | '-today'
     tagId?: Tag['id']
@@ -69,6 +71,7 @@ type UpdateTodoOptionsRaw = {
     isArchived?: Todo['isArchived']
     archivedAt?: Todo['archivedAt']
     isFavorited?: Todo['isFavorited']
+    isGivenUp?: Todo['isFavorited']
 }
 
 type CreateTodoOptionsRaw = {
@@ -84,6 +87,7 @@ type CreateTodoOptionsRaw = {
     isArchived?: Todo['isArchived']
     archivedAt?: Todo['archivedAt']
     isFavorited?: Todo['isFavorited']
+    isGivenUp?: Todo['isFavorited']
 }
 
 type CreateTodoOptions = CreateTodoOptionsRaw

@@ -334,6 +334,50 @@ export const useTodoStore = defineStore('todoStore', () => {
         return false
     }
 
+    // 放弃任务（带确认）
+    const giveUpTodoWithConfirmation = async (todoId: Todo['id']) => {
+        try {
+            const result = await NueConfirm({
+                title: '放弃待办确认',
+                content: '确认放弃该待办吗？放弃后依然能够在 “已放弃” 视图中重新处理。',
+                confirmButtonText: '放弃',
+                cancelButtonText: '取消',
+                onConfirm: async () => await doUpdateTodo(todoId, { isGivenUp: true })
+            })
+            if (result) {
+                NueMessage.success('放弃待办成功')
+                return result
+            } else {
+                NueMessage.error('放弃待办失败')
+            }
+        } catch (error) {
+            console.warn('[UseTodoStore] giveUpTodoWithConfirmation:', error)
+        }
+        return false
+    }
+
+    // 取消放弃任务（带确认）
+    const cancelGiveUpTodoWithConfirmation = async (todoId: Todo['id']) => {
+        try {
+            const result = await NueConfirm({
+                title: '取消放弃待办',
+                content: '取消放弃该待办吗？',
+                confirmButtonText: '确认',
+                cancelButtonText: '取消',
+                onConfirm: async () => await doUpdateTodo(todoId, { isGivenUp: false })
+            })
+            if (result) {
+                NueMessage.success('取消放弃待办成功')
+                return result
+            } else {
+                NueMessage.error('取消放弃待办失败')
+            }
+        } catch (error) {
+            console.warn('[UseTodoStore] cancelGiveUpTodoWithConfirmation:', error)
+        }
+        return false
+    }
+
     // 根据清单偏好设置获取选项
     const setGetOptionsByPreference = (preference: Project['preference']) => {
         if (!preference) return
@@ -378,6 +422,8 @@ export const useTodoStore = defineStore('todoStore', () => {
         deleteTodoPermanentlyWithConfirmation,
         deleteTodosPermanentlyWithConfirmation,
         duplicateTodoWithConfirmation,
+        giveUpTodoWithConfirmation,
+        cancelGiveUpTodoWithConfirmation,
         setGetOptionsByPreference,
         getTodoByIdFromLocal,
         addTodoToLocal,

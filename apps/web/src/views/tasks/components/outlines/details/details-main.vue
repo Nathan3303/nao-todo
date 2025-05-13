@@ -26,6 +26,9 @@ const formatDate = (dateString: string) => {
 <template>
     <nue-main class="tasks-details-view__main" v-if="shadowTodo">
         <nue-container theme="vertical,inner">
+            <span class="tasks-details-view__giveup-tag" v-if="shadowTodo.isGivenUp">
+                任务已放弃
+            </span>
             <nue-header class="tasks-details-view__status">
                 <nue-div align="center" width="fit-content">
                     <todo-selector
@@ -147,5 +150,14 @@ const formatDate = (dateString: string) => {
 .todo-comments-wrapper {
     border-top: 1px solid var(--divider-color);
     padding: 8px;
+}
+
+.tasks-details-view__giveup-tag {
+    font-size: 0.75rem;
+    height: 32px;
+    line-height: 32px;
+    background-color: #ff7b47;
+    color: white;
+    text-align: center;
 }
 </style>

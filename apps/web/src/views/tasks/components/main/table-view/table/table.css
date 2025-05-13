@@ -73,6 +73,11 @@
         }
     }
 
+    .todo-table__main__row[data-giveup='true'] {
+        opacity: 0.8;
+        transition: opacity 0.16s ease;
+    }
+
     .todo-table__main__col {
         line-height: 21px;
         overflow: hidden;
@@ -88,6 +93,16 @@
     .col-name .col-name__description {
         color: var(--primary-color-600);
         white-space: break-spaces;
+    }
+
+    .col-name .col-name__giveup-tag {
+        font-size: .75rem;
+        height: 18px;
+        line-height: 18px;
+        padding: 0 6px;
+        border-radius: var(--primary-radius);
+        background-color: #ff7b47;
+        color: white;
     }
 
     .col-created-at,
@@ -141,7 +156,7 @@
             padding: 8px;
             background-color: var(--primary-color-100);
 
-            &[data-selected="true"] {
+            &[data-selected='true'] {
                 border: 1px solid #ffbd64;
                 position: relative;
 

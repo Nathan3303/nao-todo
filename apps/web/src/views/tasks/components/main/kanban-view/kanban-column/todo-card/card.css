@@ -23,6 +23,16 @@
         gap: 0;
     }
 
+    .todo-card__giveup-tag {
+        font-size: 0.75rem;
+        height: 18px;
+        line-height: 18px;
+        padding: 0 6px;
+        border-radius: var(--primary-radius);
+        background-color: #ff7b47;
+        color: white;
+    }
+
     .todo-card__name {
         display: -webkit-box;
         -webkit-box-orient: vertical;
@@ -100,5 +110,9 @@
             text-decoration: line-through;
             color: gray;
         }
+    }
+
+    &[data-giveup='true'] {
+        opacity: 0.8;
     }
 }

@@ -24,6 +24,7 @@ type TasksMainBasicViewNames =
     | 'week'
     | 'inbox'
     | 'favorite'
+    | 'giveup'
     | 'recycle'
 
 type TasksMultiSelectInfo = {
