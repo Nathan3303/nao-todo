@@ -2,10 +2,10 @@
     <nue-dialog v-model="vo.dialogVisible" theme="small" title="用户信息">
         <nue-div gap="1rem">
             <nue-div wrap="nowrap" align="center">
-                <nue-div vertical gap="4px" flex="1">
+                <nue-div vertical gap="4px" flex="1" style="position: relative">
                     <nue-avatar
                         :src="vo.avatar"
-                        size="4rem"
+                        size="64px"
                         style="cursor: pointer"
                         rounded
                         @click="handleUpdateAvatar"
@@ -16,6 +16,12 @@
                         accept="image/*"
                         hidden
                         @change="handleAvatarFileInputChange"
+                    />
+                    <nue-icon
+                        class="update-avatar-loading-icon"
+                        v-if="updateAvatarLoading"
+                        name="loading"
+                        :spin="updateAvatarLoading"
                     />
                 </nue-div>
                 <nue-div vertical gap="4px" width="75%">
@@ -93,6 +99,7 @@ const vo = reactive<UserProfileDialogVO>({
     updateLoading: false,
     dialogVisible: false
 })
+const updateAvatarLoading = ref(false)
 
 const isNew = computed(() => {
     return vo.nickname !== vo.newNickname
@@ -124,13 +131,25 @@ const handleUpdateAvatar = () => {
 
 const handleAvatarFileInputChange = async () => {
     if (!avatarFileInputRef.value) return
+    updateAvatarLoading.value = true
     const result = await userStore.updateUserAvatar(avatarFileInputRef.value.files?.[0])
     console.log('[UserProfileDialog] handleAvatarFileInputChange', result)
-    vo.avatar = result
+    if (result) vo.avatar = result
     avatarFileInputRef.value.value = ''
+    updateAvatarLoading.value = false
 }
 
 defineExpose({
     show: () => (vo.dialogVisible = true)
 })
 </script>
+
+<style scoped>
+.update-avatar-loading-icon {
+    position: absolute;
+    top: calc((64px - 2rem) / 2);
+    left: calc((64px - 2rem) / 2);
+    --icon-size: 2rem;
+    color: #cccccc;
+}
+</style>
