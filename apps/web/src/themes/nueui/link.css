@@ -27,23 +27,11 @@
     }
 }
 
-
 /* plink */
 .nue-link--plink {
-    overflow: hidden;
-}
-
-.nue-link--plink .nue-icon {
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    --font-size: 16px;
-}
-
-.nue-link--plink span {
-    width: 100%;
-    text-align: left;
-    font-size: var(--text-xs);
+    span {
+        line-height: 1.4;
+    }
 }
 
 /* disabled */
@@ -51,4 +39,3 @@
     opacity: 0.6;
     background-color: #f5f5f5;
 }
-
