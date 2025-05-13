@@ -16,6 +16,7 @@ const todoStore = useTodoStore()
 
 // 默认列选项
 export const defaultColumnOptions: TodoColumnOptions = {
+    name: true,
     endAt: true,
     state: true,
     priority: true,
