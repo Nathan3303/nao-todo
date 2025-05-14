@@ -1,10 +1,5 @@
 <template>
     <nue-container theme="vertical,inner">
-        <!-- <nue-header height="96px">
-            <template #logo>
-                <nue-avatar size="48px" />
-            </template>
-        </nue-header> -->
         <nue-main
             :allow-collapse-aside="false"
             :allow-hide-aside="false"
@@ -50,5 +45,12 @@ const routeLinks = [
 ]
 </script>
 
-<style scoped></style>
+<style>
+.settings-view__form-row {
+    gap: 0.5rem;
+    flex-direction: column;
+    width: min(100%, 32rem);
+    align-items: stretch;
+}
+</style>
 

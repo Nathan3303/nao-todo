@@ -6,9 +6,7 @@
         <nue-main>
             <nue-div vertical gap="2rem">
                 <profile-avatar />
-                <!-- <nue-divider /> -->
                 <profile-nickname />
-                <!-- <nue-divider /> -->
                 <profile-info />
             </nue-div>
         </nue-main>
@@ -22,10 +20,3 @@ import ProfileInfo from './profile-info.vue'
 
 defineOptions({ name: 'SettingsProfile' })
 </script>
-
-<style scoped>
-.form-row {
-    gap: 0.5rem;
-    flex-direction: column;
-}
-</style>

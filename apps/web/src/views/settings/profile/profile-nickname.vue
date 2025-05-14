@@ -2,7 +2,7 @@
     <nue-div vertical>
         <nue-text theme="h4">基本信息修改</nue-text>
         <nue-div vertical>
-            <nue-div class="form-row">
+            <nue-div class="settings-view__form-row">
                 <nue-text color="gray" size=".875rem">用户昵称</nue-text>
                 <nue-text color="#999" size=".75rem">
                     昵称会在任务创建者、分配者、项目成员等区块中展示，你可以随时修改。
@@ -63,8 +63,8 @@ const handleUpdateNickname = async () => {
 </script>
 
 <style scoped>
-.form-row {
+/* .form-row {
     gap: 0.5rem;
     flex-direction: column;
-}
+} */
 </style>
