@@ -7,6 +7,7 @@ import fqfocusRoutes from '@/views/fqfocus/routes'
 import searchRoutes from '@/views/search/routes'
 import aiRoutes from '@/views/ai/routes'
 import checkinRoutes from '@/views/checkin/routes'
+import settingsRoutes from '@/views/settings/routes'
 
 const router = createRouter({
     history: createWebHashHistory(),
@@ -23,7 +24,14 @@ const router = createRouter({
             },
             component: () => import('@/views/index.vue'),
             redirect: { name: 'tasks' },
-            children: [tasksRoutes, calendarRoutes, fqfocusRoutes, searchRoutes, aiRoutes]
+            children: [
+                tasksRoutes,
+                calendarRoutes,
+                fqfocusRoutes,
+                searchRoutes,
+                aiRoutes,
+                settingsRoutes
+            ]
         }
     ]
 })

@@ -2,13 +2,13 @@
     <nue-container class="index-view" theme="horizontal">
         <nue-header v-if="viewStore.indexHeaderVisible" class="index-view__header">
             <template #logo>
-                <user-dropdown
-                    :user="user"
-                    placement="right-start"
-                    @logout="userStore.signOutWithConfirmation"
-                    @show-profile="userProfileDialogRef?.show"
-                    @update-passwd="updatePasswordDialogRef?.show"
-                />
+                <nue-tooltip size="small" :content="`你好👋，${user?.nickname}`" placement="right-center">
+                    <nue-avatar
+                        :src="user?.avatar"
+                        style="cursor: pointer"
+                        @click="$router.push('/settings/profile')"
+                    />
+                </nue-tooltip>
             </template>
             <template #navigators>
                 <nue-div vertical gap="24px">
@@ -28,9 +28,6 @@
             <router-view></router-view>
         </nue-main>
     </nue-container>
-    <!-- Dialogs -->
-    <user-profile-dialog ref="userProfileDialogRef" />
-    <update-password-dialog ref="updatePasswordDialogRef" />
 </template>
 
 <script lang="ts" setup>
@@ -38,7 +35,6 @@ import { provide, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { UpdatePasswordDialog } from '@/layers'
 import { useUserStore, useViewStore } from '@/stores'
-import { UserDropdown } from '@nao-todo/components'
 import { UserProfileDialog } from '@/layers/user-profile-dialog'
 import { type IndexViewCtx, IndexViewCtxKey } from '@nao-todo/types/views/index-view'
 
@@ -53,10 +49,11 @@ const updatePasswordDialogRef = ref<InstanceType<typeof UpdatePasswordDialog>>()
 
 const routeLinks = [
     { name: '任务', icon: 'square-check-fill', route: '/tasks' },
-    { name: '日历视图', icon: 'calendar', route: '/calendar' },
-    { name: '番茄专注', icon: 'focus2', route: '/fqfocus' },
+    { name: '日历', icon: 'calendar', route: '/calendar' },
+    { name: '专注', icon: 'focus2', route: '/fqfocus' },
     { name: '搜索', icon: 'search2', route: '/search' },
-    { name: '对话大模型', icon: 'ai-chat-fill', route: '/ai' }
+    { name: '对话', icon: 'ai-chat-fill', route: '/ai' },
+    { name: '设置', icon: 'settings-fill', route: '/settings' }
 ]
 
 provide<IndexViewCtx>(IndexViewCtxKey, {
