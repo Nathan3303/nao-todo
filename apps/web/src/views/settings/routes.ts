@@ -12,11 +12,6 @@ const routes: RouteRecordRaw = {
             component: () => import('./profile/index.vue')
         },
         {
-            path: 'account',
-            name: 'settings-account',
-            component: () => import('./account/index.vue')
-        },
-        {
             path: 'password',
             name: 'settings-password',
             component: () => import('./password/index.vue')

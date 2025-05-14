@@ -135,14 +135,18 @@ export const useUserStore = defineStore('userStore', () => {
     }
 
     // 更新密码
-    const updatePasswordWithConfirmation = async (newPasswordRaw: string) => {
+    const updatePasswordWithConfirmation = async (
+        oldPasswordRaw: string,
+        newPasswordRaw: string
+    ) => {
         try {
             const result = (await NueConfirm({
                 title: '提交更新密码',
                 content: '确定要更新密码吗？（更新成功后需要重新登录）',
                 confirmButtonText: '确认',
                 cancelButtonText: '取消',
-                onConfirm: async () => await updatePassword(newPasswordRaw.trim())
+                onConfirm: async () =>
+                    await updatePassword(oldPasswordRaw.trim(), newPasswordRaw.trim())
             })) as ResponseData
             if (result.code === 20000) {
                 NueMessage.success('更新密码成功')
@@ -150,7 +154,7 @@ export const useUserStore = defineStore('userStore', () => {
                 if (signoutRes) await router.push('/auth/login')
                 return true
             }
-            NueMessage.error('更新密码失败')
+            NueMessage.error(result.message || '更新密码失败')
             return false
         } catch (e) {
             console.warn('[UserStore] updatePasswordWithConfirmation:', e)

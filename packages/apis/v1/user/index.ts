@@ -69,9 +69,10 @@ export const updateNickname = async (newNickname: string) => {
 }
 
 // 修改密码
-export const updatePassword = async (newPasswordRaw: string, phoneNumber?: number) => {
+export const updatePassword = async (oldPasswordRaw: string, newPasswordRaw: string) => {
     try {
         const response = await $axios.post('/user/password', {
+            oldPassword: SparkMD5.hash(oldPasswordRaw),
             password: SparkMD5.hash(newPasswordRaw)
         })
         return response.data as ResponseData
