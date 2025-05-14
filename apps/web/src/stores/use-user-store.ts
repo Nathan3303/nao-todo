@@ -174,24 +174,10 @@ export const useUserStore = defineStore('userStore', () => {
             const result = await updateAvatar(formData)
             const responseData = result.data as { url: string }
             if (result.code === 20000) {
-                user.value.avatar = responseData.url
-                // vo.avatar = responseData.url
-                // userStore.updateUserAvatar(result.data.url)
-                // avatarFileInputRef.value.value = ''
+                user.value.avatar = responseData.url + '?t=' + Date.now()
+                return responseData.url
             }
             console.log(result)
-            // const response = await fetch('http://localhost:3002/api/user/avatar', {
-            //     method: 'POST',
-            //     body: formData,
-            //     headers: { Authorization: `Bearer ${userStore.token}` }
-            // })
-            // const req = await response.json()
-            // if (req.code === 20000) {
-            //     vo.avatar = req.data.url
-            //     userStore.updateUserAvatar(req.data.url)
-            //     avatarFileInputRef.value.value = ''
-            // }
-            return responseData.url || void 0
         } catch (e) {
             console.warn(e)
         }
