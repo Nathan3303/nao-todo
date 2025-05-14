@@ -46,7 +46,6 @@ const { asideWidth } = storeToRefs(tasksLayoutStore)
 
 const routeLinks = [
     { name: '用户信息', icon: 'user', route: '/settings/profile' },
-    { name: '账户设置', icon: 'account', route: '/settings/account' },
     { name: '修改密码', icon: 'lock', route: '/settings/password' }
 ]
 </script>
