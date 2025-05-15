@@ -15,7 +15,7 @@
         </template>
         <template #dropdown>
             <nue-container>
-                <nue-main style="flex-direction: column">
+                <nue-main style="flex-direction: column; border: none">
                     <nue-div
                         align="center"
                         class="nue-dropdown-item"
@@ -42,31 +42,26 @@
 
 <script setup lang="ts">
 import { inject, computed } from 'vue'
-import type { TodoTableContext } from './types'
-import type { GetTodosSortOptions } from '@nao-todo/types'
+import { todoTableContextKey } from './constants'
+import type { TodoTableContext, TodoTableOrderButtonProps } from './types'
 
 defineOptions({ name: 'TodoTableOrderButton' })
-const props = defineProps<{ prop: GetTodosSortOptions['field']; text?: string }>()
+const props = defineProps<TodoTableOrderButtonProps>()
 
-const todoTableContext = inject<TodoTableContext>('TodoTableContext')
+const { sortOptions, handleUpdateSortOptions } = inject<TodoTableContext>(todoTableContextKey)!
 
 const checkNumber = computed(() => {
     const { prop } = props
-    if (!todoTableContext) return
-    const { sortOptions } = todoTableContext
-    if (prop !== sortOptions.field) return
-    return sortOptions.order === 'asc' ? 1 : -1
+    if (prop !== sortOptions.value.field) return
+    return sortOptions.value.order === 'asc' ? 1 : -1
 })
 
 const handleUpdateSortInfo = (flag: 1 | -1) => {
-    if (!todoTableContext) return
-    const { sortOptions } = todoTableContext
     const { prop } = props
     const order = flag === 1 ? 'asc' : 'desc'
-    if (sortOptions.field === prop && sortOptions.order === order) return
-    sortOptions.field = prop
-    sortOptions.order = order
+    if (sortOptions.value.field === prop && sortOptions.value.order === order) return
+    handleUpdateSortOptions({ field: prop, order })
+    // sortOptions.value.field = prop
+    // sortOptions.value.order = order
 }
 </script>
-
-<style scoped></style>

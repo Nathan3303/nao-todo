@@ -1,14 +1,9 @@
-import { computed, onMounted, provide, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { isExpired } from '@nao-todo/utils'
 import { useProjectStore, useTodoStore } from '@/stores'
 import type { Todo } from '@nao-todo/types'
-import type {
-    TodoTableContext,
-    TodoTableEmits,
-    TodoTableMultiSelectPayload,
-    TodoTableProps
-} from './types'
+import type { TodoTableEmits, TodoTableMultiSelectPayload, TodoTableProps } from './types'
 
 export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
     const route = useRoute()
@@ -122,6 +117,12 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
         handleShowDetails(props.todos[idx].id, idx)
     }
 
+    // 更新排序选项
+    const handleUpdateSortOptions = (payload: TodoTableProps['sortOptions']) => {
+        sortInfo.field = payload.field
+        sortInfo.order = payload.order
+    }
+
     watch(
         () => sortInfo,
         (newValue) => emit('sortTodo', { ...newValue }),
@@ -130,11 +131,6 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
 
     onMounted(() => {
         activeRowByTodoIdFromRoute()
-    })
-
-    provide<TodoTableContext>('TodoTableContext', {
-        showDetailsHandler: handleShowDetails,
-        sortOptions: sortInfo
     })
 
     return {
@@ -151,6 +147,7 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
         handleClearSelectedId,
         handleClearSelect,
         handleClearSortInfo,
-        getProjectNameByIdFromLocal
+        getProjectNameByIdFromLocal,
+        handleUpdateSortOptions
     }
 }
