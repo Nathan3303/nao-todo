@@ -1,0 +1,22 @@
+.nue-collapse--smart-lists {
+    --nue-collapse-gap: 1rem;
+
+    gap: 0;
+    margin: -1rem 0;
+
+    .nue-collapse-item {
+        .nue-collapse-item__header {
+            padding: var(--nue-collapse-gap) 0;
+        }
+
+        .nue-collapse-item__content {
+            .nue-collapse-item__empty-text {
+                font-size: var(--nue-text-xs);
+                color: var(--nue-primary-color-500);
+                padding: .5rem .75rem;
+                border-radius: var(--nue-primary-radius);
+                background-color: var(--nue-primary-color-200);
+            }
+        }
+    }
+}

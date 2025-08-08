@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-defineOptions({ name: 'TagColorDot' })
+defineOptions({ name: 'NaoColorDot' })
 const props = defineProps<{
     color: string
     size?: 'small' | 'large' | 'xlarge'
@@ -22,9 +22,8 @@ const classes = computed(() => {
 
 <style scoped>
 .tag-color-dot {
-    aspect-ratio: 1/1;
-    width: 14px;
-    height: 14px;
+    aspect-ratio: 1;
+    width: var(--nue-text-xs);
     border-radius: 999px;
     background-color: v-bind(color);
     position: relative;
@@ -33,8 +32,7 @@ const classes = computed(() => {
 }
 
 .tag-color-dot.tag-color-dot--small {
-    width: 10px;
-    height: 10px;
+    height: var(--nue-text-xxs);
 }
 
 .tag-color-dot.tag-color-dot--large {

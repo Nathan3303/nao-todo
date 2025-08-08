@@ -1,47 +1,47 @@
 .nue-button {
-    .nue-button__icon {
-        display: block;
-        line-height: normal;
-
-        &.iconfont {
-            font-size: var(--icon-size);
-        }
-    }
-
-    .nue-button__text {
-        line-height: 1.4;
-    }
+    --nue-button-box-shadow: var(--nue-secondary-shadow);
+    --nue-button-color: var(--nue-primary-text-color);
+    --nue-button-border-radius: var(--nue-primary-radius);
+    --nue-button-border-color: var(--nue-border-color);
+    --nue-button-hover-bg-color: var(--nue-primary-color-100);
+    --nue-button-active-bg-color: var(--nue-primary-color-200);
+    --nue-button-disable-color: var(--nue-disabled-color);
+    --nue-button-disable-bg-color: var(--nue-primary-color-200);
 }
 
-/* icon-only */
-.nue-button--icon-only {
+.nue-button--icon {
+    --nue-button-alignment: center;
+    aspect-ratio: 1;
+
     .nue-button__text {
         display: none;
     }
-
-    .nue-icon::before {
-        font-size: 16px;
-        font-weight: 500;
-    }
 }
 
-/* pure-icon */
-.nue-button--pure-icon {
-    --icon-size: 16px;
-    --icon-weight: normal;
-    cursor: pointer;
-    transition: all 0.16s;
+.nue-button--round {
+    --nue-button-border-radius: 9999px;
 }
 
-/* error */
-.nue-button--error {
-    --color: #ff4d4f;
-    --border-color: #ffd8d8;
-    --background-color: #ffd8d8;
-    --hover-color: #ff4d4f;
-    --hover-border-color: #ffcbcb;
-    --hover-background-color: #ffcbcb;
-    --active-color: #ff4d4f;
-    --active-border-color: #ffb8b8;
-    --active-background-color: #ffb8b8;
+.nue-button--secondary {
+    --nue-button-bg-color: var(--nue-primary-color-200);
+    --nue-button-hover-bg-color: var(--nue-primary-color-300);
+    --nue-button-active-bg-color: var(--nue-primary-color-300);
+    border-color: transparent;
 }
+
+.nue-button--destructive {
+    --nue-button-color: white;
+    --nue-button-bg-color: hsl(var(--nue-destructive-color));
+    --nue-button-hover-bg-color: hsl(var(--nue-destructive-color) / 0.86);
+    --nue-button-active-bg-color: var(--nue-button-hover-bg-color);
+    border-color: transparent;
+}
+
+.nue-button--ghost {
+    --nue-button-bg-color: transparent;
+    --nue-button-hover-bg-color: var(--nue-primary-color-200);
+    --nue-button-active-bg-color: var(--nue-primary-color-300);
+    box-shadow: none;
+    border-color: transparent;
+}
+

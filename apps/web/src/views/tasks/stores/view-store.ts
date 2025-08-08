@@ -84,6 +84,7 @@ export const useTasksViewStore = defineStore('TasksViewStore', () => {
         if (project) {
             _viewInfo = {
                 id: project.id,
+                icon: '',
                 title: project.title,
                 description: project.description,
                 preference: {
@@ -116,6 +117,7 @@ export const useTasksViewStore = defineStore('TasksViewStore', () => {
         if (tag) {
             _viewInfo = {
                 id: tag.id,
+                icon: '',
                 title: tag.name,
                 description: tag.description,
                 preference: {
@@ -166,6 +168,7 @@ export const useTasksViewStore = defineStore('TasksViewStore', () => {
                 category.value = 'basic'
                 viewInfo.value = {
                     id: basicViewsInfo['all'].id,
+                    icon: '',
                     title: basicViewsInfo['all'].title,
                     description: basicViewsInfo['all'].description,
                     preference: {

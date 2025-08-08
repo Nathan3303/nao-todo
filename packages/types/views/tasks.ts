@@ -4,6 +4,7 @@ type TasksMainRouteCategory = 'basic' | 'project' | 'tag' | 'unknown'
 
 type TasksMainViewInfo = {
     id: string
+    icon: string
     title: string
     description: string
     preference: {

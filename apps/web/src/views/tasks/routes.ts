@@ -18,19 +18,19 @@ const buildChildRoute = (path: string, meta: RouteMeta) => {
         path,
         name: `tasks-${meta.id}`,
         meta,
-        component: () => import('./components/main/index.vue'),
+        component: () => import('./main/index.vue'),
         children: [
             {
                 path: 'table/:taskId?',
                 name: `tasks-${meta.id}-table`,
                 meta: { viewType: 'table' },
-                component: () => import('./components/main/table-view/index.vue')
+                component: () => import('./main/table-view/index.vue')
             },
             {
                 path: 'kanban/:taskId?',
                 name: `tasks-${meta.id}-kanban`,
                 meta: { viewType: 'kanban' },
-                component: () => import('./components/main/kanban-view/index.vue')
+                component: () => import('./main/kanban-view/index.vue')
             }
         ]
     } as RouteRecordRaw

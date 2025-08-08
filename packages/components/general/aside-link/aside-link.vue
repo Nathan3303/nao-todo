@@ -1,9 +1,5 @@
 <template>
-    <nue-link
-        theme="btnlike,plink"
-        :route="routeName ? { name: routeName } : void 0"
-        v-bind="$attrs"
-    >
+    <nue-link theme="rl" :route="routeName ? { name: routeName } : void 0" v-bind="$attrs">
         <slot />
         <template #append>
             <slot name="append" />
@@ -15,22 +11,3 @@
 defineOptions({ name: 'AsideLink' })
 defineProps<{ routeName?: string }>()
 </script>
-
-<style scoped>
-.nue-link--plink {
-    overflow: hidden;
-}
-
-.nue-link--plink .nue-icon {
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    --font-size: 16px;
-}
-
-.nue-link--plink span {
-    width: 100%;
-    text-align: left;
-    font-size: var(--text-xs);
-}
-</style>

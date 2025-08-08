@@ -3,9 +3,9 @@ import { ref } from 'vue'
 import { useTagStore } from '@/stores'
 import { useTasksViewStore } from './view-store'
 import { TagColorSelectDialog } from '@nao-todo/components'
-import { TasksDialogLoader } from '../components'
+import { TasksDialogLoader } from '../dialogs'
 import type { Tag } from '@nao-todo/types'
-import type { DialogPayload } from '../components/dialogs/types'
+import type { DialogPayload } from '../dialogs/types'
 
 export const useTasksDialogStore = defineStore('TasksDialogStore', () => {
     const tagStore = useTagStore()

@@ -53,6 +53,7 @@ export const basicViewsInfo: {
 } = {
     all: {
         id: 'all',
+        icon: 'more2',
         title: '所有待办',
         description: '所有板块是专门展示和管理工作所有需要完成的任务的地方。',
         preference: {
@@ -76,6 +77,7 @@ export const basicViewsInfo: {
     },
     today: {
         id: 'today',
+        icon: 'calendar2',
         title: '今日待办',
         description: '今日板块是专门展示和管理工作当天需要完成的任务的地方。',
         preference: {
@@ -122,6 +124,7 @@ export const basicViewsInfo: {
     },
     tomorrow: {
         id: 'tomorrow',
+        icon: 'tomorrow2',
         title: '明日待办',
         description: '明日板块是专门展示和管理工作明天需要完成的任务的地方。',
         preference: {
@@ -168,6 +171,7 @@ export const basicViewsInfo: {
     },
     week: {
         id: 'week',
+        icon: 'week3',
         title: '本周待办',
         description: '本周板块是专门展示和管理工作本周需要完成的任务的地方。',
         preference: {
@@ -214,6 +218,7 @@ export const basicViewsInfo: {
     },
     inbox: {
         id: 'inbox',
+        icon: 'inbox',
         title: '收集箱',
         description: '收集箱板块是专门展示和管理工作所有需要完成的任务的地方。',
         preference: {
@@ -240,6 +245,7 @@ export const basicViewsInfo: {
     },
     favorite: {
         id: 'favorite',
+        icon: 'heart',
         title: '已收藏的待办',
         description: '收藏板块是展示收藏待办的地方。',
         preference: {
@@ -271,6 +277,7 @@ export const basicViewsInfo: {
     },
     giveup: {
         id: 'giveup',
+        icon: 'clear',
         title: '已放弃的待办',
         description: '下方是已放弃的待办。',
         preference: {
@@ -300,6 +307,7 @@ export const basicViewsInfo: {
     },
     recycle: {
         id: 'recycle',
+        icon: 'delete',
         title: '垃圾桶',
         description: '垃圾桶板块是专门展示和管理工作所有已经删除的任务的地方。',
         preference: {

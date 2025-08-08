@@ -8,7 +8,6 @@ const htmlTransformer = () => {
         transformIndexHtml: (html) => {
             html = html.replace('${flsStyle}', firstLoadingScreenStyle)
             html = html.replace('${flsElement}', firstLoadingScreenElement)
-            // console.log(html)
             return html
         }
     }

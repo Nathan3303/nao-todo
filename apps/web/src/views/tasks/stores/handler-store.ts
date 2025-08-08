@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { useTasksViewStore } from '../index'
+import { useTasksViewStore } from './view-store'
 import { useRoute, useRouter } from 'vue-router'
 import { useProjectStore, useTagStore, useTodoStore } from '@/stores'
 import type {
