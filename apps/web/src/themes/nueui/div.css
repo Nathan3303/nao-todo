@@ -1,42 +1,43 @@
-/* 项目视图切换 */
-.nue-div--view-type-switcher {
-    width: fit-content;
-    gap: 0;
-    padding: 4px;
-    background-color: #f4f4f5;
-    border-radius: var(--primary-radius);
-}
+/*!* 项目视图切换 *!*/
+/*.nue-div--view-type-switcher {*/
+/*    width: fit-content;*/
+/*    gap: 0;*/
+/*    padding: 4px;*/
+/*    background-color: #f4f4f5;*/
+/*    border-radius: var(--primary-radius);*/
+/*}*/
 
-.nue-div--view-type-switcher .nue-link {
-    padding: 4px 12px;
-    height: auto;
-    color: #66666e;
-    border-color: transparent;
-    justify-content: center;
-    font-size: 14px;
+/*.nue-div--view-type-switcher .nue-link {*/
+/*    padding: 4px 12px;*/
+/*    height: auto;*/
+/*    color: #66666e;*/
+/*    border-color: transparent;*/
+/*    justify-content: center;*/
+/*    font-size: 14px;*/
 
-    --hover-background-color: transparent;
-    --active-background-color: transparent;
-}
+/*    --hover-background-color: transparent;*/
+/*    --active-background-color: transparent;*/
+/*}*/
 
-.nue-div--view-type-switcher .nue-link--actived {
-    background-color: white;
-    color: #131315;
-    box-shadow: var(--secondary-shadow);
-}
+/*.nue-div--view-type-switcher .nue-link--actived {*/
+/*    background-color: white;*/
+/*    color: #131315;*/
+/*    box-shadow: var(--secondary-shadow);*/
+/*}*/
 
-/* 密码提示 */
-.nue-div--signup-password-hint {
-    gap: 8px;
-    padding: 8px 12px;
-    border-radius: var(--primary-radius);
-    background-color: var(--primary-color-800);
-}
+/*!* 密码提示 *!*/
+/*.nue-div--signup-password-hint {*/
+/*    gap: 8px;*/
+/*    padding: 8px 12px;*/
+/*    border-radius: var(--primary-radius);*/
+/*    background-color: var(--primary-color-800);*/
+/*}*/
 
-.nue-div--view-header {
-    width: 100%;
-    align-items: start;
-    flex: 1 1 auto;
-    flex-wrap: nowrap;
-    gap: 8px;
-}
+/*.nue-div--view-header {*/
+/*    width: 100%;*/
+/*    align-items: start;*/
+/*    flex: 1 1 auto;*/
+/*    flex-wrap: nowrap;*/
+/*    gap: 8px;*/
+/*}*/
+

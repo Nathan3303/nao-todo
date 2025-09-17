@@ -11,7 +11,7 @@ type ProjectPreference = {
 type Project = {
     id: string
     userId: User['id']
-    title: string
+    name: string
     description: string
     state: number
     isArchived: boolean
@@ -26,7 +26,7 @@ type Project = {
 
 type GetProjectOptionsRaw = {
     id?: Project['id']
-    title?: string
+    name?: string
     description?: string
 }
 
@@ -36,7 +36,7 @@ type GetProjectsSortOptions = {
 }
 
 type GetProjectsOptionsRaw = {
-    title?: string
+    name?: string
     description?: string
     isArchived?: boolean
     isDeleted?: boolean
@@ -44,7 +44,7 @@ type GetProjectsOptionsRaw = {
 }
 
 type UpdateProjectOptionsRaw = {
-    title?: string
+    name?: string
     description?: string
     state?: number
     isArchived?: boolean

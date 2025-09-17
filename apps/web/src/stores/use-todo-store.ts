@@ -8,7 +8,7 @@ import {
     getTodos,
     updateTodo,
     updateTodos
-} from '@nao-todo/apis'
+} from '@nao-todo/apis/v1'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { useMoment } from '@nao-todo/utils'
 import type {

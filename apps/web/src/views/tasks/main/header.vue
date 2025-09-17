@@ -23,10 +23,10 @@
                     size="small"
                     v-if="viewInfo?.id === 'today'"
                 >
-                    <nue-button icon="history" theme="icon" @click="handleShowOverdueTodoManager" />
+                    <nue-button icon="history" theme="icon,ghost" @click="handleShowOverdueTodoManager" />
                 </nue-tooltip>
                 <nue-tooltip content="新增待办" size="small">
-                    <nue-button icon="plus" theme="icon" @click="handleShowTodoCreator" />
+                    <nue-button icon="plus" theme="icon,ghost" @click="handleShowTodoCreator" />
                 </nue-tooltip>
                 <tasks-filter-dropdown />
                 <tasks-operations-dropdown />
@@ -49,7 +49,7 @@
 import { storeToRefs } from 'pinia'
 import { useTasksDialogStore, useTasksHandlerStore, useTasksViewStore } from '../stores'
 import { useViewStore } from '@/stores'
-import { TasksFilterDropdown, TasksOperationsDropdown } from '../dropdowns'
+import { TasksFilterDropdown, TasksOperationsDropdown } from '@/components/tasks'
 
 defineOptions({ name: 'NaoTasksViewContentHeader' })
 

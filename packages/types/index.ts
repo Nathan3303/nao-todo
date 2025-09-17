@@ -14,3 +14,7 @@ export type * from './views/tasks'
 
 // requester
 export type * from './requester'
+
+// Golang like error handling type support
+export type Err = Error | string | Error[] | string[] | null
+export type GoLike = [any, Err]

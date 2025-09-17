@@ -85,7 +85,7 @@ export const useTasksViewStore = defineStore('TasksViewStore', () => {
             _viewInfo = {
                 id: project.id,
                 icon: '',
-                title: project.title,
+                title: project.name,
                 description: project.description,
                 preference: {
                     viewType: project.preference?.viewType || defaultPreference.viewType,

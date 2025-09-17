@@ -1,5 +1,110 @@
 :root {
-    --nue-primary-font-family: 'Poppins', 'Noto Sans', 'Segoe UI Emoji', 'Noto Color Emoji',
-        sans-serif;
-    font-family: var(--nue-primary-font-family);
+    font-family: "Poppins", "Noto Sans", sans-serif;
+}
+
+.nue-div.nue-div--hint {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 0.25rem;
+    padding: 0.5rem;
+    border-radius: var(--nue-primary-radius);
+    border: 1px solid var(--nue-primary-color-500);
+    background-color: var(--nue-primary-color-200);
+    color: var(--nue-primary-color-800);
+    user-select: none;
+    -webkit-user-select: none;
+
+    > .nue-icon {
+        --nue-icon-size: 1rem;
+    }
+
+    > .nue-text {
+        font-size: var(--nue-text-xs);
+        line-height: 1.5;
+    }
+}
+
+.nue-div.nue-div--block {
+    gap: 4px;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 4px;
+
+    > .nue-text--title {
+        font-size: var(--nue-text-xs);
+        font-weight: 500;
+        color: var(--nue-primary-color-500);
+        padding: 4px 6px;
+        cursor: default;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+}
+
+.nue-div.nue-div--form-item {
+    width: min(100%, 25rem);
+    flex-direction: column;
+    gap: 0.5rem;
+
+    > .nue-text--label {
+        font-size: var(--nue-text-sm);
+        color: var(--nue-primary-color-600);
+    }
+
+    > .nue-input {
+        width: 100%;
+    }
+}
+
+.nue-dropdown.nue-dropdown--menu {
+    padding: 2px 0;
+
+    .nue-dropdown-wrapper {
+        width: 100%;
+    }
+
+    li {
+        padding: 0.5rem;
+        cursor: pointer;
+        gap: 0.5rem;
+        font-size: var(--nue-text-xs);
+
+        .nue-icon {
+            --nue-icon-size: var(--nue-text-sm);
+        }
+
+        .nue-text {
+            font-size: var(--nue-text-xs);
+            line-height: 1.3;
+        }
+
+        > .nue-div--append {
+            font-size: var(--nue-text-xs);
+            width: fit-content;
+            margin-left: auto;
+            gap: 0.25rem;
+            align-items: center;
+        }
+    }
+}
+
+.nue-dialog.nue-dialog--loader {
+    .nue-dialog__content {
+        margin-bottom: 0;
+    }
+}
+
+.nue-textarea.nue-textarea--fix-padding {
+    padding: 12px;
+
+    .nue-textarea__backend-textarea {
+        overflow: hidden;
+    }
+
+    .word-counter {
+        font-size: var(--nue-text-xs);
+        background-color: transparent;
+    }
+
 }

@@ -1,5 +1,5 @@
 <template>
-    <nue-container class="ntd-container">
+    <nue-container id="AppViewContainer">
         <nue-main>
             <nue-aside
                 v-if="viewStore.indexHeaderVisible"
@@ -27,7 +27,12 @@
                 </nue-div>
             </nue-aside>
             <nue-content fill style="overflow: hidden">
-                <router-view />
+                <suspense>
+                    <router-view />
+                    <template #fallback>
+                        Loading ...
+                    </template>
+                </suspense>
             </nue-content>
         </nue-main>
     </nue-container>
@@ -35,10 +40,12 @@
 
 <script lang="ts" setup>
 import { storeToRefs } from 'pinia'
-import { useUserStore, useViewStore } from '@/stores'
+import { useViewStore } from '@/stores'
+import { useUserStoreV2 } from '@/stores/global'
 import { NaoRouterLink } from '@/components/ui'
+import { NueContainer } from 'nue-ui'
 
-const userStore = useUserStore()
+const userStore = useUserStoreV2()
 const viewStore = useViewStore()
 
 await viewStore.indexViewInitTask()
@@ -47,10 +54,10 @@ const { user } = storeToRefs(userStore)
 
 const routeLinks = [
     { name: '任务', icon: 'square-check-fill', route: '/tasks' },
-    { name: '日历', icon: 'calendar', route: '/calendar' },
+    // { name: '日历', icon: 'calendar', route: '/calendar' },
     { name: '专注', icon: 'focus2', route: '/fqfocus' },
     { name: '搜索', icon: 'search2', route: '/search' },
-    { name: '对话', icon: 'ai-chat-fill', route: '/ai' },
+    // { name: '对话', icon: 'ai-chat-fill', route: '/ai' },
     { name: '设置', icon: 'settings-fill', route: '/settings' }
 ]
 </script>

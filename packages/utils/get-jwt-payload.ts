@@ -1,28 +1,29 @@
 import type { User } from '@nao-todo/types'
-
-const myAtob = (input: string): string => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='
-    const str = input.replace(/=+$/, '')
-    let output = ''
-    if (str.length % 4 === 1) {
-        throw new Error('InvalidLengthError')
-    }
-    for (let i = 0, len = str.length; i < len; i += 4) {
-        const a = chars.indexOf(str.charAt(i))
-        const b = chars.indexOf(str.charAt(i + 1))
-        const c = chars.indexOf(str.charAt(i + 2))
-        const d = chars.indexOf(str.charAt(i + 3))
-        const sum = (a << 18) | (b << 12) | (c << 6) | d
-        output += String.fromCharCode((sum >> 16) & 0xff, (sum >> 8) & 0xff, sum & 0xff)
-    }
-    return output
-}
+import { unwrapError } from './utils'
 
 const getJWTPayload = (jwt: string) => {
-    const jwtPayload = jwt.split('.')[1]
-    const decodedPayload = JSON.parse(decodeURIComponent(atob(jwtPayload)))
-    return decodedPayload as User
+    // 拆分 JWT
+    const parts = jwt.split('.')
+    if (parts.length != 3) {
+        console.error('Invalid JWT parts for JWT')
+        return {}
+    }
+    const payloadPart = parts[1]
+
+    // 将 Base64Url 转换为标准 Base64
+    let base64 = payloadPart.replace(/-/g, '+').replace(/_/g, '/')
+
+    // 3. 补齐填充 '='
+    while (base64.length % 4) base64 += '='
+
+    // 4. 解码并解析 JSON
+    try {
+        const decoded = atob(base64)
+        const payload = JSON.parse(decoded)
+        return payload.profile as User
+    } catch (e) {
+        throw new Error('Failed to decode or parse payload: ' + unwrapError(e as string | Error))
+    }
 }
 
 export default getJWTPayload
-export { myAtob }

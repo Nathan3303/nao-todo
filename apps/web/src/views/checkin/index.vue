@@ -1,23 +1,29 @@
 <template>
-    <nue-container class="checkin-view"></nue-container>
+    <nue-container id="CheckinViewContainer"></nue-container>
 </template>
 
 <script lang="ts" setup>
+import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUserStore } from '@/stores'
+import { useUserStoreV2 } from '@/stores/global'
+import { NueMessage } from 'nue-ui'
+import { unwrapError } from '@nao-todo/utils'
+import { useAxios } from '@nao-todo/hooks'
 
 const props = defineProps<{ fromUrlBase64: string }>()
 
 const router = useRouter()
-const userStore = useUserStore()
+const userStore = useUserStoreV2()
+const request = useAxios('http://localhost:3303/api/user')
 
-userStore.doCheckin().then((res) => {
-    if (!res && !userStore.isAuthenticated) {
-        router.replace('/auth/login')
-    } else {
-        const to = atob(props.fromUrlBase64) || '/'
-        router.replace(to)
+onMounted(async () => {
+    const [res, err] = await userStore.checkin(request)
+    if (err) {
+        NueMessage.error(unwrapError(err))
+        await router.replace('/auth/signin')
+        return false
     }
+    await router.replace(atob(props.fromUrlBase64) || '/')
+    return res
 })
 </script>
-

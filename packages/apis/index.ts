@@ -1,2 +1,4 @@
-export * from './v1'
-export * from './v2'
+import * as apisV1 from './v1'
+import * as apisV2 from './v2'
+
+export { apisV1, apisV2 }

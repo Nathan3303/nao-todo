@@ -1,3 +1,5 @@
+import type { Err } from '@nao-todo/types'
+
 export const throttle = (callback: (...args: any[]) => void | Promise<any>, delay: number) => {
     let timer: number | null = null
     return async (...args: any[]) => {
@@ -52,4 +54,19 @@ export function generateId(length: number = 6) {
     return Math.random()
         .toString(36)
         .slice(2, 2 + length)
+}
+
+export function unwrapError(err: Err): string {
+    let errString = err
+    if (Array.isArray(err)) {
+        err.forEach((_err: Error | string, idx) => {
+            errString += unwrapError(_err)
+            if (idx !== err.length - 1) errString += '; '
+        })
+    } else if (err instanceof Error) {
+        errString = err.message
+    } else {
+        errString = err
+    }
+    return errString
 }

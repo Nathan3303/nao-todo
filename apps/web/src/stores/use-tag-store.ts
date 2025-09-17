@@ -1,6 +1,6 @@
 import { computed, ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
-import { createTag, deleteTag, getTags, updateTag } from '@nao-todo/apis'
+import { createTag, deleteTag, getTags, updateTag } from '@nao-todo/apis/v1'
 import type {
     CreateTagOptions,
     GetTagsOptions,
@@ -83,8 +83,8 @@ export const useTagStore = defineStore('tagStore', () => {
                 confirmButtonText: '确认',
                 cancelButtonText: '取消',
                 inputValue: currentName,
-                validator: (value: string) => value,
-                onConfirm: async (newName: string) => doUpdateTag(tagId, { name: newName })
+                validator: (value) => !!value,
+                onConfirm: async (newName) => doUpdateTag(tagId, { name: newName as string })
             })
             if (result) {
                 NueMessage.success('标签名称修改成功')

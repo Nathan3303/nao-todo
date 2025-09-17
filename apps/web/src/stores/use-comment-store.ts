@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useUserStore } from './use-user-store'
-import { createCommentV2, deleteCommentV2, getCommentsV2, updateCommentV2 } from '@nao-todo/apis'
+import { createCommentV2, deleteCommentV2, getCommentsV2, updateCommentV2 } from '@nao-todo/apis/v2'
 import type {
     CreateCommentOptions,
     Comment,

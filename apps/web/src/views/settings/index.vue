@@ -1,48 +1,26 @@
 <template>
-    <nue-container theme="vertical,inner">
-        <nue-main
-            :allow-collapse-aside="false"
-            :allow-hide-aside="false"
-            :allow-resize-aside="responsiveFlag > 1"
-            aside-max-width="300px"
-            aside-min-width="200px"
-            @after-aside-resize="tasksLayoutStore.handleAfterAsideResize"
-            :aside-width="asideWidth"
-        >
-            <template #aside>
-                <aside-link
-                    v-for="(link, index) in routeLinks"
+    <nue-container id="SettingsViewContainer">
+        <nue-main>
+            <nue-aside>
+                <nue-link
+                    v-for="(link, idx) in routeLinks"
                     :icon="link.icon"
-                    :key="index"
+                    :key="idx"
                     :route="link.route"
-                    theme="btnlike,plink"
+                    theme="route"
                 >
                     {{ link.name }}
-                </aside-link>
-            </template>
-            <template #content>
-                <router-view></router-view>
-            </template>
+                </nue-link>
+            </nue-aside>
+            <nue-content fill>
+                <router-view />
+            </nue-content>
         </nue-main>
     </nue-container>
 </template>
 
 <script lang="ts" setup>
-import { AsideLink } from '@nao-todo/components'
-import { storeToRefs } from 'pinia'
-import { useViewStore } from '@/stores'
-import { useTasksLayoutStore } from '@/views/tasks'
-
-const viewStore = useViewStore()
-const tasksLayoutStore = useTasksLayoutStore()
-
-const { responsiveFlag } = storeToRefs(viewStore)
-const { asideWidth } = storeToRefs(tasksLayoutStore)
-
-const routeLinks = [
-    { name: '用户信息', icon: 'user', route: '/settings/profile' },
-    { name: '修改密码', icon: 'lock', route: '/settings/password' }
-]
+import { SettingsViewRouteLinks as routeLinks } from './routes'
 </script>
 
 <style>
@@ -53,4 +31,3 @@ const routeLinks = [
     align-items: stretch;
 }
 </style>
-

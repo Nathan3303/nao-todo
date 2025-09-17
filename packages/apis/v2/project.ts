@@ -16,9 +16,9 @@ const defaultGetProjectsOptions: GetProjectsOptions = {
     limit: 99
 }
 
-export const createProjectV2 = async (requester: Requester, options: CreateProjectOptions) => {
+export const createProjectApi = async (requester: Requester, options: CreateProjectOptions) => {
     try {
-        const response = await requester(`/project`, options)
+        const response = await requester.post('/project/', options)
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/create-project-v2]', error)
@@ -26,9 +26,13 @@ export const createProjectV2 = async (requester: Requester, options: CreateProje
     }
 }
 
-export const deleteProjectV2 = async (requester: Requester, projectId: Project['id']) => {
+export const deleteProjectApi = async (
+    requester: Requester,
+    projectId: Project['id'],
+    isHard: boolean
+) => {
     try {
-        const response = await requester(`/project?projectId=${projectId}`)
+        const response = await requester.delete(`/project/${projectId}?hard=${isHard}`)
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/delete-project-v2]', error)
@@ -36,13 +40,13 @@ export const deleteProjectV2 = async (requester: Requester, projectId: Project['
     }
 }
 
-export const updateProjectV2 = async (
+export const updateProjectApi = async (
     requester: Requester,
     projectId: Project['id'],
     options: UpdateProjectOptions
 ) => {
     try {
-        const response = await requester(`/project?projectId=${projectId}`, options)
+        const response = await requester.put(`/project/${projectId}`, options)
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/update-project-v2]', error)
@@ -50,9 +54,9 @@ export const updateProjectV2 = async (
     }
 }
 
-export const getProjectV2 = async (requester: Requester, options: GetProjectOptions) => {
+export const getProjectApi = async (requester: Requester, options: GetProjectOptions) => {
     try {
-        const response = await requester('/project?projectId=' + options.id)
+        const response = await requester.get(`/project/${options.id}`)
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/get-project-v2]', error)
@@ -60,17 +64,18 @@ export const getProjectV2 = async (requester: Requester, options: GetProjectOpti
     }
 }
 
-export const getProjectsV2 = async (
+export const getProjectsApi = async (
     requester: Requester,
     options: GetProjectsOptions = defaultGetProjectsOptions
 ) => {
     try {
-        const queryString = stringifyGetOptions(options, (key, value) => {
+        let queryString = stringifyGetOptions(options, (key: unknown, value: any) => {
             if (key === 'sort' && value) {
                 return `${key}=${(value as GetProjectsSortOptions).field}:${(value as GetProjectsSortOptions).order}`
             }
         })
-        const response = await requester(`/projects?${queryString}`)
+        queryString = queryString ? `?${queryString}` : ''
+        const response = await requester.get(`/projects/${queryString}`)
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/get-projects-v2]', error)

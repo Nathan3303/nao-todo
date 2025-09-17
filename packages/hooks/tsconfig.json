@@ -1,12 +1,15 @@
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "lib": [
-      "esnext",
-      "dom"
+    "extends": "../../tsconfig.base.json",
+    "include": [
+        "./**/*.ts",
+        "./*.ts"
     ],
-    "types": [
-      "@dcloudio/types"
-    ]
-  }
+    "compilerOptions": {
+        "types": [
+            "@dcloudio/types"
+        ],
+        "rootDir": ".",
+        "moduleResolution": "nodenext",
+        "paths": null
+    }
 }

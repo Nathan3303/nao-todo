@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import { createEvent, deleteEvent, getEvents, updateEvent } from '@nao-todo/apis'
+import { createEvent, deleteEvent, getEvents, updateEvent } from '@nao-todo/apis/v1'
 import type {
     CreateEventOptions,
     Event,

@@ -1,7 +1,7 @@
 import sparkMD5 from 'spark-md5'
 import type { Requester, ResponseData, SigninOptions, SignupOptions } from '@nao-todo/types'
 
-export const signInApiV2 = async (requester: Requester, options: SigninOptions) => {
+export const signInApi = async (requester: Requester, options: SigninOptions) => {
     try {
         const { email, password } = options
         const response = await requester.post('/signin', {
@@ -15,7 +15,7 @@ export const signInApiV2 = async (requester: Requester, options: SigninOptions) 
     }
 }
 
-export const signUpApiV2 = async (requester: Requester, options: SignupOptions) => {
+export const signUpApi = async (requester: Requester, options: SignupOptions) => {
     try {
         const { email, password, nickname } = options
         const response = await requester.post('/signup', {
@@ -30,10 +30,10 @@ export const signUpApiV2 = async (requester: Requester, options: SignupOptions) 
     }
 }
 
-export const checkInApiV2 = async (requester: Requester, jwt: string) => {
+export const checkInApi = async (requester: Requester, jwt: string) => {
     try {
         // const jwt = localStorage.getItem('USER_JWT') || ''
-        const response = await requester.get(`/checkin?jwt=${jwt}`)
+        const response = await requester.put(`/checkin?jwt=${jwt}`)
         return response.data as ResponseData
     } catch (error) {
         console.log('[@nao-todo/apis/check-in-v2]:', error)
@@ -41,10 +41,10 @@ export const checkInApiV2 = async (requester: Requester, jwt: string) => {
     }
 }
 
-export const signOutApiV2 = async (requester: Requester, jwt: string) => {
+export const signOutApi = async (requester: Requester, jwt: string) => {
     try {
         // const jwt = localStorage.getItem('USER_JWT') || ''
-        const response = await requester.get(`/signout?jwt=${jwt}`)
+        const response = await requester.delete(`/signout?jwt=${jwt}`)
         return response.data as ResponseData
     } catch (error) {
         console.log('[@nao-todo/apis/sign-out-v2]:', error)
@@ -52,9 +52,9 @@ export const signOutApiV2 = async (requester: Requester, jwt: string) => {
     }
 }
 
-export const updateNicknameV2 = async (requester: Requester, newNickname: string) => {
+export const updateNicknameApi = async (requester: Requester, newNickname: string) => {
     try {
-        const response = await requester.put('/user/nickname', { nickname: newNickname })
+        const response = await requester.put('/profile', { nickname: newNickname })
         return response.data as ResponseData
     } catch (error) {
         console.log('[@nao-todo/apis/update-nickname-v2]:', error)
@@ -62,10 +62,15 @@ export const updateNicknameV2 = async (requester: Requester, newNickname: string
     }
 }
 
-export const updatePasswordV2 = async (requester: Requester, newPasswordRaw: string) => {
+export const updatePasswordApi = async (
+    requester: Requester,
+    oldPasswordRaw: string,
+    newPasswordRaw: string
+) => {
     try {
-        const response = await requester.put('/user/password', {
-            password: sparkMD5.hash(newPasswordRaw)
+        const response = await requester.put('/password', {
+            oldPassword: sparkMD5.hash(oldPasswordRaw),
+            newPassword: sparkMD5.hash(newPasswordRaw)
         })
         return response.data as ResponseData
     } catch (error) {

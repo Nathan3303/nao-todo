@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { IndexAside } from '@/layers'
+import { IndexAside } from '@/layouts'
 </script>
 
 <template>

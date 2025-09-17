@@ -9,7 +9,7 @@ import {
     updateNickname,
     updatePassword,
     updateAvatar
-} from '@nao-todo/apis'
+} from '@nao-todo/apis/v1'
 import { throttle } from '@nao-todo/utils'
 import getJWTPayload from '@nao-todo/utils/get-jwt-payload'
 import { NueConfirm, NueMessage } from 'nue-ui'
@@ -30,7 +30,7 @@ export const useUserStore = defineStore('userStore', () => {
         }
         const jwt = (result.data as { token: string }).token
         localStorage.setItem('USER_JWT', jwt)
-        user.value = getJWTPayload(jwt)
+        user.value = getJWTPayload(jwt) as User
         token.value = jwt
         isAuthenticated.value = true
         NueMessage.success('登录成功')
@@ -62,7 +62,7 @@ export const useUserStore = defineStore('userStore', () => {
         }
         const newJWT = (result.data as { token: string }).token
         localStorage.setItem('USER_JWT', newJWT)
-        user.value = getJWTPayload(newJWT)
+        user.value = getJWTPayload(newJWT) as User
         token.value = newJWT
         isAuthenticated.value = true
         return true

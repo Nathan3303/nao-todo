@@ -1,5 +1,5 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import { useUserStore } from '@/stores'
+import { useUserStoreV2 } from '@/stores/global'
 import authRoutes from '@/views/auth/routes'
 import tasksRoutes from '@/views/tasks/routes'
 import calendarRoutes from '@/views/calendar/routes'
@@ -18,18 +18,18 @@ const router = createRouter({
             path: '/',
             name: 'index',
             beforeEnter: (to) => {
-                const userStore = useUserStore()
+                const userStore = useUserStoreV2()
                 if (userStore.isAuthenticated) return true
                 return { name: 'checkin', params: { fromUrlBase64: btoa(to.fullPath) } }
             },
             component: () => import('@/views/index.vue'),
-            redirect: { name: 'tasks' },
+            redirect: { name: 'settings' },
             children: [
                 tasksRoutes,
-                calendarRoutes,
+                // calendarRoutes,
                 fqfocusRoutes,
                 searchRoutes,
-                aiRoutes,
+                // aiRoutes,
                 settingsRoutes
             ]
         }

@@ -12,12 +12,11 @@ import type {
 const defaultGetTagsOptions: GetTagsOptions = {
     page: 1,
     limit: 10
-    // sort: { field: 'createdAt', order: 'desc' }
 }
 
-export const createTagV2 = async (requester: Requester, options: CreateTagOptions) => {
+export const createTagApi = async (requester: Requester, options: CreateTagOptions) => {
     try {
-        const response = await requester(`/tag`, options)
+        const response = await requester.post(`/tag/`, options)
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/create-tag-v2]', error)
@@ -25,9 +24,9 @@ export const createTagV2 = async (requester: Requester, options: CreateTagOption
     }
 }
 
-export const deleteTagV2 = async (requester: Requester, id: Tag['id']) => {
+export const deleteTagApi = async (requester: Requester, id: Tag['id']) => {
     try {
-        const response = await requester(`/tag?tagId=${id}`)
+        const response = await requester.delete(`/tag/${id}`)
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/delete-tag-v2]', error)
@@ -35,13 +34,13 @@ export const deleteTagV2 = async (requester: Requester, id: Tag['id']) => {
     }
 }
 
-export const updateTagV2 = async (
+export const updateTagApi = async (
     requester: Requester,
     id: Tag['id'],
     options: UpdateTagOptions
 ) => {
     try {
-        const response = await requester(`/tag?tagId=${id}`, options)
+        const response = await requester.put(`/tag/?${id}`, options)
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/update-tag-v2]', error)
@@ -49,9 +48,9 @@ export const updateTagV2 = async (
     }
 }
 
-export const getTagV2 = async (requester: Requester, options: GetTagOptions) => {
+export const getTagApi = async (requester: Requester, options: GetTagOptions) => {
     try {
-        const response = await requester('/tag?tagId=' + options.id)
+        const response = await requester.get(`/tag/${options.id}`)
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/get-tag-v2]', error)
@@ -59,13 +58,14 @@ export const getTagV2 = async (requester: Requester, options: GetTagOptions) => 
     }
 }
 
-export const getTagsV2 = async (
+export const getTagsApi = async (
     requester: Requester,
     options: GetTagsOptions = defaultGetTagsOptions
 ) => {
     try {
-        const queryString = stringifyGetOptions(options)
-        const response = await requester(`/tags?${queryString}`)
+        let queryString = stringifyGetOptions(options)
+        queryString = queryString ? `?${queryString}` : ''
+        const response = await requester.get(`/tags/${queryString}`)
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/get-tags-v2]', error)

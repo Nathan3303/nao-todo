@@ -1,6 +1,6 @@
 import { computed, ref, shallowRef } from 'vue'
 import { defineStore } from 'pinia'
-import { createProject, deleteProject, getProjects, updateProject } from '@nao-todo/apis'
+import { createProject, deleteProject, getProjects, updateProject } from '@nao-todo/apis/v1'
 import type {
     CreateProjectOptions,
     GetProjectsOptions,
@@ -153,7 +153,7 @@ export const useProjectStore = defineStore('projectStore', () => {
      */
     const updateProjectTitleWithPrompt = async (
         projectId: Project['id'],
-        currentTitle: Project['title']
+        currentTitle: Project['name']
     ) => {
         try {
             // 显示用户提示对话框，让用户输入新的项目标题
@@ -164,9 +164,9 @@ export const useProjectStore = defineStore('projectStore', () => {
                 cancelButtonText: '取消',
                 inputValue: currentTitle,
                 // 简单的验证器，确保输入值不为空
-                validator: (value: string) => value,
-                onConfirm: async (newTitle: string) =>
-                    await doUpdateProject(projectId, { title: newTitle })
+                validator: (value) => !!value,
+                onConfirm: async (newTitle) =>
+                    await doUpdateProject(projectId, { name: newTitle as string })
             })
             if (result) {
                 // 如果更新成功，显示成功消息
@@ -208,9 +208,9 @@ export const useProjectStore = defineStore('projectStore', () => {
                 cancelButtonText: '取消',
                 inputValue: currentDescription,
                 inputType: 'textarea',
-                validator: (value: string) => value,
-                onConfirm: async (newDescription: string) =>
-                    await doUpdateProject(projectId, { description: newDescription })
+                validator: (value) => !!value,
+                onConfirm: async (newDescription) =>
+                    await doUpdateProject(projectId, { description: newDescription as string })
             })
             // 根据更新结果，显示相应的消息
             if (result) {
@@ -499,4 +499,3 @@ export const useProjectStore = defineStore('projectStore', () => {
         deleteLocalProject
     }
 })
-
