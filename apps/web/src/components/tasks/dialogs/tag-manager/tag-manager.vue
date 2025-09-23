@@ -1,69 +1,98 @@
 <template>
-    <nue-div align="stretch" vertical>
-        <nue-text color="gray" size="12px">
-            "标签管理"能够清楚地展示出所有的标签，方便执行标签的增删改查。
-        </nue-text>
-        <nue-div align="center" justify="space-between">
-            <tag-filter-bar :filter-options="filterInfo" @filter="handleFilter" />
-            <nue-div gap="12px" width="fit-content">
-                <nue-button icon="plus-circle" theme="small,primary">新增</nue-button>
-                <nue-button icon="refresh" theme="small" @click="getData" />
-            </nue-div>
-        </nue-div>
-        <nue-div align="stretch" class="tag-manager" vertical>
-            <tag-board
-                :loading-state="loading"
-                :tags="tags"
-                @delete="tasksHandlerStore.handleDeleteTag"
-                @recolor="tasksDialogStore.showTagColorSelectDialog"
-            />
-        </nue-div>
-    </nue-div>
+    <nue-dialog v-model="visible" ref="dialogRef" theme="large">
+        <template #header="{ close }">
+            <nue-text>标签管理</nue-text>
+            <nue-button @click="close" icon="clear" theme="icon,ghost,small" />
+        </template>
+        <nue-container id="TagManager" theme="in-dialog">
+            <nue-header>
+                <tag-manager-filter-bar />
+                <nue-div gap="12px" width="fit-content" style="margin-left: auto">
+                    <nue-button
+                        icon="plus-circle"
+                        theme="small,primary"
+                        @click="showCreateTagDialog"
+                    >
+                        新增
+                    </nue-button>
+                </nue-div>
+            </nue-header>
+            <nue-main>
+                <nue-content fill style="overflow: hidden">
+                    <tag-board
+                        :tags="tags"
+                        @delete="tagManagerStore.deleteTag"
+                        @recolor="showUpdateTagColorDialog"
+                    />
+                </nue-content>
+            </nue-main>
+        </nue-container>
+    </nue-dialog>
 </template>
 
 <script lang="ts" setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
-import { TagBoard, TagFilterBar } from '@nao-todo/components'
-import { useTagStore } from '@/stores'
-import { useTasksDialogStore, useTasksHandlerStore } from '../../stores'
-import type { GetTagsOptions, Tag } from '@nao-todo/types'
+import { ref } from 'vue'
+import { TagBoard } from '@nao-todo/components'
+import useTagManagerStore from './use-tag-manager-store'
+import TagManagerFilterBar from './filter-bar.vue'
+import { storeToRefs } from 'pinia'
+import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
+import type { Tag } from '@nao-todo/types'
+import { useTasksDialogStore } from '@/stores/tasks'
 
 defineOptions({ name: 'TagManager' })
+defineEmits<{ (e: 'closeDialog'): void }>()
 
-const tagStore = useTagStore()
+const tagManagerStore = useTagManagerStore()
 const tasksDialogStore = useTasksDialogStore()
-const tasksHandlerStore = useTasksHandlerStore()
 
-const loading = ref(false)
-const filterInfo = ref<GetTagsOptions>({})
-const tags = ref<Tag[]>([])
-let unSubscribe: () => void
+const dialogRef = ref<DialogInstanceType>()
 
-const getData = () => {
-    tags.value = tagStore.findTagsFromLocal(filterInfo.value, (key, tag, options) => {
-        if (key === 'name') return tag.name.includes(options.name || '')
-    })
+const { tags } = storeToRefs(tagManagerStore)
+const { visible, open, close } = useDialogWrapper(dialogRef)
+
+const showCreateTagDialog = () => {
+    tasksDialogStore.tagCreator?.open()
 }
 
-const handleFilter = async (newFilterOptions: GetTagsOptions) => {
-    filterInfo.value = newFilterOptions
-    getData()
+const showUpdateTagColorDialog = (tagId: Tag['id']) => {
+    tasksDialogStore.tagColorUpdater?.open({ tagId })
 }
 
-onMounted(() => {
-    unSubscribe = tagStore.$subscribe((mutation) => {
-        if (mutation.type !== 'direct') return
-        setTimeout(() => getData())
-    })
-})
+tagManagerStore.getTagsAgain()
 
-onBeforeUnmount(() => {
-    if (unSubscribe) unSubscribe()
-})
-
-getData()
+defineExpose({ open, close })
 </script>
 
 <style scoped>
-@import url('./tag-manager.css');
+.tag-manager {
+    aspect-ratio: 16 / 9;
+    min-height: 520px;
+}
+
+.tag-navigations {
+    width: fit-content;
+    gap: 0;
+    padding: 4px;
+    background-color: #f4f4f5;
+    border-radius: var(--primary-radius);
+}
+
+.tag-navigations:deep(.nue-link) {
+    padding: 4px 12px;
+    height: auto;
+    color: #66666e;
+    border-color: transparent;
+    justify-content: center;
+    font-size: 14px;
+
+    --hover-background-color: transparent;
+    --active-background-color: transparent;
+}
+
+.tag-navigations:deep(.nue-link--actived) {
+    background-color: white;
+    color: #131315;
+    box-shadow: var(--secondary-shadow);
+}
 </style>

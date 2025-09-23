@@ -9,28 +9,23 @@ import type {
     UpdateTagOptions
 } from '@nao-todo/types'
 
-const defaultGetTagsOptions: GetTagsOptions = {
-    page: 1,
-    limit: 10
-}
-
 export const createTagApi = async (requester: Requester, options: CreateTagOptions) => {
     try {
         const response = await requester.post(`/tag/`, options)
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/create-tag-v2]', error)
-        return { code: 50001, message: '服务器错误' } as ResponseData
+        return { code: 500, message: '服务器错误' } as ResponseData
     }
 }
 
-export const deleteTagApi = async (requester: Requester, id: Tag['id']) => {
+export const deleteTagApi = async (requester: Requester, id: Tag['id'], isHard: boolean) => {
     try {
-        const response = await requester.delete(`/tag/${id}`)
+        const response = await requester.delete(`/tag/${id}?hard=${isHard}`)
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/delete-tag-v2]', error)
-        return { code: 50001, message: '服务器错误' } as ResponseData
+        return { code: 500, message: '服务器错误' } as ResponseData
     }
 }
 
@@ -40,11 +35,11 @@ export const updateTagApi = async (
     options: UpdateTagOptions
 ) => {
     try {
-        const response = await requester.put(`/tag/?${id}`, options)
+        const response = await requester.put(`/tag/${id}`, options)
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/update-tag-v2]', error)
-        return { code: 50001, message: '服务器错误' } as ResponseData
+        return { code: 500, message: '服务器错误' } as ResponseData
     }
 }
 
@@ -54,14 +49,11 @@ export const getTagApi = async (requester: Requester, options: GetTagOptions) =>
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/get-tag-v2]', error)
-        return { code: 50001, message: '服务器错误' } as ResponseData
+        return { code: 500, message: '服务器错误' } as ResponseData
     }
 }
 
-export const getTagsApi = async (
-    requester: Requester,
-    options: GetTagsOptions = defaultGetTagsOptions
-) => {
+export const getTagsApi = async (requester: Requester, options: GetTagsOptions) => {
     try {
         let queryString = stringifyGetOptions(options)
         queryString = queryString ? `?${queryString}` : ''
@@ -69,6 +61,6 @@ export const getTagsApi = async (
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/get-tags-v2]', error)
-        return { code: 50001, message: '服务器错误' } as ResponseData
+        return { code: 500, message: '服务器错误' } as ResponseData
     }
 }

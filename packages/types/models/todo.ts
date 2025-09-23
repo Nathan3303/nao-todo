@@ -4,11 +4,6 @@ import type { Project } from './project'
 import type { Event } from './event'
 import type { Tag } from './tag'
 
-type TodoDueDate = {
-    startAt: string | null
-    endAt: string | null
-}
-
 type Todo = {
     id: string
     userId: User['id']
@@ -18,7 +13,8 @@ type Todo = {
     state: 'todo' | 'in-progress' | 'done'
     priority: 'low' | 'medium' | 'high' | 'urgent'
     tags: Tag['id'][]
-    dueDate: TodoDueDate
+    startAt?: string | null
+    endAt?: string | null
     isDeleted: boolean
     deletedAt: string | null
     isArchived: boolean
@@ -28,8 +24,30 @@ type Todo = {
     createdAt: string
     updatedAt: string
     // Additional fields
-    project?: { title: Project['title'] }
+    project?: { name: Project['name'] }
     events?: Event[]
+}
+
+type TodoColumnOptions = {
+    // id: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    deletedAt?: boolean
+    // userId?: boolean
+    // projectId?: boolean
+    project?: boolean
+    // name?: boolean
+    description?: boolean
+    state?: boolean
+    priority?: boolean
+    tags?: boolean
+    startAt?: boolean
+    endAt?: boolean
+    isDeleted?: boolean
+    isArchived?: boolean
+    archivedAt?: boolean
+    isFavorited?: boolean
+    isGivenUp?: boolean
 }
 
 type GetTodoOptionsRaw = {
@@ -39,7 +57,7 @@ type GetTodoOptionsRaw = {
 }
 
 type GetTodosSortOptions = {
-    field: Omit<keyof Todo, 'dueDate'> | 'endAt' | 'startAt'
+    field: keyof Todo
     order: 'asc' | 'desc'
 }
 
@@ -52,8 +70,8 @@ type GetTodosOptionsRaw = {
     isArchived?: Todo['isArchived']
     isDeleted?: Todo['isDeleted']
     isFavorited?: Todo['isFavorited']
-    isGivenUp?: Todo['isFavorited']
-    sort?: GetTodosSortOptions
+    isGivenUp?: Todo['isGivenUp']
+    sort: GetTodosSortOptions
     relativeDate?: 'today' | 'tomorrow' | 'week' | '-today' | 'month'
     tagId?: Tag['id']
 }
@@ -65,7 +83,8 @@ type UpdateTodoOptionsRaw = {
     state?: Todo['state']
     priority?: Todo['priority']
     tags?: Todo['tags']
-    dueDate?: TodoDueDate
+    startAt?: string | null
+    endAt?: string | null
     isDeleted?: Todo['isDeleted']
     deletedAt?: Todo['deletedAt']
     isArchived?: Todo['isArchived']
@@ -81,7 +100,8 @@ type CreateTodoOptionsRaw = {
     state?: Todo['state']
     priority?: Todo['priority']
     tags?: Todo['tags']
-    dueDate: Partial<TodoDueDate>
+    startAt?: string | null
+    endAt?: string | null
     isDeleted?: Todo['isDeleted']
     deletedAt?: Todo['deletedAt']
     isArchived?: Todo['isArchived']
@@ -113,21 +133,8 @@ type GetTodosOverview = {
     pageInfo: { page: number; totalPages: number }
 }
 
-type TodoColumnOptions = Partial<{
-    name: boolean
-    description: boolean
-    state: boolean
-    priority: boolean
-    tags: boolean
-    endAt: boolean
-    createdAt: boolean
-    updatedAt: boolean
-    project: boolean
-}>
-
 export type {
     Todo,
-    TodoDueDate,
     CreateTodoOptions,
     DeleteTodoOptions,
     UpdateTodoOptionsRaw,
@@ -139,4 +146,3 @@ export type {
     GetTodosOverview,
     TodoColumnOptions
 }
-

@@ -6,22 +6,22 @@ type Event = {
     id: string
     userId: User['id']
     todoId: Todo['id']
-    title: string
+    name: string
     description: string
     isDone: boolean
     doneAt: Date | null
-    isTopped: boolean
+    sortId: number
 }
 
 type CreateEventOptionsRaw = {
     todoId: Todo['id']
-    title: string
+    name: string
     description?: string
 }
 
 type UpdateEventOptionsRaw = {
     todoId?: Todo['id']
-    title?: string
+    name?: string
     description?: string
     isDone?: boolean
     doneAt?: Date | null

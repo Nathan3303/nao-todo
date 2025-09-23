@@ -1,15 +1,15 @@
 <template>
     <nue-dropdown theme="combo-box" v-bind="$attrs">
-        <template #default="{ clickTrigger }">
-            <nue-button :icon="triggerIcon" size="small" @click="clickTrigger">
+        <template #trigger="{ trigger }">
+            <nue-button :icon="triggerIcon" size="small" @click="trigger">
                 {{ triggerTitle }}
                 <template v-if="!hideCounter && checkedOptionsCount" #append>
-                    <nue-divider direction="vertical" style="height: 12px" />
+                    <nue-divider direction="vertical" />
                     <nue-text color="orange" size="12px"> + {{ checkedOptionsCount }}</nue-text>
                 </template>
             </nue-button>
         </template>
-        <template #dropdown>
+        <template #default>
             <nue-container class="combo-box-container">
                 <nue-header @click.stop>
                     <nue-input

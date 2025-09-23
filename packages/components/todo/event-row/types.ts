@@ -1,6 +1,6 @@
 type TodoEventInfo = {
     id: string
-    title: string
+    name: string
     isDone: boolean
 }
 

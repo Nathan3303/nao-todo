@@ -1,2 +1,5 @@
 export * from './project-handler'
 export * from './tag-handler'
+export * from './todo-handler'
+export * from './event-handler'
+export * from './comment-handler'

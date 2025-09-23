@@ -8,7 +8,7 @@ import type {
     Todo,
     TodoColumnOptions
 } from '@nao-todo/types'
-import { getTodos, updateTodo, updateTodos } from '@nao-todo/apis'
+import { getTodos, updateTodo, updateTodos } from '@nao-todo/apis/v1'
 import { useMoment } from '@nao-todo/utils'
 import { NueConfirm, NueMessage } from 'nue-ui'
 

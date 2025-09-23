@@ -2,7 +2,7 @@
     <nue-tooltip size="small" :content="isDeleted ? '恢复清单' : '删除清单'">
         <nue-button
             class="project-delete-button"
-            :theme="$slots.default ? 'small' : 'pure'"
+            :theme="$slots.default ? 'icon,ghost,small' : 'icon,ghost,pure'"
             :icon="isDeleted ? 'restore' : 'delete'"
             @click.stop="handleClick"
         >
@@ -18,12 +18,12 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{
     (event: 'delete'): void
-    (event: 'resotre'): void
+    (event: 'restore'): void
 }>()
 
 const handleClick = () => {
     if (props.isDeleted) {
-        emit('resotre')
+        emit('restore')
     } else {
         emit('delete')
     }

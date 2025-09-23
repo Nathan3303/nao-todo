@@ -98,9 +98,10 @@ import { useTodoStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 import { InnerDropdown, InnerDropdownOption } from '@/components/ui/inner-dropdown'
+import { getColumnText } from '@/components/tasks'
 import { priorityOptions, stateOptions } from '@nao-todo/components/todo/selector/constants'
-import { columnOptionsInfoMap } from '@/views/tasks/constants'
 import type { InnerDropdownOptionVO } from '@/components/ui/inner-dropdown/types'
+import type { Todo } from '@nao-todo/types'
 
 const route = useRoute()
 const todoStore = useTodoStore()
@@ -136,7 +137,7 @@ const sortFieldDropdownOptions = computed<InnerDropdownOptionVO[]>(() => {
     Object.keys(columnOptions.value).forEach((key) => {
         _fields.push({
             icon: 'plus-circle',
-            label: columnOptionsInfoMap[key as keyof typeof columnOptionsInfoMap],
+            label: getColumnText(key),
             value: key,
             checked: getOptions.value.sort?.field === key || false
         })
@@ -179,11 +180,11 @@ const handleStateDropdownExecute = (field: string) => {
 const handleSortFieldDropdownExecute = (field: string) => {
     if (field === getOptions.value.sort?.field) {
         todoStore.mergeGetOptions({
-            sort: { field: '', order: 'asc' }
+            sort: { field: 'createdAt', order: 'desc' }
         })
     } else {
         todoStore.mergeGetOptions({
-            sort: { field, order: getOptions.value.sort?.order || 'asc' }
+            sort: { field: field as keyof Todo, order: getOptions.value.sort?.order || 'asc' }
         })
     }
     // todoStore.doGetTodos()

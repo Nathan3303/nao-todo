@@ -10,19 +10,13 @@ import type {
     GetProjectsSortOptions
 } from '@nao-todo/types'
 
-const defaultGetProjectsOptions: GetProjectsOptions = {
-    isDeleted: false,
-    page: 1,
-    limit: 99
-}
-
 export const createProjectApi = async (requester: Requester, options: CreateProjectOptions) => {
     try {
         const response = await requester.post('/project/', options)
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/create-project-v2]', error)
-        return { code: 50001, message: '服务器错误' } as ResponseData
+        return { code: 500, message: '服务器错误' } as ResponseData
     }
 }
 
@@ -36,7 +30,17 @@ export const deleteProjectApi = async (
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/delete-project-v2]', error)
-        return { code: 50001, message: '服务器错误' } as ResponseData
+        return { code: 500, message: '服务器错误' } as ResponseData
+    }
+}
+
+export const restoreProjectApi = async (requester: Requester, projectId: Project['id']) => {
+    try {
+        const response = await requester.put(`/project/restore/${projectId}`)
+        return response.data as ResponseData
+    } catch (error) {
+        console.error('[@nao-todo/apis/restore-project-v2]', error)
+        return { code: 500, message: '服务器错误' } as ResponseData
     }
 }
 
@@ -50,7 +54,7 @@ export const updateProjectApi = async (
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/update-project-v2]', error)
-        return { code: 50001, message: '服务器错误' } as ResponseData
+        return { code: 500, message: '服务器错误' } as ResponseData
     }
 }
 
@@ -60,14 +64,11 @@ export const getProjectApi = async (requester: Requester, options: GetProjectOpt
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/get-project-v2]', error)
-        return { code: 50001, message: '服务器错误' } as ResponseData
+        return { code: 500, message: '服务器错误' } as ResponseData
     }
 }
 
-export const getProjectsApi = async (
-    requester: Requester,
-    options: GetProjectsOptions = defaultGetProjectsOptions
-) => {
+export const getProjectsApi = async (requester: Requester, options: GetProjectsOptions) => {
     try {
         let queryString = stringifyGetOptions(options, (key: unknown, value: any) => {
             if (key === 'sort' && value) {
@@ -79,6 +80,6 @@ export const getProjectsApi = async (
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/get-projects-v2]', error)
-        return { code: 50001, message: '服务器错误' } as ResponseData
+        return { code: 500, message: '服务器错误' } as ResponseData
     }
 }

@@ -1,5 +1,5 @@
 import type { User } from '@nao-todo/types'
-import { unwrapError } from './utils'
+import { unwrapError } from './error'
 
 const getJWTPayload = (jwt: string) => {
     // 拆分 JWT

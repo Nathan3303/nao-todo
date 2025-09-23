@@ -1,11 +1,11 @@
 import { defineAsyncComponent } from 'vue'
-import LoadingComponent from '@/components/tasks/dialogs/loading.vue'
-import ErrorComponent from '@/components/tasks/dialogs/error.vue'
+// import LoadingComponent from '@/components/ui/dialog-manager/loading.vue'
+// import ErrorComponent from '@/components/ui/dialog-manager/error.vue'
 
 export default defineAsyncComponent({
     loader: () => import('./project-creator.vue'),
-    loadingComponent: LoadingComponent,
+    // loadingComponent: LoadingComponent,
     delay: 0,
-    errorComponent: ErrorComponent,
+    // errorComponent: ErrorComponent,
     timeout: 10000
 })

@@ -17,15 +17,12 @@
 
 <script lang="ts" setup>
 import { computed } from 'vue'
-import { useTasksDialogStore, useTasksHandlerStore } from '@/views/tasks/stores'
 import { NaoSmartList, type NaoSmartListLinkVO, NaoColorDot } from '@/components/ui'
-import { useTasksDataStore } from '@/stores/tasks'
+import { useTasksDataStore, useTasksDialogStore } from '@/stores/tasks'
 import { storeToRefs } from 'pinia'
-
 defineOptions({ name: 'TagSmartList' })
 
 const tasksDialogStore = useTasksDialogStore()
-const tasksHandlerStore = useTasksHandlerStore()
 const tasksDataStore = useTasksDataStore()
 
 const { tagSmartListData: tags } = storeToRefs(tasksDataStore)
@@ -35,7 +32,7 @@ const links = computed<NaoSmartListLinkVO[]>(() => {
         return {
             id: tag.id,
             title: tag.name,
-            route: { name: 'tasks-tag', params: { tagId: tag.id } },
+            route: { name: 'tasks-tag', params: { id: tag.id } },
             icon: 'tag',
             payload: { color: tag.color }
         } as NaoSmartListLinkVO
@@ -43,13 +40,10 @@ const links = computed<NaoSmartListLinkVO[]>(() => {
 })
 
 const handleManage = () => {
-    tasksDialogStore.dialogManagerShow('TagManager', { dialogSize: 'large' })
+    tasksDialogStore.tagManager?.open()
 }
 
 const handleCreate = () => {
-    tasksDialogStore.dialogManagerShow('TagCreator', {
-        confirmHandler: tasksHandlerStore.handleCreateTag,
-        dialogSize: 'small'
-    })
+    tasksDialogStore.tagCreator?.open()
 }
 </script>

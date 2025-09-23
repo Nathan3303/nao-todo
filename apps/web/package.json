@@ -18,8 +18,6 @@
     },
     "dependencies": {
         "@types/markdown-it": "^14.1.2",
-        "markdown-it": "^14.1.0",
-        "nue-ui": "^1.0.9",
-        "nue-ui-theme-shadlike": "^0.0.4"
+        "markdown-it": "^14.1.0"
     }
 }

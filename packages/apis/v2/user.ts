@@ -11,7 +11,7 @@ export const signInApi = async (requester: Requester, options: SigninOptions) =>
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/sign-in-v2]:', error)
-        return { code: 50001, message: '服务器错误' } as ResponseData
+        return { code: 500, message: '服务器错误' } as ResponseData
     }
 }
 
@@ -26,7 +26,7 @@ export const signUpApi = async (requester: Requester, options: SignupOptions) =>
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/sign-up-v2]:', error)
-        return { code: 50001, message: '服务器错误' } as ResponseData
+        return { code: 500, message: '服务器错误' } as ResponseData
     }
 }
 
@@ -37,7 +37,7 @@ export const checkInApi = async (requester: Requester, jwt: string) => {
         return response.data as ResponseData
     } catch (error) {
         console.log('[@nao-todo/apis/check-in-v2]:', error)
-        return { code: 50001, message: '服务器错误' } as ResponseData
+        return { code: 500, message: '服务器错误' } as ResponseData
     }
 }
 
@@ -48,7 +48,7 @@ export const signOutApi = async (requester: Requester, jwt: string) => {
         return response.data as ResponseData
     } catch (error) {
         console.log('[@nao-todo/apis/sign-out-v2]:', error)
-        return { code: 50001, message: '服务器错误' } as ResponseData
+        return { code: 500, message: '服务器错误' } as ResponseData
     }
 }
 
@@ -58,7 +58,7 @@ export const updateNicknameApi = async (requester: Requester, newNickname: strin
         return response.data as ResponseData
     } catch (error) {
         console.log('[@nao-todo/apis/update-nickname-v2]:', error)
-        return { code: 50001, message: '服务器错误' } as ResponseData
+        return { code: 500, message: '服务器错误' } as ResponseData
     }
 }
 
@@ -75,6 +75,6 @@ export const updatePasswordApi = async (
         return response.data as ResponseData
     } catch (error) {
         console.log('[@nao-todo/apis/update-password-v2]:', error)
-        return { code: 50001, message: '服务器错误' } as ResponseData
+        return { code: 500, message: '服务器错误' } as ResponseData
     }
 }

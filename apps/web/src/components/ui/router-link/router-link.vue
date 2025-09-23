@@ -20,13 +20,13 @@ const props = defineProps<NaoRouterLinkProps>()
 
 const theme = computed(() => {
     return {
-        rl: true,
-        'rl-ico': props.iconLink,
-        [`rl-${props.size}`]: props.size
+        route: true,
+        'route-ico': props.iconLink,
+        [`route-${props.size}`]: props.size
     }
 })
 
 const route = computed(() => {
-    return props.to ? { name: props.to } : void 0
+    return props.to ? { path: props.to } : void 0
 })
 </script>

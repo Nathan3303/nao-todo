@@ -1,3 +1,5 @@
+import type { ComponentPublicInstance } from 'vue'
+
 // axios
 export type * from './axios/common'
 
@@ -17,4 +19,7 @@ export type * from './requester'
 
 // Golang like error handling type support
 export type Err = Error | string | Error[] | string[] | null
-export type GoLike = [any, Err]
+export type GoLike<T = any> = [T, Err]
+
+// other
+export type ComponentRef<T> = ComponentPublicInstance<T> | null | undefined

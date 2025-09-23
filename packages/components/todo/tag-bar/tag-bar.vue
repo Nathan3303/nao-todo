@@ -51,8 +51,17 @@ const { visibleTags, comboBoxOptions, handleAddTag, handleDropTag } = useTagBar(
     text-decoration: none !important;
 }
 
-.todo-tag-bar--small .tag-node {
-    --tag-node-vgap: 6px;
-    --tag-node-fs: calc(var(--text-xs) - 0.08rem);
+.todo-tag-bar--small {
+    scale: 0.9;
+    margin-left: -4%;
+
+    .tag-node {
+        height: 20px;
+        padding: 0 0.4375rem;
+
+        .tag-node__name {
+            font-size: var(--nue-text-xs);
+        }
+    }
 }
 </style>

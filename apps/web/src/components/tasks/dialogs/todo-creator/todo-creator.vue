@@ -1,62 +1,109 @@
-<template>
-    <nue-div vertical>
-        <todo-creator-ui
-            ref="todoCreatorRef"
-            :presetInfo="presetInfo"
-            :projects="projects"
-            :tags="tags"
-            :userId="userStore.user?.id ?? ''"
-        />
-        <nue-div align="center" justify="end" style="margin-top: auto">
-            <nue-button @click="emit('closeDialog')">取消</nue-button>
-            <nue-button :loading="loading" theme="primary" @click="handleClick">创建</nue-button>
-        </nue-div>
-    </nue-div>
-</template>
-
 <script lang="ts" setup>
 import { ref } from 'vue'
-import { TodoCreatorUi } from '@nao-todo/components/todo'
-import { NueMessage } from 'nue-ui'
-import { useProjectStore, useTagStore, useUserStore } from '@/stores'
-import type { TodoCreatorProps } from '@nao-todo/components/todo/creator/types'
-import type { CreateTodoOptions } from '@nao-todo/types'
-import { storeToRefs } from 'pinia'
+import useTodoCreator, { defaultCreateTodoOptions } from './use-todo-creator'
+import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
+import { useRelativeDate } from '@nao-todo/hooks/use-relative-date'
+import {
+    TodoDateSelector,
+    TodoPrioritySelectOptions,
+    TodoProjectSelector,
+    TodoSelector,
+    TodoStateSelectOptions,
+    TodoTagBar
+} from '@nao-todo/components'
+import type { CreateTodoOptions, Todo } from '@nao-todo/types'
 
 defineOptions({ name: 'TodoCreator' })
-const props = defineProps<{
-    handler: (options: CreateTodoOptions) => Promise<boolean>
-    presetInfo?: TodoCreatorProps['presetInfo']
-}>()
-const emit = defineEmits<{ (e: 'closeDialog'): void }>()
 
-const projectStore = useProjectStore()
-const tagStore = useTagStore()
-const userStore = useUserStore()
+const dialogRef = ref<DialogInstanceType>()
 
-const { smartListData: projects } = storeToRefs(projectStore)
-const { smartListData: tags } = storeToRefs(tagStore)
+const { visible, open, close } = useDialogWrapper(dialogRef)
+const { user, projects, tags, newTodo, creating, disabled, handleCreateTodo } = useTodoCreator()
 
-const loading = ref(false)
-const todoCreatorRef = ref<InstanceType<typeof TodoCreatorUi>>()
-
-const handleClick = async () => {
-    const newTodo = { ...todoCreatorRef.value?.todoData }
-    if (!newTodo.name) {
-        NueMessage.error('待办事项名称不能为空')
-        return
-    }
-    try {
-        loading.value = true
-        const result = await props.handler(newTodo as CreateTodoOptions)
-        if (result) {
-            emit('closeDialog')
-            todoCreatorRef.value?.clear()
-        }
-    } catch (e) {
-        console.warn('[CreateTodoDialog] confirm error:', e)
-    } finally {
-        loading.value = false
-    }
+const iOpen = (createTodoOptions: CreateTodoOptions) => {
+    newTodo.value = { ...newTodo.value, ...createTodoOptions }
+    open()
 }
+
+const iClose = () => {
+    close()
+    newTodo.value = { ...defaultCreateTodoOptions }
+}
+
+const handleSubmit = async () => {
+    const ok = await handleCreateTodo()
+    if (ok) iClose()
+}
+
+defineExpose({ open: iOpen, close: iClose })
 </script>
+
+<template>
+    <nue-dialog v-model="visible" ref="dialogRef">
+        <template #header>
+            <nue-text>创建待办事项</nue-text>
+            <nue-button @click="iClose" icon="clear" theme="icon,ghost,small" />
+        </template>
+        <template #content>
+            <nue-div vertical align="stretch">
+                <nue-input
+                    v-model="newTodo.name"
+                    clearable
+                    placeholder="待办事项名称"
+                    maxlength="64"
+                    counter="word-left"
+                />
+                <nue-textarea
+                    v-model="newTodo.description"
+                    maxlength="256"
+                    counter="word-left"
+                    :autosize="{ minRows: 1, maxRows: 4 }"
+                    placeholder="添加待办事项备注（可选）"
+                    theme="fix-padding"
+                />
+                <nue-div align="center">
+                    <todo-date-selector v-model="newTodo.endAt" />
+                    <nue-text v-if="newTodo.endAt" color="gray" size="var(--nue-text-xs)">
+                        任务截止于：{{ useRelativeDate(newTodo.endAt) }}
+                    </nue-text>
+                </nue-div>
+                <nue-div wrap="nowrap">
+                    <todo-selector
+                        :options="TodoStateSelectOptions"
+                        :value="newTodo.state"
+                        @change="(s) => (newTodo.state = s as Todo['state'])"
+                    />
+                    <todo-selector
+                        :options="TodoPrioritySelectOptions"
+                        :value="newTodo.priority"
+                        @change="(p) => (newTodo.priority = p as Todo['priority'])"
+                    />
+                    <nue-div flex="1" />
+                    <todo-project-selector
+                        :project-id="newTodo.projectId"
+                        :projects="projects"
+                        :user-id="user?.id || ''"
+                        @select="(pid) => (newTodo.projectId = pid)"
+                    />
+                </nue-div>
+                <todo-tag-bar
+                    :clamped="5"
+                    :tags="tags"
+                    :todo-tags="newTodo.tags || []"
+                    @update-tags="(_tags) => (newTodo.tags = _tags)"
+                />
+            </nue-div>
+        </template>
+        <template #footer>
+            <nue-button :disabled="creating" @click="iClose">取消</nue-button>
+            <nue-button
+                :disabled="disabled"
+                :loading="creating"
+                theme="primary"
+                @click="handleSubmit"
+            >
+                创建
+            </nue-button>
+        </template>
+    </nue-dialog>
+</template>

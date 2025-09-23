@@ -47,7 +47,6 @@ import { inject } from 'vue'
 import { UserDropdown } from '@nao-todo/components'
 import { useUserStore, useViewStore } from '@/stores'
 import { storeToRefs } from 'pinia'
-import { onBeforeRouteUpdate } from 'vue-router'
 import { type IndexViewCtx, IndexViewCtxKey } from '@nao-todo/types/views/index-view'
 
 const userStore = useUserStore()
@@ -64,11 +63,6 @@ const routeLinks = [
     { name: '搜索', icon: 'search2', route: '/search' },
     { name: '对话大模型', icon: 'ai-chat-fill', route: '/ai' }
 ]
-
-onBeforeRouteUpdate((to, from, next) => {
-    next()
-    setTimeout(() => (viewStore.indexAsideVisible = false), 128)
-})
 </script>
 
 <style scoped>

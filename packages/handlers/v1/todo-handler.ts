@@ -1,0 +1,111 @@
+import { createTodoApiV2, getTodosApiV2, updateTodoApiV2 } from '@nao-todo/apis/v2'
+import type {
+    CreateTodoOptions,
+    GetTodosOptions,
+    ResponseData,
+    GoLike,
+    Requester,
+    Todo,
+    UpdateTodoOptions
+} from '@nao-todo/types'
+
+const CREATE_TODO_SUCCESS_CODE = 40010
+const GET_TODOS_SUCCESS_CODE = 40050
+const UPDATE_TODO_SUCCESS_CODE = 40020
+// const GET_TODO_SUCCESS_CODE = 40000
+// const DELETE_TODO_SUCCESS_CODE = 40030
+// const RESTORE_TODO_SUCCESS_CODE = 40040
+
+export const createTodoHandler = async (
+    options: CreateTodoOptions,
+    requester: Requester
+): Promise<GoLike> => {
+    // 参数判断
+    if (options.name === '') return [null, '待办任务名称不能为空']
+    // 调用 API 创建待办任务
+    const apiRes = await createTodoApiV2(requester, options)
+    // 处理成功结果
+    if (apiRes.code === CREATE_TODO_SUCCESS_CODE) {
+        return [apiRes.data, null]
+    }
+    // 处理失败结果
+    return [null, apiRes.message]
+}
+
+export const getTodosHandler = async (
+    getOptions: GetTodosOptions,
+    requester: Requester
+): Promise<GoLike<{ todos: Todo[]; pagination: ResponseData['pagination'] } | null>> => {
+    // 调用 API 获取待办任务列表
+    const apiRes = await getTodosApiV2(requester, getOptions)
+    // 处理成功结果
+    if (apiRes.code === GET_TODOS_SUCCESS_CODE) {
+        return [
+            {
+                todos: apiRes.data as Todo[],
+                pagination: apiRes.pagination
+            },
+            null
+        ]
+    }
+    // 处理失败结果
+    return [null, apiRes.message]
+}
+
+export const updateTodoHandler = async (
+    todoId: Todo['id'],
+    updateOptions: UpdateTodoOptions,
+    requester: Requester
+): Promise<GoLike> => {
+    // 调用 API 更新待办任务信息
+    const apiRes = await updateTodoApiV2(requester, todoId, updateOptions)
+    // 处理成功结果
+    if (apiRes.code === UPDATE_TODO_SUCCESS_CODE) {
+        return [apiRes.data, null]
+    }
+    // 处理失败结果
+    return [null, apiRes.message]
+}
+
+// export const getTodoHandler = async (
+//     getOptions: GetProjectOptions,
+//     requester: Requester
+// ): Promise<GoLike> => {
+//     // 调用 API 获取待办任务信息
+//     const apiRes = await (requester, getOptions)
+//     // 处理成功结果
+//     if (apiRes.code === GET_PROJECT_SUCCESS_CODE) {
+//         return [apiRes.data, null]
+//     }
+//     // 处理失败结果
+//     return [null, apiRes.message]
+// }
+
+// export const deleteProjectHandler = async (
+//     projectId: Project['id'],
+//     isHard?: boolean,
+//     requester?: Requester
+// ): Promise<GoLike> => {
+//     // 调用 API 删除（更新）待办任务
+//     const apiRes = await deleteProjectApi(requester || iReq, projectId, isHard || false)
+//     // 处理成功结果
+//     if (apiRes.code === DELETE_PROJECT_SUCCESS_CODE) {
+//         return [apiRes.data, null]
+//     }
+//     // 处理失败结果
+//     return [null, apiRes.message]
+// }
+
+// export const restoreProjectHandler = async (
+//     projectId: Project['id'],
+//     requester?: Requester
+// ): Promise<GoLike> => {
+//     // 调用 API 删除（更新）待办任务
+//     const apiRes = await restoreProjectApi(requester || iReq, projectId)
+//     // 处理成功结果
+//     if (apiRes.code === RESTORE_PROJECT_SUCCESS_CODE) {
+//         return [apiRes.data, null]
+//     }
+//     // 处理失败结果
+//     return [null, apiRes.message]
+// }

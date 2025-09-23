@@ -10,16 +10,16 @@
                     :allow-route="allowRoute"
                 >
                     <template #ops>
-                        <project-archive-button
-                            v-if="!project.isDeleted"
-                            :is-archived="project.isArchived"
-                            @archive="emit('archiveProject', project.id)"
-                            @unarchive="emit('unarchiveProject', project.id)"
-                        />
+<!--                        <project-archive-button-->
+<!--                            v-if="!project.isDeleted"-->
+<!--                            :is-archived="project.isArchived"-->
+<!--                            @archive="emit('archiveProject', project.id)"-->
+<!--                            @unarchive="emit('unarchiveProject', project.id)"-->
+<!--                        />-->
                         <project-delete-button
                             :is-deleted="project.isDeleted"
                             @delete="emit('deleteProject', project.id)"
-                            @resotre="emit('restoreProject', project.id)"
+                            @restore="emit('restoreProject', project.id)"
                         />
                         <nue-tooltip
                             v-if="project.isDeleted"
@@ -28,18 +28,16 @@
                             content="永久删除清单"
                         >
                             <nue-button
-                                theme="pure"
+                                theme="icon,ghost,pure"
                                 icon="delete"
-                                @click="
-                                    emit('deleteProjectPermanently', project.id)
-                                "
+                                @click="emit('deleteProjectPermanently', project.id)"
                             />
                         </nue-tooltip>
                     </template>
                 </project-card>
             </div>
         </template>
-        <nue-empty v-else image-size="48px" style="margin-top: 36px" />
+        <nue-empty v-else image-size="6rem" fill />
     </div>
 </template>
 
@@ -69,7 +67,8 @@ const emit = defineEmits<{
 
 <style scoped>
 .project-board-wrapper {
-    overflow: auto;
+    overflow: unset;
+    flex: 1;
 }
 
 .project-board {
@@ -85,11 +84,6 @@ const emit = defineEmits<{
 }
 
 .project-board .project-board__delete-permanently .nue-button--pure {
-    --icon-size: 16px;
-    --icon-weight: normal;
-    cursor: pointer;
-    transition: all 0.16s;
     color: red;
-    margin-right: 6px;
 }
 </style>

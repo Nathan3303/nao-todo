@@ -32,3 +32,4 @@ package-lock.json
 **/.rn_temp/
 **/.swc
 apps/web/stats.html
+.bak

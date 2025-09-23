@@ -1,4 +1,3 @@
-import { useAxios } from '@nao-todo/hooks/use-requester'
 import type {
     CreateProjectOptions,
     GetProjectOptions,
@@ -13,7 +12,8 @@ import {
     deleteProjectApi,
     getProjectsApi,
     getProjectApi,
-    updateProjectApi
+    updateProjectApi,
+    restoreProjectApi
 } from '@nao-todo/apis/v2'
 
 const CREATE_PROJECT_SUCCESS_CODE = 20010
@@ -21,17 +21,16 @@ const GET_PROJECTS_SUCCESS_CODE = 20050
 const GET_PROJECT_SUCCESS_CODE = 20000
 const UPDATE_PROJECT_SUCCESS_CODE = 20020
 const DELETE_PROJECT_SUCCESS_CODE = 20030
-
-const iReq = useAxios('http://localhost:3303/api/')
+const RESTORE_PROJECT_SUCCESS_CODE = 20040
 
 const createProjectHandler = async (
     options: CreateProjectOptions,
-    requester?: Requester
+    requester: Requester
 ): Promise<GoLike> => {
     // 参数判断
     if (options.name === '') return [null, '清单名称不能为空']
     // 调用 API 创建清单
-    const apiRes = await createProjectApi(requester || iReq, options)
+    const apiRes = await createProjectApi(requester, options)
     // 处理成功结果
     if (apiRes.code === CREATE_PROJECT_SUCCESS_CODE) {
         return [apiRes.data, null]
@@ -42,10 +41,10 @@ const createProjectHandler = async (
 
 const getProjectsHandler = async (
     getOptions: GetProjectsOptions,
-    requester?: Requester
+    requester: Requester
 ): Promise<GoLike> => {
     // 调用 API 获取清单列表
-    const apiRes = await getProjectsApi(requester || iReq, getOptions)
+    const apiRes = await getProjectsApi(requester, getOptions)
     // 处理成功结果
     if (apiRes.code === GET_PROJECTS_SUCCESS_CODE) {
         return [apiRes.data, null]
@@ -56,10 +55,10 @@ const getProjectsHandler = async (
 
 const getProjectHandler = async (
     getOptions: GetProjectOptions,
-    requester?: Requester
+    requester: Requester
 ): Promise<GoLike> => {
     // 调用 API 获取清单信息
-    const apiRes = await getProjectApi(requester || iReq, getOptions)
+    const apiRes = await getProjectApi(requester, getOptions)
     // 处理成功结果
     if (apiRes.code === GET_PROJECT_SUCCESS_CODE) {
         return [apiRes.data, null]
@@ -71,10 +70,10 @@ const getProjectHandler = async (
 const updateProjectHandler = async (
     projectId: Project['id'],
     updateOptions: UpdateProjectOptions,
-    requester?: Requester
+    requester: Requester
 ): Promise<GoLike> => {
     // 调用 API 更新清单信息
-    const apiRes = await updateProjectApi(requester || iReq, projectId, updateOptions)
+    const apiRes = await updateProjectApi(requester, projectId, updateOptions)
     // 处理成功结果
     if (apiRes.code === UPDATE_PROJECT_SUCCESS_CODE) {
         return [apiRes.data, null]
@@ -85,13 +84,27 @@ const updateProjectHandler = async (
 
 const deleteProjectHandler = async (
     projectId: Project['id'],
-    isHard?: boolean,
-    requester?: Requester
+    isHard: boolean,
+    requester: Requester
 ): Promise<GoLike> => {
     // 调用 API 删除（更新）清单
-    const apiRes = await deleteProjectApi(requester || iReq, projectId, isHard || false)
+    const apiRes = await deleteProjectApi(requester, projectId, isHard || false)
     // 处理成功结果
     if (apiRes.code === DELETE_PROJECT_SUCCESS_CODE) {
+        return [apiRes.data, null]
+    }
+    // 处理失败结果
+    return [null, apiRes.message]
+}
+
+const restoreProjectHandler = async (
+    projectId: Project['id'],
+    requester: Requester
+): Promise<GoLike> => {
+    // 调用 API 删除（更新）清单
+    const apiRes = await restoreProjectApi(requester, projectId)
+    // 处理成功结果
+    if (apiRes.code === RESTORE_PROJECT_SUCCESS_CODE) {
         return [apiRes.data, null]
     }
     // 处理失败结果
@@ -103,5 +116,6 @@ export {
     getProjectsHandler,
     getProjectHandler,
     updateProjectHandler,
-    deleteProjectHandler
+    deleteProjectHandler,
+    restoreProjectHandler
 }

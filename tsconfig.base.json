@@ -1,4 +1,9 @@
 {
+    "$schema": "https://json.schemastore.org/tsconfig",
+    // "include": [
+    //     "./**/*.ts",
+    //     "./*.ts"
+    // ],
     "compilerOptions": {
         "composite": true,
         "incremental": true,
@@ -18,5 +23,10 @@
             "dom"
         ],
         "module": "ESNext",
+        "moduleResolution": "bundler",
+        "rootDir": ".",
+        "types": [
+            "nue-ui/types"
+        ]
     }
 }

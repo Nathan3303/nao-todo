@@ -1,17 +1,23 @@
-.nue-link--rl {
+.nue-link.nue-link--route {
     --nue-link-font-size: var(--nue-text-xs);
     --nue-link-icon-size: var(--nue-text-sm);
+    --nue-link-actived-background-color: var(--nue-primary-color-900);
+
+    width: 100%;
+    min-width: unset;
+    overflow: hidden;
 
     .nue-link__content {
-        overflow: unset;
-        line-height: 1;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
     }
 
     .nue-link__append {
         margin-left: auto;
     }
 
-    &.nue-link--rl-ico {
+    &.nue-link--route-ico {
         --nue-link-padding: 0;
         --nue-link-border-color: transparent;
         --nue-link-text-decoration: none;
@@ -33,9 +39,11 @@
         .nue-link__content {
             display: none;
         }
+    }
 
-        &.nue-link--actived .nue-link__icon {
-            --nue-icon-color: var(--nue-link-actived-color);
-        }
+    &.nue-link--actived {
+        --nue-link-hover-color: white;
+
+        background-color: var(--nue-link-actived-background-color);
     }
 }

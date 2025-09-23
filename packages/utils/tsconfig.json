@@ -1,11 +1,3 @@
 {
     "extends": "../../tsconfig.base.json",
-    "include": [
-        "./*.tx"
-    ],
-    "compilerOptions": {
-        "rootDir": ".",
-        "moduleResolution": "nodenext",
-        "paths": null
-    }
 }

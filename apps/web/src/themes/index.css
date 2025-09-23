@@ -1,5 +1,5 @@
-:root {
-    font-family: "Poppins", "Noto Sans", sans-serif;
+html.nue-html {
+    --nue-primary-font-family: "Poppins", "Noto Sans", sans-serif;
 }
 
 .nue-div.nue-div--hint {
@@ -89,12 +89,6 @@
     }
 }
 
-.nue-dialog.nue-dialog--loader {
-    .nue-dialog__content {
-        margin-bottom: 0;
-    }
-}
-
 .nue-textarea.nue-textarea--fix-padding {
     padding: 12px;
 
@@ -107,4 +101,36 @@
         background-color: transparent;
     }
 
+}
+
+.nue-confirm.nue-confirm--danger {
+    > .nue-confirm__footer {
+        > .nue-button--primary {
+            --nue-button-color: white;
+            --nue-button-border-color: transparent;
+            --nue-button-bg-color: hsl(var(--nue-destructive-hsl-color));
+            --nue-button-hover-bg-color: hsl(var(--nue-destructive-hsl-color) / 0.86);
+            --nue-button-active-bg-color: var(--nue-button-hover-bg-color);
+            --nue-button-disable-color: white;
+            --nue-button-disable-bg-color: hsl(var(--nue-destructive-hsl-color) / 0.5);
+        }
+    }
+}
+
+.nue-container.nue-container--in-dialog {
+    gap: 0.5rem;
+
+    > .nue-header,
+    > .nue-main,
+    > .nue-footer {
+        border: none;
+        height: auto;
+        padding: 0;
+    }
+
+    > .nue-footer {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-end;
+    }
 }

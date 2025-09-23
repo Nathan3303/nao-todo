@@ -1,5 +1,5 @@
 <template>
-    <nue-div :gap="simple ? '8px' : '16px'" align="center" width="fit-content" wrap="nowarp">
+    <nue-div :gap="simple ? '8px' : '16px'" align="center" width="fit-content">
         <nue-div align="center" gap="8px" width="fit-content">
             <nue-text v-if="!simple" size="12px">每页条数</nue-text>
             <nue-select v-model="perPage" size="small" @change="handlePerPageChange">
@@ -7,36 +7,36 @@
             </nue-select>
             <nue-text v-if="simple" size="12px">条/页</nue-text>
         </nue-div>
-        <nue-text v-if="simple" size="12px">{{ page }}/{{ totalPages }} 页</nue-text>
-        <nue-text v-else size="12px">第 {{ page }} 页，共 {{ totalPages }} 页。</nue-text>
+        <nue-text v-if="!simple" size="12px">第 {{ page }} 页，共 {{ totalPages }} 页。</nue-text>
         <nue-div align="center" gap="8px" width="fit-content">
             <nue-button
                 v-if="!simple"
                 :disabled="prevButtonDisabled"
                 icon="arrow-left-more"
-                theme="small"
+                :theme="buttonThemes"
                 @click="handleGoToPage(1)"
             />
             <nue-button
                 :disabled="prevButtonDisabled"
                 icon="arrow-left"
-                theme="small"
+                :theme="buttonThemes"
                 @click="handlePrevPage"
             />
             <nue-button
                 :disabled="nextButtonDisabled"
                 icon="arrow-right"
-                theme="small"
+                :theme="buttonThemes"
                 @click="handleNextPage"
             />
             <nue-button
                 v-if="!simple"
                 :disabled="nextButtonDisabled"
                 icon="arrow-right-more"
-                theme="small"
+                :theme="buttonThemes"
                 @click="handleGoToPage(totalPages)"
             />
         </nue-div>
+        <nue-text v-if="simple" size="12px">{{ page }}/{{ totalPages }} 页</nue-text>
     </nue-div>
 </template>
 
@@ -59,6 +59,7 @@ const perPage = ref<number>(props.limit || 20)
 
 const prevButtonDisabled = computed(() => props.page === 1)
 const nextButtonDisabled = computed(() => props.page === props.totalPages)
+const buttonThemes = computed(() => (props.simple ? 'small,icon' : 'small'))
 
 const handlePerPageChange = (value: number) => {
     emit('perPageChange', value as number)
@@ -80,3 +81,4 @@ const handleGoToPage = (page: number) => {
     emit('pageChange', page)
 }
 </script>
+

@@ -6,6 +6,7 @@
         @execute="handleDropdownExecute"
         theme="menu"
         group="tasks-view-operations"
+        v-if="viewProps"
     >
         <template #trigger="{ trigger }">
             <nue-button icon="more" theme="icon,ghost" @click="trigger" />
@@ -13,14 +14,18 @@
         <template #default>
             <nue-div theme="block">
                 <nue-text theme="title">切换视图</nue-text>
-                <nue-div gap="0.5rem" wrap="nowrap">
+                <nue-div gap="0.5rem" wrap="nowrap" justify="space-between">
                     <li data-executeid="switch-view-to-table">
                         <nue-icon v-if="$route.name!.toString().endsWith('table')" name="check" />
-                        <nue-text>列表视图</nue-text>
+                        表格
                     </li>
                     <li data-executeid="switch-view-to-kanban">
                         <nue-icon v-if="$route.name!.toString().endsWith('kanban')" name="check" />
-                        <nue-text>看板视图</nue-text>
+                        看板
+                    </li>
+                    <li data-executeid="switch-view-to-list">
+                        <nue-icon v-if="$route.name!.toString().endsWith('list')" name="check" />
+                        列表
                     </li>
                 </nue-div>
             </nue-div>
@@ -28,31 +33,29 @@
             <nue-div theme="block">
                 <nue-text theme="title">视图操作</nue-text>
                 <li :data-disabled="isRefreshing" data-executeid="refresh-data">
-                    <nue-icon name="refresh" />
-                    <nue-text>重新获取数据</nue-text>
+                    <nue-icon name="refresh" /> 重新获取数据
                 </li>
                 <li data-executeid="hide-which-is-done">
-                    <nue-icon name="eye-close" />
-                    <nue-text>隐藏已完成</nue-text>
+                    <nue-icon name="eye-close" /> 隐藏已完成
                 </li>
-                <inner-dropdown
-                    @execute="handleColumnDropdownExecute"
-                    title="显示与隐藏列"
-                    @click.stop
-                    :suffix="sortFieldDropdownOptions.count"
-                    group="tasks-view-operations"
-                >
-                    <inner-dropdown-option
-                        v-for="option in sortFieldDropdownOptions.options"
-                        :key="option.label"
-                        :icon="option.icon"
-                        :title="option.label"
-                        :execute-id="option.value"
-                        :checked="option.checked"
-                    />
-                </inner-dropdown>
+                <!--                <inner-dropdown-->
+                <!--                    @execute="handleColumnDropdownExecute"-->
+                <!--                    title="显示与隐藏列"-->
+                <!--                    @click.stop-->
+                <!--                    :suffix="sortFieldDropdownOptions.count"-->
+                <!--                    group="tasks-view-operations"-->
+                <!--                >-->
+                <!--                    <inner-dropdown-option-->
+                <!--                        v-for="option in sortFieldDropdownOptions.options"-->
+                <!--                        :key="option.label"-->
+                <!--                        :icon="option.icon"-->
+                <!--                        :title="option.label"-->
+                <!--                        :execute-id="option.value"-->
+                <!--                        :checked="option.checked"-->
+                <!--                    />-->
+                <!--                </inner-dropdown>-->
             </nue-div>
-            <template v-if="category === 'project'">
+            <template v-if="viewProps.category === 'project'">
                 <nue-divider />
                 <nue-div theme="block">
                     <nue-text theme="title">清单操作</nue-text>
@@ -70,15 +73,15 @@
                     </li>
                 </nue-div>
             </template>
-            <template v-else-if="category === 'tag'">
+            <template v-else-if="viewProps.category === 'tag'">
                 <nue-divider />
                 <nue-div theme="block">
                     <nue-text theme="title">标签操作</nue-text>
-                    <li data-executeid="change-tag-color">
+                    <li data-executeid="change-tag-color" v-if="viewProps.extra?.color">
                         <nue-icon name="theme" />
                         修改标签颜色
                         <tag-color-dot
-                            :color="viewInfo?.payload?.color as string"
+                            :color="viewProps.extra.color as string"
                             style="margin-left: auto"
                             size="small"
                         />
@@ -94,87 +97,91 @@
 </template>
 
 <script setup lang="ts">
-import { useTodoStore } from '@/stores'
-import { useTasksDialogStore, useTasksHandlerStore, useTasksViewStore } from '@/views/tasks/stores'
+// import { useTodoStore } from '@/stores/global'
 import { storeToRefs } from 'pinia'
-import { useRoute, useRouter } from 'vue-router'
-import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { ref } from 'vue'
 import { TagColorDot } from '@nao-todo/components'
-import { InnerDropdown, InnerDropdownOption, type InnerDropdownOptionVO } from '@/components/ui'
-import { columnOptionsInfoMap } from '@/views/tasks/constants'
-import type { TodoColumnOptions } from '@nao-todo/types'
+// import { InnerDropdown, InnerDropdownOption, type InnerDropdownOptionVO } from '@/components/ui'
+import { useTasksViewStore, useTasksDataStore, useTasksDialogStore } from '@/stores/tasks'
+// import type { TodoColumnOptions } from '@nao-todo/types'
+// import { getColumnText } from '@/components/tasks/table/utils'
 
 const router = useRouter()
-const route = useRoute()
-const todoStore = useTodoStore()
+// const todoStore = useTodoStore()
 const tasksViewStore = useTasksViewStore()
-const tasksHandlerStore = useTasksHandlerStore()
+const tasksDataStore = useTasksDataStore()
 const tasksDialogStore = useTasksDialogStore()
 
-const { category, viewInfo } = storeToRefs(tasksViewStore)
-const { columnOptions } = storeToRefs(todoStore)
+const { viewProps } = storeToRefs(tasksViewStore)
+// const { columnOptions } = storeToRefs(todoStore)
 const isRefreshing = ref(false)
 
-const sortFieldDropdownOptions = computed<{
-    options: InnerDropdownOptionVO[]
-    count: number
-}>(() => {
-    const _fields: InnerDropdownOptionVO[] = []
-    let count = 0
-    Object.keys(columnOptions.value).forEach((key) => {
-        const isChecked = columnOptions.value[key as keyof TodoColumnOptions]
-        if (isChecked) count++
-        _fields.push({
-            icon: 'plus-circle',
-            label: columnOptionsInfoMap[key as keyof typeof columnOptionsInfoMap],
-            value: key,
-            checked: isChecked
-        })
-    })
-    return { options: _fields, count }
-})
+// const sortFieldDropdownOptions = computed<{
+//     options: InnerDropdownOptionVO[]
+//     count: number
+// }>(() => {
+//     const _fields: InnerDropdownOptionVO[] = []
+//     let count = 0
+//     Object.keys(columnOptions.value).forEach((key) => {
+//         const isChecked = columnOptions.value[key as keyof TodoColumnOptions]
+//         if (isChecked) count++
+//         _fields.push({
+//             icon: 'plus-circle',
+//             label: getColumnText(key),
+//             value: key,
+//             checked: isChecked
+//         })
+//     })
+//     return { options: _fields, count }
+// })
 
 const handleDropdownExecute = async (executeId: string) => {
     switch (executeId) {
         case 'save-as-preference':
-            await tasksHandlerStore.handleUpdateProjectPreference()
-            break
-        case 'archive':
-            await tasksHandlerStore.handleArchiveProject()
+            // await tasksHandlerStore.handleUpdateProjectPreference()
             break
         case 'hide-which-is-done':
-            await tasksHandlerStore.handleHideTodosWhichIsDone()
+            // await tasksHandlerStore.handleHideTodosWhichIsDone()
             break
         case 'switch-view-to-table':
-            await router.replace({ name: `tasks-${route.meta.id}-table` })
+            await router.replace({ name: 'TasksMain', params: { type: 'table' } })
             break
         case 'switch-view-to-kanban':
-            await router.replace({ name: `tasks-${route.meta.id}-kanban` })
+            await router.replace({ name: 'TasksMain', params: { type: 'kanban' } })
+            break
+        case 'switch-view-to-list':
+            await router.replace({ name: 'TasksMain', params: { type: 'list' } })
             break
         case 'delete-project':
-            await tasksHandlerStore.handleRemoveProject()
+            if (!viewProps.value) break
+            await tasksDataStore.deleteProject(viewProps.value.id)
             break
         case 'refresh-data':
             {
-                isRefreshing.value = true
-                await tasksHandlerStore.handleRefresh()
-                isRefreshing.value = false
+                if (viewProps.value!.preference.getTodosOptions) {
+                    isRefreshing.value = true
+                    await tasksDataStore.getTodos(viewProps.value!.preference.getTodosOptions)
+                    isRefreshing.value = false
+                }
             }
             break
         case 'change-tag-color':
-            await tasksDialogStore.showTagColorSelectDialog()
+            if (!tasksDialogStore.tagColorUpdater || !viewProps.value) break
+            tasksDialogStore.tagColorUpdater.open({ tagId: viewProps.value.id })
             break
         case 'delete-tag':
-            await tasksHandlerStore.handleDeleteTag()
+            if (!viewProps.value) break
+            await tasksDataStore.deleteTag(viewProps.value.id)
             break
     }
 }
 
-const handleColumnDropdownExecute = (field: string) => {
-    const oldValue = columnOptions.value[field as keyof TodoColumnOptions]
-    todoStore.updateColumnOptions({
-        ...columnOptions.value,
-        [field]: !oldValue
-    })
-}
+// const handleColumnDropdownExecute = (field: string) => {
+//     const oldValue = columnOptions.value[field as keyof TodoColumnOptions]
+//     todoStore.updateColumnOptions({
+//         ...columnOptions.value,
+//         [field]: !oldValue
+//     })
+// }
 </script>

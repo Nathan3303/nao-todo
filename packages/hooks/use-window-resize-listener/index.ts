@@ -19,8 +19,11 @@ export const useWindowResizeListener = () => {
     const cbSet: Set<Callback> | null = new Set()
     const poolId: string = generateId()
 
-    const addCallback = (callback: Callback) => {
+    const addCallback = (callback: Callback, immediate = false) => {
         cbSet.add(callback)
+        let e: Event | null = new Event('resize')
+        if (immediate) callback(e)
+        e = null
     }
 
     const removeCallback = (callback: Callback) => {
@@ -46,3 +49,4 @@ export const useWindowResizeListener = () => {
         removeCallback
     }
 }
+
