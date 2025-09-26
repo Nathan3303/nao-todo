@@ -1,3 +1,4 @@
+import { pingServerByXHR } from './requester'
 import useUserStoreV2 from './use-user-store-v2'
 import useProjectStore from './use-project-store'
 import useTagStore from './use-tag-store'
@@ -11,5 +12,6 @@ export {
     useTagStore,
     useTodoStore,
     useEventStore,
-    useCommentStore
+    useCommentStore,
+    pingServerByXHR
 }

@@ -2,7 +2,7 @@
 import { storeToRefs } from 'pinia'
 import { useViewStore } from '@/stores'
 import { useUserStoreV2 } from '@/stores/global'
-import { NaoRouterLink } from '@/components/ui'
+import { NaoRouterLink, OfflineScreen } from '@/components/ui'
 import { NueContainer } from 'nue-ui'
 
 const userStore = useUserStoreV2()
@@ -23,6 +23,7 @@ const routeLinks = [
 </script>
 
 <template>
+    <offline-screen />
     <nue-container id="AppContainer">
         <nue-main>
             <nue-aside>
