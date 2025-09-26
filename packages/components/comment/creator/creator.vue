@@ -1,14 +1,13 @@
 <template>
-    <nue-div align="stretch" theme="comment-creator" vertical>
+    <nue-div align="stretch" theme="comment-creator" vertical spellcheck="false">
         <nue-textarea
             ref="leaveCommentInputRef"
             v-model="commentContent"
-            :rows="0"
-            autosize
+            :autosize="{ minRows: 1, maxRows: 4 }"
             counter="word-limit"
-            maxlength="256"
+            maxlength="360"
             placeholder="添加评论"
-            theme="small"
+            theme="fix-padding"
         />
         <!--        <nue-divider />-->
         <nue-div justify="space-between">
@@ -47,8 +46,8 @@ const handleSubmit = async () => {
         NueMessage.warn('评论内容不能为空')
         return
     }
-    if (commentContent.value.length > 256) {
-        NueMessage.warn('评论内容不能超过256个字')
+    if (commentContent.value.length > 360) {
+        NueMessage.warn('评论内容不能超过360个字')
         return
     }
     if (!props.handler) {

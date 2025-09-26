@@ -1,3 +1,27 @@
+<script setup lang="ts">
+import { inject } from 'vue'
+import { TodoPriorityInfo, TodoStateInfo, TodoTagBar } from '@nao-todo/components'
+import { useRelativeDate } from '@nao-todo/hooks'
+import { todoTableContextKey } from './constants'
+import type { TodoTableContext } from './types'
+
+defineOptions({ name: 'TodoTableMain' })
+
+const {
+    todos,
+    tags,
+    tagBarClamped,
+    refreshKey,
+    selectRange,
+    columnOptions,
+    isTodoExpired,
+    showTodoDetailsPanel,
+    showMultiSelectPanel,
+    getProjectNameByIdFromLocal,
+    deleteButtonClickHandler
+} = inject<TodoTableContext>(todoTableContextKey)!
+</script>
+
 <template>
     <nue-div class="todo-table__main">
         <nue-empty v-if="!todos.length" description="当前列表无待办任务" />
@@ -7,17 +31,17 @@
                 :key="todo.id + refreshKey"
                 :data-done="todo.state === 'done'"
                 :data-selected="idx >= selectRange.start && idx <= selectRange.end"
-                :data-deleted="useDeletedLine && todo.isDeleted"
+                :data-deleted="todo.isDeleted"
                 :data-giveup="todo.isGivenUp"
                 class="todo-table__main__row"
-                @click.stop.exact="handleShowDetails(todo.id, idx)"
-                @click.stop.shift.exact="handleMultiSelect(idx)"
+                @click.stop.exact="showTodoDetailsPanel(todo.id, idx)"
+                @click.stop.shift.exact="showMultiSelectPanel(idx)"
             >
                 <nue-div class="todo-table__main__col col-first" vertical>
-                    <nue-div align="center" gap="0.5rem" wrap="nowrap">
+                    <nue-div align="center" gap="1rem" wrap="nowrap">
                         <nue-div class="col-first__name" width="auto" gap=".5rem" align="center">
                             <span class="col-first__giveup-tag" v-if="todo.isGivenUp">已放弃</span>
-                            <nue-text :clamped="1">{{ todo.name }}</nue-text>
+                            <nue-text :clamped="1" :title="todo.name">{{ todo.name }}</nue-text>
                         </nue-div>
                         <todo-tag-bar
                             :clamped="tagBarClamped"
@@ -73,23 +97,15 @@
                     <todo-state-info :key="todo.state" :state="todo.state" use-clamped />
                 </nue-div>
                 <nue-div v-if="columnOptions.project" class="todo-table__main__col col-attr">
-                    <nue-text
-                        :clamped="1"
-                        size="12px"
-                        :title="getProjectNameByIdFromLocal(todo.projectId)"
-                    >
-                        {{
-                            todo.project?.name ||
-                            getProjectNameByIdFromLocal(todo.projectId) ||
-                            '收集箱'
-                        }}
+                    <nue-text :clamped="1" :title="getProjectNameByIdFromLocal(todo.projectId)">
+                        {{ getProjectNameByIdFromLocal(todo.projectId) || '收集箱' }}
                     </nue-text>
                 </nue-div>
                 <nue-div class="todo-table__main__col col-actions">
                     <slot :todo="todo" name="row-actions">
                         <nue-icon
                             :name="todo.isDeleted ? 'restore' : 'delete'"
-                            @click.stop="handleDeleteBtnClk(todo.id, todo.isDeleted)"
+                            @click.stop="deleteButtonClickHandler(todo.id, todo.isDeleted)"
                         />
                     </slot>
                 </nue-div>
@@ -97,30 +113,3 @@
         </template>
     </nue-div>
 </template>
-
-<script setup lang="ts">
-import { inject } from 'vue'
-import { TodoPriorityInfo, TodoStateInfo, TodoTagBar } from '@nao-todo/components'
-import { useRelativeDate } from '@nao-todo/hooks'
-import type { TodoTableContext } from './types'
-import { todoTableContextKey } from './constants'
-
-defineOptions({ name: 'TodoTableMain' })
-
-const {
-    columnOptions,
-    todos,
-    selectRange,
-    useDeletedLine,
-    tagBarClamped,
-    tags,
-    refreshKey,
-    isTodoExpired,
-    handleShowDetails,
-    handleMultiSelect,
-    getProjectNameByIdFromLocal,
-    handleDeleteBtnClk
-} = inject<TodoTableContext>(todoTableContextKey)!
-</script>
-
-<style scoped></style>

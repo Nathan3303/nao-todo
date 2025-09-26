@@ -1,6 +1,6 @@
 <template>
     <nue-dialog v-model="visible" ref="dialogRef">
-        <template #header="{ close }">
+        <template #header>
             <nue-text>创建标签</nue-text>
             <nue-button @click="close" icon="clear" theme="icon,ghost,small" />
         </template>
@@ -41,7 +41,7 @@
         </template>
         <template #footer>
             <nue-button @click="close">取消</nue-button>
-            <nue-button :loading="creating" theme="primary" @click="handleConfirm">
+            <nue-button :loading="creating" theme="primary" @click="handleSubmit">
                 创建
             </nue-button>
         </template>
@@ -68,6 +68,11 @@ const { visible, open, close } = useDialogWrapper(dialogRef)
 onMounted(() => {
     tagNameInputRef.value?.innerInputRef?.focus()
 })
+
+const handleSubmit = async () => {
+    const ok = await handleConfirm()
+    if (ok) close()
+}
 
 defineExpose({ open, close })
 </script>

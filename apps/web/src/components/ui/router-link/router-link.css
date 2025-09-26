@@ -30,6 +30,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        height: auto;
 
         .nue-link__icon {
             --nue-icon-size: var(--nue-text-xxl);
@@ -38,6 +39,11 @@
 
         .nue-link__content {
             display: none;
+        }
+
+        &.nue-link--actived {
+            --nue-link-icon-color: var(--nue-link-actived-color);
+            box-shadow: var(--nue-secondary-shadow);
         }
     }
 

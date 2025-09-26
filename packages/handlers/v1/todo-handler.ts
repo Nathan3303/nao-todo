@@ -1,4 +1,10 @@
-import { createTodoApiV2, getTodosApiV2, updateTodoApiV2 } from '@nao-todo/apis/v2'
+import {
+    createTodoApiV2,
+    getTodosApiV2,
+    updateTodoApiV2,
+    deleteTodoApiV2,
+    restoreTodoApiV2
+} from '@nao-todo/apis/v2'
 import type {
     CreateTodoOptions,
     GetTodosOptions,
@@ -12,9 +18,9 @@ import type {
 const CREATE_TODO_SUCCESS_CODE = 40010
 const GET_TODOS_SUCCESS_CODE = 40050
 const UPDATE_TODO_SUCCESS_CODE = 40020
+const DELETE_TODO_SUCCESS_CODE = 40030
+const RESTORE_TODO_SUCCESS_CODE = 40040
 // const GET_TODO_SUCCESS_CODE = 40000
-// const DELETE_TODO_SUCCESS_CODE = 40030
-// const RESTORE_TODO_SUCCESS_CODE = 40040
 
 export const createTodoHandler = async (
     options: CreateTodoOptions,
@@ -26,7 +32,7 @@ export const createTodoHandler = async (
     const apiRes = await createTodoApiV2(requester, options)
     // 处理成功结果
     if (apiRes.code === CREATE_TODO_SUCCESS_CODE) {
-        return [apiRes.data, null]
+        return [apiRes.data as Todo, null]
     }
     // 处理失败结果
     return [null, apiRes.message]
@@ -67,6 +73,35 @@ export const updateTodoHandler = async (
     return [null, apiRes.message]
 }
 
+export const deleteTodoHandler = async (
+    todoId: Todo['id'],
+    isHard: boolean,
+    requester: Requester
+): Promise<GoLike> => {
+    // 调用 API 删除（更新）待办任务
+    const apiRes = await deleteTodoApiV2(requester, todoId, isHard || false)
+    // 处理成功结果
+    if (apiRes.code === DELETE_TODO_SUCCESS_CODE) {
+        return [apiRes.data, null]
+    }
+    // 处理失败结果
+    return [null, apiRes.message]
+}
+
+export const restoreTodoHandler = async (
+    todoId: Todo['id'],
+    requester: Requester
+): Promise<GoLike> => {
+    // 调用 API 删除（更新）待办任务
+    const apiRes = await restoreTodoApiV2(requester, todoId)
+    // 处理成功结果
+    if (apiRes.code === RESTORE_TODO_SUCCESS_CODE) {
+        return [apiRes.data, null]
+    }
+    // 处理失败结果
+    return [null, apiRes.message]
+}
+
 // export const getTodoHandler = async (
 //     getOptions: GetProjectOptions,
 //     requester: Requester
@@ -75,35 +110,6 @@ export const updateTodoHandler = async (
 //     const apiRes = await (requester, getOptions)
 //     // 处理成功结果
 //     if (apiRes.code === GET_PROJECT_SUCCESS_CODE) {
-//         return [apiRes.data, null]
-//     }
-//     // 处理失败结果
-//     return [null, apiRes.message]
-// }
-
-// export const deleteProjectHandler = async (
-//     projectId: Project['id'],
-//     isHard?: boolean,
-//     requester?: Requester
-// ): Promise<GoLike> => {
-//     // 调用 API 删除（更新）待办任务
-//     const apiRes = await deleteProjectApi(requester || iReq, projectId, isHard || false)
-//     // 处理成功结果
-//     if (apiRes.code === DELETE_PROJECT_SUCCESS_CODE) {
-//         return [apiRes.data, null]
-//     }
-//     // 处理失败结果
-//     return [null, apiRes.message]
-// }
-
-// export const restoreProjectHandler = async (
-//     projectId: Project['id'],
-//     requester?: Requester
-// ): Promise<GoLike> => {
-//     // 调用 API 删除（更新）待办任务
-//     const apiRes = await restoreProjectApi(requester || iReq, projectId)
-//     // 处理成功结果
-//     if (apiRes.code === RESTORE_PROJECT_SUCCESS_CODE) {
 //         return [apiRes.data, null]
 //     }
 //     // 处理失败结果

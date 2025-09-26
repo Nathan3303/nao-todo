@@ -3,13 +3,20 @@ import { ref } from 'vue'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/utils'
 import { requester } from './requester'
-import type { Err, GetProjectsOptions, Project, UpdateProjectOptions } from '@nao-todo/types'
+import type {
+    Err,
+    GetProjectsOptions,
+    Project,
+    ProjectPreference,
+    UpdateProjectOptions
+} from '@nao-todo/types'
 import {
     createProjectHandler,
     deleteProjectHandler,
     getProjectsHandler,
     restoreProjectHandler,
-    updateProjectHandler
+    updateProjectHandler,
+    updateProjectPreferenceHandler
 } from '@nao-todo/handlers/v1'
 
 const useProjectStore = defineStore('ProjectStore', () => {
@@ -177,7 +184,8 @@ const useProjectStore = defineStore('ProjectStore', () => {
         const [, err] = await updateProjectHandler(projectId, options, requester)
         // 处理失败结果
         if (err) {
-            NueMessage.error(unwrapError(err))
+            // NueMessage.error(unwrapError(err))
+            console.error(unwrapError(err))
             return err
         }
         // 处理成功结果
@@ -186,7 +194,35 @@ const useProjectStore = defineStore('ProjectStore', () => {
             if (options.name) project.name = options.name
             if (options.description) project.description = options.description
         })
-        NueMessage.success('清单更新成功')
+        // NueMessage.success('清单更新成功')
+        return null
+    }
+
+    // @method 更新清单偏好
+    const updateProjectPreference = async (
+        projectId: Project['id'],
+        preference: ProjectPreference
+    ): Promise<Err> => {
+        // 参数判断
+        if (!projectId) return '清单ID不能为空'
+        if (!preference.columns && !preference.getTodosOptions && !preference.viewType)
+            return '请指定更新的清单偏好'
+        if (preference.viewType === '') return '请指定清单视图类型'
+        // 更新清单偏好
+        const [, err] = await updateProjectPreferenceHandler(projectId, preference, requester)
+        // 处理失败结果
+        if (err) {
+            // NueMessage.error(unwrapError(err))
+            console.error(unwrapError(err))
+            return err
+        }
+        // 处理成功结果
+        // NueMessage.success('清单偏好更新成功')
+        projects.value.forEach((project) => {
+            if (project.id === projectId) {
+                project.preference = preference
+            }
+        })
         return null
     }
 
@@ -201,7 +237,8 @@ const useProjectStore = defineStore('ProjectStore', () => {
         deleteProjectWithConfirm,
         restoreProjectWithConfirm,
         deleteProjectPermanentlyWithConfirm,
-        updateProject
+        updateProject,
+        updateProjectPreference
     }
 })
 

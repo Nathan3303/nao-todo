@@ -7,9 +7,8 @@ import { getColumnText } from '@/components/tasks/table/utils'
 
 defineOptions({ name: 'TodoTableHeader' })
 
-const todoTableContext = inject<TodoTableContext>(todoTableContextKey)!
-
-const { columnOptions, sortOptions, handleClearSortInfo } = todoTableContext
+const { columnOptions, sortOptions, clearSortOptions } =
+    inject<TodoTableContext>(todoTableContextKey)!
 </script>
 
 <template>
@@ -39,12 +38,7 @@ const { columnOptions, sortOptions, handleClearSortInfo } = todoTableContext
             <order-button prop="project">{{ getColumnText('project') }}</order-button>
         </div>
         <div class="todo-table__header__col col-actions">
-            <nue-icon
-                v-if="sortOptions.field && sortOptions.field !== 'createdAt'"
-                color="gray"
-                name="clear"
-                @click="handleClearSortInfo"
-            />
+            <nue-icon v-if="sortOptions" color="gray" name="clear" @click="clearSortOptions" />
             <nue-icon v-else name="more" style="opacity: 0" />
         </div>
     </nue-div>

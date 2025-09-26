@@ -1,4 +1,3 @@
-export * from './aside-link'
 export * from './loading'
 export * from './loading-screen'
 export * from './combo-box'

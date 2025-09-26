@@ -1,5 +1,5 @@
 import type { Ref } from 'vue'
-import type { ButtonSize, IconNameType } from 'nue-ui'
+import type { NueButtonSize, NueIconName } from 'nue-ui'
 
 type OnButtonClickPayload = {
     inputValue: Ref<string>
@@ -11,11 +11,11 @@ type InputButtonSubmitPayload = {
 
 type InputButtonProps = {
     buttonText?: string
-    icon?: IconNameType
+    icon?: NueIconName
     buttonTheme?: string | string[]
     inputTheme?: string | string[]
     theme?: string | string[]
-    size?: ButtonSize
+    size?: NueButtonSize
     submitOnBlur?: boolean
     disabled?: boolean
     onSubmit?: (payload: InputButtonSubmitPayload) => Promise<any>
@@ -26,8 +26,4 @@ type InputButtonEmits = {
     (event: 'submit', payload: InputButtonSubmitPayload): void
 }
 
-export type {
-    InputButtonProps,
-    InputButtonEmits,
-    InputButtonSubmitPayload
-}
+export type { InputButtonProps, InputButtonEmits, InputButtonSubmitPayload }

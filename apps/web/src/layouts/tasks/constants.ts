@@ -159,7 +159,7 @@ const viewPropsForFavorite: TasksMainViewProps = {
 }
 
 const viewPropsForGivenUp: TasksMainViewProps = {
-    id: 'givenUp',
+    id: 'givenup',
     category: 'basic',
     icon: 'clear',
     name: '已放弃的待办',

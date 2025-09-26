@@ -1,6 +1,6 @@
 <template>
     <nue-dialog v-model="visible" ref="dialogRef">
-        <template #header="{ close }">
+        <template #header>
             <nue-text>标签颜色修改</nue-text>
             <nue-button @click="close" icon="clear" theme="icon,ghost,small" />
         </template>
@@ -13,7 +13,7 @@
                 :disabled="disabled"
                 :loading="updating"
                 theme="primary"
-                @click="updateTagColor"
+                @click="handleConfirm"
             >
                 修改
             </nue-button>
@@ -23,27 +23,31 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import useTagColorUpdater, {
-    type TagColorUpdaterEmits,
-    type TagColorUpdaterProps
-} from './use-tag-color-updater'
+import useTagColorUpdater from './use-tag-color-updater'
 import { TagColorSelector } from '@nao-todo/components'
 import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
 
 defineOptions({ name: 'TagColorUpdater' })
-const emit = defineEmits<TagColorUpdaterEmits>()
 
 const dialogRef = ref<DialogInstanceType>()
 
-const { visible, payload, open, close } = useDialogWrapper(dialogRef)
-const { color, updating, disabled, getTagColor, updateTagColor } = useTagColorUpdater(
-    payload.value as TagColorUpdaterProps,
-    emit
-)
+const { visible, open, close } = useDialogWrapper(dialogRef)
+const { color, updating, disabled, getTagColor, updateTagColor } = useTagColorUpdater()
 
-getTagColor()
+const iOpen = (tagId: string) => {
+    getTagColor(tagId)
+    open()
+}
 
-defineExpose({ open, close })
+const handleConfirm = async () => {
+    const ok = await updateTagColor()
+    if (ok) {
+        close()
+        setTimeout(() => (disabled.value = false), 240)
+    }
+}
+
+defineExpose({ open: iOpen, close })
 </script>
 
 <style scoped></style>

@@ -2,13 +2,24 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { unwrapError } from '@nao-todo/utils'
 import { requester } from './requester'
-import type { CreateEventOptions, Err, GetEventsOptions, Event, ResponseData } from '@nao-todo/types'
-import { createEventHandler, getEventsHandler } from '@nao-todo/handlers/v1'
+import {
+    createEventHandler,
+    getEventsHandler,
+    updateEventHandler,
+    deleteEventHandler
+} from '@nao-todo/handlers/v1'
+import type {
+    CreateEventOptions,
+    Err,
+    GetEventsOptions,
+    Event,
+    UpdateEventOptions
+} from '@nao-todo/types'
 
 const useEventStore = defineStore('EventStore', () => {
     // @state 检查事项列表（应该被应用于整个视图）
     const events = ref<Event[]>([])
-    const pagination = ref<ResponseData['pagination']>({ total: 0, page: 1, limit: 10, maxPage: 1 })
+    // const pagination = ref<ResponseData['pagination']>({ total: 0, page: 1, limit: 10, maxPage: 1 })
 
     // @method 进一步筛选检查事项列表
     const getEvents = async (options: GetEventsOptions): Promise<Err> => {
@@ -20,10 +31,7 @@ const useEventStore = defineStore('EventStore', () => {
             return err
         }
         // 处理成功结果
-        if (res) {
-            events.value = res.events
-            pagination.value = res.pagination
-        }
+        events.value = res || []
         return null
     }
 
@@ -43,26 +51,42 @@ const useEventStore = defineStore('EventStore', () => {
         return null
     }
 
+    // @method 更新检查事项
+    const updateEvent = async (eventId: Event['id'], options: UpdateEventOptions): Promise<Err> => {
+        // 创建检查事项
+        const [, err] = await updateEventHandler(eventId, options, requester)
+        // 处理失败结果
+        if (err) {
+            console.error(unwrapError(err))
+            return err
+        }
+        // 处理成功结果
+        events.value.forEach((event) => {
+            if (event.id === eventId) {
+                if (options.name) event.name = options.name
+                if (options.description) event.description = options.description
+                if (typeof options.isDone === 'boolean') event.isDone = options.isDone
+                if (options.sortId) event.sortId = options.sortId
+            }
+        })
+        return null
+    }
+
     // @method 删除检查事项
-    // const deleteProject = async (projectId: Project['id']): Promise<Err> => {
-    //     // 参数判断
-    //     if (!projectId) return '检查事项ID不能为空'
-    //     // 删除检查事项
-    //     const [, err] = await deleteProjectHandler(projectId)
-    //     // 处理失败结果
-    //     if (err) {
-    //         console.error(unwrapError(err))
-    //         return err
-    //     }
-    //     // 处理成功结果
-    //     // projects.value = projects.value.filter((project) => project.id !== projectId)
-    //     projects.value.forEach((project) => {
-    //         if (project.id === projectId) {
-    //             project.isDeleted = true
-    //         }
-    //     })
-    //     return null
-    // }
+    const deleteEvent = async (eventId: Event['id']): Promise<Err> => {
+        // 参数判断
+        if (!eventId) return '检查事项ID不能为空'
+        // 删除检查事项
+        const [, err] = await deleteEventHandler(eventId, requester)
+        // 处理失败结果
+        if (err) {
+            console.error(unwrapError(err))
+            return err
+        }
+        // 处理成功结果
+        events.value = events.value.filter((event) => event.id !== eventId)
+        return null
+    }
 
     // @method 删除检查事项（带确认）
     // const deleteProjectWithConfirm = async (projectId: Project['id']): Promise<Err> => {
@@ -85,9 +109,11 @@ const useEventStore = defineStore('EventStore', () => {
 
     return {
         events,
-        pagination,
+        // pagination,
         getEvents,
-        createEvent
+        createEvent,
+        updateEvent,
+        deleteEvent
     }
 })
 

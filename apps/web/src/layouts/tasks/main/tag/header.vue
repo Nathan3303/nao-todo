@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { useTasksViewStore, useTasksDialogStore } from '@/stores/tasks'
 import { storeToRefs } from 'pinia'
-import { TasksOperationsDropdown } from '@/components/tasks'
+import { useTasksViewStore, useTasksDialogStore } from '@/stores/tasks'
+import TasksMainTagOperationsDropdown from './operations-dropdown.vue'
 
 defineOptions({ name: 'TasksMainTagViewHeader' })
 
@@ -20,7 +20,7 @@ const openTodoCreator = () => {
     <nue-div vertical gap="0.5rem" v-if="viewProps">
         <nue-div wrap="nowrap" align="center">
             <nue-div flex="1" wrap="nowrap" align="center">
-                <nue-button icon="menu-open" theme="icon,ghost" />
+                <nue-button :icon="'menu-open' as never" theme="icon,ghost" />
                 <nue-text
                     :clamped="1"
                     size="var(--nue-text-xxl)"
@@ -34,8 +34,7 @@ const openTodoCreator = () => {
                 <nue-tooltip content="新增待办" size="small" @click="openTodoCreator">
                     <nue-button icon="plus" theme="icon,ghost" />
                 </nue-tooltip>
-                <!--                <tasks-filter-dropdown />-->
-                <tasks-operations-dropdown />
+                <tasks-main-tag-operations-dropdown />
             </nue-div>
         </nue-div>
         <nue-text

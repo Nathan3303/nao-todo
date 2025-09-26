@@ -1,6 +1,38 @@
+<script lang="ts" setup>
+import { ref } from 'vue'
+import { TagBoard } from '@nao-todo/components'
+import useTagManagerStore from './use-tag-manager-store'
+import TagManagerFilterBar from './filter-bar.vue'
+import { storeToRefs } from 'pinia'
+import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
+import type { Tag } from '@nao-todo/types'
+import { useTasksDialogStore } from '@/stores/tasks'
+
+defineOptions({ name: 'TagManager' })
+defineEmits<{ (e: 'closeDialog'): void }>()
+
+const tagManagerStore = useTagManagerStore()
+const tasksDialogStore = useTasksDialogStore()
+
+const dialogRef = ref<DialogInstanceType>()
+
+const { tags } = storeToRefs(tagManagerStore)
+const { visible, open, close } = useDialogWrapper(dialogRef)
+
+const showCreateTagDialog = () => {
+    tasksDialogStore.tagCreator?.open()
+}
+
+const showUpdateTagColorDialog = (tagId: Tag['id']) => {
+    tasksDialogStore.tagColorUpdater?.open(tagId)
+}
+
+defineExpose({ open, close })
+</script>
+
 <template>
     <nue-dialog v-model="visible" ref="dialogRef" theme="large">
-        <template #header="{ close }">
+        <template #header>
             <nue-text>标签管理</nue-text>
             <nue-button @click="close" icon="clear" theme="icon,ghost,small" />
         </template>
@@ -29,40 +61,6 @@
         </nue-container>
     </nue-dialog>
 </template>
-
-<script lang="ts" setup>
-import { ref } from 'vue'
-import { TagBoard } from '@nao-todo/components'
-import useTagManagerStore from './use-tag-manager-store'
-import TagManagerFilterBar from './filter-bar.vue'
-import { storeToRefs } from 'pinia'
-import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
-import type { Tag } from '@nao-todo/types'
-import { useTasksDialogStore } from '@/stores/tasks'
-
-defineOptions({ name: 'TagManager' })
-defineEmits<{ (e: 'closeDialog'): void }>()
-
-const tagManagerStore = useTagManagerStore()
-const tasksDialogStore = useTasksDialogStore()
-
-const dialogRef = ref<DialogInstanceType>()
-
-const { tags } = storeToRefs(tagManagerStore)
-const { visible, open, close } = useDialogWrapper(dialogRef)
-
-const showCreateTagDialog = () => {
-    tasksDialogStore.tagCreator?.open()
-}
-
-const showUpdateTagColorDialog = (tagId: Tag['id']) => {
-    tasksDialogStore.tagColorUpdater?.open({ tagId })
-}
-
-tagManagerStore.getTagsAgain()
-
-defineExpose({ open, close })
-</script>
 
 <style scoped>
 .tag-manager {

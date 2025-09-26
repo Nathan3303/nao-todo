@@ -28,6 +28,7 @@ const iOpen = (createTodoOptions: CreateTodoOptions) => {
 const iClose = () => {
     close()
     newTodo.value = { ...defaultCreateTodoOptions }
+    disabled.value = false
 }
 
 const handleSubmit = async () => {

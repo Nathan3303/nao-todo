@@ -26,6 +26,7 @@ type UpdateEventOptionsRaw = {
     isDone?: boolean
     doneAt?: Date | null
     isTopped?: boolean
+    sortId?: number
 }
 
 type GetEventsOptionsRaw = {

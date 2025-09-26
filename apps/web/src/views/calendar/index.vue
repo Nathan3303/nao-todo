@@ -1,5 +1,8 @@
 <template>
-    <nue-container id="NaoTodoCalenderView" theme="vertical,inner">
+    <nue-div align="center" height="100%" justify="center">
+        <nue-empty description="日历视图筹备中" />
+    </nue-div>
+    <!-- <nue-container id="NaoTodoCalenderView" theme="vertical,inner">
         <nue-main
             aside-width="18rem"
             :allow-hide-aside="false"
@@ -14,12 +17,12 @@
                 <calendar-content />
             </template>
         </nue-main>
-    </nue-container>
+    </nue-container> -->
 </template>
 
 <script lang="ts" setup>
-import { CalendarAside } from './aside'
-import { CalendarContent } from './content'
+// import { CalendarAside } from './aside'
+// import { CalendarContent } from './content'
 </script>
 
 <style scoped></style>

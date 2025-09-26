@@ -23,13 +23,13 @@ const router = createRouter({
                 return { name: 'checkin', params: { fromUrlBase64: btoa(to.fullPath) } }
             },
             component: () => import('@/views/index.vue'),
-            redirect: { name: 'settings' },
+            redirect: { name: 'tasks' },
             children: [
                 tasksRoutes,
-                // calendarRoutes,
+                calendarRoutes,
                 fqfocusRoutes,
                 searchRoutes,
-                // aiRoutes,
+                aiRoutes,
                 settingsRoutes
             ]
         }

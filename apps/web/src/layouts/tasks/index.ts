@@ -8,6 +8,7 @@ import TasksMainHeader from './main/tasks-main-header.vue'
 
 // outline
 import TasksTodoDetails from './outlines/details/details.vue'
+import TasksTodoDetailsDrawer from './outlines/details/float-details.vue'
 
 // export
 export {
@@ -20,7 +21,8 @@ export {
     TasksMainHeader,
 
     // outline
-    TasksTodoDetails
+    TasksTodoDetails,
+    TasksTodoDetailsDrawer
 }
 export type * from './types'
 export * from './utils'

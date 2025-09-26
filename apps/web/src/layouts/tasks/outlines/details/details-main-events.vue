@@ -1,55 +1,82 @@
+<script setup lang="ts">
+import { ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import { InputButton, TodoEventRow } from '@nao-todo/components'
+import { useTasksDataStore } from '@/stores/tasks'
+import { watchEffect } from 'vue'
+import { unwrapError } from '@nao-todo/utils'
+import type { Event } from '@nao-todo/types'
+import type { DetailsMainEventsProps } from './types'
+import type { InputButtonSubmitPayload, TodoEventRowUpdatePayload } from '@nao-todo/components'
+
+const props = defineProps<DetailsMainEventsProps>()
+
+const tasksDataStore = useTasksDataStore()
+
+const { events } = storeToRefs(tasksDataStore)
+const loading = ref(true)
+const error = ref('')
+
+const handleCreateEvent = async (payload: InputButtonSubmitPayload) => {
+    return await tasksDataStore.createEvent({
+        todoId: props.todoId,
+        name: payload.value as string
+    })
+}
+
+const handleUpdateEvent = async (payload: TodoEventRowUpdatePayload) => {
+    return await tasksDataStore.updateEvent(payload.id, {
+        name: payload.name,
+        isDone: payload.isDone
+    })
+}
+
+const handleDeleteEvent = async (eventId: Event['id']) => {
+    return await tasksDataStore.deleteEvent(eventId)
+}
+
+watchEffect(() => {
+    // 处理与弹出层动画冲突导致卡顿
+    setTimeout(async () => {
+        // 获取待办任务 Id
+        const todoId = props.todoId
+        // 重置加载状态
+        loading.value = true
+        // 获取检查事项
+        const err = await tasksDataStore.getEvents({ todoId })
+        loading.value = false
+        // 处理失败结果
+        if (err) {
+            error.value = unwrapError(err)
+            return
+        }
+        error.value = ''
+    })
+})
+</script>
+
 <template>
-    <nue-div vertical gap="4px">
+    <nue-div vertical gap="4px" flex="1">
         <nue-div v-if="loading" align="center" gap="8px" style="height: 28px">
-            <nue-icon size="13px" name="loading" spin />
-            <nue-text size="12px" color="gray">检查事项加载中 ...</nue-text>
+            <nue-icon size="var(--nue-text-sm)" name="loading" spin />
+            <nue-text size="var(--nue-text-sm)" color="gray">检查事项加载中 ...</nue-text>
         </nue-div>
+        <nue-div v-else-if="error">加载失败</nue-div>
         <template v-else>
-            <todo-event-row v-for="event in events" :key="event.id" :event="event" />
-            <!--                :on-update="handleUpdateEvent"-->
-            <!--                :on-delete="handleDeleteEvent"-->
+            <todo-event-row
+                v-for="event in events"
+                :key="event.id"
+                :event="event"
+                :on-update="handleUpdateEvent"
+                :on-delete="handleDeleteEvent"
+            />
             <input-button
                 icon="plus-circle"
                 button-text="添加检查事项"
                 theme="pure,noshape"
                 :submit-on-blur="false"
+                :on-submit="handleCreateEvent"
             />
-            <!--                :on-submit="handleCreateEvent"-->
         </template>
     </nue-div>
 </template>
-
-<script setup lang="ts">
-import { storeToRefs } from 'pinia'
-import { InputButton, TodoEventRow } from '@nao-todo/components'
-import { useEventStore } from '@/stores/global'
-import type { DetailsMainEventsProps } from './types'
-import type { CreateEventOptions, Event, UpdateEventOptions } from '@nao-todo/types'
-import type { InputButtonSubmitPayload, TodoEventRowUpdatePayload } from '@nao-todo/components'
-
-const props = defineProps<DetailsMainEventsProps>()
-
-const eventStore = useEventStore()
-
-const { events } = storeToRefs(eventStore)
-
-// const handleCreateEvent = async (payload: InputButtonSubmitPayload) => {
-//     const options: CreateEventOptions = {
-//         todoId: props.todoId,
-//         name: payload.value as string
-//     }
-//     return await eventStore.doCreateEvent(options)
-// }
-//
-// const handleUpdateEvent = async (payload: TodoEventRowUpdatePayload) => {
-//     const options: UpdateEventOptions = {
-//         name: payload.title,
-//         isDone: payload.isDone
-//     }
-//     await eventStore.doUpdateEvent(payload.id, options)
-// }
-//
-// const handleDeleteEvent = async (eventId: Event['id']) => {
-//     return await eventStore.doDeleteEvent(eventId)
-// }
-</script>

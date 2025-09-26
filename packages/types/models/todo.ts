@@ -71,7 +71,7 @@ type GetTodosOptionsRaw = {
     isDeleted?: Todo['isDeleted']
     isFavorited?: Todo['isFavorited']
     isGivenUp?: Todo['isGivenUp']
-    sort: GetTodosSortOptions
+    sort?: GetTodosSortOptions
     relativeDate?: 'today' | 'tomorrow' | 'week' | '-today' | 'month'
     tagId?: Tag['id']
 }

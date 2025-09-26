@@ -1,3 +1,25 @@
+<script setup lang="ts">
+import { inject, computed } from 'vue'
+import { todoTableContextKey } from './constants'
+import type { TodoTableContext, TodoTableOrderButtonProps } from './types'
+
+defineOptions({ name: 'TodoTableOrderButton' })
+const props = defineProps<TodoTableOrderButtonProps>()
+
+const { sortOptions, updateSortOptions } = inject<TodoTableContext>(todoTableContextKey)!
+
+const checkNumber = computed(() => {
+    const { prop } = props
+    if (!sortOptions.value) return
+    if (prop !== sortOptions.value.field) return
+    return sortOptions.value.order === 'asc' ? 1 : -1
+})
+
+const handleUpdateSortInfo = (flag: 1 | -1) => {
+    updateSortOptions({ field: props.prop, order: flag === 1 ? 'asc' : 'desc' })
+}
+</script>
+
 <template>
     <nue-dropdown theme="combo-box,small" close-when-executed>
         <template #trigger="{ trigger }">
@@ -39,29 +61,3 @@
         </template>
     </nue-dropdown>
 </template>
-
-<script setup lang="ts">
-import { inject, computed } from 'vue'
-import { todoTableContextKey } from './constants'
-import type { TodoTableContext, TodoTableOrderButtonProps } from './types'
-
-defineOptions({ name: 'TodoTableOrderButton' })
-const props = defineProps<TodoTableOrderButtonProps>()
-
-const { sortOptions, handleUpdateSortOptions } = inject<TodoTableContext>(todoTableContextKey)!
-
-const checkNumber = computed(() => {
-    const { prop } = props
-    if (prop !== sortOptions.value.field) return
-    return sortOptions.value.order === 'asc' ? 1 : -1
-})
-
-const handleUpdateSortInfo = (flag: 1 | -1) => {
-    const { prop } = props
-    const order = flag === 1 ? 'asc' : 'desc'
-    if (sortOptions.value.field === prop && sortOptions.value.order === order) return
-    handleUpdateSortOptions({ field: prop, order })
-    // sortOptions.value.field = prop
-    // sortOptions.value.order = order
-}
-</script>

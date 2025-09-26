@@ -1,6 +1,38 @@
-import type { Project, Tag } from '@nao-todo/types'
+import type { Project, Tag, GetTodosOptions, TodoColumnOptions } from '@nao-todo/types'
 import type { TasksMainViewProps } from './types'
 import { defaultColumnOptions } from '@/layouts'
+
+type ProjectPreferenceRaw = {
+    viewType: string
+    getTodosOptions: unknown
+    columns: unknown
+}
+
+const parsePreference = (
+    preferenceRaw: ProjectPreferenceRaw
+): Project['preference'] | Tag['preference'] => {
+    const { viewType, getTodosOptions, columns } = preferenceRaw
+    let iGetTodosOptions: GetTodosOptions = getTodosOptions ?? {}
+    let iColumns: TodoColumnOptions = columns ?? { ...defaultColumnOptions }
+
+    if (typeof getTodosOptions === 'string') {
+        try {
+            iGetTodosOptions = JSON.parse(getTodosOptions)
+        } catch (error) {
+            console.warn('parse project preference error:', error)
+        }
+    }
+
+    if (typeof columns === 'string') {
+        try {
+            iColumns = JSON.parse(columns)
+        } catch (error) {
+            console.warn('parse project preference error:', error)
+        }
+    }
+
+    return { viewType, getTodosOptions: iGetTodosOptions, columns: iColumns }
+}
 
 const toProjectViewProps = (project: Project): TasksMainViewProps => {
     const result: Partial<TasksMainViewProps> = {}
@@ -9,14 +41,8 @@ const toProjectViewProps = (project: Project): TasksMainViewProps => {
     result.icon = ''
     result.name = project.name
     result.description = project.description
-    // const pGetTodosOptions = JSON.parse(project.preference.getTodosOptions)
-    result.preference = {
-        viewType: project.preference.viewType,
-        getTodosOptions: {},
-        columns: { ...defaultColumnOptions }
-    }
+    result.preference = parsePreference(project.preference)
     result.createTodoOptions = {
-        dueDate: {},
         projectId: project.id
     }
     return result as TasksMainViewProps
@@ -29,14 +55,8 @@ const toTagViewProps = (tag: Tag): TasksMainViewProps => {
     result.icon = ''
     result.name = tag.name
     result.description = tag.description
-    // const tGetTodosOptions = JSON.parse(tag.preference.getTodosOptions)
-    result.preference = {
-        viewType: 'table',
-        getTodosOptions: {},
-        columns: { ...defaultColumnOptions }
-    }
+    result.preference = parsePreference(tag.preference)
     result.createTodoOptions = {
-        dueDate: {},
         tags: [tag.id]
     }
     return result as TasksMainViewProps

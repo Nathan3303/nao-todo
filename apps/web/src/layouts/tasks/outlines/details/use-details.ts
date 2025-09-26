@@ -20,7 +20,7 @@ export const useTodoDetails = () => {
     // @effect 当路由 todoId 变化时重新获取数据
     watchEffect(() => {
         // 判断并获取 todoId
-        if (!route.params.todoId) return
+        if (!route.params.todoId) return (todo.value = void 0)
         const todoId = route.params.todoId as string
         // 重置加载状态
         loading.value = true
@@ -101,7 +101,6 @@ export const useTodoDetails = () => {
         updateQueue.insertItem({ todoId: todo.value.id, updateOptions: { tags } })
     }
 
-    //
     // const handleDeleteTodo = async () => {
     //     if (!shadowTodo.value) return
     //     await todoStore.deleteTodoWithConfirmation(shadowTodo.value.id)
@@ -149,8 +148,7 @@ export const useTodoDetails = () => {
     //     { immediate: true }
     // )
 
-    // 返回
-
+    // @returns
     return {
         loading,
         error,

@@ -1,4 +1,8 @@
-import type { Project, Todo, UpdateTodoOptions } from '@nao-todo/types'
+import type { Todo, UpdateTodoOptions } from '@nao-todo/types'
+
+export type DetailsEmits = {
+    (e: 'close'): void
+}
 
 export type DetailsHeaderProps = {
     shadowTodo?: Todo
@@ -34,18 +38,14 @@ export type DetailsFooterProps = {
 }
 
 export type DetailsFooterEmits = {
-    (
-        e: 'updateTodoProject',
-        newProjectId: Todo['projectId'],
-        newProjectTitle: Project['name']
-    ): void
-    (e: 'leaveTodoComment'): void
-    (e: 'duplicateTodo'): void
-    (e: 'deleteTodoPermanently'): void
-    (e: 'deleteTodo'): void
-    (e: 'restoreTodo'): void
+    (e: 'updateTodoProject', newProjectId: Todo['projectId']): void
+    (e: 'deleteTodoPermanently', todoId: Todo['id']): void
+    (e: 'deleteTodo', todoId: Todo['id']): void
+    (e: 'restoreTodo', todoId: Todo['id']): void
     (e: 'giveUpTodo'): void
     (e: 'cancelGiveUpTodo'): void
+    (e: 'leaveTodoComment'): void
+    (e: 'duplicateTodo'): void
 }
 
 export type DetailsMainEventsProps = {

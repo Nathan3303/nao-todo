@@ -1,6 +1,6 @@
 <template>
     <nue-dialog v-model="visible" ref="dialogRef">
-        <template #header="{ close }">
+        <template #header>
             <nue-text>创建清单</nue-text>
             <nue-button @click="close" icon="clear" theme="icon,ghost,small" />
         </template>
@@ -38,7 +38,7 @@
         </template>
         <template #footer>
             <nue-button @click="close">取消</nue-button>
-            <nue-button :loading="creating" theme="primary" @click="handleConfirm">
+            <nue-button :loading="creating" theme="primary" @click="handleSubmit">
                 创建
             </nue-button>
         </template>
@@ -47,22 +47,26 @@
 
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
-import useProjectCreator, { type ProjectCreatorEmits } from './use-project-creator'
+import useProjectCreator from './use-project-creator'
 import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
 import type { NueDialog, NueInput } from 'nue-ui'
 
 defineOptions({ name: 'ProjectCreator' })
-const emit = defineEmits<ProjectCreatorEmits>()
 
 const nameInputRef = ref<InstanceType<typeof NueInput>>()
 const dialogRef = ref<DialogInstanceType>()
 
-const { creating, isNameEmpty, newProject, handleConfirm } = useProjectCreator(emit)
+const { creating, isNameEmpty, newProject, handleConfirm } = useProjectCreator()
 const { visible, open, close } = useDialogWrapper(dialogRef)
 
 onMounted(() => {
     nameInputRef.value?.innerInputRef?.focus()
 })
+
+const handleSubmit = async () => {
+    const ok = await handleConfirm()
+    if (ok) close()
+}
 
 defineExpose({ open, close })
 </script>

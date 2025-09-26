@@ -83,7 +83,7 @@ const handleSubmit = async (e: Event) => {
         formData.password = ''
         return
     }
-    await router.push({ path: '/settings' })
+    await router.push({ path: '/' })
 }
 </script>
 

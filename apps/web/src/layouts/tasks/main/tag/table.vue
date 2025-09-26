@@ -1,61 +1,71 @@
 <script setup lang="ts">
 import { ref, watchEffect } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
 import { useTasksDataStore, useTasksViewStore } from '@/stores/tasks'
 import { TodoTable } from '@/components/tasks/table'
 import { Loading as LoadingComp, Pager } from '@nao-todo/components'
 import { unwrapError } from '@nao-todo/utils'
-import type { GetTodosOptions, Tag } from '@nao-todo/types'
+import type { Tag } from '@nao-todo/types'
 
 defineOptions({ name: 'TasksMainTagViewTable' })
 
 const tasksDataStore = useTasksDataStore()
 const tasksViewStore = useTasksViewStore()
+const router = useRouter()
 
 const { viewProps } = storeToRefs(tasksViewStore)
 const { todos, pagination, tags } = storeToRefs(tasksDataStore)
 const iTagId = ref<Tag['id']>()
-const defaultGetTodosOptions: GetTodosOptions = {
-    page: 1,
-    limit: 10,
-    sort: { field: 'createdAt', order: 'asc' }
-}
 const loading = ref<boolean>(false)
 const error = ref<string>('')
+const page = ref<number>(1)
+
+const showTodoDetails = (id: string) => {
+    router.push({ name: 'tasks-tag', params: { todoId: id as string } })
+}
+
+const handleChangePerpage = (limit: number) => {
+    if (!viewProps.value) return
+    viewProps.value.preference.getTodosOptions.limit = limit
+}
 
 watchEffect(async () => {
-    // 判断清单 Id 是否相同
-    if (iTagId.value === viewProps.value!.id) return
+    // 判断 viewProps
+    if (!viewProps.value) return
+    // 判断标签 Id 是否相同
+    if (iTagId.value === viewProps.value.id) return
     // 重置加载状态
     loading.value = true
     error.value = ''
-    // 调用 API 请求数据
-    const getOptions = {
-        ...viewProps.value!.preference.getTodosOptions,
-        ...defaultGetTodosOptions,
-        tagId: viewProps.value!.id
+    // 保存标签偏好（记录在标签数据中，以便偏好更新时直接传输）
+    viewProps.value.preference.getTodosOptions = {
+        limit: 10,
+        tagId: viewProps.value.id,
+        ...viewProps.value.preference.getTodosOptions
     }
-    const err = await tasksDataStore.getTodos(getOptions)
+    // 调用 API 请求数据
+    const err = await tasksDataStore.getTodos({
+        ...viewProps.value.preference.getTodosOptions,
+        page: page.value
+    })
     loading.value = false
-    // 记录已请求的清单 Id，避免重复请求
-    iTagId.value = viewProps.value!.id
-    // 保存清单偏好（记录在清单数据中，以便偏好更新时直接传输）
-    viewProps.value!.preference.getTodosOptions = { ...getOptions }
+    // 记录已请求的标签 Id，避免重复请求
+    iTagId.value = viewProps.value.id
     // 处理失败结果
     if (err) {
         error.value = unwrapError(err)
         return
     }
     // 处理成功但结果为空的情况
-    if (todos.value && todos.value.length) return
-    error.value = '当前暂无待办，放松一下吧!'
+    if (!todos.value || !todos.value.length) error.value = '当前暂无待办'
 })
 </script>
 
 <template>
     <loading-comp v-if="loading" />
     <nue-empty
-        v-else-if="error"
+        v-else-if="error || !viewProps"
         image-size="4rem"
         image-src="/images/coffee.webp"
         :description="error"
@@ -65,10 +75,11 @@ watchEffect(async () => {
         <nue-main>
             <nue-content fill>
                 <todo-table
-                    :column-options="viewProps!.preference.columns"
-                    :sort-options="viewProps!.preference.getTodosOptions.sort"
+                    :column-options="viewProps.preference.columns"
+                    :sort-options="viewProps.preference.getTodosOptions.sort!"
                     :tags="tags"
                     :todos="todos"
+                    @show-todo-details="showTodoDetails"
                 />
             </nue-content>
         </nue-main>
@@ -81,8 +92,8 @@ watchEffect(async () => {
                     :limit="pagination.limit"
                     :page="pagination.page"
                     :total-pages="pagination.maxPage"
-                    @per-page-change="(limit) => (getTodosOptions.limit = limit)"
-                    @page-change="(page) => (getTodosOptions.page = page)"
+                    @per-page-change="handleChangePerpage"
+                    @page-change="(p) => (page = p)"
                 />
             </nue-div>
         </nue-footer>

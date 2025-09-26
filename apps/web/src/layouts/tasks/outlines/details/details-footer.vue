@@ -1,24 +1,18 @@
 <script setup lang="ts">
 import { TodoDeleteButton, TodoProjectSelector } from '@nao-todo/components'
-import { useProjectStore, useUserStore } from '@/stores'
-import { computed } from 'vue'
+import { useProjectStore, useUserStoreV2 } from '@/stores/global'
 import type { DetailsFooterEmits, DetailsFooterProps } from './types'
+import { storeToRefs } from 'pinia'
 
 defineProps<DetailsFooterProps>()
 const emit = defineEmits<DetailsFooterEmits>()
 
 const projectStore = useProjectStore()
-const userStore = useUserStore()
+const userStore = useUserStoreV2()
 
-const projects = computed(() => {
-    return projectStore.findProjectsFromLocal({
-        isArchived: false,
-        isDeleted: false
-    })
-})
+const { projects } = storeToRefs(projectStore)
 
 const handleDropdownExecute = (executeId: string) => {
-    console.log(executeId)
     switch (executeId) {
         case 'comment-todo':
             emit('leaveTodoComment')
@@ -43,25 +37,30 @@ const handleDropdownExecute = (executeId: string) => {
             :projects="projects"
             :user-id="userStore.user?.id || ''"
             placement="top-start"
-            @select="(npId, npt) => emit('updateTodoProject', npId, npt)"
+            @select="(npId) => emit('updateTodoProject', npId)"
         />
         <nue-div wrap="nowrap" width="auto" gap="0.5rem">
             <nue-button
                 v-if="shadowTodo.isDeleted"
                 icon="delete"
                 theme="error,small"
-                @click="emit('deleteTodoPermanently')"
+                @click="emit('deleteTodoPermanently', shadowTodo.id)"
             >
                 永久删除
             </nue-button>
             <todo-delete-button
                 :is-deleted="shadowTodo.isDeleted"
-                @delete="emit('deleteTodo')"
-                @restore="emit('restoreTodo')"
+                @delete="emit('deleteTodo', shadowTodo.id)"
+                @restore="emit('restoreTodo', shadowTodo.id)"
             />
-            <nue-dropdown placement="top-end" @execute="handleDropdownExecute" theme="menu,small">
+            <nue-dropdown
+                close-when-executed
+                placement="top-end"
+                @execute="handleDropdownExecute"
+                theme="menu,small"
+            >
                 <template #trigger="{ trigger }">
-                    <nue-button icon="more" theme="small" @click="trigger"> 更多 </nue-button>
+                    <nue-button icon="more" theme="small" @click="trigger">更多</nue-button>
                 </template>
                 <nue-div theme="block" style="min-width: 8rem">
                     <nue-text theme="title">更多操作</nue-text>

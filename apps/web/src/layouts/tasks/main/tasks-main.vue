@@ -21,7 +21,7 @@ const comps = {
 watchEffect(() => {
     if (!viewProps.value) return
     const category = viewProps.value.category
-    const preference = viewProps.value.preference || 'table'
+    const preference = viewProps.value.preference
     if (!category || !preference) return
     comp.value =
         comps[category as keyof typeof comps][
@@ -31,10 +31,10 @@ watchEffect(() => {
 </script>
 
 <template>
-    <nue-container id="TasksMainContainer">
+    <nue-container v-if="comp && viewProps" id="TasksMainContainer">
         <nue-main>
             <nue-content fill style="overflow: hidden">
-                <component v-if="comp && viewProps" :is="comp" />
+                <component :is="comp" />
             </nue-content>
         </nue-main>
     </nue-container>

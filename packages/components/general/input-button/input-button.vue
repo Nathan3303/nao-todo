@@ -4,8 +4,9 @@
         :icon="icon"
         :size="size"
         @click="handleClick"
+        class="nue-button--icon-fix"
         :theme="theme || buttonTheme"
-        style="gap: 8px"
+        style="gap: 0.5rem"
     >
         {{ buttonText }}
     </nue-button>
@@ -13,11 +14,10 @@
         wrap="nowrap"
         v-show="isInput"
         align="center"
-        gap="6px"
-        style="padding-left: 2px"
+        gap="0.5rem"
         @keydown.enter.prevent="handleKeydown"
     >
-        <nue-icon size="14px" :name="loading ? 'loading' : icon" :spin="loading" />
+        <nue-icon size="1rem" :name="iconName" :spin="loading" />
         <nue-input
             ref="inputRef"
             v-model="inputValue"
@@ -34,7 +34,7 @@
                 :theme="theme || buttonTheme"
                 :size="size"
                 :disabled="loading"
-                @click="handleSubmit"
+                @click="() => handleSubmit()"
             />
             <nue-button
                 icon="clear"
@@ -48,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { NueInput } from 'nue-ui'
 import type { InputButtonProps, InputButtonEmits } from './types'
 
@@ -65,6 +65,8 @@ const inputRef = ref<InstanceType<typeof NueInput>>()
 const inputValue = ref('')
 const isInput = ref(false)
 const loading = ref(false)
+
+const iconName = computed(() => (loading.value ? 'loading' : props.icon) as never)
 
 const handleClick = async (event: MouseEvent) => {
     await props.onButtonClick(event, { inputValue })
@@ -109,17 +111,24 @@ const handleCancel = () => {
 </script>
 
 <style scoped>
+.nue-button {
+    --nue-button-font-size: var(--nue-text-xs);
+}
+
 .nue-button--pure {
-    --disable-background-color: transparent;
-    height: 28px;
-    padding: 0 2px;
+    --nue-button-disable-background-color: transparent;
+    height: 1.75rem;
+    font-size: var(--nue-text-xs);
+}
+
+.nue-button--icon-fix :deep(.nue-button__icon) {
+    --nue-icon-size: 1rem;
 }
 
 .nue-input--small {
-    --disabled-background-color: transparent;
-    padding: 0 2px;
-    height: 28px;
-    font-size: var(--text-xs);
+    --nue-input-disabled-background-color: transparent;
+    height: 1.75rem;
+    font-size: var(--nue-text-xs);
     border-width: 0;
 }
 </style>

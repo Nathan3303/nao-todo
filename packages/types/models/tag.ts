@@ -1,5 +1,12 @@
 import type { GetRequestPageOptions } from '../axios/common'
 import type { User } from './user'
+import type { TodoColumnOptions, GetTodosOptions } from './todo'
+
+type TagPreference = {
+    viewType: string
+    getTodosOptions: GetTodosOptions
+    columns: TodoColumnOptions
+}
 
 type Tag = {
     _id?: string
@@ -10,6 +17,7 @@ type Tag = {
     description: string
     isDeleted: boolean
     deletedAt: Date | null
+    preference: TagPreference
 }
 
 type CreateTagOptionsRaw = {

@@ -1,5 +1,8 @@
 <template>
-    <nue-container theme="vertical,inner" class="index-ai-view">
+    <nue-div align="center" height="100%" justify="center">
+        <nue-empty description="大模型对话视图筹备中" />
+    </nue-div>
+    <!-- <nue-container theme="vertical,inner" class="index-ai-view">
         <nue-header>
             <nue-div theme="view-header">
                 <nue-tooltip
@@ -64,92 +67,92 @@
                 </nue-button>
             </nue-div>
         </nue-footer>
-    </nue-container>
+    </nue-container> -->
     <!-- Drawers -->
-    <float-aside v-if="!viewStore.projectAsideVisible" />
+    <!-- <float-aside v-if="!viewStore.projectAsideVisible" /> -->
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue'
-import { useSSE } from '@nao-todo/hooks'
-import MarkdownIt from 'markdown-it'
-import { baseURL } from '@nao-todo/utils/axios'
-import { useViewStore } from '@/stores'
-import { storeToRefs } from 'pinia'
-import FloatAside from './float-aside.vue'
+// import { onBeforeUnmount, ref } from 'vue'
+// import { useSSE } from '@nao-todo/hooks'
+// import MarkdownIt from 'markdown-it'
+// import { baseURL } from '@nao-todo/utils/axios'
+// import { useViewStore } from '@/stores'
+// import { storeToRefs } from 'pinia'
+// import FloatAside from './float-aside.vue'
 
-const viewStore = useViewStore()
-const { connect, close } = useSSE(`${baseURL}/ai/chat`)
+// const viewStore = useViewStore()
+// const { connect, close } = useSSE(`${baseURL}/ai/chat`)
 
-const { projectAsideVisible: pav } = storeToRefs(viewStore)
-const waitingForCompletion = ref(false)
-const message = ref('比较 9.9 和 9.11 哪个大。')
-const thinktext = ref('')
-const completion = ref('')
-const markdownContent = ref('')
-const isCollapseThinking = ref(false)
-const isShowRawText = ref(false)
+// const { projectAsideVisible: pav } = storeToRefs(viewStore)
+// const waitingForCompletion = ref(false)
+// const message = ref('比较 9.9 和 9.11 哪个大。')
+// const thinktext = ref('')
+// const completion = ref('')
+// const markdownContent = ref('')
+// const isCollapseThinking = ref(false)
+// const isShowRawText = ref(false)
 
-const clear = () => {
-    completion.value = ''
-    thinktext.value = ''
-    markdownContent.value = ''
-}
+// const clear = () => {
+//     completion.value = ''
+//     thinktext.value = ''
+//     markdownContent.value = ''
+// }
 
-const sendMessage = () => {
-    const md = new MarkdownIt()
-    let state: 1 | 0 = 1
-    waitingForCompletion.value = true
+// const sendMessage = () => {
+//     const md = new MarkdownIt()
+//     let state: 1 | 0 = 1
+//     waitingForCompletion.value = true
 
-    clear()
+//     clear()
 
-    const parseResponse = (response: string) => {
-        const content = decodeURIComponent(atob(response))
-        // const content = response
-        if (!content || content === 'null') return
-        switch (state) {
-            case 1:
-                thinktext.value += content
-                break
-            case 0:
-                completion.value += content
-                markdownContent.value = md.render(completion.value)
-                break
-        }
-    }
+//     const parseResponse = (response: string) => {
+//         const content = decodeURIComponent(atob(response))
+//         // const content = response
+//         if (!content || content === 'null') return
+//         switch (state) {
+//             case 1:
+//                 thinktext.value += content
+//                 break
+//             case 0:
+//                 completion.value += content
+//                 markdownContent.value = md.render(completion.value)
+//                 break
+//         }
+//     }
 
-    const messageHandler = (event: MessageEvent) => {
-        switch (event.data) {
-            case '#--EOC--#':
-                waitingForCompletion.value = false
-                break
-            case '#--SOT--#':
-                state = 1
-                break
-            case '#--EOT--#':
-                state = 0
-                break
-            default:
-                parseResponse(event.data)
-                break
-        }
-    }
+//     const messageHandler = (event: MessageEvent) => {
+//         switch (event.data) {
+//             case '#--EOC--#':
+//                 waitingForCompletion.value = false
+//                 break
+//             case '#--SOT--#':
+//                 state = 1
+//                 break
+//             case '#--EOT--#':
+//                 state = 0
+//                 break
+//             default:
+//                 parseResponse(event.data)
+//                 break
+//         }
+//     }
 
-    const errorHandler = () => {
-        waitingForCompletion.value = false
-        close()
-    }
+//     const errorHandler = () => {
+//         waitingForCompletion.value = false
+//         close()
+//     }
 
-    connect('?message=' + message.value, messageHandler, errorHandler)
-}
+//     connect('?message=' + message.value, messageHandler, errorHandler)
+// }
 
-onBeforeUnmount(() => {
-    close()
-})
+// onBeforeUnmount(() => {
+//     close()
+// })
 </script>
 
 <style scoped>
-.nue-textarea--msg-input {
+/* .nue-textarea--msg-input {
     flex: auto;
 }
 
@@ -164,5 +167,5 @@ onBeforeUnmount(() => {
 
 .nue-text--completion {
     white-space: pre-wrap;
-}
+} */
 </style>

@@ -4,13 +4,9 @@ import type { CreateProjectOptions } from '@nao-todo/types'
 import { unwrapError } from '@nao-todo/utils'
 import { NueMessage } from 'nue-ui'
 
-export type ProjectCreatorEmits = {
-    (e: 'closeDialog'): void
-}
-
 const DefaultCreateOptions: CreateProjectOptions = { name: '', description: '' }
 
-const useProjectCreator = (emit: ProjectCreatorEmits) => {
+const useProjectCreator = () => {
     const tasksDataStore = useTasksDataStore()
 
     const creating = ref(false)
@@ -41,7 +37,6 @@ const useProjectCreator = (emit: ProjectCreatorEmits) => {
             return false
         }
         // 处理成功结果
-        emit('closeDialog')
         NueMessage.success('清单创建成功')
         clearInputsValue()
         return true

@@ -20,21 +20,19 @@ const tableMinWidth = computed(() => {
             columnCounter++
         }
     }
-    return `${columnCounter * 5 + 20}rem`
+    return `${columnCounter * 6 + 12}rem`
 })
 
 const {
     selectRange,
     tagBarClamped,
     isTodoExpired,
-    handleDeleteBtnClk,
-    handleShowDetails,
-    handleMultiSelect,
+    showTodoDetailsPanel,
+    showMultiSelectPanel,
     handleClearSelectedId,
     handleClearSelect,
-    handleClearSortInfo,
     getProjectNameByIdFromLocal,
-    handleUpdateSortOptions
+    deleteButtonClickHandler
 } = useTodoTable(props, emit)
 const { refreshKey, startRefresh, stopRefresh } = useRefreshKey()
 
@@ -47,26 +45,27 @@ onBeforeUnmount(() => {
 })
 
 provide<TodoTableContext>(todoTableContextKey, {
+    // header
     columnOptions: computed(() => props.columnOptions),
     sortOptions: computed(() => props.sortOptions),
-    todos: computed(() => props.todos),
+    clearSortOptions: () => emit('clearSortOptions'),
+    updateSortOptions: (newSortOptions) => emit('updateSortOptions', newSortOptions),
+    // main
+    todos: props.todos,
     selectRange,
-    useDeletedLine: computed(() => props.useDeletedLine),
     tagBarClamped,
     tags: computed(() => props.tags),
     refreshKey,
     isTodoExpired,
-    handleClearSortInfo,
-    handleShowDetails,
-    handleMultiSelect,
+    showTodoDetailsPanel,
+    showMultiSelectPanel,
     getProjectNameByIdFromLocal,
-    handleDeleteBtnClk,
-    handleUpdateSortOptions
+    deleteButtonClickHandler
 })
 
 defineExpose({
-    reset: handleClearSelectedId,
-    resetSelect: handleClearSelect
+    resetSelect: handleClearSelect,
+    reset: handleClearSelectedId
 })
 </script>
 

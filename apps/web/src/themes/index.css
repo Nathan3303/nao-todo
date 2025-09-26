@@ -1,5 +1,6 @@
 html.nue-html {
-    --nue-primary-font-family: "Poppins", "Noto Sans", sans-serif;
+    --nue-primary-font-family: 'Poppins', 'Noto Sans', 'Segoe UI Emoji', 'Apple Color Emoji',
+        'Noto Color Emoji', sans-serif;
 }
 
 .nue-div.nue-div--hint {
@@ -100,7 +101,6 @@ html.nue-html {
         font-size: var(--nue-text-xs);
         background-color: transparent;
     }
-
 }
 
 .nue-confirm.nue-confirm--danger {

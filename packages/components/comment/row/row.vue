@@ -3,11 +3,10 @@
         <nue-avatar :src="comment.user.avatar" class="comment-row__avatar" size="32px" />
         <nue-div class="comment-row__details">
             <nue-div class="comment-row__details__title">
-                <nue-text color="#696969" size="13px" weight="500">
+                <nue-text color="var(--nue-primary-color-600)" size="var(--nue-text-sm)">
                     {{ comment.user.nickname }}
                 </nue-text>
-                <nue-text color="#969696" size="12px">
-                    <!--                    评论于-->
+                <nue-text color="var(--nue-primary-color-500)" size="var(--nue-text-xs)">
                     {{ useRelativeDate(comment.createdAt) }}
                 </nue-text>
                 <nue-div class="comment-row__details__actions">
@@ -25,11 +24,10 @@
                     <nue-textarea
                         ref="editInputerRef"
                         v-model="shadowContent"
-                        :rows="0"
-                        autosize
+                        :autosize="{ minRows: 1, maxRows: 4 }"
                         counter="word-limit"
-                        maxlength="256"
-                        theme="small"
+                        maxlength="512"
+                        theme="small,fix-padding"
                     />
                     <nue-div gap="4px">
                         <nue-button icon="check" theme="small" @click="handleUpdateComment">
@@ -104,29 +102,25 @@ const handleCancelEdit = () => {
 <style scoped>
 .comment-row {
     flex-wrap: nowrap;
-    padding: 4px 8px;
-}
-
-.comment-row__avatar {
-    margin-top: 4px;
+    padding: 0.25rem 0.5rem;
 }
 
 .comment-row__details {
     flex-direction: column;
     flex: auto;
-    gap: 4px;
+    gap: 0.5rem;
 }
 
 .comment-row__details__title {
     align-items: center;
-    gap: 16px;
+    gap: 1rem;
 }
 
 .comment-row__details__actions {
     opacity: 0;
     align-items: center;
     flex: auto;
-    gap: 12px;
+    gap: 0.5rem;
     justify-content: end;
     width: fit-content;
     color: var(--primary-color-600);
@@ -149,3 +143,4 @@ const handleCancelEdit = () => {
     opacity: 1;
 }
 </style>
+

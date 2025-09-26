@@ -1,3 +1,28 @@
+<script lang="ts" setup>
+import { inject } from 'vue'
+import { UserDropdown } from '@nao-todo/components'
+import { useUserStore, useViewStore } from '@/stores'
+import { storeToRefs } from 'pinia'
+import { type IndexViewCtx, IndexViewCtxKey } from '@nao-todo/types/views/index-view'
+
+defineOptions({ name: 'IndexAside' })
+
+const userStore = useUserStore()
+const viewStore = useViewStore()
+
+const indexViewCtx = inject<IndexViewCtx>(IndexViewCtxKey)
+
+const { user } = storeToRefs(userStore)
+
+const routeLinks = [
+    { name: '任务', icon: 'square-check-fill', route: '/tasks' },
+    { name: '日历视图', icon: 'calendar', route: '/calendar' },
+    { name: '番茄专注', icon: 'focus2', route: '/fqfocus' },
+    { name: '搜索', icon: 'search2', route: '/search' },
+    { name: '对话大模型', icon: 'ai-chat-fill', route: '/ai' }
+]
+</script>
+
 <template>
     <nue-drawer
         v-model:visible="viewStore.indexAsideVisible"
@@ -33,7 +58,7 @@
                             placement="right-center"
                             size="small"
                         >
-                            <nue-link :icon="rl.icon" :route="rl.route" theme="index-header-link" />
+                            <nue-link :icon="rl.icon" :to="rl.route" theme="index-header-link" />
                         </nue-tooltip>
                     </nue-div>
                 </slot>
@@ -41,29 +66,6 @@
         </nue-container>
     </nue-drawer>
 </template>
-
-<script lang="ts" setup>
-import { inject } from 'vue'
-import { UserDropdown } from '@nao-todo/components'
-import { useUserStore, useViewStore } from '@/stores'
-import { storeToRefs } from 'pinia'
-import { type IndexViewCtx, IndexViewCtxKey } from '@nao-todo/types/views/index-view'
-
-const userStore = useUserStore()
-const viewStore = useViewStore()
-
-const indexViewCtx = inject<IndexViewCtx>(IndexViewCtxKey)
-
-const { user } = storeToRefs(userStore)
-
-const routeLinks = [
-    { name: '任务', icon: 'square-check-fill', route: '/tasks' },
-    { name: '日历视图', icon: 'calendar', route: '/calendar' },
-    { name: '番茄专注', icon: 'focus2', route: '/fqfocus' },
-    { name: '搜索', icon: 'search2', route: '/search' },
-    { name: '对话大模型', icon: 'ai-chat-fill', route: '/ai' }
-]
-</script>
 
 <style scoped>
 .index-aside:deep(.nue-main__content) {

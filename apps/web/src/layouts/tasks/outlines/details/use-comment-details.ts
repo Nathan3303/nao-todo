@@ -1,33 +1,35 @@
 import { computed, ref } from 'vue'
-import { useCommentStore } from '@/stores/global'
-import { useRoute } from 'vue-router'
+import { storeToRefs } from 'pinia'
+import { useTasksDataStore } from '@/stores/tasks'
 import { NueMessage } from 'nue-ui'
+import type { Todo } from '@nao-todo/types'
 
-export const useCommentDetails = () => {
-    const route = useRoute()
-    const commentStore = useCommentStore()
+export const useCommentDetails = (todoId?: Todo['id']) => {
+    const tasksDataStore = useTasksDataStore()
 
+    const { comments } = storeToRefs(tasksDataStore)
     const isCommenting = ref(false)
     const commentContent = ref('')
 
-    const commentsCount = computed(() => commentStore.comments.length)
+    const commentsCount = computed(() => comments.value.length)
 
     const handleEnterNewLine = () => {
-        // commentContent.value += '\n'
+        commentContent.value += '\n'
     }
 
     const handleLeaveComment = async (content: string) => {
-        // const createResult = await commentStore.doCreateComment({
-        //     todoId: route.params.taskId as string,
-        //     content: content
-        // })
-        // if (createResult) {
-        //     NueMessage.success('添加评论成功')
-        // } else {
-        //     NueMessage.error('添加评论失败')
-        // }
-        // return createResult
-        return false
+        if (!todoId) return false
+        const err = await tasksDataStore.createComment({
+            todoId: todoId,
+            content: content
+        })
+        if (err) {
+            NueMessage.error('添加评论失败')
+            return false
+        }
+        NueMessage.success('添加评论成功')
+        isCommenting.value = false
+        return true
     }
 
     return {

@@ -26,7 +26,7 @@
         "moduleResolution": "bundler",
         "rootDir": ".",
         "types": [
-            "nue-ui/types"
+            "nue-ui/dist/global.d.ts"
         ]
     }
 }

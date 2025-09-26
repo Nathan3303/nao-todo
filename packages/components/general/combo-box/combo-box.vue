@@ -10,16 +10,17 @@
             </nue-button>
         </template>
         <template #default>
-            <nue-container class="combo-box-container">
+            <nue-container id="ComboBoxContainer">
                 <nue-header @click.stop>
                     <nue-input
                         v-model="filterText"
                         :placeholder="`筛选${triggerTitle.toLowerCase()}`"
                         clearable
                         icon="search"
-                        theme="noshape"
+                        theme="small,noshape"
                     />
                 </nue-header>
+                <nue-divider />
                 <nue-main>
                     <nue-div align="stretch" gap="4px" vertical>
                         <template v-if="filteredOptions && filteredOptions.length">
@@ -75,9 +76,19 @@ const handleCheck = (checked: boolean, value: unknown) => {
 
 <style scoped>
 .combo-box__empty-text {
-    font-size: var(--text-xs);
+    font-size: var(--nue-text-xs);
     padding: 8px;
     color: gray;
     text-align: center;
+}
+
+.nue-container#ComboBoxContainer {
+    gap: 0.25rem;
+
+    > .nue-header {
+        height: auto;
+        padding: 0 0.5rem;
+        border: none;
+    }
 }
 </style>

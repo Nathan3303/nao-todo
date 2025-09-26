@@ -1,5 +1,5 @@
 <template>
-    <nue-link :theme="theme" :route="route">
+    <nue-link :theme="theme" v-bind="$attrs">
         <slot />
         <template v-if="$slots.append" #append>
             <nue-div align="center" justify="end" width="fit-content" flex="1">
@@ -24,9 +24,5 @@ const theme = computed(() => {
         'route-ico': props.iconLink,
         [`route-${props.size}`]: props.size
     }
-})
-
-const route = computed(() => {
-    return props.to ? { path: props.to } : void 0
 })
 </script>

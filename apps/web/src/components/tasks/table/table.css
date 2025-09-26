@@ -46,6 +46,7 @@
                 border-radius: var(--nue-primary-radius);
                 gap: 1rem;
                 padding: 8px 12px;
+                position: relative;
 
                 &:hover {
                     border: 1px solid #ccc;
@@ -56,7 +57,7 @@
                 }
 
                 &[data-done='true'] * {
-                    opacity: 0.8;
+                    opacity: 0.9;
                     transition: opacity 0.16s ease;
                 }
 
@@ -64,10 +65,10 @@
                     opacity: 0.8;
                     transition: opacity 0.16s ease;
 
-                    &::after {
+                    & *::after {
                         width: 98%;
                         height: 1px;
-                        background-color: var(--nue-primary-color-500);
+                        background-color: var(--nue-primary-color-400);
                         display: block;
                         content: '';
                         position: absolute;
@@ -91,7 +92,7 @@
         }
 
         .col-first {
-            gap: 4px;
+            gap: 0.5rem;
 
             .col-first__name {
                 flex: auto;
@@ -127,6 +128,7 @@
         }
 
         .col-attr {
+            font-size: var(--nue-text-xs);
             color: var(--nue-primary-color-800);
         }
 

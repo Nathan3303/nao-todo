@@ -4,7 +4,7 @@
             class="todo-event-row__check-icon"
             :name="updateLoading ? 'loading' : event.isDone ? 'square-check-fill' : 'square'"
             :spin="updateLoading"
-            size="16px"
+            size="1rem"
             @click="handleUpdate(true)"
         />
         <nue-input
@@ -16,7 +16,11 @@
             @blur="handleUpdate(false)"
         />
         <nue-div class="todo-event-row__actions">
-            <nue-icon name="delete" :color="updateLoading ? 'gray' : '#ff6f6f'" @click="handleDelete" />
+            <nue-icon
+                name="delete"
+                :color="updateLoading ? 'gray' : '#ff6f6f'"
+                @click="handleDelete"
+            />
         </nue-div>
     </nue-div>
 </template>
@@ -29,15 +33,15 @@ defineOptions({ name: 'TodoEventRow' })
 const props = defineProps<TodoEventRowProps>()
 const emit = defineEmits<TodoEventRowEmits>()
 
-const inputValue = ref(props.event.title)
+const inputValue = ref(props.event.name)
 const updateLoading = ref(false)
 
 const handleUpdate = async (updateIsDone = false) => {
-    const { id, title, isDone } = props.event
-    if (title === inputValue.value && !updateIsDone) return
+    const { id, name, isDone } = props.event
+    if (name === inputValue.value && !updateIsDone) return
     if (updateLoading.value) return
     const _n_isDone = updateIsDone ? !isDone : isDone
-    const payload = { id, title: inputValue.value, isDone: _n_isDone }
+    const payload = { id, name: inputValue.value, isDone: _n_isDone }
     const { onUpdate } = props
     if (onUpdate) {
         updateLoading.value = true
@@ -64,11 +68,10 @@ const handleDelete = async () => {
 
 <style scoped>
 .todo-event-row {
-    height: 28px;
-    padding: 0 1px;
+    height: 1.75rem;
     flex-wrap: nowrap;
     align-items: center;
-    gap: 6px;
+    gap: 0.5rem;
 }
 
 .todo-event-row__check-icon {
@@ -76,15 +79,17 @@ const handleDelete = async () => {
 }
 
 .todo-event-row .nue-input--small {
-    --disabled-background-color: transparent;
-    font-size: var(--text-xs);
+    --nue-input-disabled-background-color: transparent;
+    --nue-input-color: var(--nue-primary-color-800);
+    font-size: var(--nue-text-xs);
     padding: 0;
     flex: 1;
 }
 
 .todo-event-row .nue-input--small[data-is-done='true'] {
     text-decoration: line-through;
-    color: #999;
+    color: var(--nue-primary-color-500);
+    --nue-input-color: var(--nue-primary-color-500);
 }
 
 .todo-event-row__actions {
@@ -112,3 +117,4 @@ const handleDelete = async () => {
     box-shadow: 0 1px rgba(0, 0, 0, 0.3);
 }
 </style>
+

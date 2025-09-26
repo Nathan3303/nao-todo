@@ -4,6 +4,7 @@ import type {
     GetProjectsOptions,
     GoLike,
     Project,
+    ProjectPreference,
     Requester,
     UpdateProjectOptions
 } from '@nao-todo/types'
@@ -13,7 +14,8 @@ import {
     getProjectsApi,
     getProjectApi,
     updateProjectApi,
-    restoreProjectApi
+    restoreProjectApi,
+    updateProjectPreferenceApi
 } from '@nao-todo/apis/v2'
 
 const CREATE_PROJECT_SUCCESS_CODE = 20010
@@ -22,6 +24,7 @@ const GET_PROJECT_SUCCESS_CODE = 20000
 const UPDATE_PROJECT_SUCCESS_CODE = 20020
 const DELETE_PROJECT_SUCCESS_CODE = 20030
 const RESTORE_PROJECT_SUCCESS_CODE = 20040
+const UPDATE_PROJECT_PREFERENCE_SUCCESS_CODE = 20060
 
 const createProjectHandler = async (
     options: CreateProjectOptions,
@@ -111,11 +114,27 @@ const restoreProjectHandler = async (
     return [null, apiRes.message]
 }
 
+const updateProjectPreferenceHandler = async (
+    projectId: Project['id'],
+    preference: ProjectPreference,
+    requester: Requester
+): Promise<GoLike> => {
+    // 调用 API 更新清单偏好
+    const apiRes = await updateProjectPreferenceApi(requester, projectId, preference)
+    // 处理成功结果
+    if (apiRes.code === UPDATE_PROJECT_PREFERENCE_SUCCESS_CODE) {
+        return [apiRes.data, null]
+    }
+    // 处理失败结果
+    return [null, apiRes.message]
+}
+
 export {
     createProjectHandler,
     getProjectsHandler,
     getProjectHandler,
     updateProjectHandler,
     deleteProjectHandler,
-    restoreProjectHandler
+    restoreProjectHandler,
+    updateProjectPreferenceHandler
 }

@@ -7,7 +7,8 @@ import type {
     Project,
     UpdateProjectOptions,
     GetProjectOptions,
-    GetProjectsSortOptions
+    GetProjectsSortOptions,
+    ProjectPreference
 } from '@nao-todo/types'
 
 export const createProjectApi = async (requester: Requester, options: CreateProjectOptions) => {
@@ -80,6 +81,32 @@ export const getProjectsApi = async (requester: Requester, options: GetProjectsO
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/get-projects-v2]', error)
+        return { code: 500, message: '服务器错误' } as ResponseData
+    }
+}
+
+export const updateProjectPreferenceApi = async (
+    requester: Requester,
+    projectId: Project['id'],
+    preference: ProjectPreference
+) => {
+    const _preference: { [key in keyof ProjectPreference]?: string } = {}
+    // 将对象偏好转为字符串
+    try {
+        _preference.getTodosOptions = preference.getTodosOptions
+            ? JSON.stringify(preference.getTodosOptions)
+            : ''
+        _preference.columns = preference.columns ? JSON.stringify(preference.columns) : ''
+    } catch (error) {
+        console.error('[@nao-todo/apis/update-project-preference-v2]', error)
+        return { code: 400, message: '偏好数据解析失败' } as ResponseData
+    }
+    // 更新清单偏好
+    try {
+        const response = await requester.put(`/project/preference/${projectId}`, _preference)
+        return response.data as ResponseData
+    } catch (error) {
+        console.error('[@nao-todo/apis/update-project-preference-v2]', error)
         return { code: 500, message: '服务器错误' } as ResponseData
     }
 }

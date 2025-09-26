@@ -51,15 +51,25 @@ export const updateTodoApiV2 = async (
     }
 }
 
-// export const deleteTodoV2 = async (requester: Requester, id: Todo['id']) => {
-//     try {
-//         const response = await requester.delete(`/todo?todoId=${id}`)
-//         return response.data as ResponseData
-//     } catch (error) {
-//         console.error('[@nao-todo/apis/delete-todo-v2]', error)
-//         return { code: 500, message: '服务器错误' } as ResponseData
-//     }
-// }
+export const deleteTodoApiV2 = async (requester: Requester, id: Todo['id'], isHard: boolean) => {
+    try {
+        const response = await requester.delete(`/todo/${id}?hard=${isHard}`)
+        return response.data as ResponseData
+    } catch (error) {
+        console.error('[@nao-todo/apis/delete-todo-v2]', error)
+        return { code: 500, message: '服务器错误' } as ResponseData
+    }
+}
+
+export const restoreTodoApiV2 = async (requester: Requester, id: Todo['id']) => {
+    try {
+        const response = await requester.put(`/todo/restore/${id}`)
+        return response.data as ResponseData
+    } catch (error) {
+        console.error('[@nao-todo/apis/restore-todo-v2]', error)
+        return { code: 500, message: '服务器错误' } as ResponseData
+    }
+}
 
 // export const updateTodosV2 = async (
 //     requester: Requester,

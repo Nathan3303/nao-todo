@@ -1,10 +1,12 @@
-import { ref, shallowRef } from 'vue'
+import { ref } from 'vue'
 import { defineStore, storeToRefs } from 'pinia'
 import { basicViewProps } from '@/layouts/tasks'
-import { useProjectStore, useTagStore } from '@/stores/global'
-import { NuePrompt } from 'nue-ui'
+import { useProjectStore, useTagStore, useTodoStore } from '@/stores/global'
+import { NuePrompt, NueMessage } from 'nue-ui'
 import { useWindowResizeListener } from '@nao-todo/hooks'
+import { unwrapError } from '@nao-todo/utils'
 import { type TasksMainViewProps, toProjectViewProps, toTagViewProps } from '@/layouts/tasks/'
+import type { Err, TodoColumnOptions } from '@nao-todo/types'
 
 const useTasksViewStore = defineStore('TasksViewStore', () => {
     // @states 读取侧边栏宽度记录
@@ -24,9 +26,10 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
     const { projects } = storeToRefs(projectStore)
     const tagStore = useTagStore()
     const { tags } = storeToRefs(tagStore)
+    const todoStore = useTodoStore()
 
     // @state 视图全局属性
-    const viewProps = shallowRef<TasksMainViewProps | null>(null)
+    const viewProps = ref<TasksMainViewProps>()
 
     // @methods 加载视图全局属性
     const loadProjectViewProps = async (id: string): Promise<TasksMainViewProps | undefined> => {
@@ -53,7 +56,22 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
                 _viewProps = await loadTagViewProps(id)
                 break
         }
-        viewProps.value = _viewProps ?? basicViewProps.find((vp) => vp.id === 'all')!
+        // 如果获取的视图参数为空，则直接 void 0，使页面渲染错误
+        if (!_viewProps) {
+            viewProps.value = void 0
+            return
+        }
+        console.log('[use-tasks-view-store/loadViewProps]', _viewProps)
+        // 判断是全量更新还是局部更新 - 在于判断前后两次加载的 id 和 category 是否一致
+        const compareKey1 = id + category
+        const compareKey2 = viewProps.value ? viewProps.value.id + viewProps.value.category : ''
+        if (viewProps.value && compareKey1 === compareKey2) {
+            // 局部更新
+            viewProps.value.name = _viewProps.name
+            viewProps.value.description = _viewProps.description
+            return
+        }
+        viewProps.value = _viewProps
     }
 
     // @methods 清单名称和描述修改
@@ -87,8 +105,8 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
     }
 
     // @methods 标签名称和描述修改
-    const showTagNameUpdater = (tagId: string) => {
-        NuePrompt({
+    const showTagNameUpdater = async (tagId: string) => {
+        return await NuePrompt({
             title: '标签名称修改',
             placeholder: '请输入新的标签名称',
             confirmButtonText: '确定',
@@ -101,8 +119,8 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
             }
         })
     }
-    const showTagDescriptionUpdater = (tagId: string) => {
-        NuePrompt({
+    const showTagDescriptionUpdater = async (tagId: string) => {
+        return await NuePrompt({
             title: '标签描述修改',
             placeholder: '请输入新的标签描述',
             confirmButtonText: '确定',
@@ -134,6 +152,62 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
     }
     addWindowResizeCb(responsiveFlagUpdater, true)
 
+    // @methods 切换视图 / 隐藏已完成 / 更新列选项
+    const switchView = (viewType: string) => {
+        if (!viewProps.value) return
+        viewProps.value.preference.viewType = viewType
+    }
+    const hideCompleted = async () => {
+        if (!viewProps.value) return
+        viewProps.value.preference.getTodosOptions.state = 'todo,in-progress'
+        await refreshData()
+    }
+    const updateColumns = (columnKey: string) => {
+        if (!viewProps.value) return
+        const key = columnKey as keyof TodoColumnOptions
+        viewProps.value.preference.columns[key] = !viewProps.value.preference.columns[key]
+    }
+
+    // @method 刷新数据
+    const refreshData = async () => {
+        if (!viewProps.value) return
+        const err = await todoStore.getTodos(viewProps.value.preference.getTodosOptions)
+        if (err) {
+            NueMessage.error(unwrapError(err))
+            return
+        }
+    }
+
+    // @method 更新视图偏好
+    const updatePreference = async () => {
+        if (!viewProps.value) return
+        // ---
+        console.log('updatePreference', viewProps.value.preference)
+        // 获取属性
+        const id = viewProps.value.id
+        const category = viewProps.value.category
+        const preference = viewProps.value.preference
+        // 判断当前分类
+        let err: Err = null
+        switch (category) {
+            case 'project':
+                // 调用 API 更新视图偏好
+                err = await projectStore.updateProjectPreference(id, preference)
+                break
+            case 'tag':
+                break
+            default:
+                break
+        }
+        // 处理失败结果
+        if (err) {
+            NueMessage.error(unwrapError(err))
+            return
+        }
+        NueMessage.success('视图偏好更新成功')
+        return
+    }
+
     // @returns
     return {
         asideWidth,
@@ -146,7 +220,12 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
         showProjectDescriptionUpdater,
         showTagNameUpdater,
         showTagDescriptionUpdater,
-        responsiveFlag
+        responsiveFlag,
+        switchView,
+        hideCompleted,
+        updateColumns,
+        refreshData,
+        updatePreference
     }
 })
 

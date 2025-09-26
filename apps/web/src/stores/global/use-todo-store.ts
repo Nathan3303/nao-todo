@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { unwrapError } from '@nao-todo/utils'
 import { requester } from './requester'
+import { NueConfirm, NueMessage } from 'nue-ui'
 import type {
     CreateTodoOptions,
     Err,
@@ -10,7 +11,13 @@ import type {
     ResponseData,
     UpdateTodoOptions
 } from '@nao-todo/types'
-import { createTodoHandler, getTodosHandler, updateTodoHandler } from '@nao-todo/handlers/v1'
+import {
+    createTodoHandler,
+    getTodosHandler,
+    updateTodoHandler,
+    deleteTodoHandler,
+    restoreTodoHandler
+} from '@nao-todo/handlers/v1'
 
 const useTodoStore = defineStore('TodoStore', () => {
     // @state 待办任务列表（应该被应用于整个视图）
@@ -28,7 +35,7 @@ const useTodoStore = defineStore('TodoStore', () => {
         }
         // 处理成功结果
         if (res) {
-            todos.value = res.todos
+            todos.value = res.todos || []
             pagination.value = res.pagination
         }
         return null
@@ -76,46 +83,44 @@ const useTodoStore = defineStore('TodoStore', () => {
     }
 
     // @method 删除待办任务
-    // const deleteProject = async (projectId: Project['id']): Promise<Err> => {
-    //     // 参数判断
-    //     if (!projectId) return '待办任务ID不能为空'
-    //     // 删除待办任务
-    //     const [, err] = await deleteProjectHandler(projectId)
-    //     // 处理失败结果
-    //     if (err) {
-    //         console.error(unwrapError(err))
-    //         return err
-    //     }
-    //     // 处理成功结果
-    //     // projects.value = projects.value.filter((project) => project.id !== projectId)
-    //     projects.value.forEach((project) => {
-    //         if (project.id === projectId) {
-    //             project.isDeleted = true
-    //         }
-    //     })
-    //     return null
-    // }
+    const deleteTodo = async (todoId: Todo['id']): Promise<Err> => {
+        // 参数判断
+        if (!todoId) return '待办任务ID不能为空'
+        // 删除待办任务
+        const [, err] = await deleteTodoHandler(todoId, false, requester)
+        // 处理失败结果
+        if (err) {
+            console.error(unwrapError(err))
+            return err
+        }
+        // 处理成功结果
+        todos.value.forEach((todo) => {
+            if (todo.id === todoId) {
+                todo.isDeleted = true
+            }
+        })
+        return null
+    }
 
     // @method 恢复待办任务
-    // const restoreProject = async (projectId: Project['id']): Promise<Err> => {
-    //     // 参数判断
-    //     if (!projectId) return '待办任务ID不能为空'
-    //     // 删除待办任务
-    //     const [, err] = await restoreProjectHandler(projectId)
-    //     // 处理失败结果
-    //     if (err) {
-    //         console.error(unwrapError(err))
-    //         return err
-    //     }
-    //     // 处理成功结果
-    //     // projects.value = projects.value.filter((project) => project.id !== projectId)
-    //     projects.value.forEach((project) => {
-    //         if (project.id === projectId) {
-    //             project.isDeleted = false
-    //         }
-    //     })
-    //     return null
-    // }
+    const restoreTodo = async (todoId: Todo['id']): Promise<Err> => {
+        // 参数判断
+        if (!todoId) return '待办任务ID不能为空'
+        // 删除待办任务
+        const [, err] = await restoreTodoHandler(todoId, requester)
+        // 处理失败结果
+        if (err) {
+            console.error(unwrapError(err))
+            return err
+        }
+        // 处理成功结果
+        todos.value.forEach((todo) => {
+            if (todo.id === todoId) {
+                todo.isDeleted = false
+            }
+        })
+        return null
+    }
 
     // @method 永久删除待办任务
     // const deleteProjectPermanently = async (projectId: Project['id']): Promise<Err> => {
@@ -134,42 +139,42 @@ const useTodoStore = defineStore('TodoStore', () => {
     // }
 
     // @method 删除待办任务（带确认）
-    // const deleteProjectWithConfirm = async (projectId: Project['id']): Promise<Err> => {
-    //     return (await NueConfirm({
-    //         title: '删除待办任务',
-    //         content: '确定要删除此待办任务吗？',
-    //         confirmButtonText: '删除',
-    //         cancelButtonText: '取消',
-    //         onConfirm: async () => {
-    //             const err = await deleteProject(projectId)
-    //             if (err) {
-    //                 NueMessage.error(unwrapError(err))
-    //                 return err
-    //             }
-    //             NueMessage.success('删除成功')
-    //             return 'ok'
-    //         }
-    //     })) as Err
-    // }
+    const deleteTodoWithConfirm = async (todoId: Todo['id']): Promise<Err> => {
+        return (await NueConfirm({
+            title: '删除待办任务',
+            content: '确定要删除此待办任务吗？',
+            confirmButtonText: '删除',
+            cancelButtonText: '取消',
+            onConfirm: async () => {
+                const err = await deleteTodo(todoId)
+                if (err) {
+                    NueMessage.error(unwrapError(err))
+                    return err
+                }
+                NueMessage.success('删除成功')
+                return 'ok'
+            }
+        })) as Err
+    }
 
     // @method 恢复待办任务（带确认）
-    // const restoreProjectWithConfirm = async (projectId: Project['id']): Promise<Err> => {
-    //     return (await NueConfirm({
-    //         title: '恢复待办任务',
-    //         content: '要恢复此待办任务吗？',
-    //         confirmButtonText: '恢复',
-    //         cancelButtonText: '取消',
-    //         onConfirm: async () => {
-    //             const err = await restoreProject(projectId)
-    //             if (err) {
-    //                 NueMessage.error(unwrapError(err))
-    //                 return err
-    //             }
-    //             NueMessage.success('恢复成功')
-    //             return 'ok'
-    //         }
-    //     })) as Err
-    // }
+    const restoreTodoWithConfirm = async (todoId: Todo['id']): Promise<Err> => {
+        return (await NueConfirm({
+            title: '恢复待办任务',
+            content: '要恢复此待办任务吗？',
+            confirmButtonText: '恢复',
+            cancelButtonText: '取消',
+            onConfirm: async () => {
+                const err = await restoreTodo(todoId)
+                if (err) {
+                    NueMessage.error(unwrapError(err))
+                    return err
+                }
+                NueMessage.success('恢复成功')
+                return 'ok'
+            }
+        })) as Err
+    }
 
     // @method 永久删除待办任务（带确认）
     // const deleteProjectPermanentlyWithConfirm = async (projectId: Project['id']): Promise<Err> => {
@@ -196,13 +201,13 @@ const useTodoStore = defineStore('TodoStore', () => {
         pagination,
         getTodos,
         createTodo,
-        updateTodo
-        // deleteTodo,
-        // restoreProject,
-        // deleteProjectPermanently,
-        // deleteProjectWithConfirm,
-        // restoreProjectWithConfirm,
-        // deleteProjectPermanentlyWithConfirm
+        updateTodo,
+        deleteTodo,
+        // restoreTodo,
+        // deleteTodoPermanently,
+        deleteTodoWithConfirm,
+        restoreTodoWithConfirm
+        // deleteTodoPermanentlyWithConfirm
     }
 })
 

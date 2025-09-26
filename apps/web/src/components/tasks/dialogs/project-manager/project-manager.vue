@@ -17,14 +17,12 @@ const dialogRef = ref<DialogInstanceType>()
 const { projects } = storeToRefs(projectManagerStore)
 const { visible, open, close } = useDialogWrapper(dialogRef)
 
-projectManagerStore.getProjectsAgain()
-
 defineExpose({ open, close })
 </script>
 
 <template>
     <nue-dialog v-model="visible" ref="dialogRef" theme="large">
-        <template #header="{ close }">
+        <template #header>
             <nue-text>清单管理</nue-text>
             <nue-button @click="close" icon="clear" theme="icon,ghost,small" />
         </template>

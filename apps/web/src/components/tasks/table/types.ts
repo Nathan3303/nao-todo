@@ -6,7 +6,7 @@ export type TodoTableProps = {
     tags: Tag[]
     simple?: boolean
     emptyMessage?: string
-    sortOptions: GetTodosSortOptions
+    sortOptions?: GetTodosSortOptions
     columnOptions: TodoColumnOptions
     useDeletedLine?: boolean
 }
@@ -17,29 +17,34 @@ export type TodoTableMultiSelectPayload = {
 }
 
 export type TodoTableEmits = {
+    // todo
     (event: 'deleteTodo', id: Todo['id']): void
     (event: 'restoreTodo', id: Todo['id']): void
+    // panel
     (event: 'showTodoDetails', id: Todo['id']): void
-    (event: 'sortTodo', payload: GetTodosSortOptions): void
-    (event: 'multiSelect', payload: TodoTableMultiSelectPayload): void
+    (event: 'showMultiSelect', payload: TodoTableMultiSelectPayload): void
+    // sortOptions
+    (event: 'clearSortOptions'): void
+    (event: 'updateSortOptions', newSortOptions: GetTodosSortOptions): void
 }
 
 export type TodoTableContext = {
-    columnOptions: ComputedRef<TodoColumnOptions>
-    sortOptions: ComputedRef<GetTodosSortOptions>
-    todos: ComputedRef<Todo[]>
-    selectRange: Reactive<TodoTableMultiSelectPayload['selectRange']>
-    useDeletedLine: ComputedRef<boolean>
-    tagBarClamped: ComputedRef<number>
+    // header
+    columnOptions: ComputedRef<TodoTableProps['columnOptions']>
+    sortOptions: ComputedRef<TodoTableProps['sortOptions']>
+    clearSortOptions: () => void
+    updateSortOptions: (newSortOptions: GetTodosSortOptions) => void
+    // main
+    todos: Todo[]
     tags: ComputedRef<Tag[]>
+    tagBarClamped: ComputedRef<number>
     refreshKey: Ref<number>
+    selectRange: Reactive<TodoTableMultiSelectPayload['selectRange']>
     isTodoExpired: (todo: Todo) => boolean
-    handleClearSortInfo: () => void
-    handleShowDetails: (todoId: Todo['id'], idx: number) => void
-    handleMultiSelect: (idx: number) => void
-    getProjectNameByIdFromLocal: (projectId: string) => string | undefined
-    handleDeleteBtnClk: (id: Todo['id'], isDeleted: boolean) => void
-    handleUpdateSortOptions: (payload: GetTodosSortOptions) => void
+    showTodoDetailsPanel: (todoId: Todo['id'], idx: number) => void
+    showMultiSelectPanel: (idx: number) => void
+    getProjectNameByIdFromLocal: (projectId: string) => string | void
+    deleteButtonClickHandler: (todoId: Todo['id'], isDeleted: boolean) => void
 }
 
 export type TodoTableOrderButtonProps = {
