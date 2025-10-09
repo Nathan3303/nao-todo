@@ -171,7 +171,7 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
     // @method 刷新数据
     const refreshData = async () => {
         if (!viewProps.value) return
-        const err = await todoStore.getTodos(viewProps.value.preference.getTodosOptions)
+        const err = await todoStore.regetTodos()
         if (err) {
             NueMessage.error(unwrapError(err))
             return

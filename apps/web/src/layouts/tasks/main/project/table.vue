@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watchEffect } from 'vue'
+import { ref, watchEffect, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useTasksDataStore, useTasksViewStore } from '@/stores/tasks'
@@ -49,7 +49,7 @@ watchEffect(async () => {
     error.value = ''
     // 保存清单偏好（记录在清单数据中，以便偏好更新时直接传输）
     viewProps.value.preference.getTodosOptions = {
-        limit: 10,
+        limit: 20,
         projectId: viewProps.value.id,
         ...viewProps.value.preference.getTodosOptions
     }
@@ -66,9 +66,22 @@ watchEffect(async () => {
         error.value = unwrapError(err)
         return
     }
-    // 处理成功但结果为空的情况
-    if (!todos.value || !todos.value.length) error.value = '当前暂无待办'
 })
+
+watch(
+    () => todos.value,
+    (newVal) => {
+        // 判断待办结果是否为空
+        console.log('todos', newVal)
+        if (newVal.length === 0) {
+            error.value = '当前暂无待办'
+            return
+        }
+        // 处理成功结果
+        error.value = ''
+    },
+    { deep: true, immediate: true }
+)
 </script>
 
 <template>

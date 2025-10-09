@@ -34,6 +34,7 @@ export type TodoTableContext = {
     sortOptions: ComputedRef<TodoTableProps['sortOptions']>
     clearSortOptions: () => void
     updateSortOptions: (newSortOptions: GetTodosSortOptions) => void
+    isScrolling: Ref<boolean>
     // main
     todos: Todo[]
     tags: ComputedRef<Tag[]>

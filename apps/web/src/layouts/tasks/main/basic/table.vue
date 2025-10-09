@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watchEffect } from 'vue'
+import { ref, watch, watchEffect } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useTasksDataStore, useTasksViewStore } from '@/stores/tasks'
@@ -26,6 +26,7 @@ const showTodoDetails = (id: string) => {
 
 const handleChangePerpage = (limit: number) => {
     if (!viewProps.value) return
+    page.value = 1
     viewProps.value.preference.getTodosOptions.limit = limit
 }
 
@@ -47,7 +48,7 @@ watchEffect(async () => {
     // 调用 API 请求数据
     const getOptions: GetTodosOptions = {
         page: page.value,
-        limit: 10,
+        limit: 20,
         sort: { field: 'createdAt', order: 'asc' },
         ...viewProps.value?.preference.getTodosOptions
     }
@@ -58,23 +59,36 @@ watchEffect(async () => {
         error.value = unwrapError(err)
         return
     }
-    // 处理成功但结果为空的情况
-    if (!todos.value || !todos.value.length) error.value = '当前暂无待办，放松一下吧!'
 })
+
+watch(
+    () => todos.value,
+    (newVal) => {
+        // 判断待办结果是否为空
+        console.log('todos', newVal)
+        if (newVal.length === 0) {
+            error.value = '当前暂无待办，放松一下吧!'
+            return
+        }
+        // 处理成功结果
+        error.value = ''
+    },
+    { deep: true, immediate: true }
+)
 </script>
 
 <template>
-    <loading-comp v-if="loading" />
-    <nue-empty
-        v-else-if="error || !viewProps"
-        image-size="4rem"
-        image-src="/images/coffee.webp"
-        :description="error"
-        style="height: 100%"
-    />
-    <nue-container v-else id="TasksMainTableContainer">
+    <nue-container id="TasksMainTableContainer">
         <nue-main>
-            <nue-content fill>
+            <loading-comp v-if="loading" />
+            <nue-empty
+                v-else-if="error || !viewProps"
+                image-size="4rem"
+                image-src="/images/coffee.webp"
+                :description="error"
+                style="height: 100%"
+            />
+            <nue-content v-else fill>
                 <todo-table
                     :column-options="viewProps.preference.columns"
                     :sort-options="viewProps.preference.getTodosOptions.sort"
@@ -88,16 +102,16 @@ watchEffect(async () => {
                 />
             </nue-content>
         </nue-main>
-        <nue-footer>
+        <nue-footer v-if="!error">
             <nue-div v-if="pagination" align="center" justify="space-between">
                 <nue-text color="gray" flex size="12px">
                     当前列表 {{ pagination.limit || 0 }} 项， 共计 {{ pagination.total || 0 }} 项。
                 </nue-text>
                 <pager
                     :limit="pagination.limit"
-                    :page="pagination.page"
+                    :page="page"
                     :total-pages="pagination.maxPage"
-                    :simple="responsiveFlag <= 2"
+                    :simple="responsiveFlag <= 1"
                     @per-page-change="handleChangePerpage"
                     @page-change="(p) => (page = p)"
                 />

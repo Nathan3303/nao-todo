@@ -25,7 +25,7 @@ const useTagStore = defineStore('TagStore', () => {
             return err
         }
         // 处理成功结果
-        tags.value = res
+        tags.value  = res || []
         return null
     }
 

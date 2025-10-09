@@ -1,13 +1,18 @@
 <template>
     <nue-div :gap="simple ? '8px' : '16px'" align="center" width="fit-content">
+        <nue-text v-if="!simple" size="12px">第 {{ page }} 页，共 {{ totalPages }} 页</nue-text>
         <nue-div align="center" gap="8px" width="fit-content">
-            <nue-text v-if="!simple" size="12px">每页条数</nue-text>
+            <!-- <nue-text v-if="!simple" size="12px">每页条数</nue-text> -->
             <nue-select v-model="perPage" size="small" @change="handlePerPageChange">
-                <nue-select-option v-for="i in [10, 20, 50, 100]" :key="i" :label="i" :value="i" />
+                <nue-select-option
+                    v-for="i in [20, 40, 60, 80]"
+                    :key="i"
+                    :label="i + ' 条每页'"
+                    :value="i"
+                />
             </nue-select>
             <nue-text v-if="simple" size="12px">条/页</nue-text>
         </nue-div>
-        <nue-text v-if="!simple" size="12px">第 {{ page }} 页，共 {{ totalPages }} 页。</nue-text>
         <nue-div align="center" gap="8px" width="fit-content">
             <nue-button
                 v-if="!simple"
@@ -61,7 +66,7 @@ const prevButtonDisabled = computed(() => props.page === 1)
 const nextButtonDisabled = computed(() => props.page === props.totalPages)
 const buttonThemes = computed(() => (props.simple ? 'small,icon' : 'small'))
 
-const handlePerPageChange = (value: number) => {
+const handlePerPageChange = (value: unknown) => {
     emit('perPageChange', value as number)
 }
 

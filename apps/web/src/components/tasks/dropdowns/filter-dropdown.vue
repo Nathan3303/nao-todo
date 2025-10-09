@@ -1,3 +1,129 @@
+<script setup lang="ts">
+import { ref, watch, computed } from 'vue'
+import { useTasksViewStore } from '@/stores/tasks'
+import { storeToRefs } from 'pinia'
+import { useRoute } from 'vue-router'
+import { InnerDropdown, InnerDropdownOption } from '@/components/ui/inner-dropdown'
+import { getColumnText } from '@/components/tasks/table'
+import { priorityOptions, stateOptions } from '@nao-todo/components/todo/selector/constants'
+import type { InnerDropdownOptionVO } from '@/components/ui/inner-dropdown/types'
+import type { Todo } from '@nao-todo/types'
+
+const route = useRoute()
+const tasksViewStore = useTasksViewStore()
+
+const { viewProps } = storeToRefs(tasksViewStore)
+const searchText = ref('')
+
+const isSorting = computed(() => !!viewProps.value?.preference.getTodosOptions.sort?.field)
+
+const counter = computed(() => {
+    if (!viewProps.value) return { priority: 0, state: 0 }
+    const _getOptions = viewProps.value.preference.getTodosOptions
+    const priority = _getOptions.priority?.split(',').filter((item) => item).length || 0
+    const state = _getOptions.state?.split(',').filter((item) => item).length || 0
+    return { priority, state }
+})
+
+const priorityDropdownOptions = computed<InnerDropdownOptionVO[]>(() => {
+    if (!viewProps.value) return []
+    const _getOptions = viewProps.value.preference.getTodosOptions
+    return priorityOptions.map((option) => ({
+        ...option,
+        checked: _getOptions.priority?.includes(option.value) || false
+    }))
+})
+
+const stateDropdownOptions = computed<InnerDropdownOptionVO[]>(() => {
+    if (!viewProps.value) return []
+    const _getOptions = viewProps.value.preference.getTodosOptions
+    return stateOptions.map((option) => ({
+        ...option,
+        checked: _getOptions.state?.includes(option.value) || false
+    }))
+})
+
+const sortFieldDropdownOptions = computed<InnerDropdownOptionVO[]>(() => {
+    if (!viewProps.value) return []
+    const _columnOptions = viewProps.value.preference.columns
+    const _getOptions = viewProps.value.preference.getTodosOptions
+    const _fields: InnerDropdownOptionVO[] = []
+    Object.keys(_columnOptions).forEach((key) => {
+        _fields.push({
+            icon: 'plus-circle',
+            label: getColumnText(key),
+            value: key,
+            checked: _getOptions.sort?.field === key || false
+        })
+    })
+    return _fields
+})
+
+const sortOrderDropdownOptions = computed<InnerDropdownOptionVO[]>(() => {
+    if (!viewProps.value) return []
+    const _getOptions = viewProps.value.preference.getTodosOptions
+    const isAsc = _getOptions.sort?.order === 'asc'
+    return [
+        { icon: 'arrow-up', label: '升序', value: 'asc', checked: isAsc },
+        { icon: 'arrow-down', label: '降序', value: 'desc', checked: !isAsc }
+    ]
+})
+
+const handlePriorityOrState = (isPriority: boolean, field: string) => {
+    if (!viewProps.value) return
+    const _getOptions = viewProps.value.preference.getTodosOptions
+    const opKey = isPriority ? 'priority' : 'state'
+    let target = _getOptions[opKey] ?? ''
+    const splitRes = target.split(',').filter((item) => item)
+    const idx = splitRes.indexOf(field)
+    if (idx !== -1) {
+        splitRes.splice(idx, 1)
+    } else {
+        splitRes.push(field)
+    }
+    _getOptions[opKey] = splitRes.join(',')
+    counter.value[opKey] = splitRes.length
+    const viewType = route.meta.viewType as string
+    if (!isPriority && ['kanban'].includes(viewType)) return
+}
+
+const handlePriorityDropdownExecute = (field: string) => {
+    handlePriorityOrState(true, field)
+}
+
+const handleStateDropdownExecute = (field: string) => {
+    handlePriorityOrState(false, field)
+}
+
+const handleSortFieldDropdownExecute = (field: string) => {
+    if (!viewProps.value) return
+    const _getOptions = viewProps.value.preference.getTodosOptions
+    if (field === _getOptions.sort?.field) {
+        _getOptions.sort = { field: 'createdAt', order: 'desc' }
+    } else {
+        _getOptions.sort = { field: field as keyof Todo, order: _getOptions.sort?.order || 'asc' }
+    }
+}
+
+const handleSortOrderDropdownExecute = (order: string) => {
+    if (!viewProps.value) return
+    const _getOptions = viewProps.value.preference.getTodosOptions
+    _getOptions.sort = {
+        field: _getOptions.sort?.field || 'createdAt',
+        order: order === 'desc' ? 'desc' : 'asc'
+    }
+}
+
+watch(
+    () => searchText.value,
+    (newValue) => {
+        if (!viewProps.value) return
+        const _getOptions = viewProps.value.preference.getTodosOptions
+        _getOptions.name = newValue || ''
+    }
+)
+</script>
+
 <template>
     <nue-dropdown placement="bottom-end" size="small" theme="menu" group="tasks-view-filters">
         <template #trigger="{ trigger }">
@@ -19,6 +145,7 @@
                     clearable
                     icon="search"
                     :debounce-time="360"
+                    style="width: 100%"
                 />
                 <inner-dropdown
                     @execute="handleStateDropdownExecute"
@@ -91,122 +218,6 @@
         </nue-div>
     </nue-dropdown>
 </template>
-
-<script setup lang="ts">
-import { ref, watch, computed } from 'vue'
-import { useTodoStore } from '@/stores'
-import { storeToRefs } from 'pinia'
-import { useRoute } from 'vue-router'
-import { InnerDropdown, InnerDropdownOption } from '@/components/ui/inner-dropdown'
-import { getColumnText } from '@/components/tasks'
-import { priorityOptions, stateOptions } from '@nao-todo/components/todo/selector/constants'
-import type { InnerDropdownOptionVO } from '@/components/ui/inner-dropdown/types'
-import type { Todo } from '@nao-todo/types'
-
-const route = useRoute()
-const todoStore = useTodoStore()
-
-const { getOptions, columnOptions } = storeToRefs(todoStore)
-const searchText = ref('')
-
-const isSorting = computed(() => !!getOptions.value.sort?.field)
-
-const counter = computed(() => {
-    const _go = getOptions.value
-    const priority = _go.priority?.split(',').filter((item) => item).length || 0
-    const state = _go.state?.split(',').filter((item) => item).length || 0
-    return { priority, state }
-})
-
-const priorityDropdownOptions = computed<InnerDropdownOptionVO[]>(() => {
-    return priorityOptions.map((option) => ({
-        ...option,
-        checked: getOptions.value.priority?.includes(option.value) || false
-    }))
-})
-
-const stateDropdownOptions = computed<InnerDropdownOptionVO[]>(() => {
-    return stateOptions.map((option) => ({
-        ...option,
-        checked: getOptions.value.state?.includes(option.value) || false
-    }))
-})
-
-const sortFieldDropdownOptions = computed<InnerDropdownOptionVO[]>(() => {
-    const _fields: InnerDropdownOptionVO[] = []
-    Object.keys(columnOptions.value).forEach((key) => {
-        _fields.push({
-            icon: 'plus-circle',
-            label: getColumnText(key),
-            value: key,
-            checked: getOptions.value.sort?.field === key || false
-        })
-    })
-    return _fields
-})
-
-const sortOrderDropdownOptions = computed<InnerDropdownOptionVO[]>(() => {
-    const isAsc = getOptions.value.sort?.order === 'asc'
-    return [
-        { icon: 'arrow-up', label: '升序', value: 'asc', checked: isAsc },
-        { icon: 'arrow-down', label: '降序', value: 'desc', checked: !isAsc }
-    ]
-})
-
-const handlePriorityOrState = (isPriority: boolean, field: string) => {
-    const opKey = isPriority ? 'priority' : 'state'
-    let target = getOptions.value[opKey] ?? ''
-    const splitRes = target.split(',').filter((item) => item)
-    const idx = splitRes.indexOf(field)
-    if (idx !== -1) {
-        splitRes.splice(idx, 1)
-    } else {
-        splitRes.push(field)
-    }
-    todoStore.mergeGetOptions({ [opKey]: splitRes.join(',') })
-    counter.value[opKey] = splitRes.length
-    const viewType = route.meta.viewType as string
-    if (!isPriority && ['kanban'].includes(viewType)) return
-}
-
-const handlePriorityDropdownExecute = (field: string) => {
-    handlePriorityOrState(true, field)
-}
-
-const handleStateDropdownExecute = (field: string) => {
-    handlePriorityOrState(false, field)
-}
-
-const handleSortFieldDropdownExecute = (field: string) => {
-    if (field === getOptions.value.sort?.field) {
-        todoStore.mergeGetOptions({
-            sort: { field: 'createdAt', order: 'desc' }
-        })
-    } else {
-        todoStore.mergeGetOptions({
-            sort: { field: field as keyof Todo, order: getOptions.value.sort?.order || 'asc' }
-        })
-    }
-    // todoStore.doGetTodos()
-}
-
-const handleSortOrderDropdownExecute = (order: string) => {
-    todoStore.mergeGetOptions({
-        sort: {
-            field: getOptions.value.sort?.field || 'createdAt',
-            order: order === 'desc' ? 'desc' : 'asc'
-        }
-    })
-    // todoStore.doGetTodos()
-}
-
-watch(
-    () => searchText.value,
-    (newValue) => {
-        todoStore.mergeGetOptions({ name: newValue || null })
-    }
-)
-</script>
 
 <style scoped>
 .nue-input {

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { unwrapError } from '@nao-todo/utils'
 import { requester } from './requester'
 import { NueConfirm, NueMessage } from 'nue-ui'
@@ -8,8 +8,8 @@ import type {
     Err,
     GetTodosOptions,
     Todo,
-    ResponseData,
-    UpdateTodoOptions
+    UpdateTodoOptions,
+    ResponseDataPagination
 } from '@nao-todo/types'
 import {
     createTodoHandler,
@@ -22,7 +22,13 @@ import {
 const useTodoStore = defineStore('TodoStore', () => {
     // @state 待办任务列表（应该被应用于整个视图）
     const todos = ref<Todo[]>([])
-    const pagination = ref<ResponseData['pagination']>({ total: 0, page: 1, limit: 10, maxPage: 1 })
+    const pagination = reactive<ResponseDataPagination>({
+        total: 0,
+        page: 1,
+        limit: 10,
+        maxPage: 1
+    })
+    const getTodosOptionsBk = ref<GetTodosOptions>({})
 
     // @method 进一步筛选待办任务列表
     const getTodos = async (options: GetTodosOptions): Promise<Err> => {
@@ -34,9 +40,28 @@ const useTodoStore = defineStore('TodoStore', () => {
             return err
         }
         // 处理成功结果
-        if (res) {
+        if (res && res.pagination) {
+            // todos.value.length = 0
             todos.value = res.todos || []
-            pagination.value = res.pagination
+            pagination.limit = res.pagination.limit
+            pagination.total = res.pagination.total
+            pagination.page = res.pagination.page
+            pagination.maxPage = res.pagination.maxPage
+        }
+        // 备份获取选项
+        getTodosOptionsBk.value = { ...options }
+        return null
+    }
+
+    // @method 重新获取待办任务列表
+    const regetTodos = async (): Promise<Err> => {
+        console.log(1);
+        // 调用 getTodos
+        const err = await getTodos(getTodosOptionsBk.value)
+        // 处理失败结果
+        if (err) {
+            console.error(unwrapError(err))
+            return err
         }
         return null
     }
@@ -57,7 +82,10 @@ const useTodoStore = defineStore('TodoStore', () => {
             return err
         }
         // 处理成功结果
-        todos.value.push(res)
+        if (todos.value.length < pagination.limit) {
+            todos.value.push(res)
+            // console.log('todos', todos.value)
+        }
         return null
     }
 
@@ -206,8 +234,9 @@ const useTodoStore = defineStore('TodoStore', () => {
         // restoreTodo,
         // deleteTodoPermanently,
         deleteTodoWithConfirm,
-        restoreTodoWithConfirm
+        restoreTodoWithConfirm,
         // deleteTodoPermanentlyWithConfirm
+        regetTodos
     }
 })
 

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { onMounted, onBeforeUnmount, reactive, ref } from 'vue'
 import { pingServerByXHR } from '@/stores/global'
 import { NueMessage } from 'nue-ui'
-import { debounce } from '@nao-todo/utils'
+import { useMinuteTask } from '@nao-todo/hooks'
 
 defineOptions({ name: 'OfflineScreen' })
 
@@ -15,64 +15,64 @@ const emptyAttrs = reactive({
 
 // @method 检测服务器连接
 const pingServer = async () => {
-    console.log(1)
     loading.value = true
     const ok = await pingServerByXHR()
     loading.value = false
     if (ok) {
         visible.value = false
-        NueMessage.success('成功重新连接至服务器')
     } else {
         visible.value = true
         NueMessage.error('连接服务器失败')
         emptyAttrs.image = '/images/disconnect.webp'
         emptyAttrs.description = '服务器连接失败，请检查网络设置或稍后再试'
+        stop()
     }
     return ok
 }
 
-// @methods 重试 / 重试节流
-const debounceRetry = debounce(() => pingServer(), 360)
-
-// @block 检测浏览器是否支持 navigator.connection - 用于检测当前网络状态
-if ('connection' in navigator) {
-    const connection =
-        navigator.connection ||
-        (navigator as any).mozConnection ||
-        (navigator as any).webkitConnection
-
-    if (connection) {
-        connection.addEventListener('change', debounceRetry)
-    } else {
-        console.warn('[OfflineScreen] Error:', 'navigator.connection API 不可用')
-    }
+// @method 重试
+const retry = async () => {
+    const ok = await pingServer()
+    if (!ok) return
+    visible.value = false
+    NueMessage.success('已连接服务器')
+    run()
 }
+
+// @hook useMinuteTask
+const { run, stop } = useMinuteTask(pingServer)
+
+// onMounted
+onMounted(() => run())
+onBeforeUnmount(() => stop())
 </script>
 
 <template>
-    <nue-div
-        v-if="visible"
-        align="center"
-        justify="center"
-        height="100vh"
-        width="100vw"
-        id="OfflineScreen"
-    >
-        <nue-empty
-            :image-src="emptyAttrs.image"
-            image-size="4rem"
-            :description="emptyAttrs.description"
+    <transition name="fade" mode="out-in" appear>
+        <nue-div
+            v-if="visible"
+            align="center"
+            justify="center"
+            height="100vh"
+            width="100vw"
+            id="OfflineScreen"
         >
-            <nue-button
-                theme="small,primary"
-                :loading="loading"
-                @click="debounceRetry"
-                style="margin: 1rem"
+            <nue-empty
+                :image-src="emptyAttrs.image"
+                image-size="4rem"
+                :description="emptyAttrs.description"
             >
-                尝试重连
-            </nue-button>
-        </nue-empty>
-    </nue-div>
+                <nue-button
+                    theme="small,primary"
+                    :loading="loading"
+                    @click="retry"
+                    style="margin: 1rem"
+                >
+                    尝试重连
+                </nue-button>
+            </nue-empty>
+        </nue-div>
+    </transition>
 </template>
 
 <style scoped>
@@ -83,5 +83,10 @@ if ('connection' in navigator) {
     background-color: rgba(200, 200, 200, 0.88);
     z-index: 100;
     opacity: 1;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.5s ease;
 }
 </style>

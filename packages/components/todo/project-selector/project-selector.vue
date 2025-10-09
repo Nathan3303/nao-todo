@@ -37,7 +37,10 @@ const handleSelect = async (projectId?: Project['id'], projectTitle?: Project['n
 </script>
 
 <template>
-    <nue-dropdown :placement="placement ?? 'bottom-end'" theme="project-selector">
+    <nue-dropdown
+        :placement="(placement as never) ?? 'bottom-end'"
+        theme="project-selector"
+    >
         <template #trigger="{ trigger }">
             <nue-button size="small" :icon="buttonIconName" @click="trigger">
                 {{ buttonText }}

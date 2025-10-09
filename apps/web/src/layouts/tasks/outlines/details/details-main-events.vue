@@ -51,7 +51,7 @@ watchEffect(() => {
             return
         }
         error.value = ''
-    })
+    }, 320)
 })
 </script>
 

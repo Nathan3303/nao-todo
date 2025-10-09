@@ -51,8 +51,6 @@ const viewPropsForAll: TasksMainViewProps = {
     preference: {
         viewType: 'table',
         getTodosOptions: {
-            isDeleted: false,
-            isGivenUp: false,
             sort: { field: 'createdAt', order: 'desc' }
         },
         columns: { ...defaultColumnOptions }
@@ -69,9 +67,7 @@ const viewPropsForToday: TasksMainViewProps = {
     preference: {
         viewType: 'table',
         getTodosOptions: {
-            isDeleted: false,
             relativeDate: 'today',
-            isGivenUp: false,
             sort: { field: 'createdAt', order: 'desc' }
         },
         columns: { ...defaultColumnOptions }
@@ -91,9 +87,7 @@ const viewPropsForTomorrow: TasksMainViewProps = {
     preference: {
         viewType: 'table',
         getTodosOptions: {
-            isDeleted: false,
             relativeDate: 'tomorrow',
-            isGivenUp: false,
             sort: { field: 'createdAt', order: 'desc' }
         },
         columns: { ...defaultColumnOptions }
@@ -113,9 +107,7 @@ const viewPropsForWeek: TasksMainViewProps = {
     preference: {
         viewType: 'table',
         getTodosOptions: {
-            isDeleted: false,
             relativeDate: 'week',
-            isGivenUp: false,
             sort: { field: 'createdAt', order: 'desc' }
         },
         columns: { ...defaultColumnOptions }
@@ -135,8 +127,7 @@ const viewPropsForInbox: TasksMainViewProps = {
     preference: {
         viewType: 'table',
         getTodosOptions: {
-            isDeleted: false,
-            isGivenUp: false,
+            projectId: 'inbox',
             sort: { field: 'createdAt', order: 'desc' }
         },
         columns: { ...defaultColumnOptions }
@@ -152,7 +143,10 @@ const viewPropsForFavorite: TasksMainViewProps = {
     description: '',
     preference: {
         viewType: 'table',
-        getTodosOptions: { isFavorited: true, sort: { field: 'createdAt', order: 'desc' } },
+        getTodosOptions: {
+            isFavorited: true,
+            sort: { field: 'createdAt', order: 'desc' }
+        },
         columns: { ...defaultColumnOptions }
     },
     createTodoOptions: { isFavorited: true }
@@ -163,12 +157,12 @@ const viewPropsForGivenUp: TasksMainViewProps = {
     category: 'basic',
     icon: 'clear',
     name: '已放弃的待办',
-    description: '',
+    description:
+        '下方视图所罗列出来的是被您放弃的待办任务，您可以通过点击任务名称进入任务详情页面以恢复该任务。',
     preference: {
         viewType: 'table',
         getTodosOptions: {
             isGivenUp: true,
-            isDeleted: false,
             sort: { field: 'createdAt', order: 'desc' }
         },
         columns: { ...defaultColumnOptions }
@@ -181,10 +175,14 @@ const viewPropsForRecycle: TasksMainViewProps = {
     category: 'basic',
     icon: 'delete',
     name: '垃圾桶',
-    description: '',
+    description:
+        '下方视图所罗列出来的是被您删除的待办任务，您可以通过点击任务名称进入任务详情页面以恢复该任务。需要注意的是垃圾桶中的任务将会在 30 天后彻底删除。',
     preference: {
         viewType: 'table',
-        getTodosOptions: { isDeleted: true, sort: { field: 'createdAt', order: 'desc' } },
+        getTodosOptions: {
+            isDeleted: true,
+            sort: { field: 'createdAt', order: 'desc' }
+        },
         columns: { ...defaultColumnOptions }
     },
     createTodoOptions: {}

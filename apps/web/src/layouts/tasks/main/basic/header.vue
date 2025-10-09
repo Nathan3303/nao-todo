@@ -2,6 +2,7 @@
 import { useTasksViewStore, useTasksDialogStore } from '@/stores/tasks'
 import { storeToRefs } from 'pinia'
 import TasksMainBasicOperationsDropdown from './operations-dropdown.vue'
+import TasksMainFilterDropdown from '@/components/tasks/dropdowns/filter-dropdown.vue'
 
 defineOptions({ name: 'TasksMainBasicViewHeader' })
 
@@ -33,12 +34,26 @@ const openTodoCreator = () => {
                 >
                     <nue-button icon="history" theme="icon,ghost" />
                 </nue-tooltip>
-                <nue-tooltip content="新增待办" size="small" @click="openTodoCreator">
+                <nue-tooltip
+                    v-if="!['favorite', 'recycle', 'givenup'].includes(viewProps.id)"
+                    content="新增待办"
+                    size="small"
+                    @click="openTodoCreator"
+                >
                     <nue-button icon="plus" theme="icon,ghost" />
                 </nue-tooltip>
+                <tasks-main-filter-dropdown />
                 <tasks-main-basic-operations-dropdown />
             </nue-div>
         </nue-div>
+        <nue-text
+            v-if="viewProps.description"
+            :clamped="2"
+            color="var(--nue-primary-color-500)"
+            size="var(--nue-text-sm)"
+        >
+            {{ viewProps.description }}
+        </nue-text>
     </nue-div>
 </template>
 
