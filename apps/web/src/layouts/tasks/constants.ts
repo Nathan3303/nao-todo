@@ -3,21 +3,21 @@ import type { Todo, TodoColumnOptions } from '@nao-todo/types'
 import type { TasksMainViewProps } from '@/layouts/tasks/types'
 
 const defaultColumnOptions: TodoColumnOptions = {
-    createdAt: false,
-    updatedAt: false,
-    deletedAt: false,
-    project: false,
+    createdAt: true,
+    updatedAt: true,
+    // deletedAt: false,
+    project: true,
     description: true,
     state: true,
     priority: true,
     tags: true,
     startAt: false,
-    endAt: true,
-    isDeleted: false,
-    isArchived: false,
-    archivedAt: false,
-    isFavorited: false,
-    isGivenUp: false
+    endAt: true
+    // isDeleted: false,
+    // isArchived: false,
+    // archivedAt: false,
+    // isFavorited: false,
+    // isGivenUp: false
 }
 
 const columnTexts: { [key in keyof Todo]: string } = {
@@ -50,12 +50,11 @@ const viewPropsForAll: TasksMainViewProps = {
     description: '',
     preference: {
         viewType: 'table',
-        getTodosOptions: {
-            sort: { field: 'createdAt', order: 'desc' }
-        },
+        getTodosOptions: {},
         columns: { ...defaultColumnOptions }
     },
-    createTodoOptions: {}
+    createTodoOptions: {},
+    readyState: 1
 }
 
 const viewPropsForToday: TasksMainViewProps = {
@@ -66,16 +65,14 @@ const viewPropsForToday: TasksMainViewProps = {
     description: '',
     preference: {
         viewType: 'table',
-        getTodosOptions: {
-            relativeDate: 'today',
-            sort: { field: 'createdAt', order: 'desc' }
-        },
+        getTodosOptions: { relativeDate: 'today' },
         columns: { ...defaultColumnOptions }
     },
     createTodoOptions: {
         startAt: useMoment().startOf('day').toISOString(true),
         endAt: useMoment().endOf('day').toISOString(true)
-    }
+    },
+    readyState: 1
 }
 
 const viewPropsForTomorrow: TasksMainViewProps = {
@@ -86,16 +83,14 @@ const viewPropsForTomorrow: TasksMainViewProps = {
     description: '',
     preference: {
         viewType: 'table',
-        getTodosOptions: {
-            relativeDate: 'tomorrow',
-            sort: { field: 'createdAt', order: 'desc' }
-        },
+        getTodosOptions: { relativeDate: 'tomorrow' },
         columns: { ...defaultColumnOptions }
     },
     createTodoOptions: {
         startAt: useMoment().add(1, 'day').startOf('day').toISOString(true),
         endAt: useMoment().add(1, 'day').endOf('day').toISOString(true)
-    }
+    },
+    readyState: 1
 }
 
 const viewPropsForWeek: TasksMainViewProps = {
@@ -106,16 +101,14 @@ const viewPropsForWeek: TasksMainViewProps = {
     description: '',
     preference: {
         viewType: 'table',
-        getTodosOptions: {
-            relativeDate: 'week',
-            sort: { field: 'createdAt', order: 'desc' }
-        },
+        getTodosOptions: { relativeDate: 'week' },
         columns: { ...defaultColumnOptions }
     },
     createTodoOptions: {
         startAt: useMoment().startOf('day').toISOString(true),
         endAt: useMoment().endOf('isoWeek').toISOString(true)
-    }
+    },
+    readyState: 1
 }
 
 const viewPropsForInbox: TasksMainViewProps = {
@@ -126,13 +119,11 @@ const viewPropsForInbox: TasksMainViewProps = {
     description: '',
     preference: {
         viewType: 'table',
-        getTodosOptions: {
-            projectId: 'inbox',
-            sort: { field: 'createdAt', order: 'desc' }
-        },
+        getTodosOptions: { projectId: 'inbox' },
         columns: { ...defaultColumnOptions }
     },
-    createTodoOptions: {}
+    createTodoOptions: {},
+    readyState: 1
 }
 
 const viewPropsForFavorite: TasksMainViewProps = {
@@ -143,13 +134,11 @@ const viewPropsForFavorite: TasksMainViewProps = {
     description: '',
     preference: {
         viewType: 'table',
-        getTodosOptions: {
-            isFavorited: true,
-            sort: { field: 'createdAt', order: 'desc' }
-        },
+        getTodosOptions: { isFavorited: true },
         columns: { ...defaultColumnOptions }
     },
-    createTodoOptions: { isFavorited: true }
+    createTodoOptions: { isFavorited: true },
+    readyState: 1
 }
 
 const viewPropsForGivenUp: TasksMainViewProps = {
@@ -161,13 +150,11 @@ const viewPropsForGivenUp: TasksMainViewProps = {
         '下方视图所罗列出来的是被您放弃的待办任务，您可以通过点击任务名称进入任务详情页面以恢复该任务。',
     preference: {
         viewType: 'table',
-        getTodosOptions: {
-            isGivenUp: true,
-            sort: { field: 'createdAt', order: 'desc' }
-        },
+        getTodosOptions: { isGivenUp: true },
         columns: { ...defaultColumnOptions }
     },
-    createTodoOptions: {}
+    createTodoOptions: {},
+    readyState: 1
 }
 
 const viewPropsForRecycle: TasksMainViewProps = {
@@ -179,13 +166,11 @@ const viewPropsForRecycle: TasksMainViewProps = {
         '下方视图所罗列出来的是被您删除的待办任务，您可以通过点击任务名称进入任务详情页面以恢复该任务。需要注意的是垃圾桶中的任务将会在 30 天后彻底删除。',
     preference: {
         viewType: 'table',
-        getTodosOptions: {
-            isDeleted: true,
-            sort: { field: 'createdAt', order: 'desc' }
-        },
-        columns: { ...defaultColumnOptions }
+        getTodosOptions: { isDeleted: true },
+        columns: { ...defaultColumnOptions, deletedAt: true }
     },
-    createTodoOptions: {}
+    createTodoOptions: {},
+    readyState: 1
 }
 
 const basicViewProps: TasksMainViewProps[] = [

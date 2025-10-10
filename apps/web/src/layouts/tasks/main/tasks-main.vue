@@ -1,40 +1,63 @@
 <script setup lang="ts">
-import { type Component, shallowRef, watchEffect } from 'vue'
+import { watch, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTasksViewStore } from '@/stores/tasks'
 import { BasicViewTable, BasicViewKanban } from './basic'
 import { ProjectViewTable, ProjectViewKanban } from './project'
 import { TagViewTable, TagViewKanban } from './tag'
 
-defineOptions({ name: 'TasksMain' })
+defineOptions({
+    name: 'TasksMain',
+    components: {
+        'basic-table': BasicViewTable,
+        'basic-kanban': BasicViewKanban,
+        'project-table': ProjectViewTable,
+        'project-kanban': ProjectViewKanban,
+        'tag-table': TagViewTable,
+        'tag-kanban': TagViewKanban
+    }
+})
 
 const tasksViewStore = useTasksViewStore()
 
 const { viewProps } = storeToRefs(tasksViewStore)
-const comp = shallowRef<Component>()
-const comps = {
-    basic: { table: BasicViewTable, kanban: BasicViewKanban },
-    project: { table: ProjectViewTable, kanban: ProjectViewKanban },
-    tag: { table: TagViewTable, kanban: TagViewKanban }
-}
+const componentIs = ref<string | null>(null)
 
-watchEffect(() => {
-    if (!viewProps.value) return
-    const category = viewProps.value.category
-    const preference = viewProps.value.preference
-    if (!category || !preference) return
-    comp.value =
-        comps[category as keyof typeof comps][
-            preference.viewType as keyof (typeof comps)[keyof typeof comps]
-        ]
-})
+watch(
+    () => viewProps.value?.readyState,
+    (newReadyState) => {
+        // 判断 newReadyState 是否为 2
+        if (newReadyState !== 2) return
+        // 判断 viewProps 是否存在
+        if (!viewProps.value) return
+        // 加载组件
+        componentIs.value = viewProps.value.category + '-' + viewProps.value.preference.viewType
+        // 设置 viewProps.readyState
+        viewProps.value.readyState = 3
+        // console.log('[TasksMain] Component changed:', componentIs.value, viewProps.value.readyState)
+    },
+    { immediate: true }
+)
+
+watch(
+    () => viewProps.value?.preference.viewType,
+    (newViewType) => {
+        // 判断 viewProps 是否存在
+        if (!viewProps.value) return
+        // 加载组件
+        componentIs.value = viewProps.value.category + '-' + newViewType
+        // 设置 viewProps.readyState
+        viewProps.value.readyState = 3
+        // console.log('[TasksMain] Component changed:', componentIs.value, viewProps.value.readyState)
+    }
+)
 </script>
 
 <template>
-    <nue-container v-if="comp && viewProps" id="TasksMainContainer">
+    <nue-container v-if="viewProps" id="TasksMainContainer">
         <nue-main>
             <nue-content fill style="overflow: hidden">
-                <component :is="comp" />
+                <component :is="componentIs" />
             </nue-content>
         </nue-main>
     </nue-container>

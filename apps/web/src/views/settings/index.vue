@@ -4,7 +4,7 @@
             <nue-aside>
                 <nue-link
                     v-for="(link, idx) in routeLinks"
-                    :icon="link.icon"
+                    :icon="(link.icon as never)"
                     :key="idx"
                     :route="link.route"
                     theme="route"

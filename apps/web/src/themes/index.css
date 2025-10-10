@@ -118,7 +118,7 @@ html.nue-html {
 }
 
 .nue-container.nue-container--in-dialog {
-    gap: 0.5rem;
+    gap: 1rem;
 
     > .nue-header,
     > .nue-main,

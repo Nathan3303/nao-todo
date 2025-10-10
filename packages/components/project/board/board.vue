@@ -1,5 +1,5 @@
 <template>
-    <div class="project-board-wrapper">
+    <div class="project-board-wrapper" style="height: 100%">
         <loading v-if="loadingState" />
         <template v-else-if="projects && projects.length">
             <div class="project-board">
@@ -10,12 +10,6 @@
                     :allow-route="allowRoute"
                 >
                     <template #ops>
-<!--                        <project-archive-button-->
-<!--                            v-if="!project.isDeleted"-->
-<!--                            :is-archived="project.isArchived"-->
-<!--                            @archive="emit('archiveProject', project.id)"-->
-<!--                            @unarchive="emit('unarchiveProject', project.id)"-->
-<!--                        />-->
                         <project-delete-button
                             :is-deleted="project.isDeleted"
                             @delete="emit('deleteProject', project.id)"
@@ -37,17 +31,12 @@
                 </project-card>
             </div>
         </template>
-        <nue-empty v-else image-size="6rem" fill />
+        <nue-empty v-else image-size="6rem" style="height: 100%" />
     </div>
 </template>
 
 <script setup lang="ts">
-import {
-    Loading,
-    ProjectArchiveButton,
-    ProjectCard,
-    ProjectDeleteButton
-} from '@nao-todo/components'
+import { Loading, ProjectCard, ProjectDeleteButton } from '@nao-todo/components'
 import type { Project } from '@nao-todo/types'
 
 defineOptions({ name: 'ProjectBoard' })

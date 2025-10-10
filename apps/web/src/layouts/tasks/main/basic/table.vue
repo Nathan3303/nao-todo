@@ -1,80 +1,15 @@
 <script setup lang="ts">
-import { ref, watch, watchEffect } from 'vue'
-import { storeToRefs } from 'pinia'
-import { useRouter } from 'vue-router'
-import { useTasksDataStore, useTasksViewStore } from '@/stores/tasks'
+import useTasksMainBasicStore from './use-tasks-main-basic-store'
 import { TodoTable } from '@/components/tasks/table'
 import { Loading as LoadingComp, Pager } from '@nao-todo/components'
-import { unwrapError } from '@nao-todo/utils'
-import type { GetTodosOptions, GetTodosSortOptions } from '@nao-todo/types'
+import { storeToRefs } from 'pinia'
 
 defineOptions({ name: 'TasksMainBasicViewTable' })
 
-const tasksDataStore = useTasksDataStore()
-const tasksViewStore = useTasksViewStore()
-const router = useRouter()
+const tasksMainBasicStore = useTasksMainBasicStore()
 
-const { viewProps, responsiveFlag } = storeToRefs(tasksViewStore)
-const { todos, pagination, tags } = storeToRefs(tasksDataStore)
-const page = ref<number>(1)
-const loading = ref<boolean>(false)
-const error = ref<string>('')
-
-const showTodoDetails = (id: string) => {
-    router.push({ name: 'tasks-basic', params: { todoId: id as string } })
-}
-
-const handleChangePerpage = (limit: number) => {
-    if (!viewProps.value) return
-    page.value = 1
-    viewProps.value.preference.getTodosOptions.limit = limit
-}
-
-const handleUpdateSortOptions = (newSortOptions: GetTodosSortOptions | null) => {
-    if (!viewProps.value) return
-    if (newSortOptions === null) {
-        viewProps.value.preference.getTodosOptions.sort = void 0
-        return
-    }
-    viewProps.value.preference.getTodosOptions.sort = newSortOptions
-}
-
-watchEffect(async () => {
-    // 判断 viewProps 是否存在
-    if (!viewProps.value) return
-    // 重置加载状态
-    loading.value = true
-    error.value = ''
-    // 调用 API 请求数据
-    const getOptions: GetTodosOptions = {
-        page: page.value,
-        limit: 20,
-        sort: { field: 'createdAt', order: 'asc' },
-        ...viewProps.value?.preference.getTodosOptions
-    }
-    const err = await tasksDataStore.getTodos(getOptions)
-    loading.value = false
-    // 处理失败结果
-    if (err) {
-        error.value = unwrapError(err)
-        return
-    }
-})
-
-watch(
-    () => todos.value,
-    (newVal) => {
-        // 判断待办结果是否为空
-        console.log('todos', newVal)
-        if (newVal.length === 0) {
-            error.value = '当前暂无待办，放松一下吧!'
-            return
-        }
-        // 处理成功结果
-        error.value = ''
-    },
-    { deep: true, immediate: true }
-)
+const { responsiveFlag, todos, pagination, tags, loading, error, page, viewProps } =
+    storeToRefs(tasksMainBasicStore)
 </script>
 
 <template>
@@ -94,11 +29,11 @@ watch(
                     :sort-options="viewProps.preference.getTodosOptions.sort"
                     :tags="tags"
                     :todos="todos"
-                    @show-todo-details="showTodoDetails"
-                    @clear-sort-options="() => handleUpdateSortOptions(null)"
-                    @update-sort-options="handleUpdateSortOptions"
-                    @delete-todo="(id) => tasksDataStore.deleteTodo(id)"
-                    @restore-todo="(id) => tasksDataStore.restoreTodo(id)"
+                    @show-todo-details="tasksMainBasicStore.showTodoDetails"
+                    @clear-sort-options="tasksMainBasicStore.handleClearSortOptions"
+                    @update-sort-options="tasksMainBasicStore.handleUpdateSortOptions"
+                    @delete-todo="(id) => tasksMainBasicStore.deleteTodo(id)"
+                    @restore-todo="(id) => tasksMainBasicStore.restoreTodo(id)"
                 />
             </nue-content>
         </nue-main>
@@ -112,7 +47,7 @@ watch(
                     :page="page"
                     :total-pages="pagination.maxPage"
                     :simple="responsiveFlag <= 1"
-                    @per-page-change="handleChangePerpage"
+                    @per-page-change="tasksMainBasicStore.handleUpdatePerPage"
                     @page-change="(p) => (page = p)"
                 />
             </nue-div>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useTasksViewStore, useTasksDataStore } from '@/stores/tasks'
+import { useTasksViewStore } from '@/stores/tasks'
 import { TasksOperationsDropdown, TasksDropdownDivBlock } from '@/components/tasks/dropdowns'
 import {
     InnerDropdown,
@@ -9,14 +9,16 @@ import {
     type InnerDropdownOptionVO
 } from '@/components/ui/inner-dropdown'
 import type { TodoColumnOptions } from '@nao-todo/types'
+import useTasksMainProjectStore from '../use-tasks-main-project-store'
 import { getColumnText } from '@/components/tasks/table/utils'
 
 defineOptions({ name: 'TasksMainProjectOperationsDropdown' })
 
 const tasksViewStore = useTasksViewStore()
-const tasksDataStore = useTasksDataStore()
+const tasksMainProjectStore = useTasksMainProjectStore()
 
 const { viewProps } = storeToRefs(tasksViewStore)
+const { allowReload, loading, isHideCompletedAlready } = storeToRefs(tasksMainProjectStore)
 const dropdownRef = ref<InstanceType<typeof TasksOperationsDropdown>>()
 
 // @computed 列选项转下拉列表项
@@ -45,35 +47,55 @@ const sortFieldDropdownOptions = computed<{
 // 注册 Dropdown 执行函数
 onMounted(() => {
     if (!dropdownRef.value) return
-    dropdownRef.value.register('switch-view-to-table', () => tasksViewStore.switchView('table'))
-    dropdownRef.value.register('switch-view-to-kanban', () => tasksViewStore.switchView('kanban'))
-    dropdownRef.value.register('switch-view-to-list', () => tasksViewStore.switchView('list'))
-    dropdownRef.value.register('refresh-data', tasksViewStore.refreshData)
-    dropdownRef.value.register('hide-completed', tasksViewStore.hideCompleted)
-    dropdownRef.value.register('update-preference', tasksViewStore.updatePreference)
-    dropdownRef.value.register('delete', () => tasksDataStore.deleteProject(viewProps.value!.id))
+    dropdownRef.value.register('switch-view-to-table', tasksMainProjectStore.handleSwitchToTable)
+    dropdownRef.value.register('switch-view-to-kanban', tasksMainProjectStore.handleSwitchToKanban)
+    dropdownRef.value.register('switch-view-to-list', tasksMainProjectStore.handleSwitchToList)
+    dropdownRef.value.register('refresh-data', tasksMainProjectStore.handleRefreshData)
+    dropdownRef.value.register('hide-completed', tasksMainProjectStore.handleHideCompleted)
+    dropdownRef.value.register('update-preference', tasksMainProjectStore.handleUpdatePreference)
+    dropdownRef.value.register('delete', tasksMainProjectStore.handleDelete)
 })
 </script>
 
 <template>
     <tasks-operations-dropdown v-if="viewProps" ref="dropdownRef">
         <tasks-dropdown-div-block title="视图切换">
-            <nue-div gap="0.25rem" wrap="nowrap">
-                <li data-executeid="switch-view-to-table">
-                    <nue-icon v-if="viewProps.preference.viewType === 'table'" name="check" />表格
-                </li>
-                <li data-executeid="switch-view-to-kanban">
-                    <nue-icon v-if="viewProps.preference.viewType === 'kanban'" name="check" />看板
-                </li>
-                <li data-executeid="switch-view-to-list">
-                    <nue-icon v-if="viewProps.preference.viewType === 'list'" name="check" />列表
-                </li>
-            </nue-div>
+            <inner-dropdown-option
+                icon="theme"
+                title="表格视图"
+                execute-id="switch-view-to-table"
+                :checked="viewProps.preference.viewType === 'table'"
+                :disabled="loading"
+            />
+            <inner-dropdown-option
+                icon="theme"
+                title="看板视图"
+                execute-id="switch-view-to-kanban"
+                :checked="viewProps.preference.viewType === 'kanban'"
+                :disabled="loading"
+            />
+            <inner-dropdown-option
+                icon="theme"
+                title="列表视图"
+                execute-id="switch-view-to-list"
+                :checked="viewProps.preference.viewType === 'list'"
+                :disabled="loading"
+            />
         </tasks-dropdown-div-block>
         <nue-divider />
         <tasks-dropdown-div-block title="视图操作">
-            <li data-executeid="refresh-data"><nue-icon name="refresh" />重新获取数据</li>
-            <li data-executeid="hide-completed"><nue-icon name="eye-close" />隐藏已完成</li>
+            <inner-dropdown-option
+                icon="refresh"
+                title="重新获取数据"
+                execute-id="refresh-data"
+                :disabled="!allowReload"
+            />
+            <inner-dropdown-option
+                icon="eye-close"
+                title="隐藏已完成"
+                execute-id="hide-completed"
+                :checked="isHideCompletedAlready"
+            />
             <inner-dropdown
                 @execute="tasksViewStore.updateColumns"
                 title="显示与隐藏列"
@@ -90,12 +112,21 @@ onMounted(() => {
                     :checked="option.checked"
                 />
             </inner-dropdown>
-            <li data-executeid="update-preference"><nue-icon name="picture" />保存视图偏好</li>
+            <inner-dropdown-option
+                icon="picture"
+                title="保存视图偏好"
+                execute-id="update-preference"
+            />
         </tasks-dropdown-div-block>
         <nue-divider />
         <tasks-dropdown-div-block title="清单操作">
             <!-- <li data-executeid="archive"><nue-icon name="archive" />归档清单</li> -->
-            <li data-executeid="delete" style="color: red"><nue-icon name="delete" />删除清单</li>
+            <inner-dropdown-option
+                style="color: red"
+                icon="delete"
+                title="删除清单"
+                execute-id="delete"
+            />
         </tasks-dropdown-div-block>
     </tasks-operations-dropdown>
 </template>

@@ -71,12 +71,12 @@ const useTasksDataStore = defineStore('TasksDataStore', () => {
 
     // @returns
     return {
-        projects: projects.value,
-        tags: tags.value,
+        projects: projects,
+        tags: tags,
         todos,
-        pagination: pagination.value,
-        events: events.value,
-        comments: comments.value,
+        pagination: pagination,
+        events: events,
+        comments: comments,
         projectSmartListData,
         tagSmartListData,
         getProjectsAndTags,

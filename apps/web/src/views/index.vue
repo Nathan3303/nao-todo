@@ -2,7 +2,7 @@
 import { storeToRefs } from 'pinia'
 import { useViewStore } from '@/stores'
 import { useUserStoreV2 } from '@/stores/global'
-import { NaoRouterLink, OfflineScreen } from '@/components/ui'
+import { NaoRouterLink } from '@/components/ui'
 import { NueContainer } from 'nue-ui'
 
 const userStore = useUserStoreV2()
@@ -23,16 +23,22 @@ const routeLinks = [
 </script>
 
 <template>
-    <offline-screen />
+    <!-- <offline-screen /> -->
     <nue-container id="AppContainer">
         <nue-main>
             <nue-aside>
                 <nue-div vertical align="center" gap="2rem">
-                    <nue-avatar
-                        :src="user?.avatar"
-                        style="cursor: pointer"
-                        @click="$router.push('/settings/profile')"
-                    />
+                    <nue-tooltip
+                        placement="right-center"
+                        size="small"
+                        :content="`你好👋，${user?.nickname}！`"
+                    >
+                        <nue-avatar
+                            :src="user?.avatar"
+                            style="cursor: pointer"
+                            @click="$router.push('/settings/profile')"
+                        />
+                    </nue-tooltip>
                     <nue-div vertical align="center" gap="1.5rem">
                         <nue-tooltip
                             v-for="(rl, idx) in routeLinks"
@@ -49,7 +55,6 @@ const routeLinks = [
             <nue-content fill style="overflow: hidden">
                 <suspense>
                     <router-view />
-                    <template #fallback> Loading ... </template>
                 </suspense>
             </nue-content>
         </nue-main>

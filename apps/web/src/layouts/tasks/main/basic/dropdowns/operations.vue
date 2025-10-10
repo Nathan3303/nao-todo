@@ -8,14 +8,17 @@ import {
     InnerDropdownOption,
     type InnerDropdownOptionVO
 } from '@/components/ui/inner-dropdown'
-import type { TodoColumnOptions } from '@nao-todo/types'
 import { getColumnText } from '@/components/tasks/table/utils'
+import useTasksMainBasicStore from '../use-tasks-main-basic-store'
+import type { TodoColumnOptions } from '@nao-todo/types'
 
 defineOptions({ name: 'TasksMainBasicOperationsDropdown' })
 
+const tasksMainBasicStore = useTasksMainBasicStore()
 const tasksViewStore = useTasksViewStore()
 
 const { viewProps } = storeToRefs(tasksViewStore)
+const { allowReload, loading, isHideCompletedAlready } = storeToRefs(tasksMainBasicStore)
 const dropdownRef = ref<InstanceType<typeof TasksOperationsDropdown>>()
 
 // @computed 列选项转下拉列表项
@@ -44,39 +47,58 @@ const sortFieldDropdownOptions = computed<{
 // 注册 Dropdown 执行函数
 onMounted(() => {
     if (!dropdownRef.value) return
-    dropdownRef.value.register('switch-view-to-table', () => tasksViewStore.switchView('table'))
-    dropdownRef.value.register('switch-view-to-kanban', () => tasksViewStore.switchView('kanban'))
-    dropdownRef.value.register('switch-view-to-list', () => tasksViewStore.switchView('list'))
-    dropdownRef.value.register('refresh-data', tasksViewStore.refreshData)
-    dropdownRef.value.register('hide-completed', tasksViewStore.hideCompleted)
+    dropdownRef.value.register('switch-view-to-table', tasksMainBasicStore.handleSwitchToTable)
+    dropdownRef.value.register('switch-view-to-kanban', tasksMainBasicStore.handleSwitchToKanban)
+    dropdownRef.value.register('switch-view-to-list', tasksMainBasicStore.handleSwitchToList)
+    dropdownRef.value.register('refresh-data', tasksMainBasicStore.handleRefreshData)
+    dropdownRef.value.register('hide-completed', tasksMainBasicStore.handleHideCompleted)
 })
 </script>
 
 <template>
     <tasks-operations-dropdown v-if="viewProps" ref="dropdownRef">
         <tasks-dropdown-div-block title="视图切换">
-            <nue-div gap="0.25rem" wrap="nowrap">
-                <li data-executeid="switch-view-to-table">
-                    <nue-icon v-if="viewProps.preference.viewType === 'table'" name="check" />表格
-                </li>
-                <li data-executeid="switch-view-to-kanban">
-                    <nue-icon v-if="viewProps.preference.viewType === 'kanban'" name="check" />看板
-                </li>
-                <li data-executeid="switch-view-to-list">
-                    <nue-icon v-if="viewProps.preference.viewType === 'list'" name="check" />列表
-                </li>
-            </nue-div>
+            <inner-dropdown-option
+                icon="theme"
+                title="表格视图"
+                execute-id="switch-view-to-table"
+                :checked="viewProps.preference.viewType === 'table'"
+                :disabled="loading"
+            />
+            <inner-dropdown-option
+                icon="theme"
+                title="看板视图"
+                execute-id="switch-view-to-kanban"
+                :checked="viewProps.preference.viewType === 'kanban'"
+                :disabled="loading"
+            />
+            <inner-dropdown-option
+                icon="theme"
+                title="列表视图"
+                execute-id="switch-view-to-list"
+                :checked="viewProps.preference.viewType === 'list'"
+                :disabled="loading"
+            />
         </tasks-dropdown-div-block>
         <nue-divider />
         <tasks-dropdown-div-block title="视图操作">
-            <li data-executeid="refresh-data"><nue-icon name="refresh" />重新获取数据</li>
-            <li data-executeid="hide-completed"><nue-icon name="eye-close" />隐藏已完成</li>
+            <inner-dropdown-option
+                icon="refresh"
+                title="重新获取数据"
+                execute-id="refresh-data"
+                :disabled="!allowReload"
+            />
+            <inner-dropdown-option
+                icon="eye-close"
+                title="隐藏已完成"
+                execute-id="hide-completed"
+                :checked="isHideCompletedAlready"
+            />
             <inner-dropdown
                 @execute="tasksViewStore.updateColumns"
                 title="显示与隐藏列"
                 @click.stop
                 :suffix="sortFieldDropdownOptions.count"
-                group="tasks-view-operations"
             >
                 <inner-dropdown-option
                     v-for="option in sortFieldDropdownOptions.options"

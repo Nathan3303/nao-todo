@@ -5,7 +5,7 @@
             icon="filter"
             theme="small"
             clearable
-            placeholder="筛选"
+            placeholder="筛选标签"
             :debounce-time="360"
         />
     </nue-div>

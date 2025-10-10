@@ -15,9 +15,15 @@ const tasksDialogStore = useTasksDialogStore()
 const dialogRef = ref<DialogInstanceType>()
 
 const { projects } = storeToRefs(projectManagerStore)
-const { visible, open, close } = useDialogWrapper(dialogRef)
+const { visible, open: openDialog, close } = useDialogWrapper(dialogRef)
 
-defineExpose({ open, close })
+defineExpose({
+    open: () => {
+        projectManagerStore.loadProjects()
+        openDialog()
+    },
+    close
+})
 </script>
 
 <template>
@@ -39,6 +45,7 @@ defineExpose({ open, close })
                     </nue-button>
                 </nue-div>
             </nue-header>
+            <nue-divider />
             <nue-main>
                 <nue-content fill style="overflow: hidden">
                     <project-board

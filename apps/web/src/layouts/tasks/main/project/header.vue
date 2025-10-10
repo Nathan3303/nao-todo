@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { useTasksViewStore, useTasksDialogStore } from '@/stores/tasks'
 import { storeToRefs } from 'pinia'
-import TasksMainProjectOperationsDropdown from './operations-dropdown.vue'
+import TasksMainProjectOperationsDropdown from './dropdowns/operations.vue'
+import TasksMainFilterDropdown from '@/components/tasks/dropdowns/filter-dropdown.vue'
 
 defineOptions({ name: 'TasksMainProjectViewHeader' })
 
@@ -34,7 +35,7 @@ const openTodoCreator = () => {
                 <nue-tooltip content="新增待办" size="small" @click="openTodoCreator">
                     <nue-button icon="plus" theme="icon,ghost" />
                 </nue-tooltip>
-                <!--                <tasks-filter-dropdown />-->
+                <tasks-main-filter-dropdown />
                 <tasks-main-project-operations-dropdown />
             </nue-div>
         </nue-div>
@@ -45,7 +46,7 @@ const openTodoCreator = () => {
             style="cursor: pointer"
             @click="() => tasksViewStore.showProjectDescriptionUpdater(viewProps!.id)"
         >
-            {{ viewProps.description }}
+            {{ viewProps.description || '设置清单描述' }}
         </nue-text>
     </nue-div>
 </template>

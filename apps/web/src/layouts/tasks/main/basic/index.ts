@@ -18,3 +18,9 @@ export const BasicViewKanban = defineAsyncComponent({
     loadingComponent: LoadingComponent,
     errorComponent: ErrorComponent
 })
+
+// import BasicViewHeader from './header.vue'
+// import BasicViewTable from './table.vue'
+// import BasicViewKanban from './kanban.vue'
+
+// export { BasicViewHeader, BasicViewTable, BasicViewKanban }

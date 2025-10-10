@@ -61,16 +61,9 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
             viewProps.value = void 0
             return
         }
-        console.log('[use-tasks-view-store/loadViewProps]', _viewProps)
-        // 判断是全量更新还是局部更新 - 在于判断前后两次加载的 id 和 category 是否一致
-        const compareKey1 = id + category
-        const compareKey2 = viewProps.value ? viewProps.value.id + viewProps.value.category : ''
-        if (viewProps.value && compareKey1 === compareKey2) {
-            // 局部更新
-            viewProps.value.name = _viewProps.name
-            viewProps.value.description = _viewProps.description
-            return
-        }
+        // debug
+        // console.log('[TasksViewStore/LoadViewProps]', _viewProps)
+        // 更新 viewProps value
         viewProps.value = _viewProps
     }
 
@@ -85,7 +78,12 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
             inputValue: projects.value.find((p) => p.id === projectId)?.name,
             validator: (value) => !!value,
             onConfirm: async (value) => {
-                return await projectStore.updateProject(projectId, { name: value as string })
+                const err = await projectStore.updateProject(projectId, { name: value as string })
+                if (err) return unwrapError(err)
+                NueMessage.success('清单名称修改成功')
+                // 刷新视图参数
+                if (!viewProps.value) return
+                if (projectId === viewProps.value.id) viewProps.value.name = value as string
             }
         })
     }
@@ -99,7 +97,14 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
             inputValue: projects.value.find((p) => p.id === projectId)?.description,
             validator: (value) => !!value,
             onConfirm: async (value) => {
-                return await projectStore.updateProject(projectId, { description: value as string })
+                const err = await projectStore.updateProject(projectId, {
+                    description: value as string
+                })
+                if (err) return unwrapError(err)
+                NueMessage.success('清单描述修改成功')
+                // 刷新视图参数
+                if (!viewProps.value) return
+                if (projectId === viewProps.value.id) viewProps.value.description = value as string
             }
         })
     }

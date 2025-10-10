@@ -6,7 +6,6 @@
             theme="small"
             clearable
             placeholder="筛选清单"
-            :debounce-time="360"
         />
         <nue-checkbox v-model="onlyDeleted" theme="small">只看已删除</nue-checkbox>
     </nue-div>

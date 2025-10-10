@@ -19,6 +19,7 @@ export type InnerDropdownOptionProps = {
     title: string
     checked?: boolean
     executeId?: string
+    disabled?: boolean
 }
 
 export type InnerDropdownOptionVO = {

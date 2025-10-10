@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useTasksViewStore, useTasksDialogStore } from '@/stores/tasks'
 import { storeToRefs } from 'pinia'
-import TasksMainBasicOperationsDropdown from './operations-dropdown.vue'
+import TasksMainBasicOperationsDropdown from './dropdowns/operations.vue'
 import TasksMainFilterDropdown from '@/components/tasks/dropdowns/filter-dropdown.vue'
 
 defineOptions({ name: 'TasksMainBasicViewHeader' })

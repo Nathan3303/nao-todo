@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watchEffect } from 'vue'
+import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { TasksMain, TasksMainHeader } from '@/layouts/tasks'
 import { useTasksViewStore } from '@/stores/tasks'
@@ -15,12 +15,38 @@ const loading = ref(true)
 const error = ref('')
 const { viewProps } = storeToRefs(tasksViewStore)
 
-watchEffect(async () => {
-    // 加载视图数据
-    await tasksViewStore.loadViewProps(props.id, route.meta.category as string)
-    // 恢复加载状态
-    loading.value = false
-})
+// @watch 监听路由信息变化，当在 id 改变时重新加载数据（全流程）
+watch(
+    () => props.id,
+    async () => {
+        // 重置错误信息
+        error.value = ''
+        // 加载视图数据
+        loading.value = true
+        await tasksViewStore.loadViewProps(props.id, route.meta.category as string)
+        loading.value = false
+        // 判断 viewProps 是否存在
+        if (!viewProps.value) {
+            error.value = '视图数据加载失败'
+            return
+        }
+        // 重置 viewProps.readyState
+        viewProps.value.readyState = 1
+    },
+    { immediate: true }
+)
+
+// @watch
+// watch(
+//     () => [viewProps.value?.category, viewProps.value?.id] as const,
+//     () => {
+//         // 判断 viewProps 是否存在
+//         if (!viewProps.value) return
+//         // 重置 viewProps.readyState
+//         viewProps.value.readyState = 1
+//     },
+//     { immediate: true }
+// )
 </script>
 
 <template>

@@ -1,124 +1,53 @@
 <script setup lang="ts">
-import { ref, watchEffect, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useRouter } from 'vue-router'
-import { useTasksDataStore, useTasksViewStore } from '@/stores/tasks'
 import { TodoTable } from '@/components/tasks/table'
 import { Loading as LoadingComp, Pager } from '@nao-todo/components'
-import { unwrapError } from '@nao-todo/utils'
-import type { GetTodosSortOptions, Project } from '@nao-todo/types'
+import useTasksMainProjectStore from './use-tasks-main-project-store'
 
 defineOptions({ name: 'TasksMainProjectViewTable' })
 
-const tasksDataStore = useTasksDataStore()
-const tasksViewStore = useTasksViewStore()
-const router = useRouter()
+const tasksMainProjectStore = useTasksMainProjectStore()
 
-const { viewProps } = storeToRefs(tasksViewStore)
-const { todos, pagination, tags } = storeToRefs(tasksDataStore)
-const iProjectId = ref<Project['id']>()
-const loading = ref<boolean>(false)
-const error = ref<string>('')
-const page = ref<number>(1)
-
-const showTodoDetails = (id: string) => {
-    router.push({ name: 'tasks-project', params: { todoId: id as string } })
-}
-
-const handleChangePerpage = (limit: number) => {
-    if (!viewProps.value) return
-    viewProps.value.preference.getTodosOptions.limit = limit
-}
-
-const handleUpdateSortOptions = (newSortOptions: GetTodosSortOptions | null) => {
-    if (!viewProps.value) return
-    if (newSortOptions === null) {
-        viewProps.value.preference.getTodosOptions.sort = void 0
-        return
-    }
-    viewProps.value.preference.getTodosOptions.sort = newSortOptions
-}
-
-watchEffect(async () => {
-    // 判断 viewProps 是否存在
-    if (!viewProps.value) return
-    // 判断清单 Id 是否相同
-    if (iProjectId.value === viewProps.value.id) return
-    // 重置加载状态
-    loading.value = true
-    error.value = ''
-    // 保存清单偏好（记录在清单数据中，以便偏好更新时直接传输）
-    viewProps.value.preference.getTodosOptions = {
-        limit: 20,
-        projectId: viewProps.value.id,
-        ...viewProps.value.preference.getTodosOptions
-    }
-    // 调用 API 请求数据
-    const err = await tasksDataStore.getTodos({
-        ...viewProps.value.preference.getTodosOptions,
-        page: page.value
-    })
-    loading.value = false
-    // 记录已请求的清单 Id，避免重复请求
-    iProjectId.value = viewProps.value.id
-    // 处理失败结果
-    if (err) {
-        error.value = unwrapError(err)
-        return
-    }
-})
-
-watch(
-    () => todos.value,
-    (newVal) => {
-        // 判断待办结果是否为空
-        console.log('todos', newVal)
-        if (newVal.length === 0) {
-            error.value = '当前暂无待办'
-            return
-        }
-        // 处理成功结果
-        error.value = ''
-    },
-    { deep: true, immediate: true }
-)
+const { responsiveFlag, todos, pagination, tags, loading, error, page, viewProps } =
+    storeToRefs(tasksMainProjectStore)
 </script>
 
 <template>
-    <loading-comp v-if="loading" />
-    <nue-empty
-        v-else-if="error || !viewProps"
-        image-size="4rem"
-        image-src="/images/coffee.webp"
-        :description="error"
-        style="height: 100%"
-    />
-    <nue-container v-else id="TasksMainTableContainer">
+    <nue-container id="TasksMainTableContainer">
         <nue-main>
-            <nue-content fill>
+            <loading-comp v-if="loading" />
+            <nue-empty
+                v-else-if="error || !viewProps"
+                image-size="4rem"
+                image-src="/images/coffee.webp"
+                :description="error"
+                style="height: 100%"
+            />
+            <nue-content v-else fill>
                 <todo-table
                     :column-options="viewProps.preference.columns"
                     :sort-options="viewProps.preference.getTodosOptions.sort"
                     :tags="tags"
                     :todos="todos"
-                    @show-todo-details="showTodoDetails"
-                    @clear-sort-options="() => handleUpdateSortOptions(null)"
-                    @update-sort-options="handleUpdateSortOptions"
-                    @delete-todo="(id) => tasksDataStore.deleteTodo(id)"
-                    @restore-todo="(id) => tasksDataStore.restoreTodo(id)"
+                    @show-todo-details="tasksMainProjectStore.showTodoDetails"
+                    @clear-sort-options="tasksMainProjectStore.handleClearSortOptions"
+                    @update-sort-options="tasksMainProjectStore.handleUpdateSortOptions"
+                    @delete-todo="(id) => tasksMainProjectStore.deleteTodo(id)"
+                    @restore-todo="(id) => tasksMainProjectStore.restoreTodo(id)"
                 />
             </nue-content>
         </nue-main>
-        <nue-footer v-if="viewProps">
+        <nue-footer v-if="!error">
             <nue-div v-if="pagination" align="center" justify="space-between">
                 <nue-text color="gray" flex size="12px">
                     当前列表 {{ pagination.limit || 0 }} 项， 共计 {{ pagination.total || 0 }} 项。
                 </nue-text>
                 <pager
                     :limit="pagination.limit"
-                    :page="pagination.page"
+                    :page="page"
                     :total-pages="pagination.maxPage"
-                    @per-page-change="handleChangePerpage"
+                    :simple="responsiveFlag <= 1"
+                    @per-page-change="tasksMainProjectStore.handleUpdatePerPage"
                     @page-change="(p) => (page = p)"
                 />
             </nue-div>

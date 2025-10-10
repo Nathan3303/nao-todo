@@ -17,7 +17,7 @@ const tasksDialogStore = useTasksDialogStore()
 const dialogRef = ref<DialogInstanceType>()
 
 const { tags } = storeToRefs(tagManagerStore)
-const { visible, open, close } = useDialogWrapper(dialogRef)
+const { visible, open: openDialog, close } = useDialogWrapper(dialogRef)
 
 const showCreateTagDialog = () => {
     tasksDialogStore.tagCreator?.open()
@@ -27,7 +27,13 @@ const showUpdateTagColorDialog = (tagId: Tag['id']) => {
     tasksDialogStore.tagColorUpdater?.open(tagId)
 }
 
-defineExpose({ open, close })
+defineExpose({
+    open: () => {
+        tagManagerStore.loadTags()
+        openDialog()
+    },
+    close
+})
 </script>
 
 <template>
@@ -49,6 +55,7 @@ defineExpose({ open, close })
                     </nue-button>
                 </nue-div>
             </nue-header>
+            <nue-divider />
             <nue-main>
                 <nue-content fill style="overflow: hidden">
                     <tag-board

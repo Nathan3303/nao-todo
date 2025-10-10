@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { useTasksViewStore, useTasksDialogStore } from '@/stores/tasks'
-import TasksMainTagOperationsDropdown from './operations-dropdown.vue'
+import TasksMainTagOperationsDropdown from './dropdowns/operations.vue'
 
 defineOptions({ name: 'TasksMainTagViewHeader' })
 
@@ -44,7 +44,7 @@ const openTodoCreator = () => {
             style="cursor: pointer"
             @click="() => tasksViewStore.showTagDescriptionUpdater(viewProps!.id)"
         >
-            {{ viewProps.description }}
+            {{ viewProps.description || '设置标签描述' }}
         </nue-text>
     </nue-div>
 </template>

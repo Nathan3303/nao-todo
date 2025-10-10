@@ -1,6 +1,5 @@
-import { computed, reactive } from 'vue'
-import useProjectsFilter from './use-projects-filter'
-import { defineStore } from 'pinia'
+import { reactive, ref, watch } from 'vue'
+import { defineStore, storeToRefs } from 'pinia'
 import { useTasksDataStore } from '@/stores/tasks'
 import { useRoute, useRouter } from 'vue-router'
 import type { Project } from '@nao-todo/types'
@@ -12,10 +11,13 @@ type FilterInfo = {
 }
 
 const useProjectManagerStore = defineStore('ProjectManagerStore', () => {
-    const projectsFilter = useProjectsFilter()
     const tasksDataStore = useTasksDataStore()
     const route = useRoute()
     const router = useRouter()
+
+    const { projects: projectsRaw } = storeToRefs(tasksDataStore)
+
+    const projects = ref<Project[]>([])
 
     const filterInfo = reactive<FilterInfo>({
         name: '',
@@ -43,13 +45,12 @@ const useProjectManagerStore = defineStore('ProjectManagerStore', () => {
     }
 
     // 筛选清单列表
-    const projects = computed(() => {
-        return projectsFilter.filter(
-            nameFilterHandler,
-            isArchivedFilterHandler,
-            isDeletedFilterHandler
-        )
-    })
+    const loadProjects = () => {
+        const handlers = [nameFilterHandler, isArchivedFilterHandler, isDeletedFilterHandler]
+        projects.value = projectsRaw.value.filter((project) =>
+            handlers.every((handler) => handler(project))
+        ) as Project[]
+    }
 
     // 处理删除当前清单后路由跳转
     const switchRouteIfDelete = (comparedProjectId: Project['id']) => {
@@ -60,8 +61,7 @@ const useProjectManagerStore = defineStore('ProjectManagerStore', () => {
 
     // 删除清单
     const deleteProject = async (projectId: Project['id']) => {
-        const ok = await tasksDataStore.deleteProject(projectId)
-        if (ok === 'ok') await switchRouteIfDelete(projectId)
+        await tasksDataStore.deleteProject(projectId)
     }
 
     // 恢复清单
@@ -72,12 +72,20 @@ const useProjectManagerStore = defineStore('ProjectManagerStore', () => {
     // 永久删除清单
     const hardDeleteProject = async (projectId: Project['id']) => {
         const ok = await tasksDataStore.deleteProjectPermanently(projectId)
-        if (ok === 'ok') await switchRouteIfDelete(projectId)
+        if (ok) await switchRouteIfDelete(projectId)
     }
+
+    // 监听过滤选项变化，重新加载数据
+    watch(
+        () => filterInfo && projectsRaw.value,
+        () => loadProjects(),
+        { deep: true }
+    )
 
     return {
         projects,
         filterInfo,
+        loadProjects,
         getProjectsAgain: tasksDataStore.getProjects,
         deleteProject,
         hardDeleteProject,

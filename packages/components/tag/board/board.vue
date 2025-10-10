@@ -1,5 +1,5 @@
 <template>
-    <div class="tag-board-wrapper">
+    <div class="tag-board-wrapper" style="height: 100%">
         <loading v-if="loadingState" />
         <template v-else-if="tags && tags.length">
             <div class="tag-board">
@@ -19,7 +19,7 @@
                 </tag-card>
             </div>
         </template>
-        <nue-empty v-else />
+        <nue-empty v-else image-size="6rem" style="height: 100%" />
     </div>
 </template>
 
