@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { ref, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useTasksDataStore } from '@/stores/tasks'
 import { useTodoDetails } from './use-details'
 import { useCommentDetails } from './use-comment-details'
 import { Loading as LoadingComp } from '@nao-todo/components'
@@ -14,7 +13,6 @@ import type { DetailsEmits } from './types'
 defineOptions({ name: 'TasksTodoDetails' })
 const emit = defineEmits<DetailsEmits>()
 
-const tasksDataStore = useTasksDataStore()
 const router = useRouter()
 const route = useRoute()
 
@@ -32,8 +30,11 @@ const {
     updateTodoState,
     handleCheckTodo,
     updateTodoProject,
-    updateTodoTags
-} = useTodoDetails()
+    updateTodoTags,
+    handleDeleteTodoPermenantly,
+    handleDeleteTodo,
+    handleRestoreTodo
+} = useTodoDetails(emit)
 const { isCommenting, commentsCount, handleLeaveComment } = useCommentDetails(todo.value?.id)
 
 const handleClose = () => {
@@ -88,9 +89,9 @@ const handleStartLeaveComment = () => {
             <details-footer
                 :shadow-todo="todo"
                 @update-todo-project="updateTodoProject"
-                @delete-todo-permanently="(id) => tasksDataStore.deleteProjectPermanently(id)"
-                @delete-todo="(id) => tasksDataStore.deleteTodo(id)"
-                @restore-todo="(id) => tasksDataStore.restoreTodo(id)"
+                @delete-todo-permanently="handleDeleteTodoPermenantly"
+                @delete-todo="handleDeleteTodo"
+                @restore-todo="handleRestoreTodo"
                 @leave-todo-comment="handleStartLeaveComment"
             />
             <!-- @duplicate-todo="handleDuplicateTodo" -->

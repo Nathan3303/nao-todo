@@ -2,13 +2,18 @@
 import { storeToRefs } from 'pinia'
 import { useTasksViewStore, useTasksDialogStore } from '@/stores/tasks'
 import TasksMainTagOperationsDropdown from './dropdowns/operations.vue'
+import { computed } from 'vue'
 
 defineOptions({ name: 'TasksMainTagViewHeader' })
 
 const tasksViewStore = useTasksViewStore()
 const tasksDialogStore = useTasksDialogStore()
 
-const { viewProps } = storeToRefs(tasksViewStore)
+const { viewProps, isDisplayAside } = storeToRefs(tasksViewStore)
+
+const hideAsideButtonIcon = computed(() => {
+    return (isDisplayAside.value ? 'menu-close' : 'menu-open') as never
+})
 
 const openTodoCreator = () => {
     if (!tasksDialogStore.todoCreator) return
@@ -20,7 +25,11 @@ const openTodoCreator = () => {
     <nue-div vertical gap="0.5rem" v-if="viewProps">
         <nue-div wrap="nowrap" align="center">
             <nue-div flex="1" wrap="nowrap" align="center">
-                <nue-button :icon="'menu-open' as never" theme="icon,ghost" />
+                <nue-button
+                    :icon="hideAsideButtonIcon"
+                    theme="icon,ghost"
+                    @click="tasksViewStore.switchIsDisplayAside"
+                />
                 <nue-text
                     :clamped="1"
                     size="var(--nue-text-xxl)"

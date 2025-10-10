@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import TasksDetails from './details.vue'
-import { ref, watchEffect } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, watchEffect, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import type { NueDrawer } from 'nue-ui'
 
 const route = useRoute()
+const router = useRouter()
 
 const visible = ref(false)
 const drawerRef = ref<InstanceType<typeof NueDrawer>>()
 
-const handleClose = () => {
+const handleClose = async () => {
     if (!drawerRef.value) {
         visible.value = false
         return
@@ -19,22 +20,26 @@ const handleClose = () => {
 
 watchEffect(
     () => {
-        const todoId = route.params.todoId as string
-        if (!todoId) {
-            handleClose()
-            return
-        }
+        if (!(route.params.todoId as string)) return handleClose()
         visible.value = true
     },
     { flush: 'post' }
+)
+
+watch(
+    () => visible.value,
+    async (newValue) => {
+        if (newValue) return
+        await router.replace({ name: route.name, params: { todoId: void 0 } })
+    }
 )
 </script>
 
 <template>
     <nue-drawer
+        allow-close-by-overlay
         v-model="visible"
         theme="outline"
-        allow-close-by-overlay
         span="420px"
         min-span="360px"
         ref="drawerRef"

@@ -90,6 +90,7 @@ const useTasksDataStore = defineStore('TasksDataStore', () => {
         deleteTag,
         getTodos: todoStore.getTodos,
         deleteTodo: todoStore.deleteTodoWithConfirm,
+        deleteTodoPermanently: todoStore.deleteTodoPermanentlyWithConfirm,
         restoreTodo: todoStore.restoreTodoWithConfirm,
         getEvents: eventStore.getEvents,
         createEvent: eventStore.createEvent,

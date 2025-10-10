@@ -1,15 +1,18 @@
-import { computed, ref, watchEffect } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 import { useEventStore, useTodoStore } from '@/stores/global'
+import { useTasksDataStore } from '@/stores/tasks'
 import { useUpdateQueue, type UpdateQueueItem } from './use-update-queue'
-import type { Todo, UpdateTodoOptions } from '@nao-todo/types'
 import { unwrapError } from '@nao-todo/utils'
+import type { Todo, UpdateTodoOptions } from '@nao-todo/types'
+import type { DetailsEmits } from './types'
 
-export const useTodoDetails = () => {
+export const useTodoDetails = (emit: DetailsEmits) => {
     const route = useRoute()
     const todoStore = useTodoStore()
     const eventStore = useEventStore()
+    const tasksDataStore = useTasksDataStore()
 
     const { todos } = storeToRefs(todoStore)
     const { events } = storeToRefs(eventStore)
@@ -18,17 +21,20 @@ export const useTodoDetails = () => {
     const error = ref('')
 
     // @effect 当路由 todoId 变化时重新获取数据
-    watchEffect(() => {
-        // 判断并获取 todoId
-        if (!route.params.todoId) return (todo.value = void 0)
-        const todoId = route.params.todoId as string
-        // 重置加载状态
-        loading.value = true
-        // 查找待办任务
-        todo.value = todos.value.find((todo) => todo.id === todoId)
-        // 恢复加载状态
-        loading.value = false
-    })
+    watch(
+        () => route.params.todoId as string,
+        (newTodoId) => {
+            // 判断并获取 todoId
+            if (!newTodoId) return (todo.value = void 0)
+            // 重置加载状态
+            loading.value = true
+            // 查找待办任务
+            todo.value = todos.value.find((todo) => todo.id === newTodoId)
+            // 恢复加载状态
+            loading.value = false
+        },
+        { immediate: true }
+    )
 
     // @computed 检查事项进度计算属性
     const eventsProgress = computed(() => {
@@ -101,52 +107,15 @@ export const useTodoDetails = () => {
         updateQueue.insertItem({ todoId: todo.value.id, updateOptions: { tags } })
     }
 
-    // const handleDeleteTodo = async () => {
-    //     if (!shadowTodo.value) return
-    //     await todoStore.deleteTodoWithConfirmation(shadowTodo.value.id)
-    // }
-    //
-    // const handleRestoreTodo = async () => {
-    //     if (!shadowTodo.value) return
-    //     await todoStore.restoreTodoWithConfirmation(shadowTodo.value.id)
-    // }
-    //
-    // const handleDeleteTodoPermanently = async () => {
-    //     if (!shadowTodo.value) return
-    //     const result = await todoStore.deleteTodoPermanentlyWithConfirmation(shadowTodo.value.id)
-    //     if (result) await handleClose()
-    // }
-    //
-    // const handleDuplicateTodo = async () => {
-    //     if (!shadowTodo.value) return
-    //     const result = await todoStore.duplicateTodoWithConfirmation(shadowTodo.value.id)
-    //     if (!result) return
-    //     await router.push({ name: route.name, params: { taskId: (result as Todo).id as string } })
-    // }
-    //
-    // const handleGiveUpTodo = async () => {
-    //     if (!shadowTodo.value) return
-    //     const result = await todoStore.giveUpTodoWithConfirmation(shadowTodo.value.id)
-    //     if (result) await handleClose()
-    // }
-    //
-    // const handleCancelGiveUpTodo = async () => {
-    //     if (!shadowTodo.value) return
-    //     const result = await todoStore.cancelGiveUpTodoWithConfirmation(shadowTodo.value.id)
-    //     if (result) await handleClose()
-    // }
-    //
-    // const handleClose = async () => {
-    //     cancelTimer(true)
-    //     shadowTodo.value = void 0
-    //     await router.replace({ name: route.name, params: { taskId: void 0 } })
-    // }
-    //
-    // watch(
-    //     () => route.params.todoId as string,
-    //     (newTaskId) => deboucedGetTodo(newTaskId),
-    //     { immediate: true }
-    // )
+    // @method 永久删除待办任务
+    const handleDeleteTodoPermenantly = async (todoId: Todo['id']) => {
+        if (!todo.value) return
+        const ok = await tasksDataStore.deleteTodoPermanently(todoId)
+        if (ok) {
+            todo.value = void 0
+            emit('close')
+        }
+    }
 
     // @returns
     return {
@@ -161,14 +130,9 @@ export const useTodoDetails = () => {
         updateTodoState,
         handleCheckTodo,
         updateTodoProject,
-        updateTodoTags
-        // handleClose,
-        // handleDeleteTodo,
-        // handleDeleteTodoPermanently,
-        // handleRestoreTodo,
-        // handleUpdateTags,
-        // handleDuplicateTodo,
-        // handleGiveUpTodo,
-        // handleCancelGiveUpTodo
+        updateTodoTags,
+        handleDeleteTodoPermenantly,
+        handleDeleteTodo: tasksDataStore.deleteTodo,
+        handleRestoreTodo: tasksDataStore.restoreTodo
     }
 }

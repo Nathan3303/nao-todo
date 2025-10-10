@@ -120,7 +120,12 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
             inputValue: tags.value.find((t) => t.id === tagId)?.name,
             validator: (value) => !!value,
             onConfirm: async (value) => {
-                return await tagStore.updateTag(tagId, { name: value as string })
+                const err = await tagStore.updateTag(tagId, { name: value as string })
+                if (err) return unwrapError(err)
+                NueMessage.success('标签名称修改成功')
+                // 刷新视图参数
+                if (!viewProps.value) return
+                if (tagId === viewProps.value.id) viewProps.value.name = value as string
             }
         })
     }
@@ -134,7 +139,12 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
             inputValue: tags.value.find((t) => t.id === tagId)?.description,
             validator: (value) => !!value,
             onConfirm: async (value) => {
-                return await tagStore.updateTag(tagId, { description: value as string })
+                const err = await tagStore.updateTag(tagId, { description: value as string })
+                if (err) return unwrapError(err)
+                NueMessage.success('标签描述修改成功')
+                // 刷新视图参数
+                if (!viewProps.value) return
+                if (tagId === viewProps.value.id) viewProps.value.description = value as string
             }
         })
     }
@@ -213,6 +223,14 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
         return
     }
 
+    // @state 是否显示侧边栏
+    const isDisplayAside = ref<boolean>(true)
+
+    // @method 切换侧边栏显示状态
+    const switchIsDisplayAside = () => {
+        isDisplayAside.value = !isDisplayAside.value
+    }
+
     // @returns
     return {
         asideWidth,
@@ -230,7 +248,9 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
         hideCompleted,
         updateColumns,
         refreshData,
-        updatePreference
+        updatePreference,
+        isDisplayAside,
+        switchIsDisplayAside
     }
 })
 

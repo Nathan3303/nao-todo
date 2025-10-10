@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { useTasksViewStore, useTasksDialogStore } from '@/stores/tasks'
+import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useTasksViewStore, useTasksDialogStore } from '@/stores/tasks'
 import TasksMainBasicOperationsDropdown from './dropdowns/operations.vue'
 import TasksMainFilterDropdown from '@/components/tasks/dropdowns/filter-dropdown.vue'
 
@@ -9,7 +10,11 @@ defineOptions({ name: 'TasksMainBasicViewHeader' })
 const tasksViewStore = useTasksViewStore()
 const tasksDialogStore = useTasksDialogStore()
 
-const { viewProps } = storeToRefs(tasksViewStore)
+const { viewProps, isDisplayAside } = storeToRefs(tasksViewStore)
+
+const hideAsideButtonIcon = computed(() => {
+    return (isDisplayAside.value ? 'menu-close' : 'menu-open') as never
+})
 
 const openTodoCreator = () => {
     if (!tasksDialogStore.todoCreator) return
@@ -21,19 +26,16 @@ const openTodoCreator = () => {
     <nue-div vertical gap="0.5rem" v-if="viewProps">
         <nue-div wrap="nowrap" align="center">
             <nue-div flex="1" wrap="nowrap" align="center">
-                <nue-button :icon="'menu-open' as never" theme="icon,ghost" />
+                <nue-button
+                    :icon="hideAsideButtonIcon"
+                    theme="icon,ghost"
+                    @click="tasksViewStore.switchIsDisplayAside"
+                />
                 <nue-text :clamped="1" theme="pointer" size="var(--nue-text-xxl)">
                     {{ viewProps.name }}
                 </nue-text>
             </nue-div>
             <nue-div wrap="nowrap" align="center" width="fit-content">
-                <nue-tooltip
-                    content="查看并顺延已过期的待办"
-                    size="small"
-                    v-if="viewProps.id === 'today'"
-                >
-                    <nue-button icon="history" theme="icon,ghost" />
-                </nue-tooltip>
                 <nue-tooltip
                     v-if="!['favorite', 'recycle', 'givenup'].includes(viewProps.id)"
                     content="新增待办"

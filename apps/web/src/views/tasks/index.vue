@@ -2,8 +2,10 @@
     <loading-comp v-if="loading" style="height: 100%" />
     <nue-container v-else>
         <nue-main>
-            <tasks-aside :width="asideWidth" max-width="256px" min-width="180px" />
-            <nue-separator op-target="previous" @resize="tasksViewStore.handleAsideResize" />
+            <template v-if="isDisplayAside">
+                <tasks-aside :width="asideWidth" max-width="256px" min-width="180px" />
+                <nue-separator op-target="previous" @resize="tasksViewStore.handleAsideResize" />
+            </template>
             <nue-content fill style="overflow: hidden">
                 <router-view />
             </nue-content>
@@ -37,7 +39,7 @@ import { ref } from 'vue'
 const tasksDataStore = useTasksDataStore()
 const tasksViewStore = useTasksViewStore()
 
-const { asideWidth, outlineWidth, responsiveFlag } = storeToRefs(tasksViewStore)
+const { asideWidth, outlineWidth, responsiveFlag, isDisplayAside } = storeToRefs(tasksViewStore)
 const loading = ref(true)
 
 const tasksTodoDetailsDiaplay = computed(() => responsiveFlag.value > 2)

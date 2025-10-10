@@ -173,6 +173,26 @@ const viewPropsForRecycle: TasksMainViewProps = {
     readyState: 1
 }
 
+const viewPropsForOverdue: TasksMainViewProps = {
+    id: 'overdue',
+    category: 'basic',
+    icon: 'timer',
+    name: '已过期的任务',
+    description:
+        '下方视图所罗列出来的是您已过期的任务（结束日期小于今日零点且未完成），您可以通过延期按钮将任务延续至今天。',
+    preference: {
+        viewType: 'table',
+        getTodosOptions: {
+            relativeDate: '-today',
+            state: 'todo,in-progress',
+            sort: { field: 'endAt', order: 'desc' }
+        },
+        columns: { ...defaultColumnOptions, endAt: true, project: true }
+    },
+    createTodoOptions: {},
+    readyState: 1
+}
+
 const basicViewProps: TasksMainViewProps[] = [
     viewPropsForAll,
     viewPropsForToday,
@@ -181,7 +201,8 @@ const basicViewProps: TasksMainViewProps[] = [
     viewPropsForInbox,
     viewPropsForFavorite,
     viewPropsForGivenUp,
-    viewPropsForRecycle
+    viewPropsForRecycle,
+    viewPropsForOverdue
 ]
 
 export { defaultColumnOptions, basicViewProps, columnTexts }

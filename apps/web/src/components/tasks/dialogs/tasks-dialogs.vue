@@ -21,7 +21,7 @@ const {
     tagCreator: tc,
     tagManager: tm,
     tagColorUpdater: tcu,
-    todoCreator: tc1
+    todoCreator: tc1,
 } = storeToRefs(tasksDialogStore)
 
 const projectCreatorRef = ref<InstanceType<typeof ProjectCreator>>()

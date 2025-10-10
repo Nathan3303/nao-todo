@@ -19,6 +19,9 @@
         </nue-collapse>
         <nue-divider />
         <nue-div vertical align="stretch" gap=".5rem">
+            <nao-router-link icon="time" :route="makeRouteString('overdue')">
+                已过期
+            </nao-router-link>
             <nao-router-link icon="heart" :route="makeRouteString('favorite')">
                 已收藏
             </nao-router-link>

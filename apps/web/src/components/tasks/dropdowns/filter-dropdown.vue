@@ -153,7 +153,16 @@ watch(
                     :suffix="counter.state"
                     group="tasks-view-filters"
                 >
+                    <nue-text
+                        v-if="viewProps?.id === 'overdue'"
+                        size="var(--nue-text-xs)"
+                        color="var(--nue-primary-color-600)"
+                        style="padding: 0.5rem"
+                    >
+                        当前分类不允许操作
+                    </nue-text>
                     <inner-dropdown-option
+                        v-else
                         v-for="option in stateDropdownOptions"
                         :key="option.label"
                         :icon="option.icon"

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { watchEffect, ref } from 'vue'
+import { watch, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTasksDataStore } from '@/stores/tasks'
 import { CommentRow, Loading as LoadingComp } from '@nao-todo/components'
@@ -29,15 +29,13 @@ const handleDeleteComment = async (id: Comment['id']) => {
     NueMessage.success('评论删除成功')
 }
 
-watchEffect(() => {
-    // 处理与弹出层动画冲突导致卡顿
-    setTimeout(async () => {
-        // 获取待办任务 Id
-        const todoId = props.todoId
+watch(
+    () => props.todoId,
+    async (newTodoId) => {
         // 重置加载状态
         loading.value = true
         // 获取检查事项
-        const err = await tasksDataStore.getComments({ todoId })
+        const err = await tasksDataStore.getComments({ todoId: newTodoId })
         loading.value = false
         // 处理失败结果
         if (err) {
@@ -45,8 +43,9 @@ watchEffect(() => {
             return
         }
         error.value = ''
-    }, 320)
-})
+    },
+    { immediate: true }
+)
 </script>
 
 <template>

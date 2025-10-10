@@ -28,7 +28,7 @@ const useProjectManagerStore = defineStore('ProjectManagerStore', () => {
     // 筛选清单处理函数
     const nameFilterHandler = (project: Project) => {
         const name = filterInfo.name
-        if (name == '') return true
+        if (name === '') return true
         return project.name.includes(name)
     }
     const isArchivedFilterHandler = (project: Project) => {
@@ -77,9 +77,9 @@ const useProjectManagerStore = defineStore('ProjectManagerStore', () => {
 
     // 监听过滤选项变化，重新加载数据
     watch(
-        () => filterInfo && projectsRaw.value,
+        () => [filterInfo, projectsRaw.value],
         () => loadProjects(),
-        { deep: true }
+        { immediate: true, deep: true }
     )
 
     return {

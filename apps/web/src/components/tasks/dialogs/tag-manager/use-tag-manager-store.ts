@@ -24,16 +24,16 @@ const useTagManagerStore = defineStore('TagManagerStore', () => {
     // 筛选标签处理函数
     const nameFilterHandler = (tag: Tag) => {
         const name = filterInfo.name
-        if (name == '') return true
+        if (name === '') return true
         return tag.name.includes(name)
     }
 
     // 筛选标签列表
     const loadTags = () => {
-        const handler = [nameFilterHandler]
-        tags.value = tagsRaw.value.filter((tag) => {
-            return handler.every((handler) => handler(tag))
-        }) as Tag[]
+        const handlers = [nameFilterHandler]
+        tags.value = tagsRaw.value.filter((tag) =>
+            handlers.every((handler) => handler(tag))
+        ) as Tag[]
     }
 
     // 处理删除当前标签后路由跳转
@@ -51,9 +51,9 @@ const useTagManagerStore = defineStore('TagManagerStore', () => {
 
     // 监听过滤选项变化，重新加载数据
     watch(
-        () => filterInfo && tagsRaw.value,
+        () => [filterInfo, tagsRaw.value],
         () => loadTags(),
-        { deep: true }
+        { immediate: true, deep: true }
     )
 
     return {

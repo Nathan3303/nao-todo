@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { InputButton, TodoEventRow } from '@nao-todo/components'
 import { useTasksDataStore } from '@/stores/tasks'
-import { watchEffect } from 'vue'
+import { watch } from 'vue'
 import { unwrapError } from '@nao-todo/utils'
 import type { Event } from '@nao-todo/types'
 import type { DetailsMainEventsProps } from './types'
@@ -35,15 +35,13 @@ const handleDeleteEvent = async (eventId: Event['id']) => {
     return await tasksDataStore.deleteEvent(eventId)
 }
 
-watchEffect(() => {
-    // 处理与弹出层动画冲突导致卡顿
-    setTimeout(async () => {
-        // 获取待办任务 Id
-        const todoId = props.todoId
+watch(
+    () => props.todoId,
+    async (newTodoId) => {
         // 重置加载状态
         loading.value = true
         // 获取检查事项
-        const err = await tasksDataStore.getEvents({ todoId })
+        const err = await tasksDataStore.getEvents({ todoId: newTodoId })
         loading.value = false
         // 处理失败结果
         if (err) {
@@ -51,8 +49,9 @@ watchEffect(() => {
             return
         }
         error.value = ''
-    }, 320)
-})
+    },
+    { immediate: true }
+)
 </script>
 
 <template>

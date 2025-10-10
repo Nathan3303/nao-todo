@@ -6,7 +6,6 @@ import TagCreator from './tag-creator'
 import TagColorUpdater from './tag-color-updater'
 import TagManager from './tag-manager'
 import TodoCreator from './todo-creator'
-// import OverdueTodoManager from './overdue-todo-manager'
 
 export {
     TasksDialogs,
@@ -16,5 +15,4 @@ export {
     TagColorUpdater,
     TagManager,
     TodoCreator
-    // OverdueTodoManager
 }
