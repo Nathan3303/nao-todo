@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import useProjectManagerStore from './use-project-manager-store'
+import { useProjectManagerStore } from '@/stores/tasks'
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 

@@ -36,7 +36,7 @@ export type TodoTableContext = {
     updateSortOptions: (newSortOptions: GetTodosSortOptions) => void
     isScrolling: Ref<boolean>
     // main
-    todos: Todo[]
+    todos: ComputedRef<Todo[]>
     tags: ComputedRef<Tag[]>
     tagBarClamped: ComputedRef<number>
     refreshKey: Ref<number>

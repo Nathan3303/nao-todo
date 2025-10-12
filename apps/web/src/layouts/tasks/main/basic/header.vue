@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useTasksViewStore, useTasksDialogStore } from '@/stores/tasks'
+import { useTasksViewStore, useTasksDialogStore, useTasksBasicViewStore } from '@/stores/tasks'
 import TasksMainBasicOperationsDropdown from './dropdowns/operations.vue'
-import TasksMainFilterDropdown from '@/components/tasks/dropdowns/filter-dropdown.vue'
+import TasksMainFilterDropdown from './dropdowns/filters.vue'
 
-defineOptions({ name: 'TasksMainBasicViewHeader' })
+defineOptions({ name: 'TasksMainBasicHeader' })
+defineProps<{ viewId?: string; viewType?: string; todoId?: string }>()
 
 const tasksViewStore = useTasksViewStore()
 const tasksDialogStore = useTasksDialogStore()
+const tasksBasicViewStore = useTasksBasicViewStore()
 
 const { viewProps, isDisplayAside } = storeToRefs(tasksViewStore)
 
@@ -16,9 +18,12 @@ const hideAsideButtonIcon = computed(() => {
     return (isDisplayAside.value ? 'menu-close' : 'menu-open') as never
 })
 
+const isCreatable = computed(() => {
+    return !['overdue', 'favorite', 'recycle', 'givenup'].includes(viewProps.value!.id)
+})
+
 const openTodoCreator = () => {
-    if (!tasksDialogStore.todoCreator) return
-    tasksDialogStore.todoCreator.open({ ...viewProps.value!.createTodoOptions })
+    tasksDialogStore.todoCreator?.open({ ...viewProps.value!.createTodoOptions })
 }
 </script>
 
@@ -37,14 +42,14 @@ const openTodoCreator = () => {
             </nue-div>
             <nue-div wrap="nowrap" align="center" width="fit-content">
                 <nue-tooltip
-                    v-if="!['favorite', 'recycle', 'givenup'].includes(viewProps.id)"
+                    v-if="isCreatable"
                     content="新增待办"
                     size="small"
                     @click="openTodoCreator"
                 >
                     <nue-button icon="plus" theme="icon,ghost" />
                 </nue-tooltip>
-                <tasks-main-filter-dropdown />
+                <tasks-main-filter-dropdown @get-todos="tasksBasicViewStore.getTodos" />
                 <tasks-main-basic-operations-dropdown />
             </nue-div>
         </nue-div>

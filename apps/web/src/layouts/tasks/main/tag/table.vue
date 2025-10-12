@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { TodoTable } from '@/components/tasks/table'
 import { Loading as LoadingComp, Pager } from '@nao-todo/components'
-import useTasksMainTagStore from './use-tasks-main-tag-store'
+import { useTasksTagViewStore } from '@/stores/tasks'
 import { storeToRefs } from 'pinia'
 
 defineOptions({ name: 'TasksMainTagViewTable' })
 
-const tasksMainTagStore = useTasksMainTagStore()
+const tasksTagViewStore = useTasksTagViewStore()
 
 const { responsiveFlag, todos, pagination, tags, loading, error, page, viewProps } =
-    storeToRefs(tasksMainTagStore)
+    storeToRefs(tasksTagViewStore)
 </script>
 
 <template>
@@ -29,11 +29,11 @@ const { responsiveFlag, todos, pagination, tags, loading, error, page, viewProps
                     :sort-options="viewProps.preference.getTodosOptions.sort!"
                     :tags="tags"
                     :todos="todos"
-                    @show-todo-details="tasksMainTagStore.showTodoDetails"
-                    @clear-sort-options="tasksMainTagStore.handleClearSortOptions"
-                    @update-sort-options="tasksMainTagStore.handleUpdateSortOptions"
-                    @delete-todo="(id) => tasksMainTagStore.deleteTodo(id)"
-                    @restore-todo="(id) => tasksMainTagStore.restoreTodo(id)"
+                    @show-todo-details="tasksTagViewStore.showTodoDetails"
+                    @clear-sort-options="tasksTagViewStore.handleClearSortOptions"
+                    @update-sort-options="tasksTagViewStore.handleUpdateSortOptions"
+                    @delete-todo="(id) => tasksTagViewStore.deleteTodo(id)"
+                    @restore-todo="(id) => tasksTagViewStore.restoreTodo(id)"
                 />
             </nue-content>
         </nue-main>
@@ -47,7 +47,7 @@ const { responsiveFlag, todos, pagination, tags, loading, error, page, viewProps
                     :page="pagination.page"
                     :total-pages="pagination.maxPage"
                     :simple="responsiveFlag <= 1"
-                    @per-page-change="tasksMainTagStore.handleUpdatePerPage"
+                    @per-page-change="tasksTagViewStore.handleUpdatePerPage"
                     @page-change="(p) => (page = p)"
                 />
             </nue-div>

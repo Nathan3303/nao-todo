@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { defineStore, storeToRefs } from 'pinia'
-import { basicViewProps } from '@/layouts/tasks'
+import { basicViewProps } from './constants'
 import { useProjectStore, useTagStore, useTodoStore } from '@/stores/global'
 import { NuePrompt, NueMessage } from 'nue-ui'
 import { useWindowResizeListener } from '@nao-todo/hooks'
@@ -31,6 +31,9 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
     // @state 视图全局属性
     const viewProps = ref<TasksMainViewProps>()
 
+    // @state 视图加载状态
+    const viewPropsLoadState = ref<number>(0)
+
     // @methods 加载视图全局属性
     const loadProjectViewProps = async (id: string): Promise<TasksMainViewProps | undefined> => {
         const project = projects.value.find((p) => p.id === id)
@@ -43,28 +46,29 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
         return toTagViewProps(tag)
     }
     const loadViewProps = async (id: string, category: string) => {
-        category = category || 'basic'
-        let _viewProps: undefined | TasksMainViewProps
+        // let _viewProps: undefined | TasksMainViewProps
         switch (category) {
             case 'basic':
-                _viewProps = basicViewProps.find((vp) => vp.id === id)
+                viewProps.value = basicViewProps.find((vp) => vp.id === id)
                 break
             case 'project':
-                _viewProps = await loadProjectViewProps(id)
+                viewProps.value = await loadProjectViewProps(id)
                 break
             case 'tag':
-                _viewProps = await loadTagViewProps(id)
+                viewProps.value = await loadTagViewProps(id)
                 break
+            default:
+                viewProps.value = void 0
         }
         // 如果获取的视图参数为空，则直接 void 0，使页面渲染错误
-        if (!_viewProps) {
-            viewProps.value = void 0
-            return
-        }
+        // if (!_viewProps) {
+        //     viewProps.value = void 0
+        //     return
+        // }
         // debug
         // console.log('[TasksViewStore/LoadViewProps]', _viewProps)
         // 更新 viewProps value
-        viewProps.value = _viewProps
+        // viewProps.value = _viewProps
     }
 
     // @methods 清单名称和描述修改
@@ -238,6 +242,7 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
         handleAsideResize,
         handleOutlineResize,
         viewProps,
+        viewPropsLoadState,
         loadViewProps,
         showProjectNameUpdater,
         showProjectDescriptionUpdater,

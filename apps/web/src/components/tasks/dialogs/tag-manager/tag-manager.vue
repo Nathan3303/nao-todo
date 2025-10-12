@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 import { TagBoard } from '@nao-todo/components'
-import useTagManagerStore from './use-tag-manager-store'
+import { useTagManagerStore } from '@/stores/tasks'
 import TagManagerFilterBar from './filter-bar.vue'
 import { storeToRefs } from 'pinia'
 import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'

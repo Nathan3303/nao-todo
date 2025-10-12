@@ -3,22 +3,22 @@ import { onMounted, ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTasksViewStore } from '@/stores/tasks'
 import { TasksOperationsDropdown, TasksDropdownDivBlock } from '@/components/tasks/dropdowns'
+import { getColumnText } from '@/components/tasks/table/utils'
+import { useTasksBasicViewStore } from '@/stores/tasks'
 import {
     InnerDropdown,
     InnerDropdownOption,
     type InnerDropdownOptionVO
 } from '@/components/ui/inner-dropdown'
-import { getColumnText } from '@/components/tasks/table/utils'
-import useTasksMainBasicStore from '../use-tasks-main-basic-store'
 import type { TodoColumnOptions } from '@nao-todo/types'
 
 defineOptions({ name: 'TasksMainBasicOperationsDropdown' })
 
-const tasksMainBasicStore = useTasksMainBasicStore()
 const tasksViewStore = useTasksViewStore()
+const tasksBasicViewStore = useTasksBasicViewStore()
 
 const { viewProps } = storeToRefs(tasksViewStore)
-const { allowReload, loading, isHideCompletedAlready } = storeToRefs(tasksMainBasicStore)
+const { allowReload, isHideCompletedAlready } = storeToRefs(tasksBasicViewStore)
 const dropdownRef = ref<InstanceType<typeof TasksOperationsDropdown>>()
 
 // @computed 列选项转下拉列表项
@@ -47,11 +47,11 @@ const sortFieldDropdownOptions = computed<{
 // 注册 Dropdown 执行函数
 onMounted(() => {
     if (!dropdownRef.value) return
-    dropdownRef.value.register('switch-view-to-table', tasksMainBasicStore.handleSwitchToTable)
-    dropdownRef.value.register('switch-view-to-kanban', tasksMainBasicStore.handleSwitchToKanban)
-    dropdownRef.value.register('switch-view-to-list', tasksMainBasicStore.handleSwitchToList)
-    dropdownRef.value.register('refresh-data', tasksMainBasicStore.handleRefreshData)
-    dropdownRef.value.register('hide-completed', tasksMainBasicStore.handleHideCompleted)
+    dropdownRef.value.register('switch-view-to-table', tasksBasicViewStore.handleSwitchToTable)
+    dropdownRef.value.register('switch-view-to-kanban', tasksBasicViewStore.handleSwitchToKanban)
+    dropdownRef.value.register('switch-view-to-list', tasksBasicViewStore.handleSwitchToList)
+    dropdownRef.value.register('refresh-data', tasksBasicViewStore.handleRefreshData)
+    dropdownRef.value.register('hide-completed', tasksBasicViewStore.handleHideCompleted)
 })
 </script>
 
@@ -63,21 +63,18 @@ onMounted(() => {
                 title="表格视图"
                 execute-id="switch-view-to-table"
                 :checked="viewProps.preference.viewType === 'table'"
-                :disabled="loading"
             />
             <inner-dropdown-option
                 icon="theme"
                 title="看板视图"
                 execute-id="switch-view-to-kanban"
                 :checked="viewProps.preference.viewType === 'kanban'"
-                :disabled="loading"
             />
             <inner-dropdown-option
                 icon="theme"
                 title="列表视图"
                 execute-id="switch-view-to-list"
                 :checked="viewProps.preference.viewType === 'list'"
-                :disabled="loading"
             />
         </tasks-dropdown-div-block>
         <nue-divider />
@@ -89,10 +86,9 @@ onMounted(() => {
                 :disabled="!allowReload"
             />
             <inner-dropdown-option
-                icon="eye-close"
-                title="隐藏已完成"
+                :icon="isHideCompletedAlready ? 'eye' : 'eye-close'"
+                :title="isHideCompletedAlready ? '显示已完成' : '隐藏已完成'"
                 execute-id="hide-completed"
-                :checked="isHideCompletedAlready"
             />
             <inner-dropdown
                 @execute="tasksViewStore.updateColumns"

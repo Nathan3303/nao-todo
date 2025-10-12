@@ -1,4 +1,4 @@
-import { defaultColumnOptions } from '@/layouts'
+import { defaultColumnOptions } from '@/stores/tasks/constants'
 import type { Project, Tag } from '@nao-todo/types'
 import type { TasksMainViewProps } from './types'
 

@@ -2,14 +2,14 @@
 import { storeToRefs } from 'pinia'
 import { TodoTable } from '@/components/tasks/table'
 import { Loading as LoadingComp, Pager } from '@nao-todo/components'
-import useTasksMainProjectStore from './use-tasks-main-project-store'
+import { useTasksProjectViewStore } from '@/stores/tasks'
 
 defineOptions({ name: 'TasksMainProjectViewTable' })
 
-const tasksMainProjectStore = useTasksMainProjectStore()
+const tasksProjectViewStore = useTasksProjectViewStore()
 
 const { responsiveFlag, todos, pagination, tags, loading, error, page, viewProps } =
-    storeToRefs(tasksMainProjectStore)
+    storeToRefs(tasksProjectViewStore)
 </script>
 
 <template>
@@ -17,7 +17,7 @@ const { responsiveFlag, todos, pagination, tags, loading, error, page, viewProps
         <nue-main>
             <loading-comp v-if="loading" />
             <nue-empty
-                v-else-if="error || !viewProps"
+                v-else-if="error || !viewProps || todos.length === 0"
                 image-size="4rem"
                 image-src="/images/coffee.webp"
                 :description="error"
@@ -29,15 +29,15 @@ const { responsiveFlag, todos, pagination, tags, loading, error, page, viewProps
                     :sort-options="viewProps.preference.getTodosOptions.sort"
                     :tags="tags"
                     :todos="todos"
-                    @show-todo-details="tasksMainProjectStore.showTodoDetails"
-                    @clear-sort-options="tasksMainProjectStore.handleClearSortOptions"
-                    @update-sort-options="tasksMainProjectStore.handleUpdateSortOptions"
-                    @delete-todo="(id) => tasksMainProjectStore.deleteTodo(id)"
-                    @restore-todo="(id) => tasksMainProjectStore.restoreTodo(id)"
+                    @show-todo-details="tasksProjectViewStore.showTodoDetails"
+                    @clear-sort-options="tasksProjectViewStore.handleClearSortOptions"
+                    @update-sort-options="tasksProjectViewStore.handleUpdateSortOptions"
+                    @delete-todo="(id) => tasksProjectViewStore.deleteTodo(id)"
+                    @restore-todo="(id) => tasksProjectViewStore.restoreTodo(id)"
                 />
             </nue-content>
         </nue-main>
-        <nue-footer v-if="!error">
+        <nue-footer v-if="!error && todos.length !== 0">
             <nue-div v-if="pagination" align="center" justify="space-between">
                 <nue-text color="gray" flex size="12px">
                     当前列表 {{ pagination.limit || 0 }} 项， 共计 {{ pagination.total || 0 }} 项。
@@ -47,7 +47,7 @@ const { responsiveFlag, todos, pagination, tags, loading, error, page, viewProps
                     :page="page"
                     :total-pages="pagination.maxPage"
                     :simple="responsiveFlag <= 1"
-                    @per-page-change="tasksMainProjectStore.handleUpdatePerPage"
+                    @per-page-change="tasksProjectViewStore.handleUpdatePerPage"
                     @page-change="(p) => (page = p)"
                 />
             </nue-div>

@@ -4,6 +4,8 @@ import { useTasksDataStore, useTasksDialogStore } from '@/stores/tasks'
 import { computed } from 'vue'
 import { NaoSmartList, type NaoSmartListLinkVO } from '@/components/ui'
 
+defineOptions({ name: 'ProjectSmartList' })
+
 const tasksDataStore = useTasksDataStore()
 const tasksDialogStore = useTasksDialogStore()
 
@@ -14,21 +16,11 @@ const links = computed<NaoSmartListLinkVO[]>(() => {
         return {
             id: project.id,
             title: project.name,
-            route: { name: 'tasks-project', params: { id: project.id } },
+            route: { name: 'tasks-project', params: { projectId: project.id } },
             icon: 'more2'
         } as NaoSmartListLinkVO
     })
 })
-
-const handleManage = () => {
-    if (!tasksDialogStore.projectManager) return
-    tasksDialogStore.projectManager.open()
-}
-
-const handleCreate = () => {
-    if (!tasksDialogStore.projectCreator) return
-    tasksDialogStore.projectCreator.open()
-}
 </script>
 
 <template>
@@ -39,7 +31,7 @@ const handleCreate = () => {
         create-btn-tooltip="创建新的清单"
         empty-text="用清单来分类收集、组织和管理你的待办任务"
         :links="links"
-        @manage="handleManage"
-        @create="handleCreate"
+        @manage="() => tasksDialogStore.projectManager?.open()"
+        @create="() => tasksDialogStore.projectCreator?.open()"
     />
 </template>

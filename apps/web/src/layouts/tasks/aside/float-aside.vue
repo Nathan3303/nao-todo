@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { IndexAside } from '@/layouts/index-aside'
-import TasksAside from './tasks-aside.vue'
+import TasksAside from './aside.vue'
 
 defineOptions({ name: 'TasksAsideDrawer' })
 </script>

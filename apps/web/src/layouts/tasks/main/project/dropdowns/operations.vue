@@ -9,16 +9,16 @@ import {
     type InnerDropdownOptionVO
 } from '@/components/ui/inner-dropdown'
 import type { TodoColumnOptions } from '@nao-todo/types'
-import useTasksMainProjectStore from '../use-tasks-main-project-store'
+import { useTasksProjectViewStore } from '@/stores/tasks'
 import { getColumnText } from '@/components/tasks/table/utils'
 
 defineOptions({ name: 'TasksMainProjectOperationsDropdown' })
 
 const tasksViewStore = useTasksViewStore()
-const tasksMainProjectStore = useTasksMainProjectStore()
+const tasksProjectViewStore = useTasksProjectViewStore()
 
 const { viewProps } = storeToRefs(tasksViewStore)
-const { allowReload, loading, isHideCompletedAlready } = storeToRefs(tasksMainProjectStore)
+const { allowReload, loading, isHideCompletedAlready } = storeToRefs(tasksProjectViewStore)
 const dropdownRef = ref<InstanceType<typeof TasksOperationsDropdown>>()
 
 // @computed 列选项转下拉列表项
@@ -47,13 +47,13 @@ const sortFieldDropdownOptions = computed<{
 // 注册 Dropdown 执行函数
 onMounted(() => {
     if (!dropdownRef.value) return
-    dropdownRef.value.register('switch-view-to-table', tasksMainProjectStore.handleSwitchToTable)
-    dropdownRef.value.register('switch-view-to-kanban', tasksMainProjectStore.handleSwitchToKanban)
-    dropdownRef.value.register('switch-view-to-list', tasksMainProjectStore.handleSwitchToList)
-    dropdownRef.value.register('refresh-data', tasksMainProjectStore.handleRefreshData)
-    dropdownRef.value.register('hide-completed', tasksMainProjectStore.handleHideCompleted)
-    dropdownRef.value.register('update-preference', tasksMainProjectStore.handleUpdatePreference)
-    dropdownRef.value.register('delete', tasksMainProjectStore.handleDelete)
+    dropdownRef.value.register('switch-view-to-table', tasksProjectViewStore.handleSwitchToTable)
+    dropdownRef.value.register('switch-view-to-kanban', tasksProjectViewStore.handleSwitchToKanban)
+    dropdownRef.value.register('switch-view-to-list', tasksProjectViewStore.handleSwitchToList)
+    dropdownRef.value.register('refresh-data', tasksProjectViewStore.handleRefreshData)
+    dropdownRef.value.register('hide-completed', tasksProjectViewStore.handleHideCompleted)
+    dropdownRef.value.register('update-preference', tasksProjectViewStore.handleUpdatePreference)
+    dropdownRef.value.register('delete', tasksProjectViewStore.handleDelete)
 })
 </script>
 

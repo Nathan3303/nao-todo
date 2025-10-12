@@ -75,7 +75,7 @@ provide<TodoTableContext>(todoTableContextKey, {
     updateSortOptions: (newSortOptions) => emit('updateSortOptions', newSortOptions),
     isScrolling: hasScrollBar,
     // main
-    todos: props.todos,
+    todos: computed(() => props.todos),
     selectRange,
     tagBarClamped,
     tags: computed(() => props.tags),

@@ -4,7 +4,7 @@ import { storeToRefs } from 'pinia'
 import { useTasksViewStore } from '@/stores/tasks'
 import { TasksOperationsDropdown, TasksDropdownDivBlock } from '@/components/tasks/dropdowns'
 import { getColumnText } from '@/components/tasks/table/utils'
-import useTasksMainTagStore from '../use-tasks-main-tag-store'
+import { useTasksTagViewStore } from '@/stores/tasks'
 import type { TodoColumnOptions } from '@nao-todo/types'
 import {
     InnerDropdown,
@@ -15,10 +15,10 @@ import {
 defineOptions({ name: 'TasksMainTagOperationsDropdown' })
 
 const tasksViewStore = useTasksViewStore()
-const tasksMainTagStore = useTasksMainTagStore()
+const tasksTagViewStore = useTasksTagViewStore()
 
 const { viewProps } = storeToRefs(tasksViewStore)
-const { allowReload, loading, isHideCompletedAlready } = storeToRefs(tasksMainTagStore)
+const { allowReload, loading, isHideCompletedAlready } = storeToRefs(tasksTagViewStore)
 const dropdownRef = ref<InstanceType<typeof TasksOperationsDropdown>>()
 
 // @computed 列选项转下拉列表项
@@ -47,14 +47,14 @@ const sortFieldDropdownOptions = computed<{
 // 注册 Dropdown 执行函数
 onMounted(() => {
     if (!dropdownRef.value) return
-    dropdownRef.value.register('switch-view-to-table', tasksMainTagStore.handleSwitchToTable)
-    dropdownRef.value.register('switch-view-to-kanban', tasksMainTagStore.handleSwitchToKanban)
-    dropdownRef.value.register('switch-view-to-list', tasksMainTagStore.handleSwitchToList)
-    dropdownRef.value.register('refresh-data', tasksMainTagStore.handleRefreshData)
-    dropdownRef.value.register('hide-completed', tasksMainTagStore.handleHideCompleted)
-    dropdownRef.value.register('update-preference', tasksMainTagStore.handleUpdatePreference)
-    dropdownRef.value.register('delete', tasksMainTagStore.handleDelete)
-    dropdownRef.value.register('update-color', tasksMainTagStore.handleUpdateColor)
+    dropdownRef.value.register('switch-view-to-table', tasksTagViewStore.handleSwitchToTable)
+    dropdownRef.value.register('switch-view-to-kanban', tasksTagViewStore.handleSwitchToKanban)
+    dropdownRef.value.register('switch-view-to-list', tasksTagViewStore.handleSwitchToList)
+    dropdownRef.value.register('refresh-data', tasksTagViewStore.handleRefreshData)
+    dropdownRef.value.register('hide-completed', tasksTagViewStore.handleHideCompleted)
+    dropdownRef.value.register('update-preference', tasksTagViewStore.handleUpdatePreference)
+    dropdownRef.value.register('delete', tasksTagViewStore.handleDelete)
+    dropdownRef.value.register('update-color', tasksTagViewStore.handleUpdateColor)
 })
 </script>
 

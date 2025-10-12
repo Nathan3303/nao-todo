@@ -1,9 +1,4 @@
-import type {
-    CreateTodoOptions,
-    GetTodosOptions,
-    Project,
-    TodoColumnOptions
-} from '@nao-todo/types'
+import type { CreateTodoOptions, GetTodosOptions, TodoColumnOptions } from '@nao-todo/types'
 
 export interface TasksMainViewProps {
     id: string
@@ -18,7 +13,4 @@ export interface TasksMainViewProps {
     }
     createTodoOptions: CreateTodoOptions
     extra?: Record<string, any>
-    readyState: number
 }
-
-export type TasksMainViewWatch = [string, string, Project['preference'], number]

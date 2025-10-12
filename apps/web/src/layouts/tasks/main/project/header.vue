@@ -5,7 +5,8 @@ import TasksMainProjectOperationsDropdown from './dropdowns/operations.vue'
 import TasksMainFilterDropdown from '@/components/tasks/dropdowns/filter-dropdown.vue'
 import { computed } from 'vue'
 
-defineOptions({ name: 'TasksMainProjectViewHeader' })
+defineOptions({ name: 'TasksMainProjectHeader' })
+defineProps<{ projectId?: string; viewType?: string; todoId?: string }>()
 
 const tasksViewStore = useTasksViewStore()
 const tasksDialogStore = useTasksDialogStore()

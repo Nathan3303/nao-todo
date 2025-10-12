@@ -1,16 +1,12 @@
 <script lang="ts" setup>
-import { inject } from 'vue'
 import { UserDropdown } from '@nao-todo/components'
 import { useUserStore, useViewStore } from '@/stores'
 import { storeToRefs } from 'pinia'
-import { type IndexViewCtx, IndexViewCtxKey } from '@nao-todo/types/views/index-view'
 
 defineOptions({ name: 'IndexAside' })
 
 const userStore = useUserStore()
 const viewStore = useViewStore()
-
-const indexViewCtx = inject<IndexViewCtx>(IndexViewCtxKey)
 
 const { user } = storeToRefs(userStore)
 
@@ -31,7 +27,7 @@ const routeLinks = [
         open-from="left"
         span="260px"
     >
-        <nue-container class="index-aside" theme="vertical,inner">
+        <nue-container id="AppAsideContainer" theme="vertical,inner">
             <nue-header height="70px">
                 <user-dropdown
                     :user="user"
@@ -39,8 +35,6 @@ const routeLinks = [
                     placement="bottom-start"
                     style="width: 100%"
                     @logout="userStore.signOutWithConfirmation"
-                    @show-profile="indexViewCtx?.dialogsRef.userProfile.value?.show"
-                    @update-passwd="indexViewCtx?.dialogsRef.updatePassword.value?.show"
                 />
             </nue-header>
             <nue-main>
@@ -58,7 +52,11 @@ const routeLinks = [
                             placement="right-center"
                             size="small"
                         >
-                            <nue-link :icon="rl.icon" :to="rl.route" theme="index-header-link" />
+                            <nue-link
+                                :icon="(rl.icon as never)"
+                                :to="rl.route"
+                                theme="index-header-link"
+                            />
                         </nue-tooltip>
                     </nue-div>
                 </slot>

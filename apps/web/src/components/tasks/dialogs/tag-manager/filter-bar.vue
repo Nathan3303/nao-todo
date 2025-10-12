@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import useTagManagerStore from './use-tag-manager-store'
+import { useTagManagerStore } from '@/stores/tasks'
 import { storeToRefs } from 'pinia'
 
 defineOptions({ name: 'TagManagerFilterBar' })

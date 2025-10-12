@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { storeToRefs } from 'pinia'
-import useProjectManagerStore from './use-project-manager-store'
+import { useProjectManagerStore } from '@/stores/tasks'
 import ProjectManagerFilterBar from './filter-bar.vue'
 import { useTasksDialogStore } from '@/stores/tasks'
 import { ProjectBoard } from '@nao-todo/components/project'

@@ -1,17 +1,17 @@
 import { ref, watch, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { storeToRefs } from 'pinia'
-import { useRouter } from 'vue-router'
-import { useTasksDataStore, useTasksViewStore, useTasksDialogStore } from '@/stores/tasks'
+import { useRouter, useRoute } from 'vue-router'
+import { useTasksDataStore, useTasksViewStore } from '@/stores/tasks'
 import { unwrapError } from '@nao-todo/utils'
 import type { GetTodosSortOptions } from '@nao-todo/types'
 
-const useTasksMainTagStore = defineStore('TasksMainTagStore', () => {
+const useTasksProjectViewStore = defineStore('TasksProjectViewStore', () => {
     // Router & Stores
     const tasksDataStore = useTasksDataStore()
     const tasksViewStore = useTasksViewStore()
-    const tasksDialogStore = useTasksDialogStore()
     const router = useRouter()
+    const route = useRoute()
 
     // @states 前置状态数据
     const { viewProps, responsiveFlag } = storeToRefs(tasksViewStore)
@@ -24,66 +24,62 @@ const useTasksMainTagStore = defineStore('TasksMainTagStore', () => {
     const loading = ref<boolean>(false)
     const error = ref<string>('')
 
-    // @state 当前加载标签 ID 记录 - 避免重复加载某些信息
-    // const iTagId = ref<Tag['id']>()
+    // @state 侦听信息标记 - 用于避免无效的重复请求
+    const loadMark = ref<string>('')
 
-    // @watch 当 viewProps 中相关数据变化时获取数据
+    // @method 加载待办任务数据
+    const getTodos = async (): Promise<boolean> => {
+        // 判断 viewProps 是否存在
+        if (!viewProps.value) return false
+        // 重置加载状态
+        loading.value = true
+        // 调用 API 请求数据
+        const err = await tasksDataStore.getTodos({
+            page: page.value,
+            limit: 20,
+            projectId: viewProps.value.id,
+            ...viewProps.value.preference.getTodosOptions
+        })
+        loading.value = false
+        // 处理失败结果
+        if (err) {
+            error.value = unwrapError(err)
+            return false
+        }
+        // 处理成功结果
+        error.value = ''
+        // 保存清单偏好（记录在清单数据中，以便偏好更新时直接传输）
+        // viewProps.value.preference.getTodosOptions = newGetTodosOptions
+        return true
+    }
+
+    // @watch 当相关数据变化时获取待办任务数据
     watch(
-        () => [viewProps.value?.readyState, page.value] as const,
-        async ([newReadyState, newPage]) => {
-            // 判断 newReadyState 是否为 3
-            if (newReadyState !== 3) return
-            // 判断 viewProps 是否存在
-            if (!viewProps.value) return
-            // 判断 viewProps.category 是否是 'tag'
-            if (viewProps.value.category !== 'tag') return
-            // 判断标签 Id 是否相同
-            // if (iTagId.value === viewProps.value.id) return
-            // 重置加载状态
-            loading.value = true
-            error.value = ''
-            // 调用 API 请求数据
-            const newGetTodosOptions = {
-                limit: 20,
-                tagId: viewProps.value.id,
-                ...viewProps.value.preference.getTodosOptions
-            }
-            const err = await tasksDataStore.getTodos({
-                page: newPage,
-                ...newGetTodosOptions
-            })
-            loading.value = false
-            // 处理失败结果
-            if (err) {
-                error.value = unwrapError(err)
+        () => [viewProps.value?.id, page.value] as const,
+        async ([newId, newPage]) => {
+            // 判断路由分类是否是 project，不是则置空 loadMark
+            if (route.meta.category !== 'project') {
+                loadMark.value = ''
                 return
             }
-            // 保存标签偏好（记录在标签数据中，以便偏好更新时直接传输）
-            viewProps.value.preference.getTodosOptions = newGetTodosOptions
-            // 记录已请求的标签 Id，避免重复请求
-            // iTagId.value = viewProps.value.id
+            // 构建 newLoadMark
+            const newLoadMark = `${newId}-${newPage}`
+            // console.log(route.meta.category, loadMark.value, '->', newLoadMark)
+            // 判断 loadMark 是否相同
+            if (newLoadMark === loadMark.value) return
+            // 请求数据
+            const ok = await getTodos()
+            // 处理失败结果
+            if (!ok) return
+            // 记录 newLoadMark
+            loadMark.value = newLoadMark
         },
         { immediate: true }
     )
 
-    // @watch 监听 todos 变化，当 todos 为空时改变 error 值
-    watch(
-        () => todos.value,
-        (newVal) => {
-            // 判断待办结果是否为空
-            if (newVal.length === 0) {
-                error.value = '当前暂无待办'
-                return
-            }
-            // 处理成功结果
-            error.value = ''
-        },
-        { deep: true, immediate: true }
-    )
-
     // @method 查看待办任务详细信息
     const showTodoDetails = async (id: string) => {
-        await router.push({ name: 'tasks-tag', params: { todoId: id as string } })
+        await router.push({ name: 'tasks-project-main', params: { todoId: id as string } })
     }
 
     // @method 处理分页每页记录数变化
@@ -96,11 +92,8 @@ const useTasksMainTagStore = defineStore('TasksMainTagStore', () => {
     // @method 处理排序数据变化
     const handleUpdateSortOptions = (newSortOptions: GetTodosSortOptions | null) => {
         if (!viewProps.value) return
-        if (newSortOptions === null) {
-            viewProps.value.preference.getTodosOptions.sort = void 0
-            return
-        }
-        viewProps.value.preference.getTodosOptions.sort = newSortOptions
+        viewProps.value.preference.getTodosOptions.sort = newSortOptions || void 0
+        getTodos()
     }
 
     // @state 上一次重新加载时间以及允许重新加载状态（五秒等待时间）
@@ -162,9 +155,8 @@ const useTasksMainTagStore = defineStore('TasksMainTagStore', () => {
         handleSwitchToList: () => tasksViewStore.switchView('list'),
         handleSwitchToKanban: () => tasksViewStore.switchView('kanban'),
         handleUpdatePreference: tasksViewStore.updatePreference,
-        handleDelete: () => tasksDataStore.deleteTag(viewProps.value!.id),
-        handleUpdateColor: () => tasksDialogStore.tagColorUpdater?.open(viewProps.value!.id)
+        handleDelete: () => tasksDataStore.deleteProject(viewProps.value!.id)
     }
 })
 
-export default useTasksMainTagStore
+export default useTasksProjectViewStore
