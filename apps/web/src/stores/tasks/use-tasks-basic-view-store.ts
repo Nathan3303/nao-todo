@@ -25,7 +25,7 @@ const useTasksBasicViewStore = defineStore('TasksBasicViewStore', () => {
     const error = ref<string>('')
 
     // @state 侦听信息标记 - 用于避免无效的重复请求
-    const loadMark = ref<string>('')
+    // const loadMark = ref<string>('')
 
     // @method 加载待办任务数据
     const getTodos = async (useLoading: boolean = false): Promise<boolean> => {
@@ -52,24 +52,24 @@ const useTasksBasicViewStore = defineStore('TasksBasicViewStore', () => {
 
     // @watch 当相关数据变化时获取待办任务数据
     watch(
-        () => [viewProps.value?.id, page.value] as const,
-        async ([newId, newPage]) => {
+        () => viewProps.value?.id,
+        async () => {
             // 判断路由分类是否是 basic，不是则置空 loadMark
             if (route.meta.category !== 'basic') {
-                loadMark.value = ''
+                //     loadMark.value = ''
                 return
             }
             // 构建 newLoadMark
-            const newLoadMark = `${newId}-${newPage}`
+            // const newLoadMark = `${newId}`
             // console.log(route.meta.category, loadMark.value, '->', newLoadMark)
             // 判断 loadMark 是否相同
-            if (newLoadMark === loadMark.value) return
+            // if (newLoadMark === loadMark.value) return
             // 请求数据
-            const ok = await getTodos(true)
+            await getTodos(true)
             // 处理失败结果
-            if (!ok) return
+            // if (!ok) return
             // 记录 newLoadMark
-            loadMark.value = newLoadMark
+            // loadMark.value = newLoadMark
         },
         { immediate: true }
     )
@@ -84,13 +84,20 @@ const useTasksBasicViewStore = defineStore('TasksBasicViewStore', () => {
         if (!viewProps.value) return
         viewProps.value.preference.getTodosOptions.limit = limit
         page.value = 1
+        getTodos()
+    }
+
+    // @method 处理分页页码变化
+    const handleUpdatePage = (newPage: number) => {
+        page.value = newPage
+        getTodos()
     }
 
     // @method 处理排序数据变化
     const handleUpdateSortOptions = (newSortOptions: GetTodosSortOptions | null) => {
         if (!viewProps.value) return
         viewProps.value.preference.getTodosOptions.sort = newSortOptions || void 0
-        getTodos()
+        getTodos(true)
     }
 
     // @state 上一次重新加载时间以及允许重新加载状态（五秒等待时间）
@@ -150,6 +157,7 @@ const useTasksBasicViewStore = defineStore('TasksBasicViewStore', () => {
         isHideCompletedAlready,
         getTodos,
         showTodoDetails,
+        handleUpdatePage,
         handleUpdatePerPage,
         handleUpdateSortOptions,
         handleClearSortOptions: () => handleUpdateSortOptions(null),

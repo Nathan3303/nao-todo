@@ -1,12 +1,13 @@
-import type { NueIconName } from "nue-ui"
+import type { NueIconName } from 'nue-ui'
 
 export type InnerDropdownProps = {
     title?: string
     icon?: NueIconName
-    hideOnClicked?: boolean
+    closeWhenExecuted?: boolean
     suffix?: number | boolean
     disabled?: boolean
     group?: string
+    transparent?: boolean
 }
 
 export type InnerDropdownEmits = {

@@ -1,6 +1,8 @@
 import DivBlock from './div-block.vue'
+import Loading from './loading.vue'
+import Pager from './pager.vue'
 
-export { DivBlock }
+export { DivBlock, Loading, Pager }
 
 export * from './color-dot'
 export * from './router-link'

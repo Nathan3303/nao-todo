@@ -33,10 +33,10 @@ watch(
     () => props.todoId,
     async (newTodoId) => {
         // 重置加载状态
-        loading.value = true
+        // loading.value = true
         // 获取检查事项
         const err = await tasksDataStore.getComments({ todoId: newTodoId })
-        loading.value = false
+        // loading.value = false
         // 处理失败结果
         if (err) {
             error.value = unwrapError(err)

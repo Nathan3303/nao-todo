@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { useTasksViewStore, useTasksDialogStore } from '@/stores/tasks'
-import TasksMainTagOperationsDropdown from './dropdowns/operations.vue'
+import { useTasksViewStore, useTasksDialogStore, useTasksTagViewStore } from '@/stores/tasks'
+import { TasksTagViewOperationsDropdown, TasksTodoFilterDropdown } from '@/components/tasks'
 import { computed } from 'vue'
 
-defineOptions({ name: 'TasksMainTagViewHeader' })
+defineOptions({ name: 'TasksMainTagHeader' })
+defineProps<{ tagId?: string; viewType?: string; todoId?: string }>()
 
 const tasksViewStore = useTasksViewStore()
 const tasksDialogStore = useTasksDialogStore()
+const tasksTagViewStore = useTasksTagViewStore()
 
 const { viewProps, isDisplayAside } = storeToRefs(tasksViewStore)
 
@@ -43,7 +45,8 @@ const openTodoCreator = () => {
                 <nue-tooltip content="新增待办" size="small" @click="openTodoCreator">
                     <nue-button icon="plus" theme="icon,ghost" />
                 </nue-tooltip>
-                <tasks-main-tag-operations-dropdown />
+                <tasks-todo-filter-dropdown @get-todos="tasksTagViewStore.getTodos" />
+                <tasks-tag-view-operations-dropdown />
             </nue-div>
         </nue-div>
         <nue-text

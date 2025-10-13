@@ -43,18 +43,6 @@ const { refreshKey, startRefresh, stopRefresh } = useRefreshKey()
 
 onMounted(() => {
     startRefresh()
-    if (window.ResizeObserver) {
-        const element = todoTableMainContentRef.value!
-        // 创建 ResizeObserver 实例
-        resizeObserver = new ResizeObserver((entries) => {
-            for (let entry of entries) {
-                const target = entry.target
-                hasScrollBar.value = target.scrollHeight > target.clientHeight
-            }
-        })
-        // 开始监听目标元素
-        resizeObserver.observe(element.$el)
-    }
 })
 
 onBeforeUnmount(() => {
@@ -95,32 +83,14 @@ defineExpose({
 
 <template>
     <nue-container id="TodoTableContainer" :style="{ '--min-width': tableMinWidth }">
-        <nue-header :data-scrolling="hasScrollBar">
+        <nue-header>
             <TodoTableHeader />
         </nue-header>
         <nue-divider />
         <nue-main>
-            <nue-content fill ref="todoTableMainContentRef">
+            <nue-content style="overflow: hidden">
                 <TodoTableMain />
             </nue-content>
         </nue-main>
     </nue-container>
 </template>
-
-<style scoped>
-.nue-container#TodoTableContainer {
-    gap: 0.5rem;
-
-    > .nue-header,
-    > .nue-main,
-    > .nue-footer {
-        padding: 0;
-        border: none;
-        height: auto;
-    }
-
-    > .nue-header[data-scrolling='true'] {
-        padding-right: 10px;
-    }
-}
-</style>

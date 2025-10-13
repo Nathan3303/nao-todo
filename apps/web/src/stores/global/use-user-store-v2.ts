@@ -13,6 +13,7 @@ import {
     updateNicknameApi,
     updatePasswordApi
 } from '@nao-todo/apis/v2'
+import { unwrapError } from '@nao-todo/utils'
 
 const USER_JWT_LOCALSTORAGE_KEY = 'USER_JWT'
 const BASE_URL = 'http://localhost:3303/api/user/'
@@ -28,10 +29,16 @@ const useUserStoreV2 = defineStore('UserStore', () => {
     const requester = useAxios(BASE_URL)
     const router = useRouter()
 
+    // @state 用户信息
     const user = ref<User>()
+
+    // @state 用户 JWT
     const userJwt = ref<string>()
+
+    // @state 用户认证状态
     const isAuthenticated = ref<boolean>()
 
+    // @method 用户注册
     const signup = async (options: SignupOptions, req?: Requester): Promise<GoLike> => {
         // 检查属性值
         if (options.email === '') return [null, '请输入邮箱']
@@ -50,6 +57,7 @@ const useUserStoreV2 = defineStore('UserStore', () => {
         return [null, result.message]
     }
 
+    // @method 用户登录
     const signin = async (options: SigninOptions, req?: Requester): Promise<GoLike> => {
         // 检查属性值
         if (options.email === '') return [null, '请输入邮箱']
@@ -71,6 +79,7 @@ const useUserStoreV2 = defineStore('UserStore', () => {
         return [null, result.message]
     }
 
+    // @method 用户检入 - 用户二次登录简单校验
     const checkin = async (req?: Requester): Promise<GoLike> => {
         // 获取并检查属性值
         const localUserJwt = localStorage.getItem(USER_JWT_LOCALSTORAGE_KEY)
@@ -99,6 +108,7 @@ const useUserStoreV2 = defineStore('UserStore', () => {
         return [null, result.message]
     }
 
+    // @method 用户登出
     const signout = async (req?: Requester): Promise<GoLike> => {
         // 检查属性值
         if (!userJwt.value) return [null, '用户凭证无效,已登出']
@@ -116,6 +126,20 @@ const useUserStoreV2 = defineStore('UserStore', () => {
         return [null, result.message]
     }
 
+    // @method 用户登出并跳转登录页
+    const signoutAndRedirect = async (req?: Requester): Promise<GoLike> => {
+        // 调用登出 API
+        const [, err] = await signout(req || requester)
+        // 判断是否成功
+        if (err) {
+            console.error(unwrapError(err))
+            return [null, err]
+        }
+        router.push({ path: '/auth/signin' })
+        return [null, null]
+    }
+
+    // @method 更新用户昵称
     const updateNickname = async (newNickname: string, req?: Requester): Promise<GoLike> => {
         // 检查是否登录
         if (!isAuthenticated.value) return [null, '请先登录']
@@ -133,6 +157,7 @@ const useUserStoreV2 = defineStore('UserStore', () => {
         return [null, result.message]
     }
 
+    // @method 更新用户密码
     const updatePassword = async (
         oldPassword: string,
         newPassword: string,
@@ -193,6 +218,7 @@ const useUserStoreV2 = defineStore('UserStore', () => {
         signup,
         checkin,
         signout,
+        signoutAndRedirect,
         updateNickname,
         updatePassword
         // updateAvatar

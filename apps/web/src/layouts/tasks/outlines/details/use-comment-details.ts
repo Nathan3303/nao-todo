@@ -2,10 +2,12 @@ import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTasksDataStore } from '@/stores/tasks'
 import { NueMessage } from 'nue-ui'
+import { useRoute } from 'vue-router'
 import type { Todo } from '@nao-todo/types'
 
 export const useCommentDetails = (todoId?: Todo['id']) => {
     const tasksDataStore = useTasksDataStore()
+    const route = useRoute()
 
     const { comments } = storeToRefs(tasksDataStore)
     const isCommenting = ref(false)
@@ -18,9 +20,9 @@ export const useCommentDetails = (todoId?: Todo['id']) => {
     }
 
     const handleLeaveComment = async (content: string) => {
-        if (!todoId) return false
+        const _todoId = todoId || route.params.todoId as Todo['id']
         const err = await tasksDataStore.createComment({
-            todoId: todoId,
+            todoId: _todoId,
             content: content
         })
         if (err) {

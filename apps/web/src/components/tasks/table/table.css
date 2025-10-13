@@ -4,15 +4,28 @@
     min-width: max(100%, var(--min-width));
     align-items: start;
     flex-direction: column;
-    gap: 4px;
-    overflow: auto;
     flex-wrap: nowrap;
     box-sizing: border-box;
-
+    gap: 0.5rem;
+    width: auto;
+    height: auto;
+    overflow: hidden;
     -webkit-user-select: none;
     user-select: none;
+    position: relative;
+
+    > .nue-header,
+    > .nue-main,
+    > .nue-footer {
+        padding: 0;
+        border: none;
+        height: auto;
+    }
 
     .nue-header {
+        position: sticky;
+        top: 0;
+        left: 0;
         width: 100%;
 
         .todo-table__header {
@@ -58,12 +71,12 @@
                 }
 
                 &[data-done='true'] * {
-                    opacity: 0.9;
+                    opacity: 0.8;
                     transition: opacity 0.16s ease;
                 }
 
                 &[data-deleted='true'] {
-                    opacity: 0.8;
+                    opacity: 0.7;
                     transition: opacity 0.16s ease;
 
                     & *::after {

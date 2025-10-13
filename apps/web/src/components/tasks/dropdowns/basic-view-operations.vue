@@ -2,7 +2,8 @@
 import { onMounted, ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTasksViewStore } from '@/stores/tasks'
-import { TasksOperationsDropdown, TasksDropdownDivBlock } from '@/components/tasks/dropdowns'
+import TasksOperationsDropdown from './operations-dropdown.vue'
+import TasksDropdownDivBlock from '@/components/ui/div-block.vue'
 import { getColumnText } from '@/components/tasks/table/utils'
 import { useTasksBasicViewStore } from '@/stores/tasks'
 import {
@@ -12,7 +13,7 @@ import {
 } from '@/components/ui/inner-dropdown'
 import type { TodoColumnOptions } from '@nao-todo/types'
 
-defineOptions({ name: 'TasksMainBasicOperationsDropdown' })
+defineOptions({ name: 'TasksBasicViewOperationsDropdown' })
 
 const tasksViewStore = useTasksViewStore()
 const tasksBasicViewStore = useTasksBasicViewStore()
@@ -59,19 +60,19 @@ onMounted(() => {
     <tasks-operations-dropdown v-if="viewProps" ref="dropdownRef">
         <tasks-dropdown-div-block title="视图切换">
             <inner-dropdown-option
-                icon="theme"
+                icon="table"
                 title="表格视图"
                 execute-id="switch-view-to-table"
                 :checked="viewProps.preference.viewType === 'table'"
             />
             <inner-dropdown-option
-                icon="theme"
+                icon="kanban"
                 title="看板视图"
                 execute-id="switch-view-to-kanban"
                 :checked="viewProps.preference.viewType === 'kanban'"
             />
             <inner-dropdown-option
-                icon="theme"
+                icon="list"
                 title="列表视图"
                 execute-id="switch-view-to-list"
                 :checked="viewProps.preference.viewType === 'list'"
@@ -95,6 +96,7 @@ onMounted(() => {
                 title="显示与隐藏列"
                 @click.stop
                 :suffix="sortFieldDropdownOptions.count"
+                :close-when-executed="false"
             >
                 <inner-dropdown-option
                     v-for="option in sortFieldDropdownOptions.options"

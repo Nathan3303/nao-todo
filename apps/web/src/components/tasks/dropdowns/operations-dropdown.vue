@@ -13,7 +13,7 @@ defineExpose({ register })
     <nue-dropdown
         placement="bottom-end"
         size="small"
-        @execute="(executeId: string) => execute(executeId)"
+        @execute="(executeId) => execute(executeId)"
         theme="menu"
         group="tasks-operations-dropdown"
     >

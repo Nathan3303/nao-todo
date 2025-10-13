@@ -63,6 +63,7 @@ html.nue-html {
 }
 
 .nue-dropdown.nue-dropdown--menu {
+    min-width: 12rem;
     padding: 2px 0;
 
     .nue-dropdown-wrapper {

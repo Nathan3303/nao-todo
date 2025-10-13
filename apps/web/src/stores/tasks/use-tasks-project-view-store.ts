@@ -28,11 +28,11 @@ const useTasksProjectViewStore = defineStore('TasksProjectViewStore', () => {
     const loadMark = ref<string>('')
 
     // @method 加载待办任务数据
-    const getTodos = async (): Promise<boolean> => {
+    const getTodos = async (useLoading: boolean = false): Promise<boolean> => {
         // 判断 viewProps 是否存在
         if (!viewProps.value) return false
         // 重置加载状态
-        loading.value = true
+        loading.value = useLoading && true
         // 调用 API 请求数据
         const err = await tasksDataStore.getTodos({
             page: page.value,
@@ -40,7 +40,7 @@ const useTasksProjectViewStore = defineStore('TasksProjectViewStore', () => {
             projectId: viewProps.value.id,
             ...viewProps.value.preference.getTodosOptions
         })
-        loading.value = false
+        loading.value = useLoading && false
         // 处理失败结果
         if (err) {
             error.value = unwrapError(err)
@@ -55,20 +55,20 @@ const useTasksProjectViewStore = defineStore('TasksProjectViewStore', () => {
 
     // @watch 当相关数据变化时获取待办任务数据
     watch(
-        () => [viewProps.value?.id, page.value] as const,
-        async ([newId, newPage]) => {
+        () => viewProps.value?.id,
+        async (newId) => {
             // 判断路由分类是否是 project，不是则置空 loadMark
             if (route.meta.category !== 'project') {
                 loadMark.value = ''
                 return
             }
             // 构建 newLoadMark
-            const newLoadMark = `${newId}-${newPage}`
+            const newLoadMark = `${newId}`
             // console.log(route.meta.category, loadMark.value, '->', newLoadMark)
             // 判断 loadMark 是否相同
             if (newLoadMark === loadMark.value) return
             // 请求数据
-            const ok = await getTodos()
+            const ok = await getTodos(true)
             // 处理失败结果
             if (!ok) return
             // 记录 newLoadMark
@@ -85,8 +85,9 @@ const useTasksProjectViewStore = defineStore('TasksProjectViewStore', () => {
     // @method 处理分页每页记录数变化
     const handleUpdatePerPage = (limit: number) => {
         if (!viewProps.value) return
-        page.value = 1
         viewProps.value.preference.getTodosOptions.limit = limit
+        page.value = 1
+        getTodos()
     }
 
     // @method 处理排序数据变化
@@ -131,6 +132,13 @@ const useTasksProjectViewStore = defineStore('TasksProjectViewStore', () => {
         await tasksViewStore.refreshData()
     }
 
+    // @method 处理切换视图
+    const handleSwitchView = (viewType: string) => {
+        if (loading.value) return
+        tasksViewStore.switchView(viewType)
+        router.push({ name: 'tasks-project-main', params: { viewType } })
+    }
+
     // @returns
     return {
         responsiveFlag,
@@ -143,6 +151,7 @@ const useTasksProjectViewStore = defineStore('TasksProjectViewStore', () => {
         viewProps,
         allowReload,
         isHideCompletedAlready,
+        getTodos,
         showTodoDetails,
         handleUpdatePerPage,
         handleUpdateSortOptions,
@@ -151,9 +160,9 @@ const useTasksProjectViewStore = defineStore('TasksProjectViewStore', () => {
         restoreTodo: tasksDataStore.restoreTodo,
         handleRefreshData,
         handleHideCompleted,
-        handleSwitchToTable: () => tasksViewStore.switchView('table'),
-        handleSwitchToList: () => tasksViewStore.switchView('list'),
-        handleSwitchToKanban: () => tasksViewStore.switchView('kanban'),
+        handleSwitchToTable: () => handleSwitchView('table'),
+        handleSwitchToList: () => handleSwitchView('list'),
+        handleSwitchToKanban: () => handleSwitchView('kanban'),
         handleUpdatePreference: tasksViewStore.updatePreference,
         handleDelete: () => tasksDataStore.deleteProject(viewProps.value!.id)
     }

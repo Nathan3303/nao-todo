@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { TodoTable } from '@/components/tasks/table'
-import { Loading as LoadingComp, Pager } from '@nao-todo/components'
+import { Loading as LoadingComp, Pager } from '@/components/ui'
 import { useTasksProjectViewStore } from '@/stores/tasks'
 
 defineOptions({ name: 'TasksMainProjectViewTable' })
@@ -40,7 +40,7 @@ const { responsiveFlag, todos, pagination, tags, loading, error, page, viewProps
         <nue-footer v-if="!error && todos.length !== 0">
             <nue-div v-if="pagination" align="center" justify="space-between">
                 <nue-text color="gray" flex size="12px">
-                    当前列表 {{ pagination.limit || 0 }} 项， 共计 {{ pagination.total || 0 }} 项。
+                    当前列表 {{ pagination.current || 0 }} 项， 共计 {{ pagination.total || 0 }} 项。
                 </nue-text>
                 <pager
                     :limit="pagination.limit"

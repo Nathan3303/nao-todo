@@ -2,7 +2,8 @@
 import { onMounted, ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTasksViewStore } from '@/stores/tasks'
-import { TasksOperationsDropdown, TasksDropdownDivBlock } from '@/components/tasks/dropdowns'
+import TasksOperationsDropdown from './operations-dropdown.vue'
+import TasksDropdownDivBlock from '@/components/ui/div-block.vue'
 import { getColumnText } from '@/components/tasks/table/utils'
 import { useTasksTagViewStore } from '@/stores/tasks'
 import type { TodoColumnOptions } from '@nao-todo/types'
@@ -12,7 +13,7 @@ import {
     type InnerDropdownOptionVO
 } from '@/components/ui/inner-dropdown'
 
-defineOptions({ name: 'TasksMainTagOperationsDropdown' })
+defineOptions({ name: 'TasksTagViewOperationsDropdown' })
 
 const tasksViewStore = useTasksViewStore()
 const tasksTagViewStore = useTasksTagViewStore()
@@ -62,21 +63,21 @@ onMounted(() => {
     <tasks-operations-dropdown v-if="viewProps" ref="dropdownRef">
         <tasks-dropdown-div-block title="视图切换">
             <inner-dropdown-option
-                icon="theme"
+                icon="table"
                 title="表格视图"
                 execute-id="switch-view-to-table"
                 :checked="viewProps.preference.viewType === 'table'"
                 :disabled="loading"
             />
             <inner-dropdown-option
-                icon="theme"
+                icon="kanban"
                 title="看板视图"
                 execute-id="switch-view-to-kanban"
                 :checked="viewProps.preference.viewType === 'kanban'"
                 :disabled="loading"
             />
             <inner-dropdown-option
-                icon="theme"
+                icon="list"
                 title="列表视图"
                 execute-id="switch-view-to-list"
                 :checked="viewProps.preference.viewType === 'list'"
@@ -102,7 +103,7 @@ onMounted(() => {
                 title="显示与隐藏列"
                 @click.stop
                 :suffix="sortFieldDropdownOptions.count"
-                group="tasks-view-operations"
+                :close-when-executed="false"
             >
                 <inner-dropdown-option
                     v-for="option in sortFieldDropdownOptions.options"

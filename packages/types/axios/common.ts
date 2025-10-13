@@ -3,6 +3,7 @@ export type ResponseDataPagination = {
     page: number
     limit: number
     maxPage: number
+    current: number
 }
 
 export type ResponseData = {

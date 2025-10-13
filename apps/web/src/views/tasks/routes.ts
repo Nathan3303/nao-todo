@@ -1,21 +1,13 @@
 import type { RouteRecordRaw } from 'vue-router'
 
-const viewIdOptions = 'all|today|tomorrow|week|inbox|overdue|favourite|givenup|deleted'
-
 const routes: RouteRecordRaw = {
     path: 'tasks',
     name: 'tasks',
     component: () => import('./index.vue'),
     redirect: { name: 'tasks-basic', params: { viewId: 'all' } },
     children: [
-        // {
-        //     path: `project/:projectId(${viewIdOptions})/:todoId?`,
-        //     name: 'tasks-basic',
-        //     meta: { category: 'basic' },
-        //     component: () => import('./tasks-basic.vue')
-        // }
         {
-            path: `:viewId(${viewIdOptions})`,
+            path: `:viewId(all|today|tomorrow|week|inbox|overdue|favourite|givenup|deleted)`,
             name: 'tasks-basic',
             meta: { category: 'basic' },
             props: true,

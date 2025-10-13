@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useTasksBasicViewStore } from '@/stores/tasks'
 import { TodoTable } from '@/components/tasks/table'
-import { Loading as LoadingComp, Pager } from '@nao-todo/components'
+import { Loading as LoadingComp, Pager } from '@/components/ui'
 import { storeToRefs } from 'pinia'
 
 defineOptions({ name: 'TasksMainBasicViewTable' })
@@ -23,7 +23,7 @@ const { responsiveFlag, todos, pagination, tags, loading, error, page, viewProps
                 :description="error || '当前暂无待办，放松一下吧!'"
                 style="height: 100%"
             />
-            <nue-content v-else fill>
+            <nue-content v-else fill style="overflow: auto">
                 <todo-table
                     :column-options="viewProps.preference.columns"
                     :sort-options="viewProps.preference.getTodosOptions.sort"
@@ -40,7 +40,8 @@ const { responsiveFlag, todos, pagination, tags, loading, error, page, viewProps
         <nue-footer v-if="!error && todos.length !== 0">
             <nue-div v-if="pagination" align="center" justify="space-between">
                 <nue-text color="gray" flex size="12px">
-                    当前列表 {{ pagination.limit || 0 }} 项， 共计 {{ pagination.total || 0 }} 项。
+                    当前列表 {{ pagination.current || 0 }} 项， 共计
+                    {{ pagination.total || 0 }} 项。
                 </nue-text>
                 <pager
                     :limit="pagination.limit"
@@ -48,7 +49,7 @@ const { responsiveFlag, todos, pagination, tags, loading, error, page, viewProps
                     :total-pages="pagination.maxPage"
                     :simple="responsiveFlag <= 1"
                     @per-page-change="tasksBasicViewStore.handleUpdatePerPage"
-                    @page-change="(p) => (page = p)"
+                    @page-change="tasksBasicViewStore.handleUpdatePage"
                 />
             </nue-div>
         </nue-footer>

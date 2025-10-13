@@ -20,7 +20,7 @@ const { viewProps } = storeToRefs(tasksViewStore)
 watch(
     () => props.projectId,
     async (newId) => {
-        // 判断 viewId 是否为空
+        // 判断 projectId 是否为空
         if (!newId) {
             error.message = '参数错误'
             return

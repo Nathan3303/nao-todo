@@ -14,7 +14,7 @@ const props = defineProps<DetailsMainEventsProps>()
 const tasksDataStore = useTasksDataStore()
 
 const { events } = storeToRefs(tasksDataStore)
-const loading = ref(true)
+const loading = ref(false)
 const error = ref('')
 
 const handleCreateEvent = async (payload: InputButtonSubmitPayload) => {
@@ -39,10 +39,10 @@ watch(
     () => props.todoId,
     async (newTodoId) => {
         // 重置加载状态
-        loading.value = true
+        // loading.value = true
         // 获取检查事项
         const err = await tasksDataStore.getEvents({ todoId: newTodoId })
-        loading.value = false
+        // loading.value = false
         // 处理失败结果
         if (err) {
             error.value = unwrapError(err)

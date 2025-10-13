@@ -2,8 +2,10 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTasksViewStore, useTasksDialogStore, useTasksBasicViewStore } from '@/stores/tasks'
-import TasksMainBasicOperationsDropdown from './dropdowns/operations.vue'
-import TasksMainFilterDropdown from './dropdowns/filters.vue'
+import {
+    TasksTodoFilterDropdown,
+    TasksBasicViewOperationsDropdown
+} from '@/components/tasks/dropdowns'
 
 defineOptions({ name: 'TasksMainBasicHeader' })
 defineProps<{ viewId?: string; viewType?: string; todoId?: string }>()
@@ -49,8 +51,8 @@ const openTodoCreator = () => {
                 >
                     <nue-button icon="plus" theme="icon,ghost" />
                 </nue-tooltip>
-                <tasks-main-filter-dropdown @get-todos="tasksBasicViewStore.getTodos" />
-                <tasks-main-basic-operations-dropdown />
+                <tasks-todo-filter-dropdown @get-todos="tasksBasicViewStore.getTodos" />
+                <tasks-basic-view-operations-dropdown />
             </nue-div>
         </nue-div>
         <nue-text

@@ -29,11 +29,11 @@ const useTasksTagViewStore = defineStore('TasksTagViewStore', () => {
     const loadMark = ref<string>('')
 
     // @method 加载待办任务数据
-    const getTodos = async (): Promise<boolean> => {
+    const getTodos = async (useLoading: boolean = false): Promise<boolean> => {
         // 判断 viewProps 是否存在
         if (!viewProps.value) return false
         // 重置加载状态
-        loading.value = true
+        loading.value = useLoading && true
         // 调用 API 请求数据
         const err = await tasksDataStore.getTodos({
             page: page.value,
@@ -41,7 +41,7 @@ const useTasksTagViewStore = defineStore('TasksTagViewStore', () => {
             tagId: viewProps.value.id,
             ...viewProps.value.preference.getTodosOptions
         })
-        loading.value = false
+        loading.value = useLoading && false
         // 处理失败结果
         if (err) {
             error.value = unwrapError(err)
@@ -69,7 +69,7 @@ const useTasksTagViewStore = defineStore('TasksTagViewStore', () => {
             // 判断 loadMark 是否相同
             if (newLoadMark === loadMark.value) return
             // 请求数据
-            const ok = await getTodos()
+            const ok = await getTodos(true)
             // 处理失败结果
             if (!ok) return
             // 记录 newLoadMark
@@ -135,6 +135,13 @@ const useTasksTagViewStore = defineStore('TasksTagViewStore', () => {
         await tasksViewStore.refreshData()
     }
 
+    // @method 处理切换视图
+    const handleSwitchView = (viewType: string) => {
+        if (loading.value) return
+        tasksViewStore.switchView(viewType)
+        router.push({ name: 'tasks-tag-main', params: { viewType } })
+    }
+
     // @returns
     return {
         responsiveFlag,
@@ -147,6 +154,7 @@ const useTasksTagViewStore = defineStore('TasksTagViewStore', () => {
         viewProps,
         allowReload,
         isHideCompletedAlready,
+        getTodos,
         showTodoDetails,
         handleUpdatePerPage,
         handleUpdateSortOptions,
@@ -155,9 +163,9 @@ const useTasksTagViewStore = defineStore('TasksTagViewStore', () => {
         restoreTodo: tasksDataStore.restoreTodo,
         handleRefreshData,
         handleHideCompleted,
-        handleSwitchToTable: () => tasksViewStore.switchView('table'),
-        handleSwitchToList: () => tasksViewStore.switchView('list'),
-        handleSwitchToKanban: () => tasksViewStore.switchView('kanban'),
+        handleSwitchToTable: () => handleSwitchView('table'),
+        handleSwitchToList: () => handleSwitchView('list'),
+        handleSwitchToKanban: () => handleSwitchView('kanban'),
         handleUpdatePreference: tasksViewStore.updatePreference,
         handleDelete: () => tasksDataStore.deleteTag(viewProps.value!.id),
         handleUpdateColor: () => tasksDialogStore.tagColorUpdater?.open(viewProps.value!.id)

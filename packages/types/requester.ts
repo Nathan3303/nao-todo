@@ -1,8 +1,11 @@
+import type { AxiosInstance } from 'axios'
+
 type RequesterOpRtn = Record<string, any> & { data: unknown }
 
 type RequesterConfig = Record<any, any>
 
 export type Requester = {
+    _instance: AxiosInstance
     name: 'AxiosRequester' | 'UniRequester'
     baseURL: string
     get: (url: string, config?: RequesterConfig) => Promise<RequesterOpRtn>

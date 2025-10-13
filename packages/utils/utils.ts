@@ -36,7 +36,9 @@ export const stringifyGetOptions = <T>(
         }
         const valRaw = options[key as keyof T]
         let val: string = ''
-        if (typeof valRaw === 'object') {
+        if (valRaw === void 0 || valRaw === null || valRaw === '') {
+            continue
+        } else if (typeof valRaw === 'object') {
             val = JSON.stringify(valRaw)
         } else if (Array.isArray(valRaw)) {
             val = (valRaw as unknown[]).join(',')

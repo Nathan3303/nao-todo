@@ -2,7 +2,8 @@
 import { onMounted, ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTasksViewStore } from '@/stores/tasks'
-import { TasksOperationsDropdown, TasksDropdownDivBlock } from '@/components/tasks/dropdowns'
+import TasksOperationsDropdown from './operations-dropdown.vue'
+import TasksDropdownDivBlock from '@/components/ui/div-block.vue'
 import {
     InnerDropdown,
     InnerDropdownOption,
@@ -12,13 +13,13 @@ import type { TodoColumnOptions } from '@nao-todo/types'
 import { useTasksProjectViewStore } from '@/stores/tasks'
 import { getColumnText } from '@/components/tasks/table/utils'
 
-defineOptions({ name: 'TasksMainProjectOperationsDropdown' })
+defineOptions({ name: 'TasksProjectViewOperationsDropdown' })
 
 const tasksViewStore = useTasksViewStore()
 const tasksProjectViewStore = useTasksProjectViewStore()
 
 const { viewProps } = storeToRefs(tasksViewStore)
-const { allowReload, loading, isHideCompletedAlready } = storeToRefs(tasksProjectViewStore)
+const { allowReload, isHideCompletedAlready } = storeToRefs(tasksProjectViewStore)
 const dropdownRef = ref<InstanceType<typeof TasksOperationsDropdown>>()
 
 // @computed 列选项转下拉列表项
@@ -61,25 +62,22 @@ onMounted(() => {
     <tasks-operations-dropdown v-if="viewProps" ref="dropdownRef">
         <tasks-dropdown-div-block title="视图切换">
             <inner-dropdown-option
-                icon="theme"
+                icon="table"
                 title="表格视图"
                 execute-id="switch-view-to-table"
                 :checked="viewProps.preference.viewType === 'table'"
-                :disabled="loading"
             />
             <inner-dropdown-option
-                icon="theme"
+                icon="kanban"
                 title="看板视图"
                 execute-id="switch-view-to-kanban"
                 :checked="viewProps.preference.viewType === 'kanban'"
-                :disabled="loading"
             />
             <inner-dropdown-option
-                icon="theme"
+                icon="list"
                 title="列表视图"
                 execute-id="switch-view-to-list"
                 :checked="viewProps.preference.viewType === 'list'"
-                :disabled="loading"
             />
         </tasks-dropdown-div-block>
         <nue-divider />
@@ -101,7 +99,7 @@ onMounted(() => {
                 title="显示与隐藏列"
                 @click.stop
                 :suffix="sortFieldDropdownOptions.count"
-                group="tasks-view-operations"
+                :close-when-executed="false"
             >
                 <inner-dropdown-option
                     v-for="option in sortFieldDropdownOptions.options"

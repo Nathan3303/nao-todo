@@ -2,7 +2,9 @@
     <li :data-executeid="executeId" :data-disabled="disabled">
         <nue-icon :name="icon as never" size="14px" />
         {{ title }}
-        <nue-icon v-if="checked" name="check" style="margin-left: auto" />
+        <nue-div theme="append">
+            <nue-icon v-if="checked" name="check" style="margin-left: auto" />
+        </nue-div>
     </li>
 </template>
 

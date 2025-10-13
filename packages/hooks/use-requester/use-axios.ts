@@ -19,6 +19,7 @@ export default (baseURL: string): Requester => {
     })
 
     return {
+        _instance: axiosInstance,
         name: 'AxiosRequester',
         baseURL,
         get: axiosInstance.get,

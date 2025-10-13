@@ -26,7 +26,8 @@ const useTodoStore = defineStore('TodoStore', () => {
         total: 0,
         page: 1,
         limit: 10,
-        maxPage: 1
+        maxPage: 1,
+        current: 0
     })
     const getTodosOptionsBk = ref<GetTodosOptions>({})
 
@@ -47,6 +48,7 @@ const useTodoStore = defineStore('TodoStore', () => {
             pagination.total = res.pagination.total
             pagination.page = res.pagination.page
             pagination.maxPage = res.pagination.maxPage
+            pagination.current = Math.min(res.pagination.limit, res.pagination.total)
         }
         // 备份获取选项
         getTodosOptionsBk.value = { ...options }

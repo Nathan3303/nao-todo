@@ -9,6 +9,9 @@ import { priorityOptions, stateOptions } from '@nao-todo/components/todo/selecto
 import type { InnerDropdownOptionVO } from '@/components/ui/inner-dropdown/types'
 import type { Todo } from '@nao-todo/types'
 
+defineOptions({ name: 'TasksTodoFilterDropdown' })
+const emit = defineEmits<{ (e: 'getTodos'): void }>()
+
 const route = useRoute()
 const tasksViewStore = useTasksViewStore()
 
@@ -25,25 +28,25 @@ const counter = computed(() => {
     return { priority, state }
 })
 
-const priorityDropdownOptions = computed<InnerDropdownOptionVO[]>(() => {
+const priorityDropdownOptions = computed(() => {
     if (!viewProps.value) return []
     const _getOptions = viewProps.value.preference.getTodosOptions
     return priorityOptions.map((option) => ({
         ...option,
         checked: _getOptions.priority?.includes(option.value) || false
-    }))
+    })) as InnerDropdownOptionVO[]
 })
 
-const stateDropdownOptions = computed<InnerDropdownOptionVO[]>(() => {
+const stateDropdownOptions = computed(() => {
     if (!viewProps.value) return []
     const _getOptions = viewProps.value.preference.getTodosOptions
     return stateOptions.map((option) => ({
         ...option,
         checked: _getOptions.state?.includes(option.value) || false
-    }))
+    })) as InnerDropdownOptionVO[]
 })
 
-const sortFieldDropdownOptions = computed<InnerDropdownOptionVO[]>(() => {
+const sortFieldDropdownOptions = computed(() => {
     if (!viewProps.value) return []
     const _columnOptions = viewProps.value.preference.columns
     const _getOptions = viewProps.value.preference.getTodosOptions
@@ -56,17 +59,26 @@ const sortFieldDropdownOptions = computed<InnerDropdownOptionVO[]>(() => {
             checked: _getOptions.sort?.field === key || false
         })
     })
-    return _fields
+    return _fields as InnerDropdownOptionVO[]
 })
 
-const sortOrderDropdownOptions = computed<InnerDropdownOptionVO[]>(() => {
+const sortOrderDropdownOptions = computed(() => {
     if (!viewProps.value) return []
     const _getOptions = viewProps.value.preference.getTodosOptions
-    const isAsc = _getOptions.sort?.order === 'asc'
     return [
-        { icon: 'arrow-up', label: '升序', value: 'asc', checked: isAsc },
-        { icon: 'arrow-down', label: '降序', value: 'desc', checked: !isAsc }
-    ]
+        {
+            icon: 'arrow-up',
+            label: '升序',
+            value: 'asc',
+            checked: _getOptions.sort?.order === 'asc'
+        },
+        {
+            icon: 'arrow-down',
+            label: '降序',
+            value: 'desc',
+            checked: _getOptions.sort?.order === 'desc'
+        }
+    ] as InnerDropdownOptionVO[]
 })
 
 const handlePriorityOrState = (isPriority: boolean, field: string) => {
@@ -89,20 +101,22 @@ const handlePriorityOrState = (isPriority: boolean, field: string) => {
 
 const handlePriorityDropdownExecute = (field: string) => {
     handlePriorityOrState(true, field)
+    emit('getTodos')
 }
 
 const handleStateDropdownExecute = (field: string) => {
     handlePriorityOrState(false, field)
+    emit('getTodos')
 }
 
 const handleSortFieldDropdownExecute = (field: string) => {
     if (!viewProps.value) return
     const _getOptions = viewProps.value.preference.getTodosOptions
-    if (field === _getOptions.sort?.field) {
-        _getOptions.sort = { field: 'createdAt', order: 'desc' }
-    } else {
-        _getOptions.sort = { field: field as keyof Todo, order: _getOptions.sort?.order || 'asc' }
-    }
+    _getOptions.sort =
+        field === _getOptions.sort?.field
+            ? void 0
+            : { field: field as keyof Todo, order: _getOptions.sort?.order || 'asc' }
+    emit('getTodos')
 }
 
 const handleSortOrderDropdownExecute = (order: string) => {
@@ -112,6 +126,7 @@ const handleSortOrderDropdownExecute = (order: string) => {
         field: _getOptions.sort?.field || 'createdAt',
         order: order === 'desc' ? 'desc' : 'asc'
     }
+    emit('getTodos')
 }
 
 watch(
@@ -120,12 +135,13 @@ watch(
         if (!viewProps.value) return
         const _getOptions = viewProps.value.preference.getTodosOptions
         _getOptions.name = newValue || ''
+        emit('getTodos')
     }
 )
 </script>
 
 <template>
-    <nue-dropdown placement="bottom-end" size="small" theme="menu" group="tasks-view-filters">
+    <nue-dropdown placement="bottom-end" size="small" theme="menu" group="tasks-todo-filter">
         <template #trigger="{ trigger }">
             <nue-badge
                 theme="for-ico-btn"
@@ -148,10 +164,11 @@ watch(
                     style="width: 100%"
                 />
                 <inner-dropdown
-                    @execute="handleStateDropdownExecute"
                     title="状态"
+                    group="tasks-todo-filter"
                     :suffix="counter.state"
-                    group="tasks-view-filters"
+                    :close-when-executed="false"
+                    @execute="handleStateDropdownExecute"
                 >
                     <nue-text
                         v-if="viewProps?.id === 'overdue'"
@@ -175,7 +192,8 @@ watch(
                     @execute="handlePriorityDropdownExecute"
                     title="优先级"
                     :suffix="counter.priority"
-                    group="tasks-view-filters"
+                    group="tasks-todo-filter"
+                    :close-when-executed="false"
                 >
                     <inner-dropdown-option
                         v-for="option in priorityDropdownOptions"
@@ -195,7 +213,8 @@ watch(
                     icon="select"
                     :suffix="isSorting"
                     @execute="handleSortFieldDropdownExecute"
-                    group="tasks-view-filters"
+                    group="tasks-todo-filter"
+                    :close-when-executed="false"
                 >
                     <inner-dropdown-option
                         v-for="option in sortFieldDropdownOptions"
@@ -212,7 +231,8 @@ watch(
                     :disabled="!isSorting"
                     :suffix="isSorting"
                     @execute="handleSortOrderDropdownExecute"
-                    group="tasks-view-filters"
+                    group="tasks-todo-filter"
+                    :close-when-executed="false"
                 >
                     <inner-dropdown-option
                         v-for="option in sortOrderDropdownOptions"
