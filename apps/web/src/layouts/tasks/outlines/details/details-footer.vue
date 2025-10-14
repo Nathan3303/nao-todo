@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import { TodoDeleteButton, TodoProjectSelector } from '@nao-todo/components'
-import { useProjectStore, useUserStoreV2 } from '@/stores/global'
-import type { DetailsFooterEmits, DetailsFooterProps } from './types'
 import { storeToRefs } from 'pinia'
+import { useTasksDataStore } from '@/stores/tasks'
+import { TodoDeleteButton, TodoProjectSelector } from '@nao-todo/components'
+import type { DetailsFooterEmits, DetailsFooterProps } from './types'
 
 defineProps<DetailsFooterProps>()
 const emit = defineEmits<DetailsFooterEmits>()
 
-const projectStore = useProjectStore()
-const userStore = useUserStoreV2()
+const tasksDataStore = useTasksDataStore()
 
-const { projects } = storeToRefs(projectStore)
+const { projects, user } = storeToRefs(tasksDataStore)
 
 const handleDropdownExecute = (executeId: string) => {
     switch (executeId) {
@@ -35,7 +34,7 @@ const handleDropdownExecute = (executeId: string) => {
         <todo-project-selector
             :project-id="shadowTodo.projectId"
             :projects="projects"
-            :user-id="userStore.user?.id || ''"
+            :user-id="user?.id || ''"
             placement="top-start"
             @select="(npId) => emit('updateTodoProject', npId)"
         />

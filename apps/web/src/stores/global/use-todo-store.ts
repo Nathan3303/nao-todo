@@ -9,14 +9,17 @@ import type {
     GetTodosOptions,
     Todo,
     UpdateTodoOptions,
-    ResponseDataPagination
+    ResponseDataPagination,
+    GetTodoOptions,
+    GoLike
 } from '@nao-todo/types'
 import {
     createTodoHandler,
     getTodosHandler,
     updateTodoHandler,
     deleteTodoHandler,
-    restoreTodoHandler
+    restoreTodoHandler,
+    getTodoHandler
 } from '@nao-todo/handlers/v1'
 
 const useTodoStore = defineStore('TodoStore', () => {
@@ -53,6 +56,19 @@ const useTodoStore = defineStore('TodoStore', () => {
         // 备份获取选项
         getTodosOptionsBk.value = { ...options }
         return null
+    }
+
+    // @method 获取单个待办任务，并返回获取结果
+    const toGetTodo = async (options: GetTodoOptions): Promise<GoLike> => {
+        // 获取待办任务
+        const [todo, err] = await getTodoHandler(options, requester)
+        // 处理失败结果
+        if (err) {
+            console.error(unwrapError(err))
+            return [null, err]
+        }
+        // 处理成功结果
+        return [todo, null]
     }
 
     // @method 重新获取待办任务列表
@@ -213,6 +229,7 @@ const useTodoStore = defineStore('TodoStore', () => {
             content: '确定要永久删除此待办任务吗？',
             confirmButtonText: '删除',
             cancelButtonText: '取消',
+            // @ts-expect-error 忽略对象字面量只能指定已知属性的错误
             theme: 'danger',
             onConfirm: async () => {
                 const err = await deleteTodoPermanently(todoId)
@@ -230,6 +247,7 @@ const useTodoStore = defineStore('TodoStore', () => {
         todos,
         pagination,
         getTodos,
+        toGetTodo,
         createTodo,
         updateTodo,
         deleteTodo,

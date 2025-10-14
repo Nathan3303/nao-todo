@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
+import { DetailsRow, DetailsMainComments, DetailsMainEvents } from '.'
+import { useTasksDataStore } from '@/stores/tasks'
+import { useRelativeDate } from '@nao-todo/hooks'
 import {
     CommentCreator,
     SwitchButton,
@@ -7,16 +11,15 @@ import {
     TodoStateSelectOptions,
     TodoTagBar
 } from '@nao-todo/components'
-import { DetailsRow, DetailsMainComments, DetailsMainEvents } from '.'
-import { useTagStore } from '@/stores/global'
-import { useRelativeDate } from '@nao-todo/hooks'
 import type { DetailsMainEmits, DetailsMainProps } from './types'
 import type { Todo } from '@nao-todo/types'
 
 defineProps<DetailsMainProps>()
 const emit = defineEmits<DetailsMainEmits>()
 
-const tagStore = useTagStore()
+const tasksDataStore = useTasksDataStore()
+
+const { tags } = storeToRefs(tasksDataStore)
 </script>
 
 <template>
@@ -75,16 +78,16 @@ const tagStore = useTagStore()
                         />
                     </nue-div>
                     <nue-div vertical style="padding: 0 1rem">
-                        <details-main-events :todo-id="shadowTodo.id" />
+                        <details-main-events />
                     </nue-div>
                     <nue-div vertical style="padding: 1rem; margin-top: auto">
                         <todo-tag-bar
-                            :tags="tagStore.tags"
+                            :tags="tags"
                             :todo-tags="shadowTodo.tags"
                             @update-tags="(v) => emit('updateTodoTags', v as Todo['tags'])"
                         />
                     </nue-div>
-                    <details-main-comments :todo-id="shadowTodo.id" />
+                    <details-main-comments />
                     <nue-div class="tasks-details-view__giveup-tag" v-if="shadowTodo.isGivenUp">
                         任务已放弃
                     </nue-div>

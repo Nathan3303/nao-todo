@@ -6,6 +6,7 @@ import useTasksProjectViewStore from './use-tasks-project-view-store'
 import useTasksTagViewStore from './use-tasks-tag-view-store'
 import useProjectManagerStore from './use-project-manager-store'
 import useTagManagerStore from './use-tag-manager-store'
+import useTodoDetailsStore from './use-todo-details-store'
 
 export {
     useTasksDataStore,
@@ -15,5 +16,6 @@ export {
     useTasksProjectViewStore,
     useTasksTagViewStore,
     useProjectManagerStore,
-    useTagManagerStore
+    useTagManagerStore,
+    useTodoDetailsStore
 }

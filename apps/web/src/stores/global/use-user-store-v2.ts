@@ -1,10 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAxios } from '@nao-todo/hooks'
-import getJWTPayload from '@nao-todo/utils/get-jwt-payload'
 import { NueConfirm } from 'nue-ui'
-import type { User, SigninOptions, SignupOptions, GoLike, Requester } from '@nao-todo/types'
+// import { useTodoStore, useProjectStore, useTagStore, useEventStore, useCommentStore } from '.'
+import { useAxios } from '@nao-todo/hooks'
+import { unwrapError } from '@nao-todo/utils'
+import getJWTPayload from '@nao-todo/utils/get-jwt-payload'
 import {
     signInApi,
     signUpApi,
@@ -13,10 +14,10 @@ import {
     updateNicknameApi,
     updatePasswordApi
 } from '@nao-todo/apis/v2'
-import { unwrapError } from '@nao-todo/utils'
+import type { User, SigninOptions, SignupOptions, GoLike, Requester, Err } from '@nao-todo/types'
 
+// @constants 相关常量
 const USER_JWT_LOCALSTORAGE_KEY = 'USER_JWT'
-const BASE_URL = 'http://localhost:3303/api/user/'
 const SIGN_UP_SUCCESS_CODE = 10000
 const SIGN_IN_SUCCESS_CODE = 10010
 const CHECK_IN_SUCCESS_CODE = 10020
@@ -26,8 +27,16 @@ const UPDATE_PASSWORD_SUCCESS_CODE = 10060
 const USER_PASSWORD_REGEXP = /^\S*(?=\S{8})(?=\S*\d)(?=\S*[a-z])(?=\S*[!@#$%^&*?.-])\S*$/
 
 const useUserStoreV2 = defineStore('UserStore', () => {
-    const requester = useAxios(BASE_URL)
+    // @stores 全局 stores
     const router = useRouter()
+    // const todoStore = useTodoStore()
+    // const projectStore = useProjectStore()
+    // const tagStore = useTagStore()
+    // const eventStore = useEventStore()
+    // const commentStore = useCommentStore()
+
+    // @state 请求器
+    const requester = useAxios('http://localhost:3303/api/user/')
 
     // @state 用户信息
     const user = ref<User>()
@@ -39,29 +48,29 @@ const useUserStoreV2 = defineStore('UserStore', () => {
     const isAuthenticated = ref<boolean>()
 
     // @method 用户注册
-    const signup = async (options: SignupOptions, req?: Requester): Promise<GoLike> => {
+    const signup = async (options: SignupOptions, req?: Requester): Promise<Err> => {
         // 检查属性值
-        if (options.email === '') return [null, '请输入邮箱']
+        if (options.email === '') return '请输入邮箱'
         if (options.password.length < 8 || options.password.length > 24)
-            return [null, '密码格式有误，需要 8 至 24 位的长度']
+            return '密码格式有误，需要 8 至 24 位的长度'
         if (!new RegExp(USER_PASSWORD_REGEXP).test(options.password))
-            return [null, '密码格式有误，需要包含字母、数字以及特殊符号']
+            return '密码格式有误，需要包含字母、数字以及特殊符号'
         // 调用 API
         const result = await signUpApi(req || requester, options)
         // 判断是否成功
         if (result.code === SIGN_UP_SUCCESS_CODE) {
             // 返回登录成功
-            return [true, null]
+            return null
         }
         // 返回失败信息
-        return [null, result.message]
+        return result.message
     }
 
     // @method 用户登录
-    const signin = async (options: SigninOptions, req?: Requester): Promise<GoLike> => {
+    const signin = async (options: SigninOptions, req?: Requester): Promise<Err> => {
         // 检查属性值
-        if (options.email === '') return [null, '请输入邮箱']
-        if (options.password === '') return [null, '请输入密码']
+        if (options.email === '') return '请输入邮箱'
+        if (options.password === '') return '请输入密码'
         // 调用 API
         const result = await signInApi(req || requester, options)
         // 判断是否成功
@@ -73,10 +82,10 @@ const useUserStoreV2 = defineStore('UserStore', () => {
             userJwt.value = jwt
             isAuthenticated.value = true
             // 返回登录成功
-            return [true, null]
+            return null
         }
         // 返回失败信息
-        return [null, result.message]
+        return result.message
     }
 
     // @method 用户检入 - 用户二次登录简单校验
@@ -114,29 +123,31 @@ const useUserStoreV2 = defineStore('UserStore', () => {
         if (!userJwt.value) return [null, '用户凭证无效,已登出']
         // 调用 API
         const result = await signOutApi(req || requester, userJwt.value)
-        // 判断是否成功
-        if (result.code === SIGN_OUT_SUCCESS_CODE) {
-            localStorage.removeItem(USER_JWT_LOCALSTORAGE_KEY)
-            user.value = void 0
-            userJwt.value = void 0
-            isAuthenticated.value = false
-            return [true, null]
+        // 处理失败结果
+        if (result.code !== SIGN_OUT_SUCCESS_CODE) {
+            return [null, result.message]
         }
-        // 返回失败信息
-        return [null, result.message]
+        // 处理成功结果
+        localStorage.removeItem(USER_JWT_LOCALSTORAGE_KEY)
+        user.value = void 0
+        userJwt.value = void 0
+        isAuthenticated.value = false
+        // 清除用户数据
+        // 返回结果
+        return [true, null]
     }
 
-    // @method 用户登出并跳转登录页
-    const signoutAndRedirect = async (req?: Requester): Promise<GoLike> => {
+    // @method 处理用户登出并跳转登录页
+    const signoutAndRedirect = async (): Promise<Err> => {
         // 调用登出 API
-        const [, err] = await signout(req || requester)
+        const [, err] = await signout()
         // 判断是否成功
         if (err) {
             console.error(unwrapError(err))
-            return [null, err]
+            return err
         }
-        router.push({ path: '/auth/signin' })
-        return [null, null]
+        await router.push({ path: '/auth/signin' })
+        return null
     }
 
     // @method 更新用户昵称
@@ -211,6 +222,7 @@ const useUserStoreV2 = defineStore('UserStore', () => {
     //     return [null, result.message]
     // }
 
+    // @returns
     return {
         user,
         isAuthenticated,
@@ -218,9 +230,9 @@ const useUserStoreV2 = defineStore('UserStore', () => {
         signup,
         checkin,
         signout,
-        signoutAndRedirect,
         updateNickname,
-        updatePassword
+        updatePassword,
+        signoutAndRedirect
         // updateAvatar
     }
 })

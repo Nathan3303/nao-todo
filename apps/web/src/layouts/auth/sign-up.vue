@@ -78,14 +78,15 @@
 
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
-import { useAuthViewStore } from './use-auth-view-store'
+import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import { PasswordRuleHint } from '@/components/ui'
 
-const authViewStore = useAuthViewStore()
+const authStore = useAuthStore()
 const router = useRouter()
 
 const loading = ref(false)
+const disabled = ref(false)
 const formData = reactive({
     email: '',
     password: '',
@@ -96,20 +97,23 @@ const formData = reactive({
 const handleSubmit = async (e: Event) => {
     e.preventDefault()
     loading.value = true
-    const result = await authViewStore.handleSignUp(
+    disabled.value = true
+    // 调用注册 API
+    const err = await authStore.handleSignUp(
         formData.email,
         formData.password,
         formData.passwordConfirm,
         formData.nickname
     )
     loading.value = false
-    if (!result) {
-        // formData.email = ''
+    // 处理错误
+    if (err) {
         formData.password = ''
         formData.passwordConfirm = ''
-        // formData.nickname = ''
+        disabled.value = false
         return
     }
+    // 注册成功，跳转到登录页
     await router.push({ path: '/auth/signin' })
 }
 </script>

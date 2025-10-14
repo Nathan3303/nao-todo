@@ -20,7 +20,13 @@ import type {
 const useCommentStore = defineStore('CommentStore', () => {
     // @state 评论列表（应该被应用于整个视图）
     const comments = ref<Comment[]>([])
-    const pagination = ref<ResponseData['pagination']>({ total: 0, page: 1, limit: 10, maxPage: 1 })
+    const pagination = ref<ResponseData['pagination']>({
+        total: 0,
+        page: 1,
+        limit: 10,
+        maxPage: 1,
+        current: 0
+    })
 
     // @method 进一步筛选评论列表
     const getComments = async (options: GetCommentsOptions): Promise<Err> => {

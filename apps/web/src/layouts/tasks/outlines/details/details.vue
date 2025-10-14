@@ -1,13 +1,13 @@
 <script lang="ts" setup>
 import { ref, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useTodoDetails } from './use-details'
-import { useCommentDetails } from './use-comment-details'
 import { Loading as LoadingComp } from '@nao-todo/components'
 import DetailsHeader from './details-header.vue'
 import DetailsMain from './details-main.vue'
 import DetailsFooter from './details-footer.vue'
 import { NueTextarea } from 'nue-ui'
+import { storeToRefs } from 'pinia'
+import { useTodoDetailsStore } from '@/stores/tasks'
 import type { DetailsEmits } from './types'
 
 defineOptions({ name: 'TasksTodoDetails' })
@@ -15,27 +15,12 @@ const emit = defineEmits<DetailsEmits>()
 
 const router = useRouter()
 const route = useRoute()
+const todoDetailsStore = useTodoDetailsStore()
 
 const leaveCommentInputRef = ref<InstanceType<typeof NueTextarea>>()
 
-const {
-    loading,
-    error,
-    todo,
-    eventsProgress,
-    updating,
-    updateTodoEndAt,
-    updateTodo,
-    updateTodoPriority,
-    updateTodoState,
-    handleCheckTodo,
-    updateTodoProject,
-    updateTodoTags,
-    handleDeleteTodoPermenantly,
-    handleDeleteTodo,
-    handleRestoreTodo
-} = useTodoDetails(emit)
-const { isCommenting, commentsCount, handleLeaveComment } = useCommentDetails(todo.value?.id)
+const { loading, error, todo, eventsProgress, updating, isCommenting, commentsCount } =
+    storeToRefs(todoDetailsStore)
 
 const handleClose = () => {
     router.push({ name: route.name, params: { todoId: void 0 } }).then(() => {
@@ -64,8 +49,8 @@ const handleStartLeaveComment = () => {
                 :shadow-todo="todo"
                 :updating="updating"
                 :disable-close="loading || updating"
-                @update-todo-end-at="updateTodoEndAt"
-                @finish-todo="handleCheckTodo"
+                @update-todo-end-at="todoDetailsStore.updateTodoEndAt"
+                @finish-todo="todoDetailsStore.handleCheckTodo"
                 @close="handleClose"
             />
         </nue-header>
@@ -76,11 +61,11 @@ const handleStartLeaveComment = () => {
                     :events-progress="eventsProgress"
                     :comments-count="commentsCount"
                     :is-commenting="isCommenting"
-                    :leaveCommentHandler="handleLeaveComment"
-                    @update="updateTodo"
-                    @update-todo-state="updateTodoState"
-                    @update-todo-priority="updateTodoPriority"
-                    @update-todo-tags="updateTodoTags"
+                    :leaveCommentHandler="todoDetailsStore.handleLeaveComment"
+                    @update="todoDetailsStore.updateTodo"
+                    @update-todo-state="todoDetailsStore.updateTodoState"
+                    @update-todo-priority="todoDetailsStore.updateTodoPriority"
+                    @update-todo-tags="todoDetailsStore.updateTodoTags"
                     @cancel-leave-comment="() => (isCommenting = false)"
                 />
             </nue-content>
@@ -88,17 +73,17 @@ const handleStartLeaveComment = () => {
         <nue-footer>
             <details-footer
                 :shadow-todo="todo"
-                @update-todo-project="updateTodoProject"
-                @delete-todo-permanently="handleDeleteTodoPermenantly"
-                @delete-todo="handleDeleteTodo"
-                @restore-todo="handleRestoreTodo"
+                @update-todo-project="todoDetailsStore.updateTodoProject"
+                @delete-todo-permanently="todoDetailsStore.handleDeleteTodoPermenantly"
+                @delete-todo="todoDetailsStore.handleDeleteTodo"
+                @restore-todo="todoDetailsStore.handleRestoreTodo"
                 @leave-todo-comment="handleStartLeaveComment"
             />
-            <!-- @duplicate-todo="handleDuplicateTodo" -->
-            <!-- @give-up-todo="handleGiveUpTodo" -->
-            <!-- @cancel-give-up-todo="handleCancelGiveUpTodo" -->
         </nue-footer>
     </nue-container>
+    <!-- @duplicate-todo="handleDuplicateTodo" -->
+    <!-- @give-up-todo="handleGiveUpTodo" -->
+    <!-- @cancel-give-up-todo="handleCancelGiveUpTodo" -->
 </template>
 
 <style scoped>

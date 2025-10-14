@@ -1,6 +1,6 @@
 <template>
     <nue-div vertical>
-        <nue-text size="var(--nue-text-df)" weight="500">基本信息修改</nue-text>
+        <nue-text size="var(--nue-text-df)" :weight="500">基本信息修改</nue-text>
         <nue-div vertical>
             <nue-div class="settings-view__form-row">
                 <nue-text color="gray" size="var(--nue-text-sm)">用户昵称</nue-text>
@@ -24,7 +24,7 @@
 
 <script setup lang="ts">
 import { NueInput } from 'nue-ui'
-import useProfileStore from './use-profile-store'
+import { useProfileStore } from '@/stores/settings'
 import { storeToRefs } from 'pinia'
 
 defineOptions({ name: 'SettingsProfileNickname' })

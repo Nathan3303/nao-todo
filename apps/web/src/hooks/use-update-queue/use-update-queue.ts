@@ -20,7 +20,7 @@ const todoStore = useTodoStore()
 // @state 更新队列延时器
 let timer: number | null = null
 
-export const useUpdateQueue = (handler?: (item: UpdateQueueItem) => Promise<any>) => {
+const useUpdateQueue = (handler?: (item: UpdateQueueItem) => Promise<any>) => {
     // @states 更新队列 / 更新队列任务错误列表
     const updateQueue = ref<UpdateQueueItem[]>([])
     const errors = ref<UpdateQueueError[]>([])
@@ -91,3 +91,5 @@ export const useUpdateQueue = (handler?: (item: UpdateQueueItem) => Promise<any>
         insertItem
     }
 }
+
+export default useUpdateQueue

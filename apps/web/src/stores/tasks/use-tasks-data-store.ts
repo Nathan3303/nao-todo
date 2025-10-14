@@ -7,7 +7,8 @@ import {
     useTagStore,
     useTodoStore,
     useEventStore,
-    useCommentStore
+    useCommentStore,
+    useUserStoreV2
 } from '@/stores/global'
 import type { Err, Project, Tag } from '@nao-todo/types'
 
@@ -19,12 +20,14 @@ const useTasksDataStore = defineStore('TasksDataStore', () => {
     const todoStore = useTodoStore()
     const eventStore = useEventStore()
     const commentStore = useCommentStore()
+    const userStore = useUserStoreV2()
 
     const { projects } = storeToRefs(projectStore)
     const { tags } = storeToRefs(tagStore)
     const { todos, pagination } = storeToRefs(todoStore)
     const { events } = storeToRefs(eventStore)
     const { comments } = storeToRefs(commentStore)
+    const { user } = storeToRefs(userStore)
 
     // @computed 智能清单列表
     const projectSmartListData = computed<Project[]>(() => {
@@ -33,7 +36,7 @@ const useTasksDataStore = defineStore('TasksDataStore', () => {
         })
     })
 
-    // @computed 智能清单列表
+    // @computed 智能标签列表
     const tagSmartListData = computed<Tag[]>(() => {
         return tags.value.filter((tag) => {
             return tag.deletedAt === null
@@ -71,12 +74,13 @@ const useTasksDataStore = defineStore('TasksDataStore', () => {
 
     // @returns
     return {
-        projects: projects,
-        tags: tags,
+        user,
+        projects,
+        tags,
         todos,
-        pagination: pagination,
-        events: events,
-        comments: comments,
+        pagination,
+        events,
+        comments,
         projectSmartListData,
         tagSmartListData,
         getProjectsAndTags,

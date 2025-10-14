@@ -4,7 +4,6 @@ import { defineStore, storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { unwrapError, useMoment } from '@nao-todo/utils'
-import type { GoLike } from '@nao-todo/types'
 
 type SettingsProfileVO = {
     id?: string
@@ -21,11 +20,14 @@ type SettingsProfileVO = {
 }
 
 const useProfileStore = defineStore('SettingsProfileStore', () => {
+    // @stores 全局 stores
     const userStore = useUserStoreV2()
     const router = useRouter()
 
+    // @state 用户信息
     const { user } = storeToRefs(userStore)
 
+    // @state 视图状态
     const vo = reactive<SettingsProfileVO>({
         id: user.value?.id,
         avatar: user.value?.avatar,
@@ -40,8 +42,10 @@ const useProfileStore = defineStore('SettingsProfileStore', () => {
         }
     })
 
+    // @computed 名称是否有变更
     const isNicknameChanged = computed(() => vo.nickname !== vo.newNickname)
 
+    // @method 退出登录
     const handleSignout = () => {
         NueConfirm({
             title: '退出登录',
@@ -49,23 +53,19 @@ const useProfileStore = defineStore('SettingsProfileStore', () => {
             confirmButtonText: '确定',
             cancelButtonText: '取消',
             onConfirm: async () => {
-                return await userStore.signout()
-            }
-        })
-            .then((confirmRes) => {
-                const [res, err] = confirmRes as GoLike
+                const [res, err] = await userStore.signout()
                 if (err) {
                     NueMessage.error(unwrapError(err))
                     return
                 }
-                router.replace({ path: '/auth/signin' }).then(() => {
-                    NueMessage.success('登出成功')
-                })
+                await router.push({ path: '/auth/signin' })
+                NueMessage.success('登出成功')
                 return res
-            })
-            .catch(() => {})
+            }
+        })
     }
 
+    // @method 更新用户昵称
     const handleUpdateNickname = async () => {
         if (!vo.newNickname) return
         vo.loading.nickname = true
@@ -80,6 +80,7 @@ const useProfileStore = defineStore('SettingsProfileStore', () => {
         return res
     }
 
+    // @method 更新用户头像
     const handleUpdateAvatar = async (avatar: File | undefined) => {
         if (!avatar) return
         // try {

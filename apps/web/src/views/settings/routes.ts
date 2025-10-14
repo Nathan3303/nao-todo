@@ -14,12 +14,12 @@ const SettingsViewRouteRecordRaw: RouteRecordRaw = {
         {
             path: 'profile',
             name: 'settings-profile',
-            component: () => import('./profile-view.vue')
+            component: () => import('@/layouts/settings/profile-view.vue')
         },
         {
             path: 'password',
             name: 'settings-password',
-            component: () => import('./password-view.vue')
+            component: () => import('@/layouts/settings/password-view.vue')
         }
     ]
 }

@@ -5,7 +5,8 @@ import type {
     GetTodosSortOptions,
     ResponseData,
     Todo,
-    UpdateTodoOptions
+    UpdateTodoOptions,
+    GetTodoOptions
 } from '@nao-todo/types'
 import { stringifyGetOptions } from '@nao-todo/utils'
 
@@ -33,6 +34,16 @@ export const getTodosApiV2 = async (requester: Requester, options: GetTodosOptio
         return response.data as ResponseData
     } catch (error) {
         console.error('[@nao-todo/apis/get-todos-v2]', error)
+        return { code: 500, message: '服务器错误' } as ResponseData
+    }
+}
+
+export const getTodoApiV2 = async (requester: Requester, options: GetTodoOptions) => {
+    try {
+        const response = await requester.get(`/todo/${options.id}`)
+        return response.data as ResponseData
+    } catch (error) {
+        console.error('[@nao-todo/apis/get-todo-v2]', error)
         return { code: 500, message: '服务器错误' } as ResponseData
     }
 }

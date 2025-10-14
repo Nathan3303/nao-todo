@@ -159,6 +159,7 @@ const useProjectStore = defineStore('ProjectStore', () => {
             content: '确定要永久删除此清单吗？永久删除清单会删除归属于该清单的所有任务',
             confirmButtonText: '删除',
             cancelButtonText: '取消',
+            // @ts-expect-error 忽略对象字面量只能指定已知属性的错误
             theme: 'danger',
             onConfirm: async () => {
                 const err = await deleteProjectPermanently(projectId)

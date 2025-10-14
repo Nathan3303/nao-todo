@@ -1,6 +1,6 @@
 <template>
     <nue-div vertical>
-        <nue-text size="var(--nue-text-df)" weight="500">更多信息</nue-text>
+        <nue-text size="var(--nue-text-df)" :weight="500">更多信息</nue-text>
         <nue-div vertical>
             <nue-div class="settings-view__form-row">
                 <nue-text color="gray" size=".875rem">用户 ID</nue-text>
@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import useProfileStore from './use-profile-store'
+import { useProfileStore } from '@/stores/settings'
 import { storeToRefs } from 'pinia'
 
 defineOptions({ name: 'SettingsProfileInfo' })

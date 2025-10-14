@@ -2,7 +2,6 @@
 import { TodoCheckButton, TodoDateSelector } from '@nao-todo/components'
 import type { DetailsHeaderEmits, DetailsHeaderProps } from './types'
 
-defineOptions({ name: 'TasksTodoDetailsHeader' })
 defineProps<DetailsHeaderProps>()
 const emit = defineEmits<DetailsHeaderEmits>()
 </script>

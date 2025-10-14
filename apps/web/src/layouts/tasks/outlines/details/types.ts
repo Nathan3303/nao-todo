@@ -49,7 +49,7 @@ export type DetailsFooterEmits = {
 }
 
 export type DetailsMainEventsProps = {
-    todoId: Todo['id']
+    // todoId: Todo['id']
     loading?: boolean
 }
 
@@ -59,7 +59,7 @@ export type UnusedTagOption = {
 }
 
 export type DetailsMainTagsProps = {
-    todoId: Todo['id']
+    // todoId: Todo['id']
     todoTags: Todo['tags']
 }
 

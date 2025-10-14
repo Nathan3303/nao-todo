@@ -48,8 +48,8 @@
 </template>
 
 <script setup lang="ts">
-import usePasswordStore from './use-password-store'
 import { storeToRefs } from 'pinia'
+import { usePasswordStore } from '@/stores/settings'
 import { PasswordRuleHint } from '@/components/ui'
 
 defineOptions({ name: 'SettingsPasswordForm' })

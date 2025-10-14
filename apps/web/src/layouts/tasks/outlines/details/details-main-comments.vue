@@ -1,57 +1,16 @@
 <script lang="ts" setup>
-import { watch, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useTasksDataStore } from '@/stores/tasks'
-import { CommentRow, Loading as LoadingComp } from '@nao-todo/components'
-import { unwrapError } from '@nao-todo/utils'
-import { NueMessage } from 'nue-ui'
-import type { Todo, Comment } from '@nao-todo/types'
+import { useTodoDetailsStore } from '@/stores/tasks'
+import { CommentRow } from '@nao-todo/components'
 
-const props = defineProps<{ todoId: Todo['id'] }>()
+const todoDetailsStore = useTodoDetailsStore()
 
-const tasksDataStore = useTasksDataStore()
-
-const { comments } = storeToRefs(tasksDataStore)
-const loading = ref(false)
-const error = ref('')
-
-const handleEditComment = async (id: Comment['id'], newContent: Comment['content']) => {
-    const err = await tasksDataStore.updateComment(id, { content: newContent })
-    return !err
-}
-
-const handleDeleteComment = async (id: Comment['id']) => {
-    const err = await tasksDataStore.deleteComment(id)
-    if (err) {
-        NueMessage.error('评论删除失败')
-        return
-    }
-    NueMessage.success('评论删除成功')
-}
-
-watch(
-    () => props.todoId,
-    async (newTodoId) => {
-        // 重置加载状态
-        // loading.value = true
-        // 获取检查事项
-        const err = await tasksDataStore.getComments({ todoId: newTodoId })
-        // loading.value = false
-        // 处理失败结果
-        if (err) {
-            error.value = unwrapError(err)
-            return
-        }
-        error.value = ''
-    },
-    { immediate: true }
-)
+const { comments } = storeToRefs(todoDetailsStore)
 </script>
 
 <template>
-    <loading-comp v-if="loading" />
     <nue-div
-        v-else-if="comments.length"
+        v-if="comments.length"
         style="border-top: 1px solid var(--nue-divider-color); padding: 8px"
     >
         <nue-div vertical gap="0">
@@ -64,8 +23,8 @@ watch(
                     v-for="comment in comments"
                     :key="comment.id"
                     :comment="comment"
-                    :updater="handleEditComment"
-                    @delete="handleDeleteComment"
+                    :updater="todoDetailsStore.handleEditComment"
+                    @delete="todoDetailsStore.handleDeleteComment"
                 />
             </nue-div>
         </nue-div>

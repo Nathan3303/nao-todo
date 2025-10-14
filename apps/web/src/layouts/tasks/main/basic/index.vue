@@ -37,6 +37,7 @@ watch(
         // 重置错误信息
         error.message = ''
         // 跳转至指定视图
+        if (props.todoId) return
         router.replace({
             name: 'tasks-basic-main',
             params: { viewType: viewProps.value.preference.viewType }

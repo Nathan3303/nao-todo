@@ -1,17 +1,20 @@
-<template>
-    <todo-tag-bar :tags="tagStore.tags" :todoTags="todoTags" />
-</template>
-
 <script lang="ts" setup>
-import { useTagStore } from '@/stores'
+import { storeToRefs } from 'pinia'
+import { useTasksDataStore } from '@/stores/tasks'
 import { TodoTagBar } from '@nao-todo/components'
 import type { DetailsMainTagsProps, DetailsMainTagsEmits } from './types'
 
 defineProps<DetailsMainTagsProps>()
 defineEmits<DetailsMainTagsEmits>()
 
-const tagStore = useTagStore()
+const tasksDataStore = useTasksDataStore()
+
+const { tags } = storeToRefs(tasksDataStore)
 </script>
+
+<template>
+    <todo-tag-bar :tags="tags" :todoTags="todoTags" />
+</template>
 
 <style scoped>
 .todo-tag-details {

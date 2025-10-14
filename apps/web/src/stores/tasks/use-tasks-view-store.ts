@@ -1,9 +1,8 @@
 import { ref } from 'vue'
 import { defineStore, storeToRefs } from 'pinia'
 import { basicViewProps } from './constants'
-import { useProjectStore, useTagStore, useTodoStore } from '@/stores/global'
+import { useProjectStore, useTagStore, useTodoStore, useViewStore } from '@/stores/global'
 import { NuePrompt, NueMessage } from 'nue-ui'
-import { useWindowResizeListener } from '@nao-todo/hooks'
 import { unwrapError } from '@nao-todo/utils'
 import { type TasksMainViewProps, toProjectViewProps, toTagViewProps } from '@/layouts/tasks/'
 import type { Err, TodoColumnOptions } from '@nao-todo/types'
@@ -23,10 +22,14 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
 
     // @states 全局 Store
     const projectStore = useProjectStore()
-    const { projects } = storeToRefs(projectStore)
     const tagStore = useTagStore()
-    const { tags } = storeToRefs(tagStore)
     const todoStore = useTodoStore()
+    const viewStore = useViewStore()
+
+    // @states 前置状态
+    const { tags } = storeToRefs(tagStore)
+    const { projects } = storeToRefs(projectStore)
+    const { responsiveFlag } = storeToRefs(viewStore)
 
     // @state 视图全局属性
     const viewProps = ref<TasksMainViewProps>()
@@ -154,22 +157,22 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
     }
 
     // @states 响应式标记 -  0: 移动端 | 1-2: 移动端 (平板) | 3-4: 桌面端 | 5: 桌面端 (大屏) | 6: 电视
-    const responsiveFlag = ref<number>(2)
-    const responsiveWidths = [445, 800, 1200, 1600, 1920, 2560, 3840]
-    const { addCallback: addWindowResizeCb } = useWindowResizeListener()
+    // const responsiveFlag = ref<number>(2)
+    // const responsiveWidths = [445, 800, 1200, 1600, 1920, 2560, 3840]
+    // const { addCallback: addWindowResizeCb } = useWindowResizeListener()
 
     // @methods 响应式检测 - 通过 window.innerWidth 和 window.resize 检测
-    const responsiveFlagUpdater = () => {
-        const innerWidth = window.innerWidth
-        if (isNaN(innerWidth)) return
-        const startAt = Math.min(Math.floor(innerWidth / 445), 5)
-        for (let i = startAt; i < responsiveWidths.length; i++) {
-            if (innerWidth > responsiveWidths[i]) continue
-            responsiveFlag.value = i
-            break
-        }
-    }
-    addWindowResizeCb(responsiveFlagUpdater, true)
+    // const responsiveFlagUpdater = () => {
+    //     const innerWidth = window.innerWidth
+    //     if (isNaN(innerWidth)) return
+    //     const startAt = Math.min(Math.floor(innerWidth / 445), 5)
+    //     for (let i = startAt; i < responsiveWidths.length; i++) {
+    //         if (innerWidth > responsiveWidths[i]) continue
+    //         responsiveFlag.value = i
+    //         break
+    //     }
+    // }
+    // addWindowResizeCb(responsiveFlagUpdater, true)
 
     // @methods 切换视图 / 隐藏已完成 / 更新列选项
     const switchView = (viewType: string) => {

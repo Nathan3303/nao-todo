@@ -17,19 +17,20 @@
                     <nue-div align="stretch" vertical>
                         <nue-input
                             v-model="formData.email"
-                            :disabled="loading"
+                            :disabled="loading || disabled"
                             placeholder="电子邮箱 (name@example.com)"
                             type="email"
                         />
                         <nue-input
                             v-model="formData.password"
-                            :disabled="loading"
+                            :disabled="loading || disabled"
                             allow-show-password
                             placeholder="密码"
                             type="password"
                         />
                         <nue-button
                             :loading="loading"
+                            :disabled="disabled"
                             theme="primary"
                             type="submit"
                             @click="handleSubmit"
@@ -62,13 +63,14 @@
 
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
-import { useAuthViewStore } from './use-auth-view-store'
+import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 
-const authViewStore = useAuthViewStore()
+const authStore = useAuthStore()
 const router = useRouter()
 
 const loading = ref(false)
+const disabled = ref(false)
 const formData = reactive({
     email: '',
     password: ''
@@ -77,13 +79,18 @@ const formData = reactive({
 const handleSubmit = async (e: Event) => {
     e.preventDefault()
     loading.value = true
-    const result = await authViewStore.handleSignIn(formData.email, formData.password)
+    disabled.value = true
+    // 调用登录 API
+    const err = await authStore.handleSignIn(formData.email, formData.password)
     loading.value = false
-    if (!result) {
+    // 处理错误
+    if (err) {
         formData.password = ''
+        disabled.value = false
         return
     }
-    await router.push({ path: '/' })
+    // 登录成功，跳转到首页
+    await router.push({ name: 'tasks' })
 }
 </script>
 

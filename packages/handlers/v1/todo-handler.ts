@@ -3,7 +3,8 @@ import {
     getTodosApiV2,
     updateTodoApiV2,
     deleteTodoApiV2,
-    restoreTodoApiV2
+    restoreTodoApiV2,
+    getTodoApiV2
 } from '@nao-todo/apis/v2'
 import type {
     CreateTodoOptions,
@@ -12,15 +13,16 @@ import type {
     GoLike,
     Requester,
     Todo,
-    UpdateTodoOptions
+    UpdateTodoOptions,
+    GetTodoOptions
 } from '@nao-todo/types'
 
+const GET_TODO_SUCCESS_CODE = 40000
 const CREATE_TODO_SUCCESS_CODE = 40010
-const GET_TODOS_SUCCESS_CODE = 40050
 const UPDATE_TODO_SUCCESS_CODE = 40020
 const DELETE_TODO_SUCCESS_CODE = 40030
 const RESTORE_TODO_SUCCESS_CODE = 40040
-// const GET_TODO_SUCCESS_CODE = 40000
+const GET_TODOS_SUCCESS_CODE = 40050
 
 export const createTodoHandler = async (
     options: CreateTodoOptions,
@@ -53,6 +55,20 @@ export const getTodosHandler = async (
             },
             null
         ]
+    }
+    // 处理失败结果
+    return [null, apiRes.message]
+}
+
+export const getTodoHandler = async (
+    getOptions: GetTodoOptions,
+    requester: Requester
+): Promise<GoLike> => {
+    // 调用 API 获取待办任务信息
+    const apiRes = await getTodoApiV2(requester, getOptions)
+    // 处理成功结果
+    if (apiRes.code === GET_TODO_SUCCESS_CODE) {
+        return [apiRes.data, null]
     }
     // 处理失败结果
     return [null, apiRes.message]

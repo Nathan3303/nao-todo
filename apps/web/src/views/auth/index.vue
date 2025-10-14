@@ -20,7 +20,7 @@
 
 <script lang="ts" setup>
 import { onMounted } from 'vue'
-import { useViewStore } from '@/stores/use-view-store'
+import { useViewStore } from '@/stores/global'
 
 const viewStore = useViewStore()
 

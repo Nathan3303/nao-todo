@@ -3,8 +3,9 @@
     "extends": "@vue/tsconfig/tsconfig.dom.json",
     "include": [
         "src/**/*",
-        "../../packages/**/*"
-, "../../.bak/basic-bak"    ],
+        "../../packages/**/*",
+        "../../.bak/basic-bak"
+    ],
     "exclude": [],
     "compilerOptions": {
         "composite": true,

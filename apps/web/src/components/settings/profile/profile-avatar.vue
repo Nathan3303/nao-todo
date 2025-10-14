@@ -47,7 +47,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import useProfileStore from './use-profile-store'
+import { useProfileStore } from '@/stores/settings'
 import { storeToRefs } from 'pinia'
 
 defineOptions({ name: 'SettingsProfileAvatar' })
