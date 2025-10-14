@@ -89,10 +89,9 @@ onMounted(() => {
                 :disabled="!allowReload"
             />
             <inner-dropdown-option
-                icon="eye-close"
-                title="隐藏已完成"
+                :icon="isHideCompletedAlready ? 'eye' : 'eye-close'"
+                :title="isHideCompletedAlready ? '显示已完成' : '隐藏已完成'"
                 execute-id="hide-completed"
-                :checked="isHideCompletedAlready"
             />
             <inner-dropdown
                 @execute="tasksViewStore.updateColumns"

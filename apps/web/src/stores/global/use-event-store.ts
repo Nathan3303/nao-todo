@@ -107,13 +107,19 @@ const useEventStore = defineStore('EventStore', () => {
     //     })) as Err
     // }
 
+    // @method 清除必要的状态
+    const __resetStates = () => {
+        events.value = [] as Event[]
+    }
+
     return {
         events,
         // pagination,
         getEvents,
         createEvent,
         updateEvent,
-        deleteEvent
+        deleteEvent,
+        __resetStates
     }
 })
 

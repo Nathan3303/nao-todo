@@ -227,6 +227,11 @@ const useProjectStore = defineStore('ProjectStore', () => {
         return null
     }
 
+    // @method 清除必要的状态
+    const __resetStates = () => {
+        projects.value = [] as Project[]
+    }
+
     // @returns
     return {
         projects,
@@ -239,7 +244,8 @@ const useProjectStore = defineStore('ProjectStore', () => {
         restoreProjectWithConfirm,
         deleteProjectPermanentlyWithConfirm,
         updateProject,
-        updateProjectPreference
+        updateProjectPreference,
+        __resetStates
     }
 })
 

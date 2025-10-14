@@ -26,6 +26,7 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useRoute, onBeforeRouteLeave } from 'vue-router'
 import { TasksAside, TasksTodoDetails, TasksFloatTodoDetails } from '@/layouts/tasks'
 import { useTasksDataStore, useTasksViewStore } from '@/stores/tasks'
 import { TasksDialogs } from '@/components/tasks/dialogs'
@@ -34,13 +35,22 @@ import { ref } from 'vue'
 
 const tasksDataStore = useTasksDataStore()
 const tasksViewStore = useTasksViewStore()
+const route = useRoute()
 
-const { outlineWidth, responsiveFlag } = storeToRefs(tasksViewStore)
+const { viewProps, outlineWidth, responsiveFlag } = storeToRefs(tasksViewStore)
 const loading = ref(true)
 
 const tasksTodoDetailsDiaplay = computed(() => responsiveFlag.value > 2)
 
 tasksDataStore.getProjectsAndTags().then(() => {
     loading.value = false
+})
+
+// @fix: 路由切换后需要清空 viewProps 数据，否则会导致切换到其他路由后返回当前路由时，会显示旧的待办任务数据
+onBeforeRouteLeave(() => {
+    setTimeout(() => {
+        if ((route.name as string).startsWith('tasks')) return
+        viewProps.value = void 0
+    }, 1000)
 })
 </script>

@@ -91,6 +91,11 @@ const useTodoDetailsStore = defineStore('TodoDetailsStore', () => {
         // 处理失败结果
         if (err) {
             console.error(unwrapError(err))
+            return
+        }
+        // 修改待办任务更新时间
+        if (todo.value) {
+            todo.value.updatedAt = new Date().toISOString()
         }
     })
 

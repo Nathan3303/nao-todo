@@ -51,7 +51,10 @@ const useTodoStore = defineStore('TodoStore', () => {
             pagination.total = res.pagination.total
             pagination.page = res.pagination.page
             pagination.maxPage = res.pagination.maxPage
-            pagination.current = Math.min(res.pagination.limit, res.pagination.total)
+            pagination.current = Math.min(
+                res.pagination.limit,
+                res.pagination.total - res.pagination.limit * (res.pagination.page - 1)
+            )
         }
         // 备份获取选项
         getTodosOptionsBk.value = { ...options }
@@ -100,8 +103,11 @@ const useTodoStore = defineStore('TodoStore', () => {
             return err
         }
         // 处理成功结果
-        if (todos.value.length < pagination.limit) {
+        if (todos.value.length <= pagination.limit) {
             todos.value.push(res)
+            pagination.current++
+            pagination.total++
+            pagination.maxPage = Math.ceil(pagination.total / pagination.limit)
             // console.log('todos', todos.value)
         }
         return null
@@ -123,7 +129,11 @@ const useTodoStore = defineStore('TodoStore', () => {
         // 处理成功结果
         const todoIdx = todos.value.findIndex((todo) => todo.id === todoId)
         if (todoIdx >= 0) {
-            todos.value[todoIdx] = { ...todos.value[todoIdx], ...options }
+            todos.value[todoIdx] = {
+                ...todos.value[todoIdx],
+                ...options,
+                updatedAt: new Date().toISOString()
+            }
         }
         return null
     }
@@ -243,6 +253,11 @@ const useTodoStore = defineStore('TodoStore', () => {
         })) as Err
     }
 
+    // @method 清除必要的状态
+    const __resetStates = () => {
+        todos.value = [] as Todo[]
+    }
+
     return {
         todos,
         pagination,
@@ -256,7 +271,8 @@ const useTodoStore = defineStore('TodoStore', () => {
         deleteTodoWithConfirm,
         restoreTodoWithConfirm,
         deleteTodoPermanentlyWithConfirm,
-        regetTodos
+        regetTodos,
+        __resetStates
     }
 })
 

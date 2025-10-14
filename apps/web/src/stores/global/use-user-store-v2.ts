@@ -2,7 +2,6 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { NueConfirm } from 'nue-ui'
-// import { useTodoStore, useProjectStore, useTagStore, useEventStore, useCommentStore } from '.'
 import { useAxios } from '@nao-todo/hooks'
 import { unwrapError } from '@nao-todo/utils'
 import getJWTPayload from '@nao-todo/utils/get-jwt-payload'
@@ -29,11 +28,6 @@ const USER_PASSWORD_REGEXP = /^\S*(?=\S{8})(?=\S*\d)(?=\S*[a-z])(?=\S*[!@#$%^&*?
 const useUserStoreV2 = defineStore('UserStore', () => {
     // @stores 全局 stores
     const router = useRouter()
-    // const todoStore = useTodoStore()
-    // const projectStore = useProjectStore()
-    // const tagStore = useTagStore()
-    // const eventStore = useEventStore()
-    // const commentStore = useCommentStore()
 
     // @state 请求器
     const requester = useAxios('http://localhost:3303/api/user/')
@@ -132,7 +126,6 @@ const useUserStoreV2 = defineStore('UserStore', () => {
         user.value = void 0
         userJwt.value = void 0
         isAuthenticated.value = false
-        // 清除用户数据
         // 返回结果
         return [true, null]
     }

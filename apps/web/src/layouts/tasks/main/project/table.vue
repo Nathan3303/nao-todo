@@ -48,7 +48,7 @@ const { responsiveFlag, todos, pagination, tags, loading, error, page, viewProps
                     :total-pages="pagination.maxPage"
                     :simple="responsiveFlag <= 1"
                     @per-page-change="tasksProjectViewStore.handleUpdatePerPage"
-                    @page-change="(p) => (page = p)"
+                    @page-change="tasksProjectViewStore.handleUpdatePage"
                 />
             </nue-div>
         </nue-footer>

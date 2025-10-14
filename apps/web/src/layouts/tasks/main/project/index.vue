@@ -34,11 +34,10 @@ watch(
             error.message = '视图数据加载失败'
             return
         }
-        // debug
-        // console.log('TasksBasic', viewProps.value)
         // 重置错误信息
         error.message = ''
-        // 跳转至 指定视图
+        // 跳转至指定视图
+        if (props.todoId) return
         router.replace({
             name: 'tasks-project-main',
             params: { viewType: viewProps.value.preference.viewType }

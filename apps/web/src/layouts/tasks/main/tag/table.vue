@@ -8,7 +8,7 @@ defineOptions({ name: 'TasksMainTagViewTable' })
 
 const tasksTagViewStore = useTasksTagViewStore()
 
-const { responsiveFlag, todos, pagination, tags, loading, error, page, viewProps } =
+const { responsiveFlag, todos, pagination, tags, loading, error, viewProps } =
     storeToRefs(tasksTagViewStore)
 </script>
 
@@ -17,7 +17,7 @@ const { responsiveFlag, todos, pagination, tags, loading, error, page, viewProps
         <nue-main>
             <loading-comp v-if="loading" />
             <nue-empty
-                v-else-if="error || !viewProps"
+                v-else-if="error || !viewProps || todos.length === 0"
                 image-size="4rem"
                 image-src="/images/coffee.webp"
                 :description="error"
@@ -37,10 +37,11 @@ const { responsiveFlag, todos, pagination, tags, loading, error, page, viewProps
                 />
             </nue-content>
         </nue-main>
-        <nue-footer v-if="!error">
+        <nue-footer v-if="!error && todos.length !== 0">
             <nue-div v-if="pagination" align="center" justify="space-between">
                 <nue-text color="gray" flex size="12px">
-                    当前列表 {{ pagination.current || 0 }} 项， 共计 {{ pagination.total || 0 }} 项。
+                    当前列表 {{ pagination.current || 0 }} 项， 共计
+                    {{ pagination.total || 0 }} 项。
                 </nue-text>
                 <pager
                     :limit="pagination.limit"
@@ -48,7 +49,7 @@ const { responsiveFlag, todos, pagination, tags, loading, error, page, viewProps
                     :total-pages="pagination.maxPage"
                     :simple="responsiveFlag <= 1"
                     @per-page-change="tasksTagViewStore.handleUpdatePerPage"
-                    @page-change="(p) => (page = p)"
+                    @page-change="tasksTagViewStore.handleUpdatePage"
                 />
             </nue-div>
         </nue-footer>

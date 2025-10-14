@@ -15,7 +15,7 @@ const useTasksBasicViewStore = defineStore('TasksBasicViewStore', () => {
 
     // @states 前置状态数据
     const { viewProps, responsiveFlag } = storeToRefs(tasksViewStore)
-    const { user, todos, pagination, tags } = storeToRefs(tasksDataStore)
+    const { todos, pagination, tags } = storeToRefs(tasksDataStore)
 
     // @state 分页页码
     const page = ref<number>(1)
@@ -45,6 +45,11 @@ const useTasksBasicViewStore = defineStore('TasksBasicViewStore', () => {
             error.value = unwrapError(err)
             return false
         }
+        // 处理当待办任务为空时的情况
+        if (todos.value.length === 0) {
+            error.value = '暂无待办任务'
+            return false
+        }
         // 处理成功结果
         error.value = ''
         return true
@@ -52,9 +57,8 @@ const useTasksBasicViewStore = defineStore('TasksBasicViewStore', () => {
 
     // @watch 当相关数据变化时获取待办任务数据
     watch(
-        () => [viewProps.value?.id, user.value?.id],
+        () => viewProps.value?.id,
         async () => {
-            console.log(111)
             // 判断路由分类是否是 basic，不是则置空 loadMark
             if (route.meta.category !== 'basic') {
                 //     loadMark.value = ''

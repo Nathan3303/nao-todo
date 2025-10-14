@@ -25,7 +25,7 @@ const useTasksProjectViewStore = defineStore('TasksProjectViewStore', () => {
     const error = ref<string>('')
 
     // @state 侦听信息标记 - 用于避免无效的重复请求
-    const loadMark = ref<string>('')
+    // const loadMark = ref<string>('')
 
     // @method 加载待办任务数据
     const getTodos = async (useLoading: boolean = false): Promise<boolean> => {
@@ -46,6 +46,11 @@ const useTasksProjectViewStore = defineStore('TasksProjectViewStore', () => {
             error.value = unwrapError(err)
             return false
         }
+        // 处理当待办任务为空时的情况
+        if (todos.value.length === 0) {
+            error.value = '暂无待办任务'
+            return false
+        }
         // 处理成功结果
         error.value = ''
         // 保存清单偏好（记录在清单数据中，以便偏好更新时直接传输）
@@ -56,23 +61,23 @@ const useTasksProjectViewStore = defineStore('TasksProjectViewStore', () => {
     // @watch 当相关数据变化时获取待办任务数据
     watch(
         () => viewProps.value?.id,
-        async (newId) => {
+        async () => {
             // 判断路由分类是否是 project，不是则置空 loadMark
             if (route.meta.category !== 'project') {
-                loadMark.value = ''
+                // loadMark.value = ''
                 return
             }
             // 构建 newLoadMark
-            const newLoadMark = `${newId}`
+            // const newLoadMark = `${newId}`
             // console.log(route.meta.category, loadMark.value, '->', newLoadMark)
             // 判断 loadMark 是否相同
-            if (newLoadMark === loadMark.value) return
+            // if (newLoadMark === loadMark.value) return
             // 请求数据
-            const ok = await getTodos(true)
+            await getTodos(true)
             // 处理失败结果
-            if (!ok) return
+            // if (!ok) return
             // 记录 newLoadMark
-            loadMark.value = newLoadMark
+            // loadMark.value = newLoadMark
         },
         { immediate: true }
     )
@@ -87,6 +92,12 @@ const useTasksProjectViewStore = defineStore('TasksProjectViewStore', () => {
         if (!viewProps.value) return
         viewProps.value.preference.getTodosOptions.limit = limit
         page.value = 1
+        getTodos()
+    }
+
+    // @method 处理分页页码变化
+    const handleUpdatePage = (newPage: number) => {
+        page.value = newPage
         getTodos()
     }
 
@@ -127,9 +138,10 @@ const useTasksProjectViewStore = defineStore('TasksProjectViewStore', () => {
     // @method 处理隐藏已完成
     const handleHideCompleted = async () => {
         if (!viewProps.value) return
-        if (isHideCompletedAlready.value) return
-        viewProps.value.preference.getTodosOptions.state = 'todo,in-progress'
-        await tasksViewStore.refreshData()
+        viewProps.value.preference.getTodosOptions.state = isHideCompletedAlready.value
+            ? void 0
+            : 'todo,in-progress'
+        getTodos()
     }
 
     // @method 处理切换视图
@@ -153,6 +165,7 @@ const useTasksProjectViewStore = defineStore('TasksProjectViewStore', () => {
         isHideCompletedAlready,
         getTodos,
         showTodoDetails,
+        handleUpdatePage,
         handleUpdatePerPage,
         handleUpdateSortOptions,
         handleClearSortOptions: () => handleUpdateSortOptions(null),

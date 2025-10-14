@@ -26,7 +26,7 @@ const useTasksTagViewStore = defineStore('TasksTagViewStore', () => {
     const error = ref<string>('')
 
     // @state 侦听信息标记 - 用于避免无效的重复请求
-    const loadMark = ref<string>('')
+    // const loadMark = ref<string>('')
 
     // @method 加载待办任务数据
     const getTodos = async (useLoading: boolean = false): Promise<boolean> => {
@@ -47,6 +47,11 @@ const useTasksTagViewStore = defineStore('TasksTagViewStore', () => {
             error.value = unwrapError(err)
             return false
         }
+        // 处理当待办任务为空时的情况
+        if (todos.value.length === 0) {
+            error.value = '暂无待办任务'
+            return false
+        }
         // 处理成功结果
         error.value = ''
         // 保存清单偏好（记录在清单数据中，以便偏好更新时直接传输）
@@ -56,24 +61,24 @@ const useTasksTagViewStore = defineStore('TasksTagViewStore', () => {
 
     // @watch 当 viewProps 中相关数据变化时获取数据
     watch(
-        () => [viewProps.value?.id, page.value] as const,
-        async ([newId, newPage]) => {
+        () => viewProps.value?.id,
+        async () => {
             // 判断路由分类是否是 tag，不是则置空 loadMark
             if (route.meta.category !== 'tag') {
-                loadMark.value = ''
+                // loadMark.value = ''
                 return
             }
             // 构建 newLoadMark
-            const newLoadMark = `${newId}-${newPage}`
+            // const newLoadMark = `${newId}-${newPage}`
             // console.log(route.meta.category, loadMark.value, '->', newLoadMark)
             // 判断 loadMark 是否相同
-            if (newLoadMark === loadMark.value) return
+            // if (newLoadMark === loadMark.value) return
             // 请求数据
-            const ok = await getTodos(true)
+            await getTodos(true)
             // 处理失败结果
-            if (!ok) return
+            // if (!ok) return
             // 记录 newLoadMark
-            loadMark.value = newLoadMark
+            // loadMark.value = newLoadMark
         },
         { immediate: true }
     )
@@ -88,16 +93,20 @@ const useTasksTagViewStore = defineStore('TasksTagViewStore', () => {
         if (!viewProps.value) return
         page.value = 1
         viewProps.value.preference.getTodosOptions.limit = limit
+        getTodos()
+    }
+
+    // @method 处理分页页码变化
+    const handleUpdatePage = (newPage: number) => {
+        page.value = newPage
+        getTodos()
     }
 
     // @method 处理排序数据变化
     const handleUpdateSortOptions = (newSortOptions: GetTodosSortOptions | null) => {
         if (!viewProps.value) return
-        if (newSortOptions === null) {
-            viewProps.value.preference.getTodosOptions.sort = void 0
-            return
-        }
-        viewProps.value.preference.getTodosOptions.sort = newSortOptions
+        viewProps.value.preference.getTodosOptions.sort = newSortOptions || void 0
+        getTodos(true)
     }
 
     // @state 上一次重新加载时间以及允许重新加载状态（五秒等待时间）
@@ -130,9 +139,10 @@ const useTasksTagViewStore = defineStore('TasksTagViewStore', () => {
     // @method 处理隐藏已完成
     const handleHideCompleted = async () => {
         if (!viewProps.value) return
-        if (isHideCompletedAlready.value) return
-        viewProps.value.preference.getTodosOptions.state = 'todo,in-progress'
-        await tasksViewStore.refreshData()
+        viewProps.value.preference.getTodosOptions.state = isHideCompletedAlready.value
+            ? void 0
+            : 'todo,in-progress'
+        getTodos()
     }
 
     // @method 处理切换视图
@@ -156,6 +166,7 @@ const useTasksTagViewStore = defineStore('TasksTagViewStore', () => {
         isHideCompletedAlready,
         getTodos,
         showTodoDetails,
+        handleUpdatePage,
         handleUpdatePerPage,
         handleUpdateSortOptions,
         handleClearSortOptions: () => handleUpdateSortOptions(null),

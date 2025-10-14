@@ -25,7 +25,7 @@ const useTagStore = defineStore('TagStore', () => {
             return err
         }
         // 处理成功结果
-        tags.value  = res || []
+        tags.value = res || []
         return null
     }
 
@@ -102,13 +102,19 @@ const useTagStore = defineStore('TagStore', () => {
         return null
     }
 
+    // @method 清除必要的状态
+    const __resetStates = () => {
+        tags.value = [] as Tag[]
+    }
+
     return {
         tags,
         getTags,
         createTag,
         deleteTag,
         deleteTagWithConfirm,
-        updateTag
+        updateTag,
+        __resetStates
     }
 })
 

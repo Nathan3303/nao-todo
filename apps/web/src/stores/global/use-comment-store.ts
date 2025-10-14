@@ -101,13 +101,19 @@ const useCommentStore = defineStore('CommentStore', () => {
         return null
     }
 
+    // @method 清除必要的状态
+    const __resetStates = () => {
+        comments.value = [] as Comment[]
+    }
+
     return {
         comments,
         pagination,
         getComments,
         createComment,
         updateComment,
-        deleteComment
+        deleteComment,
+        __resetStates
     }
 })
 
