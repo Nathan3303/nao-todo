@@ -19,7 +19,8 @@ import {
     updateTodoHandler,
     deleteTodoHandler,
     restoreTodoHandler,
-    getTodoHandler
+    getTodoHandler,
+    duplicateTodoHandler
 } from '@nao-todo/handlers/v1'
 
 const useTodoStore = defineStore('TodoStore', () => {
@@ -88,29 +89,34 @@ const useTodoStore = defineStore('TodoStore', () => {
     }
 
     // @method 创建待办任务
-    const createTodo = async (createOptions: CreateTodoOptions): Promise<Err> => {
+    const createTodo = async (
+        createOptions: CreateTodoOptions
+    ): Promise<GoLike<Todo['id'] | null | undefined>> => {
         // 参数判断
-        if (!createOptions.name) return '待办任务名称不能为空'
-        if (!createOptions.state) return '待办任务状态不能为空'
-        if (!createOptions.priority) return '待办任务优先级不能为空'
-        if (!createOptions.endAt) return '待办任务截止时间不能为空'
-        if (!createOptions.projectId) return '待办任务所属清单 ID 不能为空'
+        if (!createOptions.name) return [null, '待办任务名称不能为空']
+        if (!createOptions.state) return [null, '待办任务状态不能为空']
+        if (!createOptions.priority) return [null, '待办任务优先级不能为空']
+        if (!createOptions.endAt) return [null, '待办任务截止时间不能为空']
+        if (!createOptions.projectId) return [null, '待办任务所属清单 ID 不能为空']
         // 创建待办任务
-        const [res, err] = await createTodoHandler(createOptions, requester)
+        const [todo, err] = await createTodoHandler(createOptions, requester)
         // 处理失败结果
         if (err) {
             console.error(unwrapError(err))
-            return err
+            return [null, err]
         }
         // 处理成功结果
-        if (todos.value.length <= pagination.limit) {
-            todos.value.push(res)
+        if (todo && todos.value.length <= pagination.limit) {
+            // 待办任务列表未满，直接添加
+            todos.value.push(todo)
+            // 待办任务列表未满，更新分页信息
             pagination.current++
             pagination.total++
             pagination.maxPage = Math.ceil(pagination.total / pagination.limit)
-            // console.log('todos', todos.value)
+            // 待办任务列表未满，返回待办任务 ID
+            return [todo.id, null]
         }
-        return null
+        return [null, null]
     }
 
     // @method 更新待办任务
@@ -253,6 +259,54 @@ const useTodoStore = defineStore('TodoStore', () => {
         })) as Err
     }
 
+    // @method 复制待办任务
+    const duplicateTodo = async (
+        todoId: Todo['id']
+    ): Promise<GoLike<Todo['id'] | null | undefined>> => {
+        // 参数判断
+        if (!todoId) return [null, '待办任务ID不能为空']
+        // 复制待办任务
+        const [todo, err] = await duplicateTodoHandler(todoId, requester)
+        // 处理失败结果
+        if (err) {
+            console.error(unwrapError(err))
+            return [null, err]
+        }
+        // 处理成功结果
+        if (todo && todos.value.length <= pagination.limit) {
+            // 待办任务列表未满，直接添加
+            todos.value.push(todo)
+            // 待办任务列表未满，更新分页信息
+            pagination.current++
+            pagination.total++
+            pagination.maxPage = Math.ceil(pagination.total / pagination.limit)
+            // 待办任务列表未满，返回待办任务 ID
+            return [todo.id, null]
+        }
+        return [null, '待办任务复制失败']
+    }
+
+    // @method 复制待办任务（带确认）
+    const duplicateTodoWithComfirm = async (
+        todoId: Todo['id']
+    ): Promise<GoLike<Todo['id'] | null | undefined>> => {
+        return (await NueConfirm({
+            title: '复制待办任务',
+            content: '确定要复制此待办任务吗？操作将会复制除待办任务评论以外的信息',
+            confirmButtonText: '复制',
+            cancelButtonText: '取消',
+            onConfirm: async () => {
+                const [newTodoId, err] = await duplicateTodo(todoId)
+                if (err) {
+                    NueMessage.error(unwrapError(err))
+                    return [null, err]
+                }
+                NueMessage.success('复制待办任务成功')
+                return [newTodoId, null]
+            }
+        })) as GoLike<Todo['id'] | null | undefined>
+    }
+
     // @method 清除必要的状态
     const __resetStates = () => {
         todos.value = [] as Todo[]
@@ -272,6 +326,8 @@ const useTodoStore = defineStore('TodoStore', () => {
         restoreTodoWithConfirm,
         deleteTodoPermanentlyWithConfirm,
         regetTodos,
+        duplicateTodo,
+        duplicateTodoWithComfirm,
         __resetStates
     }
 })

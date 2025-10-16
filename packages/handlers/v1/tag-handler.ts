@@ -17,7 +17,7 @@ const DELETE_TAG_SUCCESS_CODE = 30030
 export const createTagHandler = async (
     options: CreateTagOptions,
     requester: Requester
-): Promise<GoLike> => {
+): Promise<GoLike<Tag | null | undefined>> => {
     // 参数判断
     if (options.name === '') return [null, '标签名称不能为空']
     if (options.color === '') return [null, '标签颜色不能为空']
@@ -25,7 +25,7 @@ export const createTagHandler = async (
     const apiRes = await createTagApi(requester, options)
     // 处理成功结果
     if (apiRes.code === CREATE_TAG_SUCCESS_CODE) {
-        return [apiRes.data, null]
+        return [apiRes.data as Tag, null]
     }
     // 处理失败结果
     return [null, apiRes.message]

@@ -58,8 +58,8 @@ const { tags } = storeToRefs(tasksDataStore)
         </nue-header>
         <nue-main>
             <nue-content fill>
-                <nue-div vertical gap="0" height="100%" wrap="nowrap">
-                    <nue-div theme="name-desc" spellcheck="false" height="auto">
+                <nue-div vertical wrap="nowrap" height="100%">
+                    <nue-div theme="name-desc" spellcheck="false">
                         <nue-textarea
                             v-model="shadowTodo.name"
                             :autosize="{ minRows: 1, maxRows: 2 }"
@@ -77,10 +77,10 @@ const { tags } = storeToRefs(tasksDataStore)
                             @change="emit('update', 'description')"
                         />
                     </nue-div>
-                    <nue-div vertical style="padding: 0 1rem">
+                    <nue-div vertical style="padding: 0 1rem; flex: 1">
                         <details-main-events />
                     </nue-div>
-                    <nue-div vertical style="padding: 1rem; margin-top: auto">
+                    <nue-div vertical style="padding: 1rem">
                         <todo-tag-bar
                             :tags="tags"
                             :todo-tags="shadowTodo.tags"
@@ -88,6 +88,9 @@ const { tags } = storeToRefs(tasksDataStore)
                         />
                     </nue-div>
                     <details-main-comments />
+                    <nue-div class="tasks-details-view__deleted-tag" v-if="shadowTodo.isDeleted">
+                        任务已删除
+                    </nue-div>
                     <nue-div class="tasks-details-view__giveup-tag" v-if="shadowTodo.isGivenUp">
                         任务已放弃
                     </nue-div>
@@ -115,6 +118,7 @@ const { tags } = storeToRefs(tasksDataStore)
                     flex="30%"
                     label="最后修改时间"
                 />
+                <!-- <details-row :text="statusText" flex="15%" label="状态" /> -->
             </nue-div>
         </nue-footer>
     </nue-container>
@@ -122,6 +126,10 @@ const { tags } = storeToRefs(tasksDataStore)
 
 <style scoped>
 .nue-container#TasksTodoDetailsMainContainer {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+
     > .nue-header,
     > .nue-main,
     > .nue-footer {
@@ -138,6 +146,7 @@ const { tags } = storeToRefs(tasksDataStore)
 
     > .nue-footer {
         padding: 1rem;
+        height: auto;
     }
 
     .nue-div--name-desc {
@@ -186,6 +195,16 @@ const { tags } = storeToRefs(tasksDataStore)
         height: 32px;
         line-height: 32px;
         background-color: #ff7b47;
+        color: white;
+        justify-content: center;
+    }
+
+    .tasks-details-view__deleted-tag {
+        display: flex;
+        font-size: 0.75rem;
+        height: 32px;
+        line-height: 32px;
+        background-color: #ff4747;
         color: white;
         justify-content: center;
     }

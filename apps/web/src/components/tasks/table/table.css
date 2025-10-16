@@ -108,17 +108,27 @@
         .col-first {
             gap: 0.5rem;
 
-            .col-first__name {
+            .col-first__name-wrapper {
                 flex: auto;
                 flex-wrap: nowrap;
-                font-size: var(--nue-text-sm);
-                color: var(--nue-primary-color-800);
+                overflow: hidden;
+                width: 100%;
+                gap: 0;
+                align-items: center;
+
+                .nue-text--todo-name {
+                    font-size: var(--nue-text-sm);
+                    color: var(--nue-primary-color-800);
+                    margin-right: auto;
+                }
             }
 
             .col-first__description {
                 color: var(--nue-primary-color-500);
-                white-space: break-spaces;
                 font-size: var(--nue-text-xs);
+                overflow: hidden;
+                white-space: normal;
+                word-break: break-all;
             }
 
             .col-first__giveup-tag {

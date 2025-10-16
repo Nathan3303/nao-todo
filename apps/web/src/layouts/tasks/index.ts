@@ -1,6 +1,6 @@
 import TasksAside from './aside'
-import { TasksTodoDetails, TasksFloatTodoDetails } from './outlines'
+import TasksOutline from './outlines'
 
 export type * from './types'
 export * from './utils'
-export { TasksAside, TasksTodoDetails, TasksFloatTodoDetails }
+export { TasksAside, TasksOutline }

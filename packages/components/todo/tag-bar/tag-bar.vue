@@ -1,23 +1,21 @@
 <template>
-    <nue-div :class="{ 'todo-tag-bar--small': small }" class="todo-tag-bar" width="fit-content">
-        <nue-div v-if="visibleTags.length" align="center" gap="8px" width="fit-content">
-            <tag-node
-                v-for="tag in visibleTags"
-                :key="tag.id"
-                :readonly="readonly"
-                :tag="tag"
-                @delete="handleDropTag"
-            />
-            <tag-node
-                v-if="todoTags.length > clamped"
-                :tag="{
-                    id: 'overflow-tag',
-                    name: `+${todoTags.length - clamped}`,
-                    color: '#a1a1a1'
-                }"
-                readonly
-            />
-        </nue-div>
+    <nue-div :class="{ 'todo-tag-bar--small': small }" class="todo-tag-bar">
+        <tag-node
+            v-for="tag in visibleTags"
+            :key="tag.id"
+            :readonly="readonly"
+            :tag="tag"
+            @delete="handleDropTag"
+        />
+        <tag-node
+            v-if="todoTags.length > clamped"
+            :tag="{
+                id: 'overflow-tag',
+                name: `+${todoTags.length - clamped}`,
+                color: '#a1a1a1'
+            }"
+            readonly
+        />
         <combo-box
             v-if="!readonly"
             :framework="comboBoxOptions"
@@ -46,21 +44,25 @@ const { visibleTags, comboBoxOptions, handleAddTag, handleDropTag } = useTagBar(
 
 <style scoped>
 .todo-tag-bar {
-    align-items: center;
-    gap: 12px;
     text-decoration: none !important;
-}
+    width: 100%;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
 
-.todo-tag-bar--small {
-    scale: 0.9;
-    margin-left: -4%;
-
-    .tag-node {
-        height: 20px;
-        padding: 0 0.4375rem;
-
-        .tag-node__name {
-            font-size: var(--nue-text-xs);
+    &.todo-tag-bar--small {
+        transform: scale(0.9);
+        transform-origin: right;
+        gap: 0.5rem;
+        width: fit-content;
+    
+        .tag-node {
+            height: 20px;
+            padding: 0 0.4375rem;
+    
+            .tag-node__name {
+                font-size: var(--nue-text-xs);
+            }
         }
     }
 }

@@ -23,6 +23,7 @@ export type DetailsMainProps = {
     commentsCount: number
     isCommenting: boolean
     leaveCommentHandler: (content: string) => Promise<boolean>
+    statusText: string
 }
 
 export type DetailsMainEmits = {
@@ -45,7 +46,7 @@ export type DetailsFooterEmits = {
     (e: 'giveUpTodo'): void
     (e: 'cancelGiveUpTodo'): void
     (e: 'leaveTodoComment'): void
-    (e: 'duplicateTodo'): void
+    (e: 'duplicateTodo', todoId: Todo['id']): void
 }
 
 export type DetailsMainEventsProps = {

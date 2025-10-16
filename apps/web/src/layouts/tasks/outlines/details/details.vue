@@ -19,7 +19,7 @@ const todoDetailsStore = useTodoDetailsStore()
 
 const leaveCommentInputRef = ref<InstanceType<typeof NueTextarea>>()
 
-const { loading, error, todo, eventsProgress, updating, isCommenting, commentsCount } =
+const { loading, error, todo, eventsProgress, updating, isCommenting, commentsCount, statusText } =
     storeToRefs(todoDetailsStore)
 
 const handleClose = () => {
@@ -38,11 +38,15 @@ const handleStartLeaveComment = () => {
     <loading-comp v-if="loading" />
     <nue-empty
         v-else-if="error || !todo"
-        description="选择左侧的任务以查看详细"
+        :description="error"
         image-size="64px"
         image-src="/images/todo.webp"
         style="height: 100%"
-    />
+    >
+        <nue-div justify="center" style="margin-top: 1rem">
+            <nue-button theme="primary,small" @click="handleClose">返回任务列表</nue-button>
+        </nue-div>
+    </nue-empty>
     <nue-container v-else id="TasksTodoDetailsContainer" class="tasks-details-view">
         <nue-header>
             <details-header
@@ -62,6 +66,7 @@ const handleStartLeaveComment = () => {
                     :comments-count="commentsCount"
                     :is-commenting="isCommenting"
                     :leaveCommentHandler="todoDetailsStore.handleLeaveComment"
+                    :status-text="statusText"
                     @update="todoDetailsStore.updateTodo"
                     @update-todo-state="todoDetailsStore.updateTodoState"
                     @update-todo-priority="todoDetailsStore.updateTodoPriority"
@@ -78,10 +83,10 @@ const handleStartLeaveComment = () => {
                 @delete-todo="todoDetailsStore.handleDeleteTodo"
                 @restore-todo="todoDetailsStore.handleRestoreTodo"
                 @leave-todo-comment="handleStartLeaveComment"
+                @duplicate-todo="todoDetailsStore.handleDuplicateTodo"
             />
         </nue-footer>
     </nue-container>
-    <!-- @duplicate-todo="handleDuplicateTodo" -->
     <!-- @give-up-todo="handleGiveUpTodo" -->
     <!-- @cancel-give-up-todo="handleCancelGiveUpTodo" -->
 </template>

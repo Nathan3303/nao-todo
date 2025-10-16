@@ -6,28 +6,16 @@
             <nue-content fill style="overflow: hidden">
                 <router-view />
             </nue-content>
-            <template v-if="tasksTodoDetailsDiaplay">
-                <nue-separator op-target="next" @resize="tasksViewStore.handleOutlineResize" />
-                <nue-aside
-                    :width="outlineWidth"
-                    max-width="420px"
-                    min-width="360px"
-                    style="padding: 0"
-                >
-                    <tasks-todo-details />
-                </nue-aside>
-            </template>
+            <tasks-outline />
         </nue-main>
     </nue-container>
     <tasks-dialogs />
-    <tasks-float-todo-details v-if="!tasksTodoDetailsDiaplay" />
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRoute, onBeforeRouteLeave } from 'vue-router'
-import { TasksAside, TasksTodoDetails, TasksFloatTodoDetails } from '@/layouts/tasks'
+import { TasksAside, TasksOutline } from '@/layouts/tasks'
 import { useTasksDataStore, useTasksViewStore } from '@/stores/tasks'
 import { TasksDialogs } from '@/components/tasks/dialogs'
 import { Loading as LoadingComp } from '@nao-todo/components'
@@ -37,10 +25,8 @@ const tasksDataStore = useTasksDataStore()
 const tasksViewStore = useTasksViewStore()
 const route = useRoute()
 
-const { viewProps, outlineWidth, responsiveFlag } = storeToRefs(tasksViewStore)
+const { viewProps } = storeToRefs(tasksViewStore)
 const loading = ref(true)
-
-const tasksTodoDetailsDiaplay = computed(() => responsiveFlag.value > 2)
 
 tasksDataStore.getProjectsAndTags().then(() => {
     loading.value = false

@@ -1,1 +1,3 @@
-export * from './details'
+import TasksOutline from './index.vue'
+
+export default TasksOutline

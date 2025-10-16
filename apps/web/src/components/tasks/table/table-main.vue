@@ -44,11 +44,10 @@ const {
             @click.stop.shift.exact="showMultiSelectPanel(idx)"
         >
             <nue-div class="todo-table__main__col col-first" vertical>
-                <nue-div align="center" gap="1rem" wrap="nowrap">
-                    <nue-div class="col-first__name" width="auto" gap=".5rem" align="center">
-                        <span class="col-first__giveup-tag" v-if="todo.isGivenUp">已放弃</span>
-                        <nue-text :clamped="1" :title="todo.name">{{ todo.name }}</nue-text>
-                    </nue-div>
+                <nue-div class="col-first__name-wrapper">
+                    <nue-text theme="todo-name" :clamped="1" :title="todo.name">
+                        {{ todo.name }}
+                    </nue-text>
                     <todo-tag-bar
                         :clamped="tagBarClamped"
                         :tags="tags"

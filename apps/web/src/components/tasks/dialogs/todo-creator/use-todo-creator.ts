@@ -1,10 +1,11 @@
-import type { CreateTodoOptions } from '@nao-todo/types'
-import { useTodoStore, useUserStoreV2 } from '@/stores/global'
-import { useTasksDataStore } from '@/stores/tasks'
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { unwrapError } from '@nao-todo/utils'
 import { NueMessage } from 'nue-ui'
+import { useRouter } from 'vue-router'
+import { useTodoStore, useUserStoreV2 } from '@/stores/global'
+import { useTasksDataStore } from '@/stores/tasks'
+import { unwrapError } from '@nao-todo/utils'
+import type { CreateTodoOptions } from '@nao-todo/types'
 
 export const defaultCreateTodoOptions: CreateTodoOptions = {
     name: '',
@@ -19,6 +20,7 @@ export const defaultCreateTodoOptions: CreateTodoOptions = {
 
 const useTodoCreator = () => {
     // @states Stores
+    const router = useRouter()
     const todoStore = useTodoStore()
     const userStore = useUserStoreV2()
     const tasksDataStore = useTasksDataStore()
@@ -40,7 +42,7 @@ const useTodoCreator = () => {
         }
         // 调用 API
         creating.value = disabled.value = true
-        const err = await todoStore.createTodo(newTodo.value)
+        const [todoId, err] = await todoStore.createTodo(newTodo.value)
         creating.value = false
         // 处理失败结果
         if (err) {
@@ -50,6 +52,8 @@ const useTodoCreator = () => {
         }
         // 处理成功结果
         NueMessage.success('待办任务创建成功')
+        // 跳转至新待办任务详情页
+        router.push({ name: router.currentRoute.value.name, params: { todoId } })
         return true
     }
 

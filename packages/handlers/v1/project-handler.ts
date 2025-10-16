@@ -29,14 +29,14 @@ const UPDATE_PROJECT_PREFERENCE_SUCCESS_CODE = 20060
 const createProjectHandler = async (
     options: CreateProjectOptions,
     requester: Requester
-): Promise<GoLike> => {
+): Promise<GoLike<Project | null | undefined>> => {
     // 参数判断
     if (options.name === '') return [null, '清单名称不能为空']
     // 调用 API 创建清单
     const apiRes = await createProjectApi(requester, options)
     // 处理成功结果
     if (apiRes.code === CREATE_PROJECT_SUCCESS_CODE) {
-        return [apiRes.data, null]
+        return [apiRes.data as Project, null]
     }
     // 处理失败结果
     return [null, apiRes.message]

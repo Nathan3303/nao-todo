@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useWindowResizeListener } from '@nao-todo/hooks'
 
@@ -21,13 +21,17 @@ const useViewStore = defineStore('viewStore', () => {
     }
     addWindowResizeCb(responsiveFlagUpdater, true)
 
-    // @state 是否显示侧边栏
-    const isDisplayAside = ref<boolean>(true)
+    // @state 任务界面默认值
+    const tasksDefaults = ref({
+        isUseFloatAside: false,
+        isUseFloatOutline: false
+    })
 
-    // @method 切换侧边栏显示状态
-    const switchIsDisplayAside = () => {
-        isDisplayAside.value = !isDisplayAside.value
-    }
+    // @state 是否显示应用级的侧边栏
+    const appAsideStates = reactive({
+        floating: false,
+        visible: false
+    })
 
     // @method 隐藏应用加载屏
     const hideFirstLoadingScreen = () => {
@@ -47,8 +51,8 @@ const useViewStore = defineStore('viewStore', () => {
 
     return {
         responsiveFlag,
-        isDisplayAside,
-        switchIsDisplayAside,
+        tasksDefaults,
+        appAsideStates,
         hideFirstLoadingScreen
     }
 })

@@ -82,22 +82,15 @@ export const restoreTodoApiV2 = async (requester: Requester, id: Todo['id']) => 
     }
 }
 
-// export const updateTodosV2 = async (
-//     requester: Requester,
-//     ids: Todo['id'][],
-//     options: UpdateTodoOptions
-// ) => {
-//     try {
-//         const response = await requester.put(`/todos`, {
-//             todoIds: ids,
-//             updateInfo: options
-//         })
-//         return response.data as ResponseData
-//     } catch (error) {
-//         console.error('[@nao-todo/apis/update-todo-v2]', error)
-//         return { code: 500, message: '服务器错误' } as ResponseData
-//     }
-// }
+export const duplicateTodoApiV2 = async (requester: Requester, todoId: Todo['id']) => {
+    try {
+        const response = await requester.get(`/todo/duplicate/${todoId}`)
+        return response.data as ResponseData
+    } catch (error) {
+        console.error('[@nao-todo/apis/duplicate-todo-v2]', error)
+        return { code: 500, message: '服务器错误' } as ResponseData
+    }
+}
 
 // 获取待办
 // export const getTodoV2 = async (requester: Requester, options: GetTodoOptions) => {
@@ -107,16 +100,6 @@ export const restoreTodoApiV2 = async (requester: Requester, id: Todo['id']) => 
 //         return response.data as ResponseData
 //     } catch (error) {
 //         console.error('[@nao-todo/apis/get-todo-v2]', error)
-//         return { code: 500, message: '服务器错误' } as ResponseData
-//     }
-// }
-
-// export const duplicateTodoV2 = async (requester: Requester, todoId: Todo['id']) => {
-//     try {
-//         const response = await requester.get`(`/todo/duplicate?todoId=${todoId}`)
-//         return response.data as ResponseData
-//     } catch (error) {
-//         console.error('[@nao-todo/apis/duplicate-todo-v2]', error)
 //         return { code: 500, message: '服务器错误' } as ResponseData
 //     }
 // }

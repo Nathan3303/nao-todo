@@ -34,9 +34,8 @@ const handleClick = () => {
 </script>
 
 <style scoped>
-.todo-check-button {
-    --icon-size: 16px;
-    --icon-weight: normal;
+.nue-button.todo-check-button {
+    --nue-button-font-size: 1.125rem;
     cursor: pointer;
     transition: all 0.16s;
 }

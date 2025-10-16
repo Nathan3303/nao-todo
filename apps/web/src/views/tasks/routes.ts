@@ -1,3 +1,4 @@
+import { useViewStore } from '@/stores/global'
 import type { RouteRecordRaw } from 'vue-router'
 
 const routes: RouteRecordRaw = {
@@ -5,6 +6,12 @@ const routes: RouteRecordRaw = {
     name: 'tasks',
     component: () => import('./index.vue'),
     redirect: { name: 'tasks-basic', params: { viewId: 'all' } },
+    beforeEnter: (to, from, next) => {
+        // 重置浮动侧边栏的显示状态
+        const viewStore = useViewStore()
+        viewStore.appAsideStates.visible = false
+        next()
+    },
     children: [
         {
             path: `:viewId(all|today|tomorrow|week|inbox|overdue|favourite|givenup|deleted)`,

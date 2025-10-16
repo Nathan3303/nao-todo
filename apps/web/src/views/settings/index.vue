@@ -1,27 +1,17 @@
+<script lang="ts" setup>
+import { SettingsAside } from '@/layouts/settings'
+</script>
+
 <template>
     <nue-container id="SettingsViewContainer">
         <nue-main>
-            <nue-aside>
-                <nue-link
-                    v-for="(link, idx) in routeLinks"
-                    :icon="(link.icon as never)"
-                    :key="idx"
-                    :route="link.route"
-                    theme="route"
-                >
-                    {{ link.name }}
-                </nue-link>
-            </nue-aside>
+            <settings-aside />
             <nue-content fill>
                 <router-view />
             </nue-content>
         </nue-main>
     </nue-container>
 </template>
-
-<script lang="ts" setup>
-import { SettingsViewRouteLinks as routeLinks } from './routes'
-</script>
 
 <style>
 .settings-view__form-row {

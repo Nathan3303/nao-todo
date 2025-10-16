@@ -1,8 +1,9 @@
 import { ref, watch } from 'vue'
-import { useTasksDataStore } from '@/stores/tasks'
-import type { CreateTagOptions } from '@nao-todo/types'
-import { unwrapError } from '@nao-todo/utils'
+import { useRouter } from 'vue-router'
 import { NueMessage } from 'nue-ui'
+import { useTasksDataStore } from '@/stores/tasks'
+import { unwrapError } from '@nao-todo/utils'
+import type { CreateTagOptions } from '@nao-todo/types'
 
 export type TagCreatorEmits = {
     (e: 'closeDialog'): void
@@ -16,6 +17,7 @@ const DefaultCreateOptions: CreateTagOptions = {
 
 const useTagCreator = (emit: TagCreatorEmits) => {
     const tasksDataStore = useTasksDataStore()
+    const router = useRouter()
 
     const creating = ref(false)
     const isNameEmpty = ref(false)
@@ -34,7 +36,7 @@ const useTagCreator = (emit: TagCreatorEmits) => {
         }
         // 调用 API 创建标签
         creating.value = true
-        const err = await tasksDataStore.createTag(
+        const [tagId, err] = await tasksDataStore.createTag(
             newTag.value.name,
             newTag.value.color,
             newTag.value.description
@@ -45,10 +47,12 @@ const useTagCreator = (emit: TagCreatorEmits) => {
             console.warn(unwrapError(err))
             return false
         }
+        // 跳转至新标签详情页
+        router.push({ name: 'tasks-tag-main', params: { tagId } })
         // 处理成功结果
         emit('closeDialog')
-        NueMessage.success('标签创建成功')
         clearInputsValue()
+        NueMessage.success('标签创建成功')
         return true
     }
 

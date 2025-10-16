@@ -6,6 +6,7 @@ import { requester } from './requester'
 import type {
     Err,
     GetProjectsOptions,
+    GoLike,
     Project,
     ProjectPreference,
     UpdateProjectOptions
@@ -41,19 +42,22 @@ const useProjectStore = defineStore('ProjectStore', () => {
     const createProject = async (
         name: Project['name'],
         description?: Project['description']
-    ): Promise<Err> => {
+    ): Promise<GoLike<Project['id'] | null | undefined>> => {
         // 参数判断
-        if (!name) return '清单名称不能为空'
+        if (!name) return [null, '清单名称不能为空']
         // 创建清单
-        const [res, err] = await createProjectHandler({ name: name, description }, requester)
+        const [project, err] = await createProjectHandler({ name: name, description }, requester)
         // 处理失败结果
         if (err) {
             console.error(unwrapError(err))
-            return err
+            return [null, err]
         }
         // 处理成功结果
-        projects.value.push(res)
-        return null
+        if (project) {
+            projects.value.push(project)
+            return [project.id, null]
+        }
+        return [null, '清单创建失败']
     }
 
     // @method 删除清单

@@ -4,7 +4,8 @@ import {
     updateTodoApiV2,
     deleteTodoApiV2,
     restoreTodoApiV2,
-    getTodoApiV2
+    getTodoApiV2,
+    duplicateTodoApiV2
 } from '@nao-todo/apis/v2'
 import type {
     CreateTodoOptions,
@@ -23,11 +24,12 @@ const UPDATE_TODO_SUCCESS_CODE = 40020
 const DELETE_TODO_SUCCESS_CODE = 40030
 const RESTORE_TODO_SUCCESS_CODE = 40040
 const GET_TODOS_SUCCESS_CODE = 40050
+const DUPLICATE_TODO_SUCCESS_CODE = 40060
 
 export const createTodoHandler = async (
     options: CreateTodoOptions,
     requester: Requester
-): Promise<GoLike> => {
+): Promise<GoLike<Todo | null | undefined>> => {
     // 参数判断
     if (options.name === '') return [null, '待办任务名称不能为空']
     // 调用 API 创建待办任务
@@ -113,6 +115,20 @@ export const restoreTodoHandler = async (
     // 处理成功结果
     if (apiRes.code === RESTORE_TODO_SUCCESS_CODE) {
         return [apiRes.data, null]
+    }
+    // 处理失败结果
+    return [null, apiRes.message]
+}
+
+export const duplicateTodoHandler = async (
+    todoId: Todo['id'],
+    requester: Requester
+): Promise<GoLike<Todo | null | undefined>> => {
+    // 调用 API 复制待办任务
+    const apiRes = await duplicateTodoApiV2(requester, todoId)
+    // 处理成功结果
+    if (apiRes.code === DUPLICATE_TODO_SUCCESS_CODE) {
+        return [apiRes.data as Todo, null]
     }
     // 处理失败结果
     return [null, apiRes.message]

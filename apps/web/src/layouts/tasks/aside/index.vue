@@ -8,11 +8,11 @@ defineOptions({ name: 'TasksAsideWrapper' })
 
 const tasksViewStore = useTasksViewStore()
 
-const { responsiveFlag, asideWidth, isDisplayAside } = storeToRefs(tasksViewStore)
+const { isDisplayAside, asideWidth, isUseFloatAside } = storeToRefs(tasksViewStore)
 </script>
 
 <template>
-    <tasks-float-aside v-if="responsiveFlag < 2" />
+    <tasks-float-aside v-if="isUseFloatAside" />
     <template v-else-if="isDisplayAside">
         <tasks-aside :width="asideWidth" max-width="256px" min-width="180px" />
         <nue-separator op-target="previous" @resize="tasksViewStore.handleAsideResize" />

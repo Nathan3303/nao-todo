@@ -40,7 +40,7 @@ watch(
         allow-close-by-overlay
         v-model="visible"
         theme="outline"
-        span="420px"
+        span="min(100%, 430px)"
         min-span="360px"
         ref="drawerRef"
     >

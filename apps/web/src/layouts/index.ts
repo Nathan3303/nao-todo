@@ -1,2 +1,2 @@
-export * from './index-aside'
+export * from './global'
 export * from './tasks'

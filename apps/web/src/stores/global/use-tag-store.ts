@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/utils'
 import { requester } from './requester'
-import type { Err, GetTagsOptions, Tag, UpdateTagOptions } from '@nao-todo/types'
+import type { Err, GetTagsOptions, GoLike, Tag, UpdateTagOptions } from '@nao-todo/types'
 import {
     createTagHandler,
     deleteTagHandler,
@@ -34,18 +34,21 @@ const useTagStore = defineStore('TagStore', () => {
         name: Tag['name'],
         color: Tag['color'],
         description?: Tag['description']
-    ): Promise<Err> => {
+    ): Promise<GoLike<Tag['id'] | null | undefined>> => {
         // 创建标签
         const createOptions = { name: name, color, description: description || '' }
-        const [res, err] = await createTagHandler(createOptions, requester)
+        const [tag, err] = await createTagHandler(createOptions, requester)
         // 处理失败结果
         if (err) {
             console.error(unwrapError(err))
-            return err
+            return [null, err]
         }
         // 处理成功结果
-        tags.value.push(res)
-        return null
+        if (tag) {
+            tags.value.push(tag)
+            return [tag.id, null]
+        }
+        return [null, '标签创建失败']
     }
 
     // @method 删除标签

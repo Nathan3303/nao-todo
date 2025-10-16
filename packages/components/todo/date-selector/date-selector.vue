@@ -5,7 +5,7 @@
                 v-model="dateMoment"
                 :debounce-time="1000"
                 theme="small,noshape"
-                type="datetime-local"
+                :type="('datetime-local' as never)"
             />
             <nue-button icon="clear" theme="small,ghost,icon,pure" @click="dateMoment = null" />
         </nue-div>

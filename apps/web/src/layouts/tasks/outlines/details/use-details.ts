@@ -3,7 +3,7 @@ import { storeToRefs } from 'pinia'
 import { useTodoStore } from '@/stores/global'
 import { useTodoDetailsStore } from '@/stores/tasks'
 import { useTasksDataStore } from '@/stores/tasks'
-import { useUpdateQueue, type UpdateQueueItem } from './use-update-queue'
+import { useUpdateQueue, type UpdateQueueItem } from '@/hooks/use-update-queue'
 import { unwrapError } from '@nao-todo/utils'
 import type { Todo, UpdateTodoOptions } from '@nao-todo/types'
 import type { DetailsEmits } from './types'
@@ -15,7 +15,7 @@ export const useTodoDetails = (emit: DetailsEmits) => {
     const tasksDataStore = useTasksDataStore()
 
     // @states 前置状态
-    const { todo, events, comments, loading, error } = storeToRefs(todoDetailsStore)
+    const { todo, events, loading, error } = storeToRefs(todoDetailsStore)
 
     // @computed 检查事项进度计算属性
     const eventsProgress = computed(() => {

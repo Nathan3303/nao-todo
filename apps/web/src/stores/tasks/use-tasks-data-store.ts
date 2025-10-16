@@ -10,7 +10,7 @@ import {
     useCommentStore,
     useUserStoreV2
 } from '@/stores/global'
-import type { Err, Project, Tag } from '@nao-todo/types'
+import type { Err, Project, Tag, Todo } from '@nao-todo/types'
 
 const useTasksDataStore = defineStore('TasksDataStore', () => {
     const router = useRouter()
@@ -72,6 +72,28 @@ const useTasksDataStore = defineStore('TasksDataStore', () => {
         }
     }
 
+    // @methods 删除待办任务的处理函数 - 主要处理当删除待办任务为当前路由待办任务时跳转
+    const deleteTodo = async (todoId: Todo['id']): Promise<boolean> => {
+        // 调用 TodoStore 删除
+        const err = await todoStore.deleteTodoWithConfirm(todoId)
+        if (err !== 'ok') return false
+        // 删除成功则判断是否跳转
+        if (route.params.id === todoId) {
+            router.replace({ name: 'tasks-basic', params: { id: 'all' } })
+        }
+        return true
+    }
+    const deleteTodoPermanently = async (todoId: Todo['id']): Promise<boolean> => {
+        // 调用 TodoStore 删除
+        const err = await todoStore.deleteTodoPermanentlyWithConfirm(todoId)
+        if (err !== 'ok') return false
+        // 删除成功则判断是否跳转
+        if (route.params.id === todoId) {
+            router.replace({ name: 'tasks-basic', params: { id: 'all' } })
+        }
+        return true
+    }
+
     // @returns
     return {
         user,
@@ -93,9 +115,10 @@ const useTasksDataStore = defineStore('TasksDataStore', () => {
         createTag: tagStore.createTag,
         deleteTag,
         getTodos: todoStore.getTodos,
-        deleteTodo: todoStore.deleteTodoWithConfirm,
-        deleteTodoPermanently: todoStore.deleteTodoPermanentlyWithConfirm,
+        deleteTodo,
+        deleteTodoPermanently,
         restoreTodo: todoStore.restoreTodoWithConfirm,
+        duplicateTodo: todoStore.duplicateTodoWithComfirm,
         getEvents: eventStore.getEvents,
         createEvent: eventStore.createEvent,
         updateEvent: eventStore.updateEvent,

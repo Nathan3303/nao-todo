@@ -1,6 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import { defineStore, storeToRefs } from 'pinia'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useTodoStore } from '@/stores/global'
 import { useTasksDataStore } from '@/stores/tasks'
 import { unwrapError, unwrapErrors } from '@nao-todo/utils'
@@ -11,8 +11,9 @@ import type { InputButtonSubmitPayload, TodoEventRowUpdatePayload } from '@nao-t
 
 const useTodoDetailsStore = defineStore('TodoDetailsStore', () => {
     // @stores 全局 stores
-    const tasksDataStore = useTasksDataStore()
     const route = useRoute()
+    const router = useRouter()
+    const tasksDataStore = useTasksDataStore()
     const todoStore = useTodoStore()
 
     // @states 前置状态
@@ -46,6 +47,7 @@ const useTodoDetailsStore = defineStore('TodoDetailsStore', () => {
             if (!newTodoId) return (todo.value = void 0)
             // 重置加载状态
             loading.value = true
+            error.value = ''
             // 查找待办任务
             todo.value = todos.value.find((todo) => todo.id === newTodoId)
             // 待办任务不存在，尝试从后端获取
@@ -56,6 +58,7 @@ const useTodoDetailsStore = defineStore('TodoDetailsStore', () => {
             if (!todo.value) {
                 // 用户提示
                 NueMessage.error('待办任务详细获取失败')
+                error.value = '待办任务详细获取失败'
                 // 恢复加载状态
                 loading.value = false
                 return
@@ -151,10 +154,10 @@ const useTodoDetailsStore = defineStore('TodoDetailsStore', () => {
         const ok = await tasksDataStore.deleteTodoPermanently(todoId)
         if (ok) {
             todo.value = void 0
+            // NueMessage.success('待办任务已永久删除')
+            router.replace({ name: router.currentRoute.value.name, params: { todoId: void 0 } })
         }
     }
-
-    // @states 检查事项功能相关状态
 
     // @method 处理创建待办任务检查事项
     const handleCreateEvent = async (payload: InputButtonSubmitPayload) => {
@@ -223,6 +226,24 @@ const useTodoDetailsStore = defineStore('TodoDetailsStore', () => {
         NueMessage.success('评论删除成功')
     }
 
+    // @method 处理复制待办任务
+    const handleDuplicateTodo = async (todoId?: Todo['id']) => {
+        if (!todoId) return false
+        const [newTodoId, err] = await tasksDataStore.duplicateTodo(todoId)
+        if (err) return false
+        router.push({ name: router.currentRoute.value.name, params: { todoId: newTodoId } })
+        return true
+    }
+
+    // @computed 待办任务状态文字
+    const statusText = computed(() => {
+        if (!todo.value) return '无'
+        else if (todo.value.isDeleted) return '已删除'
+        else if (todo.value.isArchived) return '已归档'
+        else if (todo.value.state === 'done') return '已完成'
+        else return '正常'
+    })
+
     // @returns
     return {
         todo,
@@ -251,7 +272,9 @@ const useTodoDetailsStore = defineStore('TodoDetailsStore', () => {
         handleLeaveComment,
         handleEnterNewLine: () => (commentContent.value += '\n'),
         handleEditComment,
-        handleDeleteComment
+        handleDeleteComment,
+        handleDuplicateTodo,
+        statusText
     }
 })
 

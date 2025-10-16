@@ -1,4 +1,8 @@
 html.nue-html {
+    height: 100vh;
+    min-width: unset;
+    min-height: unset;
+    aspect-ratio: unset;
     --nue-primary-font-family: 'Poppins', 'Noto Sans', 'Segoe UI Emoji', 'Apple Color Emoji',
         'Noto Color Emoji', sans-serif;
 

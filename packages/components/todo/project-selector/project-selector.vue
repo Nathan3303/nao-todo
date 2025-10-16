@@ -37,7 +37,7 @@ const handleSelect = async (projectId?: Project['id'], projectTitle?: Project['n
 </script>
 
 <template>
-    <nue-dropdown :placement="(placement as never) ?? 'bottom-end'">
+    <nue-dropdown :placement="(placement as never) ?? 'bottom-end'" theme="project-selector">
         <template #trigger="{ trigger }">
             <nue-button size="small" :icon="buttonIconName" @click="trigger">
                 {{ buttonText }}
@@ -58,9 +58,10 @@ const handleSelect = async (projectId?: Project['id'], projectTitle?: Project['n
                     :data-selected="project.id === projectId"
                     @click="handleSelect(project.id, project.name)"
                     gap="0.5rem"
+                    wrap="nowrap"
                 >
                     <nue-icon name="more2" size="12px" />
-                    <nue-text size="12px" style="flex: auto">{{ project.name }}</nue-text>
+                    <nue-text size="12px" style="flex: auto" :clamped="2">{{ project.name }}</nue-text>
                     <nue-icon v-if="project.id === projectId" name="check" />
                 </nue-div>
             </template>
@@ -70,3 +71,11 @@ const handleSelect = async (projectId?: Project['id'], projectTitle?: Project['n
         </template>
     </nue-dropdown>
 </template>
+
+<style>
+.nue-dropdown.nue-dropdown--project-selector {
+    min-width: 12rem;
+    width: max-content;
+    max-width: 80%;
+}
+</style>

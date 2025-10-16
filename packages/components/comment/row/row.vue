@@ -3,10 +3,10 @@
         <nue-avatar :src="comment.user.avatar" class="comment-row__avatar" size="32px" />
         <nue-div class="comment-row__details">
             <nue-div class="comment-row__details__title">
-                <nue-text color="var(--nue-primary-color-600)" size="var(--nue-text-sm)">
+                <nue-text color="var(--nue-primary-color-800)" size="var(--nue-text-sm)">
                     {{ comment.user.nickname }}
                 </nue-text>
-                <nue-text color="var(--nue-primary-color-500)" size="var(--nue-text-xs)">
+                <nue-text color="var(--nue-primary-color-400)" size="var(--nue-text-xs)">
                     {{ useRelativeDate(comment.createdAt) }}
                 </nue-text>
                 <nue-div class="comment-row__details__actions">
@@ -38,9 +38,7 @@
                         </nue-button>
                     </nue-div>
                 </template>
-                <nue-text v-else color="#363636" size="12px" theme="pre">
-                    {{ shadowContent }}
-                </nue-text>
+                <nue-text v-else theme="pre">{{ shadowContent }}</nue-text>
             </nue-div>
         </nue-div>
     </nue-div>
@@ -136,7 +134,10 @@ const handleCancelEdit = () => {
 }
 
 .comment-row .nue-text--pre {
+    word-break: break-word;
     white-space: pre-wrap;
+    font-size: var(--nue-text-xs);
+    color: var(--nue-primary-color-700);
 }
 
 .comment-row:hover .comment-row__details__actions {

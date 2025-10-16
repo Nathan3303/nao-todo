@@ -1,7 +1,7 @@
 <template>
     <nue-container id="AuthViewContainer">
         <nue-main>
-            <nue-aside>
+            <nue-aside v-if="isDisplayAside">
                 <nue-div flex="1" justify="space-between" vertical>
                     <nue-text color="white" size="2rem">NaoTodo</nue-text>
                     <nue-text color="white" size="1rem">
@@ -21,8 +21,13 @@
 <script lang="ts" setup>
 import { onMounted } from 'vue'
 import { useViewStore } from '@/stores/global'
+import { useAuthViewStore } from '@/stores/auth'
+import { storeToRefs } from 'pinia'
 
 const viewStore = useViewStore()
+const authViewStore = useAuthViewStore()
+
+const { isDisplayAside } = storeToRefs(authViewStore)
 
 onMounted(() => {
     viewStore.hideFirstLoadingScreen()
