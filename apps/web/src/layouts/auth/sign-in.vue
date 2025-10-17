@@ -82,10 +82,10 @@ const handleSubmit = async (e: Event) => {
     disabled.value = true
     // 调用登录 API
     const err = await authStore.handleSignIn(formData.email, formData.password)
-    loading.value = false
     // 处理错误
     if (err) {
         formData.password = ''
+        loading.value = false
         disabled.value = false
         return
     }

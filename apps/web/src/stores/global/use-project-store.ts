@@ -209,7 +209,7 @@ const useProjectStore = defineStore('ProjectStore', () => {
         preference: ProjectPreference
     ): Promise<Err> => {
         // 参数判断
-        if (!projectId) return '清单ID不能为空'
+        if (!projectId) return '清单 ID 不能为空'
         if (!preference.columns && !preference.getTodosOptions && !preference.viewType)
             return '请指定更新的清单偏好'
         if (preference.viewType === '') return '请指定清单视图类型'

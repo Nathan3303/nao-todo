@@ -11,7 +11,7 @@ const useAuthViewStore = defineStore('AuthViewStore', () => {
 
     // @computed 是否显示侧边栏
     const isDisplayAside = computed(() => {
-        return responsiveFlag.value >= 3
+        return responsiveFlag.value > 2
     })
 
     // @returns

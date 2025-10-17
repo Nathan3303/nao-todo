@@ -2,7 +2,7 @@ import { computed, ref, watch } from 'vue'
 import { defineStore, storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import { useTodoStore } from '@/stores/global'
-import { useTasksDataStore } from '@/stores/tasks'
+import { useTasksDataStore, useTasksViewStore } from '@/stores/tasks'
 import { unwrapError, unwrapErrors } from '@nao-todo/utils'
 import { useUpdateQueue, type UpdateQueueItem } from '@/hooks'
 import { NueMessage } from 'nue-ui'
@@ -13,11 +13,13 @@ const useTodoDetailsStore = defineStore('TodoDetailsStore', () => {
     // @stores 全局 stores
     const route = useRoute()
     const router = useRouter()
-    const tasksDataStore = useTasksDataStore()
     const todoStore = useTodoStore()
+    const tasksDataStore = useTasksDataStore()
+    const tasksViewStore = useTasksViewStore()
 
     // @states 前置状态
     const { todos, events, comments } = storeToRefs(tasksDataStore)
+    const { isUseFloatAside } = storeToRefs(tasksViewStore)
 
     // @state 加载以及错误状态
     const loading = ref(false)
@@ -44,7 +46,11 @@ const useTodoDetailsStore = defineStore('TodoDetailsStore', () => {
         () => route.params.todoId as string,
         async (newTodoId) => {
             // 判断并获取 todoId
-            if (!newTodoId) return (todo.value = void 0)
+            if (!newTodoId) {
+                todo.value = void 0
+                error.value = '点击任务显示详情'
+                return
+            }
             // 重置加载状态
             loading.value = true
             error.value = ''
@@ -57,7 +63,7 @@ const useTodoDetailsStore = defineStore('TodoDetailsStore', () => {
             // 处理待办任务不存在结果
             if (!todo.value) {
                 // 用户提示
-                NueMessage.error('待办任务详细获取失败')
+                // NueMessage.error('待办任务详细获取失败')
                 error.value = '待办任务详细获取失败'
                 // 恢复加载状态
                 loading.value = false
@@ -274,7 +280,8 @@ const useTodoDetailsStore = defineStore('TodoDetailsStore', () => {
         handleEditComment,
         handleDeleteComment,
         handleDuplicateTodo,
-        statusText
+        statusText,
+        isUseFloatAside
     }
 })
 

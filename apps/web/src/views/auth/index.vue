@@ -42,10 +42,4 @@ onMounted(() => {
     min-width: unset;
     max-width: unset;
 }
-
-@media screen and (max-width: 768px) {
-    .auth-view__main:deep(.nue-main__aside-wrapper) {
-        display: none;
-    }
-}
 </style>

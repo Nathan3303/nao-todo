@@ -75,6 +75,16 @@ const useUserStoreV2 = defineStore('UserStore', () => {
             user.value = getJWTPayload(jwt) as User
             userJwt.value = jwt
             isAuthenticated.value = true
+            // 临时插入用户偏好设置
+            user.value.preference = {
+                isUseFloatAsideDefaultly: {
+                    tasks: false,
+                    settings: false
+                },
+                isUseFloatOutlineDefaultly: {
+                    tasks: false
+                }
+            }
             // 返回登录成功
             return null
         }
@@ -99,6 +109,16 @@ const useUserStoreV2 = defineStore('UserStore', () => {
             user.value = getJWTPayload(jwt) as User
             userJwt.value = jwt
             isAuthenticated.value = true
+            // 临时插入用户偏好设置
+            user.value.preference = {
+                isUseFloatAsideDefaultly: {
+                    tasks: false,
+                    settings: false
+                },
+                isUseFloatOutlineDefaultly: {
+                    tasks: false
+                }
+            }
             // 返回登录成功
             return [true, null]
         }
@@ -122,10 +142,18 @@ const useUserStoreV2 = defineStore('UserStore', () => {
             return [null, result.message]
         }
         // 处理成功结果
-        localStorage.removeItem(USER_JWT_LOCALSTORAGE_KEY)
         user.value = void 0
         userJwt.value = void 0
         isAuthenticated.value = false
+        // 删除所有以 USER 开头的 LocalStorage 项
+        // localStorage.removeItem(USER_JWT_LOCALSTORAGE_KEY)
+        const keysToRemove = []
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i)
+            if (!key) continue
+            if (/^USER_/.test(key)) keysToRemove.push(key)
+        }
+        keysToRemove.forEach((key) => localStorage.removeItem(key))
         // 返回结果
         return [true, null]
     }

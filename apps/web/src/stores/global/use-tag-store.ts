@@ -3,12 +3,20 @@ import { ref } from 'vue'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/utils'
 import { requester } from './requester'
-import type { Err, GetTagsOptions, GoLike, Tag, UpdateTagOptions } from '@nao-todo/types'
+import type {
+    Err,
+    GetTagsOptions,
+    GoLike,
+    Tag,
+    TagPreference,
+    UpdateTagOptions
+} from '@nao-todo/types'
 import {
     createTagHandler,
     deleteTagHandler,
     getTagsHandler,
-    updateTagHandler
+    updateTagHandler,
+    updateTagPreferenceHandler
 } from '@nao-todo/handlers/v1'
 
 const useTagStore = defineStore('TagStore', () => {
@@ -105,6 +113,32 @@ const useTagStore = defineStore('TagStore', () => {
         return null
     }
 
+    // @method 更新标签偏好
+    const updateTagPreference = async (
+        tagId: Tag['id'],
+        preference: TagPreference
+    ): Promise<Err> => {
+        // 参数判断
+        if (!tagId) return '标签 ID 不能为空'
+        if (!preference.columns && !preference.getTodosOptions && !preference.viewType)
+            return '请指定更新的标签偏好'
+        if (preference.viewType === '') return '请指定标签视图类型'
+        // 更新标签偏好
+        const [, err] = await updateTagPreferenceHandler(tagId, preference, requester)
+        // 处理失败结果
+        if (err) {
+            console.error(unwrapError(err))
+            return err
+        }
+        // 处理成功结果
+        tags.value.forEach((tag) => {
+            if (tag.id === tagId) {
+                tag.preference = preference
+            }
+        })
+        return null
+    }
+
     // @method 清除必要的状态
     const __resetStates = () => {
         tags.value = [] as Tag[]
@@ -117,6 +151,7 @@ const useTagStore = defineStore('TagStore', () => {
         deleteTag,
         deleteTagWithConfirm,
         updateTag,
+        updateTagPreference,
         __resetStates
     }
 })

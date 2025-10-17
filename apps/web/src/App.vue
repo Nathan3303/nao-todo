@@ -1,30 +1,18 @@
+<script setup lang="ts">
+import { useViewStore } from '@/stores/global'
+import { useWindowResizeListener } from '@nao-todo/hooks'
+
+defineOptions({ name: 'AppTopRouterView' })
+
+const viewStore = useViewStore()
+const { addCallback: addWindowResizeCb } = useWindowResizeListener()
+
+// @window-resize 响应式检测 - 通过 window.innerWidth 和 window.resize 检测
+addWindowResizeCb(viewStore.responsiveFlagUpdater, true)
+</script>
+
 <template>
-    <!-- <loading-screen
-        :loading="indexViewLoader.loading"
-        :error="indexViewLoader.error"
-        :error-message="indexViewLoader.errorMessage"
-        @refresh="indexViewInitTask"
-    /> -->
     <suspense>
         <router-view />
     </suspense>
 </template>
-
-<script setup lang="ts">
-// import { useViewStore } from '@/stores/global'
-</script>
-
-<style>
-html,
-body {
-    width: 100vw;
-    height: 100vh;
-    margin: 0;
-    padding: 0;
-}
-
-#app {
-    width: 100%;
-    height: 100%;
-}
-</style>

@@ -48,6 +48,7 @@ type DeleteTagOptions = { id: Tag['id'] }
 
 export type {
     Tag,
+    TagPreference,
     CreateTagOptions,
     UpdateTagOptions,
     GetTagOptions,

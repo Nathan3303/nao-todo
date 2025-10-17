@@ -1,10 +1,17 @@
-import { createTagApi, deleteTagApi, getTagsApi, updateTagApi } from '@nao-todo/apis/v2'
+import {
+    createTagApi,
+    deleteTagApi,
+    getTagsApi,
+    updateTagApi,
+    updateTagPreferenceApi
+} from '@nao-todo/apis/v2'
 import type {
     CreateTagOptions,
     GetTagOptions,
     GoLike,
     Requester,
     Tag,
+    TagPreference,
     UpdateTagOptions
 } from '@nao-todo/types'
 
@@ -13,6 +20,7 @@ const GET_TAGS_SUCCESS_CODE = 30050
 // const GET_TAG_SUCCESS_CODE = 30000
 const UPDATE_TAG_SUCCESS_CODE = 30020
 const DELETE_TAG_SUCCESS_CODE = 30030
+const UPDATE_TAG_PREFERENCE_SUCCESS_CODE = 30060
 
 export const createTagHandler = async (
     options: CreateTagOptions,
@@ -69,6 +77,21 @@ export const updateTagHandler = async (
     const apiRes = await updateTagApi(requester, tagId, options)
     // 处理成功结果
     if (apiRes.code === UPDATE_TAG_SUCCESS_CODE) {
+        return [apiRes.data, null]
+    }
+    // 处理失败结果
+    return [null, apiRes.message]
+}
+
+export const updateTagPreferenceHandler = async (
+    tagId: Tag['id'],
+    preference: TagPreference,
+    requester: Requester
+): Promise<GoLike> => {
+    // 调用 API 更新标签偏好
+    const apiRes = await updateTagPreferenceApi(requester, tagId, preference)
+    // 处理成功结果
+    if (apiRes.code === UPDATE_TAG_PREFERENCE_SUCCESS_CODE) {
         return [apiRes.data, null]
     }
     // 处理失败结果

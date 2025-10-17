@@ -6,23 +6,60 @@ defineOptions({ name: 'SettingsViewTasks' })
 
 const viewSetterStore = useViewSetterStore()
 
-const { tasksDefaults } = storeToRefs(viewSetterStore)
+const {
+    isUseFloatTasksAsideDefaultly,
+    isUseFloatTasksOutlineDefaultly,
+    isUseFloatSettingsAsideDefaultly
+} = storeToRefs(viewSetterStore)
 </script>
 
 <template>
     <nue-div vertical>
-        <nue-text>浮动侧边栏偏好设置</nue-text>
-        <nue-div vertical>
-            <nue-div align="center" gap="2rem">
-                <nue-text color="gray" size="var(--nue-text-sm)">默认使用浮动详情栏</nue-text>
-                <nue-switch size="small" v-model="tasksDefaults.isUseFloatAside" />
-            </nue-div>
-            <nue-div align="center" gap="2rem">
-                <nue-text color="gray" size="var(--nue-text-sm)">默认使用浮动侧边栏</nue-text>
-                <nue-switch size="small" v-model="tasksDefaults.isUseFloatOutline" />
-            </nue-div>
-        </nue-div>
+        <nue-container>
+            <nue-header>浮动侧边栏偏好设置</nue-header>
+            <nue-main>
+                <nue-content>
+                    <nue-div vertical gap=".5rem">
+                        <nue-div align="center" gap="2rem">
+                            <nue-text color="gray" size="var(--nue-text-sm)">
+                                在 任务界面 中默认使用浮动侧边栏
+                            </nue-text>
+                            <nue-switch size="small" v-model="isUseFloatTasksAsideDefaultly" />
+                        </nue-div>
+                        <nue-div align="center" gap="2rem">
+                            <nue-text color="gray" size="var(--nue-text-sm)">
+                                在 设置界面 中默认使用浮动详情栏
+                            </nue-text>
+                            <nue-switch size="small" v-model="isUseFloatSettingsAsideDefaultly" />
+                        </nue-div>
+                    </nue-div>
+                </nue-content>
+            </nue-main>
+        </nue-container>
+        <nue-container>
+            <nue-header>浮动详情栏偏好设置</nue-header>
+            <nue-main>
+                <nue-content>
+                    <nue-div vertical gap=".5rem">
+                        <nue-div align="center" gap="2rem">
+                            <nue-text color="gray" size="var(--nue-text-sm)">
+                                在 任务界面 中默认使用浮动详情栏
+                            </nue-text>
+                            <nue-switch size="small" v-model="isUseFloatTasksOutlineDefaultly" />
+                        </nue-div>
+                    </nue-div>
+                </nue-content>
+            </nue-main>
+        </nue-container>
     </nue-div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.nue-container {
+    > .nue-header,
+    > .nue-main {
+        height: auto;
+        padding: 0.875rem 0;
+    }
+}
+</style>

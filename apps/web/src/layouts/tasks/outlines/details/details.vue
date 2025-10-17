@@ -19,8 +19,17 @@ const todoDetailsStore = useTodoDetailsStore()
 
 const leaveCommentInputRef = ref<InstanceType<typeof NueTextarea>>()
 
-const { loading, error, todo, eventsProgress, updating, isCommenting, commentsCount, statusText } =
-    storeToRefs(todoDetailsStore)
+const {
+    loading,
+    error,
+    todo,
+    eventsProgress,
+    updating,
+    isCommenting,
+    commentsCount,
+    statusText,
+    isUseFloatAside
+} = storeToRefs(todoDetailsStore)
 
 const handleClose = () => {
     router.push({ name: route.name, params: { todoId: void 0 } }).then(() => {
@@ -43,7 +52,7 @@ const handleStartLeaveComment = () => {
         image-src="/images/todo.webp"
         style="height: 100%"
     >
-        <nue-div justify="center" style="margin-top: 1rem">
+        <nue-div v-if="isUseFloatAside" justify="center" style="margin-top: 1rem">
             <nue-button theme="primary,small" @click="handleClose">返回任务列表</nue-button>
         </nue-div>
     </nue-empty>

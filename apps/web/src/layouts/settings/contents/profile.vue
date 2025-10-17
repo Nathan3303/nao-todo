@@ -32,14 +32,11 @@ const hideAsideButtonIcon = computed(() => {
         </nue-header>
         <nue-main>
             <nue-content fill>
-                <nue-div vertical gap="3rem" style="padding: 2rem 1rem">
+                <nue-div vertical style="padding: 2rem 1rem">
                     <settings-profile-avatar />
                     <settings-profile-nickname />
                     <settings-profile-info />
-                    <nue-div vertical>
-                        <nue-text>修改密码</nue-text>
-                        <settings-password-form />
-                    </nue-div>
+                    <settings-password-form />
                 </nue-div>
             </nue-content>
         </nue-main>

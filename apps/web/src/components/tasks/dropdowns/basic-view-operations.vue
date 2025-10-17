@@ -53,6 +53,7 @@ onMounted(() => {
     dropdownRef.value.register('switch-view-to-list', tasksBasicViewStore.handleSwitchToList)
     dropdownRef.value.register('refresh-data', tasksBasicViewStore.handleRefreshData)
     dropdownRef.value.register('hide-completed', tasksBasicViewStore.handleHideCompleted)
+    dropdownRef.value.register('update-preference', tasksBasicViewStore.handleUpdatePreference)
 })
 </script>
 
@@ -107,7 +108,11 @@ onMounted(() => {
                     :checked="option.checked"
                 />
             </inner-dropdown>
-            <!-- <li data-executeid="update-preference"><nue-icon name="picture" />保存视图偏好</li> -->
+            <inner-dropdown-option
+                icon="picture"
+                title="保存视图偏好"
+                execute-id="update-preference"
+            />
         </tasks-dropdown-div-block>
     </tasks-operations-dropdown>
 </template>

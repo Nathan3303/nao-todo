@@ -18,18 +18,16 @@ const hideAsideButtonIcon = computed(() => {
 <template>
     <nue-container id="SettingsViewContainer">
         <nue-header>
-            <nue-div flex="1" wrap="nowrap" align="center">
-                <nue-button
-                    :icon="hideAsideButtonIcon"
-                    theme="icon,ghost"
-                    @click="settingsViewStore.switchIsDisplayAside"
-                />
-                <nue-text size="var(--nue-text-xxl)">页面设置</nue-text>
-            </nue-div>
+            <nue-button
+                :icon="hideAsideButtonIcon"
+                theme="icon,ghost"
+                @click="settingsViewStore.switchIsDisplayAside"
+            />
+            <nue-text>页面设置</nue-text>
         </nue-header>
         <nue-main>
             <nue-content fill>
-                <nue-div vertical gap="2rem" style="padding: 2rem 1rem">
+                <nue-div vertical gap="2rem" style="padding: 1rem">
                     <settings-view-floating />
                 </nue-div>
             </nue-content>

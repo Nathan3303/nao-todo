@@ -1,25 +1,16 @@
 import { ref, computed } from 'vue'
 import { defineStore, storeToRefs } from 'pinia'
 import { basicViewProps } from './constants'
+import { parsePreference, toObject } from './utils'
 import { useProjectStore, useTagStore, useTodoStore, useViewStore } from '@/stores/global'
 import { NuePrompt, NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/utils'
-import { type TasksMainViewProps, toProjectViewProps, toTagViewProps } from '@/layouts/tasks/'
-import type { Err, TodoColumnOptions } from '@nao-todo/types'
+import type { TasksMainViewProps } from '@/layouts/tasks/'
+import type { Err, ProjectPreference, TodoColumnOptions } from '@nao-todo/types'
+
+const USER_TASKS_BASIC_VIEW_PREFERENCE_LSKEY = 'USER_TASKS_BASIC_VIEW_PREFERENCE'
 
 const useTasksViewStore = defineStore('TasksViewStore', () => {
-    // @states 读取侧边栏宽度记录
-    const asideWidth = ref(localStorage.getItem('TASKS_ASIDE_WIDTH') || '256px')
-    const outlineWidth = ref(localStorage.getItem('TASKS_OUTLINE_WIDTH') || '420px')
-
-    // @methods 写入侧边栏宽度记录 - 当侧边栏宽度手动修改时调用
-    const handleAsideResize = (newWidth: number) => {
-        localStorage.setItem('TASKS_ASIDE_WIDTH', newWidth + 'px')
-    }
-    const handleOutlineResize = (newWidth: number) => {
-        localStorage.setItem('TASKS_OUTLINE_WIDTH', newWidth + 'px')
-    }
-
     // @states 全局 Store
     const projectStore = useProjectStore()
     const tagStore = useTagStore()
@@ -29,21 +20,28 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
     // @states 前置状态
     const { tags } = storeToRefs(tagStore)
     const { projects } = storeToRefs(projectStore)
-    const { responsiveFlag, tasksDefaults, appAsideStates } = storeToRefs(viewStore)
+    const {
+        responsiveFlag,
+        appAsideStates,
+        globalAsideWidth,
+        globalOutlineWidth,
+        isUseFloatTasksAsideDefaultly,
+        isUseFloatTasksOutlineDefaultly
+    } = storeToRefs(viewStore)
 
     // @states 是否显示侧边栏
     const isDisplayAside = ref<boolean>(true)
 
     // @computed 是否使用浮动侧边栏
     const isUseFloatAside = computed(() => {
-        const flag = responsiveFlag.value < 2 || tasksDefaults.value.isUseFloatAside
-        appAsideStates.value.floating = flag
+        const flag = responsiveFlag.value < 2 || isUseFloatTasksAsideDefaultly.value
+        appAsideStates.value.floating = flag || false
         return flag
     })
 
     // @computed 是否使用浮动任务详情侧边栏
     const isUseFloatOutline = computed(() => {
-        return responsiveFlag.value < 3 || tasksDefaults.value.isUseFloatOutline
+        return responsiveFlag.value < 3 || isUseFloatTasksOutlineDefaultly.value
     })
 
     // @method 切换侧边栏显示状态
@@ -62,22 +60,63 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
     // @state 视图加载状态
     const viewPropsLoadState = ref<number>(0)
 
-    // @methods 加载视图全局属性
+    // @method 加载基础视图全局属性
+    const loadBasicViewProps = async (id: string): Promise<TasksMainViewProps | undefined> => {
+        const res = basicViewProps.find((vp) => vp.id === id)
+        if (!res) return
+        const result: Partial<TasksMainViewProps> = {}
+        result.id = res.id
+        result.category = res.category
+        result.icon = res.icon
+        result.name = res.name
+        result.description = res.description
+        const localPreference = toObject(
+            localStorage.getItem(`${USER_TASKS_BASIC_VIEW_PREFERENCE_LSKEY}/${id}`),
+            res.preference
+        ) as ProjectPreference
+        result.preference = parsePreference(localPreference)
+        return result as TasksMainViewProps
+    }
+
+    // @method 加载项目视图全局属性
     const loadProjectViewProps = async (id: string): Promise<TasksMainViewProps | undefined> => {
         const project = projects.value.find((p) => p.id === id)
         if (!project) return
-        return toProjectViewProps(project)
+        const result: Partial<TasksMainViewProps> = {}
+        result.id = project.id
+        result.category = 'project'
+        result.icon = ''
+        result.name = project.name
+        result.description = project.description
+        result.preference = parsePreference(project.preference)
+        result.createTodoOptions = {
+            projectId: project.id
+        }
+        return result as TasksMainViewProps
     }
+
+    // @method 加载标签视图全局属性
     const loadTagViewProps = async (id: string): Promise<TasksMainViewProps | undefined> => {
         const tag = tags.value.find((t) => t.id === id)
         if (!tag) return
-        return toTagViewProps(tag)
+        const result: Partial<TasksMainViewProps> = {}
+        result.id = tag.id
+        result.category = 'tag'
+        result.icon = ''
+        result.name = tag.name
+        result.description = tag.description
+        result.preference = parsePreference(tag.preference)
+        result.createTodoOptions = {
+            tags: [tag.id]
+        }
+        return result as TasksMainViewProps
     }
+
+    // @method 加载视图全局属性 根据类别加载不同的视图全局属性
     const loadViewProps = async (id: string, category: string) => {
-        // let _viewProps: undefined | TasksMainViewProps
         switch (category) {
             case 'basic':
-                viewProps.value = basicViewProps.find((vp) => vp.id === id)
+                viewProps.value = await loadBasicViewProps(id)
                 break
             case 'project':
                 viewProps.value = await loadProjectViewProps(id)
@@ -172,16 +211,20 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
         })
     }
 
-    // @methods 切换视图 / 隐藏已完成 / 更新列选项
+    // @method 切换视图
     const switchView = (viewType: string) => {
         if (!viewProps.value) return
         viewProps.value.preference.viewType = viewType
     }
+
+    // @method 切换隐藏已完成
     const hideCompleted = async () => {
         if (!viewProps.value) return
         viewProps.value.preference.getTodosOptions.state = 'todo,in-progress'
         await refreshData()
     }
+
+    // @method 更新列选项
     const updateColumns = (columnKey: string) => {
         if (!viewProps.value) return
         const key = columnKey as keyof TodoColumnOptions
@@ -198,23 +241,43 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
         }
     }
 
+    // @method 更新基础分类视图偏好
+    const updateBasicPreference = (viewId: string, preference: ProjectPreference): Err => {
+        try {
+            const preferenceString = JSON.stringify(preference)
+            localStorage.setItem(
+                `${USER_TASKS_BASIC_VIEW_PREFERENCE_LSKEY}/${viewId}`,
+                preferenceString
+            )
+        } catch (err: unknown) {
+            console.warn(
+                '[UseTasksViewStore/UpdateBasicPreference] Error:',
+                unwrapError(err as Err)
+            )
+            return err as Err
+        }
+        return null
+    }
+
     // @method 更新视图偏好
     const updatePreference = async () => {
         if (!viewProps.value) return
-        // ---
-        console.log('updatePreference', viewProps.value.preference)
         // 获取属性
         const id = viewProps.value.id
         const category = viewProps.value.category
         const preference = viewProps.value.preference
         // 判断当前分类
         let err: Err = null
+        // 调用 API 更新视图偏好
         switch (category) {
             case 'project':
-                // 调用 API 更新视图偏好
                 err = await projectStore.updateProjectPreference(id, preference)
                 break
             case 'tag':
+                err = await tagStore.updateTagPreference(id, preference)
+                break
+            case 'basic':
+                err = updateBasicPreference(id, preference)
                 break
             default:
                 break
@@ -235,10 +298,10 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
         isDisplayAside,
         isUseFloatOutline,
         switchIsDisplayAside,
-        asideWidth,
-        outlineWidth,
-        handleAsideResize,
-        handleOutlineResize,
+        asideWidth: globalAsideWidth,
+        outlineWidth: globalOutlineWidth,
+        handleAsideResize: viewStore.handleAsideResize,
+        handleOutlineResize: viewStore.handleOutlineResize,
         viewProps,
         viewPropsLoadState,
         loadViewProps,

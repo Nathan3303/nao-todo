@@ -172,7 +172,8 @@ const useTasksBasicViewStore = defineStore('TasksBasicViewStore', () => {
         handleHideCompleted,
         handleSwitchToTable: () => handleSwitchView('table'),
         handleSwitchToList: () => handleSwitchView('list'),
-        handleSwitchToKanban: () => handleSwitchView('kanban')
+        handleSwitchToKanban: () => handleSwitchView('kanban'),
+        handleUpdatePreference: tasksViewStore.updatePreference
     }
 })
 
