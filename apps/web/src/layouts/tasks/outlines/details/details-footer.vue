@@ -62,14 +62,18 @@ const handleDropdownExecute = (executeId: string) => {
             </template>
             <nue-div theme="block" style="min-width: 8rem">
                 <nue-text theme="title">更多操作</nue-text>
-                <inner-dropdown-option title="评论" icon="chat" execute-id="comment-todo" />
-                <inner-dropdown-option title="复制" icon="files" execute-id="duplicate-todo" />
+                <inner-dropdown-option title="添加评论" icon="chat" execute-id="comment-todo" />
                 <inner-dropdown-option
+                    title="复制待办任务"
+                    icon="files"
+                    execute-id="duplicate-todo"
+                />
+                <!-- <inner-dropdown-option
                     :disabled="shadowTodo.isDeleted"
                     :title="shadowTodo.isGivenUp ? '取消放弃任务' : '放弃任务'"
                     :icon="shadowTodo.isGivenUp ? 'plus-circle' : 'clear'"
                     :execute-id="shadowTodo.isGivenUp ? 'cancel-give-up-todo' : 'give-up-todo'"
-                />
+                /> -->
             </nue-div>
             <nue-div theme="block" style="min-width: 8rem">
                 <nue-text theme="title">删除待办任务</nue-text>

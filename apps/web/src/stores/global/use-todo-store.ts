@@ -35,7 +35,7 @@ const useTodoStore = defineStore('TodoStore', () => {
     })
     const getTodosOptionsBk = ref<GetTodosOptions>({})
 
-    // @method 进一步筛选待办任务列表
+    // @method 获取待办任务列表，并替换 todos 中的数据
     const getTodos = async (options: GetTodosOptions): Promise<Err> => {
         // 获取待办任务列表
         const [res, err] = await getTodosHandler(options, requester)
@@ -60,6 +60,28 @@ const useTodoStore = defineStore('TodoStore', () => {
         // 备份获取选项
         getTodosOptionsBk.value = { ...options }
         return null
+    }
+
+    // @method 获取待办任务列表，并填充到 todos 中
+    const getTodosWithPush = async (options: GetTodosOptions): Promise<GoLike> => {
+        // 获取待办任务
+        const [res, err] = await getTodosHandler(options, requester)
+        // 处理失败结果
+        if (err) {
+            console.error(unwrapError(err))
+            return [null, err]
+        }
+        // 处理成功结果
+        if (!res || todos.value.length === 0) {
+            return [0, null]
+        }
+        // TODO 差异化填充待办任务列表
+        // 1. 先根据 ID 查找是否存在重复项
+        const existingIds = todos.value.map((todo) => todo.id)
+        const newTodos = (res.todos || []).filter((todo) => !existingIds.includes(todo.id))
+        // 2. 填充新任务
+        todos.value.push(...newTodos)
+        return [res, null]
     }
 
     // @method 获取单个待办任务，并返回获取结果
@@ -317,6 +339,7 @@ const useTodoStore = defineStore('TodoStore', () => {
         pagination,
         getTodos,
         toGetTodo,
+        getTodosWithPush,
         createTodo,
         updateTodo,
         deleteTodo,
