@@ -3,6 +3,7 @@ import { reactive, ref } from 'vue'
 import { unwrapError } from '@nao-todo/utils'
 import { requester } from './requester'
 import { NueConfirm, NueMessage } from 'nue-ui'
+import { useUpdateQueue, type UpdateQueueItem } from '@/hooks'
 import type {
     CreateTodoOptions,
     Err,
@@ -26,6 +27,8 @@ import {
 const useTodoStore = defineStore('TodoStore', () => {
     // @state 待办任务列表（应该被应用于整个视图）
     const todos = ref<Todo[]>([])
+
+    // @state 分页信息
     const pagination = reactive<ResponseDataPagination>({
         total: 0,
         page: 1,
@@ -33,7 +36,14 @@ const useTodoStore = defineStore('TodoStore', () => {
         maxPage: 1,
         current: 0
     })
+
+    // @state 备份上一次获取待办任务列表的选项
     const getTodosOptionsBk = ref<GetTodosOptions>({})
+
+    // @hook useUpdateQueue 待办任务更新队列
+    const updateTodoQueue = useUpdateQueue(async (item: UpdateQueueItem) => {
+        return await updateTodo(item.id, item.updateOptions)
+    }, 2000)
 
     // @method 获取待办任务列表，并替换 todos 中的数据
     const getTodos = async (options: GetTodosOptions): Promise<Err> => {
@@ -46,8 +56,9 @@ const useTodoStore = defineStore('TodoStore', () => {
         }
         // 处理成功结果
         if (res && res.pagination) {
-            // todos.value.length = 0
+            // 替换 todos
             todos.value = res.todos || []
+            // 处理分页数据
             pagination.limit = res.pagination.limit
             pagination.total = res.pagination.total
             pagination.page = res.pagination.page
@@ -63,7 +74,7 @@ const useTodoStore = defineStore('TodoStore', () => {
     }
 
     // @method 获取待办任务列表，并填充到 todos 中
-    const getTodosWithPush = async (options: GetTodosOptions): Promise<GoLike> => {
+    const getTodosWithPush = async (options: GetTodosOptions): Promise<GoLike<number | null>> => {
         // 获取待办任务
         const [res, err] = await getTodosHandler(options, requester)
         // 处理失败结果
@@ -72,7 +83,7 @@ const useTodoStore = defineStore('TodoStore', () => {
             return [null, err]
         }
         // 处理成功结果
-        if (!res || todos.value.length === 0) {
+        if (!res || res.todos?.length === 0) {
             return [0, null]
         }
         // TODO 差异化填充待办任务列表
@@ -81,7 +92,8 @@ const useTodoStore = defineStore('TodoStore', () => {
         const newTodos = (res.todos || []).filter((todo) => !existingIds.includes(todo.id))
         // 2. 填充新任务
         todos.value.push(...newTodos)
-        return [res, null]
+        // console.log(newTodos)
+        return [newTodos.length, null]
     }
 
     // @method 获取单个待办任务，并返回获取结果
@@ -141,6 +153,21 @@ const useTodoStore = defineStore('TodoStore', () => {
         return [null, null]
     }
 
+    // @method 更新本地待办任务数据
+    const updateLocalTodo = (todoId: Todo['id'], options: UpdateTodoOptions) => {
+        // 参数判断
+        if (!todoId) return
+        // 更新待办任务
+        const todoIdx = todos.value.findIndex((todo) => todo.id === todoId)
+        if (todoIdx >= 0) {
+            todos.value[todoIdx] = {
+                ...todos.value[todoIdx],
+                ...options,
+                updatedAt: new Date().toISOString()
+            }
+        }
+    }
+
     // @method 更新待办任务
     const updateTodo = async (todoId: Todo['id'], options: UpdateTodoOptions): Promise<Err> => {
         // 参数判断
@@ -155,15 +182,18 @@ const useTodoStore = defineStore('TodoStore', () => {
             return err
         }
         // 处理成功结果
-        const todoIdx = todos.value.findIndex((todo) => todo.id === todoId)
-        if (todoIdx >= 0) {
-            todos.value[todoIdx] = {
-                ...todos.value[todoIdx],
-                ...options,
-                updatedAt: new Date().toISOString()
-            }
-        }
+        updateLocalTodo(todoId, options)
         return null
+    }
+
+    // @method 通过更新队列执行待办更新任务
+    const updateTodoByUpdateQueue = async (todoId: Todo['id'], options: UpdateTodoOptions) => {
+        // 参数判断
+        if (!todoId) return
+        // 优先处理本地待办任务数据
+        updateLocalTodo(todoId, options)
+        // 插入待办更新任务
+        updateTodoQueue.insertItem({ id: todoId, updateOptions: options })
     }
 
     // @method 删除待办任务
@@ -329,6 +359,30 @@ const useTodoStore = defineStore('TodoStore', () => {
         })) as GoLike<Todo['id'] | null | undefined>
     }
 
+    // @method 更新待办任务状态
+    const updateTodoState = async (todoId: Todo['id'], newState: Todo['state']) => {
+        // 参数判断
+        if (!todoId) return '待办任务ID不能为空'
+        if (!newState) return '待办任务状态不能为空'
+        newState = ['todo', 'in-progress', 'done'].includes(newState) ? newState : 'todo'
+        // 获取当前状态
+        const target = todos.value.find((todo) => todo.id === todoId)
+        if (!target) return '待办任务不存在'
+        const currentState = target.state
+        // 判断是否需要切换状态
+        if (currentState === newState) return null
+        // 调用 API 更新状态
+        await updateTodoByUpdateQueue(todoId, { state: newState })
+        // 处理失败结果
+        // if (err) {
+        //     console.error(unwrapError(err))
+        //     return err
+        // }
+        // 处理成功结果
+        // NueMessage.success('切换待办任务状态成功')
+        // return null
+    }
+
     // @method 清除必要的状态
     const __resetStates = () => {
         todos.value = [] as Todo[]
@@ -337,11 +391,13 @@ const useTodoStore = defineStore('TodoStore', () => {
     return {
         todos,
         pagination,
+        updateTodoQueue,
         getTodos,
         toGetTodo,
         getTodosWithPush,
         createTodo,
         updateTodo,
+        updateTodoByUpdateQueue,
         deleteTodo,
         restoreTodo,
         deleteTodoPermanently,
@@ -351,6 +407,7 @@ const useTodoStore = defineStore('TodoStore', () => {
         regetTodos,
         duplicateTodo,
         duplicateTodoWithComfirm,
+        updateTodoState,
         __resetStates
     }
 })

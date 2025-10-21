@@ -1,1 +1,3 @@
-export const todoTableContextKey = Symbol('todoTableContext')
+const TODO_TABLE_CONTEXT_KEY = Symbol('TODO_TABLE_CONTEXT_KEY')
+
+export { TODO_TABLE_CONTEXT_KEY }

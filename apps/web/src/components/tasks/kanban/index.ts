@@ -1,3 +1,3 @@
-import TodoKanban from './index.vue'
+import TodoKanban from './kanban.vue'
 
 export { TodoKanban }

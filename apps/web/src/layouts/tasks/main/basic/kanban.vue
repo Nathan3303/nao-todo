@@ -31,6 +31,11 @@ const { todos, tags, loading, error } = storeToRefs(tasksBasicViewStore)
                     :sort-options="viewProps.preference.getTodosOptions.sort"
                     :tags="tags"
                     :todos="todos"
+                    @show-todo-details="tasksBasicViewStore.showTodoDetails"
+                    @delete-todo="tasksBasicViewStore.deleteTodo"
+                    @restore-todo="tasksBasicViewStore.restoreTodo"
+                    @finish-todo="tasksBasicViewStore.finishTodo"
+                    @unfinish-todo="tasksBasicViewStore.unfinishTodo"
                 />
             </nue-content>
         </nue-main>

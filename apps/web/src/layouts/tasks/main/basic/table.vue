@@ -1,29 +1,26 @@
 <script setup lang="ts">
 import { useTasksBasicViewStore } from '@/stores/tasks'
 import { TodoTable } from '@/components/tasks/table'
-import { Loading as LoadingComp, Pager } from '@/components/ui'
 import { storeToRefs } from 'pinia'
 
 defineOptions({ name: 'TasksMainBasicViewTable' })
 
 const tasksBasicViewStore = useTasksBasicViewStore()
 
-const { responsiveFlag, todos, pagination, tags, loading, error, page, viewProps } =
-    storeToRefs(tasksBasicViewStore)
+const { todos, tags, viewProps } = storeToRefs(tasksBasicViewStore)
 </script>
 
 <template>
     <nue-container id="TasksMainTableContainer">
         <nue-main>
-            <loading-comp v-if="loading" />
             <nue-empty
-                v-else-if="error || !viewProps || todos.length === 0"
+                v-if="!viewProps"
                 image-size="4rem"
                 image-src="/images/coffee.webp"
-                :description="error || '当前暂无待办，放松一下吧!'"
+                description="视图属性无效"
                 style="height: 100%"
             />
-            <nue-content v-else fill style="overflow: auto">
+            <nue-content v-if="viewProps" fill style="overflow: hidden">
                 <todo-table
                     :column-options="viewProps.preference.columns"
                     :sort-options="viewProps.preference.getTodosOptions.sort"
@@ -37,22 +34,6 @@ const { responsiveFlag, todos, pagination, tags, loading, error, page, viewProps
                 />
             </nue-content>
         </nue-main>
-        <nue-footer v-if="!error && todos.length !== 0">
-            <nue-div v-if="pagination" align="center" justify="space-between">
-                <nue-text color="gray" flex size="12px">
-                    当前列表 {{ pagination.current || 0 }} 项， 共计
-                    {{ pagination.total || 0 }} 项。
-                </nue-text>
-                <pager
-                    :limit="pagination.limit"
-                    :page="page"
-                    :total-pages="pagination.maxPage"
-                    :simple="responsiveFlag <= 1"
-                    @per-page-change="tasksBasicViewStore.handleUpdatePerPage"
-                    @page-change="tasksBasicViewStore.handleUpdatePage"
-                />
-            </nue-div>
-        </nue-footer>
     </nue-container>
 </template>
 

@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { defineStore, storeToRefs } from 'pinia'
-import { basicViewProps } from './constants'
+import { basicViewProps, columnTexts } from './constants'
 import { parsePreference, toObject } from './utils'
 import { useProjectStore, useTagStore, useTodoStore, useViewStore } from '@/stores/global'
 import { NuePrompt, NueMessage } from 'nue-ui'
@@ -60,7 +60,7 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
     // @state 视图加载状态
     const viewPropsLoadState = ref<number>(0)
 
-    // @method 加载基础视图全局属性
+    // @method 加载基础视图全局属性 - 由 加载视图全局属性 调用
     const loadBasicViewProps = async (id: string): Promise<TasksMainViewProps | undefined> => {
         const res = basicViewProps.find((vp) => vp.id === id)
         if (!res) return
@@ -78,7 +78,7 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
         return result as TasksMainViewProps
     }
 
-    // @method 加载项目视图全局属性
+    // @method 加载项目视图全局属性 - 由 加载视图全局属性 调用
     const loadProjectViewProps = async (id: string): Promise<TasksMainViewProps | undefined> => {
         const project = projects.value.find((p) => p.id === id)
         if (!project) return
@@ -95,7 +95,7 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
         return result as TasksMainViewProps
     }
 
-    // @method 加载标签视图全局属性
+    // @method 加载标签视图全局属性 - 由 加载视图全局属性 调用
     const loadTagViewProps = async (id: string): Promise<TasksMainViewProps | undefined> => {
         const tag = tags.value.find((t) => t.id === id)
         if (!tag) return
@@ -112,7 +112,7 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
         return result as TasksMainViewProps
     }
 
-    // @method 加载视图全局属性 根据类别加载不同的视图全局属性
+    // @method 加载视图全局属性 - 根据类别加载不同的视图全局属性
     const loadViewProps = async (id: string, category: string) => {
         switch (category) {
             case 'basic':
@@ -129,7 +129,7 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
         }
     }
 
-    // @methods 清单名称和描述修改
+    // @methods 清单名称修改 - 通过 NuePrompt 进行
     const showProjectNameUpdater = (projectId: string) => {
         NuePrompt({
             title: '清单名称修改',
@@ -149,6 +149,8 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
             }
         })
     }
+
+    // @methods 清单描述修改 - 通过 NuePrompt 进行
     const showProjectDescriptionUpdater = (projectId: string) => {
         NuePrompt({
             title: '清单描述修改',
@@ -171,7 +173,7 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
         })
     }
 
-    // @methods 标签名称和描述修改
+    // @methods 标签名称修改 - 通过 NuePrompt 进行
     const showTagNameUpdater = async (tagId: string) => {
         return await NuePrompt({
             title: '标签名称修改',
@@ -191,6 +193,8 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
             }
         })
     }
+
+    // @methods 标签描述修改 - 通过 NuePrompt 进行
     const showTagDescriptionUpdater = async (tagId: string) => {
         return await NuePrompt({
             title: '标签描述修改',
@@ -241,7 +245,7 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
         }
     }
 
-    // @method 更新基础分类视图偏好
+    // @method 更新基础分类视图偏好 - 由 更新视图偏好 调用
     const updateBasicPreference = (viewId: string, preference: ProjectPreference): Err => {
         try {
             const preferenceString = JSON.stringify(preference)
@@ -291,29 +295,42 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
         return
     }
 
+    // @method 获取列名文本
+    const getColumnText = (key: string, replaceText?: string) => {
+        const _k = key as keyof typeof columnTexts
+        return columnTexts[_k] || replaceText || '无效列名'
+    }
+
     // @returns
     return {
+        // 侧边栏状态
         responsiveFlag,
         isUseFloatAside,
         isDisplayAside,
         isUseFloatOutline,
         switchIsDisplayAside,
+        // 侧边栏宽度
         asideWidth: globalAsideWidth,
         outlineWidth: globalOutlineWidth,
         handleAsideResize: viewStore.handleAsideResize,
         handleOutlineResize: viewStore.handleOutlineResize,
+        // 全局视图属性
         viewProps,
         viewPropsLoadState,
         loadViewProps,
+        // project
         showProjectNameUpdater,
         showProjectDescriptionUpdater,
+        // tag
         showTagNameUpdater,
         showTagDescriptionUpdater,
+        // other handlers
         switchView,
         hideCompleted,
         updateColumns,
         refreshData,
-        updatePreference
+        updatePreference,
+        getColumnText
     }
 })
 

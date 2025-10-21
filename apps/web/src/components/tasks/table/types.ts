@@ -1,5 +1,11 @@
-import type { ComputedRef, Reactive, Ref } from 'vue'
-import type { Tag, Todo, TodoColumnOptions, GetTodosSortOptions } from '@nao-todo/types'
+import type { ComputedRef, Reactive } from 'vue'
+import type {
+    Tag,
+    Todo,
+    TodoColumnOptions,
+    GetTodosSortOptions,
+    ResponseDataPagination
+} from '@nao-todo/types'
 
 export type TodoTableProps = {
     todos: Todo[]
@@ -9,6 +15,7 @@ export type TodoTableProps = {
     sortOptions?: GetTodosSortOptions
     columnOptions: TodoColumnOptions
     useDeletedLine?: boolean
+    extraGetOptions?: Record<string, any>
 }
 
 export type TodoTableMultiSelectPayload = {
@@ -34,18 +41,24 @@ export type TodoTableContext = {
     sortOptions: ComputedRef<TodoTableProps['sortOptions']>
     clearSortOptions: () => void
     updateSortOptions: (newSortOptions: GetTodosSortOptions) => void
-    isScrolling: Ref<boolean>
+    getColumnText: (key: string, replaceText?: string) => string
     // main
     todos: ComputedRef<Todo[]>
     tags: ComputedRef<Tag[]>
     tagBarClamped: ComputedRef<number>
-    refreshKey: Ref<number>
+    refreshKey: ComputedRef<number>
     selectRange: Reactive<TodoTableMultiSelectPayload['selectRange']>
     isTodoExpired: (todo: Todo) => boolean
     showTodoDetailsPanel: (todoId: Todo['id'], idx: number) => void
     showMultiSelectPanel: (idx: number) => void
-    getProjectNameByIdFromLocal: (projectId: string) => string | void
+    getProjectName: (projectId: Todo['projectId']) => string
     deleteButtonClickHandler: (todoId: Todo['id'], isDeleted: boolean) => void
+    // footer
+    error: ComputedRef<string>
+    pagination: ComputedRef<ResponseDataPagination>
+    page: ComputedRef<number>
+    handleUpdatePerPage: (limit: number) => void
+    handleUpdatePage: (newPage: number) => void
 }
 
 export type TodoTableOrderButtonProps = {

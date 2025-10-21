@@ -1,29 +1,53 @@
 <script lang="ts" setup>
-import { watchEffect } from 'vue'
-import { storeToRefs } from 'pinia'
+import { computed, provide, watchEffect } from 'vue'
 import TodoKanbanColumn from './kanban-column.vue'
-import useKanbanStore from './use-kanban-store'
-import { useKanbanDragger } from './use-kanban-dragger'
+import useKanban from './use-kanban'
 import { Loading as LoadingComponent } from '@/components/ui'
-import type { TodoKanbanProps } from './types'
+import { TODO_KANBAN_CONTEXT_KEY } from './constants'
+import type { TodoKanbanContext, TodoKanbanEmits, TodoKanbanProps } from './types'
 import './kanban.css'
 
 defineOptions({ name: 'TodoKanban' })
 defineProps<TodoKanbanProps>()
+const emit = defineEmits<TodoKanbanEmits>()
 
-const kanbanStore = useKanbanStore()
+// @hook useKanban
+const {
+    loading,
+    kanbanColumns,
+    todos,
+    tags,
+    getKanbanColumns,
+    getProjectName,
+    getTodosWithPush,
+    handleShowTodoDetails,
+    handleDeleteTodo,
+    handleRestoreTodo,
+    handleFinishTodo,
+    handleUnfinishTodo,
+    handleDragStart,
+    handleDragOver,
+    handleDragEnter,
+    handleDragEnd,
+    handleDrop,
+    filterTodosByCategory
+} = useKanban(emit)
 
-const { handleDragStart, handleDragOver, handleDragEnter, handleDragEnd, handleDrop } =
-    useKanbanDragger()
+// @effect
+watchEffect(() => getKanbanColumns())
 
-const { loading, kanbanColumns, todos } = storeToRefs(kanbanStore)
-
-watchEffect(() => kanbanStore.getKanbanColumns())
+// @provide
+provide<TodoKanbanContext>(TODO_KANBAN_CONTEXT_KEY, {
+    todos: computed(() => todos.value),
+    tags: computed(() => tags.value),
+    getProjectName,
+    getTodosWithPush
+})
 </script>
 
 <template>
     <nue-container id="TodoKanbanContainer">
-        <nue-main style="border: none">
+        <nue-main>
             <loading-component v-if="loading" placeholder="正在加载任务看板..." />
             <nue-empty
                 v-else-if="kanbanColumns.length === 0"
@@ -39,20 +63,19 @@ watchEffect(() => kanbanStore.getKanbanColumns())
                     :category="groupName"
                     :column-options="columnOptions"
                     :data-category="groupName"
+                    @show-todo-details="handleShowTodoDetails"
+                    @delete-todo="handleDeleteTodo"
+                    @restore-todo="handleRestoreTodo"
+                    @finish-todo="handleFinishTodo"
+                    @unfinish-todo="handleUnfinishTodo"
                     data-droppable="true"
                     @dragend="handleDragEnd"
                     @dragenter="handleDragEnter"
                     @dragover="handleDragOver"
                     @dragstart="handleDragStart"
                     @drop="handleDrop"
+                    @filter-todos-by-category="filterTodosByCategory"
                 />
-                <!-- 
-                    @show-todo-details="showTodoDetails"
-                    @delete-todo="todoStore.deleteTodoWithConfirm"
-                    @restore-todo="todoStore.restoreTodoWithConfirm"
-                    @finish-todo="handleFinishTodo"
-                    @unfinish-todo="handleUnfinishTodo"
-                -->
             </nue-content>
         </nue-main>
     </nue-container>

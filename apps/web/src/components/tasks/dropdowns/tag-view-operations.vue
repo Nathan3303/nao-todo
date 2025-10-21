@@ -4,7 +4,6 @@ import { storeToRefs } from 'pinia'
 import { useTasksViewStore } from '@/stores/tasks'
 import TasksOperationsDropdown from './operations-dropdown.vue'
 import TasksDropdownDivBlock from '@/components/ui/div-block.vue'
-import { getColumnText } from '@/components/tasks/table/utils'
 import { useTasksTagViewStore } from '@/stores/tasks'
 import type { TodoColumnOptions } from '@nao-todo/types'
 import {
@@ -36,7 +35,7 @@ const sortFieldDropdownOptions = computed<{
             if (isChecked) count++
             _fields.push({
                 icon: 'plus-circle',
-                label: getColumnText(key),
+                label: tasksViewStore.getColumnText(key),
                 value: key,
                 checked: isChecked
             })

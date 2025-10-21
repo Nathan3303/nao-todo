@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { inject, computed } from 'vue'
-import { todoTableContextKey } from './constants'
+import { TODO_TABLE_CONTEXT_KEY } from './constants'
 import type { TodoTableContext, TodoTableOrderButtonProps } from './types'
 
 defineOptions({ name: 'TodoTableOrderButton' })
 const props = defineProps<TodoTableOrderButtonProps>()
 
-const { sortOptions, updateSortOptions } = inject<TodoTableContext>(todoTableContextKey)!
+const { sortOptions, updateSortOptions } = inject<TodoTableContext>(TODO_TABLE_CONTEXT_KEY)!
 
 const checkNumber = computed(() => {
     const { prop } = props

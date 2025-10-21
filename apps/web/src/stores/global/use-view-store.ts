@@ -1,5 +1,6 @@
 import { computed, reactive, ref } from 'vue'
 import { defineStore, storeToRefs } from 'pinia'
+import useTodoStore from './use-todo-store'
 import useUserStore from './use-user-store-v2'
 
 const ASIDE_WIDTH_LSKEY = 'GLOBAL_ASIDE_WIDTH'
@@ -8,6 +9,7 @@ const OUTLINE_WIDTH_LSKEY = 'GLOBAL_OUTLINE_WIDTH'
 const useViewStore = defineStore('viewStore', () => {
     // @stores 全局 stores
     const userStore = useUserStore()
+    const todoStore = useTodoStore()
 
     // @states 前置状态
     const { user } = storeToRefs(userStore)
@@ -103,7 +105,9 @@ const useViewStore = defineStore('viewStore', () => {
         handleOutlineResize,
         isUseFloatTasksAsideDefaultly,
         isUseFloatTasksOutlineDefaultly,
-        isUseFloatSettingsAsideDefaultly
+        isUseFloatSettingsAsideDefaultly,
+        hasUpdateTasksInQueue: computed(() => todoStore.updateTodoQueue.running),
+        updateTasksQueueCount: computed(() => todoStore.updateTodoQueue.queueLength)
     }
 })
 

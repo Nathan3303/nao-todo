@@ -22,7 +22,6 @@
         "@nao-todo/webapp": "workspace:*",
         "@types/markdown-it": "^14.1.2",
         "axios": "1.11.0",
-        "flatpickr": "^4.6.13",
         "markdown-it": "^14.1.0",
         "moment": "^2.30.1",
         "nue-ui": "^1.0.9",

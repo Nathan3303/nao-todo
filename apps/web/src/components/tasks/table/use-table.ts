@@ -1,14 +1,77 @@
-import { computed, reactive, ref, onMounted } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
-import { isExpired } from '@nao-todo/utils'
-import { useProjectStore } from '@/stores/global'
+import { useTasksDataStore, useTasksViewStore } from '@/stores/tasks'
+import { useRefreshKey } from './use-refresh-key'
+import { isExpired, unwrapError } from '@nao-todo/utils'
 import type { Todo } from '@nao-todo/types'
 import type { TodoTableEmits, TodoTableMultiSelectPayload, TodoTableProps } from './types'
 
 export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
     // @stores
     const route = useRoute()
-    const projectStore = useProjectStore()
+    const tasksDataStore = useTasksDataStore()
+    const tasksViewStore = useTasksViewStore()
+
+    // @hook useRefreshKey
+    const { refreshKey, startRefresh, stopRefresh } = useRefreshKey()
+
+    // @states 前置状态
+    const { todos, pagination, tags } = storeToRefs(tasksDataStore)
+    const { viewProps } = storeToRefs(tasksViewStore)
+
+    // @state 分页信息
+    const page = ref<number>(1)
+
+    // @states 加载态以及加载失败错误信息
+    const loading = ref<boolean>(true)
+    const error = ref<string>('')
+
+    // @method 加载待办任务数据
+    const getTodos = async (useLoading: boolean = false): Promise<boolean> => {
+        // 判断 viewProps 是否存在
+        if (!viewProps.value) return false
+        // 重置加载状态
+        loading.value = useLoading && true
+        // 调用 API 请求数据
+        const err = await tasksDataStore.getTodos({
+            page: page.value,
+            limit: 20,
+            ...props.extraGetOptions,
+            ...viewProps.value.preference.getTodosOptions
+        })
+        loading.value = useLoading && false
+        // 处理失败结果
+        if (err) {
+            error.value = unwrapError(err)
+            return false
+        }
+        // 处理当待办任务为空时的情况
+        if (todos.value.length === 0) {
+            error.value = '暂无待办任务'
+            return false
+        }
+        // 处理成功结果
+        error.value = ''
+        return true
+    }
+
+    // @watch 当请求 ID 变化时重新获取待办数据 - 用于路由参数变化时
+    watch(
+        () => viewProps.value?.id,
+        async () => {
+            await getTodos(true)
+            if (todos.value.length) activeRowByTodoIdFromRoute()
+        },
+        { immediate: true }
+    )
+
+    // @watch 当相关数据变化时获取待办任务数据
+    watch(
+        () => viewProps.value?.preference.getTodosOptions,
+        () => getTodos(),
+        { deep: true }
+    )
 
     // @computed 计算标签显示数量 - 用于响应式变化时变化标签显示个数
     const tagBarClamped = computed(() => {
@@ -78,13 +141,6 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
         selectRange.end = selectRange.original
     }
 
-    // @method 查找清单名称
-    const getProjectNameByIdFromLocal = (projectId: string) => {
-        const targetProject = projectStore.projects.find((p) => p.id === projectId)
-        if (!targetProject) return
-        return targetProject.name
-    }
-
     // @methods 删除功能按钮点击处理 - 当待办任务删除时则处理恢复动作，相反则处理删除动作（非硬删除）
     const deleteButtonClickHandler = (todoId: Todo['id'], isDeleted: boolean) => {
         if (isDeleted) {
@@ -95,26 +151,54 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
     }
 
     // @methods 根据路由中的待办 ID 获取表格下标 / 根据路由中的待办 ID 激活表格项
-    onMounted(() => {
+    const activeRowByTodoIdFromRoute = () => {
         // activeRowByTodoIdFromRoute()
         const idx = props.todos.findIndex((todo) => todo.id === (route.params.todoId as string))
         if (idx === -1) return
         handleClearSelect(true)
         // selectedId.value = props.todos[idx].id
         showTodoDetailsPanel(props.todos[idx].id, idx)
-    })
+    }
+
+    // @method 处理分页每页记录数变化
+    const handleUpdatePerPage = (limit: number) => {
+        if (!viewProps.value) return
+        viewProps.value.preference.getTodosOptions.limit = limit
+        page.value = 1
+        getTodos()
+    }
+
+    // @method 处理分页页码变化
+    const handleUpdatePage = (newPage: number) => {
+        page.value = newPage
+        getTodos()
+    }
 
     // @returns
     return {
         selectedId,
         selectRange,
         tagBarClamped,
+        todos,
+        pagination,
+        tags,
+        loading,
+        error,
+        page,
+        // tableMinWidth,
+        refreshKey,
+        getTodos,
         isTodoExpired,
         showTodoDetailsPanel,
         showMultiSelectPanel,
         handleClearSelectedId,
         handleClearSelect,
-        getProjectNameByIdFromLocal,
-        deleteButtonClickHandler
+        handleUpdatePerPage,
+        handleUpdatePage,
+        deleteButtonClickHandler,
+        getProjectName: tasksDataStore.getProjectNameById,
+        startRefresh,
+        stopRefresh,
+        getColumnText: tasksViewStore.getColumnText
     }
 }

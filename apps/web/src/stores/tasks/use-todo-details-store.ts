@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useTodoStore } from '@/stores/global'
 import { useTasksDataStore, useTasksViewStore } from '@/stores/tasks'
 import { unwrapError, unwrapErrors } from '@nao-todo/utils'
-import { useUpdateQueue, type UpdateQueueItem } from '@/hooks'
+// import { useupdateTodoQueue, type updateTodoQueueItem } from '@/hooks'
 import { NueMessage } from 'nue-ui'
 import type { Todo, UpdateTodoOptions, Comment, Event } from '@nao-todo/types'
 import type { InputButtonSubmitPayload, TodoEventRowUpdatePayload } from '@nao-todo/components'
@@ -20,6 +20,7 @@ const useTodoDetailsStore = defineStore('TodoDetailsStore', () => {
     // @states 前置状态
     const { todos, events, comments } = storeToRefs(tasksDataStore)
     const { isUseFloatAside } = storeToRefs(tasksViewStore)
+    const { updateTodoQueue } = todoStore
 
     // @state 加载以及错误状态
     const loading = ref(false)
@@ -94,45 +95,45 @@ const useTodoDetailsStore = defineStore('TodoDetailsStore', () => {
     })
 
     // @state 更新队列
-    const updateQueue = useUpdateQueue(async (item: UpdateQueueItem) => {
-        // 更新待办任务
-        const err = await todoStore.updateTodo(item.todoId, item.updateOptions)
-        // 处理失败结果
-        if (err) {
-            console.error(unwrapError(err))
-            return
-        }
-        // 修改待办任务更新时间
-        if (todo.value) {
-            todo.value.updatedAt = new Date().toISOString()
-        }
-    })
+    // const updateTodoQueue = useupdateTodoQueue(async (item: updateTodoQueueItem) => {
+    //     // 更新待办任务
+    //     const err = await todoStore.updateTodo(item.id, item.updateOptions)
+    //     // 处理失败结果
+    //     if (err) {
+    //         console.error(unwrapError(err))
+    //         return
+    //     }
+    //     // 修改待办任务更新时间
+    //     if (todo.value) {
+    //         todo.value.updatedAt = new Date().toISOString()
+    //     }
+    // })
 
     // @method 更新待办任务截止时间
     const updateTodoEndAt = async (endAt: Todo['endAt']) => {
         if (!todo.value) return
         todo.value.endAt = endAt
-        updateQueue.insertItem({ todoId: todo.value.id, updateOptions: { endAt } })
+        updateTodoQueue.insertItem({ id: todo.value.id, updateOptions: { endAt } })
     }
 
     // @method 更新待办任务 (名称、描述、收藏等直接更改原值的更新)
     const updateTodo = async (key: keyof UpdateTodoOptions) => {
         if (!todo.value) return
-        updateQueue.insertItem({ todoId: todo.value.id, updateOptions: { [key]: todo.value[key] } })
+        updateTodoQueue.insertItem({ id: todo.value.id, updateOptions: { [key]: todo.value[key] } })
     }
 
     // @method 更新待办任务优先级
     const updateTodoPriority = (value: Todo['priority']) => {
         if (!todo.value) return
         todo.value.priority = value
-        updateQueue.insertItem({ todoId: todo.value.id, updateOptions: { priority: value } })
+        updateTodoQueue.insertItem({ id: todo.value.id, updateOptions: { priority: value } })
     }
 
     // @methods 更新待办任务状态
     const updateTodoState = (value: Todo['state']) => {
         if (!todo.value) return
         todo.value.state = value
-        updateQueue.insertItem({ todoId: todo.value.id, updateOptions: { state: value } })
+        updateTodoQueue.insertItem({ id: todo.value.id, updateOptions: { state: value } })
     }
     const handleCheckTodo = async () => {
         if (!todo.value) return
@@ -144,14 +145,14 @@ const useTodoDetailsStore = defineStore('TodoDetailsStore', () => {
     const updateTodoProject = async (projectId: string) => {
         if (!todo.value) return
         todo.value.projectId = projectId
-        updateQueue.insertItem({ todoId: todo.value.id, updateOptions: { projectId } })
+        updateTodoQueue.insertItem({ id: todo.value.id, updateOptions: { projectId } })
     }
 
     // @method 更新待办任务所属标签
     const updateTodoTags = async (tags: Todo['tags']) => {
         if (!todo.value) return
         todo.value.tags = tags
-        updateQueue.insertItem({ todoId: todo.value.id, updateOptions: { tags } })
+        updateTodoQueue.insertItem({ id: todo.value.id, updateOptions: { tags } })
     }
 
     // @method 永久删除待办任务
@@ -258,7 +259,7 @@ const useTodoDetailsStore = defineStore('TodoDetailsStore', () => {
         loading,
         error,
         eventsProgress,
-        updating: updateQueue.running,
+        updating: computed(() => updateTodoQueue.running),
         updateTodoEndAt,
         updateTodo,
         updateTodoPriority,

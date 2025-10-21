@@ -1,17 +1,26 @@
 <script setup lang="ts">
-import { useMoment } from '@nao-todo/utils'
-import { computed } from 'vue'
-import useKanbanStore from './use-kanban-store'
-import { useRelativeDate } from '@nao-todo/hooks/use-relative-date'
-import { TodoStateInfo, TodoPriorityInfo, TodoTagBar } from '@nao-todo/components'
-import type { KanbanColumnItemProps, KanbanColumnItemEmits } from './types'
-import type { Todo, TodoColumnOptions } from '@nao-todo/types'
+import { computed, inject } from 'vue'
+import {
+    TodoStateInfo,
+    TodoPriorityInfo,
+    TodoDateInfo,
+    TodoBasicInfo,
+    TodoTagBar
+} from '@nao-todo/components'
+import { TODO_KANBAN_CONTEXT_KEY } from './constants'
+import type {
+    TodoKanbanColumnItemProps,
+    TodoKanbanColumnItemEmits,
+    TodoKanbanContext
+} from './types'
+import type { TodoColumnOptions } from '@nao-todo/types'
 
-defineOptions({ name: 'KanbanColumnItem' })
-const props = defineProps<KanbanColumnItemProps>()
-const emit = defineEmits<KanbanColumnItemEmits>()
+defineOptions({ name: 'TodoKanbanColumnItem' })
+const props = defineProps<TodoKanbanColumnItemProps>()
+const emit = defineEmits<TodoKanbanColumnItemEmits>()
 
-const kanbanStore = useKanbanStore()
+// @inject 看板组件上下文
+const todoKanbanContext = inject<TodoKanbanContext>(TODO_KANBAN_CONTEXT_KEY)
 
 const isAttrsNone = computed(() => {
     if (!props.columns) return true
@@ -28,16 +37,19 @@ const isAttrsNone = computed(() => {
 
 const isDone = computed(() => props.todo.state === 'done')
 
-const checkIconName = computed(() => (isDone.value ? 'square-check-fill' : 'square'))
+const checkIconName = computed(() => {
+    return isDone.value ? 'square-check-fill' : 'square'
+    // switch (props)
+})
 
 const deleteIconName = computed(() => (props.todo.isDeleted ? 'restore' : 'delete') as never)
 
-const isTodoExpired = (todo: Todo) => {
-    const endAt = todo.endAt
-    if (!endAt || todo.state === 'done') return false
-    const date = useMoment(endAt)
-    return date.isBefore(useMoment())
-}
+// const isTodoExpired = (todo: Todo) => {
+//     const endAt = todo.endAt
+//     if (!endAt || todo.state === 'done') return false
+//     const date = useMoment(endAt)
+//     return date.isBefore(useMoment())
+// }
 
 const handleClick = () => {
     const todoId = props.todo.id
@@ -65,21 +77,21 @@ const handleFinish = () => {
 <template>
     <nue-div
         class="todo-card"
-        theme="card"
-        :data-is-done="isDone"
         @click="handleClick"
+        :data-is-done="isDone"
         :data-actived="actived"
+        :data-is-deleted="todo.isDeleted"
     >
-        <nue-div vertical width="auto">
+        <nue-div vertical width="fit-content">
             <nue-icon
                 class="todo-card__check-icon"
                 :name="checkIconName"
                 @click.stop="handleFinish"
             />
         </nue-div>
-        <nue-div vertical gap="8px" flex="1">
+        <nue-div vertical gap=".5rem" flex="1" width="auto" style="overflow: hidden">
             <nue-div class="todo-card__info">
-                <nue-div align="center" gap="4px" justify="space-between">
+                <nue-div align="center" gap=".25rem" justify="space-between">
                     <nue-text class="todo-card__name" :clamped="1">{{ todo.name }}</nue-text>
                     <nue-div class="todo-card__actions">
                         <nue-button
@@ -100,10 +112,10 @@ const handleFinish = () => {
             <nue-div v-if="!isAttrsNone" class="todo-card__attrs" align="center" gap="6px">
                 <nue-div class="todo-card__infos" align="center" gap="6px">
                     <todo-tag-bar
-                        v-if="todo.tags.length"
+                        v-if="columns?.tags && todo.tags.length"
                         :tags="tags"
                         :todoTags="todo.tags"
-                        :clamped="3"
+                        :clamped="2"
                         readonly
                         small
                     />
@@ -112,29 +124,29 @@ const handleFinish = () => {
                         <todo-priority-info v-if="columns?.priority" :priority="todo.priority" />
                     </nue-div>
                 </nue-div>
-                <nue-div v-if="columns?.endAt" align="center" gap="4px">
-                    <nue-icon name="calendar" color="gray" />
-                    <nue-text size="12px" :color="isTodoExpired(todo) ? '#ec5555' : 'gray'">
-                        {{ useRelativeDate(todo.endAt as string) }}
-                    </nue-text>
+                <nue-div gap=".25rem .5rem">
+                    <todo-date-info
+                        v-if="columns?.createdAt"
+                        :date="todo.createdAt"
+                        :formatter="(date) => `创建于 ${date}`"
+                    />
+                    <todo-date-info
+                        v-if="columns?.updatedAt"
+                        :date="todo.updatedAt"
+                        :formatter="(date) => `修改于 ${date}`"
+                    />
+                    <todo-date-info
+                        v-if="columns?.endAt"
+                        :date="todo.endAt!"
+                        :formatter="(date) => `截止于 ${date}`"
+                    />
                 </nue-div>
-                <nue-div v-if="columns?.project" align="center" gap="4px">
-                    <nue-icon name="inbox-fill" color="gray" />
-                    <nue-text size="12px" color="gray">
-                        {{ kanbanStore.getProjectNameByIdFromLocal(todo.projectId) || '收集箱' }}
-                    </nue-text>
-                </nue-div>
-                <nue-div v-if="columns?.createdAt" align="center" gap="4px">
-                    <nue-icon name="time" color="gray" />
-                    <nue-text size="12px" color="gray">
-                        创建于 {{ useRelativeDate(todo.createdAt) }}
-                    </nue-text>
-                </nue-div>
-                <nue-div v-if="columns?.updatedAt" align="center" gap="4px">
-                    <nue-icon name="time" color="gray" />
-                    <nue-text size="12px" color="gray">
-                        修改于 {{ useRelativeDate(todo.updatedAt) }}
-                    </nue-text>
+                <nue-div gap=".25rem">
+                    <todo-basic-info
+                        v-if="columns?.project"
+                        icon="inbox-fill"
+                        :text="todoKanbanContext?.getProjectName(todo.projectId) || '收集箱'"
+                    />
                 </nue-div>
             </nue-div>
         </nue-div>

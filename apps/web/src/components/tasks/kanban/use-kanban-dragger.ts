@@ -3,7 +3,7 @@ import { useTodoStore } from '@/stores/global'
 import type { Todo } from '@nao-todo/types'
 import { storeToRefs } from 'pinia'
 
-export const useKanbanDragger = () => {
+const useKanbanDragger = () => {
     const todoStore = useTodoStore()
     const draggingTodoId = ref<Todo['id']>('')
 
@@ -58,18 +58,16 @@ export const useKanbanDragger = () => {
 
     const handleDragEnd = () => handleRemoveDragOverClass()
 
-    const handleDrop = async (event: DragEvent) => {
+    const handleDrop = (event: DragEvent) => {
         handleRemoveDragOverClass()
         const element = getTargetNode(event.target as HTMLElement)
         if (!element) return
-        const category = element.dataset.category as string
+        const category = element.dataset.category as Todo['state']
         if (!category) return
         const todoId = draggingTodoId.value
         const todo = todos.value.find((todo) => todo.id === todoId)
         if (todo && todo.state === category) return
-        await todoStore.updateTodo(todoId, {
-            state: category as Todo['state']
-        })
+        todoStore.updateTodoByUpdateQueue(todoId, { state: category })
     }
 
     return {
@@ -80,3 +78,5 @@ export const useKanbanDragger = () => {
         handleDrop
     }
 }
+
+export default useKanbanDragger

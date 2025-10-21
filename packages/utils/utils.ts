@@ -8,12 +8,12 @@ export const throttle = (callback: (...args: any[]) => void | Promise<any>, dela
     }
 }
 
-export const debounce = (callback: (...args: any) => void | Promise<any>, delay: number) => {
+export const debounce = <T>(callback: (...args: T[]) => void, delay: number) => {
     let timer: number | null = null
-    return (...args: any[]) => {
+    return (...args: T[]) => {
         if (timer) clearTimeout(timer)
         timer = setTimeout(() => {
-            callback(...args)
+            callback(...(args as T[]))
             timer = null
         }, delay) as unknown as number
     }

@@ -1,3 +1,6 @@
+import UpdateIndicator from './update-indicator.vue'
+
+export { UpdateIndicator }
 export * from './loading'
 export * from './loading-screen'
 export * from './combo-box'

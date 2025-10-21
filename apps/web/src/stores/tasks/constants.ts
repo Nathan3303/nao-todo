@@ -51,8 +51,8 @@ const basicViewProps: TasksMainViewProps[] = [
         description: '',
         preference: {
             viewType: 'table',
-            getTodosOptions: {},
-            columns: basicViewDefaultColumns
+            getTodosOptions: { limit: 80 },
+            columns: { endAt: true, priority: true, state: true, project: true, tags: true }
         },
         createTodoOptions: {}
     },
@@ -63,9 +63,9 @@ const basicViewProps: TasksMainViewProps[] = [
         name: '今日任务',
         description: '',
         preference: {
-            viewType: 'table',
-            getTodosOptions: { relativeDate: 'today' },
-            columns: basicViewDefaultColumns
+            viewType: 'kanban',
+            getTodosOptions: { relativeDate: 'today', limit: 20 },
+            columns: { endAt: true, priority: true, state: true, project: true, tags: true }
         },
         createTodoOptions: {
             startAt: useMoment().startOf('day').toISOString(true),
@@ -79,9 +79,9 @@ const basicViewProps: TasksMainViewProps[] = [
         name: '明日任务',
         description: '',
         preference: {
-            viewType: 'table',
-            getTodosOptions: { relativeDate: 'tomorrow' },
-            columns: basicViewDefaultColumns
+            viewType: 'kanban',
+            getTodosOptions: { relativeDate: 'tomorrow', limit: 20 },
+            columns: { endAt: true, priority: true, state: true, project: true, tags: true }
         },
         createTodoOptions: {
             startAt: useMoment().add(1, 'day').startOf('day').toISOString(true),
@@ -96,8 +96,8 @@ const basicViewProps: TasksMainViewProps[] = [
         description: '',
         preference: {
             viewType: 'table',
-            getTodosOptions: { relativeDate: 'week' },
-            columns: basicViewDefaultColumns
+            getTodosOptions: { relativeDate: 'week', limit: 80 },
+            columns: { endAt: true, priority: true, state: true, project: true, tags: true }
         },
         createTodoOptions: {
             startAt: useMoment().startOf('day').toISOString(true),
@@ -112,7 +112,7 @@ const basicViewProps: TasksMainViewProps[] = [
         description: '',
         preference: {
             viewType: 'table',
-            getTodosOptions: { projectId: 'inbox' },
+            getTodosOptions: { projectId: 'inbox', limit: 80 },
             columns: basicViewDefaultColumns
         },
         createTodoOptions: {}
@@ -125,8 +125,8 @@ const basicViewProps: TasksMainViewProps[] = [
         description: '',
         preference: {
             viewType: 'table',
-            getTodosOptions: { isFavorited: true },
-            columns: basicViewDefaultColumns
+            getTodosOptions: { isFavorited: true, limit: 80 },
+            columns: { createdAt: true, endAt: true, project: true, tags: true, description: true }
         },
         createTodoOptions: { isFavorited: true }
     },
@@ -135,11 +135,10 @@ const basicViewProps: TasksMainViewProps[] = [
         category: 'basic',
         icon: 'clear',
         name: '已放弃的待办',
-        description:
-            '下方视图所罗列出来的是被您放弃的待办任务，您可以通过点击任务名称进入任务详情页面以恢复该任务。',
+        description: '',
         preference: {
             viewType: 'table',
-            getTodosOptions: { isGivenUp: true },
+            getTodosOptions: { isGivenUp: true, limit: 80 },
             columns: basicViewDefaultColumns
         },
         createTodoOptions: {}
@@ -149,11 +148,14 @@ const basicViewProps: TasksMainViewProps[] = [
         category: 'basic',
         icon: 'delete',
         name: '垃圾桶',
-        description:
-            '下方视图所罗列出来的是被您删除的待办任务，您可以通过点击任务名称进入任务详情页面以恢复该任务。需要注意的是垃圾桶中的任务将会在 30 天后彻底删除。',
+        description: '',
         preference: {
             viewType: 'table',
-            getTodosOptions: { isDeleted: true },
+            getTodosOptions: {
+                isDeleted: true,
+                sort: { field: 'deletedAt', order: 'desc' },
+                limit: 20
+            },
             columns: { ...basicViewDefaultColumns, deletedAt: true }
         },
         createTodoOptions: {}
@@ -164,15 +166,16 @@ const basicViewProps: TasksMainViewProps[] = [
         icon: 'time',
         name: '已过期的任务',
         description:
-            '下方视图所罗列出来的是您已过期的任务（结束日期小于今日零点且未完成），您可以通过延期按钮将任务延续至今天。',
+            '结束日期于今日零点之前，且未完成的待办任务被视为过期任务，您可以通过延期按钮将待办任务延续至今天。',
         preference: {
             viewType: 'table',
             getTodosOptions: {
                 relativeDate: '-today',
                 state: 'todo,in-progress',
-                sort: { field: 'endAt', order: 'desc' }
+                sort: { field: 'endAt', order: 'desc' },
+                limit: 20
             },
-            columns: { ...basicViewDefaultColumns, endAt: true, project: true }
+            columns: { ...basicViewDefaultColumns, endAt: true, project: true, description: false }
         },
         createTodoOptions: {}
     }

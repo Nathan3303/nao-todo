@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/inner-dropdown'
 import type { TodoColumnOptions } from '@nao-todo/types'
 import { useTasksProjectViewStore } from '@/stores/tasks'
-import { getColumnText } from '@/components/tasks/table/utils'
 
 defineOptions({ name: 'TasksProjectViewOperationsDropdown' })
 
@@ -36,7 +35,7 @@ const sortFieldDropdownOptions = computed<{
             if (isChecked) count++
             _fields.push({
                 icon: 'plus-circle',
-                label: getColumnText(key),
+                label: tasksViewStore.getColumnText(key),
                 value: key,
                 checked: isChecked
             })

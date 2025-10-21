@@ -14,6 +14,7 @@ import type {
 import {
     createProjectHandler,
     deleteProjectHandler,
+    getProjectHandler,
     getProjectsHandler,
     restoreProjectHandler,
     updateProjectHandler,
@@ -23,6 +24,25 @@ import {
 const useProjectStore = defineStore('ProjectStore', () => {
     // @state 清单列表（应该被应用于整个视图）
     const projects = ref<Project[]>([])
+
+    // @method 获取单个清单
+    const getProject = async (projectId: Project['id']): Promise<GoLike<Project | null>> => {
+        // 参数判断
+        if (!projectId) return [null, '清单ID不能为空']
+        // 调用 API 获取清单
+        const [project, err] = await getProjectHandler({ id: projectId }, requester)
+        // 处理失败结果
+        if (err) {
+            console.error(unwrapError(err))
+            return [null, err]
+        }
+        // 处理 project 为空的情况
+        if (!project) {
+            return [null, '清单不存在']
+        }
+        // 处理成功结果
+        return [project, null]
+    }
 
     // @method 获取清单列表
     const getProjects = async (options: GetProjectsOptions): Promise<Err> => {
@@ -231,6 +251,29 @@ const useProjectStore = defineStore('ProjectStore', () => {
         return null
     }
 
+    // @method 通过项目 ID 获取项目名称
+    const getProjectNameById = (projectId: Project['id']): Project['name'] => {
+        // 参数检查
+        if (!projectId) return '收集箱'
+        // 本地获取
+        const projectFromLocal = projects.value.find((p) => p.id === projectId)
+        // 本地获取成功则直接返回
+        if (projectFromLocal && projectFromLocal.name) {
+            return projectFromLocal.name
+        }
+        // 本地获取失败，从后端获取
+        // const [projectFromBackend, err] = await getProject(projectId)
+        // if (err) {
+        //     console.error(unwrapError(err))
+        //     return [null, err]
+        // }
+        // if (!projectFromBackend) {
+        //     return [null, '清单不存在']
+        // }
+        // 处理成功结果
+        return '收集箱'
+    }
+
     // @method 清除必要的状态
     const __resetStates = () => {
         projects.value = [] as Project[]
@@ -239,6 +282,7 @@ const useProjectStore = defineStore('ProjectStore', () => {
     // @returns
     return {
         projects,
+        getProject,
         getProjects,
         createProject,
         deleteProject,
@@ -249,6 +293,7 @@ const useProjectStore = defineStore('ProjectStore', () => {
         deleteProjectPermanentlyWithConfirm,
         updateProject,
         updateProjectPreference,
+        getProjectNameById,
         __resetStates
     }
 })

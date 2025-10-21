@@ -4,7 +4,6 @@ import { useTasksViewStore } from '@/stores/tasks'
 import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 import { InnerDropdown, InnerDropdownOption } from '@/components/ui/inner-dropdown'
-import { getColumnText } from '@/components/tasks/table'
 import { priorityOptions, stateOptions } from '@nao-todo/components/todo/selector/constants'
 import type { InnerDropdownOptionVO } from '@/components/ui/inner-dropdown/types'
 import type { Todo } from '@nao-todo/types'
@@ -54,7 +53,7 @@ const sortFieldDropdownOptions = computed(() => {
     Object.keys(_columnOptions).forEach((key) => {
         _fields.push({
             icon: 'plus-circle',
-            label: getColumnText(key),
+            label: tasksViewStore.getColumnText(key),
             value: key,
             checked: _getOptions.sort?.field === key || false
         })

@@ -2,7 +2,7 @@
 import { inject } from 'vue'
 import { TodoPriorityInfo, TodoStateInfo, TodoTagBar } from '@nao-todo/components'
 import { useRelativeDate } from '@nao-todo/hooks'
-import { todoTableContextKey } from './constants'
+import { TODO_TABLE_CONTEXT_KEY } from './constants'
 import type { TodoTableContext } from './types'
 import type { NueDiv } from 'nue-ui'
 
@@ -11,27 +11,20 @@ defineOptions({ name: 'TodoTableMain' })
 const {
     todos,
     tags,
-    tagBarClamped,
     refreshKey,
     selectRange,
     columnOptions,
+    tagBarClamped,
     isTodoExpired,
+    getProjectName,
     showTodoDetailsPanel,
     showMultiSelectPanel,
-    getProjectNameByIdFromLocal,
     deleteButtonClickHandler
-} = inject<TodoTableContext>(todoTableContextKey)!
+} = inject<TodoTableContext>(TODO_TABLE_CONTEXT_KEY)!
 </script>
 
 <template>
-    <nue-empty
-        v-if="!todos.length"
-        description="当前暂无待办任务"
-        image-size="4rem"
-        image-src="/images/coffee.webp"
-        style="height: 100%; overflow: hidden"
-    />
-    <nue-div v-else class="todo-table__main">
+    <nue-div class="todo-table__main">
         <nue-div
             v-for="(todo, idx) in todos"
             :key="todo.id + refreshKey"
@@ -49,6 +42,7 @@ const {
                         {{ todo.name }}
                     </nue-text>
                     <todo-tag-bar
+                        v-if="columnOptions.tags && todo.tags.length"
                         :clamped="tagBarClamped"
                         :tags="tags"
                         :todoTags="todo.tags"
@@ -94,8 +88,8 @@ const {
                 <todo-state-info :key="todo.state" :state="todo.state" use-clamped />
             </nue-div>
             <nue-div v-if="columnOptions.project" class="todo-table__main__col col-attr">
-                <nue-text :clamped="1" :title="getProjectNameByIdFromLocal(todo.projectId)">
-                    {{ getProjectNameByIdFromLocal(todo.projectId) || '收集箱' }}
+                <nue-text :clamped="1" :title="getProjectName(todo.projectId)">
+                    {{ getProjectName(todo.projectId) || '收集箱' }}
                 </nue-text>
             </nue-div>
             <nue-div class="todo-table__main__col col-actions">

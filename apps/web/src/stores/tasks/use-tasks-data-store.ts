@@ -13,6 +13,7 @@ import {
 import type { Err, Project, Tag, Todo } from '@nao-todo/types'
 
 const useTasksDataStore = defineStore('TasksDataStore', () => {
+    // @stores 全局 stores
     const router = useRouter()
     const route = useRoute()
     const projectStore = useProjectStore()
@@ -22,6 +23,7 @@ const useTasksDataStore = defineStore('TasksDataStore', () => {
     const commentStore = useCommentStore()
     const userStore = useUserStoreV2()
 
+    // @states 前置状态
     const { projects } = storeToRefs(projectStore)
     const { tags } = storeToRefs(tagStore)
     const { todos, pagination } = storeToRefs(todoStore)
@@ -52,7 +54,7 @@ const useTasksDataStore = defineStore('TasksDataStore', () => {
         return unwrapErrors(getProjectsError, getTagsError)
     }
 
-    // @methods 删除清单或标签的处理函数 - 主要处理当删除清单或标签为当前路由标签或清单时跳转
+    // @methods 删除清单处理函数 - 主要处理当删除清单后的跳转
     const deleteProject = async (projectId: Project['id']) => {
         // 调用 ProjectStore 删除
         const err = await projectStore.deleteProjectWithConfirm(projectId)
@@ -62,6 +64,8 @@ const useTasksDataStore = defineStore('TasksDataStore', () => {
             router.replace({ name: 'tasks-basic', params: { id: 'all' } })
         }
     }
+
+    // @methods 删除标签处理函数 - 主要处理当删除标签后的跳转
     const deleteTag = async (tagId: Tag['id']) => {
         // 调用 TagStore 删除
         const err = await tagStore.deleteTagWithConfirm(tagId)
@@ -72,7 +76,7 @@ const useTasksDataStore = defineStore('TasksDataStore', () => {
         }
     }
 
-    // @methods 删除待办任务的处理函数 - 主要处理当删除待办任务为当前路由待办任务时跳转
+    // @methods 删除待办任务的处理函数 - 主要处理删除待办任务后的跳转
     const deleteTodo = async (todoId: Todo['id']): Promise<boolean> => {
         // 调用 TodoStore 删除
         const err = await todoStore.deleteTodoWithConfirm(todoId)
@@ -83,6 +87,8 @@ const useTasksDataStore = defineStore('TasksDataStore', () => {
         }
         return true
     }
+
+    // @methods 永久删除待办任务处理函数 - 主要处理当永久删除待办任务后的跳转
     const deleteTodoPermanently = async (todoId: Todo['id']): Promise<boolean> => {
         // 调用 TodoStore 删除
         const err = await todoStore.deleteTodoPermanentlyWithConfirm(todoId)
@@ -97,32 +103,41 @@ const useTasksDataStore = defineStore('TasksDataStore', () => {
     // @returns
     return {
         user,
-        projects,
-        tags,
-        todos,
-        pagination,
-        events,
-        comments,
-        projectSmartListData,
-        tagSmartListData,
         getProjectsAndTags,
+        // project
+        projects,
+        projectSmartListData,
         getProjects,
+        getProjectNameById: projectStore.getProjectNameById,
         createProject: projectStore.createProject,
         deleteProject,
         restoreProject: projectStore.restoreProjectWithConfirm,
         deleteProjectPermanently: projectStore.deleteProjectPermanentlyWithConfirm,
+        // tag
+        tags,
+        tagSmartListData,
         getTags,
         createTag: tagStore.createTag,
         deleteTag,
+        // todos
+        todos,
+        pagination,
         getTodos: todoStore.getTodos,
+        getTodosWithPush: todoStore.getTodosWithPush,
         deleteTodo,
         deleteTodoPermanently,
         restoreTodo: todoStore.restoreTodoWithConfirm,
         duplicateTodo: todoStore.duplicateTodoWithComfirm,
+        updateTodoState: todoStore.updateTodoState,
+        clearTodos: todoStore.__resetStates,
+        // event
+        events,
         getEvents: eventStore.getEvents,
         createEvent: eventStore.createEvent,
         updateEvent: eventStore.updateEvent,
         deleteEvent: eventStore.deleteEvent,
+        // comment
+        comments,
         getComments: commentStore.getComments,
         createComment: commentStore.createComment,
         updateComment: commentStore.updateComment,

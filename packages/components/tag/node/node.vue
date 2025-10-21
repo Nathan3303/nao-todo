@@ -28,9 +28,7 @@ const classes = computed(() => {
 })
 
 const styles = computed(() => {
-    return {
-        '--tag-node-bg': props.tag.color || '#f5f5f5'
-    }
+    return { '--tag-node-bg': props.tag.color || '#f5f5f5' }
 })
 
 const handleDelete = (id: string) => {
@@ -48,14 +46,14 @@ const handleDelete = (id: string) => {
     flex-wrap: nowrap;
     align-items: center;
     width: fit-content;
-    height: 28px;
+    height: 26px;
     background-color: var(--tag-node-bg);
     border-radius: 99px;
     position: relative;
     cursor: default;
     flex: none;
     gap: var(--tag-node-vgap);
-    padding: 0.25rem 0.75rem;
+    padding: 0.25rem 0.5rem;
 
     .tag-node__name {
         color: white;

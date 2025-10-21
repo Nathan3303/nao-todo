@@ -1,18 +1,17 @@
 <script setup lang="ts">
 import { inject } from 'vue'
-import type { TodoTableContext } from './types'
-import { todoTableContextKey } from './constants'
 import OrderButton from './order-button.vue'
-import { getColumnText } from '@/components/tasks/table/utils'
+import { TODO_TABLE_CONTEXT_KEY } from './constants'
+import type { TodoTableContext } from './types'
 
 defineOptions({ name: 'TodoTableHeader' })
 
-const { columnOptions, sortOptions, clearSortOptions } =
-    inject<TodoTableContext>(todoTableContextKey)!
+const { columnOptions, sortOptions, clearSortOptions, getColumnText } =
+    inject<TodoTableContext>(TODO_TABLE_CONTEXT_KEY)!
 </script>
 
 <template>
-    <nue-div class="todo-table__header" wrap="nowrap">
+    <nue-div class="todo-table__header">
         <div class="todo-table__header__col col-first">
             <order-button prop="name">{{ getColumnText('name') }}</order-button>
         </div>

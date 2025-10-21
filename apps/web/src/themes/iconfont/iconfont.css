@@ -1,6 +1,6 @@
 @font-face {
   font-family: "iconfont"; /* Project id 4627189 */
-  src: url('iconfont.woff2?t=1760335025636') format('woff2');
+  src: url('iconfont.woff2?t=1761034398689') format('woff2');
 }
 
 .iconfont {
@@ -9,6 +9,14 @@
   font-style: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-update:before {
+  content: "\e635";
+}
+
+.icon-update-filled:before {
+  content: "\ea58";
 }
 
 .icon-list:before {

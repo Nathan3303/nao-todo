@@ -19,7 +19,8 @@
             overflow-x: auto;
 
             .nue-container.kanban-column {
-                min-width: 20rem;
+                min-width: 18rem;
+                flex: 30%;
                 height: 100%;
                 overflow: hidden;
                 -webkit-user-select: none;
@@ -53,16 +54,15 @@
                         gap: 0.5rem;
                         padding: 0.5rem;
 
-                        .empty {
-                            height: auto;
-                            font-size: 1rem;
-                            flex: none;
-                            width: 100%;
-                            border-radius: var(--nue-primary-radius);
+                        > .nue-empty.nue-empty--no-image {
+                            min-height: 2.5rem;
 
-                            .nue-text {
-                                font-size: 1rem;
-                                margin: 0.5rem;
+                            .nue-empty__image {
+                                display: none;
+                            }
+
+                            .nue-empty__description {
+                                font-size: var(--nue-text-xs);
                             }
                         }
                     }
@@ -102,27 +102,27 @@
                     box-sizing: border-box;
                 }
 
-                .infinite-scroll__disabled {
-                    display: none;
-                }
-
                 &.kanban-column--disabled {
-                    opacity: 0.7;
+                    opacity: 0.6;
                 }
 
                 .todo-card {
-                    padding: 0.5rem 0.75rem 1rem;
+                    padding: 0.5rem;
                     gap: 0.5rem;
                     flex-wrap: nowrap;
                     width: 100%;
+                    height: auto;
                     transition: all 0.16s ease;
                     background-color: white;
                     box-sizing: border-box;
                     overflow: hidden;
+                    border: 1px solid var(--nue-border-color);
+                    border-radius: var(--nue-primary-radius);
+                    box-shadow: var(--nue-secondary-shadow);
 
                     .todo-card__check-icon {
                         --nue-icon-size: 1.25rem;
-                        color: var(--nue-primary-color-500);
+                        color: var(--nue-primary-color-600);
                         padding: 2px 0;
                         transition: all 0.16s ease;
 
@@ -132,18 +132,10 @@
                     }
 
                     .todo-card__info {
+                        overflow: hidden;
                         flex-direction: column;
-                        gap: 0;
-
-                        /* .todo-card__giveup-tag {
-                            font-size: 0.75rem;
-                            height: 10.5rem;
-                            line-height: 10.5rem;
-                            padding: 0 6px;
-                            border-radius: var(--nue-primary-radius);
-                            background-color: #ff7b47;
-                            color: white;
-                        } */
+                        flex: 1;
+                        gap: 0.25rem;
 
                         .todo-card__name {
                             word-break: keep-all;
@@ -151,6 +143,7 @@
                             font-size: var(--nue-text-sm);
                             line-height: var(--nue-text-xl);
                             flex: 1;
+                            margin-right: 0.25rem;
                         }
 
                         .todo-card__actions {
@@ -159,7 +152,8 @@
                             display: none;
 
                             .nue-button {
-                                --nue-icon-color: var(--nue-primary-color-800);
+                                --nue-button-font-size: var(--nue-text-df);
+                                --nue-button-icon-color: var(--nue-primary-color-900);
                             }
                         }
 
@@ -167,23 +161,13 @@
                             word-break: break-all;
                             font-size: var(--nue-text-xs);
                             color: var(--nue-primary-color-500);
+                            margin-right: 0.25rem;
                         }
                     }
 
-                    .todo-card__attrs {
-                        & > .nue-div {
-                            color: var(--nue-primary-color-700);
-                            min-width: 20%;
-                        }
-
-                        .todo-tag-bar {
-                            min-width: 20%;
-                            transform-origin: left;
-                        }
-                    }
-
-                    .todo-card__favorite-icon {
-                        --nue-icon-color: #ee537f;
+                    .todo-card__attrs .todo-tag-bar {
+                        min-width: 20%;
+                        transform-origin: left;
                     }
 
                     &:hover,
@@ -209,6 +193,20 @@
                         .todo-card__name {
                             text-decoration: line-through;
                             color: gray;
+                        }
+                    }
+
+                    &[data-is-deleted='true'] {
+                        * {
+                            opacity: 0.8;
+                        }
+
+                        .todo-card__actions {
+                            display: flex;
+
+                            * {
+                                opacity: 1;
+                            }
                         }
                     }
 
