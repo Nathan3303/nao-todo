@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { useTasksBasicViewStore } from '@/stores/tasks'
 import { useTasksViewStore } from '@/stores/tasks'
+import { useTasksBasicViewStore } from '@/stores/tasks'
 import { TodoKanban } from '@/components/tasks'
 import { Loading as LoadingComponent } from '@/components/ui'
 

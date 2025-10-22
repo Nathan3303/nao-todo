@@ -57,7 +57,7 @@ const { tags } = storeToRefs(tasksDataStore)
             </nue-div>
         </nue-header>
         <nue-main>
-            <nue-content fill>
+            <nue-content fill style="overflow: hidden">
                 <nue-div vertical wrap="nowrap" height="100%">
                     <nue-div theme="name-desc" spellcheck="false">
                         <nue-textarea

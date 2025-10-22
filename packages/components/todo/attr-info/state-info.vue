@@ -7,7 +7,6 @@ defineOptions({ name: 'TodoStateInfo' })
 const props = defineProps<{
     state: string
     colored?: boolean
-    useClamped?: boolean
 }>()
 
 const stateInfos = {
@@ -22,32 +21,14 @@ const info = computed(() => {
 })
 </script>
 
-<style scoped>
-.nue-div.nue-div--state-info {
-    min-height: 1rem;
+<template>
+    <todo-basic-info :icon="info[0]" :text="info[1]" :clamped="1" />
+</template>
 
-    .nue-text {
-        line-height: 1;
-    }
+<style scoped>
+.nue-div--basic-info {
+    min-height: 1rem;
+    flex: 1;
 }
 </style>
-
-<template>
-    <!-- <nue-div theme="state-info" align="center" gap=".25rem" wrap="nowrap" width="fit-content">
-        <nue-icon
-            :name="info[0]"
-            color="var(--nue-primary-color-600)"
-            size="var(--nue-text-df)"
-            style="--nue-icon-weight: normal"
-        />
-        <nue-text
-            :clamped="useClamped ? 1 : void 0"
-            color="var(--nue-primary-color-600)"
-            size="var(--nue-text-xs)"
-        >
-            {{ info[1] }}
-        </nue-text>
-    </nue-div> -->
-    <todo-basic-info :icon="info[0]" :text="info[1]" :clamped="useClamped ? 1 : void 0" />
-</template>
 

@@ -27,3 +27,10 @@ const info = computed(() => {
     <todo-basic-info :icon="info[0]" :text="info[1]" :clamped="useClamped ? 1 : void 0" />
 </template>
 
+<style scoped>
+.nue-div--basic-info {
+    min-height: 1rem;
+    flex: 1;
+}
+</style>
+

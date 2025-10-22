@@ -234,6 +234,7 @@ const useProjectStore = defineStore('ProjectStore', () => {
             return '请指定更新的清单偏好'
         if (preference.viewType === '') return '请指定清单视图类型'
         // 更新清单偏好
+        // console.log(preference)
         const [, err] = await updateProjectPreferenceHandler(projectId, preference, requester)
         // 处理失败结果
         if (err) {

@@ -2,7 +2,7 @@ import { ref, computed } from 'vue'
 import { storeToRefs, defineStore } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useTasksDataStore, useTasksViewStore } from '@/stores/tasks'
-import type { GetTodosSortOptions } from '@nao-todo/types'
+import type { GetTodosSortOptions, Todo } from '@nao-todo/types'
 
 const useTasksProjectViewStore = defineStore('TasksProjectViewStore', () => {
     // Router & Stores
@@ -86,6 +86,9 @@ const useTasksProjectViewStore = defineStore('TasksProjectViewStore', () => {
         showTodoDetails,
         deleteTodo: tasksDataStore.deleteTodo,
         restoreTodo: tasksDataStore.restoreTodo,
+        updateTodoState: tasksDataStore.updateTodoState,
+        finishTodo: (todoId: Todo['id']) => tasksDataStore.updateTodoState(todoId, 'done'),
+        unfinishTodo: (todoId: Todo['id']) => tasksDataStore.updateTodoState(todoId, 'todo'),
         handleUpdateSortOptions,
         handleClearSortOptions: () => handleUpdateSortOptions(null),
         handleSwitchToTable: () => handleSwitchView('table'),

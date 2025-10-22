@@ -95,11 +95,10 @@ defineExpose({
     <nue-container v-else id="TodoTableContainer">
         <nue-main>
             <nue-content fill>
-                <TodoTableHeader />
-                <nue-divider />
-                <TodoTableMain />
+                <todo-table-header />
+                <todo-table-main />
             </nue-content>
         </nue-main>
-        <TodoTableFooter />
+        <todo-table-footer />
     </nue-container>
 </template>

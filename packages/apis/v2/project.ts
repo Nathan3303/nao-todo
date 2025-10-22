@@ -90,13 +90,16 @@ export const updateProjectPreferenceApi = async (
     projectId: Project['id'],
     preference: ProjectPreference
 ) => {
-    const _preference: { [key in keyof ProjectPreference]?: string } = {}
     // 将对象偏好转为字符串
+    let _preference: { [key in keyof ProjectPreference]?: string } | null = null
     try {
-        _preference.getTodosOptions = preference.getTodosOptions
-            ? JSON.stringify(preference.getTodosOptions)
-            : ''
-        _preference.columns = preference.columns ? JSON.stringify(preference.columns) : ''
+        _preference = {
+            viewType: preference.viewType,
+            getTodosOptions: preference.getTodosOptions
+                ? JSON.stringify(preference.getTodosOptions)
+                : '',
+            columns: preference.columns ? JSON.stringify(preference.columns) : ''
+        }
     } catch (error) {
         console.error('[@nao-todo/apis/update-project-preference-v2]', error)
         return { code: 400, message: '偏好数据解析失败' } as ResponseData

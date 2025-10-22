@@ -24,7 +24,8 @@ withDefaults(
     gap: 0.25rem;
     flex-wrap: nowrap;
     color: var(--nue-primary-color-700);
-    width: auto;
+    width: fit-content;
+    flex: none;
 
     > .nue-icon {
         --nue-icon-size: var(--nue-text-df);
