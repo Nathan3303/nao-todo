@@ -14,9 +14,6 @@ const useTasksBasicViewStore = defineStore('TasksBasicViewStore', () => {
     const { viewProps, responsiveFlag } = storeToRefs(tasksViewStore)
     const { todos, pagination, tags } = storeToRefs(tasksDataStore)
 
-    // @state 分页页码
-    // const page = ref<number>(1)
-
     // @states 加载态以及加载失败错误信息
     const loading = ref<boolean>(false)
     const error = ref<string>('')
@@ -33,26 +30,6 @@ const useTasksBasicViewStore = defineStore('TasksBasicViewStore', () => {
     const handleUpdateSortOptions = (newSortOptions: GetTodosSortOptions | null) => {
         if (!viewProps.value) return
         viewProps.value.preference.getTodosOptions.sort = newSortOptions || void 0
-    }
-
-    // @state 上一次重新加载时间以及允许重新加载状态（五秒等待时间）
-    const reloadTimer = ref<number | null>(null)
-    const allowReload = ref<boolean>(true)
-
-    // @method 处理重新获取待办任务数据
-    const handleRefreshData = async () => {
-        loading.value = true
-        if (reloadTimer.value) {
-            loading.value = false
-            return
-        }
-        await tasksViewStore.refreshData()
-        reloadTimer.value = setTimeout(() => {
-            reloadTimer.value = null
-            allowReload.value = true
-        }, 5000)
-        loading.value = false
-        allowReload.value = false
     }
 
     // @computed 是否已是隐藏了已完成任务
@@ -75,6 +52,26 @@ const useTasksBasicViewStore = defineStore('TasksBasicViewStore', () => {
         if (loading.value) return
         tasksViewStore.switchView(viewType)
         router.push({ name: router.currentRoute.value.name, params: { viewType } })
+    }
+
+    // @state 上一次重新加载时间以及允许重新加载状态（五秒等待时间）
+    const reloadTimer = ref<number | null>(null)
+    const allowReload = ref<boolean>(true)
+
+    // @method 处理重新获取待办任务数据
+    const handleRefreshData = async () => {
+        loading.value = true
+        if (reloadTimer.value) {
+            loading.value = false
+            return
+        }
+        // await tasksViewStore.refreshData()
+        reloadTimer.value = setTimeout(() => {
+            reloadTimer.value = null
+            allowReload.value = true
+        }, 5000)
+        loading.value = false
+        allowReload.value = false
     }
 
     // @returns

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTasksViewStore } from '@/stores/tasks'
 import { Loading as LoadingComp } from '@nao-todo/components'
@@ -17,34 +17,33 @@ const error = reactive({ message: '', errorImage: '/images/error.png' })
 const { viewProps } = storeToRefs(tasksViewStore)
 
 // @effect 当路由信息变化重新加载数据
-watch(
-    () => props.viewId,
-    async (newId) => {
-        // 判断 viewId 是否为空
-        if (!newId) {
-            error.message = '参数错误'
-            return
-        }
-        // 加载视图数据
-        loading.value = true
-        await tasksViewStore.loadViewProps(newId, route.meta.category as string)
-        loading.value = false
-        // 判断 viewProps 是否存在
-        if (!viewProps.value) {
-            error.message = '视图数据加载失败'
-            return
-        }
-        // 重置错误信息
-        error.message = ''
-        // 跳转至指定视图
-        if (props.todoId) return
-        router.replace({
-            name: 'tasks-basic-main',
-            params: { viewType: viewProps.value.preference.viewType }
+watchEffect(() => {
+    // 判断 viewId 是否为空
+    if (!props.viewId) {
+        error.message = '参数错误'
+        return
+    }
+    // 加载视图数据
+    loading.value = true
+    tasksViewStore
+        .loadViewProps(props.viewId, route.meta.category as string)
+        .then(() => {
+            // 判断 viewProps 是否存在
+            if (!viewProps.value) {
+                error.message = '视图数据加载失败'
+                return
+            }
+            // 重置错误信息
+            error.message = ''
+            // 跳转至指定视图
+            if (props.todoId) return
+            router.replace({
+                name: 'tasks-basic-main',
+                params: { viewType: viewProps.value.preference.viewType }
+            })
         })
-    },
-    { immediate: true }
-)
+        .finally(() => (loading.value = false))
+})
 </script>
 
 <template>

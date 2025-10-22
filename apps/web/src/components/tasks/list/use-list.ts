@@ -30,6 +30,35 @@ export const useTodoList = (props: TodoListProps, emit: TodoListEmits) => {
     // @state 滚动加载禁用状态
     const infiniteScrollDisabled = ref<boolean>(false)
 
+    // @state 正在查看的待办任务 Id 记录 - 用于高量任务行
+    const selectedId = ref<Todo['id']>()
+
+    // @state 多行选择范围记录 - 用于多行选择
+    const selectRange = reactive<TodoListMultiSelectPayload['selectRange']>({
+        start: -1,
+        end: -1,
+        original: -1
+    })
+
+    // @computed 计算标签显示数量 - 用于响应式变化时变化标签显示个数
+    const tagBarClamped = computed(() => {
+        if (!props.columns) return 2
+        let trueCount = 0
+        Object.keys(props.columns).forEach((key: string) => {
+            if (props.columns[key as keyof TodoListProps['columns']]) {
+                trueCount++
+            }
+        })
+        return Math.max(Math.ceil(5 / trueCount), 2)
+    })
+
+    // @watch 当相关数据变化时获取待办任务数据
+    watch(
+        () => viewProps.value?.preference.getTodosOptions,
+        () => getTodos(),
+        { deep: true }
+    )
+
     // @method 加载待办任务数据
     const getTodos = async (useLoading: boolean = false): Promise<boolean> => {
         // 判断 viewProps 是否存在
@@ -62,42 +91,10 @@ export const useTodoList = (props: TodoListProps, emit: TodoListEmits) => {
         return true
     }
 
-    // @watch 当请求 ID 变化时重新获取待办数据 - 用于路由参数变化时
-    // watch(
-    //     () => viewProps.value?.id,
-    //     async () => {
-    //         await getTodos(true)
-    //         if (todos.value.length) activeRowByTodoIdFromRoute()
-    //     },
-    //     { immediate: true }
-    // )
-
-    // @watch 当相关数据变化时获取待办任务数据
-    watch(
-        () => viewProps.value?.preference.getTodosOptions,
-        () => getTodos(),
-        { deep: true }
-    )
-
-    // @computed 计算标签显示数量 - 用于响应式变化时变化标签显示个数
-    const tagBarClamped = computed(() => {
-        if (!props.columns) return 2
-        let trueCount = 0
-        Object.keys(props.columns).forEach((key: string) => {
-            if (props.columns[key as keyof TodoListProps['columns']]) {
-                trueCount++
-            }
-        })
-        return Math.max(Math.ceil(5 / trueCount), 2)
-    })
-
     // @method 检测当前待办任务是否过期
     const isTodoExpired = (todo: Todo) => {
         return isExpired(todo.endAt || '') && todo.state !== 'done'
     }
-
-    // @state 正在查看的待办任务 Id 记录 - 用于高量任务行
-    const selectedId = ref<Todo['id']>()
 
     // @method 显示待办详情
     const showTodoDetailsPanel = (todoId: Todo['id'], idx: number) => {
@@ -108,13 +105,6 @@ export const useTodoList = (props: TodoListProps, emit: TodoListEmits) => {
         // 显示详情
         emit('showTodoDetails', todoId)
     }
-
-    // @state 多行选择范围记录 - 用于多行选择
-    const selectRange = reactive<TodoListMultiSelectPayload['selectRange']>({
-        start: -1,
-        end: -1,
-        original: -1
-    })
 
     // @method 多选待办处理
     const showMultiSelectPanel = (idx: number) => {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
 import { useTasksBasicViewStore } from '@/stores/tasks'
 import { TodoList } from '@/components/tasks/list'
-import { storeToRefs } from 'pinia'
 
 defineOptions({ name: 'TasksMainBasicViewList' })
 
