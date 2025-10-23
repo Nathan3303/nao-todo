@@ -1,3 +1,30 @@
+<script lang="ts" setup>
+import { onMounted, ref } from 'vue'
+import useProjectCreator from './use-project-creator'
+import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
+import type { NueDialog, NueInput } from 'nue-ui'
+
+defineOptions({ name: 'ProjectCreator' })
+const emit = defineEmits<{ (e: 'register', open: () => void, close: () => void): void }>()
+
+const nameInputRef = ref<InstanceType<typeof NueInput>>()
+const dialogRef = ref<DialogInstanceType>()
+
+const { creating, isNameEmpty, newProject, handleConfirm } = useProjectCreator()
+const { visible, open, close } = useDialogWrapper(dialogRef)
+
+const handleSubmit = async () => {
+    const ok = await handleConfirm()
+    if (ok) close()
+}
+
+onMounted(() => {
+    emit('register', open, close)
+})
+
+defineExpose({ open, close })
+</script>
+
 <template>
     <nue-dialog v-model="visible" ref="dialogRef">
         <template #header>
@@ -45,28 +72,3 @@
     </nue-dialog>
 </template>
 
-<script lang="ts" setup>
-import { onMounted, ref } from 'vue'
-import useProjectCreator from './use-project-creator'
-import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
-import type { NueDialog, NueInput } from 'nue-ui'
-
-defineOptions({ name: 'ProjectCreator' })
-
-const nameInputRef = ref<InstanceType<typeof NueInput>>()
-const dialogRef = ref<DialogInstanceType>()
-
-const { creating, isNameEmpty, newProject, handleConfirm } = useProjectCreator()
-const { visible, open, close } = useDialogWrapper(dialogRef)
-
-onMounted(() => {
-    nameInputRef.value?.innerInputRef?.focus()
-})
-
-const handleSubmit = async () => {
-    const ok = await handleConfirm()
-    if (ok) close()
-}
-
-defineExpose({ open, close })
-</script>

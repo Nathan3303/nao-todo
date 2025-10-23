@@ -1,15 +1,18 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
-import { TagBoard } from '@nao-todo/components'
-import { useTagManagerStore } from '@/stores/tasks'
-import TagManagerFilterBar from './filter-bar.vue'
+import { onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
+import TagManagerFilterBar from './filter-bar.vue'
+import { TagBoard } from '@nao-todo/components'
+import { useTasksDialogStore, useTagManagerStore } from '@/stores/tasks'
 import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
 import type { Tag } from '@nao-todo/types'
-import { useTasksDialogStore } from '@/stores/tasks'
+import type { DialogOpenFunction, DialogCloseFunction } from '@/stores/tasks/use-tasks-dialog-store'
 
 defineOptions({ name: 'TagManager' })
-defineEmits<{ (e: 'closeDialog'): void }>()
+const emit = defineEmits<{
+    (e: 'closeDialog'): void
+    (e: 'register', open: DialogOpenFunction, close: DialogCloseFunction): void
+}>()
 
 const tagManagerStore = useTagManagerStore()
 const tasksDialogStore = useTasksDialogStore()
@@ -20,20 +23,23 @@ const { tags } = storeToRefs(tagManagerStore)
 const { visible, open: openDialog, close } = useDialogWrapper(dialogRef)
 
 const showCreateTagDialog = () => {
-    tasksDialogStore.tagCreator?.open()
+    tasksDialogStore.tagCreator?.open?.()
 }
 
 const showUpdateTagColorDialog = (tagId: Tag['id']) => {
-    tasksDialogStore.tagColorUpdater?.open(tagId)
+    tasksDialogStore.tagColorUpdater?.open?.(tagId)
 }
 
-defineExpose({
-    open: () => {
-        tagManagerStore.loadTags()
-        openDialog()
-    },
-    close
+const open = () => {
+    tagManagerStore.loadTags()
+    openDialog()
+}
+
+onMounted(() => {
+    emit('register', open, close)
 })
+
+defineExpose({ open, close })
 </script>
 
 <template>
@@ -101,3 +107,4 @@ defineExpose({
     box-shadow: var(--secondary-shadow);
 }
 </style>
+

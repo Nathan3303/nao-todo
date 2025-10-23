@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
-import useTodoCreator, { defaultCreateTodoOptions } from './use-todo-creator'
+import { onMounted, ref } from 'vue'
+import useTodoCreator from './use-todo-creator'
 import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
 import { useRelativeDate } from '@nao-todo/hooks/use-relative-date'
 import {
@@ -12,38 +12,46 @@ import {
     TodoTagBar
 } from '@nao-todo/components'
 import type { CreateTodoOptions, Todo } from '@nao-todo/types'
+import type { DialogOpenFunction, DialogCloseFunction } from '@/stores/tasks/use-tasks-dialog-store'
 
 defineOptions({ name: 'TodoCreator' })
+const emit = defineEmits<{
+    (e: 'register', open: DialogOpenFunction, close: DialogCloseFunction): void
+}>()
 
 const dialogRef = ref<DialogInstanceType>()
 
-const { visible, open, close } = useDialogWrapper(dialogRef)
 const { user, projects, tags, newTodo, creating, disabled, handleCreateTodo } = useTodoCreator()
+const { visible, open: openDialog, close: closeDialog } = useDialogWrapper(dialogRef)
 
-const iOpen = (createTodoOptions: CreateTodoOptions) => {
+const open = (createTodoOptions: CreateTodoOptions) => {
     newTodo.value = { ...newTodo.value, ...createTodoOptions }
-    open()
+    openDialog()
 }
 
-const iClose = () => {
-    close()
-    newTodo.value = { ...defaultCreateTodoOptions }
+const close = () => {
+    closeDialog()
+    // newTodo.value = { ...defaultCreateTodoOptions }
     disabled.value = false
 }
 
 const handleSubmit = async () => {
     const ok = await handleCreateTodo()
-    if (ok) iClose()
+    if (ok) close()
 }
 
-defineExpose({ open: iOpen, close: iClose })
+onMounted(() => {
+    emit('register', open, close)
+})
+
+defineExpose({ open, close })
 </script>
 
 <template>
     <nue-dialog v-model="visible" ref="dialogRef">
         <template #header>
             <nue-text>创建待办事项</nue-text>
-            <nue-button @click="iClose" icon="clear" theme="icon,ghost,small" />
+            <nue-button @click="close" icon="clear" theme="icon,ghost,small" />
         </template>
         <template #content>
             <nue-div vertical align="stretch">
@@ -96,7 +104,7 @@ defineExpose({ open: iOpen, close: iClose })
             </nue-div>
         </template>
         <template #footer>
-            <nue-button :disabled="creating" @click="iClose">取消</nue-button>
+            <nue-button :disabled="creating" @click="close">取消</nue-button>
             <nue-button
                 :disabled="disabled"
                 :loading="creating"
@@ -108,3 +116,4 @@ defineExpose({ open: iOpen, close: iClose })
         </template>
     </nue-dialog>
 </template>
+

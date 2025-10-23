@@ -1,3 +1,40 @@
+<script setup lang="ts">
+import { onMounted, ref } from 'vue'
+import useTagColorUpdater from './use-tag-color-updater'
+import { TagColorSelector } from '@nao-todo/components'
+import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
+import type { DialogOpenFunction, DialogCloseFunction } from '@/stores/tasks/use-tasks-dialog-store'
+
+defineOptions({ name: 'TagColorUpdater' })
+const emit = defineEmits<{
+    (e: 'register', open: DialogOpenFunction, close: DialogCloseFunction): void
+}>()
+
+const dialogRef = ref<DialogInstanceType>()
+
+const { color, updating, disabled, getTagColor, updateTagColor } = useTagColorUpdater()
+const { visible, open: openDialog, close } = useDialogWrapper(dialogRef)
+
+const open = (tagId: string) => {
+    getTagColor(tagId)
+    openDialog()
+}
+
+const handleConfirm = async () => {
+    const ok = await updateTagColor()
+    if (ok) {
+        close()
+        setTimeout(() => (disabled.value = false), 240)
+    }
+}
+
+onMounted(() => {
+    emit('register', open, close)
+})
+
+defineExpose({ open, close })
+</script>
+
 <template>
     <nue-dialog v-model="visible" ref="dialogRef">
         <template #header>
@@ -21,33 +58,3 @@
     </nue-dialog>
 </template>
 
-<script setup lang="ts">
-import { ref } from 'vue'
-import useTagColorUpdater from './use-tag-color-updater'
-import { TagColorSelector } from '@nao-todo/components'
-import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
-
-defineOptions({ name: 'TagColorUpdater' })
-
-const dialogRef = ref<DialogInstanceType>()
-
-const { visible, open, close } = useDialogWrapper(dialogRef)
-const { color, updating, disabled, getTagColor, updateTagColor } = useTagColorUpdater()
-
-const iOpen = (tagId: string) => {
-    getTagColor(tagId)
-    open()
-}
-
-const handleConfirm = async () => {
-    const ok = await updateTagColor()
-    if (ok) {
-        close()
-        setTimeout(() => (disabled.value = false), 240)
-    }
-}
-
-defineExpose({ open: iOpen, close })
-</script>
-
-<style scoped></style>

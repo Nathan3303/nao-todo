@@ -5,9 +5,10 @@ import ProjectManagerFilterBar from './filter-bar.vue'
 import { useTasksDialogStore } from '@/stores/tasks'
 import { ProjectBoard } from '@nao-todo/components/project'
 import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 
 defineOptions({ name: 'ProjectManager' })
+const emit = defineEmits<{ (e: 'register', open: () => void, close: () => void): void }>()
 
 const projectManagerStore = useProjectManagerStore()
 const tasksDialogStore = useTasksDialogStore()
@@ -17,13 +18,16 @@ const dialogRef = ref<DialogInstanceType>()
 const { projects } = storeToRefs(projectManagerStore)
 const { visible, open: openDialog, close } = useDialogWrapper(dialogRef)
 
-defineExpose({
-    open: () => {
-        projectManagerStore.loadProjects()
-        openDialog()
-    },
-    close
+const open = () => {
+    projectManagerStore.loadProjects()
+    openDialog()
+}
+
+onMounted(() => {
+    emit('register', open, close)
 })
+
+defineExpose({ open, close })
 </script>
 
 <template>
@@ -59,3 +63,4 @@ defineExpose({
         </nue-container>
     </nue-dialog>
 </template>
+

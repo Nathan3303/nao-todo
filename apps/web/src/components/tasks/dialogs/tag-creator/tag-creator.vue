@@ -1,3 +1,30 @@
+<script lang="ts" setup>
+import { onMounted, ref } from 'vue'
+import { type NueDialog, NueDiv, NueInput, NueTextarea } from 'nue-ui'
+import { TagColorSelector } from '@nao-todo/components'
+import useTagCreator, { type TagCreatorEmits } from './use-tag-creator'
+import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
+
+defineOptions({ name: 'TagCreator' })
+const emit = defineEmits<TagCreatorEmits>()
+
+const tagNameInputRef = ref<InstanceType<typeof NueInput>>()
+const dialogRef = ref<DialogInstanceType>()
+
+const { creating, isNameEmpty, newTag, handleConfirm } = useTagCreator(emit)
+const { visible, open, close } = useDialogWrapper(dialogRef)
+const handleSubmit = async () => {
+    const ok = await handleConfirm()
+    if (ok) close()
+}
+
+onMounted(() => {
+    emit('register', open, close)
+})
+
+defineExpose({ open, close })
+</script>
+
 <template>
     <nue-dialog v-model="visible" ref="dialogRef">
         <template #header>
@@ -48,31 +75,3 @@
     </nue-dialog>
 </template>
 
-<script lang="ts" setup>
-import { onMounted, ref } from 'vue'
-import { type NueDialog, NueDiv, NueInput, NueTextarea } from 'nue-ui'
-import { TagColorSelector } from '@nao-todo/components'
-import useTagCreator, { type TagCreatorEmits } from './use-tag-creator'
-import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
-
-defineOptions({ name: 'TagCreator' })
-
-const emit = defineEmits<TagCreatorEmits>()
-
-const tagNameInputRef = ref<InstanceType<typeof NueInput>>()
-const dialogRef = ref<DialogInstanceType>()
-
-const { creating, isNameEmpty, newTag, handleConfirm } = useTagCreator(emit)
-const { visible, open, close } = useDialogWrapper(dialogRef)
-
-onMounted(() => {
-    tagNameInputRef.value?.innerInputRef?.focus()
-})
-
-const handleSubmit = async () => {
-    const ok = await handleConfirm()
-    if (ok) close()
-}
-
-defineExpose({ open, close })
-</script>

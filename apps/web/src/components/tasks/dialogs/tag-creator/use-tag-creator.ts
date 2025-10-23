@@ -7,6 +7,7 @@ import type { CreateTagOptions } from '@nao-todo/types'
 
 export type TagCreatorEmits = {
     (e: 'closeDialog'): void
+    (e: 'register', open: () => void, close: () => void): void 
 }
 
 const DefaultCreateOptions: CreateTagOptions = {
