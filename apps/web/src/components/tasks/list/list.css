@@ -69,6 +69,7 @@
                     border: 1px solid transparent;
                     border-radius: var(--nue-primary-radius);
                     transition: opacity 0.16s ease;
+                    width: 100%;
 
                     &:hover {
                         border: 1px solid var(--nue-primary-color-400);

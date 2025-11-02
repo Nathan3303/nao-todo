@@ -11,16 +11,16 @@ const nameInputRef = ref<InstanceType<typeof NueInput>>()
 const dialogRef = ref<DialogInstanceType>()
 
 const { creating, isNameEmpty, newProject, handleConfirm } = useProjectCreator()
-const { visible, open, close } = useDialogWrapper(dialogRef)
+const { visible, close } = useDialogWrapper(dialogRef)
 
 const handleSubmit = async () => {
     const ok = await handleConfirm()
     if (ok) close()
 }
 
-onMounted(() => {
-    emit('register', open, close)
-})
+const open = () => (visible.value = true)
+
+onMounted(() => emit('register', open, close))
 
 defineExpose({ open, close })
 </script>
@@ -33,7 +33,7 @@ defineExpose({ open, close })
         </template>
         <template #content>
             <nue-div vertical gap="0.5rem">
-                <nue-div align="stretch" gap="4px" vertical>
+                <nue-div align="stretch" gap="4px" vertical width="100%">
                     <nue-input
                         ref="nameInputRef"
                         v-model="newProject.name"

@@ -2,9 +2,9 @@
     <nue-select v-model="proxyValue" size="small" v-bind="$attrs">
         <nue-select-option
             v-for="option in options"
-            :key="option.value"
+            :key="option.label"
             :label="option.label"
-            :value="option.value"
+            :value="option.value as never"
         />
     </nue-select>
 </template>
@@ -14,15 +14,15 @@ import { computed } from 'vue'
 
 defineOptions({ name: 'TodoSelector' })
 const props = defineProps<{
-    value: unknown
+    value?: string | number
     options?: {
         label: string
-        value: unknown
+        value: string | number
         disabled?: boolean
     }[]
 }>()
 const emit = defineEmits<{
-    (event: 'change', value: unknown): void
+    (event: 'change', value?: string | number): void
 }>()
 
 const proxyValue = computed({
@@ -30,3 +30,4 @@ const proxyValue = computed({
     set: (value) => emit('change', value)
 })
 </script>
+

@@ -140,7 +140,7 @@ const useProjectStore = defineStore('ProjectStore', () => {
 
     // @method 删除清单（带确认）
     const deleteProjectWithConfirm = async (projectId: Project['id']): Promise<Err> => {
-        return (await NueConfirm({
+        const [isByCancel, onConfirmResult] = await NueConfirm({
             title: '删除清单',
             content: '确定要删除此清单吗？',
             confirmButtonText: '删除',
@@ -154,12 +154,14 @@ const useProjectStore = defineStore('ProjectStore', () => {
                 NueMessage.success('删除成功')
                 return 'ok'
             }
-        })) as Err
+        })
+        if (isByCancel) return null
+        return onConfirmResult as Err
     }
 
     // @method 恢复清单（带确认）
     const restoreProjectWithConfirm = async (projectId: Project['id']): Promise<Err> => {
-        return (await NueConfirm({
+        const [isByCancel, onConfirmResult] = await NueConfirm({
             title: '恢复清单',
             content: '要恢复此清单吗？',
             confirmButtonText: '恢复',
@@ -173,12 +175,14 @@ const useProjectStore = defineStore('ProjectStore', () => {
                 NueMessage.success('恢复成功')
                 return 'ok'
             }
-        })) as Err
+        })
+        if (isByCancel) return null
+        return onConfirmResult as Err
     }
 
     // @method 永久删除清单（带确认）
     const deleteProjectPermanentlyWithConfirm = async (projectId: Project['id']): Promise<Err> => {
-        return (await NueConfirm({
+        const [isByCancel, onConfirmResult] = await NueConfirm({
             title: '永久删除清单',
             content: '确定要永久删除此清单吗？永久删除清单会删除归属于该清单的所有任务',
             confirmButtonText: '删除',
@@ -194,7 +198,9 @@ const useProjectStore = defineStore('ProjectStore', () => {
                 NueMessage.success('永久删除成功')
                 return 'ok'
             }
-        })) as Err
+        })
+        if (isByCancel) return null
+        return onConfirmResult as Err
     }
 
     // @method 更新清单
@@ -300,3 +306,4 @@ const useProjectStore = defineStore('ProjectStore', () => {
 })
 
 export default useProjectStore
+

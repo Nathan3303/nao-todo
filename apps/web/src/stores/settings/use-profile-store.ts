@@ -46,7 +46,7 @@ const useProfileStore = defineStore('SettingsProfileStore', () => {
     const isNicknameChanged = computed(() => vo.nickname !== vo.newNickname)
 
     // @method 退出登录
-    const handleSignout = () => {
+    const handleSignout = async () => {
         NueConfirm({
             title: '退出登录',
             content: '确定退出登录吗?',
@@ -104,3 +104,4 @@ const useProfileStore = defineStore('SettingsProfileStore', () => {
 })
 
 export default useProfileStore
+

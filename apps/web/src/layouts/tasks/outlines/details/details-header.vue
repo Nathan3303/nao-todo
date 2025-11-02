@@ -7,7 +7,7 @@ const emit = defineEmits<DetailsHeaderEmits>()
 </script>
 
 <template>
-    <nue-div wrap="nowrap" justify="space-between" style="padding: 1rem">
+    <nue-div wrap="nowrap" justify="space-between" style="padding: 1rem" width="100%">
         <nue-div align="center" width="auto" wrap="nowrap">
             <todo-check-button
                 :is-done="shadowTodo!.state === 'done'"
@@ -42,3 +42,4 @@ const emit = defineEmits<DetailsHeaderEmits>()
     --nue-button-color: orange;
 }
 </style>
+

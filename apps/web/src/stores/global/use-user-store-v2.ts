@@ -214,7 +214,8 @@ const useUserStoreV2 = defineStore('UserStore', () => {
                 content: '您已成功修改密码，需要重新登录以获取新的用户凭证',
                 unuseCancelButton: true,
                 confirmButtonText: '好'
-            }).then(() => router.replace('/auth/signin'))
+            })
+            await router.replace('/auth/signin')
             return [true, null]
         }
         // 返回失败结果
@@ -259,3 +260,4 @@ const useUserStoreV2 = defineStore('UserStore', () => {
 })
 
 export default useUserStoreV2
+

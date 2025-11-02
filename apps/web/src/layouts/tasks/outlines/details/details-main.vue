@@ -25,8 +25,8 @@ const { tags } = storeToRefs(tasksDataStore)
 <template>
     <nue-container id="TasksTodoDetailsMainContainer" v-if="shadowTodo">
         <nue-header>
-            <nue-div wrap="nowrap" justify="space-between">
-                <nue-div align="center" width="auto">
+            <nue-div wrap="nowrap" justify="space-between" width="100%">
+                <nue-div align="center">
                     <todo-selector
                         :options="TodoStateSelectOptions"
                         :value="shadowTodo.state"
@@ -58,14 +58,14 @@ const { tags } = storeToRefs(tasksDataStore)
         </nue-header>
         <nue-main>
             <nue-content fill style="overflow: hidden">
-                <nue-div vertical wrap="nowrap" height="100%">
+                <nue-div vertical wrap="nowrap" height="100%" gap="0">
                     <nue-div theme="name-desc" spellcheck="false">
                         <nue-textarea
                             v-model="shadowTodo.name"
                             :autosize="{ minRows: 1, maxRows: 2 }"
                             maxlength="64"
                             placeholder="输入您的任务名称..."
-                            theme="noshape,name"
+                            theme="pure,name"
                             @change="emit('update', 'name')"
                         />
                         <nue-textarea
@@ -73,14 +73,14 @@ const { tags } = storeToRefs(tasksDataStore)
                             :autosize="{ minRows: 1, maxRows: 4 }"
                             maxlength="256"
                             placeholder="输入您的任务描述..."
-                            theme="noshape,description"
+                            theme="pure,description"
                             @change="emit('update', 'description')"
                         />
                     </nue-div>
-                    <nue-div vertical style="padding: 0 1rem; flex: 1">
+                    <nue-div vertical style="padding: 0 1rem; flex: 1" width="100%">
                         <details-main-events />
                     </nue-div>
-                    <nue-div vertical style="padding: 1rem">
+                    <nue-div vertical style="padding: 1rem" width="100%">
                         <todo-tag-bar
                             :tags="tags"
                             :todo-tags="shadowTodo.tags"
@@ -104,7 +104,7 @@ const { tags } = storeToRefs(tasksDataStore)
                     @cancel="emit('cancelLeaveComment')"
                 />
             </nue-div>
-            <nue-div v-else wrap="nowrap" justify="space-between">
+            <nue-div v-else wrap="nowrap" justify="space-between" width="100%">
                 <details-row :text="eventsProgress.text" label="检查事项进度" flex="40%" />
                 <details-row
                     v-if="shadowTodo.createdAt"
@@ -118,7 +118,6 @@ const { tags } = storeToRefs(tasksDataStore)
                     flex="30%"
                     label="最后修改时间"
                 />
-                <!-- <details-row :text="statusText" flex="15%" label="状态" /> -->
             </nue-div>
         </nue-footer>
     </nue-container>
@@ -197,6 +196,7 @@ const { tags } = storeToRefs(tasksDataStore)
         background-color: #ff7b47;
         color: white;
         justify-content: center;
+        width: 100%;
     }
 
     .tasks-details-view__deleted-tag {
@@ -207,6 +207,8 @@ const { tags } = storeToRefs(tasksDataStore)
         background-color: #ff4747;
         color: white;
         justify-content: center;
+        width: 100%;
     }
 }
 </style>
+

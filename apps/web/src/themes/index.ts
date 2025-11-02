@@ -1,5 +1,4 @@
 import 'nue-ui/dist/index.css'
 import 'nue-ui-theme-shadlike/dist/all.css'
-import './nueui/div.css'
 import './iconfont/iconfont.css'
 import './index.css'

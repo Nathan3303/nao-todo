@@ -23,7 +23,7 @@
             v-model="inputValue"
             :placeholder="buttonText"
             :size="size"
-            :theme="theme || inputTheme"
+            theme="pure"
             :disabled="loading"
             style="flex: 1"
             @blur="handleBlur"

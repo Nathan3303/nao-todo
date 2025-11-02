@@ -12,15 +12,16 @@ const tagNameInputRef = ref<InstanceType<typeof NueInput>>()
 const dialogRef = ref<DialogInstanceType>()
 
 const { creating, isNameEmpty, newTag, handleConfirm } = useTagCreator(emit)
-const { visible, open, close } = useDialogWrapper(dialogRef)
+const { visible, close } = useDialogWrapper(dialogRef)
+
 const handleSubmit = async () => {
     const ok = await handleConfirm()
     if (ok) close()
 }
 
-onMounted(() => {
-    emit('register', open, close)
-})
+const open = () => (visible.value = true)
+
+onMounted(() => emit('register', open, close))
 
 defineExpose({ open, close })
 </script>
@@ -33,7 +34,7 @@ defineExpose({ open, close })
         </template>
         <template #content>
             <nue-div vertical gap=".5rem">
-                <nue-div align="stretch" gap="4px" vertical>
+                <nue-div align="stretch" gap="4px" vertical width="100%">
                     <nue-input
                         ref="tagNameInputRef"
                         v-model="newTag.name"
@@ -47,7 +48,7 @@ defineExpose({ open, close })
                         * 标签名称不能为空
                     </nue-text>
                 </nue-div>
-                <nue-div align="stretch" gap="8px" vertical>
+                <nue-div align="stretch" gap="8px" vertical width="100%">
                     <nue-textarea
                         v-model="newTag.description"
                         :disabled="creating"

@@ -11,14 +11,19 @@
         @execute="(executeId) => emit('execute', executeId)"
     >
         <template #trigger="{ trigger }">
-            <li :data-disabled="disabled" @click="trigger">
-                <nue-icon :name="icon" />
-                <nue-text>{{ title }}</nue-text>
-                <nue-div theme="append">
-                    <span v-if="suffix" style="color: orange">{{ suffix }}</span>
-                    <nue-icon size="var(--nue-text-xs)" name="arrow-right" />
-                </nue-div>
-            </li>
+            <nue-dropdown-item
+                :icon="icon"
+                :disabled="disabled"
+                :text="title"
+                use-suffix-icon
+                @click="!disabled && trigger($event)"
+            >
+                <template #append>
+                    <nue-text v-if="suffix" color="orange" size="var(--nue-text-sm)">
+                        {{ suffix }}
+                    </nue-text>
+                </template>
+            </nue-dropdown-item>
         </template>
         <nue-div theme="block">
             <slot></slot>
@@ -31,6 +36,7 @@ import { computed, ref } from 'vue'
 import { NueDropdown } from 'nue-ui'
 import type { InnerDropdownEmits, InnerDropdownProps } from './types'
 
+defineOptions({ name: 'InnerDropdown' })
 const props = withDefaults(defineProps<InnerDropdownProps>(), {
     title: '选项标题',
     icon: 'plus-circle',
@@ -56,3 +62,4 @@ const suffix = computed(() => {
     cursor: not-allowed;
 }
 </style>
+

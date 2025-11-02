@@ -22,11 +22,11 @@ const emit = defineEmits<{
 const dialogRef = ref<DialogInstanceType>()
 
 const { user, projects, tags, newTodo, creating, disabled, handleCreateTodo } = useTodoCreator()
-const { visible, open: openDialog, close: closeDialog } = useDialogWrapper(dialogRef)
+const { visible, close: closeDialog } = useDialogWrapper(dialogRef)
 
 const open = (createTodoOptions: CreateTodoOptions) => {
     newTodo.value = { ...newTodo.value, ...createTodoOptions }
-    openDialog()
+    visible.value = true
 }
 
 const close = () => {
@@ -40,9 +40,7 @@ const handleSubmit = async () => {
     if (ok) close()
 }
 
-onMounted(() => {
-    emit('register', open, close)
-})
+onMounted(() => emit('register', open, close))
 
 defineExpose({ open, close })
 </script>

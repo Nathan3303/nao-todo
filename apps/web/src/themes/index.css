@@ -1,8 +1,4 @@
 html.nue-html {
-    height: 100vh;
-    min-width: unset;
-    min-height: unset;
-    aspect-ratio: unset;
     --nue-primary-font-family: 'Poppins', 'Noto Sans', 'Segoe UI Emoji', 'Apple Color Emoji',
         'Noto Color Emoji', sans-serif;
 
@@ -39,6 +35,7 @@ html.nue-html {
     flex-direction: column;
     align-items: stretch;
     padding: 4px;
+    width: 100%;
 
     > .nue-text--title {
         font-size: var(--nue-text-xs);
@@ -143,3 +140,4 @@ html.nue-html {
         justify-content: flex-end;
     }
 }
+

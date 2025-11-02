@@ -20,7 +20,7 @@ const tasksDialogStore = useTasksDialogStore()
 const dialogRef = ref<DialogInstanceType>()
 
 const { tags } = storeToRefs(tagManagerStore)
-const { visible, open: openDialog, close } = useDialogWrapper(dialogRef)
+const { visible, close } = useDialogWrapper(dialogRef)
 
 const showCreateTagDialog = () => {
     tasksDialogStore.tagCreator?.open?.()
@@ -32,12 +32,10 @@ const showUpdateTagColorDialog = (tagId: Tag['id']) => {
 
 const open = () => {
     tagManagerStore.loadTags()
-    openDialog()
+    visible.value = true
 }
 
-onMounted(() => {
-    emit('register', open, close)
-})
+onMounted(() => emit('register', open, close))
 
 defineExpose({ open, close })
 </script>

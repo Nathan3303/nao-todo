@@ -77,7 +77,7 @@ const useTagStore = defineStore('TagStore', () => {
 
     // @method 删除标签（带确认）
     const deleteTagWithConfirm = async (tagId: Tag['id']): Promise<Err> => {
-        return (await NueConfirm({
+        const [isByCancel, onConfirmResult] = await NueConfirm({
             title: '删除标签',
             content: '确定要删除此标签吗？',
             confirmButtonText: '删除',
@@ -91,7 +91,9 @@ const useTagStore = defineStore('TagStore', () => {
                 NueMessage.success('删除成功')
                 return 'ok'
             }
-        })) as Err
+        })
+        if (isByCancel) return null
+        return onConfirmResult as Err
     }
 
     // @method 更新标签
@@ -157,3 +159,4 @@ const useTagStore = defineStore('TagStore', () => {
 })
 
 export default useTagStore
+

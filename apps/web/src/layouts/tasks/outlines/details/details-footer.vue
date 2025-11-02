@@ -43,7 +43,7 @@ const handleDropdownExecute = (executeId: string) => {
 </script>
 
 <template>
-    <nue-div v-if="shadowTodo" align="center" justify="space-between">
+    <nue-div v-if="shadowTodo" align="center" justify="space-between" width="100%">
         <todo-project-selector
             :project-id="shadowTodo.projectId"
             :projects="projects"
@@ -68,12 +68,6 @@ const handleDropdownExecute = (executeId: string) => {
                     icon="files"
                     execute-id="duplicate-todo"
                 />
-                <!-- <inner-dropdown-option
-                    :disabled="shadowTodo.isDeleted"
-                    :title="shadowTodo.isGivenUp ? '取消放弃任务' : '放弃任务'"
-                    :icon="shadowTodo.isGivenUp ? 'plus-circle' : 'clear'"
-                    :execute-id="shadowTodo.isGivenUp ? 'cancel-give-up-todo' : 'give-up-todo'"
-                /> -->
             </nue-div>
             <nue-div theme="block" style="min-width: 8rem">
                 <nue-text theme="title">删除待办任务</nue-text>

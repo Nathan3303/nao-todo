@@ -9,7 +9,7 @@
         />
         <nue-input
             :key="event.id"
-            theme="small,noshape"
+            theme="small,pure"
             v-model="inputValue"
             :data-is-done="event.isDone"
             :disabled="updateLoading"
@@ -72,6 +72,7 @@ const handleDelete = async () => {
     flex-wrap: nowrap;
     align-items: center;
     gap: 0.5rem;
+    width: 100%;
 }
 
 .todo-event-row__check-icon {

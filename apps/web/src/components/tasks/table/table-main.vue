@@ -50,7 +50,7 @@ const {
                         small
                     />
                 </nue-div>
-                <nue-div v-if="columnOptions.description && todo.description" vertical>
+                <nue-div v-if="columnOptions.description && todo.description" vertical width="100%">
                     <nue-text :clamped="2" class="col-first__description" :title="todo.description">
                         {{ todo.description }}
                     </nue-text>
@@ -103,3 +103,4 @@ const {
         </nue-div>
     </nue-div>
 </template>
+

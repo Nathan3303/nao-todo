@@ -138,14 +138,19 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
             cancelButtonText: '取消',
             inputType: 'text',
             inputValue: projects.value.find((p) => p.id === projectId)?.name,
-            validator: (value) => !!value,
-            onConfirm: async (value) => {
+            validator: (value) => (value ? null : '清单名称不能为空'),
+            onConfirm: async (value, done) => {
                 const err = await projectStore.updateProject(projectId, { name: value as string })
                 if (err) return unwrapError(err)
                 NueMessage.success('清单名称修改成功')
                 // 刷新视图参数
-                if (!viewProps.value) return
-                if (projectId === viewProps.value.id) viewProps.value.name = value as string
+                if (!viewProps.value) return '失败'
+                if (projectId === viewProps.value.id) {
+                    viewProps.value.name = value as string
+                    done()
+                    return null
+                }
+                return '失败'
             }
         })
     }
@@ -159,16 +164,21 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
             cancelButtonText: '取消',
             inputType: 'textarea',
             inputValue: projects.value.find((p) => p.id === projectId)?.description,
-            validator: (value) => !!value,
-            onConfirm: async (value) => {
+            validator: (value) => (value ? null : '清单描述不能为空'),
+            onConfirm: async (value, done) => {
                 const err = await projectStore.updateProject(projectId, {
                     description: value as string
                 })
                 if (err) return unwrapError(err)
                 NueMessage.success('清单描述修改成功')
                 // 刷新视图参数
-                if (!viewProps.value) return
-                if (projectId === viewProps.value.id) viewProps.value.description = value as string
+                if (!viewProps.value) return '失败'
+                if (projectId === viewProps.value.id) {
+                    viewProps.value.description = value as string
+                    done()
+                    return null
+                }
+                return '失败'
             }
         })
     }
@@ -182,14 +192,19 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
             cancelButtonText: '取消',
             inputType: 'text',
             inputValue: tags.value.find((t) => t.id === tagId)?.name,
-            validator: (value) => !!value,
-            onConfirm: async (value) => {
+            validator: (value) => (value ? null : '标签名称不能为空'),
+            onConfirm: async (value, done) => {
                 const err = await tagStore.updateTag(tagId, { name: value as string })
                 if (err) return unwrapError(err)
                 NueMessage.success('标签名称修改成功')
                 // 刷新视图参数
-                if (!viewProps.value) return
-                if (tagId === viewProps.value.id) viewProps.value.name = value as string
+                if (!viewProps.value) return '失败'
+                if (tagId === viewProps.value.id) {
+                    viewProps.value.name = value as string
+                    done()
+                    return null
+                }
+                return '失败'
             }
         })
     }
@@ -203,14 +218,19 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
             cancelButtonText: '取消',
             inputType: 'textarea',
             inputValue: tags.value.find((t) => t.id === tagId)?.description,
-            validator: (value) => !!value,
-            onConfirm: async (value) => {
+            validator: (value) => (value ? null : '标签描述不能为空'),
+            onConfirm: async (value, done) => {
                 const err = await tagStore.updateTag(tagId, { description: value as string })
                 if (err) return unwrapError(err)
                 NueMessage.success('标签描述修改成功')
                 // 刷新视图参数
-                if (!viewProps.value) return
-                if (tagId === viewProps.value.id) viewProps.value.description = value as string
+                if (!viewProps.value) return '失败'
+                if (tagId === viewProps.value.id) {
+                    viewProps.value.description = value as string
+                    done()
+                    return null
+                }
+                return '失败'
             }
         })
     }
@@ -335,3 +355,4 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
 })
 
 export default useTasksViewStore
+

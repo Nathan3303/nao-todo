@@ -17,12 +17,12 @@
                         :placeholder="`筛选${triggerTitle.toLowerCase()}`"
                         clearable
                         icon="search"
-                        theme="small,noshape"
+                        theme="small,pure"
                     />
                 </nue-header>
                 <nue-divider />
                 <nue-main>
-                    <nue-div align="stretch" gap="4px" vertical>
+                    <nue-div align="stretch" gap="4px" vertical width="100%">
                         <template v-if="filteredOptions && filteredOptions.length">
                             <checkbox
                                 v-for="option in filteredOptions"

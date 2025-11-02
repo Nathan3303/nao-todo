@@ -13,11 +13,11 @@ const emit = defineEmits<{
 const dialogRef = ref<DialogInstanceType>()
 
 const { color, updating, disabled, getTagColor, updateTagColor } = useTagColorUpdater()
-const { visible, open: openDialog, close } = useDialogWrapper(dialogRef)
+const { visible, close } = useDialogWrapper(dialogRef)
 
 const open = (tagId: string) => {
     getTagColor(tagId)
-    openDialog()
+    visible.value = true
 }
 
 const handleConfirm = async () => {
@@ -28,9 +28,7 @@ const handleConfirm = async () => {
     }
 }
 
-onMounted(() => {
-    emit('register', open, close)
-})
+onMounted(() => emit('register', open, close))
 
 defineExpose({ open, close })
 </script>

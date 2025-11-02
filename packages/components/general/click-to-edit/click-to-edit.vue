@@ -20,7 +20,7 @@ const props = withDefaults(
         preventDefault?: boolean
         size?: string
         color?: string
-        weight?: string
+        weight?: number
         emptyholder?: string
     }>(),
     {
@@ -47,11 +47,11 @@ const handleEdit = () => {
         confirmButtonText: 'Edit',
         cancelButtonText: 'Cancel',
         inputValue: text,
-        validator: (value: any) => value
-    }).then(
-        (value) => emit('edit', value as string),
-        (e) => console.log('[ClickToEdit/handleEdit] NuePromptCanceled:', e)
-    )
+        validator: () => null
+    }).then(([isByCancel, inputValue]) => {
+        if (isByCancel) return
+        emit('edit', inputValue as string)
+    })
 }
 </script>
 
@@ -60,3 +60,4 @@ const handleEdit = () => {
     text-align: left;
 }
 </style>
+

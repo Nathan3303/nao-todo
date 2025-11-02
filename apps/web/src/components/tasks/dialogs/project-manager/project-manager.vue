@@ -16,16 +16,14 @@ const tasksDialogStore = useTasksDialogStore()
 const dialogRef = ref<DialogInstanceType>()
 
 const { projects } = storeToRefs(projectManagerStore)
-const { visible, open: openDialog, close } = useDialogWrapper(dialogRef)
+const { visible, close } = useDialogWrapper(dialogRef)
 
 const open = () => {
     projectManagerStore.loadProjects()
-    openDialog()
+    visible.value = true
 }
 
-onMounted(() => {
-    emit('register', open, close)
-})
+onMounted(() => emit('register', open, close))
 
 defineExpose({ open, close })
 </script>
@@ -43,7 +41,7 @@ defineExpose({ open, close })
                     <nue-button
                         icon="plus-circle"
                         theme="small,primary"
-                        @click="tasksDialogStore.projectCreator?.open"
+                        @click="() => tasksDialogStore.projectCreator?.open?.()"
                     >
                         新增
                     </nue-button>

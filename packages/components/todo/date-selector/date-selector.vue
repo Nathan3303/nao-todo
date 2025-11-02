@@ -4,7 +4,7 @@
             <nue-input
                 v-model="dateMoment"
                 :debounce-time="1000"
-                theme="small,noshape"
+                theme="small,pure"
                 :type="('datetime-local' as never)"
             />
             <nue-button icon="clear" theme="small,ghost,icon,pure" @click="dateMoment = null" />

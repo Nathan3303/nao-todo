@@ -154,7 +154,7 @@ watch(
             <nue-div theme="block">
                 <nue-text theme="title">筛选</nue-text>
                 <nue-input
-                    theme="noshape,small"
+                    theme="pure,small"
                     placeholder="根据名称筛选"
                     v-model="searchText"
                     clearable
@@ -253,7 +253,13 @@ watch(
     border-radius: 0;
     --nue-icon-size: var(--nue-text-sm);
     font-size: var(--nue-text-sm);
-    padding: 0 8px;
+    padding: 0 0.75rem;
     gap: 8px;
+
+    .nue-input__input {
+        width: 2rem;
+        line-height: unset;
+    }
 }
 </style>
+

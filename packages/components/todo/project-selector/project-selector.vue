@@ -11,14 +11,22 @@ const props = defineProps<{
     placement?: string
 }>()
 const emit = defineEmits<{
-    (event: 'select', projectId: Project['id'], projectTitle: Project['name']): void
+    (event: 'select', projectId: Project['id'], projectTitle?: Project['name']): void
 }>()
 
-const buttonIconName = computed(() => {
-    const { projectId, userId } = props
-    if (projectId === '') return 'projects'
-    return projectId !== userId ? 'more2' : 'inbox'
+const vm = computed({
+    get: () => props.projectId,
+    set: (newProjectId) => {
+        console.log('newProjectId', newProjectId)
+        handleSelect(newProjectId)
+    }
 })
+
+// const buttonIconName = computed(() => {
+//     const { projectId, userId } = props
+//     if (projectId === '') return 'projects'
+//     return projectId !== userId ? 'more2' : 'inbox'
+// })
 
 const buttonText = computed(() => {
     const { projectId, placeholder } = props
@@ -27,9 +35,9 @@ const buttonText = computed(() => {
     return projectTitle || '收集箱'
 })
 
-const handleSelect = async (projectId?: Project['id'], projectTitle?: Project['name']) => {
-    if (projectId && projectTitle) {
-        emit('select', projectId, projectTitle)
+const handleSelect = async (projectId?: Project['id']) => {
+    if (projectId) {
+        emit('select', projectId)
         return
     }
     emit('select', props.userId, '收集箱')
@@ -37,7 +45,7 @@ const handleSelect = async (projectId?: Project['id'], projectTitle?: Project['n
 </script>
 
 <template>
-    <nue-dropdown :placement="(placement as never) ?? 'bottom-end'" theme="project-selector">
+    <!-- <nue-dropdown :placement="(placement as never) ?? 'bottom-end'" theme="project-selector">
         <template #trigger="{ trigger }">
             <nue-button size="small" :icon="buttonIconName" @click="trigger">
                 {{ buttonText }}
@@ -69,7 +77,22 @@ const handleSelect = async (projectId?: Project['id'], projectTitle?: Project['n
                 暂无自建清单
             </nue-text>
         </template>
-    </nue-dropdown>
+    </nue-dropdown> -->
+    <nue-select v-model="vm" size="small" :placeholder="buttonText">
+        <nue-select-option icon="inbox" label="收集箱" :value="userId" />
+        <nue-divider />
+        <template v-if="projects && projects.length">
+            <nue-select-option
+                v-for="(project, index) in projects"
+                :key="index"
+                :label="project.name"
+                :value="project.id"
+            />
+        </template>
+        <nue-text v-else size="11px" color="gray" style="padding: 8px" align="center">
+            暂无自建清单
+        </nue-text>
+    </nue-select>
 </template>
 
 <style>
@@ -79,3 +102,4 @@ const handleSelect = async (projectId?: Project['id'], projectTitle?: Project['n
     max-width: 80%;
 }
 </style>
+

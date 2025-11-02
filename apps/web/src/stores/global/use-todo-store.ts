@@ -254,7 +254,7 @@ const useTodoStore = defineStore('TodoStore', () => {
 
     // @method 删除待办任务（带确认）
     const deleteTodoWithConfirm = async (todoId: Todo['id']): Promise<Err> => {
-        return (await NueConfirm({
+        const [isByCancel, onConfirmResult] = await NueConfirm({
             title: '删除待办任务',
             content: '确定要删除此待办任务吗？',
             confirmButtonText: '删除',
@@ -266,14 +266,16 @@ const useTodoStore = defineStore('TodoStore', () => {
                     return err
                 }
                 NueMessage.success('删除成功')
-                return 'ok'
+                return null
             }
-        })) as Err
+        })
+        if (isByCancel) return null
+        return onConfirmResult as Err
     }
 
     // @method 恢复待办任务（带确认）
     const restoreTodoWithConfirm = async (todoId: Todo['id']): Promise<Err> => {
-        return (await NueConfirm({
+        const [isByCancel, onConfirmResult] = await NueConfirm({
             title: '恢复待办任务',
             content: '要恢复此待办任务吗？',
             confirmButtonText: '恢复',
@@ -287,12 +289,14 @@ const useTodoStore = defineStore('TodoStore', () => {
                 NueMessage.success('恢复成功')
                 return 'ok'
             }
-        })) as Err
+        })
+        if (isByCancel) return null
+        return onConfirmResult as Err
     }
 
     // @method 永久删除待办任务（带确认）
     const deleteTodoPermanentlyWithConfirm = async (todoId: Todo['id']): Promise<Err> => {
-        return (await NueConfirm({
+        const [isByCancel, onConfirmResult] = await NueConfirm({
             title: '永久删除待办任务',
             content: '确定要永久删除此待办任务吗？',
             confirmButtonText: '删除',
@@ -308,7 +312,9 @@ const useTodoStore = defineStore('TodoStore', () => {
                 NueMessage.success('永久删除成功')
                 return 'ok'
             }
-        })) as Err
+        })
+        if (isByCancel) return null
+        return onConfirmResult as Err
     }
 
     // @method 复制待办任务
@@ -342,7 +348,7 @@ const useTodoStore = defineStore('TodoStore', () => {
     const duplicateTodoWithComfirm = async (
         todoId: Todo['id']
     ): Promise<GoLike<Todo['id'] | null | undefined>> => {
-        return (await NueConfirm({
+        const [isByCancel, onConfirmResult] = await NueConfirm({
             title: '复制待办任务',
             content: '确定要复制此待办任务吗？操作将会复制除待办任务评论以外的信息',
             confirmButtonText: '复制',
@@ -356,7 +362,9 @@ const useTodoStore = defineStore('TodoStore', () => {
                 NueMessage.success('复制待办任务成功')
                 return [newTodoId, null]
             }
-        })) as GoLike<Todo['id'] | null | undefined>
+        })
+        if (isByCancel) return [null, '取消']
+        return onConfirmResult as GoLike<Todo['id'] | null | undefined>
     }
 
     // @method 更新待办任务状态
@@ -413,3 +421,4 @@ const useTodoStore = defineStore('TodoStore', () => {
 })
 
 export default useTodoStore
+

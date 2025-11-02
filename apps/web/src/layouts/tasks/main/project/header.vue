@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useTasksViewStore, useTasksDialogStore, useTasksProjectViewStore } from '@/stores/tasks'
+import { useTasksViewStore, useTasksDialogStore } from '@/stores/tasks'
 import { storeToRefs } from 'pinia'
 import {
     TasksProjectViewOperationsDropdown,
@@ -12,7 +12,6 @@ defineProps<{ projectId?: string; viewType?: string; todoId?: string }>()
 
 const tasksViewStore = useTasksViewStore()
 const tasksDialogStore = useTasksDialogStore()
-const tasksProjectViewStore = useTasksProjectViewStore()
 
 const { viewProps, isDisplayAside } = storeToRefs(tasksViewStore)
 
@@ -22,13 +21,13 @@ const hideAsideButtonIcon = computed(() => {
 
 const openTodoCreator = () => {
     if (!tasksDialogStore.todoCreator) return
-    tasksDialogStore.todoCreator.open({ projectId: viewProps.value!.id })
+    tasksDialogStore.todoCreator.open?.({ projectId: viewProps.value!.id })
 }
 </script>
 
 <template>
-    <nue-div vertical gap="0.5rem" v-if="viewProps">
-        <nue-div wrap="nowrap" align="center">
+    <nue-div vertical gap="0.5rem" v-if="viewProps" width="100%">
+        <nue-div wrap="nowrap" align="center" width="100%">
             <nue-div flex="1" wrap="nowrap" align="center">
                 <nue-button
                     :icon="hideAsideButtonIcon"
@@ -48,7 +47,7 @@ const openTodoCreator = () => {
                 <nue-tooltip content="新增待办" size="small" @click="openTodoCreator">
                     <nue-button icon="plus" theme="icon,ghost" />
                 </nue-tooltip>
-                <tasks-todo-filter-dropdown @get-todos="tasksProjectViewStore.getTodos" />
+                <tasks-todo-filter-dropdown />
                 <tasks-project-view-operations-dropdown />
             </nue-div>
         </nue-div>
@@ -63,3 +62,4 @@ const openTodoCreator = () => {
         </nue-text>
     </nue-div>
 </template>
+
