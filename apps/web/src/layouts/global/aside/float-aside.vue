@@ -48,7 +48,7 @@ const visible = computed({
             </nue-main>
             <nue-footer>
                 <slot name="footer">
-                    <nue-div wrap="nowrap" justify="space-between" gap="0">
+                    <nue-div justify="space-between" gap="0">
                         <nao-router-link
                             v-for="(rl, idx) in GlobalAsideRouteLinks"
                             :key="idx"

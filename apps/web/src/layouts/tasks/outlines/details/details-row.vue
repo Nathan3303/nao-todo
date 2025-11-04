@@ -8,7 +8,7 @@ defineProps<{
 </script>
 
 <template>
-    <nue-div vertical align="stretch" gap="4px" :flex="flex">
+    <nue-div vertical gap="4px" :flex="flex">
         <nue-text size="var(--nue-text-xs)" color="var(--nue-primary-color-500)">
             {{ label }}
         </nue-text>

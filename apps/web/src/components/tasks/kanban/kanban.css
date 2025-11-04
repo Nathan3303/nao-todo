@@ -132,9 +132,7 @@
                     }
 
                     .todo-card__info {
-                        overflow: hidden;
                         flex-direction: column;
-                        flex: 1;
                         gap: 0.25rem;
 
                         .todo-card__name {
@@ -143,12 +141,9 @@
                             font-size: var(--nue-text-sm);
                             line-height: var(--nue-text-xl);
                             flex: 1;
-                            margin-right: 0.25rem;
                         }
 
                         .todo-card__actions {
-                            width: auto;
-                            margin: 0 4px;
                             display: none;
 
                             .nue-button {
@@ -165,7 +160,7 @@
                         }
                     }
 
-                    .todo-card__attrs .todo-tag-bar {
+                    .todo-tag-bar {
                         min-width: 20%;
                         transform-origin: left;
                     }

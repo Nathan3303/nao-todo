@@ -22,11 +22,7 @@ const { appAsideStates, hasUpdateTasksInQueue, updateTasksQueueCount } = storeTo
                 size="small"
                 :content="`你好👋，${user?.nickname}！`"
             >
-                <nue-avatar
-                    :src="user?.avatar"
-                    style="cursor: pointer"
-                    @click="$router.push('/settings/profile')"
-                />
+                <nue-avatar :src="user?.avatar" size="2.5rem" />
             </nue-tooltip>
             <nue-div vertical align="center" gap="1.5rem" flex="1">
                 <nue-tooltip
@@ -48,5 +44,3 @@ const { appAsideStates, hasUpdateTasksInQueue, updateTasksQueueCount } = storeTo
         </nue-div>
     </nue-aside>
 </template>
-
-<style scoped></style>

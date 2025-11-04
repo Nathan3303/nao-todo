@@ -12,7 +12,7 @@ const { events } = storeToRefs(todoDetailsStore)
 </script>
 
 <template>
-    <nue-div vertical gap="4px" flex="1" width="100%">
+    <nue-div vertical gap="0.25rem">
         <todo-event-row
             v-for="event in events"
             :key="event.id"

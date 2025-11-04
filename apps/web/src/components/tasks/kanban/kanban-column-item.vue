@@ -77,21 +77,22 @@ const handleFinish = () => {
 <template>
     <nue-div
         class="todo-card"
+        auto-fit
         @click="handleClick"
         :data-is-done="isDone"
         :data-actived="actived"
         :data-is-deleted="todo.isDeleted"
     >
-        <nue-div vertical width="fit-content">
+        <nue-div vertical>
             <nue-icon
                 class="todo-card__check-icon"
                 :name="checkIconName"
                 @click.stop="handleFinish"
             />
         </nue-div>
-        <nue-div vertical gap=".5rem" flex="1" width="auto" style="overflow: hidden">
+        <nue-div vertical gap=".5rem" flex="1">
             <nue-div class="todo-card__info">
-                <nue-div align="center" gap=".25rem" justify="space-between">
+                <nue-div align="center">
                     <nue-text class="todo-card__name" :clamped="1">{{ todo.name }}</nue-text>
                     <nue-div class="todo-card__actions">
                         <nue-button
@@ -109,8 +110,8 @@ const handleFinish = () => {
                     {{ todo.description }}
                 </nue-text>
             </nue-div>
-            <nue-div v-if="!isAttrsNone" class="todo-card__attrs" align="center" gap="6px">
-                <nue-div class="todo-card__infos" align="center" gap="6px">
+            <nue-div v-if="!isAttrsNone" vertical gap=".25rem">
+                <nue-div vertical gap=".25rem">
                     <todo-tag-bar
                         v-if="columns?.tags && todo.tags.length"
                         :tags="tags"
@@ -119,7 +120,7 @@ const handleFinish = () => {
                         readonly
                         small
                     />
-                    <nue-div align="center" wrap="nowrap">
+                    <nue-div>
                         <todo-state-info v-if="columns?.state" :state="todo.state" />
                         <todo-priority-info v-if="columns?.priority" :priority="todo.priority" />
                     </nue-div>
@@ -152,3 +153,4 @@ const handleFinish = () => {
         </nue-div>
     </nue-div>
 </template>
+

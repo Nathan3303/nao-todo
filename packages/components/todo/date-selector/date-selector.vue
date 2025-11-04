@@ -57,7 +57,6 @@ const handleAddDateByNow = () => {
     align-items: center;
     gap: 0.25rem;
     border-radius: var(--nue-primary-radius);
-    height: 28px;
 }
 
 .date-selector:hover {

@@ -25,8 +25,8 @@ const { tags } = storeToRefs(tasksDataStore)
 <template>
     <nue-container id="TasksTodoDetailsMainContainer" v-if="shadowTodo">
         <nue-header>
-            <nue-div wrap="nowrap" justify="space-between" width="100%">
-                <nue-div align="center">
+            <nue-div flex="1">
+                <nue-div flex="1">
                     <todo-selector
                         :options="TodoStateSelectOptions"
                         :value="shadowTodo.state"
@@ -38,15 +38,17 @@ const { tags } = storeToRefs(tasksDataStore)
                         @change="(v) => emit('updateTodoPriority', v as Todo['priority'])"
                     />
                 </nue-div>
-                <switch-button
-                    v-model="shadowTodo.isFavorited"
-                    active-icon="heart-fill"
-                    active-text="取消收藏"
-                    icon="heart"
-                    size="small"
-                    text="收藏"
-                    @change="emit('update', 'isFavorited')"
-                />
+                <nue-div>
+                    <switch-button
+                        v-model="shadowTodo.isFavorited"
+                        active-icon="heart-fill"
+                        active-text="取消收藏"
+                        icon="heart"
+                        size="small"
+                        text="收藏"
+                        @change="emit('update', 'isFavorited')"
+                    />
+                </nue-div>
                 <nue-div class="tasks-details-view__progress">
                     <nue-progress
                         :percentage="eventsProgress.percentage"
@@ -58,7 +60,7 @@ const { tags } = storeToRefs(tasksDataStore)
         </nue-header>
         <nue-main>
             <nue-content fill style="overflow: hidden">
-                <nue-div vertical wrap="nowrap" height="100%" gap="0">
+                <nue-div vertical gap="0" height="100%">
                     <nue-div theme="name-desc" spellcheck="false">
                         <nue-textarea
                             v-model="shadowTodo.name"
@@ -77,10 +79,10 @@ const { tags } = storeToRefs(tasksDataStore)
                             @change="emit('update', 'description')"
                         />
                     </nue-div>
-                    <nue-div vertical style="padding: 0 1rem; flex: 1" width="100%">
+                    <nue-div vertical flex="1" style="padding: 0 1rem">
                         <details-main-events />
                     </nue-div>
-                    <nue-div vertical style="padding: 1rem" width="100%">
+                    <nue-div vertical style="padding: 1rem">
                         <todo-tag-bar
                             :tags="tags"
                             :todo-tags="shadowTodo.tags"
@@ -98,13 +100,13 @@ const { tags } = storeToRefs(tasksDataStore)
             </nue-content>
         </nue-main>
         <nue-footer>
-            <nue-div v-if="isCommenting" align="stretch" vertical>
+            <nue-div v-if="isCommenting" vertical>
                 <comment-creator
                     :handler="leaveCommentHandler"
                     @cancel="emit('cancelLeaveComment')"
                 />
             </nue-div>
-            <nue-div v-else wrap="nowrap" justify="space-between" width="100%">
+            <nue-div v-else justify="space-between" width="100%">
                 <details-row :text="eventsProgress.text" label="检查事项进度" flex="40%" />
                 <details-row
                     v-if="shadowTodo.createdAt"
@@ -149,7 +151,6 @@ const { tags } = storeToRefs(tasksDataStore)
     }
 
     .nue-div--name-desc {
-        /*  vertical align="stretch" wrap="nowrap" */
         flex-direction: column;
         flex-wrap: nowrap;
         align-items: stretch;

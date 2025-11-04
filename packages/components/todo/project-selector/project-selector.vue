@@ -85,6 +85,7 @@ const handleSelect = async (projectId?: Project['id']) => {
             <nue-select-option
                 v-for="(project, index) in projects"
                 :key="index"
+                icon="more2"
                 :label="project.name"
                 :value="project.id"
             />

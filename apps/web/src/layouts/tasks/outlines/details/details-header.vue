@@ -7,8 +7,8 @@ const emit = defineEmits<DetailsHeaderEmits>()
 </script>
 
 <template>
-    <nue-div wrap="nowrap" justify="space-between" style="padding: 1rem" width="100%">
-        <nue-div align="center" width="auto" wrap="nowrap">
+    <nue-div style="padding: 1rem" width="100%" auto-fit>
+        <nue-div align="center" flex="1">
             <todo-check-button
                 :is-done="shadowTodo!.state === 'done'"
                 @change="emit('finishTodo')"
@@ -19,7 +19,7 @@ const emit = defineEmits<DetailsHeaderEmits>()
                 @change="(v) => emit('updateTodoEndAt', v)"
             />
         </nue-div>
-        <nue-div align="center" width="auto" wrap="nowrap">
+        <nue-div>
             <nue-icon
                 v-show="updating"
                 name="loading"

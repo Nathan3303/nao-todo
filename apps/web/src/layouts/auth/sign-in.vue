@@ -2,7 +2,6 @@
     <nue-container id="AuthViewSigninContainer">
         <nue-main>
             <nue-div
-                align="stretch"
                 gap="1.75rem"
                 vertical
                 width="20rem"
@@ -14,7 +13,7 @@
                     <nue-text color="gray" size="0.875rem">使用您的电子邮件和密码进行登录</nue-text>
                 </nue-div>
                 <form autocomplete="off" name="NaoTodoSignInForm">
-                    <nue-div align="stretch" vertical>
+                    <nue-div vertical>
                         <nue-input
                             v-model="formData.email"
                             :disabled="loading || disabled"
@@ -102,3 +101,4 @@ const handleSubmit = async (e: Event) => {
     }
 }
 </style>
+

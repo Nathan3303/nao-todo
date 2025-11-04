@@ -6,7 +6,7 @@ defineOptions({ name: 'SettingsAside' })
 
 <template>
     <nue-aside>
-        <nue-div vertical align="stretch" gap=".5rem">
+        <nue-div vertical gap=".5rem">
             <nue-link
                 v-for="(link, idx) in routeLinks"
                 :icon="(link.icon as never)"

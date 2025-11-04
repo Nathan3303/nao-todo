@@ -96,8 +96,6 @@ const handleStartLeaveComment = () => {
             />
         </nue-footer>
     </nue-container>
-    <!-- @give-up-todo="handleGiveUpTodo" -->
-    <!-- @cancel-give-up-todo="handleCancelGiveUpTodo" -->
 </template>
 
 <style scoped>

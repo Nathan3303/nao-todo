@@ -1,6 +1,6 @@
 <template>
     <nue-aside v-bind="$attrs">
-        <nue-div vertical align="stretch" gap=".5rem">
+        <nue-div vertical gap=".5rem">
             <nao-router-link
                 icon="more2"
                 :route="{ name: 'tasks-basic', params: { viewId: 'all' } }"
@@ -39,7 +39,7 @@
             <tag-smart-list />
         </nue-collapse>
         <nue-divider />
-        <nue-div vertical align="stretch" gap=".5rem">
+        <nue-div vertical gap=".5rem">
             <nao-router-link
                 icon="time"
                 :route="{ name: 'tasks-basic', params: { viewId: 'overdue' } }"
@@ -78,3 +78,4 @@ defineOptions({ name: 'TasksAside' })
 
 const collapseItemsRecord = ref(['projects', 'filters', 'tags'])
 </script>
+

@@ -16,7 +16,7 @@
         "vue-router": "^4.5.0",
         "pinia": "^2.2.6",
         "axios": "1.11.0",
-        "nue-ui": "1.2.19",
+        "nue-ui": "1.5.20",
         "nue-ui-theme-shadlike": "0.6.8",
         "markdown-it": "^14.1.0",
         "moment": "^2.30.1",

@@ -29,9 +29,9 @@ const openTodoCreator = () => {
 </script>
 
 <template>
-    <nue-div v-if="viewProps" vertical gap="0.5rem" width="100%">
-        <nue-div wrap="nowrap" align="center" width="100%">
-            <nue-div flex="1" wrap="nowrap" align="center">
+    <nue-div v-if="viewProps" vertical gap=".5rem" width="100%">
+        <nue-div align="center">
+            <nue-div align="center" flex="1">
                 <nue-button
                     :icon="hideAsideButtonIcon"
                     theme="icon,ghost"
@@ -41,7 +41,7 @@ const openTodoCreator = () => {
                     {{ viewProps.name }}
                 </nue-text>
             </nue-div>
-            <nue-div wrap="nowrap" align="center" width="fit-content">
+            <nue-div align="center">
                 <nue-tooltip
                     v-if="isCreatable"
                     content="新增待办"
@@ -64,6 +64,3 @@ const openTodoCreator = () => {
         </nue-text>
     </nue-div>
 </template>
-
-<style scoped></style>
-

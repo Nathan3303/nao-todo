@@ -2,7 +2,6 @@
     <nue-container id="AuthViewSignupContainer">
         <nue-main>
             <nue-div
-                align="stretch"
                 gap="1.75rem"
                 vertical
                 width="20rem"
@@ -16,7 +15,7 @@
                     </nue-text>
                 </nue-div>
                 <form autocomplete="off" name="NaoTodoSignUpForm">
-                    <nue-div align="stretch" vertical>
+                    <nue-div vertical>
                         <nue-input
                             v-model="formData.email"
                             :disabled="loading"
@@ -126,3 +125,4 @@ const handleSubmit = async (e: Event) => {
     }
 }
 </style>
+
