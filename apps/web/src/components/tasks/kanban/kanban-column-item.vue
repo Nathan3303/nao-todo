@@ -140,6 +140,7 @@ const handleFinish = () => {
                         v-if="columns?.endAt"
                         :date="todo.endAt!"
                         :formatter="(date) => `截止于 ${date}`"
+                        :colored="!isDone"
                     />
                 </nue-div>
                 <nue-div gap=".25rem">

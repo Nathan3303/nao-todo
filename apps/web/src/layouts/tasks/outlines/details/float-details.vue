@@ -7,15 +7,23 @@ import type { NueDrawer } from 'nue-ui'
 const route = useRoute()
 
 const visible = ref(false)
+const drawerRef = ref<InstanceType<typeof NueDrawer>>()
 
 watch(
     () => route.params.todoId,
-    (newId) => (visible.value = Boolean(newId)),
+    (newId) => {
+        if (newId) {
+            drawerRef.value?.open()
+            return
+        }
+        drawerRef.value?.close()
+    }
 )
 </script>
 
 <template>
     <nue-drawer
+        ref="drawerRef"
         allow-close-by-overlay
         v-model="visible"
         theme="outline"

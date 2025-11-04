@@ -19,20 +19,15 @@ const emit = defineEmits<DetailsHeaderEmits>()
                 @change="(v) => emit('updateTodoEndAt', v)"
             />
         </nue-div>
-        <nue-div>
-            <nue-icon
+        <nue-div align="center">
+            <!-- <nue-icon
                 v-show="updating"
                 name="loading"
                 spin
                 size="var(--nue-text-sm)"
                 color="orange"
-            />
-            <nue-button
-                :disabled="disableClose"
-                icon="clear"
-                theme="small,icon"
-                @click="emit('close')"
-            />
+            /> -->
+            <nue-button icon="clear" theme="small" @click="emit('close')">关闭</nue-button>
         </nue-div>
     </nue-div>
 </template>

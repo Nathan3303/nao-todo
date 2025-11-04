@@ -88,6 +88,7 @@ const {
                     v-if="columns?.endAt"
                     :date="todo.endAt!"
                     :formatter="(date) => `结束时间： ${date}`"
+                    :colored="!(todo.state === 'done')"
                 />
                 <todo-basic-info
                     v-if="columns?.project"

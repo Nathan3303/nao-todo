@@ -7,7 +7,7 @@ withDefaults(
         clamped?: number
         noIcon?: boolean
     }>(),
-    { icon: 'more2' }
+    { icon: 'more2', clamped: 1 }
 )
 </script>
 

@@ -78,7 +78,7 @@
                     }
 
                     &[data-done='true'] * {
-                        opacity: 0.8;
+                        opacity: 0.77;
                         transition: opacity 0.16s ease;
                     }
 
@@ -162,7 +162,7 @@
                     }
 
                     &.col-actions {
-                        color: var(--nue-primary-color-500);
+                        color: var(--nue-primary-color-600);
 
                         .nue-icon {
                             cursor: pointer;
@@ -178,13 +178,13 @@
 
             .col-datetime {
                 min-width: 6rem;
-                max-width: 8rem;
+                max-width: 7rem;
                 flex: 1;
             }
 
             .col-attr {
                 min-width: 5rem;
-                max-width: 7rem;
+                max-width: 6rem;
                 flex: 1;
             }
 

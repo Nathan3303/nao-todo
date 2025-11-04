@@ -12,7 +12,7 @@ const { pagination, page, error, todos, handleUpdatePerPage, handleUpdatePage } 
 
 <template>
     <nue-footer v-if="!error && todos.length !== 0">
-        <nue-div v-if="pagination" align="center" justify="space-between">
+        <nue-div v-if="pagination" align="center" justify="space-between" width="100%">
             <nue-text color="gray" flex size="12px">
                 当前列表 {{ pagination.current || 0 }} 项， 共计 {{ pagination.total || 0 }} 项。
             </nue-text>

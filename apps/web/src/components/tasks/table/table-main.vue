@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { inject } from 'vue'
-import { TodoPriorityInfo, TodoStateInfo, TodoTagBar } from '@nao-todo/components'
+import {
+    TodoPriorityInfo,
+    TodoStateInfo,
+    TodoTagBar,
+    TodoDateInfo,
+    TodoBasicInfo
+} from '@nao-todo/components'
 import { useRelativeDate } from '@nao-todo/hooks'
 import { TODO_TABLE_CONTEXT_KEY } from './constants'
 import type { TodoTableContext } from './types'
@@ -15,7 +21,6 @@ const {
     selectRange,
     columnOptions,
     tagBarClamped,
-    isTodoExpired,
     getProjectName,
     showTodoDetailsPanel,
     showMultiSelectPanel,
@@ -56,42 +61,48 @@ const {
                     </nue-text>
                 </nue-div>
             </nue-div>
-            <nue-div v-if="columnOptions.createdAt" class="todo-table__main__col col-datetime">
-                <nue-text :title="todo.createdAt">
-                    {{ useRelativeDate(todo.createdAt) }}
-                </nue-text>
-            </nue-div>
-            <nue-div v-if="columnOptions.updatedAt" class="todo-table__main__col col-datetime">
-                <nue-text :title="todo.updatedAt">
-                    {{ useRelativeDate(todo.updatedAt) }}
-                </nue-text>
-            </nue-div>
+            <todo-date-info
+                v-if="columnOptions.createdAt"
+                class="todo-table__main__col col-datetime"
+                :date="todo.createdAt"
+            />
+            <todo-date-info
+                v-if="columnOptions.updatedAt"
+                class="todo-table__main__col col-datetime"
+                :date="todo.updatedAt"
+            />
             <nue-div v-if="columnOptions.startAt" class="todo-table__main__col col-datetime">
                 <nue-text v-if="todo.startAt" :title="todo.startAt">
                     {{ useRelativeDate(todo.startAt) }}
                 </nue-text>
                 <nue-text v-else>未设置起始时间</nue-text>
             </nue-div>
-            <nue-div
+            <todo-date-info
                 v-if="columnOptions.endAt"
-                :data-expired="isTodoExpired(todo)"
                 class="todo-table__main__col col-datetime"
-            >
-                <nue-text v-if="todo.endAt" :title="todo.endAt">
-                    {{ useRelativeDate(todo.endAt) }}
-                </nue-text>
-            </nue-div>
-            <nue-div v-if="columnOptions.priority" class="todo-table__main__col col-attr">
-                <todo-priority-info :key="todo.priority" :priority="todo.priority" use-clamped />
-            </nue-div>
-            <nue-div v-if="columnOptions.state" class="todo-table__main__col col-attr">
-                <todo-state-info :key="todo.state" :state="todo.state" use-clamped />
-            </nue-div>
-            <nue-div v-if="columnOptions.project" class="todo-table__main__col col-attr">
-                <nue-text :clamped="1" :title="getProjectName(todo.projectId)">
-                    {{ getProjectName(todo.projectId) || '收集箱' }}
-                </nue-text>
-            </nue-div>
+                :date="todo.endAt!"
+                :colored="!(todo.state === 'done')"
+            />
+            <todo-priority-info
+                v-if="columnOptions.priority"
+                class="todo-table__main__col col-attr"
+                :key="todo.priority"
+                :priority="todo.priority"
+                use-clamped
+            />
+            <todo-state-info
+                v-if="columnOptions.state"
+                class="todo-table__main__col col-attr"
+                :key="todo.state"
+                :state="todo.state"
+                use-clamped
+            />
+            <todo-basic-info
+                v-if="columnOptions.project"
+                class="todo-table__main__col col-attr"
+                :text="getProjectName(todo.projectId) || '收集箱'"
+                no-icon
+            />
             <nue-div class="todo-table__main__col col-actions">
                 <slot :todo="todo" name="row-actions">
                     <nue-icon
