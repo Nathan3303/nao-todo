@@ -53,7 +53,7 @@ const handleAddDateByNow = () => {
                     v-model="dateMoment"
                     :debounce-time="256"
                     theme="small,pure"
-                    :type="'datetime-local'"
+                    :type="'datetime-local' as never"
                 />
             </nue-div>
             <nue-divider vertical />

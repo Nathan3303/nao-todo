@@ -3,16 +3,16 @@ import type { Todo, TodoColumnOptions } from '@nao-todo/types'
 import type { TasksMainViewProps } from '@/layouts/tasks/types'
 
 const basicViewDefaultColumns: TodoColumnOptions = {
-    createdAt: true,
-    updatedAt: true,
-    // deletedAt: false,
-    project: true,
-    description: true,
     state: true,
     priority: true,
-    tags: true,
-    startAt: false,
-    endAt: true
+    endAt: true,
+    project: false,
+    tags: false,
+    description: false,
+    createdAt: false,
+    updatedAt: false,
+    startAt: false
+    // deletedAt: false,
     // isDeleted: false,
     // isArchived: false,
     // archivedAt: false,
@@ -52,7 +52,14 @@ const basicViewProps: TasksMainViewProps[] = [
         preference: {
             viewType: 'table',
             getTodosOptions: { limit: 80 },
-            columns: { endAt: true, priority: true, state: true, project: true, tags: true }
+            columns: {
+                ...basicViewDefaultColumns,
+                endAt: true,
+                priority: true,
+                state: true,
+                project: true,
+                tags: true
+            }
         },
         createTodoOptions: {}
     },
@@ -65,7 +72,14 @@ const basicViewProps: TasksMainViewProps[] = [
         preference: {
             viewType: 'kanban',
             getTodosOptions: { relativeDate: 'today', limit: 20 },
-            columns: { endAt: true, priority: true, state: true, project: true, tags: true }
+            columns: {
+                ...basicViewDefaultColumns,
+                endAt: true,
+                priority: true,
+                state: true,
+                project: true,
+                tags: true
+            }
         },
         createTodoOptions: {
             startAt: useMoment().startOf('day').toISOString(true),
@@ -81,7 +95,14 @@ const basicViewProps: TasksMainViewProps[] = [
         preference: {
             viewType: 'kanban',
             getTodosOptions: { relativeDate: 'tomorrow', limit: 20 },
-            columns: { endAt: true, priority: true, state: true, project: true, tags: true }
+            columns: {
+                ...basicViewDefaultColumns,
+                endAt: true,
+                priority: true,
+                state: true,
+                project: true,
+                tags: true
+            }
         },
         createTodoOptions: {
             startAt: useMoment().add(1, 'day').startOf('day').toISOString(true),
@@ -97,7 +118,14 @@ const basicViewProps: TasksMainViewProps[] = [
         preference: {
             viewType: 'table',
             getTodosOptions: { relativeDate: 'week', limit: 80 },
-            columns: { endAt: true, priority: true, state: true, project: true, tags: true }
+            columns: {
+                ...basicViewDefaultColumns,
+                endAt: true,
+                priority: true,
+                state: true,
+                project: true,
+                tags: true
+            }
         },
         createTodoOptions: {
             startAt: useMoment().startOf('day').toISOString(true),
@@ -126,7 +154,14 @@ const basicViewProps: TasksMainViewProps[] = [
         preference: {
             viewType: 'table',
             getTodosOptions: { isFavorited: true, limit: 80 },
-            columns: { createdAt: true, endAt: true, project: true, tags: true, description: true }
+            columns: {
+                ...basicViewDefaultColumns,
+                createdAt: true,
+                endAt: true,
+                project: true,
+                tags: true,
+                description: true
+            }
         },
         createTodoOptions: { isFavorited: true }
     },
@@ -187,3 +222,4 @@ export {
     basicViewDefaultColumns,
     basicViewDefaultColumns as defaultColumnOptions
 }
+

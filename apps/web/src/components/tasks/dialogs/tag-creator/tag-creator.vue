@@ -11,7 +11,7 @@ const emit = defineEmits<TagCreatorEmits>()
 const tagNameInputRef = ref<InstanceType<typeof NueInput>>()
 const dialogRef = ref<DialogInstanceType>()
 
-const { creating, isNameEmpty, newTag, handleConfirm } = useTagCreator(emit)
+const { creating, isNameEmpty, newTag, handleConfirm, clearInputsValue } = useTagCreator(emit)
 const { visible, close } = useDialogWrapper(dialogRef)
 
 const handleSubmit = async () => {
@@ -19,11 +19,14 @@ const handleSubmit = async () => {
     if (ok) close()
 }
 
-const open = () => (visible.value = true)
+const open = () => {
+    clearInputsValue()
+    visible.value = true
+}
 
 onMounted(() => emit('register', open, close))
 
-defineExpose({ open, close })
+// defineExpose({ open, close })
 </script>
 
 <template>

@@ -55,8 +55,10 @@ const useProjectCreator = () => {
         creating,
         isNameEmpty,
         newProject,
-        handleConfirm
+        handleConfirm,
+        clearInputsValue
     }
 }
 
 export default useProjectCreator
+

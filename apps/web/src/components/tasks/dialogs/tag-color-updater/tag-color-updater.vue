@@ -30,7 +30,7 @@ const handleConfirm = async () => {
 
 onMounted(() => emit('register', open, close))
 
-defineExpose({ open, close })
+// defineExpose({ open, close })
 </script>
 
 <template>

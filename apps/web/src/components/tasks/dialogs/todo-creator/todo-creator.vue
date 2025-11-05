@@ -21,10 +21,12 @@ const emit = defineEmits<{
 
 const dialogRef = ref<DialogInstanceType>()
 
-const { user, projects, tags, newTodo, creating, disabled, handleCreateTodo } = useTodoCreator()
+const { user, projects, tags, newTodo, creating, disabled, handleCreateTodo, clearInputsValue } =
+    useTodoCreator()
 const { visible, close: closeDialog } = useDialogWrapper(dialogRef)
 
 const open = (createTodoOptions: CreateTodoOptions) => {
+    clearInputsValue()
     newTodo.value = { ...newTodo.value, ...createTodoOptions }
     visible.value = true
 }
@@ -42,7 +44,7 @@ const handleSubmit = async () => {
 
 onMounted(() => emit('register', open, close))
 
-defineExpose({ open, close })
+// defineExpose({ open, close })
 </script>
 
 <template>

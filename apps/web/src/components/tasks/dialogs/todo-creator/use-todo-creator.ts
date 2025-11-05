@@ -57,6 +57,11 @@ const useTodoCreator = () => {
         return true
     }
 
+    // @method 清空输入值
+    const clearInputsValue = () => {
+        newTodo.value = { ...defaultCreateTodoOptions }
+    }
+
     // @return
     return {
         user,
@@ -65,8 +70,10 @@ const useTodoCreator = () => {
         newTodo,
         creating,
         disabled,
-        handleCreateTodo
+        handleCreateTodo,
+        clearInputsValue
     }
 }
 
 export default useTodoCreator
+

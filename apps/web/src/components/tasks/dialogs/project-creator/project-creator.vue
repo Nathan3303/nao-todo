@@ -10,7 +10,7 @@ const emit = defineEmits<{ (e: 'register', open: () => void, close: () => void):
 const nameInputRef = ref<InstanceType<typeof NueInput>>()
 const dialogRef = ref<DialogInstanceType>()
 
-const { creating, isNameEmpty, newProject, handleConfirm } = useProjectCreator()
+const { creating, isNameEmpty, newProject, handleConfirm, clearInputsValue } = useProjectCreator()
 const { visible, close } = useDialogWrapper(dialogRef)
 
 const handleSubmit = async () => {
@@ -18,11 +18,14 @@ const handleSubmit = async () => {
     if (ok) close()
 }
 
-const open = () => (visible.value = true)
+const open = () => {
+    clearInputsValue()
+    visible.value = true
+}
 
 onMounted(() => emit('register', open, close))
 
-defineExpose({ open, close })
+// defineExpose({ open, close })
 </script>
 
 <template>
