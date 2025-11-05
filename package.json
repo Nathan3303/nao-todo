@@ -12,17 +12,19 @@
         "desktop": "pnpm --filter @nao-todo/desktop"
     },
     "dependencies": {
-        "vue": "^3.5.18",
-        "vue-router": "^4.5.0",
-        "pinia": "^2.2.6",
         "axios": "1.11.0",
-        "nue-ui": "1.5.23",
-        "nue-ui-theme-shadlike": "0.6.9",
         "markdown-it": "^14.1.0",
         "moment": "^2.30.1",
-        "spark-md5": "^3.0.2"
+        "nue-ui": "1.5.23",
+        "nue-ui-theme-shadlike": "0.6.9",
+        "pinia": "^2.2.6",
+        "spark-md5": "^3.0.2",
+        "vue": "^3.5.18",
+        "vue-router": "^4.5.0"
     },
     "devDependencies": {
+        "@dcloudio/types": "^3.4.8",
+        "@eslint/js": "^9.15.0",
         "@nao-todo/apis": "workspace:*",
         "@nao-todo/components": "workspace:*",
         "@nao-todo/desktop": "workspace:*",
@@ -31,16 +33,14 @@
         "@nao-todo/types": "workspace:*",
         "@nao-todo/utils": "workspace:*",
         "@nao-todo/webapp": "workspace:*",
+        "@rollup/plugin-terser": "^0.4.4",
+        "@rushstack/eslint-patch": "^1.10.4",
+        "@tsconfig/node20": "^20.1.4",
+        "@types/markdown-it": "^14.1.2",
         "@types/md5": "^2.3.5",
         "@types/node": "^20.17.8",
         "@types/spark-md5": "^3.0.5",
         "@types/validator": "^13.12.2",
-        "@types/markdown-it": "^14.1.2",
-        "@dcloudio/types": "^3.4.8",
-        "@eslint/js": "^9.15.0",
-        "@rollup/plugin-terser": "^0.4.4",
-        "@rushstack/eslint-patch": "^1.10.4",
-        "@tsconfig/node20": "^20.1.4",
         "@typescript-eslint/eslint-plugin": "^8.16.0",
         "@typescript-eslint/parser": "^8.16.0",
         "@vitejs/plugin-vue": "^5.2.0",
@@ -51,6 +51,7 @@
         "eslint-config-prettier": "^9.1.0",
         "eslint-plugin-prettier": "^5.2.1",
         "eslint-plugin-vue": "^9.31.0",
+        "font-slice": "^1.0.2",
         "globals": "^15.12.0",
         "prettier": "^3.4.0",
         "rollup-plugin-visualizer": "^5.14.0",
@@ -63,4 +64,3 @@
         "packages/*"
     ]
 }
-

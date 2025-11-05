@@ -2,6 +2,7 @@ import { computed, reactive, ref } from 'vue'
 import { defineStore, storeToRefs } from 'pinia'
 import useTodoStore from './use-todo-store'
 import useUserStore from './use-user-store-v2'
+import type { UserPreference } from '@nao-todo/types'
 
 const ASIDE_WIDTH_LSKEY = 'GLOBAL_ASIDE_WIDTH'
 const OUTLINE_WIDTH_LSKEY = 'GLOBAL_OUTLINE_WIDTH'
@@ -64,7 +65,7 @@ const useViewStore = defineStore('viewStore', () => {
         visible: false
     })
 
-    // @states 任务界面侧边栏默认值
+    // @state 任务界面侧边栏默认值
     const isUseFloatTasksAsideDefaultly = computed({
         get: () => user.value?.preference?.isUseFloatAsideDefaultly?.tasks ?? false,
         set: (newValue: boolean) => {
@@ -74,7 +75,7 @@ const useViewStore = defineStore('viewStore', () => {
         }
     })
 
-    // @states 任务界面任务详情侧边栏默认值
+    // @state 任务界面任务详情侧边栏默认值
     const isUseFloatTasksOutlineDefaultly = computed({
         get: () => user.value?.preference?.isUseFloatOutlineDefaultly?.tasks ?? false,
         set: (newValue: boolean) => {
@@ -84,12 +85,22 @@ const useViewStore = defineStore('viewStore', () => {
         }
     })
 
-    // @states 设置界面侧边栏默认值
+    // @state 设置界面侧边栏默认值
     const isUseFloatSettingsAsideDefaultly = computed({
         get: () => user.value?.preference?.isUseFloatAsideDefaultly?.settings ?? false,
         set: (newValue: boolean) => {
             if (user.value?.preference?.isUseFloatAsideDefaultly) {
                 user.value.preference.isUseFloatAsideDefaultly.settings = newValue
+            }
+        }
+    })
+
+    // @state 用户落地页偏好
+    const landingPage = computed({
+        get: () => user.value?.preference?.landingPage,
+        set: (newValue: UserPreference['landingPage']) => {
+            if (user.value?.preference?.landingPage) {
+                user.value.preference.landingPage = newValue
             }
         }
     })
@@ -107,8 +118,11 @@ const useViewStore = defineStore('viewStore', () => {
         isUseFloatTasksOutlineDefaultly,
         isUseFloatSettingsAsideDefaultly,
         hasUpdateTasksInQueue: computed(() => todoStore.updateTodoQueue.running),
-        updateTasksQueueCount: computed(() => todoStore.updateTodoQueue.queueLength)
+        updateTasksQueueCount: computed(() => todoStore.updateTodoQueue.queueLength),
+        landingPage
     }
 })
 
 export default useViewStore
+
+

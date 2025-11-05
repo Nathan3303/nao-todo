@@ -1,5 +1,7 @@
+@import './pf/font.css';
+
 html.nue-html {
-    --nue-primary-font-family: 'Poppins', 'Noto Sans', 'Segoe UI Emoji', 'Apple Color Emoji',
+    --nue-primary-font-family: 'Poppins', 'pf', 'Noto Sans', 'Segoe UI Emoji', 'Apple Color Emoji',
         'Noto Color Emoji', sans-serif;
 
     * {

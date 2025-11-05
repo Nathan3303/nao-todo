@@ -14,19 +14,19 @@ const {
 </script>
 
 <template>
-    <nue-div vertical>
+    <nue-div theme="card" vertical>
         <nue-container>
-            <nue-header>浮动侧边栏偏好设置</nue-header>
+            <nue-header height="auto">浮动侧边栏偏好设置</nue-header>
             <nue-main>
                 <nue-content>
                     <nue-div vertical gap=".5rem">
-                        <nue-div align="center" gap="2rem">
+                        <nue-div align="center" justify="space-between">
                             <nue-text color="gray" size="var(--nue-text-sm)">
                                 在 任务界面 中默认使用浮动侧边栏
                             </nue-text>
                             <nue-switch size="small" v-model="isUseFloatTasksAsideDefaultly" />
                         </nue-div>
-                        <nue-div align="center" gap="2rem">
+                        <nue-div align="center" justify="space-between">
                             <nue-text color="gray" size="var(--nue-text-sm)">
                                 在 设置界面 中默认使用浮动详情栏
                             </nue-text>
@@ -41,7 +41,7 @@ const {
             <nue-main>
                 <nue-content>
                     <nue-div vertical gap=".5rem">
-                        <nue-div align="center" gap="2rem">
+                        <nue-div align="center" justify="space-between">
                             <nue-text color="gray" size="var(--nue-text-sm)">
                                 在 任务界面 中默认使用浮动详情栏
                             </nue-text>
@@ -56,10 +56,13 @@ const {
 
 <style scoped>
 .nue-container {
+    gap: 0.5rem;
+
     > .nue-header,
     > .nue-main {
         height: auto;
-        padding: 0.875rem 0;
+        padding: 0;
+        border: none;
     }
 }
 </style>

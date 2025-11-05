@@ -8,6 +8,9 @@ export type UserPreference = {
     isUseFloatOutlineDefaultly: {
         tasks: boolean
     }
+    landingPage: {
+        tasks: string
+    }
 }
 
 export interface User {
@@ -31,3 +34,4 @@ export type SignupOptions = {
     password: string
     nickname?: string
 }
+

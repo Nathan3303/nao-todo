@@ -10,6 +10,9 @@ const routes: RouteRecordRaw = {
         // 重置浮动侧边栏的显示状态
         const viewStore = useViewStore()
         viewStore.appAsideStates.visible = false
+        // 设置默认跳转页面
+        const defaultLandingPage = viewStore.landingPage?.tasks || 'all'
+        to.params.viewId = defaultLandingPage
         next()
     },
     children: [

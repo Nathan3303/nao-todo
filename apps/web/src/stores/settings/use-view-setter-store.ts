@@ -10,7 +10,8 @@ const useViewSetterStore = defineStore('ViewSetterStore', () => {
     const {
         isUseFloatSettingsAsideDefaultly,
         isUseFloatTasksAsideDefaultly,
-        isUseFloatTasksOutlineDefaultly
+        isUseFloatTasksOutlineDefaultly,
+        landingPage
     } = storeToRefs(viewStore)
     const { user } = storeToRefs(userStore)
 
@@ -32,8 +33,11 @@ const useViewSetterStore = defineStore('ViewSetterStore', () => {
         isUseFloatTasksOutlineDefaultly,
         isUseFloatSettingsAsideDefaultly,
         updateIsUseFloatSettingsAsideDefaultly,
-        updateIsUseFloatTasksOutlineDefaultly
+        updateIsUseFloatTasksOutlineDefaultly,
+        landingPage
     }
 })
 
 export default useViewSetterStore
+
+

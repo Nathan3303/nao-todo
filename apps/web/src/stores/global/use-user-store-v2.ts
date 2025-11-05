@@ -77,13 +77,9 @@ const useUserStoreV2 = defineStore('UserStore', () => {
             isAuthenticated.value = true
             // 临时插入用户偏好设置
             user.value.preference = {
-                isUseFloatAsideDefaultly: {
-                    tasks: false,
-                    settings: false
-                },
-                isUseFloatOutlineDefaultly: {
-                    tasks: false
-                }
+                isUseFloatAsideDefaultly: { tasks: false, settings: false },
+                isUseFloatOutlineDefaultly: { tasks: false },
+                landingPage: { tasks: 'today' }
             }
             // 返回登录成功
             return null
@@ -111,13 +107,9 @@ const useUserStoreV2 = defineStore('UserStore', () => {
             isAuthenticated.value = true
             // 临时插入用户偏好设置
             user.value.preference = {
-                isUseFloatAsideDefaultly: {
-                    tasks: false,
-                    settings: false
-                },
-                isUseFloatOutlineDefaultly: {
-                    tasks: false
-                }
+                isUseFloatAsideDefaultly: { tasks: false, settings: false },
+                isUseFloatOutlineDefaultly: { tasks: false },
+                landingPage: { tasks: 'today' }
             }
             // 返回登录成功
             return [true, null]

@@ -2,7 +2,7 @@
 import { useSettingsViewStore } from '@/stores/settings'
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
-import { SettingsViewFloating } from '@/components/settings/view'
+import { SettingsViewFloating, SettingsViewLandingPage } from '@/components/settings/view'
 
 defineOptions({ name: 'SettingsView' })
 
@@ -27,8 +27,9 @@ const hideAsideButtonIcon = computed(() => {
         </nue-header>
         <nue-main>
             <nue-content fill>
-                <nue-div vertical gap="2rem" style="padding: 1rem">
+                <nue-div vertical gap="1rem" style="padding: 1rem">
                     <settings-view-floating />
+                    <settings-view-landing-page />
                 </nue-div>
             </nue-content>
         </nue-main>
