@@ -100,7 +100,7 @@ const { tags } = storeToRefs(tasksDataStore)
             </nue-content>
         </nue-main>
         <nue-footer>
-            <nue-div v-if="isCommenting" vertical>
+            <nue-div v-if="isCommenting" vertical width="100%">
                 <comment-creator
                     :handler="leaveCommentHandler"
                     @cancel="emit('cancelLeaveComment')"

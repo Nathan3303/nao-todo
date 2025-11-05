@@ -101,7 +101,7 @@ const useTasksTagViewStore = defineStore('TasksTagViewStore', () => {
         handleHideCompleted,
         handleUpdatePreference: tasksViewStore.updatePreference,
         handleDelete: () => tasksDataStore.deleteTag(viewProps.value!.id),
-        handleUpdateColor: () => tasksDialogStore.tagColorUpdater?.open(viewProps.value!.id)
+        handleUpdateColor: () => tasksDialogStore.tagColorUpdater?.open?.(viewProps.value!.id)
     }
 })
 

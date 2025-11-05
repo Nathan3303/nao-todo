@@ -15,18 +15,12 @@ const emit = defineEmits<DetailsHeaderEmits>()
             />
             <nue-divider vertical />
             <todo-date-selector
+                :colored="!(shadowTodo!.state === 'done')"
                 v-model="shadowTodo!.endAt"
                 @change="(v) => emit('updateTodoEndAt', v)"
             />
         </nue-div>
         <nue-div align="center">
-            <!-- <nue-icon
-                v-show="updating"
-                name="loading"
-                spin
-                size="var(--nue-text-sm)"
-                color="orange"
-            /> -->
             <nue-button icon="clear" theme="small" @click="emit('close')">关闭</nue-button>
         </nue-div>
     </nue-div>

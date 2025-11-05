@@ -2,7 +2,7 @@
 import { onBeforeUnmount, onMounted, provide, computed } from 'vue'
 import { useTodoList } from './use-list'
 import TodoListMain from './list-main.vue'
-import { Loading as LoadingComp } from '@/components/ui'
+import { Loading as LoadingComp } from '@nao-todo/components'
 import { TODO_LIST_CONTEXT_KEY } from './constants'
 import type { TodoListEmits, TodoListProps, TodoListContext } from './types'
 import './list.css'

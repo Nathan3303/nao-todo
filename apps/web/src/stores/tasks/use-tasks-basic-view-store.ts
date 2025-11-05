@@ -65,7 +65,7 @@ const useTasksBasicViewStore = defineStore('TasksBasicViewStore', () => {
             loading.value = false
             return
         }
-        // await tasksViewStore.refreshData()
+        await tasksViewStore.refreshData()
         reloadTimer.value = setTimeout(() => {
             reloadTimer.value = null
             allowReload.value = true

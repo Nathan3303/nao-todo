@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Loading as LoadingComponent } from '@/components/ui'
+import { Loading as LoadingComponent } from '@nao-todo/components'
 import { TodoStateInfo } from '@nao-todo/components'
 import { NueInfiniteScroll } from 'nue-ui'
 import { useColumnLoader } from './use-column-loader'

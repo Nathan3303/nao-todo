@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject } from 'vue'
 import { TODO_TABLE_CONTEXT_KEY } from './constants'
-import { Pager } from '@/components/ui'
+import { Pager } from '@nao-todo/components'
 import type { TodoTableContext } from './types'
 
 defineOptions({ name: 'TodoTableFooter' })

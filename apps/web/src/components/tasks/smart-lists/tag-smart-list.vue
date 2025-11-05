@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
-import { NaoSmartList, type NaoSmartListLinkVO, NaoColorDot } from '@/components/ui'
+import { NaoSmartList, type NaoSmartListLinkVO } from '@/components/ui'
+import { TagColorDot } from '@nao-todo/components'
 import { useTasksDataStore, useTasksDialogStore } from '@/stores/tasks'
 import { storeToRefs } from 'pinia'
 
@@ -32,11 +33,11 @@ const links = computed<NaoSmartListLinkVO[]>(() => {
         create-btn-tooltip="创建新的标签"
         empty-text="以标签的维度展示不同清单的待办任务"
         :links="links"
-        @manage="() => tasksDialogStore.tagManager?.open()"
-        @create="() => tasksDialogStore.tagCreator?.open()"
+        @manage="() => tasksDialogStore.tagManager?.open?.()"
+        @create="() => tasksDialogStore.tagCreator?.open?.()"
     >
         <template #linkAppend="{ link }">
-            <nao-color-dot :color="link.payload?.color" size="sm" />
+            <tag-color-dot :color="link.payload?.color" size="small" />
         </template>
     </nao-smart-list>
 </template>

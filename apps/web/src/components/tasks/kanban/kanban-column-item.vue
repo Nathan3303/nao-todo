@@ -5,7 +5,8 @@ import {
     TodoPriorityInfo,
     TodoDateInfo,
     TodoBasicInfo,
-    TodoTagBar
+    TodoTagBar,
+    TodoCheckButton
 } from '@nao-todo/components'
 import { TODO_KANBAN_CONTEXT_KEY } from './constants'
 import type {
@@ -37,19 +38,7 @@ const isAttrsNone = computed(() => {
 
 const isDone = computed(() => props.todo.state === 'done')
 
-const checkIconName = computed(() => {
-    return isDone.value ? 'square-check-fill' : 'square'
-    // switch (props)
-})
-
 const deleteIconName = computed(() => (props.todo.isDeleted ? 'restore' : 'delete') as never)
-
-// const isTodoExpired = (todo: Todo) => {
-//     const endAt = todo.endAt
-//     if (!endAt || todo.state === 'done') return false
-//     const date = useMoment(endAt)
-//     return date.isBefore(useMoment())
-// }
 
 const handleClick = () => {
     const todoId = props.todo.id
@@ -84,11 +73,7 @@ const handleFinish = () => {
         :data-is-deleted="todo.isDeleted"
     >
         <nue-div vertical>
-            <nue-icon
-                class="todo-card__check-icon"
-                :name="checkIconName"
-                @click.stop="handleFinish"
-            />
+            <todo-check-button :is-done="isDone" @change="handleFinish" size="large" />
         </nue-div>
         <nue-div vertical gap=".5rem" flex="1">
             <nue-div class="todo-card__info">
@@ -117,6 +102,7 @@ const handleFinish = () => {
                         :tags="tags"
                         :todoTags="todo.tags"
                         :clamped="2"
+                        transform-origin="left"
                         readonly
                         small
                     />

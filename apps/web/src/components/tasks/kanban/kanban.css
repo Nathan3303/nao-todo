@@ -160,11 +160,6 @@
                         }
                     }
 
-                    .todo-tag-bar {
-                        min-width: 20%;
-                        transform-origin: left;
-                    }
-
                     &:hover,
                     &[data-actived='true'] {
                         border-color: #66667f;

@@ -1,9 +1,7 @@
-import { ref, watch, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref } from 'vue'
 import { defineStore, storeToRefs } from 'pinia'
 import { useTasksDataStore, useTasksViewStore } from '@/stores/tasks'
 import { unwrapError } from '@nao-todo/utils'
-import type { GetTodosSortOptions } from '@nao-todo/types'
 
 const useTableStore = defineStore('TodoTableStore', () => {
     // @stores 全局 stores
@@ -62,3 +60,4 @@ const useTableStore = defineStore('TodoTableStore', () => {
 })
 
 export default useTableStore
+

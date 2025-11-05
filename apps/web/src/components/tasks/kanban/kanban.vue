@@ -2,7 +2,7 @@
 import { computed, provide, watchEffect } from 'vue'
 import TodoKanbanColumn from './kanban-column.vue'
 import useKanban from './use-kanban'
-import { Loading as LoadingComponent } from '@/components/ui'
+import { Loading as LoadingComponent } from '@nao-todo/components'
 import { TODO_KANBAN_CONTEXT_KEY } from './constants'
 import type { TodoKanbanContext, TodoKanbanEmits, TodoKanbanProps } from './types'
 import './kanban.css'

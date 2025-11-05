@@ -4,7 +4,7 @@ import { useTasksViewStore } from '@/stores/tasks'
 import { storeToRefs } from 'pinia'
 import { useRoute } from 'vue-router'
 import { InnerDropdown, InnerDropdownOption } from '@/components/ui/inner-dropdown'
-import { priorityOptions, stateOptions } from '@nao-todo/components/todo/selector/constants'
+import { TodoPrioritySelectOptions, TodoStateSelectOptions } from '@nao-todo/components'
 import type { InnerDropdownOptionVO } from '@/components/ui/inner-dropdown/types'
 import type { Todo } from '@nao-todo/types'
 
@@ -30,7 +30,7 @@ const counter = computed(() => {
 const priorityDropdownOptions = computed(() => {
     if (!viewProps.value) return []
     const _getOptions = viewProps.value.preference.getTodosOptions
-    return priorityOptions.map((option) => ({
+    return TodoPrioritySelectOptions.map((option) => ({
         ...option,
         checked: _getOptions.priority?.includes(option.value) || false
     })) as InnerDropdownOptionVO[]
@@ -39,7 +39,7 @@ const priorityDropdownOptions = computed(() => {
 const stateDropdownOptions = computed(() => {
     if (!viewProps.value) return []
     const _getOptions = viewProps.value.preference.getTodosOptions
-    return stateOptions.map((option) => ({
+    return TodoStateSelectOptions.map((option) => ({
         ...option,
         checked: _getOptions.state?.includes(option.value) || false
     })) as InnerDropdownOptionVO[]
@@ -150,7 +150,7 @@ watch(
                 <nue-button icon="filter" theme="icon,ghost" @click.stop="trigger" />
             </nue-badge>
         </template>
-        <nue-div gap="4px" style="width: 12rem">
+        <nue-div vertical gap=".25rem" width="100%">
             <nue-div theme="block">
                 <nue-text theme="title">筛选</nue-text>
                 <nue-input
@@ -212,8 +212,6 @@ watch(
                     icon="select"
                     :suffix="isSorting"
                     @execute="handleSortFieldDropdownExecute"
-                    group="tasks-todo-filter"
-                    :close-when-executed="false"
                 >
                     <inner-dropdown-option
                         v-for="option in sortFieldDropdownOptions"
@@ -230,8 +228,6 @@ watch(
                     :disabled="!isSorting"
                     :suffix="isSorting"
                     @execute="handleSortOrderDropdownExecute"
-                    group="tasks-todo-filter"
-                    :close-when-executed="false"
                 >
                     <inner-dropdown-option
                         v-for="option in sortOrderDropdownOptions"
@@ -253,12 +249,11 @@ watch(
     border-radius: 0;
     --nue-icon-size: var(--nue-text-sm);
     font-size: var(--nue-text-sm);
-    padding: 0 0.75rem;
+    padding: 0 0.5rem;
     gap: 8px;
 
-    .nue-input__input {
-        width: 2rem;
-        line-height: unset;
+    &:deep(.nue-input__input) {
+        line-height: normal;
     }
 }
 </style>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { InputButton, TodoEventRow } from '@nao-todo/components'
+import { InputButton, EventRow } from '@nao-todo/components'
 import { useTodoDetailsStore } from '@/stores/tasks'
 import type { DetailsMainEventsProps } from './types'
 
@@ -13,7 +13,7 @@ const { events } = storeToRefs(todoDetailsStore)
 
 <template>
     <nue-div vertical gap="0.25rem">
-        <todo-event-row
+        <event-row
             v-for="event in events"
             :key="event.id"
             :event="event"
