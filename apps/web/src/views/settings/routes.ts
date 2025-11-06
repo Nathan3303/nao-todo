@@ -1,11 +1,44 @@
 import { useViewStore } from '@/stores/global'
 import type { RouteRecordRaw } from 'vue-router'
 
-const SettingsViewRouteLinks = [
-    { name: '个人信息', icon: 'user', route: '/settings/profile' },
-    // { name: '修改密码', icon: 'lock', route: '/settings/password' },
-    { name: '页面设置', icon: 'theme', route: '/settings/view' }
+const _routeRecords = [
+    {
+        path: 'profile',
+        name: 'settings-profile',
+        componentName: 'profile',
+        title: '账户与个人信息',
+        icon: 'user'
+    },
+    // {
+    //     path: 'password',
+    //     name: 'settings-password',
+    //     componentName: 'password',
+    //     title: '密码与安全',
+    //     icon: 'lock'
+    // },
+    {
+        path: 'view',
+        name: 'settings-view',
+        componentName: 'view',
+        title: '页面设置',
+        icon: 'theme'
+    },
+    {
+        path: 'smartlist',
+        name: 'settings-smartlist',
+        componentName: 'smartlist',
+        title: '智能列表',
+        icon: 'list'
+    }
 ]
+
+const SettingsViewRouteLinks = _routeRecords.map((record) => {
+    return {
+        name: record.title,
+        icon: record.icon,
+        route: `/settings/${record.path}`
+    }
+})
 
 const SettingsViewRouteRecordRaw: RouteRecordRaw = {
     path: 'settings',
@@ -18,24 +51,16 @@ const SettingsViewRouteRecordRaw: RouteRecordRaw = {
         viewStore.appAsideStates.visible = false
         next()
     },
-    children: [
-        {
-            path: 'profile',
-            name: 'settings-profile',
-            component: () => import('@/layouts/settings/contents/profile.vue')
-        },
-        {
-            path: 'password',
-            name: 'settings-password',
-            component: () => import('@/layouts/settings/contents/password.vue')
-        },
-        {
-            path: 'view',
-            name: 'settings-view',
-            component: () => import('@/layouts/settings/contents/view.vue')
+    children: _routeRecords.map((record) => {
+        return {
+            path: record.path,
+            name: record.name,
+            meta: { title: record.title, icon: record.icon },
+            component: () => import(`@/layouts/settings/contents/${record.componentName}.vue`)
         }
-    ]
+    })
 }
 
 export default SettingsViewRouteRecordRaw
 export { SettingsViewRouteLinks }
+

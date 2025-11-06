@@ -94,6 +94,14 @@ const useViewStore = defineStore('viewStore', () => {
         }
     })
 
+    // @state 用户任务界面菜单项的显示与隐藏
+    const tasksAsideNavLinkVisible = computed({
+        get: () => userPreference.value.tasksAsideNavLinkVisible,
+        set: (newValue: UserPreference['tasksAsideNavLinkVisible']) => {
+            userPreference.value.tasksAsideNavLinkVisible = newValue
+        }
+    })
+
     return {
         responsiveFlag,
         responsiveFlagUpdater,
@@ -108,7 +116,8 @@ const useViewStore = defineStore('viewStore', () => {
         isUseFloatSettingsAsideDefaultly,
         hasUpdateTasksInQueue: computed(() => todoStore.updateTodoQueue.running),
         updateTasksQueueCount: computed(() => todoStore.updateTodoQueue.queueLength),
-        landingPage
+        landingPage,
+        tasksAsideNavLinkVisible
     }
 })
 

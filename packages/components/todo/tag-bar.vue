@@ -41,9 +41,10 @@ const comboBoxOptions = computed<FrameworkOption[]>(() => {
 })
 
 const selectedTags = computed<Tag[]>(() => {
-    return props.tags.filter((tag) =>
+    const _tags = props.tags.filter((tag) =>
         props.todoTags ? props.todoTags.indexOf(tag.id) !== -1 : false
     )
+    return _tags.slice(0, props.clamped)
 })
 
 const handleAddTag = async (tagId: unknown, { checked }: Partial<FrameworkOption>) => {

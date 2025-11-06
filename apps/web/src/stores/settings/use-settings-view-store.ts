@@ -7,8 +7,13 @@ const useSettingsViewStore = defineStore('SettingsViewStore', () => {
     const viewStore = useViewStore()
 
     // @states 前置状态
-    const { responsiveFlag, appAsideStates, globalAsideWidth, isUseFloatSettingsAsideDefaultly } =
-        storeToRefs(viewStore)
+    const {
+        responsiveFlag,
+        appAsideStates,
+        globalAsideWidth,
+        isUseFloatSettingsAsideDefaultly,
+        tasksAsideNavLinkVisible
+    } = storeToRefs(viewStore)
 
     // @states 是否显示侧边栏
     const isDisplayAside = ref<boolean>(true)
@@ -36,8 +41,11 @@ const useSettingsViewStore = defineStore('SettingsViewStore', () => {
         handleAsideResize: viewStore.handleAsideResize,
         isDisplayAside,
         isUseFloatAside,
-        switchIsDisplayAside
+        switchIsDisplayAside,
+        tasksAsideNavLinkVisible
     }
 })
 
 export default useSettingsViewStore
+
+

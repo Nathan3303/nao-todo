@@ -26,7 +26,8 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
         globalAsideWidth,
         globalOutlineWidth,
         isUseFloatTasksAsideDefaultly,
-        isUseFloatTasksOutlineDefaultly
+        isUseFloatTasksOutlineDefaultly,
+        tasksAsideNavLinkVisible
     } = storeToRefs(viewStore)
 
     // @states 是否显示侧边栏
@@ -350,9 +351,12 @@ const useTasksViewStore = defineStore('TasksViewStore', () => {
         updateColumns,
         refreshData,
         updatePreference,
-        getColumnText
+        getColumnText,
+        tasksAsideNavLinkVisible
     }
 })
 
 export default useTasksViewStore
+
+
 

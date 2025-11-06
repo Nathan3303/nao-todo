@@ -24,22 +24,21 @@ const userStore = useUserStoreV2()
 const request = useAxios('http://localhost:3303/api/user')
 
 watchEffect(async () => {
-    const [res, err] = await userStore.checkin(request)
+    const [, err] = await userStore.checkin(request)
     if (err) {
         NueMessage.error(unwrapError(err))
         await router.replace('/auth/signin')
-        return false
+        return
     }
     // 获取用户落地页，若用户未设置落地页，则跳转到任务页
     const userSettingsStore = useUserSettingsStore()
     const landingPage = userSettingsStore.userPreference.landingPage
-    // console.log('landingPage', landingPage)
-    if (landingPage) {
-        await router.replace({ name: landingPage })
-    } else {
-        await router.replace(atob(props.fromUrlBase64) || '/')
+    const callbackURL = atob(props.fromUrlBase64) || '/'
+    if (callbackURL.includes('/' + landingPage) || !landingPage) {
+        await router.replace(atob(props.fromUrlBase64))
+        return
     }
-    return res
+    await router.replace({ name: landingPage })
 })
 </script>
 
