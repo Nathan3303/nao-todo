@@ -140,7 +140,7 @@ const { tags } = storeToRefs(tasksDataStore)
     }
 
     > .nue-header {
-        padding: 1rem;
+        padding: 1rem 1rem 0.25rem;
         height: auto;
         border: none;
     }

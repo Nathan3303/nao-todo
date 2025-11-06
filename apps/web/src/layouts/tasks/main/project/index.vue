@@ -71,7 +71,7 @@ watch(
 <style scoped>
 .nue-container#TasksMainWrapper {
     padding: 1rem;
-    gap: 1rem;
+    gap: 0.25rem;
 
     > .nue-header,
     > .nue-main,
