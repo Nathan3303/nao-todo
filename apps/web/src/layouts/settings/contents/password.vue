@@ -32,5 +32,3 @@ const hideAsideButtonIcon = computed(() => {
         </nue-main>
     </nue-container>
 </template>
-
-<style scoped></style>

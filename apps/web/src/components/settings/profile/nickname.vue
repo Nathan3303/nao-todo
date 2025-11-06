@@ -12,12 +12,13 @@
                         <nue-div align="center">
                             <nue-input v-model="profileVO.newNickname" />
                             <nue-button
-                                icon="check"
-                                theme="icon,primary"
+                                theme="primary"
                                 :disabled="!isNicknameChanged"
                                 :loading="profileVO.loading.nickname"
                                 @click="profileStore.handleUpdateNickname"
-                            />
+                            >
+                                修改
+                            </nue-button>
                         </nue-div>
                     </nue-div>
                 </nue-div>
@@ -47,3 +48,4 @@ const { profileVO, isNicknameChanged } = storeToRefs(profileStore)
     }
 }
 </style>
+

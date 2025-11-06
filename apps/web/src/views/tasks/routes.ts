@@ -1,4 +1,4 @@
-import { useViewStore } from '@/stores/global'
+// import { useViewStore } from '@/stores/global'
 import type { RouteRecordRaw } from 'vue-router'
 
 const routes: RouteRecordRaw = {
@@ -8,11 +8,8 @@ const routes: RouteRecordRaw = {
     redirect: { name: 'tasks-basic', params: { viewId: 'all' } },
     beforeEnter: (to, from, next) => {
         // 重置浮动侧边栏的显示状态
-        const viewStore = useViewStore()
-        viewStore.appAsideStates.visible = false
-        // 设置默认跳转页面
-        const defaultLandingPage = viewStore.landingPage?.tasks || 'all'
-        to.params.viewId = defaultLandingPage
+        // const viewStore = useViewStore()
+        // viewStore.appAsideStates.visible = false
         next()
     },
     children: [
@@ -77,3 +74,4 @@ const routes: RouteRecordRaw = {
 }
 
 export default routes
+

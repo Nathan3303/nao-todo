@@ -1,15 +1,23 @@
+import type { TasksMainBasicViewNames } from '../views/tasks'
+
 export type UserRole = 'user' | 'admin'
 
 export type UserPreference = {
     isUseFloatAsideDefaultly: {
         tasks: boolean
+        calendar: boolean
         settings: boolean
     }
     isUseFloatOutlineDefaultly: {
         tasks: boolean
+        calendar: boolean
+        settings: boolean
     }
-    landingPage: {
-        tasks: string
+    landingPage: string
+    tasksAsideNavLinkVisible: {
+        [key in TasksMainBasicViewNames]: boolean
+    } & {
+        filter: boolean
     }
 }
 

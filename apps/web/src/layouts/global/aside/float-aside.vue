@@ -1,9 +1,8 @@
 <script lang="ts" setup>
-import { computed } from 'vue'
-import { useViewStore, useUserStoreV2 } from '@/stores/global'
+import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { ref } from 'vue'
-import { GlobalAsideRouteLinks } from './constants'
+import { useViewStore, useUserStoreV2 } from '@/stores/global'
+import { GlobalAsideNavItems } from '@/stores/global/constants'
 import { NaoRouterLink } from '@/components/ui'
 import type { NueDrawer } from 'nue-ui'
 
@@ -37,7 +36,7 @@ const visible = computed({
         <nue-container id="AppAsideContainer">
             <nue-header>
                 <nue-div align="center">
-                    <nue-avatar :src="user?.avatar" />
+                    <nue-avatar :src="user?.avatar" size="2rem" />
                     <nue-text>{{ user?.nickname }}</nue-text>
                 </nue-div>
             </nue-header>
@@ -48,9 +47,9 @@ const visible = computed({
             </nue-main>
             <nue-footer>
                 <slot name="footer">
-                    <nue-div justify="space-between" gap="0">
+                    <nue-div justify="space-between" gap="0" width="100%">
                         <nao-router-link
-                            v-for="(rl, idx) in GlobalAsideRouteLinks"
+                            v-for="(rl, idx) in GlobalAsideNavItems"
                             :key="idx"
                             :icon="rl.icon"
                             :route="rl.route"
@@ -71,3 +70,4 @@ const visible = computed({
     }
 }
 </style>
+

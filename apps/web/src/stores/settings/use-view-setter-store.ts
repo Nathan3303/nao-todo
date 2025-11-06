@@ -1,10 +1,9 @@
 import { defineStore, storeToRefs } from 'pinia'
-import { useViewStore, useUserStoreV2 } from '@/stores/global'
+import { useViewStore } from '@/stores/global'
 
 const useViewSetterStore = defineStore('ViewSetterStore', () => {
     // @stores 全局 stores
     const viewStore = useViewStore()
-    const userStore = useUserStoreV2()
 
     // @states 前置状态
     const {
@@ -13,18 +12,15 @@ const useViewSetterStore = defineStore('ViewSetterStore', () => {
         isUseFloatTasksOutlineDefaultly,
         landingPage
     } = storeToRefs(viewStore)
-    const { user } = storeToRefs(userStore)
 
     // @methods 更新 Tasks 界面是否默认使用浮动侧边栏
     const updateIsUseFloatSettingsAsideDefaultly = (newValue: boolean) => {
-        if (!user.value?.preference?.isUseFloatAsideDefaultly?.tasks) return
-        user.value.preference.isUseFloatAsideDefaultly.tasks = newValue
+        isUseFloatSettingsAsideDefaultly.value = newValue
     }
 
     // @methods 更新 Tasks 界面是否默认使用浮动详情栏
     const updateIsUseFloatTasksOutlineDefaultly = (newValue: boolean) => {
-        if (!user.value?.preference?.isUseFloatOutlineDefaultly?.tasks) return
-        user.value.preference.isUseFloatOutlineDefaultly.tasks = newValue
+        isUseFloatTasksOutlineDefaultly.value = newValue
     }
 
     // @returns
@@ -39,5 +35,4 @@ const useViewSetterStore = defineStore('ViewSetterStore', () => {
 })
 
 export default useViewSetterStore
-
 

@@ -11,7 +11,7 @@
 <script lang="ts" setup>
 import { watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUserStoreV2 } from '@/stores/global'
+import { useUserStoreV2, useUserSettingsStore } from '@/stores/global'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/utils'
 import { useAxios } from '@nao-todo/hooks'
@@ -30,7 +30,16 @@ watchEffect(async () => {
         await router.replace('/auth/signin')
         return false
     }
-    await router.replace(atob(props.fromUrlBase64) || '/')
+    // 获取用户落地页，若用户未设置落地页，则跳转到任务页
+    const userSettingsStore = useUserSettingsStore()
+    const landingPage = userSettingsStore.userPreference.landingPage
+    // console.log('landingPage', landingPage)
+    if (landingPage) {
+        await router.replace({ name: landingPage })
+    } else {
+        await router.replace(atob(props.fromUrlBase64) || '/')
+    }
     return res
 })
 </script>
+

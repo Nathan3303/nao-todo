@@ -13,6 +13,7 @@ import {
     updateNicknameApi,
     updatePasswordApi
 } from '@nao-todo/apis/v2'
+import useUserSettingsStore from './use-user-settings-store'
 import type { User, SigninOptions, SignupOptions, GoLike, Requester, Err } from '@nao-todo/types'
 
 // @constants 相关常量
@@ -28,6 +29,7 @@ const USER_PASSWORD_REGEXP = /^\S*(?=\S{8})(?=\S*\d)(?=\S*[a-z])(?=\S*[!@#$%^&*?
 const useUserStoreV2 = defineStore('UserStore', () => {
     // @stores 全局 stores
     const router = useRouter()
+    const userSettingsStore = useUserSettingsStore()
 
     // @state 请求器
     const requester = useAxios('http://localhost:3303/api/user/')
@@ -75,12 +77,9 @@ const useUserStoreV2 = defineStore('UserStore', () => {
             user.value = getJWTPayload(jwt) as User
             userJwt.value = jwt
             isAuthenticated.value = true
-            // 临时插入用户偏好设置
-            user.value.preference = {
-                isUseFloatAsideDefaultly: { tasks: false, settings: false },
-                isUseFloatOutlineDefaultly: { tasks: false },
-                landingPage: { tasks: 'today' }
-            }
+            // 处理用户偏好
+            userSettingsStore.userId = user.value?.id || ''
+            userSettingsStore.getUserPreferenceFromLocalStorage()
             // 返回登录成功
             return null
         }
@@ -105,12 +104,9 @@ const useUserStoreV2 = defineStore('UserStore', () => {
             user.value = getJWTPayload(jwt) as User
             userJwt.value = jwt
             isAuthenticated.value = true
-            // 临时插入用户偏好设置
-            user.value.preference = {
-                isUseFloatAsideDefaultly: { tasks: false, settings: false },
-                isUseFloatOutlineDefaultly: { tasks: false },
-                landingPage: { tasks: 'today' }
-            }
+            // 处理用户偏好
+            userSettingsStore.userId = user.value?.id || ''
+            userSettingsStore.getUserPreferenceFromLocalStorage()
             // 返回登录成功
             return [true, null]
         }
@@ -252,4 +248,6 @@ const useUserStoreV2 = defineStore('UserStore', () => {
 })
 
 export default useUserStoreV2
+
+
 

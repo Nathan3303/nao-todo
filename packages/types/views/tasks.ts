@@ -25,8 +25,8 @@ type TasksMainBasicViewNames =
     | 'week'
     | 'inbox'
     | 'favorite'
-    | 'giveup'
-    | 'recycle'
+    | 'deleted'
+    | 'overdue'
 
 type TasksMultiSelectInfo = {
     isShowMultiDetails: boolean
@@ -39,3 +39,4 @@ export type {
     TasksMainBasicViewNames,
     TasksMultiSelectInfo
 }
+

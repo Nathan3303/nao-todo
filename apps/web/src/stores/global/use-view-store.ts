@@ -1,7 +1,7 @@
 import { computed, reactive, ref } from 'vue'
 import { defineStore, storeToRefs } from 'pinia'
 import useTodoStore from './use-todo-store'
-import useUserStore from './use-user-store-v2'
+import useUserSettingsStore from './use-user-settings-store'
 import type { UserPreference } from '@nao-todo/types'
 
 const ASIDE_WIDTH_LSKEY = 'GLOBAL_ASIDE_WIDTH'
@@ -9,11 +9,11 @@ const OUTLINE_WIDTH_LSKEY = 'GLOBAL_OUTLINE_WIDTH'
 
 const useViewStore = defineStore('viewStore', () => {
     // @stores 全局 stores
-    const userStore = useUserStore()
     const todoStore = useTodoStore()
+    const userSettingsStore = useUserSettingsStore()
 
     // @states 前置状态
-    const { user } = storeToRefs(userStore)
+    const { userPreference } = storeToRefs(userSettingsStore)
 
     // @states 响应式标记 -  0: 移动端 | 1-2: 移动端 (平板) | 3-4: 桌面端 | 5: 桌面端 (大屏) | 6: 电视
     const responsiveFlag = ref<number>(2)
@@ -60,48 +60,37 @@ const useViewStore = defineStore('viewStore', () => {
     }
 
     // @state 是否显示应用级的侧边栏
-    const appAsideStates = reactive({
-        floating: false,
-        visible: false
-    })
+    const appAsideStates = reactive({ floating: false, visible: false })
 
     // @state 任务界面侧边栏默认值
     const isUseFloatTasksAsideDefaultly = computed({
-        get: () => user.value?.preference?.isUseFloatAsideDefaultly?.tasks ?? false,
+        get: () => userPreference.value.isUseFloatAsideDefaultly.tasks,
         set: (newValue: boolean) => {
-            if (user.value?.preference?.isUseFloatAsideDefaultly) {
-                user.value.preference.isUseFloatAsideDefaultly.tasks = newValue
-            }
+            userPreference.value.isUseFloatAsideDefaultly.tasks = newValue
         }
     })
 
     // @state 任务界面任务详情侧边栏默认值
     const isUseFloatTasksOutlineDefaultly = computed({
-        get: () => user.value?.preference?.isUseFloatOutlineDefaultly?.tasks ?? false,
+        get: () => userPreference.value.isUseFloatOutlineDefaultly.tasks,
         set: (newValue: boolean) => {
-            if (user.value?.preference?.isUseFloatOutlineDefaultly) {
-                user.value.preference.isUseFloatOutlineDefaultly.tasks = newValue
-            }
+            userPreference.value.isUseFloatOutlineDefaultly.tasks = newValue
         }
     })
 
     // @state 设置界面侧边栏默认值
     const isUseFloatSettingsAsideDefaultly = computed({
-        get: () => user.value?.preference?.isUseFloatAsideDefaultly?.settings ?? false,
+        get: () => userPreference.value.isUseFloatAsideDefaultly.settings,
         set: (newValue: boolean) => {
-            if (user.value?.preference?.isUseFloatAsideDefaultly) {
-                user.value.preference.isUseFloatAsideDefaultly.settings = newValue
-            }
+            userPreference.value.isUseFloatAsideDefaultly.settings = newValue
         }
     })
 
     // @state 用户落地页偏好
     const landingPage = computed({
-        get: () => user.value?.preference?.landingPage,
+        get: () => userPreference.value.landingPage,
         set: (newValue: UserPreference['landingPage']) => {
-            if (user.value?.preference?.landingPage) {
-                user.value.preference.landingPage = newValue
-            }
+            userPreference.value.landingPage = newValue
         }
     })
 
@@ -124,5 +113,4 @@ const useViewStore = defineStore('viewStore', () => {
 })
 
 export default useViewStore
-
 

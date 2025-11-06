@@ -35,14 +35,3 @@ const hideAsideButtonIcon = computed(() => {
         </nue-main>
     </nue-container>
 </template>
-
-<style scoped>
-#SettingsViewContainer {
-    height: 100%;
-
-    > .nue-header,
-    > .nue-main {
-        border: none;
-    }
-}
-</style>

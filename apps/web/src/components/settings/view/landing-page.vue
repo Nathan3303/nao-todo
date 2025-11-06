@@ -1,44 +1,39 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { basicViewProps } from '@/stores/tasks/constants'
-import { useViewSetterStore } from '@/stores/settings'
 import { storeToRefs } from 'pinia'
+import { GlobalAsideNavItems } from '@/stores/global/constants'
+import { useViewSetterStore } from '@/stores/settings'
 
 defineOptions({ name: 'SettingsViewLandingPage' })
 
 // @stores 视图设置 store
 const viewSetterStore = useViewSetterStore()
-const { landingPage: userLandingPage } = storeToRefs(viewSetterStore)
+
+// @state 用户偏好中的默认落地页
+const { landingPage } = storeToRefs(viewSetterStore)
 
 // @state 默认落地页
-const defaultLandingPages = { tasks: 'all' }
-
-const landingPage = computed({
-    get: () => userLandingPage.value || defaultLandingPages,
-    set: (newValue) => (userLandingPage.value = newValue)
-})
-const tasksLandingPageOptions = basicViewProps.map((item) => {
-    return { icon: item.icon, label: item.name, value: item.id }
-})
+const landingPageOptions = GlobalAsideNavItems.map((item) => ({
+    icon: item.icon,
+    label: item.name,
+    value: item.routeName
+}))
 </script>
 
 <template>
     <nue-div theme="card" vertical>
-        <nue-text size="var(--nue-text-md)">设置默认初始页</nue-text>
-        <nue-divider />
         <nue-div vertical gap=".5rem">
             <nue-div align="start" justify="space-between" gap="2rem">
                 <nue-div vertical gap=".25rem">
                     <nue-text color="var(--nue-primary-color-800)" size="var(--nue-text-df)">
-                        任务界面默认初始页
+                        落地页设置
                     </nue-text>
                     <nue-text color="var(--nue-primary-color-500)" size="var(--nue-text-xs)">
-                        设置当用户访问任务界面时，默认跳转显示的页面。
+                        设置访问应用时默认跳转的页面。
                     </nue-text>
                 </nue-div>
-                <nue-select v-model="landingPage.tasks" size="small" placement="bottom-end">
+                <nue-select v-model="landingPage" size="small" placement="bottom-end">
                     <nue-select-option
-                        v-for="item in tasksLandingPageOptions"
+                        v-for="item in landingPageOptions"
                         :key="item.value"
                         :value="item.value"
                         :label="item.label"

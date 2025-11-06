@@ -6,6 +6,7 @@ import useEventStore from './use-event-store'
 import useCommentStore from './use-comment-store'
 import { pingServerByXHR } from './requester'
 import useViewStore from './use-view-store'
+import useUserSettingsStore from './use-user-settings-store'
 
 export {
     useUserStoreV2,
@@ -15,5 +16,7 @@ export {
     useEventStore,
     useCommentStore,
     pingServerByXHR,
-    useViewStore
+    useViewStore,
+    useUserSettingsStore
 }
+

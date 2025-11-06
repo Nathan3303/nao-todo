@@ -52,12 +52,12 @@
             >
                 已收藏
             </nao-router-link>
-            <nao-router-link
+            <!-- <nao-router-link
                 icon="clear"
                 :route="{ name: 'tasks-basic', params: { viewId: 'givenup' } }"
             >
                 已放弃
-            </nao-router-link>
+            </nao-router-link> -->
             <nao-router-link
                 icon="delete"
                 :route="{ name: 'tasks-basic', params: { viewId: 'deleted' } }"
