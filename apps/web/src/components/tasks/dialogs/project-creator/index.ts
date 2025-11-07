@@ -2,7 +2,6 @@ import { defineAsyncComponent } from 'vue'
 
 export default defineAsyncComponent({
     loader: () => import('./project-creator.vue'),
-    delay: 0,
-    timeout: 10000
+    delay: 1000
 })
 

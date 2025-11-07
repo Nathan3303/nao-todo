@@ -1,4 +1,5 @@
-import Table from './table.vue'
+import { defineAsyncComponent } from 'vue'
+// import Table from './table.vue'
 
-export const TodoTable = Table
+export const TodoTable = defineAsyncComponent(() => import('./table.vue'))
 export type * from './types'

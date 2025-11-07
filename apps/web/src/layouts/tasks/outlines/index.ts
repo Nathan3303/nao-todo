@@ -1,3 +1,6 @@
-import TasksOutline from './index.vue'
+import { defineAsyncComponent } from 'vue'
+// import TasksOutline from './index.vue'
 
-export default TasksOutline
+export default defineAsyncComponent(() => import('./index.vue'))
+// export default TasksOutline
+
