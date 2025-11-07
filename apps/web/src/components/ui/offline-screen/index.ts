@@ -1,3 +1,6 @@
-import OfflineScreen from './offline-screen.vue'
+import { defineAsyncComponent } from 'vue'
+
+const OfflineScreen = defineAsyncComponent(() => import('./offline-screen.vue'))
 
 export { OfflineScreen }
+

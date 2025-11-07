@@ -1,5 +1,8 @@
-import FilterSmartList from './filter-smart-list.vue'
-import ProjectSmartList from './project-smart-list.vue'
-import TagSmartList from './tag-smart-list.vue'
+import { defineAsyncComponent } from 'vue'
+
+const FilterSmartList = defineAsyncComponent(() => import('./filter-smart-list.vue'))
+const ProjectSmartList = defineAsyncComponent(() => import('./project-smart-list.vue'))
+const TagSmartList = defineAsyncComponent(() => import('./tag-smart-list.vue'))
 
 export { FilterSmartList, ProjectSmartList, TagSmartList }
+

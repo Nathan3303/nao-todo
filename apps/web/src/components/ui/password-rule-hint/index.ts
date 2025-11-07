@@ -1,3 +1,5 @@
-import PasswordRuleHint from './password-rule-hint.vue'
+import { defineAsyncComponent } from 'vue'
+
+const PasswordRuleHint = defineAsyncComponent(() => import('./password-rule-hint.vue'))
 
 export { PasswordRuleHint }
