@@ -136,6 +136,8 @@ const useTasksDataStore = defineStore('TasksDataStore', () => {
         createEvent: eventStore.createEvent,
         updateEvent: eventStore.updateEvent,
         deleteEvent: eventStore.deleteEvent,
+        updateEvents: eventStore.updateEvents,
+        sortEventOnly: eventStore.sortEventOnly,
         // comment
         comments,
         getComments: commentStore.getComments,

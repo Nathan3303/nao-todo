@@ -75,7 +75,7 @@ const handleFinish = () => {
         <nue-div vertical>
             <todo-check-button :is-done="isDone" @change="handleFinish" size="large" />
         </nue-div>
-        <nue-div vertical gap=".5rem" flex="1">
+        <nue-div vertical gap=".5rem" flex="1" overflow="hidden">
             <nue-div class="todo-card__info">
                 <nue-div align="center">
                     <nue-text class="todo-card__name" :clamped="1">{{ todo.name }}</nue-text>

@@ -136,7 +136,7 @@
                         gap: 0.25rem;
 
                         .todo-card__name {
-                            word-break: keep-all;
+                            word-break: break-all;
                             white-space: pre;
                             font-size: var(--nue-text-sm);
                             line-height: var(--nue-text-xl);
@@ -208,3 +208,4 @@
         }
     }
 }
+

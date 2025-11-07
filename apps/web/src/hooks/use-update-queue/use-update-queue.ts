@@ -1,5 +1,4 @@
 import { computed, ref } from 'vue'
-// import { useTodoStore } from '@/stores/global'
 import { type Err } from '@nao-todo/types'
 
 // @type 更新队列项
@@ -13,9 +12,6 @@ type UpdateQueueError = UpdateQueueItem & { error: Err }
 
 // @type 更新队列项重复处理函数 - 当多个更新队列项指向同一个任务时可以通过此函数处理
 type DuplicateHandler = (item: UpdateQueueItem) => UpdateQueueItem
-
-// @store TodoStore
-// const todoStore = useTodoStore()
 
 // @state 更新队列延时器
 let timer: number | null = null
@@ -33,19 +29,7 @@ const useUpdateQueue = (handler: (item: UpdateQueueItem) => Promise<Err>, delay:
         const item = updateQueue.value.shift()
         if (item) {
             console.log('[UseUpdateQueue] shiftAndRun:', item.id, item.updateOptions)
-            // if (handler) {
             handler(item)
-            // }
-            // else {
-            //     const err = await todoStore.updateTodo(item.todoId, item.updateOptions)
-            //     if (err) {
-            //         errors.value.push({
-            //             todoId: item.todoId,
-            //             updateOptions: item.updateOptions,
-            //             error: err
-            //         })
-            //     }
-            // }
         }
         timer = null
         if (updateQueue.value.length) {
@@ -95,3 +79,4 @@ const useUpdateQueue = (handler: (item: UpdateQueueItem) => Promise<Err>, delay:
 }
 
 export default useUpdateQueue
+

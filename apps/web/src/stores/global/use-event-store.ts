@@ -6,14 +6,16 @@ import {
     createEventHandler,
     getEventsHandler,
     updateEventHandler,
-    deleteEventHandler
+    deleteEventHandler,
+    updateEventsHandler
 } from '@nao-todo/handlers/v1'
 import type {
     CreateEventOptions,
     Err,
     GetEventsOptions,
     Event,
-    UpdateEventOptions
+    UpdateEventOptions,
+    UpdateEventsOptions
 } from '@nao-todo/types'
 
 const useEventStore = defineStore('EventStore', () => {
@@ -30,8 +32,11 @@ const useEventStore = defineStore('EventStore', () => {
             console.error(unwrapError(err))
             return err
         }
+        if (!res) return '检查事项列表获取失败'
         // 处理成功结果
         events.value = res || []
+        // 排序检查事项
+        sortEventOnly()
         return null
     }
 
@@ -72,6 +77,21 @@ const useEventStore = defineStore('EventStore', () => {
         return null
     }
 
+    // @method 更新多个检查事项
+    const updateEvents = async (options: UpdateEventsOptions): Promise<Err> => {
+        // 参数判断
+        if (!options.length) return '检查事项更新选项不能为空'
+        // 更新检查事项
+        const [, err] = await updateEventsHandler(options, requester)
+        // 处理失败结果
+        if (err) {
+            console.error(unwrapError(err))
+            return err
+        }
+        // 处理成功结果
+        return null
+    }
+
     // @method 删除检查事项
     const deleteEvent = async (eventId: Event['id']): Promise<Err> => {
         // 参数判断
@@ -107,6 +127,11 @@ const useEventStore = defineStore('EventStore', () => {
     //     })) as Err
     // }
 
+    // @method 更新检查事项排序
+    const sortEventOnly = () => {
+        events.value.sort((a, b) => a.sortId - b.sortId)
+    }
+
     // @method 清除必要的状态
     const __resetStates = () => {
         events.value = [] as Event[]
@@ -119,8 +144,11 @@ const useEventStore = defineStore('EventStore', () => {
         createEvent,
         updateEvent,
         deleteEvent,
+        updateEvents,
+        sortEventOnly,
         __resetStates
     }
 })
 
 export default useEventStore
+

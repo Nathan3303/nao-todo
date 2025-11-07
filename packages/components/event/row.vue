@@ -55,7 +55,8 @@ const handleDelete = async () => {
 </script>
 
 <template>
-    <nue-div theme="event-row" auto-fit>
+    <nue-div theme="event-row">
+        <nue-icon theme="drag-icon" name="more-vertical" draggable="true" />
         <nue-icon
             theme="pointer"
             :name="updateLoading ? 'loading' : event.isDone ? 'square-check-fill' : 'square'"
@@ -83,13 +84,33 @@ const handleDelete = async () => {
 </template>
 
 <style scoped>
-.nue-div.nue-div--event-row {
-    width: 100%;
+.nue-div--event-row {
+    display: flex;
+    width: calc(100% + 2rem);
     gap: 0.5rem;
+    padding: 0 1rem;
+    margin-left: -1rem;
     align-items: center;
+    position: relative;
 
     .nue-icon--pointer {
         cursor: pointer;
+    }
+
+    > .nue-icon--drag-icon {
+        display: flex;
+        height: 100%;
+        align-items: center;
+        justify-content: center;
+        cursor: grabbing;
+        position: absolute;
+        left: 0;
+        opacity: 0;
+        font-weight: bold;
+
+        &:hover {
+            opacity: 1;
+        }
     }
 
     > .nue-input--small {
@@ -107,6 +128,8 @@ const handleDelete = async () => {
 
     > .nue-div--actions {
         visibility: hidden;
+        gap: 0.25rem;
+        align-items: center;
 
         @media (max-width: 445px) {
             display: block;
@@ -115,10 +138,14 @@ const handleDelete = async () => {
 
     &:hover,
     &:focus-within {
-        box-shadow: 0 1px rgba(0, 0, 0, 0.3);
+        background-color: var(--nue-primary-color-100);
 
         > .nue-div--actions {
             visibility: visible;
+        }
+
+        > .nue-icon--drag-icon {
+            opacity: 1;
         }
     }
 }

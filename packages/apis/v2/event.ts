@@ -5,7 +5,8 @@ import type {
     GetEventsOptions,
     Requester,
     ResponseData,
-    UpdateEventOptions
+    UpdateEventOptions,
+    UpdateEventsOptions
 } from '@nao-todo/types'
 
 export const createEventApiV2 = async (requester: Requester, options: CreateEventOptions) => {
@@ -53,3 +54,14 @@ export const getEventsApiV2 = async (requester: Requester, options: GetEventsOpt
         return { code: 500, message: '服务器错误' } as ResponseData
     }
 }
+
+export const updateEventsApiV2 = async (requester: Requester, options: UpdateEventsOptions) => {
+    try {
+        const response = await requester.put(`/events/`, { updates: options })
+        return response.data as ResponseData
+    } catch (error) {
+        console.error('[@nao-todo/apis/update-events-v2]', error)
+        return { code: 500, message: '服务器错误' } as ResponseData
+    }
+}
+

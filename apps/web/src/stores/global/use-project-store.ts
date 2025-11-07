@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/utils'
 import { requester } from './requester'
+import { useUpdateQueue, type UpdateQueueItem } from '@/hooks'
 import type {
     Err,
     GetProjectsOptions,
@@ -24,6 +25,11 @@ import {
 const useProjectStore = defineStore('ProjectStore', () => {
     // @state 清单列表（应该被应用于整个视图）
     const projects = ref<Project[]>([])
+
+    // @hook useUpdateQueue 清单更新队列
+    const updateProjectQueue = useUpdateQueue(async (item: UpdateQueueItem) => {
+        return await updateProject(item.id, item.updateOptions)
+    }, 2000)
 
     // @method 获取单个清单
     const getProject = async (projectId: Project['id']): Promise<GoLike<Project | null>> => {
@@ -299,6 +305,7 @@ const useProjectStore = defineStore('ProjectStore', () => {
         restoreProjectWithConfirm,
         deleteProjectPermanentlyWithConfirm,
         updateProject,
+        updateProjectQueue,
         updateProjectPreference,
         getProjectNameById,
         __resetStates

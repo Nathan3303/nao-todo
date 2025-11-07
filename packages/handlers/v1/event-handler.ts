@@ -2,7 +2,8 @@ import {
     createEventApiV2,
     getEventsApiV2,
     updateEventApiV2,
-    deleteEventApiV2
+    deleteEventApiV2,
+    updateEventsApiV2
 } from '@nao-todo/apis/v2'
 import type {
     CreateEventOptions,
@@ -10,15 +11,15 @@ import type {
     GoLike,
     Requester,
     Event,
-    UpdateEventOptions
+    UpdateEventOptions,
+    UpdateEventsOptions
 } from '@nao-todo/types'
 
 const CREATE_EVENT_SUCCESS_CODE = 50010
 const GET_EVENTS_SUCCESS_CODE = 50000
 const UPDATE_EVENT_SUCCESS_CODE = 50020
 const DELETE_EVENT_SUCCESS_CODE = 50030
-// const GET_EVENT_SUCCESS_CODE = 50000
-// const RESTORE_EVENT_SUCCESS_CODE = 50040
+const UPDATE_EVENTS_SUCCESS_CODE = 50040
 
 export const createEventHandler = async (
     createOptions: CreateEventOptions,
@@ -39,7 +40,7 @@ export const createEventHandler = async (
 export const getEventsHandler = async (
     getOptions: GetEventsOptions,
     requester: Requester
-): Promise<GoLike> => {
+): Promise<GoLike<Event[] | null>> => {
     // 调用 API 获取检查事项列表
     const apiRes = await getEventsApiV2(requester, getOptions)
     // 处理成功结果
@@ -78,3 +79,19 @@ export const deleteEventHandler = async (
     // 处理失败结果
     return [null, apiRes.message]
 }
+
+export const updateEventsHandler = async (
+    options: UpdateEventsOptions,
+    requester: Requester
+): Promise<GoLike> => {
+    // 调用 API 更新检查事项列表
+    const apiRes = await updateEventsApiV2(requester, options)
+    // 处理成功结果
+    if (apiRes.code === UPDATE_EVENTS_SUCCESS_CODE) {
+        return [apiRes.data, null]
+    }
+    // 处理失败结果
+    return [null, apiRes.message]
+}
+
+

@@ -4,10 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useTodoStore } from '@/stores/global'
 import { useTasksDataStore, useTasksViewStore } from '@/stores/tasks'
 import { unwrapError, unwrapErrors } from '@nao-todo/utils'
-// import { useupdateTodoQueue, type updateTodoQueueItem } from '@/hooks'
 import { NueMessage } from 'nue-ui'
 import type { Todo, UpdateTodoOptions, Comment, Event } from '@nao-todo/types'
-import type { InputButtonSubmitPayload, TodoEventRowUpdatePayload } from '@nao-todo/components'
 
 const useTodoDetailsStore = defineStore('TodoDetailsStore', () => {
     // @stores 全局 stores
@@ -94,21 +92,6 @@ const useTodoDetailsStore = defineStore('TodoDetailsStore', () => {
         return { percentage, text }
     })
 
-    // @state 更新队列
-    // const updateTodoQueue = useupdateTodoQueue(async (item: updateTodoQueueItem) => {
-    //     // 更新待办任务
-    //     const err = await todoStore.updateTodo(item.id, item.updateOptions)
-    //     // 处理失败结果
-    //     if (err) {
-    //         console.error(unwrapError(err))
-    //         return
-    //     }
-    //     // 修改待办任务更新时间
-    //     if (todo.value) {
-    //         todo.value.updatedAt = new Date().toISOString()
-    //     }
-    // })
-
     // @method 更新待办任务截止时间
     const updateTodoEndAt = async (endAt: Todo['endAt']) => {
         if (!todo.value) return
@@ -167,7 +150,7 @@ const useTodoDetailsStore = defineStore('TodoDetailsStore', () => {
     }
 
     // @method 处理创建待办任务检查事项
-    const handleCreateEvent = async (payload: InputButtonSubmitPayload) => {
+    const handleCreateEvent = async (payload: { value: string }) => {
         const _todoId = todo.value?.id
         if (!_todoId) {
             NueMessage.error('添加检查事项失败')
@@ -180,7 +163,7 @@ const useTodoDetailsStore = defineStore('TodoDetailsStore', () => {
     }
 
     // @method 处理更新待办任务检查事项
-    const handleUpdateEvent = async (payload: TodoEventRowUpdatePayload) => {
+    const handleUpdateEvent = async (payload: { id: string; name: string; isDone: boolean }) => {
         return await tasksDataStore.updateEvent(payload.id, {
             name: payload.name,
             isDone: payload.isDone
@@ -251,6 +234,36 @@ const useTodoDetailsStore = defineStore('TodoDetailsStore', () => {
         else return '正常'
     })
 
+    // @method 更新待办任务检查事项排序
+    const handleResortEvents = async (origin: number, target: number, isUp: boolean) => {
+        const originEvent = events.value[origin]
+        const targetEvent = events.value[target]
+        if (!originEvent || !targetEvent) return
+        // 处理上升排序
+        if (isUp) {
+            if (originEvent.sortId >= targetEvent.sortId) {
+                originEvent.sortId = targetEvent.sortId - 1
+            }
+        } else {
+            if (originEvent.sortId <= targetEvent.sortId) {
+                originEvent.sortId = targetEvent.sortId + 1
+            }
+        }
+        // 更新检查事项排序
+        // updateTodoQueue.insertItem({ id: todo.value.id, updateOptions: { events: events.value } })
+        const err = await tasksDataStore.updateEvents([
+            { eventId: originEvent.id, sortId: originEvent.sortId },
+            { eventId: targetEvent.id, sortId: targetEvent.sortId }
+        ])
+        // 处理更新失败
+        if (err) {
+            NueMessage.error('检查事项排序更新失败')
+            return
+        }
+        // 重新排序检查事项
+        tasksDataStore.sortEventOnly()
+    }
+
     // @returns
     return {
         todo,
@@ -270,6 +283,7 @@ const useTodoDetailsStore = defineStore('TodoDetailsStore', () => {
         handleDeleteTodoPermenantly,
         handleDeleteTodo: tasksDataStore.deleteTodo,
         handleRestoreTodo: tasksDataStore.restoreTodo,
+        handleDuplicateTodo,
         handleCreateEvent,
         handleUpdateEvent,
         handleDeleteEvent,
@@ -280,10 +294,11 @@ const useTodoDetailsStore = defineStore('TodoDetailsStore', () => {
         handleEnterNewLine: () => (commentContent.value += '\n'),
         handleEditComment,
         handleDeleteComment,
-        handleDuplicateTodo,
         statusText,
-        isUseFloatAside
+        isUseFloatAside,
+        handleResortEvents
     }
 })
 
 export default useTodoDetailsStore
+

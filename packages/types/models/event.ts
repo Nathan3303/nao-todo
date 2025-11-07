@@ -37,6 +37,8 @@ type CreateEventOptions = CreateEventOptionsRaw
 
 type UpdateEventOptions = UpdateEventOptionsRaw
 
+type UpdateEventsOptions = (UpdateEventOptions & { eventId: Event['id'] })[]
+
 type GetEventsOptions = GetEventsOptionsRaw
 
 type DeleteEventOptions = { id: Event['id'] }
@@ -46,6 +48,8 @@ export type {
     CreateEventOptions,
     UpdateEventOptionsRaw,
     UpdateEventOptions,
+    UpdateEventsOptions,
     GetEventsOptions,
     DeleteEventOptions
 }
+
