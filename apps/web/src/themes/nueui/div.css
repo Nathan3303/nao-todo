@@ -1,43 +1,58 @@
-/*!* 项目视图切换 *!*/
-/*.nue-div--view-type-switcher {*/
-/*    width: fit-content;*/
-/*    gap: 0;*/
-/*    padding: 4px;*/
-/*    background-color: #f4f4f5;*/
-/*    border-radius: var(--primary-radius);*/
-/*}*/
+/* Hint */
+.nue-div--hint {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 0.25rem;
+    padding: 0.5rem;
+    border-radius: var(--nue-primary-radius);
+    border: 1px solid var(--nue-primary-color-500);
+    background-color: var(--nue-primary-color-200);
+    color: var(--nue-primary-color-800);
+    user-select: none;
+    -webkit-user-select: none;
 
-/*.nue-div--view-type-switcher .nue-link {*/
-/*    padding: 4px 12px;*/
-/*    height: auto;*/
-/*    color: #66666e;*/
-/*    border-color: transparent;*/
-/*    justify-content: center;*/
-/*    font-size: 14px;*/
+    > .nue-icon {
+        --nue-icon-size: 1rem;
+    }
 
-/*    --hover-background-color: transparent;*/
-/*    --active-background-color: transparent;*/
-/*}*/
+    > .nue-text {
+        font-size: var(--nue-text-xs);
+        line-height: 1.5;
+    }
+}
 
-/*.nue-div--view-type-switcher .nue-link--actived {*/
-/*    background-color: white;*/
-/*    color: #131315;*/
-/*    box-shadow: var(--secondary-shadow);*/
-/*}*/
+/* Block */
+.nue-div--block {
+    gap: 4px;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 4px;
+    width: 100%;
 
-/*!* 密码提示 *!*/
-/*.nue-div--signup-password-hint {*/
-/*    gap: 8px;*/
-/*    padding: 8px 12px;*/
-/*    border-radius: var(--primary-radius);*/
-/*    background-color: var(--primary-color-800);*/
-/*}*/
+    > .nue-text--title {
+        font-size: var(--nue-text-xs);
+        font-weight: 500;
+        color: var(--nue-primary-color-500);
+        padding: 4px 6px;
+        cursor: default;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+}
 
-/*.nue-div--view-header {*/
-/*    width: 100%;*/
-/*    align-items: start;*/
-/*    flex: 1 1 auto;*/
-/*    flex-wrap: nowrap;*/
-/*    gap: 8px;*/
-/*}*/
+/* Form Item */
+.nue-div--form-item {
+    width: min(100%, 25rem);
+    flex-direction: column;
+    gap: 0.5rem;
 
+    > .nue-text--label {
+        font-size: var(--nue-text-sm);
+        color: var(--nue-primary-color-600);
+    }
+
+    > .nue-input {
+        width: 100%;
+    }
+}
