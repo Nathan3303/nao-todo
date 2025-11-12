@@ -37,7 +37,7 @@ const openTodoCreator = () => {
                     style="cursor: pointer"
                     @click="() => tasksViewStore.showTagNameUpdater(viewProps!.id)"
                 >
-                    {{ viewProps.name }}
+                    # {{ viewProps.name }}
                 </nue-text>
             </nue-div>
             <nue-div align="center">

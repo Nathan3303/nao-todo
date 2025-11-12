@@ -58,7 +58,7 @@ const openTodoCreator = () => {
             style="cursor: pointer"
             @click="() => tasksViewStore.showProjectDescriptionUpdater(viewProps!.id)"
         >
-            {{ viewProps.description || '设置清单描述' }}
+            {{ viewProps.description || '该清单没有设置描述信息，点此设置清单描述' }}
         </nue-text>
     </nue-div>
 </template>

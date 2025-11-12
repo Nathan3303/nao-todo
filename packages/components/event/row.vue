@@ -118,6 +118,7 @@ const handleDelete = async () => {
         --nue-input-color: var(--nue-primary-color-800);
         --nue-input-font-size: var(--nue-text-xs);
         flex: 1;
+        border: none;
 
         &[data-is-done='true'] {
             text-decoration: line-through;
