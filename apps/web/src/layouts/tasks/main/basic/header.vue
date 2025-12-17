@@ -29,7 +29,7 @@ const openTodoCreator = () => {
 </script>
 
 <template>
-    <nue-div v-if="viewProps" vertical gap=".5rem" width="100%">
+    <nue-div v-if="viewProps" theme="tasks-header">
         <nue-div align="center">
             <nue-div align="center" flex="1">
                 <nue-button
@@ -37,7 +37,7 @@ const openTodoCreator = () => {
                     theme="icon,ghost"
                     @click="tasksViewStore.switchIsDisplayAside"
                 />
-                <nue-text :clamped="1" theme="pointer" size="var(--nue-text-xxl)">
+                <nue-text theme="pointer,tasks-header__name">
                     {{ viewProps.name }}
                 </nue-text>
             </nue-div>
@@ -54,13 +54,9 @@ const openTodoCreator = () => {
                 <tasks-basic-view-operations-dropdown />
             </nue-div>
         </nue-div>
-        <nue-text
-            v-if="viewProps.description"
-            :clamped="2"
-            color="var(--nue-primary-color-500)"
-            size="var(--nue-text-sm)"
-        >
+        <nue-text v-if="viewProps.description" theme="tasks-header__description">
             {{ viewProps.description }}
         </nue-text>
     </nue-div>
 </template>
+

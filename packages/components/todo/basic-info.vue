@@ -18,20 +18,20 @@ withDefaults(defineProps<TodoBasicInfoProps>(), { icon: 'more2', clamped: 1 })
 </template>
 
 <style scoped>
-.nue-div.nue-div--basic-info {
+.nue-div--basic-info {
     align-items: center;
     gap: 0.25rem;
     flex-wrap: nowrap;
-    color: var(--nue-primary-color-700);
+    color: var(--nue-primary-color-800);
     width: fit-content;
     flex: none;
 
     > .nue-icon {
-        --nue-icon-size: var(--nue-text-df);
+        --nue-icon-size: var(--nue-text-md);
     }
 
     > .nue-text {
-        font-size: var(--nue-text-xs);
+        font-size: var(--nue-text-sm);
     }
 }
 </style>

@@ -27,10 +27,8 @@ const visible = computed({
     <nue-drawer
         v-model="visible"
         ref="drawerRef"
-        min-span="240px"
-        span="min(100%, 256px)"
         open-from="left"
-        theme="outline"
+        theme="float-aside"
         allow-close-by-overlay
     >
         <nue-container id="AppAsideContainer">
@@ -41,9 +39,11 @@ const visible = computed({
                 </nue-div>
             </nue-header>
             <nue-main>
-                <slot>
-                    <nue-empty />
-                </slot>
+                <nue-content>
+                    <slot>
+                        <nue-empty />
+                    </slot>
+                </nue-content>
             </nue-main>
             <nue-footer>
                 <slot name="footer">
@@ -64,9 +64,21 @@ const visible = computed({
 </template>
 
 <style>
-.nue-drawer--outline {
+.nue-drawer.nue-drawer--float-aside {
+    --nue-drawer-span: min(100%, 256px);
+    --nue-drawer-min-span: 240px;
+
     .nue-drawer__header {
         display: none;
+        /* height: auto;
+        padding-top: var(--nue-padding-sm);
+        padding-bottom: var(--nue-padding-sm);  */
+    }
+
+    #AppAsideContainer > .nue-main > .nue-content {
+        display: flex;
+        flex-direction: column;
+        padding: 1rem;
     }
 }
 </style>

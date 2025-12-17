@@ -16,7 +16,7 @@ const { appAsideStates, hasUpdateTasksInQueue, updateTasksQueueCount } = storeTo
 
 <template>
     <nue-aside v-if="!appAsideStates.floating">
-        <nue-div vertical align="center" gap="2rem" height="100%">
+        <nue-div theme="aside-wrapper">
             <nue-tooltip
                 placement="right-center"
                 size="small"
@@ -24,7 +24,7 @@ const { appAsideStates, hasUpdateTasksInQueue, updateTasksQueueCount } = storeTo
             >
                 <nue-avatar :src="user?.avatar" size="2.5rem" />
             </nue-tooltip>
-            <nue-div vertical align="center" gap="1.5rem" flex="1">
+            <nue-div theme="aside__navs">
                 <nue-tooltip
                     v-for="(rl, idx) in GlobalAsideNavItems"
                     :key="idx"
@@ -35,7 +35,7 @@ const { appAsideStates, hasUpdateTasksInQueue, updateTasksQueueCount } = storeTo
                     <nao-router-link :icon="rl.icon" :route="rl.route" icon-link />
                 </nue-tooltip>
             </nue-div>
-            <nue-div vertical align="center" gap="2rem">
+            <nue-div theme="aside__actions">
                 <update-indicator
                     :updating="hasUpdateTasksInQueue"
                     :count="updateTasksQueueCount"
@@ -44,4 +44,26 @@ const { appAsideStates, hasUpdateTasksInQueue, updateTasksQueueCount } = storeTo
         </nue-div>
     </nue-aside>
 </template>
+
+<style scoped>
+.nue-div.nue-div--aside-wrapper {
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    height: 100%;
+
+    .nue-div.nue-div--aside__navs {
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+        flex: auto;
+    }
+
+    .nue-div.nue-div--aside__actions {
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+    }
+}
+</style>
 

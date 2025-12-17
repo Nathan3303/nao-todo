@@ -1,0 +1,22 @@
+/* Dropdown Menu */
+.nue-dropdown.nue-dropdown--menu {
+    width: max-content;
+    padding: 2px;
+
+    .nue-dropdown-wrapper {
+        width: 100%;
+    }
+
+    .nue-dropdown-item {
+        padding: 6px 8px;
+
+        .nue-icon {
+            --nue-icon-size: var(--nue-text-sm);
+        }
+
+        .nue-text {
+            font-size: var(--nue-text-xs);
+        }
+    }
+}
+

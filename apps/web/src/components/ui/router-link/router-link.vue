@@ -1,5 +1,5 @@
 <template>
-    <nue-link :theme="theme" v-bind="$attrs">
+    <nue-link :theme="themes" v-bind="$attrs">
         <slot />
         <template v-if="$slots.append" #append>
             <nue-div align="center" justify="end" width="fit-content" flex="1">
@@ -13,16 +13,13 @@
 import { computed } from 'vue'
 import { NueLink } from 'nue-ui'
 import type { NaoRouterLinkProps } from './types'
-import './router-link.css'
 
 defineOptions({ name: 'NaoRouterLink' })
 const props = defineProps<NaoRouterLinkProps>()
 
-const theme = computed(() => {
-    return {
-        route: true,
-        'route-ico': props.iconLink,
-        [`route-${props.size}`]: props.size
-    }
-})
+const themes = computed(() => ({
+    route: true,
+    'route-icon': props.iconLink,
+    [`route-${props.size}`]: props.size
+}))
 </script>

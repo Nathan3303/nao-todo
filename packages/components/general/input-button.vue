@@ -131,24 +131,25 @@ const handleCancel = () => {
 
 <style scoped>
 .nue-button {
-    --nue-button-font-size: var(--nue-text-xs);
+    font-size: var(--nue-text-sm);
 }
 
 .nue-button--pure {
     --nue-button-disable-background-color: transparent;
-    height: 1.75rem;
-    font-size: var(--nue-text-xs);
+    height: var(--nue-box-size-sm);
+    border: none;
 }
 
-.nue-button--icon-fix :deep(.nue-button__icon) {
-    --nue-icon-size: 1rem;
+.nue-button--icon-fix:deep(.nue-button__icon) {
+    font-size: 1rem;
 }
 
 .nue-input--small {
-    --nue-input-disabled-background-color: transparent;
-    height: 1.75rem;
-    font-size: var(--nue-text-xs);
-    border-width: 0;
+    border: none;
+
+    &:deep(.nue-input__input) {
+        font-size: var(--nue-text-sm);
+    }
 }
 </style>
 

@@ -1,11 +1,15 @@
 .nue-link.nue-link--route {
     --nue-link-font-size: var(--nue-text-xs);
-    --nue-link-icon-size: var(--nue-text-sm);
+    --nue-link-icon-size: 0.9625rem;
     --nue-link-actived-background-color: var(--nue-primary-color-900);
 
     width: 100%;
     min-width: unset;
     overflow: hidden;
+
+    .nue-link__icon::before {
+        line-height: normal;
+    }
 
     .nue-link__content {
         text-overflow: ellipsis;
@@ -33,7 +37,7 @@
         height: auto;
 
         .nue-link__icon {
-            --nue-icon-size: var(--nue-text-xxl);
+            --nue-icon-size: 1.625rem;
             padding: 0;
         }
 
@@ -53,3 +57,4 @@
         background-color: var(--nue-link-actived-background-color);
     }
 }
+

@@ -30,6 +30,7 @@ const {
     getColumnText,
     isTodoExpired,
     getProjectName,
+    resetAndGetTodos,
     handleUpdatePage,
     handleClearSelect,
     handleUpdatePerPage,
@@ -79,6 +80,7 @@ provide<TodoTableContext>(TODO_TABLE_CONTEXT_KEY, {
 // @expose 表格组件暴露的方法
 defineExpose({
     reset: handleClearSelectedId,
+    reload: resetAndGetTodos,
     resetSelect: handleClearSelect
 })
 </script>
@@ -102,3 +104,4 @@ defineExpose({
         <todo-table-footer />
     </nue-container>
 </template>
+

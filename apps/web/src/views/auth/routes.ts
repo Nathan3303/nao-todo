@@ -10,12 +10,12 @@ const routes: RouteRecordRaw = {
         {
             path: 'signin',
             name: 'signin',
-            component: () => import('@/layouts/auth/sign-in.vue')
+            component: () => import('@/views/auth/main/content/sign-in.vue')
         },
         {
             path: 'signup',
             name: 'signup',
-            component: () => import('@/layouts/auth/sign-up.vue')
+            component: () => import('@/views/auth/main/content/sign-up.vue')
         }
     ]
 }

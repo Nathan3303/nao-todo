@@ -23,3 +23,6 @@ export type GoLike<T = any> = [T, Err]
 
 // other
 export type ComponentRef<T> = ComponentPublicInstance<T> | null | undefined
+
+export type * from './auth-app'
+export type * from './user-app'

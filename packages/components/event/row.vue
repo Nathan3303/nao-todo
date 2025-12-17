@@ -87,6 +87,7 @@ const handleDelete = async () => {
 .nue-div--event-row {
     display: flex;
     width: calc(100% + 2rem);
+    height: var(--nue-box-size-sm);
     gap: 0.5rem;
     padding: 0 1rem;
     margin-left: -1rem;
@@ -115,15 +116,18 @@ const handleDelete = async () => {
 
     > .nue-input--small {
         --nue-input-disabled-background-color: transparent;
-        --nue-input-color: var(--nue-primary-color-800);
-        --nue-input-font-size: var(--nue-text-xs);
+        --nue-input-color: var(--nue-primary-color-900);
+        --nue-input-font-size: var(--nue-text-sm);
         flex: 1;
         border: none;
 
         &[data-is-done='true'] {
-            text-decoration: line-through;
-            color: var(--nue-primary-color-500);
-            --nue-input-color: var(--nue-primary-color-500);
+            color: var(--nue-primary-color-600);
+            --nue-input-color: var(--nue-primary-color-600);
+
+            &:deep(.nue-input__input) {
+                text-decoration: line-through;
+            }
         }
     }
 

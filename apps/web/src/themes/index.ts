@@ -1,4 +1,4 @@
-import 'nue-ui/dist/index.css'
-import 'nue-ui-theme-shadlike/dist/all.css'
-import './index.css'
-import './iconfont/iconfont.css'
+import 'nue-ui-iconfont/dist/iconfont.css'
+import 'nue-ui-theme-shadlike/dist/index.css'
+import './patch-01014/index.css'
+

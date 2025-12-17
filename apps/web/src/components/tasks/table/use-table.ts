@@ -174,6 +174,13 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
         getTodos()
     }
 
+    // @method 重新加载待办任务数据
+    const resetAndGetTodos = async (): Promise<boolean> => {
+        page.value = 1
+        tasksDataStore.clearTodos()
+        return getTodos(true)
+    }
+
     // @returns
     return {
         selectedId,
@@ -199,6 +206,8 @@ export const useTodoTable = (props: TodoTableProps, emit: TodoTableEmits) => {
         getProjectName: tasksDataStore.getProjectNameById,
         startRefresh,
         stopRefresh,
-        getColumnText: tasksViewStore.getColumnText
+        getColumnText: tasksViewStore.getColumnText,
+        resetAndGetTodos
     }
 }
+

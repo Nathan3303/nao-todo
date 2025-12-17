@@ -1,0 +1,7 @@
+/* for-ico-btn - patches */
+.nue-badge.nue-badge--for-ico-btn .nue-badge__content:is(sup) {
+    --nue-badge-height: 0.5375rem;
+    transform: translate(-32%, 32%);
+    border-color: transparent;
+    background-color: orange;
+}

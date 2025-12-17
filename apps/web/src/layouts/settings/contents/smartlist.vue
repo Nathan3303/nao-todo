@@ -38,17 +38,17 @@ const hideAsideButtonIcon = computed(() => {
                         <nue-switch v-model="tasksAsideNavLinkVisible.today" theme="small" />
                     </nue-div>
                     <nue-div theme="row">
-                        <nue-icon name="tomorrow2"></nue-icon>
+                        <nue-icon name="tomorrow"></nue-icon>
                         <nue-text>明天</nue-text>
                         <nue-switch v-model="tasksAsideNavLinkVisible.tomorrow" theme="small" />
                     </nue-div>
                     <nue-div theme="row">
-                        <nue-icon name="week3"></nue-icon>
+                        <nue-icon name="week"></nue-icon>
                         <nue-text>本周</nue-text>
                         <nue-switch v-model="tasksAsideNavLinkVisible.week" theme="small" />
                     </nue-div>
                     <nue-div theme="row">
-                        <nue-icon name="inbox"></nue-icon>
+                        <nue-icon name="inbox2-fill"></nue-icon>
                         <nue-text>收集箱</nue-text>
                         <nue-switch v-model="tasksAsideNavLinkVisible.inbox" theme="small" />
                     </nue-div>
@@ -64,17 +64,17 @@ const hideAsideButtonIcon = computed(() => {
                 <nue-divider />
                 <nue-div theme="area">
                     <nue-div theme="row">
-                        <nue-icon name="time"></nue-icon>
+                        <nue-icon name="overdue"></nue-icon>
                         <nue-text>已过期</nue-text>
                         <nue-switch v-model="tasksAsideNavLinkVisible.overdue" theme="small" />
                     </nue-div>
                     <nue-div theme="row">
-                        <nue-icon name="heart"></nue-icon>
+                        <nue-icon name="heart-fill"></nue-icon>
                         <nue-text>已收藏</nue-text>
                         <nue-switch v-model="tasksAsideNavLinkVisible.favorite" theme="small" />
                     </nue-div>
                     <nue-div theme="row">
-                        <nue-icon name="delete"></nue-icon>
+                        <nue-icon name="recycle-bin"></nue-icon>
                         <nue-text>垃圾桶</nue-text>
                         <nue-switch v-model="tasksAsideNavLinkVisible.deleted" theme="small" />
                     </nue-div>

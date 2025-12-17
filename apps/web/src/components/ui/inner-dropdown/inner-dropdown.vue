@@ -42,7 +42,7 @@ const props = withDefaults(defineProps<InnerDropdownProps>(), {
     icon: 'plus-circle',
     closeWhenExecuted: true,
     groupName: 'default',
-    transparent: true
+    transparent: false
 })
 const emit = defineEmits<InnerDropdownEmits>()
 

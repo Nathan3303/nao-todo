@@ -21,7 +21,7 @@ const { events } = storeToRefs(todoDetailsStore)
 </script>
 
 <template>
-    <nue-div theme="event-list" vertical gap="0.25rem" auto-fit>
+    <nue-div theme="event-list" vertical gap="0.2rem" auto-fit>
         <nue-div
             vertical
             gap="0"

@@ -11,20 +11,19 @@
 <script lang="ts" setup>
 import { watchEffect } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUserStoreV2, useUserSettingsStore } from '@/stores/global'
+import { useUserSettingsStore } from '@/stores/global'
+import useAuthAppStore from '@nao-todo/application/auth'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/utils'
-import { useAxios } from '@nao-todo/hooks'
 import { Loading as LoadingComp } from '@nao-todo/components'
 
 const props = defineProps<{ fromUrlBase64: string }>()
 
 const router = useRouter()
-const userStore = useUserStoreV2()
-const request = useAxios('http://localhost:3303/api/user')
+const authAppStore = useAuthAppStore()
 
 watchEffect(async () => {
-    const [, err] = await userStore.checkin(request)
+    const err = await authAppStore.checkIn()
     if (err) {
         NueMessage.error(unwrapError(err))
         await router.replace('/auth/signin')
@@ -41,4 +40,3 @@ watchEffect(async () => {
     await router.replace({ name: landingPage })
 })
 </script>
-

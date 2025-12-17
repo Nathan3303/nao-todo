@@ -3,7 +3,7 @@ import useUserStore from './use-user-store-v2'
 import type { ResponseData } from '@nao-todo/types'
 import { NueMessage } from 'nue-ui'
 
-export const requester = useAxios('http://localhost:3303/api/')
+export const requester = useAxios('http://localhost:3302/api/')
 
 // 注册验证响应拦截器 - 当用户验证未通过时，自动登出并跳转登录页
 requester._instance.interceptors.response.use((response) => {

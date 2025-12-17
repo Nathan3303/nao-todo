@@ -28,12 +28,11 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.nue-container#AppContainer {
-    > .nue-main .nue-aside {
-        align-items: center;
-        width: 70px;
-        min-width: 70px;
-        max-width: 70px;
-    }
+.nue-container#AppContainer > .nue-main .nue-aside {
+    align-items: center;
+    width: 70px;
+    min-width: 70px;
+    max-width: 70px;
 }
 </style>
+

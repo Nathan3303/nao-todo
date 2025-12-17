@@ -2,12 +2,15 @@
 import { useTasksBasicViewStore } from '@/stores/tasks'
 import { TodoTable } from '@/components/tasks/table'
 import { storeToRefs } from 'pinia'
+import { ref } from 'vue'
 
 defineOptions({ name: 'TasksMainBasicViewTable' })
 
 const tasksBasicViewStore = useTasksBasicViewStore()
 
 const { todos, tags, viewProps } = storeToRefs(tasksBasicViewStore)
+
+const todoTableRef = ref<InstanceType<typeof TodoTable>>()
 </script>
 
 <template>
@@ -22,6 +25,7 @@ const { todos, tags, viewProps } = storeToRefs(tasksBasicViewStore)
             />
             <nue-content v-if="viewProps" fill style="overflow: hidden">
                 <todo-table
+                    ref="todoTableRef"
                     :column-options="viewProps.preference.columns"
                     :sort-options="viewProps.preference.getTodosOptions.sort"
                     :tags="tags"
@@ -50,3 +54,4 @@ const { todos, tags, viewProps } = storeToRefs(tasksBasicViewStore)
     }
 }
 </style>
+

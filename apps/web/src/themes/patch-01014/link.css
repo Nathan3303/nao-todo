@@ -1,0 +1,23 @@
+.nue-link > .nue-link__content {
+    color: inherit;
+}
+
+.nue-link.nue-link--route:not(.nue-link--route-icon) {
+    --nue-link-font-size: var(--nue-text-sm);
+
+    > .nue-link__icon {
+        font-size: calc(var(--nue-link-font-size) + 4px);
+        line-height: normal;
+    }
+
+    > .nue-link__content {
+        font-size: var(--nue-link-font-size);
+        line-height: normal;
+    }
+
+    > .nue-link__append {
+        flex: auto;
+        align-items: center;
+        justify-content: end;
+    }
+}

@@ -71,6 +71,7 @@ const handleAddDateByNow = () => {
     .date-selector__input-wrapper {
         gap: 0.5rem;
         padding: 0 0.5rem;
+        height: var(--nue-box-size-sm);
         border-radius: var(--nue-primary-radius);
         border: 1px solid var(--nue-divider-color);
         box-shadow: var(--nue-secondary-shadow);
@@ -84,6 +85,10 @@ const handleAddDateByNow = () => {
                 width: fit-content;
             }
         }
+    }
+
+    .nue-divider {
+        height: calc(100% - .5rem);
     }
 
     &:hover {

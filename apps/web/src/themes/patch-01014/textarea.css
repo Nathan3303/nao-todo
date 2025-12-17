@@ -1,0 +1,13 @@
+/* Fix Padding */
+.nue-textarea.nue-textarea--fix-padding {
+    padding: 12px;
+
+    .nue-textarea__backend-textarea {
+        overflow: hidden;
+    }
+
+    .word-counter {
+        font-size: var(--nue-text-xs);
+        background-color: transparent;
+    }
+}

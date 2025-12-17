@@ -22,17 +22,20 @@
         </template>
         <nue-div vertical align="stretch" gap=".5rem">
             <slot v-if="count">
-                <nao-router-link
+                <nue-link
                     v-for="link in links"
                     :key="link.id"
                     :route="link.route"
                     :icon="link.icon"
+                    theme="route"
                 >
                     {{ link.title }}
                     <template #append>
-                        <slot name="linkAppend" :link="link"></slot>
+                        <nue-div class="nue-link__append">
+                            <slot name="linkAppend" :link="link"></slot>
+                        </nue-div>
                     </template>
-                </nao-router-link>
+                </nue-link>
             </slot>
             <nue-text v-else class="nue-collapse-item__empty-text">
                 {{ emptyText ?? '用清单来分类收集、组织和管理你的待办任务' }}
@@ -42,10 +45,8 @@
 </template>
 
 <script lang="ts" setup>
-import { NaoRouterLink } from '@/components/ui'
 import type { NaoSmartListEmits, NaoSmartListProps } from './types'
 import { computed } from 'vue'
-import './smart-list.css'
 
 defineOptions({ name: 'NaoSmartList' })
 const props = defineProps<NaoSmartListProps>()
@@ -55,3 +56,4 @@ const count = computed(() => {
     return props.count ?? props.links?.length
 })
 </script>
+

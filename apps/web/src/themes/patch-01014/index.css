@@ -1,0 +1,13 @@
+@import './div.css';
+@import './dropdown.css';
+@import './confirm.css';
+@import './textarea.css';
+@import './container.css';
+@import './badge.css';
+@import './link.css';
+@import './collapse.css';
+
+html.nue-html {
+    --nue-primary-font-family: 'Poppins-Regular', 'pf', 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Noto Color Emoji', sans-serif;
+}

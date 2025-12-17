@@ -46,7 +46,7 @@ const basicViewProps: TasksMainViewProps[] = [
     {
         id: 'all',
         category: 'basic',
-        icon: 'list',
+        icon: 'more2',
         name: '所有任务',
         description: '',
         preference: {
@@ -89,7 +89,7 @@ const basicViewProps: TasksMainViewProps[] = [
     {
         id: 'tomorrow',
         category: 'basic',
-        icon: 'tomorrow2',
+        icon: 'tomorrow',
         name: '明日任务',
         description: '',
         preference: {
@@ -135,7 +135,7 @@ const basicViewProps: TasksMainViewProps[] = [
     {
         id: 'inbox',
         category: 'basic',
-        icon: 'inbox',
+        icon: 'inbox2-fill',
         name: '收集箱',
         description: '',
         preference: {
@@ -148,7 +148,7 @@ const basicViewProps: TasksMainViewProps[] = [
     {
         id: 'favourite',
         category: 'basic',
-        icon: 'heart',
+        icon: 'heart-fill',
         name: '收藏夹',
         description: '',
         preference: {
@@ -181,7 +181,7 @@ const basicViewProps: TasksMainViewProps[] = [
     {
         id: 'deleted',
         category: 'basic',
-        icon: 'delete',
+        icon: 'recycle-bin',
         name: '垃圾桶',
         description: '',
         preference: {
@@ -222,4 +222,10 @@ export {
     basicViewDefaultColumns,
     basicViewDefaultColumns as defaultColumnOptions
 }
+
+
+
+
+
+
 

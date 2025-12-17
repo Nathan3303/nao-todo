@@ -32,7 +32,7 @@ const useUserStoreV2 = defineStore('UserStore', () => {
     const userSettingsStore = useUserSettingsStore()
 
     // @state 请求器
-    const requester = useAxios('http://localhost:3303/api/user/')
+    const requester = useAxios('http://localhost:3302/api/')
 
     // @state 用户信息
     const user = ref<User>()

@@ -26,7 +26,7 @@ const openTodoCreator = () => {
 </script>
 
 <template>
-    <nue-div v-if="viewProps" vertical gap=".5rem" width="100%">
+    <nue-div v-if="viewProps" theme="tasks-header">
         <nue-div align="center">
             <nue-div align="center" flex="1">
                 <nue-button
@@ -35,9 +35,7 @@ const openTodoCreator = () => {
                     @click="tasksViewStore.switchIsDisplayAside"
                 />
                 <nue-text
-                    :clamped="1"
-                    size="var(--nue-text-xxl)"
-                    style="cursor: pointer"
+                    theme="pointer,tasks-header__name"
                     @click="() => tasksViewStore.showProjectNameUpdater(viewProps!.id)"
                 >
                     {{ viewProps.name }}
@@ -52,10 +50,7 @@ const openTodoCreator = () => {
             </nue-div>
         </nue-div>
         <nue-text
-            :clamped="2"
-            color="var(--nue-primary-color-500)"
-            size="var(--nue-text-sm)"
-            style="cursor: pointer"
+            theme="pointer,tasks-header__description"
             @click="() => tasksViewStore.showProjectDescriptionUpdater(viewProps!.id)"
         >
             {{ viewProps.description || '该清单没有设置描述信息，点此设置清单描述' }}

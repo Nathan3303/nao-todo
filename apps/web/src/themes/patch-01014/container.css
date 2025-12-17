@@ -1,0 +1,27 @@
+.nue-container {
+    max-width: unset;
+
+    .nue-content {
+        min-width: unset;
+    }
+}
+
+/* In Dialog */
+.nue-container.nue-container--in-dialog {
+    gap: 1rem;
+
+    > .nue-header,
+    > .nue-main,
+    > .nue-footer {
+        border: none;
+        height: auto;
+        padding: 0;
+    }
+
+    > .nue-footer {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-end;
+    }
+}
+
