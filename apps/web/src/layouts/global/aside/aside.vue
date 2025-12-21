@@ -1,28 +1,29 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { useUserStoreV2, useViewStore } from '@/stores/global'
 import { NaoRouterLink } from '@/components/ui'
-import { UpdateIndicator } from '@nao-todo/components'
-import { GlobalAsideNavItems } from '@/stores/global/constants'
+// import { UpdateIndicator } from '@nao-todo/components'
+import { GlobalAsideNavItems } from '@/views/constants'
+import useViewStore from '@/views/view-store'
 
 defineOptions({ name: 'GlobalAside' })
 
-const userStore = useUserStoreV2()
 const viewStore = useViewStore()
+// const viewStore = useViewStore()
 
-const { user } = storeToRefs(userStore)
-const { appAsideStates, hasUpdateTasksInQueue, updateTasksQueueCount } = storeToRefs(viewStore)
+const { userProfile } = storeToRefs(viewStore)
+// const { appAsideStates, hasUpdateTasksInQueue, updateTasksQueueCount } = storeToRefs(viewStore)
 </script>
 
 <template>
-    <nue-aside v-if="!appAsideStates.floating">
+    <!-- <nue-aside v-if="!appAsideStates.floating"> -->
+    <nue-aside>
         <nue-div theme="aside-wrapper">
             <nue-tooltip
                 placement="right-center"
                 size="small"
-                :content="`你好👋，${user?.nickname}！`"
+                :content="`你好👋，${userProfile?.nickname}！`"
             >
-                <nue-avatar :src="user?.avatar" size="2.5rem" />
+                <nue-avatar :src="userProfile?.avatar" size="2.5rem" />
             </nue-tooltip>
             <nue-div theme="aside__navs">
                 <nue-tooltip
@@ -36,10 +37,10 @@ const { appAsideStates, hasUpdateTasksInQueue, updateTasksQueueCount } = storeTo
                 </nue-tooltip>
             </nue-div>
             <nue-div theme="aside__actions">
-                <update-indicator
+                <!-- <update-indicator
                     :updating="hasUpdateTasksInQueue"
                     :count="updateTasksQueueCount"
-                />
+                /> -->
             </nue-div>
         </nue-div>
     </nue-aside>
@@ -66,4 +67,3 @@ const { appAsideStates, hasUpdateTasksInQueue, updateTasksQueueCount } = storeTo
     }
 }
 </style>
-

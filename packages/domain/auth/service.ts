@@ -1,6 +1,6 @@
-import { UserEntity } from './user-entity'
+import type { UserEntity } from './user-entity'
 import type { AuthRepository } from './repositories'
-import type { Err, GoLike } from '@nao-todo/types'
+import type { Err, GoAsync, GoLike } from '@nao-todo/types'
 
 interface AuthDomain {
     signIn(userEntity: UserEntity): Promise<GoLike<string>>
@@ -10,21 +10,17 @@ interface AuthDomain {
 }
 
 export const useAuthDomain = (authRepo: AuthRepository): AuthDomain => {
-    const signIn = async (userEntity: UserEntity): Promise<GoLike<string>> => {
+    const signIn = async (userEntity: UserEntity): GoAsync<string> => {
         const [ePasswd, err] = authRepo.encryptPassword(userEntity.password)
-        if (err) {
-            return ['', err]
-        }
-        userEntity.password = ePasswd
+        if (err) return ['', err]
+        userEntity.password = ePasswd!
         return authRepo.signIn(userEntity)
     }
 
     const signUp = async (userEntity: UserEntity): Promise<Err> => {
         const [ePasswd, err] = authRepo.encryptPassword(userEntity.password)
-        if (err) {
-            return err
-        }
-        userEntity.password = ePasswd
+        if (err) return err
+        userEntity.password = ePasswd!
         return authRepo.signUp(userEntity)
     }
 

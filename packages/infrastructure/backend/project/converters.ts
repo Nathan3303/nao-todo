@@ -1,37 +1,39 @@
-import { ProjectEntity } from '@nao-todo/domain/project/entities'
-import type { CreateProjectRes, GetProjectRes, ListProjectRes } from '../types'
+import {
+    makeProjectEntity,
+    makeProjectPreferenceEntity,
+    type ProjectEntity,
+    type ProjectPreferenceEntity
+} from '@nao-todo/domain/project/entities'
+import type {
+    CreateProjectRes,
+    GetProjectPreferenceRes,
+    GetProjectRes,
+    ListProjectRes
+} from '../types'
 
 export const getProjectRes2ProjectEntity = (res: GetProjectRes): ProjectEntity => {
-    const e = new ProjectEntity()
+    const e = makeProjectEntity()
     e.id = res.id
     e.name = res.name
     e.description = res.description
     e.archivedAt = res.archivedAt
-    // e.createdAt = res.createdAt
-    // e.updatedAt = res.updatedAt
     return e
 }
 
 export const createProjectRes2ProjectEntity = (res: CreateProjectRes): ProjectEntity => {
-    const e = new ProjectEntity()
-    e.id = res.id
-    e.name = res.name
-    e.description = res.description
-    e.archivedAt = res.archivedAt
-    // e.createdAt = res.createdAt
-    // e.updatedAt = res.updatedAt
-    return e
+    return getProjectRes2ProjectEntity(res)
 }
 
 export const listProjectRes2ProjectEntities = (res: ListProjectRes): ProjectEntity[] => {
-    return res.map((p) => {
-        const e = new ProjectEntity()
-        e.id = p.id
-        e.name = p.name
-        e.description = p.description
-        e.archivedAt = p.archivedAt
-        // e.createdAt = p.createdAt
-        // e.updatedAt = p.updatedAt
-        return e
-    })
+    return res.map((project) => getProjectRes2ProjectEntity(project))
+}
+
+export const getProjectPreferenceRes2ProjectPreferenceEntity = (
+    res: GetProjectPreferenceRes
+): ProjectPreferenceEntity => {
+    const e = makeProjectPreferenceEntity()
+    e.viewType = res.viewType
+    e.getTasksOptions = res.getTasksOptions
+    e.columns = res.columns
+    return e
 }

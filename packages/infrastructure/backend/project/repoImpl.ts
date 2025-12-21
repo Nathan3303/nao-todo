@@ -1,15 +1,17 @@
 import {
     createProjectRes2ProjectEntity,
+    getProjectPreferenceRes2ProjectPreferenceEntity,
     getProjectRes2ProjectEntity,
     listProjectRes2ProjectEntities
 } from './converters'
-import { ProjectEntity } from '@nao-todo/domain/project/entities'
+import type { ProjectEntity, ProjectPreferenceEntity } from '@nao-todo/domain/project/entities'
 import type { ProjectRepository } from '@nao-todo/domain/project/repositories'
-import type { Requester } from '../../requester/types'
-import type { Err, GoLike } from '@nao-todo/types'
+import type { Requester } from '@nao-todo/infrastructure/requester'
+import type { Err, GoAsync, GoLike } from '@nao-todo/types'
 import type {
     CreateProjectReq,
     CreateProjectRes,
+    GetProjectPreferenceRes,
     GetProjectRes,
     ListProjectRes,
     ResponseData,
@@ -18,7 +20,7 @@ import type {
 } from '../types'
 
 export const useProjectRepository = (requester: Requester): ProjectRepository => {
-    const get = async (projectId: string): Promise<GoLike<ProjectEntity | null>> => {
+    const get = async (projectId: string): GoAsync<ProjectEntity> => {
         // 1. 调用接口
         const response = await requester.get(`/projects/${projectId}`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
@@ -58,7 +60,7 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
     const update = async (
         projectId: string,
         projectEntity: ProjectEntity
-    ): Promise<GoLike<string | null>> => {
+    ): GoAsync<string> => {
         // 1. 构建 rto
         const rto: UpdateProjectReq = {}
         if (projectEntity.name) rto.name = projectEntity.name
@@ -150,5 +152,23 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
         return [projectEntities, null]
     }
 
-    return { create, get, update, remove, restore, archive, unarchive, list }
+    const getPreference = async (projectId: string): GoAsync<ProjectPreferenceEntity> => {
+        // 1. 调用接口
+        const response = await requester.get(`/projects/${projectId}/preference`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
+        })
+        // 2. 获取结果
+        const res = response.data as ResponseData
+        if (res.code !== 20080) {
+            return [null, res.message]
+        }
+        // 3. 转换为实体
+        const projectPreferenceEntity = getProjectPreferenceRes2ProjectPreferenceEntity(
+            res.data as GetProjectPreferenceRes
+        )
+        // 4. 返回
+        return [projectPreferenceEntity, null]
+    }
+
+    return { create, get, update, remove, restore, archive, unarchive, list, getPreference }
 }

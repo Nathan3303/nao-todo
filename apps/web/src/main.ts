@@ -4,7 +4,7 @@ import { initRequester } from '@nao-todo/infrastructure/requester'
 import router from './router'
 import NueUI from 'nue-ui'
 import App from './App.vue'
-import './themes'
+import '@/infrastructure/themes'
 
 initRequester({ name: 'AxiosRequester', baseURL: 'http://localhost:3302/api' })
 

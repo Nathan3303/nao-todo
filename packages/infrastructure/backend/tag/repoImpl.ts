@@ -1,11 +1,17 @@
-import { createTagRes2TagEntity, getTagRes2TagEntity, listTagRes2TagEntities } from './converters'
-import { TagEntity } from '@nao-todo/domain/tag/entities'
+import {
+    createTagRes2TagEntity,
+    getTagPreferenceRes2TagPreferenceEntity,
+    getTagRes2TagEntity,
+    listTagRes2TagEntities
+} from './converters'
+import { TagEntity, TagPreferenceEntity } from '@nao-todo/domain/tag/entities'
 import type { TagRepository } from '@nao-todo/domain/tag/repositories'
 import type { Requester } from '../../requester/types'
-import type { Err, GoLike } from '@nao-todo/types'
+import type { Err, GoAsync, GoLike } from '@nao-todo/types'
 import type {
     CreateTagReq,
     CreateTagRes,
+    GetTagPreferenceRes,
     GetTagRes,
     ListTagRes,
     ResponseData,
@@ -14,7 +20,7 @@ import type {
 } from '../types'
 
 export const useTagRepository = (requester: Requester): TagRepository => {
-    const get = async (tagId: string): Promise<GoLike<TagEntity | null>> => {
+    const get = async (tagId: string): GoAsync<TagEntity> => {
         // 1. 调用接口
         const response = await requester.get(`/tags/${tagId}`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
@@ -102,5 +108,23 @@ export const useTagRepository = (requester: Requester): TagRepository => {
         return [tagEntities, null]
     }
 
-    return { create, get, update, remove, list }
+    const getPreference = async (tagId: string): GoAsync<TagPreferenceEntity> => {
+        // 1. 调用接口
+        const response = await requester.get(`/tags/${tagId}/preference`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
+        })
+        // 2. 判断结果
+        const res = response.data as ResponseData
+        if (res.code !== 30050) {
+            return [null, res.message]
+        }
+        // 3. 转换为实体
+        const tagPreferenceEntity = getTagPreferenceRes2TagPreferenceEntity(
+            res.data as GetTagPreferenceRes
+        )
+        // 4. 返回
+        return [tagPreferenceEntity, null]
+    }
+
+    return { create, get, update, remove, list, getPreference }
 }

@@ -1,22 +1,14 @@
 <script lang="ts" setup>
-import { onMounted } from 'vue'
-import { useViewStore } from '@/stores/global'
-import { OfflineScreen } from '@/components/ui'
 import { GlobalAside } from '@/layouts/global'
 import { NueContainer } from 'nue-ui'
+import useViewStore from './view-store'
 
 defineOptions({ name: 'AppContainer' })
 
-const viewStore = useViewStore()
-
-// @mounted 初始化 - 隐藏首屏加载器
-onMounted(() => {
-    viewStore.hideFirstLoadingScreen()
-})
+await useViewStore().getProfile()
 </script>
 
 <template>
-    <offline-screen />
     <nue-container id="AppContainer">
         <nue-main>
             <global-aside />
@@ -35,4 +27,3 @@ onMounted(() => {
     max-width: 70px;
 }
 </style>
-

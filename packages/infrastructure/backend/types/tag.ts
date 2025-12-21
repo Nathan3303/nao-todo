@@ -23,3 +23,9 @@ export type UpdateTagReq = {
 export type UpdateTagRes = { tagId: string }
 
 export type ListTagRes = GetTagRes[]
+
+export type GetTagPreferenceRes = {
+    viewType: string
+    getTasksOptions: string
+    columns: string
+}

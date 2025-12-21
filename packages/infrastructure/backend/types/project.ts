@@ -21,3 +21,9 @@ export type UpdateProjectReq = {
 export type UpdateProjectRes = { projectId: string }
 
 export type ListProjectRes = GetProjectRes[]
+
+export type GetProjectPreferenceRes = {
+    viewType: string
+    getTasksOptions: string
+    columns: string
+}

@@ -1,4 +1,4 @@
-import { Err, GoLike } from '@nao-todo/types'
+import type { Err, GoLike } from '@nao-todo/types'
 import { UserEntity } from './user-entity'
 
 export interface UserRepository {

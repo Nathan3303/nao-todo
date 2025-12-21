@@ -25,3 +25,5 @@ export const initRequester = (options: UseRequesterOptions) => {
             break
     }
 }
+
+export type { Requester } from './types'

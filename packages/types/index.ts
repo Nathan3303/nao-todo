@@ -18,11 +18,16 @@ export type * from './views/tasks'
 export type * from './requester'
 
 // Golang like error handling type support
-export type Err = Error | string | Error[] | string[] | null
-export type GoLike<T = any> = [T, Err]
+export type * from './go'
+
+// View objects
+export type * from './viewobjects/auth'
+export type * from './viewobjects/user'
+export type * from './viewobjects/project'
+export type * from './viewobjects/task'
+export type * from './viewobjects/tag'
+
+
 
 // other
 export type ComponentRef<T> = ComponentPublicInstance<T> | null | undefined
-
-export type * from './auth-app'
-export type * from './user-app'

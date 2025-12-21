@@ -1,3 +1,4 @@
-import useAuthAppStore from './auth-app-store'
+import useAuthApp, { type AuthApp } from './auth-app'
 
-export default useAuthAppStore
+export default useAuthApp
+export type { AuthApp }

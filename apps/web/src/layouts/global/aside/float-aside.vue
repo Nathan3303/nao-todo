@@ -1,41 +1,37 @@
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useViewStore, useUserStoreV2 } from '@/stores/global'
-import { GlobalAsideNavItems } from '@/stores/global/constants'
+// import { useViewStore } from '@/stores/global'
+import useViewStore from '@/views/view-store'
+import { GlobalAsideNavItems } from '@/views/constants'
 import { NaoRouterLink } from '@/components/ui'
 import type { NueDrawer } from 'nue-ui'
 
 defineOptions({ name: 'IndexAside' })
 
 const viewStore = useViewStore()
-const userStore = useUserStoreV2()
+// const userStore = useUserStoreV2()
 
-const { appAsideStates } = storeToRefs(viewStore)
-const { user } = storeToRefs(userStore)
+// const { appAsideStates } = storeToRefs(viewStore)
+const { userProfile } = storeToRefs(viewStore)
 const drawerRef = ref<InstanceType<typeof NueDrawer>>()
 
-const visible = computed({
-    get: () => appAsideStates.value.visible,
-    set: (newVisible) => {
-        appAsideStates.value.visible = newVisible
-    }
-})
+// const visible = computed({
+//     get: () => appAsideStates.value.visible,
+//     set: (newVisible) => {
+//         appAsideStates.value.visible = newVisible
+//     }
+// })
 </script>
 
 <template>
-    <nue-drawer
-        v-model="visible"
-        ref="drawerRef"
-        open-from="left"
-        theme="float-aside"
-        allow-close-by-overlay
-    >
+    <!-- v-model="visible" -->
+    <nue-drawer ref="drawerRef" open-from="left" theme="float-aside" allow-close-by-overlay>
         <nue-container id="AppAsideContainer">
             <nue-header>
                 <nue-div align="center">
-                    <nue-avatar :src="user?.avatar" size="2rem" />
-                    <nue-text>{{ user?.nickname }}</nue-text>
+                    <nue-avatar :src="userProfile?.avatar" size="2rem" />
+                    <nue-text>{{ userProfile?.nickname }}</nue-text>
                 </nue-div>
             </nue-header>
             <nue-main>
@@ -82,4 +78,3 @@ const visible = computed({
     }
 }
 </style>
-

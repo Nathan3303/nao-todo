@@ -4,30 +4,36 @@ import type { RouteRecordRaw } from 'vue-router'
 const routes: RouteRecordRaw = {
     path: 'tasks',
     name: 'tasks',
-    component: () => import('./index.vue'),
-    redirect: { name: 'tasks-basic', params: { viewId: 'all' } },
+    component: () => import('./entry.vue'),
     beforeEnter: (to, from, next) => {
-        // 重置浮动侧边栏的显示状态
-        // const viewStore = useViewStore()
-        // viewStore.appAsideStates.visible = false
+        if (to.name === 'tasks') {
+            next({ name: 'tasks-built-in-project', params: { projectId: 'all' } })
+            return
+        }
         next()
     },
     children: [
         {
-            path: `:viewId(all|today|tomorrow|week|inbox|overdue|favourite|givenup|deleted)`,
-            name: 'tasks-basic',
-            meta: { category: 'basic' },
+            path: `:projectId`,
+            name: 'tasks-built-in-project',
+            meta: { category: 'built-in-project' },
             props: true,
-            component: () => import('@/layouts/tasks/main/basic/index.vue'),
+            component: () => import('@/layouts/tasks/content/built-in-project-view/index.vue'),
             children: [
                 {
                     path: ':viewType(table|list|kanban)/:todoId?',
-                    name: 'tasks-basic-main',
-                    meta: { category: 'basic' },
+                    name: 'tasks-built-in-project-main',
+                    meta: { category: 'built-in-project' },
                     props: true,
                     components: {
-                        Header: () => import('@/layouts/tasks/main/basic/header.vue'),
-                        Content: () => import('@/layouts/tasks/main/basic/content.vue')
+                        Header: () =>
+                            import(
+                                '@/layouts/tasks/content/built-in-project-view/header/index.vue'
+                            ),
+                        Content: () =>
+                            import(
+                                '@/layouts/tasks/content/built-in-project-view/content/index.vue'
+                            )
                     }
                 }
             ]
@@ -37,16 +43,16 @@ const routes: RouteRecordRaw = {
             name: 'tasks-project',
             meta: { category: 'project' },
             props: true,
-            component: () => import('@/layouts/tasks/main/project/index.vue'),
+            component: () => import('@/layouts/tasks/content/project-view/index.vue'),
             children: [
                 {
-                    path: ':viewType(table|list|kanban)/:todoId?',
+                    path: ':viewType(table|list|kanban)/:taskId?',
                     name: 'tasks-project-main',
                     meta: { category: 'project' },
                     props: true,
                     components: {
-                        Header: () => import('@/layouts/tasks/main/project/header.vue'),
-                        Content: () => import('@/layouts/tasks/main/project/content.vue')
+                        Header: () => import('@/layouts/tasks/content/project-view/header.vue'),
+                        Content: () => import('@/layouts/tasks/content/project-view/content.vue')
                     }
                 }
             ]
@@ -56,16 +62,16 @@ const routes: RouteRecordRaw = {
             name: 'tasks-tag',
             meta: { category: 'tag' },
             props: true,
-            component: () => import('@/layouts/tasks/main/tag/index.vue'),
+            component: () => import('@/layouts/tasks/content/tag-view/index.vue'),
             children: [
                 {
-                    path: ':viewType(table|list|kanban)/:todoId?',
+                    path: ':viewType(table|list|kanban)/:taskId?',
                     name: 'tasks-tag-main',
                     meta: { category: 'tag' },
                     props: true,
                     components: {
-                        Header: () => import('@/layouts/tasks/main/tag/header.vue'),
-                        Content: () => import('@/layouts/tasks/main/tag/content.vue')
+                        Header: () => import('@/layouts/tasks/content/tag-view/header.vue'),
+                        Content: () => import('@/layouts/tasks/content/tag-view/content.vue')
                     }
                 }
             ]
@@ -74,4 +80,3 @@ const routes: RouteRecordRaw = {
 }
 
 export default routes
-

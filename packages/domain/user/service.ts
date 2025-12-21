@@ -1,14 +1,15 @@
-import type { Err } from "@nao-todo/types"
-import { UserRepository } from "./repositories"
+import type { Err, GoLike } from '@nao-todo/types'
+import type { UserRepository } from './repositories'
+import type { UserEntity } from './user-entity'
 
 interface UserDomain {
     updateNickname(nickname: string): Promise<Err>
+    getProfile(): Promise<GoLike<UserEntity | null>>
 }
 
 export const useUserDomain = (userRepo: UserRepository): UserDomain => {
-    const updateNickname = async (nickname: string): Promise<Err> => {
-        return userRepo.updateNickname(nickname)
+    return {
+        updateNickname: userRepo.updateNickname,
+        getProfile: userRepo.getProfile
     }
-
-    return { updateNickname }
 }
