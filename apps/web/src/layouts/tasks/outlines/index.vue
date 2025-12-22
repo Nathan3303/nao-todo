@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { TasksTodoDetails, TasksFloatTodoDetails } from './details'
-import { useTasksViewStore } from '@/stores/tasks'
+import { useTasksViewStore } from '@/views/tasks'
 import { storeToRefs } from 'pinia'
 
 defineOptions({ name: 'TasksOutline' })
@@ -13,7 +13,7 @@ const { isUseFloatOutline, outlineWidth } = storeToRefs(tasksViewStore)
 <template>
     <tasks-float-todo-details v-if="isUseFloatOutline" />
     <template v-else>
-        <nue-separator op-target="next" @resize="tasksViewStore.handleOutlineResize" />
+        <nue-separator op-target="next" @resize="tasksViewStore.handleResizeOutline" />
         <nue-aside :width="outlineWidth" max-width="420px" min-width="360px" style="padding: 0">
             <tasks-todo-details />
         </nue-aside>

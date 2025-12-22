@@ -26,7 +26,7 @@ export type TaskVO = {
 
 export type GetTasksOptions = {
     projectId?: TaskVO['projectId']
-    name?: TaskVO['name'] | null
+    name?: TaskVO['name']
     description?: TaskVO['description']
     state?: string
     priority?: string
@@ -42,8 +42,8 @@ export type GetTasksOptions = {
 }
 
 export type GetTasksSortOptions = {
-    field: keyof TaskVO
-    order: 'asc' | 'desc'
+    field: string
+    order: string
 }
 
 export type TaskColumnOptions = {

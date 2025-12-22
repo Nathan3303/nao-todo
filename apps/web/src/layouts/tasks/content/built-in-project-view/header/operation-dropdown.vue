@@ -1,26 +1,32 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { inject, onMounted, ref } from 'vue'
 // import { useTasksViewStore } from '@/views/tasks'
 import TasksOperationsDropdown from '@/components/tasks/dropdowns/operations-dropdown.vue'
-import { InnerDropdown, InnerDropdownOption, DivBlock } from '@/components/ui'
+import { InnerDropdownOption, DivBlock } from '@/components/ui'
+import {
+    type TasksProjectViewHeaderContext,
+    TASKS_PROJECT_VIEW_HEADER_CONTEXT_KEY
+} from './use-header'
+import ColumnDisplayOperator from '@/components/tasks/dropdowns/column-display-operator.vue'
 
 defineOptions({ name: 'TasksProjectOperationsDropdown' })
 
 // const tasksViewStore = useTasksViewStore()
 // const tasksBasicViewStore = useTasksBasicViewStore()
+const viewContext = inject<TasksProjectViewHeaderContext>(TASKS_PROJECT_VIEW_HEADER_CONTEXT_KEY)
 
 // const { allowReload, isHideCompletedAlready } = storeToRefs(tasksBasicViewStore)
 const dropdownRef = ref<InstanceType<typeof TasksOperationsDropdown>>()
 
 // 注册 Dropdown 执行函数
 onMounted(() => {
-    if (!dropdownRef.value) return
-    dropdownRef.value.register('switch-view-to-table', switchViewTypeToTable)
-    dropdownRef.value.register('switch-view-to-kanban', switchViewTypeToKanban)
-    dropdownRef.value.register('switch-view-to-list', switchViewTypeToList)
+    if (!dropdownRef.value || !viewContext) return
+    dropdownRef.value.register('switch-view-to-table', viewContext.switchViewTypeToTable)
+    dropdownRef.value.register('switch-view-to-kanban', viewContext.switchViewTypeToKanban)
+    dropdownRef.value.register('switch-view-to-list', viewContext.switchViewTypeToList)
     // dropdownRef.value.register('refresh-data', tasksBasicViewStore.handleRefreshData)
     // dropdownRef.value.register('hide-completed', tasksBasicViewStore.handleHideCompleted)
-    dropdownRef.value.register('update-preference', savePreference)
+    dropdownRef.value.register('update-preference', viewContext.savePreference)
 })
 </script>
 
@@ -60,21 +66,10 @@ onMounted(() => {
                 execute-id="hide-completed"
             /> -->
             <!-- @execute="tasksViewStore.updateColumns" -->
-            <inner-dropdown
-                title="显示与隐藏列"
-                @click.stop
-                :suffix="columnsDropdownOptions.count"
-                :close-when-executed="false"
-            >
-                <inner-dropdown-option
-                    v-for="option in columnsDropdownOptions.options"
-                    :key="option.label"
-                    :icon="option.icon"
-                    :title="option.label"
-                    :execute-id="option.value"
-                    :checked="option.checked"
-                />
-            </inner-dropdown>
+            <column-display-operator
+                :model-value="viewContext.preference.value!.columns"
+                :label-getter="viewContext.getColumnText"
+            />
             <inner-dropdown-option
                 icon="picture"
                 title="保存视图偏好"

@@ -2,7 +2,7 @@ import { useTagDomain } from '@nao-todo/domain/tag'
 import { useTagRepository } from '@nao-todo/infrastructure/backend/tag/repoImpl'
 import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 import type { Err, GoAsync, TagPreferenceVO, TagVO } from '@nao-todo/types'
-import { ComputedRef, ref, type Ref } from 'vue'
+import { type ComputedRef, ref, type Ref } from 'vue'
 import {
     tagEntities2TagVO,
     tagEntity2TagVO,

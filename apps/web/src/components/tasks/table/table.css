@@ -30,6 +30,8 @@
             gap: 0.5rem;
             position: relative;
             overflow: visible;
+            flex-shrink: 0;
+            flex-grow: 1;
 
             .todo-table__header {
                 align-items: center;
@@ -39,9 +41,10 @@
                 height: 2.5rem;
                 position: sticky;
                 top: 0;
-                background-color: white;
+                background-color: var(--nue-primary-color-0);
                 border-bottom: 1px solid var(--nue-border-color);
                 z-index: 2;
+                overflow: visible;
 
                 .col-first,
                 .col-datetime,
@@ -54,8 +57,8 @@
             .todo-table__main {
                 display: flex;
                 flex-direction: column;
+                overflow: visible;
                 gap: 0;
-                width: 100%;
 
                 .todo-table__main__row {
                     align-items: center;
@@ -69,11 +72,11 @@
                     width: 100%;
 
                     &:hover {
-                        border: 1px solid #ccc;
+                        border: 1px solid var(--nue-primary-color-200);
                     }
 
                     &[data-selected='true'] {
-                        background-color: #f2f2f2;
+                        background-color: var(--nue-primary-color-200);
                         /* border: 1px solid orange; */
                     }
 
@@ -142,8 +145,8 @@
                             line-height: 18px;
                             padding: 0 6px;
                             border-radius: var(--nue-primary-radius);
-                            background-color: #ff7b47;
-                            color: white;
+                            background-color: var(--nue-error-color-30);
+                            color: var(--nue-primary-color-0);
                         }
                     }
 
@@ -152,7 +155,7 @@
                         font-size: var(--nue-text-sm);
 
                         &[data-expired='true'] {
-                            color: #e74646;
+                            color: var(--nue-error-color-30);
                         }
                     }
 

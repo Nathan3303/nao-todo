@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useTasksBasicViewStore } from '@/stores/tasks'
-import { TodoTable } from '@/components/tasks/table'
+import { TodoTable } from '../../../../../../../.bak/20251222/table'
 import { storeToRefs } from 'pinia'
 import { ref } from 'vue'
 

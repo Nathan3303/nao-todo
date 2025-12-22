@@ -1,26 +1,27 @@
 <script setup lang="ts">
-// import { computed } from 'vue'
-// import TableView from './table.vue'
+import { computed } from 'vue'
+import useContent, { type TasksProjectViewContentProps } from './use-content'
+import TableView from './table.vue'
 // import KanbanView from './kanban.vue'
 // import ListView from './list.vue'
 
 defineOptions({
     name: 'TasksMainProjectContent',
     components: {
-        // 'table-view': TableView,
+        'table-view': TableView
         // 'kanban-view': KanbanView,
         // 'list-view': ListView
     }
 })
-const props = defineProps<{ projectId?: string; viewType?: string; todoId?: string }>()
+const props = defineProps<TasksProjectViewContentProps>()
+useContent()
 
-// const componentName = computed(() => {
-//     const viewType = props.viewType || 'table'
-//     return `${viewType}-view`
-// })
+const componentName = computed(() => {
+    const viewType = props.viewType || 'table'
+    return `${viewType}-view`
+})
 </script>
 
 <template>
-    <!-- <component :is="componentName" /> -->
-    ProjectView
+    <component :is="componentName" />
 </template>

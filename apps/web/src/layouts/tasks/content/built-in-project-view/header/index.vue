@@ -1,33 +1,16 @@
 <script setup lang="ts">
 import { inject } from 'vue'
-import { storeToRefs } from 'pinia'
-import { useTasksViewStore, useTasksDialogStore } from '@/views/tasks'
-import { TasksTodoFilterDropdown } from '@/components/tasks/dropdowns'
-import operationDropdown from './operation-dropdown.vue'
+import OperationDropdown from './operation-dropdown.vue'
+import FilterDropdown from './filter-dropdown.vue'
 import useHeader from './use-header'
 import { type TasksProjectViewContext, TASKS_PROJECT_VIEW_CONTEXT_KEY } from '../use-project-view'
 
 defineOptions({ name: 'TasksMainProjectHeader' })
 defineProps<{ projectId?: string; viewType?: string; todoId?: string }>()
 
-const tasksViewStore = useTasksViewStore()
-const tasksDialogStore = useTasksDialogStore()
 const tasksProjectViewContext = inject<TasksProjectViewContext>(TASKS_PROJECT_VIEW_CONTEXT_KEY)
 
-const {
-    viewContext,
-    columnsDropdownOptions,
-    switchViewTypeToTable,
-    switchViewTypeToKanban,
-    switchViewTypeToList,
-    savePreference
-} = useHeader()
-const { isDisplayAside } = storeToRefs(tasksViewStore)
-
-const openTodoCreator = () => {
-    if (!tasksDialogStore.todoCreator) return
-    tasksDialogStore.todoCreator.open?.({ projectId: tasksProjectViewContext!.project.value!.id })
-}
+const { isDisplayAside, switchAsideDisplay, openTaskCreator } = useHeader()
 </script>
 
 <template>
@@ -37,17 +20,17 @@ const openTodoCreator = () => {
                 <nue-button
                     :icon="isDisplayAside ? 'menu-close' : 'menu-open'"
                     theme="icon,ghost"
-                    @click="tasksViewStore.isDisplayAside = !tasksViewStore.isDisplayAside"
+                    @click="switchAsideDisplay()"
                 />
                 <nue-text theme="pointer,tasks-header__name">
                     {{ tasksProjectViewContext.project.value!.name }}
                 </nue-text>
             </nue-div>
             <nue-div align="center">
-                <nue-tooltip content="新增待办" size="small" @click="openTodoCreator">
+                <nue-tooltip content="新增待办" size="small" @click="openTaskCreator">
                     <nue-button icon="plus" theme="icon,ghost" />
                 </nue-tooltip>
-                <tasks-todo-filter-dropdown />
+                <filter-dropdown />
                 <operation-dropdown />
             </nue-div>
         </nue-div>

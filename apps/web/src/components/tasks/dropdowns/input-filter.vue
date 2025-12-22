@@ -4,7 +4,7 @@ import { ref, watch } from 'vue'
 defineOptions({ name: 'TasksDropdownTextFilter' })
 const props = defineProps<{
     placeholder?: string
-    modelValue?: string
+    modelValue: string
 }>()
 
 const inputValue = ref(props.modelValue || '')

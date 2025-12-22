@@ -1,13 +1,15 @@
-import { computed, ComputedRef, type Ref } from 'vue'
+import { computed, type ComputedRef, type Ref } from 'vue'
 
 export type UseListMapper = <T extends { id: string }>(
     listRef: Ref<T[]>
 ) => {
     map: ComputedRef<Map<string, T>>
     get: (id: string) => T | undefined
+    remove: (id: string) => void
+    add: (item: T) => void
 }
 
-const useListMapper: UseListMapper = (listRef) => {
+const useListMapper: UseListMapper = <T extends { id: string }>(listRef: Ref<T[]>) => {
     // @computed Mapper
     const map = computed(() => {
         return new Map(
@@ -22,7 +24,17 @@ const useListMapper: UseListMapper = (listRef) => {
         return map.value.get(id)
     }
 
-    return { map, get }
+    // @method Remove by id
+    const remove = (id: string) => {
+        map.value.delete(id)
+    }
+
+    // @method Add
+    const add = (item: T) => {
+        map.value.set(item.id, item)
+    }
+
+    return { map, get, remove, add }
 }
 
 export default useListMapper

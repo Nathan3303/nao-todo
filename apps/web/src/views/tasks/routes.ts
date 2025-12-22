@@ -21,7 +21,7 @@ const routes: RouteRecordRaw = {
             component: () => import('@/layouts/tasks/content/built-in-project-view/index.vue'),
             children: [
                 {
-                    path: ':viewType(table|list|kanban)/:todoId?',
+                    path: ':viewType(table|list|kanban)/:taskId?',
                     name: 'tasks-built-in-project-main',
                     meta: { category: 'built-in-project' },
                     props: true,

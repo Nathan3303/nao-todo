@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import { TagNode, ComboBox } from '@nao-todo/components'
-import type { Tag, Todo } from '@nao-todo/types'
+import type { TagVO, Todo } from '@nao-todo/types'
 import type { FrameworkOption } from '../general/types'
 
 type TodoTagBarProps = {
-    tags: Tag[]
+    tags: TagVO[]
     todoTags: Todo['tags']
     clamped?: number
     readonly?: boolean
@@ -40,7 +40,7 @@ const comboBoxOptions = computed<FrameworkOption[]>(() => {
           })
 })
 
-const selectedTags = computed<Tag[]>(() => {
+const selectedTags = computed<TagVO[]>(() => {
     const _tags = props.tags.filter((tag) =>
         props.todoTags ? props.todoTags.indexOf(tag.id) !== -1 : false
     )
@@ -120,4 +120,3 @@ const handleDropTag = async (tagId: string) => {
     }
 }
 </style>
-

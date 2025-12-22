@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { TodoTable } from '@/components/tasks/table'
+import { TodoTable } from '../../../../../../../.bak/20251222/table'
 import { useTasksProjectViewStore } from '@/stores/tasks'
 
 defineOptions({ name: 'TasksMainProjectViewTable' })

@@ -6,7 +6,7 @@ import {
 import { TaskEntity } from '@nao-todo/domain/task/entities'
 import type { TaskRepository } from '@nao-todo/domain/task/repositories'
 import type { Requester } from '../../requester/types'
-import type { Err, GoLike } from '@nao-todo/types'
+import type { GoAsync } from '@nao-todo/types'
 import type {
     CreateTaskReq,
     CreateTaskRes,
@@ -18,7 +18,8 @@ import type {
 } from '../types'
 
 export const useTaskRepository = (requester: Requester): TaskRepository => {
-    const get = async (taskId: string): Promise<GoLike<TaskEntity | null>> => {
+    // @method 获取任务详情
+    const get = async (taskId: string): GoAsync<TaskEntity> => {
         // 1. 调用接口
         const response = await requester.get(`/tasks/${taskId}`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
@@ -33,7 +34,9 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
         // 4. 返回
         return [taskEntity, null]
     }
-    const create = async (taskEntity: TaskEntity): Promise<GoLike<TaskEntity | null>> => {
+
+    // @method 创建任务
+    const create = async (taskEntity: TaskEntity): GoAsync<TaskEntity> => {
         // 1. 构建 rto
         const rto: CreateTaskReq = {
             projectId: taskEntity.projectId,
@@ -61,10 +64,8 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
         return [taskEntity, null]
     }
 
-    const update = async (
-        taskId: string,
-        taskEntity: TaskEntity
-    ): Promise<GoLike<string | null>> => {
+    // @method 更新任务
+    const update = async (taskId: string, taskEntity: TaskEntity): GoAsync<string> => {
         // 1. 构建 rto
         const rto: UpdateTaskReq = {}
         if (taskEntity.name) rto.name = taskEntity.name
@@ -84,7 +85,8 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
         return [data.taskId, null]
     }
 
-    const remove = async (taskId: string): Promise<Err> => {
+    // @method 删除任务
+    const remove = async (taskId: string): GoAsync<void> => {
         // 1. 调用接口
         const response = await requester.delete(`/tasks/${taskId}`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
@@ -98,7 +100,8 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
         return null
     }
 
-    const restore = async (taskId: string): Promise<Err> => {
+    // @method 恢复任务
+    const restore = async (taskId: string): GoAsync<void> => {
         // 1. 调用接口
         const response = await requester.put(`/tasks/restore/${taskId}`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
@@ -112,9 +115,10 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
         return null
     }
 
-    const list = async (): Promise<GoLike<TaskEntity[] | null>> => {
+    // @method 获取任务列表
+    const list = async (queryString?: string): GoAsync<TaskEntity[]> => {
         // 1. 调用接口
-        const response = await requester.get('/tasks/', {
+        const response = await requester.get(`/tasks/?${queryString}`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
         })
         // 2. 获取结果
@@ -128,5 +132,13 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
         return [taskEntities, null]
     }
 
-    return { create, get, update, remove, restore, list }
+    // @returns
+    return {
+        create,
+        get,
+        update,
+        remove,
+        restore,
+        list
+    }
 }

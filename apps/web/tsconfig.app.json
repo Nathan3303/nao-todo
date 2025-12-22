@@ -5,7 +5,7 @@
         "src/**/*",
         "../../packages/**/*",
         "../../.bak/basic-bak"
-    ],
+, "../../.bak/20251222/table"    ],
     "exclude": [],
     "compilerOptions": {
         "composite": true,

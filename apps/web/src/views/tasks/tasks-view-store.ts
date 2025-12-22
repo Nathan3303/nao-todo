@@ -1,11 +1,19 @@
-import { useProjectApp, useBuiltInProjectApp, useTagApp, useUserApp } from '@nao-todo/application'
+import {
+    useProjectApp,
+    useBuiltInProjectApp,
+    useTagApp,
+    useUserApp,
+    useTaskApp
+} from '@nao-todo/application'
 import useInitializer from '@/infrastructure/hooks/tasks-view/use-initializer'
 import { defineStore } from 'pinia'
 import { useAsideWidth } from '@nao-todo/hooks'
 import { ref } from 'vue'
 import { NueMessage, NuePrompt } from 'nue-ui'
 import { unwrapError } from '@nao-todo/utils'
-import { columnLabels } from './constants'
+import { columnLabels } from '@/infrastructure/constants/task'
+import type { TaskVO } from '@nao-todo/types'
+import { useRouter } from 'vue-router'
 
 export default defineStore('TasksViewStore', () => {
     // @appInstants
@@ -13,16 +21,20 @@ export default defineStore('TasksViewStore', () => {
     const projectApp = useProjectApp()
     const tagApp = useTagApp()
     const builtInProjectApp = useBuiltInProjectApp()
+    const taskApp = useTaskApp()
+    const router = useRouter()
 
     // @hook 任务界面初始化状态机
     const initializer = useInitializer(userApp, projectApp, builtInProjectApp, tagApp)
 
     // @hook 侧边栏宽度
     const { width: asideWidth, updater: handleResizeAside } = useAsideWidth(256)
+    const { width: outlineWidth, updater: handleResizeOutline } = useAsideWidth(480)
 
     // @states
     const isDisplayAside = ref(true)
     const isUseFloatAside = ref(false)
+    const isUseFloatOutline = ref(false)
 
     // @method 更新清单名称
     // 通过 NuePrompt 组件实现用户输入并更新
@@ -96,22 +108,37 @@ export default defineStore('TasksViewStore', () => {
         return columnLabels[key] || ''
     }
 
-    // @returns
+    // @method 显示任务详情（面板）
+    const showTaskDetails = async (taskId: TaskVO['id']) => {
+        // 1. 检查任务 ID 是否合法
+        if (!taskId) return
+        // 2. 导航到任务详情路由
+        return await router.push({ name: router.currentRoute.value.name, params: { taskId } })
+    }
+
+    // @returns 返回
     return {
         userProfile: userApp.userProfile,
+        userApp,
         projects: projectApp.projects,
+        projectApp,
         builtInProjects: builtInProjectApp.builtInProjects,
+        builtInProjectApp,
         tags: tagApp.tags,
+        tagApp,
+        tasks: taskApp.tasks,
+        taskApp,
         initializer,
         asideWidth,
         handleResizeAside,
+        outlineWidth,
+        handleResizeOutline,
         isDisplayAside,
         isUseFloatAside,
-        projectApp,
-        tagApp,
-        builtInProjectApp,
+        isUseFloatOutline,
         updateProjectNameByNuePrompt,
         updateProjectDescriptionByNuePrompt,
-        getColumnLabel
+        getColumnLabel,
+        showTaskDetails
     }
 })

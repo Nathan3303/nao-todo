@@ -1,37 +1,43 @@
 <script setup lang="ts">
-import { storeToRefs } from 'pinia'
 import { TodoTable } from '@/components/tasks/table'
-import { useTasksProjectViewStore } from '@/stores/tasks'
+import {
+    type TasksProjectViewContentContext,
+    TASKS_PROJECT_VIEW_CONTENT_CONTEXT_KEY
+} from './use-content'
+import { inject } from 'vue'
 
 defineOptions({ name: 'TasksMainProjectViewTable' })
 
-const tasksProjectViewStore = useTasksProjectViewStore()
-
-const { todos, tags, viewProps } = storeToRefs(tasksProjectViewStore)
+const viewContext = inject<TasksProjectViewContentContext>(TASKS_PROJECT_VIEW_CONTENT_CONTEXT_KEY)
 </script>
 
 <template>
     <nue-container id="TasksMainTableContainer">
         <nue-main>
-            <nue-empty
-                v-if="!viewProps"
-                image-size="4rem"
-                image-src="/images/coffee.webp"
-                description="视图属性无效"
-                style="height: 100%"
-            />
-            <nue-content v-if="viewProps" fill style="overflow: hidden">
+            <nue-content fill style="overflow: hidden">
+                <nue-empty
+                    v-if="
+                        !viewContext || !viewContext.columns.value || !viewContext.sortOptions.value
+                    "
+                    image-size="4rem"
+                    image-src="/images/coffee.webp"
+                    description="数据加载失败"
+                    style="height: 100%"
+                />
                 <todo-table
-                    :extra-get-options="{ projectId: viewProps.id }"
-                    :column-options="viewProps.preference.columns"
-                    :sort-options="viewProps.preference.getTodosOptions.sort"
-                    :tags="tags"
-                    :todos="todos"
-                    @show-todo-details="tasksProjectViewStore.showTodoDetails"
-                    @clear-sort-options="tasksProjectViewStore.handleClearSortOptions"
-                    @update-sort-options="tasksProjectViewStore.handleUpdateSortOptions"
-                    @delete-todo="tasksProjectViewStore.deleteTodo"
-                    @restore-todo="tasksProjectViewStore.restoreTodo"
+                    v-else
+                    :tags="viewContext.tags.value"
+                    :tasks="viewContext.tasks.value"
+                    :columns="viewContext.columns.value"
+                    :sort-options="viewContext.sortOptions.value"
+                    :column-label-getter="viewContext.getColumnLabel"
+                    :project-name-getter="viewContext.getProjectName"
+                    @show-task-details="viewContext.showTaskDetails"
+                    @clear-sort-options="viewContext.clearSortOptions"
+                    @update-columns="viewContext.updateColumns"
+                    @update-sort-options="viewContext.updateSortOptions"
+                    @delete-task="viewContext.deleteTask"
+                    @restore-task="viewContext.restoreTask"
                 />
             </nue-content>
         </nue-main>

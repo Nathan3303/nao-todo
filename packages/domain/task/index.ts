@@ -1,6 +1,6 @@
-import useTagDomain from './service'
+import useTaskDomain from './service'
 import { TaskEntity } from './entities'
 import type { TaskRepository } from './repositories'
 
 export type { TaskRepository }
-export { useTagDomain, TaskEntity }
+export { useTaskDomain, TaskEntity }
