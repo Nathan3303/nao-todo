@@ -1,31 +1,26 @@
-import { ref, type Ref } from 'vue'
-import { useAuthDomain } from '@nao-todo/domain'
-import { useAuthRepository } from '@nao-todo/infrastructure/backend/auth/repoImpl'
 import { signInVO2UserEntity, signUpVO2UserEntity } from './converters'
-import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
+import {
+    USER_JWT_LOCALSTORAGE_KEY,
+    USER_PASSWORD_REGEXP
+} from '@nao-todo/infrastructure/consts/auth'
+import type { Reactive } from 'vue'
+import type { AuthDomain } from '@nao-todo/domain'
 import type { Err, SignInVO, SignUpVO } from '@nao-todo/types'
 
+export type AuthAppStates = Reactive<{
+    userToken: string | null
+    isAuthenticated: boolean
+}>
+
 export interface AuthApp {
-    isAuthenticated: Ref<boolean>
+    states: AuthAppStates
     signIn: (signInVO: SignInVO) => Promise<Err>
     signUp: (signUpVO: SignUpVO) => Promise<Err>
     checkIn: () => Promise<Err>
     signOut: () => Promise<Err>
 }
 
-const USER_JWT_LOCALSTORAGE_KEY = 'USER_JWT'
-const USER_PASSWORD_REGEXP = /^\S*(?=\S{8})(?=\S*\d)(?=\S*[a-z])(?=\S*[!@#$%^&*?.-])\S*$/
-
-export default (): AuthApp => {
-    // @domain Auth Domain
-    const authDomain = useAuthDomain(useAuthRepository(getRequesterImpl()))
-
-    // @state 用户凭据
-    const userToken = ref<string>()
-
-    // @state 用户认证状态
-    const isAuthenticated = ref<boolean>(false)
-
+const useAuthDomain = (authDomain: AuthDomain, authAppStates: AuthAppStates): AuthApp => {
     // @method 登录
     const signIn = async (vo: SignInVO): Promise<Err> => {
         // 1. 检查属性值
@@ -38,8 +33,8 @@ export default (): AuthApp => {
         if (err) return err
         // 4. 存储JWT
         localStorage.setItem(USER_JWT_LOCALSTORAGE_KEY, jwt!)
-        userToken.value = jwt!
-        isAuthenticated.value = true
+        authAppStates.userToken = jwt!
+        authAppStates.isAuthenticated = true
         // 5. 返回
         return null
     }
@@ -72,34 +67,37 @@ export default (): AuthApp => {
     // @method 检入
     const checkIn = async (): Promise<Err> => {
         // 1. 获取用户凭据
-        const jwt = userToken.value ?? localStorage.getItem(USER_JWT_LOCALSTORAGE_KEY)
+        const jwt = authAppStates.userToken ?? localStorage.getItem(USER_JWT_LOCALSTORAGE_KEY)
         if (!jwt) return '用户未登入'
         // 2. 调用域服务 - 检入
         const [newJwt, err] = await authDomain.checkIn(jwt)
         if (err) return err
         // 3. 赋值新的用户凭据
-        userToken.value = newJwt!
+        authAppStates.userToken = newJwt!
         localStorage.setItem(USER_JWT_LOCALSTORAGE_KEY, newJwt!)
-        isAuthenticated.value = true
+        authAppStates.isAuthenticated = true
         return null
     }
 
     // @method 登出
     const signOut = async (): Promise<Err> => {
         // 1. 检查是否登入
-        if (!isAuthenticated.value) return null
+        if (!authAppStates.isAuthenticated) return null
         // 2. 获取用户凭据
-        const jwt = userToken.value ?? localStorage.getItem(USER_JWT_LOCALSTORAGE_KEY)
+        const jwt = authAppStates.userToken ?? localStorage.getItem(USER_JWT_LOCALSTORAGE_KEY)
         if (!jwt) return '用户未登入'
         // 3. 调用域服务 - 登出
         const err = await authDomain.signOut(jwt)
         if (err) return err
         // 4. 删除用户凭据
-        userToken.value = ''
+        authAppStates.userToken = ''
         localStorage.removeItem(USER_JWT_LOCALSTORAGE_KEY)
-        isAuthenticated.value = false
+        authAppStates.isAuthenticated = false
         return null
     }
 
-    return { isAuthenticated, signIn, signUp, checkIn, signOut }
+    // @returns
+    return { states: authAppStates, signIn, signUp, checkIn, signOut }
 }
+
+export default useAuthDomain

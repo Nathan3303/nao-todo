@@ -3,10 +3,10 @@ import {
     getEventRes2EventEntity,
     listEventRes2EventEntities
 } from './converters'
-import { EventEntity } from '@nao-todo/domain/event/entities'
+import type { EventEntity } from '@nao-todo/domain/event/entities'
 import type { EventRepository } from '@nao-todo/domain/event/repositories'
 import type { Requester } from '../../requester/types'
-import type { Err, GoLike } from '@nao-todo/types'
+import type { GoAsync } from '@nao-todo/types'
 import type {
     CreateEventReq,
     CreateEventRes,
@@ -18,7 +18,7 @@ import type {
 } from '../types'
 
 export const useEventRepository = (requester: Requester): EventRepository => {
-    const get = async (eventId: string): Promise<GoLike<EventEntity | null>> => {
+    const get = async (eventId: string): GoAsync<EventEntity> => {
         // 1. 调用接口
         const response = await requester.get(`/events/${eventId}`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
@@ -33,12 +33,13 @@ export const useEventRepository = (requester: Requester): EventRepository => {
         // 4. 返回
         return [eventEntity, null]
     }
-    const create = async (eventEntity: EventEntity): Promise<GoLike<EventEntity | null>> => {
+
+    const create = async (eventEntity: EventEntity): GoAsync<EventEntity> => {
         // 1. 构建 rto
         const rto: CreateEventReq = {
             taskId: eventEntity.taskId,
             name: eventEntity.name,
-            description: eventEntity.description,
+            description: eventEntity.description
         }
         // 2. 调用接口
         const response = await requester.post('/events', {
@@ -56,10 +57,7 @@ export const useEventRepository = (requester: Requester): EventRepository => {
         return [eventEntity, null]
     }
 
-    const update = async (
-        eventId: string,
-        eventEntity: EventEntity
-    ): Promise<GoLike<string | null>> => {
+    const update = async (eventId: string, eventEntity: EventEntity): GoAsync<string> => {
         // 1. 构建 rto
         const rto: UpdateEventReq = {}
         if (eventEntity.name) rto.name = eventEntity.name
@@ -79,7 +77,7 @@ export const useEventRepository = (requester: Requester): EventRepository => {
         return [data.eventId, null]
     }
 
-    const remove = async (eventId: string): Promise<Err> => {
+    const remove = async (eventId: string): GoAsync<void> => {
         // 1. 调用接口
         const response = await requester.delete(`/events/${eventId}`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
@@ -92,10 +90,10 @@ export const useEventRepository = (requester: Requester): EventRepository => {
         // 3. 返回
         return null
     }
-
-    const list = async (): Promise<GoLike<EventEntity[] | null>> => {
+    
+    const list = async (taskId: string): GoAsync<EventEntity[]> => {
         // 1. 调用接口
-        const response = await requester.get('/events/', {
+        const response = await requester.get(`/events/?taskId=${taskId}`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
         })
         // 2. 获取结果

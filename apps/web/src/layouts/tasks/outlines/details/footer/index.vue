@@ -1,49 +1,50 @@
 <script setup lang="ts">
-import { storeToRefs } from 'pinia'
-import { useTasksDataStore } from '@/stores/tasks'
-import { TodoProjectSelector } from '@nao-todo/components'
-import { InnerDropdownOption } from '@/components/ui'
-import type { DetailsFooterEmits, DetailsFooterProps } from './types'
+// import { storeToRefs } from 'pinia'
+// import { useTasksDataStore } from '@/stores/tasks'
+// import { TodoProjectSelector } from '@nao-todo/components'
+// import { InnerDropdownOption } from '@/components/ui'
+// import type { DetailsFooterEmits, DetailsFooterProps } from './types'
 
-const props = defineProps<DetailsFooterProps>()
-const emit = defineEmits<DetailsFooterEmits>()
+// const props = defineProps<DetailsFooterProps>()
+// const emit = defineEmits<DetailsFooterEmits>()
 
-const tasksDataStore = useTasksDataStore()
+// const tasksDataStore = useTasksDataStore()
 
-const { projects, user } = storeToRefs(tasksDataStore)
+// const { projects, user } = storeToRefs(tasksDataStore)
 
-const handleDropdownExecute = (executeId: string) => {
-    if (!props.shadowTodo) {
-        return
-    }
-    switch (executeId) {
-        case 'comment-todo':
-            emit('leaveTodoComment')
-            break
-        case 'duplicate-todo':
-            emit('duplicateTodo', props.shadowTodo.id)
-            break
-        case 'give-up-todo':
-            emit('giveUpTodo')
-            break
-        case 'cancel-give-up-todo':
-            emit('cancelGiveUpTodo')
-            break
-        case 'delete-todo':
-            emit('deleteTodo', props.shadowTodo.id)
-            break
-        case 'restore-todo':
-            emit('restoreTodo', props.shadowTodo.id)
-            break
-        case 'delete-todo-permanently':
-            emit('deleteTodoPermanently', props.shadowTodo.id)
-            break
-    }
-}
+// const handleDropdownExecute = (executeId: string) => {
+//     if (!props.shadowTodo) {
+//         return
+//     }
+//     switch (executeId) {
+//         case 'comment-todo':
+//             emit('leaveTodoComment')
+//             break
+//         case 'duplicate-todo':
+//             emit('duplicateTodo', props.shadowTodo.id)
+//             break
+//         case 'give-up-todo':
+//             emit('giveUpTodo')
+//             break
+//         case 'cancel-give-up-todo':
+//             emit('cancelGiveUpTodo')
+//             break
+//         case 'delete-todo':
+//             emit('deleteTodo', props.shadowTodo.id)
+//             break
+//         case 'restore-todo':
+//             emit('restoreTodo', props.shadowTodo.id)
+//             break
+//         case 'delete-todo-permanently':
+//             emit('deleteTodoPermanently', props.shadowTodo.id)
+//             break
+//     }
+// }
 </script>
 
 <template>
-    <nue-div v-if="shadowTodo" align="center" justify="space-between" width="100%">
+    Footer
+    <!-- <nue-div v-if="shadowTodo" align="center" justify="space-between" width="100%">
         <todo-project-selector
             :project-id="shadowTodo.projectId"
             :projects="projects"
@@ -85,5 +86,5 @@ const handleDropdownExecute = (executeId: string) => {
                 />
             </nue-div>
         </nue-dropdown>
-    </nue-div>
+    </nue-div> -->
 </template>

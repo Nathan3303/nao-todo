@@ -1,59 +1,87 @@
 <script setup lang="ts">
-import { storeToRefs } from 'pinia'
-import DetailsRow from './details-row.vue'
-import DetailsMainComments from './details-main-comments.vue'
-import DetailsMainEvents from './details-main-events.vue'
-import { useTasksDataStore } from '@/stores/tasks'
+import { inject } from 'vue'
+import DetailsRow from './row.vue'
+import DetailsMainComments from './comments.vue'
+import DetailsMainEvents from './events.vue'
 import { useRelativeDate } from '@nao-todo/hooks'
 import {
-    CommentCreator,
+    // CommentCreator,
     SwitchButton,
     TodoPrioritySelectOptions,
     TodoSelector,
     TodoStateSelectOptions,
     TodoTagBar
 } from '@nao-todo/components'
-import type { DetailsMainEmits, DetailsMainProps } from './types'
-import type { Todo } from '@nao-todo/types'
+import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
+import type { TaskDetailsContext } from '../types'
+import type {
+    TaskVO
+    // Todo
+} from '@nao-todo/types'
 
-defineProps<DetailsMainProps>()
-const emit = defineEmits<DetailsMainEmits>()
+const { vo, emit, eventProgress } = inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
 
-const tasksDataStore = useTasksDataStore()
+const updateTaskState = (v: unknown) => {
+    if (vo.value === null) return
+    emit('updateTask', vo.value.id, { state: v as TaskVO['state'] })
+}
 
-const { tags } = storeToRefs(tasksDataStore)
+const updateTaskPriority = (v: unknown) => {
+    if (vo.value === null) return
+    emit('updateTask', vo.value.id, { priority: v as TaskVO['priority'] })
+}
+
+const updateTaskIsStarMark = (v: unknown) => {
+    if (vo.value === null) return
+    emit('updateTask', vo.value.id, { isFavorited: v as TaskVO['isFavorited'] })
+}
+
+const updateTaskName = (v: unknown) => {
+    if (vo.value === null) return
+    emit('updateTask', vo.value.id, { name: v as TaskVO['name'] })
+}
+
+const updateTaskDescription = (v: unknown) => {
+    if (vo.value === null) return
+    emit('updateTask', vo.value.id, { description: v as TaskVO['description'] })
+}
+
+const updateTaskTags = (v: unknown) => {
+    if (vo.value === null) return
+    emit('updateTask', vo.value.id, { tags: v as TaskVO['tags'] })
+}
 </script>
 
 <template>
-    <nue-container id="TasksTodoDetailsMainContainer" v-if="shadowTodo">
+    <nue-container id="TasksTodoDetailsMainContainer" v-if="vo">
         <nue-header>
             <nue-div flex="1">
                 <nue-div flex="1">
                     <todo-selector
                         :options="TodoStateSelectOptions"
-                        :value="shadowTodo.state"
-                        @change="(v) => emit('updateTodoState', v as Todo['state'])"
+                        :value="vo.state"
+                        @change="updateTaskState"
                     />
                     <todo-selector
                         :options="TodoPrioritySelectOptions"
-                        :value="shadowTodo.priority"
-                        @change="(v) => emit('updateTodoPriority', v as Todo['priority'])"
+                        :value="vo.priority"
+                        @change="updateTaskPriority"
                     />
                 </nue-div>
                 <nue-div>
                     <switch-button
-                        v-model="shadowTodo.isFavorited"
+                        v-model="vo.isFavorited"
                         active-icon="heart-fill"
                         active-text="取消收藏"
                         icon="heart"
                         size="small"
                         text="收藏"
-                        @change="emit('update', 'isFavorited')"
+                        @change="updateTaskIsStarMark"
                     />
                 </nue-div>
                 <nue-div class="tasks-details-view__progress">
                     <nue-progress
-                        :percentage="eventsProgress.percentage"
+                        :percentage="eventProgress.percentage"
                         :stroke-width="2"
                         hide-text
                     />
@@ -65,20 +93,20 @@ const { tags } = storeToRefs(tasksDataStore)
                 <nue-div vertical gap="0" height="100%">
                     <nue-div theme="name-desc" spellcheck="false">
                         <nue-textarea
-                            v-model="shadowTodo.name"
+                            v-model="vo.name"
                             :autosize="{ minRows: 1, maxRows: 2 }"
                             maxlength="64"
                             placeholder="输入您的任务名称..."
                             theme="pure,name"
-                            @change="emit('update', 'name')"
+                            @change="updateTaskName"
                         />
                         <nue-textarea
-                            v-model="shadowTodo.description"
+                            v-model="vo.description"
                             :autosize="{ minRows: 1, maxRows: 4 }"
                             maxlength="256"
                             placeholder="输入您的任务描述..."
                             theme="pure,description"
-                            @change="emit('update', 'description')"
+                            @change="updateTaskDescription"
                         />
                     </nue-div>
                     <nue-div vertical flex="1" style="padding: 0 1rem">
@@ -86,39 +114,39 @@ const { tags } = storeToRefs(tasksDataStore)
                     </nue-div>
                     <nue-div vertical style="padding: 1rem">
                         <todo-tag-bar
-                            :tags="tags"
-                            :todo-tags="shadowTodo.tags"
-                            @update-tags="(v) => emit('updateTodoTags', v as Todo['tags'])"
+                            :tags="vo.tagList"
+                            :todo-tags="vo.tags"
+                            @update-tags="updateTaskTags"
                         />
                     </nue-div>
                     <details-main-comments />
-                    <nue-div class="tasks-details-view__deleted-tag" v-if="shadowTodo.isDeleted">
+                    <nue-div class="tasks-details-view__deleted-tag" v-if="vo.isDeleted">
                         任务已删除
                     </nue-div>
-                    <nue-div class="tasks-details-view__giveup-tag" v-if="shadowTodo.isGivenUp">
+                    <nue-div class="tasks-details-view__giveup-tag" v-if="vo.isGivenUp">
                         任务已放弃
                     </nue-div>
                 </nue-div>
             </nue-content>
         </nue-main>
         <nue-footer>
-            <nue-div v-if="isCommenting" vertical width="100%">
+            <!-- <nue-div v-if="isCommenting" vertical width="100%">
                 <comment-creator
                     :handler="leaveCommentHandler"
                     @cancel="emit('cancelLeaveComment')"
                 />
-            </nue-div>
-            <nue-div v-else justify="space-between" width="100%">
-                <details-row :text="eventsProgress.text" label="检查事项进度" flex="40%" />
+            </nue-div> -->
+            <nue-div justify="space-between" width="100%">
+                <details-row :text="eventProgress.text" label="检查事项进度" flex="40%" />
                 <details-row
-                    v-if="shadowTodo.createdAt"
-                    :text="useRelativeDate(shadowTodo.createdAt)"
+                    v-if="vo.createdAt"
+                    :text="useRelativeDate(vo.createdAt)"
                     flex="30%"
                     label="创建时间"
                 />
                 <details-row
-                    v-if="shadowTodo.updatedAt"
-                    :text="useRelativeDate(shadowTodo.updatedAt)"
+                    v-if="vo.updatedAt"
+                    :text="useRelativeDate(vo.updatedAt)"
                     flex="30%"
                     label="最后修改时间"
                 />
@@ -214,4 +242,3 @@ const { tags } = storeToRefs(tasksDataStore)
     }
 }
 </style>
-

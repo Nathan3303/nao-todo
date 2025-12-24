@@ -1,17 +1,17 @@
 <script lang="ts" setup>
-import { GlobalAside } from '@/layouts/global'
+import { AppAside } from '@/layouts/app'
 import { NueContainer } from 'nue-ui'
-import useViewStore from './view-store'
+import useAppStore from './app-store'
 
 defineOptions({ name: 'AppContainer' })
 
-await useViewStore().getProfile()
+await useAppStore().getProfile()
 </script>
 
 <template>
     <nue-container id="AppContainer">
         <nue-main>
-            <global-aside />
+            <app-aside />
             <nue-content fill style="overflow: hidden">
                 <router-view />
             </nue-content>

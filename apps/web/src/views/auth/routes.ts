@@ -35,7 +35,7 @@ const beforeEnter: NavigationGuard = async (to, from, next) => {
     }
     // 1. 判断是否登入
     const authViewStore = useAuthViewStore()
-    if (authViewStore.isAuthenticated) return next()
+    if (authViewStore.authApp.states.isAuthenticated) return next()
     // 未登录，跳转到任务列表页
     // const err = await authViewStore.checkIn()
     // if (err) {

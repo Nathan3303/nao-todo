@@ -24,6 +24,19 @@ export type TaskVO = {
     events?: Event[]
 }
 
+export type UpdateTaskVO = {
+    name?: TaskVO['name']
+    description?: TaskVO['description']
+    state?: TaskVO['state']
+    priority?: TaskVO['priority']
+    startAt?: TaskVO['startAt']
+    endAt?: TaskVO['endAt']
+    isArchived?: TaskVO['isArchived']
+    isFavorited?: TaskVO['isFavorited']
+    isGivenUp?: TaskVO['isGivenUp']
+    tags?: TaskVO['tags']
+}
+
 export type GetTasksOptions = {
     projectId?: TaskVO['projectId']
     name?: TaskVO['name']

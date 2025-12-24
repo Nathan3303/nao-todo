@@ -3,10 +3,8 @@ import { inject, onMounted, ref } from 'vue'
 // import { useTasksViewStore } from '@/views/tasks'
 import TasksOperationsDropdown from '@/components/tasks/dropdowns/operations-dropdown.vue'
 import { InnerDropdownOption, DivBlock } from '@/components/ui'
-import {
-    type TasksProjectViewHeaderContext,
-    TASKS_PROJECT_VIEW_HEADER_CONTEXT_KEY
-} from './use-header'
+import { type TasksProjectViewHeaderContext } from './use-header'
+import { TASKS_PROJECT_VIEW_HEADER_CONTEXT_KEY } from '../constants'
 import ColumnDisplayOperator from '@/components/tasks/dropdowns/column-display-operator.vue'
 
 defineOptions({ name: 'TasksProjectOperationsDropdown' })

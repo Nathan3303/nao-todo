@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import { storeToRefs } from 'pinia'
-import { useTasksViewStore, useTasksProjectViewStore } from '@/stores/tasks'
-import { TodoKanban } from '@/components/tasks'
-import { Loading as LoadingComponent } from '@nao-todo/components'
+// import { storeToRefs } from 'pinia'
+// import { useTasksViewStore, useTasksProjectViewStore } from '@/stores/tasks'
+// import { TodoKanban } from '@/components/tasks'
+// import { Loading as LoadingComponent } from '@nao-todo/components'
 
-defineOptions({ name: 'TasksMainProjectViewKanban' })
+// defineOptions({ name: 'TasksMainProjectViewKanban' })
 
-const tasksViewStore = useTasksViewStore()
-const tasksProjectViewStore = useTasksProjectViewStore()
+// const tasksViewStore = useTasksViewStore()
+// const tasksProjectViewStore = useTasksProjectViewStore()
 
-const { viewProps } = storeToRefs(tasksViewStore)
-const { todos, tags, loading, error } = storeToRefs(tasksProjectViewStore)
+// const { viewProps } = storeToRefs(tasksViewStore)
+// const { todos, tags, loading, error } = storeToRefs(tasksProjectViewStore)
 </script>
 
 <template>
-    <nue-container id="TasksMainKanbanContainer">
+    <!-- <nue-container id="TasksMainKanbanContainer">
         <nue-main>
             <loading-component v-if="loading" />
             <nue-empty
@@ -38,11 +38,12 @@ const { todos, tags, loading, error } = storeToRefs(tasksProjectViewStore)
                 />
             </nue-content>
         </nue-main>
-    </nue-container>
+    </nue-container> -->
+    KanbanView
 </template>
 
 <style scoped>
-.nue-container#TasksMainKanbanContainer {
+/* .nue-container#TasksMainKanbanContainer {
     gap: 0.5rem;
 
     > .nue-header,
@@ -52,5 +53,5 @@ const { todos, tags, loading, error } = storeToRefs(tasksProjectViewStore)
         border: none;
         height: auto;
     }
-}
+} */
 </style>

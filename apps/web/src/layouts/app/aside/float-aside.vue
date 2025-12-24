@@ -2,18 +2,17 @@
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 // import { useViewStore } from '@/stores/global'
-import useViewStore from '@/views/view-store'
-import { GlobalAsideNavItems } from '@/views/constants'
+import useAppStore from '@/views/app-store'
 import { NaoRouterLink } from '@/components/ui'
 import type { NueDrawer } from 'nue-ui'
 
 defineOptions({ name: 'IndexAside' })
 
-const viewStore = useViewStore()
+const appStore = useAppStore()
 // const userStore = useUserStoreV2()
 
-// const { appAsideStates } = storeToRefs(viewStore)
-const { userProfile } = storeToRefs(viewStore)
+// const { appAsideStates } = storeToRefs(appStore)
+const { userProfile, routerLinks } = storeToRefs(appStore)
 const drawerRef = ref<InstanceType<typeof NueDrawer>>()
 
 // const visible = computed({
@@ -45,7 +44,7 @@ const drawerRef = ref<InstanceType<typeof NueDrawer>>()
                 <slot name="footer">
                     <nue-div justify="space-between" gap="0" width="100%">
                         <nao-router-link
-                            v-for="(rl, idx) in GlobalAsideNavItems"
+                            v-for="(rl, idx) in routerLinks"
                             :key="idx"
                             :icon="rl.icon"
                             :route="rl.route"

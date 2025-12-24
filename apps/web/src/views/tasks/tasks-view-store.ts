@@ -3,7 +3,8 @@ import {
     useBuiltInProjectApp,
     useTagApp,
     useUserApp,
-    useTaskApp
+    useTaskApp,
+    useEventApp
 } from '@nao-todo/application'
 import useInitializer from '@/infrastructure/hooks/tasks-view/use-initializer'
 import { defineStore } from 'pinia'
@@ -12,16 +13,21 @@ import { ref } from 'vue'
 import { NueMessage, NuePrompt } from 'nue-ui'
 import { unwrapError } from '@nao-todo/utils'
 import { columnLabels } from '@/infrastructure/constants/task'
-import type { TaskVO } from '@nao-todo/types'
+import type { TagVO, TaskVO } from '@nao-todo/types'
 import { useRouter } from 'vue-router'
+import useAppStore from '@/views/app-store'
 
 export default defineStore('TasksViewStore', () => {
+    // @store
+    const appStore = useAppStore()
+
     // @appInstants
     const userApp = useUserApp()
     const projectApp = useProjectApp()
     const tagApp = useTagApp()
     const builtInProjectApp = useBuiltInProjectApp()
     const taskApp = useTaskApp()
+    const eventApp = useEventApp()
     const router = useRouter()
 
     // @hook 任务界面初始化状态机
@@ -116,8 +122,23 @@ export default defineStore('TasksViewStore', () => {
         return await router.push({ name: router.currentRoute.value.name, params: { taskId } })
     }
 
+    // @method 获取清单名称
+    const getProjectName = (projectId: string): string => {
+        const project = projectApp.getByIdFromMap(projectId)
+        return project?.name || '收集箱'
+    }
+
+    // @method 获取任务所关联的标签列表
+    const getTags = (tagIds: TagVO['id'][]): TagVO[] => {
+        const _tags = tagIds.map((tagId) => {
+            return tagApp.getByIdFromMap(tagId)
+        })
+        return _tags.filter((tag) => tag !== undefined)
+    }
+
     // @returns 返回
     return {
+        appStore,
         userProfile: userApp.userProfile,
         userApp,
         projects: projectApp.projects,
@@ -126,8 +147,9 @@ export default defineStore('TasksViewStore', () => {
         builtInProjectApp,
         tags: tagApp.tags,
         tagApp,
-        tasks: taskApp.tasks,
+        tasks: taskApp.states.tasks,
         taskApp,
+        eventApp,
         initializer,
         asideWidth,
         handleResizeAside,
@@ -139,6 +161,8 @@ export default defineStore('TasksViewStore', () => {
         updateProjectNameByNuePrompt,
         updateProjectDescriptionByNuePrompt,
         getColumnLabel,
-        showTaskDetails
+        showTaskDetails,
+        getProjectName,
+        getTags
     }
 })

@@ -2,15 +2,11 @@
 import { storeToRefs } from 'pinia'
 import { NaoRouterLink } from '@/components/ui'
 // import { UpdateIndicator } from '@nao-todo/components'
-import { GlobalAsideNavItems } from '@/views/constants'
-import useViewStore from '@/views/view-store'
+import useAppStore from '@/views/app-store'
 
-defineOptions({ name: 'GlobalAside' })
+defineOptions({ name: 'AppAside' })
 
-const viewStore = useViewStore()
-// const viewStore = useViewStore()
-
-const { userProfile } = storeToRefs(viewStore)
+const { userProfile, routerLinks } = storeToRefs(useAppStore())
 // const { appAsideStates, hasUpdateTasksInQueue, updateTasksQueueCount } = storeToRefs(viewStore)
 </script>
 
@@ -27,7 +23,7 @@ const { userProfile } = storeToRefs(viewStore)
             </nue-tooltip>
             <nue-div theme="aside__navs">
                 <nue-tooltip
-                    v-for="(rl, idx) in GlobalAsideNavItems"
+                    v-for="(rl, idx) in routerLinks"
                     :key="idx"
                     :content="rl.name"
                     placement="right-center"

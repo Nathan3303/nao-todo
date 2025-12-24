@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { GlobalFloatAside } from '@/layouts/global'
+import { AppFloatAside } from '@/layouts/app'
 import TasksAside from './aside.vue'
 
 defineOptions({ name: 'TasksAsideDrawer' })
 </script>
 
 <template>
-    <global-float-aside>
+    <app-float-aside>
         <tasks-aside width="100%" />
-    </global-float-aside>
+    </app-float-aside>
 </template>

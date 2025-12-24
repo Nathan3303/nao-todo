@@ -1,23 +1,29 @@
 <script setup lang="ts">
-import { storeToRefs } from 'pinia'
-import { useTodoDetailsStore } from '@/stores/tasks'
 import { InputButton, EventRow } from '@nao-todo/components'
-import useEventDragger from './use-event-dragger'
-import type { DetailsMainEventsProps } from './types'
+import useEventDragger from '../use-event-dragger'
+import type { TaskDetailsContext } from '../types'
+import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
+import { inject } from 'vue'
 
-defineProps<DetailsMainEventsProps>()
+const { vo, emit, events, resortEvents } = inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
 
-const todoDetailsStore = useTodoDetailsStore()
 const { handleDragStart, handleDragOver, handleDrop, handleDragLeave, handleDragEnd } =
     useEventDragger((dragged, dropped, isUp) => {
-        todoDetailsStore.handleResortEvents(
-            Number(dragged.dataset.index),
-            Number(dropped.dataset.index),
-            isUp
-        )
+        resortEvents(Number(dragged.dataset.index), Number(dropped.dataset.index), isUp)
     })
 
-const { events } = storeToRefs(todoDetailsStore)
+const updateEvent = async (value: { id: string; name: string; isDone: boolean }) => {
+    emit('updateEvent', value.id, value)
+}
+
+const deleteEvent = async (id: string) => {
+    emit('deleteEvent', id)
+}
+
+const createEvent = async (payload: { value: string }) => {
+    if (!vo.value) return
+    emit('createEvent', { taskId: vo.value.id, name: payload.value as string })
+}
 </script>
 
 <template>
@@ -38,8 +44,8 @@ const { events } = storeToRefs(todoDetailsStore)
                 :key="event.id"
                 :event="event"
                 :data-index="index"
-                :on-update="todoDetailsStore.handleUpdateEvent"
-                :on-delete="todoDetailsStore.handleDeleteEvent"
+                :on-update="updateEvent"
+                :on-delete="deleteEvent"
             />
         </nue-div>
         <input-button
@@ -47,7 +53,7 @@ const { events } = storeToRefs(todoDetailsStore)
             button-text="添加检查事项"
             theme="pure,noshape"
             :submit-on-blur="false"
-            :on-submit="todoDetailsStore.handleCreateEvent"
+            :on-submit="createEvent"
         />
     </nue-div>
 </template>
@@ -79,4 +85,3 @@ const { events } = storeToRefs(todoDetailsStore)
     }
 }
 </style>
-

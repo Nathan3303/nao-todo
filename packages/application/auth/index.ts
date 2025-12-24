@@ -1,4 +1,4 @@
-import useAuthApp, { type AuthApp } from './auth-app'
+import useAuthApp, { type AuthApp } from './app'
 
 export default useAuthApp
 export type { AuthApp }

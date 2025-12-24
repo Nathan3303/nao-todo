@@ -11,7 +11,7 @@ defineOptions({ name: 'AuthViewMainContentCheckIn' })
 const router = useRouter()
 
 onMounted(async () => {
-    const err = await useAuthViewStore().checkIn()
+    const err = await useAuthViewStore().authApp.checkIn()
     if (err) {
         NueMessage.error(unwrapError(err))
         router.replace('/auth/signin')

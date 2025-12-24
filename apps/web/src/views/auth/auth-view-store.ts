@@ -1,11 +1,20 @@
 import { defineStore } from 'pinia'
 import { useAuthApp } from '@nao-todo/application'
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { useAsideWidth } from '@nao-todo/hooks'
+import { useAuthDomain } from '@nao-todo/domain'
+import { useAuthRepository } from '@nao-todo/infrastructure/backend/auth/repoImpl'
+import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 
 export default defineStore('AuthViewStore', () => {
-    // @appInstants
-    const authApp = useAuthApp()
+    // @appInstant Auth app
+    const authApp = useAuthApp(
+        useAuthDomain(useAuthRepository(getRequesterImpl())),
+        reactive({
+            userToken: null,
+            isAuthenticated: false
+        })
+    )
 
     // @hook 侧边栏宽度
     const { width: asideWidth, updater: handleResizeAside } = useAsideWidth(256)
@@ -24,10 +33,7 @@ export default defineStore('AuthViewStore', () => {
 
     // @returns
     return {
-        isAuthenticated: authApp.isAuthenticated,
-        signIn: authApp.signIn,
-        signUp: authApp.signUp,
-        checkIn: authApp.checkIn,
+        authApp,
         isDisplayAside,
         asideWidth,
         handleResizeAside,

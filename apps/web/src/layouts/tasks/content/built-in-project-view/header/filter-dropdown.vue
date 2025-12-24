@@ -2,12 +2,10 @@
 import TextFilter from '@/components/tasks/dropdowns/input-filter.vue'
 import StateFilter from '@/components/tasks/dropdowns/state-filter.vue'
 import PriorityFilter from '@/components/tasks/dropdowns/priority-filter.vue'
-import {
-    type TasksProjectViewHeaderContext,
-    TASKS_PROJECT_VIEW_HEADER_CONTEXT_KEY
-} from './use-header'
+import { type TasksProjectViewHeaderContext } from './use-header'
 import { computed, inject } from 'vue'
 import SortOperator from '@/components/tasks/dropdowns/sort-operator.vue'
+import { TASKS_PROJECT_VIEW_HEADER_CONTEXT_KEY } from '../constants'
 
 defineOptions({ name: 'TasksTodoFilterDropdown' })
 defineEmits<{ (e: 'getTodos'): void }>()

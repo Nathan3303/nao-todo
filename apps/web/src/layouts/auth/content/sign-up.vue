@@ -97,7 +97,7 @@ const handleSubmit = async (e: Event) => {
     loading.value = true
     disabled.value = true
     // 调用注册 API
-    const err = await authViewStore.signUp(signUpVO)
+    const err = await authViewStore.authApp.signUp(signUpVO)
     loading.value = false
     // 处理错误
     if (err) {

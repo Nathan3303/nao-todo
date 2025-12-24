@@ -1,13 +1,13 @@
-import { EventEntity } from './entities'
-import type { Err, GoLike } from '@nao-todo/types'
+import type { EventEntity } from './entities'
+import type {  GoAsync } from '@nao-todo/types'
 import type { EventRepository } from './repositories'
 
 interface EventDomain {
-    get(eventId: string): Promise<GoLike<EventEntity | null>>
-    create(eventEntity: EventEntity): Promise<GoLike<EventEntity | null>>
-    update(eventId: string, eventEntity: EventEntity): Promise<GoLike<string | null>>
-    remove(eventId: string): Promise<Err> // like delete
-    list(): Promise<GoLike<EventEntity[] | null>>
+    get(eventId: string): GoAsync<EventEntity>
+    create(eventEntity: EventEntity): GoAsync<EventEntity>
+    update(eventId: string, eventEntity: EventEntity): GoAsync<string>
+    remove(eventId: string): GoAsync<void> // like delete
+    list(taskId: string): GoAsync<EventEntity[]>
 }
 
 export default (eventRepo: EventRepository): EventDomain => {

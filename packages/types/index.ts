@@ -26,7 +26,7 @@ export type * from './viewobjects/user'
 export type * from './viewobjects/project'
 export type * from './viewobjects/task'
 export type * from './viewobjects/tag'
-
+export type * from './viewobjects/event'
 
 
 // other

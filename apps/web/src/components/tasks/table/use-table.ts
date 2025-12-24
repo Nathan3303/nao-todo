@@ -41,11 +41,11 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
     }
 
     // @method 删除/恢复按钮处理
-    const deleteOrRestore = (taskId: TaskVO['id'], isDelete: boolean) => {
-        if (isDelete) {
-            emit('deleteTask', taskId)
-        } else {
+    const deleteOrRestore = (taskId: TaskVO['id'], isDeleted: boolean) => {
+        if (isDeleted) {
             emit('restoreTask', taskId)
+        } else {
+            emit('deleteTask', taskId)
         }
     }
 

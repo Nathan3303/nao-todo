@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { useTasksProjectViewStore } from '@/stores/tasks'
-import { TodoList } from '@/components/tasks/list'
-import { storeToRefs } from 'pinia'
+// import { useTasksProjectViewStore } from '@/stores/tasks'
+// import { TodoList } from '@/components/tasks/list'
+// import { storeToRefs } from 'pinia'
 
-defineOptions({ name: 'TasksMainProjectViewList' })
+// defineOptions({ name: 'TasksMainProjectViewList' })
 
-const tasksProjectViewStore = useTasksProjectViewStore()
+// const tasksProjectViewStore = useTasksProjectViewStore()
 
-const { todos, tags, viewProps } = storeToRefs(tasksProjectViewStore)
+// const { todos, tags, viewProps } = storeToRefs(tasksProjectViewStore)
 </script>
 
 <template>
-    <nue-container id="TasksMainListContainer">
+    <!-- <nue-container id="TasksMainListContainer">
         <nue-main>
             <nue-empty
                 v-if="!viewProps"
@@ -35,11 +35,12 @@ const { todos, tags, viewProps } = storeToRefs(tasksProjectViewStore)
                 />
             </nue-content>
         </nue-main>
-    </nue-container>
+    </nue-container> -->
+    ListView
 </template>
 
 <style scoped>
-.nue-container#TasksMainListContainer {
+/* .nue-container#TasksMainListContainer {
     gap: 0.5rem;
 
     > .nue-header,
@@ -49,5 +50,5 @@ const { todos, tags, viewProps } = storeToRefs(tasksProjectViewStore)
         border: none;
         height: auto;
     }
-}
+} */
 </style>

@@ -30,10 +30,8 @@ const routes: RouteRecordRaw = {
                             import(
                                 '@/layouts/tasks/content/built-in-project-view/header/index.vue'
                             ),
-                        Content: () =>
-                            import(
-                                '@/layouts/tasks/content/built-in-project-view/content/index.vue'
-                            )
+                        Main: () =>
+                            import('@/layouts/tasks/content/built-in-project-view/main/index.vue')
                     }
                 }
             ]

@@ -1,15 +1,15 @@
 <script lang="ts" setup>
-import { storeToRefs } from 'pinia'
-import { useTodoDetailsStore } from '@/stores/tasks'
-import { CommentRow } from '@nao-todo/components'
+// import { storeToRefs } from 'pinia'
+// import { useTodoDetailsStore } from '@/stores/tasks'
+// import { CommentRow } from '@nao-todo/components'
 
-const todoDetailsStore = useTodoDetailsStore()
+// const todoDetailsStore = useTodoDetailsStore()
 
-const { comments } = storeToRefs(todoDetailsStore)
+// const { comments } = storeToRefs(todoDetailsStore)
 </script>
 
 <template>
-    <nue-container v-if="comments.length" id="TodoDetailsCommentsContainer">
+    <!-- <nue-container v-if="comments.length" id="TodoDetailsCommentsContainer">
         <nue-header>
             <nue-text size="14px" :weight="500">评论</nue-text>
             <nue-text size="14px" color="gray">{{ comments.length }}</nue-text>
@@ -25,11 +25,12 @@ const { comments } = storeToRefs(todoDetailsStore)
                 />
             </nue-content>
         </nue-main>
-    </nue-container>
+    </nue-container> -->
+    Comments
 </template>
 
 <style scoped>
-#TodoDetailsCommentsContainer {
+/* #TodoDetailsCommentsContainer {
     border-top: 1px solid var(--nue-divider-color);
     padding: 0.5rem;
     gap: 0.5rem;
@@ -54,5 +55,5 @@ const { comments } = storeToRefs(todoDetailsStore)
             overflow: hidden;
         }
     }
-}
+} */
 </style>

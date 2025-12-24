@@ -1,18 +1,22 @@
 import { useTaskDomain } from '@nao-todo/domain/task'
 import { useTaskRepository } from '@nao-todo/infrastructure/backend/task/repoImpl'
 import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
-import type { GetTasksOptions, GoAsync, TaskVO } from '@nao-todo/types'
-import { ref, type ComputedRef, type Ref } from 'vue'
 import { getTasksOptions2ValueObject, taskEntities2VOs } from './converters'
-import useListMapper from '@nao-todo/infrastructure/hooks/use-list-mapper'
+import type { GetTasksOptions, GoAsync, TaskVO } from '@nao-todo/types'
 import dayjs from 'dayjs'
+import { reactive, type Reactive, watch } from 'vue'
+
+export type TaskAppStates = Reactive<{
+    tasks: TaskVO[]
+    taskMap: Map<string, number>
+}>
 
 export interface TaskApp {
-    tasks: Ref<TaskVO[]>
+    states: TaskAppStates
     list: (options?: GetTasksOptions) => GoAsync<TaskVO[]>
     remove: (id: string) => GoAsync<void>
     restore: (id: string) => GoAsync<void>
-    taskMap: ComputedRef<Map<string, TaskVO>>
+    // taskMap: ComputedRef<Map<string, TaskVO>>
     getByIdFromMap: (id: string) => TaskVO | undefined
 }
 
@@ -20,12 +24,11 @@ export default (): TaskApp => {
     // @domain 任务域
     const taskDomain = useTaskDomain(useTaskRepository(getRequesterImpl()))
 
-    /**
-     * 任务列表以及相关方法
-     */
-
-    // @state 任务列表
-    const tasks = ref<TaskVO[]>([])
+    // @state 任务列表以及映射
+    const states = reactive<TaskAppStates>({
+        tasks: [],
+        taskMap: new Map()
+    })
 
     // @method 获取标签列表
     const list = async (getOptions?: GetTasksOptions): GoAsync<TaskVO[]> => {
@@ -37,9 +40,10 @@ export default (): TaskApp => {
             return [null, err]
         }
         // 3. 更新状态
-        tasks.value = taskEntities2VOs(taskEntities)
+        states.tasks = taskEntities2VOs(taskEntities)
+        console.log(222, states.tasks)
         // 4. 返回
-        return [tasks.value, null]
+        return [states.tasks, null]
     }
 
     // @method 删除任务
@@ -48,13 +52,11 @@ export default (): TaskApp => {
         const err = await taskDomain.remove(id)
         if (err !== null) return err
         // 2. 删除任务
-        const taskIdx = tasks.value.findIndex((task) => task.id === id)
+        const taskIdx = states.tasks.findIndex((task) => task.id === id)
         if (taskIdx !== -1) {
-            tasks.value[taskIdx].deletedAt = dayjs().toISOString()
-            tasks.value[taskIdx].isDeleted = true
+            states.tasks[taskIdx].deletedAt = dayjs().toISOString()
+            states.tasks[taskIdx].isDeleted = true
         }
-        // 3. 删除映射
-        removeFromMap(id)
         // 4. 返回
         return null
     }
@@ -67,13 +69,11 @@ export default (): TaskApp => {
             return err
         }
         // 2. 恢复任务
-        const taskIdx = tasks.value.findIndex((task) => task.id === id)
+        const taskIdx = states.tasks.findIndex((task) => task.id === id)
         if (taskIdx !== -1) {
-            tasks.value[taskIdx].deletedAt = null
-            tasks.value[taskIdx].isDeleted = false
+            states.tasks[taskIdx].deletedAt = null
+            states.tasks[taskIdx].isDeleted = false
         }
-        // 3. 恢复映射
-        addToMap(tasks.value[taskIdx])
         // 4. 返回
         return null
     }
@@ -84,16 +84,24 @@ export default (): TaskApp => {
      * Computed 实现响应式变化
      */
 
-    // @hook useListMapper
-    const {
-        map: taskMap,
-        get: getByIdFromMap,
-        remove: removeFromMap,
-        add: addToMap
-    } = useListMapper(tasks)
+    // @watch 监听 tasks 变化，更新 taskMap
+    watch(
+        () => states.tasks,
+        (newList) => (states.taskMap = new Map(newList.map((item, index) => [item.id, index]))),
+        { immediate: true }
+    )
+
+    // @method 根据 id 获取任务
+    const getByIdFromMap = (id: string): TaskVO | undefined => {
+        const index = states.taskMap.get(id)
+        if (index === undefined) return void 0
+        const task = states.tasks[index]
+        if (task.isDeleted) return void 0
+        return task
+    }
 
     /**
      * 返回
      */
-    return { tasks, list, remove, restore, taskMap, getByIdFromMap }
+    return { states, list, remove, restore, getByIdFromMap }
 }

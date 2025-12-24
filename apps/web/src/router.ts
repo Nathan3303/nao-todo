@@ -2,7 +2,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import authRoutes, { beforeEnter as authBeforeEnter } from '@/views/auth/routes'
 import tasksRoutes from '@/views/tasks/routes'
 // import calendarRoutes from '@/views/calendar/routes'
-// import searchRoutes from '@/views/search/routes'
+import searchRoutes from '@/views/search/routes'
 // import settingsRoutes from '@/views/settings/routes'
 
 const router = createRouter({
@@ -15,8 +15,9 @@ const router = createRouter({
             beforeEnter: authBeforeEnter,
             component: () => import('@/views/index.vue'),
             children: [
-                tasksRoutes
-                // calendarRoutes, searchRoutes, settingsRoutes
+                tasksRoutes,
+                searchRoutes
+                // calendarRoutes, , settingsRoutes
             ]
         }
     ]

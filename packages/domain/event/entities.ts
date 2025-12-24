@@ -1,8 +1,19 @@
-export class EventEntity {
-    public id: string = ''
-    public taskId: string = ''
-    public name: string = ''
-    public description: string = ''
-    public isDone: boolean = false
-    public sortId: number = 0
+export type EventEntity = {
+    id: string
+    taskId: string
+    name: string
+    description: string
+    isDone: boolean
+    sortId: number
+}
+
+export const makeEventEntity = (): EventEntity => {
+    return {
+        id: '',
+        taskId: '',
+        name: '',
+        description: '',
+        isDone: false,
+        sortId: 0
+    }
 }

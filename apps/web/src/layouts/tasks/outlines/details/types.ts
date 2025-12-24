@@ -1,69 +1,107 @@
-import type { Todo, UpdateTodoOptions } from '@nao-todo/types'
+import type {
+    CreateEventVO,
+    EventVO,
+    GoAsync,
+    ProjectVO,
+    TagVO,
+    TaskVO,
+    UpdateEventsVO,
+    UpdateEventVO,
+    UpdateTaskVO,
+    WithNull
+} from '@nao-todo/types'
+import type { ComputedRef, Ref } from 'vue'
 
-export type DetailsEmits = {
-    (e: 'close'): void
+/**
+ * Task Details
+ */
+
+export type TaskDetailsVO = {
+    id: string
+    projectId: ProjectVO['id']
+    projectName?: ProjectVO['name']
+    name: string
+    description: string
+    state: 'todo' | 'in-progress' | 'done'
+    priority: 'low' | 'medium' | 'high' | 'urgent'
+    tags: TagVO['id'][]
+    tagList: TagVO[]
+    startAt?: string | null
+    endAt?: string | null
+    deletedAt: string | null
+    isDeleted: boolean
+    isFavorited: boolean
+    isGivenUp: boolean
+    isDone: boolean
+    createdAt: string
+    updatedAt: string
 }
 
-export type DetailsHeaderProps = {
-    shadowTodo?: Todo
-    disableClose?: boolean
-    updating?: boolean
+export type TaskDetailsProps = {
+    taskId?: TaskVO['id']
+    taskGetter: (taskId: TaskVO['id']) => TaskVO | undefined
+    eventLister: (taskId: TaskVO['id']) => GoAsync<EventVO[]>
+    // commentLister: (taskId: TaskVO['id']) => GoAsync<CommentVO[]>
+    projectNameGetter: (projectId: ProjectVO['id']) => string
+    tagGetter: (tagIds: TagVO['id'][]) => TagVO[]
 }
 
-export type DetailsHeaderEmits = {
-    (e: 'finishTodo'): void
-    (e: 'updateTodoEndAt', value: string | null): void
-    (e: 'close'): void
-    (e: 'save'): void
+export type TaskDetailsEmits = {
+    (e: 'closeDetails'): void
+    (e: 'updateTask', taskId: TaskVO['id'], updateVO: UpdateTaskVO): void
+    (e: 'deleteTask', taskId: TaskVO['id']): void
+    (e: 'restoreTask', taskId: TaskVO['id']): void
+    (e: 'duplicateTask', taskId: TaskVO['id']): void
+    (e: 'createEvent', createVO: CreateEventVO): void
+    (e: 'updateEvent', eventId: EventVO['id'], updateVO: UpdateEventVO): void
+    (e: 'updateEvents', updatesVO: UpdateEventsVO[]): void
+    (e: 'deleteEvent', eventId: EventVO['id']): void
 }
 
-export type DetailsMainProps = {
-    shadowTodo?: Todo
-    eventsProgress: { percentage: number; text: string }
-    commentsCount: number
-    isCommenting: boolean
-    leaveCommentHandler: (content: string) => Promise<boolean>
-    statusText: string
+export type TaskDetailsContext = TaskDetailsHeaderContext &
+    TaskDetailsMainContext &
+    TaskDetailsFooterContext
+
+/**
+ * Task Details Header
+ */
+
+// export type TaskDetailsHeaderProps = {}
+
+// export type TaskDetailsHeaderEmits = {}
+
+export type TaskDetailsHeaderContext = {
+    vo: Ref<WithNull<TaskDetailsVO>>
+    finishTask: () => void
+    closeDetails: () => void
+    updateEndAt: (value: any) => void
 }
 
-export type DetailsMainEmits = {
-    (e: 'updateTodoState', newState: Todo['state']): void
-    (e: 'updateTodoPriority', newPriority: Todo['priority']): void
-    (e: 'update', key: keyof UpdateTodoOptions): void
-    (e: 'updateTodoTags', newTags: Todo['tags']): void
-    (e: 'cancelLeaveComment'): void
+/**
+ * Task Details Main
+ */
+
+// export type TaskDetailsMainProps = {}
+
+// export type TaskDetailsMainEmits = {}
+
+export type TaskDetailsMainContext = {
+    emit: TaskDetailsEmits
+    vo: Ref<WithNull<TaskDetailsVO>>
+    events: Ref<WithNull<EventVO[]>>
+    eventProgress: ComputedRef<{ percentage: number; text: string }>
+    resortEvents: (oldIndex: number, newIndex: number, isUp: boolean) => void
 }
 
-export type DetailsFooterProps = {
-    shadowTodo?: Todo
-}
+/**
+ * Task Details Footer
+ */
 
-export type DetailsFooterEmits = {
-    (e: 'updateTodoProject', newProjectId: Todo['projectId']): void
-    (e: 'deleteTodoPermanently', todoId: Todo['id']): void
-    (e: 'deleteTodo', todoId: Todo['id']): void
-    (e: 'restoreTodo', todoId: Todo['id']): void
-    (e: 'giveUpTodo'): void
-    (e: 'cancelGiveUpTodo'): void
-    (e: 'leaveTodoComment'): void
-    (e: 'duplicateTodo', todoId: Todo['id']): void
-}
+// export type TaskDetailsFooterProps = {}
 
-export type DetailsMainEventsProps = {
-    // todoId: Todo['id']
-    loading?: boolean
-}
+// export type TaskDetailsFooterEmits = {}
 
-export type UnusedTagOption = {
-    label: string
-    value: string
-}
-
-export type DetailsMainTagsProps = {
-    // todoId: Todo['id']
-    todoTags: Todo['tags']
-}
-
-export type DetailsMainTagsEmits = {
-    (event: 'updateTags', tags: Todo['tags']): void
+export type TaskDetailsFooterContext = {
+    emit: TaskDetailsEmits
+    vo: Ref<WithNull<TaskDetailsVO>>
 }

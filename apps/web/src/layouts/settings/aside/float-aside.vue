@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { GlobalFloatAside } from '@/layouts/global'
+import { GlobalFloatAside } from '@/layouts/app'
 import SettingsAside from './aside.vue'
 
 defineOptions({ name: 'SettingsAsideDrawer' })

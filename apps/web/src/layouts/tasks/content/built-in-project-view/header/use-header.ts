@@ -1,10 +1,11 @@
 import { useTasksViewStore, useTasksDialogStore } from '@/views/tasks'
 import { computed, inject, provide, type ComputedRef } from 'vue'
-import { type TasksProjectViewContext, TASKS_PROJECT_VIEW_CONTEXT_KEY } from '../use-project-view'
+import { type TasksProjectViewContext } from '../use-project-view'
 import type { InnerDropdownOptionVO } from '@/components/ui'
 import type { ProjectPreferenceVO, TodoColumnOptions, WithNull } from '@nao-todo/types'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
+import { TASKS_PROJECT_VIEW_CONTEXT_KEY, TASKS_PROJECT_VIEW_HEADER_CONTEXT_KEY } from '../constants'
 
 export type TasksProjectViewHeaderContext = {
     preference: ComputedRef<WithNull<ProjectPreferenceVO>>
@@ -15,8 +16,6 @@ export type TasksProjectViewHeaderContext = {
     savePreference: () => void
     getColumnText: (key: string) => string
 }
-
-export const TASKS_PROJECT_VIEW_HEADER_CONTEXT_KEY = 'TASKS_PROJECT_VIEW_HEADER_CONTEXT_KEY'
 
 export default () => {
     const router = useRouter()

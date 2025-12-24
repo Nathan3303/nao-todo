@@ -76,14 +76,14 @@ const signInVO = reactive<SignInVO>({ email: '', password: '' })
 const handleSubmit = async (e: Event) => {
     e.preventDefault()
     loading.value = disabled.value = true
-    const err = await authViewStore.signIn(signInVO)
+    const err = await authViewStore.authApp.signIn(signInVO)
     if (err) {
         signInVO.password = ''
         loading.value = disabled.value = false
         NueMessage.error(unwrapError(err))
         return
     }
-    NueMessage.success("登录成功")
+    NueMessage.success('登录成功')
     await router.push({ path: '/tasks' })
 }
 

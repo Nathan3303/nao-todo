@@ -2,8 +2,8 @@ import type { UserEntity } from './user-entity'
 import type { AuthRepository } from './repositories'
 import type { Err, GoAsync, GoLike } from '@nao-todo/types'
 
-interface AuthDomain {
-    signIn(userEntity: UserEntity): Promise<GoLike<string>>
+export interface AuthDomain {
+    signIn(userEntity: UserEntity): GoAsync<string>
     signUp(userEntity: UserEntity): Promise<Err>
     checkIn(userToken: string): Promise<GoLike<string>>
     signOut(userToken: string): Promise<Err>

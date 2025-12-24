@@ -23,5 +23,9 @@ const componentName = computed(() => {
 </script>
 
 <template>
-    <component :is="componentName" />
+    <nue-main>
+        <nue-content fill overflow="hidden">
+            <component :is="componentName" />
+        </nue-content>
+    </nue-main>
 </template>

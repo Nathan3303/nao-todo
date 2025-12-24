@@ -21,14 +21,8 @@ const { loading, error, initialize } = useProjectView(props)
         <nue-button theme="small,primary" @click="initialize">重试</nue-button>
     </nue-empty>
     <nue-container v-else id="TasksMainWrapper">
-        <nue-header>
-            <router-view name="Header" />
-        </nue-header>
-        <nue-main>
-            <nue-content fill overflow="hidden">
-                <router-view name="Content" />
-            </nue-content>
-        </nue-main>
+        <router-view name="Header" />
+        <router-view name="Main" />
     </nue-container>
 </template>
 

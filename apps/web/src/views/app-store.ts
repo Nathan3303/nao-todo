@@ -1,9 +1,16 @@
 import { useUserApp } from '@nao-todo/application'
 import { defineStore } from 'pinia'
+import { ref } from 'vue'
 
 export default defineStore('ViewStore', () => {
     // @appInstants
     const userApp = useUserApp()
+
+    // @state Router links
+    const routerLinks = ref([
+        { name: '任务', icon: 'square-check-fill', route: '/tasks', routeName: 'tasks' },
+        { name: '搜索', icon: 'search2', route: '/search', routeName: 'search' }
+    ])
 
     // @method 隐藏首屏加载
     const hideFirstLoadingScreen = () => {
@@ -17,6 +24,7 @@ export default defineStore('ViewStore', () => {
     return {
         userProfile: userApp.userProfile,
         getProfile: userApp.getProfile,
-        hideFirstLoadingScreen
+        hideFirstLoadingScreen,
+        routerLinks
     }
 })

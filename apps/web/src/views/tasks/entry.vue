@@ -19,21 +19,20 @@
             <nue-content fill style="overflow: hidden">
                 <router-view />
             </nue-content>
+            <tasks-outline />
         </nue-main>
     </nue-container>
 </template>
 
 <script lang="ts" setup>
-import { TasksAside } from '@/layouts/tasks'
-import useTasksViewStore from './tasks-view-store'
+import { TasksAside, TasksOutline } from '@/layouts/tasks'
 import { Loading as LoadingComp } from '@nao-todo/components'
-import useViewStore from '@/views/view-store'
+import useTasksViewStore from './tasks-view-store'
 
 defineOptions({ name: 'TasksView' })
 
-const viewStore = useViewStore()
 const tasksViewStore = useTasksViewStore()
 
 await tasksViewStore.initializer.start()
-viewStore.hideFirstLoadingScreen()
+tasksViewStore.appStore.hideFirstLoadingScreen()
 </script>

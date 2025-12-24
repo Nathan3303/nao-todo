@@ -1,8 +1,8 @@
-import { EventEntity } from '@nao-todo/domain/event/entities'
+import { type EventEntity, makeEventEntity } from '@nao-todo/domain/event/entities'
 import type { CreateEventRes, GetEventRes, ListEventRes } from '../types'
 
 export const getEventRes2EventEntity = (res: GetEventRes): EventEntity => {
-    const e = new EventEntity()
+    const e = makeEventEntity()
     e.id = res.id
     e.taskId = res.taskId
     e.name = res.name
