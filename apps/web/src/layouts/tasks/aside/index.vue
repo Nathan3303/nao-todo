@@ -1,20 +1,99 @@
 <script setup lang="ts">
-import TasksAside from './aside.vue'
-import TasksFloatAside from './float-aside.vue'
+import { computed, ref } from 'vue'
 import useTasksViewStore from '@/views/tasks/tasks-view-store'
-import { storeToRefs } from 'pinia'
+import projectSmartList from '@/components/tasks/smartlists/project-smart-list.vue'
+import FilterSmartList from '@/components/tasks/smartlists/filter-smart-list.vue'
+import TagSmartList from '@/components/tasks/smartlists/tag-smart-list.vue'
 
-defineOptions({ name: 'TasksAsideWrapper' })
+defineOptions({ name: 'TasksAside' })
 
 const tasksViewStore = useTasksViewStore()
 
-const { isDisplayAside, asideWidth, isUseFloatAside } = storeToRefs(tasksViewStore)
+const collapseItemsRecord = ref(['projects', 'filters', 'tags'])
+
+const builtInProjectLinks = computed(() => {
+    return tasksViewStore.builtInProjectApp.states.projects.map((project) => ({
+        id: project.id,
+        title: project.name,
+        route: { name: 'tasks-built-in-project', params: { projectId: project.id } },
+        icon: project.icon
+    }))
+})
+
+const projectLinks = computed(() => {
+    return tasksViewStore.projectApp.projects.map((p) => {
+        return {
+            id: p.id,
+            title: p.name,
+            route: { name: 'tasks-project', params: { projectId: p.id } },
+            icon: p.icon
+        }
+    })
+})
+
+const tagLinks = computed(() => {
+    return tasksViewStore.tagApp.tags.map((tag) => ({
+        id: tag.id,
+        title: tag.name,
+        route: { name: 'tasks-tag', params: { tagId: tag.id } },
+        icon: 'tag'
+    }))
+})
 </script>
 
 <template>
-    <tasks-float-aside v-if="isUseFloatAside" />
-    <template v-else-if="isDisplayAside">
-        <tasks-aside :width="asideWidth" max-width="256px" min-width="180px" />
-        <nue-separator op-target="previous" @resize="tasksViewStore.handleResizeAside" />
-    </template>
+    <nue-aside theme="tasks-aside" v-bind="$attrs">
+        <nue-div vertical>
+            <nue-div vertical gap="0.5rem">
+                <nue-link
+                    v-for="link in builtInProjectLinks"
+                    :key="link.id"
+                    :icon="link.icon"
+                    :route="{ name: 'tasks-built-in-project', params: { projectId: link.id } }"
+                    theme="route"
+                >
+                    {{ link.title }}
+                </nue-link>
+            </nue-div>
+            <nue-divider />
+            <nue-collapse theme="menu" v-model="collapseItemsRecord">
+                <project-smart-list
+                    :links="projectLinks"
+                    @open-project-creator="
+                        () => tasksViewStore.dialogManager.openDialog('project-creator')
+                    "
+                    @open-project-manager="
+                        () => tasksViewStore.dialogManager.openDialog('project-manager')
+                    "
+                />
+                <filter-smart-list />
+                <tag-smart-list
+                    :links="tagLinks"
+                    @open-tag-creator="() => tasksViewStore.dialogManager.openDialog('tag-creator')"
+                    @open-tag-manager="() => tasksViewStore.dialogManager.openDialog('tag-manager')"
+                />
+            </nue-collapse>
+        </nue-div>
+    </nue-aside>
 </template>
+
+<style scoped>
+.nue-aside.nue-aside--tasks-aside {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    .nue-div--block {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .nue-collapse--menu {
+        gap: 0;
+
+        .nue-collapse-item {
+            border: none;
+        }
+    }
+}
+</style>

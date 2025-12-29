@@ -6,6 +6,9 @@ export type ProjectVO = {
     name: string
     description: string
     archivedAt: string
+    isArchived: boolean
+    deletedAt: string
+    isDeleted: boolean
     createdAt?: string
     updatedAt?: string
 }
@@ -23,4 +26,10 @@ export type UpdateProjectVO = {
     name?: string
     description?: string
     archivedAt?: string
+}
+
+export type CreateProjectVO = {
+    icon?: string
+    name: string
+    description?: string
 }

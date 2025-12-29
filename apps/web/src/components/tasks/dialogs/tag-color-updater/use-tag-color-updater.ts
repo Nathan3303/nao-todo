@@ -1,59 +1,54 @@
-import { useTagStore } from '@/stores/global'
 import type { Tag } from '@nao-todo/types'
-import { ref } from 'vue'
-import { storeToRefs } from 'pinia'
+import { reactive } from 'vue'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/utils'
+import type { TagColorUpdaterProps, TagColorUpdaterVO } from './types'
 
-const useTagColorUpdater = () => {
-    const tagStore = useTagStore()
+const useTagColorUpdater = (props: TagColorUpdaterProps) => {
+    // @states
+    const states = reactive<TagColorUpdaterVO>({
+        tagId: null,
+        color: 'transparent',
+        updating: false,
+        disabled: false
+    })
 
-    const { tags } = storeToRefs(tagStore)
-    const tagId = ref<Tag['id']>()
-    const color = ref<Tag['color']>('transparent')
-    const updating = ref(false)
-    const disabled = ref(false)
-
+    // @method 获取标签颜色
     const getTagColor = (id: Tag['id']) => {
-        // 判断 tagId 是否为空
         if (!id || id === '') {
             NueMessage.error('标签 ID 不能为空')
             return
         }
-        // 记录 tagId
-        tagId.value = id
-        // 查找 Tag 数据
-        const _tag = tags.value.find((tag) => tag.id === id) as Tag
-        // 获取 Tag 颜色
-        color.value = _tag ? _tag.color : 'transparent'
+        states.tagId = id
+        states.color = props.tagColorGetter(id) || 'transparent'
     }
 
+    // @method 更新标签颜色
     const updateTagColor = async (): Promise<boolean> => {
         // 判断 tagId 是否为空
-        if (!tagId.value || tagId.value === '') {
+        if (!states.tagId || states.tagId === '') {
             NueMessage.error('标签 ID 不能为空')
             return false
         }
         // 调用 API
-        disabled.value = updating.value = true
-        const err = await tagStore.updateTag(tagId.value, { color: color.value })
-        updating.value = false
+        states.disabled = states.updating = true
+        const err = await props.tagColorUpdater(states.tagId, states.color)
+        states.updating = false
         // 处理结果
         if (err) {
             NueMessage.error(unwrapError(err))
-            disabled.value = false
+            states.disabled = false
             return false
         }
         NueMessage.success('标签颜色修改成功')
-        tagId.value = void 0
-        color.value = 'transparent'
+        states.tagId = null
+        states.color = 'transparent'
         return true
     }
 
+    // @returns
     return {
-        color,
-        updating,
-        disabled,
+        states,
         getTagColor,
         updateTagColor
     }

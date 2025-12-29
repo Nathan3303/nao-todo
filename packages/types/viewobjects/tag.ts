@@ -16,3 +16,15 @@ export type TagPreferenceVO = {
     getTasksOptions: GetTasksOptions
     columns: TaskColumnOptions
 }
+
+export type CreateTagVO = {
+    name: string
+    description?: string
+    color?: string
+}
+
+export type UpdateTagVO = {
+    name?: string
+    description?: string
+    color?: string
+}

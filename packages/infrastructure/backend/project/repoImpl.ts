@@ -7,7 +7,7 @@ import {
 import type { ProjectEntity, ProjectPreferenceEntity } from '@nao-todo/domain/project/entities'
 import type { ProjectRepository } from '@nao-todo/domain/project/repositories'
 import type { Requester } from '@nao-todo/infrastructure/requester'
-import type { Err, GoAsync, GoLike } from '@nao-todo/types'
+import type { CreateProjectVO, Err, GoAsync, GoLike } from '@nao-todo/types'
 import type {
     CreateProjectReq,
     CreateProjectRes,
@@ -35,12 +35,12 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
         // 4. 返回
         return [projectEntity, null]
     }
-    const create = async (projectEntity: ProjectEntity): Promise<GoLike<ProjectEntity | null>> => {
+
+    const create = async (createVO: CreateProjectVO): GoAsync<ProjectEntity> => {
         // 1. 构建 rto
-        const rto: CreateProjectReq = {
-            name: projectEntity.name,
-            description: projectEntity.description
-        }
+        const rto = {} as CreateProjectReq
+        if (createVO.name) rto.name = createVO.name
+        if (createVO.description) rto.description = createVO.description
         // 2. 调用接口
         const response = await requester.post('/projects', {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` },
@@ -52,15 +52,12 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
             return [null, res.message]
         }
         // 4. 转换为实体
-        projectEntity = createProjectRes2ProjectEntity(res.data as CreateProjectRes)
+        const projectEntity = createProjectRes2ProjectEntity(res.data as CreateProjectRes)
         // 5. 返回
         return [projectEntity, null]
     }
 
-    const update = async (
-        projectId: string,
-        projectEntity: ProjectEntity
-    ): GoAsync<string> => {
+    const update = async (projectId: string, projectEntity: ProjectEntity): GoAsync<string> => {
         // 1. 构建 rto
         const rto: UpdateProjectReq = {}
         if (projectEntity.name) rto.name = projectEntity.name

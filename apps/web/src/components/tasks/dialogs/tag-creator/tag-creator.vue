@@ -1,17 +1,19 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue'
-import { type NueDialog, NueDiv, NueInput, NueTextarea } from 'nue-ui'
+import { nextTick, onMounted, ref } from 'vue'
+import { NueDiv, NueInput, NueTextarea } from 'nue-ui'
 import { TagColorSelector } from '@nao-todo/components'
-import useTagCreator, { type TagCreatorEmits } from './use-tag-creator'
+import useTagCreator from './use-tag-creator'
+import type { TagCreatorProps, TagCreatorEmits } from './types'
 import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
 
 defineOptions({ name: 'TagCreator' })
+const props = defineProps<TagCreatorProps>()
 const emit = defineEmits<TagCreatorEmits>()
 
 const tagNameInputRef = ref<InstanceType<typeof NueInput>>()
 const dialogRef = ref<DialogInstanceType>()
 
-const { creating, isNameEmpty, newTag, handleConfirm, clearInputsValue } = useTagCreator(emit)
+const { states, handleConfirm, clearInputsValue } = useTagCreator(props)
 const { visible, close } = useDialogWrapper(dialogRef)
 
 const handleSubmit = async () => {
@@ -22,11 +24,12 @@ const handleSubmit = async () => {
 const open = () => {
     clearInputsValue()
     visible.value = true
+    nextTick(() => {
+        tagNameInputRef.value?.innerInputRef?.focus()
+    })
 }
 
 onMounted(() => emit('register', open, close))
-
-// defineExpose({ open, close })
 </script>
 
 <template>
@@ -40,21 +43,21 @@ onMounted(() => emit('register', open, close))
                 <nue-div align="stretch" gap="4px" vertical width="100%">
                     <nue-input
                         ref="tagNameInputRef"
-                        v-model="newTag.name"
-                        :disabled="creating"
+                        v-model="states.name"
+                        :disabled="states.creating"
                         placeholder="请输入标签名称"
                         title="标签名称"
                         maxlength="36"
                         counter="word-left"
                     />
-                    <nue-text v-if="isNameEmpty" color="#f56c6c" size="12px">
+                    <nue-text v-if="states.isNameEmpty" color="#f56c6c" size="12px">
                         * 标签名称不能为空
                     </nue-text>
                 </nue-div>
                 <nue-div align="stretch" gap="8px" vertical width="100%">
                     <nue-textarea
-                        v-model="newTag.description"
-                        :disabled="creating"
+                        v-model="states.description"
+                        :disabled="states.creating"
                         :rows="4"
                         placeholder="标签描述"
                         title="Project description"
@@ -66,16 +69,15 @@ onMounted(() => emit('register', open, close))
                 </nue-div>
                 <nue-div align="stretch" gap="8px" vertical>
                     <nue-text color="gray" size="12px">选择标签颜色：</nue-text>
-                    <tag-color-selector v-model="newTag.color" />
+                    <tag-color-selector v-model="states.color" />
                 </nue-div>
             </nue-div>
         </template>
         <template #footer>
             <nue-button @click="close">取消</nue-button>
-            <nue-button :loading="creating" theme="primary" @click="handleSubmit">
+            <nue-button :loading="states.creating" theme="primary" @click="handleSubmit">
                 创建
             </nue-button>
         </template>
     </nue-dialog>
 </template>
-

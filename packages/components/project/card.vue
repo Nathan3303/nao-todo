@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import type { Project } from '@nao-todo/types'
+import type { ProjectVO } from '@nao-todo/types'
 import { computed } from 'vue'
 
 type ProjectCardProps = {
-    project: Project
+    project: ProjectVO
     allowRoute?: boolean
 }
 type ProjectCardEmits = {
-    (event: 'click', project: Project): void
-    (event: 'unarchiveProject', projectId: Project['id']): void
+    (event: 'click', project: ProjectVO): void
+    (event: 'unarchiveProject', projectId: ProjectVO['id']): void
 }
 
 defineOptions({ name: 'ProjectCard' })
@@ -83,4 +83,3 @@ const handleClick = () => {
     }
 }
 </style>
-

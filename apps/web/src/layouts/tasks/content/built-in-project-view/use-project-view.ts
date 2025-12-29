@@ -16,7 +16,7 @@ export type TasksProjectViewContext = {
     project: ComputedRef<ProjectVO | null>
     preference: ComputedRef<ProjectPreferenceVO | null>
     tags: Ref<TagVO[]>
-    tasks: ComputedRef<TaskVO[]>
+    tasks: Ref<TaskVO[]>
     getColumnLabel: (key: string) => string
     savePreference: () => void
     showTaskDetails: (taskId: TaskVO['id']) => void

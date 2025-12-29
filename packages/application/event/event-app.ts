@@ -9,7 +9,7 @@ import type {
     // UpdateEventVO
 } from '@nao-todo/types'
 import { eventEntities2VOs } from './converters'
-import { type ComputedRef, ref, type Ref } from 'vue'
+import { ref, type Ref } from 'vue'
 import useListMapper from '@nao-todo/infrastructure/hooks/use-list-mapper'
 
 export interface EventApp {
@@ -18,7 +18,6 @@ export interface EventApp {
     // createEvent: (createVO: CreateEventVO) => GoAsync<EventVO>
     // updateEvent: (id: EventVO['id'], updateVO: UpdateEventVO) => GoAsync<void>
     // deleteEvent: (id: EventVO['id']) => GoAsync<void>
-    eventMap: ComputedRef<Map<EventVO['id'], EventVO>>
     getByIdFromMap: (id: EventVO['id']) => EventVO | undefined
 }
 
@@ -54,7 +53,6 @@ export default (): EventApp => {
 
     // @hook useListMapper
     const {
-        map: eventMap,
         get: getByIdFromMap
         // remove: removeFromMap,
         // add: addToMap
@@ -63,5 +61,5 @@ export default (): EventApp => {
     /**
      * 返回
      */
-    return { events, listEvent, eventMap, getByIdFromMap }
+    return { events, listEvent, getByIdFromMap }
 }

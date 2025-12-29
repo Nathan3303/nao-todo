@@ -2,7 +2,7 @@
 import { Loading as LoadingComp } from '@nao-todo/components'
 import DetailsHeader from './header/index.vue'
 import DetailsMain from './main/index.vue'
-// import DetailsFooter from './details-footer.vue'
+import DetailsFooter from './footer/index.vue'
 import useTaskDetails from './use-task-details'
 import type { TaskDetailsProps, TaskDetailsEmits } from './types'
 
@@ -35,17 +35,7 @@ const { loading, error, taskDetailsVO } = useTaskDetails(props, emit)
                 <details-main />
             </nue-content>
         </nue-main>
-        <!-- <nue-footer>
-            <details-footer
-                :shadow-todo="todo"
-                @update-todo-project="todoDetailsStore.updateTodoProject"
-                @delete-todo-permanently="todoDetailsStore.handleDeleteTodoPermenantly"
-                @delete-todo="todoDetailsStore.handleDeleteTodo"
-                @restore-todo="todoDetailsStore.handleRestoreTodo"
-                @leave-todo-comment="handleStartLeaveComment"
-                @duplicate-todo="todoDetailsStore.handleDuplicateTodo"
-            />
-        </nue-footer> -->
+        <details-footer />
     </nue-container>
 </template>
 

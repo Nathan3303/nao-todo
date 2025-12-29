@@ -1,41 +1,38 @@
-import { ref, watch } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { NueMessage } from 'nue-ui'
-import { useTasksDataStore } from '@/stores/tasks'
 import { unwrapError } from '@nao-todo/utils'
-import type { CreateProjectOptions } from '@nao-todo/types'
+import type { ProjectCreatorProps, ProjectCreatorVO } from './types'
 
-const DefaultCreateOptions: CreateProjectOptions = { name: '', description: '' }
-
-const useProjectCreator = () => {
-    const tasksDataStore = useTasksDataStore()
+const useProjectCreator = (props: ProjectCreatorProps) => {
     const router = useRouter()
 
     const creating = ref(false)
     const isNameEmpty = ref(false)
-    const newProject = ref<CreateProjectOptions>({ ...DefaultCreateOptions })
+    const viewObject = reactive<ProjectCreatorVO>({ name: '', description: '' })
 
     const clearInputsValue = () => {
         isNameEmpty.value = false
-        newProject.value = { ...DefaultCreateOptions }
+        viewObject.name = ''
+        viewObject.description = ''
     }
 
     const handleConfirm = async () => {
         // 检查参数
-        if (!newProject.value.name) {
+        if (!viewObject.name) {
             isNameEmpty.value = true
             return false
         }
         // 调用 API 创建清单
         creating.value = true
-        const [projectId, err] = await tasksDataStore.createProject(
-            newProject.value.name,
-            newProject.value.description
-        )
+        const [projectId, createError] = await props.creator({
+            name: viewObject.name,
+            description: viewObject.description
+        })
         creating.value = false
         // 处理失败结果
-        if (err) {
-            console.warn(unwrapError(err))
+        if (createError) {
+            console.warn(unwrapError(createError))
             return false
         }
         // 跳转至新清单详情页
@@ -47,18 +44,17 @@ const useProjectCreator = () => {
     }
 
     watch(
-        () => newProject.value.name,
+        () => viewObject.name,
         (newVal) => newVal && (isNameEmpty.value = !newVal)
     )
 
     return {
         creating,
         isNameEmpty,
-        newProject,
+        viewObject,
         handleConfirm,
         clearInputsValue
     }
 }
 
 export default useProjectCreator
-

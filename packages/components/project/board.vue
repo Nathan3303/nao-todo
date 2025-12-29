@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { Loading, ProjectCard, ProjectDeleteButton } from '@nao-todo/components'
-import type { Project } from '@nao-todo/types'
+import type { ProjectVO } from '@nao-todo/types'
 
 type ProjectBoardProps = {
-    projects?: Project[]
+    projects?: ProjectVO[]
     loadingState?: boolean
     allowRoute?: boolean
 }
 type ProjectBoardEmits = {
-    (event: 'archiveProject', projectId: Project['id']): void
-    (event: 'unarchiveProject', projectId: Project['id']): void
-    (event: 'deleteProject', projectId: Project['id']): void
-    (event: 'restoreProject', projectId: Project['id']): void
-    (event: 'deleteProjectPermanently', projectId: Project['id']): void
+    (event: 'archiveProject', projectId: ProjectVO['id']): void
+    (event: 'unarchiveProject', projectId: ProjectVO['id']): void
+    (event: 'deleteProject', projectId: ProjectVO['id']): void
+    (event: 'restoreProject', projectId: ProjectVO['id']): void
+    (event: 'deleteProjectPermanently', projectId: ProjectVO['id']): void
 }
 
 defineOptions({ name: 'ProjectBoard' })
@@ -79,4 +79,3 @@ const emit = defineEmits<ProjectBoardEmits>()
     }
 }
 </style>
-

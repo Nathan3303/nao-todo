@@ -1,5 +1,4 @@
-import { markRaw, ref } from 'vue'
-import { watch, type Ref } from 'vue'
+import { watch, type Ref, markRaw, ref, computed } from 'vue'
 
 const useListMapper = <T extends { id: string }>(listRef: Ref<T[]>) => {
     // @computed Mapper
@@ -39,4 +38,36 @@ const useListMapper = <T extends { id: string }>(listRef: Ref<T[]>) => {
     }
 }
 
+const useListMapperV2 = <T extends { id: string }>() => {
+    // @state
+    const itemMap = ref<Map<T['id'], T>>()
+
+    // @method Make indexed map for items
+    const makeMap = (items: T[]) => {
+        itemMap.value = new Map(items.map((item) => [item.id, item]))
+    }
+
+    // @method Get item by id from indexed map
+    const getById = (itemId: T['id']): T | undefined => {
+        if (!itemMap.value) return void 0
+        return itemMap.value.get(itemId)
+    }
+
+    // @method Getter for indexed map as reactivity
+    const useComputedGetter = (itemId: T['id']) => {
+        return computed(() => {
+            if (!itemMap.value) return void 0
+            return itemMap.value.get(itemId)
+        })
+    }
+
+    // @returns
+    return {
+        makeMap,
+        getById,
+        useComputedGetter
+    }
+}
+
 export default useListMapper
+export { useListMapperV2 }

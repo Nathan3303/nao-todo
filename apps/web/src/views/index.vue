@@ -5,13 +5,15 @@ import useAppStore from './app-store'
 
 defineOptions({ name: 'AppContainer' })
 
-await useAppStore().getProfile()
+await useAppStore().userApp.getProfile()
 </script>
 
 <template>
     <nue-container id="AppContainer">
         <nue-main>
-            <app-aside />
+            <nue-aside>
+                <app-aside />
+            </nue-aside>
             <nue-content fill style="overflow: hidden">
                 <router-view />
             </nue-content>

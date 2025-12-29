@@ -4,10 +4,10 @@ import {
     getTagRes2TagEntity,
     listTagRes2TagEntities
 } from './converters'
-import { TagEntity, TagPreferenceEntity } from '@nao-todo/domain/tag/entities'
+import type { TagEntity, TagPreferenceEntity } from '@nao-todo/domain/tag/entities'
 import type { TagRepository } from '@nao-todo/domain/tag/repositories'
 import type { Requester } from '../../requester/types'
-import type { Err, GoAsync, GoLike } from '@nao-todo/types'
+import type { CreateTagVO, Err, GoAsync, GoLike, UpdateTagVO } from '@nao-todo/types'
 import type {
     CreateTagReq,
     CreateTagRes,
@@ -35,12 +35,12 @@ export const useTagRepository = (requester: Requester): TagRepository => {
         // 4. 返回
         return [tagEntity, null]
     }
-    const create = async (tagEntity: TagEntity): Promise<GoLike<TagEntity | null>> => {
+    const create = async (createVO: CreateTagVO): GoAsync<TagEntity | null> => {
         // 1. 构建 rto
         const rto: CreateTagReq = {
-            name: tagEntity.name,
-            description: tagEntity.description,
-            color: tagEntity.color
+            name: createVO.name,
+            description: createVO.description || '',
+            color: createVO.color || 'transparent'
         }
         // 2. 调用接口
         const response = await requester.post('/tags', {
@@ -53,16 +53,17 @@ export const useTagRepository = (requester: Requester): TagRepository => {
             return [null, res.message]
         }
         // 4. 转换为实体
-        tagEntity = createTagRes2TagEntity(res.data as CreateTagRes)
+        const tagEntity = createTagRes2TagEntity(res.data as CreateTagRes)
         // 5. 返回
         return [tagEntity, null]
     }
 
-    const update = async (tagId: string, tagEntity: TagEntity): Promise<GoLike<string | null>> => {
+    const update = async (tagId: string, updateVO: UpdateTagVO): GoAsync<void> => {
         // 1. 构建 rto
         const rto: UpdateTagReq = {}
-        if (tagEntity.name) rto.name = tagEntity.name
-        if (tagEntity.description) rto.description = tagEntity.description
+        if (updateVO.name) rto.name = updateVO.name
+        if (updateVO.description) rto.description = updateVO.description
+        if (updateVO.color) rto.color = updateVO.color
         // 2. 调用接口
         const response = await requester.put(`/tags/${tagId}`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` },
@@ -71,11 +72,11 @@ export const useTagRepository = (requester: Requester): TagRepository => {
         // 3. 判断结果
         const res = response.data as ResponseData
         if (res.code !== 30020) {
-            return [null, res.message]
+            return res.message
         }
         // 4. 返回
         const data = res.data as UpdateTagRes
-        return [data.tagId, null]
+        return data.tagId
     }
 
     const remove = async (tagId: string): Promise<Err> => {

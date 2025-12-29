@@ -10,6 +10,7 @@ import type {
     UpdateTaskVO,
     WithNull
 } from '@nao-todo/types'
+import type { CommentVO, CreateCommentVO, UpdateCommentVO } from '@nao-todo/types/viewobjects/comment'
 import type { ComputedRef, Ref } from 'vue'
 
 /**
@@ -39,9 +40,10 @@ export type TaskDetailsVO = {
 
 export type TaskDetailsProps = {
     taskId?: TaskVO['id']
+    projects: ProjectVO[]
     taskGetter: (taskId: TaskVO['id']) => TaskVO | undefined
     eventLister: (taskId: TaskVO['id']) => GoAsync<EventVO[]>
-    // commentLister: (taskId: TaskVO['id']) => GoAsync<CommentVO[]>
+    commentLister: (taskId: TaskVO['id']) => GoAsync<CommentVO[]>
     projectNameGetter: (projectId: ProjectVO['id']) => string
     tagGetter: (tagIds: TagVO['id'][]) => TagVO[]
 }
@@ -56,6 +58,9 @@ export type TaskDetailsEmits = {
     (e: 'updateEvent', eventId: EventVO['id'], updateVO: UpdateEventVO): void
     (e: 'updateEvents', updatesVO: UpdateEventsVO[]): void
     (e: 'deleteEvent', eventId: EventVO['id']): void
+    (e: 'createComment', createVO: CreateCommentVO): void
+    (e: 'updateComment', commentId: CommentVO['id'], updateVO: UpdateCommentVO): void
+    (e: 'deleteComment', commentId: CommentVO['id']): void
 }
 
 export type TaskDetailsContext = TaskDetailsHeaderContext &
@@ -90,7 +95,11 @@ export type TaskDetailsMainContext = {
     vo: Ref<WithNull<TaskDetailsVO>>
     events: Ref<WithNull<EventVO[]>>
     eventProgress: ComputedRef<{ percentage: number; text: string }>
+    comments: Ref<WithNull<CommentVO[]>>
+    isCommenting: Ref<boolean>
     resortEvents: (oldIndex: number, newIndex: number, isUp: boolean) => void
+    updateComment: (commentId: CommentVO['id'], updateVO: UpdateCommentVO) => void
+    deleteComment: (commentId: CommentVO['id']) => void
 }
 
 /**
@@ -104,4 +113,6 @@ export type TaskDetailsMainContext = {
 export type TaskDetailsFooterContext = {
     emit: TaskDetailsEmits
     vo: Ref<WithNull<TaskDetailsVO>>
+    projects: ComputedRef<ProjectVO[]>
+    isCommenting: Ref<boolean>
 }

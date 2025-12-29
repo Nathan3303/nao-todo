@@ -21,9 +21,9 @@ export type GetTaskRes = {
 }
 
 export type CreateTaskReq = {
-    projectId: string
+    projectId?: string
     name: string
-    description: string
+    description?: string
     state: string
     priority: string
     startAt?: string

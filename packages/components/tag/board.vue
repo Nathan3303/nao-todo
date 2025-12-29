@@ -1,15 +1,15 @@
 <script lang="ts" setup>
 import { TagCard, TagColorDot } from '.'
 import { Loading } from '@nao-todo/components/general'
-import type { Tag } from '@nao-todo/types'
+import type { TagVO } from '@nao-todo/types'
 
 type TagBoardProps = {
     loadingState?: boolean
-    tags: Tag[]
+    tags: TagVO[]
 }
 type TagBoardEmits = {
-    (event: 'delete', tagId: Tag['id']): void
-    (event: 'recolor', tagId: Tag['id']): void
+    (event: 'delete', tagId: TagVO['id']): void
+    (event: 'recolor', tagId: TagVO['id']): void
 }
 
 defineOptions({ name: 'TagBoard', inheritAttrs: false })
@@ -53,4 +53,3 @@ const emit = defineEmits<TagBoardEmits>()
     }
 }
 </style>
-

@@ -24,7 +24,19 @@ export type TaskVO = {
     events?: Event[]
 }
 
+export type CreateTaskVO = {
+    projectId?: TaskVO['projectId']
+    name: TaskVO['name']
+    description?: TaskVO['description']
+    state: TaskVO['state']
+    priority: TaskVO['priority']
+    startAt?: TaskVO['startAt']
+    endAt: TaskVO['endAt']
+    tags?: TaskVO['tags']
+}
+
 export type UpdateTaskVO = {
+    projectId?: TaskVO['projectId']
     name?: TaskVO['name']
     description?: TaskVO['description']
     state?: TaskVO['state']

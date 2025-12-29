@@ -3,15 +3,18 @@ import { onMounted, ref } from 'vue'
 import useProjectCreator from './use-project-creator'
 import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
 import type { NueDialog, NueInput } from 'nue-ui'
+import type { ProjectCreatorEmits, ProjectCreatorProps } from './types'
 
 defineOptions({ name: 'ProjectCreator' })
-const emit = defineEmits<{ (e: 'register', open: () => void, close: () => void): void }>()
+const props = defineProps<ProjectCreatorProps>()
+const emit = defineEmits<ProjectCreatorEmits>()
 
 const nameInputRef = ref<InstanceType<typeof NueInput>>()
 const dialogRef = ref<DialogInstanceType>()
 
-const { creating, isNameEmpty, newProject, handleConfirm, clearInputsValue } = useProjectCreator()
 const { visible, close } = useDialogWrapper(dialogRef)
+const { creating, isNameEmpty, viewObject, handleConfirm, clearInputsValue } =
+    useProjectCreator(props)
 
 const handleSubmit = async () => {
     const ok = await handleConfirm()
@@ -24,8 +27,6 @@ const open = () => {
 }
 
 onMounted(() => emit('register', open, close))
-
-// defineExpose({ open, close })
 </script>
 
 <template>
@@ -39,7 +40,7 @@ onMounted(() => emit('register', open, close))
                 <nue-div align="stretch" gap="4px" vertical width="100%">
                     <nue-input
                         ref="nameInputRef"
-                        v-model="newProject.name"
+                        v-model="viewObject.name"
                         :disabled="creating"
                         clearable
                         placeholder="请输入清单名称"
@@ -53,7 +54,7 @@ onMounted(() => emit('register', open, close))
                 </nue-div>
                 <nue-div align="stretch" gap="8px" vertical>
                     <nue-textarea
-                        v-model="newProject.description"
+                        v-model="viewObject.description"
                         :disabled="creating"
                         :rows="4"
                         placeholder="清单描述"
@@ -74,4 +75,3 @@ onMounted(() => emit('register', open, close))
         </template>
     </nue-dialog>
 </template>
-

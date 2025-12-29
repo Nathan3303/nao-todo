@@ -8,7 +8,7 @@ import {
     projectPreferenceEntity2ProjectPreferenceVO,
     updateProjectVO2Entity
 } from './converters'
-import type { GoAsync, ProjectPreferenceVO, ProjectVO, UpdateProjectVO } from '@nao-todo/types'
+import type { CreateProjectVO, GoAsync, ProjectPreferenceVO, ProjectVO, UpdateProjectVO } from '@nao-todo/types'
 
 export interface ProjectApp {
     projects: Ref<ProjectVO[]>
@@ -16,6 +16,7 @@ export interface ProjectApp {
     getById: (id: string) => GoAsync<ProjectVO>
     getPreference: (id: string) => GoAsync<ProjectPreferenceVO>
     update: (id: string, project: UpdateProjectVO) => GoAsync<undefined>
+    create: (project: CreateProjectVO) => GoAsync<ProjectVO>
     projectMap: ComputedRef<Map<string, ProjectVO>>
     getByIdFromMap: (id: string) => ProjectVO | undefined
 }
@@ -108,6 +109,21 @@ export default (): ProjectApp => {
         return null
     }
 
+    // @method 创建清单
+    const create = async (createVO: CreateProjectVO): GoAsync<ProjectVO> => {
+        // 1. 参数判断
+        if (!createVO) return [null, '清单创建参数不能为空']
+        // 2. 调用域服务
+        const [projectEntity, err] = await projectDomain.create(createVO)
+        if (err !== null) return [null, err]
+        // 4. 实体转viewobject
+        const project = projectEntity2ProjectVO(projectEntity)
+        // 5. 更新状态
+        projects.value.push(project)
+        // 6. 返回
+        return [project, null]
+    }
+
     /**
      * 清单 Mapper 以及相关方法
      * 主要提供 O(1) 时间复杂度的查询，用于在视图层快速获取清单详情
@@ -124,5 +140,6 @@ export default (): ProjectApp => {
         return projectMap.value.get(id)
     }
 
-    return { projects, projectMap, list, getById, update, getByIdFromMap, getPreference }
+    // @returns
+    return { projects, projectMap, list, getById, update, create, getByIdFromMap, getPreference }
 }

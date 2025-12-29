@@ -1,43 +1,25 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
-import { storeToRefs } from 'pinia'
-import TagManagerFilterBar from './filter-bar.vue'
 import { TagBoard } from '@nao-todo/components'
-import { useTasksDialogStore, useTagManagerStore } from '@/stores/tasks'
+import useTagManager from './use-tag-manager'
 import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
-import type { Tag } from '@nao-todo/types'
-import type { DialogOpenFunction, DialogCloseFunction } from '@/stores/tasks/use-tasks-dialog-store'
+import type { TagManagerEmits, TagManagerProps } from './type'
 
 defineOptions({ name: 'TagManager' })
-const emit = defineEmits<{
-    (e: 'closeDialog'): void
-    (e: 'register', open: DialogOpenFunction, close: DialogCloseFunction): void
-}>()
-
-const tagManagerStore = useTagManagerStore()
-const tasksDialogStore = useTasksDialogStore()
+const props = defineProps<TagManagerProps>()
+const emit = defineEmits<TagManagerEmits>()
 
 const dialogRef = ref<DialogInstanceType>()
 
-const { tags } = storeToRefs(tagManagerStore)
+const { states, filteredTags, deleteTag, showCreateTagDialog, showUpdateTagColorDialog } =
+    useTagManager(props, emit)
 const { visible, close } = useDialogWrapper(dialogRef)
 
-const showCreateTagDialog = () => {
-    tasksDialogStore.tagCreator?.open?.()
-}
-
-const showUpdateTagColorDialog = (tagId: Tag['id']) => {
-    tasksDialogStore.tagColorUpdater?.open?.(tagId)
-}
-
 const open = () => {
-    tagManagerStore.loadTags()
     visible.value = true
 }
 
 onMounted(() => emit('register', open, close))
-
-// defineExpose({ open, close })
 </script>
 
 <template>
@@ -48,7 +30,15 @@ onMounted(() => emit('register', open, close))
         </template>
         <nue-container id="TagManager" theme="in-dialog">
             <nue-header>
-                <tag-manager-filter-bar />
+                <nue-div align="center" width="fit-content">
+                    <nue-input
+                        v-model="states.filterInfo.name"
+                        icon="filter"
+                        theme="small"
+                        clearable
+                        placeholder="筛选标签"
+                    />
+                </nue-div>
                 <nue-div gap="12px" width="fit-content" style="margin-left: auto">
                     <nue-button
                         icon="plus-circle"
@@ -63,8 +53,8 @@ onMounted(() => emit('register', open, close))
             <nue-main>
                 <nue-content fill style="overflow: hidden">
                     <tag-board
-                        :tags="tags"
-                        @delete="tagManagerStore.deleteTag"
+                        :tags="filteredTags"
+                        @delete="deleteTag"
                         @recolor="showUpdateTagColorDialog"
                     />
                 </nue-content>
@@ -105,4 +95,3 @@ onMounted(() => emit('register', open, close))
     box-shadow: var(--secondary-shadow);
 }
 </style>
-

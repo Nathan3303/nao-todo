@@ -1,31 +1,23 @@
 <script lang="ts" setup>
-import { storeToRefs } from 'pinia'
-import { useProjectManagerStore } from '@/stores/tasks'
-import ProjectManagerFilterBar from './filter-bar.vue'
-import { useTasksDialogStore } from '@/stores/tasks'
 import { ProjectBoard } from '@nao-todo/components/project'
 import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
 import { onMounted, ref } from 'vue'
+import type { ProjectManagerEmits, ProjectManagerProps } from './types'
+import useProjectManager from './use-project-manager'
 
 defineOptions({ name: 'ProjectManager' })
-const emit = defineEmits<{ (e: 'register', open: () => void, close: () => void): void }>()
-
-const projectManagerStore = useProjectManagerStore()
-const tasksDialogStore = useTasksDialogStore()
+const props = defineProps<ProjectManagerProps>()
+const emit = defineEmits<ProjectManagerEmits>()
 
 const dialogRef = ref<DialogInstanceType>()
 
-const { projects } = storeToRefs(projectManagerStore)
+const { states, filteredProjects, openProjectCreator, deleteProject, restoreProject, hardDeleteProject } =
+    useProjectManager(props, emit)
 const { visible, close } = useDialogWrapper(dialogRef)
 
-const open = () => {
-    projectManagerStore.loadProjects()
-    visible.value = true
-}
+const open = () => (visible.value = true)
 
 onMounted(() => emit('register', open, close))
-
-// defineExpose({ open, close })
 </script>
 
 <template>
@@ -36,12 +28,21 @@ onMounted(() => emit('register', open, close))
         </template>
         <nue-container id="ProjectManager" theme="in-dialog">
             <nue-header>
-                <project-manager-filter-bar />
+                <nue-div align="center" width="fit-content">
+                    <nue-input
+                        v-model="states.filterInfo.name"
+                        icon="filter"
+                        theme="small"
+                        clearable
+                        placeholder="筛选清单"
+                    />
+                    <nue-checkbox v-model="states.filterInfo.onlyDeleted" theme="small">只看已删除</nue-checkbox>
+                </nue-div>
                 <nue-div gap="12px" width="fit-content" style="margin-left: auto">
                     <nue-button
                         icon="plus-circle"
                         theme="small,primary"
-                        @click="() => tasksDialogStore.projectCreator?.open?.()"
+                        @click="openProjectCreator"
                     >
                         新增
                     </nue-button>
@@ -51,14 +52,13 @@ onMounted(() => emit('register', open, close))
             <nue-main>
                 <nue-content fill style="overflow: hidden">
                     <project-board
-                        :projects="projects"
-                        @delete-project="projectManagerStore.deleteProject"
-                        @restore-project="projectManagerStore.restoreProject"
-                        @delete-project-permanently="projectManagerStore.hardDeleteProject"
+                        :projects="filteredProjects"
+                        @delete-project="deleteProject"
+                        @restore-project="restoreProject"
+                        @delete-project-permanently="hardDeleteProject"
                     />
                 </nue-content>
             </nue-main>
         </nue-container>
     </nue-dialog>
 </template>
-

@@ -1,48 +1,46 @@
-import { ref, watch } from 'vue'
+import { reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { NueMessage } from 'nue-ui'
-import { useTasksDataStore } from '@/stores/tasks'
 import { unwrapError } from '@nao-todo/utils'
-import type { CreateTagOptions } from '@nao-todo/types'
+import type { TagCreatorVO, TagCreatorProps } from './types'
 
-export type TagCreatorEmits = {
-    (e: 'closeDialog'): void
-    (e: 'register', open: () => void, close: () => void): void
-}
-
-const DefaultCreateOptions: CreateTagOptions = {
-    name: '',
-    description: '',
-    color: 'transparent'
-}
-
-const useTagCreator = (emit: TagCreatorEmits) => {
-    const tasksDataStore = useTasksDataStore()
+const useTagCreator = (props: TagCreatorProps) => {
+    // @router
     const router = useRouter()
 
-    const creating = ref(false)
-    const isNameEmpty = ref(false)
-    const newTag = ref<CreateTagOptions>({ ...DefaultCreateOptions })
+    // @states
+    const states = reactive<TagCreatorVO>({
+        name: '',
+        description: '',
+        color: '',
+        isNameEmpty: false,
+        creating: false
+    })
 
+    // @method 重置状态
     const clearInputsValue = () => {
-        isNameEmpty.value = false
-        newTag.value = { ...DefaultCreateOptions }
+        states.name = ''
+        states.description = ''
+        states.color = ''
+        states.isNameEmpty = false
+        states.creating = false
     }
 
-    const handleConfirm = async () => {
+    // @method 确认创建标签
+    const handleConfirm = async (): Promise<boolean> => {
         // 检查参数
-        if (!newTag.value.name) {
-            isNameEmpty.value = true
+        if (!states.name) {
+            states.isNameEmpty = true
             return false
         }
         // 调用 API 创建标签
-        creating.value = true
-        const [tagId, err] = await tasksDataStore.createTag(
-            newTag.value.name,
-            newTag.value.color,
-            newTag.value.description
-        )
-        creating.value = false
+        states.creating = true
+        const [tagId, err] = await props.creatrTagHandler({
+            name: states.name,
+            description: states.description,
+            color: states.color
+        })
+        states.creating = false
         // 处理失败结果
         if (err) {
             console.warn(unwrapError(err))
@@ -51,25 +49,22 @@ const useTagCreator = (emit: TagCreatorEmits) => {
         // 跳转至新标签详情页
         router.push({ name: 'tasks-tag-main', params: { tagId } })
         // 处理成功结果
-        emit('closeDialog')
-        clearInputsValue()
         NueMessage.success('标签创建成功')
         return true
     }
 
+    // @watch 监听 name 变化，更新 isNameEmpty
     watch(
-        () => newTag.value.name,
-        (newVal) => newVal && (isNameEmpty.value = !newVal)
+        () => states.name,
+        (newVal) => newVal && (states.isNameEmpty = !newVal)
     )
 
+    // @returns
     return {
-        creating,
-        isNameEmpty,
-        newTag,
+        states,
         handleConfirm,
         clearInputsValue
     }
 }
 
 export default useTagCreator
-

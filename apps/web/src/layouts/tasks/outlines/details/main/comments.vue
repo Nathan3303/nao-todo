@@ -1,15 +1,21 @@
 <script lang="ts" setup>
-// import { storeToRefs } from 'pinia'
-// import { useTodoDetailsStore } from '@/stores/tasks'
-// import { CommentRow } from '@nao-todo/components'
+import { CommentRow } from '@nao-todo/components'
+import type { TaskDetailsContext } from '../types'
+import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
+import { inject } from 'vue'
+import type { CommentVO } from '@nao-todo/types/viewobjects/comment'
 
-// const todoDetailsStore = useTodoDetailsStore()
+const { comments, updateComment, deleteComment } =
+    inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
 
-// const { comments } = storeToRefs(todoDetailsStore)
+const commentUpdater = async (commentId: CommentVO['id'], newContent: string) => {
+    updateComment(commentId, { content: newContent })
+    return true
+}
 </script>
 
 <template>
-    <!-- <nue-container v-if="comments.length" id="TodoDetailsCommentsContainer">
+    <nue-container v-if="comments && comments.length" id="TodoDetailsCommentsContainer">
         <nue-header>
             <nue-text size="14px" :weight="500">评论</nue-text>
             <nue-text size="14px" color="gray">{{ comments.length }}</nue-text>
@@ -20,17 +26,16 @@
                     v-for="comment in comments"
                     :key="comment.id"
                     :comment="comment"
-                    :updater="todoDetailsStore.handleEditComment"
-                    @delete="todoDetailsStore.handleDeleteComment"
+                    :updater="commentUpdater"
+                    @delete="deleteComment"
                 />
             </nue-content>
         </nue-main>
-    </nue-container> -->
-    Comments
+    </nue-container>
 </template>
 
 <style scoped>
-/* #TodoDetailsCommentsContainer {
+#TodoDetailsCommentsContainer {
     border-top: 1px solid var(--nue-divider-color);
     padding: 0.5rem;
     gap: 0.5rem;
@@ -55,5 +60,5 @@
             overflow: hidden;
         }
     }
-} */
+}
 </style>

@@ -1,13 +1,14 @@
-import { CommentEntity } from './entities'
-import type { Err, GoLike } from '@nao-todo/types'
+import type { CommentEntity } from './entities'
+import type { GoAsync } from '@nao-todo/types'
 import type { CommentRepository } from './repositories'
+import type { UpdateCommentValueObject } from './valueobjects'
 
 interface CommentDomain {
-    get(commentId: string): Promise<GoLike<CommentEntity | null>>
-    create(commentEntity: CommentEntity): Promise<GoLike<CommentEntity | null>>
-    update(commentId: string, commentEntity: CommentEntity): Promise<GoLike<string | null>>
-    remove(commentId: string): Promise<Err> // like delete
-    list(): Promise<GoLike<CommentEntity[] | null>>
+    get(commentId: string): GoAsync<CommentEntity>
+    create(commentEntity: CommentEntity): GoAsync<CommentEntity>
+    update(commentId: string, updateValueObject: UpdateCommentValueObject): GoAsync<string>
+    remove(commentId: string): GoAsync<void>
+    list(taskId: string): GoAsync<CommentEntity[]>
 }
 
 export default (commentRepo: CommentRepository): CommentDomain => {

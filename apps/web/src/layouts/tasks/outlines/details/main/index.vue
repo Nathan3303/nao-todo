@@ -3,9 +3,8 @@ import { inject } from 'vue'
 import DetailsRow from './row.vue'
 import DetailsMainComments from './comments.vue'
 import DetailsMainEvents from './events.vue'
-import { useRelativeDate } from '@nao-todo/hooks'
 import {
-    // CommentCreator,
+    CommentCreator,
     SwitchButton,
     TodoPrioritySelectOptions,
     TodoSelector,
@@ -14,12 +13,11 @@ import {
 } from '@nao-todo/components'
 import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
 import type { TaskDetailsContext } from '../types'
-import type {
-    TaskVO
-    // Todo
-} from '@nao-todo/types'
+import type { TaskVO } from '@nao-todo/types'
+import dayjs from 'dayjs'
 
-const { vo, emit, eventProgress } = inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
+const { vo, emit, eventProgress, isCommenting } =
+    inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
 
 const updateTaskState = (v: unknown) => {
     if (vo.value === null) return
@@ -49,6 +47,12 @@ const updateTaskDescription = (v: unknown) => {
 const updateTaskTags = (v: unknown) => {
     if (vo.value === null) return
     emit('updateTask', vo.value.id, { tags: v as TaskVO['tags'] })
+}
+
+const createComment = async (content: string) => {
+    if (vo.value === null) return false
+    emit('createComment', { taskId: vo.value.id, content })
+    return true
 }
 </script>
 
@@ -130,23 +134,20 @@ const updateTaskTags = (v: unknown) => {
             </nue-content>
         </nue-main>
         <nue-footer>
-            <!-- <nue-div v-if="isCommenting" vertical width="100%">
-                <comment-creator
-                    :handler="leaveCommentHandler"
-                    @cancel="emit('cancelLeaveComment')"
-                />
-            </nue-div> -->
+            <nue-div v-if="isCommenting" vertical width="100%">
+                <comment-creator :handler="createComment" @cancel="isCommenting = false" />
+            </nue-div>
             <nue-div justify="space-between" width="100%">
                 <details-row :text="eventProgress.text" label="检查事项进度" flex="40%" />
                 <details-row
                     v-if="vo.createdAt"
-                    :text="useRelativeDate(vo.createdAt)"
+                    :text="dayjs(vo.createdAt).format('YYYY-MM-DD HH:mm:ss')"
                     flex="30%"
                     label="创建时间"
                 />
                 <details-row
                     v-if="vo.updatedAt"
-                    :text="useRelativeDate(vo.updatedAt)"
+                    :text="dayjs(vo.updatedAt).format('YYYY-MM-DD HH:mm:ss')"
                     flex="30%"
                     label="最后修改时间"
                 />

@@ -1,11 +1,11 @@
-import { TaskEntity } from './entities'
-import type { GoAsync } from '@nao-todo/types'
-import type { TaskRepository } from './repositories'
-import { parseObject2QueryString, type ListTaskOptionsValueObject } from './valueobjs'
+import { TaskEntity } from '../entities'
+import { parseObject2QueryString, type ListTaskOptionsValueObject } from '../valueobjs'
+import type { TaskRepository } from '../repositories/task'
+import type { CreateTaskVO, GoAsync } from '@nao-todo/types'
 
-interface TaskDomain {
+export interface TaskDomain {
     get(taskId: string): GoAsync<TaskEntity>
-    create(taskEntity: TaskEntity): GoAsync<TaskEntity>
+    create(createVO: CreateTaskVO): GoAsync<TaskEntity>
     update(taskId: string, taskEntity: TaskEntity): GoAsync<string>
     remove(taskId: string): GoAsync<void> // like delete
     restore(taskId: string): GoAsync<void>
@@ -24,7 +24,6 @@ export default (taskRepo: TaskRepository): TaskDomain => {
             if (!v.field) return null
             return `${key}=${v.field}:${v.order}`
         })
-        console.log(queryString)
         // 2. 调用仓库方法
         return await taskRepo.list(queryString)
     }

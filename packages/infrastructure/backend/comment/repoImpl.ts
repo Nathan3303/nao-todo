@@ -3,10 +3,10 @@ import {
     getCommentRes2CommentEntity,
     listCommentRes2CommentEntities
 } from './converters'
-import { CommentEntity } from '@nao-todo/domain/comment/entities'
+import type { CommentEntity } from '@nao-todo/domain/comment/entities'
 import type { CommentRepository } from '@nao-todo/domain/comment/repositories'
 import type { Requester } from '../../requester/types'
-import type { Err, GoLike } from '@nao-todo/types'
+import type { GoAsync } from '@nao-todo/types'
 import type {
     CreateCommentReq,
     CreateCommentRes,
@@ -16,9 +16,11 @@ import type {
     UpdateCommentReq,
     UpdateCommentRes
 } from '../types'
+import type { UpdateCommentValueObject } from '@nao-todo/domain/comment/valueobjects'
 
 export const useCommentRepository = (requester: Requester): CommentRepository => {
-    const get = async (commentId: string): Promise<GoLike<CommentEntity | null>> => {
+    // @method Get
+    const get = async (commentId: string): GoAsync<CommentEntity> => {
         // 1. 调用接口
         const response = await requester.get(`/comments/${commentId}`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
@@ -33,7 +35,9 @@ export const useCommentRepository = (requester: Requester): CommentRepository =>
         // 4. 返回
         return [commentEntity, null]
     }
-    const create = async (commentEntity: CommentEntity): Promise<GoLike<CommentEntity | null>> => {
+
+    // @method Create
+    const create = async (commentEntity: CommentEntity): GoAsync<CommentEntity> => {
         // 1. 构建 rto
         const rto: CreateCommentReq = {
             taskId: commentEntity.taskId,
@@ -55,15 +59,15 @@ export const useCommentRepository = (requester: Requester): CommentRepository =>
         return [commentEntity, null]
     }
 
+    // @method Update
     const update = async (
         commentId: string,
-        commentEntity: CommentEntity
-    ): Promise<GoLike<string | null>> => {
+        updateValueObject: UpdateCommentValueObject
+    ): GoAsync<string> => {
         // 1. 构建 rto
         const rto: UpdateCommentReq = {}
-        if (commentEntity.content) rto.content = commentEntity.content
-        if (commentEntity.attachments) rto.attachments = commentEntity.attachments
-        if (commentEntity.isTopUp) rto.isTopUp = commentEntity.isTopUp
+        if (updateValueObject.content) rto.content = updateValueObject.content
+        if (typeof updateValueObject.isTopUp === 'boolean') rto.isTopUp = updateValueObject.isTopUp
         // 2. 调用接口
         const response = await requester.put(`/comments/${commentId}`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` },
@@ -79,7 +83,8 @@ export const useCommentRepository = (requester: Requester): CommentRepository =>
         return [data.commentId, null]
     }
 
-    const remove = async (commentId: string): Promise<Err> => {
+    // @method Remove
+    const remove = async (commentId: string): GoAsync<void> => {
         // 1. 调用接口
         const response = await requester.delete(`/comments/${commentId}`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
@@ -93,9 +98,10 @@ export const useCommentRepository = (requester: Requester): CommentRepository =>
         return null
     }
 
-    const list = async (): Promise<GoLike<CommentEntity[] | null>> => {
+    // @method List
+    const list = async (taskId: string): GoAsync<CommentEntity[]> => {
         // 1. 调用接口
-        const response = await requester.get('/comments/', {
+        const response = await requester.get(`/comments/?taskId=${taskId}`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
         })
         // 2. 获取结果

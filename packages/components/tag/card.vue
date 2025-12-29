@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { Tag } from '@nao-todo/types'
+import type { TagVO } from '@nao-todo/types'
 
 type TagCardProps = {
-    tag: Tag
+    tag: TagVO
 }
 
 defineOptions({ name: 'TagCard', inheritAttrs: false })
@@ -42,4 +42,3 @@ defineProps<TagCardProps>()
     }
 }
 </style> -->
-

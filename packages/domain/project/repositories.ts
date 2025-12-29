@@ -1,9 +1,9 @@
-import type { Err, GoLike, GoAsync, Go } from '@nao-todo/types'
+import type { Err, GoLike, GoAsync, Go, CreateProjectVO } from '@nao-todo/types'
 import type { ProjectEntity, ProjectPreferenceEntity } from './entities'
 
 export interface ProjectRepository {
     get(projectId: string): GoAsync<ProjectEntity>
-    create(projectEntity: ProjectEntity): Promise<GoLike<ProjectEntity | null>>
+    create(createVO: CreateProjectVO): GoAsync<ProjectEntity>
     update(projectId: string, projectEntity: ProjectEntity): GoAsync<string>
     remove(projectId: string): Promise<Err> // like delete
     restore(projectId: string): Promise<Err>

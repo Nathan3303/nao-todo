@@ -1,7 +1,7 @@
 import { defineAsyncComponent } from 'vue'
 
 export default defineAsyncComponent({
-    loader: () => import('./project-creator.vue'),
+    loader: () => import('./index.vue'),
     delay: 1000
 })
 

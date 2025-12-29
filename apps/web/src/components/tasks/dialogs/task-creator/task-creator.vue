@@ -1,8 +1,6 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
-import useTodoCreator from './use-todo-creator'
 import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
-import { useRelativeDate } from '@nao-todo/hooks/use-relative-date'
 import {
     TodoDateSelector,
     TodoPrioritySelectOptions,
@@ -11,40 +9,44 @@ import {
     TodoStateSelectOptions,
     TodoTagBar
 } from '@nao-todo/components'
-import type { CreateTodoOptions, Todo } from '@nao-todo/types'
-import type { DialogOpenFunction, DialogCloseFunction } from '@/stores/tasks/use-tasks-dialog-store'
+import type { CreateTaskVO, Todo } from '@nao-todo/types'
+import useTaskCreator from './use-task-creator'
+import type { TaskCreatorProps, TaskCreatorEmits, TaskCreatorVO } from './types'
+import dayjs from 'dayjs'
 
-defineOptions({ name: 'TodoCreator' })
-const emit = defineEmits<{
-    (e: 'register', open: DialogOpenFunction, close: DialogCloseFunction): void
-}>()
+defineOptions({ name: 'TaskCreator' })
+const props = defineProps<TaskCreatorProps>()
+const emit = defineEmits<TaskCreatorEmits>()
 
 const dialogRef = ref<DialogInstanceType>()
 
-const { user, projects, tags, newTodo, creating, disabled, handleCreateTodo, clearInputsValue } =
-    useTodoCreator()
+const { states, handleCreateTask, clearInputsValue } = useTaskCreator(props)
 const { visible, close: closeDialog } = useDialogWrapper(dialogRef)
 
-const open = (createTodoOptions: CreateTodoOptions) => {
+const open = (createTaskOptions: CreateTaskVO) => {
     clearInputsValue()
-    newTodo.value = { ...newTodo.value, ...createTodoOptions }
+    Object.keys(createTaskOptions).forEach((key) => {
+        const presetVal = createTaskOptions[key as keyof CreateTaskVO]
+        if (!presetVal) return
+        const targetKey = key as keyof TaskCreatorVO
+        if (targetKey in states) {
+            ;(states as any)[targetKey] = presetVal
+        }
+    })
     visible.value = true
 }
 
 const close = () => {
     closeDialog()
-    // newTodo.value = { ...defaultCreateTodoOptions }
-    disabled.value = false
+    states.disabled = false
 }
 
 const handleSubmit = async () => {
-    const ok = await handleCreateTodo()
+    const ok = await handleCreateTask()
     if (ok) close()
 }
 
 onMounted(() => emit('register', open, close))
-
-// defineExpose({ open, close })
 </script>
 
 <template>
@@ -56,14 +58,14 @@ onMounted(() => emit('register', open, close))
         <template #content>
             <nue-div vertical align="stretch">
                 <nue-input
-                    v-model="newTodo.name"
+                    v-model="states.name"
                     clearable
                     placeholder="待办事项名称"
                     maxlength="64"
                     counter="word-left"
                 />
                 <nue-textarea
-                    v-model="newTodo.description"
+                    v-model="states.description"
                     maxlength="256"
                     counter="word-left"
                     :autosize="{ minRows: 1, maxRows: 4 }"
@@ -71,43 +73,42 @@ onMounted(() => emit('register', open, close))
                     theme="fix-padding"
                 />
                 <nue-div align="center">
-                    <todo-date-selector v-model="newTodo.endAt" />
-                    <nue-text v-if="newTodo.endAt" color="gray" size="var(--nue-text-xs)">
-                        任务截止于：{{ useRelativeDate(newTodo.endAt) }}
+                    <todo-date-selector v-model="states.endAt" />
+                    <nue-text v-if="states.endAt" color="gray" size="var(--nue-text-xs)">
+                        任务截止于：{{ dayjs(states.endAt).format('YYYY-MM-DD HH:mm') }}
                     </nue-text>
                 </nue-div>
                 <nue-div wrap="nowrap">
                     <todo-selector
                         :options="TodoStateSelectOptions"
-                        :value="newTodo.state"
-                        @change="(s) => (newTodo.state = s as Todo['state'])"
+                        :value="states.state"
+                        @change="(s) => (states.state = s as Todo['state'])"
                     />
                     <todo-selector
                         :options="TodoPrioritySelectOptions"
-                        :value="newTodo.priority"
-                        @change="(p) => (newTodo.priority = p as Todo['priority'])"
+                        :value="states.priority"
+                        @change="(p) => (states.priority = p as Todo['priority'])"
                     />
                     <nue-div flex="1" />
                     <todo-project-selector
-                        :project-id="newTodo.projectId"
-                        :projects="projects"
-                        :user-id="user?.id || ''"
-                        @select="(pid) => (newTodo.projectId = pid)"
+                        :project-id="states.projectId"
+                        :projects="props.avaliableProjects || []"
+                        @select="(pid) => (states.projectId = pid)"
                     />
                 </nue-div>
                 <todo-tag-bar
                     :clamped="5"
-                    :tags="tags"
-                    :todo-tags="newTodo.tags || []"
-                    @update-tags="(_tags) => (newTodo.tags = _tags)"
+                    :tags="props.avaliableTags || []"
+                    :todo-tags="states.tags || []"
+                    @update-tags="(_tags) => (states.tags = _tags)"
                 />
             </nue-div>
         </template>
         <template #footer>
-            <nue-button :disabled="creating" @click="close">取消</nue-button>
+            <nue-button :disabled="states.disabled" @click="close">取消</nue-button>
             <nue-button
-                :disabled="disabled"
-                :loading="creating"
+                :disabled="states.disabled"
+                :loading="states.creating"
                 theme="primary"
                 @click="handleSubmit"
             >
@@ -116,4 +117,3 @@ onMounted(() => emit('register', open, close))
         </template>
     </nue-dialog>
 </template>
-

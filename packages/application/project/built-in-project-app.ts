@@ -1,36 +1,44 @@
 import { useBuiltInProjectDomain } from '@nao-todo/domain/project'
 import { newBuiltInProjectRepository } from '@nao-todo/infrastructure/built-in/project/repoImpl'
-import type { Go, ProjectPreferenceVO, ProjectVO } from '@nao-todo/types'
-import type { ComputedRef, Ref } from 'vue'
-import { ref } from 'vue'
+import { reactive, watch } from 'vue'
 import {
     projectEntities2ProjectVO,
     projectEntity2ProjectVO,
     projectPreferenceEntity2ProjectPreferenceVO,
     projectPreferenceVO2Entity
 } from './converters'
-import useListMapper from '@nao-todo/infrastructure/hooks/use-list-mapper'
+import type { Go, ProjectPreferenceVO, ProjectVO } from '@nao-todo/types'
+import type { ComputedRef, Reactive } from 'vue'
+import { useListMapperV2 } from '@nao-todo/infrastructure/hooks/use-list-mapper'
+
+export type BuiltInProjectAppStates = {
+    projects: ProjectVO[]
+    projectMap: Map<string, number>
+}
 
 export interface BuiltInProjectApp {
-    builtInProjects: Ref<ProjectVO[]>
+    states: Reactive<BuiltInProjectAppStates>
     list: () => Go<ProjectVO[]>
     getById: (id: string) => Go<ProjectVO>
     getPreference: (userId: string, id: string) => Go<ProjectPreferenceVO>
     updatePreference: (userId: string, id: string, preference: ProjectPreferenceVO) => Go<void>
-    builtInProjectMap: ComputedRef<Map<string, ProjectVO>>
     getByIdFromMap: (id: string) => ProjectVO | undefined
+    computedGetByIdFromMap: (id: string) => ComputedRef<ProjectVO | undefined>
 }
 
 export default (): BuiltInProjectApp => {
     // @domain 内建清单域
     const builtInProjectDomain = useBuiltInProjectDomain(newBuiltInProjectRepository())
 
-    /**
-     * 内建清单列表以及相关方法
-     */
+    // @states
+    const states = reactive<BuiltInProjectAppStates>({
+        projects: [],
+        projectMap: new Map()
+    })
 
-    // @state 内建清单列表
-    const builtInProjects = ref<ProjectVO[]>([])
+    /**
+     * Projects 相关方法
+     */
 
     // @method 获取内建清单列表
     const list = (): Go<ProjectVO[]> => {
@@ -41,9 +49,9 @@ export default (): BuiltInProjectApp => {
         }
         // 2. 更新状态
         const plist = projectEntities2ProjectVO(projectEntities)
-        // 2. 更新状态
-        builtInProjects.value = plist
-        // 3. 返回
+        // 3. 更新状态
+        states.projects = plist
+        // 4. 返回
         return [plist, null]
     }
 
@@ -99,25 +107,30 @@ export default (): BuiltInProjectApp => {
     }
 
     /**
-     * 内建清单 Mapper 以及相关方法
-     * 主要提供 O(1) 时间复杂度的查询，用于在视图层快速获取内建清单详情
-     * Computed 实现响应式变化
+     * ProjectMap 相关方法
      */
 
-    // @hook UseListMapper
-    const { map: builtInProjectMap, get: getByIdFromMap } = useListMapper(builtInProjects)
+    // @hook
+    const { makeMap, getById: getByIdFromMap, useComputedGetter } = useListMapperV2<ProjectVO>()
+
+    // @watch 监听 tasks 变化，更新 taskMap
+    watch(
+        () => states.projects,
+        (newList) => makeMap(newList),
+        { immediate: true }
+    )
 
     /**
      * 返回
      */
 
     return {
-        builtInProjects,
+        states,
         list,
         getById,
         getPreference,
         updatePreference,
-        builtInProjectMap,
-        getByIdFromMap
+        getByIdFromMap,
+        computedGetByIdFromMap: useComputedGetter
     }
 }

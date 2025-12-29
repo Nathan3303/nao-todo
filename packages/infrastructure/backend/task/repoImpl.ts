@@ -6,7 +6,7 @@ import {
 import { TaskEntity } from '@nao-todo/domain/task/entities'
 import type { TaskRepository } from '@nao-todo/domain/task/repositories'
 import type { Requester } from '../../requester/types'
-import type { GoAsync } from '@nao-todo/types'
+import type { CreateTaskVO, GoAsync } from '@nao-todo/types'
 import type {
     CreateTaskReq,
     CreateTaskRes,
@@ -16,6 +16,7 @@ import type {
     UpdateTaskReq,
     UpdateTaskRes
 } from '../types'
+import dayjs from 'dayjs'
 
 export const useTaskRepository = (requester: Requester): TaskRepository => {
     // @method 获取任务详情
@@ -36,17 +37,17 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
     }
 
     // @method 创建任务
-    const create = async (taskEntity: TaskEntity): GoAsync<TaskEntity> => {
+    const create = async (createVO: CreateTaskVO): GoAsync<TaskEntity> => {
         // 1. 构建 rto
         const rto: CreateTaskReq = {
-            projectId: taskEntity.projectId,
-            name: taskEntity.name,
-            description: taskEntity.description,
-            state: taskEntity.state,
-            priority: taskEntity.priority,
-            startAt: taskEntity.startAt,
-            endAt: taskEntity.endAt,
-            tags: taskEntity.tags
+            projectId: createVO.projectId,
+            name: createVO.name,
+            description: createVO.description,
+            state: createVO.state,
+            priority: createVO.priority,
+            startAt: createVO.startAt || void 0,
+            endAt: createVO.endAt || dayjs().toISOString(),
+            tags: createVO.tags || []
         }
         // 2. 调用接口
         const response = await requester.post('/tasks', {
@@ -59,7 +60,7 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
             return [null, res.message]
         }
         // 4. 转换为实体
-        taskEntity = createTaskRes2TaskEntity(res.data as CreateTaskRes)
+        const taskEntity = createTaskRes2TaskEntity(res.data as CreateTaskRes)
         // 5. 返回
         return [taskEntity, null]
     }
