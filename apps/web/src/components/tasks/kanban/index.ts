@@ -1,5 +1,5 @@
-import { defineAsyncComponent } from 'vue'
-// import TodoKanban from './kanban.vue'
+// import { defineAsyncComponent } from 'vue'
+import TaskKanban from './kanban.vue'
 
-// export { TodoKanban }
-export const TodoKanban = defineAsyncComponent(() => import('./kanban.vue'))
+export default TaskKanban
+// export const TodoKanban = defineAsyncComponent(() => import('./kanban.vue'))

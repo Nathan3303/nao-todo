@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TodoList } from '@/components/tasks/list'
+import { TaskList } from '@/components/tasks'
 import { type TasksProjectViewContentContext } from './use-content'
 import { inject } from 'vue'
 import { TASKS_PROJECT_VIEW_CONTENT_CONTEXT_KEY } from '../constants'
@@ -20,7 +20,7 @@ const contextCtx = inject<TasksProjectViewContentContext>(TASKS_PROJECT_VIEW_CON
                 style="height: 100%"
             />
             <nue-content v-else fill style="overflow: hidden">
-                <todo-list
+                <task-list
                     v-if="contextCtx.sortOptions.value"
                     :tags="contextCtx.tags.value"
                     :tasks="contextCtx.tasks.value"

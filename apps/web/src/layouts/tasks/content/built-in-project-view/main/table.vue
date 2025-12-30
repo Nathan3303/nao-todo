@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TodoTable } from '@/components/tasks/table'
+import { TaskTable } from '@/components/tasks'
 import { type TasksProjectViewContentContext } from './use-content'
 import { inject } from 'vue'
 import { TASKS_PROJECT_VIEW_CONTENT_CONTEXT_KEY } from '../constants'
@@ -34,7 +34,7 @@ const {
                     description="数据加载失败"
                     style="height: 100%"
                 />
-                <todo-table
+                <task-table
                     v-else
                     :tags="tags"
                     :tasks="tasks"

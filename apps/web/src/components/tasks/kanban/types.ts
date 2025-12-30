@@ -1,50 +1,79 @@
-import type { GetTodosOptions, GoLike, Tag, Todo, TodoColumnOptions } from '@nao-todo/types'
+import type { TaskApp } from '@nao-todo/application/task'
+import type { GetTasksSortOptions, TagVO, TaskColumnOptions, TaskVO } from '@nao-todo/types'
 import type { ComputedRef } from 'vue'
 
-export type TodoKanbanProps = {
-    columnOptions: TodoColumnOptions
+/**
+ * Task Kanban
+ */
+
+export type TaskKanbanVO = {
+    currentGroupBy: 'state' | 'priority'
+    kanbanColumns: string[]
 }
 
-export type TodoKanbanEmits = {
-    (event: 'show-todo-details', todoId: Todo['id']): void
-    (event: 'delete-todo', todoId: Todo['id']): void
-    (event: 'restore-todo', todoId: Todo['id']): void
-    (event: 'finish-todo', todoId: Todo['id']): void
-    (event: 'unfinish-todo', todoId: Todo['id']): void
+export type TaskKanbanProps = {
+    tags: TagVO[]
+    columns: TaskColumnOptions
+    sortOptions: GetTasksSortOptions
+    taskLister: TaskApp['list']
+    columnLabelGetter: (key: string) => string
+    projectNameGetter: (projectId: TaskVO['projectId']) => string
 }
 
-export type TodoKanbanContext = {
-    todos: ComputedRef<Todo[]>
-    tags: ComputedRef<Tag[]>
-    getProjectName: (projectId: Todo['projectId']) => string
-    getTodosWithPush: (options: GetTodosOptions) => Promise<GoLike<number | null>>
+export type TaskKanbanEmits = {
+    (e: 'showTaskDetails', taskId: TaskVO['id']): void
+    (e: 'updateColumns', key: string, value: boolean): void
+    (e: 'updateSortOptions', newSortOptions: GetTasksSortOptions): void
+    (e: 'clearSortOptions'): void
+    (e: 'deleteTask', taskId: TaskVO['id']): void
+    (e: 'restoreTask', taskId: TaskVO['id']): void
+    (e: 'finishTask', taskId: TaskVO['id']): void
+    (e: 'unfinishTask', taskId: TaskVO['id']): void
 }
 
-export type TodoKanbanColumnProps = {
-    todos: Todo[]
+export type TaskKanbanContext = {
+    emit: TaskKanbanEmits
+    tags: ComputedRef<TagVO[]>
+    getProjectName: TaskKanbanProps['projectNameGetter']
+    getColumnLabel: TaskKanbanProps['columnLabelGetter']
+}
+
+/**
+ * Task Kanban Column
+ */
+
+// export type TaskKanbanColumnVO = {}
+
+export type TaskKanbanColumnProps = {
     category: string
-    columnOptions?: TodoColumnOptions
+    columns: TaskColumnOptions
     disabled?: boolean
+    displayable?: boolean
+    taskLister: TaskApp['list']
 }
 
-export type TodoKanbanColumnEmits = TodoKanbanEmits & {
-    (event: 'heart-todo', todoId: Todo['id']): void
-    (event: 'load-more'): void
-    (event: 'filter-todos-by-category', category: string): void
-}
+// export type TodoKanbanColumnEmits = TodoKanbanEmits & {
+//     (event: 'heart-todo', todoId: Todo['id']): void
+//     (event: 'load-more'): void
+//     (event: 'filter-todos-by-category', category: string): void
+// }
 
-export type TodoKanbanColumnItemProps = {
-    todo: Todo
-    tags: Tag[]
+/**
+ * Task Kanban Column Item
+ */
+
+export type TaskKanbanColumnItemProps = {
+    task: TaskVO
+    tags: TagVO[]
     actived?: boolean
-    columns?: TodoColumnOptions
+    columns?: TaskColumnOptions
 }
 
-export type TodoKanbanColumnItemEmits = {
-    (event: 'click', todoId: Todo['id']): void
-    (event: 'delete', todoId: Todo['id']): void
-    (event: 'restore', todoId: Todo['id']): void
-    (event: 'finish', todoId: Todo['id']): void
-    (event: 'unfinish', todoId: Todo['id']): void
-    (event: 'heart', todoId: Todo['id']): void
+export type TaskKanbanColumnItemEmits = {
+    (event: 'click', taskId: TaskVO['id']): void
+    (event: 'delete', taskId: TaskVO['id']): void
+    (event: 'restore', taskId: TaskVO['id']): void
+    (event: 'finish', taskId: TaskVO['id']): void
+    (event: 'unfinish', taskId: TaskVO['id']): void
+    (event: 'heart', taskId: TaskVO['id']): void
 }

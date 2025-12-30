@@ -1,6 +1,28 @@
-export * from './smart-lists'
+import TaskTable from './table'
+import TaskKanban from './kanban'
+import TaskList from './list'
+import { FilterSmartList, ProjectSmartList, TagSmartList } from './smartlists'
+import {
+    ProjectCreator,
+    ProjectManager,
+    TagCreator,
+    TagColorUpdater,
+    TagManager,
+    TaskCreator
+} from './dialogs'
+
+export {
+    TaskTable,
+    TaskKanban,
+    TaskList,
+    FilterSmartList,
+    ProjectSmartList,
+    TagSmartList,
+    ProjectCreator,
+    ProjectManager,
+    TagCreator,
+    TagColorUpdater,
+    TagManager,
+    TaskCreator
+}
 export * from './dropdowns'
-export * from './dialogs'
-export * from './kanban'
-export * from '../../../../../.bak/20251222/table'
-export * from './list'

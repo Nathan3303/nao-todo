@@ -1,5 +1,7 @@
-import { defineAsyncComponent } from 'vue'
-// import List from './list.vue'
+// import { defineAsyncComponent } from 'vue'
+import TaskList from './list.vue'
 
-export const TodoList = defineAsyncComponent(() => import('./list.vue'))
-export type * from './types'
+export default TaskList
+
+// export const TodoList = defineAsyncComponent(() => import('./list.vue'))
+// export type * from './types'

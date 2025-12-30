@@ -1,4 +1,8 @@
-import { defineAsyncComponent } from 'vue'
-// import Table from './table.vue'
+import Table from './table.vue'
 
-export const TodoTable = defineAsyncComponent(() => import('./table.vue'))
+export default Table
+
+// import { defineAsyncComponent } from 'vue'
+// export const TaskTable = defineAsyncComponent(() => {
+//     return import('./table.vue')
+// })

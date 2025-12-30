@@ -1,49 +1,47 @@
 <script setup lang="ts">
-// import { storeToRefs } from 'pinia'
-// import { useTasksViewStore, useTasksProjectViewStore } from '@/stores/tasks'
-// import { TodoKanban } from '@/components/tasks'
-// import { Loading as LoadingComponent } from '@nao-todo/components'
+import { TaskKanban } from '@/components/tasks'
+import { TASKS_PROJECT_VIEW_CONTENT_CONTEXT_KEY } from '../constants'
+import { type TasksProjectViewContentContext } from './use-content'
+import { inject } from 'vue'
 
-// defineOptions({ name: 'TasksMainProjectViewKanban' })
+defineOptions({ name: 'TasksMainProjectViewKanban' })
 
-// const tasksViewStore = useTasksViewStore()
-// const tasksProjectViewStore = useTasksProjectViewStore()
-
-// const { viewProps } = storeToRefs(tasksViewStore)
-// const { todos, tags, loading, error } = storeToRefs(tasksProjectViewStore)
+const contextCtx = inject<TasksProjectViewContentContext>(TASKS_PROJECT_VIEW_CONTENT_CONTEXT_KEY)
 </script>
 
 <template>
-    <!-- <nue-container id="TasksMainKanbanContainer">
+    <nue-container id="TasksMainKanbanContainer">
         <nue-main>
-            <loading-component v-if="loading" />
             <nue-empty
-                v-else-if="error || !viewProps"
+                v-if="!contextCtx"
                 image-size="4rem"
                 image-src="/images/coffee.webp"
-                :description="error || '当前暂无待办，放松一下吧!'"
+                description="视图属性无效"
                 style="height: 100%"
             />
             <nue-content v-else fill style="overflow: auto">
-                <todo-kanban
-                    :column-options="viewProps.preference.columns"
-                    :sort-options="viewProps.preference.getTodosOptions.sort"
-                    :tags="tags"
-                    :todos="todos"
-                    @show-todo-details="tasksProjectViewStore.showTodoDetails"
-                    @delete-todo="tasksProjectViewStore.deleteTodo"
-                    @restore-todo="tasksProjectViewStore.restoreTodo"
-                    @finish-todo="tasksProjectViewStore.finishTodo"
-                    @unfinish-todo="tasksProjectViewStore.unfinishTodo"
+                <task-kanban
+                    v-if="contextCtx.sortOptions.value"
+                    :tags="contextCtx.tags.value"
+                    :tasks="contextCtx.tasks.value"
+                    :columns="contextCtx.columns.value!"
+                    :sort-options="contextCtx.sortOptions.value"
+                    :column-label-getter="contextCtx.getColumnLabel"
+                    :project-name-getter="contextCtx.getProjectName"
+                    :task-lister="contextCtx.taskLister"
+                    @show-task-details="contextCtx.showTaskDetails"
+                    @delete-task="contextCtx.deleteTask"
+                    @restore-task="contextCtx.restoreTask"
                 />
+                <!-- @finish-task="tasksProjectViewStore.finishTodo" -->
+                <!-- @unfinish-task="tasksProjectViewStore.unfinishTodo" -->
             </nue-content>
         </nue-main>
-    </nue-container> -->
-    KanbanView
+    </nue-container>
 </template>
 
 <style scoped>
-/* .nue-container#TasksMainKanbanContainer {
+.nue-container#TasksMainKanbanContainer {
     gap: 0.5rem;
 
     > .nue-header,
@@ -53,5 +51,5 @@
         border: none;
         height: auto;
     }
-} */
+}
 </style>

@@ -1,13 +1,8 @@
 import { ref } from 'vue'
-import { useTodoStore } from '@/stores/global'
 import type { Todo } from '@nao-todo/types'
-import { storeToRefs } from 'pinia'
 
 const useKanbanDragger = () => {
-    const todoStore = useTodoStore()
     const draggingTodoId = ref<Todo['id']>('')
-
-    const { todos } = storeToRefs(todoStore)
 
     const handleRemoveDragOverClass = () => {
         document.querySelectorAll('.kanban-column__main--drag-over').forEach((element) => {
@@ -64,10 +59,10 @@ const useKanbanDragger = () => {
         if (!element) return
         const category = element.dataset.category as Todo['state']
         if (!category) return
-        const todoId = draggingTodoId.value
-        const todo = todos.value.find((todo) => todo.id === todoId)
-        if (todo && todo.state === category) return
-        todoStore.updateTodoByUpdateQueue(todoId, { state: category })
+        // const todoId = draggingTodoId.value
+        // const todo = todos.value.find((todo) => todo.id === todoId)
+        // if (todo && todo.state === category) return
+        // todoStore.updateTodoByUpdateQueue(todoId, { state: category })
     }
 
     return {
