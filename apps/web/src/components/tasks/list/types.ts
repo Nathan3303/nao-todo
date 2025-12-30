@@ -1,50 +1,54 @@
-import type { ComputedRef, Reactive } from 'vue'
-import type { Tag, Todo, TodoColumnOptions, GetTodosSortOptions } from '@nao-todo/types'
+import type { ComputedRef } from 'vue'
+import type { TaskVO, TagVO, TaskColumnOptions, GetTasksSortOptions } from '@nao-todo/types'
+import type { TaskApp } from '@nao-todo/application/task'
 
-export type TodoListProps = {
-    tags: Tag[]
-    todos: Todo[]
-    simple?: boolean
-    columns: TodoColumnOptions
-    sortOptions?: GetTodosSortOptions
-    emptyMessage?: string
-    useDeletedLine?: boolean
-    extraGetOptions?: Record<string, any>
+export type TaskListProps = {
+    tags: TagVO[]
+    tasks: TaskVO[]
+    columns: TaskColumnOptions
+    sortOptions: GetTasksSortOptions
+    columnLabelGetter: (key: string) => string
+    projectNameGetter: (projectId: string) => string
+    taskLister: TaskApp['list']
 }
 
-export type TodoListMultiSelectPayload = {
-    selectedIds: Todo['id'][]
+export type TaskListEmits = {
+    (e: 'showTaskDetails', taskId: TaskVO['id']): void
+    (e: 'showMultiSelectPanel', payload: TaskListMultiSelectPayload): void
+    (e: 'updateColumns', key: string, value: boolean): void
+    (e: 'updateSortOptions', newSortOptions: GetTasksSortOptions): void
+    (e: 'clearSortOptions'): void
+    (e: 'deleteTask', taskId: TaskVO['id']): void
+    (e: 'restoreTask', taskId: TaskVO['id']): void
+}
+
+export type TaskListContext = {
+    columns: ComputedRef<TaskColumnOptions>
+    sortOptions: ComputedRef<GetTasksSortOptions>
+    tags: ComputedRef<TagVO[]>
+    tasks: ComputedRef<TaskVO[]>
+    tagBarClamped: ComputedRef<number>
+    showTaskDetails: (taskId: TaskVO['id'], idx: number) => void
+    updateColumns: (key: string, value: boolean) => void
+    updateSortOptions: (options: GetTasksSortOptions) => void
+    clearSortOptions: () => void
+    deleteTask: (taskId: TaskVO['id']) => void
+    restoreTask: (taskId: TaskVO['id']) => void
+    getColumnLabel: (key: string) => string
+    isTaskExpired: (task: TaskVO) => boolean
+    isInMultiSelectRange: (idx: number) => boolean
+    showMultiSelectPanel: (idx: number) => void
+    clearMultiSelect: (fullCLear: boolean) => void
+    getProjectName: (projectId: string) => string
+    deleteOrRestore: (taskId: TaskVO['id'], isDelete: boolean) => void
+}
+
+export type TaskListMultiSelectPayload = {
+    selectedIds: TaskVO['id'][]
     selectRange: { start: number; end: number; original: number }
 }
 
-export type TodoListEmits = {
-    (event: 'clearSortOptions'): void
-    (event: 'deleteTodo', id: Todo['id']): void
-    (event: 'restoreTodo', id: Todo['id']): void
-    (event: 'showTodoDetails', id: Todo['id']): void
-    (event: 'showMultiSelect', payload: TodoListMultiSelectPayload): void
-    (event: 'updateSortOptions', newSortOptions: GetTodosSortOptions): void
-}
-
-export type TodoListContext = {
-    tags: ComputedRef<Tag[]>
-    todos: ComputedRef<Todo[]>
-    columns: ComputedRef<TodoListProps['columns']>
-    refreshKey: ComputedRef<number>
-    selectRange: Reactive<TodoListMultiSelectPayload['selectRange']>
-    sortOptions: ComputedRef<TodoListProps['sortOptions']>
-    tagBarClamped: ComputedRef<number>
-    getColumnText: (key: string, replaceText?: string) => string
-    isTodoExpired: (todo: Todo) => boolean
-    getProjectName: (projectId: Todo['projectId']) => string
-    clearSortOptions: () => void
-    updateSortOptions: (newSortOptions: GetTodosSortOptions) => void
-    showTodoDetailsPanel: (todoId: Todo['id'], idx: number) => void
-    showMultiSelectPanel: (idx: number) => void
-    deleteButtonClickHandler: (todoId: Todo['id'], isDeleted: boolean) => void
-}
-
-export type TodoListOrderButtonProps = {
-    prop: GetTodosSortOptions['field']
+export type TaskListOrderButtonProps = {
+    prop: GetTasksSortOptions['field']
     text?: string
 }

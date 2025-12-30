@@ -1,7 +1,7 @@
 import { TaskEntity } from '../entities'
 import { parseObject2QueryString, type ListTaskOptionsValueObject } from '../valueobjs'
 import type { TaskRepository } from '../repositories/task'
-import type { CreateTaskVO, GoAsync } from '@nao-todo/types'
+import type { CreateTaskVO, GoAsync, ResponseDataPagination } from '@nao-todo/types'
 
 export interface TaskDomain {
     get(taskId: string): GoAsync<TaskEntity>
@@ -9,12 +9,14 @@ export interface TaskDomain {
     update(taskId: string, taskEntity: TaskEntity): GoAsync<string>
     remove(taskId: string): GoAsync<void> // like delete
     restore(taskId: string): GoAsync<void>
-    list(listOptions?: ListTaskOptionsValueObject): GoAsync<TaskEntity[]>
+    list(
+        listOptions?: ListTaskOptionsValueObject
+    ): GoAsync<{ taskEntities: TaskEntity[]; pagination?: ResponseDataPagination }>
 }
 
 export default (taskRepo: TaskRepository): TaskDomain => {
     // @method 获取任务列表 - 查询选项转换为查询字符串
-    const list = async (listOptions?: ListTaskOptionsValueObject): GoAsync<TaskEntity[]> => {
+    const list = async (listOptions?: ListTaskOptionsValueObject) => {
         // 1. 转换查询选项
         const queryString = parseObject2QueryString(listOptions, (key, value) => {
             if (!value) return null

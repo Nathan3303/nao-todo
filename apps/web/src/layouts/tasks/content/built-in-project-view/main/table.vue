@@ -18,7 +18,8 @@ const {
     updateColumns,
     updateSortOptions,
     deleteTask,
-    restoreTask
+    restoreTask,
+    taskLister
 } = inject<TasksProjectViewContentContext>(TASKS_PROJECT_VIEW_CONTENT_CONTEXT_KEY)!
 </script>
 
@@ -41,6 +42,7 @@ const {
                     :sort-options="sortOptions"
                     :column-label-getter="getColumnLabel"
                     :project-name-getter="getProjectName"
+                    :task-lister="taskLister"
                     @show-task-details="showTaskDetails"
                     @clear-sort-options="clearSortOptions"
                     @update-columns="updateColumns"

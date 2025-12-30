@@ -1,46 +1,48 @@
 <script setup lang="ts">
-// import { useTasksProjectViewStore } from '@/stores/tasks'
-// import { TodoList } from '@/components/tasks/list'
-// import { storeToRefs } from 'pinia'
+import { TodoList } from '@/components/tasks/list'
+import { type TasksProjectViewContentContext } from './use-content'
+import { inject } from 'vue'
+import { TASKS_PROJECT_VIEW_CONTENT_CONTEXT_KEY } from '../constants'
 
-// defineOptions({ name: 'TasksMainProjectViewList' })
+defineOptions({ name: 'TasksMainProjectViewList' })
 
-// const tasksProjectViewStore = useTasksProjectViewStore()
-
-// const { todos, tags, viewProps } = storeToRefs(tasksProjectViewStore)
+const contextCtx = inject<TasksProjectViewContentContext>(TASKS_PROJECT_VIEW_CONTENT_CONTEXT_KEY)
 </script>
 
 <template>
-    <!-- <nue-container id="TasksMainListContainer">
+    <nue-container id="TasksMainListContainer">
         <nue-main>
             <nue-empty
-                v-if="!viewProps"
+                v-if="!contextCtx"
                 image-size="4rem"
                 image-src="/images/coffee.webp"
                 description="视图属性无效"
                 style="height: 100%"
             />
-            <nue-content v-if="viewProps" fill style="overflow: hidden">
+            <nue-content v-else fill style="overflow: hidden">
                 <todo-list
-                    :extra-get-options="{ projectId: viewProps.id }"
-                    :columns="viewProps.preference.columns"
-                    :sort-options="viewProps.preference.getTodosOptions.sort"
-                    :tags="tags"
-                    :todos="todos"
-                    @show-todo-details="tasksProjectViewStore.showTodoDetails"
-                    @clear-sort-options="tasksProjectViewStore.handleClearSortOptions"
-                    @update-sort-options="tasksProjectViewStore.handleUpdateSortOptions"
-                    @delete-todo="tasksProjectViewStore.deleteTodo"
-                    @restore-todo="tasksProjectViewStore.restoreTodo"
+                    v-if="contextCtx.sortOptions.value"
+                    :tags="contextCtx.tags.value"
+                    :tasks="contextCtx.tasks.value"
+                    :columns="contextCtx.columns.value!"
+                    :sort-options="contextCtx.sortOptions.value"
+                    :column-label-getter="contextCtx.getColumnLabel"
+                    :project-name-getter="contextCtx.getProjectName"
+                    :task-lister="contextCtx.taskLister"
+                    @show-task-details="contextCtx.showTaskDetails"
+                    @clear-sort-options="contextCtx.clearSortOptions"
+                    @update-columns="contextCtx.updateColumns"
+                    @update-sort-options="contextCtx.updateSortOptions"
+                    @delete-task="contextCtx.deleteTask"
+                    @restore-task="contextCtx.restoreTask"
                 />
             </nue-content>
         </nue-main>
-    </nue-container> -->
-    ListView
+    </nue-container>
 </template>
 
 <style scoped>
-/* .nue-container#TasksMainListContainer {
+.nue-container#TasksMainListContainer {
     gap: 0.5rem;
 
     > .nue-header,
@@ -50,5 +52,5 @@
         border: none;
         height: auto;
     }
-} */
+}
 </style>

@@ -1,19 +1,24 @@
-import { computed, provide, ref } from 'vue'
+import { computed, provide } from 'vue'
 import type { TaskTableContext, TaskTableEmits, TaskTableProps } from './types'
 import type { GetTasksSortOptions, TaskColumnOptions, TaskVO } from '@nao-todo/types'
 import useMultiSelect from './use-multi-select'
 import dayjs from 'dayjs'
+import useTasksLoader from '@/infrastructure/hooks/tasks-view/use-tasks-loader'
 
 export const TASK_TABLE_CONTEXT_KEY = Symbol('TASK_TABLE_CONTEXT_KEY')
 
 export default (props: TaskTableProps, emit: TaskTableEmits) => {
-    // @states
-    const loading = ref(false)
-    const error = ref('')
-
     // @hook Use multi select
     const { selectRange, showMultiSelectPanel, clearMultiSelect, isInMultiSelectRange } =
         useMultiSelect(props, emit)
+
+    // @hook Use tasks lodaer
+    const {
+        states: loaderStates,
+        loadAndReplace: fetchTasks,
+        handleUpdatePage,
+        handleUpdatePerPage
+    } = useTasksLoader(props.taskLister)
 
     // @computed 计算标签显示数量 - 用于响应式变化时变化标签显示个数
     const tagBarClamped = computed(() => {
@@ -54,8 +59,8 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         columns: computed(() => props.columns),
         sortOptions: computed(() => props.sortOptions),
         tags: computed(() => props.tags),
-        tasks: computed(() => props.tasks),
         tagBarClamped,
+        states: computed(() => loaderStates),
         showTaskDetails,
         updateColumns: (key: string, value: boolean) => emit('updateColumns', key, value),
         updateSortOptions: (options: GetTasksSortOptions) => emit('updateSortOptions', options),
@@ -68,9 +73,11 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         showMultiSelectPanel,
         clearMultiSelect,
         getProjectName: props.projectNameGetter,
-        deleteOrRestore
+        deleteOrRestore,
+        handleUpdatePage,
+        handleUpdatePerPage
     })
 
     // @returns 返回值
-    return { loading, error }
+    return { states: loaderStates, fetchTasks }
 }

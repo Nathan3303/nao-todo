@@ -4,8 +4,8 @@ import type { ProjectPreferenceVO, ProjectVO, TagVO, TaskVO, WithNull } from '@n
 import { unwrapError } from '@nao-todo/utils'
 import { useRouter } from 'vue-router'
 import { NueMessage } from 'nue-ui'
-import { storeToRefs } from 'pinia'
 import { TASKS_PROJECT_VIEW_CONTEXT_KEY } from './constants'
+import type { TaskApp } from '@nao-todo/application/task'
 
 export type TasksProjectViewProps = {
     projectId?: string
@@ -15,7 +15,7 @@ export type TasksProjectViewProps = {
 export type TasksProjectViewContext = {
     project: ComputedRef<ProjectVO | null>
     preference: ComputedRef<ProjectPreferenceVO | null>
-    tags: Ref<TagVO[]>
+    tags: ComputedRef<TagVO[]>
     tasks: Ref<TaskVO[]>
     getColumnLabel: (key: string) => string
     savePreference: () => void
@@ -23,6 +23,7 @@ export type TasksProjectViewContext = {
     deleteTask: (taskId: TaskVO['id']) => void
     restoreTask: (taskId: TaskVO['id']) => void
     getProjectName: (projectId: string) => string
+    taskLister: TaskApp['list']
 }
 
 export default (props: TasksProjectViewProps) => {
@@ -31,7 +32,6 @@ export default (props: TasksProjectViewProps) => {
 
     const project = ref<WithNull<ProjectVO>>(null)
     const preference = ref<WithNull<ProjectPreferenceVO>>(null)
-    const { tags } = storeToRefs(tasksViewStore)
     const loading = ref(true)
     const error = reactive({ message: '', errorImage: '/images/error.png' })
 
@@ -51,7 +51,7 @@ export default (props: TasksProjectViewProps) => {
         }
         // 3. 获取清单偏好
         const [pp, err] = tasksViewStore.builtInProjectApp.getPreference(
-            tasksViewStore.userProfile?.email || 'default',
+            tasksViewStore.userApp.states.profile?.email || 'default',
             props.projectId
         )
         if (err !== null) {
@@ -115,7 +115,7 @@ export default (props: TasksProjectViewProps) => {
         }
         // 2. 更新清单偏好
         const err = tasksViewStore.builtInProjectApp.updatePreference(
-            tasksViewStore.userProfile?.email || 'default',
+            tasksViewStore.userApp.states.profile?.email || 'default',
             project.value.id,
             preference.value
         )
@@ -134,21 +134,13 @@ export default (props: TasksProjectViewProps) => {
             NueMessage.error('任务删除失败：参数错误')
             return
         }
-        // 2. 用户确认
-        // const [isByCancel] = await NueConfirm({
-        //     title: '删除任务',
-        //     content: '确认删除任务吗？（删除后可以在“已删除”分类中恢复）',
-        //     confirmButtonText: '删除',
-        //     cancelButtonText: '取消'
-        // })
-        // if (isByCancel) return
-        // 3. 删除任务
+        // 2. 删除任务
         const err = await tasksViewStore.taskApp.remove(taskId)
         if (err !== null) {
             NueMessage.error('任务删除失败：' + unwrapError(err))
             return
         }
-        // 4. 删除成功
+        // 3. 删除成功
         NueMessage.success('任务删除成功')
     }
 
@@ -178,14 +170,15 @@ export default (props: TasksProjectViewProps) => {
     provide<TasksProjectViewContext>(TASKS_PROJECT_VIEW_CONTEXT_KEY, {
         project: computed(() => project.value),
         preference: computed(() => preference.value),
-        tags,
+        tags: computed(() => tasksViewStore.tagApp.tags),
         tasks: computed(() => tasksViewStore.taskApp.states.tasks),
         getColumnLabel: tasksViewStore.getColumnLabel,
         savePreference,
         showTaskDetails: tasksViewStore.showTaskDetails,
         deleteTask,
         restoreTask,
-        getProjectName
+        getProjectName,
+        taskLister: tasksViewStore.taskApp.list
     })
 
     // @returns

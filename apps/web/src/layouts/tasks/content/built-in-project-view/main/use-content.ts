@@ -12,6 +12,7 @@ import {
     TASKS_PROJECT_VIEW_CONTENT_CONTEXT_KEY
 } from '../constants'
 import { computed, inject, provide, type ComputedRef, type Ref } from 'vue'
+import type { TaskApp } from '@nao-todo/application/task'
 
 export type TasksProjectViewContentProps = {
     projectId?: string
@@ -33,6 +34,7 @@ export type TasksProjectViewContentContext = {
     getColumnLabel: (key: string) => string
     clearSortOptions: () => void
     getProjectName: (projectId: string) => string
+    taskLister: TaskApp['list']
 }
 
 export default () => {
@@ -46,7 +48,8 @@ export default () => {
         getColumnLabel,
         getProjectName,
         restoreTask,
-        deleteTask
+        deleteTask,
+        taskLister
     } = inject<TasksProjectViewContext>(TASKS_PROJECT_VIEW_CONTEXT_KEY)!
 
     // @proxy
@@ -86,7 +89,7 @@ export default () => {
         columns,
         sortOptions,
         tags,
-        tasks,
+        tasks: computed(() => tasks.value),
         showTaskDetails,
         deleteTask,
         restoreTask,
@@ -94,7 +97,8 @@ export default () => {
         updateSortOptions,
         getColumnLabel,
         clearSortOptions,
-        getProjectName
+        getProjectName,
+        taskLister
     })
 
     // @returns

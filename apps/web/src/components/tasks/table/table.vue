@@ -3,7 +3,7 @@ import useTaskTable from './use-table'
 import { Loading as LoadingComp } from '@nao-todo/components'
 import TaskTableHeader from './table-header.vue'
 import TaskTableMain from './table-main.vue'
-// import TaskTableFooter from './table-footer.vue'
+import TaskTableFooter from './table-footer.vue'
 import type { TaskTableProps, TaskTableEmits } from './types'
 import './table.css'
 
@@ -11,13 +11,15 @@ defineOptions({ name: 'TaskTable' })
 const props = defineProps<TaskTableProps>()
 const emit = defineEmits<TaskTableEmits>()
 
-const { loading, error } = useTaskTable(props, emit)
+const { states, fetchTasks } = useTaskTable(props, emit)
+
+fetchTasks()
 </script>
 
 <template>
-    <loading-comp v-if="loading" style="height: 100%" />
+    <loading-comp v-if="states.loading" style="height: 100%" />
     <nue-empty
-        v-else-if="error"
+        v-else-if="states.error"
         image-size="4rem"
         image-src="/images/coffee.webp"
         description="当前暂无待办"
@@ -30,6 +32,6 @@ const { loading, error } = useTaskTable(props, emit)
                 <task-table-main />
             </nue-content>
         </nue-main>
-        <!-- <task-table-footer /> -->
+        <task-table-footer />
     </nue-container>
 </template>

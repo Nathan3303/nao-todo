@@ -33,8 +33,8 @@ await tasksViewStore.initializer.start()
     </nue-empty>
     <nue-container v-else>
         <nue-main>
-            <tasks-view-aside :width="asideWidth" max-width="360px" min-width="240px" />
-            <nue-separator op-target="previous" @resize="tasksViewStore.handleResizeAside" />
+            <!-- <tasks-view-aside :width="asideWidth" max-width="360px" min-width="240px" /> -->
+            <!-- <nue-separator op-target="previous" @resize="tasksViewStore.handleResizeAside" /> -->
             <nue-content fill style="overflow: hidden">
                 <router-view />
             </nue-content>
@@ -48,7 +48,6 @@ await tasksViewStore.initializer.start()
                     :project-name-getter="tasksViewStore.projectHandlers.getNameById"
                     :tag-getter="tasksViewStore.tagHandlers.getTagsByTagIds"
                     :task-getter="tasksViewStore.taskApp.getByIdFromMap"
-                    :width="outlineWidth"
                 />
             </nue-aside>
         </nue-main>

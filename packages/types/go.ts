@@ -9,12 +9,13 @@ export type GoLike<T = unknown> = [T, Err]
 export type GoLikeAsync<T = unknown> = Promise<[T, Err]>
 
 export type GoSuccess<T> = [T, null]
+// export type GoSuccessWithMultiValue<T extends unknown[]> = [...(T[number] | null)[], null]
 export type GoFailure<T, U> = [WithNull<T>, U]
 export type GoWithoutValue = Err
-export type Go<T = unknown, U extends Err = Err> = T extends undefined | void
+
+export type GoAsync<T = unknown> = Promise<Go<T>>
+export type Go<T = unknown, U extends Err = Err> = T extends void
     ? GoWithoutValue
     : U extends null
       ? GoSuccess<Exclude<T, null>>
       : GoFailure<T, Exclude<U, null>>
-
-export type GoAsync<T = unknown> = Promise<Go<T>>

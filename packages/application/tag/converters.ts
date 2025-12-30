@@ -1,5 +1,5 @@
 import type { TagEntity } from '@nao-todo/domain/tag'
-import { TagPreferenceEntity } from '@nao-todo/domain/tag/entities'
+import type { TagPreferenceEntity } from '@nao-todo/domain/tag/entities'
 import jsonParse from '@nao-todo/infrastructure/utils/json-parse'
 import type { TagPreferenceVO, TagVO } from '@nao-todo/types'
 

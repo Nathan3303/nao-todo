@@ -1,27 +1,32 @@
 <script setup lang="ts">
 import { inject } from 'vue'
-import { TODO_TABLE_CONTEXT_KEY } from './constants'
 import { Pager } from '@nao-todo/components'
-import type { TodoTableContext } from './types'
+import type { TaskTableContext } from './types'
+import { TASK_TABLE_CONTEXT_KEY } from './use-table'
 
-defineOptions({ name: 'TodoTableFooter' })
+defineOptions({ name: 'TaskTableFooter' })
 
-const { pagination, page, error, todos, handleUpdatePerPage, handleUpdatePage } =
-    inject<TodoTableContext>(TODO_TABLE_CONTEXT_KEY)!
+const tableCtx = inject<TaskTableContext>(TASK_TABLE_CONTEXT_KEY)
 </script>
 
 <template>
-    <nue-footer v-if="!error && todos.length !== 0">
-        <nue-div v-if="pagination" align="center" justify="space-between" width="100%">
+    <nue-footer v-if="tableCtx">
+        <nue-div
+            v-if="!tableCtx.states.value.error && tableCtx.states.value.tasks.length !== 0"
+            align="center"
+            justify="space-between"
+            width="100%"
+        >
             <nue-text color="gray" flex size="12px">
-                当前列表 {{ pagination.current || 0 }} 项， 共计 {{ pagination.total || 0 }} 项。
+                当前列表 {{ tableCtx.states.value.tasks.length || 0 }} 项， 共计
+                {{ tableCtx.states.value.pagination.total || 0 }} 项。
             </nue-text>
             <pager
-                :limit="pagination.limit"
-                :page="page"
-                :total-pages="pagination.maxPage"
-                @per-page-change="handleUpdatePerPage"
-                @page-change="handleUpdatePage"
+                :limit="tableCtx.states.value.pagination.limit"
+                :page="tableCtx.states.value.pagination.page"
+                :total-pages="tableCtx.states.value.pagination.maxPage"
+                @per-page-change="tableCtx.handleUpdatePerPage"
+                @page-change="tableCtx.handleUpdatePage"
             />
         </nue-div>
     </nue-footer>

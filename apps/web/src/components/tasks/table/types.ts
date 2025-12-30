@@ -1,11 +1,25 @@
+import type { TaskApp } from '@nao-todo/application/task'
 import type { GetTasksSortOptions, TagVO, TaskColumnOptions, TaskVO } from '@nao-todo/types'
 import type { ComputedRef } from 'vue'
+
+export type TaskTableVO = {
+    loading: boolean
+    error: string
+    tasks: TaskVO[]
+    pagination: {
+        page: number
+        limit: number
+        total: number
+        maxPage: number
+    }
+}
 
 export type TaskTableProps = {
     tags: TagVO[]
     tasks: TaskVO[]
     columns: TaskColumnOptions
     sortOptions: GetTasksSortOptions
+    taskLister: TaskApp['list']
     columnLabelGetter: (key: string) => string
     projectNameGetter: (projectId: string) => string
 }
@@ -24,8 +38,8 @@ export type TaskTableContext = {
     columns: ComputedRef<TaskColumnOptions>
     sortOptions: ComputedRef<GetTasksSortOptions>
     tags: ComputedRef<TagVO[]>
-    tasks: ComputedRef<TaskVO[]>
     tagBarClamped: ComputedRef<number>
+    states: ComputedRef<TaskTableVO>
     showTaskDetails: (taskId: TaskVO['id'], idx: number) => void
     updateColumns: (key: string, value: boolean) => void
     updateSortOptions: (options: GetTasksSortOptions) => void
@@ -39,6 +53,8 @@ export type TaskTableContext = {
     clearMultiSelect: (fullCLear: boolean) => void
     getProjectName: (projectId: string) => string
     deleteOrRestore: (taskId: TaskVO['id'], isDelete: boolean) => void
+    handleUpdatePage: (page: number) => void
+    handleUpdatePerPage: (limit: number) => void
 }
 
 export type TaskTableMultiSelectPayload = {

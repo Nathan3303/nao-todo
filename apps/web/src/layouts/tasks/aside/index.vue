@@ -4,6 +4,7 @@ import useTasksViewStore from '@/views/tasks/tasks-view-store'
 import projectSmartList from '@/components/tasks/smartlists/project-smart-list.vue'
 import FilterSmartList from '@/components/tasks/smartlists/filter-smart-list.vue'
 import TagSmartList from '@/components/tasks/smartlists/tag-smart-list.vue'
+import type { NaoSmartListLinkVO } from '@/components/ui'
 
 defineOptions({ name: 'TasksAside' })
 
@@ -11,7 +12,7 @@ const tasksViewStore = useTasksViewStore()
 
 const collapseItemsRecord = ref(['projects', 'filters', 'tags'])
 
-const builtInProjectLinks = computed(() => {
+const builtInProjectLinks = computed<NaoSmartListLinkVO[]>(() => {
     return tasksViewStore.builtInProjectApp.states.projects.map((project) => ({
         id: project.id,
         title: project.name,
@@ -20,7 +21,7 @@ const builtInProjectLinks = computed(() => {
     }))
 })
 
-const projectLinks = computed(() => {
+const projectLinks = computed<NaoSmartListLinkVO[]>(() => {
     return tasksViewStore.projectApp.projects.map((p) => {
         return {
             id: p.id,
@@ -31,12 +32,13 @@ const projectLinks = computed(() => {
     })
 })
 
-const tagLinks = computed(() => {
+const tagLinks = computed<NaoSmartListLinkVO[]>(() => {
     return tasksViewStore.tagApp.tags.map((tag) => ({
         id: tag.id,
         title: tag.name,
         route: { name: 'tasks-tag', params: { tagId: tag.id } },
-        icon: 'tag'
+        icon: 'tag',
+        payload: { color: tag.color || 'default' }
     }))
 })
 </script>

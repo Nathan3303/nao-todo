@@ -1,7 +1,7 @@
 import {
     makeTagEntity,
     makeTagPreferenceEntity,
-    TagPreferenceEntity,
+    type TagPreferenceEntity,
     type TagEntity
 } from '@nao-todo/domain/tag/entities'
 import type { CreateTagRes, GetTagPreferenceRes, GetTagRes, ListTagRes } from '../types'
@@ -25,14 +25,7 @@ export const createTagRes2TagEntity = (res: CreateTagRes): TagEntity => {
 }
 
 export const listTagRes2TagEntities = (res: ListTagRes): TagEntity[] => {
-    return res.map((p) => {
-        const e = makeTagEntity()
-        e.id = p.id
-        e.name = p.name
-        e.description = p.description
-        e.color = p.color
-        return e
-    })
+    return res.map((p) => getTagRes2TagEntity(p))
 }
 
 export const getTagPreferenceRes2TagPreferenceEntity = (

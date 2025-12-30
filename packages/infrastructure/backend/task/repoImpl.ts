@@ -4,7 +4,7 @@ import {
     listTaskRes2TaskEntities
 } from './converters'
 import { TaskEntity } from '@nao-todo/domain/task/entities'
-import type { TaskRepository } from '@nao-todo/domain/task/repositories'
+import type { TaskRepository } from '@nao-todo/domain/task/repositories/task'
 import type { Requester } from '../../requester/types'
 import type { CreateTaskVO, GoAsync } from '@nao-todo/types'
 import type {
@@ -13,6 +13,7 @@ import type {
     GetTaskRes,
     ListTaskRes,
     ResponseData,
+    ResponseDataPagination,
     UpdateTaskReq,
     UpdateTaskRes
 } from '../types'
@@ -117,7 +118,9 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
     }
 
     // @method 获取任务列表
-    const list = async (queryString?: string): GoAsync<TaskEntity[]> => {
+    const list = async (
+        queryString?: string
+    ): GoAsync<{ taskEntities: TaskEntity[]; pagination?: ResponseDataPagination }> => {
         // 1. 调用接口
         const response = await requester.get(`/tasks/?${queryString}`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
@@ -130,16 +133,9 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
         // 3. 转换为实体
         const taskEntities = listTaskRes2TaskEntities(res.data as ListTaskRes)
         // 4. 返回
-        return [taskEntities, null]
+        return [{ taskEntities, pagination: res.pagination }, null]
     }
 
     // @returns
-    return {
-        create,
-        get,
-        update,
-        remove,
-        restore,
-        list
-    }
+    return { create, get, update, remove, restore, list }
 }

@@ -2,7 +2,13 @@ import { useTaskDomain } from '@nao-todo/domain/task'
 import { useTaskRepository } from '@nao-todo/infrastructure/backend/task/repoImpl'
 import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 import { getTasksOptions2ValueObject, taskEntities2VOs } from './converters'
-import type { CreateTaskVO, GetTasksOptions, GoAsync, TaskVO } from '@nao-todo/types'
+import type {
+    CreateTaskVO,
+    GetTasksOptions,
+    GoAsync,
+    ResponseDataPagination,
+    TaskVO
+} from '@nao-todo/types'
 import dayjs from 'dayjs'
 import { type ComputedRef, reactive, type Reactive, watch } from 'vue'
 import { useListMapperV2 } from '@nao-todo/infrastructure/hooks/use-list-mapper'
@@ -14,7 +20,9 @@ export type TaskAppStates = Reactive<{
 
 export interface TaskApp {
     states: TaskAppStates
-    list: (options?: GetTasksOptions) => GoAsync<TaskVO[]>
+    list: (
+        options?: GetTasksOptions
+    ) => GoAsync<{ taskVOs: TaskVO[]; pagination?: ResponseDataPagination }>
     remove: (id: string) => GoAsync<void>
     restore: (id: string) => GoAsync<void>
     create: (createVO: CreateTaskVO) => GoAsync<TaskVO>
@@ -37,19 +45,21 @@ export default (): TaskApp => {
      */
 
     // @method 获取标签列表
-    const list = async (getOptions?: GetTasksOptions): GoAsync<TaskVO[]> => {
+    const list = async (
+        getOptions?: GetTasksOptions
+    ): GoAsync<{ taskVOs: TaskVO[]; pagination?: ResponseDataPagination }> => {
         // 1. 转换参数
         const listOptions = getTasksOptions2ValueObject(getOptions)
         // 2. 获取后端数据
-        const [taskEntities, err] = await taskDomain.list(listOptions)
+        const [res, err] = await taskDomain.list(listOptions)
         if (err !== null) {
             return [null, err]
         }
         // 3. 更新状态
-        const taskVOs = taskEntities2VOs(taskEntities)
+        const taskVOs = taskEntities2VOs(res.taskEntities)
         states.tasks = taskVOs
         // 4. 返回
-        return [taskVOs, null]
+        return [{ taskVOs, pagination: res.pagination }, null]
     }
 
     // @method 删除任务
