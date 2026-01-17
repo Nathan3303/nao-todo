@@ -1,6 +1,6 @@
 import type { ProjectEntity, ProjectPreferenceEntity } from './entities'
-import type { CreateProjectVO, Err, Go, GoAsync, GoLike } from '@nao-todo/types'
-import type { BuiltInProjectRepository, ProjectRepository } from './repositories'
+import type { CreateProjectVO, Err, GoAsync, GoLike } from '@nao-todo/types'
+import type { ProjectRepository } from './repositories'
 
 /**
  * 项目领域服务
@@ -16,6 +16,7 @@ interface ProjectDomain {
     unarchive(projectId: string): Promise<Err>
     list(): Promise<GoLike<ProjectEntity[] | null>>
     getPreference(projectId: string): GoAsync<ProjectPreferenceEntity>
+    updatePreference(projectId: string, preferenceEntity: ProjectPreferenceEntity): GoAsync<string>
 }
 
 export const useProjectDomain = (projectRepo: ProjectRepository): ProjectDomain => {
@@ -28,28 +29,7 @@ export const useProjectDomain = (projectRepo: ProjectRepository): ProjectDomain 
         archive: projectRepo.archive,
         unarchive: projectRepo.unarchive,
         list: projectRepo.list,
-        getPreference: projectRepo.getPreference
-    }
-}
-
-/**
- * 内建项目领域服务
- */
-
-export interface BuiltInProjectDomain {
-    get(projectId: string): Go<ProjectEntity>
-    list(): Go<ProjectEntity[]>
-    getPreference(userId: string, projectId: string): Go<ProjectPreferenceEntity>
-    savePreference(userId: string, ppe: ProjectPreferenceEntity): Err
-}
-
-export const useBuiltInProjectDomain = (
-    builtInProjectRepo: BuiltInProjectRepository
-): BuiltInProjectDomain => {
-    return {
-        get: builtInProjectRepo.get,
-        list: builtInProjectRepo.list,
-        getPreference: builtInProjectRepo.getPreference,
-        savePreference: builtInProjectRepo.savePreference
+        getPreference: projectRepo.getPreference,
+        updatePreference: projectRepo.updatePreference
     }
 }

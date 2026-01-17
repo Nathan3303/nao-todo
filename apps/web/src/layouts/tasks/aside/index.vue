@@ -13,7 +13,7 @@ const tasksViewStore = useTasksViewStore()
 const collapseItemsRecord = ref(['projects', 'filters', 'tags'])
 
 const builtInProjectLinks = computed<NaoSmartListLinkVO[]>(() => {
-    return tasksViewStore.builtInProjectApp.states.projects.map((project) => ({
+    return tasksViewStore.builtInProjectApp.states.builtInProjects.map((project) => ({
         id: project.id,
         title: project.name,
         route: { name: 'tasks-built-in-project', params: { projectId: project.id } },
@@ -22,18 +22,18 @@ const builtInProjectLinks = computed<NaoSmartListLinkVO[]>(() => {
 })
 
 const projectLinks = computed<NaoSmartListLinkVO[]>(() => {
-    return tasksViewStore.projectApp.projects.map((p) => {
+    return tasksViewStore.projectApp.states.projects.map((p) => {
         return {
             id: p.id,
             title: p.name,
             route: { name: 'tasks-project', params: { projectId: p.id } },
-            icon: p.icon
+            icon: p.icon || 'more2'
         }
     })
 })
 
 const tagLinks = computed<NaoSmartListLinkVO[]>(() => {
-    return tasksViewStore.tagApp.tags.map((tag) => ({
+    return tasksViewStore.tagApp.states.tags.map((tag) => ({
         id: tag.id,
         title: tag.name,
         route: { name: 'tasks-tag', params: { tagId: tag.id } },
@@ -99,3 +99,4 @@ const tagLinks = computed<NaoSmartListLinkVO[]>(() => {
     }
 }
 </style>
+

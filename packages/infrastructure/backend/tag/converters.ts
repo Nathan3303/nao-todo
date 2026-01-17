@@ -4,7 +4,13 @@ import {
     type TagPreferenceEntity,
     type TagEntity
 } from '@nao-todo/domain/tag/entities'
-import type { CreateTagRes, GetTagPreferenceRes, GetTagRes, ListTagRes } from '../types'
+import type {
+    CreateTagRes,
+    GetTagPreferenceRes,
+    GetTagRes,
+    ListTagRes,
+    UpdateTagPreferenceReq
+} from '../types'
 
 export const getTagRes2TagEntity = (res: GetTagRes): TagEntity => {
     const e = makeTagEntity()
@@ -36,4 +42,14 @@ export const getTagPreferenceRes2TagPreferenceEntity = (
     e.getTasksOptions = res.getTasksOptions
     e.columns = res.columns
     return e
+}
+
+export const tagPreferenceEntity2UpdateReq = (
+    tagPreferenceEntity: TagPreferenceEntity
+): UpdateTagPreferenceReq => {
+    const rto = {} as UpdateTagPreferenceReq
+    rto.preference.viewType = tagPreferenceEntity.viewType
+    rto.preference.getTasksOptions = tagPreferenceEntity.getTasksOptions
+    rto.preference.columns = tagPreferenceEntity.columns
+    return rto
 }

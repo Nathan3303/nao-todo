@@ -138,17 +138,15 @@ const createComment = async (content: string) => {
                 <comment-creator :handler="createComment" @cancel="isCommenting = false" />
             </nue-div>
             <nue-div justify="space-between" width="100%">
-                <details-row :text="eventProgress.text" label="检查事项进度" flex="40%" />
+                <details-row :text="eventProgress.text" label="检查事项进度" />
                 <details-row
                     v-if="vo.createdAt"
-                    :text="dayjs(vo.createdAt).format('YYYY-MM-DD HH:mm:ss')"
-                    flex="30%"
+                    :text="dayjs(vo.createdAt).format('YYYY-MM-DD HH:mm')"
                     label="创建时间"
                 />
                 <details-row
                     v-if="vo.updatedAt"
-                    :text="dayjs(vo.updatedAt).format('YYYY-MM-DD HH:mm:ss')"
-                    flex="30%"
+                    :text="dayjs(vo.updatedAt).format('YYYY-MM-DD HH:mm')"
                     label="最后修改时间"
                 />
             </nue-div>
@@ -243,3 +241,4 @@ const createComment = async (content: string) => {
     }
 }
 </style>
+

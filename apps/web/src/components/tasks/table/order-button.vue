@@ -6,58 +6,68 @@ import type { TaskTableContext, TaskTableOrderButtonProps } from './types'
 defineOptions({ name: 'TaskTableOrderButton' })
 const props = defineProps<TaskTableOrderButtonProps>()
 
-const { sortOptions, updateSortOptions } = inject<TaskTableContext>(TASK_TABLE_CONTEXT_KEY)!
+const { getOptions, updateSortOptions } = inject<TaskTableContext>(TASK_TABLE_CONTEXT_KEY)!
 
 const checkNumber = computed(() => {
     const { prop } = props
-    if (!sortOptions.value) return
-    if (prop !== sortOptions.value.field) return
-    return sortOptions.value.order === 'asc' ? 1 : -1
+    if (!getOptions.value.sort) return
+    if (prop !== getOptions.value.sort?.field) return
+    return getOptions.value.sort?.order === 'asc' ? 1 : -1
 })
 
-const handleUpdateSortInfo = (flag: 1 | -1) => {
-    updateSortOptions({ field: props.prop, order: flag === 1 ? 'asc' : 'desc' })
+const ascIconName = computed(() => {
+    const { prop } = props
+    if (prop !== getOptions.value.sort?.field) return ''
+    return getOptions.value.sort?.order === 'asc' ? 'check' : ''
+})
+
+const descIconName = computed(() => {
+    const { prop } = props
+    if (prop !== getOptions.value.sort?.field) return ''
+    return getOptions.value.sort?.order === 'desc' ? 'check' : ''
+})
+
+const handleExecute = (id: string) => {
+    switch (id) {
+        case 'go-asc':
+            updateSortOptions({ field: props.prop, order: 'asc' })
+            break
+        case 'go-desc':
+            updateSortOptions({ field: props.prop, order: 'desc' })
+            break
+    }
 }
 </script>
 
 <template>
-    <nue-dropdown theme="combo-box,small" close-when-executed>
+    <nue-dropdown theme="combo-box,small" close-when-executed @execute="handleExecute">
         <template #trigger="{ trigger }">
-            <nue-div align="center" gap="4px">
-                <nue-text size="12px" color="gray" @click="trigger" style="cursor: pointer">
+            <nue-div align="center" gap="0.5rem">
+                <nue-text @click="trigger" style="cursor: pointer">
                     <slot>{{ text }}</slot>
                 </nue-text>
                 <nue-icon
                     v-if="checkNumber"
                     :name="checkNumber === 1 ? 'arrow-up' : 'arrow-down'"
-                    size="11px"
-                    color="gray"
                 />
             </nue-div>
         </template>
         <template #default>
-            <nue-container>
-                <nue-main style="flex-direction: column; border: none">
-                    <nue-div
-                        align="center"
-                        class="nue-dropdown-item"
-                        @click="handleUpdateSortInfo(1)"
-                    >
-                        <nue-icon size="12px" name="arrow-up" />
-                        <nue-text size="12px" style="flex: auto">升序</nue-text>
-                        <nue-icon v-if="checkNumber === 1" size="12px" name="check" />
-                    </nue-div>
-                    <nue-div
-                        align="center"
-                        class="nue-dropdown-item"
-                        @click="handleUpdateSortInfo(-1)"
-                    >
-                        <nue-icon size="12px" name="arrow-down" />
-                        <nue-text size="12px" style="flex: auto">降序</nue-text>
-                        <nue-icon v-if="checkNumber === -1" size="12px" name="check" />
-                    </nue-div>
-                </nue-main>
-            </nue-container>
+            <nue-div theme="block">
+                <nue-dropdown-item size="small" icon="arrow-up" text="升序" execute-id="go-asc">
+                    <template #append>
+                        <nue-icon :name="ascIconName" />
+                    </template>
+                </nue-dropdown-item>
+                <nue-dropdown-item size="small" icon="arrow-down" text="降序" execute-id="go-desc">
+                    <template #append>
+                        <nue-icon :name="descIconName" />
+                    </template>
+                </nue-dropdown-item>
+            </nue-div>
         </template>
     </nue-dropdown>
 </template>
+
+<style scoped></style>
+

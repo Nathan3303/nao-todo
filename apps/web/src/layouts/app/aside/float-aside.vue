@@ -1,31 +1,26 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
-// import { useViewStore } from '@/stores/global'
 import useAppStore from '@/views/app-store'
 import { NaoRouterLink } from '@/components/ui'
-import type { NueDrawer } from 'nue-ui'
 
 defineOptions({ name: 'IndexAside' })
+const props = defineProps<{ modelValue: boolean }>()
+const emit = defineEmits<{ (e: 'update:modelValue', value: boolean): void }>()
 
 const appStore = useAppStore()
-// const userStore = useUserStoreV2()
 
-// const { appAsideStates } = storeToRefs(appStore)
-const { userProfile, routerLinks } = storeToRefs(appStore)
-const drawerRef = ref<InstanceType<typeof NueDrawer>>()
+const { routerLinks } = storeToRefs(appStore)
 
-// const visible = computed({
-//     get: () => appAsideStates.value.visible,
-//     set: (newVisible) => {
-//         appAsideStates.value.visible = newVisible
-//     }
-// })
+const userProfile = computed(() => appStore.userApp.states.profile)
+const visible = computed({
+    get: () => props.modelValue,
+    set: (newVisible) => emit('update:modelValue', newVisible)
+})
 </script>
 
 <template>
-    <!-- v-model="visible" -->
-    <nue-drawer ref="drawerRef" open-from="left" theme="float-aside" allow-close-by-overlay>
+    <nue-drawer v-model="visible" open-from="left" theme="float-aside" allow-close-by-overlay>
         <nue-container id="AppAsideContainer">
             <nue-header>
                 <nue-div align="center">
@@ -65,15 +60,14 @@ const drawerRef = ref<InstanceType<typeof NueDrawer>>()
 
     .nue-drawer__header {
         display: none;
-        /* height: auto;
-        padding-top: var(--nue-padding-sm);
-        padding-bottom: var(--nue-padding-sm);  */
     }
 
     #AppAsideContainer > .nue-main > .nue-content {
         display: flex;
         flex-direction: column;
         padding: 1rem;
+        box-sizing: border-box;
     }
 }
 </style>
+

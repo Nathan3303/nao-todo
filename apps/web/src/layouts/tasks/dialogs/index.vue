@@ -9,7 +9,7 @@ import {
 } from '@/components/tasks/dialogs'
 import useDialogs from './use-dialogs'
 
-defineOptions({ name: 'TasksDialogManager' })
+defineOptions({ name: 'TasksViewDialogs' })
 
 const {
     projectCreatorRegister,
@@ -33,7 +33,7 @@ const {
     <project-manager @register="projectManagerRegister" :projects="projects" />
     <tag-creator @register="tagCreatorRegister" :creatr-tag-handler="tagCreatorHandler" />
     <tag-manager @register="tagManagerRegister" :tags="tags" />
-    <tag-color-updater
+    <TagColorUpdater
         @register="tagColorUpdaterRegister"
         :tag-color-getter="tagColorGetter"
         :tag-color-updater="tagColorUpdater"

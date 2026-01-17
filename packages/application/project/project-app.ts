@@ -1,36 +1,61 @@
 import { useProjectDomain } from '@nao-todo/domain/project'
 import { useProjectRepository } from '@nao-todo/infrastructure/backend/project/repoImpl'
 import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
-import { computed, ref, type Ref, type ComputedRef } from 'vue'
+import { type Reactive, reactive, watch } from 'vue'
 import {
     projectEntities2ProjectVO,
     projectEntity2ProjectVO,
     projectPreferenceEntity2ProjectPreferenceVO,
+    projectPreferenceVO2Entity,
     updateProjectVO2Entity
 } from './converters'
-import type { CreateProjectVO, GoAsync, ProjectPreferenceVO, ProjectVO, UpdateProjectVO } from '@nao-todo/types'
+import type {
+    CreateProjectVO,
+    GoAsync,
+    ProjectPreferenceVO,
+    ProjectVO,
+    UpdateProjectVO,
+    WithNull
+} from '@nao-todo/types'
+
+export type ProjectAppStates = {
+    projects: ProjectVO[]
+    project: WithNull<ProjectVO>
+    preference: WithNull<ProjectPreferenceVO>
+    projectsMap: Map<string, ProjectVO>
+}
 
 export interface ProjectApp {
-    projects: Ref<ProjectVO[]>
+    states: Reactive<ProjectAppStates>
     list: () => GoAsync<ProjectVO[]>
     getById: (id: string) => GoAsync<ProjectVO>
     getPreference: (id: string) => GoAsync<ProjectPreferenceVO>
-    update: (id: string, project: UpdateProjectVO) => GoAsync<undefined>
+    update: (id: string, project: UpdateProjectVO) => GoAsync<void>
     create: (project: CreateProjectVO) => GoAsync<ProjectVO>
-    projectMap: ComputedRef<Map<string, ProjectVO>>
     getByIdFromMap: (id: string) => ProjectVO | undefined
+    updatePreference: (id: string, preferenceVO: ProjectPreferenceVO) => GoAsync<string>
 }
 
 export default (): ProjectApp => {
     // @domain 清单域
     const projectDomain = useProjectDomain(useProjectRepository(getRequesterImpl()))
 
-    /**
-     * 清单列表以及相关方法
-     */
+    // @states
+    const states = reactive<ProjectAppStates>({
+        projects: [],
+        project: null,
+        preference: null,
+        projectsMap: new Map()
+    })
 
-    // @state 清单列表
-    const projects = ref<ProjectVO[]>([])
+    // @watch 当 projects 变化时，更新 projectsMap
+    watch(
+        () => states.projects,
+        (projects) => {
+            states.projectsMap = new Map(projects.map((p) => [p.id, p]))
+        },
+        { immediate: true }
+    )
 
     // @method 获取清单列表
     const list = async (): GoAsync<ProjectVO[]> => {
@@ -42,7 +67,7 @@ export default (): ProjectApp => {
         // 2. 更新状态
         const plist = projectEntities2ProjectVO(projectEntities!)
         // 2. 更新状态
-        projects.value = plist
+        states.projects = plist
         // 3. 返回
         return [plist, null]
     }
@@ -59,35 +84,22 @@ export default (): ProjectApp => {
         // 3. 实体转viewobject
         const project = projectEntity2ProjectVO(projectEntity)
         // 4. 更新状态
+        states.project = project
         // 查找下标更新，不存在则追加
-        // const projectIndex = projects.value.findIndex((p) => p.id === project.id)
-        // if (projectIndex !== -1) {
-        //     projects.value[projectIndex] = project
-        // } else {
-        //     projects.value.push(project)
-        // }
+        const projectIndex = states.projects.findIndex((p) => p.id === project.id)
+        if (projectIndex !== -1) {
+            states.projects[projectIndex] = project
+        } else {
+            states.projects.push(project)
+        }
+        // 更新 map
+        states.projectsMap = new Map(states.projects.map((p) => [p.id, p]))
         // 4. 返回
         return [project, null]
     }
 
-    // @method 获取清单偏好
-    const getPreference = async (id: string): GoAsync<ProjectPreferenceVO> => {
-        // 1. 判断 id
-        if (!id) return [null, '清单 ID 不能为空']
-        // 2. 调用域服务
-        const [projectPreferenceEntity, err] = await projectDomain.getPreference(id)
-        if (err !== null) {
-            return [null, err]
-        }
-        // 3. 实体转viewobject
-        const projectPreference =
-            projectPreferenceEntity2ProjectPreferenceVO(projectPreferenceEntity)
-        // 4. 返回
-        return [projectPreference, null]
-    }
-
     // @method 更新清单
-    const update = async (id: string, updateVO: UpdateProjectVO): GoAsync<undefined> => {
+    const update = async (id: string, updateVO: UpdateProjectVO): GoAsync<void> => {
         // 1. 判断 id
         if (!id) return '清单 ID 不能为空'
         // 2. 调用域服务
@@ -97,13 +109,13 @@ export default (): ProjectApp => {
             return err
         }
         // 3. 更新状态 - 查找下标更新
-        const projectIndex = projects.value.findIndex((p) => p.id === id)
+        const projectIndex = states.projects.findIndex((p) => p.id === id)
         if (projectIndex === -1) return null
         Object.keys(updateVO).forEach((key) => {
             if (key === 'id') return
             const updateValue = updateVO[key as keyof UpdateProjectVO]
             if (updateValue === undefined) return
-            ;(projects.value[projectIndex] as any)[key] = updateValue
+            ;(states.projects[projectIndex] as any)[key] = updateValue
         })
         // 4. 返回
         return null
@@ -119,27 +131,63 @@ export default (): ProjectApp => {
         // 4. 实体转viewobject
         const project = projectEntity2ProjectVO(projectEntity)
         // 5. 更新状态
-        projects.value.push(project)
+        states.projects.push(project)
         // 6. 返回
         return [project, null]
     }
 
-    /**
-     * 清单 Mapper 以及相关方法
-     * 主要提供 O(1) 时间复杂度的查询，用于在视图层快速获取清单详情
-     * Computed 实现响应式变化
-     */
+    // @method 获取清单偏好
+    const getPreference = async (id: string): GoAsync<ProjectPreferenceVO> => {
+        // 1. 判断 id
+        if (!id) return [null, '清单 ID 不能为空']
+        // 2. 调用域服务
+        const [projectPreferenceEntity, err] = await projectDomain.getPreference(id)
+        if (err !== null) {
+            return [null, err]
+        }
+        // 3. 实体转viewobject
+        const projectPreference =
+            projectPreferenceEntity2ProjectPreferenceVO(projectPreferenceEntity)
+        // 4. 更新状态
+        console.log(projectPreference)
+        states.preference = projectPreference
+        // 5. 返回
+        return [projectPreference, null]
+    }
 
-    // @computed 清单列表 Mapper
-    const projectMap = computed(() => {
-        return new Map(projects.value.map((p) => [p.id, p]))
-    })
+    // @method 更新清单偏好
+    const updatePreference = async (
+        id: string,
+        preferenceVO: ProjectPreferenceVO
+    ): GoAsync<string> => {
+        // 1. 判断 id
+        if (!id) return [null, '清单 ID 不能为空']
+        // 2. 调用域服务
+        const projectPreferenceEntity = projectPreferenceVO2Entity(preferenceVO)
+        const [projectId, err] = await projectDomain.updatePreference(id, projectPreferenceEntity)
+        if (err !== null) {
+            return [null, err]
+        }
+        // 3. 更新状态
+        states.preference = preferenceVO
+        // 4. 返回
+        return [projectId, null]
+    }
 
-    // @method 根据 ID 获取清单详情
+    // @method 根据 ID 获取清单详情 - 从 Map 中获取
     const getByIdFromMap = (id: string): ProjectVO | undefined => {
-        return projectMap.value.get(id)
+        return states.projectsMap.get(id)
     }
 
     // @returns
-    return { projects, projectMap, list, getById, update, create, getByIdFromMap, getPreference }
+    return {
+        states,
+        list,
+        getById,
+        update,
+        create,
+        getPreference,
+        getByIdFromMap,
+        updatePreference
+    }
 }

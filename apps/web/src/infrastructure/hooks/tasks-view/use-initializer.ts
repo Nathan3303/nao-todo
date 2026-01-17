@@ -35,7 +35,7 @@ const useInitializer: UseInitializer = (
     // @method 获取内建清单列表
     const getBuiltInProjects = () => {
         placeholder.value = '获取内建清单列表中...'
-        const [, err] = builtInProjectApp.list()
+        const [, err] = builtInProjectApp.listBuiltInProject()
         if (err !== null) {
             error.value = true
             errorMessage.value = '内建清单列表获取失败：' + unwrapError(err)
@@ -59,7 +59,7 @@ const useInitializer: UseInitializer = (
     // @method 获取用户标签列表
     const getTags = async () => {
         placeholder.value = '获取标签列表中...'
-        const err = await tagApp.list()
+        const [, err] = await tagApp.list()
         if (err) {
             error.value = true
             errorMessage.value = '标签列表获取失败：' + unwrapError(err)

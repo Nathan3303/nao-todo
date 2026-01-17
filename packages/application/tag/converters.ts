@@ -1,5 +1,5 @@
 import type { TagEntity } from '@nao-todo/domain/tag'
-import type { TagPreferenceEntity } from '@nao-todo/domain/tag/entities'
+import { makeTagPreferenceEntity, type TagPreferenceEntity } from '@nao-todo/domain/tag/entities'
 import jsonParse from '@nao-todo/infrastructure/utils/json-parse'
 import type { TagPreferenceVO, TagVO } from '@nao-todo/types'
 
@@ -45,4 +45,14 @@ export const tagPreferenceEntity2TagPreferenceVO = (
               }
             : columns
     return vo
+}
+
+export const tagPreferenceVO2Entity = (vo: TagPreferenceVO): TagPreferenceEntity => {
+    const entity = makeTagPreferenceEntity()
+    entity.id = vo.id
+    entity.tagId = vo.tagId
+    entity.viewType = vo.viewType
+    entity.getTasksOptions = JSON.stringify(vo.getTasksOptions)
+    entity.columns = JSON.stringify(vo.columns)
+    return entity
 }

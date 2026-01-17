@@ -2,16 +2,21 @@
 import { AppAside } from '@/layouts/app'
 import { NueContainer } from 'nue-ui'
 import useAppStore from './app-store'
+import { storeToRefs } from 'pinia'
 
 defineOptions({ name: 'AppContainer' })
 
-await useAppStore().userApp.getProfile()
+const appStore = useAppStore()
+
+const { isDisplayHeader } = storeToRefs(appStore)
+
+await appStore.userApp.getProfile()
 </script>
 
 <template>
     <nue-container id="AppContainer">
         <nue-main>
-            <nue-aside>
+            <nue-aside v-if="isDisplayHeader">
                 <app-aside />
             </nue-aside>
             <nue-content fill style="overflow: hidden">
@@ -29,3 +34,4 @@ await useAppStore().userApp.getProfile()
     max-width: 70px;
 }
 </style>
+

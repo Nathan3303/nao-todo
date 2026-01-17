@@ -7,65 +7,65 @@ export const defaultBuiltInProjects: BuiltInProject[] = [
         icon: 'more2',
         name: '所有任务',
         description: '',
-        createTasksOptions: {}
+        createTaskOptions: {}
     },
     {
         id: 'today',
         icon: 'calendar2',
         name: '今日任务',
         description: '',
-        createTasksOptions: {
+        createTaskOptions: () => ({
             startAt: dayjs().startOf('day').toISOString(),
             endAt: dayjs().endOf('day').toISOString()
-        }
+        })
     },
     {
         id: 'tomorrow',
         icon: 'tomorrow',
         name: '明日任务',
         description: '',
-        createTasksOptions: {
+        createTaskOptions: () => ({
             startAt: dayjs().add(1, 'day').startOf('day').toISOString(),
             endAt: dayjs().add(1, 'day').endOf('day').toISOString()
-        }
+        })
     },
     {
         id: 'week',
         icon: 'week',
         name: '本周任务',
         description: '',
-        createTasksOptions: {
+        createTaskOptions: () => ({
             startAt: dayjs().startOf('day').toISOString(),
             endAt: dayjs().endOf('week').toISOString()
-        }
+        })
     },
     {
         id: 'inbox',
         icon: 'inbox2-fill',
         name: '收集箱',
         description: '',
-        createTasksOptions: {}
+        createTaskOptions: {}
     },
     {
         id: 'favourite',
         icon: 'heart-fill',
         name: '收藏夹',
         description: '',
-        createTasksOptions: { isFavorited: true }
+        createTaskOptions: {}
     },
     {
         id: 'givenup',
         icon: 'clear',
         name: '已放弃的待办',
         description: '',
-        createTasksOptions: {}
+        createTaskOptions: {}
     },
     {
         id: 'deleted',
         icon: 'recycle-bin',
         name: '垃圾桶',
         description: '',
-        createTasksOptions: {}
+        createTaskOptions: {}
     },
     {
         id: 'overdue',
@@ -73,7 +73,7 @@ export const defaultBuiltInProjects: BuiltInProject[] = [
         name: '已过期的任务',
         description:
             '结束日期于今日零点之前，且未完成的待办任务被视为过期任务，您可以通过延期按钮将待办任务延续至今天。',
-        createTasksOptions: {}
+        createTaskOptions: {}
     }
 ]
 

@@ -16,8 +16,9 @@ const tableCtx = inject<TaskTableContext>(TASK_TABLE_CONTEXT_KEY)
             align="center"
             justify="space-between"
             width="100%"
+            wrap="wrap"
         >
-            <nue-text color="gray" flex size="12px">
+            <nue-text flex>
                 当前列表 {{ tableCtx.states.value.tasks.length || 0 }} 项， 共计
                 {{ tableCtx.states.value.pagination.total || 0 }} 项。
             </nue-text>

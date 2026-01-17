@@ -17,27 +17,39 @@
     }
 
     > .nue-text {
-        font-size: var(--nue-text-xs);
+        font-size: var(--nue-text-sm);
         line-height: 1.5;
     }
 }
 
 /* Block */
 .nue-div.nue-div--block {
-    gap: 4px;
+    gap: 0.125rem;
     flex-direction: column;
-    align-items: stretch;
-    padding: 4px;
     width: 100%;
+    min-width: 6.5rem;
 
     > .nue-text--title {
-        font-size: var(--nue-text-xs);
+        font-size: var(--nue-text-sm);
         font-weight: 500;
         color: var(--nue-primary-color-500);
-        padding: 4px 6px;
+        padding: 0.125rem 0;
         cursor: default;
         user-select: none;
         -webkit-user-select: none;
+    }
+
+    > .nue-divider--title {
+        padding: 0.125rem 0;
+        box-sizing: border-box;
+
+        .nue-divider__content {
+            font-size: var(--nue-text-sm);
+            font-weight: 500;
+            color: var(--nue-primary-color-500);
+            margin: 0;
+            padding-left: 0;
+        }
     }
 }
 
@@ -60,7 +72,7 @@
 /* Tasks Header */
 .nue-div--tasks-header {
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.5rem;
     width: 100%;
 
     .nue-text--pointer {
@@ -68,13 +80,12 @@
     }
 
     .nue-text--tasks-header__name {
-        --nue-text-clamped-lines: 1;
         font-size: var(--nue-text-2xl);
     }
 
     .nue-text--tasks-header__description {
-        --nue-text-clamped-lines: 2;
         color: var(--nue-primary-color-500);
-        font-size: var(--nue-text-sm);
+        font-size: var(--nue-text-df);
     }
 }
+

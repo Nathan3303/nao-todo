@@ -116,7 +116,7 @@ export default (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
             }
             error.value = ''
             loading.value = false
-            console.log(eventVOList.value, commentVOList.value)
+            // console.log(eventVOList.value, commentVOList.value)
         },
         { immediate: true }
     )
@@ -225,9 +225,5 @@ export default (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     })
 
     // @returns 返回值
-    return {
-        loading,
-        error,
-        taskDetailsVO
-    }
+    return { loading, error, taskDetailsVO }
 }

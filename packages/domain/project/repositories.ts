@@ -1,4 +1,4 @@
-import type { Err, GoLike, GoAsync, Go, CreateProjectVO } from '@nao-todo/types'
+import type { Err, GoLike, GoAsync, CreateProjectVO } from '@nao-todo/types'
 import type { ProjectEntity, ProjectPreferenceEntity } from './entities'
 
 export interface ProjectRepository {
@@ -11,11 +11,5 @@ export interface ProjectRepository {
     unarchive(projectId: string): Promise<Err>
     list(): Promise<GoLike<ProjectEntity[] | null>>
     getPreference(projectId: string): GoAsync<ProjectPreferenceEntity>
-}
-
-export interface BuiltInProjectRepository {
-    get(projectId: string): Go<ProjectEntity>
-    list(): Go<ProjectEntity[]>
-    getPreference(userId: string, projectId: string): Go<ProjectPreferenceEntity>
-    savePreference(userId: string, ppe: ProjectPreferenceEntity): Err
+    updatePreference(projectId: string, preferenceEntity: ProjectPreferenceEntity): GoAsync<string>
 }

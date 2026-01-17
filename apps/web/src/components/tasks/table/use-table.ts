@@ -3,7 +3,6 @@ import type { TaskTableContext, TaskTableEmits, TaskTableProps } from './types'
 import type { GetTasksSortOptions, TaskColumnOptions, TaskVO } from '@nao-todo/types'
 import useMultiSelect from './use-multi-select'
 import dayjs from 'dayjs'
-import useTasksLoader from '@/infrastructure/hooks/tasks-view/use-tasks-loader'
 
 export const TASK_TABLE_CONTEXT_KEY = Symbol('TASK_TABLE_CONTEXT_KEY')
 
@@ -11,14 +10,6 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
     // @hook Use multi select
     const { selectRange, showMultiSelectPanel, clearMultiSelect, isInMultiSelectRange } =
         useMultiSelect(props, emit)
-
-    // @hook Use tasks lodaer
-    const {
-        states: loaderStates,
-        loadAndReplace: fetchTasks,
-        handleUpdatePage,
-        handleUpdatePerPage
-    } = useTasksLoader(props.taskLister)
 
     // @computed 计算标签显示数量 - 用于响应式变化时变化标签显示个数
     const tagBarClamped = computed(() => {
@@ -54,13 +45,26 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         }
     }
 
+    // @method 更新页码
+    // const handleUpdatePage = (page: number) => {
+    //     loaderStates.pagination.page = page
+    //     fetchTasks()
+    // }
+
+    // @method 更新每页显示数量
+    // const handleUpdatePerPage = (limit: number) => {
+    //     loaderStates.pagination.limit = limit
+    //     handleUpdatePage(1)
+    // }
+
     // @provide 任务表格上下文
     provide<TaskTableContext>(TASK_TABLE_CONTEXT_KEY, {
+        tasks: computed(() => props.tasks),
         columns: computed(() => props.columns),
-        sortOptions: computed(() => props.sortOptions),
+        getOptions: computed(() => props.getOptions),
         tags: computed(() => props.tags),
         tagBarClamped,
-        states: computed(() => loaderStates),
+        // states: computed(() => loaderStates),
         showTaskDetails,
         updateColumns: (key: string, value: boolean) => emit('updateColumns', key, value),
         updateSortOptions: (options: GetTasksSortOptions) => emit('updateSortOptions', options),
@@ -74,10 +78,12 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         clearMultiSelect,
         getProjectName: props.projectNameGetter,
         deleteOrRestore,
-        handleUpdatePage,
-        handleUpdatePerPage
+        // handleUpdatePage,
+        // handleUpdatePerPage
     })
 
     // @returns 返回值
-    return { states: loaderStates, fetchTasks }
+    return {
+        // states: loaderStates, fetchTasks
+    }
 }

@@ -1,68 +1,107 @@
-import type { ProjectEntity, ProjectPreferenceEntity } from '@nao-todo/domain/project/entities'
-import type { BuiltInProjectRepository } from '@nao-todo/domain/project/repositories'
-import type { Err, Go } from '@nao-todo/types'
+import type {
+    BuiltInProjectEntity,
+    BuiltInProjectPreferenceValueObject,
+    BuiltInProjectRepository
+} from '@nao-todo/domain/built-in-project'
+import type { Go } from '@nao-todo/types'
 import { defaultBuiltInProjectPreferences, defaultBuiltInProjects } from './default'
 import {
-    parse2ProjectEntity,
-    parse2ProjectPreferenceEntity,
+    builtInProjectRes2Entity,
+    builtInProjectPreferenceRes2VO,
     projectPreferenceEntity2BuiltInPp
 } from './converters'
 
-export const newBuiltInProjectRepository = (): BuiltInProjectRepository => {
-    const get = (id: string): Go<ProjectEntity> => {
+const useBuiltInProjectRepository = (): BuiltInProjectRepository => {
+    /**
+     * 获取指定 ID 的清单
+     * @param id 清单 ID
+     * @returns 清单实体
+     */
+    const get = (id: string): Go<BuiltInProjectEntity> => {
         // 1. 获取清单
         const builtInProject = defaultBuiltInProjects.find((item) => item.id === id)
         if (!builtInProject) {
             return [null, '清单不存在']
         }
         // 2. 转换为实体
-        const entity = parse2ProjectEntity(builtInProject)
+        const builtInProjectEntity = builtInProjectRes2Entity(builtInProject)
         // 3. 返回
-        return [entity, null]
+        return [builtInProjectEntity, null]
     }
 
-    const list = (): Go<ProjectEntity[]> => {
+    /**
+     * 获取所有清单
+     * @returns 清单实体数组
+     */
+    const list = (): Go<BuiltInProjectEntity[]> => {
         // 1. 获取清单
         const builtInProjects = defaultBuiltInProjects
         // 2. 转换为实体
-        const entities = builtInProjects.map(parse2ProjectEntity)
+        const entities = builtInProjects.map(builtInProjectRes2Entity)
         // 3. 返回
         return [entities, null]
     }
 
-    const getPreference = (userId: string, projectId: string): Go<ProjectPreferenceEntity> => {
+    /**
+     * 获取指定清单的偏好
+     * @param userId 用户 ID
+     * @param projectId 清单 ID
+     * @returns 清单偏好实体
+     */
+    const getPreference = (userId: string, id: string): Go<BuiltInProjectPreferenceValueObject> => {
         // 1. 构造查询 Key
-        const key = `${userId}/${projectId}`
+        const key = `${userId}/${id}`
         // 2. 查询 localStorage
-        const ppInStorage = localStorage.getItem(key)
-        if (ppInStorage) {
+        const builtInProjectPreferenceInLocalStorage = localStorage.getItem(key)
+        if (builtInProjectPreferenceInLocalStorage) {
             // 2.1 转换为实体
-            const ppe = parse2ProjectPreferenceEntity(JSON.parse(ppInStorage))
+            const bippvo = builtInProjectPreferenceRes2VO(
+                JSON.parse(builtInProjectPreferenceInLocalStorage)
+            )
             // 2.2 返回
-            return [ppe, null]
+            return [bippvo, null]
         }
         // 3. 若不存在，则返回默认值
-        const defaultPp = defaultBuiltInProjectPreferences.find((pp) => pp.projectId === projectId)
-        if (defaultPp) {
+        const defaultBuiltInProjectPreference = defaultBuiltInProjectPreferences.find(
+            (pp) => pp.projectId === id
+        )
+        if (defaultBuiltInProjectPreference) {
             // 3.1 转换为实体
-            const ppe = parse2ProjectPreferenceEntity(defaultPp)
+            const bippvo = builtInProjectPreferenceRes2VO(defaultBuiltInProjectPreference)
             // 3.2 返回
-            return [ppe, null]
+            return [bippvo, null]
         }
         // 4. 返回错误
         return [null, '清单偏好获取失败']
     }
 
-    const savePreference = (userId: string, ppe: ProjectPreferenceEntity): Err => {
+    /**
+     * 保存清单偏好
+     * @param userId 用户 ID
+     * @param bippvo 清单偏好值对象
+     * @returns 错误信息
+     */
+    const savePreference = (
+        userId: string,
+        bippvo: BuiltInProjectPreferenceValueObject
+    ): Go<void> => {
         // 1. 构造读写 Key
-        const key = `${userId}/${ppe.projectId}`
+        const key = `${userId}/${bippvo.projectId}`
         // 2. 格式转换
-        const builtInPp = projectPreferenceEntity2BuiltInPp(ppe)
+        const builtInPp = projectPreferenceEntity2BuiltInPp(bippvo)
         // 3. 更新
         localStorage.setItem(key, JSON.stringify(builtInPp))
         // 4. 返回
         return null
     }
 
-    return { get, list, getPreference, savePreference }
+    // @returns
+    return {
+        get,
+        list,
+        getPreference,
+        savePreference
+    }
 }
+
+export default useBuiltInProjectRepository

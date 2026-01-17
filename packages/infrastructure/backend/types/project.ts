@@ -27,3 +27,15 @@ export type GetProjectPreferenceRes = {
     getTasksOptions: string
     columns: string
 }
+
+export type UpdateProjectPreferenceReq = {
+    preference: {
+        viewType: string
+        getTasksOptions: string
+        columns: string
+    }
+}
+
+export type UpdateProjectPreferenceRes = {
+    projectId: string
+}

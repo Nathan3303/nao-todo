@@ -29,3 +29,15 @@ export type GetTagPreferenceRes = {
     getTasksOptions: string
     columns: string
 }
+
+export type UpdateTagPreferenceReq = {
+    preference: {
+        viewType: string
+        getTasksOptions: string
+        columns: string
+    }
+}
+
+export type UpdateTagPreferenceRes = {
+    tagId: string
+}

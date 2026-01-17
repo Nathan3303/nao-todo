@@ -1,6 +1,6 @@
-import { useProjectDomain, useBuiltInProjectDomain } from './services'
+import { useProjectDomain } from './services'
 import type { ProjectEntity, ProjectPreferenceEntity } from './entities'
 import type { ProjectRepository } from './repositories'
 
-export { useProjectDomain, useBuiltInProjectDomain }
+export { useProjectDomain }
 export type { ProjectRepository, ProjectEntity, ProjectPreferenceEntity }

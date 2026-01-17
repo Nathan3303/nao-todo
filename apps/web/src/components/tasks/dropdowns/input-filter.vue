@@ -1,20 +1,21 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed } from 'vue'
 
 defineOptions({ name: 'TasksDropdownTextFilter' })
 const props = defineProps<{
     placeholder?: string
     modelValue: string
 }>()
+const emit = defineEmits<{
+    (e: 'update:modelValue', value: string): void
+}>()
 
-const inputValue = ref(props.modelValue || '')
-
-watch(
-    () => props.modelValue,
-    (newValue) => {
-        inputValue.value = newValue || ''
+const inputValue = computed({
+    get: () => props.modelValue,
+    set: (value) => {
+        emit('update:modelValue', value)
     }
-)
+})
 </script>
 
 <template>
@@ -35,7 +36,7 @@ watch(
     border-radius: 0;
     --nue-icon-size: var(--nue-text-sm);
     font-size: var(--nue-text-sm);
-    padding: 0 0.5rem;
+    padding: 0.25rem 0.75rem;
     gap: 8px;
 
     &:deep(.nue-input__input) {

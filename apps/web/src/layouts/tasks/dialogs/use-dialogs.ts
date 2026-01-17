@@ -27,7 +27,7 @@ const useDialogs = () => {
 
     // @computed 清单列表
     const projects = computed(() => {
-        return tasksViewStore.projectApp.projects
+        return tasksViewStore.projectApp.states.projects
     })
 
     // @method 清单管理对话框注册函数
@@ -51,7 +51,7 @@ const useDialogs = () => {
 
     // @computed 标签列表
     const tags = computed(() => {
-        return tasksViewStore.tagApp.tags
+        return tasksViewStore.tagApp.states.tags
     })
 
     // @method 标签管理对话框注册函数
@@ -71,7 +71,7 @@ const useDialogs = () => {
 
     // @method 待办事项创建对话框注册函数
     const taskCreatorRegister = (open: DialogOpenFunc, close: DialogCloseFunc) => {
-        tasksViewStore.dialogManager.registerDialog('todo-creator', { open, close })
+        tasksViewStore.dialogManager.registerDialog('task-creator', { open, close })
     }
 
     // @method 待办事项创建对话框处理函数

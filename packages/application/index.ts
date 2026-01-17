@@ -1,7 +1,8 @@
 import useAuthApp from './auth'
 import useUserApp from './user'
-import useProjectApp, { useBuiltInProjectApp } from './project'
+import useProjectApp from './project'
 import useTagApp from './tag'
+import { useBuiltInProjectApp } from './built-in-project'
 import { useTaskApp } from './task'
 import useEventApp from './event'
 

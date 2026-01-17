@@ -11,6 +11,7 @@ export type ProjectVO = {
     isDeleted: boolean
     createdAt?: string
     updatedAt?: string
+    createTaskOptions?: { projectId: string }
 }
 
 export type ProjectPreferenceVO = {

@@ -1,4 +1,3 @@
-import moment from 'moment'
 import type { UseMinuteTaskOptions } from './types'
 
 const defaultOptions: UseMinuteTaskOptions = {
@@ -11,7 +10,7 @@ const useMinuteTask = (task: () => void, options?: UseMinuteTaskOptions) => {
     const { once } = options
 
     let taskTimerId: number | null = null
-    let lastRunTime = moment()
+    let lastRunTime = new Date()
 
     const stop = () => {
         if (!taskTimerId) return
@@ -30,13 +29,14 @@ const useMinuteTask = (task: () => void, options?: UseMinuteTaskOptions) => {
     }
 
     const run = () => {
-        const now = moment()
-        const nextRunTime = moment().add(1, 'minutes').startOf('minute')
-        if (now.diff(lastRunTime, 'minutes') >= 1) {
+        const now = new Date()
+        const nextRunTime = new Date(now)
+        nextRunTime.setMinutes(nextRunTime.getMinutes() + 1, 0, 0)
+        if ((now.getTime() - lastRunTime.getTime()) / (1000 * 60) >= 1) {
             task()
             lastRunTime = now
         }
-        const diffTime = nextRunTime.diff(now)
+        const diffTime = nextRunTime.getTime() - now.getTime()
         stop()
         callTask(diffTime, () => {
             lastRunTime = nextRunTime

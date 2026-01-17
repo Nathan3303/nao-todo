@@ -19,7 +19,7 @@ const tableCtx = inject<TaskTableContext>(TASK_TABLE_CONTEXT_KEY)
 <template>
     <nue-div v-if="tableCtx" class="todo-table__main">
         <nue-div
-            v-for="(task, idx) in tableCtx.states.value.tasks"
+            v-for="(task, idx) in tableCtx.tasks.value"
             :key="task.id"
             :data-done="task.state === 'done'"
             :data-selected="tableCtx.isInMultiSelectRange(idx)"

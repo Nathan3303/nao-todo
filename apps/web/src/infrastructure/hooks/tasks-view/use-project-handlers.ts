@@ -1,8 +1,19 @@
 import type { ProjectApp } from '@nao-todo/application/project'
+import type { GetTasksSortOptions, GoAsync, ProjectPreferenceVO, ProjectVO } from '@nao-todo/types'
 import { unwrapError } from '@nao-todo/utils'
 import { NueMessage, NuePrompt } from 'nue-ui'
 
-const useProjectHandlers = (projectApp: ProjectApp) => {
+export type ProjectHandlers = {
+    updateProjectNameByNuePrompt: (projectId: string) => Promise<void>
+    updateProjectDescriptionByNuePrompt: (projectId: string) => Promise<void>
+    getNameById: (projectId: string) => string
+    updateColumns: (key: string, value: boolean) => void
+    savePreference: (projectId: ProjectVO['id'], preference: ProjectPreferenceVO) => GoAsync<void>
+    updateSortOptions: (options: GetTasksSortOptions) => void
+    clearSortOptions: () => void
+}
+
+const useProjectHandlers = (projectApp: ProjectApp): ProjectHandlers => {
     // @method 更新清单名称
     // 通过 NuePrompt 组件实现用户输入并更新
     const updateProjectNameByNuePrompt = async (projectId: string) => {
@@ -76,11 +87,64 @@ const useProjectHandlers = (projectApp: ProjectApp) => {
         return project?.name || '收集箱'
     }
 
+    // @method 更新列选项
+    const updateColumns = (key: string, value: boolean) => {
+        if (!projectApp.states.preference) return
+        const oldValue = (projectApp.states.preference.columns as Record<string, boolean>)[key]
+        if (oldValue === void 0 || oldValue === value) return
+        ;(projectApp.states.preference.columns as Record<string, boolean>)[key] = value
+        console.log('updateColumns', key, value)
+    }
+
+    // @method 更新清单偏好设置
+    const savePreference = async (
+        projectId: ProjectVO['id'],
+        preference: ProjectPreferenceVO
+    ): GoAsync<void> => {
+        // 1. 校验参数
+        if (!projectId || !preference) {
+            return '参数错误'
+        }
+        // 2. 更新清单偏好
+        const [, err] = await projectApp.updatePreference(projectId, preference)
+        if (err !== null) {
+            return '清单偏好更新失败' + unwrapError(err)
+        }
+        // 3. 更新成功
+        return null
+    }
+
+    // @method 更新排序选项
+    const updateSortOptions = (options: GetTasksSortOptions) => {
+        if (!projectApp.states.preference) return
+        if (
+            options.field === projectApp.states.preference.getTasksOptions.sort?.field &&
+            options.order === projectApp.states.preference.getTasksOptions.sort?.order
+        ) {
+            projectApp.states.preference.getTasksOptions.sort = undefined
+            return
+        }
+        projectApp.states.preference.getTasksOptions.sort = options
+    }
+
+    // @method 清除排序选项
+    const clearSortOptions = () => {
+        if (!projectApp.states.preference) return
+        projectApp.states.preference.getTasksOptions.sort = {
+            field: 'createdAt',
+            order: 'desc'
+        }
+    }
+
     // @return 项目相关的处理函数
     return {
         updateProjectNameByNuePrompt,
         updateProjectDescriptionByNuePrompt,
-        getNameById
+        getNameById,
+        updateColumns,
+        updateSortOptions,
+        clearSortOptions,
+        savePreference
     }
 }
 

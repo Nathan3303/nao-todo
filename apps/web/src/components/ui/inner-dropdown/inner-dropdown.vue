@@ -9,6 +9,7 @@
         :disabled="disabled"
         :group="group"
         @execute="(executeId) => emit('execute', executeId)"
+        style="width: 100%"
     >
         <template #trigger="{ trigger }">
             <nue-dropdown-item
@@ -32,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { NueDropdown } from 'nue-ui'
 import type { InnerDropdownEmits, InnerDropdownProps } from './types'
 
@@ -45,8 +46,6 @@ const props = withDefaults(defineProps<InnerDropdownProps>(), {
     transparent: false
 })
 const emit = defineEmits<InnerDropdownEmits>()
-
-const InnerDropdownRef = ref<InstanceType<typeof NueDropdown>>()
 
 const suffix = computed(() => {
     if (!props.suffix) return ''

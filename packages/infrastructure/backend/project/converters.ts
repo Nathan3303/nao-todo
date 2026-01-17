@@ -8,7 +8,8 @@ import type {
     CreateProjectRes,
     GetProjectPreferenceRes,
     GetProjectRes,
-    ListProjectRes
+    ListProjectRes,
+    UpdateProjectPreferenceReq
 } from '../types'
 
 export const getProjectRes2ProjectEntity = (res: GetProjectRes): ProjectEntity => {
@@ -36,4 +37,14 @@ export const getProjectPreferenceRes2ProjectPreferenceEntity = (
     e.getTasksOptions = res.getTasksOptions
     e.columns = res.columns
     return e
+}
+
+export const preferenceEntity2UpdateProjectPreferenceReq = (
+    preferenceEntity: ProjectPreferenceEntity
+): UpdateProjectPreferenceReq => {
+    const rto = {} as UpdateProjectPreferenceReq
+    rto.preference.viewType = preferenceEntity.viewType
+    rto.preference.getTasksOptions = preferenceEntity.getTasksOptions
+    rto.preference.columns = preferenceEntity.columns
+    return rto
 }

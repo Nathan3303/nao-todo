@@ -59,7 +59,7 @@ const tableContext = inject<TaskTableContext>(TASK_TABLE_CONTEXT_KEY)
         </div>
         <div class="todo-table__header__col col-actions">
             <nue-icon
-                v-if="tableContext.sortOptions.value"
+                v-if="tableContext.getOptions.value.sort"
                 color="gray"
                 name="clear"
                 @click="tableContext.clearSortOptions()"

@@ -2,7 +2,8 @@ import {
     createProjectRes2ProjectEntity,
     getProjectPreferenceRes2ProjectPreferenceEntity,
     getProjectRes2ProjectEntity,
-    listProjectRes2ProjectEntities
+    listProjectRes2ProjectEntities,
+    preferenceEntity2UpdateProjectPreferenceReq
 } from './converters'
 import type { ProjectEntity, ProjectPreferenceEntity } from '@nao-todo/domain/project/entities'
 import type { ProjectRepository } from '@nao-todo/domain/project/repositories'
@@ -15,9 +16,11 @@ import type {
     GetProjectRes,
     ListProjectRes,
     ResponseData,
+    UpdateProjectPreferenceRes,
     UpdateProjectReq,
     UpdateProjectRes
 } from '../types'
+import { defaultPreference } from '@nao-todo/infrastructure/consts/preference'
 
 export const useProjectRepository = (requester: Requester): ProjectRepository => {
     const get = async (projectId: string): GoAsync<ProjectEntity> => {
@@ -156,16 +159,50 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
         })
         // 2. 获取结果
         const res = response.data as ResponseData
-        if (res.code !== 20080) {
-            return [null, res.message]
+        // 3. 判断结果
+        if (res.code === 20080) {
+            return [
+                getProjectPreferenceRes2ProjectPreferenceEntity(
+                    res.data as GetProjectPreferenceRes
+                ),
+                null
+            ]
         }
-        // 3. 转换为实体
-        const projectPreferenceEntity = getProjectPreferenceRes2ProjectPreferenceEntity(
-            res.data as GetProjectPreferenceRes
-        )
-        // 4. 返回
-        return [projectPreferenceEntity, null]
+        // 4. 获取失败则返回默认结果
+        return [defaultPreference, null]
     }
 
-    return { create, get, update, remove, restore, archive, unarchive, list, getPreference }
+    const updatePreference = async (
+        projectId: string,
+        preferenceEntity: ProjectPreferenceEntity
+    ): GoAsync<string> => {
+        // 1. 构建 rto
+        const rto = preferenceEntity2UpdateProjectPreferenceReq(preferenceEntity)
+        // 2. 调用接口
+        const response = await requester.post(`/projects/${projectId}/preference`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` },
+            data: rto
+        })
+        // 3. 判断结果
+        const res = response.data as ResponseData
+        if (res.code !== 20090) {
+            return [null, res.message]
+        }
+        // 4. 返回
+        const data = res.data as UpdateProjectPreferenceRes
+        return [data.projectId, null]
+    }
+
+    return {
+        create,
+        get,
+        update,
+        remove,
+        restore,
+        archive,
+        unarchive,
+        list,
+        getPreference,
+        updatePreference
+    }
 }

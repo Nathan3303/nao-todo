@@ -2,12 +2,13 @@ import {
     createTagRes2TagEntity,
     getTagPreferenceRes2TagPreferenceEntity,
     getTagRes2TagEntity,
-    listTagRes2TagEntities
+    listTagRes2TagEntities,
+    tagPreferenceEntity2UpdateReq
 } from './converters'
 import type { TagEntity, TagPreferenceEntity } from '@nao-todo/domain/tag/entities'
 import type { TagRepository } from '@nao-todo/domain/tag/repositories'
 import type { Requester } from '../../requester/types'
-import type { CreateTagVO, Err, GoAsync, GoLike, UpdateTagVO } from '@nao-todo/types'
+import type { CreateTagVO, Err, GoAsync, UpdateTagVO } from '@nao-todo/types'
 import type {
     CreateTagReq,
     CreateTagRes,
@@ -15,9 +16,11 @@ import type {
     GetTagRes,
     ListTagRes,
     ResponseData,
+    UpdateTagPreferenceRes,
     UpdateTagReq,
     UpdateTagRes
 } from '../types'
+import { defaultPreference } from '../../consts/preference'
 
 export const useTagRepository = (requester: Requester): TagRepository => {
     const get = async (tagId: string): GoAsync<TagEntity> => {
@@ -93,7 +96,7 @@ export const useTagRepository = (requester: Requester): TagRepository => {
         return null
     }
 
-    const list = async (): Promise<GoLike<TagEntity[] | null>> => {
+    const list = async (): GoAsync<TagEntity[]> => {
         // 1. 调用接口
         const response = await requester.get('/tags/', {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
@@ -114,18 +117,36 @@ export const useTagRepository = (requester: Requester): TagRepository => {
         const response = await requester.get(`/tags/${tagId}/preference`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
         })
-        // 2. 判断结果
+        // 2. 获取
         const res = response.data as ResponseData
-        if (res.code !== 30050) {
-            return [null, res.message]
+        // 3. 判断结果
+        if (res.code === 30050) {
+            return [getTagPreferenceRes2TagPreferenceEntity(res.data as GetTagPreferenceRes), null]
         }
-        // 3. 转换为实体
-        const tagPreferenceEntity = getTagPreferenceRes2TagPreferenceEntity(
-            res.data as GetTagPreferenceRes
-        )
-        // 4. 返回
-        return [tagPreferenceEntity, null]
+        // 4. 失败返回默认值
+        return [defaultPreference, null]
     }
 
-    return { create, get, update, remove, list, getPreference }
+    const updatePreference = async (
+        tagId: string,
+        preferenceEntity: TagPreferenceEntity
+    ): GoAsync<string> => {
+        // 1. 构建 rto
+        const rto = tagPreferenceEntity2UpdateReq(preferenceEntity)
+        // 1. 调用接口
+        const response = await requester.post(`/tags/${tagId}/preference`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` },
+            data: rto
+        })
+        // 2. 判断结果
+        const res = response.data as ResponseData
+        if (res.code !== 30060) {
+            return [null, res.message]
+        }
+        // 3. 返回
+        const data = res.data as UpdateTagPreferenceRes
+        return [data.tagId, null]
+    }
+
+    return { create, get, update, remove, list, getPreference, updatePreference }
 }
