@@ -1,16 +1,21 @@
 import type { UserEntity, UserRepository } from '@nao-todo/domain/user'
-import type { Err, GoLike } from '@nao-todo/types'
+import type { GoAsync } from '@nao-todo/types'
 import type { Requester } from '../../requester/types'
 import type { ResponseData } from '../types'
 import type { GetUserProfileRes, UpdateAvatarURLRes } from '../types/user'
 import { getUserProfileRes2UserEntity } from './converters'
 
 export const useUserRepository = (requester: Requester): UserRepository => {
-    const updateNickname = async (nickname: string): Promise<Err> => {
+    /**
+     * 更新用户昵称
+     * @param newNickname 新昵称
+     * @returns 更新结果
+     */
+    const updateNickname = async (newNickname: string): GoAsync<void> => {
         // 1. 调用接口
         const response = await requester.put('/user/nickname', {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` },
-            data: { nickname }
+            data: { nickname: newNickname }
         })
         // 2. 判断结果
         const res = response.data as ResponseData
@@ -21,7 +26,11 @@ export const useUserRepository = (requester: Requester): UserRepository => {
         return null
     }
 
-    const getProfile = async (): Promise<GoLike<UserEntity | null>> => {
+    /**
+     * 获取用户个人信息
+     * @returns 用户个人信息
+     */
+    const getProfile = async (): GoAsync<UserEntity> => {
         // 1. 调用接口
         const response = await requester.get('/user/profile', {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
@@ -37,7 +46,13 @@ export const useUserRepository = (requester: Requester): UserRepository => {
         return [userEntity, null]
     }
 
-    const updatePassword = async (oldPassword: string, newPassword: string): Promise<Err> => {
+    /**
+     * 更新用户密码
+     * @param oldPassword 旧密码
+     * @param newPassword 新密码
+     * @returns 更新结果
+     */
+    const updatePassword = async (oldPassword: string, newPassword: string): GoAsync<void> => {
         // 1. 构建 rto
         const rto = { oldPassword, newPassword }
         // 2. 调用接口
@@ -52,7 +67,12 @@ export const useUserRepository = (requester: Requester): UserRepository => {
         return null
     }
 
-    const updateAvatarURL = async (url: string): Promise<GoLike<string | null>> => {
+    /**
+     * 更新用户头像URL
+     * @param url 头像URL
+     * @returns 更新结果
+     */
+    const updateAvatarURL = async (url: string): GoAsync<string> => {
         // 1. 调用接口
         const response = await requester.put('/user/avatar', {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` },
@@ -68,7 +88,11 @@ export const useUserRepository = (requester: Requester): UserRepository => {
         return [avatarURL, null]
     }
 
-    const deactive = async (): Promise<Err> => {
+    /**
+     * 停用用户账号
+     * @returns 停用结果
+     */
+    const deactive = async (): GoAsync<void> => {
         // 1. 调用接口
         const response = await requester.put('/user/deactive', {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
@@ -80,7 +104,11 @@ export const useUserRepository = (requester: Requester): UserRepository => {
         return null
     }
 
-    const active = async (): Promise<Err> => {
+    /**
+     * 激活用户账号
+     * @returns 激活结果
+     */
+    const active = async (): GoAsync<void> => {
         // 1. 调用接口
         const response = await requester.put('/user/active', {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
@@ -92,5 +120,13 @@ export const useUserRepository = (requester: Requester): UserRepository => {
         return null
     }
 
-    return { updateNickname, getProfile, updatePassword, updateAvatarURL, deactive, active }
+    // @returns
+    return {
+        updateNickname,
+        getProfile,
+        updatePassword,
+        updateAvatarURL,
+        deactive,
+        active
+    }
 }

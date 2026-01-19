@@ -1,30 +1,30 @@
 <script setup lang="ts">
+import { inject } from 'vue'
 import { storeToRefs } from 'pinia'
 import { NaoRouterLink } from '@/components/ui'
-import useAppStore from '@/views/app-store'
-import { computed } from 'vue'
+import useUserStore from '@nao-todo/application/web/stores/user-store'
+import type { IndexViewContext } from '@/views/index-view'
 
 defineOptions({ name: 'AppAside' })
 
-const appStore = useAppStore()
+const userStore = useUserStore()
+const indexViewCtx = inject<IndexViewContext>('IndexViewContext')!
 
-const { routerLinks } = storeToRefs(appStore)
-
-const userProfile = computed(() => appStore.userApp.states.profile)
+const { profile } = storeToRefs(userStore)
 </script>
 
 <template>
-    <nue-div v-if="userProfile" theme="aside-wrapper">
+    <nue-div v-if="profile" theme="aside-wrapper">
         <nue-tooltip
             placement="right-center"
             size="small"
-            :content="`你好👋，${userProfile.nickname}！`"
+            :content="`你好👋，${profile.nickname}！`"
         >
-            <nue-avatar :src="userProfile.avatar" size="2.5rem" />
+            <nue-avatar :src="profile.avatar" size="2.5rem" />
         </nue-tooltip>
         <nue-div theme="aside__navs">
             <nue-tooltip
-                v-for="(rl, idx) in routerLinks"
+                v-for="(rl, idx) in indexViewCtx.routerLinks"
                 :key="idx"
                 :content="rl.name"
                 placement="right-center"
@@ -58,3 +58,4 @@ const userProfile = computed(() => appStore.userApp.states.profile)
     }
 }
 </style>
+

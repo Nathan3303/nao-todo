@@ -4,9 +4,9 @@ import {
     listTaskRes2TaskEntities
 } from './converters'
 import { TaskEntity } from '@nao-todo/domain/task/entities'
-import type { TaskRepository } from '@nao-todo/domain/task/repositories/task'
+import type { TaskRepository } from '@nao-todo/domain/task/repositories'
 import type { Requester } from '../../requester/types'
-import type { CreateTaskVO, GoAsync } from '@nao-todo/types'
+import type { CreateTask, GoAsync } from '@nao-todo/types'
 import type {
     CreateTaskReq,
     CreateTaskRes,
@@ -38,7 +38,7 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
     }
 
     // @method 创建任务
-    const create = async (createVO: CreateTaskVO): GoAsync<TaskEntity> => {
+    const create = async (createVO: CreateTask): GoAsync<TaskEntity> => {
         // 1. 构建 rto
         const rto: CreateTaskReq = {
             projectId: createVO.projectId,

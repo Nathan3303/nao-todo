@@ -1,20 +1,18 @@
+<script lang="ts" setup>
+import { AuthViewAside, AuthViewContent } from '@/layouts/auth'
+import useAuthView from './auth-view'
+
+defineOptions({ name: 'AuthView' })
+
+const { isDisplayAside } = useAuthView()
+</script>
+
 <template>
     <nue-container>
         <nue-main>
-            <auth-aside v-if="isDisplayAside" />
-            <auth-content />
+            <auth-view-aside v-if="isDisplayAside" />
+            <auth-view-content />
         </nue-main>
     </nue-container>
 </template>
 
-<script lang="ts" setup>
-import { storeToRefs } from 'pinia'
-import { AuthAside, AuthContent } from '@/layouts/auth'
-import useAuthViewStore from './auth-view-store'
-
-defineOptions({ name: 'AuthView' })
-
-const authViewStore = useAuthViewStore()
-
-const { isDisplayAside } = storeToRefs(authViewStore)
-</script>

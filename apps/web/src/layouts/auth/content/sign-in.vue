@@ -56,27 +56,28 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref } from 'vue'
+import { inject, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import useAuthViewStore from '@/views/auth/auth-view-store'
 import { unwrapError } from '@nao-todo/utils'
 import { NueMessage } from 'nue-ui'
-import type { SignInVO } from '@nao-todo/types'
-import { onMounted } from 'vue'
+import type { AuthViewContext } from '@/views/auth/auth-view'
 
 defineOptions({ name: 'AuthViewMainContentSignIn' })
 
-const authViewStore = useAuthViewStore()
 const router = useRouter()
+const authViewContext = inject<AuthViewContext>('AuthViewContext')!
 
 const loading = ref(false)
 const disabled = ref(false)
-const signInVO = reactive<SignInVO>({ email: '', password: '' })
+const signInVO = reactive({ email: '', password: '' })
 
 const handleSubmit = async (e: Event) => {
     e.preventDefault()
     loading.value = disabled.value = true
-    const err = await authViewStore.authApp.signIn(signInVO)
+    const err = await authViewContext.signInExecutor({
+        email: signInVO.email,
+        password: signInVO.password
+    })
     if (err) {
         signInVO.password = ''
         loading.value = disabled.value = false
@@ -86,10 +87,6 @@ const handleSubmit = async (e: Event) => {
     NueMessage.success('登录成功')
     await router.push({ path: '/tasks' })
 }
-
-onMounted(() => {
-    authViewStore.hideFirstLoadingScreen()
-})
 </script>
 
 <style scoped>
@@ -125,3 +122,4 @@ onMounted(() => {
     }
 }
 </style>
+

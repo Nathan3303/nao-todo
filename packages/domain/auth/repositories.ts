@@ -1,10 +1,13 @@
-import type { UserEntity } from './user-entity'
-import type { Err, GoLike } from '@nao-todo/types'
+import type { SignUpValueObject, SignInValueObject } from './valueobjects'
+import type { Go, GoAsync } from '@nao-todo/types'
 
 export interface AuthRepository {
-    signIn(userEntity: UserEntity): Promise<GoLike<string>>
-    encryptPassword(password: string): GoLike<string>
-    signUp(userEntity: UserEntity): Promise<Err>
-    checkIn(jwt: string): Promise<GoLike<string>>
-    signOut(jwt: string): Promise<Err>
+    signIn(vo: SignInValueObject): GoAsync<string>
+    encryptPassword(password: string): Go<string>
+    signUp(vo: SignUpValueObject): GoAsync<void>
+    checkIn(jwt: string): GoAsync<string>
+    signOut(jwt: string): GoAsync<void>
+    saveJwtToLocalStorage(jwt: string): Go<void>
+    getJwtFromLocalStorage(): string | null
+    removeJwtFromLocalStorage(): Go<void>
 }

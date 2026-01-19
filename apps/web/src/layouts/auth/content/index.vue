@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineOptions({ name: 'AuthViewMainContent' })
+defineOptions({ name: 'AuthViewContent' })
 </script>
 
 <template>

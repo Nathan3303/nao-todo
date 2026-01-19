@@ -1,6 +1,6 @@
 import type { GetTasksOptions, TaskColumnOptions } from './task'
 
-export type ProjectVO = {
+export type Project = {
     id: string
     icon?: string
     name: string
@@ -14,7 +14,7 @@ export type ProjectVO = {
     createTaskOptions?: { projectId: string }
 }
 
-export type ProjectPreferenceVO = {
+export type ProjectPreference = {
     id?: string
     projectId?: string
     viewType: string
@@ -22,14 +22,14 @@ export type ProjectPreferenceVO = {
     columns: TaskColumnOptions
 }
 
-export type UpdateProjectVO = {
+export type UpdateProject = {
     icon?: string
     name?: string
     description?: string
     archivedAt?: string
 }
 
-export type CreateProjectVO = {
+export type CreateProject = {
     icon?: string
     name: string
     description?: string

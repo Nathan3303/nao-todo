@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import { Loading as LoadingComponent } from '@nao-todo/components'
-import useAuthViewStore from '@/views/auth/auth-view-store'
-import { onMounted } from 'vue'
+import { inject, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { unwrapError } from '@nao-todo/utils'
 import { NueMessage } from 'nue-ui'
-
-defineOptions({ name: 'AuthViewMainContentCheckIn' })
+import type { AuthViewContext } from '@/views/auth/auth-view'
 
 const router = useRouter()
+const authViewContext = inject<AuthViewContext>('AuthViewContext')!
 
 onMounted(async () => {
-    const err = await useAuthViewStore().authApp.checkIn()
+    const err = await authViewContext.checkInExecutor()
     if (err) {
         NueMessage.error(unwrapError(err))
         router.replace('/auth/signin')

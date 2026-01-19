@@ -1,11 +1,11 @@
-import type { Err, GoLike } from '@nao-todo/types'
-import { UserEntity } from './user-entity'
+import type { GoAsync, UserProfile } from '@nao-todo/types'
+import type { UserEntity } from './entities'
 
 export interface UserRepository {
-    updateNickname(nickname: string): Promise<Err>
-    getProfile(): Promise<GoLike<UserEntity | null>>
-    updatePassword(oldPassword: string, newPassword: string): Promise<Err>
-    updateAvatarURL(url: string): Promise<GoLike<string | null>>
-    deactive(): Promise<Err>
-    active(): Promise<Err>
+    updateNickname(newNickname: UserProfile['nickname']): GoAsync<void>
+    getProfile(): GoAsync<UserEntity>
+    updatePassword(oldPassword: string, newPassword: string): GoAsync<void>
+    updateAvatarURL(url: string): GoAsync<string>
+    deactive(): GoAsync<void>
+    active(): GoAsync<void>
 }

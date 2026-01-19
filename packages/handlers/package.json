@@ -1,9 +1,0 @@
-{
-    "name": "@nao-todo/handlers",
-    "version": "0.1.0",
-    "description": "Handlers for Nao Todo",
-    "author": "Nathan Lee",
-    "license": "MIT",
-    "type": "module",
-    "main": "index.ts"
-}

@@ -1,16 +1,12 @@
 <script lang="ts" setup>
 import { AppAside } from '@/layouts/app'
-import { NueContainer } from 'nue-ui'
-import useAppStore from './app-store'
-import { storeToRefs } from 'pinia'
+import useIndexView from './index-view'
 
 defineOptions({ name: 'AppContainer' })
 
-const appStore = useAppStore()
+const { userUseCase, isDisplayHeader } = useIndexView()
 
-const { isDisplayHeader } = storeToRefs(appStore)
-
-await appStore.userApp.getProfile()
+await userUseCase.loadUserProfile()
 </script>
 
 <template>

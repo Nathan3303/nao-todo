@@ -1,4 +1,4 @@
-export type EventVO = {
+export type Event = {
     id: string
     taskId: string
     name: string
@@ -9,20 +9,20 @@ export type EventVO = {
     updatedAt?: string
 }
 
-export type CreateEventVO = {
+export type CreateEvent = {
     taskId: string
     name: string
     description?: string
 }
 
-export type UpdateEventVO = {
+export type UpdateEvent = {
     name?: string
     description?: string
     isDone?: boolean
     sortId?: number
 }
 
-export type UpdateEventsVO = {
+export type UpdateEvents = {
     eventId: string
-    updateVO: UpdateEventVO
+    updateVO: UpdateEvent
 }

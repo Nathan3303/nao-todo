@@ -72,32 +72,30 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, reactive, ref } from 'vue'
+import { inject, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { PasswordRuleHint } from '@/components/ui'
-import useAuthViewStore from '@/views/auth/auth-view-store'
-import type { SignUpVO } from '@nao-todo/types'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/utils'
+import type { AuthViewContext } from '@/views/auth/auth-view'
 
-const authViewStore = useAuthViewStore()
 const router = useRouter()
+const authViewContext = inject<AuthViewContext>('AuthViewContext')!
 
 const loading = ref(false)
 const disabled = ref(false)
-const signUpVO = reactive<SignUpVO>({
-    email: '',
-    password: '',
-    passwordConfirm: '',
-    nickname: ''
-})
+const signUpVO = reactive({ email: '', password: '', passwordConfirm: '', nickname: '' })
 
 const handleSubmit = async (e: Event) => {
     e.preventDefault()
-    loading.value = true
-    disabled.value = true
+    loading.value = disabled.value = true
     // 调用注册 API
-    const err = await authViewStore.authApp.signUp(signUpVO)
+    const err = await authViewContext.signUpExecutor({
+        email: signUpVO.email,
+        password: signUpVO.password,
+        confirmPassword: signUpVO.passwordConfirm,
+        nickname: signUpVO.nickname
+    })
     loading.value = false
     // 处理错误
     if (err) {
@@ -107,13 +105,9 @@ const handleSubmit = async (e: Event) => {
         return
     }
     // 注册成功，跳转到登录页
-    NueMessage.success("注册成功")
+    NueMessage.success('注册成功')
     await router.push({ path: '/auth/signin' })
 }
-
-onMounted(() => {
-    authViewStore.hideFirstLoadingScreen()
-})
 </script>
 
 <style scoped>
@@ -149,3 +143,4 @@ onMounted(() => {
     }
 }
 </style>
+

@@ -1,11 +1,11 @@
-export type SignIn = {
+export type SignInValueObject = {
     email: string
     password: string
 }
 
-export type SignUp = {
+export type SignUpValueObject = {
     email: string
     password: string
-    passwordConfirm: string
+    confirmPassword: string
     nickname: string
 }

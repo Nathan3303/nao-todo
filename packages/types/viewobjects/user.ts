@@ -1,12 +1,12 @@
 import type { WithNull } from '../go'
 
-export type UserProfileConfigVO = {
+export type UserProfileConfig = {
     state: number
     theme?: string
     language?: string
 }
 
-export type UserProfileVO = {
+export type UserProfile = {
     email: string
     nickname: string
     avatar: string
@@ -14,10 +14,10 @@ export type UserProfileVO = {
     state: number
     createdAt: string
     updatedAt: string
-    config?: WithNull<UserProfileConfigVO>
+    config?: WithNull<UserProfileConfig>
     createdFrom?: string
 }
 
-export type UpdateNicknameVO = {
+export type UpdateNickname = {
     nickname: string
 }

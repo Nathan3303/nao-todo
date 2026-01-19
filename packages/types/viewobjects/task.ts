@@ -1,14 +1,14 @@
-import type { ProjectVO } from './project'
-import type { TagVO } from './tag'
+import type { Project } from './project'
+import type { Tag } from './tag'
 
-export type TaskVO = {
+export type Task = {
     id: string
-    projectId: ProjectVO['id']
+    projectId: Project['id']
     name: string
     description: string
     state: 'todo' | 'in-progress' | 'done'
     priority: 'low' | 'medium' | 'high' | 'urgent'
-    tags: TagVO['id'][]
+    tags: Tag['id'][]
     startAt?: string | null
     endAt?: string | null
     isDeleted: boolean
@@ -20,48 +20,49 @@ export type TaskVO = {
     createdAt: string
     updatedAt: string
     // Additional fields
-    project?: { name: ProjectVO['name'] }
+    project?: { name: Project['name'] }
     events?: Event[]
 }
 
-export type CreateTaskVO = {
-    projectId?: TaskVO['projectId']
-    name: TaskVO['name']
-    description?: TaskVO['description']
-    state: TaskVO['state']
-    priority: TaskVO['priority']
-    startAt?: TaskVO['startAt']
-    endAt: TaskVO['endAt']
-    tags?: TaskVO['tags']
+export type CreateTask = {
+    projectId?: Task['projectId']
+    name: Task['name']
+    description?: Task['description']
+    state: Task['state']
+    priority: Task['priority']
+    startAt?: Task['startAt']
+    endAt: Task['endAt']
+    tags?: Task['tags']
 }
 
-export type UpdateTaskVO = {
-    projectId?: TaskVO['projectId']
-    name?: TaskVO['name']
-    description?: TaskVO['description']
-    state?: TaskVO['state']
-    priority?: TaskVO['priority']
-    startAt?: TaskVO['startAt']
-    endAt?: TaskVO['endAt']
-    isArchived?: TaskVO['isArchived']
-    isFavorited?: TaskVO['isFavorited']
-    isGivenUp?: TaskVO['isGivenUp']
-    tags?: TaskVO['tags']
+export type UpdateTaskOptions = {
+    projectId?: Task['projectId']
+    name?: Task['name']
+    description?: Task['description']
+    state?: Task['state']
+    priority?: Task['priority']
+    startAt?: Task['startAt']
+    endAt?: Task['endAt']
+    isDeleted?: Task['isDeleted']
+    isArchived?: Task['isArchived']
+    isFavorited?: Task['isFavorited']
+    isGivenUp?: Task['isGivenUp']
+    tags?: Task['tags']
 }
 
 export type GetTasksOptions = {
-    projectId?: TaskVO['projectId']
-    name?: TaskVO['name']
-    description?: TaskVO['description']
+    projectId?: Task['projectId']
+    name?: Task['name']
+    description?: Task['description']
     state?: string
     priority?: string
-    isArchived?: TaskVO['isArchived']
-    isDeleted?: TaskVO['isDeleted']
-    isFavorited?: TaskVO['isFavorited']
-    isGivenUp?: TaskVO['isGivenUp']
+    isArchived?: Task['isArchived']
+    isDeleted?: Task['isDeleted']
+    isFavorited?: Task['isFavorited']
+    isGivenUp?: Task['isGivenUp']
     sort?: GetTasksSortOptions
     relativeDate?: 'today' | 'tomorrow' | 'week' | '-today' | 'month'
-    tagId?: TagVO['id']
+    tagId?: Tag['id']
     page?: number
     limit?: number
 }

@@ -1,6 +1,6 @@
 import type { GetTasksOptions, TaskColumnOptions } from './task'
 
-export type TagVO = {
+export type Tag = {
     id: string
     name: string
     description: string
@@ -9,7 +9,7 @@ export type TagVO = {
     updatedAt?: string
 }
 
-export type TagPreferenceVO = {
+export type TagPreference = {
     id?: string
     tagId?: string
     viewType: string
@@ -17,13 +17,13 @@ export type TagPreferenceVO = {
     columns: TaskColumnOptions
 }
 
-export type CreateTagVO = {
+export type CreateTag = {
     name: string
     description?: string
     color?: string
 }
 
-export type UpdateTagVO = {
+export type UpdateTag = {
     name?: string
     description?: string
     color?: string

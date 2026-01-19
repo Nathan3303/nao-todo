@@ -1,6 +1,6 @@
-import { useAuthDomain, type AuthDomain } from './service'
-import type { UserEntity } from './user-entity'
+import { AuthDomain } from './service'
+import type { SignInValueObject, SignUpValueObject } from './valueobjects'
 import type { AuthRepository } from './repositories'
 
-export { useAuthDomain }
-export type { AuthDomain, AuthRepository, UserEntity }
+export { AuthDomain }
+export type { AuthRepository, SignInValueObject, SignUpValueObject }
