@@ -76,11 +76,12 @@ import { inject, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { PasswordRuleHint } from '@/components/ui'
 import { NueMessage } from 'nue-ui'
-import { unwrapError } from '@nao-todo/utils'
+import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
+import { AUTH_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import type { AuthViewContext } from '@/views/auth/auth-view'
 
 const router = useRouter()
-const authViewContext = inject<AuthViewContext>('AuthViewContext')!
+const authViewContext = inject<AuthViewContext>(AUTH_VIEW_CONTEXT_KEY)!
 
 const loading = ref(false)
 const disabled = ref(false)

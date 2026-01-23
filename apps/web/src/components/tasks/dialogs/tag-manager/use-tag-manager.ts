@@ -1,5 +1,5 @@
 import { computed, reactive } from 'vue'
-import { useTasksViewStore } from '@/views/tasks'
+import { useTasksViewStore } from '@/views/index/tasks'
 import type { TagManagerVO, TagManagerEmits, TagManagerProps } from './type'
 import type { TagVO } from '@nao-todo/types'
 

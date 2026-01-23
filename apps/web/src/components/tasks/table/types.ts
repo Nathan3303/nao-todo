@@ -2,15 +2,15 @@
 import type {
     GetTasksOptions,
     GetTasksSortOptions,
-    TagVO,
+    Tag,
     TaskColumnOptions,
-    TaskVO
+    Task
 } from '@nao-todo/types'
 import type { ComputedRef } from 'vue'
 
 export type TaskTableProps = {
-    tags: TagVO[]
-    tasks: TaskVO[]
+    tags: Tag[]
+    tasks: Task[]
     columns: TaskColumnOptions
     getOptions: GetTasksOptions
     loading: boolean
@@ -19,35 +19,42 @@ export type TaskTableProps = {
 }
 
 export type TaskTableEmits = {
-    (e: 'showTaskDetails', taskId: TaskVO['id']): void
+    (e: 'showTaskDetails', taskId: Task['id']): void
     (e: 'showMultiSelectPanel', payload: TaskTableMultiSelectPayload): void
-    (e: 'updateColumns', key: string, value: boolean): void
-    (e: 'updateSortOptions', options: GetTasksSortOptions): void
+    (e: 'updateColumns', key: keyof TaskColumnOptions, value: boolean): void
+    (
+        e: 'updateSortOptions',
+        field: GetTasksSortOptions['field'],
+        order: GetTasksSortOptions['order']
+    ): void
     (e: 'clearSortOptions'): void
-    (e: 'deleteTask', taskId: TaskVO['id']): void
-    (e: 'restoreTask', taskId: TaskVO['id']): void
+    (e: 'deleteTask', taskId: Task['id']): void
+    (e: 'restoreTask', taskId: Task['id']): void
 }
 
 export type TaskTableContext = {
-    tasks: ComputedRef<TaskVO[]>
+    tasks: ComputedRef<Task[]>
     columns: ComputedRef<TaskColumnOptions>
     getOptions: ComputedRef<GetTasksOptions>
-    tags: ComputedRef<TagVO[]>
+    tags: ComputedRef<Tag[]>
     tagBarClamped: ComputedRef<number>
     // states: ComputedRef<TaskTableVO>
-    showTaskDetails: (taskId: TaskVO['id'], idx: number) => void
-    updateColumns: (key: string, value: boolean) => void
-    updateSortOptions: (options: GetTasksSortOptions) => void
+    showTaskDetails: (taskId: Task['id'], idx: number) => void
+    updateColumns: (key: keyof TaskColumnOptions, value: boolean) => void
+    updateSortOptions: (
+        field: GetTasksSortOptions['field'],
+        order: GetTasksSortOptions['order']
+    ) => void
     clearSortOptions: () => void
-    deleteTask: (taskId: TaskVO['id']) => void
-    restoreTask: (taskId: TaskVO['id']) => void
+    deleteTask: (taskId: Task['id']) => void
+    restoreTask: (taskId: Task['id']) => void
     getColumnLabel: (key: string) => string
-    isTaskExpired: (task: TaskVO) => boolean
+    isTaskExpired: (task: Task) => boolean
     isInMultiSelectRange: (idx: number) => boolean
     showMultiSelectPanel: (idx: number) => void
     clearMultiSelect: (fullCLear: boolean) => void
     getProjectName: (projectId: string) => string
-    deleteOrRestore: (taskId: TaskVO['id'], isDelete: boolean) => void
+    deleteOrRestore: (taskId: Task['id'], isDelete: boolean) => void
     // handleUpdatePage: (page: number) => void
     // handleUpdatePerPage: (limit: number) => void
 }
@@ -61,3 +68,4 @@ export type TaskTableOrderButtonProps = {
     prop: GetTasksSortOptions['field']
     text?: string
 }
+

@@ -16,8 +16,10 @@ type Tag = {
     color: string
     description: string
     isDeleted: boolean
-    deletedAt: Date | null
+    deletedAt: string
     preference: TagPreference
+    createdAt: string
+    updatedAt: string
 }
 
 type CreateTagOptionsRaw = {
@@ -31,7 +33,7 @@ type UpdateTagOptionsRaw = {
     color?: string
     description?: string
     isDeleted?: boolean
-    deletedAt?: Date | null
+    deletedAt?: string
 }
 
 type GetTagsOptionsRaw = UpdateTagOptionsRaw
@@ -57,3 +59,4 @@ export type {
     GetTagsOptions,
     DeleteTagOptions
 }
+

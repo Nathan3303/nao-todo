@@ -3,6 +3,7 @@ import { USER_PASSWORD_REGEXP } from '@nao-todo/infrastructure/consts/auth'
 import type { GoAsync } from '@nao-todo/types/go'
 
 export interface AuthStore {
+    setIsAuthenticated: (isAuthenticated: boolean) => void
     setUserToken: (userToken: string) => void
 }
 
@@ -32,6 +33,7 @@ export class AuthUseCase {
             return err
         }
         // 3. 存储JWT
+        this.authStore.setIsAuthenticated(true)
         this.authStore.setUserToken(jwt)
         // 4. 返回
         return null
@@ -78,6 +80,7 @@ export class AuthUseCase {
             return err
         }
         // 2. 存储JWT
+        this.authStore.setIsAuthenticated(true)
         this.authStore.setUserToken(newJwt)
         // 3. 返回
         return null
@@ -94,6 +97,7 @@ export class AuthUseCase {
             return err
         }
         // 2. 清除JWT
+        this.authStore.setIsAuthenticated(false)
         this.authStore.setUserToken('')
         // 3. 返回
         return null

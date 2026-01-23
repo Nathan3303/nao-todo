@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
-import { useMoment, formatForDateTimeInput } from '@nao-todo/utils'
+import dayjs from 'dayjs'
 import moment from 'moment'
 
 type TodoDateSelectorProps = {
@@ -20,8 +20,8 @@ const emit = defineEmits<TodoDateSelectorEmits>()
 const dateMoment = computed<string | null>({
     get() {
         const { modelValue, date } = props
-        if (modelValue) return formatForDateTimeInput(useMoment(modelValue))
-        if (date) return formatForDateTimeInput(useMoment(date))
+        if (modelValue) return dayjs(modelValue).format('YYYY-MM-DDTHH:mm')
+        if (date) return dayjs(date).format('YYYY-MM-DDTHH:mm')
         return null
     },
     set(value) {
@@ -88,7 +88,7 @@ const handleAddDateByNow = () => {
     }
 
     .nue-divider {
-        height: calc(100% - .5rem);
+        height: calc(100% - 0.5rem);
     }
 
     &:hover {

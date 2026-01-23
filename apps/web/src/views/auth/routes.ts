@@ -1,5 +1,5 @@
 import type { NavigationGuard, RouteRecordRaw } from 'vue-router'
-import useAuthViewStore from './auth-view-store'
+import useUserStore from '@/stores/user-store'
 
 const routes: RouteRecordRaw = {
     path: '/auth',
@@ -34,15 +34,9 @@ const beforeEnter: NavigationGuard = async (to, from, next) => {
         return
     }
     // 1. 判断是否登入
-    const authViewStore = useAuthViewStore()
-    if (authViewStore.authApp.states.isAuthenticated) return next()
+    const userStore = useUserStore()
+    if (userStore.isAuthenticated) return next()
     // 未登录，跳转到任务列表页
-    // const err = await authViewStore.checkIn()
-    // if (err) {
-    //     NueMessage.error(unwrapError(err))
-    //     next({ name: 'signin' })
-    //     return
-    // }
     next({
         name: 'auth-checkin',
         query: { fromUrl: from.fullPath }
@@ -51,3 +45,4 @@ const beforeEnter: NavigationGuard = async (to, from, next) => {
 
 export default routes
 export { beforeEnter }
+

@@ -1,15 +1,15 @@
-import type { CreateTaskVO } from '@nao-todo/types'
+import type { CreateTask } from '@nao-todo/types'
 
-export type BuiltInProject = {
+export type BuiltInProjectRes = {
     id: string
     icon: string
     name: string
     description: string
-    createTaskOptions: Partial<CreateTaskVO> | (() => Partial<CreateTaskVO>)
+    createTaskOptions: Partial<CreateTask> | (() => Partial<CreateTask>)
 }
 
-export type BuiltInProjectPreference = {
-    projectId: BuiltInProject['id']
+export type BuiltInProjectPreferenceRes = {
+    projectId: BuiltInProjectRes['id']
     userId: string
     viewType: string
     getTasksOptions: string

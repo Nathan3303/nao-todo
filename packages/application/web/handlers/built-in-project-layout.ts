@@ -1,16 +1,14 @@
-import { GetTasksOptions, GetTasksSortOptions, Go } from '@nao-todo/types'
-// import { BuiltInProjectUseCase } from '../usecases/built-in-project'
+import type { GetTasksOptions, GetTasksSortOptions, Go, TaskColumnOptions } from '@nao-todo/types'
 import { TaskUseCase } from '../usecases/task'
 
 export interface BuiltInProjectStore {
-    updatePreferenceColumns(key: string, value: boolean): void
-    updatePreferenceGetOption(key: string, value: unknown): void
-    updateGetTasksOptions<K extends keyof GetTasksOptions>(
-        key: K,
-        value: GetTasksOptions[K]
-    ): Go<void>
-    getPreferenceGetOption(key: string): unknown
-    getPreferenceGetOptions(): GetTasksOptions
+    updatePreferenceColumns(key: keyof TaskColumnOptions, value: boolean): void
+    updatePreferenceGetTasksOptions<T extends keyof GetTasksOptions>(
+        key: T,
+        value: GetTasksOptions[T]
+    ): void
+    getPreferenceGetTasksOption<T extends keyof GetTasksOptions>(key: T): GetTasksOptions[T]
+    getPreferenceGetTasksOptions(): GetTasksOptions
 }
 
 export class BuiltInProjectLayoutHandlers {
@@ -20,7 +18,7 @@ export class BuiltInProjectLayoutHandlers {
      * @param store 项目内建处理程序存储
      */
     constructor(
-        // private builtInProjectUseCase: BuiltInProjectUseCase, 
+        // private builtInProjectUseCase: BuiltInProjectUseCase,
         private taskUseCase: TaskUseCase,
         private store: BuiltInProjectStore
     ) {}
@@ -31,7 +29,7 @@ export class BuiltInProjectLayoutHandlers {
      * @param value 配置值
      * @returns 无
      */
-    updateColumns(key: string, value: boolean): Go<void> {
+    updateColumns(key: keyof TaskColumnOptions, value: boolean): Go<void> {
         // 1. 调用存储
         this.store.updatePreferenceColumns(key, value)
         // 2. 返回
@@ -49,7 +47,7 @@ export class BuiltInProjectLayoutHandlers {
         value: GetTasksOptions[K]
     ): Go<void> {
         // 1. 调用存储
-        this.store.updateGetTasksOptions(key, value)
+        this.store.updatePreferenceGetTasksOptions(key, value)
         // 2. 调用任务用例重新获取任务数据
         this.reloadTasks()
         // 3. 返回
@@ -67,7 +65,20 @@ export class BuiltInProjectLayoutHandlers {
         order: GetTasksSortOptions['order']
     ): Go<void> {
         // 1. 调用存储
-        this.store.updateGetTasksOptions('sort', { field, order })
+        this.store.updatePreferenceGetTasksOptions('sort', { field, order })
+        // 2. 调用任务用例重新获取任务数据
+        this.reloadTasks()
+        // 3. 返回
+        return null
+    }
+
+    /**
+     * 清除项目内建排序选项
+     * @returns 无
+     */
+    clearSortOption(): Go<void> {
+        // 1. 调用存储
+        this.store.updatePreferenceGetTasksOptions('sort', { field: 'created', order: 'desc' })
         // 2. 调用任务用例重新获取任务数据
         this.reloadTasks()
         // 3. 返回
@@ -80,12 +91,12 @@ export class BuiltInProjectLayoutHandlers {
      */
     switchCompletedTaskDisplay(): Go<void> {
         // 1. 获取当前状态
-        const currentState = this.store.getPreferenceGetOption('state')
+        const currentState = this.store.getPreferenceGetTasksOption('state')
         // 2. 判断是否已隐藏 - 已隐藏则显示, 否则隐藏
         if (currentState === 'todo,in-progress') {
-            this.store.updatePreferenceGetOption('state', '')
+            this.store.updatePreferenceGetTasksOptions('state', '')
         } else {
-            this.store.updatePreferenceGetOption('state', 'todo,in-progress')
+            this.store.updatePreferenceGetTasksOptions('state', 'todo,in-progress')
         }
         // 3. 调用任务用例重新获取任务数据
         this.reloadTasks()
@@ -99,7 +110,7 @@ export class BuiltInProjectLayoutHandlers {
      */
     reloadTasks(): Go<void> {
         // 1. 调用任务用例重新获取任务数据
-        this.taskUseCase.loadTasks(this.store.getPreferenceGetOptions())
+        this.taskUseCase.loadTasks(this.store.getPreferenceGetTasksOptions())
         // 2. 返回
         return null
     }

@@ -1,6 +1,6 @@
 import type { UserEntity } from '@nao-todo/domain/user'
 import type { GetUserProfileRes } from '../types/user'
-import { makeUserEntity } from '@nao-todo/domain/user/user-entity'
+import { makeUserEntity } from '@nao-todo/domain/user/entities'
 import dayjs from 'dayjs'
 
 export const getUserProfileRes2UserEntity = (res: GetUserProfileRes): UserEntity => {

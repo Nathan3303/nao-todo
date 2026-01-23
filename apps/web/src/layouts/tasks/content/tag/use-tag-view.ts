@@ -1,5 +1,5 @@
 import { computed, provide, watch } from 'vue'
-import { useTasksViewStore } from '@/views/tasks'
+import { useTasksViewStore } from '@/views/index/tasks'
 import { useRouter } from 'vue-router'
 import useTagLoader from '@/infrastructure/hooks/tasks-view/use-tag-loader'
 import useTagHandlers from '@/infrastructure/hooks/tasks-view/use-tag-handlers'

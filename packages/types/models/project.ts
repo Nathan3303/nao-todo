@@ -13,14 +13,15 @@ type Project = {
     userId: User['id']
     name: string
     description: string
+    icon: string
     state: number
     isArchived: boolean
-    archivedAt: Date | string | null
+    archivedAt: string | null
     isDeleted: boolean
-    deletedAt: Date | string | null
+    deletedAt: string | null
     preference: ProjectPreference
-    createdAt: Date
-    updatedAt: Date
+    createdAt: string
+    updatedAt: string
     _id?: string
 }
 
@@ -73,3 +74,4 @@ export type {
     UpdateProjectOptions,
     CreateProjectOptions
 }
+

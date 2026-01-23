@@ -1,4 +1,4 @@
-import { useMinuteTask } from '@nao-todo/hooks'
+import { useMinuteTask } from '@nao-todo/infrastructure/hooks/use-minute-task'
 import { ref, watch } from 'vue'
 
 const useAutoChangeTheme = (defaultIsAutoChange: boolean) => {

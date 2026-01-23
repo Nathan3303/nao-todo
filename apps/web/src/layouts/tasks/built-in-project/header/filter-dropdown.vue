@@ -1,0 +1,90 @@
+<script setup lang="ts">
+import TextFilter from '@/components/tasks/dropdowns/input-filter.vue'
+import StateFilter from '@/components/tasks/dropdowns/state-filter.vue'
+import PriorityFilter from '@/components/tasks/dropdowns/priority-filter.vue'
+import { DivBlock } from '@/components/ui'
+import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
+import type { BuiltInProjectViewContext } from '../types'
+import { computed, inject } from 'vue'
+import SortOperator from '@/components/tasks/dropdowns/sort-operator.vue'
+
+defineOptions({ name: 'TasksTodoFilterDropdown' })
+defineEmits<{ (e: 'getTodos'): void }>()
+
+const { preference } = inject<BuiltInProjectViewContext>(BUILT_IN_PROJECT_VIEW_CONTEXT_KEY)!
+
+// @proxy 清单偏好上下文 名称 属性代理
+const getTasksOptionsName = computed({
+    get: () => preference.value?.getTasksOptions?.name || '',
+    set: (name) => {
+        if (!preference.value) return
+        preference.value.getTasksOptions.name = name
+    }
+})
+
+// @proxy 清单偏好上下文 状态 属性代理
+const getTasksOptionsState = computed({
+    get: () => preference.value?.getTasksOptions?.state || '',
+    set: (state) => {
+        if (!preference.value) return
+        preference.value.getTasksOptions.state = state
+    }
+})
+
+// @proxy 清单偏好上下文 优先级 属性代理
+const getTasksOptionsPriority = computed({
+    get: () => preference.value?.getTasksOptions?.priority || '',
+    set: (priority) => {
+        if (!preference.value) return
+        preference.value.getTasksOptions.priority = priority
+    }
+})
+
+// @proxy 清单偏好上下文 排序 属性代理
+const getTasksOptionsSort = computed({
+    get: () =>
+        preference.value?.getTasksOptions?.sort || {
+            field: 'createdAt',
+            order: 'asc'
+        },
+    set: (sort) => {
+        if (!preference.value) return
+        preference.value.getTasksOptions.sort = sort
+    }
+})
+</script>
+
+<template>
+    <nue-dropdown
+        v-if="preference"
+        placement="bottom-end"
+        size="small"
+        theme="menu"
+        group="tasks-todo-filter"
+    >
+        <template #trigger="{ trigger }">
+            <nue-badge theme="for-ico-btn" dot>
+                <nue-button icon="filter" theme="icon,ghost" @click.stop="trigger" />
+            </nue-badge>
+        </template>
+        <div-block title="筛选">
+            <text-filter placeholder="筛选任务" v-model="getTasksOptionsName" />
+            <state-filter
+                v-if="preference.projectId !== 'overdue'"
+                v-model="getTasksOptionsState"
+            />
+            <priority-filter v-model="getTasksOptionsPriority" />
+        </div-block>
+        <nue-divider />
+        <div-block title="排序">
+            <sort-operator
+                v-model="getTasksOptionsSort"
+                :get-tasks-options="preference.getTasksOptions"
+                :columns="preference.columns"
+            />
+        </div-block>
+    </nue-dropdown>
+</template>
+
+<style scoped></style>
+

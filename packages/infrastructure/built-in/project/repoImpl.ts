@@ -5,11 +5,7 @@ import type {
 } from '@nao-todo/domain/built-in-project'
 import type { Go } from '@nao-todo/types'
 import { defaultBuiltInProjectPreferences, defaultBuiltInProjects } from './default'
-import {
-    builtInProjectRes2Entity,
-    builtInProjectPreferenceRes2VO,
-    projectPreferenceEntity2BuiltInPp
-} from './converters'
+import { bipRes2bipEntity, bippRes2bippVO, bippVO2bippRes } from './converters'
 
 const useBuiltInProjectRepository = (): BuiltInProjectRepository => {
     /**
@@ -24,9 +20,9 @@ const useBuiltInProjectRepository = (): BuiltInProjectRepository => {
             return [null, '清单不存在']
         }
         // 2. 转换为实体
-        const builtInProjectEntity = builtInProjectRes2Entity(builtInProject)
+        const bipe = bipRes2bipEntity(builtInProject)
         // 3. 返回
-        return [builtInProjectEntity, null]
+        return [bipe, null]
     }
 
     /**
@@ -37,7 +33,7 @@ const useBuiltInProjectRepository = (): BuiltInProjectRepository => {
         // 1. 获取清单
         const builtInProjects = defaultBuiltInProjects
         // 2. 转换为实体
-        const entities = builtInProjects.map(builtInProjectRes2Entity)
+        const entities = builtInProjects.map(bipRes2bipEntity)
         // 3. 返回
         return [entities, null]
     }
@@ -55,9 +51,7 @@ const useBuiltInProjectRepository = (): BuiltInProjectRepository => {
         const builtInProjectPreferenceInLocalStorage = localStorage.getItem(key)
         if (builtInProjectPreferenceInLocalStorage) {
             // 2.1 转换为实体
-            const bippvo = builtInProjectPreferenceRes2VO(
-                JSON.parse(builtInProjectPreferenceInLocalStorage)
-            )
+            const bippvo = bippRes2bippVO(JSON.parse(builtInProjectPreferenceInLocalStorage))
             // 2.2 返回
             return [bippvo, null]
         }
@@ -67,7 +61,7 @@ const useBuiltInProjectRepository = (): BuiltInProjectRepository => {
         )
         if (defaultBuiltInProjectPreference) {
             // 3.1 转换为实体
-            const bippvo = builtInProjectPreferenceRes2VO(defaultBuiltInProjectPreference)
+            const bippvo = bippRes2bippVO(defaultBuiltInProjectPreference)
             // 3.2 返回
             return [bippvo, null]
         }
@@ -88,7 +82,7 @@ const useBuiltInProjectRepository = (): BuiltInProjectRepository => {
         // 1. 构造读写 Key
         const key = `${userId}/${bippvo.projectId}`
         // 2. 格式转换
-        const builtInPp = projectPreferenceEntity2BuiltInPp(bippvo)
+        const builtInPp = bippVO2bippRes(bippvo)
         // 3. 更新
         localStorage.setItem(key, JSON.stringify(builtInPp))
         // 4. 返回

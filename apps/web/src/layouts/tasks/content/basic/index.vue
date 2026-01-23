@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue'
-import { useTasksViewStore } from '@/views/tasks'
+import { useTasksViewStore } from '@/views/index/tasks'
 import { Loading as LoadingComp } from '@nao-todo/components'
 import { unwrapError } from '@nao-todo/utils'
 import type { ProjectVO, WithNull } from '@nao-todo/types'

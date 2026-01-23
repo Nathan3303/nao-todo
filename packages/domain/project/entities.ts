@@ -1,4 +1,4 @@
-export interface ProjectEntity {
+export type ProjectEntity = {
     id: string
     name: string
     icon?: string
@@ -12,6 +12,7 @@ export const makeProjectEntity = (): ProjectEntity => {
     return {
         id: '',
         name: '',
+        icon: '',
         description: '',
         archivedAt: '',
         createdAt: '',
@@ -19,7 +20,7 @@ export const makeProjectEntity = (): ProjectEntity => {
     }
 }
 
-export interface ProjectPreferenceEntity {
+export type ProjectPreferenceEntity = {
     id?: string
     projectId?: string
     viewType: string

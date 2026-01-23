@@ -29,19 +29,19 @@ export class BuiltInProjectUseCase {
      * 加载内建项目
      * @returns 错误信息
      */
-    loadBuiltInProjects(): Go<BuiltInProject['id'][]> {
+    loadBuiltInProjects(): Go<void> {
         // 1. 获取内建项目实体
         const [builtInProjectEntities, err] = this.builtInProjectDomain.list()
         if (err !== null) {
-            return [null, err]
+            return err
         }
         const builtInProjects = builtInProjectEntities2ViewObjects(builtInProjectEntities)
         // 2. 获取内建项目ID列表
-        const builtInProjectIds = builtInProjects.map((entity) => entity.id)
+        // const builtInProjectIds = builtInProjects.map((entity) => entity.id)
         // 3. 存储内建项目实体
         this.store.setBuiltInProjects(builtInProjects)
         // 4. 返回
-        return [builtInProjectIds, null]
+        return null
     }
 
     /**

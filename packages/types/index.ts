@@ -4,12 +4,12 @@ import type { ComponentPublicInstance } from 'vue'
 export type * from './axios/common'
 
 // models
-export type * from './models/user'
-export type * from './models/project'
-export type * from './models/todo'
-export type * from './models/event'
-export type * from './models/tag'
-export type * from './models/comment'
+// export type * from './models/user'
+// export type * from './models/project'
+// export type * from './models/todo'
+// export type * from './models/event'
+// export type * from './models/tag'
+// export type * from './models/comment'
 
 // views
 export type * from './views/tasks'
@@ -27,6 +27,8 @@ export type * from './viewobjects/project'
 export type * from './viewobjects/task'
 export type * from './viewobjects/tag'
 export type * from './viewobjects/event'
+export type * from './viewobjects/built-in-project'
+export type * from './viewobjects/comment'
 
 
 // other

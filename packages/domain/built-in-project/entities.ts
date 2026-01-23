@@ -1,11 +1,11 @@
-import type { CreateTaskVO } from "@nao-todo/types"
+import type { CreateTask } from "@nao-todo/types"
 
 export type BuiltInProjectEntity = {
     id: string
     name: string
     icon: string
     description: string
-    createTaskOptions: Partial<CreateTaskVO>
+    createTaskOptions: Partial<CreateTask> | (() => Partial<CreateTask>)
 }
 
 export type BuiltInProjectPreferenceValueObject = {

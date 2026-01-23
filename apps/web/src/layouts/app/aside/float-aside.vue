@@ -3,16 +3,18 @@ import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import useAppStore from '@/views/app-store'
 import { NaoRouterLink } from '@/components/ui'
+import useUserStore from '@nao-todo/application/web/stores/user-store'
 
 defineOptions({ name: 'IndexAside' })
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{ (e: 'update:modelValue', value: boolean): void }>()
 
+const userStore = useUserStore()
 const appStore = useAppStore()
 
+const { profile } = storeToRefs(userStore)
 const { routerLinks } = storeToRefs(appStore)
 
-const userProfile = computed(() => appStore.userApp.states.profile)
 const visible = computed({
     get: () => props.modelValue,
     set: (newVisible) => emit('update:modelValue', newVisible)
@@ -22,10 +24,10 @@ const visible = computed({
 <template>
     <nue-drawer v-model="visible" open-from="left" theme="float-aside" allow-close-by-overlay>
         <nue-container id="AppAsideContainer">
-            <nue-header>
+            <nue-header v-if="profile">
                 <nue-div align="center">
-                    <nue-avatar :src="userProfile?.avatar" size="2rem" />
-                    <nue-text>{{ userProfile?.nickname }}</nue-text>
+                    <nue-avatar :src="profile.avatar" size="2rem" />
+                    <nue-text>{{ profile.nickname }}</nue-text>
                 </nue-div>
             </nue-header>
             <nue-main>

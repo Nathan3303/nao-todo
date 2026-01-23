@@ -1,8 +1,17 @@
 export type DialogOpenFunc = (payload?: any) => void
+
 export type DialogCloseFunc = () => void
+
 export type DialogFuncs = {
     open: DialogOpenFunc
     close: DialogCloseFunc
+}
+
+export type DialogManager = {
+    registerDialog: (dialogName: string, dialogFuncs: DialogFuncs) => void
+    openDialog: (dialogName: string, payload?: any) => void
+    closeDialog: (dialogName: string) => void
+    unregisterDialog: (dialogName: string) => void
 }
 
 const useDialogManager = () => {

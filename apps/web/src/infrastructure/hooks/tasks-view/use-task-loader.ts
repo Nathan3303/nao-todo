@@ -1,9 +1,10 @@
-import type { TaskApp } from '@nao-todo/application/task'
-import type { GetTasksOptions, GoAsync, ResponseDataPagination, TaskVO } from '@nao-todo/types'
-import { unwrapError } from '@nao-todo/utils'
+import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
+import type { GetTasksOptions, GoAsync, ResponseDataPagination, Task } from '@nao-todo/types'
+import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { reactive } from 'vue'
 
 export type UseTasksLoaderStates = {
+    taskIds: Task['id'][]
     loading: boolean
     error: string
     pagination: ResponseDataPagination
@@ -13,9 +14,10 @@ export type UseTasksLoaderStates = {
     disabled: boolean
 }
 
-const useTasksLoader = (taskApp: TaskApp, originalGetOptions?: GetTasksOptions) => {
+const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: GetTasksOptions) => {
     // @states
     const states = reactive<UseTasksLoaderStates>({
+        taskIds: [],
         loading: true,
         error: '',
         pagination: { total: 0, page: 1, limit: originalGetOptions?.limit ?? 20, maxPage: 1 },
@@ -26,13 +28,13 @@ const useTasksLoader = (taskApp: TaskApp, originalGetOptions?: GetTasksOptions) 
     })
 
     // @method 加载函数
-    const load = async (extraGetOptions?: GetTasksOptions): GoAsync<TaskVO[]> => {
+    const load = async (extraGetOptions?: GetTasksOptions): GoAsync<Task['id'][]> => {
         states.loading = true
         states.error = ''
         const getOptions: GetTasksOptions = { ...extraGetOptions }
         getOptions.page = states.pagination.page
         getOptions.limit = extraGetOptions?.limit ?? states.pagination.limit
-        const [res, err] = await taskApp.list(getOptions)
+        const [res, err] = await taskUseCase.loadTasks(getOptions)
         if (err !== null) {
             states.error = unwrapError(err)
             states.loading = false
@@ -42,36 +44,19 @@ const useTasksLoader = (taskApp: TaskApp, originalGetOptions?: GetTasksOptions) 
         if (res.pagination) {
             states.pagination.maxPage = res.pagination.maxPage
             states.pagination.total = res.pagination.total
-            states.isDone = res.taskVOs.length < res.pagination?.limit
+            states.isDone = res.taskIds.length < res.pagination?.limit
         }
         states.lastGetOptions = getOptions
-        return [res.taskVOs, null]
+        return [res.taskIds, null]
     }
-
-    // @method 填充数据
-    // 通过批量填充缓解渲染压力
-    // const fill = (taskVOs: TaskVO[], startAt: number, limit: number) => {
-    //     const _f = () => {
-    //         let i = startAt
-    //         while (i < startAt + limit && i < taskVOs.length) {
-    //             taskApp.states.tasks.push(taskVOs[i])
-    //             i++
-    //         }
-    //         if (i < taskVOs.length) fill(taskVOs, i, limit)
-    //     }
-    //     if (typeof window.requestIdleCallback === 'function') {
-    //         return window.requestIdleCallback(() => _f())
-    //     }
-    //     return nextTick(() => _f())
-    // }
 
     // @method 加载数据并追加
     const loadAndPush = async (extraGetOptions?: GetTasksOptions) => {
         if (states.disabled) return
         states.disabled = true
-        const [taskVOs, err] = await load(extraGetOptions)
+        const [taskIds, err] = await load(extraGetOptions)
         if (err !== null) return
-        taskApp.states.tasks.push(...taskVOs)
+        states.taskIds.push(...taskIds)
         // fill(taskVOs, 0, 20)
         setTimeout(() => (states.disabled = false), states.delay)
     }
@@ -80,9 +65,9 @@ const useTasksLoader = (taskApp: TaskApp, originalGetOptions?: GetTasksOptions) 
     const loadAndReplace = async (extraGetOptions?: GetTasksOptions) => {
         if (states.disabled) return
         states.disabled = true
-        const [taskVOs, err] = await load(extraGetOptions)
+        const [taskIds, err] = await load(extraGetOptions)
         if (err !== null) return
-        taskApp.states.tasks = taskVOs
+        states.taskIds = taskIds
         // fill(taskVOs, 0, 20)
         setTimeout(() => (states.disabled = false), states.delay)
     }

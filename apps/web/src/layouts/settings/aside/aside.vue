@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SettingsViewRouteLinks as routeLinks } from '@/views/settings/routes'
+import { SettingsViewRouteLinks as routeLinks } from '@/views/index/settings/routes'
 
 defineOptions({ name: 'SettingsAside' })
 </script>

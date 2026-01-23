@@ -1,5 +1,9 @@
 <script setup lang="ts">
+import useApp from './app'
+
 defineOptions({ name: 'AppView' })
+
+useApp()
 </script>
 
 <template>
@@ -40,3 +44,4 @@ defineOptions({ name: 'AppView' })
         </template>
     </suspense>
 </template>
+

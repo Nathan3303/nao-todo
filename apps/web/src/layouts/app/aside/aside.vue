@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { inject } from 'vue'
 import { storeToRefs } from 'pinia'
 import { NaoRouterLink } from '@/components/ui'
 import useUserStore from '@nao-todo/application/web/stores/user-store'
-import type { IndexViewContext } from '@/views/index-view'
+import useAppStore from '@/views/app-store'
 
 defineOptions({ name: 'AppAside' })
 
 const userStore = useUserStore()
-const indexViewCtx = inject<IndexViewContext>('IndexViewContext')!
+const appStore = useAppStore()
 
 const { profile } = storeToRefs(userStore)
+const { routerLinks } = storeToRefs(appStore)
 </script>
 
 <template>
@@ -24,7 +24,7 @@ const { profile } = storeToRefs(userStore)
         </nue-tooltip>
         <nue-div theme="aside__navs">
             <nue-tooltip
-                v-for="(rl, idx) in indexViewCtx.routerLinks"
+                v-for="(rl, idx) in routerLinks"
                 :key="idx"
                 :content="rl.name"
                 placement="right-center"

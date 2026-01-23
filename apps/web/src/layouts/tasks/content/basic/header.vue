@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
-import useTasksViewStore from "@/views/tasks/tasks-view-store"
+import useTasksViewStore from "@/views/index/tasks/tasks-view-store"
 import useTasksDialogStore from '@/views/tasks/tasks-dialog-store'
 import {
     TasksTodoFilterDropdown,

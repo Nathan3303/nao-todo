@@ -2,7 +2,7 @@
 import { inject } from 'vue'
 import OperationDropdown from './operation-dropdown.vue'
 import FilterDropdown from './filter-dropdown.vue'
-import { useTasksViewStore } from '@/views/tasks'
+import { useTasksViewStore } from '@/views/index/tasks'
 import { PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import type { ProjectViewContext } from '../types'
 import { storeToRefs } from 'pinia'

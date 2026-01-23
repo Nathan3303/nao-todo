@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRelativeDate } from '@nao-todo/hooks'
+import relativeDateParser from '@nao-todo/infrastructure/utils/relative-date-parser'
 import TodoBasicInfo from './basic-info.vue'
 import moment from 'moment'
 
 defineOptions({ name: 'TodoDateInfo' })
 const props = defineProps<{
-    date: string | Date
+    date: string
     formatter?: (date: string) => string
     colored?: boolean
 }>()
@@ -15,8 +15,11 @@ const formattedDate = computed(() => {
     if (!props.date) {
         return ''
     }
-    const date = useRelativeDate(props.date)
-    return props.formatter ? props.formatter(date) : date
+    const [relativeDate, err] = relativeDateParser(props.date)
+    if (err !== null) {
+        return ''
+    }
+    return props.formatter ? props.formatter(relativeDate) : relativeDate
 })
 
 const isExpired = computed(() => {

@@ -2,7 +2,7 @@ import { PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import type { ProjectViewContext } from '../../types'
 import { inject, watch } from 'vue'
 import useTasksLoader from '@/infrastructure/hooks/tasks-view/use-task-loader'
-import { useTasksViewStore } from '@/views/tasks'
+import { useTasksViewStore } from '@/views/index/tasks'
 
 const useTable = () => {
     // @context

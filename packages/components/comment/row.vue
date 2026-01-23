@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { nextTick, ref } from 'vue'
-import { useRelativeDate } from '@nao-todo/hooks'
+import dayjs from 'dayjs'
 import { NueMessage, NueTextarea } from 'nue-ui'
 
 type CommentRowPayload = {
@@ -63,7 +63,7 @@ const handleCancelEdit = () => {
                     {{ comment.user.nickname }}
                 </nue-text>
                 <nue-text color="var(--nue-primary-color-400)" size="var(--nue-text-xs)">
-                    {{ useRelativeDate(comment.createdAt) }}
+                    {{ dayjs(comment.createdAt).format('YYYY-MM-DD HH:mm') }}
                 </nue-text>
                 <nue-div class="comment-row__details__actions">
                     <nue-icon

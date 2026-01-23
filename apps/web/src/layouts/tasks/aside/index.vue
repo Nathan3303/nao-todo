@@ -1,46 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import useTasksViewStore from '@/views/tasks/tasks-view-store'
 import projectSmartList from '@/components/tasks/smartlists/project-smart-list.vue'
 import FilterSmartList from '@/components/tasks/smartlists/filter-smart-list.vue'
 import TagSmartList from '@/components/tasks/smartlists/tag-smart-list.vue'
-import type { NaoSmartListLinkVO } from '@/components/ui'
+import useAside from './aside'
 
 defineOptions({ name: 'TasksAside' })
 
-const tasksViewStore = useTasksViewStore()
-
-const collapseItemsRecord = ref(['projects', 'filters', 'tags'])
-
-const builtInProjectLinks = computed<NaoSmartListLinkVO[]>(() => {
-    return tasksViewStore.builtInProjectApp.states.builtInProjects.map((project) => ({
-        id: project.id,
-        title: project.name,
-        route: { name: 'tasks-built-in-project', params: { projectId: project.id } },
-        icon: project.icon
-    }))
-})
-
-const projectLinks = computed<NaoSmartListLinkVO[]>(() => {
-    return tasksViewStore.projectApp.states.projects.map((p) => {
-        return {
-            id: p.id,
-            title: p.name,
-            route: { name: 'tasks-project', params: { projectId: p.id } },
-            icon: p.icon || 'more2'
-        }
-    })
-})
-
-const tagLinks = computed<NaoSmartListLinkVO[]>(() => {
-    return tasksViewStore.tagApp.states.tags.map((tag) => ({
-        id: tag.id,
-        title: tag.name,
-        route: { name: 'tasks-tag', params: { tagId: tag.id } },
-        icon: 'tag',
-        payload: { color: tag.color || 'default' }
-    }))
-})
+const { collapseItemsRecord, builtInProjectLinks, projectLinks, tagLinks, openDialog } = useAside()
 </script>
 
 <template>
@@ -61,18 +27,14 @@ const tagLinks = computed<NaoSmartListLinkVO[]>(() => {
             <nue-collapse theme="menu" v-model="collapseItemsRecord">
                 <project-smart-list
                     :links="projectLinks"
-                    @open-project-creator="
-                        () => tasksViewStore.dialogManager.openDialog('project-creator')
-                    "
-                    @open-project-manager="
-                        () => tasksViewStore.dialogManager.openDialog('project-manager')
-                    "
+                    @open-project-creator="() => openDialog('project-creator')"
+                    @open-project-manager="() => openDialog('project-manager')"
                 />
                 <filter-smart-list />
                 <tag-smart-list
                     :links="tagLinks"
-                    @open-tag-creator="() => tasksViewStore.dialogManager.openDialog('tag-creator')"
-                    @open-tag-manager="() => tasksViewStore.dialogManager.openDialog('tag-manager')"
+                    @open-tag-creator="() => openDialog('tag-creator')"
+                    @open-tag-manager="() => openDialog('tag-manager')"
                 />
             </nue-collapse>
         </nue-div>

@@ -1,22 +1,22 @@
 <script setup lang="ts">
 import type { InnerDropdownOptionVO } from '@/components/ui'
-import type { ProjectPreferenceVO } from '@nao-todo/types'
+import type { ProjectPreference } from '@nao-todo/types'
 import { InnerDropdown, InnerDropdownOption } from '@/components/ui/inner-dropdown'
 import { computed } from 'vue'
 
 defineOptions({ name: 'TasksDropdownColumnDisplayOperator' })
 const props = defineProps<{
-    columns: ProjectPreferenceVO['columns']
+    columns: ProjectPreference['columns']
     labelGetter: (key: string) => string
 }>()
 const emit = defineEmits<{
-    (e: 'update', key: string, value: boolean): void
+    (e: 'update', key: keyof ProjectPreference['columns'], value: boolean): void
 }>()
 
 const count = computed<number>(() => {
     let count = 0
     Object.keys(props.columns).forEach((key) => {
-        if (props.columns[key as keyof ProjectPreferenceVO['columns']]) count++
+        if (props.columns[key as keyof ProjectPreference['columns']]) count++
     })
     return count
 })
@@ -28,16 +28,16 @@ const columnOptions = computed<InnerDropdownOptionVO[]>(() => {
             icon: 'plus-circle',
             label: props.labelGetter(key),
             value: key,
-            checked: props.columns[key as keyof ProjectPreferenceVO['columns']]
+            checked: props.columns[key as keyof ProjectPreference['columns']]
         })
     })
     return options
 })
 
 const handleExecute = (id: string) => {
-    const oldValue = props.columns[id as keyof ProjectPreferenceVO['columns']]
+    const oldValue = props.columns[id as keyof ProjectPreference['columns']]
     const newValue = !oldValue
-    emit('update', id, newValue)
+    emit('update', id as keyof ProjectPreference['columns'], newValue)
 }
 </script>
 

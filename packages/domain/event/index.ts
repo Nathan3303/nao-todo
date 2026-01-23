@@ -1,6 +1,6 @@
-import useEventDomain from './service'
+import { EventDomain } from './service'
 import type { EventEntity } from './entities'
 import type { EventRepository } from './repositories'
 
-export type { EventRepository }
-export { useEventDomain, type EventEntity }
+export { EventDomain }
+export type { EventRepository, EventEntity }

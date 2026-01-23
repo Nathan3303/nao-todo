@@ -1,4 +1,4 @@
-import type { UseInitializer } from '@/views/tasks/types'
+import type { UseInitializer } from '@/views/index/tasks/types'
 import type { BuiltInProjectApp, ProjectApp } from '@nao-todo/application/project'
 import type { TagApp } from '@nao-todo/application/tag'
 import type { UserApp } from '@nao-todo/application/user'
