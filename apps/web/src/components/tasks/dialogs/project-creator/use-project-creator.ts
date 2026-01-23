@@ -1,7 +1,7 @@
 import { reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { NueMessage } from 'nue-ui'
-import { unwrapError } from '@nao-todo/utils'
+import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import type { ProjectCreatorProps, ProjectCreatorVO } from './types'
 
 const useProjectCreator = (props: ProjectCreatorProps) => {

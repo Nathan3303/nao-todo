@@ -91,7 +91,7 @@ const handleSubmit = async (e: Event) => {
     e.preventDefault()
     loading.value = disabled.value = true
     // 调用注册 API
-    const err = await authViewContext.signUpExecutor({
+    const err = await authViewContext.authUseCase.signUp({
         email: signUpVO.email,
         password: signUpVO.password,
         confirmPassword: signUpVO.passwordConfirm,

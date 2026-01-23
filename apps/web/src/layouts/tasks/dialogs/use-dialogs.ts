@@ -18,9 +18,12 @@ export type UseDialogs = {
     projectCreatorRegister: (open: DialogOpenFunc, close: DialogCloseFunc) => void
     projectCreatorHandler: (vo: ProjectCreatorVO) => GoAsync<string>
     projectManagerRegister: (open: DialogOpenFunc, close: DialogCloseFunc) => void
+    projectCreatorOpener: () => void
     tagCreatorRegister: (open: DialogOpenFunc, close: DialogCloseFunc) => void
     tagCreatorHandler: (vo: CreateTag) => GoAsync<string>
     tagManagerRegister: (open: DialogOpenFunc, close: DialogCloseFunc) => void
+    tagCreatorOpener: () => void
+    tagColorUpdaterOpener: (tagId: Tag['id']) => void
     tagColorUpdaterRegister: (open: DialogOpenFunc, close: DialogCloseFunc) => void
     tagColorUpdater: (tagId: Tag['id'], color: Tag['color']) => GoAsync<void>
     taskCreatorRegister: (open: DialogOpenFunc, close: DialogCloseFunc) => void
@@ -57,6 +60,11 @@ const useDialogs = (): UseDialogs => {
         tasksViewContext.dialogManager.registerDialog('project-manager', { open, close })
     }
 
+    // @method 清单创建对话框打开函数
+    const projectCreatorOpener = () => {
+        tasksViewContext.dialogManager.openDialog('project-creator')
+    }
+
     // @method 标签创建对话框注册函数
     const tagCreatorRegister = (open: DialogOpenFunc, close: DialogCloseFunc) => {
         tasksViewContext.dialogManager.registerDialog('tag-creator', { open, close })
@@ -86,6 +94,16 @@ const useDialogs = (): UseDialogs => {
         return tasksViewContext.tagUseCase.update(tagId, { color })
     }
 
+    // @method 标签创建对话框打开函数
+    const tagCreatorOpener = () => {
+        tasksViewContext.dialogManager.openDialog('tag-creator')
+    }
+
+    // @method 标签颜色修改对话框打开函数
+    const tagColorUpdaterOpener = (tagId: Tag['id']) => {
+        tasksViewContext.dialogManager.openDialog('tag-color-updater', { tagId })
+    }
+
     // @method 待办事项创建对话框注册函数
     const taskCreatorRegister = (open: DialogOpenFunc, close: DialogCloseFunc) => {
         tasksViewContext.dialogManager.registerDialog('task-creator', { open, close })
@@ -104,10 +122,13 @@ const useDialogs = (): UseDialogs => {
         projectCreatorHandler,
         projects: computed(() => [...projects.value.values()]),
         projectManagerRegister,
+        projectCreatorOpener,
         tagCreatorRegister,
         tagCreatorHandler,
         tags: computed(() => [...tags.value.values()]),
         tagManagerRegister,
+        tagCreatorOpener,
+        tagColorUpdaterOpener,
         tagColorUpdaterRegister,
         tagColorGetter: tasksViewContext.getTagColor,
         tagColorUpdater,

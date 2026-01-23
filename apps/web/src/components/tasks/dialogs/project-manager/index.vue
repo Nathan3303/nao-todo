@@ -11,7 +11,7 @@ const emit = defineEmits<ProjectManagerEmits>()
 
 const dialogRef = ref<DialogInstanceType>()
 
-const { states, filteredProjects, openProjectCreator, deleteProject, restoreProject, hardDeleteProject } =
+const { states, filteredProjects, deleteProject, restoreProject, hardDeleteProject } =
     useProjectManager(props, emit)
 const { visible, close } = useDialogWrapper(dialogRef)
 
@@ -42,7 +42,7 @@ onMounted(() => emit('register', open, close))
                     <nue-button
                         icon="plus-circle"
                         theme="small,primary"
-                        @click="openProjectCreator"
+                        @click="projectCreatorOpener"
                     >
                         新增
                     </nue-button>

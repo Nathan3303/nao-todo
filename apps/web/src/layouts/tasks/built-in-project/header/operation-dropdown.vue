@@ -18,6 +18,7 @@ const {
     isHideCompletedAlready,
     getColumnLabel
 } = inject<BuiltInProjectViewContext>(BUILT_IN_PROJECT_VIEW_CONTEXT_KEY)!
+    console.log(preference.value?.columns)
 
 const dropdownRef = ref<InstanceType<typeof TasksOperationsDropdown>>()
 

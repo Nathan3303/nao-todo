@@ -16,6 +16,7 @@ const {
     projectCreatorHandler,
     projects,
     projectManagerRegister,
+    projectCreatorOpener,
     tagCreatorRegister,
     tagCreatorHandler,
     tags,
@@ -23,6 +24,8 @@ const {
     tagColorUpdaterRegister,
     tagColorGetter,
     tagColorUpdater,
+    tagCreatorOpener,
+    tagColorUpdaterOpener,
     taskCreatorRegister,
     taskCreatorHandler
 } = useDialogs()
@@ -30,9 +33,18 @@ const {
 
 <template>
     <project-creator @register="projectCreatorRegister" :creator="projectCreatorHandler" />
-    <project-manager @register="projectManagerRegister" :projects="projects" />
+    <project-manager
+        @register="projectManagerRegister"
+        :projects="projects"
+        :project-creator-opener="projectCreatorOpener"
+    />
     <tag-creator @register="tagCreatorRegister" :creatr-tag-handler="tagCreatorHandler" />
-    <tag-manager @register="tagManagerRegister" :tags="tags" />
+    <tag-manager
+        @register="tagManagerRegister"
+        :tags="tags"
+        :tag-creator-opener="tagCreatorOpener"
+        :tag-color-updater-opener="tagColorUpdaterOpener"
+    />
     <TagColorUpdater
         @register="tagColorUpdaterRegister"
         :tag-color-getter="tagColorGetter"

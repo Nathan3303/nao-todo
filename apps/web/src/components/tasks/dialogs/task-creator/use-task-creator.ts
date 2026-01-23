@@ -1,7 +1,7 @@
 import { reactive } from 'vue'
 import { NueMessage } from 'nue-ui'
 import { useRouter } from 'vue-router'
-import { unwrapError } from '@nao-todo/utils'
+import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import type { TaskCreatorProps, TaskCreatorVO } from './types'
 
 const useTaskCreator = (props: TaskCreatorProps) => {

@@ -27,7 +27,7 @@
             gap: 0.5rem;
             position: relative;
             overflow: auto;
-            --content-max-width: 40rem;
+            --content-max-width: 42rem;
 
             .todo-table__header {
                 align-items: center;
@@ -174,7 +174,7 @@
             }
 
             .col-datetime {
-                max-width: 7rem;
+                max-width: 10rem;
                 flex: 1;
             }
 

@@ -9,9 +9,7 @@ import { useAuthRepository } from '@nao-todo/infrastructure/backend/auth/repoImp
 import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 
 export type AuthViewContext = {
-    signInExecutor: AuthUseCase['signIn']
-    signUpExecutor: AuthUseCase['signUp']
-    checkInExecutor: AuthUseCase['checkIn']
+    authUseCase: AuthUseCase
 }
 
 const useAuthView = () => {
@@ -22,10 +20,8 @@ const useAuthView = () => {
     const userStore = useUserStore()
 
     // @usecase Auth use case
-    const authUseCase = new AuthUseCase(
-        new AuthDomain(useAuthRepository(getRequesterImpl())),
-        userStore
-    )
+    const authDomain = new AuthDomain(useAuthRepository(getRequesterImpl()))
+    const authUseCase = new AuthUseCase(authDomain, userStore)
 
     // @state isDisplayAside
     const isDisplayAside = computed(() => {
@@ -33,11 +29,7 @@ const useAuthView = () => {
     })
 
     // @provide Auth view context
-    provide<AuthViewContext>(AUTH_VIEW_CONTEXT_KEY, {
-        signInExecutor: authUseCase.signIn,
-        signUpExecutor: authUseCase.signUp,
-        checkInExecutor: authUseCase.checkIn
-    })
+    provide<AuthViewContext>(AUTH_VIEW_CONTEXT_KEY, { authUseCase })
 
     // @returns
     return {
@@ -46,5 +38,4 @@ const useAuthView = () => {
 }
 
 export default useAuthView
-
 

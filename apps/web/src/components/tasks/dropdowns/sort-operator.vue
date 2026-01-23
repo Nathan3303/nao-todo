@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { InnerDropdown, InnerDropdownOption } from '@/components/ui/inner-dropdown'
-import type { GetTasksOptions, GetTasksSortOptions, ProjectPreferenceVO } from '@nao-todo/types'
+import type { GetTasksOptions, GetTasksSortOptions, ProjectPreference } from '@nao-todo/types'
 import type { InnerDropdownOptionVO } from '@/components/ui/inner-dropdown/types'
 import { columnLabels } from '@/infrastructure/constants/task'
 
 defineOptions({ name: 'TasksDropdownSortOperator' })
 const props = defineProps<{
     modelValue: GetTasksSortOptions
-    columns: ProjectPreferenceVO['columns']
+    columns: ProjectPreference['columns']
     getTasksOptions: GetTasksOptions
 }>()
 const emit = defineEmits<{
@@ -22,7 +22,7 @@ const fieldOptions = computed(() => {
     Object.keys(props.columns).forEach((key) => {
         options.push({
             icon: 'plus-circle',
-            label: columnLabels[key as keyof ProjectPreferenceVO],
+            label: columnLabels[key as keyof ProjectPreference['columns']],
             value: key,
             checked: props.modelValue.field === key
         })

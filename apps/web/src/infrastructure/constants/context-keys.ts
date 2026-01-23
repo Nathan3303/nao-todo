@@ -4,5 +4,8 @@ export const APP_CONTEXT_KEY = 'AppContext'
 // Auth view
 export const AUTH_VIEW_CONTEXT_KEY = 'AuthViewContext'
 
-// Tasks view
-export const TASKS_VIEW_CONTEXT_KEY = 'TasksViewContext'
+// Index view
+export const INDEX_VIEW_CONTEXT_KEY = 'IndexViewContext'
+
+// Index view -> Tasks view
+export const TASKS_VIEW_CONTEXT_KEY = 'IndexTasksViewContext'

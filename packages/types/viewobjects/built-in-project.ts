@@ -11,7 +11,7 @@ export type BuiltInProject = {
 export type BuiltInProjectPreference = {
     projectId: string
     userId: string
-    viewType: 'table' | 'kanban' | 'list'
+    viewType: string
     getTasksOptions: GetTasksOptions
     columns: TaskColumnOptions
 }

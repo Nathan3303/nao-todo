@@ -75,7 +75,7 @@ const signInVO = reactive({ email: '', password: '' })
 const handleSubmit = async (e: Event) => {
     e.preventDefault()
     loading.value = disabled.value = true
-    const err = await authViewContext.signInExecutor({
+    const err = await authViewContext.authUseCase.signIn({
         email: signInVO.email,
         password: signInVO.password
     })

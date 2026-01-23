@@ -1,24 +1,24 @@
-import type { GoAsync, CreateTaskVO, ProjectVO, TagVO } from '@nao-todo/types'
+import type { GoAsync, CreateTask, Project, Tag } from '@nao-todo/types'
 
 export type TaskCreatorVO = {
-    projectId?: CreateTaskVO['projectId']
-    name: CreateTaskVO['name']
-    description?: CreateTaskVO['description']
-    state: CreateTaskVO['state']
-    priority: CreateTaskVO['priority']
-    startAt?: CreateTaskVO['startAt']
-    endAt: CreateTaskVO['endAt']
-    tags?: CreateTaskVO['tags']
+    projectId?: CreateTask['projectId']
+    name: CreateTask['name']
+    description?: CreateTask['description']
+    state: CreateTask['state']
+    priority: CreateTask['priority']
+    startAt?: CreateTask['startAt']
+    endAt: CreateTask['endAt']
+    tags?: CreateTask['tags']
     creating: boolean
     disabled: boolean
 }
 
 export type TaskCreatorProps = {
-    avaliableProjects?: ProjectVO[]
-    avaliableTags?: TagVO[]
-    createTaskHandler: (createVO: CreateTaskVO) => GoAsync<string>
+    avaliableProjects?: Project[]
+    avaliableTags?: Tag[]
+    createTaskHandler: (createVO: CreateTask) => GoAsync<string>
 }
 
 export type TaskCreatorEmits = {
-    (e: 'register', open: (createTaskOptions: CreateTaskVO) => void, close: () => void): void
+    (e: 'register', open: (createTaskOptions: CreateTask) => void, close: () => void): void
 }

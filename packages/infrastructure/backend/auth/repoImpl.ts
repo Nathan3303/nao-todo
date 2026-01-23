@@ -1,7 +1,7 @@
 import SparkMD5 from 'spark-md5'
 import { userEntity2SignInReq } from './converters'
 import type { SignUpValueObject, SignInValueObject } from '@nao-todo/domain/auth'
-import type { AuthRepository } from '@nao-todo/domain'
+import type { AuthRepository } from '@nao-todo/domain/auth'
 import type { Go, GoAsync } from '@nao-todo/types'
 import type { CheckInRes, SignInRes, ResponseData } from '../types'
 import type { Requester } from '@nao-todo/infrastructure/requester/types'

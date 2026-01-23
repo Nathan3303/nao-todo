@@ -1,8 +1,6 @@
-import type { NueIconName } from 'nue-ui'
-
 export type InnerDropdownProps = {
     title?: string
-    icon?: NueIconName
+    icon?: string
     closeWhenExecuted?: boolean
     suffix?: number | boolean
     disabled?: boolean
@@ -29,3 +27,4 @@ export type InnerDropdownOptionVO = {
     value: string
     checked?: boolean
 }
+

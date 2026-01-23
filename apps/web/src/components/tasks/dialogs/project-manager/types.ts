@@ -1,4 +1,4 @@
-import type { ProjectVO } from '@nao-todo/types'
+import type { Project } from '@nao-todo/types'
 
 export type ProjectManagerVO = {
     filterInfo: {
@@ -8,12 +8,13 @@ export type ProjectManagerVO = {
 }
 
 export type ProjectManagerProps = {
-    projects: ProjectVO[]
+    projects: Project[]
+    projectCreatorOpener: () => void
 }
 
 export type ProjectManagerEmits = {
     (e: 'register', open: () => void, close: () => void): void
-    (e: 'deleteProject', projectId: ProjectVO['id']): void
-    (e: 'restoreProject', projectId: ProjectVO['id']): void
-    (e: 'hardDeleteProject', projectId: ProjectVO['id']): void
+    (e: 'deleteProject', projectId: Project['id']): void
+    (e: 'restoreProject', projectId: Project['id']): void
+    (e: 'hardDeleteProject', projectId: Project['id']): void
 }

@@ -1,4 +1,4 @@
-import type { GoAsync, CreateTagVO } from '@nao-todo/types'
+import type { GoAsync, CreateTag } from '@nao-todo/types'
 
 export type TagCreatorVO = {
     name: string
@@ -9,7 +9,7 @@ export type TagCreatorVO = {
 }
 
 export type TagCreatorProps = {
-    creatrTagHandler: (createVO: CreateTagVO) => GoAsync<string>
+    creatrTagHandler: (createVO: CreateTag) => GoAsync<string>
 }
 
 export type TagCreatorEmits = {

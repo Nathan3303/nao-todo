@@ -1,19 +1,18 @@
 <script lang="ts" setup>
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { storeToRefs } from 'pinia'
-import useAppStore from '@/views/app-store'
 import { NaoRouterLink } from '@/components/ui'
 import useUserStore from '@nao-todo/application/web/stores/user-store'
+import { APP_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import type { AppContext } from '@/app'
 
 defineOptions({ name: 'IndexAside' })
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{ (e: 'update:modelValue', value: boolean): void }>()
 
-const userStore = useUserStore()
-const appStore = useAppStore()
+const { routerLinks } = inject<AppContext>(APP_CONTEXT_KEY)!
 
-const { profile } = storeToRefs(userStore)
-const { routerLinks } = storeToRefs(appStore)
+const { profile } = storeToRefs(useUserStore())
 
 const visible = computed({
     get: () => props.modelValue,

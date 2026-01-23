@@ -1,17 +1,17 @@
-import type { GoAsync, TagVO, WithNull } from '@nao-todo/types'
+import type { GoAsync, Tag, WithNull } from '@nao-todo/types'
 
 export type TagColorUpdaterVO = {
-    tagId: WithNull<TagVO['id']>
-    color: TagVO['color']
+    tagId: WithNull<Tag['id']>
+    color: Tag['color']
     updating: boolean
     disabled: boolean
 }
 
 export type TagColorUpdaterProps = {
-    tagColorGetter: (tagId: TagVO['id']) => TagVO['color'] | undefined
-    tagColorUpdater: (tagId: TagVO['id'], color: TagVO['color']) => GoAsync<void>
+    tagColorGetter: (tagId: Tag['id']) => Tag['color'] | undefined
+    tagColorUpdater: (tagId: Tag['id'], color: Tag['color']) => GoAsync<void>
 }
 
 export type TagColorUpdaterEmits = {
-    (e: 'register', open: (tagId: TagVO['id']) => void, close: () => void): void
+    (e: 'register', open: (tagId: Tag['id']) => void, close: () => void): void
 }

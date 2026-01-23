@@ -1,6 +1,9 @@
 import type { NaoSmartListLinkVO } from '@/components/ui'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import { useBuiltInProjectsStore, useProjectsStore, useTagsStore } from '@/stores/tasks'
+import {
+    useBuiltInProjectsStore,
+    // useProjectsStore, useTagsStore
+} from '@/stores/tasks'
 import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
 import { computed, inject, ref } from 'vue'
 
@@ -10,8 +13,8 @@ const useAside = () => {
 
     // @dataStores
     const builtInProjectStore = useBuiltInProjectsStore()
-    const projectStore = useProjectsStore()
-    const tagStore = useTagsStore()
+    // const projectStore = useProjectsStore()
+    // const tagStore = useTagsStore()
 
     // @state 侧边栏折叠项记录
     const collapseItemsRecord = ref(['projects', 'filters', 'tags'])
@@ -28,25 +31,27 @@ const useAside = () => {
 
     // @state 侧边栏清单路由按钮视图对象
     const projectLinks = computed<NaoSmartListLinkVO[]>(() => {
-        return [...projectStore.projects.values()].map((p) => {
-            return {
-                id: p.id,
-                title: p.name,
-                route: { name: 'tasks-project', params: { projectId: p.id } },
-                icon: p.icon || 'more2'
-            }
-        })
+        return []
+        // return [...projectStore.projects.values()].map((p) => {
+        //     return {
+        //         id: p.id,
+        //         title: p.name,
+        //         route: { name: 'tasks-project', params: { projectId: p.id } },
+        //         icon: p.icon || 'more2'
+        //     }
+        // })
     })
 
     // @state 侧边栏标签路由按钮视图对象
     const tagLinks = computed<NaoSmartListLinkVO[]>(() => {
-        return [...tagStore.tags.values()].map((tag) => ({
-            id: tag.id,
-            title: tag.name,
-            route: { name: 'tasks-tag', params: { tagId: tag.id } },
-            icon: 'tag',
-            payload: { color: tag.color || 'default' }
-        }))
+        return []
+        // return [...tagStore.tags.values()].map((tag) => ({
+        //     id: tag.id,
+        //     title: tag.name,
+        //     route: { name: 'tasks-tag', params: { tagId: tag.id } },
+        //     icon: 'tag',
+        //     payload: { color: tag.color || 'default' }
+        // }))
     })
 
     // @method 打开对话框

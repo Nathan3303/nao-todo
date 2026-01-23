@@ -1,11 +1,7 @@
 import { computed, reactive } from 'vue'
-import { useTasksViewStore } from '@/views/index/tasks'
 import type { ProjectManagerEmits, ProjectManagerProps, ProjectManagerVO } from './types'
 
 const useProjectManager = (props: ProjectManagerProps, emit: ProjectManagerEmits) => {
-    // @store
-    const tasksViewStore = useTasksViewStore()
-
     // @states
     const states = reactive<ProjectManagerVO>({
         filterInfo: { name: '', onlyDeleted: false }
@@ -21,9 +17,6 @@ const useProjectManager = (props: ProjectManagerProps, emit: ProjectManagerEmits
         })
     })
 
-    // @method Open Project Creator Dialog
-    const openProjectCreator = () => tasksViewStore.dialogManager.openDialog('project-creator')
-
     // @emits
     const deleteProject = (id: string) => emit('deleteProject', id)
     const restoreProject = (id: string) => emit('restoreProject', id)
@@ -33,7 +26,6 @@ const useProjectManager = (props: ProjectManagerProps, emit: ProjectManagerEmits
     return {
         states,
         filteredProjects,
-        openProjectCreator,
         deleteProject,
         restoreProject,
         hardDeleteProject

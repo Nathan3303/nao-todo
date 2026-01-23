@@ -1,8 +1,5 @@
 import type { BuiltInProjectDomain } from '@nao-todo/domain/built-in-project/services'
-import type {
-    BuiltInProject,
-    BuiltInProjectPreference
-} from '@nao-todo/infrastructure/built-in/project/types'
+import type { BuiltInProject, BuiltInProjectPreference } from '@nao-todo/types'
 import type { Go } from '@nao-todo/types'
 import {
     builtInProjectEntities2ViewObjects,
@@ -82,6 +79,7 @@ export class BuiltInProjectUseCase {
         )
         // 3. 存储内建项目偏好实体
         this.store.setBuiltInProjectPreference(builtInProjectPreference)
+        console.log(builtInProjectPreference)
         // 4. 返回
         return null
     }

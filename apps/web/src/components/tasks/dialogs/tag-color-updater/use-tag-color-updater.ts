@@ -1,7 +1,7 @@
 import type { Tag } from '@nao-todo/types'
 import { reactive } from 'vue'
 import { NueMessage } from 'nue-ui'
-import { unwrapError } from '@nao-todo/utils'
+import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import type { TagColorUpdaterProps, TagColorUpdaterVO } from './types'
 
 const useTagColorUpdater = (props: TagColorUpdaterProps) => {

@@ -7,7 +7,7 @@ import {
     TodoDateInfo,
     TodoBasicInfo
 } from '@nao-todo/components'
-import { useRelativeDate } from '@nao-todo/hooks'
+import { parse2RelativeDate } from '@nao-todo/infrastructure/utils/relative-date-parser'
 import { TASK_TABLE_CONTEXT_KEY } from './use-table'
 import type { TaskTableContext } from './types'
 
@@ -68,7 +68,7 @@ const tableCtx = inject<TaskTableContext>(TASK_TABLE_CONTEXT_KEY)
                 class="todo-table__main__col col-datetime"
             >
                 <nue-text v-if="task.startAt" :title="task.startAt">
-                    {{ useRelativeDate(task.startAt) }}
+                    {{ parse2RelativeDate(task.startAt) }}
                 </nue-text>
                 <nue-text v-else>未设置起始时间</nue-text>
             </nue-div>
@@ -109,3 +109,4 @@ const tableCtx = inject<TaskTableContext>(TASK_TABLE_CONTEXT_KEY)
         </nue-div>
     </nue-div>
 </template>
+

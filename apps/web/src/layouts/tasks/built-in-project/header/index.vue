@@ -2,17 +2,16 @@
 import { inject } from 'vue'
 import OperationDropdown from './operation-dropdown.vue'
 import FilterDropdown from './filter-dropdown.vue'
-import { useTasksViewStore } from '@/views/index/tasks'
 import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import type { BuiltInProjectViewContext } from '../types'
-import { storeToRefs } from 'pinia'
+import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
+import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 
 defineOptions({ name: 'TasksMainProjectHeader' })
 defineProps<{ projectId?: string; viewType?: string; taskId?: string }>()
 
-const tasksViewStore = useTasksViewStore()
+const { isDisplayAside, switchDisplayAside } = inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
 
-const { isDisplayAside } = storeToRefs(tasksViewStore)
 const { builtInProject, showTaskCreator } = inject<BuiltInProjectViewContext>(
     BUILT_IN_PROJECT_VIEW_CONTEXT_KEY
 )!
@@ -26,7 +25,7 @@ const { builtInProject, showTaskCreator } = inject<BuiltInProjectViewContext>(
                     <nue-button
                         :icon="isDisplayAside ? 'menu-close' : 'menu-open'"
                         theme="icon,ghost"
-                        @click="tasksViewStore.switchDisplayAside"
+                        @click="switchDisplayAside"
                     />
                     <nue-text theme="pointer,tasks-header__name" :clamped="1">
                         {{ builtInProject!.name }}

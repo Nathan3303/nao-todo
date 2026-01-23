@@ -1,7 +1,7 @@
 import { reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { NueMessage } from 'nue-ui'
-import { unwrapError } from '@nao-todo/utils'
+import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import type { TagCreatorVO, TagCreatorProps } from './types'
 
 const useTagCreator = (props: TagCreatorProps) => {

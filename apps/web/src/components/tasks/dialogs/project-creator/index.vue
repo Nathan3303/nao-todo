@@ -2,14 +2,12 @@
 import { onMounted, ref } from 'vue'
 import useProjectCreator from './use-project-creator'
 import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
-import type { NueDialog, NueInput } from 'nue-ui'
 import type { ProjectCreatorEmits, ProjectCreatorProps } from './types'
 
 defineOptions({ name: 'ProjectCreator' })
 const props = defineProps<ProjectCreatorProps>()
 const emit = defineEmits<ProjectCreatorEmits>()
 
-const nameInputRef = ref<InstanceType<typeof NueInput>>()
 const dialogRef = ref<DialogInstanceType>()
 
 const { visible, close } = useDialogWrapper(dialogRef)
@@ -75,3 +73,4 @@ onMounted(() => emit('register', open, close))
         </template>
     </nue-dialog>
 </template>
+

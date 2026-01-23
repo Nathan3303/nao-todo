@@ -9,7 +9,7 @@ import {
     TodoStateSelectOptions,
     TodoTagBar
 } from '@nao-todo/components'
-import type { CreateTaskVO, Todo } from '@nao-todo/types'
+import type { CreateTask, Task } from '@nao-todo/types'
 import useTaskCreator from './use-task-creator'
 import type { TaskCreatorProps, TaskCreatorEmits, TaskCreatorVO } from './types'
 import dayjs from 'dayjs'
@@ -23,10 +23,10 @@ const dialogRef = ref<DialogInstanceType>()
 const { states, handleCreateTask, clearInputsValue } = useTaskCreator(props)
 const { visible, close: closeDialog } = useDialogWrapper(dialogRef)
 
-const open = (createTaskOptions: CreateTaskVO) => {
+const open = (createTaskOptions: CreateTask) => {
     clearInputsValue()
     Object.keys(createTaskOptions).forEach((key) => {
-        const presetVal = createTaskOptions[key as keyof CreateTaskVO]
+        const presetVal = createTaskOptions[key as keyof CreateTask]
         if (!presetVal) return
         const targetKey = key as keyof TaskCreatorVO
         if (targetKey in states) {
@@ -82,12 +82,12 @@ onMounted(() => emit('register', open, close))
                     <todo-selector
                         :options="TodoStateSelectOptions"
                         :value="states.state"
-                        @change="(s) => (states.state = s as Todo['state'])"
+                        @change="(s) => (states.state = s as Task['state'])"
                     />
                     <todo-selector
                         :options="TodoPrioritySelectOptions"
                         :value="states.priority"
-                        @change="(p) => (states.priority = p as Todo['priority'])"
+                        @change="(p) => (states.priority = p as Task['priority'])"
                     />
                     <nue-div flex="1" />
                     <todo-project-selector
@@ -117,3 +117,4 @@ onMounted(() => emit('register', open, close))
         </template>
     </nue-dialog>
 </template>
+

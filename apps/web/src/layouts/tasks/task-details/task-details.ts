@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import { computed, provide, ref, watch } from 'vue'
+import { computed, inject, provide, ref, watch } from 'vue'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { TASK_DETAILS_CONTEXT_KEY } from './constants'
 import type { Comment, UpdateComment } from '@nao-todo/types/viewobjects/comment'
@@ -12,13 +12,14 @@ import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 import { CommentUseCase } from '@nao-todo/application/web/usecases/comment'
 import { CommentDomain } from '@nao-todo/domain/comment'
 import { useCommentRepository } from '@nao-todo/infrastructure/backend/comment/repoImpl'
-import { useTasksViewStore } from '@/views/index/tasks'
 import { storeToRefs } from 'pinia'
 import { useProjectsStore, useTagsStore, useTasksStore, useTaskDetailsStore } from '@/stores/tasks'
+import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
+import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 
 export default (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
-    // @viewStore
-    const tasksViewStore = useTasksViewStore()
+    // @viewContext TasksView context
+    const tasksViewContext = inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
 
     // @dataStore
     const projectStore = useProjectsStore()
@@ -56,7 +57,7 @@ export default (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         return {
             id: _task.id,
             projectId: _task.projectId,
-            projectName: tasksViewStore.getProjectName(_task.projectId),
+            projectName: tasksViewContext.getProjectName(_task.projectId),
             name: _task.name,
             description: _task.description,
             state: _task.state,

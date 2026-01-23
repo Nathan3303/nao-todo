@@ -11,7 +11,7 @@ withDefaults(defineProps<TodoBasicInfoProps>(), { icon: 'more2', clamped: 1 })
 </script>
 
 <template>
-    <nue-div theme="basic-info">
+    <nue-div theme="basic-info" :title="text">
         <nue-icon v-if="!noIcon" :name="icon" />
         <nue-text :clamped="clamped">{{ text }}</nue-text>
     </nue-div>

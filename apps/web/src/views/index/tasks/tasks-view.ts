@@ -8,7 +8,6 @@ import { useProjectRepository } from '@nao-todo/infrastructure/backend/project/r
 import { useTagRepository } from '@nao-todo/infrastructure/backend/tag/repoImpl'
 import useBuiltInProjectRepository from '@nao-todo/infrastructure/built-in/project/repoImpl'
 import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
-import { defineStore } from 'pinia'
 import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
 import useResponsiveAside from '@/infrastructure/hooks/tasks-view/use-responsive-aside'
 import { columnLabels } from '@nao-todo/infrastructure/consts/tasks'
@@ -36,6 +35,7 @@ export type TasksViewContext = {
     taskUseCase: TaskUseCase
     dialogManager: DialogManager
     isDisplayAside: Ref<boolean>
+    isDisplayOutline: Ref<boolean>
     getProjectName: (projectId: string) => string
     getTagColor: (tagId: Tag['id']) => string
     showTaskDetails: (taskId: Task['id']) => Promise<void | NavigationFailure>
@@ -43,7 +43,7 @@ export type TasksViewContext = {
     switchDisplayAside: () => void
 }
 
-export default defineStore('TasksViewStore', () => {
+export default () => {
     // @context App context
     const appContext = inject<AppContext>(APP_CONTEXT_KEY)!
 
@@ -154,6 +154,7 @@ export default defineStore('TasksViewStore', () => {
         taskUseCase,
         dialogManager,
         isDisplayAside,
+        isDisplayOutline,
         getColumnLabel,
         showTaskDetails,
         getTagColor,
@@ -175,4 +176,4 @@ export default defineStore('TasksViewStore', () => {
         handleResizeAside,
         handleResizeOutline
     }
-})
+}

@@ -2,10 +2,8 @@ import type {
     BuiltInProjectEntity,
     BuiltInProjectPreferenceValueObject
 } from '@nao-todo/domain/built-in-project/entities'
-import type {
-    BuiltInProject,
-    BuiltInProjectPreference
-} from '@nao-todo/infrastructure/built-in/project/types'
+import type { BuiltInProject, BuiltInProjectPreference, GetTasksOptions, TaskColumnOptions } from '@nao-todo/types'
+import jsonParse from '@nao-todo/infrastructure/utils/json-parse'
 
 /**
  * 内建项目实体转换为视图对象
@@ -44,7 +42,17 @@ export const builtInProjectPreferenceValueObject2ViewObject = (
     const vo = {} as BuiltInProjectPreference
     vo.projectId = valueObject.projectId || ''
     vo.viewType = valueObject.viewType
-    vo.getTasksOptions = valueObject.getTasksOptions
-    vo.columns = valueObject.columns
+    const [getTasksOptions, err] = jsonParse(valueObject.getTasksOptions)
+    if (err !== null) {
+        vo.getTasksOptions = {} as GetTasksOptions
+    } else {
+        vo.getTasksOptions = getTasksOptions as GetTasksOptions
+    }
+    const [columns, err2] = jsonParse(valueObject.columns)
+    if (err2 !== null) {
+        vo.columns = {} as TaskColumnOptions
+    } else {
+        vo.columns = columns as TaskColumnOptions
+    }
     return vo
 }

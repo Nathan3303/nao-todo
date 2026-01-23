@@ -11,7 +11,8 @@ const router = useRouter()
 const authViewContext = inject<AuthViewContext>(AUTH_VIEW_CONTEXT_KEY)!
 
 onMounted(async () => {
-    const err = await authViewContext.checkInExecutor()
+    console.log(authViewContext)
+    const err = await authViewContext.authUseCase.checkIn()
     if (err) {
         NueMessage.error(unwrapError(err))
         router.replace('/auth/signin')

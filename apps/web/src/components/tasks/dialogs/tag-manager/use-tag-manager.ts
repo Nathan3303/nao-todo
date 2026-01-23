@@ -1,12 +1,8 @@
 import { computed, reactive } from 'vue'
-import { useTasksViewStore } from '@/views/index/tasks'
 import type { TagManagerVO, TagManagerEmits, TagManagerProps } from './type'
-import type { TagVO } from '@nao-todo/types'
+import type { Tag } from '@nao-todo/types'
 
 const useTagManager = (props: TagManagerProps, emit: TagManagerEmits) => {
-    // @store
-    const tasksViewStore = useTasksViewStore()
-
     // @states
     const states = reactive<TagManagerVO>({
         filterInfo: {
@@ -23,20 +19,13 @@ const useTagManager = (props: TagManagerProps, emit: TagManagerEmits) => {
     })
 
     // @method Emit proxy
-    const deleteTag = (tagId: TagVO['id']) => emit('deleteTag', tagId)
-
-    // @methods 对话框
-    const showCreateTagDialog = () => tasksViewStore.dialogManager.openDialog('tag-creator')
-    const showUpdateTagColorDialog = (tagId: TagVO['id']) =>
-        tasksViewStore.dialogManager.openDialog('tag-color-updater', { tagId })
+    const deleteTag = (tagId: Tag['id']) => emit('deleteTag', tagId)
 
     // @returns
     return {
         states,
         filteredTags,
         deleteTag,
-        showCreateTagDialog,
-        showUpdateTagColorDialog
     }
 }
 

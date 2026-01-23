@@ -11,8 +11,7 @@ const emit = defineEmits<TagManagerEmits>()
 
 const dialogRef = ref<DialogInstanceType>()
 
-const { states, filteredTags, deleteTag, showCreateTagDialog, showUpdateTagColorDialog } =
-    useTagManager(props, emit)
+const { states, filteredTags, deleteTag } = useTagManager(props, emit)
 const { visible, close } = useDialogWrapper(dialogRef)
 
 const open = () => {
@@ -40,11 +39,7 @@ onMounted(() => emit('register', open, close))
                     />
                 </nue-div>
                 <nue-div gap="12px" width="fit-content" style="margin-left: auto">
-                    <nue-button
-                        icon="plus-circle"
-                        theme="small,primary"
-                        @click="showCreateTagDialog"
-                    >
+                    <nue-button icon="plus-circle" theme="small,primary" @click="tagCreatorOpener">
                         新增
                     </nue-button>
                 </nue-div>
@@ -55,7 +50,7 @@ onMounted(() => emit('register', open, close))
                     <tag-board
                         :tags="filteredTags"
                         @delete="deleteTag"
-                        @recolor="showUpdateTagColorDialog"
+                        @recolor="tagColorUpdaterOpener"
                     />
                 </nue-content>
             </nue-main>
@@ -95,3 +90,4 @@ onMounted(() => emit('register', open, close))
     box-shadow: var(--secondary-shadow);
 }
 </style>
+

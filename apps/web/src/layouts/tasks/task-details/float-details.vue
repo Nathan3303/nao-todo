@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, watch, inject } from 'vue'
 import { useRoute } from 'vue-router'
 import TaskDetails from './index.vue'
-import { useTasksViewStore } from '@/views/index/tasks'
-import { storeToRefs } from 'pinia'
+import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
+import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 
-const tasksViewStore = useTasksViewStore()
 const route = useRoute()
 
-const { isDisplayOutline } = storeToRefs(tasksViewStore)
+// @viewContext TasksView context
+const { isDisplayOutline } = inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
 
-const projects = computed(() => tasksViewStore.projectApp.states.projects)
 const taskId = computed<string>(() => route.params.taskId as string)
 
 watch(
@@ -28,14 +27,6 @@ watch(
         min-span="360px"
         allow-close-by-overlay
     >
-        <task-details
-            :task-id="taskId"
-            :projects="projects"
-            :event-lister="tasksViewStore.eventApp.listEvent"
-            :comment-lister="tasksViewStore.commentApp.list"
-            :project-name-getter="tasksViewStore.projectHandlers.getNameById"
-            :tag-getter="tasksViewStore.tagHandlers.getTagsByTagIds"
-            :task-getter="tasksViewStore.taskApp.getByIdFromMap"
-        />
+        <task-details :task-id="taskId" />
     </nue-drawer>
 </template>

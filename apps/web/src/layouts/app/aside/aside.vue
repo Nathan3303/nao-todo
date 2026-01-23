@@ -1,16 +1,18 @@
 <script setup lang="ts">
+import { inject } from 'vue'
 import { storeToRefs } from 'pinia'
 import { NaoRouterLink } from '@/components/ui'
 import useUserStore from '@nao-todo/application/web/stores/user-store'
-import useAppStore from '@/views/app-store'
+import { APP_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import type { AppContext } from '@/app'
 
 defineOptions({ name: 'AppAside' })
 
 const userStore = useUserStore()
-const appStore = useAppStore()
+
+const { routerLinks } = inject<AppContext>(APP_CONTEXT_KEY)!
 
 const { profile } = storeToRefs(userStore)
-const { routerLinks } = storeToRefs(appStore)
 </script>
 
 <template>

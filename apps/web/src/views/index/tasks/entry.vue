@@ -9,6 +9,7 @@ import {
 import useTasksView from './tasks-view'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { Loading as LoadingComp } from '@nao-todo/components'
 
 defineOptions({ name: 'TasksView' })
 

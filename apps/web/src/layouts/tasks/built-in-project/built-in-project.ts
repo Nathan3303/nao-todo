@@ -1,5 +1,4 @@
-import { computed, provide, watch } from 'vue'
-import { useTasksViewStore } from '@/views/index/tasks'
+import { computed, inject, provide, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import type { BuiltInProjectViewProps, BuiltInProjectViewContext } from './types'
@@ -13,12 +12,16 @@ import { TaskDomain } from '@nao-todo/domain/task'
 import { useTaskRepository } from '@nao-todo/infrastructure/backend/task/repoImpl'
 import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 import { useBuiltInProjectsStore, useTagsStore, useTasksStore } from '@/stores/tasks'
+import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
+import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 
 const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     // @viewStores
     const router = useRouter()
     // const appStore = useAppStore()
-    const tasksViewStore = useTasksViewStore()
+
+    // @viewContext TasksView context
+    const tasksViewContext = inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
 
     // @dataStores
     const userStore = useUserStore()
@@ -35,16 +38,13 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     const subscriber = useSubscriber()
 
     // @method 视图切换
-    const switchViewType = async (viewType: string) => {
+    const switchViewType = (viewType: string) => {
         if (!viewType) return
         if (viewType === (router.currentRoute.value.params.viewType as string)) return
-        const err = await router.replace({
+        router.replace({
             name: 'tasks-built-in-project-main',
             params: { viewType }
         })
-        if (err) {
-            console.error(err)
-        }
     }
 
     // @state 清单详情
@@ -58,7 +58,7 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
         // 1. 检查参数
         if (!props.projectId || !profile.value) return
         // 2. 获取清单详情
-        tasksViewStore.builtInProjectUseCase.loadBuiltInProjectPreference(
+        tasksViewContext.builtInProjectUseCase.loadBuiltInProjectPreference(
             profile.value.email,
             props.projectId
         )
@@ -104,13 +104,13 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
         subscriber,
         builtInProjectHandlers,
         isHideCompletedAlready,
-        getColumnLabel: tasksViewStore.getColumnLabel,
-        getProjectName: tasksViewStore.getProjectName,
-        showTaskDetails: tasksViewStore.showTaskDetails,
+        getColumnLabel: tasksViewContext.getColumnLabel,
+        getProjectName: tasksViewContext.getProjectName,
+        showTaskDetails: tasksViewContext.showTaskDetails,
         switchViewTypeToTable: () => switchViewType('table'),
         switchViewTypeToKanban: () => switchViewType('kanban'),
         switchViewTypeToList: () => switchViewType('list'),
-        showTaskCreator: () => tasksViewStore.dialogManager.openDialog('task-creator', {})
+        showTaskCreator: () => tasksViewContext.dialogManager.openDialog('task-creator', {})
     })
 
     // @returns
