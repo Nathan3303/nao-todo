@@ -1,35 +1,13 @@
 <script lang="ts" setup>
-import {
-    TasksViewAside,
-    TasksViewFloatAside,
-    TasksViewDetails,
-    TasksViewFloatDetails,
-    TasksViewDialogs
-} from '@/layouts/tasks'
+import { TasksViewAsideAdapter, TasksViewDetailsAdapter, TasksViewDialogs } from '@/layouts/tasks'
 import useTasksView from './tasks-view'
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
 import { Loading as LoadingComp } from '@nao-todo/components'
 
 defineOptions({ name: 'TasksView' })
 
-const route = useRoute()
-const {
-    initializer,
-    isLoading,
-    error,
-    asideWidth,
-    outlineWidth,
-    isDisplayAside,
-    isUseFloatAside,
-    isUseFloatOutline,
-    handleResizeAside,
-    handleResizeOutline
-} = useTasksView()
+const { initializer, isLoading, error } = useTasksView()
 
-const taskId = computed<string>(() => route.params.taskId as string)
-
-await initializer.start()
+initializer.start()
 </script>
 
 <template>
@@ -39,26 +17,16 @@ await initializer.start()
     </nue-empty>
     <nue-container v-else>
         <nue-main>
-            <template v-if="isDisplayAside && !isUseFloatAside">
-                <tasks-view-aside :width="asideWidth" max-width="360px" min-width="240px" />
-                <nue-separator op-target="previous" @resize="handleResizeAside" />
-            </template>
-            <tasks-view-float-aside v-else />
+            <tasks-view-aside-adapter />
             <nue-content fill style="overflow: hidden">
-                <router-view />
+                <router-view v-slot="{ Component }">
+                    <suspense>
+                        <component :is="Component" />
+                        <template #fallback> Loading... </template>
+                    </suspense>
+                </router-view>
             </nue-content>
-            <template v-if="!isUseFloatOutline">
-                <nue-separator op-target="next" @resize="handleResizeOutline" />
-                <nue-aside
-                    :width="outlineWidth"
-                    max-width="480px"
-                    min-width="360px"
-                    style="padding: 0"
-                >
-                    <tasks-view-details :task-id="taskId" />
-                </nue-aside>
-            </template>
-            <tasks-view-float-details v-else />
+            <tasks-view-details-adapter />
         </nue-main>
     </nue-container>
     <tasks-view-dialogs />

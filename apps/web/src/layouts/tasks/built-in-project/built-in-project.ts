@@ -6,7 +6,7 @@ import type { BuiltInProjectViewProps, BuiltInProjectViewContext } from './types
 import useSubscriber from '@/infrastructure/hooks/use-subscriber'
 import useUserStore from '@nao-todo/application/web/stores/user-store'
 import { storeToRefs } from 'pinia'
-import { BuiltInProjectLayoutHandlers } from '@nao-todo/application/web/handlers/built-in-project-layout'
+import { BuiltInProjectLayoutHandlers } from '@/handlers/tasks/built-in-project-handler'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 import { TaskDomain } from '@nao-todo/domain/task'
 import { useTaskRepository } from '@nao-todo/infrastructure/backend/task/repoImpl'
@@ -14,6 +14,8 @@ import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 import { useBuiltInProjectsStore, useTagsStore, useTasksStore } from '@/stores/tasks'
 import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import { NueMessage } from 'nue-ui'
+import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 
 const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     // @viewStores
@@ -41,10 +43,7 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     const switchViewType = (viewType: string) => {
         if (!viewType) return
         if (viewType === (router.currentRoute.value.params.viewType as string)) return
-        router.replace({
-            name: 'tasks-built-in-project-main',
-            params: { viewType }
-        })
+        router.replace({ name: 'tasks-built-in-project-main', params: { viewType } })
     }
 
     // @state 清单详情
@@ -58,10 +57,14 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
         // 1. 检查参数
         if (!props.projectId || !profile.value) return
         // 2. 获取清单详情
-        tasksViewContext.builtInProjectUseCase.loadBuiltInProjectPreference(
+        const err = tasksViewContext.builtInProjectUseCase.loadBuiltInProjectPreference(
             profile.value.email,
             props.projectId
         )
+        if (err !== null) {
+            NueMessage.error(unwrapError(err))
+            return
+        }
         // 3. 跳转至指定视图类型
         switchViewType(preference.value?.viewType || 'table')
     }
@@ -90,17 +93,18 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     const isHideCompletedAlready = computed(() => {
         if (!preference.value) return false
         const state = builtInProjectsStore.getPreferenceGetTasksOption('state')
-        return state === 'todo,in-progress'
+        // console.log(state)
+        return state == 'todo,in-progress'
     })
 
     // @provide 提供 Project View 上下文
     provide<BuiltInProjectViewContext>(BUILT_IN_PROJECT_VIEW_CONTEXT_KEY, {
+        tasksViewContext,
         taskUseCase,
         builtInProject: builtInProject,
         preference,
+        profile,
         tags: computed(() => [...tags.value.values()]),
-        // builtInProjectHandlers,
-        // taskHandlers,
         subscriber,
         builtInProjectHandlers,
         isHideCompletedAlready,
@@ -110,7 +114,7 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
         switchViewTypeToTable: () => switchViewType('table'),
         switchViewTypeToKanban: () => switchViewType('kanban'),
         switchViewTypeToList: () => switchViewType('list'),
-        showTaskCreator: () => tasksViewContext.dialogManager.openDialog('task-creator', {})
+        showTaskCreator: () => tasksViewContext.dialogManager.openDialog('task-creator', {}),
     })
 
     // @returns

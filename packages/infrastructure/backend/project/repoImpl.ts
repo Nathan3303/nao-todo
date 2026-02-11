@@ -8,7 +8,7 @@ import {
 import type { ProjectEntity, ProjectPreferenceEntity } from '@nao-todo/domain/project/entities'
 import type { ProjectRepository } from '@nao-todo/domain/project/repositories'
 import type { Requester } from '@nao-todo/infrastructure/requester'
-import type { CreateProjectVO, Err, GoAsync, GoLike } from '@nao-todo/types'
+import type { CreateProject, GoAsync } from '@nao-todo/types'
 import type {
     CreateProjectReq,
     CreateProjectRes,
@@ -23,6 +23,11 @@ import type {
 import { defaultPreference } from '@nao-todo/infrastructure/consts/preference'
 
 export const useProjectRepository = (requester: Requester): ProjectRepository => {
+    /**
+     * 获取项目
+     * @param projectId 项目 ID
+     * @returns 项目实体
+     */
     const get = async (projectId: string): GoAsync<ProjectEntity> => {
         // 1. 调用接口
         const response = await requester.get(`/projects/${projectId}`, {
@@ -39,15 +44,19 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
         return [projectEntity, null]
     }
 
-    const create = async (createVO: CreateProjectVO): GoAsync<ProjectEntity> => {
+    /**
+     * 创建项目
+     * @param createVO 创建项目视图对象
+     * @returns 项目实体
+     */
+    const create = async (createVO: CreateProject): GoAsync<ProjectEntity> => {
         // 1. 构建 rto
         const rto = {} as CreateProjectReq
         if (createVO.name) rto.name = createVO.name
         if (createVO.description) rto.description = createVO.description
         // 2. 调用接口
-        const response = await requester.post('/projects', {
-            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` },
-            data: rto
+        const response = await requester.post('/projects/', rto, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
         })
         // 3. 判断结果
         const res = response.data as ResponseData
@@ -60,15 +69,20 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
         return [projectEntity, null]
     }
 
+    /**
+     * 更新项目
+     * @param projectId 项目 ID
+     * @param projectEntity 项目实体
+     * @returns 项目 ID
+     */
     const update = async (projectId: string, projectEntity: ProjectEntity): GoAsync<string> => {
         // 1. 构建 rto
         const rto: UpdateProjectReq = {}
         if (projectEntity.name) rto.name = projectEntity.name
         if (projectEntity.description) rto.description = projectEntity.description
         // 2. 调用接口
-        const response = await requester.put(`/projects/${projectId}`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` },
-            data: rto
+        const response = await requester.put(`/projects/${projectId}`, rto, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
         })
         // 3. 判断结果
         const res = response.data as ResponseData
@@ -80,7 +94,12 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
         return [data.projectId, null]
     }
 
-    const remove = async (projectId: string): Promise<Err> => {
+    /**
+     * 删除项目
+     * @param projectId 项目 ID
+     * @returns 错误信息
+     */
+    const remove = async (projectId: string): GoAsync<void> => {
         // 1. 调用接口
         const response = await requester.delete(`/projects/${projectId}`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
@@ -94,9 +113,14 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
         return null
     }
 
-    const restore = async (projectId: string): Promise<Err> => {
+    /**
+     * 恢复项目
+     * @param projectId 项目 ID
+     * @returns 错误信息
+     */
+    const restore = async (projectId: string): GoAsync<void> => {
         // 1. 调用接口
-        const response = await requester.put(`/projects/restore/${projectId}`, {
+        const response = await requester.put(`/projects/restore/${projectId}`, null, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
         })
         // 2. 判断结果
@@ -108,9 +132,14 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
         return null
     }
 
-    const archive = async (projectId: string): Promise<Err> => {
+    /**
+     * 归档项目
+     * @param projectId 项目 ID
+     * @returns 错误信息
+     */
+    const archive = async (projectId: string): GoAsync<void> => {
         // 1. 调用接口
-        const response = await requester.put(`/projects/archive/${projectId}`, {
+        const response = await requester.put(`/projects/archive/${projectId}`, null, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
         })
         // 2. 判断结果
@@ -122,9 +151,14 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
         return null
     }
 
-    const unarchive = async (projectId: string): Promise<Err> => {
+    /**
+     * 取消归档项目
+     * @param projectId 项目 ID
+     * @returns 错误信息
+     */
+    const unarchive = async (projectId: string): GoAsync<void> => {
         // 1. 调用接口
-        const response = await requester.put(`/projects/unarchive/${projectId}`, {
+        const response = await requester.put(`/projects/unarchive/${projectId}`, null, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
         })
         // 2. 判断结果
@@ -136,7 +170,11 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
         return null
     }
 
-    const list = async (): Promise<GoLike<ProjectEntity[] | null>> => {
+    /**
+     * 获取项目列表
+     * @returns 项目实体数组
+     */
+    const list = async (): GoAsync<ProjectEntity[]> => {
         // 1. 调用接口
         const response = await requester.get('/projects/', {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
@@ -152,6 +190,11 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
         return [projectEntities, null]
     }
 
+    /**
+     * 获取项目偏好
+     * @param projectId 项目 ID
+     * @returns 项目偏好实体
+     */
     const getPreference = async (projectId: string): GoAsync<ProjectPreferenceEntity> => {
         // 1. 调用接口
         const response = await requester.get(`/projects/${projectId}/preference`, {
@@ -172,6 +215,12 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
         return [defaultPreference, null]
     }
 
+    /**
+     * 更新项目偏好
+     * @param projectId 项目 ID
+     * @param preferenceEntity 项目偏好实体
+     * @returns 项目 ID
+     */
     const updatePreference = async (
         projectId: string,
         preferenceEntity: ProjectPreferenceEntity
@@ -179,9 +228,8 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
         // 1. 构建 rto
         const rto = preferenceEntity2UpdateProjectPreferenceReq(preferenceEntity)
         // 2. 调用接口
-        const response = await requester.post(`/projects/${projectId}/preference`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` },
-            data: rto
+        const response = await requester.post(`/projects/${projectId}/preference`, rto, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
         })
         // 3. 判断结果
         const res = response.data as ResponseData

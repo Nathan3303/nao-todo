@@ -11,7 +11,7 @@ const router = useRouter()
 const authViewContext = inject<AuthViewContext>(AUTH_VIEW_CONTEXT_KEY)!
 
 onMounted(async () => {
-    console.log(authViewContext)
+    // console.log(authViewContext)
     const err = await authViewContext.authUseCase.checkIn()
     if (err) {
         NueMessage.error(unwrapError(err))

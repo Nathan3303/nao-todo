@@ -42,7 +42,7 @@ export const getProjectPreferenceRes2ProjectPreferenceEntity = (
 export const preferenceEntity2UpdateProjectPreferenceReq = (
     preferenceEntity: ProjectPreferenceEntity
 ): UpdateProjectPreferenceReq => {
-    const rto = {} as UpdateProjectPreferenceReq
+    const rto = { preference: {} } as UpdateProjectPreferenceReq
     rto.preference.viewType = preferenceEntity.viewType
     rto.preference.getTasksOptions = preferenceEntity.getTasksOptions
     rto.preference.columns = preferenceEntity.columns

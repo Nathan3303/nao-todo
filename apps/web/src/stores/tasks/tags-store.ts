@@ -1,49 +1,54 @@
-import type { Tag, UpdateTag } from '@nao-todo/types'
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
-import { useLoadingErrorStoreBase } from '../base'
+import { computed } from 'vue'
+import { useLoadingErrorStoreBase, useTagPreferenceStoreBase, useTagsStoreBase } from '../base'
 
 export default defineStore('TagsStore', () => {
-    // @state 标签视图对象 Map
-    const tags = ref<Map<Tag['id'], Tag>>(new Map())
+    // @storebase Tag store base
+    const { tags, setTags, addTag, getTag, updateTag } = useTagsStoreBase()
 
-    // @action 设置标签视图对象数组
-    const setTags = (value: Tag[]) => {
-        tags.value = new Map(value.map((item) => [item.id, item]))
-    }
-
-    // @action 添加标签
-    const addTag = (t: Tag) => {
-        const idx = tags.value.has(t.id)
-        if (idx) return
-        tags.value.set(t.id, t)
-    }
-
-    // @action 更新标签
-    const updateTag = (id: Tag['id'], t: UpdateTag) => {
-        const idx = tags.value.has(id)
-        if (!idx) return
-        tags.value.set(id, { ...tags.value.get(id)!, ...t })
-    }
-
-    // @action 获取单个标签
-    const getTag = (id: Tag['id']) => {
-        return tags.value.get(id)
-    }
-
-    // @storebase 标签存储加载/错误基础
+    // @storebase 内建标签存储加载/错误基础
     const { loading, error, setLoading, setError } = useLoadingErrorStoreBase()
+
+    // @storebase 标签偏好存储基础
+    const {
+        tagPreference,
+        setTagPreference,
+        getTagPreference,
+        updatePreferenceColumns,
+        updatePreferenceGetTasksOptions,
+        getPreferenceGetTasksOption,
+        getPreferenceGetTasksOptions
+    } = useTagPreferenceStoreBase()
+
+    // @storebase 标签偏好存储加载/错误基础
+    const {
+        loading: preferenceLoading,
+        error: preferenceError,
+        setLoading: setPreferenceLoading,
+        setError: setPreferenceError
+    } = useLoadingErrorStoreBase()
 
     // @returns
     return {
         tags: computed(() => tags.value),
         setTags,
         addTag,
-        updateTag,
         getTag,
+        updateTag,
         loading: computed(() => loading.value),
         error: computed(() => error.value),
         setLoading,
-        setError
+        setError,
+        tagPreference: computed(() => tagPreference.value),
+        setTagPreference,
+        getTagPreference,
+        updatePreferenceColumns,
+        updatePreferenceGetTasksOptions,
+        getPreferenceGetTasksOption,
+        getPreferenceGetTasksOptions,
+        preferenceLoading: computed(() => preferenceLoading.value),
+        preferenceError: computed(() => preferenceError.value),
+        setPreferenceLoading,
+        setPreferenceError
     }
 })

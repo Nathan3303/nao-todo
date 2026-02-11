@@ -1,10 +1,16 @@
-import type { CreateTag, GoAsync, Tag, UpdateTag } from '@nao-todo/types'
+import type { CreateTag, GoAsync, Tag, TagPreference, UpdateTag } from '@nao-todo/types'
 import { TagDomain } from '@nao-todo/domain/tag'
-import { tagEntity2ValueObject } from '../converters/tag'
+import {
+    tagEntity2ValueObject,
+    tagPreferenceEntity2ValueObject,
+    tagPreferenceVO2Entity
+} from '../converters/tag'
+import { NueConfirm } from 'nue-ui'
 
 export interface TagStore {
     setTags: (tags: Tag[]) => void
     addTag: (tag: Tag) => void
+    setTagPreference: (preference: TagPreference) => void
     updateTag: (tagId: Tag['id'], updateVO: UpdateTag) => void
 }
 
@@ -69,5 +75,61 @@ export class TagUseCase {
         // 2. 存储到状态管理
         this.store.updateTag(tagId, updateVO)
         return null
+    }
+
+    /**
+     * 加载标签偏好
+     * @param tagId 标签ID
+     * @returns 标签偏好视图对象
+     */
+    async loadTagPreference(tagId: Tag['id']): GoAsync<void> {
+        // 1. 调用领域层方法
+        const [preferenceEntity, err] = await this.tagDomain.getPreference(tagId)
+        if (err !== null) {
+            return err
+        }
+        // 2. 转换为视图对象
+        const preference = tagPreferenceEntity2ValueObject(preferenceEntity)
+        // 3. 存储到状态管理
+        this.store.setTagPreference(preference)
+        return null
+    }
+
+    /**
+     * 保存标签偏好
+     * @param tagId 标签ID
+     * @param newPreference 标签偏好视图对象
+     * @returns 错误信息
+     */
+    async savePreference(tagId: Tag['id'], newPreference: TagPreference): GoAsync<void> {
+        // 1. 判断项目偏好是否存在
+        if (!newPreference) {
+            return new Error('项目偏好无效')
+        }
+        // 2. 存储项目偏好实体
+        const preferenceEntity = tagPreferenceVO2Entity(newPreference)
+        const [, err] = await this.tagDomain.updatePreference(tagId, preferenceEntity)
+        return err
+    }
+
+    /**
+     * 删除标签
+     * @param tagId 标签ID
+     * @returns 无
+     */
+    async delete(tagId: Tag['id']): GoAsync<void> {
+        // 1. 询问用户是否确认删除
+        const [isByCancel] = await NueConfirm({
+            title: '确认删除标签',
+            content: '删除标签后可以在 标签管理 中恢复。是否继续？',
+            confirmButtonText: '删除',
+            cancelButtonText: '取消'
+        })
+        // 2. 判断用户是否取消删除
+        if (isByCancel) {
+            return null
+        }
+        // 3. 调用领域层方法
+        return await this.tagDomain.remove(tagId)
     }
 }

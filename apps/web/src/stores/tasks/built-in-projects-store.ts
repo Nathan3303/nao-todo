@@ -17,6 +17,7 @@ const useBuiltInProjectsStore = defineStore('BuiltInProjectsStore', () => {
     const {
         builtInProjectPreference,
         setBuiltInProjectPreference,
+        getBuiltInProjectPreference,
         updatePreferenceColumns,
         updatePreferenceGetTasksOptions,
         getPreferenceGetTasksOption,
@@ -46,6 +47,7 @@ const useBuiltInProjectsStore = defineStore('BuiltInProjectsStore', () => {
         setPreferenceLoading,
         setPreferenceError,
         setBuiltInProjectPreference,
+        getBuiltInProjectPreference,
         updatePreferenceColumns,
         updatePreferenceGetTasksOptions,
         getPreferenceGetTasksOption,

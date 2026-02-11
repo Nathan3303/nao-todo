@@ -31,7 +31,7 @@ const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: GetTasksO
     const load = async (extraGetOptions?: GetTasksOptions): GoAsync<Task['id'][]> => {
         states.loading = true
         states.error = ''
-        const getOptions: GetTasksOptions = { ...extraGetOptions }
+        const getOptions: GetTasksOptions = { ...originalGetOptions, ...extraGetOptions }
         getOptions.page = states.pagination.page
         getOptions.limit = extraGetOptions?.limit ?? states.pagination.limit
         const [res, err] = await taskUseCase.loadTasks(getOptions)

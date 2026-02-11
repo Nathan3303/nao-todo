@@ -71,7 +71,7 @@ export class TaskDomain {
                 if (key !== 'sort') return
                 const sortValue = value as GetTasksOptions['sort']
                 if (!sortValue?.field) return void 0
-                return `${key}=${sortValue.field}:${sortValue.order}`
+                return `${sortValue.field}:${sortValue.order}`
             }
         )
         // 2. 调用仓库方法

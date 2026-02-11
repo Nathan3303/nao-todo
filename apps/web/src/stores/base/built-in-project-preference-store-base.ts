@@ -10,6 +10,11 @@ const useBuiltInProjectPreferenceStoreBase = () => {
         builtInProjectPreference.value = preference
     }
 
+    // @action 获取内建项目偏好
+    const getBuiltInProjectPreference = (): BuiltInProjectPreference | undefined => {
+        return builtInProjectPreference.value
+    }
+
     // @action 设置偏好 - 列选项
     const updatePreferenceColumns = (key: keyof TaskColumnOptions, value: boolean) => {
         if (!builtInProjectPreference.value) return
@@ -43,6 +48,7 @@ const useBuiltInProjectPreferenceStoreBase = () => {
     return {
         builtInProjectPreference,
         setBuiltInProjectPreference,
+        getBuiltInProjectPreference,
         updatePreferenceColumns,
         updatePreferenceGetTasksOptions,
         getPreferenceGetTasksOption,

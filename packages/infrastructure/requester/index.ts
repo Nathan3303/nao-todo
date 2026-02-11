@@ -20,10 +20,13 @@ export const initRequester = (options: UseRequesterOptions) => {
 
     switch (name) {
         case 'AxiosRequester':
-        default:
+        default: {
             requester = useAxiosRequester(baseURL)
             break
+        }
     }
+
+    return requester
 }
 
 export type { Requester } from './types'

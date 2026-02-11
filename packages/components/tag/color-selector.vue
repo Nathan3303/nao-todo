@@ -38,20 +38,23 @@ const selectedColor = computed({
 </script>
 
 <template>
-    <nue-div class="tag-color-selector">
-        <nue-tooltip
-            v-for="color in tagColors"
-            :key="color.value"
-            :content="color.name"
-            size="small"
-        >
-            <tag-color-dot
-                :color="color.value"
-                :data-selected="selectedColor === color.value"
-                size="xlarge"
-                @click="selectedColor = color.value"
-            />
-        </nue-tooltip>
+    <nue-div vertical overflow="visible">
+        <nue-text size="var(--nue-text-sm)">当前颜色：{{ selectedColor }}</nue-text>
+        <nue-div class="tag-color-selector" overflow="visible">
+            <nue-tooltip
+                v-for="color in tagColors"
+                :key="color.value"
+                :content="color.name"
+                size="small"
+            >
+                <tag-color-dot
+                    :color="color.value"
+                    :data-selected="selectedColor === color.value"
+                    size="xlarge"
+                    @click="selectedColor = color.value"
+                />
+            </nue-tooltip>
+        </nue-div>
     </nue-div>
 </template>
 
@@ -61,24 +64,25 @@ const selectedColor = computed({
 
     &:deep(.tag-color-dot) {
         cursor: pointer;
-        position: relative;
     }
 
     &:deep(.tag-color-dot)[data-selected='true']::after {
+        box-sizing: border-box;
         content: '';
         display: block;
         aspect-ratio: 1;
-        width: 12px;
+        width: 1rem;
         left: 50%;
         top: 50%;
         transform: translate(-50%, -50%);
         position: absolute;
-        border: 2px solid white;
-        border-radius: 50%;
+        border: 2px solid var(--nue-primary-color-900);
+        border-radius: 50%; 
+        box-shadow: 0 0 2px 1px var(--nue-primary-color-900);
     }
 
-    &:deep(.tag-color-dot.tag-color-dot--transparent)[data-selected='true']::after {
-        background-color: rgba(180, 102, 102, 0.4);
+    &:deep(.tag-color-dot.tag-color-dot--transparent) {
+        background-color: var(--nue-primary-color-200);
     }
 }
 </style>

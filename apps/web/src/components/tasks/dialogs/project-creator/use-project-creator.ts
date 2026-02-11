@@ -31,7 +31,7 @@ const useProjectCreator = (props: ProjectCreatorProps) => {
         })
         creating.value = false
         // 处理失败结果
-        if (createError) {
+        if (createError !== null) {
             console.warn(unwrapError(createError))
             return false
         }

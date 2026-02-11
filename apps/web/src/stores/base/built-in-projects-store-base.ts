@@ -1,17 +1,18 @@
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { BuiltInProject } from '@nao-todo/types'
 
 const useBuiltInProjectsStoreBase = () => {
     // @state 内建清单列表
-    // const builtInProjects = ref<BuiltInProject[]>([])
+    const builtInProjects = ref<BuiltInProject[]>([])
 
     // @computed 内建清单列表 Map
-    const builtInProjectsMap = ref<Map<BuiltInProject['id'], BuiltInProject>>(new Map())
+    const builtInProjectsMap = computed(
+        () => new Map(builtInProjects.value.map((project) => [project.id, project]))
+    )
 
     // @method 设置内建清单
     const setBuiltInProjects = (projects: BuiltInProject[]) => {
-        // builtInProjects.value = projects
-        builtInProjectsMap.value = new Map(projects.map((project) => [project.id, project]))
+        builtInProjects.value = projects
     }
 
     // @method 获取单个内建清单
@@ -19,8 +20,28 @@ const useBuiltInProjectsStoreBase = () => {
         return builtInProjectsMap.value.get(id)
     }
 
+    // @method 替换单个内建清单
+    const setBuiltInProject = (id: string, newProject: BuiltInProject) => {
+        const index = builtInProjects.value.findIndex((project) => project.id === id)
+        if (index === -1) return
+        builtInProjects.value[index] = newProject
+    }
+
+    // @method 更新单个内建清单
+    const updateBuiltInProject = (id: string, updateOptions: Partial<BuiltInProject>) => {
+        const oldProject = builtInProjectsMap.value.get(id)
+        if (!oldProject) return
+        setBuiltInProject(id, { ...oldProject, ...updateOptions })
+    }
+
     // @return
-    return { builtInProjects: builtInProjectsMap, setBuiltInProjects, getBuiltInProject }
+    return {
+        builtInProjects,
+        setBuiltInProjects,
+        getBuiltInProject,
+        updateBuiltInProject,
+        setBuiltInProject
+    }
 }
 
 export default useBuiltInProjectsStoreBase

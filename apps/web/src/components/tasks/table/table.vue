@@ -18,13 +18,13 @@ useTaskTable(props, emit)
         <nue-main>
             <nue-content fill>
                 <task-table-header />
-                <loading-comp v-if="loading" />
+                <loading-comp height="auto" v-if="loading" />
                 <nue-empty
                     v-else-if="!tasks.length"
                     image-size="4rem"
                     image-src="/images/coffee.webp"
                     description="当前暂无待办"
-                    style="height: 100%"
+                    style="flex: auto"
                 />
                 <task-table-main v-else />
             </nue-content>

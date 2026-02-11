@@ -1,60 +1,34 @@
-<script lang="ts" setup>
-import { Loading as LoadingComp } from '@nao-todo/components'
-import DetailsHeader from './header/index.vue'
-import DetailsMain from './main/index.vue'
-import DetailsFooter from './footer/index.vue'
-import useTaskDetails from './task-details'
-import type { TaskDetailsProps, TaskDetailsEmits } from './types'
+<script setup lang="ts">
+import { computed, inject } from 'vue'
+import TasksViewDetails from './details.vue'
+import TasksViewDetailsDrawer from './float-details.vue'
+import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
+import { useRoute } from 'vue-router'
 
-defineOptions({ name: 'TaskDetails' })
-const props = defineProps<TaskDetailsProps>()
-const emit = defineEmits<TaskDetailsEmits>()
+defineOptions({ name: 'TasksViewDetailsAdapter' })
 
-const { loading, error, task } = useTaskDetails(props, emit)
+const route = useRoute()
+const tasksViewContext = inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
+
+const taskId = computed<string>(() => route.params.taskId as string)
 </script>
 
 <template>
-    <loading-comp v-if="loading" />
-    <nue-empty
-        v-else-if="error || !task"
-        :description="error"
-        image-size="64px"
-        image-src="/images/todo.webp"
-        style="height: 100%"
-    >
-        <nue-div v-if="false" justify="center" style="margin-top: 1rem">
-            <nue-button theme="primary,small" @click="emit('closeDetails')">
-                返回任务列表
-            </nue-button>
-        </nue-div>
-    </nue-empty>
-    <nue-container v-else id="TasksTodoDetailsContainer" class="tasks-details-view">
-        <details-header />
-        <nue-main>
-            <nue-content fill>
-                <details-main />
-            </nue-content>
-        </nue-main>
-        <details-footer />
-    </nue-container>
+    <template v-if="tasksViewContext.isUseFloatOutline">
+        <tasks-view-details-drawer />
+    </template>
+    <template v-else>
+        <nue-separator op-target="next" @resize="tasksViewContext.handleResizeOutline" />
+        <nue-aside
+            :width="tasksViewContext.outlineWidth"
+            max-width="480px"
+            min-width="360px"
+            style="padding: 0"
+        >
+            <tasks-view-details :task-id="taskId" />
+        </nue-aside>
+    </template>
 </template>
 
-<style scoped>
-.nue-container#TasksTodoDetailsContainer {
-    gap: 0;
-
-    > .nue-header,
-    > .nue-main {
-        padding: 0;
-        border: none;
-        height: auto;
-    }
-
-    > .nue-footer {
-        padding: 1rem;
-        height: auto;
-        border-top: 1px solid var(--nue-border-color);
-    }
-}
-</style>
-
+<style scoped></style>

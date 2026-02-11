@@ -6,10 +6,30 @@ defineProps<InnerDropdownOptionProps>()
 </script>
 
 <template>
-    <nue-dropdown-item :icon="icon" :execute-id="executeId" :disabled="disabled" :text="title">
+    <nue-dropdown-item
+        :theme="color"
+        :icon="icon"
+        :execute-id="executeId"
+        :disabled="disabled"
+        :text="title"
+    >
         <template #append>
-            <nue-icon v-if="checked" name="check" />
+            <slot>
+                <nue-icon v-if="checked" name="check" />
+            </slot>
         </template>
     </nue-dropdown-item>
 </template>
+
+<style scoped>
+.nue-dropdown-item--red {
+    color: var(--nue-error-color-70);
+    background-color: var(--nue-error-color-10);
+
+    &:hover {
+        color: var(--nue-error-color-90);
+        background-color: var(--nue-error-color-20);
+    }
+}
+</style>
 

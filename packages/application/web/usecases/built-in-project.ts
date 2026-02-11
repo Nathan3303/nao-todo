@@ -3,10 +3,12 @@ import type { BuiltInProject, BuiltInProjectPreference } from '@nao-todo/types'
 import type { Go } from '@nao-todo/types'
 import {
     builtInProjectEntities2ViewObjects,
-    builtInProjectPreferenceValueObject2ViewObject
+    builtInProjectPreferenceValueObject2ViewObject,
+    builtInProjectPreferenceViewObject2ValueObject
 } from '../converters/built-in-project'
 
 export interface BuiltInProjectUseCaseStore {
+    getBuiltInProjectPreference(): BuiltInProjectPreference | undefined
     setBuiltInProjects(builtInProjects: BuiltInProject[]): void
     setBuiltInProjectPreference(preference: BuiltInProjectPreference): void
 }
@@ -79,8 +81,30 @@ export class BuiltInProjectUseCase {
         )
         // 3. 存储内建项目偏好实体
         this.store.setBuiltInProjectPreference(builtInProjectPreference)
-        console.log(builtInProjectPreference)
+        // console.log(builtInProjectPreference)
         // 4. 返回
         return null
+    }
+
+    /**
+     * 保存内建项目偏好
+     * @param userId 用户ID
+     * @returns 错误信息
+     */
+    savePreference(
+        userId: string,
+        builtInProjectId: BuiltInProject['id'],
+        newPreference: BuiltInProjectPreference
+    ): Go<void> {
+        // 1. 判断内建项目偏好是否存在
+        if (!newPreference) {
+            return new Error('内建项目偏好无效')
+        }
+        // 2. 存储内建项目偏好实体
+        return this.builtInProjectDomain.savePreference(
+            userId,
+            builtInProjectId,
+            builtInProjectPreferenceViewObject2ValueObject(newPreference)
+        )
     }
 }

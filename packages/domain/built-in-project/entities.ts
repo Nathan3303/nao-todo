@@ -9,7 +9,7 @@ export type BuiltInProjectEntity = {
 }
 
 export type BuiltInProjectPreferenceValueObject = {
-    projectId?: string
+    projectId: string
     viewType: string
     getTasksOptions: string
     columns: string

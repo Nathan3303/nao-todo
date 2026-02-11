@@ -21,6 +21,7 @@ const useTagColorUpdater = (props: TagColorUpdaterProps) => {
         }
         states.tagId = id
         states.color = props.tagColorGetter(id) || 'transparent'
+        console.log(props.tagColorGetter(id))
     }
 
     // @method 更新标签颜色
@@ -55,3 +56,4 @@ const useTagColorUpdater = (props: TagColorUpdaterProps) => {
 }
 
 export default useTagColorUpdater
+

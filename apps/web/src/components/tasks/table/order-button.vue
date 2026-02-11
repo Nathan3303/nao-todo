@@ -30,10 +30,10 @@ const descIconName = computed(() => {
 const handleExecute = (id: string) => {
     switch (id) {
         case 'go-asc':
-            updateSortOptions({ field: props.prop, order: 'asc' })
+            updateSortOptions(props.prop, 'asc')
             break
         case 'go-desc':
-            updateSortOptions({ field: props.prop, order: 'desc' })
+            updateSortOptions(props.prop, 'desc')
             break
     }
 }

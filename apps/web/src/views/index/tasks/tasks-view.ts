@@ -34,8 +34,14 @@ export type TasksViewContext = {
     tagUseCase: TagUseCase
     taskUseCase: TaskUseCase
     dialogManager: DialogManager
+    asideWidth: Ref<string>
     isDisplayAside: Ref<boolean>
+    isUseFloatAside: Ref<boolean>
+    outlineWidth: Ref<string>
     isDisplayOutline: Ref<boolean>
+    isUseFloatOutline: Ref<boolean>
+    handleResizeAside: (width: number) => void
+    handleResizeOutline: (width: number) => void
     getProjectName: (projectId: string) => string
     getTagColor: (tagId: Tag['id']) => string
     showTaskDetails: (taskId: Task['id']) => Promise<void | NavigationFailure>
@@ -153,8 +159,14 @@ export default () => {
         tagUseCase,
         taskUseCase,
         dialogManager,
+        asideWidth,
         isDisplayAside,
+        isUseFloatAside,
+        outlineWidth,
         isDisplayOutline,
+        isUseFloatOutline,
+        handleResizeAside,
+        handleResizeOutline,
         getColumnLabel,
         showTaskDetails,
         getTagColor,
@@ -163,17 +175,5 @@ export default () => {
     })
 
     // @returns
-    return {
-        initializer,
-        isLoading,
-        error,
-        asideWidth,
-        outlineWidth,
-        isDisplayAside,
-        isDisplayOutline,
-        isUseFloatAside,
-        isUseFloatOutline,
-        handleResizeAside,
-        handleResizeOutline
-    }
+    return { initializer, isLoading, error }
 }

@@ -9,5 +9,9 @@ export interface BuiltInProjectRepository {
     // 获取指定清单的偏好
     getPreference(userId: string, id: string): Go<BuiltInProjectPreferenceValueObject>
     // 保存清单偏好
-    savePreference(userId: string, preference: BuiltInProjectPreferenceValueObject): Go<void>
+    savePreference(
+        userId: string,
+        projectId: string,
+        preference: BuiltInProjectPreferenceValueObject
+    ): Go<void>
 }

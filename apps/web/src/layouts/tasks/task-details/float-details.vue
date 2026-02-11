@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, watch, inject } from 'vue'
 import { useRoute } from 'vue-router'
-import TaskDetails from './index.vue'
+import TaskDetails from './details.vue'
 import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 

@@ -16,11 +16,11 @@ export default (funcs: Func[]) => {
         try {
             const err = await fn()
             if (err !== null) {
-                paused = false
-                return run(idx + 1)
+                paused = true
+                return err
             }
-            paused = true
-            return err
+            paused = false
+            return run(idx + 1)
         } catch (e) {
             console.error('[UseTasksExecutor]', e)
             paused = true
@@ -31,7 +31,7 @@ export default (funcs: Func[]) => {
     const start = async (): Promise<boolean> => {
         paused = false
         const err = await run(0)
-        return err !== null
+        return err === null
     }
 
     const stop = () => {
@@ -41,7 +41,7 @@ export default (funcs: Func[]) => {
     const retry = async (): Promise<boolean> => {
         paused = false
         const err = await run(lastRunIdx)
-        return err !== null
+        return err === null
     }
 
     return { idx: lastRunIdx, run, start, stop, retry }

@@ -6,26 +6,23 @@ export interface Subscriber {
 
 const useSubscriber = (): Subscriber => {
     // @state
-    const callbackMap = new Map<string, Array<() => void>>()
+    const callbackMap = new Map<string, Set<() => void>>()
 
     // @method 订阅事件
     const subscribe = (eventName: string, callback: () => void) => {
         if (!callbackMap.has(eventName)) {
-            callbackMap.set(eventName, [])
+            callbackMap.set(eventName, new Set())
         }
-        callbackMap.get(eventName)?.push(callback)
+        callbackMap.get(eventName)?.add(callback)
     }
 
     // @method 取消订阅事件
     const unsubscribe = (eventName: string, callback: () => void) => {
         const callbacks = callbackMap.get(eventName)
         if (callbacks) {
-            callbackMap.set(
-                eventName,
-                callbacks.filter((cb) => cb !== callback)
-            )
+            callbackMap.set(eventName, new Set([...callbacks].filter((cb) => cb !== callback)))
         }
-        if (callbackMap.get(eventName)?.length === 0) {
+        if (callbackMap.get(eventName)?.size === 0) {
             callbackMap.delete(eventName)
         }
     }

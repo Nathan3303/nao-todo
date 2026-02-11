@@ -61,21 +61,6 @@ export default defineConfig({
                         else if (truePackageName.includes('vue-router')) return 'vender/vue-router'
                         else if (truePackageName.includes('vue')) return 'vender/vue-ecosystem'
                         else return `vender/${truePackageName}`
-                    } else if (id.includes('src/stores')) {
-                        // const packageName = id.toString().split('src/stores')[1]
-                        // const truePackageName = packageName.split('-')[1]
-                        // if (['project', 'tag', 'view', 'todo'].includes(truePackageName))
-                        //     return 'app-stores/tasks-main'
-                        // if (['comment', 'event'].includes(truePackageName))
-                        //     return 'app-stores/tasks-detail'
-                        // if (truePackageName) return `app-stores/${truePackageName}`
-                        // else return 'app-stores/index'
-                    } else if (id.includes('src/views/auth')) {
-                        // const packageName = id.toString().split('src/views/auth')[1]
-                        // if (packageName.includes('sign-in')) return 'auth-view_sign-in'
-                        // else if (packageName.includes('sign-up')) return 'auth-view_sign-up'
-                        // else
-                        // return 'auth-view'
                     }
                 }
             }

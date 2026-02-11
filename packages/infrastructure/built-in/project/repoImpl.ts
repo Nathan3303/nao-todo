@@ -51,7 +51,10 @@ const useBuiltInProjectRepository = (): BuiltInProjectRepository => {
         const builtInProjectPreferenceInLocalStorage = localStorage.getItem(key)
         if (builtInProjectPreferenceInLocalStorage) {
             // 2.1 转换为实体
-            const bippvo = bippRes2bippVO(JSON.parse(builtInProjectPreferenceInLocalStorage))
+            const bippvo = bippRes2bippVO({
+                ...JSON.parse(builtInProjectPreferenceInLocalStorage),
+                projectId: id
+            })
             // 2.2 返回
             return [bippvo, null]
         }
@@ -61,7 +64,10 @@ const useBuiltInProjectRepository = (): BuiltInProjectRepository => {
         )
         if (defaultBuiltInProjectPreference) {
             // 3.1 转换为实体
-            const bippvo = bippRes2bippVO(defaultBuiltInProjectPreference)
+            const bippvo = bippRes2bippVO({
+                ...defaultBuiltInProjectPreference,
+                projectId: id
+            })
             // 3.2 返回
             return [bippvo, null]
         }
@@ -77,10 +83,11 @@ const useBuiltInProjectRepository = (): BuiltInProjectRepository => {
      */
     const savePreference = (
         userId: string,
+        projectId: string,
         bippvo: BuiltInProjectPreferenceValueObject
     ): Go<void> => {
         // 1. 构造读写 Key
-        const key = `${userId}/${bippvo.projectId}`
+        const key = `${userId}/${projectId}`
         // 2. 格式转换
         const builtInPp = bippVO2bippRes(bippvo)
         // 3. 更新

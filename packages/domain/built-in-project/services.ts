@@ -42,8 +42,12 @@ export class BuiltInProjectDomain {
      * @param preference 内建清单偏好
      * @returns
      */
-    savePreference(userId: string, preference: BuiltInProjectPreferenceValueObject): Go<void> {
-        return this.builtInProjectRepo.savePreference(userId, preference)
+    savePreference(
+        userId: string,
+        projectId: string,
+        preference: BuiltInProjectPreferenceValueObject
+    ): Go<void> {
+        return this.builtInProjectRepo.savePreference(userId, projectId, preference)
     }
 }
 

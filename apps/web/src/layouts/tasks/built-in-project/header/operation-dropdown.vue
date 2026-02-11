@@ -18,7 +18,7 @@ const {
     isHideCompletedAlready,
     getColumnLabel
 } = inject<BuiltInProjectViewContext>(BUILT_IN_PROJECT_VIEW_CONTEXT_KEY)!
-    console.log(preference.value?.columns)
+// console.log(preference.value?.columns)
 
 const dropdownRef = ref<InstanceType<typeof TasksOperationsDropdown>>()
 
@@ -29,8 +29,10 @@ onMounted(() => {
     dropdownRef.value.register('switch-view-to-kanban', switchViewTypeToKanban)
     dropdownRef.value.register('switch-view-to-list', switchViewTypeToList)
     dropdownRef.value.register('refresh-data', () => subscriber.emit('RefreshData'))
-    dropdownRef.value.register('hide-completed', builtInProjectHandlers.switchCompletedTaskDisplay)
-    // dropdownRef.value.register('update-preference', () => builtInProjectHandlers.updatePreference())
+    dropdownRef.value.register('hide-completed', () =>
+        builtInProjectHandlers.switchCompletedTaskDisplay()
+    )
+    dropdownRef.value.register('save-preference', () => subscriber.emit('UpdatePreference'))
 })
 </script>
 
@@ -43,36 +45,36 @@ onMounted(() => {
                 execute-id="switch-view-to-table"
                 :checked="preference.viewType === 'table'"
             />
-            <!-- <inner-dropdown-option
+            <inner-dropdown-option
                 icon="kanban"
                 title="看板视图"
                 execute-id="switch-view-to-kanban"
-                :checked="viewContext.preference.value!.viewType === 'kanban'"
+                :checked="preference.viewType === 'kanban'"
             />
             <inner-dropdown-option
                 icon="list"
                 title="列表视图"
                 execute-id="switch-view-to-list"
-                :checked="viewContext.preference.value!.viewType === 'list'"
-            /> -->
+                :checked="preference.viewType === 'list'"
+            />
         </div-block>
         <nue-divider />
         <div-block title="视图操作">
             <inner-dropdown-option icon="refresh" title="重新获取数据" execute-id="refresh-data" />
             <inner-dropdown-option
                 :icon="isHideCompletedAlready ? 'eye' : 'eye-close'"
-                :title="isHideCompletedAlready ? '显示已完成' : '隐藏已完成'"
+                :title="`${isHideCompletedAlready ? '显示' : '隐藏'}已完成任务`"
                 execute-id="hide-completed"
             />
             <column-display-operator
                 :columns="preference.columns"
                 :label-getter="getColumnLabel"
-                @update="builtInProjectHandlers.updateColumns"
+                @update="(k, v) => builtInProjectHandlers.updateColumns(k, v)"
             />
             <inner-dropdown-option
                 icon="picture"
                 title="保存视图偏好"
-                execute-id="update-preference"
+                execute-id="save-preference"
             />
         </div-block>
     </tasks-operations-dropdown>

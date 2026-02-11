@@ -39,7 +39,7 @@ const useDialogs = (): UseDialogs => {
     const tagsStore = useTagsStore()
 
     // @presetStates
-    const { projects } = storeToRefs(projectsStore)
+    const projects = computed(() => projectsStore.getAllProjects())
     const { tags } = storeToRefs(tagsStore)
 
     // @method 创建清单对话框注册函数
@@ -101,7 +101,7 @@ const useDialogs = (): UseDialogs => {
 
     // @method 标签颜色修改对话框打开函数
     const tagColorUpdaterOpener = (tagId: Tag['id']) => {
-        tasksViewContext.dialogManager.openDialog('tag-color-updater', { tagId })
+        tasksViewContext.dialogManager.openDialog('tag-color-updater', tagId)
     }
 
     // @method 待办事项创建对话框注册函数

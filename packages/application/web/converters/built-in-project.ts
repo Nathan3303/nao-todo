@@ -2,7 +2,12 @@ import type {
     BuiltInProjectEntity,
     BuiltInProjectPreferenceValueObject
 } from '@nao-todo/domain/built-in-project/entities'
-import type { BuiltInProject, BuiltInProjectPreference, GetTasksOptions, TaskColumnOptions } from '@nao-todo/types'
+import type {
+    BuiltInProject,
+    BuiltInProjectPreference,
+    GetTasksOptions,
+    TaskColumnOptions
+} from '@nao-todo/types'
 import jsonParse from '@nao-todo/infrastructure/utils/json-parse'
 
 /**
@@ -40,7 +45,7 @@ export const builtInProjectPreferenceValueObject2ViewObject = (
     valueObject: BuiltInProjectPreferenceValueObject
 ): BuiltInProjectPreference => {
     const vo = {} as BuiltInProjectPreference
-    vo.projectId = valueObject.projectId || ''
+    vo.projectId = valueObject.projectId
     vo.viewType = valueObject.viewType
     const [getTasksOptions, err] = jsonParse(valueObject.getTasksOptions)
     if (err !== null) {
@@ -54,5 +59,16 @@ export const builtInProjectPreferenceValueObject2ViewObject = (
     } else {
         vo.columns = columns as TaskColumnOptions
     }
+    return vo
+}
+
+export const builtInProjectPreferenceViewObject2ValueObject = (
+    viewObject: BuiltInProjectPreference
+): BuiltInProjectPreferenceValueObject => {
+    const vo = {} as BuiltInProjectPreferenceValueObject
+    vo.projectId = viewObject.projectId
+    vo.viewType = viewObject.viewType
+    vo.getTasksOptions = JSON.stringify(viewObject.getTasksOptions)
+    vo.columns = JSON.stringify(viewObject.columns)
     return vo
 }
