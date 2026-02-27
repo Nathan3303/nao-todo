@@ -1,3 +1,3 @@
-export * from './password'
+// export * from './password'
 export * from './profile'
-export * from './view'
+// export * from './view'

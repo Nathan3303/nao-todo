@@ -2,18 +2,19 @@
 import { TasksViewAsideAdapter, TasksViewDetailsAdapter, TasksViewDialogs } from '@/layouts/tasks'
 import useTasksView from './tasks-view'
 import { Loading as LoadingComp } from '@nao-todo/components'
+import { onMounted } from 'vue'
 
 defineOptions({ name: 'TasksView' })
 
-const { initializer, isLoading, error } = useTasksView()
+const { isLoading, error, init } = useTasksView()
 
-initializer.start()
+onMounted(() => init())
 </script>
 
 <template>
     <loading-comp v-if="isLoading" height="100%" />
     <nue-empty v-else-if="error" :description="error" height="100%">
-        <nue-button theme="primary,small" @click="initializer.retry">重试</nue-button>
+        <nue-button theme="primary,small" @click="init">重试</nue-button>
     </nue-empty>
     <nue-container v-else>
         <nue-main>

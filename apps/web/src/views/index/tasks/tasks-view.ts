@@ -11,14 +11,13 @@ import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
 import useResponsiveAside from '@/infrastructure/hooks/tasks-view/use-responsive-aside'
 import { columnLabels } from '@nao-todo/infrastructure/consts/tasks'
-import { useRouter, type NavigationFailure } from 'vue-router'
+import { useRouter } from 'vue-router'
 import useDialogManager, {
     type DialogManager
 } from '@/infrastructure/hooks/tasks-view/use-dialog-manager'
 import useAsideWidth from '@nao-todo/infrastructure/hooks/use-aside-width'
-import { computed, inject, provide, type Ref } from 'vue'
+import { inject, provide, ref, type Ref } from 'vue'
 import { APP_CONTEXT_KEY, TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import useTasksViewInitializeHandler from '@/handlers/tasks/initialize-handler'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 import { TaskDomain } from '@nao-todo/domain/task'
 import { useTaskRepository } from '@nao-todo/infrastructure/backend/task/repoImpl'
@@ -27,6 +26,7 @@ import { useBuiltInProjectsStore, useProjectsStore, useTagsStore } from '@/store
 import useSubscriber, { type Subscriber } from '@/infrastructure/hooks/use-subscriber'
 import type { AppContext } from '@/app'
 import type { Tag, Task } from '@nao-todo/types'
+import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 
 export type TasksViewContext = {
     appContext: AppContext
@@ -46,7 +46,7 @@ export type TasksViewContext = {
     handleResizeOutline: (width: number) => void
     getProjectName: (projectId: string) => string
     getTagColor: (tagId: Tag['id']) => string
-    showTaskDetails: (taskId: Task['id']) => Promise<void | NavigationFailure>
+    showTaskDetails: (taskId: Task['id']) => void
     getColumnLabel: (key: string) => string
     switchDisplayAside: () => void
 }
@@ -80,15 +80,24 @@ const useTasksView = () => {
     // @hook 事件订阅器
     const subscriber = useSubscriber()
 
-    // @hook 初始化处理程序
-    const initializer = useTasksViewInitializeHandler(
-        builtInProjectUseCase,
-        builtInProjectsStore,
-        projectUseCase,
-        projectsStore,
-        tagUseCase,
-        tagsStore
-    )
+    // @states&method 初始化处理程序
+    const isLoading = ref<boolean>(true) // 加载状态
+    const error = ref<string>('') // 错误信息
+    // 初始化处理程序
+    const init = () => {
+        isLoading.value = true
+        Promise.allSettled([
+            builtInProjectUseCase.loadBuiltInProjects(),
+            projectUseCase.loadProjects(),
+            tagUseCase.loadTags()
+        ]).then((results) => {
+            isLoading.value = false
+            results.forEach((result) => {
+                if (result.status !== 'rejected') return
+                error.value = unwrapError(result.reason)
+            })
+        })
+    }
 
     // @hook 响应式侧边栏
     const {
@@ -115,26 +124,13 @@ const useTasksView = () => {
     // @hook 对话框管理器
     const dialogManager = useDialogManager()
 
-    // @computed 加载状态
-    const isLoading = computed(() => {
-        return builtInProjectsStore.loading || projectsStore.loading || tagsStore.loading
-    })
-
-    // @computed 错误信息
-    const error = computed(() => {
-        return builtInProjectsStore.error || projectsStore.error || tagsStore.error
-    })
-
     // @method 获取列选项标识
     const getColumnLabel = (key: string): string => columnLabels[key] || ''
 
     // @method 显示任务详情（面板）
-    const showTaskDetails = async (taskId: Task['id']) => {
+    const showTaskDetails = (taskId: Task['id']) => {
         if (!taskId) return
-        return await router.push({
-            name: router.currentRoute.value.name,
-            params: { taskId }
-        })
+        router.push({ params: { taskId } })
     }
 
     // @method 获取标签颜色
@@ -172,7 +168,7 @@ const useTasksView = () => {
     })
 
     // @returns
-    return { initializer, isLoading, error }
+    return { isLoading, error, init }
 }
 
 export default useTasksView
