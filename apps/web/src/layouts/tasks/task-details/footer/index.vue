@@ -5,7 +5,8 @@ import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
 import type { TaskDetailsContext } from '../types'
 import { inject } from 'vue'
 
-const { vo, emit, projects, isCommenting } = inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
+const { vo, emit, projects, isCommenting, taskHandler } =
+    inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
 
 const handleDropdownExecute = (executeId: string) => {
     if (!vo.value) return
@@ -36,7 +37,7 @@ const handleDropdownExecute = (executeId: string) => {
 
 const updateProjectId = (npId: string) => {
     if (!vo.value) return
-    emit('updateTask', vo.value.id, { projectId: npId })
+    taskHandler.updateTask(vo.value.id, { projectId: npId })
 }
 </script>
 
@@ -60,11 +61,16 @@ const updateProjectId = (npId: string) => {
                 </template>
                 <nue-div theme="block" style="min-width: 8rem">
                     <nue-text theme="title">更多操作</nue-text>
-                    <inner-dropdown-option title="添加评论" icon="chat" execute-id="comment-todo" />
+                    <inner-dropdown-option
+                        title="添加评论"
+                        icon="chat"
+                        execute-id="comment-todo"
+                    />
                     <inner-dropdown-option
                         title="复制待办任务"
                         icon="files"
                         execute-id="duplicate-todo"
+                        disabled
                     />
                 </nue-div>
                 <nue-div theme="block" style="min-width: 8rem">
@@ -73,6 +79,7 @@ const updateProjectId = (npId: string) => {
                         :title="vo.isDeleted ? '恢复待办任务' : '删除待办任务'"
                         :icon="vo.isDeleted ? 'restore' : 'delete'"
                         :execute-id="vo.isDeleted ? 'restore-todo' : 'delete-todo'"
+                        disabled
                     />
                     <inner-dropdown-option
                         v-if="vo.isDeleted"
@@ -80,6 +87,7 @@ const updateProjectId = (npId: string) => {
                         icon="delete"
                         execute-id="delete-todo-permanently"
                         style="color: red"
+                        disabled
                     />
                 </nue-div>
             </nue-dropdown>

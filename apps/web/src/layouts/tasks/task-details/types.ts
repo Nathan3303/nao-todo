@@ -1,3 +1,6 @@
+import type { CommentHandler } from '@/handlers/tasks/comment-handler'
+import type { EventHandler } from '@/handlers/tasks/event-handler'
+import type { TaskHandler } from '@/handlers/tasks/task-handler'
 import type {
     CreateEvent,
     Event,
@@ -39,12 +42,6 @@ export type TaskDetailsViewObject = {
 
 export type TaskDetailsProps = {
     taskId?: Task['id']
-    // projects: Project[]
-    // taskGetter: (taskId: Task['id']) => Task | undefined
-    // eventLister: (taskId: Task['id']) => GoAsync<Event[]>
-    // commentLister: (taskId: Task['id']) => GoAsync<Comment[]>
-    // projectNameGetter: (projectId: Project['id']) => string
-    // tagGetter: (tagIds: Tag['id'][]) => Tag[]
 }
 
 export type TaskDetailsEmits = {
@@ -70,48 +67,36 @@ export type TaskDetailsContext = TaskDetailsHeaderContext &
  * Task Details Header
  */
 
-// export type TaskDetailsHeaderProps = {}
-
-// export type TaskDetailsHeaderEmits = {}
-
 export type TaskDetailsHeaderContext = {
-    vo: Ref<WithNull<TaskDetailsViewObject>>
-    finishTask: () => void
+    vo: ComputedRef<WithNull<TaskDetailsViewObject>>
     closeDetails: () => void
-    updateEndAt: (value: any) => void
 }
 
 /**
  * Task Details Main
  */
 
-// export type TaskDetailsMainProps = {}
-
-// export type TaskDetailsMainEmits = {}
-
 export type TaskDetailsMainContext = {
     emit: TaskDetailsEmits
-    vo: Ref<WithNull<TaskDetailsViewObject>>
+    vo: ComputedRef<WithNull<TaskDetailsViewObject>>
     events: Ref<WithNull<Event[]>>
     eventProgress: ComputedRef<{ percentage: number; text: string }>
     comments: Ref<WithNull<Comment[]>>
     isCommenting: Ref<boolean>
-    resortEvents: (oldIndex: number, newIndex: number, isUp: boolean) => void
-    updateComment: (commentId: Comment['id'], update: UpdateComment) => void
-    deleteComment: (commentId: Comment['id']) => void
+    resortEvents: (oldEid: Event['id'], newEid: Event['id'], isUp: boolean) => void
+    eventHandler: EventHandler
+    commentHandler: CommentHandler
+    taskHandler: TaskHandler
+    tags: Ref<Tag[]>
 }
 
 /**
  * Task Details Footer
  */
 
-// export type TaskDetailsFooterProps = {}
-
-// export type TaskDetailsFooterEmits = {}
-
 export type TaskDetailsFooterContext = {
     emit: TaskDetailsEmits
-    vo: Ref<WithNull<TaskDetailsViewObject>>
+    vo: ComputedRef<WithNull<TaskDetailsViewObject>>
     projects: ComputedRef<Project[]>
     isCommenting: Ref<boolean>
 }

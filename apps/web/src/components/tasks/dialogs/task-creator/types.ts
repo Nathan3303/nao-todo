@@ -1,7 +1,7 @@
 import type { GoAsync, CreateTask, Project, Tag } from '@nao-todo/types'
 
 export type TaskCreatorVO = {
-    projectId?: CreateTask['projectId']
+    projectId: CreateTask['projectId']
     name: CreateTask['name']
     description?: CreateTask['description']
     state: CreateTask['state']

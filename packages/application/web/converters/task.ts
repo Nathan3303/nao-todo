@@ -1,10 +1,12 @@
 import type { TaskEntity } from '@nao-todo/domain/task'
-import type { Task } from '@nao-todo/types'
+import type { UpdateTask } from '@nao-todo/domain/task/valueobjects'
+import type { Task, UpdateTaskOptions } from '@nao-todo/types'
 
 export const taskEntity2ViewObject = (entity: TaskEntity): Task => {
     const vo = {} as Task
     vo.id = entity.id
     vo.name = entity.name
+    vo.projectId = entity.projectId
     vo.description = entity.description
     vo.state = ['todo', 'in-progress', 'done'].includes(entity.state)
         ? (entity.state as Task['state'])
@@ -27,4 +29,17 @@ export const taskEntity2ViewObject = (entity: TaskEntity): Task => {
 
 export const taskEntities2ViewObjects = (entities: TaskEntity[]): Task[] => {
     return entities.map(taskEntity2ViewObject)
+}
+
+export const updateTaskOptions2UpdateValueObject = (options: UpdateTaskOptions): UpdateTask => {
+    const vo = {} as UpdateTask
+    vo.projectId = options.projectId
+    vo.name = options.name
+    vo.description = options.description
+    vo.state = options.state
+    vo.priority = options.priority
+    vo.startAt = options.startAt
+    vo.endAt = options.endAt
+    vo.tags = options.tags
+    return vo
 }

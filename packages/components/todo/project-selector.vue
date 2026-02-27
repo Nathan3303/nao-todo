@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ProjectVO } from '@nao-todo/types'
+import type { Project } from '@nao-todo/types'
 
 type TodoProjectSelectorProps = {
-    projects: ProjectVO[]
-    projectId?: ProjectVO['id']
+    projects: Project[]
+    projectId: Project['id']
     placeholder?: string
     placement?: string
 }
 type TodoProjectSelectorEmits = {
-    (event: 'select', projectId: ProjectVO['id'], projectTitle?: ProjectVO['name']): void
+    (event: 'select', projectId: Project['id'], projectTitle?: Project['name']): void
 }
 
 defineOptions({ name: 'TodoProjectSelector', inheritAttrs: false })
@@ -17,19 +17,15 @@ const props = defineProps<TodoProjectSelectorProps>()
 const emit = defineEmits<TodoProjectSelectorEmits>()
 
 const vm = computed({
-    get: () => props.projectId,
+    get: () => {
+        const p = props.projects.find((p) => p.id === props.projectId)
+        if (!p) return ''
+        return p.id
+    },
     set: (newProjectId) => handleSelect(newProjectId)
 })
 
-const buttonText = computed(() => {
-    const projectTitle = props.projects.find((project) => project.id === props.projectId)?.name
-    if (props.projectId === '') {
-        return props.placeholder || '移动到清单 ...'
-    }
-    return projectTitle || '收集箱'
-})
-
-const handleSelect = async (projectId?: ProjectVO['id']) => {
+const handleSelect = async (projectId?: Project['id']) => {
     if (projectId) {
         emit('select', projectId)
         return
@@ -39,7 +35,7 @@ const handleSelect = async (projectId?: ProjectVO['id']) => {
 </script>
 
 <template>
-    <nue-select v-model="vm" size="small" :placeholder="buttonText" theme="project-selector">
+    <nue-select v-model="vm" size="small">
         <nue-select-option icon="inbox" label="收集箱" :value="''" />
         <nue-divider />
         <template v-if="projects && projects.length">

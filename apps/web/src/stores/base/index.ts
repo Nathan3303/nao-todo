@@ -11,6 +11,8 @@ import useTagsStoreBase, { type TagsStoreBase } from './tags-store-base'
 import useLoadingErrorStoreBase, { type LoadingErrorStoreBase } from './loading-error-store-base'
 import useTasksStoreBase, { type TasksStoreBase } from './tasks-store-base'
 import useTagPreferenceStoreBase, { type TagPreferenceStoreBase } from './tag-preference-store-base'
+import useEventIdsStoreBase, { type EventIdsStoreBase } from './event-ids-store-base'
+import useCommentIdsStoreBase, { type CommentIdsStoreBase } from './comment-ids-store-base'
 
 export { useBuiltInProjectsStoreBase, type BuiltInProjectsStoreBase }
 export { useBuiltInProjectPreferenceStoreBase, type BuiltInProjectPreferenceStoreBase }
@@ -21,3 +23,5 @@ export { useTagsStoreBase, type TagsStoreBase }
 export { useLoadingErrorStoreBase, type LoadingErrorStoreBase }
 export { useTasksStoreBase, type TasksStoreBase }
 export { useTagPreferenceStoreBase, type TagPreferenceStoreBase }
+export { useEventIdsStoreBase, type EventIdsStoreBase }
+export { useCommentIdsStoreBase, type CommentIdsStoreBase }

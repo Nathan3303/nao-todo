@@ -31,7 +31,7 @@ const dateMoment = computed<string | null>({
             value = value ? moment(value).toISOString() : null
         }
         emit('update:modelValue', value)
-        emit('change', value)
+        // emit('change', value)
     }
 })
 
@@ -50,10 +50,11 @@ const handleAddDateByNow = () => {
         <nue-div v-if="dateMoment" class="date-selector__input-wrapper" auto-fit>
             <nue-div align="center" gap="0.25rem">
                 <nue-input
-                    v-model="dateMoment"
+                    v-model.lazy="dateMoment"
                     :debounce-time="256"
                     theme="small,pure"
                     :type="'datetime-local' as never"
+                    @blur="emit('change', dateMoment)"
                 />
             </nue-div>
             <nue-divider vertical />

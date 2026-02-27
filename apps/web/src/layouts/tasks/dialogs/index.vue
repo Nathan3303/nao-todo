@@ -50,5 +50,10 @@ const {
         :tag-color-getter="tagColorGetter"
         :tag-color-updater="tagColorUpdater"
     />
-    <task-creator @register="taskCreatorRegister" :create-task-handler="taskCreatorHandler" />
+    <task-creator
+        @register="taskCreatorRegister"
+        :create-task-handler="taskCreatorHandler"
+        :avaliable-projects="projects"
+        :avaliable-tags="tags"
+    />
 </template>

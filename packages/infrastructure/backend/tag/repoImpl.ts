@@ -8,7 +8,7 @@ import {
 import type { TagEntity, TagPreferenceEntity } from '@nao-todo/domain/tag/entities'
 import type { TagRepository } from '@nao-todo/domain/tag/repositories'
 import type { Requester } from '../../requester/types'
-import type { CreateTagVO, Err, GoAsync, UpdateTagVO } from '@nao-todo/types'
+import type { CreateTag, Err, GoAsync, UpdateTag } from '@nao-todo/types'
 import type {
     CreateTagReq,
     CreateTagRes,
@@ -17,8 +17,7 @@ import type {
     ListTagRes,
     ResponseData,
     UpdateTagPreferenceRes,
-    UpdateTagReq,
-    UpdateTagRes
+    UpdateTagReq
 } from '../types'
 import { defaultPreference } from '../../consts/preference'
 
@@ -38,7 +37,7 @@ export const useTagRepository = (requester: Requester): TagRepository => {
         // 4. 返回
         return [tagEntity, null]
     }
-    const create = async (createVO: CreateTagVO): GoAsync<TagEntity | null> => {
+    const create = async (createVO: CreateTag): GoAsync<TagEntity | null> => {
         // 1. 构建 rto
         const rto: CreateTagReq = {
             name: createVO.name,
@@ -46,9 +45,8 @@ export const useTagRepository = (requester: Requester): TagRepository => {
             color: createVO.color || 'transparent'
         }
         // 2. 调用接口
-        const response = await requester.post('/tags', {
-            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` },
-            data: rto
+        const response = await requester.post('/tags/', rto, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
         })
         // 3. 判断结果
         const res = response.data as ResponseData
@@ -61,16 +59,15 @@ export const useTagRepository = (requester: Requester): TagRepository => {
         return [tagEntity, null]
     }
 
-    const update = async (tagId: string, updateVO: UpdateTagVO): GoAsync<void> => {
+    const update = async (tagId: string, updateVO: UpdateTag): GoAsync<void> => {
         // 1. 构建 rto
         const rto: UpdateTagReq = {}
         if (updateVO.name) rto.name = updateVO.name
         if (updateVO.description) rto.description = updateVO.description
         if (updateVO.color) rto.color = updateVO.color
         // 2. 调用接口
-        const response = await requester.put(`/tags/${tagId}`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` },
-            data: rto
+        const response = await requester.put(`/tags/${tagId}`, rto, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
         })
         // 3. 判断结果
         const res = response.data as ResponseData
@@ -78,8 +75,8 @@ export const useTagRepository = (requester: Requester): TagRepository => {
             return res.message
         }
         // 4. 返回
-        const data = res.data as UpdateTagRes
-        return data.tagId
+        // const data = res.data as UpdateTagRes
+        return null
     }
 
     const remove = async (tagId: string): Promise<Err> => {
@@ -134,9 +131,8 @@ export const useTagRepository = (requester: Requester): TagRepository => {
         // 1. 构建 rto
         const rto = tagPreferenceEntity2UpdateReq(preferenceEntity)
         // 1. 调用接口
-        const response = await requester.post(`/tags/${tagId}/preference`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` },
-            data: rto
+        const response = await requester.post(`/tags/${tagId}/preference`, rto, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
         })
         // 2. 判断结果
         const res = response.data as ResponseData

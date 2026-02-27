@@ -15,6 +15,7 @@ const useApp = () => {
     // @state Router links
     const routerLinks = reactive([
         { name: '任务', icon: 'square-check-fill', route: '/tasks', routeName: 'tasks' },
+        { name: '设置', icon: 'settings-fill', route: '/settings', routeName: 'settings' }
         // { name: '搜索', icon: 'search2', route: '/search', routeName: 'search' }
     ])
 

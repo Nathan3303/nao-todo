@@ -42,9 +42,8 @@ export const useEventRepository = (requester: Requester): EventRepository => {
             description: eventEntity.description
         }
         // 2. 调用接口
-        const response = await requester.post('/events', {
-            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` },
-            data: rto
+        const response = await requester.post('/events/', rto, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
         })
         // 3. 判断结果
         const res = response.data as ResponseData
@@ -62,10 +61,11 @@ export const useEventRepository = (requester: Requester): EventRepository => {
         const rto: UpdateEventReq = {}
         if (eventEntity.name) rto.name = eventEntity.name
         if (eventEntity.description) rto.description = eventEntity.description
+        if (eventEntity.isDone !== undefined) rto.isDone = eventEntity.isDone
+        if (eventEntity.sortId !== undefined) rto.sortId = eventEntity.sortId
         // 2. 调用接口
-        const response = await requester.put(`/events/${eventId}`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` },
-            data: rto
+        const response = await requester.put(`/events/${eventId}`, rto, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
         })
         // 3. 判断结果
         const res = response.data as ResponseData
@@ -90,7 +90,7 @@ export const useEventRepository = (requester: Requester): EventRepository => {
         // 3. 返回
         return null
     }
-    
+
     const list = async (taskId: string): GoAsync<EventEntity[]> => {
         // 1. 调用接口
         const response = await requester.get(`/events/?taskId=${taskId}`, {

@@ -1,12 +1,13 @@
 import { TaskDomain } from '@nao-todo/domain/task'
 import type { GoAsync, ResponseDataPagination } from '@nao-todo/types'
 import type { CreateTask, GetTasksOptions, Task, UpdateTaskOptions } from '@nao-todo/types'
-import { taskEntity2ViewObject } from '../converters/task'
+import { taskEntity2ViewObject, updateTaskOptions2UpdateValueObject } from '../converters/task'
 
 export interface TaskStore {
     setTasks(tasks: Task[]): void
     updateTask(taskId: Task['id'], updateOptions: UpdateTaskOptions): void
     addTask(task: Task): void
+    getTask(taskId: Task['id']): Task | undefined
 }
 
 export class TaskUseCase {
@@ -91,5 +92,25 @@ export class TaskUseCase {
         this.store.addTask(taskVO)
         // 4. 返回任务ID列表
         return [taskVO, null]
+    }
+
+    /**
+     * 更新任务
+     * @param taskId 任务ID
+     * @param updateOptions 更新任务选项
+     * @returns 错误信息
+     */
+    async updateTask(taskId: Task['id'], updateOptions: UpdateTaskOptions): GoAsync<void> {
+        // 1. 从领域服务更新任务
+        const oldTask = this.store.getTask(taskId)
+        if (oldTask === undefined) return '任务不存在'
+        const updateVO = updateTaskOptions2UpdateValueObject(updateOptions)
+        const [, err] = await this.taskDomain.update(taskId, updateVO)
+        if (err !== null) {
+            return err
+        }
+        // 2. 更新任务列表
+        this.store.updateTask(taskId, updateOptions)
+        return null
     }
 }

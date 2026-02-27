@@ -13,8 +13,8 @@ const rules = [
     { checker: (d: dayjs.Dayjs) => d.isSame(dayjs(), 'd'), fmt: '今天, HH:mm' },
     { checker: (d: dayjs.Dayjs) => d.isSame(dayjs().add(1, 'd'), 'd'), fmt: '明天, HH:mm' },
     { checker: (d: dayjs.Dayjs) => d.isSame(dayjs().add(2, 'd'), 'd'), fmt: '后天, HH:mm' },
-    { checker: (d: dayjs.Dayjs) => d.isAfter(dayjs().endOf('w')), fmt: '下周, M月D日, HH:mm' },
-    { checker: (d: dayjs.Dayjs) => d.isAfter(dayjs().endOf('m')), fmt: 'M月D日, HH:mm' }
+    { checker: (d: dayjs.Dayjs) => d.isBefore(dayjs().add(1, 'w').endOf('w')), fmt: '下周, M月D日, HH:mm' },
+    { checker: (d: dayjs.Dayjs) => d.isBefore(dayjs().add(1, 'm').endOf('m')), fmt: 'M月D日, HH:mm' }
 ]
 
 const date2RelativeDate = (dateStrOrDayJs: string | dayjs.Dayjs): Go<string> => {

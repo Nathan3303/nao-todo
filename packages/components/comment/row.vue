@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { nextTick, ref } from 'vue'
 import dayjs from 'dayjs'
-import { NueMessage, NueTextarea } from 'nue-ui'
+import { NueTextarea } from 'nue-ui'
 
 type CommentRowPayload = {
     id: string
@@ -14,7 +14,8 @@ type CommentRowPayload = {
 }
 type CommentRowProps = {
     comment: CommentRowPayload
-    updater?: (commentId: string, newContent: string) => Promise<boolean>
+    updater?: (commentId: string, newContent: string) => Promise<void>
+    deleter?: (commentId: string) => Promise<void>
 }
 type CommentRowEmits = {
     (event: 'delete', commentId: string): void
@@ -23,12 +24,13 @@ type CommentRowEmits = {
 
 defineOptions({ name: 'CommentRow' })
 const props = defineProps<CommentRowProps>()
-const emit = defineEmits<CommentRowEmits>()
+defineEmits<CommentRowEmits>()
 
 const editInputerRef = ref<InstanceType<typeof NueTextarea>>()
 const shadowContent = ref<string>(props.comment.content || '')
 const isEditing = ref(false)
 const loading = ref(false)
+const deleting = ref(false)
 
 const handleEditComment = () => {
     isEditing.value = true
@@ -38,14 +40,17 @@ const handleEditComment = () => {
 const handleUpdateComment = async () => {
     if (props.updater && shadowContent.value !== props.comment.content) {
         loading.value = true
-        const updateResult = await props.updater(props.comment.id, shadowContent.value)
+        await props.updater(props.comment.id, shadowContent.value)
         loading.value = false
-        if (!updateResult) {
-            NueMessage.error('评论更新失败')
-            return
-        }
     }
     handleCancelEdit()
+}
+
+const handleDeleteComment = async () => {
+    if (!props.deleter) return
+    deleting.value = true
+    await props.deleter(props.comment.id)
+    deleting.value = false
 }
 
 const handleCancelEdit = () => {
@@ -72,7 +77,12 @@ const handleCancelEdit = () => {
                         size="13px"
                         @click="handleEditComment"
                     />
-                    <nue-icon name="delete" size="13px" @click="emit('delete', comment.id)" />
+                    <nue-icon
+                        :name="deleting ? 'loading' : 'delete'"
+                        :spin="deleting"
+                        size="13px"
+                        @click="handleDeleteComment"
+                    />
                 </nue-div>
             </nue-div>
             <nue-div align="stretch" gap="4px" vertical>

@@ -5,13 +5,12 @@ import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
 import { inject } from 'vue'
 import type { Comment } from '@nao-todo/types'
 
-const { comments, updateComment, deleteComment } =
-    inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
+const { comments, commentHandler } = inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
 
-const commentUpdater = async (commentId: Comment['id'], newContent: string) => {
-    updateComment(commentId, { content: newContent })
-    return true
-}
+const commentUpdater = async (id: Comment['id'], content: string) =>
+    commentHandler.updateComment(id, { content })
+
+const deleteComment = async (id: Comment['id']) => commentHandler.deleteComment(id)
 </script>
 
 <template>
@@ -27,7 +26,7 @@ const commentUpdater = async (commentId: Comment['id'], newContent: string) => {
                     :key="comment.id"
                     :comment="comment"
                     :updater="commentUpdater"
-                    @delete="deleteComment"
+                    :deleter="deleteComment"
                 />
             </nue-content>
         </nue-main>

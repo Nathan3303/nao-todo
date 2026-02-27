@@ -2,7 +2,7 @@
 import { TaskTable } from '@/components/tasks'
 import { Pager } from '@nao-todo/components'
 import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
-import { computed, inject, onMounted, watch } from 'vue'
+import { computed, inject, onMounted, onUnmounted, watch } from 'vue'
 import useTasksLoader from '@/infrastructure/hooks/tasks-view/use-task-loader'
 import { useTasksStore } from '@/stores/tasks'
 import { NueMessage } from 'nue-ui'
@@ -44,18 +44,8 @@ const handleUpdatePerPage = (limit: number) => {
     handleUpdatePage(1)
 }
 
-// @watch 监听获取选项变化
-watch(
-    () => viewContext.preference.value?.getTasksOptions,
-    (newOptions) => taskLoader.loadAndReplace(newOptions),
-    { deep: true }
-)
-
-// @sub RefreshData 事件订阅
-viewContext.subscriber.subscribe('RefreshData', () => taskLoader.loadAndReplace())
-
-// @sub UpdatePreference 事件订阅
-viewContext.subscriber.subscribe('UpdatePreference', () => {
+// @method UpdatePreference 事件订阅
+const updatePreference = () => {
     if (!viewContext.builtInProject.value) return
     const newPreference = { ...viewContext.preference.value } as BuiltInProjectPreference
     newPreference.getTasksOptions!.limit = taskLoader.states.pagination.limit
@@ -70,10 +60,27 @@ viewContext.subscriber.subscribe('UpdatePreference', () => {
         return
     }
     NueMessage.success('保存成功')
-})
+}
+
+// @watch 监听获取选项变化
+watch(
+    () => viewContext.preference.value?.getTasksOptions,
+    (newOptions) => taskLoader.loadAndReplace(newOptions),
+    { deep: true }
+)
 
 // @onMounted
-onMounted(() => initTable())
+onMounted(() => {
+    initTable()
+    viewContext.subscriber.subscribe('RefreshData', taskLoader.loadAndReplace)
+    viewContext.subscriber.subscribe('UpdatePreference', updatePreference)
+})
+
+// @onUnmounted
+onUnmounted(() => {
+    viewContext.subscriber.unsubscribe('RefreshData', taskLoader.loadAndReplace)
+    viewContext.subscriber.unsubscribe('UpdatePreference', updatePreference)
+})
 </script>
 
 <template>
@@ -104,8 +111,8 @@ onMounted(() => initTable())
                         (k, v) => viewContext.builtInProjectHandlers.updateSortOption(k, v)
                     "
                     @clear-sort-options="() => viewContext.builtInProjectHandlers.clearSortOption"
-                    @delete-task="viewContext.taskUseCase.removeTask"
-                    @restore-task="viewContext.taskUseCase.restoreTask"
+                    @delete-task="(taskId) => viewContext.taskUseCase.removeTask(taskId)"
+                    @restore-task="(taskId) => viewContext.taskUseCase.restoreTask(taskId)"
                 />
             </nue-content>
         </nue-main>

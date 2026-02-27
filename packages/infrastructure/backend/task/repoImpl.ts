@@ -18,6 +18,7 @@ import type {
     UpdateTaskRes
 } from '../types'
 import dayjs from 'dayjs'
+import type { UpdateTask } from '@nao-todo/domain/task/valueobjects'
 
 export const useTaskRepository = (requester: Requester): TaskRepository => {
     // @method 获取任务详情
@@ -51,9 +52,8 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
             tags: createVO.tags || []
         }
         // 2. 调用接口
-        const response = await requester.post('/tasks', {
-            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` },
-            data: rto
+        const response = await requester.post('/tasks/', rto, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
         })
         // 3. 判断结果
         const res = response.data as ResponseData
@@ -67,15 +67,12 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
     }
 
     // @method 更新任务
-    const update = async (taskId: string, taskEntity: TaskEntity): GoAsync<string> => {
+    const update = async (taskId: string, updateVO: UpdateTask): GoAsync<string> => {
         // 1. 构建 rto
-        const rto: UpdateTaskReq = {}
-        if (taskEntity.name) rto.name = taskEntity.name
-        if (taskEntity.description) rto.description = taskEntity.description
+        const rto: UpdateTaskReq = updateVO
         // 2. 调用接口
-        const response = await requester.put(`/tasks/${taskId}`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` },
-            data: rto
+        const response = await requester.put(`/tasks/${taskId}`, rto, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
         })
         // 3. 判断结果
         const res = response.data as ResponseData

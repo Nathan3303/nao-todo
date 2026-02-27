@@ -44,9 +44,8 @@ export const useCommentRepository = (requester: Requester): CommentRepository =>
             content: commentEntity.content
         }
         // 2. 调用接口
-        const response = await requester.post('/comments', {
-            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` },
-            data: rto
+        const response = await requester.post('/comments/', rto, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
         })
         // 3. 判断结果
         const res = response.data as ResponseData
@@ -69,9 +68,8 @@ export const useCommentRepository = (requester: Requester): CommentRepository =>
         if (updateValueObject.content) rto.content = updateValueObject.content
         if (typeof updateValueObject.isTopUp === 'boolean') rto.isTopUp = updateValueObject.isTopUp
         // 2. 调用接口
-        const response = await requester.put(`/comments/${commentId}`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` },
-            data: rto
+        const response = await requester.put(`/comments/${commentId}`, rto, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
         })
         // 3. 判断结果
         const res = response.data as ResponseData

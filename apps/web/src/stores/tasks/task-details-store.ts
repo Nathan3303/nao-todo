@@ -1,6 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { useEventsStoreBase, useCommentsStoreBase, useLoadingErrorStoreBase } from '../base'
+import {
+    useEventsStoreBase,
+    useCommentsStoreBase,
+    useLoadingErrorStoreBase,
+    useEventIdsStoreBase,
+    useCommentIdsStoreBase
+} from '../base'
 import type { TaskDetailsViewObject } from '@/layouts/tasks/task-details/types'
 
 const useTaskDetailsStore = defineStore('TaskDetailsStore', () => {
@@ -16,10 +22,29 @@ const useTaskDetailsStore = defineStore('TaskDetailsStore', () => {
     const { loading, error, setLoading, setError } = useLoadingErrorStoreBase()
 
     // @storebase Events store base
-    const { addEvent, setEvents, getEvent } = useEventsStoreBase()
+    const { addEvent, setEvents, getEvent, updateEvent, deleteEvent } = useEventsStoreBase()
+
+    // @storebase Event Ids store base
+    const {
+        eventIds,
+        events: eventIdsEvents,
+        setEventIds,
+        addEventId,
+        removeEventId
+    } = useEventIdsStoreBase(getEvent)
 
     // @storebase Comment store base
-    const { addComment, setComments, getComment } = useCommentsStoreBase()
+    const { addComment, setComments, getComment, updateComment, removeComment } =
+        useCommentsStoreBase()
+
+    // @storebase Comment Ids store base
+    const {
+        commentIds,
+        comments: commentIdsComments,
+        setCommentIds,
+        addCommentId,
+        removeCommentId
+    } = useCommentIdsStoreBase(getComment)
 
     // @return
     return {
@@ -34,7 +59,21 @@ const useTaskDetailsStore = defineStore('TaskDetailsStore', () => {
         getEvent,
         addComment,
         setComments,
-        getComment
+        getComment,
+        eventIds,
+        eventIdsEvents,
+        setEventIds,
+        addEventId,
+        removeEventId,
+        commentIds,
+        commentIdsComments,
+        setCommentIds,
+        addCommentId,
+        removeCommentId,
+        updateComment,
+        removeComment,
+        updateEvent,
+        deleteEvent
     }
 })
 

@@ -69,7 +69,7 @@ const openDialog = (dialogName: string) => {
         <nue-div vertical>
             <nue-div vertical gap="0.5rem">
                 <nue-link
-                    v-for="link in builtInProjectLinks"
+                    v-for="link in builtInProjectLinks.slice(0, 5)"
                     :key="link.id"
                     :icon="link.icon"
                     :route="{ name: 'tasks-built-in-project', params: { projectId: link.id } }"
@@ -92,6 +92,18 @@ const openDialog = (dialogName: string) => {
                     @open-tag-manager="() => openDialog('tag-manager')"
                 />
             </nue-collapse>
+            <nue-divider />
+            <nue-div vertical gap="0.5rem">
+                <nue-link
+                    v-for="link in builtInProjectLinks.slice(5, builtInProjectLinks.length)"
+                    :key="link.id"
+                    :icon="link.icon"
+                    :route="{ name: 'tasks-built-in-project', params: { projectId: link.id } }"
+                    theme="route"
+                >
+                    {{ link.title }}
+                </nue-link>
+            </nue-div>
         </nue-div>
     </nue-aside>
 </template>

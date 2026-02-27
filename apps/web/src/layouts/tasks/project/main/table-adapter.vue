@@ -79,7 +79,7 @@ const updatePreferenceHandler = async () => {
 
 // @onMounted
 onMounted(() => {
-    console.log('TasksTableAdapter mounted')
+    // console.log('TasksTableAdapter mounted')
     initTable()
     viewContext.subscriber.subscribe('RefreshData', refreshDataHandler)
     viewContext.subscriber.subscribe('UpdatePreference', updatePreferenceHandler)
@@ -87,7 +87,7 @@ onMounted(() => {
 
 // @onUnmounted
 onUnmounted(() => {
-    console.log('TasksTableAdapter unmounted')
+    // console.log('TasksTableAdapter unmounted')
     viewContext.subscriber.unsubscribe('RefreshData', refreshDataHandler)
     viewContext.subscriber.unsubscribe('UpdatePreference', updatePreferenceHandler)
 })

@@ -1,19 +1,19 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import { TagNode, ComboBox } from '@nao-todo/components'
-import type { TagVO, Todo } from '@nao-todo/types'
+import type { Tag, Task } from '@nao-todo/types'
 import type { FrameworkOption } from '../general/types'
 
 type TodoTagBarProps = {
-    tags: TagVO[]
-    todoTags: Todo['tags']
+    tags: Tag[]
+    todoTags: Task['tags']
     clamped?: number
     readonly?: boolean
     small?: boolean
     transformOrigin?: string
 }
 type TodoTagBarEmits = {
-    (event: 'updateTags', tags: Todo['tags']): void
+    (event: 'updateTags', tags: Task['tags']): void
 }
 
 defineOptions({ name: 'TodoTagBar' })
@@ -40,7 +40,7 @@ const comboBoxOptions = computed<FrameworkOption[]>(() => {
           })
 })
 
-const selectedTags = computed<TagVO[]>(() => {
+const selectedTags = computed<Tag[]>(() => {
     const _tags = props.tags.filter((tag) =>
         props.todoTags ? props.todoTags.indexOf(tag.id) !== -1 : false
     )
@@ -120,3 +120,4 @@ const handleDropTag = async (tagId: string) => {
     }
 }
 </style>
+

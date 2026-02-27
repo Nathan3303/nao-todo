@@ -16,43 +16,42 @@ import type { TaskDetailsContext } from '../types'
 import type { Task } from '@nao-todo/types'
 import dayjs from 'dayjs'
 
-const { vo, emit, eventProgress, isCommenting } =
+const { vo, eventProgress, isCommenting, commentHandler, taskHandler, tags } =
     inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
 
 const updateTaskState = (v: unknown) => {
     if (vo.value === null) return
-    emit('updateTask', vo.value.id, { state: v as Task['state'] })
+    taskHandler.updateTask(vo.value.id, { state: v as Task['state'] })
 }
 
 const updateTaskPriority = (v: unknown) => {
     if (vo.value === null) return
-    emit('updateTask', vo.value.id, { priority: v as Task['priority'] })
+    taskHandler.updateTask(vo.value.id, { priority: v as Task['priority'] })
 }
 
 const updateTaskIsStarMark = (v: unknown) => {
     if (vo.value === null) return
-    emit('updateTask', vo.value.id, { isFavorited: v as Task['isFavorited'] })
+    taskHandler.updateTask(vo.value.id, { isFavorited: v as Task['isFavorited'] })
 }
 
-const updateTaskName = (v: unknown) => {
+const updateTaskName = () => {
     if (vo.value === null) return
-    emit('updateTask', vo.value.id, { name: v as Task['name'] })
+    taskHandler.updateTaskName(vo.value.id, vo.value.name as Task['name'])
 }
 
-const updateTaskDescription = (v: unknown) => {
+const updateTaskDescription = () => {
     if (vo.value === null) return
-    emit('updateTask', vo.value.id, { description: v as Task['description'] })
+    taskHandler.updateTaskDescription(vo.value.id, vo.value.description as Task['description'])
 }
 
 const updateTaskTags = (v: unknown) => {
     if (vo.value === null) return
-    emit('updateTask', vo.value.id, { tags: v as Task['tags'] })
+    taskHandler.updateTask(vo.value.id, { tags: v as Task['tags'] })
 }
 
-const createComment = async (content: string) => {
+const createCommentHandler = async (content: string) => {
     if (vo.value === null) return false
-    emit('createComment', { taskId: vo.value.id, content })
-    return true
+    return await commentHandler.createComment(vo.value.id, content)
 }
 </script>
 
@@ -118,7 +117,7 @@ const createComment = async (content: string) => {
                     </nue-div>
                     <nue-div vertical style="padding: 1rem">
                         <todo-tag-bar
-                            :tags="vo.tagList"
+                            :tags="tags"
                             :todo-tags="vo.tags"
                             @update-tags="updateTaskTags"
                         />
@@ -135,7 +134,7 @@ const createComment = async (content: string) => {
         </nue-main>
         <nue-footer>
             <nue-div v-if="isCommenting" vertical width="100%">
-                <comment-creator :handler="createComment" @cancel="isCommenting = false" />
+                <comment-creator :handler="createCommentHandler" @cancel="isCommenting = false" />
             </nue-div>
             <nue-div justify="space-between" width="100%">
                 <details-row :text="eventProgress.text" label="检查事项进度" />

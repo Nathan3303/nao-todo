@@ -111,7 +111,10 @@ const useProjectView = (props: ProjectViewProps) => {
         switchViewTypeToTable: () => switchViewType('table'),
         switchViewTypeToKanban: () => switchViewType('kanban'),
         switchViewTypeToList: () => switchViewType('list'),
-        showTaskCreator: () => tasksViewContext.dialogManager.openDialog('task-creator', {})
+        showTaskCreator: () =>
+            tasksViewContext.dialogManager.openDialog('task-creator', {
+                projectId: props.projectId
+            })
     })
 
     // @returns

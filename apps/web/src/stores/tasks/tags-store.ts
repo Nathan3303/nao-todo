@@ -30,7 +30,7 @@ export default defineStore('TagsStore', () => {
 
     // @returns
     return {
-        tags: computed(() => tags.value),
+        tags,
         setTags,
         addTag,
         getTag,

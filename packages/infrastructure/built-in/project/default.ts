@@ -1,7 +1,7 @@
 import dayjs from 'dayjs'
-import type { BuiltInProject, BuiltInProjectPreference } from './types'
+import type { BuiltInProjectRes, BuiltInProjectPreferenceRes } from './types'
 
-export const defaultBuiltInProjects: BuiltInProject[] = [
+export const defaultBuiltInProjects: BuiltInProjectRes[] = [
     {
         id: 'all',
         icon: 'more2',
@@ -54,13 +54,6 @@ export const defaultBuiltInProjects: BuiltInProject[] = [
         createTaskOptions: {}
     },
     {
-        id: 'givenup',
-        icon: 'clear',
-        name: '已放弃的待办',
-        description: '',
-        createTaskOptions: {}
-    },
-    {
         id: 'deleted',
         icon: 'recycle-bin',
         name: '垃圾桶',
@@ -74,10 +67,17 @@ export const defaultBuiltInProjects: BuiltInProject[] = [
         description:
             '结束日期于今日零点之前，且未完成的待办任务被视为过期任务，您可以通过延期按钮将待办任务延续至今天。',
         createTaskOptions: {}
+    },
+    {
+        id: 'givenup',
+        icon: 'clear',
+        name: '已放弃的待办',
+        description: '',
+        createTaskOptions: {}
     }
 ]
 
-export const defaultBuiltInProjectPreferences: BuiltInProjectPreference[] = [
+export const defaultBuiltInProjectPreferences: BuiltInProjectPreferenceRes[] = [
     {
         projectId: 'all',
         userId: 'default',

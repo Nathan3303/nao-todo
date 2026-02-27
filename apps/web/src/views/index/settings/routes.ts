@@ -1,4 +1,4 @@
-import { useViewStore } from '@/stores/global'
+// import { useUserStore } from '@/stores'
 import type { RouteRecordRaw } from 'vue-router'
 
 const _routeRecords = [
@@ -16,20 +16,20 @@ const _routeRecords = [
     //     title: '密码与安全',
     //     icon: 'lock'
     // },
-    {
-        path: 'view',
-        name: 'settings-view',
-        componentName: 'view',
-        title: '页面设置',
-        icon: 'theme'
-    },
-    {
-        path: 'smartlist',
-        name: 'settings-smartlist',
-        componentName: 'smartlist',
-        title: '智能列表',
-        icon: 'list'
-    }
+    // {
+    //     path: 'view',
+    //     name: 'settings-view',
+    //     componentName: 'view',
+    //     title: '页面设置',
+    //     icon: 'theme'
+    // },
+    // {
+    //     path: 'smartlist',
+    //     name: 'settings-smartlist',
+    //     componentName: 'smartlist',
+    //     title: '智能列表',
+    //     icon: 'list'
+    // }
 ]
 
 const SettingsViewRouteLinks = _routeRecords.map((record) => {
@@ -45,12 +45,6 @@ const SettingsViewRouteRecordRaw: RouteRecordRaw = {
     name: 'settings',
     component: () => import('./index.vue'),
     redirect: { name: 'settings-profile' },
-    beforeEnter: (to, from, next) => {
-        // 重置浮动侧边栏的显示状态
-        const viewStore = useViewStore()
-        viewStore.appAsideStates.visible = false
-        next()
-    },
     children: _routeRecords.map((record) => {
         return {
             path: record.path,

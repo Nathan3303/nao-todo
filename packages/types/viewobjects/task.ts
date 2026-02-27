@@ -9,8 +9,8 @@ export type Task = {
     state: 'todo' | 'in-progress' | 'done'
     priority: 'low' | 'medium' | 'high' | 'urgent'
     tags: Tag['id'][]
-    startAt?: string | null
-    endAt?: string | null
+    startAt?: string
+    endAt: string
     isDeleted: boolean
     deletedAt: string | null
     isArchived: boolean
@@ -25,7 +25,7 @@ export type Task = {
 }
 
 export type CreateTask = {
-    projectId?: Task['projectId']
+    projectId: Task['projectId']
     name: Task['name']
     description?: Task['description']
     state: Task['state']

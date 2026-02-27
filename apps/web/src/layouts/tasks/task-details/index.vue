@@ -9,23 +9,19 @@ import { useRoute } from 'vue-router'
 defineOptions({ name: 'TasksViewDetailsAdapter' })
 
 const route = useRoute()
-const tasksViewContext = inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
+const { isUseFloatOutline, outlineWidth, handleResizeOutline } =
+    inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
 
 const taskId = computed<string>(() => route.params.taskId as string)
 </script>
 
 <template>
-    <template v-if="tasksViewContext.isUseFloatOutline">
+    <template v-if="isUseFloatOutline">
         <tasks-view-details-drawer />
     </template>
     <template v-else>
-        <nue-separator op-target="next" @resize="tasksViewContext.handleResizeOutline" />
-        <nue-aside
-            :width="tasksViewContext.outlineWidth"
-            max-width="480px"
-            min-width="360px"
-            style="padding: 0"
-        >
+        <nue-separator op-target="next" @resize="handleResizeOutline" />
+        <nue-aside :width="outlineWidth" max-width="480px" min-width="360px" style="padding: 0">
             <tasks-view-details :task-id="taskId" />
         </nue-aside>
     </template>

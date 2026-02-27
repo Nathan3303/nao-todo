@@ -22,17 +22,19 @@ const {
 
 const dropdownRef = ref<InstanceType<typeof TasksOperationsDropdown>>()
 
+const refreshHandler = () => subscriber.emit('RefreshData')
+const switchCompletedTaskDisplay = () => builtInProjectHandlers.switchCompletedTaskDisplay()
+const updatePreference = () => subscriber.emit('UpdatePreference')
+
 // 注册 Dropdown 执行函数
 onMounted(() => {
     if (!dropdownRef.value) return
     dropdownRef.value.register('switch-view-to-table', switchViewTypeToTable)
     dropdownRef.value.register('switch-view-to-kanban', switchViewTypeToKanban)
     dropdownRef.value.register('switch-view-to-list', switchViewTypeToList)
-    dropdownRef.value.register('refresh-data', () => subscriber.emit('RefreshData'))
-    dropdownRef.value.register('hide-completed', () =>
-        builtInProjectHandlers.switchCompletedTaskDisplay()
-    )
-    dropdownRef.value.register('save-preference', () => subscriber.emit('UpdatePreference'))
+    dropdownRef.value.register('refresh-data', refreshHandler)
+    dropdownRef.value.register('hide-completed', switchCompletedTaskDisplay)
+    dropdownRef.value.register('save-preference', updatePreference)
 })
 </script>
 

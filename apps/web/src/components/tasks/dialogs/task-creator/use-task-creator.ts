@@ -10,13 +10,13 @@ const useTaskCreator = (props: TaskCreatorProps) => {
 
     // @states
     const states = reactive<TaskCreatorVO>({
-        projectId: void 0,
+        projectId: '',
         name: '',
         description: '',
         state: 'todo',
         priority: 'low',
-        startAt: null,
-        endAt: null,
+        startAt: '',
+        endAt: '',
         tags: [],
         creating: false,
         disabled: false
@@ -52,13 +52,13 @@ const useTaskCreator = (props: TaskCreatorProps) => {
 
     // @method 清空输入值
     const clearInputsValue = () => {
-        states.projectId = void 0
+        states.projectId = ''
         states.name = ''
         states.description = ''
         states.state = 'todo'
         states.priority = 'low'
-        states.startAt = null
-        states.endAt = null
+        states.startAt = ''
+        states.endAt = ''
         states.tags = []
     }
 

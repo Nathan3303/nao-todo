@@ -39,7 +39,7 @@ const useDialogs = (): UseDialogs => {
     const tagsStore = useTagsStore()
 
     // @presetStates
-    const projects = computed(() => projectsStore.getAllProjects())
+    const { availableProjects: projects } = storeToRefs(projectsStore)
     const { tags } = storeToRefs(tagsStore)
 
     // @method 创建清单对话框注册函数
@@ -91,7 +91,7 @@ const useDialogs = (): UseDialogs => {
 
     // @method 标签颜色更新对话框处理函数
     const tagColorUpdater = async (tagId: Tag['id'], color: Tag['color']) => {
-        return tasksViewContext.tagUseCase.update(tagId, { color })
+        return await tasksViewContext.tagUseCase.update(tagId, { color })
     }
 
     // @method 标签创建对话框打开函数

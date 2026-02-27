@@ -2,9 +2,6 @@ import dayjs from 'dayjs'
 import { computed, inject, provide, ref, watch } from 'vue'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { TASK_DETAILS_CONTEXT_KEY } from './constants'
-import type { Comment, UpdateComment } from '@nao-todo/types/viewobjects/comment'
-import { type TaskDetailsProps, type TaskDetailsEmits, type TaskDetailsContext } from './types'
-import type { Event, Task } from '@nao-todo/types'
 import { EventUseCase } from '@nao-todo/application/web/usecases/event'
 import { EventDomain } from '@nao-todo/domain/event'
 import { useEventRepository } from '@nao-todo/infrastructure/backend/event/repoImpl'
@@ -14,12 +11,19 @@ import { CommentDomain } from '@nao-todo/domain/comment'
 import { useCommentRepository } from '@nao-todo/infrastructure/backend/comment/repoImpl'
 import { storeToRefs } from 'pinia'
 import { useProjectsStore, useTagsStore, useTasksStore, useTaskDetailsStore } from '@/stores/tasks'
-import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import useCommentHandler from '@/handlers/tasks/comment-handler'
+import useEventHandler from '@/handlers/tasks/event-handler'
+import useTaskHandler from '@/handlers/tasks/task-handler'
+import { useRouter } from 'vue-router'
+import type { Task } from '@nao-todo/types'
+import type { TaskDetailsProps, TaskDetailsEmits, TaskDetailsContext } from './types'
+import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
 
-export default (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
+const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     // @viewContext TasksView context
     const tasksViewContext = inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
+    const router = useRouter()
 
     // @dataStore
     const projectStore = useProjectsStore()
@@ -28,7 +32,9 @@ export default (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     const taskDetailsStore = useTaskDetailsStore()
 
     // @presetStates
-    const { projects } = storeToRefs(projectStore)
+    const { availableProjects: projects } = storeToRefs(projectStore)
+    const { tags } = storeToRefs(tagStore)
+    const { eventIdsEvents: events, commentIdsComments: comments } = storeToRefs(taskDetailsStore)
 
     // @usecase 任务检查事项用例
     const eventUseCase = new EventUseCase(
@@ -42,11 +48,14 @@ export default (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         taskDetailsStore
     )
 
+    // @handlers
+    const eventHandler = useEventHandler(eventUseCase)
+    const commentHandler = useCommentHandler(commentUseCase)
+    const taskHandler = useTaskHandler(tasksViewContext.taskUseCase)
+
     // @states
     const loading = ref(false)
     const error = ref('')
-    const eventIds = ref<Event['id'][]>([])
-    const commentIds = ref<Comment['id'][]>([])
     const isCommenting = ref(false)
 
     // @computed 获取任务详情并转换为视图对象
@@ -76,50 +85,6 @@ export default (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         }
     })
 
-    // @computed 获取检查事项列表
-    const events = computed(() => {
-        if (!props.taskId) return []
-        const _events = eventIds.value.map((id) => taskDetailsStore.getEvent(id)!).filter(Boolean)
-        return _events.sort((a, b) => a.sortId - b.sortId)
-    })
-
-    // @computed 获取评论列表
-    const comments = computed(() => {
-        if (!props.taskId) return []
-        return commentIds.value.map((id) => taskDetailsStore.getComment(id)!).filter(Boolean)
-    })
-
-    // @method 初始化任务详情
-    const initialize = async (taskId?: Task['id']) => {
-        // 1. 判断任务 ID
-        if (!taskId) {
-            error.value = '选择任务以查看详情'
-            return
-        }
-        // 2. 获取检查事项
-        const [eids, err] = await eventUseCase.loadEvents(taskId)
-        if (err !== null) {
-            error.value = '检查事项获取失败：' + unwrapError(err)
-            return
-        }
-        eventIds.value = eids
-        // 3. 获取评论
-        const [cids, err2] = await commentUseCase.loadComments(taskId)
-        if (err2 !== null) {
-            error.value = '评论获取失败：' + unwrapError(err2)
-            return
-        }
-        commentIds.value = cids
-        return null
-    }
-
-    // @watch 监听任务 ID
-    watch(
-        () => props.taskId,
-        async (newId) => await initialize(newId),
-        { immediate: true }
-    )
-
     // @computed 计算检查事项进度
     const eventProgress = computed(() => {
         const _e = events.value
@@ -130,67 +95,40 @@ export default (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         return { percentage, text }
     })
 
-    // @method 重新排序检查事项
-    const resortEvents = async (origin: number, target: number, isUp: boolean) => {
-        if (!events.value) return
-        const originEvent = events.value[origin]
-        const targetEvent = events.value[target]
-        if (!originEvent || !targetEvent) return
-        // 处理上升排序
-        if (isUp) {
-            if (originEvent.sortId >= targetEvent.sortId) {
-                originEvent.sortId = targetEvent.sortId - 1
-            }
-        } else {
-            if (originEvent.sortId <= targetEvent.sortId) {
-                originEvent.sortId = targetEvent.sortId + 1
-            }
+    // @method 初始化任务详情
+    const initialize = async (taskId?: Task['id']) => {
+        error.value = ''
+        // 1. 判断任务 ID
+        if (!taskId) {
+            error.value = '选择任务以查看详情'
+            return
         }
-        // 更新检查事项排序
-        emit('updateEvents', [
-            { eventId: originEvent.id, updateVO: { sortId: originEvent.sortId } },
-            { eventId: targetEvent.id, updateVO: { sortId: targetEvent.sortId } }
-        ])
-    }
-
-    // @method 更新评论
-    const updateComment = async (commentId: Comment['id'], updateVO: UpdateComment) => {
-        if (!comments.value) return
-        const index = comments.value.findIndex((comment) => comment.id === commentId)
-        if (index === -1) return
-        comments.value[index] = {
-            ...comments.value[index],
-            ...updateVO,
-            id: comments.value[index].id,
-            taskId: comments.value[index].taskId
+        // 2. 获取检查事项
+        const [, err] = await eventUseCase.loadEvents(taskId)
+        if (err !== null) {
+            error.value = '检查事项获取失败：' + unwrapError(err)
+            return
         }
-        emit('updateComment', commentId, updateVO)
+        // 3. 获取评论
+        const [, err2] = await commentUseCase.loadComments(taskId)
+        if (err2 !== null) {
+            error.value = '评论获取失败：' + unwrapError(err2)
+            return
+        }
+        return null
     }
 
-    // @method 删除评论
-    const deleteComment = (commentId: Comment['id']) => {
-        if (!comments.value) return
-        const index = comments.value.findIndex((comment) => comment.id === commentId)
-        if (index === -1) return
-        comments.value.splice(index, 1)
-        emit('deleteComment', commentId)
+    // @method 关闭任务详情面板
+    const closeDetails = () => {
+        router.push({ name: router.currentRoute.value.name, params: { taskId: '' } })
     }
 
-    // @method 设置任务为已完成
-    const finishTask = () => {
-        if (!task.value) return
-        const taskId = task.value?.id
-        if (!taskId) return
-        task.value.state = 'done'
-        emit('updateTask', taskId, task.value)
-    }
-
-    // @method 更新任务结束时间
-    const updateEndAt = (value: string) => {
-        if (!task.value) return
-        task.value.endAt = value
-        emit('updateTask', task.value.id, task.value)
-    }
+    // @watch 监听任务 ID
+    watch(
+        () => props.taskId,
+        (newId) => initialize(newId),
+        { immediate: true }
+    )
 
     // @provide 任务详情面板上下文
     provide<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY, {
@@ -199,16 +137,18 @@ export default (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         eventProgress,
         comments: comments,
         projects: computed(() => [...projects.value.values()]),
+        tags,
         isCommenting,
         emit,
-        finishTask,
-        closeDetails: () => emit('closeDetails'),
-        updateEndAt,
-        resortEvents,
-        updateComment,
-        deleteComment
+        closeDetails,
+        resortEvents: (oeid, teid, isUp) => eventUseCase.resort(oeid, teid, isUp),
+        eventHandler,
+        commentHandler,
+        taskHandler
     })
 
     // @returns 返回值
     return { loading, error, task }
 }
+
+export default useTaskDetails

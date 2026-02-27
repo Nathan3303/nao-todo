@@ -5,24 +5,26 @@ import type { TaskDetailsContext } from '../types'
 import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
 import { inject } from 'vue'
 
-const { vo, emit, events, resortEvents } = inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
+const { vo, events, resortEvents, eventHandler } =
+    inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
 
 const { handleDragStart, handleDragOver, handleDrop, handleDragLeave, handleDragEnd } =
     useEventDragger((dragged, dropped, isUp) => {
-        resortEvents(Number(dragged.dataset.index), Number(dropped.dataset.index), isUp)
+        if (!dragged.dataset.eid || !dropped.dataset.eid) return
+        resortEvents(dragged.dataset.eid, dropped.dataset.eid, isUp)
     })
 
-const updateEvent = async (value: { id: string; name: string; isDone: boolean }) => {
-    emit('updateEvent', value.id, value)
-}
+// const updateEvent = async (value: { id: string; name: string; isDone: boolean }) => {
+//     await eventHandler.updateEvent(value.id, value)
+// }
 
-const deleteEvent = async (id: string) => {
-    emit('deleteEvent', id)
-}
+// const deleteEvent = async (id: string) => {
+//     await (id)
+// }
 
 const createEvent = async (payload: { value: string }) => {
     if (!vo.value) return
-    emit('createEvent', { taskId: vo.value.id, name: payload.value as string })
+    await eventHandler.createEvent({ taskId: vo.value.id, name: payload.value })
 }
 </script>
 
@@ -39,13 +41,13 @@ const createEvent = async (payload: { value: string }) => {
             @drop="handleDrop"
         >
             <event-row
-                v-for="(event, index) in events"
+                v-for="event in events"
                 data-drag-item="true"
                 :key="event.id"
                 :event="event"
-                :data-index="index"
-                :on-update="updateEvent"
-                :on-delete="deleteEvent"
+                :data-eid="event.id"
+                :on-update="(v) => eventHandler.updateEvent(v.id, v)"
+                :on-delete="eventHandler.deleteEvent"
             />
         </nue-div>
         <input-button

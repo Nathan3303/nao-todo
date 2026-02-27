@@ -21,7 +21,6 @@ const useTagColorUpdater = (props: TagColorUpdaterProps) => {
         }
         states.tagId = id
         states.color = props.tagColorGetter(id) || 'transparent'
-        console.log(props.tagColorGetter(id))
     }
 
     // @method 更新标签颜色
@@ -36,7 +35,7 @@ const useTagColorUpdater = (props: TagColorUpdaterProps) => {
         const err = await props.tagColorUpdater(states.tagId, states.color)
         states.updating = false
         // 处理结果
-        if (err) {
+        if (err !== null) {
             NueMessage.error(unwrapError(err))
             states.disabled = false
             return false

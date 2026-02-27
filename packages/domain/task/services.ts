@@ -2,6 +2,7 @@ import parseObject2QueryString from '@nao-todo/infrastructure/utils/query-string
 import { TaskEntity } from './entities'
 import type { TaskRepository } from './repositories'
 import type { CreateTask, GetTasksOptions, GoAsync, ResponseDataPagination } from '@nao-todo/types'
+import type { UpdateTask } from './valueobjects'
 
 export class TaskDomain {
     /**
@@ -31,11 +32,11 @@ export class TaskDomain {
     /**
      * 更新任务
      * @param taskId 任务ID
-     * @param taskEntity 任务实体
+     * @param updateVO 更新任务值对象
      * @returns 更新后的任务ID
      */
-    async update(taskId: string, taskEntity: TaskEntity): GoAsync<string> {
-        return await this.taskRepo.update(taskId, taskEntity)
+    async update(taskId: string, updateVO: UpdateTask): GoAsync<string> {
+        return await this.taskRepo.update(taskId, updateVO)
     }
 
     /**
