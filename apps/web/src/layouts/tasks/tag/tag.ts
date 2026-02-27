@@ -2,7 +2,6 @@ import { computed, inject, provide, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { TAG_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import type { TagViewContext, TagViewProps } from './types'
-import useSubscriber from '@/infrastructure/hooks/use-subscriber'
 import useUserStore from '@nao-todo/application/web/stores/user-store'
 import { storeToRefs } from 'pinia'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
@@ -32,9 +31,6 @@ const useTagView = (props: TagViewProps) => {
     const { profile } = storeToRefs(userStore)
     const { tags, tagPreference: preference } = storeToRefs(tagsStore)
 
-    // @hooks 事件监听
-    const subscriber = useSubscriber()
-
     // @method 视图切换
     const switchViewType = (viewType: string) => {
         if (!viewType) return
@@ -54,6 +50,7 @@ const useTagView = (props: TagViewProps) => {
         if (!props.tagId || !profile.value) return
         // 2. 获取标签详情
         const err = await tasksViewContext.tagUseCase.loadTagPreference(props.tagId)
+        console.log(preference)
         if (err !== null) {
             NueMessage.error(unwrapError(err))
             return
@@ -81,7 +78,7 @@ const useTagView = (props: TagViewProps) => {
         taskUseCase,
         tasksViewContext.tagUseCase,
         tagsStore,
-        subscriber
+        tasksViewContext.subscriber
     )
 
     // @computed 是否已经是只显示未完成任务
@@ -100,7 +97,7 @@ const useTagView = (props: TagViewProps) => {
         preference,
         profile,
         tags: computed(() => [...tags.value.values()]),
-        subscriber,
+        subscriber: tasksViewContext.subscriber,
         tagHandler,
         isHideCompletedAlready,
         getColumnLabel: tasksViewContext.getColumnLabel,

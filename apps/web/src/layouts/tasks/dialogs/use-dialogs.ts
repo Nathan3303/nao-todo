@@ -10,6 +10,7 @@ import { computed, inject, type ComputedRef } from 'vue'
 import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { useProjectsStore, useTagsStore } from '@/stores/tasks'
+import type { Subscriber } from '@/infrastructure/hooks/use-subscriber'
 
 export type UseDialogs = {
     projects: ComputedRef<Project[]>
@@ -28,6 +29,7 @@ export type UseDialogs = {
     tagColorUpdater: (tagId: Tag['id'], color: Tag['color']) => GoAsync<void>
     taskCreatorRegister: (open: DialogOpenFunc, close: DialogCloseFunc) => void
     taskCreatorHandler: (vo: CreateTask) => GoAsync<string>
+    subscriber: Subscriber
 }
 
 const useDialogs = (): UseDialogs => {
@@ -133,7 +135,8 @@ const useDialogs = (): UseDialogs => {
         tagColorGetter: tasksViewContext.getTagColor,
         tagColorUpdater,
         taskCreatorRegister,
-        taskCreatorHandler
+        taskCreatorHandler,
+        subscriber: tasksViewContext.subscriber
     }
 }
 

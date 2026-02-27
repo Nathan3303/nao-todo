@@ -1,5 +1,10 @@
 <script lang="ts" setup>
 import { SettingsAside } from '@/layouts/settings'
+import useSettingsView from './settings-view'
+
+defineOptions({ name: 'SettingsView' })
+
+useSettingsView()
 </script>
 
 <template>
@@ -21,3 +26,4 @@ import { SettingsAside } from '@/layouts/settings'
     align-items: stretch;
 }
 </style>
+

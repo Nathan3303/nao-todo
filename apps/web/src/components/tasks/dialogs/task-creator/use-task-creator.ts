@@ -26,7 +26,7 @@ const useTaskCreator = (props: TaskCreatorProps) => {
     const handleCreateTask = async () => {
         // 调用 API
         states.creating = states.disabled = true
-        const [todoId, err] = await props.createTaskHandler({
+        const [taskId, err] = await props.createTaskHandler({
             projectId: states.projectId,
             name: states.name,
             description: states.description,
@@ -38,7 +38,7 @@ const useTaskCreator = (props: TaskCreatorProps) => {
         })
         states.creating = false
         // 处理失败结果
-        if (err) {
+        if (err !== null) {
             NueMessage.error(unwrapError(err))
             states.disabled = false
             return false
@@ -46,7 +46,8 @@ const useTaskCreator = (props: TaskCreatorProps) => {
         // 处理成功结果
         NueMessage.success('待办任务创建成功')
         // 跳转至新待办任务详情页
-        router.push({ name: router.currentRoute.value.name, params: { todoId } })
+        if (props.subscriber) props.subscriber.emit('AddNewTaskId', taskId)
+        router.push({ name: router.currentRoute.value.name, params: { taskId } })
         return true
     }
 
@@ -71,3 +72,4 @@ const useTaskCreator = (props: TaskCreatorProps) => {
 }
 
 export default useTaskCreator
+

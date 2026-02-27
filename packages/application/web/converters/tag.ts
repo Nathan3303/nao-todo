@@ -52,5 +52,6 @@ export const tagPreferenceVO2Entity = (vo: TagPreference): TagPreferenceEntity =
     entity.viewType = vo.viewType
     entity.getTasksOptions = JSON.stringify(vo.getTasksOptions)
     entity.columns = JSON.stringify(vo.columns)
+    console.log(entity)
     return entity
 }

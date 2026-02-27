@@ -3,7 +3,6 @@ import { useRouter } from 'vue-router'
 import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import type { BuiltInProjectViewProps, BuiltInProjectViewContext } from './types'
 // import useAppStore from '@/views/app-store'
-import useSubscriber from '@/infrastructure/hooks/use-subscriber'
 import useUserStore from '@nao-todo/application/web/stores/user-store'
 import { storeToRefs } from 'pinia'
 import { BuiltInProjectLayoutHandlers } from '@/handlers/tasks/built-in-project-handler'
@@ -35,9 +34,6 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     const { builtInProjectPreference: preference } = storeToRefs(builtInProjectsStore)
     const { profile } = storeToRefs(userStore)
     const { tags } = storeToRefs(tagsStore)
-
-    // @hooks 事件监听
-    const subscriber = useSubscriber()
 
     // @method 视图切换
     const switchViewType = (viewType: string) => {
@@ -105,7 +101,7 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
         preference,
         profile,
         tags: computed(() => [...tags.value.values()]),
-        subscriber,
+        subscriber: tasksViewContext.subscriber,
         builtInProjectHandlers,
         isHideCompletedAlready,
         getColumnLabel: tasksViewContext.getColumnLabel,
@@ -114,7 +110,7 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
         switchViewTypeToTable: () => switchViewType('table'),
         switchViewTypeToKanban: () => switchViewType('kanban'),
         switchViewTypeToList: () => switchViewType('list'),
-        showTaskCreator: () => tasksViewContext.dialogManager.openDialog('task-creator', {}),
+        showTaskCreator: () => tasksViewContext.dialogManager.openDialog('task-creator', {})
     })
 
     // @returns

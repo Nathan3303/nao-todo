@@ -1,15 +1,17 @@
+type cbFunc = (...args: any[]) => void
+
 export interface Subscriber {
-    emit: (eventName: string) => void
-    subscribe: (eventName: string, callback: () => void) => void
-    unsubscribe: (eventName: string, callback: () => void) => void
+    emit: (eventName: string, ...args: any[]) => void
+    subscribe: (eventName: string, callback: cbFunc) => void
+    unsubscribe: (eventName: string, callback: cbFunc) => void
 }
 
 const useSubscriber = (): Subscriber => {
     // @state
-    const callbackMap = new Map<string, Set<() => void>>()
+    const callbackMap = new Map<string, Set<cbFunc>>()
 
     // @method 订阅事件
-    const subscribe = (eventName: string, callback: () => void) => {
+    const subscribe = (eventName: string, callback: cbFunc) => {
         if (!callbackMap.has(eventName)) {
             callbackMap.set(eventName, new Set())
         }
@@ -17,7 +19,7 @@ const useSubscriber = (): Subscriber => {
     }
 
     // @method 取消订阅事件
-    const unsubscribe = (eventName: string, callback: () => void) => {
+    const unsubscribe = (eventName: string, callback: cbFunc) => {
         const callbacks = callbackMap.get(eventName)
         if (callbacks) {
             callbackMap.set(eventName, new Set([...callbacks].filter((cb) => cb !== callback)))
@@ -28,8 +30,11 @@ const useSubscriber = (): Subscriber => {
     }
 
     // @method 触发事件
-    const emit = (eventName: string) => {
-        callbackMap.get(eventName)?.forEach((callback) => callback())
+    const emit = (eventName: string, ...args: any[]) => {
+        callbackMap.get(eventName)?.forEach((callback) => {
+            // console.log('触发事件', eventName, ...args)
+            callback(...args)
+        })
     }
 
     // @returns

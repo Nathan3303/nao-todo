@@ -1,13 +1,13 @@
 import useAutoChangeTheme from '@/infrastructure/hooks/tasks-view/use-auto-change-theme'
 import { AuthUseCase } from '@nao-todo/application/web/usecases/auth'
-import { AuthDomain } from '@nao-todo/domain'
+import { AuthDomain } from '@nao-todo/domain/auth'
 import useResponsiveFlag, {
     responsiveTypes
 } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
 import { useAuthRepository } from '@nao-todo/infrastructure/backend/auth/repoImpl'
 import { defineStore } from 'pinia'
 import { computed, reactive } from 'vue'
-import useUserStore from '@nao-todo/application/web/stores/user-store'
+import useUserStore from '@/stores/user-store'
 import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 import { UserUseCase } from '@nao-todo/application/web/usecases/user'
 import { useUserRepository } from '@nao-todo/infrastructure/backend/user/repoImpl'

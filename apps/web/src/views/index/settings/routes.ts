@@ -43,7 +43,7 @@ const SettingsViewRouteLinks = _routeRecords.map((record) => {
 const SettingsViewRouteRecordRaw: RouteRecordRaw = {
     path: 'settings',
     name: 'settings',
-    component: () => import('./index.vue'),
+    component: () => import('./entry.vue'),
     redirect: { name: 'settings-profile' },
     children: _routeRecords.map((record) => {
         return {

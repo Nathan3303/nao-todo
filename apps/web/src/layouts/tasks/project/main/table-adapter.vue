@@ -44,17 +44,17 @@ const handleUpdatePerPage = (limit: number) => {
     handleUpdatePage(1)
 }
 
-// @watch 监听获取选项变化
-// watch(
-//     () => viewContext.preference.value?.getTasksOptions,
-//     (newOptions) => taskLoader.loadAndReplace(newOptions),
-//     { deep: true }
-// )
-
 // @method 刷新数据
 const refreshDataHandler = () => {
     const newGetTasksOptions = { ...viewContext.preference.value?.getTasksOptions }
     taskLoader.loadAndReplace(newGetTasksOptions)
+}
+
+// @method 新增任务 ID 事件订阅
+const addNewTaskId = (taskId: string) => {
+    const idx = taskLoader.states.taskIds.findIndex((id) => id === taskId)
+    if (idx !== -1) return
+    taskLoader.states.taskIds.push(taskId)
 }
 
 // @method 更新偏好设置
@@ -79,17 +79,17 @@ const updatePreferenceHandler = async () => {
 
 // @onMounted
 onMounted(() => {
-    // console.log('TasksTableAdapter mounted')
     initTable()
     viewContext.subscriber.subscribe('RefreshData', refreshDataHandler)
     viewContext.subscriber.subscribe('UpdatePreference', updatePreferenceHandler)
+    viewContext.subscriber.subscribe('AddNewTaskId', addNewTaskId)
 })
 
 // @onUnmounted
 onUnmounted(() => {
-    // console.log('TasksTableAdapter unmounted')
     viewContext.subscriber.unsubscribe('RefreshData', refreshDataHandler)
     viewContext.subscriber.unsubscribe('UpdatePreference', updatePreferenceHandler)
+    viewContext.subscriber.unsubscribe('AddNewTaskId', addNewTaskId)
 })
 </script>
 

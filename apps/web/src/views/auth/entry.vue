@@ -4,13 +4,13 @@ import useAuthView from './auth-view'
 
 defineOptions({ name: 'AuthView' })
 
-const authView = useAuthView()
+const { isDisplayAside } = useAuthView()
 </script>
 
 <template>
     <nue-container>
         <nue-main>
-            <auth-view-aside v-if="authView.isDisplayAside" />
+            <auth-view-aside v-if="isDisplayAside" />
             <nue-content fill>
                 <router-view />
             </nue-content>

@@ -27,6 +27,11 @@ const useUserStore = defineStore('UserStore', () => {
         userProfile.value = profile
     }
 
+    // @action 更新用户配置文件
+    const updateUserProfile = (updateProfile: Partial<UserProfile>) => {
+        userProfile.value = { ...userProfile.value, ...updateProfile } as UserProfile
+    }
+
     // @returns
     return {
         isAuthenticated: computed(() => isAuthenticated.value),
@@ -34,7 +39,8 @@ const useUserStore = defineStore('UserStore', () => {
         token: computed(() => userToken.value),
         setUserToken,
         profile: computed(() => userProfile.value),
-        setUserProfile
+        setUserProfile,
+        updateUserProfile
     }
 })
 

@@ -1,21 +1,24 @@
 <template>
     <nue-container>
-        <nue-header>基本信息修改</nue-header>
+        <nue-header>修改用户昵称</nue-header>
         <nue-main>
-            <nue-content>
+            <nue-content v-if="profile">
                 <nue-div vertical gap=".5rem">
                     <nue-div class="settings-view__form-row">
-                        <nue-text color="gray" size="var(--nue-text-sm)">用户昵称</nue-text>
                         <nue-text color="#999" size=".75rem">
                             昵称会在任务创建者、分配者、项目成员等区块中展示，你可以随时修改。
                         </nue-text>
                         <nue-div align="center">
-                            <nue-input v-model="profileVO.newNickname" />
+                            <nue-input
+                                v-model="inputValue"
+                                placeholder="请输入昵称（2-16个字符）"
+                                maxlength="16"
+                            />
                             <nue-button
                                 theme="primary"
                                 :disabled="!isNicknameChanged"
-                                :loading="profileVO.loading.nickname"
-                                @click="profileStore.handleUpdateNickname"
+                                :loading="loading"
+                                @click="handleUpdateNickname"
                             >
                                 修改
                             </nue-button>
@@ -29,14 +32,32 @@
 
 <script setup lang="ts">
 import { NueInput } from 'nue-ui'
-import { useProfileStore } from '@/stores/settings'
+import { useUserStore } from '@/stores'
 import { storeToRefs } from 'pinia'
+import { computed, inject, ref } from 'vue'
+import type { SettingsViewContext } from '@/views/index/settings/settings-view'
+import { SETTINGS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 
 defineOptions({ name: 'SettingsProfileNickname' })
 
-const profileStore = useProfileStore()
+const { userUseCase } = inject<SettingsViewContext>(SETTINGS_VIEW_CONTEXT_KEY)!
 
-const { profileVO, isNicknameChanged } = storeToRefs(profileStore)
+const userStore = useUserStore()
+
+const { profile } = storeToRefs(userStore)
+const inputValue = ref(profile.value?.nickname || '')
+const loading = ref<boolean>(false)
+
+const isNicknameChanged = computed(() => inputValue.value !== profile.value?.nickname)
+
+const handleUpdateNickname = async () => {
+    loading.value = true
+    const err = await userUseCase.updateNickname(inputValue.value)
+    loading.value = false
+    if (err !== null) {
+        return
+    }
+}
 </script>
 
 <style scoped>

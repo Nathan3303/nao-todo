@@ -1,3 +1,4 @@
+import type { Subscriber } from '@/infrastructure/hooks/use-subscriber'
 import type { GoAsync, CreateTask, Project, Tag } from '@nao-todo/types'
 
 export type TaskCreatorVO = {
@@ -17,6 +18,7 @@ export type TaskCreatorProps = {
     avaliableProjects?: Project[]
     avaliableTags?: Tag[]
     createTaskHandler: (createVO: CreateTask) => GoAsync<string>
+    subscriber?: Subscriber
 }
 
 export type TaskCreatorEmits = {

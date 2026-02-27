@@ -9,10 +9,10 @@ defineOptions({ name: 'SettingsAside' })
         <nue-div vertical gap=".5rem">
             <nue-link
                 v-for="(link, idx) in routeLinks"
-                :icon="link.icon as never"
+                :icon="link.icon"
                 :key="idx"
                 :route="link.route"
-                theme="route,route-small"
+                theme="route"
             >
                 {{ link.name }}
             </nue-link>

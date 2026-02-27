@@ -5,15 +5,15 @@ import { useRouter } from 'vue-router'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { NueMessage } from 'nue-ui'
 import { AUTH_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import type { AuthViewContext } from '@/views/auth/auth-view'
+import type { AuthViewContext } from '@/views/auth/types'
 
 const router = useRouter()
-const authViewContext = inject<AuthViewContext>(AUTH_VIEW_CONTEXT_KEY)!
+const { authUseCase } = inject<AuthViewContext>(AUTH_VIEW_CONTEXT_KEY)!
 
 onMounted(async () => {
     // console.log(authViewContext)
-    const err = await authViewContext.authUseCase.checkIn()
-    if (err) {
+    const err = await authUseCase.checkIn()
+    if (err !== null) {
         NueMessage.error(unwrapError(err))
         router.replace('/auth/signin')
         return
@@ -27,7 +27,7 @@ onMounted(async () => {
     <nue-container id="AuthViewMainContentCheckIn">
         <nue-main>
             <nue-content>
-                <loading-component />
+                <loading-component placeholder="正在验证用户凭证 ..." />
             </nue-content>
         </nue-main>
     </nue-container>

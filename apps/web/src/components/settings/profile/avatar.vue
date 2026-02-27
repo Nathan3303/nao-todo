@@ -1,8 +1,8 @@
 <template>
-    <nue-div wrap="nowrap" align="center" gap="2rem">
+    <nue-div v-if="profile" wrap="nowrap" align="center" gap="2rem">
         <nue-div align="center" width="fit-content">
             <nue-avatar
-                :src="profileVO.avatar"
+                :src="profile.avatar"
                 size="6rem"
                 style="cursor: pointer"
                 @click="handleUpdateAvatar"
@@ -18,8 +18,8 @@
         </nue-div>
         <nue-div vertical flex="1">
             <nue-div vertical gap="0.25rem">
-                <nue-text size="1.25rem">{{ profileVO.nickname }}</nue-text>
-                <nue-text size=".875rem" color="gray">{{ profileVO.email }}</nue-text>
+                <nue-text size="1.25rem">{{ profile.nickname }}</nue-text>
+                <nue-text size=".875rem" color="gray">{{ profile.email }}</nue-text>
             </nue-div>
             <nue-div>
                 <nue-button
@@ -33,11 +33,7 @@
                 >
                     修改头像
                 </nue-button>
-                <nue-button
-                    @click="profileStore.handleSignout"
-                    icon="arrow-left-more"
-                    theme="small"
-                >
+                <nue-button @click="handleSignOut" icon="arrow-left-more" theme="small">
                     退出登录
                 </nue-button>
             </nue-div>
@@ -46,17 +42,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useProfileStore } from '@/stores/settings'
+import { inject, ref } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useUserStore } from '@/stores'
+import type { SettingsViewContext } from '@/views/index/settings/settings-view'
+import { SETTINGS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import { NueConfirm, NueMessage } from 'nue-ui'
+import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
+import { useRouter } from 'vue-router'
 
 defineOptions({ name: 'SettingsProfileAvatar' })
 
-const profileStore = useProfileStore()
+const { authUseCase } = inject<SettingsViewContext>(SETTINGS_VIEW_CONTEXT_KEY)!
+const userStore = useUserStore()
+const router = useRouter()
 
+const { profile } = storeToRefs(userStore)
 const avatarFileInputRef = ref<HTMLInputElement>()
 const updateAvatarLoading = ref(false)
-const { profileVO } = storeToRefs(profileStore)
 
 const handleUpdateAvatar = () => {
     if (!avatarFileInputRef.value) return
@@ -65,7 +68,26 @@ const handleUpdateAvatar = () => {
 
 const handleAvatarFileInputChange = async () => {
     if (!avatarFileInputRef.value) return
-    await profileStore.handleUpdateAvatar(avatarFileInputRef.value.files?.[0])
+    console.log(avatarFileInputRef.value.files?.[0])
     avatarFileInputRef.value.value = ''
 }
+
+const handleSignOut = async () => {
+    return await NueConfirm({
+        title: '确认退出登录吗？',
+        content: '退出登录后，您需要重新登录才能继续使用应用。',
+        confirmButtonText: '退出登录',
+        cancelButtonText: '取消',
+        onConfirm: async () => {
+            const err = await authUseCase.signOut()
+            if (err !== null) {
+                NueMessage.error('退出登录失败' + `(${unwrapError(err)})`)
+                return
+            }
+            NueMessage.success('退出登录成功')
+            await router.replace('/auth/signin')
+        }
+    })
+}
 </script>
+

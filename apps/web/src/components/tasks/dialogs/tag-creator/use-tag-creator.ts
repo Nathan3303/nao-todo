@@ -1,13 +1,9 @@
 import { reactive, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import type { TagCreatorVO, TagCreatorProps } from './types'
 
 const useTagCreator = (props: TagCreatorProps) => {
-    // @router
-    const router = useRouter()
-
     // @states
     const states = reactive<TagCreatorVO>({
         name: '',
@@ -35,7 +31,7 @@ const useTagCreator = (props: TagCreatorProps) => {
         }
         // 调用 API 创建标签
         states.creating = true
-        const [tagId, err] = await props.creatrTagHandler({
+        const [, err] = await props.creatrTagHandler({
             name: states.name,
             description: states.description,
             color: states.color
@@ -46,8 +42,6 @@ const useTagCreator = (props: TagCreatorProps) => {
             console.warn(unwrapError(err))
             return false
         }
-        // 跳转至新标签详情页
-        router.push({ name: 'tasks-tag-main', params: { tagId } })
         // 处理成功结果
         NueMessage.success('标签创建成功')
         return true
@@ -68,3 +62,4 @@ const useTagCreator = (props: TagCreatorProps) => {
 }
 
 export default useTagCreator
+

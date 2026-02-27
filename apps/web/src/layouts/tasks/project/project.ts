@@ -2,7 +2,6 @@ import { computed, inject, provide, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import type { ProjectViewContext, ProjectViewProps } from './types'
-import useSubscriber from '@/infrastructure/hooks/use-subscriber'
 import useUserStore from '@nao-todo/application/web/stores/user-store'
 import { storeToRefs } from 'pinia'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
@@ -33,9 +32,6 @@ const useProjectView = (props: ProjectViewProps) => {
     const { projectPreference: preference } = storeToRefs(projectsStore)
     const { profile } = storeToRefs(userStore)
     const { tags } = storeToRefs(tagsStore)
-
-    // @hooks 事件监听
-    const subscriber = useSubscriber()
 
     // @method 视图切换
     const switchViewType = (viewType: string) => {
@@ -83,7 +79,7 @@ const useProjectView = (props: ProjectViewProps) => {
         taskUseCase,
         tasksViewContext.projectUseCase,
         projectsStore,
-        subscriber
+        tasksViewContext.subscriber
     )
 
     // @computed 是否已经是只显示未完成任务
@@ -102,7 +98,7 @@ const useProjectView = (props: ProjectViewProps) => {
         preference,
         profile,
         tags: computed(() => [...tags.value.values()]),
-        subscriber,
+        subscriber: tasksViewContext.subscriber,
         projectHandler,
         isHideCompletedAlready,
         getColumnLabel: tasksViewContext.getColumnLabel,

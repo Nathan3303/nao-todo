@@ -47,7 +47,7 @@ export const getTagPreferenceRes2TagPreferenceEntity = (
 export const tagPreferenceEntity2UpdateReq = (
     tagPreferenceEntity: TagPreferenceEntity
 ): UpdateTagPreferenceReq => {
-    const rto = {} as UpdateTagPreferenceReq
+    const rto = { preference: {} } as UpdateTagPreferenceReq
     rto.preference.viewType = tagPreferenceEntity.viewType
     rto.preference.getTasksOptions = tagPreferenceEntity.getTasksOptions
     rto.preference.columns = tagPreferenceEntity.columns

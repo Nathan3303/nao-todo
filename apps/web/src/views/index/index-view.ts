@@ -14,7 +14,7 @@ export type IndexViewContext = {
     userUseCase: UserUseCase
     isDisplayAside: Ref<boolean>
     isUseFloatAside: Ref<boolean>
-    switchDisplayAside: (visible?: boolean) => void
+    switchDisplayAside: () => void
     isDisplayOutline: Ref<boolean>
     isUseFloatOutline: Ref<boolean>
 }

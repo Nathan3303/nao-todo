@@ -27,7 +27,8 @@ const {
     tagCreatorOpener,
     tagColorUpdaterOpener,
     taskCreatorRegister,
-    taskCreatorHandler
+    taskCreatorHandler,
+    subscriber
 } = useDialogs()
 </script>
 
@@ -55,5 +56,6 @@ const {
         :create-task-handler="taskCreatorHandler"
         :avaliable-projects="projects"
         :avaliable-tags="tags"
+        :subscriber="subscriber"
     />
 </template>

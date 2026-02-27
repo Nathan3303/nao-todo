@@ -1,4 +1,4 @@
-export type DialogOpenFunc = (payload?: any) => void
+export type DialogOpenFunc = (payload?: any, onClose?: () => void) => void
 
 export type DialogCloseFunc = () => void
 
@@ -9,7 +9,7 @@ export type DialogFuncs = {
 
 export type DialogManager = {
     registerDialog: (dialogName: string, dialogFuncs: DialogFuncs) => void
-    openDialog: (dialogName: string, payload?: any) => void
+    openDialog: (dialogName: string, payload?: any, onClose?: () => void) => void
     closeDialog: (dialogName: string) => void
     unregisterDialog: (dialogName: string) => void
 }
@@ -24,10 +24,10 @@ const useDialogManager = () => {
     }
 
     // @method 打开对话框
-    const openDialog = (dialogName: string, payload?: any) => {
+    const openDialog = (dialogName: string, payload?: any, onClose?: () => void) => {
         const dialogFuncs = dialogMapper.get(dialogName)
         if (dialogFuncs) {
-            dialogFuncs.open(payload)
+            dialogFuncs.open(payload, onClose)
         }
     }
 

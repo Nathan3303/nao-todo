@@ -62,6 +62,13 @@ const updatePreference = () => {
     NueMessage.success('保存成功')
 }
 
+// @method 新增任务 ID 事件订阅
+const addNewTaskId = (taskId: string) => {
+    const idx = taskLoader.states.taskIds.findIndex((id) => id === taskId)
+    if (idx !== -1) return
+    taskLoader.states.taskIds.push(taskId)
+}
+
 // @watch 监听获取选项变化
 watch(
     () => viewContext.preference.value?.getTasksOptions,
@@ -74,12 +81,14 @@ onMounted(() => {
     initTable()
     viewContext.subscriber.subscribe('RefreshData', taskLoader.loadAndReplace)
     viewContext.subscriber.subscribe('UpdatePreference', updatePreference)
+    viewContext.subscriber.subscribe('AddNewTaskId', addNewTaskId)
 })
 
 // @onUnmounted
 onUnmounted(() => {
     viewContext.subscriber.unsubscribe('RefreshData', taskLoader.loadAndReplace)
     viewContext.subscriber.unsubscribe('UpdatePreference', updatePreference)
+    viewContext.subscriber.unsubscribe('AddNewTaskId', addNewTaskId)
 })
 </script>
 

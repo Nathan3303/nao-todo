@@ -78,10 +78,10 @@ import { PasswordRuleHint } from '@/components/ui'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { AUTH_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import type { AuthViewContext } from '@/views/auth/auth-view'
+import type { AuthViewContext } from '@/views/auth/types'
 
 const router = useRouter()
-const authViewContext = inject<AuthViewContext>(AUTH_VIEW_CONTEXT_KEY)!
+const { authUseCase } = inject<AuthViewContext>(AUTH_VIEW_CONTEXT_KEY)!
 
 const loading = ref(false)
 const disabled = ref(false)
@@ -91,7 +91,7 @@ const handleSubmit = async (e: Event) => {
     e.preventDefault()
     loading.value = disabled.value = true
     // 调用注册 API
-    const err = await authViewContext.authUseCase.signUp({
+    const err = await authUseCase.signUp({
         email: signUpVO.email,
         password: signUpVO.password,
         confirmPassword: signUpVO.passwordConfirm,
@@ -99,7 +99,7 @@ const handleSubmit = async (e: Event) => {
     })
     loading.value = false
     // 处理错误
-    if (err) {
+    if (err !== null) {
         signUpVO.password = signUpVO.passwordConfirm = ''
         disabled.value = false
         NueMessage.error(unwrapError(err))

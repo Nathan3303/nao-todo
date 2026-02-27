@@ -61,12 +61,12 @@ import { useRouter } from 'vue-router'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { NueMessage } from 'nue-ui'
 import { AUTH_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import type { AuthViewContext } from '@/views/auth/auth-view'
+import type { AuthViewContext } from '@/views/auth/types'
 
 defineOptions({ name: 'AuthViewMainContentSignIn' })
 
 const router = useRouter()
-const authViewContext = inject<AuthViewContext>(AUTH_VIEW_CONTEXT_KEY)!
+const { authUseCase } = inject<AuthViewContext>(AUTH_VIEW_CONTEXT_KEY)!
 
 const loading = ref(false)
 const disabled = ref(false)
@@ -75,11 +75,11 @@ const signInVO = reactive({ email: '', password: '' })
 const handleSubmit = async (e: Event) => {
     e.preventDefault()
     loading.value = disabled.value = true
-    const err = await authViewContext.authUseCase.signIn({
+    const err = await authUseCase.signIn({
         email: signInVO.email,
         password: signInVO.password
     })
-    if (err) {
+    if (err !== null) {
         signInVO.password = ''
         loading.value = disabled.value = false
         NueMessage.error(unwrapError(err))

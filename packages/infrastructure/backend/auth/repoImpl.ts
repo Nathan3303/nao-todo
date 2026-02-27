@@ -80,7 +80,7 @@ export const useAuthRepository = (requester: Requester): AuthRepository => {
      */
     const signOut = async (jwt: string): GoAsync<void> => {
         // 1. 调用接口
-        const response = await requester.put('/auth/signout', { jwt })
+        const response = await requester.delete('/auth/signout', { jwt })
         const res = response.data as ResponseData
         // 2. 判断是否成功
         if (res.code !== 10031) {
