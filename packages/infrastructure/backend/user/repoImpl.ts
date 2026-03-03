@@ -1,5 +1,6 @@
+import SparkMD5 from 'spark-md5'
 import type { UserEntity, UserRepository } from '@nao-todo/domain/user'
-import type { GoAsync } from '@nao-todo/types'
+import type { Go, GoAsync } from '@nao-todo/types'
 import type { Requester } from '../../requester/types'
 import type { ResponseData } from '../types'
 import type { GetUserProfileRes, UpdateAvatarURLRes } from '../types/user'
@@ -56,17 +57,29 @@ export const useUserRepository = (requester: Requester): UserRepository => {
      * @returns 更新结果
      */
     const updatePassword = async (oldPassword: string, newPassword: string): GoAsync<void> => {
-        // 1. 构建 rto
-        const rto = { oldPassword, newPassword }
-        // 2. 调用接口
+        // 1. 加密密码
+        const [encryptedOldPassword] = encryptPassword(oldPassword)
+        const [encryptedNewPassword] = encryptPassword(newPassword)
+        // 2. 构建 rto
+        const rto = { oldPassword: encryptedOldPassword, newPassword: encryptedNewPassword }
+        // 3. 调用接口
         const response = await requester.put('/user/password', rto, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
         })
-        // 3. 判断结果
+        // 4. 判断结果
         const res = response.data as ResponseData
         if (res.code !== 10070) return res.message
-        // 4. 返回
+        // 5. 返回
         return null
+    }
+
+    /**
+     * 加密密码（md5）
+     * @param password 密码
+     * @returns 加密后的密码
+     */
+    const encryptPassword = (password: string): Go<string> => {
+        return [SparkMD5.hash(password), null]
     }
 
     /**
@@ -138,6 +151,7 @@ export const useUserRepository = (requester: Requester): UserRepository => {
         updateNickname,
         getProfile,
         updatePassword,
+        encryptPassword,
         updateAvatarURL,
         deactive,
         active

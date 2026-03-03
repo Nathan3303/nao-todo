@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import useTagColorUpdater from './use-tag-color-updater'
 import { TagColorSelector } from '@nao-todo/components'
-import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
+import { type DialogInstanceType, useDialogWrapper } from '@nao-todo/components'
 import type { TagColorUpdaterEmits, TagColorUpdaterProps } from './types'
 
 defineOptions({ name: 'TagColorUpdater' })

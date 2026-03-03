@@ -1,6 +1,5 @@
 <script lang="ts" setup>
-import { ProjectBoard } from '@nao-todo/components/project'
-import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
+import { type DialogInstanceType, useDialogWrapper, ProjectBoard } from '@nao-todo/components'
 import { onMounted, ref } from 'vue'
 import type { ProjectManagerEmits, ProjectManagerProps } from './types'
 import useProjectManager from './use-project-manager'
@@ -36,7 +35,9 @@ onMounted(() => emit('register', open, close))
                         clearable
                         placeholder="筛选清单"
                     />
-                    <nue-checkbox v-model="states.filterInfo.onlyDeleted" theme="small">只看已删除</nue-checkbox>
+                    <nue-checkbox v-model="states.filterInfo.onlyDeleted" theme="small"
+                        >只看已删除</nue-checkbox
+                    >
                 </nue-div>
                 <nue-div gap="12px" width="fit-content" style="margin-left: auto">
                     <nue-button
@@ -62,3 +63,4 @@ onMounted(() => emit('register', open, close))
         </nue-container>
     </nue-dialog>
 </template>
+

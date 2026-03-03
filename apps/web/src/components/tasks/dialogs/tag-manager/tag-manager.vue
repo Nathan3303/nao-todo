@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { TagBoard } from '@nao-todo/components'
 import useTagManager from './use-tag-manager'
-import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
+import { type DialogInstanceType, useDialogWrapper } from '@nao-todo/components'
 import type { TagManagerEmits, TagManagerProps } from './type'
 
 defineOptions({ name: 'TagManager' })

@@ -54,4 +54,14 @@ export class UserUseCase {
         // 4. 返回
         return null
     }
+
+    /**
+     * 更新用户密码
+     * @param oldPassword 旧密码
+     * @param newPassword 新密码
+     * @returns 更新结果
+     */
+    async updatePassword(oldPassword: string, newPassword: string): GoAsync<void> {
+        return await this.userDomain.updatePassword(oldPassword, newPassword)
+    }
 }

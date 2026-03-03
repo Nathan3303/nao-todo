@@ -25,4 +25,14 @@ export class UserDomain {
     async getProfile(): GoAsync<UserEntity> {
         return await this.userRepo.getProfile()
     }
+
+    /**
+     * 更新用户密码
+     * @param oldPassword 旧密码
+     * @param newPassword 新密码
+     * @returns 更新结果
+     */
+    async updatePassword(oldPassword: string, newPassword: string): GoAsync<void> {
+        return await this.userRepo.updatePassword(oldPassword, newPassword)
+    }
 }

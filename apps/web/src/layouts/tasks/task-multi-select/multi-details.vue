@@ -1,5 +1,5 @@
 <template>
-    <nue-container id="TodoMultiDetails" theme="vertical,inner">
+    <nue-container id="TaskMultiDetails" theme="vertical,inner">
         <nue-header height="auto" style="box-sizing: border-box">
             <nue-text size="16px" style="margin-right: auto">
                 已选中列表中的
@@ -11,52 +11,53 @@
             <nue-button icon="clear" size="small" @click="handleCancelMultiSelect">关闭</nue-button>
         </nue-header>
         <nue-main>
-            <nue-div flex vertical>
+            <nue-div flex="1" vertical>
                 <nue-div align="center">
-                    <todo-date-selector
+                    <task-date-selector
                         v-model="commonData.dueDate.endAt"
                         @change="handleChangeEndDate"
                     />
                     <nue-text v-if="commonData.dueDate.endAt" color="gray" size="12px">
-                        (截止于 {{ useRelativeDate(commonData.dueDate.endAt) }} )
+                        (截止于 {{ parse2RelativeDate(commonData.dueDate.endAt) }} )
                     </nue-text>
                 </nue-div>
                 <nue-divider />
                 <nue-div align="center" wrap="nowrap">
-                    <todo-selector
-                        :options="TodoStateSelectOptions"
+                    <task-selector
+                        :options="TaskStateSelectOptions"
                         :value="commonData.state"
                         placeholder="待办状态"
                         @change="handleChangeState"
                     />
-                    <todo-selector
-                        :options="TodoPrioritySelectOptions"
+                    <task-selector
+                        :options="TaskPrioritySelectOptions"
                         :value="commonData.priority"
                         placeholder="待办优先级"
                         @change="handleChangePriority"
                     />
                 </nue-div>
-                <nue-div flex />
-                <todo-tag-bar
+                <nue-div flex="1" />
+                <task-tag-bar
                     :tags="avalibleTags"
-                    :todo-tags="commonData.tags"
+                    :task-tags="commonData.tags"
                     @update-tags="handleUpdateTags"
                 />
             </nue-div>
         </nue-main>
         <nue-footer style="justify-content: space-between">
-            <todo-project-selector
+            <task-project-selector
                 :project-id="commonData.projectId"
                 :projects="avalibleProjects"
-                :user-id="userStore.user!.id"
                 placeholder="移动到清单"
-                @select="setProjectInfo"
+                @select="
+                    (pId: string, pTitle: string | undefined) => setProjectInfo(pId, pTitle || '')
+                "
             />
             <nue-div width="auto">
                 <nue-button icon="delete" size="small" theme="error" @click="handleDelete">
                     永久删除
                 </nue-button>
-                <todo-delete-button
+                <task-delete-button
                     :is-deleted="commonData.isDeleted"
                     @delete="handleRemove"
                     @restore="handleRestore"
@@ -68,21 +69,21 @@
 
 <script lang="ts" setup>
 import { useMultiDetails } from './use-multi-details'
-import { useRelativeDate } from '@nao-todo/hooks/use-relative-date'
+import { parse2RelativeDate } from '@nao-todo/infrastructure/utils/relative-date-parser'
 import {
-    TodoDateSelector,
-    TodoProjectSelector,
-    TodoTagBar,
-    TodoDeleteButton
+    TaskDateSelector,
+    TaskProjectSelector,
+    TaskTagBar,
+    TaskDeleteButton,
+    TaskSelector
 } from '@nao-todo/components'
 import {
-    TodoSelector,
-    TodoStateSelectOptions,
-    TodoPrioritySelectOptions
-} from '@nao-todo/components/todo/selector'
-import type { TodoMultiDetailsProps } from './types'
+    TaskStateSelectOptions,
+    TaskPrioritySelectOptions
+} from '@nao-todo/infrastructure/consts/tasks'
+import type { TaskMultiDetailsProps } from './types'
 
-const props = defineProps<TodoMultiDetailsProps>()
+const props = defineProps<TaskMultiDetailsProps>()
 
 const {
     avalibleProjects,
@@ -100,3 +101,4 @@ const {
     handleCancelMultiSelect
 } = useMultiDetails(props)
 </script>
+

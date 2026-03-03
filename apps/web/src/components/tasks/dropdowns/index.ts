@@ -1,5 +1,5 @@
 // import { defineAsyncComponent } from 'vue'
-import TasksDropdownDivBlock from '@/components/ui/div-block.vue'
+import TasksDropdownDivBlock from '@/components/ui/div-block/div-block.vue'
 // import TasksOperationsDropdown from './operations-dropdown.vue'
 
 // 基本视图操作下拉菜单

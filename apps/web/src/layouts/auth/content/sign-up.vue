@@ -74,7 +74,7 @@
 <script lang="ts" setup>
 import { inject, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { PasswordRuleHint } from '@/components/ui'
+import { PasswordRuleHint } from '@nao-todo/components'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { AUTH_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'

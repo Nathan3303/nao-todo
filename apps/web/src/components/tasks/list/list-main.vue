@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { inject } from 'vue'
 import {
-    TodoStateInfo,
-    TodoPriorityInfo,
-    TodoDateInfo,
-    TodoBasicInfo,
-    TodoTagBar
+    TaskStateInfo,
+    TaskPriorityInfo,
+    TaskDateInfo,
+    TaskBasicInfo,
+    TaskTagBar
 } from '@nao-todo/components'
 import { TASK_LIST_CONTEXT_KEY } from './use-list'
 import type { TaskListContext } from './types'
@@ -41,11 +41,11 @@ const {
                 <nue-div theme="todo-list__main__row__first__name-wrapper">
                     <nue-text :clamped="1" :title="task.name">{{ task.name }}</nue-text>
                     <nue-icon v-if="columns.isFavorited" name="heart-fill" color="pink" />
-                    <todo-tag-bar
+                    <task-tag-bar
                         v-if="columns.tags && task.tags.length"
                         :clamped="tagBarClamped"
                         :tags="tags"
-                        :todoTags="task.tags"
+                        :task-tags="task.tags"
                         readonly
                         small
                     />
@@ -70,25 +70,25 @@ const {
                 </nue-text>
             </nue-div>
             <nue-div theme="todo-list-main__row__attrs">
-                <todo-state-info v-if="columns?.state" :state="task.state" />
-                <todo-priority-info v-if="columns?.priority" :priority="task.priority" />
-                <todo-date-info
+                <task-state-info v-if="columns?.state" :state="task.state" />
+                <task-priority-info v-if="columns?.priority" :priority="task.priority" />
+                <task-date-info
                     v-if="columns.createdAt"
                     :date="task.createdAt"
                     :formatter="(date) => `创建时间： ${date}`"
                 />
-                <todo-date-info
+                <task-date-info
                     v-if="columns?.updatedAt"
                     :date="task.updatedAt"
                     :formatter="(date) => `更新时间： ${date}`"
                 />
-                <todo-date-info
+                <task-date-info
                     v-if="columns?.endAt"
                     :date="task.endAt!"
                     :formatter="(date) => `结束时间： ${date}`"
                     :colored="!(task.state === 'done')"
                 />
-                <todo-basic-info
+                <task-basic-info
                     v-if="columns?.project"
                     icon="inbox-fill"
                     :text="'清单：' + getProjectName(task.projectId) || '收集箱'"
@@ -97,3 +97,4 @@ const {
         </nue-div>
     </nue-div>
 </template>
+

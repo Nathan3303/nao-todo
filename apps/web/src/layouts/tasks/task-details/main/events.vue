@@ -14,14 +14,6 @@ const { handleDragStart, handleDragOver, handleDrop, handleDragLeave, handleDrag
         resortEvents(dragged.dataset.eid, dropped.dataset.eid, isUp)
     })
 
-// const updateEvent = async (value: { id: string; name: string; isDone: boolean }) => {
-//     await eventHandler.updateEvent(value.id, value)
-// }
-
-// const deleteEvent = async (id: string) => {
-//     await (id)
-// }
-
 const createEvent = async (payload: { value: string }) => {
     if (!vo.value) return
     await eventHandler.createEvent({ taskId: vo.value.id, name: payload.value })

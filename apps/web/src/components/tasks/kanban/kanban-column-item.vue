@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue'
 import {
-    TodoStateInfo,
-    TodoPriorityInfo,
-    TodoDateInfo,
-    TodoBasicInfo,
-    TodoTagBar,
-    TodoCheckButton
+    TaskStateInfo,
+    TaskPriorityInfo,
+    TaskDateInfo,
+    TaskBasicInfo,
+    TaskTagBar,
+    TaskCheckButton
 } from '@nao-todo/components'
 import { TASK_KANBAN_CONTEXT_KEY } from './use-kanban'
 import type {
@@ -14,7 +14,7 @@ import type {
     TaskKanbanColumnItemEmits,
     TaskKanbanContext
 } from './types'
-import type { TodoColumnOptions } from '@nao-todo/types'
+import type { TaskColumnOptions } from '@nao-todo/types'
 
 defineOptions({ name: 'TaskKanbanColumnItem' })
 const props = defineProps<TaskKanbanColumnItemProps>()
@@ -27,7 +27,7 @@ const isAttrsNone = computed(() => {
     let isNoColumnSelected = true
     for (const column in props.columns) {
         if (column === 'description') continue
-        if (props.columns[column as keyof TodoColumnOptions]) {
+        if (props.columns[column as keyof TaskColumnOptions]) {
             isNoColumnSelected = false
             break
         }
@@ -36,7 +36,6 @@ const isAttrsNone = computed(() => {
 })
 
 const isDone = computed(() => props.task.state === 'done')
-
 
 const handleClick = () => {
     const taskId = props.task.id
@@ -72,7 +71,7 @@ const handleFinish = () => {
         :data-is-deleted="task.isDeleted"
     >
         <nue-div vertical>
-            <todo-check-button :is-done="isDone" @change="handleFinish" size="large" />
+            <task-check-button :is-done="isDone" @change="handleFinish" size="large" />
         </nue-div>
         <nue-div vertical gap=".5rem" flex="1" overflow="hidden">
             <nue-div class="todo-card__info">
@@ -96,32 +95,32 @@ const handleFinish = () => {
             </nue-div>
             <nue-div v-if="!isAttrsNone" vertical gap=".25rem">
                 <nue-div vertical gap=".25rem">
-                    <todo-tag-bar
+                    <task-tag-bar
                         v-if="columns?.tags && task.tags.length"
                         :tags="tags"
-                        :todoTags="task.tags"
+                        :task-tags="task.tags"
                         :clamped="2"
                         transform-origin="left"
                         readonly
                         small
                     />
                     <nue-div>
-                        <todo-state-info v-if="columns?.state" :state="task.state" />
-                        <todo-priority-info v-if="columns?.priority" :priority="task.priority" />
+                        <task-state-info v-if="columns?.state" :state="task.state" />
+                        <task-priority-info v-if="columns?.priority" :priority="task.priority" />
                     </nue-div>
                 </nue-div>
                 <nue-div gap=".25rem .5rem">
-                    <todo-date-info
+                    <task-date-info
                         v-if="columns?.createdAt"
                         :date="task.createdAt"
                         :formatter="(date) => `创建于 ${date}`"
                     />
-                    <todo-date-info
+                    <task-date-info
                         v-if="columns?.updatedAt"
                         :date="task.updatedAt"
                         :formatter="(date) => `修改于 ${date}`"
                     />
-                    <todo-date-info
+                    <task-date-info
                         v-if="columns?.endAt"
                         :date="task.endAt!"
                         :formatter="(date) => `截止于 ${date}`"
@@ -129,7 +128,7 @@ const handleFinish = () => {
                     />
                 </nue-div>
                 <nue-div gap=".25rem">
-                    <todo-basic-info
+                    <task-basic-info
                         v-if="columns?.project"
                         icon="inbox-fill"
                         :text="kanbanCtx.getProjectName(task.projectId) || '收集箱'"
@@ -139,3 +138,4 @@ const handleFinish = () => {
         </nue-div>
     </nue-div>
 </template>
+

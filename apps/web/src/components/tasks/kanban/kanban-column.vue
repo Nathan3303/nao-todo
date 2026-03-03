@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { inject, onMounted } from 'vue'
 import { Loading as LoadingComponent } from '@nao-todo/components'
-import { TodoStateInfo } from '@nao-todo/components'
+import { TaskStateInfo } from '@nao-todo/components'
 import { NueInfiniteScroll } from 'nue-ui'
 import TaskKanbanColumnItem from './kanban-column-item.vue'
 import useKanbanColumn from './use-kanban-column'
@@ -24,7 +24,7 @@ onMounted(() => fetchTasks())
         :class="{ 'kanban-column--disabled': disabled }"
     >
         <nue-header class="kanban-column__header">
-            <todo-state-info :state="category" />
+            <task-state-info :state="category" />
             <nue-text color="var(--nue-primary-color-600)" size="var(--nue-text-xs)">
                 {{ states.tasks.length }}
             </nue-text>

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
 import useProjectCreator from './use-project-creator'
-import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
+import { type DialogInstanceType, useDialogWrapper } from '@nao-todo/components'
 import type { ProjectCreatorEmits, ProjectCreatorProps } from './types'
 
 defineOptions({ name: 'ProjectCreator' })

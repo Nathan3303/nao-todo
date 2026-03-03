@@ -1,8 +1,8 @@
 import { ref } from 'vue'
-import type { Todo } from '@nao-todo/types'
+import type { Task } from '@nao-todo/types'
 
 const useKanbanDragger = () => {
-    const draggingTodoId = ref<Todo['id']>('')
+    const draggingTodoId = ref<Task['id']>('')
 
     const handleRemoveDragOverClass = () => {
         document.querySelectorAll('.kanban-column__main--drag-over').forEach((element) => {
@@ -57,7 +57,7 @@ const useKanbanDragger = () => {
         handleRemoveDragOverClass()
         const element = getTargetNode(event.target as HTMLElement)
         if (!element) return
-        const category = element.dataset.category as Todo['state']
+        const category = element.dataset.category as Task['state']
         if (!category) return
         // const todoId = draggingTodoId.value
         // const todo = todos.value.find((todo) => todo.id === todoId)
@@ -75,3 +75,5 @@ const useKanbanDragger = () => {
 }
 
 export default useKanbanDragger
+
+

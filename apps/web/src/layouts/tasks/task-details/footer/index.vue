@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { TodoProjectSelector } from '@nao-todo/components'
-import { InnerDropdownOption } from '@/components/ui'
+import { InnerDropdownOption, TaskProjectSelector } from '@nao-todo/components'
 import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
 import type { TaskDetailsContext } from '../types'
 import { inject } from 'vue'
@@ -23,15 +22,6 @@ const handleDropdownExecute = (executeId: string) => {
         case 'restore-todo':
             emit('restoreTask', vo.value.id)
             break
-        // case 'delete-todo-permanently':
-        //     emit('deleteTodoPermanently', vo.value.id)
-        //     break
-        // case 'give-up-todo':
-        //     emit('giveUpTodo')
-        //     break
-        // case 'cancel-give-up-todo':
-        //     emit('cancelGiveUpTodo')
-        //     break
     }
 }
 
@@ -44,7 +34,7 @@ const updateProjectId = (npId: string) => {
 <template>
     <nue-footer>
         <nue-div v-if="vo" align="center" justify="space-between" width="100%">
-            <todo-project-selector
+            <task-project-selector
                 :project-id="vo.projectId"
                 :projects="projects"
                 placement="top-start"

@@ -1,5 +1,5 @@
 import { computed, provide } from 'vue'
-import type { GetTasksSortOptions, TaskColumnOptions, TaskVO } from '@nao-todo/types'
+import type { GetTasksSortOptions, TaskColumnOptions, Task } from '@nao-todo/types'
 import type { TaskListContext, TaskListEmits, TaskListProps } from './types'
 import useMultiSelect from './use-multi-select'
 import dayjs from 'dayjs'
@@ -31,14 +31,14 @@ export const useTaskList = (props: TaskListProps, emit: TaskListEmits) => {
     })
 
     // @method 检测当前待办任务是否过期
-    const isTaskExpired = (task: TaskVO) => {
+    const isTaskExpired = (task: Task) => {
         const now = dayjs()
         const endAt = dayjs(task.endAt)
         return now.isAfter(endAt) && task.state !== 'done'
     }
 
     // @method 显示待办详情
-    const showTaskDetails = (taskId: TaskVO['id'], idx: number) => {
+    const showTaskDetails = (taskId: Task['id'], idx: number) => {
         // 恢复多选参数 - 取消多选
         selectRange.original = selectRange.start = selectRange.end = idx
         // 显示详情
@@ -46,7 +46,7 @@ export const useTaskList = (props: TaskListProps, emit: TaskListEmits) => {
     }
 
     // @method 删除/恢复按钮处理
-    const deleteOrRestore = (taskId: TaskVO['id'], isDeleted: boolean) => {
+    const deleteOrRestore = (taskId: Task['id'], isDeleted: boolean) => {
         if (isDeleted) {
             emit('restoreTask', taskId)
         } else {
@@ -65,8 +65,8 @@ export const useTaskList = (props: TaskListProps, emit: TaskListEmits) => {
         updateColumns: (key: string, value: boolean) => emit('updateColumns', key, value),
         updateSortOptions: (options: GetTasksSortOptions) => emit('updateSortOptions', options),
         clearSortOptions: () => emit('clearSortOptions'),
-        deleteTask: (taskId: TaskVO['id']) => emit('deleteTask', taskId),
-        restoreTask: (taskId: TaskVO['id']) => emit('restoreTask', taskId),
+        deleteTask: (taskId: Task['id']) => emit('deleteTask', taskId),
+        restoreTask: (taskId: Task['id']) => emit('restoreTask', taskId),
         getColumnLabel: props.columnLabelGetter,
         isTaskExpired,
         isInMultiSelectRange,
@@ -79,3 +79,4 @@ export const useTaskList = (props: TaskListProps, emit: TaskListEmits) => {
     // @returns
     return { states: loaderStates, loadMore, reset, fetchTasks }
 }
+

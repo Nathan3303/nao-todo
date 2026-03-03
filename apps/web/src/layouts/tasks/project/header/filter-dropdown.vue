@@ -2,7 +2,7 @@
 import TextFilter from '@/components/tasks/dropdowns/input-filter.vue'
 import StateFilter from '@/components/tasks/dropdowns/state-filter.vue'
 import PriorityFilter from '@/components/tasks/dropdowns/priority-filter.vue'
-import { DivBlock } from '@/components/ui'
+import { DropdownDivBlock } from '@nao-todo/components'
 import { PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import type { ProjectViewContext } from '../types'
 import { computed, inject } from 'vue'
@@ -71,19 +71,19 @@ const getTasksOptionsSort = computed({
                 <nue-button icon="filter" theme="icon,ghost" @click.stop="trigger" />
             </nue-badge>
         </template>
-        <div-block title="筛选">
+        <dropdown-div-block title="筛选">
             <text-filter placeholder="筛选任务" v-model="getTasksOptionsName" />
             <state-filter v-model="getTasksOptionsState" />
             <priority-filter v-model="getTasksOptionsPriority" />
-        </div-block>
+        </dropdown-div-block>
         <nue-divider />
-        <div-block title="排序">
+        <dropdown-div-block title="排序">
             <sort-operator
                 v-model="getTasksOptionsSort"
                 :get-tasks-options="preference.getTasksOptions"
                 :columns="preference.columns"
             />
-        </div-block>
+        </dropdown-div-block>
     </nue-dropdown>
 </template>
 

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { inject } from 'vue'
 import {
-    TodoPriorityInfo,
-    TodoStateInfo,
-    TodoTagBar,
-    TodoDateInfo,
-    TodoBasicInfo
+    TaskPriorityInfo,
+    TaskStateInfo,
+    TaskTagBar,
+    TaskDateInfo,
+    TaskBasicInfo
 } from '@nao-todo/components'
 import { parse2RelativeDate } from '@nao-todo/infrastructure/utils/relative-date-parser'
 import { TASK_TABLE_CONTEXT_KEY } from './use-table'
@@ -34,11 +34,11 @@ const tableCtx = inject<TaskTableContext>(TASK_TABLE_CONTEXT_KEY)
                     <nue-text theme="todo-name" :clamped="1" :title="task.name">
                         {{ task.name }}
                     </nue-text>
-                    <todo-tag-bar
+                    <task-tag-bar
                         v-if="tableCtx.columns.value.tags && task.tags.length"
                         :clamped="tableCtx.tagBarClamped.value"
                         :tags="tableCtx.tags.value"
-                        :todoTags="task.tags"
+                        :task-tags="task.tags"
                         readonly
                         small
                     />
@@ -53,12 +53,12 @@ const tableCtx = inject<TaskTableContext>(TASK_TABLE_CONTEXT_KEY)
                     </nue-text>
                 </nue-div>
             </nue-div>
-            <todo-date-info
+            <task-date-info
                 v-if="tableCtx.columns.value.createdAt"
                 class="todo-table__main__col col-datetime"
                 :date="task.createdAt"
             />
-            <todo-date-info
+            <task-date-info
                 v-if="tableCtx.columns.value.updatedAt"
                 class="todo-table__main__col col-datetime"
                 :date="task.updatedAt"
@@ -72,27 +72,27 @@ const tableCtx = inject<TaskTableContext>(TASK_TABLE_CONTEXT_KEY)
                 </nue-text>
                 <nue-text v-else>未设置起始时间</nue-text>
             </nue-div>
-            <todo-date-info
+            <task-date-info
                 v-if="tableCtx.columns.value.endAt"
                 class="todo-table__main__col col-datetime"
                 :date="task.endAt!"
                 :colored="!(task.state === 'done')"
             />
-            <todo-priority-info
+            <task-priority-info
                 v-if="tableCtx.columns.value.priority"
                 class="todo-table__main__col col-attr"
                 :key="task.priority"
                 :priority="task.priority"
                 use-clamped
             />
-            <todo-state-info
+            <task-state-info
                 v-if="tableCtx.columns.value.state"
                 class="todo-table__main__col col-attr"
                 :key="task.state"
                 :state="task.state"
                 use-clamped
             />
-            <todo-basic-info
+            <task-basic-info
                 v-if="tableCtx.columns.value.project"
                 class="todo-table__main__col col-attr"
                 :text="tableCtx.getProjectName(task.projectId)"

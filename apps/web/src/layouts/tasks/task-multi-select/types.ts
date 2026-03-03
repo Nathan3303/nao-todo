@@ -1,5 +1,7 @@
-import type { Todo } from '@nao-todo/types'
+import type { Task } from '@nao-todo/types'
 
-export type TodoMultiDetailsProps = {
-    selectedIds: Todo['id'][]
+export type TaskMultiDetailsProps = {
+    selectedIds: Task['id'][]
 }
+
+

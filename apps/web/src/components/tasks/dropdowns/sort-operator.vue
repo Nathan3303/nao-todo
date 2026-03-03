@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { InnerDropdown, InnerDropdownOption } from '@/components/ui/inner-dropdown'
+import {
+    InnerDropdown,
+    InnerDropdownOption,
+    type InnerDropdownOptionVO
+} from '@nao-todo/components'
 import type { GetTasksOptions, GetTasksSortOptions, ProjectPreference } from '@nao-todo/types'
-import type { InnerDropdownOptionVO } from '@/components/ui/inner-dropdown/types'
 import { columnLabels } from '@/infrastructure/constants/task'
 
 defineOptions({ name: 'TasksDropdownSortOperator' })

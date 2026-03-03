@@ -1,33 +1,13 @@
 <script lang="ts" setup>
-// import { computed } from 'vue'
-import { NaoSmartList, type NaoSmartListLinkVO } from '@/components/ui'
+import { NaoSmartList, type NaoSmartListLinkVO } from '@nao-todo/components/'
 import { TagColorDot } from '@nao-todo/components'
-// import useTasksViewStore from '@/views/tasks/tasks-view-store'
-// import useTasksDialogStore from '@/views/tasks/tasks-dialog-store'
 
 defineOptions({ name: 'TagSmartList' })
-defineProps<{
-    links: NaoSmartListLinkVO[]
-}>()
+defineProps<{ links: NaoSmartListLinkVO[] }>()
 const emit = defineEmits<{
     (e: 'open-tag-manager'): void
     (e: 'open-tag-creator'): void
 }>()
-
-// const tasksViewStore = useTasksViewStore()
-// const tasksDialogStore = useTasksDialogStore()
-
-// const links = computed<NaoSmartListLinkVO[]>(() => {
-//     return tasksViewStore.tagApp.tags.map((tag) => {
-//         return {
-//             id: tag.id,
-//             title: tag.name,
-//             route: { name: 'tasks-tag', params: { tagId: tag.id } },
-//             icon: 'tag',
-//             payload: { color: tag.color }
-//         } as NaoSmartListLinkVO
-//     })
-// })
 </script>
 
 <template>
@@ -46,3 +26,4 @@ const emit = defineEmits<{
         </template>
     </nao-smart-list>
 </template>
+

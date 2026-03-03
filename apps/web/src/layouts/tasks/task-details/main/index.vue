@@ -3,14 +3,11 @@ import { inject } from 'vue'
 import DetailsRow from './row.vue'
 import DetailsMainComments from './comments.vue'
 import DetailsMainEvents from './events.vue'
+import { CommentCreator, SwitchButton, TaskSelector, TaskTagBar } from '@nao-todo/components'
 import {
-    CommentCreator,
-    SwitchButton,
-    TodoPrioritySelectOptions,
-    TodoSelector,
-    TodoStateSelectOptions,
-    TodoTagBar
-} from '@nao-todo/components'
+    TaskPrioritySelectOptions,
+    TaskStateSelectOptions
+} from '@nao-todo/infrastructure/consts/tasks'
 import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
 import type { TaskDetailsContext } from '../types'
 import type { Task } from '@nao-todo/types'
@@ -60,13 +57,13 @@ const createCommentHandler = async (content: string) => {
         <nue-header>
             <nue-div flex="1">
                 <nue-div flex="1">
-                    <todo-selector
-                        :options="TodoStateSelectOptions"
+                    <task-selector
+                        :options="TaskStateSelectOptions"
                         :value="vo.state"
                         @change="updateTaskState"
                     />
-                    <todo-selector
-                        :options="TodoPrioritySelectOptions"
+                    <task-selector
+                        :options="TaskPrioritySelectOptions"
                         :value="vo.priority"
                         @change="updateTaskPriority"
                     />
@@ -116,9 +113,9 @@ const createCommentHandler = async (content: string) => {
                         <details-main-events />
                     </nue-div>
                     <nue-div vertical style="padding: 1rem">
-                        <todo-tag-bar
+                        <task-tag-bar
                             :tags="tags"
-                            :todo-tags="vo.tags"
+                            :task-tags="vo.tags"
                             @update-tags="updateTaskTags"
                         />
                     </nue-div>

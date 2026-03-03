@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { NaoSmartList, type NaoSmartListLinkVO } from '@/components/ui'
+import { NaoSmartList, type NaoSmartListLinkVO  } from '@nao-todo/components/'
 
 defineOptions({ name: 'ProjectSmartList' })
 defineProps<{ links: NaoSmartListLinkVO[] }>()

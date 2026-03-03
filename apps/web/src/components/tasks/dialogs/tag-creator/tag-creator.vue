@@ -1,16 +1,15 @@
 <script lang="ts" setup>
-import { nextTick, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { NueDiv, NueInput, NueTextarea } from 'nue-ui'
 import { TagColorSelector } from '@nao-todo/components'
 import useTagCreator from './use-tag-creator'
 import type { TagCreatorProps, TagCreatorEmits } from './types'
-import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
+import { type DialogInstanceType, useDialogWrapper } from '@nao-todo/components'
 
 defineOptions({ name: 'TagCreator' })
 const props = defineProps<TagCreatorProps>()
 const emit = defineEmits<TagCreatorEmits>()
 
-const tagNameInputRef = ref<InstanceType<typeof NueInput>>()
 const dialogRef = ref<DialogInstanceType>()
 
 const { states, handleConfirm, clearInputsValue } = useTagCreator(props)
@@ -24,9 +23,6 @@ const handleSubmit = async () => {
 const open = () => {
     clearInputsValue()
     visible.value = true
-    nextTick(() => {
-        tagNameInputRef.value?.innerInputRef?.focus()
-    })
 }
 
 onMounted(() => emit('register', open, close))
@@ -39,33 +35,34 @@ onMounted(() => emit('register', open, close))
             <nue-button @click="close" icon="clear" theme="icon,ghost,small" />
         </template>
         <template #content>
-            <nue-div vertical gap=".5rem">
-                <nue-div align="stretch" gap="4px" vertical width="100%">
-                    <nue-input
-                        ref="tagNameInputRef"
-                        v-model="states.name"
-                        :disabled="states.creating"
-                        placeholder="请输入标签名称"
-                        title="标签名称"
-                        maxlength="36"
-                        counter="word-left"
-                    />
-                    <nue-text v-if="states.isNameEmpty" color="#f56c6c" size="12px">
-                        * 标签名称不能为空
-                    </nue-text>
-                </nue-div>
-                <nue-div align="stretch" gap="8px" vertical width="100%">
-                    <nue-textarea
-                        v-model="states.description"
-                        :disabled="states.creating"
-                        :rows="4"
-                        placeholder="标签描述"
-                        title="Project description"
-                        maxlength="128"
-                        counter="word-left"
-                        :autosize="{ minRows: 1, maxRows: 3 }"
-                        theme="fix-padding"
-                    />
+            <nue-div vertical>
+                <nue-div vertical gap=".5rem">
+                    <nue-div align="stretch" gap="4px" vertical width="100%">
+                        <nue-input
+                            v-model="states.name"
+                            :disabled="states.creating"
+                            placeholder="请输入标签名称"
+                            title="标签名称"
+                            maxlength="36"
+                            counter="word-left"
+                        />
+                        <nue-text v-if="states.isNameEmpty" color="#f56c6c" size="12px">
+                            * 标签名称不能为空
+                        </nue-text>
+                    </nue-div>
+                    <nue-div align="stretch" gap="8px" vertical width="100%">
+                        <nue-textarea
+                            v-model="states.description"
+                            :disabled="states.creating"
+                            :rows="4"
+                            placeholder="标签描述"
+                            title="Project description"
+                            maxlength="128"
+                            counter="word-left"
+                            :autosize="{ minRows: 1, maxRows: 3 }"
+                            theme="fix-padding"
+                        />
+                    </nue-div>
                 </nue-div>
                 <nue-div align="stretch" gap="8px" vertical>
                     <nue-text color="gray" size="12px">选择标签颜色：</nue-text>
@@ -81,3 +78,4 @@ onMounted(() => emit('register', open, close))
         </template>
     </nue-dialog>
 </template>
+

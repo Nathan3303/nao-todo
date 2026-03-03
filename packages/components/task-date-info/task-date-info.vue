@@ -1,0 +1,36 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import dayjs from 'dayjs'
+import { TaskBasicInfo } from '../task-basic-info'
+import relativeDateParser from '@nao-todo/infrastructure/utils/relative-date-parser'
+import type { TaskDateInfoProps } from './types'
+
+defineOptions({ name: 'TaskDateInfo' })
+const props = defineProps<TaskDateInfoProps>()
+
+const formattedDate = computed(() => {
+    if (!props.date) return ''
+    const [relativeDate, err] = relativeDateParser(props.date)
+    if (err !== null) return ''
+    return props.formatter ? props.formatter(relativeDate) : relativeDate
+})
+
+const isExpired = computed(() => {
+    if (!props.date) return false
+    return dayjs(props.date).isBefore(dayjs())
+})
+</script>
+
+<template>
+    <task-basic-info
+        icon="time"
+        :text="formattedDate"
+        :data-expired="colored ? isExpired : void 0"
+    />
+</template>
+
+<style scoped>
+.nue-div--basic-info[data-expired='true'] {
+    color: rgb(255, 74, 74);
+}
+</style>

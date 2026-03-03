@@ -1,14 +1,16 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
-import { type DialogInstanceType, useDialogWrapper } from '@/components/ui/dialog-wrapper'
+import { type DialogInstanceType, useDialogWrapper } from '@nao-todo/components'
 import {
-    TodoDateSelector,
-    TodoPrioritySelectOptions,
-    TodoProjectSelector,
-    TodoSelector,
-    TodoStateSelectOptions,
-    TodoTagBar
+    TaskDateSelector,
+    TaskProjectSelector,
+    TaskSelector,
+    TaskTagBar
 } from '@nao-todo/components'
+import {
+    TaskStateSelectOptions,
+    TaskPrioritySelectOptions
+} from '@nao-todo/infrastructure/consts/tasks'
 import type { CreateTask, Task } from '@nao-todo/types'
 import useTaskCreator from './use-task-creator'
 import type { TaskCreatorProps, TaskCreatorEmits, TaskCreatorVO } from './types'
@@ -73,33 +75,33 @@ onMounted(() => emit('register', open, close))
                     theme="fix-padding"
                 />
                 <nue-div align="center">
-                    <todo-date-selector v-model="states.endAt" />
+                    <task-date-selector v-model="states.endAt" />
                     <nue-text v-if="states.endAt" color="gray" size="var(--nue-text-xs)">
                         任务截止于：{{ dayjs(states.endAt).format('YYYY-MM-DD HH:mm') }}
                     </nue-text>
                 </nue-div>
                 <nue-div wrap="nowrap">
-                    <todo-selector
-                        :options="TodoStateSelectOptions"
+                    <task-selector
+                        :options="TaskStateSelectOptions"
                         :value="states.state"
                         @change="(s) => (states.state = s as Task['state'])"
                     />
-                    <todo-selector
-                        :options="TodoPrioritySelectOptions"
+                    <task-selector
+                        :options="TaskPrioritySelectOptions"
                         :value="states.priority"
                         @change="(p) => (states.priority = p as Task['priority'])"
                     />
                     <nue-div flex="1" />
-                    <todo-project-selector
+                    <task-project-selector
                         :project-id="states.projectId"
                         :projects="props.avaliableProjects || []"
-                        @select="(pid) => (states.projectId = pid)"
+                        @select="(pid: string) => (states.projectId = pid)"
                     />
                 </nue-div>
-                <todo-tag-bar
+                <task-tag-bar
                     :clamped="5"
                     :tags="props.avaliableTags || []"
-                    :todo-tags="states.tags || []"
+                    :task-tags="states.tags || []"
                     @update-tags="(_tags) => (states.tags = _tags)"
                 />
             </nue-div>

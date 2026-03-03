@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from 'vue'
 import TasksOperationsDropdown from '@/components/tasks/dropdowns/operations-dropdown.vue'
-import { InnerDropdownOption, DivBlock } from '@/components/ui'
+import { InnerDropdownOption, DropdownDivBlock } from '@nao-todo/components'
 import ColumnDisplayOperator from '@/components/tasks/dropdowns/column-display-operator.vue'
 import { PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import type { ProjectViewContext } from '../types'
@@ -45,7 +45,7 @@ onMounted(() => {
 
 <template>
     <tasks-operations-dropdown v-if="preference" ref="dropdownRef">
-        <div-block title="视图切换">
+        <dropdown-div-block title="视图切换">
             <inner-dropdown-option
                 icon="table"
                 title="表格视图"
@@ -64,9 +64,9 @@ onMounted(() => {
                 execute-id="switch-view-to-list"
                 :checked="preference.viewType === 'list'"
             />
-        </div-block>
+        </dropdown-div-block>
         <nue-divider />
-        <div-block title="视图操作">
+        <dropdown-div-block title="视图操作">
             <inner-dropdown-option icon="refresh" title="重新获取数据" execute-id="refresh-data" />
             <inner-dropdown-option
                 :icon="isHideCompletedAlready ? 'eye' : 'eye-close'"
@@ -83,9 +83,9 @@ onMounted(() => {
                 title="保存视图偏好"
                 execute-id="save-preference"
             />
-        </div-block>
+        </dropdown-div-block>
         <nue-divider />
-        <div-block title="清单操作">
+        <dropdown-div-block title="清单操作">
             <inner-dropdown-option
                 color="red"
                 icon="clear"
@@ -98,7 +98,7 @@ onMounted(() => {
                 title="归档清单"
                 execute-id="archive-project"
             />
-        </div-block>
+        </dropdown-div-block>
     </tasks-operations-dropdown>
 </template>
 

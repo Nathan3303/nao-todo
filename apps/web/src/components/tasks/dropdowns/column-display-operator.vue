@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import type { InnerDropdownOptionVO } from '@/components/ui'
 import type { ProjectPreference } from '@nao-todo/types'
-import { InnerDropdown, InnerDropdownOption } from '@/components/ui/inner-dropdown'
+import {
+    InnerDropdown,
+    InnerDropdownOption,
+    type InnerDropdownOptionVO
+} from '@nao-todo/components'
 import { computed } from 'vue'
 
 defineOptions({ name: 'TasksDropdownColumnDisplayOperator' })

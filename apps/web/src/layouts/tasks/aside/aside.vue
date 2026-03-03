@@ -3,7 +3,7 @@ import projectSmartList from '@/components/tasks/smartlists/project-smart-list.v
 import FilterSmartList from '@/components/tasks/smartlists/filter-smart-list.vue'
 import TagSmartList from '@/components/tasks/smartlists/tag-smart-list.vue'
 import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
-import type { NaoSmartListLinkVO } from '@/components/ui'
+import type { NaoSmartListLinkVO } from '@nao-todo/components'
 import { computed, inject, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'

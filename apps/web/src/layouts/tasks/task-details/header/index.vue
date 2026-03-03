@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { inject } from 'vue'
-import { TodoCheckButton, TodoDateSelector } from '@nao-todo/components'
+import { TaskCheckButton, TaskDateSelector } from '@nao-todo/components'
 import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
 import type { TaskDetailsContext } from '../types'
 import type { Task } from '@nao-todo/types'
@@ -22,9 +22,9 @@ const updateEndAt = () => {
     <nue-header v-if="vo">
         <nue-div style="padding: 1rem" width="100%" auto-fit>
             <nue-div align="center" flex="1">
-                <todo-check-button :is-done="vo.isDone" @change="switchState" />
+                <task-check-button :is-done="vo.isDone" @change="switchState" />
                 <nue-divider vertical />
-                <todo-date-selector
+                <task-date-selector
                     :colored="!vo.isDone"
                     v-model="vo.endAt"
                     @change="updateEndAt"

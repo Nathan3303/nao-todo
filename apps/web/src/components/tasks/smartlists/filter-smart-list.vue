@@ -10,6 +10,6 @@
 </template>
 
 <script setup lang="ts">
-import { NaoSmartList } from '@/components/ui'
+import { NaoSmartList } from '@nao-todo/components/'
 </script>
 

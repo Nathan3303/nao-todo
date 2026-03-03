@@ -9,13 +9,13 @@ const _routeRecords = [
         title: '账户与个人信息',
         icon: 'user'
     },
-    // {
-    //     path: 'password',
-    //     name: 'settings-password',
-    //     componentName: 'password',
-    //     title: '密码与安全',
-    //     icon: 'lock'
-    // },
+    {
+        path: 'password',
+        name: 'settings-password',
+        componentName: 'password',
+        title: '密码与安全',
+        icon: 'lock'
+    }
     // {
     //     path: 'view',
     //     name: 'settings-view',
@@ -57,4 +57,3 @@ const SettingsViewRouteRecordRaw: RouteRecordRaw = {
 
 export default SettingsViewRouteRecordRaw
 export { SettingsViewRouteLinks }
-
