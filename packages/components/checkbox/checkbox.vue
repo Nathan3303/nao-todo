@@ -35,7 +35,7 @@ const handleCheck = () => {
     flex-wrap: nowrap;
 
     &:hover {
-        background-color: #f5f5f5;
+        background-color: var(--nue-primary-color-200);
         border-radius: var(--primary-radius);
         cursor: pointer;
     }

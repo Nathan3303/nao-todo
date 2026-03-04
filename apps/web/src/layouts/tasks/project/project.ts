@@ -1,4 +1,4 @@
-import { computed, inject, provide, watch } from 'vue'
+import { computed, inject, provide, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import type { ProjectViewContext, ProjectViewProps } from './types'
@@ -33,11 +33,14 @@ const useProjectView = (props: ProjectViewProps) => {
     const { profile } = storeToRefs(userStore)
     const { tags } = storeToRefs(tagsStore)
 
+    // @state 加载态
+    const loading = ref(true)
+
     // @method 视图切换
-    const switchViewType = (viewType: string) => {
+    const switchViewType = async (viewType: string) => {
         if (!viewType) return
         if (viewType === (router.currentRoute.value.params.viewType as string)) return
-        router.replace({ name: 'tasks-project-main', params: { viewType } }).then(() => {
+        return router.replace({ name: 'tasks-project-main', params: { viewType } }).then(() => {
             preference.value!.viewType = viewType
         })
     }
@@ -52,6 +55,7 @@ const useProjectView = (props: ProjectViewProps) => {
     const initialize = async () => {
         // 1. 检查参数
         if (!props.projectId || !profile.value) return
+        loading.value = true
         // 2. 获取清单详情
         const err = await tasksViewContext.projectUseCase.loadProjectPreference(props.projectId)
         if (err !== null) {
@@ -59,7 +63,8 @@ const useProjectView = (props: ProjectViewProps) => {
             return
         }
         // 3. 跳转至指定视图类型
-        switchViewType(preference.value?.viewType || 'table')
+        await switchViewType(preference.value?.viewType || 'table')
+        loading.value = false
     }
 
     // @watch 监听 projectId 变化
@@ -116,7 +121,7 @@ const useProjectView = (props: ProjectViewProps) => {
     })
 
     // @returns
-    return { initialize }
+    return { initialize, loading }
 }
 
 export default useProjectView

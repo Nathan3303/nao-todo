@@ -73,9 +73,11 @@ export class ProjectUseCase {
         }
         // 2. 转换为视图对象
         const preference = projectPreferenceEntity2ProjectPreferenceVO(preferenceEntity)
+        preference.projectId = projectId
+        preference.getTasksOptions.projectId = projectId
         // 3. 存储到状态管理
-        // console.log('loadProjectPreference', preference)
         this.store.setProjectPreference(preference)
+        console.log('loadProjectPreference', preference)
         // 4. 返回
         return null
     }

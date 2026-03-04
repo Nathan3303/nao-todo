@@ -81,7 +81,7 @@ export class BuiltInProjectUseCase {
         )
         // 3. 存储内建项目偏好实体
         this.store.setBuiltInProjectPreference(builtInProjectPreference)
-        // console.log(builtInProjectPreference)
+        console.log(builtInProjectPreference)
         // 4. 返回
         return null
     }

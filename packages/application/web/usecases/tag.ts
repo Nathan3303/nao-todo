@@ -90,6 +90,8 @@ export class TagUseCase {
         }
         // 2. 转换为视图对象
         const preference = tagPreferenceEntity2ValueObject(preferenceEntity)
+        preference.tagId = tagId
+        preference.getTasksOptions.tagId = tagId
         // 3. 存储到状态管理
         this.store.setTagPreference(preference)
         return null

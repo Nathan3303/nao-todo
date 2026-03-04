@@ -40,7 +40,9 @@ const handleGoToPage = (page: number) => {
 
 <template>
     <nue-div :gap="wrapperGap" align="center" auto-fit>
-        <nue-text v-if="!simple"> 第 {{ page }} 页，共 {{ totalPages }} 页 </nue-text>
+        <nue-text v-if="!simple" size="var(--nue-text-sm)">
+            第 {{ page }} 页，共 {{ totalPages }} 页
+        </nue-text>
         <nue-select
             v-model="perPage"
             size="small"
@@ -77,6 +79,6 @@ const handleGoToPage = (page: number) => {
                 @click="handleGoToPage(totalPages)"
             />
         </nue-div>
-        <nue-text v-if="simple">{{ page }}/{{ totalPages }} 页</nue-text>
+        <nue-text v-if="simple" size="var(--nue-text-sm)">{{ page }}/{{ totalPages }} 页</nue-text>
     </nue-div>
 </template>
