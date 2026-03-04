@@ -3,7 +3,6 @@ import type { GetTasksSortOptions, TaskColumnOptions, Task } from '@nao-todo/typ
 import type { TaskListContext, TaskListEmits, TaskListProps } from './types'
 import useMultiSelect from './use-multi-select'
 import dayjs from 'dayjs'
-import useTasksLoader from '@/infrastructure/hooks/tasks-view/use-tasks-loader'
 
 export const TASK_LIST_CONTEXT_KEY = Symbol('TASK_LIST_CONTEXT_KEY')
 
@@ -11,14 +10,6 @@ export const useTaskList = (props: TaskListProps, emit: TaskListEmits) => {
     // @hook Use multi select
     const { selectRange, showMultiSelectPanel, clearMultiSelect, isInMultiSelectRange } =
         useMultiSelect(props, emit)
-
-    // @hook Use tasks loader
-    const {
-        states: loaderStates,
-        loadAndPush: fetchTasks,
-        loadNextPage: loadMore,
-        reset
-    } = useTasksLoader(props.taskLister)
 
     // @computed 计算标签显示数量 - 用于响应式变化时变化标签显示个数
     const tagBarClamped = computed(() => {
@@ -62,8 +53,12 @@ export const useTaskList = (props: TaskListProps, emit: TaskListEmits) => {
         tasks: computed(() => props.tasks),
         tagBarClamped,
         showTaskDetails,
-        updateColumns: (key: string, value: boolean) => emit('updateColumns', key, value),
-        updateSortOptions: (options: GetTasksSortOptions) => emit('updateSortOptions', options),
+        updateColumns: (key: keyof TaskColumnOptions, value: boolean) =>
+            emit('updateColumns', key, value),
+        updateSortOptions: (
+            field: GetTasksSortOptions['field'],
+            order: GetTasksSortOptions['order']
+        ) => emit('updateSortOptions', field, order),
         clearSortOptions: () => emit('clearSortOptions'),
         deleteTask: (taskId: Task['id']) => emit('deleteTask', taskId),
         restoreTask: (taskId: Task['id']) => emit('restoreTask', taskId),
@@ -75,8 +70,5 @@ export const useTaskList = (props: TaskListProps, emit: TaskListEmits) => {
         getProjectName: props.projectNameGetter,
         deleteOrRestore
     })
-
-    // @returns
-    return { states: loaderStates, loadMore, reset, fetchTasks }
 }
 

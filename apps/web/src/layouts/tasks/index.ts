@@ -1,26 +1,24 @@
 // Aside
-import TasksViewAside from './aside/aside.vue'
-import TasksViewFloatAside from './aside/float-aside.vue'
-import TasksViewAsideAdapter from './aside/index.vue'
+import { Aside, FloatAside, AsideAdapter } from './aside'
 // Dialogs
 import TasksViewDialogs from './dialogs/index.vue'
 // Built-in project
-import TasksViewBuiltInProjectView from './built-in-project/index.vue'
+import { BuiltInProjectSection } from './built-in-project'
 // Task details
 import { TaskDetails, TaskDetailsDrawer } from './task-details'
 import TasksViewDetailsAdapter from './task-details/index.vue'
 
 export {
     // Aside
-    TasksViewAside,
-    TasksViewFloatAside,
-    TasksViewAsideAdapter,
+    Aside as TasksViewAside,
+    FloatAside as TasksViewFloatAside,
+    AsideAdapter as TasksViewAsideAdapter,
+    // Built-in project
+    BuiltInProjectSection as TasksViewBuiltInProjectSection,
     // Dialogs
     TasksViewDialogs,
-    // Built-in project
-    TasksViewBuiltInProjectView,
     // Task details
     TaskDetails as TasksViewDetails,
     TaskDetailsDrawer as TasksViewFloatDetails,
-    TasksViewDetailsAdapter,
+    TasksViewDetailsAdapter
 }

@@ -2,21 +2,21 @@
 import useProjectView from './project'
 import type { ProjectViewProps } from './types'
 
-defineOptions({ name: 'TasksProjectView' })
+defineOptions({ name: 'ProjectSection' })
 const props = defineProps<ProjectViewProps>()
 
 useProjectView(props)
 </script>
 
 <template>
-    <nue-container id="TasksMainWrapper">
+    <nue-container id="ProjectSectionWrapper">
         <router-view name="Header" />
         <router-view name="Main" />
     </nue-container>
 </template>
 
 <style scoped>
-.nue-container#TasksMainWrapper {
+.nue-container#ProjectSectionWrapper {
     padding: 1rem;
     gap: 0.25rem;
 

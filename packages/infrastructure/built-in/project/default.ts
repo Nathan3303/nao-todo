@@ -90,7 +90,7 @@ export const defaultBuiltInProjectPreferences: BuiltInProjectPreferenceRes[] = [
     {
         projectId: 'today',
         userId: 'default',
-        viewType: 'kanban',
+        viewType: 'list',
         getTasksOptions: '{"relativeDate": "today","limit": 20}',
         columns:
             '{ "endAt": true, "priority": true, "state": true, "project": true, "tags": true, \
@@ -99,7 +99,7 @@ export const defaultBuiltInProjectPreferences: BuiltInProjectPreferenceRes[] = [
     {
         projectId: 'tomorrow',
         userId: 'default',
-        viewType: 'kanban',
+        viewType: 'list',
         getTasksOptions: '{"relativeDate": "tomorrow","limit": 20}',
         columns:
             '{ "endAt": true, "priority": true, "state": true, "project": true, "tags": true, \

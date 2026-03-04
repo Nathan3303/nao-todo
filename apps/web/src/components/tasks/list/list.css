@@ -34,8 +34,8 @@
 
             .nue-infinite-scroll-wrapper {
                 .nue-infinite-sroll__text {
-                    font-size: var(--nue-text-xs);
-                    color: var(--nue-primary-color-400);
+                    font-size: var(--nue-text-sm);
+                    color: var(--nue-primary-color-500);
                 }
 
                 .nue-empty.nue-empty--no-image {
@@ -46,8 +46,8 @@
                     }
 
                     .nue-empty__description {
-                        font-size: var(--nue-text-xs);
-                        color: var(--nue-primary-color-400);
+                        font-size: var(--nue-text-sm);
+                        color: var(--nue-primary-color-500);
                     }
                 }
             }
@@ -60,12 +60,12 @@
                 .nue-div.nue-div--todo-list-main__row {
                     flex-wrap: wrap;
                     flex-direction: row;
-                    gap: 0.5rem;
+                    gap: 0.75rem;
                     position: relative;
                     min-height: 40px;
                     align-items: center;
-                    padding: 0.5rem 0.75rem;
-                    background-color: var(--nue-primary-color-100);
+                    padding: 0.75rem 1rem;
+                    background-color: var(--nue-primary-color-200);
                     border: 1px solid transparent;
                     border-radius: var(--nue-primary-radius);
                     transition: opacity 0.16s ease;
@@ -76,19 +76,8 @@
                     }
 
                     &[data-selected='true'] {
-                        border: 1px solid orange;
-
-                        &::after {
-                            content: '';
-                            display: block;
-                            position: absolute;
-                            width: calc(100% - 4px);
-                            height: calc(100% - 4px);
-                            top: 0;
-                            left: 0;
-                            border: 2px solid white;
-                            border-radius: var(--nue-primary-radius);
-                        }
+                        border: 1px solid var(--nue-primary-color-400);
+                        box-shadow: var(--nue-secondary-shadow);
                     }
 
                     &[data-done='true'] * {
@@ -114,7 +103,7 @@
                     .nue-div.nue-div--todo-list-main__row__first {
                         flex-direction: column;
                         overflow: hidden;
-                        gap: 0.25rem;
+                        gap: 0.5rem;
                         width: 100%;
 
                         .nue-div.nue-div--todo-list__main__row__first__name-wrapper {
@@ -123,10 +112,9 @@
                             overflow: hidden;
                             width: 100%;
                             align-items: center;
-                            gap: 0.5rem;
 
                             > .nue-text {
-                                font-size: var(--nue-text-sm);
+                                font-size: var(--nue-text-df);
                                 color: var(--nue-primary-color-800);
                                 margin-right: auto;
                                 line-height: 1.25rem;
@@ -143,14 +131,14 @@
 
                         .nue-text.nue-text--description {
                             color: var(--nue-primary-color-600);
-                            font-size: var(--nue-text-xs);
+                            font-size: var(--nue-text-sm);
                             overflow: hidden;
                             white-space: normal;
                             word-break: break-all;
                         }
 
                         &::before {
-                            font-size: var(--nue-text-xs);
+                            font-size: var(--nue-text-sm);
                             color: var(--nue-primary-color-700);
                             line-height: 1;
                         }
@@ -159,9 +147,15 @@
                     .nue-div.nue-div--todo-list-main__row__attrs {
                         align-items: center;
                         gap: 0.5rem 0.75rem;
+
+                        .nue-div--basic-info {
+                            width: fit-content;
+                            flex: auto;
+                        }
                     }
                 }
             }
         }
     }
 }
+

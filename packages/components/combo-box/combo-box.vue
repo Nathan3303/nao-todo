@@ -75,20 +75,22 @@ const handleCheck = (checked: boolean, value: unknown) => {
 </script>
 
 <style scoped>
-.combo-box__empty-text {
-    font-size: var(--nue-text-xs);
-    padding: 0.5rem;
-    color: var(--nue-primary-color-600);
-    text-align: center;
-}
-
 .nue-container#ComboBoxContainer {
     gap: 0.25rem;
 
     > .nue-header {
         height: auto;
-        padding: 0 0.5rem;
+        padding: 0.25rem 0.5rem;
         border: none;
+
+        
+    }
+
+    .combo-box__empty-text {
+        font-size: var(--nue-text-xs);
+        padding: 0.5rem;
+        color: var(--nue-primary-color-600);
+        text-align: center;
     }
 }
 </style>

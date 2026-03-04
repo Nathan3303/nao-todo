@@ -1,4 +1,3 @@
-// import type { TaskApp } from '@nao-todo/application/task'
 import type {
     GetTasksOptions,
     GetTasksSortOptions,

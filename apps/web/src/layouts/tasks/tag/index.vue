@@ -2,21 +2,21 @@
 import useTagView from './tag'
 import type { TagViewProps } from './types'
 
-defineOptions({ name: 'TasksTagView' })
+defineOptions({ name: 'TagSection' })
 const props = defineProps<TagViewProps>()
 
 useTagView(props)
 </script>
 
 <template>
-    <nue-container id="TasksMainWrapper">
+    <nue-container id="TagSectionWrapper">
         <router-view name="Header" />
         <router-view name="Main" />
     </nue-container>
 </template>
 
 <style scoped>
-.nue-container#TasksMainWrapper {
+.nue-container#TagSectionWrapper {
     padding: 1rem;
     gap: 0.25rem;
 

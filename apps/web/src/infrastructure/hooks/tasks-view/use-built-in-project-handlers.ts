@@ -1,14 +1,20 @@
 import type { BuiltInProjectApp } from '@nao-todo/application/project'
-import type { GetTasksSortOptions, Go, ProjectPreferenceVO, ProjectVO } from '@nao-todo/types'
-import { unwrapError } from '@nao-todo/utils'
+import type {
+    GetTasksSortOptions,
+    Go,
+    ProjectPreference,
+    Project,
+    TaskColumnOptions
+} from '@nao-todo/types'
+import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 
 export interface BuiltInProjectHandlers {
     savePreference: (
         userId: string,
-        projectId: ProjectVO['id'],
-        preference: ProjectPreferenceVO
+        projectId: Project['id'],
+        preference: ProjectPreference
     ) => Go<void>
-    updateColumns: (key: string, value: boolean) => void
+    updateColumns: (key: keyof TaskColumnOptions, value: boolean) => void
     updateSortOptions: (options: GetTasksSortOptions) => void
     clearSortOptions: () => void
 }
@@ -17,8 +23,8 @@ const useBuiltInProjectHandlers = (builtInProjectApp: BuiltInProjectApp) => {
     // @method 更新清单偏好设置
     const savePreference = (
         userId: string,
-        projectId: ProjectVO['id'],
-        preference: ProjectPreferenceVO
+        projectId: Project['id'],
+        preference: ProjectPreference
     ): Go<void> => {
         // 1. 校验参数
         if (!projectId || !preference) {

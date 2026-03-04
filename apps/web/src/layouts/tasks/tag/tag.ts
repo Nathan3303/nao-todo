@@ -35,7 +35,9 @@ const useTagView = (props: TagViewProps) => {
     const switchViewType = (viewType: string) => {
         if (!viewType) return
         if (viewType === (router.currentRoute.value.params.viewType as string)) return
-        router.replace({ name: 'tasks-tag-main', params: { viewType } })
+        router.replace({ name: 'tasks-tag-main', params: { viewType } }).then(() => {
+            preference.value!.viewType = viewType
+        })
     }
 
     // @state 标签详情

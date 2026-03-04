@@ -39,7 +39,9 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     const switchViewType = (viewType: string) => {
         if (!viewType) return
         if (viewType === (router.currentRoute.value.params.viewType as string)) return
-        router.replace({ name: 'tasks-built-in-project-main', params: { viewType } })
+        router.replace({ name: 'tasks-built-in-project-main', params: { viewType } }).then(() => {
+            preference.value!.viewType = viewType
+        })
     }
 
     // @state 清单详情
@@ -81,6 +83,7 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
 
     // @handler 内建清单操作器
     const builtInProjectHandlers = new BuiltInProjectLayoutHandlers(
+        tasksViewContext.builtInProjectUseCase,
         taskUseCase,
         builtInProjectsStore
     )

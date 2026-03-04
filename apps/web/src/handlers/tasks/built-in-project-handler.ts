@@ -1,5 +1,12 @@
-import type { GetTasksOptions, GetTasksSortOptions, Go, TaskColumnOptions } from '@nao-todo/types'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
+import type {
+    BuiltInProjectPreference,
+    GetTasksOptions,
+    GetTasksSortOptions,
+    Go,
+    TaskColumnOptions
+} from '@nao-todo/types'
+import type { BuiltInProjectUseCase } from '@nao-todo/application/web/usecases/built-in-project'
 
 export interface BuiltInProjectStore {
     updatePreferenceColumns(key: keyof TaskColumnOptions, value: boolean): void
@@ -9,6 +16,7 @@ export interface BuiltInProjectStore {
     ): void
     getPreferenceGetTasksOption<T extends keyof GetTasksOptions>(key: T): GetTasksOptions[T]
     getPreferenceGetTasksOptions(): GetTasksOptions
+    getBuiltInProjectPreference: () => BuiltInProjectPreference | undefined
 }
 
 export class BuiltInProjectLayoutHandlers {
@@ -18,7 +26,7 @@ export class BuiltInProjectLayoutHandlers {
      * @param store 项目内建处理程序存储
      */
     constructor(
-        // private builtInProjectUseCase: BuiltInProjectUseCase,
+        private builtInProjectUseCase: BuiltInProjectUseCase,
         private taskUseCase: TaskUseCase,
         private store: BuiltInProjectStore
     ) {}
@@ -113,5 +121,23 @@ export class BuiltInProjectLayoutHandlers {
         this.taskUseCase.loadTasks(this.store.getPreferenceGetTasksOptions())
         // 2. 返回
         return null
+    }
+
+    /**
+     * 保存项目内建偏好
+     * @param email 用户邮箱
+     * @param projectId 项目ID
+     * @param preference 项目内建偏好
+     * @returns 无
+     */
+    savePreference(email: string, projectId: string): Go<void> {
+        // 1. 获取最新的偏好设置
+        const newPreference = this.store.getBuiltInProjectPreference()
+        if (!newPreference) return '项目内建偏好不存在'
+        // console.log('savePreference', newPreference)
+        // 2. 配置项目ID
+        newPreference.projectId = projectId
+        // 3. 调用用例保存偏好
+        return this.builtInProjectUseCase.savePreference(email, projectId, newPreference!)
     }
 }

@@ -1,5 +1,11 @@
 import { useProjectsStore } from '@/stores/tasks'
-import type { GetTasksOptions, GetTasksSortOptions, Go, TaskColumnOptions } from '@nao-todo/types'
+import type {
+    GetTasksOptions,
+    GetTasksSortOptions,
+    Go,
+    GoAsync,
+    TaskColumnOptions
+} from '@nao-todo/types'
 import type { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 import type { Subscriber } from '@/infrastructure/hooks/use-subscriber'
 import type { ProjectUseCase } from '@nao-todo/application/web/usecases/project'
@@ -101,5 +107,21 @@ export class ProjectHandler {
         this.subscriber.emit('RefreshData')
         // 4. 返回
         return null
+    }
+
+    /**
+     * 保存项目偏好设置
+     * @param projectId 项目ID
+     * @returns 无
+     */
+    async savePreference(projectId: string): GoAsync<void> {
+        // 1. 获取当前偏好设置
+        const preference = this.projectStore.getProjectPreference()
+        if (!preference) return '项目偏好设置不存在'
+        // console.log('savePreference', preference)
+        // 2. 配置项目ID
+        preference.projectId = projectId
+        // 3. 调用用例
+        return await this.projectUseCase.savePreference(projectId, preference)
     }
 }

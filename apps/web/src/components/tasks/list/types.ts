@@ -8,17 +8,26 @@ export type TaskListProps = {
     sortOptions: GetTasksSortOptions
     columnLabelGetter: (key: string) => string
     projectNameGetter: (projectId: string) => string
+    disabledNextPage: boolean
+    loading: boolean
+    error: string | null
     // taskLister: TaskApp['list']
 }
 
 export type TaskListEmits = {
     (e: 'showTaskDetails', taskId: Task['id']): void
     (e: 'showMultiSelectPanel', payload: TaskListMultiSelectPayload): void
-    (e: 'updateColumns', key: string, value: boolean): void
-    (e: 'updateSortOptions', newSortOptions: GetTasksSortOptions): void
+    (e: 'updateColumns', key: keyof TaskColumnOptions, value: boolean): void
+    (
+        e: 'updateSortOptions',
+        field: GetTasksSortOptions['field'],
+        order: GetTasksSortOptions['order']
+    ): void
     (e: 'clearSortOptions'): void
     (e: 'deleteTask', taskId: Task['id']): void
     (e: 'restoreTask', taskId: Task['id']): void
+    (e: 'nextPage'): void
+    (e: 'newTask'): void
 }
 
 export type TaskListContext = {
@@ -28,8 +37,11 @@ export type TaskListContext = {
     tasks: ComputedRef<Task[]>
     tagBarClamped: ComputedRef<number>
     showTaskDetails: (taskId: Task['id'], idx: number) => void
-    updateColumns: (key: string, value: boolean) => void
-    updateSortOptions: (options: GetTasksSortOptions) => void
+    updateColumns: (key: keyof TaskColumnOptions, value: boolean) => void
+    updateSortOptions: (
+        field: GetTasksSortOptions['field'],
+        order: GetTasksSortOptions['order']
+    ) => void
     clearSortOptions: () => void
     deleteTask: (taskId: Task['id']) => void
     restoreTask: (taskId: Task['id']) => void
@@ -51,3 +63,4 @@ export type TaskListOrderButtonProps = {
     prop: GetTasksSortOptions['field']
     text?: string
 }
+

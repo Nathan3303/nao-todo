@@ -41,14 +41,6 @@ const {
                 <nue-div theme="todo-list__main__row__first__name-wrapper">
                     <nue-text :clamped="1" :title="task.name">{{ task.name }}</nue-text>
                     <nue-icon v-if="columns.isFavorited" name="heart-fill" color="pink" />
-                    <task-tag-bar
-                        v-if="columns.tags && task.tags.length"
-                        :clamped="tagBarClamped"
-                        :tags="tags"
-                        :task-tags="task.tags"
-                        readonly
-                        small
-                    />
                     <nue-divider vertical />
                     <nue-div theme="todo-list-main__row__actions">
                         <slot :todo="task" name="row-actions">
@@ -70,8 +62,14 @@ const {
                 </nue-text>
             </nue-div>
             <nue-div theme="todo-list-main__row__attrs">
-                <task-state-info v-if="columns?.state" :state="task.state" />
-                <task-priority-info v-if="columns?.priority" :priority="task.priority" />
+                <task-tag-bar
+                    v-if="columns.tags && task.tags.length"
+                    :clamped="tagBarClamped"
+                    :tags="tags"
+                    :task-tags="task.tags"
+                    readonly
+                    small
+                />
                 <task-date-info
                     v-if="columns.createdAt"
                     :date="task.createdAt"
@@ -88,6 +86,8 @@ const {
                     :formatter="(date) => `结束时间： ${date}`"
                     :colored="!(task.state === 'done')"
                 />
+                <task-state-info v-if="columns?.state" :state="task.state" />
+                <task-priority-info v-if="columns?.priority" :priority="task.priority" />
                 <task-basic-info
                     v-if="columns?.project"
                     icon="inbox-fill"

@@ -7,13 +7,22 @@ import {
 import { computed } from 'vue'
 
 const useBuiltInProjectsStore = defineStore('BuiltInProjectsStore', () => {
-    // @storebase 内建项目存储基础
+    /**
+     * 内建项目存储基础
+     * 用于管理内建项目的加载状态和错误信息
+     */
     const { builtInProjects, setBuiltInProjects, getBuiltInProject } = useBuiltInProjectsStoreBase()
 
-    // @storebase 内建项目存储加载/错误基础
+    /**
+     * 内建项目存储加载/错误基础
+     * 用于管理内建项目的加载状态和错误信息
+     */
     const { loading, error, setLoading, setError } = useLoadingErrorStoreBase()
 
-    // @storebase 内建项目偏好存储基础
+    /**
+     * 内建项目偏好存储基础
+     * 用于管理内建项目偏好的加载状态和错误信息
+     */
     const {
         builtInProjectPreference,
         setBuiltInProjectPreference,
@@ -24,7 +33,10 @@ const useBuiltInProjectsStore = defineStore('BuiltInProjectsStore', () => {
         getPreferenceGetTasksOptions
     } = useBuiltInProjectPreferenceStoreBase()
 
-    // @storebase 内建项目偏好存储加载/错误基础
+    /**
+     * 内建项目偏好存储加载/错误基础
+     * 用于管理内建项目偏好的加载状态和错误信息
+     */
     const {
         loading: preferenceLoading,
         error: preferenceError,

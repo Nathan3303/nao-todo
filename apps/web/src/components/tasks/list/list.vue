@@ -1,23 +1,15 @@
 <script lang="ts" setup>
-import { useTaskList } from './use-list'
 import TaskListMain from './list-main.vue'
 import { Loading as LoadingComp } from '@nao-todo/components'
+import { useTaskList } from './use-list'
 import type { TaskListEmits, TaskListProps } from './types'
-import { onMounted } from 'vue'
 import './list.css'
 
 defineOptions({ name: 'TaskList' })
 const props = defineProps<TaskListProps>()
 const emit = defineEmits<TaskListEmits>()
 
-const { states, fetchTasks, loadMore } = useTaskList(props, emit)
-
-onMounted(() => {
-    states.isDone = true
-    fetchTasks().then(() => {
-        states.isDone = false
-    })  
-})
+useTaskList(props, emit)
 </script>
 
 <template>
@@ -25,17 +17,18 @@ onMounted(() => {
         <nue-main>
             <nue-content fill style="overflow: hidden">
                 <nue-empty
-                    v-if="states.error && tasks.length === 0"
+                    v-if="error || tasks.length === 0"
                     image-size="4rem"
                     image-src="/images/coffee.webp"
-                    :description="states.error"
                     style="height: 100%"
-                />
+                >
+                    <nue-text>{{ error || '暂无待办任务' }}</nue-text>
+                </nue-empty>
                 <nue-infinite-scroll
                     v-else
-                    @load-more="loadMore"
-                    :loading="states.loading"
-                    :disabled="states.isDone"
+                    @load-more="emit('nextPage')"
+                    :loading="loading"
+                    :disabled="disabledNextPage"
                     trigger-height="2px"
                 >
                     <task-list-main />
@@ -53,3 +46,4 @@ onMounted(() => {
         </nue-main>
     </nue-container>
 </template>
+

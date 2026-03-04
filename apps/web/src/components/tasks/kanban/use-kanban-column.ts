@@ -1,4 +1,4 @@
-import useTasksLoader from '@/infrastructure/hooks/tasks-view/use-tasks-loader'
+import useTasksLoader from '@/infrastructure/hooks/tasks-view/use-task-loader'
 import type { TaskKanbanColumnProps } from './types'
 
 const useKanbanColumn = (props: TaskKanbanColumnProps) => {

@@ -66,6 +66,7 @@ const handleAddDateByNow = () => {
         border: 1px solid var(--nue-divider-color);
         box-shadow: var(--nue-secondary-shadow);
         align-items: center;
+        overflow: hidden;
 
         .nue-input {
             padding: 0;
@@ -82,7 +83,13 @@ const handleAddDateByNow = () => {
     }
 
     &:hover {
-        background-color: #f5f5f5;
+        background-color: var(--nue-primary-color-300);
+        border-color: var(--nue-primary-color-500);
+        border-radius: var(--nue-primary-radius);
+    }
+
+    .nue-input__input {
+        -webkit-rtl-ordering: logical;
     }
 
     &[data-expired='false'] .nue-input {

@@ -1,5 +1,5 @@
 import { useTagsStore } from '@/stores/tasks'
-import type { GetTasksOptions, GetTasksSortOptions, Go, TaskColumnOptions } from '@nao-todo/types'
+import type { GetTasksOptions, GetTasksSortOptions, Go, GoAsync, TaskColumnOptions } from '@nao-todo/types'
 import type { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 import type { Subscriber } from '@/infrastructure/hooks/use-subscriber'
 import type { TagUseCase } from '@nao-todo/application/web/usecases/tag'
@@ -99,5 +99,21 @@ export class TagHandler {
         this.subscriber.emit('RefreshData')
         // 4. 返回
         return null
+    }
+
+    /**
+     * 保存标签偏好设置
+     * @param tagId 标签ID
+     * @returns 无
+     */
+    async savePreference(tagId: string): GoAsync<void> {
+        // 1. 获取当前偏好设置
+        const preference = this.tagsStore.getTagPreference()
+        if (!preference) return '标签偏好设置不存在'
+        // console.log('savePreference', preference)
+        // 2. 配置标签ID
+        preference.tagId = tagId
+        // 3. 调用用例
+        return await this.tagUseCase.savePreference(tagId, preference)
     }
 }

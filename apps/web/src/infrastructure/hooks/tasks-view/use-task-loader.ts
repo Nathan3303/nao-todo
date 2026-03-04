@@ -4,7 +4,7 @@ import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { reactive } from 'vue'
 
 export type UseTasksLoaderStates = {
-    taskIds: Task['id'][]
+    taskIds: Set<Task['id']>
     loading: boolean
     error: string
     pagination: ResponseDataPagination
@@ -17,7 +17,7 @@ export type UseTasksLoaderStates = {
 const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: GetTasksOptions) => {
     // @states
     const states = reactive<UseTasksLoaderStates>({
-        taskIds: [],
+        taskIds: new Set<Task['id']>(),
         loading: true,
         error: '',
         pagination: { total: 0, page: 1, limit: originalGetOptions?.limit ?? 20, maxPage: 1 },
@@ -56,7 +56,7 @@ const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: GetTasksO
         states.disabled = true
         const [taskIds, err] = await load(extraGetOptions)
         if (err !== null) return
-        states.taskIds.push(...taskIds)
+        taskIds.forEach((id) => states.taskIds.add(id))
         // fill(taskVOs, 0, 20)
         setTimeout(() => (states.disabled = false), states.delay)
     }
@@ -67,7 +67,7 @@ const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: GetTasksO
         states.disabled = true
         const [taskIds, err] = await load(extraGetOptions)
         if (err !== null) return
-        states.taskIds = taskIds
+        states.taskIds = new Set(taskIds)
         // fill(taskVOs, 0, 20)
         setTimeout(() => (states.disabled = false), states.delay)
     }
