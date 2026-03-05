@@ -7,10 +7,10 @@ useApp()
 </script>
 
 <template>
-    <router-view v-slot="{ Component }">
-        <suspense>
-            <component :is="Component" />
-            <template #fallback>
+    <suspense>
+        <router-view />
+    </suspense>
+    <!-- <template #fallback>
                 <div id="firstLoadingScreen">
                     <svg
                         t="1741753056341"
@@ -41,8 +41,6 @@ useApp()
                         </div>
                     </div>
                 </div>
-            </template>
-        </suspense>
-    </router-view>
+            </template> -->
 </template>
 

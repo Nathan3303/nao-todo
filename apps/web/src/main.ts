@@ -5,6 +5,7 @@ import router from './router'
 import NueUI from 'nue-ui'
 import App from './App.vue'
 import '@/infrastructure/themes'
+import { useThemeStore } from '@/stores'
 
 initRequester({ name: 'AxiosRequester', baseURL: 'http://localhost:3302/api' })
 
@@ -12,5 +13,10 @@ const app = createApp(App)
 app.use(NueUI)
 app.use(createPinia())
 app.use(router)
-app.mount('#app')
 
+// Initialize theme store
+const themeStore = useThemeStore()
+themeStore.loadSavedTheme()
+themeStore.initSystemListener()
+
+app.mount('#app')

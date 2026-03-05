@@ -15,14 +15,14 @@ const _routeRecords = [
         componentName: 'password',
         title: '密码与安全',
         icon: 'lock'
-    }
-    // {
-    //     path: 'view',
-    //     name: 'settings-view',
-    //     componentName: 'view',
-    //     title: '页面设置',
-    //     icon: 'theme'
-    // },
+    },
+    {
+        path: 'app',
+        name: 'settings-app',
+        componentName: 'appsetting',
+        title: '应用设置',
+        icon: 'setting'
+    },
     // {
     //     path: 'smartlist',
     //     name: 'settings-smartlist',
