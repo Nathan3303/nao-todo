@@ -77,7 +77,7 @@ export class ProjectUseCase {
         preference.getTasksOptions.projectId = projectId
         // 3. 存储到状态管理
         this.store.setProjectPreference(preference)
-        console.log('loadProjectPreference', preference)
+        // console.log('loadProjectPreference', preference)
         // 4. 返回
         return null
     }
