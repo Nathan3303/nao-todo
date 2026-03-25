@@ -26,6 +26,7 @@ export class TaskDomain {
      * @returns 任务实体
      */
     async create(createVO: CreateTask): GoAsync<TaskEntity> {
+        createVO = this.taskRepo.fillStartAt(createVO)
         return await this.taskRepo.create(createVO)
     }
 

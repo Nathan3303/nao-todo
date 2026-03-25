@@ -11,4 +11,7 @@ export interface TaskRepository {
     list(
         queryString?: string
     ): GoAsync<{ taskEntities: TaskEntity[]; pagination?: ResponseDataPagination }>
+
+    fillStartAt(createVO: CreateTask): CreateTask
 }
+

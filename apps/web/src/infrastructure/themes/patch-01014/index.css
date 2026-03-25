@@ -7,6 +7,16 @@
 @import './collapse.css';
 
 html.nue-html {
-    --nue-primary-font-family: 'Poppins-Regular', 'pf', 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Noto Color Emoji', sans-serif;
+    --nue-primary-font-family:
+        'Poppins-Regular', 'pf', apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji';
+    letter-spacing: normal;
+    /* 使用比例数字，取消等宽限制 */
+    font-variant-numeric: proportional-nums;
+    /* 或者显式关闭等宽特性 */
+    font-feature-settings:
+        'tnum' 0,
+        'lnum' 0;
+    font-kerning: none;
 }
+

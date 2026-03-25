@@ -37,6 +37,11 @@ const { project, showTaskCreator } = inject<ProjectViewContext>(PROJECT_VIEW_CON
                     <operation-dropdown />
                 </nue-div>
             </nue-div>
+            <nue-div>
+                <nue-text size="var(--nue-text-sm)" color="var(--nue-primary-color-700)">
+                    {{ project!.description }}
+                </nue-text>
+            </nue-div>
         </nue-div>
     </nue-header>
 </template>

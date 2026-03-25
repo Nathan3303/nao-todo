@@ -133,6 +133,17 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
         return [{ taskEntities, pagination: res.pagination }, null]
     }
 
+    // @method 填充起始时间
+    const fillStartAt = (createVO: CreateTask): CreateTask => {
+        if (!createVO.startAt && createVO.endAt) {
+            const endAtDate = dayjs(createVO.endAt)
+            createVO.endAt = endAtDate.toISOString()
+            createVO.startAt = endAtDate.startOf('D').toISOString()
+        }
+        return createVO
+    }
+
     // @returns
-    return { create, get, update, remove, restore, list }
+    return { create, get, update, remove, restore, list, fillStartAt }
 }
+
