@@ -1,24 +1,16 @@
 import type { ComponentPublicInstance } from 'vue'
 
-// axios
-export type * from './axios/common'
+// Backend api response type
+export type * from './response'
 
-// models
-// export type * from './models/user'
-// export type * from './models/project'
-// export type * from './models/todo'
-// export type * from './models/event'
-// export type * from './models/tag'
-// export type * from './models/comment'
-
-// views
-export type * from './views/tasks'
-
-// requester
+// Requester type
 export type * from './requester'
 
 // Golang like error handling type support
 export type * from './go'
+
+// Models
+export type * from './models'
 
 // View objects
 export type * from './viewobjects/auth'
@@ -30,6 +22,6 @@ export type * from './viewobjects/event'
 export type * from './viewobjects/built-in-project'
 export type * from './viewobjects/comment'
 
-
-// other
+// Other types
 export type ComponentRef<T> = ComponentPublicInstance<T> | null | undefined
+

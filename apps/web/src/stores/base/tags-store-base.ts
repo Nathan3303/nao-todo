@@ -1,9 +1,9 @@
-import type { Tag, UpdateTag } from '@nao-todo/types'
+import type { TagViewObject, UpdateTagViewObject } from '@nao-todo/types'
 import { computed, ref } from 'vue'
 
 const useTagsStoreBase = () => {
     // @state 标签列表
-    const tags = ref<Tag[]>([])
+    const tags = ref<TagViewObject[]>([])
 
     // @computed 标签视图对象 Map
     const tagsMap = computed(() => {
@@ -11,26 +11,26 @@ const useTagsStoreBase = () => {
     })
 
     // @action 设置标签视图对象数组
-    const setTags = (newTags: Tag[]) => {
+    const setTags = (newTags: TagViewObject[]) => {
         tags.value = newTags
     }
 
     // @action 添加标签
-    const addTag = (t: Tag) => {
+    const addTag = (t: TagViewObject) => {
         const isExist = tagsMap.value.has(t.id)
         if (isExist) return
         tags.value.push(t)
     }
 
     // @action 更新标签
-    const updateTag = (id: Tag['id'], t: UpdateTag) => {
+    const updateTag = (id: TagViewObject['id'], t: UpdateTagViewObject) => {
         const idx = tags.value.findIndex((item) => item.id === id)
         if (idx === -1) return
         tags.value[idx] = { ...tags.value[idx], ...t }
     }
 
     // @action 获取单个标签
-    const getTag = (id: Tag['id']) => {
+    const getTag = (id: TagViewObject['id']) => {
         return tagsMap.value.get(id)
     }
 

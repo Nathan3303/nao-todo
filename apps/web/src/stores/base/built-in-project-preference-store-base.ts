@@ -1,17 +1,21 @@
 import { ref } from 'vue'
-import type { BuiltInProjectPreference, GetTasksOptions, TaskColumnOptions } from '@nao-todo/types'
+import type {
+    BuiltInProjectPreferenceViewObject,
+    GetTasksOptions,
+    TaskColumnOptions
+} from '@nao-todo/types'
 
 const useBuiltInProjectPreferenceStoreBase = () => {
     // @state 内建项目偏好
-    const builtInProjectPreference = ref<BuiltInProjectPreference>()
+    const builtInProjectPreference = ref<BuiltInProjectPreferenceViewObject>()
 
     // @action 设置内建项目偏好
-    const setBuiltInProjectPreference = (preference: BuiltInProjectPreference) => {
+    const setBuiltInProjectPreference = (preference: BuiltInProjectPreferenceViewObject) => {
         builtInProjectPreference.value = preference
     }
 
     // @action 获取内建项目偏好
-    const getBuiltInProjectPreference = (): BuiltInProjectPreference | undefined => {
+    const getBuiltInProjectPreference = (): BuiltInProjectPreferenceViewObject | undefined => {
         return builtInProjectPreference.value
     }
 

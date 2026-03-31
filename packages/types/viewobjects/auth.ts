@@ -1,11 +1,11 @@
-export type SignIn = {
+export type SignInViewObject = {
     email: string
     password: string
 }
 
-export type SignUp = {
+export type SignUpViewObject = {
     email: string
     password: string
-    passwordConfirm: string
+    confirmPassword: string
     nickname: string
 }

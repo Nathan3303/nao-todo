@@ -5,13 +5,17 @@ import {
     InnerDropdownOption,
     type InnerDropdownOptionVO
 } from '@nao-todo/components'
-import type { GetTasksOptions, GetTasksSortOptions, ProjectPreference } from '@nao-todo/types'
+import type {
+    GetTasksOptions,
+    GetTasksSortOptions,
+    ProjectPreferenceViewObject
+} from '@nao-todo/types'
 import { columnLabels } from '@/infrastructure/constants/task'
 
 defineOptions({ name: 'TasksDropdownSortOperator' })
 const props = defineProps<{
     modelValue: GetTasksSortOptions
-    columns: ProjectPreference['columns']
+    columns: ProjectPreferenceViewObject['columns']
     getTasksOptions: GetTasksOptions
 }>()
 const emit = defineEmits<{
@@ -25,7 +29,7 @@ const fieldOptions = computed(() => {
     Object.keys(props.columns).forEach((key) => {
         options.push({
             icon: 'plus-circle',
-            label: columnLabels[key as keyof ProjectPreference['columns']],
+            label: columnLabels[key as keyof ProjectPreferenceViewObject['columns']],
             value: key,
             checked: props.modelValue.field === key
         })

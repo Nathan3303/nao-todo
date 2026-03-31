@@ -1,31 +1,57 @@
-import type { Comment, CreateComment, UpdateComment } from '@nao-todo/types'
+import type {
+    CommentViewObject,
+    CreateCommentViewObject,
+    UpdateCommentViewObject
+} from '@nao-todo/types'
 import type { CommentEntity } from '@nao-todo/domain/comment'
-import type { UpdateCommentValueObject } from '@nao-todo/domain/comment/valueobjects'
+import { UpdateCommentValueObject, CreateCommentValueObject } from '@nao-todo/domain/comment'
 
-export const commentEntity2ViewObject = (entity: CommentEntity): Comment => {
-    const vo = {} as Comment
-    vo.id = entity.id
-    vo.taskId = entity.taskId
-    vo.content = entity.content
-    vo.attachments = entity.attachments
-    vo.isTopUp = entity.isTopUp
-    vo.createdAt = entity.createdAt
-    vo.user = entity.commentUser
-    return vo
+/**
+ * 将评论实体转换为评论视图对象
+ * @param entity 评论实体
+ * @returns 评论视图对象
+ */
+export const commentEntityToViewObject = (entity: CommentEntity): CommentViewObject => {
+    const commentViewObject = {} as CommentViewObject
+    commentViewObject.id = entity.id
+    commentViewObject.taskId = entity.taskId
+    commentViewObject.content = entity.content
+    commentViewObject.attachments = entity.attachments
+    commentViewObject.isTopUp = entity.isTopUp
+    commentViewObject.createdAt = entity.createdAt
+    commentViewObject.user = {
+        avatar: entity.commentUser.avatar,
+        nickname: entity.commentUser.nickname
+    }
+    return commentViewObject
 }
 
-export const createComment2CommentEntity = (vo: CreateComment): CommentEntity => {
-    const entity = {} as CommentEntity
-    entity.taskId = vo.taskId
-    entity.content = vo.content
-    entity.attachments = vo.attachments || []
-    entity.isTopUp = vo.isTopUp || false
-    return entity
+/**
+ * 将创建评论视图对象转换为评论实体
+ * @param createCommentViewObject 创建评论视图对象
+ * @returns 评论实体
+ */
+export const createCommentViewObjectToValueObject = (
+    createCommentViewObject: CreateCommentViewObject
+): CreateCommentValueObject => {
+    return new CreateCommentValueObject(
+        createCommentViewObject.taskId,
+        createCommentViewObject.content,
+        createCommentViewObject.attachments || [],
+        createCommentViewObject.isTopUp || false
+    )
 }
 
-export const updateComment2ValueObject = (vo: UpdateComment): UpdateCommentValueObject => {
-    const entity = {} as CommentEntity
-    if (vo.content) entity.content = vo.content
-    if (vo.isTopUp !== undefined) entity.isTopUp = vo.isTopUp
-    return entity
+/**
+ * 将更新评论视图对象转换为更新评论值对象
+ * @param updateCommentViewObject 更新评论视图对象
+ * @returns 更新评论值对象
+ */
+export const updateCommentViewObjectToValueObject = (
+    updateCommentViewObject: UpdateCommentViewObject
+): UpdateCommentValueObject => {
+    return new UpdateCommentValueObject(
+        updateCommentViewObject.content,
+        updateCommentViewObject.isTopUp
+    )
 }

@@ -1,5 +1,5 @@
 import type { BuiltInProjectDomain } from '@nao-todo/domain/built-in-project/services'
-import type { BuiltInProject, BuiltInProjectPreference } from '@nao-todo/types'
+import type { BuiltInProjectViewObject, BuiltInProjectPreferenceViewObject } from '@nao-todo/types'
 import type { Go } from '@nao-todo/types'
 import {
     builtInProjectEntities2ViewObjects,
@@ -8,9 +8,9 @@ import {
 } from '../converters/built-in-project'
 
 export interface BuiltInProjectUseCaseStore {
-    getBuiltInProjectPreference(): BuiltInProjectPreference | undefined
-    setBuiltInProjects(builtInProjects: BuiltInProject[]): void
-    setBuiltInProjectPreference(preference: BuiltInProjectPreference): void
+    getBuiltInProjectPreference(): BuiltInProjectPreferenceViewObject | undefined
+    setBuiltInProjects(builtInProjects: BuiltInProjectViewObject[]): void
+    setBuiltInProjectPreference(preference: BuiltInProjectPreferenceViewObject): void
 }
 
 export class BuiltInProjectUseCase {
@@ -66,7 +66,10 @@ export class BuiltInProjectUseCase {
      * @param builtInProjectId 内建项目ID
      * @returns 错误信息
      */
-    loadBuiltInProjectPreference(userId: string, builtInProjectId: BuiltInProject['id']): Go<void> {
+    loadBuiltInProjectPreference(
+        userId: string,
+        builtInProjectId: BuiltInProjectViewObject['id']
+    ): Go<void> {
         // 1. 获取内建项目偏好实体
         const [builtInProjectPreferenceEntity, err] = this.builtInProjectDomain.getPreference(
             userId,
@@ -93,8 +96,8 @@ export class BuiltInProjectUseCase {
      */
     savePreference(
         userId: string,
-        builtInProjectId: BuiltInProject['id'],
-        newPreference: BuiltInProjectPreference
+        builtInProjectId: BuiltInProjectViewObject['id'],
+        newPreference: BuiltInProjectPreferenceViewObject
     ): Go<void> {
         // 1. 判断内建项目偏好是否存在
         if (!newPreference) {

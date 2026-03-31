@@ -1,11 +1,11 @@
 import type { TaskUseCase } from '@nao-todo/application/web/usecases/task'
-import type { CreateTask, Task, UpdateTaskOptions } from '@nao-todo/types'
+import type { CreateTaskViewObject, TaskViewObject, UpdateTaskViewObject } from '@nao-todo/types'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { NueMessage } from 'nue-ui'
 
 const useTaskHandler = (taskUseCase: TaskUseCase) => {
     // @method 创建任务
-    const createTask = async (createTask: CreateTask) => {
+    const createTask = async (createTask: CreateTaskViewObject) => {
         const [, err] = await taskUseCase.createTask(createTask)
         if (err !== null) {
             NueMessage.error('创建任务失败：' + `(${unwrapError(err)})`)
@@ -15,7 +15,10 @@ const useTaskHandler = (taskUseCase: TaskUseCase) => {
     }
 
     // @method 更新任务
-    const updateTask = async (taskId: Task['id'], updateOptions: UpdateTaskOptions) => {
+    const updateTask = async (
+        taskId: TaskViewObject['id'],
+        updateOptions: UpdateTaskViewObject
+    ) => {
         const err = await taskUseCase.updateTask(taskId, updateOptions)
         if (err !== null) {
             NueMessage.error('更新任务失败：' + `(${unwrapError(err)})`)
@@ -25,27 +28,39 @@ const useTaskHandler = (taskUseCase: TaskUseCase) => {
     }
 
     // @method 更新任务名称
-    const updateTaskName = async (taskId: Task['id'], name: Task['name']) => {
+    const updateTaskName = async (taskId: TaskViewObject['id'], name: TaskViewObject['name']) => {
         return await updateTask(taskId, { name })
     }
 
     // @method 更新任务描述
-    const updateTaskDescription = async (taskId: Task['id'], description: Task['description']) => {
+    const updateTaskDescription = async (
+        taskId: TaskViewObject['id'],
+        description: TaskViewObject['description']
+    ) => {
         return await updateTask(taskId, { description })
     }
 
     // @method 更新任务状态
-    const updateTaskState = async (taskId: Task['id'], state: Task['state']) => {
+    const updateTaskState = async (
+        taskId: TaskViewObject['id'],
+        state: TaskViewObject['state']
+    ) => {
         return await updateTask(taskId, { state })
     }
 
     // @method 更新任务优先级
-    const updateTaskPriority = async (taskId: Task['id'], priority: Task['priority']) => {
+    const updateTaskPriority = async (
+        taskId: TaskViewObject['id'],
+        priority: TaskViewObject['priority']
+    ) => {
         return await updateTask(taskId, { priority })
     }
 
     // @method 更新任务结束时间
-    const updateTaskEndAt = async (taskId: Task['id'], endAt: Task['endAt']) => {
+    const updateTaskEndAt = async (
+        taskId: TaskViewObject['id'],
+        endAt: TaskViewObject['endAt']
+    ) => {
         return await updateTask(taskId, { endAt })
     }
 

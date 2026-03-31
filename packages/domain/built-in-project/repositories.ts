@@ -1,5 +1,5 @@
 import type { Go } from '@nao-todo/types'
-import type { BuiltInProjectEntity, BuiltInProjectPreferenceValueObject } from './entities'
+import type { BuiltInProjectEntity, BuiltInProjectPreferenceEntity } from './entities'
 
 export interface BuiltInProjectRepository {
     // 获取指定 ID 的清单
@@ -7,11 +7,11 @@ export interface BuiltInProjectRepository {
     // 获取所有清单
     list(): Go<BuiltInProjectEntity[]>
     // 获取指定清单的偏好
-    getPreference(userId: string, id: string): Go<BuiltInProjectPreferenceValueObject>
+    getPreference(userId: string, id: string): Go<BuiltInProjectPreferenceEntity>
     // 保存清单偏好
     savePreference(
         userId: string,
         projectId: string,
-        preference: BuiltInProjectPreferenceValueObject
+        preference: BuiltInProjectPreferenceEntity
     ): Go<void>
 }

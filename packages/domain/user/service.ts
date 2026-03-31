@@ -1,6 +1,8 @@
-import type { GoAsync, UserProfile } from '@nao-todo/types'
+import type { GoAsync } from '@nao-todo/types'
 import type { UserRepository } from './repositories'
-import type { UserEntity } from './entities'
+import { UserEntity } from './entities'
+import { UpdateNicknameValueObject, UpdatePasswordValueObject } from './valueobjects'
+import { unwrapError } from '@nao-todo/infrastructure/utils'
 
 export class UserDomain {
     /**
@@ -8,15 +10,6 @@ export class UserDomain {
      * @param userRepo 用户存储库
      */
     constructor(private userRepo: UserRepository) {}
-
-    /**
-     * 更新用户昵称
-     * @param newNickname 新昵称
-     * @returns 更新结果
-     */
-    async updateNickname(newNickname: UserProfile['nickname']): GoAsync<void> {
-        return await this.userRepo.updateNickname(newNickname)
-    }
 
     /**
      * 获取用户个人信息
@@ -27,12 +20,34 @@ export class UserDomain {
     }
 
     /**
-     * 更新用户密码
-     * @param oldPassword 旧密码
-     * @param newPassword 新密码
+     * 更新用户昵称
+     * @param updateNicknameValueObject 更新用户昵称值对象
      * @returns 更新结果
      */
-    async updatePassword(oldPassword: string, newPassword: string): GoAsync<void> {
-        return await this.userRepo.updatePassword(oldPassword, newPassword)
+    async updateNickname(updateNicknameValueObject: UpdateNicknameValueObject): GoAsync<void> {
+        // 数据校验
+        const validateErr = updateNicknameValueObject.validate()
+        if (validateErr !== null) {
+            console.error(unwrapError(validateErr))
+            return validateErr
+        }
+        // 更新用户昵称
+        return await this.userRepo.updateNickname(updateNicknameValueObject)
+    }
+
+    /**
+     * 更新用户密码
+     * @param updatePasswordValueObject 更新用户密码值对象
+     * @returns 更新结果
+     */
+    async updatePassword(updatePasswordValueObject: UpdatePasswordValueObject): GoAsync<void> {
+        // 数据校验
+        const validateErr = updatePasswordValueObject.validate()
+        if (validateErr !== null) {
+            console.error(unwrapError(validateErr))
+            return validateErr
+        }
+        // 更新用户密码
+        return await this.userRepo.updatePassword(updatePasswordValueObject)
     }
 }

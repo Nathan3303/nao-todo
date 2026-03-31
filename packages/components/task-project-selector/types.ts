@@ -1,12 +1,16 @@
-import { Project } from '@nao-todo/types'
+import { ProjectViewObject } from '@nao-todo/types'
 
 export type TaskProjectSelectorProps = {
-    projects: Project[]
-    projectId: Project['id']
+    projects: ProjectViewObject[]
+    projectId: ProjectViewObject['id']
     placeholder?: string
     placement?: string
 }
 
 export type TaskProjectSelectorEmits = {
-    (event: 'select', projectId: Project['id'], projectTitle?: Project['name']): void
+    (
+        event: 'select',
+        projectId: ProjectViewObject['id'],
+        projectTitle?: ProjectViewObject['name']
+    ): void
 }

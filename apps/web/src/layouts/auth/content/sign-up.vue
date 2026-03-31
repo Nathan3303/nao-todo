@@ -30,7 +30,7 @@
                             type="password"
                         />
                         <nue-input
-                            v-model="signUpVO.passwordConfirm"
+                            v-model="signUpVO.confirmPassword"
                             :disabled="loading"
                             allow-show-password
                             clearable
@@ -79,28 +79,29 @@ import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { AUTH_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import type { AuthViewContext } from '@/views/auth/types'
+import type { SignUpViewObject } from '@nao-todo/types'
 
 const router = useRouter()
 const { authUseCase } = inject<AuthViewContext>(AUTH_VIEW_CONTEXT_KEY)!
 
 const loading = ref(false)
 const disabled = ref(false)
-const signUpVO = reactive({ email: '', password: '', passwordConfirm: '', nickname: '' })
+const signUpVO = reactive<SignUpViewObject>({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    nickname: ''
+})
 
 const handleSubmit = async (e: Event) => {
     e.preventDefault()
     loading.value = disabled.value = true
     // 调用注册 API
-    const err = await authUseCase.signUp({
-        email: signUpVO.email,
-        password: signUpVO.password,
-        confirmPassword: signUpVO.passwordConfirm,
-        nickname: signUpVO.nickname
-    })
+    const err = await authUseCase.signUp(signUpVO)
     loading.value = false
     // 处理错误
     if (err !== null) {
-        signUpVO.password = signUpVO.passwordConfirm = ''
+        signUpVO.password = signUpVO.confirmPassword = ''
         disabled.value = false
         NueMessage.error(unwrapError(err))
         return

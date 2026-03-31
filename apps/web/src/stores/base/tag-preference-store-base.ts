@@ -1,17 +1,17 @@
 import { ref } from 'vue'
-import type { GetTasksOptions, TagPreference, TaskColumnOptions } from '@nao-todo/types'
+import type { GetTasksOptions, TagPreferenceViewObject, TaskColumnOptions } from '@nao-todo/types'
 
 const useTagPreferenceStoreBase = () => {
     // @state 标签偏好
-    const tagPreference = ref<TagPreference>()
+    const tagPreference = ref<TagPreferenceViewObject>()
 
     // @action 设置标签偏好
-    const setTagPreference = (preference: TagPreference) => {
+    const setTagPreference = (preference: TagPreferenceViewObject) => {
         tagPreference.value = preference
     }
 
     // @action 获取标签偏好
-    const getTagPreference = (): TagPreference | undefined => {
+    const getTagPreference = (): TagPreferenceViewObject | undefined => {
         return tagPreference.value
     }
 

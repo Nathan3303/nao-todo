@@ -1,15 +1,15 @@
-import type { Project } from '@nao-todo/types'
+import type { ProjectViewObject, UpdateProjectViewObject } from '@nao-todo/types'
 import { computed, reactive } from 'vue'
 
 const useProjectsStoreBase = () => {
     // @state 项目视图对象数组
-    const projects = reactive<Project[]>([])
+    const projects = reactive<ProjectViewObject[]>([])
 
     // @state 项目视图对象 Map
     const projectsMap = computed(() => new Map(projects.map((item) => [item.id, item])))
 
     // @action 设置项目视图对象数组
-    const setProjects = (value: Project[]) => {
+    const setProjects = (value: ProjectViewObject[]) => {
         projects.length = 0
         projects.push(...value)
     }
@@ -20,7 +20,7 @@ const useProjectsStoreBase = () => {
     }
 
     // @action 添加项目
-    const addProject = (p: Project) => {
+    const addProject = (p: ProjectViewObject) => {
         // if (projectsMap.value.has(p.id)) return
         projects.push(p)
         console.log('addProject', projects, p)
@@ -32,7 +32,7 @@ const useProjectsStoreBase = () => {
     }
 
     // @action 设置项目
-    const setProject = (id: string, p: Project) => {
+    const setProject = (id: string, p: ProjectViewObject) => {
         if (!projectsMap.value.has(id)) return
         const index = projects.findIndex((item) => item.id === id)
         if (index === -1) return
@@ -40,10 +40,10 @@ const useProjectsStoreBase = () => {
     }
 
     // @action 更新项目
-    const updateProject = (id: string, updateOptions: Partial<Project>) => {
+    const updateProject = (id: string, updateProjectViewObject: UpdateProjectViewObject) => {
         const oldProject = projectsMap.value.get(id)
         if (!oldProject) return
-        setProject(id, { ...oldProject, ...updateOptions })
+        setProject(id, { ...oldProject, ...updateProjectViewObject })
     }
 
     // @action 删除项目

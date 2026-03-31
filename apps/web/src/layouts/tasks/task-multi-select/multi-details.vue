@@ -89,7 +89,6 @@ const {
     avalibleProjects,
     avalibleTags,
     commonData,
-    userStore,
     setProjectInfo,
     handleChangeEndDate,
     handleUpdateTags,

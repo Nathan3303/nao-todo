@@ -1,6 +1,7 @@
 import { EventDomain } from './service'
-import type { EventEntity } from './entities'
+import { EventEntity } from './entities'
+import { CreateEventValueObject, UpdateEventValueObject } from './valueobjects'
 import type { EventRepository } from './repositories'
 
-export { EventDomain }
-export type { EventRepository, EventEntity }
+export { EventDomain, CreateEventValueObject, UpdateEventValueObject, EventEntity }
+export type { EventRepository }

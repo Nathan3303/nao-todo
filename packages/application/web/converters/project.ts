@@ -1,40 +1,62 @@
-import {
-    makeProjectPreferenceEntity,
-    type ProjectEntity,
-    type ProjectPreferenceEntity
-} from '@nao-todo/domain/project/entities'
+import { ProjectEntity, ProjectPreferenceEntity } from '@nao-todo/domain/project/entities'
+import { CreateProjectValueObject } from '@nao-todo/domain/project/valueobjects'
 import jsonParse from '@nao-todo/infrastructure/utils/json-parse'
-import type { Project, ProjectPreference } from '@nao-todo/types'
+import type {
+    ProjectViewObject,
+    ProjectPreferenceViewObject,
+    CreateProjectViewObject
+} from '@nao-todo/types'
+import dayjs from 'dayjs'
 
-export const projectEntity2ViewObject = (projectEntity: ProjectEntity): Project => {
-    const vo = {} as Project
-    vo.id = projectEntity.id
-    vo.icon = projectEntity.icon || 'more2'
-    vo.name = projectEntity.name
-    vo.description = projectEntity.description
-    vo.archivedAt = projectEntity.archivedAt
-    vo.createdAt = projectEntity.createdAt
-    vo.updatedAt = projectEntity.updatedAt
-    return vo
+/**
+ * 将项目实体转换为项目视图对象
+ * @param projectEntity 项目实体
+ * @returns 项目视图对象
+ */
+export const projectEntityToViewObject = (projectEntity: ProjectEntity): ProjectViewObject => {
+    return {
+        id: projectEntity.id,
+        icon: projectEntity.icon || 'more2',
+        name: projectEntity.name,
+        description: projectEntity.description,
+        archivedAt: projectEntity.archivedAt,
+        createdAt: projectEntity.createdAt,
+        updatedAt: projectEntity.updatedAt,
+        isArchived: dayjs(projectEntity.archivedAt).isValid(),
+        // isDeleted: dayjs(projectEntity.deletedAt).isValid()
+        createTaskOptions: { projectId: projectEntity.id }
+    } as ProjectViewObject
 }
 
-export const projectEntities2ViewObject = (projectEntities: ProjectEntity[]): Project[] => {
-    return projectEntities.map(projectEntity2ViewObject)
+/**
+ * 将项目实体数组转换为项目视图对象数组
+ * @param projectEntities 项目实体数组
+ * @returns 项目视图对象数组
+ */
+export const projectEntitiesToViewObjects = (
+    projectEntities: ProjectEntity[]
+): ProjectViewObject[] => {
+    return projectEntities.map(projectEntityToViewObject)
 }
 
-export const projectPreferenceEntity2ProjectPreferenceVO = (
+/**
+ * 将项目偏好实体转换为项目偏好视图对象
+ * @param entity 项目偏好实体
+ * @returns 项目偏好视图对象
+ */
+export const projectPreferenceEntityToViewObject = (
     entity: ProjectPreferenceEntity
-): ProjectPreference => {
-    const vo = {} as ProjectPreference
-    vo.id = entity.id
-    vo.projectId = entity.projectId
-    vo.viewType = entity.viewType
+): ProjectPreferenceViewObject => {
+    const projectPreferenceViewObject = {} as ProjectPreferenceViewObject
+    projectPreferenceViewObject.id = entity.id
+    projectPreferenceViewObject.projectId = entity.projectId
+    projectPreferenceViewObject.viewType = entity.viewType
 
     const [getTasksOptions, err1] = jsonParse(entity.getTasksOptions)
-    vo.getTasksOptions = err1 !== null ? { limit: 20 } : getTasksOptions
+    projectPreferenceViewObject.getTasksOptions = err1 !== null ? { limit: 20 } : getTasksOptions
 
     const [columns, err2] = jsonParse(entity.columns)
-    vo.columns =
+    projectPreferenceViewObject.columns =
         err2 !== null
             ? {
                   state: true,
@@ -48,34 +70,38 @@ export const projectPreferenceEntity2ProjectPreferenceVO = (
                   startAt: false
               }
             : columns
-    return vo
+    return projectPreferenceViewObject
 }
 
-// export const projectVO2Entity = (vo: ProjectVO): ProjectEntity => {
-//     const entity = makeProjectEntity()
-//     entity.id = vo.id
-//     entity.icon = vo.icon
-//     entity.name = vo.name
-//     entity.description = vo.description
-//     entity.archivedAt = vo.archivedAt
-//     return entity
-// }
+/**
+ * 将项目偏好视图对象转换为项目偏好实体
+ * @param projectPreferenceViewObject 项目偏好视图对象
+ * @returns 项目偏好实体
+ */
+export const projectPreferenceViewObjectToEntity = (
+    projectPreferenceViewObject: ProjectPreferenceViewObject
+): ProjectPreferenceEntity => {
+    return new ProjectPreferenceEntity(
+        projectPreferenceViewObject.id,
+        '', //TODO: 项目偏好 USERID
+        projectPreferenceViewObject.projectId,
+        projectPreferenceViewObject.viewType,
+        JSON.stringify(projectPreferenceViewObject.getTasksOptions),
+        JSON.stringify(projectPreferenceViewObject.columns)
+    )
+}
 
-// export const updateProjectVO2Entity = (vo: UpdateProjectVO): ProjectEntity => {
-//     const entity = makeProjectEntity()
-//     entity.icon = vo.icon
-//     entity.name = vo.name || ''
-//     entity.description = vo.description || ''
-//     entity.archivedAt = vo.archivedAt || ''
-//     return entity
-// }
-
-export const projectPreferenceVO2Entity = (vo: ProjectPreference): ProjectPreferenceEntity => {
-    const entity = makeProjectPreferenceEntity()
-    entity.id = vo.id
-    entity.projectId = vo.projectId
-    entity.viewType = vo.viewType
-    entity.getTasksOptions = JSON.stringify(vo.getTasksOptions)
-    entity.columns = JSON.stringify(vo.columns)
-    return entity
+/**
+ * 将创建项目视图对象转换为创建项目值对象
+ * @param createProjectViewObject 创建项目视图对象
+ * @returns 创建项目值对象
+ */
+export const createProjectViewObjectToValueObject = (
+    createProjectViewObject: CreateProjectViewObject
+): CreateProjectValueObject => {
+    return new CreateProjectValueObject(
+        createProjectViewObject.name,
+        createProjectViewObject.icon || 'more2',
+        createProjectViewObject.description || ''
+    )
 }

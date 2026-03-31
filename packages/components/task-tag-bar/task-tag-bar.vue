@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { TagNode } from '../tag-node'
 import { ComboBox } from '../combo-box'
-import type { Tag } from '@nao-todo/types'
+import type { TagViewObject } from '@nao-todo/types'
 import type { ComboBoxOption } from '../combo-box/types'
 import type { TaskTagBarEmits, TaskTagBarProps } from './types'
 
@@ -30,7 +30,7 @@ const comboBoxOptions = computed<ComboBoxOption[]>(() => {
           })
 })
 
-const selectedTags = computed<Tag[]>(() => {
+const selectedTags = computed<TagViewObject[]>(() => {
     const _tags = props.tags.filter((tag) =>
         props.taskTags ? props.taskTags.indexOf(tag.id) !== -1 : false
     )

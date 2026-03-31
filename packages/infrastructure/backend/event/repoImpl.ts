@@ -16,8 +16,19 @@ import type {
     UpdateEventReq,
     UpdateEventRes
 } from '../types'
+import { CreateEventValueObject, UpdateEventValueObject } from '@nao-todo/domain/event'
 
+/**
+ * 检查事项仓库实现
+ * @param requester 请求器
+ * @returns 检查事项仓库
+ */
 export const useEventRepository = (requester: Requester): EventRepository => {
+    /**
+     * 获取检查事项
+     * @param eventId 检查事项 ID
+     * @returns 检查事项实体
+     */
     const get = async (eventId: string): GoAsync<EventEntity> => {
         // 1. 调用接口
         const response = await requester.get(`/events/${eventId}`, {
@@ -34,12 +45,16 @@ export const useEventRepository = (requester: Requester): EventRepository => {
         return [eventEntity, null]
     }
 
-    const create = async (eventEntity: EventEntity): GoAsync<EventEntity> => {
+    /**
+     * 创建检查事项
+     * @param createEventValueObject 创建检查事项值对象
+     * @returns 检查事项实体
+     */
+    const create = async (createEventValueObject: CreateEventValueObject): GoAsync<EventEntity> => {
         // 1. 构建 rto
         const rto: CreateEventReq = {
-            taskId: eventEntity.taskId,
-            name: eventEntity.name,
-            description: eventEntity.description
+            taskId: createEventValueObject.taskId,
+            name: createEventValueObject.name
         }
         // 2. 调用接口
         const response = await requester.post('/events/', rto, {
@@ -51,18 +66,26 @@ export const useEventRepository = (requester: Requester): EventRepository => {
             return [null, res.message]
         }
         // 4. 转换为实体
-        eventEntity = createEventRes2EventEntity(res.data as CreateEventRes)
+        const eventEntity = createEventRes2EventEntity(res.data as CreateEventRes)
         // 5. 返回
         return [eventEntity, null]
     }
 
-    const update = async (eventId: string, eventEntity: EventEntity): GoAsync<string> => {
+    /**
+     * 更新检查事项
+     * @param eventId 检查事项 ID
+     * @param updateEventValueObject 更新检查事项值对象
+     * @returns 检查事项 ID
+     */
+    const update = async (
+        eventId: string,
+        updateEventValueObject: UpdateEventValueObject
+    ): GoAsync<string> => {
         // 1. 构建 rto
         const rto: UpdateEventReq = {}
-        if (eventEntity.name) rto.name = eventEntity.name
-        if (eventEntity.description) rto.description = eventEntity.description
-        if (eventEntity.isDone !== undefined) rto.isDone = eventEntity.isDone
-        if (eventEntity.sortId !== undefined) rto.sortId = eventEntity.sortId
+        if (updateEventValueObject.name) rto.name = updateEventValueObject.name
+        if (updateEventValueObject.isDone !== undefined) rto.isDone = updateEventValueObject.isDone
+        if (updateEventValueObject.sortId !== undefined) rto.sortId = updateEventValueObject.sortId
         // 2. 调用接口
         const response = await requester.put(`/events/${eventId}`, rto, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
@@ -77,6 +100,11 @@ export const useEventRepository = (requester: Requester): EventRepository => {
         return [data.eventId, null]
     }
 
+    /**
+     * 删除检查事项
+     * @param eventId 检查事项 ID
+     * @returns 无
+     */
     const remove = async (eventId: string): GoAsync<void> => {
         // 1. 调用接口
         const response = await requester.delete(`/events/${eventId}`, {
@@ -91,6 +119,11 @@ export const useEventRepository = (requester: Requester): EventRepository => {
         return null
     }
 
+    /**
+     * 获取任务下的检查事项列表
+     * @param taskId 任务 ID
+     * @returns 检查事项实体列表
+     */
     const list = async (taskId: string): GoAsync<EventEntity[]> => {
         // 1. 调用接口
         const response = await requester.get(`/events/?taskId=${taskId}`, {

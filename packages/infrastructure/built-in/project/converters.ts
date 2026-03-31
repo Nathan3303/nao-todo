@@ -1,6 +1,6 @@
 import type {
     BuiltInProjectEntity,
-    BuiltInProjectPreferenceValueObject
+    BuiltInProjectPreferenceEntity
 } from '@nao-todo/domain/built-in-project'
 import type { BuiltInProjectRes, BuiltInProjectPreferenceRes } from './types'
 
@@ -16,8 +16,8 @@ export const bipRes2bipEntity = (bipRes: BuiltInProjectRes): BuiltInProjectEntit
 
 export const bippRes2bippVO = (
     bippRes: BuiltInProjectPreferenceRes
-): BuiltInProjectPreferenceValueObject => {
-    const bippvo = {} as BuiltInProjectPreferenceValueObject
+): BuiltInProjectPreferenceEntity => {
+    const bippvo = {} as BuiltInProjectPreferenceEntity
     bippvo.projectId = bippRes.projectId
     bippvo.viewType = bippRes.viewType
     bippvo.getTasksOptions = bippRes.getTasksOptions
@@ -26,7 +26,7 @@ export const bippRes2bippVO = (
 }
 
 export const bippVO2bippRes = (
-    bippvo: BuiltInProjectPreferenceValueObject
+    bippvo: BuiltInProjectPreferenceEntity
 ): BuiltInProjectPreferenceRes => {
     const bipp = {} as BuiltInProjectPreferenceRes
     bipp.projectId = bippvo.projectId || ''

@@ -1,65 +1,52 @@
-import type { Project } from './project'
-import type { Tag } from './tag'
+import type { Project, Tag, Task } from '../models'
 
-export type Task = {
-    id: string
-    projectId: Project['id']
-    name: string
-    description: string
-    state: 'todo' | 'in-progress' | 'done'
-    priority: 'low' | 'medium' | 'high' | 'urgent'
-    tags: Tag['id'][]
-    startAt?: string
-    endAt: string
+export type TaskViewObject = Omit<Task, 'state' | 'priority'> & {
+    state: string
+    priority: string
     isDeleted: boolean
-    deletedAt: string | null
     isArchived: boolean
-    archivedAt: string | null
-    isFavorited: boolean
+    isStarMarked: boolean
     isGivenUp: boolean
-    createdAt: string
-    updatedAt: string
-    // Additional fields
     project?: { name: Project['name'] }
     events?: Event[]
 }
 
-export type CreateTask = {
-    projectId: Task['projectId']
-    name: Task['name']
-    description?: Task['description']
-    state: Task['state']
-    priority: Task['priority']
-    startAt?: Task['startAt']
-    endAt: Task['endAt']
-    tags?: Task['tags']
+export type CreateTaskViewObject = {
+    projectId: TaskViewObject['projectId']
+    name: TaskViewObject['name']
+    description?: TaskViewObject['description']
+    state: TaskViewObject['state']
+    priority: TaskViewObject['priority']
+    startAt: TaskViewObject['startAt'] | null
+    endAt: TaskViewObject['endAt']
+    tags?: TaskViewObject['tags']
 }
 
-export type UpdateTaskOptions = {
-    projectId?: Task['projectId']
-    name?: Task['name']
-    description?: Task['description']
-    state?: Task['state']
-    priority?: Task['priority']
-    startAt?: Task['startAt']
-    endAt?: Task['endAt']
-    isDeleted?: Task['isDeleted']
-    isArchived?: Task['isArchived']
-    isFavorited?: Task['isFavorited']
-    isGivenUp?: Task['isGivenUp']
-    tags?: Task['tags']
+export type UpdateTaskViewObject = {
+    projectId?: TaskViewObject['projectId']
+    name?: TaskViewObject['name']
+    description?: TaskViewObject['description']
+    state?: TaskViewObject['state']
+    priority?: TaskViewObject['priority']
+    startAt?: TaskViewObject['startAt']
+    endAt?: TaskViewObject['endAt']
+    isDeleted?: TaskViewObject['isDeleted']
+    isArchived?: TaskViewObject['isArchived']
+    isStarMarked?: TaskViewObject['isStarMarked']
+    isGivenUp?: TaskViewObject['isGivenUp']
+    tags?: TaskViewObject['tags']
 }
 
 export type GetTasksOptions = {
-    projectId?: Task['projectId']
-    name?: Task['name']
-    description?: Task['description']
-    state?: string
-    priority?: string
-    isArchived?: Task['isArchived']
-    isDeleted?: Task['isDeleted']
-    isFavorited?: Task['isFavorited']
-    isGivenUp?: Task['isGivenUp']
+    projectId?: TaskViewObject['projectId']
+    name?: TaskViewObject['name']
+    description?: TaskViewObject['description']
+    state?: TaskViewObject['state']
+    priority?: TaskViewObject['priority']
+    isArchived?: TaskViewObject['isArchived']
+    isDeleted?: TaskViewObject['isDeleted']
+    isStarMarked?: TaskViewObject['isStarMarked']
+    isGivenUp?: TaskViewObject['isGivenUp']
     sort?: GetTasksSortOptions
     relativeDate?: 'today' | 'tomorrow' | 'week' | '-today' | 'month'
     tagId?: Tag['id']

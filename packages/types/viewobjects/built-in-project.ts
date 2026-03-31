@@ -1,14 +1,14 @@
-import type { CreateTask, GetTasksOptions, TaskColumnOptions } from './task'
+import type { GetTasksOptions, TaskColumnOptions } from './task'
 
-export type BuiltInProject = {
+export type BuiltInProjectViewObject = {
     id: string
     icon: string
     name: string
     description: string
-    createTaskOptions: Partial<CreateTask> | (() => Partial<CreateTask>)
+    // createTaskOptions: Partial<CreateTaskViewObject> | (() => Partial<CreateTaskViewObject>)
 }
 
-export type BuiltInProjectPreference = {
+export type BuiltInProjectPreferenceViewObject = {
     projectId: string
     userId: string
     viewType: string

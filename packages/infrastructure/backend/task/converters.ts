@@ -2,26 +2,24 @@ import { TaskEntity } from '@nao-todo/domain/task/entities'
 import type { CreateTaskRes, GetTaskRes, ListTaskRes } from '../types'
 
 export const getTaskRes2TaskEntity = (res: GetTaskRes): TaskEntity => {
-    const e = new TaskEntity()
-    e.id = res.id
-    e.projectId = res.projectId
-    e.name = res.name
-    e.description = res.description
-    e.state = res.state
-    e.priority = res.priority
-    e.startAt = res.startAt
-    e.endAt = res.endAt
-    e.tags = res.tags
-    e.createdAt = res.createdAt
-    e.updatedAt = res.updatedAt
-    e.isDeleted = res.isDeleted
-    e.archivedAt = res.archivedAt
-    e.isArchived = res.isArchived
-    e.starMarkAt = res.starMarkAt
-    e.isStarMarked = res.isStarMarked
-    e.givenUpAt = res.givenUpAt
-    e.isGivenUp = res.isGivenUp
-    return e
+    return new TaskEntity(
+        res.id,
+        '',
+        res.name,
+        res.description,
+        res.state,
+        res.priority,
+        res.startAt,
+        res.endAt,
+        res.projectId,
+        res.tags,
+        res.createdAt,
+        res.updatedAt,
+        res.deletedAt,
+        res.archivedAt,
+        res.starMarkAt,
+        res.givenUpAt
+    )
 }
 
 export const createTaskRes2TaskEntity = (res: CreateTaskRes): TaskEntity => {

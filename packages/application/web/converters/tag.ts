@@ -1,33 +1,60 @@
-import type { TagEntity } from '@nao-todo/domain/tag'
-import { makeTagPreferenceEntity, type TagPreferenceEntity } from '@nao-todo/domain/tag/entities'
+import {
+    CreateTagValueObject,
+    TagEntity,
+    TagPreferenceEntity,
+    UpdateTagValueObject
+} from '@nao-todo/domain/tag'
 import jsonParse from '@nao-todo/infrastructure/utils/json-parse'
-import type { Tag, TagPreference } from '@nao-todo/types'
+import type {
+    TagViewObject,
+    TagPreferenceViewObject,
+    CreateTagViewObject,
+    UpdateTagViewObject
+} from '@nao-todo/types'
 
-export const tagEntity2ValueObject = (tagEntity: TagEntity): Tag => {
-    const vo = {} as Tag
-    vo.id = tagEntity.id
-    vo.name = tagEntity.name
-    vo.description = tagEntity.description
-    vo.color = tagEntity.color
-    vo.createdAt = tagEntity.createdAt
-    vo.updatedAt = tagEntity.updatedAt
-    return vo
+/**
+ * 转换 TagEntity 为 TagViewObject
+ * @param tagEntity 标签实体
+ * @returns 标签视图对象
+ */
+export const tagEntityToViewObject = (tagEntity: TagEntity): TagViewObject => {
+    return {
+        id: tagEntity.id,
+        name: tagEntity.name,
+        description: tagEntity.description,
+        color: tagEntity.color,
+        createdAt: tagEntity.createdAt,
+        updatedAt: tagEntity.updatedAt
+    } as TagViewObject
 }
 
-export const tagEntities2ValueObject = (tagEntities: TagEntity[]): Tag[] => {
-    return tagEntities.map(tagEntity2ValueObject)
+/**
+ * 转换 TagEntity[] 为 TagViewObject[]
+ * @param tagEntities 标签实体数组
+ * @returns 标签视图对象数组
+ */
+export const tagEntitiesToViewObjects = (tagEntities: TagEntity[]): TagViewObject[] => {
+    return tagEntities.map(tagEntityToViewObject)
 }
 
-export const tagPreferenceEntity2ValueObject = (entity: TagPreferenceEntity): TagPreference => {
-    const vo = {} as TagPreference
-    vo.id = entity.id
-    vo.tagId = entity.tagId
-    vo.viewType = entity.viewType
-
-    const [getTasksOptions, err1] = jsonParse(entity.getTasksOptions)
+/**
+ * 转换 TagPreferenceEntity 为 TagPreferenceViewObject
+ * @param tagPreferenceEntity 标签偏好实体
+ * @returns 标签偏好视图对象
+ */
+export const tagPreferenceEntityToViewObject = (
+    tagPreferenceEntity: TagPreferenceEntity
+): TagPreferenceViewObject => {
+    const vo = {} as TagPreferenceViewObject
+    vo.id = tagPreferenceEntity.id
+    vo.tagId = tagPreferenceEntity.tagId
+    vo.viewType = tagPreferenceEntity.viewType
+    // 解析 JSON 字符串
+    // 1. 解析 getTasksOptions
+    const [getTasksOptions, err1] = jsonParse(tagPreferenceEntity.getTasksOptions)
     vo.getTasksOptions = err1 !== null ? { limit: 20 } : getTasksOptions
-
-    const [columns, err2] = jsonParse(entity.columns)
+    // 2. 解析 columns
+    const [columns, err2] = jsonParse(tagPreferenceEntity.columns)
     vo.columns =
         err2 !== null
             ? {
@@ -45,13 +72,54 @@ export const tagPreferenceEntity2ValueObject = (entity: TagPreferenceEntity): Ta
     return vo
 }
 
-export const tagPreferenceVO2Entity = (vo: TagPreference): TagPreferenceEntity => {
-    const entity = makeTagPreferenceEntity()
-    entity.id = vo.id
-    entity.tagId = vo.tagId
-    entity.viewType = vo.viewType
-    entity.getTasksOptions = JSON.stringify(vo.getTasksOptions)
-    entity.columns = JSON.stringify(vo.columns)
-    console.log(entity)
-    return entity
+/**
+ * 转换 TagPreferenceViewObject 为 TagPreferenceEntity
+ * @param tagPreferenceViewObject 标签偏好视图对象
+ * @returns 标签偏好实体
+ */
+export const tagPreferenceViewObjectToEntity = (
+    tagPreferenceViewObject: TagPreferenceViewObject
+): TagPreferenceEntity => {
+    return new TagPreferenceEntity(
+        tagPreferenceViewObject.id,
+        '',
+        tagPreferenceViewObject.tagId,
+        tagPreferenceViewObject.viewType,
+        JSON.stringify(tagPreferenceViewObject.getTasksOptions),
+        JSON.stringify(tagPreferenceViewObject.columns)
+    )
+}
+
+/**
+ * 转换 CreateTagViewObject 为 CreateTagValueObject
+ * @param createTagViewObject 创建标签视图对象
+ * @returns 创建标签值对象
+ */
+export const createTagViewObjectToValueObject = (
+    createTagViewObject: CreateTagViewObject
+): CreateTagValueObject => {
+    return new CreateTagValueObject(
+        '', //TODO: 从领域层获取标签ID
+        createTagViewObject.name,
+        createTagViewObject.description || '',
+        createTagViewObject.color || 'transparent',
+        createTagViewObject.icon || 'tag'
+    )
+}
+
+/**
+ * 转换 UpdateTagViewObject 为 UpdateTagValueObject
+ * @param updateTagViewObject 更新标签视图对象
+ * @returns 更新标签值对象
+ */
+export const updateTagViewObjectToValueObject = (
+    tagId: TagViewObject['id'],
+    updateTagViewObject: UpdateTagViewObject
+): UpdateTagValueObject => {
+    const updateTagValueObject = new UpdateTagValueObject(tagId)
+    if (updateTagViewObject.name) updateTagValueObject.name = updateTagViewObject.name
+    if (updateTagViewObject.description)
+        updateTagValueObject.description = updateTagViewObject.description
+    if (updateTagViewObject.color) updateTagValueObject.color = updateTagViewObject.color
+    return updateTagValueObject
 }

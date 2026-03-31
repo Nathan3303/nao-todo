@@ -1,5 +1,10 @@
 import type { ComputedRef } from 'vue'
-import type { Tag, Task, UserProfile, TagPreference } from '@nao-todo/types'
+import type {
+    TagViewObject,
+    TaskViewObject,
+    UserViewObject,
+    TagPreferenceViewObject
+} from '@nao-todo/types'
 import type { Subscriber } from '@/infrastructure/hooks/use-subscriber'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
@@ -13,16 +18,16 @@ export type TagViewProps = {
 export type TagViewContext = {
     tasksViewContext: TasksViewContext
     taskUseCase: TaskUseCase
-    tag: ComputedRef<Tag | undefined>
-    preference: ComputedRef<TagPreference | undefined>
-    tags: ComputedRef<Tag[]>
+    tag: ComputedRef<TagViewObject | undefined>
+    preference: ComputedRef<TagPreferenceViewObject | undefined>
+    tags: ComputedRef<TagViewObject[]>
     tagHandler: TagHandler
     subscriber: Subscriber
     isHideCompletedAlready: ComputedRef<boolean>
-    profile: ComputedRef<UserProfile | undefined>
+    profile: ComputedRef<UserViewObject | undefined>
     getColumnLabel: (key: string) => string
     getProjectName: (projectId: string) => string
-    showTaskDetails: (taskId: Task['id']) => void
+    showTaskDetails: (taskId: TaskViewObject['id']) => void
     switchViewTypeToTable: () => void
     switchViewTypeToKanban: () => void
     switchViewTypeToList: () => void

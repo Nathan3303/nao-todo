@@ -1,6 +1,13 @@
 import { ProjectDomain } from './services'
-import type { ProjectEntity, ProjectPreferenceEntity } from './entities'
+import { ProjectEntity, ProjectPreferenceEntity } from './entities'
+import { CreateProjectValueObject, UpdateProjectValueObject } from './valueobjects'
 import type { ProjectRepository } from './repositories'
 
-export { ProjectDomain }
-export type { ProjectRepository, ProjectEntity, ProjectPreferenceEntity }
+export {
+    ProjectDomain,
+    CreateProjectValueObject,
+    UpdateProjectValueObject,
+    ProjectEntity,
+    ProjectPreferenceEntity
+}
+export type { ProjectRepository }

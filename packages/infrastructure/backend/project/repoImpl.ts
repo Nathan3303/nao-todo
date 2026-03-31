@@ -5,10 +5,8 @@ import {
     listProjectRes2ProjectEntities,
     preferenceEntity2UpdateProjectPreferenceReq
 } from './converters'
-import type { ProjectEntity, ProjectPreferenceEntity } from '@nao-todo/domain/project/entities'
-import type { ProjectRepository } from '@nao-todo/domain/project/repositories'
 import type { Requester } from '@nao-todo/infrastructure/requester'
-import type { CreateProject, GoAsync } from '@nao-todo/types'
+import type { GoAsync } from '@nao-todo/types'
 import type {
     CreateProjectReq,
     CreateProjectRes,
@@ -21,6 +19,13 @@ import type {
     UpdateProjectRes
 } from '../types'
 import { defaultPreference } from '@nao-todo/infrastructure/consts/preference'
+import {
+    ProjectEntity,
+    ProjectPreferenceEntity,
+    CreateProjectValueObject,
+    UpdateProjectValueObject,
+    type ProjectRepository
+} from '@nao-todo/domain/project'
 
 export const useProjectRepository = (requester: Requester): ProjectRepository => {
     /**
@@ -49,11 +54,14 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
      * @param createVO 创建项目视图对象
      * @returns 项目实体
      */
-    const create = async (createVO: CreateProject): GoAsync<ProjectEntity> => {
+    const create = async (
+        createProjectValueObject: CreateProjectValueObject
+    ): GoAsync<ProjectEntity> => {
         // 1. 构建 rto
         const rto = {} as CreateProjectReq
-        if (createVO.name) rto.name = createVO.name
-        if (createVO.description) rto.description = createVO.description
+        if (createProjectValueObject.name) rto.name = createProjectValueObject.name
+        if (createProjectValueObject.description)
+            rto.description = createProjectValueObject.description
         // 2. 调用接口
         const response = await requester.post('/projects/', rto, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
@@ -75,11 +83,15 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
      * @param projectEntity 项目实体
      * @returns 项目 ID
      */
-    const update = async (projectId: string, projectEntity: ProjectEntity): GoAsync<string> => {
+    const update = async (
+        projectId: string,
+        updateProjectValueObject: UpdateProjectValueObject
+    ): GoAsync<string> => {
         // 1. 构建 rto
         const rto: UpdateProjectReq = {}
-        if (projectEntity.name) rto.name = projectEntity.name
-        if (projectEntity.description) rto.description = projectEntity.description
+        if (updateProjectValueObject.name) rto.name = updateProjectValueObject.name
+        if (updateProjectValueObject.description)
+            rto.description = updateProjectValueObject.description
         // 2. 调用接口
         const response = await requester.put(`/projects/${projectId}`, rto, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
@@ -212,7 +224,17 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
             ]
         }
         // 4. 获取失败则返回默认结果
-        return [defaultPreference, null]
+        return [
+            new ProjectPreferenceEntity(
+                '',
+                '',
+                projectId,
+                defaultPreference.viewType,
+                defaultPreference.getTasksOptions,
+                defaultPreference.columns
+            ),
+            null
+        ]
     }
 
     /**

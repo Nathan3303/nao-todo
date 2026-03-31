@@ -10,16 +10,21 @@ import type { AuthViewContext } from '@/views/auth/types'
 const router = useRouter()
 const { authUseCase } = inject<AuthViewContext>(AUTH_VIEW_CONTEXT_KEY)!
 
-onMounted(async () => {
-    // console.log(authViewContext)
-    const err = await authUseCase.checkIn()
-    if (err !== null) {
-        NueMessage.error(unwrapError(err))
-        router.replace('/auth/signin')
-        return
-    }
-    const fromUrl = router.currentRoute.value.query.fromUrl as string
-    router.replace(fromUrl === '/' ? '/tasks' : fromUrl)
+onMounted(() => {
+    // const err = await
+    // if (err !== null) {
+    //     NueMessage.error(unwrapError(err))
+    //     return router.replace('/auth/signin')
+    // }
+    // router.replace('/tasks')
+    authUseCase
+        .checkIn()
+        .then((err) => {
+            if (err === null) return
+            NueMessage.error(unwrapError(err))
+            router.replace('/auth/signin')
+        })
+        .finally(() => router.replace('/tasks'))
 })
 </script>
 

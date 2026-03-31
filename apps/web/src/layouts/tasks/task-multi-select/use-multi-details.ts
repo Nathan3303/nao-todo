@@ -1,18 +1,25 @@
-import { computed, ref, watch } from 'vue'
-import { useProjectStore, useTagStore, useTodoStore, useUserStore } from '@/stores'
-import { debounce } from '@nao-todo/utils'
+import { computed, inject, ref, watch } from 'vue'
+import { useProjectsStore, useTagsStore, useTasksStore } from '@/stores/tasks'
+import { useUserStore } from '@/stores'
+import { debounce } from '@nao-todo/infrastructure/utils'
 import { useRoute, useRouter } from 'vue-router'
 import { useTasksViewStore } from '@/views/index/tasks'
-import type { TodoMultiDetailsProps } from './types'
-import type { Todo } from '@nao-todo/types'
+import type { TaskMultiDetailsProps } from './types'
+import type { TaskViewObject } from '@nao-todo/types'
+import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
+import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 
-export const useMultiDetails = (props: TodoMultiDetailsProps) => {
-    const route = useRoute()
+export const useMultiDetails = (props: TaskMultiDetailsProps) => {
+    // @viewContext TasksView context
+    const tasksViewContext = inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
     const router = useRouter()
+    const route = useRoute()
+
+    // @stores
     const userStore = useUserStore()
-    const projectStore = useProjectStore()
-    const todoStore = useTodoStore()
-    const tagStore = useTagStore()
+    const projectStore = useProjectsStore()
+    const taskStore = useTasksStore()
+    const tagStore = useTagsStore()
     const tasksViewStore = useTasksViewStore()
 
     const commonData = ref({
@@ -25,35 +32,35 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
         isDeleted: false
     })
 
-    const endAt = ref<Todo['dueDate']['endAt']>(null)
+    const endAt = ref<TaskViewObject['endAt']>('')
 
-    let updateOptions: Partial<Todo> = {}
+    let updateOptions: Partial<TaskViewObject> = {}
 
     const avalibleProjects = computed(() => {
-        return projectStore.findProjectsFromLocal({ isDeleted: false, isArchived: false })
+        return projectStore.availableProjects.filter((project) => !project.isArchived)
     })
 
     const avalibleTags = computed(() => {
         return tagStore.tags
     })
 
-    const getSelectedTodos = () => {
+    const getSelectedTasks = () => {
         const _selectedIds = [...props.selectedIds]
-        if (!_selectedIds.length) return [] as Todo[]
-        const _selectedTodos: Todo[] = []
-        for (const todo of todoStore.todos) {
+        if (!_selectedIds.length) return [] as TaskViewObject[]
+        const _selectedTasks: TaskViewObject[] = []
+        for (const task of taskStore.list) {
             if (_selectedIds.length === 0) break
-            const idx = _selectedIds.indexOf(todo.id)
+            const idx = _selectedIds.indexOf(task.id)
             if (idx > -1) {
                 _selectedIds.splice(idx, 1)
-                _selectedTodos.push(todo)
+                _selectedTasks.push(task)
             }
         }
-        return _selectedTodos
+        return _selectedTasks
     }
 
-    const _updateTodos = async () => {
-        const updateResult = await todoStore.doUpdateTodos(props.selectedIds, updateOptions)
+    const _updateTasks = async () => {
+        const updateResult = await taskStore.doUpdateTasks(props.selectedIds, updateOptions)
         if (
             updateResult &&
             Object.prototype.hasOwnProperty.call(updateOptions, 'projectId') &&
@@ -229,3 +236,7 @@ export const useMultiDetails = (props: TodoMultiDetailsProps) => {
         handleCancelMultiSelect
     }
 }
+
+
+
+

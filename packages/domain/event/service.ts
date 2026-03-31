@@ -1,6 +1,8 @@
-import type { EventEntity } from './entities'
+import { EventEntity } from './entities'
 import type { GoAsync } from '@nao-todo/types'
 import type { EventRepository } from './repositories'
+import { CreateEventValueObject, UpdateEventValueObject } from './valueobjects'
+import { unwrapError } from '@nao-todo/infrastructure/utils'
 
 export class EventDomain {
     /**
@@ -20,21 +22,38 @@ export class EventDomain {
 
     /**
      * 创建检查事项
-     * @param eventEntity 检查事项实体
+     * @param createEventValueObject 创建检查事项值对象
      * @returns 检查事项实体
      */
-    async create(eventEntity: EventEntity): GoAsync<EventEntity> {
-        return this.eventRepo.create(eventEntity)
+    async create(createEventValueObject: CreateEventValueObject): GoAsync<EventEntity> {
+        // 数据校验
+        const validateErr = createEventValueObject.validate()
+        if (validateErr !== null) {
+            console.error(unwrapError(validateErr))
+            return [null, validateErr]
+        }
+        // 创建检查事项
+        return this.eventRepo.create(createEventValueObject)
     }
 
     /**
      * 更新检查事项
      * @param eventId 检查事项 ID
-     * @param eventEntity 检查事项实体
+     * @param updateEventValueObject 更新检查事项值对象
      * @returns 更新结果
      */
-    async update(eventId: EventEntity['id'], eventEntity: EventEntity): GoAsync<string> {
-        return this.eventRepo.update(eventId, eventEntity)
+    async update(
+        eventId: EventEntity['id'],
+        updateEventValueObject: UpdateEventValueObject
+    ): GoAsync<string> {
+        // 数据校验
+        const validateErr = updateEventValueObject.validate()
+        if (validateErr !== null) {
+            console.error(unwrapError(validateErr))
+            return [null, validateErr]
+        }
+        // 更新检查事项
+        return this.eventRepo.update(eventId, updateEventValueObject)
     }
 
     /**

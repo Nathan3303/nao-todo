@@ -1,13 +1,23 @@
 import { TaskDomain } from '@nao-todo/domain/task'
-import type { GoAsync, ResponseDataPagination } from '@nao-todo/types'
-import type { CreateTask, GetTasksOptions, Task, UpdateTaskOptions } from '@nao-todo/types'
-import { taskEntity2ViewObject, updateTaskOptions2UpdateValueObject } from '../converters/task'
+import type { GoAsync, ResponseDataPagination, TaskViewObject } from '@nao-todo/types'
+import type {
+    CreateTaskViewObject,
+    GetTasksOptions,
+    Task,
+    UpdateTaskViewObject
+} from '@nao-todo/types'
+import {
+    createTaskViewObjectToValueObject,
+    taskEntitiesToViewObjects,
+    taskEntityToViewObject,
+    updateTaskViewObjectToValueObject
+} from '../converters/task'
 
 export interface TaskStore {
-    setTasks(tasks: Task[]): void
-    updateTask(taskId: Task['id'], updateOptions: UpdateTaskOptions): void
-    addTask(task: Task): void
-    getTask(taskId: Task['id']): Task | undefined
+    setTasks(tasks: TaskViewObject[]): void
+    updateTask(taskId: TaskViewObject['id'], updateTaskViewObject: UpdateTaskViewObject): void
+    addTask(task: TaskViewObject): void
+    getTask(taskId: TaskViewObject['id']): TaskViewObject | undefined
 }
 
 export class TaskUseCase {
@@ -30,17 +40,17 @@ export class TaskUseCase {
         taskIds: Task['id'][]
         pagination: ResponseDataPagination | undefined
     }> {
-        // 1. 从领域服务获取任务列表
-        const [res, err] = await this.taskDomain.list(getTasksOptions)
-        if (err !== null) {
-            return [null, err]
-        }
-        // 2. 转换为视图对象
-        const tasks = res.taskEntities.map(taskEntity2ViewObject)
-        // 3. 存储任务列表
-        this.store.setTasks(tasks)
-        // 4. 返回任务ID列表
-        return [{ taskIds: tasks.map((task) => task.id), pagination: res.pagination }, null]
+        // 获取任务实体列表
+        const [listResult, err] = await this.taskDomain.list(getTasksOptions)
+        if (err !== null) return [null, err]
+        // 结构请求结果
+        const { taskEntities, pagination } = listResult
+        // 实体转换为视图对象
+        const taskViewObjects = taskEntitiesToViewObjects(taskEntities)
+        // 存储任务列表
+        this.store.setTasks(taskViewObjects)
+        // 返回任务ID列表
+        return [{ taskIds: taskViewObjects.map((task) => task.id), pagination }, null]
     }
 
     /**
@@ -49,13 +59,12 @@ export class TaskUseCase {
      * @returns 错误信息
      */
     async removeTask(taskId: Task['id']): GoAsync<void> {
-        // 1. 从领域服务删除任务
+        // 删除任务
         const err = await this.taskDomain.remove(taskId)
-        if (err !== null) {
-            return err
-        }
-        // 2. 更新任务列表
+        if (err !== null) return err
+        // 更新任务状态为已删除
         this.store.updateTask(taskId, { isDeleted: true })
+        // 返回成功
         return null
     }
 
@@ -65,52 +74,55 @@ export class TaskUseCase {
      * @returns 错误信息
      */
     async restoreTask(taskId: Task['id']): GoAsync<void> {
-        // 1. 从领域服务恢复任务
+        // 恢复
         const err = await this.taskDomain.restore(taskId)
-        if (err !== null) {
-            return err
-        }
-        // 2. 更新任务列表
+        if (err !== null) return err
+        // 更新任务状态为未删除
         this.store.updateTask(taskId, { isDeleted: false })
+        // 返回成功
         return null
     }
 
     /**
      * 创建任务
-     * @param task 创建任务选项
+     * @param createTaskViewObject 创建任务视图对象
      * @returns 任务视图对象
      */
-    async createTask(task: CreateTask): GoAsync<Task> {
-        // 1. 从领域服务创建任务
-        const [taskEntity, err] = await this.taskDomain.create(task)
-        if (err !== null) {
-            return [null, err]
-        }
-        // 2. 转换为视图对象
-        const taskVO = taskEntity2ViewObject(taskEntity)
-        // 3. 存储任务列表
-        this.store.addTask(taskVO)
-        // 4. 返回任务ID列表
-        return [taskVO, null]
+    async createTask(createTaskViewObject: CreateTaskViewObject): GoAsync<TaskViewObject> {
+        // 数据转换
+        const createTaskValueObject = createTaskViewObjectToValueObject(createTaskViewObject)
+        // 创建任务
+        const [taskEntity, err] = await this.taskDomain.create(createTaskValueObject)
+        if (err !== null) return [null, err]
+        // 实体转换为视图对象
+        const taskViewObject = taskEntityToViewObject(taskEntity)
+        // 存储任务列表
+        this.store.addTask(taskViewObject)
+        // 返回任务视图对象
+        return [taskViewObject, null]
     }
 
     /**
      * 更新任务
      * @param taskId 任务ID
-     * @param updateOptions 更新任务选项
+     * @param updateTaskViewObject 更新任务视图对象
      * @returns 错误信息
      */
-    async updateTask(taskId: Task['id'], updateOptions: UpdateTaskOptions): GoAsync<void> {
-        // 1. 从领域服务更新任务
-        const oldTask = this.store.getTask(taskId)
-        if (oldTask === undefined) return '任务不存在'
-        const updateVO = updateTaskOptions2UpdateValueObject(updateOptions)
-        const [, err] = await this.taskDomain.update(taskId, updateVO)
-        if (err !== null) {
-            return err
-        }
-        // 2. 更新任务列表
-        this.store.updateTask(taskId, updateOptions)
+    async updateTask(
+        taskId: Task['id'],
+        updateTaskViewObject: UpdateTaskViewObject
+    ): GoAsync<void> {
+        // 数据转换
+        const updateTaskValueObject = updateTaskViewObjectToValueObject(
+            taskId,
+            updateTaskViewObject
+        )
+        // 更新任务
+        const [, err] = await this.taskDomain.update(taskId, updateTaskValueObject)
+        if (err !== null) return err
+        // 更新内存数据
+        this.store.updateTask(taskId, updateTaskViewObject)
+        // 返回成功
         return null
     }
 }

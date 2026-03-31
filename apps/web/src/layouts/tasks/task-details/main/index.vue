@@ -10,7 +10,7 @@ import {
 } from '@nao-todo/infrastructure/consts/tasks'
 import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
 import type { TaskDetailsContext } from '../types'
-import type { Task } from '@nao-todo/types'
+import type { TaskViewObject } from '@nao-todo/types'
 import dayjs from 'dayjs'
 
 const { vo, eventProgress, isCommenting, commentHandler, taskHandler, tags } =
@@ -18,32 +18,35 @@ const { vo, eventProgress, isCommenting, commentHandler, taskHandler, tags } =
 
 const updateTaskState = (v: unknown) => {
     if (vo.value === null) return
-    taskHandler.updateTask(vo.value.id, { state: v as Task['state'] })
+    taskHandler.updateTask(vo.value.id, { state: v as TaskViewObject['state'] })
 }
 
 const updateTaskPriority = (v: unknown) => {
     if (vo.value === null) return
-    taskHandler.updateTask(vo.value.id, { priority: v as Task['priority'] })
+    taskHandler.updateTask(vo.value.id, { priority: v as TaskViewObject['priority'] })
 }
 
 const updateTaskIsStarMark = (v: unknown) => {
     if (vo.value === null) return
-    taskHandler.updateTask(vo.value.id, { isFavorited: v as Task['isFavorited'] })
+    taskHandler.updateTask(vo.value.id, { isStarMarked: v as TaskViewObject['isStarMarked'] })
 }
 
 const updateTaskName = () => {
     if (vo.value === null) return
-    taskHandler.updateTaskName(vo.value.id, vo.value.name as Task['name'])
+    taskHandler.updateTaskName(vo.value.id, vo.value.name as TaskViewObject['name'])
 }
 
 const updateTaskDescription = () => {
     if (vo.value === null) return
-    taskHandler.updateTaskDescription(vo.value.id, vo.value.description as Task['description'])
+    taskHandler.updateTaskDescription(
+        vo.value.id,
+        vo.value.description as TaskViewObject['description']
+    )
 }
 
 const updateTaskTags = (v: unknown) => {
     if (vo.value === null) return
-    taskHandler.updateTask(vo.value.id, { tags: v as Task['tags'] })
+    taskHandler.updateTask(vo.value.id, { tags: v as TaskViewObject['tags'] })
 }
 
 const createCommentHandler = async (content: string) => {
@@ -70,7 +73,7 @@ const createCommentHandler = async (content: string) => {
                 </nue-div>
                 <nue-div>
                     <switch-button
-                        v-model="vo.isFavorited"
+                        v-model="vo.isStarMarked"
                         active-icon="heart-fill"
                         active-text="取消收藏"
                         icon="heart"

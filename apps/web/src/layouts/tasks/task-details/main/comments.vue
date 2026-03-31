@@ -3,14 +3,14 @@ import { CommentRow } from '@nao-todo/components'
 import type { TaskDetailsContext } from '../types'
 import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
 import { inject } from 'vue'
-import type { Comment } from '@nao-todo/types'
+import type { CommentViewObject } from '@nao-todo/types'
 
 const { comments, commentHandler } = inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
 
-const commentUpdater = async (id: Comment['id'], content: string) =>
+const commentUpdater = async (id: CommentViewObject['id'], content: string) =>
     commentHandler.updateComment(id, { content })
 
-const deleteComment = async (id: Comment['id']) => commentHandler.deleteComment(id)
+const deleteComment = async (id: CommentViewObject['id']) => commentHandler.deleteComment(id)
 </script>
 
 <template>

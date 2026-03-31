@@ -1,5 +1,5 @@
-import { AuthDomain, type SignUpValueObject, type SignInValueObject } from '@nao-todo/domain/auth'
-import { USER_PASSWORD_REGEXP } from '@nao-todo/infrastructure/consts/auth'
+import { AuthDomain, SignInValueObject, SignUpValueObject } from '@nao-todo/domain/auth'
+import type { SignInViewObject, SignUpViewObject } from '@nao-todo/types'
 import type { GoAsync } from '@nao-todo/types/go'
 
 export interface AuthStore {
@@ -23,15 +23,15 @@ export class AuthUseCase {
      * @param vo 登录值对象
      * @returns 错误信息或空值
      */
-    async signIn(vo: SignInValueObject): GoAsync<void> {
-        // 1. 检查属性值
-        if (vo.email === '') return '请输入邮箱'
-        if (vo.password === '') return '请输入密码'
+    async signIn(signInViewObject: SignInViewObject): GoAsync<void> {
+        // 视图对象转换为值对象
+        const signInValueObject = new SignInValueObject(
+            signInViewObject.email,
+            signInViewObject.password
+        )
         // 2. 调用域服务 - 登录
-        const [jwt, err] = await this.authDomain.signIn(vo)
-        if (err !== null) {
-            return err
-        }
+        const [jwt, err] = await this.authDomain.signIn(signInValueObject)
+        if (err !== null) return err
         // 3. 存储JWT
         this.authStore.setIsAuthenticated(true)
         this.authStore.setUserToken(jwt)
@@ -44,27 +44,17 @@ export class AuthUseCase {
      * @param vo 注册值对象
      * @returns 错误信息或空值
      */
-    async signUp(vo: SignUpValueObject): GoAsync<void> {
-        // 1. 检查属性值
-        if (vo.email === '') return '请输入邮箱'
-        if (vo.password === '') return '请输入密码'
-        if (vo.confirmPassword === '') return '请确认密码'
-        if (vo.password !== vo.confirmPassword) return '两次密码不一致'
-        // 2. 检查密码格式
-        if (vo.password.length < 8 || vo.password.length > 24) {
-            return '密码格式有误，需要 8 至 24 位的长度'
-        }
-        if (
-            !USER_PASSWORD_REGEXP.test(vo.password) ||
-            !USER_PASSWORD_REGEXP.test(vo.confirmPassword)
-        ) {
-            return '密码格式错误'
-        }
+    async signUp(signUpViewObject: SignUpViewObject): GoAsync<void> {
+        // 视图对象转换为值对象
+        const signUpValueObject = new SignUpValueObject(
+            signUpViewObject.email,
+            signUpViewObject.password,
+            signUpViewObject.confirmPassword,
+            signUpViewObject.nickname
+        )
         // 2. 调用域服务 - 注册
-        const err = await this.authDomain.signUp(vo)
-        if (err !== null) {
-            return err
-        }
+        const err = await this.authDomain.signUp(signUpValueObject)
+        if (err !== null) return err
         // 3. 返回
         return null
     }

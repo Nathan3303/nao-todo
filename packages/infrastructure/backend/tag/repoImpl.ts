@@ -5,10 +5,8 @@ import {
     listTagRes2TagEntities,
     tagPreferenceEntity2UpdateReq
 } from './converters'
-import type { TagEntity, TagPreferenceEntity } from '@nao-todo/domain/tag/entities'
-import type { TagRepository } from '@nao-todo/domain/tag/repositories'
 import type { Requester } from '../../requester/types'
-import type { CreateTag, Err, GoAsync, UpdateTag } from '@nao-todo/types'
+import type { Err, GoAsync } from '@nao-todo/types'
 import type {
     CreateTagReq,
     CreateTagRes,
@@ -20,8 +18,25 @@ import type {
     UpdateTagReq
 } from '../types'
 import { defaultPreference } from '../../consts/preference'
+import {
+    TagEntity,
+    TagPreferenceEntity,
+    CreateTagValueObject,
+    UpdateTagValueObject,
+    type TagRepository
+} from '@nao-todo/domain/tag'
 
+/**
+ * 标签仓库实现
+ * @param requester 请求器
+ * @returns 标签仓库实现
+ */
 export const useTagRepository = (requester: Requester): TagRepository => {
+    /**
+     * 获取标签
+     * @param tagId 标签 ID
+     * @returns 标签实体
+     */
     const get = async (tagId: string): GoAsync<TagEntity> => {
         // 1. 调用接口
         const response = await requester.get(`/tags/${tagId}`, {
@@ -37,12 +52,20 @@ export const useTagRepository = (requester: Requester): TagRepository => {
         // 4. 返回
         return [tagEntity, null]
     }
-    const create = async (createVO: CreateTag): GoAsync<TagEntity | null> => {
+
+    /**
+     * 创建标签
+     * @param createTagValueObject 创建标签值对象
+     * @returns 标签实体
+     */
+    const create = async (
+        createTagValueObject: CreateTagValueObject
+    ): GoAsync<TagEntity | null> => {
         // 1. 构建 rto
         const rto: CreateTagReq = {
-            name: createVO.name,
-            description: createVO.description || '',
-            color: createVO.color || 'transparent'
+            name: createTagValueObject.name,
+            description: createTagValueObject.description || '',
+            color: createTagValueObject.color || 'transparent'
         }
         // 2. 调用接口
         const response = await requester.post('/tags/', rto, {
@@ -59,12 +82,21 @@ export const useTagRepository = (requester: Requester): TagRepository => {
         return [tagEntity, null]
     }
 
-    const update = async (tagId: string, updateVO: UpdateTag): GoAsync<void> => {
+    /**
+     * 更新标签
+     * @param tagId 标签 ID
+     * @param updateTagValueObject 更新标签值对象
+     * @returns 更新结果
+     */
+    const update = async (
+        tagId: string,
+        updateTagValueObject: UpdateTagValueObject
+    ): GoAsync<void> => {
         // 1. 构建 rto
         const rto: UpdateTagReq = {}
-        if (updateVO.name) rto.name = updateVO.name
-        if (updateVO.description) rto.description = updateVO.description
-        if (updateVO.color) rto.color = updateVO.color
+        if (updateTagValueObject.name) rto.name = updateTagValueObject.name
+        if (updateTagValueObject.description) rto.description = updateTagValueObject.description
+        if (updateTagValueObject.color) rto.color = updateTagValueObject.color
         // 2. 调用接口
         const response = await requester.put(`/tags/${tagId}`, rto, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
@@ -79,6 +111,11 @@ export const useTagRepository = (requester: Requester): TagRepository => {
         return null
     }
 
+    /**
+     * 删除标签
+     * @param tagId 标签 ID
+     * @returns 删除结果
+     */
     const remove = async (tagId: string): Promise<Err> => {
         // 1. 调用接口
         const response = await requester.delete(`/tags/${tagId}`, {
@@ -93,6 +130,10 @@ export const useTagRepository = (requester: Requester): TagRepository => {
         return null
     }
 
+    /**
+     * 获取标签列表
+     * @returns 标签实体
+     */
     const list = async (): GoAsync<TagEntity[]> => {
         // 1. 调用接口
         const response = await requester.get('/tags/', {
@@ -109,6 +150,11 @@ export const useTagRepository = (requester: Requester): TagRepository => {
         return [tagEntities, null]
     }
 
+    /**
+     * 获取标签偏好
+     * @param tagId 标签 ID
+     * @returns 标签偏好实体
+     */
     const getPreference = async (tagId: string): GoAsync<TagPreferenceEntity> => {
         // 1. 调用接口
         const response = await requester.get(`/tags/${tagId}/preference`, {
@@ -121,9 +167,25 @@ export const useTagRepository = (requester: Requester): TagRepository => {
             return [getTagPreferenceRes2TagPreferenceEntity(res.data as GetTagPreferenceRes), null]
         }
         // 4. 失败返回默认值
-        return [defaultPreference, null]
+        return [
+            new TagPreferenceEntity(
+                '',
+                '',
+                tagId,
+                defaultPreference.viewType,
+                defaultPreference.getTasksOptions,
+                defaultPreference.columns
+            ),
+            null
+        ]
     }
 
+    /**
+     * 更新标签偏好
+     * @param tagId 标签 ID
+     * @param preferenceEntity 标签偏好实体
+     * @returns 更新结果
+     */
     const updatePreference = async (
         tagId: string,
         preferenceEntity: TagPreferenceEntity

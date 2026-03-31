@@ -1,9 +1,14 @@
 import type { ComputedRef } from 'vue'
-import type { Task, Tag, TaskColumnOptions, GetTasksSortOptions } from '@nao-todo/types'
+import type {
+    TaskViewObject,
+    TagViewObject,
+    TaskColumnOptions,
+    GetTasksSortOptions
+} from '@nao-todo/types'
 
 export type TaskListProps = {
-    tags: Tag[]
-    tasks: Task[]
+    tags: TagViewObject[]
+    tasks: TaskViewObject[]
     columns: TaskColumnOptions
     sortOptions: GetTasksSortOptions
     columnLabelGetter: (key: string) => string
@@ -15,7 +20,7 @@ export type TaskListProps = {
 }
 
 export type TaskListEmits = {
-    (e: 'showTaskDetails', taskId: Task['id']): void
+    (e: 'showTaskDetails', taskId: TaskViewObject['id']): void
     (e: 'showMultiSelectPanel', payload: TaskListMultiSelectPayload): void
     (e: 'updateColumns', key: keyof TaskColumnOptions, value: boolean): void
     (
@@ -24,8 +29,8 @@ export type TaskListEmits = {
         order: GetTasksSortOptions['order']
     ): void
     (e: 'clearSortOptions'): void
-    (e: 'deleteTask', taskId: Task['id']): void
-    (e: 'restoreTask', taskId: Task['id']): void
+    (e: 'deleteTask', taskId: TaskViewObject['id']): void
+    (e: 'restoreTask', taskId: TaskViewObject['id']): void
     (e: 'nextPage'): void
     (e: 'newTask'): void
 }
@@ -33,29 +38,29 @@ export type TaskListEmits = {
 export type TaskListContext = {
     columns: ComputedRef<TaskColumnOptions>
     sortOptions: ComputedRef<GetTasksSortOptions>
-    tags: ComputedRef<Tag[]>
-    tasks: ComputedRef<Task[]>
+    tags: ComputedRef<TagViewObject[]>
+    tasks: ComputedRef<TaskViewObject[]>
     tagBarClamped: ComputedRef<number>
-    showTaskDetails: (taskId: Task['id'], idx: number) => void
+    showTaskDetails: (taskId: TaskViewObject['id'], idx: number) => void
     updateColumns: (key: keyof TaskColumnOptions, value: boolean) => void
     updateSortOptions: (
         field: GetTasksSortOptions['field'],
         order: GetTasksSortOptions['order']
     ) => void
     clearSortOptions: () => void
-    deleteTask: (taskId: Task['id']) => void
-    restoreTask: (taskId: Task['id']) => void
+    deleteTask: (taskId: TaskViewObject['id']) => void
+    restoreTask: (taskId: TaskViewObject['id']) => void
     getColumnLabel: (key: string) => string
-    isTaskExpired: (task: Task) => boolean
+    isTaskExpired: (task: TaskViewObject) => boolean
     isInMultiSelectRange: (idx: number) => boolean
     showMultiSelectPanel: (idx: number) => void
     clearMultiSelect: (fullCLear: boolean) => void
     getProjectName: (projectId: string) => string
-    deleteOrRestore: (taskId: Task['id'], isDelete: boolean) => void
+    deleteOrRestore: (taskId: TaskViewObject['id'], isDelete: boolean) => void
 }
 
 export type TaskListMultiSelectPayload = {
-    selectedIds: Task['id'][]
+    selectedIds: TaskViewObject['id'][]
     selectRange: { start: number; end: number; original: number }
 }
 

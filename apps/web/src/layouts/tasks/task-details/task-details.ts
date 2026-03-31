@@ -77,7 +77,7 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
             endAt: dayjs(_task.endAt).format('YYYY-MM-DD HH:mm'),
             deletedAt: _task.deletedAt,
             isDeleted: _task.isDeleted || _task.deletedAt === null,
-            isFavorited: _task.isFavorited,
+            isStarMarked: _task.isStarMarked,
             isGivenUp: _task.isGivenUp,
             isDone: _task.state === 'done',
             createdAt: dayjs(_task.createdAt).format('YYYY-MM-DD HH:mm'),

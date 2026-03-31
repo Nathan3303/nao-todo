@@ -1,10 +1,10 @@
 import { computed, ref } from 'vue'
 import type { EventsStoreBase } from './events-store-base'
-import type { Event } from '@nao-todo/types'
+import type { EventViewObject } from '@nao-todo/types'
 
 const useEventIdsStoreBase = (getEvent: EventsStoreBase['getEvent']) => {
     // @state 检查事项 ID 数组
-    const eventIds = ref<Event['id'][]>([])
+    const eventIds = ref<EventViewObject['id'][]>([])
 
     // @state 检查事项数组 - 用于展示
     const events = computed(() => {
@@ -14,12 +14,12 @@ const useEventIdsStoreBase = (getEvent: EventsStoreBase['getEvent']) => {
     })
 
     // @method 设置检查事项 ID 数组
-    const setEventIds = (newEventIds: Event['id'][]) => {
+    const setEventIds = (newEventIds: EventViewObject['id'][]) => {
         eventIds.value = newEventIds
     }
 
     // @method 添加检查事项 ID
-    const addEventId = (newEventId: Event['id']) => {
+    const addEventId = (newEventId: EventViewObject['id']) => {
         // 检查是否已存在
         if (eventIds.value.includes(newEventId)) {
             return
@@ -28,7 +28,7 @@ const useEventIdsStoreBase = (getEvent: EventsStoreBase['getEvent']) => {
     }
 
     // @method 删除检查事项 ID
-    const removeEventId = (eventId: Event['id']) => {
+    const removeEventId = (eventId: EventViewObject['id']) => {
         eventIds.value = eventIds.value.filter((id) => id !== eventId)
     }
 

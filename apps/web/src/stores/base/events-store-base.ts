@@ -1,9 +1,9 @@
 import { computed, ref } from 'vue'
-import type { Event, UpdateEvent } from '@nao-todo/types'
+import type { EventViewObject, UpdateEventViewObject } from '@nao-todo/types'
 
 const useEventsStoreBase = () => {
     // @state 检查事项数组
-    const events = ref<Event[]>([])
+    const events = ref<EventViewObject[]>([])
 
     // @state 检查事项 Map
     const eventMap = computed(() => {
@@ -11,31 +11,31 @@ const useEventsStoreBase = () => {
     })
 
     // @method 添加检查事项
-    const addEvent = (event: Event) => {
+    const addEvent = (event: EventViewObject) => {
         const idx = events.value.findIndex((e) => e.id === event.id)
         if (idx !== -1) return
         events.value.push(event)
     }
 
     // @method 获取检查事项
-    const getEvent = (eventId: Event['id']) => {
+    const getEvent = (eventId: EventViewObject['id']) => {
         return eventMap.value?.get(eventId)
     }
 
     // @method 设置检查事项
-    const setEvents = (newEvents: Event[]) => {
+    const setEvents = (newEvents: EventViewObject[]) => {
         events.value = newEvents
     }
 
     // @method 更新检查事项
-    const updateEvent = (eventId: Event['id'], event: UpdateEvent) => {
+    const updateEvent = (eventId: EventViewObject['id'], event: UpdateEventViewObject) => {
         const idx = events.value.findIndex((e) => e.id === eventId)
         if (idx === -1) return
         events.value[idx] = { ...events.value[idx], ...event }
     }
 
     // @method 删除检查事项
-    const deleteEvent = (eventId: Event['id']) => {
+    const deleteEvent = (eventId: EventViewObject['id']) => {
         events.value = events.value.filter((e) => e.id !== eventId)
     }
 

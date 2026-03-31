@@ -1,35 +1,26 @@
+import type { Project, ProjectPreference } from '../models'
 import type { GetTasksOptions, TaskColumnOptions } from './task'
 
-export type Project = {
-    id: string
-    icon?: string
-    name: string
-    description: string
-    archivedAt: string
+export type ProjectViewObject = Omit<Project, 'preference'> & {
     isArchived: boolean
-    deletedAt: string
     isDeleted: boolean
-    createdAt?: string
-    updatedAt?: string
     createTaskOptions?: { projectId: string }
 }
 
-export type ProjectPreference = {
-    id?: string
-    projectId?: string
+export type ProjectPreferenceViewObject = Omit<ProjectPreference, 'getTasksOptions' | 'columns'> & {
     viewType: string
     getTasksOptions: GetTasksOptions
     columns: TaskColumnOptions
 }
 
-export type UpdateProject = {
+export type UpdateProjectViewObject = {
     icon?: string
     name?: string
     description?: string
     archivedAt?: string
 }
 
-export type CreateProject = {
+export type CreateProjectViewObject = {
     icon?: string
     name: string
     description?: string

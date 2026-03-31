@@ -1,6 +1,6 @@
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 import type {
-    BuiltInProjectPreference,
+    BuiltInProjectPreferenceViewObject,
     GetTasksOptions,
     GetTasksSortOptions,
     Go,
@@ -16,7 +16,7 @@ export interface BuiltInProjectStore {
     ): void
     getPreferenceGetTasksOption<T extends keyof GetTasksOptions>(key: T): GetTasksOptions[T]
     getPreferenceGetTasksOptions(): GetTasksOptions
-    getBuiltInProjectPreference: () => BuiltInProjectPreference | undefined
+    getBuiltInProjectPreference: () => BuiltInProjectPreferenceViewObject | undefined
 }
 
 export class BuiltInProjectLayoutHandlers {

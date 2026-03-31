@@ -4,7 +4,13 @@ import type {
     DialogOpenFunc
 } from '@/infrastructure/hooks/tasks-view/use-dialog-manager'
 import { projectCreatorVO2ValueObject } from './converters'
-import type { CreateTag, CreateTask, GoAsync, Project, Tag } from '@nao-todo/types'
+import type {
+    CreateTagViewObject,
+    CreateTaskViewObject,
+    GoAsync,
+    ProjectViewObject,
+    TagViewObject
+} from '@nao-todo/types'
 import { storeToRefs } from 'pinia'
 import { computed, inject, type ComputedRef } from 'vue'
 import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
@@ -13,22 +19,22 @@ import { useProjectsStore, useTagsStore } from '@/stores/tasks'
 import type { Subscriber } from '@/infrastructure/hooks/use-subscriber'
 
 export type UseDialogs = {
-    projects: ComputedRef<Project[]>
-    tags: ComputedRef<Tag[]>
-    tagColorGetter: (tagId: Tag['id']) => Tag['color']
+    projects: ComputedRef<ProjectViewObject[]>
+    tags: ComputedRef<TagViewObject[]>
+    tagColorGetter: (tagId: TagViewObject['id']) => TagViewObject['color']
     projectCreatorRegister: (open: DialogOpenFunc, close: DialogCloseFunc) => void
     projectCreatorHandler: (vo: ProjectCreatorVO) => GoAsync<string>
     projectManagerRegister: (open: DialogOpenFunc, close: DialogCloseFunc) => void
     projectCreatorOpener: () => void
     tagCreatorRegister: (open: DialogOpenFunc, close: DialogCloseFunc) => void
-    tagCreatorHandler: (vo: CreateTag) => GoAsync<string>
+    tagCreatorHandler: (vo: CreateTagViewObject) => GoAsync<string>
     tagManagerRegister: (open: DialogOpenFunc, close: DialogCloseFunc) => void
     tagCreatorOpener: () => void
-    tagColorUpdaterOpener: (tagId: Tag['id']) => void
+    tagColorUpdaterOpener: (tagId: TagViewObject['id']) => void
     tagColorUpdaterRegister: (open: DialogOpenFunc, close: DialogCloseFunc) => void
-    tagColorUpdater: (tagId: Tag['id'], color: Tag['color']) => GoAsync<void>
+    tagColorUpdater: (tagId: TagViewObject['id'], color: TagViewObject['color']) => GoAsync<void>
     taskCreatorRegister: (open: DialogOpenFunc, close: DialogCloseFunc) => void
-    taskCreatorHandler: (vo: CreateTask) => GoAsync<string>
+    taskCreatorHandler: (vo: CreateTaskViewObject) => GoAsync<string>
     subscriber: Subscriber
 }
 
@@ -73,7 +79,7 @@ const useDialogs = (): UseDialogs => {
     }
 
     // @method 创建标签对话框处理函数
-    const tagCreatorHandler = async (vo: CreateTag): GoAsync<string> => {
+    const tagCreatorHandler = async (vo: CreateTagViewObject): GoAsync<string> => {
         const [tagVO, err] = await tasksViewContext.tagUseCase.create(vo)
         if (err !== null) {
             return [null, err]
@@ -92,7 +98,7 @@ const useDialogs = (): UseDialogs => {
     }
 
     // @method 标签颜色更新对话框处理函数
-    const tagColorUpdater = async (tagId: Tag['id'], color: Tag['color']) => {
+    const tagColorUpdater = async (tagId: TagViewObject['id'], color: TagViewObject['color']) => {
         return await tasksViewContext.tagUseCase.update(tagId, { color })
     }
 
@@ -102,7 +108,7 @@ const useDialogs = (): UseDialogs => {
     }
 
     // @method 标签颜色修改对话框打开函数
-    const tagColorUpdaterOpener = (tagId: Tag['id']) => {
+    const tagColorUpdaterOpener = (tagId: TagViewObject['id']) => {
         tasksViewContext.dialogManager.openDialog('tag-color-updater', tagId)
     }
 
@@ -112,7 +118,7 @@ const useDialogs = (): UseDialogs => {
     }
 
     // @method 待办事项创建对话框处理函数
-    const taskCreatorHandler = async (vo: CreateTask): GoAsync<string> => {
+    const taskCreatorHandler = async (vo: CreateTaskViewObject): GoAsync<string> => {
         const [taskVO, err] = await tasksViewContext.taskUseCase.createTask(vo)
         if (err !== null) return [null, err]
         return [taskVO.id, null]

@@ -2,17 +2,19 @@ import type { CommentHandler } from '@/handlers/tasks/comment-handler'
 import type { EventHandler } from '@/handlers/tasks/event-handler'
 import type { TaskHandler } from '@/handlers/tasks/task-handler'
 import type {
-    CreateEvent,
-    Event,
-    Project,
-    Tag,
-    Task,
-    UpdateEvents,
-    UpdateEvent,
-    UpdateTaskOptions,
-    WithNull
+    CreateEventViewObject,
+    EventViewObject,
+    ProjectViewObject,
+    TagViewObject,
+    TaskViewObject,
+    UpdateEventsViewObject,
+    UpdateEventViewObject,
+    UpdateTaskViewObject,
+    WithNull,
+    CommentViewObject,
+    CreateCommentViewObject,
+    UpdateCommentViewObject
 } from '@nao-todo/types'
-import type { Comment, CreateComment, UpdateComment } from '@nao-todo/types/viewobjects/comment'
 import type { ComputedRef, Ref } from 'vue'
 
 /**
@@ -21,19 +23,19 @@ import type { ComputedRef, Ref } from 'vue'
 
 export type TaskDetailsViewObject = {
     id: string
-    projectId: Project['id']
-    projectName?: Project['name']
+    projectId: ProjectViewObject['id']
+    projectName?: ProjectViewObject['name']
     name: string
     description: string
-    state: 'todo' | 'in-progress' | 'done'
-    priority: 'low' | 'medium' | 'high' | 'urgent'
-    tags: Tag['id'][]
-    tagList: Tag[]
+    state: string
+    priority: string
+    tags: TagViewObject['id'][]
+    tagList: TagViewObject[]
     startAt?: string | null
     endAt?: string | null
     deletedAt: string | null
     isDeleted: boolean
-    isFavorited: boolean
+    isStarMarked: boolean
     isGivenUp: boolean
     isDone: boolean
     createdAt: string
@@ -41,22 +43,22 @@ export type TaskDetailsViewObject = {
 }
 
 export type TaskDetailsProps = {
-    taskId?: Task['id']
+    taskId?: TaskViewObject['id']
 }
 
 export type TaskDetailsEmits = {
     (e: 'closeDetails'): void
-    (e: 'updateTask', taskId: Task['id'], update: UpdateTaskOptions): void
-    (e: 'deleteTask', taskId: Task['id']): void
-    (e: 'restoreTask', taskId: Task['id']): void
-    (e: 'duplicateTask', taskId: Task['id']): void
-    (e: 'createEvent', create: CreateEvent): void
-    (e: 'updateEvent', eventId: Event['id'], update: UpdateEvent): void
-    (e: 'updateEvents', updates: UpdateEvents[]): void
-    (e: 'deleteEvent', eventId: Event['id']): void
-    (e: 'createComment', create: CreateComment): void
-    (e: 'updateComment', commentId: Comment['id'], update: UpdateComment): void
-    (e: 'deleteComment', commentId: Comment['id']): void
+    (e: 'updateTask', taskId: TaskViewObject['id'], update: UpdateTaskViewObject): void
+    (e: 'deleteTask', taskId: TaskViewObject['id']): void
+    (e: 'restoreTask', taskId: TaskViewObject['id']): void
+    (e: 'duplicateTask', taskId: TaskViewObject['id']): void
+    (e: 'createEvent', create: CreateEventViewObject): void
+    (e: 'updateEvent', eventId: EventViewObject['id'], update: UpdateEventViewObject): void
+    (e: 'updateEvents', updates: UpdateEventsViewObject[]): void
+    (e: 'deleteEvent', eventId: EventViewObject['id']): void
+    (e: 'createComment', create: CreateCommentViewObject): void
+    (e: 'updateComment', commentId: CommentViewObject['id'], update: UpdateCommentViewObject): void
+    (e: 'deleteComment', commentId: CommentViewObject['id']): void
 }
 
 export type TaskDetailsContext = TaskDetailsHeaderContext &
@@ -79,15 +81,19 @@ export type TaskDetailsHeaderContext = {
 export type TaskDetailsMainContext = {
     emit: TaskDetailsEmits
     vo: ComputedRef<WithNull<TaskDetailsViewObject>>
-    events: Ref<WithNull<Event[]>>
+    events: Ref<WithNull<EventViewObject[]>>
     eventProgress: ComputedRef<{ percentage: number; text: string }>
-    comments: Ref<WithNull<Comment[]>>
+    comments: Ref<WithNull<CommentViewObject[]>>
     isCommenting: Ref<boolean>
-    resortEvents: (oldEid: Event['id'], newEid: Event['id'], isUp: boolean) => void
+    resortEvents: (
+        oldEid: EventViewObject['id'],
+        newEid: EventViewObject['id'],
+        isUp: boolean
+    ) => void
     eventHandler: EventHandler
     commentHandler: CommentHandler
     taskHandler: TaskHandler
-    tags: Ref<Tag[]>
+    tags: Ref<TagViewObject[]>
 }
 
 /**
@@ -97,7 +103,7 @@ export type TaskDetailsMainContext = {
 export type TaskDetailsFooterContext = {
     emit: TaskDetailsEmits
     vo: ComputedRef<WithNull<TaskDetailsViewObject>>
-    projects: ComputedRef<Project[]>
+    projects: ComputedRef<ProjectViewObject[]>
     isCommenting: Ref<boolean>
 }
 

@@ -27,20 +27,14 @@ const routes: RouteRecordRaw = {
 
 const beforeEnter: NavigationGuard = async (to, from, next) => {
     // 用户凭证验证失败或者用户未登录，跳转到登录页
-    // 1. 判断是否处于认证相关页面
+    // 判断是否处于认证相关页面
     const toName = to.name as string
-    if (toName?.startsWith('auth-')) {
-        next()
-        return
-    }
-    // 1. 判断是否登入
+    if (toName?.startsWith('auth-')) return next()
+    // 判断是否登入
     const userStore = useUserStore()
     if (userStore.isAuthenticated) return next()
     // 未登录，跳转到任务列表页
-    next({
-        name: 'auth-checkin',
-        query: { fromUrl: from.fullPath }
-    })
+    next({ name: 'auth-checkin' })
 }
 
 export default routes

@@ -1,6 +1,17 @@
 import { CommentDomain } from './service'
-import type { CommentEntity } from './entities'
+import { CommentEntity } from './entities'
+import {
+    UpdateCommentValueObject,
+    CommentUserValueObject,
+    CreateCommentValueObject
+} from './valueobjects'
 import type { CommentRepository } from './repositories'
 
-export { CommentDomain }
-export type { CommentRepository, CommentEntity }
+export {
+    CommentDomain,
+    CommentEntity,
+    UpdateCommentValueObject,
+    CommentUserValueObject,
+    CreateCommentValueObject
+}
+export type { CommentRepository }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Project } from '@nao-todo/types'
+import type { ProjectViewObject } from '@nao-todo/types'
 import type { TaskProjectSelectorProps, TaskProjectSelectorEmits } from './types'
 
 defineOptions({ name: 'TaskProjectSelector', inheritAttrs: false })
@@ -16,7 +16,7 @@ const vm = computed({
     set: (newProjectId) => handleSelect(newProjectId)
 })
 
-const handleSelect = async (projectId?: Project['id']) => {
+const handleSelect = async (projectId?: ProjectViewObject['id']) => {
     if (projectId) {
         emit('select', projectId)
         return

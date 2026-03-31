@@ -1,62 +1,17 @@
-import type { GetRequestPageOptions } from '../axios/common'
-import type { User } from './user'
-import type { TodoColumnOptions, GetTodosOptions } from './todo'
+import type { ModelBase } from './base'
 
-type TagPreference = {
-    viewType: string
-    getTodosOptions: GetTodosOptions
-    columns: TodoColumnOptions
-}
-
-type Tag = {
-    _id?: string
-    id: string
-    userId: User['id']
+export type Tag = ModelBase & {
+    userId: string
     name: string
-    color: string
-    description: string
-    isDeleted: boolean
-    deletedAt: string
-    preference: TagPreference
-    createdAt: string
-    updatedAt: string
-}
-
-type CreateTagOptionsRaw = {
-    name: string
-    color: string
-    description: string
-}
-
-type UpdateTagOptionsRaw = {
-    name?: string
-    color?: string
     description?: string
-    isDeleted?: boolean
-    deletedAt?: string
+    color: string
+    preference: TagPreference
 }
 
-type GetTagsOptionsRaw = UpdateTagOptionsRaw
-
-type CreateTagOptions = CreateTagOptionsRaw
-
-type UpdateTagOptions = UpdateTagOptionsRaw
-
-type GetTagsOptions = GetTagsOptionsRaw & GetRequestPageOptions
-
-type GetTagOptions = { id?: Tag['id']; name?: Tag['name'] }
-
-type DeleteTagOptions = { id: Tag['id'] }
-
-export type {
-    Tag,
-    TagPreference,
-    CreateTagOptions,
-    UpdateTagOptions,
-    GetTagOptions,
-    GetTagsOptionsRaw,
-    UpdateTagOptionsRaw,
-    GetTagsOptions,
-    DeleteTagOptions
+export type TagPreference = ModelBase & {
+    userId: string
+    tagId: string
+    viewType: string
+    getOptions: string
+    columns: string
 }
-

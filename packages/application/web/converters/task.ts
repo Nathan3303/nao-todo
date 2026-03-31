@@ -1,45 +1,87 @@
-import type { TaskEntity } from '@nao-todo/domain/task'
-import type { UpdateTask } from '@nao-todo/domain/task/valueobjects'
-import type { Task, UpdateTaskOptions } from '@nao-todo/types'
+import { TaskEntity, UpdateTaskValueObject } from '@nao-todo/domain/task'
+import { CreateTaskValueObject } from '@nao-todo/domain/task/valueobjects'
+import type { CreateTaskViewObject, TaskViewObject, UpdateTaskViewObject } from '@nao-todo/types'
+import dayjs from 'dayjs'
 
-export const taskEntity2ViewObject = (entity: TaskEntity): Task => {
-    const vo = {} as Task
-    vo.id = entity.id
-    vo.name = entity.name
-    vo.projectId = entity.projectId
-    vo.description = entity.description
-    vo.state = ['todo', 'in-progress', 'done'].includes(entity.state)
-        ? (entity.state as Task['state'])
+/**
+ * 任务实体转换为任务视图对象
+ * @param entity 任务实体
+ * @returns 任务视图对象
+ */
+export const taskEntityToViewObject = (entity: TaskEntity): TaskViewObject => {
+    const taskViewObject = {} as TaskViewObject
+    taskViewObject.id = entity.id
+    taskViewObject.userId = entity.userId
+    taskViewObject.name = entity.name
+    taskViewObject.description = entity.description
+    taskViewObject.projectId = entity.projectId
+    taskViewObject.state = ['todo', 'in-progress', 'done'].includes(entity.state)
+        ? entity.state
         : 'todo'
-    vo.priority = ['low', 'medium', 'high', 'urgent'].includes(entity.priority)
-        ? (entity.priority as Task['priority'])
+    taskViewObject.priority = ['low', 'medium', 'high'].includes(entity.priority)
+        ? entity.priority
         : 'low'
-    vo.tags = entity.tags
-    vo.startAt = entity.startAt
-    vo.endAt = entity.endAt
-    vo.isDeleted = entity.isDeleted
-    vo.isArchived = entity.isArchived
-    vo.archivedAt = entity.archivedAt
-    vo.isFavorited = entity.isStarMarked
-    vo.isGivenUp = entity.isGivenUp
-    vo.createdAt = entity.createdAt
-    vo.updatedAt = entity.updatedAt
-    return vo
+    taskViewObject.tags = entity.tags
+    taskViewObject.startAt = entity.startAt
+    taskViewObject.endAt = entity.endAt
+    taskViewObject.archivedAt = entity.archivedAt
+    taskViewObject.createdAt = entity.createdAt
+    taskViewObject.updatedAt = entity.updatedAt
+    taskViewObject.isStarMarked = dayjs(entity.starMarkAt).isValid()
+    taskViewObject.isDeleted = dayjs(entity.deletedAt).isValid()
+    taskViewObject.isArchived = dayjs(entity.archivedAt).isValid()
+    taskViewObject.isGivenUp = dayjs(entity.givenUpAt).isValid()
+    return taskViewObject
 }
 
-export const taskEntities2ViewObjects = (entities: TaskEntity[]): Task[] => {
-    return entities.map(taskEntity2ViewObject)
+/**
+ * 任务实体数组转换为任务视图对象数组
+ * @param entities 任务实体数组
+ * @returns 任务视图对象数组
+ */
+export const taskEntitiesToViewObjects = (entities: TaskEntity[]): TaskViewObject[] => {
+    return entities.map(taskEntityToViewObject)
 }
 
-export const updateTaskOptions2UpdateValueObject = (options: UpdateTaskOptions): UpdateTask => {
-    const vo = {} as UpdateTask
-    vo.projectId = options.projectId
-    vo.name = options.name
-    vo.description = options.description
-    vo.state = options.state
-    vo.priority = options.priority
-    vo.startAt = options.startAt
-    vo.endAt = options.endAt
-    vo.tags = options.tags
-    return vo
+/**
+ * 创建任务视图对象转换为创建任务值对象
+ * @param createTaskViewObject 创建任务视图对象
+ * @returns 创建任务值对象
+ */
+export const createTaskViewObjectToValueObject = (
+    createTaskViewObject: CreateTaskViewObject
+): CreateTaskValueObject => {
+    return new CreateTaskValueObject(
+        '', // userId
+        createTaskViewObject.name,
+        createTaskViewObject.description || '',
+        createTaskViewObject.state,
+        createTaskViewObject.priority,
+        createTaskViewObject.startAt,
+        createTaskViewObject.endAt,
+        createTaskViewObject.projectId,
+        createTaskViewObject.tags || []
+    )
+}
+
+/**
+ * 更新任务视图对象转换为更新任务值对象
+ * @param taskId 任务ID
+ * @param viewObject 更新任务视图对象
+ * @returns 更新任务值对象
+ */
+export const updateTaskViewObjectToValueObject = (
+    taskId: UpdateTaskValueObject['id'],
+    viewObject: UpdateTaskViewObject
+): UpdateTaskValueObject => {
+    const valueObject = new UpdateTaskValueObject(taskId)
+    if (viewObject.name) valueObject.name = viewObject.name
+    if (viewObject.description) valueObject.description = viewObject.description
+    if (viewObject.state) valueObject.state = viewObject.state
+    if (viewObject.priority) valueObject.priority = viewObject.priority
+    if (viewObject.startAt) valueObject.startAt = viewObject.startAt
+    if (viewObject.endAt) valueObject.endAt = viewObject.endAt
+    if (viewObject.projectId) valueObject.projectId = viewObject.projectId
+    if (viewObject.tags) valueObject.tags = viewObject.tags
+    return valueObject
 }

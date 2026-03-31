@@ -3,8 +3,6 @@ import {
     getCommentRes2CommentEntity,
     listCommentRes2CommentEntities
 } from './converters'
-import type { CommentEntity } from '@nao-todo/domain/comment/entities'
-import type { CommentRepository } from '@nao-todo/domain/comment/repositories'
 import type { Requester } from '../../requester/types'
 import type { GoAsync } from '@nao-todo/types'
 import type {
@@ -16,7 +14,12 @@ import type {
     UpdateCommentReq,
     UpdateCommentRes
 } from '../types'
-import type { UpdateCommentValueObject } from '@nao-todo/domain/comment/valueobjects'
+import {
+    CreateCommentValueObject,
+    UpdateCommentValueObject,
+    type CommentEntity,
+    type CommentRepository
+} from '@nao-todo/domain/comment'
 
 export const useCommentRepository = (requester: Requester): CommentRepository => {
     // @method Get
@@ -37,11 +40,13 @@ export const useCommentRepository = (requester: Requester): CommentRepository =>
     }
 
     // @method Create
-    const create = async (commentEntity: CommentEntity): GoAsync<CommentEntity> => {
+    const create = async (
+        createCommentValueObject: CreateCommentValueObject
+    ): GoAsync<CommentEntity> => {
         // 1. 构建 rto
         const rto: CreateCommentReq = {
-            taskId: commentEntity.taskId,
-            content: commentEntity.content
+            taskId: createCommentValueObject.taskId,
+            content: createCommentValueObject.content
         }
         // 2. 调用接口
         const response = await requester.post('/comments/', rto, {
@@ -53,7 +58,7 @@ export const useCommentRepository = (requester: Requester): CommentRepository =>
             return [null, res.message]
         }
         // 4. 转换为实体
-        commentEntity = createCommentRes2CommentEntity(res.data as CreateCommentRes)
+        const commentEntity = createCommentRes2CommentEntity(res.data as CreateCommentRes)
         // 5. 返回
         return [commentEntity, null]
     }

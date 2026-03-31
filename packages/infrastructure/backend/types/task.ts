@@ -11,13 +11,13 @@ export type GetTaskRes = {
     createdAt: string
     updatedAt: string
     deletedAt: string | null
-    isDeleted: boolean
     archivedAt: string | null
-    isArchived: boolean
     starMarkAt: string | null
-    isStarMarked: boolean
     givenUpAt: string | null
-    isGivenUp: boolean
+    // isDeleted: boolean
+    // isArchived: boolean
+    // isStarMarked: boolean
+    // isGivenUp: boolean
 }
 
 export type CreateTaskReq = {

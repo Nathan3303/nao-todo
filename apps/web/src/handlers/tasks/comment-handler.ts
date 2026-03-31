@@ -1,11 +1,14 @@
 import type { CommentUseCase } from '@nao-todo/application/web/usecases/comment'
 import { unwrapErrors } from '@nao-todo/infrastructure/utils/go-error-handler'
-import type { Comment, Task, UpdateComment } from '@nao-todo/types'
+import type { CommentViewObject, TaskViewObject, UpdateCommentViewObject } from '@nao-todo/types'
 import { NueMessage } from 'nue-ui'
 
 const useCommentHandler = (commentUseCase: CommentUseCase) => {
     // @method 创建评论
-    const createComment = async (taskId: Task['id'], content: Comment['content']) => {
+    const createComment = async (
+        taskId: TaskViewObject['id'],
+        content: CommentViewObject['content']
+    ) => {
         if (!taskId) return false
         const [, err] = await commentUseCase.create({ taskId, content })
         if (err !== null) {
@@ -17,7 +20,10 @@ const useCommentHandler = (commentUseCase: CommentUseCase) => {
     }
 
     // @method 更新评论
-    const updateComment = async (commentId: Comment['id'], updateComment: UpdateComment) => {
+    const updateComment = async (
+        commentId: CommentViewObject['id'],
+        updateComment: UpdateCommentViewObject
+    ) => {
         if (!commentId) return
         const [, err] = await commentUseCase.update(commentId, updateComment)
         if (err !== null) {
@@ -28,7 +34,7 @@ const useCommentHandler = (commentUseCase: CommentUseCase) => {
     }
 
     // @method 删除评论
-    const deleteComment = async (commentId: Comment['id']) => {
+    const deleteComment = async (commentId: CommentViewObject['id']) => {
         if (!commentId) return
         const [, err] = await commentUseCase.delete(commentId)
         if (err !== null) {

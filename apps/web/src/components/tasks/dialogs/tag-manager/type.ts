@@ -1,4 +1,4 @@
-import type { Tag } from '@nao-todo/types'
+import type { TagViewObject } from '@nao-todo/types'
 
 export type TagManagerVO = {
     filterInfo: {
@@ -7,12 +7,12 @@ export type TagManagerVO = {
 }
 
 export type TagManagerProps = {
-    tags: Tag[]
+    tags: TagViewObject[]
     tagCreatorOpener: () => void
-    tagColorUpdaterOpener: (tagId: Tag['id']) => void
+    tagColorUpdaterOpener: (tagId: TagViewObject['id']) => void
 }
 
 export type TagManagerEmits = {
     (e: 'register', open: () => void, close: () => void): void
-    (e: 'deleteTag', tagId: Tag['id']): void
+    (e: 'deleteTag', tagId: TagViewObject['id']): void
 }

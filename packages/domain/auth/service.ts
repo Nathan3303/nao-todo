@@ -1,51 +1,74 @@
-import type { SignUpValueObject, SignInValueObject } from './valueobjects'
+import { SignUpValueObject, SignInValueObject } from './valueobjects'
 import type { AuthRepository } from './repositories'
 import type { GoAsync } from '@nao-todo/types'
+import { unwrapError } from '@nao-todo/infrastructure/utils'
 
+/**
+ * 认证域
+ * @description 认证域，包含登录、注册、检入和登出等功能
+ */
 export class AuthDomain {
     /**
-     * 认证域
+     * 认证域构造函数
      * @param authRepo 认证仓库
      */
     constructor(private authRepo: AuthRepository) {}
 
     /**
      * 登录
-     * @param vo 登录值对象
+     * @param signInValueObject 登录值对象
      * @returns 登录凭证
      */
-    async signIn(vo: SignInValueObject): GoAsync<string> {
-        // 1. 加密密码
-        const [ePasswd, encryptErr] = this.authRepo.encryptPassword(vo.password)
+    async signIn(signInValueObject: SignInValueObject): GoAsync<string> {
+        // 校验数据
+        const validateErr = signInValueObject.validate()
+        if (validateErr !== null) {
+            console.error(unwrapError(validateErr))
+            return [null, validateErr]
+        }
+        // 加密密码
+        const [encryptedPassword, encryptErr] = this.authRepo.encryptPassword(
+            signInValueObject.password
+        )
         if (encryptErr !== null) {
-            return ['', encryptErr]
+            console.error(unwrapError(encryptErr))
+            return [null, encryptErr]
         }
-        // 2. 登录
-        vo.password = ePasswd
-        const [jwt, signInErr] = await this.authRepo.signIn(vo)
+        signInValueObject.setEncryptedPassword(encryptedPassword) // 设置加密后的密码
+        // 执行登录
+        const [jwt, signInErr] = await this.authRepo.signIn(signInValueObject)
         if (signInErr !== null) {
-            return ['', signInErr]
+            console.error(unwrapError(signInErr))
+            return [null, signInErr]
         }
-        // 3. 保存登录凭证
+        // 保存登录凭证
         this.authRepo.saveJwtToLocalStorage(jwt)
-        // 4. 返回
         return [jwt, null]
     }
 
     /**
      * 注册
-     * @param vo 注册值对象
+     * @param signUpValueObject 注册值对象
      * @returns 错误信息
      */
-    async signUp(vo: SignUpValueObject): GoAsync<void> {
-        // 1. 加密密码
-        const [ePasswd, encryptErr] = this.authRepo.encryptPassword(vo.password)
+    async signUp(signUpValueObject: SignUpValueObject): GoAsync<void> {
+        // 校验数据
+        const validateErr = signUpValueObject.validate()
+        if (validateErr !== null) {
+            console.error(unwrapError(validateErr))
+            return validateErr
+        }
+        // 加密密码
+        const [encryptedPassword, encryptErr] = this.authRepo.encryptPassword(
+            signUpValueObject.password
+        )
         if (encryptErr !== null) {
+            console.error(unwrapError(encryptErr))
             return encryptErr
         }
-        // 2. 注册
-        vo.password = ePasswd
-        return await this.authRepo.signUp(vo)
+        signUpValueObject.setEncryptedPassword(encryptedPassword) // 设置加密后的密码
+        // 注册
+        return await this.authRepo.signUp(signUpValueObject)
     }
 
     /**

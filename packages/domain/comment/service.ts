@@ -1,7 +1,8 @@
-import type { CommentEntity } from './entities'
+import { CommentEntity } from './entities'
+import { UpdateCommentValueObject, CreateCommentValueObject } from './valueobjects'
 import type { GoAsync } from '@nao-todo/types'
 import type { CommentRepository } from './repositories'
-import type { UpdateCommentValueObject } from './valueobjects'
+import { unwrapError } from '@nao-todo/infrastructure/utils'
 
 export class CommentDomain {
     /**
@@ -21,30 +22,44 @@ export class CommentDomain {
 
     /**
      * 创建评论
-     * @param commentEntity 评论实体
+     * @param createCommentValueObject 创建评论值对象
      * @returns 评论实体
      */
-    async create(commentEntity: CommentEntity): GoAsync<CommentEntity> {
-        return this.commentRepo.create(commentEntity)
+    async create(createCommentValueObject: CreateCommentValueObject): GoAsync<CommentEntity> {
+        // 数据校验
+        const validateErr = createCommentValueObject.validate()
+        if (validateErr !== null) {
+            console.error(unwrapError(validateErr))
+            return [null, validateErr]
+        }
+        // 创建评论
+        return this.commentRepo.create(createCommentValueObject)
     }
 
     /**
      * 更新评论
      * @param commentId 评论 ID
-     * @param updateValueObject 更新评论值对象
-     * @returns 评论 ID
+     * @param updateCommentValueObject 更新评论值对象
+     * @returns 更新结果
      */
     async update(
         commentId: CommentEntity['id'],
-        updateValueObject: UpdateCommentValueObject
+        updateCommentValueObject: UpdateCommentValueObject
     ): GoAsync<string> {
-        return this.commentRepo.update(commentId, updateValueObject)
+        // 数据校验
+        const validateErr = updateCommentValueObject.validate()
+        if (validateErr !== null) {
+            console.error(unwrapError(validateErr))
+            return [null, validateErr]
+        }
+        // 更新评论
+        return this.commentRepo.update(commentId, updateCommentValueObject)
     }
 
     /**
      * 删除评论
      * @param commentId 评论 ID
-     * @returns 评论 ID
+     * @returns 错误信息
      */
     async remove(commentId: CommentEntity['id']): GoAsync<void> {
         return this.commentRepo.remove(commentId)

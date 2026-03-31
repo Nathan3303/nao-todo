@@ -1,13 +1,13 @@
-import { Tag, Task } from '@nao-todo/types'
+import { TagViewObject, TaskViewObject } from '@nao-todo/types'
 
 export type TaskTagBarProps = {
-    tags: Tag[]
-    taskTags: Task['tags']
+    tags: TagViewObject[]
+    taskTags: TaskViewObject['tags']
     clamped?: number
     readonly?: boolean
     small?: boolean
     transformOrigin?: string
 }
 export type TaskTagBarEmits = {
-    (event: 'updateTags', tags: Task['tags']): void
+    (event: 'updateTags', tags: TaskViewObject['tags']): void
 }

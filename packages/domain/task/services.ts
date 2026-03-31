@@ -1,12 +1,17 @@
 import parseObject2QueryString from '@nao-todo/infrastructure/utils/query-string-parser'
 import { TaskEntity } from './entities'
+import { CreateTaskValueObject, UpdateTaskValueObject } from './valueobjects'
+import { unwrapError } from '@nao-todo/infrastructure/utils'
 import type { TaskRepository } from './repositories'
-import type { CreateTask, GetTasksOptions, GoAsync, ResponseDataPagination } from '@nao-todo/types'
-import type { UpdateTask } from './valueobjects'
+import type { GetTasksOptions, GoAsync, ResponseDataPagination } from '@nao-todo/types'
 
+/**
+ * 任务领域服务
+ * @description 任务领域服务类，用于处理任务的业务逻辑和数据操作。
+ */
 export class TaskDomain {
     /**
-     * 任务领域服务
+     * 任务领域服务构造函数
      * @param taskRepo 任务仓库
      */
     constructor(private taskRepo: TaskRepository) {}
@@ -22,22 +27,41 @@ export class TaskDomain {
 
     /**
      * 创建任务
-     * @param createVO 创建任务值对象
+     * @param createTaskValueObject 创建任务值对象
      * @returns 任务实体
      */
-    async create(createVO: CreateTask): GoAsync<TaskEntity> {
-        createVO = this.taskRepo.fillStartAt(createVO)
-        return await this.taskRepo.create(createVO)
+    async create(createTaskValueObject: CreateTaskValueObject): GoAsync<TaskEntity> {
+        // 尝试填充开始时间
+        const fillErr = createTaskValueObject.fillStartAtThroughEndAt()
+        if (fillErr !== null) {
+            console.log(unwrapError(fillErr))
+            return [null, fillErr]
+        }
+        // 验证
+        const validateErr = createTaskValueObject.validate()
+        if (validateErr !== null) {
+            console.log(unwrapError(validateErr))
+            return [null, validateErr]
+        }
+        // 创建
+        return await this.taskRepo.create(createTaskValueObject)
     }
 
     /**
      * 更新任务
      * @param taskId 任务ID
-     * @param updateVO 更新任务值对象
+     * @param updateTaskValueObject 更新任务值对象
      * @returns 更新后的任务ID
      */
-    async update(taskId: string, updateVO: UpdateTask): GoAsync<string> {
-        return await this.taskRepo.update(taskId, updateVO)
+    async update(taskId: string, updateTaskValueObject: UpdateTaskValueObject): GoAsync<string> {
+        // 验证
+        const validateErr = updateTaskValueObject.validate()
+        if (validateErr !== null) {
+            console.log(unwrapError(validateErr))
+            return [null, validateErr]
+        }
+        // 更新
+        return await this.taskRepo.update(taskId, updateTaskValueObject)
     }
 
     /**

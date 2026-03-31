@@ -1,4 +1,4 @@
-import type { UserProfile } from '@nao-todo/types'
+import type { UserViewObject, UpdateUserViewObject } from '@nao-todo/types'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
@@ -20,16 +20,16 @@ const useUserStore = defineStore('UserStore', () => {
     }
 
     // @state 用户配置文件
-    const userProfile = ref<UserProfile>()
+    const userProfile = ref<UserViewObject>()
 
     // @action 设置用户配置文件
-    const setUserProfile = (profile: UserProfile) => {
+    const setUserProfile = (profile: UserViewObject) => {
         userProfile.value = profile
     }
 
     // @action 更新用户配置文件
-    const updateUserProfile = (updateProfile: Partial<UserProfile>) => {
-        userProfile.value = { ...userProfile.value, ...updateProfile } as UserProfile
+    const updateUserProfile = (updateProfile: UpdateUserViewObject) => {
+        userProfile.value = { ...userProfile.value, ...updateProfile } as UserViewObject
     }
 
     // @returns

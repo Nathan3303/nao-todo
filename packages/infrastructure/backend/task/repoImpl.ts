@@ -3,10 +3,8 @@ import {
     getTaskRes2TaskEntity,
     listTaskRes2TaskEntities
 } from './converters'
-import { TaskEntity } from '@nao-todo/domain/task/entities'
-import type { TaskRepository } from '@nao-todo/domain/task/repositories'
 import type { Requester } from '../../requester/types'
-import type { CreateTask, GoAsync } from '@nao-todo/types'
+import type { GoAsync } from '@nao-todo/types'
 import type {
     CreateTaskReq,
     CreateTaskRes,
@@ -17,11 +15,24 @@ import type {
     UpdateTaskReq,
     UpdateTaskRes
 } from '../types'
-import dayjs from 'dayjs'
-import type { UpdateTask } from '@nao-todo/domain/task/valueobjects'
+import {
+    UpdateTaskValueObject,
+    CreateTaskValueObject,
+    TaskEntity,
+    type TaskRepository
+} from '@nao-todo/domain/task'
 
+/**
+ * 任务仓库实现
+ * @param requester 请求器
+ * @returns 任务仓库
+ */
 export const useTaskRepository = (requester: Requester): TaskRepository => {
-    // @method 获取任务详情
+    /**
+     * 获取任务详情
+     * @param taskId 任务ID
+     * @returns 任务实体
+     */
     const get = async (taskId: string): GoAsync<TaskEntity> => {
         // 1. 调用接口
         const response = await requester.get(`/tasks/${taskId}`, {
@@ -38,18 +49,22 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
         return [taskEntity, null]
     }
 
-    // @method 创建任务
-    const create = async (createVO: CreateTask): GoAsync<TaskEntity> => {
+    /**
+     * 创建任务
+     * @param createTaskValueObject 创建任务值对象
+     * @returns 任务实体
+     */
+    const create = async (createTaskValueObject: CreateTaskValueObject): GoAsync<TaskEntity> => {
         // 1. 构建 rto
         const rto: CreateTaskReq = {
-            projectId: createVO.projectId,
-            name: createVO.name,
-            description: createVO.description,
-            state: createVO.state,
-            priority: createVO.priority,
-            startAt: createVO.startAt || void 0,
-            endAt: createVO.endAt || dayjs().toISOString(),
-            tags: createVO.tags || []
+            projectId: createTaskValueObject.projectId,
+            name: createTaskValueObject.name,
+            description: createTaskValueObject.description,
+            state: createTaskValueObject.state,
+            priority: createTaskValueObject.priority,
+            startAt: createTaskValueObject.startAt || undefined,
+            endAt: createTaskValueObject.endAt,
+            tags: createTaskValueObject.tags
         }
         // 2. 调用接口
         const response = await requester.post('/tasks/', rto, {
@@ -66,10 +81,18 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
         return [taskEntity, null]
     }
 
-    // @method 更新任务
-    const update = async (taskId: string, updateVO: UpdateTask): GoAsync<string> => {
+    /**
+     * 更新任务
+     * @param taskId 任务ID
+     * @param updateTaskValueObject 更新任务值对象
+     * @returns 任务ID
+     */
+    const update = async (
+        taskId: string,
+        updateTaskValueObject: UpdateTaskValueObject
+    ): GoAsync<string> => {
         // 1. 构建 rto
-        const rto: UpdateTaskReq = updateVO
+        const rto: UpdateTaskReq = updateTaskValueObject
         // 2. 调用接口
         const response = await requester.put(`/tasks/${taskId}`, rto, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
@@ -84,7 +107,11 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
         return [data.taskId, null]
     }
 
-    // @method 删除任务
+    /**
+     * 删除任务
+     * @param taskId 任务ID
+     * @returns 任务ID
+     */
     const remove = async (taskId: string): GoAsync<void> => {
         // 1. 调用接口
         const response = await requester.delete(`/tasks/${taskId}`, {
@@ -99,7 +126,11 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
         return null
     }
 
-    // @method 恢复任务
+    /**
+     * 恢复任务
+     * @param taskId 任务ID
+     * @returns 任务ID
+     */
     const restore = async (taskId: string): GoAsync<void> => {
         // 1. 调用接口
         const response = await requester.put(`/tasks/restore/${taskId}`, {
@@ -114,7 +145,11 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
         return null
     }
 
-    // @method 获取任务列表
+    /**
+     * 获取任务列表
+     * @param queryString 查询字符串
+     * @returns 任务列表
+     */
     const list = async (
         queryString?: string
     ): GoAsync<{ taskEntities: TaskEntity[]; pagination?: ResponseDataPagination }> => {
@@ -133,17 +168,6 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
         return [{ taskEntities, pagination: res.pagination }, null]
     }
 
-    // @method 填充起始时间
-    const fillStartAt = (createVO: CreateTask): CreateTask => {
-        if (!createVO.startAt && createVO.endAt) {
-            const endAtDate = dayjs(createVO.endAt)
-            createVO.endAt = endAtDate.toISOString()
-            createVO.startAt = endAtDate.startOf('D').toISOString()
-        }
-        return createVO
-    }
-
     // @returns
-    return { create, get, update, remove, restore, list, fillStartAt }
+    return { create, get, update, remove, restore, list }
 }
-

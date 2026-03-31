@@ -1,17 +1,21 @@
 import { ref } from 'vue'
-import type { GetTasksOptions, ProjectPreference, TaskColumnOptions } from '@nao-todo/types'
+import type {
+    GetTasksOptions,
+    ProjectPreferenceViewObject,
+    TaskColumnOptions
+} from '@nao-todo/types'
 
 const useProjectPreferenceStoreBase = () => {
     // @state 项目偏好
-    const projectPreference = ref<ProjectPreference>()
+    const projectPreference = ref<ProjectPreferenceViewObject>()
 
     // @action 设置项目偏好
-    const setProjectPreference = (preference: ProjectPreference) => {
+    const setProjectPreference = (preference: ProjectPreferenceViewObject) => {
         projectPreference.value = preference
     }
 
     // @action 获取项目偏好
-    const getProjectPreference = (): ProjectPreference | undefined => {
+    const getProjectPreference = (): ProjectPreferenceViewObject | undefined => {
         return projectPreference.value
     }
 

@@ -1,9 +1,4 @@
-import {
-    makeProjectEntity,
-    makeProjectPreferenceEntity,
-    type ProjectEntity,
-    type ProjectPreferenceEntity
-} from '@nao-todo/domain/project/entities'
+import { ProjectEntity, ProjectPreferenceEntity } from '@nao-todo/domain/project'
 import type {
     CreateProjectRes,
     GetProjectPreferenceRes,
@@ -13,11 +8,7 @@ import type {
 } from '../types'
 
 export const getProjectRes2ProjectEntity = (res: GetProjectRes): ProjectEntity => {
-    const e = makeProjectEntity()
-    e.id = res.id
-    e.name = res.name
-    e.description = res.description
-    e.archivedAt = res.archivedAt
+    const e = new ProjectEntity(res.id, res.name, 'more2', res.description, res.archivedAt, '', '')
     return e
 }
 
@@ -32,10 +23,14 @@ export const listProjectRes2ProjectEntities = (res: ListProjectRes): ProjectEnti
 export const getProjectPreferenceRes2ProjectPreferenceEntity = (
     res: GetProjectPreferenceRes
 ): ProjectPreferenceEntity => {
-    const e = makeProjectPreferenceEntity()
-    e.viewType = res.viewType
-    e.getTasksOptions = res.getTasksOptions
-    e.columns = res.columns
+    const e = new ProjectPreferenceEntity(
+        '',
+        '',
+        '',
+        res.viewType,
+        res.getTasksOptions,
+        res.columns
+    )
     return e
 }
 

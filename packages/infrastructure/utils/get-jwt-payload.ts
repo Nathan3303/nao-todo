@@ -6,7 +6,7 @@ import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
  * @param jwt JWT字符串
  * @returns JWT Payload
  */
-export default (jwt: string) => {
+const getJwtPayload = (jwt: string) => {
     // 拆分 JWT
     const parts = jwt.split('.')
     if (parts.length != 3) {
@@ -30,3 +30,6 @@ export default (jwt: string) => {
         throw new Error('Failed to decode or parse payload: ' + unwrapError(e as string | Error))
     }
 }
+
+export default getJwtPayload
+

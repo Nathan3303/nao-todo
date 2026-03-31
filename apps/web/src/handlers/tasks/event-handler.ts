@@ -1,11 +1,11 @@
 import type { EventUseCase } from '@nao-todo/application/web/usecases/event'
 import { unwrapErrors } from '@nao-todo/infrastructure/utils/go-error-handler'
-import type { Event, UpdateEvent, CreateEvent } from '@nao-todo/types'
+import type { EventViewObject, UpdateEventViewObject, CreateEventViewObject } from '@nao-todo/types'
 import { NueMessage } from 'nue-ui'
 
 const useEventHandler = (eventUseCase: EventUseCase) => {
     // @method 创建 event
-    const createEvent = async (createEvent: CreateEvent) => {
+    const createEvent = async (createEvent: CreateEventViewObject) => {
         const [, err] = await eventUseCase.create(createEvent)
         if (err !== null) {
             NueMessage.error('检查事项创建失败' + `(${unwrapErrors(err)})`)
@@ -15,7 +15,10 @@ const useEventHandler = (eventUseCase: EventUseCase) => {
     }
 
     // @method 更新 event
-    const updateEvent = async (eventId: Event['id'], updateEvent: UpdateEvent) => {
+    const updateEvent = async (
+        eventId: EventViewObject['id'],
+        updateEvent: UpdateEventViewObject
+    ) => {
         if (!eventId) return
         const [, err] = await eventUseCase.update(eventId, updateEvent)
         if (err !== null) {
@@ -26,7 +29,7 @@ const useEventHandler = (eventUseCase: EventUseCase) => {
     }
 
     // @method 删除 event
-    const deleteEvent = async (eventId: Event['id']) => {
+    const deleteEvent = async (eventId: EventViewObject['id']) => {
         if (!eventId) return
         const [, err] = await eventUseCase.delete(eventId)
         if (err !== null) {
@@ -37,7 +40,6 @@ const useEventHandler = (eventUseCase: EventUseCase) => {
     }
 
     // @method 重新排序 event
-    
 
     // @return
     return {

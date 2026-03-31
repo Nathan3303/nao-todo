@@ -32,7 +32,7 @@ const useTaskCreator = (props: TaskCreatorProps) => {
             description: states.description,
             state: states.state,
             priority: states.priority,
-            startAt: states.startAt,
+            startAt: states.startAt || null,
             endAt: states.endAt,
             tags: states.tags
         })

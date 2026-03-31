@@ -1,45 +1,20 @@
-import type { TasksMainBasicViewNames } from '../views/tasks'
+import type { ModelBase } from './base'
 
-export type UserRole = 'user' | 'admin'
-
-export type UserPreference = {
-    isUseFloatAsideDefaultly: {
-        tasks: boolean
-        calendar: boolean
-        settings: boolean
-    }
-    isUseFloatOutlineDefaultly: {
-        tasks: boolean
-        calendar: boolean
-        settings: boolean
-    }
-    landingPage: string
-    tasksAsideNavLinkVisible: {
-        [key in TasksMainBasicViewNames]: boolean
-    } & {
-        filter: boolean
-    }
-}
-
-export interface User {
-    _id?: string
-    id: string
-    email: string
+export type User = ModelBase & {
+    account?: string
+    email?: string
+    // password?: string
     nickname: string
     avatar: string
-    role: UserRole
-    createdAt: string | Date
-    preference?: UserPreference
+    createdFrom?: string
+    role: string
+    state?: number
+    config?: UserConfig
+    deactivedAt?: string
 }
 
-export type SigninOptions = {
-    email: string
-    password: string
+export type UserConfig = ModelBase & {
+    userId: string
+    state: string
+    appearance: string
 }
-
-export type SignupOptions = {
-    email: string
-    password: string
-    nickname?: string
-}
-

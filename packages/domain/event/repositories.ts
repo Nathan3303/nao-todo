@@ -1,10 +1,11 @@
 import type { GoAsync } from '@nao-todo/types'
 import type { EventEntity } from './entities'
+import { CreateEventValueObject, UpdateEventValueObject } from './valueobjects'
 
 export interface EventRepository {
     get(eventId: string): GoAsync<EventEntity>
-    create(eventEntity: EventEntity): GoAsync<EventEntity>
-    update(eventId: string, eventEntity: EventEntity): GoAsync<string>
+    create(createEventValueObject: CreateEventValueObject): GoAsync<EventEntity>
+    update(eventId: string, updateEventValueObject: UpdateEventValueObject): GoAsync<string>
     remove(eventId: string): GoAsync<void> // like delete
     list(taskId: string): GoAsync<EventEntity[]>
 }

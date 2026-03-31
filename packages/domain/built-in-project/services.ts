@@ -1,5 +1,5 @@
+import { BuiltInProjectEntity, BuiltInProjectPreferenceEntity } from './entities'
 import type { Go } from '@nao-todo/types'
-import type { BuiltInProjectEntity, BuiltInProjectPreferenceValueObject } from './entities'
 import type { BuiltInProjectRepository } from './repositories'
 
 export class BuiltInProjectDomain {
@@ -32,7 +32,7 @@ export class BuiltInProjectDomain {
      * @param projectId 内建清单 ID
      * @returns 内建清单偏好
      */
-    getPreference(userId: string, projectId: string): Go<BuiltInProjectPreferenceValueObject> {
+    getPreference(userId: string, projectId: string): Go<BuiltInProjectPreferenceEntity> {
         return this.builtInProjectRepo.getPreference(userId, projectId)
     }
 
@@ -40,12 +40,12 @@ export class BuiltInProjectDomain {
      * 保存内建清单偏好
      * @param userId 用户 ID
      * @param preference 内建清单偏好
-     * @returns
+     * @returns 错误信息
      */
     savePreference(
         userId: string,
         projectId: string,
-        preference: BuiltInProjectPreferenceValueObject
+        preference: BuiltInProjectPreferenceEntity
     ): Go<void> {
         return this.builtInProjectRepo.savePreference(userId, projectId, preference)
     }

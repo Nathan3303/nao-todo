@@ -1,6 +1,7 @@
 import { TagDomain } from './service'
+import { TagEntity, TagPreferenceEntity } from './entities'
+import { CreateTagValueObject, UpdateTagValueObject } from './valueobjects'
 import type { TagRepository } from './repositories'
-import type { TagEntity } from './entities'
 
-export { TagDomain }
-export type { TagRepository, TagEntity }
+export { TagDomain, TagEntity, TagPreferenceEntity, CreateTagValueObject, UpdateTagValueObject }
+export type { TagRepository }

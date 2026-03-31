@@ -1,47 +1,16 @@
-import type { User } from './user'
-import type { Todo } from './todo'
+import type { ModelBase } from './base'
 
-type Comment = {
-    _id?: string
-    id: string
-    userId: User['id']
-    todoId: Todo['id']
+export type Comment = ModelBase & {
+    userId: string
+    taskId: string
     content: string
-    attachments: string[]
+    attachment: string[]
     isTopUp: boolean
-    createdAt: string
-    updatedAt: string
-    // extend fields
-    user: Partial<User>
+    commentUser: CommentUser
 }
 
-type CreateCommentOptionsRaw = {
-    todoId: Todo['id']
-    content: string
-}
-
-type UpdateCommentOptionsRaw = {
-    content?: string
-    isTopUp?: boolean
-}
-
-type GetCommentsOptionsRaw = {
-    todoId?: Todo['id']
-}
-
-type CreateCommentOptions = CreateCommentOptionsRaw
-
-type UpdateCommentOptions = UpdateCommentOptionsRaw
-
-type GetCommentsOptions = GetCommentsOptionsRaw
-
-type DeleteCommentOptions = { id: Comment['id'] }
-
-export type {
-    Comment,
-    CreateCommentOptions,
-    UpdateCommentOptionsRaw,
-    UpdateCommentOptions,
-    GetCommentsOptions,
-    DeleteCommentOptions
+export type CommentUser = ModelBase & {
+    commentId: string
+    avatar: string
+    nickname: string
 }

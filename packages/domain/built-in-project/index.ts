@@ -1,10 +1,10 @@
-import type { BuiltInProjectEntity, BuiltInProjectPreferenceValueObject } from './entities'
+import { BuiltInProjectEntity, BuiltInProjectPreferenceEntity } from './entities'
 import type { BuiltInProjectRepository } from './repositories'
 import useBuiltInProjectDomain from './services'
 
 export {
     useBuiltInProjectDomain,
-    type BuiltInProjectEntity,
-    type BuiltInProjectPreferenceValueObject,
+    BuiltInProjectEntity,
+    BuiltInProjectPreferenceEntity,
     type BuiltInProjectRepository
 }

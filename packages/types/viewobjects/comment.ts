@@ -1,24 +1,24 @@
-export type Comment = {
+export type CommentViewObject = {
     id: string
     taskId: string
     content: string
-    attachments?: string[]
+    attachments: string[]
     isTopUp: boolean
     createdAt: string
-    user: CommentUser
+    user: CommentUserViewObject
 }
 
-export type CommentUser = {
+export type CommentUserViewObject = {
     avatar: string
     nickname: string
 }
 
-export type UpdateComment = {
+export type UpdateCommentViewObject = {
     content?: string
     isTopUp?: boolean
 }
 
-export type CreateComment = {
+export type CreateCommentViewObject = {
     taskId: string
     content: string
     attachments?: string[]

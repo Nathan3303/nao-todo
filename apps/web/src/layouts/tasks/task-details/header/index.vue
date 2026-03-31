@@ -4,6 +4,7 @@ import { TaskCheckButton, TaskDateSelector } from '@nao-todo/components'
 import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
 import type { TaskDetailsContext } from '../types'
 import type { Task } from '@nao-todo/types'
+import dayjs from 'dayjs'
 
 const { vo, closeDetails, taskHandler } = inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
 
@@ -16,11 +17,16 @@ const updateEndAt = () => {
     if (vo.value === null) return
     taskHandler.updateTaskEndAt(vo.value.id, vo.value.endAt as Task['endAt'])
 }
+
+const updateEndAtToNow = () => {
+    if (vo.value === null) return
+    taskHandler.updateTaskEndAt(vo.value.id, dayjs().toISOString())
+}
 </script>
 
 <template>
     <nue-header v-if="vo">
-        <nue-div style="padding: 1rem" width="100%" auto-fit>
+        <nue-div v-if="vo.endAt" style="padding: 1rem" width="100%" auto-fit>
             <nue-div align="center" flex="1">
                 <task-check-button :is-done="vo.isDone" @change="switchState" />
                 <nue-divider vertical />
@@ -34,6 +40,9 @@ const updateEndAt = () => {
                 <nue-button icon="clear" theme="small" @click="closeDetails">关闭</nue-button>
             </nue-div>
         </nue-div>
+        <nue-button v-else icon="clock" theme="small" @click="updateEndAtToNow">
+            为任务设置结束时间
+        </nue-button>
     </nue-header>
 </template>
 

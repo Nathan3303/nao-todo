@@ -1,15 +1,32 @@
-import type { GoAsync, UserProfile } from '@nao-todo/types'
+import type {
+    GoAsync,
+    UpdateNicknameViewObject,
+    UpdatePasswordViewObject,
+    UpdateUserViewObject,
+    UserViewObject
+} from '@nao-todo/types'
 import { UserDomain } from '@nao-todo/domain/user'
-import { userEntity2UserProfile } from '../converters/user'
+import {
+    updatePasswordViewObjectToValueObject,
+    updateUserNicknameViewObjectToValueObject,
+    userEntityToViewObject
+} from '../converters/user'
 
+/**
+ * 用户存储
+ */
 interface UserStore {
-    setUserProfile: (userProfile: UserProfile) => void
-    updateUserProfile: (updateUserProfile: Partial<UserProfile>) => void
+    setUserProfile: (userProfile: UserViewObject) => void
+    updateUserProfile: (updateUserViewObject: UpdateUserViewObject) => void
 }
 
+/**
+ * 用户用例
+ * @description 负责处理用户相关的业务逻辑，包括加载用户信息、更新用户昵称、更新用户密码等
+ */
 export class UserUseCase {
     /**
-     * 用户用例
+     * 用户用例构造函数
      * @param userDomain 用户领域模型
      * @param userStore 用户存储
      */
@@ -22,46 +39,51 @@ export class UserUseCase {
      * 加载用户信息
      * @returns 用户信息
      */
-    async loadUserProfile(): GoAsync<UserProfile> {
-        // 1. 获取用户信息
+    async loadUserProfile(): GoAsync<UserViewObject> {
+        // 获取用户信息
         const [userEntity, err] = await this.userDomain.getProfile()
-        // 2. 判断结果
-        if (err !== null) {
-            return [null, err]
-        }
-        // 3. 转换为VO
-        const userProfile = userEntity2UserProfile(userEntity)
-        // 3. 存储用户信息
+        if (err !== null) return [null, err]
+        // 实体转换为视图对象
+        const userProfile = userEntityToViewObject(userEntity)
+        // 存储用户信息
         this.userStore.setUserProfile(userProfile)
-        // 4. 返回
+        // 返回
         return [userProfile, null]
     }
 
     /**
      * 更新用户昵称
-     * @param newNickname 新昵称
+     * @param updateUserNicknameViewObject 更新昵称视图对象
      * @returns 更新结果
      */
-    async updateNickname(newNickname: string): GoAsync<void> {
-        // 1. 更新用户昵称
-        const err = await this.userDomain.updateNickname(newNickname)
-        // 2. 判断结果
-        if (err !== null) {
-            return err
-        }
-        // 3. 更新用户存储
-        this.userStore.updateUserProfile({ nickname: newNickname })
-        // 4. 返回
+    async updateNickname(updateUserNicknameViewObject: UpdateNicknameViewObject): GoAsync<void> {
+        // 数据转换
+        const updateUserNicknameValueObject = updateUserNicknameViewObjectToValueObject(
+            updateUserNicknameViewObject
+        )
+        // 更新用户昵称
+        const err = await this.userDomain.updateNickname(updateUserNicknameValueObject)
+        if (err !== null) return err
+        // 更新存储
+        this.userStore.updateUserProfile({ nickname: updateUserNicknameValueObject.nickname })
+        // 返回
         return null
     }
 
     /**
      * 更新用户密码
-     * @param oldPassword 旧密码
-     * @param newPassword 新密码
+     * @param updatePasswordViewObject 更新密码视图对象
      * @returns 更新结果
      */
-    async updatePassword(oldPassword: string, newPassword: string): GoAsync<void> {
-        return await this.userDomain.updatePassword(oldPassword, newPassword)
+    async updatePassword(updatePasswordViewObject: UpdatePasswordViewObject): GoAsync<void> {
+        // 判断新密码是否与确认密码一致
+        if (updatePasswordViewObject.newPassword !== updatePasswordViewObject.confirmNewPassword) {
+            return '新密码与确认密码不一致'
+        }
+        // 数据转换
+        const updatePasswordValueObject =
+            updatePasswordViewObjectToValueObject(updatePasswordViewObject)
+        // 更新用户密码
+        return await this.userDomain.updatePassword(updatePasswordValueObject)
     }
 }

@@ -1,10 +1,15 @@
-import Axios from // AxiosError
-// type InternalAxiosRequestConfig
-'axios'
+import Axios from 'axios' // type InternalAxiosRequestConfig // AxiosError
 import type { Requester } from '@nao-todo/types'
-// import type { RequesterOpRtn } from './types'
 
+/**
+ * 创建 Axios 请求器
+ * @param baseURL 基础 URL
+ * @returns Axios 请求器
+ */
 export default (baseURL: string): Requester => {
+    /**
+     * 创建 Axios 实例
+     */
     const axiosInstance = Axios.create({
         baseURL,
         timeout: 5000,
@@ -14,14 +19,9 @@ export default (baseURL: string): Requester => {
         }
     })
 
-    // Add token to request header
-    // axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig<any>) => {
-    //     const userToken = localStorage.getItem('USER_JWT')
-    //     config.headers.Authorization = `Bearer ${userToken || ''}`
-    //     return config
-    // })
-
-    // Add error handler
+    /**
+     * 添加响应拦截器
+     */
     axiosInstance.interceptors.response.use(
         (response) => response,
         (error) => {
@@ -37,65 +37,9 @@ export default (baseURL: string): Requester => {
         }
     )
 
-    // GET Request with error handling
-    // const get: Requester['get'] = async (url: string, config?: any) => {
-    //     try {
-    //         return await axiosInstance.get(url, config)
-    //     } catch (err) {
-    //         if (err instanceof AxiosError) {
-    //             return {
-    //                 data: null,
-    //                 message: err.message,
-    //                 code: err.response?.status || 500
-    //             }
-    //         }
-    //         return { data: null, message: '未知错误', code: 500 }
-    //     }
-    // }
-
-    // // POST Request with error handling
-    // const post: Requester['post'] = async (url: string, data?: any, config?: any) => {
-    //     try {
-    //         const r = await axiosInstance.post(url, data, config)
-    //         console.log(r)
-    //         return r
-    //     } catch (e) {
-    //         console.log(e)
-    //     }
-    // }
-
-    // // PUT Request with error handling
-    // const put: Requester['put'] = async (url: string, data?: any, config?: any) => {
-    //     try {
-    //         return await axiosInstance.put(url, data, config)
-    //     } catch (err) {
-    //         if (err instanceof AxiosError) {
-    //             return {
-    //                 data: null,
-    //                 message: err.message,
-    //                 code: err.response?.status || 500
-    //             }
-    //         }
-    //         return { data: null, message: '未知错误', code: 500 }
-    //     }
-    // }
-
-    // // DELETE Request with error handling
-    // const deleteReq: Requester['delete'] = async (url: string, config?: any) => {
-    //     try {
-    //         return await axiosInstance.delete(url, config)
-    //     } catch (err) {
-    //         if (err instanceof AxiosError) {
-    //             return {
-    //                 data: null,
-    //                 message: err.message,
-    //                 code: err.response?.status || 500
-    //             }
-    //         }
-    //         return { data: null, message: '未知错误', code: 500 }
-    //     }
-    // }
-
+    /**
+     * 返回 Axios 请求器
+     */
     return {
         _instance: axiosInstance,
         name: 'AxiosRequester',

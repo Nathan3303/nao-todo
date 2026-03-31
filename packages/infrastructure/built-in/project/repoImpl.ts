@@ -1,6 +1,6 @@
 import type {
     BuiltInProjectEntity,
-    BuiltInProjectPreferenceValueObject,
+    BuiltInProjectPreferenceEntity,
     BuiltInProjectRepository
 } from '@nao-todo/domain/built-in-project'
 import type { Go } from '@nao-todo/types'
@@ -44,7 +44,7 @@ const useBuiltInProjectRepository = (): BuiltInProjectRepository => {
      * @param projectId 清单 ID
      * @returns 清单偏好实体
      */
-    const getPreference = (userId: string, id: string): Go<BuiltInProjectPreferenceValueObject> => {
+    const getPreference = (userId: string, id: string): Go<BuiltInProjectPreferenceEntity> => {
         // 1. 构造查询 Key
         const key = `${userId}/${id}`
         // 2. 查询 localStorage
@@ -84,7 +84,7 @@ const useBuiltInProjectRepository = (): BuiltInProjectRepository => {
     const savePreference = (
         userId: string,
         projectId: string,
-        bippvo: BuiltInProjectPreferenceValueObject
+        bippvo: BuiltInProjectPreferenceEntity
     ): Go<void> => {
         // 1. 构造读写 Key
         const key = `${userId}/${projectId}`

@@ -62,6 +62,7 @@ import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { NueMessage } from 'nue-ui'
 import { AUTH_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import type { AuthViewContext } from '@/views/auth/types'
+import type { SignInViewObject } from '@nao-todo/types'
 
 defineOptions({ name: 'AuthViewMainContentSignIn' })
 
@@ -70,15 +71,12 @@ const { authUseCase } = inject<AuthViewContext>(AUTH_VIEW_CONTEXT_KEY)!
 
 const loading = ref(false)
 const disabled = ref(false)
-const signInVO = reactive({ email: '', password: '' })
+const signInVO = reactive<SignInViewObject>({ email: '', password: '' })
 
 const handleSubmit = async (e: Event) => {
     e.preventDefault()
     loading.value = disabled.value = true
-    const err = await authUseCase.signIn({
-        email: signInVO.email,
-        password: signInVO.password
-    })
+    const err = await authUseCase.signIn(signInVO)
     if (err !== null) {
         signInVO.password = ''
         loading.value = disabled.value = false
