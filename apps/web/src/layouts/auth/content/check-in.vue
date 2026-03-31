@@ -11,20 +11,18 @@ const router = useRouter()
 const { authUseCase } = inject<AuthViewContext>(AUTH_VIEW_CONTEXT_KEY)!
 
 onMounted(() => {
-    // const err = await
-    // if (err !== null) {
-    //     NueMessage.error(unwrapError(err))
-    //     return router.replace('/auth/signin')
-    // }
-    // router.replace('/tasks')
     authUseCase
         .checkIn()
         .then((err) => {
-            if (err === null) return
-            NueMessage.error(unwrapError(err))
-            router.replace('/auth/signin')
+            if (err !== null) {
+                NueMessage.error(unwrapError(err))
+                return router.replace('/auth/signin')
+            }
+            // if (err === null) return
+            // NueMessage.error(unwrapError(err))
+            // return router.replace('/auth/signin')
         })
-        .finally(() => router.replace('/tasks'))
+        .then(() => router.replace('/tasks'))
 })
 </script>
 

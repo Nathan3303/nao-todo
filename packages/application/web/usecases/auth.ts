@@ -67,6 +67,7 @@ export class AuthUseCase {
         // 1. 调用域服务 - 检查登录状态
         const [newJwt, err] = await this.authDomain.checkIn()
         if (err !== null) {
+            localStorage.removeItem("USER_JWT")
             return err
         }
         // 2. 存储JWT

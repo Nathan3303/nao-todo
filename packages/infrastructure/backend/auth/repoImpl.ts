@@ -14,14 +14,15 @@ export const useAuthRepository = (requester: Requester): AuthRepository => {
      * @returns 登录凭证
      */
     const signIn = async (signInValueObject: SignInValueObject): GoAsync<string> => {
-        // 1. 实体转换请求体
-        const rto = signInValueObjectToSignInReq(signInValueObject)
-        // 2. 调用登录接口
+        // 实体转换请求体
+        const [rto, err] = signInValueObjectToSignInReq(signInValueObject)
+        if (err !== null) return [null, err]
+        // 调用登录接口
         const response = await requester.post('/auth/signin', rto)
         const result = response.data as ResponseData
-        // 3. 判断是否成功
+        // 判断是否成功
         if (result.code !== 10010) return [null, result.message]
-        // 4. 返回
+        // 返回
         const data = result.data as SignInRes
         return [data.jwt, null]
     }
@@ -41,14 +42,15 @@ export const useAuthRepository = (requester: Requester): AuthRepository => {
      * @returns 错误信息
      */
     const signUp = async (signUpValueObject: SignUpValueObject): GoAsync<void> => {
-        // 1. 实体转换请求体
-        const rto = signUpValueObjectToSignUpReq(signUpValueObject)
-        // 2. 调用注册接口
+        // 实体转换请求体
+        const [rto, err] = signUpValueObjectToSignUpReq(signUpValueObject)
+        if (err !== null) return err
+        // 调用注册接口
         const response = await requester.post('/auth/signup', rto)
         const result = response.data as ResponseData
-        // 3. 判断是否成功
+        // 判断是否成功
         if (result.code !== 10000) return result.message
-        // 4. 转换为实体
+        // 转换为实体
         return null
     }
 
@@ -58,12 +60,12 @@ export const useAuthRepository = (requester: Requester): AuthRepository => {
      * @returns 登录凭证
      */
     const checkIn = async (jwt: string): GoAsync<string> => {
-        // 1. 调用接口
+        // 调用接口
         const response = await requester.put('/auth/checkin', { jwt })
         const result = response.data as ResponseData
-        // 2. 判断是否成功
+        // 判断是否成功
         if (result.code !== 10020) return [null, result.message]
-        // 3. 返回
+        // 返回
         const data = result.data as CheckInRes
         return [data.jwt, null]
     }
@@ -74,12 +76,12 @@ export const useAuthRepository = (requester: Requester): AuthRepository => {
      * @returns 错误信息
      */
     const signOut = async (jwt: string): GoAsync<void> => {
-        // 1. 调用接口
+        // 调用接口
         const response = await requester.delete('/auth/signout', { jwt })
         const result = response.data as ResponseData
-        // 2. 判断是否成功
+        // 判断是否成功
         if (result.code !== 10031) return result.message
-        // 3. 返回
+        // 返回
         return null
     }
 

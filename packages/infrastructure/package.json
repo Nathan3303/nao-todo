@@ -3,8 +3,11 @@
     "version": "0.1.0",
     "author": "Nathan Lee",
     "license": "MIT",
-    "main": "index.ts",
     "files": [
-        "."
+        "backend",
+        "built-in",
+        "consts",
+        "hooks",
+        "utils"
     ]
 }
