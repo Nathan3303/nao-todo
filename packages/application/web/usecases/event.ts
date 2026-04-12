@@ -1,5 +1,5 @@
 import { type EventDomain } from '@nao-todo/domain/event'
-import { UpdateEventViewObject } from '@nao-todo/types'
+import type { UpdateEventViewObject } from '@nao-todo/types'
 import type { CreateEventViewObject, EventViewObject, GoAsync, Task } from '@nao-todo/types'
 import {
     createEventViewObjectToValueObject,
@@ -76,6 +76,7 @@ export class EventUseCase {
     ): GoAsync<EventViewObject['id']> {
         // 转换为值对象
         const updateValueObject = updateEventViewObjectToValueObject(eventId, updateEventViewObject)
+        // console.log(updateValueObject)
         // 更新检查事项
         const [updatedId, err] = await this.eventDomain.update(eventId, updateValueObject)
         if (err !== null) return [null, err]

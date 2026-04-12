@@ -4,8 +4,8 @@ import type { CreateCommentRes, GetCommentRes, ListCommentRes } from '../types'
 export const getCommentRes2CommentEntity = (res: GetCommentRes): CommentEntity => {
     const commentUserValueObject = new CommentUserValueObject(
         res.id,
-        res.commentUser.avatar,
-        res.commentUser.nickname
+        res.commentUser.nickname,
+        res.commentUser.avatar
     )
     return new CommentEntity(
         res.id,
@@ -27,3 +27,4 @@ export const listCommentRes2CommentEntities = (res: ListCommentRes): CommentEnti
         return getCommentRes2CommentEntity(comment)
     })
 }
+

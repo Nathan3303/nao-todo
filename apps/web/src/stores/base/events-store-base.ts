@@ -29,6 +29,7 @@ const useEventsStoreBase = () => {
 
     // @method 更新检查事项
     const updateEvent = (eventId: EventViewObject['id'], event: UpdateEventViewObject) => {
+        // console.log(event)
         const idx = events.value.findIndex((e) => e.id === eventId)
         if (idx === -1) return
         events.value[idx] = { ...events.value[idx], ...event }

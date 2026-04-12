@@ -79,7 +79,6 @@ import { PasswordRuleHint } from '@nao-todo/components'
 import { SETTINGS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import type { SettingsViewContext } from '@/views/index/settings/settings-view'
 import { NueMessage } from 'nue-ui'
-import { USER_PASSWORD_REGEXP } from '@nao-todo/infrastructure/consts/auth'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 
 defineOptions({ name: 'SettingsPasswordForm' })
@@ -105,17 +104,12 @@ const submitButtonDisabled = computed(() => {
 })
 
 const handleSubmit = async () => {
-    if (submitButtonDisabled.value) return
-    if (formData.newPassword !== formData.confirmNewPassword) {
-        NueMessage.warn('两次密码不一致')
-        return
-    }
-    if (!USER_PASSWORD_REGEXP.test(formData.newPassword)) {
-        NueMessage.warn('密码格式错误')
-        return
-    }
     loading.value = true
-    const err = await userUseCase.updatePassword(formData.oldPassword, formData.newPassword)
+    const err = await userUseCase.updatePassword({
+        password: formData.oldPassword,
+        confirmNewPassword: formData.confirmNewPassword,
+        newPassword: formData.newPassword
+    })
     loading.value = false
     if (err !== null) {
         NueMessage.error('密码修改失败' + `(${unwrapError(err)})`)
@@ -129,3 +123,4 @@ const handleSubmit = async () => {
     await router.replace('/auth/signin')
 }
 </script>
+

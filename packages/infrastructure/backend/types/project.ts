@@ -23,19 +23,22 @@ export type UpdateProjectRes = { projectId: string }
 export type ListProjectRes = GetProjectRes[]
 
 export type GetProjectPreferenceRes = {
+    id: string
+    projectId: string
+    viewType: string
+    getTasksOptions: string
+    columns: string
+    createdAt: string
+    updatedAt: string
+}
+
+export type UpdateProjectPreferenceReq = {
     viewType: string
     getTasksOptions: string
     columns: string
 }
 
-export type UpdateProjectPreferenceReq = {
-    preference: {
-        viewType: string
-        getTasksOptions: string
-        columns: string
-    }
-}
-
 export type UpdateProjectPreferenceRes = {
     projectId: string
 }
+

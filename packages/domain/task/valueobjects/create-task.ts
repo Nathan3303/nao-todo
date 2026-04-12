@@ -36,7 +36,7 @@ export class CreateTaskValueObject {
      * @returns 验证结果，如果验证通过则返回null，否则返回错误信息
      */
     validate(): Go<void> {
-        if (!this.userId) return '用户ID不能为空'
+        // if (!this.userId) return '用户ID不能为空'
         if (!this.name) return '任务名称不能为空'
         if (this.name.length > 256) return '任务名称最多256个字符'
         if (this.description && this.description.length > 256) return '任务描述最多256个字符'
@@ -51,7 +51,7 @@ export class CreateTaskValueObject {
             if (!startAt.isValid()) return '任务开始时间无效'
             if (startAt.isAfter(entAt)) return '任务开始时间不能晚于结束时间'
         }
-        if (!this.projectId) return '项目ID不能为空'
+        // if (!this.projectId) return '项目ID不能为空'
         return null
     }
 

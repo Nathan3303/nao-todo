@@ -23,23 +23,24 @@ export const listProjectRes2ProjectEntities = (res: ListProjectRes): ProjectEnti
 export const getProjectPreferenceRes2ProjectPreferenceEntity = (
     res: GetProjectPreferenceRes
 ): ProjectPreferenceEntity => {
-    const e = new ProjectPreferenceEntity(
-        '',
-        '',
-        '',
+    return new ProjectPreferenceEntity(
+        res.id,
+        res.projectId,
         res.viewType,
         res.getTasksOptions,
-        res.columns
+        res.columns,
+        res.createdAt,
+        res.updatedAt
     )
-    return e
 }
 
 export const preferenceEntity2UpdateProjectPreferenceReq = (
     preferenceEntity: ProjectPreferenceEntity
 ): UpdateProjectPreferenceReq => {
-    const rto = { preference: {} } as UpdateProjectPreferenceReq
-    rto.preference.viewType = preferenceEntity.viewType
-    rto.preference.getTasksOptions = preferenceEntity.getTasksOptions
-    rto.preference.columns = preferenceEntity.columns
+    const rto = {} as UpdateProjectPreferenceReq
+    rto.viewType = preferenceEntity.viewType
+    rto.getTasksOptions = preferenceEntity.getTasksOptions
+    rto.columns = preferenceEntity.columns
     return rto
 }
+

@@ -10,24 +10,21 @@ const emit = defineEmits<TaskProjectSelectorEmits>()
 const vm = computed({
     get: () => {
         const p = props.projects.find((p) => p.id === props.projectId)
-        if (!p) return ''
+        if (!p) return 'inbox'
         return p.id
     },
     set: (newProjectId) => handleSelect(newProjectId)
 })
 
-const handleSelect = async (projectId?: ProjectViewObject['id']) => {
-    if (projectId) {
-        emit('select', projectId)
-        return
-    }
-    emit('select', '', '收集箱')
+const handleSelect = async (projectId: ProjectViewObject['id']) => {
+    emit('select', projectId)
+    return
 }
 </script>
 
 <template>
     <nue-select v-model="vm" size="small">
-        <nue-select-option icon="inbox" label="收集箱" :value="''" />
+        <nue-select-option icon="inbox" label="收集箱" :value="'inbox'" />
         <nue-divider />
         <template v-if="projects && projects.length">
             <nue-select-option
@@ -53,3 +50,4 @@ const handleSelect = async (projectId?: ProjectViewObject['id']) => {
     }
 }
 </style>
+

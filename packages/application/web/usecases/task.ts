@@ -112,11 +112,12 @@ export class TaskUseCase {
         taskId: Task['id'],
         updateTaskViewObject: UpdateTaskViewObject
     ): GoAsync<void> {
+        // 获取原始数据
+        const oldTask = this.store.getTask(taskId)
+        const newTask = { name: oldTask?.name || undefined, ...updateTaskViewObject }
+        // console.log(newTask)
         // 数据转换
-        const updateTaskValueObject = updateTaskViewObjectToValueObject(
-            taskId,
-            updateTaskViewObject
-        )
+        const updateTaskValueObject = updateTaskViewObjectToValueObject(taskId, newTask)
         // 更新任务
         const [, err] = await this.taskDomain.update(taskId, updateTaskValueObject)
         if (err !== null) return err
@@ -126,3 +127,4 @@ export class TaskUseCase {
         return null
     }
 }
+

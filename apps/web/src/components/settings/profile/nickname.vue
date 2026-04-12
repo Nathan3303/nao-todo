@@ -52,7 +52,7 @@ const isNicknameChanged = computed(() => inputValue.value !== profile.value?.nic
 
 const handleUpdateNickname = async () => {
     loading.value = true
-    const err = await userUseCase.updateNickname(inputValue.value)
+    const err = await userUseCase.updateNickname({ nickname: inputValue.value })
     loading.value = false
     if (err !== null) {
         return

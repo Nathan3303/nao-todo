@@ -1,7 +1,8 @@
 import {
     createTaskRes2TaskEntity,
     getTaskRes2TaskEntity,
-    listTaskRes2TaskEntities
+    listTaskRes2TaskEntities,
+    updateTaskValueObjectToReq
 } from './converters'
 import type { Requester } from '../../requester/types'
 import type { GoAsync } from '@nao-todo/types'
@@ -21,6 +22,7 @@ import {
     TaskEntity,
     type TaskRepository
 } from '@nao-todo/domain/task'
+import dayjs from 'dayjs'
 
 /**
  * 任务仓库实现
@@ -63,7 +65,7 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
             state: createTaskValueObject.state,
             priority: createTaskValueObject.priority,
             startAt: createTaskValueObject.startAt || undefined,
-            endAt: createTaskValueObject.endAt,
+            endAt: dayjs(createTaskValueObject.endAt).toISOString(),
             tags: createTaskValueObject.tags
         }
         // 2. 调用接口
@@ -92,7 +94,7 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
         updateTaskValueObject: UpdateTaskValueObject
     ): GoAsync<string> => {
         // 1. 构建 rto
-        const rto: UpdateTaskReq = updateTaskValueObject
+        const rto: UpdateTaskReq = updateTaskValueObjectToReq(updateTaskValueObject)
         // 2. 调用接口
         const response = await requester.put(`/tasks/${taskId}`, rto, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }

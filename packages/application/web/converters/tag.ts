@@ -53,6 +53,7 @@ export const tagPreferenceEntityToViewObject = (
     // 1. 解析 getTasksOptions
     const [getTasksOptions, err1] = jsonParse(tagPreferenceEntity.getTasksOptions)
     vo.getTasksOptions = err1 !== null ? { limit: 20 } : getTasksOptions
+    if (!vo.tagId) vo.tagId = tagPreferenceEntity.tagId
     // 2. 解析 columns
     const [columns, err2] = jsonParse(tagPreferenceEntity.columns)
     vo.columns =
@@ -123,3 +124,4 @@ export const updateTagViewObjectToValueObject = (
     if (updateTagViewObject.color) updateTagValueObject.color = updateTagViewObject.color
     return updateTagValueObject
 }
+

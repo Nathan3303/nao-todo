@@ -227,11 +227,12 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
         return [
             new ProjectPreferenceEntity(
                 '',
-                '',
                 projectId,
                 defaultPreference.viewType,
                 defaultPreference.getTasksOptions,
-                defaultPreference.columns
+                defaultPreference.columns,
+                '',
+                ''
             ),
             null
         ]
@@ -276,3 +277,4 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
         updatePreference
     }
 }
+

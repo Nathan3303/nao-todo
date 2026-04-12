@@ -11,7 +11,7 @@ import dayjs from 'dayjs'
 export const taskEntityToViewObject = (entity: TaskEntity): TaskViewObject => {
     const taskViewObject = {} as TaskViewObject
     taskViewObject.id = entity.id
-    taskViewObject.userId = entity.userId
+    // taskViewObject.userId = entity.userId
     taskViewObject.name = entity.name
     taskViewObject.description = entity.description
     taskViewObject.projectId = entity.projectId
@@ -21,7 +21,7 @@ export const taskEntityToViewObject = (entity: TaskEntity): TaskViewObject => {
     taskViewObject.priority = ['low', 'medium', 'high'].includes(entity.priority)
         ? entity.priority
         : 'low'
-    taskViewObject.tags = entity.tags
+    taskViewObject.tags = entity.tags || []
     taskViewObject.startAt = entity.startAt
     taskViewObject.endAt = entity.endAt
     taskViewObject.archivedAt = entity.archivedAt
@@ -85,3 +85,4 @@ export const updateTaskViewObjectToValueObject = (
     if (viewObject.tags) valueObject.tags = viewObject.tags
     return valueObject
 }
+

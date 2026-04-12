@@ -35,7 +35,7 @@ const tableCtx = inject<TaskTableContext>(TASK_TABLE_CONTEXT_KEY)
                         {{ task.name }}
                     </nue-text>
                     <task-tag-bar
-                        v-if="tableCtx.columns.value.tags && task.tags.length"
+                        v-if="tableCtx.columns.value.tags && task.tags && task.tags.length"
                         :clamped="tableCtx.tagBarClamped.value"
                         :tags="tableCtx.tags.value"
                         :task-tags="task.tags"

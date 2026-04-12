@@ -27,18 +27,24 @@ export class UpdateTaskValueObject {
      * @returns 验证结果，如果验证通过则返回null，否则返回错误信息
      */
     validate(): Go<void> {
-        if (this.name && this.name.length > 256) return '任务名称长度不能超过256个字符'
+        if (!this.name) return '任务名称不能为空'
+        if (this.name.length > 256) return '任务名称长度不能超过256个字符'
         if (this.description && this.description.length > 256)
             return '任务描述长度不能超过256个字符'
         if (this.state && !['todo', 'in-progress', 'done'].includes(this.state))
             return '任务状态无效'
         if (this.priority && !['low', 'medium', 'high'].includes(this.priority))
             return '任务优先级无效'
-        const startAt = dayjs(this.startAt)
-        const entAt = dayjs(this.endAt)
-        if (!startAt.isValid()) return '任务开始时间无效'
-        if (!entAt.isValid()) return '任务结束时间无效'
-        if (startAt.isAfter(entAt)) return '任务开始时间不能晚于结束时间'
+        if (this.endAt) {
+            const entAt = dayjs(this.endAt)
+            if (!entAt.isValid()) return '任务结束时间无效'
+        }
+        if (this.startAt) {
+            const startAt = dayjs(this.startAt)
+            if (!startAt.isValid()) return '任务开始时间无效'
+            if (startAt.isAfter(dayjs(this.endAt))) return '任务开始时间不能晚于结束时间'
+        }
         return null
     }
 }
+

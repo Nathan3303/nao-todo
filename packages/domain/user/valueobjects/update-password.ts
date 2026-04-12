@@ -1,5 +1,5 @@
 import { USER_PASSWORD_REGEXP } from '@nao-todo/infrastructure/consts/auth'
-import { Go } from '@nao-todo/types'
+import type { Go } from '@nao-todo/types'
 
 /**
  * 更新用户密码值对象
@@ -56,3 +56,4 @@ export class UpdatePasswordValueObject {
         return [this.encryptedPassword, null]
     }
 }
+

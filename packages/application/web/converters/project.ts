@@ -54,6 +54,9 @@ export const projectPreferenceEntityToViewObject = (
 
     const [getTasksOptions, err1] = jsonParse(entity.getTasksOptions)
     projectPreferenceViewObject.getTasksOptions = err1 !== null ? { limit: 20 } : getTasksOptions
+    if (!projectPreferenceViewObject.projectId) {
+        projectPreferenceViewObject.projectId = entity.projectId
+    }
 
     const [columns, err2] = jsonParse(entity.columns)
     projectPreferenceViewObject.columns =
@@ -83,11 +86,12 @@ export const projectPreferenceViewObjectToEntity = (
 ): ProjectPreferenceEntity => {
     return new ProjectPreferenceEntity(
         projectPreferenceViewObject.id,
-        '', //TODO: 项目偏好 USERID
         projectPreferenceViewObject.projectId,
         projectPreferenceViewObject.viewType,
         JSON.stringify(projectPreferenceViewObject.getTasksOptions),
-        JSON.stringify(projectPreferenceViewObject.columns)
+        JSON.stringify(projectPreferenceViewObject.columns),
+        projectPreferenceViewObject.createdAt,
+        projectPreferenceViewObject.updatedAt
     )
 }
 
@@ -105,3 +109,4 @@ export const createProjectViewObjectToValueObject = (
         createProjectViewObject.description || ''
     )
 }
+
