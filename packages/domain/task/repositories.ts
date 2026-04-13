@@ -12,3 +12,4 @@ export interface TaskRepository {
         queryString?: string
     ): GoAsync<{ taskEntities: TaskEntity[]; pagination?: ResponseDataPagination }>
 }
+

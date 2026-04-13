@@ -135,7 +135,7 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
      */
     const restore = async (taskId: string): GoAsync<void> => {
         // 1. 调用接口
-        const response = await requester.put(`/tasks/restore/${taskId}`, {
+        const response = await requester.put(`/tasks/restore/${taskId}`, null, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
         })
         // 2. 判断结果
@@ -173,3 +173,4 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
     // @returns
     return { create, get, update, remove, restore, list }
 }
+

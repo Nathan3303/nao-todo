@@ -130,6 +130,16 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         { immediate: true }
     )
 
+    // @method 处理删除任务
+    const handleDeleteTask = async (taskId: string) => {
+        await taskHandler.deleteTask(taskId)
+    }
+
+    // @method 处理恢复任务
+    const handleRestoreTask = async (taskId: string) => {
+        await taskHandler.restoreTask(taskId)
+    }
+
     // @provide 任务详情面板上下文
     provide<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY, {
         vo: task,
@@ -147,8 +157,22 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         taskHandler
     })
 
+    // @watch 监听任务删除事件
+    watch(
+        () => props.taskId,
+        () => {},
+        { immediate: false }
+    )
+
     // @returns 返回值
-    return { loading, error, task }
+    return {
+        loading,
+        error,
+        task,
+        handleDeleteTask,
+        handleRestoreTask,
+        closeDetails
+    }
 }
 
 export default useTaskDetails

@@ -27,6 +27,7 @@ export const taskEntityToViewObject = (entity: TaskEntity): TaskViewObject => {
     taskViewObject.archivedAt = entity.archivedAt
     taskViewObject.createdAt = entity.createdAt
     taskViewObject.updatedAt = entity.updatedAt
+    taskViewObject.deletedAt = entity.deletedAt || ''
     taskViewObject.isStarMarked = dayjs(entity.starMarkAt).isValid()
     taskViewObject.isDeleted = dayjs(entity.deletedAt).isValid()
     taskViewObject.isArchived = dayjs(entity.archivedAt).isValid()

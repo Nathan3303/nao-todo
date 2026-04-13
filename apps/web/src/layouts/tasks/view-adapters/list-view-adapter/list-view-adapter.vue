@@ -29,6 +29,7 @@ const { tasks, taskLoader, handleNextPage } = useListViewAdapter(props)
                     @clear-sort-options="clearSortOptions"
                     @delete-task="(taskId) => taskUseCase.removeTask(taskId)"
                     @restore-task="(taskId) => taskUseCase.restoreTask(taskId)"
+                    @delete-task-permanently="(taskId) => taskUseCase.deleteTaskPermanently(taskId)"
                     @next-page="handleNextPage"
                 />
             </nue-content>

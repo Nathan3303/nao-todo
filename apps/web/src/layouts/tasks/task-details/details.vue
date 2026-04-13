@@ -10,7 +10,7 @@ defineOptions({ name: 'TaskDetails' })
 const props = defineProps<TaskDetailsProps>()
 const emit = defineEmits<TaskDetailsEmits>()
 
-const { loading, error, task } = useTaskDetails(props, emit)
+const { loading, error, task, handleDeleteTask, handleRestoreTask } = useTaskDetails(props, emit)
 </script>
 
 <template>
@@ -35,7 +35,7 @@ const { loading, error, task } = useTaskDetails(props, emit)
                 <details-main />
             </nue-content>
         </nue-main>
-        <details-footer />
+        <details-footer @deleteTask="handleDeleteTask" @restoreTask="handleRestoreTask" />
     </nue-container>
 </template>
 

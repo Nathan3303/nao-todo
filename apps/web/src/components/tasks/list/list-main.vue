@@ -43,13 +43,11 @@ const {
                     <nue-icon v-if="columns.isFavorited" name="heart-fill" color="pink" />
                     <nue-divider vertical />
                     <nue-div theme="todo-list-main__row__actions">
-                        <slot :todo="task" name="row-actions">
-                            <nue-button
-                                :icon="(task.isDeleted ? 'restore' : 'delete') as never"
-                                theme="icon,ghost,pure"
-                                @click.stop="deleteOrRestore(task.id, task.isDeleted)"
-                            />
-                        </slot>
+                        <nue-button
+                            :icon="task.isDeleted ? 'restore' : 'delete'"
+                            theme="icon,ghost,pure"
+                            @click.stop="deleteOrRestore(task.id, task.isDeleted)"
+                        />
                     </nue-div>
                 </nue-div>
                 <nue-text

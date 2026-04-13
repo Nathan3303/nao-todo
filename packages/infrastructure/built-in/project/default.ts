@@ -148,7 +148,7 @@ export const defaultBuiltInProjectPreferences: BuiltInProjectPreferenceRes[] = [
         getTasksOptions:
             '{"isDeleted": true, "sort": { "field": "deletedAt", "order": "desc" }, "limit": 20}',
         columns:
-            '{ "endAt": true, "priority": true, "state": true, "project": true, "tags": true, \
+            '{ "endAt": false, "priority": false, "state": false, "project": false, "tags": true, \
             "description": false, "createdAt": false, "updatedAt": false, "startAt": false, \
             "deletedAt": true }'
     },
@@ -163,3 +163,4 @@ export const defaultBuiltInProjectPreferences: BuiltInProjectPreferenceRes[] = [
             "description": false, "createdAt": false, "updatedAt": false, "startAt": false }'
     }
 ]
+

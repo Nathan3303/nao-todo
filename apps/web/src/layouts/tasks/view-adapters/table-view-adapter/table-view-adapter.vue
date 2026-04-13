@@ -28,6 +28,7 @@ const { tasks, taskLoader, handleUpdatePage, handleUpdatePerPage } = useTableVie
                     @clear-sort-options="clearSortOptions"
                     @delete-task="(taskId) => taskUseCase.removeTask(taskId)"
                     @restore-task="(taskId) => taskUseCase.restoreTask(taskId)"
+                    @delete-task-permanently="(taskId) => taskUseCase.deleteTaskPermanently(taskId)"
                 />
             </nue-content>
         </nue-main>

@@ -64,6 +64,26 @@ const useTaskHandler = (taskUseCase: TaskUseCase) => {
         return await updateTask(taskId, { endAt })
     }
 
+    // @method 删除任务
+    const deleteTask = async (taskId: TaskViewObject['id']) => {
+        const err = await taskUseCase.removeTask(taskId)
+        if (err !== null) {
+            NueMessage.error('删除任务失败：' + `(${unwrapError(err)})`)
+            return
+        }
+        NueMessage.success('删除任务成功')
+    }
+
+    // @method 恢复任务
+    const restoreTask = async (taskId: TaskViewObject['id']) => {
+        const err = await taskUseCase.restoreTask(taskId)
+        if (err !== null) {
+            NueMessage.error('恢复任务失败：' + `(${unwrapError(err)})`)
+            return
+        }
+        NueMessage.success('恢复任务成功')
+    }
+
     // @return
     return {
         createTask,
@@ -72,9 +92,12 @@ const useTaskHandler = (taskUseCase: TaskUseCase) => {
         updateTaskDescription,
         updateTaskState,
         updateTaskPriority,
-        updateTaskEndAt
+        updateTaskEndAt,
+        deleteTask,
+        restoreTask
     }
 }
 
 export default useTaskHandler
 export type TaskHandler = ReturnType<typeof useTaskHandler>
+

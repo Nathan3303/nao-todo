@@ -45,6 +45,11 @@ export const useTaskList = (props: TaskListProps, emit: TaskListEmits) => {
         }
     }
 
+    // @method 处理永久删除任务
+    const handleDeleteTaskPermanently = (taskId: TaskViewObject['id']) => {
+        emit('deleteTaskPermanently', taskId)
+    }
+
     // @provide 任务列表上下文
     provide<TaskListContext>(TASK_LIST_CONTEXT_KEY, {
         columns: computed(() => props.columns),
@@ -62,6 +67,7 @@ export const useTaskList = (props: TaskListProps, emit: TaskListEmits) => {
         clearSortOptions: () => emit('clearSortOptions'),
         deleteTask: (taskId: TaskViewObject['id']) => emit('deleteTask', taskId),
         restoreTask: (taskId: TaskViewObject['id']) => emit('restoreTask', taskId),
+        deleteTaskPermanently: handleDeleteTaskPermanently,
         getColumnLabel: props.columnLabelGetter,
         isTaskExpired,
         isInMultiSelectRange,

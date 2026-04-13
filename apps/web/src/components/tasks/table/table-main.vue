@@ -13,7 +13,7 @@ import type { TaskTableContext } from './types'
 
 defineOptions({ name: 'TaskTableMain' })
 
-const tableCtx = inject<TaskTableContext>(TASK_TABLE_CONTEXT_KEY)
+const tableCtx = inject<TaskTableContext>(TASK_TABLE_CONTEXT_KEY)!
 </script>
 
 <template>
@@ -98,13 +98,16 @@ const tableCtx = inject<TaskTableContext>(TASK_TABLE_CONTEXT_KEY)
                 :text="tableCtx.getProjectName(task.projectId)"
                 no-icon
             />
+            <task-date-info
+                v-if="tableCtx.columns.value.deletedAt"
+                class="todo-table__main__col col-datetime"
+                :date="task.deletedAt!"
+            />
             <nue-div class="todo-table__main__col col-actions">
-                <slot :task="task" name="row-actions">
-                    <nue-icon
-                        :name="task.isDeleted ? 'restore' : 'delete'"
-                        @click.stop="tableCtx.deleteOrRestore(task.id, task.isDeleted)"
-                    />
-                </slot>
+                <nue-icon
+                    :name="task.isDeleted ? 'restore' : 'delete'"
+                    @click.stop="tableCtx.deleteOrRestore(task.id, task.isDeleted)"
+                />
             </nue-div>
         </nue-div>
     </nue-div>

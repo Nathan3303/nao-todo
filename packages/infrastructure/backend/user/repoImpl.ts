@@ -111,13 +111,9 @@ export const useUserRepository = (requester: Requester): UserRepository => {
      */
     const deactive = async (): GoAsync<void> => {
         // 1. 调用接口
-        const response = await requester.put(
-            '/user/deactive',
-            {},
-            {
-                headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
-            }
-        )
+        const response = await requester.put('/user/deactive', null, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
+        })
         // 2. 判断结果
         const res = response.data as ResponseData
         if (res.code !== 10090) return res.message
@@ -131,13 +127,9 @@ export const useUserRepository = (requester: Requester): UserRepository => {
      */
     const active = async (): GoAsync<void> => {
         // 1. 调用接口
-        const response = await requester.put(
-            '/user/active',
-            {},
-            {
-                headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
-            }
-        )
+        const response = await requester.put('/user/active', null, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
+        })
         // 2. 判断结果
         const res = response.data as ResponseData
         if (res.code !== 10090) return res.message
@@ -163,3 +155,4 @@ export const useUserRepository = (requester: Requester): UserRepository => {
         active
     }
 }
+

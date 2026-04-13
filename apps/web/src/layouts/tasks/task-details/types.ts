@@ -51,6 +51,7 @@ export type TaskDetailsEmits = {
     (e: 'updateTask', taskId: TaskViewObject['id'], update: UpdateTaskViewObject): void
     (e: 'deleteTask', taskId: TaskViewObject['id']): void
     (e: 'restoreTask', taskId: TaskViewObject['id']): void
+    (e: 'deleteTaskPermanently', taskId: TaskViewObject['id']): void
     (e: 'duplicateTask', taskId: TaskViewObject['id']): void
     (e: 'createEvent', create: CreateEventViewObject): void
     (e: 'updateEvent', eventId: EventViewObject['id'], update: UpdateEventViewObject): void

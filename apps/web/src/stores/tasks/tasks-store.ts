@@ -38,8 +38,16 @@ const useTasksStore = defineStore('TasksStore', () => {
         return tasksMap.value.get(taskId)
     }
 
+    // @action 删除任务
+    const removeTask = (taskId: TaskViewObject['id']) => {
+        const idx = tasks.value.findIndex((task) => task.id === taskId)
+        if (idx !== -1) {
+            tasks.value.splice(idx, 1)
+        }
+    }
+
     // @returns
-    return { list: tasks, setTasks, updateTask, addTask, getTask }
+    return { list: tasks, setTasks, updateTask, addTask, getTask, removeTask }
 })
 
 export default useTasksStore

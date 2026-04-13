@@ -31,6 +31,7 @@ export type TaskListEmits = {
     (e: 'clearSortOptions'): void
     (e: 'deleteTask', taskId: TaskViewObject['id']): void
     (e: 'restoreTask', taskId: TaskViewObject['id']): void
+    (e: 'deleteTaskPermanently', taskId: TaskViewObject['id']): void
     (e: 'nextPage'): void
     (e: 'newTask'): void
 }
@@ -50,6 +51,7 @@ export type TaskListContext = {
     clearSortOptions: () => void
     deleteTask: (taskId: TaskViewObject['id']) => void
     restoreTask: (taskId: TaskViewObject['id']) => void
+    deleteTaskPermanently: (taskId: TaskViewObject['id']) => void
     getColumnLabel: (key: string) => string
     isTaskExpired: (task: TaskViewObject) => boolean
     isInMultiSelectRange: (idx: number) => boolean

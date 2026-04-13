@@ -3,6 +3,7 @@ import type { Project, Tag, Task } from '../models'
 export type TaskViewObject = Omit<Task, 'state' | 'priority'> & {
     state: string
     priority: string
+    deletedAt: string
     isDeleted: boolean
     isArchived: boolean
     isStarMarked: boolean
@@ -76,3 +77,4 @@ export type TaskColumnOptions = {
     isFavorited?: boolean
     isGivenUp?: boolean
 }
+

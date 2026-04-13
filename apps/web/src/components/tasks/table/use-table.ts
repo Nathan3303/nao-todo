@@ -45,6 +45,11 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         }
     }
 
+    // @method 处理永久删除任务
+    const handleDeleteTaskPermanently = (taskId: TaskViewObject['id']) => {
+        emit('deleteTaskPermanently', taskId)
+    }
+
     // @provide 任务表格上下文
     provide<TaskTableContext>(TASK_TABLE_CONTEXT_KEY, {
         tasks: computed(() => props.tasks),
@@ -63,6 +68,7 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         clearSortOptions: () => emit('clearSortOptions'),
         deleteTask: (taskId: TaskViewObject['id']) => emit('deleteTask', taskId),
         restoreTask: (taskId: TaskViewObject['id']) => emit('restoreTask', taskId),
+        deleteTaskPermanently: handleDeleteTaskPermanently,
         getColumnLabel: props.columnLabelGetter,
         isTaskExpired,
         isInMultiSelectRange,

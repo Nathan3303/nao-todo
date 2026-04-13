@@ -57,6 +57,14 @@ const tableContext = inject<TaskTableContext>(TASK_TABLE_CONTEXT_KEY)
                 {{ tableContext.getColumnLabel('project') }}
             </order-button>
         </div>
+        <div
+            v-if="tableContext.columns.value.deletedAt"
+            class="todo-table__header__col col-datetime"
+        >
+            <order-button prop="deletedAt">
+                {{ tableContext.getColumnLabel('deletedAt') }}
+            </order-button>
+        </div>
         <div class="todo-table__header__col col-actions">
             <!-- <nue-icon
                 v-if="tableContext.getOptions.value.sort"

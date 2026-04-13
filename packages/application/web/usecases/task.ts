@@ -18,6 +18,7 @@ export interface TaskStore {
     updateTask(taskId: TaskViewObject['id'], updateTaskViewObject: UpdateTaskViewObject): void
     addTask(task: TaskViewObject): void
     getTask(taskId: TaskViewObject['id']): TaskViewObject | undefined
+    removeTask(taskId: TaskViewObject['id']): void
 }
 
 export class TaskUseCase {
