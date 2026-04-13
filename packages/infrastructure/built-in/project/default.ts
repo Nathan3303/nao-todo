@@ -127,7 +127,7 @@ export const defaultBuiltInProjectPreferences: BuiltInProjectPreferenceRes[] = [
         projectId: 'favourite',
         userId: 'default',
         viewType: 'table',
-        getTasksOptions: '{"isFavorited": true, "limit": 80}',
+        getTasksOptions: '{"isStarMarked": true, "limit": 80}',
         columns:
             '{ "endAt": true, "priority": true, "state": true, "project": true, "tags": true, \
             "description": false, "createdAt": false, "updatedAt": false, "startAt": false }'
