@@ -1,6 +1,6 @@
 import { EventEntity } from './entities'
 import type { GoAsync } from '@nao-todo/types'
-import type { EventRepository } from './repositories'
+import type { EventRepository, BatchUpdateEventResult } from './repositories'
 import { CreateEventValueObject, UpdateEventValueObject } from './valueobjects'
 import { unwrapError } from '@nao-todo/infrastructure/utils'
 
@@ -72,5 +72,14 @@ export class EventDomain {
      */
     async list(taskId: EventEntity['taskId']): GoAsync<EventEntity[]> {
         return this.eventRepo.list(taskId)
+    }
+
+    /**
+     * 批量更新检查事项
+     * @param events 检查事项实体列表
+     * @returns 批量更新结果
+     */
+    async batchUpdate(events: EventEntity[]): GoAsync<BatchUpdateEventResult> {
+        return this.eventRepo.batchUpdate(events)
     }
 }

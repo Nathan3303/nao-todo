@@ -77,6 +77,7 @@ const handleDelete = () => {
 
     .nue-icon--pointer {
         cursor: pointer;
+        flex-shrink: 0;
     }
 
     > .nue-icon--drag-icon {
@@ -84,23 +85,16 @@ const handleDelete = () => {
         height: 100%;
         align-items: center;
         justify-content: center;
-        cursor: grab;
-        position: relative;
-        opacity: 0.6;
+        cursor: grabbing;
+        position: absolute;
+        left: 0;
+        opacity: 0;
         font-weight: bold;
-        color: var(--nue-primary-color-400);
-        transition:
-            opacity 0.2s ease,
-            color 0.2s ease;
-        flex-shrink: 0;
+        transition: opacity 0.2s ease;
+        z-index: 1;
 
         &:hover {
             opacity: 1;
-            color: var(--nue-primary-color-600);
-        }
-
-        &:active {
-            cursor: grabbing;
         }
     }
 
@@ -126,6 +120,7 @@ const handleDelete = () => {
         gap: 0.25rem;
         align-items: center;
         transition: visibility 0.2s ease;
+        flex-shrink: 0;
 
         @media (max-width: 445px) {
             display: block;

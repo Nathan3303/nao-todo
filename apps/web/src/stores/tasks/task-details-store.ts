@@ -22,7 +22,8 @@ const useTaskDetailsStore = defineStore('TaskDetailsStore', () => {
     const { loading, error, setLoading, setError } = useLoadingErrorStoreBase()
 
     // @storebase Events store base
-    const { addEvent, setEvents, getEvent, updateEvent, deleteEvent } = useEventsStoreBase()
+    const { events, addEvent, setEvents, getEvent, updateEvent, deleteEvent, updateEvents } =
+        useEventsStoreBase()
 
     // @storebase Event Ids store base
     const {
@@ -54,6 +55,7 @@ const useTaskDetailsStore = defineStore('TaskDetailsStore', () => {
         error,
         setLoading,
         setError,
+        events,
         addEvent,
         setEvents,
         getEvent,
@@ -73,8 +75,10 @@ const useTaskDetailsStore = defineStore('TaskDetailsStore', () => {
         updateComment,
         removeComment,
         updateEvent,
+        updateEvents,
         deleteEvent
     }
 })
 
 export default useTaskDetailsStore
+

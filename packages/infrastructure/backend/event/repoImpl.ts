@@ -1,10 +1,11 @@
 import {
     createEventRes2EventEntity,
     getEventRes2EventEntity,
-    listEventRes2EventEntities
+    listEventRes2EventEntities,
+    batchUpdateEventRes2BatchUpdateEventResult
 } from './converters'
 import type { EventEntity } from '@nao-todo/domain/event/entities'
-import type { EventRepository } from '@nao-todo/domain/event/repositories'
+import type { EventRepository, BatchUpdateEventResult } from '@nao-todo/domain/event/repositories'
 import type { Requester } from '../../requester/types'
 import type { GoAsync } from '@nao-todo/types'
 import type {
@@ -14,7 +15,9 @@ import type {
     ListEventRes,
     ResponseData,
     UpdateEventReq,
-    UpdateEventRes
+    UpdateEventRes,
+    BatchUpdateEventReq,
+    BatchUpdateEventRes
 } from '../types'
 import { CreateEventValueObject, UpdateEventValueObject } from '@nao-todo/domain/event'
 
@@ -139,6 +142,34 @@ export const useEventRepository = (requester: Requester): EventRepository => {
         return [eventEntities, null]
     }
 
-    return { create, get, update, remove, list }
+    /**
+     * 批量更新检查事项
+     * @param events 检查事项实体列表
+     * @returns 批量更新结果
+     */
+    const batchUpdate = async (events: EventEntity[]): GoAsync<BatchUpdateEventResult> => {
+        // 1. 构建 rto
+        const rto: BatchUpdateEventReq = {
+            events: events.map((event) => ({
+                id: event.id,
+                sortId: event.sortId
+            }))
+        }
+        // 2. 调用接口
+        const response = await requester.put('/events/', rto, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
+        })
+        // 3. 判断结果
+        const res = response.data as ResponseData
+        if (res.code !== 50050) {
+            return [null, res.message]
+        }
+        // 4. 转换为结果
+        const result = batchUpdateEventRes2BatchUpdateEventResult(res.data as BatchUpdateEventRes)
+        // 5. 返回
+        return [result, null]
+    }
+
+    return { create, get, update, remove, list, batchUpdate }
 }
 

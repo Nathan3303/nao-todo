@@ -23,3 +23,12 @@ export type UpdateEventRes = string
 
 export type ListEventRes = GetEventRes[]
 
+export type BatchUpdateEventReq = {
+    events: UpdateEventReq[]
+}
+
+export type BatchUpdateEventRes = {
+    updatedCount: number
+    events: GetEventRes[]
+}
+

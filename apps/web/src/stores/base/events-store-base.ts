@@ -33,7 +33,11 @@ const useEventsStoreBase = () => {
         const idx = events.value.findIndex((e) => e.id === eventId)
         if (idx === -1) return
         events.value[idx] = { ...events.value[idx], ...event }
-        console.log(events.value)
+    }
+
+    // @method 更新检查事项
+    const updateEvents = (newEvents: EventViewObject[]) => {
+        newEvents.forEach((event) => updateEvent(event.id, event))
     }
 
     // @method 删除检查事项
@@ -48,7 +52,8 @@ const useEventsStoreBase = () => {
         getEvent,
         setEvents,
         updateEvent,
-        deleteEvent
+        deleteEvent,
+        updateEvents
     }
 }
 
