@@ -102,8 +102,7 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
             return [null, res.message]
         }
         // 4. 返回
-        const data = res.data as UpdateProjectRes
-        return [data.projectId, null]
+        return [res.data as UpdateProjectRes, null]
     }
 
     /**
@@ -260,8 +259,7 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
             return [null, res.message]
         }
         // 4. 返回
-        const data = res.data as UpdateProjectPreferenceRes
-        return [data.projectId, null]
+        return [res.data as UpdateProjectPreferenceRes, null]
     }
 
     return {

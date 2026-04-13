@@ -82,8 +82,7 @@ export const useCommentRepository = (requester: Requester): CommentRepository =>
             return [null, res.message]
         }
         // 4. 返回
-        const data = res.data as UpdateCommentRes
-        return [data.commentId, null]
+        return [res.data as UpdateCommentRes, null]
     }
 
     // @method Remove
@@ -120,3 +119,4 @@ export const useCommentRepository = (requester: Requester): CommentRepository =>
 
     return { create, get, update, remove, list }
 }
+

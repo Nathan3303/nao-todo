@@ -11,6 +11,7 @@ const useEventDragger = (handler: EventDraggerHandler) => {
         ) as unknown as HTMLElement[]
         eventRows.forEach((row) => {
             row.dataset['dod'] = 'none'
+            row.dataset['dragging'] = 'false'
         })
     }
 
@@ -24,6 +25,8 @@ const useEventDragger = (handler: EventDraggerHandler) => {
             }
             if (node.parentNode) {
                 node = node.parentNode as HTMLElement
+            } else {
+                break
             }
         }
         return null
@@ -34,6 +37,9 @@ const useEventDragger = (handler: EventDraggerHandler) => {
         event.dataTransfer!.effectAllowed = 'move'
         event.dataTransfer!.dropEffect = 'move'
         dragged = getTargetNode(event.target as HTMLElement)
+        if (dragged) {
+            dragged.dataset['dragging'] = 'true'
+        }
         resetDragElementDOD()
     }
 
@@ -45,11 +51,21 @@ const useEventDragger = (handler: EventDraggerHandler) => {
         const { y: dropElementY, height: dropElementH } = dropped.getBoundingClientRect()
         const dropElementCenterY = dropElementY + dropElementH / 2
         isUp = event.clientY < dropElementCenterY
+        
+        resetDragElementDOD()
+        if (dragged) {
+            dragged.dataset['dragging'] = 'true'
+        }
         dropped.dataset['dod'] = isUp ? 'up' : 'down'
     }
 
     const handleDragLeave = (event: DragEvent) => {
         event.preventDefault()
+        const relatedTarget = event.relatedTarget as HTMLElement | null
+        if (relatedTarget) {
+            const parent = relatedTarget.closest('.nue-div--event-list')
+            if (parent) return
+        }
         resetDragElementDOD()
     }
 

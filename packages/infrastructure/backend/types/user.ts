@@ -1,7 +1,3 @@
-export type UpdateNicknameReq = {
-    nickname: string
-}
-
 export type GetUserProfileRes = {
     email: string
     nickname: string
@@ -9,9 +5,13 @@ export type GetUserProfileRes = {
     role: string
     createdFrom: string
     state: number
+    config: any
     createdAt: string
     updatedAt: string
-    config: Record<string, unknown>
+}
+
+export type UpdateNicknameReq = {
+    nickname: string
 }
 
 export type UpdateAvatarURLReq = {
@@ -21,3 +21,10 @@ export type UpdateAvatarURLReq = {
 export type UpdateAvatarURLRes = {
     avatarURL: string
 }
+
+export type DeactiveUserReq = {
+    password: string
+}
+
+export type ActiveUserReq = DeactiveUserReq
+

@@ -1,41 +1,33 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { EventRowProps, EventRowEmits } from './types'
+import type { EventRowProps } from './types'
 
 defineOptions({ name: 'EventRow' })
 const props = defineProps<EventRowProps>()
-const emit = defineEmits<EventRowEmits>()
 
 const inputValue = ref(props.event.name)
 const updateLoading = ref(false)
 
-const handleUpdate = async (updateIsDone = false) => {
-    const { id, name, isDone } = props.event
-    if (name === inputValue.value && !updateIsDone) return
+const handleUpdateIsDone = () => {
     if (updateLoading.value) return
-    const _n_isDone = updateIsDone ? !isDone : isDone
-    const payload = { id, name: inputValue.value, isDone: _n_isDone }
-    const { onUpdate } = props
-    if (onUpdate) {
-        updateLoading.value = true
-        await onUpdate(payload)
-        updateLoading.value = false
-    } else {
-        emit('update', payload)
-    }
+    updateLoading.value = true
+    props
+        .onUpdate(props.event.id, { isDone: !props.event.isDone })
+        .finally(() => (updateLoading.value = false))
 }
 
-const handleDelete = async () => {
-    const { id } = props.event
+const handleUpdateName = () => {
     if (updateLoading.value) return
-    const { onDelete } = props
-    if (onDelete) {
-        updateLoading.value = true
-        await onDelete(id)
-        updateLoading.value = false
-    } else {
-        emit('delete', id)
-    }
+    updateLoading.value = true
+    props
+        .onUpdate(props.event.id, { name: inputValue.value })
+        .finally(() => (updateLoading.value = false))
+}
+
+const handleDelete = () => {
+    if (updateLoading.value) return
+    updateLoading.value = true
+    props.onDelete(props.event.id).finally(() => (updateLoading.value = false))
 }
 </script>
 
@@ -47,7 +39,7 @@ const handleDelete = async () => {
             :name="updateLoading ? 'loading' : event.isDone ? 'square-check-fill' : 'square'"
             :spin="updateLoading"
             size="1rem"
-            @click="handleUpdate(true)"
+            @click="handleUpdateIsDone"
         />
         <nue-input
             :key="event.id"
@@ -55,7 +47,7 @@ const handleDelete = async () => {
             v-model="inputValue"
             :data-is-done="event.isDone"
             :disabled="updateLoading"
-            @blur="handleUpdate(false)"
+            @blur="handleUpdateName"
         />
         <nue-div theme="actions">
             <nue-icon
@@ -78,6 +70,10 @@ const handleDelete = async () => {
     margin-left: -1rem;
     align-items: center;
     position: relative;
+    transition:
+        background-color 0.2s ease,
+        transform 0.2s ease,
+        opacity 0.2s ease;
 
     .nue-icon--pointer {
         cursor: pointer;
@@ -88,14 +84,23 @@ const handleDelete = async () => {
         height: 100%;
         align-items: center;
         justify-content: center;
-        cursor: grabbing;
-        position: absolute;
-        left: 0;
-        opacity: 0;
+        cursor: grab;
+        position: relative;
+        opacity: 0.6;
         font-weight: bold;
+        color: var(--nue-primary-color-400);
+        transition:
+            opacity 0.2s ease,
+            color 0.2s ease;
+        flex-shrink: 0;
 
         &:hover {
             opacity: 1;
+            color: var(--nue-primary-color-600);
+        }
+
+        &:active {
+            cursor: grabbing;
         }
     }
 
@@ -120,6 +125,7 @@ const handleDelete = async () => {
         visibility: hidden;
         gap: 0.25rem;
         align-items: center;
+        transition: visibility 0.2s ease;
 
         @media (max-width: 445px) {
             display: block;
@@ -137,6 +143,11 @@ const handleDelete = async () => {
         > .nue-icon--drag-icon {
             opacity: 1;
         }
+    }
+
+    &[data-dragging='true'] {
+        opacity: 0.5;
+        transform: scale(0.98);
     }
 }
 </style>

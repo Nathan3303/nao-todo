@@ -3,8 +3,11 @@ export type GetProjectRes = {
     name: string
     description: string
     archivedAt: string
-    preference: any
+    createdAt: string
+    updatedAt: string
 }
+
+export type ListProjectRes = GetProjectRes[]
 
 export type CreateProjectReq = {
     name: string
@@ -18,9 +21,15 @@ export type UpdateProjectReq = {
     description?: string
 }
 
-export type UpdateProjectRes = { projectId: string }
+export type UpdateProjectRes = GetProjectRes['id']
 
-export type ListProjectRes = GetProjectRes[]
+export type DeleteProjectRes = UpdateProjectRes
+
+export type RestoreProjectRes = DeleteProjectRes
+
+export type ArchiveProjectRes = UpdateProjectRes
+
+export type UnarchiveProjectRes = ArchiveProjectRes
 
 export type GetProjectPreferenceRes = {
     id: string
@@ -38,7 +47,5 @@ export type UpdateProjectPreferenceReq = {
     columns: string
 }
 
-export type UpdateProjectPreferenceRes = {
-    projectId: string
-}
+export type UpdateProjectPreferenceRes = UpdateProjectRes
 

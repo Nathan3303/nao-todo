@@ -19,7 +19,8 @@ const useEventsStoreBase = () => {
 
     // @method 获取检查事项
     const getEvent = (eventId: EventViewObject['id']) => {
-        return eventMap.value?.get(eventId)
+        if (!eventMap.value) return void 0
+        return eventMap.value.get(eventId)
     }
 
     // @method 设置检查事项
@@ -29,10 +30,10 @@ const useEventsStoreBase = () => {
 
     // @method 更新检查事项
     const updateEvent = (eventId: EventViewObject['id'], event: UpdateEventViewObject) => {
-        // console.log(event)
         const idx = events.value.findIndex((e) => e.id === eventId)
         if (idx === -1) return
         events.value[idx] = { ...events.value[idx], ...event }
+        console.log(events.value)
     }
 
     // @method 删除检查事项
@@ -53,3 +54,4 @@ const useEventsStoreBase = () => {
 
 export default useEventsStoreBase
 export type EventsStoreBase = ReturnType<typeof useEventsStoreBase>
+

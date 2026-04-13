@@ -19,6 +19,7 @@ export type UpdateEventReq = {
     sortId?: number
 }
 
-export type UpdateEventRes = { eventId: string }
+export type UpdateEventRes = string
 
 export type ListEventRes = GetEventRes[]
+

@@ -38,7 +38,7 @@ const createEvent = async (payload: { value: string }) => {
                 :key="event.id"
                 :event="event"
                 :data-eid="event.id"
-                :on-update="(v) => eventHandler.updateEvent(v.id, v)"
+                :on-update="(id, v) => eventHandler.updateEvent(id, v)"
                 :on-delete="eventHandler.deleteEvent"
             />
         </nue-div>
@@ -60,22 +60,49 @@ const createEvent = async (payload: { value: string }) => {
     &::before {
         content: '';
         position: absolute;
-        left: 1rem;
-        width: calc(100% - 1rem);
-        height: 2px;
-        background-color: orange;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(90deg, var(--nue-primary-color-500), var(--nue-primary-color-300));
         visibility: hidden;
-        z-index: 2;
+        z-index: 10;
+        border-radius: 2px;
+        box-shadow: 0 0 8px rgba(var(--nue-primary-color-rgb), 0.4);
+        transition: opacity 0.15s ease;
     }
 
     &[data-dod='up']::before {
         visibility: visible;
-        top: -1px;
+        top: -2px;
+        animation: pulse-up 0.3s ease;
     }
 
     &[data-dod='down']::before {
         visibility: visible;
-        bottom: -1px;
+        bottom: -2px;
+        animation: pulse-down 0.3s ease;
+    }
+}
+
+@keyframes pulse-up {
+    0% {
+        transform: scaleX(0.5);
+        opacity: 0;
+    }
+    100% {
+        transform: scaleX(1);
+        opacity: 1;
+    }
+}
+
+@keyframes pulse-down {
+    0% {
+        transform: scaleX(0.5);
+        opacity: 0;
+    }
+    100% {
+        transform: scaleX(1);
+        opacity: 1;
     }
 }
 </style>

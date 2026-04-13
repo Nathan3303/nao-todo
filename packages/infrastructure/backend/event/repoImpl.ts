@@ -96,8 +96,7 @@ export const useEventRepository = (requester: Requester): EventRepository => {
             return [null, res.message]
         }
         // 4. 返回
-        const data = res.data as UpdateEventRes
-        return [data.eventId, null]
+        return [res.data as UpdateEventRes, null]
     }
 
     /**
@@ -142,3 +141,4 @@ export const useEventRepository = (requester: Requester): EventRepository => {
 
     return { create, get, update, remove, list }
 }
+

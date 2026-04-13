@@ -24,6 +24,6 @@ export type UpdateCommentReq = {
     isTopUp?: boolean
 }
 
-export type UpdateCommentRes = { commentId: string }
+export type UpdateCommentRes = string
 
 export type ListCommentRes = GetCommentRes[]

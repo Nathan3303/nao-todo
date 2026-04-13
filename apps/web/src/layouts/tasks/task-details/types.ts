@@ -81,9 +81,9 @@ export type TaskDetailsHeaderContext = {
 export type TaskDetailsMainContext = {
     emit: TaskDetailsEmits
     vo: ComputedRef<WithNull<TaskDetailsViewObject>>
-    events: Ref<WithNull<EventViewObject[]>>
+    events: ComputedRef<EventViewObject[]>
     eventProgress: ComputedRef<{ percentage: number; text: string }>
-    comments: Ref<WithNull<CommentViewObject[]>>
+    comments: ComputedRef<CommentViewObject[]>
     isCommenting: Ref<boolean>
     resortEvents: (
         oldEid: EventViewObject['id'],

@@ -202,9 +202,9 @@ export const useTagRepository = (requester: Requester): TagRepository => {
             return [null, res.message]
         }
         // 3. 返回
-        const data = res.data as UpdateTagPreferenceRes
-        return [data.tagId, null]
+        return [res.data as UpdateTagPreferenceRes, null]
     }
 
     return { create, get, update, remove, list, getPreference, updatePreference }
 }
+

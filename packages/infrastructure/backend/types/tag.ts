@@ -3,8 +3,11 @@ export type GetTagRes = {
     name: string
     description: string
     color: string
-    preference: any
+    createdAt: string
+    updatedAt: string
 }
+
+export type ListTagRes = GetTagRes[]
 
 export type CreateTagReq = {
     name: string
@@ -20,14 +23,18 @@ export type UpdateTagReq = {
     color?: string
 }
 
-export type UpdateTagRes = { tagId: string }
+export type UpdateTagRes = GetTagRes['id']
 
-export type ListTagRes = GetTagRes[]
+export type DeleteTagRes = UpdateTagRes
 
 export type GetTagPreferenceRes = {
+    id: string
+    tagId: string
     viewType: string
     getTasksOptions: string
     columns: string
+    createdAt: string
+    updatedAt: string
 }
 
 export type UpdateTagPreferenceReq = {
@@ -36,7 +43,8 @@ export type UpdateTagPreferenceReq = {
     columns: string
 }
 
-export type UpdateTagPreferenceRes = {
-    tagId: string
-}
+export type UpdateTagPreferenceRes = UpdateTagRes
+
+
+
 

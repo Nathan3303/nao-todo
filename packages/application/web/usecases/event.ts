@@ -16,6 +16,7 @@ export interface EventStore {
     updateEvent: (eventId: EventViewObject['id'], event: UpdateEventViewObject) => void
     deleteEvent: (eventId: EventViewObject['id']) => void
     removeEventId: (eventId: EventViewObject['id']) => void
+    events?: EventViewObject[]
 }
 
 export class EventUseCase {
@@ -81,7 +82,8 @@ export class EventUseCase {
         const [updatedId, err] = await this.eventDomain.update(eventId, updateValueObject)
         if (err !== null) return [null, err]
         // 更新本地数据
-        this.store.updateEvent(updatedId, updateEventViewObject)
+        // console.log(updateEventViewObject)
+        this.store.updateEvent(eventId, updateEventViewObject)
         // 返回检查事项ID
         return [updatedId, null]
     }
@@ -104,20 +106,22 @@ export class EventUseCase {
 
     /**
      * 重新排序事件
-     * @param eventIds 事件ID列表
-     * @returns 排序后的事件ID列表
+     * @param originalId 被拖拽事件ID
+     * @param boundId 目标事件ID
+     * @param isBefore 是否插入到目标之前
+     * @returns 排序结果
      */
     async resort(
         originalId: EventViewObject['id'],
         boundId: EventViewObject['id'],
         isBefore: boolean
     ): GoAsync<void> {
-        // 获取检查事项数据
         const originalEvent = this.store.getEvent(originalId)
         const boundEvent = this.store.getEvent(boundId)
         if (!originalEvent || !boundEvent) return '事件不存在'
-        // 处理排序
+
         let originalSortId = originalEvent.sortId
+
         if (isBefore) {
             if (originalSortId >= boundEvent.sortId) {
                 originalSortId = boundEvent.sortId - 1
@@ -127,11 +131,13 @@ export class EventUseCase {
                 originalSortId = boundEvent.sortId + 1
             }
         }
-        // 更新数据库
+
         const [updatedId, err] = await this.update(originalId, { sortId: originalSortId })
         if (err !== null) return err
-        // 更新本地数据
+
         this.store.updateEvent(updatedId, { sortId: originalSortId })
         return null
     }
 }
+
+

@@ -1,6 +1,6 @@
 export type GetTaskRes = {
     id: string
-    projectId: string
+    parentTaskId: string
     name: string
     description: string
     state: string
@@ -8,27 +8,25 @@ export type GetTaskRes = {
     startAt: string
     endAt: string
     tags: string[]
+    projectId: string
+    archivedAt: string
+    starMarkAt: string
+    givenUpAt: string
     createdAt: string
     updatedAt: string
-    deletedAt: string | null
-    archivedAt: string | null
-    starMarkAt: string | null
-    givenUpAt: string | null
-    // isDeleted: boolean
-    // isArchived: boolean
-    // isStarMarked: boolean
-    // isGivenUp: boolean
+    deletedAt: string
 }
 
 export type CreateTaskReq = {
-    projectId?: string
+    parentTaskId?: string
     name: string
     description?: string
     state: string
     priority: string
     startAt?: string
-    endAt: string
-    tags: string[]
+    endAt?: string
+    projectId?: string
+    tags?: string[]
 }
 
 export type CreateTaskRes = GetTaskRes
@@ -64,3 +62,4 @@ export type ListTaskReq = {
 }
 
 export type ListTaskRes = GetTaskRes[]
+
