@@ -11,7 +11,7 @@ import type { TaskKanbanColumnProps, TaskKanbanContext } from './types'
 defineOptions({ name: 'TodoKanbanColumn' })
 const props = defineProps<TaskKanbanColumnProps>()
 
-const { states, fetchTasks, loadMore } = useKanbanColumn(props)
+const { states, columnTasks, fetchTasks, loadMore } = useKanbanColumn(props)
 const kanbanCtx = inject<TaskKanbanContext>(TASK_KANBAN_CONTEXT_KEY)
 
 onMounted(() => fetchTasks())
@@ -26,7 +26,7 @@ onMounted(() => fetchTasks())
         <nue-header class="kanban-column__header">
             <task-state-info :state="category" />
             <nue-text color="var(--nue-primary-color-600)" size="var(--nue-text-xs)">
-                {{ states.tasks.length }}
+                {{ columnTasks.length }}
             </nue-text>
         </nue-header>
         <nue-infinite-scroll @load-more="loadMore" :disabled="states.isDone" trigger-height="2px">
@@ -40,11 +40,12 @@ onMounted(() => fetchTasks())
                     />
                     <task-kanban-column-item
                         v-else
-                        v-for="task in states.tasks"
+                        v-for="task in columnTasks"
                         :key="task.id"
                         :actived="task.id === $route.params.taskId"
                         :columns="columns"
                         :data-taskId="task.id"
+                        :data-todoId="task.id"
                         :task="task"
                         :tags="kanbanCtx.tags.value"
                         draggable="true"

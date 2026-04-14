@@ -1,5 +1,5 @@
 import TaskTable from './table'
-// import TaskKanban from './kanban'
+import TaskKanban from './kanban'
 import TaskList from './list'
 import { FilterSmartList, ProjectSmartList, TagSmartList } from './smartlists'
 import {
@@ -13,7 +13,7 @@ import {
 
 export {
     TaskTable,
-    // TaskKanban,
+    TaskKanban,
     TaskList,
     FilterSmartList,
     ProjectSmartList,

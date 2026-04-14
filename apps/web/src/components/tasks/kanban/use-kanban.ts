@@ -2,13 +2,22 @@ import { computed, provide, reactive } from 'vue'
 import useKanbanDragger from './use-kanban-dragger'
 import { KANBAN_GROUP_BY_NAMES, KANBAN_DEFAULT_GROUP_BY } from './constants'
 import type { TaskKanbanVO, TaskKanbanProps, TaskKanbanEmits, TaskKanbanContext } from './types'
+import type { TaskColumnOptions, GetTasksSortOptions, TaskViewObject } from '@nao-todo/types'
 
 export const TASK_KANBAN_CONTEXT_KEY = Symbol('TASK_KANBAN_CONTEXT_KEY')
 
 const useKanban = (props: TaskKanbanProps, emit: TaskKanbanEmits) => {
+    // @method 处理拖拽放下 - 更新任务状态
+    const handleTaskDrop = (taskId: TaskViewObject['id'], category: TaskViewObject['state']) => {
+        const task = props.tasks.find(t => t.id === taskId)
+        if (task && task.state !== category) {
+            props.taskUseCase.updateTask(taskId, { state: category })
+        }
+    }
+
     // @hook 看板拖拽 Hook
     const { handleDragStart, handleDragOver, handleDragEnter, handleDragEnd, handleDrop } =
-        useKanbanDragger()
+        useKanbanDragger(handleTaskDrop)
 
     // @states
     const states = reactive<TaskKanbanVO>({
@@ -24,12 +33,72 @@ const useKanban = (props: TaskKanbanProps, emit: TaskKanbanEmits) => {
         states.kanbanColumns = KANBAN_GROUP_BY_NAMES[groupBy] || []
     }
 
+    // @method 显示任务详情
+    const showTaskDetails = (taskId: TaskViewObject['id']) => {
+        emit('showTaskDetails', taskId)
+    }
+
+    // @method 删除任务
+    const deleteTask = (taskId: TaskViewObject['id']) => {
+        emit('deleteTask', taskId)
+    }
+
+    // @method 恢复任务
+    const restoreTask = (taskId: TaskViewObject['id']) => {
+        emit('restoreTask', taskId)
+    }
+
+    // @method 完成任务
+    const finishTask = (taskId: TaskViewObject['id']) => {
+        emit('finishTask', taskId)
+    }
+
+    // @method 取消完成任务
+    const unfinishTask = (taskId: TaskViewObject['id']) => {
+        emit('unfinishTask', taskId)
+    }
+
+    // @method 删除或恢复任务
+    const deleteOrRestore = (taskId: TaskViewObject['id'], isDeleted: boolean) => {
+        if (isDeleted) {
+            restoreTask(taskId)
+        } else {
+            deleteTask(taskId)
+        }
+    }
+
+    // @method 更新列显示
+    const updateColumns = (key: keyof TaskColumnOptions, value: boolean) => {
+        emit('updateColumns', key, value)
+    }
+
+    // @method 更新排序选项
+    const updateSortOptions = (field: GetTasksSortOptions['field'], order: GetTasksSortOptions['order']) => {
+        emit('updateSortOptions', field, order)
+    }
+
+    // @method 清除排序选项
+    const clearSortOptions = () => {
+        emit('clearSortOptions')
+    }
+
     // @provide
     provide<TaskKanbanContext>(TASK_KANBAN_CONTEXT_KEY, {
         emit,
         tags: computed(() => props.tags),
+        columns: computed(() => props.columns),
+        sortOptions: computed(() => props.sortOptions),
         getProjectName: props.projectNameGetter,
-        getColumnLabel: props.columnLabelGetter
+        getColumnLabel: props.columnLabelGetter,
+        showTaskDetails,
+        deleteTask,
+        restoreTask,
+        finishTask,
+        unfinishTask,
+        deleteOrRestore,
+        updateColumns,
+        updateSortOptions,
+        clearSortOptions
     })
 
     // @returns

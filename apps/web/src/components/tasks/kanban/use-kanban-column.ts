@@ -1,29 +1,33 @@
-import useTasksLoader from '@/infrastructure/hooks/tasks-view/use-task-loader'
-import type { TaskKanbanColumnProps } from './types'
+import { computed, reactive } from 'vue'
+import type { TaskKanbanColumnProps, TaskViewObject } from './types'
 
 const useKanbanColumn = (props: TaskKanbanColumnProps) => {
-    // @states
-    // const states = reactive<TaskKanbanColumnVO>({})
+    const states = reactive({
+        tasks: [] as TaskViewObject[],
+        loading: false,
+        error: '',
+        isDone: true,
+        pagination: { page: 1 }
+    })
 
-    // @hook Use tasks loader
-    const { states, loadAndReplace, loadAndPush } = useTasksLoader(props.taskLister)
+    const columnTasks = computed(() =>
+        props.tasks.filter((task) => task.state === props.category)
+    )
 
-    // @method 首次加载处理函数
     const fetchTasks = async () => {
-        states.pagination.page = 1
+        states.loading = true
+        states.error = ''
+        states.tasks = columnTasks.value
+        states.loading = false
         states.isDone = true
-        await loadAndReplace({ state: props.category })
-        states.isDone = false
     }
 
-    // @method 加载更多处理函数
     const loadMore = async () => {
-        await loadAndPush({ state: props.category })
     }
 
-    // @returns
     return {
         states,
+        columnTasks,
         fetchTasks,
         loadMore
     }

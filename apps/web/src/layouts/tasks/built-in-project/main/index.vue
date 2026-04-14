@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, onUnmounted } from 'vue'
-import { TableViewAdapter, ListViewAdapter } from '@/layouts/tasks/view-adapters'
+import { TableViewAdapter, ListViewAdapter, KanbanViewAdapter } from '@/layouts/tasks/view-adapters'
 import type { BuiltInProjectViewContext } from '../types'
 import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import { NueMessage } from 'nue-ui'
@@ -11,7 +11,8 @@ defineOptions({
     name: 'TasksMainProjectContent',
     components: {
         'table-view': TableViewAdapter,
-        'list-view': ListViewAdapter
+        'list-view': ListViewAdapter,
+        'kanban-view': KanbanViewAdapter
     }
 })
 const props = defineProps<{ viewType: string }>()

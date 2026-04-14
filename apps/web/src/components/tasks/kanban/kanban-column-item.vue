@@ -11,14 +11,12 @@ import {
 import { TASK_KANBAN_CONTEXT_KEY } from './use-kanban'
 import type {
     TaskKanbanColumnItemProps,
-    TaskKanbanColumnItemEmits,
     TaskKanbanContext
 } from './types'
 import type { TaskColumnOptions } from '@nao-todo/types'
 
 defineOptions({ name: 'TaskKanbanColumnItem' })
 const props = defineProps<TaskKanbanColumnItemProps>()
-const emit = defineEmits<TaskKanbanColumnItemEmits>()
 
 const kanbanCtx = inject<TaskKanbanContext>(TASK_KANBAN_CONTEXT_KEY)
 
@@ -38,24 +36,24 @@ const isAttrsNone = computed(() => {
 const isDone = computed(() => props.task.state === 'done')
 
 const handleClick = () => {
-    const taskId = props.task.id
-    emit('click', taskId)
+    if (kanbanCtx) {
+        kanbanCtx.showTaskDetails(props.task.id)
+    }
 }
 
 const handleDelete = () => {
-    const { id: taskId, isDeleted } = props.task
-    if (isDeleted) {
-        emit('restore', taskId)
-    } else {
-        emit('delete', taskId)
+    if (kanbanCtx) {
+        kanbanCtx.deleteOrRestore(props.task.id, props.task.isDeleted)
     }
 }
 
 const handleFinish = () => {
-    if (isDone.value) {
-        emit('unfinish', props.task.id)
-    } else {
-        emit('finish', props.task.id)
+    if (kanbanCtx) {
+        if (isDone.value) {
+            kanbanCtx.unfinishTask(props.task.id)
+        } else {
+            kanbanCtx.finishTask(props.task.id)
+        }
     }
 }
 </script>
@@ -138,4 +136,3 @@ const handleFinish = () => {
         </nue-div>
     </nue-div>
 </template>
-

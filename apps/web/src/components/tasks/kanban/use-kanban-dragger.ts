@@ -1,8 +1,8 @@
 import { ref } from 'vue'
-import type { Task } from '@nao-todo/types'
+import type { TaskViewObject } from '@nao-todo/types'
 
-const useKanbanDragger = () => {
-    const draggingTodoId = ref<Task['id']>('')
+const useKanbanDragger = (onDrop?: (taskId: TaskViewObject['id'], category: TaskViewObject['state']) => void) => {
+    const draggingTodoId = ref<TaskViewObject['id']>('')
 
     const handleRemoveDragOverClass = () => {
         document.querySelectorAll('.kanban-column__main--drag-over').forEach((element) => {
@@ -34,7 +34,7 @@ const useKanbanDragger = () => {
 
     const handleDragStart = (event: DragEvent) => {
         const target = event.target as HTMLElement
-        draggingTodoId.value = target.dataset.todoid as string
+        draggingTodoId.value = target.dataset.todoid || target.dataset.taskid || ''
     }
 
     const handleDragOver = (event: DragEvent) => {
@@ -57,12 +57,12 @@ const useKanbanDragger = () => {
         handleRemoveDragOverClass()
         const element = getTargetNode(event.target as HTMLElement)
         if (!element) return
-        const category = element.dataset.category as Task['state']
+        const category = element.dataset.category as TaskViewObject['state']
         if (!category) return
-        // const todoId = draggingTodoId.value
-        // const todo = todos.value.find((todo) => todo.id === todoId)
-        // if (todo && todo.state === category) return
-        // todoStore.updateTodoByUpdateQueue(todoId, { state: category })
+        const todoId = draggingTodoId.value
+        if (todoId && onDrop) {
+            onDrop(todoId, category)
+        }
     }
 
     return {

@@ -1,5 +1,5 @@
-import type { TaskApp } from '@nao-todo/application/task'
-import type { GetTasksSortOptions, TagVO, TaskColumnOptions, TaskVO } from '@nao-todo/types'
+import type { TaskUseCase } from '@nao-todo/application/web/usecases/task'
+import type { GetTasksSortOptions, TagViewObject, TaskColumnOptions, TaskViewObject } from '@nao-todo/types'
 import type { ComputedRef } from 'vue'
 
 /**
@@ -12,68 +12,72 @@ export type TaskKanbanVO = {
 }
 
 export type TaskKanbanProps = {
-    tags: TagVO[]
+    tags: TagViewObject[]
+    tasks: TaskViewObject[]
     columns: TaskColumnOptions
     sortOptions: GetTasksSortOptions
-    taskLister: TaskApp['list']
+    taskUseCase: TaskUseCase
     columnLabelGetter: (key: string) => string
-    projectNameGetter: (projectId: TaskVO['projectId']) => string
+    projectNameGetter: (projectId: TaskViewObject['projectId']) => string
 }
 
 export type TaskKanbanEmits = {
-    (e: 'showTaskDetails', taskId: TaskVO['id']): void
-    (e: 'updateColumns', key: string, value: boolean): void
-    (e: 'updateSortOptions', newSortOptions: GetTasksSortOptions): void
+    (e: 'showTaskDetails', taskId: TaskViewObject['id']): void
+    (e: 'updateColumns', key: keyof TaskColumnOptions, value: boolean): void
+    (e: 'updateSortOptions', field: GetTasksSortOptions['field'], order: GetTasksSortOptions['order']): void
     (e: 'clearSortOptions'): void
-    (e: 'deleteTask', taskId: TaskVO['id']): void
-    (e: 'restoreTask', taskId: TaskVO['id']): void
-    (e: 'finishTask', taskId: TaskVO['id']): void
-    (e: 'unfinishTask', taskId: TaskVO['id']): void
+    (e: 'deleteTask', taskId: TaskViewObject['id']): void
+    (e: 'restoreTask', taskId: TaskViewObject['id']): void
+    (e: 'finishTask', taskId: TaskViewObject['id']): void
+    (e: 'unfinishTask', taskId: TaskViewObject['id']): void
 }
 
 export type TaskKanbanContext = {
     emit: TaskKanbanEmits
-    tags: ComputedRef<TagVO[]>
+    tags: ComputedRef<TagViewObject[]>
+    columns: ComputedRef<TaskColumnOptions>
+    sortOptions: ComputedRef<GetTasksSortOptions>
     getProjectName: TaskKanbanProps['projectNameGetter']
     getColumnLabel: TaskKanbanProps['columnLabelGetter']
+    showTaskDetails: (taskId: TaskViewObject['id']) => void
+    deleteTask: (taskId: TaskViewObject['id']) => void
+    restoreTask: (taskId: TaskViewObject['id']) => void
+    finishTask: (taskId: TaskViewObject['id']) => void
+    unfinishTask: (taskId: TaskViewObject['id']) => void
+    deleteOrRestore: (taskId: TaskViewObject['id'], isDeleted: boolean) => void
+    updateColumns: (key: keyof TaskColumnOptions, value: boolean) => void
+    updateSortOptions: (field: GetTasksSortOptions['field'], order: GetTasksSortOptions['order']) => void
+    clearSortOptions: () => void
 }
 
 /**
  * Task Kanban Column
  */
 
-// export type TaskKanbanColumnVO = {}
-
 export type TaskKanbanColumnProps = {
     category: string
     columns: TaskColumnOptions
     disabled?: boolean
     displayable?: boolean
-    taskLister: TaskApp['list']
+    tasks: TaskViewObject[]
 }
-
-// export type TodoKanbanColumnEmits = TodoKanbanEmits & {
-//     (event: 'heart-todo', todoId: Todo['id']): void
-//     (event: 'load-more'): void
-//     (event: 'filter-todos-by-category', category: string): void
-// }
 
 /**
  * Task Kanban Column Item
  */
 
 export type TaskKanbanColumnItemProps = {
-    task: TaskVO
-    tags: TagVO[]
+    task: TaskViewObject
+    tags: TagViewObject[]
     actived?: boolean
     columns?: TaskColumnOptions
 }
 
 export type TaskKanbanColumnItemEmits = {
-    (event: 'click', taskId: TaskVO['id']): void
-    (event: 'delete', taskId: TaskVO['id']): void
-    (event: 'restore', taskId: TaskVO['id']): void
-    (event: 'finish', taskId: TaskVO['id']): void
-    (event: 'unfinish', taskId: TaskVO['id']): void
-    (event: 'heart', taskId: TaskVO['id']): void
+    (event: 'click', taskId: TaskViewObject['id']): void
+    (event: 'delete', taskId: TaskViewObject['id']): void
+    (event: 'restore', taskId: TaskViewObject['id']): void
+    (event: 'finish', taskId: TaskViewObject['id']): void
+    (event: 'unfinish', taskId: TaskViewObject['id']): void
+    (event: 'heart', taskId: TaskViewObject['id']): void
 }

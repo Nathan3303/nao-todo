@@ -1,3 +1,3 @@
-import kanbanViewAdapter from './kanban-view-adapter.vue'
+import KanbanViewAdapter from './kanban-view-adapter.vue'
 
-export { kanbanViewAdapter }
+export { KanbanViewAdapter }
