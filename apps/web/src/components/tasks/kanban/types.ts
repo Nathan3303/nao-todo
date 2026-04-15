@@ -1,5 +1,10 @@
 import type { TaskUseCase } from '@nao-todo/application/web/usecases/task'
-import type { GetTasksSortOptions, TagViewObject, TaskColumnOptions, TaskViewObject } from '@nao-todo/types'
+import type {
+    GetTasksSortOptions,
+    TagViewObject,
+    TaskColumnOptions,
+    TaskViewObject
+} from '@nao-todo/types'
 import type { ComputedRef } from 'vue'
 
 /**
@@ -24,7 +29,11 @@ export type TaskKanbanProps = {
 export type TaskKanbanEmits = {
     (e: 'showTaskDetails', taskId: TaskViewObject['id']): void
     (e: 'updateColumns', key: keyof TaskColumnOptions, value: boolean): void
-    (e: 'updateSortOptions', field: GetTasksSortOptions['field'], order: GetTasksSortOptions['order']): void
+    (
+        e: 'updateSortOptions',
+        field: GetTasksSortOptions['field'],
+        order: GetTasksSortOptions['order']
+    ): void
     (e: 'clearSortOptions'): void
     (e: 'deleteTask', taskId: TaskViewObject['id']): void
     (e: 'restoreTask', taskId: TaskViewObject['id']): void
@@ -46,7 +55,10 @@ export type TaskKanbanContext = {
     unfinishTask: (taskId: TaskViewObject['id']) => void
     deleteOrRestore: (taskId: TaskViewObject['id'], isDeleted: boolean) => void
     updateColumns: (key: keyof TaskColumnOptions, value: boolean) => void
-    updateSortOptions: (field: GetTasksSortOptions['field'], order: GetTasksSortOptions['order']) => void
+    updateSortOptions: (
+        field: GetTasksSortOptions['field'],
+        order: GetTasksSortOptions['order']
+    ) => void
     clearSortOptions: () => void
 }
 
@@ -81,3 +93,4 @@ export type TaskKanbanColumnItemEmits = {
     (event: 'unfinish', taskId: TaskViewObject['id']): void
     (event: 'heart', taskId: TaskViewObject['id']): void
 }
+

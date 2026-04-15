@@ -38,6 +38,11 @@ onMounted(() => fetchTasks())
                         theme="no-image"
                         :description="states.error"
                     />
+                    <nue-empty
+                        v-else-if="columnTasks.length === 0"
+                        theme="no-image"
+                        description="无待办任务"
+                    />
                     <task-kanban-column-item
                         v-else
                         v-for="task in columnTasks"

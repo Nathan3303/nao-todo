@@ -1,3 +1,5 @@
+@import './animation.css';
+
 @import './div.css';
 @import './confirm.css';
 @import './textarea.css';
@@ -5,6 +7,9 @@
 @import './badge.css';
 @import './link.css';
 @import './collapse.css';
+@import './overlay.css';
+@import './prompt.css';
+@import './drawer.css';
 
 html.nue-html {
     --nue-primary-font-family:
@@ -19,4 +24,3 @@ html.nue-html {
         'lnum' 0;
     font-kerning: none;
 }
-

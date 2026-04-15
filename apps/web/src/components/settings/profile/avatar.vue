@@ -73,21 +73,23 @@ const handleAvatarFileInputChange = async () => {
 }
 
 const handleSignOut = async () => {
-    return await NueConfirm({
+    const [isByCancel] = await NueConfirm({
         title: '确认退出登录吗？',
         content: '退出登录后，您需要重新登录才能继续使用应用。',
         confirmButtonText: '退出登录',
         cancelButtonText: '取消',
-        onConfirm: async () => {
-            const err = await authUseCase.signOut()
-            if (err !== null) {
-                NueMessage.error('退出登录失败' + `(${unwrapError(err)})`)
-                return
-            }
-            NueMessage.success('退出登录成功')
-            await router.replace('/auth/signin')
-        }
+        // overlayAnimation: 'fade-in-with-blur',
+        // overlayCloseAnimation: 'fade-out-with-blur'
     })
+    if (isByCancel) return
+
+    const err = await authUseCase.signOut()
+    if (err !== null) {
+        NueMessage.error('退出登录失败' + `(${unwrapError(err)})`)
+        return
+    }
+    NueMessage.success('退出登录成功')
+    await router.replace('/auth/signin')
 }
 </script>
 

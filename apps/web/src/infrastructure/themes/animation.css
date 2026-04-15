@@ -1,0 +1,22 @@
+@keyframes fade-in-with-blur {
+    0% {
+        opacity: 0;
+        backdrop-filter: blur(0px);
+    }
+    100% {
+        opacity: 1;
+        backdrop-filter: blur(2px);
+    }
+}
+
+@keyframes fade-out-with-blur {
+    0% {
+        opacity: 1;
+        backdrop-filter: blur(2px);
+    }
+    100% {
+        opacity: 0;
+        backdrop-filter: blur(0px);
+    }
+}
+

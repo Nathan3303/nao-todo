@@ -1,5 +1,6 @@
 import { computed, reactive } from 'vue'
-import type { TaskKanbanColumnProps, TaskViewObject } from './types'
+import type { TaskKanbanColumnProps } from './types'
+import type { TaskViewObject } from '@nao-todo/types'
 
 const useKanbanColumn = (props: TaskKanbanColumnProps) => {
     const states = reactive({
@@ -10,9 +11,7 @@ const useKanbanColumn = (props: TaskKanbanColumnProps) => {
         pagination: { page: 1 }
     })
 
-    const columnTasks = computed(() =>
-        props.tasks.filter((task) => task.state === props.category)
-    )
+    const columnTasks = computed(() => props.tasks.filter((task) => task.state === props.category))
 
     const fetchTasks = async () => {
         states.loading = true
@@ -22,8 +21,7 @@ const useKanbanColumn = (props: TaskKanbanColumnProps) => {
         states.isDone = true
     }
 
-    const loadMore = async () => {
-    }
+    const loadMore = async () => {}
 
     return {
         states,
@@ -34,3 +32,4 @@ const useKanbanColumn = (props: TaskKanbanColumnProps) => {
 }
 
 export default useKanbanColumn
+
