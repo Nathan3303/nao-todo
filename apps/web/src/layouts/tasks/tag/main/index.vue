@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { TableViewAdapter, ListViewAdapter } from '@/layouts/tasks/view-adapters'
+import { TableViewAdapter, ListViewAdapter, KanbanViewAdapter } from '@/layouts/tasks/view-adapters'
 import { TAG_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import { inject, onMounted, onUnmounted } from 'vue'
 import { NueMessage } from 'nue-ui'
@@ -12,7 +12,8 @@ defineOptions({
     name: 'TasksMainTagContent',
     components: {
         'table-view': TableViewAdapter,
-        'list-view': ListViewAdapter
+        'list-view': ListViewAdapter,
+        'kanban-view': KanbanViewAdapter
     }
 })
 const props = defineProps<{ viewType: string }>()
@@ -82,3 +83,4 @@ onUnmounted(() => {
         </nue-content>
     </nue-main>
 </template>
+
