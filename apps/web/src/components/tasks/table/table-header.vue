@@ -1,77 +1,128 @@
 <script setup lang="ts">
-import { inject } from 'vue'
+import { inject, ref, computed } from 'vue'
 import OrderButton from './order-button.vue'
-import { type TaskTableContext } from './types'
+import { type TaskTableContext, type TableColumnConfig } from './types'
 import { TASK_TABLE_CONTEXT_KEY } from './use-table'
 
 defineOptions({ name: 'TaskTableHeader' })
 
 const tableContext = inject<TaskTableContext>(TASK_TABLE_CONTEXT_KEY)
+const draggingIndex = ref<number | null>(null)
+const dragOverIndex = ref<number | null>(null)
+const resizingColumn = ref<string | null>(null)
+const startX = ref<number>(0)
+const startWidth = ref<number>(0)
+
+const visibleColumns = computed(() => {
+    return tableContext?.visibleColumns.value || []
+})
+
+const handleDragStart = (e: DragEvent, index: number) => {
+    e.dataTransfer?.setData('text/plain', index.toString())
+    if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = 'move'
+    }
+    draggingIndex.value = index
+}
+
+const handleDragOver = (e: DragEvent, index: number) => {
+    e.preventDefault()
+    e.dataTransfer!.dropEffect = 'move'
+    dragOverIndex.value = index
+}
+
+const handleDragLeave = () => {
+    dragOverIndex.value = null
+}
+
+const handleDrop = (e: DragEvent, targetIndex: number) => {
+    e.preventDefault()
+    const fromIndex = parseInt(e.dataTransfer?.getData('text/plain') || '0')
+    if (tableContext) {
+        tableContext.columnReorder({ fromIndex, toIndex: targetIndex })
+    }
+    draggingIndex.value = null
+    dragOverIndex.value = null
+}
+
+const handleDragEnd = () => {
+    draggingIndex.value = null
+    dragOverIndex.value = null
+}
+
+const handleResizeStart = (e: MouseEvent, columnKey: string, column: TableColumnConfig) => {
+    e.preventDefault()
+    e.stopPropagation()
+    resizingColumn.value = columnKey
+    startX.value = e.clientX
+    startWidth.value = column.width ?? column.defaultWidth
+    document.addEventListener('mousemove', handleResizeMove)
+    document.addEventListener('mouseup', handleResizeEnd)
+}
+
+const handleResizeMove = (e: MouseEvent) => {
+    if (!resizingColumn.value || !tableContext) return
+    const deltaX = e.clientX - startX.value
+    const newWidth = startWidth.value + deltaX
+    const column = visibleColumns.value.find((c) => c.key === resizingColumn.value)
+    if (column) {
+        const clampedWidth = Math.max(column.minWidth, Math.min(column.maxWidth, newWidth))
+        tableContext.columnResize({ columnKey: resizingColumn.value, newWidth: clampedWidth })
+    }
+}
+
+const handleResizeEnd = () => {
+    resizingColumn.value = null
+    document.removeEventListener('mousemove', handleResizeMove)
+    document.removeEventListener('mouseup', handleResizeEnd)
+}
+
+const getColumnStyle = (column: TableColumnConfig) => {
+    const width = column.width ?? column.defaultWidth
+    return {
+        width: `${width}px`,
+        minWidth: `${column.minWidth}px`,
+        maxWidth: `${column.maxWidth}px`
+    }
+}
+
+const getColumnTypeClass = (key: string) => {
+    if (['createdAt', 'updatedAt', 'startAt', 'endAt', 'deletedAt'].includes(key)) {
+        return 'col-datetime'
+    }
+    return 'col-attr'
+}
 </script>
 
 <template>
     <nue-div v-if="tableContext" class="todo-table__header">
-        <div class="todo-table__header__col col-first">
-            <order-button prop="name">
-                {{ tableContext.getColumnLabel('name') }}
-            </order-button>
-        </div>
         <div
-            v-if="tableContext.columns.value.createdAt"
-            class="todo-table__header__col col-datetime"
+            v-for="(column, index) in visibleColumns"
+            :key="column.key"
+            class="todo-table__header__col"
+            :class="[
+                column.key === 'name' ? 'col-first' : getColumnTypeClass(column.key),
+                { dragging: draggingIndex === index },
+                { 'drag-over': dragOverIndex === index }
+            ]"
+            :style="getColumnStyle(column)"
+            :draggable="column.key !== 'name'"
+            @dragstart="column.key !== 'name' ? handleDragStart($event, index) : null"
+            @dragover="column.key !== 'name' ? handleDragOver($event, index) : null"
+            @dragleave="handleDragLeave"
+            @drop="column.key !== 'name' ? handleDrop($event, index) : null"
+            @dragend="handleDragEnd"
         >
-            <order-button prop="createdAt">
-                {{ tableContext.getColumnLabel('createdAt') }}
+            <order-button :prop="column.key">
+                {{ tableContext.getColumnLabel(column.key) }}
             </order-button>
-        </div>
-        <div
-            v-if="tableContext.columns.value.updatedAt"
-            class="todo-table__header__col col-datetime"
-        >
-            <order-button prop="updatedAt">
-                {{ tableContext.getColumnLabel('updatedAt') }}
-            </order-button>
-        </div>
-        <div v-if="tableContext.columns.value.startAt" class="todo-table__header__col col-datetime">
-            <order-button prop="startAt">
-                {{ tableContext.getColumnLabel('startAt') }}
-            </order-button>
-        </div>
-        <div v-if="tableContext.columns.value.endAt" class="todo-table__header__col col-datetime">
-            <order-button prop="endAt">
-                {{ tableContext.getColumnLabel('endAt') }}
-            </order-button>
-        </div>
-        <div v-if="tableContext.columns.value.priority" class="todo-table__header__col col-attr">
-            <order-button prop="priority">
-                {{ tableContext.getColumnLabel('priority') }}
-            </order-button>
-        </div>
-        <div v-if="tableContext.columns.value.state" class="todo-table__header__col col-attr">
-            <order-button prop="state">
-                {{ tableContext.getColumnLabel('state') }}
-            </order-button>
-        </div>
-        <div v-if="tableContext.columns.value.project" class="todo-table__header__col col-attr">
-            <order-button prop="project">
-                {{ tableContext.getColumnLabel('project') }}
-            </order-button>
-        </div>
-        <div
-            v-if="tableContext.columns.value.deletedAt"
-            class="todo-table__header__col col-datetime"
-        >
-            <order-button prop="deletedAt">
-                {{ tableContext.getColumnLabel('deletedAt') }}
-            </order-button>
+            <div
+                v-if="column.key !== 'deletedAt'"
+                class="column-resizer"
+                @mousedown="handleResizeStart($event, column.key, column)"
+            />
         </div>
         <div class="todo-table__header__col col-actions">
-            <!-- <nue-icon
-                v-if="tableContext.getOptions.value.sort"
-                color="gray"
-                name="clear"
-                @click="tableContext.clearSortOptions()"
-            /> -->
             <nue-icon name="more" style="opacity: 0" />
         </div>
     </nue-div>

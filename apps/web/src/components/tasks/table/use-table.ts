@@ -1,7 +1,8 @@
-import { computed, provide } from 'vue'
+import { computed, provide, watch } from 'vue'
 import type { TaskTableContext, TaskTableEmits, TaskTableProps } from './types'
 import type { GetTasksSortOptions, TaskColumnOptions, TaskViewObject } from '@nao-todo/types'
 import useMultiSelect from './use-multi-select'
+import useColumnConfig from './use-column-config'
 import dayjs from 'dayjs'
 
 export const TASK_TABLE_CONTEXT_KEY = Symbol('TASK_TABLE_CONTEXT_KEY')
@@ -10,6 +11,21 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
     // @hook Use multi select
     const { selectRange, showMultiSelectPanel, clearMultiSelect, isInMultiSelectRange } =
         useMultiSelect(props, emit)
+
+    // @hook Use column config
+    const {
+        layoutConfig,
+        visibleColumns,
+        reorderColumns,
+        resizeColumn,
+        resetConfig,
+        syncFromProps
+    } = useColumnConfig(props.layoutConfig)
+
+    // @watch Sync from props
+    watch(() => props.columns, (newColumns) => {
+        syncFromProps(newColumns)
+    }, { immediate: true, deep: true })
 
     // @computed 计算标签显示数量 - 用于响应式变化时变化标签显示个数
     const tagBarClamped = computed(() => {
@@ -30,9 +46,7 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
 
     // @method 显示待办详情
     const showTaskDetails = (taskId: TaskViewObject['id'], idx: number) => {
-        // 恢复多选参数 - 取消多选
         selectRange.original = selectRange.start = selectRange.end = idx
-        // 显示详情
         emit('showTaskDetails', taskId)
     }
 
@@ -50,6 +64,26 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         emit('deleteTaskPermanently', taskId)
     }
 
+    // @method 处理列排序
+    const handleColumnReorder = (payload: any) => {
+        reorderColumns(payload)
+        emit('columnReorder', payload)
+        emit('updateLayoutConfig', layoutConfig.value)
+    }
+
+    // @method 处理列宽调整
+    const handleColumnResize = (payload: any) => {
+        resizeColumn(payload)
+        emit('columnResize', payload)
+        emit('updateLayoutConfig', layoutConfig.value)
+    }
+
+    // @method 重置表格配置
+    const handleResetTableConfig = () => {
+        resetConfig()
+        emit('updateLayoutConfig', layoutConfig.value)
+    }
+
     // @provide 任务表格上下文
     provide<TaskTableContext>(TASK_TABLE_CONTEXT_KEY, {
         tasks: computed(() => props.tasks),
@@ -57,7 +91,8 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         getOptions: computed(() => props.getOptions),
         tags: computed(() => props.tags),
         tagBarClamped,
-        // states: computed(() => loaderStates),
+        layoutConfig: computed(() => layoutConfig.value),
+        visibleColumns: computed(() => visibleColumns.value),
         showTaskDetails,
         updateColumns: (key: keyof TaskColumnOptions, value: boolean) =>
             emit('updateColumns', key, value),
@@ -75,14 +110,11 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         showMultiSelectPanel,
         clearMultiSelect,
         getProjectName: props.projectNameGetter,
-        deleteOrRestore
-        // handleUpdatePage,
-        // handleUpdatePerPage
+        deleteOrRestore,
+        columnReorder: handleColumnReorder,
+        columnResize: handleColumnResize,
+        resetTableConfig: handleResetTableConfig
     })
 
-    // @returns 返回值
-    return {
-        // states: loaderStates, fetchTasks
-    }
+    return {}
 }
-

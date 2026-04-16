@@ -7,6 +7,33 @@ import type {
 } from '@nao-todo/types'
 import type { ComputedRef } from 'vue'
 
+export type TableColumnConfig = {
+    key: keyof TaskColumnOptions
+    label: string
+    visible: boolean
+    width: number | null
+    minWidth: number
+    maxWidth: number
+    defaultWidth: number
+}
+
+export type TableLayoutConfig = {
+    columns: TableColumnConfig[]
+    tableId: string
+    version: string
+    updatedAt: string
+}
+
+export type ColumnReorderPayload = {
+    fromIndex: number
+    toIndex: number
+}
+
+export type ColumnResizePayload = {
+    columnKey: keyof TaskColumnOptions
+    newWidth: number
+}
+
 export type TaskTableProps = {
     tags: TagViewObject[]
     tasks: TaskViewObject[]
@@ -15,6 +42,7 @@ export type TaskTableProps = {
     loading: boolean
     columnLabelGetter: (key: string) => string
     projectNameGetter: (projectId: string) => string
+    layoutConfig?: TableLayoutConfig
 }
 
 export type TaskTableEmits = {
@@ -30,6 +58,9 @@ export type TaskTableEmits = {
     (e: 'deleteTask', taskId: TaskViewObject['id']): void
     (e: 'restoreTask', taskId: TaskViewObject['id']): void
     (e: 'deleteTaskPermanently', taskId: TaskViewObject['id']): void
+    (e: 'columnReorder', payload: ColumnReorderPayload): void
+    (e: 'columnResize', payload: ColumnResizePayload): void
+    (e: 'updateLayoutConfig', config: TableLayoutConfig): void
 }
 
 export type TaskTableContext = {
@@ -38,6 +69,8 @@ export type TaskTableContext = {
     getOptions: ComputedRef<GetTasksOptions>
     tags: ComputedRef<TagViewObject[]>
     tagBarClamped: ComputedRef<number>
+    layoutConfig: ComputedRef<TableLayoutConfig | undefined>
+    visibleColumns: ComputedRef<TableColumnConfig[]>
     // states: ComputedRef<TaskTableVO>
     showTaskDetails: (taskId: TaskViewObject['id'], idx: number) => void
     updateColumns: (key: keyof TaskColumnOptions, value: boolean) => void
@@ -56,6 +89,9 @@ export type TaskTableContext = {
     clearMultiSelect: (fullCLear: boolean) => void
     getProjectName: (projectId: string) => string
     deleteOrRestore: (taskId: TaskViewObject['id'], isDelete: boolean) => void
+    columnReorder: (payload: ColumnReorderPayload) => void
+    columnResize: (payload: ColumnResizePayload) => void
+    resetTableConfig: () => void
     // handleUpdatePage: (page: number) => void
     // handleUpdatePerPage: (limit: number) => void
 }

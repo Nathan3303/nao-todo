@@ -38,7 +38,7 @@
                 top: 0;
                 background-color: var(--nue-primary-color-0);
                 border-bottom: 1px solid var(--nue-border-color);
-                min-width: var(--content-max-width);
+                width: fit-content;
                 z-index: 1;
 
                 .col-first *,
@@ -48,14 +48,72 @@
                     color: var(--nue-primary-color-800);
                     flex: auto;
                 }
+
+                .todo-table__header__col {
+                    position: relative;
+                    transition: background-color 0.2s;
+                    display: flex;
+                    align-items: center;
+
+                    &:not(.col-first) {
+                        cursor: grab;
+
+                        &:active {
+                            cursor: grabbing;
+                        }
+                    }
+
+                    &.col-first {
+                        cursor: default;
+
+                        :deep(.nue-text) {
+                            cursor: default !important;
+                        }
+                    }
+
+                    &.dragging {
+                        opacity: 0.5;
+                    }
+
+                    &.drag-over {
+                        border-left: 2px solid var(--nue-primary-color-500);
+                    }
+                }
+
+                .column-resizer {
+                    position: absolute;
+                    right: 0;
+                    top: 0;
+                    bottom: 0;
+                    width: 8px;
+                    cursor: col-resize;
+                    background: transparent;
+                    transition: background 0.2s;
+                    z-index: 2;
+
+                    &::before {
+                        content: '';
+                        position: absolute;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        top: 0;
+                        bottom: 0;
+                        width: 1px;
+                        background: var(--nue-primary-color-200);
+                        transition: background 0.2s;
+                    }
+
+                    &:hover::before {
+                        background: var(--nue-primary-color-500);
+                    }
+                }
             }
 
             .todo-table__main {
                 display: flex;
                 flex-direction: column;
                 gap: 0;
-                min-width: var(--content-max-width);
-                overflow: hidden;
+                width: fit-content;
 
                 .todo-table__main__row {
                     align-items: center;
@@ -65,6 +123,7 @@
                     padding: 8px 12px;
                     position: relative;
                     min-height: 40px;
+                    width: 100%;
 
                     &:hover {
                         border: 1px solid var(--nue-primary-color-200);
@@ -169,21 +228,21 @@
             }
 
             .col-first {
-                flex: 1;
+                flex: none;
             }
 
             .col-datetime {
-                max-width: 10rem;
-                flex: 1;
+                flex: none;
             }
 
             .col-attr {
-                max-width: 5rem;
-                flex: 1;
+                flex: none;
             }
 
             .col-actions {
-                max-width: 1rem;
+                flex: none;
+                width: 2rem;
+                max-width: 2rem;
             }
         }
     }
