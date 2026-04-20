@@ -2,7 +2,7 @@
 import { inject } from 'vue'
 import { storeToRefs } from 'pinia'
 import { NaoRouterLink } from '@nao-todo/components'
-import useUserStore from '@nao-todo/application/web/stores/user-store'
+import useUserStore from '@/stores/user-store'
 import { APP_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import type { AppContext } from '@/app'
 

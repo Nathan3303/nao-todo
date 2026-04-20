@@ -2,8 +2,7 @@ import { computed, inject, provide, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import type { BuiltInProjectViewProps, BuiltInProjectViewContext } from './types'
-// import useAppStore from '@/views/app-store'
-import useUserStore from '@nao-todo/application/web/stores/user-store'
+import useUserStore from '@/stores/user-store'
 import { storeToRefs } from 'pinia'
 import { BuiltInProjectLayoutHandlers } from '@/handlers/tasks/built-in-project-handler'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
@@ -19,7 +18,6 @@ import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     // @viewStores
     const router = useRouter()
-    // const appStore = useAppStore()
 
     // @viewContext TasksView context
     const tasksViewContext = inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!

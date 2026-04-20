@@ -2,7 +2,7 @@ import { computed, inject, provide, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { TAG_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import type { TagViewContext, TagViewProps } from './types'
-import useUserStore from '@nao-todo/application/web/stores/user-store'
+import useUserStore from '@/stores/user-store'
 import { storeToRefs } from 'pinia'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 import { TaskDomain } from '@nao-todo/domain/task'
@@ -117,3 +117,4 @@ const useTagView = (props: TagViewProps) => {
 }
 
 export default useTagView
+
