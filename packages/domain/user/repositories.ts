@@ -7,6 +7,7 @@ export interface UserRepository {
     updateNickname(updateNicknameValueObject: UpdateNicknameValueObject): GoAsync<void>
     updatePassword(updatePasswordValueObject: UpdatePasswordValueObject): GoAsync<void>
     updateAvatarURL(url: string): GoAsync<string>
+    updateAvatarFile(file: File): GoAsync<string>
     deactive(): GoAsync<void>
     active(): GoAsync<void>
 

@@ -106,6 +106,39 @@ export const useUserRepository = (requester: Requester): UserRepository => {
     }
 
     /**
+     * 更新用户头像文件
+     * @param file 头像文件
+     * @returns 更新结果
+     */
+    const updateAvatarFile = async (file: File): GoAsync<string> => {
+        // 1. 构建 FormData
+        const formData = new FormData()
+        formData.append('avatar', file)
+        console.log('updateAvatarFile: uploading file', {
+            name: file.name,
+            size: file.size,
+            type: file.type
+        })
+        // 2. 调用接口
+        const response = await requester.put('/user/avatar', formData, {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('USER_JWT')}`,
+                'Content-Type': 'multipart/form-data'
+            }
+        })
+        console.log('updateAvatarFile: response', response)
+        // 3. 判断结果
+        const res = response.data as ResponseData
+        console.log('updateAvatarFile: response data', res)
+        if (res.code !== 10080) return ['', res.message]
+        // 4. 返回
+        const data = res.data as any
+        const avatarURL = data.avatarURL || data.avatar || ''
+        console.log('updateAvatarFile: avatarURL', avatarURL)
+        return [avatarURL, null]
+    }
+
+    /**
      * 停用用户账号
      * @returns 停用结果
      */
@@ -151,6 +184,7 @@ export const useUserRepository = (requester: Requester): UserRepository => {
         updatePassword,
         encryptPassword,
         updateAvatarURL,
+        updateAvatarFile,
         deactive,
         active
     }

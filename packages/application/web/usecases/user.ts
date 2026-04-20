@@ -86,4 +86,19 @@ export class UserUseCase {
         // 更新用户密码
         return await this.userDomain.updatePassword(updatePasswordValueObject)
     }
+
+    /**
+     * 更新用户头像文件
+     * @param file 头像文件
+     * @returns 更新结果
+     */
+    async updateAvatarFile(file: File): GoAsync<string> {
+        // 更新用户头像
+        const [avatarURL, err] = await this.userDomain.updateAvatarFile(file)
+        if (err !== null) return ['', err]
+        // 更新存储
+        this.userStore.updateUserProfile({ avatar: avatarURL })
+        // 返回
+        return [avatarURL, null]
+    }
 }

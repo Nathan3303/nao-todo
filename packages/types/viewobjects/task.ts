@@ -61,6 +61,7 @@ export type GetTasksSortOptions = {
 }
 
 export type TaskColumnOptions = {
+    name?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     deletedAt?: boolean

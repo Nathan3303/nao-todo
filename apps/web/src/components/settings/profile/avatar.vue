@@ -38,6 +38,11 @@
                 </nue-button>
             </nue-div>
         </nue-div>
+        <settings-profile-avatar-cropper-dialog
+            v-model="cropperDialogVisible"
+            :file="selectedFile"
+            @success="handleCropperSuccess"
+        />
     </nue-div>
 </template>
 
@@ -50,16 +55,19 @@ import { SETTINGS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-ke
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { useRouter } from 'vue-router'
+import SettingsProfileAvatarCropperDialog from './avatar-cropper-dialog.vue'
 
 defineOptions({ name: 'SettingsProfileAvatar' })
 
-const { authUseCase } = inject<SettingsViewContext>(SETTINGS_VIEW_CONTEXT_KEY)!
+const { authUseCase, userUseCase } = inject<SettingsViewContext>(SETTINGS_VIEW_CONTEXT_KEY)!
 const userStore = useUserStore()
 const router = useRouter()
 
 const { profile } = storeToRefs(userStore)
 const avatarFileInputRef = ref<HTMLInputElement>()
 const updateAvatarLoading = ref(false)
+const cropperDialogVisible = ref(false)
+const selectedFile = ref<File | null>(null)
 
 const handleUpdateAvatar = () => {
     if (!avatarFileInputRef.value) return
@@ -67,9 +75,28 @@ const handleUpdateAvatar = () => {
 }
 
 const handleAvatarFileInputChange = async () => {
-    if (!avatarFileInputRef.value) return
-    console.log(avatarFileInputRef.value.files?.[0])
+    if (!avatarFileInputRef.value?.files?.[0]) return
+
+    selectedFile.value = avatarFileInputRef.value.files[0]
     avatarFileInputRef.value.value = ''
+    cropperDialogVisible.value = true
+}
+
+const handleCropperSuccess = async (file: File) => {
+    updateAvatarLoading.value = true
+    try {
+        const [, err] = await userUseCase.updateAvatarFile(file)
+        if (err !== null) {
+            NueMessage.error('上传失败: ' + unwrapError(err as any))
+            return
+        }
+        NueMessage.success('头像更新成功')
+    } catch (err) {
+        NueMessage.error('上传失败: ' + unwrapError(err as any))
+    } finally {
+        updateAvatarLoading.value = false
+        selectedFile.value = null
+    }
 }
 
 const handleSignOut = async () => {

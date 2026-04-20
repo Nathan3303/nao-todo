@@ -50,4 +50,22 @@ export class UserDomain {
         // 更新用户密码
         return await this.userRepo.updatePassword(updatePasswordValueObject)
     }
+
+    /**
+     * 更新用户头像URL
+     * @param url 头像URL
+     * @returns 更新结果
+     */
+    async updateAvatarURL(url: string): GoAsync<string> {
+        return await this.userRepo.updateAvatarURL(url)
+    }
+
+    /**
+     * 更新用户头像文件
+     * @param file 头像文件
+     * @returns 更新结果
+     */
+    async updateAvatarFile(file: File): GoAsync<string> {
+        return await this.userRepo.updateAvatarFile(file)
+    }
 }
