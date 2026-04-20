@@ -83,13 +83,13 @@ const handleCheck = (checked: boolean, value: unknown) => {
         padding: 0.25rem 0.5rem;
         border: none;
 
-        
+
     }
 
     .combo-box__empty-text {
-        font-size: var(--nue-text-xs);
+        font-size: var(--nue-text-sm);
         padding: 0.5rem;
-        color: var(--nue-primary-color-600);
+        color: var(--nue-primary-color-500);
         text-align: center;
     }
 }

@@ -4,8 +4,8 @@
             <nue-button :icon="state ? 'arrow-right' : 'arrow-down'" theme="pure" @click="collapse">
                 <template #default>
                     <nue-div align="center">
-                        <nue-text size="var(--nue-text-xs)">{{ name }}</nue-text>
-                        <nue-text color="var(--nue-primary-color-800)" size="var(--nue-text-xs)">
+                        <nue-text size="var(--nue-text-sm)">{{ name }}</nue-text>
+                        <nue-text color="var(--nue-primary-color-700)" size="var(--nue-text-sm)">
                             {{ count ?? 0 }}
                         </nue-text>
                     </nue-div>

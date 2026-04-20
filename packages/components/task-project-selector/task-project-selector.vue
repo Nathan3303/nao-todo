@@ -40,14 +40,11 @@ const handleSelect = async (projectId: ProjectViewObject['id']) => {
 </template>
 
 <style>
-.nue-select.nue-select--project-selector {
-    /*  size="11px" color="gray" style="padding: 8px" align="center" */
-    > .nue-text--empty {
-        font-size: var(--nue-text-xs);
-        color: var(--nue-text-color-400);
-        padding: 0.5rem;
-        text-align: center;
-    }
+.nue-text--empty {
+    font-size: var(--nue-text-sm);
+    color: var(--nue-primary-color-500);
+    padding: 0.5rem;
+    text-align: center;
 }
 </style>
 

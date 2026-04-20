@@ -200,7 +200,7 @@ const createCommentHandler = async (content: string) => {
         }
 
         .nue-textarea--name {
-            --nue-textarea-font-size: var(--nue-text-df);
+            --nue-textarea-font-size: var(--nue-text-default);
             --nue-textarea-color: var(--nue-primary-color-800);
         }
 
