@@ -97,8 +97,11 @@ export class UserUseCase {
         const [avatarURL, err] = await this.userDomain.updateAvatarFile(file)
         if (err !== null) return ['', err]
         // 更新存储
-        this.userStore.updateUserProfile({ avatar: avatarURL })
+        this.userStore.updateUserProfile({
+            avatar: avatarURL ? `http://localhost:3302${avatarURL}?timestamp=${Date.now()}` : ''
+        })
         // 返回
         return [avatarURL, null]
     }
 }
+

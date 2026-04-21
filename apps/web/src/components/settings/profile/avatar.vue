@@ -2,10 +2,10 @@
     <nue-div v-if="profile" wrap="nowrap" align="center" gap="2rem">
         <nue-div align="center" width="fit-content">
             <nue-avatar
-                :src="profile.avatar"
+                :src="fullAvatarUrl"
                 size="6rem"
                 style="cursor: pointer"
-                @click="handleUpdateAvatar"
+                @click="handleViewAvatar"
                 theme="round"
             />
             <input
@@ -43,11 +43,15 @@
             :file="selectedFile"
             @success="handleCropperSuccess"
         />
+        <settings-profile-avatar-viewer-dialog
+            v-model="viewerDialogVisible"
+            :avatar-url="fullAvatarUrl"
+        />
     </nue-div>
 </template>
 
 <script setup lang="ts">
-import { inject, ref } from 'vue'
+import { inject, ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useUserStore } from '@/stores'
 import type { SettingsViewContext } from '@/views/index/settings/settings-view'
@@ -56,6 +60,7 @@ import { NueConfirm, NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { useRouter } from 'vue-router'
 import SettingsProfileAvatarCropperDialog from './avatar-cropper-dialog.vue'
+import SettingsProfileAvatarViewerDialog from './avatar-viewer-dialog.vue'
 
 defineOptions({ name: 'SettingsProfileAvatar' })
 
@@ -67,7 +72,21 @@ const { profile } = storeToRefs(userStore)
 const avatarFileInputRef = ref<HTMLInputElement>()
 const updateAvatarLoading = ref(false)
 const cropperDialogVisible = ref(false)
+const viewerDialogVisible = ref(false)
 const selectedFile = ref<File | null>(null)
+
+const fullAvatarUrl = computed(() => {
+    const url = profile.value?.avatar
+    if (!url) return ''
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+        return url
+    }
+    return `http://localhost:3302${url}`
+})
+
+const handleViewAvatar = () => {
+    viewerDialogVisible.value = true
+}
 
 const handleUpdateAvatar = () => {
     if (!avatarFileInputRef.value) return
@@ -105,8 +124,6 @@ const handleSignOut = async () => {
         content: '退出登录后，您需要重新登录才能继续使用应用。',
         confirmButtonText: '退出登录',
         cancelButtonText: '取消',
-        // overlayAnimation: 'fade-in-with-blur',
-        // overlayCloseAnimation: 'fade-out-with-blur'
     })
     if (isByCancel) return
 
@@ -119,4 +136,3 @@ const handleSignOut = async () => {
     await router.replace('/auth/signin')
 }
 </script>
-
