@@ -22,11 +22,7 @@ const isExpired = computed(() => {
 </script>
 
 <template>
-    <task-basic-info
-        icon="time"
-        :text="formattedDate"
-        :data-expired="colored ? isExpired : void 0"
-    />
+    <task-basic-info no-icon :text="formattedDate" :data-expired="colored ? isExpired : void 0" />
 </template>
 
 <style scoped>
@@ -34,3 +30,4 @@ const isExpired = computed(() => {
     color: rgb(255, 74, 74);
 }
 </style>
+

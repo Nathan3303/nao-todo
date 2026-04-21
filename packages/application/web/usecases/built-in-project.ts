@@ -3,8 +3,8 @@ import type { BuiltInProjectViewObject, BuiltInProjectPreferenceViewObject } fro
 import type { Go } from '@nao-todo/types'
 import {
     builtInProjectEntities2ViewObjects,
-    builtInProjectPreferenceValueObject2ViewObject,
-    builtInProjectPreferenceViewObject2ValueObject
+    builtInProjectPreferenceEntity2ViewObject,
+    builtInProjectPreferenceViewObject2Entity
 } from '../converters/built-in-project'
 
 export interface BuiltInProjectUseCaseStore {
@@ -13,9 +13,12 @@ export interface BuiltInProjectUseCaseStore {
     setBuiltInProjectPreference(preference: BuiltInProjectPreferenceViewObject): void
 }
 
+/**
+ * 内建项目用例
+ */
 export class BuiltInProjectUseCase {
     /**
-     * 内建项目用例
+     * 内建项目用例构造函数
      * @param builtInProjectDomain 内建项目领域服务
      * @param store 内建项目用例存储
      */
@@ -35,31 +38,11 @@ export class BuiltInProjectUseCase {
             return err
         }
         const builtInProjects = builtInProjectEntities2ViewObjects(builtInProjectEntities)
-        // 2. 获取内建项目ID列表
-        // const builtInProjectIds = builtInProjects.map((entity) => entity.id)
-        // 3. 存储内建项目实体
+        // 2. 存储内建项目实体
         this.store.setBuiltInProjects(builtInProjects)
-        // 4. 返回
+        // 3. 返回
         return null
     }
-
-    /**
-     * 加载内建项目
-     * @param id 内建项目ID
-     * @returns 错误信息
-     */
-    // loadBuiltInProject(id: BuiltInProject['id']): Go<void> {
-    //     // 1. 获取内建项目实体
-    //     const [builtInProjectEntity, err] = this.builtInProjectDomain.get(id)
-    //     if (err !== null) {
-    //         return err
-    //     }
-    //     // 2. 实体转换
-    //     // const builtInProject = builtInProjectEntity.toValueObject()
-    //     // 2. 存储内建项目实体
-    //     this.store.setBuiltInProjects([builtInProjectEntity])
-    //     return null
-    // }
 
     /**
      * 加载内建项目偏好
@@ -79,7 +62,7 @@ export class BuiltInProjectUseCase {
             return err
         }
         // 2. 实体转换
-        const builtInProjectPreference = builtInProjectPreferenceValueObject2ViewObject(
+        const builtInProjectPreference = builtInProjectPreferenceEntity2ViewObject(
             builtInProjectPreferenceEntity
         )
         // 3. 存储内建项目偏好实体
@@ -100,14 +83,13 @@ export class BuiltInProjectUseCase {
         newPreference: BuiltInProjectPreferenceViewObject
     ): Go<void> {
         // 1. 判断内建项目偏好是否存在
-        if (!newPreference) {
-            return new Error('内建项目偏好无效')
-        }
+        if (!newPreference) return '内建项目偏好无效'
         // 2. 存储内建项目偏好实体
         return this.builtInProjectDomain.savePreference(
             userId,
             builtInProjectId,
-            builtInProjectPreferenceViewObject2ValueObject(newPreference)
+            builtInProjectPreferenceViewObject2Entity(newPreference)
         )
     }
 }
+

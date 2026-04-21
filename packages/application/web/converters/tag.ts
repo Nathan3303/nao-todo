@@ -4,6 +4,7 @@ import {
     TagPreferenceEntity,
     UpdateTagValueObject
 } from '@nao-todo/domain/tag'
+import { defaultPreferenceColumns } from '@nao-todo/infrastructure/consts/preference'
 import jsonParse from '@nao-todo/infrastructure/utils/json-parse'
 import type {
     TagViewObject,
@@ -45,31 +46,14 @@ export const tagEntitiesToViewObjects = (tagEntities: TagEntity[]): TagViewObjec
 export const tagPreferenceEntityToViewObject = (
     tagPreferenceEntity: TagPreferenceEntity
 ): TagPreferenceViewObject => {
+    const [getTasksOptions, err1] = jsonParse(tagPreferenceEntity.getTasksOptions)
+    const [columns, err2] = jsonParse(tagPreferenceEntity.columns)
     const vo = {} as TagPreferenceViewObject
     vo.id = tagPreferenceEntity.id
     vo.tagId = tagPreferenceEntity.tagId
     vo.viewType = tagPreferenceEntity.viewType
-    // 解析 JSON 字符串
-    // 1. 解析 getTasksOptions
-    const [getTasksOptions, err1] = jsonParse(tagPreferenceEntity.getTasksOptions)
     vo.getTasksOptions = err1 !== null ? { limit: 20 } : getTasksOptions
-    if (!vo.tagId) vo.tagId = tagPreferenceEntity.tagId
-    // 2. 解析 columns
-    const [columns, err2] = jsonParse(tagPreferenceEntity.columns)
-    vo.columns =
-        err2 !== null
-            ? {
-                  state: true,
-                  priority: true,
-                  endAt: true,
-                  project: false,
-                  tags: false,
-                  description: false,
-                  createdAt: false,
-                  updatedAt: false,
-                  startAt: false
-              }
-            : columns
+    vo.columns = err2 !== null ? defaultPreferenceColumns : columns
     return vo
 }
 

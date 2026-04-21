@@ -14,7 +14,6 @@ import {
 import type { CreateTaskViewObject, TaskViewObject } from '@nao-todo/types'
 import useTaskCreator from './use-task-creator'
 import type { TaskCreatorProps, TaskCreatorEmits, TaskCreatorVO } from './types'
-import dayjs from 'dayjs'
 
 defineOptions({ name: 'TaskCreator' })
 const props = defineProps<TaskCreatorProps>()
@@ -52,11 +51,7 @@ onMounted(() => emit('register', open, close))
 </script>
 
 <template>
-    <nue-dialog v-model="visible" ref="dialogRef">
-        <template #header>
-            <nue-text>创建待办事项</nue-text>
-            <nue-button @click="close" icon="clear" theme="icon,ghost,small" />
-        </template>
+    <nue-dialog v-model="visible" ref="dialogRef" title="创建待办事项">
         <template #content>
             <nue-div vertical align="stretch">
                 <nue-input
@@ -66,21 +61,8 @@ onMounted(() => emit('register', open, close))
                     maxlength="64"
                     counter="word-left"
                 />
-                <nue-textarea
-                    v-model="states.description"
-                    maxlength="256"
-                    counter="word-left"
-                    :autosize="{ minRows: 1, maxRows: 4 }"
-                    placeholder="添加待办事项备注（可选）"
-                    theme="fix-padding"
-                />
-                <nue-div align="center">
+                <nue-div wrap="nowrap" gap=".5rem">
                     <task-date-selector v-model="states.endAt" />
-                    <nue-text v-if="states.endAt" color="gray" size="var(--nue-text-xs)">
-                        任务截止于：{{ dayjs(states.endAt).format('YYYY-MM-DD HH:mm') }}
-                    </nue-text>
-                </nue-div>
-                <nue-div wrap="nowrap">
                     <task-selector
                         :options="TaskStateSelectOptions"
                         :value="states.state"
@@ -91,7 +73,6 @@ onMounted(() => emit('register', open, close))
                         :value="states.priority"
                         @change="(p) => (states.priority = p as TaskViewObject['priority'])"
                     />
-                    <nue-div flex="1" />
                     <task-project-selector
                         :project-id="states.projectId"
                         :projects="props.avaliableProjects || []"
@@ -103,6 +84,14 @@ onMounted(() => emit('register', open, close))
                     :tags="props.avaliableTags || []"
                     :task-tags="states.tags || []"
                     @update-tags="(_tags) => (states.tags = _tags)"
+                />
+                <nue-textarea
+                    v-model="states.description"
+                    maxlength="256"
+                    counter="word-left"
+                    :autosize="{ minRows: 1, maxRows: 4 }"
+                    placeholder="添加待办事项备注（可选）"
+                    theme="fix-padding"
                 />
             </nue-div>
         </template>

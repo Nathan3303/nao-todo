@@ -1,5 +1,6 @@
 import { ProjectEntity, ProjectPreferenceEntity } from '@nao-todo/domain/project/entities'
 import { CreateProjectValueObject } from '@nao-todo/domain/project/valueobjects'
+import { defaultPreferenceColumns } from '@nao-todo/infrastructure/consts/preference'
 import jsonParse from '@nao-todo/infrastructure/utils/json-parse'
 import type {
     ProjectViewObject,
@@ -23,7 +24,7 @@ export const projectEntityToViewObject = (projectEntity: ProjectEntity): Project
         createdAt: projectEntity.createdAt,
         updatedAt: projectEntity.updatedAt,
         isArchived: dayjs(projectEntity.archivedAt).isValid(),
-        // isDeleted: dayjs(projectEntity.deletedAt).isValid()
+        // isDeleted: dayjs(projectEntity.deletedAt).isValid(),
         createTaskOptions: { projectId: projectEntity.id }
     } as ProjectViewObject
 }
@@ -47,33 +48,15 @@ export const projectEntitiesToViewObjects = (
 export const projectPreferenceEntityToViewObject = (
     entity: ProjectPreferenceEntity
 ): ProjectPreferenceViewObject => {
-    const projectPreferenceViewObject = {} as ProjectPreferenceViewObject
-    projectPreferenceViewObject.id = entity.id
-    projectPreferenceViewObject.projectId = entity.projectId
-    projectPreferenceViewObject.viewType = entity.viewType
-
     const [getTasksOptions, err1] = jsonParse(entity.getTasksOptions)
-    projectPreferenceViewObject.getTasksOptions = err1 !== null ? { limit: 20 } : getTasksOptions
-    if (!projectPreferenceViewObject.projectId) {
-        projectPreferenceViewObject.projectId = entity.projectId
-    }
-
     const [columns, err2] = jsonParse(entity.columns)
-    projectPreferenceViewObject.columns =
-        err2 !== null
-            ? {
-                  state: true,
-                  priority: true,
-                  endAt: true,
-                  project: false,
-                  tags: false,
-                  description: false,
-                  createdAt: false,
-                  updatedAt: false,
-                  startAt: false
-              }
-            : columns
-    return projectPreferenceViewObject
+    const vo = {} as ProjectPreferenceViewObject
+    vo.id = entity.id
+    vo.projectId = entity.projectId
+    vo.viewType = entity.viewType
+    vo.getTasksOptions = err1 !== null ? { limit: 20 } : getTasksOptions
+    vo.columns = err2 !== null ? defaultPreferenceColumns : columns
+    return vo
 }
 
 /**
