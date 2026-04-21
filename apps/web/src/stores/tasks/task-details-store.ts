@@ -4,6 +4,7 @@ import {
     useEventsStoreBase,
     useCommentsStoreBase,
     useLoadingErrorStoreBase,
+    useDualLoadingErrorStoreBase,
     useEventIdsStoreBase,
     useCommentIdsStoreBase
 } from '../base'
@@ -18,8 +19,20 @@ const useTaskDetailsStore = defineStore('TaskDetailsStore', () => {
         taskDetails.value = newTaskDetails
     }
 
-    // @storebase Loading error store base
+    // @storebase Loading error store base (保留原有用于向后兼容)
     const { loading, error, setLoading, setError } = useLoadingErrorStoreBase()
+
+    // @storebase Dual loading error store base
+    const {
+        eventsLoading,
+        eventsError,
+        commentsLoading,
+        commentsError,
+        setEventsLoading,
+        setEventsError,
+        setCommentsLoading,
+        setCommentsError
+    } = useDualLoadingErrorStoreBase()
 
     // @storebase Events store base
     const { events, addEvent, setEvents, getEvent, updateEvent, deleteEvent, updateEvents } =
@@ -55,6 +68,14 @@ const useTaskDetailsStore = defineStore('TaskDetailsStore', () => {
         error,
         setLoading,
         setError,
+        eventsLoading,
+        eventsError,
+        commentsLoading,
+        commentsError,
+        setEventsLoading,
+        setEventsError,
+        setCommentsLoading,
+        setCommentsError,
         events,
         addEvent,
         setEvents,

@@ -95,6 +95,12 @@ export type TaskDetailsMainContext = {
     commentHandler: CommentHandler
     taskHandler: TaskHandler
     tags: Ref<TagViewObject[]>
+    eventsLoading: ComputedRef<boolean>
+    eventsError: ComputedRef<string>
+    commentsLoading: ComputedRef<boolean>
+    commentsError: ComputedRef<string>
+    retryEvents: () => Promise<void>
+    retryComments: () => Promise<void>
 }
 
 /**

@@ -8,7 +8,11 @@ import useCommentsStoreBase, { type CommentsStoreBase } from './comments-store-b
 import useEventsStoreBase, { type EventsStoreBase } from './events-store-base'
 import useProjectsStoreBase, { type ProjectsStoreBase } from './projects-store-base'
 import useTagsStoreBase, { type TagsStoreBase } from './tags-store-base'
-import useLoadingErrorStoreBase, { type LoadingErrorStoreBase } from './loading-error-store-base'
+import useLoadingErrorStoreBase, {
+    type LoadingErrorStoreBase,
+    useDualLoadingErrorStoreBase,
+    type DualLoadingErrorStoreBase
+} from './loading-error-store-base'
 import useTasksStoreBase, { type TasksStoreBase } from './tasks-store-base'
 import useTagPreferenceStoreBase, { type TagPreferenceStoreBase } from './tag-preference-store-base'
 import useEventIdsStoreBase, { type EventIdsStoreBase } from './event-ids-store-base'
@@ -21,6 +25,7 @@ export { useEventsStoreBase, type EventsStoreBase }
 export { useProjectsStoreBase, type ProjectsStoreBase }
 export { useTagsStoreBase, type TagsStoreBase }
 export { useLoadingErrorStoreBase, type LoadingErrorStoreBase }
+export { useDualLoadingErrorStoreBase, type DualLoadingErrorStoreBase }
 export { useTasksStoreBase, type TasksStoreBase }
 export { useTagPreferenceStoreBase, type TagPreferenceStoreBase }
 export { useEventIdsStoreBase, type EventIdsStoreBase }

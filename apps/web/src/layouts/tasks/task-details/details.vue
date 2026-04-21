@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { Loading as LoadingComp } from '@nao-todo/components'
 import DetailsHeader from './header/index.vue'
 import DetailsMain from './main/index.vue'
 import DetailsFooter from './footer/index.vue'
@@ -10,13 +9,12 @@ defineOptions({ name: 'TaskDetails' })
 const props = defineProps<TaskDetailsProps>()
 const emit = defineEmits<TaskDetailsEmits>()
 
-const { loading, error, task, handleDeleteTask, handleRestoreTask } = useTaskDetails(props, emit)
+const { error, task, handleDeleteTask, handleRestoreTask } = useTaskDetails(props, emit)
 </script>
 
 <template>
-    <loading-comp v-if="loading" />
     <nue-empty
-        v-else-if="error || !task"
+        v-if="error || !task"
         :description="error"
         image-size="64px"
         image-src="/images/todo.webp"

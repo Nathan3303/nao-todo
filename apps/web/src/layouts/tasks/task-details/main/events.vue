@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { InputButton, EventRow } from '@nao-todo/components'
+import { InputButton, EventRow, Loading } from '@nao-todo/components'
 import useEventDragger from '../use-event-dragger'
 import type { TaskDetailsContext } from '../types'
 import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
 import { inject } from 'vue'
 
-const { vo, events, resortEvents, eventHandler } =
+const { vo, events, resortEvents, eventHandler, eventsLoading, eventsError, retryEvents } =
     inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
 
 const { handleDragStart, handleDragOver, handleDrop, handleDragLeave, handleDragEnd } =
@@ -22,33 +22,39 @@ const createEvent = async (payload: { value: string }) => {
 
 <template>
     <nue-div theme="event-list" vertical gap="0.2rem" auto-fit>
-        <nue-div
-            vertical
-            gap="0"
-            theme="event-list"
-            @dragover="handleDragOver"
-            @dragstart="handleDragStart"
-            @dragleave="handleDragLeave"
-            @dragend="handleDragEnd"
-            @drop="handleDrop"
-        >
-            <event-row
-                v-for="event in events"
-                data-drag-item="true"
-                :key="event.id"
-                :event="event"
-                :data-eid="event.id"
-                :on-update="(id, v) => eventHandler.updateEvent(id, v)"
-                :on-delete="eventHandler.deleteEvent"
+        <loading v-if="eventsLoading" placeholder="正在加载检查事项..." />
+        <nue-empty v-else-if="eventsError" :description="eventsError" image-size="64px">
+            <nue-button theme="primary,small" @click="retryEvents">重试</nue-button>
+        </nue-empty>
+        <template v-else>
+            <nue-div
+                vertical
+                gap="0"
+                theme="event-list"
+                @dragover="handleDragOver"
+                @dragstart="handleDragStart"
+                @dragleave="handleDragLeave"
+                @dragend="handleDragEnd"
+                @drop="handleDrop"
+            >
+                <event-row
+                    v-for="event in events"
+                    data-drag-item="true"
+                    :key="event.id"
+                    :event="event"
+                    :data-eid="event.id"
+                    :on-update="(id, v) => eventHandler.updateEvent(id, v)"
+                    :on-delete="eventHandler.deleteEvent"
+                />
+            </nue-div>
+            <input-button
+                icon="plus-circle"
+                button-text="添加检查事项"
+                theme="pure,noshape"
+                :submit-on-blur="false"
+                :on-submit="createEvent"
             />
-        </nue-div>
-        <input-button
-            icon="plus-circle"
-            button-text="添加检查事项"
-            theme="pure,noshape"
-            :submit-on-blur="false"
-            :on-submit="createEvent"
-        />
+        </template>
     </nue-div>
 </template>
 

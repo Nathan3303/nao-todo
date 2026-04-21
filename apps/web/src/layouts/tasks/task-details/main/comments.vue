@@ -1,11 +1,12 @@
 <script lang="ts" setup>
-import { CommentRow } from '@nao-todo/components'
+import { CommentRow, Loading } from '@nao-todo/components'
 import type { TaskDetailsContext } from '../types'
 import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
 import { inject } from 'vue'
 import type { CommentViewObject } from '@nao-todo/types'
 
-const { comments, commentHandler } = inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
+const { comments, commentHandler, commentsLoading, commentsError, retryComments } =
+    inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
 
 const commentUpdater = async (id: CommentViewObject['id'], content: string) =>
     commentHandler.updateComment(id, { content })
@@ -14,20 +15,29 @@ const deleteComment = async (id: CommentViewObject['id']) => commentHandler.dele
 </script>
 
 <template>
-    <nue-container v-if="comments && comments.length" id="TodoDetailsCommentsContainer">
+    <nue-container
+        v-if="commentsLoading || commentsError || (comments && comments.length > 0)"
+        id="TodoDetailsCommentsContainer"
+    >
         <nue-header>
             <nue-text size="14px" :weight="500">评论</nue-text>
-            <nue-text size="14px" color="gray">{{ comments.length }}</nue-text>
+            <nue-text v-if="comments && comments.length" size="14px" color="gray">{{ comments.length }}</nue-text>
         </nue-header>
         <nue-main>
             <nue-content>
-                <comment-row
-                    v-for="comment in comments"
-                    :key="comment.id"
-                    :comment="comment"
-                    :updater="commentUpdater"
-                    :deleter="deleteComment"
-                />
+                <loading v-if="commentsLoading" placeholder="正在加载评论..." />
+                <nue-empty v-else-if="commentsError" :description="commentsError" image-size="64px">
+                    <nue-button theme="primary,small" @click="retryComments">重试</nue-button>
+                </nue-empty>
+                <template v-else>
+                    <comment-row
+                        v-for="comment in comments"
+                        :key="comment.id"
+                        :comment="comment"
+                        :updater="commentUpdater"
+                        :deleter="deleteComment"
+                    />
+                </template>
             </nue-content>
         </nue-main>
     </nue-container>

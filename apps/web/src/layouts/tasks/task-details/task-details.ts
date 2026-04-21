@@ -34,7 +34,14 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     // @presetStates
     const { availableProjects: projects } = storeToRefs(projectStore)
     const { tags } = storeToRefs(tagStore)
-    const { eventIdsEvents: events, commentIdsComments: comments } = storeToRefs(taskDetailsStore)
+    const {
+        eventIdsEvents: events,
+        commentIdsComments: comments,
+        eventsLoading,
+        eventsError,
+        commentsLoading,
+        commentsError
+    } = storeToRefs(taskDetailsStore)
 
     // @usecase 任务检查事项用例
     const eventUseCase = new EventUseCase(
@@ -57,6 +64,7 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     const loading = ref(false)
     const error = ref('')
     const isCommenting = ref(false)
+    const currentTaskId = ref<string | null>(null)
 
     // @computed 获取任务详情并转换为视图对象
     const task = computed(() => {
@@ -95,6 +103,40 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         return { percentage, text }
     })
 
+    // @method 加载检查事项
+    const loadEvents = async (taskId: Task['id']) => {
+        taskDetailsStore.setEventsLoading(true)
+        taskDetailsStore.setEventsError('')
+        const [, err] = await eventUseCase.loadEvents(taskId)
+        if (err !== null) {
+            taskDetailsStore.setEventsError('检查事项获取失败：' + unwrapError(err))
+        }
+        taskDetailsStore.setEventsLoading(false)
+    }
+
+    // @method 加载评论
+    const loadComments = async (taskId: Task['id']) => {
+        taskDetailsStore.setCommentsLoading(true)
+        taskDetailsStore.setCommentsError('')
+        const [, err] = await commentUseCase.loadComments(taskId)
+        if (err !== null) {
+            taskDetailsStore.setCommentsError('评论获取失败：' + unwrapError(err))
+        }
+        taskDetailsStore.setCommentsLoading(false)
+    }
+
+    // @method 重试加载检查事项
+    const retryEvents = async () => {
+        if (!currentTaskId.value) return
+        await loadEvents(currentTaskId.value)
+    }
+
+    // @method 重试加载评论
+    const retryComments = async () => {
+        if (!currentTaskId.value) return
+        await loadComments(currentTaskId.value)
+    }
+
     // @method 初始化任务详情
     const initialize = async (taskId?: Task['id']) => {
         error.value = ''
@@ -103,18 +145,9 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
             error.value = '选择任务以查看详情'
             return
         }
-        // 2. 获取检查事项
-        const [, err] = await eventUseCase.loadEvents(taskId)
-        if (err !== null) {
-            error.value = '检查事项获取失败：' + unwrapError(err)
-            return
-        }
-        // 3. 获取评论
-        const [, err2] = await commentUseCase.loadComments(taskId)
-        if (err2 !== null) {
-            error.value = '评论获取失败：' + unwrapError(err2)
-            return
-        }
+        currentTaskId.value = taskId
+        // 2. 并行获取检查事项和评论
+        await Promise.all([loadEvents(taskId), loadComments(taskId)])
         return null
     }
 
@@ -154,7 +187,13 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         resortEvents: (oeid, teid, isUp) => eventUseCase.resort(oeid, teid, isUp),
         eventHandler,
         commentHandler,
-        taskHandler
+        taskHandler,
+        eventsLoading,
+        eventsError,
+        commentsLoading,
+        commentsError,
+        retryEvents,
+        retryComments
     })
 
     // @watch 监听任务删除事件
