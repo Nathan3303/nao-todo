@@ -7,7 +7,7 @@ defineOptions({ name: 'TaskDateSelector', inheritAttrs: false })
 const props = defineProps<TaskDateSelectorProps>()
 const emit = defineEmits<TaskDateSelectorEmits>()
 
-const date = ref(dayjs(props.modelValue).format('YYYY-MM-DD HH:mm'))
+const date = ref(props.modelValue ? dayjs(props.modelValue).format('YYYY-MM-DD HH:mm') : '')
 
 const isExpired = computed(() => {
     if (!props.modelValue) return false
@@ -64,3 +64,4 @@ const handleClose = () => {
     }
 }
 </style>
+

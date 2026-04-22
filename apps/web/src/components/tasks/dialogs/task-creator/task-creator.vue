@@ -26,6 +26,7 @@ const { visible, close: closeDialog } = useDialogWrapper(dialogRef)
 
 const open = (createTaskOptions: CreateTaskViewObject) => {
     clearInputsValue()
+    console.log(createTaskOptions)
     Object.keys(createTaskOptions).forEach((key) => {
         const presetVal = createTaskOptions[key as keyof CreateTaskViewObject]
         if (!presetVal) return

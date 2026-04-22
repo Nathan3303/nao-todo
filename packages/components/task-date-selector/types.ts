@@ -1,6 +1,6 @@
 export type TaskDateSelectorProps = {
     colored?: boolean
-    modelValue: string | null
+    modelValue: string | null | undefined
 }
 
 export type TaskDateSelectorEmits = {

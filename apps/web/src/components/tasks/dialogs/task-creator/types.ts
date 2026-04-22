@@ -1,4 +1,4 @@
-import type { Subscriber } from '@/infrastructure/hooks/use-subscriber'
+import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import type {
     GoAsync,
     CreateTaskViewObject,
@@ -13,7 +13,7 @@ export type TaskCreatorVO = {
     state: CreateTaskViewObject['state']
     priority: CreateTaskViewObject['priority']
     startAt?: CreateTaskViewObject['startAt']
-    endAt: CreateTaskViewObject['endAt']
+    endAt?: CreateTaskViewObject['endAt']
     tags?: CreateTaskViewObject['tags']
     creating: boolean
     disabled: boolean
@@ -33,3 +33,4 @@ export type TaskCreatorEmits = {
         close: () => void
     ): void
 }
+

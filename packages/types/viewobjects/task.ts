@@ -19,7 +19,7 @@ export type CreateTaskViewObject = {
     state: TaskViewObject['state']
     priority: TaskViewObject['priority']
     startAt: TaskViewObject['startAt'] | null
-    endAt: TaskViewObject['endAt']
+    endAt: TaskViewObject['endAt'] | null
     tags?: TaskViewObject['tags']
 }
 
