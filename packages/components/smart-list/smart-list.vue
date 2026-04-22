@@ -22,7 +22,7 @@
                 </slot>
             </nue-div>
         </template>
-        <nue-div vertical align="stretch" gap=".5rem">
+        <nue-div vertical align="stretch" gap=".25rem">
             <slot v-if="count">
                 <nue-link
                     v-for="link in links"

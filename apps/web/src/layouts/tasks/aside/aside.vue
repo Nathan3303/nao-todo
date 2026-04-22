@@ -67,7 +67,7 @@ const openDialog = (dialogName: string) => {
 <template>
     <nue-aside theme="tasks-aside" v-bind="$attrs">
         <nue-div vertical>
-            <nue-div vertical gap="0.5rem">
+            <nue-div vertical gap="0.25rem">
                 <nue-link
                     v-for="link in builtInProjectLinks.slice(0, 5)"
                     :key="link.id"
@@ -93,7 +93,7 @@ const openDialog = (dialogName: string) => {
                 />
             </nue-collapse>
             <nue-divider />
-            <nue-div vertical gap="0.5rem">
+            <nue-div vertical gap="0.25rem">
                 <nue-link
                     v-for="link in builtInProjectLinks.slice(5, builtInProjectLinks.length)"
                     :key="link.id"
