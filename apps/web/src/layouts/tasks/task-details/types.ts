@@ -1,6 +1,6 @@
-import type { CommentHandler } from '@/handlers/tasks/comment-handler'
-import type { EventHandler } from '@/handlers/tasks/event-handler'
-import type { TaskHandler } from '@/handlers/tasks/task-handler'
+import type { CommentHandler } from '@/infrastructure/handlers/tasks/comment-handler'
+import type { EventHandler } from '@/infrastructure/handlers/tasks/event-handler'
+import type { TaskHandler } from '@/infrastructure/handlers/tasks/task-handler'
 import type {
     CreateEventViewObject,
     EventViewObject,

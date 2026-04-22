@@ -10,7 +10,7 @@ import type {
     GetTasksSortOptions,
     ProjectPreferenceViewObject
 } from '@nao-todo/types'
-import { columnLabels } from '@/infrastructure/constants/task'
+import { columnLabels } from '@nao-todo/infrastructure/consts/tasks'
 
 defineOptions({ name: 'TasksDropdownSortOperator' })
 const props = defineProps<{

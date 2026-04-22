@@ -9,7 +9,7 @@ import type {
 import type { Subscriber } from '@/infrastructure/hooks/use-subscriber'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
-import type { ProjectHandler } from '@/handlers/tasks/project-handler'
+import type { ProjectHandler } from '@/infrastructure/handlers/tasks/project-handler'
 
 export type ProjectViewProps = {
     projectId?: string

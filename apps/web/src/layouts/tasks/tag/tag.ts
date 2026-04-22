@@ -13,7 +13,7 @@ import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { TagHandler } from '@/handlers/tasks/tag-handler'
+import { TagHandler } from '@/infrastructure/handlers/tasks/tag-handler'
 
 const useTagView = (props: TagViewProps) => {
     // @viewStores

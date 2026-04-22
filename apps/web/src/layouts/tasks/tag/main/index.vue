@@ -5,7 +5,7 @@ import { TAG_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import { inject, onMounted, onUnmounted } from 'vue'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { TagHandler } from '@/handlers/tasks/tag-handler'
+import { TagHandler } from '@/infrastructure/handlers/tasks/tag-handler'
 import type { TagViewContext } from '../types'
 
 defineOptions({

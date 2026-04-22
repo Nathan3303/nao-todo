@@ -1,4 +1,4 @@
-import useAutoChangeTheme from '@/infrastructure/hooks/tasks-view/use-auto-change-theme'
+import useAutoChangeTheme from '@/infrastructure/hooks/use-auto-change-theme'
 import { AuthUseCase } from '@nao-todo/application/web/usecases/auth'
 import { AuthDomain } from '@nao-todo/domain/auth'
 import useResponsiveFlag, {

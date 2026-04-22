@@ -6,11 +6,12 @@ import type {
 } from './types'
 import type { TaskColumnOptions } from '@nao-todo/types'
 import { ref, computed } from 'vue'
+import { columnLabels } from '@nao-todo/infrastructure/consts/tasks'
 
 export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     {
         key: 'name',
-        label: '任务名称',
+        label: columnLabels.name,
         visible: true,
         width: null,
         minWidth: 200,
@@ -19,7 +20,7 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     },
     {
         key: 'createdAt',
-        label: '创建时间',
+        label: columnLabels.createdAt,
         visible: true,
         width: null,
         minWidth: 100,
@@ -28,7 +29,7 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     },
     {
         key: 'updatedAt',
-        label: '更新时间',
+        label: columnLabels.updatedAt,
         visible: true,
         width: null,
         minWidth: 100,
@@ -37,7 +38,7 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     },
     {
         key: 'startAt',
-        label: '开始时间',
+        label: columnLabels.startAt,
         visible: true,
         width: null,
         minWidth: 100,
@@ -46,7 +47,7 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     },
     {
         key: 'endAt',
-        label: '截止时间',
+        label: columnLabels.endAt,
         visible: true,
         width: null,
         minWidth: 100,
@@ -55,7 +56,7 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     },
     {
         key: 'priority',
-        label: '优先级',
+        label: columnLabels.priority,
         visible: true,
         width: null,
         minWidth: 80,
@@ -64,7 +65,7 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     },
     {
         key: 'state',
-        label: '状态',
+        label: columnLabels.state,
         visible: true,
         width: null,
         minWidth: 80,
@@ -73,7 +74,7 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     },
     {
         key: 'project',
-        label: '项目',
+        label: columnLabels.project,
         visible: true,
         width: null,
         minWidth: 80,
@@ -82,7 +83,7 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     },
     {
         key: 'deletedAt',
-        label: '删除时间',
+        label: columnLabels.deletedAt,
         visible: false,
         width: null,
         minWidth: 100,

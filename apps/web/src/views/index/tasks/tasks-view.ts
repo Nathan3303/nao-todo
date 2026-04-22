@@ -9,12 +9,10 @@ import { useTagRepository } from '@nao-todo/infrastructure/backend/tag/repoImpl'
 import useBuiltInProjectRepository from '@nao-todo/infrastructure/built-in/project/repoImpl'
 import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
-import useResponsiveAside from '@/infrastructure/hooks/tasks-view/use-responsive-aside'
+import useResponsiveAside from '@/infrastructure/hooks/use-responsive-aside'
 import { columnLabels } from '@nao-todo/infrastructure/consts/tasks'
 import { useRouter } from 'vue-router'
-import useDialogManager, {
-    type DialogManager
-} from '@/infrastructure/hooks/tasks-view/use-dialog-manager'
+import useDialogManager, { type DialogManager } from '@/infrastructure/hooks/use-dialog-manager'
 import useAsideWidth from '@nao-todo/infrastructure/hooks/use-aside-width'
 import { inject, provide, ref, type Ref } from 'vue'
 import { APP_CONTEXT_KEY, TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
@@ -23,7 +21,7 @@ import { TaskDomain } from '@nao-todo/domain/task'
 import { useTaskRepository } from '@nao-todo/infrastructure/backend/task/repoImpl'
 import { useTasksStore } from '@/stores/tasks'
 import { useBuiltInProjectsStore, useProjectsStore, useTagsStore } from '@/stores/tasks'
-import useSubscriber, { type Subscriber } from '@/infrastructure/hooks/use-subscriber'
+import useSubscriber, { type Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import type { AppContext } from '@/app'
 import type { Tag, Task } from '@nao-todo/types'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
@@ -172,3 +170,4 @@ const useTasksView = () => {
 }
 
 export default useTasksView
+

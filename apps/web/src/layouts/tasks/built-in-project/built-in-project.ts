@@ -4,7 +4,7 @@ import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/ta
 import type { BuiltInProjectViewProps, BuiltInProjectViewContext } from './types'
 import useUserStore from '@/stores/user-store'
 import { storeToRefs } from 'pinia'
-import { BuiltInProjectLayoutHandlers } from '@/handlers/tasks/built-in-project-handler'
+import { BuiltInProjectLayoutHandlers } from '@/infrastructure/handlers/tasks/built-in-project-handler'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 import { TaskDomain } from '@nao-todo/domain/task'
 import { useTaskRepository } from '@nao-todo/infrastructure/backend/task/repoImpl'

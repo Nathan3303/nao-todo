@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { InnerDropdown, InnerDropdownOption } from '@nao-todo/components'
-import { TaskStateSelectOptions } from '@/infrastructure/constants/task'
+import { TaskStateSelectOptions } from '@nao-todo/infrastructure/consts/tasks'
 
 defineOptions({ name: 'TasksDropdownStateFilter' })
 const props = defineProps<{ modelValue: string }>()

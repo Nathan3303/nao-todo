@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { InnerDropdown, InnerDropdownOption } from '@nao-todo/components'
-import { TaskPrioritySelectOptions } from '@/infrastructure/constants/task'
+import { TaskPrioritySelectOptions } from '@nao-todo/infrastructure/consts/tasks'
 
 defineOptions({ name: 'TasksDropdownPriorityFilter' })
 const props = defineProps<{ modelValue: string }>()

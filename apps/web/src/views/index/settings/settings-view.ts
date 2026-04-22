@@ -10,7 +10,7 @@ import { AuthDomain } from '@nao-todo/domain/auth'
 import { useAuthRepository } from '@nao-todo/infrastructure/backend/auth/repoImpl'
 import { AuthUseCase } from '@nao-todo/application/web/usecases/auth'
 import type { UserUseCase } from '@nao-todo/application/web/usecases/user'
-import useSubscriber, { type Subscriber } from '@/infrastructure/hooks/use-subscriber'
+import useSubscriber, { type Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import useAsideWidth from '@nao-todo/infrastructure/hooks/use-aside-width'
 
 export type SettingsViewContext = {

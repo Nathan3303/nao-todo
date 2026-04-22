@@ -21,16 +21,17 @@ const handleUnfinishTask = (taskId: string) => {
 <template>
     <nue-container id="TasksMainKanbanContainer">
         <nue-main>
-            <loading-component v-if="loading" />
-            <nue-empty
-                v-else-if="error"
-                image-size="4rem"
-                image-src="/images/coffee.webp"
-                :description="error"
-                style="height: 100%"
-            />
-            <nue-content v-else fill style="overflow: auto">
+            <nue-content fill style="overflow: auto">
+                <loading-component v-if="loading" placeholder="正在加载任务" style="height: auto" />
+                <nue-empty
+                    v-else-if="error"
+                    image-size="4rem"
+                    image-src="/images/coffee.webp"
+                    :description="error"
+                    style="height: 100%"
+                />
                 <task-kanban
+                    v-else
                     :column-label-getter="getColumnLabel"
                     :columns="columns"
                     :project-name-getter="getProjectName"
@@ -65,3 +66,4 @@ const handleUnfinishTask = (taskId: string) => {
     }
 }
 </style>
+

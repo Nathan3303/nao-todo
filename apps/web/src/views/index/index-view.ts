@@ -1,5 +1,5 @@
 import { APP_CONTEXT_KEY, INDEX_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import useResponsiveAside from '@/infrastructure/hooks/tasks-view/use-responsive-aside'
+import useResponsiveAside from '@/infrastructure/hooks/use-responsive-aside'
 import { useUserStore } from '@/stores'
 import { UserUseCase } from '@nao-todo/application/web/usecases/user'
 import { UserDomain } from '@nao-todo/domain/user'

@@ -5,7 +5,7 @@ import type { BuiltInProjectViewContext } from '../types'
 import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import type { BuiltInProjectLayoutHandlers } from '@/handlers/tasks/built-in-project-handler'
+import type { BuiltInProjectLayoutHandlers } from '@/infrastructure/handlers/tasks/built-in-project-handler'
 
 defineOptions({
     name: 'TasksMainProjectContent',

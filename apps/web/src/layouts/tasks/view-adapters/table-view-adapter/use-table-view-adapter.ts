@@ -1,5 +1,5 @@
 import { computed, onMounted, onUnmounted, watch } from 'vue'
-import useTasksLoader from '@/infrastructure/hooks/tasks-view/use-task-loader'
+import useTasksLoader from '@/infrastructure/hooks/use-task-loader'
 import { useTasksStore } from '@/stores/tasks'
 import type { TableViewAdapterProps } from './types'
 

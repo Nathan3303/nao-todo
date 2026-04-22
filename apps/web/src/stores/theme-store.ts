@@ -92,4 +92,4 @@ const useThemeStore = defineStore('ThemeStore', () => {
     }
 })
 
-export { useThemeStore }
+export default useThemeStore

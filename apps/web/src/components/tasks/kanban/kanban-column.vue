@@ -55,14 +55,6 @@ onMounted(() => fetchTasks())
                         :tags="kanbanCtx.tags.value"
                         draggable="true"
                     />
-                    <!--
-                        @click="(todoId) => emit('show-todo-details', todoId)"
-                        @delete="(todoId) => emit('delete-todo', todoId)"
-                        @finish="(todoId) => emit('finish-todo', todoId)"
-                        @heart="(todoId) => emit('heart-todo', todoId)"
-                        @restore="(todoId) => emit('restore-todo', todoId)"
-                        @unfinish="(todoId) => emit('unfinish-todo', todoId)"
-                    -->
                 </nue-content>
             </nue-main>
         </nue-infinite-scroll>
@@ -75,3 +67,4 @@ onMounted(() => fetchTasks())
     display: none;
 }
 </style>
+

@@ -7,7 +7,7 @@ import type {
     UserViewObject
 } from '@nao-todo/types'
 import type { Subscriber } from '@/infrastructure/hooks/use-subscriber'
-import type { BuiltInProjectLayoutHandlers } from '@/handlers/tasks/built-in-project-handler'
+import type { BuiltInProjectLayoutHandlers } from '@/infrastructure/handlers/tasks/built-in-project-handler'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
 

@@ -5,7 +5,7 @@ import { PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import { inject, onMounted, onUnmounted } from 'vue'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { ProjectHandler } from '@/handlers/tasks/project-handler'
+import { ProjectHandler } from '@/infrastructure/handlers/tasks/project-handler'
 import type { ProjectViewContext } from '../types'
 
 defineOptions({

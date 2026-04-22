@@ -8,7 +8,7 @@ import type {
 import type { Subscriber } from '@/infrastructure/hooks/use-subscriber'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
-import type { TagHandler } from '@/handlers/tasks/tag-handler'
+import type { TagHandler } from '@/infrastructure/handlers/tasks/tag-handler'
 
 export type TagViewProps = {
     tagId?: string
