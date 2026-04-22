@@ -41,7 +41,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useThemeStore, type ThemeMode } from '@/stores/theme-store'
+import { useThemeStore, type ThemeMode } from '@/stores'
 
 defineOptions({ name: 'SettingsAppAppereance' })
 
