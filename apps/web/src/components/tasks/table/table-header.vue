@@ -67,7 +67,10 @@ const handleResizeMove = (e: MouseEvent) => {
     const column = visibleColumns.value.find((c) => c.key === resizingColumn.value)
     if (column) {
         const clampedWidth = Math.max(column.minWidth, Math.min(column.maxWidth, newWidth))
-        tableContext.columnResize({ columnKey: resizingColumn.value, newWidth: clampedWidth })
+        tableContext.columnResize({
+            columnKey: resizingColumn.value as never,
+            newWidth: clampedWidth
+        })
     }
 }
 
