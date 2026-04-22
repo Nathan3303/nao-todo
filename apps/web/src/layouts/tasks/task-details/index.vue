@@ -21,7 +21,7 @@ const taskId = computed<string>(() => route.params.taskId as string)
     </template>
     <template v-else>
         <nue-separator op-target="next" @resize="handleResizeOutline" />
-        <nue-aside :width="outlineWidth" max-width="480px" min-width="360px" style="padding: 0">
+        <nue-aside :width="outlineWidth" max-width="720px" min-width="360px" style="padding: 0">
             <tasks-view-details :task-id="taskId" />
         </nue-aside>
     </template>
