@@ -7,11 +7,19 @@ import type { TaskColumnOptions, GetTasksSortOptions, TaskViewObject } from '@na
 export const TASK_KANBAN_CONTEXT_KEY = Symbol('TASK_KANBAN_CONTEXT_KEY')
 
 const useKanban = (props: TaskKanbanProps, emit: TaskKanbanEmits) => {
+    // @state 正在更新的任务 ID 集合
+    const updatingTaskIds = reactive<Set<TaskViewObject['id']>>(new Set())
+
     // @method 处理拖拽放下 - 更新任务状态
-    const handleTaskDrop = (taskId: TaskViewObject['id'], category: TaskViewObject['state']) => {
+    const handleTaskDrop = async (taskId: TaskViewObject['id'], category: TaskViewObject['state']) => {
         const task = props.tasks.find(t => t.id === taskId)
         if (task && task.state !== category) {
-            props.taskUseCase.updateTask(taskId, { state: category })
+            updatingTaskIds.add(taskId)
+            try {
+                await props.taskUseCase.updateTask(taskId, { state: category })
+            } finally {
+                updatingTaskIds.delete(taskId)
+            }
         }
     }
 
@@ -98,7 +106,8 @@ const useKanban = (props: TaskKanbanProps, emit: TaskKanbanEmits) => {
         deleteOrRestore,
         updateColumns,
         updateSortOptions,
-        clearSortOptions
+        clearSortOptions,
+        updatingTaskIds: computed(() => updatingTaskIds)
     })
 
     // @returns

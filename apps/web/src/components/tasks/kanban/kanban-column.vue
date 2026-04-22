@@ -53,7 +53,8 @@ onMounted(() => fetchTasks())
                         :data-todoId="task.id"
                         :task="task"
                         :tags="kanbanCtx.tags.value"
-                        draggable="true"
+                        :is-updating="kanbanCtx.updatingTaskIds.value.has(task.id)"
+                        :draggable="!kanbanCtx.updatingTaskIds.value.has(task.id)"
                     />
                 </nue-content>
             </nue-main>

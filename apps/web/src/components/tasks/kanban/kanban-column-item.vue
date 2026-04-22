@@ -9,10 +9,7 @@ import {
     TaskCheckButton
 } from '@nao-todo/components'
 import { TASK_KANBAN_CONTEXT_KEY } from './use-kanban'
-import type {
-    TaskKanbanColumnItemProps,
-    TaskKanbanContext
-} from './types'
+import type { TaskKanbanColumnItemProps, TaskKanbanContext } from './types'
 import type { TaskColumnOptions } from '@nao-todo/types'
 
 defineOptions({ name: 'TaskKanbanColumnItem' })
@@ -36,19 +33,19 @@ const isAttrsNone = computed(() => {
 const isDone = computed(() => props.task.state === 'done')
 
 const handleClick = () => {
-    if (kanbanCtx) {
+    if (kanbanCtx && !props.isUpdating) {
         kanbanCtx.showTaskDetails(props.task.id)
     }
 }
 
 const handleDelete = () => {
-    if (kanbanCtx) {
+    if (kanbanCtx && !props.isUpdating) {
         kanbanCtx.deleteOrRestore(props.task.id, props.task.isDeleted)
     }
 }
 
 const handleFinish = () => {
-    if (kanbanCtx) {
+    if (kanbanCtx && !props.isUpdating) {
         if (isDone.value) {
             kanbanCtx.unfinishTask(props.task.id)
         } else {
@@ -62,14 +59,19 @@ const handleFinish = () => {
     <nue-div
         v-if="kanbanCtx"
         class="todo-card"
-        auto-fit
         @click="handleClick"
         :data-is-done="isDone"
         :data-actived="actived"
         :data-is-deleted="task.isDeleted"
+        :class="{ 'todo-card--updating': isUpdating }"
     >
         <nue-div vertical>
-            <task-check-button :is-done="isDone" @change="handleFinish" size="large" />
+            <task-check-button
+                size="large"
+                :is-done="isDone"
+                :is-updating="isUpdating"
+                @change="handleFinish"
+            />
         </nue-div>
         <nue-div vertical gap=".5rem" flex="1" overflow="hidden">
             <nue-div class="todo-card__info">
@@ -80,6 +82,7 @@ const handleFinish = () => {
                             theme="pure"
                             :icon="task.isDeleted ? 'restore' : 'delete'"
                             @click.stop="handleDelete"
+                            :disabled="isUpdating"
                         />
                     </nue-div>
                 </nue-div>
@@ -136,3 +139,4 @@ const handleFinish = () => {
         </nue-div>
     </nue-div>
 </template>
+

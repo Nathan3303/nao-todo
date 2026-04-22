@@ -3,6 +3,8 @@
         theme="pure,icon,chkbtn"
         :size="size"
         :icon="iconName"
+        :loading="isUpdating"
+        :disabled="isUpdating"
         @click="emit('change', !props.isDone)"
         @mouseover="isHover = true"
         @mouseout="isHover = false"
@@ -25,7 +27,7 @@ const iconName = computed(() => {
 </script>
 
 <style scoped>
-.nue-button.nue-button--chkbtn {
+.nue-button--chkbtn {
     --nue-button-font-size: 1.25rem;
     --nue-button-color: var(--nue-primary-color-800);
     cursor: pointer;
@@ -39,3 +41,4 @@ const iconName = computed(() => {
     }
 }
 </style>
+

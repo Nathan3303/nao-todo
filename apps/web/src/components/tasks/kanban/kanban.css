@@ -207,6 +207,43 @@
                     &[data-giveup='true'] {
                         opacity: 0.8;
                     }
+
+                    &.todo-card--updating {
+                        opacity: 0.5;
+                        cursor: not-allowed;
+                        position: relative;
+
+                        .todo-card__updating-overlay {
+                            position: absolute;
+                            inset: 0;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            background: rgba(255, 255, 255, 0.9);
+                            border-radius: inherit;
+                            z-index: 10;
+
+                            .todo-card__updating-text {
+                                font-size: var(--nue-text-sm);
+                                color: var(--nue-primary-color-700);
+                                font-weight: 500;
+                            }
+                        }
+
+                        &:hover {
+                            border-color: var(--nue-border-color);
+                            background-color: var(--nue-primary-color-0);
+                            cursor: not-allowed;
+
+                            .todo-card__name {
+                                text-decoration: none;
+                            }
+
+                            .todo-card__actions {
+                                display: none;
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -60,6 +60,7 @@ export type TaskKanbanContext = {
         order: GetTasksSortOptions['order']
     ) => void
     clearSortOptions: () => void
+    updatingTaskIds: ComputedRef<Set<TaskViewObject['id']>>
 }
 
 /**
@@ -83,6 +84,7 @@ export type TaskKanbanColumnItemProps = {
     tags: TagViewObject[]
     actived?: boolean
     columns?: TaskColumnOptions
+    isUpdating?: boolean
 }
 
 export type TaskKanbanColumnItemEmits = {
