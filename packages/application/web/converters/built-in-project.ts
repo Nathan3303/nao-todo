@@ -23,6 +23,7 @@ export const builtInProjectEntity2ViewObject = (
     vo.name = entity.name
     vo.icon = entity.icon
     vo.description = entity.description
+    vo.createTaskOptions = entity.createTaskOptions
     return vo
 }
 

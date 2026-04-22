@@ -5,7 +5,7 @@ export type BuiltInProjectRes = {
     icon: string
     name: string
     description: string
-    createTaskOptions: Partial<CreateTaskViewObject> | (() => Partial<CreateTaskViewObject>)
+    createTaskOptions: (() => Partial<CreateTaskViewObject>) | Partial<CreateTaskViewObject>
 }
 
 export type BuiltInProjectPreferenceRes = {
@@ -15,3 +15,4 @@ export type BuiltInProjectPreferenceRes = {
     getTasksOptions: string
     columns: string
 }
+

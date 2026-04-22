@@ -94,6 +94,22 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
         return state == 'todo,in-progress'
     })
 
+    // @method 打开创建任务对话框
+    const showTaskCreator = () => {
+        if (!builtInProject.value) return
+        if (typeof builtInProject.value.createTaskOptions === 'function') {
+            tasksViewContext.dialogManager.openDialog(
+                'task-creator',
+                builtInProject.value.createTaskOptions?.() || {}
+            )
+            return
+        }
+        tasksViewContext.dialogManager.openDialog(
+            'task-creator',
+            builtInProject.value.createTaskOptions
+        )
+    }
+
     // @provide 提供 Project View 上下文
     provide<BuiltInProjectViewContext>(BUILT_IN_PROJECT_VIEW_CONTEXT_KEY, {
         tasksViewContext,
@@ -111,7 +127,7 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
         switchViewTypeToTable: () => switchViewType('table'),
         switchViewTypeToKanban: () => switchViewType('kanban'),
         switchViewTypeToList: () => switchViewType('list'),
-        showTaskCreator: () => tasksViewContext.dialogManager.openDialog('task-creator', {})
+        showTaskCreator
     })
 
     // @returns
@@ -119,3 +135,4 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
 }
 
 export default useBuiltInProjectView
+

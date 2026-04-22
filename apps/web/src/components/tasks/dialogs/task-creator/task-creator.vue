@@ -62,6 +62,14 @@ onMounted(() => emit('register', open, close))
                     maxlength="64"
                     counter="word-left"
                 />
+                <nue-textarea
+                    v-model="states.description"
+                    maxlength="256"
+                    counter="word-left"
+                    :autosize="{ minRows: 1, maxRows: 4 }"
+                    placeholder="添加待办事项备注（可选）"
+                    theme="fix-padding"
+                />
                 <nue-div wrap="nowrap" gap=".5rem">
                     <task-date-selector v-model="states.endAt" />
                     <task-selector
@@ -85,14 +93,6 @@ onMounted(() => emit('register', open, close))
                     :tags="props.avaliableTags || []"
                     :task-tags="states.tags || []"
                     @update-tags="(_tags) => (states.tags = _tags)"
-                />
-                <nue-textarea
-                    v-model="states.description"
-                    maxlength="256"
-                    counter="word-left"
-                    :autosize="{ minRows: 1, maxRows: 4 }"
-                    placeholder="添加待办事项备注（可选）"
-                    theme="fix-padding"
                 />
             </nue-div>
         </template>

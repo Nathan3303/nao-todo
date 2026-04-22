@@ -1,11 +1,11 @@
-import type { GetTasksOptions, TaskColumnOptions } from './task'
+import type { CreateTaskViewObject, GetTasksOptions, TaskColumnOptions } from './task'
 
 export type BuiltInProjectViewObject = {
     id: string
     icon: string
     name: string
     description: string
-    // createTaskOptions: Partial<CreateTaskViewObject> | (() => Partial<CreateTaskViewObject>)
+    createTaskOptions: (() => Partial<CreateTaskViewObject>) | Partial<CreateTaskViewObject>
 }
 
 export type BuiltInProjectPreferenceViewObject = {
@@ -15,3 +15,4 @@ export type BuiltInProjectPreferenceViewObject = {
     getTasksOptions: GetTasksOptions
     columns: TaskColumnOptions
 }
+
