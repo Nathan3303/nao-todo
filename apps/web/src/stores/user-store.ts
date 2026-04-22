@@ -1,6 +1,7 @@
 import type { UserViewObject, UpdateUserViewObject } from '@nao-todo/types'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import { env } from '@/infrastructure/constants/env'
 
 const useUserStore = defineStore('UserStore', () => {
     // @state 用户是否登录
@@ -24,12 +25,17 @@ const useUserStore = defineStore('UserStore', () => {
 
     // @action 设置用户配置文件
     const setUserProfile = (profile: UserViewObject) => {
+        // 处理 avatar 字段
+        if (profile.avatar) {
+            profile.avatar = `${env.baseURL}${profile.avatar}?timestamp=${Date.now()}`
+        }
+        // 设置存储
         userProfile.value = profile
     }
 
     // @action 更新用户配置文件
     const updateUserProfile = (updateProfile: UpdateUserViewObject) => {
-        userProfile.value = { ...userProfile.value, ...updateProfile } as UserViewObject
+        setUserProfile({ ...userProfile.value, ...updateProfile } as UserViewObject)
     }
 
     // @returns
@@ -45,3 +51,4 @@ const useUserStore = defineStore('UserStore', () => {
 })
 
 export default useUserStore
+

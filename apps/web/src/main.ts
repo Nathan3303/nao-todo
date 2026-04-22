@@ -6,8 +6,9 @@ import NueUI from 'nue-ui'
 import App from './App.vue'
 import '@/infrastructure/themes'
 import { useThemeStore } from '@/stores'
+import { env } from '@/infrastructure/constants/env'
 
-initRequester({ name: 'AxiosRequester', baseURL: 'http://localhost:3302/api' })
+initRequester({ name: 'AxiosRequester', baseURL: env.apiBaseURL })
 
 const app = createApp(App)
 app.use(NueUI)
@@ -20,3 +21,4 @@ themeStore.loadSavedTheme()
 themeStore.initSystemListener()
 
 app.mount('#app')
+

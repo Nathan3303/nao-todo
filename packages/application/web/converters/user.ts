@@ -19,9 +19,7 @@ export const userEntityToViewObject = (userEntity: UserEntity): UserViewObject =
     return {
         email: userEntity.email,
         nickname: userEntity.nickname,
-        avatar: userEntity.avatar
-            ? `http://localhost:3302${userEntity.avatar}?timestamp=${Date.now()}`
-            : '',
+        avatar: userEntity.avatar,
         role: userEntity.role,
         state: userEntity.state,
         createdAt: dayjs(userEntity.createdAt).format('YYYY-MM-DD HH:mm:ss'),
