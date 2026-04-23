@@ -14,7 +14,6 @@ import {
     tagPreferenceViewObjectToEntity,
     updateTagViewObjectToValueObject
 } from '../converters/tag'
-import { NueConfirm } from 'nue-ui'
 
 /**
  * 标签状态管理
@@ -135,16 +134,6 @@ export class TagUseCase {
      * @returns 无
      */
     async delete(tagId: TagViewObject['id']): GoAsync<void> {
-        // 询问用户是否确认删除
-        const [isByCancel] = await NueConfirm({
-            title: '确认删除标签',
-            content: '删除标签后可以在 标签管理 中恢复。是否继续？',
-            confirmButtonText: '删除',
-            cancelButtonText: '取消'
-        })
-        // 判断用户是否取消删除
-        if (isByCancel) return null
-        // 删除
         return await this.tagDomain.remove(tagId)
     }
 }

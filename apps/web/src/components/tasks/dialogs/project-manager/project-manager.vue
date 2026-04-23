@@ -38,6 +38,7 @@ const handleDeleteProject = (projectId: string) => {
             const err = await dialogManagerContext.projectUseCase.delete(projectId)
             if (err !== null) {
                 NueMessage.error(unwrapError(err))
+                return
             }
             NueMessage.success('任务清单删除成功')
         }
@@ -52,6 +53,7 @@ const handleRestoreProject = async (projectId: string) => {
     loadingProjects.value.delete(projectId)
     if (err !== null) {
         NueMessage.error(unwrapError(err))
+        return
     }
     NueMessage.success('任务清单恢复成功')
 }

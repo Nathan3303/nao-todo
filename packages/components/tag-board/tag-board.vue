@@ -16,16 +16,15 @@ const emit = defineEmits<TagBoardEmits>()
             <div class="tag-board">
                 <tag-card v-for="tag in tags" :key="tag.id" :tag="tag">
                     <template #ops>
-                        <nue-tooltip content="修改标签提示色" size="small">
-                            <tag-color-dot :color="tag.color" @click="emit('recolor', tag.id)" />
-                        </nue-tooltip>
-                        <nue-tooltip content="删除标签" size="small">
-                            <nue-button
-                                icon="delete"
-                                theme="pure,pure-icon"
-                                @click="emit('delete', tag.id)"
-                            />
-                        </nue-tooltip>
+                        <slot name="ops" :tag="tag">
+                            <nue-tooltip content="删除标签" size="small">
+                                <nue-button
+                                    icon="delete"
+                                    theme="pure,pure-icon"
+                                    @click="emit('delete', tag.id)"
+                                />
+                            </nue-tooltip>
+                        </slot>
                     </template>
                 </tag-card>
             </div>
@@ -45,3 +44,4 @@ const emit = defineEmits<TagBoardEmits>()
     }
 }
 </style>
+

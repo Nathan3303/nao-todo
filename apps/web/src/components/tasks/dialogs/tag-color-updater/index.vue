@@ -31,7 +31,7 @@ onMounted(() => emit('register', open, close))
 </script>
 
 <template>
-    <nue-dialog v-model="visible" ref="dialogRef">
+    <nue-dialog v-model="visible" ref="dialogRef" theme="color-selector">
         <template #header>
             <nue-text>标签颜色修改</nue-text>
             <nue-button @click="close" icon="clear" theme="icon,ghost,small" />
