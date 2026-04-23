@@ -2,7 +2,8 @@ import type {
     GoAsync,
     ProjectViewObject,
     CreateProjectViewObject,
-    ProjectPreferenceViewObject
+    ProjectPreferenceViewObject,
+    UpdateProjectViewObject
 } from '@nao-todo/types'
 import { ProjectDomain } from '@nao-todo/domain/project/services'
 import {
@@ -12,13 +13,19 @@ import {
     projectPreferenceEntityToViewObject,
     projectPreferenceViewObjectToEntity
 } from '../converters/project'
-import { NueConfirm } from 'nue-ui'
 
 export interface ProjectStore {
     setProjects: (projects: ProjectViewObject[]) => void
     addProject: (project: ProjectViewObject) => void
     setProjectPreference: (preference: ProjectPreferenceViewObject) => void
     getProject: (projectId: ProjectViewObject['id']) => ProjectViewObject | undefined
+    updateProject: (
+        projectId: ProjectViewObject['id'],
+        updateProjectViewObject: UpdateProjectViewObject
+    ) => void
+    deleteProject: (projectId: ProjectViewObject['id']) => void
+    softDeleteProject: (projectId: ProjectViewObject['id']) => void
+    restoreProject: (projectId: ProjectViewObject['id']) => void
 }
 
 /**
@@ -47,6 +54,7 @@ export class ProjectUseCase {
         // 转换为视图对象
         const projects = projectEntitiesToViewObjects(projectEntities)
         // 存储到状态管理
+        console.log(projects)
         this.store.setProjects(projects)
         return null
     }
@@ -112,17 +120,26 @@ export class ProjectUseCase {
      * @returns 无
      */
     async delete(projectId: ProjectViewObject['id']): GoAsync<void> {
-        // 询问用户是否确认删除
-        const [isByCancel] = await NueConfirm({
-            title: '确认删除项目',
-            content: '删除项目后可以在 项目管理 中恢复。是否继续？',
-            confirmButtonText: '删除',
-            cancelButtonText: '取消'
-        })
-        // 判断用户是否取消删除
-        if (isByCancel) return null
-        // 删除
-        return await this.projectDomain.remove(projectId)
+        // 删除任务清单
+        const err = await this.projectDomain.remove(projectId)
+        if (err !== null) return err
+        // 更新状态管理
+        this.store.softDeleteProject(projectId)
+        return null
+    }
+
+    /**
+     * 恢复项目
+     * @param projectId 项目ID
+     * @returns 无
+     */
+    async restore(projectId: ProjectViewObject['id']): GoAsync<void> {
+        // 恢复任务清单
+        const err = await this.projectDomain.restore(projectId)
+        if (err !== null) return err
+        // 更新状态管理
+        this.store.restoreProject(projectId)
+        return null
     }
 
     /**
@@ -131,18 +148,17 @@ export class ProjectUseCase {
      * @returns 无
      */
     async archive(projectId: ProjectViewObject['id']): GoAsync<void> {
-        // 获取项目名称
-        const projectName = this.store.getProject(projectId)?.name
-        // 询问用户是否确认归档
-        const [isByCancel] = await NueConfirm({
-            title: '确认归档项目',
-            content: `确认归档项目 ${projectName} 吗？`,
-            confirmButtonText: '归档',
-            cancelButtonText: '取消'
-        })
-        // 判断用户是否取消归档
-        if (isByCancel) return null
-        // 调用领域层方法
+        // 直接调用，不做确认
         return await this.projectDomain.archive(projectId)
     }
+
+    /**
+     * 取消归档项目
+     * @param projectId 项目ID
+     * @returns 无
+     */
+    async unarchive(projectId: ProjectViewObject['id']): GoAsync<void> {
+        return await this.projectDomain.unarchive(projectId)
+    }
 }
+

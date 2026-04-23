@@ -3,33 +3,41 @@ import type { ProjectManagerEmits, ProjectManagerProps, ProjectManagerVO } from 
 
 const useProjectManager = (props: ProjectManagerProps, emit: ProjectManagerEmits) => {
     // @states
-    const states = reactive<ProjectManagerVO>({
-        filterInfo: { name: '', onlyDeleted: false }
-    })
+    const states = reactive<ProjectManagerVO>({ filterInfo: { name: '' }, activeTab: 'all' })
 
-    // @computed 根据 filterInfo 筛选清单
+    // @computed 根据 filterInfo 和 activeTab 筛选清单
     const filteredProjects = computed(() => {
-        const { name, onlyDeleted } = states.filterInfo
+        const { name } = states.filterInfo
         return props.projects.filter((project) => {
             const nameMatch = name ? project.name.includes(name) : true
-            const isDeletedMatch = onlyDeleted ? project.isDeleted : true
-            return nameMatch && isDeletedMatch
+            let statusMatch = true
+            if (states.activeTab === 'active') {
+                statusMatch = !project.isDeleted
+            } else if (states.activeTab === 'deleted') {
+                statusMatch = project.isDeleted
+            }
+            return nameMatch && statusMatch
         })
     })
+
+    // @methods
+    const setActiveTab = (tab: 'all' | 'active' | 'deleted') => {
+        states.activeTab = tab
+    }
 
     // @emits
     const deleteProject = (id: string) => emit('deleteProject', id)
     const restoreProject = (id: string) => emit('restoreProject', id)
-    const hardDeleteProject = (id: string) => emit('hardDeleteProject', id)
 
     // @returns
     return {
         states,
         filteredProjects,
+        setActiveTab,
         deleteProject,
-        restoreProject,
-        hardDeleteProject
+        restoreProject
     }
 }
 
 export default useProjectManager
+

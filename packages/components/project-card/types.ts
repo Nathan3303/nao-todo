@@ -1,11 +1,12 @@
-import { Project } from '@nao-todo/types'
+import type { ProjectViewObject } from '@nao-todo/types'
 
 export type ProjectCardProps = {
-    project: Project
+    project: ProjectViewObject
     allowRoute?: boolean
 }
 
 export type ProjectCardEmits = {
-    (event: 'click', project: Project): void
-    (event: 'unarchiveProject', projectId: Project['id']): void
+    (event: 'click', project: ProjectViewObject): void
+    (event: 'unarchiveProject', projectId: ProjectViewObject['id']): void
 }
+

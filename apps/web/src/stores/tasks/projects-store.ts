@@ -5,7 +5,16 @@ import useProjectPreferenceStoreBase from '../base/project-preference-store-base
 
 export default defineStore('ProjectsStore', () => {
     // @storebase Project store base
-    const { projects, getAllProjects, setProjects, addProject, getProject } = useProjectsStoreBase()
+    const {
+        projects,
+        getAllProjects,
+        setProjects,
+        addProject,
+        getProject,
+        softDeleteProject,
+        deleteProject,
+        restoreProject
+    } = useProjectsStoreBase()
 
     // @state 可用项目
     const availableProjects = computed(() => {
@@ -42,6 +51,9 @@ export default defineStore('ProjectsStore', () => {
         setProjects,
         addProject,
         getProject,
+        softDeleteProject,
+        deleteProject,
+        restoreProject,
         loading: computed(() => loading.value),
         error: computed(() => error.value),
         setLoading,
@@ -59,3 +71,4 @@ export default defineStore('ProjectsStore', () => {
         setPreferenceError
     }
 })
+

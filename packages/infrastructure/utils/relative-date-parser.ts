@@ -21,7 +21,7 @@ const date2RelativeDate = (dateStrOrDayJs: string | dayjs.Dayjs): Go<string> => 
     // 1. 解析日期字符串或 dayjs 对象
     const date = typeof dateStrOrDayJs === 'string' ? dayjs(dateStrOrDayJs) : dateStrOrDayJs
     // 2. 判断日期是否有效
-    if (!date.isValid()) return [null, '无效日期']
+    if (!date?.isValid()) return [null, '无效日期']
     // 3. 解析成相对日期
     for (const rule of rules) {
         if (rule.checker(date)) {

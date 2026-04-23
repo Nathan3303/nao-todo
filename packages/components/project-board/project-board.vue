@@ -12,7 +12,11 @@ const emit = defineEmits<ProjectBoardEmits>()
 <template>
     <div class="project-board-wrapper" style="height: 100%">
         <loading v-if="loadingState" />
-        <nue-empty v-else-if="!projects || !projects.length" style="height: 100%" />
+        <nue-empty
+            v-else-if="!projects || !projects.length"
+            style="height: 100%"
+            description="暂无数据"
+        />
         <template v-else>
             <div class="project-board">
                 <project-card
@@ -22,23 +26,13 @@ const emit = defineEmits<ProjectBoardEmits>()
                     :allow-route="allowRoute"
                 >
                     <template #ops>
-                        <project-delete-button
-                            :is-deleted="project.isDeleted"
-                            @delete="emit('deleteProject', project.id)"
-                            @restore="emit('restoreProject', project.id)"
-                        />
-                        <nue-tooltip
-                            v-if="project.isDeleted"
-                            class="project-board__delete-permanently"
-                            size="small"
-                            content="永久删除清单"
-                        >
-                            <nue-button
-                                theme="icon,ghost,pure"
-                                icon="delete"
-                                @click="emit('deleteProjectPermanently', project.id)"
+                        <slot name="ops" :project="project">
+                            <project-delete-button
+                                :is-deleted="project.isDeleted"
+                                @delete="emit('deleteProject', project.id)"
+                                @restore="emit('restoreProject', project.id)"
                             />
-                        </nue-tooltip>
+                        </slot>
                     </template>
                 </project-card>
             </div>
@@ -61,10 +55,7 @@ const emit = defineEmits<ProjectBoardEmits>()
             height: 140px;
             overflow: hidden;
         }
-
-        .project-board__delete-permanently .nue-button--pure {
-            color: red;
-        }
     }
 }
 </style>
+

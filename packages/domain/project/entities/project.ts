@@ -12,6 +12,7 @@ export class ProjectEntity {
      * @param archivedAt 归档时间
      * @param createdAt 创建时间
      * @param updatedAt 更新时间
+     * @param deactivedAt 停用(删除)时间
      */
     constructor(
         public id: string,
@@ -20,6 +21,8 @@ export class ProjectEntity {
         public description: string,
         public archivedAt: string,
         public createdAt: string,
-        public updatedAt: string
+        public updatedAt: string,
+        public deactivedAt: string | null
     ) {}
 }
+

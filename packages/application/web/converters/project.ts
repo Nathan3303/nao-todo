@@ -23,8 +23,9 @@ export const projectEntityToViewObject = (projectEntity: ProjectEntity): Project
         archivedAt: projectEntity.archivedAt,
         createdAt: projectEntity.createdAt,
         updatedAt: projectEntity.updatedAt,
+        deactivedAt: projectEntity.deactivedAt,
         isArchived: dayjs(projectEntity.archivedAt).isValid(),
-        // isDeleted: dayjs(projectEntity.deletedAt).isValid(),
+        isDeleted: dayjs(projectEntity.deactivedAt).isValid(),
         createTaskOptions: { projectId: projectEntity.id }
     } as ProjectViewObject
 }

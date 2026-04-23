@@ -4,6 +4,8 @@ import type { GetTasksOptions, TaskColumnOptions } from './task'
 export type ProjectViewObject = Omit<Project, 'preference'> & {
     isArchived: boolean
     isDeleted: boolean
+    createdAt: string
+    updatedAt: string
     createTaskOptions?: { projectId: string }
 }
 

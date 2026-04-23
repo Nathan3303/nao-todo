@@ -1,8 +1,5 @@
 import type { ProjectCreatorVO } from '@/components/tasks/dialogs/project-creator/types'
-import type {
-    DialogCloseFunc,
-    DialogOpenFunc
-} from '@/infrastructure/hooks/tasks-view/use-dialog-manager'
+import type { DialogCloseFunc, DialogOpenFunc } from '@/infrastructure/hooks/use-dialog-manager'
 import { projectCreatorVO2ValueObject } from './converters'
 import type {
     CreateTagViewObject,
@@ -12,13 +9,16 @@ import type {
     TagViewObject
 } from '@nao-todo/types'
 import { storeToRefs } from 'pinia'
-import { computed, inject, type ComputedRef } from 'vue'
-import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
+import { computed, inject, provide, type ComputedRef } from 'vue'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { useProjectsStore, useTagsStore } from '@/stores/tasks'
-import type { Subscriber } from '@/infrastructure/hooks/use-subscriber'
+import { DIALOG_MANAGER_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
+import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
+import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
+import type { DialogManagerContext } from './types'
 
 export type UseDialogs = {
+    availableProjects: ComputedRef<ProjectViewObject[]>
     projects: ComputedRef<ProjectViewObject[]>
     tags: ComputedRef<TagViewObject[]>
     tagColorGetter: (tagId: TagViewObject['id']) => TagViewObject['color']
@@ -47,7 +47,7 @@ const useDialogs = (): UseDialogs => {
     const tagsStore = useTagsStore()
 
     // @presetStates
-    const { availableProjects: projects } = storeToRefs(projectsStore)
+    const { availableProjects, projects } = storeToRefs(projectsStore)
     const { tags } = storeToRefs(tagsStore)
 
     // @method 创建清单对话框注册函数
@@ -124,11 +124,18 @@ const useDialogs = (): UseDialogs => {
         return [taskVO.id, null]
     }
 
+    // @provide 对话框管理上下文
+    provide<DialogManagerContext>(DIALOG_MANAGER_CONTEXT_KEY, {
+        projectUseCase: tasksViewContext.projectUseCase,
+        tagUseCase: tasksViewContext.tagUseCase
+    })
+
     // @returns
     return {
         projectCreatorRegister,
         projectCreatorHandler,
-        projects: computed(() => [...projects.value.values()]),
+        availableProjects,
+        projects: computed(() => projects.value),
         projectManagerRegister,
         projectCreatorOpener,
         tagCreatorRegister,
@@ -147,3 +154,4 @@ const useDialogs = (): UseDialogs => {
 }
 
 export default useDialogs
+

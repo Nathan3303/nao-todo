@@ -54,7 +54,7 @@ export class ProjectDomain {
             return [null, validateErr]
         }
         // 更新任务清单
-        return this.projectRepo.update(updateProjectValueObject)
+        return this.projectRepo.update(updateProjectValueObject.id, updateProjectValueObject)
     }
 
     /**
@@ -119,3 +119,4 @@ export class ProjectDomain {
         return this.projectRepo.updatePreference(projectId, preferenceEntity)
     }
 }
+

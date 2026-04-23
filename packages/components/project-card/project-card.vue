@@ -1,50 +1,68 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
 import { computed } from 'vue'
 import type { ProjectCardProps, ProjectCardEmits } from './types'
+import { parse2RelativeDate } from '@nao-todo/infrastructure/utils'
 
 defineOptions({ name: 'ProjectCard' })
 const props = defineProps<ProjectCardProps>()
-const emit = defineEmits<ProjectCardEmits>()
+defineEmits<ProjectCardEmits>()
 
-const router = useRouter()
+// const router = useRouter()
+console.log(props.project)
+const isDeleted = computed(() => props.project.isDeleted)
+const isArchived = computed(() => props.project.isArchived)
 
-const isActived = computed(() => {
-    return !props.project.isArchived && !props.project.isDeleted
+const statusText = computed(() => {
+    if (props.project.isDeleted) return '已删除'
+    if (props.project.isArchived) return '已归档'
+    return '正常'
 })
 
-const handleClick = () => {
-    emit('click', props.project)
-    if (!props.allowRoute) return
-    router.push({
-        name: 'project-main',
-        params: {
-            projectId: props.project.id
-        }
-    })
-}
+const statusColor = computed(() => {
+    if (props.project.isDeleted) return 'var(--nue-error-color-80)'
+    if (props.project.isArchived) return 'var(--nue-warning-color-80)'
+    return 'var(--nue-success-color-70)'
+})
 </script>
 
 <template>
-    <nue-div class="project-card" :data-actived="isActived" @click="handleClick">
-        <nue-div align="center" justify="space-between" wrap="nowrap">
-            <nue-text size="16px" :clamped="1">
-                {{ project.name }}
-            </nue-text>
-            <nue-div align="center" width="fit-content" gap="0.5rem">
-                <slot name="ops" />
+    <nue-div class="project-card" :data-deleted="isDeleted" :data-archived="isArchived">
+        <nue-div vertical gap=".25rem" flex="1">
+            <!-- 顶部：项目名称 + 图标 + 操作 -->
+            <nue-div align="center" justify="space-between" wrap="nowrap">
+                <nue-div align="center" gap="0.5rem">
+                    <nue-icon v-if="project.icon" :name="project.icon" size="var(--nue-text-md)" />
+                    <nue-text size="var(--nue-text-md)" :weight="500" :clamped="1">
+                        {{ project.name }}
+                    </nue-text>
+                </nue-div>
+                <nue-div align="center" width="fit-content" gap="0.5rem">
+                    <slot name="ops" />
+                </nue-div>
             </nue-div>
+            <!-- 项目描述 -->
+            <nue-text
+                size="var(--nue-text-sm)"
+                color="var(--nue-primary-color-500)"
+                :clamped="3"
+                style="word-break: break-word"
+            >
+                {{ project.description || '无描述' }}
+            </nue-text>
         </nue-div>
-        <nue-text size="12px" color="gray" :clamped="3" style="word-break: break-word">
-            {{ project.description || '无描述' }}
-        </nue-text>
-        <nue-div flex="1" />
-        <nue-text size="12px" color="gray">
-            清单状态：{{ project.isDeleted ? '已删除' : project.isArchived ? '已归档' : '正常' }}
-        </nue-text>
-        <nue-div v-if="$slots.footerOps" class="project-card__footer-ops" align="center">
-            <nue-divider />
-            <slot name="footerOps" />
+        <!-- 底部信息 -->
+        <nue-div class="project-card__info" align="center" justify="space-between" wrap="nowrap">
+            <nue-text
+                v-if="isDeleted"
+                size="var(--nue-text-sm)"
+                color="var(--nue-primary-color-600)"
+            >
+                删除于 {{ parse2RelativeDate(project.deactivedAt!) }}
+            </nue-text>
+            <nue-text v-else size="var(--nue-text-sm)" color="var(--nue-primary-color-400)">
+                创建于 {{ parse2RelativeDate(project.createdAt) }}
+            </nue-text>
+            <nue-text size="var(--nue-text-sm)" :color="statusColor">{{ statusText }}</nue-text>
         </nue-div>
     </nue-div>
 </template>
@@ -60,17 +78,11 @@ const handleClick = () => {
     flex-wrap: nowrap;
     box-shadow: var(--nue-secondary-shadow);
 
-    &[data-actived='false'] {
-        background-color: #f2f2f2;
-    }
-
-    &[data-actived='false'] > * {
+    &[data-deleted='true'],
+    &[data-archived='true'] {
         opacity: 0.8;
-    }
-
-    &[data-actived='false'] .project-card__footer-ops,
-    &[data-actived='false'] .project-card__ops {
-        opacity: 1;
+        background-color: var(--nue-primary-color-200);
     }
 }
 </style>
+

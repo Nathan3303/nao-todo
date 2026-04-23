@@ -8,7 +8,16 @@ import type {
 } from '../types'
 
 export const getProjectRes2ProjectEntity = (res: GetProjectRes): ProjectEntity => {
-    const e = new ProjectEntity(res.id, res.name, 'more2', res.description, res.archivedAt, '', '')
+    const e = new ProjectEntity(
+        res.id,
+        res.name,
+        'more2',
+        res.description,
+        res.archivedAt,
+        res.createdAt,
+        res.updatedAt,
+        res.deactivedAt
+    )
     return e
 }
 

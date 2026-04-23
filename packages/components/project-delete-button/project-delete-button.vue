@@ -6,6 +6,7 @@ const props = defineProps<ProjectDeleteButtonProps>()
 const emit = defineEmits<ProjectDeleteButtonEmits>()
 
 const handleClick = () => {
+    if (props.loading) return
     if (props.isDeleted) {
         emit('restore')
         return
@@ -20,6 +21,7 @@ const handleClick = () => {
             class="project-delete-button"
             :theme="$slots.default ? 'icon,ghost,small' : 'icon,ghost,pure'"
             :icon="isDeleted ? 'restore' : 'delete'"
+            :loading="loading"
             @click.stop="handleClick"
         >
             <slot />

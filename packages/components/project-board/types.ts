@@ -1,15 +1,15 @@
-import type { Project } from '@nao-todo/types'
+import type { ProjectViewObject } from '@nao-todo/types'
 
 export type ProjectBoardProps = {
-    projects?: Project[]
+    projects?: ProjectViewObject[]
     loadingState?: boolean
     allowRoute?: boolean
 }
 
 export type ProjectBoardEmits = {
-    (event: 'archiveProject', projectId: Project['id']): void
-    (event: 'unarchiveProject', projectId: Project['id']): void
-    (event: 'deleteProject', projectId: Project['id']): void
-    (event: 'restoreProject', projectId: Project['id']): void
-    (event: 'deleteProjectPermanently', projectId: Project['id']): void
+    (event: 'archiveProject', projectId: ProjectViewObject['id']): void
+    (event: 'unarchiveProject', projectId: ProjectViewObject['id']): void
+    (event: 'deleteProject', projectId: ProjectViewObject['id']): void
+    (event: 'restoreProject', projectId: ProjectViewObject['id']): void
 }
+

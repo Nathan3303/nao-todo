@@ -1,5 +1,6 @@
 export type ProjectDeleteButtonProps = {
     isDeleted?: boolean
+    loading?: boolean
 }
 
 export type ProjectDeleteButtonEmits = {

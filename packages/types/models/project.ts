@@ -6,6 +6,7 @@ export type Project = ModelBase & {
     name: string
     description?: string
     archivedAt?: string
+    deactivedAt?: string
     preference: ProjectPreference
 }
 

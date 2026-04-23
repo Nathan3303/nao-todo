@@ -15,20 +15,16 @@ const useProjectsStoreBase = () => {
     }
 
     // @action 获取所有项目
-    const getAllProjects = () => {
-        return projects
-    }
+    const getAllProjects = () => projects
+
+    // @action 获取项目
+    const getProject = (id: string) => projectsMap.value.get(id)
 
     // @action 添加项目
     const addProject = (p: ProjectViewObject) => {
         // if (projectsMap.value.has(p.id)) return
         projects.push(p)
         console.log('addProject', projects, p)
-    }
-
-    // @action 获取项目
-    const getProject = (id: string) => {
-        return projectsMap.value.get(id)
     }
 
     // @action 设置项目
@@ -44,6 +40,34 @@ const useProjectsStoreBase = () => {
         const oldProject = projectsMap.value.get(id)
         if (!oldProject) return
         setProject(id, { ...oldProject, ...updateProjectViewObject })
+    }
+
+    // @action 软删除项目
+    const softDeleteProject = (id: string) => {
+        const oldProject = projectsMap.value.get(id)
+        if (!oldProject) return
+        setProject(id, { ...oldProject, deactivedAt: new Date().toISOString(), isDeleted: true })
+    }
+
+    // @action 恢复项目
+    const restoreProject = (id: string) => {
+        const oldProject = projectsMap.value.get(id)
+        if (!oldProject) return
+        setProject(id, { ...oldProject, deactivedAt: '', isDeleted: false })
+    }
+
+    // @action 归档项目
+    const archiveProject = (id: string) => {
+        const oldProject = projectsMap.value.get(id)
+        if (!oldProject) return
+        setProject(id, { ...oldProject, isArchived: true })
+    }
+
+    // @action 取消归档项目
+    const unarchiveProject = (id: string) => {
+        const oldProject = projectsMap.value.get(id)
+        if (!oldProject) return
+        setProject(id, { ...oldProject, isArchived: false })
     }
 
     // @action 删除项目
@@ -62,9 +86,14 @@ const useProjectsStoreBase = () => {
         getProject,
         setProject,
         updateProject,
+        softDeleteProject,
+        restoreProject,
+        archiveProject,
+        unarchiveProject,
         deleteProject
     }
 }
 
 export default useProjectsStoreBase
 export type ProjectsStoreBase = ReturnType<typeof useProjectsStoreBase>
+

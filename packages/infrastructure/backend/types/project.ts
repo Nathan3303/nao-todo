@@ -5,6 +5,7 @@ export type GetProjectRes = {
     archivedAt: string
     createdAt: string
     updatedAt: string
+    deactivedAt: string | null
 }
 
 export type ListProjectRes = GetProjectRes[]
