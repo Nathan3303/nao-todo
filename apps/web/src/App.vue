@@ -3,7 +3,7 @@ import useApp from './app'
 
 defineOptions({ name: 'AppView' })
 
-useApp()
+await useApp()
 </script>
 
 <template>
@@ -43,4 +43,3 @@ useApp()
                 </div>
             </template> -->
 </template>
-

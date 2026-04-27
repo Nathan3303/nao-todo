@@ -18,7 +18,7 @@ import { inject, provide, ref, type Ref } from 'vue'
 import { APP_CONTEXT_KEY, TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 import { TaskDomain } from '@nao-todo/domain/task'
-import { useTaskRepository } from '@nao-todo/infrastructure/backend/task/repoImpl'
+import { hybridTaskRepository } from '@nao-todo/infrastructure/indexeddb/repositories/hybrid-task-repo'
 import { useTasksStore } from '@/stores/tasks'
 import { useBuiltInProjectsStore, useProjectsStore, useTagsStore } from '@/stores/tasks'
 import useSubscriber, { type Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
@@ -67,7 +67,7 @@ const useTasksView = () => {
     const bipDomain = new BuiltInProjectDomain(useBuiltInProjectRepository())
     const projectDomain = new ProjectDomain(useProjectRepository(requesterImpl))
     const tagDomain = new TagDomain(useTagRepository(requesterImpl))
-    const taskDomain = new TaskDomain(useTaskRepository(requesterImpl))
+    const taskDomain = new TaskDomain(hybridTaskRepository)
 
     // @usecases
     const builtInProjectUseCase = new BuiltInProjectUseCase(bipDomain, builtInProjectsStore)
@@ -170,4 +170,3 @@ const useTasksView = () => {
 }
 
 export default useTasksView
-

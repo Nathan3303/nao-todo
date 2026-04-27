@@ -3,6 +3,7 @@ import useResponsiveFlag, {
 } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
 import { computed, provide, reactive, type Ref } from 'vue'
 import { APP_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import useTasksStore from './stores/tasks/tasks-store'
 
 export type AppContext = {
     routerLinks: { name: string; icon: string; route: string; routeName: string }[]
@@ -10,7 +11,11 @@ export type AppContext = {
     isDisplayHeader: Ref<boolean>
 }
 
-const useApp = () => {
+const useApp = async () => {
+    // 初始化任务列表从 IndexedDB
+    const tasksStore = useTasksStore()
+    await tasksStore.initializeFromIndexedDB()
+
     // @state Router links
     const routerLinks = reactive([
         { name: '任务', icon: 'square-check-fill', route: '/tasks', routeName: 'tasks' },

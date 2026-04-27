@@ -6,8 +6,7 @@ import useUserStore from '@/stores/user-store'
 import { storeToRefs } from 'pinia'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 import { TaskDomain } from '@nao-todo/domain/task'
-import { useTaskRepository } from '@nao-todo/infrastructure/backend/task/repoImpl'
-import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
+import { hybridTaskRepository } from '@nao-todo/infrastructure/indexeddb/repositories/hybrid-task-repo'
 import { useProjectsStore, useTagsStore, useTasksStore } from '@/stores/tasks'
 import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
@@ -77,7 +76,7 @@ const useProjectView = (props: ProjectViewProps) => {
 
     // @usecase 任务用例
     const taskUseCase = new TaskUseCase(
-        new TaskDomain(useTaskRepository(getRequesterImpl())),
+        new TaskDomain(hybridTaskRepository),
         tasksStore
     )
 

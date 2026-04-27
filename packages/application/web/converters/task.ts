@@ -87,3 +87,27 @@ export const updateTaskViewObjectToValueObject = (
     return valueObject
 }
 
+/**
+ * 任务视图对象转换为任务实体
+ * @param viewObject 任务视图对象
+ * @returns 任务实体
+ */
+export const taskViewObjectToEntity = (viewObject: TaskViewObject): TaskEntity => {
+    return new TaskEntity(
+        viewObject.id,
+        '', // userId
+        viewObject.name,
+        viewObject.description || '',
+        viewObject.state,
+        viewObject.priority,
+        viewObject.startAt || '',
+        viewObject.endAt || '',
+        viewObject.projectId || '',
+        viewObject.tags || [],
+        viewObject.archivedAt,
+        viewObject.starMarkAt,
+        viewObject.givenUpAt,
+        viewObject.createdAt,
+        viewObject.updatedAt
+    )
+}
