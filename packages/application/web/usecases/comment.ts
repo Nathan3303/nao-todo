@@ -6,6 +6,8 @@ import type {
     CreateCommentViewObject,
     UpdateCommentViewObject
 } from '@nao-todo/types'
+import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
+import { useCommentRepository } from '@nao-todo/infrastructure/backend/comment/repoImpl'
 import {
     commentEntityToViewObject,
     createCommentViewObjectToValueObject,
@@ -39,6 +41,18 @@ export class CommentUseCase {
         private commentDomain: CommentDomain,
         private store: CommentStore
     ) {}
+
+    /**
+     * 创建评论用例实例（静态工厂方法）
+     * @param commentStore 评论存储
+     * @returns 评论用例实例
+     */
+    static create(commentStore: CommentStore): CommentUseCase {
+        const requester = getRequesterImpl()
+        const repo = useCommentRepository(requester)
+        const domain = new CommentDomain(repo)
+        return new CommentUseCase(domain, commentStore)
+    }
 
     /**
      * 加载任务评论
@@ -135,3 +149,4 @@ export class CommentUseCase {
         return [commentId, null]
     }
 }
+

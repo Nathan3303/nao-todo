@@ -1,13 +1,10 @@
 import { useUserStore } from '@/stores'
-import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 import { inject, provide, type Ref } from 'vue'
 import type { IndexViewContext } from '../index-view'
 import {
     INDEX_VIEW_CONTEXT_KEY,
     SETTINGS_VIEW_CONTEXT_KEY
 } from '@/infrastructure/constants/context-keys'
-import { AuthDomain } from '@nao-todo/domain/auth'
-import { useAuthRepository } from '@nao-todo/infrastructure/backend/auth/repoImpl'
 import { AuthUseCase } from '@nao-todo/application/web/usecases/auth'
 import type { UserUseCase } from '@nao-todo/application/web/usecases/user'
 import useSubscriber, { type Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
@@ -32,12 +29,8 @@ const useSettingsView = () => {
     // @stores
     const userStore = useUserStore()
 
-    // @domains
-    const requesterImpl = getRequesterImpl()
-    const authDomain = new AuthDomain(useAuthRepository(requesterImpl))
-
     // @usecases
-    const authUseCase = new AuthUseCase(authDomain, userStore)
+    const authUseCase = AuthUseCase.create(userStore)
 
     // @hook 事件订阅器
     const subscriber = useSubscriber()

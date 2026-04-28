@@ -5,8 +5,6 @@ import type { TagViewContext, TagViewProps } from './types'
 import useUserStore from '@/stores/user-store'
 import { storeToRefs } from 'pinia'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
-import { TaskDomain } from '@nao-todo/domain/task'
-import { hybridTaskRepository } from '@nao-todo/infrastructure/indexeddb/repositories/hybrid-task-repo'
 import { useTagsStore, useTasksStore } from '@/stores/tasks'
 import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
@@ -69,10 +67,7 @@ const useTagView = (props: TagViewProps) => {
     )
 
     // @usecase 任务用例
-    const taskUseCase = new TaskUseCase(
-        new TaskDomain(hybridTaskRepository),
-        tasksStore
-    )
+    const taskUseCase = TaskUseCase.create(tasksStore)
 
     // @handler 标签操作器
     const tagHandler = new TagHandler(

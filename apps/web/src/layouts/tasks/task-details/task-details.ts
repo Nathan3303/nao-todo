@@ -3,12 +3,7 @@ import { computed, inject, provide, ref, watch } from 'vue'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { TASK_DETAILS_CONTEXT_KEY } from './constants'
 import { EventUseCase } from '@nao-todo/application/web/usecases/event'
-import { EventDomain } from '@nao-todo/domain/event'
-import { useEventRepository } from '@nao-todo/infrastructure/backend/event/repoImpl'
-import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 import { CommentUseCase } from '@nao-todo/application/web/usecases/comment'
-import { CommentDomain } from '@nao-todo/domain/comment'
-import { useCommentRepository } from '@nao-todo/infrastructure/backend/comment/repoImpl'
 import { storeToRefs } from 'pinia'
 import { useProjectsStore, useTagsStore, useTasksStore, useTaskDetailsStore } from '@/stores/tasks'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
@@ -44,16 +39,10 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     } = storeToRefs(taskDetailsStore)
 
     // @usecase 任务检查事项用例
-    const eventUseCase = new EventUseCase(
-        new EventDomain(useEventRepository(getRequesterImpl())),
-        taskDetailsStore
-    )
+    const eventUseCase = EventUseCase.create(taskDetailsStore)
 
     // @usecase 任务评论用例
-    const commentUseCase = new CommentUseCase(
-        new CommentDomain(useCommentRepository(getRequesterImpl())),
-        taskDetailsStore
-    )
+    const commentUseCase = CommentUseCase.create(taskDetailsStore)
 
     // @handlers
     const eventHandler = useEventHandler(eventUseCase)

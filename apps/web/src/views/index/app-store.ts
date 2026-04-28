@@ -1,30 +1,19 @@
 import useAutoChangeTheme from '@/infrastructure/hooks/use-auto-change-theme'
 import { AuthUseCase } from '@nao-todo/application/web/usecases/auth'
-import { AuthDomain } from '@nao-todo/domain/auth'
 import useResponsiveFlag, {
     responsiveTypes
 } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
-import { useAuthRepository } from '@nao-todo/infrastructure/backend/auth/repoImpl'
 import { defineStore } from 'pinia'
 import { computed, reactive } from 'vue'
 import useUserStore from '@/stores/user-store'
-import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 import { UserUseCase } from '@nao-todo/application/web/usecases/user'
-import { useUserRepository } from '@nao-todo/infrastructure/backend/user/repoImpl'
-import { UserDomain } from '@nao-todo/domain/user'
 
 export default defineStore('ViewStore', () => {
     // @usecase 认证用例
-    const authUseCase = new AuthUseCase(
-        new AuthDomain(useAuthRepository(getRequesterImpl())),
-        useUserStore()
-    )
+    const authUseCase = AuthUseCase.create(useUserStore())
 
     // @usecase 用户用例
-    const userUseCase = new UserUseCase(
-        new UserDomain(useUserRepository(getRequesterImpl())),
-        useUserStore()
-    )
+    const userUseCase = UserUseCase.create(useUserStore())
 
     // @state Router links
     const routerLinks = reactive([

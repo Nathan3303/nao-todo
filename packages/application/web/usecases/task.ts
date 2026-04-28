@@ -14,6 +14,8 @@ import {
 } from '../converters/task'
 import { syncService } from '@nao-todo/infrastructure/sync/sync-service'
 import { syncStatusManager } from '@nao-todo/infrastructure/sync/sync-status'
+import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
+import { useTaskRepository } from '@nao-todo/infrastructure/backend/task/repoImpl'
 
 export interface TaskStore {
     setTasks(tasks: TaskViewObject[]): void
@@ -35,6 +37,18 @@ export class TaskUseCase {
     ) {
         // 启动同步服务
         syncService.startSync()
+    }
+
+    /**
+     * 创建TaskUseCase实例
+     * @param taskStore 任务存储
+     * @returns TaskUseCase实例
+     */
+    static create(taskStore: TaskStore): TaskUseCase {
+        const requester = getRequesterImpl()
+        const repo = useTaskRepository(requester)
+        const domain = new TaskDomain(repo)
+        return new TaskUseCase(domain, taskStore)
     }
 
     /**
@@ -164,3 +178,4 @@ export class TaskUseCase {
         return syncStatusManager.subscribe(listener)
     }
 }
+

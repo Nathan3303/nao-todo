@@ -3,9 +3,6 @@ import { APP_CONTEXT_KEY, AUTH_VIEW_CONTEXT_KEY } from '@/infrastructure/constan
 import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
 import { useUserStore } from '@/stores'
 import { AuthUseCase } from '@nao-todo/application/web/usecases/auth'
-import { AuthDomain } from '@nao-todo/domain/auth'
-import { useAuthRepository } from '@nao-todo/infrastructure/backend/auth/repoImpl'
-import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 import type { AppContext } from '@/app'
 import type { AuthViewContext } from './types'
 
@@ -17,8 +14,7 @@ const useAuthView = () => {
     const userStore = useUserStore()
 
     // @usecase Auth use case
-    const authDomain = new AuthDomain(useAuthRepository(getRequesterImpl()))
-    const authUseCase = new AuthUseCase(authDomain, userStore)
+    const authUseCase = AuthUseCase.create(userStore)
 
     // @state isDisplayAside
     const isDisplayAside = computed(() => {

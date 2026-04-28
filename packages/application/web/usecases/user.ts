@@ -6,6 +6,8 @@ import type {
     UserViewObject
 } from '@nao-todo/types'
 import { UserDomain } from '@nao-todo/domain/user'
+import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
+import { useUserRepository } from '@nao-todo/infrastructure/backend/user/repoImpl'
 import {
     updatePasswordViewObjectToValueObject,
     updateUserNicknameViewObjectToValueObject,
@@ -101,5 +103,18 @@ export class UserUseCase {
         // 返回
         return [avatarURL, null]
     }
+
+    /**
+     * 创建用户用例实例
+     * @param userStore 用户存储
+     * @returns 用户用例实例
+     */
+    static create(userStore: UserStore): UserUseCase {
+        const requester = getRequesterImpl()
+        const repo = useUserRepository(requester)
+        const domain = new UserDomain(repo)
+        return new UserUseCase(domain, userStore)
+    }
 }
+
 

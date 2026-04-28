@@ -2,10 +2,11 @@ import type {
     GoAsync,
     ProjectViewObject,
     CreateProjectViewObject,
-    ProjectPreferenceViewObject,
-    UpdateProjectViewObject
+    ProjectPreferenceViewObject
 } from '@nao-todo/types'
 import { ProjectDomain } from '@nao-todo/domain/project/services'
+import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
+import { useProjectRepository } from '@nao-todo/infrastructure/backend/project/repoImpl'
 import {
     createProjectViewObjectToValueObject,
     projectEntitiesToViewObjects,
@@ -19,10 +20,6 @@ export interface ProjectStore {
     addProject: (project: ProjectViewObject) => void
     setProjectPreference: (preference: ProjectPreferenceViewObject) => void
     getProject: (projectId: ProjectViewObject['id']) => ProjectViewObject | undefined
-    updateProject: (
-        projectId: ProjectViewObject['id'],
-        updateProjectViewObject: UpdateProjectViewObject
-    ) => void
     deleteProject: (projectId: ProjectViewObject['id']) => void
     softDeleteProject: (projectId: ProjectViewObject['id']) => void
     restoreProject: (projectId: ProjectViewObject['id']) => void
@@ -42,6 +39,18 @@ export class ProjectUseCase {
         private projectDomain: ProjectDomain,
         private store: ProjectStore
     ) {}
+
+    /**
+     * 创建ProjectUseCase实例
+     * @param projectStore 项目状态管理
+     * @returns ProjectUseCase实例
+     */
+    static create(projectStore: ProjectStore): ProjectUseCase {
+        const requester = getRequesterImpl()
+        const repo = useProjectRepository(requester)
+        const domain = new ProjectDomain(repo)
+        return new ProjectUseCase(domain, projectStore)
+    }
 
     /**
      * 加载项目

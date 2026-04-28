@@ -6,8 +6,6 @@ import useUserStore from '@/stores/user-store'
 import { storeToRefs } from 'pinia'
 import { BuiltInProjectLayoutHandlers } from '@/infrastructure/handlers/tasks/built-in-project-handler'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
-import { TaskDomain } from '@nao-todo/domain/task'
-import { hybridTaskRepository } from '@nao-todo/infrastructure/indexeddb/repositories/hybrid-task-repo'
 import { useBuiltInProjectsStore, useTagsStore, useTasksStore } from '@/stores/tasks'
 import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
@@ -73,10 +71,7 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     )
 
     // @usecase 任务用例
-    const taskUseCase = new TaskUseCase(
-        new TaskDomain(hybridTaskRepository),
-        tasksStore
-    )
+    const taskUseCase = TaskUseCase.create(tasksStore)
 
     // @handler 内建清单操作器
     const builtInProjectHandlers = new BuiltInProjectLayoutHandlers(
@@ -134,3 +129,4 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
 }
 
 export default useBuiltInProjectView
+

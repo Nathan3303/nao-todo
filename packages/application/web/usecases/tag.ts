@@ -6,6 +6,8 @@ import type {
     CreateTagViewObject
 } from '@nao-todo/types'
 import { TagDomain } from '@nao-todo/domain/tag'
+import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
+import { useTagRepository } from '@nao-todo/infrastructure/backend/tag/repoImpl'
 import {
     createTagViewObjectToValueObject,
     tagEntitiesToViewObjects,
@@ -135,5 +137,17 @@ export class TagUseCase {
      */
     async delete(tagId: TagViewObject['id']): GoAsync<void> {
         return await this.tagDomain.remove(tagId)
+    }
+
+    /**
+     * 创建TagUseCase实例
+     * @param tagStore 标签状态管理
+     * @returns TagUseCase实例
+     */
+    static create(tagStore: TagStore): TagUseCase {
+        const requester = getRequesterImpl()
+        const repo = useTagRepository(requester)
+        const domain = new TagDomain(repo)
+        return new TagUseCase(domain, tagStore)
     }
 }

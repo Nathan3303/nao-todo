@@ -1,4 +1,6 @@
-import { type EventDomain } from '@nao-todo/domain/event'
+import { EventDomain } from '@nao-todo/domain/event'
+import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
+import { useEventRepository } from '@nao-todo/infrastructure/backend/event/repoImpl'
 import type { UpdateEventViewObject } from '@nao-todo/types'
 import type { CreateEventViewObject, EventViewObject, GoAsync, Task } from '@nao-todo/types'
 import {
@@ -30,6 +32,13 @@ export class EventUseCase {
         private eventDomain: EventDomain,
         private store: EventStore
     ) {}
+
+    static create(eventStore: EventStore): EventUseCase {
+        const requester = getRequesterImpl()
+        const repo = useEventRepository(requester)
+        const domain = new EventDomain(repo)
+        return new EventUseCase(domain, eventStore)
+    }
 
     /**
      * 加载任务的检查事项列表

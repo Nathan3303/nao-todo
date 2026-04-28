@@ -1,13 +1,6 @@
 import { BuiltInProjectUseCase } from '@nao-todo/application/web/usecases/built-in-project'
 import { ProjectUseCase } from '@nao-todo/application/web/usecases/project'
 import { TagUseCase } from '@nao-todo/application/web/usecases/tag'
-import { BuiltInProjectDomain } from '@nao-todo/domain/built-in-project/services'
-import { ProjectDomain } from '@nao-todo/domain/project'
-import { TagDomain } from '@nao-todo/domain/tag'
-import { useProjectRepository } from '@nao-todo/infrastructure/backend/project/repoImpl'
-import { useTagRepository } from '@nao-todo/infrastructure/backend/tag/repoImpl'
-import useBuiltInProjectRepository from '@nao-todo/infrastructure/built-in/project/repoImpl'
-import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
 import useResponsiveAside from '@/infrastructure/hooks/use-responsive-aside'
 import { columnLabels } from '@nao-todo/infrastructure/consts/tasks'
@@ -17,8 +10,6 @@ import useAsideWidth from '@nao-todo/infrastructure/hooks/use-aside-width'
 import { inject, provide, ref, type Ref } from 'vue'
 import { APP_CONTEXT_KEY, TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
-import { TaskDomain } from '@nao-todo/domain/task'
-import { hybridTaskRepository } from '@nao-todo/infrastructure/indexeddb/repositories/hybrid-task-repo'
 import { useTasksStore } from '@/stores/tasks'
 import { useBuiltInProjectsStore, useProjectsStore, useTagsStore } from '@/stores/tasks'
 import useSubscriber, { type Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
@@ -62,18 +53,11 @@ const useTasksView = () => {
     const tagsStore = useTagsStore()
     const tasksStore = useTasksStore()
 
-    // @domains
-    const requesterImpl = getRequesterImpl()
-    const bipDomain = new BuiltInProjectDomain(useBuiltInProjectRepository())
-    const projectDomain = new ProjectDomain(useProjectRepository(requesterImpl))
-    const tagDomain = new TagDomain(useTagRepository(requesterImpl))
-    const taskDomain = new TaskDomain(hybridTaskRepository)
-
     // @usecases
-    const builtInProjectUseCase = new BuiltInProjectUseCase(bipDomain, builtInProjectsStore)
-    const projectUseCase = new ProjectUseCase(projectDomain, projectsStore)
-    const tagUseCase = new TagUseCase(tagDomain, tagsStore)
-    const taskUseCase = new TaskUseCase(taskDomain, tasksStore)
+    const builtInProjectUseCase = BuiltInProjectUseCase.create(builtInProjectsStore)
+    const projectUseCase = ProjectUseCase.create(projectsStore)
+    const tagUseCase = TagUseCase.create(tagsStore)
+    const taskUseCase = TaskUseCase.create(tasksStore)
 
     // @hook 事件订阅器
     const subscriber = useSubscriber()

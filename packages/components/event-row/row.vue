@@ -70,6 +70,7 @@ const handleDelete = () => {
     margin-left: -1rem;
     align-items: center;
     position: relative;
+    color: var(--nue-primary-color-900);
     transition:
         background-color 0.2s ease,
         transform 0.2s ease,

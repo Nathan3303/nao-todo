@@ -1,4 +1,6 @@
 import { AuthDomain, SignInValueObject, SignUpValueObject } from '@nao-todo/domain/auth'
+import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
+import { useAuthRepository } from '@nao-todo/infrastructure/backend/auth/repoImpl'
 import type { SignInViewObject, SignUpViewObject } from '@nao-todo/types'
 import type { GoAsync } from '@nao-todo/types/go'
 
@@ -17,6 +19,18 @@ export class AuthUseCase {
         private authDomain: AuthDomain,
         private authStore: AuthStore
     ) {}
+
+    /**
+     * 创建AuthUseCase实例，自动实例化所有依赖
+     * @param authStore 认证存储
+     * @returns AuthUseCase实例
+     */
+    static create(authStore: AuthStore): AuthUseCase {
+        const requester = getRequesterImpl()
+        const repo = useAuthRepository(requester)
+        const domain = new AuthDomain(repo)
+        return new AuthUseCase(domain, authStore)
+    }
 
     /**
      * 登录
@@ -67,7 +81,7 @@ export class AuthUseCase {
         // 1. 调用域服务 - 检查登录状态
         const [newJwt, err] = await this.authDomain.checkIn()
         if (err !== null) {
-            localStorage.removeItem("USER_JWT")
+            localStorage.removeItem('USER_JWT')
             return err
         }
         // 2. 存储JWT
@@ -94,3 +108,4 @@ export class AuthUseCase {
         return null
     }
 }
+
