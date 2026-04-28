@@ -1,9 +1,8 @@
 /* Hint */
 .nue-div.nue-div--hint {
     display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    gap: 0.25rem;
+    align-items: center;
+    gap: 0.5rem;
     padding: 0.5rem;
     border-radius: var(--nue-primary-radius);
     border: 1px solid var(--nue-primary-color-500);
@@ -55,7 +54,6 @@
 
 /* Form Item */
 .nue-div.nue-div--form-item {
-    width: min(100%, 25rem);
     flex-direction: column;
     gap: 0.5rem;
 

@@ -1,17 +1,19 @@
 <script lang="ts" setup>
+import { onMounted, inject } from 'vue'
 import { AppAside } from '@/layouts/app'
 import { APP_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import type { AppContext } from '@/app'
-import { inject } from 'vue'
 import useIndexView from './index-view'
 
 defineOptions({ name: 'AppContainer' })
 
 const { isDisplayHeader } = inject<AppContext>(APP_CONTEXT_KEY)!
-    
+
 const { userUseCase } = useIndexView()
 
-await userUseCase.loadUserProfile()
+onMounted(async () => {
+    await userUseCase.loadUserProfile()
+})
 </script>
 
 <template>
@@ -35,4 +37,3 @@ await userUseCase.loadUserProfile()
     max-width: 70px;
 }
 </style>
-

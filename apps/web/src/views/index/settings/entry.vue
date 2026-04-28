@@ -22,7 +22,7 @@ useSettingsView()
 .settings-view__form-row {
     gap: 0.5rem;
     flex-direction: column;
-    width: min(100%, 32rem);
+    width: min(100%, 40rem);
     align-items: stretch;
 }
 </style>

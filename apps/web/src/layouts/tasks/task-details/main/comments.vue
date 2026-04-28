@@ -21,7 +21,9 @@ const deleteComment = async (id: CommentViewObject['id']) => commentHandler.dele
     >
         <nue-header>
             <nue-text size="14px" :weight="500">评论</nue-text>
-            <nue-text v-if="comments && comments.length" size="14px" color="gray">{{ comments.length }}</nue-text>
+            <nue-text v-if="comments && comments.length" size="14px" color="gray">
+                {{ comments.length }}
+            </nue-text>
         </nue-header>
         <nue-main>
             <nue-content>
@@ -54,6 +56,7 @@ const deleteComment = async (id: CommentViewObject['id']) => commentHandler.dele
         height: auto;
         padding: 0.5rem;
         border: none;
+        color: var(--nue-primary-color-900);
     }
 
     > .nue-main {

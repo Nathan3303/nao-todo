@@ -71,17 +71,17 @@ const {
                 <task-date-info
                     v-if="columns.createdAt"
                     :date="task.createdAt"
-                    :formatter="(date) => `创建时间： ${date}`"
+                    :formatter="(date) => `创建于${date}`"
                 />
                 <task-date-info
                     v-if="columns?.updatedAt"
                     :date="task.updatedAt"
-                    :formatter="(date) => `更新时间： ${date}`"
+                    :formatter="(date) => `更新于${date}`"
                 />
                 <task-date-info
                     v-if="columns?.endAt"
                     :date="task.endAt!"
-                    :formatter="(date) => `结束时间： ${date}`"
+                    :formatter="(date) => `结束于${date}`"
                     :colored="!(task.state === 'done')"
                 />
                 <task-state-info v-if="columns?.state" :state="task.state" />

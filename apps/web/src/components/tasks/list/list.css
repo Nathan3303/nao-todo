@@ -65,14 +65,14 @@
                     min-height: 40px;
                     align-items: center;
                     padding: 0.75rem 1rem;
-                    background-color: var(--nue-primary-color-200);
+                    background-color: var(--nue-primary-color-100);
                     border: 1px solid transparent;
                     border-radius: var(--nue-primary-radius);
                     transition: opacity 0.16s ease;
                     width: 100%;
 
                     &:hover {
-                        border: 1px solid var(--nue-primary-color-400);
+                        border: 1px solid var(--nue-primary-color-500);
                     }
 
                     &[data-selected='true'] {

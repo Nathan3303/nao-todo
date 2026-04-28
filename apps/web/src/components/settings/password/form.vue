@@ -2,71 +2,66 @@
     <nue-container>
         <nue-main>
             <nue-content>
-                <nue-div
-                    style="
-                        margin-bottom: 1.5rem;
-                        padding: 0.75rem 1rem;
-                        background-color: #f5f5f5;
-                        border-radius: 4px;
-                        border-left: 3px solid #555555;
-                    "
-                >
-                    <nue-text style="color: #666666">
-                        为保护您的账号安全，建议您定期更换密码。修改密码后，您需要重新登录才能继续使用应用。
-                    </nue-text>
-                </nue-div>
-                <form
-                    action=""
-                    autocomplete="off"
-                    method="post"
-                    name="UpdatePasswordForm"
-                    @submit.prevent="handleSubmit"
-                >
-                    <nue-div align="stretch" vertical>
-                        <nue-div theme="form-item">
-                            <nue-text theme="label">旧密码</nue-text>
-                            <nue-input
-                                v-model="formData.oldPassword"
-                                allow-show-password
-                                clearable
-                                maxlength="24"
-                                placeholder="请输入旧密码"
-                                type="password"
-                                flex="1"
-                            />
-                        </nue-div>
-                        <nue-div theme="form-item">
-                            <nue-text theme="label">新密码</nue-text>
-                            <password-rule-hint />
-                            <nue-input
-                                v-model="formData.newPassword"
-                                allow-show-password
-                                clearable
-                                maxlength="24"
-                                placeholder="请输入新密码"
-                                type="password"
-                            />
-                            <nue-input
-                                v-model="formData.confirmNewPassword"
-                                allow-show-password
-                                clearable
-                                maxlength="24"
-                                placeholder="请确认新密码"
-                                type="password"
-                            />
-                        </nue-div>
-                        <nue-div style="margin-top: 0.5rem">
-                            <nue-button
-                                :disabled="submitButtonDisabled"
-                                :loading="loading"
-                                theme="primary"
-                                type="submit"
-                            >
-                                提交修改
-                            </nue-button>
-                        </nue-div>
+                <nue-div vertical>
+                    <nue-div theme="hint">
+                        <nue-icon name="warning" />
+                        <nue-text>
+                            为保护您的账号安全，建议您定期更换密码。修改密码后，您需要重新登录才能继续使用应用。
+                        </nue-text>
                     </nue-div>
-                </form>
+                    <form
+                        action=""
+                        autocomplete="off"
+                        method="post"
+                        name="UpdatePasswordForm"
+                        @submit.prevent="handleSubmit"
+                    >
+                        <nue-div align="stretch" vertical>
+                            <nue-div theme="form-item">
+                                <nue-text theme="label">旧密码</nue-text>
+                                <nue-input
+                                    v-model="formData.oldPassword"
+                                    allow-show-password
+                                    clearable
+                                    maxlength="24"
+                                    placeholder="请输入旧密码"
+                                    type="password"
+                                    flex="1"
+                                />
+                            </nue-div>
+                            <nue-div theme="form-item">
+                                <nue-text theme="label">新密码</nue-text>
+                                <password-rule-hint />
+                                <nue-input
+                                    v-model="formData.newPassword"
+                                    allow-show-password
+                                    clearable
+                                    maxlength="24"
+                                    placeholder="请输入新密码"
+                                    type="password"
+                                />
+                                <nue-input
+                                    v-model="formData.confirmNewPassword"
+                                    allow-show-password
+                                    clearable
+                                    maxlength="24"
+                                    placeholder="请确认新密码"
+                                    type="password"
+                                />
+                            </nue-div>
+                            <nue-div style="margin-top: 0.5rem">
+                                <nue-button
+                                    :disabled="submitButtonDisabled"
+                                    :loading="loading"
+                                    theme="primary"
+                                    type="submit"
+                                >
+                                    提交修改
+                                </nue-button>
+                            </nue-div>
+                        </nue-div>
+                    </form>
+                </nue-div>
             </nue-content>
         </nue-main>
     </nue-container>

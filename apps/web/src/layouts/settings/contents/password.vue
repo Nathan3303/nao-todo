@@ -23,9 +23,10 @@ const { isDisplayAside, switchDisplayAside } =
         <nue-main>
             <nue-content fill>
                 <nue-div vertical style="padding: 1rem">
-                    <settings-password-form />
+                    <settings-password-form style="max-width: 32rem" />
                 </nue-div>
             </nue-content>
         </nue-main>
     </nue-container>
 </template>
+
