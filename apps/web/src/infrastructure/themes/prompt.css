@@ -1,7 +1,7 @@
 .nue-prompt-overlay {
     --nue-overlay-animation-name: fade-in-with-blur;
-    --nue-overlay-animation-duration: 0.16s;
+    --nue-overlay-animation-duration: var(--nue-animation-duration-long);
     --nue-overlay-close-animation-name: fade-out-with-blur;
-    --nue-overlay-close-animation-duration: 0.16s;
+    --nue-overlay-close-animation-duration: var(--nue-animation-duration-long);
     background-color: hsl(from var(--nue-primary-color-700) h s l / 0.48);
 }

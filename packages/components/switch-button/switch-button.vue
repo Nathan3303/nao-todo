@@ -40,7 +40,8 @@ const handleClick = () => {
 
 <style scoped>
 .nue-button--inactived {
-    color: #555;
+    font-size: var(--nue-text-xs);
+    color: var(--nue-primary-color-600);
 }
 
 .nue-button--actived {

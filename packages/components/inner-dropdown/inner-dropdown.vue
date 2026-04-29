@@ -9,7 +9,6 @@
         :disabled="disabled"
         :group="group"
         @execute="(executeId) => emit('execute', executeId)"
-        style="width: 100%"
     >
         <template #trigger="{ trigger }">
             <nue-dropdown-item
@@ -56,7 +55,7 @@ const suffix = computed(() => {
 
 <style scoped>
 .nue-dropdown-item[data-disabled='true'] {
-    background-color: #e2e2e2;
+    background-color: var(--nue-primary-color-300);
     opacity: 0.6;
     cursor: not-allowed;
 }

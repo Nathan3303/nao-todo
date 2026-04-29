@@ -3,6 +3,6 @@ export type EmptyProps = {
     message?: string
     textSize?: string
     textColor?: string
-    align?: 'left' | 'center' | 'right'
+    alignment?: 'left' | 'center' | 'right'
     fullHeight?: boolean
 }

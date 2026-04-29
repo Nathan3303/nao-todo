@@ -1,0 +1,31 @@
+.nue-div--event-creator {
+    width: 100%;
+    height: var(--nue-box-size-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--nue-gap-xs);
+    font-size: var(--nue-text-sm);
+
+    > .nue-button--pure {
+        --nue-button-color: var(--nue-primary-color-500);
+    }
+
+    > .nue-div--body {
+        width: 100%;
+        gap: var(--nue-gap-xs);
+
+        > .nue-input--pure {
+            font-size: var(--nue-text-sm);
+            flex: 1;
+        }
+
+        > .nue-div--actions {
+            gap: var(--nue-gap-xs);
+
+            > .nue-icon {
+                cursor: pointer;
+            }
+        }
+    }
+}
+

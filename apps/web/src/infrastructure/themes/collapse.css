@@ -3,5 +3,6 @@
     color: var(--nue-primary-color-700);
     border-radius: var(--nue-primary-radius);
     background-color: var(--nue-primary-color-100);
-    padding: 0.5rem 0.75rem;
+    padding: var(--nue-padding-xs) var(--nue-padding-sm);
 }
+

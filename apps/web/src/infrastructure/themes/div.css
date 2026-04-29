@@ -2,44 +2,38 @@
 .nue-div.nue-div--hint {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem;
+    gap: var(--nue-padding-xs);
+    padding: var(--nue-padding-xs);
     border-radius: var(--nue-primary-radius);
     border: 1px solid var(--nue-primary-color-500);
     background-color: var(--nue-primary-color-200);
     color: var(--nue-primary-color-800);
     user-select: none;
     -webkit-user-select: none;
+    font-size: var(--nue-text-sm);
 
     > .nue-icon {
         --nue-icon-size: 1rem;
     }
-
-    > .nue-text {
-        font-size: var(--nue-text-sm);
-        line-height: 1.5;
-    }
 }
 
 /* Block */
-.nue-div.nue-div--block {
-    gap: 0.125rem;
+/* .nue-div.nue-div--block {
     flex-direction: column;
+    gap: var(--nue-gap-xs);
     width: 100%;
-    min-width: 6.5rem;
+    font-size: var(--nue-text-sm);
+    user-select: none;
+    -webkit-user-select: none;
 
     > .nue-text--title {
-        font-size: var(--nue-text-sm);
         font-weight: 500;
         color: var(--nue-primary-color-500);
-        padding: 0.125rem 0;
-        cursor: default;
-        user-select: none;
-        -webkit-user-select: none;
+        padding: var(--nue-padding-xs) 0;
     }
 
     > .nue-divider--title {
-        padding: 0.125rem 0;
+        padding: var(--nue-padding-xs) 0;
         box-sizing: border-box;
 
         .nue-divider__content {
@@ -50,12 +44,12 @@
             padding-left: 0;
         }
     }
-}
+} */
 
 /* Form Item */
 .nue-div.nue-div--form-item {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--nue-gap-xs);
 
     > .nue-text--label {
         font-size: var(--nue-text-sm);
@@ -70,7 +64,7 @@
 /* Tasks Header */
 .nue-div--tasks-header {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--nue-gap-xs);
     width: 100%;
 
     .nue-text--pointer {

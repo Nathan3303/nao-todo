@@ -7,7 +7,7 @@
 }
 
 /* In Dialog */
-.nue-container.nue-container--in-dialog {
+/* .nue-container.nue-container--in-dialog {
     gap: 1rem;
 
     > .nue-header,
@@ -23,5 +23,5 @@
         flex-direction: row;
         justify-content: flex-end;
     }
-}
+} */
 

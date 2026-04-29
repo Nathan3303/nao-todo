@@ -92,43 +92,38 @@ const createCommentHandler = async (content: string) => {
             </nue-div>
         </nue-header>
         <nue-main>
-            <nue-content fill style="overflow: hidden">
-                <nue-div vertical gap="0" height="100%">
-                    <nue-div theme="name-desc" spellcheck="false">
-                        <nue-textarea
-                            v-model="vo.name"
-                            :autosize="{ minRows: 1, maxRows: 2 }"
-                            maxlength="64"
-                            placeholder="输入您的任务名称..."
-                            theme="pure,name"
-                            @change="updateTaskName"
-                        />
-                        <nue-textarea
-                            v-model="vo.description"
-                            :autosize="{ minRows: 1, maxRows: 4 }"
-                            maxlength="256"
-                            placeholder="输入您的任务描述..."
-                            theme="pure,description"
-                            @change="updateTaskDescription"
-                        />
-                    </nue-div>
-                    <nue-div vertical flex="1" style="padding: 0 1rem">
-                        <details-main-events />
-                    </nue-div>
-                    <nue-div vertical style="padding: 1rem">
-                        <task-tag-bar
-                            :tags="tags"
-                            :task-tags="vo.tags"
-                            @update-tags="updateTaskTags"
-                        />
-                    </nue-div>
-                    <details-main-comments />
-                    <nue-div class="tasks-details-view__deleted-tag" v-if="vo.isDeleted">
-                        任务已删除
-                    </nue-div>
-                    <nue-div class="tasks-details-view__giveup-tag" v-if="vo.isGivenUp">
-                        任务已放弃
-                    </nue-div>
+            <nue-content fill>
+                <nue-div theme="name-desc">
+                    <nue-textarea
+                        v-model="vo.name"
+                        :autosize="{ minRows: 1, maxRows: 2 }"
+                        maxlength="64"
+                        placeholder="输入您的任务名称..."
+                        theme="pure,name"
+                        @change="updateTaskName"
+                    />
+                    <nue-textarea
+                        v-model="vo.description"
+                        :autosize="{ minRows: 1, maxRows: 4 }"
+                        maxlength="256"
+                        placeholder="输入您的任务描述..."
+                        theme="pure,description"
+                        @change="updateTaskDescription"
+                    />
+                </nue-div>
+                <nue-div vertical style="padding: 0 1rem">
+                    <details-main-events />
+                </nue-div>
+                <nue-div flex="1"></nue-div>
+                <nue-div vertical style="padding: 1rem">
+                    <task-tag-bar :tags="tags" :task-tags="vo.tags" @update-tags="updateTaskTags" />
+                </nue-div>
+                <details-main-comments />
+                <nue-div class="tasks-details-view__deleted-tag" v-if="vo.isDeleted">
+                    任务已删除
+                </nue-div>
+                <nue-div class="tasks-details-view__giveup-tag" v-if="vo.isGivenUp">
+                    任务已放弃
                 </nue-div>
             </nue-content>
         </nue-main>
@@ -168,9 +163,22 @@ const createCommentHandler = async (content: string) => {
     }
 
     > .nue-header {
-        padding: 1rem 1rem 0.25rem;
+        padding: 1rem 1rem 0.5rem;
         height: auto;
         border: none;
+    }
+
+    > .nue-main {
+        height: 100%;
+        box-sizing: border-box;
+        flex-wrap: nowrap;
+        overflow: auto;
+
+        > .nue-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
     }
 
     > .nue-footer {
@@ -182,9 +190,10 @@ const createCommentHandler = async (content: string) => {
         flex-direction: column;
         flex-wrap: nowrap;
         align-items: stretch;
-        padding: 1rem;
+        padding: 0.75rem 1rem 1rem;
         width: 100%;
         box-sizing: border-box;
+        gap: var(--nue-gap-sm);
 
         .nue-textarea:deep().word-counter {
             font-size: var(--nue-text-xs);
@@ -200,7 +209,7 @@ const createCommentHandler = async (content: string) => {
         }
 
         .nue-textarea--name {
-            --nue-textarea-font-size: var(--nue-text-default);
+            --nue-textarea-font-size: var(--nue-text-df);
             --nue-textarea-color: var(--nue-primary-color-800);
         }
 

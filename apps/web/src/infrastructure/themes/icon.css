@@ -3,9 +3,6 @@
     align-items: center;
     justify-content: center;
 
-    &::before {
-        display: inline-block;
-        font-size: 1em;
-        vertical-align: 0.075em;
-    }
+    --nue-icon-ratio: 1em !important;
+    --nue-icon-align-offset: 0 !important;
 }

@@ -1,14 +1,6 @@
 <template>
-    <nue-div
-        class="empty"
-        v-if="empty"
-        warp="nowrap"
-        align="center"
-        :justify="align"
-        :height="fullHeight ? '100%' : 'auto'"
-        flex="1"
-    >
-        <nue-text :size="textSize" :color="textColor">
+    <nue-div theme="empty" v-if="empty" :justify="alignment" :height="height">
+        <nue-text theme="message" :size="textSize" :color="textColor">
             {{ message }}
         </nue-text>
     </nue-div>
@@ -16,20 +8,26 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { EmptyProps } from './types'
 
 defineOptions({ name: 'Empty' })
-withDefaults(defineProps<EmptyProps>(), {
+const props = withDefaults(defineProps<EmptyProps>(), {
     message: '没有数据',
     textSize: '14px',
     textColor: 'gray',
-    align: 'center',
+    alignment: 'center',
     fullHeight: false
 })
+
+const height = computed(() => (props.fullHeight ? '100%' : 'auto'))
 </script>
 
 <style scoped>
-.nue-text {
-    margin: 16px 0;
+.nue-div--empty {
+    flex-wrap: nowrap;
+    align-items: center;
+    flex: auto;
 }
 </style>
+

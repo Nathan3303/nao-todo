@@ -48,13 +48,16 @@ onMounted(() => {
             placeholder="添加评论"
             theme="fix-padding,small"
             spellcheck="false"
-        />
-        <nue-div gap=".5rem">
-            <nue-button :loading="loading" icon="check" theme="small" @click="handleSubmit">
-                添加
-            </nue-button>
-            <nue-button icon="clear" theme="small" @click="emit('cancel')">取消</nue-button>
-        </nue-div>
+        >
+            <template #actions>
+                <nue-div gap=".5rem">
+                    <nue-button :loading="loading" icon="check" theme="small" @click="handleSubmit">
+                        添加
+                    </nue-button>
+                    <nue-button icon="clear" theme="small" @click="emit('cancel')">取消</nue-button>
+                </nue-div>
+            </template>
+        </nue-textarea>
     </nue-div>
 </template>
 

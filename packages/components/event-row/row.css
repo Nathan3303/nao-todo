@@ -1,0 +1,84 @@
+.nue-div--event-row {
+    display: flex;
+    width: calc(100% + 2rem);
+    height: var(--nue-box-size-sm);
+    gap: var(--nue-gap-xs);
+    padding: 0 var(--nue-padding-df);
+    margin-left: calc(-1 * var(--nue-padding-df));
+    align-items: center;
+    position: relative;
+    color: var(--nue-primary-color-900);
+
+    > .nue-icon {
+        font-size: var(--nue-text-md);
+    }
+
+    .nue-icon--pointer {
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    > .nue-icon--drag-icon {
+        display: flex;
+        height: 100%;
+        align-items: center;
+        justify-content: center;
+        cursor: grabbing;
+        position: absolute;
+        left: 0;
+        opacity: 0;
+        font-weight: bold;
+        z-index: 1;
+
+        &:hover {
+            opacity: 1;
+        }
+    }
+
+    > .nue-input--small {
+        --nue-input-disabled-background-color: transparent;
+        --nue-input-color: var(--nue-primary-color-900);
+        --nue-input-font-size: var(--nue-text-sm);
+        flex: 1;
+        border: none;
+
+        &[data-is-done='true'] {
+            color: var(--nue-primary-color-600);
+            --nue-input-color: var(--nue-primary-color-600);
+
+            &:deep(.nue-input__input) {
+                text-decoration: line-through;
+            }
+        }
+    }
+
+    > .nue-div--actions {
+        visibility: hidden;
+        gap: 0.25rem;
+        align-items: center;
+        flex-shrink: 0;
+
+        @media (max-width: 445px) {
+            display: block;
+        }
+    }
+
+    &:hover,
+    &:focus-within {
+        background-color: var(--nue-primary-color-100);
+
+        > .nue-div--actions {
+            visibility: visible;
+        }
+
+        > .nue-icon--drag-icon {
+            opacity: 1;
+        }
+    }
+
+    &[data-dragging='true'] {
+        opacity: 0.5;
+        transform: scale(0.98);
+    }
+}
+

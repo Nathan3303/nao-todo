@@ -47,26 +47,35 @@ const getColumnStyle = (column: TableColumnConfig) => {
             @click.stop.shift.exact="tableCtx.showMultiSelectPanel(idx)"
         >
             <template v-for="column in visibleColumns" :key="column.key">
-                <nue-div v-if="column.key === 'name'" class="todo-table__main__col col-first" vertical :style="getColumnStyle(column)">
+                <nue-div
+                    v-if="column.key === 'name'"
+                    class="todo-table__main__col col-first"
+                    vertical
+                    :style="getColumnStyle(column)"
+                >
                     <nue-div class="col-first__name-wrapper">
                         <nue-text theme="todo-name" :clamped="1" :title="task.name">
                             {{ task.name }}
                         </nue-text>
                         <task-tag-bar
-                            v-if="tableCtx.columns.tags && task.tags && task.tags.length"
-                            :clamped="tableCtx.tagBarClamped"
-                            :tags="tableCtx.tags"
+                            v-if="tableCtx.columns.value.tags && task.tags && task.tags.length"
+                            :clamped="tableCtx.tagBarClamped.value"
+                            :tags="tableCtx.tags.value"
                             :task-tags="task.tags"
                             readonly
                             small
                         />
                     </nue-div>
                     <nue-div
-                        v-if="tableCtx.columns.description && task.description"
+                        v-if="tableCtx.columns.value.description && task.description"
                         vertical
                         width="100%"
                     >
-                        <nue-text :clamped="2" class="col-first__description" :title="task.description">
+                        <nue-text
+                            :clamped="2"
+                            class="col-first__description"
+                            :title="task.description"
+                        >
                             {{ task.description }}
                         </nue-text>
                     </nue-div>
@@ -148,3 +157,4 @@ const getColumnStyle = (column: TableColumnConfig) => {
         </nue-div>
     </nue-div>
 </template>
+

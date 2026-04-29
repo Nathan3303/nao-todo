@@ -34,7 +34,7 @@
 
             .nue-infinite-scroll-wrapper {
                 .nue-infinite-sroll__text {
-                    font-size: var(--nue-text-sm);
+                    font-size: var(--nue-text-xs);
                     color: var(--nue-primary-color-500);
                 }
 
@@ -46,7 +46,7 @@
                     }
 
                     .nue-empty__description {
-                        font-size: var(--nue-text-sm);
+                        font-size: var(--nue-text-xs);
                         color: var(--nue-primary-color-500);
                     }
                 }
@@ -60,7 +60,7 @@
                 .nue-div.nue-div--todo-list-main__row {
                     flex-wrap: wrap;
                     flex-direction: row;
-                    gap: 0.75rem;
+                    gap: 0.5rem;
                     position: relative;
                     min-height: 40px;
                     align-items: center;
@@ -76,7 +76,7 @@
                     }
 
                     &[data-selected='true'] {
-                        border: 1px solid var(--nue-primary-color-400);
+                        border: 1px solid var(--nue-primary-color-700);
                         box-shadow: var(--nue-secondary-shadow);
                     }
 
@@ -103,7 +103,7 @@
                     .nue-div.nue-div--todo-list-main__row__first {
                         flex-direction: column;
                         overflow: hidden;
-                        gap: 0.5rem;
+                        gap: 0.25rem;
                         width: 100%;
 
                         .nue-div.nue-div--todo-list__main__row__first__name-wrapper {
@@ -114,13 +114,13 @@
                             align-items: center;
 
                             > .nue-text {
-                                font-size: var(--nue-text-df);
+                                font-size: 0.9375rem;
                                 color: var(--nue-primary-color-800);
                                 margin-right: auto;
                                 line-height: 1.25rem;
                             }
 
-                            .todo-tag-bar {
+                            > .nue-div--tag-bar {
                                 transform-origin: right center;
                             }
 
@@ -130,7 +130,7 @@
                         }
 
                         .nue-text.nue-text--description {
-                            color: var(--nue-primary-color-600);
+                            color: var(--nue-primary-color-500);
                             font-size: var(--nue-text-sm);
                             overflow: hidden;
                             white-space: normal;

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { nextTick, ref } from 'vue'
-import dayjs from 'dayjs'
 import { NueTextarea } from 'nue-ui'
+import { parse2RelativeDate } from '@nao-todo/infrastructure/utils'
 import type { CommentRowProps, CommentRowEmits } from './types'
 
 defineOptions({ name: 'CommentRow' })
@@ -42,32 +42,24 @@ const handleCancelEdit = () => {
 </script>
 
 <template>
-    <nue-div class="comment-row">
-        <nue-avatar :src="comment.user.avatar || ''" class="comment-row__avatar" size="32px" />
-        <nue-div class="comment-row__details">
-            <nue-div class="comment-row__details__title">
-                <nue-text color="var(--nue-primary-color-900)" size="var(--nue-text-sm)">
-                    {{ comment.user.nickname }}
+    <nue-div theme="comment-row">
+        <nue-avatar :src="comment.user.avatar || ''" />
+        <nue-div theme="details">
+            <nue-div theme="title">
+                <nue-text theme="nickname">{{ comment.user.nickname }}</nue-text>
+                <nue-text theme="datetime">
+                    {{ parse2RelativeDate(comment.createdAt) }}
                 </nue-text>
-                <nue-text color="var(--nue-primary-color-500)" size="var(--nue-text-sm)">
-                    {{ dayjs(comment.createdAt).format('YYYY-MM-DD HH:mm') }}
-                </nue-text>
-                <nue-div class="comment-row__details__actions">
-                    <nue-icon
-                        v-show="!isEditing"
-                        name="edit"
-                        size="13px"
-                        @click="handleEditComment"
-                    />
+                <nue-div theme="actions">
+                    <nue-icon v-show="!isEditing" name="edit" @click="handleEditComment" />
                     <nue-icon
                         :name="deleting ? 'loading' : 'delete'"
                         :spin="deleting"
-                        size="13px"
                         @click="handleDeleteComment"
                     />
                 </nue-div>
             </nue-div>
-            <nue-div align="stretch" gap="0" vertical>
+            <nue-div theme="content">
                 <template v-if="isEditing">
                     <nue-textarea
                         ref="editInputerRef"
@@ -93,49 +85,6 @@ const handleCancelEdit = () => {
 </template>
 
 <style scoped>
-.comment-row {
-    flex-wrap: nowrap;
-    padding: 0.25rem 0.5rem;
-}
-
-.comment-row__details {
-    flex-direction: column;
-    flex: auto;
-    gap: 0.25rem;
-}
-
-.comment-row__details__title {
-    align-items: center;
-}
-
-.comment-row__details__actions {
-    opacity: 0;
-    align-items: center;
-    flex: auto;
-    gap: 0.5rem;
-    justify-content: end;
-    width: fit-content;
-    color: var(--primary-color-600);
-
-    @media (max-width: 445px) {
-        opacity: 1;
-    }
-}
-
-.comment-row__details__actions .nue-icon:hover {
-    cursor: pointer;
-    color: var(--primary-color-900);
-}
-
-.comment-row .nue-text--pre {
-    word-break: break-word;
-    white-space: pre-wrap;
-    font-size: var(--nue-text-sm);
-    color: var(--nue-primary-color-800);
-}
-
-.comment-row:hover .comment-row__details__actions {
-    opacity: 1;
-}
+@import './row.css';
 </style>
 

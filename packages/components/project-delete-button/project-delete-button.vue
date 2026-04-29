@@ -33,6 +33,6 @@ const handleClick = () => {
 .project-delete-button {
     --nue-button-font-size: var(--nue-text-df);
     cursor: pointer;
-    transition: all 0.16s;
+    transition: all var(--nue-animation-duration-short);
 }
 </style>

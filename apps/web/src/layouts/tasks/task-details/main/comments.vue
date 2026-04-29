@@ -51,6 +51,7 @@ const deleteComment = async (id: CommentViewObject['id']) => commentHandler.dele
     padding: 0.5rem;
     gap: 0.5rem;
     height: auto;
+    overflow: unset;
 
     > .nue-header {
         height: auto;

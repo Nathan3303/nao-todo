@@ -7,7 +7,7 @@
     -webkit-user-select: none;
     user-select: none;
     position: relative;
-    gap: 0.5rem;
+    gap: var(--nue-gap-xs);
     width: 100%;
     height: 100%;
 
@@ -24,15 +24,15 @@
         > .nue-content {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: var(--nue-gap-xs);
             position: relative;
             overflow: auto;
             --content-max-width: 42rem;
 
             .todo-table__header {
                 align-items: center;
-                gap: 1rem;
-                padding: 0 12px;
+                gap: var(--nue-gap-df);
+                padding: 0 var(--nue-padding-sm);
                 height: 2.5rem;
                 position: sticky;
                 top: 0;
@@ -168,6 +168,7 @@
 
                     &.col-first {
                         gap: 0.25rem;
+                        font-size: 0.9375rem;
 
                         .col-first__name-wrapper {
                             flex: auto;
@@ -178,14 +179,13 @@
                             align-items: center;
 
                             .nue-text--todo-name {
-                                font-size: var(--nue-text-df);
                                 color: var(--nue-primary-color-900);
                                 margin-right: auto;
                             }
                         }
 
                         .col-first__description {
-                            color: var(--nue-primary-color-600);
+                            color: var(--nue-primary-color-500);
                             font-size: var(--nue-text-sm);
                             overflow: hidden;
                             white-space: normal;

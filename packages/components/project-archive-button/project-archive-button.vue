@@ -29,9 +29,10 @@ const handleClick = () => {
 
 <style scoped>
 .project-archive-button {
-    --icon-size: 16px;
-    --icon-weight: normal;
+    --nue-icon-size: var(--nue-text-df);
+    --nue-icon-weight: normal;
     cursor: pointer;
-    transition: all 0.16s;
+    transition: all var(--nue-animation-duration-short);
 }
 </style>
+

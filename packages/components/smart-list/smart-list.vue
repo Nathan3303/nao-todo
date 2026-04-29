@@ -1,17 +1,13 @@
 <template>
-    <nue-collapse-item :name="collapseItemName">
+    <nue-collapse-item :name="collapseItemName" theme="smart-list">
         <template #header="{ collapse, state }">
             <nue-button :icon="state ? 'arrow-right' : 'arrow-down'" theme="pure" @click="collapse">
-                <template #default>
-                    <nue-div align="center">
-                        <nue-text size="var(--nue-text-sm)">{{ name }}</nue-text>
-                        <nue-text color="var(--nue-primary-color-700)" size="var(--nue-text-sm)">
-                            {{ count ?? 0 }}
-                        </nue-text>
-                    </nue-div>
-                </template>
+                <nue-div theme="title" align="center">
+                    <nue-text>{{ name }}</nue-text>
+                    <nue-text theme="count">{{ count ?? 0 }}</nue-text>
+                </nue-div>
             </nue-button>
-            <nue-div gap="8px" width="fit-content">
+            <nue-div theme="actions">
                 <slot name="actions">
                     <nue-tooltip :content="manageBtnTooltip ?? '管理'" size="small">
                         <nue-button icon="setting" theme="pure" @click.stop="emit('manage')" />
@@ -22,7 +18,7 @@
                 </slot>
             </nue-div>
         </template>
-        <nue-div vertical align="stretch" gap=".25rem">
+        <nue-div theme="links">
             <slot v-if="count">
                 <nue-link
                     v-for="link in links"
@@ -39,7 +35,7 @@
                     </template>
                 </nue-link>
             </slot>
-            <nue-text v-else class="nue-collapse-item__empty-text">
+            <nue-text v-else theme="empty">
                 {{ emptyText ?? '用清单来分类收集、组织和管理你的待办任务' }}
             </nue-text>
         </nue-div>
@@ -58,4 +54,8 @@ const count = computed(() => {
     return props.count ?? props.links?.length
 })
 </script>
+
+<style scoped>
+@import url('./smart-list.css');
+</style>
 
