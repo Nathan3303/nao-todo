@@ -23,7 +23,9 @@ onMounted(() => init())
                 <router-view v-slot="{ Component }">
                     <suspense>
                         <component :is="Component" />
-                        <template #fallback> Loading... </template>
+                        <template #fallback>
+                            <loading-comp height="100%" />
+                        </template>
                     </suspense>
                 </router-view>
             </nue-content>

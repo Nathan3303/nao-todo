@@ -1,4 +1,4 @@
-import { computed, inject, provide, watch } from 'vue'
+import { computed, inject, provide, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { TAG_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import type { TagViewContext, TagViewProps } from './types'
@@ -28,6 +28,9 @@ const useTagView = (props: TagViewProps) => {
     const { profile } = storeToRefs(userStore)
     const { tags, tagPreference: preference } = storeToRefs(tagsStore)
 
+    // @state 加载态
+    const loading = ref(true)
+
     // @method 视图切换
     const switchViewType = (viewType: string) => {
         if (!viewType) return
@@ -47,15 +50,17 @@ const useTagView = (props: TagViewProps) => {
     const initialize = async () => {
         // 1. 检查参数
         if (!props.tagId || !profile.value) return
+        loading.value = true
         // 2. 获取标签详情
         const err = await tasksViewContext.tagUseCase.loadTagPreference(props.tagId)
-        console.log(preference)
         if (err !== null) {
             NueMessage.error(unwrapError(err))
+            loading.value = false
             return
         }
         // 3. 跳转至指定视图类型
         switchViewType(preference.value?.viewType || 'table')
+        loading.value = false
     }
 
     // @watch 监听 tagId 变化
@@ -107,7 +112,8 @@ const useTagView = (props: TagViewProps) => {
     })
 
     // @returns
-    return { initialize }
+    return { initialize, loading }
 }
 
 export default useTagView
+

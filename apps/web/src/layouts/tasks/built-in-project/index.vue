@@ -1,15 +1,17 @@
 <script setup lang="ts">
+import { Loading as LoadingComp } from '@nao-todo/components'
 import useBuiltInProjectView from './built-in-project'
 import type { BuiltInProjectViewProps } from './types'
 
 defineOptions({ name: 'BuiltInProjectSection' })
 const props = defineProps<BuiltInProjectViewProps>()
 
-useBuiltInProjectView(props)
+const { loading } = useBuiltInProjectView(props)
 </script>
 
 <template>
-    <nue-container id="BuiltInProjectSectionWrapper">
+    <loading-comp v-if="loading" height="100%" />
+    <nue-container v-else id="BuiltInProjectSectionWrapper">
         <router-view name="Header" />
         <router-view name="Main" />
     </nue-container>

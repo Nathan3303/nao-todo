@@ -10,7 +10,7 @@ const { loading } = useProjectView(props)
 </script>
 
 <template>
-    <loading-comp v-if="loading" />
+    <loading-comp v-if="loading" height="100%" />
     <nue-container v-else id="ProjectSectionWrapper">
         <router-view name="Header" />
         <router-view name="Main" />

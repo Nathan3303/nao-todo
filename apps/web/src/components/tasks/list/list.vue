@@ -17,7 +17,7 @@ useTaskList(props, emit)
         <nue-main>
             <nue-content fill style="overflow: hidden">
                 <nue-empty
-                    v-if="error || tasks.length === 0"
+                    v-if="error || (!loading && tasks.length === 0)"
                     image-size="4rem"
                     image-src="/images/coffee.webp"
                     style="height: 100%"

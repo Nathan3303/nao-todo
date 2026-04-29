@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { InnerDropdownOption, TaskProjectSelector } from '@nao-todo/components'
+import { inject } from 'vue'
+import { InnerDropdownOption, TaskProjectSelector, DropdownDivBlock } from '@nao-todo/components'
 import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
 import type { TaskDetailsContext } from '../types'
-import { inject } from 'vue'
 
 const { vo, emit, projects, isCommenting, taskHandler } =
     inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
@@ -44,13 +44,12 @@ const updateProjectId = (npId: string) => {
                 close-when-executed
                 placement="top-end"
                 @execute="handleDropdownExecute"
-                theme="menu,small"
+                theme="small"
             >
                 <template #trigger="{ trigger }">
                     <nue-button icon="more" theme="small" @click="trigger">更多</nue-button>
                 </template>
-                <nue-div theme="block" style="min-width: 8rem">
-                    <nue-text theme="title">更多操作</nue-text>
+                <dropdown-div-block title="更多操作">
                     <inner-dropdown-option title="添加评论" icon="chat" execute-id="comment-todo" />
                     <inner-dropdown-option
                         title="复制待办任务"
@@ -58,15 +57,14 @@ const updateProjectId = (npId: string) => {
                         execute-id="duplicate-todo"
                         disabled
                     />
-                </nue-div>
-                <nue-div theme="block" style="min-width: 8rem">
-                    <nue-text theme="title">删除或恢复</nue-text>
+                </dropdown-div-block>
+                <dropdown-div-block title="删除或恢复">
                     <inner-dropdown-option
                         :title="vo.isDeleted ? '恢复待办任务' : '删除待办任务'"
                         :icon="vo.isDeleted ? 'restore' : 'delete'"
                         :execute-id="vo.isDeleted ? 'restore-todo' : 'delete-todo'"
                     />
-                </nue-div>
+                </dropdown-div-block>
             </nue-dropdown>
         </nue-div>
     </nue-footer>

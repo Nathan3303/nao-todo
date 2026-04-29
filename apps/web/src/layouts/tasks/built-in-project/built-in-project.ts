@@ -1,4 +1,4 @@
-import { computed, inject, provide, watch } from 'vue'
+import { computed, inject, provide, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import type { BuiltInProjectViewProps, BuiltInProjectViewContext } from './types'
@@ -30,6 +30,9 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     const { profile } = storeToRefs(userStore)
     const { tags } = storeToRefs(tagsStore)
 
+    // @state 加载态
+    const loading = ref(true)
+
     // @method 视图切换
     const switchViewType = (viewType: string) => {
         if (!viewType) return
@@ -46,9 +49,10 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     })
 
     // @method 初始化 - 触发获取清单详情
-    const initialize = () => {
+    const initialize = async () => {
         // 1. 检查参数
         if (!props.projectId || !profile.value) return
+        loading.value = true
         // 2. 获取清单详情
         const err = tasksViewContext.builtInProjectUseCase.loadBuiltInProjectPreference(
             profile.value.email,
@@ -56,10 +60,12 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
         )
         if (err !== null) {
             NueMessage.error(unwrapError(err))
+            loading.value = false
             return
         }
         // 3. 跳转至指定视图类型
         switchViewType(preference.value?.viewType || 'table')
+        loading.value = false
     }
 
     // @watch 监听 projectId 变化
@@ -84,7 +90,6 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     const isHideCompletedAlready = computed(() => {
         if (!preference.value) return false
         const state = builtInProjectsStore.getPreferenceGetTasksOption('state')
-        // console.log(state)
         return state == 'todo,in-progress'
     })
 
@@ -125,7 +130,7 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     })
 
     // @returns
-    return { initialize }
+    return { initialize, loading }
 }
 
 export default useBuiltInProjectView

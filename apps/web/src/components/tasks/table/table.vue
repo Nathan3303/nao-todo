@@ -20,7 +20,7 @@ useTaskTable(props, emit)
                 <task-table-header />
                 <loading-comp height="auto" v-if="loading" />
                 <nue-empty
-                    v-else-if="!tasks.length"
+                    v-else-if="!loading && !tasks.length"
                     image-size="4rem"
                     image-src="/images/coffee.webp"
                     description="当前暂无待办"

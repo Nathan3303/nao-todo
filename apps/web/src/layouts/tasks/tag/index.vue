@@ -1,15 +1,17 @@
 <script setup lang="ts">
+import { Loading as LoadingComp } from '@nao-todo/components'
 import useTagView from './tag'
 import type { TagViewProps } from './types'
 
 defineOptions({ name: 'TagSection' })
 const props = defineProps<TagViewProps>()
 
-useTagView(props)
+const { loading } = useTagView(props)
 </script>
 
 <template>
-    <nue-container id="TagSectionWrapper">
+    <loading-comp v-if="loading" height="100%" />
+    <nue-container v-else id="TagSectionWrapper">
         <router-view name="Header" />
         <router-view name="Main" />
     </nue-container>
