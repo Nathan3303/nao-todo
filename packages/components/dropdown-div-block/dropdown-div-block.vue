@@ -13,7 +13,7 @@ defineProps<{ title: string }>()
 <style scoped>
 .nue-div--block {
     flex-direction: column;
-    gap: var(--nue-gap-xs);
+    gap: var(--nue-gap-2xs);
     width: 100%;
     font-size: var(--nue-text-sm);
     user-select: none;
@@ -22,7 +22,7 @@ defineProps<{ title: string }>()
     > .nue-text--title {
         font-weight: 500;
         color: var(--nue-primary-color-500);
-        padding: var(--nue-padding-xs) 0;
+        padding: var(--nue-padding-2xs) var(--nue-padding-xs);
     }
 }
 </style>

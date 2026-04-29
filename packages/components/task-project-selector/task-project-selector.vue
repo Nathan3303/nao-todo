@@ -23,8 +23,8 @@ const handleSelect = async (projectId: ProjectViewObject['id']) => {
 </script>
 
 <template>
-    <nue-select v-model="vm" size="small">
-        <nue-select-option icon="inbox" label="收集箱" :value="'inbox'" />
+    <nue-select theme="project-selector" v-model="vm" size="small">
+        <nue-select-option icon="inbox" label="收集箱" :value="'inbox'" theme="project-selector" />
         <nue-divider />
         <template v-if="projects && projects.length">
             <nue-select-option
@@ -33,18 +33,27 @@ const handleSelect = async (projectId: ProjectViewObject['id']) => {
                 icon="more2"
                 :label="project.name"
                 :value="project.id"
+                theme="project-selector"
             />
         </template>
         <nue-text v-else theme="empty">暂无自建清单</nue-text>
     </nue-select>
 </template>
 
-<style>
-.nue-text--empty {
+<style scoped>
+.nue-select--project-selector {
     font-size: var(--nue-text-sm);
-    color: var(--nue-primary-color-500);
-    padding: 0.5rem;
-    text-align: center;
+
+    &:deep(.nue-button) {
+        max-width: 12rem;
+        font-family: var(--nue-primary-font-family);
+    }
+}
+</style>
+
+<style>
+.nue-dropdown .nue-dropdown-item.nue-select-option--project-selector {
+    gap: var(--nue-gap-xs);
 }
 </style>
 

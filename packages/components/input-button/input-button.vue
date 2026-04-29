@@ -75,7 +75,7 @@ const handleCancel = () => {
                 @blur="handleBlur"
             />
             <nue-div theme="actions">
-                <nue-icon :name="iconName" @click="handleSubmit" />
+                <nue-icon :name="iconName" :spin="loading" @click="handleSubmit" />
                 <nue-icon name="clear" @click="handleCancel" />
             </nue-div>
         </nue-div>

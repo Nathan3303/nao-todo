@@ -9,6 +9,7 @@
         :disabled="disabled"
         :group="group"
         @execute="(executeId) => emit('execute', executeId)"
+        style="width: 100%"
     >
         <template #trigger="{ trigger }">
             <nue-dropdown-item

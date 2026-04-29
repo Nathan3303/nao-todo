@@ -24,6 +24,7 @@
 
             > .nue-icon {
                 cursor: pointer;
+                color: var(--nue-primary-color-800);
             }
         }
     }

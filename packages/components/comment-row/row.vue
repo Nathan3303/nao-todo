@@ -68,15 +68,18 @@ const handleCancelEdit = () => {
                         counter="word-limit"
                         maxlength="512"
                         theme="small,fix-padding"
-                    />
-                    <nue-div gap="4px">
-                        <nue-button icon="check" theme="small" @click="handleUpdateComment">
-                            修改
-                        </nue-button>
-                        <nue-button icon="clear" theme="small" @click="handleCancelEdit">
-                            取消
-                        </nue-button>
-                    </nue-div>
+                    >
+                        <template #actions>
+                            <nue-div gap="4px">
+                                <nue-button icon="check" theme="small" @click="handleUpdateComment">
+                                    修改
+                                </nue-button>
+                                <nue-button icon="clear" theme="small" @click="handleCancelEdit">
+                                    取消
+                                </nue-button>
+                            </nue-div>
+                        </template>
+                    </nue-textarea>
                 </template>
                 <nue-text v-else theme="pre">{{ shadowContent }}</nue-text>
             </nue-div>

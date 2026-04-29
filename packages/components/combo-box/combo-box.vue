@@ -17,7 +17,7 @@
                         :placeholder="`筛选${triggerTitle.toLowerCase()}`"
                         clearable
                         icon="search"
-                        theme="small,pure"
+                        theme="pure"
                     />
                 </nue-header>
                 <nue-divider />
@@ -35,7 +35,7 @@
                                 @check="handleCheck"
                             />
                         </template>
-                        <nue-text v-else class="combo-box__empty-text"> 暂无数据 </nue-text>
+                        <nue-text v-else class="combo-box__empty-text">暂无数据</nue-text>
                     </nue-div>
                 </nue-main>
             </nue-container>
@@ -77,13 +77,12 @@ const handleCheck = (checked: boolean, value: unknown) => {
 <style scoped>
 .nue-container#ComboBoxContainer {
     gap: 0.25rem;
+    color: var(--nue-primary-color-900);
 
     > .nue-header {
         height: auto;
         padding: 0.25rem 0.5rem;
         border: none;
-
-
     }
 
     .combo-box__empty-text {

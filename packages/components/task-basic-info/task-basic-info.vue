@@ -17,16 +17,15 @@ withDefaults(defineProps<TaskBasicInfoProps>(), { icon: 'more2', clamped: 1 })
     align-items: center;
     gap: 0.25rem;
     flex-wrap: nowrap;
-    color: var(--nue-primary-color-800);
     width: fit-content;
     flex: none;
+    color: var(--nue-primary-color-800);
+    font-size: var(--nue-text-sm);
 
     > .nue-icon {
-        --nue-icon-size: var(--nue-text-md);
-    }
-
-    > .nue-text {
-        font-size: var(--nue-text-sm);
+        font-size: 1.25em;
+        line-height: 1;
     }
 }
 </style>
+

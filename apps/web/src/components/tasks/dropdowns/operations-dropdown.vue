@@ -14,7 +14,6 @@ defineExpose({ register })
         placement="bottom-end"
         size="small"
         @execute="(executeId) => execute(executeId)"
-        theme="menu"
         group="tasks-operations-dropdown"
     >
         <template #trigger="{ trigger }">
