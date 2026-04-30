@@ -1,7 +1,7 @@
 import { useTasksStore } from '@/stores/tasks'
 import type { ListViewAdapterProps } from './types'
 import useTasksLoader from '@/infrastructure/hooks/use-task-loader'
-import { computed, onMounted, onUnmounted, watch } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 
 const useListViewAdapter = (props: ListViewAdapterProps) => {
     // @dataStore
@@ -24,23 +24,21 @@ const useListViewAdapter = (props: ListViewAdapterProps) => {
     // @method 新增任务 ID 事件订阅
     const addNewTaskId = (taskId: string) => taskLoader.states.taskIds.add(taskId)
 
-    // @watch 监听获取选项变化
-    watch(
-        () => props.getTasksOptions,
-        (newOptions) => taskLoader.loadAndReplace(newOptions),
-        { deep: true }
-    )
+    // @method 刷新数据事件订阅
+    const refreshHandler = () => {
+        taskLoader.loadFirstPage(true)
+    }
 
     // @onMounted
     onMounted(() => {
         taskLoader.loadFirstPage(true)
-        props.subscriber.subscribe('RefreshData', taskLoader.loadAndReplace)
+        props.subscriber.subscribe('RefreshData', refreshHandler)
         props.subscriber.subscribe('AddNewTaskId', addNewTaskId)
     })
 
     // @onUnmounted
     onUnmounted(() => {
-        props.subscriber.unsubscribe('RefreshData', taskLoader.loadAndReplace)
+        props.subscriber.unsubscribe('RefreshData', refreshHandler)
         props.subscriber.unsubscribe('AddNewTaskId', addNewTaskId)
     })
 
@@ -53,3 +51,4 @@ const useListViewAdapter = (props: ListViewAdapterProps) => {
 }
 
 export default useListViewAdapter
+

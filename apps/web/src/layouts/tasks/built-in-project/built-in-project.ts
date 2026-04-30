@@ -83,7 +83,8 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     const builtInProjectHandlers = new BuiltInProjectLayoutHandlers(
         tasksViewContext.builtInProjectUseCase,
         taskUseCase,
-        builtInProjectsStore
+        builtInProjectsStore,
+        tasksViewContext.subscriber
     )
 
     // @computed 是否已经是只显示未完成任务

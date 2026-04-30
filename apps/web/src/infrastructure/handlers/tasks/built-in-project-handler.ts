@@ -7,6 +7,7 @@ import type {
     TaskColumnOptions
 } from '@nao-todo/types'
 import type { BuiltInProjectUseCase } from '@nao-todo/application/web/usecases/built-in-project'
+import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 
 export interface BuiltInProjectStore {
     updatePreferenceColumns(key: keyof TaskColumnOptions, value: boolean): void
@@ -23,12 +24,15 @@ export class BuiltInProjectLayoutHandlers {
     /**
      * 项目内建处理程序
      * @param builtInProjectUseCase 项目内建用例
+     * @param taskUseCase 任务用例
      * @param store 项目内建处理程序存储
+     * @param subscriber 事件订阅器
      */
     constructor(
         private builtInProjectUseCase: BuiltInProjectUseCase,
         private taskUseCase: TaskUseCase,
-        private store: BuiltInProjectStore
+        private store: BuiltInProjectStore,
+        private subscriber: Subscriber
     ) {}
 
     /**
@@ -107,7 +111,8 @@ export class BuiltInProjectLayoutHandlers {
             this.store.updatePreferenceGetTasksOptions('state', 'todo,in-progress')
         }
         // 3. 调用任务用例重新获取任务数据
-        this.reloadTasks()
+        // this.reloadTasks()
+        this.subscriber.emit('RefreshData')
         // 4. 返回
         return null
     }
@@ -141,3 +146,4 @@ export class BuiltInProjectLayoutHandlers {
         return this.builtInProjectUseCase.savePreference(email, projectId, newPreference!)
     }
 }
+

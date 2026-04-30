@@ -1,4 +1,4 @@
-import { computed, onMounted, onUnmounted, watch } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import useTasksLoader from '@/infrastructure/hooks/use-task-loader'
 import { useTasksStore } from '@/stores/tasks'
 import type { TableViewAdapterProps } from './types'
@@ -58,11 +58,11 @@ const useTableViewAdapter = (props: TableViewAdapterProps) => {
      * 监听获取选项变化
      * 当获取选项变化时，调用加载器加载第一页数据
      */
-    watch(
-        () => props.getTasksOptions,
-        (newOptions) => taskLoader.loadAndReplace(newOptions),
-        { deep: true }
-    )
+    // watch(
+    //     () => props.getTasksOptions,
+    //     (newOptions) => taskLoader.loadAndReplace(newOptions),
+    //     { deep: true }
+    // )
 
     /**
      * 组件挂载时
@@ -99,3 +99,4 @@ const useTableViewAdapter = (props: TableViewAdapterProps) => {
 }
 
 export default useTableViewAdapter
+

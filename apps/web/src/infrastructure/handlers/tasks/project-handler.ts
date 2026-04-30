@@ -35,7 +35,7 @@ export class ProjectHandler {
         // 1. 调用存储
         this.projectStore.updatePreferenceColumns(key, value)
         // 2. 触发刷新数据事件
-        this.subscriber.emit('RefreshData')
+        // this.subscriber.emit('RefreshData')
         // 3. 返回
         return null
     }
@@ -53,7 +53,7 @@ export class ProjectHandler {
         // 1. 调用存储
         this.projectStore.updatePreferenceGetTasksOptions(key, value)
         // 2. 触发刷新数据事件
-        this.subscriber.emit('RefreshData')
+        // this.subscriber.emit('RefreshData')
         // 3. 返回
         return null
     }
@@ -71,7 +71,7 @@ export class ProjectHandler {
         // 1. 调用存储
         this.projectStore.updatePreferenceGetTasksOptions('sort', { field, order })
         // 2. 触发刷新数据事件
-        this.subscriber.emit('RefreshData')
+        // this.subscriber.emit('RefreshData')
         // 3. 返回
         return null
     }
@@ -87,7 +87,7 @@ export class ProjectHandler {
             order: 'desc'
         })
         // 2. 触发刷新数据事件
-        this.subscriber.emit('RefreshData')
+        // this.subscriber.emit('RefreshData')
         // 3. 返回
         return null
     }
@@ -106,7 +106,7 @@ export class ProjectHandler {
             this.projectStore.updatePreferenceGetTasksOptions('state', 'todo,in-progress')
         }
         // 3. 触发刷新数据事件
-        this.subscriber.emit('RefreshData')
+        // this.subscriber.emit('RefreshData')
         // 4. 返回
         return null
     }
