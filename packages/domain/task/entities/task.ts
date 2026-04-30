@@ -41,3 +41,4 @@ export class TaskEntity {
         public givenUpAt: string | null
     ) {}
 }
+

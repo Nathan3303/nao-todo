@@ -1,10 +1,8 @@
-import { onMounted } from 'vue'
 import useResponsiveFlag, {
     responsiveTypes
 } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
 import { computed, provide, reactive, type Ref } from 'vue'
 import { APP_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import useTasksStore from './stores/tasks/tasks-store'
 
 export type AppContext = {
     routerLinks: { name: string; icon: string; route: string; routeName: string }[]
@@ -27,11 +25,7 @@ const useApp = () => {
         responsiveFlag: flag,
         isDisplayHeader
     })
-
-    onMounted(async () => {
-        const tasksStore = useTasksStore()
-        await tasksStore.initializeFromIndexedDB()
-    })
 }
 
 export default useApp
+

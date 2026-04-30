@@ -69,8 +69,6 @@ export class TaskUseCase {
         const taskViewObjects = taskEntitiesToViewObjects(taskEntities)
         // 存储任务列表
         this.store.setTasks(taskViewObjects)
-        // 更新同步状态
-        await syncStatusManager.updateStatus()
         // 返回任务ID列表
         return [{ taskIds: taskViewObjects.map((task) => task.id), pagination }, null]
     }
@@ -103,8 +101,6 @@ export class TaskUseCase {
         if (err !== null) return err
         // 更新任务状态为未删除
         this.store.updateTask(taskId, { isDeleted: false })
-        // 更新同步状态
-        await syncStatusManager.updateStatus()
         // 返回成功
         return null
     }
@@ -124,8 +120,6 @@ export class TaskUseCase {
         const taskViewObject = taskEntityToViewObject(taskEntity)
         // 存储任务列表
         this.store.addTask(taskViewObject)
-        // 更新同步状态
-        await syncStatusManager.updateStatus()
         // 返回任务视图对象
         return [taskViewObject, null]
     }
@@ -150,32 +144,8 @@ export class TaskUseCase {
         if (err !== null) return err
         // 更新内存数据
         this.store.updateTask(taskId, updateTaskViewObject)
-        // 更新同步状态
-        await syncStatusManager.updateStatus()
         // 返回成功
         return null
-    }
-
-    /**
-     * 手动触发同步
-     */
-    async syncTasks(): Promise<void> {
-        await syncService.syncNow()
-        await syncStatusManager.updateStatus()
-    }
-
-    /**
-     * 获取同步状态
-     */
-    async getSyncStatus() {
-        return syncStatusManager.getStatus()
-    }
-
-    /**
-     * 订阅同步状态变化
-     */
-    subscribeToSyncStatus(listener: (status: any) => void) {
-        return syncStatusManager.subscribe(listener)
     }
 }
 

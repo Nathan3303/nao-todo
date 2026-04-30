@@ -28,6 +28,11 @@ export class BuiltInProjectUseCase {
         private store: BuiltInProjectUseCaseStore
     ) {}
 
+    /**
+     * 内建项目用例创建函数
+     * @param builtInProjectStore 内建项目用例存储
+     * @returns 内建项目用例
+     */
     static create(builtInProjectStore: BuiltInProjectUseCaseStore): BuiltInProjectUseCase {
         const repo = useBuiltInProjectRepository()
         const domain = new BuiltInProjectDomain(repo)

@@ -31,12 +31,6 @@ export class TaskDomain {
      * @returns 任务实体
      */
     async create(createTaskValueObject: CreateTaskValueObject): GoAsync<TaskEntity> {
-        // 尝试填充开始时间
-        // const fillErr = createTaskValueObject.fillStartAtThroughEndAt()
-        // if (fillErr !== null) {
-        //     console.log(unwrapError(fillErr))
-        //     return [null, fillErr]
-        // }
         // 验证
         const validateErr = createTaskValueObject.validate()
         if (validateErr !== null) {
