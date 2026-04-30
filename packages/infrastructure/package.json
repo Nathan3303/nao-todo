@@ -4,10 +4,11 @@
     "author": "Nathan Lee",
     "license": "MIT",
     "files": [
-        "backend",
-        "built-in",
-        "consts",
-        "hooks",
-        "utils"
+        "backend/**/*",
+        "built-in/**/*",
+        "consts/**/*",
+        "hooks/**/*",
+        "utils/**/*"
     ]
 }
+

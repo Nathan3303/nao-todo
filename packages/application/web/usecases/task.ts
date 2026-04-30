@@ -12,8 +12,6 @@ import {
     taskEntityToViewObject,
     updateTaskViewObjectToValueObject
 } from '../converters/task'
-import { syncService } from '@nao-todo/infrastructure/sync/sync-service'
-import { syncStatusManager } from '@nao-todo/infrastructure/sync/sync-status'
 import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 import { useTaskRepository } from '@nao-todo/infrastructure/backend/task/repoImpl'
 
@@ -34,10 +32,7 @@ export class TaskUseCase {
     constructor(
         private taskDomain: TaskDomain,
         private store: TaskStore
-    ) {
-        // 启动同步服务
-        syncService.startSync()
-    }
+    ) {}
 
     /**
      * 创建TaskUseCase实例
@@ -84,8 +79,6 @@ export class TaskUseCase {
         if (err !== null) return err
         // 更新任务状态为已删除
         this.store.updateTask(taskId, { isDeleted: true })
-        // 更新同步状态
-        await syncStatusManager.updateStatus()
         // 返回成功
         return null
     }
