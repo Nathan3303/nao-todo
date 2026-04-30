@@ -22,7 +22,7 @@ export class UpdateCommentValueObject {
      */
     validate(): Go<void> {
         if (!this.content) return '评论内容不能为空'
-        if (this.content.length > 256) return '评论内容不能超过256个字符'
+        if (this.content.length > 256) return '评论内容最多256个字符'
         return null
     }
 }

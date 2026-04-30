@@ -20,7 +20,7 @@ export class UpdateEventValueObject {
      * @returns 验证结果
      */
     validate(): Go<void> {
-        if (this.name && this.name.length > 128) return '检查事项名称最多 128 个字符'
+        if (this.name && this.name.length > 64) return '检查事项名称最多 64 个字符'
         if (this.sortId && this.sortId < 0) return '排序 ID 不能小于 0'
         return null
     }

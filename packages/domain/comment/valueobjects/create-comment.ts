@@ -25,9 +25,10 @@ export class CreateCommentValueObject {
      * @returns 校验结果
      */
     validate(): Go<void> {
-        if (!this.taskId) return '任务 ID不能为空'
+        if (!this.taskId) return '任务ID不能为空'
         if (!this.content) return '评论内容不能为空'
-        if (this.content.length > 256) return '评论内容最多 256 个字符'
+        if (this.content.length > 256) return '评论内容最多256个字符'
         return null
     }
 }
+

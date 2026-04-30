@@ -25,7 +25,7 @@ export class CreateTagValueObject {
      */
     validate(): Go<void> {
         if (!this.name) return '标签名称不能为空'
-        if (this.name.length > 64) return '标签名称最多64个字符'
+        if (this.name.length > 32) return '标签名称最多21个字符'
         if (!this.color) return '标签颜色不能为空'
         if (this.color.length > 16) return '标签颜色最多16个字符'
         if (this.description && this.description.length > 256) return '标签描述最多256个字符'

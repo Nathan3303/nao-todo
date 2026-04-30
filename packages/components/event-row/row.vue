@@ -18,6 +18,7 @@ const handleUpdateIsDone = () => {
 
 const handleUpdateName = () => {
     if (updateLoading.value) return
+    if (inputValue.value === props.event.name) return
     updateLoading.value = true
     props
         .onUpdate(props.event.id, { name: inputValue.value })

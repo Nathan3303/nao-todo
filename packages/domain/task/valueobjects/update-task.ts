@@ -28,7 +28,7 @@ export class UpdateTaskValueObject {
      */
     validate(): Go<void> {
         if (!this.name) return '任务名称不能为空'
-        if (this.name.length > 256) return '任务名称长度不能超过256个字符'
+        if (this.name.length > 128) return '任务名称长度不能超过128个字符'
         if (this.description && this.description.length > 256)
             return '任务描述长度不能超过256个字符'
         if (this.state && !['todo', 'in-progress', 'done'].includes(this.state))

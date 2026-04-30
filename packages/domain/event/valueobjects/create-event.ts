@@ -26,7 +26,7 @@ export class CreateEventValueObject {
     validate(): Go<void> {
         if (!this.taskId) return '任务 ID不能为空'
         if (!this.name) return '检查事项内容不能为空'
-        if (this.name.length > 128) return '检查事项内容最多 128 个字符'
+        if (this.name.length > 64) return '检查事项内容最多 64 个字符'
         return null
     }
 }

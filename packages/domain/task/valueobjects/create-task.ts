@@ -38,7 +38,7 @@ export class CreateTaskValueObject {
     validate(): Go<void> {
         // if (!this.userId) return '用户ID不能为空'
         if (!this.name) return '任务名称不能为空'
-        if (this.name.length > 256) return '任务名称最多256个字符'
+        if (this.name.length > 128) return '任务名称最多128个字符'
         if (this.description && this.description.length > 256) return '任务描述最多256个字符'
         if (this.state && !['todo', 'in-progress', 'done'].includes(this.state))
             return '任务状态无效'
