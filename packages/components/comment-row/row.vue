@@ -13,6 +13,7 @@ const shadowContent = ref<string>(props.comment.content || '')
 const isEditing = ref(false)
 const loading = ref(false)
 const deleting = ref(false)
+const isClamped = ref(true)
 
 const handleEditComment = () => {
     isEditing.value = true
@@ -81,7 +82,14 @@ const handleCancelEdit = () => {
                         </template>
                     </nue-textarea>
                 </template>
-                <nue-text v-else theme="pre">{{ shadowContent }}</nue-text>
+                <template v-else>
+                    <nue-text theme="pre" :clamped="isClamped ? 2 : 0">
+                        {{ shadowContent }}
+                    </nue-text>
+                    <nue-button theme="pure" @click="isClamped = !isClamped">
+                        {{ isClamped ? '查看所有 +' : '收起 -' }}
+                    </nue-button>
+                </template>
             </nue-div>
         </nue-div>
     </nue-div>

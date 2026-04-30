@@ -7,14 +7,16 @@ import type {
     TaskColumnOptions
 } from '@nao-todo/types'
 import type { TaskUseCase } from '@nao-todo/application/web/usecases/task'
-import type { Subscriber } from '@/infrastructure/hooks/use-subscriber'
+import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import type { ProjectUseCase } from '@nao-todo/application/web/usecases/project'
 
 export class ProjectHandler {
     /**
      * 项目操作器
      * @param taskUseCase 任务用例
+     * @param projectUseCase 项目用例
      * @param projectStore 项目存储
+     * @param subscriber 事件订阅器
      */
     constructor(
         private taskUseCase: TaskUseCase,
@@ -125,3 +127,4 @@ export class ProjectHandler {
         return await this.projectUseCase.savePreference(projectId, preference)
     }
 }
+

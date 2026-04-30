@@ -1,7 +1,7 @@
 import { useTagsStore } from '@/stores/tasks'
 import type { GetTasksOptions, GetTasksSortOptions, Go, GoAsync, TaskColumnOptions } from '@nao-todo/types'
 import type { TaskUseCase } from '@nao-todo/application/web/usecases/task'
-import type { Subscriber } from '@/infrastructure/hooks/use-subscriber'
+import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import type { TagUseCase } from '@nao-todo/application/web/usecases/tag'
 
 export class TagHandler {
@@ -10,6 +10,7 @@ export class TagHandler {
      * @param taskUseCase 任务用例
      * @param tagUseCase 标签用例
      * @param tagsStore 标签存储
+     * @param subscriber 事件订阅器
      */
     constructor(
         private taskUseCase: TaskUseCase,
