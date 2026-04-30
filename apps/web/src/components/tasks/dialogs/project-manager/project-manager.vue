@@ -159,11 +159,10 @@ onMounted(() => emit('register', open, close))
 <style>
 .nue-tooltip.nue-tooltip--warning {
     background-color: var(--nue-warning-color-10);
-    padding: var(--nue-padding-df);
+    padding: var(--nue-padding-sm);
 
     > .nue-tooltip__text {
         font-size: var(--nue-text-sm);
-        line-height: 1.5;
         color: var(--nue-warning-color-60);
     }
 }

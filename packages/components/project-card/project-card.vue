@@ -26,22 +26,19 @@ const statusColor = computed(() => {
 </script>
 
 <template>
-    <nue-div class="project-card" :data-deleted="isDeleted" :data-archived="isArchived">
-        <nue-div vertical gap=".25rem" flex="1">
+    <nue-div theme="project-card" :data-deleted="isDeleted" :data-archived="isArchived">
+        <nue-div theme="name-desc">
             <!-- 顶部：项目名称 + 图标 + 操作 -->
-            <nue-div align="center" justify="space-between" wrap="nowrap">
-                <nue-div align="center" gap="0.5rem">
-                    <nue-icon v-if="project.icon" :name="project.icon" size="var(--nue-text-md)" />
-                    <nue-text size="var(--nue-text-md)" :weight="500" :clamped="1">
-                        {{ project.name }}
-                    </nue-text>
-                </nue-div>
-                <nue-div align="center" width="fit-content" gap="0.5rem">
+            <nue-div theme="name">
+                <nue-icon v-if="project.icon" :name="project.icon" />
+                <nue-text :clamped="1">{{ project.name }}</nue-text>
+                <nue-div theme="actions" align="center" width="fit-content" gap="0.5rem">
                     <slot name="ops" />
                 </nue-div>
             </nue-div>
             <!-- 项目描述 -->
             <nue-text
+                theme="description"
                 size="var(--nue-text-sm)"
                 color="var(--nue-primary-color-500)"
                 :clamped="3"
@@ -51,38 +48,19 @@ const statusColor = computed(() => {
             </nue-text>
         </nue-div>
         <!-- 底部信息 -->
-        <nue-div class="project-card__info" align="center" justify="space-between" wrap="nowrap">
-            <nue-text
-                v-if="isDeleted"
-                size="var(--nue-text-sm)"
-                color="var(--nue-primary-color-600)"
-            >
-                删除于 {{ parse2RelativeDate(project.deactivedAt!) }}
+        <nue-div theme="info">
+            <nue-text v-if="isDeleted" color="var(--nue-primary-color-600)">
+                删除于{{ parse2RelativeDate(project.deactivedAt!) }}
             </nue-text>
-            <nue-text v-else size="var(--nue-text-sm)" color="var(--nue-primary-color-400)">
-                创建于 {{ parse2RelativeDate(project.createdAt) }}
+            <nue-text v-else color="var(--nue-primary-color-400)">
+                创建于{{ parse2RelativeDate(project.createdAt) }}
             </nue-text>
-            <nue-text size="var(--nue-text-sm)" :color="statusColor">{{ statusText }}</nue-text>
+            <nue-text :color="statusColor">{{ statusText }}</nue-text>
         </nue-div>
     </nue-div>
 </template>
 
 <style scoped>
-.project-card {
-    border: 1px solid var(--nue-divider-color);
-    border-radius: var(--nue-primary-radius);
-    padding: 1rem;
-    flex-direction: column;
-    gap: 0.5rem;
-    align-items: stretch;
-    flex-wrap: nowrap;
-    box-shadow: var(--nue-secondary-shadow);
-
-    &[data-deleted='true'],
-    &[data-archived='true'] {
-        opacity: 0.8;
-        background-color: var(--nue-primary-color-200);
-    }
-}
+@import url('./project-card.css');
 </style>
 
