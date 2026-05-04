@@ -1,6 +1,6 @@
 import type { ModelBase } from './base'
 
-export type User = ModelBase & {
+export type UserModel = ModelBase & {
     account?: string
     email?: string
     // password?: string
@@ -9,11 +9,11 @@ export type User = ModelBase & {
     createdFrom?: string
     role: string
     state?: number
-    config?: UserConfig
+    config?: UserConfigModel
     deactivedAt?: string
 }
 
-export type UserConfig = ModelBase & {
+export type UserConfigModel = ModelBase & {
     userId: string
     state: string
     appearance: string

@@ -10,7 +10,7 @@ export type * from './requester'
 export type * from './go'
 
 // Models
-export type * from './models'
+export type * from '../infrastructure/local/models'
 
 // View objects
 export type * from './viewobjects/auth'

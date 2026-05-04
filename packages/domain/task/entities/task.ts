@@ -6,7 +6,9 @@ export class TaskEntity {
     /**
      * 任务实体构造函数
      * @param id 任务ID
+     * @param localId 本地任务任务ID
      * @param userId 用户ID
+     * @param parentTaskId 父任务ID
      * @param name 任务名称
      * @param description 任务描述
      * @param state 任务状态
@@ -24,7 +26,9 @@ export class TaskEntity {
      */
     constructor(
         public id: string,
+        public localId: string,
         public userId: string,
+        public parentTaskId: string,
         public name: string,
         public description: string,
         public state: string,
@@ -41,4 +45,6 @@ export class TaskEntity {
         public givenUpAt: string | null
     ) {}
 }
+
+
 

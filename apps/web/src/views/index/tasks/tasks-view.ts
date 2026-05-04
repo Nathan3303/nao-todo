@@ -14,7 +14,7 @@ import { useTasksStore } from '@/stores/tasks'
 import { useBuiltInProjectsStore, useProjectsStore, useTagsStore } from '@/stores/tasks'
 import useSubscriber, { type Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import type { AppContext } from '@/app'
-import type { Tag, Task } from '@nao-todo/types'
+import type { TagViewObject, TaskViewObject } from '@nao-todo/types'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 
 export type TasksViewContext = {
@@ -34,8 +34,8 @@ export type TasksViewContext = {
     handleResizeAside: (width: number) => void
     handleResizeOutline: (width: number) => void
     getProjectName: (projectId: string) => string
-    getTagColor: (tagId: Tag['id']) => string
-    showTaskDetails: (taskId: Task['id']) => void
+    getTagColor: (tagId: TagViewObject['id']) => string
+    showTaskDetails: (taskId: TaskViewObject['id']) => void
     getColumnLabel: (key: string) => string
     switchDisplayAside: () => void
 }
@@ -110,13 +110,13 @@ const useTasksView = () => {
     const getColumnLabel = (key: string): string => columnLabels[key] || ''
 
     // @method 显示任务详情（面板）
-    const showTaskDetails = (taskId: Task['id']) => {
+    const showTaskDetails = (taskId: TaskViewObject['id']) => {
         if (!taskId) return
         router.push({ params: { taskId } })
     }
 
     // @method 获取标签颜色
-    const getTagColor = (tagId: Tag['id']): string => {
+    const getTagColor = (tagId: TagViewObject['id']): string => {
         return tagsStore.getTag(tagId)?.color || 'transparent'
     }
 
@@ -154,3 +154,4 @@ const useTasksView = () => {
 }
 
 export default useTasksView
+

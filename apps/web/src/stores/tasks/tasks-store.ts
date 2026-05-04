@@ -30,6 +30,13 @@ const useTasksStore = defineStore('TasksStore', () => {
         tasks.value.push(task)
     }
 
+    // @action 添加任务列表
+    const addTasks = (tasks: TaskViewObject[]) => {
+        tasks.forEach((task) => {
+            addTask(task)
+        })
+    }
+
     // @action 获取任务
     const getTask = (taskId: TaskViewObject['id']) => {
         return tasksMap.value.get(taskId)
@@ -49,6 +56,7 @@ const useTasksStore = defineStore('TasksStore', () => {
         setTasks,
         updateTask,
         addTask,
+        addTasks,
         getTask,
         removeTask
     }

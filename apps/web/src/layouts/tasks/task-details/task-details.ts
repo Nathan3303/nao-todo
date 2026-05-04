@@ -11,7 +11,7 @@ import useCommentHandler from '@/infrastructure/handlers/tasks/comment-handler'
 import useEventHandler from '@/infrastructure/handlers/tasks/event-handler'
 import useTaskHandler from '@/infrastructure/handlers/tasks/task-handler'
 import { useRouter } from 'vue-router'
-import type { Task } from '@nao-todo/types'
+import type { TaskViewObject } from '@nao-todo/types'
 import type { TaskDetailsProps, TaskDetailsEmits, TaskDetailsContext } from './types'
 import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
 
@@ -93,7 +93,7 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     })
 
     // @method 加载检查事项
-    const loadEvents = async (taskId: Task['id']) => {
+    const loadEvents = async (taskId: TaskViewObject['id']) => {
         taskDetailsStore.setEventsLoading(true)
         taskDetailsStore.setEventsError('')
         const [, err] = await eventUseCase.loadEvents(taskId)
@@ -104,7 +104,7 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     }
 
     // @method 加载评论
-    const loadComments = async (taskId: Task['id']) => {
+    const loadComments = async (taskId: TaskViewObject['id']) => {
         taskDetailsStore.setCommentsLoading(true)
         taskDetailsStore.setCommentsError('')
         const [, err] = await commentUseCase.loadComments(taskId)
@@ -127,7 +127,7 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     }
 
     // @method 初始化任务详情
-    const initialize = async (taskId?: Task['id']) => {
+    const initialize = async (taskId?: TaskViewObject['id']) => {
         error.value = ''
         // 1. 判断任务 ID
         if (!taskId) {
@@ -204,3 +204,4 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
 }
 
 export default useTaskDetails
+

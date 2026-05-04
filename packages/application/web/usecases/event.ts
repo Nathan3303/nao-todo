@@ -2,7 +2,7 @@ import { EventDomain } from '@nao-todo/domain/event'
 import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 import { useEventRepository } from '@nao-todo/infrastructure/backend/event/repoImpl'
 import type { UpdateEventViewObject } from '@nao-todo/types'
-import type { CreateEventViewObject, EventViewObject, GoAsync, Task } from '@nao-todo/types'
+import type { CreateEventViewObject, EventViewObject, GoAsync, TaskViewObject } from '@nao-todo/types'
 import {
     createEventViewObjectToValueObject,
     eventEntityToViewObject,
@@ -45,7 +45,7 @@ export class EventUseCase {
      * @param taskId 任务ID
      * @returns 检查事项ID列表
      */
-    async loadEvents(taskId: Task['id']): GoAsync<EventViewObject['id'][]> {
+    async loadEvents(taskId: TaskViewObject['id']): GoAsync<EventViewObject['id'][]> {
         const [eventEntities, err] = await this.eventDomain.list(taskId)
         if (err !== null) return [null, err]
         const events = eventEntities.map(eventEntityToViewObject)

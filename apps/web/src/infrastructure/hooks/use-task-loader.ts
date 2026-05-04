@@ -1,5 +1,10 @@
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
-import type { GetTasksOptions, GoAsync, ResponseDataPagination, Task } from '@nao-todo/types'
+import type {
+    GetTasksOptions,
+    GoAsync,
+    ResponseDataPagination,
+    TaskViewObject
+} from '@nao-todo/types'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { reactive } from 'vue'
 
@@ -7,7 +12,7 @@ import { reactive } from 'vue'
  * 任务加载器状态
  */
 export type UseTasksLoaderStates = {
-    taskIds: Set<Task['id']>
+    taskIds: Set<TaskViewObject['id']>
     loading: boolean
     error: string
     pagination: ResponseDataPagination
@@ -23,7 +28,7 @@ export type UseTasksLoaderStates = {
 const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: GetTasksOptions) => {
     // @states
     const states = reactive<UseTasksLoaderStates>({
-        taskIds: new Set<Task['id']>(),
+        taskIds: new Set<TaskViewObject['id']>(),
         loading: true,
         error: '',
         pagination: { total: 0, page: 1, limit: originalGetOptions?.limit ?? 20, maxPage: 1 },
@@ -38,7 +43,7 @@ const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: GetTasksO
      * @param extraGetOptions 额外的选项
      * @returns 任务 ID 列表
      */
-    const load = async (extraGetOptions?: GetTasksOptions): GoAsync<Task['id'][]> => {
+    const load = async (extraGetOptions?: GetTasksOptions): GoAsync<TaskViewObject['id'][]> => {
         states.loading = true
         states.error = ''
         const getOptions: GetTasksOptions = { ...originalGetOptions, ...extraGetOptions }

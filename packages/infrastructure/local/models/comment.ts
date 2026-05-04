@@ -1,15 +1,15 @@
 import type { ModelBase } from './base'
 
-export type Comment = ModelBase & {
+export type CommentModel = ModelBase & {
     userId: string
     taskId: string
     content: string
     attachment: string[]
     isTopUp: boolean
-    commentUser: CommentUser
+    commentUser: CommentUserModel
 }
 
-export type CommentUser = ModelBase & {
+export type CommentUserModel = ModelBase & {
     commentId: string
     avatar: string
     nickname: string

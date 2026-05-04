@@ -1,16 +1,16 @@
 import type { ModelBase } from './base'
 
-export type Project = ModelBase & {
+export type ProjectModel = ModelBase & {
     userId: string
     icon?: string
     name: string
     description?: string
     archivedAt?: string
     deactivedAt?: string
-    preference: ProjectPreference
+    preference: ProjectPreferenceModel
 }
 
-export type ProjectPreference = ModelBase & {
+export type ProjectPreferenceModel = ModelBase & {
     userId: string
     projectId: string
     viewType: string

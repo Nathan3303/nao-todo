@@ -1,6 +1,6 @@
 import { CommentDomain } from '@nao-todo/domain/comment'
 import type {
-    Task,
+    TaskViewObject,
     CommentViewObject,
     GoAsync,
     CreateCommentViewObject,
@@ -59,7 +59,7 @@ export class CommentUseCase {
      * @param taskId 任务 ID
      * @returns 评论 ID 列表
      */
-    async loadComments(taskId: Task['id']): GoAsync<CommentViewObject['id'][]> {
+    async loadComments(taskId: TaskViewObject['id']): GoAsync<CommentViewObject['id'][]> {
         // 参数校验
         if (!taskId) return [null, '参数错误']
         // 调用域服务

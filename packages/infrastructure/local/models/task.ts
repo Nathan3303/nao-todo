@@ -1,15 +1,15 @@
 import type { ModelBase } from './base'
 
-export type Task = ModelBase & {
+export type TaskModel = ModelBase & {
     parentTaskId: string | null
     userId: string
     name: string
-    description: string
+    description: string | null
     state: number
     priority: number
-    startAt: string
-    endAt: string
-    projectId: string
+    startAt: string | null
+    endAt: string | null
+    projectId: string | null
     tags: string[]
     archivedAt: string | null
     starMarkAt: string | null

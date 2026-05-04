@@ -1,15 +1,28 @@
-import type { Project, Tag, Task } from '../models'
-
-export type TaskViewObject = Omit<Task, 'state' | 'priority'> & {
+export type TaskViewObject = {
+    id: string
+    localId: string
+    parentTaskId: string | null
+    userId: string
+    name: string
+    description: string
     state: string
     priority: string
-    deletedAt: string
+    startAt: string
+    endAt: string
+    projectId: string
+    tags: string[]
+    archivedAt: string | null
+    starMarkAt: string | null
+    givenUpAt: string | null
     isDeleted: boolean
     isArchived: boolean
     isStarMarked: boolean
     isGivenUp: boolean
-    project?: { name: Project['name'] }
+    project?: { name: string }
     events?: Event[]
+    createdAt: string
+    updatedAt: string
+    deletedAt: string | null
 }
 
 export type CreateTaskViewObject = {
@@ -50,7 +63,7 @@ export type GetTasksOptions = {
     isGivenUp?: TaskViewObject['isGivenUp']
     sort?: GetTasksSortOptions
     relativeDate?: 'today' | 'tomorrow' | 'week' | '-today' | 'month'
-    tagId?: Tag['id']
+    tagId?: string
     page?: number
     limit?: number
 }

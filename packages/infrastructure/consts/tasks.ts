@@ -31,3 +31,21 @@ export const columnLabels: Record<string, string> = {
     isFavorited: '是否收藏',
     isGivenUp: '是否放弃'
 }
+
+export const stateSNMap = {
+    todo: 1,
+    'in-progress': 2,
+    doing: 2,
+    done: 3
+}
+
+export const stateSNMapReverse = [null, 'todo', 'in-progress', 'done']
+
+export const prioritySNMap = {
+    low: 1,
+    medium: 2,
+    high: 3
+}
+
+export const prioritySNMapReverse = [null, 'low', 'medium', 'high']
+

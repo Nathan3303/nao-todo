@@ -25,7 +25,7 @@ export class CreateTaskValueObject {
         public state: string,
         public priority: string,
         public startAt: string | null,
-        public endAt: string,
+        public endAt: string | null,
         public projectId: string,
         public tags: string[]
     ) {}

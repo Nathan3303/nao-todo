@@ -2,14 +2,13 @@
 import { computed } from 'vue'
 import { TaskBasicInfo } from '../task-basic-info'
 import { TaskStatePresets } from './constants'
-import type { Task } from '@nao-todo/types'
 import type { TaskStateInfoProps } from './types'
 
 defineOptions({ name: 'TaskStateInfo' })
 const props = defineProps<TaskStateInfoProps>()
 
 const info = computed(() => {
-    return TaskStatePresets[props.state as Task['state']]
+    return TaskStatePresets[props.state as keyof typeof TaskStatePresets]
 })
 </script>
 
@@ -23,3 +22,4 @@ const info = computed(() => {
     flex: 1;
 }
 </style>
+

@@ -1,14 +1,14 @@
 import type { ModelBase } from './base'
 
-export type Tag = ModelBase & {
+export type TagModel = ModelBase & {
     userId: string
     name: string
     description?: string
     color: string
-    preference: TagPreference
+    preference: TagPreferenceModel
 }
 
-export type TagPreference = ModelBase & {
+export type TagPreferenceModel = ModelBase & {
     userId: string
     tagId: string
     viewType: string

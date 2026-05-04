@@ -1,10 +1,11 @@
 import type { ModelBase } from './base'
 
-export type Event = ModelBase & {
+export type EventModel = ModelBase & {
     userId: string
     taskId: string
     name: string
-    description?: string
+    description: string | null
     isDone: boolean
     sortId: number
 }
+

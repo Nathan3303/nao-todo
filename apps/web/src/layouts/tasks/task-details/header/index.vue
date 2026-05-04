@@ -3,7 +3,7 @@ import { inject } from 'vue'
 import { TaskCheckButton, TaskDateSelector } from '@nao-todo/components'
 import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
 import type { TaskDetailsContext } from '../types'
-import type { Task } from '@nao-todo/types'
+import type { TaskViewObject } from '@nao-todo/types'
 import dayjs from 'dayjs'
 
 const { vo, closeDetails, taskHandler } = inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
@@ -15,7 +15,7 @@ const switchState = () => {
 
 const updateEndAt = () => {
     if (vo.value === null) return
-    taskHandler.updateTaskEndAt(vo.value.id, vo.value.endAt as Task['endAt'])
+    taskHandler.updateTaskEndAt(vo.value.id, vo.value.endAt as TaskViewObject['endAt'])
 }
 
 const updateEndAtToNow = () => {

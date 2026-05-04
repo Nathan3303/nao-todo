@@ -1,7 +1,7 @@
-import type { Task } from '@nao-todo/types'
+import type { TaskViewObject } from '@nao-todo/types'
 
 export type TaskMultiDetailsProps = {
-    selectedIds: Task['id'][]
+    selectedIds: TaskViewObject['id'][]
 }
 
 

@@ -66,12 +66,7 @@ const handleFinish = () => {
         :class="{ 'todo-card--updating': isUpdating }"
     >
         <nue-div vertical>
-            <task-check-button
-                size="large"
-                :is-done="isDone"
-                :is-updating="isUpdating"
-                @change="handleFinish"
-            />
+            <task-check-button :is-done="isDone" :is-updating="isUpdating" @change="handleFinish" />
         </nue-div>
         <nue-div vertical gap=".5rem" flex="1" overflow="hidden">
             <nue-div class="todo-card__info">
@@ -114,17 +109,17 @@ const handleFinish = () => {
                     <task-date-info
                         v-if="columns?.createdAt"
                         :date="task.createdAt"
-                        :formatter="(date) => `创建于 ${date}`"
+                        :formatter="(date) => `创建于${date}`"
                     />
                     <task-date-info
                         v-if="columns?.updatedAt"
                         :date="task.updatedAt"
-                        :formatter="(date) => `修改于 ${date}`"
+                        :formatter="(date) => `修改于${date}`"
                     />
                     <task-date-info
                         v-if="columns?.endAt"
                         :date="task.endAt!"
-                        :formatter="(date) => `截止于 ${date}`"
+                        :formatter="(date) => `截止于${date}`"
                         :colored="!isDone"
                     />
                 </nue-div>

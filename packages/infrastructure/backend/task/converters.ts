@@ -7,6 +7,8 @@ export const getTaskRes2TaskEntity = (res: GetTaskRes): TaskEntity => {
     return new TaskEntity(
         res.id,
         '',
+        '',
+        '',
         res.name,
         res.description,
         res.state,
@@ -46,3 +48,4 @@ export const updateTaskValueObjectToReq = (valueObject: UpdateTaskValueObject): 
     if (valueObject.tags) req.tags = valueObject.tags
     return req
 }
+

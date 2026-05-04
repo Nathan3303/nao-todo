@@ -2,13 +2,12 @@
 import { computed } from 'vue'
 import { TaskBasicInfo } from '../task-basic-info'
 import { TaskPriorityPresets } from './constants'
-import type { Task } from '@nao-todo/types'
 import type { TaskPriorityInfoProps } from './types'
 
 defineOptions({ name: 'TaskPriorityInfo' })
 const props = defineProps<TaskPriorityInfoProps>()
 
-const info = computed(() => TaskPriorityPresets[props.priority as Task['priority']])
+const info = computed(() => TaskPriorityPresets[props.priority as keyof typeof TaskPriorityPresets])
 </script>
 
 <template>
@@ -21,3 +20,4 @@ const info = computed(() => TaskPriorityPresets[props.priority as Task['priority
     flex: 1;
 }
 </style>
+

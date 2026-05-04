@@ -1,11 +1,6 @@
 import { TaskDomain } from '@nao-todo/domain/task'
 import type { GoAsync, ResponseDataPagination, TaskViewObject } from '@nao-todo/types'
-import type {
-    CreateTaskViewObject,
-    GetTasksOptions,
-    Task,
-    UpdateTaskViewObject
-} from '@nao-todo/types'
+import type { CreateTaskViewObject, GetTasksOptions, UpdateTaskViewObject } from '@nao-todo/types'
 import {
     createTaskViewObjectToValueObject,
     taskEntitiesToViewObjects,
@@ -14,11 +9,14 @@ import {
 } from '../converters/task'
 import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 import { useTaskRepository } from '@nao-todo/infrastructure/backend/task/repoImpl'
+import { LocalTaskDomain } from '@nao-todo/domain/task/services/local-task'
+import { LocalTaskRepositoryImpl, localDB } from '@nao-todo/infrastructure/local'
 
 export interface TaskStore {
     setTasks(tasks: TaskViewObject[]): void
     updateTask(taskId: TaskViewObject['id'], updateTaskViewObject: UpdateTaskViewObject): void
     addTask(task: TaskViewObject): void
+    addTasks(tasks: TaskViewObject[]): void
     getTask(taskId: TaskViewObject['id']): TaskViewObject | undefined
     removeTask(taskId: TaskViewObject['id']): void
 }
@@ -27,10 +25,12 @@ export class TaskUseCase {
     /**
      * 任务用例
      * @param taskDomain 任务领域服务
+     * @param localTaskDomain 本地任务任务领域服务
      * @param store 任务用例存储
      */
     constructor(
         private taskDomain: TaskDomain,
+        private localTaskDomain: LocalTaskDomain,
         private store: TaskStore
     ) {}
 
@@ -40,10 +40,9 @@ export class TaskUseCase {
      * @returns TaskUseCase实例
      */
     static create(taskStore: TaskStore): TaskUseCase {
-        const requester = getRequesterImpl()
-        const repo = useTaskRepository(requester)
-        const domain = new TaskDomain(repo)
-        return new TaskUseCase(domain, taskStore)
+        const domain = new TaskDomain(useTaskRepository(getRequesterImpl()))
+        const localDomain = new LocalTaskDomain(new LocalTaskRepositoryImpl(localDB))
+        return new TaskUseCase(domain, localDomain, taskStore)
     }
 
     /**
@@ -52,18 +51,25 @@ export class TaskUseCase {
      * @returns 任务ID列表
      */
     async loadTasks(getTasksOptions: GetTasksOptions): GoAsync<{
-        taskIds: Task['id'][]
+        taskIds: TaskViewObject['id'][]
         pagination: ResponseDataPagination | undefined
     }> {
         // 获取任务实体列表
         const [listResult, err] = await this.taskDomain.list(getTasksOptions)
         if (err !== null) return [null, err]
-        // 结构请求结果
-        const { taskEntities, pagination } = listResult
         // 实体转换为视图对象
+        const { taskEntities, pagination } = listResult
         const taskViewObjects = taskEntitiesToViewObjects(taskEntities)
         // 存储任务列表
         this.store.setTasks(taskViewObjects)
+        // 存储到本地数据库
+        const [localListResult, localErr] = await this.localTaskDomain.list(getTasksOptions)
+        if (localErr !== null) return [null, localErr]
+        // 实体转换为视图对象
+        const { taskEntities: localTaskEntities } = localListResult
+        const localTaskViewObjects = taskEntitiesToViewObjects(localTaskEntities)
+        // 存储任务列表
+        this.store.addTasks(localTaskViewObjects)
         // 返回任务ID列表
         return [{ taskIds: taskViewObjects.map((task) => task.id), pagination }, null]
     }
@@ -73,7 +79,7 @@ export class TaskUseCase {
      * @param taskId 任务ID
      * @returns 错误信息
      */
-    async removeTask(taskId: Task['id']): GoAsync<void> {
+    async removeTask(taskId: TaskViewObject['id']): GoAsync<void> {
         // 删除任务
         const err = await this.taskDomain.remove(taskId)
         if (err !== null) return err
@@ -88,7 +94,7 @@ export class TaskUseCase {
      * @param taskId 任务ID
      * @returns 错误信息
      */
-    async restoreTask(taskId: Task['id']): GoAsync<void> {
+    async restoreTask(taskId: TaskViewObject['id']): GoAsync<void> {
         // 恢复
         const err = await this.taskDomain.restore(taskId)
         if (err !== null) return err
@@ -113,6 +119,9 @@ export class TaskUseCase {
         const taskViewObject = taskEntityToViewObject(taskEntity)
         // 存储任务列表
         this.store.addTask(taskViewObject)
+        // 存储到本地数据库
+        const [e, localErr] = await this.localTaskDomain.create(createTaskValueObject)
+        console.log(e, localErr)
         // 返回任务视图对象
         return [taskViewObject, null]
     }
@@ -124,7 +133,7 @@ export class TaskUseCase {
      * @returns 错误信息
      */
     async updateTask(
-        taskId: Task['id'],
+        taskId: TaskViewObject['id'],
         updateTaskViewObject: UpdateTaskViewObject
     ): GoAsync<void> {
         // 获取原始数据
@@ -137,8 +146,11 @@ export class TaskUseCase {
         if (err !== null) return err
         // 更新内存数据
         this.store.updateTask(taskId, updateTaskViewObject)
+        // 更新本地数据库
+        await this.localTaskDomain.update(oldTask?.localId || '', updateTaskValueObject)
         // 返回成功
         return null
     }
 }
+
 

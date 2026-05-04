@@ -46,10 +46,11 @@
                     overflow: hidden;
                     background: linear-gradient(
                         to bottom,
-                        var(--nue-primary-color-200) 0 10%,
+                        var(--nue-primary-color-100) 0 10%,
                         var(--nue-primary-color-0) 80% 100%
                     );
                     border-radius: var(--nue-primary-radius);
+                    min-height: 4rem;
 
                     > .nue-content {
                         display: flex;
@@ -67,6 +68,7 @@
 
                             .nue-empty__description {
                                 font-size: var(--nue-text-xs);
+                                color: var(--nue-primary-color-500);
                             }
                         }
                     }
@@ -83,17 +85,9 @@
                             line-height: 2rem;
                             content: '移动到此栏';
                             position: absolute;
-                            left: 0;
-                            top: 0;
                             color: var(--nue-primary-color-700);
                             text-align: center;
                             font-size: var(--nue-text-xs);
-                            background: linear-gradient(
-                                to bottom,
-                                var(--nue-primary-color-100) 0 10%,
-                                var(--nue-primary-color-0) 80% 100%
-                            );
-                            border-radius: var(--nue-primary-radius);
                         }
                     }
 
@@ -124,17 +118,6 @@
                     border-radius: var(--nue-primary-radius);
                     box-shadow: var(--nue-secondary-shadow);
 
-                    .todo-card__check-icon {
-                        --nue-icon-size: 1.25rem;
-                        color: var(--nue-primary-color-600);
-                        padding: 2px 0;
-                        transition: all 0.16s ease;
-
-                        &:hover {
-                            color: var(--nue-primary-color-800);
-                        }
-                    }
-
                     .todo-card__info {
                         flex-direction: column;
                         gap: 0.25rem;
@@ -142,7 +125,7 @@
                         .todo-card__name {
                             word-break: break-all;
                             white-space: pre;
-                            font-size: var(--nue-text-sm);
+                            font-size: var(--nue-text-df2);
                             line-height: var(--nue-text-xl);
                             flex: 1;
                         }
@@ -219,7 +202,6 @@
                             display: flex;
                             align-items: center;
                             justify-content: center;
-                            background: rgba(255, 255, 255, 0.9);
                             border-radius: inherit;
                             z-index: 10;
 
