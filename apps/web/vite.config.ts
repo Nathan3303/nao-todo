@@ -45,11 +45,11 @@ export default defineConfig({
         cssMinify: true,
         rollupOptions: {
             output: {
-                assetFileNames: (assetInfo) => {
-                    if (assetInfo.type === 'asset' && (assetInfo.name as string).endsWith('.css'))
-                        return 'css/[name].[hash].[ext]'
-                    return assetInfo.name as string
-                },
+                // assetFileNames: (assetInfo) => {
+                //     if (assetInfo.type === 'asset' && (assetInfo.name as string).endsWith('.css'))
+                //         return 'css/[name].[hash].[ext]'
+                //     return assetInfo.name as string
+                // },
                 chunkFileNames: 'js/[name].[hash].js',
                 manualChunks: (id) => {
                     if (id.includes('node_modules')) {
