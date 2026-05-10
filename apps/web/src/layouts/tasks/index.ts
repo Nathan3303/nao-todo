@@ -1,5 +1,5 @@
 // Aside
-import { Aside, FloatAside, AsideAdapter } from './aside'
+import { TasksAside } from './aside'
 // Dialogs
 import TasksViewDialogs from './dialogs/index.vue'
 // Built-in project
@@ -10,9 +10,7 @@ import TasksViewDetailsAdapter from './task-details/index.vue'
 
 export {
     // Aside
-    Aside as TasksViewAside,
-    FloatAside as TasksViewFloatAside,
-    AsideAdapter as TasksViewAsideAdapter,
+    TasksAside as TasksViewAside,
     // Built-in project
     BuiltInProjectSection as TasksViewBuiltInProjectSection,
     // Dialogs
@@ -22,3 +20,4 @@ export {
     TaskDetailsDrawer as TasksViewFloatDetails,
     TasksViewDetailsAdapter
 }
+

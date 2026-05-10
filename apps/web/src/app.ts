@@ -1,6 +1,7 @@
 import useResponsiveFlag, {
     responsiveTypes
 } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
+import useResponsiveAside from '@/infrastructure/hooks/use-responsive-aside'
 import { computed, provide, reactive, type Ref } from 'vue'
 import { APP_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 
@@ -8,6 +9,9 @@ export type AppContext = {
     routerLinks: { name: string; icon: string; route: string; routeName: string }[]
     responsiveFlag: Ref<number>
     isDisplayHeader: Ref<boolean>
+    isDisplayAside: Ref<boolean>
+    isUseFloatAside: Ref<boolean>
+    switchDisplayAside: () => void
 }
 
 const useApp = () => {
@@ -20,10 +24,19 @@ const useApp = () => {
 
     const isDisplayHeader = computed(() => flag.value > responsiveTypes.MOBILE)
 
+    const {
+        visible: isDisplayAside,
+        isFloating: isUseFloatAside,
+        switchVisible: switchDisplayAside
+    } = useResponsiveAside(flag, responsiveTypes.MOBILE)
+
     provide<AppContext>(APP_CONTEXT_KEY, {
         routerLinks,
         responsiveFlag: flag,
-        isDisplayHeader
+        isDisplayHeader,
+        isDisplayAside,
+        isUseFloatAside,
+        switchDisplayAside
     })
 }
 

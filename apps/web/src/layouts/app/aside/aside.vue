@@ -16,54 +16,72 @@ const { profile } = storeToRefs(userStore)
 </script>
 
 <template>
-    <!-- :content="``" -->
-    <nue-div v-if="profile" theme="aside-wrapper">
-        <nue-tooltip placement="right-start" size="small">
-            <nue-avatar :src="profile.avatar" size="2.5rem" />
-            <template #content>
-                <nue-div vertical gap=".25rem">
-                    <nue-text size="var(--nue-text-sm)" color="var(--nue-primary-color-0)">
-                        你好 👋，{{ profile.nickname }}！
-                    </nue-text>
-                    <nue-text size="var(--nue-text-sm)" color="var(--nue-primary-color-0)">
-                        欢迎回到 NaoTodo，继续规划并完成你的任务 🎯 吧！
-                    </nue-text>
-                </nue-div>
-            </template>
-        </nue-tooltip>
-        <nue-div theme="aside__navs">
-            <nue-tooltip
-                v-for="(rl, idx) in routerLinks"
-                :key="idx"
-                :content="rl.name"
-                placement="right-center"
-                size="small"
-            >
-                <nao-router-link :icon="rl.icon" :route="rl.route" icon-link />
+    <nue-div theme="app-aside">
+        <nue-div v-if="profile" theme="aside-header">
+            <nue-tooltip placement="right-start" size="small">
+                <nue-avatar :src="profile.avatar" size="2.5rem" />
+                <template #content>
+                    <nue-div vertical gap=".25rem">
+                        <nue-text size="var(--nue-text-sm)" color="var(--nue-primary-color-0)">
+                            你好 👋，{{ profile.nickname }}！
+                        </nue-text>
+                        <nue-text size="var(--nue-text-sm)" color="var(--nue-primary-color-0)">
+                            欢迎回到 NaoTodo，继续规划并完成你的任务 🎯 吧！
+                        </nue-text>
+                    </nue-div>
+                </template>
             </nue-tooltip>
+            <nue-div theme="aside__navs">
+                <nue-tooltip
+                    v-for="(rl, idx) in routerLinks"
+                    :key="idx"
+                    :content="rl.name"
+                    placement="right-center"
+                    size="small"
+                >
+                    <nao-router-link :icon="rl.icon" :route="rl.route" icon-link />
+                </nue-tooltip>
+            </nue-div>
+            <nue-div theme="aside__actions" v-if="$slots.actions">
+                <slot name="actions"></slot>
+            </nue-div>
         </nue-div>
-        <nue-div theme="aside__actions"></nue-div>
+        <slot></slot>
     </nue-div>
 </template>
 
 <style scoped>
-.nue-div.nue-div--aside-wrapper {
-    flex-direction: column;
-    align-items: center;
-    gap: 2rem;
+.nue-div--app-aside {
+    width: 100%;
     height: 100%;
+    overflow: hidden;
+    gap: 0;
+    padding: 0;
 
-    .nue-div.nue-div--aside__navs {
+    > .nue-div.nue-div--aside-header {
         flex-direction: column;
         align-items: center;
-        gap: 1.5rem;
-        flex: auto;
-    }
+        gap: 2rem;
+        width: 70px;
+        padding: var(--nue-padding-df);
+        height: 100%;
 
-    .nue-div.nue-div--aside__actions {
-        flex-direction: column;
-        align-items: center;
-        gap: 1.5rem;
+        &:deep() + div {
+            border-left: 1px solid var(--nue-border-color);
+        }
+
+        .nue-div.nue-div--aside__navs {
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            flex: auto;
+        }
+
+        .nue-div.nue-div--aside__actions {
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
     }
 }
 </style>

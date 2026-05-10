@@ -2,7 +2,7 @@
 defineOptions({ name: 'TodoDetailsRow' })
 defineProps<{
     label: string
-    text?: string | number
+    text?: string | null
     flex?: string
 }>()
 </script>
@@ -14,7 +14,7 @@ defineProps<{
         </nue-text>
         <slot>
             <nue-text size="var(--nue-text-sm)" color="var(--nue-primary-color-800)">
-                {{ text }}
+                {{ text || '暂无文本' }}
             </nue-text>
         </slot>
     </nue-div>

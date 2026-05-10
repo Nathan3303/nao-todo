@@ -8,11 +8,13 @@ import { computed, inject, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { useBuiltInProjectsStore, useProjectsStore, useTagsStore } from '@/stores/tasks'
+import { AppAsideAdapter } from '@/layouts/app/'
 
 defineOptions({ name: 'TasksViewAside' })
 
 // @context Tasksview 任务视图上下文
-const tasksViewContext = inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
+const { dialogManager, asideWidth, handleResizeAside, isDisplayAside } =
+    inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
 
 // @dataStores
 const builtInProjectsStore = useBuiltInProjectsStore()
@@ -60,13 +62,19 @@ const tagLinks = computed<NaoSmartListLinkVO[]>(() => {
 
 // @method 打开对话框
 const openDialog = (dialogName: string) => {
-    tasksViewContext.dialogManager.openDialog(dialogName)
+    dialogManager.openDialog(dialogName)
 }
 </script>
 
 <template>
-    <nue-aside theme="tasks-aside" v-bind="$attrs">
-        <nue-div vertical>
+    <app-aside-adapter
+        @resize="handleResizeAside"
+        v-model:displayed="isDisplayAside"
+        :width="asideWidth"
+        :min-width="isDisplayAside ? '250px' : 'unset'"
+        max-width="350px"
+    >
+        <nue-div v-if="isDisplayAside" theme="aside-wrapper">
             <nue-div vertical gap="0.25rem">
                 <nue-link
                     v-for="link in builtInProjectLinks.slice(0, 5)"
@@ -105,14 +113,15 @@ const openDialog = (dialogName: string) => {
                 </nue-link>
             </nue-div>
         </nue-div>
-    </nue-aside>
+    </app-aside-adapter>
 </template>
 
 <style scoped>
-.nue-aside.nue-aside--tasks-aside {
-    display: flex;
+.nue-div--aside-wrapper {
     flex-direction: column;
-    gap: 1rem;
+    box-sizing: border-box;
+    padding: var(--nue-padding-df);
+    flex: 1;
 
     .nue-div--block {
         flex-direction: column;

@@ -36,7 +36,15 @@ const handleSelect = async (projectId: ProjectViewObject['id']) => {
                 theme="project-selector"
             />
         </template>
-        <nue-text v-else theme="empty">暂无自建清单</nue-text>
+        <nue-text
+            v-else
+            theme="no-project"
+            color="var(--nue-primary-color-900)"
+            size="var(--nue-text-xs)"
+            align="center"
+        >
+            暂无自建清单
+        </nue-text>
     </nue-select>
 </template>
 
@@ -52,8 +60,18 @@ const handleSelect = async (projectId: ProjectViewObject['id']) => {
 </style>
 
 <style>
-.nue-dropdown .nue-dropdown-item.nue-select-option--project-selector {
-    gap: var(--nue-gap-xs);
+.nue-dropdown {
+
+    .nue-text--no-project {
+        color: var(--nue-primary-color-600);
+        size: var(--nue-text-xs);
+        text-align: center;
+        padding: var(--nue-padding-xs);
+    }
+    .nue-dropdown-item.nue-select-option--project-selector {
+
+        gap: var(--nue-gap-xs);
+    }
 }
 </style>
 

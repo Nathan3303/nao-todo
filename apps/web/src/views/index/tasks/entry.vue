@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { TasksViewAsideAdapter, TasksViewDetailsAdapter, TasksViewDialogs } from '@/layouts/tasks'
+import { TasksViewAside, TasksViewDetailsAdapter, TasksViewDialogs } from '@/layouts/tasks'
 import useTasksView from './tasks-view'
 import { Loading as LoadingComp } from '@nao-todo/components'
 import { onMounted } from 'vue'
@@ -12,13 +12,18 @@ onMounted(() => init())
 </script>
 
 <template>
+    <!-- 加载组件 -->
     <loading-comp v-if="isLoading" height="100%" />
+    <!-- 错误状态 -->
     <nue-empty v-else-if="error" :description="error" height="100%">
         <nue-button theme="primary,small" @click="init">重试</nue-button>
     </nue-empty>
+    <!-- 视图主体 -->
     <nue-container v-else>
         <nue-main>
-            <tasks-view-aside-adapter />
+            <!-- 侧边栏 -->
+            <tasks-view-aside />
+            <!-- 内容区域 -->
             <nue-content fill style="overflow: hidden">
                 <router-view v-slot="{ Component }">
                     <suspense>
@@ -29,9 +34,11 @@ onMounted(() => init())
                     </suspense>
                 </router-view>
             </nue-content>
+            <!-- 详情适配器 -->
             <tasks-view-details-adapter />
         </nue-main>
     </nue-container>
+    <!-- 对话框 -->
     <tasks-view-dialogs />
 </template>
 

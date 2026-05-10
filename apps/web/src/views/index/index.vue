@@ -1,14 +1,10 @@
 <script lang="ts" setup>
-import { onMounted, inject, ref } from 'vue'
-import { AppAside } from '@/layouts/app'
-import { APP_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import type { AppContext } from '@/app'
+import { onMounted, ref } from 'vue'
+// import { AppAside } from '@/layouts/app'
 import useIndexView from './index-view'
 import { Loading as LoadingComp } from '@nao-todo/components'
 
 defineOptions({ name: 'AppContainer' })
-
-const { isDisplayHeader } = inject<AppContext>(APP_CONTEXT_KEY)!
 
 const { userUseCase } = useIndexView()
 
@@ -24,9 +20,6 @@ onMounted(async () => {
     <loading-comp v-if="isLoading" height="100vh" placeholder="正在加载用户信息..." />
     <nue-container v-else id="AppContainer">
         <nue-main>
-            <nue-aside v-if="isDisplayHeader">
-                <app-aside />
-            </nue-aside>
             <nue-content fill style="overflow: hidden">
                 <router-view v-slot="{ Component }">
                     <suspense>
@@ -41,11 +34,3 @@ onMounted(async () => {
     </nue-container>
 </template>
 
-<style scoped>
-.nue-container#AppContainer > .nue-main .nue-aside {
-    align-items: center;
-    width: 70px;
-    min-width: 70px;
-    max-width: 70px;
-}
-</style>

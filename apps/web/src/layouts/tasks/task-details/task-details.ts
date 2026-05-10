@@ -1,4 +1,3 @@
-import dayjs from 'dayjs'
 import { computed, inject, provide, ref, watch } from 'vue'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { TASK_DETAILS_CONTEXT_KEY } from './constants'
@@ -70,15 +69,15 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
             priority: _task.priority,
             tags: _task.tags,
             tagList: _task.tags.map((tagId) => tagStore.getTag(tagId)!).filter(Boolean),
-            startAt: dayjs(_task.startAt).format('YYYY-MM-DD HH:mm'),
-            endAt: dayjs(_task.endAt).format('YYYY-MM-DD HH:mm'),
+            startAt: _task.startAt,
+            endAt: _task.endAt,
             deletedAt: _task.deletedAt,
             isDeleted: _task.isDeleted || _task.deletedAt === null,
             isStarMarked: _task.isStarMarked,
             isGivenUp: _task.isGivenUp,
             isDone: _task.state === 'done',
-            createdAt: dayjs(_task.createdAt).format('YYYY-MM-DD HH:mm'),
-            updatedAt: dayjs(_task.updatedAt).format('YYYY-MM-DD HH:mm')
+            createdAt: _task.createdAt,
+            updatedAt: _task.updatedAt
         }
     })
 
@@ -88,7 +87,7 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         const progress = _e ? _e.filter((event) => event.isDone).length : 0
         const total = _e ? _e.length : 0
         const percentage = total ? Math.floor((progress / total) * 100) : 0
-        const text = total ? `已完成 ${progress}/${total}, ${percentage}%` : '待办目前无检查事项'
+        const text = total ? `已完成 ${progress}/${total}, ${percentage}%` : '暂无检查事项'
         return { percentage, text }
     })
 

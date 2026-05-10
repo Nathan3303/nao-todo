@@ -1,3 +1,7 @@
+.nue-textarea {
+    --nue-textarea-min-width: unset;
+}
+
 /* Fix Padding */
 .nue-textarea.nue-textarea--fix-padding {
     padding: 12px;

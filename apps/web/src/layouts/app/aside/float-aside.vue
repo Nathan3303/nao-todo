@@ -6,10 +6,14 @@ import useUserStore from '@/stores/user-store'
 import { APP_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import type { AppContext } from '@/app'
 
-defineOptions({ name: 'IndexAside' })
-const props = defineProps<{ modelValue: boolean }>()
+defineOptions({ name: 'AppFloatAside' })
+const props = defineProps<{
+    modelValue: boolean
+    width?: string
+    minWidth?: string
+    maxWidth?: string
+}>()
 const emit = defineEmits<{ (e: 'update:modelValue', value: boolean): void }>()
-
 const { routerLinks } = inject<AppContext>(APP_CONTEXT_KEY)!
 
 const { profile } = storeToRefs(useUserStore())
@@ -37,18 +41,16 @@ const visible = computed({
                 </nue-content>
             </nue-main>
             <nue-footer>
-                <slot name="footer">
-                    <nue-div justify="space-between" gap="0" width="100%">
-                        <nao-router-link
-                            v-for="(rl, idx) in routerLinks"
-                            :key="idx"
-                            :icon="rl.icon"
-                            :route="rl.route"
-                            icon-link
-                            style="width: auto"
-                        />
-                    </nue-div>
-                </slot>
+                <nue-div justify="space-around" gap="0" width="100%">
+                    <nao-router-link
+                        v-for="(rl, idx) in routerLinks"
+                        :key="idx"
+                        :icon="rl.icon"
+                        :route="rl.route"
+                        icon-link
+                        style="width: auto"
+                    />
+                </nue-div>
             </nue-footer>
         </nue-container>
     </nue-drawer>
@@ -66,7 +68,6 @@ const visible = computed({
     #AppAsideContainer > .nue-main > .nue-content {
         display: flex;
         flex-direction: column;
-        padding: 1rem;
         box-sizing: border-box;
     }
 }

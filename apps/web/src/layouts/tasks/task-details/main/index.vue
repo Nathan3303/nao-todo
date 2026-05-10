@@ -11,7 +11,7 @@ import {
 import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
 import type { TaskDetailsContext } from '../types'
 import type { TaskViewObject } from '@nao-todo/types'
-import dayjs from 'dayjs'
+import { parse2RelativeDate } from '@nao-todo/infrastructure/utils'
 
 const { vo, eventProgress, isCommenting, commentHandler, taskHandler, tags } =
     inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
@@ -131,16 +131,16 @@ const createCommentHandler = async (content: string) => {
             <nue-div v-if="isCommenting" vertical width="100%">
                 <comment-creator :handler="createCommentHandler" @cancel="isCommenting = false" />
             </nue-div>
-            <nue-div justify="space-between" width="100%">
+            <nue-div justify="space-between" width="100%" overflow="auto">
                 <details-row :text="eventProgress.text" label="检查事项进度" />
                 <details-row
                     v-if="vo.createdAt"
-                    :text="dayjs(vo.createdAt).format('YYYY-MM-DD HH:mm')"
+                    :text="parse2RelativeDate(vo.createdAt)"
                     label="创建时间"
                 />
                 <details-row
                     v-if="vo.updatedAt"
-                    :text="dayjs(vo.updatedAt).format('YYYY-MM-DD HH:mm')"
+                    :text="parse2RelativeDate(vo.updatedAt)"
                     label="最后修改时间"
                 />
             </nue-div>
