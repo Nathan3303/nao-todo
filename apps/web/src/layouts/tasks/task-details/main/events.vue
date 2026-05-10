@@ -50,6 +50,7 @@ const createEvent = async (payload: { value: string }) => {
             <input-button
                 icon="plus-circle"
                 button-text="添加检查事项"
+                placeholder="输入检查事项名称..."
                 theme="pure,noshape"
                 :submit-on-blur="false"
                 :on-submit="createEvent"

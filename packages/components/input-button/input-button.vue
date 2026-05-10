@@ -8,6 +8,7 @@ const props = withDefaults(defineProps<InputButtonProps>(), {
     buttonText: '点击以输入文本',
     size: 'small',
     submitOnBlur: true,
+    placeholder: '请输入...',
     onButtonClick: () => {}
 })
 const emit = defineEmits<InputButtonEmits>()
@@ -69,7 +70,7 @@ const handleCancel = () => {
             <nue-input
                 ref="inputRef"
                 v-model="inputValue"
-                :placeholder="buttonText"
+                :placeholder="placeholder"
                 theme="pure"
                 :disabled="loading"
                 @blur="handleBlur"

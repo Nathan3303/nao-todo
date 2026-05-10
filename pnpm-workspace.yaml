@@ -1,6 +1,9 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+allowBuilds:
+  ttf2woff2: true
+  vue-demi: true
 overrides:
   '@tootallnate/once@<3.0.1': '>=3.0.1'
   axios@>=1.0.0 <1.12.0: '>=1.12.0'

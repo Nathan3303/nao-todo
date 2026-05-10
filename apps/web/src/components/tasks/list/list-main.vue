@@ -40,7 +40,7 @@ const {
             <nue-div theme="todo-list-main__row__first">
                 <nue-div theme="todo-list__main__row__first__name-wrapper">
                     <nue-text :clamped="1" :title="task.name">{{ task.name }}</nue-text>
-                    <nue-icon v-if="columns.isFavorited" name="heart-fill" color="pink" />
+                    <!-- <nue-icon v-if="columns.isFavorited" name="heart-fill" color="pink" /> -->
                     <task-tag-bar
                         v-if="columns.tags && task.tags.length"
                         :clamped="tagBarClamped"

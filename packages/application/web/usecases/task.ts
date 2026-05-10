@@ -62,16 +62,9 @@ export class TaskUseCase {
         const taskViewObjects = taskEntitiesToViewObjects(taskEntities)
         // 存储任务列表
         this.store.setTasks(taskViewObjects)
-        // 存储到本地数据库
-        const [localListResult, localErr] = await this.localTaskDomain.list(getTasksOptions)
-        if (localErr !== null) return [null, localErr]
-        // 实体转换为视图对象
-        const { taskEntities: localTaskEntities } = localListResult
-        const localTaskViewObjects = taskEntitiesToViewObjects(localTaskEntities)
-        // 存储任务列表
-        this.store.addTasks(localTaskViewObjects)
         // 返回任务ID列表
-        return [{ taskIds: taskViewObjects.map((task) => task.id), pagination }, null]
+        const taskIds = taskViewObjects.map((task) => task.id)
+        return [{ taskIds, pagination }, null]
     }
 
     /**
@@ -119,9 +112,6 @@ export class TaskUseCase {
         const taskViewObject = taskEntityToViewObject(taskEntity)
         // 存储任务列表
         this.store.addTask(taskViewObject)
-        // 存储到本地数据库
-        const [e, localErr] = await this.localTaskDomain.create(createTaskValueObject)
-        console.log(e, localErr)
         // 返回任务视图对象
         return [taskViewObject, null]
     }
@@ -146,8 +136,6 @@ export class TaskUseCase {
         if (err !== null) return err
         // 更新内存数据
         this.store.updateTask(taskId, updateTaskViewObject)
-        // 更新本地数据库
-        await this.localTaskDomain.update(oldTask?.localId || '', updateTaskValueObject)
         // 返回成功
         return null
     }

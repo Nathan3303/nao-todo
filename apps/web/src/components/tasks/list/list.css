@@ -114,10 +114,9 @@
                             align-items: center;
 
                             > .nue-text {
-                                font-size: 0.9375rem;
+                                font-size: var(--nue-text-df2);
                                 color: var(--nue-primary-color-800);
                                 margin-right: auto;
-                                line-height: 1.25rem;
                             }
 
                             > .nue-div--tag-bar {
@@ -147,6 +146,7 @@
                     .nue-div.nue-div--todo-list-main__row__attrs {
                         align-items: center;
                         gap: 0.5rem 0.75rem;
+                        font-size: var(--nue-text-sm);
 
                         .nue-div--basic-info {
                             width: fit-content;

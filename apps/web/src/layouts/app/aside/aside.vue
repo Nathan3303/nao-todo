@@ -16,13 +16,20 @@ const { profile } = storeToRefs(userStore)
 </script>
 
 <template>
+    <!-- :content="``" -->
     <nue-div v-if="profile" theme="aside-wrapper">
-        <nue-tooltip
-            placement="right-center"
-            size="small"
-            :content="`你好👋，${profile.nickname}！`"
-        >
+        <nue-tooltip placement="right-start" size="small">
             <nue-avatar :src="profile.avatar" size="2.5rem" />
+            <template #content>
+                <nue-div vertical gap=".25rem">
+                    <nue-text size="var(--nue-text-sm)" color="var(--nue-primary-color-0)">
+                        你好 👋，{{ profile.nickname }}！
+                    </nue-text>
+                    <nue-text size="var(--nue-text-sm)" color="var(--nue-primary-color-0)">
+                        欢迎回到 NaoTodo，继续规划并完成你的任务 🎯 吧！
+                    </nue-text>
+                </nue-div>
+            </template>
         </nue-tooltip>
         <nue-div theme="aside__navs">
             <nue-tooltip

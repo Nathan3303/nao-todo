@@ -35,22 +35,18 @@ const handleClose = () => {
         type="datetime"
         clearable
         @close="handleClose"
+        size="small"
     />
 </template>
 
 <style scoped>
 .nue-date-picker:deep().nue-button {
-    height: 28px;
     background-color: var(--nue-primary-color-0);
     border-color: var(--nue-primary-color-200);
     color: var(--nue-primary-color-900);
 
     &:hover {
         border-color: var(--nue-primary-color-300);
-    }
-
-    .nue-button__text {
-        font-size: var(--nue-text-sm);
     }
 }
 

@@ -14,6 +14,7 @@ export type InputButtonProps = {
     size?: NueButtonSize
     submitOnBlur?: boolean
     disabled?: boolean
+    placeholder?: string
     onSubmit?: (payload: InputButtonSubmitPayload) => Promise<any>
     onButtonClick?: (event: MouseEvent, payload: OnButtonClickPayload) => void | Promise<any>
 }
