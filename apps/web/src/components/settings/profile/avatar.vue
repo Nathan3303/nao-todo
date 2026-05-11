@@ -1,9 +1,9 @@
 <template>
-    <nue-div v-if="profile" wrap="nowrap" align="center" gap="2rem">
+    <nue-div v-if="profile" wrap="wrap" align="center" gap="2rem">
         <nue-div align="center" width="fit-content">
             <nue-avatar
                 :src="fullAvatarUrl"
-                size="6rem"
+                size="8rem"
                 style="cursor: pointer"
                 @click="handleViewAvatar"
                 theme="round"

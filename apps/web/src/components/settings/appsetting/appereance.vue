@@ -47,7 +47,6 @@ defineOptions({ name: 'SettingsAppAppereance' })
 
 const themeStore = useThemeStore()
 
-// Theme options configuration
 const themeOptions: Array<{
     value: ThemeMode
     label: string
@@ -74,10 +73,8 @@ const themeOptions: Array<{
     }
 ]
 
-// Current theme from store
 const currentTheme = computed(() => themeStore.themeMode)
 
-// Select theme
 const selectTheme = (mode: ThemeMode) => {
     themeStore.setTheme(mode)
 }
@@ -89,7 +86,7 @@ const selectTheme = (mode: ThemeMode) => {
     gap: 0.5rem;
 
     .nue-text--title {
-        font-size: var(--nue-text-lg);
+        font-size: var(--nue-text-df);
     }
 
     .nue-text--description {
@@ -103,7 +100,11 @@ const selectTheme = (mode: ThemeMode) => {
         gap: 1.5rem;
         margin-top: 0.5rem;
 
-        /* Theme Card */
+        .theme-cards {
+            display: flex;
+            flex-direction: row;
+        }
+
         .theme-card {
             position: relative;
             height: 160px;
@@ -111,22 +112,21 @@ const selectTheme = (mode: ThemeMode) => {
             border: 1px solid var(--nue-primary-color-500);
             background: var(--nue-primary-color-500);
             cursor: pointer;
-            transition: all 0.2s ease;
             display: flex;
             flex-direction: column;
             overflow: hidden;
             flex: 1;
+            min-width: 140px;
         }
 
         .theme-card:hover {
-            transform: translateY(-2px);
+            box-shadow: var(--nue-primary-shadow);
         }
 
         .theme-card--active {
             border-color: var(--nue-primary-color-500);
         }
 
-        /* Preview Area */
         .theme-card__preview {
             flex: 1;
             display: flex;
@@ -168,7 +168,6 @@ const selectTheme = (mode: ThemeMode) => {
             width: 60%;
         }
 
-        /* Light Theme Preview */
         .theme-preview-light .preview-window {
             background: #ffffff;
             border: 1px solid #e0e0e0;
@@ -183,7 +182,6 @@ const selectTheme = (mode: ThemeMode) => {
             background: #bdbdbd;
         }
 
-        /* Dark Theme Preview */
         .theme-preview-dark .preview-window {
             background: #1a1a1a;
             border: 1px solid #333;
@@ -198,7 +196,6 @@ const selectTheme = (mode: ThemeMode) => {
             background: #555;
         }
 
-        /* System Theme Preview */
         .theme-preview-system .preview-window {
             background: linear-gradient(90deg, #ffffff 50%, #1a1a1a 50%);
             border: 1px solid #ccc;
@@ -213,7 +210,6 @@ const selectTheme = (mode: ThemeMode) => {
             background: linear-gradient(90deg, #bdbdbd 50%, #555 50%);
         }
 
-        /* Info Area */
         .theme-card__info {
             display: flex;
             align-items: center;
@@ -224,7 +220,6 @@ const selectTheme = (mode: ThemeMode) => {
             background: var(--nue-primary-color-100);
         }
 
-        /* Check Indicator */
         .theme-card__check {
             position: absolute;
             top: 8px;
@@ -237,6 +232,105 @@ const selectTheme = (mode: ThemeMode) => {
             align-items: center;
             justify-content: center;
             color: var(--nue-primary-color-0);
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .nue-div--appereance-wrapper {
+        .nue-div--body {
+            .theme-cards {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .theme-card {
+                height: 120px;
+                flex-direction: row;
+                min-width: 100%;
+                width: 100%;
+            }
+
+            .theme-card__preview {
+                flex: 1;
+                padding: 16px;
+            }
+
+            .preview-window {
+                height: 80px;
+                max-width: 200px;
+            }
+
+            .theme-card__info {
+                width: 100px;
+                border-top: none;
+                border-left: 1px solid var(--nue-primary-color-300);
+                flex-direction: column;
+                gap: 8px;
+                padding: 16px 12px;
+            }
+
+            .theme-card__check {
+                top: 12px;
+                right: 12px;
+                width: 24px;
+                height: 24px;
+            }
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .nue-div--appereance-wrapper {
+        gap: 0.75rem;
+
+        .nue-text--title {
+            font-size: var(--nue-text-df);
+        }
+
+        .nue-div--body {
+            gap: 1rem;
+            margin-top: 0.25rem;
+
+            .theme-card {
+                height: 100px;
+                border-radius: 10px;
+            }
+
+            .theme-card__preview {
+                padding: 12px;
+            }
+
+            .preview-window {
+                height: 65px;
+                max-width: 160px;
+            }
+
+            .preview-header {
+                height: 14px;
+            }
+
+            .preview-content {
+                padding: 6px;
+                gap: 5px;
+            }
+
+            .preview-line {
+                height: 5px;
+            }
+
+            .theme-card__info {
+                width: 85px;
+                padding: 12px 8px;
+                gap: 6px;
+            }
+
+            .theme-card__check {
+                top: 8px;
+                right: 8px;
+                width: 20px;
+                height: 20px;
+            }
         }
     }
 }

@@ -70,7 +70,7 @@ onMounted(() => emit('register', open, close))
                     placeholder="添加待办事项备注（可选）"
                     theme="fix-padding"
                 />
-                <nue-div wrap="nowrap" gap=".5rem">
+                <nue-div wrap="wrap" gap=".5rem">
                     <task-date-selector v-model="states.endAt" />
                     <task-selector
                         :options="TaskStateSelectOptions"

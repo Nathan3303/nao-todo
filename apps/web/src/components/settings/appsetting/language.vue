@@ -26,13 +26,14 @@ const selectedLanguage = ref('zh-CN')
     gap: 0.5rem;
     align-items: top;
     justify-content: space-between;
+    flex-wrap: wrap;
 
     .nue-div--title-wrapper {
         flex-direction: column;
         gap: 0.25rem;
 
         .nue-text--title {
-            font-size: var(--nue-text-lg);
+            font-size: var(--nue-text-df);
         }
 
         .nue-text--description {
