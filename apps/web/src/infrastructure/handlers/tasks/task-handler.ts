@@ -1,7 +1,8 @@
 import type { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 import type { CreateTaskViewObject, TaskViewObject, UpdateTaskViewObject } from '@nao-todo/types'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { NueMessage } from 'nue-ui'
+import { NueConfirm, NueMessage } from 'nue-ui'
+import dayjs from 'dayjs'
 
 const useTaskHandler = (taskUseCase: TaskUseCase) => {
     // @method 创建任务
@@ -84,6 +85,24 @@ const useTaskHandler = (taskUseCase: TaskUseCase) => {
         NueMessage.success('恢复任务成功')
     }
 
+    // @method 更新任务放弃时间
+    const giveUpTask = async (taskId: TaskViewObject['id']) => {
+        return NueConfirm({
+            title: '确认放弃该任务吗？',
+            content: '放弃后该任务将移至「已放弃的待办」清单中。是否继续？',
+            confirmButtonText: '确认放弃',
+            cancelButtonText: '取消',
+            onConfirm: async () => {
+                await updateTask(taskId, { givenUpAt: dayjs().toISOString() })
+            }
+        })
+    }
+
+    // @method 恢复任务放弃时间
+    const unGiveUpTask = async (taskId: TaskViewObject['id']) => {
+        return await updateTask(taskId, { givenUpAt: null })
+    }
+
     // @return
     return {
         createTask,
@@ -94,10 +113,13 @@ const useTaskHandler = (taskUseCase: TaskUseCase) => {
         updateTaskPriority,
         updateTaskEndAt,
         deleteTask,
-        restoreTask
+        restoreTask,
+        giveUpTask,
+        unGiveUpTask
     }
 }
 
 export default useTaskHandler
 export type TaskHandler = ReturnType<typeof useTaskHandler>
+
 

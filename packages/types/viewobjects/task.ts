@@ -1,6 +1,7 @@
 export type TaskViewObject = {
     id: string
     localId: string
+    serverId: string | null
     parentTaskId: string | null
     userId: string
     name: string
@@ -34,6 +35,7 @@ export type CreateTaskViewObject = {
     startAt: TaskViewObject['startAt'] | null
     endAt: TaskViewObject['endAt'] | null
     tags?: TaskViewObject['tags']
+    isStarMarked?: boolean
 }
 
 export type UpdateTaskViewObject = {
@@ -48,6 +50,7 @@ export type UpdateTaskViewObject = {
     isArchived?: TaskViewObject['isArchived']
     isStarMarked?: TaskViewObject['isStarMarked']
     isGivenUp?: TaskViewObject['isGivenUp']
+    givenUpAt?: TaskViewObject['givenUpAt']
     tags?: TaskViewObject['tags']
 }
 
@@ -68,27 +71,22 @@ export type GetTasksOptions = {
     limit?: number
 }
 
-export type GetTasksSortOptions = {
-    field: string
-    order: string
-}
+export type GetTasksSortOptions = { field: string; order: string }
 
 export type TaskColumnOptions = {
-    name?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-    deletedAt?: boolean
-    project?: boolean
-    description?: boolean
-    state?: boolean
-    priority?: boolean
-    tags?: boolean
-    startAt?: boolean
-    endAt?: boolean
-    isDeleted?: boolean
-    isArchived?: boolean
-    archivedAt?: boolean
-    isFavorited?: boolean
-    isGivenUp?: boolean
+    name: boolean
+    description: boolean
+    state: boolean
+    priority: boolean
+    startAt: boolean
+    endAt: boolean
+    project: boolean
+    tags: boolean
+    givenUpAt: boolean
+    starMarkAt: boolean
+    archivedAt: boolean
+    createdAt: boolean
+    updatedAt: boolean
+    deletedAt: boolean
 }
 

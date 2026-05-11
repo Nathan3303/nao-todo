@@ -120,10 +120,10 @@ const createCommentHandler = async (content: string) => {
                 </nue-div>
                 <details-main-comments />
                 <nue-div class="tasks-details-view__deleted-tag" v-if="vo.isDeleted">
-                    任务已删除
+                    任务于 {{ parse2RelativeDate(vo.deletedAt!) }} 删除
                 </nue-div>
                 <nue-div class="tasks-details-view__giveup-tag" v-if="vo.isGivenUp">
-                    任务已放弃
+                    任务于 {{ parse2RelativeDate(vo.givenUpAt!) }} 放弃
                 </nue-div>
             </nue-content>
         </nue-main>
@@ -228,23 +228,23 @@ const createCommentHandler = async (content: string) => {
 
     .tasks-details-view__giveup-tag {
         display: flex;
-        font-size: 0.75rem;
-        height: 32px;
-        line-height: 32px;
-        background-color: #ff7b47;
-        color: white;
+        align-items: center;
         justify-content: center;
+        font-size: var(--nue-text-sm);
+        background-color: var(--nue-warning-color-20);
+        height: var(--nue-box-size-sm);
+        color: var(--nue-warning-color-80);
         width: 100%;
     }
 
     .tasks-details-view__deleted-tag {
         display: flex;
-        font-size: 0.75rem;
-        height: 32px;
-        line-height: 32px;
-        background-color: #ff4747;
-        color: white;
+        align-items: center;
         justify-content: center;
+        font-size: var(--nue-text-sm);
+        background-color: var(--nue-danger-color-30);
+        height: var(--nue-box-size-sm);
+        color: var(--nue-danger-color-80);
         width: 100%;
     }
 }

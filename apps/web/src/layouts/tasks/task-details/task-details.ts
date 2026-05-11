@@ -72,12 +72,13 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
             startAt: _task.startAt,
             endAt: _task.endAt,
             deletedAt: _task.deletedAt,
-            isDeleted: _task.isDeleted || _task.deletedAt === null,
+            isDeleted: _task.isDeleted,
             isStarMarked: _task.isStarMarked,
             isGivenUp: _task.isGivenUp,
             isDone: _task.state === 'done',
             createdAt: _task.createdAt,
-            updatedAt: _task.updatedAt
+            updatedAt: _task.updatedAt,
+            givenUpAt: _task.givenUpAt
         }
     })
 

@@ -40,6 +40,7 @@ export type TaskDetailsViewObject = {
     isDone: boolean
     createdAt: string
     updatedAt: string
+    givenUpAt?: string | null
 }
 
 export type TaskDetailsProps = {

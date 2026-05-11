@@ -1,6 +1,7 @@
 import { TaskDomain } from '@nao-todo/domain/task'
 import type { GoAsync, ResponseDataPagination, TaskViewObject } from '@nao-todo/types'
 import type { CreateTaskViewObject, GetTasksOptions, UpdateTaskViewObject } from '@nao-todo/types'
+import dayjs from 'dayjs'
 import {
     createTaskViewObjectToValueObject,
     taskEntitiesToViewObjects,
@@ -134,8 +135,12 @@ export class TaskUseCase {
         // 更新任务
         const [, err] = await this.taskDomain.update(taskId, updateTaskValueObject)
         if (err !== null) return err
-        // 更新内存数据
-        this.store.updateTask(taskId, updateTaskViewObject)
+        // 更新内存数据（根据 givenUpAt 计算 isGivenUp）
+        const storeUpdateData = { ...updateTaskViewObject }
+        if (storeUpdateData.givenUpAt !== undefined) {
+            storeUpdateData.isGivenUp = dayjs(storeUpdateData.givenUpAt).isValid()
+        }
+        this.store.updateTask(taskId, storeUpdateData)
         // 返回成功
         return null
     }

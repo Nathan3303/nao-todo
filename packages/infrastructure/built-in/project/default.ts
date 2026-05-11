@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { defaultColumns } from '../../consts/tasks'
 import type { BuiltInProjectRes, BuiltInProjectPreferenceRes } from './types'
 
 export const defaultBuiltInProjects: BuiltInProjectRes[] = [
@@ -44,14 +45,14 @@ export const defaultBuiltInProjects: BuiltInProjectRes[] = [
         icon: 'inbox2-fill',
         name: '收集箱',
         description: '',
-        createTaskOptions: {}
+        createTaskOptions: { projectId: void 0 }
     },
     {
         id: 'favourite',
         icon: 'heart-fill',
         name: '收藏夹',
         description: '',
-        createTaskOptions: {}
+        createTaskOptions: { isStarMarked: true }
     },
     {
         id: 'deleted',
@@ -82,85 +83,103 @@ export const defaultBuiltInProjectPreferences: BuiltInProjectPreferenceRes[] = [
         projectId: 'all',
         userId: 'default',
         viewType: 'table',
-        getTasksOptions: '{"limit": 80}',
-        columns:
-            '{ "endAt": true, "priority": true, "state": true, "project": true, "tags": true, \
-            "description": false, "createdAt": false, "updatedAt": false, "startAt": false }'
+        getTasksOptions: JSON.stringify({
+            limit: 20,
+            isGivenUp: false
+        }),
+        columns: JSON.stringify(defaultColumns)
     },
     {
         projectId: 'today',
         userId: 'default',
         viewType: 'list',
-        getTasksOptions: '{"relativeDate": "today","limit": 20}',
-        columns:
-            '{ "endAt": true, "priority": true, "state": true, "project": true, "tags": true, \
-            "description": false, "createdAt": false, "updatedAt": false, "startAt": false }'
+        getTasksOptions: JSON.stringify({
+            relativeDate: 'today',
+            limit: 20,
+            isGivenUp: false
+        }),
+        columns: JSON.stringify(defaultColumns)
     },
     {
         projectId: 'tomorrow',
         userId: 'default',
         viewType: 'list',
-        getTasksOptions: '{"relativeDate": "tomorrow","limit": 20}',
-        columns:
-            '{ "endAt": true, "priority": true, "state": true, "project": true, "tags": true, \
-            "description": false, "createdAt": false, "updatedAt": false, "startAt": false }'
+        getTasksOptions: JSON.stringify({
+            relativeDate: 'tomorrow',
+            limit: 20,
+            isGivenUp: false
+        }),
+        columns: JSON.stringify(defaultColumns)
     },
     {
         projectId: 'week',
         userId: 'default',
         viewType: 'table',
-        getTasksOptions: '{"relativeDate": "week","limit": 80}',
-        columns:
-            '{ "endAt": true, "priority": true, "state": true, "project": true, "tags": true, \
-            "description": false, "createdAt": false, "updatedAt": false, "startAt": false }'
+        getTasksOptions: JSON.stringify({
+            relativeDate: 'week',
+            limit: 20,
+            isGivenUp: false
+        }),
+        columns: JSON.stringify(defaultColumns)
     },
     {
         projectId: 'inbox',
         userId: 'default',
         viewType: 'table',
-        getTasksOptions: '{"projectId": "inbox", "limit": 20}',
-        columns:
-            '{ "endAt": true, "priority": true, "state": true, "project": false, "tags": false, \
-            "description": false, "createdAt": false, "updatedAt": false, "startAt": false }'
+        getTasksOptions: JSON.stringify({
+            projectId: 'inbox',
+            limit: 20,
+            isGivenUp: false
+        }),
+        columns: JSON.stringify(defaultColumns)
     },
     {
         projectId: 'favourite',
         userId: 'default',
         viewType: 'table',
-        getTasksOptions: '{"isStarMarked": true, "limit": 80}',
-        columns:
-            '{ "endAt": true, "priority": true, "state": true, "project": true, "tags": true, \
-            "description": false, "createdAt": false, "updatedAt": false, "startAt": false }'
+        getTasksOptions: JSON.stringify({
+            isStarMarked: true,
+            limit: 20,
+            isGivenUp: false
+        }),
+        columns: JSON.stringify({ ...defaultColumns, starMarkAt: true })
     },
     {
         projectId: 'givenup',
         userId: 'default',
         viewType: 'table',
-        getTasksOptions: '{"isGivenUp": true, "limit": 80}',
-        columns:
-            '{ "endAt": true, "priority": true, "state": true, "project": true, "tags": true, \
-            "description": false, "createdAt": false, "updatedAt": false, "startAt": false }'
+        getTasksOptions: JSON.stringify({
+            isGivenUp: true,
+            limit: 20,
+            isDeleted: false
+        }),
+        columns: JSON.stringify({ ...defaultColumns, givenUpAt: true })
     },
     {
         projectId: 'deleted',
         userId: 'default',
         viewType: 'table',
-        getTasksOptions:
-            '{"isDeleted": true, "sort": { "field": "deletedAt", "order": "desc" }, "limit": 20}',
-        columns:
-            '{ "endAt": false, "priority": false, "state": false, "project": false, "tags": true, \
-            "description": false, "createdAt": false, "updatedAt": false, "startAt": false, \
-            "deletedAt": true }'
+        getTasksOptions: JSON.stringify({
+            isDeleted: true,
+            sort: { field: 'deletedAt', order: 'desc' },
+            limit: 20,
+            isGivenUp: false
+        }),
+        columns: JSON.stringify({ ...defaultColumns, deletedAt: true })
     },
     {
         projectId: 'overdue',
         userId: 'default',
         viewType: 'table',
-        getTasksOptions:
-            '{"relativeDate": "-today", "state": "todo,in-progress", "sort": { "field": "endAt", "order": "desc" }, "limit": 20}',
-        columns:
-            '{ "endAt": true, "priority": true, "state": true, "project": true, "tags": false, \
-            "description": false, "createdAt": false, "updatedAt": false, "startAt": false }'
+        getTasksOptions: JSON.stringify({
+            relativeDate: '-today',
+            state: 'todo,in-progress',
+            sort: { field: 'endAt', order: 'desc' },
+            limit: 20,
+            isGivenUp: false,
+            isDeleted: false
+        }),
+        columns: JSON.stringify({ ...defaultColumns, endAt: true })
     }
 ]
 

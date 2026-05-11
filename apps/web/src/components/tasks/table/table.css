@@ -154,11 +154,6 @@
                             z-index: -1;
                         }
                     }
-
-                    &[data-giveup='true'] {
-                        opacity: 0.8;
-                        transition: opacity 0.16s ease;
-                    }
                 }
 
                 .todo-table__main__col {
@@ -177,6 +172,16 @@
                             width: 100%;
                             gap: 0.5rem;
                             align-items: center;
+
+                            .nue-text--todo-givenup {
+                                font-size: var(--nue-text-xs);
+                                color: var(--nue-warning-color-50);
+                                line-height: 1;
+                                /* padding: 0.25rem 0.375rem */
+                                /* background-color: var(--nue-warning-color-20);
+                                border-radius: var(--nue-primary-radius);
+                                transform: scale(0.91); */
+                            }
 
                             .nue-text--todo-name {
                                 color: var(--nue-primary-color-900);

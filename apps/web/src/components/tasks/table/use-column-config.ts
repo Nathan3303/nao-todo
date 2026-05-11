@@ -19,6 +19,33 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
         defaultWidth: 300
     },
     {
+        key: 'deletedAt',
+        label: columnLabels.deletedAt,
+        visible: false,
+        width: null,
+        minWidth: 100,
+        maxWidth: 200,
+        defaultWidth: 120
+    },
+    {
+        key: 'givenUpAt',
+        label: columnLabels.givenUpAt,
+        visible: true,
+        width: null,
+        minWidth: 100,
+        maxWidth: 200,
+        defaultWidth: 120
+    },
+    {
+        key: 'archivedAt',
+        label: columnLabels.archivedAt,
+        visible: false,
+        width: null,
+        minWidth: 100,
+        maxWidth: 200,
+        defaultWidth: 120
+    },
+    {
         key: 'createdAt',
         label: columnLabels.createdAt,
         visible: true,
@@ -78,15 +105,6 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
         visible: true,
         width: null,
         minWidth: 80,
-        maxWidth: 200,
-        defaultWidth: 120
-    },
-    {
-        key: 'deletedAt',
-        label: columnLabels.deletedAt,
-        visible: false,
-        width: null,
-        minWidth: 100,
         maxWidth: 200,
         defaultWidth: 120
     }

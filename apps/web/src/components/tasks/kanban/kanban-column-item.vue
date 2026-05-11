@@ -63,6 +63,7 @@ const handleFinish = () => {
         :data-is-done="isDone"
         :data-actived="actived"
         :data-is-deleted="task.isDeleted"
+        :data-is-given-up="task.isGivenUp"
         :class="{ 'todo-card--updating': isUpdating }"
     >
         <nue-div vertical>
@@ -71,6 +72,7 @@ const handleFinish = () => {
         <nue-div vertical gap=".5rem" flex="1" overflow="hidden">
             <nue-div class="todo-card__info">
                 <nue-div align="center">
+                    <nue-text v-if="task.isGivenUp" class="todo-card__giveup-tag">已放弃</nue-text>
                     <nue-text class="todo-card__name" :clamped="1">{{ task.name }}</nue-text>
                     <nue-div class="todo-card__actions">
                         <nue-button

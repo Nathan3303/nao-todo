@@ -41,7 +41,6 @@ const getColumnStyle = (column: TableColumnConfig) => {
             :data-done="task.state === 'done'"
             :data-selected="tableCtx.isInMultiSelectRange(idx)"
             :data-deleted="task.isDeleted"
-            :data-giveup="task.isGivenUp"
             class="todo-table__main__row"
             @click.stop.exact="tableCtx.showTaskDetails(task.id, idx)"
             @click.stop.shift.exact="tableCtx.showMultiSelectPanel(idx)"
@@ -54,6 +53,7 @@ const getColumnStyle = (column: TableColumnConfig) => {
                     :style="getColumnStyle(column)"
                 >
                     <nue-div class="col-first__name-wrapper">
+                        <nue-text v-if="task.isGivenUp" theme="todo-givenup">已放弃</nue-text>
                         <nue-text theme="todo-name" :clamped="1" :title="task.name">
                             {{ task.name }}
                         </nue-text>
@@ -80,6 +80,13 @@ const getColumnStyle = (column: TableColumnConfig) => {
                         </nue-text>
                     </nue-div>
                 </nue-div>
+
+                <task-date-info
+                    v-else-if="column.key === 'givenUpAt'"
+                    class="todo-table__main__col col-datetime"
+                    :date="task.givenUpAt || ''"
+                    :style="getColumnStyle(column)"
+                />
 
                 <task-date-info
                     v-else-if="column.key === 'createdAt'"

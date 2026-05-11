@@ -109,6 +109,9 @@ export const updateTaskValueObjectToPartialModel = (
     if (updateTaskValueObject.tags !== undefined) {
         taskModel.tags = updateTaskValueObject.tags || []
     }
+    if (updateTaskValueObject.givenUpAt !== undefined) {
+        taskModel.givenUpAt = updateTaskValueObject.givenUpAt
+    }
     // 返回
     return taskModel
 }
@@ -156,6 +159,10 @@ export const buildListQuery = (
         .and((task) => {
             // console.log(getOptions.isDeleted === undefined)
             return getOptions.isDeleted === undefined || task._deletedAt !== null
+        })
+        .and((task) => {
+            // console.log(getOptions.isGivenUp === undefined)
+            return getOptions.isGivenUp === undefined || task.givenUpAt !== null
         })
     // 处理分页
     query = query.offset((getOptions.page! - 1) * getOptions.limit!).limit(getOptions.limit!)

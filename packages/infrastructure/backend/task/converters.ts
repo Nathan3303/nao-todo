@@ -1,7 +1,6 @@
 import { TaskEntity } from '@nao-todo/domain/task/entities'
 import type { CreateTaskRes, GetTaskRes, ListTaskRes, UpdateTaskReq } from '../types'
 import { UpdateTaskValueObject } from '@nao-todo/domain/task'
-import dayjs from 'dayjs'
 
 export const getTaskRes2TaskEntity = (res: GetTaskRes): TaskEntity => {
     return new TaskEntity(
@@ -42,10 +41,11 @@ export const updateTaskValueObjectToReq = (valueObject: UpdateTaskValueObject): 
     if (valueObject.description) req.description = valueObject.description
     if (valueObject.state) req.state = valueObject.state
     if (valueObject.priority) req.priority = valueObject.priority
-    if (valueObject.startAt) req.startAt = dayjs(valueObject.startAt).toISOString()
-    if (valueObject.endAt) req.endAt = dayjs(valueObject.endAt).toISOString()
+    if (valueObject.startAt !== void 0) req.startAt = valueObject.startAt
+    if (valueObject.endAt !== void 0) req.endAt = valueObject.endAt
     if (valueObject.projectId) req.projectId = valueObject.projectId
     if (valueObject.tags) req.tags = valueObject.tags
+    if (valueObject.givenUpAt !== void 0) req.givenUpAt = valueObject.givenUpAt
     return req
 }
 

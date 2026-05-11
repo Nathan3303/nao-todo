@@ -22,12 +22,13 @@ const handleDropdownExecute = async (executeId: string) => {
         case 'restore-todo':
             await taskHandler.restoreTask(vo.value.id)
             break
+        case 'giveup-todo':
+            await taskHandler.giveUpTask(vo.value.id)
+            break
+        case 'un-giveup-todo':
+            await taskHandler.unGiveUpTask(vo.value.id)
+            break
     }
-}
-
-const updateProjectId = (npId: string) => {
-    if (!vo.value) return
-    taskHandler.updateTask(vo.value.id, { projectId: npId })
 }
 </script>
 
@@ -38,7 +39,7 @@ const updateProjectId = (npId: string) => {
                 :project-id="vo.projectId"
                 :projects="projects"
                 placement="top-start"
-                @select="updateProjectId"
+                @select="(npId) => taskHandler.updateTask(vo!.id, { projectId: npId })"
             />
             <nue-dropdown
                 close-when-executed
@@ -56,6 +57,13 @@ const updateProjectId = (npId: string) => {
                         icon="files"
                         execute-id="duplicate-todo"
                         disabled
+                    />
+                </dropdown-div-block>
+                <dropdown-div-block title="放弃或恢复">
+                    <inner-dropdown-option
+                        :title="vo.isGivenUp ? '恢复待办任务（取消放弃）' : '放弃待办任务'"
+                        :icon="vo.isGivenUp ? 'restore' : 'clear'"
+                        :execute-id="vo.isGivenUp ? 'un-giveup-todo' : 'giveup-todo'"
                     />
                 </dropdown-div-block>
                 <dropdown-div-block title="删除或恢复">

@@ -1,3 +1,4 @@
+import type { ComputedRef } from 'vue'
 import type {
     GetTasksOptions,
     GetTasksSortOptions,
@@ -5,7 +6,6 @@ import type {
     TaskColumnOptions,
     TaskViewObject
 } from '@nao-todo/types'
-import type { ComputedRef } from 'vue'
 
 export type TableColumnConfig = {
     key: keyof TaskColumnOptions

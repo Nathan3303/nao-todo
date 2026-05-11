@@ -37,10 +37,11 @@ export type UpdateTaskReq = {
     description?: string
     state?: string
     priority?: string
-    startAt?: string
-    endAt?: string
+    startAt?: string | null
+    endAt?: string | null
     tags?: string[]
     isStarMarked?: boolean
+    givenUpAt?: string | null
 }
 
 export type UpdateTaskRes = { taskId: string }

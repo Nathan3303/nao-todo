@@ -10,12 +10,13 @@ export class UpdateTaskValueObject {
     public description?: string // 任务描述
     public state?: string // 任务状态
     public priority?: string // 任务优先级
-    public startAt?: string // 任务开始时间
-    public endAt?: string // 任务结束时间
+    public startAt?: string | null // 任务开始时间
+    public endAt?: string | null // 任务结束时间
     public projectId?: string // 项目ID
     public tags?: string[] // 任务标签
+    public givenUpAt?: string | null // 放弃时间
 
-    /**
+    /**s
      * 更新任务值对象构造函数
      * @param id 任务ID
      */
@@ -35,14 +36,22 @@ export class UpdateTaskValueObject {
             return '任务状态无效'
         if (this.priority && !['low', 'medium', 'high'].includes(this.priority))
             return '任务优先级无效'
-        if (this.endAt) {
+        if (this.endAt !== void 0 && this.endAt !== null) {
             const entAt = dayjs(this.endAt)
             if (!entAt.isValid()) return '任务结束时间无效'
+            this.endAt = entAt.toISOString()
         }
-        if (this.startAt) {
+        if (this.startAt !== void 0 && this.startAt !== null) {
             const startAt = dayjs(this.startAt)
             if (!startAt.isValid()) return '任务开始时间无效'
             if (startAt.isAfter(dayjs(this.endAt))) return '任务开始时间不能晚于结束时间'
+            this.startAt = startAt.toISOString()
+        }
+        if (this.givenUpAt !== void 0 && this.givenUpAt !== null) {
+            const givenUpAt = dayjs(this.givenUpAt)
+            if (!givenUpAt.isValid()) return '放弃时间无效'
+            if (givenUpAt.isBefore(dayjs(this.startAt))) return '放弃时间不能早于任务开始时间'
+            this.givenUpAt = givenUpAt.toISOString()
         }
         return null
     }

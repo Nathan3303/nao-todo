@@ -28,7 +28,8 @@ export const taskEntityToViewObject = (entity: TaskEntity): TaskViewObject => {
     taskViewObject.archivedAt = entity.archivedAt
     taskViewObject.createdAt = entity.createdAt
     taskViewObject.updatedAt = entity.updatedAt
-    taskViewObject.deletedAt = entity.deletedAt || ''
+    taskViewObject.deletedAt = entity.deletedAt
+    taskViewObject.givenUpAt = entity.givenUpAt
     taskViewObject.isStarMarked = dayjs(entity.starMarkAt).isValid()
     taskViewObject.isDeleted = dayjs(entity.deletedAt).isValid()
     taskViewObject.isArchived = dayjs(entity.archivedAt).isValid()
@@ -85,6 +86,7 @@ export const updateTaskViewObjectToValueObject = (
     if (viewObject.endAt) valueObject.endAt = viewObject.endAt
     if (viewObject.projectId) valueObject.projectId = viewObject.projectId
     if (viewObject.tags) valueObject.tags = viewObject.tags
+    if (viewObject.givenUpAt !== undefined) valueObject.givenUpAt = viewObject.givenUpAt
     return valueObject
 }
 
