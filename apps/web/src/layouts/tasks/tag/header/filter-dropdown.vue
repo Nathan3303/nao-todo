@@ -5,7 +5,7 @@ import PriorityFilter from '@/components/tasks/dropdowns/priority-filter.vue'
 import { DropdownDivBlock } from '@nao-todo/components'
 import { TAG_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import type { TagViewContext } from '../types'
-import { computed, inject } from 'vue'
+import { computed, inject, watch } from 'vue'
 import SortOperator from '@/components/tasks/dropdowns/sort-operator.vue'
 
 defineOptions({ name: 'TasksTodoFilterDropdown' })
@@ -56,6 +56,17 @@ const getTasksOptionsSort = computed({
         subscriber.emit('RefreshData')
     }
 })
+
+// @watch 清单偏好上下文 状态 属性代理
+watch(
+    () => [
+        getTasksOptionsName.value,
+        getTasksOptionsState.value,
+        getTasksOptionsPriority.value,
+        getTasksOptionsSort.value
+    ],
+    () => subscriber.emit('RefreshData')
+)
 </script>
 
 <template>

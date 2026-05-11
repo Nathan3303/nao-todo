@@ -5,13 +5,15 @@ import PriorityFilter from '@/components/tasks/dropdowns/priority-filter.vue'
 import { DropdownDivBlock } from '@nao-todo/components'
 import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import type { BuiltInProjectViewContext } from '../types'
-import { computed, inject } from 'vue'
+import { computed, inject, watch } from 'vue'
 import SortOperator from '@/components/tasks/dropdowns/sort-operator.vue'
 
 defineOptions({ name: 'TasksTodoFilterDropdown' })
 defineEmits<{ (e: 'getTodos'): void }>()
 
-const { preference } = inject<BuiltInProjectViewContext>(BUILT_IN_PROJECT_VIEW_CONTEXT_KEY)!
+const { preference, subscriber } = inject<BuiltInProjectViewContext>(
+    BUILT_IN_PROJECT_VIEW_CONTEXT_KEY
+)!
 
 // @proxy 清单偏好上下文 名称 属性代理
 const getTasksOptionsName = computed({
@@ -52,6 +54,17 @@ const getTasksOptionsSort = computed({
         preference.value.getTasksOptions.sort = sort
     }
 })
+
+// @watch 清单偏好上下文 状态 属性代理
+watch(
+    () => [
+        getTasksOptionsName.value,
+        getTasksOptionsState.value,
+        getTasksOptionsPriority.value,
+        getTasksOptionsSort.value
+    ],
+    () => subscriber.emit('RefreshData')
+)
 </script>
 
 <template>
