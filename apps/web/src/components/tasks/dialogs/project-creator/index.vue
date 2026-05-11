@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
 import useProjectCreator from './use-project-creator'
-import { type DialogInstanceType, useDialogWrapper } from '@nao-todo/components'
+import { type DialogInstanceType, useDialogWrapper, ProjectForm } from '@nao-todo/components'
 import type { ProjectCreatorEmits, ProjectCreatorProps } from './types'
 
 defineOptions({ name: 'ProjectCreator' })
@@ -28,42 +28,13 @@ onMounted(() => emit('register', open, close))
 </script>
 
 <template>
-    <nue-dialog v-model="visible" ref="dialogRef">
+    <nue-dialog theme="project-creator" v-model="visible" ref="dialogRef">
         <template #header>
-            <nue-text>创建清单</nue-text>
+            <nue-text>创建任务清单</nue-text>
             <nue-button @click="close" icon="clear" theme="icon,ghost,small" />
         </template>
         <template #content>
-            <nue-div vertical gap="0.5rem">
-                <nue-div align="stretch" gap="4px" vertical width="100%">
-                    <nue-input
-                        ref="nameInputRef"
-                        v-model="viewObject.name"
-                        :disabled="creating"
-                        clearable
-                        placeholder="请输入清单名称"
-                        title="清单名称"
-                        maxlength="36"
-                        counter="word-left"
-                    />
-                    <nue-text v-if="isNameEmpty" color="#f56c6c" size="12px">
-                        * 清单名称不能为空
-                    </nue-text>
-                </nue-div>
-                <nue-div align="stretch" gap="8px" vertical>
-                    <nue-textarea
-                        v-model="viewObject.description"
-                        :disabled="creating"
-                        :rows="4"
-                        placeholder="清单描述"
-                        title="Project description"
-                        maxlength="128"
-                        counter="word-left"
-                        :autosize="{ minRows: 1, maxRows: 4 }"
-                        theme="fix-padding"
-                    />
-                </nue-div>
-            </nue-div>
+            <project-form v-model="viewObject" :disabled="creating" :is-name-empty="isNameEmpty" />
         </template>
         <template #footer>
             <nue-button @click="close">取消</nue-button>
@@ -73,4 +44,10 @@ onMounted(() => emit('register', open, close))
         </template>
     </nue-dialog>
 </template>
+
+<style>
+.nue-dialog--project-creator {
+    min-width: min(24rem, 100vw);
+}
+</style>
 

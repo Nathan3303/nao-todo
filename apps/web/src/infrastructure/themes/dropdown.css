@@ -28,7 +28,7 @@
         cursor: pointer;
 
         .nue-icon {
-            --icon-size: var(--nue-text-sm);
+            /* --icon-size: var(--nue-text-sm); */
         }
     }
 }

@@ -33,6 +33,7 @@ const useProjectsStoreBase = () => {
         const index = projects.findIndex((item) => item.id === id)
         if (index === -1) return
         projects[index] = p
+        console.log('setProject', projects, p)
     }
 
     // @action 更新项目

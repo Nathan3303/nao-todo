@@ -43,10 +43,14 @@ export class ProjectDomain {
 
     /**
      * 更新任务清单
+     * @param projectId 任务清单ID
      * @param updateProjectValueObject 更新任务清单值对象
      * @returns 更新任务清单ID
      */
-    async update(updateProjectValueObject: UpdateProjectValueObject): GoAsync<string> {
+    async update(
+        projectId: string,
+        updateProjectValueObject: UpdateProjectValueObject
+    ): GoAsync<string> {
         // 数据校验
         const validateErr = updateProjectValueObject.validate()
         if (validateErr !== null) {
@@ -54,7 +58,7 @@ export class ProjectDomain {
             return [null, validateErr]
         }
         // 更新任务清单
-        return this.projectRepo.update(updateProjectValueObject.id, updateProjectValueObject)
+        return this.projectRepo.update(projectId, updateProjectValueObject)
     }
 
     /**

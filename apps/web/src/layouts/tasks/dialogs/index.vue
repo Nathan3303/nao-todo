@@ -2,6 +2,7 @@
 import {
     ProjectCreator,
     ProjectManager,
+    ProjectUpdater,
     TagCreator,
     TagColorUpdater,
     TagManager,
@@ -17,6 +18,9 @@ const {
     projects,
     projectManagerRegister,
     projectCreatorOpener,
+    projectUpdaterRegister,
+    projectUpdaterHandler,
+    projectGetter,
     tagCreatorRegister,
     tagCreatorHandler,
     tags,
@@ -39,6 +43,11 @@ const {
         :projects="projects"
         :project-creator-opener="projectCreatorOpener"
     />
+    <project-updater
+        @register="projectUpdaterRegister"
+        :project-getter="projectGetter"
+        :updater="projectUpdaterHandler"
+    />
     <tag-creator @register="tagCreatorRegister" :creatr-tag-handler="tagCreatorHandler" />
     <tag-manager
         @register="tagManagerRegister"
@@ -59,3 +68,4 @@ const {
         :subscriber="subscriber"
     />
 </template>
+

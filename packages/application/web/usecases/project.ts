@@ -2,7 +2,8 @@ import type {
     GoAsync,
     ProjectViewObject,
     CreateProjectViewObject,
-    ProjectPreferenceViewObject
+    ProjectPreferenceViewObject,
+    UpdateProjectViewObject
 } from '@nao-todo/types'
 import { ProjectDomain } from '@nao-todo/domain/project/services'
 import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
@@ -12,7 +13,8 @@ import {
     projectEntitiesToViewObjects,
     projectEntityToViewObject,
     projectPreferenceEntityToViewObject,
-    projectPreferenceViewObjectToEntity
+    projectPreferenceViewObjectToEntity,
+    updateProjectViewObjectToValueObject
 } from '../converters/project'
 
 export interface ProjectStore {
@@ -23,6 +25,10 @@ export interface ProjectStore {
     deleteProject: (projectId: ProjectViewObject['id']) => void
     softDeleteProject: (projectId: ProjectViewObject['id']) => void
     restoreProject: (projectId: ProjectViewObject['id']) => void
+    updateProject: (
+        projectId: ProjectViewObject['id'],
+        updateProjectViewObject: UpdateProjectViewObject
+    ) => void
 }
 
 /**
@@ -168,6 +174,29 @@ export class ProjectUseCase {
      */
     async unarchive(projectId: ProjectViewObject['id']): GoAsync<void> {
         return await this.projectDomain.unarchive(projectId)
+    }
+
+    /**
+     * 更新任务清单
+     * @param projectId 项目ID
+     * @param updateProjectViewObject 更新项目视图对象
+     * @returns 无
+     */
+    async update(
+        projectId: ProjectViewObject['id'],
+        updateProjectViewObject: UpdateProjectViewObject
+    ): GoAsync<void> {
+        // 数据转换
+        const updateProjectValueObject = updateProjectViewObjectToValueObject(
+            projectId,
+            updateProjectViewObject
+        )
+        // 更新
+        const [, err] = await this.projectDomain.update(projectId, updateProjectValueObject)
+        if (err !== null) return err
+        // 同步本地状态
+        this.store.updateProject(projectId, updateProjectViewObject)
+        return null
     }
 }
 

@@ -26,6 +26,13 @@ export type UseDialogs = {
     projectCreatorHandler: (vo: ProjectCreatorVO) => GoAsync<string>
     projectManagerRegister: (open: DialogOpenFunc, close: DialogCloseFunc) => void
     projectCreatorOpener: () => void
+    projectUpdaterRegister: (open: (projectId: string) => void, close: DialogCloseFunc) => void
+    projectUpdaterHandler: (
+        projectId: ProjectViewObject['id'],
+        vo: { name: string; description: string }
+    ) => GoAsync<void>
+    projectUpdaterOpener: (projectId: ProjectViewObject['id']) => void
+    projectGetter: (projectId: ProjectViewObject['id']) => ProjectViewObject | undefined
     tagCreatorRegister: (open: DialogOpenFunc, close: DialogCloseFunc) => void
     tagCreatorHandler: (vo: CreateTagViewObject) => GoAsync<string>
     tagManagerRegister: (open: DialogOpenFunc, close: DialogCloseFunc) => void
@@ -71,6 +78,29 @@ const useDialogs = (): UseDialogs => {
     // @method 清单创建对话框打开函数
     const projectCreatorOpener = () => {
         tasksViewContext.dialogManager.openDialog('project-creator')
+    }
+
+    // @method 清单修改对话框注册函数
+    const projectUpdaterRegister = (open: (projectId: string) => void, close: DialogCloseFunc) => {
+        tasksViewContext.dialogManager.registerDialog('project-updater', { open, close })
+    }
+
+    // @method 清单修改对话框处理函数
+    const projectUpdaterHandler = async (
+        projectId: ProjectViewObject['id'],
+        vo: { name: string; description: string }
+    ): GoAsync<void> => {
+        return await tasksViewContext.projectUseCase.update(projectId, vo)
+    }
+
+    // @method 清单修改对话框打开函数
+    const projectUpdaterOpener = (projectId: ProjectViewObject['id']) => {
+        tasksViewContext.dialogManager.openDialog('project-updater', projectId)
+    }
+
+    // @method 清单获取函数
+    const projectGetter = (projectId: ProjectViewObject['id']) => {
+        return projectsStore.getProject(projectId)
     }
 
     // @method 标签创建对话框注册函数
@@ -138,6 +168,10 @@ const useDialogs = (): UseDialogs => {
         projects: computed(() => projects.value),
         projectManagerRegister,
         projectCreatorOpener,
+        projectUpdaterRegister,
+        projectUpdaterHandler,
+        projectUpdaterOpener,
+        projectGetter,
         tagCreatorRegister,
         tagCreatorHandler,
         tags: computed(() => [...tags.value.values()]),

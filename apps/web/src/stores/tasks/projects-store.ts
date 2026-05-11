@@ -13,7 +13,8 @@ export default defineStore('ProjectsStore', () => {
         getProject,
         softDeleteProject,
         deleteProject,
-        restoreProject
+        restoreProject,
+        updateProject
     } = useProjectsStoreBase()
 
     // @state 可用项目
@@ -54,6 +55,7 @@ export default defineStore('ProjectsStore', () => {
         softDeleteProject,
         deleteProject,
         restoreProject,
+        updateProject,
         loading: computed(() => loading.value),
         error: computed(() => error.value),
         setLoading,

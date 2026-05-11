@@ -1,11 +1,15 @@
 import { ProjectEntity, ProjectPreferenceEntity } from '@nao-todo/domain/project/entities'
-import { CreateProjectValueObject } from '@nao-todo/domain/project/valueobjects'
+import {
+    CreateProjectValueObject,
+    UpdateProjectValueObject
+} from '@nao-todo/domain/project/valueobjects'
 import { defaultPreferenceColumns } from '@nao-todo/infrastructure/consts/preference'
 import jsonParse from '@nao-todo/infrastructure/utils/json-parse'
 import type {
     ProjectViewObject,
     ProjectPreferenceViewObject,
-    CreateProjectViewObject
+    CreateProjectViewObject,
+    UpdateProjectViewObject
 } from '@nao-todo/types'
 import dayjs from 'dayjs'
 
@@ -52,7 +56,7 @@ export const projectPreferenceEntityToViewObject = (
     const [getTasksOptions, err1] = jsonParse(entity.getTasksOptions)
     const [columns, err2] = jsonParse(entity.columns)
     const vo = {} as ProjectPreferenceViewObject
-    vo.id = entity.id
+    // vo.id = entity.id
     vo.projectId = entity.projectId
     vo.viewType = entity.viewType
     vo.getTasksOptions = err1 !== null ? { limit: 20 } : getTasksOptions
@@ -69,13 +73,16 @@ export const projectPreferenceViewObjectToEntity = (
     projectPreferenceViewObject: ProjectPreferenceViewObject
 ): ProjectPreferenceEntity => {
     return new ProjectPreferenceEntity(
-        projectPreferenceViewObject.id,
+        // projectPreferenceViewObject.id,
+        '',
         projectPreferenceViewObject.projectId,
         projectPreferenceViewObject.viewType,
         JSON.stringify(projectPreferenceViewObject.getTasksOptions),
         JSON.stringify(projectPreferenceViewObject.columns),
-        projectPreferenceViewObject.createdAt,
-        projectPreferenceViewObject.updatedAt
+        // projectPreferenceViewObject.createdAt,
+        '',
+        // projectPreferenceViewObject.updatedAt
+        ''
     )
 }
 
@@ -92,5 +99,28 @@ export const createProjectViewObjectToValueObject = (
         createProjectViewObject.icon || 'more2',
         createProjectViewObject.description || ''
     )
+}
+
+/**
+ * 将更新项目视图对象转换为更新项目值对象
+ * @param projectId 项目ID
+ * @param updateProjectViewObject 更新项目视图对象
+ * @returns 更新项目值对象
+ */
+export const updateProjectViewObjectToValueObject = (
+    projectId: string,
+    updateProjectViewObject: UpdateProjectViewObject
+): UpdateProjectValueObject => {
+    const valueObject = new UpdateProjectValueObject(projectId)
+    if (updateProjectViewObject.name) {
+        valueObject.name = updateProjectViewObject.name
+    }
+    if (updateProjectViewObject.icon) {
+        valueObject.icon = updateProjectViewObject.icon || 'more2'
+    }
+    if (updateProjectViewObject.description) {
+        valueObject.description = updateProjectViewObject.description || ''
+    }
+    return valueObject
 }
 

@@ -40,6 +40,10 @@ onMounted(() => {
         if (!project.value) return
         tasksViewContext.projectUseCase.archive(project.value.id)
     })
+    dropdownRef.value.register('update-project', () => {
+        if (!project.value) return
+        tasksViewContext.dialogManager.openDialog('project-updater', project.value.id)
+    })
 })
 </script>
 
@@ -86,6 +90,7 @@ onMounted(() => {
         </dropdown-div-block>
         <nue-divider />
         <dropdown-div-block title="清单操作">
+            <inner-dropdown-option icon="edit" title="修改清单" execute-id="update-project" />
             <inner-dropdown-option
                 color="red"
                 icon="clear"
