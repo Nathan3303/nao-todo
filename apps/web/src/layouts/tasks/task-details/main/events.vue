@@ -3,7 +3,7 @@ import { InputButton, EventRow, Loading } from '@nao-todo/components'
 import useEventDragger from '../use-event-dragger'
 import type { TaskDetailsContext } from '../types'
 import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
-import { computed, inject, ref } from 'vue'
+import { computed, inject, ref, watch } from 'vue'
 
 type FilterStatus = 'all' | 'undone' | 'done'
 
@@ -66,6 +66,14 @@ const createEvent = async (payload: { value: string }) => {
     if (!vo.value) return
     await eventHandler.createEvent({ taskId: vo.value.id, name: payload.value })
 }
+
+watch(
+    () => vo.value?.id,
+    () => {
+        searchQuery.value = ''
+        filterStatus.value = 'all'
+    }
+)
 </script>
 
 <template>
