@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { TagColorSelector, TagForm } from '@nao-todo/components'
 import useTagCreator from './use-tag-creator'
 import type { TagCreatorProps, TagCreatorEmits } from './types'
@@ -15,12 +15,18 @@ const { states, handleConfirm, clearInputsValue } = useTagCreator(props)
 const { visible, close } = useDialogWrapper(dialogRef)
 
 const formData = computed({
-    get: () => ({ name: states.name, description: states.description }),
+    get: () => ({ name: states.value.name, description: states.value.description }),
     set: (val) => {
-        states.name = val.name
-        states.description = val.description
+        states.value.name = val.name
+        states.value.description = val.description
     }
 })
+
+// 监听颜色选择器变化
+watch(
+    () => states.value.color,
+    (newVal) => newVal
+)
 
 const handleSubmit = async () => {
     const ok = await handleConfirm()
@@ -45,18 +51,18 @@ onMounted(() => emit('register', open, close))
             <nue-div vertical>
                 <tag-form
                     v-model="formData"
-                    :disabled="states.creating"
-                    :is-name-empty="states.isNameEmpty"
+                    :disabled="states.value.creating"
+                    :is-name-empty="states.value.isNameEmpty"
                 />
                 <nue-div align="stretch" gap="8px" vertical>
                     <nue-text color="gray" size="12px">选择标签颜色：</nue-text>
-                    <tag-color-selector v-model="states.color" />
+                    <tag-color-selector v-model="states.value.color" />
                 </nue-div>
             </nue-div>
         </template>
         <template #footer>
             <nue-button @click="close">取消</nue-button>
-            <nue-button :loading="states.creating" theme="primary" @click="handleSubmit">
+            <nue-button :loading="states.value.creating" theme="primary" @click="handleSubmit">
                 创建
             </nue-button>
         </template>

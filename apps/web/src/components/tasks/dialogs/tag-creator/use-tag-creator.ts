@@ -1,11 +1,11 @@
-import { reactive, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import type { TagCreatorVO, TagCreatorProps } from './types'
 
 const useTagCreator = (props: TagCreatorProps) => {
     // @states
-    const states = reactive<TagCreatorVO>({
+    const states = ref<TagCreatorVO>({
         name: '',
         description: '',
         color: '',
@@ -15,28 +15,30 @@ const useTagCreator = (props: TagCreatorProps) => {
 
     // @method 重置状态
     const clearInputsValue = () => {
-        states.name = ''
-        states.description = ''
-        states.color = ''
-        states.isNameEmpty = false
-        states.creating = false
+        states.value = {
+            name: '',
+            description: '',
+            color: '',
+            isNameEmpty: false,
+            creating: false
+        }
     }
 
     // @method 确认创建标签
     const handleConfirm = async (): Promise<boolean> => {
         // 检查参数
-        if (!states.name) {
-            states.isNameEmpty = true
+        if (!states.value.name) {
+            states.value.isNameEmpty = true
             return false
         }
         // 调用 API 创建标签
-        states.creating = true
+        states.value.creating = true
         const [, err] = await props.creatrTagHandler({
-            name: states.name,
-            description: states.description,
-            color: states.color
+            name: states.value.name,
+            description: states.value.description,
+            color: states.value.color
         })
-        states.creating = false
+        states.value.creating = false
         // 处理失败结果
         if (err) {
             console.warn(unwrapError(err))
@@ -49,8 +51,8 @@ const useTagCreator = (props: TagCreatorProps) => {
 
     // @watch 监听 name 变化，更新 isNameEmpty
     watch(
-        () => states.name,
-        (newVal) => newVal && (states.isNameEmpty = !newVal)
+        () => states.value.name,
+        (newVal) => newVal && (states.value.isNameEmpty = !newVal)
     )
 
     // @returns

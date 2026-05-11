@@ -1,4 +1,4 @@
-import { reactive, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
@@ -9,25 +9,24 @@ const useProjectCreator = (props: ProjectCreatorProps) => {
 
     const creating = ref(false)
     const isNameEmpty = ref(false)
-    const viewObject = reactive<ProjectCreatorVO>({ name: '', description: '' })
+    const viewObject = ref<ProjectCreatorVO>({ name: '', description: '' })
 
     const clearInputsValue = () => {
         isNameEmpty.value = false
-        viewObject.name = ''
-        viewObject.description = ''
+        viewObject.value = { name: '', description: '' }
     }
 
     const handleConfirm = async () => {
         // 检查参数
-        if (!viewObject.name) {
+        if (!viewObject.value.name) {
             isNameEmpty.value = true
             return false
         }
         // 调用 API 创建清单
         creating.value = true
         const [projectId, createError] = await props.creator({
-            name: viewObject.name,
-            description: viewObject.description
+            name: viewObject.value.name,
+            description: viewObject.value.description
         })
         creating.value = false
         // 处理失败结果
@@ -44,7 +43,7 @@ const useProjectCreator = (props: ProjectCreatorProps) => {
     }
 
     watch(
-        () => viewObject.name,
+        () => viewObject.value.name,
         (newVal) => newVal && (isNameEmpty.value = !newVal)
     )
 

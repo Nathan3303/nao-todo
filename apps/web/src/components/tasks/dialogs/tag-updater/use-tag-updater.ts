@@ -1,10 +1,10 @@
-import { reactive, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import type { TagUpdaterProps, TagUpdaterVO } from './types'
 
 const useTagUpdater = (props: TagUpdaterProps) => {
-    const states = reactive<TagUpdaterVO>({
+    const states = ref<TagUpdaterVO>({
         tagId: null,
         name: '',
         description: '',
@@ -14,10 +14,10 @@ const useTagUpdater = (props: TagUpdaterProps) => {
     })
 
     const formData = computed({
-        get: () => ({ name: states.name, description: states.description }),
+        get: () => ({ name: states.value.name, description: states.value.description }),
         set: (val) => {
-            states.name = val.name
-            states.description = val.description
+            states.value.name = val.name
+            states.value.description = val.description
         }
     })
 
@@ -27,40 +27,40 @@ const useTagUpdater = (props: TagUpdaterProps) => {
             NueMessage.error('未找到标签')
             return false
         }
-        states.tagId = id
-        states.name = tag.name || ''
-        states.description = tag.description || ''
-        states.color = tag.color || 'transparent'
+        states.value.tagId = id
+        states.value.name = tag.name || ''
+        states.value.description = tag.description || ''
+        states.value.color = tag.color || 'transparent'
         return true
     }
 
     const updateTag = async (): Promise<boolean> => {
-        if (!states.tagId) {
+        if (!states.value.tagId) {
             NueMessage.error('标签 ID 不能为空')
             return false
         }
-        if (!states.name) {
+        if (!states.value.name) {
             NueMessage.error('标签名称不能为空')
             return false
         }
-        states.disabled = states.updating = true
-        const err = await props.updater(states.tagId, {
-            name: states.name,
-            description: states.description,
-            color: states.color
+        states.value.disabled = states.value.updating = true
+        const err = await props.updater(states.value.tagId, {
+            name: states.value.name,
+            description: states.value.description,
+            color: states.value.color
         })
-        states.updating = false
+        states.value.updating = false
         if (err !== null) {
             NueMessage.error(unwrapError(err))
-            states.disabled = false
+            states.value.disabled = false
             return false
         }
         NueMessage.success('标签修改成功')
-        states.tagId = null
-        states.name = ''
-        states.description = ''
-        states.color = 'transparent'
-        states.disabled = false
+        states.value.tagId = null
+        states.value.name = ''
+        states.value.description = ''
+        states.value.color = 'transparent'
+        states.value.disabled = false
         return true
     }
 

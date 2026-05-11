@@ -27,7 +27,7 @@ const handleConfirm = async () => {
     const ok = await updateTag()
     if (ok) {
         close()
-        setTimeout(() => (states.disabled = false), 240)
+        setTimeout(() => (states.value.disabled = false), 240)
     }
 }
 
@@ -42,18 +42,18 @@ onMounted(() => emit('register', open, close))
         </template>
         <template #content>
             <nue-div vertical>
-                <tag-form v-model="formData" :disabled="states.updating" />
+                <tag-form v-model="formData" :disabled="states.value.updating" />
                 <nue-div align="stretch" gap="8px" vertical>
                     <nue-text color="gray" size="12px">选择标签颜色：</nue-text>
-                    <tag-color-selector v-model="states.color" />
+                    <tag-color-selector v-model="states.value.color" />
                 </nue-div>
             </nue-div>
         </template>
         <template #footer>
-            <nue-button :disabled="states.updating" @click="close">取消</nue-button>
+            <nue-button :disabled="states.value.updating" @click="close">取消</nue-button>
             <nue-button
-                :disabled="states.disabled"
-                :loading="states.updating"
+                :disabled="states.value.disabled"
+                :loading="states.value.updating"
                 theme="primary"
                 @click="handleConfirm"
             >
