@@ -4,6 +4,7 @@ import ProjectUpdater from './project-updater'
 import TagCreator from './tag-creator'
 import TagColorUpdater from './tag-color-updater'
 import TagManager from './tag-manager'
+import TagUpdater from './tag-updater'
 import TaskCreator from './task-creator'
 
 export {
@@ -13,5 +14,6 @@ export {
     TagCreator,
     TagColorUpdater,
     TagManager,
+    TagUpdater,
     TaskCreator
 }

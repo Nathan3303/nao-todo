@@ -6,6 +6,7 @@ import {
     TagCreator,
     TagColorUpdater,
     TagManager,
+    TagUpdater,
     TaskCreator
 } from '@/components/tasks/dialogs'
 import useDialogs from './use-dialogs'
@@ -30,6 +31,9 @@ const {
     tagColorUpdater,
     tagCreatorOpener,
     tagColorUpdaterOpener,
+    tagUpdaterRegister,
+    tagUpdaterHandler,
+    tagGetter,
     taskCreatorRegister,
     taskCreatorHandler,
     subscriber
@@ -59,6 +63,11 @@ const {
         @register="tagColorUpdaterRegister"
         :tag-color-getter="tagColorGetter"
         :tag-color-updater="tagColorUpdater"
+    />
+    <TagUpdater
+        @register="tagUpdaterRegister"
+        :tag-getter="tagGetter"
+        :updater="tagUpdaterHandler"
     />
     <task-creator
         @register="taskCreatorRegister"

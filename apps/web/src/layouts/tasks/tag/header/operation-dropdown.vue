@@ -4,7 +4,6 @@ import TasksOperationsDropdown from '@/components/tasks/dropdowns/operations-dro
 import { InnerDropdownOption, DropdownDivBlock } from '@nao-todo/components'
 import ColumnDisplayOperator from '@/components/tasks/dropdowns/column-display-operator.vue'
 import { TAG_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
-import { TagColorDot } from '@nao-todo/components'
 import type { TagViewContext } from '../types'
 
 defineOptions({ name: 'TasksTagOperationsDropdown' })
@@ -37,9 +36,9 @@ onMounted(() => {
         if (!tag.value) return
         tasksViewContext.tagUseCase.delete(tag.value.id)
     })
-    dropdownRef.value.register('update-tag-color', () => {
+    dropdownRef.value.register('update-tag', () => {
         if (!tag.value) return
-        tasksViewContext.dialogManager.openDialog('tag-color-updater', tag.value.id)
+        tasksViewContext.dialogManager.openDialog('tag-updater', tag.value.id)
     })
 })
 </script>
@@ -87,9 +86,7 @@ onMounted(() => {
         </dropdown-div-block>
         <nue-divider />
         <dropdown-div-block title="标签操作">
-            <inner-dropdown-option icon="theme" title="修改标签颜色" execute-id="update-tag-color">
-                <tag-color-dot :color="tag?.color || `transparent`" size="small" />
-            </inner-dropdown-option>
+            <inner-dropdown-option icon="edit" title="修改标签" execute-id="update-tag" />
             <inner-dropdown-option
                 color="red"
                 icon="clear"

@@ -1,7 +1,6 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue'
-import { NueDiv, NueInput, NueTextarea } from 'nue-ui'
-import { TagColorSelector } from '@nao-todo/components'
+import { computed, onMounted, ref } from 'vue'
+import { TagColorSelector, TagForm } from '@nao-todo/components'
 import useTagCreator from './use-tag-creator'
 import type { TagCreatorProps, TagCreatorEmits } from './types'
 import { type DialogInstanceType, useDialogWrapper } from '@nao-todo/components'
@@ -14,6 +13,14 @@ const dialogRef = ref<DialogInstanceType>()
 
 const { states, handleConfirm, clearInputsValue } = useTagCreator(props)
 const { visible, close } = useDialogWrapper(dialogRef)
+
+const formData = computed({
+    get: () => ({ name: states.name, description: states.description }),
+    set: (val) => {
+        states.name = val.name
+        states.description = val.description
+    }
+})
 
 const handleSubmit = async () => {
     const ok = await handleConfirm()
@@ -36,34 +43,11 @@ onMounted(() => emit('register', open, close))
         </template>
         <template #content>
             <nue-div vertical>
-                <nue-div vertical gap=".5rem">
-                    <nue-div align="stretch" gap="4px" vertical width="100%">
-                        <nue-input
-                            v-model="states.name"
-                            :disabled="states.creating"
-                            placeholder="请输入标签名称"
-                            title="标签名称"
-                            maxlength="36"
-                            counter="word-left"
-                        />
-                        <nue-text v-if="states.isNameEmpty" color="#f56c6c" size="12px">
-                            * 标签名称不能为空
-                        </nue-text>
-                    </nue-div>
-                    <nue-div align="stretch" gap="8px" vertical width="100%">
-                        <nue-textarea
-                            v-model="states.description"
-                            :disabled="states.creating"
-                            :rows="4"
-                            placeholder="标签描述"
-                            title="Project description"
-                            maxlength="128"
-                            counter="word-left"
-                            :autosize="{ minRows: 1, maxRows: 3 }"
-                            theme="fix-padding"
-                        />
-                    </nue-div>
-                </nue-div>
+                <tag-form
+                    v-model="formData"
+                    :disabled="states.creating"
+                    :is-name-empty="states.isNameEmpty"
+                />
                 <nue-div align="stretch" gap="8px" vertical>
                     <nue-text color="gray" size="12px">选择标签颜色：</nue-text>
                     <tag-color-selector v-model="states.color" />

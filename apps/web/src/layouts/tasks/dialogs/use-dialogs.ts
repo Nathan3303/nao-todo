@@ -34,6 +34,13 @@ export type UseDialogs = {
     projectUpdaterOpener: (projectId: ProjectViewObject['id']) => void
     projectGetter: (projectId: ProjectViewObject['id']) => ProjectViewObject | undefined
     tagCreatorRegister: (open: DialogOpenFunc, close: DialogCloseFunc) => void
+    tagUpdaterRegister: (open: (tagId: string) => void, close: DialogCloseFunc) => void
+    tagUpdaterHandler: (
+        tagId: TagViewObject['id'],
+        vo: { name: string; description: string; color: string }
+    ) => GoAsync<void>
+    tagUpdaterOpener: (tagId: TagViewObject['id']) => void
+    tagGetter: (tagId: TagViewObject['id']) => TagViewObject | undefined
     tagCreatorHandler: (vo: CreateTagViewObject) => GoAsync<string>
     tagManagerRegister: (open: DialogOpenFunc, close: DialogCloseFunc) => void
     tagCreatorOpener: () => void
@@ -142,6 +149,29 @@ const useDialogs = (): UseDialogs => {
         tasksViewContext.dialogManager.openDialog('tag-color-updater', tagId)
     }
 
+    // @method 标签修改对话框注册函数
+    const tagUpdaterRegister = (open: (tagId: string) => void, close: DialogCloseFunc) => {
+        tasksViewContext.dialogManager.registerDialog('tag-updater', { open, close })
+    }
+
+    // @method 标签修改对话框处理函数
+    const tagUpdaterHandler = async (
+        tagId: TagViewObject['id'],
+        vo: { name: string; description: string; color: string }
+    ): GoAsync<void> => {
+        return await tasksViewContext.tagUseCase.update(tagId, vo)
+    }
+
+    // @method 标签修改对话框打开函数
+    const tagUpdaterOpener = (tagId: TagViewObject['id']) => {
+        tasksViewContext.dialogManager.openDialog('tag-updater', tagId)
+    }
+
+    // @method 标签获取函数
+    const tagGetter = (tagId: TagViewObject['id']) => {
+        return tagsStore.getTag(tagId)
+    }
+
     // @method 待办事项创建对话框注册函数
     const taskCreatorRegister = (open: DialogOpenFunc, close: DialogCloseFunc) => {
         tasksViewContext.dialogManager.registerDialog('task-creator', { open, close })
@@ -181,6 +211,10 @@ const useDialogs = (): UseDialogs => {
         tagColorUpdaterRegister,
         tagColorGetter: tasksViewContext.getTagColor,
         tagColorUpdater,
+        tagUpdaterRegister,
+        tagUpdaterHandler,
+        tagUpdaterOpener,
+        tagGetter,
         taskCreatorRegister,
         taskCreatorHandler,
         subscriber: tasksViewContext.subscriber
