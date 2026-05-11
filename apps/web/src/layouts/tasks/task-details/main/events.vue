@@ -3,10 +3,58 @@ import { InputButton, EventRow, Loading } from '@nao-todo/components'
 import useEventDragger from '../use-event-dragger'
 import type { TaskDetailsContext } from '../types'
 import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
-import { inject } from 'vue'
+import { computed, inject, ref } from 'vue'
+
+type FilterStatus = 'all' | 'undone' | 'done'
 
 const { vo, events, resortEvents, eventHandler, eventsLoading, eventsError, retryEvents } =
     inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
+
+const searchQuery = ref('')
+const filterStatus = ref<FilterStatus>('all')
+
+const filteredEvents = computed(() => {
+    let result = events.value
+
+    if (filterStatus.value === 'undone') {
+        result = result.filter((event) => !event.isDone)
+    } else if (filterStatus.value === 'done') {
+        result = result.filter((event) => event.isDone)
+    }
+
+    if (searchQuery.value.trim()) {
+        const query = searchQuery.value.toLowerCase()
+        result = result.filter((event) => event.name.toLowerCase().includes(query))
+    }
+
+    return result
+})
+
+const isSearching = computed(
+    () => searchQuery.value.trim().length > 0 || filterStatus.value !== 'all'
+)
+
+const searchStatusText = computed(() => {
+    if (!isSearching.value) return ''
+    return `共搜索到 ${filteredEvents.value.length} 条`
+})
+
+const toggleFilter = () => {
+    const filters: FilterStatus[] = ['all', 'undone', 'done']
+    const currentIndex = filters.indexOf(filterStatus.value)
+    filterStatus.value = filters[(currentIndex + 1) % filters.length]
+}
+
+const getFilterIcon = () => {
+    switch (filterStatus.value) {
+        case 'all':
+            return '全部'
+        case 'undone':
+            return '未完成'
+        case 'done':
+            return '已完成'
+    }
+}
 
 const { handleDragStart, handleDragOver, handleDrop, handleDragLeave, handleDragEnd } =
     useEventDragger((dragged, dropped, isUp) => {
@@ -21,12 +69,29 @@ const createEvent = async (payload: { value: string }) => {
 </script>
 
 <template>
-    <nue-div theme="event-list" vertical gap="0.2rem" auto-fit>
+    <nue-div theme="event-list">
         <loading v-if="eventsLoading" placeholder="正在加载检查事项..." />
         <nue-empty v-else-if="eventsError" :description="eventsError" image-size="64px">
             <nue-button theme="primary,small" @click="retryEvents">重试</nue-button>
         </nue-empty>
         <template v-else>
+            <nue-div
+                v-show="events.length >= 10"
+                theme="search-header"
+                :data-searching="isSearching"
+            >
+                <nue-text theme="state-filter" @click="toggleFilter">
+                    {{ getFilterIcon() }}
+                </nue-text>
+                <nue-input
+                    v-model="searchQuery"
+                    placeholder="搜索检查事项..."
+                    icon="search"
+                    theme="small,pure"
+                    clearable
+                />
+                <nue-text>{{ searchStatusText }}</nue-text>
+            </nue-div>
             <nue-div
                 vertical
                 gap="0"
@@ -38,7 +103,7 @@ const createEvent = async (payload: { value: string }) => {
                 @drop="handleDrop"
             >
                 <event-row
-                    v-for="event in events"
+                    v-for="event in filteredEvents"
                     data-drag-item="true"
                     :key="event.id"
                     :event="event"
@@ -49,7 +114,7 @@ const createEvent = async (payload: { value: string }) => {
             </nue-div>
             <input-button
                 icon="plus-circle"
-                button-text="添加检查事项"
+                button-text="新增检查事项"
                 placeholder="输入检查事项名称..."
                 theme="pure,noshape"
                 :submit-on-blur="false"
@@ -60,6 +125,52 @@ const createEvent = async (payload: { value: string }) => {
 </template>
 
 <style scoped>
+.nue-div--event-list {
+    flex-direction: column;
+    gap: 0;
+}
+
+.nue-div--search-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+    opacity: 0.65;
+    font-size: var(--nue-text-xs);
+    color: var(--nue-primary-color-400);
+
+    &[data-searching='true'],
+    &:focus-within,
+    &:hover {
+        opacity: 1;
+        transition: opacity 0.15s linear;
+    }
+
+    .nue-input {
+        flex: 1;
+    }
+
+    .nue-text--state-filter {
+        cursor: pointer;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}
+
+.nue-div--filter-section {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 80px;
+    justify-content: flex-end;
+}
+
+.nue-icon.filter-active {
+    color: var(--nue-primary-color-600);
+}
+
 .nue-div--event-row {
     position: relative;
     overflow: visible;
@@ -70,7 +181,11 @@ const createEvent = async (payload: { value: string }) => {
         left: 0;
         width: 100%;
         height: 3px;
-        background: linear-gradient(90deg, var(--nue-primary-color-500), var(--nue-primary-color-300));
+        background: linear-gradient(
+            90deg,
+            var(--nue-primary-color-500),
+            var(--nue-primary-color-300)
+        );
         visibility: hidden;
         z-index: 10;
         border-radius: 2px;
