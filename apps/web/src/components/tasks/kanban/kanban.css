@@ -123,8 +123,6 @@
                         gap: 0.25rem;
 
                         .todo-card__name {
-                            word-break: break-all;
-                            white-space: pre;
                             font-size: var(--nue-text-df2);
                             line-height: var(--nue-text-xl);
                             flex: 1;
@@ -147,6 +145,16 @@
                         }
                     }
 
+                    .todo-card__attrs {
+                        gap: 0.25rem 1rem;
+                        flex-wrap: wrap;
+
+                        .nue-div--basic-info {
+                            flex: 0 0 auto;
+                            font-size: var(--nue-text-xs);
+                        }
+                    }
+
                     &:hover,
                     &[data-actived='true'] {
                         border-color: var(--nue-primary-color-800);
@@ -163,6 +171,8 @@
                     }
 
                     &[data-is-done='true'] {
+                        opacity: 0.83;
+
                         .todo-card__check-icon {
                             --nue-icon-color: var(--nue-primary-color);
                         }
@@ -174,9 +184,7 @@
                     }
 
                     &[data-is-deleted='true'] {
-                        * {
-                            opacity: 0.8;
-                        }
+                        opacity: 0.5;
 
                         .todo-card__actions {
                             display: flex;

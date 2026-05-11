@@ -88,48 +88,40 @@ const handleFinish = () => {
                 >
                     {{ task.description }}
                 </nue-text>
+                <task-tag-bar
+                    v-if="columns?.tags && task.tags.length"
+                    :tags="tags"
+                    :task-tags="task.tags"
+                    :clamped="2"
+                    transform-origin="left"
+                    readonly
+                    small
+                />
             </nue-div>
-            <nue-div v-if="!isAttrsNone" vertical gap=".25rem">
-                <nue-div vertical gap=".25rem">
-                    <task-tag-bar
-                        v-if="columns?.tags && task.tags.length"
-                        :tags="tags"
-                        :task-tags="task.tags"
-                        :clamped="2"
-                        transform-origin="left"
-                        readonly
-                        small
-                    />
-                    <nue-div>
-                        <task-state-info v-if="columns?.state" :state="task.state" />
-                        <task-priority-info v-if="columns?.priority" :priority="task.priority" />
-                    </nue-div>
-                </nue-div>
-                <nue-div gap=".25rem .5rem">
-                    <task-date-info
-                        v-if="columns?.createdAt"
-                        :date="task.createdAt"
-                        :formatter="(date) => `创建于${date}`"
-                    />
-                    <task-date-info
-                        v-if="columns?.updatedAt"
-                        :date="task.updatedAt"
-                        :formatter="(date) => `修改于${date}`"
-                    />
-                    <task-date-info
-                        v-if="columns?.endAt"
-                        :date="task.endAt!"
-                        :formatter="(date) => `截止于${date}`"
-                        :colored="!isDone"
-                    />
-                </nue-div>
-                <nue-div gap=".25rem">
-                    <task-basic-info
-                        v-if="columns?.project"
-                        icon="inbox-fill"
-                        :text="kanbanCtx.getProjectName(task.projectId) || '收集箱'"
-                    />
-                </nue-div>
+            <nue-div v-if="!isAttrsNone" class="todo-card__attrs">
+                <task-date-info
+                    v-if="columns?.createdAt"
+                    :date="task.createdAt"
+                    :formatter="(date) => `创建于${date}`"
+                />
+                <task-date-info
+                    v-if="columns?.updatedAt"
+                    :date="task.updatedAt"
+                    :formatter="(date) => `修改于${date}`"
+                />
+                <task-date-info
+                    v-if="columns?.endAt"
+                    :date="task.endAt!"
+                    :formatter="(date) => `截止于${date}`"
+                    :colored="!isDone"
+                />
+                <task-state-info v-if="columns?.state" :state="task.state" />
+                <task-priority-info v-if="columns?.priority" :priority="task.priority" />
+                <task-basic-info
+                    v-if="columns?.project"
+                    icon="inbox-fill"
+                    :text="kanbanCtx.getProjectName(task.projectId) || '收集箱'"
+                />
             </nue-div>
         </nue-div>
     </nue-div>

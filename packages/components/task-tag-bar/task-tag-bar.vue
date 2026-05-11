@@ -89,19 +89,19 @@ const handleDropTag = async (tagId: string) => {
     --tag-bar-transform-origin: right;
 
     width: 100%;
-    gap: 0.75rem;
+    gap: var(--nue-gap-xs);
     flex-wrap: wrap;
     align-items: center;
 
     &[data-small='true'] {
-        transform: scale(0.9);
+        transform: scale(0.83);
         transform-origin: var(--tag-bar-transform-origin);
         gap: 0.5rem;
         width: fit-content;
 
         .tag-node {
             height: 20px;
-            padding: 0 0.4375rem;
+            padding: 0 var(--nue-padding-xs);
 
             .tag-node__name {
                 font-size: var(--nue-text-xs);
@@ -110,3 +110,4 @@ const handleDropTag = async (tagId: string) => {
     }
 }
 </style>
+
