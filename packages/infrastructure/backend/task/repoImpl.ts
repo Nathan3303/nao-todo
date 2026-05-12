@@ -170,7 +170,28 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
         return [{ taskEntities, pagination: res.pagination }, null]
     }
 
+    /**
+     * 复制任务
+     * @param taskId 任务ID
+     * @returns 任务实体
+     */
+    const copy = async (taskId: string): GoAsync<TaskEntity> => {
+        // 1. 调用接口
+        const response = await requester.post(`/tasks/copy/${taskId}`, null, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
+        })
+        // 2. 获取结果
+        const res = response.data as ResponseData
+        if (res.code !== 40060) {
+            return [null, res.message]
+        }
+        // 3. 转换为实体
+        const taskEntity = getTaskRes2TaskEntity(res.data as GetTaskRes)
+        // 4. 返回
+        return [taskEntity, null]
+    }
+
     // @returns
-    return { create, get, update, remove, restore, list }
+    return { create, get, update, remove, restore, list, copy }
 }
 

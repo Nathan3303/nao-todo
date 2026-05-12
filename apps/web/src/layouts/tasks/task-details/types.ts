@@ -113,5 +113,6 @@ export type TaskDetailsFooterContext = {
     vo: ComputedRef<WithNull<TaskDetailsViewObject>>
     projects: ComputedRef<ProjectViewObject[]>
     isCommenting: Ref<boolean>
+    switchTaskDetails: (taskId: TaskViewObject['id']) => void
 }
 

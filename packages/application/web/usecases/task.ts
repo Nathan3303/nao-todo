@@ -13,6 +13,9 @@ import { useTaskRepository } from '@nao-todo/infrastructure/backend/task/repoImp
 import { LocalTaskDomain } from '@nao-todo/domain/task/services/local-task'
 import { LocalTaskRepositoryImpl, localDB } from '@nao-todo/infrastructure/local'
 
+/**
+ * 任务用例存储接口
+ */
 export interface TaskStore {
     setTasks(tasks: TaskViewObject[]): void
     updateTask(taskId: TaskViewObject['id'], updateTaskViewObject: UpdateTaskViewObject): void
@@ -22,6 +25,9 @@ export interface TaskStore {
     removeTask(taskId: TaskViewObject['id']): void
 }
 
+/**
+ * 任务用例
+ */
 export class TaskUseCase {
     /**
      * 任务用例
@@ -144,6 +150,22 @@ export class TaskUseCase {
         // 返回成功
         return null
     }
-}
 
+    /**
+     * 复制任务
+     * @param taskId 任务ID
+     * @returns 任务视图对象
+     */
+    async copyTask(taskId: TaskViewObject['id']): GoAsync<TaskViewObject> {
+        // 复制
+        const [taskEntity, err] = await this.taskDomain.copy(taskId)
+        if (err !== null) return [null, err]
+        // 实体转换为视图对象
+        const taskViewObject = taskEntityToViewObject(taskEntity)
+        // 存储任务列表
+        this.store.addTask(taskViewObject)
+        // 返回任务视图对象
+        return [taskViewObject, null]
+    }
+}
 

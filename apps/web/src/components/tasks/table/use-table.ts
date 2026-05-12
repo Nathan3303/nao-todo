@@ -8,11 +8,11 @@ import dayjs from 'dayjs'
 export const TASK_TABLE_CONTEXT_KEY = Symbol('TASK_TABLE_CONTEXT_KEY')
 
 export default (props: TaskTableProps, emit: TaskTableEmits) => {
-    // @hook Use multi select
+    // @hook 多选配置
     const { selectRange, showMultiSelectPanel, clearMultiSelect, isInMultiSelectRange } =
         useMultiSelect(props, emit)
 
-    // @hook Use column config
+    // @hook 列配置
     const {
         layoutConfig,
         visibleColumns,
@@ -21,11 +21,6 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         resetConfig,
         syncFromProps
     } = useColumnConfig(props.layoutConfig)
-
-    // @watch Sync from props
-    watch(() => props.columns, (newColumns) => {
-        syncFromProps(newColumns)
-    }, { immediate: true, deep: true })
 
     // @computed 计算标签显示数量 - 用于响应式变化时变化标签显示个数
     const tagBarClamped = computed(() => {
@@ -84,6 +79,13 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         emit('updateLayoutConfig', layoutConfig.value)
     }
 
+    // @watch 同步列配置到 props
+    watch(
+        () => props.columns,
+        (newColumns) => syncFromProps(newColumns),
+        { immediate: true, deep: true }
+    )
+
     // @provide 任务表格上下文
     provide<TaskTableContext>(TASK_TABLE_CONTEXT_KEY, {
         tasks: computed(() => props.tasks),
@@ -115,6 +117,5 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         columnResize: handleColumnResize,
         resetTableConfig: handleResetTableConfig
     })
-
-    return {}
 }
+

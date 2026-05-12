@@ -31,5 +31,15 @@ defineProps<InnerDropdownOptionProps>()
         background-color: var(--nue-error-color-20);
     }
 }
+
+.nue-dropdown-item--orange {
+    color: var(--nue-warning-color-70);
+    background-color: var(--nue-warning-color-10);
+
+    &:hover {
+        color: var(--nue-warning-color-90);
+        background-color: var(--nue-warning-color-20);
+    }
+}
 </style>
 

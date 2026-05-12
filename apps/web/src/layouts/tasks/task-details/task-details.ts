@@ -43,18 +43,24 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     // @usecase 任务评论用例
     const commentUseCase = CommentUseCase.create(taskDetailsStore)
 
-    // @handlers
+    // @handlers 任务检查事项处理程序
     const eventHandler = useEventHandler(eventUseCase)
+
+    // @handlers 任务评论处理程序
     const commentHandler = useCommentHandler(commentUseCase)
-    const taskHandler = useTaskHandler(tasksViewContext.taskUseCase)
+
+    // @handlers 任务处理程序
+    const taskHandler = useTaskHandler(tasksViewContext.taskUseCase, tasksViewContext.subscriber)
 
     // @states
-    const loading = ref(false)
-    const error = ref('')
-    const isCommenting = ref(false)
-    const currentTaskId = ref<string | null>(null)
+    const loading = ref(false) /** 加载状态 */
+    const error = ref('') /** 错误信息 */
+    const isCommenting = ref(false) /** 是否正在评论 */
+    const currentTaskId = ref<string | null>(null) /** 当前任务 ID */
 
-    // @computed 获取任务详情并转换为视图对象
+    /**
+     * 获取任务详情并转换为视图对象
+     */
     const task = computed(() => {
         if (!props.taskId) return null
         const _task = taskStore.getTask(props.taskId)
@@ -82,7 +88,9 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         }
     })
 
-    // @computed 计算检查事项进度
+    /**
+     * 计算检查事项进度
+     */
     const eventProgress = computed(() => {
         const _e = events.value
         const progress = _e ? _e.filter((event) => event.isDone).length : 0
@@ -92,7 +100,10 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         return { percentage, text }
     })
 
-    // @method 加载检查事项
+    /**
+     * 加载检查事项
+     * @param taskId 任务 ID
+     */
     const loadEvents = async (taskId: TaskViewObject['id']) => {
         taskDetailsStore.setEventsLoading(true)
         taskDetailsStore.setEventsError('')
@@ -103,7 +114,10 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         taskDetailsStore.setEventsLoading(false)
     }
 
-    // @method 加载评论
+    /**
+     * 加载评论
+     * @param taskId 任务 ID
+     */
     const loadComments = async (taskId: TaskViewObject['id']) => {
         taskDetailsStore.setCommentsLoading(true)
         taskDetailsStore.setCommentsError('')
@@ -114,19 +128,26 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         taskDetailsStore.setCommentsLoading(false)
     }
 
-    // @method 重试加载检查事项
+    /**
+     * 重试加载检查事项
+     */
     const retryEvents = async () => {
         if (!currentTaskId.value) return
         await loadEvents(currentTaskId.value)
     }
 
-    // @method 重试加载评论
+    /**
+     * 重试加载评论
+     */
     const retryComments = async () => {
         if (!currentTaskId.value) return
         await loadComments(currentTaskId.value)
     }
 
-    // @method 初始化任务详情
+    /**
+     * 初始化任务详情
+     * @param taskId 任务 ID
+     */
     const initialize = async (taskId?: TaskViewObject['id']) => {
         error.value = ''
         // 1. 判断任务 ID
@@ -140,9 +161,20 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         return null
     }
 
-    // @method 关闭任务详情面板
+    /**
+     * 关闭任务详情面板
+     */
     const closeDetails = () => {
         router.push({ name: router.currentRoute.value.name, params: { taskId: '' } })
+    }
+
+    /**
+     * 重写路由并加载任务详情
+     * @param taskId 任务 ID
+     */
+    const switchTaskDetails = (taskId: TaskViewObject['id']) => {
+        router.push({ name: router.currentRoute.value.name, params: { taskId } })
+        // initialize(taskId)
     }
 
     // @watch 监听任务 ID
@@ -151,16 +183,6 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         (newId) => initialize(newId),
         { immediate: true }
     )
-
-    // @method 处理删除任务
-    const handleDeleteTask = async (taskId: string) => {
-        await taskHandler.deleteTask(taskId)
-    }
-
-    // @method 处理恢复任务
-    const handleRestoreTask = async (taskId: string) => {
-        await taskHandler.restoreTask(taskId)
-    }
 
     // @provide 任务详情面板上下文
     provide<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY, {
@@ -182,25 +204,12 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         commentsLoading,
         commentsError,
         retryEvents,
-        retryComments
+        retryComments,
+        switchTaskDetails
     })
 
-    // @watch 监听任务删除事件
-    watch(
-        () => props.taskId,
-        () => {},
-        { immediate: false }
-    )
-
     // @returns 返回值
-    return {
-        loading,
-        error,
-        task,
-        handleDeleteTask,
-        handleRestoreTask,
-        closeDetails
-    }
+    return { loading, error, task, closeDetails }
 }
 
 export default useTaskDetails

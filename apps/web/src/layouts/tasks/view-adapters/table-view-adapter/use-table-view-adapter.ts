@@ -52,6 +52,7 @@ const useTableViewAdapter = (props: TableViewAdapterProps) => {
      */
     const addNewTaskId = (taskId: string) => {
         taskLoader.states.taskIds.add(taskId)
+        taskLoader.states.pagination.total += 1
     }
 
     /**

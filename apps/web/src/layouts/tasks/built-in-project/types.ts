@@ -6,7 +6,7 @@ import type {
     BuiltInProjectViewObject,
     UserViewObject
 } from '@nao-todo/types'
-import type { Subscriber } from '@/infrastructure/hooks/use-subscriber'
+import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import type { BuiltInProjectLayoutHandlers } from '@/infrastructure/handlers/tasks/built-in-project-handler'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
@@ -34,3 +34,4 @@ export type BuiltInProjectViewContext = {
     switchViewTypeToList: () => void
     showTaskCreator: () => void
 }
+

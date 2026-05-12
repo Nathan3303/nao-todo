@@ -97,5 +97,14 @@ export class TaskDomain {
         // 2. 调用仓库方法
         return await this.taskRepo.list(queryString)
     }
+
+    /**
+     * 复制任务
+     * @param taskId 任务ID
+     * @returns 任务实体
+     */
+    async copy(taskId: string): GoAsync<TaskEntity> {
+        return await this.taskRepo.copy(taskId)
+    }
 }
 

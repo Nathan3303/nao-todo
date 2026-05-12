@@ -50,5 +50,12 @@ export interface TaskRepository {
     list(
         queryString?: string
     ): GoAsync<{ taskEntities: TaskEntity[]; pagination?: ResponseDataPagination }>
+
+    /**
+     * 复制任务
+     * @param taskId 任务ID
+     * @returns 任务实体
+     */
+    copy(taskId: string): GoAsync<TaskEntity>
 }
 

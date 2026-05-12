@@ -1,10 +1,10 @@
 <script setup lang="ts">
+import { DropdownDivBlock, InnerDropdownOption, TaskProjectSelector } from '@nao-todo/components'
 import { inject } from 'vue'
-import { InnerDropdownOption, TaskProjectSelector, DropdownDivBlock } from '@nao-todo/components'
 import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
 import type { TaskDetailsContext } from '../types'
 
-const { vo, emit, projects, isCommenting, taskHandler } =
+const { vo, projects, isCommenting, taskHandler, switchTaskDetails } =
     inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
 
 const handleDropdownExecute = async (executeId: string) => {
@@ -13,8 +13,10 @@ const handleDropdownExecute = async (executeId: string) => {
         case 'comment-todo':
             isCommenting.value = true
             break
-        case 'duplicate-todo':
-            emit('duplicateTask', vo.value.id)
+        case 'copy-todo':
+            await taskHandler.copyTask(vo.value.id, (taskViewObject) => {
+                switchTaskDetails(taskViewObject.id)
+            })
             break
         case 'delete-todo':
             await taskHandler.deleteTask(vo.value.id)
@@ -55,15 +57,15 @@ const handleDropdownExecute = async (executeId: string) => {
                     <inner-dropdown-option
                         title="复制待办任务"
                         icon="files"
-                        execute-id="duplicate-todo"
-                        disabled
+                        execute-id="copy-todo"
                     />
                 </dropdown-div-block>
                 <dropdown-div-block title="放弃或恢复">
                     <inner-dropdown-option
-                        :title="vo.isGivenUp ? '恢复待办任务（取消放弃）' : '放弃待办任务'"
+                        :title="vo.isGivenUp ? '取消放弃待办任务' : '放弃待办任务'"
                         :icon="vo.isGivenUp ? 'restore' : 'clear'"
                         :execute-id="vo.isGivenUp ? 'un-giveup-todo' : 'giveup-todo'"
+                        :theme="vo.isGivenUp ? void 0 : 'orange'"
                     />
                 </dropdown-div-block>
                 <dropdown-div-block title="删除或恢复">
@@ -71,6 +73,7 @@ const handleDropdownExecute = async (executeId: string) => {
                         :title="vo.isDeleted ? '恢复待办任务' : '删除待办任务'"
                         :icon="vo.isDeleted ? 'restore' : 'delete'"
                         :execute-id="vo.isDeleted ? 'restore-todo' : 'delete-todo'"
+                        :theme="vo.isDeleted ? void 0 : 'red'"
                     />
                 </dropdown-div-block>
             </nue-dropdown>
