@@ -3,9 +3,12 @@ import useApp from './app'
 
 defineOptions({ name: 'AppView' })
 
-useApp()
+const { getUserLocalThemeMode } = useApp()
+
+getUserLocalThemeMode()
 </script>
 
 <template>
     <router-view />
 </template>
+

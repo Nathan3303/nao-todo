@@ -19,7 +19,6 @@ export type UserConfigViewObject = {
 export type UpdateUserViewObject = {
     nickname?: string
     avatar?: string
-    config?: UserConfigViewObject
     role?: string
 }
 
@@ -32,3 +31,9 @@ export type UpdatePasswordViewObject = {
     newPassword: string
     confirmNewPassword: string
 }
+
+export type UpdateUserConfigViewObject = {
+    appearance?: string
+    language?: string
+}
+

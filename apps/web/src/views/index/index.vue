@@ -6,12 +6,14 @@ import { Loading as LoadingComp } from '@nao-todo/components'
 
 defineOptions({ name: 'AppContainer' })
 
-const { userUseCase } = useIndexView()
+const { userUseCase, loadUserThemeModeFromConfig } = useIndexView()
 
 const isLoading = ref(true)
 
 onMounted(async () => {
     await userUseCase.loadUserProfile()
+    await userUseCase.loadUserConfig()
+    loadUserThemeModeFromConfig()
     isLoading.value = false
 })
 </script>

@@ -29,6 +29,9 @@ export type DeactiveUserReq = {
 export type ActiveUserReq = DeactiveUserReq
 
 export type GetUserConfigRes = {
+    id: string
     appearance: string
+    createdAt: string
+    updatedAt: string
 }
 

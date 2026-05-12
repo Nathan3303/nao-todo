@@ -1,8 +1,13 @@
-import type { GoAsync } from '@nao-todo/types'
-import type { UserRepository } from './repositories'
-import { UserEntity } from './entities'
-import { UpdateNicknameValueObject, UpdatePasswordValueObject, UpdateUserConfigValueObject } from './valueobjects'
 import { unwrapError } from '@nao-todo/infrastructure/utils'
+import type { GoAsync } from '@nao-todo/types'
+import { UserEntity } from './entities'
+import type { UserConfigEntity } from './entities/user-config'
+import type { UserRepository } from './repositories'
+import {
+    UpdateNicknameValueObject,
+    UpdatePasswordValueObject,
+    UpdateUserConfigValueObject
+} from './valueobjects'
 
 export class UserDomain {
     /**
@@ -73,7 +78,7 @@ export class UserDomain {
      * 获取用户配置
      * @returns 用户配置
      */
-    async getConfig(): GoAsync<{ appearance: string }> {
+    async getConfig(): GoAsync<UserConfigEntity> {
         return await this.userRepo.getConfig()
     }
 
@@ -91,3 +96,4 @@ export class UserDomain {
         return await this.userRepo.updateConfig(valueObject)
     }
 }
+

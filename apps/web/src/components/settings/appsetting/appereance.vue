@@ -1,6 +1,9 @@
 <template>
     <nue-div theme="appereance-wrapper">
-        <nue-text theme="title">外观设置</nue-text>
+        <nue-text theme="title">
+            外观设置
+            <nue-icon :name="loading ? 'loading' : 'check'" size="16px" v-if="loading" />
+        </nue-text>
         <nue-text theme="description">自定义视觉与感受，选择你喜欢的主题！</nue-text>
         <nue-div theme="body">
             <!-- Theme Cards Container -->
@@ -40,49 +43,51 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject } from 'vue'
+import { computed, inject, ref } from 'vue'
 import { useThemeStore, type ThemeMode } from '@/stores'
 import { SETTINGS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import type { SettingsViewContext } from '@/views/index/settings/settings-view'
-import { themeModeToAppearance } from '@/infrastructure/hooks/use-sync-theme-config'
+import { unwrapError } from '@nao-todo/infrastructure/utils'
+import { NueMessage } from 'nue-ui'
 
 defineOptions({ name: 'SettingsAppAppereance' })
 
 const themeStore = useThemeStore()
 
-const themeOptions: Array<{
-    value: ThemeMode
-    label: string
-    icon: string
-    previewClass: string
-}> = [
-    {
-        value: 'light',
-        label: '浅色',
-        icon: 'sun',
-        previewClass: 'theme-preview-light'
-    },
-    {
-        value: 'dark',
-        label: '深色',
-        icon: 'moon',
-        previewClass: 'theme-preview-dark'
-    },
-    {
-        value: 'system',
-        label: '跟随系统',
-        icon: 'desktop',
-        previewClass: 'theme-preview-system'
-    }
-]
+const themeOptions: Array<{ value: ThemeMode; label: string; icon: string; previewClass: string }> =
+    [
+        {
+            value: 'light',
+            label: '浅色',
+            icon: 'sun',
+            previewClass: 'theme-preview-light'
+        },
+        {
+            value: 'dark',
+            label: '深色',
+            icon: 'moon',
+            previewClass: 'theme-preview-dark'
+        },
+        {
+            value: 'system',
+            label: '跟随系统',
+            icon: 'desktop',
+            previewClass: 'theme-preview-system'
+        }
+    ]
+const loading = ref(false)
 
 const { userUseCase } = inject<SettingsViewContext>(SETTINGS_VIEW_CONTEXT_KEY)!
 
 const currentTheme = computed(() => themeStore.themeMode)
 
 const selectTheme = async (mode: ThemeMode) => {
+    loading.value = true
     themeStore.setTheme(mode)
-    await userUseCase.updateUserConfig(themeModeToAppearance(mode))
+    const updateError = await userUseCase.updateUserConfig({ appearance: mode })
+    loading.value = false
+    if (updateError === null) return
+    NueMessage.error(`主题同步失败：${unwrapError(updateError)}`)
 }
 </script>
 
@@ -341,3 +346,4 @@ const selectTheme = async (mode: ThemeMode) => {
     }
 }
 </style>
+

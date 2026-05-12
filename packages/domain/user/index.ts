@@ -1,6 +1,10 @@
 import { UserDomain } from './service'
-import { UserEntity } from './entities'
-import { UpdateNicknameValueObject, UpdatePasswordValueObject, UpdateUserConfigValueObject } from './valueobjects'
+import { UserEntity, UserConfigEntity } from './entities'
+import {
+    UpdateNicknameValueObject,
+    UpdatePasswordValueObject,
+    UpdateUserConfigValueObject
+} from './valueobjects'
 import type { UserRepository } from './repositories'
 
 export {
@@ -9,5 +13,7 @@ export {
     UpdatePasswordValueObject,
     UpdateUserConfigValueObject,
     UserEntity,
+    UserConfigEntity,
     type UserRepository
 }
+

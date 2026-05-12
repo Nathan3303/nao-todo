@@ -2,27 +2,29 @@ import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 
 /**
- * Theme mode type
+ * 主题模式类型
  */
 export type ThemeMode = 'light' | 'dark' | 'system'
 
 /**
- * Theme store key
+ * 主题存储键名
  */
-export const THEME_MODE_KEY = 'theme-mode'
+export const THEME_MODE_KEY = 'USER_THEME_MODE'
 
 /**
- * Theme store
- * Manages theme mode state and persistence
+ * 主题存储
+ * @description 主题存储负责管理主题模式状态和持久化存储
  */
 const useThemeStore = defineStore('ThemeStore', () => {
-    // @state Theme mode - light | dark | system
+    // @state 主题模式 - light | dark | system
     const themeMode = ref<ThemeMode>('system')
 
-    // @state System preference for dark mode
+    // @state 系统偏好（深模式）
     const systemPrefersDark = ref(false)
 
-    // @computed Actual applied theme (resolves 'system' to actual value)
+    /**
+     * 实际应用的主题（根据系统偏好解析 'system' 模式）
+     */
     const actualTheme = computed(() => {
         if (themeMode.value === 'system') {
             return systemPrefersDark.value ? 'dark' : 'light'
@@ -30,12 +32,15 @@ const useThemeStore = defineStore('ThemeStore', () => {
         return themeMode.value
     })
 
-    // @computed Is dark theme active
+    /**
+     * 是否激活深模式主题
+     * @description 计算属性，根据实际主题模式判断是否激活深模式主题
+     */
     const isDark = computed(() => actualTheme.value === 'dark')
 
     /**
-     * Set theme mode
-     * @param mode - Theme mode to set
+     * 设置主题模式
+     * @param mode - 主题模式
      */
     const setTheme = (mode: ThemeMode) => {
         themeMode.value = mode
@@ -43,7 +48,20 @@ const useThemeStore = defineStore('ThemeStore', () => {
     }
 
     /**
-     * Initialize system preference listener
+     * 更新主题模式
+     * @param mode - 主题模式
+     */
+    const updateTheme = (mode?: ThemeMode | null) => {
+        if (!mode) {
+            loadSavedTheme()
+            return
+        }
+        setTheme(mode)
+    }
+
+    /**
+     * 初始化系统偏好监听器
+     * @description 初始化系统偏好变化监听器，用于监听用户系统偏好变化
      */
     const initSystemListener = () => {
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
@@ -55,7 +73,7 @@ const useThemeStore = defineStore('ThemeStore', () => {
     }
 
     /**
-     * Load saved theme from localStorage
+     * 从 localStorage 加载已保存的主题模式
      */
     const loadSavedTheme = () => {
         const saved = localStorage.getItem(THEME_MODE_KEY) as ThemeMode | null
@@ -65,27 +83,26 @@ const useThemeStore = defineStore('ThemeStore', () => {
     }
 
     /**
-     * Apply theme to document
+     * 应用主题到文档
+     * @description 应用当前主题模式到文档根元素，用于切换深模式主题
      */
     const applyTheme = () => {
         const flag = isDark.value ? 1 : 0
         document.documentElement.style.setProperty('--nue-dark-switch', flag.toString())
     }
 
-    // Watch actual theme changes and apply to DOM
-    watch(
-        actualTheme,
-        () => {
-            applyTheme()
-        },
-        { immediate: true }
-    )
+    /**
+     * 监听实际主题变化并应用到 DOM
+     * @description 监听实际主题变化，当主题模式变化时应用到文档
+     */
+    watch(actualTheme, () => applyTheme(), { immediate: true })
 
     return {
         themeMode,
         actualTheme,
         isDark,
         setTheme,
+        updateTheme,
         initSystemListener,
         loadSavedTheme,
         applyTheme
@@ -93,3 +110,4 @@ const useThemeStore = defineStore('ThemeStore', () => {
 })
 
 export default useThemeStore
+

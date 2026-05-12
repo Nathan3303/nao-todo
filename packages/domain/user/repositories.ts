@@ -1,6 +1,10 @@
 import type { Go, GoAsync } from '@nao-todo/types'
-import type { UserEntity } from './entities'
-import type { UpdateNicknameValueObject, UpdatePasswordValueObject, UpdateUserConfigValueObject } from './valueobjects'
+import type { UserConfigEntity, UserEntity } from './entities'
+import type {
+    UpdateNicknameValueObject,
+    UpdatePasswordValueObject,
+    UpdateUserConfigValueObject
+} from './valueobjects'
 
 export interface UserRepository {
     getProfile(): GoAsync<UserEntity>
@@ -10,8 +14,9 @@ export interface UserRepository {
     updateAvatarFile(file: File): GoAsync<string>
     deactive(): GoAsync<void>
     active(): GoAsync<void>
-    getConfig(): GoAsync<{ appearance: string }>
+    getConfig(): GoAsync<UserConfigEntity>
     updateConfig(valueObject: UpdateUserConfigValueObject): GoAsync<void>
 
     encryptPassword(password: string): Go<string>
 }
+

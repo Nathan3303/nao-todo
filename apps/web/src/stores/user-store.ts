@@ -1,4 +1,9 @@
-import type { UserViewObject, UpdateUserViewObject } from '@nao-todo/types'
+import type {
+    UserViewObject,
+    UpdateUserViewObject,
+    UserConfigViewObject,
+    UpdateUserConfigViewObject
+} from '@nao-todo/types'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { env } from '@/infrastructure/constants/env'
@@ -38,6 +43,19 @@ const useUserStore = defineStore('UserStore', () => {
         setUserProfile({ ...userProfile.value, ...updateProfile } as UserViewObject)
     }
 
+    // @state 用户配置
+    const userConfig = ref<UserConfigViewObject>()
+
+    // @action 设置用户配置
+    const setUserConfig = (config: UserConfigViewObject) => {
+        userConfig.value = config
+    }
+
+    // @action 更新用户配置
+    const updateUserConfig = (updateConfig: UpdateUserConfigViewObject) => {
+        setUserConfig({ ...userConfig.value, ...updateConfig } as UserConfigViewObject)
+    }
+
     // @returns
     return {
         isAuthenticated: computed(() => isAuthenticated.value),
@@ -46,7 +64,10 @@ const useUserStore = defineStore('UserStore', () => {
         setUserToken,
         profile: computed(() => userProfile.value),
         setUserProfile,
-        updateUserProfile
+        updateUserProfile,
+        config: computed(() => userConfig.value),
+        setUserConfig,
+        updateUserConfig
     }
 })
 

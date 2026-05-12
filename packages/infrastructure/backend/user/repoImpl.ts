@@ -2,6 +2,7 @@ import {
     UpdateNicknameValueObject,
     UpdatePasswordValueObject,
     UpdateUserConfigValueObject,
+    UserConfigEntity,
     UserEntity,
     type UserRepository
 } from '@nao-todo/domain/user'
@@ -10,7 +11,7 @@ import SparkMD5 from 'spark-md5'
 import type { Requester } from '../../requester/types'
 import type { ResponseData } from '../types'
 import type { GetUserConfigRes, GetUserProfileRes, UpdateAvatarURLRes } from '../types/user'
-import { getUserProfileRes2UserEntity } from './converters'
+import { getUserConfigResToEntity, getUserProfileRes2UserEntity } from './converters'
 
 /**
  * 用户仓库实现
@@ -175,14 +176,15 @@ export const useUserRepository = (requester: Requester): UserRepository => {
      * 获取用户配置
      * @returns 用户配置
      */
-    const getConfig = async (): GoAsync<{ appearance: string }> => {
+    const getConfig = async (): GoAsync<UserConfigEntity> => {
         const response = await requester.get('/user/config', {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
         })
         const res = response.data as ResponseData
         if (res.code !== 10110) return [null, res.message]
         const data = res.data as GetUserConfigRes
-        return [{ appearance: data.appearance }, null]
+        const userConfigEntity = getUserConfigResToEntity(data)
+        return [userConfigEntity, null]
     }
 
     /**

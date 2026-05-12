@@ -1,11 +1,13 @@
 import {
     UpdateNicknameValueObject,
     UpdatePasswordValueObject,
+    UserConfigEntity,
     UserEntity
 } from '@nao-todo/domain/user'
 import type {
     UpdateNicknameViewObject,
     UpdatePasswordViewObject,
+    UserConfigViewObject,
     UserViewObject
 } from '@nao-todo/types'
 import dayjs from 'dayjs'
@@ -38,6 +40,11 @@ export const updateUserNicknameViewObjectToValueObject = (
     return new UpdateNicknameValueObject(updateUserNicknameViewObject.nickname)
 }
 
+/**
+ * 将更新密码视图对象转换为更新密码值对象
+ * @param updatePasswordViewObject 更新密码视图对象
+ * @returns 更新密码值对象
+ */
 export const updatePasswordViewObjectToValueObject = (
     updatePasswordViewObject: UpdatePasswordViewObject
 ): UpdatePasswordValueObject => {
@@ -45,5 +52,18 @@ export const updatePasswordViewObjectToValueObject = (
         updatePasswordViewObject.password,
         updatePasswordViewObject.newPassword
     )
+}
+
+/**
+ * 将用户配置实体转换为用户配置视图对象
+ * @param userConfigEntity 用户配置实体
+ * @returns 用户配置视图对象
+ */
+export const userConfigEntityToViewObject = (
+    userConfigEntity: UserConfigEntity
+): UserConfigViewObject => {
+    return {
+        appearance: userConfigEntity.appearance
+    } as UserConfigViewObject
 }
 

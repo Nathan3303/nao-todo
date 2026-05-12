@@ -2,6 +2,7 @@ import type {
     GoAsync,
     UpdateNicknameViewObject,
     UpdatePasswordViewObject,
+    UpdateUserConfigViewObject,
     UpdateUserViewObject,
     UserConfigViewObject,
     UserViewObject
@@ -12,6 +13,7 @@ import { useUserRepository } from '@nao-todo/infrastructure/backend/user/repoImp
 import {
     updatePasswordViewObjectToValueObject,
     updateUserNicknameViewObjectToValueObject,
+    userConfigEntityToViewObject,
     userEntityToViewObject
 } from '../converters/user'
 
@@ -21,6 +23,8 @@ import {
 interface UserStore {
     setUserProfile: (userProfile: UserViewObject) => void
     updateUserProfile: (updateUserViewObject: UpdateUserViewObject) => void
+    setUserConfig: (userConfig: UserConfigViewObject) => void
+    updateUserConfig: (updateUserConfigViewObject: UpdateUserConfigViewObject) => void
 }
 
 /**
@@ -94,20 +98,34 @@ export class UserUseCase {
      * 加载用户配置
      * @returns 用户配置
      */
-    async loadUserConfig(): GoAsync<UserConfigViewObject> {
-        const [config, err] = await this.userDomain.getConfig()
-        if (err !== null) return [null, err]
-        return [config as UserConfigViewObject, null]
+    async loadUserConfig(): GoAsync<void> {
+        // 获取用户设置
+        const [userConfigEntity, err] = await this.userDomain.getConfig()
+        if (err !== null) return err
+        // 数据转换为视图对象
+        const userConfig = userConfigEntityToViewObject(userConfigEntity)
+        // 存储用户配置
+        this.userStore.setUserConfig(userConfig)
+        // 返回
+        return null
     }
 
     /**
      * 更新用户配置
-     * @param appearance 外观设置值
+     * @param updateUserConfigViewObject 更新用户配置视图对象
      * @returns 更新结果
      */
-    async updateUserConfig(appearance: string): GoAsync<void> {
-        const valueObject = new UpdateUserConfigValueObject(appearance)
-        return await this.userDomain.updateConfig(valueObject)
+    async updateUserConfig(updateUserConfigViewObject: UpdateUserConfigViewObject): GoAsync<void> {
+        // 创建更新用户配置值对象
+        const updateUserConfigValueObject = new UpdateUserConfigValueObject()
+        updateUserConfigValueObject.appearance = updateUserConfigViewObject.appearance || null
+        // 更新用户设置
+        const err = await this.userDomain.updateConfig(updateUserConfigValueObject)
+        if (err !== null) return err
+        // 更新存储
+        this.userStore.updateUserConfig(updateUserConfigViewObject)
+        // 返回
+        return null
     }
 
     /**
@@ -137,5 +155,4 @@ export class UserUseCase {
         return new UserUseCase(domain, userStore)
     }
 }
-
 
