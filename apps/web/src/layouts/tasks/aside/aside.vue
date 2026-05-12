@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import projectSmartList from '@/components/tasks/smartlists/project-smart-list.vue'
-import FilterSmartList from '@/components/tasks/smartlists/filter-smart-list.vue'
+// import FilterSmartList from '@/components/tasks/smartlists/filter-smart-list.vue'
 import TagSmartList from '@/components/tasks/smartlists/tag-smart-list.vue'
 import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
 import type { NaoSmartListLinkVO } from '@nao-todo/components'
@@ -93,7 +93,7 @@ const openDialog = (dialogName: string) => {
                     @open-project-creator="() => openDialog('project-creator')"
                     @open-project-manager="() => openDialog('project-manager')"
                 />
-                <filter-smart-list />
+                <!-- <filter-smart-list /> -->
                 <tag-smart-list
                     :links="tagLinks"
                     @open-tag-creator="() => openDialog('tag-creator')"
