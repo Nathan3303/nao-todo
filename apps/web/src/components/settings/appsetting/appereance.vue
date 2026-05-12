@@ -1,9 +1,9 @@
 <template>
     <nue-div theme="appereance-wrapper">
-        <nue-text theme="title">
-            外观设置
-            <nue-icon :name="loading ? 'loading' : 'check'" size="16px" v-if="loading" />
-        </nue-text>
+        <nue-div>
+            <nue-text theme="title"> 外观设置 </nue-text>
+            <nue-icon v-show="loading" :name="loading ? 'loading' : 'check'" spin size="1rem" />
+        </nue-div>
         <nue-text theme="description">自定义视觉与感受，选择你喜欢的主题！</nue-text>
         <nue-div theme="body">
             <!-- Theme Cards Container -->
@@ -21,10 +21,9 @@
                     </div>
 
                     <!-- Info Area -->
-                    <div class="theme-card__info">
-                        <nue-icon :name="option.icon" size="16px" />
-                        <nue-text size="12px">{{ option.label }}</nue-text>
-                    </div>
+                    <!-- <div class="theme-card__info"> -->
+                    <!-- <nue-text>{{ option.label }}</nue-text> -->
+                    <!-- </div> -->
 
                     <!-- Check Indicator -->
                     <div v-if="currentTheme === option.value" class="theme-card__check">
@@ -106,149 +105,53 @@ const selectTheme = async (mode: ThemeMode) => {
     .nue-div--body {
         flex-direction: column;
         flex-wrap: nowrap;
-        gap: 1.5rem;
+        gap: 1rem;
         margin-top: 0.5rem;
-
-        .theme-cards {
-            display: flex;
-            flex-direction: row;
-        }
 
         .theme-card {
             position: relative;
-            height: 160px;
-            border-radius: 12px;
-            border: 1px solid var(--nue-primary-color-500);
-            background: var(--nue-primary-color-500);
             cursor: pointer;
-            display: flex;
-            flex-direction: column;
             overflow: hidden;
-            flex: 1;
-            min-width: 140px;
-        }
+            box-sizing: border-box;
+            flex: auto;
+            width: 30%;
+            max-width: 20rem;
+            aspect-ratio: 16/9;
+            border: 2px solid var(--nue-border-color);
+            border-radius: var(--nue-primary-radius);
+            box-shadow: var(--nue-secondary-shadow);
 
-        .theme-card:hover {
-            box-shadow: var(--nue-primary-shadow);
-        }
-
-        .theme-card--active {
-            border-color: var(--nue-primary-color-500);
-        }
-
-        .theme-card__preview {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 8px;
-            background: var(--nue-primary-color-500);
-        }
-
-        .preview-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 6px;
-        }
-
-        .theme-card__info {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 10px;
-            border-top: 1px solid var(--nue-primary-color-300);
-            background: var(--nue-primary-color-100);
-        }
-
-        .theme-card__check {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: var(--nue-success-color-50);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--nue-primary-color-0);
-        }
-    }
-}
-
-@media (max-width: 768px) {
-    .nue-div--appereance-wrapper {
-        .nue-div--body {
-            .theme-cards {
-                flex-direction: column;
-                gap: 1rem;
+            &:hover {
+                transform: translateY(-0.25rem);
+                transition: transform var(--nue-animation-duration-short) linear;
             }
 
-            .theme-card {
-                height: 120px;
-                flex-direction: row;
-                min-width: 100%;
+            .preview-image {
                 width: 100%;
-            }
-
-            .theme-card__preview {
-                flex: 1;
-                padding: 16px;
+                height: 100%;
+                object-fit: contain;
             }
 
             .theme-card__info {
-                width: 100px;
-                border-top: none;
-                border-left: 1px solid var(--nue-primary-color-300);
-                flex-direction: column;
-                gap: 8px;
-                padding: 16px 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: var(--nue-padding-sm);
+                font-size: var(--nue-text-sm);
             }
 
             .theme-card__check {
-                top: 12px;
-                right: 12px;
-                width: 24px;
-                height: 24px;
-            }
-        }
-    }
-}
-
-@media (max-width: 480px) {
-    .nue-div--appereance-wrapper {
-        gap: 0.75rem;
-
-        .nue-text--title {
-            font-size: var(--nue-text-df);
-        }
-
-        .nue-div--body {
-            gap: 1rem;
-            margin-top: 0.25rem;
-
-            .theme-card {
-                height: 100px;
-                border-radius: 10px;
-            }
-
-            .theme-card__preview {
-                padding: 12px;
-            }
-
-            .theme-card__info {
-                width: 85px;
-                padding: 12px 8px;
-                gap: 6px;
-            }
-
-            .theme-card__check {
+                position: absolute;
                 top: 8px;
                 right: 8px;
                 width: 20px;
                 height: 20px;
+                border-radius: 50%;
+                background: var(--nue-success-color-50);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--nue-primary-color-0);
             }
         }
     }
