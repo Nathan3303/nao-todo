@@ -17,7 +17,6 @@ import type {
     UpdateTagPreferenceRes,
     UpdateTagReq
 } from '../types'
-import { defaultPreference } from '../../consts/preference'
 import {
     TagEntity,
     TagPreferenceEntity,
@@ -25,6 +24,7 @@ import {
     UpdateTagValueObject,
     type TagRepository
 } from '@nao-todo/domain/tag'
+import { defaultColumns } from '../../consts/tasks'
 
 /**
  * 标签仓库实现
@@ -168,14 +168,7 @@ export const useTagRepository = (requester: Requester): TagRepository => {
         }
         // 4. 失败返回默认值
         return [
-            new TagPreferenceEntity(
-                '',
-                '',
-                tagId,
-                defaultPreference.viewType,
-                defaultPreference.getTasksOptions,
-                defaultPreference.columns
-            ),
+            new TagPreferenceEntity('', '', tagId, 'table', '{}', JSON.stringify(defaultColumns)),
             null
         ]
     }

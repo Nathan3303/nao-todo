@@ -30,7 +30,7 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     {
         key: 'givenUpAt',
         label: columnLabels.givenUpAt,
-        visible: true,
+        visible: false,
         width: null,
         minWidth: 100,
         maxWidth: 200,
@@ -224,4 +224,5 @@ export default (initialConfig?: TableLayoutConfig, tableId: string = 'default') 
         syncFromProps
     }
 }
+
 

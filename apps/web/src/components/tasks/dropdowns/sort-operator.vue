@@ -10,7 +10,7 @@ import type {
     GetTasksSortOptions,
     ProjectPreferenceViewObject
 } from '@nao-todo/types'
-import { columnLabels } from '@nao-todo/infrastructure/consts/tasks'
+import { columnLabels, sortFieldLabels } from '@nao-todo/infrastructure/consts/tasks'
 
 defineOptions({ name: 'TasksDropdownSortOperator' })
 const props = defineProps<{
@@ -26,7 +26,7 @@ const isSorting = computed(() => props.modelValue.field !== undefined)
 
 const fieldOptions = computed(() => {
     const options: InnerDropdownOptionVO[] = []
-    Object.keys(props.columns).forEach((key) => {
+    Object.keys(sortFieldLabels).forEach((key) => {
         options.push({
             icon: 'plus-circle',
             label: columnLabels[key as keyof ProjectPreferenceViewObject['columns']],
@@ -71,6 +71,7 @@ const handleOrderDropdownExecute = (order: string) => {
 
 <template>
     <inner-dropdown
+        theme="default"
         title="字段"
         icon="select"
         :suffix="isSorting"
@@ -104,3 +105,4 @@ const handleOrderDropdownExecute = (order: string) => {
 </template>
 
 <style scoped></style>
+

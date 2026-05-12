@@ -14,14 +14,12 @@ defineProps<{ title: string }>()
 .nue-div--block {
     flex-direction: column;
     gap: var(--nue-gap-2xs);
-    width: 100%;
     font-size: var(--nue-text-sm);
     user-select: none;
     -webkit-user-select: none;
 
     > .nue-text--title {
-        font-weight: 500;
-        color: var(--nue-primary-color-500);
+        color: var(--nue-primary-color-600);
         padding: var(--nue-padding-2xs) var(--nue-padding-xs);
     }
 }

@@ -17,35 +17,6 @@
     }
 }
 
-/* Block */
-/* .nue-div.nue-div--block {
-    flex-direction: column;
-    gap: var(--nue-gap-xs);
-    width: 100%;
-    font-size: var(--nue-text-sm);
-    user-select: none;
-    -webkit-user-select: none;
-
-    > .nue-text--title {
-        font-weight: 500;
-        color: var(--nue-primary-color-500);
-        padding: var(--nue-padding-xs) 0;
-    }
-
-    > .nue-divider--title {
-        padding: var(--nue-padding-xs) 0;
-        box-sizing: border-box;
-
-        .nue-divider__content {
-            font-size: var(--nue-text-sm);
-            font-weight: 500;
-            color: var(--nue-primary-color-500);
-            margin: 0;
-            padding-left: 0;
-        }
-    }
-} */
-
 /* Form Item */
 .nue-div.nue-div--form-item {
     flex-direction: column;

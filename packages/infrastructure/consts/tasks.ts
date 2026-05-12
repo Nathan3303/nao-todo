@@ -1,4 +1,4 @@
-import type { TaskColumnOptions } from '@nao-todo/types'
+import type { TaskColumnOptions, TaskSortFields } from '@nao-todo/types'
 
 /**
  * 待办事项状态选项
@@ -56,6 +56,24 @@ export const defaultColumns: Record<keyof TaskColumnOptions, boolean> = {
     createdAt: false,
     updatedAt: true,
     deletedAt: false
+}
+
+/**
+ * 待办事项排序字段标签映射
+ */
+export const sortFieldLabels: Record<keyof TaskSortFields, string> = {
+    name: '名称',
+    state: '状态',
+    priority: '优先级',
+    startAt: '开始时间',
+    endAt: '结束时间',
+    tags: '标签',
+    givenUpAt: '放弃时间',
+    starMarkAt: '星标时间',
+    archivedAt: '归档时间',
+    createdAt: '创建时间',
+    updatedAt: '更新时间',
+    deletedAt: '删除时间'
 }
 
 /**

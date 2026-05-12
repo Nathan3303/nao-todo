@@ -242,9 +242,9 @@ const createCommentHandler = async (content: string) => {
         align-items: center;
         justify-content: center;
         font-size: var(--nue-text-sm);
-        background-color: var(--nue-danger-color-30);
+        background-color: var(--nue-error-color-30);
         height: var(--nue-box-size-sm);
-        color: var(--nue-danger-color-80);
+        color: var(--nue-error-color-80);
         width: 100%;
     }
 }

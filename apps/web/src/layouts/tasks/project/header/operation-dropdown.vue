@@ -90,19 +90,23 @@ onMounted(() => {
         </dropdown-div-block>
         <nue-divider />
         <dropdown-div-block title="清单操作">
-            <inner-dropdown-option icon="edit" title="修改清单" execute-id="update-project" />
+            <inner-dropdown-option
+                icon="edit"
+                title="修改清单名称和描述"
+                execute-id="update-project"
+            />
             <inner-dropdown-option
                 color="red"
                 icon="clear"
                 title="删除清单"
                 execute-id="delete-project"
             />
-            <inner-dropdown-option
+            <!-- <inner-dropdown-option
                 disabled
                 icon="archive"
                 title="归档清单"
                 execute-id="archive-project"
-            />
+            /> -->
         </dropdown-div-block>
     </tasks-operations-dropdown>
 </template>

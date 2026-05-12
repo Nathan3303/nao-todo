@@ -84,7 +84,7 @@ export class TaskUseCase {
         const err = await this.taskDomain.remove(taskId)
         if (err !== null) return err
         // 更新任务状态为已删除
-        this.store.updateTask(taskId, { isDeleted: true })
+        this.store.updateTask(taskId, { isDeleted: true, deletedAt: dayjs().toISOString() })
         // 返回成功
         return null
     }

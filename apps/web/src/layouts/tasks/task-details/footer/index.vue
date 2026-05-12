@@ -44,10 +44,10 @@ const handleDropdownExecute = async (executeId: string) => {
                 @select="(npId) => taskHandler.updateTask(vo!.id, { projectId: npId })"
             />
             <nue-dropdown
+                theme="menu"
                 close-when-executed
                 placement="top-end"
                 @execute="handleDropdownExecute"
-                theme="small"
             >
                 <template #trigger="{ trigger }">
                     <nue-button icon="more" theme="small" @click="trigger">更多</nue-button>
@@ -60,15 +60,15 @@ const handleDropdownExecute = async (executeId: string) => {
                         execute-id="copy-todo"
                     />
                 </dropdown-div-block>
-                <dropdown-div-block title="放弃或恢复">
+                <nue-divider />
+                <dropdown-div-block title="删除 或 放弃 任务">
                     <inner-dropdown-option
+                        :disabled="vo.isDeleted"
                         :title="vo.isGivenUp ? '取消放弃待办任务' : '放弃待办任务'"
                         :icon="vo.isGivenUp ? 'restore' : 'clear'"
                         :execute-id="vo.isGivenUp ? 'un-giveup-todo' : 'giveup-todo'"
                         :theme="vo.isGivenUp ? void 0 : 'orange'"
                     />
-                </dropdown-div-block>
-                <dropdown-div-block title="删除或恢复">
                     <inner-dropdown-option
                         :title="vo.isDeleted ? '恢复待办任务' : '删除待办任务'"
                         :icon="vo.isDeleted ? 'restore' : 'delete'"

@@ -2,19 +2,12 @@
 import { computed } from 'vue'
 
 defineOptions({ name: 'TasksDropdownTextFilter' })
-const props = defineProps<{
-    placeholder?: string
-    modelValue: string
-}>()
-const emit = defineEmits<{
-    (e: 'update:modelValue', value: string): void
-}>()
+const props = defineProps<{ placeholder?: string; modelValue: string }>()
+const emit = defineEmits<{ (e: 'update:modelValue', value: string): void }>()
 
 const inputValue = computed({
     get: () => props.modelValue,
-    set: (value) => {
-        emit('update:modelValue', value)
-    }
+    set: (value) => emit('update:modelValue', value)
 })
 </script>
 
@@ -34,13 +27,11 @@ const inputValue = computed({
 .nue-input {
     border: none;
     border-radius: 0;
-    --nue-icon-size: var(--nue-text-sm);
     font-size: var(--nue-text-sm);
-    padding: 0.25rem 0.75rem;
-    gap: 8px;
-
-    &:deep(.nue-input__input) {
-        line-height: normal;
-    }
+    padding: 0 var(--nue-padding-sm);
+    height: var(--nue-box-size-xs);
+    gap: var(--nue-gap-2xs);
+    color: var(--nue-primary-color-900);
 }
 </style>
+

@@ -4,7 +4,7 @@ import {
     TagPreferenceEntity,
     UpdateTagValueObject
 } from '@nao-todo/domain/tag'
-import { defaultPreferenceColumns } from '@nao-todo/infrastructure/consts/preference'
+import { defaultColumns } from '@nao-todo/infrastructure/consts/tasks'
 import jsonParse from '@nao-todo/infrastructure/utils/json-parse'
 import type {
     TagViewObject,
@@ -53,7 +53,7 @@ export const tagPreferenceEntityToViewObject = (
     vo.tagId = tagPreferenceEntity.tagId
     vo.viewType = tagPreferenceEntity.viewType
     vo.getTasksOptions = err1 !== null ? { limit: 20 } : getTasksOptions
-    vo.columns = err2 !== null ? defaultPreferenceColumns : columns
+    vo.columns = err2 !== null ? defaultColumns : { ...defaultColumns, ...columns }
     return vo
 }
 
@@ -108,4 +108,5 @@ export const updateTagViewObjectToValueObject = (
     if (updateTagViewObject.color) updateTagValueObject.color = updateTagViewObject.color
     return updateTagValueObject
 }
+
 

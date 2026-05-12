@@ -52,6 +52,7 @@ export type UpdateTaskViewObject = {
     isGivenUp?: TaskViewObject['isGivenUp']
     givenUpAt?: TaskViewObject['givenUpAt']
     tags?: TaskViewObject['tags']
+    deletedAt?: TaskViewObject['deletedAt']
 }
 
 export type GetTasksOptions = {
@@ -81,6 +82,21 @@ export type TaskColumnOptions = {
     startAt: boolean
     endAt: boolean
     project: boolean
+    tags: boolean
+    givenUpAt: boolean
+    starMarkAt: boolean
+    archivedAt: boolean
+    createdAt: boolean
+    updatedAt: boolean
+    deletedAt: boolean
+}
+
+export type TaskSortFields = {
+    name: boolean
+    state: boolean
+    priority: boolean
+    startAt: boolean
+    endAt: boolean
     tags: boolean
     givenUpAt: boolean
     starMarkAt: boolean

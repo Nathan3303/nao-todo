@@ -5,10 +5,10 @@ import type {
 import type {
     BuiltInProjectViewObject,
     BuiltInProjectPreferenceViewObject,
-    GetTasksOptions,
-    TaskColumnOptions
+    GetTasksOptions
 } from '@nao-todo/types'
 import jsonParse from '@nao-todo/infrastructure/utils/json-parse'
+import { defaultColumns } from '@nao-todo/infrastructure/consts/tasks'
 
 /**
  * 内建项目实体转换为视图对象
@@ -57,9 +57,9 @@ export const builtInProjectPreferenceEntity2ViewObject = (
     }
     const [columns, err2] = jsonParse(entity.columns)
     if (err2 !== null) {
-        vo.columns = {} as TaskColumnOptions
+        vo.columns = defaultColumns
     } else {
-        vo.columns = columns as TaskColumnOptions
+        vo.columns = { ...defaultColumns, ...columns }
     }
     return vo
 }

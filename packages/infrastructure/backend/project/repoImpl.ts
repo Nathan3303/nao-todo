@@ -18,7 +18,6 @@ import type {
     UpdateProjectReq,
     UpdateProjectRes
 } from '../types'
-import { defaultPreference } from '@nao-todo/infrastructure/consts/preference'
 import {
     ProjectEntity,
     ProjectPreferenceEntity,
@@ -26,6 +25,7 @@ import {
     UpdateProjectValueObject,
     type ProjectRepository
 } from '@nao-todo/domain/project'
+import { defaultColumns } from '../../consts/tasks'
 
 export const useProjectRepository = (requester: Requester): ProjectRepository => {
     /**
@@ -227,9 +227,9 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
             new ProjectPreferenceEntity(
                 '',
                 projectId,
-                defaultPreference.viewType,
-                defaultPreference.getTasksOptions,
-                defaultPreference.columns,
+                'table',
+                '{}',
+                JSON.stringify(defaultColumns),
                 '',
                 ''
             ),

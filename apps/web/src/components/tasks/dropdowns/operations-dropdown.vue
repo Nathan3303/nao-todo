@@ -15,6 +15,7 @@ defineExpose({ register })
         size="small"
         @execute="(executeId) => execute(executeId)"
         group="tasks-operations-dropdown"
+        theme="operations"
     >
         <template #trigger="{ trigger }">
             <slot name="trigger" :trigger="trigger">
@@ -24,3 +25,10 @@ defineExpose({ register })
         <slot></slot>
     </nue-dropdown>
 </template>
+
+<style>
+.nue-dropdown--operations {
+    min-width: 12rem;
+}
+</style>
+
