@@ -44,13 +44,15 @@ export class UpdateTaskValueObject {
         if (this.startAt !== void 0 && this.startAt !== null) {
             const startAt = dayjs(this.startAt)
             if (!startAt.isValid()) return '任务开始时间无效'
-            if (startAt.isAfter(dayjs(this.endAt))) return '任务开始时间不能晚于结束时间'
+            if (this.endAt && startAt.isAfter(dayjs(this.endAt)))
+                return '任务开始时间不能晚于结束时间'
             this.startAt = startAt.toISOString()
         }
         if (this.givenUpAt !== void 0 && this.givenUpAt !== null) {
             const givenUpAt = dayjs(this.givenUpAt)
             if (!givenUpAt.isValid()) return '放弃时间无效'
-            if (givenUpAt.isBefore(dayjs(this.startAt))) return '放弃时间不能早于任务开始时间'
+            if (this.startAt && givenUpAt.isBefore(dayjs(this.startAt)))
+                return '放弃时间不能早于任务开始时间'
             this.givenUpAt = givenUpAt.toISOString()
         }
         return null
