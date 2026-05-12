@@ -47,7 +47,7 @@ onMounted(() => emit('register', open, close))
 
 <style>
 .nue-dialog--project-creator {
-    min-width: min(24rem, 100vw);
+    min-width: min(20rem, 100vw);
 }
 </style>
 

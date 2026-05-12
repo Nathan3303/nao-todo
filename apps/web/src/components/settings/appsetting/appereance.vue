@@ -16,14 +16,8 @@
                     @click="selectTheme(option.value)"
                 >
                     <!-- Preview Area -->
-                    <div class="theme-card__preview" :class="option.previewClass">
-                        <div class="preview-window">
-                            <div class="preview-header"></div>
-                            <div class="preview-content">
-                                <div class="preview-line"></div>
-                                <div class="preview-line short"></div>
-                            </div>
-                        </div>
+                    <div class="theme-card__preview">
+                        <img :src="option.previewImage" :alt="option.label" class="preview-image" />
                     </div>
 
                     <!-- Info Area -->
@@ -54,27 +48,31 @@ defineOptions({ name: 'SettingsAppAppereance' })
 
 const themeStore = useThemeStore()
 
-const themeOptions: Array<{ value: ThemeMode; label: string; icon: string; previewClass: string }> =
-    [
-        {
-            value: 'light',
-            label: '浅色',
-            icon: 'sun',
-            previewClass: 'theme-preview-light'
-        },
-        {
-            value: 'dark',
-            label: '深色',
-            icon: 'moon',
-            previewClass: 'theme-preview-dark'
-        },
-        {
-            value: 'system',
-            label: '跟随系统',
-            icon: 'desktop',
-            previewClass: 'theme-preview-system'
-        }
-    ]
+const themeOptions: Array<{
+    value: ThemeMode
+    label: string
+    icon: string
+    previewImage: string
+}> = [
+    {
+        value: 'light',
+        label: '浅色',
+        icon: 'sun',
+        previewImage: '/images/naotodo-theme-mode-light.png'
+    },
+    {
+        value: 'dark',
+        label: '深色',
+        icon: 'moon',
+        previewImage: '/images/naotodo-theme-mode-dark.png'
+    },
+    {
+        value: 'system',
+        label: '跟随系统',
+        icon: 'desktop',
+        previewImage: '/images/naotodo-theme-mode-system.png'
+    }
+]
 const loading = ref(false)
 
 const { userUseCase } = inject<SettingsViewContext>(SETTINGS_VIEW_CONTEXT_KEY)!
@@ -143,82 +141,15 @@ const selectTheme = async (mode: ThemeMode) => {
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 12px;
+            padding: 8px;
             background: var(--nue-primary-color-500);
         }
 
-        .preview-window {
+        .preview-image {
             width: 100%;
-            height: 70px;
+            height: 100%;
+            object-fit: cover;
             border-radius: 6px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .preview-header {
-            height: 16px;
-            border-bottom: 1px solid;
-        }
-
-        .preview-content {
-            flex: 1;
-            padding: 8px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .preview-line {
-            height: 6px;
-            border-radius: 3px;
-            opacity: 0.6;
-        }
-
-        .preview-line.short {
-            width: 60%;
-        }
-
-        .theme-preview-light .preview-window {
-            background: #ffffff;
-            border: 1px solid #e0e0e0;
-        }
-
-        .theme-preview-light .preview-header {
-            background: #f5f5f5;
-            border-bottom-color: #e0e0e0;
-        }
-
-        .theme-preview-light .preview-line {
-            background: #bdbdbd;
-        }
-
-        .theme-preview-dark .preview-window {
-            background: #1a1a1a;
-            border: 1px solid #333;
-        }
-
-        .theme-preview-dark .preview-header {
-            background: #2a2a2a;
-            border-bottom-color: #333;
-        }
-
-        .theme-preview-dark .preview-line {
-            background: #555;
-        }
-
-        .theme-preview-system .preview-window {
-            background: linear-gradient(90deg, #ffffff 50%, #1a1a1a 50%);
-            border: 1px solid #ccc;
-        }
-
-        .theme-preview-system .preview-header {
-            background: linear-gradient(90deg, #f5f5f5 50%, #2a2a2a 50%);
-            border-bottom-color: #999;
-        }
-
-        .theme-preview-system .preview-line {
-            background: linear-gradient(90deg, #bdbdbd 50%, #555 50%);
         }
 
         .theme-card__info {
@@ -267,11 +198,6 @@ const selectTheme = async (mode: ThemeMode) => {
                 padding: 16px;
             }
 
-            .preview-window {
-                height: 80px;
-                max-width: 200px;
-            }
-
             .theme-card__info {
                 width: 100px;
                 border-top: none;
@@ -310,24 +236,6 @@ const selectTheme = async (mode: ThemeMode) => {
 
             .theme-card__preview {
                 padding: 12px;
-            }
-
-            .preview-window {
-                height: 65px;
-                max-width: 160px;
-            }
-
-            .preview-header {
-                height: 14px;
-            }
-
-            .preview-content {
-                padding: 6px;
-                gap: 5px;
-            }
-
-            .preview-line {
-                height: 5px;
             }
 
             .theme-card__info {

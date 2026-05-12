@@ -42,7 +42,7 @@ onMounted(() => emit('register', open, close))
 </script>
 
 <template>
-    <nue-dialog v-model="visible" ref="dialogRef">
+    <nue-dialog theme="tag-creator" v-model="visible" ref="dialogRef">
         <template #header>
             <nue-text>创建标签</nue-text>
             <nue-button @click="close" icon="clear" theme="icon,ghost,small" />
@@ -51,21 +51,27 @@ onMounted(() => emit('register', open, close))
             <nue-div vertical>
                 <tag-form
                     v-model="formData"
-                    :disabled="states.value.creating"
-                    :is-name-empty="states.value.isNameEmpty"
+                    :disabled="states.creating"
+                    :is-name-empty="states.isNameEmpty"
                 />
                 <nue-div align="stretch" gap="8px" vertical>
                     <nue-text color="gray" size="12px">选择标签颜色：</nue-text>
-                    <tag-color-selector v-model="states.value.color" />
+                    <tag-color-selector v-model="states.color" />
                 </nue-div>
             </nue-div>
         </template>
         <template #footer>
             <nue-button @click="close">取消</nue-button>
-            <nue-button :loading="states.value.creating" theme="primary" @click="handleSubmit">
+            <nue-button :loading="states.creating" theme="primary" @click="handleSubmit">
                 创建
             </nue-button>
         </template>
     </nue-dialog>
 </template>
+
+<style>
+.nue-dialog--tag-creator {
+    min-width: min(20rem, 100vw);
+}
+</style>
 
