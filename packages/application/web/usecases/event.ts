@@ -187,8 +187,8 @@ export class EventUseCase {
             // 插入到最后面
             newSortId = prevEvent.sortId + INTERVAL
         } else {
-            // 插入到中间，取平均值
-            newSortId = (prevEvent.sortId + nextEvent.sortId) / 2
+            // 插入到中间，取平均值并转换为整数
+            newSortId = Math.round((prevEvent.sortId + nextEvent.sortId) / 2)
         }
 
         // 检查是否需要重建：

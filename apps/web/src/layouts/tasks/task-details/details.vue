@@ -9,7 +9,7 @@ defineOptions({ name: 'TaskDetails' })
 const props = defineProps<TaskDetailsProps>()
 const emit = defineEmits<TaskDetailsEmits>()
 
-const { error, task, handleDeleteTask, handleRestoreTask } = useTaskDetails(props, emit)
+const { error, task, closeDetails } = useTaskDetails(props, emit)
 </script>
 
 <template>
@@ -21,9 +21,7 @@ const { error, task, handleDeleteTask, handleRestoreTask } = useTaskDetails(prop
         style="height: 100%"
     >
         <nue-div v-if="false" justify="center" style="margin-top: 1rem">
-            <nue-button theme="primary,small" @click="emit('closeDetails')">
-                返回任务列表
-            </nue-button>
+            <nue-button theme="primary,small" @click="closeDetails">返回任务列表</nue-button>
         </nue-div>
     </nue-empty>
     <nue-container v-else id="TasksTodoDetailsContainer" class="tasks-details-view">
@@ -33,7 +31,7 @@ const { error, task, handleDeleteTask, handleRestoreTask } = useTaskDetails(prop
                 <details-main />
             </nue-content>
         </nue-main>
-        <details-footer @deleteTask="handleDeleteTask" @restoreTask="handleRestoreTask" />
+        <details-footer />
     </nue-container>
 </template>
 
