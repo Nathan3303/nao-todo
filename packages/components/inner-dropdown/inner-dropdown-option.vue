@@ -12,6 +12,7 @@ defineProps<InnerDropdownOptionProps>()
         :execute-id="executeId"
         :disabled="disabled"
         :text="title"
+        size="small"
     >
         <template #append>
             <slot>
