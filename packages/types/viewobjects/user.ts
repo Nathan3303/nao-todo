@@ -9,12 +9,10 @@ export type UserViewObject = {
     createdAt: string
     updatedAt: string
     config?: WithNull<UserConfigViewObject>
-    // createdFrom?: string
 }
 
 export type UserConfigViewObject = {
-    state: number
-    theme?: string
+    appearance?: string
     language?: string
 }
 

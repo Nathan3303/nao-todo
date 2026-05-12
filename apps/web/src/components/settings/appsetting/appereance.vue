@@ -40,8 +40,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { useThemeStore, type ThemeMode } from '@/stores'
+import { SETTINGS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import type { SettingsViewContext } from '@/views/index/settings/settings-view'
+import { themeModeToAppearance } from '@/infrastructure/hooks/use-sync-theme-config'
 
 defineOptions({ name: 'SettingsAppAppereance' })
 
@@ -73,10 +76,13 @@ const themeOptions: Array<{
     }
 ]
 
+const { userUseCase } = inject<SettingsViewContext>(SETTINGS_VIEW_CONTEXT_KEY)!
+
 const currentTheme = computed(() => themeStore.themeMode)
 
-const selectTheme = (mode: ThemeMode) => {
+const selectTheme = async (mode: ThemeMode) => {
     themeStore.setTheme(mode)
+    await userUseCase.updateUserConfig(themeModeToAppearance(mode))
 }
 </script>
 

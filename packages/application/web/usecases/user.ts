@@ -3,9 +3,10 @@ import type {
     UpdateNicknameViewObject,
     UpdatePasswordViewObject,
     UpdateUserViewObject,
+    UserConfigViewObject,
     UserViewObject
 } from '@nao-todo/types'
-import { UserDomain } from '@nao-todo/domain/user'
+import { UserDomain, UpdateUserConfigValueObject } from '@nao-todo/domain/user'
 import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 import { useUserRepository } from '@nao-todo/infrastructure/backend/user/repoImpl'
 import {
@@ -87,6 +88,26 @@ export class UserUseCase {
             updatePasswordViewObjectToValueObject(updatePasswordViewObject)
         // 更新用户密码
         return await this.userDomain.updatePassword(updatePasswordValueObject)
+    }
+
+    /**
+     * 加载用户配置
+     * @returns 用户配置
+     */
+    async loadUserConfig(): GoAsync<UserConfigViewObject> {
+        const [config, err] = await this.userDomain.getConfig()
+        if (err !== null) return [null, err]
+        return [config as UserConfigViewObject, null]
+    }
+
+    /**
+     * 更新用户配置
+     * @param appearance 外观设置值
+     * @returns 更新结果
+     */
+    async updateUserConfig(appearance: string): GoAsync<void> {
+        const valueObject = new UpdateUserConfigValueObject(appearance)
+        return await this.userDomain.updateConfig(valueObject)
     }
 
     /**

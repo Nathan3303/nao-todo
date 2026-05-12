@@ -1,7 +1,7 @@
 import type { GoAsync } from '@nao-todo/types'
 import type { UserRepository } from './repositories'
 import { UserEntity } from './entities'
-import { UpdateNicknameValueObject, UpdatePasswordValueObject } from './valueobjects'
+import { UpdateNicknameValueObject, UpdatePasswordValueObject, UpdateUserConfigValueObject } from './valueobjects'
 import { unwrapError } from '@nao-todo/infrastructure/utils'
 
 export class UserDomain {
@@ -67,5 +67,27 @@ export class UserDomain {
      */
     async updateAvatarFile(file: File): GoAsync<string> {
         return await this.userRepo.updateAvatarFile(file)
+    }
+
+    /**
+     * 获取用户配置
+     * @returns 用户配置
+     */
+    async getConfig(): GoAsync<{ appearance: string }> {
+        return await this.userRepo.getConfig()
+    }
+
+    /**
+     * 更新用户配置
+     * @param valueObject 更新用户配置值对象
+     * @returns 更新结果
+     */
+    async updateConfig(valueObject: UpdateUserConfigValueObject): GoAsync<void> {
+        const validateErr = valueObject.validate()
+        if (validateErr !== null) {
+            console.error(unwrapError(validateErr))
+            return validateErr
+        }
+        return await this.userRepo.updateConfig(valueObject)
     }
 }

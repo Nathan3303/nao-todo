@@ -1,14 +1,15 @@
-import SparkMD5 from 'spark-md5'
 import {
     UpdateNicknameValueObject,
     UpdatePasswordValueObject,
+    UpdateUserConfigValueObject,
     UserEntity,
     type UserRepository
 } from '@nao-todo/domain/user'
 import type { Go, GoAsync } from '@nao-todo/types'
+import SparkMD5 from 'spark-md5'
 import type { Requester } from '../../requester/types'
 import type { ResponseData } from '../types'
-import type { GetUserProfileRes, UpdateAvatarURLRes } from '../types/user'
+import type { GetUserConfigRes, GetUserProfileRes, UpdateAvatarURLRes } from '../types/user'
 import { getUserProfileRes2UserEntity } from './converters'
 
 /**
@@ -171,6 +172,38 @@ export const useUserRepository = (requester: Requester): UserRepository => {
     }
 
     /**
+     * 获取用户配置
+     * @returns 用户配置
+     */
+    const getConfig = async (): GoAsync<{ appearance: string }> => {
+        const response = await requester.get('/user/config', {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
+        })
+        const res = response.data as ResponseData
+        if (res.code !== 10110) return [null, res.message]
+        const data = res.data as GetUserConfigRes
+        return [{ appearance: data.appearance }, null]
+    }
+
+    /**
+     * 更新用户配置
+     * @param valueObject 更新用户配置值对象
+     * @returns 更新结果
+     */
+    const updateConfig = async (valueObject: UpdateUserConfigValueObject): GoAsync<void> => {
+        const response = await requester.put(
+            '/user/config',
+            { appearance: valueObject.appearance },
+            {
+                headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
+            }
+        )
+        const res = response.data as ResponseData
+        if (res.code !== 10120) return res.message
+        return null
+    }
+
+    /**
      * 加密密码（md5）
      * @param password 密码
      * @returns 加密后的密码
@@ -186,7 +219,9 @@ export const useUserRepository = (requester: Requester): UserRepository => {
         updateAvatarURL,
         updateAvatarFile,
         deactive,
-        active
+        active,
+        getConfig,
+        updateConfig
     }
 }
 
