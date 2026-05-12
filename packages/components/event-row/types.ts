@@ -13,7 +13,6 @@ export type EventRowProps = {
 }
 
 export type EventRowEmits = {
-    (event: 'update', payload: EventRowUpdatePayload): void
-    (event: 'delete', id: string): void
+    (event: 'toTask', id: string): void
 }
 

@@ -36,7 +36,7 @@ export type TasksViewContext = {
     getProjectName: (projectId: string) => string
     getTagColor: (tagId: TagViewObject['id']) => string
     showTaskDetails: (taskId: TaskViewObject['id']) => void
-    getColumnLabel: (key: string) => string
+    getColumnLabel: (key: keyof typeof columnLabels) => string
     switchDisplayAside: () => void
 }
 
@@ -107,7 +107,7 @@ const useTasksView = () => {
     const dialogManager = useDialogManager()
 
     // @method 获取列选项标识
-    const getColumnLabel = (key: string): string => columnLabels[key] || ''
+    const getColumnLabel = (key: keyof typeof columnLabels): string => columnLabels[key] || ''
 
     // @method 显示任务详情（面板）
     const showTaskDetails = (taskId: TaskViewObject['id']) => {

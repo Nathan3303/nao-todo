@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { EventRowProps } from './types'
+import type { EventRowProps, EventRowEmits } from './types'
 
 defineOptions({ name: 'EventRow' })
 const props = defineProps<EventRowProps>()
+const emit = defineEmits<EventRowEmits>()
 
 const inputValue = ref(props.event.name)
 const updateLoading = ref(false)
@@ -51,7 +52,14 @@ const handleDelete = () => {
         />
         <nue-div theme="actions">
             <nue-icon
+                name="plus-circle"
+                title="依据该检查事项创建新任务"
+                theme="pointer"
+                @click="emit('toTask', event.id)"
+            />
+            <nue-icon
                 name="delete"
+                title="删除事件"
                 theme="pointer"
                 :color="updateLoading ? 'gray' : '#ff6f6f'"
                 @click="handleDelete"

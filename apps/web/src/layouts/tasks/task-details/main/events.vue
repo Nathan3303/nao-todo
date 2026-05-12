@@ -7,8 +7,16 @@ import { computed, inject, ref, watch } from 'vue'
 
 type FilterStatus = 'all' | 'undone' | 'done'
 
-const { vo, events, resortEvents, eventHandler, eventsLoading, eventsError, retryEvents } =
-    inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
+const {
+    vo,
+    events,
+    resortEvents,
+    eventHandler,
+    eventsLoading,
+    eventsError,
+    retryEvents,
+    makeEventToTask
+} = inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
 
 const searchQuery = ref('')
 const filterStatus = ref<FilterStatus>('all')
@@ -118,6 +126,7 @@ watch(
                     :data-eid="event.id"
                     :on-update="(id, v) => eventHandler.updateEvent(id, v)"
                     :on-delete="eventHandler.deleteEvent"
+                    @to-task="makeEventToTask"
                 />
             </nue-div>
             <input-button

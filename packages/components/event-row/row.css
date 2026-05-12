@@ -54,9 +54,11 @@
 
     > .nue-div--actions {
         visibility: hidden;
-        gap: 0.25rem;
+        gap: 0.5rem;
         align-items: center;
         flex-shrink: 0;
+        font-size: var(--nue-text-df);
+        color: var(--nue-primary-color-800);
 
         @media (max-width: 445px) {
             display: block;

@@ -1,18 +1,18 @@
-import { computed, inject, provide, ref, watch } from 'vue'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { TASK_DETAILS_CONTEXT_KEY } from './constants'
-import { EventUseCase } from '@nao-todo/application/web/usecases/event'
-import { CommentUseCase } from '@nao-todo/application/web/usecases/comment'
-import { storeToRefs } from 'pinia'
-import { useProjectsStore, useTagsStore, useTasksStore, useTaskDetailsStore } from '@/stores/tasks'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import useCommentHandler from '@/infrastructure/handlers/tasks/comment-handler'
 import useEventHandler from '@/infrastructure/handlers/tasks/event-handler'
 import useTaskHandler from '@/infrastructure/handlers/tasks/task-handler'
-import { useRouter } from 'vue-router'
-import type { TaskViewObject } from '@nao-todo/types'
-import type { TaskDetailsProps, TaskDetailsEmits, TaskDetailsContext } from './types'
+import { useProjectsStore, useTagsStore, useTaskDetailsStore, useTasksStore } from '@/stores/tasks'
 import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
+import { CommentUseCase } from '@nao-todo/application/web/usecases/comment'
+import { EventUseCase } from '@nao-todo/application/web/usecases/event'
+import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
+import type { EventViewObject, TaskViewObject } from '@nao-todo/types'
+import { storeToRefs } from 'pinia'
+import { computed, inject, provide, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { TASK_DETAILS_CONTEXT_KEY } from './constants'
+import type { TaskDetailsContext, TaskDetailsEmits, TaskDetailsProps } from './types'
 
 const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     // @viewContext TasksView context
@@ -177,6 +177,19 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         // initialize(taskId)
     }
 
+    /**
+     * 将检查事项转换为任务
+     * @param eventId 检查事项 ID
+     */
+    const makeEventToTask = (eventId: EventViewObject['id']) => {
+        const event = events.value.find((e) => e.id === eventId)
+        if (!event) return
+        tasksViewContext.dialogManager.openDialog('task-creator', {
+            name: event.name,
+            state: event.isDone ? 'done' : 'todo'
+        })
+    }
+
     // @watch 监听任务 ID
     watch(
         () => props.taskId,
@@ -205,7 +218,8 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         commentsError,
         retryEvents,
         retryComments,
-        switchTaskDetails
+        switchTaskDetails,
+        makeEventToTask
     })
 
     // @returns 返回值

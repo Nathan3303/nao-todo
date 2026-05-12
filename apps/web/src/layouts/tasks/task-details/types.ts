@@ -102,6 +102,7 @@ export type TaskDetailsMainContext = {
     commentsError: Ref<string>
     retryEvents: () => Promise<void>
     retryComments: () => Promise<void>
+    makeEventToTask: (eventId: EventViewObject['id']) => void
 }
 
 /**
