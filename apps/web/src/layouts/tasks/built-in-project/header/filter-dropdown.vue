@@ -44,15 +44,20 @@ const getTasksOptionsPriority = computed({
 
 // @proxy 清单偏好上下文 排序 属性代理
 const getTasksOptionsSort = computed({
-    get: () =>
-        preference.value?.getTasksOptions?.sort || {
-            field: 'createdAt',
-            order: 'asc'
-        },
+    get: () => preference.value?.getTasksOptions?.sort || { field: 'createdAt', order: 'asc' },
     set: (sort) => {
         if (!preference.value) return
         preference.value.getTasksOptions.sort = sort
     }
+})
+
+// @computed 根据清单偏好计算当前的筛选条件数量
+const filterCount = computed(() => {
+    let count = 0
+    if (getTasksOptionsName.value) count += 1
+    if (getTasksOptionsState.value) count += 1
+    if (getTasksOptionsPriority.value) count += 1
+    return !!count
 })
 
 // @watch 清单偏好上下文 状态 属性代理
@@ -76,7 +81,7 @@ watch(
         group="tasks-todo-filter"
     >
         <template #trigger="{ trigger }">
-            <nue-badge theme="for-ico-btn" dot>
+            <nue-badge theme="for-ico-btn" :dot="filterCount">
                 <nue-button icon="filter" theme="icon,ghost" @click.stop="trigger" />
             </nue-badge>
         </template>

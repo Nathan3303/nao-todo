@@ -3,7 +3,8 @@ import { computed } from 'vue'
 import {
     InnerDropdown,
     InnerDropdownOption,
-    type InnerDropdownOptionVO
+    type InnerDropdownOptionVO,
+    DropdownDivBlock
 } from '@nao-todo/components'
 import type {
     GetTasksOptions,
@@ -70,37 +71,34 @@ const handleOrderDropdownExecute = (order: string) => {
 </script>
 
 <template>
-    <inner-dropdown
-        theme="default"
-        title="字段"
-        icon="select"
-        :suffix="isSorting"
-        @execute="handleFieldDropdownExecute"
-    >
-        <inner-dropdown-option
-            v-for="option in fieldOptions"
-            :key="option.label"
-            :icon="option.icon"
-            :title="option.label"
-            :execute-id="option.value"
-            :checked="option.checked"
-        />
+    <inner-dropdown title="排序字段" icon="select" @execute="handleFieldDropdownExecute">
+        <dropdown-div-block title="选择排序字段">
+            <inner-dropdown-option
+                v-for="option in fieldOptions"
+                :key="option.label"
+                :icon="option.icon"
+                :title="option.label"
+                :execute-id="option.value"
+                :checked="option.checked"
+            />
+        </dropdown-div-block>
     </inner-dropdown>
     <inner-dropdown
-        title="顺序"
+        title="排序顺序"
         icon="select"
         :disabled="!isSorting"
-        :suffix="isSorting"
         @execute="handleOrderDropdownExecute"
     >
-        <inner-dropdown-option
-            v-for="option in orderOptions"
-            :key="option.label"
-            :icon="option.icon"
-            :title="option.label"
-            :execute-id="option.value"
-            :checked="option.checked"
-        />
+        <dropdown-div-block title="选择排序顺序">
+            <inner-dropdown-option
+                v-for="option in orderOptions"
+                :key="option.label"
+                :icon="option.icon"
+                :title="option.label"
+                :execute-id="option.value"
+                :checked="option.checked"
+            />
+        </dropdown-div-block>
     </inner-dropdown>
 </template>
 

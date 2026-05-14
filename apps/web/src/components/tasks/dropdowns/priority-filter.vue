@@ -37,6 +37,7 @@ const handleExecute = (id: string) => {
 <template>
     <inner-dropdown
         title="优先级"
+        icon="filter"
         group="tasks-todo-filter"
         :suffix="count"
         :close-when-executed="false"

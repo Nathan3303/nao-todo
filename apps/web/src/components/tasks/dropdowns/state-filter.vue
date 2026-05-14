@@ -37,6 +37,7 @@ const handleExecute = (id: string) => {
 <template>
     <inner-dropdown
         title="状态"
+        icon="filter"
         group="tasks-todo-filter"
         :suffix="count"
         :close-when-executed="false"
@@ -54,3 +55,4 @@ const handleExecute = (id: string) => {
 </template>
 
 <style scoped></style>
+
