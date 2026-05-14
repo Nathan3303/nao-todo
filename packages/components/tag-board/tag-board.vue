@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { TagCard } from '../tag-card'
-import { TagColorDot } from '../tag-color-dot'
 import { Loading } from '../loading'
 import type { TagBoardProps, TagBoardEmits } from './types'
 
@@ -29,7 +28,7 @@ const emit = defineEmits<TagBoardEmits>()
                 </tag-card>
             </div>
         </template>
-        <nue-empty v-else image-size="6rem" style="height: 100%" />
+        <nue-empty v-else image-size="6rem" style="height: 100%" description="暂无标签" />
     </div>
 </template>
 

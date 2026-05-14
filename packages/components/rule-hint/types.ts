@@ -3,6 +3,6 @@ export type RuleHintProps = {
     content?: string
     icon?: string
     hidden?: boolean
-    variant?: string
+    variant?: 'warning' | 'success' | 'error'
 }
 

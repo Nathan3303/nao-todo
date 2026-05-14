@@ -6,7 +6,7 @@ defineProps<RuleHintProps>()
 </script>
 
 <template>
-    <nue-div v-if="!hidden || content" theme="rule-hint">
+    <nue-div v-if="!hidden || content" theme="rule-hint" :data-variant="variant">
         <nue-icon theme="rule-hint__icon" :name="icon" />
         <nue-div theme="rule-hint__content-wrapper">
             <nue-text v-if="title" theme="title">{{ title }}</nue-text>
@@ -22,7 +22,7 @@ defineProps<RuleHintProps>()
     display: flex;
     align-items: flex-start;
     gap: var(--nue-padding-xs);
-    padding: var(--nue-padding-xs);
+    padding: var(--nue-padding-sm);
     border-radius: var(--nue-primary-radius);
     border: 1px solid var(--nue-border-color);
     background-color: var(--nue-primary-color-100);
@@ -32,7 +32,7 @@ defineProps<RuleHintProps>()
     > .nue-div--rule-hint__content-wrapper {
         display: flex;
         flex-direction: column;
-        gap: var(--nue-gap-2xs);
+        gap: 0;
         flex: auto;
 
         > .nue-text--title {
@@ -43,6 +43,24 @@ defineProps<RuleHintProps>()
             font-size: var(--nue-text-xs);
         }
     }
+}
+
+.nue-div--rule-hint[data-variant='warning'] {
+    border: 1px solid var(--nue-warning-color-30);
+    background-color: var(--nue-warning-color-20);
+    color: var(--nue-warning-color-80);
+}
+
+.nue-div--rule-hint[data-variant='success'] {
+    border: 1px solid var(--nue-success-color-30);
+    background-color: var(--nue-success-color-20);
+    color: var(--nue-success-color-80);
+}
+
+.nue-div--rule-hint[data-variant='error'] {
+    border: 1px solid var(--nue-error-color-30);
+    background-color: var(--nue-error-color-20);
+    color: var(--nue-error-color-80);
 }
 </style>
 

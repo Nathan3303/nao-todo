@@ -113,9 +113,9 @@ onMounted(() => emit('register', open, close))
 <style scoped>
 #TagManager {
     .tag-manager-header {
-        border: none;
         height: auto;
         justify-content: space-between;
+        flex-wrap: wrap;
     }
 
     .danger-trigger {

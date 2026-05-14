@@ -34,15 +34,24 @@ const useTagsStoreBase = () => {
         return tagsMap.value.get(id)
     }
 
+    // @action 删除标签
+    const deleteTag = (id: TagViewObject['id']) => {
+        const idx = tags.value.findIndex((item) => item.id === id)
+        if (idx === -1) return
+        tags.value.splice(idx, 1)
+    }
+
     // @returns
     return {
         tags,
         setTags,
         addTag,
         updateTag,
-        getTag
+        getTag,
+        deleteTag
     }
 }
 
 export default useTagsStoreBase
 export type TagsStoreBase = ReturnType<typeof useTagsStoreBase>
+

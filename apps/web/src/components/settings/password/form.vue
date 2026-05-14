@@ -3,12 +3,9 @@
         <nue-main>
             <nue-content>
                 <nue-div vertical>
-                    <nue-div theme="hint">
-                        <nue-icon name="warning" />
-                        <nue-text>
-                            为保护您的账号安全，建议您定期更换密码。修改密码后，您需要重新登录才能继续使用应用。
-                        </nue-text>
-                    </nue-div>
+                    <rule-hint title="密码安全提醒" icon="scan" variant="warning">
+                        为保护您的账号安全，建议您定期更换密码。修改密码后，您需要重新登录才能继续使用应用。
+                    </rule-hint>
                     <form
                         action=""
                         autocomplete="off"
@@ -70,7 +67,7 @@
 <script setup lang="ts">
 import { reactive, computed, ref, inject } from 'vue'
 import { useRouter } from 'vue-router'
-import { PasswordRuleHint } from '@nao-todo/components'
+import { PasswordRuleHint, RuleHint } from '@nao-todo/components'
 import { SETTINGS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import type { SettingsViewContext } from '@/views/index/settings/settings-view'
 import { NueMessage } from 'nue-ui'

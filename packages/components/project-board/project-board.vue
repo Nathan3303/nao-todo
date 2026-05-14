@@ -15,7 +15,7 @@ const emit = defineEmits<ProjectBoardEmits>()
         <nue-empty
             v-else-if="!projects || !projects.length"
             style="height: 100%"
-            description="暂无数据"
+            description="暂无任务清单"
         />
         <template v-else>
             <div class="project-board">

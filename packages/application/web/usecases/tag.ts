@@ -25,6 +25,7 @@ export interface TagStore {
     addTag: (tag: TagViewObject) => void
     setTagPreference: (tagPreferenceViewObject: TagPreferenceViewObject) => void
     updateTag: (tagId: TagViewObject['id'], updateTagViewObject: UpdateTagViewObject) => void
+    deleteTag: (tagId: TagViewObject['id']) => void
 }
 
 /**
@@ -41,6 +42,18 @@ export class TagUseCase {
         private tagDomain: TagDomain,
         private store: TagStore
     ) {}
+
+    /**
+     * 创建TagUseCase实例
+     * @param tagStore 标签状态管理
+     * @returns TagUseCase实例
+     */
+    static create(tagStore: TagStore): TagUseCase {
+        const requester = getRequesterImpl()
+        const repo = useTagRepository(requester)
+        const domain = new TagDomain(repo)
+        return new TagUseCase(domain, tagStore)
+    }
 
     /**
      * 加载标签
@@ -136,18 +149,10 @@ export class TagUseCase {
      * @returns 无
      */
     async delete(tagId: TagViewObject['id']): GoAsync<void> {
-        return await this.tagDomain.remove(tagId)
-    }
-
-    /**
-     * 创建TagUseCase实例
-     * @param tagStore 标签状态管理
-     * @returns TagUseCase实例
-     */
-    static create(tagStore: TagStore): TagUseCase {
-        const requester = getRequesterImpl()
-        const repo = useTagRepository(requester)
-        const domain = new TagDomain(repo)
-        return new TagUseCase(domain, tagStore)
+        const removeError = await this.tagDomain.remove(tagId)
+        if (removeError !== null) return removeError
+        this.store.deleteTag(tagId)
+        return null
     }
 }
+

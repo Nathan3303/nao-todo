@@ -147,6 +147,7 @@ onMounted(() => emit('register', open, close))
         border: none;
         height: auto;
         justify-content: space-between;
+        flex-wrap: wrap;
     }
 
     .warning-trigger {
