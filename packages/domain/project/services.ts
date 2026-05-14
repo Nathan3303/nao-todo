@@ -1,6 +1,6 @@
 import type { ProjectEntity, ProjectPreferenceEntity } from './entities'
 import type { GoAsync } from '@nao-todo/types'
-import type { ProjectRepository } from './repositories'
+import type { ProjectRepository, BatchUpdateProjectResult } from './repositories'
 import { CreateProjectValueObject } from './valueobjects'
 import { UpdateProjectValueObject } from './valueobjects/update-project'
 import { unwrapError } from '@nao-todo/infrastructure/utils'
@@ -121,6 +121,15 @@ export class ProjectDomain {
         preferenceEntity: ProjectPreferenceEntity
     ): GoAsync<string> {
         return this.projectRepo.updatePreference(projectId, preferenceEntity)
+    }
+
+    /**
+     * 批量更新任务清单
+     * @param projects 任务清单实体数组
+     * @returns 批量更新结果
+     */
+    async batchUpdate(projects: UpdateProjectValueObject[]): GoAsync<BatchUpdateProjectResult> {
+        return this.projectRepo.batchUpdate(projects)
     }
 }
 

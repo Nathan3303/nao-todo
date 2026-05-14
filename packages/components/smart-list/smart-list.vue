@@ -1,3 +1,15 @@
+<script lang="ts" setup>
+import type { NaoSmartListEmits, NaoSmartListProps } from './types'
+import { computed } from 'vue'
+
+defineOptions({ name: 'NaoSmartList' })
+const props = defineProps<NaoSmartListProps>()
+const emit = defineEmits<NaoSmartListEmits>()
+
+const count = computed(() => props.count ?? props.links?.length)
+</script>
+
+F
 <template>
     <nue-collapse-item :name="collapseItemName" theme="smart-list">
         <template #header="{ collapse, state }">
@@ -18,7 +30,14 @@
                 </slot>
             </nue-div>
         </template>
-        <nue-div theme="links">
+        <nue-div
+            theme="links"
+            @dragstart="draggable && emit('dragstart', $event)"
+            @dragover="draggable && emit('dragover', $event)"
+            @dragleave="draggable && emit('dragleave', $event)"
+            @dragend="draggable && emit('dragend', $event)"
+            @drop="draggable && emit('drop', $event)"
+        >
             <slot v-if="count">
                 <nue-link
                     v-for="link in links"
@@ -26,6 +45,9 @@
                     :route="link.route"
                     :icon="link.icon"
                     theme="route"
+                    :draggable="draggable"
+                    :data-drag-item="draggable"
+                    :data-drag-id="link.id"
                 >
                     {{ link.title }}
                     <template #append>
@@ -41,19 +63,6 @@
         </nue-div>
     </nue-collapse-item>
 </template>
-
-<script lang="ts" setup>
-import type { NaoSmartListEmits, NaoSmartListProps } from './types'
-import { computed } from 'vue'
-
-defineOptions({ name: 'NaoSmartList' })
-const props = defineProps<NaoSmartListProps>()
-const emit = defineEmits<NaoSmartListEmits>()
-
-const count = computed(() => {
-    return props.count ?? props.links?.length
-})
-</script>
 
 <style scoped>
 @import url('./smart-list.css');

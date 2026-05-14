@@ -2,6 +2,7 @@ import type { GetTasksOptions, TaskColumnOptions } from './task'
 
 export type ProjectViewObject = {
     id: string
+    sortId: number
     userId: string
     icon?: string
     name: string
@@ -27,6 +28,7 @@ export type ProjectPreferenceViewObject = {
 }
 
 export type UpdateProjectViewObject = {
+    sortId?: number
     icon?: string
     name?: string
     description?: string

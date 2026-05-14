@@ -14,9 +14,15 @@ export type NaoSmartListProps = {
     createBtnTooltip?: string
     emptyText?: string
     links?: NaoSmartListLinkVO[]
+    draggable?: boolean
 }
 
 export type NaoSmartListEmits = {
     (e: 'manage'): void
     (e: 'create'): void
+    (e: 'dragstart', event: DragEvent): void
+    (e: 'dragover', event: DragEvent): void
+    (e: 'dragleave', event: DragEvent): void
+    (e: 'dragend', event: DragEvent): void
+    (e: 'drop', event: DragEvent): void
 }

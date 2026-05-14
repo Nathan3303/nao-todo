@@ -3,7 +3,9 @@ import {
     getProjectPreferenceRes2ProjectPreferenceEntity,
     getProjectRes2ProjectEntity,
     listProjectRes2ProjectEntities,
-    preferenceEntity2UpdateProjectPreferenceReq
+    preferenceEntity2UpdateProjectPreferenceReq,
+    batchUpdateProjectRes2BatchUpdateProjectResult,
+    updateProjectValueObjectToUpdateProjectReq
 } from './converters'
 import type { Requester } from '@nao-todo/infrastructure/requester'
 import type { GoAsync } from '@nao-todo/types'
@@ -15,15 +17,17 @@ import type {
     ListProjectRes,
     ResponseData,
     UpdateProjectPreferenceRes,
-    UpdateProjectReq,
-    UpdateProjectRes
+    UpdateProjectRes,
+    BatchUpdateProjectReq,
+    BatchUpdateProjectRes
 } from '../types'
 import {
     ProjectEntity,
     ProjectPreferenceEntity,
     CreateProjectValueObject,
     UpdateProjectValueObject,
-    type ProjectRepository
+    type ProjectRepository,
+    type BatchUpdateProjectResult
 } from '@nao-todo/domain/project'
 import { defaultColumns } from '../../consts/tasks'
 
@@ -88,10 +92,7 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
         updateProjectValueObject: UpdateProjectValueObject
     ): GoAsync<string> => {
         // 1. 构建 rto
-        const rto: UpdateProjectReq = {}
-        if (updateProjectValueObject.name) rto.name = updateProjectValueObject.name
-        if (updateProjectValueObject.description)
-            rto.description = updateProjectValueObject.description
+        const rto = updateProjectValueObjectToUpdateProjectReq(updateProjectValueObject)
         // 2. 调用接口
         const response = await requester.put(`/projects/${projectId}`, rto, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
@@ -262,6 +263,35 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
         return [res.data as UpdateProjectPreferenceRes, null]
     }
 
+    /**
+     * 批量更新任务清单
+     * @param projects 任务清单实体数组
+     * @returns 批量更新结果
+     */
+    const batchUpdate = async (
+        projects: UpdateProjectValueObject[]
+    ): GoAsync<BatchUpdateProjectResult> => {
+        // 1. 构建 rto
+        const rto: BatchUpdateProjectReq = {
+            projects: projects.map((project) => updateProjectValueObjectToUpdateProjectReq(project))
+        }
+        // 2. 调用接口
+        const response = await requester.put('/projects/', rto, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
+        })
+        // 3. 判断结果
+        const res = response.data as ResponseData
+        if (res.code !== 20100) {
+            return [null, res.message]
+        }
+        // 4. 转换为结果
+        const result = batchUpdateProjectRes2BatchUpdateProjectResult(
+            res.data as BatchUpdateProjectRes
+        )
+        // 5. 返回
+        return [result, null]
+    }
+
     return {
         create,
         get,
@@ -272,7 +302,8 @@ export const useProjectRepository = (requester: Requester): ProjectRepository =>
         unarchive,
         list,
         getPreference,
-        updatePreference
+        updatePreference,
+        batchUpdate
     }
 }
 

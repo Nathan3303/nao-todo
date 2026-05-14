@@ -2,6 +2,11 @@ import type { GoAsync } from '@nao-todo/types'
 import type { ProjectEntity, ProjectPreferenceEntity } from './entities'
 import { CreateProjectValueObject, UpdateProjectValueObject } from './valueobjects'
 
+export interface BatchUpdateProjectResult {
+    updatedCount: number
+    projects: ProjectEntity[]
+}
+
 /**
  * 任务清单仓库接口
  * @description 任务清单仓库接口，包含任务清单的数据库操作
@@ -77,4 +82,11 @@ export interface ProjectRepository {
      * @returns 更新任务清单偏好ID
      */
     updatePreference(projectId: string, preferenceEntity: ProjectPreferenceEntity): GoAsync<string>
+
+    /**
+     * 批量更新任务清单
+     * @param projects 任务清单实体数组
+     * @returns 批量更新结果
+     */
+    batchUpdate(projects: UpdateProjectValueObject[]): GoAsync<BatchUpdateProjectResult>
 }

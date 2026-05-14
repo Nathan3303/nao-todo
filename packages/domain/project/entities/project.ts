@@ -22,7 +22,8 @@ export class ProjectEntity {
         public archivedAt: string,
         public createdAt: string,
         public updatedAt: string,
-        public deactivedAt: string | null
+        public deactivedAt: string | null,
+        public sortId: number
     ) {}
 }
 

@@ -13,7 +13,7 @@ import { AppAsideAdapter } from '@/layouts/app/'
 defineOptions({ name: 'TasksViewAside' })
 
 // @context Tasksview 任务视图上下文
-const { dialogManager, asideWidth, handleResizeAside, isDisplayAside } =
+const { dialogManager, asideWidth, handleResizeAside, isDisplayAside, projectUseCase } =
     inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
 
 // @dataStores
@@ -64,6 +64,11 @@ const tagLinks = computed<NaoSmartListLinkVO[]>(() => {
 const openDialog = (dialogName: string) => {
     dialogManager.openDialog(dialogName)
 }
+
+// @method 处理项目拖拽排序
+const handleProjectResort = (originalId: string, boundId: string, isBefore: boolean) => {
+    projectUseCase.resort(originalId, boundId, isBefore)
+}
 </script>
 
 <template>
@@ -90,8 +95,10 @@ const openDialog = (dialogName: string) => {
             <nue-collapse theme="menu" v-model="collapseItemsRecord">
                 <project-smart-list
                     :links="projectLinks"
+                    draggable
                     @open-project-creator="() => openDialog('project-creator')"
                     @open-project-manager="() => openDialog('project-manager')"
+                    @resort="handleProjectResort"
                 />
                 <!-- <filter-smart-list /> -->
                 <tag-smart-list

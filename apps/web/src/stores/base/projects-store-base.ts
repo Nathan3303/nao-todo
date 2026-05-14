@@ -21,11 +21,7 @@ const useProjectsStoreBase = () => {
     const getProject = (id: string) => projectsMap.value.get(id)
 
     // @action 添加项目
-    const addProject = (p: ProjectViewObject) => {
-        // if (projectsMap.value.has(p.id)) return
-        projects.push(p)
-        console.log('addProject', projects, p)
-    }
+    const addProject = (p: ProjectViewObject) => projects.push(p)
 
     // @action 设置项目
     const setProject = (id: string, p: ProjectViewObject) => {
@@ -33,7 +29,6 @@ const useProjectsStoreBase = () => {
         const index = projects.findIndex((item) => item.id === id)
         if (index === -1) return
         projects[index] = p
-        console.log('setProject', projects, p)
     }
 
     // @action 更新项目
@@ -71,6 +66,11 @@ const useProjectsStoreBase = () => {
         setProject(id, { ...oldProject, isArchived: false })
     }
 
+    // @action 批量更新项目
+    const updateProjects = (newProjects: ProjectViewObject[]) => {
+        newProjects.forEach((p) => updateProject(p.id, p))
+    }
+
     // @action 删除项目
     const deleteProject = (id: string) => {
         const index = projects.findIndex((item) => item.id === id)
@@ -87,6 +87,7 @@ const useProjectsStoreBase = () => {
         getProject,
         setProject,
         updateProject,
+        updateProjects,
         softDeleteProject,
         restoreProject,
         archiveProject,

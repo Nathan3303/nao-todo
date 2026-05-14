@@ -1,10 +1,16 @@
-import { ProjectEntity, ProjectPreferenceEntity } from '@nao-todo/domain/project'
+import {
+    ProjectEntity,
+    ProjectPreferenceEntity,
+    UpdateProjectValueObject
+} from '@nao-todo/domain/project'
 import type {
     CreateProjectRes,
     GetProjectPreferenceRes,
     GetProjectRes,
     ListProjectRes,
-    UpdateProjectPreferenceReq
+    UpdateProjectPreferenceReq,
+    BatchUpdateProjectRes,
+    UpdateProjectReq
 } from '../types'
 
 export const getProjectRes2ProjectEntity = (res: GetProjectRes): ProjectEntity => {
@@ -16,13 +22,25 @@ export const getProjectRes2ProjectEntity = (res: GetProjectRes): ProjectEntity =
         res.archivedAt,
         res.createdAt,
         res.updatedAt,
-        res.deactivedAt
+        res.deactivedAt,
+        res.sortId
     )
     return e
 }
 
 export const createProjectRes2ProjectEntity = (res: CreateProjectRes): ProjectEntity => {
     return getProjectRes2ProjectEntity(res)
+}
+
+export const updateProjectValueObjectToUpdateProjectReq = (
+    updateProjectValueObject: UpdateProjectValueObject
+): UpdateProjectReq => {
+    const rto: UpdateProjectReq = {}
+    if (updateProjectValueObject.id) rto.id = updateProjectValueObject.id
+    if (updateProjectValueObject.name) rto.name = updateProjectValueObject.name
+    if (updateProjectValueObject.description) rto.description = updateProjectValueObject.description
+    if (updateProjectValueObject.sortId !== undefined) rto.sortId = updateProjectValueObject.sortId
+    return rto
 }
 
 export const listProjectRes2ProjectEntities = (res: ListProjectRes): ProjectEntity[] => {
@@ -51,5 +69,12 @@ export const preferenceEntity2UpdateProjectPreferenceReq = (
     rto.getTasksOptions = preferenceEntity.getTasksOptions
     rto.columns = preferenceEntity.columns
     return rto
+}
+
+export const batchUpdateProjectRes2BatchUpdateProjectResult = (res: BatchUpdateProjectRes) => {
+    return {
+        updatedCount: res.updatedCount,
+        projects: res.projects.map((project) => getProjectRes2ProjectEntity(project))
+    }
 }
 

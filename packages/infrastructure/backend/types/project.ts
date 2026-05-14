@@ -6,6 +6,7 @@ export type GetProjectRes = {
     createdAt: string
     updatedAt: string
     deactivedAt: string | null
+    sortId: number
 }
 
 export type ListProjectRes = GetProjectRes[]
@@ -18,8 +19,10 @@ export type CreateProjectReq = {
 export type CreateProjectRes = GetProjectRes
 
 export type UpdateProjectReq = {
+    id?: string
     name?: string
     description?: string
+    sortId?: number
 }
 
 export type UpdateProjectRes = GetProjectRes['id']
@@ -49,4 +52,13 @@ export type UpdateProjectPreferenceReq = {
 }
 
 export type UpdateProjectPreferenceRes = UpdateProjectRes
+
+export type BatchUpdateProjectReq = {
+    projects: UpdateProjectReq[]
+}
+
+export type BatchUpdateProjectRes = {
+    updatedCount: number
+    projects: GetProjectRes[]
+}
 

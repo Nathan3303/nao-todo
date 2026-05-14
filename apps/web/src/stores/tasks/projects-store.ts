@@ -11,15 +11,18 @@ export default defineStore('ProjectsStore', () => {
         setProjects,
         addProject,
         getProject,
+        updateProjects,
         softDeleteProject,
         deleteProject,
         restoreProject,
         updateProject
     } = useProjectsStoreBase()
 
-    // @state 可用项目
+    // @state 可用项目（按 sortId 排序）
     const availableProjects = computed(() => {
-        return projects.filter((p) => !p.isDeleted && !p.isArchived)
+        return projects
+            .filter((p) => !p.isDeleted && !p.isArchived)
+            .sort((a, b) => a.sortId - b.sortId)
     })
 
     // @storebase 内建项目存储加载/错误基础
@@ -52,6 +55,7 @@ export default defineStore('ProjectsStore', () => {
         setProjects,
         addProject,
         getProject,
+        updateProjects,
         softDeleteProject,
         deleteProject,
         restoreProject,

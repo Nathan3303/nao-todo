@@ -222,27 +222,5 @@ watch(
         animation: pulse-down 0.3s ease;
     }
 }
-
-@keyframes pulse-up {
-    0% {
-        transform: scaleX(0.5);
-        opacity: 0;
-    }
-    100% {
-        transform: scaleX(1);
-        opacity: 1;
-    }
-}
-
-@keyframes pulse-down {
-    0% {
-        transform: scaleX(0.5);
-        opacity: 0;
-    }
-    100% {
-        transform: scaleX(1);
-        opacity: 1;
-    }
-}
 </style>
 

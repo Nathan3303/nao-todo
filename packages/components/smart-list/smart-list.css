@@ -29,6 +29,44 @@
             border-radius: var(--nue-primary-radius);
             text-align: left;
         }
+
+        .nue-link {
+            position: relative;
+
+            &[data-drag-item='true']::before {
+                content: '';
+                position: absolute;
+                left: 1%;
+                width: 98%;
+                height: 3px;
+                background: linear-gradient(
+                    90deg,
+                    var(--nue-primary-color-500),
+                    var(--nue-primary-color-300)
+                );
+                visibility: hidden;
+                z-index: 10;
+                border-radius: 2px;
+                transition: opacity 0.15s ease;
+            }
+
+            &[data-dragging='true'] {
+                opacity: 0.5;
+                transform: scale(0.98);
+            }
+        }
+
+        .nue-link[data-dod='up']::before {
+            visibility: visible;
+            top: 0;
+            animation: pulse-up 0.3s ease;
+        }
+
+        .nue-link[data-dod='down']::before {
+            visibility: visible;
+            bottom: 0;
+            animation: pulse-down 0.3s ease;
+        }
     }
 }
 

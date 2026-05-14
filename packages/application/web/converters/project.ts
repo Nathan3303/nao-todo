@@ -21,6 +21,7 @@ import dayjs from 'dayjs'
 export const projectEntityToViewObject = (projectEntity: ProjectEntity): ProjectViewObject => {
     return {
         id: projectEntity.id,
+        sortId: projectEntity.sortId,
         icon: projectEntity.icon || 'more2',
         name: projectEntity.name,
         description: projectEntity.description,
@@ -120,6 +121,9 @@ export const updateProjectViewObjectToValueObject = (
     }
     if (updateProjectViewObject.description) {
         valueObject.description = updateProjectViewObject.description || ''
+    }
+    if (updateProjectViewObject.sortId !== undefined) {
+        valueObject.sortId = updateProjectViewObject.sortId
     }
     return valueObject
 }

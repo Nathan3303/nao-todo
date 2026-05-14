@@ -22,6 +22,7 @@ export interface ProjectStore {
     addProject: (project: ProjectViewObject) => void
     setProjectPreference: (preference: ProjectPreferenceViewObject) => void
     getProject: (projectId: ProjectViewObject['id']) => ProjectViewObject | undefined
+    getAllProjects: () => ProjectViewObject[]
     deleteProject: (projectId: ProjectViewObject['id']) => void
     softDeleteProject: (projectId: ProjectViewObject['id']) => void
     restoreProject: (projectId: ProjectViewObject['id']) => void
@@ -29,6 +30,7 @@ export interface ProjectStore {
         projectId: ProjectViewObject['id'],
         updateProjectViewObject: UpdateProjectViewObject
     ) => void
+    updateProjects: (newProjects: ProjectViewObject[]) => void
 }
 
 /**
@@ -66,10 +68,11 @@ export class ProjectUseCase {
         // 调用领域层方法
         const [projectEntities, err] = await this.projectDomain.list()
         if (err !== null) return err
+        // 按 sortId 排序
+        const sorted = projectEntities.sort((a, b) => a.sortId - b.sortId)
         // 转换为视图对象
-        const projects = projectEntitiesToViewObjects(projectEntities)
+        const projects = projectEntitiesToViewObjects(sorted)
         // 存储到状态管理
-        console.log(projects)
         this.store.setProjects(projects)
         return null
     }
@@ -196,6 +199,149 @@ export class ProjectUseCase {
         if (err !== null) return err
         // 同步本地状态
         this.store.updateProject(projectId, updateProjectViewObject)
+        return null
+    }
+
+    /**
+     * 重新排序项目 - 使用浮动间隔排序法
+     * @param originalId 被拖拽项目ID
+     * @param boundId 目标项目ID
+     * @param isBefore 是否插入到目标之前
+     * @returns 排序结果
+     */
+    async resort(
+        originalId: ProjectViewObject['id'],
+        boundId: ProjectViewObject['id'],
+        isBefore: boolean
+    ): GoAsync<void> {
+        const originalProject = this.store.getProject(originalId)
+        const boundProject = this.store.getProject(boundId)
+        if (!originalProject || !boundProject) return '项目不存在'
+
+        if (originalId === boundId) return null
+
+        const allProjects = this.store.getAllProjects()
+        const activeProjects = allProjects.filter((p) => !p.isDeleted && !p.isArchived)
+
+        if (activeProjects.length <= 1) return null
+
+        const sortedProjects = [...activeProjects].sort((a, b) => a.sortId - b.sortId)
+
+        const originalIndex = sortedProjects.findIndex((p) => p.id === originalId)
+        const boundIndex = sortedProjects.findIndex((p) => p.id === boundId)
+
+        if (originalIndex === -1 || boundIndex === -1) return '项目不存在'
+
+        const tempProjects = [...sortedProjects]
+        tempProjects.splice(originalIndex, 1)
+
+        let newIndex = boundIndex
+        if (originalIndex < boundIndex) {
+            newIndex = isBefore ? boundIndex - 1 : boundIndex
+        } else {
+            newIndex = isBefore ? boundIndex : boundIndex + 1
+        }
+
+        let prevProject: ProjectViewObject | null = null
+        let nextProject: ProjectViewObject | null = null
+
+        if (newIndex === 0) {
+            nextProject = tempProjects[0]
+        } else if (newIndex === tempProjects.length) {
+            prevProject = tempProjects[tempProjects.length - 1]
+        } else {
+            prevProject = tempProjects[newIndex - 1]
+            nextProject = tempProjects[newIndex]
+        }
+
+        let newSortId: number
+        const INTERVAL = 1000
+
+        if (!prevProject) {
+            newSortId = nextProject!.sortId - INTERVAL
+        } else if (!nextProject) {
+            newSortId = prevProject.sortId + INTERVAL
+        } else {
+            newSortId = Math.round((prevProject.sortId + nextProject.sortId) / 2)
+        }
+
+        const needsRebuild =
+            (prevProject && nextProject && Math.abs(nextProject.sortId - prevProject.sortId) < 2) ||
+            newSortId <= 0
+
+        if (needsRebuild) {
+            return this.resortWithRebuild(originalId, boundId, isBefore)
+        } else {
+            return this.resortSingle(originalId, newSortId)
+        }
+    }
+
+    /**
+     * 单项目排序更新 - 99% 的情况使用此方法
+     * @param originalId 被拖拽项目ID
+     * @param newSortId 新的 sortId
+     * @returns 排序结果
+     */
+    async resortSingle(originalId: string, newSortId: number): GoAsync<void> {
+        this.store.updateProject(originalId, { sortId: newSortId })
+
+        const err = await this.update(originalId, { sortId: newSortId })
+        if (err !== null) return err
+
+        return null
+    }
+
+    /**
+     * 重建项目排序 - 间隔太小时触发
+     * @param originalId 被拖拽项目ID
+     * @param boundId 目标项目ID
+     * @param isBefore 是否插入到目标之前
+     * @returns 排序结果
+     */
+    async resortWithRebuild(originalId: string, boundId: string, isBefore: boolean): GoAsync<void> {
+        const allProjects = this.store.getAllProjects()
+        const activeProjects = allProjects.filter((p) => !p.isDeleted && !p.isArchived)
+
+        if (!activeProjects.length) return null
+
+        const sortedProjects = [...activeProjects].sort((a, b) => a.sortId - b.sortId)
+
+        const originalIndex = sortedProjects.findIndex((p) => p.id === originalId)
+        const boundIndex = sortedProjects.findIndex((p) => p.id === boundId)
+
+        if (originalIndex === -1 || boundIndex === -1) return '项目不存在'
+
+        const [movedProject] = sortedProjects.splice(originalIndex, 1)
+
+        let newIndex = boundIndex
+        if (originalIndex < boundIndex) {
+            newIndex = isBefore ? boundIndex - 1 : boundIndex
+        } else {
+            newIndex = isBefore ? boundIndex : boundIndex + 1
+        }
+
+        sortedProjects.splice(newIndex, 0, movedProject)
+
+        const INTERVAL = 1000
+        const projectsToUpdate = sortedProjects.map((project, index) => ({
+            ...project,
+            sortId: (index + 1) * INTERVAL
+        }))
+
+        this.store.updateProjects(projectsToUpdate)
+
+        const updateProjectViewObjects = projectsToUpdate.map((project) => {
+            return { id: project.id, updatedAt: project.updatedAt, sortId: project.sortId }
+        })
+
+        const [batchResult, err] = await this.projectDomain.batchUpdate(
+            updateProjectViewObjects.map((p) => updateProjectViewObjectToValueObject(p.id, p))
+        )
+        if (err !== null) return err
+
+        const updatedProjects = batchResult.projects.map(projectEntityToViewObject)
+        this.store.updateProjects(updatedProjects)
+
         return null
     }
 }
