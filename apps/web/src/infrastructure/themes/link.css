@@ -1,17 +1,23 @@
-.nue-link.nue-link--route:not(.nue-link--route-icon) {
-    height: var(--nue-box-size-md);
-    padding: var(--nue-padding-sm);
-    gap: var(--nue-gap-xs);
-    font-size: var(--nue-text-xs);
+.nue-link:not(.nue-link--route) {
+    font-size: inherit;
+}
 
-    > .nue-link__icon {
-        font-size: 1.375em;
-    }
+.nue-link.nue-link--route {
+    &:not(.nue-link--route-icon) {
+        height: var(--nue-box-size-md);
+        padding: var(--nue-padding-sm);
+        gap: var(--nue-gap-xs);
+        font-size: var(--nue-text-xs);
 
-    > .nue-link__append {
-        flex: auto;
-        align-items: center;
-        justify-content: end;
+        > .nue-link__icon {
+            font-size: 1.375em;
+        }
+
+        > .nue-link__append {
+            flex: auto;
+            align-items: center;
+            justify-content: end;
+        }
     }
 }
 

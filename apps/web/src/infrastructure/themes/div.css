@@ -1,22 +1,3 @@
-/* Hint */
-.nue-div.nue-div--hint {
-    display: flex;
-    align-items: center;
-    gap: var(--nue-padding-xs);
-    padding: var(--nue-padding-xs);
-    border-radius: var(--nue-primary-radius);
-    border: 1px solid var(--nue-primary-color-500);
-    background-color: var(--nue-primary-color-200);
-    color: var(--nue-primary-color-800);
-    user-select: none;
-    -webkit-user-select: none;
-    font-size: var(--nue-text-sm);
-
-    > .nue-icon {
-        --nue-icon-size: 1rem;
-    }
-}
-
 /* Form Item */
 .nue-div.nue-div--form-item {
     flex-direction: column;

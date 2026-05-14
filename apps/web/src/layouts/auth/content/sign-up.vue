@@ -1,10 +1,10 @@
 <template>
-    <nue-container id="AuthViewMainContentSignUp">
+    <nue-container theme="sign-up">
         <nue-header>
             <nue-div align="center" gap="0.5rem" vertical>
-                <nue-text size="1.725rem" weight="bold">创建您的 NaoTodo 账户</nue-text>
+                <nue-text size="1.725rem" weight="bold">创建 NaoTodo 账户</nue-text>
                 <nue-text align="center" color="grey" size="0.875rem">
-                    在下面输入您的电子邮件和密码以创建账户
+                    在下方输入您的电子邮箱、密码以及昵称来创建<br />您的 NaoTodo 账户
                 </nue-text>
             </nue-div>
         </nue-header>
@@ -17,10 +17,11 @@
                             :disabled="loading"
                             clearable
                             name="SignUpEmail"
-                            placeholder="电子邮箱 (name@example.com)"
+                            placeholder="电子邮箱 (example@x.com)"
                             type="email"
+                            maxlength="64"
+                            counter="word-left"
                         />
-                        <password-rule-hint />
                         <nue-input
                             v-model="signUpVO.password"
                             :disabled="loading"
@@ -28,7 +29,10 @@
                             clearable
                             placeholder="密码"
                             type="password"
+                            maxlength="24"
+                            counter="word-left"
                         />
+                        <password-rule-hint />
                         <nue-input
                             v-model="signUpVO.confirmPassword"
                             :disabled="loading"
@@ -36,11 +40,15 @@
                             clearable
                             placeholder="确认密码"
                             type="password"
+                            maxlength="24"
+                            counter="word-left"
                         />
                         <nue-input
                             v-model="signUpVO.nickname"
                             :disabled="loading"
-                            placeholder="昵称（留空系统自动生成）"
+                            placeholder="昵称"
+                            maxlength="32"
+                            counter="word-left"
                         />
                         <nue-button
                             :loading="loading"
@@ -55,15 +63,8 @@
             </nue-content>
         </nue-main>
         <nue-footer>
-            <nue-text align="center" color="gray" size="12px">
-                点击注册按钮后，即表示您同意我们站点的<br />
-                <nue-link>服务条款</nue-link>
-                和
-                <nue-link>隐私政策</nue-link>
-            </nue-text>
-            <nue-divider />
-            <nue-text align="center" color="gray" size="12px">
-                已经拥有 NaoTodo 账号了吗？现在就去
+            <nue-text align="center">
+                已有 NaoTodo 账户了吗？现在就去
                 <nue-link route="/auth/signin">登录</nue-link>
                 吧
             </nue-text>
@@ -113,21 +114,21 @@ const handleSubmit = async (e: Event) => {
 </script>
 
 <style scoped>
-#AuthViewMainContentSignUp {
+.nue-container--sign-up {
     align-items: center;
     justify-content: center;
-    gap: 1.75rem;
+    gap: var(--nue-gap-md);
+    width: 20rem;
+    margin: 0 auto;
 
     > .nue-header {
         border: none;
-        width: 20rem;
         align-items: center;
         justify-content: center;
         height: auto;
     }
 
     > .nue-main {
-        width: 20rem;
         border: none;
         height: auto;
         align-items: center;
@@ -138,10 +139,11 @@ const handleSubmit = async (e: Event) => {
     > .nue-footer {
         flex-direction: column;
         border: none;
-        width: 20rem;
         align-items: center;
         justify-content: center;
         height: auto;
+        font-size: var(--nue-text-sm);
+        color: var(--nue-primary-color-600);
     }
 }
 </style>

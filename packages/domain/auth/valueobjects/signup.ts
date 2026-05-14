@@ -7,12 +7,6 @@ import type { Go } from '@nao-todo/types'
  */
 export class SignUpValueObject {
     /**
-     * 加密后的密码
-     * @description 加密后的密码 ，用于登录时校验密码是否正确
-     */
-    private encryptedPassword: string = ''
-
-    /**
      * 注册值对象构造函数
      * @param email 邮箱
      * @param password 密码
@@ -27,12 +21,20 @@ export class SignUpValueObject {
     ) {}
 
     /**
+     * 加密后的密码
+     * @description 加密后的密码 ，用于登录时校验密码是否正确
+     */
+    private encryptedPassword: string = ''
+
+    /**
      * 注册值对象数据校验
      * @description 注册值对象数据校验，校验邮箱、密码、确认密码和昵称是否为空
      * @returns 错误信息
      */
     validate(): Go<void> {
-        if (this.email === '') return '请输入邮箱'
+        if (this.email === '') return '请输入电子邮箱'
+        if (this.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/) === null) return '请输入有效的电子邮箱'
+        if (this.nickname === '') return '请输入昵称'
         if (this.password === '') return '请输入密码'
         if (this.confirmPassword === '') return '请确认密码'
         if (this.password !== this.confirmPassword) return '两次密码不一致'
@@ -67,3 +69,4 @@ export class SignUpValueObject {
         return [this.encryptedPassword, null]
     }
 }
+

@@ -1,5 +1,5 @@
 <template>
-    <nue-container id="AuthViewMainContentSignIn">
+    <nue-container theme="sign-in">
         <nue-header>
             <nue-div align="center" gap="0.5rem" vertical>
                 <nue-text size="1.725rem" weight="bold">登录到 NaoTodo</nue-text>
@@ -37,19 +37,10 @@
             </nue-content>
         </nue-main>
         <nue-footer>
-            <nue-text align="center" color="gray" size="12px">
-                认证成功后，您可以在接下来的 7 日期限内免密访问您的账户，直到您退出或在别处登录。
-            </nue-text>
-            <nue-divider />
-            <nue-text align="center" color="gray" size="12px">
+            <nue-text align="center">
                 还没有 NaoTodo 账号吗？去
                 <nue-link route="/auth/signup">注册</nue-link>
-                一个吧
-            </nue-text>
-            <nue-text align="center" color="gray" size="12px">
-                忘记密码了吗？去
-                <nue-link route="/auth/signup">重置密码</nue-link>
-                吧
+                一个！
             </nue-text>
         </nue-footer>
     </nue-container>
@@ -89,21 +80,21 @@ const handleSubmit = async (e: Event) => {
 </script>
 
 <style scoped>
-#AuthViewMainContentSignIn {
+.nue-container--sign-in {
     align-items: center;
     justify-content: center;
-    gap: 1.75rem;
+    gap: var(--nue-gap-md);
+    width: 20rem;
+    margin: 0 auto;
 
     > .nue-header {
         border: none;
-        width: 20rem;
         align-items: center;
         justify-content: center;
         height: auto;
     }
 
     > .nue-main {
-        width: 20rem;
         border: none;
         height: auto;
         align-items: center;
@@ -114,10 +105,11 @@ const handleSubmit = async (e: Event) => {
     > .nue-footer {
         flex-direction: column;
         border: none;
-        width: 20rem;
         align-items: center;
         justify-content: center;
         height: auto;
+        font-size: var(--nue-text-sm);
+        color: var(--nue-primary-color-600);
     }
 }
 </style>
