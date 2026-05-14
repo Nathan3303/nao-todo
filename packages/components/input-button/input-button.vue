@@ -74,6 +74,8 @@ const handleCancel = () => {
                 theme="pure"
                 :disabled="loading"
                 @blur="handleBlur"
+                maxlength="64"
+                counter="word-left"
             />
             <nue-div theme="actions">
                 <nue-icon :name="iconName" :spin="loading" @click="handleSubmit" />

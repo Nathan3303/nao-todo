@@ -1,13 +1,22 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import type { EventRowProps, EventRowEmits } from './types'
+import { NueInput } from 'nue-ui'
 
 defineOptions({ name: 'EventRow' })
 const props = defineProps<EventRowProps>()
 const emit = defineEmits<EventRowEmits>()
 
+const eventNameInputer = ref<InstanceType<typeof NueInput>>()
 const inputValue = ref(props.event.name)
+const isEditing = ref(false)
 const updateLoading = ref(false)
+
+const handleGoEdit = () => {
+    if (updateLoading.value) return
+    isEditing.value = true
+    nextTick(() => eventNameInputer.value?.innerInputRef?.focus())
+}
 
 const handleUpdateIsDone = () => {
     if (updateLoading.value) return
@@ -18,12 +27,18 @@ const handleUpdateIsDone = () => {
 }
 
 const handleUpdateName = () => {
-    if (updateLoading.value) return
-    if (inputValue.value === props.event.name) return
+    if (updateLoading.value) {
+        isEditing.value = false
+        return
+    }
+    if (inputValue.value === props.event.name) {
+        isEditing.value = false
+        return
+    }
     updateLoading.value = true
     props
         .onUpdate(props.event.id, { name: inputValue.value })
-        .finally(() => (updateLoading.value = false))
+        .finally(() => (isEditing.value = updateLoading.value = false))
 }
 
 const handleDelete = () => {
@@ -42,13 +57,19 @@ const handleDelete = () => {
             :spin="updateLoading"
             @click="handleUpdateIsDone"
         />
+        <nue-text v-if="!isEditing" theme="event-row__name" @click="handleGoEdit" :clamped="1">
+            {{ event.name }}
+        </nue-text>
         <nue-input
+            v-else
+            ref="eventNameInputer"
             :key="event.id"
             theme="small,pure"
             v-model="inputValue"
-            :data-is-done="event.isDone"
             :disabled="updateLoading"
             @blur="handleUpdateName"
+            maxlength="64"
+            counter="word-left"
         />
         <nue-div theme="actions">
             <nue-icon
