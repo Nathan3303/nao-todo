@@ -39,7 +39,7 @@
         flex: 1;
         font-size: var(--nue-text-sm);
         color: inherit;
-        cursor: pointer;
+        cursor: text;
 
         &[data-is-done='true'] {
             color: var(--nue-primary-color-600);
