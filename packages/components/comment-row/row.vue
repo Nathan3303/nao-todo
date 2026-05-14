@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { nextTick, ref } from 'vue'
+import { nextTick, onMounted, ref, watch } from 'vue'
 import { NueTextarea } from 'nue-ui'
 import { parse2RelativeDate } from '@nao-todo/infrastructure/utils'
 import type { CommentRowProps, CommentRowEmits } from './types'
@@ -14,6 +14,28 @@ const isEditing = ref(false)
 const loading = ref(false)
 const deleting = ref(false)
 const isClamped = ref(true)
+const textRef = ref<any>()
+const isOverflowing = ref(false)
+
+const checkOverflow = () => {
+    nextTick(() => {
+        const el = textRef.value?.$el as HTMLElement | undefined
+        if (el) {
+            isOverflowing.value = el.scrollHeight > el.clientHeight
+        }
+    })
+}
+
+onMounted(() => {
+    checkOverflow()
+})
+
+watch(
+    () => shadowContent.value,
+    () => {
+        checkOverflow()
+    }
+)
 
 const handleEditComment = () => {
     isEditing.value = true
@@ -83,10 +105,10 @@ const handleCancelEdit = () => {
                     </nue-textarea>
                 </template>
                 <template v-else>
-                    <nue-text theme="pre" :clamped="isClamped ? 2 : 0">
+                    <nue-text ref="textRef" theme="pre" :clamped="isClamped ? 2 : 0">
                         {{ shadowContent }}
                     </nue-text>
-                    <nue-button theme="pure" @click="isClamped = !isClamped">
+                    <nue-button v-if="isOverflowing" theme="pure" @click="isClamped = !isClamped">
                         {{ isClamped ? '查看所有 +' : '收起 -' }}
                     </nue-button>
                 </template>
