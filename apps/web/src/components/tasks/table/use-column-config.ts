@@ -14,9 +14,9 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
         label: columnLabels.name,
         visible: true,
         width: null,
-        minWidth: 200,
+        minWidth: 300,
         maxWidth: 600,
-        defaultWidth: 300
+        defaultWidth: 400
     },
     {
         key: 'deletedAt',
