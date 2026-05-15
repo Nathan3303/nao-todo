@@ -11,6 +11,7 @@ import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { TagHandler } from '@/infrastructure/handlers/tasks/tag-handler'
+import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 
 const useTagView = (props: TagViewProps) => {
     // @viewStores
@@ -108,7 +109,7 @@ const useTagView = (props: TagViewProps) => {
         switchViewTypeToKanban: () => switchViewType('kanban'),
         switchViewTypeToList: () => switchViewType('list'),
         showTaskCreator: () =>
-            tasksViewContext.dialogManager.open('task-creator', { tags: [props.tagId] })
+            tasksViewContext.dialogManager.open(TASK_CREATOR_DIALOG_KEY, { tags: [props.tagId] })
     })
 
     // @returns

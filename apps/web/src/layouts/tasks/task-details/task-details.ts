@@ -13,6 +13,7 @@ import { computed, inject, provide, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { TASK_DETAILS_CONTEXT_KEY } from './constants'
 import type { TaskDetailsContext, TaskDetailsEmits, TaskDetailsProps } from './types'
+import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 
 const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     // @viewContext TasksView context
@@ -184,7 +185,7 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     const makeEventToTask = (eventId: EventViewObject['id']) => {
         const event = events.value.find((e) => e.id === eventId)
         if (!event) return
-        tasksViewContext.dialogManager.open('task-creator', {
+        tasksViewContext.dialogManager.open(TASK_CREATOR_DIALOG_KEY, {
             name: event.name,
             state: event.isDone ? 'done' : 'todo'
         })

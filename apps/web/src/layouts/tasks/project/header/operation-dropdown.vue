@@ -5,6 +5,7 @@ import { InnerDropdownOption, DropdownDivBlock } from '@nao-todo/components'
 import ColumnDisplayOperator from '@/components/tasks/dropdowns/column-display-operator.vue'
 import { PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import type { ProjectViewContext } from '../types'
+import { PROJECT_UPDATER_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 
 defineOptions({ name: 'TasksProjectOperationsDropdown' })
 
@@ -42,7 +43,7 @@ onMounted(() => {
     })
     dropdownRef.value.register('update-project', () => {
         if (!project.value) return
-        tasksViewContext.dialogManager.open('project-updater', project.value.id)
+        tasksViewContext.dialogManager.open(PROJECT_UPDATER_DIALOG_KEY, project.value.id)
     })
 })
 </script>

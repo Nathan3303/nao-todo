@@ -22,7 +22,12 @@ const selectedColor = computed({
             </nue-text>
             <tag-color-dot :color="selectedColor" size="large" />
             <nue-text size="var(--nue-text-sm)">
-                {{ SelectableTagColors.find((c) => c.value === selectedColor)?.name || '无颜色' }}
+                {{
+                    (SelectableTagColors.find((c) => c.value === selectedColor)?.name ||
+                        `未知颜色`) +
+                    '，' +
+                    selectedColor
+                }}
             </nue-text>
         </nue-div>
         <nue-div class="color-grid" overflow="visible">

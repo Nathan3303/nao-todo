@@ -10,6 +10,12 @@ import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { useBuiltInProjectsStore } from '@/stores/tasks'
 import { useProjectsStore, useTagsStore } from '@/stores'
 import { AppAsideAdapter } from '@/layouts/app/'
+import {
+    PROJECT_CREATOR_DIALOG_KEY,
+    PROJECT_MANAGER_DIALOG_KEY,
+    TAG_CREATOR_DIALOG_KEY,
+    TAG_MANAGER_DIALOG_KEY
+} from '@/infrastructure/constants/dialog-keys'
 
 defineOptions({ name: 'TasksViewAside' })
 
@@ -104,15 +110,15 @@ const handleTagResort = (originalId: string, boundId: string, isBefore: boolean)
                 <project-smart-list
                     :links="projectLinks"
                     draggable
-                    @open-project-creator="() => openDialog('project-creator')"
-                    @open-project-manager="() => openDialog('project-manager')"
+                    @open-project-creator="() => openDialog(PROJECT_CREATOR_DIALOG_KEY)"
+                    @open-project-manager="() => openDialog(PROJECT_MANAGER_DIALOG_KEY)"
                     @resort="handleProjectResort"
                 />
                 <tag-smart-list
                     :links="tagLinks"
                     draggable
-                    @open-tag-creator="() => openDialog('tag-creator')"
-                    @open-tag-manager="() => openDialog('tag-manager')"
+                    @open-tag-creator="() => openDialog(TAG_CREATOR_DIALOG_KEY)"
+                    @open-tag-manager="() => openDialog(TAG_MANAGER_DIALOG_KEY)"
                     @resort="handleTagResort"
                 />
             </nue-collapse>

@@ -11,7 +11,7 @@
             <nue-button
                 icon="plus"
                 theme="primary,small"
-                @click="calendarContext.dialogManager.open('task-creator')"
+                @click="calendarContext.dialogManager.open(TASK_CREATOR_DIALOG_KEY)"
             >
                 新增待办事项
             </nue-button>
@@ -23,6 +23,7 @@
 import { ref, computed, inject } from 'vue'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import type { CalendarViewContext } from '@/views/index/calendar/calendar-view'
+import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 
 defineProps<{ switchDisplayAside?: () => void; isDisplayAside?: boolean }>()
 

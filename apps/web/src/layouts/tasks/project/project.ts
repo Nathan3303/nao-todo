@@ -11,6 +11,7 @@ import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { ProjectHandler } from '@/infrastructure/handlers/tasks/project-handler'
+import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 
 const useProjectView = (props: ProjectViewProps) => {
     // @viewStores
@@ -109,7 +110,7 @@ const useProjectView = (props: ProjectViewProps) => {
         switchViewTypeToKanban: () => switchViewType('kanban'),
         switchViewTypeToList: () => switchViewType('list'),
         showTaskCreator: () =>
-            tasksViewContext.dialogManager.open('task-creator', {
+            tasksViewContext.dialogManager.open(TASK_CREATOR_DIALOG_KEY, {
                 projectId: props.projectId
             })
     })

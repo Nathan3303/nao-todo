@@ -5,6 +5,7 @@ import { InnerDropdownOption, DropdownDivBlock } from '@nao-todo/components'
 import ColumnDisplayOperator from '@/components/tasks/dropdowns/column-display-operator.vue'
 import { TAG_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import type { TagViewContext } from '../types'
+import { TAG_UPDATER_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 
 defineOptions({ name: 'TasksTagOperationsDropdown' })
 
@@ -38,7 +39,7 @@ onMounted(() => {
     })
     dropdownRef.value.register('update-tag', () => {
         if (!tag.value) return
-        tasksViewContext.dialogManager.open('tag-updater', tag.value.id)
+        tasksViewContext.dialogManager.open(TAG_UPDATER_DIALOG_KEY, tag.value.id)
     })
 })
 </script>

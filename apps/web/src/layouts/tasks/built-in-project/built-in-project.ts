@@ -11,6 +11,7 @@ import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
+import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 
 const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     // @viewStores
@@ -99,12 +100,15 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
         if (!builtInProject.value) return
         if (typeof builtInProject.value.createTaskOptions === 'function') {
             tasksViewContext.dialogManager.open(
-                'task-creator',
+                TASK_CREATOR_DIALOG_KEY,
                 builtInProject.value.createTaskOptions?.() || {}
             )
             return
         }
-        tasksViewContext.dialogManager.open('task-creator', builtInProject.value.createTaskOptions)
+        tasksViewContext.dialogManager.open(
+            TASK_CREATOR_DIALOG_KEY,
+            builtInProject.value.createTaskOptions
+        )
     }
 
     // @provide 提供 Project View 上下文
