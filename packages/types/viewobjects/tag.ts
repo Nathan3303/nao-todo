@@ -2,6 +2,7 @@ import type { GetTasksOptions, TaskColumnOptions } from './task'
 
 export type TagViewObject = {
     id: string
+    sortId: number
     name: string
     description: string
     color: string
@@ -25,6 +26,7 @@ export type CreateTagViewObject = {
 }
 
 export type UpdateTagViewObject = {
+    sortId?: number
     name?: string
     description?: string
     color?: string

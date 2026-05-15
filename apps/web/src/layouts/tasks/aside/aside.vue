@@ -13,7 +13,7 @@ import { AppAsideAdapter } from '@/layouts/app/'
 defineOptions({ name: 'TasksViewAside' })
 
 // @context Tasksview 任务视图上下文
-const { dialogManager, asideWidth, handleResizeAside, isDisplayAside, projectUseCase } =
+const { dialogManager, asideWidth, handleResizeAside, isDisplayAside, projectUseCase, tagUseCase } =
     inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
 
 // @dataStores
@@ -49,15 +49,17 @@ const projectLinks = computed(() => {
     }))
 })
 
-// @state 侧边栏标签路由按钮视图对象
+// @state 侧边栏标签路由按钮视图对象（按 sortId 排序）
 const tagLinks = computed<NaoSmartListLinkVO[]>(() => {
-    return [...tags.value.values()].map((tag) => ({
-        id: tag.id,
-        title: tag.name,
-        route: { name: 'tasks-tag', params: { tagId: tag.id } },
-        icon: 'tag',
-        payload: { color: tag.color || 'default' }
-    }))
+    return [...tags.value.values()]
+        .sort((a, b) => a.sortId - b.sortId)
+        .map((tag) => ({
+            id: tag.id,
+            title: tag.name,
+            route: { name: 'tasks-tag', params: { tagId: tag.id } },
+            icon: 'tag',
+            payload: { color: tag.color || 'default' }
+        }))
 })
 
 // @method 打开对话框
@@ -68,6 +70,11 @@ const openDialog = (dialogName: string) => {
 // @method 处理项目拖拽排序
 const handleProjectResort = (originalId: string, boundId: string, isBefore: boolean) => {
     projectUseCase.resort(originalId, boundId, isBefore)
+}
+
+// @method 处理标签拖拽排序
+const handleTagResort = (originalId: string, boundId: string, isBefore: boolean) => {
+    tagUseCase.resort(originalId, boundId, isBefore)
 }
 </script>
 
@@ -100,11 +107,12 @@ const handleProjectResort = (originalId: string, boundId: string, isBefore: bool
                     @open-project-manager="() => openDialog('project-manager')"
                     @resort="handleProjectResort"
                 />
-                <!-- <filter-smart-list /> -->
                 <tag-smart-list
                     :links="tagLinks"
+                    draggable
                     @open-tag-creator="() => openDialog('tag-creator')"
                     @open-tag-manager="() => openDialog('tag-manager')"
+                    @resort="handleTagResort"
                 />
             </nue-collapse>
             <nue-divider />

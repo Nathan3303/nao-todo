@@ -21,6 +21,7 @@ import type {
 export const tagEntityToViewObject = (tagEntity: TagEntity): TagViewObject => {
     return {
         id: tagEntity.id,
+        sortId: tagEntity.sortId,
         name: tagEntity.name,
         description: tagEntity.description,
         color: tagEntity.color,
@@ -106,6 +107,8 @@ export const updateTagViewObjectToValueObject = (
     if (updateTagViewObject.description)
         updateTagValueObject.description = updateTagViewObject.description
     if (updateTagViewObject.color) updateTagValueObject.color = updateTagViewObject.color
+    if (updateTagViewObject.sortId !== undefined)
+        updateTagValueObject.sortId = updateTagViewObject.sortId
     return updateTagValueObject
 }
 

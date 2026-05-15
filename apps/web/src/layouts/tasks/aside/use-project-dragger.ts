@@ -39,6 +39,22 @@ const useProjectDragger = (handler: ProjectDraggerHandler) => {
         dragged = getTargetNode(event.target as HTMLElement)
         if (dragged) {
             dragged.dataset['dragging'] = 'true'
+
+            const rect = dragged.getBoundingClientRect()
+            const ghost = dragged.cloneNode(true) as HTMLElement
+            ghost.style.position = 'fixed'
+            ghost.style.top = '-9999px'
+            ghost.style.left = '-9999px'
+            ghost.style.opacity = '0.4'
+            ghost.style.pointerEvents = 'none'
+            ghost.style.zIndex = '-1'
+            document.body.appendChild(ghost)
+            event.dataTransfer!.setDragImage(
+                ghost,
+                event.clientX - rect.left,
+                event.clientY - rect.top
+            )
+            requestAnimationFrame(() => ghost.remove())
         }
         resetDragElementDOD()
     }

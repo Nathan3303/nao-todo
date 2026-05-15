@@ -9,6 +9,7 @@ export class UpdateTagValueObject {
     public description?: string // 标签描述
     public color?: string // 标签颜色
     public icon?: string // 标签图标
+    public sortId?: number // 排序 ID
 
     /**
      * 更新标签视图对象构造函数
@@ -25,6 +26,7 @@ export class UpdateTagValueObject {
         if (this.description && this.description.length > 256) return '标签描述最多256个字符'
         if (this.color && this.color.length > 16) return '标签颜色最多16个字符'
         if (this.icon && this.icon.length > 16) return '标签图标最多16个字符'
+        if (this.sortId && this.sortId <= 0) return '排序 ID 不能小于等于 0'
         return null
     }
 }

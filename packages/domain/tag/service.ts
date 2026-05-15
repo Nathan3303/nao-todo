@@ -1,5 +1,5 @@
 import type { GoAsync } from '@nao-todo/types'
-import type { TagRepository } from './repositories'
+import type { TagRepository, BatchUpdateTagResult } from './repositories'
 import { TagEntity, TagPreferenceEntity } from './entities'
 import { CreateTagValueObject, UpdateTagValueObject } from './valueobjects'
 import { unwrapError } from '@nao-todo/infrastructure/utils'
@@ -83,5 +83,9 @@ export class TagDomain {
      */
     async updatePreference(tagId: string, preferenceEntity: TagPreferenceEntity): GoAsync<string> {
         return this.tagRepo.updatePreference(tagId, preferenceEntity)
+    }
+
+    async batchUpdate(tags: UpdateTagValueObject[]): GoAsync<BatchUpdateTagResult> {
+        return this.tagRepo.batchUpdate(tags)
     }
 }

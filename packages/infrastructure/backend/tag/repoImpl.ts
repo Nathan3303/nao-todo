@@ -3,7 +3,9 @@ import {
     getTagPreferenceRes2TagPreferenceEntity,
     getTagRes2TagEntity,
     listTagRes2TagEntities,
-    tagPreferenceEntity2UpdateReq
+    tagPreferenceEntity2UpdateReq,
+    updateTagValueObjectToUpdateTagReq,
+    batchUpdateTagRes2BatchUpdateTagResult
 } from './converters'
 import type { Requester } from '../../requester/types'
 import type { Err, GoAsync } from '@nao-todo/types'
@@ -15,14 +17,16 @@ import type {
     ListTagRes,
     ResponseData,
     UpdateTagPreferenceRes,
-    UpdateTagReq
+    BatchUpdateTagReq,
+    BatchUpdateTagRes
 } from '../types'
 import {
     TagEntity,
     TagPreferenceEntity,
     CreateTagValueObject,
     UpdateTagValueObject,
-    type TagRepository
+    type TagRepository,
+    type BatchUpdateTagResult
 } from '@nao-todo/domain/tag'
 import { defaultColumns } from '../../consts/tasks'
 
@@ -93,10 +97,7 @@ export const useTagRepository = (requester: Requester): TagRepository => {
         updateTagValueObject: UpdateTagValueObject
     ): GoAsync<void> => {
         // 1. 构建 rto
-        const rto: UpdateTagReq = {}
-        if (updateTagValueObject.name) rto.name = updateTagValueObject.name
-        if (updateTagValueObject.description) rto.description = updateTagValueObject.description
-        if (updateTagValueObject.color) rto.color = updateTagValueObject.color
+        const rto = updateTagValueObjectToUpdateTagReq(updateTagValueObject)
         // 2. 调用接口
         const response = await requester.put(`/tags/${tagId}`, rto, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
@@ -107,7 +108,6 @@ export const useTagRepository = (requester: Requester): TagRepository => {
             return res.message
         }
         // 4. 返回
-        // const data = res.data as UpdateTagRes
         return null
     }
 
@@ -198,6 +198,26 @@ export const useTagRepository = (requester: Requester): TagRepository => {
         return [res.data as UpdateTagPreferenceRes, null]
     }
 
-    return { create, get, update, remove, list, getPreference, updatePreference }
+    const batchUpdate = async (tags: UpdateTagValueObject[]): GoAsync<BatchUpdateTagResult> => {
+        // 1. 构建 rto
+        const rto: BatchUpdateTagReq = {
+            tags: tags.map((tag) => updateTagValueObjectToUpdateTagReq(tag))
+        }
+        // 2. 调用接口
+        const response = await requester.put('/tags/', rto, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
+        })
+        // 3. 判断结果
+        const res = response.data as ResponseData
+        if (res.code !== 30100) {
+            return [null, res.message]
+        }
+        // 4. 转换为结果
+        const result = batchUpdateTagRes2BatchUpdateTagResult(res.data as BatchUpdateTagRes)
+        // 5. 返回
+        return [result, null]
+    }
+
+    return { create, get, update, remove, list, getPreference, updatePreference, batchUpdate }
 }
 

@@ -34,6 +34,14 @@ const useTagsStoreBase = () => {
         return tagsMap.value.get(id)
     }
 
+    // @action 批量更新标签
+    const updateTags = (newTags: TagViewObject[]) => {
+        newTags.forEach((t) => updateTag(t.id, t))
+    }
+
+    // @action 获取所有标签
+    const getAllTags = () => tags.value
+
     // @action 删除标签
     const deleteTag = (id: TagViewObject['id']) => {
         const idx = tags.value.findIndex((item) => item.id === id)
@@ -47,6 +55,8 @@ const useTagsStoreBase = () => {
         setTags,
         addTag,
         updateTag,
+        updateTags,
+        getAllTags,
         getTag,
         deleteTag
     }

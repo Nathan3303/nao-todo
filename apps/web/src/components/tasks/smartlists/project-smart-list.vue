@@ -37,7 +37,6 @@ const { handleDragStart, handleDragOver, handleDragLeave, handleDragEnd, handleD
         @dragleave="handleDragLeave"
         @dragend="handleDragEnd"
         @drop="handleDrop"
-        data-drag-item="true"
     />
 </template>
 

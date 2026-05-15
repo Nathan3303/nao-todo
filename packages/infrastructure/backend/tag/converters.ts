@@ -1,10 +1,12 @@
-import { TagPreferenceEntity, TagEntity } from '@nao-todo/domain/tag/entities'
+import { TagPreferenceEntity, TagEntity, UpdateTagValueObject } from '@nao-todo/domain/tag'
 import type {
     CreateTagRes,
     GetTagPreferenceRes,
     GetTagRes,
     ListTagRes,
-    UpdateTagPreferenceReq
+    UpdateTagPreferenceReq,
+    UpdateTagReq,
+    BatchUpdateTagRes
 } from '../types'
 
 export const getTagRes2TagEntity = (res: GetTagRes): TagEntity => {
@@ -15,8 +17,21 @@ export const getTagRes2TagEntity = (res: GetTagRes): TagEntity => {
         res.color,
         res.description,
         '',
-        ''
+        '',
+        res.sortId
     )
+}
+
+export const updateTagValueObjectToUpdateTagReq = (
+    updateTagValueObject: UpdateTagValueObject
+): UpdateTagReq => {
+    const rto: UpdateTagReq = {}
+    if (updateTagValueObject.id) rto.id = updateTagValueObject.id
+    if (updateTagValueObject.name) rto.name = updateTagValueObject.name
+    if (updateTagValueObject.description) rto.description = updateTagValueObject.description
+    if (updateTagValueObject.color) rto.color = updateTagValueObject.color
+    if (updateTagValueObject.sortId !== undefined) rto.sortId = updateTagValueObject.sortId
+    return rto
 }
 
 export const createTagRes2TagEntity = (res: CreateTagRes): TagEntity => {
@@ -48,5 +63,12 @@ export const tagPreferenceEntity2UpdateReq = (
     rto.getTasksOptions = tagPreferenceEntity.getTasksOptions
     rto.columns = tagPreferenceEntity.columns
     return rto
+}
+
+export const batchUpdateTagRes2BatchUpdateTagResult = (res: BatchUpdateTagRes) => {
+    return {
+        updatedCount: res.updatedCount,
+        tags: res.tags.map((tag) => getTagRes2TagEntity(tag))
+    }
 }
 

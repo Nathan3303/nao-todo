@@ -20,6 +20,7 @@ export class TagEntity {
         public color: string,
         public description: string,
         public createdAt: string,
-        public updatedAt: string
+        public updatedAt: string,
+        public sortId: number
     ) {}
 }

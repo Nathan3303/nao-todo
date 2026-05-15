@@ -254,6 +254,20 @@ export class ProjectUseCase {
             nextProject = tempProjects[newIndex]
         }
 
+        // 如果原 sortId 在新位置依旧成立，则无需发送网络请求
+        let isSortIdStillValid = false
+        if (!prevProject) {
+            isSortIdStillValid = originalProject.sortId < nextProject!.sortId
+        } else if (!nextProject) {
+            isSortIdStillValid = originalProject.sortId > prevProject.sortId
+        } else {
+            isSortIdStillValid =
+                originalProject.sortId > prevProject.sortId &&
+                originalProject.sortId < nextProject.sortId
+        }
+
+        if (isSortIdStillValid) return null
+
         let newSortId: number
         const INTERVAL = 1000
 

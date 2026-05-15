@@ -4,7 +4,8 @@ import { useLoadingErrorStoreBase, useTagPreferenceStoreBase, useTagsStoreBase }
 
 export default defineStore('TagsStore', () => {
     // @storebase Tag store base
-    const { tags, setTags, addTag, getTag, updateTag, deleteTag } = useTagsStoreBase()
+    const { tags, setTags, addTag, getTag, updateTag, updateTags, getAllTags, deleteTag } =
+        useTagsStoreBase()
 
     // @storebase 内建标签存储加载/错误基础
     const { loading, error, setLoading, setError } = useLoadingErrorStoreBase()
@@ -35,6 +36,8 @@ export default defineStore('TagsStore', () => {
         addTag,
         getTag,
         updateTag,
+        updateTags,
+        getAllTags,
         deleteTag,
         loading: computed(() => loading.value),
         error: computed(() => error.value),

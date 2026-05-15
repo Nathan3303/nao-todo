@@ -24,7 +24,10 @@ export interface TagStore {
     setTags: (tags: TagViewObject[]) => void
     addTag: (tag: TagViewObject) => void
     setTagPreference: (tagPreferenceViewObject: TagPreferenceViewObject) => void
+    getTag: (tagId: TagViewObject['id']) => TagViewObject | undefined
+    getAllTags: () => TagViewObject[]
     updateTag: (tagId: TagViewObject['id'], updateTagViewObject: UpdateTagViewObject) => void
+    updateTags: (newTags: TagViewObject[]) => void
     deleteTag: (tagId: TagViewObject['id']) => void
 }
 
@@ -63,8 +66,10 @@ export class TagUseCase {
         // 调用领域层方法
         const [tagEntities, err] = await this.tagDomain.list()
         if (err !== null) return err
+        // 按 sortId 排序
+        const sorted = tagEntities.sort((a, b) => a.sortId - b.sortId)
         // 转换为视图对象
-        const tags = tagEntitiesToViewObjects(tagEntities)
+        const tags = tagEntitiesToViewObjects(sorted)
         // 存储到状态管理
         this.store.setTags(tags)
         return null
@@ -152,6 +157,134 @@ export class TagUseCase {
         const removeError = await this.tagDomain.remove(tagId)
         if (removeError !== null) return removeError
         this.store.deleteTag(tagId)
+        return null
+    }
+
+    /**
+     * 重新排序标签 - 使用浮动间隔排序法
+     */
+    async resort(
+        originalId: TagViewObject['id'],
+        boundId: TagViewObject['id'],
+        isBefore: boolean
+    ): GoAsync<void> {
+        const originalTag = this.store.getTag(originalId)
+        const boundTag = this.store.getTag(boundId)
+        if (!originalTag || !boundTag) return '标签不存在'
+
+        if (originalId === boundId) return null
+
+        const allTags = this.store.getAllTags()
+        if (allTags.length <= 1) return null
+
+        const sortedTags = [...allTags].sort((a, b) => a.sortId - b.sortId)
+
+        const originalIndex = sortedTags.findIndex((t) => t.id === originalId)
+        const boundIndex = sortedTags.findIndex((t) => t.id === boundId)
+
+        if (originalIndex === -1 || boundIndex === -1) return '标签不存在'
+
+        const tempTags = [...sortedTags]
+        tempTags.splice(originalIndex, 1)
+
+        let newIndex = boundIndex
+        if (originalIndex < boundIndex) {
+            newIndex = isBefore ? boundIndex - 1 : boundIndex
+        } else {
+            newIndex = isBefore ? boundIndex : boundIndex + 1
+        }
+
+        let prevTag: TagViewObject | null = null
+        let nextTag: TagViewObject | null = null
+
+        if (newIndex === 0) {
+            nextTag = tempTags[0]
+        } else if (newIndex === tempTags.length) {
+            prevTag = tempTags[tempTags.length - 1]
+        } else {
+            prevTag = tempTags[newIndex - 1]
+            nextTag = tempTags[newIndex]
+        }
+
+        // 如果原 sortId 在新位置依旧成立，则无需发送网络请求
+        let isSortIdStillValid = false
+        if (!prevTag) {
+            isSortIdStillValid = originalTag.sortId < nextTag!.sortId
+        } else if (!nextTag) {
+            isSortIdStillValid = originalTag.sortId > prevTag.sortId
+        } else {
+            isSortIdStillValid =
+                originalTag.sortId > prevTag.sortId &&
+                originalTag.sortId < nextTag.sortId
+        }
+
+        if (isSortIdStillValid) return null
+
+        let newSortId: number
+        const INTERVAL = 1000
+
+        if (!prevTag) {
+            newSortId = nextTag!.sortId - INTERVAL
+        } else if (!nextTag) {
+            newSortId = prevTag.sortId + INTERVAL
+        } else {
+            newSortId = Math.round((prevTag.sortId + nextTag.sortId) / 2)
+        }
+
+        const needsRebuild =
+            (prevTag && nextTag && Math.abs(nextTag.sortId - prevTag.sortId) < 2) || newSortId <= 0
+
+        if (needsRebuild) {
+            return this.resortWithRebuild(originalId, boundId, isBefore)
+        } else {
+            return this.resortSingle(originalId, newSortId)
+        }
+    }
+
+    async resortSingle(originalId: string, newSortId: number): GoAsync<void> {
+        // 更新状态管理中的标签顺序
+        this.store.updateTag(originalId, { sortId: newSortId })
+        // 调用领域层方法更新标签顺序
+        return await this.update(originalId, { sortId: newSortId })
+    }
+
+    async resortWithRebuild(originalId: string, boundId: string, isBefore: boolean): GoAsync<void> {
+        const allTags = this.store.getAllTags()
+        if (!allTags.length) return null
+
+        const sortedTags = [...allTags].sort((a, b) => a.sortId - b.sortId)
+
+        const originalIndex = sortedTags.findIndex((t) => t.id === originalId)
+        const boundIndex = sortedTags.findIndex((t) => t.id === boundId)
+
+        if (originalIndex === -1 || boundIndex === -1) return '标签不存在'
+
+        const [movedTag] = sortedTags.splice(originalIndex, 1)
+
+        let newIndex = boundIndex
+        if (originalIndex < boundIndex) {
+            newIndex = isBefore ? boundIndex - 1 : boundIndex
+        } else {
+            newIndex = isBefore ? boundIndex : boundIndex + 1
+        }
+
+        sortedTags.splice(newIndex, 0, movedTag)
+
+        const INTERVAL = 1000
+        const tagsToUpdate = sortedTags.map((tag, index) => ({
+            ...tag,
+            sortId: (index + 1) * INTERVAL
+        }))
+
+        this.store.updateTags(tagsToUpdate)
+
+        const [, err] = await this.tagDomain.batchUpdate(
+            tagsToUpdate
+                .map((tag) => ({ id: tag.id, sortId: tag.sortId }))
+                .map((t) => updateTagViewObjectToValueObject(t.id, t as UpdateTagViewObject))
+        )
+        if (err !== null) return err
+
         return null
     }
 }
