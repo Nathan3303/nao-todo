@@ -6,7 +6,7 @@ import useUserStore from '@/stores/user-store'
 import { storeToRefs } from 'pinia'
 import { BuiltInProjectLayoutHandlers } from '@/infrastructure/handlers/tasks/built-in-project-handler'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
-import { useBuiltInProjectsStore, useTagsStore, useTasksStore } from '@/stores/tasks'
+import { useBuiltInProjectsStore, useTagsStore, useTasksStore } from '@/stores'
 import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { NueMessage } from 'nue-ui'
@@ -98,16 +98,13 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     const showTaskCreator = () => {
         if (!builtInProject.value) return
         if (typeof builtInProject.value.createTaskOptions === 'function') {
-            tasksViewContext.dialogManager.openDialog(
+            tasksViewContext.dialogManager.open(
                 'task-creator',
                 builtInProject.value.createTaskOptions?.() || {}
             )
             return
         }
-        tasksViewContext.dialogManager.openDialog(
-            'task-creator',
-            builtInProject.value.createTaskOptions
-        )
+        tasksViewContext.dialogManager.open('task-creator', builtInProject.value.createTaskOptions)
     }
 
     // @provide 提供 Project View 上下文

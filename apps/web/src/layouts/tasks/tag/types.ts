@@ -3,9 +3,10 @@ import type {
     TagViewObject,
     TaskViewObject,
     UserViewObject,
-    TagPreferenceViewObject
+    TagPreferenceViewObject,
+    TaskColumnOptions
 } from '@nao-todo/types'
-import type { Subscriber } from '@/infrastructure/hooks/use-subscriber'
+import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
 import type { TagHandler } from '@/infrastructure/handlers/tasks/tag-handler'
@@ -25,7 +26,7 @@ export type TagViewContext = {
     subscriber: Subscriber
     isHideCompletedAlready: ComputedRef<boolean>
     profile: ComputedRef<UserViewObject | undefined>
-    getColumnLabel: (key: string) => string
+    getColumnLabel: (key: keyof TaskColumnOptions) => string
     getProjectName: (projectId: string) => string
     showTaskDetails: (taskId: TaskViewObject['id']) => void
     switchViewTypeToTable: () => void
@@ -33,3 +34,4 @@ export type TagViewContext = {
     switchViewTypeToList: () => void
     showTaskCreator: () => void
 }
+

@@ -5,7 +5,7 @@ import type { ProjectViewContext, ProjectViewProps } from './types'
 import useUserStore from '@/stores/user-store'
 import { storeToRefs } from 'pinia'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
-import { useProjectsStore, useTagsStore, useTasksStore } from '@/stores/tasks'
+import { useProjectsStore, useTagsStore, useTasksStore } from '@/stores'
 import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { NueMessage } from 'nue-ui'
@@ -109,7 +109,7 @@ const useProjectView = (props: ProjectViewProps) => {
         switchViewTypeToKanban: () => switchViewType('kanban'),
         switchViewTypeToList: () => switchViewType('list'),
         showTaskCreator: () =>
-            tasksViewContext.dialogManager.openDialog('task-creator', {
+            tasksViewContext.dialogManager.open('task-creator', {
                 projectId: props.projectId
             })
     })
@@ -119,3 +119,4 @@ const useProjectView = (props: ProjectViewProps) => {
 }
 
 export default useProjectView
+

@@ -5,7 +5,7 @@ import type { TagViewContext, TagViewProps } from './types'
 import useUserStore from '@/stores/user-store'
 import { storeToRefs } from 'pinia'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
-import { useTagsStore, useTasksStore } from '@/stores/tasks'
+import { useTagsStore, useTasksStore } from '@/stores'
 import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { NueMessage } from 'nue-ui'
@@ -108,7 +108,7 @@ const useTagView = (props: TagViewProps) => {
         switchViewTypeToKanban: () => switchViewType('kanban'),
         switchViewTypeToList: () => switchViewType('list'),
         showTaskCreator: () =>
-            tasksViewContext.dialogManager.openDialog('task-creator', { tags: [props.tagId] })
+            tasksViewContext.dialogManager.open('task-creator', { tags: [props.tagId] })
     })
 
     // @returns

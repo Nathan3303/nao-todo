@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Loading as LoadingComponent } from '@nao-todo/components'
-import { inject, onMounted } from 'vue'
+import { inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { NueMessage } from 'nue-ui'
@@ -10,20 +10,17 @@ import type { AuthViewContext } from '@/views/auth/types'
 const router = useRouter()
 const { authUseCase } = inject<AuthViewContext>(AUTH_VIEW_CONTEXT_KEY)!
 
-onMounted(() => {
-    authUseCase
-        .checkIn()
-        .then((err) => {
-            if (err !== null) {
-                NueMessage.error(unwrapError(err))
-                return router.replace('/auth/signin')
-            }
-            // if (err === null) return
-            // NueMessage.error(unwrapError(err))
-            // return router.replace('/auth/signin')
-        })
-        .then(() => router.replace('/tasks'))
-})
+authUseCase
+    .checkIn()
+    .then((err) => {
+        if (err === null) return null
+        NueMessage.error(unwrapError(err))
+        return router.replace('/auth/signin')
+    })
+    .then(() => {
+        const lastRoute = localStorage.getItem('LAST_VISITED_ROUTE')
+        router.replace(lastRoute || '/tasks')
+    })
 </script>
 
 <template>
@@ -69,3 +66,4 @@ onMounted(() => {
     }
 }
 </style>
+

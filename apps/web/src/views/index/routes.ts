@@ -1,5 +1,5 @@
 import tasksRoutes from './tasks/routes'
-// import calendarRoutes from '@/views/calendar/routes'
+import calendarRoutes from './calendar/routes'
 // import searchRoutes from '@/views/search/routes'
 import settingsRoutes from './settings/routes'
 
@@ -9,8 +9,9 @@ export default {
     component: () => import('./index.vue'),
     children: [
         tasksRoutes,
+        calendarRoutes,
         // searchRoutes
-        // calendarRoutes,
         settingsRoutes
     ]
 }
+

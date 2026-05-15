@@ -10,7 +10,7 @@ import { computed } from 'vue'
 defineOptions({ name: 'TasksDropdownColumnDisplayOperator' })
 const props = defineProps<{
     columns: ProjectPreferenceViewObject['columns']
-    labelGetter: (key: string) => string
+    labelGetter: (key: keyof ProjectPreferenceViewObject['columns']) => string
 }>()
 const emit = defineEmits<{
     (e: 'update', key: keyof ProjectPreferenceViewObject['columns'], value: boolean): void
@@ -29,7 +29,7 @@ const columnOptions = computed<InnerDropdownOptionVO[]>(() => {
     Object.keys(props.columns).forEach((key) => {
         options.push({
             icon: 'plus-circle',
-            label: props.labelGetter(key),
+            label: props.labelGetter(key as keyof ProjectPreferenceViewObject['columns']),
             value: key,
             checked: props.columns[key as keyof ProjectPreferenceViewObject['columns']]
         })
@@ -64,3 +64,4 @@ const handleExecute = (id: string) => {
 </template>
 
 <style scoped></style>
+

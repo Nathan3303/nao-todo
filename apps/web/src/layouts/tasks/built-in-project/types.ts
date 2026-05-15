@@ -4,7 +4,8 @@ import type {
     TaskViewObject,
     BuiltInProjectPreferenceViewObject,
     BuiltInProjectViewObject,
-    UserViewObject
+    UserViewObject,
+    TaskColumnOptions
 } from '@nao-todo/types'
 import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import type { BuiltInProjectLayoutHandlers } from '@/infrastructure/handlers/tasks/built-in-project-handler'
@@ -26,7 +27,7 @@ export type BuiltInProjectViewContext = {
     subscriber: Subscriber
     isHideCompletedAlready: ComputedRef<boolean>
     profile: ComputedRef<UserViewObject | undefined>
-    getColumnLabel: (key: string) => string
+    getColumnLabel: (key: keyof TaskColumnOptions) => string
     getProjectName: (projectId: string) => string
     showTaskDetails: (taskId: TaskViewObject['id']) => void
     switchViewTypeToTable: () => void

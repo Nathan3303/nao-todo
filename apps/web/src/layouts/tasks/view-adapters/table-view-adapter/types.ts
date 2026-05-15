@@ -1,4 +1,4 @@
-import type { Subscriber } from '@/infrastructure/hooks/use-subscriber'
+import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import type { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 import type { GetTasksOptions, TaskViewObject, TaskColumnOptions, TagViewObject } from '@nao-todo/types'
 import type { TaskTableProps } from '@/components/tasks/table/types'

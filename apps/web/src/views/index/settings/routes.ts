@@ -22,14 +22,7 @@ const _routeRecords = [
         componentName: 'appsetting',
         title: '应用设置',
         icon: 'setting'
-    },
-    // {
-    //     path: 'smartlist',
-    //     name: 'settings-smartlist',
-    //     componentName: 'smartlist',
-    //     title: '智能列表',
-    //     icon: 'list'
-    // }
+    }
 ]
 
 const SettingsViewRouteLinks = _routeRecords.map((record) => {
@@ -57,3 +50,4 @@ const SettingsViewRouteRecordRaw: RouteRecordRaw = {
 
 export default SettingsViewRouteRecordRaw
 export { SettingsViewRouteLinks }
+

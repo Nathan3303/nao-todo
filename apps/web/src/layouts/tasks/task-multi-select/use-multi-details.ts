@@ -1,9 +1,8 @@
 import { computed, inject, ref, watch } from 'vue'
-import { useProjectsStore, useTagsStore, useTasksStore } from '@/stores/tasks'
+import { useProjectsStore, useTagsStore, useTasksStore } from '@/stores'
 import { useUserStore } from '@/stores'
 import { debounce } from '@nao-todo/infrastructure/utils'
 import { useRoute, useRouter } from 'vue-router'
-import { useTasksViewStore } from '@/views/index/tasks'
 import type { TaskMultiDetailsProps } from './types'
 import type { TaskViewObject } from '@nao-todo/types'
 import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
@@ -20,7 +19,6 @@ export const useMultiDetails = (props: TaskMultiDetailsProps) => {
     const projectStore = useProjectsStore()
     const taskStore = useTasksStore()
     const tagStore = useTagsStore()
-    const tasksViewStore = useTasksViewStore()
 
     const commonData = ref({
         dueDate: { startAt: '', endAt: '' },
@@ -48,7 +46,7 @@ export const useMultiDetails = (props: TaskMultiDetailsProps) => {
         const _selectedIds = [...props.selectedIds]
         if (!_selectedIds.length) return [] as TaskViewObject[]
         const _selectedTasks: TaskViewObject[] = []
-        for (const task of taskStore.list) {
+        for (const task of taskStore.tasks) {
             if (_selectedIds.length === 0) break
             const idx = _selectedIds.indexOf(task.id)
             if (idx > -1) {
@@ -60,45 +58,45 @@ export const useMultiDetails = (props: TaskMultiDetailsProps) => {
     }
 
     const _updateTasks = async () => {
-        const updateResult = await taskStore.doUpdateTasks(props.selectedIds, updateOptions)
+        const updateResult = await taskStore.updateTasks(props.selectedIds, updateOptions)
         if (
             updateResult &&
             Object.prototype.hasOwnProperty.call(updateOptions, 'projectId') &&
             updateOptions.projectId !== (route.params.projectId as string)
         ) {
-            await todoStore.doGetTodos()
+            await taskStore.getTasks()
             const prevRoute = route.matched[route.matched.length - 1]
             if (prevRoute) await router.push(prevRoute)
-            tasksViewStore.hideMultiDetails()
+            tasksViewContext.hideMultiDetails()
         }
         updateOptions = {}
     }
 
-    const debouncedUpdateTodos = debounce(_updateTodos, 1024)
+    const debouncedUpdateTasks = debounce(_updateTasks, 1024)
 
-    const insertOptionsAndUpdate = (options: Partial<Todo>) => {
+    const insertOptionsAndUpdate = (options: Partial<TaskViewObject>) => {
         Object.assign(updateOptions, options)
-        debouncedUpdateTodos()
+        debouncedUpdateTasks()
     }
 
     const setProjectInfo = (projectId: string, projectTitle: string) => {
         commonData.value.projectId = projectId
         commonData.value.project.title = projectTitle
-        insertOptionsAndUpdate({ projectId, project: { title: projectTitle } })
+        insertOptionsAndUpdate({ projectId, project: { name: projectTitle } })
     }
 
     const handleChangeEndDate = (date: string | null) => {
-        insertOptionsAndUpdate({ dueDate: { startAt: null, endAt: date } })
+        insertOptionsAndUpdate({ startAt: null, endAt: date })
     }
 
     const handleChangeState = (value: unknown) => {
         commonData.value.state = value as string
-        insertOptionsAndUpdate({ state: value as Todo['state'] })
+        insertOptionsAndUpdate({ state: value as TaskViewObject['state'] })
     }
 
     const handleChangePriority = (value: unknown) => {
         commonData.value.priority = value as string
-        insertOptionsAndUpdate({ priority: value as Todo['priority'] })
+        insertOptionsAndUpdate({ priority: value as TaskViewObject['priority'] })
     }
 
     const handleUpdateTags = (tags: string[]) => {
@@ -107,39 +105,39 @@ export const useMultiDetails = (props: TaskMultiDetailsProps) => {
     }
 
     const handleRemove = async () => {
-        const removeResult = await todoStore.deleteTodosWithConfirmation(props.selectedIds)
+        const removeResult = await taskStore.deleteTasksWithConfirmation(props.selectedIds)
         if (!removeResult) return
         const prevRoute = route.matched[route.matched.length - 1]
         if (prevRoute) await router.push(prevRoute)
-        tasksViewStore.hideMultiDetails()
+        tasksViewContext.hideMultiDetails()
     }
 
     const handleDelete = async () => {
-        const removeResult = await todoStore.deleteTodosPermanentlyWithConfirmation(
+        const removeResult = await taskStore.deleteTasksPermanentlyWithConfirmation(
             props.selectedIds
         )
         if (!removeResult) return
         const prevRoute = route.matched[route.matched.length - 1]
         if (prevRoute) await router.push(prevRoute)
-        tasksViewStore.hideMultiDetails()
+        tasksViewContext.hideMultiDetails()
     }
 
     const handleRestore = async () => {
-        const removeResult = await todoStore.restoreTodosWithConfirmation(props.selectedIds)
+        const removeResult = await taskStore.restoreTasksWithConfirmation(props.selectedIds)
         if (!removeResult) return
-        tasksViewStore.hideMultiDetails()
+        tasksViewContext.hideMultiDetails()
         const prevRoute = route.matched[route.matched.length - 1]
         if (prevRoute) await router.push(prevRoute)
     }
 
     const handleCancelMultiSelect = () => {
         // console.log('000');
-        tasksViewStore.hideMultiDetails()
+        tasksViewContext.hideMultiDetails()
     }
 
     // 属性匹配检查
-    const checkTodosAttrs = (
-        target: Todo[],
+    const checkTasksAttrs = (
+        target: TaskViewObject[],
         chkList: {
             attrName: string
             initValue: unknown
@@ -154,15 +152,15 @@ export const useMultiDetails = (props: TaskMultiDetailsProps) => {
             tags: true,
             isDeleted: true
         }
-        for (const todo of target) {
+        for (const task of target) {
             for (const chkItem of chkList) {
                 if (!_commonDataChkFlag[chkItem.attrName]) continue
-                if (!Object.prototype.hasOwnProperty.call(todo, chkItem.attrName)) {
+                if (!Object.prototype.hasOwnProperty.call(task, chkItem.attrName)) {
                     _commonData[chkItem.attrName] = chkItem.initValue
                     _commonDataChkFlag[chkItem.attrName] = false
                     continue
                 }
-                if (!chkItem.validator(_commonData[chkItem.attrName], todo[chkItem.attrName])) {
+                if (!chkItem.validator(_commonData[chkItem.attrName], task[chkItem.attrName])) {
                     _commonData[chkItem.attrName] = chkItem.initValue
                     _commonDataChkFlag[chkItem.attrName] = false
                     // console.log('Attribute', chkItem.attrName, 'is different')
@@ -175,9 +173,9 @@ export const useMultiDetails = (props: TaskMultiDetailsProps) => {
     watch(
         () => props.selectedIds,
         () => {
-            const _selectedTodos = getSelectedTodos()
-            if (!_selectedTodos) return
-            commonData.value = checkTodosAttrs(_selectedTodos, [
+            const _selectedTasks = getSelectedTasks()
+            if (!_selectedTasks) return
+            commonData.value = checkTasksAttrs(_selectedTasks, [
                 {
                     attrName: 'dueDate',
                     initValue: { startAt: '', endAt: '' },
@@ -236,7 +234,4 @@ export const useMultiDetails = (props: TaskMultiDetailsProps) => {
         handleCancelMultiSelect
     }
 }
-
-
-
 

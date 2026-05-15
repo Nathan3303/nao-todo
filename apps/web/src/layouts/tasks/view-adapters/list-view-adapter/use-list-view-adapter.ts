@@ -1,4 +1,4 @@
-import { useTasksStore } from '@/stores/tasks'
+import { useTasksStore } from '@/stores'
 import type { ListViewAdapterProps } from './types'
 import useTasksLoader from '@/infrastructure/hooks/use-task-loader'
 import { computed, onMounted, onUnmounted } from 'vue'

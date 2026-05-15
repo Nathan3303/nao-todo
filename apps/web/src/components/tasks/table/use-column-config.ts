@@ -150,14 +150,14 @@ export default (initialConfig?: TableLayoutConfig, tableId: string = 'default') 
         const fromColumn = visibleCols[fromIndex]
         const toColumn = visibleCols[toIndex]
 
-        if (fromColumn.key === 'name' || toColumn.key === 'name') return
+        if (fromColumn?.key === 'name' || toColumn?.key === 'name') return
 
         const newColumns = [...layoutConfig.value.columns]
-        const fromColumnIndex = newColumns.findIndex((c) => c.key === fromColumn.key)
-        const toColumnIndex = newColumns.findIndex((c) => c.key === toColumn.key)
+        const fromColumnIndex = newColumns.findIndex((c) => c.key === fromColumn?.key)
+        const toColumnIndex = newColumns.findIndex((c) => c.key === toColumn?.key)
 
         const [removed] = newColumns.splice(fromColumnIndex, 1)
-        newColumns.splice(toColumnIndex, 0, removed)
+        newColumns.splice(toColumnIndex, 0, removed as TableColumnConfig)
 
         layoutConfig.value = {
             ...layoutConfig.value,
@@ -224,5 +224,4 @@ export default (initialConfig?: TableLayoutConfig, tableId: string = 'default') 
         syncFromProps
     }
 }
-
 

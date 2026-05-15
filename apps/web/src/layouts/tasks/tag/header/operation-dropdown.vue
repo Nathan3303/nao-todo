@@ -38,7 +38,7 @@ onMounted(() => {
     })
     dropdownRef.value.register('update-tag', () => {
         if (!tag.value) return
-        tasksViewContext.dialogManager.openDialog('tag-updater', tag.value.id)
+        tasksViewContext.dialogManager.open('tag-updater', tag.value.id)
     })
 })
 </script>

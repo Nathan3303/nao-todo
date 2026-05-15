@@ -1,14 +1,17 @@
-import { useProjectsStore } from '@/stores/tasks'
+import { useProjectsStore } from '@/stores'
 import type {
     GetTasksOptions,
     GetTasksSortOptions,
     Go,
     GoAsync,
-    TaskColumnOptions
+    TaskColumnOptions,
+    UpdateProjectViewObject
 } from '@nao-todo/types'
 import type { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import type { ProjectUseCase } from '@nao-todo/application/web/usecases/project'
+import { NueConfirm, NueMessage } from 'nue-ui'
+import { unwrapError } from '@nao-todo/infrastructure/utils'
 
 export class ProjectHandler {
     /**
@@ -125,6 +128,69 @@ export class ProjectHandler {
         preference.projectId = projectId
         // 3. 调用用例
         return await this.projectUseCase.savePreference(projectId, preference)
+    }
+
+    /**
+     * 删除项目
+     * @param projectId 项目ID
+     * @returns 无
+     */
+    async deleteProject(projectId: string): GoAsync<void> {
+        // 询问用户
+        const [, isByCancel] = await NueConfirm({
+            title: '确认删除清单吗？',
+            content: '删除后 30 天内可以恢复',
+            confirmButtonText: '确认删除',
+            cancelButtonText: '取消'
+        })
+        if (isByCancel) return 'Cancel'
+        // 调用用例
+        const deleteError = await this.projectUseCase.delete(projectId)
+        // 处理错误
+        if (deleteError !== null) {
+            NueMessage.error('清单删除失败' + unwrapError(deleteError))
+            return deleteError
+        }
+        // 成功
+        NueMessage.success('清单删除成功')
+        return null
+    }
+
+    /**
+     * 恢复项目
+     * @param projectId 项目ID
+     * @returns 无
+     */
+    async restoreProject(projectId: string): GoAsync<void> {
+        // 调用用例
+        const restoreError = await this.projectUseCase.restore(projectId)
+        // 处理错误
+        if (restoreError !== null) {
+            NueMessage.error('清单恢复失败' + unwrapError(restoreError))
+            return restoreError
+        }
+        // 成功
+        NueMessage.success('清单恢复成功')
+        return null
+    }
+
+    /**
+     * 更新项目
+     * @param projectId 项目ID
+     * @param updateVO 更新项目视图对象
+     * @returns 无
+     */
+    async updateProject(
+        projectId: string,
+        updateVO: UpdateProjectViewObject
+    ): GoAsync<void> {
+        const err = await this.projectUseCase.update(projectId, updateVO)
+        if (err !== null) {
+            NueMessage.error('清单更新失败' + unwrapError(err))
+            return err
+        }
+        NueMessage.success('清单更新成功')
+        return null
     }
 }
 

@@ -2,7 +2,7 @@ import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import useCommentHandler from '@/infrastructure/handlers/tasks/comment-handler'
 import useEventHandler from '@/infrastructure/handlers/tasks/event-handler'
 import useTaskHandler from '@/infrastructure/handlers/tasks/task-handler'
-import { useProjectsStore, useTagsStore, useTaskDetailsStore, useTasksStore } from '@/stores/tasks'
+import { useProjectsStore, useTagsStore, useTaskDetailsStore, useTasksStore } from '@/stores'
 import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
 import { CommentUseCase } from '@nao-todo/application/web/usecases/comment'
 import { EventUseCase } from '@nao-todo/application/web/usecases/event'
@@ -184,7 +184,7 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     const makeEventToTask = (eventId: EventViewObject['id']) => {
         const event = events.value.find((e) => e.id === eventId)
         if (!event) return
-        tasksViewContext.dialogManager.openDialog('task-creator', {
+        tasksViewContext.dialogManager.open('task-creator', {
             name: event.name,
             state: event.isDone ? 'done' : 'todo'
         })

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { TasksViewAside, TasksViewDetailsAdapter, TasksViewDialogs } from '@/layouts/tasks'
+import { TasksViewAside, TasksViewDetailsAdapter } from '@/layouts/tasks'
 import useTasksView from './tasks-view'
 import { Loading as LoadingComp } from '@nao-todo/components'
 import { onMounted } from 'vue'
@@ -38,7 +38,5 @@ onMounted(() => init())
             <tasks-view-details-adapter />
         </nue-main>
     </nue-container>
-    <!-- 对话框 -->
-    <tasks-view-dialogs />
 </template>
 

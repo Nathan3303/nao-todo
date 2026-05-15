@@ -1,8 +1,18 @@
-import { useTagsStore } from '@/stores/tasks'
-import type { GetTasksOptions, GetTasksSortOptions, Go, GoAsync, TaskColumnOptions } from '@nao-todo/types'
+import { useTagsStore } from '@/stores'
+import type {
+    GetTasksOptions,
+    GetTasksSortOptions,
+    Go,
+    GoAsync,
+    TaskColumnOptions,
+    CreateTagViewObject,
+    UpdateTagViewObject
+} from '@nao-todo/types'
 import type { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import type { TagUseCase } from '@nao-todo/application/web/usecases/tag'
+import { NueConfirm, NueMessage } from 'nue-ui'
+import { unwrapError } from '@nao-todo/infrastructure/utils'
 
 export class TagHandler {
     /**
@@ -117,4 +127,68 @@ export class TagHandler {
         // 3. 调用用例
         return await this.tagUseCase.savePreference(tagId, preference)
     }
+
+    /**
+     * 创建标签
+     * @param createVO 创建标签视图对象
+     * @returns 错误或空
+     */
+    async createTag(createVO: CreateTagViewObject): GoAsync<void> {
+        const [, err] = await this.tagUseCase.create(createVO)
+        if (err !== null) {
+            NueMessage.error('标签创建失败：' + unwrapError(err))
+            return err
+        }
+        NueMessage.success('标签创建成功')
+        return null
+    }
+
+    /**
+     * 更新标签
+     * @param tagId 标签ID
+     * @param updateVO 更新标签视图对象
+     * @returns 错误或空
+     */
+    async updateTag(tagId: string, updateVO: UpdateTagViewObject): GoAsync<void> {
+        const err = await this.tagUseCase.update(tagId, updateVO)
+        if (err !== null) {
+            NueMessage.error('标签更新失败：' + unwrapError(err))
+            return err
+        }
+        NueMessage.success('标签更新成功')
+        return null
+    }
+
+    /**
+     * 更新标签颜色
+     * @param tagId 标签ID
+     * @param color 颜色值
+     * @returns 错误或空
+     */
+    async updateTagColor(tagId: string, color: string): GoAsync<void> {
+        return await this.updateTag(tagId, { color })
+    }
+
+    /**
+     * 删除标签
+     * @param tagId 标签ID
+     * @returns 错误或空
+     */
+    async deleteTag(tagId: string): GoAsync<void> {
+        const [, isByCancel] = await NueConfirm({
+            title: '确认删除标签吗？',
+            content: '删除后无法恢复，相关任务将保留但移除该标签',
+            confirmButtonText: '确认删除',
+            cancelButtonText: '取消'
+        })
+        if (isByCancel) return 'Cancel'
+        const err = await this.tagUseCase.delete(tagId)
+        if (err !== null) {
+            NueMessage.error('标签删除失败：' + unwrapError(err))
+            return err
+        }
+        NueMessage.success('标签删除成功')
+        return null
+    }
 }
+

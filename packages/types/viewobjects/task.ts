@@ -1,7 +1,5 @@
 export type TaskViewObject = {
     id: string
-    localId: string
-    serverId: string | null
     parentTaskId: string | null
     userId: string
     name: string
@@ -39,7 +37,9 @@ export type CreateTaskViewObject = {
 }
 
 export type UpdateTaskViewObject = {
+    id?: TaskViewObject['id']
     projectId?: TaskViewObject['projectId']
+    parentTaskId?: TaskViewObject['parentTaskId']
     name?: TaskViewObject['name']
     description?: TaskViewObject['description']
     state?: TaskViewObject['state']

@@ -7,7 +7,8 @@ import type { NaoSmartListLinkVO } from '@nao-todo/components'
 import { computed, inject, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import { useBuiltInProjectsStore, useProjectsStore, useTagsStore } from '@/stores/tasks'
+import { useBuiltInProjectsStore } from '@/stores/tasks'
+import { useProjectsStore, useTagsStore } from '@/stores'
 import { AppAsideAdapter } from '@/layouts/app/'
 
 defineOptions({ name: 'TasksViewAside' })
@@ -64,7 +65,7 @@ const tagLinks = computed<NaoSmartListLinkVO[]>(() => {
 
 // @method 打开对话框
 const openDialog = (dialogName: string) => {
-    dialogManager.openDialog(dialogName)
+    dialogManager.open(dialogName)
 }
 
 // @method 处理项目拖拽排序

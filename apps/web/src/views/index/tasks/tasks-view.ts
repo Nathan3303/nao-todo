@@ -1,21 +1,25 @@
 import { BuiltInProjectUseCase } from '@nao-todo/application/web/usecases/built-in-project'
-import { ProjectUseCase } from '@nao-todo/application/web/usecases/project'
-import { TagUseCase } from '@nao-todo/application/web/usecases/tag'
 import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
 import useResponsiveAside from '@/infrastructure/hooks/use-responsive-aside'
 import { columnLabels } from '@nao-todo/infrastructure/consts/tasks'
 import { useRouter } from 'vue-router'
-import useDialogManager, { type DialogManager } from '@/infrastructure/hooks/use-dialog-manager'
+import { type DialogManager } from '@/infrastructure/hooks/use-dialog-manager'
 import useAsideWidth from '@nao-todo/infrastructure/hooks/use-aside-width'
 import { inject, provide, ref, type Ref } from 'vue'
-import { APP_CONTEXT_KEY, TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
-import { useTasksStore } from '@/stores/tasks'
-import { useBuiltInProjectsStore, useProjectsStore, useTagsStore } from '@/stores/tasks'
-import useSubscriber, { type Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
+import {
+    APP_CONTEXT_KEY,
+    INDEX_VIEW_CONTEXT_KEY,
+    TASKS_VIEW_CONTEXT_KEY
+} from '@/infrastructure/constants/context-keys'
+import { useBuiltInProjectsStore, useProjectsStore, useTagsStore } from '@/stores'
+import { type Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import type { AppContext } from '@/app'
+import type { IndexViewContext } from '@/views/index/index-view'
 import type { TagViewObject, TaskViewObject } from '@nao-todo/types'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
+import { ProjectUseCase } from '@nao-todo/application/web/usecases/project'
+import { TagUseCase } from '@nao-todo/application/web/usecases/tag'
+import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 
 export type TasksViewContext = {
     appContext: AppContext
@@ -44,6 +48,9 @@ const useTasksView = () => {
     // @context App 上下文
     const appContext = inject<AppContext>(APP_CONTEXT_KEY)!
 
+    // @context IndexView 上下文（共享 dialogManager、useCase 等）
+    const indexViewContext = inject<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY)!
+
     // @context 路由上下文
     const router = useRouter()
 
@@ -51,16 +58,15 @@ const useTasksView = () => {
     const builtInProjectsStore = useBuiltInProjectsStore()
     const projectsStore = useProjectsStore()
     const tagsStore = useTagsStore()
-    const tasksStore = useTasksStore()
 
     // @usecases
     const builtInProjectUseCase = BuiltInProjectUseCase.create(builtInProjectsStore)
-    const projectUseCase = ProjectUseCase.create(projectsStore)
-    const tagUseCase = TagUseCase.create(tagsStore)
-    const taskUseCase = TaskUseCase.create(tasksStore)
+    const projectUseCase = indexViewContext.projectUseCase
+    const tagUseCase = indexViewContext.tagUseCase
+    const taskUseCase = indexViewContext.taskUseCase
 
     // @hook 事件订阅器
-    const subscriber = useSubscriber()
+    const subscriber = indexViewContext.subscriber
 
     // @states&method 初始化处理程序
     const isLoading = ref<boolean>(true) // 加载状态
@@ -72,13 +78,14 @@ const useTasksView = () => {
             builtInProjectUseCase.loadBuiltInProjects(),
             projectUseCase.loadProjects(),
             tagUseCase.loadTags()
-        ]).then((results) => {
-            isLoading.value = false
-            results.forEach((result) => {
-                if (result.status !== 'rejected') return
-                error.value = unwrapError(result.reason)
+        ])
+            .then((results) => {
+                results.forEach((result) => {
+                    if (result.status !== 'rejected') return
+                    error.value = unwrapError(result.reason)
+                })
             })
-        })
+            .finally(() => (isLoading.value = false))
     }
 
     // @hook 响应式侧边栏
@@ -103,8 +110,8 @@ const useTasksView = () => {
         'OUTLINE_WIDTH'
     )
 
-    // @hook 对话框管理器
-    const dialogManager = useDialogManager()
+    // @hook 对话框管理器（复用 IndexView 实例）
+    const dialogManager = indexViewContext.dialogManager
 
     // @method 获取列选项标识
     const getColumnLabel = (key: keyof typeof columnLabels): string => columnLabels[key] || ''

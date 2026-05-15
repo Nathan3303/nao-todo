@@ -246,12 +246,12 @@ export class ProjectUseCase {
         let nextProject: ProjectViewObject | null = null
 
         if (newIndex === 0) {
-            nextProject = tempProjects[0]
+            nextProject = tempProjects[0] || null
         } else if (newIndex === tempProjects.length) {
-            prevProject = tempProjects[tempProjects.length - 1]
+            prevProject = tempProjects[tempProjects.length - 1] || null
         } else {
-            prevProject = tempProjects[newIndex - 1]
-            nextProject = tempProjects[newIndex]
+            prevProject = tempProjects[newIndex - 1] || null
+            nextProject = tempProjects[newIndex] || null
         }
 
         // 如果原 sortId 在新位置依旧成立，则无需发送网络请求
@@ -334,7 +334,7 @@ export class ProjectUseCase {
             newIndex = isBefore ? boundIndex : boundIndex + 1
         }
 
-        sortedProjects.splice(newIndex, 0, movedProject)
+        sortedProjects.splice(newIndex, 0, movedProject || ({} as ProjectViewObject))
 
         const INTERVAL = 1000
         const projectsToUpdate = sortedProjects.map((project, index) => ({

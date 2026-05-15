@@ -1,6 +1,6 @@
 import { computed, onMounted, onUnmounted } from 'vue'
 import useTasksLoader from '@/infrastructure/hooks/use-task-loader'
-import { useTasksStore } from '@/stores/tasks'
+import { useTasksStore } from '@/stores'
 import type { TableViewAdapterProps } from './types'
 
 const useTableViewAdapter = (props: TableViewAdapterProps) => {

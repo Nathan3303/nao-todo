@@ -75,7 +75,8 @@ const handleSubmit = async (e: Event) => {
         return
     }
     NueMessage.success('登录成功')
-    await router.push({ path: '/tasks' })
+    const lastRoute = localStorage.getItem('LAST_VISITED_ROUTE')
+    await router.push(lastRoute || '/tasks')
 }
 </script>
 

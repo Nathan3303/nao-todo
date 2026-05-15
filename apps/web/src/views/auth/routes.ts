@@ -26,7 +26,7 @@ const routes: RouteRecordRaw = {
     ]
 }
 
-const beforeEnter: NavigationGuard = async (to, from, next) => {
+const beforeEnter: NavigationGuard = async (_to, _from, next) => {
     // 获取 LocalStorage 中的 JWT 令牌
     const jwt = localStorage.getItem(USER_JWT_LOCALSTORAGE_KEY)
     // 若有 JWT 令牌且未登录，跳转到检入页

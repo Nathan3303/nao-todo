@@ -5,7 +5,7 @@ const routes: RouteRecordRaw = {
     path: 'tasks',
     name: 'tasks',
     component: () => import('./entry.vue'),
-    beforeEnter: (to, from, next) => {
+    beforeEnter: (to, _from, next) => {
         if (to.name === 'tasks') {
             next({ name: 'tasks-built-in-project', params: { projectId: 'all' } })
             return

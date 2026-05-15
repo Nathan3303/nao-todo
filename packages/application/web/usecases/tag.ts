@@ -198,12 +198,12 @@ export class TagUseCase {
         let nextTag: TagViewObject | null = null
 
         if (newIndex === 0) {
-            nextTag = tempTags[0]
+            nextTag = tempTags[0] || null
         } else if (newIndex === tempTags.length) {
-            prevTag = tempTags[tempTags.length - 1]
+            prevTag = tempTags[tempTags.length - 1] || null
         } else {
-            prevTag = tempTags[newIndex - 1]
-            nextTag = tempTags[newIndex]
+            prevTag = tempTags[newIndex - 1] || null
+            nextTag = tempTags[newIndex] || null
         }
 
         // 如果原 sortId 在新位置依旧成立，则无需发送网络请求
@@ -214,8 +214,7 @@ export class TagUseCase {
             isSortIdStillValid = originalTag.sortId > prevTag.sortId
         } else {
             isSortIdStillValid =
-                originalTag.sortId > prevTag.sortId &&
-                originalTag.sortId < nextTag.sortId
+                originalTag.sortId > prevTag.sortId && originalTag.sortId < nextTag.sortId
         }
 
         if (isSortIdStillValid) return null
@@ -268,7 +267,7 @@ export class TagUseCase {
             newIndex = isBefore ? boundIndex : boundIndex + 1
         }
 
-        sortedTags.splice(newIndex, 0, movedTag)
+        sortedTags.splice(newIndex, 0, movedTag || ({} as TagViewObject))
 
         const INTERVAL = 1000
         const tagsToUpdate = sortedTags.map((tag, index) => ({

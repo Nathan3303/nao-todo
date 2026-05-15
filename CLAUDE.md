@@ -51,11 +51,29 @@ Vue 视图 → Pinia Store → UseCase (packages/application)
 
 - **Store** 通过 base composable（如 `useProjectsStoreBase`）封装公共状态逻辑
 - **UseCase** 是业务编排入口，通过工厂静态方法（如 `ProjectUseCase.create(store)`）创建，组合 Domain Service + Repository + Converter
-- **Handler** (`apps/web/src/infrastructure/handlers/`) 协调 UseCase 与 Store 的交互
+- **Handler** (`apps/web/src/infrastructure/handlers/`) 协调 UseCase 与 UI 的交互，通常用于集成某些用户输入提示框、请求结果的消息提示以及实现部分方法的复用。
 
 ### Go 风格错误处理
 
-项目使用 ``[result, error]`` 元组模式代替异常。`GoAsync<T>` 返回 `Promise<[T | null, error | null]>`。成功时错误为 `null`，失败时结果为 `null`。贯穿 UseCase → Domain → Repository 全链路。
+项目使用 ``[result, error]`` 元组模式代替异常。贯穿 UseCase → Domain → Repository 全链路。
+
+同步函数返回类型注意项：
+
+- `Go<T, U>` 表示函数返回值为 `T`，错误类型为 `U`。成功时返回 `[T, null]`，失败时返回 `[null, U]`
+- 由于必须处理错误的特性，因此即使是 `Go<void>` 也必须返回值，即使是 `null`（表示没有错误）
+- 最后处理错误时，当指定了返回值类型 `T` 时，必须判断错误类型 `U` 是否为 `null`，否则 `T` 会处于联合类型状态，导致类型断言失败。
+
+因为错误类型必须处理，因此就算返回了值，但错误不为 `null`，也依旧应该被判断为失败。如：
+
+```ts
+const [v, e] = fn() /* fn: () => Go<string> */
+if (e) { /* error handle */ }
+console.log(v) /* v: string | null */
+if (e !== null) { /* error handle */ }
+console.log(v) /* v: string */
+```
+
+`GoAsync<T>` 返回 `Promise<[T | null, error | null]>`。成功时错误为 `null`，失败时结果为 `null`。
 
 ### API 请求
 
@@ -83,9 +101,15 @@ Dexie (IndexedDB wrapper) 用于本地数据缓存。数据库名称 `nao-todo`�
 - 顶级路由：`/auth`（登录） 和 `/`（主应用，需认证）
 - 主应用视图：首页（列表视图）、日历视图、设置、任务详情
 
-### Git 提交规范
+### Vue 视图层结构
 
-使用 `feat|fix|chore|change(范围): 描述` 格式，后跟 `变更点：` 列表。完整规范见 `.trae/rules/git-commit-message.md`。
+```text
+Views(src/views) —— 包含 entry.vue、routes.ts 以及与目录名同名的 xxx-view.ts，xxx-view.ts 通常功能以 hook 的形式集成相应逻辑，让 entry.vue 保持干净。
+  -> Layouts(src/layouts) —— 包含各种布局组件，通常是一个大的业务板块组件，由各种 component 组成，包含各种处理逻辑，如 `infrastructure/{hooks|handlers}` 的使用。
+    -> Components(src/components) —— 纯粹或者含有轻微业务逻辑的 UI 组件，目的是复用性，通常被业务板块组件使用。
+```
+
+各层级的组件通常采用 Vue 3 的 inject/provide 方法提供视图上下文，除非是父子组件并且成员比较少的情况下可以考虑使用 props 传递。
 
 ## 代码风格
 

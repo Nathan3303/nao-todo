@@ -12,3 +12,6 @@ export const TASKS_VIEW_CONTEXT_KEY = 'IndexTasksViewContext'
 
 // Index view -> Settings view
 export const SETTINGS_VIEW_CONTEXT_KEY = 'IndexSettingsViewContext'
+
+// Index view -> Calendar view
+export const CALENDAR_VIEW_CONTEXT_KEY = 'IndexCalendarViewContext'

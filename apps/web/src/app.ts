@@ -28,6 +28,7 @@ const useApp = () => {
     // 初始化路由链接
     const routerLinks = reactive([
         { name: '任务', icon: 'square-check-fill', route: '/tasks', routeName: 'tasks' },
+        { name: '日历', icon: 'calendar2', route: '/calendar', routeName: 'calendar' },
         { name: '设置', icon: 'settings-fill', route: '/settings', routeName: 'settings' }
     ])
 

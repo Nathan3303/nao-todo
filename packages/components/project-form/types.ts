@@ -1,14 +1,12 @@
-export type ProjectFormVO = {
-    name: string
-    description: string
-}
+import type { CreateProjectViewObject } from '@nao-todo/types'
 
 export type ProjectFormProps = {
-    modelValue: ProjectFormVO
+    modelValue: CreateProjectViewObject
     disabled?: boolean
     isNameEmpty?: boolean
 }
 
 export type ProjectFormEmits = {
-    (e: 'update:modelValue', value: ProjectFormVO): void
+    (e: 'update:modelValue', value: CreateProjectViewObject): void
 }
+

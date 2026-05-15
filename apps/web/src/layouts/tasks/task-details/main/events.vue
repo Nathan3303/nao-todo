@@ -50,7 +50,7 @@ const searchStatusText = computed(() => {
 const toggleFilter = () => {
     const filters: FilterStatus[] = ['all', 'undone', 'done']
     const currentIndex = filters.indexOf(filterStatus.value)
-    filterStatus.value = filters[(currentIndex + 1) % filters.length]
+    filterStatus.value = filters[(currentIndex + 1) % filters.length] || 'all'
 }
 
 const getFilterIcon = () => {

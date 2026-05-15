@@ -1,4 +1,4 @@
-import { useTasksStore } from '@/stores/tasks'
+import { useTasksStore } from '@/stores'
 import type { KanbanViewAdapterProps } from './types'
 import useTasksLoader from '@/infrastructure/hooks/use-task-loader'
 import { computed, onMounted, onUnmounted, watch } from 'vue'
