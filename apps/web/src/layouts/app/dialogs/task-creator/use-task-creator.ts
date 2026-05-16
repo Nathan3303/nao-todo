@@ -11,8 +11,12 @@ const useTaskCreator = () => {
     const router = useRouter()
     const { taskUseCase, subscriber, dialogManager } =
         inject<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY)!
-    const { projects: avaliableProjects } = storeToRefs(useProjectsStore())
-    const { tags: avaliableTags } = storeToRefs(useTagsStore())
+
+    const projectsStore = useProjectsStore()
+    const tagsStore = useTagsStore()
+
+    const { avaliableProjects } = storeToRefs(projectsStore)
+    const { tags: avaliableTags } = storeToRefs(tagsStore)
 
     const states = reactive({
         projectId: '' as string,
@@ -75,4 +79,6 @@ const useTaskCreator = () => {
 }
 
 export default useTaskCreator
+
+
 

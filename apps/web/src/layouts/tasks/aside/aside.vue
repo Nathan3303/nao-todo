@@ -30,7 +30,7 @@ const tagsStore = useTagsStore()
 
 // @presetStates
 const { builtInProjects } = storeToRefs(builtInProjectsStore)
-const { availableProjects: projects } = storeToRefs(projectsStore)
+const { avaliableProjects: projects } = storeToRefs(projectsStore)
 const { tags } = storeToRefs(tagsStore)
 
 // @state 侧边栏折叠项记录

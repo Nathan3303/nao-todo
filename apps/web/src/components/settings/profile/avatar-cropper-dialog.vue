@@ -26,21 +26,47 @@
                         }"
                     >
                         <div class="crop-border" />
-                        <div class="crop-handle corner top-left" @mousedown.stop="startResize('top-left', $event)" />
-                        <div class="crop-handle corner top-right" @mousedown.stop="startResize('top-right', $event)" />
-                        <div class="crop-handle corner bottom-left" @mousedown.stop="startResize('bottom-left', $event)" />
-                        <div class="crop-handle corner bottom-right" @mousedown.stop="startResize('bottom-right', $event)" />
-                        <div class="crop-handle edge top" @mousedown.stop="startResize('top', $event)" />
-                        <div class="crop-handle edge bottom" @mousedown.stop="startResize('bottom', $event)" />
-                        <div class="crop-handle edge left" @mousedown.stop="startResize('left', $event)" />
-                        <div class="crop-handle edge right" @mousedown.stop="startResize('right', $event)" />
+                        <div
+                            class="crop-handle corner top-left"
+                            @mousedown.stop="startResize('top-left', $event)"
+                        />
+                        <div
+                            class="crop-handle corner top-right"
+                            @mousedown.stop="startResize('top-right', $event)"
+                        />
+                        <div
+                            class="crop-handle corner bottom-left"
+                            @mousedown.stop="startResize('bottom-left', $event)"
+                        />
+                        <div
+                            class="crop-handle corner bottom-right"
+                            @mousedown.stop="startResize('bottom-right', $event)"
+                        />
+                        <div
+                            class="crop-handle edge top"
+                            @mousedown.stop="startResize('top', $event)"
+                        />
+                        <div
+                            class="crop-handle edge bottom"
+                            @mousedown.stop="startResize('bottom', $event)"
+                        />
+                        <div
+                            class="crop-handle edge left"
+                            @mousedown.stop="startResize('left', $event)"
+                        />
+                        <div
+                            class="crop-handle edge right"
+                            @mousedown.stop="startResize('right', $event)"
+                        />
                     </div>
                 </div>
             </nue-div>
         </template>
         <template #footer>
             <nue-button @click="$emit('update:modelValue', false)" theme="ghost">取消</nue-button>
-            <nue-button @click="handleCropAndUpload" :loading="uploading" theme="primary">确认上传</nue-button>
+            <nue-button @click="handleCropAndUpload" :loading="uploading" theme="primary"
+                >确认上传</nue-button
+            >
         </template>
     </nue-dialog>
 </template>
@@ -115,7 +141,7 @@ const initializeAndRender = async () => {
                 return
             }
         }
-        await new Promise(resolve => setTimeout(resolve, 50))
+        await new Promise((resolve) => setTimeout(resolve, 50))
     }
     console.log('Container not ready after retries')
 }
@@ -155,7 +181,14 @@ const renderImage = () => {
     const x = (canvas.width - imgWidth) / 2
     const y = (canvas.height - imgHeight) / 2
 
-    console.log('Rendering:', { imgWidth, imgHeight, x, y, canvasWidth: canvas.width, canvasHeight: canvas.height })
+    console.log('Rendering:', {
+        imgWidth,
+        imgHeight,
+        x,
+        y,
+        canvasWidth: canvas.width,
+        canvasHeight: canvas.height
+    })
     ctx.drawImage(image.value, x, y, imgWidth, imgHeight)
 }
 

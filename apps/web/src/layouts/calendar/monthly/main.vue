@@ -64,25 +64,20 @@ const hasTodo = (day: number, isCurrentMonth: boolean) => {
 .nue-div--monthly-main {
     width: 100%;
     height: 100%;
-    border: 1px solid var(--divider-color);
-    border-radius: var(--primary-radius);
-    background-color: var(--divider-color);
-
-    &:deep().nue-main__content {
-        padding: 0;
-    }
+    border-radius: var(--nue-primary-radius);
+    background-color: var(--nue-divider-color);
 
     .todo-calendar__weekdays {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
         gap: 1px;
-        border-bottom: 1px solid var(--divider-color);
+        border-bottom: 1px solid var(--nue-divider-color);
 
         & div {
             text-align: center;
             font-size: var(--text-sm);
             padding: 1rem 0.5rem;
-            background: white;
+            background: var(--nue-primary-color-0);
         }
     }
 
@@ -93,7 +88,7 @@ const hasTodo = (day: number, isCurrentMonth: boolean) => {
         flex: auto;
 
         .todo-calendar__day {
-            background-color: #fafcfe;
+            background-color: var(--nue-primary-color-0);
             text-align: center;
             font-size: var(--text-sm);
             cursor: default;
@@ -115,7 +110,7 @@ const hasTodo = (day: number, isCurrentMonth: boolean) => {
             }
 
             &[data-is-current-month='false'] {
-                color: var(--primary-color-600);
+                color: var(--nue-primary-color-600);
             }
 
             &[data-selected='true'] {

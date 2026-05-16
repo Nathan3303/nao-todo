@@ -3,8 +3,9 @@
         :model-value="modelValue"
         @update:model-value="(value) => $emit('update:modelValue', value ?? false)"
         title="头像查看"
+        theme="auto"
     >
-        <nue-avatar :src="avatarUrl" alt="头像" theme="viewer" />
+        <nue-avatar :src="avatarUrl" alt="头像" size="fit-content"/>
     </nue-dialog>
 </template>
 
@@ -30,14 +31,16 @@ defineEmits<Emits>()
     justify-content: center;
     padding: 1rem;
 }
+</style>
 
-.nue-avatar--viewer {
-    min-width: 200px;
-    min-height: 200px;
-    max-width: 80vw;
-    max-height: 80vh;
-    object-fit: contain;
-    border-radius: 0.5rem;
+<style>
+.nue-dialog--auto {
+    min-width: 4rem;
+    min-height: 4rem;
+    max-width: 100vw;
+    max-height: 100vh;
+    width: fit-content;
+    height: fit-content;
 }
 </style>
 

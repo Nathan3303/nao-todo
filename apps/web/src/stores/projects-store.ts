@@ -19,7 +19,7 @@ export default defineStore('ProjectsStore', () => {
     } = useProjectsStoreBase()
 
     // @state 可用项目（按 sortId 排序）
-    const availableProjects = computed(() => {
+    const avaliableProjects = computed(() => {
         return projects
             .filter((p) => !p.isDeleted && !p.isArchived)
             .sort((a, b) => a.sortId - b.sortId)
@@ -50,7 +50,7 @@ export default defineStore('ProjectsStore', () => {
     // @returns
     return {
         projects,
-        availableProjects,
+        avaliableProjects,
         getAllProjects,
         setProjects,
         addProject,

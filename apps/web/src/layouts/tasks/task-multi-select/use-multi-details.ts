@@ -35,7 +35,7 @@ export const useMultiDetails = (props: TaskMultiDetailsProps) => {
     let updateOptions: Partial<TaskViewObject> = {}
 
     const avalibleProjects = computed(() => {
-        return projectStore.availableProjects.filter((project) => !project.isArchived)
+        return projectStore.avaliableProjects.filter((project) => !project.isArchived)
     })
 
     const avalibleTags = computed(() => {
@@ -234,4 +234,5 @@ export const useMultiDetails = (props: TaskMultiDetailsProps) => {
         handleCancelMultiSelect
     }
 }
+
 

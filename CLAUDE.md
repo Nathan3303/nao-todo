@@ -117,3 +117,15 @@ Views(src/views) —— 包含 entry.vue、routes.ts 以及与目录名同名的
 - Vue 3 `<script setup>` 语法，Composition API
 - Pinia `defineStore` 使用组合式语法（`() => { ... }`）
 - 文件和目录命名：kebab-case（组件目录名），PascalCase（组件文件名）
+
+## 功能规划与开发日志
+
+### 功能规划
+
+- 通常在开发新功能之前会进行方案规划，规划文档应该常放在 docs/plans 目录下，如果没有则创建目录然后新增 .md 文件。
+- 每当有新功能需要规划时，确保所有工作围绕 MVP 形式展开，只确保需要的核心功能被开发，其余工作一律不考虑。
+
+### 开发日志
+
+- 执行方案时通常分阶段，每个阶段的开发日志应该保存在 docs/devlogs/<plan-name>/<phase-x.md> 文件。
+- 日志内容需要简要记录：实现什么、怎么实现、哪些文件被影响。

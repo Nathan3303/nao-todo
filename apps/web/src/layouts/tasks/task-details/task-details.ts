@@ -17,7 +17,8 @@ import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 
 const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     // @viewContext TasksView context
-    const tasksViewContext = inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
+    const { taskUseCase, subscriber, dialogManager, getProjectName } =
+        inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
     const router = useRouter()
 
     // @dataStore
@@ -27,7 +28,7 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     const taskDetailsStore = useTaskDetailsStore()
 
     // @presetStates
-    const { availableProjects: projects } = storeToRefs(projectStore)
+    const { avaliableProjects: projects } = storeToRefs(projectStore)
     const { tags } = storeToRefs(tagStore)
     const {
         eventIdsEvents: events,
@@ -51,7 +52,7 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     const commentHandler = useCommentHandler(commentUseCase)
 
     // @handlers 任务处理程序
-    const taskHandler = useTaskHandler(tasksViewContext.taskUseCase, tasksViewContext.subscriber)
+    const taskHandler = useTaskHandler(taskUseCase, subscriber)
 
     // @states
     const loading = ref(false) /** 加载状态 */
@@ -69,7 +70,7 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         return {
             id: _task.id,
             projectId: _task.projectId,
-            projectName: tasksViewContext.getProjectName(_task.projectId),
+            projectName: getProjectName(_task.projectId),
             name: _task.name,
             description: _task.description,
             state: _task.state,
@@ -185,7 +186,7 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     const makeEventToTask = (eventId: EventViewObject['id']) => {
         const event = events.value.find((e) => e.id === eventId)
         if (!event) return
-        tasksViewContext.dialogManager.open(TASK_CREATOR_DIALOG_KEY, {
+        dialogManager.open(TASK_CREATOR_DIALOG_KEY, {
             name: event.name,
             state: event.isDone ? 'done' : 'todo'
         })
@@ -228,4 +229,5 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
 }
 
 export default useTaskDetails
+
 

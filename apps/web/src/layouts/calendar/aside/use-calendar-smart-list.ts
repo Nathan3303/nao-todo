@@ -13,7 +13,7 @@ const useCalendarSmartList = () => {
     const projectsStore = useProjectsStore()
     const tagsStore = useTagsStore()
 
-    const { availableProjects: projects } = storeToRefs(projectsStore)
+    const { avaliableProjects: projects } = storeToRefs(projectsStore)
     const { tags } = storeToRefs(tagsStore)
 
     const projectOptions = computed(() => projects.value.map((p) => ({ id: p.id, name: p.name })))
@@ -53,4 +53,6 @@ const useCalendarSmartList = () => {
 }
 
 export default useCalendarSmartList
+
+
 
