@@ -63,7 +63,9 @@ export class TaskUseCase {
     }> {
         // 获取任务实体列表
         const [listResult, err] = await this.taskDomain.list(getTasksOptions)
-        if (err !== null) return [null, err]
+        if (err !== null) {
+            return [null, err]
+        }
         // 实体转换为视图对象
         const { taskEntities, pagination } = listResult
         const taskViewObjects = taskEntitiesToViewObjects(taskEntities)
@@ -168,4 +170,5 @@ export class TaskUseCase {
         return [taskViewObject, null]
     }
 }
+
 

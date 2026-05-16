@@ -11,7 +11,7 @@
             <nue-button
                 icon="plus"
                 theme="primary,small"
-                @click="calendarContext.dialogManager.open(TASK_CREATOR_DIALOG_KEY)"
+                @click="dialogManager.open(TASK_CREATOR_DIALOG_KEY, {})"
             >
                 新增待办事项
             </nue-button>
@@ -27,7 +27,7 @@ import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 
 defineProps<{ switchDisplayAside?: () => void; isDisplayAside?: boolean }>()
 
-const calendarContext = inject<CalendarViewContext>(CALENDAR_VIEW_CONTEXT_KEY)!
+const { dialogManager } = inject<CalendarViewContext>(CALENDAR_VIEW_CONTEXT_KEY)!
 
 const currentDate = ref(new Date())
 const displayMonth = computed(

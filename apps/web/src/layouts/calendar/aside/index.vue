@@ -10,6 +10,8 @@
                     :count="projectOptions.length"
                     manage-btn-tooltip="管理清单"
                     create-btn-tooltip="新建清单"
+                    @manage="dialogManager.open(PROJECT_MANAGER_DIALOG_KEY)"
+                    @create="dialogManager.open(PROJECT_CREATOR_DIALOG_KEY)"
                 >
                     <template #actions></template>
                     <nue-checkbox-group v-model="selectedProjectIds">
@@ -27,6 +29,8 @@
                     :count="tagOptions.length"
                     manage-btn-tooltip="管理标签"
                     create-btn-tooltip="新建标签"
+                    @manage="dialogManager.open(TAG_MANAGER_DIALOG_KEY)"
+                    @create="dialogManager.open(TAG_CREATOR_DIALOG_KEY)"
                 >
                     <template #actions></template>
                     <nue-checkbox-group v-model="selectedTagIds">
@@ -47,12 +51,19 @@
 import { ref } from 'vue'
 import { NaoSmartList } from '@nao-todo/components'
 import useCalendarSmartList from './use-calendar-smart-list'
+import {
+    PROJECT_CREATOR_DIALOG_KEY,
+    PROJECT_MANAGER_DIALOG_KEY,
+    TAG_CREATOR_DIALOG_KEY,
+    TAG_MANAGER_DIALOG_KEY
+} from '@/infrastructure/constants/dialog-keys'
 
 defineOptions({ name: 'CalendarAside' })
 
 const collapseItemsRecord = ref(['projects', 'tags'])
 
-const { projectOptions, tagOptions, selectedProjectIds, selectedTagIds } = useCalendarSmartList()
+const { projectOptions, tagOptions, selectedProjectIds, selectedTagIds, dialogManager } =
+    useCalendarSmartList()
 </script>
 
 <style scoped>

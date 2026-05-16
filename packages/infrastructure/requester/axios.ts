@@ -21,19 +21,47 @@ export default (baseURL: string): Requester => {
 
     /**
      * 添加响应拦截器
+     * @description 处理网络错误，返回统一的错误响应格式
      */
     axiosInstance.interceptors.response.use(
         (response) => response,
         (error) => {
-            console.error(error)
-            return Promise.resolve({
-                code: error.code,
-                data: {
-                    data: null,
-                    message: '服务器连接失败',
-                    code: error.response?.status || 5001
-                }
-            })
+            switch (error.code) {
+                // 处理请求过于频繁的错误
+                case 'TOO_MANY_REQUESTS':
+                    return Promise.resolve({
+                        code: error.code,
+                        data: {
+                            data: null,
+                            message: '请求过于频繁，请稍后再试',
+                            code: 42900
+                        }
+                    })
+                // 处理请求超时的错误
+                case 'ECONNABORTED':
+                    return Promise.resolve({
+                        code: error.code,
+                        data: {
+                            data: null,
+                            message: '请求超时，请稍后再试',
+                            code: 40800
+                        }
+                    })
+                // 处理网络错误
+                case 'ERR_NETWORK':
+                    return Promise.resolve({
+                        code: error.code,
+                        data: {
+                            data: null,
+                            message: '网络错误，请检查您的网络连接',
+                            code: 50300
+                        }
+                    })
+                // 处理其他错误
+                default:
+                    console.error(error)
+                    return Promise.reject(error)
+            }
         }
     )
 
@@ -50,3 +78,4 @@ export default (baseURL: string): Requester => {
         delete: axiosInstance.delete
     }
 }
+

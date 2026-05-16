@@ -19,20 +19,28 @@ defineOptions({ name: 'TaskCreator' })
 
 const dialogRef = ref<DialogInstanceType>()
 
-const { states, avaliableProjects, avaliableTags, dialogManager, handleCreateTask, clearInputsValue } =
-    useTaskCreator()
+const {
+    states,
+    avaliableProjects,
+    avaliableTags,
+    dialogManager,
+    handleCreateTask,
+    clearInputsValue
+} = useTaskCreator()
 const { visible, close: closeDialog } = useDialogWrapper(dialogRef)
 
 const open = (createTaskOptions: CreateTaskViewObject) => {
     clearInputsValue()
-    Object.keys(createTaskOptions).forEach((key) => {
-        const presetVal = createTaskOptions[key as keyof CreateTaskViewObject]
-        if (!presetVal) return
-        const targetKey = key as keyof typeof states
-        if (targetKey in states) {
-            ;(states as any)[targetKey] = presetVal
-        }
-    })
+    if (createTaskOptions) {
+        Object.keys(createTaskOptions).forEach((key) => {
+            const presetVal = createTaskOptions[key as keyof CreateTaskViewObject]
+            if (!presetVal) return
+            const targetKey = key as keyof typeof states
+            if (targetKey in states) {
+                ;(states as any)[targetKey] = presetVal
+            }
+        })
+    }
     visible.value = true
 }
 
@@ -109,3 +117,4 @@ onMounted(() => {
         </template>
     </nue-dialog>
 </template>
+

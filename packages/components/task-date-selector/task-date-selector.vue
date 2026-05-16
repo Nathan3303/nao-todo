@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import type { TaskDateSelectorProps, TaskDateSelectorEmits } from './types'
 
@@ -8,6 +8,11 @@ const props = defineProps<TaskDateSelectorProps>()
 const emit = defineEmits<TaskDateSelectorEmits>()
 
 const date = ref(props.modelValue ? dayjs(props.modelValue).format('YYYY-MM-DD HH:mm') : '')
+
+watch(
+    () => props.modelValue,
+    (val) => (date.value = val ? dayjs(val).format('YYYY-MM-DD HH:mm') : '')
+)
 
 const isExpired = computed(() => {
     if (!props.modelValue) return false
