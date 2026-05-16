@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Loading as LoadingComponent } from '@nao-todo/components'
 import { inject } from 'vue'
+import { t } from '@nao-todo/infrastructure/locales'
 import { useRouter } from 'vue-router'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { NueMessage } from 'nue-ui'
@@ -27,7 +28,7 @@ authUseCase
     <nue-container id="AuthViewMainContentCheckIn">
         <nue-main>
             <nue-content>
-                <loading-component placeholder="正在验证用户凭证 ..." />
+                <loading-component :placeholder="t('auth.checkIn.verifying')" />
             </nue-content>
         </nue-main>
     </nue-container>

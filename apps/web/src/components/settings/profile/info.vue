@@ -1,11 +1,11 @@
 <template>
     <nue-container>
-        <nue-header>更多信息</nue-header>
+        <nue-header>{{ t('settings.moreInfo') }}</nue-header>
         <nue-main>
             <nue-content v-if="profile">
                 <nue-div vertical gap=".5rem">
                     <nue-div class="settings-view__form-row">
-                        <nue-text color="gray" size=".875rem">注册时间</nue-text>
+                        <nue-text color="gray" size=".875rem">{{ t('settings.registeredAt') }}</nue-text>
                         <nue-text size=".875rem">
                             {{ profile.createdAt }}
                         </nue-text>
@@ -19,6 +19,7 @@
 <script setup lang="ts">
 import { useUserStore } from '@/stores'
 import { storeToRefs } from 'pinia'
+import { t } from '@nao-todo/infrastructure/locales'
 
 defineOptions({ name: 'SettingsProfileInfo' })
 

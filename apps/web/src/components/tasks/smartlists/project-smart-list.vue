@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { NaoSmartList, type NaoSmartListLinkVO } from '@nao-todo/components/'
 import useProjectDragger from '@/layouts/tasks/aside/use-project-dragger'
+import { t } from '@nao-todo/infrastructure/locales'
 
 defineOptions({ name: 'ProjectSmartList' })
 withDefaults(defineProps<{ links: NaoSmartListLinkVO[]; draggable?: boolean }>(), {
@@ -24,10 +25,10 @@ const { handleDragStart, handleDragOver, handleDragLeave, handleDragEnd, handleD
 <template>
     <nao-smart-list
         collapse-item-name="projects"
-        name="清单"
-        manage-btn-tooltip="管理所有清单"
-        create-btn-tooltip="创建新的清单"
-        empty-text="用清单来分类收集、组织和管理你的待办任务"
+        :name="t('task.smartlist.project')"
+        :manage-btn-tooltip="t('task.smartlist.projectManage')"
+        :create-btn-tooltip="t('task.smartlist.projectCreate')"
+        :empty-text="t('task.smartlist.projectEmpty')"
         :draggable="draggable"
         :links="links"
         @manage="() => emit('open-project-manager')"

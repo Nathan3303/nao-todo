@@ -3,8 +3,8 @@
         <nue-main>
             <nue-content>
                 <nue-div vertical>
-                    <rule-hint title="密码安全提醒" icon="scan" variant="warning">
-                        为保护您的账号安全，建议您定期更换密码。修改密码后，您需要重新登录才能继续使用应用。
+                    <rule-hint :title="t('settings.passwordHintTitle')" icon="scan" variant="warning">
+                        {{ t('settings.passwordHintContent') }}
                     </rule-hint>
                     <form
                         action=""
@@ -15,26 +15,26 @@
                     >
                         <nue-div align="stretch" vertical>
                             <nue-div theme="form-item">
-                                <nue-text theme="label">旧密码</nue-text>
+                                <nue-text theme="label">{{ t('settings.passwordOld') }}</nue-text>
                                 <nue-input
                                     v-model="formData.oldPassword"
                                     allow-show-password
                                     clearable
                                     maxlength="24"
-                                    placeholder="请输入旧密码"
+                                    :placeholder="t('settings.passwordOldPlaceholder')"
                                     type="password"
                                     flex="1"
                                 />
                             </nue-div>
                             <nue-div theme="form-item">
-                                <nue-text theme="label">新密码</nue-text>
+                                <nue-text theme="label">{{ t('settings.passwordNew') }}</nue-text>
                                 <password-rule-hint />
                                 <nue-input
                                     v-model="formData.newPassword"
                                     allow-show-password
                                     clearable
                                     maxlength="24"
-                                    placeholder="请输入新密码"
+                                    :placeholder="t('settings.passwordNewPlaceholder')"
                                     type="password"
                                 />
                                 <nue-input
@@ -42,7 +42,7 @@
                                     allow-show-password
                                     clearable
                                     maxlength="24"
-                                    placeholder="请确认新密码"
+                                    :placeholder="t('settings.passwordConfirmPlaceholder')"
                                     type="password"
                                 />
                             </nue-div>
@@ -53,7 +53,7 @@
                                     theme="primary"
                                     type="submit"
                                 >
-                                    提交修改
+                                    {{ t('settings.passwordSubmit') }}
                                 </nue-button>
                             </nue-div>
                         </nue-div>
@@ -72,6 +72,7 @@ import { SETTINGS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-ke
 import type { SettingsViewContext } from '@/views/index/settings/settings-view'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
+import { t } from '@nao-todo/infrastructure/locales'
 
 defineOptions({ name: 'SettingsPasswordForm' })
 
@@ -104,10 +105,10 @@ const handleSubmit = async () => {
     })
     loading.value = false
     if (err !== null) {
-        NueMessage.error('密码修改失败' + `(${unwrapError(err)})`)
+        NueMessage.error(t('settings.passwordChangeFailed') + `(${unwrapError(err)})`)
         return
     }
-    NueMessage.success('密码修改成功，请重新登录')
+    NueMessage.success(t('settings.passwordChangeSuccess'))
     formData.oldPassword = ''
     formData.newPassword = ''
     formData.confirmNewPassword = ''
@@ -115,4 +116,3 @@ const handleSubmit = async () => {
     await router.replace('/auth/signin')
 }
 </script>
-

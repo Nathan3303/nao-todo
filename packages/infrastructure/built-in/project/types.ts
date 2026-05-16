@@ -4,6 +4,7 @@ export type BuiltInProjectRes = {
     id: string
     icon: string
     name: string
+    nameKey?: string
     description: string
     createTaskOptions: (() => Partial<CreateTaskViewObject>) | Partial<CreateTaskViewObject>
 }

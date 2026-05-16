@@ -6,13 +6,17 @@ import { createPinia } from 'pinia'
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
+import useLocaleStore from '@/stores/locale-store'
 
 initRequester({ name: 'AxiosRequester', baseURL: env.apiBaseURL })
 
 const app = createApp(App)
 app.use(NueUI)
-app.use(createPinia())
+const pinia = createPinia()
+app.use(pinia)
 app.use(router)
+
+useLocaleStore().loadSavedLanguage()
 
 app.mount('#app')
 

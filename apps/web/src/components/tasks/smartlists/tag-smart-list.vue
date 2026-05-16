@@ -2,6 +2,7 @@
 import { NaoSmartList, type NaoSmartListLinkVO } from '@nao-todo/components/'
 import { TagColorDot } from '@nao-todo/components'
 import useProjectDragger from '@/layouts/tasks/aside/use-project-dragger'
+import { t } from '@nao-todo/infrastructure/locales'
 
 defineOptions({ name: 'TagSmartList' })
 withDefaults(defineProps<{ links: NaoSmartListLinkVO[]; draggable?: boolean }>(), {
@@ -25,10 +26,10 @@ const { handleDragStart, handleDragOver, handleDragLeave, handleDragEnd, handleD
 <template>
     <nao-smart-list
         collapse-item-name="tags"
-        name="标签"
-        manage-btn-tooltip="管理所有标签"
-        create-btn-tooltip="创建新的标签"
-        empty-text="以标签的维度展示不同清单的待办任务"
+        :name="t('task.smartlist.tag')"
+        :manage-btn-tooltip="t('task.smartlist.tagManage')"
+        :create-btn-tooltip="t('task.smartlist.tagCreate')"
+        :empty-text="t('task.smartlist.tagEmpty')"
         :draggable="draggable"
         :links="links"
         @manage="() => emit('open-tag-manager')"

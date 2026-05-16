@@ -7,6 +7,7 @@ export const defaultBuiltInProjects: BuiltInProjectRes[] = [
         id: 'all',
         icon: 'more2',
         name: '所有任务',
+        nameKey: 'builtin.all',
         description: '',
         createTaskOptions: {}
     },
@@ -14,6 +15,7 @@ export const defaultBuiltInProjects: BuiltInProjectRes[] = [
         id: 'today',
         icon: 'calendar2',
         name: '今日任务',
+        nameKey: 'builtin.today',
         description: '',
         createTaskOptions: () => ({
             startAt: dayjs().startOf('day').toISOString(),
@@ -24,6 +26,7 @@ export const defaultBuiltInProjects: BuiltInProjectRes[] = [
         id: 'tomorrow',
         icon: 'tomorrow',
         name: '明日任务',
+        nameKey: 'builtin.tomorrow',
         description: '',
         createTaskOptions: () => ({
             startAt: dayjs().add(1, 'day').startOf('day').toISOString(),
@@ -34,6 +37,7 @@ export const defaultBuiltInProjects: BuiltInProjectRes[] = [
         id: 'week',
         icon: 'week',
         name: '本周任务',
+        nameKey: 'builtin.week',
         description: '',
         createTaskOptions: () => ({
             startAt: dayjs().startOf('day').toISOString(),
@@ -44,6 +48,7 @@ export const defaultBuiltInProjects: BuiltInProjectRes[] = [
         id: 'inbox',
         icon: 'inbox2-fill',
         name: '收集箱',
+        nameKey: 'builtin.inbox',
         description: '',
         createTaskOptions: { projectId: void 0 }
     },
@@ -51,6 +56,7 @@ export const defaultBuiltInProjects: BuiltInProjectRes[] = [
         id: 'favourite',
         icon: 'heart-fill',
         name: '收藏夹',
+        nameKey: 'builtin.favourite',
         description: '',
         createTaskOptions: { isStarMarked: true }
     },
@@ -58,6 +64,7 @@ export const defaultBuiltInProjects: BuiltInProjectRes[] = [
         id: 'deleted',
         icon: 'recycle-bin',
         name: '垃圾桶',
+        nameKey: 'builtin.deleted',
         description: '',
         createTaskOptions: {}
     },
@@ -65,6 +72,7 @@ export const defaultBuiltInProjects: BuiltInProjectRes[] = [
         id: 'overdue',
         icon: 'time',
         name: '已过期的任务',
+        nameKey: 'builtin.overdue',
         description:
             '结束日期于今日零点之前，且未完成的待办任务被视为过期任务，您可以通过延期按钮将待办任务延续至今天。',
         createTaskOptions: {}
@@ -73,6 +81,7 @@ export const defaultBuiltInProjects: BuiltInProjectRes[] = [
         id: 'givenup',
         icon: 'clear',
         name: '已放弃的待办',
+        nameKey: 'builtin.givenup',
         description: '',
         createTaskOptions: {}
     }

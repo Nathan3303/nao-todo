@@ -2,8 +2,8 @@
     <nue-container theme="sign-in">
         <nue-header>
             <nue-div align="center" gap="0.5rem" vertical>
-                <nue-text size="1.725rem" weight="bold">登录到 NaoTodo</nue-text>
-                <nue-text color="gray" size="0.875rem">使用您的电子邮件和密码进行登录</nue-text>
+                <nue-text size="1.725rem" weight="bold">{{ t('auth.signIn.title') }}</nue-text>
+                <nue-text color="gray" size="0.875rem">{{ t('auth.signIn.subtitle') }}</nue-text>
             </nue-div>
         </nue-header>
         <nue-main>
@@ -13,14 +13,14 @@
                         <nue-input
                             v-model="signInVO.email"
                             :disabled="loading || disabled"
-                            placeholder="电子邮箱 (name@example.com)"
+                            :placeholder="t('auth.signIn.emailPlaceholder')"
                             type="email"
                         />
                         <nue-input
                             v-model="signInVO.password"
                             :disabled="loading || disabled"
                             allow-show-password
-                            placeholder="密码"
+                            :placeholder="t('auth.signIn.passwordPlaceholder')"
                             type="password"
                         />
                         <nue-button
@@ -30,7 +30,7 @@
                             type="submit"
                             @click="handleSubmit"
                         >
-                            登录
+                            {{ t('auth.signIn.submit') }}
                         </nue-button>
                     </nue-div>
                 </form>
@@ -38,9 +38,9 @@
         </nue-main>
         <nue-footer>
             <nue-text align="center">
-                还没有 NaoTodo 账号吗？去
-                <nue-link route="/auth/signup">注册</nue-link>
-                一个！
+                {{ t('auth.signIn.noAccount') }}
+                <nue-link route="/auth/signup">{{ t('auth.signIn.registerLink') }}</nue-link>
+                {{ t('auth.signIn.goToRegister') }}
             </nue-text>
         </nue-footer>
     </nue-container>
@@ -51,6 +51,7 @@ import { inject, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { NueMessage } from 'nue-ui'
+import { t } from '@nao-todo/infrastructure/locales'
 import { AUTH_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import type { AuthViewContext } from '@/views/auth/types'
 import type { SignInViewObject } from '@nao-todo/types'
@@ -74,7 +75,7 @@ const handleSubmit = async (e: Event) => {
         NueMessage.error(unwrapError(err))
         return
     }
-    NueMessage.success('登录成功')
+    NueMessage.success(t('auth.signIn.success'))
     const lastRoute = localStorage.getItem('LAST_VISITED_ROUTE')
     await router.push(lastRoute || '/tasks')
 }

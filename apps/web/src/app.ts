@@ -2,13 +2,11 @@ import useResponsiveFlag, {
     responsiveTypes
 } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
 import useResponsiveAside from '@/infrastructure/hooks/use-responsive-aside'
-import { computed, provide, reactive, type Ref } from 'vue'
+import { computed, provide, type Ref } from 'vue'
 import { useThemeStore } from './stores'
 import { APP_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import { t } from '@nao-todo/infrastructure/locales'
 
-/**
- * 应用全局上下文
- */
 export type AppContext = {
     routerLinks: { name: string; icon: string; route: string; routeName: string }[]
     responsiveFlag: Ref<number>
@@ -18,19 +16,14 @@ export type AppContext = {
     switchDisplayAside: () => void
 }
 
-/**
- * 应用全局上下文提供器
- */
 const useApp = () => {
-    // 初始化主题状态
     const themeStore = useThemeStore()
 
-    // 初始化路由链接
-    const routerLinks = reactive([
-        { name: '任务', icon: 'square-check-fill', route: '/tasks', routeName: 'tasks' },
-        { name: '日历', icon: 'calendar2', route: '/calendar', routeName: 'calendar' },
-        { name: '设置', icon: 'settings-fill', route: '/settings', routeName: 'settings' }
-    ])
+    const routerLinks = computed(() => [
+        { name: t('nav.tasks'), icon: 'square-check-fill', route: '/tasks', routeName: 'tasks' },
+        { name: t('nav.calendar'), icon: 'calendar2', route: '/calendar', routeName: 'calendar' },
+        { name: t('nav.settings'), icon: 'settings-fill', route: '/settings', routeName: 'settings' }
+    ]) as unknown as { name: string; icon: string; route: string; routeName: string }[]
 
     // 初始化响应式标志
     const { flag } = useResponsiveFlag()

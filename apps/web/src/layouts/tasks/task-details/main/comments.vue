@@ -4,6 +4,7 @@ import type { TaskDetailsContext } from '../types'
 import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
 import { inject } from 'vue'
 import type { CommentViewObject } from '@nao-todo/types'
+import { t } from '@nao-todo/infrastructure/locales'
 
 const { comments, commentHandler, commentsLoading, commentsError, retryComments } =
     inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
@@ -20,16 +21,16 @@ const deleteComment = async (id: CommentViewObject['id']) => commentHandler.dele
         id="TodoDetailsCommentsContainer"
     >
         <nue-header>
-            <nue-text size="14px" :weight="500">评论</nue-text>
+            <nue-text size="14px" :weight="500">{{ t('task.details.comments') }}</nue-text>
             <nue-text v-if="comments && comments.length" size="14px" color="gray">
                 {{ comments.length }}
             </nue-text>
         </nue-header>
         <nue-main>
             <nue-content>
-                <loading v-if="commentsLoading" placeholder="正在加载评论..." />
+                <loading v-if="commentsLoading" :placeholder="t('task.details.commentsLoading')" />
                 <nue-empty v-else-if="commentsError" :description="commentsError" image-size="64px">
-                    <nue-button theme="primary,small" @click="retryComments">重试</nue-button>
+                    <nue-button theme="primary,small" @click="retryComments">{{ t('common.retry') }}</nue-button>
                 </nue-empty>
                 <template v-else>
                     <comment-row

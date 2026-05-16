@@ -12,6 +12,7 @@ import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
 import type { TaskDetailsContext } from '../types'
 import type { TaskViewObject } from '@nao-todo/types'
 import { parse2RelativeDate } from '@nao-todo/infrastructure/utils'
+import { t } from '@nao-todo/infrastructure/locales'
 
 const { vo, eventProgress, isCommenting, commentHandler, taskHandler, tags } =
     inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
@@ -75,10 +76,10 @@ const createCommentHandler = async (content: string) => {
                     <switch-button
                         v-model="vo.isStarMarked"
                         active-icon="heart-fill"
-                        active-text="取消收藏"
+                        :active-text="t('task.details.unfavorite')"
                         icon="heart"
                         size="small"
-                        text="收藏"
+                        :text="t('task.details.favorite')"
                         @change="updateTaskIsStarMark"
                     />
                 </nue-div>
@@ -98,7 +99,7 @@ const createCommentHandler = async (content: string) => {
                         v-model="vo.name"
                         :autosize="{ minRows: 1, maxRows: 2 }"
                         maxlength="64"
-                        placeholder="输入您的任务名称..."
+                        :placeholder="t('task.details.namePlaceholder')"
                         theme="pure,name"
                         @change="updateTaskName"
                     />
@@ -106,7 +107,7 @@ const createCommentHandler = async (content: string) => {
                         v-model="vo.description"
                         :autosize="{ minRows: 1, maxRows: 4 }"
                         maxlength="256"
-                        placeholder="输入您的任务描述..."
+                        :placeholder="t('task.details.descPlaceholder')"
                         theme="pure,description"
                         @change="updateTaskDescription"
                     />
@@ -120,10 +121,10 @@ const createCommentHandler = async (content: string) => {
                 </nue-div>
                 <details-main-comments />
                 <nue-div class="tasks-details-view__deleted-tag" v-if="vo.isDeleted">
-                    任务于 {{ parse2RelativeDate(vo.deletedAt!) }} 删除
+                    {{ t('task.details.deletedAt', { date: parse2RelativeDate(vo.deletedAt!) ?? '' }) }}
                 </nue-div>
                 <nue-div class="tasks-details-view__giveup-tag" v-if="vo.isGivenUp">
-                    任务于 {{ parse2RelativeDate(vo.givenUpAt!) }} 放弃
+                    {{ t('task.details.givenUpAt', { date: parse2RelativeDate(vo.givenUpAt!) ?? '' }) }}
                 </nue-div>
             </nue-content>
         </nue-main>
@@ -132,16 +133,16 @@ const createCommentHandler = async (content: string) => {
                 <comment-creator :handler="createCommentHandler" @cancel="isCommenting = false" />
             </nue-div>
             <nue-div justify="space-between" width="100%" overflow="auto">
-                <details-row :text="eventProgress.text" label="检查事项进度" />
+                <details-row :text="eventProgress.text" :label="t('task.details.eventProgress')" />
                 <details-row
                     v-if="vo.createdAt"
                     :text="parse2RelativeDate(vo.createdAt)"
-                    label="创建时间"
+                    :label="t('task.details.createdAt')"
                 />
                 <details-row
                     v-if="vo.updatedAt"
                     :text="parse2RelativeDate(vo.updatedAt)"
-                    label="最后修改时间"
+                    :label="t('task.details.updatedAt')"
                 />
             </nue-div>
         </nue-footer>

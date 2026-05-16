@@ -3,6 +3,7 @@ import { SettingsAppAppereance, SettingsAppLanguage } from '@/components/setting
 import { SETTINGS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import type { SettingsViewContext } from '@/views/index/settings/settings-view'
 import { inject } from 'vue'
+import { t } from '@nao-todo/infrastructure/locales'
 
 defineOptions({ name: 'SettingsApp' })
 
@@ -18,7 +19,7 @@ const { isDisplayAside, switchDisplayAside } =
                 theme="icon,ghost"
                 @click="switchDisplayAside"
             />
-            <nue-text>应用设置</nue-text>
+            <nue-text>{{ t('settings.app') }}</nue-text>
         </nue-header>
         <nue-main>
             <nue-content fill>

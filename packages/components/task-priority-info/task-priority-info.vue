@@ -7,7 +7,7 @@ import type { TaskPriorityInfoProps } from './types'
 defineOptions({ name: 'TaskPriorityInfo' })
 const props = defineProps<TaskPriorityInfoProps>()
 
-const info = computed(() => TaskPriorityPresets[props.priority as keyof typeof TaskPriorityPresets])
+const info = computed(() => TaskPriorityPresets.value[props.priority as keyof typeof TaskPriorityPresets.value])
 </script>
 
 <template>

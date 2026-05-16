@@ -4,6 +4,7 @@ import useEventDragger from '../use-event-dragger'
 import type { TaskDetailsContext } from '../types'
 import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
 import { computed, inject, ref, watch } from 'vue'
+import { t } from '@nao-todo/infrastructure/locales'
 
 type FilterStatus = 'all' | 'undone' | 'done'
 
@@ -44,7 +45,7 @@ const isSearching = computed(
 
 const searchStatusText = computed(() => {
     if (!isSearching.value) return ''
-    return `共搜索到 ${filteredEvents.value.length} 条`
+    return t('task.details.eventSearchResult', { n: filteredEvents.value.length })
 })
 
 const toggleFilter = () => {
@@ -56,11 +57,11 @@ const toggleFilter = () => {
 const getFilterIcon = () => {
     switch (filterStatus.value) {
         case 'all':
-            return '全部'
+            return t('task.details.eventFilterAll')
         case 'undone':
-            return '未完成'
+            return t('task.details.eventFilterIncomplete')
         case 'done':
-            return '已完成'
+            return t('task.details.eventFilterCompleted')
     }
 }
 
@@ -86,9 +87,9 @@ watch(
 
 <template>
     <nue-div theme="event-list">
-        <loading v-if="eventsLoading" placeholder="正在加载检查事项..." />
+        <loading v-if="eventsLoading" :placeholder="t('task.details.eventsLoading')" />
         <nue-empty v-else-if="eventsError" :description="eventsError" image-size="64px">
-            <nue-button theme="primary,small" @click="retryEvents">重试</nue-button>
+            <nue-button theme="primary,small" @click="retryEvents">{{ t('common.retry') }}</nue-button>
         </nue-empty>
         <template v-else>
             <nue-div
@@ -101,7 +102,7 @@ watch(
                 </nue-text>
                 <nue-input
                     v-model="searchQuery"
-                    placeholder="搜索检查事项..."
+                    :placeholder="t('task.details.eventSearchPlaceholder')"
                     icon="search"
                     theme="small,pure"
                     clearable
@@ -131,8 +132,8 @@ watch(
             </nue-div>
             <input-button
                 icon="plus-circle"
-                button-text="新增检查事项"
-                placeholder="输入检查事项名称..."
+                :button-text="t('task.details.eventCreate')"
+                :placeholder="t('task.details.eventNamePlaceholder')"
                 theme="pure,noshape"
                 :submit-on-blur="false"
                 :on-submit="createEvent"

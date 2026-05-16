@@ -8,7 +8,11 @@
         "built-in/**/*",
         "consts/**/*",
         "hooks/**/*",
+        "locales/**/*",
         "utils/**/*"
-    ]
+    ],
+    "peerDependencies": {
+        "vue": "^3"
+    }
 }
 

@@ -7,13 +7,13 @@
         />
         <nue-text size="var(--text-xl)">{{ displayMonth }}</nue-text>
         <nue-div class="calendar-content__header__actions">
-            <nue-button theme="small" @click="jumpToToday">跳转至今天</nue-button>
+            <nue-button theme="small" @click="jumpToToday">{{ t('calendar.today') }}</nue-button>
             <nue-button
                 icon="plus"
                 theme="primary,small"
                 @click="dialogManager.open(TASK_CREATOR_DIALOG_KEY, {})"
             >
-                新增待办事项
+                {{ t('calendar.createTask') }}
             </nue-button>
         </nue-div>
     </nue-div>
@@ -24,6 +24,7 @@ import { ref, computed, inject } from 'vue'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import type { CalendarViewContext } from '@/views/index/calendar/calendar-view'
 import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+import { t } from '@nao-todo/infrastructure/locales'
 
 defineProps<{ switchDisplayAside?: () => void; isDisplayAside?: boolean }>()
 
@@ -31,7 +32,7 @@ const { dialogManager } = inject<CalendarViewContext>(CALENDAR_VIEW_CONTEXT_KEY)
 
 const currentDate = ref(new Date())
 const displayMonth = computed(
-    () => `${currentDate.value.getFullYear()} 年 ${currentDate.value.getMonth() + 1} 月`
+    () => t('calendar.monthTitle', { year: currentDate.value.getFullYear(), month: currentDate.value.getMonth() + 1 })
 )
 
 const jumpToToday = () => {

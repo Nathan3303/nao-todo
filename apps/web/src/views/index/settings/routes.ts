@@ -6,21 +6,21 @@ const _routeRecords = [
         path: 'profile',
         name: 'settings-profile',
         componentName: 'profile',
-        title: '账户与个人信息',
+        title: 'nav.settingsProfile',
         icon: 'user'
     },
     {
         path: 'password',
         name: 'settings-password',
         componentName: 'password',
-        title: '密码与安全',
+        title: 'nav.settingsPassword',
         icon: 'lock'
     },
     {
         path: 'app',
         name: 'settings-app',
         componentName: 'appsetting',
-        title: '应用设置',
+        title: 'nav.settingsApp',
         icon: 'setting'
     }
 ]

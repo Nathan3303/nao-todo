@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { InnerDropdown, InnerDropdownOption } from '@nao-todo/components'
 import { TaskStateSelectOptions } from '@nao-todo/infrastructure/consts/tasks'
+import { t } from '@nao-todo/infrastructure/locales'
 
 defineOptions({ name: 'TasksDropdownStateFilter' })
 const props = defineProps<{ modelValue: string }>()
@@ -18,7 +19,7 @@ const count = computed(() => {
 })
 
 const dropdownOptions = computed(() => {
-    return TaskStateSelectOptions.map((option) => ({
+    return TaskStateSelectOptions.value.map((option) => ({
         ...option,
         checked: states.value.includes(option.value)
     }))
@@ -36,7 +37,7 @@ const handleExecute = (id: string) => {
 
 <template>
     <inner-dropdown
-        title="状态"
+        :title="t('task.filter.state')"
         icon="filter"
         group="tasks-todo-filter"
         :suffix="count"

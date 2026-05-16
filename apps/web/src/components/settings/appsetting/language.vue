@@ -1,23 +1,31 @@
 <template>
     <nue-div theme="language-wrapper">
         <nue-div theme="title-wrapper">
-            <nue-text theme="title">语言设置</nue-text>
-            <nue-text theme="description">选择一个你喜欢的语言作为应用语言吧</nue-text>
+            <nue-text theme="title">{{ t('settings.language') }}</nue-text>
+            <nue-text theme="description">{{ t('settings.languageDesc') }}</nue-text>
         </nue-div>
         <nue-div theme="body">
             <nue-select v-model="selectedLanguage">
-                <nue-select-option label="中文（简体）" value="zh-CN" />
+                <nue-select-option :label="t('settings.languageZhCN')" value="zh-CN" />
+                <nue-select-option :label="t('settings.languageEnUS')" value="en-US" />
             </nue-select>
         </nue-div>
     </nue-div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed } from 'vue'
+import { t } from '@nao-todo/infrastructure/locales'
+import useLocaleStore from '@/stores/locale-store'
 
 defineOptions({ name: 'SettingsAppLanguage' })
 
-const selectedLanguage = ref('zh-CN')
+const localeStore = useLocaleStore()
+
+const selectedLanguage = computed({
+    get: () => localeStore.language,
+    set: (value) => localeStore.setLanguage(value)
+})
 </script>
 
 <style scoped>

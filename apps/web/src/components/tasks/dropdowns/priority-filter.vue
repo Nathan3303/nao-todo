@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { InnerDropdown, InnerDropdownOption } from '@nao-todo/components'
 import { TaskPrioritySelectOptions } from '@nao-todo/infrastructure/consts/tasks'
+import { t } from '@nao-todo/infrastructure/locales'
 
 defineOptions({ name: 'TasksDropdownPriorityFilter' })
 const props = defineProps<{ modelValue: string }>()
@@ -18,7 +19,7 @@ const count = computed(() => {
 })
 
 const dropdownOptions = computed(() => {
-    return TaskPrioritySelectOptions.map((option) => ({
+    return TaskPrioritySelectOptions.value.map((option) => ({
         ...option,
         checked: priorities.value.includes(option.value)
     }))
@@ -36,7 +37,7 @@ const handleExecute = (id: string) => {
 
 <template>
     <inner-dropdown
-        title="优先级"
+        :title="t('task.filter.priority')"
         icon="filter"
         group="tasks-todo-filter"
         :suffix="count"

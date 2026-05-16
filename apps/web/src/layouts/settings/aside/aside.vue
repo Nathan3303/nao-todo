@@ -4,6 +4,8 @@ import type { SettingsViewContext } from '@/views/index/settings/settings-view'
 import { inject } from 'vue'
 import { SETTINGS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { AppAsideAdapter } from '@/layouts/app/'
+import { t } from '@nao-todo/infrastructure/locales'
+import type { LocaleKey } from '@nao-todo/infrastructure/locales'
 
 defineOptions({ name: 'SettingsAside' })
 
@@ -28,7 +30,7 @@ const { asideWidth, handleResizeAside, isDisplayAside } = inject<SettingsViewCon
                     :route="link.route"
                     theme="route"
                 >
-                    {{ link.name }}
+                    {{ t(link.name as LocaleKey) }}
                 </nue-link>
             </nue-div>
         </nue-div>

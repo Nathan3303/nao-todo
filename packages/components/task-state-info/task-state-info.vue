@@ -8,7 +8,7 @@ defineOptions({ name: 'TaskStateInfo' })
 const props = defineProps<TaskStateInfoProps>()
 
 const info = computed(() => {
-    return TaskStatePresets[props.state as keyof typeof TaskStatePresets]
+    return TaskStatePresets.value[props.state as keyof typeof TaskStatePresets.value]
 })
 </script>
 

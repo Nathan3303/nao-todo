@@ -5,6 +5,7 @@ import { NaoRouterLink } from '@nao-todo/components'
 import { useUserStore } from '@/stores'
 import { APP_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import type { AppContext } from '@/app'
+import { t } from '@nao-todo/infrastructure/locales'
 
 defineOptions({ name: 'AppAside' })
 
@@ -23,10 +24,10 @@ const { profile } = storeToRefs(userStore)
                 <template #content>
                     <nue-div vertical gap=".25rem">
                         <nue-text size="var(--nue-text-sm)" color="var(--nue-primary-color-0)">
-                            你好 👋，{{ profile.nickname }}！
+                            {{ t('welcome.greeting', { name: profile.nickname }) }}
                         </nue-text>
                         <nue-text size="var(--nue-text-sm)" color="var(--nue-primary-color-0)">
-                            欢迎回到 NaoTodo，继续规划并完成你的任务 🎯 吧！
+                            {{ t('welcome.message') }}
                         </nue-text>
                     </nue-div>
                 </template>

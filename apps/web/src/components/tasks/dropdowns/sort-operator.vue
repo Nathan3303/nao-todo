@@ -12,6 +12,7 @@ import type {
     ProjectPreferenceViewObject
 } from '@nao-todo/types'
 import { columnLabels, sortFieldLabels } from '@nao-todo/infrastructure/consts/tasks'
+import { t } from '@nao-todo/infrastructure/locales'
 
 defineOptions({ name: 'TasksDropdownSortOperator' })
 const props = defineProps<{
@@ -27,10 +28,10 @@ const isSorting = computed(() => props.modelValue.field !== undefined)
 
 const fieldOptions = computed(() => {
     const options: InnerDropdownOptionVO[] = []
-    Object.keys(sortFieldLabels).forEach((key) => {
+    Object.keys(sortFieldLabels.value).forEach((key) => {
         options.push({
             icon: 'plus-circle',
-            label: columnLabels[key as keyof ProjectPreferenceViewObject['columns']],
+            label: columnLabels.value[key as keyof ProjectPreferenceViewObject['columns']],
             value: key,
             checked: props.modelValue.field === key
         })
@@ -42,13 +43,13 @@ const orderOptions = computed(() => {
     const options: InnerDropdownOptionVO[] = []
     options.push({
         icon: 'arrow-up',
-        label: '升序',
+        label: t('task.sort.asc'),
         value: 'asc',
         checked: props.modelValue.order === 'asc'
     })
     options.push({
         icon: 'arrow-down',
-        label: '降序',
+        label: t('task.sort.desc'),
         value: 'desc',
         checked: props.modelValue.order === 'desc'
     })
@@ -71,8 +72,8 @@ const handleOrderDropdownExecute = (order: string) => {
 </script>
 
 <template>
-    <inner-dropdown title="排序字段" icon="select" @execute="handleFieldDropdownExecute">
-        <dropdown-div-block title="选择排序字段">
+    <inner-dropdown :title="t('task.sort.field')" icon="select" @execute="handleFieldDropdownExecute">
+        <dropdown-div-block :title="t('task.sort.selectField')">
             <inner-dropdown-option
                 v-for="option in fieldOptions"
                 :key="option.label"
@@ -84,12 +85,12 @@ const handleOrderDropdownExecute = (order: string) => {
         </dropdown-div-block>
     </inner-dropdown>
     <inner-dropdown
-        title="排序顺序"
+        :title="t('task.sort.order')"
         icon="select"
         :disabled="!isSorting"
         @execute="handleOrderDropdownExecute"
     >
-        <dropdown-div-block title="选择排序顺序">
+        <dropdown-div-block :title="t('task.sort.selectOrder')">
             <inner-dropdown-option
                 v-for="option in orderOptions"
                 :key="option.label"

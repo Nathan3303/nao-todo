@@ -5,6 +5,7 @@ import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
 import type { TaskDetailsContext } from '../types'
 import type { TaskViewObject } from '@nao-todo/types'
 import dayjs from 'dayjs'
+import { t } from '@nao-todo/infrastructure/locales'
 
 const { vo, closeDetails, taskHandler } = inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
 
@@ -37,11 +38,11 @@ const updateEndAtToNow = () => {
                 />
             </nue-div>
             <nue-div align="center">
-                <nue-button icon="clear" theme="small" @click="closeDetails">关闭</nue-button>
+                <nue-button icon="clear" theme="small" @click="closeDetails">{{ t('task.details.close') }}</nue-button>
             </nue-div>
         </nue-div>
         <nue-button v-else icon="clock" theme="small" @click="updateEndAtToNow">
-            为任务设置结束时间
+            {{ t('task.details.setEndTime') }}
         </nue-button>
     </nue-header>
 </template>

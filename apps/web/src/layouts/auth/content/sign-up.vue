@@ -2,9 +2,9 @@
     <nue-container theme="sign-up">
         <nue-header>
             <nue-div align="center" gap="0.5rem" vertical>
-                <nue-text size="1.725rem" weight="bold">创建 NaoTodo 账户</nue-text>
+                <nue-text size="1.725rem" weight="bold">{{ t('auth.signUp.title') }}</nue-text>
                 <nue-text align="center" color="grey" size="0.875rem">
-                    在下方输入您的电子邮箱、密码以及昵称来创建<br />您的 NaoTodo 账户
+                    {{ t('auth.signUp.subtitle') }}
                 </nue-text>
             </nue-div>
         </nue-header>
@@ -17,7 +17,7 @@
                             :disabled="loading"
                             clearable
                             name="SignUpEmail"
-                            placeholder="电子邮箱 (example@x.com)"
+                            :placeholder="t('auth.signUp.emailPlaceholder')"
                             type="email"
                             maxlength="64"
                             counter="word-left"
@@ -27,7 +27,7 @@
                             :disabled="loading"
                             allow-show-password
                             clearable
-                            placeholder="密码"
+                            :placeholder="t('auth.signUp.passwordPlaceholder')"
                             type="password"
                             maxlength="24"
                             counter="word-left"
@@ -38,7 +38,7 @@
                             :disabled="loading"
                             allow-show-password
                             clearable
-                            placeholder="确认密码"
+                            :placeholder="t('auth.signUp.confirmPassword')"
                             type="password"
                             maxlength="24"
                             counter="word-left"
@@ -46,7 +46,7 @@
                         <nue-input
                             v-model="signUpVO.nickname"
                             :disabled="loading"
-                            placeholder="昵称"
+                            :placeholder="t('auth.signUp.nickname')"
                             maxlength="32"
                             counter="word-left"
                         />
@@ -56,7 +56,7 @@
                             type="submit"
                             @click="handleSubmit"
                         >
-                            注册
+                            {{ t('auth.signUp.submit') }}
                         </nue-button>
                     </nue-div>
                 </form>
@@ -64,9 +64,9 @@
         </nue-main>
         <nue-footer>
             <nue-text align="center">
-                已有 NaoTodo 账户了吗？现在就去
-                <nue-link route="/auth/signin">登录</nue-link>
-                吧
+                {{ t('auth.signUp.hasAccount') }}
+                <nue-link route="/auth/signin">{{ t('auth.signUp.loginLink') }}</nue-link>
+                {{ t('auth.signUp.goToLogin') }}
             </nue-text>
         </nue-footer>
     </nue-container>
@@ -78,6 +78,7 @@ import { useRouter } from 'vue-router'
 import { PasswordRuleHint } from '@nao-todo/components'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
+import { t } from '@nao-todo/infrastructure/locales'
 import { AUTH_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import type { AuthViewContext } from '@/views/auth/types'
 import type { SignUpViewObject } from '@nao-todo/types'
@@ -97,18 +98,15 @@ const signUpVO = reactive<SignUpViewObject>({
 const handleSubmit = async (e: Event) => {
     e.preventDefault()
     loading.value = disabled.value = true
-    // 调用注册 API
     const err = await authUseCase.signUp(signUpVO)
     loading.value = false
-    // 处理错误
     if (err !== null) {
         signUpVO.password = signUpVO.confirmPassword = ''
         disabled.value = false
         NueMessage.error(unwrapError(err))
         return
     }
-    // 注册成功，跳转到登录页
-    NueMessage.success('注册成功')
+    NueMessage.success(t('auth.signUp.success'))
     await router.push({ path: '/auth/signin' })
 }
 </script>
@@ -147,4 +145,3 @@ const handleSubmit = async (e: Event) => {
     }
 }
 </style>
-

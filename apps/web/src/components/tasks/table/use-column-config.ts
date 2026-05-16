@@ -11,7 +11,7 @@ import { columnLabels } from '@nao-todo/infrastructure/consts/tasks'
 export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     {
         key: 'name',
-        label: columnLabels.name,
+        label: columnLabels.value.name,
         visible: true,
         width: null,
         minWidth: 300,
@@ -20,7 +20,7 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     },
     {
         key: 'deletedAt',
-        label: columnLabels.deletedAt,
+        label: columnLabels.value.deletedAt,
         visible: false,
         width: null,
         minWidth: 100,
@@ -29,7 +29,7 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     },
     {
         key: 'givenUpAt',
-        label: columnLabels.givenUpAt,
+        label: columnLabels.value.givenUpAt,
         visible: false,
         width: null,
         minWidth: 100,
@@ -38,7 +38,7 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     },
     {
         key: 'archivedAt',
-        label: columnLabels.archivedAt,
+        label: columnLabels.value.archivedAt,
         visible: false,
         width: null,
         minWidth: 100,
@@ -47,7 +47,7 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     },
     {
         key: 'createdAt',
-        label: columnLabels.createdAt,
+        label: columnLabels.value.createdAt,
         visible: true,
         width: null,
         minWidth: 100,
@@ -56,7 +56,7 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     },
     {
         key: 'updatedAt',
-        label: columnLabels.updatedAt,
+        label: columnLabels.value.updatedAt,
         visible: true,
         width: null,
         minWidth: 100,
@@ -65,7 +65,7 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     },
     {
         key: 'startAt',
-        label: columnLabels.startAt,
+        label: columnLabels.value.startAt,
         visible: true,
         width: null,
         minWidth: 100,
@@ -74,7 +74,7 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     },
     {
         key: 'endAt',
-        label: columnLabels.endAt,
+        label: columnLabels.value.endAt,
         visible: true,
         width: null,
         minWidth: 100,
@@ -83,7 +83,7 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     },
     {
         key: 'priority',
-        label: columnLabels.priority,
+        label: columnLabels.value.priority,
         visible: true,
         width: null,
         minWidth: 80,
@@ -92,7 +92,7 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     },
     {
         key: 'state',
-        label: columnLabels.state,
+        label: columnLabels.value.state,
         visible: true,
         width: null,
         minWidth: 80,
@@ -101,7 +101,7 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     },
     {
         key: 'project',
-        label: columnLabels.project,
+        label: columnLabels.value.project,
         visible: true,
         width: null,
         minWidth: 80,

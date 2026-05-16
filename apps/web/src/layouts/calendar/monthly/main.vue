@@ -25,11 +25,16 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import CalendarTodo from './todo.vue'
+import { t } from '@nao-todo/infrastructure/locales'
 
 const currentDate = ref(new Date())
 const year = computed(() => currentDate.value.getFullYear())
 const month = computed(() => currentDate.value.getMonth() + 1)
-const weekdays = ['一', '二', '三', '四', '五', '六', '日']
+const weekdays = computed(() => [
+    t('calendar.weekday.mon'), t('calendar.weekday.tue'), t('calendar.weekday.wed'),
+    t('calendar.weekday.thu'), t('calendar.weekday.fri'), t('calendar.weekday.sat'),
+    t('calendar.weekday.sun')
+])
 
 const days = computed(() => {
     const firstDay = new Date(year.value, month.value - 1, 1).getDay()

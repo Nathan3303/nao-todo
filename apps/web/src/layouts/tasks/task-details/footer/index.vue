@@ -3,6 +3,7 @@ import { DropdownDivBlock, InnerDropdownOption, TaskProjectSelector } from '@nao
 import { inject } from 'vue'
 import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
 import type { TaskDetailsContext } from '../types'
+import { t } from '@nao-todo/infrastructure/locales'
 
 const { vo, projects, isCommenting, taskHandler, switchTaskDetails } =
     inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
@@ -50,27 +51,27 @@ const handleDropdownExecute = async (executeId: string) => {
                 @execute="handleDropdownExecute"
             >
                 <template #trigger="{ trigger }">
-                    <nue-button icon="more" theme="small" @click="trigger">更多</nue-button>
+                    <nue-button icon="more" theme="small" @click="trigger">{{ t('common.more') }}</nue-button>
                 </template>
-                <dropdown-div-block title="更多操作">
-                    <inner-dropdown-option title="添加评论" icon="chat" execute-id="comment-todo" />
+                <dropdown-div-block :title="t('task.details.moreOperations')">
+                    <inner-dropdown-option :title="t('task.details.addComment')" icon="chat" execute-id="comment-todo" />
                     <inner-dropdown-option
-                        title="复制待办任务"
+                        :title="t('task.details.copyTask')"
                         icon="files"
                         execute-id="copy-todo"
                     />
                 </dropdown-div-block>
                 <nue-divider />
-                <dropdown-div-block title="删除 或 放弃 任务">
+                <dropdown-div-block :title="t('task.details.deleteOrGiveUp')">
                     <inner-dropdown-option
                         :disabled="vo.isDeleted"
-                        :title="vo.isGivenUp ? '取消放弃待办任务' : '放弃待办任务'"
+                        :title="vo.isGivenUp ? t('task.details.ungiveUp') : t('task.details.giveUp')"
                         :icon="vo.isGivenUp ? 'restore' : 'clear'"
                         :execute-id="vo.isGivenUp ? 'un-giveup-todo' : 'giveup-todo'"
                         :theme="vo.isGivenUp ? void 0 : 'orange'"
                     />
                     <inner-dropdown-option
-                        :title="vo.isDeleted ? '恢复待办任务' : '删除待办任务'"
+                        :title="vo.isDeleted ? t('task.details.restore') : t('task.details.deleteTask')"
                         :icon="vo.isDeleted ? 'restore' : 'delete'"
                         :execute-id="vo.isDeleted ? 'restore-todo' : 'delete-todo'"
                         :theme="vo.isDeleted ? void 0 : 'red'"

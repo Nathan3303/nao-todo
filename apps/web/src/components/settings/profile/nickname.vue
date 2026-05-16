@@ -1,17 +1,17 @@
 <template>
     <nue-container>
-        <nue-header>修改用户昵称</nue-header>
+        <nue-header>{{ t('settings.nickname') }}</nue-header>
         <nue-main>
             <nue-content v-if="profile">
                 <nue-div vertical gap=".5rem">
                     <nue-div class="settings-view__form-row">
                         <nue-text color="#999" size=".75rem">
-                            昵称会在任务创建者、分配者、项目成员等区块中展示，你可以随时修改。
+                            {{ t('settings.nicknameDesc') }}
                         </nue-text>
                         <nue-div align="center">
                             <nue-input
                                 v-model="inputValue"
-                                placeholder="请输入昵称（2-16个字符）"
+                                :placeholder="t('settings.nicknamePlaceholder')"
                                 maxlength="16"
                             />
                             <nue-button
@@ -20,7 +20,7 @@
                                 :loading="loading"
                                 @click="handleUpdateNickname"
                             >
-                                修改
+                                {{ t('settings.nicknameSubmit') }}
                             </nue-button>
                         </nue-div>
                     </nue-div>
@@ -35,6 +35,7 @@ import { NueInput } from 'nue-ui'
 import { useUserStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { computed, inject, ref } from 'vue'
+import { t } from '@nao-todo/infrastructure/locales'
 import type { SettingsViewContext } from '@/views/index/settings/settings-view'
 import { SETTINGS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 

@@ -1,10 +1,10 @@
 <template>
     <nue-div theme="appereance-wrapper">
         <nue-div>
-            <nue-text theme="title"> 外观设置 </nue-text>
+            <nue-text theme="title">{{ t('settings.appearance') }}</nue-text>
             <nue-icon v-show="loading" :name="loading ? 'loading' : 'check'" spin size="1rem" />
         </nue-div>
-        <nue-text theme="description">自定义视觉与感受，选择你喜欢的主题！</nue-text>
+        <nue-text theme="description">{{ t('settings.appearanceDesc') }}</nue-text>
         <nue-div theme="body">
             <!-- Theme Cards Container -->
             <nue-div class="theme-cards" gap="1rem" wrap="wrap">
@@ -42,6 +42,7 @@ import { SETTINGS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-ke
 import type { SettingsViewContext } from '@/views/index/settings/settings-view'
 import { unwrapError } from '@nao-todo/infrastructure/utils'
 import { NueMessage } from 'nue-ui'
+import { t } from '@nao-todo/infrastructure/locales'
 
 defineOptions({ name: 'SettingsAppAppereance' })
 
@@ -55,19 +56,19 @@ const themeOptions: Array<{
 }> = [
     {
         value: 'light',
-        label: '浅色',
+        label: t('settings.appearanceLight'),
         icon: 'sun',
         previewImage: '/images/naotodo-theme-mode-light.png'
     },
     {
         value: 'dark',
-        label: '深色',
+        label: t('settings.appearanceDark'),
         icon: 'moon',
         previewImage: '/images/naotodo-theme-mode-dark.png'
     },
     {
         value: 'system',
-        label: '跟随系统',
+        label: t('settings.appearanceSystem'),
         icon: 'desktop',
         previewImage: '/images/naotodo-theme-mode-system.png'
     }
@@ -84,7 +85,7 @@ const selectTheme = async (mode: ThemeMode) => {
     const updateError = await userUseCase.updateUserConfig({ appearance: mode })
     loading.value = false
     if (updateError === null) return
-    NueMessage.error(`主题同步失败：${unwrapError(updateError)}`)
+    NueMessage.error(`${t('settings.appearanceSyncFailed')}：${unwrapError(updateError)}`)
 }
 </script>
 

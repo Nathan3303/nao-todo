@@ -3,6 +3,7 @@ import { SettingsPasswordForm } from '@/components/settings'
 import { SETTINGS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import type { SettingsViewContext } from '@/views/index/settings/settings-view'
 import { inject } from 'vue'
+import { t } from '@nao-todo/infrastructure/locales'
 
 defineOptions({ name: 'SettingsPassword' })
 
@@ -18,7 +19,7 @@ const { isDisplayAside, switchDisplayAside } =
                 theme="icon,ghost"
                 @click="switchDisplayAside"
             />
-            <nue-text>密码修改</nue-text>
+            <nue-text>{{ t('settings.password') }}</nue-text>
         </nue-header>
         <nue-main>
             <nue-content fill>
