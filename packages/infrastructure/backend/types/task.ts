@@ -76,3 +76,11 @@ export type ListTaskReq = {
 
 export type ListTaskRes = GetTaskRes[]
 
+export type SnoozeTaskReq = {
+    durationMinutes: number
+}
+
+export type SnoozeTaskRes = {
+    remindAt: string
+}
+

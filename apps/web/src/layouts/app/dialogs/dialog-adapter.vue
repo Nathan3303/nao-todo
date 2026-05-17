@@ -7,6 +7,7 @@ import TagColorUpdater from './tag-color-updater'
 import TagManager from './tag-manager'
 import TagUpdater from './tag-updater'
 import TaskCreator from './task-creator'
+import { TaskReminder } from './task-reminder'
 
 defineOptions({ name: 'AppDialogsAdapter' })
 </script>
@@ -20,5 +21,6 @@ defineOptions({ name: 'AppDialogsAdapter' })
     <TagManager />
     <TagUpdater />
     <TaskCreator />
+    <TaskReminder />
 </template>
 

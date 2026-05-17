@@ -12,7 +12,8 @@ import useSubscriber, { type Subscriber } from '@nao-todo/infrastructure/hooks/u
 import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
 import { inject, provide, type Ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { TaskViewObject } from '@nao-todo/types'
+import { TASK_REMINDER_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+import type { SSEReminderEvent, TaskViewObject } from '@nao-todo/types'
 
 /**
  * 首页视图上下文
@@ -107,6 +108,23 @@ const useIndexView = () => {
     const showTaskDetailsDrawer = (taskId: TaskViewObject['id']) => {
         router.push({ name: router.currentRoute.value.name, params: { taskId } })
     }
+
+    /**
+     * SSE 提醒连接
+     */
+    const connectReminderSSE = () => {
+        const token = localStorage.getItem('USER_JWT')
+        const url = `${import.meta.env.VITE_API_BASE_URL}/sse/reminders?token=${token}`
+        const es = new EventSource(url)
+        es.addEventListener('reminder', (event: MessageEvent) => {
+            const data = JSON.parse(event.data) as SSEReminderEvent
+            dialogManager.open(TASK_REMINDER_DIALOG_KEY, data)
+        })
+        es.addEventListener('error', () => {
+            es.close()
+        })
+    }
+    connectReminderSSE()
 
     /**
      * 提供首页视图上下文

@@ -170,14 +170,16 @@ export class TaskUseCase {
      * @param durationMinutes 延迟分钟数（1-1440）
      * @returns 新的提醒时间
      */
-    async snoozeTask(taskId: TaskViewObject['id'], durationMinutes: number): GoAsync<string> {
-        if (durationMinutes < 1 || durationMinutes > 1440) {
-            return [null, '延迟时间需在 1-1440 分钟之间']
-        }
+    async snoozeTask(taskId: TaskViewObject['id'], durationMinutes: number): GoAsync<void> {
+        // 判断数据是否合法
+        if (durationMinutes < 1 || durationMinutes > 1440) return '延迟时间需在 1-1440 分钟之间'
+        // 执行延迟提醒
         const [newRemindAt, err] = await this.taskDomain.snooze(taskId, durationMinutes)
-        if (err !== null) return [null, err]
+        if (err !== null) return err
+        // 更新本地数据
         this.store.updateTask(taskId, { remindAt: newRemindAt })
-        return [newRemindAt, null]
+        // 返回
+        return null
     }
 }
 

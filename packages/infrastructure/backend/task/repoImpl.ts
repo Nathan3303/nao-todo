@@ -210,9 +210,7 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
             { headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` } }
         )
         const res = response.data as ResponseData
-        if (res.code !== 40070) {
-            return [null, res.message]
-        }
+        if (res.code !== 40090) return [null, res.message]
         const data = res.data as SnoozeTaskRes
         return [data.remindAt, null]
     }

@@ -56,6 +56,7 @@ export interface LocaleMessages {
     'common.uploadFailed': string
     'common.uploadSuccess': string
     'common.loadFailed': string
+    'common.reminder': string
 
     // Settings
     'settings.profile': string
@@ -176,6 +177,7 @@ export interface LocaleMessages {
     'task.details.restore': string
     'task.details.deleteTask': string
     'task.details.backToList': string
+    'task.details.view': string
     'task.restore': string
     'task.delete': string
     'task.createTask': string

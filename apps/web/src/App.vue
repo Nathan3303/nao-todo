@@ -3,9 +3,7 @@ import useApp from './app'
 
 defineOptions({ name: 'AppView' })
 
-const { getUserLocalThemeMode } = useApp()
-
-getUserLocalThemeMode()
+useApp()
 </script>
 
 <template>

@@ -6,4 +6,5 @@ export const TAG_CREATOR_DIALOG_KEY = 'tag-creator-dialog'
 export const TAG_MANAGER_DIALOG_KEY = 'tag-manager-dialog'
 export const TAG_UPDATER_DIALOG_KEY = 'tag-updater-dialog'
 export const TASK_CREATOR_DIALOG_KEY = 'task-creator-dialog'
+export const TASK_REMINDER_DIALOG_KEY = 'task-reminder-dialog'
 

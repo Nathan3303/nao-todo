@@ -58,6 +58,7 @@ const enUS: LocaleMessages = {
     'common.uploadFailed': 'Upload failed',
     'common.uploadSuccess': 'Upload successful',
     'common.loadFailed': 'Load failed',
+    'common.reminder': 'Reminder',
 
     // Settings
     'settings.profile': 'User Profile',
@@ -178,6 +179,7 @@ const enUS: LocaleMessages = {
     'task.details.restore': 'Restore Task',
     'task.details.deleteTask': 'Delete Task',
     'task.details.backToList': 'Back to Task List',
+    'task.details.view': 'View Details',
     'task.restore': 'Restore Task',
     'task.delete': 'Delete Task',
     'task.createTask': 'New Task',

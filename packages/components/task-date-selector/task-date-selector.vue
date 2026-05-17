@@ -45,7 +45,7 @@ const handleClose = () => {
 </template>
 
 <style scoped>
-.nue-date-picker:deep().nue-button {
+.nue-date-picker:deep() .nue-button {
     background-color: var(--nue-primary-color-0);
     border-color: var(--nue-primary-color-200);
     color: var(--nue-primary-color-900);
@@ -55,7 +55,7 @@ const handleClose = () => {
     }
 }
 
-.nue-date-picker--expired:deep().nue-button {
+.nue-date-picker--expired:deep() .nue-button {
     background-color: var(--nue-error-color-10);
     border-color: var(--nue-error-color-30);
     color: var(--nue-error-color-50);

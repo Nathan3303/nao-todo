@@ -58,6 +58,7 @@ const zhCN: LocaleMessages = {
     'common.uploadFailed': '上传失败',
     'common.uploadSuccess': '上传成功',
     'common.loadFailed': '加载失败',
+    'common.reminder': '提醒',
 
     // Settings
     'settings.profile': '用户信息',
@@ -178,6 +179,7 @@ const zhCN: LocaleMessages = {
     'task.details.restore': '恢复待办任务',
     'task.details.deleteTask': '删除待办任务',
     'task.details.backToList': '返回任务列表',
+    'task.details.view': '查看详情',
     'task.restore': '恢复任务',
     'task.delete': '删除任务',
     'task.createTask': '新增待办',
