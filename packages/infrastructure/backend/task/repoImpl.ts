@@ -13,6 +13,8 @@ import type {
     ListTaskRes,
     ResponseData,
     ResponseDataPagination,
+    SnoozeTaskReq,
+    SnoozeTaskRes,
     UpdateTaskReq,
     UpdateTaskRes
 } from '../types'
@@ -66,7 +68,11 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
             priority: createTaskValueObject.priority,
             startAt: createTaskValueObject.startAt || undefined,
             endAt: dayjs(createTaskValueObject.endAt).toISOString(),
-            tags: createTaskValueObject.tags
+            tags: createTaskValueObject.tags,
+            remindAt: createTaskValueObject.remindAt || undefined,
+            remindRepeat: createTaskValueObject.remindRepeat || undefined,
+            remindTime: createTaskValueObject.remindTime || undefined,
+            remindWeekdays: createTaskValueObject.remindWeekdays || undefined
         }
         // 2. 调用接口
         const response = await requester.post('/tasks/', rto, {
@@ -191,7 +197,27 @@ export const useTaskRepository = (requester: Requester): TaskRepository => {
         return [taskEntity, null]
     }
 
+    /**
+     * 稍后提醒
+     * @param taskId 任务ID
+     * @param durationMinutes 延迟分钟数
+     * @returns 新的提醒时间
+     */
+    const snooze = async (taskId: string, durationMinutes: number): GoAsync<string> => {
+        const response = await requester.post(
+            `/tasks/${taskId}/snooze`,
+            { durationMinutes } as SnoozeTaskReq,
+            { headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` } }
+        )
+        const res = response.data as ResponseData
+        if (res.code !== 40070) {
+            return [null, res.message]
+        }
+        const data = res.data as SnoozeTaskRes
+        return [data.remindAt, null]
+    }
+
     // @returns
-    return { create, get, update, remove, restore, list, copy }
+    return { create, get, update, remove, restore, list, copy, snooze }
 }
 

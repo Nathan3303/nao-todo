@@ -15,6 +15,10 @@ export type GetTaskRes = {
     createdAt: string
     updatedAt: string
     deletedAt: string
+    remindAt: string
+    remindRepeat: string
+    remindTime: string
+    remindWeekdays: number[]
 }
 
 export type CreateTaskReq = {
@@ -27,6 +31,10 @@ export type CreateTaskReq = {
     endAt?: string
     projectId?: string
     tags?: string[]
+    remindAt?: string
+    remindRepeat?: string
+    remindTime?: string
+    remindWeekdays?: number[]
 }
 
 export type CreateTaskRes = GetTaskRes
@@ -42,6 +50,10 @@ export type UpdateTaskReq = {
     tags?: string[]
     isStarMarked?: boolean
     givenUpAt?: string | null
+    remindAt?: string | null
+    remindRepeat?: string
+    remindTime?: string | null
+    remindWeekdays?: number[]
 }
 
 export type UpdateTaskRes = { taskId: string }

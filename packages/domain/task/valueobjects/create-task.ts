@@ -17,6 +17,10 @@ export class CreateTaskValueObject {
      * @param endAt 任务结束时间
      * @param projectId 项目ID
      * @param tags 任务标签
+     * @param remindAt 提醒时间
+     * @param remindRepeat 提醒重复类型
+     * @param remindTime 提醒时刻
+     * @param remindWeekdays 提醒星期几
      */
     constructor(
         public userId: string,
@@ -27,7 +31,11 @@ export class CreateTaskValueObject {
         public startAt: string | null,
         public endAt: string | null,
         public projectId: string,
-        public tags: string[]
+        public tags: string[],
+        public remindAt: string | null,
+        public remindRepeat: string,
+        public remindTime: string | null,
+        public remindWeekdays: number[]
     ) {}
 
     /**
@@ -43,6 +51,14 @@ export class CreateTaskValueObject {
             return '任务状态无效'
         if (this.priority && !['low', 'medium', 'high'].includes(this.priority))
             return '任务优先级无效'
+        if (this.remindRepeat && !['none', 'daily', 'weekly', 'monthly'].includes(this.remindRepeat))
+            return '提醒重复类型无效'
+        if (this.remindTime && !/^\d{2}:\d{2}$/.test(this.remindTime))
+            return '提醒时间格式无效（应为 HH:mm）'
+        if (this.remindAt) {
+            const remindAt = dayjs(this.remindAt)
+            if (!remindAt.isValid()) return '提醒时间无效'
+        }
         const entAt = dayjs(this.endAt)
         if (!entAt.isValid()) return '任务结束时间无效'
         if (this.startAt) {

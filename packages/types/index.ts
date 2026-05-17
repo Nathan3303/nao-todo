@@ -21,6 +21,7 @@ export type * from './viewobjects/tag'
 export type * from './viewobjects/event'
 export type * from './viewobjects/built-in-project'
 export type * from './viewobjects/comment'
+export type * from './viewobjects/sse'
 
 // Other types
 export type ComponentRef<T> = ComponentPublicInstance<T> | null | undefined

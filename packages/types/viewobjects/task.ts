@@ -22,6 +22,10 @@ export type TaskViewObject = {
     createdAt: string
     updatedAt: string
     deletedAt: string | null
+    remindAt: string | null
+    remindRepeat: 'none' | 'daily' | 'weekly' | 'monthly'
+    remindTime: string | null
+    remindWeekdays: number[]
 }
 
 export type CreateTaskViewObject = {
@@ -34,6 +38,10 @@ export type CreateTaskViewObject = {
     endAt: TaskViewObject['endAt'] | null
     tags?: TaskViewObject['tags']
     isStarMarked?: boolean
+    remindAt?: TaskViewObject['remindAt']
+    remindRepeat?: TaskViewObject['remindRepeat']
+    remindTime?: TaskViewObject['remindTime']
+    remindWeekdays?: TaskViewObject['remindWeekdays']
 }
 
 export type UpdateTaskViewObject = {
@@ -53,6 +61,10 @@ export type UpdateTaskViewObject = {
     givenUpAt?: TaskViewObject['givenUpAt']
     tags?: TaskViewObject['tags']
     deletedAt?: TaskViewObject['deletedAt']
+    remindAt?: TaskViewObject['remindAt']
+    remindRepeat?: TaskViewObject['remindRepeat']
+    remindTime?: TaskViewObject['remindTime']
+    remindWeekdays?: TaskViewObject['remindWeekdays']
 }
 
 export type GetTasksOptions = {

@@ -33,6 +33,10 @@ export const taskEntityToViewObject = (entity: TaskEntity): TaskViewObject => {
     taskViewObject.isDeleted = dayjs(entity.deletedAt).isValid()
     taskViewObject.isArchived = dayjs(entity.archivedAt).isValid()
     taskViewObject.isGivenUp = dayjs(entity.givenUpAt).isValid()
+    taskViewObject.remindAt = entity.remindAt || null
+    taskViewObject.remindRepeat = (entity.remindRepeat || 'none') as TaskViewObject['remindRepeat']
+    taskViewObject.remindTime = entity.remindTime || null
+    taskViewObject.remindWeekdays = entity.remindWeekdays || []
     return taskViewObject
 }
 
@@ -62,7 +66,11 @@ export const createTaskViewObjectToValueObject = (
         createTaskViewObject.startAt,
         createTaskViewObject.endAt,
         createTaskViewObject.projectId,
-        createTaskViewObject.tags || []
+        createTaskViewObject.tags || [],
+        createTaskViewObject.remindAt || null,
+        createTaskViewObject.remindRepeat || 'none',
+        createTaskViewObject.remindTime || null,
+        createTaskViewObject.remindWeekdays || []
     )
 }
 
@@ -86,6 +94,11 @@ export const updateTaskViewObjectToValueObject = (
     if (viewObject.projectId) valueObject.projectId = viewObject.projectId
     if (viewObject.tags) valueObject.tags = viewObject.tags
     if (viewObject.givenUpAt !== undefined) valueObject.givenUpAt = viewObject.givenUpAt
+    if (viewObject.remindAt !== undefined) valueObject.remindAt = viewObject.remindAt
+    if (viewObject.remindRepeat !== undefined) valueObject.remindRepeat = viewObject.remindRepeat
+    if (viewObject.remindTime !== undefined) valueObject.remindTime = viewObject.remindTime
+    if (viewObject.remindWeekdays !== undefined)
+        valueObject.remindWeekdays = viewObject.remindWeekdays
     return valueObject
 }
 

@@ -57,5 +57,13 @@ export interface TaskRepository {
      * @returns 任务实体
      */
     copy(taskId: string): GoAsync<TaskEntity>
+
+    /**
+     * 稍后提醒
+     * @param taskId 任务ID
+     * @param durationMinutes 延迟分钟数（1-1440）
+     * @returns 新的提醒时间
+     */
+    snooze(taskId: string, durationMinutes: number): GoAsync<string>
 }
 

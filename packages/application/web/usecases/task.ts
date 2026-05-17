@@ -10,8 +10,6 @@ import {
 } from '../converters/task'
 import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 import { useTaskRepository } from '@nao-todo/infrastructure/backend/task/repoImpl'
-import { LocalTaskDomain } from '@nao-todo/domain/task/services/local-task'
-import { LocalTaskRepositoryImpl, localDB } from '@nao-todo/infrastructure/local'
 
 /**
  * 任务用例存储接口
@@ -32,12 +30,10 @@ export class TaskUseCase {
     /**
      * 任务用例
      * @param taskDomain 任务领域服务
-     * @param localTaskDomain 本地任务任务领域服务
      * @param store 任务用例存储
      */
     constructor(
         private taskDomain: TaskDomain,
-        private localTaskDomain: LocalTaskDomain,
         private store: TaskStore
     ) {}
 
@@ -47,9 +43,7 @@ export class TaskUseCase {
      * @returns TaskUseCase实例
      */
     static create(taskStore: TaskStore): TaskUseCase {
-        const domain = new TaskDomain(useTaskRepository(getRequesterImpl()))
-        const localDomain = new LocalTaskDomain(new LocalTaskRepositoryImpl(localDB))
-        return new TaskUseCase(domain, localDomain, taskStore)
+        return new TaskUseCase(new TaskDomain(useTaskRepository(getRequesterImpl())), taskStore)
     }
 
     /**
@@ -169,6 +163,21 @@ export class TaskUseCase {
         // 返回任务视图对象
         return [taskViewObject, null]
     }
-}
 
+    /**
+     * 稍后提醒
+     * @param taskId 任务ID
+     * @param durationMinutes 延迟分钟数（1-1440）
+     * @returns 新的提醒时间
+     */
+    async snoozeTask(taskId: TaskViewObject['id'], durationMinutes: number): GoAsync<string> {
+        if (durationMinutes < 1 || durationMinutes > 1440) {
+            return [null, '延迟时间需在 1-1440 分钟之间']
+        }
+        const [newRemindAt, err] = await this.taskDomain.snooze(taskId, durationMinutes)
+        if (err !== null) return [null, err]
+        this.store.updateTask(taskId, { remindAt: newRemindAt })
+        return [newRemindAt, null]
+    }
+}
 

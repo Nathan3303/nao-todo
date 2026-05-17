@@ -12,6 +12,12 @@ import {
     parseTaskState,
     parseTaskStateBackward
 } from '@nao-todo/infrastructure/utils/task-attributes-parser'
+import {
+    parseRemindRepeat,
+    parseRemindRepeatBackward,
+    weekdaysArrayToBitmask,
+    bitmaskToWeekdaysArray
+} from '@nao-todo/infrastructure/utils/reminder-parser'
 import { GetTasksOptions } from '@nao-todo/types'
 import { Collection } from 'dexie'
 import { LocalDB } from '../db'
@@ -42,6 +48,10 @@ export const createTaskValueObjectToModel = (
     taskModel.endAt = createTaskValueObject.endAt
     taskModel.projectId = createTaskValueObject.projectId
     taskModel.tags = [...createTaskValueObject.tags]
+    taskModel.remindAt = createTaskValueObject.remindAt || null
+    taskModel.remindRepeat = parseRemindRepeat(createTaskValueObject.remindRepeat || 'none')
+    taskModel.remindTime = createTaskValueObject.remindTime || null
+    taskModel.remindWeekdays = weekdaysArrayToBitmask(createTaskValueObject.remindWeekdays || [])
     // 返回
     return taskModel
 }
@@ -70,7 +80,11 @@ export const taskModelToEntity = (taskModel: TaskModel): TaskEntity => {
         taskModel._deletedAt,
         taskModel.archivedAt,
         taskModel.starMarkAt,
-        taskModel.givenUpAt
+        taskModel.givenUpAt,
+        taskModel.remindAt || '',
+        parseRemindRepeatBackward(taskModel.remindRepeat),
+        taskModel.remindTime || '',
+        bitmaskToWeekdaysArray(taskModel.remindWeekdays)
     )
 }
 
@@ -111,6 +125,18 @@ export const updateTaskValueObjectToPartialModel = (
     }
     if (updateTaskValueObject.givenUpAt !== undefined) {
         taskModel.givenUpAt = updateTaskValueObject.givenUpAt
+    }
+    if (updateTaskValueObject.remindAt !== undefined) {
+        taskModel.remindAt = updateTaskValueObject.remindAt
+    }
+    if (updateTaskValueObject.remindRepeat !== undefined) {
+        taskModel.remindRepeat = parseRemindRepeat(updateTaskValueObject.remindRepeat)
+    }
+    if (updateTaskValueObject.remindTime !== undefined) {
+        taskModel.remindTime = updateTaskValueObject.remindTime
+    }
+    if (updateTaskValueObject.remindWeekdays !== undefined) {
+        taskModel.remindWeekdays = weekdaysArrayToBitmask(updateTaskValueObject.remindWeekdays)
     }
     // 返回
     return taskModel

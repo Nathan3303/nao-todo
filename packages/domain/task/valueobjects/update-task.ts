@@ -15,6 +15,10 @@ export class UpdateTaskValueObject {
     public projectId?: string // 项目ID
     public tags?: string[] // 任务标签
     public givenUpAt?: string | null // 放弃时间
+    public remindAt?: string | null // 提醒时间
+    public remindRepeat?: string // 提醒重复类型
+    public remindTime?: string | null // 提醒时刻
+    public remindWeekdays?: number[] // 提醒星期几
 
     /**s
      * 更新任务值对象构造函数
@@ -36,6 +40,14 @@ export class UpdateTaskValueObject {
             return '任务状态无效'
         if (this.priority && !['low', 'medium', 'high'].includes(this.priority))
             return '任务优先级无效'
+        if (this.remindRepeat !== undefined && !['none', 'daily', 'weekly', 'monthly'].includes(this.remindRepeat))
+            return '提醒重复类型无效'
+        if (this.remindTime !== undefined && this.remindTime !== null && !/^\d{2}:\d{2}$/.test(this.remindTime))
+            return '提醒时间格式无效（应为 HH:mm）'
+        if (this.remindAt !== undefined && this.remindAt !== null) {
+            const remindAt = dayjs(this.remindAt)
+            if (!remindAt.isValid()) return '提醒时间无效'
+        }
         if (this.endAt !== void 0 && this.endAt !== null) {
             const entAt = dayjs(this.endAt)
             if (!entAt.isValid()) return '任务结束时间无效'

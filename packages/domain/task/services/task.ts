@@ -108,5 +108,15 @@ export class TaskDomain {
     async copy(taskId: string): GoAsync<TaskEntity> {
         return await this.taskRepo.copy(taskId)
     }
+
+    /**
+     * 稍后提醒
+     * @param taskId 任务ID
+     * @param durationMinutes 延迟分钟数
+     * @returns 新的提醒时间
+     */
+    async snooze(taskId: string, durationMinutes: number): GoAsync<string> {
+        return await this.taskRepo.snooze(taskId, durationMinutes)
+    }
 }
 

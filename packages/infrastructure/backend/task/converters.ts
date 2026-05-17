@@ -21,7 +21,11 @@ export const getTaskRes2TaskEntity = (res: GetTaskRes): TaskEntity => {
         res.deletedAt,
         res.archivedAt,
         res.starMarkAt,
-        res.givenUpAt
+        res.givenUpAt,
+        res.remindAt || '',
+        res.remindRepeat || 'none',
+        res.remindTime || '',
+        res.remindWeekdays || []
     )
 }
 
@@ -46,6 +50,10 @@ export const updateTaskValueObjectToReq = (valueObject: UpdateTaskValueObject): 
     if (valueObject.projectId) req.projectId = valueObject.projectId
     if (valueObject.tags) req.tags = valueObject.tags
     if (valueObject.givenUpAt !== void 0) req.givenUpAt = valueObject.givenUpAt
+    if (valueObject.remindAt !== undefined) req.remindAt = valueObject.remindAt
+    if (valueObject.remindRepeat !== undefined) req.remindRepeat = valueObject.remindRepeat
+    if (valueObject.remindTime !== undefined) req.remindTime = valueObject.remindTime
+    if (valueObject.remindWeekdays !== undefined) req.remindWeekdays = valueObject.remindWeekdays
     return req
 }
 

@@ -23,6 +23,10 @@ export class TaskEntity {
      * @param archivedAt 归档时间
      * @param starMarkAt 星标时间
      * @param givenUpAt 放弃时间
+     * @param remindAt 提醒时间
+     * @param remindRepeat 提醒重复类型
+     * @param remindTime 提醒时刻
+     * @param remindWeekdays 提醒星期几
      */
     constructor(
         public id: string,
@@ -42,7 +46,11 @@ export class TaskEntity {
         public deletedAt: string | null,
         public archivedAt: string | null,
         public starMarkAt: string | null,
-        public givenUpAt: string | null
+        public givenUpAt: string | null,
+        public remindAt: string,
+        public remindRepeat: string,
+        public remindTime: string,
+        public remindWeekdays: number[]
     ) {}
 }
 

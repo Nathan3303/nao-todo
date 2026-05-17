@@ -14,4 +14,8 @@ export type TaskModel = ModelBase & {
     archivedAt: string | null
     starMarkAt: string | null
     givenUpAt: string | null
+    remindAt: string | null
+    remindRepeat: number
+    remindTime: string | null
+    remindWeekdays: number
 }
