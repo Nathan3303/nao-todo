@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import useProjectCreator from './use-project-creator'
 import { type DialogInstanceType, useDialogWrapper, ProjectForm } from '@nao-todo/components'
 import { PROJECT_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+import { t } from '@nao-todo/infrastructure/locales'
 
 defineOptions({ name: 'ProjectCreator' })
 
@@ -32,16 +33,16 @@ onMounted(() => {
 <template>
     <nue-dialog theme="project-creator" v-model="visible" ref="dialogRef">
         <template #header>
-            <nue-text>创建任务清单</nue-text>
+            <nue-text>{{ t('dialog.projectCreator.title') }}</nue-text>
             <nue-button @click="close" icon="clear" theme="icon,ghost,small" />
         </template>
         <template #content>
             <project-form v-model="viewObject" :disabled="creating" :is-name-empty="isNameEmpty" />
         </template>
         <template #footer>
-            <nue-button @click="close">取消</nue-button>
+            <nue-button @click="close">{{ t('common.cancel') }}</nue-button>
             <nue-button :loading="creating" theme="primary" @click="handleSubmit">
-                创建
+                {{ t('common.create') }}
             </nue-button>
         </template>
     </nue-dialog>

@@ -10,7 +10,8 @@ import type { LocaleKey } from '@nao-todo/infrastructure/locales'
 defineOptions({ name: 'SettingsAside' })
 
 // @context Settingsview 任务视图上下文
-const { asideWidth, handleResizeAside, isDisplayAside } = inject<SettingsViewContext>(SETTINGS_VIEW_CONTEXT_KEY)!
+const { asideWidth, handleResizeAside, isDisplayAside } =
+    inject<SettingsViewContext>(SETTINGS_VIEW_CONTEXT_KEY)!
 </script>
 
 <template>
@@ -30,7 +31,7 @@ const { asideWidth, handleResizeAside, isDisplayAside } = inject<SettingsViewCon
                     :route="link.route"
                     theme="route"
                 >
-                    {{ t(link.name as LocaleKey) }}
+                    {{ t(link.title as LocaleKey) }}
                 </nue-link>
             </nue-div>
         </nue-div>

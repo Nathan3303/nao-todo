@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue'
 import type { CommentViewObject, UpdateCommentViewObject } from '@nao-todo/types'
+import { env } from '@/infrastructure/constants/env'
 
 const useCommentsStoreBase = () => {
     // @state 评论数组
@@ -12,7 +13,16 @@ const useCommentsStoreBase = () => {
 
     // @method 设置评论(s)
     const setComments = (newComments: CommentViewObject[]) => {
-        comments.value = newComments
+        comments.value = newComments.map((newComment) => {
+            return {
+                ...newComment,
+                // 处理 avatar 链接
+                user: {
+                    avatar: `${env.baseURL}${newComment.user.avatar}?timestamp=${Date.now()}`,
+                    nickname: newComment.user.nickname
+                }
+            }
+        })
     }
 
     // @method 获取单个评论
@@ -34,7 +44,7 @@ const useCommentsStoreBase = () => {
     ) => {
         const idx = comments.value.findIndex((c) => c.id === commentId)
         if (idx === -1) return
-        comments.value[idx] = { ...comments.value[idx], ...updateCommentViewObject }
+        comments.value[idx] = { ...comments.value[idx], ...updateCommentViewObject, id: commentId }
     }
 
     // @method 删除评论
@@ -56,3 +66,4 @@ const useCommentsStoreBase = () => {
 
 export default useCommentsStoreBase
 export type CommentsStoreBase = ReturnType<typeof useCommentsStoreBase>
+

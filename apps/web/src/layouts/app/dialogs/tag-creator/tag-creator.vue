@@ -4,6 +4,7 @@ import { TagColorSelector, TagForm } from '@nao-todo/components'
 import useTagCreator from './use-tag-creator'
 import { type DialogInstanceType, useDialogWrapper } from '@nao-todo/components'
 import { TAG_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+import { t } from '@nao-todo/infrastructure/locales'
 
 defineOptions({ name: 'TagCreator' })
 
@@ -38,7 +39,7 @@ onMounted(() => {
 <template>
     <nue-dialog theme="tag-creator" v-model="visible" ref="dialogRef">
         <template #header>
-            <nue-text>创建标签</nue-text>
+            <nue-text>{{ t('dialog.tagCreator.title') }}</nue-text>
             <nue-button @click="close" icon="clear" theme="icon,ghost,small" />
         </template>
         <template #content>
@@ -49,15 +50,15 @@ onMounted(() => {
                     :is-name-empty="states.isNameEmpty"
                 />
                 <nue-div align="stretch" gap="8px" vertical>
-                    <nue-text color="gray" size="12px">选择标签颜色：</nue-text>
+                    <nue-text color="gray" size="12px">{{ t('dialog.tagCreator.selectColor') }}</nue-text>
                     <tag-color-selector v-model="states.color" />
                 </nue-div>
             </nue-div>
         </template>
         <template #footer>
-            <nue-button @click="close">取消</nue-button>
+            <nue-button @click="close">{{ t('common.cancel') }}</nue-button>
             <nue-button :loading="states.creating" theme="primary" @click="handleSubmit">
-                创建
+                {{ t('common.create') }}
             </nue-button>
         </template>
     </nue-dialog>

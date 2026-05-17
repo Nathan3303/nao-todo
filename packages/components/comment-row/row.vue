@@ -20,21 +20,16 @@ const isOverflowing = ref(false)
 const checkOverflow = () => {
     nextTick(() => {
         const el = textRef.value?.$el as HTMLElement | undefined
-        if (el) {
-            isOverflowing.value = el.scrollHeight > el.clientHeight
-        }
+        if (!el) return
+        isOverflowing.value = el.scrollHeight > el.clientHeight
     })
 }
 
-onMounted(() => {
-    checkOverflow()
-})
+onMounted(() => checkOverflow())
 
 watch(
     () => shadowContent.value,
-    () => {
-        checkOverflow()
-    }
+    () => checkOverflow()
 )
 
 const handleEditComment = () => {

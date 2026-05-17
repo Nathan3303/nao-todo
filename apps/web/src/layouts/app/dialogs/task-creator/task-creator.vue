@@ -14,6 +14,7 @@ import {
 import type { CreateTaskViewObject, TaskViewObject } from '@nao-todo/types'
 import useTaskCreator from './use-task-creator'
 import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+import { t } from '@nao-todo/infrastructure/locales'
 
 defineOptions({ name: 'TaskCreator' })
 
@@ -60,13 +61,13 @@ onMounted(() => {
 </script>
 
 <template>
-    <nue-dialog v-model="visible" ref="dialogRef" title="创建待办事项">
+    <nue-dialog v-model="visible" ref="dialogRef" :title="t('dialog.taskCreator.title')">
         <template #content>
             <nue-div vertical align="stretch">
                 <nue-input
                     v-model="states.name"
                     clearable
-                    placeholder="待办事项名称"
+                    :placeholder="t('dialog.taskCreator.namePlaceholder')"
                     maxlength="64"
                     counter="word-left"
                 />
@@ -75,7 +76,7 @@ onMounted(() => {
                     maxlength="256"
                     counter="word-left"
                     :autosize="{ minRows: 1, maxRows: 4 }"
-                    placeholder="添加待办事项备注（可选）"
+                    :placeholder="t('dialog.taskCreator.descPlaceholder')"
                     theme="fix-padding"
                 />
                 <nue-div wrap="wrap" gap=".5rem">
@@ -105,14 +106,14 @@ onMounted(() => {
             </nue-div>
         </template>
         <template #footer>
-            <nue-button :disabled="states.disabled" @click="close">取消</nue-button>
+            <nue-button :disabled="states.disabled" @click="close">{{ t('common.cancel') }}</nue-button>
             <nue-button
                 :disabled="states.disabled"
                 :loading="states.creating"
                 theme="primary"
                 @click="handleSubmit"
             >
-                创建
+                {{ t('common.create') }}
             </nue-button>
         </template>
     </nue-dialog>

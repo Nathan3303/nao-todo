@@ -11,7 +11,6 @@ import dayjs from 'dayjs'
 export const taskEntityToViewObject = (entity: TaskEntity): TaskViewObject => {
     const taskViewObject = {} as TaskViewObject
     taskViewObject.id = entity.id
-    taskViewObject.localId = entity.localId
     taskViewObject.userId = entity.userId
     taskViewObject.name = entity.name
     taskViewObject.description = entity.description
@@ -89,29 +88,4 @@ export const updateTaskViewObjectToValueObject = (
     if (viewObject.givenUpAt !== undefined) valueObject.givenUpAt = viewObject.givenUpAt
     return valueObject
 }
-
-/**
- * 任务视图对象转换为任务实体
- * @param viewObject 任务视图对象
- * @returns 任务实体
- */
-// export const taskViewObjectToEntity = (viewObject: TaskViewObject): TaskEntity => {
-//     return new TaskEntity(
-//         viewObject.id,
-//         '', // userId
-//         viewObject.name,
-//         viewObject.description || '',
-//         viewObject.state,
-//         viewObject.priority,
-//         viewObject.startAt || '',
-//         viewObject.endAt || '',
-//         viewObject.projectId || '',
-//         viewObject.tags || [],
-//         viewObject.archivedAt,
-//         viewObject.starMarkAt,
-//         viewObject.givenUpAt,
-//         viewObject.createdAt,
-//         viewObject.updatedAt
-//     )
-// }
 

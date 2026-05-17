@@ -1,6 +1,6 @@
 export type CommentViewObject = {
     id: string
-    taskId: string
+    // taskId: string
     content: string
     attachments: string[]
     isTopUp: boolean

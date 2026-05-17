@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import useProjectUpdater from './use-project-updater'
 import { type DialogInstanceType, useDialogWrapper, ProjectForm } from '@nao-todo/components'
 import { PROJECT_UPDATER_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+import { t } from '@nao-todo/infrastructure/locales'
 
 defineOptions({ name: 'ProjectUpdater' })
 
@@ -29,21 +30,21 @@ onMounted(() => {
 <template>
     <nue-dialog theme="project-updater" v-model="visible" ref="dialogRef">
         <template #header>
-            <nue-text>修改清单</nue-text>
+            <nue-text>{{ t('dialog.projectUpdater.title') }}</nue-text>
             <nue-button @click="close" icon="clear" theme="icon,ghost,small" />
         </template>
         <template #content>
             <project-form v-model="formData" :disabled="states.updating" />
         </template>
         <template #footer>
-            <nue-button :disabled="states.updating" @click="close">取消</nue-button>
+            <nue-button :disabled="states.updating" @click="close">{{ t('common.cancel') }}</nue-button>
             <nue-button
                 :disabled="states.disabled"
                 :loading="states.updating"
                 theme="primary"
                 @click="handleConfirm"
             >
-                修改
+                {{ t('common.update') }}
             </nue-button>
         </template>
     </nue-dialog>

@@ -12,6 +12,7 @@ import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import type { ProjectUseCase } from '@nao-todo/application/web/usecases/project'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils'
+import { t } from '@nao-todo/infrastructure/locales'
 
 export class ProjectHandler {
     /**
@@ -138,21 +139,21 @@ export class ProjectHandler {
     async deleteProject(projectId: string): GoAsync<void> {
         // 询问用户
         const [, isByCancel] = await NueConfirm({
-            title: '确认删除清单吗？',
-            content: '删除后 30 天内可以恢复',
-            confirmButtonText: '确认删除',
-            cancelButtonText: '取消'
+            title: t('dialog.projectDeleteConfirmTitle'),
+            content: t('dialog.projectDeleteConfirmContent'),
+            confirmButtonText: t('dialog.confirmDelete'),
+            cancelButtonText: t('common.cancel')
         })
         if (isByCancel) return 'Cancel'
         // 调用用例
         const deleteError = await this.projectUseCase.delete(projectId)
         // 处理错误
         if (deleteError !== null) {
-            NueMessage.error('清单删除失败' + unwrapError(deleteError))
+            NueMessage.error(t('dialog.projectDeleteFailed', { error: unwrapError(deleteError) }))
             return deleteError
         }
         // 成功
-        NueMessage.success('清单删除成功')
+        NueMessage.success(t('dialog.projectDeleteSuccess'))
         return null
     }
 
@@ -166,11 +167,11 @@ export class ProjectHandler {
         const restoreError = await this.projectUseCase.restore(projectId)
         // 处理错误
         if (restoreError !== null) {
-            NueMessage.error('清单恢复失败' + unwrapError(restoreError))
+            NueMessage.error(t('dialog.projectRestoreFailed', { error: unwrapError(restoreError) }))
             return restoreError
         }
         // 成功
-        NueMessage.success('清单恢复成功')
+        NueMessage.success(t('dialog.projectRestoreSuccess'))
         return null
     }
 
@@ -186,10 +187,10 @@ export class ProjectHandler {
     ): GoAsync<void> {
         const err = await this.projectUseCase.update(projectId, updateVO)
         if (err !== null) {
-            NueMessage.error('清单更新失败' + unwrapError(err))
+            NueMessage.error(t('dialog.projectUpdateFailed', { error: unwrapError(err) }))
             return err
         }
-        NueMessage.success('清单更新成功')
+        NueMessage.success(t('dialog.projectUpdateSuccess'))
         return null
     }
 }

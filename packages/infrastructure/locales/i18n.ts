@@ -7,7 +7,7 @@ export type SupportedLocale = 'zh-CN' | 'en-US'
 
 const messages: Record<SupportedLocale, Record<LocaleKey, string>> = {
     'zh-CN': zhCN,
-    'en-US': enUS,
+    'en-US': enUS
 }
 
 const currentLocale = ref<SupportedLocale>('zh-CN')
@@ -27,3 +27,4 @@ export const t = (key: LocaleKey, params?: Record<string, string | number>): str
     if (!params) return msg
     return msg.replace(/\{(\w+)\}/g, (_, k) => String(params[k] ?? `{${k}}`))
 }
+

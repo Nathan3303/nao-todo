@@ -27,9 +27,10 @@ const _routeRecords = [
 
 const SettingsViewRouteLinks = _routeRecords.map((record) => {
     return {
-        name: record.title,
+        name: record.name,
         icon: record.icon,
-        route: `/settings/${record.path}`
+        route: `/settings/${record.path}`,
+        title: record.title
     }
 })
 

@@ -13,6 +13,7 @@ import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import type { TagUseCase } from '@nao-todo/application/web/usecases/tag'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils'
+import { t } from '@nao-todo/infrastructure/locales'
 
 export class TagHandler {
     /**
@@ -136,10 +137,10 @@ export class TagHandler {
     async createTag(createVO: CreateTagViewObject): GoAsync<void> {
         const [, err] = await this.tagUseCase.create(createVO)
         if (err !== null) {
-            NueMessage.error('标签创建失败：' + unwrapError(err))
+            NueMessage.error(t('dialog.tagUpdateFailed', { error: unwrapError(err) }))
             return err
         }
-        NueMessage.success('标签创建成功')
+        NueMessage.success(t('dialog.tagCreateSuccess'))
         return null
     }
 
@@ -152,10 +153,10 @@ export class TagHandler {
     async updateTag(tagId: string, updateVO: UpdateTagViewObject): GoAsync<void> {
         const err = await this.tagUseCase.update(tagId, updateVO)
         if (err !== null) {
-            NueMessage.error('标签更新失败：' + unwrapError(err))
+            NueMessage.error(t('dialog.tagUpdateFailed', { error: unwrapError(err) }))
             return err
         }
-        NueMessage.success('标签更新成功')
+        NueMessage.success(t('dialog.tagUpdateSuccess'))
         return null
     }
 
@@ -176,18 +177,18 @@ export class TagHandler {
      */
     async deleteTag(tagId: string): GoAsync<void> {
         const [, isByCancel] = await NueConfirm({
-            title: '确认删除标签吗？',
-            content: '删除后无法恢复，相关任务将保留但移除该标签',
-            confirmButtonText: '确认删除',
-            cancelButtonText: '取消'
+            title: t('dialog.tagDeleteConfirmTitle'),
+            content: t('dialog.tagDeleteConfirmContent'),
+            confirmButtonText: t('dialog.confirmDelete'),
+            cancelButtonText: t('common.cancel')
         })
         if (isByCancel) return 'Cancel'
         const err = await this.tagUseCase.delete(tagId)
         if (err !== null) {
-            NueMessage.error('标签删除失败：' + unwrapError(err))
+            NueMessage.error(t('dialog.tagDeleteFailed', { error: unwrapError(err) }))
             return err
         }
-        NueMessage.success('标签删除成功')
+        NueMessage.success(t('dialog.tagDeleteSuccess'))
         return null
     }
 }

@@ -50,6 +50,12 @@ export interface LocaleMessages {
     'common.all': string
     'common.normal': string
     'common.deleted': string
+    'common.unknown': string
+    'common.signOut': string
+    'common.filter': string
+    'common.uploadFailed': string
+    'common.uploadSuccess': string
+    'common.loadFailed': string
 
     // Settings
     'settings.profile': string
@@ -84,6 +90,16 @@ export interface LocaleMessages {
     'settings.passwordSubmit': string
     'settings.passwordChangeFailed': string
     'settings.passwordChangeSuccess': string
+    'settings.avatarUpdateSuccess': string
+    'settings.signOutConfirmTitle': string
+    'settings.signOutConfirmContent': string
+    'settings.signOutConfirmText': string
+    'settings.signOutFailed': string
+    'settings.signOutSuccess': string
+    'settings.avatarCropTitle': string
+    'settings.avatarUpload': string
+    'settings.avatarCropFailed': string
+    'settings.avatarViewTitle': string
 
     // Task
     'task.state.todo': string
@@ -117,6 +133,7 @@ export interface LocaleMessages {
     'task.filter.priority': string
     'task.filter.search': string
     'task.filter.sort': string
+    'task.filter.byName': string
     'task.view.switch': string
     'task.view.table': string
     'task.view.kanban': string
@@ -158,13 +175,62 @@ export interface LocaleMessages {
     'task.details.ungiveUp': string
     'task.details.restore': string
     'task.details.deleteTask': string
+    'task.details.backToList': string
     'task.restore': string
     'task.delete': string
     'task.createTask': string
     'task.createTaskTitle': string
     'task.createTaskName': string
     'task.createTaskDesc': string
+    'task.createFailed': string
+    'task.createSuccess': string
+    'task.updateFailed': string
+    'task.updateSuccess': string
+    'task.deleteFailed': string
+    'task.deleteSuccess': string
+    'task.restoreFailed': string
+    'task.restoreSuccess': string
+    'task.copyFailed': string
+    'task.copySuccess': string
+    'task.confirmGiveUpTitle': string
+    'task.confirmGiveUpContent': string
+    'task.confirmGiveUp': string
+    'task.confirmCopyTitle': string
+    'task.confirmCopyContent': string
+    'task.confirmCopy': string
+    'task.eventCreateFailed': string
+    'task.eventCreateSuccess': string
+    'task.eventUpdateFailed': string
+    'task.eventUpdateSuccess': string
+    'task.eventDeleteFailed': string
+    'task.eventDeleteSuccess': string
+    'task.eventLoadFailed': string
+    'task.commentLoadFailed': string
+    'task.selectToView': string
+    'task.eventProgressText': string
+    'task.noEvents': string
+    'task.comment.createFailed': string
+    'task.comment.createSuccess': string
+    'task.comment.updateFailed': string
+    'task.comment.updateSuccess': string
+    'task.comment.deleteFailed': string
+    'task.comment.deleteSuccess': string
+    'task.givenUp': string
+    'task.notStarted': string
+    'task.createdAt': string
+    'task.updatedAt': string
+    'task.endAt': string
+    'task.listLoading': string
+    'task.listLoaded': string
+    'task.noTasks': string
+    'task.noKanban': string
+    'task.loadingTasks': string
+    'task.noTasksInColumn': string
+    'task.projectRequired': string
+    'task.tagRequired': string
     'task.multiSelect.title': string
+    'task.multiSelect.titlePrefix': string
+    'task.multiSelect.titleSuffix': string
     'task.multiSelect.dueDate': string
     'task.multiSelect.state': string
     'task.multiSelect.priority': string
@@ -178,6 +244,11 @@ export interface LocaleMessages {
     'task.smartlist.tagManage': string
     'task.smartlist.tagCreate': string
     'task.smartlist.tagEmpty': string
+    'task.smartlist.filter': string
+    'task.smartlist.filterManage': string
+    'task.smartlist.filterCreate': string
+    'task.smartlist.filterEmpty': string
+    'task.table.summary': string
 
     // Calendar
     'calendar.today': string
@@ -209,10 +280,45 @@ export interface LocaleMessages {
     'dialog.tagManager.changeColor': string
     'dialog.tagManager.deleteTag': string
     'dialog.tagUpdater.title': string
+    'dialog.tagUpdater.selectColor': string
     'dialog.tagColorUpdater.title': string
     'dialog.taskCreator.title': string
     'dialog.taskCreator.namePlaceholder': string
     'dialog.taskCreator.descPlaceholder': string
+    'dialog.confirmDelete': string
+    'dialog.projectDeleteConfirmTitle': string
+    'dialog.projectDeleteConfirmContent': string
+    'dialog.projectDeleteFailed': string
+    'dialog.projectDeleteSuccess': string
+    'dialog.projectRestoreFailed': string
+    'dialog.projectRestoreSuccess': string
+    'dialog.projectUpdateFailed': string
+    'dialog.projectUpdateSuccess': string
+    'dialog.projectCreateSuccess': string
+    'dialog.projectNotFound': string
+    'dialog.projectIdRequired': string
+    'dialog.projectNameRequired': string
+    'dialog.tagDeleteConfirmTitle': string
+    'dialog.tagDeleteConfirmContent': string
+    'dialog.tagDeleteFailed': string
+    'dialog.tagDeleteSuccess': string
+    'dialog.tagCreateSuccess': string
+    'dialog.tagUpdateFailed': string
+    'dialog.tagUpdateSuccess': string
+    'dialog.tagUpdateColorFailed': string
+    'dialog.tagUpdateColorSuccess': string
+    'dialog.tagNotFound': string
+    'dialog.tagIdRequired': string
+    'dialog.tagNameRequired': string
+    'dialog.taskCreateSuccess': string
+    'dialog.saveSuccess': string
+    'dialog.projectNotExist': string
+    'dialog.tagNotExist': string
+    'dialog.projectOperations': string
+    'dialog.tagOperations': string
+    'dialog.projectUpdateNameDesc': string
+    'dialog.projectDelete': string
+    'dialog.tagUpdate': string
 
     // Shared component
     'component.empty': string
@@ -233,11 +339,15 @@ export interface LocaleMessages {
     'component.comment.edit': string
     'component.comment.cancel': string
     'component.projectForm.namePlaceholder': string
+    'component.projectForm.nameTitle': string
     'component.projectForm.nameRequired': string
     'component.projectForm.descPlaceholder': string
+    'component.projectForm.descTitle': string
     'component.tagForm.namePlaceholder': string
+    'component.tagForm.nameTitle': string
     'component.tagForm.nameRequired': string
     'component.tagForm.descPlaceholder': string
+    'component.tagForm.descTitle': string
     'component.inputButton.defaultText': string
     'component.inputButton.defaultPlaceholder': string
     'component.eventRow.cancelEdit': string
@@ -250,6 +360,41 @@ export interface LocaleMessages {
     'component.passwordHint.content': string
     'component.restoreProject': string
     'component.deleteProject': string
+    'component.archiveProject': string
+    'component.unarchiveProject': string
+    'component.projectCard.deleted': string
+    'component.projectCard.archived': string
+    'component.projectCard.normal': string
+    'component.projectCard.noDescription': string
+    'component.projectCard.deletedAt': string
+    'component.projectCard.createdAt': string
+    'component.tagBoard.deleteTag': string
+    'component.tagColorSelector.current': string
+    'component.tagColorSelector.unknown': string
+    'component.comboBox.filterPrefix': string
+    'component.comboBox.noData': string
+    'component.innerDropdown.defaultTitle': string
+    'component.taskSelector.tag': string
+    'component.taskSelector.inbox': string
+    'component.taskSelector.noProject': string
+
+    // Tag colors
+    'tagColor.none': string
+    'tagColor.coral': string
+    'tagColor.orange': string
+    'tagColor.sunflower': string
+    'tagColor.forest': string
+    'tagColor.mint': string
+    'tagColor.sky': string
+    'tagColor.violet': string
+    'tagColor.deepPurple': string
+    'tagColor.rose': string
+    'tagColor.magenta': string
+    'tagColor.indigo': string
+    'tagColor.cobalt': string
+    'tagColor.teal': string
+    'tagColor.gold': string
+    'tagColor.flame': string
 
     // Built-in projects
     'builtin.all': string

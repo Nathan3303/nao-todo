@@ -31,6 +31,8 @@ export class TaskDomain {
      * @returns 任务实体
      */
     async create(createTaskValueObject: CreateTaskValueObject): GoAsync<TaskEntity> {
+        // 填充开始时间 - 处理任务时间为单个时间的问题
+        createTaskValueObject.fillStartAt()
         // 验证
         const validateErr = createTaskValueObject.validate()
         if (validateErr !== null) {

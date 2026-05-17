@@ -8,6 +8,7 @@ import {
 import { onMounted, ref } from 'vue'
 import useProjectManager from './use-project-manager'
 import { PROJECT_MANAGER_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+import { t } from '@nao-todo/infrastructure/locales'
 
 defineOptions({ name: 'ProjectManager' })
 
@@ -42,7 +43,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <nue-dialog v-model="visible" ref="dialogRef" theme="fullscreen" title="清单管理">
+    <nue-dialog v-model="visible" ref="dialogRef" theme="fullscreen" :title="t('dialog.projectManager.title')">
         <nue-container id="ProjectManager" theme="in-dialog">
             <nue-header class="project-manager-header">
                 <nue-div align="center" gap="0.75rem">
@@ -51,19 +52,19 @@ onMounted(() => {
                             :theme="states.activeTab === 'all' ? 'primary,small' : 'small'"
                             @click="setActiveTab('all')"
                         >
-                            全部
+                            {{ t('common.all') }}
                         </nue-button>
                         <nue-button
                             :theme="states.activeTab === 'active' ? 'primary,small' : 'small'"
                             @click="setActiveTab('active')"
                         >
-                            正常
+                            {{ t('common.normal') }}
                         </nue-button>
                         <nue-button
                             :theme="states.activeTab === 'deleted' ? 'primary,small' : 'small'"
                             @click="setActiveTab('deleted')"
                         >
-                            已删除
+                            {{ t('common.deleted') }}
                         </nue-button>
                     </nue-button-group>
                     <nue-divider vertical />
@@ -72,7 +73,7 @@ onMounted(() => {
                         icon="search"
                         theme="small"
                         clearable
-                        placeholder="搜索清单"
+                        :placeholder="t('dialog.projectManager.searchPlaceholder')"
                         style="width: 200px"
                     />
                 </nue-div>
@@ -80,12 +81,12 @@ onMounted(() => {
                     <nue-tooltip
                         size="small"
                         theme="warning"
-                        content="删除的清单会在 30 天后永久删除，所有归属于该清单的任务也会被永久删除，切记删除清单时再次考虑。如果是不想在智能列表中显示该清单，可以使用归档功能。"
+                        :content="t('dialog.projectManager.deleteWarning')"
                         placement="bottom-center"
                     >
                         <nue-div align="center" gap="0.25rem" class="warning-trigger">
                             <nue-icon name="warning" size="14px" />
-                            <nue-text size="12px">删除功能重要提醒</nue-text>
+                            <nue-text size="12px">{{ t('dialog.projectManager.deleteReminder') }}</nue-text>
                         </nue-div>
                     </nue-tooltip>
                     <nue-divider vertical />
@@ -94,7 +95,7 @@ onMounted(() => {
                         theme="small,primary"
                         @click="openProjectCreatorDialog"
                     >
-                        新增清单
+                        {{ t('dialog.projectManager.createNew') }}
                     </nue-button>
                 </nue-div>
             </nue-header>

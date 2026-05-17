@@ -30,7 +30,9 @@ const deleteComment = async (id: CommentViewObject['id']) => commentHandler.dele
             <nue-content>
                 <loading v-if="commentsLoading" :placeholder="t('task.details.commentsLoading')" />
                 <nue-empty v-else-if="commentsError" :description="commentsError" image-size="64px">
-                    <nue-button theme="primary,small" @click="retryComments">{{ t('common.retry') }}</nue-button>
+                    <nue-button theme="primary,small" @click="retryComments">
+                        {{ t('common.retry') }}
+                    </nue-button>
                 </nue-empty>
                 <template v-else>
                     <comment-row

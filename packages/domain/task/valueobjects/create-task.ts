@@ -36,7 +36,6 @@ export class CreateTaskValueObject {
      * @returns 验证结果，如果验证通过则返回null，否则返回错误信息
      */
     validate(): Go<void> {
-        // if (!this.userId) return '用户ID不能为空'
         if (!this.name) return '任务名称不能为空'
         if (this.name.length > 128) return '任务名称最多128个字符'
         if (this.description && this.description.length > 256) return '任务描述最多256个字符'
@@ -51,22 +50,31 @@ export class CreateTaskValueObject {
             if (!startAt.isValid()) return '任务开始时间无效'
             if (startAt.isAfter(entAt)) return '任务开始时间不能晚于结束时间'
         }
-        // if (!this.projectId) return '项目ID不能为空'
         return null
     }
 
     /**
      * 填充任务开始时间
-     * @description 如果任务开始时间为空，则充为当前时间
+     * @description 适配原有的结束时间逻辑，处理开始时间
+     * - 当任务时间为单个时间时，表示任务的结束（截止）时间，任务的开始时间采用创建时间；
+     * - 当任务时间为双时间，则自然地分别为开始和结束时间。
+     * - 还需要检测创建时间是否大于用户指定时间，如果是则采取用户指定时间的前一分钟作为开始时间
      */
-    fillStartAtThroughEndAt(): Go<void> {
-        if (!this.endAt) return '任务结束时间为空, 无法填充开始时间'
-        const startAt = dayjs(this.startAt)
-        if (startAt.isValid()) {
-            console.warn('任务开始时间已存在, 无法填充')
-            return null
-        }
-        this.startAt = dayjs(this.endAt).startOf('D').toISOString()
-        return null
+    fillStartAt() {
+        // 如果 已经设置了开始时间 或者 没有结束时间 则不作处理
+        if (this.startAt || !this.endAt) return
+        // 如果 结束时间 在 现在 之前（设置了一个过期的结束时间）
+        // 那么 开始时间 则设置在 结束时间 的前一分钟
+        const time = dayjs()
+        const endAt = dayjs(this.endAt)
+        this.startAt = endAt.isAfter(time)
+            ? time.toISOString()
+            : endAt.subtract(1, 'm').toISOString()
+        // console.log(this.startAt)
     }
 }
+
+
+
+
+

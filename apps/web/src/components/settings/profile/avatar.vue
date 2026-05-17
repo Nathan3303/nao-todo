@@ -31,10 +31,10 @@
                     :throttle-duration="300"
                     @click="handleUpdateAvatar"
                 >
-                    修改头像
+                    {{ t('settings.updateAvatarButtonText') }}
                 </nue-button>
                 <nue-button @click="handleSignOut" icon="arrow-left-more" theme="small">
-                    退出登录
+                    {{ t('settings.signOutButtonText') }}
                 </nue-button>
             </nue-div>
         </nue-div>
@@ -61,6 +61,7 @@ import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { useRouter } from 'vue-router'
 import SettingsProfileAvatarCropperDialog from './avatar-cropper-dialog.vue'
 import SettingsProfileAvatarViewerDialog from './avatar-viewer-dialog.vue'
+import { t } from '@nao-todo/infrastructure/locales'
 
 defineOptions({ name: 'SettingsProfileAvatar' })
 
@@ -123,7 +124,7 @@ const handleSignOut = async () => {
         title: '确认退出登录吗？',
         content: '退出登录后，您需要重新登录才能继续使用应用。',
         confirmButtonText: '退出登录',
-        cancelButtonText: '取消',
+        cancelButtonText: '取消'
     })
     if (isByCancel) return
 
@@ -136,3 +137,4 @@ const handleSignOut = async () => {
     await router.replace('/auth/signin')
 }
 </script>
+

@@ -1,3 +1,3 @@
-import SettingsAside from './index.vue'
+import SettingsAside from './aside.vue'
 
 export { SettingsAside }

@@ -105,7 +105,7 @@ const createCommentHandler = async (content: string) => {
                     />
                     <nue-textarea
                         v-model="vo.description"
-                        :autosize="{ minRows: 1, maxRows: 4 }"
+                        :autosize="{ minRows: 1, maxRows: 99 }"
                         maxlength="256"
                         :placeholder="t('task.details.descPlaceholder')"
                         theme="pure,description"

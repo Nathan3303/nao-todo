@@ -2,9 +2,9 @@ import type { CommentUseCase } from '@nao-todo/application/web/usecases/comment'
 import { unwrapErrors } from '@nao-todo/infrastructure/utils/go-error-handler'
 import type { CommentViewObject, TaskViewObject, UpdateCommentViewObject } from '@nao-todo/types'
 import { NueMessage } from 'nue-ui'
+import { t } from '@nao-todo/infrastructure/locales'
 
 const useCommentHandler = (commentUseCase: CommentUseCase) => {
-    // @method 创建评论
     const createComment = async (
         taskId: TaskViewObject['id'],
         content: CommentViewObject['content']
@@ -12,14 +12,13 @@ const useCommentHandler = (commentUseCase: CommentUseCase) => {
         if (!taskId) return false
         const [, err] = await commentUseCase.create({ taskId, content })
         if (err !== null) {
-            NueMessage.error('评论创建失败' + `(${unwrapErrors(err)})`)
+            NueMessage.error(t('task.comment.createFailed', { error: `(${unwrapErrors(err)})` }))
             return false
         }
-        NueMessage.success('评论创建成功')
+        NueMessage.success(t('task.comment.createSuccess'))
         return true
     }
 
-    // @method 更新评论
     const updateComment = async (
         commentId: CommentViewObject['id'],
         updateComment: UpdateCommentViewObject
@@ -27,24 +26,22 @@ const useCommentHandler = (commentUseCase: CommentUseCase) => {
         if (!commentId) return
         const [, err] = await commentUseCase.update(commentId, updateComment)
         if (err !== null) {
-            NueMessage.error('评论更新失败' + `(${unwrapErrors(err)})`)
+            NueMessage.error(t('task.comment.updateFailed', { error: `(${unwrapErrors(err)})` }))
             return
         }
-        NueMessage.success('评论更新成功')
+        NueMessage.success(t('task.comment.updateSuccess'))
     }
 
-    // @method 删除评论
     const deleteComment = async (commentId: CommentViewObject['id']) => {
         if (!commentId) return
         const [, err] = await commentUseCase.delete(commentId)
         if (err !== null) {
-            NueMessage.error('评论删除失败' + `(${unwrapErrors(err)})`)
+            NueMessage.error(t('task.comment.deleteFailed', { error: `(${unwrapErrors(err)})` }))
             return
         }
-        NueMessage.success('评论删除成功')
+        NueMessage.success(t('task.comment.deleteSuccess'))
     }
 
-    // @return
     return {
         createComment,
         updateComment,
