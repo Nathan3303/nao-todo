@@ -21,7 +21,14 @@ const useTaskReminder = () => {
         inject<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY)!
     const tasksStore = useTasksStore()
 
-    const currentEvent = ref<SSEReminderEvent | null>(null)
+    const currentEvent = ref<SSEReminderEvent | null>({
+        type: 'REMINDER',
+        taskId: '1234567890',
+        taskName: '日历视图 MVP',
+        description:
+            '规划并实现日历视图的最小可用形式，包含整体布局、组件规划、基础逻辑的功能实现。按照类别可以划分为年、月、周以及日度视图，分别对应四个子页面，目前优先实现月度视图，其他视图为后续任务。',
+        remindAt: ''
+    })
     const currentTask = ref<TaskViewObject | undefined>()
     const snoozing = ref(false)
 
@@ -67,6 +74,10 @@ const useTaskReminder = () => {
 }
 
 export default useTaskReminder
+
+
+
+
 
 
 

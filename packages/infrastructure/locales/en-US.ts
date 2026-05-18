@@ -12,7 +12,8 @@ const enUS: LocaleMessages = {
     'auth.signIn.goToRegister': '!',
     'auth.signIn.success': 'Sign in successful',
     'auth.signUp.title': 'Create NaoTodo Account',
-    'auth.signUp.subtitle': 'Enter your email, password and nickname below to create your NaoTodo account',
+    'auth.signUp.subtitle':
+        'Enter your email, password and nickname below to create your NaoTodo account',
     'auth.signUp.emailPlaceholder': 'Email (example@x.com)',
     'auth.signUp.passwordPlaceholder': 'Password',
     'auth.signUp.confirmPassword': 'Confirm Password',
@@ -23,7 +24,8 @@ const enUS: LocaleMessages = {
     'auth.signUp.goToLogin': '',
     'auth.signUp.success': 'Registration successful',
     'auth.checkIn.verifying': 'Verifying user credentials...',
-    'auth.aside.tagline': 'Effortlessly manage your daily tasks and stay productive with a smart to-do list app tailored just for you!',
+    'auth.aside.tagline':
+        'Effortlessly manage your daily tasks and stay productive with a smart to-do list app tailored just for you!',
 
     // Navigation
     'nav.tasks': 'Tasks',
@@ -40,6 +42,7 @@ const enUS: LocaleMessages = {
     'common.update': 'Update',
     'common.delete': 'Delete',
     'common.close': 'Close',
+    'common.done': 'Done',
     'common.more': 'More',
     'common.search': 'Search',
     'common.loading': 'Loading...',
@@ -58,7 +61,8 @@ const enUS: LocaleMessages = {
     'common.uploadFailed': 'Upload failed',
     'common.uploadSuccess': 'Upload successful',
     'common.loadFailed': 'Load failed',
-    'common.reminder': 'Reminder',
+    'common.reminder': 'To-Do Task Reminder',
+    'common.snooze': 'Snooze Reminder',
 
     // Settings
     'settings.profile': 'User Profile',
@@ -78,13 +82,15 @@ const enUS: LocaleMessages = {
     'settings.appearanceSystem': 'System',
     'settings.appearanceSyncFailed': 'Theme sync failed',
     'settings.nickname': 'Edit Nickname',
-    'settings.nicknameDesc': 'Your nickname is shown in task creator, assignee, project members and other places. You can change it anytime.',
+    'settings.nicknameDesc':
+        'Your nickname is shown in task creator, assignee, project members and other places. You can change it anytime.',
     'settings.nicknamePlaceholder': 'Enter nickname (2-16 characters)',
     'settings.nicknameSubmit': 'Update',
     'settings.moreInfo': 'More Info',
     'settings.registeredAt': 'Registered At',
     'settings.passwordHintTitle': 'Password Security Notice',
-    'settings.passwordHintContent': 'To protect your account, we recommend changing your password regularly. After changing your password, you will need to sign in again.',
+    'settings.passwordHintContent':
+        'To protect your account, we recommend changing your password regularly. After changing your password, you will need to sign in again.',
     'settings.passwordOld': 'Current Password',
     'settings.passwordOldPlaceholder': 'Enter current password',
     'settings.passwordNew': 'New Password',
@@ -95,7 +101,8 @@ const enUS: LocaleMessages = {
     'settings.passwordChangeSuccess': 'Password changed successfully. Please sign in again.',
     'settings.avatarUpdateSuccess': 'Avatar updated',
     'settings.signOutConfirmTitle': 'Confirm sign out?',
-    'settings.signOutConfirmContent': 'After signing out, you will need to sign in again to continue using the app.',
+    'settings.signOutConfirmContent':
+        'After signing out, you will need to sign in again to continue using the app.',
     'settings.signOutConfirmText': 'Sign Out',
     'settings.signOutFailed': 'Sign out failed',
     'settings.signOutSuccess': 'Signed out successfully',
@@ -251,7 +258,8 @@ const enUS: LocaleMessages = {
     'task.smartlist.filter': 'Filters',
     'task.smartlist.filterManage': 'Manage all filters',
     'task.smartlist.filterCreate': 'Create new filter',
-    'task.smartlist.filterEmpty': 'Filter tasks by project, time, priority, tags and other attributes',
+    'task.smartlist.filterEmpty':
+        'Filter tasks by project, time, priority, tags and other attributes',
     'task.table.summary': '{count} items in current list, {total} total.',
 
     // Calendar
@@ -270,7 +278,8 @@ const enUS: LocaleMessages = {
     'dialog.projectCreator.title': 'Create Project',
     'dialog.projectManager.title': 'Project Manager',
     'dialog.projectManager.searchPlaceholder': 'Search projects',
-    'dialog.projectManager.deleteWarning': 'Deleted projects will be permanently removed after 30 days, along with all tasks belonging to them. Consider using archive if you just want to hide from the smart list.',
+    'dialog.projectManager.deleteWarning':
+        'Deleted projects will be permanently removed after 30 days, along with all tasks belonging to them. Consider using archive if you just want to hide from the smart list.',
     'dialog.projectManager.deleteReminder': 'Important Deletion Notice',
     'dialog.projectManager.createNew': 'New Project',
     'dialog.projectUpdater.title': 'Edit Project',
@@ -278,7 +287,8 @@ const enUS: LocaleMessages = {
     'dialog.tagCreator.selectColor': 'Select tag color:',
     'dialog.tagManager.title': 'Tag Manager',
     'dialog.tagManager.searchPlaceholder': 'Search tags',
-    'dialog.tagManager.deleteWarning': 'Deleted tags cannot be recovered. All tasks marked with this tag will lose it. Please proceed with caution.',
+    'dialog.tagManager.deleteWarning':
+        'Deleted tags cannot be recovered. All tasks marked with this tag will lose it. Please proceed with caution.',
     'dialog.tagManager.deleteReminder': 'Important Deletion Notice',
     'dialog.tagManager.createNew': 'New Tag',
     'dialog.tagManager.changeColor': 'Change tag color',
@@ -303,7 +313,8 @@ const enUS: LocaleMessages = {
     'dialog.projectIdRequired': 'Project ID is required',
     'dialog.projectNameRequired': 'Project name is required',
     'dialog.tagDeleteConfirmTitle': 'Delete this tag?',
-    'dialog.tagDeleteConfirmContent': 'Cannot be recovered. Tasks will be kept but the tag will be removed.',
+    'dialog.tagDeleteConfirmContent':
+        'Cannot be recovered. Tasks will be kept but the tag will be removed.',
     'dialog.tagDeleteFailed': 'Failed to delete tag: {error}',
     'dialog.tagDeleteSuccess': 'Tag deleted',
     'dialog.tagCreateSuccess': 'Tag created',
@@ -323,6 +334,7 @@ const enUS: LocaleMessages = {
     'dialog.projectUpdateNameDesc': 'Edit project name and description',
     'dialog.projectDelete': 'Delete project',
     'dialog.tagUpdate': 'Edit tag',
+    'dialog.taskReminder.confirm': 'I know',
 
     // Shared component
     'component.empty': 'No Data',
@@ -359,7 +371,8 @@ const enUS: LocaleMessages = {
     'component.eventRow.createTask': 'Create task from this item',
     'component.eventRow.deleteEvent': 'Delete item',
     'component.accountHint.title': 'Account Hint',
-    'component.accountHint.content': 'Account can be a username or email.\nUsername: 6-32 letters, digits or underscores;\nEmail: standard email format required.',
+    'component.accountHint.content':
+        'Account can be a username or email.\nUsername: 6-32 letters, digits or underscores;\nEmail: standard email format required.',
     'component.passwordHint.title': 'Password Hint',
     'component.passwordHint.content': 'Password must be 8-24 characters...',
     'component.restoreProject': 'Restore Project',
@@ -413,7 +426,8 @@ const enUS: LocaleMessages = {
 
     // Welcome
     'welcome.greeting': 'Hello \u{1F44B}, {name}!',
-    'welcome.message': 'Welcome back to NaoTodo, keep planning and completing your tasks \u{1F3AF}!',
+    'welcome.message': 'Welcome back to NaoTodo, keep planning and completing your tasks \u{1F3AF}!'
 }
 
 export default enUS
+

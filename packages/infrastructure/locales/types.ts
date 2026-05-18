@@ -38,6 +38,7 @@ export interface LocaleMessages {
     'common.update': string
     'common.delete': string
     'common.close': string
+    'common.done': string
     'common.more': string
     'common.search': string
     'common.loading': string
@@ -57,6 +58,7 @@ export interface LocaleMessages {
     'common.uploadSuccess': string
     'common.loadFailed': string
     'common.reminder': string
+    'common.snooze': string
 
     // Settings
     'settings.profile': string
@@ -321,6 +323,7 @@ export interface LocaleMessages {
     'dialog.projectUpdateNameDesc': string
     'dialog.projectDelete': string
     'dialog.tagUpdate': string
+    'dialog.taskReminder.confirm': string
 
     // Shared component
     'component.empty': string

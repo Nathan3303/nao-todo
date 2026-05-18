@@ -1,0 +1,65 @@
+.nue-dialog--task-reminder {
+    gap: var(--nue-gap-xs);
+    background-color: transparent;
+    max-width: min(36rem, 80%);
+
+    .nue-dialog__header {
+        display: flex;
+        flex-direction: column;
+        gap: var(--nue-gap-2xs);
+        background-color: var(--nue-primary-color-0);
+        align-items: stretch;
+        padding: var(--nue-padding-xs) var(--nue-padding-sm);
+        border-radius: var(--nue-primary-radius);
+
+        .nue-text--reminder__title {
+            font-size: var(--nue-text-df);
+        }
+
+        .nue-div--reminder__progress {
+            font-size: var(--nue-text-xs);
+        }
+    }
+
+    .nue-dialog__content {
+        display: flex;
+        flex-direction: column;
+        gap: var(--nue-gap-sm);
+        background-color: var(--nue-primary-color-0);
+        align-items: stretch;
+        padding: var(--nue-padding-xs) var(--nue-padding-sm);
+        border-radius: var(--nue-primary-radius);
+
+        .nue-div--reminder__task-switcher {
+            align-items: center;
+        }
+
+        .nue-div--reminder__name-desc {
+            flex-direction: column;
+            gap: var(--nue-gap-2xs);
+
+            .nue-text--reminder__task-name {
+                font-size: var(--nue-text-df);
+                color: var(--nue-primary-color-800);
+                width: fit-content;
+
+                &:hover {
+                    cursor: pointer;
+                    text-decoration: underline;
+                }
+            }
+
+            .nue-text--reminder__task-desc {
+                font-size: var(--nue-text-sm);
+                color: var(--nue-primary-color-500);
+            }
+        }
+
+        .nue-div--reminder__actions {
+            width: 100%;
+            gap: var(--nue-gap-2xs);
+            justify-content: flex-start;
+        }
+    }
+}
+

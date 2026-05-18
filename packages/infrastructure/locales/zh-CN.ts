@@ -23,7 +23,8 @@ const zhCN: LocaleMessages = {
     'auth.signUp.goToLogin': '吧',
     'auth.signUp.success': '注册成功',
     'auth.checkIn.verifying': '正在验证用户凭证 ...',
-    'auth.aside.tagline': '使用专门为您量身定制的智能待办事项列表应用程序，轻松管理日常并保持高效专注！',
+    'auth.aside.tagline':
+        '使用专门为您量身定制的智能待办事项列表应用程序，轻松管理日常并保持高效专注！',
 
     // Navigation
     'nav.tasks': '任务',
@@ -40,6 +41,7 @@ const zhCN: LocaleMessages = {
     'common.update': '修改',
     'common.delete': '删除',
     'common.close': '关闭',
+    'common.done': '完成',
     'common.more': '更多',
     'common.search': '搜索',
     'common.loading': '正在加载...',
@@ -58,7 +60,8 @@ const zhCN: LocaleMessages = {
     'common.uploadFailed': '上传失败',
     'common.uploadSuccess': '上传成功',
     'common.loadFailed': '加载失败',
-    'common.reminder': '提醒',
+    'common.reminder': '待办任务提醒',
+    'common.snooze': '稍后提醒',
 
     // Settings
     'settings.profile': '用户信息',
@@ -84,7 +87,8 @@ const zhCN: LocaleMessages = {
     'settings.moreInfo': '更多信息',
     'settings.registeredAt': '注册时间',
     'settings.passwordHintTitle': '密码安全提醒',
-    'settings.passwordHintContent': '为保护您的账号安全，建议您定期更换密码。修改密码后，您需要重新登录才能继续使用应用。',
+    'settings.passwordHintContent':
+        '为保护您的账号安全，建议您定期更换密码。修改密码后，您需要重新登录才能继续使用应用。',
     'settings.passwordOld': '旧密码',
     'settings.passwordOldPlaceholder': '请输入旧密码',
     'settings.passwordNew': '新密码',
@@ -270,7 +274,8 @@ const zhCN: LocaleMessages = {
     'dialog.projectCreator.title': '创建任务清单',
     'dialog.projectManager.title': '清单管理',
     'dialog.projectManager.searchPlaceholder': '搜索清单',
-    'dialog.projectManager.deleteWarning': '删除的清单会在 30 天后永久删除，所有归属于该清单的任务也会被永久删除，切记删除清单时再次考虑。如果是不想在智能列表中显示该清单，可以使用归档功能。',
+    'dialog.projectManager.deleteWarning':
+        '删除的清单会在 30 天后永久删除，所有归属于该清单的任务也会被永久删除，切记删除清单时再次考虑。如果是不想在智能列表中显示该清单，可以使用归档功能。',
     'dialog.projectManager.deleteReminder': '删除功能重要提醒',
     'dialog.projectManager.createNew': '新增清单',
     'dialog.projectUpdater.title': '修改清单',
@@ -278,7 +283,8 @@ const zhCN: LocaleMessages = {
     'dialog.tagCreator.selectColor': '选择标签颜色：',
     'dialog.tagManager.title': '标签管理',
     'dialog.tagManager.searchPlaceholder': '搜索标签',
-    'dialog.tagManager.deleteWarning': '删除标签后无法恢复，所有标记了该标签的任务都将失去此标签。请谨慎操作。',
+    'dialog.tagManager.deleteWarning':
+        '删除标签后无法恢复，所有标记了该标签的任务都将失去此标签。请谨慎操作。',
     'dialog.tagManager.deleteReminder': '删除功能重要提醒',
     'dialog.tagManager.createNew': '新增标签',
     'dialog.tagManager.changeColor': '修改标签提示色',
@@ -323,6 +329,7 @@ const zhCN: LocaleMessages = {
     'dialog.projectUpdateNameDesc': '修改清单名称和描述',
     'dialog.projectDelete': '删除清单',
     'dialog.tagUpdate': '修改标签',
+    'dialog.taskReminder.confirm': '我知道了',
 
     // Shared component
     'component.empty': '没有数据',
@@ -359,7 +366,8 @@ const zhCN: LocaleMessages = {
     'component.eventRow.createTask': '依据该检查事项创建新任务',
     'component.eventRow.deleteEvent': '删除事件',
     'component.accountHint.title': '账号提示',
-    'component.accountHint.content': '账号可以是用户名或者电子邮箱。\n用户名要求由 6 - 32 位字母、数字或下划线组成；\n电子邮箱需要符合常规的邮箱格式要求。',
+    'component.accountHint.content':
+        '账号可以是用户名或者电子邮箱。\n用户名要求由 6 - 32 位字母、数字或下划线组成；\n电子邮箱需要符合常规的邮箱格式要求。',
     'component.passwordHint.title': '密码提示',
     'component.passwordHint.content': '密码格式要求长度为8-24位...',
     'component.restoreProject': '恢复清单',
@@ -413,7 +421,8 @@ const zhCN: LocaleMessages = {
 
     // Welcome
     'welcome.greeting': '你好 \u{1F44B}，{name}！',
-    'welcome.message': '欢迎回到 NaoTodo，继续规划并完成你的任务 \u{1F3AF} 吧！',
+    'welcome.message': '欢迎回到 NaoTodo，继续规划并完成你的任务 \u{1F3AF} 吧！'
 }
 
 export default zhCN
+
