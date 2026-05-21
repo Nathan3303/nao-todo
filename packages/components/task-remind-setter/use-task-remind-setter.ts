@@ -1,4 +1,4 @@
-import { computed, reactive, watch } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 // import { NueMessage } from 'nue-ui'
 import dayjs from 'dayjs'
 import { REPEAT_DAY_OPTIONS } from './constants'
@@ -8,6 +8,8 @@ import type {
     TaskRemindSetterUpdateVO,
     TaskRemindSetterVO
 } from './types'
+
+const pad = (n: number) => n.toString().padStart(2, '0')
 
 const REMIND_REPEAT_MAP: Record<string, number> = {
     none: -1,
@@ -60,15 +62,32 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
         }
     }
 
-    const hourText = computed({
-        get: () => vo.hour.toString().padStart(2, '0'),
-        set: (val) => (vo.hour = Number(val))
-    })
+    const hourText = ref(pad(vo.hour))
+    const minuteText = ref(pad(vo.minute))
 
-    const minuteText = computed({
-        get: () => vo.minute.toString().padStart(2, '0'),
-        set: (val) => (vo.minute = Number(val))
-    })
+    const onFocus = (e: Event) => (e.target as HTMLInputElement).select()
+
+    const applyTimeInput = (e: Event, displayRef: { value: string }, max: number, onSet: (n: number) => void) => {
+        const input = e.target as HTMLInputElement
+        const rawDigits = input.value.replace(/\D/g, '')
+        const digits = rawDigits.slice(-2)
+        let num = Number(digits) || 0
+        if (num > max) num = max
+        const val = num.toString().padStart(2, '0')
+        input.value = val
+        displayRef.value = val
+        onSet(num)
+        if (rawDigits.length >= 2) nextTick(() => input.select())
+    }
+
+    const onHourInput = (e: Event) => applyTimeInput(e, hourText, 23, (n) => { vo.hour = n })
+    const onMinuteInput = (e: Event) => applyTimeInput(e, minuteText, 59, (n) => { vo.minute = n })
+
+    const onHourBlur = () => { hourText.value = pad(vo.hour) }
+    const onMinuteBlur = () => { minuteText.value = pad(vo.minute) }
+
+    watch(() => vo.hour, (h) => { hourText.value = pad(h) })
+    watch(() => vo.minute, (m) => { minuteText.value = pad(m) })
 
     const repeatDayText = computed(() => {
         return REPEAT_DAY_OPTIONS.filter((_item, idx) => vo.repeatDays[idx])
@@ -175,6 +194,11 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
         vo,
         hourText,
         minuteText,
+        onFocus,
+        onHourInput,
+        onMinuteInput,
+        onHourBlur,
+        onMinuteBlur,
         repeatDayText,
         handleRepeatWayDropdownExecute,
         handleRepeatDayDropdownExecute

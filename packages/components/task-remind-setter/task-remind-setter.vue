@@ -11,6 +11,11 @@ const {
     vo,
     hourText,
     minuteText,
+    onFocus,
+    onHourInput,
+    onMinuteInput,
+    onHourBlur,
+    onMinuteBlur,
     repeatDayText,
     handleRepeatWayDropdownExecute,
     handleRepeatDayDropdownExecute
@@ -37,13 +42,22 @@ const {
             >
                 <nue-text size="var(--nue-text-xs)">提醒时间</nue-text>
                 <nue-div theme="remind-time-setter" align="center">
-                    <input v-model="hourText" inputmode="numeric" maxlength="2" placeholder="00" />
+                    <input
+                        :value="hourText"
+                        inputmode="numeric"
+                        placeholder="00"
+                        @focus="onFocus"
+                        @input="onHourInput"
+                        @blur="onHourBlur"
+                    />
                     <nue-text weight="bold">:</nue-text>
                     <input
-                        v-model="minuteText"
+                        :value="minuteText"
                         inputmode="numeric"
-                        maxlength="2"
                         placeholder="00"
+                        @focus="onFocus"
+                        @input="onMinuteInput"
+                        @blur="onMinuteBlur"
                     />
                 </nue-div>
             </nue-div>

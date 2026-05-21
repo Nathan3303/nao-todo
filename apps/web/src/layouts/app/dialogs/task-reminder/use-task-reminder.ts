@@ -1,4 +1,4 @@
-import { inject, ref } from 'vue'
+import { computed, inject, ref } from 'vue'
 import { NueMessage } from 'nue-ui'
 import { IndexViewContext } from '@/views/index/index-view'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
@@ -21,25 +21,39 @@ const useTaskReminder = () => {
         inject<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY)!
     const tasksStore = useTasksStore()
 
-    const currentEvent = ref<SSEReminderEvent | null>({
-        type: 'REMINDER',
-        taskId: '1234567890',
-        taskName: '日历视图 MVP',
-        description:
-            '规划并实现日历视图的最小可用形式，包含整体布局、组件规划、基础逻辑的功能实现。按照类别可以划分为年、月、周以及日度视图，分别对应四个子页面，目前优先实现月度视图，其他视图为后续任务。',
-        remindAt: ''
+    const queue = ref<SSEReminderEvent[]>([])
+    const processedCount = ref(0)
+    const totalCount = ref(0)
+
+    const currentEvent = computed(() => queue.value[0] ?? null)
+    const currentTask = computed<TaskViewObject | undefined>(() => {
+        const e = currentEvent.value
+        return e ? tasksStore.getTask(e.taskId) : undefined
     })
-    const currentTask = ref<TaskViewObject | undefined>()
+
+    const progressPercent = computed(() =>
+        totalCount.value === 0 ? 0 : Math.floor((processedCount.value / totalCount.value) * 100)
+    )
+    const progressText = computed(
+        () => `已处理 ${processedCount.value} 个提醒，剩余 ${queue.value.length} 个`
+    )
+
     const snoozing = ref(false)
 
-    const loadTask = (payload?: SSEReminderEvent) => {
-        currentEvent.value = payload || null
-        currentTask.value = payload ? tasksStore.getTask(payload.taskId) : undefined
+    const enqueue = (event: SSEReminderEvent) => {
+        queue.value.push(event)
+        totalCount.value++
     }
 
-    const clearTask = () => {
-        currentEvent.value = null
-        currentTask.value = undefined
+    const dequeue = () => {
+        queue.value.shift()
+        processedCount.value++
+    }
+
+    const resetQueue = () => {
+        queue.value = []
+        processedCount.value = 0
+        totalCount.value = 0
     }
 
     const snooze = async (minutes: number) => {
@@ -53,6 +67,11 @@ const useTaskReminder = () => {
             return
         }
         NueMessage.success('稍后提醒已设置')
+        dequeue()
+    }
+
+    const confirm = () => {
+        dequeue()
     }
 
     const viewDetail = () => {
@@ -63,21 +82,21 @@ const useTaskReminder = () => {
 
     return {
         dialogManager,
+        queue,
         currentEvent,
         currentTask,
+        totalCount,
+        processedCount,
+        progressPercent,
+        progressText,
         snoozing,
-        loadTask,
-        clearTask,
+        enqueue,
+        dequeue,
+        resetQueue,
         snooze,
+        confirm,
         viewDetail
     }
 }
 
 export default useTaskReminder
-
-
-
-
-
-
-
