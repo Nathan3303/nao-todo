@@ -73,10 +73,15 @@ const {
                     <nue-dropdown-item @click="trigger" size="small" use-suffix-icon>
                         提醒周期
                         <template #append>
-                            <nue-text>{{ vo.repeatWay === 0 ? '每天' : '每周' }}</nue-text>
+                            <nue-text>{{
+                                vo.repeatWay === 0 ? '不重复' : vo.repeatWay === 1 ? '每天' : '每周'
+                            }}</nue-text>
                         </template>
                     </nue-dropdown-item>
                 </template>
+                <nue-dropdown-item execute-id="reminder-repeat-none" size="small">
+                    不重复
+                </nue-dropdown-item>
                 <nue-dropdown-item execute-id="reminder-repeat-day" size="small">
                     每天
                 </nue-dropdown-item>
@@ -86,7 +91,7 @@ const {
             </nue-dropdown>
             <!-- 提醒日 - 只有在提醒周期为每周时才显示 -->
             <nue-dropdown
-                v-if="vo.repeatWay === 1"
+                v-if="vo.repeatWay === 2"
                 style="width: 100%"
                 size="small"
                 placement="right-start"

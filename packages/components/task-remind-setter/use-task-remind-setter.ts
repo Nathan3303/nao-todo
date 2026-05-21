@@ -12,16 +12,17 @@ import type {
 const pad = (n: number) => n.toString().padStart(2, '0')
 
 const REMIND_REPEAT_MAP: Record<string, number> = {
-    none: -1,
-    daily: 0,
-    weekly: 1,
-    monthly: 2
+    none: 0,
+    daily: 1,
+    weekly: 2,
+    monthly: 3
 }
 
 const REMIND_REPEAT_REVERSE: Record<number, string> = {
-    0: 'daily',
-    1: 'weekly',
-    2: 'monthly'
+    0: 'none',
+    1: 'daily',
+    2: 'weekly',
+    3: 'monthly'
 }
 
 const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSetterEmits) => {
@@ -51,7 +52,7 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
 
         if (t.remindRepeat && t.remindRepeat in REMIND_REPEAT_MAP) {
             const way = REMIND_REPEAT_MAP[t.remindRepeat] as number | undefined
-            if (way !== undefined && way >= 0) vo.repeatWay = way
+            if (way !== undefined && way > 0) vo.repeatWay = way
         }
 
         if (t.remindWeekdays && t.remindWeekdays.length > 0) {
@@ -96,10 +97,12 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
     })
 
     const handleRepeatWayDropdownExecute = (executeId: string) => {
-        if (executeId === 'reminder-repeat-day') {
+        if (executeId === 'reminder-repeat-none') {
             vo.repeatWay = 0
-        } else if (executeId === 'reminder-repeat-week') {
+        } else if (executeId === 'reminder-repeat-day') {
             vo.repeatWay = 1
+        } else if (executeId === 'reminder-repeat-week') {
+            vo.repeatWay = 2
         }
     }
 
@@ -145,10 +148,10 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
 
         const remindTime = `${vo.hour.toString().padStart(2, '0')}:${vo.minute.toString().padStart(2, '0')}`
         const remindRepeat = (REMIND_REPEAT_REVERSE[vo.repeatWay] ||
-            'daily') as TaskRemindSetterUpdateVO['remindRepeat']
+            'none') as TaskRemindSetterUpdateVO['remindRepeat']
 
         const remindWeekdays: number[] = []
-        if (vo.repeatWay === 1) {
+        if (vo.repeatWay === 2) {
             vo.repeatDays.forEach((selected, idx) => {
                 if (selected) remindWeekdays.push(idx === 6 ? 7 : idx + 1)
             })
@@ -161,7 +164,7 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
         }
 
         // 每周重复：向前扫描匹配的星期几
-        if (vo.repeatWay === 1 && remindWeekdays.length > 0) {
+        if (vo.repeatWay === 2 && remindWeekdays.length > 0) {
             for (let i = 0; i < 7; i++) {
                 const dayjsDay = candidate.day()
                 const idx = dayjsDay === 0 ? 6 : dayjsDay - 1
