@@ -21,30 +21,10 @@ import type { ComputedRef, Ref } from 'vue'
  * Task Details
  */
 
-export type TaskDetailsViewObject = {
-    id: string
-    projectId: ProjectViewObject['id']
+export type TaskDetailsViewObject = TaskViewObject & {
     projectName?: ProjectViewObject['name']
-    name: string
-    description: string
-    state: string
-    priority: string
-    tags: TagViewObject['id'][]
     tagList: TagViewObject[]
-    startAt?: string | null
-    endAt?: string | null
-    deletedAt: string | null
-    isDeleted: boolean
-    isStarMarked: boolean
-    isGivenUp: boolean
     isDone: boolean
-    createdAt: string
-    updatedAt: string
-    givenUpAt?: string | null
-    remindAt?: string | null
-    remindRepeat?: 'none' | 'daily' | 'weekly' | 'monthly'
-    remindTime?: string | null
-    remindWeekdays?: number[]
 }
 
 export type TaskDetailsProps = {

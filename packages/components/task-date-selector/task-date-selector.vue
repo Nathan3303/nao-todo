@@ -9,43 +9,79 @@ defineOptions({ name: 'TaskDateSelector', inheritAttrs: false })
 const props = defineProps<TaskDateSelectorProps>()
 const emit = defineEmits<TaskDateSelectorEmits>()
 
-const date = ref(props.modelValue ? dayjs(props.modelValue).format('YYYY-MM-DD HH:mm') : '')
+const date = ref(props.modelValue ? dayjs(props.modelValue).toISOString() : '')
+const pendingRemindUpdate = ref<TaskRemindSetterUpdateVO | null>(null)
 
-watch(
-    () => props.modelValue,
-    (val) => (date.value = val ? dayjs(val).format('YYYY-MM-DD HH:mm') : '')
-)
-
+// @computed 是否过期
 const isExpired = computed(() => {
     if (!props.modelValue) return false
     return dayjs(props.modelValue).isBefore(dayjs())
 })
 
+// @computed 日期选择器主题
 const datePickerTheme = computed(() => {
     return { small: true, expired: props.colored && isExpired.value }
 })
 
-const pendingRemindUpdate = ref<TaskRemindSetterUpdateVO | null>(null)
-
+/**
+ * 处理提醒更新
+ * @param vo 提醒更新VO
+ */
 const handleRemindUpdate = (vo: TaskRemindSetterUpdateVO) => {
+    // 判断属性值是否相同
+    const isRemindAtSame = vo.remindAt === props.task?.remindAt
+    const isRemindRepeatSame = vo.remindRepeat === props.task?.remindRepeat
+    const isRemindTimeSame = vo.remindTime === props.task?.remindTime
+    const isRemindWeekdaysSame =
+        vo.remindWeekdays?.toString() === props.task?.remindWeekdays?.toString()
+    // 如果所有属性值都相同，不更新 pendingRemindUpdate
+    if (isRemindAtSame && isRemindRepeatSame && isRemindTimeSame && isRemindWeekdaysSame) return
+    // 更新 pendingRemindUpdate
     pendingRemindUpdate.value = vo
 }
 
+/**
+ * 处理关闭
+ * @description 关闭日期选择器时，判断是否有日期变化，如果有则更新 modelValue 和 change 事件
+ */
 const handleClose = () => {
     const dayjsDate = dayjs(date.value)
     const dateChanged = !dayjsDate.isSame(dayjs(props.modelValue))
+    const remindChanged = pendingRemindUpdate.value !== null
 
+    // 同时更新？
+    if (dateChanged && remindChanged) {
+        emit('update-all', {
+            endAt: dayjsDate.toISOString(),
+            remindAt: pendingRemindUpdate.value!.remindAt,
+            remindRepeat: pendingRemindUpdate.value!.remindRepeat,
+            remindTime: pendingRemindUpdate.value!.remindTime,
+            remindWeekdays: pendingRemindUpdate.value!.remindWeekdays
+        })
+        pendingRemindUpdate.value = null
+        return
+    }
+
+    // 分别更新日期和提醒时间
     if (dateChanged) {
         const newValue = dayjsDate.format('YYYY-MM-DDTHH:mm')
         emit('update:modelValue', newValue)
         emit('change', newValue)
     }
-
     if (pendingRemindUpdate.value) {
         emit('remind-change', pendingRemindUpdate.value)
         pendingRemindUpdate.value = null
     }
 }
+
+/**
+ * 监听 modelValue 变化
+ * @description 当 modelValue 变化时，更新 date 值
+ */
+watch(
+    () => props.modelValue,
+    (val) => (date.value = val ? dayjs(val).toISOString() : '')
+)
 </script>
 
 <template>
@@ -58,11 +94,7 @@ const handleClose = () => {
         size="small"
     >
         <template #footer>
-            <task-remind-setter
-                :task="props.task"
-                :date="date"
-                @update="handleRemindUpdate"
-            />
+            <task-remind-setter :task="task" :date="date" @update="handleRemindUpdate" />
         </template>
     </nue-date-picker>
 </template>
@@ -88,3 +120,4 @@ const handleClose = () => {
     }
 }
 </style>
+

@@ -4,7 +4,7 @@ import { TaskCheckButton, TaskDateSelector } from '@nao-todo/components'
 import type { TaskRemindSetterUpdateVO } from '@nao-todo/components'
 import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
 import type { TaskDetailsContext } from '../types'
-import type { TaskViewObject } from '@nao-todo/types'
+import type { TaskViewObject, UpdateTaskViewObject } from '@nao-todo/types'
 import dayjs from 'dayjs'
 import { t } from '@nao-todo/infrastructure/locales'
 
@@ -29,6 +29,11 @@ const updateRemind = (updateVO: TaskRemindSetterUpdateVO) => {
     if (vo.value === null) return
     taskHandler.updateTask(vo.value.id, updateVO)
 }
+
+const updateEndAtAndRemind = (updateVO: UpdateTaskViewObject) => {
+    if (vo.value === null) return
+    taskHandler.updateTask(vo.value.id, updateVO)
+}
 </script>
 
 <template>
@@ -43,10 +48,13 @@ const updateRemind = (updateVO: TaskRemindSetterUpdateVO) => {
                     :task="vo"
                     @change="updateEndAt"
                     @remind-change="updateRemind"
+                    @update-all="updateEndAtAndRemind"
                 />
             </nue-div>
             <nue-div align="center">
-                <nue-button icon="clear" theme="small" @click="closeDetails">{{ t('task.details.close') }}</nue-button>
+                <nue-button icon="clear" theme="small" @click="closeDetails">{{
+                    t('task.details.close')
+                }}</nue-button>
             </nue-div>
         </nue-div>
         <nue-button v-else icon="clock" theme="small" @click="updateEndAtToNow">

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { type DialogInstanceType, useDialogWrapper } from '@nao-todo/components'
 import {
     TaskDateSelector,
@@ -15,6 +15,7 @@ import type { CreateTaskViewObject, TaskViewObject } from '@nao-todo/types'
 import useTaskCreator from './use-task-creator'
 import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 import { t } from '@nao-todo/infrastructure/locales'
+import dayjs from 'dayjs'
 
 defineOptions({ name: 'TaskCreator' })
 
@@ -26,9 +27,16 @@ const {
     avaliableTags,
     dialogManager,
     handleCreateTask,
-    clearInputsValue
+    clearInputsValue,
+    handleUpdateEndAt,
+    handleUpdateRemind,
+    handleUpdateEndAtAndRemind
 } = useTaskCreator()
 const { visible, close: closeDialog } = useDialogWrapper(dialogRef)
+
+const isExpired = computed(() => {
+    return states.state !== 'done' && dayjs(states.endAt).isBefore(dayjs())
+})
 
 const open = (createTaskOptions: CreateTaskViewObject) => {
     clearInputsValue()
@@ -84,7 +92,14 @@ onMounted(() => {
                     :placeholder="t('dialog.taskCreator.descPlaceholder')"
                     theme="fix-padding"
                 />
-                <task-date-selector v-model="states.endAt" />
+                <task-date-selector
+                    :colored="!isExpired"
+                    v-model="states.endAt"
+                    :task-remind-data="states"
+                    @change="handleUpdateEndAt"
+                    @remind-change="handleUpdateRemind"
+                    @update-all="handleUpdateEndAtAndRemind"
+                />
                 <nue-div wrap="wrap" gap=".5rem">
                     <task-selector
                         :options="TaskStateSelectOptions"
@@ -98,7 +113,7 @@ onMounted(() => {
                     />
                     <nue-div flex="1" />
                     <task-project-selector
-                        :project-id="states.projectId"
+                        :project-id="states.projectId || ''"
                         :projects="avaliableProjects || []"
                         @select="(pid: string) => (states.projectId = pid)"
                     />

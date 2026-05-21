@@ -6,6 +6,8 @@ import { IndexViewContext } from '@/views/index/index-view'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { useProjectsStore, useTagsStore } from '@/stores'
 import { storeToRefs } from 'pinia'
+import type { UpdateTaskViewObject } from '@nao-todo/types'
+import { TaskRemindSetterUpdateVO } from '@nao-todo/components'
 
 const useTaskCreator = () => {
     const router = useRouter()
@@ -18,30 +20,59 @@ const useTaskCreator = () => {
     const { avaliableProjects } = storeToRefs(projectsStore)
     const { tags: avaliableTags } = storeToRefs(tagsStore)
 
-    const states = reactive({
-        projectId: '' as string,
+    const states = reactive<UpdateTaskViewObject & { creating: boolean; disabled: boolean }>({
+        projectId: '',
         name: '',
         description: '',
-        state: 'todo' as string,
-        priority: 'low' as string,
-        startAt: '' as string,
-        endAt: '' as string,
-        tags: [] as string[],
+        state: 'todo',
+        priority: 'low',
+        startAt: '',
+        endAt: '',
+        tags: [],
+        remindAt: null,
+        remindRepeat: 'none',
+        remindTime: null,
+        remindWeekdays: [],
         creating: false,
         disabled: false
     })
 
+    const handleUpdateEndAt = (value: string | null) => {
+        states.endAt = value || ''
+    }
+
+    const handleUpdateRemind = (value: TaskRemindSetterUpdateVO) => {
+        states.remindAt = value.remindAt
+        states.remindRepeat = value.remindRepeat
+        states.remindTime = value.remindTime
+        states.remindWeekdays = value.remindWeekdays
+    }
+
+    const handleUpdateEndAtAndRemind = (value: UpdateTaskViewObject) => {
+        handleUpdateEndAt(value.endAt || '')
+        handleUpdateRemind({
+            remindAt: value.remindAt || null,
+            remindRepeat: value.remindRepeat || 'none',
+            remindTime: value.remindTime || null,
+            remindWeekdays: value.remindWeekdays || []
+        })
+    }
+
     const handleCreateTask = async (): Promise<boolean> => {
         states.creating = states.disabled = true
         const [task, err] = await taskUseCase.createTask({
-            projectId: states.projectId,
-            name: states.name,
-            description: states.description,
-            state: states.state,
-            priority: states.priority,
+            projectId: states.projectId || '',
+            name: states.name || '',
+            description: states.description || '',
+            state: states.state || '',
+            priority: states.priority || '',
             startAt: states.startAt || null,
             endAt: states.endAt || null,
-            tags: states.tags
+            tags: states.tags,
+            remindAt: states.remindAt || null,
+            remindRepeat: states.remindRepeat,
+            remindTime: states.remindTime || null,
+            remindWeekdays: states.remindWeekdays
         })
         states.creating = false
         if (err !== null) {
@@ -74,11 +105,12 @@ const useTaskCreator = () => {
         avaliableTags,
         dialogManager,
         handleCreateTask,
-        clearInputsValue
+        clearInputsValue,
+        handleUpdateEndAt,
+        handleUpdateRemind,
+        handleUpdateEndAtAndRemind
     }
 }
 
 export default useTaskCreator
-
-
 

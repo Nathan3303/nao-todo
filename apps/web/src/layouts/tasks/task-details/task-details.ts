@@ -67,26 +67,32 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         if (!props.taskId) return null
         const _task = taskStore.getTask(props.taskId)
         if (!_task) return null
+        console.log(_task)
         return {
             id: _task.id,
-            projectId: _task.projectId,
-            projectName: getProjectName(_task.projectId),
+            userId: _task.userId,
+            parentTaskId: _task.parentTaskId,
             name: _task.name,
             description: _task.description,
             state: _task.state,
+            isDone: _task.state === 'done',
             priority: _task.priority,
-            tags: _task.tags,
-            tagList: _task.tags.map((tagId) => tagStore.getTag(tagId)!).filter(Boolean),
             startAt: _task.startAt,
             endAt: _task.endAt,
-            deletedAt: _task.deletedAt,
-            isDeleted: _task.isDeleted,
-            isStarMarked: _task.isStarMarked,
-            isGivenUp: _task.isGivenUp,
-            isDone: _task.state === 'done',
+            projectId: _task.projectId,
+            projectName: getProjectName(_task.projectId),
+            tags: _task.tags,
+            tagList: _task.tags.map((tagId) => tagStore.getTag(tagId)!).filter(Boolean),
             createdAt: _task.createdAt,
             updatedAt: _task.updatedAt,
+            deletedAt: _task.deletedAt,
+            isDeleted: _task.isDeleted,
+            starMarkAt: _task.starMarkAt,
+            isStarMarked: _task.isStarMarked,
             givenUpAt: _task.givenUpAt,
+            isGivenUp: _task.isGivenUp,
+            archivedAt: _task.archivedAt,
+            isArchived: _task.isArchived,
             remindAt: _task.remindAt,
             remindRepeat: _task.remindRepeat,
             remindTime: _task.remindTime,
@@ -233,5 +239,4 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
 }
 
 export default useTaskDetails
-
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import useTaskRemindSetter from './use-task-remind-setter'
-import { REPEAT_DAY_OPTIONS } from './constants'
+import { TASK_REMIND_REPEAT_WAYS, TASK_REMIND_REPEAT_DAYS } from './constants'
 import type { TaskRemindSetterProps, TaskRemindSetterEmits } from './types'
 
 defineOptions({ name: 'TaskRemindSetter' })
@@ -79,14 +79,16 @@ const {
                         </template>
                     </nue-dropdown-item>
                 </template>
-                <nue-dropdown-item execute-id="reminder-repeat-none" size="small">
-                    不重复
-                </nue-dropdown-item>
-                <nue-dropdown-item execute-id="reminder-repeat-day" size="small">
-                    每天
-                </nue-dropdown-item>
-                <nue-dropdown-item execute-id="reminder-repeat-week" size="small">
-                    每周
+                <nue-dropdown-item
+                    v-for="item in TASK_REMIND_REPEAT_WAYS"
+                    :key="item.executeId"
+                    :execute-id="item.executeId"
+                    size="small"
+                >
+                    {{ item.label }}
+                    <template #append>
+                        <nue-icon name="check" v-if="vo.repeatWay === Number(item.executeId)" />
+                    </template>
                 </nue-dropdown-item>
             </nue-dropdown>
             <!-- 提醒日 - 只有在提醒周期为每周时才显示 -->
@@ -108,7 +110,7 @@ const {
                     </nue-dropdown-item>
                 </template>
                 <nue-dropdown-item
-                    v-for="(item, idx) in REPEAT_DAY_OPTIONS"
+                    v-for="(item, idx) in TASK_REMIND_REPEAT_DAYS"
                     :key="item.executeId"
                     :execute-id="item.executeId"
                     size="small"

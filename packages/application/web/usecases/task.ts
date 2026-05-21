@@ -114,6 +114,7 @@ export class TaskUseCase {
         // 实体转换为视图对象
         const taskViewObject = taskEntityToViewObject(taskEntity)
         // 存储任务列表
+        console.log(taskViewObject)
         this.store.addTask(taskViewObject)
         // 返回任务视图对象
         return [taskViewObject, null]

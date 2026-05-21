@@ -4,7 +4,7 @@ const zhCN: LocaleMessages = {
     // Auth
     'auth.signIn.title': '登录到 NaoTodo',
     'auth.signIn.subtitle': '使用您的电子邮件和密码进行登录',
-    'auth.signIn.emailPlaceholder': '电子邮箱 (name@example.com)',
+    'auth.signIn.emailPlaceholder': '电子邮箱',
     'auth.signIn.passwordPlaceholder': '密码',
     'auth.signIn.submit': '登录',
     'auth.signIn.noAccount': '还没有 NaoTodo 账号吗？去',
