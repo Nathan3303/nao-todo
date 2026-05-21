@@ -5,7 +5,7 @@
             <nue-text theme="description">{{ t('settings.languageDesc') }}</nue-text>
         </nue-div>
         <nue-div theme="body">
-            <nue-select v-model="selectedLanguage">
+            <nue-select size="small" v-model="selectedLanguage">
                 <nue-select-option :label="t('settings.languageZhCN')" value="zh-CN" />
                 <!-- <nue-select-option :label="t('settings.languageEnUS')" value="en-US" /> -->
             </nue-select>
@@ -58,3 +58,4 @@ const selectedLanguage = computed({
     }
 }
 </style>
+
