@@ -371,8 +371,7 @@ const zhCN: LocaleMessages = {
     'component.accountHint.content':
         '账号可以是用户名或者电子邮箱。\n用户名要求由 6 - 32 位字母、数字或下划线组成；\n电子邮箱需要符合常规的邮箱格式要求。',
     'component.passwordHint.title': '密码提示',
-    'component.passwordHint.content':
-        '密码格式要求长度为 8 - 24 位，且包含字母、数字以及特殊符号。（特殊符号包括：! @ # $ % ^ & * ? . ）',
+    'component.passwordHint.content': '密码格式要求长度为 8 - 24 位，且包含字母、数字以及特殊符号。',
     'component.restoreProject': '恢复清单',
     'component.deleteProject': '删除清单',
     'component.archiveProject': '归档清单',

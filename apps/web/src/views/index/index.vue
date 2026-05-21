@@ -36,13 +36,19 @@ onMounted(async () => {
                 <router-view v-slot="{ Component }">
                     <suspense>
                         <component :is="Component" />
-                        <template #fallback>
+                        <template #pending>
                             <loading-comp height="100%" />
+                        </template>
+                        <template #fallback>
+                            <nue-empty image-src="/images/error.webp" image-size="6rem">
+                                <nue-text size="var(--nue-text-sm)">
+                                    应用加载失败, 请刷新页面重试
+                                </nue-text>
+                            </nue-empty>
                         </template>
                     </suspense>
                 </router-view>
                 <!-- 任务视图对话框 -->
-                <!-- <tasks-view-dialogs /> -->
                 <app-dialog-adapter />
             </nue-content>
         </nue-main>
