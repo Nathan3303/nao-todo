@@ -27,7 +27,7 @@ const isExpired = computed(() => {
 
 <style scoped>
 .nue-div--basic-info[data-expired='true'] {
-    color: rgb(255, 74, 74);
+    color: var(--nue-error-color-60) !important;
 }
 </style>
 
