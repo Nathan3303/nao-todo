@@ -63,7 +63,7 @@
         color: var(--nue-primary-color-800);
 
         @media (max-width: 445px) {
-            display: block;
+            display: flex;
         }
     }
 

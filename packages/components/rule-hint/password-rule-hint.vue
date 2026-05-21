@@ -1,6 +1,6 @@
 <template>
-    <rule-hint icon="priority-2" :title="t('settings.passwordRuleHintTitle')" v-bind="$attrs">
-        {{ t('settings.passwordRuleHintContent') }}
+    <rule-hint icon="priority-2" :title="t('component.passwordHint.title')" v-bind="$attrs">
+        {{ t('component.passwordHint.content') }}
     </rule-hint>
 </template>
 

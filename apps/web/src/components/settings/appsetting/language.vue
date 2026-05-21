@@ -7,7 +7,7 @@
         <nue-div theme="body">
             <nue-select v-model="selectedLanguage">
                 <nue-select-option :label="t('settings.languageZhCN')" value="zh-CN" />
-                <nue-select-option :label="t('settings.languageEnUS')" value="en-US" />
+                <!-- <nue-select-option :label="t('settings.languageEnUS')" value="en-US" /> -->
             </nue-select>
         </nue-div>
     </nue-div>

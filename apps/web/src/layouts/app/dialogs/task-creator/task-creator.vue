@@ -61,7 +61,12 @@ onMounted(() => {
 </script>
 
 <template>
-    <nue-dialog v-model="visible" ref="dialogRef" :title="t('dialog.taskCreator.title')">
+    <nue-dialog
+        theme="creator"
+        v-model="visible"
+        ref="dialogRef"
+        :title="t('dialog.taskCreator.title')"
+    >
         <template #content>
             <nue-div vertical align="stretch">
                 <nue-input
@@ -79,8 +84,8 @@ onMounted(() => {
                     :placeholder="t('dialog.taskCreator.descPlaceholder')"
                     theme="fix-padding"
                 />
+                <task-date-selector v-model="states.endAt" />
                 <nue-div wrap="wrap" gap=".5rem">
-                    <task-date-selector v-model="states.endAt" />
                     <task-selector
                         :options="TaskStateSelectOptions"
                         :value="states.state"
@@ -91,6 +96,7 @@ onMounted(() => {
                         :value="states.priority"
                         @change="(p: any) => (states.priority = p as TaskViewObject['priority'])"
                     />
+                    <nue-div flex="1" />
                     <task-project-selector
                         :project-id="states.projectId"
                         :projects="avaliableProjects || []"
@@ -106,7 +112,9 @@ onMounted(() => {
             </nue-div>
         </template>
         <template #footer>
-            <nue-button :disabled="states.disabled" @click="close">{{ t('common.cancel') }}</nue-button>
+            <nue-button :disabled="states.disabled" @click="close">{{
+                t('common.cancel')
+            }}</nue-button>
             <nue-button
                 :disabled="states.disabled"
                 :loading="states.creating"

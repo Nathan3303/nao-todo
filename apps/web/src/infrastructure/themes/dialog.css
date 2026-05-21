@@ -14,8 +14,14 @@
     }
 }
 
+/* 任务创建器弹窗 */
+.nue-dialog--creator {
+    min-width: min(24rem, 100vw);
+}
+
+/* 任务创建器弹窗响应式 */
 @media screen and (max-width: 400px) {
-    .nue-dialog {
+    .nue-dialog--creator {
         --nue-dialog-open-animation-name: slide-in-from-bottom;
         --nue-dialog-close-animation-name: slide-out-to-bottom;
 

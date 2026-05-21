@@ -103,6 +103,8 @@ export interface LocaleMessages {
     'settings.avatarUpload': string
     'settings.avatarCropFailed': string
     'settings.avatarViewTitle': string
+    'settings.updateAvatarButtonText': string
+    'settings.signOutButtonText': string
 
     // Task
     'task.state.todo': string
@@ -418,3 +420,7 @@ export interface LocaleMessages {
 }
 
 export type LocaleKey = keyof LocaleMessages
+
+
+
+

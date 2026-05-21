@@ -110,6 +110,8 @@ const enUS: LocaleMessages = {
     'settings.avatarUpload': 'Confirm Upload',
     'settings.avatarCropFailed': 'Crop failed',
     'settings.avatarViewTitle': 'View Avatar',
+    'settings.updateAvatarButtonText': 'Update Avatar',
+    'settings.signOutButtonText': 'Sign Out',
 
     // Task
     'task.state.todo': 'To Do',
@@ -374,7 +376,8 @@ const enUS: LocaleMessages = {
     'component.accountHint.content':
         'Account can be a username or email.\nUsername: 6-32 letters, digits or underscores;\nEmail: standard email format required.',
     'component.passwordHint.title': 'Password Hint',
-    'component.passwordHint.content': 'Password must be 8-24 characters...',
+    'component.passwordHint.content':
+        'Password must be 8-24 characters, including letters, digits, and special characters (e.g. ! @ # $ % ^ & * ? .).',
     'component.restoreProject': 'Restore Project',
     'component.deleteProject': 'Delete Project',
     'component.archiveProject': 'Archive Project',
