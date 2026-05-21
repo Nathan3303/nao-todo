@@ -1,7 +1,13 @@
 import { computed, reactive, watch } from 'vue'
+// import { NueMessage } from 'nue-ui'
 import dayjs from 'dayjs'
 import { REPEAT_DAY_OPTIONS } from './constants'
-import type { TaskRemindSetterEmits, TaskRemindSetterProps, TaskRemindSetterUpdateVO, TaskRemindSetterVO } from './types'
+import type {
+    TaskRemindSetterEmits,
+    TaskRemindSetterProps,
+    TaskRemindSetterUpdateVO,
+    TaskRemindSetterVO
+} from './types'
 
 const REMIND_REPEAT_MAP: Record<string, number> = {
     none: -1,
@@ -65,9 +71,7 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
     })
 
     const repeatDayText = computed(() => {
-        return REPEAT_DAY_OPTIONS.filter(
-            (_item, idx) => vo.repeatDays[idx]
-        )
+        return REPEAT_DAY_OPTIONS.filter((_item, idx) => vo.repeatDays[idx])
             .map((item) => item.label.slice(1, 2))
             .join('、')
     })
@@ -89,11 +93,19 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
         }
     }
 
-    // Auto-set time to now when enabling reminders for the first time
+    // Validate and auto-set when enabling reminders
     watch(
         () => vo.enabled,
         (enabled) => {
-            if (enabled && vo.hour === 0 && vo.minute === 0) {
+            if (!enabled) return
+            // 不允许在已过期的任务上启用提醒
+            // if (props.date && dayjs(props.date).isBefore(dayjs())) {
+            //     NueMessage.warn('请先选择一个合适的结束时间')
+            //     vo.enabled = false
+            //     return
+            // }
+            // Auto-set time to now when enabling reminders for the first time
+            if (vo.hour === 0 && vo.minute === 0) {
                 const now = dayjs()
                 vo.hour = now.hour()
                 vo.minute = now.minute()
@@ -113,7 +125,8 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
         }
 
         const remindTime = `${vo.hour.toString().padStart(2, '0')}:${vo.minute.toString().padStart(2, '0')}`
-        const remindRepeat = (REMIND_REPEAT_REVERSE[vo.repeatWay] || 'daily') as TaskRemindSetterUpdateVO['remindRepeat']
+        const remindRepeat = (REMIND_REPEAT_REVERSE[vo.repeatWay] ||
+            'daily') as TaskRemindSetterUpdateVO['remindRepeat']
 
         const remindWeekdays: number[] = []
         if (vo.repeatWay === 1) {
@@ -122,13 +135,23 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
             })
         }
 
-        let remindAt: string | null = null
-        if (props.date) {
-            const dateDayjs = dayjs(props.date)
-            if (dateDayjs.isValid()) {
-                remindAt = dateDayjs.hour(vo.hour).minute(vo.minute).second(0).toISOString()
+        const now = dayjs()
+        let candidate = now.hour(vo.hour).minute(vo.minute).second(0).millisecond(0)
+        if (!candidate.isAfter(now)) {
+            candidate = candidate.add(1, 'day')
+        }
+
+        // 每周重复：向前扫描匹配的星期几
+        if (vo.repeatWay === 1 && remindWeekdays.length > 0) {
+            for (let i = 0; i < 7; i++) {
+                const dayjsDay = candidate.day()
+                const idx = dayjsDay === 0 ? 6 : dayjsDay - 1
+                if (vo.repeatDays[idx]) break
+                candidate = candidate.add(1, 'day')
             }
         }
+
+        const remindAt = candidate.toISOString()
 
         return { remindAt, remindRepeat, remindTime, remindWeekdays }
     }
@@ -159,3 +182,4 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
 }
 
 export default useTaskRemindSetter
+
