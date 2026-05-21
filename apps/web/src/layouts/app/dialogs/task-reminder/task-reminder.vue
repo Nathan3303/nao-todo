@@ -60,7 +60,7 @@ onMounted(() => {
     <nue-dialog theme="task-reminder" v-model="visible" ref="dialogRef">
         <template #header>
             <nue-text theme="reminder__title">{{ t('common.reminder') }}</nue-text>
-            <nue-div v-if="totalCount > 1" theme="reminder__progress">
+            <nue-div v-if="totalCount" theme="reminder__progress">
                 <nue-text>{{ progressText }}</nue-text>
                 <nue-progress :percentage="progressPercent" />
             </nue-div>
@@ -78,7 +78,7 @@ onMounted(() => {
                 <nue-button size="small" theme="primary" @click="handleConfirm">
                     {{ t('dialog.taskReminder.confirm') }}
                 </nue-button>
-                <nue-dropdown size="small" @execute="handleSnoozeExecute">
+                <nue-dropdown size="small" @execute="handleSnoozeExecute" close-when-executed>
                     <template #trigger="{ trigger }">
                         <nue-button
                             theme="text"
@@ -105,3 +105,4 @@ onMounted(() => {
 <style>
 @import './task-reminder.css';
 </style>
+

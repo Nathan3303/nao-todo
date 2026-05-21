@@ -1,6 +1,7 @@
 .nue-dialog--task-reminder {
     gap: var(--nue-gap-xs);
     background-color: transparent;
+    min-width: 36rem;
     max-width: min(36rem, 80%);
 
     .nue-dialog__header {

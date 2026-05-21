@@ -66,7 +66,7 @@ const useTaskReminder = () => {
             NueMessage.error(unwrapError(snoozeError))
             return
         }
-        NueMessage.success('稍后提醒已设置')
+        NueMessage.success('延时提醒已设置', 8000)
         dequeue()
     }
 
@@ -100,3 +100,4 @@ const useTaskReminder = () => {
 }
 
 export default useTaskReminder
+
