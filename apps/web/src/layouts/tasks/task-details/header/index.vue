@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { inject } from 'vue'
 import { TaskCheckButton, TaskDateSelector } from '@nao-todo/components'
+import type { TaskRemindSetterUpdateVO } from '@nao-todo/components'
 import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
 import type { TaskDetailsContext } from '../types'
 import type { TaskViewObject } from '@nao-todo/types'
@@ -23,6 +24,11 @@ const updateEndAtToNow = () => {
     if (vo.value === null) return
     taskHandler.updateTaskEndAt(vo.value.id, dayjs().toISOString())
 }
+
+const updateRemind = (updateVO: TaskRemindSetterUpdateVO) => {
+    if (vo.value === null) return
+    taskHandler.updateTask(vo.value.id, updateVO)
+}
 </script>
 
 <template>
@@ -34,7 +40,9 @@ const updateEndAtToNow = () => {
                 <task-date-selector
                     :colored="!vo.isDone"
                     v-model="vo.endAt"
+                    :task="vo"
                     @change="updateEndAt"
+                    @remind-change="updateRemind"
                 />
             </nue-div>
             <nue-div align="center">

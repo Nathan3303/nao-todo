@@ -41,6 +41,10 @@ export type TaskDetailsViewObject = {
     createdAt: string
     updatedAt: string
     givenUpAt?: string | null
+    remindAt?: string | null
+    remindRepeat?: 'none' | 'daily' | 'weekly' | 'monthly'
+    remindTime?: string | null
+    remindWeekdays?: number[]
 }
 
 export type TaskDetailsProps = {

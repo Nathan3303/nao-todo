@@ -86,7 +86,11 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
             isDone: _task.state === 'done',
             createdAt: _task.createdAt,
             updatedAt: _task.updatedAt,
-            givenUpAt: _task.givenUpAt
+            givenUpAt: _task.givenUpAt,
+            remindAt: _task.remindAt,
+            remindRepeat: _task.remindRepeat,
+            remindTime: _task.remindTime,
+            remindWeekdays: _task.remindWeekdays
         }
     })
 

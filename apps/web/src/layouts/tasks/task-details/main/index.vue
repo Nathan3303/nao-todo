@@ -58,42 +58,39 @@ const createCommentHandler = async (content: string) => {
 
 <template>
     <nue-container id="TasksTodoDetailsMainContainer" v-if="vo">
+        <!-- 任务详情头部 -->
         <nue-header>
             <nue-div flex="1">
-                <nue-div flex="1">
-                    <task-selector
-                        :options="TaskStateSelectOptions"
-                        :value="vo.state"
-                        @change="updateTaskState"
-                    />
-                    <task-selector
-                        :options="TaskPrioritySelectOptions"
-                        :value="vo.priority"
-                        @change="updateTaskPriority"
-                    />
-                </nue-div>
-                <nue-div>
-                    <switch-button
-                        v-model="vo.isStarMarked"
-                        active-icon="heart-fill"
-                        :active-text="t('task.details.unfavorite')"
-                        icon="heart"
-                        size="small"
-                        :text="t('task.details.favorite')"
-                        @change="updateTaskIsStarMark"
-                    />
-                </nue-div>
-                <nue-div class="tasks-details-view__progress">
-                    <nue-progress
-                        :percentage="eventProgress.percentage"
-                        :stroke-width="2"
-                        hide-text
-                    />
-                </nue-div>
+                <task-selector
+                    :options="TaskStateSelectOptions"
+                    :value="vo.state"
+                    @change="updateTaskState"
+                />
+                <task-selector
+                    :options="TaskPrioritySelectOptions"
+                    :value="vo.priority"
+                    @change="updateTaskPriority"
+                />
+            </nue-div>
+            <nue-div>
+                <switch-button
+                    v-model="vo.isStarMarked"
+                    active-icon="heart-fill"
+                    :active-text="t('task.details.unfavorite')"
+                    icon="heart"
+                    size="small"
+                    :text="t('task.details.favorite')"
+                    @change="updateTaskIsStarMark"
+                />
+            </nue-div>
+            <nue-div class="tasks-details-view__progress">
+                <nue-progress :percentage="eventProgress.percentage" :stroke-width="2" hide-text />
             </nue-div>
         </nue-header>
+        <!-- 任务详情主体 -->
         <nue-main>
             <nue-content fill>
+                <!-- 任务详情名称和描述 -->
                 <nue-div theme="name-desc">
                     <nue-textarea
                         v-model="vo.name"
@@ -112,26 +109,42 @@ const createCommentHandler = async (content: string) => {
                         @change="updateTaskDescription"
                     />
                 </nue-div>
+                <!-- 任务详情事件 -->
                 <nue-div vertical style="padding: 0 1rem">
                     <details-main-events />
                 </nue-div>
                 <nue-div flex="1"></nue-div>
+                <!-- 任务详情标签 -->
                 <nue-div vertical style="padding: 1rem">
                     <task-tag-bar :tags="tags" :task-tags="vo.tags" @update-tags="updateTaskTags" />
                 </nue-div>
+                <!-- 任务详情评论 -->
                 <details-main-comments />
+                <!-- 任务详情删除标签 -->
                 <nue-div class="tasks-details-view__deleted-tag" v-if="vo.isDeleted">
-                    {{ t('task.details.deletedAt', { date: parse2RelativeDate(vo.deletedAt!) ?? '' }) }}
+                    {{
+                        t('task.details.deletedAt', {
+                            date: parse2RelativeDate(vo.deletedAt!) ?? ''
+                        })
+                    }}
                 </nue-div>
+                <!-- 任务详情放弃标签 -->
                 <nue-div class="tasks-details-view__giveup-tag" v-if="vo.isGivenUp">
-                    {{ t('task.details.givenUpAt', { date: parse2RelativeDate(vo.givenUpAt!) ?? '' }) }}
+                    {{
+                        t('task.details.givenUpAt', {
+                            date: parse2RelativeDate(vo.givenUpAt!) ?? ''
+                        })
+                    }}
                 </nue-div>
             </nue-content>
         </nue-main>
+        <!-- 任务详情底部 -->
         <nue-footer>
+            <!-- 任务详情评论创建器 -->
             <nue-div v-if="isCommenting" vertical width="100%">
                 <comment-creator :handler="createCommentHandler" @cancel="isCommenting = false" />
             </nue-div>
+            <!-- 任务详情事件进度 -->
             <nue-div justify="space-between" width="100%" overflow="auto">
                 <details-row :text="eventProgress.text" :label="t('task.details.eventProgress')" />
                 <details-row

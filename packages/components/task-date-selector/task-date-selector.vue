@@ -1,7 +1,9 @@
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue'
 import dayjs from 'dayjs'
+import { TaskRemindSetter } from '../task-remind-setter'
 import type { TaskDateSelectorProps, TaskDateSelectorEmits } from './types'
+import type { TaskRemindSetterUpdateVO } from '../task-remind-setter/types'
 
 defineOptions({ name: 'TaskDateSelector', inheritAttrs: false })
 const props = defineProps<TaskDateSelectorProps>()
@@ -23,13 +25,26 @@ const datePickerTheme = computed(() => {
     return { small: true, expired: props.colored && isExpired.value }
 })
 
+const pendingRemindUpdate = ref<TaskRemindSetterUpdateVO | null>(null)
+
+const handleRemindUpdate = (vo: TaskRemindSetterUpdateVO) => {
+    pendingRemindUpdate.value = vo
+}
+
 const handleClose = () => {
-    // console.log(date.value)
     const dayjsDate = dayjs(date.value)
-    if (dayjsDate.isSame(dayjs(props.modelValue))) return
-    const newValue = dayjsDate.format('YYYY-MM-DDTHH:mm')
-    emit('update:modelValue', newValue)
-    emit('change', newValue)
+    const dateChanged = !dayjsDate.isSame(dayjs(props.modelValue))
+
+    if (dateChanged) {
+        const newValue = dayjsDate.format('YYYY-MM-DDTHH:mm')
+        emit('update:modelValue', newValue)
+        emit('change', newValue)
+    }
+
+    if (pendingRemindUpdate.value) {
+        emit('remind-change', pendingRemindUpdate.value)
+        pendingRemindUpdate.value = null
+    }
 }
 </script>
 
@@ -41,7 +56,15 @@ const handleClose = () => {
         clearable
         @close="handleClose"
         size="small"
-    />
+    >
+        <template #footer>
+            <task-remind-setter
+                :task="props.task"
+                :date="date"
+                @update="handleRemindUpdate"
+            />
+        </template>
+    </nue-date-picker>
 </template>
 
 <style scoped>
@@ -65,4 +88,3 @@ const handleClose = () => {
     }
 }
 </style>
-
