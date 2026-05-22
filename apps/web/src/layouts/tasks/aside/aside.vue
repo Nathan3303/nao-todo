@@ -16,6 +16,7 @@ import {
     TAG_CREATOR_DIALOG_KEY,
     TAG_MANAGER_DIALOG_KEY
 } from '@/infrastructure/constants/dialog-keys'
+import dayjs from 'dayjs'
 
 defineOptions({ name: 'TasksViewAside' })
 
@@ -103,6 +104,11 @@ const handleTagResort = (originalId: string, boundId: string, isBefore: boolean)
                     theme="route"
                 >
                     {{ link.title }}
+                    <template #append>
+                        <nue-text :clamped="1">
+                            {{ link.id === 'today' ? dayjs().format('M月DD日') : '' }}
+                        </nue-text>
+                    </template>
                 </nue-link>
             </nue-div>
             <nue-divider />
