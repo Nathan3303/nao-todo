@@ -12,6 +12,15 @@ import type {
     TaskRemindSetterVO
 } from './types'
 import { pad, onFocus } from './utils'
+import { TaskViewObject } from '@nao-todo/types'
+
+const DEFAULT_SETTER_VO: TaskRemindSetterVO = {
+    enabled: false,
+    hour: 0,
+    minute: 0,
+    repeatWay: 0,
+    repeatDays: [false, false, false, false, false, false, false]
+}
 
 /**
  * 任务提醒设置器 hook
@@ -22,26 +31,33 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
     /**
      * 任务提醒设置器状态
      */
-    const vo = reactive<TaskRemindSetterVO>({
-        enabled: false,
-        hour: 0,
-        minute: 0,
-        repeatWay: 0,
-        repeatDays: [false, false, false, false, false, false, false]
-    })
+    const vo = reactive<TaskRemindSetterVO>({ ...DEFAULT_SETTER_VO })
 
     /**
-     * 初始化任务提醒设置器状态
-     * @description 从任务提醒设置器属性初始化任务提醒设置器状态
+     * 任务提醒设置器时间输入框显示值
      */
-    if (props.task) {
-        const t = props.task
-        const hasReminder = !!(t.remindAt)
-        vo.enabled = hasReminder
+    const hourText = ref(pad(vo.hour))
+    const minuteText = ref(pad(vo.minute))
 
+    /**
+     * 任务视图转换为任务提醒设置器显示值
+     * @param taskViewObject 任务视图
+     */
+    const taskViewObjectToSetterVO = (taskViewObject: TaskViewObject) => {
+        // 判断是否有提醒设置
+        const hasReminder = taskViewObject.remindTime !== null && taskViewObject.remindAt !== null
+        if (!hasReminder) {
+            vo.enabled = false
+            vo.hour = DEFAULT_SETTER_VO.hour
+            vo.minute = DEFAULT_SETTER_VO.minute
+            vo.repeatWay = DEFAULT_SETTER_VO.repeatWay
+            vo.repeatDays = DEFAULT_SETTER_VO.repeatDays
+            return
+        }
+        vo.enabled = true
         // 处理提醒时间
-        if (t.remindTime) {
-            const parts = t.remindTime.split(':').map(Number)
+        if (taskViewObject.remindTime) {
+            const parts = taskViewObject.remindTime.split(':').map(Number)
             const h = parts[0]
             const m = parts[1]
             if (h !== undefined && m !== undefined && !isNaN(h) && !isNaN(m)) {
@@ -49,27 +65,19 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
                 vo.minute = m
             }
         }
-
         // 处理重复方式
-        if (t.remindRepeat && t.remindRepeat in TASK_REMIND_REPEAT_MAP) {
-            const way = TASK_REMIND_REPEAT_MAP[t.remindRepeat] as number | undefined
+        if (taskViewObject.remindRepeat && taskViewObject.remindRepeat in TASK_REMIND_REPEAT_MAP) {
+            const way = TASK_REMIND_REPEAT_MAP[taskViewObject.remindRepeat] as number | undefined
             if (way !== undefined && way > 0) vo.repeatWay = way
         }
-
         // 处理重复天数
-        if (t.remindWeekdays && t.remindWeekdays.length > 0) {
-            for (const day of t.remindWeekdays) {
+        if (taskViewObject.remindWeekdays && taskViewObject.remindWeekdays.length > 0) {
+            for (const day of taskViewObject.remindWeekdays) {
                 const idx = day === 7 ? 6 : day - 1
                 if (idx >= 0 && idx < 7) vo.repeatDays[idx] = true
             }
         }
     }
-
-    /**
-     * 任务提醒设置器时间输入框显示值
-     */
-    const hourText = ref(pad(vo.hour))
-    const minuteText = ref(pad(vo.minute))
 
     /**
      * 应用时间输入框值
@@ -136,24 +144,6 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
     }
 
     /**
-     * 监听任务提醒设置器状态变化，更新显示值
-     * @description 监听任务提醒设置器状态变化，更新显示值
-     */
-    watch(
-        () => vo.hour,
-        (h) => (hourText.value = pad(h))
-    )
-
-    /**
-     * 监听任务提醒设置器状态变化，更新显示值
-     * @description 监听任务提醒设置器状态变化，更新显示值
-     */
-    watch(
-        () => vo.minute,
-        (m) => (minuteText.value = pad(m))
-    )
-
-    /**
      * 任务提醒设置器重复天数显示值
      */
     const repeatDayText = computed(() => {
@@ -196,6 +186,7 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
         }
         vo.repeatDays[dayIndex] = !vo.repeatDays[dayIndex]
     }
+
     /**
      * 构建任务提醒设置器更新VO
      */
@@ -240,6 +231,24 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
     }
 
     /**
+     * 监听任务提醒设置器状态变化，更新显示值
+     * @description 监听任务提醒设置器状态变化，更新显示值
+     */
+    watch(
+        () => vo.hour,
+        (h) => (hourText.value = pad(h))
+    )
+
+    /**
+     * 监听任务提醒设置器状态变化，更新显示值
+     * @description 监听任务提醒设置器状态变化，更新显示值
+     */
+    watch(
+        () => vo.minute,
+        (m) => (minuteText.value = pad(m))
+    )
+
+    /**
      * 当任务首次启用时，自动设置时间为当前时间
      * @watch vo.enabled
      */
@@ -256,14 +265,48 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
     )
 
     /**
+     * 监听任务提醒设置器状态变化，更新显示值
+     * @description 监听任务提醒设置器状态变化，更新显示值
+     */
+    watch(
+        () => props.task,
+        (newTask) => {
+            if (!newTask) return
+            taskViewObjectToSetterVO(newTask)
+            // console.log(vo)
+        },
+        { deep: true, immediate: true }
+    )
+
+    /**
      * 监听任务提醒设置器状态变化，触发更新事件
      * @description 监听任务提醒设置器状态变化，触发更新事件
      */
     watch(
         () => [vo.enabled, vo.hour, vo.minute, vo.repeatWay, vo.repeatDays],
         () => {
+            // 构建更新视图对象
             const updateVO = buildUpdateVO()
-            console.log(updateVO)
+            // 判断是否变更
+            const hasRemindAtChanged = updateVO.remindAt === props.task?.remindAt
+            const hasRemindRepeatChanged = updateVO.remindRepeat === props.task?.remindRepeat
+            const hasRemindTimeChanged = updateVO.remindTime === props.task?.remindTime
+            const hasRemindWeekdaysChanged =
+                updateVO.remindWeekdays.toString() === props.task?.remindWeekdays.toString()
+            if (
+                !hasRemindAtChanged &&
+                !hasRemindRepeatChanged &&
+                !hasRemindTimeChanged &&
+                !hasRemindWeekdaysChanged
+            )
+                return
+            console.log(
+                !hasRemindAtChanged &&
+                    !hasRemindRepeatChanged &&
+                    !hasRemindTimeChanged &&
+                    !hasRemindWeekdaysChanged
+            )
+            // 触发更新事件
             emits('update', updateVO)
         },
         { deep: true }

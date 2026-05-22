@@ -67,7 +67,7 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         if (!props.taskId) return null
         const _task = taskStore.getTask(props.taskId)
         if (!_task) return null
-        console.log(_task)
+        // console.log(_task)
         return {
             id: _task.id,
             userId: _task.userId,
