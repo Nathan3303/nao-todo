@@ -6,6 +6,7 @@
     "license": "MIT",
     "private": true,
     "type": "module",
+    "packageManager": "pnpm@8.12.1",
     "scripts": {
         "webapp": "pnpm --filter @nao-todo/webapp",
         "mobile": "pnpm --filter @nao-todo/mobile",
