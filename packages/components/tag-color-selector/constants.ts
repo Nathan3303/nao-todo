@@ -1,0 +1,18 @@
+export const SelectableTagColors = [
+    { value: 'transparent', name: '无颜色' },
+    { value: '#FF6B6B', name: '珊瑚红' },
+    { value: '#FF8E53', name: '日落橙' },
+    { value: '#FFD93D', name: '向日葵黄' },
+    { value: '#6BCB77', name: '森林绿' },
+    { value: '#4ECDC4', name: '薄荷青' },
+    { value: '#4D96FF', name: '天空蓝' },
+    { value: '#6F69AC', name: '紫罗兰' },
+    { value: '#9D4EDD', name: '深紫' },
+    { value: '#FF7AB2', name: '玫瑰粉' },
+    { value: '#C44569', name: '洋红' },
+    { value: '#7209B7', name: '靛蓝' },
+    { value: '#3A86FF', name: '钴蓝' },
+    { value: '#06D6A0', name: '青绿' },
+    { value: '#FFBE0B', name: '金黄' },
+    { value: '#FB5607', name: '火焰橙' },
+]

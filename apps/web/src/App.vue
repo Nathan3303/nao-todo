@@ -1,18 +1,12 @@
+<script setup lang="ts">
+import useApp from './app'
+
+defineOptions({ name: 'AppView' })
+
+useApp()
+</script>
+
 <template>
-    <loading-screen
-        :loading="indexViewLoader.loading"
-        :error="indexViewLoader.error"
-        :error-message="indexViewLoader.errorMessage"
-        @refresh="indexViewInitTask"
-    />
-    <suspense>
-        <router-view />
-    </suspense>
+    <router-view />
 </template>
 
-<script setup lang="ts">
-import { useViewStore } from '@/stores'
-import { LoadingScreen } from '@nao-todo/components'
-
-const { indexViewLoader, indexViewInitTask } = useViewStore()
-</script>

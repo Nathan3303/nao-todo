@@ -1,0 +1,39 @@
+.nue-dialog-overlay {
+    --nue-overlay-animation-name: fade-in-with-blur;
+    --nue-overlay-animation-duration: var(--nue-animation-duration-short);
+    --nue-overlay-close-animation-name: fade-out-with-blur;
+    --nue-overlay-close-animation-duration: var(--nue-animation-duration-short);
+    background-color: hsl(from var(--nue-primary-color-700) h s l / 0.48);
+
+    .nue-dialog {
+        color: var(--nue-primary-color-900);
+
+        .nue-dialog__header {
+            font-size: var(--nue-text-df2);
+        }
+    }
+}
+
+/* 任务创建器弹窗 */
+.nue-dialog--creator {
+    min-width: min(24rem, 100vw);
+}
+
+/* 任务创建器弹窗响应式 */
+@media screen and (max-width: 400px) {
+    .nue-dialog--creator {
+        --nue-dialog-open-animation-name: slide-in-from-bottom;
+        --nue-dialog-close-animation-name: slide-out-to-bottom;
+
+        width: 100vw;
+        min-width: 100vw;
+        max-width: 100vw;
+        height: fit-content;
+        min-height: unset;
+        max-height: calc(100vh - 1.5rem);
+        overflow: hidden;
+        border-radius: var(--nue-primary-radius) var(--nue-primary-radius) 0 0;
+        margin-top: auto;
+    }
+}
+

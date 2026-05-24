@@ -1,0 +1,49 @@
+.nue-div--project-card {
+    border: 1px solid var(--nue-divider-color);
+    border-radius: var(--nue-primary-radius);
+    padding: var(--nue-padding-sm);
+    flex-direction: column;
+    gap: var(--nue-gap-sm);
+    align-items: stretch;
+    flex-wrap: nowrap;
+    box-shadow: var(--nue-secondary-shadow);
+    gap: var(--nue-gap-df);
+
+    &[data-deleted='true'],
+    &[data-archived='true'] {
+        opacity: 0.8;
+        background-color: var(--nue-primary-color-200);
+    }
+
+    > .nue-div--name-desc {
+        flex-direction: column;
+        gap: var(--nue-gap-2xs);
+        flex: auto;
+
+        > .nue-div--name {
+            align-items: center;
+            justify-content: start;
+            flex-wrap: nowrap;
+            font-size: var(--nue-text-df);
+            gap: var(--nue-gap-xs);
+
+            > .nue-text {
+                flex: auto;
+            }
+
+            > .nue-div--actions {
+                align-items: center;
+                width: fit-content;
+                gap: var(--nue-gap-xs);
+            }
+        }
+    }
+
+    > .nue-div--info {
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+        font-size: var(--nue-text-xs);
+    }
+}
+

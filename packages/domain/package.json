@@ -1,0 +1,17 @@
+{
+    "name": "@nao-todo/domain",
+    "version": "0.1.0",
+    "author": "Nathan Lee",
+    "license": "MIT",
+    "files": [
+        "auth",
+        "built-in-project",
+        "comment",
+        "event",
+        "project",
+        "tag",
+        "task",
+        "user"
+    ],
+    "packageManager": "pnpm@8.12.1"
+}

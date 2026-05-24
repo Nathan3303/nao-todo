@@ -1,14 +1,10 @@
-import { createApp } from 'vue'
-import App from './App.vue'
-import { createPinia } from 'pinia'
-import router from './router'
+import '@/infrastructure/themes'
 import NueUI from 'nue-ui'
+import { createPinia } from 'pinia'
+import { createApp } from 'vue'
+import { i18n } from '@nao-todo/infrastructure/locales'
+import App from './App.vue'
+import router from './router'
 
-import 'nue-ui/dist/index.css'
-import './themes'
+createApp(App).use(NueUI).use(createPinia()).use(router).use(i18n).mount('#app')
 
-const app = createApp(App)
-app.use(NueUI)
-app.use(createPinia())
-app.use(router)
-app.mount('#app')

@@ -1,0 +1,259 @@
+#TodoTableContainer {
+    align-items: start;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    box-sizing: border-box;
+    overflow: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+    position: relative;
+    gap: var(--nue-gap-xs);
+    width: 100%;
+    height: 100%;
+
+    > .nue-header,
+    > .nue-footer {
+        padding: 0;
+        border: none;
+        height: auto;
+    }
+
+    > .nue-main {
+        border: none;
+
+        > .nue-content {
+            display: flex;
+            flex-direction: column;
+            gap: var(--nue-gap-xs);
+            position: relative;
+            overflow: auto;
+            --content-max-width: 42rem;
+
+            .todo-table__header {
+                align-items: center;
+                gap: var(--nue-gap-df);
+                padding: 0 var(--nue-padding-sm);
+                height: 2.5rem;
+                position: sticky;
+                top: 0;
+                background-color: var(--nue-primary-color-0);
+                border-bottom: 1px solid var(--nue-border-color);
+                width: fit-content;
+                z-index: 1;
+
+                .col-first *,
+                .col-datetime *,
+                .col-attr * {
+                    font-size: var(--nue-text-sm);
+                    color: var(--nue-primary-color-800);
+                    flex: auto;
+                }
+
+                .todo-table__header__col {
+                    position: relative;
+                    transition: background-color 0.2s;
+                    display: flex;
+                    align-items: center;
+
+                    &:not(.col-first) {
+                        cursor: grab;
+
+                        &:active {
+                            cursor: grabbing;
+                        }
+                    }
+
+                    &.col-first {
+                        cursor: default;
+
+                        .nue-text {
+                            cursor: default !important;
+                        }
+                    }
+
+                    &.dragging {
+                        opacity: 0.5;
+                    }
+
+                    &.drag-over {
+                        border-left: 2px solid var(--nue-primary-color-500);
+                    }
+                }
+
+                .column-resizer {
+                    position: absolute;
+                    right: 0;
+                    top: 0;
+                    bottom: 0;
+                    width: 8px;
+                    cursor: col-resize;
+                    background: transparent;
+                    transition: background 0.2s;
+                    z-index: 2;
+
+                    &::before {
+                        content: '';
+                        position: absolute;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        top: 0;
+                        bottom: 0;
+                        width: 1px;
+                        background: var(--nue-primary-color-200);
+                        transition: background 0.2s;
+                    }
+
+                    &:hover::before {
+                        background: var(--nue-primary-color-500);
+                    }
+                }
+            }
+
+            .todo-table__main {
+                display: flex;
+                flex-direction: column;
+                gap: 0;
+                width: fit-content;
+
+                .todo-table__main__row {
+                    align-items: center;
+                    border: 1px solid transparent;
+                    border-radius: var(--nue-primary-radius);
+                    gap: 1rem;
+                    padding: 8px 12px;
+                    position: relative;
+                    min-height: 40px;
+                    width: 100%;
+
+                    &:hover {
+                        border: 1px solid var(--nue-primary-color-200);
+                    }
+
+                    &[data-selected='true'] {
+                        background-color: var(--nue-primary-color-200);
+                    }
+
+                    &[data-done='true'] * {
+                        opacity: 0.8;
+                        transition: opacity 0.16s ease;
+                    }
+
+                    &[data-deleted='true'] {
+                        opacity: 0.7;
+                        transition: opacity 0.16s ease;
+
+                        & *::after {
+                            width: 98%;
+                            height: 1px;
+                            background-color: var(--nue-primary-color-400);
+                            display: block;
+                            content: '';
+                            position: absolute;
+                            top: calc(50% - 1px);
+                            left: 1%;
+                            z-index: -1;
+                        }
+                    }
+                }
+
+                .todo-table__main__col {
+                    overflow: hidden;
+                    height: 100%;
+                    align-items: center;
+
+                    &.col-first {
+                        gap: 0.25rem;
+                        font-size: 0.9375rem;
+
+                        .col-first__name-wrapper {
+                            flex: auto;
+                            flex-wrap: nowrap;
+                            overflow: hidden;
+                            width: 100%;
+                            gap: 0.5rem;
+                            align-items: center;
+
+                            .nue-text--todo-givenup {
+                                font-size: var(--nue-text-xs);
+                                color: var(--nue-warning-color-50);
+                                line-height: 1;
+                                /* padding: 0.25rem 0.375rem */
+                                /* background-color: var(--nue-warning-color-20);
+                                border-radius: var(--nue-primary-radius);
+                                transform: scale(0.91); */
+                            }
+
+                            .nue-text--todo-name {
+                                color: var(--nue-primary-color-900);
+                                margin-right: auto;
+                            }
+                        }
+
+                        .col-first__description {
+                            color: var(--nue-primary-color-500);
+                            font-size: var(--nue-text-sm);
+                            overflow: hidden;
+                            white-space: normal;
+                            word-break: break-all;
+                        }
+
+                        .col-first__giveup-tag {
+                            font-size: 0.75rem;
+                            height: 18px;
+                            line-height: 18px;
+                            padding: 0 6px;
+                            border-radius: var(--nue-primary-radius);
+                            background-color: var(--nue-error-color-30);
+                            color: var(--nue-primary-color-0);
+                        }
+                    }
+
+                    &.col-datetime {
+                        color: var(--nue-primary-color-800);
+                        font-size: var(--nue-text-sm);
+
+                        &[data-expired='true'] {
+                            color: var(--nue-error-color-30);
+                        }
+                    }
+
+                    &.col-attr {
+                        font-size: var(--nue-text-sm);
+                        color: var(--nue-primary-color-800);
+                    }
+
+                    &.col-actions {
+                        color: var(--nue-primary-color-600);
+
+                        .nue-icon {
+                            cursor: pointer;
+                        }
+                    }
+                }
+            }
+
+            .col-first {
+                flex: none;
+            }
+
+            .col-datetime {
+                flex: none;
+            }
+
+            .col-attr {
+                flex: none;
+            }
+
+            .col-actions {
+                flex: none;
+                width: 2rem;
+                max-width: 2rem;
+            }
+        }
+    }
+
+    > .nue-footer {
+        width: 100%;
+    }
+}
+

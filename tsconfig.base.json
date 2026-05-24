@@ -1,19 +1,38 @@
 {
+    "$schema": "https://json.schemastore.org/tsconfig",
     "compilerOptions": {
         "composite": true,
         "incremental": true,
-
         "declaration": true,
         "declarationMap": true,
         "emitDeclarationOnly": true,
         "noEmitOnError": true,
         "skipLibCheck": true,
         "sourceMap": true,
-
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
-
         "strict": true,
         "forceConsistentCasingInFileNames": true,
-    },
+        "target": "ES2022",
+        "lib": [
+            "ES2022",
+            "DOM",
+            "DOM.Iterable"
+        ],
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "rootDir": ".",
+        "types": [
+            "nue-ui/dist/global.d.ts"
+        ],
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "allowJs": false,
+        "checkJs": false,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        "noUncheckedIndexedAccess": true,
+    }
 }

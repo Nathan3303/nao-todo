@@ -1,42 +1,14 @@
 {
     "name": "@nao-todo/desktop",
-    "version": "1.0.0",
-    "description": "Desktop version of NaoTodo (Electron)",
+    "version": "0.0.1",
+    "description": "Desktop version of NaoTodo",
     "author": "Nathan Lee",
     "license": "MIT",
     "private": true,
     "main": "src/main.js",
-    "scripts": {
-        "dev": "electron .",
-        "build": "electron-builder"
-    },
-    "build": {
-        "appId": "site.nathan33.naotodo",
-        "productName": "NaoTodoDesktop",
-        "npmRebuild": false,
-        "win": {
-            "icon": "./src/logo.png",
-            "target": [
-                {
-                    "target": "nsis",
-                    "arch": [
-                        "x64"
-                    ]
-                }
-            ]
-        },
-        "nsis": {
-            "oneClick": false,
-            "perMachine": true,
-            "allowToChangeInstallationDirectory": true
-        }
-    },
-    "devDependencies": {
-        "electron": "^34.2.0",
-        "electron-builder": "25.1.8",
-        "@types/node": "^20.12.7"
-    },
-    "dependencies": {
-        "read-config-file": "^6.0.0"
-    }
+    "scripts": {},
+    "build": {},
+    "devDependencies": {},
+    "dependencies": {},
+    "packageManager": "pnpm@8.12.1"
 }

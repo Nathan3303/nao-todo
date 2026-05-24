@@ -1,0 +1,12 @@
+:root {
+    --nue-primary-font-family: 'Poppins-Regular', 'pf', sans-serif;
+    --nue-primary-font-size: 16px;
+    --nue-primary-font-weight: 400;
+}
+
+:root {
+    --nue-text-sm: calc(var(--nue-primary-font-size) * 0.8125);
+    --nue-text-df2: calc(var(--nue-primary-font-size) * 0.875);
+    --nue-text-df: calc(var(--nue-primary-font-size) * 1);
+}
+

@@ -3,7 +3,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import terser from '@rollup/plugin-terser'
 import { visualizer } from 'rollup-plugin-visualizer'
-import htmlTransformPlugin from './html-transform-plugin'
+// import htmlTransformPlugin from './html-transform-plugin'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -31,7 +31,7 @@ export default defineConfig({
             }
         }),
         visualizer({ open: true }),
-        htmlTransformPlugin()
+        // htmlTransformPlugin()
     ],
     resolve: {
         alias: {
@@ -45,11 +45,11 @@ export default defineConfig({
         cssMinify: true,
         rollupOptions: {
             output: {
-                assetFileNames: (assetInfo) => {
-                    if (assetInfo.type === 'asset' && (assetInfo.name as string).endsWith('.css'))
-                        return 'css/[name].[hash].[ext]'
-                    return assetInfo.name as string
-                },
+                // assetFileNames: (assetInfo) => {
+                //     if (assetInfo.type === 'asset' && (assetInfo.name as string).endsWith('.css'))
+                //         return 'css/[name].[hash].[ext]'
+                //     return assetInfo.name as string
+                // },
                 chunkFileNames: 'js/[name].[hash].js',
                 manualChunks: (id) => {
                     if (id.includes('node_modules')) {
@@ -61,21 +61,6 @@ export default defineConfig({
                         else if (truePackageName.includes('vue-router')) return 'vender/vue-router'
                         else if (truePackageName.includes('vue')) return 'vender/vue-ecosystem'
                         else return `vender/${truePackageName}`
-                    } else if (id.includes('src/stores')) {
-                        // const packageName = id.toString().split('src/stores')[1]
-                        // const truePackageName = packageName.split('-')[1]
-                        // if (['project', 'tag', 'view', 'todo'].includes(truePackageName))
-                        //     return 'app-stores/tasks-main'
-                        // if (['comment', 'event'].includes(truePackageName))
-                        //     return 'app-stores/tasks-detail'
-                        // if (truePackageName) return `app-stores/${truePackageName}`
-                        // else return 'app-stores/index'
-                    } else if (id.includes('src/views/auth')) {
-                        // const packageName = id.toString().split('src/views/auth')[1]
-                        // if (packageName.includes('sign-in')) return 'auth-view_sign-in'
-                        // else if (packageName.includes('sign-up')) return 'auth-view_sign-up'
-                        // else
-                        // return 'auth-view'
                     }
                 }
             }
