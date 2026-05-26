@@ -11,8 +11,5 @@
         "locales/**/*",
         "utils/**/*"
     ],
-    "packageManager": "pnpm@8.12.1",
-    "peerDependencies": {
-        "vue": "^3"
-    }
+    "packageManager": "pnpm@8.12.1"
 }
