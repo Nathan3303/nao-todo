@@ -4,7 +4,7 @@ const enUS: LocaleMessages = {
     // Auth
     'auth.signIn.title': 'Sign in to NaoTodo',
     'auth.signIn.subtitle': 'Sign in with your email and password',
-    'auth.signIn.emailPlaceholder': 'Email (name@example.com)',
+    'auth.signIn.emailPlaceholder': 'Email address',
     'auth.signIn.passwordPlaceholder': 'Password',
     'auth.signIn.submit': 'Sign In',
     'auth.signIn.noAccount': "Don't have a NaoTodo account? Go",
@@ -13,8 +13,8 @@ const enUS: LocaleMessages = {
     'auth.signIn.success': 'Sign in successful',
     'auth.signUp.title': 'Create NaoTodo Account',
     'auth.signUp.subtitle':
-        'Enter your email, password and nickname below to create your NaoTodo account',
-    'auth.signUp.emailPlaceholder': 'Email (example@x.com)',
+        'Enter your email, password and nickname\n below to create your NaoTodo account',
+    'auth.signUp.emailPlaceholder': 'Email address',
     'auth.signUp.passwordPlaceholder': 'Password',
     'auth.signUp.confirmPassword': 'Confirm Password',
     'auth.signUp.nickname': 'Nickname',
@@ -84,7 +84,7 @@ const enUS: LocaleMessages = {
     'settings.nickname': 'Edit Nickname',
     'settings.nicknameDesc':
         'Your nickname is shown in task creator, assignee, project members and other places. You can change it anytime.',
-    'settings.nicknamePlaceholder': 'Enter nickname (2-16 characters)',
+    'settings.nicknamePlaceholder': 'Enter nickname',
     'settings.nicknameSubmit': 'Update',
     'settings.moreInfo': 'More Info',
     'settings.registeredAt': 'Registered At',
