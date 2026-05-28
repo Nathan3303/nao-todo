@@ -1,6 +1,8 @@
 import type { Go } from '@nao-todo/types'
 import dayjs from 'dayjs'
 
+const WEEKDAY_NAMES = ['日', '一', '二', '三', '四', '五', '六']
+
 type Rule = {
     check: (
         date: dayjs.Dayjs,
@@ -41,7 +43,7 @@ const rules: Rule[] = [
     },
     {
         check: (d, { thisWeekStart }) => d.isBefore(thisWeekStart),
-        format: (d) => `上周 ${d.format('M月D日 HH:mm')}`
+        format: (d) => `上周${WEEKDAY_NAMES[d.day()]} ${d.format('HH:mm')}`
     },
     {
         check: (d, { thisMonthStart }) => d.isBefore(thisMonthStart),
@@ -53,7 +55,7 @@ const rules: Rule[] = [
     },
     {
         check: (d, { nextWeekEnd }) => d.isBefore(nextWeekEnd),
-        format: (d) => `下周 ${d.format('M月D日 HH:mm')}`
+        format: (d) => `下周${WEEKDAY_NAMES[d.day()]} ${d.format('HH:mm')}`
     },
     {
         check: (d, { nextMonthEnd }) => d.isBefore(nextMonthEnd),
