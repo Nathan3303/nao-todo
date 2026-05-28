@@ -40,7 +40,7 @@ import { computed, inject, ref } from 'vue'
 import { useThemeStore, type ThemeMode } from '@/stores'
 import { SETTINGS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import type { SettingsViewContext } from '@/views/index/settings/settings-view'
-import { unwrapError } from '@nao-todo/infrastructure/utils'
+import { unwrapError, debounce } from '@nao-todo/infrastructure/utils'
 import { NueMessage } from 'nue-ui'
 import { t } from '@nao-todo/infrastructure/locales'
 
@@ -79,13 +79,22 @@ const { userUseCase } = inject<SettingsViewContext>(SETTINGS_VIEW_CONTEXT_KEY)!
 
 const currentTheme = computed(() => themeStore.themeMode)
 
+const debounceUpdateUserTheme = debounce((mode: ThemeMode) => {
+    userUseCase
+        .updateUserConfig({ appearance: mode })
+        .then((updateErr) => {
+            if (updateErr === null) return
+            NueMessage.error(`${t('settings.appearanceSyncFailed')}：${unwrapError(updateErr)}`)
+        })
+        .finally(() => {
+            loading.value = false
+        })
+}, 500)
+
 const selectTheme = async (mode: ThemeMode) => {
     loading.value = true
     themeStore.setTheme(mode)
-    const updateError = await userUseCase.updateUserConfig({ appearance: mode })
-    loading.value = false
-    if (updateError === null) return
-    NueMessage.error(`${t('settings.appearanceSyncFailed')}：${unwrapError(updateError)}`)
+    debounceUpdateUserTheme(mode)
 }
 </script>
 
