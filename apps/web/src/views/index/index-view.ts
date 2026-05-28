@@ -113,16 +113,32 @@ const useIndexView = () => {
      * SSE 提醒连接
      */
     const connectReminderSSE = () => {
+        // 请求通知权限
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission()
+        }
+        // 连接 SSE 事件源
         const token = localStorage.getItem('USER_JWT')
         const url = `${import.meta.env.VITE_API_BASE_URL}/sse/reminders?token=${token}`
         const es = new EventSource(url)
+        // 监听提醒事件
         es.addEventListener('reminder', (event: MessageEvent) => {
             const data = JSON.parse(event.data) as SSEReminderEvent
             dialogManager.open(TASK_REMINDER_DIALOG_KEY, data)
+            // 显示通知
+            if ('Notification' in window && Notification.permission === 'granted') {
+                const notification = new Notification(data.taskName, {
+                    body: data.description || '',
+                    icon: '/favicon.ico'
+                })
+                notification.onclick = () => {
+                    window.focus()
+                    notification.close()
+                }
+            }
         })
-        es.addEventListener('error', () => {
-            es.close()
-        })
+        // 监听错误事件，关闭连接
+        es.addEventListener('error', () => es.close())
     }
     connectReminderSSE()
 
