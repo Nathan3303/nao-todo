@@ -96,7 +96,7 @@ export const defaultBuiltInProjectPreferences: BuiltInProjectPreferenceRes[] = [
             limit: 20,
             isGivenUp: false
         }),
-        columns: JSON.stringify(defaultColumns)
+        columns: JSON.stringify({ ...defaultColumns, description: false })
     },
     {
         projectId: 'today',

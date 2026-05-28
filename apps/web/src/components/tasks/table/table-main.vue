@@ -72,7 +72,7 @@ const getColumnStyle = (column: TableColumnConfig) => {
                         width="100%"
                     >
                         <nue-text
-                            :clamped="2"
+                            :clamped="1"
                             class="col-first__description"
                             :title="task.description"
                         >
