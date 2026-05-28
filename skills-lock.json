@@ -1,35 +1,30 @@
 {
-  "version": 1,
-  "skills": {
-    "agent-browser": {
-      "source": "vercel-labs/agent-browser",
-      "sourceType": "github",
-      "skillPath": "skills/agent-browser/SKILL.md",
-      "computedHash": "edad4d958bc4baf821e3391bb9889a03a8bbc0e4d7f54ee4a5f30837654fed83"
-    },
-    "find-skills": {
-      "source": "vercel-labs/skills",
-      "sourceType": "github",
-      "skillPath": "skills/find-skills/SKILL.md",
-      "computedHash": "9e1c8b3103f92fa8092568a44fe64858de7c5c9dc65ce4bea8f168080e889cfd"
-    },
-    "frontend-design": {
-      "source": "anthropics/skills",
-      "sourceType": "github",
-      "skillPath": "skills/frontend-design/SKILL.md",
-      "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
-    },
-    "skill-creator": {
-      "source": "anthropics/skills",
-      "sourceType": "github",
-      "skillPath": "skills/skill-creator/SKILL.md",
-      "computedHash": "5ea13a6d9f0d4bb694405d79acd00cadec0d21bb138c4dd10fcf3c500cb835c2"
-    },
-    "webapp-testing": {
-      "source": "anthropics/skills",
-      "ref": "main",
-      "sourceType": "github",
-      "computedHash": "cf8e5916d474886bd67b09691247f43f331523008b7d366064bc607ab42d6302"
+    "version": 1,
+    "skills": {
+        "agent-browser": {
+            "source": "vercel-labs/agent-browser",
+            "sourceType": "github",
+            "skillPath": "skills/agent-browser/SKILL.md",
+            "computedHash": "edad4d958bc4baf821e3391bb9889a03a8bbc0e4d7f54ee4a5f30837654fed83"
+        },
+        "find-skills": {
+            "source": "vercel-labs/skills",
+            "sourceType": "github",
+            "skillPath": "skills/find-skills/SKILL.md",
+            "computedHash": "d31e234f0c90694a670222cdd1dafa853e051d7066beda389f1097c22dadd461"
+        },
+        "frontend-design": {
+            "source": "anthropics/skills",
+            "sourceType": "github",
+            "skillPath": "skills/frontend-design/SKILL.md",
+            "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
+        },
+        "skill-creator": {
+            "source": "anthropics/skills",
+            "sourceType": "github",
+            "skillPath": "skills/skill-creator/SKILL.md",
+            "computedHash": "5ea13a6d9f0d4bb694405d79acd00cadec0d21bb138c4dd10fcf3c500cb835c2"
+        }
     }
-  }
 }
+
