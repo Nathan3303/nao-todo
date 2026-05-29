@@ -81,6 +81,16 @@ const useKanbanViewAdapter = (props: KanbanViewAdapterProps) => {
         props.subscriber.unsubscribe('AddNewTaskId', addNewTaskId)
     })
 
+    /**
+     * 空状态信息
+     */
+    const noTaskError = computed(() => props.getNoTaskError())
+
+    /**
+     * 重试加载
+     */
+    const handleRetry = () => taskLoader.loadAndReplace()
+
     return {
         dialogManager,
         tasks,
@@ -88,6 +98,7 @@ const useKanbanViewAdapter = (props: KanbanViewAdapterProps) => {
         taskLoader,
         loading: computed(() => taskLoader.states.loading),
         error: computed(() => taskLoader.states.error),
+        noTaskError,
         viewProps: computed(() => ({
             preference: {
                 columns: props.columns,
@@ -95,7 +106,8 @@ const useKanbanViewAdapter = (props: KanbanViewAdapterProps) => {
             }
         })),
         handleFinishTask,
-        handleUnfinishTask
+        handleUnfinishTask,
+        handleRetry
     }
 }
 

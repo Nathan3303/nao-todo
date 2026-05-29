@@ -6,7 +6,9 @@ import { inject, onMounted, onUnmounted } from 'vue'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { TagHandler } from '@/infrastructure/handlers/tasks/tag-handler'
+import { TAG_EMPTY_STATE } from '../constants'
 import type { TagViewContext } from '../types'
+import type { ViewAdapterNoTaskError } from '@/layouts/tasks/view-adapters/types'
 
 defineOptions({
     name: 'TasksMainTagContent',
@@ -61,6 +63,12 @@ onMounted(() => {
 onUnmounted(() => {
     subscriber.unsubscribe('UpdatePreference', updatePreferenceHandler)
 })
+
+// @method 获取空状态信息
+const getNoTaskError = (): ViewAdapterNoTaskError | undefined => {
+    if (!tag.value) return undefined
+    return TAG_EMPTY_STATE
+}
 </script>
 
 <template>
@@ -79,6 +87,7 @@ onUnmounted(() => {
                 :update-columns="updateColumns"
                 :update-sort-options="updateSortOptions"
                 :clear-sort-options="() => tagHandler.clearSortOption()"
+                :get-no-task-error="getNoTaskError"
             />
         </nue-content>
     </nue-main>

@@ -52,14 +52,22 @@ const useListViewAdapter = (props: ListViewAdapterProps) => {
         props.subscriber.unsubscribe('AddNewTaskId', addNewTaskId)
     })
 
+    // @state 空状态信息
+    const noTaskError = computed(() => props.getNoTaskError())
+
+    // @method 重试加载
+    const handleRetry = () => taskLoader.loadAndReplace()
+
     // @returns
     return {
         tasks,
         taskLoader,
         sortOptions,
         error: computed(() => taskLoader.states.error),
+        noTaskError,
         dialogManager,
-        handleNextPage
+        handleNextPage,
+        handleRetry
     }
 }
 

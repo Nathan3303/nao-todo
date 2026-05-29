@@ -4,29 +4,42 @@ import { LoadingError, Pager } from '@nao-todo/components'
 import useTableViewAdapter from './use-table-view-adapter'
 import type { TableViewAdapterProps } from './types'
 import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+import { t } from '@nao-todo/infrastructure/locales'
 
 defineOptions({ name: 'TableViewAdapter' })
 const props = defineProps<TableViewAdapterProps>()
 
-const { tasks, taskLoader, error, handleUpdatePage, handleUpdatePerPage, dialogManager } =
+const { tasks, taskLoader, error, noTaskError, handleUpdatePage, handleUpdatePerPage, handleRetry, dialogManager } =
     useTableViewAdapter(props)
 </script>
 
 <template>
     <nue-container id="TasksMainTableContainer">
         <loading-error
-            :error="!!error || !tasks.length"
+            :error="!!error"
             error-image-size="8rem"
-            error-image-src="/images/notaskhere.webp"
+            error-image-src="/images/error.png"
+            :empty="!error && !tasks.length && !!noTaskError"
+            :empty-image-src="noTaskError?.image"
+            :empty-image-size="noTaskError?.imageSize"
         >
             <template #error>
                 <nue-div vertical align="center">
-                    <nue-text size="var(--nue-text-sm)">当前视图暂无待办任务</nue-text>
+                    <nue-text size="var(--nue-text-sm)">{{ t('task.error.loadFailed') }}</nue-text>
+                    <nue-button theme="primary,small" @click="handleRetry">
+                        {{ t('common.retry') }}
+                    </nue-button>
+                </nue-div>
+            </template>
+            <template #empty>
+                <nue-div vertical align="center">
+                    <nue-text size="var(--nue-text-sm)">{{ noTaskError?.message ? t(noTaskError.message as any) : '' }}</nue-text>
                     <nue-button
+                        v-if="noTaskError?.isShowTaskCreateButton"
                         theme="primary,small"
                         @click="dialogManager.open(TASK_CREATOR_DIALOG_KEY)"
                     >
-                        添加任务
+                        {{ t('task.createTask') }}
                     </nue-button>
                 </nue-div>
             </template>

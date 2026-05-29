@@ -95,6 +95,16 @@ const useTableViewAdapter = (props: TableViewAdapterProps) => {
     })
 
     /**
+     * 空状态信息
+     */
+    const noTaskError = computed(() => props.getNoTaskError())
+
+    /**
+     * 重试加载
+     */
+    const handleRetry = () => taskLoader.loadAndReplace()
+
+    /**
      * 返回值
      * 包含任务数据、加载器、更新页码、更新每页显示数量方法
      */
@@ -102,9 +112,11 @@ const useTableViewAdapter = (props: TableViewAdapterProps) => {
         tasks,
         taskLoader,
         error: computed(() => taskLoader.states.error),
+        noTaskError,
         handleUpdatePage,
         handleUpdatePerPage,
         dialogManager,
+        handleRetry
     }
 }
 

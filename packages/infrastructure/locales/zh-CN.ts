@@ -259,6 +259,18 @@ const zhCN: LocaleMessages = {
     'task.smartlist.filterCreate': '创建新的过滤器',
     'task.smartlist.filterEmpty': '根据清单、时间、优先级、标签等属性过滤出符合条件的特定任务',
     'task.table.summary': '当前列表 {count} 项， 共计 {total} 项。',
+    'task.empty.all': '还没有任务，开始创建一个吧',
+    'task.empty.today': '今天没有任务啦，休息一下吧',
+    'task.empty.tomorrow': '明天暂无安排，提前规划一下',
+    'task.empty.week': '本周暂无任务',
+    'task.empty.inbox': '收集箱空空如也，记录点想法吧',
+    'task.empty.favourite': '还没有收藏任何任务',
+    'task.empty.deleted': '垃圾桶是空的，干净得很',
+    'task.empty.overdue': '没有过期的任务，继续保持',
+    'task.empty.givenup': '没有已放弃的任务',
+    'task.empty.project': '此清单暂无任务',
+    'task.empty.tag': '此标签下暂无任务',
+    'task.error.loadFailed': '加载失败，请稍后重试',
 
     // Calendar
     'calendar.today': '跳转至今天',

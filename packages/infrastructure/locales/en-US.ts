@@ -263,6 +263,18 @@ const enUS: LocaleMessages = {
     'task.smartlist.filterEmpty':
         'Filter tasks by project, time, priority, tags and other attributes',
     'task.table.summary': '{count} items in current list, {total} total.',
+    'task.empty.all': 'No tasks yet, create one now',
+    'task.empty.today': 'No tasks today, take a break',
+    'task.empty.tomorrow': 'Nothing scheduled for tomorrow',
+    'task.empty.week': 'No tasks this week',
+    'task.empty.inbox': 'Inbox is empty, jot down ideas',
+    'task.empty.favourite': 'No favorited tasks yet',
+    'task.empty.deleted': 'Trash is empty, nice and clean',
+    'task.empty.overdue': 'No overdue tasks, keep it up',
+    'task.empty.givenup': 'No given-up tasks',
+    'task.empty.project': 'No tasks in this project',
+    'task.empty.tag': 'No tasks under this tag',
+    'task.error.loadFailed': 'Failed to load, please try again',
 
     // Calendar
     'calendar.today': 'Go to Today',

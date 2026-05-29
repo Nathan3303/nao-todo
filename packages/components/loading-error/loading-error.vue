@@ -17,6 +17,15 @@ defineProps<LoadingErrorProps>()
     >
         <slot name="error"></slot>
     </nue-empty>
+    <nue-empty
+        v-else-if="empty"
+        :image-src="emptyImageSrc"
+        :image-size="emptyImageSize"
+        :description="$slots.empty ? '' : emptyMessage"
+        style="height: 100%"
+    >
+        <slot name="empty"></slot>
+    </nue-empty>
     <slot v-else />
 </template>
 

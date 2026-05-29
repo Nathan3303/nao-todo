@@ -6,7 +6,9 @@ import { inject, onMounted, onUnmounted } from 'vue'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { ProjectHandler } from '@/infrastructure/handlers/tasks/project-handler'
+import { PROJECT_EMPTY_STATE } from '../constants'
 import type { ProjectViewContext } from '../types'
+import type { ViewAdapterNoTaskError } from '@/layouts/tasks/view-adapters'
 
 defineOptions({
     name: 'TasksMainProjectContent',
@@ -61,6 +63,12 @@ onMounted(() => {
 onUnmounted(() => {
     subscriber.unsubscribe('UpdatePreference', updatePreferenceHandler)
 })
+
+// @method 获取空状态信息
+const getNoTaskError = (): ViewAdapterNoTaskError | undefined => {
+    if (!project.value) return undefined
+    return PROJECT_EMPTY_STATE
+}
 </script>
 
 <template>
@@ -79,6 +87,7 @@ onUnmounted(() => {
                 :update-columns="updateColumns"
                 :update-sort-options="updateSortOptions"
                 :clear-sort-options="() => projectHandler.clearSortOption()"
+                :get-no-task-error="getNoTaskError"
             />
         </nue-content>
     </nue-main>

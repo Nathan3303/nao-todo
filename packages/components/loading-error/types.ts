@@ -5,4 +5,8 @@ export type LoadingErrorProps = {
     errorImageSrc?: string
     errorImageSize?: string
     errorMessage?: string
+    empty?: boolean
+    emptyImageSrc?: string
+    emptyImageSize?: string
+    emptyMessage?: string
 }

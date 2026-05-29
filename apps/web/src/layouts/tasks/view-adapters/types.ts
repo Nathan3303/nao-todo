@@ -8,7 +8,7 @@ export type ViewAdapterNoTaskError = {
 }
 
 export type ViewAdapterPropsBase = {
-    getNoTaskError: () => (ViewAdapterNoTaskError | undefined)
+    getNoTaskError: () => ViewAdapterNoTaskError | undefined
     getColumnLabel: (key: string) => string
     getProjectName: (projectId: ProjectViewObject['id']) => string
     showTaskDetails: (taskId: TaskViewObject['id']) => void

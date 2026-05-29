@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, onUnmounted } from 'vue'
 import { TableViewAdapter, ListViewAdapter, KanbanViewAdapter } from '@/layouts/tasks/view-adapters'
-import type { BuiltInProjectViewContext } from '../types'
 import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
+import { BUILT_IN_EMPTY_STATE_MAP } from '../constants'
 import type { BuiltInProjectLayoutHandlers } from '@/infrastructure/handlers/tasks/built-in-project-handler'
+import type { ViewAdapterNoTaskError } from '@/layouts/tasks/view-adapters'
+import type { BuiltInProjectViewContext } from '../types'
 
 defineOptions({
     name: 'TasksMainProjectContent',
@@ -67,6 +69,12 @@ onMounted(() => {
 onUnmounted(() => {
     subscriber.unsubscribe('UpdatePreference', updatePreference)
 })
+
+// @method 获取空状态信息
+const getNoTaskError = (): ViewAdapterNoTaskError | undefined => {
+    if (!builtInProject.value) return undefined
+    return BUILT_IN_EMPTY_STATE_MAP[builtInProject.value.id]
+}
 </script>
 
 <template>
@@ -85,7 +93,9 @@ onUnmounted(() => {
                 :update-columns="updateColumns"
                 :update-sort-options="updateSortOptions"
                 :clear-sort-options="() => builtInProjectHandlers.clearSortOption()"
+                :get-no-task-error="getNoTaskError"
             />
         </nue-content>
     </nue-main>
 </template>
+
