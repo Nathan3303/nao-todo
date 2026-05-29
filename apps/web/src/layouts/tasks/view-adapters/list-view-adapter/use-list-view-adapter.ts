@@ -1,9 +1,14 @@
 import { useTasksStore } from '@/stores'
 import type { ListViewAdapterProps } from './types'
 import useTasksLoader from '@/infrastructure/hooks/use-task-loader'
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, inject, onMounted, onUnmounted } from 'vue'
+import { IndexViewContext } from '@/views/index/index-view'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 
 const useListViewAdapter = (props: ListViewAdapterProps) => {
+    // @context 索引视图上下文
+    const { dialogManager } = inject<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY)!
+
     // @dataStore
     const tasksStore = useTasksStore()
 
@@ -14,6 +19,11 @@ const useListViewAdapter = (props: ListViewAdapterProps) => {
     const tasks = computed(() =>
         [...taskLoader.states.taskIds].map((taskId) => tasksStore.getTask(taskId)!).filter(Boolean)
     )
+
+    // @state 排序选项
+    const sortOptions = computed(() => {
+        return props.getTasksOptions.sort || { field: 'createdAt', order: 'desc' }
+    })
 
     // @method 下一页
     const handleNextPage = () => {
@@ -46,9 +56,13 @@ const useListViewAdapter = (props: ListViewAdapterProps) => {
     return {
         tasks,
         taskLoader,
+        sortOptions,
+        error: computed(() => taskLoader.states.error),
+        dialogManager,
         handleNextPage
     }
 }
 
 export default useListViewAdapter
+
 

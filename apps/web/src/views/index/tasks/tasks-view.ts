@@ -73,8 +73,8 @@ const useTasksView = () => {
     const error = ref<string>('') // 错误信息
     // 初始化处理程序
     const init = () => {
-        isLoading.value = true
         Promise.allSettled([
+            () => (isLoading.value = true),
             builtInProjectUseCase.loadBuiltInProjects(),
             projectUseCase.loadProjects(),
             tagUseCase.loadTags()
@@ -114,7 +114,8 @@ const useTasksView = () => {
     const dialogManager = indexViewContext.dialogManager
 
     // @method 获取列选项标识
-    const getColumnLabel = (key: string): string => (columnLabels.value as Record<string, string>)[key] || ''
+    const getColumnLabel = (key: string): string =>
+        (columnLabels.value as Record<string, string>)[key] || ''
 
     // @method 显示任务详情（面板）
     const showTaskDetails = (taskId: TaskViewObject['id']) => {

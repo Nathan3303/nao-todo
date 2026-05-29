@@ -1,9 +1,16 @@
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, inject, onMounted, onUnmounted } from 'vue'
 import useTasksLoader from '@/infrastructure/hooks/use-task-loader'
 import { useTasksStore } from '@/stores'
 import type { TableViewAdapterProps } from './types'
+import { IndexViewContext } from '@/views/index/index-view'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 
 const useTableViewAdapter = (props: TableViewAdapterProps) => {
+    /**
+     * 视图上下文
+     */
+    const { dialogManager } = inject<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY)!
+
     /**
      * 任务存储
      * 用于获取任务数据
@@ -94,8 +101,10 @@ const useTableViewAdapter = (props: TableViewAdapterProps) => {
     return {
         tasks,
         taskLoader,
+        error: computed(() => taskLoader.states.error),
         handleUpdatePage,
-        handleUpdatePerPage
+        handleUpdatePerPage,
+        dialogManager,
     }
 }
 

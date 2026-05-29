@@ -25,13 +25,7 @@ onMounted(() => getKanbanColumns())
 <template>
     <nue-container id="TodoKanbanContainer">
         <nue-main>
-            <nue-empty
-                v-if="states.kanbanColumns.length === 0"
-                image-src="/images/coffee.webp"
-                image-size="4rem"
-                description="目前看板无分组"
-            />
-            <nue-content fill v-else>
+            <nue-content fill>
                 <task-kanban-column
                     v-for="groupName in states.kanbanColumns"
                     :key="groupName"
@@ -50,3 +44,4 @@ onMounted(() => getKanbanColumns())
         </nue-main>
     </nue-container>
 </template>
+

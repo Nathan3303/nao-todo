@@ -2,7 +2,11 @@ import { AuthUseCase } from '@nao-todo/application/web/usecases/auth'
 import { UserUseCase } from '@nao-todo/application/web/usecases/user'
 import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import { inject, type Ref, provide, ref } from 'vue'
-import { APP_CONTEXT_KEY, CALENDAR_VIEW_CONTEXT_KEY, INDEX_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import {
+    APP_CONTEXT_KEY,
+    CALENDAR_VIEW_CONTEXT_KEY,
+    INDEX_VIEW_CONTEXT_KEY
+} from '@/infrastructure/constants/context-keys'
 import type { AppContext } from '@/app'
 import type { IndexViewContext } from '@/views/index/index-view'
 import type { DialogManager } from '@/infrastructure/hooks/use-dialog-manager'
@@ -99,8 +103,8 @@ export const useCalendarView = () => {
     const error = ref<string>('') // 错误信息
     // 初始化处理程序
     const init = () => {
-        isLoading.value = true
         Promise.allSettled([
+            () => (isLoading.value = true),
             builtInProjectUseCase.loadBuiltInProjects(),
             projectUseCase.loadProjects(),
             tagUseCase.loadTags()

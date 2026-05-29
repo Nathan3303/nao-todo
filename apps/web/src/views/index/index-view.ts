@@ -10,10 +10,11 @@ import { TagUseCase } from '@nao-todo/application/web/usecases/tag'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 import useSubscriber, { type Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
-import { inject, provide, type Ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { inject, provide, ref, type Ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { TASK_REMINDER_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 import type { SSEReminderEvent, TaskViewObject } from '@nao-todo/types'
+import { LAST_VISITED_ROUTE_KEY } from '@/router'
 
 /**
  * 首页视图上下文
@@ -50,6 +51,7 @@ const useIndexView = () => {
      * 路由实例
      * @description 用于导航到其他路由。
      */
+    const route = useRoute()
     const router = useRouter()
 
     /**
@@ -140,7 +142,6 @@ const useIndexView = () => {
         // 监听错误事件，关闭连接
         es.addEventListener('error', () => es.close())
     }
-    connectReminderSSE()
 
     /**
      * 提供首页视图上下文
@@ -161,12 +162,33 @@ const useIndexView = () => {
         showTaskDetailsDrawer
     })
 
-    // @return
-    return {
-        appContext,
-        userUseCase,
-        loadUserThemeModeFromConfig
+    /**
+     * 首页视图加载状态
+     */
+    const isLoading = ref(true)
+
+    /**
+     * 首页视图依赖数据初始化
+     */
+    const IndexViewInitialize = () => {
+        Promise.all([
+            userUseCase.loadUserProfile(),
+            userUseCase.loadUserConfig(),
+            loadUserThemeModeFromConfig(),
+            connectReminderSSE()
+        ])
+            .then(() => {
+                if (route.name !== 'index') return
+                const lastRoute = localStorage.getItem(LAST_VISITED_ROUTE_KEY)
+                router.replace(lastRoute || '/tasks')
+            })
+            .finally(() => {
+                isLoading.value = false
+            })
     }
+
+    // @return
+    return { isLoading, IndexViewInitialize }
 }
 
 export default useIndexView

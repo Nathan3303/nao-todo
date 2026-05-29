@@ -51,7 +51,7 @@ const rules: Rule[] = [
     },
     {
         check: (d, { thisYearStart }) => d.isBefore(thisYearStart),
-        format: (d) => d.format('YYYY年M月D日 HH:mm')
+        format: (d) => d.format('M月D日 HH:mm')
     },
     {
         check: (d, { nextWeekEnd }) => d.isBefore(nextWeekEnd),
@@ -78,7 +78,6 @@ const rules: Rule[] = [
 const date2RelativeDate = (dateStrOrDayJs: string | dayjs.Dayjs): Go<string> => {
     const date = typeof dateStrOrDayJs === 'string' ? dayjs(dateStrOrDayJs) : dateStrOrDayJs
     if (!date?.isValid()) return [null, '无效日期']
-
     const now = dayjs()
     const refs = {
         today: now.startOf('d'),
@@ -91,13 +90,11 @@ const date2RelativeDate = (dateStrOrDayJs: string | dayjs.Dayjs): Go<string> => 
         nextWeekEnd: now.add(1, 'w').endOf('w'),
         nextMonthEnd: now.add(1, 'm').endOf('m')
     }
-
     for (const rule of rules) {
         if (rule.check(date, refs)) {
             return [rule.format(date), null]
         }
     }
-
     return [date.format('YYYY年M月D日 HH:mm'), null]
 }
 

@@ -64,9 +64,15 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
      * 获取任务详情并转换为视图对象
      */
     const task = computed(() => {
-        if (!props.taskId) return null
+        if (!props.taskId) {
+            error.value = '任务 ID 不能为空'
+            return null
+        }
         const _task = taskStore.getTask(props.taskId)
-        if (!_task) return null
+        if (!_task) {
+            error.value = '任务不存在'
+            return null
+        }
         // console.log(_task)
         return {
             id: _task.id,
