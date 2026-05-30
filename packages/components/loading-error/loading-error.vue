@@ -3,7 +3,14 @@ import { Loading as LoadingComponent } from '../loading'
 import type { LoadingErrorProps } from './types'
 
 defineOptions({ name: 'LoadingError' })
-defineProps<LoadingErrorProps>()
+withDefaults(defineProps<LoadingErrorProps>(), {
+    loading: true,
+    loadingMessage: '加载中...',
+    errorMessage: '加载失败, 请刷新页面重试',
+    emptyMessage: '暂无数据',
+    emptyImageSrc: '/images/empty.png',
+    emptyImageSize: '8rem'
+})
 </script>
 
 <template>

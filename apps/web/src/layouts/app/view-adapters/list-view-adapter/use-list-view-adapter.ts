@@ -62,6 +62,7 @@ const useListViewAdapter = (props: ListViewAdapterProps) => {
     return {
         tasks,
         taskLoader,
+        loading: computed(() => taskLoader.states.loading),
         sortOptions,
         error: computed(() => taskLoader.states.error),
         noTaskError,

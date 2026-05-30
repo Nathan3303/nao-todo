@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SettingsAppAppereance, SettingsAppLanguage } from '@/components/settings/appsetting'
+import { SettingsAppAppereance, SettingsAppLanguage } from '@/components/settings'
 import { SETTINGS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import type { SettingsViewContext } from '@/views/index/settings/settings-view'
 import { inject } from 'vue'
@@ -38,3 +38,4 @@ const { isDisplayAside, switchDisplayAside } =
     margin: 1rem 0;
 }
 </style>
+

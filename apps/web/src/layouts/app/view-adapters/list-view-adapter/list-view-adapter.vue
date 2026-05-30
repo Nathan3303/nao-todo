@@ -9,8 +9,17 @@ import { t } from '@nao-todo/infrastructure/locales'
 defineOptions({ name: 'ListViewAdapter' })
 const props = defineProps<ListViewAdapterProps>()
 
-const { tasks, taskLoader, sortOptions, error, noTaskError, dialogManager, handleNextPage, handleRetry } =
-    useListViewAdapter(props)
+const {
+    tasks,
+    taskLoader,
+    loading,
+    sortOptions,
+    error,
+    noTaskError,
+    dialogManager,
+    handleNextPage,
+    handleRetry
+} = useListViewAdapter(props)
 </script>
 
 <template>
@@ -18,6 +27,7 @@ const { tasks, taskLoader, sortOptions, error, noTaskError, dialogManager, handl
         <nue-main>
             <nue-content fill style="overflow: hidden">
                 <loading-error
+                    :loading="loading"
                     :error="!!error"
                     error-image-size="8rem"
                     error-image-src="/images/error.png"
@@ -27,7 +37,9 @@ const { tasks, taskLoader, sortOptions, error, noTaskError, dialogManager, handl
                 >
                     <template #error>
                         <nue-div vertical align="center">
-                            <nue-text size="var(--nue-text-sm)">{{ t('task.error.loadFailed') }}</nue-text>
+                            <nue-text size="var(--nue-text-sm)">
+                                {{ t('task.error.loadFailed') }}
+                            </nue-text>
                             <nue-button theme="primary,small" @click="handleRetry">
                                 {{ t('common.retry') }}
                             </nue-button>
@@ -35,7 +47,9 @@ const { tasks, taskLoader, sortOptions, error, noTaskError, dialogManager, handl
                     </template>
                     <template #empty>
                         <nue-div vertical align="center">
-                            <nue-text size="var(--nue-text-sm)">{{ noTaskError?.message ? t(noTaskError.message as any) : '' }}</nue-text>
+                            <nue-text size="var(--nue-text-sm)">
+                                {{ noTaskError?.message ? t(noTaskError.message as any) : '' }}
+                            </nue-text>
                             <nue-button
                                 v-if="noTaskError?.isShowTaskCreateButton"
                                 theme="primary,small"

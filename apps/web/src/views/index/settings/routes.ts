@@ -5,21 +5,21 @@ const _routeRecords = [
     {
         path: 'profile',
         name: 'settings-profile',
-        componentName: 'profile',
+        componentName: 'profile-updater',
         title: 'nav.settingsProfile',
         icon: 'user'
     },
     {
         path: 'password',
         name: 'settings-password',
-        componentName: 'password',
+        componentName: 'password-updater',
         title: 'nav.settingsPassword',
         icon: 'lock'
     },
     {
         path: 'app',
         name: 'settings-app',
-        componentName: 'appsetting',
+        componentName: 'app-setting',
         title: 'nav.settingsApp',
         icon: 'setting'
     }
@@ -44,7 +44,7 @@ const SettingsViewRouteRecordRaw: RouteRecordRaw = {
             path: record.path,
             name: record.name,
             meta: { title: record.title, icon: record.icon },
-            component: () => import(`@/layouts/settings/contents/${record.componentName}.vue`)
+            component: () => import(`@/layouts/settings/${record.componentName}/index.vue`)
         }
     })
 }

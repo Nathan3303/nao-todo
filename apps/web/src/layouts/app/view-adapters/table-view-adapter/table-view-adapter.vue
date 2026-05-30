@@ -9,13 +9,23 @@ import { t } from '@nao-todo/infrastructure/locales'
 defineOptions({ name: 'TableViewAdapter' })
 const props = defineProps<TableViewAdapterProps>()
 
-const { tasks, taskLoader, error, noTaskError, handleUpdatePage, handleUpdatePerPage, handleRetry, dialogManager } =
-    useTableViewAdapter(props)
+const {
+    tasks,
+    taskLoader,
+    loading,
+    error,
+    noTaskError,
+    handleUpdatePage,
+    handleUpdatePerPage,
+    handleRetry,
+    dialogManager
+} = useTableViewAdapter(props)
 </script>
 
 <template>
     <nue-container id="TasksMainTableContainer">
         <loading-error
+            :loading="loading"
             :error="!!error"
             error-image-size="8rem"
             error-image-src="/images/error.png"
@@ -33,7 +43,9 @@ const { tasks, taskLoader, error, noTaskError, handleUpdatePage, handleUpdatePer
             </template>
             <template #empty>
                 <nue-div vertical align="center">
-                    <nue-text size="var(--nue-text-sm)">{{ noTaskError?.message ? t(noTaskError.message as any) : '' }}</nue-text>
+                    <nue-text size="var(--nue-text-sm)">
+                        {{ noTaskError?.message ? t(noTaskError.message as any) : '' }}
+                    </nue-text>
                     <nue-button
                         v-if="noTaskError?.isShowTaskCreateButton"
                         theme="primary,small"

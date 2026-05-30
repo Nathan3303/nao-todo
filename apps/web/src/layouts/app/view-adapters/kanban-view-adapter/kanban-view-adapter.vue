@@ -11,6 +11,7 @@ const props = defineProps<KanbanViewAdapterProps>()
 
 const {
     tasks,
+    loading,
     sortOptions,
     error,
     noTaskError,
@@ -26,6 +27,7 @@ const {
         <nue-main>
             <nue-content fill style="overflow: auto">
                 <loading-error
+                    :loading="loading"
                     :error="!!error"
                     error-image-size="8rem"
                     error-image-src="/images/error.png"

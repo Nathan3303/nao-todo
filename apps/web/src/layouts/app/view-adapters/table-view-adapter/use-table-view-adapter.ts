@@ -111,6 +111,7 @@ const useTableViewAdapter = (props: TableViewAdapterProps) => {
     return {
         tasks,
         taskLoader,
+        loading: computed(() => taskLoader.states.loading),
         error: computed(() => taskLoader.states.error),
         noTaskError,
         handleUpdatePage,
