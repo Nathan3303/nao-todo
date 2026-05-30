@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { TasksViewAside, TasksViewDetailsAdapter } from '@/layouts/tasks'
+import { TasksViewAside } from '@/layouts/tasks'
+import { TaskDetailsAdapter } from '@/layouts/app'
 import useTasksView from './tasks-view'
 import { Loading as LoadingComp } from '@nao-todo/components'
 import { onMounted } from 'vue'
@@ -42,7 +43,7 @@ onMounted(() => init())
                 </router-view>
             </nue-content>
             <!-- 详情适配器 -->
-            <tasks-view-details-adapter />
+            <task-details-adapter />
         </nue-main>
     </nue-container>
 </template>

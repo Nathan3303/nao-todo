@@ -1,4 +1,4 @@
-import type { ViewAdapterNoTaskError } from '@/layouts/tasks/view-adapters'
+import type { ViewAdapterNoTaskError } from '@/layouts/app/view-adapters'
 
 /**
  * 用户清单空状态

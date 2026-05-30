@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { TableViewAdapter, ListViewAdapter, KanbanViewAdapter } from '@/layouts/tasks/view-adapters'
 import { PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import { inject, onMounted, onUnmounted } from 'vue'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { ProjectHandler } from '@/infrastructure/handlers/tasks/project-handler'
 import { PROJECT_EMPTY_STATE } from '../constants'
+import {
+    TableViewAdapter,
+    ListViewAdapter,
+    KanbanViewAdapter,
+    type ViewAdapterNoTaskError
+} from '@/layouts/app/view-adapters'
 import type { ProjectViewContext } from '../types'
-import type { ViewAdapterNoTaskError } from '@/layouts/tasks/view-adapters'
 
 defineOptions({
     name: 'TasksMainProjectContent',

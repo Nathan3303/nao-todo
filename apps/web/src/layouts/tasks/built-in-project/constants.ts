@@ -1,4 +1,4 @@
-import type { ViewAdapterNoTaskError } from '@/layouts/tasks/view-adapters'
+import type { ViewAdapterNoTaskError } from '@/layouts/app/view-adapters'
 
 /**
  * 内建清单空状态映射
@@ -42,7 +42,7 @@ export const BUILT_IN_EMPTY_STATE_MAP: Record<string, ViewAdapterNoTaskError> = 
         isShowTaskCreateButton: false
     },
     deleted: {
-        image: '/images/trash.webp',
+        image: '/images/notaskhere.webp',
         imageSize: '8rem',
         message: 'task.empty.deleted',
         isShowTaskCreateButton: false

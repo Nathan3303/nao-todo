@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { TableViewAdapter, ListViewAdapter, KanbanViewAdapter } from '@/layouts/tasks/view-adapters'
 import { TAG_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import { inject, onMounted, onUnmounted } from 'vue'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { TagHandler } from '@/infrastructure/handlers/tasks/tag-handler'
 import { TAG_EMPTY_STATE } from '../constants'
+import {
+    TableViewAdapter,
+    ListViewAdapter,
+    KanbanViewAdapter,
+    type ViewAdapterNoTaskError
+} from '@/layouts/app/view-adapters'
 import type { TagViewContext } from '../types'
-import type { ViewAdapterNoTaskError } from '@/layouts/tasks/view-adapters/types'
 
 defineOptions({
     name: 'TasksMainTagContent',

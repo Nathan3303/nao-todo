@@ -56,6 +56,15 @@ const useUserStore = defineStore('UserStore', () => {
         setUserConfig({ ...userConfig.value, ...updateConfig } as UserConfigViewObject)
     }
 
+    // @action 清除用户数据
+    const clearUserData = () => {
+        setIsAuthenticated(false)
+        setUserToken('')
+        setUserProfile({} as UserViewObject)
+        setUserConfig({} as UserConfigViewObject)
+        localStorage.clear()
+    }
+
     // @returns
     return {
         isAuthenticated: computed(() => isAuthenticated.value),
@@ -67,7 +76,8 @@ const useUserStore = defineStore('UserStore', () => {
         updateUserProfile,
         config: computed(() => userConfig.value),
         setUserConfig,
-        updateUserConfig
+        updateUserConfig,
+        clearUserData
     }
 })
 
