@@ -10,20 +10,25 @@ defineOptions({ name: 'TaskDetails' })
 const props = defineProps<TaskDetailsProps>()
 const emit = defineEmits<TaskDetailsEmits>()
 
-const { error, task, closeDetails } = useTaskDetails(props, emit)
+const { error, task } = useTaskDetails(props, emit)
 </script>
 
 <template>
     <loading-error
-        :error="!!error || !task"
-        error-image-src="/images/todo.webp"
+        :loading="false"
+        :empty="!task"
+        :error="!!error"
+        empty-image-src="/images/todo.webp"
+        empty-image-size="4rem"
+        error-image-src="/images/error.webp"
         error-image-size="4rem"
     >
         <!-- 错误状态 -->
         <template #error>
-            <nue-div v-if="false" justify="center" style="margin-top: 1rem">
-                <nue-button theme="primary,small" @click="closeDetails">返回任务列表</nue-button>
-            </nue-div>
+            <nue-text>加载失败, 请刷新页面重试</nue-text>
+        </template>
+        <template #empty>
+            <nue-text>选择任务以查看任务详细</nue-text>
         </template>
         <!-- 正常状态 -->
         <nue-container id="TasksTodoDetailsContainer" class="tasks-details-view">

@@ -64,46 +64,41 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
      * 获取任务详情并转换为视图对象
      */
     const task = computed(() => {
-        if (!props.taskId) {
-            error.value = '任务 ID 不能为空'
-            return null
-        }
+        if (!props.taskId) return null
         const _task = taskStore.getTask(props.taskId)
-        if (!_task) {
-            error.value = '任务不存在'
-            return null
-        }
         // console.log(_task)
-        return {
-            id: _task.id,
-            userId: _task.userId,
-            parentTaskId: _task.parentTaskId,
-            name: _task.name,
-            description: _task.description,
-            state: _task.state,
-            isDone: _task.state === 'done',
-            priority: _task.priority,
-            startAt: _task.startAt,
-            endAt: _task.endAt,
-            projectId: _task.projectId,
-            projectName: getProjectName(_task.projectId),
-            tags: _task.tags,
-            tagList: _task.tags.map((tagId) => tagStore.getTag(tagId)!).filter(Boolean),
-            createdAt: _task.createdAt,
-            updatedAt: _task.updatedAt,
-            deletedAt: _task.deletedAt,
-            isDeleted: _task.isDeleted,
-            starMarkAt: _task.starMarkAt,
-            isStarMarked: _task.isStarMarked,
-            givenUpAt: _task.givenUpAt,
-            isGivenUp: _task.isGivenUp,
-            archivedAt: _task.archivedAt,
-            isArchived: _task.isArchived,
-            remindAt: _task.remindAt,
-            remindRepeat: _task.remindRepeat,
-            remindTime: _task.remindTime,
-            remindWeekdays: _task.remindWeekdays
-        }
+        return _task
+            ? {
+                  id: _task.id,
+                  userId: _task.userId,
+                  parentTaskId: _task.parentTaskId,
+                  name: _task.name,
+                  description: _task.description,
+                  state: _task.state,
+                  isDone: _task.state === 'done',
+                  priority: _task.priority,
+                  startAt: _task.startAt,
+                  endAt: _task.endAt,
+                  projectId: _task.projectId,
+                  projectName: getProjectName(_task.projectId),
+                  tags: _task.tags,
+                  tagList: _task.tags.map((tagId) => tagStore.getTag(tagId)!).filter(Boolean),
+                  createdAt: _task.createdAt,
+                  updatedAt: _task.updatedAt,
+                  deletedAt: _task.deletedAt,
+                  isDeleted: _task.isDeleted,
+                  starMarkAt: _task.starMarkAt,
+                  isStarMarked: _task.isStarMarked,
+                  givenUpAt: _task.givenUpAt,
+                  isGivenUp: _task.isGivenUp,
+                  archivedAt: _task.archivedAt,
+                  isArchived: _task.isArchived,
+                  remindAt: _task.remindAt,
+                  remindRepeat: _task.remindRepeat,
+                  remindTime: _task.remindTime,
+                  remindWeekdays: _task.remindWeekdays
+              }
+            : null
     })
 
     /**

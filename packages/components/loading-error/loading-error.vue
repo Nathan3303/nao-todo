@@ -36,5 +36,10 @@ withDefaults(defineProps<LoadingErrorProps>(), {
     <slot v-else />
 </template>
 
-<style scoped></style>
+<style scoped>
+.nue-empty:deep(> .nue-text) {
+    font-size: var(--nue-text-sm);
+    color: var(--nue-primary-color-600);
+}
+</style>
 
