@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import dayjs from 'dayjs'
 import { TaskRemindSetter } from '../task-remind-setter'
 import type { TaskDateSelectorProps, TaskDateSelectorEmits } from './types'
@@ -9,8 +9,16 @@ defineOptions({ name: 'TaskDateSelector', inheritAttrs: false })
 const props = defineProps<TaskDateSelectorProps>()
 const emit = defineEmits<TaskDateSelectorEmits>()
 
-const date = ref(props.modelValue ? dayjs(props.modelValue).toISOString() : '')
+// @computed 待处理提醒更新VO
 const pendingRemindUpdate = ref<TaskRemindSetterUpdateVO | null>(null)
+
+// @computed 日期选择器日期代理
+const date = computed(() => {
+    if (!props.modelValue) return ''
+    const dayjsDate = dayjs(props.modelValue)
+    if (!dayjsDate.isValid()) return ''
+    return dayjsDate.toISOString()
+})
 
 // @computed 是否过期
 const isExpired = computed(() => {
@@ -73,15 +81,6 @@ const handleClose = () => {
         pendingRemindUpdate.value = null
     }
 }
-
-/**
- * 监听 modelValue 变化
- * @description 当 modelValue 变化时，更新 date 值
- */
-watch(
-    () => props.modelValue,
-    (val) => (date.value = val ? dayjs(val).toISOString() : '')
-)
 </script>
 
 <template>

@@ -3,7 +3,7 @@ import type { TaskRemindSetterUpdateVO } from '../task-remind-setter/types'
 
 export type TaskDateSelectorProps = {
     colored?: boolean
-    modelValue: string | null | undefined
+    modelValue: string | null
     task?: TaskViewObject
 }
 
