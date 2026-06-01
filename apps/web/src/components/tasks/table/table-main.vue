@@ -10,6 +10,7 @@ import {
 import { parse2RelativeDate } from '@nao-todo/infrastructure/utils/relative-date-parser'
 import { TASK_TABLE_CONTEXT_KEY } from './use-table'
 import type { TaskTableContext, TableColumnConfig } from './types'
+import { getColumnStyle } from './column-style'
 
 defineOptions({ name: 'TaskTableMain' })
 
@@ -23,14 +24,6 @@ const tasks = computed(() => {
     return tableCtx.tasks.value || []
 })
 
-const getColumnStyle = (column: TableColumnConfig) => {
-    const width = column.width ?? column.defaultWidth
-    return {
-        width: `${width}px`,
-        minWidth: `${column.minWidth}px`,
-        maxWidth: `${column.maxWidth}px`
-    }
-}
 </script>
 
 <template>

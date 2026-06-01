@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import type { TaskViewObject } from '@nao-todo/types'
 
 /**
  * 判断是否是今天
@@ -63,6 +64,17 @@ export const isExpired = (date: dayjs.Dayjs | string | null) => {
     if (typeof date === 'string') date = dayjs(date)
     if (!date) return false
     return date.isBefore(dayjs())
+}
+
+/**
+ * 判断待办任务是否过期
+ * @param task 待办任务对象
+ * @return 是否过期（超过结束时间且未完成）
+ */
+export const isTaskExpired = (task: TaskViewObject) => {
+    const now = dayjs()
+    const endAt = dayjs(task.endAt)
+    return now.isAfter(endAt) && task.state !== 'done'
 }
 
 /**

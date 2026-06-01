@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { inject, ref, computed } from 'vue'
-import OrderButton from './order-button.vue'
+import OrderButton from './table-order-button.vue'
 import { type TaskTableContext, type TableColumnConfig } from './types'
 import { TASK_TABLE_CONTEXT_KEY } from './use-table'
+import { getColumnStyle } from './column-style'
 
 defineOptions({ name: 'TaskTableHeader' })
 
@@ -80,15 +81,6 @@ const handleResizeEnd = () => {
     resizingColumn.value = null
     document.removeEventListener('mousemove', handleResizeMove)
     document.removeEventListener('mouseup', handleResizeEnd)
-}
-
-const getColumnStyle = (column: TableColumnConfig) => {
-    const width = column.width ?? column.defaultWidth
-    return {
-        width: `${width}px`,
-        minWidth: `${column.minWidth}px`,
-        maxWidth: `${column.maxWidth}px`
-    }
 }
 
 const getColumnTypeClass = (key: string) => {

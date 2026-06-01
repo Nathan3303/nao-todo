@@ -3,7 +3,7 @@ import type { TaskTableContext, TaskTableEmits, TaskTableProps } from './types'
 import type { GetTasksSortOptions, TaskColumnOptions, TaskViewObject } from '@nao-todo/types'
 import useMultiSelect from './use-multi-select'
 import useColumnConfig from './use-column-config'
-import dayjs from 'dayjs'
+import { isTaskExpired } from '@nao-todo/infrastructure/utils/date-checker'
 
 export const TASK_TABLE_CONTEXT_KEY = Symbol('TASK_TABLE_CONTEXT_KEY')
 
@@ -38,13 +38,6 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         })
         return Math.max(Math.ceil(5 / trueCount), 2)
     })
-
-    // @method 检测当前待办任务是否过期
-    const isTaskExpired = (task: TaskViewObject) => {
-        const now = dayjs()
-        const endAt = dayjs(task.endAt)
-        return now.isAfter(endAt) && task.state !== 'done'
-    }
 
     // @method 显示待办详情
     const showTaskDetails = (taskId: TaskViewObject['id'], idx: number) => {
