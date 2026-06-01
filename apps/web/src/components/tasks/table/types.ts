@@ -72,6 +72,8 @@ export type TaskTableContext = {
     layoutConfig: ComputedRef<TableLayoutConfig | undefined>
     visibleColumns: ComputedRef<TableColumnConfig[]>
     pinnedColumn: ComputedRef<string | undefined>
+    suppressDeletedStyle: ComputedRef<boolean>
+    suppressGivenUpLabel: ComputedRef<boolean>
     // states: ComputedRef<TaskTableVO>
     showTaskDetails: (taskId: TaskViewObject['id'], idx: number) => void
     updateColumns: (key: keyof TaskColumnOptions, value: boolean) => void

@@ -14,6 +14,10 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
 
     // @hook 列配置
     const tableId = props.layoutConfig?.tableId
+
+    // @computed 在当前内置分类视图中抑制对应的状态样式
+    const suppressDeletedStyle = computed(() => tableId === 'deleted')
+    const suppressGivenUpLabel = computed(() => tableId === 'givenup')
     const initialConfig = props.layoutConfig?.columns?.length ? props.layoutConfig : undefined
     const {
         layoutConfig,
@@ -99,6 +103,8 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         layoutConfig: computed(() => layoutConfig.value),
         visibleColumns: computed(() => visibleColumns.value),
         pinnedColumn,
+        suppressDeletedStyle,
+        suppressGivenUpLabel,
         showTaskDetails,
         updateColumns: (key: keyof TaskColumnOptions, value: boolean) =>
             emit('updateColumns', key, value),

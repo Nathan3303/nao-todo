@@ -24,10 +24,13 @@
                 gap: 0;
                 position: sticky;
                 top: 0;
+                background-color: var(--nue-primary-color-0);
                 border-bottom: 1px solid var(--nue-border-color);
                 width: fit-content;
+                z-index: 1;
+                box-shadow: -2px 2px 4px rgba(200, 200, 200, 0.1);
 
-                > *{
+                > * {
                     font-size: var(--nue-text-sm);
                     color: var(--nue-primary-color-700);
                     box-sizing: border-box;
@@ -110,9 +113,8 @@
                     border: 1px solid transparent;
                     border-radius: var(--nue-primary-radius);
                     gap: 0;
-                    /* padding: 8px 12px; */
                     position: relative;
-                    min-height: var(--nue-box-size-md);
+                    height: fit-content;
 
                     &:hover {
                         border: 1px solid var(--nue-primary-color-200);
@@ -147,12 +149,11 @@
                     .todo-table__main__col {
                         overflow: visible;
                         align-items: center;
-                        height: var(--nue-box-size-md);
-                        padding: 0 var(--nue-padding-sm);
+                        padding: var(--nue-padding-xs) var(--nue-padding-sm);
 
                         &.col-first {
-                            gap: 0.25rem;
-                            font-size: 0.9375rem;
+                            gap: 0.125rem;
+                            font-size: var(--nue-text-df2);
 
                             .col-first__name-wrapper {
                                 flex: auto;
