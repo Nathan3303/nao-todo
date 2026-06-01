@@ -10,8 +10,8 @@ const { getOptions, updateSortOptions } = inject<TaskTableContext>(TASK_TABLE_CO
 
 const checkNumber = computed(() => {
     const { prop } = props
-    if (!getOptions.value.sort) return
-    if (prop !== getOptions.value.sort?.field) return
+    if (!getOptions.value.sort) return 0
+    if (prop !== getOptions.value.sort?.field) return 0
     return getOptions.value.sort?.order === 'asc' ? 1 : -1
 })
 
@@ -40,7 +40,7 @@ const handleExecute = (id: string) => {
 </script>
 
 <template>
-    <nue-dropdown theme="combo-box,small" close-when-executed @execute="handleExecute">
+    <nue-dropdown theme="menu,small" close-when-executed @execute="handleExecute">
         <template #trigger="{ trigger }">
             <nue-div align="center" gap="0.5rem">
                 <nue-text @click="trigger" style="cursor: pointer">
@@ -54,6 +54,7 @@ const handleExecute = (id: string) => {
         </template>
         <template #default>
             <nue-div theme="block">
+                <!-- <nue-text theme="title">是否排序：{{ checkNumber ? '已排序' : '未排序' }}</nue-text> -->
                 <nue-dropdown-item size="small" icon="arrow-up" text="升序" execute-id="go-asc">
                     <template #append>
                         <nue-icon :name="ascIconName" />

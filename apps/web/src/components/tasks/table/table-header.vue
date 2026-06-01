@@ -113,17 +113,28 @@ const getColumnTypeClass = (key: string) => {
             ]"
             :style="getColumnStyle(column)"
             :draggable="column.key !== 'name' && column.key !== pinnedColumnKey"
-            @dragstart="column.key !== 'name' && column.key !== pinnedColumnKey ? handleDragStart($event, index) : null"
-            @dragover="column.key !== 'name' && column.key !== pinnedColumnKey ? handleDragOver($event, index) : null"
+            @dragstart="
+                column.key !== 'name' && column.key !== pinnedColumnKey
+                    ? handleDragStart($event, index)
+                    : null
+            "
+            @dragover="
+                column.key !== 'name' && column.key !== pinnedColumnKey
+                    ? handleDragOver($event, index)
+                    : null
+            "
             @dragleave="handleDragLeave"
-            @drop="column.key !== 'name' && column.key !== pinnedColumnKey ? handleDrop($event, index) : null"
+            @drop="
+                column.key !== 'name' && column.key !== pinnedColumnKey
+                    ? handleDrop($event, index)
+                    : null
+            "
             @dragend="handleDragEnd"
         >
             <order-button :prop="column.key">
                 {{ tableContext.getColumnLabel(column.key) }}
             </order-button>
             <div
-                v-if="column.key !== 'deletedAt'"
                 class="column-resizer"
                 @mousedown="handleResizeStart($event, column.key, column)"
             />

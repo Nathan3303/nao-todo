@@ -57,7 +57,10 @@ const clearConfig = (tableId: string): void => {
 }
 
 // @helper 将固定列移动到 name 列之后的固定位置
-const enforcePinnedColumn = (columns: TableColumnConfig[], tableId: string): TableColumnConfig[] => {
+const enforcePinnedColumn = (
+    columns: TableColumnConfig[],
+    tableId: string
+): TableColumnConfig[] => {
     const pinnedKey = PINNED_COLUMN_MAP[tableId]
     if (!pinnedKey) return columns
 
@@ -90,97 +93,97 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
         label: columnLabels.value.deletedAt,
         visible: false,
         width: null,
-        minWidth: 100,
-        maxWidth: 200,
-        defaultWidth: 120
+        minWidth: 160,
+        maxWidth: 240,
+        defaultWidth: 180
     },
     {
         key: 'starMarkAt',
         label: columnLabels.value.starMarkAt,
         visible: false,
         width: null,
-        minWidth: 100,
-        maxWidth: 200,
-        defaultWidth: 120
+        minWidth: 160,
+        maxWidth: 240,
+        defaultWidth: 180
     },
     {
         key: 'givenUpAt',
         label: columnLabels.value.givenUpAt,
         visible: false,
         width: null,
-        minWidth: 100,
-        maxWidth: 200,
-        defaultWidth: 120
+        minWidth: 160,
+        maxWidth: 240,
+        defaultWidth: 180
     },
     {
         key: 'archivedAt',
         label: columnLabels.value.archivedAt,
         visible: false,
         width: null,
-        minWidth: 100,
-        maxWidth: 200,
-        defaultWidth: 120
+        minWidth: 160,
+        maxWidth: 240,
+        defaultWidth: 180
     },
     {
         key: 'createdAt',
         label: columnLabels.value.createdAt,
         visible: true,
         width: null,
-        minWidth: 100,
-        maxWidth: 200,
-        defaultWidth: 120
+        minWidth: 160,
+        maxWidth: 240,
+        defaultWidth: 200
     },
     {
         key: 'updatedAt',
         label: columnLabels.value.updatedAt,
         visible: true,
         width: null,
-        minWidth: 100,
-        maxWidth: 200,
-        defaultWidth: 120
+        minWidth: 160,
+        maxWidth: 240,
+        defaultWidth: 200
     },
     {
         key: 'startAt',
         label: columnLabels.value.startAt,
         visible: true,
         width: null,
-        minWidth: 100,
-        maxWidth: 200,
-        defaultWidth: 120
+        minWidth: 160,
+        maxWidth: 240,
+        defaultWidth: 200
     },
     {
         key: 'endAt',
         label: columnLabels.value.endAt,
         visible: true,
         width: null,
-        minWidth: 100,
-        maxWidth: 200,
-        defaultWidth: 120
+        minWidth: 160,
+        maxWidth: 240,
+        defaultWidth: 200
     },
     {
         key: 'priority',
         label: columnLabels.value.priority,
         visible: true,
         width: null,
-        minWidth: 80,
+        minWidth: 100,
         maxWidth: 150,
-        defaultWidth: 100
+        defaultWidth: 120
     },
     {
         key: 'state',
         label: columnLabels.value.state,
         visible: true,
         width: null,
-        minWidth: 80,
+        minWidth: 100,
         maxWidth: 150,
-        defaultWidth: 100
+        defaultWidth: 120
     },
     {
         key: 'project',
         label: columnLabels.value.project,
         visible: true,
         width: null,
-        minWidth: 80,
+        minWidth: 100,
         maxWidth: 200,
         defaultWidth: 120
     }
@@ -203,7 +206,11 @@ export default (initialConfig?: TableLayoutConfig, tableId: string = 'default') 
         // 恢复列宽：仅在合法范围内应用已保存的宽度
         for (const col of columns) {
             const savedWidth = savedConfig.widths[col.key]
-            if (savedWidth !== undefined && savedWidth >= col.minWidth && savedWidth <= col.maxWidth) {
+            if (
+                savedWidth !== undefined &&
+                savedWidth >= col.minWidth &&
+                savedWidth <= col.maxWidth
+            ) {
                 col.width = savedWidth
             }
         }
