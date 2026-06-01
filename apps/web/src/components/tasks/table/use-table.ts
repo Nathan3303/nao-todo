@@ -3,7 +3,7 @@ import type { TaskTableContext, TaskTableEmits, TaskTableProps } from './types'
 import type { GetTasksSortOptions, TaskColumnOptions, TaskViewObject } from '@nao-todo/types'
 import useMultiSelect from './use-multi-select'
 import useColumnConfig from './use-column-config'
-import dayjs from 'dayjs'
+import { isTaskExpired } from '@nao-todo/infrastructure/utils/date-checker'
 
 export const TASK_TABLE_CONTEXT_KEY = Symbol('TASK_TABLE_CONTEXT_KEY')
 
@@ -13,14 +13,21 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         useMultiSelect(props, emit)
 
     // @hook 列配置
+    const tableId = props.layoutConfig?.tableId
+
+    // @computed 在当前内置分类视图中抑制对应的状态样式
+    const suppressDeletedStyle = computed(() => tableId === 'deleted')
+    const suppressGivenUpLabel = computed(() => tableId === 'givenup')
+    const initialConfig = props.layoutConfig?.columns?.length ? props.layoutConfig : undefined
     const {
         layoutConfig,
         visibleColumns,
         reorderColumns,
         resizeColumn,
         resetConfig,
-        syncFromProps
-    } = useColumnConfig(props.layoutConfig)
+        syncFromProps,
+        pinnedColumn
+    } = useColumnConfig(initialConfig, tableId)
 
     // @computed 计算标签显示数量 - 用于响应式变化时变化标签显示个数
     const tagBarClamped = computed(() => {
@@ -31,13 +38,6 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         })
         return Math.max(Math.ceil(5 / trueCount), 2)
     })
-
-    // @method 检测当前待办任务是否过期
-    const isTaskExpired = (task: TaskViewObject) => {
-        const now = dayjs()
-        const endAt = dayjs(task.endAt)
-        return now.isAfter(endAt) && task.state !== 'done'
-    }
 
     // @method 显示待办详情
     const showTaskDetails = (taskId: TaskViewObject['id'], idx: number) => {
@@ -95,6 +95,9 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         tagBarClamped,
         layoutConfig: computed(() => layoutConfig.value),
         visibleColumns: computed(() => visibleColumns.value),
+        pinnedColumn,
+        suppressDeletedStyle,
+        suppressGivenUpLabel,
         showTaskDetails,
         updateColumns: (key: keyof TaskColumnOptions, value: boolean) =>
             emit('updateColumns', key, value),

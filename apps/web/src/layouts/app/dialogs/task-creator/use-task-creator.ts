@@ -27,7 +27,7 @@ const useTaskCreator = () => {
         state: 'todo',
         priority: 'low',
         startAt: '',
-        endAt: '',
+        endAt: null,
         tags: [],
         remindAt: null,
         remindRepeat: 'none',

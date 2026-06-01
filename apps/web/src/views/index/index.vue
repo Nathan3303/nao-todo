@@ -1,30 +1,14 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { onMounted } from 'vue'
 import useIndexView from './index-view'
 import { AppDialogAdapter } from '@/layouts/app/dialogs'
 import { Loading as LoadingComp } from '@nao-todo/components'
-import { LAST_VISITED_ROUTE_KEY } from '@/router'
 
 defineOptions({ name: 'AppContainer' })
 
-const route = useRoute()
-const router = useRouter()
-const { userUseCase, loadUserThemeModeFromConfig } = useIndexView()
+const { isLoading, IndexViewInitialize } = useIndexView()
 
-const isLoading = ref(true)
-
-onMounted(async () => {
-    await userUseCase.loadUserProfile()
-    await userUseCase.loadUserConfig()
-    loadUserThemeModeFromConfig()
-    isLoading.value = false
-
-    if (route.name === 'index') {
-        const lastRoute = localStorage.getItem(LAST_VISITED_ROUTE_KEY)
-        router.replace(lastRoute || '/tasks')
-    }
-})
+onMounted(() => IndexViewInitialize())
 </script>
 
 <template>

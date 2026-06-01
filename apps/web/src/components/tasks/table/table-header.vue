@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { inject, ref, computed } from 'vue'
-import OrderButton from './order-button.vue'
+import OrderButton from './table-order-button.vue'
 import { type TaskTableContext, type TableColumnConfig } from './types'
 import { TASK_TABLE_CONTEXT_KEY } from './use-table'
+import { getColumnStyle } from './column-style'
 
 defineOptions({ name: 'TaskTableHeader' })
 
@@ -16,6 +17,8 @@ const startWidth = ref<number>(0)
 const visibleColumns = computed(() => {
     return tableContext?.visibleColumns.value || []
 })
+
+const pinnedColumnKey = computed(() => tableContext?.pinnedColumn?.value)
 
 const handleDragStart = (e: DragEvent, index: number) => {
     e.dataTransfer?.setData('text/plain', index.toString())
@@ -80,15 +83,6 @@ const handleResizeEnd = () => {
     document.removeEventListener('mouseup', handleResizeEnd)
 }
 
-const getColumnStyle = (column: TableColumnConfig) => {
-    const width = column.width ?? column.defaultWidth
-    return {
-        width: `${width}px`,
-        minWidth: `${column.minWidth}px`,
-        maxWidth: `${column.maxWidth}px`
-    }
-}
-
 const getColumnTypeClass = (key: string) => {
     if (['createdAt', 'updatedAt', 'startAt', 'endAt', 'deletedAt'].includes(key)) {
         return 'col-datetime'
@@ -105,22 +99,34 @@ const getColumnTypeClass = (key: string) => {
             class="todo-table__header__col"
             :class="[
                 column.key === 'name' ? 'col-first' : getColumnTypeClass(column.key),
+                { 'col-pinned': column.key === pinnedColumnKey },
                 { dragging: draggingIndex === index },
-                { 'drag-over': dragOverIndex === index }
+                { 'drag-over': dragOverIndex === index && column.key !== pinnedColumnKey }
             ]"
             :style="getColumnStyle(column)"
-            :draggable="column.key !== 'name'"
-            @dragstart="column.key !== 'name' ? handleDragStart($event, index) : null"
-            @dragover="column.key !== 'name' ? handleDragOver($event, index) : null"
+            :draggable="column.key !== 'name' && column.key !== pinnedColumnKey"
+            @dragstart="
+                column.key !== 'name' && column.key !== pinnedColumnKey
+                    ? handleDragStart($event, index)
+                    : null
+            "
+            @dragover="
+                column.key !== 'name' && column.key !== pinnedColumnKey
+                    ? handleDragOver($event, index)
+                    : null
+            "
             @dragleave="handleDragLeave"
-            @drop="column.key !== 'name' ? handleDrop($event, index) : null"
+            @drop="
+                column.key !== 'name' && column.key !== pinnedColumnKey
+                    ? handleDrop($event, index)
+                    : null
+            "
             @dragend="handleDragEnd"
         >
             <order-button :prop="column.key">
                 {{ tableContext.getColumnLabel(column.key) }}
             </order-button>
             <div
-                v-if="column.key !== 'deletedAt'"
                 class="column-resizer"
                 @mousedown="handleResizeStart($event, column.key, column)"
             />

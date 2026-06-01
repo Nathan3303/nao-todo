@@ -60,7 +60,7 @@ const {
                 </nue-div>
                 <nue-text
                     v-if="columns.description && task.description"
-                    :clamped="2"
+                    :clamped="3"
                     :title="task.description"
                     theme="description"
                 >

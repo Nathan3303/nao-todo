@@ -6,119 +6,52 @@ import type {
 } from './types'
 import type { TaskColumnOptions } from '@nao-todo/types'
 import { ref, computed } from 'vue'
-import { columnLabels } from '@nao-todo/infrastructure/consts/tasks'
-
-export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
-    {
-        key: 'name',
-        label: columnLabels.value.name,
-        visible: true,
-        width: null,
-        minWidth: 300,
-        maxWidth: 600,
-        defaultWidth: 400
-    },
-    {
-        key: 'deletedAt',
-        label: columnLabels.value.deletedAt,
-        visible: false,
-        width: null,
-        minWidth: 100,
-        maxWidth: 200,
-        defaultWidth: 120
-    },
-    {
-        key: 'givenUpAt',
-        label: columnLabels.value.givenUpAt,
-        visible: false,
-        width: null,
-        minWidth: 100,
-        maxWidth: 200,
-        defaultWidth: 120
-    },
-    {
-        key: 'archivedAt',
-        label: columnLabels.value.archivedAt,
-        visible: false,
-        width: null,
-        minWidth: 100,
-        maxWidth: 200,
-        defaultWidth: 120
-    },
-    {
-        key: 'createdAt',
-        label: columnLabels.value.createdAt,
-        visible: true,
-        width: null,
-        minWidth: 100,
-        maxWidth: 200,
-        defaultWidth: 120
-    },
-    {
-        key: 'updatedAt',
-        label: columnLabels.value.updatedAt,
-        visible: true,
-        width: null,
-        minWidth: 100,
-        maxWidth: 200,
-        defaultWidth: 120
-    },
-    {
-        key: 'startAt',
-        label: columnLabels.value.startAt,
-        visible: true,
-        width: null,
-        minWidth: 100,
-        maxWidth: 200,
-        defaultWidth: 120
-    },
-    {
-        key: 'endAt',
-        label: columnLabels.value.endAt,
-        visible: true,
-        width: null,
-        minWidth: 100,
-        maxWidth: 200,
-        defaultWidth: 120
-    },
-    {
-        key: 'priority',
-        label: columnLabels.value.priority,
-        visible: true,
-        width: null,
-        minWidth: 80,
-        maxWidth: 150,
-        defaultWidth: 100
-    },
-    {
-        key: 'state',
-        label: columnLabels.value.state,
-        visible: true,
-        width: null,
-        minWidth: 80,
-        maxWidth: 150,
-        defaultWidth: 100
-    },
-    {
-        key: 'project',
-        label: columnLabels.value.project,
-        visible: true,
-        width: null,
-        minWidth: 80,
-        maxWidth: 200,
-        defaultWidth: 120
-    }
-]
-
-export const createDefaultTableConfig = (tableId: string): TableLayoutConfig => ({
-    columns: DEFAULT_TABLE_COLUMNS,
-    tableId,
-    version: '1.0.0',
-    updatedAt: new Date().toISOString()
-})
+import {
+    DEFAULT_TABLE_COLUMNS,
+    PINNED_COLUMN_MAP,
+    enforcePinnedColumn,
+    createDefaultTableConfig
+} from './column-defaults'
+import { readConfig, writeConfig, clearConfig } from './column-storage'
 
 export default (initialConfig?: TableLayoutConfig, tableId: string = 'default') => {
     const layoutConfig = ref<TableLayoutConfig>(initialConfig || createDefaultTableConfig(tableId))
+
+    // @init 从 localStorage 恢复已保存的列宽和列排序
+    const savedConfig = readConfig(tableId)
+    if (savedConfig) {
+        const columns = [...layoutConfig.value.columns]
+        // 恢复列宽：仅在合法范围内应用已保存的宽度
+        for (const col of columns) {
+            const savedWidth = savedConfig.widths[col.key]
+            if (
+                savedWidth !== undefined &&
+                savedWidth >= col.minWidth &&
+                savedWidth <= col.maxWidth
+            ) {
+                col.width = savedWidth
+            }
+        }
+        // 恢复列排序：按已保存的顺序重排，未知列和缺失列保持默认位置
+        if (savedConfig.order?.length) {
+            const keyOrderMap = new Map(savedConfig.order.map((key, idx) => [key, idx]))
+            columns.sort((a, b) => {
+                const orderA = keyOrderMap.get(a.key)
+                const orderB = keyOrderMap.get(b.key)
+                if (orderA !== undefined && orderB !== undefined) return orderA - orderB
+                if (orderA !== undefined) return -1
+                if (orderB !== undefined) return 1
+                return 0
+            })
+        }
+        layoutConfig.value = { ...layoutConfig.value, columns }
+    }
+
+    // 强制执行固定列排序
+    layoutConfig.value = {
+        ...layoutConfig.value,
+        columns: enforcePinnedColumn(layoutConfig.value.columns, tableId)
+    }
 
     const visibleColumns = computed(() => {
         return layoutConfig.value.columns.filter((col) => col.visible)
@@ -152,6 +85,9 @@ export default (initialConfig?: TableLayoutConfig, tableId: string = 'default') 
 
         if (fromColumn?.key === 'name' || toColumn?.key === 'name') return
 
+        const pinnedKey = PINNED_COLUMN_MAP[tableId]
+        if (pinnedKey && (fromColumn?.key === pinnedKey || toColumn?.key === pinnedKey)) return
+
         const newColumns = [...layoutConfig.value.columns]
         const fromColumnIndex = newColumns.findIndex((c) => c.key === fromColumn?.key)
         const toColumnIndex = newColumns.findIndex((c) => c.key === toColumn?.key)
@@ -164,6 +100,8 @@ export default (initialConfig?: TableLayoutConfig, tableId: string = 'default') 
             columns: newColumns,
             updatedAt: new Date().toISOString()
         }
+        // 持久化列排序到 localStorage
+        writeConfig(tableId, newColumns)
     }
 
     const resizeColumn = (payload: ColumnResizePayload) => {
@@ -182,6 +120,8 @@ export default (initialConfig?: TableLayoutConfig, tableId: string = 'default') 
             columns: newColumns,
             updatedAt: new Date().toISOString()
         }
+        // 持久化列宽到 localStorage
+        writeConfig(tableId, newColumns)
     }
 
     const updateColumnVisibility = (key: keyof TaskColumnOptions, visible: boolean) => {
@@ -198,6 +138,8 @@ export default (initialConfig?: TableLayoutConfig, tableId: string = 'default') 
 
     const resetConfig = () => {
         layoutConfig.value = createDefaultTableConfig(tableId)
+        // 同步清除 localStorage 中已保存的表格配置
+        clearConfig(tableId)
     }
 
     const syncFromProps = (propsColumns: TaskColumnOptions) => {
@@ -208,7 +150,7 @@ export default (initialConfig?: TableLayoutConfig, tableId: string = 'default') 
 
         layoutConfig.value = {
             ...layoutConfig.value,
-            columns: newColumns as TableColumnConfig[]
+            columns: enforcePinnedColumn(newColumns as TableColumnConfig[], tableId)
         }
     }
 
@@ -221,7 +163,7 @@ export default (initialConfig?: TableLayoutConfig, tableId: string = 'default') 
         resizeColumn,
         updateColumnVisibility,
         resetConfig,
-        syncFromProps
+        syncFromProps,
+        pinnedColumn: computed(() => PINNED_COLUMN_MAP[tableId] || undefined)
     }
 }
-

@@ -7,7 +7,7 @@ export type TaskViewObject = {
     state: string
     priority: string
     startAt: string
-    endAt: string
+    endAt: string | null
     projectId: string
     tags: string[]
     archivedAt: string | null

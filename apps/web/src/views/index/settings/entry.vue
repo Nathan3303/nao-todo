@@ -16,8 +16,15 @@ useSettingsView()
                 <router-view v-slot="{ Component }">
                     <suspense>
                         <component :is="Component" />
-                        <template #fallback>
+                        <template #pending>
                             <loading-comp height="100%" />
+                        </template>
+                        <template #fallback>
+                            <nue-empty image-src="/images/error.webp" image-size="6rem">
+                                <nue-text size="var(--nue-text-sm)">
+                                    加载失败, 请刷新页面重试
+                                </nue-text>
+                            </nue-empty>
                         </template>
                     </suspense>
                 </router-view>

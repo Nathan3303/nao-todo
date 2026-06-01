@@ -10,3 +10,10 @@
     --nue-text-df: calc(var(--nue-primary-font-size) * 1);
 }
 
+:root {
+    body {
+        width: 100dvw;
+        height: 100dvh;
+    }
+}
+

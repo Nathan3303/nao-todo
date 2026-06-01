@@ -18,7 +18,14 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     const router = useRouter()
 
     // @viewContext TasksView context
-    const tasksViewContext = inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
+    const {
+        builtInProjectUseCase,
+        subscriber,
+        dialogManager,
+        getColumnLabel,
+        getProjectName,
+        showTaskDetails
+    } = inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
 
     // @dataStores
     const userStore = useUserStore()
@@ -55,7 +62,7 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
         if (!props.projectId || !profile.value) return
         loading.value = true
         // 2. 获取清单详情
-        const err = tasksViewContext.builtInProjectUseCase.loadBuiltInProjectPreference(
+        const err = builtInProjectUseCase.loadBuiltInProjectPreference(
             profile.value.email,
             props.projectId
         )
@@ -82,10 +89,10 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
 
     // @handler 内建清单操作器
     const builtInProjectHandlers = new BuiltInProjectLayoutHandlers(
-        tasksViewContext.builtInProjectUseCase,
+        builtInProjectUseCase,
         taskUseCase,
         builtInProjectsStore,
-        tasksViewContext.subscriber
+        subscriber
     )
 
     // @computed 是否已经是只显示未完成任务
@@ -99,32 +106,29 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     const showTaskCreator = () => {
         if (!builtInProject.value) return
         if (typeof builtInProject.value.createTaskOptions === 'function') {
-            tasksViewContext.dialogManager.open(
+            dialogManager.open(
                 TASK_CREATOR_DIALOG_KEY,
                 builtInProject.value.createTaskOptions?.() || {}
             )
             return
         }
-        tasksViewContext.dialogManager.open(
-            TASK_CREATOR_DIALOG_KEY,
-            builtInProject.value.createTaskOptions
-        )
+        dialogManager.open(TASK_CREATOR_DIALOG_KEY, builtInProject.value.createTaskOptions)
     }
 
     // @provide 提供 Project View 上下文
     provide<BuiltInProjectViewContext>(BUILT_IN_PROJECT_VIEW_CONTEXT_KEY, {
-        tasksViewContext,
         taskUseCase,
         builtInProject: builtInProject,
         preference,
         profile,
         tags: computed(() => [...tags.value.values()]),
-        subscriber: tasksViewContext.subscriber,
+        subscriber: subscriber,
         builtInProjectHandlers,
         isHideCompletedAlready,
-        getColumnLabel: tasksViewContext.getColumnLabel,
-        getProjectName: tasksViewContext.getProjectName,
-        showTaskDetails: tasksViewContext.showTaskDetails,
+        dialogManager,
+        getColumnLabel: getColumnLabel,
+        getProjectName: getProjectName,
+        showTaskDetails: showTaskDetails,
         switchViewTypeToTable: () => switchViewType('table'),
         switchViewTypeToKanban: () => switchViewType('kanban'),
         switchViewTypeToList: () => switchViewType('list'),

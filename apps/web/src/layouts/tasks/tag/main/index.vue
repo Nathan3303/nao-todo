@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { TableViewAdapter, ListViewAdapter, KanbanViewAdapter } from '@/layouts/tasks/view-adapters'
 import { TAG_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import { inject, onMounted, onUnmounted } from 'vue'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { TagHandler } from '@/infrastructure/handlers/tasks/tag-handler'
+import { TAG_EMPTY_STATE } from '../constants'
+import {
+    TableViewAdapter,
+    ListViewAdapter,
+    KanbanViewAdapter,
+    type ViewAdapterNoTaskError
+} from '@/layouts/app/view-adapters'
 import type { TagViewContext } from '../types'
 
 defineOptions({
@@ -61,6 +67,12 @@ onMounted(() => {
 onUnmounted(() => {
     subscriber.unsubscribe('UpdatePreference', updatePreferenceHandler)
 })
+
+// @method 获取空状态信息
+const getNoTaskError = (): ViewAdapterNoTaskError | undefined => {
+    if (!tag.value) return undefined
+    return TAG_EMPTY_STATE
+}
 </script>
 
 <template>
@@ -79,6 +91,7 @@ onUnmounted(() => {
                 :update-columns="updateColumns"
                 :update-sort-options="updateSortOptions"
                 :clear-sort-options="() => tagHandler.clearSortOption()"
+                :get-no-task-error="getNoTaskError"
             />
         </nue-content>
     </nue-main>

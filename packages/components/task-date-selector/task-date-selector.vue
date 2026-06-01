@@ -9,7 +9,10 @@ defineOptions({ name: 'TaskDateSelector', inheritAttrs: false })
 const props = defineProps<TaskDateSelectorProps>()
 const emit = defineEmits<TaskDateSelectorEmits>()
 
-const date = ref(props.modelValue ? dayjs(props.modelValue).toISOString() : '')
+// @ref 组件日期
+const date = ref<string>('')
+
+// @ref 待处理提醒更新VO
 const pendingRemindUpdate = ref<TaskRemindSetterUpdateVO | null>(null)
 
 // @computed 是否过期
@@ -22,6 +25,17 @@ const isExpired = computed(() => {
 const datePickerTheme = computed(() => {
     return { small: true, expired: props.colored && isExpired.value }
 })
+
+/**
+ * 计算日期
+ * @description 根据 modelValue 计算日期，返回 ISO 格式的日期字符串
+ */
+const calculateDate = (newValue: string | null) => {
+    if (!newValue) return ''
+    const dayjsDate = dayjs(newValue)
+    if (!dayjsDate.isValid()) return ''
+    return dayjsDate.toISOString()
+}
 
 /**
  * 处理提醒更新
@@ -74,13 +88,11 @@ const handleClose = () => {
     }
 }
 
-/**
- * 监听 modelValue 变化
- * @description 当 modelValue 变化时，更新 date 值
- */
+// @watch modelValue 变化时，更新日期选择器日期
 watch(
     () => props.modelValue,
-    (val) => (date.value = val ? dayjs(val).toISOString() : '')
+    (newValue) => (date.value = calculateDate(newValue)),
+    { immediate: true }
 )
 </script>
 

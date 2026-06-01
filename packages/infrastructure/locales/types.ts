@@ -255,6 +255,18 @@ export interface LocaleMessages {
     'task.smartlist.filterCreate': string
     'task.smartlist.filterEmpty': string
     'task.table.summary': string
+    'task.empty.all': string
+    'task.empty.today': string
+    'task.empty.tomorrow': string
+    'task.empty.week': string
+    'task.empty.inbox': string
+    'task.empty.favourite': string
+    'task.empty.deleted': string
+    'task.empty.overdue': string
+    'task.empty.givenup': string
+    'task.empty.project': string
+    'task.empty.tag': string
+    'task.error.loadFailed': string
 
     // Calendar
     'calendar.today': string

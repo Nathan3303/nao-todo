@@ -16,6 +16,7 @@ import useTaskCreator from './use-task-creator'
 import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 import { t } from '@nao-todo/infrastructure/locales'
 import dayjs from 'dayjs'
+// import { parse2RelativeDate } from '@nao-todo/infrastructure/utils'
 
 defineOptions({ name: 'TaskCreator' })
 
@@ -92,14 +93,19 @@ onMounted(() => {
                     :placeholder="t('dialog.taskCreator.descPlaceholder')"
                     theme="fix-padding"
                 />
-                <task-date-selector
-                    :colored="!isExpired"
-                    v-model="states.endAt"
-                    :task-remind-data="states"
-                    @change="handleUpdateEndAt"
-                    @remind-change="handleUpdateRemind"
-                    @update-all="handleUpdateEndAtAndRemind"
-                />
+                <nue-div align="center" gap="0.5rem">
+                    <task-date-selector
+                        :colored="!isExpired"
+                        v-model="states.endAt!"
+                        :task-remind-data="states"
+                        @change="handleUpdateEndAt"
+                        @remind-change="handleUpdateRemind"
+                        @update-all="handleUpdateEndAtAndRemind"
+                    />
+                    <!-- <nue-text size="var(--nue-text-xs)" color="var(--nue-primary-color-600)">
+                        [ {{ parse2RelativeDate(states.endAt!) }} ]
+                    </nue-text> -->
+                </nue-div>
                 <nue-div wrap="wrap" gap=".5rem">
                     <task-selector
                         :options="TaskStateSelectOptions"

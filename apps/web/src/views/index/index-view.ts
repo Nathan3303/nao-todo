@@ -10,10 +10,11 @@ import { TagUseCase } from '@nao-todo/application/web/usecases/tag'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 import useSubscriber, { type Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
-import { inject, provide, type Ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { inject, provide, ref, type Ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { TASK_REMINDER_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 import type { SSEReminderEvent, TaskViewObject } from '@nao-todo/types'
+import { LAST_VISITED_ROUTE_KEY } from '@/router'
 
 /**
  * 首页视图上下文
@@ -50,6 +51,7 @@ const useIndexView = () => {
      * 路由实例
      * @description 用于导航到其他路由。
      */
+    const route = useRoute()
     const router = useRouter()
 
     /**
@@ -113,18 +115,33 @@ const useIndexView = () => {
      * SSE 提醒连接
      */
     const connectReminderSSE = () => {
+        // 请求通知权限
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission()
+        }
+        // 连接 SSE 事件源
         const token = localStorage.getItem('USER_JWT')
         const url = `${import.meta.env.VITE_API_BASE_URL}/sse/reminders?token=${token}`
         const es = new EventSource(url)
+        // 监听提醒事件
         es.addEventListener('reminder', (event: MessageEvent) => {
             const data = JSON.parse(event.data) as SSEReminderEvent
             dialogManager.open(TASK_REMINDER_DIALOG_KEY, data)
+            // 显示通知
+            if ('Notification' in window && Notification.permission === 'granted') {
+                const notification = new Notification(data.taskName, {
+                    body: data.description || '',
+                    icon: '/favicon.ico'
+                })
+                notification.onclick = () => {
+                    window.focus()
+                    notification.close()
+                }
+            }
         })
-        es.addEventListener('error', () => {
-            es.close()
-        })
+        // 监听错误事件，关闭连接
+        es.addEventListener('error', () => es.close())
     }
-    connectReminderSSE()
 
     /**
      * 提供首页视图上下文
@@ -145,12 +162,33 @@ const useIndexView = () => {
         showTaskDetailsDrawer
     })
 
-    // @return
-    return {
-        appContext,
-        userUseCase,
-        loadUserThemeModeFromConfig
+    /**
+     * 首页视图加载状态
+     */
+    const isLoading = ref(true)
+
+    /**
+     * 首页视图依赖数据初始化
+     */
+    const IndexViewInitialize = () => {
+        Promise.all([
+            userUseCase.loadUserProfile(),
+            userUseCase.loadUserConfig(),
+            loadUserThemeModeFromConfig(),
+            connectReminderSSE()
+        ])
+            .then(() => {
+                if (route.name !== 'index') return
+                const lastRoute = localStorage.getItem(LAST_VISITED_ROUTE_KEY)
+                router.replace(lastRoute || '/tasks')
+            })
+            .finally(() => {
+                isLoading.value = false
+            })
     }
+
+    // @return
+    return { isLoading, IndexViewInitialize }
 }
 
 export default useIndexView

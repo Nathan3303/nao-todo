@@ -34,9 +34,9 @@ class DialogManager {
 
     /**
      * 构造函数
-     * @param allowDuplicateRegistration 是否允许重复注册对话框
+     * @param allowDuplicateRegistration 是否允许重复注册对话框，默认允许
      */
-    constructor(private allowDuplicateRegistration: boolean = false) {}
+    constructor(private allowDuplicateRegistration: boolean = true) {}
 
     /**
      * 注册对话框生命周期函数接口

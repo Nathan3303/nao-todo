@@ -7,6 +7,7 @@ import type { GoAsync } from '@nao-todo/types/go'
 export interface AuthStore {
     setIsAuthenticated: (isAuthenticated: boolean) => void
     setUserToken: (userToken: string) => void
+    clearUserData: () => void
 }
 
 export class AuthUseCase {
@@ -101,9 +102,8 @@ export class AuthUseCase {
         if (err !== null) {
             return err
         }
-        // 2. 清除JWT
-        this.authStore.setIsAuthenticated(false)
-        this.authStore.setUserToken('')
+        // 2. 清除用户数据
+        this.authStore.clearUserData()
         // 3. 返回
         return null
     }

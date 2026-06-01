@@ -96,7 +96,7 @@ export const defaultBuiltInProjectPreferences: BuiltInProjectPreferenceRes[] = [
             limit: 20,
             isGivenUp: false
         }),
-        columns: JSON.stringify(defaultColumns)
+        columns: JSON.stringify({ ...defaultColumns, description: false })
     },
     {
         projectId: 'today',
@@ -151,7 +151,7 @@ export const defaultBuiltInProjectPreferences: BuiltInProjectPreferenceRes[] = [
             limit: 20,
             isGivenUp: false
         }),
-        columns: JSON.stringify({ ...defaultColumns, starMarkAt: true })
+        columns: JSON.stringify({ ...defaultColumns, starMarkAt: true, description: false })
     },
     {
         projectId: 'givenup',
@@ -162,7 +162,13 @@ export const defaultBuiltInProjectPreferences: BuiltInProjectPreferenceRes[] = [
             limit: 20,
             isDeleted: false
         }),
-        columns: JSON.stringify({ ...defaultColumns, givenUpAt: true })
+        columns: JSON.stringify({
+            ...defaultColumns,
+            givenUpAt: true,
+            description: false,
+            updatedAt: false,
+            endAt: false
+        })
     },
     {
         projectId: 'deleted',
@@ -174,7 +180,13 @@ export const defaultBuiltInProjectPreferences: BuiltInProjectPreferenceRes[] = [
             limit: 20,
             isGivenUp: false
         }),
-        columns: JSON.stringify({ ...defaultColumns, deletedAt: true })
+        columns: JSON.stringify({
+            ...defaultColumns,
+            deletedAt: true,
+            description: false,
+            updatedAt: false,
+            endAt: false
+        })
     },
     {
         projectId: 'overdue',
@@ -188,7 +200,12 @@ export const defaultBuiltInProjectPreferences: BuiltInProjectPreferenceRes[] = [
             isGivenUp: false,
             isDeleted: false
         }),
-        columns: JSON.stringify({ ...defaultColumns, endAt: true })
+        columns: JSON.stringify({
+            ...defaultColumns,
+            endAt: true,
+            description: false,
+            updatedAt: false
+        })
     }
 ]
 
