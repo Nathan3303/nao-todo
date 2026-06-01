@@ -19,16 +19,16 @@ const { error, task } = useTaskDetails(props, emit)
         :empty="!task"
         :error="!!error"
         empty-image-src="/images/todo.webp"
-        empty-image-size="4rem"
+        empty-image-size="8rem"
         error-image-src="/images/error.webp"
-        error-image-size="4rem"
+        error-image-size="8rem"
     >
         <!-- 错误状态 -->
         <template #error>
             <nue-text>加载失败, 请刷新页面重试</nue-text>
         </template>
         <template #empty>
-            <nue-text>选择任务以查看任务详细</nue-text>
+            <nue-text>选择待办任务以查看任务详情</nue-text>
         </template>
         <!-- 正常状态 -->
         <nue-container id="TasksTodoDetailsContainer" class="tasks-details-view">

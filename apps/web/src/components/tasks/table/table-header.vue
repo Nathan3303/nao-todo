@@ -17,6 +17,8 @@ const visibleColumns = computed(() => {
     return tableContext?.visibleColumns.value || []
 })
 
+const pinnedColumnKey = computed(() => tableContext?.pinnedColumn?.value)
+
 const handleDragStart = (e: DragEvent, index: number) => {
     e.dataTransfer?.setData('text/plain', index.toString())
     if (e.dataTransfer) {
@@ -105,15 +107,16 @@ const getColumnTypeClass = (key: string) => {
             class="todo-table__header__col"
             :class="[
                 column.key === 'name' ? 'col-first' : getColumnTypeClass(column.key),
+                { 'col-pinned': column.key === pinnedColumnKey },
                 { dragging: draggingIndex === index },
-                { 'drag-over': dragOverIndex === index }
+                { 'drag-over': dragOverIndex === index && column.key !== pinnedColumnKey }
             ]"
             :style="getColumnStyle(column)"
-            :draggable="column.key !== 'name'"
-            @dragstart="column.key !== 'name' ? handleDragStart($event, index) : null"
-            @dragover="column.key !== 'name' ? handleDragOver($event, index) : null"
+            :draggable="column.key !== 'name' && column.key !== pinnedColumnKey"
+            @dragstart="column.key !== 'name' && column.key !== pinnedColumnKey ? handleDragStart($event, index) : null"
+            @dragover="column.key !== 'name' && column.key !== pinnedColumnKey ? handleDragOver($event, index) : null"
             @dragleave="handleDragLeave"
-            @drop="column.key !== 'name' ? handleDrop($event, index) : null"
+            @drop="column.key !== 'name' && column.key !== pinnedColumnKey ? handleDrop($event, index) : null"
             @dragend="handleDragEnd"
         >
             <order-button :prop="column.key">

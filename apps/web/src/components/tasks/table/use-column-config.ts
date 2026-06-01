@@ -8,6 +8,14 @@ import type { TaskColumnOptions } from '@nao-todo/types'
 import { ref, computed } from 'vue'
 import { columnLabels } from '@nao-todo/infrastructure/consts/tasks'
 
+// @const 内置分类对应的固定列（固定列始终显示在 name 列之后）
+const PINNED_COLUMN_MAP: Record<string, string> = {
+    deleted: 'deletedAt',
+    overdue: 'endAt',
+    favourite: 'starMarkAt',
+    givenup: 'givenUpAt'
+}
+
 // @const localStorage 存储键前缀
 const STORAGE_KEY_PREFIX = 'TABLE_CONFIG'
 
@@ -48,6 +56,25 @@ const clearConfig = (tableId: string): void => {
     localStorage.removeItem(getStorageKey(tableId))
 }
 
+// @helper 将固定列移动到 name 列之后的固定位置
+const enforcePinnedColumn = (columns: TableColumnConfig[], tableId: string): TableColumnConfig[] => {
+    const pinnedKey = PINNED_COLUMN_MAP[tableId]
+    if (!pinnedKey) return columns
+
+    const nameIndex = columns.findIndex((c) => c.key === 'name')
+    const pinnedIndex = columns.findIndex((c) => c.key === pinnedKey)
+    if (pinnedIndex === -1) return columns
+
+    // 固定列应在 name 之后（索引 1）；若缺失 name 列则退到索引 0
+    const targetIndex = nameIndex === -1 ? 0 : 1
+    if (pinnedIndex === targetIndex) return columns
+
+    const newColumns = [...columns]
+    const [removed] = newColumns.splice(pinnedIndex, 1)
+    newColumns.splice(targetIndex, 0, removed as TableColumnConfig)
+    return newColumns
+}
+
 export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     {
         key: 'name',
@@ -61,6 +88,15 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     {
         key: 'deletedAt',
         label: columnLabels.value.deletedAt,
+        visible: false,
+        width: null,
+        minWidth: 100,
+        maxWidth: 200,
+        defaultWidth: 120
+    },
+    {
+        key: 'starMarkAt',
+        label: columnLabels.value.starMarkAt,
         visible: false,
         width: null,
         minWidth: 100,
@@ -186,6 +222,12 @@ export default (initialConfig?: TableLayoutConfig, tableId: string = 'default') 
         layoutConfig.value = { ...layoutConfig.value, columns }
     }
 
+    // 强制执行固定列排序
+    layoutConfig.value = {
+        ...layoutConfig.value,
+        columns: enforcePinnedColumn(layoutConfig.value.columns, tableId)
+    }
+
     const visibleColumns = computed(() => {
         return layoutConfig.value.columns.filter((col) => col.visible)
     })
@@ -217,6 +259,9 @@ export default (initialConfig?: TableLayoutConfig, tableId: string = 'default') 
         const toColumn = visibleCols[toIndex]
 
         if (fromColumn?.key === 'name' || toColumn?.key === 'name') return
+
+        const pinnedKey = PINNED_COLUMN_MAP[tableId]
+        if (pinnedKey && (fromColumn?.key === pinnedKey || toColumn?.key === pinnedKey)) return
 
         const newColumns = [...layoutConfig.value.columns]
         const fromColumnIndex = newColumns.findIndex((c) => c.key === fromColumn?.key)
@@ -280,7 +325,7 @@ export default (initialConfig?: TableLayoutConfig, tableId: string = 'default') 
 
         layoutConfig.value = {
             ...layoutConfig.value,
-            columns: newColumns as TableColumnConfig[]
+            columns: enforcePinnedColumn(newColumns as TableColumnConfig[], tableId)
         }
     }
 
@@ -293,7 +338,8 @@ export default (initialConfig?: TableLayoutConfig, tableId: string = 'default') 
         resizeColumn,
         updateColumnVisibility,
         resetConfig,
-        syncFromProps
+        syncFromProps,
+        pinnedColumn: computed(() => PINNED_COLUMN_MAP[tableId] || undefined)
     }
 }
 

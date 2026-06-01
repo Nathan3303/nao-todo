@@ -13,14 +13,17 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         useMultiSelect(props, emit)
 
     // @hook 列配置
+    const tableId = props.layoutConfig?.tableId
+    const initialConfig = props.layoutConfig?.columns?.length ? props.layoutConfig : undefined
     const {
         layoutConfig,
         visibleColumns,
         reorderColumns,
         resizeColumn,
         resetConfig,
-        syncFromProps
-    } = useColumnConfig(props.layoutConfig)
+        syncFromProps,
+        pinnedColumn
+    } = useColumnConfig(initialConfig, tableId)
 
     // @computed 计算标签显示数量 - 用于响应式变化时变化标签显示个数
     const tagBarClamped = computed(() => {
@@ -95,6 +98,7 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         tagBarClamped,
         layoutConfig: computed(() => layoutConfig.value),
         visibleColumns: computed(() => visibleColumns.value),
+        pinnedColumn,
         showTaskDetails,
         updateColumns: (key: keyof TaskColumnOptions, value: boolean) =>
             emit('updateColumns', key, value),

@@ -67,6 +67,7 @@ const {
                         :get-options="getTasksOptions"
                         :column-label-getter="getColumnLabel"
                         :project-name-getter="getProjectName"
+                        :layout-config="layoutConfig"
                         @show-task-details="showTaskDetails"
                         @update-columns="updateColumns"
                         @update-sort-options="updateSortOptions"

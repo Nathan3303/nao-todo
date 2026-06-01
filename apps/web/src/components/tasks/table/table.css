@@ -71,6 +71,12 @@
                         }
                     }
 
+                    &.col-pinned {
+                        cursor: default;
+                        background-color: var(--nue-primary-color-30);
+                        border-radius: var(--nue-primary-radius);
+                    }
+
                     &.dragging {
                         opacity: 0.5;
                     }
@@ -177,10 +183,7 @@
                                 font-size: var(--nue-text-xs);
                                 color: var(--nue-warning-color-50);
                                 line-height: 1;
-                                /* padding: 0.25rem 0.375rem */
-                                /* background-color: var(--nue-warning-color-20);
-                                border-radius: var(--nue-primary-radius);
-                                transform: scale(0.91); */
+                                flex: none;
                             }
 
                             .nue-text--todo-name {
@@ -195,16 +198,6 @@
                             overflow: hidden;
                             white-space: normal;
                             word-break: break-all;
-                        }
-
-                        .col-first__giveup-tag {
-                            font-size: 0.75rem;
-                            height: 18px;
-                            line-height: 18px;
-                            padding: 0 6px;
-                            border-radius: var(--nue-primary-radius);
-                            background-color: var(--nue-error-color-30);
-                            color: var(--nue-primary-color-0);
                         }
                     }
 

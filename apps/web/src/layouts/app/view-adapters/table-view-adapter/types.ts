@@ -2,6 +2,7 @@ import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import type { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 import type { GetTasksOptions, TaskColumnOptions, TagViewObject } from '@nao-todo/types'
 import type { ViewAdapterPropsBase } from '../types'
+import type { TableLayoutConfig } from '@/components/tasks/table/types'
 
 export type TableViewAdapterProps = {
     taskUseCase: TaskUseCase
@@ -9,5 +10,6 @@ export type TableViewAdapterProps = {
     subscriber: Subscriber
     tags: TagViewObject[]
     columns: TaskColumnOptions
+    layoutConfig?: TableLayoutConfig
 } & ViewAdapterPropsBase
 

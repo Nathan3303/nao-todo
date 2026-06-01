@@ -71,6 +71,7 @@ export type TaskTableContext = {
     tagBarClamped: ComputedRef<number>
     layoutConfig: ComputedRef<TableLayoutConfig | undefined>
     visibleColumns: ComputedRef<TableColumnConfig[]>
+    pinnedColumn: ComputedRef<string | undefined>
     // states: ComputedRef<TaskTableVO>
     showTaskDetails: (taskId: TaskViewObject['id'], idx: number) => void
     updateColumns: (key: keyof TaskColumnOptions, value: boolean) => void

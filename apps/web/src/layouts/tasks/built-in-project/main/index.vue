@@ -12,6 +12,7 @@ import {
 } from '@/layouts/app/view-adapters'
 import type { BuiltInProjectLayoutHandlers } from '@/infrastructure/handlers/tasks/built-in-project-handler'
 import type { BuiltInProjectViewContext } from '../types'
+import type { TableLayoutConfig } from '@/components/tasks/table/types'
 import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 import { t } from '@nao-todo/infrastructure/locales'
 
@@ -42,6 +43,17 @@ const {
 
 // @computed componentName
 const componentName = computed(() => `${props.viewType || 'table'}-view`)
+
+// @computed 表格布局配置（仅传递 tableId 用于分类固定列逻辑）
+const layoutConfig = computed<TableLayoutConfig | undefined>(() => {
+    if (!builtInProject.value) return undefined
+    return {
+        tableId: builtInProject.value.id,
+        columns: [],
+        version: '1.0.0',
+        updatedAt: new Date().toISOString()
+    }
+})
 
 // Handlers 代理
 const updateColumns: BuiltInProjectLayoutHandlers['updateColumns'] = (k, v) => {
@@ -105,6 +117,7 @@ onUnmounted(() => {
                 :subscriber="subscriber"
                 :tags="tags"
                 :columns="preference!.columns"
+                :layout-config="layoutConfig"
                 :get-column-label="getColumnLabel"
                 :get-project-name="getProjectName"
                 :show-task-details="showTaskDetails"
