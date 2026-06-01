@@ -1,23 +1,16 @@
 import type { Go } from '@nao-todo/types'
 import dayjs from 'dayjs'
 
+/**
+ * 星期几名称
+ */
 const WEEKDAY_NAMES = ['日', '一', '二', '三', '四', '五', '六']
 
+/**
+ * 相对日期规则
+ */
 type Rule = {
-    check: (
-        date: dayjs.Dayjs,
-        refs: {
-            today: dayjs.Dayjs
-            yesterday: dayjs.Dayjs
-            tomorrow: dayjs.Dayjs
-            dayAfterTomorrow: dayjs.Dayjs
-            thisWeekStart: dayjs.Dayjs
-            thisMonthStart: dayjs.Dayjs
-            thisYearStart: dayjs.Dayjs
-            nextWeekEnd: dayjs.Dayjs
-            nextMonthEnd: dayjs.Dayjs
-        }
-    ) => boolean
+    check: (date: dayjs.Dayjs, _nowDayjs: dayjs.Dayjs) => boolean
     format: (date: dayjs.Dayjs) => string
 }
 
@@ -25,41 +18,115 @@ type Rule = {
  * 相对日期规则
  */
 const rules: Rule[] = [
+    // 今天
     {
-        check: (d, { today }) => d.isSame(today, 'd'),
-        format: (d) => `今天 ${d.format('HH:mm')}`
+        check: (d, _nowDayjs) => d.isSame(_nowDayjs, 'd'),
+        format: (d) => d.format('今天 HH:mm')
     },
+    // 昨天
     {
-        check: (d, { yesterday }) => d.isSame(yesterday, 'd'),
-        format: (d) => `昨天 ${d.format('HH:mm')}`
+        check: (d, _nowDayjs) => {
+            if (d.isSame(_nowDayjs, 'd')) return false
+            const yesterdayStart = _nowDayjs.subtract(1, 'd').startOf('day')
+            const yesterdayEnd = _nowDayjs.subtract(1, 'd').endOf('day')
+            return d.isAfter(yesterdayStart) && d.isBefore(yesterdayEnd)
+        },
+        format: (d) => d.format('昨天 HH:mm')
     },
+    // 明天
     {
-        check: (d, { tomorrow }) => d.isSame(tomorrow, 'd'),
-        format: (d) => `明天 ${d.format('HH:mm')}`
+        check: (d, _nowDayjs) => {
+            if (d.isSame(_nowDayjs, 'd')) return false
+            const tomorrowStart = _nowDayjs.add(1, 'd').startOf('day')
+            const tomorrowEnd = _nowDayjs.add(1, 'd').endOf('day')
+            return d.isAfter(tomorrowStart) && d.isBefore(tomorrowEnd)
+        },
+        format: (d) => d.format('明天 HH:mm')
     },
+    // 后天
     {
-        check: (d, { dayAfterTomorrow }) => d.isSame(dayAfterTomorrow, 'd'),
-        format: (d) => `后天 ${d.format('HH:mm')}`
+        check: (d, _nowDayjs) => {
+            if (d.isSame(_nowDayjs, 'd')) return false
+            const dayAfterTomorrowStart = _nowDayjs.add(2, 'd').startOf('day')
+            const dayAfterTomorrowEnd = _nowDayjs.add(2, 'd').endOf('day')
+            return d.isAfter(dayAfterTomorrowStart) && d.isBefore(dayAfterTomorrowEnd)
+        },
+        format: (d) => d.format('后天 HH:mm')
     },
+    // 本周
     {
-        check: (d, { thisWeekStart }) => d.isBefore(thisWeekStart),
-        format: (d) => `上周${WEEKDAY_NAMES[d.day()]} ${d.format('HH:mm')}`
+        check: (d, _nowDayjs) => d.isSame(_nowDayjs, 'w'),
+        format: (d) => d.format(`本周${WEEKDAY_NAMES[d.day()]} HH:mm`)
     },
+    // 上周
     {
-        check: (d, { thisMonthStart }) => d.isBefore(thisMonthStart),
+        check: (d, _nowDayjs) => {
+            if (d.isSame(_nowDayjs, 'w')) return false
+            const lastWeekStart = _nowDayjs.subtract(1, 'w').startOf('week')
+            const lastWeekEnd = _nowDayjs.subtract(1, 'w').endOf('week')
+            return d.isAfter(lastWeekStart) && d.isBefore(lastWeekEnd)
+        },
+        format: (d) => d.format(`上周${WEEKDAY_NAMES[d.day()]} HH:mm`)
+    },
+    // 下周
+    {
+        check: (d, _nowDayjs) => {
+            if (d.isSame(_nowDayjs, 'w')) return false
+            const nextWeekStart = _nowDayjs.add(1, 'w').startOf('week')
+            const nextWeekEnd = _nowDayjs.add(1, 'w').endOf('week')
+            return d.isAfter(nextWeekStart) && d.isBefore(nextWeekEnd)
+        },
+        format: (d) => d.format(`下周${WEEKDAY_NAMES[d.day()]} HH:mm`)
+    },
+    // 本月
+    {
+        check: (d, _nowDayjs) => d.isSame(_nowDayjs, 'month'),
+        format: (d) => d.format('本月D日 HH:mm')
+    },
+    // 上个月
+    {
+        check: (d, _nowDayjs) => {
+            if (d.isSame(_nowDayjs, 'month')) return false
+            const lastMonthStart = _nowDayjs.subtract(1, 'month').startOf('month')
+            const lastMonthEnd = _nowDayjs.subtract(1, 'month').endOf('month')
+            return d.isAfter(lastMonthStart) && d.isBefore(lastMonthEnd)
+        },
+        format: (d) => d.format('上个月D日 HH:mm')
+    },
+    // 下个月
+    {
+        check: (d, _nowDayjs) => {
+            if (d.isSame(_nowDayjs, 'month')) return false
+            const nextMonthStart = _nowDayjs.add(1, 'month').startOf('month')
+            const nextMonthEnd = _nowDayjs.add(1, 'month').endOf('month')
+            return d.isAfter(nextMonthStart) && d.isBefore(nextMonthEnd)
+        },
+        format: (d) => d.format('下个月D日 HH:mm')
+    },
+    // 今年
+    {
+        check: (d, _nowDayjs) => d.isSame(_nowDayjs, 'y'),
         format: (d) => d.format('M月D日 HH:mm')
     },
+    // 去年
     {
-        check: (d, { thisYearStart }) => d.isBefore(thisYearStart),
-        format: (d) => d.format('M月D日 HH:mm')
+        check: (d, _nowDayjs) => {
+            if (d.isSame(_nowDayjs, 'y')) return false
+            const lastYearStart = _nowDayjs.subtract(1, 'y').startOf('day')
+            const lastYearEnd = _nowDayjs.subtract(1, 'y').endOf('day')
+            return d.isAfter(lastYearStart) && d.isBefore(lastYearEnd)
+        },
+        format: (d) => d.format('去年M月D日 HH:mm')
     },
+    // 明年
     {
-        check: (d, { nextWeekEnd }) => d.isBefore(nextWeekEnd),
-        format: (d) => `下周${WEEKDAY_NAMES[d.day()]} ${d.format('HH:mm')}`
-    },
-    {
-        check: (d, { nextMonthEnd }) => d.isBefore(nextMonthEnd),
-        format: (d) => d.format('M月D日 HH:mm')
+        check: (d, _nowDayjs) => {
+            if (d.isSame(_nowDayjs, 'y')) return false
+            const nextYearStart = _nowDayjs.add(1, 'y').startOf('day')
+            const nextYearEnd = _nowDayjs.add(1, 'y').endOf('day')
+            return d.isAfter(nextYearStart) && d.isBefore(nextYearEnd)
+        },
+        format: (d) => d.format('明年M月D日 HH:mm')
     }
 ]
 
@@ -78,22 +145,10 @@ const rules: Rule[] = [
 const date2RelativeDate = (dateStrOrDayJs: string | dayjs.Dayjs): Go<string> => {
     const date = typeof dateStrOrDayJs === 'string' ? dayjs(dateStrOrDayJs) : dateStrOrDayJs
     if (!date?.isValid()) return [null, '无效日期']
-    const now = dayjs()
-    const refs = {
-        today: now.startOf('d'),
-        yesterday: now.startOf('d').subtract(1, 'd'),
-        tomorrow: now.startOf('d').add(1, 'd'),
-        dayAfterTomorrow: now.startOf('d').add(2, 'd'),
-        thisWeekStart: now.startOf('w'),
-        thisMonthStart: now.startOf('m'),
-        thisYearStart: now.startOf('y'),
-        nextWeekEnd: now.add(1, 'w').endOf('w'),
-        nextMonthEnd: now.add(1, 'm').endOf('m')
-    }
+    const _nowDayjs = dayjs()
     for (const rule of rules) {
-        if (rule.check(date, refs)) {
-            return [rule.format(date), null]
-        }
+        if (!rule.check(date, _nowDayjs)) continue
+        return [rule.format(date), null]
     }
     return [date.format('YYYY年M月D日 HH:mm'), null]
 }
@@ -114,4 +169,5 @@ export const parse2RelativeDate = (dateStrOrDayJs: string | dayjs.Dayjs) => {
 }
 
 export default date2RelativeDate
+
 

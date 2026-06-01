@@ -27,11 +27,11 @@ const {
         <loading-error
             :loading="loading"
             :error="!!error"
-            error-image-size="8rem"
-            error-image-src="/images/error.png"
+            error-image-size="6rem"
+            error-image-src="/images/error.webp"
             :empty="!error && !tasks.length && !!noTaskError"
-            :empty-image-src="noTaskError?.image"
-            :empty-image-size="noTaskError?.imageSize"
+            :empty-image-src="noTaskError?.image || '/images/notaskhere.webp'"
+            :empty-image-size="noTaskError?.imageSize || '6rem'"
         >
             <template #error>
                 <nue-div vertical align="center">
