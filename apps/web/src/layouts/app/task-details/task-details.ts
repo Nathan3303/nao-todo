@@ -164,10 +164,7 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     const initialize = async (taskId?: TaskViewObject['id']) => {
         error.value = ''
         // 1. 判断任务 ID
-        if (!taskId) {
-            error.value = '选择任务以查看详情'
-            return
-        }
+        if (!taskId) return
         currentTaskId.value = taskId
         // 2. 并行获取检查事项和评论
         await Promise.all([loadEvents(taskId), loadComments(taskId)])

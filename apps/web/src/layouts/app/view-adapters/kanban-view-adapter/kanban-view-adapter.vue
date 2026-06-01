@@ -50,13 +50,15 @@ const {
                             <nue-text size="var(--nue-text-sm)">
                                 {{ noTaskError?.message ? t(noTaskError.message as any) : '' }}
                             </nue-text>
-                            <nue-button
-                                v-if="noTaskError?.isShowTaskCreateButton"
-                                theme="primary,small"
-                                @click="dialogManager.open(TASK_CREATOR_DIALOG_KEY)"
-                            >
-                                {{ t('task.createTask') }}
-                            </nue-button>
+                            <slot name="emptyActions">
+                                <nue-button
+                                    v-if="noTaskError?.isShowTaskCreateButton"
+                                    theme="primary,small"
+                                    @click="dialogManager.open(TASK_CREATOR_DIALOG_KEY)"
+                                >
+                                    {{ t('task.createTask') }}
+                                </nue-button>
+                            </slot>
                         </nue-div>
                     </template>
                     <task-kanban

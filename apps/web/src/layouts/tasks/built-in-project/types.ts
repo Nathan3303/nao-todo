@@ -10,7 +10,7 @@ import type {
 import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import type { BuiltInProjectLayoutHandlers } from '@/infrastructure/handlers/tasks/built-in-project-handler'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
-import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
+import DialogManager from '@/infrastructure/hooks/use-dialog-manager'
 
 export type BuiltInProjectViewProps = {
     projectId?: string
@@ -18,7 +18,6 @@ export type BuiltInProjectViewProps = {
 }
 
 export type BuiltInProjectViewContext = {
-    tasksViewContext: TasksViewContext
     taskUseCase: TaskUseCase
     builtInProject: ComputedRef<BuiltInProjectViewObject | undefined>
     preference: ComputedRef<BuiltInProjectPreferenceViewObject | undefined>
@@ -27,6 +26,7 @@ export type BuiltInProjectViewContext = {
     subscriber: Subscriber
     isHideCompletedAlready: ComputedRef<boolean>
     profile: ComputedRef<UserViewObject | undefined>
+    dialogManager: DialogManager
     getColumnLabel: (key: keyof TaskColumnOptions) => string
     getProjectName: (projectId: string) => string
     showTaskDetails: (taskId: TaskViewObject['id']) => void

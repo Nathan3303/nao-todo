@@ -12,6 +12,8 @@ import {
 } from '@/layouts/app/view-adapters'
 import type { BuiltInProjectLayoutHandlers } from '@/infrastructure/handlers/tasks/built-in-project-handler'
 import type { BuiltInProjectViewContext } from '../types'
+import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+import { t } from '@nao-todo/infrastructure/locales'
 
 defineOptions({
     name: 'TasksMainProjectContent',
@@ -34,7 +36,8 @@ const {
     showTaskDetails,
     builtInProjectHandlers,
     builtInProject,
-    profile
+    profile,
+    dialogManager
 } = inject<BuiltInProjectViewContext>(BUILT_IN_PROJECT_VIEW_CONTEXT_KEY)!
 
 // @computed componentName
@@ -64,6 +67,23 @@ const updatePreference = () => {
     NueMessage.success('保存成功')
 }
 
+// @method 获取空状态信息
+const getNoTaskError = (): ViewAdapterNoTaskError | undefined => {
+    if (!builtInProject.value) return undefined
+    return BUILT_IN_EMPTY_STATE_MAP[builtInProject.value.id]
+}
+
+// @method 创建任务
+const createTask = () => {
+    const createTaskOptions =
+        typeof builtInProject.value?.createTaskOptions === 'function'
+            ? builtInProject.value.createTaskOptions()
+            : builtInProject.value?.createTaskOptions
+    if (!createTaskOptions) return
+    console.log(createTaskOptions)
+    dialogManager.open(TASK_CREATOR_DIALOG_KEY, createTaskOptions)
+}
+
 // @onMounted
 onMounted(() => {
     subscriber.subscribe('UpdatePreference', updatePreference)
@@ -73,12 +93,6 @@ onMounted(() => {
 onUnmounted(() => {
     subscriber.unsubscribe('UpdatePreference', updatePreference)
 })
-
-// @method 获取空状态信息
-const getNoTaskError = (): ViewAdapterNoTaskError | undefined => {
-    if (!builtInProject.value) return undefined
-    return BUILT_IN_EMPTY_STATE_MAP[builtInProject.value.id]
-}
 </script>
 
 <template>
@@ -98,7 +112,17 @@ const getNoTaskError = (): ViewAdapterNoTaskError | undefined => {
                 :update-sort-options="updateSortOptions"
                 :clear-sort-options="() => builtInProjectHandlers.clearSortOption()"
                 :get-no-task-error="getNoTaskError"
-            />
+            >
+                <template #emptyActions>
+                    <nue-button
+                        v-if="getNoTaskError()?.isShowTaskCreateButton"
+                        theme="primary,small"
+                        @click="createTask"
+                    >
+                        {{ t('task.createTask') }}
+                    </nue-button>
+                </template>
+            </component>
         </nue-content>
     </nue-main>
 </template>
