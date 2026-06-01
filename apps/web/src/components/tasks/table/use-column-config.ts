@@ -8,6 +8,46 @@ import type { TaskColumnOptions } from '@nao-todo/types'
 import { ref, computed } from 'vue'
 import { columnLabels } from '@nao-todo/infrastructure/consts/tasks'
 
+// @const localStorage 存储键前缀
+const STORAGE_KEY_PREFIX = 'TABLE_CONFIG'
+
+// @helper 获取完整 localStorage 键名
+const getStorageKey = (tableId: string) => `${STORAGE_KEY_PREFIX}_${tableId}`
+
+// @type 已保存的表格配置
+type SavedTableConfig = {
+    widths: Record<string, number>
+    order: string[]
+}
+
+// @helper 从 localStorage 读取已保存的表格配置
+const readConfig = (tableId: string): SavedTableConfig | null => {
+    try {
+        const raw = localStorage.getItem(getStorageKey(tableId))
+        return raw ? JSON.parse(raw) : null
+    } catch {
+        return null
+    }
+}
+
+// @helper 将当前列配置写入 localStorage（仅保存宽度和排序）
+const writeConfig = (tableId: string, columns: TableColumnConfig[]): void => {
+    const widths: Record<string, number> = {}
+    for (const col of columns) {
+        if (col.width !== null) widths[col.key] = col.width
+    }
+    const config: SavedTableConfig = {
+        widths,
+        order: columns.map((c) => c.key)
+    }
+    localStorage.setItem(getStorageKey(tableId), JSON.stringify(config))
+}
+
+// @helper 清除 localStorage 中已保存的表格配置
+const clearConfig = (tableId: string): void => {
+    localStorage.removeItem(getStorageKey(tableId))
+}
+
 export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
     {
         key: 'name',
@@ -120,6 +160,32 @@ export const createDefaultTableConfig = (tableId: string): TableLayoutConfig => 
 export default (initialConfig?: TableLayoutConfig, tableId: string = 'default') => {
     const layoutConfig = ref<TableLayoutConfig>(initialConfig || createDefaultTableConfig(tableId))
 
+    // @init 从 localStorage 恢复已保存的列宽和列排序
+    const savedConfig = readConfig(tableId)
+    if (savedConfig) {
+        const columns = [...layoutConfig.value.columns]
+        // 恢复列宽：仅在合法范围内应用已保存的宽度
+        for (const col of columns) {
+            const savedWidth = savedConfig.widths[col.key]
+            if (savedWidth !== undefined && savedWidth >= col.minWidth && savedWidth <= col.maxWidth) {
+                col.width = savedWidth
+            }
+        }
+        // 恢复列排序：按已保存的顺序重排，未知列和缺失列保持默认位置
+        if (savedConfig.order?.length) {
+            const keyOrderMap = new Map(savedConfig.order.map((key, idx) => [key, idx]))
+            columns.sort((a, b) => {
+                const orderA = keyOrderMap.get(a.key)
+                const orderB = keyOrderMap.get(b.key)
+                if (orderA !== undefined && orderB !== undefined) return orderA - orderB
+                if (orderA !== undefined) return -1
+                if (orderB !== undefined) return 1
+                return 0
+            })
+        }
+        layoutConfig.value = { ...layoutConfig.value, columns }
+    }
+
     const visibleColumns = computed(() => {
         return layoutConfig.value.columns.filter((col) => col.visible)
     })
@@ -164,6 +230,8 @@ export default (initialConfig?: TableLayoutConfig, tableId: string = 'default') 
             columns: newColumns,
             updatedAt: new Date().toISOString()
         }
+        // 持久化列排序到 localStorage
+        writeConfig(tableId, newColumns)
     }
 
     const resizeColumn = (payload: ColumnResizePayload) => {
@@ -182,6 +250,8 @@ export default (initialConfig?: TableLayoutConfig, tableId: string = 'default') 
             columns: newColumns,
             updatedAt: new Date().toISOString()
         }
+        // 持久化列宽到 localStorage
+        writeConfig(tableId, newColumns)
     }
 
     const updateColumnVisibility = (key: keyof TaskColumnOptions, visible: boolean) => {
@@ -198,6 +268,8 @@ export default (initialConfig?: TableLayoutConfig, tableId: string = 'default') 
 
     const resetConfig = () => {
         layoutConfig.value = createDefaultTableConfig(tableId)
+        // 同步清除 localStorage 中已保存的表格配置
+        clearConfig(tableId)
     }
 
     const syncFromProps = (propsColumns: TaskColumnOptions) => {
