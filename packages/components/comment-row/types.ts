@@ -2,10 +2,8 @@ export type CommentRowPayload = {
     id: string
     content: string
     createdAt: string
-    user: {
-        nickname?: string
-        avatar?: string
-    }
+    nickname: string
+    avatar: string
 }
 
 export type CommentRowProps = {
@@ -18,3 +16,4 @@ export type CommentRowEmits = {
     (event: 'delete', commentId: string): void
     (event: 'edit', commentId: string, newContent: string): void
 }
+

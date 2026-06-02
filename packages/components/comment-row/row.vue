@@ -61,10 +61,10 @@ const handleCancelEdit = () => {
 
 <template>
     <nue-div theme="comment-row">
-        <nue-avatar :src="comment.user.avatar || ''" />
+        <nue-avatar :src="comment.avatar || ''" />
         <nue-div theme="details">
             <nue-div theme="title">
-                <nue-text theme="nickname">{{ comment.user.nickname }}</nue-text>
+                <nue-text theme="nickname">{{ comment.nickname }}</nue-text>
                 <nue-text theme="datetime">
                     {{ parse2RelativeDate(comment.createdAt) }}
                 </nue-text>

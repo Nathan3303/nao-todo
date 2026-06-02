@@ -17,10 +17,8 @@ const useCommentsStoreBase = () => {
             return {
                 ...newComment,
                 // 处理 avatar 链接
-                user: {
-                    avatar: `${env.baseURL}${newComment.user.avatar}?timestamp=${Date.now()}`,
-                    nickname: newComment.user.nickname
-                }
+                avatar: `${env.baseURL}${newComment.avatar}?timestamp=${Date.now()}`,
+                nickname: newComment.nickname
             }
         })
     }

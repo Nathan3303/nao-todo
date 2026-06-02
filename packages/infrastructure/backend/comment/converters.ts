@@ -1,12 +1,7 @@
-import { CommentEntity, CommentUserValueObject } from '@nao-todo/domain/comment'
+import { CommentEntity } from '@nao-todo/domain/comment'
 import type { CreateCommentRes, GetCommentRes, ListCommentRes } from '../types'
 
 export const getCommentRes2CommentEntity = (res: GetCommentRes): CommentEntity => {
-    const commentUserValueObject = new CommentUserValueObject(
-        res.id,
-        res.commentUser.nickname,
-        res.commentUser.avatar
-    )
     return new CommentEntity(
         res.id,
         res.taskId,
@@ -14,7 +9,8 @@ export const getCommentRes2CommentEntity = (res: GetCommentRes): CommentEntity =
         res.createdAt,
         res.attachments,
         res.isTopUp,
-        commentUserValueObject
+        res.avatar,
+        res.nickname
     )
 }
 

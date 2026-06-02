@@ -1,7 +1,5 @@
 // import { Go } from '@nao-todo/types'
 
-import { CommentUserValueObject } from "../valueobjects";
-
 /**
  * 评论实体
  * @description 评论的实体，包含评论的ID、任务ID、评论内容、创建时间、附件列表、是否是充值评论和评论用户信息
@@ -23,7 +21,8 @@ export class CommentEntity {
         public createdAt: string,
         public attachments: string[],
         public isTopUp: boolean,
-        public commentUser: CommentUserValueObject
+        public avatar: string,
+        public nickname: string
     ) {}
 
     /**
@@ -37,3 +36,4 @@ export class CommentEntity {
     //     return null
     // }
 }
+
