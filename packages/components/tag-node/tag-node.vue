@@ -51,7 +51,7 @@ const styles = computed(() => ({
 
     .tag-node__name {
         font-size: var(--tag-node-fs);
-        font-weight: bold;
+        /* font-weight: bold; */
     }
 
     .tag-node__delete-button {
