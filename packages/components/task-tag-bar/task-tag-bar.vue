@@ -1,58 +1,17 @@
 <script lang="ts" setup>
-import { computed } from 'vue'
 import { TagNode } from '../tag-node'
 import { ComboBox } from '../combo-box'
-import type { TagViewObject } from '@nao-todo/types'
-import type { ComboBoxOption } from '../combo-box/types'
+import { useTaskTagBar } from './use-task-tag-bar'
 import type { TaskTagBarEmits, TaskTagBarProps } from './types'
 
 defineOptions({ name: 'TaskTagBar' })
-const props = withDefaults(defineProps<TaskTagBarProps>(), {
-    clamped: Infinity,
-    small: false,
-    readonly: false
-})
 const emit = defineEmits<TaskTagBarEmits>()
-
-const styles = computed(() => ({
-    '--tag-bar-transform-origin': props.transformOrigin
-}))
-
-const comboBoxOptions = computed<ComboBoxOption[]>(() => {
-    return !props.taskTags
-        ? []
-        : props.tags.map((tag) => {
-              return {
-                  label: tag.name,
-                  value: tag.id,
-                  checked: props.taskTags ? props.taskTags.indexOf(tag.id) !== -1 : false
-              }
-          })
+const props = withDefaults(defineProps<TaskTagBarProps>(), {
+    clamped: Infinity
 })
 
-const selectedTags = computed<TagViewObject[]>(() => {
-    const _tags = props.tags.filter((tag) =>
-        props.taskTags ? props.taskTags.indexOf(tag.id) !== -1 : false
-    )
-    return _tags.slice(0, props.clamped)
-})
-
-const handleAddTag = async (tagId: unknown, { checked }: Partial<ComboBoxOption>) => {
-    if (!checked) {
-        await handleDropTag(tagId as string)
-        return
-    }
-    const taskTags = props.taskTags || []
-    const newTags = taskTags.filter((id) => id)
-    newTags.push(tagId as string)
-    emit('updateTags', newTags)
-}
-
-const handleDropTag = async (tagId: string) => {
-    const taskTags = props.taskTags || []
-    const newTags = taskTags.filter((id) => id !== tagId)
-    emit('updateTags', newTags as string[])
-}
+const { styles, comboBoxOptions, selectedTags, pushTagHandler, dropTagHandler, createTagHandler } =
+    useTaskTagBar(props, emit)
 </script>
 
 <template>
@@ -62,13 +21,13 @@ const handleDropTag = async (tagId: string) => {
             :key="tag.id"
             :readonly="readonly"
             :tag="tag"
-            @delete="handleDropTag"
+            @delete="dropTagHandler"
         />
         <tag-node
-            v-if="taskTags.length > clamped"
+            v-if="selectedTags.length > clamped"
             :tag="{
                 id: 'overflow-tag',
-                name: `+${taskTags.length - clamped}`,
+                name: `+${selectedTags.length - clamped}`,
                 color: '#a1a1a1'
             }"
             readonly
@@ -79,8 +38,14 @@ const handleDropTag = async (tagId: string) => {
             hide-counter
             hide-on-click
             trigger-title="标签"
-            @change="handleAddTag"
-        />
+            @change="pushTagHandler"
+        >
+            <template #emptyActions="{ filterText }">
+                <nue-button theme="ghost" icon="plus" @click="createTagHandler(filterText)">
+                    创建标签：{{ filterText }}
+                </nue-button>
+            </template>
+        </combo-box>
     </nue-div>
 </template>
 

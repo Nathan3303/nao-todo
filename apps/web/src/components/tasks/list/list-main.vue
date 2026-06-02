@@ -44,8 +44,8 @@ const {
                     <task-tag-bar
                         v-if="columns.tags && task.tags.length"
                         :clamped="tagBarClamped"
-                        :tags="tags"
-                        :task-tags="task.tags"
+                        :available-tags="tags"
+                        :task-tag-ids="task.tags"
                         readonly
                         small
                     />

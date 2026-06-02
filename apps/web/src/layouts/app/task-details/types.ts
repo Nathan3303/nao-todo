@@ -1,6 +1,7 @@
 import type { CommentHandler } from '@/infrastructure/handlers/tasks/comment-handler'
 import type { EventHandler } from '@/infrastructure/handlers/tasks/event-handler'
 import type { TaskHandler } from '@/infrastructure/handlers/tasks/task-handler'
+import DialogManager from '@/infrastructure/hooks/use-dialog-manager'
 import type {
     CreateEventViewObject,
     EventViewObject,
@@ -84,6 +85,7 @@ export type TaskDetailsMainContext = {
     eventsError: Ref<string>
     commentsLoading: Ref<boolean>
     commentsError: Ref<string>
+    dialogManager: DialogManager
     retryEvents: () => Promise<void>
     retryComments: () => Promise<void>
     makeEventToTask: (eventId: EventViewObject['id']) => void

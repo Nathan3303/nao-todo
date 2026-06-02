@@ -13,8 +13,9 @@ import type { TaskDetailsContext } from '../types'
 import type { TaskViewObject } from '@nao-todo/types'
 import { parse2RelativeDate } from '@nao-todo/infrastructure/utils'
 import { t } from '@nao-todo/infrastructure/locales'
+import { TAG_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys.js'
 
-const { vo, eventProgress, isCommenting, commentHandler, taskHandler, tags } =
+const { vo, eventProgress, isCommenting, commentHandler, taskHandler, tags, dialogManager } =
     inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
 
 const updateTaskState = (v: unknown) => {
@@ -116,7 +117,15 @@ const createCommentHandler = async (content: string) => {
                 <nue-div flex="1"></nue-div>
                 <!-- 任务详情标签 -->
                 <nue-div vertical style="padding: 1rem">
-                    <task-tag-bar :tags="tags" :task-tags="vo.tags" @update-tags="updateTaskTags" />
+                    <task-tag-bar
+                        :clamped="5"
+                        :available-tags="tags"
+                        :task-tag-ids="vo.tags"
+                        @update-tags="updateTaskTags"
+                        @create-tag="
+                            (name: string) => dialogManager.open(TAG_CREATOR_DIALOG_KEY, { name })
+                        "
+                    />
                 </nue-div>
                 <!-- 任务详情评论 -->
                 <details-main-comments />

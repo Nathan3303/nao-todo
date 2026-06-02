@@ -226,6 +226,7 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         eventsError,
         commentsLoading,
         commentsError,
+        dialogManager,
         retryEvents,
         retryComments,
         switchTaskDetails,

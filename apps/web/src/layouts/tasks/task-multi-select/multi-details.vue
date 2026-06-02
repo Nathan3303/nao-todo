@@ -38,8 +38,8 @@
                 </nue-div>
                 <nue-div flex="1" />
                 <task-tag-bar
-                    :tags="avalibleTags"
-                    :task-tags="commonData.tags"
+                    :available-tags="avalibleTags"
+                    :task-tag-ids="commonData.tags"
                     @update-tags="handleUpdateTags"
                 />
             </nue-div>

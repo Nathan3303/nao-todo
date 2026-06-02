@@ -5,6 +5,7 @@ import useTagCreator from './use-tag-creator'
 import { type DialogInstanceType, useDialogWrapper } from '@nao-todo/components'
 import { TAG_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 import { t } from '@nao-todo/infrastructure/locales'
+import { TagViewObject } from '@nao-todo/types'
 
 defineOptions({ name: 'TagCreator' })
 
@@ -26,8 +27,12 @@ const handleSubmit = async () => {
     if (ok) close()
 }
 
-const open = () => {
+const open = (payload: Partial<TagViewObject>) => {
     clearInputsValue()
+    if (payload) {
+        formData.value.name = payload.name || ''
+        formData.value.description = payload.description || ''
+    }
     visible.value = true
 }
 
@@ -50,7 +55,9 @@ onMounted(() => {
                     :is-name-empty="states.isNameEmpty"
                 />
                 <nue-div align="stretch" gap="8px" vertical>
-                    <nue-text color="gray" size="12px">{{ t('dialog.tagCreator.selectColor') }}</nue-text>
+                    <nue-text color="gray" size="12px">{{
+                        t('dialog.tagCreator.selectColor')
+                    }}</nue-text>
                     <tag-color-selector v-model="states.color" />
                 </nue-div>
             </nue-div>
@@ -69,3 +76,4 @@ onMounted(() => {
     min-width: min(20rem, 100vw);
 }
 </style>
+

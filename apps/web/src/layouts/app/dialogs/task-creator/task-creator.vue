@@ -13,7 +13,10 @@ import {
 } from '@nao-todo/infrastructure/consts/tasks'
 import type { CreateTaskViewObject, TaskViewObject } from '@nao-todo/types'
 import useTaskCreator from './use-task-creator'
-import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+import {
+    TAG_CREATOR_DIALOG_KEY,
+    TASK_CREATOR_DIALOG_KEY
+} from '@/infrastructure/constants/dialog-keys'
 import { t } from '@nao-todo/infrastructure/locales'
 import dayjs from 'dayjs'
 // import { parse2RelativeDate } from '@nao-todo/infrastructure/utils'
@@ -102,9 +105,6 @@ onMounted(() => {
                         @remind-change="handleUpdateRemind"
                         @update-all="handleUpdateEndAtAndRemind"
                     />
-                    <!-- <nue-text size="var(--nue-text-xs)" color="var(--nue-primary-color-600)">
-                        [ {{ parse2RelativeDate(states.endAt!) }} ]
-                    </nue-text> -->
                 </nue-div>
                 <nue-div wrap="wrap" gap=".5rem">
                     <task-selector
@@ -126,9 +126,12 @@ onMounted(() => {
                 </nue-div>
                 <task-tag-bar
                     :clamped="5"
-                    :tags="avaliableTags || []"
-                    :task-tags="states.tags || []"
+                    :available-tags="avaliableTags || []"
+                    :task-tag-ids="states.tags || []"
                     @update-tags="(_tags: any) => (states.tags = _tags)"
+                    @create-tag="
+                        (name: string) => dialogManager.open(TAG_CREATOR_DIALOG_KEY, { name })
+                    "
                 />
             </nue-div>
         </template>
