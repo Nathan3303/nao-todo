@@ -78,7 +78,7 @@ export const useTaskTagBar = (props: TaskTagBarProps, emit: TaskTagBarEmits) => 
         () => [props.availableTags, props.taskTagIds],
         () => {
             // 初始化选择器选项列表和已选择的任务标签列表
-            const { availableTags, taskTagIds } = props
+            const { availableTags, taskTagIds, clamped } = props
             selectedTags.value = []
             comboBoxOptions.value = []
             // 若可用标签列表或任务标签ID列表为空，则直接返回
@@ -97,8 +97,8 @@ export const useTaskTagBar = (props: TaskTagBarProps, emit: TaskTagBarEmits) => 
                     value: tag.id,
                     checked: isSelected
                 })
-                // 若当前标签未被选中，则跳过
-                if (!isSelected) continue
+                // 若当前标签未被选中，或者超出了溢出隐藏的范围，则跳过
+                if (!isSelected || selectedTags.value.length >= clamped!) continue
                 selectedTags.value.push(tag)
             }
         },

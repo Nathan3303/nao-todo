@@ -125,7 +125,6 @@ onMounted(() => {
                     />
                 </nue-div>
                 <task-tag-bar
-                    :clamped="5"
                     :available-tags="avaliableTags || []"
                     :task-tag-ids="states.tags || []"
                     @update-tags="(_tags: any) => (states.tags = _tags)"

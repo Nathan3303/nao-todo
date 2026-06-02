@@ -94,7 +94,7 @@ const handleFinish = () => {
                     v-if="columns?.tags && task.tags.length"
                     :available-tags="tags"
                     :task-tag-ids="task.tags"
-                    :clamped="2"
+                    :clamped="3"
                     transform-origin="left"
                     readonly
                     small

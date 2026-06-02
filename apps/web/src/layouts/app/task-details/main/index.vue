@@ -118,7 +118,6 @@ const createCommentHandler = async (content: string) => {
                 <!-- 任务详情标签 -->
                 <nue-div vertical style="padding: 1rem">
                     <task-tag-bar
-                        :clamped="5"
                         :available-tags="tags"
                         :task-tag-ids="vo.tags"
                         @update-tags="updateTaskTags"

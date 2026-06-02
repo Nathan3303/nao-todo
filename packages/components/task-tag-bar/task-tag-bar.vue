@@ -24,10 +24,10 @@ const { styles, comboBoxOptions, selectedTags, pushTagHandler, dropTagHandler, c
             @delete="dropTagHandler"
         />
         <tag-node
-            v-if="selectedTags.length > clamped"
+            v-if="selectedTags.length >= clamped"
             :tag="{
                 id: 'overflow-tag',
-                name: `+${selectedTags.length - clamped}`,
+                name: `+${taskTagIds.length - clamped}`,
                 color: '#a1a1a1'
             }"
             readonly
@@ -59,18 +59,14 @@ const { styles, comboBoxOptions, selectedTags, pushTagHandler, dropTagHandler, c
     align-items: center;
 
     &[data-small='true'] {
-        transform: scale(0.83);
         transform-origin: var(--tag-bar-transform-origin);
-        gap: 0.5rem;
+        gap: 0;
         width: fit-content;
 
         .tag-node {
             height: 20px;
             padding: 0 var(--nue-padding-xs);
-
-            .tag-node__name {
-                font-size: var(--nue-text-xs);
-            }
+            transform: scale(0.92);
         }
     }
 }
