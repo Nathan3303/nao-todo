@@ -33,6 +33,8 @@ const zhCN: LocaleMessages = {
     'nav.settingsProfile': '账户与个人信息',
     'nav.settingsPassword': '密码与安全',
     'nav.settingsApp': '应用设置',
+    'nav.search': '搜索',
+    'nav.pomodoro': '番茄钟',
 
     // Common
     'common.cancel': '取消',

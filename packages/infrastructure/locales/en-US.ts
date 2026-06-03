@@ -34,6 +34,8 @@ const enUS: LocaleMessages = {
     'nav.settingsProfile': 'Account & Profile',
     'nav.settingsPassword': 'Password & Security',
     'nav.settingsApp': 'App Settings',
+    'nav.search': 'Search',
+    'nav.pomodoro': 'Pomodoro',
 
     // Common
     'common.cancel': 'Cancel',

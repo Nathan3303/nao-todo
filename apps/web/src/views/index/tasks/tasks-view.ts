@@ -102,12 +102,15 @@ const useTasksView = () => {
     )
 
     // @hook 侧边栏宽度
-    const { width: asideWidth, updater: handleResizeAside } = useAsideWidth(256, 'ASIDE_WIDTH')
+    const { width: asideWidth, updater: handleResizeAside } = useAsideWidth(
+        256,
+        'TASKS_ASIDE_WIDTH'
+    )
 
     // @hook 任务详情面板宽度
     const { width: outlineWidth, updater: handleResizeOutline } = useAsideWidth(
         480,
-        'OUTLINE_WIDTH'
+        'TASKS_OUTLINE_WIDTH'
     )
 
     // @hook 对话框管理器（复用 IndexView 实例）

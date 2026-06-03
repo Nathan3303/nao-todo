@@ -30,6 +30,8 @@ export interface LocaleMessages {
     'nav.settingsProfile': string
     'nav.settingsPassword': string
     'nav.settingsApp': string
+    'nav.search': string
+    'nav.pomodoro': string
 
     // Common
     'common.cancel': string
