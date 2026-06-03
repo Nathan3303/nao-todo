@@ -1,3 +1,5 @@
+import { GoAsync } from "@nao-todo/types"
+
 export type CommentRowPayload = {
     id: string
     content: string
@@ -8,7 +10,7 @@ export type CommentRowPayload = {
 
 export type CommentRowProps = {
     comment: CommentRowPayload
-    updater?: (commentId: string, newContent: string) => Promise<void>
+    updater?: (commentId: string, newContent: string) => GoAsync<void>
     deleter?: (commentId: string) => Promise<void>
 }
 

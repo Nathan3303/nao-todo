@@ -32,7 +32,12 @@ const useCommentsStoreBase = () => {
     const addComment = (comment: CommentViewObject) => {
         const idx = comments.value.findIndex((c) => c.id === comment.id)
         if (idx !== -1) return
-        comments.value.push(comment)
+        comments.value.push({
+            ...comment,
+            // 处理 avatar 链接
+            avatar: `${env.baseURL}${comment.avatar}?timestamp=${Date.now()}`,
+            nickname: comment.nickname
+        })
     }
 
     // @method 更新评论
@@ -42,7 +47,11 @@ const useCommentsStoreBase = () => {
     ) => {
         const idx = comments.value.findIndex((c) => c.id === commentId)
         if (idx === -1) return
-        comments.value[idx] = { ...comments.value[idx], ...updateCommentViewObject, id: commentId }
+        comments.value[idx] = {
+            ...comments.value[idx],
+            ...updateCommentViewObject,
+            id: commentId
+        } as CommentViewObject
     }
 
     // @method 删除评论
