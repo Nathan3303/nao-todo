@@ -65,9 +65,20 @@
                     }
 
                     &.drag-over::before {
-                        content: '>|';
-                        margin-right: 1rem;
+                        content: '>';
+                        margin-right: 0.5rem;
                         color: var(--nue-warning-color-50);
+                    }
+
+                    &.drag-over::after {
+                        content: '<';
+                        margin-left: 0.5rem;
+                        color: var(--nue-warning-color-50);
+                    }
+
+                    &.col-pinned {
+                        /* cursor: not-allowed; */
+                        font-weight: bold;
                     }
 
                     .column-resizer {
@@ -147,9 +158,11 @@
                     }
 
                     .todo-table__main__col {
-                        overflow: visible;
+                        overflow: hidden;
                         align-items: center;
                         padding: var(--nue-padding-xs) var(--nue-padding-sm);
+                        flex: 0 0 auto;
+                        cursor: default;
 
                         &.col-first {
                             gap: 0.125rem;

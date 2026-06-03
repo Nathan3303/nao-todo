@@ -36,7 +36,7 @@ export const columnLabels = computed<Record<keyof TaskColumnOptions, string>>(()
  */
 export const defaultColumns: Record<keyof TaskColumnOptions, boolean> = {
     name: true,
-    description: true,
+    description: false,
     state: true,
     priority: true,
     startAt: false,

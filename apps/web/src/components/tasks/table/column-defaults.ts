@@ -1,5 +1,4 @@
 import type { TableColumnConfig, TableLayoutConfig } from './types'
-import type { TaskColumnOptions } from '@nao-todo/types'
 import { columnLabels } from '@nao-todo/infrastructure/consts/tasks'
 
 // @const 内置分类对应的固定列（固定列始终显示在 name 列之后）
@@ -47,72 +46,72 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
         label: columnLabels.value.deletedAt,
         visible: false,
         width: null,
-        minWidth: 160,
-        maxWidth: 240,
-        defaultWidth: 180
+        minWidth: 100,
+        maxWidth: 200,
+        defaultWidth: 120
     },
     {
         key: 'starMarkAt',
         label: columnLabels.value.starMarkAt,
         visible: false,
         width: null,
-        minWidth: 160,
-        maxWidth: 240,
-        defaultWidth: 180
+        minWidth: 100,
+        maxWidth: 200,
+        defaultWidth: 120
     },
     {
         key: 'givenUpAt',
         label: columnLabels.value.givenUpAt,
         visible: false,
         width: null,
-        minWidth: 160,
-        maxWidth: 240,
-        defaultWidth: 180
+        minWidth: 100,
+        maxWidth: 200,
+        defaultWidth: 120
     },
     {
         key: 'archivedAt',
         label: columnLabels.value.archivedAt,
         visible: false,
         width: null,
-        minWidth: 160,
-        maxWidth: 240,
-        defaultWidth: 180
+        minWidth: 100,
+        maxWidth: 200,
+        defaultWidth: 120
     },
     {
         key: 'createdAt',
         label: columnLabels.value.createdAt,
         visible: true,
         width: null,
-        minWidth: 160,
-        maxWidth: 240,
-        defaultWidth: 200
+        minWidth: 100,
+        maxWidth: 200,
+        defaultWidth: 120
     },
     {
         key: 'updatedAt',
         label: columnLabels.value.updatedAt,
         visible: true,
         width: null,
-        minWidth: 160,
-        maxWidth: 240,
-        defaultWidth: 200
+        minWidth: 100,
+        maxWidth: 200,
+        defaultWidth: 120
     },
     {
         key: 'startAt',
         label: columnLabels.value.startAt,
         visible: true,
         width: null,
-        minWidth: 160,
-        maxWidth: 240,
-        defaultWidth: 200
+        minWidth: 100,
+        maxWidth: 200,
+        defaultWidth: 120
     },
     {
         key: 'endAt',
         label: columnLabels.value.endAt,
         visible: true,
         width: null,
-        minWidth: 160,
-        maxWidth: 240,
-        defaultWidth: 200
+        minWidth: 100,
+        maxWidth: 200,
+        defaultWidth: 120
     },
     {
         key: 'priority',
@@ -120,8 +119,8 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
         visible: true,
         width: null,
         minWidth: 100,
-        maxWidth: 150,
-        defaultWidth: 120
+        maxWidth: 120,
+        defaultWidth: 110
     },
     {
         key: 'state',
@@ -129,8 +128,8 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
         visible: true,
         width: null,
         minWidth: 100,
-        maxWidth: 150,
-        defaultWidth: 120
+        maxWidth: 120,
+        defaultWidth: 110
     },
     {
         key: 'project',
@@ -151,3 +150,4 @@ export const createDefaultTableConfig = (tableId: string): TableLayoutConfig => 
 })
 
 export { PINNED_COLUMN_MAP, enforcePinnedColumn }
+
