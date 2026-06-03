@@ -1,18 +1,18 @@
 <script lang="ts" setup>
 import { AppAsideAdapter } from '@/layouts/app/'
-import { CalendarAside } from '@/layouts/calendar'
+// import { CalendarAside } from '@/layouts/calendar'
 import { useCalendarView } from './calendar-view'
-import { Loading as LoadingComp } from '@nao-todo/components'
+// import { Loading as LoadingComp } from '@nao-todo/components'
 
 defineOptions({ name: 'CalendarView' })
 
 const {
     init,
-    isLoading,
-    error,
+    // isLoading,
+    // error,
     isDisplayAside,
-    switchDisplayAside,
-    asideWidth,
+    // switchDisplayAside,
+    // asideWidth,
     handleResizeAside
 } = useCalendarView()
 
@@ -20,7 +20,7 @@ init()
 </script>
 
 <template>
-    <loading-comp v-if="isLoading" height="100%" />
+    <!-- <loading-comp v-if="isLoading" height="100%" />
     <nue-empty v-else-if="error" :description="error || '发生错误了'" />
     <nue-container v-else>
         <nue-main>
@@ -46,6 +46,27 @@ init()
                         </template>
                     </suspense>
                 </router-view>
+            </nue-content>
+        </nue-main>
+    </nue-container> -->
+    <nue-container>
+        <nue-main>
+            <app-aside-adapter
+                v-model:displayed="isDisplayAside"
+                width="auto"
+                min-width="unset"
+                max-width="350px"
+                @resize="handleResizeAside"
+            />
+            <nue-content fill>
+                <nue-empty
+                    image-src="/images/feature.webp"
+                    image-size="8rem"
+                    description="日历页面还在规划中，敬请期待"
+                    style="height: 100%"
+                >
+                    <nue-button theme="small,primary" @click="$router.back()">返回</nue-button>
+                </nue-empty>
             </nue-content>
         </nue-main>
     </nue-container>
