@@ -12,6 +12,7 @@ const props = defineProps<TableViewAdapterProps>()
 const {
     tasks,
     taskLoader,
+    adapterLoading,
     loading,
     error,
     noTaskError,
@@ -25,7 +26,7 @@ const {
 <template>
     <nue-container id="TasksMainTableContainer">
         <loading-error
-            :loading="loading"
+            :loading="adapterLoading"
             :error="!!error"
             error-image-size="6rem"
             error-image-src="/images/error.webp"
@@ -62,7 +63,7 @@ const {
                     <task-table
                         :tags="tags"
                         :tasks="tasks"
-                        :loading="taskLoader.states.loading"
+                        :loading="loading"
                         :columns="columns"
                         :get-options="getTasksOptions"
                         :column-label-getter="getColumnLabel"

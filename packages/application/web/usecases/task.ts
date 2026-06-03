@@ -64,7 +64,7 @@ export class TaskUseCase {
         const { taskEntities, pagination } = listResult
         const taskViewObjects = taskEntitiesToViewObjects(taskEntities)
         // 存储任务列表
-        this.store.setTasks(taskViewObjects)
+        this.store.addTasks(taskViewObjects)
         // 返回任务ID列表
         const taskIds = taskViewObjects.map((task) => task.id)
         return [{ taskIds, pagination }, null]

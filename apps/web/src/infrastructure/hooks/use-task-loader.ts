@@ -134,10 +134,10 @@ const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: GetTasksO
         if (states.disabled) return
         if (states.pagination.page !== 1) states.pagination.page = 1
         if (isReplace) {
-            loadAndReplace()
+            await loadAndReplace()
             return
         }
-        loadAndPush()
+        await loadAndPush()
     }
 
     /**
@@ -150,10 +150,10 @@ const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: GetTasksO
         if (states.isDone) return
         states.pagination.page = states.pagination.maxPage
         if (isReplace) {
-            loadAndReplace()
+            await loadAndReplace()
             return
         }
-        loadAndPush()
+        await loadAndPush()
     }
 
     /**
