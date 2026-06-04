@@ -106,7 +106,7 @@ const handleTagResort = (originalId: string, boundId: string, isBefore: boolean)
                     {{ link.title }}
                     <template #append>
                         <nue-text :clamped="1">
-                            {{ link.id === 'today' ? dayjs().format('M月DD日') : '' }}
+                            {{ link.id === 'today' ? dayjs().format('M月D日') : '' }}
                         </nue-text>
                     </template>
                 </nue-link>
