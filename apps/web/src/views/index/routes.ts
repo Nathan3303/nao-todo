@@ -8,6 +8,7 @@ export default {
     path: '/',
     name: 'index',
     component: () => import('./index.vue'),
-    children: [tasksRoutes, calendarRoutes, searchRoutes, pomodoroRoutes, settingsRoutes]
+    children: [tasksRoutes, calendarRoutes, pomodoroRoutes, searchRoutes, settingsRoutes]
 }
+
 

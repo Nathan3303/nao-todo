@@ -34,7 +34,7 @@ const useApp = () => {
 
     // @computed 应用侧边栏链接数组
     const routerLinks = [
-        { name: t('nav.tasks'), icon: 'square-check-fill', route: '/tasks', routeName: 'tasks' },
+        { name: t('nav.tasks'), icon: 'ntd-logo1', route: '/tasks', routeName: 'tasks' },
         {
             name: t('nav.calendar'),
             icon: 'ntd-calendar',
@@ -48,16 +48,16 @@ const useApp = () => {
             routeName: 'pomodoro'
         },
         {
+            name: t('nav.search'),
+            icon: 'ntd-search',
+            route: '/search',
+            routeName: 'search'
+        },
+        {
             name: t('nav.settings'),
             icon: 'settings-fill',
             route: '/settings',
             routeName: 'settings'
-        },
-        {
-            name: t('nav.search'),
-            icon: 'ntd-search2',
-            route: '/search',
-            routeName: 'search'
         }
     ]
 
