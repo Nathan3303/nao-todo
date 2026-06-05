@@ -13,7 +13,12 @@ import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-f
 import { inject, provide, ref, type Ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { TASK_REMINDER_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
-import type { SSEReminderEvent, TaskViewObject } from '@nao-todo/types'
+import type {
+    ProjectViewObject,
+    SSEReminderEvent,
+    TagViewObject,
+    TaskViewObject
+} from '@nao-todo/types'
 import { LAST_VISITED_ROUTE_KEY } from '@/router'
 
 /**
@@ -33,7 +38,9 @@ export type IndexViewContext = {
     switchDisplayAside: () => void
     isDisplayOutline: Ref<boolean>
     isUseFloatOutline: Ref<boolean>
-    showTaskDetailsDrawer: (taskId: TaskViewObject['id']) => void
+    showTaskDetails: (taskId: TaskViewObject['id']) => void
+    getProjectName: (projectId: ProjectViewObject['id']) => ProjectViewObject['name']
+    getTagColor: (tagId: TagViewObject['id']) => TagViewObject['color']
 }
 
 /**
@@ -107,8 +114,26 @@ const useIndexView = () => {
      * 显示任务详情抽屉
      * @param taskId 任务 ID
      */
-    const showTaskDetailsDrawer = (taskId: TaskViewObject['id']) => {
+    const showTaskDetails = (taskId: TaskViewObject['id']) => {
         router.push({ name: router.currentRoute.value.name, params: { taskId } })
+    }
+
+    /**
+     * 获取项目名称
+     * @param projectId 项目 ID
+     * @returns 项目名称
+     */
+    const getProjectName = (projectId: ProjectViewObject['id']) => {
+        return projectsStore.projects.find((p) => p.id === projectId)?.name || ''
+    }
+
+    /**
+     * 获取标签颜色
+     * @param tagId 标签 ID
+     * @returns 标签颜色
+     */
+    const getTagColor = (tagId: TagViewObject['id']) => {
+        return tagsStore.getTag(tagId)?.color || 'transparent'
     }
 
     /**
@@ -144,25 +169,6 @@ const useIndexView = () => {
     }
 
     /**
-     * 提供首页视图上下文
-     */
-    provide<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY, {
-        appContext,
-        userUseCase,
-        dialogManager,
-        projectUseCase,
-        tagUseCase,
-        taskUseCase,
-        subscriber,
-        isDisplayAside,
-        isUseFloatAside,
-        switchDisplayAside,
-        isDisplayOutline,
-        isUseFloatOutline,
-        showTaskDetailsDrawer
-    })
-
-    /**
      * 首页视图加载状态
      */
     const isLoading = ref(true)
@@ -186,6 +192,27 @@ const useIndexView = () => {
                 isLoading.value = false
             })
     }
+
+    /**
+     * 提供首页视图上下文
+     */
+    provide<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY, {
+        appContext,
+        userUseCase,
+        dialogManager,
+        projectUseCase,
+        tagUseCase,
+        taskUseCase,
+        subscriber,
+        isDisplayAside,
+        isUseFloatAside,
+        switchDisplayAside,
+        isDisplayOutline,
+        isUseFloatOutline,
+        showTaskDetails,
+        getProjectName,
+        getTagColor
+    })
 
     // @return
     return { isLoading, IndexViewInitialize }

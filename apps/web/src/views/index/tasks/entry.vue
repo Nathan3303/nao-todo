@@ -44,9 +44,9 @@ onMounted(() => init())
                         </suspense>
                     </router-view>
                 </nue-content>
-                <!-- 详情适配器 -->
-                <task-details-adapter />
             </loading-error>
+            <!-- 详情适配器 -->
+            <task-details-adapter />
         </nue-main>
     </nue-container>
 </template>

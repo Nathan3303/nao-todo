@@ -1,27 +1,30 @@
-import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import useCommentHandler from '@/infrastructure/handlers/tasks/comment-handler'
 import useEventHandler from '@/infrastructure/handlers/tasks/event-handler'
 import useTaskHandler from '@/infrastructure/handlers/tasks/task-handler'
 import { useProjectsStore, useTagsStore, useTaskDetailsStore, useTasksStore } from '@/stores'
-import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
 import { CommentUseCase } from '@nao-todo/application/web/usecases/comment'
 import { EventUseCase } from '@nao-todo/application/web/usecases/event'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import type { EventViewObject, TaskViewObject } from '@nao-todo/types'
 import { storeToRefs } from 'pinia'
 import { computed, inject, provide, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { TASK_DETAILS_CONTEXT_KEY } from './constants'
-import type { TaskDetailsContext, TaskDetailsEmits, TaskDetailsProps } from './types'
+import { TASK_DETAILS_CONTEXT_KEY, TASK_DETAILS_PRE_CONTEXT_KEY } from './constants'
 import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+import type { EventViewObject, TaskViewObject } from '@nao-todo/types'
+import type {
+    TaskDetailsContext,
+    TaskDetailsEmits,
+    TaskDetailsPreContext,
+    TaskDetailsProps
+} from './types'
 
 const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
-    // @viewContext TasksView context
+    // @viewContext TaskDetailsPre context
     const { taskUseCase, subscriber, dialogManager, getProjectName } =
-        inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
-    const router = useRouter()
+        inject<TaskDetailsPreContext>(TASK_DETAILS_PRE_CONTEXT_KEY)!
 
     // @dataStore
+    const router = useRouter()
     const projectStore = useProjectsStore()
     const tagStore = useTagsStore()
     const taskStore = useTasksStore()

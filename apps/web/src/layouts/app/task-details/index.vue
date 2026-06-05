@@ -2,15 +2,16 @@
 import { computed, inject } from 'vue'
 import TasksViewDetails from './details.vue'
 import TasksViewDetailsDrawer from './float-details.vue'
-import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
+import { TASK_DETAILS_PRE_CONTEXT_KEY } from './constants'
 import { useRoute } from 'vue-router'
+import { TaskDetailsPreContext } from './types'
 
 defineOptions({ name: 'TasksViewDetailsAdapter' })
 
 const route = useRoute()
-const { isUseFloatOutline, outlineWidth, handleResizeOutline } =
-    inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
+const { isUseFloatOutline, outlineWidth, handleResizeOutline } = inject<TaskDetailsPreContext>(
+    TASK_DETAILS_PRE_CONTEXT_KEY
+)!
 
 const taskId = computed<string>(() => route.params.taskId as string)
 </script>
@@ -28,3 +29,4 @@ const taskId = computed<string>(() => route.params.taskId as string)
 </template>
 
 <style scoped></style>
+

@@ -1,26 +1,30 @@
+import { inject, provide, ref, type Ref } from 'vue'
 import { BuiltInProjectUseCase } from '@nao-todo/application/web/usecases/built-in-project'
 import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
-import useResponsiveAside from '@/infrastructure/hooks/use-responsive-aside'
 import { columnLabels } from '@nao-todo/infrastructure/consts/tasks'
-import { useRouter } from 'vue-router'
-import { type DialogManager } from '@/infrastructure/hooks/use-dialog-manager'
+import useResponsiveAside from '@/infrastructure/hooks/use-responsive-aside'
 import useAsideWidth from '@nao-todo/infrastructure/hooks/use-aside-width'
-import { inject, provide, ref, type Ref } from 'vue'
 import {
     APP_CONTEXT_KEY,
     INDEX_VIEW_CONTEXT_KEY,
     TASKS_VIEW_CONTEXT_KEY
 } from '@/infrastructure/constants/context-keys'
-import { useBuiltInProjectsStore, useProjectsStore, useTagsStore } from '@/stores'
-import { type Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import type { AppContext } from '@/app'
-import type { IndexViewContext } from '@/views/index/index-view'
-import type { TagViewObject, TaskViewObject } from '@nao-todo/types'
+import { useBuiltInProjectsStore } from '@/stores'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { ProjectUseCase } from '@nao-todo/application/web/usecases/project'
 import { TagUseCase } from '@nao-todo/application/web/usecases/tag'
 import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
+import type { DialogManager } from '@/infrastructure/hooks/use-dialog-manager'
+import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
+import type { AppContext } from '@/app'
+import type { IndexViewContext } from '@/views/index/index-view'
+import type { TagViewObject, TaskViewObject } from '@nao-todo/types'
+import { TaskDetailsPreContext } from '@/layouts/app/task-details/types'
+import { TASK_DETAILS_PRE_CONTEXT_KEY } from '@/layouts/app/task-details/constants'
 
+/**
+ * 任务视图上下文
+ */
 export type TasksViewContext = {
     appContext: AppContext
     builtInProjectUseCase: BuiltInProjectUseCase
@@ -44,6 +48,9 @@ export type TasksViewContext = {
     switchDisplayAside: () => void
 }
 
+/**
+ * 任务视图 Hook
+ */
 const useTasksView = () => {
     // @context App 上下文
     const appContext = inject<AppContext>(APP_CONTEXT_KEY)!
@@ -51,13 +58,8 @@ const useTasksView = () => {
     // @context IndexView 上下文（共享 dialogManager、useCase 等）
     const indexViewContext = inject<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY)!
 
-    // @context 路由上下文
-    const router = useRouter()
-
     // @stores
     const builtInProjectsStore = useBuiltInProjectsStore()
-    const projectsStore = useProjectsStore()
-    const tagsStore = useTagsStore()
 
     // @usecases
     const builtInProjectUseCase = BuiltInProjectUseCase.create(builtInProjectsStore)
@@ -117,23 +119,8 @@ const useTasksView = () => {
     const dialogManager = indexViewContext.dialogManager
 
     // @method 获取列选项标识
-    const getColumnLabel = (key: string): string =>
-        (columnLabels.value as Record<string, string>)[key] || ''
-
-    // @method 显示任务详情（面板）
-    const showTaskDetails = (taskId: TaskViewObject['id']) => {
-        if (!taskId) return
-        router.push({ params: { taskId } })
-    }
-
-    // @method 获取标签颜色
-    const getTagColor = (tagId: TagViewObject['id']): string => {
-        return tagsStore.getTag(tagId)?.color || 'transparent'
-    }
-
-    // @method 获取清单名称
-    const getProjectName = (projectId: string) => {
-        return projectsStore.getProject(projectId)?.name || '收集箱'
+    const getColumnLabel = (key: string): string => {
+        return (columnLabels.value as Record<string, string>)[key] || ''
     }
 
     // @provide Tasks view context
@@ -154,10 +141,22 @@ const useTasksView = () => {
         handleResizeAside,
         handleResizeOutline,
         getColumnLabel,
-        showTaskDetails,
-        getTagColor,
-        getProjectName,
+        showTaskDetails: indexViewContext.showTaskDetails,
+        getTagColor: indexViewContext.getTagColor,
+        getProjectName: indexViewContext.getProjectName,
         switchDisplayAside
+    })
+
+    // @provide TaskDetailsPreContext
+    provide<TaskDetailsPreContext>(TASK_DETAILS_PRE_CONTEXT_KEY, {
+        isDisplayOutline,
+        isUseFloatOutline,
+        outlineWidth,
+        handleResizeOutline,
+        taskUseCase,
+        subscriber,
+        dialogManager,
+        getProjectName: indexViewContext.getProjectName
     })
 
     // @returns

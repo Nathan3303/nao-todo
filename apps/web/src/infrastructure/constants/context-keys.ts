@@ -15,3 +15,6 @@ export const SETTINGS_VIEW_CONTEXT_KEY = 'IndexSettingsViewContext'
 
 // Index view -> Calendar view
 export const CALENDAR_VIEW_CONTEXT_KEY = 'IndexCalendarViewContext'
+
+// Index view -> Pomodoro view context
+export const POMODORO_VIEW_CONTEXT_KEY = 'IndexPomodoroViewContext'
