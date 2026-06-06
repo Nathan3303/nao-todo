@@ -120,6 +120,16 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
         records.value.push(record)
     }
 
+    // @action 设置当前关联任务 ID
+    const setCurrentTaskId = (taskId: string | null) => {
+        currentTaskId.value = taskId
+    }
+
+    // @action 设置当前关联任务名称
+    const setCurrentTaskName = (taskName: string) => {
+        currentTaskName.value = taskName
+    }
+
     // @action 更新记录笔记
     const updateNote = (recordId: string, note: string) => {
         const record = records.value.find((r) => r.id === recordId)
@@ -193,8 +203,11 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
         autoRest,
         setAutoStartNextFocusSession,
         setAutoStartNextFocusSessionCount,
-        setAutoRest
+        setAutoRest,
+        setCurrentTaskId,
+        setCurrentTaskName
     }
 })
 
 export default usePomodoroStore
+

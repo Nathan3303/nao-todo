@@ -23,6 +23,11 @@ export interface UseTimerPageOptions {
 export const useTimerPage = (options: UseTimerPageOptions) => {
     const { taskId, dialogManager } = options
 
+    /**
+     * stores 访问
+     * @store PomodoroStore 专注记录管理
+     * @store TasksStore 任务管理
+     */
     const pomodoroStore = usePomodoroStore()
     const tasksStore = useTasksStore()
 
@@ -32,7 +37,10 @@ export const useTimerPage = (options: UseTimerPageOptions) => {
         return tasksStore.getTask(taskId.value)?.name ?? ''
     })
 
-    // 开始新的专注会话（生成 record ID 和开始时间）
+    /**
+     * 开始新的专注会话
+     * @description 生成新的专注记录 ID 和开始时间，设置为当前会话
+     */
     const startNewFocusSession = () => {
         const recordId = nanoid()
         const startAt = new Date().toISOString()
@@ -128,6 +136,10 @@ export const useTimerPage = (options: UseTimerPageOptions) => {
         timer.start()
     }
 
+    /**
+     * 调整专注时间
+     * @param delta 调整时间（秒）
+     */
     const handleAdjustTime = (delta: number) => {
         timer.adjustTime(delta)
         // 空闲状态下的调整需要同步回 store，作为后续专注会话的默认时长
@@ -136,11 +148,17 @@ export const useTimerPage = (options: UseTimerPageOptions) => {
         }
     }
 
+    /**
+     * 重置专注时间
+     */
     const handleReset = () => {
         timer.reset()
         pomodoroStore.clearCurrentSession()
     }
 
+    /**
+     * 打开专注钟设置弹窗
+     */
     const handleOpenSettings = () => {
         dialogManager.open(POMODORO_TIMER_SETTING_DIALOG_KEY, null, () => {
             timer.updateConfig({
@@ -152,6 +170,9 @@ export const useTimerPage = (options: UseTimerPageOptions) => {
         })
     }
 
+    /**
+     * 保存专注记录笔记
+     */
     const handleSaveNote = () => {
         if (pomodoroStore.currentRecordId) {
             pomodoroStore.updateNote(pomodoroStore.currentRecordId, pomodoroStore.noteText)
@@ -167,6 +188,7 @@ export const useTimerPage = (options: UseTimerPageOptions) => {
         pomodoroStore.records.filter((r) => dayjs(r.startAt).isSame(dayjs(), 'day'))
     )
 
+    // @returns
     return {
         timer,
         taskName,
@@ -182,3 +204,4 @@ export const useTimerPage = (options: UseTimerPageOptions) => {
         handleSaveNote
     }
 }
+

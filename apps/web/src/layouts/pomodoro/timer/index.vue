@@ -4,6 +4,7 @@ import { PomodoroTimerComp, PomodoroRecordsComp, PomodoroNotesComp } from '@/com
 import type { PomodoroViewContext } from '@/views/index/pomodoro/pomodoro-view'
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { useTimerPage } from './use-timer-page'
+import { PomodoroTaskSelectDropdown } from '../task-select-dropdown'
 
 defineOptions({ name: 'PomodoroTimer' })
 
@@ -41,11 +42,13 @@ const {
                     </nue-div>
                     <nue-div theme="actions">
                         <nue-button icon="plus" theme="icon,ghost" />
-                        <nue-button
-                            icon="setting"
-                            theme="icon,ghost"
-                            @click="handleOpenSettings"
-                        />
+                        <nue-tooltip content="计时器设置" size="small">
+                            <nue-button
+                                icon="setting"
+                                theme="icon,ghost"
+                                @click="handleOpenSettings"
+                            />
+                        </nue-tooltip>
                     </nue-div>
                 </nue-div>
                 <nue-text theme="description">
@@ -69,7 +72,11 @@ const {
                     @reset="handleReset"
                     @skip="timer.skip()"
                     @adjust-time="handleAdjustTime($event)"
-                />
+                >
+                    <template #BelowTimeString>
+                        <pomodoro-task-select-dropdown />
+                    </template>
+                </pomodoro-timer-comp>
                 <pomodoro-records-comp style="grid-area: today" :records="todayRecords" />
                 <pomodoro-notes-comp
                     style="grid-area: note"
@@ -127,8 +134,8 @@ const {
 
     > .nue-main .nue-content {
         display: grid;
-        grid-template-columns: min(24rem, 1fr) auto;
-        grid-template-rows: 24rem auto;
+        grid-template-columns: minmax(24rem, 3fr) 4fr;
+        grid-template-rows: minmax(24rem, 3fr) 4fr;
         grid-template-areas: 'timer today' 'note note';
         height: 100%;
         overflow: hidden;
@@ -136,7 +143,7 @@ const {
 
         @media (max-width: 480px) {
             grid-template-columns: 1fr;
-            grid-template-rows: 24rem auto 24rem;
+            grid-template-rows: minmax(24rem, 3fr) 4fr;
             grid-template-areas: 'timer' 'note' 'today';
             gap: var(--nue-gap-df);
         }

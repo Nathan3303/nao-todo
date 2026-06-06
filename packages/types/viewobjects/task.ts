@@ -78,7 +78,7 @@ export type GetTasksOptions = {
     isStarMarked?: TaskViewObject['isStarMarked']
     isGivenUp?: TaskViewObject['isGivenUp']
     sort?: GetTasksSortOptions
-    relativeDate?: 'today' | 'tomorrow' | 'week' | '-today' | 'month'
+    relativeDate?: 'today' | 'tomorrow' | 'week' | '-today' | 'month' | '-overdue'
     tagId?: string
     page?: number
     limit?: number

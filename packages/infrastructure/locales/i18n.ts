@@ -6,29 +6,30 @@ import enUS from './en-US'
 export type SupportedLocale = 'zh-CN' | 'en-US'
 
 const messages: Record<SupportedLocale, LocaleMessages> = {
-  'zh-CN': zhCN,
-  'en-US': enUS
+    'zh-CN': zhCN,
+    'en-US': enUS
 }
 
 export const i18n = createI18n({
-  legacy: false,
-  locale: 'zh-CN',
-  fallbackLocale: 'zh-CN',
-  messages
+    legacy: false,
+    locale: 'zh-CN',
+    fallbackLocale: 'zh-CN',
+    messages
 })
 
 export const setLocale = (locale: SupportedLocale) => {
-  i18n.global.locale.value = locale
+    i18n.global.locale.value = locale
 }
 
 export const getLocale = () => {
-  return i18n.global.locale.value
+    return i18n.global.locale.value
 }
 
 // 兼容层：保持原有的 t 函数 API 不变
 export const t = (key: LocaleKey, params?: Record<string, string | number>) => {
-  return i18n.global.t(key, params)
+    return i18n.global.t(key, params)
 }
 
 // 导出 locale 计算属性保持兼容
 export const locale = i18n.global.locale
+

@@ -9,5 +9,8 @@ export type ListViewAdapterProps = {
     subscriber: Subscriber
     tags: TagViewObject[]
     columns: TaskColumnOptions
-} & ViewAdapterPropsBase
+} & Omit<
+    ViewAdapterPropsBase,
+    'getColumnLabel' | 'updateColumns' | 'updateSortOptions' | 'clearSortOptions'
+>
 

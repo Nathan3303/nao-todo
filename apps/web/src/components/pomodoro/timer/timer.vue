@@ -55,7 +55,9 @@ const phaseLabel = computed(() => {
 
 // @computed 进度条颜色：休息阶段使用较浅色
 const progressColor = computed(() =>
-    (props.phase === 'break' || props.phase === 'longBreak') ? 'var(--nue-primary-color-500)' : 'var(--nue-primary-color-900)'
+    props.phase === 'break' || props.phase === 'longBreak'
+        ? 'var(--nue-primary-color-500)'
+        : 'var(--nue-primary-color-900)'
 )
 
 // @computed 是否空闲
@@ -115,7 +117,9 @@ const handleAdjustTime = (delta: number) => {
                     theme="icon,ghost"
                     @click="handleAdjustTime(TIME_ADJUST_STEP)"
                 />
-                <nue-text theme="name">{{ taskName || '关联待办任务' }} ></nue-text>
+                <nue-div theme="below-time-string">
+                    <slot name="BelowTimeString"> {{ taskName || '关联待办任务' }} > </slot>
+                </nue-div>
             </nue-div>
         </nue-div>
         <nue-div theme="actions">
@@ -173,7 +177,7 @@ const handleAdjustTime = (delta: number) => {
                 transition: opacity 0.3s ease-in-out;
             }
 
-            .nue-text--name {
+            .nue-div--below-time-string {
                 font-size: var(--nue-text-sm);
                 color: var(--nue-primary-color-600);
                 position: absolute;

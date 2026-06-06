@@ -11,7 +11,6 @@ export type TaskListProps = {
     tasks: TaskViewObject[]
     columns: TaskColumnOptions
     sortOptions: GetTasksSortOptions
-    columnLabelGetter: (key: string) => string
     projectNameGetter: (projectId: string) => string
     disabledNextPage: boolean
     loading: boolean
@@ -43,16 +42,9 @@ export type TaskListContext = {
     tasks: ComputedRef<TaskViewObject[]>
     tagBarClamped: ComputedRef<number>
     showTaskDetails: (taskId: TaskViewObject['id'], idx: number) => void
-    updateColumns: (key: keyof TaskColumnOptions, value: boolean) => void
-    updateSortOptions: (
-        field: GetTasksSortOptions['field'],
-        order: GetTasksSortOptions['order']
-    ) => void
-    clearSortOptions: () => void
     deleteTask: (taskId: TaskViewObject['id']) => void
     restoreTask: (taskId: TaskViewObject['id']) => void
     deleteTaskPermanently: (taskId: TaskViewObject['id']) => void
-    getColumnLabel: (key: string) => string
     isTaskExpired: (task: TaskViewObject) => boolean
     isInMultiSelectRange: (idx: number) => boolean
     showMultiSelectPanel: (idx: number) => void

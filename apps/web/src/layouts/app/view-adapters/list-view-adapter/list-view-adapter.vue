@@ -12,7 +12,7 @@ const props = defineProps<ListViewAdapterProps>()
 const {
     tasks,
     taskLoader,
-    loading,
+    viewLoading,
     sortOptions,
     error,
     noTaskError,
@@ -27,7 +27,7 @@ const {
         <nue-main>
             <nue-content fill style="overflow: hidden">
                 <loading-error
-                    :loading="loading"
+                    :loading="viewLoading"
                     :error="!!error"
                     error-image-size="6rem"
                     error-image-src="/images/error.webp"
@@ -48,7 +48,7 @@ const {
                     <template #empty>
                         <nue-div vertical align="center">
                             <nue-text size="var(--nue-text-sm)">
-                                {{ noTaskError?.message ? t(noTaskError.message as any) : '' }}
+                                {{ noTaskError?.message ? t(noTaskError?.message as never) : '' }}
                             </nue-text>
                             <slot name="emptyActions">
                                 <nue-button
@@ -69,16 +69,16 @@ const {
                         :disabled-next-page="taskLoader.states.isDone"
                         :columns="columns"
                         :sort-options="sortOptions"
-                        :column-label-getter="getColumnLabel"
                         :project-name-getter="getProjectName"
                         @show-task-details="showTaskDetails"
-                        @update-columns="updateColumns"
-                        @update-sort-options="updateSortOptions"
-                        @clear-sort-options="clearSortOptions"
                         @delete-task="(taskId) => taskUseCase.removeTask(taskId)"
                         @restore-task="(taskId) => taskUseCase.restoreTask(taskId)"
                         @next-page="handleNextPage"
-                    />
+                    >
+                        <template #actions="{ task }">
+                            <slot name="actions" :task="task" />
+                        </template>
+                    </task-list>
                 </loading-error>
             </nue-content>
         </nue-main>
@@ -95,6 +95,10 @@ const {
         padding: 0;
         border: none;
         height: auto;
+    }
+
+    > .nue-main {
+        overflow: auto;
     }
 }
 </style>

@@ -1,5 +1,5 @@
 import { computed, provide } from 'vue'
-import type { GetTasksSortOptions, TaskColumnOptions, TaskViewObject } from '@nao-todo/types'
+import type { TaskColumnOptions, TaskViewObject } from '@nao-todo/types'
 import type { TaskListContext, TaskListEmits, TaskListProps } from './types'
 import useMultiSelect from './use-multi-select'
 import { isTaskExpired } from '@nao-todo/infrastructure/utils/date-checker'
@@ -51,17 +51,9 @@ export const useTaskList = (props: TaskListProps, emit: TaskListEmits) => {
         tasks: computed(() => props.tasks),
         tagBarClamped,
         showTaskDetails,
-        updateColumns: (key: keyof TaskColumnOptions, value: boolean) =>
-            emit('updateColumns', key, value),
-        updateSortOptions: (
-            field: GetTasksSortOptions['field'],
-            order: GetTasksSortOptions['order']
-        ) => emit('updateSortOptions', field, order),
-        clearSortOptions: () => emit('clearSortOptions'),
         deleteTask: (taskId: TaskViewObject['id']) => emit('deleteTask', taskId),
         restoreTask: (taskId: TaskViewObject['id']) => emit('restoreTask', taskId),
         deleteTaskPermanently: handleDeleteTaskPermanently,
-        getColumnLabel: props.columnLabelGetter,
         isTaskExpired,
         isInMultiSelectRange,
         showMultiSelectPanel,

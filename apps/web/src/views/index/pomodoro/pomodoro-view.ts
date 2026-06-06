@@ -12,6 +12,8 @@ import { TaskDetailsPreContext } from '@/layouts/app/task-details/types'
 import { TASK_DETAILS_PRE_CONTEXT_KEY } from '@/layouts/app/task-details/constants'
 import { IndexViewContext } from '../index-view'
 import DialogManager from '@/infrastructure/hooks/use-dialog-manager'
+import { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
+import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 
 /**
  * 番茄钟视图上下文
@@ -22,6 +24,10 @@ export type PomodoroViewContext = {
     handleResizeAside: (width: number) => void
     switchDisplayAside: () => void
     dialogManager: DialogManager
+    taskUseCase: TaskUseCase
+    subscriber: Subscriber
+    getProjectName: (projectId: string) => string
+    showTaskDetails: (taskId: string) => void
 }
 
 /**
@@ -35,7 +41,7 @@ export const usePomodoroView = () => {
      * @inject INDEX_VIEW_CONTEXT_KEY - 主要视图上下文
      */
     const { responsiveFlag } = inject<AppContext>(APP_CONTEXT_KEY)!
-    const { taskUseCase, dialogManager, subscriber, getProjectName } =
+    const { taskUseCase, dialogManager, subscriber, getProjectName, showTaskDetails } =
         inject<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY)!
 
     /**
@@ -86,7 +92,11 @@ export const usePomodoroView = () => {
         isDisplayAside,
         handleResizeAside,
         switchDisplayAside,
-        dialogManager
+        dialogManager,
+        taskUseCase,
+        subscriber,
+        getProjectName,
+        showTaskDetails
     })
 
     /**
