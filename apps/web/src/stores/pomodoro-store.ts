@@ -1,57 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { nanoid } from 'nanoid'
-import dayjs from 'dayjs'
 import type { PomodoroRecordViewObject } from '@/components/pomodoro/timer/types'
-
-/**
- * 生成 mock 专注记录数据
- */
-function initMockRecords(): PomodoroRecordViewObject[] {
-    const today = dayjs().format('YYYY-MM-DD')
-    return [
-        {
-            id: nanoid(),
-            taskId: 'mock-task-1',
-            name: '完成项目架构设计文档',
-            type: 'timer',
-            startAt: `${today}T09:00:00.000Z`,
-            endAt: `${today}T09:25:00.000Z`,
-            duration: 25 * 60,
-            note: '完成了整体架构图和数据流设计'
-        },
-        {
-            id: nanoid(),
-            taskId: 'mock-task-2',
-            name: '修复登录页面样式问题',
-            type: 'timer',
-            startAt: `${today}T09:30:00.000Z`,
-            endAt: `${today}T09:55:00.000Z`,
-            duration: 25 * 60,
-            note: ''
-        },
-        {
-            id: nanoid(),
-            taskId: '',
-            name: '未关联任务',
-            type: 'timer',
-            startAt: `${today}T10:30:00.000Z`,
-            endAt: `${today}T10:45:00.000Z`,
-            duration: 15 * 60,
-            note: '临时专注，回顾上午工作进度'
-        },
-        {
-            id: nanoid(),
-            taskId: 'mock-task-1',
-            name: '完成项目架构设计文档',
-            type: 'timer',
-            startAt: `${today}T14:00:00.000Z`,
-            endAt: `${today}T14:25:00.000Z`,
-            duration: 25 * 60,
-            note: '补充了接口定义和错误处理方案'
-        }
-    ]
-}
 
 const usePomodoroStore = defineStore('PomodoroStore', () => {
     // @state 当前关联任务 ID
@@ -67,7 +16,7 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
     const currentRecordStartAt = ref<string | null>(null)
 
     // @state 专注记录列表
-    const records = ref<PomodoroRecordViewObject[]>(initMockRecords())
+    const records = ref<PomodoroRecordViewObject[]>([])
 
     // @state 当前笔记文本
     const noteText = ref('')
@@ -92,6 +41,12 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
 
     // @state 自动休息
     const autoRest = ref(true)
+
+    // @action 选择专注任务（由 selectTask 事件触发）
+    const selectTask = (taskId: string | null, taskName: string) => {
+        currentTaskId.value = taskId
+        currentTaskName.value = taskName
+    }
 
     // @action 设置当前会话
     const setCurrentSession = (
@@ -118,16 +73,6 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
     // @action 添加专注记录
     const addRecord = (record: PomodoroRecordViewObject) => {
         records.value.push(record)
-    }
-
-    // @action 设置当前关联任务 ID
-    const setCurrentTaskId = (taskId: string | null) => {
-        currentTaskId.value = taskId
-    }
-
-    // @action 设置当前关联任务名称
-    const setCurrentTaskName = (taskName: string) => {
-        currentTaskName.value = taskName
     }
 
     // @action 更新记录笔记
@@ -189,6 +134,7 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
         breakDuration,
         longBreakDuration,
         sessionsUntilLongBreak,
+        selectTask,
         setCurrentSession,
         clearCurrentSession,
         addRecord,
@@ -203,9 +149,7 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
         autoRest,
         setAutoStartNextFocusSession,
         setAutoStartNextFocusSessionCount,
-        setAutoRest,
-        setCurrentTaskId,
-        setCurrentTaskName
+        setAutoRest
     }
 })
 

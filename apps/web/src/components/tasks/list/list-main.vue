@@ -17,11 +17,12 @@ const {
     tags,
     columns,
     tagBarClamped,
+    small,
     isInMultiSelectRange,
     getProjectName,
-    showTaskDetails,
     showMultiSelectPanel,
-    deleteOrRestore
+    deleteOrRestore,
+    handleClickTask
 } = inject<TaskListContext>(TASK_LIST_CONTEXT_KEY)!
 </script>
 
@@ -30,11 +31,12 @@ const {
         <nue-div
             v-for="(task, idx) in tasks"
             theme="todo-list-main__row"
+            :class="{'todo-list-main__row--small': small}"
             :key="task.id"
             :data-done="task.state === 'done'"
             :data-selected="isInMultiSelectRange(idx)"
             :data-deleted="task.isDeleted"
-            @click.stop.exact="showTaskDetails(task.id, idx)"
+            @click.stop.exact="handleClickTask(task, idx)"
             @click.stop.shift.exact="showMultiSelectPanel(idx)"
         >
             <nue-div theme="todo-list-main__row__first">

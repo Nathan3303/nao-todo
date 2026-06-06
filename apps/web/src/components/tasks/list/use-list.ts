@@ -43,6 +43,12 @@ export const useTaskList = (props: TaskListProps, emit: TaskListEmits) => {
         emit('deleteTaskPermanently', taskId)
     }
 
+    // @method 处理任务点击事件
+    const handleClickTask = (task: TaskViewObject, taskIdx: number) => {
+        showTaskDetails(task.id, taskIdx)
+        emit('task-clicked', task)
+    }
+
     // @provide 任务列表上下文
     provide<TaskListContext>(TASK_LIST_CONTEXT_KEY, {
         columns: computed(() => props.columns),
@@ -50,6 +56,7 @@ export const useTaskList = (props: TaskListProps, emit: TaskListEmits) => {
         tags: computed(() => props.tags),
         tasks: computed(() => props.tasks),
         tagBarClamped,
+        small: computed(() => props.small || false),
         showTaskDetails,
         deleteTask: (taskId: TaskViewObject['id']) => emit('deleteTask', taskId),
         restoreTask: (taskId: TaskViewObject['id']) => emit('restoreTask', taskId),
@@ -59,7 +66,8 @@ export const useTaskList = (props: TaskListProps, emit: TaskListEmits) => {
         showMultiSelectPanel,
         clearMultiSelect,
         getProjectName: props.projectNameGetter,
-        deleteOrRestore
+        deleteOrRestore,
+        handleClickTask,
     })
 }
 

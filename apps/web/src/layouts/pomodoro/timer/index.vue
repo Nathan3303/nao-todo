@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, toRef } from 'vue'
+import { inject } from 'vue'
 import { PomodoroTimerComp, PomodoroRecordsComp, PomodoroNotesComp } from '@/components/pomodoro'
 import type { PomodoroViewContext } from '@/views/index/pomodoro/pomodoro-view'
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
@@ -8,14 +8,13 @@ import { PomodoroTaskSelectDropdown } from '../task-select-dropdown'
 
 defineOptions({ name: 'PomodoroTimer' })
 
-const props = defineProps<{ taskId?: string }>()
-
 const { isDisplayAside, switchDisplayAside, dialogManager } =
     inject<PomodoroViewContext>(POMODORO_VIEW_CONTEXT_KEY)!
 
 const {
     timer,
     taskName,
+    handleSelectTask,
     todayRecords,
     noteText,
     setNoteText,
@@ -24,7 +23,7 @@ const {
     handleReset,
     handleOpenSettings,
     handleSaveNote
-} = useTimerPage({ taskId: toRef(props, 'taskId'), dialogManager })
+} = useTimerPage(dialogManager)
 </script>
 
 <template>
@@ -74,7 +73,13 @@ const {
                     @adjust-time="handleAdjustTime($event)"
                 >
                     <template #BelowTimeString>
-                        <pomodoro-task-select-dropdown />
+                        <pomodoro-task-select-dropdown @select-task="handleSelectTask">
+                            <template #default="{ open }">
+                                <nue-link @click="open">
+                                    {{ taskName || '未选择专注任务' }}
+                                </nue-link>
+                            </template>
+                        </pomodoro-task-select-dropdown>
                     </template>
                 </pomodoro-timer-comp>
                 <pomodoro-records-comp style="grid-area: today" :records="todayRecords" />

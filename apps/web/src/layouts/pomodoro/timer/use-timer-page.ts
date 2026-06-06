@@ -1,45 +1,41 @@
-import { computed, type Ref } from 'vue'
+import { computed } from 'vue'
 import { nanoid } from 'nanoid'
 import dayjs from 'dayjs'
 import { NueMessage } from 'nue-ui'
 import type { PomodoroRecordViewObject } from '@/components/pomodoro/timer/types'
 import { useTimer } from '@/components/pomodoro/timer/use-timer'
 import usePomodoroStore from '@/stores/pomodoro-store'
-import useTasksStore from '@/stores/tasks-store'
 import { POMODORO_TIMER_SETTING_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 import type DialogManager from '@/infrastructure/hooks/use-dialog-manager'
+import type { TaskViewObject } from '@nao-todo/types'
 import { MIN_FOCUS_SECONDS, MAX_FOCUS_SECONDS } from './constants'
 import { formatMinutes, notify } from './utils'
-
-export interface UseTimerPageOptions {
-    taskId: Ref<string | undefined>
-    dialogManager: DialogManager
-}
 
 /**
  * 番茄钟计时器页面 composable
  * @description 封装计时器的 store 访问、会话管理、事件回调与所有交互处理逻辑
  */
-export const useTimerPage = (options: UseTimerPageOptions) => {
-    const { taskId, dialogManager } = options
-
+export const useTimerPage = (dialogManager: DialogManager) => {
     /**
-     * stores 访问
-     * @store PomodoroStore 专注记录管理
-     * @store TasksStore 任务管理
+     * store 访问
+     * @store PomodoroStore 专注记录管理（当前选中任务、会话、记录的统一数据源）
      */
     const pomodoroStore = usePomodoroStore()
-    const tasksStore = useTasksStore()
 
-    // @computed 根据 taskId 获取任务名称
-    const taskName = computed(() => {
-        if (!taskId.value) return ''
-        return tasksStore.getTask(taskId.value)?.name ?? ''
-    })
+    // @computed 当前选中任务名称（由 selectTask 事件 → store.selectTask 驱动）
+    const taskName = computed(() => pomodoroStore.currentTaskName)
+
+    /**
+     * 处理任务选择
+     * @description 由 PomodoroTaskSelectDropdown 的 selectTask 事件触发，写入 store
+     */
+    const handleSelectTask = (task: TaskViewObject) => {
+        pomodoroStore.selectTask(task.id, task.name)
+    }
 
     /**
      * 开始新的专注会话
-     * @description 生成新的专注记录 ID 和开始时间，设置为当前会话
+     * @description 从 store 读取当前选中任务，生成新的专注记录 ID 和开始时间
      */
     const startNewFocusSession = () => {
         const recordId = nanoid()
@@ -131,7 +127,12 @@ export const useTimerPage = (options: UseTimerPageOptions) => {
         }
         const recordId = nanoid()
         const startAt = new Date().toISOString()
-        pomodoroStore.setCurrentSession(taskId.value ?? null, taskName.value, recordId, startAt)
+        pomodoroStore.setCurrentSession(
+            pomodoroStore.currentTaskId,
+            pomodoroStore.currentTaskName,
+            recordId,
+            startAt
+        )
         pomodoroStore.setNoteText('')
         timer.start()
     }
@@ -192,6 +193,7 @@ export const useTimerPage = (options: UseTimerPageOptions) => {
     return {
         timer,
         taskName,
+        handleSelectTask,
         todayRecords,
         /** 当前笔记文本（绑定到 pomodoro-notes-comp） */
         noteText: computed(() => pomodoroStore.noteText),

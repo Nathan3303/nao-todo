@@ -71,6 +71,26 @@
                     transition: opacity 0.16s ease;
                     width: 100%;
 
+                    &.todo-list-main__row--small {
+                        padding: var(--nue-padding-xs) var(--nue-padding-sm);
+                        gap: var(--nue-gap-2xs);
+
+                        .nue-div.nue-div--todo-list-main__row__attrs {
+                            width: 100%;
+                            align-items: center;
+                            justify-content: flex-start;
+                            gap: 0.5rem 1.25rem;
+                            font-size: var(--nue-text-xs);
+                            flex-wrap: wrap;
+
+                            .nue-div--basic-info {
+                                width: fit-content;
+                                flex: 0 0 auto;
+                                font-size: var(--nue-text-xs);
+                            }
+                        }
+                    }
+
                     &:hover {
                         border: 1px solid var(--nue-primary-color-500);
                     }

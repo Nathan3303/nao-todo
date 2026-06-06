@@ -15,11 +15,13 @@ export type TaskListProps = {
     disabledNextPage: boolean
     loading: boolean
     error: string | null
+    small?: boolean
     // taskLister: TaskApp['list']
 }
 
 export type TaskListEmits = {
     (e: 'showTaskDetails', taskId: TaskViewObject['id']): void
+    (e: 'task-clicked', task: TaskViewObject): void
     (e: 'showMultiSelectPanel', payload: TaskListMultiSelectPayload): void
     (e: 'updateColumns', key: keyof TaskColumnOptions, value: boolean): void
     (
@@ -41,6 +43,7 @@ export type TaskListContext = {
     tags: ComputedRef<TagViewObject[]>
     tasks: ComputedRef<TaskViewObject[]>
     tagBarClamped: ComputedRef<number>
+    small: ComputedRef<boolean>
     showTaskDetails: (taskId: TaskViewObject['id'], idx: number) => void
     deleteTask: (taskId: TaskViewObject['id']) => void
     restoreTask: (taskId: TaskViewObject['id']) => void
@@ -51,6 +54,7 @@ export type TaskListContext = {
     clearMultiSelect: (fullCLear: boolean) => void
     getProjectName: (projectId: string) => string
     deleteOrRestore: (taskId: TaskViewObject['id'], isDelete: boolean) => void
+    handleClickTask: (task: TaskViewObject, taskIdx: number) => void
 }
 
 export type TaskListMultiSelectPayload = {

@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import { usePomodoroStore } from '@/stores'
 import { useTaskSelectDropdown } from './use-task-select-dropdown'
 import { ListViewAdapter } from '@/layouts/app'
 import { NueDropdown, NueInput } from 'nue-ui'
-import { storeToRefs } from 'pinia'
 import { nextTick, ref } from 'vue'
+import { TaskViewObject } from '@nao-todo/types'
+import type { PomodoroTaskSelectDropdownEmits } from './types'
 
 defineOptions({ name: 'PomodoroTaskSelectDropdown' })
 
-// 番茄数据仓库
-const pomodoroStore = usePomodoroStore()
-const { currentTaskName } = storeToRefs(pomodoroStore)
+// @emits
+const emit = defineEmits<PomodoroTaskSelectDropdownEmits>()
 
 // 元素引用
 const inputRef = ref<InstanceType<typeof NueInput>>()
@@ -23,18 +22,17 @@ const {
     taskUseCase,
     subscriber,
     getProjectName,
-    showTaskDetails,
     getNoTaskError,
-    refreshData
+    refreshData,
+    showTaskDetails
 } = useTaskSelectDropdown()
 
 /**
  * 选择任务
- * @description 触发选择任务事件，将任务 ID 传递给父组件
+ * @description 通过 selectTask 事件将所选任务传递给父组件
  */
-const handleSelectTask = (taskId: string, taskName: string) => {
-    pomodoroStore.setCurrentTaskId(taskId)
-    pomodoroStore.setCurrentTaskName(taskName)
+const handleSelectTask = (task: TaskViewObject) => {
+    emit('selectTask', task)
     dropdownRef.value?.close()
 }
 </script>
@@ -50,9 +48,7 @@ const handleSelectTask = (taskId: string, taskName: string) => {
         <!-- 触发元素 -->
         <template #trigger="{ trigger }">
             <slot :open="trigger">
-                <nue-link @click="trigger">
-                    {{ currentTaskName || '未选择专注任务' }}
-                </nue-link>
+                <nue-link @click="trigger">未选择专注任务</nue-link>
             </slot>
         </template>
         <!-- 下拉菜单 -->
@@ -60,9 +56,9 @@ const handleSelectTask = (taskId: string, taskName: string) => {
             <!-- 下拉菜单标题 -->
             <nue-header>
                 <nue-text theme="title">选择专注任务</nue-text>
-                <nue-text theme="description"
-                    >选择想要关联的任务，用于在专注结束后创建专注记录</nue-text
-                >
+                <nue-text theme="description">
+                    选择想要关联的任务，用于在专注结束后创建专注记录
+                </nue-text>
             </nue-header>
             <!-- 下拉菜单内容 -->
             <nue-main>
@@ -81,21 +77,22 @@ const handleSelectTask = (taskId: string, taskName: string) => {
                 <!-- 下拉菜单任务列表 -->
                 <nue-content>
                     <list-view-adapter
+                        small
                         :task-use-case="taskUseCase"
                         :get-tasks-options="viewPreference.getTasksOptions"
                         :subscriber="subscriber"
                         :tags="tags"
                         :columns="viewPreference.columns"
                         :get-project-name="getProjectName"
-                        :show-task-details="showTaskDetails"
+                        :task-clicked="handleSelectTask"
                         :get-no-task-error="getNoTaskError"
                         style="overflow: hidden"
                     >
                         <template #actions="{ task }">
                             <nue-button
-                                icon="check"
+                                icon="eye"
                                 theme="pure"
-                                @click.stop="handleSelectTask(task.id, task.name)"
+                                @click.stop="showTaskDetails(task.id)"
                             />
                         </template>
                     </list-view-adapter>
@@ -110,7 +107,7 @@ const handleSelectTask = (taskId: string, taskName: string) => {
     display: flex;
     flex-direction: column;
     width: 24rem;
-    height: 48rem;
+    height: 40rem;
     overflow: auto;
     padding: 0;
 }
