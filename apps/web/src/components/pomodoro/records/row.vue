@@ -1,11 +1,35 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import dayjs from 'dayjs'
+import type { PomodoroRecordViewObject } from '../timer/types'
+
 defineOptions({ name: 'PomodoroRecordsCompRow' })
+
+// @props
+const props = defineProps<{
+    record: PomodoroRecordViewObject
+}>()
+
+// @computed 格式化时长显示
+const displayDuration = computed(() => {
+    const start = dayjs(props.record.startAt)
+    const end = dayjs(props.record.endAt)
+    const startStr = start.format('HH:mm')
+    const endStr = end.format('HH:mm')
+    const minutes = Math.round(props.record.duration / 60)
+    if (minutes < 60) {
+        return `${startStr} - ${endStr} , ${minutes}m`
+    }
+    const hours = Math.floor(minutes / 60)
+    const mins = minutes % 60
+    return `${startStr} - ${endStr} , ${hours}h ${mins}m`
+})
 </script>
 
 <template>
     <nue-div theme="card,pomodoro-records-row">
-        <nue-text theme="title" :clamped="1">专注所关联任务的名称</nue-text>
-        <nue-text theme="duration">今天 , 09:30 - 10:00 , 25m</nue-text>
+        <nue-text theme="title" :clamped="1">{{ record.name }}</nue-text>
+        <nue-text theme="duration">{{ displayDuration }}</nue-text>
     </nue-div>
 </template>
 
@@ -29,9 +53,7 @@ defineOptions({ name: 'PomodoroRecordsCompRow' })
     > .nue-text--duration {
         font-size: var(--nue-text-sm);
         color: var(--nue-primary-color-500);
-        /* margin: 0 var(--nue-padding-xs); */
         flex: none;
     }
 }
 </style>
-

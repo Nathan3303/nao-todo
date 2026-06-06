@@ -1,9 +1,24 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed } from 'vue'
 
 defineOptions({ name: 'PomodoroNotesComp' })
 
-const noteText = ref('')
+// @props
+const props = defineProps<{
+    noteText: string
+}>()
+
+// @emits
+const emit = defineEmits<{
+    save: []
+    'update:noteText': [value: string]
+}>()
+
+// 通过 computed get/set 实现双向绑定
+const localNote = computed({
+    get: () => props.noteText,
+    set: (value: string) => emit('update:noteText', value)
+})
 </script>
 
 <template>
@@ -14,14 +29,14 @@ const noteText = ref('')
         </nue-div>
         <nue-textarea
             theme="inputer,fix-padding"
-            v-model="noteText"
+            v-model="localNote"
             placeholder="写下你的专注笔记 ..."
             maxlength="1000"
             :autosize="{ minRows: 1, maxRows: 16 }"
             counter="both"
         >
             <template #actions>
-                <nue-button theme="small">保存草稿</nue-button>
+                <nue-button theme="small" @click="emit('save')">保存草稿</nue-button>
             </template>
         </nue-textarea>
     </nue-div>
@@ -55,4 +70,3 @@ const noteText = ref('')
     }
 }
 </style>
-
