@@ -13,6 +13,12 @@ export interface UseTimerOptions {
     onPhaseComplete?: (phase: TimerPhase, elapsedSeconds: number, totalSeconds: number) => void
     /** 跳过回调 */
     onSkip?: (phase: TimerPhase, elapsedSeconds: number, totalSeconds: number) => void
+    /** 休息阶段剩余时间提醒回调（参数为触发时的剩余秒数） */
+    onBreakWarning?: (remainingSeconds: number) => void
+    /** 长休息时长（秒） */
+    longBreakDuration: number
+    /** 触发长休息所需的专注次数 */
+    sessionsUntilLongBreak: number
 }
 
 /**
@@ -36,7 +42,9 @@ export const useTimer = (options: UseTimerOptions) => {
     // 内部配置（可被 updateConfig 更新）
     const config = {
         focusDuration: options.focusDuration,
-        breakDuration: options.breakDuration
+        breakDuration: options.breakDuration,
+        longBreakDuration: options.longBreakDuration,
+        sessionsUntilLongBreak: options.sessionsUntilLongBreak
     }
 
     // 定时器间隔 ID
@@ -50,6 +58,13 @@ export const useTimer = (options: UseTimerOptions) => {
 
     // 最后一次 tick 时的 Date.now()，用于兼容系统时间回拨
     let lastTickNow = 0
+
+    // 当前休息阶段是否已发送 20% 剩余提醒
+    let breakWarningSent = false
+
+    // 当前周期内已完成的轮数（一轮 = 一次专注 + 一次短休息）
+    // 达到 sessionsUntilLongBreak 后，下一次专注完成时触发长休息
+    let completedRoundCount = 0
 
     // @computed 是否空闲
     const isIdle = computed(() => phase.value === 'idle')
@@ -80,6 +95,19 @@ export const useTimer = (options: UseTimerOptions) => {
         lastTickNow = now
 
         remainingSeconds.value = Math.max(0, Math.ceil((targetEndTime - now) / 1000))
+
+        // 休息阶段剩余时间提醒：取 20% 和 3 分钟的较小值作为触发阈值
+        if (
+            !breakWarningSent &&
+            (phase.value === 'break' || phase.value === 'longBreak') &&
+            totalSeconds.value > 0
+        ) {
+            const threshold = Math.min(Math.ceil(totalSeconds.value * 0.2), 180) // 3 分钟 = 180 秒
+            if (remainingSeconds.value <= threshold) {
+                breakWarningSent = true
+                options.onBreakWarning?.(remainingSeconds.value)
+            }
+        }
 
         if (remainingSeconds.value <= 0) {
             handlePhaseComplete()
@@ -126,15 +154,27 @@ export const useTimer = (options: UseTimerOptions) => {
         const elapsed = totalSeconds.value
 
         if (completedPhase === 'focus') {
+            const isLongBreak = completedRoundCount >= config.sessionsUntilLongBreak
+            const nextPhase: TimerPhase = isLongBreak ? 'longBreak' : 'break'
+            const nextDuration = isLongBreak ? config.longBreakDuration : config.breakDuration
+
             options.onPhaseComplete?.('focus', elapsed, totalSeconds.value)
-            phase.value = 'break'
-            totalSeconds.value = config.breakDuration
-            remainingSeconds.value = config.breakDuration
-            targetEndTime = Date.now() + config.breakDuration * 1000
+            phase.value = nextPhase
+            breakWarningSent = false
+            if (isLongBreak) {
+                completedRoundCount = 0
+            }
+            totalSeconds.value = nextDuration
+            remainingSeconds.value = nextDuration
+            targetEndTime = Date.now() + nextDuration * 1000
             status.value = 'running'
             startInterval()
-        } else if (completedPhase === 'break') {
-            options.onPhaseComplete?.('break', elapsed, totalSeconds.value)
+        } else if (completedPhase === 'break' || completedPhase === 'longBreak') {
+            // 短休息自然完成 → 一轮结束，递增轮数
+            if (completedPhase === 'break') {
+                completedRoundCount++
+            }
+            options.onPhaseComplete?.(completedPhase, elapsed, totalSeconds.value)
             phase.value = 'focus'
             totalSeconds.value = config.focusDuration
             remainingSeconds.value = config.focusDuration
@@ -187,6 +227,7 @@ export const useTimer = (options: UseTimerOptions) => {
         stopInterval()
         phase.value = 'idle'
         status.value = 'paused'
+        completedRoundCount = 0
         totalSeconds.value = config.focusDuration
         remainingSeconds.value = config.focusDuration
         targetEndTime = 0
@@ -205,11 +246,19 @@ export const useTimer = (options: UseTimerOptions) => {
         options.onSkip?.(skippedPhase, elapsed, totalSeconds.value)
 
         if (skippedPhase === 'focus') {
-            phase.value = 'break'
-            totalSeconds.value = config.breakDuration
-            remainingSeconds.value = config.breakDuration
-            targetEndTime = Date.now() + config.breakDuration * 1000
-        } else if (skippedPhase === 'break') {
+            const isLongBreak = completedRoundCount >= config.sessionsUntilLongBreak
+            const nextPhase: TimerPhase = isLongBreak ? 'longBreak' : 'break'
+            const nextDuration = isLongBreak ? config.longBreakDuration : config.breakDuration
+
+            phase.value = nextPhase
+            breakWarningSent = false
+            if (isLongBreak) {
+                completedRoundCount = 0
+            }
+            totalSeconds.value = nextDuration
+            remainingSeconds.value = nextDuration
+            targetEndTime = Date.now() + nextDuration * 1000
+        } else if (skippedPhase === 'break' || skippedPhase === 'longBreak') {
             phase.value = 'focus'
             totalSeconds.value = config.focusDuration
             remainingSeconds.value = config.focusDuration
@@ -240,10 +289,11 @@ export const useTimer = (options: UseTimerOptions) => {
         remainingSeconds.value = newRemaining
         totalSeconds.value += delta
 
+        // 直接基于 newRemaining 重建时间基准，避免 Math.ceil 取整导致的 1 秒抖动
         if (status.value === 'running') {
-            targetEndTime += delta * 1000
+            targetEndTime = Date.now() + newRemaining * 1000
         } else if (status.value === 'paused') {
-            pausedRemainingMs += delta * 1000
+            pausedRemainingMs = newRemaining * 1000
         }
     }
 
@@ -254,9 +304,20 @@ export const useTimer = (options: UseTimerOptions) => {
     const updateConfig = (newConfig: Partial<TimerConfig>) => {
         if (newConfig.focusDuration !== undefined) {
             config.focusDuration = newConfig.focusDuration
+            // 空闲态同步更新显示值
+            if (phase.value === 'idle') {
+                totalSeconds.value = newConfig.focusDuration
+                remainingSeconds.value = newConfig.focusDuration
+            }
         }
         if (newConfig.breakDuration !== undefined) {
             config.breakDuration = newConfig.breakDuration
+        }
+        if (newConfig.longBreakDuration !== undefined) {
+            config.longBreakDuration = newConfig.longBreakDuration
+        }
+        if (newConfig.sessionsUntilLongBreak !== undefined) {
+            config.sessionsUntilLongBreak = newConfig.sessionsUntilLongBreak
         }
     }
 

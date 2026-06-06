@@ -43,6 +43,7 @@ const displayTime = computed(() => {
 const phaseLabel = computed(() => {
     if (props.phase === 'idle') return ''
     if (props.phase === 'break') return '正在休息'
+    if (props.phase === 'longBreak') return '长休息'
     const elapsed = props.totalSeconds - props.remainingSeconds
     const now = Date.now()
     const startTime = new Date(now - elapsed * 1000)
@@ -54,7 +55,7 @@ const phaseLabel = computed(() => {
 
 // @computed 进度条颜色：休息阶段使用较浅色
 const progressColor = computed(() =>
-    props.phase === 'break' ? 'var(--nue-primary-color-500)' : 'var(--nue-primary-color-900)'
+    (props.phase === 'break' || props.phase === 'longBreak') ? 'var(--nue-primary-color-500)' : 'var(--nue-primary-color-900)'
 )
 
 // @computed 是否空闲
@@ -70,7 +71,7 @@ const actionButtonText = computed(() => {
 // @computed 主操作按钮图标
 const actionButtonIcon = computed(() => {
     if (isIdle.value) return 'ntd-start'
-    if (props.isRunning) return 'ntd-pause'
+    if (props.isRunning) return 'ntd-paused'
     return 'ntd-start'
 })
 

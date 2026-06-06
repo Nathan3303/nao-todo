@@ -1,5 +1,4 @@
 :root {
-    --nue-primary-font-family: 'Poppins-Regular', 'pf', sans-serif;
     --nue-primary-font-size: 16px;
     --nue-primary-font-weight: 400;
 }
@@ -14,6 +13,11 @@
     body {
         width: 100dvw;
         height: 100dvh;
+        font-optical-sizing: auto;
+
+        * {
+            font-family: var(--nue-primary-font-family);
+        }
     }
 }
 

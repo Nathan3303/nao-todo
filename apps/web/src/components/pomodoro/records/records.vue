@@ -20,7 +20,7 @@ defineEmits<{
         <nue-div theme="header">
             <nue-icon name="time" />
             <nue-text theme="title">今日专注记录</nue-text>
-            <nue-button theme="small" @click="$emit('viewAll')">查看所有</nue-button>
+            <nue-button theme="pure" @click="$emit('viewAll')">查看所有</nue-button>
         </nue-div>
         <nue-div v-if="records.length === 0" theme="empty">
             <nue-text theme="description">暂无专注记录</nue-text>
@@ -38,6 +38,7 @@ defineEmits<{
 <style scoped>
 .nue-div--pomodoro-records {
     flex-direction: column;
+    gap: var(--nue-gap-sm);
 
     > .nue-div--header {
         display: flex;
@@ -66,3 +67,4 @@ defineEmits<{
     }
 }
 </style>
+

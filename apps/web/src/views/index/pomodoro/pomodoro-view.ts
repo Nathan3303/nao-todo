@@ -11,6 +11,7 @@ import type { AppContext } from '@/app'
 import { TaskDetailsPreContext } from '@/layouts/app/task-details/types'
 import { TASK_DETAILS_PRE_CONTEXT_KEY } from '@/layouts/app/task-details/constants'
 import { IndexViewContext } from '../index-view'
+import DialogManager from '@/infrastructure/hooks/use-dialog-manager'
 
 /**
  * 番茄钟视图上下文
@@ -20,6 +21,7 @@ export type PomodoroViewContext = {
     isDisplayAside: Ref<boolean>
     handleResizeAside: (width: number) => void
     switchDisplayAside: () => void
+    dialogManager: DialogManager
 }
 
 /**
@@ -83,7 +85,8 @@ export const usePomodoroView = () => {
         asideWidth,
         isDisplayAside,
         handleResizeAside,
-        switchDisplayAside
+        switchDisplayAside,
+        dialogManager
     })
 
     /**

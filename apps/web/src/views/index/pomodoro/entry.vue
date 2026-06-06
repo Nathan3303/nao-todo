@@ -2,7 +2,7 @@
 import { TaskDetailsAdapter } from '@/layouts/app'
 import { Loading as LoadingComp } from '@nao-todo/components'
 import { usePomodoroView } from './pomodoro-view'
-import { PomodoroAside } from '@/layouts/pomodoro/aside'
+import { PomodoroAside, PomodoroDialogAdapter } from '@/layouts/pomodoro'
 import { env } from '@/infrastructure/constants/env'
 
 defineOptions({ name: 'PomodoroView' })
@@ -37,6 +37,8 @@ usePomodoroView()
             <!-- 任务详情适配器 -->
             <task-details-adapter />
         </nue-main>
+        <!-- 对话框适配器 -->
+        <pomodoro-dialog-adapter />
     </nue-container>
     <!-- 番茄钟页面未开放 -->
     <nue-empty

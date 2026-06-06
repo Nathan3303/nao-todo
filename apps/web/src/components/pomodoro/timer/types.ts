@@ -7,7 +7,7 @@ import type { PomodoroType } from '@/views/index/pomodoro/types'
  * @enum focus 专注
  * @enum break 休息
  */
-export type TimerPhase = 'idle' | 'focus' | 'break'
+export type TimerPhase = 'idle' | 'focus' | 'break' | 'longBreak'
 
 /**
  * Timer 运行状态
@@ -30,6 +30,8 @@ export interface TimerState {
 export interface TimerConfig {
     focusDuration: number
     breakDuration: number
+    longBreakDuration: number
+    sessionsUntilLongBreak: number
 }
 
 /**

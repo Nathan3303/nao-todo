@@ -10,6 +10,9 @@ import { POMODORO_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-ke
 import { useTimer } from '@/components/pomodoro/timer/use-timer'
 import usePomodoroStore from '@/stores/pomodoro-store'
 import useTasksStore from '@/stores/tasks-store'
+import { POMODORO_TIMER_SETTING_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+
+defineOptions({ name: 'PomodoroTimer' })
 
 // @constants 时间边界
 const MIN_FOCUS_SECONDS = 5 * 60 // 5 分钟
@@ -30,13 +33,11 @@ const notify = (title: string, body: string) => {
     new Notification(title, { body })
 }
 
-defineOptions({ name: 'PomodoroTimer' })
-
 // @props 路由参数
 const props = defineProps<{ taskId?: string }>()
 
 // @context 番茄钟视图上下文
-const { isDisplayAside, switchDisplayAside } =
+const { isDisplayAside, switchDisplayAside, dialogManager } =
     inject<PomodoroViewContext>(POMODORO_VIEW_CONTEXT_KEY)!
 
 // @store
@@ -66,6 +67,8 @@ const startNewFocusSession = () => {
 const timer = useTimer({
     focusDuration: pomodoroStore.focusDuration,
     breakDuration: pomodoroStore.breakDuration,
+    longBreakDuration: pomodoroStore.longBreakDuration,
+    sessionsUntilLongBreak: pomodoroStore.sessionsUntilLongBreak,
     onPhaseComplete(phase, _elapsed, total) {
         if (phase === 'focus') {
             // 创建专注记录
@@ -82,13 +85,19 @@ const timer = useTimer({
             // TODO: 后端接口就绪后替换为真实 API 请求
             console.log('[Pomodoro] 创建专注记录', record)
             pomodoroStore.addRecord(record)
-            notify('专注完成', `已完成 ${formatMinutes(total)} 的专注，开始休息`)
+            notify('专注完成', `已完成 ${formatMinutes(total)} 的专注，现在开始休息`)
         }
         // 休息阶段结束 → 自动开启下一次专注
-        if (phase === 'break') {
+        if (phase === 'break' || phase === 'longBreak') {
             startNewFocusSession()
-            notify('休息结束', '是时候开始下一轮专注了')
+            notify('休息结束', '现在开始下一轮的专注计时')
         }
+    },
+    onBreakWarning(remaining: number) {
+        const mins = Math.floor(remaining / 60)
+        const secs = remaining % 60
+        const timeStr = mins > 0 ? `${mins} 分钟${secs > 0 ? ` ${secs} 秒` : ''}` : `${secs} 秒`
+        notify('休息即将结束', `剩余 ${timeStr} 的休息时间，准备好进行下一轮专注了吗？`)
     },
     onSkip(phase, elapsed, total) {
         if (phase === 'focus') {
@@ -150,6 +159,17 @@ const handleReset = () => {
     pomodoroStore.clearCurrentSession()
 }
 
+const handleOpenSettings = () => {
+    dialogManager.open(POMODORO_TIMER_SETTING_DIALOG_KEY, null, () => {
+        timer.updateConfig({
+            focusDuration: pomodoroStore.focusDuration,
+            breakDuration: pomodoroStore.breakDuration,
+            longBreakDuration: pomodoroStore.longBreakDuration,
+            sessionsUntilLongBreak: pomodoroStore.sessionsUntilLongBreak
+        })
+    })
+}
+
 const handleSaveNote = () => {
     if (pomodoroStore.currentRecordId) {
         pomodoroStore.updateNote(pomodoroStore.currentRecordId, pomodoroStore.noteText)
@@ -169,14 +189,24 @@ const todayRecords = computed(() =>
 <template>
     <nue-container id="PomodoroFocus">
         <nue-header>
-            <nue-div theme="title-wrapper">
-                <nue-div theme="title">
-                    <nue-button
-                        :icon="isDisplayAside ? 'menu-close' : 'menu-open'"
-                        theme="icon,ghost"
-                        @click="switchDisplayAside"
-                    />
-                    <nue-text>番茄专注</nue-text>
+            <nue-div theme="title-and-description">
+                <nue-div theme="title-wrapper">
+                    <nue-div theme="title">
+                        <nue-button
+                            :icon="isDisplayAside ? 'menu-close' : 'menu-open'"
+                            theme="icon,ghost"
+                            @click="switchDisplayAside"
+                        />
+                        <nue-text>番茄专注</nue-text>
+                    </nue-div>
+                    <nue-div theme="actions">
+                        <nue-button icon="plus" theme="icon,ghost" />
+                        <nue-button
+                            icon="setting"
+                            theme="icon,ghost"
+                            @click="handleOpenSettings"
+                        />
+                    </nue-div>
                 </nue-div>
                 <nue-text theme="description">
                     番茄时钟是一种时间管理工具，它将工作时间和休息时间交替进行。
@@ -223,15 +253,25 @@ const todayRecords = computed(() =>
         justify-content: space-between;
         border: none;
 
-        > .nue-div--title-wrapper {
+        > .nue-div--title-and-description {
+            width: 100%;
             flex-direction: column;
             gap: var(--nue-gap-2xs);
 
-            > .nue-div--title {
-                align-items: center;
+            > .nue-div--title-wrapper {
                 flex: auto;
-                font-size: var(--nue-text-xl);
-                gap: var(--nue-gap-2xs);
+                justify-content: space-between;
+
+                > .nue-div--title {
+                    align-items: center;
+                    font-size: var(--nue-text-xl);
+                    gap: var(--nue-gap-2xs);
+                }
+
+                > .nue-div--actions {
+                    width: fit-content;
+                    margin-left: auto;
+                }
             }
 
             > .nue-text--description {
@@ -247,8 +287,8 @@ const todayRecords = computed(() =>
 
     > .nue-main .nue-content {
         display: grid;
-        grid-template-columns: minmax(24rem 2fr) 3fr;
-        grid-template-rows: minmax(24rem, 2fr) 3fr;
+        grid-template-columns: min(24rem, 1fr) auto;
+        grid-template-rows: 24rem auto;
         grid-template-areas: 'timer today' 'note note';
         height: 100%;
         overflow: hidden;

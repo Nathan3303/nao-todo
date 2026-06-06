@@ -75,8 +75,23 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
     // @state 专注时长（秒）
     const focusDuration = ref(25 * 60)
 
-    // @state 休息时长（秒）
+    // @state 短休息时长（秒）
     const breakDuration = ref(5 * 60)
+
+    // @state 长休息时长（秒）
+    const longBreakDuration = ref(15 * 60)
+
+    // @state 触发长休息所需的专注次数
+    const sessionsUntilLongBreak = ref(4)
+
+    // @state 自动开始下一轮专注
+    const autoStartNextFocusSession = ref(false)
+
+    // @state 自动开始专注次数
+    const autoStartNextFocusSessionCount = ref(4)
+
+    // @state 自动休息
+    const autoRest = ref(true)
 
     // @action 设置当前会话
     const setCurrentSession = (
@@ -123,9 +138,34 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
         focusDuration.value = seconds
     }
 
-    // @action 设置休息时长
+    // @action 设置短休息时长
     const setBreakDuration = (seconds: number) => {
         breakDuration.value = seconds
+    }
+
+    // @action 设置长休息时长
+    const setLongBreakDuration = (seconds: number) => {
+        longBreakDuration.value = seconds
+    }
+
+    // @action 设置触发长休息所需的专注次数
+    const setSessionsUntilLongBreak = (n: number) => {
+        sessionsUntilLongBreak.value = n
+    }
+
+    // @action 设置自动开始下一轮专注
+    const setAutoStartNextFocusSession = (value: boolean) => {
+        autoStartNextFocusSession.value = value
+    }
+
+    // @action 设置自动开始专注次数
+    const setAutoStartNextFocusSessionCount = (n: number) => {
+        autoStartNextFocusSessionCount.value = n
+    }
+
+    // @action 设置自动休息
+    const setAutoRest = (value: boolean) => {
+        autoRest.value = value
     }
 
     return {
@@ -137,13 +177,23 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
         noteText,
         focusDuration,
         breakDuration,
+        longBreakDuration,
+        sessionsUntilLongBreak,
         setCurrentSession,
         clearCurrentSession,
         addRecord,
         updateNote,
         setNoteText,
         setFocusDuration,
-        setBreakDuration
+        setBreakDuration,
+        setLongBreakDuration,
+        setSessionsUntilLongBreak,
+        autoStartNextFocusSession,
+        autoStartNextFocusSessionCount,
+        autoRest,
+        setAutoStartNextFocusSession,
+        setAutoStartNextFocusSessionCount,
+        setAutoRest
     }
 })
 
