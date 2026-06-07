@@ -9,3 +9,5 @@ export type {
     PomodoroRecordViewObject
 } from './types'
 export { useTimer } from './use-timer'
+export { usePomodoroStateMachine } from './use-pomodoro-state-machine'
+export type { StateMachineCallbacks, StateMachineConfig } from './use-pomodoro-state-machine'

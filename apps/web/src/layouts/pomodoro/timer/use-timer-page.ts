@@ -12,6 +12,20 @@ import { MIN_FOCUS_SECONDS, MAX_FOCUS_SECONDS } from './constants'
 import { formatMinutes, notify } from './utils'
 
 /**
+ * 创建一条专注记录
+ */
+const buildRecord = (store: ReturnType<typeof usePomodoroStore>, total: number): PomodoroRecordViewObject => ({
+    id: store.currentRecordId!,
+    taskId: store.currentTaskId ?? '',
+    name: store.currentTaskName || '未关联任务',
+    type: 'timer',
+    startAt: store.currentRecordStartAt!,
+    endAt: new Date().toISOString(),
+    duration: total,
+    note: store.noteText
+})
+
+/**
  * 番茄钟计时器页面 composable
  * @description 封装计时器的 store 访问、会话管理、事件回调与所有交互处理逻辑
  */
@@ -49,31 +63,22 @@ export const useTimerPage = (dialogManager: DialogManager) => {
         pomodoroStore.setNoteText('')
     }
 
-    // @composable 纯倒计时逻辑
+    // @composable 纯倒计时逻辑（委托给 usePomodoroStateMachine）
     const timer = useTimer({
         focusDuration: pomodoroStore.focusDuration,
         breakDuration: pomodoroStore.breakDuration,
         longBreakDuration: pomodoroStore.longBreakDuration,
         sessionsUntilLongBreak: pomodoroStore.sessionsUntilLongBreak,
+        autoRest: pomodoroStore.autoRest,
+        autoStartNextFocusSession: pomodoroStore.autoStartNextFocusSession,
+        autoStartNextFocusSessionCount: pomodoroStore.autoStartNextFocusSessionCount,
         onPhaseComplete(phase, _elapsed, total) {
             if (phase === 'focus') {
-                // 创建专注记录
-                const record: PomodoroRecordViewObject = {
-                    id: pomodoroStore.currentRecordId!,
-                    taskId: pomodoroStore.currentTaskId ?? '',
-                    name: pomodoroStore.currentTaskName || '未关联任务',
-                    type: 'timer',
-                    startAt: pomodoroStore.currentRecordStartAt!,
-                    endAt: new Date().toISOString(),
-                    duration: total,
-                    note: pomodoroStore.noteText
-                }
-                // TODO: 后端接口就绪后替换为真实 API 请求
+                const record = buildRecord(pomodoroStore, total)
                 console.log('[Pomodoro] 创建专注记录', record)
                 pomodoroStore.addRecord(record)
                 notify('专注完成', `已完成 ${formatMinutes(total)} 的专注，现在开始休息`)
             }
-            // 休息阶段结束 → 自动开启下一次专注
             if (phase === 'break' || phase === 'longBreak') {
                 startNewFocusSession()
                 notify('休息结束', '现在开始下一轮的专注计时')
@@ -85,26 +90,16 @@ export const useTimerPage = (dialogManager: DialogManager) => {
             const timeStr = mins > 0 ? `${mins} 分钟${secs > 0 ? ` ${secs} 秒` : ''}` : `${secs} 秒`
             notify('休息即将结束', `剩余 ${timeStr} 的休息时间，准备好进行下一轮专注了吗？`)
         },
-        onSkip(phase, elapsed, total) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        onSkip(phase, elapsed, _total) {
             if (phase === 'focus') {
-                // 跳过专注：创建部分记录
-                const record: PomodoroRecordViewObject = {
-                    id: pomodoroStore.currentRecordId!,
-                    taskId: pomodoroStore.currentTaskId ?? '',
-                    name: pomodoroStore.currentTaskName || '未关联任务',
-                    type: 'timer',
-                    startAt: pomodoroStore.currentRecordStartAt!,
-                    endAt: new Date().toISOString(),
-                    duration: total,
-                    note: pomodoroStore.noteText
-                }
+                // 使用 elapsed（实际已用时间）而不是 _total（计划时间）
+                const record = buildRecord(pomodoroStore, elapsed)
                 console.log('[Pomodoro] 跳过专注，创建部分记录', record)
                 pomodoroStore.addRecord(record)
-                // 准备下一次专注
                 startNewFocusSession()
             }
-            if (phase === 'break') {
-                // 跳过休息：直接开始下一次专注
+            if (phase === 'break' || phase === 'longBreak') {
                 startNewFocusSession()
             }
         }
@@ -125,15 +120,7 @@ export const useTimerPage = (dialogManager: DialogManager) => {
         if ('Notification' in window && Notification.permission === 'default') {
             Notification.requestPermission()
         }
-        const recordId = nanoid()
-        const startAt = new Date().toISOString()
-        pomodoroStore.setCurrentSession(
-            pomodoroStore.currentTaskId,
-            pomodoroStore.currentTaskName,
-            recordId,
-            startAt
-        )
-        pomodoroStore.setNoteText('')
+        startNewFocusSession()
         timer.start()
     }
 
@@ -166,7 +153,10 @@ export const useTimerPage = (dialogManager: DialogManager) => {
                 focusDuration: pomodoroStore.focusDuration,
                 breakDuration: pomodoroStore.breakDuration,
                 longBreakDuration: pomodoroStore.longBreakDuration,
-                sessionsUntilLongBreak: pomodoroStore.sessionsUntilLongBreak
+                sessionsUntilLongBreak: pomodoroStore.sessionsUntilLongBreak,
+                autoRest: pomodoroStore.autoRest,
+                autoStartNextFocusSession: pomodoroStore.autoStartNextFocusSession,
+                autoStartNextFocusSessionCount: pomodoroStore.autoStartNextFocusSessionCount
             })
         })
     }
@@ -206,4 +196,3 @@ export const useTimerPage = (dialogManager: DialogManager) => {
         handleSaveNote
     }
 }
-

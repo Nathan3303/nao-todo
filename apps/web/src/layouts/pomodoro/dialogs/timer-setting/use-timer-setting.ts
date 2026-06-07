@@ -1,4 +1,5 @@
 import { inject, ref } from 'vue'
+import { NueMessage } from 'nue-ui'
 import type { PomodoroViewContext } from '@/views/index/pomodoro/pomodoro-view'
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import type { PomodoroTimerSettingViewObject } from '@/views/index/pomodoro/types'
@@ -58,21 +59,41 @@ export const useTimerSettingDialog = () => {
         const f = form.value
 
         // 基础验证
-        if (f.duration < 5 || f.duration > 180) return false
-        if (f.breakDuration < 1 || f.breakDuration > 60) return false
-        if (f.longBreakDuration < 1 || f.longBreakDuration > 60) return false
-        if (f.sessionsUntilLongBreak < 1 || f.sessionsUntilLongBreak > 10) return false
+        if (f.duration < 5 || f.duration > 180) {
+            NueMessage.warn('专注时间必须在 5-180 分钟之间')
+            return false
+        }
+        if (f.breakDuration < 1 || f.breakDuration > 60) {
+            NueMessage.warn('短休息时间必须在 1-60 分钟之间')
+            return false
+        }
+        if (f.longBreakDuration < 1 || f.longBreakDuration > 60) {
+            NueMessage.warn('长休息时间必须在 1-60 分钟之间')
+            return false
+        }
+        if (f.sessionsUntilLongBreak < 1 || f.sessionsUntilLongBreak > 10) {
+            NueMessage.warn('长休息触发轮数必须在 1-10 之间')
+            return false
+        }
 
-        // 写入 store（分钟 → 秒）
-        store.setFocusDuration(f.duration * 60)
-        store.setBreakDuration(f.breakDuration * 60)
-        store.setLongBreakDuration(f.longBreakDuration * 60)
-        store.setSessionsUntilLongBreak(f.sessionsUntilLongBreak)
-        store.setAutoStartNextFocusSession(f.autoStartNextFocusSession)
-        store.setAutoStartNextFocusSessionCount(f.autoStartNextFocusSessionCount)
-        store.setAutoRest(f.autoRest)
+        // 设置保存中状态
+        saving.value = true
 
-        return true
+        try {
+            // 写入 store（分钟 → 秒）
+            store.setFocusDuration(f.duration * 60)
+            store.setBreakDuration(f.breakDuration * 60)
+            store.setLongBreakDuration(f.longBreakDuration * 60)
+            store.setSessionsUntilLongBreak(f.sessionsUntilLongBreak)
+            store.setAutoStartNextFocusSession(f.autoStartNextFocusSession)
+            store.setAutoStartNextFocusSessionCount(f.autoStartNextFocusSessionCount)
+            store.setAutoRest(f.autoRest)
+
+            NueMessage.success('设置已保存')
+            return true
+        } finally {
+            saving.value = false
+        }
     }
 
     return {
