@@ -123,11 +123,11 @@ const handleAdjustTime = (delta: number) => {
             </nue-div>
         </nue-div>
         <nue-div theme="actions">
-            <nue-button v-if="!isIdle" icon="ntd-reset" @click="emit('reset')">重置</nue-button>
+            <nue-button v-if="!isIdle && !isRunning" icon="ntd-reset" @click="emit('reset')">重置</nue-button>
             <nue-button :icon="actionButtonIcon" theme="primary" @click="handleMainAction">
                 {{ actionButtonText }}
             </nue-button>
-            <nue-button v-if="!isIdle" icon="ntd-tiaoguo" theme="secondary" @click="emit('skip')">
+            <nue-button v-if="!isIdle && !isRunning" icon="ntd-tiaoguo" theme="secondary" @click="emit('skip')">
                 跳过
             </nue-button>
         </nue-div>

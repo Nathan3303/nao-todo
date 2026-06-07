@@ -49,18 +49,20 @@ export const useTimerPage = (dialogManager: DialogManager) => {
 
     /**
      * 开始新的专注会话
-     * @description 从 store 读取当前选中任务，生成新的专注记录 ID 和开始时间
+     * @description 从 store 读取当前选中任务，仅在没有当前会话时生成新的专注记录 ID 和开始时间
      */
     const startNewFocusSession = () => {
-        const recordId = nanoid()
-        const startAt = new Date().toISOString()
-        pomodoroStore.setCurrentSession(
-            pomodoroStore.currentTaskId,
-            pomodoroStore.currentTaskName,
-            recordId,
-            startAt
-        )
-        pomodoroStore.setNoteText('')
+        if (!pomodoroStore.currentRecordId) {
+            const recordId = nanoid()
+            const startAt = new Date().toISOString()
+            pomodoroStore.setCurrentSession(
+                pomodoroStore.currentTaskId,
+                pomodoroStore.currentTaskName,
+                recordId,
+                startAt
+            )
+            pomodoroStore.setNoteText('')
+        }
     }
 
     // @composable 纯倒计时逻辑（委托给 usePomodoroStateMachine）
