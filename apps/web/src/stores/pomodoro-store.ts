@@ -2,6 +2,11 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { PomodoroRecordViewObject } from '@/components/pomodoro/timer/types'
 
+/**
+ * 番茄钟设置存储键名
+ */
+const POMODORO_SETTINGS_KEY = 'POMODORO_SETTINGS'
+
 const usePomodoroStore = defineStore('PomodoroStore', () => {
     // @state 当前关联任务 ID
     const currentTaskId = ref<string | null>(null)
@@ -41,6 +46,95 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
 
     // @state 自动休息
     const autoRest = ref(true)
+
+    /**
+     * 从 localStorage 加载已保存的番茄钟设置
+     */
+    const loadSavedSettings = () => {
+        try {
+            const saved = localStorage.getItem(POMODORO_SETTINGS_KEY)
+            if (!saved) return
+
+            const data = JSON.parse(saved)
+
+            // 验证并加载专注时长
+            if (
+                typeof data.focusDuration === 'number' &&
+                data.focusDuration >= 300 &&
+                data.focusDuration <= 10800
+            ) {
+                focusDuration.value = data.focusDuration
+            }
+
+            // 验证并加载短休息时长
+            if (
+                typeof data.breakDuration === 'number' &&
+                data.breakDuration >= 60 &&
+                data.breakDuration <= 3600
+            ) {
+                breakDuration.value = data.breakDuration
+            }
+
+            // 验证并加载长休息时长
+            if (
+                typeof data.longBreakDuration === 'number' &&
+                data.longBreakDuration >= 60 &&
+                data.longBreakDuration <= 3600
+            ) {
+                longBreakDuration.value = data.longBreakDuration
+            }
+
+            // 验证并加载长休息触发轮数
+            if (
+                typeof data.sessionsUntilLongBreak === 'number' &&
+                data.sessionsUntilLongBreak >= 1 &&
+                data.sessionsUntilLongBreak <= 10
+            ) {
+                sessionsUntilLongBreak.value = data.sessionsUntilLongBreak
+            }
+
+            // 验证并加载自动开始下一轮专注
+            if (typeof data.autoStartNextFocusSession === 'boolean') {
+                autoStartNextFocusSession.value = data.autoStartNextFocusSession
+            }
+
+            // 验证并加载自动开始专注次数
+            if (
+                typeof data.autoStartNextFocusSessionCount === 'number' &&
+                data.autoStartNextFocusSessionCount >= 1 &&
+                data.autoStartNextFocusSessionCount <= 10
+            ) {
+                autoStartNextFocusSessionCount.value = data.autoStartNextFocusSessionCount
+            }
+
+            // 验证并加载自动休息
+            if (typeof data.autoRest === 'boolean') {
+                autoRest.value = data.autoRest
+            }
+        } catch (error) {
+            console.error('Failed to load pomodoro settings from localStorage:', error)
+        }
+    }
+
+    /**
+     * 保存番茄钟设置到 localStorage
+     */
+    const saveSettings = () => {
+        try {
+            const data = {
+                focusDuration: focusDuration.value,
+                breakDuration: breakDuration.value,
+                longBreakDuration: longBreakDuration.value,
+                sessionsUntilLongBreak: sessionsUntilLongBreak.value,
+                autoStartNextFocusSession: autoStartNextFocusSession.value,
+                autoStartNextFocusSessionCount: autoStartNextFocusSessionCount.value,
+                autoRest: autoRest.value
+            }
+            localStorage.setItem(POMODORO_SETTINGS_KEY, JSON.stringify(data))
+        } catch (error) {
+            console.error('Failed to save pomodoro settings to localStorage:', error)
+        }
+    }
 
     // @action 选择专注任务（由 selectTask 事件触发）
     const selectTask = (taskId: string | null, taskName: string) => {
@@ -91,37 +185,47 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
     // @action 设置专注时长
     const setFocusDuration = (seconds: number) => {
         focusDuration.value = seconds
+        saveSettings()
     }
 
     // @action 设置短休息时长
     const setBreakDuration = (seconds: number) => {
         breakDuration.value = seconds
+        saveSettings()
     }
 
     // @action 设置长休息时长
     const setLongBreakDuration = (seconds: number) => {
         longBreakDuration.value = seconds
+        saveSettings()
     }
 
     // @action 设置触发长休息所需的专注次数
     const setSessionsUntilLongBreak = (n: number) => {
         sessionsUntilLongBreak.value = n
+        saveSettings()
     }
 
     // @action 设置自动开始下一轮专注
     const setAutoStartNextFocusSession = (value: boolean) => {
         autoStartNextFocusSession.value = value
+        saveSettings()
     }
 
     // @action 设置自动开始专注次数
     const setAutoStartNextFocusSessionCount = (n: number) => {
         autoStartNextFocusSessionCount.value = n
+        saveSettings()
     }
 
     // @action 设置自动休息
     const setAutoRest = (value: boolean) => {
         autoRest.value = value
+        saveSettings()
     }
+
+    // 初始化时加载已保存的设置
+    loadSavedSettings()
 
     return {
         currentTaskId,
