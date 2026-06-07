@@ -1,7 +1,7 @@
 import { computed } from 'vue'
 import { nanoid } from 'nanoid'
 import dayjs from 'dayjs'
-import { NueMessage } from 'nue-ui'
+import { NueMessage, NueConfirm } from 'nue-ui'
 import type { PomodoroRecordViewObject } from '@/components/pomodoro/timer/types'
 import { useTimer } from '@/components/pomodoro/timer/use-timer'
 import usePomodoroStore from '@/stores/pomodoro-store'
@@ -118,12 +118,27 @@ export const useTimerPage = (dialogManager: DialogManager) => {
             NueMessage.warn('专注时间不能大于 180 分钟')
             return
         }
-        // 预请求系统通知权限
-        if ('Notification' in window && Notification.permission === 'default') {
-            Notification.requestPermission()
+
+        const doStart = () => {
+            // 预请求系统通知权限
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission()
+            }
+            startNewFocusSession()
+            timer.start()
         }
-        startNewFocusSession()
-        timer.start()
+
+        if (!pomodoroStore.currentTaskId) {
+            NueConfirm({
+                title: '确认开始专注',
+                content: '还没有选择待办任务，是否要继续开始专注？',
+                confirmButtonText: '继续',
+                cancelButtonText: '取消',
+                onConfirm: doStart
+            })
+        } else {
+            doStart()
+        }
     }
 
     /**
