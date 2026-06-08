@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import { FeatureUnimplement } from '@nao-todo/components'
+
 defineOptions({ name: 'PomodoroFocus' })
 </script>
 
 <template>
-    <nue-div>正计时</nue-div>
+    <feature-unimplement @back="$router.back()" />
 </template>
 
 <style scoped></style>

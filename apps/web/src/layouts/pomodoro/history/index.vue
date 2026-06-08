@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { FeatureUnimplement } from '@nao-todo/components'
+
 defineOptions({ name: 'PomodoroHistory' })
 </script>
 
 <template>
-    <nue-div>专注记录</nue-div>
+    <feature-unimplement @back="$router.back()" />
 </template>
 
 <style scoped></style>
+
