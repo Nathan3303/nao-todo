@@ -11,7 +11,8 @@
         "project",
         "tag",
         "task",
-        "user"
+        "user",
+        "pomodoro"
     ],
     "packageManager": "pnpm@8.12.1"
 }

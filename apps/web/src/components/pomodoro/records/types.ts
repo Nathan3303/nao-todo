@@ -1,1 +1,1 @@
-export type { PomodoroRecordViewObject } from '../timer/types'
+export type { PomodoroRecordViewObject } from '@nao-todo/types'

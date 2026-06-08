@@ -19,8 +19,8 @@ export type PomodoroStatus = 'active' | 'paused'
  * @description Pomodoro 视图对象，包含 Pomodoro 的基本信息和状态
  */
 export type PomodoroViewObject = {
-    // Pomodoro ID
-    id: string
+    // Pomodoro 会话 ID
+    sessionId: string
     // 任务 ID
     taskId: string
     // 任务名称

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { PomodoroRecordViewObject } from '@/components/pomodoro/timer/types'
+import type { PomodoroRecordViewObject, CreatePomodoroRecordViewObject, GoAsync } from '@nao-todo/types'
+import { PomodoroRecordUseCase } from '@nao-todo/application/web/usecases/pomodoro'
 
 /**
  * 番茄钟设置存储键名
@@ -22,6 +23,11 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
 
     // @state 专注记录列表
     const records = ref<PomodoroRecordViewObject[]>([])
+
+    // @usecase Pomodoro 记录用例
+    const pomodoroRecordUseCase = PomodoroRecordUseCase.create({
+        addRecord: (record) => { records.value.push(record) }
+    })
 
     // @state 当前笔记文本
     const noteText = ref('')
@@ -164,14 +170,18 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
         noteText.value = ''
     }
 
-    // @action 添加专注记录
-    const addRecord = (record: PomodoroRecordViewObject) => {
-        records.value.push(record)
+    // @action 添加专注记录（异步：先调 API 持久化，成功后再推入本地列表）
+    const addRecord = async (
+        createViewObject: CreatePomodoroRecordViewObject
+    ): GoAsync<PomodoroRecordViewObject[]> => {
+        const [record, err] = await pomodoroRecordUseCase.createRecord(createViewObject)
+        if (err !== null) return [null, err]
+        return [[record], null]
     }
 
     // @action 更新记录笔记
     const updateNote = (recordId: string, note: string) => {
-        const record = records.value.find((r) => r.id === recordId)
+        const record = records.value.find((r) => r.sessionId === recordId)
         if (record) {
             record.note = note
         }

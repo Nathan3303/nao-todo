@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import dayjs from 'dayjs'
-import type { PomodoroRecordViewObject } from '../timer/types'
+import type { PomodoroRecordViewObject } from '@nao-todo/types'
 
 defineOptions({ name: 'PomodoroRecordsCompRow' })
 
@@ -28,7 +28,7 @@ const displayDuration = computed(() => {
 
 <template>
     <nue-div theme="card,pomodoro-records-row">
-        <nue-text theme="title" :clamped="1">{{ record.name }}</nue-text>
+        <nue-text theme="title" :clamped="1">{{ record.taskName }}</nue-text>
         <nue-text theme="duration">{{ displayDuration }}</nue-text>
     </nue-div>
 </template>

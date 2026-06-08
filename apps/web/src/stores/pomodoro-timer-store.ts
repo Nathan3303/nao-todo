@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { nanoid } from 'nanoid'
-import type { TimerPhase, TimerStatus, PomodoroRecordViewObject } from '@/components/pomodoro/timer/types'
+import type { TimerPhase, TimerStatus } from '@/components/pomodoro/timer/types'
+import type { CreatePomodoroRecordViewObject } from '@nao-todo/types'
 import usePomodoroStore from '@/stores/pomodoro-store'
 
 /**
@@ -119,12 +120,12 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
         }
     }
 
-    /** 构建一条专注记录 ViewObject */
-    const buildRecord = (total: number): PomodoroRecordViewObject => ({
-        id: pomodoroStore.currentRecordId!,
+    /** 构建一条专注记录 CreatePomodoroRecordViewObject */
+    const buildRecord = (total: number): CreatePomodoroRecordViewObject => ({
+        sessionId: pomodoroStore.currentRecordId!,
+        type: 0, // timer=0
         taskId: pomodoroStore.currentTaskId ?? '',
-        name: pomodoroStore.currentTaskName || '未关联任务',
-        type: 'timer',
+        taskName: pomodoroStore.currentTaskName || '未关联任务',
         startAt: pomodoroStore.currentRecordStartAt!,
         endAt: new Date().toISOString(),
         duration: total,
@@ -156,10 +157,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
     const tick = () => {
         if (status.value !== 'running') return
 
-        remainingSeconds.value = Math.max(
-            0,
-            Math.ceil((targetEndTime - Date.now()) / 1000)
-        )
+        remainingSeconds.value = Math.max(0, Math.ceil((targetEndTime - Date.now()) / 1000))
 
         // Break warning
         if (
@@ -173,9 +171,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
                 const mins = Math.floor(remainingSeconds.value / 60)
                 const secs = remainingSeconds.value % 60
                 const timeStr =
-                    mins > 0
-                        ? `${mins} 分钟${secs > 0 ? ` ${secs} 秒` : ''}`
-                        : `${secs} 秒`
+                    mins > 0 ? `${mins} 分钟${secs > 0 ? ` ${secs} 秒` : ''}` : `${secs} 秒`
                 sendNotification(
                     '休息即将结束',
                     `剩余 ${timeStr} 的休息时间，准备好进行下一轮专注了吗？`
@@ -236,9 +232,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
         const long = isLongBreakDue()
         if (long) completedRoundCount = 0
         const nextPhase: TimerPhase = long ? 'longBreak' : 'break'
-        const nextDuration = long
-            ? pomodoroStore.longBreakDuration
-            : pomodoroStore.breakDuration
+        const nextDuration = long ? pomodoroStore.longBreakDuration : pomodoroStore.breakDuration
         phase.value = nextPhase
         breakWarningSent = false
         totalSeconds.value = nextDuration
@@ -281,7 +275,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
 
     /**
      * 阶段完成处理
-     * - focus 完成：创建记录 + 通知 + 自动进入休息（或 idle）
+     * - focus 完成：创建记录（持久化）+ 通知 + 自动进入休息（或 idle）
      * - break / longBreak 完成：递增轮次 + 通知 + 自动进入下一轮专注（或 idle）
      */
     const handlePhaseComplete = () => {
@@ -290,7 +284,10 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
         if (phase.value === 'focus') {
             const total = totalSeconds.value
             const record = buildRecord(total)
-            pomodoroStore.addRecord(record)
+            // 异步持久化，不阻塞阶段流转
+            pomodoroStore.addRecord(record).then(([, err]) => {
+                if (err !== null) console.error('[Pomodoro] Failed to create record:', err)
+            })
             sendNotification('专注完成', `已完成 ${formatMinutes(total)} 的专注，现在开始休息`)
 
             if (!pomodoroStore.autoRest) {
@@ -386,7 +383,9 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
         if (phase.value === 'focus') {
             const elapsed = calcElapsed()
             const record = buildRecord(elapsed)
-            pomodoroStore.addRecord(record)
+            pomodoroStore.addRecord(record).then(([, err]) => {
+                if (err !== null) console.error('[Pomodoro] Failed to create record on skip:', err)
+            })
             generateNewSessionId()
             enterBreakPhase()
         } else if (phase.value === 'break') {
@@ -479,3 +478,4 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
 })
 
 export default usePomodoroTimerStore
+

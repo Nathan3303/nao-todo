@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import PomodoroRecordsCompRow from './row.vue'
-import type { PomodoroRecordViewObject } from '../timer/types'
+import type { PomodoroRecordViewObject } from '@nao-todo/types'
 
 defineOptions({ name: 'PomodoroRecordsComp' })
 

@@ -39,7 +39,7 @@ export interface TimerConfig {
  * @description 一次专注会话的记录
  */
 export interface PomodoroRecordViewObject {
-    id: string
+    sessionId: string
     taskId: string
     name: string
     type: PomodoroType
@@ -48,3 +48,4 @@ export interface PomodoroRecordViewObject {
     duration: number
     note: string
 }
+

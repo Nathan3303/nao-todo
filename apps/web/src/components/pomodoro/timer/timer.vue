@@ -118,17 +118,24 @@ const handleAdjustTime = (delta: number) => {
                     @click="handleAdjustTime(TIME_ADJUST_STEP)"
                 />
                 <nue-div theme="below-time-string">
-                    <slot name="BelowTimeString"> {{ taskName || '关联待办任务' }} > </slot>
+                    <slot name="BelowTimeString"> {{ taskName || '选择关联任务' }} > </slot>
                 </nue-div>
             </nue-div>
         </nue-div>
         <nue-div theme="actions">
-            <nue-button v-if="!isIdle && !isRunning" icon="ntd-reset" @click="emit('reset')">重置</nue-button>
+            <nue-button v-if="!isIdle && !isRunning" icon="clear" @click="emit('reset')">
+                结束专注
+            </nue-button>
             <nue-button :icon="actionButtonIcon" theme="primary" @click="handleMainAction">
                 {{ actionButtonText }}
             </nue-button>
-            <nue-button v-if="!isIdle && !isRunning" icon="ntd-tiaoguo" theme="secondary" @click="emit('skip')">
-                跳过
+            <nue-button
+                v-if="!isIdle && !isRunning"
+                icon="ntd-tiaoguo"
+                theme="secondary"
+                @click="emit('skip')"
+            >
+                跳过{{ phase === 'focus' ? '专注' : '休息' }}
             </nue-button>
         </nue-div>
     </nue-div>
