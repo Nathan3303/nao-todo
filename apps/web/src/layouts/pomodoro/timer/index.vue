@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { inject } from 'vue'
+import { storeToRefs } from 'pinia'
 import { PomodoroTimerComp, PomodoroRecordsComp, PomodoroNotesComp } from '@/components/pomodoro'
 import type { PomodoroViewContext } from '@/views/index/pomodoro/pomodoro-view'
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import { usePomodoroTimerStore } from '@/stores/pomodoro-timer-store'
 import { useTimerPage } from './use-timer-page'
 import { PomodoroTaskSelectDropdown } from '../task-select-dropdown'
 
@@ -11,8 +13,10 @@ defineOptions({ name: 'PomodoroTimer' })
 const { isDisplayAside, switchDisplayAside, dialogManager } =
     inject<PomodoroViewContext>(POMODORO_VIEW_CONTEXT_KEY)!
 
+const timerStore = usePomodoroTimerStore()
+const { phase, remainingSeconds, totalSeconds, isRunning } = storeToRefs(timerStore)
+
 const {
-    timer,
     taskName,
     handleSelectTask,
     todayRecords,
@@ -60,16 +64,16 @@ const {
             <nue-content>
                 <pomodoro-timer-comp
                     style="grid-area: timer"
-                    :phase="timer.phase.value"
-                    :is-running="timer.isRunning.value"
-                    :remaining-seconds="timer.remainingSeconds.value"
-                    :total-seconds="timer.totalSeconds.value"
+                    :phase="phase"
+                    :is-running="isRunning"
+                    :remaining-seconds="remainingSeconds"
+                    :total-seconds="totalSeconds"
                     :task-name="taskName"
                     @start="handleStart"
-                    @pause="timer.pause()"
-                    @resume="timer.resume()"
+                    @pause="timerStore.pause()"
+                    @resume="timerStore.resume()"
                     @reset="handleReset"
-                    @skip="timer.skip()"
+                    @skip="timerStore.skip()"
                     @adjust-time="handleAdjustTime($event)"
                 >
                     <template #BelowTimeString>

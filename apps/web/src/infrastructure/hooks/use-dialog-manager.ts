@@ -34,9 +34,8 @@ class DialogManager {
 
     /**
      * 构造函数
-     * @param allowDuplicateRegistration 是否允许重复注册对话框，默认允许
      */
-    constructor(private allowDuplicateRegistration: boolean = true) {}
+    constructor() {}
 
     /**
      * 注册对话框生命周期函数接口
@@ -44,16 +43,6 @@ class DialogManager {
      * @param dialogLifecycle 对话框生命周期函数接口
      */
     register(dialogName: string, dialogLifecycle: DialogLifecycle) {
-        // 检查对话框是否已注册
-        const isExist = this.dialogMapper.has(dialogName)
-        // 如果对话框已注册且不允许重复注册，则跳过注册
-        if (isExist && !this.allowDuplicateRegistration) {
-            console.warn(
-                `Dialog ${dialogName} already registered, skip registration. ` +
-                    'Please check if you want to allow duplicate registration.'
-            )
-            return
-        }
         // 注册对话框生命周期函数接口
         this.dialogMapper.set(dialogName, dialogLifecycle)
     }
@@ -117,8 +106,8 @@ class DialogManager {
  * @param allowDuplicateRegistration 是否允许重复注册对话框
  * @returns 对话框管理器实例
  */
-const useDialogManager = (allowDuplicateRegistration: boolean = false) => {
-    return new DialogManager(allowDuplicateRegistration)
+const useDialogManager = () => {
+    return new DialogManager()
 }
 
 /**
