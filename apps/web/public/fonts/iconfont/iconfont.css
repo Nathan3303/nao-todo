@@ -1,6 +1,6 @@
 @font-face {
   font-family: "iconfont"; /* Project id 4627189 */
-  src: url('iconfont.woff2?t=1780721524732') format('woff2');
+  src: url('iconfont.woff2?t=1780895796927') format('woff2');
 }
 
 .iconfont {
@@ -9,6 +9,14 @@
   font-style: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-ntd-timer:before {
+  content: "\e021";
+}
+
+.icon-ntd-fanqie2:before {
+  content: "\e020";
 }
 
 .icon-ntd-paused:before {
@@ -45,10 +53,6 @@
 
 .icon-ntd-search:before {
   content: "\e009";
-}
-
-.icon-ntd-search2:before {
-  content: "\e011";
 }
 
 .icon-ntd-fanqie:before {

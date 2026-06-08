@@ -7,16 +7,13 @@ scene: git_message
 
 ## 格式
 
-feat|fix|chore|change(功能点或变更点): 描述变更
+feat/fix/chore/change(变更点): 中文简短描述
 
 变更点：
-- 时间选择面板不会显示 NaN 字样
-- 日期选择面板会显示当前选中的日期
-- 日期时间选择面板会显示当前选中的日期时间
+- xxx
 
 其他（可选）:
-- 更新 xxx 包版本，从 x.x.x(需要提出旧版本号) 到 y.y.y
-- 调整了 xxx 配置文件，以适应 xxx 功能
+- xxx
 
 ## 注意事项
 - `feat` 表示新增功能点

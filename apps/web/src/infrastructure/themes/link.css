@@ -3,6 +3,10 @@
 }
 
 .nue-link.nue-link--route {
+    &:is(.nue-link--route-icon) {
+        --nue-link-color: var(--nue-primary-color-400);
+    }
+
     &:not(.nue-link--route-icon) {
         height: var(--nue-box-size-md);
         padding: var(--nue-padding-sm);

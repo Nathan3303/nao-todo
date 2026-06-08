@@ -5,6 +5,7 @@ import { NaoRouterLink } from '@nao-todo/components'
 import { useUserStore } from '@/stores'
 import { APP_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import type { AppContext } from '@/app'
+import { PomodoroTimerIndicator } from '@/components/pomodoro'
 
 defineOptions({ name: 'AppFloatAside' })
 const props = defineProps<{
@@ -34,10 +35,13 @@ const visible = computed({
                 </nue-div>
             </nue-header>
             <nue-main>
-                <nue-content>
-                    <slot>
-                        <nue-empty />
-                    </slot>
+                <nue-content style="justify-content: space-between; min-height: 0;">
+                    <div>
+                        <slot>
+                            <nue-empty />
+                        </slot>
+                    </div>
+                    <pomodoro-timer-indicator />
                 </nue-content>
             </nue-main>
             <nue-footer>
