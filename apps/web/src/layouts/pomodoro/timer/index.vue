@@ -26,7 +26,10 @@ const {
     handleAdjustTime,
     handleReset,
     handleOpenSettings,
-    handleSaveNote
+    handleSaveNote,
+    recordLoading,
+    recordIsDone,
+    handleNextPage
 } = useTimerPage(dialogManager)
 </script>
 
@@ -86,7 +89,13 @@ const {
                         </pomodoro-task-select-dropdown>
                     </template>
                 </pomodoro-timer-comp>
-                <pomodoro-records-comp style="grid-area: today" :records="todayRecords" />
+                <pomodoro-records-comp
+    style="grid-area: today"
+    :records="todayRecords"
+    :loading="recordLoading"
+    :disabled-next-page="recordIsDone"
+    @next-page="handleNextPage"
+/>
                 <pomodoro-notes-comp
                     style="grid-area: note"
                     :note-text="noteText"

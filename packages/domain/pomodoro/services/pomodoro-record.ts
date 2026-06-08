@@ -1,8 +1,9 @@
 import { PomodoroRecordEntity } from '../entities'
 import { CreatePomodoroRecordValueObject } from '../valueobjects'
 import { unwrapError } from '@nao-todo/infrastructure/utils'
+import parseObject2QueryString from '@nao-todo/infrastructure/utils/query-string-parser'
 import type { PomodoroRecordRepository } from '../repositories'
-import type { GoAsync } from '@nao-todo/types'
+import type { GoAsync, GetPomodoroRecordsOptions, ResponseDataPagination } from '@nao-todo/types'
 
 /**
  * Pomodoro 记录领域服务
@@ -23,5 +24,21 @@ export class PomodoroRecordDomain {
             return [null, validateErr]
         }
         return await this.repo.create(valueObject)
+    }
+
+    /**
+     * 获取 Pomodoro 记录列表
+     * @param listOptions 查询选项
+     * @returns Pomodoro 记录实体列表和分页信息
+     */
+    async list(
+        listOptions?: GetPomodoroRecordsOptions
+    ): GoAsync<{ entities: PomodoroRecordEntity[]; pagination?: ResponseDataPagination }> {
+        // 1. 转换查询选项 -> 查询字符串
+        const queryString = parseObject2QueryString<GetPomodoroRecordsOptions>(
+            listOptions || {}
+        )
+        // 2. 调用仓库方法
+        return await this.repo.list(queryString)
     }
 }

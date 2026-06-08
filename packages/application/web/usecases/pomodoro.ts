@@ -1,8 +1,9 @@
 import { PomodoroRecordDomain } from '@nao-todo/domain/pomodoro'
-import type { GoAsync, PomodoroRecordViewObject, CreatePomodoroRecordViewObject } from '@nao-todo/types'
+import type { GoAsync, PomodoroRecordViewObject, CreatePomodoroRecordViewObject, GetPomodoroRecordsOptions, ResponseDataPagination } from '@nao-todo/types'
 import {
     createPomodoroViewObjectToValueObject,
-    pomodoroRecordEntityToViewObject
+    pomodoroRecordEntityToViewObject,
+    pomodoroRecordEntitiesToViewObjects
 } from '../converters/pomodoro'
 import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 import { usePomodoroRecordRepository } from '@nao-todo/infrastructure/backend/pomodoro/repoImpl'
@@ -13,6 +14,7 @@ import { usePomodoroRecordRepository } from '@nao-todo/infrastructure/backend/po
  */
 export interface PomodoroRecordStore {
     addRecord(record: PomodoroRecordViewObject): void
+    addRecords(records: PomodoroRecordViewObject[]): void
 }
 
 /**
@@ -59,5 +61,28 @@ export class PomodoroRecordUseCase {
 
         // 5. 返回
         return [viewObject, null]
+    }
+
+    /**
+     * 获取 Pomodoro 记录列表
+     * @param options 查询选项
+     * @returns 记录 ID 列表和分页信息
+     */
+    async getRecords(
+        options: GetPomodoroRecordsOptions
+    ): GoAsync<{ recordIds: string[]; pagination?: ResponseDataPagination }> {
+        // 1. 调用领域服务
+        const [result, err] = await this.pomodoroRecordDomain.list(options)
+        if (err !== null) return [null, err]
+
+        // 2. 实体 → 视图对象
+        const viewObjects = pomodoroRecordEntitiesToViewObjects(result.entities)
+
+        // 3. 存储记录列表
+        this.store.addRecords(viewObjects)
+
+        // 4. 返回记录 ID 列表
+        const recordIds = viewObjects.map((r) => r.id)
+        return [{ recordIds, pagination: result.pagination }, null]
     }
 }

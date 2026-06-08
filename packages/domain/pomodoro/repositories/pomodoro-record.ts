@@ -1,4 +1,4 @@
-import type { GoAsync } from '@nao-todo/types'
+import type { GoAsync, ResponseDataPagination } from '@nao-todo/types'
 import { PomodoroRecordEntity } from '../entities'
 import { CreatePomodoroRecordValueObject } from '../valueobjects'
 
@@ -13,4 +13,13 @@ export interface PomodoroRecordRepository {
      * @returns Pomodoro 记录实体
      */
     create(valueObject: CreatePomodoroRecordValueObject): GoAsync<PomodoroRecordEntity>
+
+    /**
+     * 获取 Pomodoro 记录列表
+     * @param queryString 查询字符串
+     * @returns Pomodoro 记录实体列表和分页信息
+     */
+    list(
+        queryString?: string
+    ): GoAsync<{ entities: PomodoroRecordEntity[]; pagination?: ResponseDataPagination }>
 }

@@ -1,4 +1,4 @@
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import { NueMessage, NueConfirm } from 'nue-ui'
 import usePomodoroStore from '@/stores/pomodoro-store'
@@ -6,6 +6,8 @@ import { usePomodoroTimerStore } from '@/stores/pomodoro-timer-store'
 import { POMODORO_TIMER_SETTING_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 import type DialogManager from '@/infrastructure/hooks/use-dialog-manager'
 import type { TaskViewObject } from '@nao-todo/types'
+import { PomodoroRecordUseCase } from '@nao-todo/application/web/usecases/pomodoro'
+import usePomodoroRecordLoader from './use-pomodoro-record-loader'
 import { MIN_FOCUS_SECONDS, MAX_FOCUS_SECONDS } from './constants'
 
 /**
@@ -16,6 +18,24 @@ import { MIN_FOCUS_SECONDS, MAX_FOCUS_SECONDS } from './constants'
 export const useTimerPage = (dialogManager: DialogManager) => {
     const pomodoroStore = usePomodoroStore()
     const timerStore = usePomodoroTimerStore()
+
+    // @usecase Pomodoro 记录用例（用于加载记录列表）
+    const pomodoroRecordUseCase = PomodoroRecordUseCase.create({
+        addRecord: (record) => {
+            pomodoroStore.addRecord(record)
+        },
+        addRecords: (records) => {
+            pomodoroStore.addRecords(records)
+        }
+    })
+
+    // @loader Pomodoro 记录加载器
+    const recordLoader = usePomodoroRecordLoader(pomodoroRecordUseCase, {
+        startTime: dayjs().startOf('day').toISOString(),
+        endTime: dayjs().endOf('day').toISOString(),
+        type: 0,
+        sort: 'startAt:desc'
+    })
 
     // @computed 当前选中任务名称
     const taskName = computed(() => pomodoroStore.currentTaskName)
@@ -96,10 +116,20 @@ export const useTimerPage = (dialogManager: DialogManager) => {
         }
     }
 
-    // @computed 今日专注记录
-    const todayRecords = computed(() =>
-        pomodoroStore.records.filter((r) => dayjs(r.startAt).isSame(dayjs(), 'day'))
-    )
+    /**
+     * 加载更多记录（NueInfiniteScroll 回调）
+     */
+    const handleNextPage = () => {
+        recordLoader.loadNextPage()
+    }
+
+    // @computed 今日专注记录（由 loader 管理，数据从 Store 映射）
+    const todayRecords = recordLoader.records
+
+    // @onMounted 加载今日专注记录
+    onMounted(() => {
+        recordLoader.loadFirstPage()
+    })
 
     // @returns
     return {
@@ -114,6 +144,13 @@ export const useTimerPage = (dialogManager: DialogManager) => {
         handleAdjustTime,
         handleReset,
         handleOpenSettings,
-        handleSaveNote
+        handleSaveNote,
+        /** 记录加载状态 */
+        recordLoading: computed(() => recordLoader.states.loading),
+        /** 是否已加载全部记录 */
+        recordIsDone: computed(() => recordLoader.states.isDone),
+        /** 加载更多记录 */
+        handleNextPage
     }
 }
+

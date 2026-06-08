@@ -6,9 +6,7 @@ import type { PomodoroRecordViewObject } from '@nao-todo/types'
 defineOptions({ name: 'PomodoroRecordsCompRow' })
 
 // @props
-const props = defineProps<{
-    record: PomodoroRecordViewObject
-}>()
+const props = defineProps<{ record: PomodoroRecordViewObject }>()
 
 // @computed 格式化时长显示
 const displayDuration = computed(() => {
@@ -22,7 +20,7 @@ const displayDuration = computed(() => {
     }
     const hours = Math.floor(minutes / 60)
     const mins = minutes % 60
-    return `${startStr} - ${endStr} , ${hours}h ${mins}m`
+    return `${startStr} - ${endStr}, ${hours}h ${mins}m`
 })
 </script>
 
@@ -37,7 +35,6 @@ const displayDuration = computed(() => {
 .nue-div--pomodoro-records-row {
     display: flex;
     align-items: center;
-    gap: var(--nue-gap-2xs);
     box-shadow: none;
     padding: var(--nue-padding-xs);
     border: none;
@@ -57,3 +54,4 @@ const displayDuration = computed(() => {
     }
 }
 </style>
+

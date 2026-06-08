@@ -42,3 +42,12 @@ export const createPomodoroViewObjectToValueObject = (
         viewObject.note || ''
     )
 }
+
+/**
+ * Pomodoro 记录实体列表 → Pomodoro 记录视图对象列表
+ */
+export const pomodoroRecordEntitiesToViewObjects = (
+    entities: PomodoroRecordEntity[]
+): PomodoroRecordViewObject[] => {
+    return entities.map(pomodoroRecordEntityToViewObject)
+}

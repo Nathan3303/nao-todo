@@ -1,7 +1,7 @@
-import { createPomodoroRes2Entity, createPomodoroValueObjectToReq } from './converters'
+import { createPomodoroRes2Entity, createPomodoroValueObjectToReq, listPomodoroRes2Entities } from './converters'
 import type { Requester } from '../../requester/types'
-import type { GoAsync } from '@nao-todo/types'
-import type { CreatePomodoroReq, CreatePomodoroRes, ResponseData } from '../types'
+import type { GoAsync, ResponseDataPagination } from '@nao-todo/types'
+import type { CreatePomodoroReq, CreatePomodoroRes, ListPomodoroRes, ResponseData } from '../types'
 import { CreatePomodoroRecordValueObject, PomodoroRecordEntity, type PomodoroRecordRepository } from '@nao-todo/domain/pomodoro'
 
 /**
@@ -39,5 +39,31 @@ export const usePomodoroRecordRepository = (requester: Requester): PomodoroRecor
         return [entity, null]
     }
 
-    return { create }
+    /**
+     * 获取 Pomodoro 记录列表
+     * @param queryString 查询字符串
+     * @returns Pomodoro 记录实体列表和分页信息
+     */
+    const list = async (
+        queryString?: string
+    ): GoAsync<{ entities: PomodoroRecordEntity[]; pagination?: ResponseDataPagination }> => {
+        // 1. 调用接口
+        const response = await requester.get(`/pomodoros/?${queryString ?? ''}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
+        })
+
+        // 2. 判断结果
+        const res = response.data as ResponseData
+        if (res.code !== 70030) {
+            return [null, res.message]
+        }
+
+        // 3. 转换为实体
+        const entities = listPomodoroRes2Entities(res.data as ListPomodoroRes)
+
+        // 4. 返回
+        return [{ entities, pagination: res.pagination }, null]
+    }
+
+    return { create, list }
 }

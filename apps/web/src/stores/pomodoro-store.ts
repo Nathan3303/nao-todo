@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import type { PomodoroRecordViewObject, CreatePomodoroRecordViewObject, GoAsync } from '@nao-todo/types'
 import { PomodoroRecordUseCase } from '@nao-todo/application/web/usecases/pomodoro'
 
@@ -24,9 +24,38 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
     // @state 专注记录列表
     const records = ref<PomodoroRecordViewObject[]>([])
 
+    // @computed 专注记录 Map（按 id 索引）
+    const recordsMap = computed(() => {
+        return new Map(records.value.map((r) => [r.id, r]))
+    })
+
+    // @action 获取单条记录
+    const getRecord = (id: string) => recordsMap.value.get(id)
+
+    // @action 替换全部记录（首屏加载）
+    const setRecords = (newRecords: PomodoroRecordViewObject[]) => {
+        records.value = newRecords
+    }
+
+    // @action 追加记录（翻页加载，自动去重）
+    const addRecords = (newRecords: PomodoroRecordViewObject[]) => {
+        newRecords.forEach((record) => {
+            if (!recordsMap.value.has(record.id)) {
+                records.value.push(record)
+            }
+        })
+    }
+
     // @usecase Pomodoro 记录用例
     const pomodoroRecordUseCase = PomodoroRecordUseCase.create({
-        addRecord: (record) => { records.value.push(record) }
+        addRecord: (record) => { records.value.push(record) },
+        addRecords: (newRecords) => {
+            newRecords.forEach((record) => {
+                if (!recordsMap.value.has(record.id)) {
+                    records.value.push(record)
+                }
+            })
+        }
     })
 
     // @state 当前笔记文本
@@ -263,7 +292,10 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
         autoRest,
         setAutoStartNextFocusSession,
         setAutoStartNextFocusSessionCount,
-        setAutoRest
+        setAutoRest,
+        getRecord,
+        setRecords,
+        addRecords
     }
 })
 
