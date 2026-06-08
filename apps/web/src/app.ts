@@ -55,7 +55,7 @@ const useApp = () => {
         },
         {
             name: t('nav.settings'),
-            icon: 'settings-fill',
+            icon: 'ntd-settings',
             route: '/settings',
             routeName: 'settings'
         }
