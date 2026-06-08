@@ -1,32 +1,26 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import PomodoroRecordsCompRow from './row.vue'
-import type { PomodoroRecordViewObject } from '@nao-todo/types'
+import type { PomodoroRecordsCompProps } from './types'
 
 defineOptions({ name: 'PomodoroRecordsComp' })
+const props = defineProps<PomodoroRecordsCompProps>()
 
-// @props
-defineProps<{
-    records: PomodoroRecordViewObject[]
-    loading: boolean
-    disabledNextPage: boolean
-}>()
-
-// @emits
-defineEmits<{
-    viewAll: []
-    nextPage: []
-}>()
+const timerMinutes = computed(() => {
+    return props.records.reduce((acc, cur) => acc + cur.duration, 0) / 60
+})
 </script>
 
 <template>
     <nue-div theme="pomodoro-records">
         <nue-div theme="header">
             <nue-icon name="time" />
-            <nue-text theme="title">今日专注记录</nue-text>
-            <nue-button theme="pure" @click="$emit('viewAll')">查看所有</nue-button>
+            <nue-text theme="title">
+                今日专注 {{ props.records.length }} 次，时长总计 {{ timerMinutes.toFixed(2) }} 分钟
+            </nue-text>
         </nue-div>
-        <nue-div v-if="records.length === 0 && !loading" theme="empty">
-            <nue-text theme="description">暂无专注记录</nue-text>
+        <nue-div v-if="props.records.length === 0 && !props.loading" theme="empty">
+            <nue-text>暂无专注记录</nue-text>
         </nue-div>
         <nue-infinite-scroll
             v-else
@@ -67,11 +61,12 @@ defineEmits<{
         gap: var(--nue-gap-xs);
 
         > .nue-icon {
-            font-size: var(--nue-text-xl);
+            font-size: var(--nue-text-df);
         }
 
         > .nue-text--title {
             margin-right: auto;
+            font-size: var(--nue-text-df2);
         }
     }
 
@@ -80,6 +75,7 @@ defineEmits<{
         align-items: center;
         padding: var(--nue-padding-df);
         color: var(--nue-primary-color-400);
+        font-size: var(--nue-text-xs);
     }
 
     > .nue-infinite-scroll-wrapper {

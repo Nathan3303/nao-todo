@@ -49,3 +49,37 @@ export interface PomodoroRecordViewObject {
     note: string
 }
 
+/**
+ * Timer 组件属性
+ */
+export type TimerProps = {
+    // Timer 阶段
+    phase: TimerPhase
+    // Timer 运行状态
+    isRunning: boolean
+    // Timer 剩余时间（秒）
+    remainingSeconds: number
+    // Timer 总时间（秒）
+    totalSeconds: number
+    // Timer 任务名称
+    taskName?: string
+}
+
+/**
+ * Timer 组件事件
+ */
+export type TimerEmits = {
+    // Timer 开始
+    (e: 'start'): void
+    // Timer 暂停
+    (e: 'pause'): void
+    // Timer 恢复
+    (e: 'resume'): void
+    // Timer 重置
+    (e: 'reset'): void
+    // Timer 跳过
+    (e: 'skip'): void
+    // Timer 调整时间
+    (e: 'adjustTime', delta: number): void
+}
+

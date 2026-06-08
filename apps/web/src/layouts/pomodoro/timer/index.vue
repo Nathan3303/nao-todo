@@ -10,13 +10,14 @@ import { PomodoroTaskSelectDropdown } from '../task-select-dropdown'
 
 defineOptions({ name: 'PomodoroTimer' })
 
-const { isDisplayAside, switchDisplayAside, dialogManager } =
+const { isDisplayAside, switchDisplayAside, dialogManager, subscriber } =
     inject<PomodoroViewContext>(POMODORO_VIEW_CONTEXT_KEY)!
 
 const timerStore = usePomodoroTimerStore()
 const { phase, remainingSeconds, totalSeconds, isRunning } = storeToRefs(timerStore)
 
 const {
+    taskId,
     taskName,
     handleSelectTask,
     todayRecords,
@@ -26,11 +27,11 @@ const {
     handleAdjustTime,
     handleReset,
     handleOpenSettings,
-    handleSaveNote,
     recordLoading,
     recordIsDone,
-    handleNextPage
-} = useTimerPage(dialogManager)
+    handleNextPage,
+    showTaskDetails
+} = useTimerPage(dialogManager, subscriber)
 </script>
 
 <template>
@@ -80,27 +81,38 @@ const {
                     @adjust-time="handleAdjustTime($event)"
                 >
                     <template #BelowTimeString>
-                        <pomodoro-task-select-dropdown @select-task="handleSelectTask">
-                            <template #default="{ open }">
-                                <nue-link @click="open">
-                                    {{ taskName || '未选择专注任务' }}
-                                </nue-link>
-                            </template>
-                        </pomodoro-task-select-dropdown>
+                        <nue-div vertical gap="0" align="center">
+                            <pomodoro-task-select-dropdown @select-task="handleSelectTask">
+                                <template #default="{ open }">
+                                    <nue-text
+                                        theme="task-select-trigger"
+                                        @click="open"
+                                        title="关联任务"
+                                    >
+                                        {{ taskName || '未选择关联任务' }}
+                                    </nue-text>
+                                </template>
+                            </pomodoro-task-select-dropdown>
+                            <nue-button
+                                v-if="taskId"
+                                theme="pure"
+                                icon="eye"
+                                @click="showTaskDetails(taskId)"
+                            />
+                        </nue-div>
                     </template>
                 </pomodoro-timer-comp>
                 <pomodoro-records-comp
-    style="grid-area: today"
-    :records="todayRecords"
-    :loading="recordLoading"
-    :disabled-next-page="recordIsDone"
-    @next-page="handleNextPage"
-/>
+                    style="grid-area: today"
+                    :records="todayRecords"
+                    :loading="recordLoading"
+                    :disabled-next-page="recordIsDone"
+                    @next-page="handleNextPage"
+                />
                 <pomodoro-notes-comp
                     style="grid-area: note"
                     :note-text="noteText"
                     @update:note-text="setNoteText($event)"
-                    @save="handleSaveNote"
                 />
             </nue-content>
         </nue-main>
@@ -155,15 +167,17 @@ const {
         grid-template-columns: minmax(24rem, 3fr) 4fr;
         grid-template-rows: minmax(24rem, 3fr) 4fr;
         grid-template-areas: 'timer today' 'note note';
+        width: 100%;
         height: 100%;
-        overflow: hidden;
-        gap: 2rem;
+        flex: none;
+        gap: var(--nue-gap-df);
+        overflow: visible;
 
         @media (max-width: 480px) {
             grid-template-columns: 1fr;
             grid-template-rows: minmax(24rem, 3fr) 4fr;
             grid-template-areas: 'timer' 'note' 'today';
-            gap: var(--nue-gap-df);
+            gap: var(--nue-gap-lg);
         }
     }
 }

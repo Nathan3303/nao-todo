@@ -1,21 +1,26 @@
-import { computed, onMounted } from 'vue'
+import { computed, inject, onMounted, onUnmounted } from 'vue'
 import dayjs from 'dayjs'
 import { NueMessage, NueConfirm } from 'nue-ui'
 import usePomodoroStore from '@/stores/pomodoro-store'
 import { usePomodoroTimerStore } from '@/stores/pomodoro-timer-store'
 import { POMODORO_TIMER_SETTING_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 import type DialogManager from '@/infrastructure/hooks/use-dialog-manager'
-import type { TaskViewObject } from '@nao-todo/types'
+import type { TaskViewObject, PomodoroRecordViewObject } from '@nao-todo/types'
+import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import { PomodoroRecordUseCase } from '@nao-todo/application/web/usecases/pomodoro'
 import usePomodoroRecordLoader from './use-pomodoro-record-loader'
 import { MIN_FOCUS_SECONDS, MAX_FOCUS_SECONDS } from './constants'
+import { POMODORO_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import { PomodoroViewContext } from '@/views/index/pomodoro/pomodoro-view'
 
 /**
  * 番茄钟计时器页面 composable
  * @description 封装计时器的 UI 交互逻辑（NueConfirm / NueMessage / 对话框管理），
  *              计时器引擎状态由 usePomodoroTimerStore 全局管理。
  */
-export const useTimerPage = (dialogManager: DialogManager) => {
+export const useTimerPage = (dialogManager: DialogManager, subscriber?: Subscriber) => {
+    const { showTaskDetails } = inject<PomodoroViewContext>(POMODORO_VIEW_CONTEXT_KEY)!
+
     const pomodoroStore = usePomodoroStore()
     const timerStore = usePomodoroTimerStore()
 
@@ -36,6 +41,24 @@ export const useTimerPage = (dialogManager: DialogManager) => {
         type: 0,
         sort: 'startAt:desc'
     })
+
+    // @subscriber 记录创建通知（Subscriber 模式）
+    // 当记录创建成功后，通知记录加载器将新记录 ID 插入列表头部
+    if (subscriber) {
+        const handleNewRecordId = (id: string) => {
+            recordLoader.prependRecordId(id)
+        }
+        subscriber.subscribe('AddNewRecordId', handleNewRecordId)
+
+        pomodoroStore.setOnRecordCreated((record: PomodoroRecordViewObject) => {
+            subscriber.emit('AddNewRecordId', record.id)
+        })
+
+        onUnmounted(() => {
+            subscriber.unsubscribe('AddNewRecordId', handleNewRecordId)
+            pomodoroStore.setOnRecordCreated(null)
+        })
+    }
 
     // @computed 当前选中任务名称
     const taskName = computed(() => pomodoroStore.currentTaskName)
@@ -108,15 +131,6 @@ export const useTimerPage = (dialogManager: DialogManager) => {
     }
 
     /**
-     * 保存专注记录笔记
-     */
-    const handleSaveNote = () => {
-        if (pomodoroStore.currentRecordId) {
-            pomodoroStore.updateNote(pomodoroStore.currentRecordId, pomodoroStore.noteText)
-        }
-    }
-
-    /**
      * 加载更多记录（NueInfiniteScroll 回调）
      */
     const handleNextPage = () => {
@@ -133,6 +147,7 @@ export const useTimerPage = (dialogManager: DialogManager) => {
 
     // @returns
     return {
+        taskId: computed(() => pomodoroStore.currentTaskId),
         taskName,
         handleSelectTask,
         todayRecords,
@@ -144,13 +159,14 @@ export const useTimerPage = (dialogManager: DialogManager) => {
         handleAdjustTime,
         handleReset,
         handleOpenSettings,
-        handleSaveNote,
         /** 记录加载状态 */
         recordLoading: computed(() => recordLoader.states.loading),
         /** 是否已加载全部记录 */
         recordIsDone: computed(() => recordLoader.states.isDone),
         /** 加载更多记录 */
-        handleNextPage
+        handleNextPage,
+        /** 显示任务详情 */
+        showTaskDetails
     }
 }
 

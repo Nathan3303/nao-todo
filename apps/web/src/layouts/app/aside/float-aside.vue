@@ -35,25 +35,31 @@ const visible = computed({
                 </nue-div>
             </nue-header>
             <nue-main>
-                <nue-content style="justify-content: space-between; min-height: 0;">
+                <nue-content style="justify-content: space-between; min-height: 0">
                     <div>
                         <slot>
                             <nue-empty />
                         </slot>
                     </div>
-                    <pomodoro-timer-indicator />
                 </nue-content>
             </nue-main>
             <nue-footer>
                 <nue-div justify="space-around" gap="0" width="100%">
-                    <nao-router-link
-                        v-for="(rl, idx) in routerLinks"
-                        :key="idx"
-                        :icon="rl.icon"
-                        :route="rl.route"
-                        icon-link
-                        style="width: auto"
-                    />
+                    <template v-for="(rl, idx) in routerLinks" :key="idx">
+                        <template v-if="rl.route === '/pomodoro'">
+                            <pomodoro-timer-indicator :route="rl.route" />
+                        </template>
+                        <template v-else>
+                            <nue-tooltip
+                                :key="idx"
+                                :content="rl.name"
+                                placement="right-center"
+                                size="small"
+                            >
+                                <nao-router-link :icon="rl.icon" :route="rl.route" icon-link />
+                            </nue-tooltip>
+                        </template>
+                    </template>
                 </nue-div>
             </nue-footer>
         </nue-container>

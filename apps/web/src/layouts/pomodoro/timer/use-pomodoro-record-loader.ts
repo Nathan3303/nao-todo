@@ -132,6 +132,17 @@ const usePomodoroRecordLoader = (
     }
 
     /**
+     * 在记录列表头部插入一条记录 ID
+     * @description 用于创建记录后，无需重新加载即可在列表中展示
+     */
+    const prependRecordId = (id: string) => {
+        if (states.recordIds.has(id)) return
+        // Set 按插入顺序迭代，新 ID 放最前（startAt:desc）
+        states.recordIds = new Set([id, ...states.recordIds])
+        states.pagination.total += 1
+    }
+
+    /**
      * 重置加载器状态
      */
     const reset = () => {
@@ -152,6 +163,7 @@ const usePomodoroRecordLoader = (
         loadAndReplace,
         loadFirstPage,
         loadNextPage,
+        prependRecordId,
         reset
     }
 }

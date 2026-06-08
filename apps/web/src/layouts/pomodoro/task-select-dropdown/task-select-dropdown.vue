@@ -157,3 +157,15 @@ const handleSelectTask = (task: TaskViewObject) => {
 }
 </style>
 
+<style scoped>
+.nue-dropdown-wrapper {
+    text-align: center;
+
+    &:hover {
+        text-decoration: underline;
+        color: var(--nue-primary-color-900);
+        cursor: pointer;
+    }
+}
+</style>
+

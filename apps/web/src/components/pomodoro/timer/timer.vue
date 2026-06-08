@@ -1,27 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { TimerPhase } from './types'
+import type { TimerEmits, TimerProps } from './types'
 
 defineOptions({ name: 'PomodoroTimerComp' })
-
-// @props
-const props = defineProps<{
-    phase: TimerPhase
-    isRunning: boolean
-    remainingSeconds: number
-    totalSeconds: number
-    taskName?: string
-}>()
-
-// @emits
-const emit = defineEmits<{
-    start: []
-    pause: []
-    resume: []
-    reset: []
-    skip: []
-    adjustTime: [delta: number]
-}>()
+const props = defineProps<TimerProps>()
+const emit = defineEmits<TimerEmits>()
 
 // @constant 时间调整步长（秒）
 const TIME_ADJUST_STEP = 300
@@ -49,7 +32,11 @@ const phaseLabel = computed(() => {
     const startTime = new Date(now - elapsed * 1000)
     const endTime = new Date(now + props.remainingSeconds * 1000)
     const fmt = (d: Date) =>
-        `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`
+        String(d.getHours()).padStart(2, '0') +
+        ':' +
+        String(d.getMinutes()).padStart(2, '0') +
+        ':' +
+        String(d.getSeconds()).padStart(2, '0')
     return `${fmt(startTime)} - ${fmt(endTime)}`
 })
 
@@ -88,6 +75,7 @@ const handleMainAction = () => {
     }
 }
 
+// @handlers
 const handleAdjustTime = (delta: number) => {
     emit('adjustTime', delta)
 }
@@ -172,11 +160,17 @@ const handleAdjustTime = (delta: number) => {
                 color: var(--nue-primary-color-600);
                 position: absolute;
                 bottom: 100%;
+                cursor: default;
             }
 
             .nue-text--time {
+                width: 8rem;
+                text-align: center;
                 font-size: 3rem;
-                line-height: 1.2;
+                line-height: 1;
+                flex: auto;
+                padding: var(--nue-padding-sm) 0;
+                cursor: default;
             }
 
             .nue-button--icon {

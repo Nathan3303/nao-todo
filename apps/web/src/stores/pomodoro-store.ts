@@ -1,6 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { PomodoroRecordViewObject, CreatePomodoroRecordViewObject, GoAsync } from '@nao-todo/types'
+import type {
+    PomodoroRecordViewObject,
+    CreatePomodoroRecordViewObject,
+    GoAsync
+} from '@nao-todo/types'
 import { PomodoroRecordUseCase } from '@nao-todo/application/web/usecases/pomodoro'
 
 /**
@@ -48,7 +52,9 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
 
     // @usecase Pomodoro 记录用例
     const pomodoroRecordUseCase = PomodoroRecordUseCase.create({
-        addRecord: (record) => { records.value.push(record) },
+        addRecord: (record) => {
+            records.value.push(record)
+        },
         addRecords: (newRecords) => {
             newRecords.forEach((record) => {
                 if (!recordsMap.value.has(record.id)) {
@@ -57,6 +63,13 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
             })
         }
     })
+
+    // 记录创建成功后的回调（由 use-timer-page 设置，用于 Subscriber 通知）
+    let onRecordCreated: ((record: PomodoroRecordViewObject) => void) | null = null
+
+    const setOnRecordCreated = (cb: ((record: PomodoroRecordViewObject) => void) | null) => {
+        onRecordCreated = cb
+    }
 
     // @state 当前笔记文本
     const noteText = ref('')
@@ -205,6 +218,8 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
     ): GoAsync<PomodoroRecordViewObject[]> => {
         const [record, err] = await pomodoroRecordUseCase.createRecord(createViewObject)
         if (err !== null) return [null, err]
+        onRecordCreated?.(record)
+        noteText.value = ''
         return [[record], null]
     }
 
@@ -295,7 +310,8 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
         setAutoRest,
         getRecord,
         setRecords,
-        addRecords
+        addRecords,
+        setOnRecordCreated
     }
 })
 
