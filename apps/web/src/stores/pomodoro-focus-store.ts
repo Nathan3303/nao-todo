@@ -212,9 +212,8 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
         if (status.value === 'idle') return
         stopInterval()
 
-        const elapsed = status.value === 'paused'
-            ? Math.floor(accumulatedMs / 1000)
-            : calcElapsedSeconds()
+        const elapsed =
+            status.value === 'paused' ? Math.floor(accumulatedMs / 1000) : calcElapsedSeconds()
 
         const record = buildRecord(elapsed)
         pomodoroStore.addRecord(record).then(([, err]) => {
@@ -267,3 +266,4 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
 })
 
 export default usePomodoroFocusStore
+

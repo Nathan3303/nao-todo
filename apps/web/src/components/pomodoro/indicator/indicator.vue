@@ -1,16 +1,25 @@
 <script setup lang="ts">
 import { NaoRouterLink } from '@nao-todo/components'
 import { useIndicator } from './use-indicator'
+import { PomodoroFocusRing } from '../focus-ring'
 
 defineOptions({ name: 'PomodoroTimerIndicator' })
 defineProps<{ route?: string }>()
 
-const { progress, indicatorColor, phaseLabel, timeDisplay, taskName, isActive, goToTimer } =
-    useIndicator()
+const {
+    progress,
+    indicatorColor,
+    phaseLabel,
+    timeDisplay,
+    taskName,
+    isTimerRunning,
+    isFocusRunning,
+    goToTimer
+} = useIndicator()
 </script>
 
 <template>
-    <nue-tooltip v-if="isActive" placement="right-center" size="small">
+    <nue-tooltip v-if="isTimerRunning" placement="right-center" size="small">
         <nue-div theme="timer-indicator" @click="goToTimer">
             <nue-progress
                 type="circle"
@@ -20,6 +29,22 @@ const { progress, indicatorColor, phaseLabel, timeDisplay, taskName, isActive, g
                 :scale="0.28"
                 hide-text
             />
+            <nue-icon name="ntd-fanqie" :color="indicatorColor" />
+        </nue-div>
+        <template #content>
+            <nue-div vertical gap="0">
+                <nue-text size="sm" color="var(--nue-primary-color-0)">
+                    {{ phaseLabel }} - {{ timeDisplay }}
+                </nue-text>
+                <nue-text v-if="taskName" size="sm" color="var(--nue-primary-color-0)">
+                    {{ taskName }}
+                </nue-text>
+            </nue-div>
+        </template>
+    </nue-tooltip>
+    <nue-tooltip v-else-if="isFocusRunning" placement="right-center" size="small">
+        <nue-div theme="timer-indicator" @click="goToTimer">
+            <pomodoro-focus-ring :scale="0.28" :stroke-width="42" :is-running="isFocusRunning" />
             <nue-icon name="ntd-fanqie" :color="indicatorColor" />
         </nue-div>
         <template #content>

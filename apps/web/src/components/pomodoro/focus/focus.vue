@@ -36,7 +36,7 @@ const phaseLabel = computed(() => {
         String(d.getMinutes()).padStart(2, '0') +
         ':' +
         String(d.getSeconds()).padStart(2, '0')
-    return `${fmt(startTime)} → 当前`
+    return `开始于 ${fmt(startTime)}`
 })
 
 // @computed 是否空闲
