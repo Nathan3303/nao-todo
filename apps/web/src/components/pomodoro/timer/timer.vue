@@ -111,17 +111,36 @@ const handleAdjustTime = (delta: number) => {
             </nue-div>
         </nue-div>
         <nue-div theme="actions">
-            <nue-button v-if="!isIdle && !isRunning" icon="clear" @click="emit('reset')">
+            <nue-button
+                v-if="!isIdle && !isRunning"
+                icon="clear"
+                @click="emit('reset')"
+                title="结束专注"
+            >
                 结束专注
             </nue-button>
-            <nue-button :icon="actionButtonIcon" theme="primary" @click="handleMainAction">
-                {{ actionButtonText }}
-            </nue-button>
+            <nue-button-group>
+                <nue-button
+                    :icon="actionButtonIcon"
+                    theme="primary"
+                    @click="handleMainAction"
+                    title="开始专注"
+                >
+                    {{ actionButtonText }}
+                </nue-button>
+                <nue-button
+                    icon="setting"
+                    theme="primary,icon"
+                    @click="emit('openSettings')"
+                    title="番茄钟设置"
+                />
+            </nue-button-group>
             <nue-button
                 v-if="!isIdle && !isRunning"
                 icon="ntd-tiaoguo"
                 theme="secondary"
                 @click="emit('skip')"
+                title="跳过专注"
             >
                 跳过{{ phase === 'focus' ? '专注' : '休息' }}
             </nue-button>
@@ -141,6 +160,10 @@ const handleAdjustTime = (delta: number) => {
         opacity: 0;
         transition: opacity 0.3s ease-in-out;
     }
+}
+
+.nue-button-group .nue-button--primary + .nue-button--primary {
+    border-left: 1px solid var(--nue-border-color);
 }
 </style>
 

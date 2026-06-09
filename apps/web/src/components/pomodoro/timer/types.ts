@@ -33,5 +33,6 @@ export type TimerEmits = {
     (e: 'reset'): void
     (e: 'skip'): void
     (e: 'adjustTime', delta: number): void
+    (e: 'openSettings'): void
 }
 

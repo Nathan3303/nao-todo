@@ -46,96 +46,110 @@ onMounted(() => {
         </template>
         <template #content>
             <nue-div vertical gap="var(--nue-gap-df)">
-                <nue-div vertical gap="var(--nue-gap-2xs)">
-                    <nue-div align="center" justify="space-between">
+                <nue-div align="center" justify="space-between">
+                    <nue-div vertical gap="0">
                         <nue-text size="sm">专注时长（分钟）</nue-text>
-                        <nue-input
-                            v-model="form.duration"
-                            type="number"
-                            size="small"
-                            placeholder="25"
-                            :min="5"
-                            :max="180"
-                            width="6rem"
-                        />
+                        <nue-text size="xs" color="var(--nue-primary-color-500)">
+                            每次专注的持续时间，范围 5-180 分钟
+                        </nue-text>
                     </nue-div>
-                    <nue-text size="xs" color="var(--nue-primary-color-500)">每次专注的持续时间，范围 5-180 分钟</nue-text>
+                    <nue-input
+                        v-model="form.duration"
+                        type="number"
+                        size="small"
+                        placeholder="25"
+                        :min="5"
+                        :max="180"
+                        width="6rem"
+                    />
                 </nue-div>
-                <nue-div vertical gap="var(--nue-gap-2xs)">
-                    <nue-div align="center" justify="space-between">
+                <nue-div align="center" justify="space-between">
+                    <nue-div vertical gap="0">
                         <nue-text size="sm">短休息时长（分钟）</nue-text>
-                        <nue-input
-                            v-model="form.breakDuration"
-                            type="number"
-                            size="small"
-                            placeholder="5"
-                            :min="1"
-                            :max="60"
-                            width="6rem"
-                        />
+                        <nue-text size="xs" color="var(--nue-primary-color-500)">
+                            短休息的持续时间，范围 1-60 分钟
+                        </nue-text>
                     </nue-div>
-                    <nue-text size="xs" color="var(--nue-primary-color-500)">短休息的持续时间，范围 1-60 分钟</nue-text>
+                    <nue-input
+                        v-model="form.breakDuration"
+                        type="number"
+                        size="small"
+                        placeholder="5"
+                        :min="1"
+                        :max="60"
+                        width="6rem"
+                    />
                 </nue-div>
-                <nue-div vertical gap="var(--nue-gap-2xs)">
-                    <nue-div align="center" justify="space-between">
+                <nue-div align="center" justify="space-between">
+                    <nue-div vertical gap="0">
                         <nue-text size="sm">长休息时长（分钟）</nue-text>
-                        <nue-input
-                            v-model="form.longBreakDuration"
-                            type="number"
-                            size="small"
-                            placeholder="15"
-                            :min="1"
-                            :max="60"
-                            width="6rem"
-                        />
+                        <nue-text size="xs" color="var(--nue-primary-color-500)">
+                            长休息的持续时间，范围 1-60 分钟
+                        </nue-text>
                     </nue-div>
-                    <nue-text size="xs" color="var(--nue-primary-color-500)">长休息的持续时间，范围 1-60 分钟</nue-text>
+                    <nue-input
+                        v-model="form.longBreakDuration"
+                        type="number"
+                        size="small"
+                        placeholder="15"
+                        :min="1"
+                        :max="60"
+                        width="6rem"
+                    />
                 </nue-div>
-                <nue-div vertical gap="var(--nue-gap-2xs)">
-                    <nue-div align="center" justify="space-between">
+                <nue-div align="center" justify="space-between">
+                    <nue-div vertical gap="0">
                         <nue-text size="sm">长休息触发轮数</nue-text>
-                        <nue-input
-                            v-model="form.sessionsUntilLongBreak"
-                            type="number"
-                            size="small"
-                            placeholder="4"
-                            :min="1"
-                            :max="10"
-                            width="6rem"
-                        />
+                        <nue-text size="xs" color="var(--nue-primary-color-500)">
+                            完成指定轮数（专注 + 短休息）后触发一次长休息
+                        </nue-text>
                     </nue-div>
-                    <nue-text size="xs" color="var(--nue-primary-color-500)">完成指定轮数（专注 + 短休息）后触发一次长休息</nue-text>
+                    <nue-input
+                        v-model="form.sessionsUntilLongBreak"
+                        type="number"
+                        size="small"
+                        placeholder="4"
+                        :min="1"
+                        :max="10"
+                        width="6rem"
+                    />
                 </nue-div>
                 <nue-divider />
-                <nue-div vertical gap="var(--nue-gap-2xs)">
-                    <nue-div align="center" justify="space-between">
+                <nue-div align="center" justify="space-between">
+                    <nue-div vertical gap="0">
                         <nue-text size="sm">自动开始下一轮专注</nue-text>
-                        <nue-switch v-model="form.autoStartNextFocusSession" size="small" />
+                        <nue-text size="xs" color="var(--nue-primary-color-500)">
+                            休息结束后自动开始下一轮专注计时
+                        </nue-text>
                     </nue-div>
-                    <nue-text size="xs" color="var(--nue-primary-color-500)">休息结束后自动开始下一轮专注计时</nue-text>
+                    <nue-switch v-model="form.autoStartNextFocusSession" size="small" />
                 </nue-div>
-                <nue-div vertical gap="var(--nue-gap-2xs)">
-                    <nue-div align="center" justify="space-between">
+                <nue-div align="center" justify="space-between">
+                    <nue-div vertical gap="0">
                         <nue-text size="sm">自动开始专注次数</nue-text>
-                        <nue-input
-                            v-model="form.autoStartNextFocusSessionCount"
-                            type="number"
-                            size="small"
-                            placeholder="4"
-                            :min="1"
-                            :max="10"
-                            width="6rem"
-                            :disabled="!form.autoStartNextFocusSession"
-                        />
+                        <nue-text size="xs" color="var(--nue-primary-color-500)">
+                            连续自动开始专注的次数，达到后停止自动开始
+                        </nue-text>
                     </nue-div>
-                    <nue-text size="xs" color="var(--nue-primary-color-500)">连续自动开始专注的次数，达到后停止自动开始</nue-text>
+                    <nue-input
+                        v-model="form.autoStartNextFocusSessionCount"
+                        type="number"
+                        size="small"
+                        placeholder="4"
+                        :min="1"
+                        :max="10"
+                        width="6rem"
+                        :disabled="!form.autoStartNextFocusSession"
+                    />
                 </nue-div>
-                <nue-div vertical gap="var(--nue-gap-2xs)">
-                    <nue-div align="center" justify="space-between">
+                <nue-div align="center" justify="space-between">
+                    <nue-div vertical gap="0">
                         <nue-text size="sm">自动休息</nue-text>
-                        <nue-switch v-model="form.autoRest" size="small" />
+                        <nue-text size="xs" color="var(--nue-primary-color-500)">
+                            专注结束后自动进入休息阶段
+                        </nue-text>
                     </nue-div>
-                    <nue-text size="xs" color="var(--nue-primary-color-500)">专注结束后自动进入休息阶段</nue-text>
+                    <nue-switch v-model="form.autoRest" size="small" />
                 </nue-div>
             </nue-div>
         </template>
@@ -148,6 +162,7 @@ onMounted(() => {
 
 <style>
 .nue-dialog--timer-setting {
-    min-width: min(26rem, 100vw);
+    min-width: min(24rem, 100vw);
 }
 </style>
+

@@ -33,7 +33,7 @@ const {
     handleStart,
     handleAdjustTime,
     handleReset,
-    // handleOpenSettings,
+    handleOpenSettings,
     handleMainAction,
     handleCancel,
     handleEnd
@@ -57,13 +57,6 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
                     </nue-div>
                     <nue-div theme="actions">
                         <!-- <nue-button icon="plus" theme="icon,ghost" /> -->
-                        <!-- <nue-tooltip content="计时器设置" size="small">
-                            <nue-button
-                                icon="setting"
-                                theme="icon,ghost"
-                                @click="handleOpenSettings"
-                            />
-                        </nue-tooltip> -->
                         <nue-tooltip content="专注记录" size="small">
                             <nue-button icon="ntd-history" theme="icon,ghost" disabled />
                         </nue-tooltip>
@@ -94,6 +87,7 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
                     @reset="handleReset"
                     @skip="timerStore.skip()"
                     @adjust-time="handleAdjustTime($event)"
+                    @open-settings="handleOpenSettings"
                 >
                     <template #BelowTimeString>
                         <nue-div vertical gap="0" align="center">
