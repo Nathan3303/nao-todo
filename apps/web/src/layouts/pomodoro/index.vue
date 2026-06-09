@@ -1,41 +1,51 @@
 <script setup lang="ts">
 import { inject } from 'vue'
 import { storeToRefs } from 'pinia'
-import { PomodoroTimerComp, PomodoroRecordsComp, PomodoroNotesComp } from '@/components/pomodoro'
+import {
+    PomodoroTimerComp,
+    PomodoroFocusComp,
+    PomodoroRecordsComp,
+    PomodoroNotesComp
+} from '@/components/pomodoro'
 import type { PomodoroViewContext } from '@/views/index/pomodoro/pomodoro-view'
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import { usePomodoroTimerStore } from '@/stores/pomodoro-timer-store'
-import { useTimerPage } from './use-timer-page'
-import { PomodoroTaskSelectDropdown } from '../task-select-dropdown'
+import { usePomodoroPage } from './use-pomodoro-page'
+import { PomodoroTaskSelectDropdown } from './task-select-dropdown'
 
-defineOptions({ name: 'PomodoroTimer' })
+defineOptions({ name: 'PomodoroPage' })
 
 const { isDisplayAside, switchDisplayAside, dialogManager, subscriber } =
     inject<PomodoroViewContext>(POMODORO_VIEW_CONTEXT_KEY)!
 
-const timerStore = usePomodoroTimerStore()
-const { phase, remainingSeconds, totalSeconds, isRunning } = storeToRefs(timerStore)
-
 const {
+    activeTab,
+    timerStore,
+    focusStore,
     taskId,
     taskName,
     handleSelectTask,
     todayRecords,
     noteText,
     setNoteText,
+    recordLoading,
+    recordIsDone,
+    handleNextPage,
+    showTaskDetails,
     handleStart,
     handleAdjustTime,
     handleReset,
     handleOpenSettings,
-    recordLoading,
-    recordIsDone,
-    handleNextPage,
-    showTaskDetails
-} = useTimerPage(dialogManager, subscriber)
+    handleMainAction,
+    handleCancel,
+    handleEnd
+} = usePomodoroPage(dialogManager, subscriber)
+
+const { phase, remainingSeconds, totalSeconds, isRunning } = storeToRefs(timerStore)
+const { status, elapsedSeconds } = storeToRefs(focusStore)
 </script>
 
 <template>
-    <nue-container id="PomodoroFocus">
+    <nue-container id="Pomodoro">
         <nue-header>
             <nue-div theme="title-and-description">
                 <nue-div theme="title-wrapper">
@@ -45,7 +55,7 @@ const {
                             theme="icon,ghost"
                             @click="switchDisplayAside"
                         />
-                        <nue-text>番茄专注</nue-text>
+                        {{ activeTab === 'timer' ? '番茄专注' : '正计时' }}
                     </nue-div>
                     <nue-div theme="actions">
                         <nue-button icon="plus" theme="icon,ghost" />
@@ -56,10 +66,16 @@ const {
                                 @click="handleOpenSettings"
                             />
                         </nue-tooltip>
+                        <nue-tooltip content="专注记录" size="small">
+                            <nue-button icon="ntd-history" theme="icon,ghost" disabled />
+                        </nue-tooltip>
                     </nue-div>
                 </nue-div>
-                <nue-text theme="description">
+                <nue-text v-if="activeTab === 'timer'" theme="description">
                     番茄时钟是一种时间管理工具，它将工作时间和休息时间交替进行。
+                </nue-text>
+                <nue-text v-else theme="description">
+                    正计时是一种自由计时模式，开始后正向计时，可随时暂停，点击「结束」后自动保存专注记录。
                 </nue-text>
             </nue-div>
             <nue-div theme="actions"></nue-div>
@@ -67,6 +83,7 @@ const {
         <nue-main>
             <nue-content>
                 <pomodoro-timer-comp
+                    v-if="activeTab === 'timer'"
                     style="grid-area: timer"
                     :phase="phase"
                     :is-running="isRunning"
@@ -102,6 +119,42 @@ const {
                         </nue-div>
                     </template>
                 </pomodoro-timer-comp>
+
+                <pomodoro-focus-comp
+                    v-if="activeTab === 'focus'"
+                    style="grid-area: timer"
+                    :status="status"
+                    :elapsed-seconds="elapsedSeconds"
+                    :task-name="taskName"
+                    @cancel="handleCancel"
+                    @start="handleMainAction"
+                    @pause="handleMainAction"
+                    @resume="handleMainAction"
+                    @end="handleEnd"
+                >
+                    <template #BelowTimeString>
+                        <nue-div vertical gap="0" align="center">
+                            <pomodoro-task-select-dropdown @select-task="handleSelectTask">
+                                <template #default="{ open }">
+                                    <nue-text
+                                        theme="task-select-trigger"
+                                        @click="open"
+                                        title="关联任务"
+                                    >
+                                        {{ taskName || '未选择关联任务' }}
+                                    </nue-text>
+                                </template>
+                            </pomodoro-task-select-dropdown>
+                            <nue-button
+                                v-if="taskId"
+                                theme="pure"
+                                icon="eye"
+                                @click="showTaskDetails(taskId)"
+                            />
+                        </nue-div>
+                    </template>
+                </pomodoro-focus-comp>
+
                 <pomodoro-records-comp
                     style="grid-area: today"
                     :records="todayRecords"
@@ -120,7 +173,7 @@ const {
 </template>
 
 <style scoped>
-#PomodoroFocus {
+#Pomodoro {
     padding: var(--nue-padding-df);
     gap: var(--nue-gap-df);
 

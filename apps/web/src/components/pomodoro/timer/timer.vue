@@ -129,68 +129,17 @@ const handleAdjustTime = (delta: number) => {
     </nue-div>
 </template>
 
+<style src="@/infrastructure/themes/pomodoro-timer.css" scoped></style>
 <style scoped>
-.nue-div--pomodoro-timer {
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-    gap: var(--nue-gap-xs);
-
-    > .nue-div--timer {
-        position: relative;
-
-        &:hover {
-            .nue-div--time-wrapper .nue-button--icon {
-                opacity: 1;
-            }
-        }
-
-        .nue-div--time-wrapper {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            justify-content: center;
-            align-items: center;
-            gap: var(--nue-gap-xs);
-
-            .nue-text--time-duration {
-                font-size: var(--nue-text-sm);
-                color: var(--nue-primary-color-600);
-                position: absolute;
-                bottom: 100%;
-                cursor: default;
-            }
-
-            .nue-text--time {
-                width: 8rem;
-                text-align: center;
-                font-size: 3rem;
-                line-height: 1;
-                flex: auto;
-                padding: var(--nue-padding-sm) 0;
-                cursor: default;
-            }
-
-            .nue-button--icon {
-                opacity: 0;
-                transition: opacity 0.3s ease-in-out;
-            }
-
-            .nue-div--below-time-string {
-                font-size: var(--nue-text-sm);
-                color: var(--nue-primary-color-600);
-                position: absolute;
-                top: 100%;
-            }
-        }
+/* 仅 Timer 独有的 hover 显隐 ± 按钮效果 */
+.nue-div--pomodoro-timer > .nue-div--timer {
+    &:hover .nue-div--time-wrapper .nue-button--icon {
+        opacity: 1;
     }
 
-    > .nue-div--actions {
-        gap: var(--nue-gap-sm);
-        justify-content: center;
-        align-items: center;
+    .nue-div--time-wrapper .nue-button--icon {
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out;
     }
 }
 </style>

@@ -1,7 +1,13 @@
-import { reactive, computed } from 'vue'
-import type { GoAsync, GetPomodoroRecordsOptions, ResponseDataPagination } from '@nao-todo/types'
+import { reactive, computed, onUnmounted } from 'vue'
+import type {
+    GoAsync,
+    GetPomodoroRecordsOptions,
+    ResponseDataPagination,
+    PomodoroRecordViewObject
+} from '@nao-todo/types'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import type { PomodoroRecordUseCase } from '@nao-todo/application/web/usecases/pomodoro'
+import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import usePomodoroStore from '@/stores/pomodoro-store'
 
 /**
@@ -23,7 +29,8 @@ export type UsePomodoroRecordLoaderStates = {
  */
 const usePomodoroRecordLoader = (
     pomodoroRecordUseCase: PomodoroRecordUseCase,
-    originalGetOptions?: GetPomodoroRecordsOptions
+    originalGetOptions?: GetPomodoroRecordsOptions,
+    subscriber?: Subscriber
 ) => {
     const pomodoroStore = usePomodoroStore()
 
@@ -84,9 +91,6 @@ const usePomodoroRecordLoader = (
             states.disabled = false
             return
         }
-        // 将新加载的记录写入 Store，ID 加入 Set
-        // 注意：load 内部已触发 getRecords，这里通过 store 同步
-        // 由于 records 已通过 addRecords 写入 store，只需将 ids 加入 set
         ids.forEach((id) => states.recordIds.add(id))
         states.disabled = false
     }
@@ -102,7 +106,6 @@ const usePomodoroRecordLoader = (
             states.disabled = false
             return
         }
-        // 替换 ID 列表
         states.recordIds = new Set(ids)
         states.disabled = false
     }
@@ -155,6 +158,21 @@ const usePomodoroRecordLoader = (
         states.disabled = false
     }
 
+    // @subscriber 记录创建通知（Subscriber 模式）
+    if (subscriber) {
+        const handleNewRecordId = (id: string) => {
+            prependRecordId(id)
+        }
+        subscriber.subscribe('AddNewRecordId', handleNewRecordId)
+        pomodoroStore.setOnRecordCreated((record: PomodoroRecordViewObject) => {
+            subscriber.emit('AddNewRecordId', record.id)
+        })
+        onUnmounted(() => {
+            subscriber.unsubscribe('AddNewRecordId', handleNewRecordId)
+            pomodoroStore.setOnRecordCreated(null)
+        })
+    }
+
     return {
         states,
         records,
@@ -169,4 +187,3 @@ const usePomodoroRecordLoader = (
 }
 
 export default usePomodoroRecordLoader
-

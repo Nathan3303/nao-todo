@@ -203,13 +203,14 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
         currentRecordStartAt.value = startAt
     }
 
-    // @action 清除当前会话
+    /**
+     * 清除当前会话（仅清除记录 ID 和开始时间）
+     * @description 不清除 currentTaskId/currentTaskName —— 任务应保持关联以支持连续专注；
+     *              noteText 在 addRecord 创建记录时同步清除。
+     */
     const clearCurrentSession = () => {
-        // currentTaskId.value = null
-        // currentTaskName.value = ''
         currentRecordId.value = null
         currentRecordStartAt.value = null
-        // noteText.value = ''
     }
 
     // @action 添加专注记录（异步：先调 API 持久化，成功后再推入本地列表）

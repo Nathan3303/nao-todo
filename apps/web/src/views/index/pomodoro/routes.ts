@@ -2,30 +2,19 @@ import type { RouteRecordRaw } from 'vue-router'
 
 const routes: RouteRecordRaw = {
     path: 'pomodoro',
-    name: 'pomodoro',
     component: () => import('./entry.vue'),
-    redirect: '/pomodoro/timer',
     children: [
         {
-            path: 'timer/:taskId?',
-            name: 'timer',
-            props: true,
-            component: () => import('@/layouts/pomodoro/timer/index.vue')
+            path: '',
+            redirect: '/pomodoro/timer'
         },
         {
-            path: 'focus/:taskId?',
-            name: 'focus',
+            path: ':type(timer|focus)/:taskId?',
+            name: 'pomodoro',
             props: true,
-            component: () => import('@/layouts/pomodoro/focus/index.vue')
-        },
-        {
-            path: 'history/:taskId?',
-            name: 'history',
-            props: true,
-            component: () => import('@/layouts/pomodoro/history/index.vue')
+            component: () => import('@/layouts/pomodoro/index.vue')
         }
     ]
 }
 
 export default routes
-

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import PomodoroRecordsCompRow from './row.vue'
-import type { PomodoroRecordsCompProps } from './types'
+import type { PomodoroRecordsCompProps, PomodoroRecordsCompEmits } from './types'
 
 defineOptions({ name: 'PomodoroRecordsComp' })
 const props = defineProps<PomodoroRecordsCompProps>()
+const emit = defineEmits<PomodoroRecordsCompEmits>()
 
 const timerMinutes = computed(() => {
     return props.records.reduce((acc, cur) => acc + cur.duration, 0) / 60
@@ -24,7 +25,7 @@ const timerMinutes = computed(() => {
         </nue-div>
         <nue-infinite-scroll
             v-else
-            @load-more="$emit('nextPage')"
+            @load-more="emit('nextPage')"
             :loading="loading"
             :disabled="disabledNextPage"
             trigger-height="2px"

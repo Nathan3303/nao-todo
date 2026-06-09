@@ -4,7 +4,6 @@ import { computed } from 'vue'
 defineOptions({ name: 'PomodoroNotesComp' })
 const props = defineProps<{ noteText: string }>()
 const emit = defineEmits<{
-    (e: 'save'): void
     (e: 'update:noteText', value: string): void
 }>()
 
@@ -30,11 +29,6 @@ const localNote = computed({
                     <nue-text theme="title">专注笔记</nue-text>
                 </nue-div>
             </template>
-            <!-- <template #actions>
-                <nue-button :disabled="!localNote.length" theme="small" @click="emit('save')">
-                    保存草稿
-                </nue-button>
-            </template> -->
         </nue-textarea>
     </nue-div>
 </template>

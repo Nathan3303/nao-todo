@@ -4,17 +4,11 @@ import { nanoid } from 'nanoid'
 import type { TimerPhase, TimerStatus } from '@/components/pomodoro/timer/types'
 import type { CreatePomodoroRecordViewObject } from '@nao-todo/types'
 import usePomodoroStore from '@/stores/pomodoro-store'
-import { usePomodoroFocusStore } from '@/stores/pomodoro-focus-store'
-
-/**
- * 最短专注时间：5 分钟
- */
-const MIN_FOCUS_SECONDS = 5 * 60
-
-/**
- * 最长专注时间：3 小时
- */
-const MAX_FOCUS_SECONDS = 180 * 60
+import {
+    POMODORO_MIN_FOCUS_SECONDS,
+    POMODORO_MAX_FOCUS_SECONDS
+} from '@/infrastructure/constants/pomodoro'
+import { sendNotification, formatMinutes } from '@/infrastructure/utils/pomodoro'
 
 /**
  * UI 刷新间隔（毫秒）
@@ -87,21 +81,6 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
     /** 判断当前是否该进入长休息 */
     const isLongBreakDue = (): boolean =>
         completedRoundCount >= pomodoroStore.sessionsUntilLongBreak
-
-    /** 发送浏览器系统通知 */
-    const sendNotification = (title: string, body: string) => {
-        if (!('Notification' in window) || Notification.permission !== 'granted') return
-        new Notification(title, { body })
-    }
-
-    /** 格式化秒数为中文时间描述 */
-    const formatMinutes = (seconds: number): string => {
-        const mins = Math.floor(seconds / 60)
-        if (mins < 60) return `${mins} 分钟`
-        const hours = Math.floor(mins / 60)
-        const remain = mins % 60
-        return remain > 0 ? `${hours} 小时 ${remain} 分钟` : `${hours} 小时`
-    }
 
     /**
      * 生成新的专注会话 ID
@@ -328,14 +307,8 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
     const start = () => {
         if (phase.value !== 'idle') return
 
-        // 互斥：如果 Focus 正计时活跃，先停掉
-        const focusStore = usePomodoroFocusStore()
-        if (focusStore.status !== 'idle') {
-            focusStore.reset()
-        }
-
         const seconds = totalSeconds.value
-        if (seconds < MIN_FOCUS_SECONDS) return
+        if (seconds < POMODORO_MIN_FOCUS_SECONDS) return
 
         generateNewSessionId()
 
@@ -367,11 +340,10 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
 
     /**
      * 重置到空闲
-     * @description 仅在暂停状态可重置（running 态需先暂停）
+     * @description 互斥场景下也会被对方 store 调用，因此允许从任意状态重置
      */
     const reset = () => {
         if (phase.value === 'idle') return
-        if (status.value === 'running') return
         stopInterval()
         pomodoroStore.clearCurrentSession()
         resetToIdle()
@@ -415,7 +387,8 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
     const adjustTime = (delta: number) => {
         if (phase.value === 'idle') {
             const newTotal = totalSeconds.value + delta
-            if (newTotal < MIN_FOCUS_SECONDS || newTotal > MAX_FOCUS_SECONDS) return
+            if (newTotal < POMODORO_MIN_FOCUS_SECONDS || newTotal > POMODORO_MAX_FOCUS_SECONDS)
+                return
             pomodoroStore.setFocusDuration(newTotal)
             totalSeconds.value = newTotal
             remainingSeconds.value = newTotal

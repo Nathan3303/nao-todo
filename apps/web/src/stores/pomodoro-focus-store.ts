@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { nanoid } from 'nanoid'
 import type { CreatePomodoroRecordViewObject, PomodoroType } from '@nao-todo/types'
 import usePomodoroStore from '@/stores/pomodoro-store'
-import { usePomodoroTimerStore } from '@/stores/pomodoro-timer-store'
+import { sendNotification, formatMinutes } from '@/infrastructure/utils/pomodoro'
 
 /**
  * UI 刷新间隔（毫秒）
@@ -57,21 +57,6 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
 
     /** 计算当前累计秒数 */
     const calcElapsedSeconds = (): number => Math.floor(calcTotalMs() / 1000)
-
-    /** 发送浏览器系统通知 */
-    const sendNotification = (title: string, body: string) => {
-        if (!('Notification' in window) || Notification.permission !== 'granted') return
-        new Notification(title, { body })
-    }
-
-    /** 格式化秒数为中文时间描述 */
-    const formatMinutes = (seconds: number): string => {
-        const mins = Math.floor(seconds / 60)
-        if (mins < 60) return `${mins} 分钟`
-        const hours = Math.floor(mins / 60)
-        const remain = mins % 60
-        return remain > 0 ? `${hours} 小时 ${remain} 分钟` : `${hours} 小时`
-    }
 
     /** 构建一条正计时记录 CreatePomodoroRecordViewObject */
     const buildRecord = (elapsed: number): CreatePomodoroRecordViewObject => ({
@@ -155,14 +140,6 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
      */
     const start = () => {
         if (status.value !== 'idle') return
-
-        // 互斥：如果 Timer 倒计时活跃，先停掉
-        // ESM 循环导入安全——usePomodoroTimerStore() 在 action 运行时才调用，
-        // 此时两个模块均已完成初始化
-        const timerStore = usePomodoroTimerStore()
-        if (timerStore.phase !== 'idle') {
-            timerStore.reset()
-        }
 
         // 生成会话
         sessionId = nanoid()

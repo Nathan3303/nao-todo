@@ -16,7 +16,7 @@ export const formatMinutes = (seconds: number): string => {
  * @param title 通知标题
  * @param body 通知内容
  */
-export const notify = (title: string, body: string) => {
+export const sendNotification = (title: string, body: string) => {
     if (!('Notification' in window) || Notification.permission !== 'granted') return
     new Notification(title, { body })
 }

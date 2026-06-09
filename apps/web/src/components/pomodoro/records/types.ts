@@ -14,10 +14,8 @@ export type PomodoroRecordsCompProps = {
 
 /**
  * 专注记录组件 emits
- * @param viewAll 查看所有专注记录
  * @param nextPage 加载下一页专注记录
  */
-// export type PomodoroRecordsCompEmits = {
-//     (e: 'viewAll'): void
-//     (e: 'nextPage'): void
-// }
+export type PomodoroRecordsCompEmits = {
+    (e: 'nextPage'): void
+}

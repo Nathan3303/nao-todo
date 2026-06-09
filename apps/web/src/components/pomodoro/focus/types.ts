@@ -6,7 +6,7 @@ export type FocusStatus = 'idle' | 'running' | 'paused'
 /**
  * 正计时组件属性
  */
-export interface FocusTimerProps {
+export interface FocusProps {
     /** 正计时状态 */
     status: FocusStatus
     /** 累计秒数 */
@@ -18,7 +18,7 @@ export interface FocusTimerProps {
 /**
  * 正计时组件事件
  */
-export interface FocusTimerEmits {
+export interface FocusEmits {
     /** 开始正计时 */
     (e: 'start'): void
     /** 暂停正计时 */
