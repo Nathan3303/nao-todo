@@ -33,7 +33,7 @@ const {
     handleStart,
     handleAdjustTime,
     handleReset,
-    handleOpenSettings,
+    // handleOpenSettings,
     handleMainAction,
     handleCancel,
     handleEnd
@@ -56,14 +56,14 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
                         <nue-link icon="ntd-zzt" route="/pomodoro/focus">正计时</nue-link>
                     </nue-div>
                     <nue-div theme="actions">
-                        <nue-button icon="plus" theme="icon,ghost" />
-                        <nue-tooltip content="计时器设置" size="small">
+                        <!-- <nue-button icon="plus" theme="icon,ghost" /> -->
+                        <!-- <nue-tooltip content="计时器设置" size="small">
                             <nue-button
                                 icon="setting"
                                 theme="icon,ghost"
                                 @click="handleOpenSettings"
                             />
-                        </nue-tooltip>
+                        </nue-tooltip> -->
                         <nue-tooltip content="专注记录" size="small">
                             <nue-button icon="ntd-history" theme="icon,ghost" disabled />
                         </nue-tooltip>
@@ -82,6 +82,7 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
                 <!-- 番茄专注计时器 -->
                 <pomodoro-timer-comp
                     v-if="activeTab === 'timer'"
+                    style="grid-area: timer"
                     :phase="phase"
                     :is-running="isRunning"
                     :remaining-seconds="remainingSeconds"
@@ -119,6 +120,7 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
                 <!-- 正计时计时器 -->
                 <pomodoro-focus-comp
                     v-if="activeTab === 'focus'"
+                    style="grid-area: timer"
                     :status="status"
                     :elapsed-seconds="elapsedSeconds"
                     :task-name="taskName"
@@ -188,6 +190,7 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
             > .nue-div--title-wrapper {
                 flex: auto;
                 justify-content: space-between;
+                position: relative;
 
                 > .nue-div--title {
                     align-items: center;
@@ -201,12 +204,17 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
                     background-color: var(--nue-primary-color-200);
                     border-radius: var(--nue-primary-radius);
                     gap: var(--nue-gap-2xs);
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
 
                     .nue-link {
                         --nue-link-background-color: transparent;
                         --nue-link-color: var(--nue-primary-color-600);
                         --nue-link-actived-background-color: var(--nue-primary-color-900);
                         --nue-link-actived-color: var(--nue-primary-color-100);
+                        --nue-link-actived-text-decoration: none;
 
                         font-size: var(--nue-text-sm);
                         width: fit-content;
@@ -232,8 +240,8 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
 
     > .nue-main .nue-content {
         display: grid;
-        grid-template-columns: minmax(24rem, 3fr) 4fr;
-        grid-template-rows: minmax(24rem, 3fr) 4fr;
+        grid-template-columns: minmax(24rem, 2fr) 4fr;
+        grid-template-rows: minmax(24rem, 2fr) 4fr;
         grid-template-areas: 'timer today' 'note note';
         width: 100%;
         height: 100%;
@@ -241,9 +249,9 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
         gap: var(--nue-gap-df);
         overflow: visible;
 
-        @media (max-width: 480px) {
+        @media (max-width: 720px) {
             grid-template-columns: 1fr;
-            grid-template-rows: minmax(24rem, 3fr) 4fr;
+            grid-template-rows: 1fr 1fr 1fr;
             grid-template-areas: 'timer' 'note' 'today';
             gap: var(--nue-gap-lg);
         }
