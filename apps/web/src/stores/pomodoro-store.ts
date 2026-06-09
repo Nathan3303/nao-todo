@@ -205,11 +205,11 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
 
     // @action 清除当前会话
     const clearCurrentSession = () => {
-        currentTaskId.value = null
-        currentTaskName.value = ''
+        // currentTaskId.value = null
+        // currentTaskName.value = ''
         currentRecordId.value = null
         currentRecordStartAt.value = null
-        noteText.value = ''
+        // noteText.value = ''
     }
 
     // @action 添加专注记录（异步：先调 API 持久化，成功后再推入本地列表）

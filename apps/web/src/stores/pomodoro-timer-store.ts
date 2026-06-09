@@ -4,6 +4,7 @@ import { nanoid } from 'nanoid'
 import type { TimerPhase, TimerStatus } from '@/components/pomodoro/timer/types'
 import type { CreatePomodoroRecordViewObject } from '@nao-todo/types'
 import usePomodoroStore from '@/stores/pomodoro-store'
+import { usePomodoroFocusStore } from '@/stores/pomodoro-focus-store'
 
 /**
  * 最短专注时间：5 分钟
@@ -326,6 +327,13 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
      */
     const start = () => {
         if (phase.value !== 'idle') return
+
+        // 互斥：如果 Focus 正计时活跃，先停掉
+        const focusStore = usePomodoroFocusStore()
+        if (focusStore.status !== 'idle') {
+            focusStore.reset()
+        }
+
         const seconds = totalSeconds.value
         if (seconds < MIN_FOCUS_SECONDS) return
 
