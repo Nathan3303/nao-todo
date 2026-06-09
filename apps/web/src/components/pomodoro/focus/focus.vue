@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { PomodoroFocusRing } from '@/components/pomodoro'
 import type { FocusTimerEmits, FocusTimerProps } from './types'
 
 defineOptions({ name: 'PomodoroFocusComp' })
@@ -13,9 +14,15 @@ const displayTime = computed(() => {
     const m = Math.floor((secs % 3600) / 60)
     const s = secs % 60
     if (h > 0) {
-        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+        return (
+            String(h).padStart(2, '0') +
+            ':' +
+            String(m).padStart(2, '0') +
+            ':' +
+            String(s).padStart(2, '0')
+        )
     }
-    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+    return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0')
 })
 
 // @computed 时间范围标签
@@ -59,37 +66,7 @@ const handleMainAction = () => {
 <template>
     <nue-div theme="pomodoro-timer">
         <nue-div theme="timer">
-            <nue-div theme="circle">
-                <svg class="progress-ring-bg" viewBox="0 0 100 100">
-                    <circle
-                        class="progress-outter-bar"
-                        cx="50"
-                        cy="50"
-                        r="50"
-                        stroke="var(--nue-primary-color-200)"
-                    />
-                </svg>
-                <div class="progress-ring-progress-container" :class="{ running: isRunning }">
-                    <svg class="progress-ring-progress" viewBox="0 0 100 100">
-                        <defs>
-                            <linearGradient id="progressGradient">
-                                <stop offset="0%" stop-color="var(--nue-primary-color-900)" />
-                                <stop offset="100%" stop-color="var(--nue-primary-color-100)" />
-                            </linearGradient>
-                        </defs>
-                        <circle
-                            class="progress-inner-bar"
-                            cx="50"
-                            cy="50"
-                            r="50"
-                            stroke="url(#progressGradient)"
-                            stroke-width="3"
-                            stroke-linecap="round"
-                            transform="rotate(-90 50 50)"
-                        />
-                    </svg>
-                </div>
-            </nue-div>
+            <pomodoro-focus-ring :scale="3" :stroke-width="1" :is-running="isRunning" />
             <nue-div theme="time-wrapper">
                 <nue-text v-if="!isIdle" theme="time-duration">{{ phaseLabel }}</nue-text>
                 <nue-text theme="time">{{ displayTime }}</nue-text>
@@ -127,59 +104,6 @@ const handleMainAction = () => {
 
     > .nue-div--timer {
         position: relative;
-
-        .nue-div--circle {
-            width: 300px;
-            height: 300px;
-            border-radius: 50%;
-            margin: var(--nue-padding-sm);
-            box-sizing: border-box;
-            position: relative;
-
-            .progress-ring-bg {
-                position: absolute;
-                inset: 0;
-                width: 300px;
-                height: 300px;
-
-                .progress-outter-bar {
-                    transform: scale(0.9) rotate(-90deg);
-                    fill: transparent;
-                    stroke-width: 3px;
-                    transform-origin: center;
-                    transition: stroke-dashoffset 0.24s linear;
-                }
-            }
-
-            .progress-ring-progress-container {
-                position: absolute;
-                inset: 0;
-                width: 100%;
-                height: 100%;
-                opacity: 0;
-                transition: opacity 0.3s ease;
-                will-change: transform;
-            }
-
-            .progress-ring-progress-container.running {
-                opacity: 1;
-                animation: spin-svg 12s linear infinite;
-                transform-origin: center center;
-            }
-
-            .progress-ring-progress {
-                width: 100%;
-                height: 100%;
-
-                .progress-inner-bar {
-                    transform: scale(0.9) rotate(-90deg);
-                    fill: transparent;
-                    stroke-width: 3px;
-                    transform-origin: center;
-                    transition: stroke-dashoffset 0.24s linear;
-                }
-            }
-        }
 
         .nue-div--time-wrapper {
             position: absolute;
@@ -221,15 +145,6 @@ const handleMainAction = () => {
         gap: var(--nue-gap-sm);
         justify-content: center;
         align-items: center;
-    }
-}
-
-@keyframes spin-svg {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
     }
 }
 </style>

@@ -6,7 +6,7 @@ import { useUserStore } from '@/stores'
 import { APP_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import type { AppContext } from '@/app'
 import { t } from '@nao-todo/infrastructure/locales'
-import { PomodoroTimerIndicator } from '@/components/pomodoro'
+import { PomodoroIndicator } from '@/components/pomodoro'
 
 defineOptions({ name: 'AppAside' })
 
@@ -36,7 +36,7 @@ const { profile } = storeToRefs(userStore)
             <nue-div theme="aside__navs">
                 <template v-for="(rl, idx) in routerLinks" :key="idx">
                     <template v-if="rl.route === '/pomodoro'">
-                        <pomodoro-timer-indicator :route="rl.route" />
+                        <pomodoro-indicator :route="rl.route" />
                     </template>
                     <template v-else>
                         <nue-tooltip

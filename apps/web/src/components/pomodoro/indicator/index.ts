@@ -1,1 +1,3 @@
-export { default as PomodoroTimerIndicator } from './PomodoroTimerIndicator.vue'
+import Indicator from './indicator.vue'
+
+export const PomodoroIndicator = Indicator

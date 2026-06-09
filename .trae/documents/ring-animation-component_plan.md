@@ -14,11 +14,8 @@
 ### 现有组件模式
 
 项目中组件遵循以下模式：
-- 组件位于 `apps/web/src/components/[模块名]/[组件名]/` 目录
-- 每个组件包含：
-  - `[组件名].vue` - 组件模板
-  - `index.ts` - 导出文件
-  - `types.ts` - TypeScript 类型定义（可选）
+- 组件位于 `apps/web/src/components/pomodoro/` 目录
+- 组件命名为 `pomodoro-[功能名].vue`
 - 使用 `<script setup lang="ts">` 语法
 - CSS 样式使用 scoped
 
@@ -28,28 +25,23 @@
 
 ### 1. 创建新的可复用组件
 
-**组件名称**：`PomodoroRingAnimation`
+**组件名称**：`PomodoroFocusRing`
 
-**位置**：`apps/web/src/components/pomodoro/ring-animation/`
+**位置**：`apps/web/src/components/pomodoro/pomodoro-focus-ring.vue`
 
 **文件结构**：
 ```
-ring-animation/
-├── RingAnimation.vue    # 组件主文件
-├── index.ts            # 导出文件
-└── types.ts            # 类型定义
+pomodoro-focus-ring.vue    # 组件主文件（包含类型定义）
 ```
 
 ### 2. 组件 Props 设计
 
 ```typescript
-interface RingAnimationProps {
+interface PomodoroFocusRingProps {
     /** 是否运行中（显示旋转动画） */
     isRunning: boolean
     /** 外环颜色（默认灰色） */
     outerColor?: string
-    /** 内环颜色或渐变（默认主色渐变） */
-    innerColor?: string
     /** 圆环尺寸（默认 300px） */
     size?: number
     /** 圆环宽度（默认 3px） */
@@ -61,33 +53,21 @@ interface RingAnimationProps {
 
 ### 3. 组件实现
 
-#### RingAnimation.vue 核心功能：
+#### pomodoro-focus-ring.vue 核心功能：
 - 渲染两个 SVG circle（背景和进度）
-- 使用 `linearGradient` 实现渐变效果
+- 使用 `linearGradient` 实现渐变效果（深色 → 浅色）
 - 根据 `isRunning` 状态控制动画显示
 - 支持自定义颜色、尺寸、动画周期
+- 内嵌类型定义
 
-#### types.ts：
+### 4. 组件导出
+
+在 `components/pomodoro/index.ts` 中添加导出：
 ```typescript
-export interface RingAnimationProps {
-    isRunning: boolean
-    outerColor?: string
-    innerColor?: string
-    size?: number
-    strokeWidth?: number
-    duration?: number
-}
+export { default as PomodoroFocusRing } from './pomodoro-focus-ring.vue'
 ```
 
-#### index.ts：
-```typescript
-import RingAnimation from './RingAnimation.vue'
-
-export const PomodoroRingAnimation = RingAnimation
-export type { RingAnimationProps } from './types'
-```
-
-### 4. 修改 focus.vue
+### 5. 修改 focus.vue
 
 将原有的环形动画模板替换为新组件：
 
@@ -95,7 +75,7 @@ export type { RingAnimationProps } from './types'
 ```vue
 <nue-div theme="circle">
     <svg class="progress-ring-bg" viewBox="0 0 100 100">
-        <!-- 背景圆环 -->
+        <circle class="progress-outter-bar" ... />
     </svg>
     <div class="progress-ring-progress-container" :class="{ running: isRunning }">
         <svg class="progress-ring-progress" viewBox="0 0 100 100">
@@ -107,7 +87,7 @@ export type { RingAnimationProps } from './types'
 
 **After**：
 ```vue
-<PomodoroRingAnimation :is-running="isRunning" />
+<PomodoroFocusRing :is-running="isRunning" />
 ```
 
 ---
@@ -116,38 +96,59 @@ export type { RingAnimationProps } from './types'
 
 | 文件路径 | 操作 | 说明 |
 |----------|------|------|
-| `apps/web/src/components/pomodoro/ring-animation/types.ts` | 创建 | 类型定义 |
-| `apps/web/src/components/pomodoro/ring-animation/RingAnimation.vue` | 创建 | 组件实现 |
-| `apps/web/src/components/pomodoro/ring-animation/index.ts` | 创建 | 导出文件 |
-| `apps/web/src/components/pomodoro/focus/focus.vue` | 修改 | 使用新组件替换模板 |
+| `apps/web/src/components/pomodoro/pomodoro-focus-ring.vue` | 创建 | 可复用环形动画组件 |
 | `apps/web/src/components/pomodoro/index.ts` | 修改 | 导出新组件 |
+| `apps/web/src/components/pomodoro/focus/focus.vue` | 修改 | 使用新组件替换模板 |
 
 ---
 
 ## 步骤分解
 
-### 步骤 1：创建类型定义
-- 创建 `ring-animation/types.ts`
-- 定义 `RingAnimationProps` 接口
-
-### 步骤 2：创建组件实现
-- 创建 `ring-animation/RingAnimation.vue`
+### 步骤 1：创建组件文件
+- 创建 `components/pomodoro/pomodoro-focus-ring.vue`
 - 实现 SVG 环形动画结构
 - 添加渐变效果和旋转动画
 - 支持自定义属性
+- 内嵌 TypeScript 类型定义
 
-### 步骤 3：创建导出文件
-- 创建 `ring-animation/index.ts`
-- 导出组件和类型
-
-### 步骤 4：更新主模块导出
+### 步骤 2：更新主模块导出
 - 修改 `components/pomodoro/index.ts`
 - 添加新组件导出
 
-### 步骤 5：重构 focus.vue
+### 步骤 3：重构 focus.vue
 - 导入新组件
 - 替换环形动画模板
 - 保留时间显示和操作按钮
+- 移除不再需要的样式
+
+---
+
+## 组件 API 设计
+
+### Props
+
+| 属性 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| isRunning | `boolean` | **必填** | 是否运行中 |
+| outerColor | `string` | `'var(--nue-primary-color-200)'` | 外环颜色 |
+| size | `number` | `300` | 圆环尺寸（px） |
+| strokeWidth | `number` | `3` | 圆环宽度（px） |
+| duration | `number` | `12` | 动画周期（秒） |
+
+### 使用示例
+
+```vue
+<!-- 基本用法 -->
+<PomodoroFocusRing :is-running="isRunning" />
+
+<!-- 自定义配置 -->
+<PomodoroFocusRing 
+    :is-running="isRunning"
+    :size="300"
+    :stroke-width="3"
+    :duration="12"
+/>
+```
 
 ---
 
@@ -159,21 +160,3 @@ export type { RingAnimationProps } from './types'
    - running 状态：显示渐变进度环并持续旋转
    - paused 状态：隐藏进度环动画
 3. **样式一致性**：确保与原 design 保持一致
-
----
-
-## 组件使用示例
-
-```vue
-<!-- 基本用法 -->
-<PomodoroRingAnimation :is-running="timerStore.isRunning" />
-
-<!-- 自定义配置 -->
-<PomodoroRingAnimation 
-    :is-running="isRunning"
-    :size="300"
-    :stroke-width="3"
-    :duration="12"
-    outer-color="var(--nue-primary-color-200)"
-/>
-```
