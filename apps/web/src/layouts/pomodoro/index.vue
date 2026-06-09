@@ -14,8 +14,7 @@ import { PomodoroTaskSelectDropdown } from './task-select-dropdown'
 
 defineOptions({ name: 'PomodoroPage' })
 
-const { isDisplayAside, switchDisplayAside, dialogManager, subscriber } =
-    inject<PomodoroViewContext>(POMODORO_VIEW_CONTEXT_KEY)!
+const { dialogManager, subscriber } = inject<PomodoroViewContext>(POMODORO_VIEW_CONTEXT_KEY)!
 
 const {
     activeTab,
@@ -45,17 +44,16 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
 </script>
 
 <template>
+    <!-- 番茄钟页面布局 -->
     <nue-container id="Pomodoro">
+        <!-- 页面标题 -->
         <nue-header>
             <nue-div theme="title-and-description">
                 <nue-div theme="title-wrapper">
-                    <nue-div theme="title">
-                        <nue-button
-                            :icon="isDisplayAside ? 'menu-close' : 'menu-open'"
-                            theme="icon,ghost"
-                            @click="switchDisplayAside"
-                        />
-                        {{ activeTab === 'timer' ? '番茄专注' : '正计时' }}
+                    <nue-div theme="title">番茄专注</nue-div>
+                    <nue-div theme="tabs">
+                        <nue-link icon="ntd-fanqie" route="/pomodoro/timer">番茄专注</nue-link>
+                        <nue-link icon="ntd-zzt" route="/pomodoro/focus">正计时</nue-link>
                     </nue-div>
                     <nue-div theme="actions">
                         <nue-button icon="plus" theme="icon,ghost" />
@@ -78,13 +76,12 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
                     正计时是一种自由计时模式，开始后正向计时，可随时暂停，点击「结束」后自动保存专注记录。
                 </nue-text>
             </nue-div>
-            <nue-div theme="actions"></nue-div>
         </nue-header>
         <nue-main>
             <nue-content>
+                <!-- 番茄专注计时器 -->
                 <pomodoro-timer-comp
                     v-if="activeTab === 'timer'"
-                    style="grid-area: timer"
                     :phase="phase"
                     :is-running="isRunning"
                     :remaining-seconds="remainingSeconds"
@@ -119,10 +116,9 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
                         </nue-div>
                     </template>
                 </pomodoro-timer-comp>
-
+                <!-- 正计时计时器 -->
                 <pomodoro-focus-comp
                     v-if="activeTab === 'focus'"
-                    style="grid-area: timer"
                     :status="status"
                     :elapsed-seconds="elapsedSeconds"
                     :task-name="taskName"
@@ -154,7 +150,7 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
                         </nue-div>
                     </template>
                 </pomodoro-focus-comp>
-
+                <!-- 专注记录 -->
                 <pomodoro-records-comp
                     style="grid-area: today"
                     :records="todayRecords"
@@ -162,6 +158,7 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
                     :disabled-next-page="recordIsDone"
                     @next-page="handleNextPage"
                 />
+                <!-- 专注笔记 -->
                 <pomodoro-notes-comp
                     style="grid-area: note"
                     :note-text="noteText"
@@ -175,7 +172,7 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
 <style scoped>
 #Pomodoro {
     padding: var(--nue-padding-df);
-    gap: var(--nue-gap-df);
+    gap: var(--nue-gap-lg);
 
     > .nue-header {
         padding: 0;
@@ -198,9 +195,31 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
                     gap: var(--nue-gap-2xs);
                 }
 
+                > .nue-div--tabs {
+                    width: fit-content;
+                    padding: var(--nue-padding-2xs);
+                    background-color: var(--nue-primary-color-200);
+                    border-radius: var(--nue-primary-radius);
+                    gap: var(--nue-gap-2xs);
+
+                    .nue-link {
+                        --nue-link-background-color: transparent;
+                        --nue-link-color: var(--nue-primary-color-600);
+                        --nue-link-actived-background-color: var(--nue-primary-color-900);
+                        --nue-link-actived-color: var(--nue-primary-color-100);
+
+                        font-size: var(--nue-text-sm);
+                        width: fit-content;
+                        height: var(--nue-box-size-xs);
+                        justify-content: center;
+                        align-items: center;
+                        padding: 0 var(--nue-padding-xs);
+                        border-radius: var(--nue-primary-radius);
+                    }
+                }
+
                 > .nue-div--actions {
                     width: fit-content;
-                    margin-left: auto;
                 }
             }
 
@@ -208,10 +227,6 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
                 font-size: var(--nue-text-sm);
                 color: var(--nue-primary-color-600);
             }
-        }
-
-        > .nue-div--actions {
-            gap: var(--nue-gap-sm);
         }
     }
 

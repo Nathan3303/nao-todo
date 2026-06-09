@@ -7,25 +7,22 @@ import { type PomodoroViewContext } from '@/views/index/pomodoro/pomodoro-view'
 defineOptions({ name: 'PomodoroAside' })
 
 // @context PomodoroView 番茄钟视图上下文
-const { asideWidth, handleResizeAside, isDisplayAside } =
-    inject<PomodoroViewContext>(POMODORO_VIEW_CONTEXT_KEY)!
+const { isDisplayAside, isUseFloatAside } = inject<PomodoroViewContext>(POMODORO_VIEW_CONTEXT_KEY)!
 </script>
 
 <template>
     <app-aside-adapter
-        @resize="handleResizeAside"
         v-model:displayed="isDisplayAside"
-        :width="asideWidth"
-        :min-width="isDisplayAside ? '250px' : 'unset'"
+        width="auto"
+        min-width="unset"
         max-width="350px"
     >
-        <nue-div v-if="isDisplayAside" theme="pomodoro-aside">
+        <nue-div v-if="isUseFloatAside" theme="pomodoro-aside">
             <nue-div vertical gap="0.25rem" flex="1">
                 <nue-link icon="ntd-fanqie" theme="route" route="/pomodoro/timer">
                     番茄专注
                 </nue-link>
                 <nue-link icon="ntd-zzt" theme="route" route="/pomodoro/focus">正计时</nue-link>
-
             </nue-div>
         </nue-div>
     </app-aside-adapter>

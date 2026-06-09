@@ -21,6 +21,7 @@ import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 export type PomodoroViewContext = {
     asideWidth: Ref<string>
     isDisplayAside: Ref<boolean>
+    isUseFloatAside: Ref<boolean>
     handleResizeAside: (width: number) => void
     switchDisplayAside: () => void
     dialogManager: DialogManager
@@ -49,10 +50,11 @@ export const usePomodoroView = () => {
      * @description 应用响应式侧栏 Hook，提供响应式侧边栏上下文
      * @use useResponsiveAside(responsiveFlag, responsiveTypes.MOBILE) - 响应式侧边栏上下文
      */
-    const { visible: isDisplayAside, switchVisible: switchDisplayAside } = useResponsiveAside(
-        responsiveFlag,
-        responsiveTypes.MOBILE
-    )
+    const {
+        visible: isDisplayAside,
+        isFloating: isUseFloatAside,
+        switchVisible: switchDisplayAside
+    } = useResponsiveAside(responsiveFlag, responsiveTypes.MOBILE)
 
     /**
      * 响应式任务详情面板
@@ -90,6 +92,7 @@ export const usePomodoroView = () => {
     provide<PomodoroViewContext>(POMODORO_VIEW_CONTEXT_KEY, {
         asideWidth,
         isDisplayAside,
+        isUseFloatAside,
         handleResizeAside,
         switchDisplayAside,
         dialogManager,
