@@ -10,23 +10,26 @@ const props = defineProps<{ record: PomodoroRecordViewObject }>()
 
 // @computed 格式化时长显示
 const displayDuration = computed(() => {
-    const start = dayjs(props.record.startAt)
-    const end = dayjs(props.record.endAt)
-    const startStr = start.format('HH:mm')
-    const endStr = end.format('HH:mm')
-    const minutes = Math.round(props.record.duration / 60)
-    if (minutes < 60) {
-        return `${startStr} - ${endStr} , ${minutes}m`
-    }
-    const hours = Math.floor(minutes / 60)
-    const mins = minutes % 60
-    return `${startStr} - ${endStr}, ${hours}h ${mins}m`
+    const totalDuration = props.record.duration
+    const hours = Math.floor(totalDuration / 3600)
+    const minutes = Math.floor((totalDuration - hours * 3600) / 60)
+    const seconds = Math.floor(totalDuration - hours * 3600 - minutes * 60)
+    const hoursStr = hours ? `${hours} 时 ` : ''
+    const minutesStr = minutes ? `${minutes} 分 ` : ''
+    const secondsStr = seconds ? `${seconds} 秒 ` : ''
+    return hoursStr + minutesStr + secondsStr
 })
 </script>
 
 <template>
     <nue-div theme="card,pomodoro-records-row">
-        <nue-text theme="title" :clamped="1">{{ record.taskName }}</nue-text>
+        <nue-div theme="task-and-startat">
+            <nue-text theme="task" :clamped="1">{{ record.taskName }}</nue-text>
+            <nue-text theme="startat">
+                {{ record.type === 1 ? '正计时' : '番茄钟' }} - 开始于
+                {{ dayjs(record.startAt).format('HH:mm') }}
+            </nue-text>
+        </nue-div>
         <nue-text theme="duration">{{ displayDuration }}</nue-text>
     </nue-div>
 </template>
@@ -36,11 +39,29 @@ const displayDuration = computed(() => {
     display: flex;
     align-items: center;
     box-shadow: none;
-    padding: var(--nue-padding-xs);
+    padding: var(--nue-padding-sm);
     border: none;
     background-color: var(--nue-primary-color-100);
-    width: 100%;
     justify-content: space-between;
+    overflow: hidden;
+
+    > .nue-div--task-and-startat {
+        display: flex;
+        flex-direction: column;
+        gap: var(--nue-gap-2xs);
+        overflow: hidden;
+        flex: auto;
+
+        > .nue-text--task {
+            font-size: var(--nue-text-df2);
+            font-weight: 500;
+        }
+
+        > .nue-text--startat {
+            font-size: var(--nue-text-sm);
+            color: var(--nue-primary-color-600);
+        }
+    }
 
     > .nue-text--title {
         font-size: var(--nue-text-sm);
@@ -48,8 +69,8 @@ const displayDuration = computed(() => {
     }
 
     > .nue-text--duration {
-        font-size: var(--nue-text-sm);
-        color: var(--nue-primary-color-500);
+        font-size: var(--nue-text-df2);
+        color: var(--nue-primary-color-600);
         flex: none;
     }
 }

@@ -129,6 +129,7 @@ const handleAdjustTime = (delta: number) => {
                     {{ actionButtonText }}
                 </nue-button>
                 <nue-button
+                    v-if="isIdle"
                     icon="setting"
                     theme="primary,icon"
                     @click="emit('openSettings')"

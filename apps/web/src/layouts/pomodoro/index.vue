@@ -14,7 +14,8 @@ import { PomodoroTaskSelectDropdown } from './task-select-dropdown'
 
 defineOptions({ name: 'PomodoroPage' })
 
-const { dialogManager, subscriber } = inject<PomodoroViewContext>(POMODORO_VIEW_CONTEXT_KEY)!
+const { dialogManager, subscriber, isUseFloatAside, isDisplayAside, switchDisplayAside } =
+    inject<PomodoroViewContext>(POMODORO_VIEW_CONTEXT_KEY)!
 
 const {
     activeTab,
@@ -48,26 +49,23 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
     <nue-container id="Pomodoro">
         <!-- 页面标题 -->
         <nue-header>
-            <nue-div theme="title-and-description">
-                <nue-div theme="title-wrapper">
-                    <nue-div theme="title">番茄专注</nue-div>
-                    <nue-div theme="tabs">
-                        <nue-link icon="ntd-fanqie" route="/pomodoro/timer">番茄专注</nue-link>
-                        <nue-link icon="ntd-zzt" route="/pomodoro/focus">正计时</nue-link>
-                    </nue-div>
-                    <nue-div theme="actions">
-                        <!-- <nue-button icon="plus" theme="icon,ghost" /> -->
-                        <nue-tooltip content="专注记录" size="small">
-                            <nue-button icon="ntd-history" theme="icon,ghost" disabled />
-                        </nue-tooltip>
-                    </nue-div>
-                </nue-div>
-                <nue-text v-if="activeTab === 'timer'" theme="description">
-                    番茄时钟是一种时间管理工具，它将工作时间和休息时间交替进行。
-                </nue-text>
-                <nue-text v-else theme="description">
-                    正计时是一种自由计时模式，开始后正向计时，可随时暂停，点击「结束」后自动保存专注记录。
-                </nue-text>
+            <nue-div theme="title-wrapper">
+                <nue-button
+                    v-if="isUseFloatAside"
+                    :icon="isDisplayAside ? 'menu-close' : 'menu-open'"
+                    theme="icon,ghost"
+                    @click="switchDisplayAside"
+                />
+                <nue-div theme="title">番茄专注</nue-div>
+            </nue-div>
+            <nue-div theme="tabs">
+                <nue-link icon="ntd-fanqie" route="/pomodoro/timer">番茄专注</nue-link>
+                <nue-link icon="ntd-zzt" route="/pomodoro/focus">正计时</nue-link>
+            </nue-div>
+            <nue-div theme="actions">
+                <nue-tooltip content="查看历史专注记录" size="small">
+                    <nue-button icon="ntd-history" theme="icon,ghost" />
+                </nue-tooltip>
             </nue-div>
         </nue-header>
         <nue-main>
@@ -90,7 +88,7 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
                     @open-settings="handleOpenSettings"
                 >
                     <template #BelowTimeString>
-                        <nue-div vertical gap="0" align="center">
+                        <nue-div vertical gap="0" align="center" flex="1">
                             <pomodoro-task-select-dropdown @select-task="handleSelectTask">
                                 <template #default="{ open }">
                                     <nue-text
@@ -125,7 +123,7 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
                     @end="handleEnd"
                 >
                     <template #BelowTimeString>
-                        <nue-div vertical gap="0" align="center">
+                        <nue-div vertical gap="0" align="center" flex="1">
                             <pomodoro-task-select-dropdown @select-task="handleSelectTask">
                                 <template #default="{ open }">
                                     <nue-text
@@ -167,81 +165,64 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
 
 <style scoped>
 #Pomodoro {
-    padding: var(--nue-padding-df);
-    gap: var(--nue-gap-lg);
+    /* gap: var(--nue-gap-lg); */
 
     > .nue-header {
-        padding: 0;
-        height: auto;
+        padding: 0 var(--nue-padding-df);
+        height: 4rem;
         justify-content: space-between;
-        border: none;
+        align-items: center;
 
-        > .nue-div--title-and-description {
-            width: 100%;
-            flex-direction: column;
+        > .nue-div--title-wrapper {
+            display: flex;
+            align-items: center;
             gap: var(--nue-gap-2xs);
 
-            > .nue-div--title-wrapper {
-                flex: auto;
-                justify-content: space-between;
-                position: relative;
-
-                > .nue-div--title {
-                    align-items: center;
-                    font-size: var(--nue-text-xl);
-                    gap: var(--nue-gap-2xs);
-                }
-
-                > .nue-div--tabs {
-                    width: fit-content;
-                    padding: var(--nue-padding-2xs);
-                    background-color: var(--nue-primary-color-200);
-                    border-radius: var(--nue-primary-radius);
-                    gap: var(--nue-gap-2xs);
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-
-                    .nue-link {
-                        --nue-link-background-color: transparent;
-                        --nue-link-color: var(--nue-primary-color-600);
-                        --nue-link-actived-background-color: var(--nue-primary-color-900);
-                        --nue-link-actived-color: var(--nue-primary-color-100);
-                        --nue-link-actived-text-decoration: none;
-
-                        font-size: var(--nue-text-sm);
-                        width: fit-content;
-                        height: var(--nue-box-size-xs);
-                        justify-content: center;
-                        align-items: center;
-                        padding: 0 var(--nue-padding-xs);
-                        border-radius: var(--nue-primary-radius);
-                    }
-                }
-
-                > .nue-div--actions {
-                    width: fit-content;
-                }
+            > .nue-div--title {
+                gap: var(--nue-gap-2xs);
             }
+        }
 
-            > .nue-text--description {
+        > .nue-div--tabs {
+            gap: var(--nue-gap-2xs);
+            height: 100%;
+
+            .nue-link {
+                --nue-link-background-color: transparent;
+                --nue-link-color: var(--nue-primary-color-500);
+                --nue-link-actived-color: var(--nue-primary-color-900);
+                --nue-link-actived-text-decoration: none;
+
                 font-size: var(--nue-text-sm);
-                color: var(--nue-primary-color-600);
+                height: 100%;
+                justify-content: center;
+                align-items: center;
+                padding: 0 var(--nue-padding-sm);
+                box-sizing: border-box;
+
+                &.nue-link--actived {
+                    border-bottom: 2px solid var(--nue-primary-color-900);
+                }
             }
+        }
+
+        > .nue-div--actions {
+            width: fit-content;
         }
     }
 
     > .nue-main .nue-content {
         display: grid;
-        grid-template-columns: minmax(24rem, 2fr) 4fr;
-        grid-template-rows: minmax(24rem, 2fr) 4fr;
+        grid-template-columns: 4fr 3fr;
+        grid-template-rows: 4fr 3fr;
         grid-template-areas: 'timer today' 'note note';
         width: 100%;
         height: 100%;
         flex: none;
         gap: var(--nue-gap-df);
         overflow: visible;
+        padding: var(--nue-padding-df);
+        box-sizing: border-box;
 
         @media (max-width: 720px) {
             grid-template-columns: 1fr;
