@@ -1,7 +1,13 @@
 import useCommentHandler from '@/infrastructure/handlers/tasks/comment-handler'
 import useEventHandler from '@/infrastructure/handlers/tasks/event-handler'
 import useTaskHandler from '@/infrastructure/handlers/tasks/task-handler'
-import { useProjectsStore, useTagsStore, useTaskDetailsStore, useTasksStore } from '@/stores'
+import {
+    usePomodoroStore,
+    useProjectsStore,
+    useTagsStore,
+    useTaskDetailsStore,
+    useTasksStore
+} from '@/stores'
 import { CommentUseCase } from '@nao-todo/application/web/usecases/comment'
 import { EventUseCase } from '@nao-todo/application/web/usecases/event'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
@@ -17,6 +23,7 @@ import type {
     TaskDetailsPreContext,
     TaskDetailsProps
 } from './types'
+import { PomodoroRecordUseCase } from '@nao-todo/application/web/usecases/pomodoro'
 
 const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     // @viewContext TaskDetailsPre context
@@ -28,6 +35,7 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     const projectStore = useProjectsStore()
     const tagStore = useTagsStore()
     const taskStore = useTasksStore()
+    const pomodoroStore = usePomodoroStore()
     const taskDetailsStore = useTaskDetailsStore()
 
     // @presetStates
@@ -42,19 +50,23 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         commentsError
     } = storeToRefs(taskDetailsStore)
 
-    // @usecase 任务检查事项用例
+    /**
+     * 用例
+     * @use EventUseCase 任务检查事项用例
+     * @use CommentUseCase 任务评论用例
+     */
     const eventUseCase = EventUseCase.create(taskDetailsStore)
-
-    // @usecase 任务评论用例
     const commentUseCase = CommentUseCase.create(taskDetailsStore)
+    const pomodoroUseCase = PomodoroRecordUseCase.create(pomodoroStore)
 
-    // @handlers 任务检查事项处理程序
+    /**
+     * 处理程序
+     * @use EventEventHandler 任务检查事项处理程序
+     * @use CommentHandler 任务评论处理程序
+     * @use TaskHandler 任务处理程序
+     */
     const eventHandler = useEventHandler(eventUseCase)
-
-    // @handlers 任务评论处理程序
     const commentHandler = useCommentHandler(commentUseCase)
-
-    // @handlers 任务处理程序
     const taskHandler = useTaskHandler(taskUseCase, subscriber)
 
     // @states

@@ -3,7 +3,13 @@ import { inject } from 'vue'
 import DetailsRow from './row.vue'
 import DetailsMainComments from './comments.vue'
 import DetailsMainEvents from './events.vue'
-import { CommentCreator, SwitchButton, TaskSelector, TaskTagBar } from '@nao-todo/components'
+import DetailsMainPomodoroInfo from './pomodoro-info.vue'
+import {
+    CommentCreator,
+    // SwitchButton,
+    TaskSelector,
+    TaskTagBar
+} from '@nao-todo/components'
 import {
     TaskPrioritySelectOptions,
     TaskStateSelectOptions
@@ -28,10 +34,10 @@ const updateTaskPriority = (v: unknown) => {
     taskHandler.updateTask(vo.value.id, { priority: v as TaskViewObject['priority'] })
 }
 
-const updateTaskIsStarMark = (v: unknown) => {
-    if (vo.value === null) return
-    taskHandler.updateTask(vo.value.id, { isStarMarked: v as TaskViewObject['isStarMarked'] })
-}
+// const updateTaskIsStarMark = (v: unknown) => {
+//     if (vo.value === null) return
+//     taskHandler.updateTask(vo.value.id, { isStarMarked: v as TaskViewObject['isStarMarked'] })
+// }
 
 const updateTaskName = () => {
     if (vo.value === null) return
@@ -74,7 +80,8 @@ const createCommentHandler = async (content: string) => {
                 />
             </nue-div>
             <nue-div>
-                <switch-button
+                <details-main-pomodoro-info :task-details="vo" />
+                <!-- <switch-button
                     v-model="vo.isStarMarked"
                     active-icon="heart-fill"
                     :active-text="t('task.details.unfavorite')"
@@ -82,7 +89,7 @@ const createCommentHandler = async (content: string) => {
                     size="small"
                     :text="t('task.details.favorite')"
                     @change="updateTaskIsStarMark"
-                />
+                /> -->
             </nue-div>
             <nue-div class="tasks-details-view__progress">
                 <nue-progress :percentage="eventProgress.percentage" :stroke-width="2" hide-text />
