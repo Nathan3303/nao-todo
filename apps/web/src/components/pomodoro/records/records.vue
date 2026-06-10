@@ -26,6 +26,10 @@ const sessionCount = computed(() => {
     return sessions.size
 })
 
+const fanqieCount = computed(() => {
+    return props.records.reduce((acc, cur) => acc + (cur.type ? 0 : 1), 0)
+})
+
 const durationToString = (duration: number) => {
     const hours = Math.floor(duration / 3600)
     const minutes = Math.floor((duration - hours * 3600) / 60)
@@ -46,11 +50,12 @@ const durationToString = (duration: number) => {
             </nue-div>
         </nue-div>
         <nue-div theme="card">
+            <nue-text theme="duration">专注时长 {{ totalDurationString }}</nue-text>
             <nue-div theme="pomodoro-records-info">
-                <nue-text theme="duration">专注时长 {{ totalDurationString }}</nue-text>
                 <nue-text theme="count">
                     {{ props.records.length }} 条专注记录，{{ sessionCount }} 个专注会话
                 </nue-text>
+                <nue-text theme="count">已收获 {{ fanqieCount }} 个番茄</nue-text>
             </nue-div>
             <nue-div theme="daily-goal">
                 <nue-div justify="space-between">
@@ -126,14 +131,14 @@ const durationToString = (duration: number) => {
         font-size: var(--nue-text-sm);
         color: var(--nue-primary-color-600);
 
+        > .nue-text--duration {
+            color: var(--nue-primary-color-900);
+        }
+
         > .nue-div--pomodoro-records-info {
             gap: var(--nue-gap-2xs);
             align-items: center;
             justify-content: space-between;
-
-            > .nue-text--duration {
-                color: var(--nue-primary-color-900);
-            }
         }
 
         > .nue-div--daily-goal {
