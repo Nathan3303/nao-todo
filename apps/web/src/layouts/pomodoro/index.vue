@@ -215,7 +215,7 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
         display: grid;
         grid-template-columns: 4fr 3fr;
         grid-template-rows: 4fr 3fr;
-        grid-template-areas: 'timer today' 'note note';
+        grid-template-areas: 'timer today' 'note today';
         width: 100%;
         height: 100%;
         flex: none;

@@ -22,56 +22,76 @@ const displayDuration = computed(() => {
 </script>
 
 <template>
-    <nue-div theme="card,pomodoro-records-row">
-        <nue-div theme="task-and-startat">
-            <nue-text theme="task" :clamped="1">{{ record.taskName }}</nue-text>
-            <nue-text theme="startat">
-                {{ record.type === 1 ? '正计时' : '番茄钟' }} - 开始于
-                {{ dayjs(record.startAt).format('HH:mm') }}
-            </nue-text>
+    <nue-div theme="card,pomodoro-records-row" :data-has-note="!!record.note">
+        <nue-div theme="title-and-duration">
+            <nue-div theme="task-and-startat">
+                <nue-text theme="task" :clamped="1">{{ record.taskName }}</nue-text>
+                <nue-text theme="startat">
+                    {{ record.type === 1 ? '正计时' : '番茄钟' }} - 开始于
+                    {{ dayjs(record.startAt).format('HH:mm') }}
+                </nue-text>
+            </nue-div>
+            <nue-text theme="duration">{{ displayDuration }}</nue-text>
         </nue-div>
-        <nue-text theme="duration">{{ displayDuration }}</nue-text>
+        <nue-text v-if="record.note" theme="note" :clamped="3">{{ record.note }}</nue-text>
     </nue-div>
 </template>
 
 <style scoped>
 .nue-div--pomodoro-records-row {
-    display: flex;
-    align-items: center;
-    box-shadow: none;
+    flex-direction: column;
+    gap: var(--nue-gap-2xs);
+    width: 100%;
+    overflow: hidden;
     padding: var(--nue-padding-sm);
     border: none;
     background-color: var(--nue-primary-color-100);
-    justify-content: space-between;
-    overflow: hidden;
+    box-shadow: none;
 
-    > .nue-div--task-and-startat {
-        display: flex;
-        flex-direction: column;
-        gap: var(--nue-gap-2xs);
+    > .nue-div--title-and-duration {
+        align-items: center;
+        justify-content: space-between;
         overflow: hidden;
-        flex: auto;
+        gap: var(--nue-gap-2xs);
 
-        > .nue-text--task {
-            font-size: var(--nue-text-df2);
+        &[data-has-note='true'] {
+            align-items: flex-start;
+        }
+
+        > .nue-div--task-and-startat {
+            display: flex;
+            flex-direction: column;
+            gap: var(--nue-gap-2xs);
+            overflow: hidden;
+            flex: auto;
+
+            > .nue-text--task {
+                font-size: var(--nue-text-df2);
+                font-weight: 500;
+            }
+
+            > .nue-text--startat {
+                font-size: var(--nue-text-sm);
+                color: var(--nue-primary-color-600);
+            }
+        }
+
+        > .nue-text--title {
+            font-size: var(--nue-text-sm);
             font-weight: 500;
         }
 
-        > .nue-text--startat {
-            font-size: var(--nue-text-sm);
+        > .nue-text--duration {
+            font-size: var(--nue-text-df2);
             color: var(--nue-primary-color-600);
+            flex: none;
         }
     }
 
-    > .nue-text--title {
+    > .nue-text--note {
         font-size: var(--nue-text-sm);
-        font-weight: 500;
-    }
-
-    > .nue-text--duration {
-        font-size: var(--nue-text-df2);
         color: var(--nue-primary-color-600);
-        flex: none;
+        word-break: break-word;
     }
 }
 </style>

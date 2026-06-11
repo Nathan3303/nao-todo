@@ -1,28 +1,19 @@
 <script lang="ts" setup>
+import { onMounted } from 'vue'
 import { AppAsideAdapter } from '@/layouts/app/'
-// import { CalendarAside } from '@/layouts/calendar'
+import { CalendarAside } from '@/layouts/calendar/aside'
 import { useCalendarView } from './calendar-view'
-// import { Loading as LoadingComp } from '@nao-todo/components'
+import { env } from '@/infrastructure/constants/env'
 
 defineOptions({ name: 'CalendarView' })
 
-const {
-    init,
-    // isLoading,
-    // error,
-    isDisplayAside,
-    // switchDisplayAside,
-    // asideWidth,
-    handleResizeAside
-} = useCalendarView()
+const { init, isDisplayAside, asideWidth, handleResizeAside } = useCalendarView()
 
-init()
+onMounted(() => init())
 </script>
 
 <template>
-    <!-- <loading-comp v-if="isLoading" height="100%" />
-    <nue-empty v-else-if="error" :description="error || '发生错误了'" />
-    <nue-container v-else>
+    <nue-container>
         <nue-main>
             <app-aside-adapter
                 v-model:displayed="isDisplayAside"
@@ -31,38 +22,15 @@ init()
                 max-width="350px"
                 @resize="handleResizeAside"
             >
-                <calendar-aside v-if="isDisplayAside" />
+                <calendar-aside />
             </app-aside-adapter>
             <nue-content fill style="overflow: hidden">
-                <router-view v-slot="{ Component }">
-                    <suspense>
-                        <component
-                            :is="Component"
-                            :switch-display-aside="switchDisplayAside"
-                            :is-display-aside="isDisplayAside"
-                        />
-                        <template #fallback>
-                            <loading-comp height="100%" />
-                        </template>
-                    </suspense>
-                </router-view>
-            </nue-content>
-        </nue-main>
-    </nue-container> -->
-    <nue-container>
-        <nue-main>
-            <app-aside-adapter
-                v-model:displayed="isDisplayAside"
-                width="auto"
-                min-width="unset"
-                max-width="350px"
-                @resize="handleResizeAside"
-            />
-            <nue-content fill>
+                <router-view v-if="env.showUnimplementedFeatures" />
                 <nue-empty
+                    v-else
                     image-src="/images/feature.webp"
                     image-size="8rem"
-                    description="日历页面还在规划中，敬请期待"
+                    description="搜索页面还在规划中，敬请期待"
                     style="height: 100%"
                 >
                     <nue-button theme="small,primary" @click="$router.back()">返回</nue-button>
