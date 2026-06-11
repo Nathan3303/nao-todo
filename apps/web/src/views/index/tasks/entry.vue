@@ -15,18 +15,18 @@ onMounted(() => init())
 <template>
     <!-- 视图主体 -->
     <nue-container>
-        <nue-main>
-            <!-- 侧边栏 -->
-            <tasks-view-aside />
-            <loading-error :loading="isLoading" :error="!!error">
-                <!-- 错误状态 -->
-                <template #error>
-                    <nue-div vertical align="center">
-                        <nue-text>{{ error }}</nue-text>
-                    </nue-div>
-                    <nue-button theme="primary,small" @click="init">重试</nue-button>
-                </template>
-                <!-- 内容区域 -->
+        <loading-error :loading="isLoading" :error="!!error">
+            <!-- 错误状态 -->
+            <template #error>
+                <nue-div vertical align="center">
+                    <nue-text>{{ error }}</nue-text>
+                </nue-div>
+                <nue-button theme="primary,small" @click="init">重试</nue-button>
+            </template>
+            <!-- 内容区域 -->
+            <nue-main>
+                <!-- 侧边栏 -->
+                <tasks-view-aside />
                 <nue-content fill style="overflow: hidden">
                     <router-view v-slot="{ Component }">
                         <suspense>
@@ -44,10 +44,10 @@ onMounted(() => init())
                         </suspense>
                     </router-view>
                 </nue-content>
-            </loading-error>
-            <!-- 详情适配器 -->
-            <task-details-adapter />
-        </nue-main>
+                <!-- 详情适配器 -->
+                <task-details-adapter />
+            </nue-main>
+        </loading-error>
     </nue-container>
 </template>
 
