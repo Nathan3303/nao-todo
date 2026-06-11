@@ -31,7 +31,7 @@ const styles = computed(() => ({
 <style scoped>
 .tag-node {
     --tag-node-fs: var(--nue-text-xs);
-    --tag-node-vgap: 0.5rem;
+    --tag-node-vgap: 0.25rem;
     --tag-node-bg: unset;
 
     display: flex;
@@ -48,10 +48,13 @@ const styles = computed(() => ({
     border-radius: 99px;
     position: relative;
     color: white;
+    transition: all var(--nue-animation-duration-short) ease;
+    cursor: default;
 
     .tag-node__name {
         font-size: var(--tag-node-fs);
         /* font-weight: bold; */
+        word-break: break-all;
     }
 
     .tag-node__delete-button {
