@@ -16,19 +16,6 @@ onMounted(() => init())
 <template>
     <nue-container>
         <nue-main v-if="env.showUnimplementedFeatures">
-            <app-aside-adapter v-model:displayed="isDisplayAside" width="auto" min-width="unset" />
-            <nue-content fill style="overflow: hidden">
-                <nue-empty
-                    image-src="/images/feature.webp"
-                    image-size="8rem"
-                    description="日历页面还在规划中，敬请期待"
-                    style="height: 100%"
-                >
-                    <nue-button theme="small,primary" @click="$router.back()">返回</nue-button>
-                </nue-empty>
-            </nue-content>
-        </nue-main>
-        <nue-main v-else>
             <app-aside-adapter
                 v-model:displayed="isDisplayAside"
                 :width="asideWidth"
@@ -54,6 +41,19 @@ onMounted(() => init())
                         </template>
                     </suspense>
                 </router-view>
+            </nue-content>
+        </nue-main>
+        <nue-main v-else>
+            <app-aside-adapter v-model:displayed="isDisplayAside" width="auto" min-width="unset" />
+            <nue-content fill style="overflow: hidden">
+                <nue-empty
+                    image-src="/images/feature.webp"
+                    image-size="8rem"
+                    description="日历页面还在规划中，敬请期待"
+                    style="height: 100%"
+                >
+                    <nue-button theme="small,primary" @click="$router.back()">返回</nue-button>
+                </nue-empty>
             </nue-content>
         </nue-main>
     </nue-container>
