@@ -10,6 +10,12 @@ const props = withDefaults(defineProps<TaskTagBarProps>(), {
     clamped: Infinity
 })
 
+const overflowTag = {
+    id: 'overflow-tag',
+    name: `+${props.taskTagIds.length - props.clamped}`,
+    color: 'var(--nue-primary-color-500)'
+}
+
 const { styles, comboBoxOptions, selectedTags, pushTagHandler, dropTagHandler, createTagHandler } =
     useTaskTagBar(props, emit)
 </script>
@@ -23,15 +29,7 @@ const { styles, comboBoxOptions, selectedTags, pushTagHandler, dropTagHandler, c
             :tag="tag"
             @delete="dropTagHandler"
         />
-        <tag-node
-            v-if="selectedTags.length >= clamped"
-            :tag="{
-                id: 'overflow-tag',
-                name: `+${taskTagIds.length - clamped}`,
-                color: '#a1a1a1'
-            }"
-            readonly
-        />
+        <tag-node v-if="selectedTags.length >= clamped" :tag="overflowTag" readonly />
         <combo-box
             v-if="!readonly"
             :framework="comboBoxOptions"

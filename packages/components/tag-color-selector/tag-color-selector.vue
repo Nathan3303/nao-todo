@@ -22,61 +22,52 @@ const selectedColor = computed({
             </nue-text>
             <tag-color-dot :color="selectedColor" size="large" />
             <nue-text size="var(--nue-text-sm)">
-                {{
-                    (SelectableTagColors.find((c) => c.value === selectedColor)?.name ||
-                        `未知颜色`) +
-                    '，' +
-                    selectedColor
-                }}
+                {{ SelectableTagColors.find((c) => c.value === selectedColor)?.name || `未知颜色` }}
+                {{ selectedColor }}
             </nue-text>
         </nue-div>
         <nue-div class="color-grid" overflow="visible">
-            <nue-tooltip
+            <div
                 v-for="color in SelectableTagColors"
                 :key="color.value"
-                :content="color.name"
-                size="small"
+                class="color-item"
+                :class="{ 'color-item--selected': selectedColor === color.value }"
+                :style="{
+                    backgroundColor:
+                        color.value === 'transparent' ? 'var(--nue-primary-color-100)' : color.value
+                }"
+                @click="selectedColor = color.value"
             >
-                <div
-                    class="color-item"
-                    :class="{ 'color-item--selected': selectedColor === color.value }"
-                    :style="{
-                        backgroundColor:
-                            color.value === 'transparent'
-                                ? 'var(--nue-primary-color-100)'
-                                : color.value
-                    }"
-                    @click="selectedColor = color.value"
+                <svg
+                    v-if="selectedColor === color.value"
+                    class="check-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
                 >
-                    <svg
-                        v-if="selectedColor === color.value"
-                        class="check-icon"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="3"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                </div>
-            </nue-tooltip>
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </div>
         </nue-div>
     </nue-div>
 </template>
 
 <style scoped>
 .color-grid {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
     gap: 1rem;
     padding: var(--nue-padding-xs);
+    grid-template-columns: repeat(auto-fit, minmax(1.25rem, 1fr));
+    grid-template-rows: repeat(auto-fit, minmax(1.25rem, 1fr));
+    width: 20rem;
 }
 
 .color-item {
     aspect-ratio: 1;
-    min-height: 1.25rem;
+    height: 1.25rem;
     border-radius: var(--nue-primary-radius);
     cursor: pointer;
     position: relative;
