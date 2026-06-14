@@ -305,6 +305,8 @@ export interface LocaleMessages {
     'dialog.taskCreator.title': string
     'dialog.taskCreator.namePlaceholder': string
     'dialog.taskCreator.descPlaceholder': string
+    'dialog.taskCreator.smartModeToggle': string
+    'dialog.taskCreator.smartPlaceholder': string
     'dialog.confirmDelete': string
     'dialog.projectDeleteConfirmTitle': string
     'dialog.projectDeleteConfirmContent': string

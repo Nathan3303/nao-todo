@@ -1,4 +1,5 @@
-import { inject, reactive } from 'vue'
+import { inject, reactive, ref, watch } from 'vue'
+import type { TaskCreatorInputValue } from '@nao-todo/components'
 import { NueMessage } from 'nue-ui'
 import { useRouter } from 'vue-router'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
@@ -37,6 +38,23 @@ const useTaskCreator = () => {
         disabled: false
     })
 
+    // ★ 新模式：智能输入
+    const TASK_CREATOR_SMART_MODE_KEY = 'TASK_CREATOR_SMART_MODE'
+
+    const taskInputValue = ref<TaskCreatorInputValue>({
+        text: '',
+        tags: [],
+        projectId: null,
+        priority: null,
+        state: null
+    })
+
+    const useSmartCreator = ref(false)
+
+    watch(useSmartCreator, (val) => {
+        localStorage.setItem(TASK_CREATOR_SMART_MODE_KEY, String(val))
+    })
+
     const handleUpdateEndAt = (value: string | null) => {
         states.endAt = value || ''
     }
@@ -60,15 +78,33 @@ const useTaskCreator = () => {
 
     const handleCreateTask = async (): Promise<boolean> => {
         states.creating = states.disabled = true
+
+        let name: string
+        let tags: string[]
+        let projectId: string
+
+        if (useSmartCreator.value) {
+            name = taskInputValue.value.text
+            tags = taskInputValue.value.tags
+            projectId = taskInputValue.value.projectId || states.projectId || ''
+            // 智能模式中 priority/state 由 chip 指定，否则 fallback 到表单值
+            states.priority = taskInputValue.value.priority || states.priority || 'low'
+            states.state = taskInputValue.value.state || states.state || 'todo'
+        } else {
+            name = states.name || ''
+            tags = states.tags || []
+            projectId = states.projectId || ''
+        }
+
         const [task, err] = await taskUseCase.createTask({
-            projectId: states.projectId || '',
-            name: states.name || '',
+            projectId,
+            name,
             description: states.description || '',
             state: states.state || '',
             priority: states.priority || '',
             startAt: states.startAt || null,
             endAt: states.endAt || null,
-            tags: states.tags,
+            tags,
             remindAt: states.remindAt || null,
             remindRepeat: states.remindRepeat,
             remindTime: states.remindTime || null,
@@ -97,6 +133,7 @@ const useTaskCreator = () => {
         states.startAt = ''
         states.endAt = ''
         states.tags = []
+        taskInputValue.value = { text: '', tags: [], projectId: null, priority: null, state: null }
     }
 
     return {
@@ -108,7 +145,9 @@ const useTaskCreator = () => {
         clearInputsValue,
         handleUpdateEndAt,
         handleUpdateRemind,
-        handleUpdateEndAtAndRemind
+        handleUpdateEndAtAndRemind,
+        useSmartCreator,
+        taskInputValue
     }
 }
 
