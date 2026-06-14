@@ -1,6 +1,12 @@
 import type { TagViewObject, ProjectViewObject } from '@nao-todo/types'
 
-/** 内联组件类型 */
+/**
+ * 内联组件类型
+ *
+ * 内置类型: 'tag' | 'project' | 'priority' | 'state'
+ * 扩展方式: 添加新字符到 InlineChipType 联合类型 + 创建 TriggerHandler
+ * @see TriggerHandler
+ */
 export type InlineChipType = 'tag' | 'project' | 'priority' | 'state'
 
 /** 内联组件数据 — 对应一个 TagNode 或 TaskBasicInfo 实例 */
@@ -19,6 +25,8 @@ export type TaskCreatorInputValue = {
     projectId: string | null // 选中的 project id
     priority?: string | null // 选中的优先级
     state?: string | null // 选中的状态
+    /** 扩展 slot：新 TriggerHandler 可将值写入自有 key */
+    [key: string]: any
 }
 
 /** 建议弹窗选项 */
