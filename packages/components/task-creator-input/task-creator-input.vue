@@ -10,19 +10,9 @@ import type {
 } from './types'
 import { detectTrigger, getTextBeforeCursor, generateChipId } from './use-mention-parser'
 import { useChipManager } from './use-chip-manager'
+import { registry } from './trigger-registry'
+import './handlers'
 import SuggestionPopover from './suggestion-popover.vue'
-
-const defaultPriorityOptions = [
-    { label: 'High', value: 'high' },
-    { label: 'Medium', value: 'medium' },
-    { label: 'Low', value: 'low' }
-]
-
-const defaultStateOptions = [
-    { label: 'Todo', value: 'todo' },
-    { label: 'In Progress', value: 'in-progress' },
-    { label: 'Done', value: 'done' }
-]
 
 const props = withDefaults(defineProps<TaskCreatorInputProps>(), {
     placeholder: '',
@@ -41,10 +31,10 @@ const editorRef = ref<HTMLElement | null>(null)
 const isComposing = ref(false)
 const highlightIndex = ref(0)
 const popoverPosition = reactive({ top: 0, left: 0 })
-let _skipWatchCount = 0 // 计数器，跳过自身 emit 触发的 watch
+let _skipWatchCount = 0
 let chipObserver: MutationObserver | null = null
 let blurTimer: ReturnType<typeof setTimeout> | null = null
-const hasLooseText = ref(false) // 是否有实质文本（用于控制 placeholder 显示）
+const hasLooseText = ref(false)
 
 const trigger = reactive<TriggerState>({
     active: false,
@@ -56,6 +46,12 @@ const trigger = reactive<TriggerState>({
 // ── Chip manager ──
 const chipManager = useChipManager()
 
+// ── Current handler for popover ──
+const currentHandler = computed(() => {
+    if (!trigger.active || !trigger.type) return null
+    return registry.getByType(trigger.type) ?? null
+})
+
 // ── 长度限制 ──
 function enforceMaxLength(): void {
     if (!editorRef.value) return
@@ -66,7 +62,7 @@ function enforceMaxLength(): void {
     const walker = document.createTreeWalker(editorRef.value, NodeFilter.SHOW_TEXT, null)
     while (walker.nextNode()) textNodes.push(walker.currentNode as Text)
     for (let i = textNodes.length - 1; i >= 0 && charsToRemove > 0; i--) {
-        const node = textNodes[i]
+        const node = textNodes[i]!
         const text = node.textContent || ''
         if (text.length <= charsToRemove) {
             node.textContent = ''
@@ -78,55 +74,13 @@ function enforceMaxLength(): void {
     }
 }
 
-// ── Computed: filtered options ──
+// ── Computed: filtered options via registry ──
 const filteredOptions = computed<SuggestionOption[]>(() => {
     if (!trigger.active || !trigger.type) return []
-    const q = trigger.query.toLowerCase()
-
-    if (trigger.type === 'tag') {
-        return props.tags
-            .filter((t) => t.name.toLowerCase().includes(q))
-            .map((t) => ({
-                id: t.id,
-                label: t.name,
-                type: 'tag' as const,
-                color: t.color
-            }))
-    }
-
-    if (trigger.type === 'project') {
-        return props.projects
-            .filter((p) => p.name.toLowerCase().includes(q))
-            .map((p) => ({
-                id: p.id,
-                label: p.name,
-                type: 'project' as const
-            }))
-    }
-
-    if (trigger.type === 'priority') {
-        const options = props.priorityOptions || defaultPriorityOptions
-        return options
-            .filter((o) => o.label.toLowerCase().includes(q) || o.value.toLowerCase().includes(q))
-            .map((o) => ({
-                id: o.value,
-                label: o.label,
-                type: 'priority' as const
-            }))
-    }
-
-    if (trigger.type === 'state') {
-        const options = props.stateOptions || defaultStateOptions
-        return options
-            .filter((o) => o.label.toLowerCase().includes(q) || o.value.toLowerCase().includes(q))
-            .map((o) => ({
-                id: o.value,
-                label: o.label,
-                type: 'state' as const
-            }))
-    }
-
-    return []
+    const handler = registry.getByType(trigger.type)
+    if (!handler) return []
+    const dataSource = (props as any)[handler.dataSourceKey] ?? []
+    return handler.getFilteredOptions(trigger.query, dataSource)
 })
 
 // ── Watch modelValue for external reset / preload ──
@@ -139,7 +93,13 @@ watch(
             return
         }
         // Empty → clear
-        if (val.text === '' && val.tags.length === 0 && !val.projectId && !val.priority && !val.state) {
+        if (
+            val.text === '' &&
+            val.tags.length === 0 &&
+            !val.projectId &&
+            !val.priority &&
+            !val.state
+        ) {
             editorRef.value.innerHTML = ''
             chipManager.destroy()
             return
@@ -173,54 +133,29 @@ function initEditor(): void {
 function buildInnerHtml(val: TaskCreatorInputValue): string {
     const parts: string[] = []
 
-    // Reconstruct chips from tags
-    for (const tagId of val.tags) {
-        const tag = props.tags.find((t) => t.id === tagId)
-        if (tag) {
-            const chipId = generateChipId()
-            const colorAttr = tag.color ? ` data-color="${tag.color}"` : ''
-            parts.push(
-                `<span class="vue-chip-mount" contenteditable="false" data-chip-id="${chipId}" data-chip-type="tag" data-entity-id="${tag.id}" data-label="${tag.name}"${colorAttr}></span>`
-            )
+    for (const handler of registry.getAll()) {
+        const rawVal = val[handler.valueKey]
+        if (handler.isSingleValue) {
+            if (rawVal) {
+                const dataSource = (props as any)[handler.dataSourceKey] ?? []
+                const html = handler.buildChipHtmlString(
+                    rawVal as string,
+                    generateChipId(),
+                    dataSource
+                )
+                if (html) parts.push(html)
+            }
+        } else {
+            if (Array.isArray(rawVal) && rawVal.length) {
+                const dataSource = (props as any)[handler.dataSourceKey] ?? []
+                for (const id of rawVal as string[]) {
+                    const html = handler.buildChipHtmlString(id, generateChipId(), dataSource)
+                    if (html) parts.push(html)
+                }
+            }
         }
     }
 
-    // Reconstruct project chip
-    if (val.projectId) {
-        const project = props.projects.find((p) => p.id === val.projectId)
-        if (project) {
-            const chipId = generateChipId()
-            parts.push(
-                `<span class="vue-chip-mount" contenteditable="false" data-chip-id="${chipId}" data-chip-type="project" data-entity-id="${project.id}" data-label="${project.name}"></span>`
-            )
-        }
-    }
-
-    // Reconstruct priority chip
-    if (val.priority) {
-        const po = (props.priorityOptions || defaultPriorityOptions).find(
-            (o) => o.value === val.priority
-        )
-        if (po) {
-            const chipId = generateChipId()
-            parts.push(
-                `<span class="vue-chip-mount" contenteditable="false" data-chip-id="${chipId}" data-chip-type="priority" data-entity-id="${po.value}" data-label="${po.label}"></span>`
-            )
-        }
-    }
-
-    // Reconstruct state chip
-    if (val.state) {
-        const so = (props.stateOptions || defaultStateOptions).find((o) => o.value === val.state)
-        if (so) {
-            const chipId = generateChipId()
-            parts.push(
-                `<span class="vue-chip-mount" contenteditable="false" data-chip-id="${chipId}" data-chip-type="state" data-entity-id="${so.value}" data-label="${so.label}"></span>`
-            )
-        }
-    }
-
-    // Text after all chips
     if (val.text) {
         parts.push(val.text)
     }
@@ -233,23 +168,26 @@ function parseModelValue(): TaskCreatorInputValue {
     const editor = editorRef.value
     if (!editor) return { text: '', tags: [], projectId: null, priority: null, state: null }
 
-    let text = ''
-    const tags: string[] = []
-    let projectId: string | null = null
-    let priority: string | null = null
-    let state: string | null = null
+    const result: Record<string, any> = { text: '' }
+    // Initialize with handler defaults
+    for (const handler of registry.getAll()) {
+        result[handler.valueKey] = handler.isSingleValue ? null : []
+    }
 
-    // 单独收集 chip 数据（避免 TreeWalker 走入 chip 内部误取文本）
+    // Collect chip data
     editor.querySelectorAll<HTMLElement>('.vue-chip-mount').forEach((el) => {
-        const type = el.dataset.chipType
-        const eid = el.dataset.entityId
-        if (type === 'tag' && eid) tags.push(eid)
-        if (type === 'project' && eid && !projectId) projectId = eid
-        if (type === 'priority' && eid && !priority) priority = eid
-        if (type === 'state' && eid && !state) state = eid
+        const chipType = el.dataset.chipType
+        const handler = registry.getByType(chipType ?? '')
+        if (!handler) return
+        const val = handler.extractChipValue(el)
+        if (handler.isSingleValue) {
+            result[handler.valueKey] = val
+        } else {
+            result[handler.valueKey].push(val)
+        }
     })
 
-    // 收集 loose text，跳过 chip 子树
+    // Collect loose text, skipping chip subtrees
     const walker = document.createTreeWalker(editor, NodeFilter.SHOW_ALL, {
         acceptNode(node) {
             if (node instanceof HTMLElement && node.classList.contains('vue-chip-mount')) {
@@ -261,11 +199,11 @@ function parseModelValue(): TaskCreatorInputValue {
     while (walker.nextNode()) {
         const node = walker.currentNode
         if (node.nodeType === Node.TEXT_NODE) {
-            text += node.textContent || ''
+            result.text += node.textContent || ''
         }
     }
 
-    return { text: text.trim(), tags, projectId, priority, state }
+    return result as TaskCreatorInputValue
 }
 
 function emitModelValue(): void {
@@ -309,22 +247,32 @@ function updatePopoverPosition(): void {
     }
     const range = sel.getRangeAt(0)
     const rect = range.getBoundingClientRect()
-    const containerRect = wrapperRef.value.getBoundingClientRect()
-    popoverPosition.top = rect.bottom - containerRect.top + 4
-    popoverPosition.left = rect.left - containerRect.left
+    // position: fixed 相对于视口，getBoundingClientRect 也返回视口坐标，直接使用
+    popoverPosition.top = rect.bottom + 4
+    popoverPosition.left = rect.left
 }
 
-// ── Chip MutationObserver（替代每次 input 调用 reconcile）──
+// ── Chip MutationObserver ──
 function setupChipObserver(): void {
     if (!editorRef.value) return
     chipObserver?.disconnect()
     chipObserver = new MutationObserver((mutations) => {
         const hasChipChange = mutations.some((m) => {
             for (const node of m.addedNodes) {
-                if (node instanceof HTMLElement && (node.classList.contains('vue-chip-mount') || node.querySelector('.vue-chip-mount'))) return true
+                if (
+                    node instanceof HTMLElement &&
+                    (node.classList.contains('vue-chip-mount') ||
+                        node.querySelector('.vue-chip-mount'))
+                )
+                    return true
             }
             for (const node of m.removedNodes) {
-                if (node instanceof HTMLElement && (node.classList.contains('vue-chip-mount') || node.querySelector('.vue-chip-mount'))) return true
+                if (
+                    node instanceof HTMLElement &&
+                    (node.classList.contains('vue-chip-mount') ||
+                        node.querySelector('.vue-chip-mount'))
+                )
+                    return true
             }
             return false
         })
@@ -345,6 +293,7 @@ function handleInput(): void {
     if (isComposing.value) return
     if (!editorRef.value) return
 
+    removeStrayBreaks()
     enforceMaxLength()
     updateTriggerState()
     emitModelValue()
@@ -356,7 +305,6 @@ function handleCompositionStart(): void {
 
 function handleCompositionEnd(): void {
     isComposing.value = false
-    // IME 结束后的 input 事件会触发 handleInput
 }
 
 function handleFocus(): void {
@@ -364,7 +312,6 @@ function handleFocus(): void {
 }
 
 function handleBlur(): void {
-    // 延迟触发 blur，让点击弹窗等操作先触发
     if (blurTimer) clearTimeout(blurTimer)
     blurTimer = setTimeout(() => {
         emit('blur')
@@ -384,7 +331,6 @@ function handlePaste(e: ClipboardEvent): void {
     range.collapse(false)
     sel.removeAllRanges()
     sel.addRange(range)
-    // 直接调用 handleInput 而不是 dispatchEvent，避免重复
     handleInput()
 }
 
@@ -425,7 +371,6 @@ function handleKeydownWithTrigger(e: KeyboardEvent): void {
 
 function handleKeydownWithoutTrigger(e: KeyboardEvent): void {
     if (e.key === 'Enter') {
-        // 回车在 contentEditable 内插入换行，不阻止
         return
     }
 
@@ -442,22 +387,67 @@ function handleBackspaceRemoveChip(e: KeyboardEvent): void {
     const node = range.startContainer
     const offset = range.startOffset
 
-    // 光标在文本节点开头 → 前一个节点可能是 chip
+    // Case 1: Cursor at start of a text node → previous sibling might be a chip
     if (node.nodeType === Node.TEXT_NODE && offset === 0) {
         const prev = node.previousSibling
         if (prev instanceof HTMLElement && prev.classList.contains('vue-chip-mount')) {
             e.preventDefault()
-            const chipId = chipManager.unmountChipByElement(prev)
-            if (chipId) {
-                // 光标移到 chip 位置
-                const newRange = document.createRange()
-                newRange.setStart(node, 0)
-                newRange.collapse(true)
-                sel.removeAllRanges()
-                sel.addRange(newRange)
-                emitModelValue()
+            chipManager.unmountChipByElement(prev)
+            placeCursorAfterChipRemoval(node, 0)
+        }
+        return
+    }
+
+    // Case 2: Cursor in parent element (cursor is between children)
+    //         → the child before the cursor might be a chip
+    // This is the common case after mountChip places cursor via setStartAfter(span),
+    // which puts the cursor in the parent element, NOT in a text node.
+    if (node.nodeType === Node.ELEMENT_NODE && offset > 0) {
+        const prev = node.childNodes[offset - 1]
+        if (prev instanceof HTMLElement && prev.classList.contains('vue-chip-mount')) {
+            e.preventDefault()
+            chipManager.unmountChipByElement(prev)
+            // After removal, children shifted; the node that was at `offset` is now at `offset - 1`
+            const nextChild = node.childNodes[offset - 1]
+            if (nextChild?.nodeType === Node.TEXT_NODE) {
+                placeCursorAfterChipRemoval(nextChild, 0)
+            } else {
+                // No text node after chip → insert zero-width space as cursor anchor
+                // to prevent the browser from inserting <br> or other artifacts
+                const anchor = document.createTextNode('\u200B')
+                if (nextChild) {
+                    node.insertBefore(anchor, nextChild)
+                } else {
+                    node.appendChild(anchor)
+                }
+                placeCursorAfterChipRemoval(anchor, 0)
             }
         }
+    }
+}
+
+/**
+ * Place cursor at a given container/offset and emit model value update.
+ * Shared helper for both case 1 and case 2 of handleBackspaceRemoveChip.
+ */
+function placeCursorAfterChipRemoval(container: Node, offset: number): void {
+    const sel = window.getSelection()
+    if (!sel) return
+    const newRange = document.createRange()
+    newRange.setStart(container, offset)
+    newRange.collapse(true)
+    sel.removeAllRanges()
+    sel.addRange(newRange)
+    removeStrayBreaks()
+    emitModelValue()
+}
+
+/** Remove direct <br> children that browsers sometimes insert into empty contentEditables */
+function removeStrayBreaks(): void {
+    if (!editorRef.value) return
+    for (let i = editorRef.value.children.length - 1; i >= 0; i--) {
+        const child = editorRef.value.children[i]!
+        if (child.tagName === 'BR') child.remove()
     }
 }
 
@@ -469,29 +459,35 @@ function handleSelect(option: SuggestionOption): void {
     if (!sel || !sel.rangeCount) return
 
     const range = sel.getRangeAt(0)
-
-    // 删除触发文本
     const textNode = range.startContainer
     const endOffset = range.startOffset
-    const deleteStart = trigger.startOffset
 
-    if (textNode.nodeType === Node.TEXT_NODE && deleteStart >= 0) {
-        range.setStart(textNode, deleteStart)
+    // Delete trigger text
+    if (textNode.nodeType === Node.TEXT_NODE && trigger.startOffset >= 0) {
+        range.setStart(textNode, trigger.startOffset)
         range.setEnd(textNode, endOffset)
     }
 
-    // priority 和 state 是单值，先移除同类型的旧 chip
-    if (trigger.type === 'priority' || trigger.type === 'state') {
-        const existingChipId = chipManager.findChipByEntityType(trigger.type)
+    // Dedup: remove existing chip with same type + entityId
+    // 同一实体（如同一个标签、同一个优先级）不可重复出现
+    const duplicateChipId = chipManager.findChipByEntity(option.type, option.id)
+    if (duplicateChipId) {
+        chipManager.unmountChip(duplicateChipId)
+    }
+
+    // Single-value: remove existing chip of same type (handles value change)
+    const handler = registry.getByType(option.type)
+    if (handler?.isSingleValue) {
+        const existingChipId = chipManager.findChipByEntityType(handler.type)
         if (existingChipId) {
             chipManager.unmountChip(existingChipId)
         }
     }
 
-    // 插入 chip
+    // Insert chip
     const chipData: InlineChipData = {
         chipId: generateChipId(),
-        type: trigger.type!,
+        type: option.type,
         entityId: option.id,
         label: option.label,
         color: option.color
@@ -514,6 +510,7 @@ onMounted(() => {
     if (editorRef.value) {
         initEditor()
         nextTick(() => {
+            removeStrayBreaks()
             chipManager.reconcile(editorRef.value!)
             setupChipObserver()
             if (props.autofocus) {
@@ -566,7 +563,8 @@ defineExpose({
             :type="trigger.type"
             :position="popoverPosition"
             :highlight-index="highlightIndex"
-            :can-create="trigger.type === 'tag'"
+            :can-create="currentHandler?.canCreate ?? false"
+            :handler="currentHandler"
             @select="handleSelect"
             @create="handleCreateTag"
             @update:highlight-index="highlightIndex = $event"
@@ -600,13 +598,11 @@ defineExpose({
             color: var(--nue-primary-color-500);
             pointer-events: none;
             user-select: none;
-            vertical-align: middle;
             line-height: 1.65;
         }
 
         .vue-chip-mount {
-            display: inline-block;
-            vertical-align: middle;
+            display: inline-flex;
             user-select: none;
 
             .chip-inner {
@@ -614,11 +610,10 @@ defineExpose({
                 align-items: center;
                 flex: none;
                 width: fit-content;
-                height: 24px;
-                padding: 0 0.5rem;
+                height: 20px;
+                padding: 0 0.375rem;
                 border-radius: var(--nue-primary-radius);
                 font-size: var(--nue-text-sm);
-                line-height: 1;
                 cursor: default;
                 white-space: nowrap;
                 overflow: hidden;
@@ -627,52 +622,46 @@ defineExpose({
                 user-select: none;
                 vertical-align: middle;
                 margin: 0 2px;
+                line-height: 1;
 
                 &.chip-inner--tag {
                     background: var(--chip-color, var(--nue-primary-color-200));
                     color: #fff;
-                    letter-spacing: 0.02em;
+                    opacity: 0.8;
 
                     &::before {
                         content: '#';
                         margin-right: 0.125rem;
-                        opacity: 0.8;
                     }
                 }
 
                 &.chip-inner--project {
-                    color: var(--nue-primary-color-800);
-                    background: var(--chip-color, var(--nue-primary-color-300));
+                    color: var(--chip-color, var(--nue-primary-color-800));
+                    background: var(--nue-primary-color-200);
 
                     &::before {
-                        content: '清单：';
-                        display: inline-block;
+                        content: '@';
                         margin-right: 0.125rem;
-                        opacity: 0.8;
                     }
                 }
 
                 &.chip-inner--priority {
-                    background: var(--chip-color, #95a5a6);
-                    color: #fff;
-                    font-weight: 500;
+                    color: var(--chip-color, var(--nue-primary-color-800));
+                    background: var(--nue-primary-color-200);
 
                     &::before {
                         content: '!';
                         margin-right: 0.125rem;
-                        opacity: 0.8;
                     }
                 }
 
                 &.chip-inner--state {
-                    background: var(--chip-color, #7f8c8d);
-                    color: #fff;
-                    font-weight: 500;
+                    color: var(--chip-color, var(--nue-primary-color-800));
+                    background: var(--nue-primary-color-200);
 
                     &::before {
                         content: '~';
                         margin-right: 0.125rem;
-                        opacity: 0.8;
                     }
                 }
             }

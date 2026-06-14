@@ -1,14 +1,10 @@
-import type { TriggerState } from './types'
+import type { TriggerState, InlineChipType } from './types'
+import { registry } from './trigger-registry'
 
 /**
  * 从光标前的文本中检测触发状态
  *
- * 触发规则：
- * - #query       → 标签 (tag)
- * - @query       → 清单 (project)
- * - !query       → 优先级 (priority)
- * - ~query       → 状态 (state)
- *
+ * 触发规则由注册的 TriggerHandler 定义（默认支持 #/@/!/~）
  * 忽略规则：
  * - IME 输入期间不触发（由调用方通过 isComposing 控制）
  * - 触发字符前必须为空白或行首
@@ -42,20 +38,14 @@ export function detectTrigger(
 
     if (!candidate) return defaultState
 
-    const triggerChar = candidate[0]
+    const triggerChar = candidate[0]!
     const query = candidate.slice(1)
 
     if (query.includes(' ')) return defaultState
 
-    switch (triggerChar) {
-        case '#':
-            return { active: true, type: 'tag', query, startOffset: startChar }
-        case '@':
-            return { active: true, type: 'project', query, startOffset: startChar }
-        case '!':
-            return { active: true, type: 'priority', query, startOffset: startChar }
-        case '~':
-            return { active: true, type: 'state', query, startOffset: startChar }
+    const handler = registry.getByChar(triggerChar)
+    if (handler) {
+        return { active: true, type: handler.type as InlineChipType, query, startOffset: startChar }
     }
 
     return defaultState

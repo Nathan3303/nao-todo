@@ -1,4 +1,5 @@
 import type { InlineChipData } from './types'
+import { registry } from './trigger-registry'
 
 type ChipRecord = {
     mountEl: HTMLElement
@@ -28,9 +29,12 @@ export function useChipManager() {
         span.dataset.label = chipData.label
         if (chipData.color) span.dataset.color = chipData.color
 
-        // 构建 chip 内部 DOM
-        const inner = buildChipDom(chipData)
-        span.appendChild(inner)
+        // 委托 handler 构建 chip 内部 DOM
+        const handler = registry.getByType(chipData.type)
+        if (handler) {
+            const inner = handler.buildChipContent(chipData)
+            span.appendChild(inner)
+        }
 
         // 删除 range 内容（触发文本）后插入 span
         range.deleteContents()
@@ -78,6 +82,22 @@ export function useChipManager() {
     }
 
     /**
+     * 根据 chipType + entityId 查找 chip（用于去重）
+     * 同一实体在同一类型中只能出现一次
+     */
+    function findChipByEntity(entityType: string, entityId: string): string | null {
+        for (const [chipId, record] of chipMap) {
+            if (
+                record.mountEl.dataset.chipType === entityType &&
+                record.mountEl.dataset.entityId === entityId
+            ) {
+                return chipId
+            }
+        }
+        return null
+    }
+
+    /**
      * 遍历编辑器内所有挂载点，修复浏览器可能破坏的 chip
      * 对 DOM 中存在但 Map 中缺失的 chip 重新构建
      * 同 chipId 只保留第一个，删除后续重复
@@ -102,7 +122,7 @@ export function useChipManager() {
             const record = chipMap.get(chipId)
             if (record) return // 已管理，跳过
 
-            // Map 中缺失 → 重新构建内部 DOM
+            // Map 中缺失 → 委托 handler 重建内部 DOM
             const chipData: InlineChipData = {
                 chipId,
                 type: (el.dataset.chipType as InlineChipData['type']) || 'tag',
@@ -110,10 +130,12 @@ export function useChipManager() {
                 label: el.dataset.label || '',
                 color: el.dataset.color || undefined
             }
-            // 清空 span 后重建
             el.innerHTML = ''
-            const inner = buildChipDom(chipData)
-            el.appendChild(inner)
+            const handler = registry.getByType(chipData.type)
+            if (handler) {
+                const inner = handler.buildChipContent(chipData)
+                el.appendChild(inner)
+            }
             chipMap.set(chipId, { mountEl: el })
         })
 
@@ -137,46 +159,8 @@ export function useChipManager() {
         unmountChip,
         unmountChipByElement,
         findChipByEntityType,
+        findChipByEntity,
         reconcile,
         destroy
     }
-}
-
-const CHIP_COLOR_MAP: Record<string, Record<string, string>> = {
-    priority: {
-        high: '#e74c3c',
-        medium: '#f39c12',
-        low: '#95a5a6'
-    },
-    state: {
-        done: '#27ae60',
-        'in-progress': '#3498db',
-        todo: '#7f8c8d'
-    }
-}
-
-/**
- * 构建 chip 内部的 DOM 元素
- *
- * 标签:  <span class="chip-inner chip-inner--tag">标签名</span>
- * 清单:  <span class="chip-inner chip-inner--project">📋 清单名</span>
- *
- * 使用 NueUI CSS 变量统一视觉，无需依赖全局注册的组件。
- */
-function buildChipDom(chipData: InlineChipData): HTMLElement {
-    const inner = document.createElement('span')
-    inner.className = 'chip-inner'
-    inner.dataset.type = chipData.type
-
-    inner.classList.add(`chip-inner--${chipData.type}`)
-    inner.textContent = chipData.label
-
-    const color =
-        chipData.color ||
-        CHIP_COLOR_MAP[chipData.type]?.[chipData.entityId]
-    if (color) {
-        inner.style.setProperty('--chip-color', color)
-    }
-
-    return inner
 }

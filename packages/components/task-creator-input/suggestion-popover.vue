@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { SuggestionOption, InlineChipType } from './types'
+import type { TriggerHandler } from './trigger-registry'
 
 const props = withDefaults(
     defineProps<{
@@ -11,9 +12,11 @@ const props = withDefaults(
         position: { top: number; left: number }
         highlightIndex: number
         canCreate: boolean
+        handler?: TriggerHandler | null
     }>(),
     {
-        canCreate: true
+        canCreate: true,
+        handler: null
     }
 )
 
@@ -24,6 +27,7 @@ const emit = defineEmits<{
 }>()
 
 const headerLabel = computed(() => {
+    if (props.handler?.headerLabel) return props.handler.headerLabel
     return props.type === 'tag' ? '标签' : '清单'
 })
 
@@ -55,23 +59,22 @@ function handleCreate() {
                 @click="handleSelect(opt)"
                 @mouseenter="emit('update:highlightIndex', i)"
             >
+                <span class="label">{{ opt.label }}</span>
                 <span
                     v-if="type === 'tag'"
                     class="color-dot"
                     :style="{ background: opt.color || '#888' }"
                 />
-                <span class="label">{{ opt.label }}</span>
-                <span v-if="opt.description" class="description">{{ opt.description }}</span>
             </div>
             <div
-                v-if="canCreate && type === 'tag' && !hasOptions && query"
+                v-if="handler?.canCreate && !hasOptions && query"
                 class="popover-create"
                 @click="handleCreate"
             >
-                创建标签 "{{ query }}"
+                {{ handler?.getCreateLabel?.(query) ?? `创建 "${query}"` }}
             </div>
             <div
-                v-if="!hasOptions && !(canCreate && type === 'tag' && query)"
+                v-if="!hasOptions && !(handler?.canCreate && query)"
                 class="popover-empty"
             >
                 无匹配
@@ -83,21 +86,21 @@ function handleCreate() {
 <style scoped>
 .suggestion-popover {
     position: fixed;
-    z-index: 9999;
     min-width: 160px;
     max-width: 240px;
     max-height: 200px;
     overflow-y: auto;
-    background: var(--nue-primary-color-100);
-    border: 1px solid var(--nue-primary-color-300);
-    border-radius: var(--nue-radius-sm, 6px);
-    box-shadow: var(--nue-shadow-md, 0 4px 12px rgba(0, 0, 0, 0.12));
+    background: var(--nue-primary-color-0);
+    border: 1px solid var(--nue-border-color);
+    border-radius: var(--nue-primary-radius);
+    box-shadow: var(--nue-secondary-shadow);
     padding: 0.25rem;
+    z-index: 99;
 }
 
 .popover-header {
-    font-size: var(--nue-text-xs, 11px);
-    color: var(--nue-primary-color-500);
+    font-size: var(--nue-text-xs);
+    color: var(--nue-primary-color-600);
     padding: 0.25rem 0.5rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -106,11 +109,11 @@ function handleCreate() {
 .popover-option {
     display: flex;
     align-items: center;
-    gap: 0.375rem;
+    gap: 0.5rem;
     padding: 0.375rem 0.5rem;
-    border-radius: calc(var(--nue-radius-sm, 6px) - 1px);
+    border-radius: var(--nue-primary-radius);
     cursor: pointer;
-    font-size: var(--nue-text-sm, 13px);
+    font-size: var(--nue-text-sm);
     transition: background 0.12s ease;
 
     &:hover,
@@ -131,6 +134,7 @@ function handleCreate() {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        color: var(--nue-primary-color-900)
     }
 
     .description {
@@ -163,4 +167,3 @@ function handleCreate() {
     text-align: center;
 }
 </style>
-
