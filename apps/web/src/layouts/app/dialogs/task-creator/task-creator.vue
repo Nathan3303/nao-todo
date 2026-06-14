@@ -181,15 +181,7 @@ onMounted(() => {
                             theme="pure"
                         />
                         <nue-div wrap="wrap" gap=".5rem">
-                            <task-date-selector
-                                :colored="!isExpired"
-                                v-model="states.endAt!"
-                                :task-remind-data="states"
-                                @change="handleUpdateEndAt"
-                                @remind-change="handleUpdateRemind"
-                                @update-all="handleUpdateEndAtAndRemind"
-                            />
-                            <task-selector
+                            <!-- <task-selector
                                 :options="TaskStateSelectOptions"
                                 :value="states.state"
                                 @change="(s: any) => (states.state = s as TaskViewObject['state'])"
@@ -200,19 +192,28 @@ onMounted(() => {
                                 @change="
                                     (p: any) => (states.priority = p as TaskViewObject['priority'])
                                 "
-                            />
+                            /> -->
                         </nue-div>
                     </nue-div>
                 </template>
             </nue-div>
         </template>
         <template #footer>
-            <task-project-selector
-                v-if="useSmartCreator"
-                :project-id="states.projectId || ''"
-                :projects="avaliableProjects || []"
-                @select="(pid: string) => (states.projectId = pid)"
-            />
+            <template v-if="useSmartCreator">
+                <task-date-selector
+                    :colored="!isExpired"
+                    v-model="states.endAt!"
+                    :task-remind-data="states"
+                    @change="handleUpdateEndAt"
+                    @remind-change="handleUpdateRemind"
+                    @update-all="handleUpdateEndAtAndRemind"
+                />
+                <task-project-selector
+                    :project-id="states.projectId || ''"
+                    :projects="avaliableProjects || []"
+                    @select="(pid: string) => (states.projectId = pid)"
+                />
+            </template>
             <nue-div gap="var(--nue-gap-xs)" flex="1" justify="flex-end">
                 <nue-button theme="small" :disabled="states.disabled" @click="close">
                     {{ t('common.cancel') }}
@@ -237,6 +238,10 @@ onMounted(() => {
 
 .nue-dialog--task-creator-v2 {
     width: 28rem;
+
+    &:deep(.nue-dialog__footer) {
+        flex-wrap: wrap;
+    }
 }
 </style>
 
