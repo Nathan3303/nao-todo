@@ -8,6 +8,9 @@ import { APP_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { t } from '@nao-todo/infrastructure/locales'
 import { env } from '@/infrastructure/constants/env'
 import { initRequester } from '@nao-todo/infrastructure/requester'
+import useKeyboardShortcuts from '@/infrastructure/hooks/use-keyboard-shortcuts'
+import { registerAppCommands } from '@/infrastructure/commands/app.commands'
+import { scopeManager } from '@/infrastructure/commands/instance'
 
 export type AppContext = {
     routerLinks: { name: string; icon: string; route: string; routeName: string }[]
@@ -30,6 +33,10 @@ const useApp = () => {
         //  加载本地的用户语言偏好
         const localeStore = useLocaleStore()
         localeStore.loadSavedLanguage()
+        // 初始化快捷键系统
+        scopeManager.enter('global')
+        registerAppCommands()
+        useKeyboardShortcuts()
     })()
 
     // @computed 应用侧边栏链接数组

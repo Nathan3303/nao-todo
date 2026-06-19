@@ -8,7 +8,9 @@ defineOptions({ name: 'AppContainer' })
 
 const { isLoading, IndexViewInitialize } = useIndexView()
 
-onMounted(() => IndexViewInitialize())
+onMounted(() => {
+    IndexViewInitialize()
+})
 </script>
 
 <template>
