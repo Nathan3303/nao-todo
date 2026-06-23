@@ -3,7 +3,13 @@ import { inject } from 'vue'
 import DetailsRow from './row.vue'
 import DetailsMainComments from './comments.vue'
 import DetailsMainEvents from './events.vue'
-import { CommentCreator, SwitchButton, TaskSelector, TaskTagBar } from '@nao-todo/components'
+import DetailsMainPomodoroInfo from './pomodoro-info.vue'
+import {
+    CommentCreator,
+    // SwitchButton,
+    TaskSelector,
+    TaskTagBar
+} from '@nao-todo/components'
 import {
     TaskPrioritySelectOptions,
     TaskStateSelectOptions
@@ -13,8 +19,9 @@ import type { TaskDetailsContext } from '../types'
 import type { TaskViewObject } from '@nao-todo/types'
 import { parse2RelativeDate } from '@nao-todo/infrastructure/utils'
 import { t } from '@nao-todo/infrastructure/locales'
+import { TAG_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys.js'
 
-const { vo, eventProgress, isCommenting, commentHandler, taskHandler, tags } =
+const { vo, eventProgress, isCommenting, commentHandler, taskHandler, tags, dialogManager } =
     inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
 
 const updateTaskState = (v: unknown) => {
@@ -27,10 +34,10 @@ const updateTaskPriority = (v: unknown) => {
     taskHandler.updateTask(vo.value.id, { priority: v as TaskViewObject['priority'] })
 }
 
-const updateTaskIsStarMark = (v: unknown) => {
-    if (vo.value === null) return
-    taskHandler.updateTask(vo.value.id, { isStarMarked: v as TaskViewObject['isStarMarked'] })
-}
+// const updateTaskIsStarMark = (v: unknown) => {
+//     if (vo.value === null) return
+//     taskHandler.updateTask(vo.value.id, { isStarMarked: v as TaskViewObject['isStarMarked'] })
+// }
 
 const updateTaskName = () => {
     if (vo.value === null) return
@@ -73,7 +80,8 @@ const createCommentHandler = async (content: string) => {
                 />
             </nue-div>
             <nue-div>
-                <switch-button
+                <details-main-pomodoro-info :task-details="vo" />
+                <!-- <switch-button
                     v-model="vo.isStarMarked"
                     active-icon="heart-fill"
                     :active-text="t('task.details.unfavorite')"
@@ -81,7 +89,7 @@ const createCommentHandler = async (content: string) => {
                     size="small"
                     :text="t('task.details.favorite')"
                     @change="updateTaskIsStarMark"
-                />
+                /> -->
             </nue-div>
             <nue-div class="tasks-details-view__progress">
                 <nue-progress :percentage="eventProgress.percentage" :stroke-width="2" hide-text />
@@ -116,7 +124,14 @@ const createCommentHandler = async (content: string) => {
                 <nue-div flex="1"></nue-div>
                 <!-- 任务详情标签 -->
                 <nue-div vertical style="padding: 1rem">
-                    <task-tag-bar :tags="tags" :task-tags="vo.tags" @update-tags="updateTaskTags" />
+                    <task-tag-bar
+                        :available-tags="tags"
+                        :task-tag-ids="vo.tags"
+                        @update-tags="updateTaskTags"
+                        @create-tag="
+                            (name: string) => dialogManager.open(TAG_CREATOR_DIALOG_KEY, { name })
+                        "
+                    />
                 </nue-div>
                 <!-- 任务详情评论 -->
                 <details-main-comments />

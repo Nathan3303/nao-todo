@@ -1,4 +1,4 @@
-import { computed, inject, onMounted, onUnmounted } from 'vue'
+import { computed, inject, onMounted, onUnmounted, ref } from 'vue'
 import useTasksLoader from '@/infrastructure/hooks/use-task-loader'
 import { useTasksStore } from '@/stores'
 import type { TableViewAdapterProps } from './types'
@@ -10,6 +10,12 @@ const useTableViewAdapter = (props: TableViewAdapterProps) => {
      * 视图上下文
      */
     const { dialogManager } = inject<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY)!
+
+    /**
+     * 页面加载状态 - 非表格
+     * @description 用于控制进入表格时的加载状态，而不是下一页或刷新时的加载状态
+     */
+    const adapterLoading = ref(true)
 
     /**
      * 任务存储
@@ -63,23 +69,13 @@ const useTableViewAdapter = (props: TableViewAdapterProps) => {
     }
 
     /**
-     * 监听获取选项变化
-     * 当获取选项变化时，调用加载器加载第一页数据
-     */
-    // watch(
-    //     () => props.getTasksOptions,
-    //     (newOptions) => taskLoader.loadAndReplace(newOptions),
-    //     { deep: true }
-    // )
-
-    /**
      * 组件挂载时
      * 1. 加载第一页数据
      * 2. 订阅刷新数据事件
      * 3. 订阅新增任务 ID 事件
      */
     onMounted(() => {
-        taskLoader.loadFirstPage(true)
+        taskLoader.loadFirstPage(true).finally(() => (adapterLoading.value = false))
         props.subscriber.subscribe('RefreshData', taskLoader.loadAndReplace)
         props.subscriber.subscribe('AddNewTaskId', addNewTaskId)
     })
@@ -111,6 +107,7 @@ const useTableViewAdapter = (props: TableViewAdapterProps) => {
     return {
         tasks,
         taskLoader,
+        adapterLoading,
         loading: computed(() => taskLoader.states.loading),
         error: computed(() => taskLoader.states.error),
         noTaskError,

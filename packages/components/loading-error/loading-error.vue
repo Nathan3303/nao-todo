@@ -37,9 +37,14 @@ withDefaults(defineProps<LoadingErrorProps>(), {
 </template>
 
 <style scoped>
-.nue-empty:deep(> .nue-text) {
-    font-size: var(--nue-text-sm);
-    color: var(--nue-primary-color-600);
+.nue-empty {
+    height: 100%;
+    margin: var(--nue-padding-df);
+
+    &:deep(> .nue-text) {
+        font-size: var(--nue-text-sm);
+        color: var(--nue-primary-color-600);
+    }
 }
 </style>
 

@@ -157,6 +157,7 @@ const {
 
             &[type='number'] {
                 -moz-appearance: textfield;
+                appearance: textfield;
             }
 
             /* 2. 针对 Chrome, Edge, Safari (WebKit/Blink 内核)：隐藏内部和外部箭头伪元素 */

@@ -12,13 +12,25 @@ import useSubscriber, { type Subscriber } from '@nao-todo/infrastructure/hooks/u
 import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
 import { inject, provide, ref, type Ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { TASK_REMINDER_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
-import type { SSEReminderEvent, TaskViewObject } from '@nao-todo/types'
+import {
+    PROJECT_CREATOR_DIALOG_KEY,
+    TASK_CREATOR_DIALOG_KEY,
+    TASK_REMINDER_DIALOG_KEY
+} from '@/infrastructure/constants/dialog-keys'
+import type {
+    ProjectViewObject,
+    SSEReminderEvent,
+    TagViewObject,
+    TaskViewObject
+} from '@nao-todo/types'
 import { LAST_VISITED_ROUTE_KEY } from '@/router'
+import useScope from '@/infrastructure/hooks/use-scope'
+import useShortcut from '@/infrastructure/hooks/use-shortcut'
 
 /**
  * 首页视图上下文
- * @description 包含首页视图的所有上下文数据，包括应用上下文、用户使用案例、对话框管理器、项目使用案例、标签使用案例、任务使用案例、事件订阅器、边栏响应式状态等。
+ * @description 包含首页视图的所有上下文数据，包括应用上下文、用户使用案例、对话框管理器、
+ *              项目使用案例、标签使用案例、任务使用案例、事件订阅器、边栏响应式状态等。
  */
 export type IndexViewContext = {
     appContext: AppContext
@@ -33,12 +45,15 @@ export type IndexViewContext = {
     switchDisplayAside: () => void
     isDisplayOutline: Ref<boolean>
     isUseFloatOutline: Ref<boolean>
-    showTaskDetailsDrawer: (taskId: TaskViewObject['id']) => void
+    showTaskDetails: (taskId: TaskViewObject['id']) => void
+    getProjectName: (projectId: ProjectViewObject['id']) => ProjectViewObject['name']
+    getTagColor: (tagId: TagViewObject['id']) => TagViewObject['color']
 }
 
 /**
  * 首页视图
- * @description 提供首页视图的所有上下文数据和方法，包括应用上下文、用户使用案例、对话框管理器、项目使用案例、标签使用案例、任务使用案例、事件订阅器、边栏响应式状态等。
+ * @description 提供首页视图的所有上下文数据和方法，包括应用上下文、用户使用案例、对话框管理器、
+ *              项目使用案例、标签使用案例、任务使用案例、事件订阅器、边栏响应式状态等。
  * @returns 首页视图上下文
  */
 const useIndexView = () => {
@@ -84,6 +99,15 @@ const useIndexView = () => {
     const subscriber = useSubscriber()
 
     /**
+     * 快捷键管理器
+     * @use n 创建任务
+     * @use p 创建项目
+     */
+    useScope('index-view')
+    useShortcut('task.create', 'n', () => dialogManager.open(TASK_CREATOR_DIALOG_KEY))
+    useShortcut('project.create', 'p', () => dialogManager.open(PROJECT_CREATOR_DIALOG_KEY))
+
+    /**
      * 边栏响应式状态
      */
     const {
@@ -107,8 +131,26 @@ const useIndexView = () => {
      * 显示任务详情抽屉
      * @param taskId 任务 ID
      */
-    const showTaskDetailsDrawer = (taskId: TaskViewObject['id']) => {
+    const showTaskDetails = (taskId: TaskViewObject['id']) => {
         router.push({ name: router.currentRoute.value.name, params: { taskId } })
+    }
+
+    /**
+     * 获取项目名称
+     * @param projectId 项目 ID
+     * @returns 项目名称
+     */
+    const getProjectName = (projectId: ProjectViewObject['id']) => {
+        return projectsStore.projects.find((p) => p.id === projectId)?.name || ''
+    }
+
+    /**
+     * 获取标签颜色
+     * @param tagId 标签 ID
+     * @returns 标签颜色
+     */
+    const getTagColor = (tagId: TagViewObject['id']) => {
+        return tagsStore.getTag(tagId)?.color || 'transparent'
     }
 
     /**
@@ -144,25 +186,6 @@ const useIndexView = () => {
     }
 
     /**
-     * 提供首页视图上下文
-     */
-    provide<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY, {
-        appContext,
-        userUseCase,
-        dialogManager,
-        projectUseCase,
-        tagUseCase,
-        taskUseCase,
-        subscriber,
-        isDisplayAside,
-        isUseFloatAside,
-        switchDisplayAside,
-        isDisplayOutline,
-        isUseFloatOutline,
-        showTaskDetailsDrawer
-    })
-
-    /**
      * 首页视图加载状态
      */
     const isLoading = ref(true)
@@ -171,6 +194,7 @@ const useIndexView = () => {
      * 首页视图依赖数据初始化
      */
     const IndexViewInitialize = () => {
+        // 初始化用户配置、主题模式、项目列表、标签列表、任务列表
         Promise.all([
             userUseCase.loadUserProfile(),
             userUseCase.loadUserConfig(),
@@ -187,9 +211,31 @@ const useIndexView = () => {
             })
     }
 
+    /**
+     * 提供首页视图上下文
+     */
+    provide<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY, {
+        appContext,
+        userUseCase,
+        dialogManager,
+        projectUseCase,
+        tagUseCase,
+        taskUseCase,
+        subscriber,
+        isDisplayAside,
+        isUseFloatAside,
+        switchDisplayAside,
+        isDisplayOutline,
+        isUseFloatOutline,
+        showTaskDetails,
+        getProjectName,
+        getTagColor
+    })
+
     // @return
     return { isLoading, IndexViewInitialize }
 }
 
 export default useIndexView
+
 

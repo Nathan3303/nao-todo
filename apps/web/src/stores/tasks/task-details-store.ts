@@ -8,7 +8,7 @@ import {
     useEventIdsStoreBase,
     useCommentIdsStoreBase
 } from '../base'
-import type { TaskDetailsViewObject } from '@/layouts/tasks/task-details/types'
+import type { TaskDetailsViewObject } from '@/layouts/app/task-details/types'
 
 const useTaskDetailsStore = defineStore('TaskDetailsStore', () => {
     // @state 任务详情

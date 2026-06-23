@@ -83,6 +83,10 @@ const { projectOptions, tagOptions, selectedProjectIds, selectedTagIds, dialogMa
             .nue-collapse-item {
                 border: none;
             }
+
+            .nue-checkbox {
+                padding: 0;
+            }
         }
     }
 }

@@ -31,7 +31,11 @@ useTaskList(props, emit)
                     :disabled="disabledNextPage"
                     trigger-height="2px"
                 >
-                    <task-list-main />
+                    <task-list-main>
+                        <template #actions="{ task }">
+                            <slot name="actions" :task="task" />
+                        </template>
+                    </task-list-main>
                     <template #loading>
                         <loading-comp placeholder="正在加载待办任务..." />
                     </template>

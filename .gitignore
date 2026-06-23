@@ -33,6 +33,7 @@ package-lock.json
 **/.swc
 apps/web/stats.html
 .bak
+.omo/run-continuation
 
 # 环境变量
 .env.local

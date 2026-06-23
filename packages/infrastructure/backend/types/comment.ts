@@ -5,10 +5,8 @@ export type GetCommentRes = {
     createdAt: string
     attachments: string[]
     isTopUp: boolean
-    commentUser: {
-        avatar: string
-        nickname: string
-    }
+    avatar: string
+    nickname: string
 }
 
 export type CreateCommentReq = {
@@ -27,3 +25,4 @@ export type UpdateCommentReq = {
 export type UpdateCommentRes = string
 
 export type ListCommentRes = GetCommentRes[]
+

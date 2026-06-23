@@ -18,7 +18,7 @@ const styles = computed(() => ({
 
 <template>
     <nue-div :class="classes" :style="styles">
-        <span class="tag-node__name">{{ tag.name }}</span>
+        <nue-text class="tag-node__name" :clamped="1">{{ tag.name }}</nue-text>
         <nue-icon
             v-if="!readonly"
             class="tag-node__delete-button"
@@ -31,31 +31,34 @@ const styles = computed(() => ({
 <style scoped>
 .tag-node {
     --tag-node-fs: var(--nue-text-xs);
-    --tag-node-vgap: 0.5rem;
+    --tag-node-vgap: 0.25rem;
     --tag-node-bg: unset;
 
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
+    flex: none;
+    gap: var(--tag-node-vgap);
     width: fit-content;
-    height: 26px;
+    max-width: 8rem;
+    height: 28px;
+    padding: 0.25rem 0.5rem;
+    overflow: hidden;
     background-color: var(--tag-node-bg);
     border-radius: 99px;
     position: relative;
+    color: white;
+    transition: all var(--nue-animation-duration-short) ease;
     cursor: default;
-    flex: none;
-    gap: var(--tag-node-vgap);
-    padding: 0.25rem 0.5rem;
 
     .tag-node__name {
-        color: white;
         font-size: var(--tag-node-fs);
-        line-height: 1;
+        /* font-weight: bold; */
+        word-break: break-all;
     }
 
     .tag-node__delete-button {
         display: block;
-        color: white;
         border-radius: 99px;
         cursor: pointer;
         transition: opacity 0.16s ease;
@@ -80,3 +83,4 @@ const styles = computed(() => ({
     }
 }
 </style>
+

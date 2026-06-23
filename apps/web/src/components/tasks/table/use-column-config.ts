@@ -6,15 +6,17 @@ import type {
 } from './types'
 import type { TaskColumnOptions } from '@nao-todo/types'
 import { ref, computed } from 'vue'
-import {
-    DEFAULT_TABLE_COLUMNS,
-    PINNED_COLUMN_MAP,
-    enforcePinnedColumn,
-    createDefaultTableConfig
-} from './column-defaults'
+import { PINNED_COLUMN_MAP, enforcePinnedColumn, createDefaultTableConfig } from './column-defaults'
 import { readConfig, writeConfig, clearConfig } from './column-storage'
 
+/**
+ * 表格列配置管理
+ * @param initialConfig 初始表格布局配置
+ * @param tableId 表格唯一标识符
+ * @returns 表格列配置管理对象
+ */
 export default (initialConfig?: TableLayoutConfig, tableId: string = 'default') => {
+    // @init 初始化表格布局
     const layoutConfig = ref<TableLayoutConfig>(initialConfig || createDefaultTableConfig(tableId))
 
     // @init 从 localStorage 恢复已保存的列宽和列排序
@@ -167,3 +169,4 @@ export default (initialConfig?: TableLayoutConfig, tableId: string = 'default') 
         pinnedColumn: computed(() => PINNED_COLUMN_MAP[tableId] || undefined)
     }
 }
+

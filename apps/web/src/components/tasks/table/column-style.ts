@@ -8,3 +8,4 @@ export const getColumnStyle = (column: TableColumnConfig) => {
         maxWidth: `${column.maxWidth}px`
     }
 }
+

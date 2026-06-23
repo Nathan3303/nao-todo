@@ -56,7 +56,7 @@ const rules: Rule[] = [
     // 本周
     {
         check: (d, _nowDayjs) => d.isSame(_nowDayjs, 'w'),
-        format: (d) => d.format(`本周${WEEKDAY_NAMES[d.day()]} HH:mm`)
+        format: (d) => d.format(`周${WEEKDAY_NAMES[d.day()]} HH:mm`)
     },
     // 上周
     {

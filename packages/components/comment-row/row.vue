@@ -28,8 +28,9 @@ const checkOverflow = () => {
 onMounted(() => checkOverflow())
 
 watch(
-    () => shadowContent.value,
-    () => checkOverflow()
+    () => props.comment.content,
+    () => checkOverflow(),
+    { immediate: true, deep: true }
 )
 
 const handleEditComment = () => {
@@ -38,11 +39,18 @@ const handleEditComment = () => {
 }
 
 const handleUpdateComment = async () => {
-    if (props.updater && shadowContent.value !== props.comment.content) {
-        loading.value = true
-        await props.updater(props.comment.id, shadowContent.value)
-        loading.value = false
+    if (!props.updater) {
+        handleCancelEdit()
+        return
     }
+    if (shadowContent.value === props.comment.content) {
+        handleCancelEdit()
+        return
+    }
+    loading.value = true
+    const err = await props.updater(props.comment.id, shadowContent.value)
+    loading.value = false
+    if (err) return
     handleCancelEdit()
 }
 
@@ -61,10 +69,10 @@ const handleCancelEdit = () => {
 
 <template>
     <nue-div theme="comment-row">
-        <nue-avatar :src="comment.user.avatar || ''" />
+        <nue-avatar :src="comment.avatar || ''" />
         <nue-div theme="details">
             <nue-div theme="title">
-                <nue-text theme="nickname">{{ comment.user.nickname }}</nue-text>
+                <nue-text theme="nickname">{{ comment.nickname }}</nue-text>
                 <nue-text theme="datetime">
                     {{ parse2RelativeDate(comment.createdAt) }}
                 </nue-text>
@@ -82,7 +90,7 @@ const handleCancelEdit = () => {
                     <nue-textarea
                         ref="editInputerRef"
                         v-model="shadowContent"
-                        :autosize="{ minRows: 1, maxRows: 4 }"
+                        :autosize="{ minRows: 1, maxRows: 8 }"
                         counter="word-limit"
                         maxlength="512"
                         theme="small,fix-padding"
@@ -100,7 +108,7 @@ const handleCancelEdit = () => {
                     </nue-textarea>
                 </template>
                 <template v-else>
-                    <nue-text ref="textRef" theme="pre" :clamped="isClamped ? 2 : 0">
+                    <nue-text ref="textRef" theme="pre" :clamped="isClamped ? 8 : 0">
                         {{ shadowContent }}
                     </nue-text>
                     <nue-button v-if="isOverflowing" theme="pure" @click="isClamped = !isClamped">

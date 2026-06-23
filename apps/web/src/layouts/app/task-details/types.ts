@@ -1,6 +1,9 @@
 import type { CommentHandler } from '@/infrastructure/handlers/tasks/comment-handler'
 import type { EventHandler } from '@/infrastructure/handlers/tasks/event-handler'
 import type { TaskHandler } from '@/infrastructure/handlers/tasks/task-handler'
+import DialogManager from '@/infrastructure/hooks/use-dialog-manager'
+import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
+import { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import type {
     CreateEventViewObject,
     EventViewObject,
@@ -84,6 +87,7 @@ export type TaskDetailsMainContext = {
     eventsError: Ref<string>
     commentsLoading: Ref<boolean>
     commentsError: Ref<string>
+    dialogManager: DialogManager
     retryEvents: () => Promise<void>
     retryComments: () => Promise<void>
     makeEventToTask: (eventId: EventViewObject['id']) => void
@@ -99,5 +103,20 @@ export type TaskDetailsFooterContext = {
     projects: ComputedRef<ProjectViewObject[]>
     isCommenting: Ref<boolean>
     switchTaskDetails: (taskId: TaskViewObject['id']) => void
+}
+
+/**
+ * Task Details PreContext
+ */
+
+export type TaskDetailsPreContext = {
+    isDisplayOutline: Ref<boolean>
+    isUseFloatOutline: Ref<boolean>
+    outlineWidth: Ref<string>
+    handleResizeOutline: (newWidth: number) => void
+    taskUseCase: TaskUseCase
+    subscriber: Subscriber
+    dialogManager: DialogManager
+    getProjectName: (projectId: ProjectViewObject['id']) => ProjectViewObject['name']
 }
 

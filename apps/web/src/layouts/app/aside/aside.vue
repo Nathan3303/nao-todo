@@ -6,6 +6,7 @@ import { useUserStore } from '@/stores'
 import { APP_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import type { AppContext } from '@/app'
 import { t } from '@nao-todo/infrastructure/locales'
+import { PomodoroIndicator } from '@/components/pomodoro'
 
 defineOptions({ name: 'AppAside' })
 
@@ -33,18 +34,27 @@ const { profile } = storeToRefs(userStore)
                 </template>
             </nue-tooltip>
             <nue-div theme="aside__navs">
-                <nue-tooltip
-                    v-for="(rl, idx) in routerLinks"
-                    :key="idx"
-                    :content="rl.name"
-                    placement="right-center"
-                    size="small"
-                >
-                    <nao-router-link :icon="rl.icon" :route="rl.route" icon-link />
-                </nue-tooltip>
+                <template v-for="(rl, idx) in routerLinks" :key="idx">
+                    <template v-if="rl.route === '/pomodoro'">
+                        <pomodoro-indicator :route="rl.route" />
+                    </template>
+                    <template v-else>
+                        <nue-tooltip
+                            :key="idx"
+                            :content="rl.name"
+                            placement="right-center"
+                            size="small"
+                        >
+                            <nao-router-link :icon="rl.icon" :route="rl.route" icon-link />
+                        </nue-tooltip>
+                    </template>
+                </template>
             </nue-div>
-            <nue-div theme="aside__actions" v-if="$slots.actions">
-                <slot name="actions"></slot>
+            <nue-div theme="aside__bottom">
+                <nue-div theme="aside__actions" v-if="$slots.actions">
+                    <slot name="actions"></slot>
+                </nue-div>
+                <!-- <pomodoro-timer-indicator /> -->
             </nue-div>
         </nue-div>
         <slot></slot>
@@ -82,6 +92,12 @@ const { profile } = storeToRefs(userStore)
             flex-direction: column;
             align-items: center;
             gap: 1.5rem;
+        }
+
+        .nue-div.nue-div--aside__bottom {
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
         }
     }
 }

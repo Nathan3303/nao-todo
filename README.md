@@ -6,7 +6,7 @@ NaoTodo 是一个待办任务管理平台，旨在为用户提供简洁高效的
 
 ## 🌐 站点地址
 
-- [NaoTodo](https://nao-todo.vercel.app/)
+- [NaoTodo](https://todo.nathanap.space/)
 
 ## 👨‍💻 开发者信息
 

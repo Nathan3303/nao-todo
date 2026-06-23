@@ -34,6 +34,8 @@ const enUS: LocaleMessages = {
     'nav.settingsProfile': 'Account & Profile',
     'nav.settingsPassword': 'Password & Security',
     'nav.settingsApp': 'App Settings',
+    'nav.search': 'Search',
+    'nav.pomodoro': 'Pomodoro',
 
     // Common
     'common.cancel': 'Cancel',
@@ -313,6 +315,8 @@ const enUS: LocaleMessages = {
     'dialog.taskCreator.title': 'Create Task',
     'dialog.taskCreator.namePlaceholder': 'Task Name',
     'dialog.taskCreator.descPlaceholder': 'Add task notes (optional)',
+    'dialog.taskCreator.smartModeToggle': 'Smart Creator',
+    'dialog.taskCreator.smartPlaceholder': 'Task Name',
     'dialog.confirmDelete': 'Confirm Delete',
     'dialog.projectDeleteConfirmTitle': 'Delete this project?',
     'dialog.projectDeleteConfirmContent': 'Can be restored within 30 days',

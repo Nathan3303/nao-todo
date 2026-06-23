@@ -13,20 +13,20 @@ onMounted(() => init())
 </script>
 
 <template>
-    <loading-error :loading="isLoading" :error="!!error">
-        <!-- 错误状态 -->
-        <template #error>
-            <nue-div vertical align="center">
-                <nue-text>{{ error }}</nue-text>
-            </nue-div>
-            <nue-button theme="primary,small" @click="init">重试</nue-button>
-        </template>
-        <!-- 视图主体 -->
-        <nue-container>
+    <!-- 视图主体 -->
+    <nue-container>
+        <loading-error :loading="isLoading" :error="!!error">
+            <!-- 错误状态 -->
+            <template #error>
+                <nue-div vertical align="center">
+                    <nue-text>{{ error }}</nue-text>
+                </nue-div>
+                <nue-button theme="primary,small" @click="init">重试</nue-button>
+            </template>
+            <!-- 内容区域 -->
             <nue-main>
                 <!-- 侧边栏 -->
                 <tasks-view-aside />
-                <!-- 内容区域 -->
                 <nue-content fill style="overflow: hidden">
                     <router-view v-slot="{ Component }">
                         <suspense>
@@ -47,7 +47,7 @@ onMounted(() => init())
                 <!-- 详情适配器 -->
                 <task-details-adapter />
             </nue-main>
-        </nue-container>
-    </loading-error>
+        </loading-error>
+    </nue-container>
 </template>
 

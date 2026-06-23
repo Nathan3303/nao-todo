@@ -33,6 +33,8 @@ const zhCN: LocaleMessages = {
     'nav.settingsProfile': '账户与个人信息',
     'nav.settingsPassword': '密码与安全',
     'nav.settingsApp': '应用设置',
+    'nav.search': '搜索',
+    'nav.pomodoro': '番茄钟',
 
     // Common
     'common.cancel': '取消',
@@ -308,7 +310,9 @@ const zhCN: LocaleMessages = {
     'dialog.tagColorUpdater.title': '标签颜色修改',
     'dialog.taskCreator.title': '创建待办事项',
     'dialog.taskCreator.namePlaceholder': '待办事项名称',
-    'dialog.taskCreator.descPlaceholder': '添加待办事项备注（可选）',
+    'dialog.taskCreator.descPlaceholder': '描述（可选）',
+    'dialog.taskCreator.smartModeToggle': '智能创建器',
+    'dialog.taskCreator.smartPlaceholder': '待办任务名称 ...',
     'dialog.confirmDelete': '确认删除',
     'dialog.projectDeleteConfirmTitle': '确认删除清单吗？',
     'dialog.projectDeleteConfirmContent': '删除后 30 天内可以恢复',

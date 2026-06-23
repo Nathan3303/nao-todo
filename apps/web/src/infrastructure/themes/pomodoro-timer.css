@@ -1,0 +1,56 @@
+/**
+ * 共享计时器布局样式
+ * @description 同时被 PomodoroTimerComp 和 PomodoroFocusComp 使用
+ */
+.nue-div--pomodoro-timer {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    gap: 2rem;
+
+    > .nue-div--timer {
+        position: relative;
+
+        .nue-div--time-wrapper {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            justify-content: center;
+            align-items: center;
+            gap: var(--nue-gap-xs);
+
+            .nue-text--time-duration {
+                font-size: var(--nue-text-sm);
+                color: var(--nue-primary-color-600);
+                position: absolute;
+                bottom: 100%;
+                cursor: default;
+            }
+
+            .nue-text--time {
+                width: 8rem;
+                text-align: center;
+                font-size: 3rem;
+                line-height: 1;
+                flex: auto;
+                padding: var(--nue-padding-sm) 0;
+                cursor: default;
+            }
+
+            .nue-div--below-time-string {
+                font-size: var(--nue-text-sm);
+                color: var(--nue-primary-color-600);
+                position: absolute;
+                top: 100%;
+            }
+        }
+    }
+
+    > .nue-div--actions {
+        gap: var(--nue-gap-sm);
+        justify-content: center;
+        align-items: center;
+    }
+}

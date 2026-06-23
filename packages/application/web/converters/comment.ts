@@ -19,10 +19,8 @@ export const commentEntityToViewObject = (entity: CommentEntity): CommentViewObj
     commentViewObject.attachments = entity.attachments
     commentViewObject.isTopUp = entity.isTopUp
     commentViewObject.createdAt = entity.createdAt
-    commentViewObject.user = {
-        avatar: entity.commentUser.avatar,
-        nickname: entity.commentUser.nickname
-    }
+    commentViewObject.avatar = entity.avatar
+    commentViewObject.nickname = entity.nickname
     return commentViewObject
 }
 
@@ -55,3 +53,4 @@ export const updateCommentViewObjectToValueObject = (
         updateCommentViewObject.isTopUp
     )
 }
+

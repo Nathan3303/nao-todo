@@ -92,9 +92,9 @@ const handleFinish = () => {
                 </nue-text>
                 <task-tag-bar
                     v-if="columns?.tags && task.tags.length"
-                    :tags="tags"
-                    :task-tags="task.tags"
-                    :clamped="2"
+                    :available-tags="tags"
+                    :task-tag-ids="task.tags"
+                    :clamped="3"
                     transform-origin="left"
                     readonly
                     small

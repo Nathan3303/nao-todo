@@ -129,7 +129,7 @@ const getColumnTypeClass = (key: string) => {
             <div
                 class="column-resizer"
                 @mousedown="handleResizeStart($event, column.key, column)"
-            />
+            ></div>
         </div>
         <div class="todo-table__header__col col-actions">
             <nue-icon name="more" style="opacity: 0" />

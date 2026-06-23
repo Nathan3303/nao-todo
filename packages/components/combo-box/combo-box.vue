@@ -35,7 +35,9 @@
                                 @check="handleCheck"
                             />
                         </template>
-                        <nue-text v-else class="combo-box__empty-text">暂无数据</nue-text>
+                        <slot v-else name="emptyActions" :filterText="filterText">
+                            <nue-text class="combo-box__empty-text">暂无数据</nue-text>
+                        </slot>
                     </nue-div>
                 </nue-main>
             </nue-container>
@@ -93,3 +95,4 @@ const handleCheck = (checked: boolean, value: unknown) => {
     }
 }
 </style>
+

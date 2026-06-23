@@ -7,7 +7,7 @@ const LAST_VISITED_ROUTE_KEY = 'LAST_VISITED_ROUTE'
 const SECTION_LAST_ROUTE_MAP: Record<string, string> = {
     tasks: 'LAST_TASKS_ROUTE',
     calendar: 'LAST_CALENDAR_ROUTE',
-    settings: 'LAST_SETTINGS_ROUTE',
+    settings: 'LAST_SETTINGS_ROUTE'
 }
 
 const router = createRouter({
@@ -18,11 +18,12 @@ const router = createRouter({
 router.beforeEach((to) => {
     const sectionName = to.name as string
     if (sectionName in SECTION_LAST_ROUTE_MAP) {
-        const savedRoute = localStorage.getItem(SECTION_LAST_ROUTE_MAP[sectionName])
+        const savedRoute = localStorage.getItem(SECTION_LAST_ROUTE_MAP[sectionName]!)
         if (savedRoute && savedRoute !== to.fullPath) {
             return savedRoute
         }
     }
+    return true
 })
 
 router.afterEach((to) => {
@@ -32,10 +33,11 @@ router.afterEach((to) => {
         if (topLevelRoute?.name) {
             const sectionName = topLevelRoute.name as string
             if (sectionName in SECTION_LAST_ROUTE_MAP) {
-                localStorage.setItem(SECTION_LAST_ROUTE_MAP[sectionName], to.fullPath)
+                localStorage.setItem(SECTION_LAST_ROUTE_MAP[sectionName]!, to.fullPath)
             }
         }
     }
+    return true
 })
 
 export default router

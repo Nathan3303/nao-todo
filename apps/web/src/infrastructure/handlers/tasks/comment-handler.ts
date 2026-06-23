@@ -1,6 +1,11 @@
 import type { CommentUseCase } from '@nao-todo/application/web/usecases/comment'
 import { unwrapErrors } from '@nao-todo/infrastructure/utils/go-error-handler'
-import type { CommentViewObject, TaskViewObject, UpdateCommentViewObject } from '@nao-todo/types'
+import type {
+    CommentViewObject,
+    GoAsync,
+    TaskViewObject,
+    UpdateCommentViewObject
+} from '@nao-todo/types'
 import { NueMessage } from 'nue-ui'
 import { t } from '@nao-todo/infrastructure/locales'
 
@@ -22,14 +27,15 @@ const useCommentHandler = (commentUseCase: CommentUseCase) => {
     const updateComment = async (
         commentId: CommentViewObject['id'],
         updateComment: UpdateCommentViewObject
-    ) => {
-        if (!commentId) return
+    ): GoAsync<void> => {
+        if (!commentId) return '评论ID不能为空'
         const [, err] = await commentUseCase.update(commentId, updateComment)
         if (err !== null) {
             NueMessage.error(t('task.comment.updateFailed', { error: `(${unwrapErrors(err)})` }))
-            return
+            return err
         }
         NueMessage.success(t('task.comment.updateSuccess'))
+        return null
     }
 
     const deleteComment = async (commentId: CommentViewObject['id']) => {
@@ -51,3 +57,4 @@ const useCommentHandler = (commentUseCase: CommentUseCase) => {
 
 export default useCommentHandler
 export type CommentHandler = ReturnType<typeof useCommentHandler>
+

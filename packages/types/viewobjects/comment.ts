@@ -1,14 +1,10 @@
 export type CommentViewObject = {
     id: string
-    // taskId: string
+    taskId: string
     content: string
     attachments: string[]
     isTopUp: boolean
     createdAt: string
-    user: CommentUserViewObject
-}
-
-export type CommentUserViewObject = {
     avatar: string
     nickname: string
 }
@@ -24,3 +20,4 @@ export type CreateCommentViewObject = {
     attachments?: string[]
     isTopUp?: boolean
 }
+

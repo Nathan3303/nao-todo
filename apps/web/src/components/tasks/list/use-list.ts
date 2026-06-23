@@ -1,5 +1,5 @@
 import { computed, provide } from 'vue'
-import type { GetTasksSortOptions, TaskColumnOptions, TaskViewObject } from '@nao-todo/types'
+import type { TaskColumnOptions, TaskViewObject } from '@nao-todo/types'
 import type { TaskListContext, TaskListEmits, TaskListProps } from './types'
 import useMultiSelect from './use-multi-select'
 import { isTaskExpired } from '@nao-todo/infrastructure/utils/date-checker'
@@ -43,6 +43,12 @@ export const useTaskList = (props: TaskListProps, emit: TaskListEmits) => {
         emit('deleteTaskPermanently', taskId)
     }
 
+    // @method 处理任务点击事件
+    const handleClickTask = (task: TaskViewObject, taskIdx: number) => {
+        showTaskDetails(task.id, taskIdx)
+        emit('task-clicked', task)
+    }
+
     // @provide 任务列表上下文
     provide<TaskListContext>(TASK_LIST_CONTEXT_KEY, {
         columns: computed(() => props.columns),
@@ -50,24 +56,18 @@ export const useTaskList = (props: TaskListProps, emit: TaskListEmits) => {
         tags: computed(() => props.tags),
         tasks: computed(() => props.tasks),
         tagBarClamped,
+        small: computed(() => props.small || false),
         showTaskDetails,
-        updateColumns: (key: keyof TaskColumnOptions, value: boolean) =>
-            emit('updateColumns', key, value),
-        updateSortOptions: (
-            field: GetTasksSortOptions['field'],
-            order: GetTasksSortOptions['order']
-        ) => emit('updateSortOptions', field, order),
-        clearSortOptions: () => emit('clearSortOptions'),
         deleteTask: (taskId: TaskViewObject['id']) => emit('deleteTask', taskId),
         restoreTask: (taskId: TaskViewObject['id']) => emit('restoreTask', taskId),
         deleteTaskPermanently: handleDeleteTaskPermanently,
-        getColumnLabel: props.columnLabelGetter,
         isTaskExpired,
         isInMultiSelectRange,
         showMultiSelectPanel,
         clearMultiSelect,
         getProjectName: props.projectNameGetter,
-        deleteOrRestore
+        deleteOrRestore,
+        handleClickTask,
     })
 }
 

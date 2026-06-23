@@ -9,7 +9,7 @@ import {
 } from '@nao-todo/components'
 import { parse2RelativeDate } from '@nao-todo/infrastructure/utils/relative-date-parser'
 import { TASK_TABLE_CONTEXT_KEY } from './use-table'
-import type { TaskTableContext, TableColumnConfig } from './types'
+import type { TaskTableContext } from './types'
 import { getColumnStyle } from './column-style'
 
 defineOptions({ name: 'TaskTableMain' })
@@ -23,7 +23,6 @@ const visibleColumns = computed(() => {
 const tasks = computed(() => {
     return tableCtx.tasks.value || []
 })
-
 </script>
 
 <template>
@@ -47,7 +46,11 @@ const tasks = computed(() => {
                 >
                     <nue-div class="col-first__name-wrapper">
                         <!-- 已放弃 -->
-                        <nue-text v-if="task.isGivenUp && !tableCtx.suppressGivenUpLabel.value" theme="todo-givenup">已放弃</nue-text>
+                        <nue-text
+                            v-if="task.isGivenUp && !tableCtx.suppressGivenUpLabel.value"
+                            theme="todo-givenup"
+                            >已放弃</nue-text
+                        >
                         <!-- 名称 -->
                         <nue-text theme="todo-name" :clamped="1" :title="task.name">
                             {{ task.name }}
@@ -56,8 +59,8 @@ const tasks = computed(() => {
                         <task-tag-bar
                             v-if="tableCtx.columns.value.tags && task.tags && task.tags.length"
                             :clamped="tableCtx.tagBarClamped.value"
-                            :tags="tableCtx.tags.value"
-                            :task-tags="task.tags"
+                            :available-tags="tableCtx.tags.value"
+                            :task-tag-ids="task.tags"
                             readonly
                             small
                         />

@@ -2,11 +2,12 @@
 import { computed, watch, inject } from 'vue'
 import { useRoute } from 'vue-router'
 import TaskDetails from './details.vue'
-import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
-import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import { TASK_DETAILS_PRE_CONTEXT_KEY } from './constants'
+import { TaskDetailsPreContext } from './types'
 
 const route = useRoute()
-const { isDisplayOutline } = inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
+
+const { isDisplayOutline } = inject<TaskDetailsPreContext>(TASK_DETAILS_PRE_CONTEXT_KEY)!
 
 const taskId = computed<string>(() => route.params.taskId as string)
 
@@ -29,3 +30,4 @@ watch(
         <task-details :task-id="taskId" />
     </nue-drawer>
 </template>
+

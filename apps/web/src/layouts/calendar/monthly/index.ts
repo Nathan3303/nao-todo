@@ -1,3 +1,3 @@
-import Content from './index.vue'
+import Monthly from './index.vue'
 
-export const CalendarContent = Content
+export const CalendarMonthly = Monthly

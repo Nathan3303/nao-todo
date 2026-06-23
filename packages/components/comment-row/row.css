@@ -16,12 +16,12 @@
 
             > .nue-text--nickname {
                 font-size: var(--nue-text-sm);
-                color: var(--nue-primary-color-900);
+                color: var(--nue-primary-color-600);
             }
 
             > .nue-text--datetime {
                 font-size: var(--nue-text-xs);
-                color: var(--nue-primary-color-600);
+                color: var(--nue-primary-color-400);
             }
 
             > .nue-div--actions {
@@ -57,12 +57,12 @@
                 word-break: break-word;
                 white-space: pre-wrap;
                 font-size: var(--nue-text-sm);
-                color: var(--nue-primary-color-900);
+                color: var(--nue-primary-color-800);
             }
 
             > .nue-button--pure {
                 font-size: var(--nue-text-xs);
-                color: var(--nue-primary-color-600);
+                color: var(--nue-primary-color-400);
                 cursor: pointer;
             }
         }

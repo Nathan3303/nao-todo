@@ -17,11 +17,12 @@ const {
     tags,
     columns,
     tagBarClamped,
+    small,
     isInMultiSelectRange,
     getProjectName,
-    showTaskDetails,
     showMultiSelectPanel,
-    deleteOrRestore
+    deleteOrRestore,
+    handleClickTask
 } = inject<TaskListContext>(TASK_LIST_CONTEXT_KEY)!
 </script>
 
@@ -30,32 +31,34 @@ const {
         <nue-div
             v-for="(task, idx) in tasks"
             theme="todo-list-main__row"
+            :class="{'todo-list-main__row--small': small}"
             :key="task.id"
             :data-done="task.state === 'done'"
             :data-selected="isInMultiSelectRange(idx)"
             :data-deleted="task.isDeleted"
-            @click.stop.exact="showTaskDetails(task.id, idx)"
+            @click.stop.exact="handleClickTask(task, idx)"
             @click.stop.shift.exact="showMultiSelectPanel(idx)"
         >
             <nue-div theme="todo-list-main__row__first">
                 <nue-div theme="todo-list__main__row__first__name-wrapper">
                     <nue-text :clamped="1" :title="task.name">{{ task.name }}</nue-text>
-                    <!-- <nue-icon v-if="columns.isFavorited" name="heart-fill" color="pink" /> -->
                     <task-tag-bar
                         v-if="columns.tags && task.tags.length"
                         :clamped="tagBarClamped"
-                        :tags="tags"
-                        :task-tags="task.tags"
+                        :available-tags="tags"
+                        :task-tag-ids="task.tags"
                         readonly
                         small
                     />
                     <nue-divider vertical />
                     <nue-div theme="todo-list-main__row__actions">
-                        <nue-button
-                            :icon="task.isDeleted ? 'restore' : 'delete'"
-                            theme="icon,ghost,pure"
-                            @click.stop="deleteOrRestore(task.id, task.isDeleted)"
-                        />
+                        <slot name="actions" :task="task">
+                            <nue-button
+                                :icon="task.isDeleted ? 'restore' : 'delete'"
+                                theme="icon,ghost,pure"
+                                @click.stop="deleteOrRestore(task.id, task.isDeleted)"
+                            />
+                        </slot>
                     </nue-div>
                 </nue-div>
                 <nue-text
@@ -67,7 +70,17 @@ const {
                     {{ task.description }}
                 </nue-text>
             </nue-div>
-            <nue-div theme="todo-list-main__row__attrs">
+            <nue-div
+                v-if="
+                    columns?.createdAt ||
+                    columns?.updatedAt ||
+                    columns?.endAt ||
+                    columns?.state ||
+                    columns?.priority ||
+                    columns?.project
+                "
+                theme="todo-list-main__row__attrs"
+            >
                 <task-date-info
                     v-if="columns.createdAt"
                     :date="task.createdAt"
@@ -89,7 +102,7 @@ const {
                 <task-basic-info
                     v-if="columns?.project"
                     icon="inbox-fill"
-                    :text="'清单：' + getProjectName(task.projectId) || '收集箱'"
+                    :text="'清单：' + (getProjectName(task.projectId) || '收集箱')"
                 />
             </nue-div>
         </nue-div>

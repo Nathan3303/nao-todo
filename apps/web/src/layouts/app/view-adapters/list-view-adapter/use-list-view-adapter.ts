@@ -1,7 +1,7 @@
 import { useTasksStore } from '@/stores'
 import type { ListViewAdapterProps } from './types'
 import useTasksLoader from '@/infrastructure/hooks/use-task-loader'
-import { computed, inject, onMounted, onUnmounted } from 'vue'
+import { computed, inject, onMounted, onUnmounted, ref } from 'vue'
 import { IndexViewContext } from '@/views/index/index-view'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 
@@ -11,6 +11,9 @@ const useListViewAdapter = (props: ListViewAdapterProps) => {
 
     // @dataStore
     const tasksStore = useTasksStore()
+
+    // @ref 视图刷新状态
+    const viewLoading = ref(true)
 
     // @hook 待办任务加载器
     const taskLoader = useTasksLoader(props.taskUseCase, props.getTasksOptions)
@@ -41,7 +44,7 @@ const useListViewAdapter = (props: ListViewAdapterProps) => {
 
     // @onMounted
     onMounted(() => {
-        taskLoader.loadFirstPage(true)
+        taskLoader.loadFirstPage(true).then(() => viewLoading.value = false)
         props.subscriber.subscribe('RefreshData', refreshHandler)
         props.subscriber.subscribe('AddNewTaskId', addNewTaskId)
     })
@@ -68,7 +71,8 @@ const useListViewAdapter = (props: ListViewAdapterProps) => {
         noTaskError,
         dialogManager,
         handleNextPage,
-        handleRetry
+        handleRetry,
+        viewLoading
     }
 }
 
