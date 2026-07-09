@@ -1,5 +1,5 @@
 import { inject, ref, watch } from 'vue'
-import { TagHandler } from '@/infrastructure/handlers/tag-handler'
+import { TagHandler } from '@/infrastructure/handlers/tag'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { useTagsStore } from '@/stores'
 

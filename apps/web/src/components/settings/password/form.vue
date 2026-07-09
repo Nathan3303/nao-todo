@@ -68,15 +68,14 @@
 import { reactive, computed, ref, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { PasswordRuleHint, RuleHint } from '@nao-todo/components'
-import { SETTINGS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import type { SettingsViewContext } from '@/views/index/settings/settings-view'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { t } from '@nao-todo/infrastructure/locales'
+import { SETTINGS_VIEW_CONTEXT_KEY } from '@/views/index/settings/context'
 
 defineOptions({ name: 'SettingsPasswordForm' })
 
-const { userUseCase, authUseCase } = inject<SettingsViewContext>(SETTINGS_VIEW_CONTEXT_KEY)!
+const { userUseCase, authUseCase } = inject(SETTINGS_VIEW_CONTEXT_KEY)!
 const router = useRouter()
 
 const formData = reactive({

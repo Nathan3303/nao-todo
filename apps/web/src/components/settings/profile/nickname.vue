@@ -36,12 +36,11 @@ import { useUserStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { computed, inject, ref } from 'vue'
 import { t } from '@nao-todo/infrastructure/locales'
-import type { SettingsViewContext } from '@/views/index/settings/settings-view'
-import { SETTINGS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import { SETTINGS_VIEW_CONTEXT_KEY } from '@/views/index/settings/context'
 
 defineOptions({ name: 'SettingsProfileNickname' })
 
-const { userUseCase } = inject<SettingsViewContext>(SETTINGS_VIEW_CONTEXT_KEY)!
+const { userUseCase } = inject(SETTINGS_VIEW_CONTEXT_KEY)!
 
 const userStore = useUserStore()
 

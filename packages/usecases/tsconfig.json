@@ -1,9 +1,6 @@
 {
-    "name": "@nao-todo/domain",
-    "version": "0.1.0",
-    "author": "Nathan Lee",
-    "license": "MIT",
-    "files": [
+    "extends": "../../tsconfig.base.json",
+    "include": [
         "auth/**/*",
         "built-in-project/**/*",
         "pomodoro/**/*",
@@ -14,4 +11,3 @@
         "user/**/*"
     ]
 }
-

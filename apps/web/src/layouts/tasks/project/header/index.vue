@@ -2,17 +2,14 @@
 import { inject } from 'vue'
 import OperationDropdown from './operation-dropdown.vue'
 import FilterDropdown from './filter-dropdown.vue'
-import { PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
-import type { ProjectViewContext } from '../types'
-import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
-import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context.js'
+import { PROJECT_VIEW_CONTEXT_KEY } from '../context.js'
 
 defineOptions({ name: 'TasksMainProjectHeader' })
 defineProps<{ projectId?: string; viewType?: string; taskId?: string }>()
 
-const { isDisplayAside, switchDisplayAside } = inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
-
-const { project, showTaskCreator } = inject<ProjectViewContext>(PROJECT_VIEW_CONTEXT_KEY)!
+const { isDisplayAside, switchDisplayAside } = inject(TASKS_VIEW_CONTEXT_KEY)!
+const { project, showTaskCreator } = inject(PROJECT_VIEW_CONTEXT_KEY)!
 </script>
 
 <template>

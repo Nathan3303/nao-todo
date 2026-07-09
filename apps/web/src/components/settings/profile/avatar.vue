@@ -54,18 +54,17 @@
 import { inject, ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useUserStore } from '@/stores'
-import type { SettingsViewContext } from '@/views/index/settings/settings-view'
-import { SETTINGS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { useRouter } from 'vue-router'
 import SettingsProfileAvatarCropperDialog from './avatar-cropper-dialog.vue'
 import SettingsProfileAvatarViewerDialog from './avatar-viewer-dialog.vue'
 import { t } from '@nao-todo/infrastructure/locales'
+import { SETTINGS_VIEW_CONTEXT_KEY } from '@/views/index/settings/context.js'
 
 defineOptions({ name: 'SettingsProfileAvatar' })
 
-const { authUseCase, userUseCase } = inject<SettingsViewContext>(SETTINGS_VIEW_CONTEXT_KEY)!
+const { authUseCase, userUseCase } = inject(SETTINGS_VIEW_CONTEXT_KEY)!
 const userStore = useUserStore()
 const router = useRouter()
 

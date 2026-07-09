@@ -4,7 +4,7 @@ import { type DialogInstanceType, useDialogWrapper } from '@nao-todo/components'
 import { TASK_REMINDER_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 import { t } from '@nao-todo/infrastructure/locales'
 import useTaskReminder, { SNOOZE_OPTIONS } from './use-task-reminder'
-import type { SSEReminderEvent } from '@nao-todo/types'
+import type { SSEReminderEvent } from '@nao-todo/types/viewobjects/sse'
 
 defineOptions({ name: 'TaskReminder' })
 

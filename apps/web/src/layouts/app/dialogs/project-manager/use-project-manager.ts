@@ -1,5 +1,5 @@
 import { computed, inject, reactive, ref } from 'vue'
-import { ProjectHandler } from '@/infrastructure/handlers/project-handler'
+import { ProjectHandler } from '@/infrastructure/handlers/project'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { useProjectsStore } from '@/stores'
 import { storeToRefs } from 'pinia'

@@ -1,6 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router'
 import useUserStore from '@/stores/user-store'
-import { USER_JWT_LOCALSTORAGE_KEY } from '@nao-todo/infrastructure/consts/auth'
+import { USER_JWT_LOCALSTORAGE_KEY } from '@nao-todo/domain/shares/consts/auth'
 
 const routes: RouteRecordRaw = {
     path: '/auth',

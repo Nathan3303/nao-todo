@@ -1,6 +1,6 @@
 import { inject, ref, computed } from 'vue'
 import { NueMessage } from 'nue-ui'
-import { TagHandler } from '@/infrastructure/handlers/tag-handler'
+import { TagHandler } from '@/infrastructure/handlers/tag'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { useTagsStore } from '@/stores'
 import { storeToRefs } from 'pinia'

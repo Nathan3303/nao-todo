@@ -38,11 +38,10 @@
 <script setup lang="ts">
 import { computed, inject, ref } from 'vue'
 import { useThemeStore, type ThemeMode } from '@/stores'
-import { SETTINGS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import type { SettingsViewContext } from '@/views/index/settings/settings-view'
 import { unwrapError, debounce } from '@nao-todo/infrastructure/utils'
 import { NueMessage } from 'nue-ui'
 import { t } from '@nao-todo/infrastructure/locales'
+import { SETTINGS_VIEW_CONTEXT_KEY } from '@/views/index/settings/context'
 
 defineOptions({ name: 'SettingsAppAppereance' })
 
@@ -75,7 +74,7 @@ const themeOptions: Array<{
 ]
 const loading = ref(false)
 
-const { userUseCase } = inject<SettingsViewContext>(SETTINGS_VIEW_CONTEXT_KEY)!
+const { userUseCase } = inject(SETTINGS_VIEW_CONTEXT_KEY)!
 
 const currentTheme = computed(() => themeStore.themeMode)
 
