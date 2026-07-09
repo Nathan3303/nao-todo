@@ -33,7 +33,7 @@ export const usePomodoroCreator = () => {
         description: string
         duration: number
     }>({
-        type: 0,
+        type: 1,
         name: '',
         description: '',
         duration: 25
@@ -44,7 +44,7 @@ export const usePomodoroCreator = () => {
      */
     const clearInputsValue = () => {
         isNameEmpty.value = false
-        form.value = { type: 0, name: '', description: '', duration: 25 }
+        form.value = { type: 1, name: '', description: '', duration: 25 }
     }
 
     /**

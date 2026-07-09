@@ -2,9 +2,9 @@ import type { NullableString, ViewObjectBase } from '../shares/types'
 
 /**
  * Pomodoro 记录类型
- * @description 映射后端 uint8：0=timer(番茄钟), 1=focus(专注正计时)
+ * @description 映射后端 uint8：1=timer(番茄专注), 2=focus(正计时)
  */
-export type PomodoroType = 0 | 1
+export type PomodoroType = 1 | 2
 
 /**
  * Pomodoro 记录视图对象

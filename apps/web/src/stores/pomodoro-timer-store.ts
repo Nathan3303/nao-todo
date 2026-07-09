@@ -103,7 +103,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
     /** 构建一条专注记录 CreatePomodoroRecordViewObject */
     const buildRecord = (total: number): CreatePomodoroRecordViewObject => ({
         sessionId: pomodoroStore.currentRecordId!,
-        type: 0, // timer=0
+        type: 1, // timer=1
         taskId: pomodoroStore.currentTaskId ?? '',
         taskName: pomodoroStore.currentTaskName || '未关联任务',
         description: null,

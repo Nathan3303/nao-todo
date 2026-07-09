@@ -72,8 +72,8 @@ onMounted(() => {
                         </nue-text>
                     </nue-div>
                     <nue-select v-model="form.type" size="small" width="8rem" :disabled="creating">
-                        <nue-select-option label="番茄钟" :value="0" />
-                        <nue-select-option label="正计时" :value="1" />
+                        <nue-select-option label="番茄专注" :value="1" />
+                        <nue-select-option label="正计时" :value="2" />
                     </nue-select>
                 </nue-div>
                 <nue-div align="center" justify="space-between">

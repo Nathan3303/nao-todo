@@ -9,7 +9,7 @@ import type { ListRequestBase, ResponseBase } from './base'
 
 // PomodoroRes 常用番茄工作响应
 export type PomodoroRes = ResponseBase & {
-    type: number // uint8: 0=timer, 1=focus
+    type: number // uint8: 1=timer, 2=focus
     name: string
     description: string | null
     duration: number
@@ -19,7 +19,7 @@ export type PomodoroRes = ResponseBase & {
 
 // CreatePomodoroReq 创建番茄工作请求
 export type CreatePomodoroReq = {
-    type: number // uint8: 0=timer, 1=focus
+    type: number // uint8: 1=timer, 2=focus
     name: string
     description: string | null
     duration: number
@@ -30,7 +30,7 @@ export type CreatePomodoroRes = PomodoroRes
 
 // UpdatePomodoroReq 更新常用番茄工作请求
 export type UpdatePomodoroReq = {
-    type?: number // uint8: 0=timer, 1=focus
+    type?: number // uint8: 1=timer, 2=focus
     name?: string
     description?: string | null
     duration?: number
@@ -39,7 +39,7 @@ export type UpdatePomodoroReq = {
 
 // ListPomodoroReq 获取常用番茄工作列表请求
 export type ListPomodoroReq = {
-    type?: number // uint8: 0=timer, 1=focus
+    type?: number // uint8: 1=timer, 2=focus
     name?: string
     isArchived?: boolean
 } & ListRequestBase
@@ -65,7 +65,7 @@ export type PomodoroRecordRes = ResponseBase & {
 // CreatePomodoroRecordReq 创建番茄记录请求
 export type CreatePomodoroRecordReq = {
     sessionId: string
-    type: number // uint8: 0=timer, 1=focus
+    type: number // uint8: 1=timer, 2=focus
     taskId: string
     taskName: string
     description?: string | null
