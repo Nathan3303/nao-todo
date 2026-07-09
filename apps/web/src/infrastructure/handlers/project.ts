@@ -181,8 +181,8 @@ export class ProjectHandler {
      * @returns 无
      */
     async updateProject(projectId: string, updateVO: UpdateProjectViewObject): GoAsync<void> {
-        updateVO.id = projectId
-        const err = await this.projectUseCase.update(updateVO)
+        // updateVO.id = projectId
+        const err = await this.projectUseCase.update(projectId, updateVO)
         if (err !== null) {
             NueMessage.error(t('dialog.projectUpdateFailed', { error: unwrapError(err) }))
             return err

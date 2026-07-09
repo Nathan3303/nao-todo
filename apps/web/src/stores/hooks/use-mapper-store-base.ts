@@ -6,7 +6,7 @@ import { computed, ref } from 'vue'
  * @template U 更新类型
  * @returns 映射状态管理对象
  */
-export const useMapperStoreBase = <T extends { id: string }, U extends { id: string } = T>() => {
+export const useMapperStoreBase = <T extends { id: string }, U = void>() => {
     // @state 映射
     const map = ref<Map<T['id'], T>>(new Map())
 

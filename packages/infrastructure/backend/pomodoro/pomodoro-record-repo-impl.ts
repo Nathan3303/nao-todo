@@ -36,7 +36,7 @@ export class PomodoroRecordRepoImpl implements PomodoroRecordRepository {
      */
     async get(id: string): GoAsync<PomodoroRecordEntity> {
         // 1. 调用接口
-        const response = await this.requester.get(`/pomodoro-recorods/${id}`, {
+        const response = await this.requester.get(`/pomodoro-records/${id}`, {
             headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
         })
         // 3. 判断结果
@@ -57,7 +57,7 @@ export class PomodoroRecordRepoImpl implements PomodoroRecordRepository {
         // 1. 构建请求传输对象
         const createRto = createPomodoroRecordValueObjectToReq(createVO)
         // 2. 调用接口
-        const response = await this.requester.post('/pomodoro-recorods/', createRto, {
+        const response = await this.requester.post('/pomodoro-records/', createRto, {
             headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
         })
         // 3. 判断结果
@@ -80,7 +80,7 @@ export class PomodoroRecordRepoImpl implements PomodoroRecordRepository {
         queryString?: string
     ): GoAsync<{ entities: PomodoroRecordEntity[]; pagination?: ResponseDataPagination }> {
         // 1. 调用接口
-        const response = await this.requester.get(`/pomodoro-recorods/?${queryString ?? ''}`, {
+        const response = await this.requester.get(`/pomodoro-records/?${queryString ?? ''}`, {
             headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
         })
         // 2. 判断结果
@@ -107,5 +107,8 @@ export class PomodoroRecordRepoImpl implements PomodoroRecordRepository {
 export const newPomodoroRecordRepository = (requester: Requester) => {
     return new PomodoroRecordRepoImpl(requester)
 }
+
+
+
 
 

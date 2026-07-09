@@ -91,7 +91,7 @@ export class TagUseCase {
         const err = await this.tagDomain.update(updateTagValueObject)
         if (err !== null) return err
         // 存储到状态管理
-        this.store.updateTag(updateTagViewObject)
+        this.store.updateTag(tagId, updateTagViewObject)
         return null
     }
 
@@ -235,7 +235,7 @@ export class TagUseCase {
     async resortSingle(originalId: string, newSortId: number): GoAsync<void> {
         const updateVO = { id: originalId, sortId: newSortId } as UpdateTagViewObject
         // 更新状态管理中的标签顺序
-        this.store.updateTag(updateVO)
+        this.store.updateTag(originalId, updateVO)
         // 调用领域层方法更新标签顺序
         return await this.update(originalId, updateVO)
     }

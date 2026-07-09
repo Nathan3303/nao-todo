@@ -31,9 +31,10 @@ export const tagRes2Entity = (res: TagRes): TagEntity => {
         res.updatedAt,
         res.deletedAt,
         // res.userId,
+        'tag',
         res.name,
-        res.color,
         res.description,
+        res.color,
         res.sortId
     )
 }
@@ -137,4 +138,6 @@ export const updateTagPreferenceValueObject2Req = (
     if (updateVO.columns !== void 0) rto.columns = updateVO.columns
     return rto
 }
+
+
 

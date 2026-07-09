@@ -57,7 +57,7 @@ export interface TaskCheckItemStore {
     /**
      * 任务检查项列表
      */
-    checkItems?: Map<string, TaskCheckItemViewObject>
+    checkItems?: TaskCheckItemViewObject[]
 
     /**
      * 添加任务检查项
@@ -168,6 +168,4 @@ export interface TaskCommentStore {
      */
     removeComment: (id: TaskCommentViewObject['id']) => void
 }
-
-
 

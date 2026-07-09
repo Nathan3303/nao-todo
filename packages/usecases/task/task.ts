@@ -73,7 +73,7 @@ export class TaskUseCase {
         const err = await this.taskRepo.remove(id)
         if (err !== null) return err
         // 更新任务状态为已删除
-        this.taskStore.updateTask(id, { id, deletedAt: dayjs().toISOString() })
+        this.taskStore.updateTask(id, { deletedAt: dayjs().toISOString() })
         // 返回成功
         return null
     }
@@ -88,7 +88,7 @@ export class TaskUseCase {
         const err = await this.taskRepo.restore(id)
         if (err !== null) return err
         // 更新任务状态为未删除
-        this.taskStore.updateTask(id, { id, deletedAt: null })
+        this.taskStore.updateTask(id, { deletedAt: null })
         // 返回成功
         return null
     }
@@ -167,7 +167,7 @@ export class TaskUseCase {
         const [newRemindAt, err] = await this.taskRepo.snooze(id, durationMinutes)
         if (err !== null) return err
         // 更新本地数据
-        this.taskStore.updateTask(id, { id, remindAt: newRemindAt })
+        this.taskStore.updateTask(id, { remindAt: newRemindAt })
         // 返回
         return null
     }

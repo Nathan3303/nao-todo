@@ -86,9 +86,9 @@ watch(
     <nue-div theme="event-list">
         <loading v-if="checkItemsLoading" :placeholder="t('task.details.eventsLoading')" />
         <nue-empty v-else-if="checkItemsError" :description="checkItemsError" image-size="64px">
-            <nue-button theme="primary,small" @click="retryCheckItems">{{
-                t('common.retry')
-            }}</nue-button>
+            <nue-button theme="primary,small" @click="retryCheckItems">
+                {{ t('common.retry') }}
+            </nue-button>
         </nue-empty>
         <template v-else>
             <nue-div
@@ -124,7 +124,7 @@ watch(
                     :key="event.id"
                     :event="event"
                     :data-eid="event.id"
-                    :on-update="(id, v) => checkItemHandler.update({ id, ...v })"
+                    :on-update="(id, v) => checkItemHandler.update(id, v)"
                     :on-delete="checkItemHandler.delete"
                     @to-task="makeCheckItemToTask"
                 />

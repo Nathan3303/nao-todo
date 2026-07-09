@@ -72,6 +72,7 @@ const { projectOptions, tagOptions, selectedProjectIds, selectedTagIds, dialogMa
     flex: auto;
     height: 100%;
     padding: 1rem;
+    overflow: auto;
 
     > .nue-div--smart-list-wrapper {
         width: 100%;

@@ -10,11 +10,11 @@ import { getJWTFromLocalStorage } from '../utils'
 import type { BatchUpdateTaskCheckItemRes, ResponseData, TaskCheckItemRes } from '../models'
 import {
     batchUpdateTaskCheckItemRes2Entities,
-    batchUpdateTaskCheckItemValueObjects2Req,
     createTaskCheckItemValueObject2Req,
     listTaskCheckItemRes2Entities,
     taskCheckItemRes2Entity,
-    updateTaskCheckItemValueObject2Req
+    updateTaskCheckItemValueObject2Req,
+    updateTaskCheckItemValueObjects2BatchUpdateReq
 } from './converters'
 
 /**
@@ -57,7 +57,7 @@ export class TaskCheckItemRepoImpl implements TaskCheckItemRepository {
         // 1. 转换为请求体
         const createRto = createTaskCheckItemValueObject2Req(createVO)
         // 2. 调用接口
-        const response = await this.requester.post('/events', createRto, {
+        const response = await this.requester.post('/events/', createRto, {
             headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
         })
         // 3. 判断结果
@@ -117,12 +117,12 @@ export class TaskCheckItemRepoImpl implements TaskCheckItemRepository {
      */
     async list(taskId: string): GoAsync<TaskCheckItemEntity[]> {
         // 1. 调用接口
-        const response = await this.requester.get(`/events/${taskId}/check-items`, {
+        const response = await this.requester.get(`/events/?taskId=${taskId}`, {
             headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
         })
         // 2. 判断结果
         const res = response.data as ResponseData
-        if (res.code !== 50000) {
+        if (res.code !== 50040) {
             return [null, res.message]
         }
         // 4. 返回
@@ -136,9 +136,9 @@ export class TaskCheckItemRepoImpl implements TaskCheckItemRepository {
      */
     async batchUpdate(updateVOs: UpdateTaskCheckItemValueObject[]): GoAsync<TaskCheckItemEntity[]> {
         // 1. 转换为请求体
-        const updateRto = batchUpdateTaskCheckItemValueObjects2Req(updateVOs)
+        const updateRto = updateTaskCheckItemValueObjects2BatchUpdateReq(updateVOs)
         // 2. 调用接口
-        const response = await this.requester.put('/events', updateRto, {
+        const response = await this.requester.put('/events/', updateRto, {
             headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
         })
         // 3. 判断结果

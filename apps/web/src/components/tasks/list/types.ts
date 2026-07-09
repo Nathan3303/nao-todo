@@ -5,6 +5,7 @@ import type {
     GetTasksSortOptions
 } from '@nao-todo/usecases/task'
 import { TagViewObject } from '@nao-todo/usecases/tag'
+import { ProjectViewObject } from '@nao-todo/usecases/project'
 
 export type TaskListProps = {
     tags: TagViewObject[]
@@ -52,7 +53,7 @@ export type TaskListContext = {
     isInMultiSelectRange: (idx: number) => boolean
     showMultiSelectPanel: (idx: number) => void
     clearMultiSelect: (fullCLear: boolean) => void
-    getProjectName: (projectId: string) => string
+    getProjectName: (projectId: ProjectViewObject['id']) => ProjectViewObject['name']
     deleteOrRestore: (taskId: TaskViewObject['id'], isDelete: boolean) => void
     handleClickTask: (task: TaskViewObject, taskIdx: number) => void
 }

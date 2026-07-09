@@ -33,6 +33,7 @@ const { isDisplayAside, isUseFloatAside } = inject(POMODORO_VIEW_CONTEXT_KEY)!
     flex: auto;
     height: 100%;
     padding: 1rem;
+    overflow: auto;
     gap: var(--nue-gap-lg);
 }
 </style>

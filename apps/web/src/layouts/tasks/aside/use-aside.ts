@@ -54,7 +54,7 @@ export const useAside = () => {
     /**
      * @computed 侧边栏清单路由按钮视图对象
      */
-    const projectLinks = computed(() => {
+    const projectLinks = computed<NaoSmartListLinkVO[]>(() => {
         return projects.value.map((p) => ({
             id: p.id,
             title: p.name,
@@ -67,15 +67,14 @@ export const useAside = () => {
      * @computed 侧边栏标签路由按钮视图对象（按 sortId 排序）
      */
     const tagLinks = computed<NaoSmartListLinkVO[]>(() => {
-        return [...tags.value.values()]
-            .sort((a, b) => a.sortId - b.sortId)
-            .map((tag) => ({
-                id: tag.id,
-                title: tag.name,
-                route: { name: 'tasks-tag', params: { tagId: tag.id } },
-                icon: 'tag',
-                payload: { color: tag.color || 'default' }
-            }))
+        const sortedTags = [...tags.value].sort((a, b) => a.sortId - b.sortId)
+        return sortedTags.map((tag) => ({
+            id: tag.id,
+            title: tag.name,
+            route: { name: 'tasks-tag', params: { tagId: tag.id } },
+            icon: tag.icon || 'tag',
+            payload: { color: tag.color || 'transparent' }
+        }))
     })
 
     /**

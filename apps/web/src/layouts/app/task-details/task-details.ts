@@ -201,6 +201,15 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         { immediate: true }
     )
 
+    // @description 排序检查事项
+    const resortCheckItems = async (
+        oeid: TaskCheckItemViewObject['id'],
+        teid: TaskCheckItemViewObject['id'],
+        isUp: boolean
+    ) => {
+        return await taskCheckItemUseCase.resort(oeid, teid, isUp)
+    }
+
     // @provide 任务详情面板上下文
     provide(TASK_DETAILS_CONTEXT_KEY, {
         dialogManager,
@@ -231,7 +240,7 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         retryCheckItems,
         retryComments,
         // ---
-        resortCheckItems: (oeid, teid, isUp) => taskCheckItemUseCase.resort(oeid, teid, isUp),
+        resortCheckItems,
         makeCheckItemToTask
     })
 

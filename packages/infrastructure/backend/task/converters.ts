@@ -24,7 +24,8 @@ import type {
     CreateTaskCommentReq,
     CreateTaskCommentRes,
     UpdateTaskCommentReq,
-    ListTaskCommentRes
+    ListTaskCommentRes,
+    BatchUpdateTaskCheckItemReq
 } from '../models'
 import { UpdateTaskValueObject } from '@nao-todo/domain/task'
 import dayjs from 'dayjs'
@@ -178,9 +179,23 @@ export const updateTaskCheckItemValueObject2Req = (
     updateVO: UpdateTaskCheckItemValueObject
 ): UpdateTaskCheckItemReq => {
     const req = {} as UpdateTaskCheckItemReq
+    req.id = updateVO.id
     if (updateVO.name) req.name = updateVO.name
     if (updateVO.isDone !== void 0) req.isDone = updateVO.isDone
     if (updateVO.sortId !== void 0) req.sortId = updateVO.sortId
+    return req
+}
+
+/**
+ * updateTaskCheckItemValueObjects2BatchUpdateReq 批量更新任务检查项值对象转换为批量更新任务检查项请求
+ * @param updateVOs 更新任务检查项值对象列表
+ * @returns 更新任务检查项请求列表
+ */
+export const updateTaskCheckItemValueObjects2BatchUpdateReq = (
+    updateVOs: UpdateTaskCheckItemValueObject[]
+): BatchUpdateTaskCheckItemReq => {
+    const req = {} as BatchUpdateTaskCheckItemReq
+    req.events = updateVOs.map((updateVO) => updateTaskCheckItemValueObject2Req(updateVO))
     return req
 }
 
@@ -194,17 +209,6 @@ export const listTaskCheckItemRes2Entities = (res: ListTaskCheckItemRes): TaskCh
 }
 
 /**
- * batchUpdateTaskCheckItemValueObjects2Req 批量更新任务检查项值对象转换为批量更新任务检查项请求
- * @param updateVOs 批量更新任务检查项值对象列表
- * @returns 批量更新任务检查项请求列表
- */
-export const batchUpdateTaskCheckItemValueObjects2Req = (
-    updateVOs: UpdateTaskCheckItemValueObject[]
-): UpdateTaskCheckItemReq[] => {
-    return updateVOs.map((updateVO) => updateTaskCheckItemValueObject2Req(updateVO))
-}
-
-/**
  * batchUpdateTaskCheckItemRes2Entities 批量更新任务检查项响应转换为批量更新任务检查项实体列表
  * @param res 批量更新任务检查项响应
  * @returns 批量更新任务检查项实体列表
@@ -212,7 +216,7 @@ export const batchUpdateTaskCheckItemValueObjects2Req = (
 export const batchUpdateTaskCheckItemRes2Entities = (
     res: BatchUpdateTaskCheckItemRes
 ): TaskCheckItemEntity[] => {
-    return res.checkItems.map((taskCheckItem) => taskCheckItemRes2Entity(taskCheckItem))
+    return res.events.map((taskCheckItem) => taskCheckItemRes2Entity(taskCheckItem))
 }
 
 // --- Task Comment ---

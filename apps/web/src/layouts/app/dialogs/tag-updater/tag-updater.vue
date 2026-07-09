@@ -13,10 +13,11 @@ defineOptions({ name: 'TagUpdater' })
 
 const dialogRef = ref<DialogInstanceType>()
 
-const { states, formData, dialogManager, getTag, updateTag } = useTagUpdater()
+const { states, formData, dialogManager, getTag, updateTag, resetStates } = useTagUpdater()
 const { visible, close } = useDialogWrapper(dialogRef)
 
 const open = (tagId: string) => {
+    resetStates()
     const ok = getTag(tagId)
     if (ok) visible.value = true
 }

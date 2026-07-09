@@ -5,7 +5,7 @@ import { useListStoreBase } from '../hooks/use-list-store-base'
 
 export const useTaskCheckItemsStoreBase = () => {
     const {
-        map: checkItems,
+        list: checkItems,
         addItem: addCheckItem,
         getItem: getCheckItem,
         setList: setCheckItems,

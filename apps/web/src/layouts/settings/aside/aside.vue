@@ -41,6 +41,7 @@ const { asideWidth, handleResizeAside, isDisplayAside } = inject(SETTINGS_VIEW_C
     flex-direction: column;
     box-sizing: border-box;
     padding: var(--nue-padding-df);
+    overflow: auto;
     flex: 1;
 }
 </style>

@@ -95,6 +95,7 @@ export type CreateTaskCheckItemReq = {
 export type CreateTaskCheckItemRes = TaskCheckItemRes
 
 export type UpdateTaskCheckItemReq = {
+    id: string
     name?: string
     isDone?: boolean
     sortId?: number
@@ -103,12 +104,12 @@ export type UpdateTaskCheckItemReq = {
 export type ListTaskCheckItemRes = TaskCheckItemRes[]
 
 export type BatchUpdateTaskCheckItemReq = {
-    checkItems: ({ id: string } & UpdateTaskCheckItemReq)[]
+    events: UpdateTaskCheckItemReq[]
 }
 
 export type BatchUpdateTaskCheckItemRes = {
     updatedCount: number
-    checkItems: TaskCheckItemRes[]
+    events: TaskCheckItemRes[]
 }
 
 // --- Task Comment ---
@@ -146,3 +147,4 @@ export type SnoozeTaskReq = {
 export type SnoozeTaskRes = {
     remindAt: string
 }
+

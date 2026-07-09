@@ -10,6 +10,7 @@ const props = withDefaults(defineProps<ProjectFormProps>(), {
 const emit = defineEmits<ProjectFormEmits>()
 
 const formState = reactive({
+    icon: props.modelValue.icon,
     name: props.modelValue.name,
     description: props.modelValue.description
 })
@@ -57,3 +58,4 @@ watch(formState, (newVal) => {
         </nue-div>
     </nue-div>
 </template>
+

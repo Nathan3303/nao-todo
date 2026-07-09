@@ -20,7 +20,7 @@ export type CreateTagViewObject = {
 
 // 更新标签视图对象
 export type UpdateTagViewObject = {
-    id: TagViewObject['id']
+    // id: TagViewObject['id']
     sortId?: TagViewObject['sortId']
     name?: TagViewObject['name']
     description?: TagViewObject['description']

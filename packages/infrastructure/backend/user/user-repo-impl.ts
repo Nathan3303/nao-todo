@@ -54,7 +54,7 @@ export class UserRepoImpl implements UserRepository {
         // 1. 转换值对象
         const updateRto = updateUserNicknameValueObject2Req(updateVO)
         // 2. 调用接口
-        const response = await this.requester.post('/user/nickname', updateRto, {
+        const response = await this.requester.put('/user/nickname', updateRto, {
             headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
         })
         // 3. 判断结果

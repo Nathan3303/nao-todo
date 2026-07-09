@@ -9,10 +9,12 @@ defineOptions({ name: 'ProjectUpdater' })
 
 const dialogRef = ref<DialogInstanceType>()
 
-const { states, formData, dialogManager, getProject, updateProject } = useProjectUpdater()
+const { states, formData, dialogManager, getProject, updateProject, resetStates } =
+    useProjectUpdater()
 const { visible, close } = useDialogWrapper(dialogRef)
 
 const open = (projectId: string) => {
+    resetStates()
     const ok = getProject(projectId)
     if (ok) visible.value = true
 }
@@ -37,7 +39,9 @@ onMounted(() => {
             <project-form v-model="formData" :disabled="states.updating" />
         </template>
         <template #footer>
-            <nue-button :disabled="states.updating" @click="close">{{ t('common.cancel') }}</nue-button>
+            <nue-button :disabled="states.updating" @click="close">
+                {{ t('common.cancel') }}
+            </nue-button>
             <nue-button
                 :disabled="states.disabled"
                 :loading="states.updating"
@@ -55,3 +59,4 @@ onMounted(() => {
     min-width: min(24rem, 100vw);
 }
 </style>
+

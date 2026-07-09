@@ -25,7 +25,7 @@ export type CreateProjectViewObject = {
 
 // 更新项目视图对象
 export type UpdateProjectViewObject = {
-    id: ProjectViewObject['id']
+    // id: ProjectViewObject['id']
     icon?: string
     name?: string
     description?: NullableString

@@ -3,14 +3,10 @@ import { NueMessage } from 'nue-ui'
 import { TagHandler } from '@/infrastructure/handlers/tag'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { useTagsStore } from '@/stores'
-import { storeToRefs } from 'pinia'
 
 const useTagUpdater = () => {
-    const { tagUseCase, subscriber, dialogManager } =
-        inject(INDEX_VIEW_CONTEXT_KEY)!
+    const { tagUseCase, subscriber, dialogManager } = inject(INDEX_VIEW_CONTEXT_KEY)!
     const tagsStore = useTagsStore()
-    const { tags } = storeToRefs(tagsStore)
-
     const tagHandler = new TagHandler(tagUseCase, tagsStore, subscriber)
 
     const states = ref({
@@ -23,7 +19,10 @@ const useTagUpdater = () => {
     })
 
     const formData = computed({
-        get: () => ({ name: states.value.name, description: states.value.description }),
+        get: () => ({
+            name: states.value.name,
+            description: states.value.description
+        }),
         set: (val) => {
             states.value.name = val.name
             states.value.description = val.description
@@ -31,7 +30,7 @@ const useTagUpdater = () => {
     })
 
     const getTag = (id: string) => {
-        const tag = tags.value.find((t) => t.id === id)
+        const tag = tagsStore.getTag(id)
         if (!tag) {
             NueMessage.error('未找到标签')
             return false
@@ -54,7 +53,6 @@ const useTagUpdater = () => {
         }
         states.value.disabled = states.value.updating = true
         const err = await tagHandler.updateTag(states.value.tagId, {
-            id: states.value.tagId,
             name: states.value.name,
             description: states.value.description,
             color: states.value.color
@@ -64,18 +62,20 @@ const useTagUpdater = () => {
             states.value.disabled = false
             return false
         }
+        return true
+    }
+
+    const resetStates = () => {
         states.value.tagId = null
         states.value.name = ''
         states.value.description = ''
         states.value.color = 'transparent'
+        states.value.updating = false
         states.value.disabled = false
-        return true
     }
 
-    return { states, formData, dialogManager, getTag, updateTag }
+    return { states, formData, dialogManager, getTag, updateTag, resetStates }
 }
 
 export default useTagUpdater
-
-
 

@@ -22,8 +22,8 @@ import useScope from '@/infrastructure/hooks/use-scope'
 import useShortcut from '@/infrastructure/hooks/use-shortcut'
 import { newUserUseCase } from '@nao-todo/usecases/user'
 import { newTaskUseCase, type TaskViewObject } from '@nao-todo/usecases/task'
-import { newProjectUseCase } from '@nao-todo/usecases/project'
-import { newTagUseCase } from '@nao-todo/usecases/tag'
+import { newProjectUseCase, ProjectViewObject } from '@nao-todo/usecases/project'
+import { newTagUseCase, TagViewObject } from '@nao-todo/usecases/tag'
 import { SSEReminderEvent } from '@nao-todo/types/viewobjects/sse'
 import { ProjectHandler } from '@/infrastructure/handlers/project'
 import { TagHandler } from '@/infrastructure/handlers/tag'
@@ -164,6 +164,24 @@ const useIndexView = () => {
     }
 
     /**
+     * 获取项目名称
+     * @param id 项目ID
+     * @returns 项目名称
+     */
+    const getProjectName = (id: ProjectViewObject['id']): ProjectViewObject['name'] => {
+        return projectHandler.getProjectName(id)
+    }
+
+    /**
+     * 获取标签颜色
+     * @param id 标签ID
+     * @returns 标签颜色
+     */
+    const getTagColor = (id: TagViewObject['id']): TagViewObject['color'] => {
+        return tagHandler.getTagColor(id)
+    }
+
+    /**
      * 提供首页视图上下文
      */
     provide(INDEX_VIEW_CONTEXT_KEY, {
@@ -187,8 +205,8 @@ const useIndexView = () => {
         isUseFloatOutline,
         // methods
         showTaskDetails,
-        getProjectName: projectHandler.getProjectName,
-        getTagColor: tagHandler.getTagColor
+        getProjectName,
+        getTagColor
     })
 
     // @return

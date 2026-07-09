@@ -3,14 +3,14 @@ import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { useProjectsStore } from '@/stores'
-import { storeToRefs } from 'pinia'
 
 const useProjectUpdater = () => {
     const { projectUseCase, dialogManager } = inject(INDEX_VIEW_CONTEXT_KEY)!
-    const { projects } = storeToRefs(useProjectsStore())
+    const projectsStore = useProjectsStore()
 
     const states = reactive({
         projectId: null as string | null,
+        icon: 'more2',
         name: '',
         description: '',
         updating: false,
@@ -18,15 +18,20 @@ const useProjectUpdater = () => {
     })
 
     const formData = computed({
-        get: () => ({ name: states.name, description: states.description }),
+        get: () => ({
+            icon: states.icon,
+            name: states.name,
+            description: states.description
+        }),
         set: (val) => {
+            states.icon = val.icon
             states.name = val.name
             states.description = val.description
         }
     })
 
     const getProject = (id: string) => {
-        const project = projects.value.find((p) => p.id === id)
+        const project = projectsStore.getProject(id)
         if (!project) {
             NueMessage.error('未找到清单')
             return false
@@ -34,6 +39,8 @@ const useProjectUpdater = () => {
         states.projectId = id
         states.name = project.name || ''
         states.description = project.description || ''
+        states.updating = false
+        states.disabled = false
         return true
     }
 
@@ -47,8 +54,7 @@ const useProjectUpdater = () => {
             return false
         }
         states.disabled = states.updating = true
-        const err = await projectUseCase.update({
-            id: states.projectId,
+        const err = await projectUseCase.update(states.projectId, {
             icon: 'more2',
             name: states.name,
             description: states.description
@@ -60,17 +66,20 @@ const useProjectUpdater = () => {
             return false
         }
         NueMessage.success('清单修改成功')
-        states.projectId = null
-        states.name = ''
-        states.description = ''
-        states.disabled = false
+        // resetStates()
         return true
     }
 
-    return { states, formData, dialogManager, getProject, updateProject }
+    const resetStates = () => {
+        states.projectId = null
+        states.name = ''
+        states.description = ''
+        states.updating = false
+        states.disabled = false
+    }
+
+    return { states, formData, dialogManager, getProject, updateProject, resetStates }
 }
 
 export default useProjectUpdater
-
-
 

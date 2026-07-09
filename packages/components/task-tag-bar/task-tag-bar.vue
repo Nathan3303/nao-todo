@@ -3,6 +3,7 @@ import { TagNode } from '../tag-node'
 import { ComboBox } from '../combo-box'
 import { useTaskTagBar } from './use-task-tag-bar'
 import type { TaskTagBarEmits, TaskTagBarProps } from './types'
+import { computed } from 'vue'
 
 defineOptions({ name: 'TaskTagBar' })
 const emit = defineEmits<TaskTagBarEmits>()
@@ -10,9 +11,11 @@ const props = withDefaults(defineProps<TaskTagBarProps>(), {
     clamped: Infinity
 })
 
+const overflowCount = computed(() => props.taskTagIds.length - props.clamped)
+
 const overflowTag = {
     id: 'overflow-tag',
-    name: `+${props.taskTagIds.length - props.clamped}`,
+    name: `+${overflowCount.value}`,
     color: 'var(--nue-primary-color-500)'
 }
 
@@ -29,7 +32,11 @@ const { styles, comboBoxOptions, selectedTags, pushTagHandler, dropTagHandler, c
             :tag="tag"
             @delete="dropTagHandler"
         />
-        <tag-node v-if="selectedTags.length >= clamped" :tag="overflowTag" readonly />
+        <tag-node
+            v-if="selectedTags.length >= clamped && overflowCount > 0"
+            :tag="overflowTag"
+            readonly
+        />
         <combo-box
             v-if="!readonly"
             :framework="comboBoxOptions"

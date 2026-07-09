@@ -162,20 +162,26 @@ export class ProjectUseCase {
 
     /**
      * 更新任务清单
+     * @param id 项目ID
      * @param updateProjectViewObject 更新项目视图对象
      * @returns 无
      */
-    async update(updateProjectViewObject: UpdateProjectViewObject): GoAsync<void> {
+    async update(
+        id: ProjectViewObject['id'],
+        updateProjectViewObject: UpdateProjectViewObject
+    ): GoAsync<void> {
         // 数据转换
-        const updateProjectValueObject =
-            updateProjectViewObjectToValueObject(updateProjectViewObject)
+        const updateProjectValueObject = updateProjectViewObjectToValueObject(
+            id,
+            updateProjectViewObject
+        )
         // 更新
         const updateError = await this.projectRepo.update(updateProjectValueObject)
         if (updateError !== null) {
             return updateError
         }
         // 同步本地状态
-        this.store.updateProject(updateProjectViewObject)
+        this.store.updateProject(id, updateProjectViewObject)
         return null
     }
 
@@ -275,8 +281,8 @@ export class ProjectUseCase {
      */
     async resortSingle(originalId: string, newSortId: number): GoAsync<void> {
         const updateVO = { id: originalId, sortId: newSortId } as UpdateProjectViewObject
-        this.store.updateProject(updateVO)
-        const err = await this.update(updateVO)
+        this.store.updateProject(originalId, updateVO)
+        const err = await this.update(originalId, updateVO)
         return err !== null ? err : null
     }
 
@@ -324,7 +330,7 @@ export class ProjectUseCase {
         })
 
         const [batchResult, err] = await this.projectDomain.batchUpdate(
-            updateProjectViewObjects.map((p) => updateProjectViewObjectToValueObject(p))
+            updateProjectViewObjects.map((p) => updateProjectViewObjectToValueObject(p.id, p))
         )
         if (err !== null) return err
 

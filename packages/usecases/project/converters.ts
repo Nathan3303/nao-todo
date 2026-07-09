@@ -109,9 +109,10 @@ export const createProjectViewObjectToValueObject = (
  * @returns 更新项目值对象
  */
 export const updateProjectViewObjectToValueObject = (
+    projectId: ProjectViewObject['id'],
     updateProjectViewObject: UpdateProjectViewObject
 ): UpdateProjectValueObject => {
-    const valueObject = new UpdateProjectValueObject(updateProjectViewObject.id)
+    const valueObject = new UpdateProjectValueObject(projectId)
     if (updateProjectViewObject.name) {
         valueObject.name = updateProjectViewObject.name
     }
