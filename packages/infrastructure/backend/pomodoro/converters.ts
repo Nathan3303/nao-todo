@@ -103,6 +103,7 @@ export const pomodoroRecordRes2Entity = (res: PomodoroRecordRes): PomodoroRecord
         res.updatedAt,
         res.deletedAt,
         res.sessionId,
+        res.pomodoroId,
         res.type,
         res.taskId,
         res.taskName,
@@ -124,6 +125,7 @@ export const createPomodoroRecordValueObjectToReq = (
 ): CreatePomodoroRecordReq => {
     return {
         sessionId: createVO.sessionId,
+        pomodoroId: createVO.pomodoroId || null,
         type: createVO.type,
         taskId: createVO.taskId,
         taskName: createVO.taskName,

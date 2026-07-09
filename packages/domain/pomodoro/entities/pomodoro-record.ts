@@ -12,6 +12,7 @@ export class PomodoroRecordEntity extends Entity {
         public updatedAt: string, // 更新时间
         public deletedAt: string | null, // 删除时间
         public sessionId: string, // 会话ID
+        public pomodoroId: string | null, // 常用番茄专注ID
         public type: number, // 类型
         public taskId: string, // 任务ID
         public taskName: string, // 任务名称

@@ -7,9 +7,10 @@ import type { Go } from '@nao-todo/types'
 export class CreatePomodoroRecordValueObject {
     constructor(
         public sessionId: string,
+        public pomodoroId: string | null,
         public type: number,
-        public taskId: string | null,
-        public taskName: string | null,
+        public taskId: string,
+        public taskName: string,
         public description: string | null,
         public startAt: string,
         public endAt: string,
@@ -24,8 +25,8 @@ export class CreatePomodoroRecordValueObject {
     validate(): Go<void> {
         if (!this.sessionId) return '会话ID不能为空'
         if (this.type !== 0 && this.type !== 1) return '专注类型无效'
-        // if (!this.taskId) return '任务ID不能为空'
-        // if (!this.taskName) return '任务名称不能为空'
+        if (!this.taskId) return '任务ID不能为空'
+        if (!this.taskName) return '任务名称不能为空'
         if (!this.startAt) return '开始时间不能为空'
         if (!this.endAt) return '结束时间不能为空'
         if (this.duration <= 0) return '专注时长必须大于0'

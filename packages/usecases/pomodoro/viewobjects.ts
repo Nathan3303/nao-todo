@@ -11,9 +11,10 @@ export type PomodoroType = 1 | 2
  */
 export type PomodoroRecordViewObject = ViewObjectBase & {
     sessionId: string
+    pomodoroId: NullableString // 常用番茄专注ID
     type: PomodoroType
-    taskId: NullableString
-    taskName: NullableString
+    taskId: string
+    taskName: string
     description: NullableString
     startAt: string
     endAt: string
@@ -26,6 +27,7 @@ export type PomodoroRecordViewObject = ViewObjectBase & {
  */
 export type CreatePomodoroRecordViewObject = {
     sessionId: PomodoroRecordViewObject['sessionId']
+    pomodoroId: PomodoroRecordViewObject['pomodoroId'] // 常用番茄专注ID
     type: PomodoroRecordViewObject['type']
     taskId: PomodoroRecordViewObject['taskId']
     taskName: PomodoroRecordViewObject['taskName']
@@ -65,6 +67,7 @@ export type CreatePomodoroViewObject = {
  */
 export type GetPomodoroRecordsOptions = {
     sessionId?: string
+    pomodoroId?: string | null, // 常用番茄专注ID
     type?: PomodoroType
     taskId?: string
     taskName?: string
@@ -74,8 +77,4 @@ export type GetPomodoroRecordsOptions = {
     limit?: number
     sort?: string
 }
-
-
-
-
 

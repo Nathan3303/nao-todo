@@ -1,11 +1,27 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
+import { Pager } from '@nao-todo/components'
 import { usePomodoroCollection } from './use-pomodoro-collection'
 import { PomodoroHeader } from '../header'
+import PomodoroRecordsCompRow from '@/components/pomodoro/records/row.vue'
 
 defineOptions({ name: 'PomodoroCollectionPage' })
 
-const { loading, selectedId, pomodoros, selectedPomodoro, handleSelect } = usePomodoroCollection()
+const {
+    loading,
+    selectedId,
+    pomodoros,
+    selectedPomodoro,
+    handleSelect,
+    records,
+    recordLoading,
+    recordPage,
+    recordLimit,
+    recordTotal,
+    recordTotalPages,
+    handleRecordPageChange,
+    handleRecordPerPageChange
+} = usePomodoroCollection()
 
 // 时长格式化（秒 → x 时 x 分 x 秒）
 const durationToString = (duration: number) => {
@@ -70,10 +86,7 @@ const typeToString = (type: number) => (type === 1 ? '番茄专注' : '正计时
                                 {{ typeToString(selectedPomodoro.type) }}
                             </nue-text>
                         </nue-div>
-                        <nue-text
-                            v-if="selectedPomodoro.description"
-                            theme="detail-description"
-                        >
+                        <nue-text v-if="selectedPomodoro.description" theme="detail-description">
                             {{ selectedPomodoro.description }}
                         </nue-text>
                         <nue-divider />
@@ -100,6 +113,41 @@ const typeToString = (type: number) => (type === 1 ? '番茄专注' : '正计时
                             <nue-text theme="value">
                                 {{ dayjs(selectedPomodoro.createdAt).format('YYYY-MM-DD HH:mm') }}
                             </nue-text>
+                        </nue-div>
+                        <!-- 专注记录 -->
+                        <nue-divider />
+                        <nue-div theme="records">
+                            <nue-div theme="records-header">
+                                <nue-text theme="records-title">专注记录</nue-text>
+                                <nue-text theme="records-count">共 {{ recordTotal }} 条</nue-text>
+                            </nue-div>
+                            <nue-div theme="records-main">
+                                <nue-div v-if="recordLoading" theme="records-tip">
+                                    <nue-text>加载中...</nue-text>
+                                </nue-div>
+                                <nue-div v-else-if="records.length === 0" theme="records-tip">
+                                    <nue-text>暂无专注记录</nue-text>
+                                </nue-div>
+                                <nue-div v-else theme="records-rows">
+                                    <pomodoro-records-comp-row
+                                        v-for="record in records"
+                                        :key="record.id"
+                                        :record="record"
+                                    />
+                                </nue-div>
+                            </nue-div>
+                            <nue-div theme="records-footer">
+                                <pager
+                                    :page="recordPage"
+                                    :limit="recordLimit"
+                                    :total="recordTotal"
+                                    :total-pages="recordTotalPages"
+                                    :disabled="recordLoading"
+                                    simple
+                                    @page-change="handleRecordPageChange"
+                                    @per-page-change="handleRecordPerPageChange"
+                                />
+                            </nue-div>
                         </nue-div>
                     </nue-div>
                     <nue-div v-else theme="empty">
@@ -274,6 +322,49 @@ const typeToString = (type: number) => (type === 1 ? '番茄专注' : '正计时
                 color: var(--nue-primary-color-900);
             }
         }
+
+        > .nue-div--records {
+            flex-direction: column;
+            gap: var(--nue-gap-xs);
+
+            > .nue-div--records-header {
+                align-items: center;
+                justify-content: space-between;
+                font-size: var(--nue-text-sm);
+
+                > .nue-text--records-title {
+                    font-size: var(--nue-text-df2);
+                }
+
+                > .nue-text--records-count {
+                    color: var(--nue-primary-color-600);
+                }
+            }
+
+            > .nue-div--records-main {
+                flex-direction: column;
+                gap: var(--nue-gap-2xs);
+                font-size: var(--nue-text-sm);
+
+                > .nue-div--records-tip {
+                    justify-content: center;
+                    align-items: center;
+                    padding: var(--nue-padding-df);
+                    color: var(--nue-primary-color-400);
+                    font-size: var(--nue-text-xs);
+                }
+
+                > .nue-div--records-rows {
+                    flex-direction: column;
+                    gap: var(--nue-gap-2xs);
+                }
+            }
+
+            > .nue-div--records-footer {
+                justify-content: flex-end;
+            }
+        }
     }
 }
 </style>
+
