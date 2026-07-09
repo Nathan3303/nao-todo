@@ -1,0 +1,29 @@
+import type { PomodoroViewObject } from '@nao-todo/usecases/pomodoro'
+import { useMapperStoreBase } from '../hooks/use-mapper-store-base'
+
+export const usePomodorosStoreBase = () => {
+    const {
+        list: pomodoros,
+        setList: setPomodoros,
+        addItem: addPomodoro,
+        getItem: getPomodoro
+    } = useMapperStoreBase<PomodoroViewObject>()
+
+    // @action 获取所有常用番茄专注
+    const getAllPomodoros = () => {
+        const allPomodoros: PomodoroViewObject[] = []
+        pomodoros.value.forEach((pomodoro) => allPomodoros.push(pomodoro))
+        return allPomodoros
+    }
+
+    // @returns
+    return {
+        pomodoros,
+        setPomodoros,
+        addPomodoro,
+        getPomodoro,
+        getAllPomodoros
+    }
+}
+
+export type PomodorosStoreBase = ReturnType<typeof usePomodorosStoreBase>

@@ -37,6 +37,30 @@ export type CreatePomodoroRecordViewObject = {
 }
 
 /**
+ * 常用番茄专注视图对象
+ */
+export type PomodoroViewObject = ViewObjectBase & {
+    type: PomodoroType
+    name: string
+    description: NullableString
+    duration: number
+    archivedAt: NullableString
+    totalDuration: number
+    // -- Others
+    isArchived: boolean
+}
+
+/**
+ * 创建常用番茄专注视图对象
+ */
+export type CreatePomodoroViewObject = {
+    type: PomodoroViewObject['type']
+    name: PomodoroViewObject['name']
+    description: PomodoroViewObject['description']
+    duration: PomodoroViewObject['duration']
+}
+
+/**
  * 获取 Pomodoro 记录列表选项
  */
 export type GetPomodoroRecordsOptions = {

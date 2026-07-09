@@ -10,11 +10,17 @@ import {
 import { usePomodoroPage } from './use-pomodoro-page'
 import { PomodoroTaskSelectDropdown } from './task-select-dropdown'
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
+import { POMODORO_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 
 defineOptions({ name: 'PomodoroPage' })
 
 const { dialogManager, subscriber, isUseFloatAside, isDisplayAside, switchDisplayAside } =
     inject(POMODORO_VIEW_CONTEXT_KEY)!
+
+// 打开新建常用番茄专注对话框
+const handleOpenCreator = () => {
+    dialogManager.open(POMODORO_CREATOR_DIALOG_KEY)
+}
 
 const {
     activeTab,
@@ -62,6 +68,9 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
                 <nue-link icon="ntd-zzt" route="/pomodoro/focus">正计时</nue-link>
             </nue-div>
             <nue-div theme="actions">
+                <nue-tooltip content="新建常用番茄专注" size="small">
+                    <nue-button icon="plus" theme="icon,ghost" @click="handleOpenCreator" />
+                </nue-tooltip>
                 <nue-tooltip content="查看历史专注记录" size="small">
                     <nue-button icon="ntd-history" theme="icon,ghost" />
                 </nue-tooltip>

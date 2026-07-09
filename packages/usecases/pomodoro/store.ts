@@ -1,4 +1,22 @@
-import type { PomodoroRecordViewObject } from './viewobjects'
+import type { PomodoroRecordViewObject, PomodoroViewObject } from './viewobjects'
+
+/**
+ * 常用番茄专注存储接口
+ * @description PomodoroUseCase 依赖的存储抽象
+ */
+export interface PomodoroStore {
+    /**
+     * 设置常用番茄专注列表
+     * @param pomodoros 常用番茄专注视图对象列表
+     */
+    setPomodoros(pomodoros: PomodoroViewObject[]): void
+
+    /**
+     * 添加常用番茄专注
+     * @param pomodoro 常用番茄专注视图对象
+     */
+    addPomodoro(pomodoro: PomodoroViewObject): void
+}
 
 /**
  * Pomodoro 记录存储接口

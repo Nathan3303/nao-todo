@@ -23,6 +23,7 @@ import {
     type TagsStoreBase,
     type TagPreferenceStoreBase
 } from './tag'
+import { usePomodorosStoreBase, type PomodorosStoreBase } from './pomodoro'
 import { useLoadingErrorStoreBase, type LoadingErrorStoreBase } from './loading-error'
 import { useTasksStoreBase, type TasksStoreBase } from './task'
 import {
@@ -49,6 +50,8 @@ export {
     useTagPreferenceStoreBase,
     type TagsStoreBase,
     type TagPreferenceStoreBase,
+    usePomodorosStoreBase,
+    type PomodorosStoreBase,
     useTaskCheckItemsStoreBase,
     useTaskCheckItemIdsStoreBase,
     type TaskCheckItemsStoreBase,

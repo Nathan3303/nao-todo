@@ -1,11 +1,13 @@
 import DialogManager from '@/infrastructure/hooks/use-dialog-manager'
 import { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import { TaskUseCase } from '@nao-todo/usecases/task'
+import { PomodoroUseCase } from '@nao-todo/usecases/pomodoro'
 import type { InjectionKey, Ref } from 'vue'
 
 // 番茄钟视图上下文
 export type PomodoroViewContext = {
     taskUseCase: TaskUseCase
+    pomodoroUseCase: PomodoroUseCase
 
     dialogManager: DialogManager
     subscriber: Subscriber

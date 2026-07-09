@@ -2,6 +2,8 @@ import { inject, provide } from 'vue'
 import useResponsiveAside from '@/infrastructure/hooks/use-responsive-aside'
 import useAsideWidth from '@nao-todo/infrastructure/hooks/use-aside-width'
 import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
+import { newPomodoroUseCase } from '@nao-todo/usecases/pomodoro'
+import usePomodorosStore from '@/stores/pomodoros-store'
 import { APP_CONTEXT_KEY } from '@/context'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { POMODORO_VIEW_CONTEXT_KEY } from './context'
@@ -20,6 +22,13 @@ export const usePomodoroView = () => {
     const { responsiveFlag } = inject(APP_CONTEXT_KEY)!
     const { taskUseCase, dialogManager, subscriber, getProjectName, showTaskDetails } =
         inject(INDEX_VIEW_CONTEXT_KEY)!
+
+    /**
+     * 常用番茄专注用例
+     * @description 实例化常用番茄专注用例，注入常用番茄专注存储
+     */
+    const pomodorosStore = usePomodorosStore()
+    const pomodoroUseCase = newPomodoroUseCase(pomodorosStore)
 
     /**
      * 响应式侧边栏
@@ -67,6 +76,7 @@ export const usePomodoroView = () => {
      */
     provide(POMODORO_VIEW_CONTEXT_KEY, {
         taskUseCase,
+        pomodoroUseCase,
         dialogManager,
         subscriber,
         asideWidth,

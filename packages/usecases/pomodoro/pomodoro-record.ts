@@ -11,7 +11,7 @@ import {
 } from './viewobjects'
 import { GoAsync, ResponseDataPagination } from '@nao-todo/types'
 import {
-    createPomodoroViewObjectToValueObject,
+    createPomodoroRecordViewObjectToValueObject,
     pomodoroRecordEntitiesToViewObjects,
     pomodoroRecordEntityToViewObject
 } from './converters'
@@ -43,7 +43,7 @@ export class PomodoroRecordUseCase {
         createViewObject: CreatePomodoroRecordViewObject
     ): GoAsync<PomodoroRecordViewObject> {
         // 1. 视图对象 → 值对象
-        const valueObject = createPomodoroViewObjectToValueObject(createViewObject)
+        const valueObject = createPomodoroRecordViewObjectToValueObject(createViewObject)
         // 2. 调用领域服务
         const [entity, err] = await this.repo.create(valueObject)
         if (err !== null) return [null, err]

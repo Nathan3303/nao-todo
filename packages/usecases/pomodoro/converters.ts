@@ -1,5 +1,58 @@
-import { CreatePomodoroRecordValueObject, PomodoroRecordEntity } from '@nao-todo/domain/pomodoro'
-import type { CreatePomodoroRecordViewObject, PomodoroRecordViewObject } from './viewobjects'
+import {
+    CreatePomodoroRecordValueObject,
+    CreatePomodoroValueObject,
+    PomodoroEntity,
+    PomodoroRecordEntity
+} from '@nao-todo/domain/pomodoro'
+import type {
+    CreatePomodoroRecordViewObject,
+    CreatePomodoroViewObject,
+    PomodoroRecordViewObject,
+    PomodoroViewObject
+} from './viewobjects'
+import dayjs from 'dayjs'
+
+/**
+ * 常用番茄专注实体 → 常用番茄专注视图对象
+ */
+export const pomodoroEntityToViewObject = (entity: PomodoroEntity): PomodoroViewObject => {
+    return {
+        id: entity.id,
+        createdAt: entity.createdAt,
+        updatedAt: entity.updatedAt,
+        deletedAt: entity.deletedAt,
+        type: entity.type as PomodoroViewObject['type'],
+        name: entity.name,
+        description: entity.description,
+        duration: entity.duration,
+        archivedAt: entity.archivedAt,
+        totalDuration: entity.totalDuration,
+        isArchived: dayjs(entity.archivedAt).isValid()
+    }
+}
+
+/**
+ * 常用番茄专注实体列表 → 常用番茄专注视图对象列表
+ */
+export const pomodoroEntitiesToViewObjects = (
+    entities: PomodoroEntity[]
+): PomodoroViewObject[] => {
+    return entities.map(pomodoroEntityToViewObject)
+}
+
+/**
+ * 创建常用番茄专注视图对象 → 创建常用番茄专注值对象
+ */
+export const createPomodoroViewObjectToValueObject = (
+    viewObject: CreatePomodoroViewObject
+): CreatePomodoroValueObject => {
+    return new CreatePomodoroValueObject(
+        viewObject.type,
+        viewObject.name,
+        viewObject.description ?? '',
+        viewObject.duration
+    )
+}
 
 /**
  * Pomodoro 记录实体 → Pomodoro 记录视图对象
@@ -27,7 +80,7 @@ export const pomodoroRecordEntityToViewObject = (
 /**
  * 创建 Pomodoro 记录视图对象 → 创建 Pomodoro 记录值对象
  */
-export const createPomodoroViewObjectToValueObject = (
+export const createPomodoroRecordViewObjectToValueObject = (
     viewObject: CreatePomodoroRecordViewObject
 ): CreatePomodoroRecordValueObject => {
     return new CreatePomodoroRecordValueObject(
