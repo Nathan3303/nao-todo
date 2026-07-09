@@ -120,7 +120,7 @@ export class PomodoroRepoImpl implements PomodoroRepository {
     async list(
         queryString?: string
     ): GoAsync<{ pomodoroEntities: PomodoroEntity[]; pagination?: ResponseDataPagination }> {
-        const response = await this.requester.get(`/?${queryString ?? ''}`, {
+        const response = await this.requester.get(`/pomodoros/?${queryString ?? ''}`, {
             headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
         })
         const res = response.data as ResponseData
@@ -145,4 +145,5 @@ export class PomodoroRepoImpl implements PomodoroRepository {
 export const newPomodoroRepository = (requester: Requester) => {
     return new PomodoroRepoImpl(requester)
 }
+
 

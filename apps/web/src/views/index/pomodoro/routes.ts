@@ -9,6 +9,11 @@ const routes: RouteRecordRaw = {
             redirect: '/pomodoro/timer'
         },
         {
+            path: 'pomodoros',
+            name: 'pomodoro-collection',
+            component: () => import('@/layouts/pomodoro/collection/index.vue')
+        },
+        {
             path: ':type(timer|focus)/:taskId?',
             name: 'pomodoro',
             props: true,

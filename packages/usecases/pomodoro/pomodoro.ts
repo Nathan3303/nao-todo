@@ -1,11 +1,12 @@
-import { PomodoroDomain } from '@nao-todo/domain/pomodoro'
+import { ListPomodoroValueObject, PomodoroDomain } from '@nao-todo/domain/pomodoro'
 import { newPomodoroRecordRepository, newPomodoroRepository, PomodoroRepoImpl } from '@nao-todo/infrastructure/backend/pomodoro'
 import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 import { GoAsync } from '@nao-todo/types'
 import { PomodoroStore } from './store'
-import { CreatePomodoroViewObject, PomodoroViewObject } from './viewobjects'
+import { CreatePomodoroViewObject, PomodoroType, PomodoroViewObject } from './viewobjects'
 import {
     createPomodoroViewObjectToValueObject,
+    pomodoroEntitiesToViewObjects,
     pomodoroEntityToViewObject
 } from './converters'
 
@@ -42,6 +43,34 @@ export class PomodoroUseCase {
         this.store.addPomodoro(viewObject)
         // 5. 返回
         return [viewObject, null]
+    }
+
+    /**
+     * 加载常用番茄专注列表
+     * @param options 查询选项
+     * @returns 错误信息
+     */
+    async loadPomodoros(options?: {
+        type?: PomodoroType
+        name?: string
+        isArchived?: boolean
+    }): GoAsync<void> {
+        // 1. 构建查询值对象
+        const listValueObject = new ListPomodoroValueObject()
+        if (options?.type !== void 0) listValueObject.type = options.type
+        if (options?.name !== void 0) listValueObject.name = options.name
+        if (options?.isArchived !== void 0) {
+            listValueObject.isArchived = String(options.isArchived)
+        }
+        // 2. 调用领域服务
+        const [result, err] = await this.pomodoroDomain.list(listValueObject)
+        if (err !== null) return err
+        // 3. 实体 → 视图对象
+        const viewObjects = pomodoroEntitiesToViewObjects(result.pomodoroEntities)
+        // 4. 存储到状态管理
+        this.store.setPomodoros(viewObjects)
+        // 5. 返回
+        return null
     }
 }
 
