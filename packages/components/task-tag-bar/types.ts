@@ -1,4 +1,5 @@
-import { TagViewObject, TaskViewObject } from '@nao-todo/types'
+import type { TagViewObject } from '@nao-todo/usecases/tag'
+import type { TaskViewObject } from '@nao-todo/usecases/task'
 
 export type TaskTagBarProps = {
     /**
@@ -56,4 +57,5 @@ export type TaskTagBarEmits = {
      */
     (event: 'createTag', tagName: TagViewObject['name']): void
 }
+
 

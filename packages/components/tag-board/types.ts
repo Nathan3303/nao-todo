@@ -1,4 +1,4 @@
-import { TagViewObject } from '@nao-todo/types'
+import { TagViewObject } from '@nao-todo/usecases/tag'
 
 export type TagBoardProps = {
     loadingState?: boolean

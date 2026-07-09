@@ -1,4 +1,4 @@
-import { TaskViewObject } from '@nao-todo/types'
+import type { TaskViewObject } from '@nao-todo/usecases/task'
 
 export type TaskRemindData = {
     remindAt?: string | null
@@ -30,4 +30,5 @@ export type TaskRemindSetterProps = {
 export type TaskRemindSetterEmits = {
     (e: 'update', vo: TaskRemindSetterUpdateVO): void
 }
+
 

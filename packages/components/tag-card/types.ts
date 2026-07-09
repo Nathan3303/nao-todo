@@ -1,3 +1,4 @@
-import { Tag } from '@nao-todo/types'
+import { TagViewObject } from '@nao-todo/usecases/tag'
 
-export type TagCardProps = { tag: Tag }
+export type TagCardProps = { tag: TagViewObject }
+

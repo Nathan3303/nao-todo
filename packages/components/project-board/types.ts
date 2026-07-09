@@ -1,4 +1,4 @@
-import type { ProjectViewObject } from '@nao-todo/types'
+import type { ProjectViewObject } from '@nao-todo/usecases/project'
 
 export type ProjectBoardProps = {
     projects?: ProjectViewObject[]

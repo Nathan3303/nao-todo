@@ -1,4 +1,4 @@
-import { TaskViewObject, UpdateTaskViewObject } from '@nao-todo/types'
+import { TaskViewObject, UpdateTaskViewObject } from '@nao-todo/usecases/task'
 import type { TaskRemindSetterUpdateVO } from '../task-remind-setter/types'
 
 export type TaskDateSelectorProps = {
@@ -13,4 +13,5 @@ export type TaskDateSelectorEmits = {
     (e: 'remind-change', vo: TaskRemindSetterUpdateVO): void
     (e: 'update-all', vo: UpdateTaskViewObject): void
 }
+
 

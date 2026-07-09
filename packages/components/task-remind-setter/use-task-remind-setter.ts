@@ -12,7 +12,7 @@ import type {
     TaskRemindSetterVO
 } from './types'
 import { pad, onFocus } from './utils'
-import { TaskViewObject } from '@nao-todo/types'
+import type { TaskViewObject } from '@nao-todo/usecases/task'
 
 const DEFAULT_SETTER_VO: TaskRemindSetterVO = {
     enabled: false,
@@ -329,4 +329,5 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
 }
 
 export default useTaskRemindSetter
+
 
