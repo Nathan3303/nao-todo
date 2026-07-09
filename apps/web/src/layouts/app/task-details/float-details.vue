@@ -2,12 +2,11 @@
 import { computed, watch, inject } from 'vue'
 import { useRoute } from 'vue-router'
 import TaskDetails from './details.vue'
-import { TASK_DETAILS_PRE_CONTEXT_KEY } from './constants'
-import { TaskDetailsPreContext } from './types'
+import { TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
 
 const route = useRoute()
 
-const { isDisplayOutline } = inject<TaskDetailsPreContext>(TASK_DETAILS_PRE_CONTEXT_KEY)!
+const { isDisplayOutline } = inject(TASK_DETAILS_PRE_CONTEXT_KEY)!
 
 const taskId = computed<string>(() => route.params.taskId as string)
 

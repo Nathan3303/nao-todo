@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { InputButton, EventRow, Loading } from '@nao-todo/components'
 import useEventDragger from '../use-event-dragger'
-import type { TaskDetailsContext } from '../types'
-import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
+import { TASK_DETAILS_CONTEXT_KEY } from '../context'
 import { computed, inject, ref, watch } from 'vue'
 import { t } from '@nao-todo/infrastructure/locales'
 
@@ -10,27 +9,25 @@ type FilterStatus = 'all' | 'undone' | 'done'
 
 const {
     vo,
-    events,
-    resortEvents,
-    eventHandler,
-    eventsLoading,
-    eventsError,
-    retryEvents,
-    makeEventToTask
-} = inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
+    checkItems,
+    resortCheckItems,
+    checkItemHandler,
+    checkItemsLoading,
+    checkItemsError,
+    retryCheckItems,
+    makeCheckItemToTask
+} = inject(TASK_DETAILS_CONTEXT_KEY)!
 
 const searchQuery = ref('')
 const filterStatus = ref<FilterStatus>('all')
 
-const filteredEvents = computed(() => {
-    let result = events.value
-
+const filteredCheckItems = computed(() => {
+    let result = checkItems.value
     if (filterStatus.value === 'undone') {
         result = result.filter((event) => !event.isDone)
     } else if (filterStatus.value === 'done') {
         result = result.filter((event) => event.isDone)
     }
-
     if (searchQuery.value.trim()) {
         const query = searchQuery.value.toLowerCase()
         result = result.filter((event) => event.name.toLowerCase().includes(query))
@@ -45,7 +42,7 @@ const isSearching = computed(
 
 const searchStatusText = computed(() => {
     if (!isSearching.value) return ''
-    return t('task.details.eventSearchResult', { n: filteredEvents.value.length })
+    return t('task.details.eventSearchResult', { n: filteredCheckItems.value.length })
 })
 
 const toggleFilter = () => {
@@ -68,12 +65,12 @@ const getFilterIcon = () => {
 const { handleDragStart, handleDragOver, handleDrop, handleDragLeave, handleDragEnd } =
     useEventDragger((dragged, dropped, isUp) => {
         if (!dragged.dataset.eid || !dropped.dataset.eid) return
-        resortEvents(dragged.dataset.eid, dropped.dataset.eid, isUp)
+        resortCheckItems(dragged.dataset.eid, dropped.dataset.eid, isUp)
     })
 
 const createEvent = async (payload: { value: string }) => {
     if (!vo.value) return
-    await eventHandler.createEvent({ taskId: vo.value.id, name: payload.value })
+    await checkItemHandler.create({ taskId: vo.value.id, name: payload.value })
 }
 
 watch(
@@ -87,13 +84,15 @@ watch(
 
 <template>
     <nue-div theme="event-list">
-        <loading v-if="eventsLoading" :placeholder="t('task.details.eventsLoading')" />
-        <nue-empty v-else-if="eventsError" :description="eventsError" image-size="64px">
-            <nue-button theme="primary,small" @click="retryEvents">{{ t('common.retry') }}</nue-button>
+        <loading v-if="checkItemsLoading" :placeholder="t('task.details.eventsLoading')" />
+        <nue-empty v-else-if="checkItemsError" :description="checkItemsError" image-size="64px">
+            <nue-button theme="primary,small" @click="retryCheckItems">{{
+                t('common.retry')
+            }}</nue-button>
         </nue-empty>
         <template v-else>
             <nue-div
-                v-show="events.length >= 10"
+                v-show="checkItems.length >= 10"
                 theme="search-header"
                 :data-searching="isSearching"
             >
@@ -120,14 +119,14 @@ watch(
                 @drop="handleDrop"
             >
                 <event-row
-                    v-for="event in filteredEvents"
+                    v-for="event in filteredCheckItems"
                     data-drag-item="true"
                     :key="event.id"
                     :event="event"
                     :data-eid="event.id"
-                    :on-update="(id, v) => eventHandler.updateEvent(id, v)"
-                    :on-delete="eventHandler.deleteEvent"
-                    @to-task="makeEventToTask"
+                    :on-update="(id, v) => checkItemHandler.update({ id, ...v })"
+                    :on-delete="checkItemHandler.delete"
+                    @to-task="makeCheckItemToTask"
                 />
             </nue-div>
             <input-button

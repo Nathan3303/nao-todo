@@ -1,10 +1,10 @@
 import { defineStore } from 'pinia'
 import { computed } from 'vue'
 import { useLoadingErrorStoreBase, useProjectsStoreBase } from './base'
-import useProjectPreferenceStoreBase from './base/project-preference-store-base'
+import { useProjectPreferenceStoreBase } from './base/project'
+import type { ProjectPreferenceStoreBase, ProjectsStoreBase } from './base/project'
 
 export default defineStore('ProjectsStore', () => {
-    // @storebase Project store base
     const {
         projects,
         getAllProjects,
@@ -16,19 +16,15 @@ export default defineStore('ProjectsStore', () => {
         deleteProject,
         restoreProject,
         updateProject
-    } = useProjectsStoreBase()
+    } = useProjectsStoreBase() as ProjectsStoreBase
 
     // @state 可用项目（按 sortId 排序）
     const avaliableProjects = computed(() => {
-        return projects
+        return getAllProjects()
             .filter((p) => !p.isDeleted && !p.isArchived)
             .sort((a, b) => a.sortId - b.sortId)
     })
 
-    // @storebase 内建项目存储加载/错误基础
-    const { loading, error, setLoading, setError } = useLoadingErrorStoreBase()
-
-    // @storebase 项目偏好存储基础
     const {
         projectPreference,
         setProjectPreference,
@@ -37,9 +33,10 @@ export default defineStore('ProjectsStore', () => {
         updatePreferenceGetTasksOptions,
         getPreferenceGetTasksOption,
         getPreferenceGetTasksOptions
-    } = useProjectPreferenceStoreBase()
+    } = useProjectPreferenceStoreBase() as ProjectPreferenceStoreBase
 
-    // @storebase 项目偏好存储加载/错误基础
+    const { loading, error, setLoading, setError } = useLoadingErrorStoreBase()
+
     const {
         loading: preferenceLoading,
         error: preferenceError,
@@ -49,8 +46,8 @@ export default defineStore('ProjectsStore', () => {
 
     // @returns
     return {
+        // --- Project ---
         projects,
-        avaliableProjects,
         getAllProjects,
         setProjects,
         addProject,
@@ -60,19 +57,23 @@ export default defineStore('ProjectsStore', () => {
         deleteProject,
         restoreProject,
         updateProject,
-        loading: computed(() => loading.value),
-        error: computed(() => error.value),
-        setLoading,
-        setError,
-        preferenceLoading: computed(() => preferenceLoading.value),
-        preferenceError: computed(() => preferenceError.value),
-        projectPreference: computed(() => projectPreference.value),
+        avaliableProjects,
+        // --- Project Preference ---
+        projectPreference,
         setProjectPreference,
         getProjectPreference,
         updatePreferenceColumns,
         updatePreferenceGetTasksOptions,
         getPreferenceGetTasksOption,
         getPreferenceGetTasksOptions,
+        // --- Loading Error ---
+        loading,
+        error,
+        setLoading,
+        setError,
+        // --- Project Preference Loading Error ---
+        preferenceLoading: computed(() => preferenceLoading.value),
+        preferenceError: computed(() => preferenceError.value),
         setPreferenceLoading,
         setPreferenceError
     }

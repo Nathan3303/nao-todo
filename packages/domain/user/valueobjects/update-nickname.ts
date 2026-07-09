@@ -4,7 +4,7 @@ import type { Go } from '@nao-todo/types'
  * 更新用户昵称值对象
  * @description 更新用户昵称值对象，包含新昵称
  */
-export class UpdateNicknameValueObject {
+export class UpdateUserNicknameValueObject {
     /**
      * 更新用户昵称值对象构造函数
      * @param nickname 新昵称

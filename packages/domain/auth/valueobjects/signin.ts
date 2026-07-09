@@ -1,4 +1,4 @@
-import { USER_PASSWORD_REGEXP } from '@nao-todo/infrastructure/consts/auth'
+import { USER_PASSWORD_REGEXP } from '../../shares/consts/auth'
 import type { Go } from '@nao-todo/types'
 
 /**

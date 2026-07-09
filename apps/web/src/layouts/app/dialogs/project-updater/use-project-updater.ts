@@ -1,13 +1,12 @@
 import { inject, reactive, computed } from 'vue'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { IndexViewContext } from '@/views/index/index-view'
-import { INDEX_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { useProjectsStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 
 const useProjectUpdater = () => {
-    const { projectUseCase, dialogManager } = inject<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY)!
+    const { projectUseCase, dialogManager } = inject(INDEX_VIEW_CONTEXT_KEY)!
     const { projects } = storeToRefs(useProjectsStore())
 
     const states = reactive({
@@ -48,7 +47,9 @@ const useProjectUpdater = () => {
             return false
         }
         states.disabled = states.updating = true
-        const err = await projectUseCase.update(states.projectId, {
+        const err = await projectUseCase.update({
+            id: states.projectId,
+            icon: 'more2',
             name: states.name,
             description: states.description
         })
@@ -70,4 +71,6 @@ const useProjectUpdater = () => {
 }
 
 export default useProjectUpdater
+
+
 

@@ -1,74 +1,140 @@
-import { TagPreferenceEntity, TagEntity, UpdateTagValueObject } from '@nao-todo/domain/tag'
+import {
+    TagPreferenceEntity,
+    TagEntity,
+    UpdateTagValueObject,
+    CreateTagValueObject,
+    UpdateTagPreferenceValueObject
+} from '@nao-todo/domain/tag'
 import type {
     CreateTagRes,
-    GetTagPreferenceRes,
-    GetTagRes,
+    TagPreferenceRes,
     ListTagRes,
     UpdateTagPreferenceReq,
     UpdateTagReq,
-    BatchUpdateTagRes
-} from '../types'
+    TagRes,
+    CreateTagReq
+} from '../models'
+import dayjs from 'dayjs'
+import { defaultColumns } from '../../consts/tasks'
 
-export const getTagRes2TagEntity = (res: GetTagRes): TagEntity => {
+// --- Tag ---
+
+/**
+ * 标签响应转换为标签实体
+ * @param res 标签响应
+ * @returns 标签实体
+ */
+export const tagRes2Entity = (res: TagRes): TagEntity => {
     return new TagEntity(
         res.id,
-        '', //TODO: 从接口返回 USERID
+        res.createdAt,
+        res.updatedAt,
+        res.deletedAt,
+        // res.userId,
         res.name,
         res.color,
         res.description,
-        '',
-        '',
         res.sortId
     )
 }
 
-export const updateTagValueObjectToUpdateTagReq = (
-    updateTagValueObject: UpdateTagValueObject
-): UpdateTagReq => {
-    const rto: UpdateTagReq = {}
-    if (updateTagValueObject.id) rto.id = updateTagValueObject.id
-    if (updateTagValueObject.name) rto.name = updateTagValueObject.name
-    if (updateTagValueObject.description) rto.description = updateTagValueObject.description
-    if (updateTagValueObject.color) rto.color = updateTagValueObject.color
-    if (updateTagValueObject.sortId !== undefined) rto.sortId = updateTagValueObject.sortId
-    return rto
+/**
+ * 创建标签值对象转换为创建标签请求
+ * @param createVO 创建标签值对象
+ * @returns 创建标签请求
+ */
+export const createTagValueObject2Req = (createVO: CreateTagValueObject): CreateTagReq => {
+    const req = {} as CreateTagReq
+    req.name = createVO.name
+    req.description = createVO.description || ''
+    req.color = createVO.color || 'transparent'
+    return req
 }
 
-export const createTagRes2TagEntity = (res: CreateTagRes): TagEntity => {
-    return getTagRes2TagEntity(res)
+/**
+ * 创建标签响应转换为标签实体
+ * @param res 创建标签响应
+ * @returns 标签实体
+ */
+export const createTagRes2Entity = (res: CreateTagRes): TagEntity => {
+    return tagRes2Entity(res)
 }
 
-export const listTagRes2TagEntities = (res: ListTagRes): TagEntity[] => {
-    return res.map((p) => getTagRes2TagEntity(p))
+/**
+ * 更新标签值对象转换为更新标签请求
+ * @param updateVO 更新标签值对象
+ * @returns 更新标签请求
+ */
+export const updateTagValueObject2Req = (updateVO: UpdateTagValueObject): UpdateTagReq => {
+    const req: UpdateTagReq = {}
+    if (updateVO.id) req.id = updateVO.id
+    if (updateVO.name) req.name = updateVO.name
+    if (updateVO.description) req.description = updateVO.description
+    if (updateVO.color) req.color = updateVO.color
+    if (updateVO.sortId !== undefined) req.sortId = updateVO.sortId
+    return req
 }
 
-export const getTagPreferenceRes2TagPreferenceEntity = (
-    res: GetTagPreferenceRes
-): TagPreferenceEntity => {
+/**
+ * 标签列表响应转换为标签实体列表
+ * @param res 标签列表响应
+ * @returns 标签实体列表
+ */
+export const listTagRes2Entities = (res: ListTagRes): TagEntity[] => {
+    return res.map((p) => tagRes2Entity(p))
+}
+
+// --- Tag Preference ---
+
+/**
+ * 标签偏好响应转换为标签偏好实体
+ * @param res 标签偏好响应
+ * @returns 标签偏好实体
+ */
+export const tagPreferenceRes2Entity = (res: TagPreferenceRes): TagPreferenceEntity => {
     return new TagPreferenceEntity(
-        '', //TODO: 从接口返回 ID
-        '', //TODO: 从接口返回 USERID
-        '', //TODO: 从接口返回 TAGID
+        res.id,
+        res.createdAt,
+        res.updatedAt,
+        res.deletedAt,
+        // res.userId,
+        res.tagId,
         res.viewType,
         res.getTasksOptions,
         res.columns
     )
 }
 
-export const tagPreferenceEntity2UpdateReq = (
-    tagPreferenceEntity: TagPreferenceEntity
-): UpdateTagPreferenceReq => {
-    const rto = {} as UpdateTagPreferenceReq
-    rto.viewType = tagPreferenceEntity.viewType
-    rto.getTasksOptions = tagPreferenceEntity.getTasksOptions
-    rto.columns = tagPreferenceEntity.columns
-    return rto
+/**
+ * 创建默认标签偏好实体
+ * @returns 默认标签偏好实体
+ */
+export const defaultTagPreferenceRes2Entity = (): TagPreferenceEntity => {
+    const today = dayjs().toISOString()
+    return new TagPreferenceEntity(
+        '',
+        today,
+        today,
+        null,
+        '',
+        'table',
+        '{}',
+        JSON.stringify(defaultColumns)
+    )
 }
 
-export const batchUpdateTagRes2BatchUpdateTagResult = (res: BatchUpdateTagRes) => {
-    return {
-        updatedCount: res.updatedCount,
-        tags: res.tags.map((tag) => getTagRes2TagEntity(tag))
-    }
+/**
+ * 更新标签偏好值对象转换为更新标签偏好请求
+ * @param updateVO 更新标签偏好值对象
+ * @returns 更新标签偏好请求
+ */
+export const updateTagPreferenceValueObject2Req = (
+    updateVO: UpdateTagPreferenceValueObject
+): UpdateTagPreferenceReq => {
+    const rto = {} as UpdateTagPreferenceReq
+    if (updateVO.viewType !== void 0) rto.viewType = updateVO.viewType
+    if (updateVO.getTasksOptions !== void 0) rto.getTasksOptions = updateVO.getTasksOptions
+    if (updateVO.columns !== void 0) rto.columns = updateVO.columns
+    return rto
 }
 

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { nanoid } from 'nanoid'
 import type { TimerPhase, TimerStatus } from '@/components/pomodoro/timer/types'
-import type { CreatePomodoroRecordViewObject } from '@nao-todo/types'
+import type { CreatePomodoroRecordViewObject } from '@nao-todo/usecases/pomodoro'
 import usePomodoroStore from '@/stores/pomodoro-store'
 import {
     POMODORO_MIN_FOCUS_SECONDS,
@@ -106,6 +106,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
         type: 0, // timer=0
         taskId: pomodoroStore.currentTaskId ?? '',
         taskName: pomodoroStore.currentTaskName || '未关联任务',
+        description: null,
         startAt: pomodoroStore.currentRecordStartAt!,
         endAt: new Date().toISOString(),
         duration: total,

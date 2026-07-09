@@ -7,16 +7,15 @@ import { usePomodoroTimerStore } from '@/stores/pomodoro-timer-store'
 import { usePomodoroFocusStore } from '@/stores/pomodoro-focus-store'
 import { POMODORO_TIMER_SETTING_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 import type DialogManager from '@/infrastructure/hooks/use-dialog-manager'
-import type { TaskViewObject } from '@nao-todo/types'
+import type { TaskViewObject } from '@nao-todo/usecases/task'
 import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import { PomodoroRecordUseCase } from '@nao-todo/application/web/usecases/pomodoro'
+import { newPomodoroRecordUseCase } from '@nao-todo/usecases/pomodoro'
 import usePomodoroRecordLoader from '@/infrastructure/hooks/use-pomodoro-record-loader'
 import {
     POMODORO_MIN_FOCUS_SECONDS,
     POMODORO_MAX_FOCUS_SECONDS
 } from '@/infrastructure/constants/pomodoro'
-import { POMODORO_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import type { PomodoroViewContext } from '@/views/index/pomodoro/pomodoro-view'
+import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
 
 export type PomodoroTab = 'timer' | 'focus'
 
@@ -28,7 +27,7 @@ export type PomodoroTab = 'timer' | 'focus'
 export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subscriber) => {
     const route = useRoute()
     const router = useRouter()
-    const { showTaskDetails } = inject<PomodoroViewContext>(POMODORO_VIEW_CONTEXT_KEY)!
+    const { showTaskDetails } = inject(POMODORO_VIEW_CONTEXT_KEY)!
 
     const pomodoroStore = usePomodoroStore()
     const timerStore = usePomodoroTimerStore()
@@ -57,7 +56,7 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
     // Record Loader（不过滤 type → 同时展示番茄钟和正计时记录）
     // ========================================================================
 
-    const pomodoroRecordUseCase = PomodoroRecordUseCase.create({
+    const pomodoroRecordUseCase = newPomodoroRecordUseCase({
         addRecord: (record) => {
             pomodoroStore.addRecord(record)
         },
@@ -66,11 +65,15 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
         }
     })
 
-    const recordLoader = usePomodoroRecordLoader(pomodoroRecordUseCase, {
-        startTime: dayjs().startOf('day').toISOString(),
-        endTime: dayjs().endOf('day').toISOString(),
-        sort: 'startAt:desc'
-    }, subscriber)
+    const recordLoader = usePomodoroRecordLoader(
+        pomodoroRecordUseCase,
+        {
+            startTime: dayjs().startOf('day').toISOString(),
+            endTime: dayjs().endOf('day').toISOString(),
+            sort: 'startAt:desc'
+        },
+        subscriber
+    )
 
     // ========================================================================
     // Shared
@@ -248,3 +251,4 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
         handleEnd
     }
 }
+

@@ -1,15 +1,14 @@
 import { inject, ref, watch } from 'vue'
-import { TagHandler } from '@/infrastructure/handlers/tasks/tag-handler'
-import { IndexViewContext } from '@/views/index/index-view'
-import { INDEX_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import { TagHandler } from '@/infrastructure/handlers/tag-handler'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { useTagsStore } from '@/stores'
 
 const useTagCreator = () => {
-    const { tagUseCase, taskUseCase, subscriber, dialogManager } =
-        inject<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY)!
+    const { tagUseCase, subscriber, dialogManager } =
+        inject(INDEX_VIEW_CONTEXT_KEY)!
     const tagsStore = useTagsStore()
 
-    const tagHandler = new TagHandler(taskUseCase, tagUseCase, tagsStore, subscriber)
+    const tagHandler = new TagHandler(tagUseCase, tagsStore, subscriber)
 
     const states = ref({
         name: '',
@@ -54,3 +53,6 @@ const useTagCreator = () => {
 }
 
 export default useTagCreator
+
+
+

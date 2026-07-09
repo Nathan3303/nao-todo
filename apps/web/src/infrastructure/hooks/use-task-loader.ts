@@ -1,10 +1,5 @@
-import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
-import type {
-    GetTasksOptions,
-    GoAsync,
-    ResponseDataPagination,
-    TaskViewObject
-} from '@nao-todo/types'
+import { GetTasksOptions, TaskUseCase, TaskViewObject } from '@nao-todo/usecases/task'
+import type { GoAsync, ResponseDataPagination } from '@nao-todo/types'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { reactive } from 'vue'
 
@@ -49,7 +44,7 @@ const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: GetTasksO
         const getOptions: GetTasksOptions = { ...originalGetOptions, ...extraGetOptions }
         getOptions.page = states.pagination.page
         getOptions.limit = extraGetOptions?.limit ?? states.pagination.limit
-        const [res, err] = await taskUseCase.loadTasks(getOptions)
+        const [res, err] = await taskUseCase.list(getOptions)
         if (err !== null) {
             states.error = unwrapError(err)
             states.loading = false

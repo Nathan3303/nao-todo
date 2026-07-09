@@ -1,10 +1,10 @@
 import type { ComputedRef } from 'vue'
 import type {
     TaskViewObject,
-    TagViewObject,
     TaskColumnOptions,
     GetTasksSortOptions
-} from '@nao-todo/types'
+} from '@nao-todo/usecases/task'
+import { TagViewObject } from '@nao-todo/usecases/tag'
 
 export type TaskListProps = {
     tags: TagViewObject[]

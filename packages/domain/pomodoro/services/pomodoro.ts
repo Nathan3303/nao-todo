@@ -1,0 +1,65 @@
+import { PomodoroRecordEntity } from '../entities/pomodoro-record'
+import { CreatePomodoroRecordValueObject } from '../valueobjects/create-pomodoro-record'
+import { QueryOptionsValueObject } from '../../shares/valueobjects/query-options'
+import type { PomodoroRepository } from '../repositories/pomodoro'
+import type { PomodoroRecordRepository } from '../repositories/pomodoro-record'
+import type { GoAsync, GetPomodoroRecordsOptions, ResponseDataPagination } from '@nao-todo/types'
+import { PomodoroEntity } from '../entities/pomodoro'
+import { ListPomodoroValueObject } from '../valueobjects/list-pomodoro'
+
+/**
+ * Pomodoro 领域服务
+ * @description 处理 Pomodoro 的业务逻辑
+ */
+export class PomodoroDomain {
+    // constructor 构造函数
+    constructor(
+        private pomodoroRepo: PomodoroRepository, // 番茄专注仓库
+        private pomodoroRecordRepo: PomodoroRecordRepository // 番茄专注记录仓库
+    ) {}
+
+    /**
+     * 获取 Pomodoro 列表
+     * @param listVO 查询值对象
+     * @returns Pomodoro 实体列表和分页信息
+     */
+    async list(
+        listVO: ListPomodoroValueObject
+    ): GoAsync<{ pomodoroEntities: PomodoroEntity[]; pagination?: ResponseDataPagination }> {
+        // 1. 转换查询选项 -> 查询字符串
+        const queryOptions = listVO.makeQueryOptions()
+        const queryString = new QueryOptionsValueObject(queryOptions).toString()
+        // 2. 调用仓库方法
+        return await this.pomodoroRepo.list(queryString)
+    }
+
+    /**
+     * 创建 Pomodoro 记录
+     * @param valueObject 创建记录值对象
+     * @returns Pomodoro 记录实体
+     */
+    async createRecord(
+        valueObject: CreatePomodoroRecordValueObject
+    ): GoAsync<PomodoroRecordEntity> {
+        const validateErr = valueObject.validate()
+        if (validateErr !== null) {
+            return [null, validateErr]
+        }
+        return await this.pomodoroRecordRepo.create(valueObject)
+    }
+
+    /**
+     * 获取 Pomodoro 记录列表
+     * @param listOptions 查询选项
+     * @returns Pomodoro 记录实体列表和分页信息
+     */
+    async listRecord(
+        listOptions?: GetPomodoroRecordsOptions
+    ): GoAsync<{ entities: PomodoroRecordEntity[]; pagination?: ResponseDataPagination }> {
+        // 1. 转换查询选项 -> 查询字符串
+        const queryString = new QueryOptionsValueObject(listOptions || {}).toString()
+        // 2. 调用仓库方法
+        return await this.pomodoroRecordRepo.list(queryString)
+    }
+}
+

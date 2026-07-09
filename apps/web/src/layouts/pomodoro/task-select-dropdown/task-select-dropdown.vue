@@ -3,7 +3,7 @@ import { useTaskSelectDropdown } from './use-task-select-dropdown'
 import { ListViewAdapter } from '@/layouts/app'
 import { NueDropdown, NueInput } from 'nue-ui'
 import { nextTick, ref } from 'vue'
-import { TaskViewObject } from '@nao-todo/types'
+import type { TaskViewObject } from '@nao-todo/usecases/task'
 import type { PomodoroTaskSelectDropdownEmits } from './types'
 
 defineOptions({ name: 'PomodoroTaskSelectDropdown' })

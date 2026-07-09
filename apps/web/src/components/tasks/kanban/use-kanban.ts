@@ -2,7 +2,11 @@ import { computed, provide, reactive } from 'vue'
 import useKanbanDragger from './use-kanban-dragger'
 import { KANBAN_GROUP_BY_NAMES, KANBAN_DEFAULT_GROUP_BY } from './constants'
 import type { TaskKanbanVO, TaskKanbanProps, TaskKanbanEmits, TaskKanbanContext } from './types'
-import type { TaskColumnOptions, GetTasksSortOptions, TaskViewObject } from '@nao-todo/types'
+import type {
+    TaskColumnOptions,
+    GetTasksSortOptions,
+    TaskViewObject
+} from '@nao-todo/usecases/task'
 
 export const TASK_KANBAN_CONTEXT_KEY = Symbol('TASK_KANBAN_CONTEXT_KEY')
 
@@ -11,12 +15,15 @@ const useKanban = (props: TaskKanbanProps, emit: TaskKanbanEmits) => {
     const updatingTaskIds = reactive<Set<TaskViewObject['id']>>(new Set())
 
     // @method 处理拖拽放下 - 更新任务状态
-    const handleTaskDrop = async (taskId: TaskViewObject['id'], category: TaskViewObject['state']) => {
-        const task = props.tasks.find(t => t.id === taskId)
+    const handleTaskDrop = async (
+        taskId: TaskViewObject['id'],
+        category: TaskViewObject['state']
+    ) => {
+        const task = props.tasks.find((t) => t.id === taskId)
         if (task && task.state !== category) {
             updatingTaskIds.add(taskId)
             try {
-                await props.taskUseCase.updateTask(taskId, { state: category })
+                await props.taskUseCase.update(taskId, { state: category })
             } finally {
                 updatingTaskIds.delete(taskId)
             }
@@ -81,7 +88,10 @@ const useKanban = (props: TaskKanbanProps, emit: TaskKanbanEmits) => {
     }
 
     // @method 更新排序选项
-    const updateSortOptions = (field: GetTasksSortOptions['field'], order: GetTasksSortOptions['order']) => {
+    const updateSortOptions = (
+        field: GetTasksSortOptions['field'],
+        order: GetTasksSortOptions['order']
+    ) => {
         emit('updateSortOptions', field, order)
     }
 
@@ -124,3 +134,4 @@ const useKanban = (props: TaskKanbanProps, emit: TaskKanbanEmits) => {
 }
 
 export default useKanban
+

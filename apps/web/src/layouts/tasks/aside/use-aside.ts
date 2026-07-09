@@ -1,6 +1,5 @@
-import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { useBuiltInProjectsStore, useProjectsStore, useTagsStore } from '@/stores'
-import { TasksViewContext } from '@/views/index/tasks/tasks-view'
+import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
 import { NaoSmartListLinkVO } from '@nao-todo/components'
 import { storeToRefs } from 'pinia'
 import { computed, inject, ref } from 'vue'
@@ -19,7 +18,7 @@ export const useAside = () => {
         isDisplayAside,
         projectUseCase,
         tagUseCase
-    } = inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
+    } = inject(TASKS_VIEW_CONTEXT_KEY)!
 
     /**
      * 数据仓库

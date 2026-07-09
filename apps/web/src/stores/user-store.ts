@@ -1,12 +1,12 @@
+import { env } from '@/infrastructure/constants/env'
 import type {
-    UserViewObject,
+    UpdateUserConfigViewObject,
     UpdateUserViewObject,
     UserConfigViewObject,
-    UpdateUserConfigViewObject
-} from '@nao-todo/types'
+    UserViewObject
+} from '@nao-todo/usecases/user'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { env } from '@/infrastructure/constants/env'
 
 const useUserStore = defineStore('UserStore', () => {
     // @state 用户是否登录
@@ -32,7 +32,7 @@ const useUserStore = defineStore('UserStore', () => {
     const setUserProfile = (profile: UserViewObject) => {
         // 处理 avatar 字段
         if (profile.avatar) {
-            profile.avatar = `${env.baseURL}${profile.avatar}?timestamp=${Date.now()}`
+            profile.avatar = `${env.baseURL}${profile.avatar}?t=${Date.now()}`
         }
         // 设置存储
         userProfile.value = profile

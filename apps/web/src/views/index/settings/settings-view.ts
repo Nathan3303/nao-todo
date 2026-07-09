@@ -1,45 +1,24 @@
 import { useUserStore } from '@/stores'
-import { inject, provide, type Ref } from 'vue'
-import type { IndexViewContext } from '../index-view'
-import {
-    INDEX_VIEW_CONTEXT_KEY,
-    SETTINGS_VIEW_CONTEXT_KEY
-} from '@/infrastructure/constants/context-keys'
-import { AuthUseCase } from '@nao-todo/application/web/usecases/auth'
-import type { UserUseCase } from '@nao-todo/application/web/usecases/user'
-import useSubscriber, { type Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
+import { inject, provide } from 'vue'
+import { newAuthUseCase } from '@nao-todo/usecases/auth'
 import useAsideWidth from '@nao-todo/infrastructure/hooks/use-aside-width'
-
-export type SettingsViewContext = {
-    authUseCase: AuthUseCase
-    userUseCase: UserUseCase
-    subscriber: Subscriber
-    asideWidth: Ref<string>
-    isDisplayAside: Ref<boolean>
-    isUseFloatAside: Ref<boolean>
-    switchDisplayAside: () => void
-    handleResizeAside: (newWidth: number) => void
-}
+import { INDEX_VIEW_CONTEXT_KEY } from '../context'
+import { SETTINGS_VIEW_CONTEXT_KEY } from './context'
 
 const useSettingsView = () => {
     // @context Index view 上下文
-    const { userUseCase, isDisplayAside, isUseFloatAside, switchDisplayAside } =
-        inject<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY)!
-
-    // @stores
-    const userStore = useUserStore()
+    const { userUseCase, isDisplayAside, isUseFloatAside, switchDisplayAside, subscriber } =
+        inject(INDEX_VIEW_CONTEXT_KEY)!
 
     // @usecases
-    const authUseCase = AuthUseCase.create(userStore)
-
-    // @hook 事件订阅器
-    const subscriber = useSubscriber()
+    const userStore = useUserStore()
+    const authUseCase = newAuthUseCase(userStore)
 
     // @hook 侧边栏宽度
     const { width: asideWidth, updater: handleResizeAside } = useAsideWidth(256, 'ASIDE_WIDTH')
 
     // @provide Settings view 上下文
-    provide<SettingsViewContext>(SETTINGS_VIEW_CONTEXT_KEY, {
+    provide(SETTINGS_VIEW_CONTEXT_KEY, {
         authUseCase,
         userUseCase,
         subscriber,
@@ -52,3 +31,4 @@ const useSettingsView = () => {
 }
 
 export default useSettingsView
+

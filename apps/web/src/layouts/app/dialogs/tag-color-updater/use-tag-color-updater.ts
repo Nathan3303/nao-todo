@@ -1,18 +1,17 @@
 import { inject, reactive } from 'vue'
 import { NueMessage } from 'nue-ui'
-import { TagHandler } from '@/infrastructure/handlers/tasks/tag-handler'
-import { IndexViewContext } from '@/views/index/index-view'
-import { INDEX_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import { TagHandler } from '@/infrastructure/handlers/tag-handler'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { useTagsStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 
 const useTagColorUpdater = () => {
-    const { tagUseCase, taskUseCase, subscriber, dialogManager } =
-        inject<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY)!
+    const { tagUseCase, subscriber, dialogManager } =
+        inject(INDEX_VIEW_CONTEXT_KEY)!
     const tagsStore = useTagsStore()
     const { tags } = storeToRefs(tagsStore)
 
-    const tagHandler = new TagHandler(taskUseCase, tagUseCase, tagsStore, subscriber)
+    const tagHandler = new TagHandler(tagUseCase, tagsStore, subscriber)
 
     const states = reactive({
         tagId: null as string | null,
@@ -52,3 +51,6 @@ const useTagColorUpdater = () => {
 }
 
 export default useTagColorUpdater
+
+
+

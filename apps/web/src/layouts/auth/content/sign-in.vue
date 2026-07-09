@@ -52,14 +52,13 @@ import { useRouter } from 'vue-router'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { NueMessage } from 'nue-ui'
 import { t } from '@nao-todo/infrastructure/locales'
-import { AUTH_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import type { AuthViewContext } from '@/views/auth/types'
-import type { SignInViewObject } from '@nao-todo/types'
+import { AUTH_VIEW_CONTEXT_KEY } from '@/views/auth/context'
+import type { SignInViewObject } from '@nao-todo/usecases/auth'
 
 defineOptions({ name: 'AuthViewMainContentSignIn' })
 
 const router = useRouter()
-const { authUseCase } = inject<AuthViewContext>(AUTH_VIEW_CONTEXT_KEY)!
+const { authUseCase } = inject(AUTH_VIEW_CONTEXT_KEY)!
 
 const loading = ref(false)
 const disabled = ref(false)

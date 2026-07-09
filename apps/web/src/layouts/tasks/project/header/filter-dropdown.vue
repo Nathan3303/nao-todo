@@ -3,15 +3,14 @@ import TextFilter from '@/components/tasks/dropdowns/input-filter.vue'
 import StateFilter from '@/components/tasks/dropdowns/state-filter.vue'
 import PriorityFilter from '@/components/tasks/dropdowns/priority-filter.vue'
 import { DropdownDivBlock } from '@nao-todo/components'
-import { PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
-import type { ProjectViewContext } from '../types'
 import { computed, inject, watch } from 'vue'
 import SortOperator from '@/components/tasks/dropdowns/sort-operator.vue'
+import { PROJECT_VIEW_CONTEXT_KEY } from '../context'
 
 defineOptions({ name: 'TasksTodoFilterDropdown' })
 defineEmits<{ (e: 'getTodos'): void }>()
 
-const { preference, subscriber } = inject<ProjectViewContext>(PROJECT_VIEW_CONTEXT_KEY)!
+const { preference, subscriber } = inject(PROJECT_VIEW_CONTEXT_KEY)!
 
 // @proxy 清单偏好上下文 名称 属性代理
 const getTasksOptionsName = computed({

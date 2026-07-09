@@ -68,3 +68,5 @@ const useBuiltInProjectsStore = defineStore('BuiltInProjectsStore', () => {
 })
 
 export default useBuiltInProjectsStore
+export type BuiltInProjectsStore = ReturnType<typeof useBuiltInProjectsStore>
+

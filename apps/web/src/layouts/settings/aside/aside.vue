@@ -1,17 +1,15 @@
 <script setup lang="ts">
 import { SettingsViewRouteLinks as routeLinks } from '@/views/index/settings/routes'
-import type { SettingsViewContext } from '@/views/index/settings/settings-view'
 import { inject } from 'vue'
-import { SETTINGS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { AppAsideAdapter } from '@/layouts/app/'
 import { t } from '@nao-todo/infrastructure/locales'
 import type { LocaleKey } from '@nao-todo/infrastructure/locales'
+import { SETTINGS_VIEW_CONTEXT_KEY } from '@/views/index/settings/context'
 
 defineOptions({ name: 'SettingsAside' })
 
 // @context Settingsview 任务视图上下文
-const { asideWidth, handleResizeAside, isDisplayAside } =
-    inject<SettingsViewContext>(SETTINGS_VIEW_CONTEXT_KEY)!
+const { asideWidth, handleResizeAside, isDisplayAside } = inject(SETTINGS_VIEW_CONTEXT_KEY)!
 </script>
 
 <template>

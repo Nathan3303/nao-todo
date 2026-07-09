@@ -1,14 +1,13 @@
 import { useProjectsStore, useTagsStore } from '@/stores'
 import { computed, inject, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { CalendarViewContext } from '@/views/index/calendar/calendar-view'
-import { CALENDAR_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
 
 /**
  * 处理日历侧边栏的智能清单逻辑，包括项目和标签的选项生成以及选中状态管理。
  */
 const useCalendarSmartList = () => {
-    const { dialogManager } = inject<CalendarViewContext>(CALENDAR_VIEW_CONTEXT_KEY)!
+    const { dialogManager } = inject(CALENDAR_VIEW_CONTEXT_KEY)!
 
     const projectsStore = useProjectsStore()
     const tagsStore = useTagsStore()

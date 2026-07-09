@@ -1,10 +1,10 @@
-import type { TaskUseCase } from '@nao-todo/application/web/usecases/task'
+import { TagViewObject } from '@nao-todo/usecases/tag'
 import type {
     GetTasksSortOptions,
-    TagViewObject,
     TaskColumnOptions,
+    TaskUseCase,
     TaskViewObject
-} from '@nao-todo/types'
+} from '@nao-todo/usecases/task'
 import type { ComputedRef } from 'vue'
 
 /**

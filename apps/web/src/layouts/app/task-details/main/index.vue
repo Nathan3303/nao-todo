@@ -14,24 +14,23 @@ import {
     TaskPrioritySelectOptions,
     TaskStateSelectOptions
 } from '@nao-todo/infrastructure/consts/tasks'
-import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
-import type { TaskDetailsContext } from '../types'
-import type { TaskViewObject } from '@nao-todo/types'
+import { TASK_DETAILS_CONTEXT_KEY } from '../context'
+import type { TaskViewObject } from '@nao-todo/usecases/task'
 import { parse2RelativeDate } from '@nao-todo/infrastructure/utils'
 import { t } from '@nao-todo/infrastructure/locales'
 import { TAG_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys.js'
 
-const { vo, eventProgress, isCommenting, commentHandler, taskHandler, tags, dialogManager } =
-    inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
+const { vo, checkItemProgress, isCommenting, commentHandler, taskHandler, tags, dialogManager } =
+    inject(TASK_DETAILS_CONTEXT_KEY)!
 
 const updateTaskState = (v: unknown) => {
     if (vo.value === null) return
-    taskHandler.updateTask(vo.value.id, { state: v as TaskViewObject['state'] })
+    taskHandler.update(vo.value.id, { state: v as TaskViewObject['state'] })
 }
 
 const updateTaskPriority = (v: unknown) => {
     if (vo.value === null) return
-    taskHandler.updateTask(vo.value.id, { priority: v as TaskViewObject['priority'] })
+    taskHandler.update(vo.value.id, { priority: v as TaskViewObject['priority'] })
 }
 
 // const updateTaskIsStarMark = (v: unknown) => {
@@ -54,12 +53,13 @@ const updateTaskDescription = () => {
 
 const updateTaskTags = (v: unknown) => {
     if (vo.value === null) return
-    taskHandler.updateTask(vo.value.id, { tags: v as TaskViewObject['tags'] })
+    taskHandler.update(vo.value.id, { tags: v as TaskViewObject['tags'] })
 }
 
 const createCommentHandler = async (content: string) => {
     if (vo.value === null) return false
-    return await commentHandler.createComment(vo.value.id, content)
+    const createError = await commentHandler.create({ taskId: vo.value.id, content })
+    return createError === null
 }
 </script>
 
@@ -92,7 +92,11 @@ const createCommentHandler = async (content: string) => {
                 /> -->
             </nue-div>
             <nue-div class="tasks-details-view__progress">
-                <nue-progress :percentage="eventProgress.percentage" :stroke-width="2" hide-text />
+                <nue-progress
+                    :percentage="checkItemProgress.percentage"
+                    :stroke-width="2"
+                    hide-text
+                />
             </nue-div>
         </nue-header>
         <!-- 任务详情主体 -->
@@ -109,7 +113,7 @@ const createCommentHandler = async (content: string) => {
                         @change="updateTaskName"
                     />
                     <nue-textarea
-                        v-model="vo.description"
+                        v-model="vo.description as string | undefined"
                         :autosize="{ minRows: 1, maxRows: 99 }"
                         maxlength="256"
                         :placeholder="t('task.details.descPlaceholder')"
@@ -161,7 +165,10 @@ const createCommentHandler = async (content: string) => {
             </nue-div>
             <!-- 任务详情事件进度 -->
             <nue-div justify="space-between" width="100%" overflow="auto">
-                <details-row :text="eventProgress.text" :label="t('task.details.eventProgress')" />
+                <details-row
+                    :text="checkItemProgress.text"
+                    :label="t('task.details.eventProgress')"
+                />
                 <details-row
                     v-if="vo.createdAt"
                     :text="parse2RelativeDate(vo.createdAt)"

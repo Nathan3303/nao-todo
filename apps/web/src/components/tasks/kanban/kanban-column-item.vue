@@ -10,7 +10,7 @@ import {
 } from '@nao-todo/components'
 import { TASK_KANBAN_CONTEXT_KEY } from './use-kanban'
 import type { TaskKanbanColumnItemProps, TaskKanbanContext } from './types'
-import type { TaskColumnOptions } from '@nao-todo/types'
+import { TaskColumnOptions } from '@nao-todo/usecases/task'
 
 defineOptions({ name: 'TaskKanbanColumnItem' })
 const props = defineProps<TaskKanbanColumnItemProps>()

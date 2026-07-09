@@ -3,10 +3,7 @@ import { inject, onMounted, ref } from 'vue'
 import TasksOperationsDropdown from '@/components/tasks/dropdowns/operations-dropdown.vue'
 import { InnerDropdownOption, DropdownDivBlock } from '@nao-todo/components'
 import ColumnDisplayOperator from '@/components/tasks/dropdowns/column-display-operator.vue'
-import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
-import type { BuiltInProjectViewContext } from '../types'
-
-defineOptions({ name: 'TasksProjectOperationsDropdown' })
+import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '../context'
 
 const {
     subscriber,
@@ -17,7 +14,7 @@ const {
     builtInProjectHandlers,
     isHideCompletedAlready,
     getColumnLabel
-} = inject<BuiltInProjectViewContext>(BUILT_IN_PROJECT_VIEW_CONTEXT_KEY)!
+} = inject(BUILT_IN_PROJECT_VIEW_CONTEXT_KEY)!
 // console.log(preference.value?.columns)
 
 const dropdownRef = ref<InstanceType<typeof TasksOperationsDropdown>>()

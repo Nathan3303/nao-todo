@@ -1,7 +1,6 @@
 import { computed, inject, reactive, ref } from 'vue'
-import { ProjectHandler } from '@/infrastructure/handlers/tasks/project-handler'
-import { IndexViewContext } from '@/views/index/index-view'
-import { INDEX_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import { ProjectHandler } from '@/infrastructure/handlers/project-handler'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { useProjectsStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { PROJECT_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
@@ -26,8 +25,8 @@ const useProjectManager = () => {
      * 项目管理器上下文
      * @description 项目管理器上下文，包含项目和任务的使用案例
      */
-    const { projectUseCase, taskUseCase, subscriber, dialogManager } =
-        inject<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY)!
+    const { projectUseCase, subscriber, dialogManager } =
+        inject(INDEX_VIEW_CONTEXT_KEY)!
 
     /**
      * 项目管理器存储
@@ -59,12 +58,7 @@ const useProjectManager = () => {
      * 项目管理器操作器
      * @description 项目管理器操作器，用于执行项目相关的操作
      */
-    const projectHandler = new ProjectHandler(
-        taskUseCase,
-        projectUseCase,
-        projectsStore,
-        subscriber
-    )
+    const projectHandler = new ProjectHandler(projectUseCase, projectsStore, subscriber)
 
     /**
      * 根据 filterInfo 和 activeTab 筛选项目
@@ -135,4 +129,5 @@ const useProjectManager = () => {
 }
 
 export default useProjectManager
+
 

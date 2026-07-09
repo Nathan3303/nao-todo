@@ -1,29 +1,34 @@
 import { computed, inject, provide, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { TAG_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
-import type { TagViewContext, TagViewProps } from './types'
+import type { TagViewProps } from './types'
 import useUserStore from '@/stores/user-store'
 import { storeToRefs } from 'pinia'
-import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
-import { useTagsStore, useTasksStore } from '@/stores'
-import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
-import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import { useTagsStore } from '@/stores'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { TagHandler } from '@/infrastructure/handlers/tasks/tag-handler'
 import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
+import { TagHandler } from '@/infrastructure/handlers/tag'
+import { TAG_VIEW_CONTEXT_KEY } from './context'
 
 const useTagView = (props: TagViewProps) => {
     // @viewStores
     const router = useRouter()
 
     // @viewContext TasksView context
-    const tasksViewContext = inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
+    const {
+        taskUseCase,
+        tagUseCase,
+        subscriber,
+        getColumnLabel,
+        getProjectName,
+        showTaskDetails,
+        dialogManager
+    } = inject(TASKS_VIEW_CONTEXT_KEY)!
 
     // @dataStores
     const userStore = useUserStore()
     const tagsStore = useTagsStore()
-    const tasksStore = useTasksStore()
 
     // @presetStates
     const { profile } = storeToRefs(userStore)
@@ -53,7 +58,7 @@ const useTagView = (props: TagViewProps) => {
         if (!props.tagId || !profile.value) return
         loading.value = true
         // 2. 获取标签详情
-        const err = await tasksViewContext.tagUseCase.loadTagPreference(props.tagId)
+        const err = await tagUseCase.loadTagPreference(props.tagId)
         if (err !== null) {
             NueMessage.error(unwrapError(err))
             loading.value = false
@@ -72,16 +77,8 @@ const useTagView = (props: TagViewProps) => {
         { immediate: true }
     )
 
-    // @usecase 任务用例
-    const taskUseCase = TaskUseCase.create(tasksStore)
-
     // @handler 标签操作器
-    const tagHandler = new TagHandler(
-        taskUseCase,
-        tasksViewContext.tagUseCase,
-        tagsStore,
-        tasksViewContext.subscriber
-    )
+    const tagHandler = new TagHandler(tagUseCase, tagsStore, subscriber)
 
     // @computed 是否已经是只显示未完成任务
     const isHideCompletedAlready = computed(() => {
@@ -91,25 +88,30 @@ const useTagView = (props: TagViewProps) => {
         return state == 'todo,in-progress'
     })
 
+    // @method 显示任务创建器
+    const showTaskCreator = () => {
+        dialogManager.open(TASK_CREATOR_DIALOG_KEY, { tags: [props.tagId] })
+    }
+
     // @provide 提供 Tag View 上下文
-    provide<TagViewContext>(TAG_VIEW_CONTEXT_KEY, {
-        tasksViewContext,
+    provide(TAG_VIEW_CONTEXT_KEY, {
         taskUseCase,
+        tagUseCase,
         tag,
         preference,
+        dialogManager,
         profile,
         tags: computed(() => [...tags.value.values()]),
-        subscriber: tasksViewContext.subscriber,
+        subscriber,
         tagHandler,
         isHideCompletedAlready,
-        getColumnLabel: tasksViewContext.getColumnLabel,
-        getProjectName: tasksViewContext.getProjectName,
-        showTaskDetails: tasksViewContext.showTaskDetails,
+        getColumnLabel,
+        getProjectName,
+        showTaskDetails,
+        showTaskCreator,
         switchViewTypeToTable: () => switchViewType('table'),
         switchViewTypeToKanban: () => switchViewType('kanban'),
-        switchViewTypeToList: () => switchViewType('list'),
-        showTaskCreator: () =>
-            tasksViewContext.dialogManager.open(TASK_CREATOR_DIALOG_KEY, { tags: [props.tagId] })
+        switchViewTypeToList: () => switchViewType('list')
     })
 
     // @returns

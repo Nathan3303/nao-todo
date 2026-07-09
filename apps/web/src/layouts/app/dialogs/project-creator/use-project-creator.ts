@@ -1,9 +1,8 @@
 import { inject, ref, watch } from 'vue'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { IndexViewContext } from '@/views/index/index-view'
-import { INDEX_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import { CreateProjectViewObject } from '@nao-todo/types'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
+import type { CreateProjectViewObject } from '@nao-todo/usecases/project'
 
 /**
  * 项目创建对话框
@@ -14,7 +13,7 @@ const useProjectCreator = () => {
     /**
      * 项目创建对话框上下文
      */
-    const { dialogManager, projectUseCase } = inject<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY)!
+    const { dialogManager, projectUseCase } = inject(INDEX_VIEW_CONTEXT_KEY)!
 
     /**
      * 项目创建对话框状态
@@ -29,14 +28,14 @@ const useProjectCreator = () => {
     /**
      * 项目创建对话框状态
      */
-    const viewObject = ref<CreateProjectViewObject>({ name: '', description: '' })
+    const viewObject = ref<CreateProjectViewObject>({ icon: 'more2', name: '', description: '' })
 
     /**
      * 清空输入值
      */
     const clearInputsValue = () => {
         isNameEmpty.value = false
-        viewObject.value = { name: '', description: '' }
+        viewObject.value = { icon: 'more2', name: '', description: '' }
     }
 
     /**

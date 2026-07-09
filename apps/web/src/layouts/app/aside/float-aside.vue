@@ -3,8 +3,7 @@ import { computed, inject } from 'vue'
 import { storeToRefs } from 'pinia'
 import { NaoRouterLink } from '@nao-todo/components'
 import { useUserStore } from '@/stores'
-import { APP_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import type { AppContext } from '@/app'
+import { APP_CONTEXT_KEY } from '@/context'
 import { PomodoroIndicator } from '@/components/pomodoro'
 
 defineOptions({ name: 'AppFloatAside' })
@@ -15,7 +14,7 @@ const props = defineProps<{
     maxWidth?: string
 }>()
 const emit = defineEmits<{ (e: 'update:modelValue', value: boolean): void }>()
-const { routerLinks } = inject<AppContext>(APP_CONTEXT_KEY)!
+const { routerLinks } = inject(APP_CONTEXT_KEY)!
 
 const { profile } = storeToRefs(useUserStore())
 

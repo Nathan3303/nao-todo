@@ -1,7 +1,7 @@
-import { TaskEntity } from '../entities'
-import { CreateTaskValueObject, UpdateTaskValueObject } from '../valueobjects'
-import { unwrapError } from '@nao-todo/infrastructure/utils'
-import type { LocalTaskRepository } from '../repositories'
+import { TaskEntity } from '../entities/task'
+import { CreateTaskValueObject } from '../valueobjects/create-task'
+import { UpdateTaskValueObject } from '../valueobjects/update-task'
+import type { LocalTaskRepository } from '../repositories/local-task'
 import type { GetTasksOptions, GoAsync, ResponseDataPagination } from '@nao-todo/types'
 
 /**
@@ -33,7 +33,6 @@ export class LocalTaskDomain {
         // 验证
         const validateErr = createTaskValueObject.validate()
         if (validateErr !== null) {
-            console.log(unwrapError(validateErr))
             return [null, validateErr]
         }
         // 创建
@@ -50,7 +49,6 @@ export class LocalTaskDomain {
         // 验证
         const validateErr = updateTaskValueObject.validate()
         if (validateErr !== null) {
-            console.log(unwrapError(validateErr))
             return [null, validateErr]
         }
         // 更新

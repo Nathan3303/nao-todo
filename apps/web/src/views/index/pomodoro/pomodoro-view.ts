@@ -1,35 +1,11 @@
-import { inject, provide, Ref } from 'vue'
-import {
-    APP_CONTEXT_KEY,
-    INDEX_VIEW_CONTEXT_KEY,
-    POMODORO_VIEW_CONTEXT_KEY
-} from '@/infrastructure/constants/context-keys'
+import { inject, provide } from 'vue'
 import useResponsiveAside from '@/infrastructure/hooks/use-responsive-aside'
 import useAsideWidth from '@nao-todo/infrastructure/hooks/use-aside-width'
 import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
-import type { AppContext } from '@/app'
-import { TaskDetailsPreContext } from '@/layouts/app/task-details/types'
-import { TASK_DETAILS_PRE_CONTEXT_KEY } from '@/layouts/app/task-details/constants'
-import { IndexViewContext } from '../index-view'
-import DialogManager from '@/infrastructure/hooks/use-dialog-manager'
-import { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
-
-/**
- * 番茄钟视图上下文
- */
-export type PomodoroViewContext = {
-    asideWidth: Ref<string>
-    isDisplayAside: Ref<boolean>
-    isUseFloatAside: Ref<boolean>
-    handleResizeAside: (width: number) => void
-    switchDisplayAside: () => void
-    dialogManager: DialogManager
-    taskUseCase: TaskUseCase
-    subscriber: Subscriber
-    getProjectName: (projectId: string) => string
-    showTaskDetails: (taskId: string) => void
-}
+import { APP_CONTEXT_KEY } from '@/context'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
+import { POMODORO_VIEW_CONTEXT_KEY } from './context'
+import { TASK_DETAILS_PRE_CONTEXT_KEY } from '@/layouts/app/task-details/context'
 
 /**
  * 番茄钟视图上下文提供器
@@ -41,9 +17,9 @@ export const usePomodoroView = () => {
      * @inject APP_CONTEXT_KEY - 应用上下文
      * @inject INDEX_VIEW_CONTEXT_KEY - 主要视图上下文
      */
-    const { responsiveFlag } = inject<AppContext>(APP_CONTEXT_KEY)!
+    const { responsiveFlag } = inject(APP_CONTEXT_KEY)!
     const { taskUseCase, dialogManager, subscriber, getProjectName, showTaskDetails } =
-        inject<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY)!
+        inject(INDEX_VIEW_CONTEXT_KEY)!
 
     /**
      * 响应式侧边栏
@@ -89,15 +65,15 @@ export const usePomodoroView = () => {
     /**
      * 提供番茄钟视图上下文
      */
-    provide<PomodoroViewContext>(POMODORO_VIEW_CONTEXT_KEY, {
+    provide(POMODORO_VIEW_CONTEXT_KEY, {
+        taskUseCase,
+        dialogManager,
+        subscriber,
         asideWidth,
         isDisplayAside,
         isUseFloatAside,
         handleResizeAside,
         switchDisplayAside,
-        dialogManager,
-        taskUseCase,
-        subscriber,
         getProjectName,
         showTaskDetails
     })
@@ -105,15 +81,19 @@ export const usePomodoroView = () => {
     /**
      * 提供任务详情适配器上下文
      */
-    provide<TaskDetailsPreContext>(TASK_DETAILS_PRE_CONTEXT_KEY, {
+    provide(TASK_DETAILS_PRE_CONTEXT_KEY, {
+        taskUseCase,
+        dialogManager,
+        subscriber,
         isDisplayOutline,
         isUseFloatOutline,
         outlineWidth,
         handleResizeOutline,
-        taskUseCase,
-        subscriber,
-        dialogManager,
         getProjectName
     })
 }
+
+
+
+
 

@@ -1,12 +1,11 @@
 import { reactive, computed, onUnmounted } from 'vue'
-import type {
-    GoAsync,
-    GetPomodoroRecordsOptions,
-    ResponseDataPagination,
-    PomodoroRecordViewObject
-} from '@nao-todo/types'
+import type { GoAsync, ResponseDataPagination } from '@nao-todo/types'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import type { PomodoroRecordUseCase } from '@nao-todo/application/web/usecases/pomodoro'
+import type {
+    GetPomodoroRecordsOptions,
+    PomodoroRecordUseCase,
+    PomodoroRecordViewObject
+} from '@nao-todo/usecases/pomodoro'
 import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import usePomodoroStore from '@/stores/pomodoro-store'
 
@@ -187,3 +186,4 @@ const usePomodoroRecordLoader = (
 }
 
 export default usePomodoroRecordLoader
+

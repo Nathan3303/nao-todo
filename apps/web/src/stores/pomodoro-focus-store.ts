@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { nanoid } from 'nanoid'
-import type { CreatePomodoroRecordViewObject, PomodoroType } from '@nao-todo/types'
+import type { CreatePomodoroRecordViewObject, PomodoroType } from '@nao-todo/usecases/pomodoro'
 import usePomodoroStore from '@/stores/pomodoro-store'
 import { sendNotification, formatMinutes } from '@/infrastructure/utils/pomodoro'
 
@@ -64,6 +64,7 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
         type: 1 as PomodoroType, // focus=1
         taskId: pomodoroStore.currentTaskId ?? '',
         taskName: pomodoroStore.currentTaskName || '未关联任务',
+        description: null,
         startAt: recordStartedAt!,
         endAt: new Date().toISOString(),
         duration: elapsed,

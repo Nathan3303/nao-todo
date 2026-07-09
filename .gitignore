@@ -31,6 +31,7 @@ package-lock.json
 **/.temp/
 **/.rn_temp/
 **/.swc
+**/.old/
 apps/web/stats.html
 .bak
 .omo/run-continuation

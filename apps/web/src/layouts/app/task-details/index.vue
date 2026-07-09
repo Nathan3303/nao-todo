@@ -2,14 +2,13 @@
 import { computed, inject } from 'vue'
 import TasksViewDetails from './details.vue'
 import TasksViewDetailsDrawer from './float-details.vue'
-import { TASK_DETAILS_PRE_CONTEXT_KEY } from './constants'
+import { TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
 import { useRoute } from 'vue-router'
-import { TaskDetailsPreContext } from './types'
 
 defineOptions({ name: 'TasksViewDetailsAdapter' })
 
 const route = useRoute()
-const { isUseFloatOutline, outlineWidth, handleResizeOutline } = inject<TaskDetailsPreContext>(
+const { isUseFloatOutline, outlineWidth, handleResizeOutline } = inject(
     TASK_DETAILS_PRE_CONTEXT_KEY
 )!
 

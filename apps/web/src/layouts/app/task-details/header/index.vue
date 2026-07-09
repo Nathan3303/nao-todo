@@ -2,13 +2,12 @@
 import { inject } from 'vue'
 import { TaskCheckButton, TaskDateSelector } from '@nao-todo/components'
 import type { TaskRemindSetterUpdateVO } from '@nao-todo/components'
-import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
-import type { TaskDetailsContext } from '../types'
-import type { TaskViewObject, UpdateTaskViewObject } from '@nao-todo/types'
+import { TASK_DETAILS_CONTEXT_KEY } from '../context'
+import type { TaskViewObject, UpdateTaskViewObject } from '@nao-todo/usecases/task'
 import dayjs from 'dayjs'
 import { t } from '@nao-todo/infrastructure/locales'
 
-const { vo, closeDetails, taskHandler } = inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
+const { vo, closeDetails, taskHandler } = inject(TASK_DETAILS_CONTEXT_KEY)!
 
 const switchState = () => {
     if (vo.value === null) return
@@ -27,12 +26,12 @@ const updateEndAtToNow = () => {
 
 const updateRemind = (updateVO: TaskRemindSetterUpdateVO) => {
     if (vo.value === null) return
-    taskHandler.updateTask(vo.value.id, updateVO)
+    taskHandler.update(vo.value.id, { ...updateVO })
 }
 
 const updateEndAtAndRemind = (updateVO: UpdateTaskViewObject) => {
     if (vo.value === null) return
-    taskHandler.updateTask(vo.value.id, updateVO)
+    taskHandler.update(vo.value.id, updateVO)
 }
 </script>
 

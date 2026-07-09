@@ -1,18 +1,17 @@
 <script lang="ts" setup>
 import { CommentRow, Loading } from '@nao-todo/components'
-import type { TaskDetailsContext } from '../types'
-import { TASK_DETAILS_CONTEXT_KEY } from '../constants'
+import { TASK_DETAILS_CONTEXT_KEY } from '../context'
 import { inject } from 'vue'
-import type { CommentViewObject } from '@nao-todo/types'
+import type { TaskCommentViewObject } from '@nao-todo/usecases/task'
 import { t } from '@nao-todo/infrastructure/locales'
 
 const { comments, commentHandler, commentsLoading, commentsError, retryComments } =
-    inject<TaskDetailsContext>(TASK_DETAILS_CONTEXT_KEY)!
+    inject(TASK_DETAILS_CONTEXT_KEY)!
 
-const commentUpdater = async (id: CommentViewObject['id'], content: string) =>
-    commentHandler.updateComment(id, { content })
+const commentUpdater = async (id: TaskCommentViewObject['id'], content: string) =>
+    commentHandler.update(id, { content })
 
-const deleteComment = async (id: CommentViewObject['id']) => commentHandler.deleteComment(id)
+const deleteComment = async (id: TaskCommentViewObject['id']) => commentHandler.delete(id)
 </script>
 
 <template>

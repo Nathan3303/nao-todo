@@ -1,11 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type {
-    PomodoroRecordViewObject,
+import type { GoAsync } from '@nao-todo/types'
+import {
     CreatePomodoroRecordViewObject,
-    GoAsync
-} from '@nao-todo/types'
-import { PomodoroRecordUseCase } from '@nao-todo/application/web/usecases/pomodoro'
+    newPomodoroRecordUseCase,
+    type PomodoroRecordViewObject
+} from '@nao-todo/usecases/pomodoro'
 
 /**
  * 番茄钟设置存储键名
@@ -51,7 +51,7 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
     }
 
     // @usecase Pomodoro 记录用例
-    const pomodoroRecordUseCase = PomodoroRecordUseCase.create({
+    const pomodoroRecordUseCase = newPomodoroRecordUseCase({
         addRecord: (record) => {
             records.value.push(record)
         },

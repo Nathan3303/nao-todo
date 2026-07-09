@@ -3,14 +3,12 @@ import { inject, onMounted, ref } from 'vue'
 import TasksOperationsDropdown from '@/components/tasks/dropdowns/operations-dropdown.vue'
 import { InnerDropdownOption, DropdownDivBlock } from '@nao-todo/components'
 import ColumnDisplayOperator from '@/components/tasks/dropdowns/column-display-operator.vue'
-import { TAG_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
-import type { TagViewContext } from '../types'
 import { TAG_UPDATER_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+import { TAG_VIEW_CONTEXT_KEY } from '../context'
 
 defineOptions({ name: 'TasksTagOperationsDropdown' })
 
 const {
-    tasksViewContext,
     tag,
     subscriber,
     preference,
@@ -19,8 +17,10 @@ const {
     switchViewTypeToList,
     tagHandler,
     isHideCompletedAlready,
-    getColumnLabel
-} = inject<TagViewContext>(TAG_VIEW_CONTEXT_KEY)!
+    getColumnLabel,
+    dialogManager,
+    tagUseCase
+} = inject(TAG_VIEW_CONTEXT_KEY)!
 
 const dropdownRef = ref<InstanceType<typeof TasksOperationsDropdown>>()
 
@@ -35,11 +35,11 @@ onMounted(() => {
     dropdownRef.value.register('save-preference', () => subscriber.emit('UpdatePreference'))
     dropdownRef.value.register('delete-tag', () => {
         if (!tag.value) return
-        tasksViewContext.tagUseCase.delete(tag.value.id)
+        tagUseCase.delete(tag.value.id)
     })
     dropdownRef.value.register('update-tag', () => {
         if (!tag.value) return
-        tasksViewContext.dialogManager.open(TAG_UPDATER_DIALOG_KEY, tag.value.id)
+        dialogManager.open(TAG_UPDATER_DIALOG_KEY, tag.value.id)
     })
 })
 </script>

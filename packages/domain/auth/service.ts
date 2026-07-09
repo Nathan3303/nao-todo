@@ -1,7 +1,7 @@
-import { SignUpValueObject, SignInValueObject } from './valueobjects'
+import type { SignUpValueObject } from './valueobjects/signup'
+import type { SignInValueObject } from './valueobjects/signin'
 import type { AuthRepository } from './repositories'
 import type { GoAsync } from '@nao-todo/types'
-import { unwrapError } from '@nao-todo/infrastructure/utils'
 
 /**
  * 认证域
@@ -23,7 +23,6 @@ export class AuthDomain {
         // 校验数据
         const validateErr = signInValueObject.validate()
         if (validateErr !== null) {
-            console.error(unwrapError(validateErr))
             return [null, validateErr]
         }
         // 加密密码
@@ -31,14 +30,12 @@ export class AuthDomain {
             signInValueObject.password
         )
         if (encryptErr !== null) {
-            console.error(unwrapError(encryptErr))
             return [null, encryptErr]
         }
         signInValueObject.setEncryptedPassword(encryptedPassword) // 设置加密后的密码
         // 执行登录
         const [jwt, signInErr] = await this.authRepo.signIn(signInValueObject)
         if (signInErr !== null) {
-            console.error(unwrapError(signInErr))
             return [null, signInErr]
         }
         // 保存登录凭证
@@ -55,7 +52,6 @@ export class AuthDomain {
         // 校验数据
         const validateErr = signUpValueObject.validate()
         if (validateErr !== null) {
-            console.error(unwrapError(validateErr))
             return validateErr
         }
         // 加密密码
@@ -63,7 +59,6 @@ export class AuthDomain {
             signUpValueObject.password
         )
         if (encryptErr !== null) {
-            console.error(unwrapError(encryptErr))
             return encryptErr
         }
         signUpValueObject.setEncryptedPassword(encryptedPassword) // 设置加密后的密码
@@ -116,3 +111,4 @@ export class AuthDomain {
         return null
     }
 }
+

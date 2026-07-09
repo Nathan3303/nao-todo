@@ -1,9 +1,8 @@
 import { inject, ref } from 'vue'
 import { NueMessage } from 'nue-ui'
-import type { PomodoroViewContext } from '@/views/index/pomodoro/pomodoro-view'
-import { POMODORO_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import type { PomodoroTimerSettingViewObject } from '@/views/index/pomodoro/types'
 import usePomodoroStore from '@/stores/pomodoro-store'
+import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
 
 /**
  * 番茄钟计时器设置对话框
@@ -12,7 +11,7 @@ export const useTimerSettingDialog = () => {
     /**
      * 注入番茄视图上下文
      */
-    const { dialogManager } = inject<PomodoroViewContext>(POMODORO_VIEW_CONTEXT_KEY)!
+    const { dialogManager } = inject(POMODORO_VIEW_CONTEXT_KEY)!
 
     /**
      * 番茄钟 store

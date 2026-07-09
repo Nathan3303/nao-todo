@@ -4,15 +4,13 @@ import {
     SettingsProfileNickname,
     SettingsProfileInfo
 } from '@/components/settings'
-import { SETTINGS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import type { SettingsViewContext } from '@/views/index/settings/settings-view'
 import { inject } from 'vue'
 import { t } from '@nao-todo/infrastructure/locales'
+import { SETTINGS_VIEW_CONTEXT_KEY } from '@/views/index/settings/context'
 
 defineOptions({ name: 'SettingsProfile' })
 
-const { isDisplayAside, switchDisplayAside } =
-    inject<SettingsViewContext>(SETTINGS_VIEW_CONTEXT_KEY)!
+const { isDisplayAside, switchDisplayAside } = inject(SETTINGS_VIEW_CONTEXT_KEY)!
 </script>
 
 <template>

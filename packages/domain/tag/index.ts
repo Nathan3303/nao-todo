@@ -1,7 +1,20 @@
-import { TagDomain } from './service'
-import { TagEntity, TagPreferenceEntity } from './entities'
-import { CreateTagValueObject, UpdateTagValueObject } from './valueobjects'
-import type { TagRepository, BatchUpdateTagResult } from './repositories'
+import { TagEntity } from './entities/tag'
+import { TagPreferenceEntity } from './entities/tag-preference'
+import { TagDomain } from './services/tag'
+import { CreateTagValueObject } from './valueobjects/create-tag'
+import { UpdateTagValueObject } from './valueobjects/update-tag'
+import { UpdateTagPreferenceValueObject } from './valueobjects/update-tag-preference'
+import type { TagRepository } from './repositories/tag'
+import type { TagPreferenceRepository } from './repositories/tag-preference'
 
-export { TagDomain, TagEntity, TagPreferenceEntity, CreateTagValueObject, UpdateTagValueObject }
-export type { TagRepository, BatchUpdateTagResult }
+export {
+    TagEntity,
+    TagPreferenceEntity,
+    TagDomain,
+    CreateTagValueObject,
+    UpdateTagValueObject,
+    UpdateTagPreferenceValueObject,
+    type TagRepository,
+    type TagPreferenceRepository
+}
+

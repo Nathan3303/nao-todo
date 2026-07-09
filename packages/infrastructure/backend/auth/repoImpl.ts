@@ -3,9 +3,9 @@ import { signInValueObjectToSignInReq, signUpValueObjectToSignUpReq } from './co
 import type { SignUpValueObject, SignInValueObject } from '@nao-todo/domain/auth'
 import type { AuthRepository } from '@nao-todo/domain/auth'
 import type { Go, GoAsync } from '@nao-todo/types'
-import type { CheckInRes, SignInRes, ResponseData } from '../types'
+import type { CheckInRes, SignInRes, ResponseData } from '../models'
 import type { Requester } from '@nao-todo/infrastructure/requester/types'
-import { USER_JWT_LOCALSTORAGE_KEY } from '../../consts/auth'
+import { USER_JWT_LOCALSTORAGE_KEY } from '@nao-todo/domain/shares/consts/auth'
 
 export const useAuthRepository = (requester: Requester): AuthRepository => {
     /**

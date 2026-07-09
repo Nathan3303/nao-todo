@@ -3,17 +3,16 @@ import type { TaskCreatorInputValue } from '@nao-todo/components'
 import { NueMessage } from 'nue-ui'
 import { useRouter } from 'vue-router'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { IndexViewContext } from '@/views/index/index-view'
-import { INDEX_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { useProjectsStore, useTagsStore } from '@/stores'
 import { storeToRefs } from 'pinia'
-import type { UpdateTaskViewObject } from '@nao-todo/types'
+import type { UpdateTaskViewObject } from '@nao-todo/usecases/task'
 import { TaskRemindSetterUpdateVO } from '@nao-todo/components'
 
 const useTaskCreator = () => {
     const router = useRouter()
     const { taskUseCase, subscriber, dialogManager } =
-        inject<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY)!
+        inject(INDEX_VIEW_CONTEXT_KEY)!
 
     const projectsStore = useProjectsStore()
     const tagsStore = useTagsStore()
@@ -22,13 +21,13 @@ const useTaskCreator = () => {
     const { tags: avaliableTags } = storeToRefs(tagsStore)
 
     const states = reactive<UpdateTaskViewObject & { creating: boolean; disabled: boolean }>({
-        projectId: '',
         name: '',
-        description: '',
+        description: null,
         state: 'todo',
         priority: 'low',
-        startAt: '',
+        startAt: null,
         endAt: null,
+        projectId: null,
         tags: [],
         remindAt: null,
         remindRepeat: 'none',
@@ -38,7 +37,7 @@ const useTaskCreator = () => {
         disabled: false
     })
 
-    // ★ 新模式：智能输入
+    // 新模式：智能输入
     const TASK_CREATOR_SMART_MODE_KEY = 'TASK_CREATOR_SMART_MODE'
 
     const taskInputValue = ref<TaskCreatorInputValue>({
@@ -96,7 +95,7 @@ const useTaskCreator = () => {
             projectId = states.projectId || ''
         }
 
-        const [task, err] = await taskUseCase.createTask({
+        const [task, err] = await taskUseCase.create({
             projectId,
             name,
             description: states.description || '',
@@ -106,9 +105,9 @@ const useTaskCreator = () => {
             endAt: states.endAt || null,
             tags,
             remindAt: states.remindAt || null,
-            remindRepeat: states.remindRepeat,
+            remindRepeat: states.remindRepeat || 'none',
             remindTime: states.remindTime || null,
-            remindWeekdays: states.remindWeekdays
+            remindWeekdays: states.remindWeekdays || []
         })
         states.creating = false
         if (err !== null) {
@@ -152,4 +151,6 @@ const useTaskCreator = () => {
 }
 
 export default useTaskCreator
+
+
 

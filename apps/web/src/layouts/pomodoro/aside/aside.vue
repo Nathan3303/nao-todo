@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { inject } from 'vue'
-import { POMODORO_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { AppAsideAdapter } from '@/layouts/app/'
-import { type PomodoroViewContext } from '@/views/index/pomodoro/pomodoro-view'
+import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
 
 defineOptions({ name: 'PomodoroAside' })
 
 // @context PomodoroView 番茄钟视图上下文
-const { isDisplayAside, isUseFloatAside } = inject<PomodoroViewContext>(POMODORO_VIEW_CONTEXT_KEY)!
+const { isDisplayAside, isUseFloatAside } = inject(POMODORO_VIEW_CONTEXT_KEY)!
 </script>
 
 <template>

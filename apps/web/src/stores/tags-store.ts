@@ -1,16 +1,9 @@
 import { defineStore } from 'pinia'
-import { computed } from 'vue'
 import { useLoadingErrorStoreBase, useTagPreferenceStoreBase, useTagsStoreBase } from './base'
 
 export default defineStore('TagsStore', () => {
-    // @storebase Tag store base
     const { tags, setTags, addTag, getTag, updateTag, updateTags, getAllTags, deleteTag } =
         useTagsStoreBase()
-
-    // @storebase 内建标签存储加载/错误基础
-    const { loading, error, setLoading, setError } = useLoadingErrorStoreBase()
-
-    // @storebase 标签偏好存储基础
     const {
         tagPreference,
         setTagPreference,
@@ -21,7 +14,8 @@ export default defineStore('TagsStore', () => {
         getPreferenceGetTasksOptions
     } = useTagPreferenceStoreBase()
 
-    // @storebase 标签偏好存储加载/错误基础
+    const { loading, error, setLoading, setError } = useLoadingErrorStoreBase()
+
     const {
         loading: preferenceLoading,
         error: preferenceError,
@@ -31,6 +25,7 @@ export default defineStore('TagsStore', () => {
 
     // @returns
     return {
+        // --- Tag ---
         tags,
         setTags,
         addTag,
@@ -39,20 +34,24 @@ export default defineStore('TagsStore', () => {
         updateTags,
         getAllTags,
         deleteTag,
-        loading: computed(() => loading.value),
-        error: computed(() => error.value),
-        setLoading,
-        setError,
-        tagPreference: computed(() => tagPreference.value),
+        // --- Tag Preference ---
+        tagPreference,
         setTagPreference,
         getTagPreference,
         updatePreferenceColumns,
         updatePreferenceGetTasksOptions,
         getPreferenceGetTasksOption,
         getPreferenceGetTasksOptions,
-        preferenceLoading: computed(() => preferenceLoading.value),
-        preferenceError: computed(() => preferenceError.value),
+        // --- Tag Loading Error ---
+        loading,
+        error,
+        setLoading,
+        setError,
+        // --- Tag Preference Loading Error ---
+        preferenceLoading,
+        preferenceError,
         setPreferenceLoading,
         setPreferenceError
     }
 })
+

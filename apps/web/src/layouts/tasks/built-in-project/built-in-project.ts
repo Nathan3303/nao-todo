@@ -1,17 +1,15 @@
 import { computed, inject, provide, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
-import type { BuiltInProjectViewProps, BuiltInProjectViewContext } from './types'
+import type { BuiltInProjectViewProps } from './types'
 import useUserStore from '@/stores/user-store'
 import { storeToRefs } from 'pinia'
-import { BuiltInProjectLayoutHandlers } from '@/infrastructure/handlers/tasks/built-in-project-handler'
-import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
-import { useBuiltInProjectsStore, useTagsStore, useTasksStore } from '@/stores'
-import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
-import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import { BuiltInProjectHandler } from '@/infrastructure/handlers/built-in-project'
+import { useBuiltInProjectsStore, useTagsStore } from '@/stores'
+import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from './context'
 
 const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     // @viewStores
@@ -22,16 +20,16 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
         builtInProjectUseCase,
         subscriber,
         dialogManager,
+        taskUseCase,
         getColumnLabel,
         getProjectName,
         showTaskDetails
-    } = inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
+    } = inject(TASKS_VIEW_CONTEXT_KEY)!
 
     // @dataStores
     const userStore = useUserStore()
     const builtInProjectsStore = useBuiltInProjectsStore()
     const tagsStore = useTagsStore()
-    const tasksStore = useTasksStore()
 
     // @presetStates
     const { builtInProjectPreference: preference } = storeToRefs(builtInProjectsStore)
@@ -84,11 +82,8 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
         { immediate: true }
     )
 
-    // @usecase 任务用例
-    const taskUseCase = TaskUseCase.create(tasksStore)
-
     // @handler 内建清单操作器
-    const builtInProjectHandlers = new BuiltInProjectLayoutHandlers(
+    const builtInProjectHandlers = new BuiltInProjectHandler(
         builtInProjectUseCase,
         taskUseCase,
         builtInProjectsStore,
@@ -116,7 +111,7 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     }
 
     // @provide 提供 Project View 上下文
-    provide<BuiltInProjectViewContext>(BUILT_IN_PROJECT_VIEW_CONTEXT_KEY, {
+    provide(BUILT_IN_PROJECT_VIEW_CONTEXT_KEY, {
         taskUseCase,
         builtInProject: builtInProject,
         preference,

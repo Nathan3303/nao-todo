@@ -1,6 +1,6 @@
 import { SignInValueObject, SignUpValueObject } from '@nao-todo/domain/auth'
 import { unwrapError } from '@nao-todo/infrastructure/utils'
-import type { SignInReq, SignUpReq } from '@nao-todo/infrastructure/backend/types/auth'
+import type { SignInReq, SignUpReq } from '../models/auth'
 import type { Go } from '@nao-todo/types'
 
 /**

@@ -1,6 +1,7 @@
 import { GetTasksOptions, GoAsync, ResponseDataPagination } from '@nao-todo/types'
-import { TaskEntity } from '../entities'
-import { CreateTaskValueObject, UpdateTaskValueObject } from '../valueobjects'
+import { TaskEntity } from '../entities/task'
+import { CreateTaskValueObject } from '../valueobjects/create-task'
+import { UpdateTaskValueObject } from '../valueobjects/update-task'
 
 /**
  * 本地任务仓库接口

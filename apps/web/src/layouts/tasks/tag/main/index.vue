@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { TAG_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import { inject, onMounted, onUnmounted } from 'vue'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { TagHandler } from '@/infrastructure/handlers/tasks/tag-handler'
+import { TagHandler } from '@/infrastructure/handlers/tag'
 import { TAG_EMPTY_STATE } from '../constants'
 import {
     TableViewAdapter,
@@ -12,7 +11,7 @@ import {
     KanbanViewAdapter,
     type ViewAdapterNoTaskError
 } from '@/layouts/app/view-adapters'
-import type { TagViewContext } from '../types'
+import { TAG_VIEW_CONTEXT_KEY } from '../context'
 
 defineOptions({
     name: 'TasksMainTagContent',
@@ -35,7 +34,7 @@ const {
     showTaskDetails,
     tagHandler,
     tag
-} = inject<TagViewContext>(TAG_VIEW_CONTEXT_KEY)!
+} = inject(TAG_VIEW_CONTEXT_KEY)!
 
 // @computed 组件名称
 const componentName = computed(() => `${props.viewType || 'table'}-view`)

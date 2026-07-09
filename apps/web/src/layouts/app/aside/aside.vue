@@ -3,8 +3,7 @@ import { inject } from 'vue'
 import { storeToRefs } from 'pinia'
 import { NaoRouterLink } from '@nao-todo/components'
 import { useUserStore } from '@/stores'
-import { APP_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import type { AppContext } from '@/app'
+import { APP_CONTEXT_KEY } from '@/context'
 import { t } from '@nao-todo/infrastructure/locales'
 import { PomodoroIndicator } from '@/components/pomodoro'
 
@@ -12,7 +11,7 @@ defineOptions({ name: 'AppAside' })
 
 const userStore = useUserStore()
 
-const { routerLinks } = inject<AppContext>(APP_CONTEXT_KEY)!
+const { routerLinks } = inject(APP_CONTEXT_KEY)!
 
 const { profile } = storeToRefs(userStore)
 </script>

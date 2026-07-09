@@ -1,0 +1,17 @@
+{
+    "name": "@nao-todo/usecases",
+    "version": "0.1.0",
+    "author": "Nathan Lee",
+    "license": "MIT",
+    "files": [
+        "user",
+        "task",
+        "tag",
+        "project",
+        "shares",
+        "pomodoro",
+        "built-in-project",
+        "auth"
+    ]
+}
+

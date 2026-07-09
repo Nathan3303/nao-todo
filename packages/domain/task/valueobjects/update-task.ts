@@ -40,9 +40,16 @@ export class UpdateTaskValueObject {
             return '任务状态无效'
         if (this.priority && !['low', 'medium', 'high'].includes(this.priority))
             return '任务优先级无效'
-        if (this.remindRepeat !== undefined && !['none', 'daily', 'weekly', 'monthly'].includes(this.remindRepeat))
+        if (
+            this.remindRepeat !== undefined &&
+            !['none', 'daily', 'weekly', 'monthly'].includes(this.remindRepeat)
+        )
             return '提醒重复类型无效'
-        if (this.remindTime !== undefined && this.remindTime !== null && !/^\d{2}:\d{2}$/.test(this.remindTime))
+        if (
+            this.remindTime !== undefined &&
+            this.remindTime !== null &&
+            !/^\d{2}:\d{2}$/.test(this.remindTime)
+        )
             return '提醒时间格式无效（应为 HH:mm）'
         if (this.remindAt !== undefined && this.remindAt !== null) {
             const remindAt = dayjs(this.remindAt)

@@ -1,47 +1,14 @@
-import { AuthUseCase } from '@nao-todo/application/web/usecases/auth'
-import { UserUseCase } from '@nao-todo/application/web/usecases/user'
-import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import { inject, type Ref, provide, ref } from 'vue'
-import {
-    APP_CONTEXT_KEY,
-    CALENDAR_VIEW_CONTEXT_KEY,
-    INDEX_VIEW_CONTEXT_KEY
-} from '@/infrastructure/constants/context-keys'
-import type { AppContext } from '@/app'
-import type { IndexViewContext } from '@/views/index/index-view'
-import type { DialogManager } from '@/infrastructure/hooks/use-dialog-manager'
+import { APP_CONTEXT_KEY } from '@/context'
 import useResponsiveAside from '@/infrastructure/hooks/use-responsive-aside'
+import { useBuiltInProjectsStore, useUserStore } from '@/stores'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import useAsideWidth from '@nao-todo/infrastructure/hooks/use-aside-width'
 import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
-import {
-    useBuiltInProjectsStore,
-    useProjectsStore,
-    useTagsStore,
-    useTasksStore,
-    useUserStore
-} from '@/stores'
-import useSubscriber from '@nao-todo/infrastructure/hooks/use-subscriber'
-import { BuiltInProjectUseCase } from '@nao-todo/application/web/usecases/built-in-project'
-import { ProjectUseCase } from '@nao-todo/application/web/usecases/project'
-import { TagUseCase } from '@nao-todo/application/web/usecases/tag'
-import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
 import { unwrapError } from '@nao-todo/infrastructure/utils'
-
-/**
- * 日历视图上下文
- */
-export type CalendarViewContext = {
-    authUseCase: AuthUseCase
-    userUseCase: UserUseCase
-    taskUseCase: TaskUseCase
-    dialogManager: DialogManager
-    subscriber: Subscriber
-    asideWidth: Ref<string>
-    isDisplayAside: Ref<boolean>
-    isUseFloatAside: Ref<boolean>
-    switchDisplayAside: () => void
-    handleResizeAside: (newWidth: number) => void
-}
+import { newAuthUseCase } from '@nao-todo/usecases/auth'
+import { newBuiltInProjectUseCase } from '@nao-todo/usecases/built-in-project'
+import { inject, provide, ref } from 'vue'
+import { CALENDAR_VIEW_CONTEXT_KEY } from './context'
 
 /**
  * 日历视图上下文提供器
@@ -51,8 +18,9 @@ export const useCalendarView = () => {
     /**
      * 注入应用上下文
      */
-    const appContext = inject<AppContext>(APP_CONTEXT_KEY)!
-    const indexViewContext = inject<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY)!
+    const { responsiveFlag, isUseFloatAside } = inject(APP_CONTEXT_KEY)!
+    const { userUseCase, projectUseCase, tagUseCase, taskUseCase, dialogManager, subscriber } =
+        inject(INDEX_VIEW_CONTEXT_KEY)!
 
     /**
      * 注入响应式侧边栏上下文
@@ -60,7 +28,7 @@ export const useCalendarView = () => {
      * @use useResponsiveAside(appContext.responsiveFlag, responsiveTypes.MOBILE) - 响应式侧边栏上下文
      */
     const { visible: isDisplayAside, switchVisible: switchDisplayAside } = useResponsiveAside(
-        appContext.responsiveFlag,
+        responsiveFlag,
         responsiveTypes.MOBILE
     )
 
@@ -80,19 +48,8 @@ export const useCalendarView = () => {
      * @use AuthUseCase.create(useUserStore()) - 认证使用案例上下文
      * @use UserUseCase.create(useUserStore()) - 用户使用案例上下文
      */
-    const authUseCase = AuthUseCase.create(useUserStore())
-    const userUseCase = UserUseCase.create(useUserStore())
-    const builtInProjectUseCase = BuiltInProjectUseCase.create(useBuiltInProjectsStore())
-    const projectUseCase = ProjectUseCase.create(useProjectsStore())
-    const tagUseCase = TagUseCase.create(useTagsStore())
-    const taskUseCase = TaskUseCase.create(useTasksStore())
-
-    /**
-     * 注入订阅器上下文
-     * @description 提供日历视图的订阅器上下文，用于订阅事件和更新状态
-     * @use useSubscriber() - 订阅器上下文
-     */
-    const subscriber = useSubscriber()
+    const authUseCase = newAuthUseCase(useUserStore())
+    const builtInProjectUseCase = newBuiltInProjectUseCase(useBuiltInProjectsStore())
 
     /**
      * 加载数据
@@ -101,7 +58,6 @@ export const useCalendarView = () => {
      */
     const isLoading = ref<boolean>(true) // 加载状态
     const error = ref<string>('') // 错误信息
-    // 初始化处理程序
     const init = () => {
         Promise.allSettled([
             () => (isLoading.value = true),
@@ -121,15 +77,15 @@ export const useCalendarView = () => {
      * 提供日历视图上下文
      * @description 提供日历视图的宽度、是否显示侧边栏、是否使用浮动侧边栏等上下文
      */
-    provide<CalendarViewContext>(CALENDAR_VIEW_CONTEXT_KEY, {
+    provide(CALENDAR_VIEW_CONTEXT_KEY, {
         authUseCase,
         userUseCase,
         taskUseCase,
-        dialogManager: indexViewContext.dialogManager,
+        dialogManager,
         subscriber,
         asideWidth,
         isDisplayAside,
-        isUseFloatAside: appContext.isUseFloatAside,
+        isUseFloatAside,
         switchDisplayAside,
         handleResizeAside
     })

@@ -1,103 +1,111 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import {
-    useEventsStoreBase,
-    useCommentsStoreBase,
+    useTaskCommentsStoreBase,
     useLoadingErrorStoreBase,
-    useDualLoadingErrorStoreBase,
-    useEventIdsStoreBase,
-    useCommentIdsStoreBase
+    useTaskCommentIdsStoreBase,
+    useTaskCheckItemsStoreBase,
+    useTaskCheckItemIdsStoreBase
 } from '../base'
 import type { TaskDetailsViewObject } from '@/layouts/app/task-details/types'
 
 const useTaskDetailsStore = defineStore('TaskDetailsStore', () => {
-    // @state 任务详情
     const taskDetails = ref<TaskDetailsViewObject>()
 
-    // @state 设置任务详情
     const setTaskDetails = (newTaskDetails: TaskDetailsViewObject) => {
         taskDetails.value = newTaskDetails
     }
 
-    // @storebase Loading error store base (保留原有用于向后兼容)
-    const { loading, error, setLoading, setError } = useLoadingErrorStoreBase()
-
-    // @storebase Dual loading error store base
     const {
-        eventsLoading,
-        eventsError,
-        commentsLoading,
-        commentsError,
-        setEventsLoading,
-        setEventsError,
-        setCommentsLoading,
-        setCommentsError
-    } = useDualLoadingErrorStoreBase()
+        checkItems,
+        addCheckItem,
+        setCheckItems,
+        getCheckItem,
+        updateCheckItem,
+        deleteCheckItem,
+        updateCheckItems
+    } = useTaskCheckItemsStoreBase()
 
-    // @storebase Events store base
-    const { events, addEvent, setEvents, getEvent, updateEvent, deleteEvent, updateEvents } =
-        useEventsStoreBase()
-
-    // @storebase Event Ids store base
-    const {
-        eventIds,
-        events: eventIdsEvents,
-        setEventIds,
-        addEventId,
-        removeEventId
-    } = useEventIdsStoreBase(getEvent)
-
-    // @storebase Comment store base
     const { addComment, setComments, getComment, updateComment, removeComment } =
-        useCommentsStoreBase()
+        useTaskCommentsStoreBase()
 
-    // @storebase Comment Ids store base
+    const {
+        checkItemIds,
+        checkItems: checkItemIdsCheckItems,
+        setCheckItemIds,
+        addCheckItemId,
+        removeCheckItemId
+    } = useTaskCheckItemIdsStoreBase(getCheckItem)
+
     const {
         commentIds,
         comments: commentIdsComments,
         setCommentIds,
         addCommentId,
         removeCommentId
-    } = useCommentIdsStoreBase(getComment)
+    } = useTaskCommentIdsStoreBase(getComment)
 
-    // @return
+    const { loading, error, setLoading, setError } = useLoadingErrorStoreBase()
+
+    const {
+        loading: checkItemsLoading,
+        error: checkItemsError,
+        setLoading: setCheckItemsLoading,
+        setError: setCheckItemsError
+    } = useLoadingErrorStoreBase()
+
+    const {
+        loading: commentsLoading,
+        error: commentsError,
+        setLoading: setCommentsLoading,
+        setError: setCommentsError
+    } = useLoadingErrorStoreBase()
+
     return {
+        // --- task details ---
         taskDetails,
         setTaskDetails,
+        // --- loading error ---
         loading,
         error,
         setLoading,
         setError,
-        eventsLoading,
-        eventsError,
+        // --- check item loading error ---
+        checkItemsLoading,
+        checkItemsError,
+        setCheckItemsLoading,
+        setCheckItemsError,
+        // --- comment loading error ---
         commentsLoading,
         commentsError,
-        setEventsLoading,
-        setEventsError,
         setCommentsLoading,
         setCommentsError,
-        events,
-        addEvent,
-        setEvents,
-        getEvent,
+        // --- check items store base ---
+        checkItems,
+        addCheckItem,
+        setCheckItems,
+        getCheckItem,
+        updateCheckItem,
+        deleteCheckItem,
+        updateCheckItems,
+        // --- check item ids store base ---
+        checkItemIds,
+        checkItemIdsCheckItems,
+        setCheckItemIds,
+        addCheckItemId,
+        removeCheckItemId,
+        // --- comments store base ---
         addComment,
         setComments,
         getComment,
-        eventIds,
-        eventIdsEvents,
-        setEventIds,
-        addEventId,
-        removeEventId,
+        updateComment,
+        removeComment,
+        // --- comment ids store base ---
         commentIds,
         commentIdsComments,
         setCommentIds,
         addCommentId,
-        removeCommentId,
-        updateComment,
-        removeComment,
-        updateEvent,
-        updateEvents,
-        deleteEvent
+        removeCommentId
     }
 })
 

@@ -79,12 +79,11 @@ import { PasswordRuleHint } from '@nao-todo/components'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { t } from '@nao-todo/infrastructure/locales'
-import { AUTH_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import type { AuthViewContext } from '@/views/auth/types'
-import type { SignUpViewObject } from '@nao-todo/types'
+import { AUTH_VIEW_CONTEXT_KEY } from '@/views/auth/context'
+import type { SignUpViewObject } from '@nao-todo/usecases/auth'
 
 const router = useRouter()
-const { authUseCase } = inject<AuthViewContext>(AUTH_VIEW_CONTEXT_KEY)!
+const { authUseCase } = inject(AUTH_VIEW_CONTEXT_KEY)!
 
 const loading = ref(false)
 const disabled = ref(false)

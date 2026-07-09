@@ -5,11 +5,10 @@ import { t } from '@nao-todo/infrastructure/locales'
 import { useRouter } from 'vue-router'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { NueMessage } from 'nue-ui'
-import { AUTH_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import type { AuthViewContext } from '@/views/auth/types'
+import { AUTH_VIEW_CONTEXT_KEY } from '@/views/auth/context'
 
 const router = useRouter()
-const { authUseCase } = inject<AuthViewContext>(AUTH_VIEW_CONTEXT_KEY)!
+const { authUseCase } = inject(AUTH_VIEW_CONTEXT_KEY)!
 
 authUseCase
     .checkIn()

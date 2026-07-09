@@ -2,17 +2,14 @@
 import { inject } from 'vue'
 import OperationDropdown from './operation-dropdown.vue'
 import FilterDropdown from './filter-dropdown.vue'
-import { TAG_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
-import type { TagViewContext } from '../types'
-import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
-import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
+import { TAG_VIEW_CONTEXT_KEY } from '../context'
 
 defineOptions({ name: 'TasksMainTagHeader' })
 defineProps<{ tagId?: string; viewType?: string; taskId?: string }>()
 
-const { isDisplayAside, switchDisplayAside } = inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
-
-const { tag, showTaskCreator } = inject<TagViewContext>(TAG_VIEW_CONTEXT_KEY)!
+const { isDisplayAside, switchDisplayAside } = inject(TASKS_VIEW_CONTEXT_KEY)!
+const { tag, showTaskCreator } = inject(TAG_VIEW_CONTEXT_KEY)!
 </script>
 
 <template>

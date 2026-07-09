@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ProjectPreferenceViewObject } from '@nao-todo/types'
+import type { ProjectPreferenceViewObject } from '@nao-todo/usecases/project'
 import {
     InnerDropdown,
     InnerDropdownOption,

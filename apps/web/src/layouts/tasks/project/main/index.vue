@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import { inject, onMounted, onUnmounted } from 'vue'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { ProjectHandler } from '@/infrastructure/handlers/tasks/project-handler'
+import { ProjectHandler } from '@/infrastructure/handlers/project'
 import { PROJECT_EMPTY_STATE } from '../constants'
 import {
     TableViewAdapter,
@@ -12,7 +11,7 @@ import {
     KanbanViewAdapter,
     type ViewAdapterNoTaskError
 } from '@/layouts/app/view-adapters'
-import type { ProjectViewContext } from '../types'
+import { PROJECT_VIEW_CONTEXT_KEY } from '../context'
 
 defineOptions({
     name: 'TasksMainProjectContent',
@@ -35,7 +34,7 @@ const {
     showTaskDetails,
     projectHandler,
     project
-} = inject<ProjectViewContext>(PROJECT_VIEW_CONTEXT_KEY)!
+} = inject(PROJECT_VIEW_CONTEXT_KEY)!
 
 // @computed 组件名称
 const componentName = computed(() => `${props.viewType || 'table'}-view`)

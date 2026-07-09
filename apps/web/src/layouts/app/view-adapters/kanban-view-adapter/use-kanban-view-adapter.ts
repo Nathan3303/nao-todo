@@ -1,8 +1,7 @@
 import { useTasksStore } from '@/stores'
 import type { KanbanViewAdapterProps } from './types'
 import useTasksLoader from '@/infrastructure/hooks/use-task-loader'
-import type { IndexViewContext } from '@/views/index/index-view'
-import { INDEX_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { computed, onMounted, onUnmounted, watch, inject } from 'vue'
 
 /**
@@ -13,7 +12,7 @@ const useKanbanViewAdapter = (props: KanbanViewAdapterProps) => {
     /**
      * 首要视图上下文
      */
-    const { dialogManager } = inject<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY)!
+    const { dialogManager } = inject(INDEX_VIEW_CONTEXT_KEY)!
 
     /**
      * 任务存储

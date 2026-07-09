@@ -1,39 +1,29 @@
-import type { CommentHandler } from '@/infrastructure/handlers/tasks/comment-handler'
-import type { EventHandler } from '@/infrastructure/handlers/tasks/event-handler'
-import type { TaskHandler } from '@/infrastructure/handlers/tasks/task-handler'
-import DialogManager from '@/infrastructure/hooks/use-dialog-manager'
-import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
-import { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import type {
-    CreateEventViewObject,
-    EventViewObject,
-    ProjectViewObject,
-    TagViewObject,
+import {
+    CreateTaskCheckItemViewObject,
+    CreateTaskCommentViewObject,
+    TaskCheckItemViewObject,
+    TaskCommentViewObject,
     TaskViewObject,
-    UpdateEventsViewObject,
-    UpdateEventViewObject,
-    UpdateTaskViewObject,
-    WithNull,
-    CommentViewObject,
-    CreateCommentViewObject,
-    UpdateCommentViewObject
-} from '@nao-todo/types'
-import type { ComputedRef, Ref } from 'vue'
+    UpdateTaskCheckItemViewObject,
+    UpdateTaskCommentViewObject,
+    UpdateTaskViewObject
+} from '@nao-todo/usecases/task'
+import { ProjectViewObject } from '@nao-todo/usecases/project'
+import { TagViewObject } from '@nao-todo/usecases/tag'
 
-/**
- * Task Details
- */
-
+// 任务详情面板视图对象
 export type TaskDetailsViewObject = TaskViewObject & {
     projectName?: ProjectViewObject['name']
     tagList: TagViewObject[]
     isDone: boolean
 }
 
+// 任务详情面板属性
 export type TaskDetailsProps = {
     taskId?: TaskViewObject['id']
 }
 
+// 任务详情面板事件
 export type TaskDetailsEmits = {
     (e: 'closeDetails'): void
     (e: 'updateTask', taskId: TaskViewObject['id'], update: UpdateTaskViewObject): void
@@ -41,82 +31,20 @@ export type TaskDetailsEmits = {
     (e: 'restoreTask', taskId: TaskViewObject['id']): void
     (e: 'deleteTaskPermanently', taskId: TaskViewObject['id']): void
     (e: 'duplicateTask', taskId: TaskViewObject['id']): void
-    (e: 'createEvent', create: CreateEventViewObject): void
-    (e: 'updateEvent', eventId: EventViewObject['id'], update: UpdateEventViewObject): void
-    (e: 'updateEvents', updates: UpdateEventsViewObject[]): void
-    (e: 'deleteEvent', eventId: EventViewObject['id']): void
-    (e: 'createComment', create: CreateCommentViewObject): void
-    (e: 'updateComment', commentId: CommentViewObject['id'], update: UpdateCommentViewObject): void
-    (e: 'deleteComment', commentId: CommentViewObject['id']): void
-}
-
-export type TaskDetailsContext = TaskDetailsHeaderContext &
-    TaskDetailsMainContext &
-    TaskDetailsFooterContext
-
-/**
- * Task Details Header
- */
-
-export type TaskDetailsHeaderContext = {
-    vo: ComputedRef<WithNull<TaskDetailsViewObject>>
-    closeDetails: () => void
-}
-
-/**
- * Task Details Main
- */
-
-export type TaskDetailsMainContext = {
-    emit: TaskDetailsEmits
-    vo: ComputedRef<WithNull<TaskDetailsViewObject>>
-    events: ComputedRef<EventViewObject[]>
-    eventProgress: ComputedRef<{ percentage: number; text: string }>
-    comments: ComputedRef<CommentViewObject[]>
-    isCommenting: Ref<boolean>
-    resortEvents: (
-        oldEid: EventViewObject['id'],
-        newEid: EventViewObject['id'],
-        isUp: boolean
-    ) => void
-    eventHandler: EventHandler
-    commentHandler: CommentHandler
-    taskHandler: TaskHandler
-    tags: Ref<TagViewObject[]>
-    eventsLoading: Ref<boolean>
-    eventsError: Ref<string>
-    commentsLoading: Ref<boolean>
-    commentsError: Ref<string>
-    dialogManager: DialogManager
-    retryEvents: () => Promise<void>
-    retryComments: () => Promise<void>
-    makeEventToTask: (eventId: EventViewObject['id']) => void
-}
-
-/**
- * Task Details Footer
- */
-
-export type TaskDetailsFooterContext = {
-    emit: TaskDetailsEmits
-    vo: ComputedRef<WithNull<TaskDetailsViewObject>>
-    projects: ComputedRef<ProjectViewObject[]>
-    isCommenting: Ref<boolean>
-    switchTaskDetails: (taskId: TaskViewObject['id']) => void
-}
-
-/**
- * Task Details PreContext
- */
-
-export type TaskDetailsPreContext = {
-    isDisplayOutline: Ref<boolean>
-    isUseFloatOutline: Ref<boolean>
-    outlineWidth: Ref<string>
-    handleResizeOutline: (newWidth: number) => void
-    taskUseCase: TaskUseCase
-    subscriber: Subscriber
-    dialogManager: DialogManager
-    getProjectName: (projectId: ProjectViewObject['id']) => ProjectViewObject['name']
+    (e: 'createCheckItem', createViewObject: CreateTaskCheckItemViewObject): void
+    (
+        e: 'updateCheckItem',
+        eventId: TaskCheckItemViewObject['id'],
+        update: UpdateTaskCheckItemViewObject
+    ): void
+    (e: 'updateCheckItems', updates: UpdateTaskCheckItemViewObject[]): void
+    (e: 'deleteCheckItem', eventId: TaskCheckItemViewObject['id']): void
+    (e: 'createComment', create: CreateTaskCommentViewObject): void
+    (
+        e: 'updateComment',
+        commentId: TaskCommentViewObject['id'],
+        update: UpdateTaskCommentViewObject
+    ): void
+    (e: 'deleteComment', commentId: TaskCommentViewObject['id']): void
 }
 

@@ -1,20 +1,19 @@
 import { inject, computed, provide } from 'vue'
-import { APP_CONTEXT_KEY, AUTH_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
 import { useUserStore } from '@/stores'
-import { AuthUseCase } from '@nao-todo/application/web/usecases/auth'
-import type { AppContext } from '@/app'
-import type { AuthViewContext } from './types'
+import { newAuthUseCase } from '@nao-todo/usecases/auth'
+import { APP_CONTEXT_KEY } from '@/context'
+import { AUTH_VIEW_CONTEXT_KEY } from './context'
 
 const useAuthView = () => {
     // @context App 上下文
-    const appContext = inject<AppContext>(APP_CONTEXT_KEY)!
+    const appContext = inject(APP_CONTEXT_KEY)!
 
     // @stores
     const userStore = useUserStore()
 
     // @usecase Auth use case
-    const authUseCase = AuthUseCase.create(userStore)
+    const authUseCase = newAuthUseCase(userStore)
 
     // @state isDisplayAside
     const isDisplayAside = computed(() => {
@@ -22,7 +21,7 @@ const useAuthView = () => {
     })
 
     // @provide Auth view context
-    provide<AuthViewContext>(AUTH_VIEW_CONTEXT_KEY, { authUseCase })
+    provide(AUTH_VIEW_CONTEXT_KEY, { authUseCase })
 
     // @returns
     return {

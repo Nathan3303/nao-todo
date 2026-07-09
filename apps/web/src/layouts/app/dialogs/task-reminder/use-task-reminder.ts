@@ -1,10 +1,10 @@
 import { computed, inject, ref } from 'vue'
 import { NueMessage } from 'nue-ui'
-import { IndexViewContext } from '@/views/index/index-view'
-import { INDEX_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import useTasksStore from '@/stores/tasks-store'
-import type { SSEReminderEvent, TaskViewObject } from '@nao-todo/types'
+import type { TaskViewObject } from '@nao-todo/usecases/task'
 import { unwrapError } from '@nao-todo/infrastructure/utils'
+import { SSEReminderEvent } from '@nao-todo/types/viewobjects/sse'
 
 export const SNOOZE_OPTIONS = [
     { label: '5分钟', minutes: 5 },
@@ -17,8 +17,7 @@ export const SNOOZE_OPTIONS = [
 ]
 
 const useTaskReminder = () => {
-    const { dialogManager, taskUseCase, showTaskDetailsDrawer } =
-        inject<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY)!
+    const { dialogManager, taskUseCase } = inject(INDEX_VIEW_CONTEXT_KEY)!
     const tasksStore = useTasksStore()
 
     const queue = ref<SSEReminderEvent[]>([])
@@ -60,7 +59,7 @@ const useTaskReminder = () => {
         const taskId = currentEvent.value?.taskId
         if (!taskId) return
         snoozing.value = true
-        const snoozeError = await taskUseCase.snoozeTask(taskId, minutes)
+        const snoozeError = await taskUseCase.snooze(taskId, minutes)
         snoozing.value = false
         if (snoozeError !== null) {
             NueMessage.error(unwrapError(snoozeError))
@@ -77,7 +76,7 @@ const useTaskReminder = () => {
     const viewDetail = () => {
         const taskId = currentEvent.value?.taskId
         if (!taskId) return
-        showTaskDetailsDrawer(taskId)
+        // showTaskDetailsDrawer(taskId)
     }
 
     return {
@@ -100,4 +99,6 @@ const useTaskReminder = () => {
 }
 
 export default useTaskReminder
+
+
 

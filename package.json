@@ -31,7 +31,7 @@
     },
     "devDependencies": {
         "@eslint/js": "^9.39.4",
-        "@nao-todo/application": "workspace:*",
+        "@nao-todo/usecases": "workspace:*",
         "@nao-todo/components": "workspace:*",
         "@nao-todo/desktop": "workspace:*",
         "@nao-todo/domain": "workspace:*",

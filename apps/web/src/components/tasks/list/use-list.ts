@@ -1,5 +1,5 @@
 import { computed, provide } from 'vue'
-import type { TaskColumnOptions, TaskViewObject } from '@nao-todo/types'
+import type { TaskColumnOptions, TaskViewObject } from '@nao-todo/usecases/task'
 import type { TaskListContext, TaskListEmits, TaskListProps } from './types'
 import useMultiSelect from './use-multi-select'
 import { isTaskExpired } from '@nao-todo/infrastructure/utils/date-checker'
@@ -67,7 +67,7 @@ export const useTaskList = (props: TaskListProps, emit: TaskListEmits) => {
         clearMultiSelect,
         getProjectName: props.projectNameGetter,
         deleteOrRestore,
-        handleClickTask,
+        handleClickTask
     })
 }
 

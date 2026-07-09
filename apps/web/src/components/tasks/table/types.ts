@@ -2,10 +2,10 @@ import type { ComputedRef } from 'vue'
 import type {
     GetTasksOptions,
     GetTasksSortOptions,
-    TagViewObject,
     TaskColumnOptions,
     TaskViewObject
-} from '@nao-todo/types'
+} from '@nao-todo/usecases/task'
+import type { TagViewObject } from '@nao-todo/usecases/tag'
 
 export type TableColumnConfig = {
     key: keyof TaskColumnOptions

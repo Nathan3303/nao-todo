@@ -3,14 +3,13 @@ import { inject, onMounted, ref } from 'vue'
 import TasksOperationsDropdown from '@/components/tasks/dropdowns/operations-dropdown.vue'
 import { InnerDropdownOption, DropdownDivBlock } from '@nao-todo/components'
 import ColumnDisplayOperator from '@/components/tasks/dropdowns/column-display-operator.vue'
-import { PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
-import type { ProjectViewContext } from '../types'
 import { PROJECT_UPDATER_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+import { PROJECT_VIEW_CONTEXT_KEY } from '../context'
 
 defineOptions({ name: 'TasksProjectOperationsDropdown' })
 
 const {
-    tasksViewContext,
+    projectUseCase,
     project,
     subscriber,
     preference,
@@ -19,8 +18,9 @@ const {
     switchViewTypeToList,
     projectHandler,
     isHideCompletedAlready,
-    getColumnLabel
-} = inject<ProjectViewContext>(PROJECT_VIEW_CONTEXT_KEY)!
+    getColumnLabel,
+    dialogManager
+} = inject(PROJECT_VIEW_CONTEXT_KEY)!
 
 const dropdownRef = ref<InstanceType<typeof TasksOperationsDropdown>>()
 
@@ -35,15 +35,15 @@ onMounted(() => {
     dropdownRef.value.register('save-preference', () => subscriber.emit('UpdatePreference'))
     dropdownRef.value.register('delete-project', () => {
         if (!project.value) return
-        tasksViewContext.projectUseCase.delete(project.value.id)
+        projectUseCase.delete(project.value.id)
     })
     dropdownRef.value.register('archive-project', () => {
         if (!project.value) return
-        tasksViewContext.projectUseCase.archive(project.value.id)
+        projectUseCase.archive(project.value.id)
     })
     dropdownRef.value.register('update-project', () => {
         if (!project.value) return
-        tasksViewContext.dialogManager.open(PROJECT_UPDATER_DIALOG_KEY, project.value.id)
+        dialogManager.open(PROJECT_UPDATER_DIALOG_KEY, project.value.id)
     })
 })
 </script>

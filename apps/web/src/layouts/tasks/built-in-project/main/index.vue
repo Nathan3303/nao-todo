@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, onUnmounted } from 'vue'
-import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { BUILT_IN_EMPTY_STATE_MAP } from '../constants'
@@ -10,11 +9,11 @@ import {
     KanbanViewAdapter,
     type ViewAdapterNoTaskError
 } from '@/layouts/app/view-adapters'
-import type { BuiltInProjectLayoutHandlers } from '@/infrastructure/handlers/tasks/built-in-project-handler'
-import type { BuiltInProjectViewContext } from '../types'
+import type { BuiltInProjectHandler } from '@/infrastructure/handlers/built-in-project'
 import type { TableLayoutConfig } from '@/components/tasks/table/types'
 import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 import { t } from '@nao-todo/infrastructure/locales'
+import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '../context'
 
 defineOptions({
     name: 'TasksMainProjectContent',
@@ -39,7 +38,7 @@ const {
     builtInProject,
     profile,
     dialogManager
-} = inject<BuiltInProjectViewContext>(BUILT_IN_PROJECT_VIEW_CONTEXT_KEY)!
+} = inject(BUILT_IN_PROJECT_VIEW_CONTEXT_KEY)!
 
 // @computed componentName
 const componentName = computed(() => `${props.viewType || 'table'}-view`)
@@ -56,12 +55,12 @@ const layoutConfig = computed<TableLayoutConfig | undefined>(() => {
 })
 
 // Handlers 代理
-const updateColumns: BuiltInProjectLayoutHandlers['updateColumns'] = (k, v) => {
+const updateColumns: BuiltInProjectHandler['updateColumns'] = (k, v) => {
     return builtInProjectHandlers.updateColumns(k, v)
 }
 
 // Handlers 代理
-const updateSortOptions: BuiltInProjectLayoutHandlers['updateSortOption'] = (f, o) => {
+const updateSortOptions: BuiltInProjectHandler['updateSortOption'] = (f, o) => {
     return builtInProjectHandlers.updateSortOption(f, o)
 }
 

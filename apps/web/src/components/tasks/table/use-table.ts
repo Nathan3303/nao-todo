@@ -1,6 +1,10 @@
 import { computed, provide, watch } from 'vue'
 import type { TaskTableContext, TaskTableEmits, TaskTableProps } from './types'
-import type { GetTasksSortOptions, TaskColumnOptions, TaskViewObject } from '@nao-todo/types'
+import type {
+    GetTasksSortOptions,
+    TaskColumnOptions,
+    TaskViewObject
+} from '@nao-todo/usecases/task'
 import useMultiSelect from './use-multi-select'
 import useColumnConfig from './use-column-config'
 import { isTaskExpired } from '@nao-todo/infrastructure/utils/date-checker'

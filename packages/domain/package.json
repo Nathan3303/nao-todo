@@ -6,13 +6,12 @@
     "files": [
         "auth",
         "built-in-project",
-        "comment",
-        "event",
+        "pomodoro",
         "project",
+        "shares",
         "tag",
         "task",
-        "user",
-        "pomodoro"
-    ],
-    "packageManager": "pnpm@8.12.1"
+        "user"
+    ]
 }
+

@@ -1,30 +1,35 @@
 import { computed, inject, provide, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { PROJECT_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/tasks-view'
-import type { ProjectViewContext, ProjectViewProps } from './types'
+import type { ProjectViewProps } from './types'
 import useUserStore from '@/stores/user-store'
 import { storeToRefs } from 'pinia'
-import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
-import { useProjectsStore, useTagsStore, useTasksStore } from '@/stores'
-import type { TasksViewContext } from '@/views/index/tasks/tasks-view'
-import { TASKS_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
+import { useProjectsStore, useTagsStore } from '@/stores'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { ProjectHandler } from '@/infrastructure/handlers/tasks/project-handler'
+import { ProjectHandler } from '@/infrastructure/handlers/project'
 import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
+import { PROJECT_VIEW_CONTEXT_KEY } from './context'
 
 const useProjectView = (props: ProjectViewProps) => {
     // @viewStores
     const router = useRouter()
 
     // @viewContext TasksView context
-    const tasksViewContext = inject<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY)!
+    const {
+        projectUseCase,
+        taskUseCase,
+        subscriber,
+        getColumnLabel,
+        getProjectName,
+        showTaskDetails,
+        dialogManager
+    } = inject(TASKS_VIEW_CONTEXT_KEY)!
 
     // @dataStores
     const userStore = useUserStore()
     const projectsStore = useProjectsStore()
     const tagsStore = useTagsStore()
-    const tasksStore = useTasksStore()
 
     // @presetStates
     const { projectPreference: preference } = storeToRefs(projectsStore)
@@ -55,7 +60,7 @@ const useProjectView = (props: ProjectViewProps) => {
         if (!props.projectId || !profile.value) return
         loading.value = true
         // 2. 获取清单详情
-        const err = await tasksViewContext.projectUseCase.loadProjectPreference(props.projectId)
+        const err = await projectUseCase.loadProjectPreference(props.projectId)
         if (err !== null) {
             NueMessage.error(unwrapError(err))
             return
@@ -73,16 +78,8 @@ const useProjectView = (props: ProjectViewProps) => {
         { immediate: true }
     )
 
-    // @usecase 任务用例
-    const taskUseCase = TaskUseCase.create(tasksStore)
-
     // @handler 清单操作器
-    const projectHandler = new ProjectHandler(
-        taskUseCase,
-        tasksViewContext.projectUseCase,
-        projectsStore,
-        tasksViewContext.subscriber
-    )
+    const projectHandler = new ProjectHandler(projectUseCase, projectsStore, subscriber)
 
     // @computed 是否已经是只显示未完成任务
     const isHideCompletedAlready = computed(() => {
@@ -92,27 +89,32 @@ const useProjectView = (props: ProjectViewProps) => {
         return state == 'todo,in-progress'
     })
 
+    // @method 显示任务创建器弹窗
+    const showTaskCreator = () => {
+        dialogManager.open(TASK_CREATOR_DIALOG_KEY, {
+            projectId: props.projectId
+        })
+    }
+
     // @provide 提供 Project View 上下文
-    provide<ProjectViewContext>(PROJECT_VIEW_CONTEXT_KEY, {
-        tasksViewContext,
+    provide(PROJECT_VIEW_CONTEXT_KEY, {
         taskUseCase,
+        projectUseCase,
+        subscriber,
+        dialogManager,
+        projectHandler,
         project,
         preference,
-        profile,
         tags: computed(() => [...tags.value.values()]),
-        subscriber: tasksViewContext.subscriber,
-        projectHandler,
+        profile,
         isHideCompletedAlready,
-        getColumnLabel: tasksViewContext.getColumnLabel,
-        getProjectName: tasksViewContext.getProjectName,
-        showTaskDetails: tasksViewContext.showTaskDetails,
+        getColumnLabel: getColumnLabel,
+        getProjectName: getProjectName,
+        showTaskDetails: showTaskDetails,
+        showTaskCreator,
         switchViewTypeToTable: () => switchViewType('table'),
         switchViewTypeToKanban: () => switchViewType('kanban'),
-        switchViewTypeToList: () => switchViewType('list'),
-        showTaskCreator: () =>
-            tasksViewContext.dialogManager.open(TASK_CREATOR_DIALOG_KEY, {
-                projectId: props.projectId
-            })
+        switchViewTypeToList: () => switchViewType('list')
     })
 
     // @returns

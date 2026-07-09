@@ -6,13 +6,10 @@ import {
     type InnerDropdownOptionVO,
     DropdownDivBlock
 } from '@nao-todo/components'
-import type {
-    GetTasksOptions,
-    GetTasksSortOptions,
-    ProjectPreferenceViewObject
-} from '@nao-todo/types'
 import { columnLabels, sortFieldLabels } from '@nao-todo/infrastructure/consts/tasks'
 import { t } from '@nao-todo/infrastructure/locales'
+import { GetTasksOptions, GetTasksSortOptions } from '@nao-todo/usecases/task'
+import { ProjectPreferenceViewObject } from '@nao-todo/usecases/project'
 
 defineOptions({ name: 'TasksDropdownSortOperator' })
 const props = defineProps<{
@@ -31,7 +28,7 @@ const fieldOptions = computed(() => {
     Object.keys(sortFieldLabels.value).forEach((key) => {
         options.push({
             icon: 'plus-circle',
-            label: columnLabels.value[key as keyof ProjectPreferenceViewObject['columns']],
+            label: columnLabels.value[key as keyof ProjectPreferenceViewObject['columns']]!,
             value: key,
             checked: props.modelValue.field === key
         })
@@ -72,7 +69,11 @@ const handleOrderDropdownExecute = (order: string) => {
 </script>
 
 <template>
-    <inner-dropdown :title="t('task.sort.field')" icon="select" @execute="handleFieldDropdownExecute">
+    <inner-dropdown
+        :title="t('task.sort.field')"
+        icon="select"
+        @execute="handleFieldDropdownExecute"
+    >
         <dropdown-div-block :title="t('task.sort.selectField')">
             <inner-dropdown-option
                 v-for="option in fieldOptions"

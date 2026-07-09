@@ -1,11 +1,10 @@
 import { inject, reactive, watch } from 'vue'
-import { POMODORO_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { useTagsStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { ViewAdapterNoTaskError } from '@/layouts/app'
 import { debounce } from '@nao-todo/infrastructure/utils'
-import type { PomodoroViewContext } from '@/views/index/pomodoro/pomodoro-view'
-import type { BuiltInProjectPreferenceViewObject } from '@nao-todo/types'
+import type { BuiltInProjectPreferenceViewObject } from '@nao-todo/usecases/built-in-project'
+import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
 
 /**
  * 任务选择下拉菜单组件 Hook
@@ -17,7 +16,7 @@ export const useTaskSelectDropdown = () => {
      * @inject POMODORO_VIEW_CONTEXT_KEY - 番茄钟视图上下文
      */
     const { taskUseCase, subscriber, getProjectName, showTaskDetails } =
-        inject<PomodoroViewContext>(POMODORO_VIEW_CONTEXT_KEY)!
+        inject(POMODORO_VIEW_CONTEXT_KEY)!
 
     /**
      * 标签列表

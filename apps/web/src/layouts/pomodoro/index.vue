@@ -7,15 +7,14 @@ import {
     PomodoroRecordsComp,
     PomodoroNotesComp
 } from '@/components/pomodoro'
-import type { PomodoroViewContext } from '@/views/index/pomodoro/pomodoro-view'
-import { POMODORO_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
 import { usePomodoroPage } from './use-pomodoro-page'
 import { PomodoroTaskSelectDropdown } from './task-select-dropdown'
+import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
 
 defineOptions({ name: 'PomodoroPage' })
 
 const { dialogManager, subscriber, isUseFloatAside, isDisplayAside, switchDisplayAside } =
-    inject<PomodoroViewContext>(POMODORO_VIEW_CONTEXT_KEY)!
+    inject(POMODORO_VIEW_CONTEXT_KEY)!
 
 const {
     activeTab,
