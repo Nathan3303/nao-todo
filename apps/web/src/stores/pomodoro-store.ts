@@ -19,6 +19,12 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
     // @state 当前关联任务名称
     const currentTaskName = ref('')
 
+    // @state 当前选中的常用番茄专注 ID
+    const currentPomodoroId = ref<string | null>(null)
+
+    // @state 当前选中的常用番茄专注名称
+    const currentPomodoroName = ref('')
+
     // @state 当前专注记录 ID（focus 开始时由 nanoid 生成）
     const currentRecordId = ref<string | null>(null)
 
@@ -190,6 +196,18 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
         currentTaskName.value = taskName
     }
 
+    // @action 选择常用番茄专注
+    const selectPomodoro = (id: string | null, name: string) => {
+        currentPomodoroId.value = id
+        currentPomodoroName.value = name
+    }
+
+    // @action 清除常用番茄专注选择
+    const clearPomodoroSelection = () => {
+        currentPomodoroId.value = null
+        currentPomodoroName.value = ''
+    }
+
     // @action 设置当前会话
     const setCurrentSession = (
         taskId: string | null,
@@ -285,6 +303,8 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
     return {
         currentTaskId,
         currentTaskName,
+        currentPomodoroId,
+        currentPomodoroName,
         currentRecordId,
         currentRecordStartAt,
         records,
@@ -294,6 +314,8 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
         longBreakDuration,
         sessionsUntilLongBreak,
         selectTask,
+        selectPomodoro,
+        clearPomodoroSelection,
         setCurrentSession,
         clearCurrentSession,
         addRecord,

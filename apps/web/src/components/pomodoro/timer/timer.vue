@@ -106,7 +106,7 @@ const handleAdjustTime = (delta: number) => {
                     @click="handleAdjustTime(TIME_ADJUST_STEP)"
                 />
                 <nue-div theme="below-time-string">
-                    <slot name="BelowTimeString"> {{ taskName || '选择关联任务' }} > </slot>
+                    <slot name="BelowTimeString"></slot>
                 </nue-div>
             </nue-div>
         </nue-div>

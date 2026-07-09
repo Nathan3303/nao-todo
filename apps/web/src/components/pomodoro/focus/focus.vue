@@ -71,9 +71,7 @@ const handleMainAction = () => {
                 <nue-text v-if="!isIdle" theme="time-duration">{{ phaseLabel }}</nue-text>
                 <nue-text theme="time">{{ displayTime }}</nue-text>
                 <nue-div theme="below-time-string">
-                    <slot name="BelowTimeString">
-                        {{ taskName || '选择关联任务' }}
-                    </slot>
+                    <slot name="BelowTimeString"></slot>
                 </nue-div>
             </nue-div>
         </nue-div>

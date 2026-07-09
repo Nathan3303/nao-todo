@@ -62,7 +62,8 @@ export const pomodoroRecordEntityToViewObject = (
 ): PomodoroRecordViewObject => {
     return {
         id: entity.id,
-        sessionId: entity.sessionId,
+        sessionId: entity.sessionId, // 会话ID
+        pomodoroId: entity.pomodoroId, // 常用番茄专注ID
         type: entity.type as PomodoroRecordViewObject['type'],
         taskId: entity.taskId,
         taskName: entity.taskName,
@@ -85,6 +86,7 @@ export const createPomodoroRecordViewObjectToValueObject = (
 ): CreatePomodoroRecordValueObject => {
     return new CreatePomodoroRecordValueObject(
         viewObject.sessionId,
+        viewObject.pomodoroId,
         viewObject.type,
         viewObject.taskId,
         viewObject.taskName,

@@ -10,6 +10,7 @@ import type DialogManager from '@/infrastructure/hooks/use-dialog-manager'
 import type { TaskViewObject } from '@nao-todo/usecases/task'
 import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import { newPomodoroRecordUseCase } from '@nao-todo/usecases/pomodoro'
+import type { PomodoroViewObject } from '@nao-todo/usecases/pomodoro'
 import usePomodoroRecordLoader from '@/infrastructure/hooks/use-pomodoro-record-loader'
 import {
     POMODORO_MIN_FOCUS_SECONDS,
@@ -84,6 +85,22 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
 
     const handleSelectTask = (task: TaskViewObject) => {
         pomodoroStore.selectTask(task.id, task.name)
+    }
+
+    const presetId = computed(() => pomodoroStore.currentPomodoroId)
+    const presetName = computed(() => pomodoroStore.currentPomodoroName)
+
+    const handleSelectPreset = (preset: PomodoroViewObject | null) => {
+        if (preset === null) {
+            pomodoroStore.clearPomodoroSelection()
+            return
+        }
+        pomodoroStore.selectPomodoro(preset.id, preset.name)
+        // 套用预设时长（仅番茄专注 timer 模式且空闲时）
+        if (activeTab.value === 'timer' && timerStore.phase === 'idle') {
+            pomodoroStore.setFocusDuration(preset.duration)
+            timerStore.updateConfig()
+        }
     }
 
     const handleNextPage = () => {
@@ -233,6 +250,9 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
         taskId,
         taskName,
         handleSelectTask,
+        presetId,
+        presetName,
+        handleSelectPreset,
         todayRecords: recordLoader.records,
         noteText: computed(() => pomodoroStore.noteText),
         setNoteText: (text: string) => pomodoroStore.setNoteText(text),

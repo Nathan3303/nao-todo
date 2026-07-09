@@ -7,12 +7,11 @@ import type { BuiltInProjectPreferenceViewObject } from '@nao-todo/usecases/buil
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
 
 /**
- * 任务选择下拉菜单组件 Hook
+ * 任务专注面板 composable
  */
-export const useTaskSelectDropdown = () => {
+export const useTaskPanel = () => {
     /**
      * 注入上下文
-     * @inject INDEX_VIEW_CONTEXT_KEY - 主要视图上下文
      * @inject POMODORO_VIEW_CONTEXT_KEY - 番茄钟视图上下文
      */
     const { taskUseCase, subscriber, getProjectName, showTaskDetails } =
@@ -35,12 +34,12 @@ export const useTaskSelectDropdown = () => {
         columns: {
             name: true,
             description: false,
-            state: true,
-            priority: true,
+            state: false,
+            priority: false,
             startAt: false,
-            endAt: true,
+            endAt: false,
             project: false,
-            tags: true,
+            tags: false,
             givenUpAt: false,
             starMarkAt: false,
             archivedAt: false,
@@ -105,4 +104,7 @@ export const useTaskSelectDropdown = () => {
         refreshData
     }
 }
+
+
+
 

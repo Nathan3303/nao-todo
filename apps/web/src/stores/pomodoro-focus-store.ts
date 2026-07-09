@@ -61,6 +61,7 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
     /** 构建一条正计时记录 CreatePomodoroRecordViewObject */
     const buildRecord = (elapsed: number): CreatePomodoroRecordViewObject => ({
         sessionId: sessionId!,
+        pomodoroId: pomodoroStore.currentPomodoroId,
         type: 2 as PomodoroType, // focus=2
         taskId: pomodoroStore.currentTaskId ?? '',
         taskName: pomodoroStore.currentTaskName || '未关联任务',
