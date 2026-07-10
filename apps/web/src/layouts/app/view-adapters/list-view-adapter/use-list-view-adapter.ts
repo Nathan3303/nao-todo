@@ -29,8 +29,9 @@ const useListViewAdapter = (props: ListViewAdapterProps) => {
 
     // @method 下一页
     const handleNextPage = () => {
-        taskLoader.states.pagination.page++
-        taskLoader.loadAndPush()
+        // taskLoader.states.pagination.page++
+        // taskLoader.loadAndPush()
+        taskLoader.loadNextPage(false)
     }
 
     // @method 新增任务 ID 事件订阅

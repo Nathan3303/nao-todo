@@ -22,6 +22,7 @@ const {
     focusStore,
     taskName,
     handleSelectTask,
+    handleClearTask,
     presetName,
     handleSelectPreset,
     todayRecords,
@@ -45,7 +46,7 @@ const { status, elapsedSeconds } = storeToRefs(focusStore)
 // 专注依赖触发文案：常用专注名与任务名同时存在时用短横线连接
 const dependLabel = computed(() => {
     const names = [presetName.value, taskName.value].filter(Boolean)
-    return names.length > 0 ? names.join(' - ') : '专注'
+    return '< ' + (names.length > 0 ? `${names.join(' / ')}` : '专注') + ' >'
 })
 </script>
 
@@ -59,8 +60,11 @@ const dependLabel = computed(() => {
                 <nue-div vertical align="center" justify="center" style="grid-area: timer" gap="0">
                     <pomodoro-focus-depend-dropdown
                         :type="activeTab === 'timer' ? 1 : 2"
+                        :preset-name="presetName"
+                        :task-name="taskName"
                         @select-preset="handleSelectPreset"
                         @select-task="handleSelectTask"
+                        @clear-task="handleClearTask"
                     >
                         <template #default="{ open }">
                             <nue-text theme="task-select-trigger" @click="open" title="专注">

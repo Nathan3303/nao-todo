@@ -87,6 +87,10 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
         pomodoroStore.selectTask(task.id, task.name)
     }
 
+    const handleClearTask = () => {
+        pomodoroStore.selectTask(null, '')
+    }
+
     const presetId = computed(() => pomodoroStore.currentPomodoroId)
     const presetName = computed(() => pomodoroStore.currentPomodoroName)
 
@@ -250,6 +254,7 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
         taskId,
         taskName,
         handleSelectTask,
+        handleClearTask,
         presetId,
         presetName,
         handleSelectPreset,
