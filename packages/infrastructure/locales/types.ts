@@ -184,6 +184,10 @@ export interface LocaleMessages {
     'task.details.deleteTask': string
     'task.details.backToList': string
     'task.details.view': string
+    'task.details.subTasks': string
+    'task.details.subTasksLoading': string
+    'task.details.moveToSubTask': string
+    'task.details.backToParent': string
     'task.restore': string
     'task.delete': string
     'task.createTask': string
@@ -307,6 +311,9 @@ export interface LocaleMessages {
     'dialog.taskCreator.descPlaceholder': string
     'dialog.taskCreator.smartModeToggle': string
     'dialog.taskCreator.smartPlaceholder': string
+    'dialog.parentTaskSelector.title': string
+    'dialog.parentTaskSelector.searchPlaceholder': string
+    'dialog.parentTaskSelector.empty': string
     'dialog.confirmDelete': string
     'dialog.projectDeleteConfirmTitle': string
     'dialog.projectDeleteConfirmContent': string

@@ -2,6 +2,7 @@
 import { inject } from 'vue'
 import DetailsRow from './row.vue'
 import DetailsMainComments from './comments.vue'
+import DetailsMainSubTasks from './subtasks.vue'
 import DetailsMainEvents from './events.vue'
 import DetailsMainPomodoroInfo from './pomodoro-info.vue'
 import {
@@ -20,8 +21,21 @@ import { parse2RelativeDate } from '@nao-todo/infrastructure/utils'
 import { t } from '@nao-todo/infrastructure/locales'
 import { TAG_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys.js'
 
-const { vo, checkItemProgress, isCommenting, commentHandler, taskHandler, tags, dialogManager } =
-    inject(TASK_DETAILS_CONTEXT_KEY)!
+const {
+    vo,
+    checkItemProgress,
+    isCommenting,
+    commentHandler,
+    taskHandler,
+    tags,
+    dialogManager,
+    switchTaskDetails
+} = inject(TASK_DETAILS_CONTEXT_KEY)!
+
+const backToParent = () => {
+    if (!vo.value?.parentTaskId) return
+    switchTaskDetails(vo.value.parentTaskId)
+}
 
 const updateTaskState = (v: unknown) => {
     if (vo.value === null) return
@@ -32,11 +46,6 @@ const updateTaskPriority = (v: unknown) => {
     if (vo.value === null) return
     taskHandler.update(vo.value.id, { priority: v as TaskViewObject['priority'] })
 }
-
-// const updateTaskIsStarMark = (v: unknown) => {
-//     if (vo.value === null) return
-//     taskHandler.updateTask(vo.value.id, { isStarMarked: v as TaskViewObject['isStarMarked'] })
-// }
 
 const updateTaskName = () => {
     if (vo.value === null) return
@@ -104,6 +113,15 @@ const createCommentHandler = async (content: string) => {
             <nue-content fill>
                 <!-- 任务详情名称和描述 -->
                 <nue-div theme="name-desc">
+                    <nue-button
+                        v-if="vo.parentTaskId"
+                        icon="arrow-left-more"
+                        theme="pure"
+                        :title="t('task.details.backToParent')"
+                        @click="backToParent"
+                    >
+                        {{ t('task.details.backToParent') }}
+                    </nue-button>
                     <nue-textarea
                         v-model="vo.name"
                         :autosize="{ minRows: 1, maxRows: 2 }"
@@ -137,6 +155,8 @@ const createCommentHandler = async (content: string) => {
                         "
                     />
                 </nue-div>
+                <!-- 任务详情子任务 -->
+                <details-main-sub-tasks />
                 <!-- 任务详情评论 -->
                 <details-main-comments />
                 <!-- 任务详情删除标签 -->
@@ -230,6 +250,19 @@ const createCommentHandler = async (content: string) => {
         width: 100%;
         box-sizing: border-box;
         gap: var(--nue-gap-sm);
+
+        .nue-button--pure {
+            font-size: var(--nue-text-xs);
+            color: var(--nue-primary-color-500);
+            line-height: 1;
+            gap: var(--nue-gap-2xs);
+            width: fit-content;
+
+            &:hover {
+                color: var(--nue-primary-color-800);
+                text-decoration: underline;
+            }
+        }
 
         .nue-textarea:deep().word-counter {
             font-size: var(--nue-text-xs);

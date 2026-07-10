@@ -42,6 +42,23 @@ export class TaskUseCase {
     // --- Task ---
 
     /**
+     * 加载任务
+     * @param id 任务ID
+     * @returns 任务视图对象
+     */
+    async get(id: TaskViewObject['id']): GoAsync<TaskViewObject> {
+        // 获取任务实体
+        const [taskEntity, err] = await this.taskRepo.get(id)
+        if (err !== null) return [null, err]
+        // 实体转换为视图对象
+        const taskViewObject = taskEntityToViewObject(taskEntity)
+        // 存储任务
+        this.taskStore.addTask(taskViewObject)
+        // 实体转换为视图对象
+        return [taskViewObject, null]
+    }
+
+    /**
      * 加载任务列表
      * @param getTasksOptions 获取任务选项
      * @returns 任务ID列表
@@ -58,7 +75,7 @@ export class TaskUseCase {
         const taskViewObjects = taskEntitiesToViewObjects(taskEntities)
         // 存储任务列表
         this.taskStore.addTasks(taskViewObjects)
-        // 返回任务ID列表
+        // 返回任务ID列表 - 过滤掉子任务
         const taskIds = taskViewObjects.map((task) => task.id)
         return [{ taskIds, pagination }, null]
     }
@@ -120,10 +137,10 @@ export class TaskUseCase {
      */
     async update(id: TaskViewObject['id'], updateViewObject: UpdateTaskViewObject): GoAsync<void> {
         // 获取原始数据
-        const oldTask = this.taskStore.getTask(id)
-        const newTask = { name: oldTask?.name || undefined, ...updateViewObject }
+        // const oldTask = this.taskStore.getTask(id)
+        // const newTask = { name: oldTask?.name || undefined, ...updateViewObject }
         // 数据转换
-        const updateTaskValueObject = updateTaskViewObjectToValueObject(id, newTask)
+        const updateTaskValueObject = updateTaskViewObjectToValueObject(id, updateViewObject)
         // 更新任务
         const updateError = await this.taskRepo.update(id, updateTaskValueObject)
         if (updateError !== null) return updateError

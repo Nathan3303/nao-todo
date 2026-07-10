@@ -37,11 +37,12 @@ const updateEndAtAndRemind = (updateVO: UpdateTaskViewObject) => {
 
 <template>
     <nue-header v-if="vo">
-        <nue-div v-if="vo.endAt" style="padding: 1rem" width="100%" auto-fit>
+        <nue-div style="padding: 1rem" width="100%" auto-fit>
             <nue-div align="center" flex="1">
                 <task-check-button :is-done="vo.isDone" @change="switchState" />
                 <nue-divider vertical />
                 <task-date-selector
+                    v-if="vo.endAt"
                     :colored="!vo.isDone"
                     v-model="vo.endAt"
                     :task="vo"
@@ -49,16 +50,16 @@ const updateEndAtAndRemind = (updateVO: UpdateTaskViewObject) => {
                     @remind-change="updateRemind"
                     @update-all="updateEndAtAndRemind"
                 />
+                <nue-button v-else icon="clock" theme="small" @click="updateEndAtToNow">
+                    {{ t('task.details.setEndTime') }}
+                </nue-button>
             </nue-div>
-            <nue-div align="center">
-                <nue-button icon="clear" theme="small" @click="closeDetails">{{
-                    t('task.details.close')
-                }}</nue-button>
+            <nue-div align="center" gap="0">
+                <nue-button icon="clear" theme="small" @click="closeDetails">
+                    {{ t('task.details.close') }}
+                </nue-button>
             </nue-div>
         </nue-div>
-        <nue-button v-else icon="clock" theme="small" @click="updateEndAtToNow">
-            {{ t('task.details.setEndTime') }}
-        </nue-button>
     </nue-header>
 </template>
 

@@ -7,6 +7,7 @@ export const TAG_MANAGER_DIALOG_KEY = 'tag-manager-dialog'
 export const TAG_UPDATER_DIALOG_KEY = 'tag-updater-dialog'
 export const TASK_CREATOR_DIALOG_KEY = 'task-creator-dialog'
 export const TASK_REMINDER_DIALOG_KEY = 'task-reminder-dialog'
+export const PARENT_TASK_SELECTOR_DIALOG_KEY = 'parent-task-selector-dialog'
 export const POMODORO_TIMER_SETTING_DIALOG_KEY = 'pomodoro-timer-setting-dialog'
 export const POMODORO_CREATOR_DIALOG_KEY = 'pomodoro-creator-dialog'
 

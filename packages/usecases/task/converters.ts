@@ -32,6 +32,7 @@ import dayjs from 'dayjs'
 export const taskEntityToViewObject = (entity: TaskEntity): TaskViewObject => {
     const taskViewObject = {} as TaskViewObject
     taskViewObject.id = entity.id
+    taskViewObject.parentTaskId = entity.parentTaskId
     // taskViewObject.userId = entity.userId
     taskViewObject.name = entity.name
     taskViewObject.description = entity.description
@@ -106,6 +107,7 @@ export const updateTaskViewObjectToValueObject = (
     viewObject: UpdateTaskViewObject
 ): UpdateTaskValueObject => {
     const valueObject = new UpdateTaskValueObject(taskId)
+    if (viewObject.parentTaskId) valueObject.parentTaskId = viewObject.parentTaskId
     if (viewObject.name) valueObject.name = viewObject.name
     if (viewObject.description) valueObject.description = viewObject.description
     if (viewObject.state) valueObject.state = viewObject.state

@@ -55,7 +55,7 @@ export class TaskRepoImpl implements TaskRepository {
         // 1. 转换为请求体
         const createTaskReq = createTaskValueObject2Req(createVO)
         // 2. 调用接口
-        const response = await this.requester.post(`/tasks`, createTaskReq, {
+        const response = await this.requester.post(`/tasks/`, createTaskReq, {
             headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
         })
         // 3. 判断结果

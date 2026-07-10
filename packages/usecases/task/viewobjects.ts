@@ -77,18 +77,19 @@ export type UpdateTaskViewObject = {
 
 // 获取任务列表选项
 export type GetTasksOptions = {
-    projectId?: TaskViewObject['projectId']
+    parentTaskId?: TaskViewObject['parentTaskId']
     name?: TaskViewObject['name']
     description?: TaskViewObject['description']
     state?: TaskViewObject['state']
     priority?: TaskViewObject['priority']
+    projectId?: TaskViewObject['projectId']
+    tagId?: string
     isArchived?: TaskViewObject['isArchived']
     isDeleted?: TaskViewObject['isDeleted']
     isStarMarked?: TaskViewObject['isStarMarked']
     isGivenUp?: TaskViewObject['isGivenUp']
     sort?: GetTasksSortOptions
     relativeDate?: 'today' | 'tomorrow' | 'week' | '-today' | 'month' | '-overdue'
-    tagId?: string
     page?: number
     limit?: number
 }
@@ -186,6 +187,10 @@ export type UpdateTaskCommentViewObject = {
     content?: TaskCommentViewObject['content']
     isTopUp?: TaskCommentViewObject['isTopUp']
 }
+
+
+
+
 
 
 

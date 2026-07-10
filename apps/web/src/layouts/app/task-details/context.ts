@@ -19,12 +19,13 @@ export type TaskDetailsContext = {
     dialogManager: DialogManager
 
     emit: TaskDetailsEmits
-    vo: ComputedRef<TaskDetailsViewObject | null>
+    vo: Ref<TaskDetailsViewObject | null>
 
     projects: ComputedRef<ProjectViewObject[]>
     tags: Ref<TagViewObject[]>
     checkItems: ComputedRef<TaskCheckItemViewObject[]>
     comments: ComputedRef<TaskCommentViewObject[]>
+    subTasks: ComputedRef<TaskViewObject[]>
 
     taskHandler: TaskHandler
     checkItemHandler: TaskCheckItemHandler
@@ -37,12 +38,15 @@ export type TaskDetailsContext = {
     checkItemsError: Ref<string>
     commentsLoading: Ref<boolean>
     commentsError: Ref<string>
+    subTasksLoading: ComputedRef<boolean>
+    subTasksError: ComputedRef<string>
 
     switchTaskDetails: (taskId: TaskViewObject['id']) => void
     closeDetails: () => void
 
     retryCheckItems: () => Promise<void>
     retryComments: () => Promise<void>
+    retrySubTasks: () => Promise<void>
 
     resortCheckItems: (
         oldEid: TaskCheckItemViewObject['id'],

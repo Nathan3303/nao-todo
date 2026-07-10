@@ -8,6 +8,7 @@ import TagManager from './tag-manager'
 import TagUpdater from './tag-updater'
 import TaskCreator from './task-creator'
 import { TaskReminder } from './task-reminder'
+import ParentTaskSelector from './parent-task-selector'
 
 defineOptions({ name: 'AppDialogsAdapter' })
 </script>
@@ -22,5 +23,6 @@ defineOptions({ name: 'AppDialogsAdapter' })
     <TagUpdater />
     <TaskCreator />
     <TaskReminder />
+    <ParentTaskSelector />
 </template>
 

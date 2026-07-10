@@ -5,7 +5,8 @@ import {
     useLoadingErrorStoreBase,
     useTaskCommentIdsStoreBase,
     useTaskCheckItemsStoreBase,
-    useTaskCheckItemIdsStoreBase
+    useTaskCheckItemIdsStoreBase,
+    useTasksStoreBase
 } from '../base'
 import type { TaskDetailsViewObject } from '@/layouts/app/task-details/types'
 
@@ -61,6 +62,23 @@ const useTaskDetailsStore = defineStore('TaskDetailsStore', () => {
         setError: setCommentsError
     } = useLoadingErrorStoreBase()
 
+    const {
+        tasks: subTasks,
+        setTasks: setSubTasks,
+        addTasks: addSubTasks,
+        addTask: addSubTask,
+        getTask: getSubTask,
+        updateTask: updateSubTask,
+        removeTask: removeSubTask
+    } = useTasksStoreBase()
+
+    const {
+        loading: subTasksLoading,
+        error: subTasksError,
+        setLoading: setSubTasksLoading,
+        setError: setSubTasksError
+    } = useLoadingErrorStoreBase()
+
     return {
         // --- task details ---
         taskDetails,
@@ -105,7 +123,20 @@ const useTaskDetailsStore = defineStore('TaskDetailsStore', () => {
         commentIdsComments,
         setCommentIds,
         addCommentId,
-        removeCommentId
+        removeCommentId,
+        // --- sub tasks store base ---
+        subTasks,
+        setSubTasks,
+        addSubTasks,
+        addSubTask,
+        getSubTask,
+        updateSubTask,
+        removeSubTask,
+        // --- sub tasks loading error ---
+        subTasksLoading,
+        subTasksError,
+        setSubTasksLoading,
+        setSubTasksError
     }
 })
 

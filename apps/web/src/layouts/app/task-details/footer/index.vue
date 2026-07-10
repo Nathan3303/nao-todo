@@ -3,9 +3,22 @@ import { DropdownDivBlock, InnerDropdownOption, TaskProjectSelector } from '@nao
 import { inject } from 'vue'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context'
 import { t } from '@nao-todo/infrastructure/locales'
+import { PARENT_TASK_SELECTOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+import type { TaskViewObject } from '@nao-todo/usecases/task'
 
-const { vo, projects, isCommenting, taskHandler, switchTaskDetails } =
+const { vo, projects, isCommenting, taskHandler, switchTaskDetails, dialogManager } =
     inject(TASK_DETAILS_CONTEXT_KEY)!
+
+const openParentTaskSelector = () => {
+    if (!vo.value) return
+    dialogManager.open(PARENT_TASK_SELECTOR_DIALOG_KEY, {
+        currentTaskId: vo.value.id,
+        onSelect: (parentTaskId: TaskViewObject['id']) => {
+            if (!vo.value) return
+            taskHandler.update(vo.value.id, { parentTaskId })
+        }
+    })
+}
 
 const handleDropdownExecute = async (executeId: string) => {
     if (!vo.value) return
@@ -17,6 +30,9 @@ const handleDropdownExecute = async (executeId: string) => {
             await taskHandler.copyTask(vo.value.id, (taskViewObject) => {
                 switchTaskDetails(taskViewObject.id)
             })
+            break
+        case 'move-to-subtask':
+            openParentTaskSelector()
             break
         case 'delete-todo':
             await taskHandler.delete(vo.value.id)
@@ -38,7 +54,7 @@ const handleDropdownExecute = async (executeId: string) => {
     <nue-footer>
         <nue-div v-if="vo" align="center" justify="space-between" width="100%">
             <task-project-selector
-                :project-id="vo.projectId"
+                :project-id="vo.projectId || ''"
                 :projects="projects"
                 placement="top-start"
                 @select="(npId) => taskHandler.update(vo!.id, { projectId: npId })"
@@ -64,6 +80,11 @@ const handleDropdownExecute = async (executeId: string) => {
                         :title="t('task.details.copyTask')"
                         icon="files"
                         execute-id="copy-todo"
+                    />
+                    <inner-dropdown-option
+                        :title="t('task.details.moveToSubTask')"
+                        icon="share"
+                        execute-id="move-to-subtask"
                     />
                 </dropdown-div-block>
                 <nue-divider />

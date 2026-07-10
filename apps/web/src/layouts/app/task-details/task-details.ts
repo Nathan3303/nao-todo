@@ -1,7 +1,7 @@
 import { TaskCommentHandler } from '@/infrastructure/handlers/task-comment'
 import { TaskCheckItemHandler } from '@/infrastructure/handlers/task-check-item'
 import { TaskHandler } from '@/infrastructure/handlers/task'
-import { useProjectsStore, useTagsStore, useTaskDetailsStore, useTasksStore } from '@/stores'
+import { useProjectsStore, useTagsStore, useTaskDetailsStore } from '@/stores'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { storeToRefs } from 'pinia'
 import { computed, inject, provide, ref, watch } from 'vue'
@@ -13,8 +13,9 @@ import {
     type TaskCheckItemViewObject,
     type TaskViewObject
 } from '@nao-todo/usecases/task'
-import type { TaskDetailsEmits, TaskDetailsProps } from './types'
+import type { TaskDetailsEmits, TaskDetailsProps, TaskDetailsViewObject } from './types'
 import { TASK_DETAILS_CONTEXT_KEY, TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
+import useSubTasks from './use-subtasks'
 
 const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     // @viewContext TaskDetailsPre context
@@ -26,7 +27,6 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     const router = useRouter()
     const projectStore = useProjectsStore()
     const tagStore = useTagsStore()
-    const taskStore = useTasksStore()
     const taskDetailsStore = useTaskDetailsStore()
 
     // @presetStates
@@ -49,6 +49,10 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     const taskCheckItemUseCase = newTaskCheckItemUseCase(taskDetailsStore)
     const taskCommentUseCase = newTaskCommentUseCase(taskDetailsStore)
 
+    // @hook 子任务加载器
+    const { subTasks, subTasksLoading, subTasksError, loadSubTasks, retrySubTasks } =
+        useSubTasks(taskDetailsStore)
+
     /**
      * 处理程序
      * @use TaskHandler 任务处理程序
@@ -60,6 +64,7 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     const taskCommentHandler = new TaskCommentHandler(taskCommentUseCase, subscriber)
 
     // @states
+    const task = ref<TaskDetailsViewObject | null>(null) /** 任务视图对象 */
     const loading = ref(false) /** 加载状态 */
     const error = ref('') /** 错误信息 */
     const isCommenting = ref(false) /** 是否正在评论 */
@@ -68,41 +73,46 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     /**
      * 获取任务详情并转换为视图对象
      */
-    const task = computed(() => {
-        if (!props.taskId) return null
-        const _task = taskStore.getTask(props.taskId)
-        if (!_task) return null
-        return {
+    const getTaskDetails = async () => {
+        if (!props.taskId) return
+        error.value = ''
+        const [_task, err] = await taskUseCase.get(props.taskId)
+        if (err !== null) {
+            error.value = unwrapError(err)
+            return
+        }
+        task.value = {
             id: _task.id,
             userId: _task.userId,
             parentTaskId: _task.parentTaskId,
             name: _task.name,
             description: _task.description,
             state: _task.state,
-            isDone: _task.state === 'done',
             priority: _task.priority,
             startAt: _task.startAt,
             endAt: _task.endAt,
             projectId: _task.projectId,
-            projectName: getProjectName(_task.projectId || ''),
             tags: _task.tags,
-            tagList: _task.tags.map((tagId) => tagStore.getTag(tagId)!).filter(Boolean),
             createdAt: _task.createdAt,
             updatedAt: _task.updatedAt,
             deletedAt: _task.deletedAt,
-            isDeleted: _task.isDeleted,
             starMarkAt: _task.starMarkAt,
-            isStarMarked: _task.isStarMarked,
             givenUpAt: _task.givenUpAt,
-            isGivenUp: _task.isGivenUp,
             archivedAt: _task.archivedAt,
-            isArchived: _task.isArchived,
             remindAt: _task.remindAt,
             remindRepeat: _task.remindRepeat,
             remindTime: _task.remindTime,
-            remindWeekdays: _task.remindWeekdays
+            remindWeekdays: _task.remindWeekdays,
+            // Others
+            isDone: _task.state === 'done',
+            isDeleted: _task.isDeleted,
+            isStarMarked: _task.isStarMarked,
+            isGivenUp: _task.isGivenUp,
+            isArchived: _task.isArchived,
+            tagList: _task.tags.map((tagId) => tagStore.getTag(tagId)!).filter(Boolean),
+            projectName: getProjectName(_task.projectId || '')
         }
-    })
+    }
 
     /**
      * 计算检查事项进度
@@ -161,8 +171,13 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         // 1. 判断任务 ID
         if (!taskId) return
         currentTaskId.value = taskId
-        // 2. 并行获取检查事项和评论
-        await Promise.all([loadCheckItems(taskId), loadComments(taskId)])
+        // 2. 并行获取检查事项、评论和子任务
+        await Promise.all([
+            getTaskDetails(),
+            loadCheckItems(taskId),
+            loadComments(taskId),
+            loadSubTasks(taskId)
+        ])
         return null
     }
 
@@ -221,6 +236,7 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         tags,
         checkItems,
         comments,
+        subTasks,
         // ---
         taskHandler,
         checkItemHandler: taskCheckItemHandler,
@@ -233,12 +249,15 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         checkItemsError,
         commentsLoading,
         commentsError,
+        subTasksLoading,
+        subTasksError,
         // ---
         switchTaskDetails,
         closeDetails,
         // ---
         retryCheckItems,
         retryComments,
+        retrySubTasks,
         // ---
         resortCheckItems,
         makeCheckItemToTask

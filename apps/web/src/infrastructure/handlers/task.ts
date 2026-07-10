@@ -47,7 +47,7 @@ export class TaskHandler {
      * @returns 任务视图对象
      */
     async update(id: TaskViewObject['id'], updateViewObject: UpdateTaskViewObject): GoAsync<void> {
-        const updateError = await this.taskUseCase.update(id, { ...updateViewObject })
+        const updateError = await this.taskUseCase.update(id, updateViewObject)
         if (updateError !== null) {
             NueMessage.error(t('task.updateFailed', { error: `(${unwrapError(updateError)})` }))
             return updateError
@@ -203,4 +203,5 @@ export class TaskHandler {
         })
     }
 }
+
 

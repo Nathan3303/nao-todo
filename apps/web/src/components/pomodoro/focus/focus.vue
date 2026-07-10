@@ -69,7 +69,7 @@ const handleMainAction = () => {
             <pomodoro-focus-ring :scale="3" :stroke-width="1" :is-running="isRunning" />
             <nue-div theme="time-wrapper">
                 <nue-text v-if="!isIdle" theme="time-duration">{{ phaseLabel }}</nue-text>
-                <nue-text theme="time">{{ displayTime }}</nue-text>
+                <nue-text style="width: auto" theme="time">{{ displayTime }}</nue-text>
                 <nue-div theme="below-time-string">
                     <slot name="BelowTimeString"></slot>
                 </nue-div>

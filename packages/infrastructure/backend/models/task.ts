@@ -40,13 +40,14 @@ export type CreateTaskReq = {
 export type CreateTaskRes = TaskRes
 
 export type UpdateTaskReq = {
-    projectId?: string
+    parentTaskId?: string
     name?: string
     description?: string
     state?: string
     priority?: string
     startAt?: string | null
     endAt?: string | null
+    projectId?: string
     tags?: string[]
     isStarMarked?: boolean
     givenUpAt?: string | null
@@ -147,4 +148,5 @@ export type SnoozeTaskReq = {
 export type SnoozeTaskRes = {
     remindAt: string
 }
+
 

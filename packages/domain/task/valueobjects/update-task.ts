@@ -6,6 +6,7 @@ import dayjs from 'dayjs'
  * @description 更新任务的值对象，包含任务的更新字段
  */
 export class UpdateTaskValueObject {
+    public parentTaskId?: string // 父任务ID
     public name?: string // 任务名称
     public description?: string // 任务描述
     public state?: string // 任务状态

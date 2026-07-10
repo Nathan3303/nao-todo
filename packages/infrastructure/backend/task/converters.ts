@@ -110,6 +110,7 @@ export const listTaskRes2TaskEntities = (res: ListTaskRes): TaskEntity[] => {
  */
 export const updateTaskValueObject2Req = (updateVO: UpdateTaskValueObject): UpdateTaskReq => {
     const req = {} as UpdateTaskReq
+    if (updateVO.parentTaskId) req.parentTaskId = updateVO.parentTaskId
     if (updateVO.name) req.name = updateVO.name
     if (updateVO.description) req.description = updateVO.description
     if (updateVO.state) req.state = updateVO.state
