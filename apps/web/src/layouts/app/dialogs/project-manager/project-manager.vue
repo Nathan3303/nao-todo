@@ -43,7 +43,12 @@ onMounted(() => {
 </script>
 
 <template>
-    <nue-dialog v-model="visible" ref="dialogRef" theme="fullscreen" :title="t('dialog.projectManager.title')">
+    <nue-dialog
+        v-model="visible"
+        ref="dialogRef"
+        theme="large"
+        :title="t('dialog.projectManager.title')"
+    >
         <nue-container id="ProjectManager" theme="in-dialog">
             <nue-header class="project-manager-header">
                 <nue-div align="center" gap="0.75rem">
@@ -86,7 +91,9 @@ onMounted(() => {
                     >
                         <nue-div align="center" gap="0.25rem" class="warning-trigger">
                             <nue-icon name="warning" size="14px" />
-                            <nue-text size="12px">{{ t('dialog.projectManager.deleteReminder') }}</nue-text>
+                            <nue-text size="12px">{{
+                                t('dialog.projectManager.deleteReminder')
+                            }}</nue-text>
                         </nue-div>
                     </nue-tooltip>
                     <nue-divider vertical />

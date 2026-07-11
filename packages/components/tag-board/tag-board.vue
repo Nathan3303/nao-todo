@@ -35,7 +35,7 @@ const emit = defineEmits<TagBoardEmits>()
 <style scoped>
 .tag-board {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
     grid-gap: 12px;
 
     .tag-card {

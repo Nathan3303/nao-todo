@@ -29,7 +29,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <nue-dialog v-model="visible" ref="dialogRef" theme="fullscreen" title="标签管理">
+    <nue-dialog v-model="visible" ref="dialogRef" theme="large" title="标签管理">
         <nue-container id="TagManager" theme="in-dialog">
             <nue-header class="tag-manager-header">
                 <nue-div align="center" gap="0.75rem">
