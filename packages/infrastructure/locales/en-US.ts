@@ -168,6 +168,7 @@ const enUS: LocaleMessages = {
     'task.details.deletedAt': 'Task deleted at {date}',
     'task.details.givenUpAt': 'Task given up at {date}',
     'task.details.eventProgress': 'Checklist Progress',
+    'task.details.subTaskProgress': 'Sub-task Progress',
     'task.details.createdAt': 'Created At',
     'task.details.updatedAt': 'Last Modified',
     'task.details.noText': 'No text',

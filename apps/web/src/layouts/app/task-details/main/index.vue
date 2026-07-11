@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject } from 'vue'
+import { computed, inject } from 'vue'
 import DetailsRow from './row.vue'
 import DetailsMainComments from './comments.vue'
 import DetailsMainSubTasks from './subtasks.vue'
@@ -29,13 +29,23 @@ const {
     taskHandler,
     tags,
     dialogManager,
-    switchTaskDetails
+    switchTaskDetails,
+    subTasks
 } = inject(TASK_DETAILS_CONTEXT_KEY)!
 
 const backToParent = () => {
     if (!vo.value?.parentTaskId) return
     switchTaskDetails(vo.value.parentTaskId)
 }
+
+// 计算子任务完成进度
+const subTaskProgress = computed(() => {
+    const progress = subTasks.value.filter((subTask) => subTask.state === 'done').length
+    const total = subTasks.value.length
+    const percentage = total ? Math.floor((progress / total) * 100) : 0
+    const text = total ? `已完成 ${progress}/${total}, ${percentage}%` : '暂无子任务'
+    return { percentage, text }
+})
 
 const updateTaskState = (v: unknown) => {
     if (vo.value === null) return
@@ -183,10 +193,14 @@ const createCommentHandler = async (content: string) => {
                 <comment-creator :handler="createCommentHandler" @cancel="isCommenting = false" />
             </nue-div>
             <!-- 任务详情事件进度 -->
-            <nue-div justify="space-between" width="100%" overflow="auto">
+            <nue-div justify="space-between" width="100%" overflow="auto" wrap="nowrap">
                 <details-row
                     :text="checkItemProgress.text"
                     :label="t('task.details.eventProgress')"
+                />
+                <details-row
+                    :text="subTaskProgress.text"
+                    :label="t('task.details.subTaskProgress')"
                 />
                 <details-row
                     v-if="vo.createdAt"

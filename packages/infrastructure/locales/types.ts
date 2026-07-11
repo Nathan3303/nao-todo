@@ -161,6 +161,7 @@ export interface LocaleMessages {
     'task.details.deletedAt': string
     'task.details.givenUpAt': string
     'task.details.eventProgress': string
+    'task.details.subTaskProgress': string
     'task.details.createdAt': string
     'task.details.updatedAt': string
     'task.details.noText': string

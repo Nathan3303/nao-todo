@@ -23,6 +23,15 @@ defineProps<InnerDropdownOptionProps>()
 </template>
 
 <style scoped>
+.nue-dropdown-item.nue-dropdown-item--small {
+    padding: var(--nue-padding-xs);
+    gap: var(--nue-gap-xs);
+
+    &:deep(.nue-dropdown-item__icon) {
+        font-size: var(--nue-text-df2);
+    }
+}
+
 .nue-dropdown-item--red {
     color: var(--nue-error-color-70);
     background-color: var(--nue-error-color-10);

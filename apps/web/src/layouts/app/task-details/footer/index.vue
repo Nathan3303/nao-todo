@@ -83,7 +83,7 @@ const handleDropdownExecute = async (executeId: string) => {
                     />
                     <inner-dropdown-option
                         :title="t('task.details.moveToSubTask')"
-                        icon="share"
+                        icon="connection"
                         execute-id="move-to-subtask"
                     />
                 </dropdown-div-block>

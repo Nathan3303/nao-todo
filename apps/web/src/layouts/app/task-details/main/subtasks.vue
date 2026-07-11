@@ -151,13 +151,13 @@ const handleCreateSubTask = async (payload: { value: string }) => {
                         </nue-div>
                     </nue-div>
                     <input-button
+                        class="subtask-row__create-bar"
                         icon="plus-circle"
                         :button-text="t('task.details.subTaskCreate')"
                         :placeholder="t('task.details.subTaskNamePlaceholder')"
                         theme="pure,noshape"
                         :submit-on-blur="false"
                         :on-submit="handleCreateSubTask"
-                        style="margin: var(--nue-padding-xs); width: auto; height: auto"
                     />
                 </template>
             </nue-content>
@@ -172,7 +172,6 @@ const handleCreateSubTask = async (payload: { value: string }) => {
     gap: 0.5rem;
     height: auto;
     overflow: unset;
-    flex: auto;
 
     > .nue-main {
         height: auto;
@@ -182,8 +181,13 @@ const handleCreateSubTask = async (payload: { value: string }) => {
             display: flex;
             flex-direction: column;
             flex-wrap: nowrap;
-            gap: 0.25rem;
             overflow: hidden;
+
+            .subtask-row__create-bar {
+                margin: 0 var(--nue-padding-xs);
+                width: auto;
+                height: 2rem;
+            }
         }
     }
 }
@@ -191,13 +195,12 @@ const handleCreateSubTask = async (payload: { value: string }) => {
 .subtask-row {
     flex-wrap: nowrap;
     gap: var(--nue-gap-xs);
-    padding: var(--nue-padding-xs);
-    height: var(--nue-box-size-df);
+    padding: 0 var(--nue-padding-xs);
     color: var(--nue-primary-color-900);
     background-color: transparent;
-    transition: background-color var(--nue-animation-duration, 0.15s) ease;
     border-radius: var(--nue-primary-radius);
-    box-sizing: border-box;
+    height: 2rem;
+    cursor: default;
     line-height: 1;
 
     &:hover,
@@ -231,7 +234,6 @@ const handleCreateSubTask = async (payload: { value: string }) => {
         align-items: center;
         flex-shrink: 0;
         opacity: 0;
-        transition: opacity var(--nue-animation-duration, 0.15s) ease;
         gap: var(--nue-gap-sm);
     }
 
