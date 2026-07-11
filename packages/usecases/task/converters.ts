@@ -80,7 +80,8 @@ export const createTaskViewObjectToValueObject = (
     createTaskViewObject: CreateTaskViewObject
 ): CreateTaskValueObject => {
     return new CreateTaskValueObject(
-        '', // userId
+        null, // userId
+        createTaskViewObject.parentTaskId || null,
         createTaskViewObject.name,
         createTaskViewObject.description || '',
         createTaskViewObject.state,

@@ -70,13 +70,14 @@ export const taskRes2TaskEntity = (res: TaskRes): TaskEntity => {
  */
 export const createTaskValueObject2Req = (createVO: CreateTaskValueObject): CreateTaskReq => {
     return {
-        projectId: createVO.projectId,
+        parentTaskId: createVO.parentTaskId || undefined,
         name: createVO.name,
         description: createVO.description,
         state: createVO.state,
         priority: createVO.priority,
         startAt: createVO.startAt || undefined,
         endAt: dayjs(createVO.endAt).toISOString(),
+        projectId: createVO.projectId,
         tags: createVO.tags,
         remindAt: createVO.remindAt || undefined,
         remindRepeat: createVO.remindRepeat || undefined,

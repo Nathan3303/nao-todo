@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Loading } from '@nao-todo/components'
+import { InputButton, Loading } from '@nao-todo/components'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context'
 import { inject, nextTick, reactive, ref } from 'vue'
 import { t } from '@nao-todo/infrastructure/locales'
@@ -12,7 +12,8 @@ const {
     subTasksError,
     retrySubTasks,
     switchTaskDetails,
-    subTaskHandler
+    subTaskHandler,
+    createSubTask
 } = inject(TASK_DETAILS_CONTEXT_KEY)!
 
 // 正在更新状态的子任务 ID 集合
@@ -60,13 +61,15 @@ const submitEditName = (subTask: TaskViewObject) => {
         editingId.value = null
     })
 }
+
+// 创建子任务（提交任务名称）
+const handleCreateSubTask = async (payload: { value: string }) => {
+    await createSubTask(payload.value)
+}
 </script>
 
 <template>
-    <nue-container
-        v-if="subTasksLoading || subTasksError || (subTasks && subTasks.length > 0)"
-        id="TodoDetailsSubTasksContainer"
-    >
+    <nue-container id="TodoDetailsSubTasksContainer">
         <nue-main>
             <nue-content>
                 <loading v-if="subTasksLoading" :placeholder="t('task.details.subTasksLoading')" />
@@ -147,6 +150,15 @@ const submitEditName = (subTask: TaskViewObject) => {
                             </template>
                         </nue-div>
                     </nue-div>
+                    <input-button
+                        icon="plus-circle"
+                        :button-text="t('task.details.subTaskCreate')"
+                        :placeholder="t('task.details.subTaskNamePlaceholder')"
+                        theme="pure,noshape"
+                        :submit-on-blur="false"
+                        :on-submit="handleCreateSubTask"
+                        style="margin: var(--nue-padding-xs); width: auto; height: auto"
+                    />
                 </template>
             </nue-content>
         </nue-main>

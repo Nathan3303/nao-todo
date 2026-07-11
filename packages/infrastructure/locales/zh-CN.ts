@@ -190,6 +190,8 @@ const zhCN: LocaleMessages = {
     'task.details.view': '查看详情',
     'task.details.subTasks': '子任务',
     'task.details.subTasksLoading': '正在加载子任务...',
+    'task.details.subTaskCreate': '新增子任务',
+    'task.details.subTaskNamePlaceholder': '输入子任务名称...',
     'task.details.moveToSubTask': '移动至子任务...',
     'task.details.backToParent': '返回父任务',
     'task.restore': '恢复任务',

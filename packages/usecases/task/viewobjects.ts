@@ -32,13 +32,14 @@ export type TaskViewObject = ViewObjectBase & {
 
 // 创建任务视图对象
 export type CreateTaskViewObject = {
-    projectId: TaskViewObject['projectId']
+    parentTaskId?: TaskViewObject['parentTaskId']
     name: TaskViewObject['name']
     description: TaskViewObject['description']
     state: TaskViewObject['state']
     priority: TaskViewObject['priority']
     startAt: TaskViewObject['startAt']
     endAt: TaskViewObject['endAt']
+    projectId: TaskViewObject['projectId']
     tags: TaskViewObject['tags']
     remindAt: TaskViewObject['remindAt']
     remindRepeat: TaskViewObject['remindRepeat']
@@ -187,6 +188,8 @@ export type UpdateTaskCommentViewObject = {
     content?: TaskCommentViewObject['content']
     isTopUp?: TaskCommentViewObject['isTopUp']
 }
+
+
 
 
 

@@ -193,6 +193,8 @@ const enUS: LocaleMessages = {
     'task.details.view': 'View Details',
     'task.details.subTasks': 'Sub-tasks',
     'task.details.subTasksLoading': 'Loading sub-tasks...',
+    'task.details.subTaskCreate': 'Add Sub-task',
+    'task.details.subTaskNamePlaceholder': 'Enter sub-task name...',
     'task.details.moveToSubTask': 'Move to sub-task...',
     'task.details.backToParent': 'Back to Parent Task',
     'task.restore': 'Restore Task',

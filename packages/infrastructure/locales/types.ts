@@ -186,6 +186,8 @@ export interface LocaleMessages {
     'task.details.view': string
     'task.details.subTasks': string
     'task.details.subTasksLoading': string
+    'task.details.subTaskCreate': string
+    'task.details.subTaskNamePlaceholder': string
     'task.details.moveToSubTask': string
     'task.details.backToParent': string
     'task.restore': string

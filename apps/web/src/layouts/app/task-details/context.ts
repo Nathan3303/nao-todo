@@ -4,6 +4,7 @@ import type { TaskHandler } from '@/infrastructure/handlers/task'
 import DialogManager from '@/infrastructure/hooks/use-dialog-manager'
 import { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import type { ComputedRef, InjectionKey, Ref } from 'vue'
+import type { GoAsync } from '@nao-todo/types'
 import { TaskDetailsEmits, TaskDetailsViewObject } from './types'
 import { ProjectViewObject } from '@nao-todo/usecases/project'
 import { TagViewObject } from '@nao-todo/usecases/tag'
@@ -48,6 +49,7 @@ export type TaskDetailsContext = {
     retryCheckItems: () => Promise<void>
     retryComments: () => Promise<void>
     retrySubTasks: () => Promise<void>
+    createSubTask: (name: TaskViewObject['name']) => GoAsync<void>
 
     resortCheckItems: (
         oldEid: TaskCheckItemViewObject['id'],

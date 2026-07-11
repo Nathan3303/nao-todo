@@ -1,7 +1,9 @@
 import { computed } from 'vue'
+import dayjs from 'dayjs'
 import useTasksLoader from '@/infrastructure/hooks/use-task-loader'
 import { newTaskUseCase, type TaskStore, type TaskViewObject } from '@nao-todo/usecases/task'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
+import type { GoAsync } from '@nao-todo/types'
 import type useTaskDetailsStore from '@/stores/tasks/task-details-store'
 
 type TaskDetailsStore = ReturnType<typeof useTaskDetailsStore>
@@ -71,6 +73,34 @@ const useSubTasks = (taskDetailsStore: TaskDetailsStore) => {
         await loadSubTasks(currentParentTaskId)
     }
 
+    /**
+     * 创建子任务
+     * @description 以当前父任务 ID 创建子任务，成功后将新任务 ID 追加到加载器列表，
+     *              使其即时展示于子任务列表末尾。
+     * @param name 子任务名称
+     */
+    const createSubTask = async (name: TaskViewObject['name']): GoAsync<void> => {
+        if (!currentParentTaskId) return '缺少父任务 ID'
+        const [task, err] = await subTaskUseCase.create({
+            parentTaskId: currentParentTaskId,
+            projectId: null,
+            name,
+            description: '',
+            state: 'todo',
+            priority: 'low',
+            startAt: null,
+            endAt: dayjs().toISOString(),
+            tags: [],
+            remindAt: null,
+            remindRepeat: 'none',
+            remindTime: null,
+            remindWeekdays: []
+        })
+        if (err !== null) return err
+        subTaskLoader.states.taskIds.add(task.id)
+        return null
+    }
+
     // @returns
     return {
         subTaskUseCase,
@@ -78,7 +108,8 @@ const useSubTasks = (taskDetailsStore: TaskDetailsStore) => {
         subTasksLoading,
         subTasksError,
         loadSubTasks,
-        retrySubTasks
+        retrySubTasks,
+        createSubTask
     }
 }
 

@@ -50,8 +50,15 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     const taskCommentUseCase = newTaskCommentUseCase(taskDetailsStore)
 
     // @hook 子任务加载器
-    const { subTaskUseCase, subTasks, subTasksLoading, subTasksError, loadSubTasks, retrySubTasks } =
-        useSubTasks(taskDetailsStore)
+    const {
+        subTaskUseCase,
+        subTasks,
+        subTasksLoading,
+        subTasksError,
+        loadSubTasks,
+        retrySubTasks,
+        createSubTask
+    } = useSubTasks(taskDetailsStore)
 
     /**
      * 处理程序
@@ -262,6 +269,7 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         retryCheckItems,
         retryComments,
         retrySubTasks,
+        createSubTask,
         // ---
         resortCheckItems,
         makeCheckItemToTask
