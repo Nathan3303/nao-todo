@@ -3,15 +3,32 @@ import dayjs from 'dayjs'
 import { computed } from 'vue'
 import { useMapperStoreBase } from '../hooks/use-mapper-store-base'
 import { useListStoreBase } from '../hooks/use-list-store-base'
+import { env } from '@/infrastructure/constants/env'
 
 export const useTaskCommentsStoreBase = () => {
     const {
-        setList: setComments,
+        setList,
         getItem: getComment,
         addItem: addComment,
         patchItem: updateComment,
         removeItem: removeComment
     } = useMapperStoreBase<TaskCommentViewObject>()
+
+    const setComments = (comments: TaskCommentViewObject[]) => {
+        setList(
+            comments.map((comment) => {
+                // 处理评论头像路径
+                return {
+                    ...comment,
+                    avatar:
+                        comment.avatar.startsWith('https://') ||
+                        comment.avatar.startsWith('http://')
+                            ? comment.avatar
+                            : env.baseURL + comment.avatar
+                }
+            })
+        )
+    }
 
     return {
         setComments,

@@ -49,6 +49,7 @@ export class TaskCommentUseCase {
         const commentIds = comments.map((comment) => comment.id)
         // 设置评论到本地
         this.taskCommentStore.setComments(comments)
+        this.taskCommentStore.setCommentIds(commentIds)
         // 返回评论 ID 列表
         return [commentIds, null]
     }

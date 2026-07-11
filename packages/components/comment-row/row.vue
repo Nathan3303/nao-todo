@@ -48,16 +48,15 @@ const handleUpdateComment = async () => {
         return
     }
     loading.value = true
-    const err = await props.updater(props.comment.id, shadowContent.value)
+    props.updater(props.comment.id, shadowContent.value)
     loading.value = false
-    if (err) return
     handleCancelEdit()
 }
 
 const handleDeleteComment = async () => {
     if (!props.deleter) return
     deleting.value = true
-    await props.deleter(props.comment.id)
+    props.deleter(props.comment.id)
     deleting.value = false
 }
 
