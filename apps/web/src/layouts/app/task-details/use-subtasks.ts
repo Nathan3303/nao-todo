@@ -41,6 +41,15 @@ const useSubTasks = (taskDetailsStore: TaskDetailsStore) => {
     const subTasksLoading = computed(() => taskDetailsStore.subTasksLoading)
     const subTasksError = computed(() => taskDetailsStore.subTasksError)
 
+    // @state 子任务完成进度
+    const subTaskProgress = computed(() => {
+        const progress = subTasks.value.filter((subTask) => subTask.state === 'done').length
+        const total = subTasks.value.length
+        const percentage = total ? Math.floor((progress / total) * 100) : 0
+        const text = total ? `已完成 ${progress}/${total}, ${percentage}%` : '暂无子任务'
+        return { percentage, text }
+    })
+
     // @state 当前父任务 ID
     let currentParentTaskId: TaskViewObject['id'] | null = null
 
@@ -107,6 +116,7 @@ const useSubTasks = (taskDetailsStore: TaskDetailsStore) => {
         subTasks,
         subTasksLoading,
         subTasksError,
+        subTaskProgress,
         loadSubTasks,
         retrySubTasks,
         createSubTask

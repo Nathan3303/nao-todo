@@ -5,7 +5,7 @@ import DialogManager from '@/infrastructure/hooks/use-dialog-manager'
 import { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import type { ComputedRef, InjectionKey, Ref } from 'vue'
 import type { GoAsync } from '@nao-todo/types'
-import { TaskDetailsEmits, TaskDetailsViewObject } from './types'
+import { TaskDetailsViewObject } from './types'
 import { ProjectViewObject } from '@nao-todo/usecases/project'
 import { TagViewObject } from '@nao-todo/usecases/tag'
 import {
@@ -19,7 +19,6 @@ import {
 export type TaskDetailsContext = {
     dialogManager: DialogManager
 
-    emit: TaskDetailsEmits
     vo: Ref<TaskDetailsViewObject | null>
 
     projects: ComputedRef<ProjectViewObject[]>
@@ -34,6 +33,7 @@ export type TaskDetailsContext = {
     commentHandler: TaskCommentHandler
 
     checkItemProgress: ComputedRef<{ percentage: number; text: string }>
+    subTaskProgress: ComputedRef<{ percentage: number; text: string }>
     isCommenting: Ref<boolean>
 
     checkItemsLoading: Ref<boolean>

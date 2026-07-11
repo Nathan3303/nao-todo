@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject } from 'vue'
+import { inject } from 'vue'
 import DetailsRow from './row.vue'
 import DetailsMainComments from './comments.vue'
 import DetailsMainSubTasks from './subtasks.vue'
@@ -24,28 +24,19 @@ import { TAG_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys.j
 const {
     vo,
     checkItemProgress,
+    subTaskProgress,
     isCommenting,
     commentHandler,
     taskHandler,
     tags,
     dialogManager,
-    switchTaskDetails,
-    subTasks
+    switchTaskDetails
 } = inject(TASK_DETAILS_CONTEXT_KEY)!
 
 const backToParent = () => {
     if (!vo.value?.parentTaskId) return
     switchTaskDetails(vo.value.parentTaskId)
 }
-
-// 计算子任务完成进度
-const subTaskProgress = computed(() => {
-    const progress = subTasks.value.filter((subTask) => subTask.state === 'done').length
-    const total = subTasks.value.length
-    const percentage = total ? Math.floor((progress / total) * 100) : 0
-    const text = total ? `已完成 ${progress}/${total}, ${percentage}%` : '暂无子任务'
-    return { percentage, text }
-})
 
 const updateTaskState = (v: unknown) => {
     if (vo.value === null) return
