@@ -7,7 +7,7 @@ import type {
     PomodoroRecordViewObject
 } from '@nao-todo/usecases/pomodoro'
 import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import usePomodoroStore from '@/stores/pomodoro-store'
+import { usePomodoroRecordsStore } from '@/stores'
 
 /**
  * Pomodoro 记录加载器状态
@@ -31,7 +31,7 @@ const usePomodoroRecordLoader = (
     originalGetOptions?: GetPomodoroRecordsOptions,
     subscriber?: Subscriber
 ) => {
-    const pomodoroStore = usePomodoroStore()
+    const pomodoroStore = usePomodoroRecordsStore()
 
     // @states
     const states = reactive<UsePomodoroRecordLoaderStates>({

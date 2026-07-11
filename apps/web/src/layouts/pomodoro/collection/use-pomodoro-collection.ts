@@ -5,7 +5,7 @@ import {
     type PomodoroRecordViewObject,
     type PomodoroViewObject
 } from '@nao-todo/usecases/pomodoro'
-import usePomodorosStore from '@/stores/pomodoros-store'
+import { usePomodorosStore } from '@/stores/pomodoro-view'
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
 
 /**

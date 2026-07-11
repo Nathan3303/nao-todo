@@ -12,7 +12,7 @@ import {
  */
 const POMODORO_SETTINGS_KEY = 'POMODORO_SETTINGS'
 
-const usePomodoroStore = defineStore('PomodoroStore', () => {
+const usePomodoroRecordsStore = defineStore('PomodoroRecordsStore', () => {
     // @state 当前关联任务 ID
     const currentTaskId = ref<string | null>(null)
 
@@ -41,11 +41,6 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
 
     // @action 获取单条记录
     const getRecord = (id: string) => recordsMap.value.get(id)
-
-    // @action 替换全部记录（首屏加载）
-    const setRecords = (newRecords: PomodoroRecordViewObject[]) => {
-        records.value = newRecords
-    }
 
     // @action 追加记录（翻页加载，自动去重）
     const addRecords = (newRecords: PomodoroRecordViewObject[]) => {
@@ -242,14 +237,6 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
         return [[record], null]
     }
 
-    // @action 更新记录笔记
-    const updateNote = (recordId: string, note: string) => {
-        const record = records.value.find((r) => r.sessionId === recordId)
-        if (record) {
-            record.note = note
-        }
-    }
-
     // @action 设置笔记文本
     const setNoteText = (text: string) => {
         noteText.value = text
@@ -319,7 +306,6 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
         setCurrentSession,
         clearCurrentSession,
         addRecord,
-        updateNote,
         setNoteText,
         setFocusDuration,
         setBreakDuration,
@@ -332,11 +318,9 @@ const usePomodoroStore = defineStore('PomodoroStore', () => {
         setAutoStartNextFocusSessionCount,
         setAutoRest,
         getRecord,
-        setRecords,
         addRecords,
         setOnRecordCreated
     }
 })
 
-export default usePomodoroStore
-
+export default usePomodoroRecordsStore

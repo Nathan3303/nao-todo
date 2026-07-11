@@ -10,7 +10,7 @@ import {
     type TaskCheckItemViewObject,
     type TaskViewObject
 } from '@nao-todo/usecases/task'
-import type useTaskDetailsStore from '@/stores/tasks/task-details-store'
+import type useTaskDetailsStore from '@/stores/tasks-view/task-details-store'
 
 type TaskDetailsStore = ReturnType<typeof useTaskDetailsStore>
 

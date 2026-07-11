@@ -1,14 +1,14 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { nanoid } from 'nanoid'
-import type { CreatePomodoroRecordViewObject, PomodoroType } from '@nao-todo/usecases/pomodoro'
-import usePomodoroStore from '@/stores/pomodoro-store'
-import { sendNotification, formatMinutes } from '@/infrastructure/utils/pomodoro'
-
-/**
- * UI 刷新间隔（毫秒）
- */
-const TICK_INTERVAL_MS = 250
+import usePomodoroRecordsStore from '@/stores/pomodoro-view/pomodoro-records-store'
+import {
+    sendNotification,
+    formatMinutes,
+    buildPomodoroRecord,
+    persistPomodoroRecord
+} from '@/infrastructure/utils/pomodoro'
+import useTimerDriver from '@/infrastructure/hooks/use-timer-driver'
 
 /**
  * 全局正计时 Store
@@ -18,14 +18,14 @@ const TICK_INTERVAL_MS = 250
  * 职责：
  * - 正计时引擎（setInterval tick、elapsed 累计）
  * - 用户控制（start / pause / resume / end / reset）
- * - 专注记录创建（用户点击「结束」时写入 usePomodoroStore）
+ * - 专注记录创建（用户点击「结束」时写入 usePomodoroRecordsStore）
  * - 与 Timer 倒计时互斥（启动时自动停掉对方）
  */
 export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
     // ========================================================================
     // Dependencies
     // ========================================================================
-    const pomodoroStore = usePomodoroStore()
+    const pomodoroStore = usePomodoroRecordsStore()
 
     // ========================================================================
     // Reactive State
@@ -38,7 +38,6 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
     // ========================================================================
     let startTimestamp = 0
     let accumulatedMs = 0
-    let intervalId: ReturnType<typeof setInterval> | null = null
 
     // 记录创建所需（持久化，end() 时读取）
     let sessionId: string | null = null
@@ -59,18 +58,17 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
     const calcElapsedSeconds = (): number => Math.floor(calcTotalMs() / 1000)
 
     /** 构建一条正计时记录 CreatePomodoroRecordViewObject */
-    const buildRecord = (elapsed: number): CreatePomodoroRecordViewObject => ({
-        sessionId: sessionId!,
-        pomodoroId: pomodoroStore.currentPomodoroId,
-        type: 2 as PomodoroType, // focus=2
-        taskId: pomodoroStore.currentTaskId ?? '',
-        taskName: pomodoroStore.currentTaskName || '未关联任务',
-        description: null,
-        startAt: recordStartedAt!,
-        endAt: new Date().toISOString(),
-        duration: elapsed,
-        note: pomodoroStore.noteText
-    })
+    const buildRecord = (elapsed: number) =>
+        buildPomodoroRecord({
+            sessionId: sessionId!,
+            pomodoroId: pomodoroStore.currentPomodoroId,
+            type: 2, // focus=2
+            taskId: pomodoroStore.currentTaskId,
+            taskName: pomodoroStore.currentTaskName,
+            startAt: recordStartedAt!,
+            duration: elapsed,
+            note: pomodoroStore.noteText
+        })
 
     /** 重置为 idle（保留累计） */
     const resetToIdle = () => {
@@ -86,17 +84,11 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
     // Interval & Engine
     // ========================================================================
 
-    const startInterval = () => {
-        stopInterval()
-        intervalId = setInterval(tick, TICK_INTERVAL_MS)
-    }
-
-    const stopInterval = () => {
-        if (intervalId !== null) {
-            clearInterval(intervalId)
-            intervalId = null
-        }
-    }
+    // @driver 计时驱动（interval + visibility + destroy）
+    const driver = useTimerDriver(
+        () => tick(),
+        () => status.value === 'running'
+    )
 
     /**
      * 每 250ms 执行的 tick
@@ -105,31 +97,6 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
     const tick = () => {
         if (status.value !== 'running') return
         elapsedSeconds.value = calcElapsedSeconds()
-    }
-
-    // ========================================================================
-    // Visibility Change（页面切换回来后修正时间显示）
-    // ========================================================================
-
-    let visibilityHandler: (() => void) | null = null
-
-    const setupVisibilityListener = () => {
-        if (visibilityHandler) return
-        visibilityHandler = () => {
-            if (document.hidden) return
-            if (status.value !== 'running') return
-            requestAnimationFrame(() => {
-                if (status.value === 'running') tick()
-            })
-        }
-        document.addEventListener('visibilitychange', visibilityHandler)
-    }
-
-    const teardownVisibilityListener = () => {
-        if (visibilityHandler) {
-            document.removeEventListener('visibilitychange', visibilityHandler)
-            visibilityHandler = null
-        }
     }
 
     // ========================================================================
@@ -163,7 +130,7 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
         accumulatedMs = 0
         startTimestamp = Date.now()
         status.value = 'running'
-        startInterval()
+        driver.start()
     }
 
     /** 暂停正计时 */
@@ -172,7 +139,7 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
         accumulatedMs += Date.now() - startTimestamp
         status.value = 'paused'
         elapsedSeconds.value = calcElapsedSeconds()
-        stopInterval()
+        driver.stop()
     }
 
     /** 恢复正计时 */
@@ -180,7 +147,7 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
         if (status.value !== 'paused') return
         startTimestamp = Date.now()
         status.value = 'running'
-        startInterval()
+        driver.start()
     }
 
     /**
@@ -189,15 +156,17 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
      */
     const end = () => {
         if (status.value === 'idle') return
-        stopInterval()
+        driver.stop()
 
         const elapsed =
             status.value === 'paused' ? Math.floor(accumulatedMs / 1000) : calcElapsedSeconds()
 
         const record = buildRecord(elapsed)
-        pomodoroStore.addRecord(record).then(([, err]) => {
-            if (err !== null) console.error('[PomodoroFocus] Failed to create record:', err)
-        })
+        persistPomodoroRecord(
+            pomodoroStore.addRecord,
+            record,
+            '[PomodoroFocus] Failed to create record:'
+        )
 
         sendNotification('正计时完成', `已完成 ${formatMinutes(elapsed)} 的正计时`)
         pomodoroStore.clearCurrentSession()
@@ -210,21 +179,15 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
      */
     const reset = () => {
         if (status.value === 'idle') return
-        stopInterval()
+        driver.stop()
         pomodoroStore.clearCurrentSession()
         resetToIdle()
     }
 
     /** 销毁（清理 interval 和事件监听） */
     const destroy = () => {
-        stopInterval()
-        teardownVisibilityListener()
+        driver.destroy()
     }
-
-    // ========================================================================
-    // Initialize
-    // ========================================================================
-    setupVisibilityListener()
 
     // ========================================================================
     // Public API

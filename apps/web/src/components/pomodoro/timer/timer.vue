@@ -153,11 +153,13 @@ const handleAdjustTime = (delta: number) => {
 <style scoped>
 /* 仅 Timer 独有的 hover 显隐 ± 按钮效果 */
 .nue-div--pomodoro-timer > .nue-div--timer {
-    &:hover .nue-div--time-wrapper .nue-button--icon {
+    &:hover .nue-div--time-wrapper .nue-button--icon,
+    &:hover .nue-text--time-duration {
         opacity: 1;
     }
 
-    .nue-div--time-wrapper .nue-button--icon {
+    .nue-div--time-wrapper .nue-button--icon,
+    .nue-text--time-duration {
         opacity: 0;
         transition: opacity 0.3s ease-in-out;
     }

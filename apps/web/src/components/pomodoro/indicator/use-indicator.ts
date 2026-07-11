@@ -1,5 +1,4 @@
-import { usePomodoroStore, usePomodoroTimerStore } from '@/stores'
-import usePomodoroFocusStore from '@/stores/pomodoro-focus-store'
+import { usePomodoroRecordsStore, usePomodoroTimerStore, usePomodoroFocusStore } from '@/stores'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -12,7 +11,7 @@ export const useIndicator = () => {
      * @use pomodoroFocusStore Pomodoro 专注状态状态管理实例
      */
     const router = useRouter()
-    const pomodoroStore = usePomodoroStore()
+    const pomodoroStore = usePomodoroRecordsStore()
     const pomodoroTimerStore = usePomodoroTimerStore()
     const pomodoroFocusStore = usePomodoroFocusStore()
 

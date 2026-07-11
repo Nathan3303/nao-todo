@@ -4,7 +4,7 @@ import useTasksLoader from '@/infrastructure/hooks/use-task-loader'
 import { newTaskUseCase, type TaskStore, type TaskViewObject } from '@nao-todo/usecases/task'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import type { GoAsync } from '@nao-todo/types'
-import type useTaskDetailsStore from '@/stores/tasks/task-details-store'
+import type useTaskDetailsStore from '@/stores/tasks-view/task-details-store'
 
 type TaskDetailsStore = ReturnType<typeof useTaskDetailsStore>
 

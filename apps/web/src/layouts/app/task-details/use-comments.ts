@@ -4,7 +4,7 @@ import { TaskCommentHandler } from '@/infrastructure/handlers/task-comment'
 import { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { newTaskCommentUseCase, type TaskViewObject } from '@nao-todo/usecases/task'
-import type useTaskDetailsStore from '@/stores/tasks/task-details-store'
+import type useTaskDetailsStore from '@/stores/tasks-view/task-details-store'
 
 type TaskDetailsStore = ReturnType<typeof useTaskDetailsStore>
 

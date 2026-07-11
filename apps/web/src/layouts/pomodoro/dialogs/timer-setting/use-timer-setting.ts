@@ -1,7 +1,7 @@
 import { inject, ref } from 'vue'
 import { NueMessage } from 'nue-ui'
 import type { PomodoroTimerSettingViewObject } from '@/views/index/pomodoro/types'
-import usePomodoroStore from '@/stores/pomodoro-store'
+import { usePomodoroRecordsStore } from '@/stores/pomodoro-view'
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
 
 /**
@@ -16,7 +16,7 @@ export const useTimerSettingDialog = () => {
     /**
      * 番茄钟 store
      */
-    const store = usePomodoroStore()
+    const store = usePomodoroRecordsStore()
 
     /**
      * 保存中状态
@@ -103,3 +103,4 @@ export const useTimerSettingDialog = () => {
         handleConfirm
     }
 }
+

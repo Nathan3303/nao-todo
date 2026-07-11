@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { usePomodoroFocusStore, usePomodoroStore, usePomodoroTimerStore } from '@/stores'
+import { usePomodoroFocusStore, usePomodoroRecordsStore, usePomodoroTimerStore } from '@/stores'
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
 import type { TaskDetailsViewObject } from '../types'
@@ -11,7 +11,7 @@ const props = defineProps<{ taskDetails: TaskDetailsViewObject }>()
 /**
  * Stores
  */
-const pomodoroStore = usePomodoroStore()
+const pomodoroStore = usePomodoroRecordsStore()
 const pomodoroTimerStore = usePomodoroTimerStore()
 const pomodoroFocusStore = usePomodoroFocusStore()
 const { currentTaskId } = storeToRefs(pomodoroStore)
@@ -84,7 +84,11 @@ const executeHandler = (executeId: string) => {
     <nue-dropdown placement="bottom-center" @execute="executeHandler">
         <template #trigger="{ trigger }">
             <!-- <nue-tooltip theme="pomodoro-info" placement="top-center"> -->
-            <nue-button icon="focus3" :theme="{ small: true, secondary: isRunning }" @click="trigger">
+            <nue-button
+                icon="focus3"
+                :theme="{ small: true, secondary: isRunning }"
+                @click="trigger"
+            >
                 {{ runningInfoTitle }}
             </nue-button>
             <!-- <template #content> -->

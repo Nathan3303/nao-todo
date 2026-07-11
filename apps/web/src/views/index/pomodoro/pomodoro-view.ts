@@ -1,13 +1,13 @@
-import { inject, provide } from 'vue'
+import { APP_CONTEXT_KEY } from '@/context'
 import useResponsiveAside from '@/infrastructure/hooks/use-responsive-aside'
+import { TASK_DETAILS_PRE_CONTEXT_KEY } from '@/layouts/app/task-details/context'
+import { usePomodorosStore } from '@/stores/pomodoro-view'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import useAsideWidth from '@nao-todo/infrastructure/hooks/use-aside-width'
 import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
 import { newPomodoroUseCase } from '@nao-todo/usecases/pomodoro'
-import usePomodorosStore from '@/stores/pomodoros-store'
-import { APP_CONTEXT_KEY } from '@/context'
-import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
+import { inject, provide } from 'vue'
 import { POMODORO_VIEW_CONTEXT_KEY } from './context'
-import { TASK_DETAILS_PRE_CONTEXT_KEY } from '@/layouts/app/task-details/context'
 
 /**
  * 番茄钟视图上下文提供器
@@ -102,8 +102,4 @@ export const usePomodoroView = () => {
         getProjectName
     })
 }
-
-
-
-
 

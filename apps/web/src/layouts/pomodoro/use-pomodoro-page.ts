@@ -1,23 +1,23 @@
+import { POMODORO_TIMER_SETTING_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+import {
+    POMODORO_MAX_FOCUS_SECONDS,
+    POMODORO_MIN_FOCUS_SECONDS
+} from '@/infrastructure/constants/pomodoro'
+import type DialogManager from '@/infrastructure/hooks/use-dialog-manager'
+import usePomodoroRecordLoader from '@/infrastructure/hooks/use-pomodoro-record-loader'
+import { usePomodoroFocusStore, usePomodoroTimerStore } from '@/stores'
+import { usePomodoroRecordsStore } from '@/stores/pomodoro-view/'
+import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
+import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
+import type { PomodoroViewObject } from '@nao-todo/usecases/pomodoro'
+import { newPomodoroRecordUseCase } from '@nao-todo/usecases/pomodoro'
+import type { TaskViewObject } from '@nao-todo/usecases/task'
+import dayjs from 'dayjs'
+import { NueConfirm, NueMessage } from 'nue-ui'
 import { computed, inject, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import dayjs from 'dayjs'
-import { NueMessage, NueConfirm } from 'nue-ui'
-import usePomodoroStore from '@/stores/pomodoro-store'
-import { usePomodoroTimerStore } from '@/stores/pomodoro-timer-store'
-import { usePomodoroFocusStore } from '@/stores/pomodoro-focus-store'
-import { POMODORO_TIMER_SETTING_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
-import type DialogManager from '@/infrastructure/hooks/use-dialog-manager'
-import type { TaskViewObject } from '@nao-todo/usecases/task'
-import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import { newPomodoroRecordUseCase } from '@nao-todo/usecases/pomodoro'
-import type { PomodoroViewObject } from '@nao-todo/usecases/pomodoro'
-import usePomodoroRecordLoader from '@/infrastructure/hooks/use-pomodoro-record-loader'
-import {
-    POMODORO_MIN_FOCUS_SECONDS,
-    POMODORO_MAX_FOCUS_SECONDS
-} from '@/infrastructure/constants/pomodoro'
-import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
 
+// 番茄钟 Tab 类型
 export type PomodoroTab = 'timer' | 'focus'
 
 /**
@@ -30,7 +30,7 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
     const router = useRouter()
     const { showTaskDetails } = inject(POMODORO_VIEW_CONTEXT_KEY)!
 
-    const pomodoroStore = usePomodoroStore()
+    const pomodoroStore = usePomodoroRecordsStore()
     const timerStore = usePomodoroTimerStore()
     const focusStore = usePomodoroFocusStore()
 

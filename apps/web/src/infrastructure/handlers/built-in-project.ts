@@ -7,7 +7,7 @@ import type {
 import type { Go } from '@nao-todo/types'
 import type { BuiltInProjectUseCase } from '@nao-todo/usecases/built-in-project'
 import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import type { BuiltInProjectsStore } from '@/stores/tasks/built-in-projects-store'
+import type { BuiltInProjectsStore } from '@/stores/tasks-view/built-in-projects-store'
 
 export class BuiltInProjectHandler {
     /**
