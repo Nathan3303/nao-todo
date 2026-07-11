@@ -43,12 +43,15 @@ const phaseLabel = computed(() => {
 // @computed 进度条颜色：休息阶段使用较浅色
 const progressColor = computed(() =>
     props.phase === 'break' || props.phase === 'longBreak'
-        ? 'var(--nue-primary-color-500)'
+        ? 'var(--nue-primary-color-400)'
         : 'var(--nue-primary-color-900)'
 )
 
 // @computed 是否空闲
 const isIdle = computed(() => props.phase === 'idle')
+
+// @computed 是否休息阶段
+const isBreak = computed(() => props.phase === 'break' || props.phase === 'longBreak')
 
 // @computed 主操作按钮文字
 const actionButtonText = computed(() => {
@@ -82,7 +85,7 @@ const handleAdjustTime = (delta: number) => {
 </script>
 
 <template>
-    <nue-div theme="pomodoro-timer">
+    <nue-div theme="pomodoro-timer" :data-is-break="isBreak">
         <nue-div theme="timer">
             <nue-progress
                 :percentage="progress"
@@ -129,7 +132,7 @@ const handleAdjustTime = (delta: number) => {
                     {{ actionButtonText }}
                 </nue-button>
                 <nue-button
-                    v-if="isIdle"
+                    v-if="isIdle || !isRunning"
                     icon="setting"
                     theme="primary,icon"
                     @click="emit('openSettings')"
@@ -152,16 +155,24 @@ const handleAdjustTime = (delta: number) => {
 <style src="@/infrastructure/themes/pomodoro-timer.css" scoped></style>
 <style scoped>
 /* 仅 Timer 独有的 hover 显隐 ± 按钮效果 */
-.nue-div--pomodoro-timer > .nue-div--timer {
-    &:hover .nue-div--time-wrapper .nue-button--icon,
-    &:hover .nue-text--time-duration {
-        opacity: 1;
+.nue-div--pomodoro-timer {
+    > .nue-div--timer {
+        &:hover .nue-div--time-wrapper .nue-button--icon,
+        &:hover .nue-text--time-duration {
+            opacity: 1;
+        }
+
+        .nue-div--time-wrapper .nue-button--icon,
+        .nue-text--time-duration {
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
     }
 
-    .nue-div--time-wrapper .nue-button--icon,
-    .nue-text--time-duration {
-        opacity: 0;
-        transition: opacity 0.3s ease-in-out;
+    &[data-is-break='true'] {
+        > .nue-div--timer .nue-text--time-duration {
+            opacity: 1;
+        }
     }
 }
 

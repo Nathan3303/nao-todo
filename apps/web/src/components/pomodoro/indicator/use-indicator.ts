@@ -35,7 +35,7 @@ export const useIndicator = () => {
         if (pomodoroTimerStore.phase === 'focus') {
             return 'var(--nue-primary-color-900)'
         }
-        return 'var(--nue-primary-color-600)'
+        return 'var(--nue-primary-color-400)'
     })
 
     /**
@@ -116,4 +116,6 @@ export const useIndicator = () => {
         goToTimer
     }
 }
+
+
 

@@ -27,7 +27,7 @@ const displayDuration = computed(() => {
             <nue-div theme="task-and-startat">
                 <nue-text theme="task" :clamped="1">{{ record.taskName }}</nue-text>
                 <nue-text theme="startat">
-                    {{ record.type === 1 ? '正计时' : '番茄钟' }} - 开始于
+                    {{ record.type === 2 ? '正计时' : '番茄钟' }} - 开始于
                     {{ dayjs(record.startAt).format('HH:mm') }}
                 </nue-text>
             </nue-div>

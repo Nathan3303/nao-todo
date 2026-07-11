@@ -78,17 +78,17 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
      * @description 仅在没有当前会话时生成新 ID，避免重复创建
      */
     const generateNewSessionId = () => {
-        if (!pomodoroStore.currentRecordId) {
-            const recordId = nanoid()
-            const startAt = new Date().toISOString()
-            pomodoroStore.setCurrentSession(
-                pomodoroStore.currentTaskId,
-                pomodoroStore.currentTaskName,
-                recordId,
-                startAt
-            )
-            pomodoroStore.setNoteText('')
-        }
+        // if (!pomodoroStore.currentRecordId) {
+        const recordId = nanoid()
+        const startAt = new Date().toISOString()
+        pomodoroStore.setCurrentSession(
+            pomodoroStore.currentTaskId,
+            pomodoroStore.currentTaskName,
+            recordId,
+            startAt
+        )
+        pomodoroStore.setNoteText('')
+        // }
     }
 
     /** 构建一条专注记录 CreatePomodoroRecordViewObject */
@@ -195,18 +195,20 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
     }
 
     /** 休息结束后判断是否自动开始下一轮专注 */
-    const transitionToNextFocusOrIdle = () => {
+    const transitionToNextFocusOrIdle = (): boolean => {
         if (pomodoroStore.autoStartNextFocusSession) {
             if (autoStartCount >= pomodoroStore.autoStartNextFocusSessionCount) {
                 autoStartCount = 0
                 resetToIdle()
-                return
+                return false
             }
             autoStartCount++
             generateNewSessionId()
             enterFocusPhase()
+            return true
         } else {
             resetToIdle()
+            return false
         }
     }
 
@@ -244,8 +246,9 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
             } else {
                 completedRoundCount = 0
             }
+            // 如果没有自动开始下一轮专注，不提示专注开始
+            if (!transitionToNextFocusOrIdle()) return
             sendNotification('休息结束', '现在开始下一轮的专注计时')
-            transitionToNextFocusOrIdle()
         }
     }
 

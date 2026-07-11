@@ -27,7 +27,7 @@ const sessionCount = computed(() => {
 })
 
 const fanqieCount = computed(() => {
-    return props.records.reduce((acc, cur) => acc + (cur.type ? 0 : 1), 0)
+    return props.records.reduce((acc, cur) => acc + (cur.type ? 1 : 1), 0)
 })
 
 const durationToString = (duration: number) => {
