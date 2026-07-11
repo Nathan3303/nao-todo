@@ -6,3 +6,7 @@
     --nue-icon-ratio: 1em !important;
     --nue-icon-align-offset: 0em;
 }
+
+.nue-icon--pointer {
+    cursor: pointer;
+}

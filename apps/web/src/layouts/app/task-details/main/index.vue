@@ -140,10 +140,9 @@ const createCommentHandler = async (content: string) => {
                     />
                 </nue-div>
                 <!-- 任务详情事件 -->
-                <nue-div vertical style="padding: 0 1rem">
+                <nue-div vertical style="padding: 0 1rem 1rem; margin-bottom: auto">
                     <details-main-events />
                 </nue-div>
-                <nue-div flex="1"></nue-div>
                 <!-- 任务详情标签 -->
                 <nue-div vertical style="padding: 1rem">
                     <task-tag-bar

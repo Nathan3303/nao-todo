@@ -28,6 +28,7 @@ export type TaskDetailsContext = {
     subTasks: ComputedRef<TaskViewObject[]>
 
     taskHandler: TaskHandler
+    subTaskHandler: TaskHandler
     checkItemHandler: TaskCheckItemHandler
     commentHandler: TaskCommentHandler
 

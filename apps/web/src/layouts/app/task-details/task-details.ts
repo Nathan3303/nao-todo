@@ -50,7 +50,7 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     const taskCommentUseCase = newTaskCommentUseCase(taskDetailsStore)
 
     // @hook 子任务加载器
-    const { subTasks, subTasksLoading, subTasksError, loadSubTasks, retrySubTasks } =
+    const { subTaskUseCase, subTasks, subTasksLoading, subTasksError, loadSubTasks, retrySubTasks } =
         useSubTasks(taskDetailsStore)
 
     /**
@@ -60,6 +60,7 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
      * @use TaskCommentHandler 任务评论处理程序
      */
     const taskHandler = new TaskHandler(taskUseCase, subscriber)
+    const subTaskHandler = new TaskHandler(subTaskUseCase, subscriber)
     const taskCheckItemHandler = new TaskCheckItemHandler(taskCheckItemUseCase, subscriber)
     const taskCommentHandler = new TaskCommentHandler(taskCommentUseCase, subscriber)
 
@@ -76,7 +77,9 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     const getTaskDetails = async () => {
         if (!props.taskId) return
         error.value = ''
+        loading.value = true
         const [_task, err] = await taskUseCase.get(props.taskId)
+        loading.value = false
         if (err !== null) {
             error.value = unwrapError(err)
             return
@@ -239,6 +242,7 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         subTasks,
         // ---
         taskHandler,
+        subTaskHandler,
         checkItemHandler: taskCheckItemHandler,
         commentHandler: taskCommentHandler,
         // ---
@@ -268,4 +272,5 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
 }
 
 export default useTaskDetails
+
 

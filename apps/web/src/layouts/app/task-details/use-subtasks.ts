@@ -27,7 +27,7 @@ const useSubTasks = (taskDetailsStore: TaskDetailsStore) => {
     const subTaskUseCase = newTaskUseCase(subTaskStore)
 
     // @loader 子任务加载器
-    const subTaskLoader = useTasksLoader(subTaskUseCase, { limit: 100 })
+    const subTaskLoader = useTasksLoader(subTaskUseCase, { limit: 20 })
 
     // @state 子任务列表
     const subTasks = computed(() =>
@@ -73,6 +73,7 @@ const useSubTasks = (taskDetailsStore: TaskDetailsStore) => {
 
     // @returns
     return {
+        subTaskUseCase,
         subTasks,
         subTasksLoading,
         subTasksError,
@@ -82,3 +83,4 @@ const useSubTasks = (taskDetailsStore: TaskDetailsStore) => {
 }
 
 export default useSubTasks
+

@@ -10,12 +10,12 @@ defineOptions({ name: 'TaskDetails' })
 const props = defineProps<TaskDetailsProps>()
 const emit = defineEmits<TaskDetailsEmits>()
 
-const { error, task } = useTaskDetails(props, emit)
+const { loading, error, task } = useTaskDetails(props, emit)
 </script>
 
 <template>
     <loading-error
-        :loading="false"
+        :loading="loading"
         :empty="!task"
         :error="!!error"
         empty-image-src="/images/todo.webp"
