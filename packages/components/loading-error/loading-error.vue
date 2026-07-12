@@ -8,8 +8,8 @@ withDefaults(defineProps<LoadingErrorProps>(), {
     loadingMessage: '加载中...',
     errorMessage: '加载失败, 请刷新页面重试',
     emptyMessage: '暂无数据',
-    emptyImageSrc: '/images/empty.png',
-    emptyImageSize: '8rem'
+    emptyImageSrc: '',
+    emptyImageSize: '6rem'
 })
 </script>
 
@@ -20,7 +20,6 @@ withDefaults(defineProps<LoadingErrorProps>(), {
         :image-src="errorImageSrc"
         :image-size="errorImageSize"
         :description="$slots.error ? '' : errorMessage"
-        style="height: 100%"
     >
         <slot name="error"></slot>
     </nue-empty>
@@ -29,7 +28,6 @@ withDefaults(defineProps<LoadingErrorProps>(), {
         :image-src="emptyImageSrc"
         :image-size="emptyImageSize"
         :description="$slots.empty ? '' : emptyMessage"
-        style="height: 100%"
     >
         <slot name="empty"></slot>
     </nue-empty>
@@ -39,7 +37,7 @@ withDefaults(defineProps<LoadingErrorProps>(), {
 <style scoped>
 .nue-empty {
     height: 100%;
-    margin: var(--nue-padding-df);
+    padding: var(--nue-padding-df);
 
     &:deep(> .nue-text) {
         font-size: var(--nue-text-sm);

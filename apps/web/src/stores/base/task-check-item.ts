@@ -9,7 +9,7 @@ export const useTaskCheckItemsStoreBase = () => {
         addItem: addCheckItem,
         getItem: getCheckItem,
         setList: setCheckItems,
-        updateItem: updateCheckItem,
+        patchItem: updateCheckItem,
         removeItem: deleteCheckItem,
         updateList: updateCheckItems
     } = useMapperStoreBase<TaskCheckItemViewObject, UpdateTaskCheckItemViewObject>()

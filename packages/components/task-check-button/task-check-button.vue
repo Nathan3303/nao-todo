@@ -5,7 +5,7 @@
         :icon="iconName"
         :loading="isUpdating"
         :disabled="isUpdating"
-        @click="emit('change', !props.isDone)"
+        @click="handleClick"
         @mouseover="isHover = true"
         @mouseout="isHover = false"
     />
@@ -24,6 +24,11 @@ const isHover = ref(false)
 const iconName = computed(() => {
     return isHover.value ? 'square-check' : props.isDone ? 'square-check-fill' : 'square'
 })
+
+const handleClick = (e: Event) => {
+    e.stopPropagation()
+    emit('change', !props.isDone)
+}
 </script>
 
 <style scoped>

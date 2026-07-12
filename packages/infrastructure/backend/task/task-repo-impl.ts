@@ -32,7 +32,7 @@ export class TaskRepoImpl implements TaskRepository {
      */
     async get(id: string): GoAsync<TaskEntity> {
         // 1. 调用接口
-        const response = await this.requester.get(`/tasks/${id}`, {
+        const response = await this.requester.get(`/tasks/${id}?isDeleted=true`, {
             headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
         })
         // 2. 判断结果

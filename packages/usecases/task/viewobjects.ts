@@ -50,6 +50,7 @@ export type CreateTaskViewObject = {
 // 更新任务视图对象
 export type UpdateTaskViewObject = {
     // id: TaskViewObject['id'] // 任务 ID， 必须指定
+    updatedAt?: TaskViewObject['updatedAt']
     deletedAt?: TaskViewObject['deletedAt']
     parentTaskId?: TaskViewObject['parentTaskId']
     name?: TaskViewObject['name']
@@ -188,6 +189,7 @@ export type UpdateTaskCommentViewObject = {
     content?: TaskCommentViewObject['content']
     isTopUp?: TaskCommentViewObject['isTopUp']
 }
+
 
 
 

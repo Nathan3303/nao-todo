@@ -16,20 +16,12 @@ const { loading, error, task } = useTaskDetails(props)
     <loading-error
         :loading="loading"
         :empty="!task"
-        :error="!!error"
+        empty-message="选择待办任务以查看任务详情"
         empty-image-src="/images/todo.webp"
-        empty-image-size="8rem"
+        :error="!!error"
+        error-message="加载失败, 请刷新页面重试"
         error-image-src="/images/error.webp"
-        error-image-size="8rem"
     >
-        <!-- 错误状态 -->
-        <template #error>
-            <nue-text>加载失败, 请刷新页面重试</nue-text>
-        </template>
-        <template #empty>
-            <nue-text>选择待办任务以查看任务详情</nue-text>
-        </template>
-        <!-- 正常状态 -->
         <nue-container id="TasksTodoDetailsContainer" class="tasks-details-view">
             <details-header />
             <nue-main>
@@ -46,7 +38,6 @@ const { loading, error, task } = useTaskDetails(props)
 .nue-container#TasksTodoDetailsContainer {
     gap: 0;
 
-    > .nue-header,
     > .nue-main {
         padding: 0;
         border: none;

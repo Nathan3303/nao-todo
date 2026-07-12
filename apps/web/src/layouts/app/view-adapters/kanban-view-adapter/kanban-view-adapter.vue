@@ -9,17 +9,8 @@ import { t } from '@nao-todo/infrastructure/locales'
 defineOptions({ name: 'KanbanViewAdapter' })
 const props = defineProps<KanbanViewAdapterProps>()
 
-const {
-    tasks,
-    loading,
-    sortOptions,
-    error,
-    noTaskError,
-    handleFinishTask,
-    handleUnfinishTask,
-    handleRetry,
-    dialogManager
-} = useKanbanViewAdapter(props)
+const { tasks, loading, sortOptions, error, noTaskError, handleRetry, dialogManager } =
+    useKanbanViewAdapter(props)
 </script>
 
 <template>
@@ -70,11 +61,11 @@ const {
                         :tasks="tasks"
                         :task-use-case="taskUseCase"
                         @clear-sort-options="clearSortOptions"
-                        @delete-task="(taskId) => taskUseCase.removeTask(taskId)"
-                        @finish-task="handleFinishTask"
-                        @restore-task="(taskId) => taskUseCase.restoreTask(taskId)"
                         @show-task-details="showTaskDetails"
-                        @unfinish-task="handleUnfinishTask"
+                        @delete-task="(taskId) => taskUseCase.delete(taskId)"
+                        @restore-task="(taskId) => taskUseCase.delete(taskId)"
+                        @finish-task="(taskId) => taskUseCase.update(taskId, { state: 'done' })"
+                        @unfinish-task="(taskId) => taskUseCase.update(taskId, { state: 'todo' })"
                         @update-columns="updateColumns"
                         @update-sort-options="updateSortOptions"
                     />

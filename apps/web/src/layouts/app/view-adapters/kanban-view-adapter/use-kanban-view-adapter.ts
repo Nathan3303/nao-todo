@@ -47,22 +47,6 @@ const useKanbanViewAdapter = (props: KanbanViewAdapterProps) => {
      */
     const addNewTaskId = (taskId: string) => taskLoader.states.taskIds.add(taskId)
 
-    /**
-     * 完成任务
-     * @param taskId 任务 ID
-     */
-    const handleFinishTask = (taskId: string) => {
-        props.taskUseCase.updateTask(taskId, { state: 'done' })
-    }
-
-    /**
-     * 未完成任务
-     * @param taskId 任务 ID
-     */
-    const handleUnfinishTask = (taskId: string) => {
-        props.taskUseCase.updateTask(taskId, { state: 'todo' })
-    }
-
     watch(
         () => props.getTasksOptions,
         (newOptions) => taskLoader.loadAndReplace(newOptions),
@@ -90,6 +74,7 @@ const useKanbanViewAdapter = (props: KanbanViewAdapterProps) => {
      */
     const handleRetry = () => taskLoader.loadAndReplace()
 
+    // @returns
     return {
         dialogManager,
         tasks,
@@ -104,8 +89,6 @@ const useKanbanViewAdapter = (props: KanbanViewAdapterProps) => {
                 getTodosOptions: props.getTasksOptions
             }
         })),
-        handleFinishTask,
-        handleUnfinishTask,
         handleRetry
     }
 }

@@ -1,9 +1,10 @@
 import { ref } from 'vue'
 import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import type { TaskUseCase, TaskViewObject } from '@nao-todo/usecases/task'
+import type { TaskUseCase, TaskViewObject, UpdateTaskViewObject } from '@nao-todo/usecases/task'
 import type { ProjectViewObject } from '@nao-todo/usecases/project'
 import type useTagsStore from '@/stores/tags-store'
 import type { TaskDetailsViewObject } from './types'
+import dayjs from 'dayjs'
 
 type TagStore = ReturnType<typeof useTagsStore>
 
@@ -71,8 +72,84 @@ const useTaskViewObject = (
         }
     }
 
+    /**
+     * 更新任务详情
+     * @param id 任务 ID
+     * @param updateVO 任务更新视图对象
+     * @returns 更新结果
+     */
+    const updateTaskDetails = async (id: TaskViewObject['id'], updateVO: UpdateTaskViewObject) => {
+        if (!id) return
+        const updateError = await taskUseCase.update(id, updateVO)
+        if (updateError !== null) return
+        if (task.value === null) return
+        task.value = { ...task.value, ...updateVO, updatedAt: dayjs().toISOString() }
+    }
+
+    /**
+     * 删除任务
+     * @param id 任务 ID
+     */
+    const deleteTask = async (id: TaskViewObject['id']) => {
+        if (!id) return
+        const deleteError = await taskUseCase.delete(id)
+        if (deleteError !== null) return
+        if (task.value === null) return
+        task.value = { ...task.value, isDeleted: true, deletedAt: dayjs().toISOString() }
+    }
+
+    /**
+     * 恢复任务
+     * @param id 任务 ID
+     */
+    const restoreTask = async (id: TaskViewObject['id']) => {
+        if (!id) return
+        const restoreError = await taskUseCase.restore(id)
+        if (restoreError !== null) return
+        if (task.value === null) return
+        task.value.isDeleted = false
+        task.value.deletedAt = null
+    }
+
+    /**
+     * 放弃任务
+     * @param id 任务 ID
+     */
+    const giveUpTask = async (id: TaskViewObject['id']) => {
+        if (!id) return
+        const updateVO = { givenUpAt: dayjs().toISOString() }
+        const giveUpError = await taskUseCase.update(id, updateVO)
+        if (giveUpError !== null) return
+        if (task.value === null) return
+        task.value = { ...task.value, ...updateVO, isGivenUp: true }
+    }
+
+    /**
+     * 归档任务
+     * @param id 任务 ID
+     */
+    const ungiveUpTask = async (id: TaskViewObject['id']) => {
+        if (!id) return
+        const updateVO = { givenUpAt: '' }
+        const ungiveUpError = await taskUseCase.update(id, updateVO)
+        if (ungiveUpError !== null) return
+        if (task.value === null) return
+        task.value = { ...task.value, ...updateVO, isGivenUp: false }
+    }
+
     // @returns
-    return { task, loading, error, getTaskDetails }
+    return {
+        task,
+        loading,
+        error,
+        getTaskDetails,
+        updateTaskDetails,
+        deleteTask,
+        restoreTask,
+        giveUpTask,
+        ungiveUpTask
+    }
 }
 
 export default useTaskViewObject
+

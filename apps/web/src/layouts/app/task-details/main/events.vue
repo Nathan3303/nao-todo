@@ -125,7 +125,7 @@ watch(
                     :event="event"
                     :data-eid="event.id"
                     :on-update="(id, v) => checkItemHandler.update(id, v)"
-                    :on-delete="checkItemHandler.delete"
+                    :on-delete="(id) => checkItemHandler.delete(id)"
                     @to-task="makeCheckItemToTask"
                 />
             </nue-div>

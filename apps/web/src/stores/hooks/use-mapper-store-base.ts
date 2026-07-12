@@ -40,7 +40,7 @@ export const useMapperStoreBase = <T extends { id: string }, U = void>() => {
      * @param newItem 新映射项
      */
     const addItem = (newItem: T) => {
-        map.value.set(newItem.id, newItem as never)
+        map.value.set(newItem.id, newItem as any)
     }
 
     /**
@@ -48,7 +48,7 @@ export const useMapperStoreBase = <T extends { id: string }, U = void>() => {
      * @param newItems 新映射项
      */
     const addItems = (newItems: T[]) => {
-        newItems.forEach((item) => addItem(item as never))
+        newItems.forEach((item) => addItem(item as any))
     }
 
     /**
@@ -57,7 +57,7 @@ export const useMapperStoreBase = <T extends { id: string }, U = void>() => {
      * @param newItem 新映射项
      */
     const updateItem = (id: T['id'], newItem: T | U) => {
-        map.value.set(id, newItem as never)
+        map.value.set(id, newItem as any)
     }
 
     /**
@@ -68,7 +68,7 @@ export const useMapperStoreBase = <T extends { id: string }, U = void>() => {
     const updateItemCustomly = (id: T['id'], handler: (item: T) => T) => {
         const oldItem = map.value.get(id)
         const newItem = handler(oldItem as T)
-        map.value.set(id, newItem as never)
+        map.value.set(id, newItem as any)
     }
 
     /**

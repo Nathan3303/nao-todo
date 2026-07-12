@@ -43,6 +43,7 @@ export const usePomodoroCreator = () => {
      * 清空输入值
      */
     const clearInputsValue = () => {
+        creating.value = false
         isNameEmpty.value = false
         form.value = { type: 1, name: '', description: '', duration: 25 }
     }
@@ -50,41 +51,33 @@ export const usePomodoroCreator = () => {
     /**
      * 处理确认创建
      */
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
         const f = form.value
-
         // 检查名称
         if (!f.name.trim()) {
             isNameEmpty.value = true
-            return Promise.resolve(false)
+            return false
         }
-
         // 检查专注时长
         if (f.duration < 5 || f.duration > 180) {
             NueMessage.warn('专注时长必须在 5-180 分钟之间')
-            return Promise.resolve(false)
+            return false
         }
-
         // 调用用例创建常用番茄专注（分钟 → 秒）
         creating.value = true
-        return pomodoroUseCase
-            .create({
-                type: f.type,
-                name: f.name.trim(),
-                description: f.description.trim() || null,
-                duration: f.duration * 60
-            })
-            .then(([, error]) => {
-                if (error !== null) {
-                    console.warn(unwrapError(error))
-                    return false
-                }
-                // 处理成功结果
-                clearInputsValue()
-                NueMessage.success('常用番茄专注创建成功')
-                return true
-            })
-            .finally(() => (creating.value = false))
+        const [, error] = await pomodoroUseCase.create({
+            type: f.type,
+            name: f.name.trim(),
+            description: f.description.trim() || null,
+            duration: f.duration * 60
+        })
+        if (error !== null) {
+            console.warn(unwrapError(error))
+            return false
+        }
+        // 处理成功结果
+        NueMessage.success('常用番茄专注创建成功')
+        return true
     }
 
     /**
@@ -105,3 +98,4 @@ export const usePomodoroCreator = () => {
         clearInputsValue
     }
 }
+

@@ -27,10 +27,10 @@ const {
     subTaskProgress,
     isCommenting,
     commentHandler,
-    taskHandler,
     tags,
     dialogManager,
-    switchTaskDetails
+    switchTaskDetails,
+    updateTaskDetails
 } = inject(TASK_DETAILS_CONTEXT_KEY)!
 
 const backToParent = () => {
@@ -40,30 +40,29 @@ const backToParent = () => {
 
 const updateTaskState = (v: unknown) => {
     if (vo.value === null) return
-    taskHandler.update(vo.value.id, { state: v as TaskViewObject['state'] })
+    updateTaskDetails(vo.value.id, { state: v as TaskViewObject['state'] })
 }
 
 const updateTaskPriority = (v: unknown) => {
     if (vo.value === null) return
-    taskHandler.update(vo.value.id, { priority: v as TaskViewObject['priority'] })
+    updateTaskDetails(vo.value.id, { priority: v as TaskViewObject['priority'] })
 }
 
 const updateTaskName = () => {
     if (vo.value === null) return
-    taskHandler.updateTaskName(vo.value.id, vo.value.name as TaskViewObject['name'])
+    updateTaskDetails(vo.value.id, { name: vo.value.name as TaskViewObject['name'] })
 }
 
 const updateTaskDescription = () => {
     if (vo.value === null) return
-    taskHandler.updateTaskDescription(
-        vo.value.id,
-        vo.value.description as TaskViewObject['description']
-    )
+    updateTaskDetails(vo.value.id, {
+        description: vo.value.description as TaskViewObject['description']
+    })
 }
 
 const updateTaskTags = (v: unknown) => {
     if (vo.value === null) return
-    taskHandler.update(vo.value.id, { tags: v as TaskViewObject['tags'] })
+    updateTaskDetails(vo.value.id, { tags: v as TaskViewObject['tags'] })
 }
 
 const createCommentHandler = async (content: string) => {

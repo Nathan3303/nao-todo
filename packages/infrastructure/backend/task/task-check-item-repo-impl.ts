@@ -84,7 +84,7 @@ export class TaskCheckItemRepoImpl implements TaskCheckItemRepository {
         })
         // 3. 判断结果
         const res = response.data as ResponseData
-        if (res.code !== 50010) {
+        if (res.code !== 50020) {
             return res.message
         }
         // 4. 返回

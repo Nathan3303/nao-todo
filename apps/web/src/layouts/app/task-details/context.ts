@@ -12,7 +12,8 @@ import {
     TaskCheckItemViewObject,
     TaskCommentViewObject,
     TaskUseCase,
-    TaskViewObject
+    TaskViewObject,
+    UpdateTaskViewObject
 } from '@nao-todo/usecases/task'
 
 // 任务详情上下文
@@ -42,6 +43,12 @@ export type TaskDetailsContext = {
     commentsError: Ref<string>
     subTasksLoading: ComputedRef<boolean>
     subTasksError: ComputedRef<string>
+
+    updateTaskDetails: (id: TaskViewObject['id'], updateVO: UpdateTaskViewObject) => Promise<void>
+    deleteTask: (id: TaskViewObject['id']) => Promise<void>
+    restoreTask: (id: TaskViewObject['id']) => Promise<void>
+    giveUpTask: (id: TaskViewObject['id']) => Promise<void>
+    ungiveUpTask: (id: TaskViewObject['id']) => Promise<void>
 
     switchTaskDetails: (taskId: TaskViewObject['id']) => void
     closeDetails: () => void

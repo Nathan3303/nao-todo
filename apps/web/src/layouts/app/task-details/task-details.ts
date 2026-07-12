@@ -28,11 +28,17 @@ const useTaskDetails = (props: TaskDetailsProps) => {
     const { tags } = storeToRefs(tagStore)
 
     // @hook 主任务详情
-    const { task, loading, error, getTaskDetails } = useTaskViewObject(
-        taskUseCase,
-        tagStore,
-        getProjectName
-    )
+    const {
+        task,
+        loading,
+        error,
+        getTaskDetails,
+        updateTaskDetails,
+        deleteTask,
+        restoreTask,
+        giveUpTask,
+        ungiveUpTask
+    } = useTaskViewObject(taskUseCase, tagStore, getProjectName)
 
     // @hook 检查事项
     const {
@@ -142,6 +148,11 @@ const useTaskDetails = (props: TaskDetailsProps) => {
         subTasksLoading,
         subTasksError,
         // ---
+        updateTaskDetails,
+        deleteTask,
+        restoreTask,
+        giveUpTask,
+        ungiveUpTask,
         switchTaskDetails,
         closeDetails,
         // ---
@@ -159,3 +170,4 @@ const useTaskDetails = (props: TaskDetailsProps) => {
 }
 
 export default useTaskDetails
+
