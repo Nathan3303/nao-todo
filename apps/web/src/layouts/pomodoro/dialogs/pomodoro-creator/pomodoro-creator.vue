@@ -76,7 +76,7 @@ onMounted(() => {
                         <nue-select-option label="正计时" :value="2" />
                     </nue-select>
                 </nue-div>
-                <nue-div align="center" justify="space-between">
+                <nue-div v-if="form.type === 1" align="center" justify="space-between">
                     <nue-div vertical gap="0">
                         <nue-text size="sm">专注时长（分钟）</nue-text>
                         <nue-text size="xs" color="var(--nue-primary-color-500)">
