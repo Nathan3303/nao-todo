@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { PomodoroFocusRing } from '@/components/pomodoro'
+import { formatTimeOfDay } from '@/infrastructure/utils/pomodoro'
 import type { TimerEmits, TimerProps } from './types'
 
 defineOptions({ name: 'PomodoroTimerComp' })
@@ -31,13 +33,7 @@ const phaseLabel = computed(() => {
     const now = Date.now()
     const startTime = new Date(now - elapsed * 1000)
     const endTime = new Date(now + props.remainingSeconds * 1000)
-    const fmt = (d: Date) =>
-        String(d.getHours()).padStart(2, '0') +
-        ':' +
-        String(d.getMinutes()).padStart(2, '0') +
-        ':' +
-        String(d.getSeconds()).padStart(2, '0')
-    return `${fmt(startTime)} - ${fmt(endTime)}`
+    return `${formatTimeOfDay(startTime)} - ${formatTimeOfDay(endTime)}`
 })
 
 // @computed 进度条颜色：休息阶段使用较浅色
@@ -87,13 +83,12 @@ const handleAdjustTime = (delta: number) => {
 <template>
     <nue-div theme="pomodoro-timer" :data-is-break="isBreak">
         <nue-div theme="timer">
-            <nue-progress
+            <pomodoro-focus-ring
                 :percentage="progress"
-                type="circle"
-                hide-text
+                :inner-color="progressColor"
+                :is-running="isRunning"
                 :scale="3"
                 :stroke-width="1"
-                :color="progressColor"
             />
             <nue-div theme="time-wrapper">
                 <nue-text v-if="!isIdle" theme="time-duration">{{ phaseLabel }}</nue-text>

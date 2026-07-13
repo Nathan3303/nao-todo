@@ -34,9 +34,7 @@ export const pomodoroEntityToViewObject = (entity: PomodoroEntity): PomodoroView
 /**
  * 常用番茄专注实体列表 → 常用番茄专注视图对象列表
  */
-export const pomodoroEntitiesToViewObjects = (
-    entities: PomodoroEntity[]
-): PomodoroViewObject[] => {
+export const pomodoroEntitiesToViewObjects = (entities: PomodoroEntity[]): PomodoroViewObject[] => {
     return entities.map(pomodoroEntityToViewObject)
 }
 
@@ -86,15 +84,15 @@ export const createPomodoroRecordViewObjectToValueObject = (
 ): CreatePomodoroRecordValueObject => {
     return new CreatePomodoroRecordValueObject(
         viewObject.sessionId,
-        viewObject.pomodoroId,
         viewObject.type,
-        viewObject.taskId,
-        viewObject.taskName,
-        viewObject.description,
         viewObject.startAt,
         viewObject.endAt,
         viewObject.duration,
-        viewObject.note
+        viewObject.pomodoroId || '',
+        viewObject.taskId || '',
+        viewObject.taskId ? viewObject.taskName : '',
+        viewObject.description || '',
+        viewObject.note || ''
     )
 }
 

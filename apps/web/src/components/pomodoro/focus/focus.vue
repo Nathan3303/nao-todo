@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { PomodoroFocusRing } from '@/components/pomodoro'
+import { formatClock, formatTimeOfDay } from '@/infrastructure/utils/pomodoro'
 import type { FocusEmits, FocusProps } from './types'
 
 defineOptions({ name: 'PomodoroFocusComp' })
@@ -8,35 +9,13 @@ const props = defineProps<FocusProps>()
 const emit = defineEmits<FocusEmits>()
 
 // @computed 显示时间 MM:SS 或 HH:MM:SS
-const displayTime = computed(() => {
-    const secs = props.elapsedSeconds
-    const h = Math.floor(secs / 3600)
-    const m = Math.floor((secs % 3600) / 60)
-    const s = secs % 60
-    if (h > 0) {
-        return (
-            String(h).padStart(2, '0') +
-            ':' +
-            String(m).padStart(2, '0') +
-            ':' +
-            String(s).padStart(2, '0')
-        )
-    }
-    return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0')
-})
+const displayTime = computed(() => formatClock(props.elapsedSeconds))
 
 // @computed 时间范围标签
 const phaseLabel = computed(() => {
     if (props.status === 'idle') return ''
-    const now = Date.now()
-    const startTime = new Date(now - props.elapsedSeconds * 1000)
-    const fmt = (d: Date) =>
-        String(d.getHours()).padStart(2, '0') +
-        ':' +
-        String(d.getMinutes()).padStart(2, '0') +
-        ':' +
-        String(d.getSeconds()).padStart(2, '0')
-    return `开始于 ${fmt(startTime)}`
+    const startTime = new Date(Date.now() - props.elapsedSeconds * 1000)
+    return `开始于 ${formatTimeOfDay(startTime)}`
 })
 
 // @computed 是否空闲

@@ -125,15 +125,15 @@ export const createPomodoroRecordValueObjectToReq = (
 ): CreatePomodoroRecordReq => {
     return {
         sessionId: createVO.sessionId,
-        pomodoroId: createVO.pomodoroId || null,
+        pomodoroId: createVO.pomodoroId,
         type: createVO.type,
         taskId: createVO.taskId,
         taskName: createVO.taskName,
-        description: createVO.description || null,
+        description: createVO.description,
         startAt: createVO.startAt,
         endAt: createVO.endAt,
         duration: createVO.duration,
-        note: createVO.note || null
+        note: createVO.note
     }
 }
 
