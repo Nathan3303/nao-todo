@@ -9,6 +9,14 @@ import {
     persistPomodoroRecord
 } from '@/infrastructure/utils/pomodoro'
 import useTimerDriver from '@/infrastructure/hooks/use-timer-driver'
+import {
+    saveFocusSnapshot,
+    loadFocusSnapshot,
+    clearFocusSnapshot
+} from '@/infrastructure/utils/pomodoro-persistence'
+
+/** 计时快照保存间隔（毫秒） */
+const PERSIST_INTERVAL_MS = 5000
 
 /**
  * 全局正计时 Store
@@ -42,6 +50,47 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
     // 记录创建所需（持久化，end() 时读取）
     let sessionId: string | null = null
     let recordStartedAt: string | null = null
+
+    // 计时快照持久化定时器（每 5s 保存一次，setInterval 独立于 driver 的 250ms）
+    let persistIntervalId: ReturnType<typeof setInterval> | null = null
+
+    // ========================================================================
+    // Persistence（localStorage 快照）
+    // ========================================================================
+
+    /** 将当前正计时状态保存为快照（仅在非 idle 时） */
+    const persist = () => {
+        if (status.value === 'idle') return
+        saveFocusSnapshot({
+            status: status.value,
+            accumulatedMs,
+            startTimestamp,
+            sessionId,
+            recordStartedAt,
+            session: {
+                taskId: pomodoroStore.currentTaskId,
+                taskName: pomodoroStore.currentTaskName,
+                pomodoroId: pomodoroStore.currentPomodoroId,
+                pomodoroName: pomodoroStore.currentPomodoroName,
+                noteText: pomodoroStore.noteText
+            },
+            savedAt: Date.now()
+        })
+    }
+
+    /** 启动 5s 持久化定时器 */
+    const startPersistTimer = () => {
+        stopPersistTimer()
+        persistIntervalId = setInterval(persist, PERSIST_INTERVAL_MS)
+    }
+
+    /** 停止 5s 持久化定时器 */
+    const stopPersistTimer = () => {
+        if (persistIntervalId !== null) {
+            clearInterval(persistIntervalId)
+            persistIntervalId = null
+        }
+    }
 
     // ========================================================================
     // Helper Functions
@@ -78,6 +127,8 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
         accumulatedMs = 0
         sessionId = null
         recordStartedAt = null
+        stopPersistTimer()
+        clearFocusSnapshot()
     }
 
     // ========================================================================
@@ -131,6 +182,8 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
         startTimestamp = Date.now()
         status.value = 'running'
         driver.start()
+        startPersistTimer()
+        persist()
     }
 
     /** 暂停正计时 */
@@ -140,6 +193,7 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
         status.value = 'paused'
         elapsedSeconds.value = calcElapsedSeconds()
         driver.stop()
+        persist()
     }
 
     /** 恢复正计时 */
@@ -148,6 +202,7 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
         startTimestamp = Date.now()
         status.value = 'running'
         driver.start()
+        persist()
     }
 
     /**
@@ -186,8 +241,53 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
 
     /** 销毁（清理 interval 和事件监听） */
     const destroy = () => {
+        stopPersistTimer()
         driver.destroy()
     }
+
+    /**
+     * 从 localStorage 快照恢复正计时状态
+     * @description 应用加载（store setup）时调用，通过绝对时间戳的时间差恢复。
+     */
+    const restoreFromStorage = () => {
+        const snapshot = loadFocusSnapshot()
+        if (!snapshot) return
+
+        // 恢复本地变量
+        sessionId = snapshot.sessionId
+        recordStartedAt = snapshot.recordStartedAt
+        accumulatedMs = snapshot.accumulatedMs
+
+        // 恢复会话信息
+        if (snapshot.sessionId && snapshot.recordStartedAt) {
+            pomodoroStore.setCurrentSession(
+                snapshot.session.taskId,
+                snapshot.session.taskName,
+                snapshot.sessionId,
+                snapshot.recordStartedAt
+            )
+        }
+        pomodoroStore.selectPomodoro(snapshot.session.pomodoroId, snapshot.session.pomodoroName)
+        pomodoroStore.setNoteText(snapshot.session.noteText)
+
+        if (snapshot.status === 'running') {
+            startTimestamp = snapshot.startTimestamp
+            status.value = 'running'
+            elapsedSeconds.value = calcElapsedSeconds()
+            driver.start()
+            startPersistTimer()
+        } else {
+            startTimestamp = 0
+            status.value = 'paused'
+            elapsedSeconds.value = calcElapsedSeconds()
+            startPersistTimer()
+        }
+    }
+
+    // ========================================================================
+    // Initialize
+    // ========================================================================
+    restoreFromStorage()
 
     // ========================================================================
     // Public API

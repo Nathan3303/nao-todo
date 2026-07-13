@@ -14,6 +14,14 @@ import {
     persistPomodoroRecord
 } from '@/infrastructure/utils/pomodoro'
 import useTimerDriver from '@/infrastructure/hooks/use-timer-driver'
+import {
+    saveTimerSnapshot,
+    loadTimerSnapshot,
+    clearTimerSnapshot
+} from '@/infrastructure/utils/pomodoro-persistence'
+
+/** 计时快照保存间隔（毫秒） */
+const PERSIST_INTERVAL_MS = 5000
 
 /**
  * 全局番茄钟计时器 Store
@@ -49,6 +57,52 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
     let breakWarningSent = false
     let completedRoundCount = 0
     let autoStartCount = 0
+
+    // 计时快照持久化定时器（每 5s 保存一次，setInterval 独立于 driver 的 250ms）
+    let persistIntervalId: ReturnType<typeof setInterval> | null = null
+
+    // ========================================================================
+    // Persistence（localStorage 快照）
+    // ========================================================================
+
+    /** 将当前计时状态保存为快照（仅在非 idle 时） */
+    const persist = () => {
+        if (phase.value === 'idle') return
+        saveTimerSnapshot({
+            phase: phase.value as 'focus' | 'break' | 'longBreak',
+            status: status.value,
+            totalSeconds: totalSeconds.value,
+            targetEndTime,
+            pausedRemainingMs,
+            breakWarningSent,
+            completedRoundCount,
+            autoStartCount,
+            recordId: pomodoroStore.currentRecordId,
+            recordStartAt: pomodoroStore.currentRecordStartAt,
+            session: {
+                taskId: pomodoroStore.currentTaskId,
+                taskName: pomodoroStore.currentTaskName,
+                pomodoroId: pomodoroStore.currentPomodoroId,
+                pomodoroName: pomodoroStore.currentPomodoroName,
+                noteText: pomodoroStore.noteText
+            },
+            savedAt: Date.now()
+        })
+    }
+
+    /** 启动 5s 持久化定时器 */
+    const startPersistTimer = () => {
+        stopPersistTimer()
+        persistIntervalId = setInterval(persist, PERSIST_INTERVAL_MS)
+    }
+
+    /** 停止 5s 持久化定时器 */
+    const stopPersistTimer = () => {
+        if (persistIntervalId !== null) {
+            clearInterval(persistIntervalId)
+            persistIntervalId = null
+        }
+    }
 
     // ========================================================================
     // Helper Functions
@@ -166,6 +220,8 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
         targetEndTime = 0
         pausedRemainingMs = 0
         breakWarningSent = false
+        stopPersistTimer()
+        clearTimerSnapshot()
     }
 
     /** 当前阶段完成后进入休息阶段（自动判断短休息/长休息） */
@@ -181,6 +237,8 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
         targetEndTime = Date.now() + nextDuration * 1000
         status.value = 'running'
         driver.start()
+        startPersistTimer()
+        persist()
     }
 
     /** 进入专注阶段（用于自动开始） */
@@ -192,6 +250,8 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
         targetEndTime = Date.now() + fd * 1000
         status.value = 'running'
         driver.start()
+        startPersistTimer()
+        persist()
     }
 
     /** 休息结束后判断是否自动开始下一轮专注 */
@@ -267,6 +327,57 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
     }
 
     /**
+     * 从 localStorage 快照恢复计时状态
+     * @description 应用加载（store setup）时调用，通过绝对时间戳的时间差恢复；
+     *              恢复成功返回 true，无快照返回 false。
+     */
+    const restoreFromStorage = (): boolean => {
+        const snapshot = loadTimerSnapshot()
+        if (!snapshot) return false
+
+        // 恢复会话信息（记录创建所需）
+        if (snapshot.recordId && snapshot.recordStartAt) {
+            pomodoroStore.setCurrentSession(
+                snapshot.session.taskId,
+                snapshot.session.taskName,
+                snapshot.recordId,
+                snapshot.recordStartAt
+            )
+        }
+        pomodoroStore.selectPomodoro(snapshot.session.pomodoroId, snapshot.session.pomodoroName)
+        pomodoroStore.setNoteText(snapshot.session.noteText)
+
+        // 恢复引擎变量
+        totalSeconds.value = snapshot.totalSeconds
+        breakWarningSent = snapshot.breakWarningSent
+        completedRoundCount = snapshot.completedRoundCount
+        autoStartCount = snapshot.autoStartCount
+        phase.value = snapshot.phase
+
+        if (snapshot.status === 'running') {
+            targetEndTime = snapshot.targetEndTime
+            const remaining = Math.max(0, Math.ceil((targetEndTime - Date.now()) / 1000))
+            status.value = 'running'
+            if (remaining > 0) {
+                remainingSeconds.value = remaining
+                driver.start()
+                startPersistTimer()
+            } else {
+                // 关闭期间当前阶段已结束：补偿完成一个阶段
+                remainingSeconds.value = 0
+                handlePhaseComplete()
+            }
+        } else {
+            pausedRemainingMs = snapshot.pausedRemainingMs
+            status.value = 'paused'
+            remainingSeconds.value = calcRemaining()
+            startPersistTimer()
+        }
+
+        return true
+    }
+
+    /**
      * 开始专注
      * @description 由 handleStart（UI 层）调用，开始前已处理 NueConfirm 等交互
      */
@@ -284,6 +395,8 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
         remainingSeconds.value = pomodoroStore.focusDuration
         targetEndTime = Date.now() + pomodoroStore.focusDuration * 1000
         driver.start()
+        startPersistTimer()
+        persist()
     }
 
     /** 暂停当前阶段 */
@@ -293,6 +406,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
         pausedRemainingMs = targetEndTime - Date.now()
         remainingSeconds.value = Math.max(0, Math.ceil(pausedRemainingMs / 1000))
         driver.stop()
+        persist()
     }
 
     /** 恢复暂停 */
@@ -302,6 +416,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
         targetEndTime = Date.now() + pausedRemainingMs
         remainingSeconds.value = Math.max(0, Math.ceil(pausedRemainingMs / 1000))
         driver.start()
+        persist()
     }
 
     /**
@@ -366,12 +481,14 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
             remainingSeconds.value = newRemaining
             totalSeconds.value += delta
             targetEndTime = Date.now() + newRemaining * 1000
+            persist()
         } else if (status.value === 'paused') {
             const newRemaining = calcRemaining() + delta
             if (newRemaining <= 0) return
             remainingSeconds.value = newRemaining
             totalSeconds.value += delta
             pausedRemainingMs = newRemaining * 1000
+            persist()
         }
     }
 
@@ -392,13 +509,14 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
      * @description 应用关闭或 logout 时调用
      */
     const destroy = () => {
+        stopPersistTimer()
         driver.destroy()
     }
 
     // ========================================================================
     // Initialize
     // ========================================================================
-    initialize()
+    if (!restoreFromStorage()) initialize()
 
     // ========================================================================
     // Public API
