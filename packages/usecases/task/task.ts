@@ -21,6 +21,7 @@ import {
     TaskRepoImpl
 } from '@nao-todo/infrastructure/backend/task'
 import type { TaskStore } from './store'
+import { QueryOptionsValueObject } from '@nao-todo/domain/shares/valueobjects/query-options'
 
 /**
  * 任务用例
@@ -67,8 +68,10 @@ export class TaskUseCase {
         taskIds: TaskViewObject['id'][]
         pagination?: ResponseDataPagination
     }> {
+        // 数据转换
+        const queryOptionsVO = new QueryOptionsValueObject(getTasksOptions)
         // 获取任务实体列表
-        const [listResult, err] = await this.taskDomain.listTasks(getTasksOptions)
+        const [listResult, err] = await this.taskDomain.listTasks(queryOptionsVO)
         if (err !== null) return [null, err]
         // 实体转换为视图对象
         const { taskEntities, pagination } = listResult

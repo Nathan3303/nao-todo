@@ -1,9 +1,9 @@
 import { TaskCheckItemRepository } from '../repositories/task-check-item'
 import { TaskCommentRepository } from '../repositories/task-comment'
 import { QueryOptionsValueObject } from '../../shares/valueobjects/query-options'
-import type { GetTasksOptions, GoAsync, ResponseDataPagination } from '@nao-todo/types'
 import type { TaskRepository } from '../repositories/task'
 import type { TaskEntity } from '../entities/task'
+import type { GoAsync, ResponseDataPagination } from '@nao-todo/types'
 
 /**
  * 任务领域服务
@@ -26,13 +26,13 @@ export class TaskDomain {
      * @returns 任务实体列表
      */
     async listTasks(
-        listOptions?: GetTasksOptions
+        listOptions?: QueryOptionsValueObject
     ): GoAsync<{ taskEntities: TaskEntity[]; pagination?: ResponseDataPagination }> {
         // 1. 转换查询选项
         const queryOptionsVO = new QueryOptionsValueObject(listOptions || {})
         const queryString = queryOptionsVO.toString((key, value) => {
             if (key !== 'sort') return
-            const sortValue = value as GetTasksOptions['sort']
+            const sortValue = value as { field: string; order: string }
             if (!sortValue?.field) return void 0
             return `${sortValue.field}:${sortValue.order}`
         })
@@ -40,5 +40,4 @@ export class TaskDomain {
         return await this.taskRepo.list(queryString)
     }
 }
-
 
