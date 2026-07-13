@@ -26,18 +26,18 @@ export class TaskDomain {
      * @returns 任务实体列表
      */
     async listTasks(
-        listOptions?: QueryOptionsValueObject
+        listOptions: QueryOptionsValueObject
     ): GoAsync<{ taskEntities: TaskEntity[]; pagination?: ResponseDataPagination }> {
         // 1. 转换查询选项
-        const queryOptionsVO = new QueryOptionsValueObject(listOptions || {})
-        const queryString = queryOptionsVO.toString((key, value) => {
+        const queryString = listOptions.toString((key, value) => {
             if (key !== 'sort') return
             const sortValue = value as { field: string; order: string }
-            if (!sortValue?.field) return void 0
+            if (!sortValue?.field) return
             return `${sortValue.field}:${sortValue.order}`
         })
         // 2. 调用仓库方法
         return await this.taskRepo.list(queryString)
     }
 }
+
 

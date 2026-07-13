@@ -76,10 +76,10 @@ export class TaskUseCase {
         // 实体转换为视图对象
         const { taskEntities, pagination } = listResult
         const taskViewObjects = taskEntitiesToViewObjects(taskEntities)
+        const taskIds = taskViewObjects.map((task) => task.id)
         // 存储任务列表
         this.taskStore.addTasks(taskViewObjects)
-        // 返回任务ID列表 - 过滤掉子任务
-        const taskIds = taskViewObjects.map((task) => task.id)
+        // 返回任务ID列表
         return [{ taskIds, pagination }, null]
     }
 
@@ -208,4 +208,5 @@ export const newTaskUseCase = (taskStore: TaskStore) => {
     const taskDomain = new TaskDomain(taskRepo, taskCheckItemRepo, taskCommentRepo)
     return new TaskUseCase(taskDomain, taskRepo, taskStore)
 }
+
 

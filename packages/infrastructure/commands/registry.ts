@@ -12,9 +12,9 @@ export class CommandRegistry {
      * @param command 命令对象
      */
     register(command: Command): void {
-        if (this.commands.has(command.id)) {
-            console.warn(`[CommandRegistry] 命令 "${command.id}" 已存在，将被覆盖`)
-        }
+        // if (this.commands.has(command.id)) {
+        // console.warn(`[CommandRegistry] 命令 "${command.id}" 已存在，将被覆盖`)
+        // }
         this.commands.set(command.id, command)
     }
 
@@ -99,3 +99,4 @@ export class CommandRegistry {
         return this.commands.size
     }
 }
+

@@ -39,7 +39,7 @@ export class QueryOptionsValueObject {
      */
     public toString(eachHandler?: (key: string, value: any) => string | void): string {
         const queryPairs: string[] = []
-        // 1. 判断是否为空对象
+        // 1. 判断是否为空对象，为空则返回空字符串
         if (Object.keys(this.options).length === 0) return ''
         // 2. 遍历对象
         for (const key in this.options) {
@@ -47,6 +47,7 @@ export class QueryOptionsValueObject {
             if (!Object.prototype.hasOwnProperty.call(this.options, key)) continue
             // 2.1 获取值
             const value = this.options[key]
+            // console.log(key, value)
             // 2.2 判断值是否为空
             if (value === void 0 || value === null || value === '') continue
             // 2.3 判断是否有 eachHandler，如果有则交给 eachHandler 处理
@@ -63,7 +64,10 @@ export class QueryOptionsValueObject {
             queryPairs.push(`${encodeURIComponent(key)}=${encodeURIComponent(normalizedValue)}`)
         }
         // 3. 拼接查询字符串并返回
-        return queryPairs.join('&')
+        const queryString = queryPairs.join('&')
+        // console.log(queryPairs, queryString)
+        return queryString
     }
 }
+
 
