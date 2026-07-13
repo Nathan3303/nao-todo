@@ -2,13 +2,15 @@ import {
     CreatePomodoroRecordValueObject,
     CreatePomodoroValueObject,
     PomodoroEntity,
-    PomodoroRecordEntity
+    PomodoroRecordEntity,
+    UpdatePomodoroValueObject
 } from '@nao-todo/domain/pomodoro'
 import type {
     CreatePomodoroRecordViewObject,
     CreatePomodoroViewObject,
     PomodoroRecordViewObject,
-    PomodoroViewObject
+    PomodoroViewObject,
+    UpdatePomodoroViewObject
 } from './viewobjects'
 import dayjs from 'dayjs'
 
@@ -50,6 +52,23 @@ export const createPomodoroViewObjectToValueObject = (
         viewObject.description ?? '',
         viewObject.duration
     )
+}
+
+/**
+ * 更新常用番茄专注视图对象 → 更新常用番茄专注值对象
+ */
+export const updatePomodoroViewObjectToValueObject = (
+    id: string,
+    viewObject: UpdatePomodoroViewObject
+): UpdatePomodoroValueObject => {
+    const valueObject = new UpdatePomodoroValueObject(id)
+    if (viewObject.type !== void 0) valueObject.type = viewObject.type
+    if (viewObject.name !== void 0) valueObject.name = viewObject.name
+    if (viewObject.description !== void 0) {
+        valueObject.description = viewObject.description ?? ''
+    }
+    if (viewObject.duration !== void 0) valueObject.duration = viewObject.duration
+    return valueObject
 }
 
 /**

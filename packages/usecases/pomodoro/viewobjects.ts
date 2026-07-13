@@ -30,6 +30,11 @@ export type CreatePomodoroViewObject = {
     duration: PomodoroViewObject['duration']
 }
 
+/**
+ * 更新常用番茄专注视图对象
+ */
+export type UpdatePomodoroViewObject = Partial<CreatePomodoroViewObject>
+
 // --- Pomodoro Record ---
 
 /**

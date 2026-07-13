@@ -13,6 +13,7 @@ const {
     pomodoros,
     selectedPomodoro,
     handleSelect,
+    handleEdit,
     records,
     recordLoading,
     recordPage,
@@ -66,12 +67,11 @@ const typeToString = (type: number) => (type === 1 ? '番茄专注' : '正计时
                                 :data-selected="item.id === selectedId"
                                 @click="handleSelect(item.id)"
                             >
-                                <nue-div theme="name-and-type">
-                                    <nue-text theme="name" :clamped="1">{{ item.name }}</nue-text>
-                                    <nue-text theme="type">{{ typeToString(item.type) }}</nue-text>
-                                </nue-div>
-                                <nue-text theme="duration">
-                                    {{ durationToString(item.duration) }}
+                                <nue-text theme="name" :clamped="1">{{ item.name }}</nue-text>
+                                <nue-text theme="meta">
+                                    {{ typeToString(item.type) }}，{{
+                                        durationToString(item.duration)
+                                    }}
                                 </nue-text>
                             </nue-div>
                         </nue-div>
@@ -85,6 +85,12 @@ const typeToString = (type: number) => (type === 1 ? '番茄专注' : '正计时
                             <nue-text theme="detail-type">
                                 {{ typeToString(selectedPomodoro.type) }}
                             </nue-text>
+                            <nue-button
+                                theme="icon,ghost,small"
+                                icon="edit"
+                                title="编辑"
+                                @click="handleEdit"
+                            />
                         </nue-div>
                         <nue-text v-if="selectedPomodoro.description" theme="detail-description">
                             {{ selectedPomodoro.description }}
@@ -247,27 +253,21 @@ const typeToString = (type: number) => (type === 1 ? '番茄专注' : '正计时
         background-color: var(--nue-primary-color-200);
     }
 
-    > .nue-div--name-and-type {
-        flex-direction: column;
-        gap: var(--nue-gap-2xs);
-        overflow: hidden;
+    > .nue-text--name {
+        font-size: var(--nue-text-df2);
+        font-weight: 500;
         flex: auto;
-
-        > .nue-text--name {
-            font-size: var(--nue-text-df2);
-            font-weight: 500;
-        }
-
-        > .nue-text--type {
-            font-size: var(--nue-text-sm);
-            color: var(--nue-primary-color-600);
-        }
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        min-width: 0;
     }
 
-    > .nue-text--duration {
-        font-size: var(--nue-text-df2);
+    > .nue-text--meta {
+        font-size: var(--nue-text-sm);
         color: var(--nue-primary-color-600);
         flex: none;
+        white-space: nowrap;
     }
 }
 
@@ -300,6 +300,11 @@ const typeToString = (type: number) => (type === 1 ? '番茄专注' : '正计时
             > .nue-text--detail-type {
                 font-size: var(--nue-text-sm);
                 color: var(--nue-primary-color-600);
+            }
+
+            > .nue-button {
+                margin-left: auto;
+                align-self: center;
             }
         }
 

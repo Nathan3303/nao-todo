@@ -3,11 +3,12 @@ import { newPomodoroRecordRepository, newPomodoroRepository, PomodoroRepoImpl } 
 import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 import { GoAsync } from '@nao-todo/types'
 import { PomodoroStore } from './store'
-import { CreatePomodoroViewObject, PomodoroType, PomodoroViewObject } from './viewobjects'
+import { CreatePomodoroViewObject, PomodoroType, PomodoroViewObject, UpdatePomodoroViewObject } from './viewobjects'
 import {
     createPomodoroViewObjectToValueObject,
     pomodoroEntitiesToViewObjects,
-    pomodoroEntityToViewObject
+    pomodoroEntityToViewObject,
+    updatePomodoroViewObjectToValueObject
 } from './converters'
 
 /**
@@ -43,6 +44,24 @@ export class PomodoroUseCase {
         this.store.addPomodoro(viewObject)
         // 5. 返回
         return [viewObject, null]
+    }
+
+    /**
+     * 更新常用番茄专注
+     * @param id 常用番茄专注 ID
+     * @param updateViewObject 更新常用番茄专注视图对象
+     * @returns 错误信息
+     */
+    async update(id: string, updateViewObject: UpdatePomodoroViewObject): GoAsync<void> {
+        // 1. 视图对象 → 值对象
+        const valueObject = updatePomodoroViewObjectToValueObject(id, updateViewObject)
+        // 2. 调用领域服务
+        const err = await this.pomodoroDomain.update(valueObject)
+        if (err !== null) return err
+        // 3. 就地更新存储
+        this.store.patchPomodoro(id, { ...updateViewObject })
+        // 4. 返回
+        return null
     }
 
     /**

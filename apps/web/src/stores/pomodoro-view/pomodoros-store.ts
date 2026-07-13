@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { usePomodorosStoreBase } from '../base'
 
 export default defineStore('PomodorosStore', () => {
-    const { pomodoros, setPomodoros, addPomodoro, getPomodoro, getAllPomodoros } =
+    const { pomodoros, setPomodoros, addPomodoro, getPomodoro, patchPomodoro, getAllPomodoros } =
         usePomodorosStoreBase()
 
     // @returns
@@ -11,6 +11,7 @@ export default defineStore('PomodorosStore', () => {
         setPomodoros,
         addPomodoro,
         getPomodoro,
+        patchPomodoro,
         getAllPomodoros
     }
 })

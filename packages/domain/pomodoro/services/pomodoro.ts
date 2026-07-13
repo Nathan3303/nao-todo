@@ -6,6 +6,7 @@ import type { PomodoroRecordRepository } from '../repositories/pomodoro-record'
 import type { GoAsync, GetPomodoroRecordsOptions, ResponseDataPagination } from '@nao-todo/types'
 import { PomodoroEntity } from '../entities/pomodoro'
 import { ListPomodoroValueObject } from '../valueobjects/list-pomodoro'
+import { UpdatePomodoroValueObject } from '../valueobjects/update-pomodoro'
 
 /**
  * Pomodoro 领域服务
@@ -31,6 +32,17 @@ export class PomodoroDomain {
         const queryString = new QueryOptionsValueObject(queryOptions).toString()
         // 2. 调用仓库方法
         return await this.pomodoroRepo.list(queryString)
+    }
+
+    /**
+     * 更新 Pomodoro
+     * @param updateVO 更新值对象
+     * @returns 错误信息
+     */
+    async update(updateVO: UpdatePomodoroValueObject): GoAsync<void> {
+        const validateErr = updateVO.validate()
+        if (validateErr !== null) return validateErr
+        return await this.pomodoroRepo.update(updateVO)
     }
 
     /**

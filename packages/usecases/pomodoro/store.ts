@@ -16,6 +16,13 @@ export interface PomodoroStore {
      * @param pomodoro 常用番茄专注视图对象
      */
     addPomodoro(pomodoro: PomodoroViewObject): void
+
+    /**
+     * 就地更新常用番茄专注
+     * @param id 常用番茄专注 ID
+     * @param patched 更新字段
+     */
+    patchPomodoro(id: string, patched: Partial<PomodoroViewObject>): void
 }
 
 /**

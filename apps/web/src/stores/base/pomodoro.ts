@@ -6,7 +6,8 @@ export const usePomodorosStoreBase = () => {
         list: pomodoros,
         setList: setPomodoros,
         addItem: addPomodoro,
-        getItem: getPomodoro
+        getItem: getPomodoro,
+        patchItem: patchPomodoro
     } = useMapperStoreBase<PomodoroViewObject>()
 
     // @action 获取所有常用番茄专注
@@ -22,6 +23,7 @@ export const usePomodorosStoreBase = () => {
         setPomodoros,
         addPomodoro,
         getPomodoro,
+        patchPomodoro,
         getAllPomodoros
     }
 }

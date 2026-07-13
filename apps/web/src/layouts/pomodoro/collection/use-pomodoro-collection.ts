@@ -7,6 +7,7 @@ import {
 } from '@nao-todo/usecases/pomodoro'
 import { usePomodorosStore } from '@/stores/pomodoro-view'
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
+import { POMODORO_UPDATER_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 
 /**
  * 常用专注页面 composable
@@ -17,7 +18,7 @@ export const usePomodoroCollection = () => {
     /**
      * 注入番茄视图上下文
      */
-    const { pomodoroUseCase } = inject(POMODORO_VIEW_CONTEXT_KEY)!
+    const { pomodoroUseCase, dialogManager } = inject(POMODORO_VIEW_CONTEXT_KEY)!
 
     /**
      * 常用专注 store
@@ -173,6 +174,14 @@ export const usePomodoroCollection = () => {
         selectedId.value = id
     }
 
+    /**
+     * 编辑当前选中的常用专注
+     */
+    const handleEdit = () => {
+        if (!selectedId.value) return
+        dialogManager.open(POMODORO_UPDATER_DIALOG_KEY, selectedId.value)
+    }
+
     // 选中项变化时重置分页并重新加载记录
     watch(selectedId, (id) => {
         if (!id) return
@@ -190,6 +199,7 @@ export const usePomodoroCollection = () => {
         selectedPomodoro,
         loadData,
         handleSelect,
+        handleEdit,
         // 专注记录
         records,
         recordLoading,
