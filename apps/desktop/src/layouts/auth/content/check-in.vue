@@ -1,0 +1,69 @@
+<script setup lang="ts">
+import { Loading as LoadingComponent } from '@nao-todo/components'
+import { inject } from 'vue'
+import { t } from '@nao-todo/infrastructure/locales'
+import { useRouter } from 'vue-router'
+import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
+import { NueMessage } from 'nue-ui'
+import { AUTH_VIEW_CONTEXT_KEY } from '@/views/auth/context'
+
+const router = useRouter()
+const { authUseCase } = inject(AUTH_VIEW_CONTEXT_KEY)!
+
+authUseCase
+    .checkIn()
+    .then((err) => {
+        if (err === null) return null
+        NueMessage.error(unwrapError(err))
+        return router.replace('/auth/signin')
+    })
+    .then(() => {
+        const lastRoute = localStorage.getItem('LAST_VISITED_ROUTE')
+        router.replace(lastRoute || '/tasks')
+    })
+</script>
+
+<template>
+    <nue-container id="AuthViewMainContentCheckIn">
+        <nue-main>
+            <nue-content>
+                <loading-component :placeholder="t('auth.checkIn.verifying')" />
+            </nue-content>
+        </nue-main>
+    </nue-container>
+</template>
+
+<style scoped>
+#AuthViewMainContentCheckIn {
+    align-items: center;
+    justify-content: center;
+    gap: 1.75rem;
+
+    > .nue-header {
+        border: none;
+        width: 20rem;
+        align-items: center;
+        justify-content: center;
+        height: auto;
+    }
+
+    > .nue-main {
+        width: 20rem;
+        border: none;
+        height: auto;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+    }
+
+    > .nue-footer {
+        flex-direction: column;
+        border: none;
+        width: 20rem;
+        align-items: center;
+        justify-content: center;
+        height: auto;
+    }
+}
+</style>
+

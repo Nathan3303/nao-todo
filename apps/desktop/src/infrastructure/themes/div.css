@@ -1,0 +1,35 @@
+/* Form Item */
+.nue-div.nue-div--form-item {
+    flex-direction: column;
+    gap: var(--nue-gap-xs);
+
+    > .nue-text--label {
+        font-size: var(--nue-text-sm);
+        color: var(--nue-primary-color-600);
+    }
+
+    > .nue-input {
+        width: 100%;
+    }
+}
+
+/* Tasks Header */
+.nue-div--tasks-header {
+    flex-direction: column;
+    gap: var(--nue-gap-xs);
+    width: 100%;
+
+    .nue-text--pointer {
+        cursor: pointer;
+    }
+
+    .nue-text--tasks-header__name {
+        font-size: var(--nue-text-2xl);
+    }
+
+    .nue-text--tasks-header__description {
+        color: var(--nue-primary-color-500);
+        font-size: var(--nue-text-df);
+    }
+}
+

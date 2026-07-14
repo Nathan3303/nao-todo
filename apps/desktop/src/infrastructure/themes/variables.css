@@ -1,0 +1,23 @@
+:root {
+    --nue-primary-font-size: 16px;
+    --nue-primary-font-weight: 400;
+}
+
+:root {
+    --nue-text-sm: calc(var(--nue-primary-font-size) * 0.8125);
+    --nue-text-df2: calc(var(--nue-primary-font-size) * 0.875);
+    --nue-text-df: calc(var(--nue-primary-font-size) * 1);
+}
+
+:root {
+    body {
+        width: 100dvw;
+        height: 100dvh;
+        font-optical-sizing: auto;
+
+        * {
+            font-family: var(--nue-primary-font-family);
+        }
+    }
+}
+

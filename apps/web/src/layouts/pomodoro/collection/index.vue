@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import { Pager } from '@nao-todo/components'
+import { Pager, PomodoroRecordsCompRow } from '@nao-todo/components'
 import { usePomodoroCollection } from './use-pomodoro-collection'
 import { PomodoroHeader } from '../header'
-import PomodoroRecordsCompRow from '@/components/pomodoro/records/row.vue'
 
 defineOptions({ name: 'PomodoroCollectionPage' })
 

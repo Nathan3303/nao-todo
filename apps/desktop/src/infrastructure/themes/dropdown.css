@@ -1,0 +1,17 @@
+.nue-dropdown {
+    min-width: 4rem;
+
+    .nue-dropdown-item.nue-dropdown-item--small {
+        height: var(--nue-box-size-xs);
+    }
+
+    &.nue-dropdown--menu {
+        min-width: 10rem;
+        padding: var(--nue-padding-2xs);
+
+        > .nue-div--block {
+            padding: 0;
+        }
+    }
+}
+

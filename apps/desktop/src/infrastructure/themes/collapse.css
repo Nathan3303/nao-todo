@@ -1,0 +1,8 @@
+.nue-collapse.nue-collapse--menu .nue-collapse-item__empty-text {
+    font-size: var(--nue-text-sm);
+    color: var(--nue-primary-color-700);
+    border-radius: var(--nue-primary-radius);
+    background-color: var(--nue-primary-color-100);
+    padding: var(--nue-padding-xs) var(--nue-padding-sm);
+}
+

@@ -6,7 +6,7 @@ import {
     PomodoroFocusComp,
     PomodoroRecordsComp,
     PomodoroNotesComp
-} from '@/components/pomodoro'
+} from '@nao-todo/components'
 import { usePomodoroPage } from './use-pomodoro-page'
 import { PomodoroFocusDependDropdown } from './focus-depend-dropdown'
 import { PomodoroHeader } from './header'

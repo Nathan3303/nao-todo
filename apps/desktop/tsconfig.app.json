@@ -1,0 +1,24 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "include": [
+        "src/**/*",
+        "../../packages/**/*",
+        "../../types/**/*"
+    ],
+    "exclude": [],
+    "compilerOptions": {
+        "composite": true,
+        "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+        "paths": {
+            "@/*": [
+                "./src/*"
+            ]
+        },
+        "types": [
+            "nue-ui/dist/global.d.ts"
+        ],
+        "rootDirs": [
+            ".",
+        ],
+    }
+}
