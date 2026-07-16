@@ -1,30 +1,20 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { InnerDropdown, InnerDropdownOption } from '@nao-todo/components'
-import { TaskStateSelectOptions } from '@nao-todo/infrastructure/consts/tasks'
-import { t } from '@nao-todo/infrastructure/locales'
+import { InnerDropdown, InnerDropdownOption, t } from '@nao-todo/shared'
+import { TaskStateSelectOptions } from '../../constants'
 
 defineOptions({ name: 'TasksDropdownStateFilter' })
 const props = defineProps<{ modelValue: string }>()
-const emit = defineEmits<{
-    (e: 'update:modelValue', value: string): void
-}>()
+const emit = defineEmits<{ (e: 'update:modelValue', value: string): void }>()
 
-const states = computed(() => {
-    return props.modelValue.split(',')
-})
-
-const count = computed(() => {
-    return states.value.filter((item) => item).length || 0
-})
-
+const states = computed(() => props.modelValue.split(','))
+const count = computed(() => states.value.filter((item) => item).length || 0)
 const dropdownOptions = computed(() => {
     return TaskStateSelectOptions.value.map((option) => ({
         ...option,
         checked: states.value.includes(option.value)
     }))
 })
-
 const handleExecute = (id: string) => {
     if (states.value.includes(id)) {
         states.value.splice(states.value.indexOf(id), 1)
@@ -56,4 +46,3 @@ const handleExecute = (id: string) => {
 </template>
 
 <style scoped></style>
-

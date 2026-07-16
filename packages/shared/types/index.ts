@@ -4,9 +4,6 @@ export type * from './response'
 // Golang like error handling type support
 export type * from './golang'
 
-// Locale type
-export type * from './locale'
-
 // 可空字符串 可空日期字符串
 export type NullableString = string | null
 export type NullableDateString = NullableString

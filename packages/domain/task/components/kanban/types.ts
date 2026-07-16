@@ -1,11 +1,11 @@
-import { TagViewObject } from '@nao-todo/usecases/tag'
+import type { ComputedRef } from 'vue'
 import type {
     GetTasksSortOptions,
     TaskColumnOptions,
-    TaskUseCase,
+    TaskTagViewObject,
     TaskViewObject
-} from '@nao-todo/usecases/task'
-import type { ComputedRef } from 'vue'
+} from '../../types'
+import { TaskUseCase } from '../../usecases'
 
 /**
  * Task Kanban
@@ -17,7 +17,7 @@ export type TaskKanbanVO = {
 }
 
 export type TaskKanbanProps = {
-    tags: TagViewObject[]
+    tags: TaskTagViewObject[]
     tasks: TaskViewObject[]
     columns: TaskColumnOptions
     sortOptions: GetTasksSortOptions
@@ -43,7 +43,7 @@ export type TaskKanbanEmits = {
 
 export type TaskKanbanContext = {
     emit: TaskKanbanEmits
-    tags: ComputedRef<TagViewObject[]>
+    tags: ComputedRef<TaskTagViewObject[]>
     columns: ComputedRef<TaskColumnOptions>
     sortOptions: ComputedRef<GetTasksSortOptions>
     getProjectName: TaskKanbanProps['projectNameGetter']
@@ -81,7 +81,7 @@ export type TaskKanbanColumnProps = {
 
 export type TaskKanbanColumnItemProps = {
     task: TaskViewObject
-    tags: TagViewObject[]
+    tags: TaskTagViewObject[]
     actived?: boolean
     columns?: TaskColumnOptions
     isUpdating?: boolean
@@ -95,4 +95,3 @@ export type TaskKanbanColumnItemEmits = {
     (event: 'unfinish', taskId: TaskViewObject['id']): void
     (event: 'heart', taskId: TaskViewObject['id']): void
 }
-

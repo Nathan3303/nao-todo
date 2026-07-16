@@ -1,7 +1,9 @@
 import { ref } from 'vue'
-import type { TaskViewObject } from '@nao-todo/usecases/task'
+import type { TaskViewObject } from '../../types'
 
-const useKanbanDragger = (onDrop?: (taskId: TaskViewObject['id'], category: TaskViewObject['state']) => void) => {
+const useKanbanDragger = (
+    onDrop?: (taskId: TaskViewObject['id'], category: TaskViewObject['state']) => void
+) => {
     const draggingTodoId = ref<TaskViewObject['id']>('')
 
     const handleRemoveDragOverClass = () => {
@@ -75,5 +77,3 @@ const useKanbanDragger = (onDrop?: (taskId: TaskViewObject['id'], category: Task
 }
 
 export default useKanbanDragger
-
-

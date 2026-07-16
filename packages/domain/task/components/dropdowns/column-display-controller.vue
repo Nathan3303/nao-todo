@@ -1,25 +1,21 @@
 <script setup lang="ts">
-import type { ProjectPreferenceViewObject } from '@nao-todo/usecases/project'
-import {
-    InnerDropdown,
-    InnerDropdownOption,
-    type InnerDropdownOptionVO
-} from '@nao-todo/components'
-import { computed } from 'vue'
+import { InnerDropdown, InnerDropdownOption, type InnerDropdownOptionVO } from '@nao-todo/shared';
+import { computed } from 'vue';
+import type { TaskColumnOptions } from '../../types';
 
-defineOptions({ name: 'TasksDropdownColumnDisplayOperator' })
+defineOptions({ name: 'TaskColumnDisplayController' })
 const props = defineProps<{
-    columns: ProjectPreferenceViewObject['columns']
-    labelGetter: (key: keyof ProjectPreferenceViewObject['columns']) => string
+    columns: TaskColumnOptions
+    labelGetter: (key: keyof TaskColumnOptions) => string
 }>()
 const emit = defineEmits<{
-    (e: 'update', key: keyof ProjectPreferenceViewObject['columns'], value: boolean): void
+    (e: 'update', key: keyof TaskColumnOptions, value: boolean): void
 }>()
 
 const count = computed<number>(() => {
     let count = 0
     Object.keys(props.columns).forEach((key) => {
-        if (props.columns[key as keyof ProjectPreferenceViewObject['columns']]) count++
+        if (props.columns[key as keyof TaskColumnOptions]) count++
     })
     return count
 })
@@ -29,18 +25,18 @@ const columnOptions = computed<InnerDropdownOptionVO[]>(() => {
     Object.keys(props.columns).forEach((key) => {
         options.push({
             icon: 'plus-circle',
-            label: props.labelGetter(key as keyof ProjectPreferenceViewObject['columns']),
+            label: props.labelGetter(key as keyof TaskColumnOptions),
             value: key,
-            checked: props.columns[key as keyof ProjectPreferenceViewObject['columns']]
+            checked: props.columns[key as keyof TaskColumnOptions]
         })
     })
     return options
 })
 
 const handleExecute = (id: string) => {
-    const oldValue = props.columns[id as keyof ProjectPreferenceViewObject['columns']]
+    const oldValue = props.columns[id as keyof TaskColumnOptions]
     const newValue = !oldValue
-    emit('update', id as keyof ProjectPreferenceViewObject['columns'], newValue)
+    emit('update', id as keyof TaskColumnOptions, newValue)
 }
 </script>
 
@@ -64,4 +60,3 @@ const handleExecute = (id: string) => {
 </template>
 
 <style scoped></style>
-

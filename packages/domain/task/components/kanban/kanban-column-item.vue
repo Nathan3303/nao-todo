@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { computed, inject } from 'vue'
 import {
-    TaskStateInfo,
-    TaskPriorityInfo,
-    TaskDateInfo,
     TaskBasicInfo,
-    TaskTagBar,
-    TaskCheckButton
-} from '@nao-todo/components'
-import { TASK_KANBAN_CONTEXT_KEY } from './use-kanban'
+    TaskCheckButton,
+    TaskDateInfo,
+    TaskPriorityInfo,
+    TaskStateInfo,
+    TaskTagBar
+} from '@nao-todo/shared'
+import { computed, inject } from 'vue'
+import type { TaskColumnOptions } from '../../types'
 import type { TaskKanbanColumnItemProps, TaskKanbanContext } from './types'
-import { TaskColumnOptions } from '@nao-todo/usecases/task'
+import { TASK_KANBAN_CONTEXT_KEY } from './use-kanban'
 
 defineOptions({ name: 'TaskKanbanColumnItem' })
 const props = defineProps<TaskKanbanColumnItemProps>()
@@ -128,4 +128,3 @@ const handleFinish = () => {
         </nue-div>
     </nue-div>
 </template>
-

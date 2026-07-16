@@ -1,25 +1,22 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import {
+    DropdownDivBlock,
     InnerDropdown,
     InnerDropdownOption,
-    type InnerDropdownOptionVO,
-    DropdownDivBlock
-} from '@nao-todo/components'
-import { columnLabels, sortFieldLabels } from '@nao-todo/infrastructure/consts/tasks'
-import { t } from '@nao-todo/infrastructure/locales'
-import { GetTasksOptions, GetTasksSortOptions } from '@nao-todo/usecases/task'
-import { ProjectPreferenceViewObject } from '@nao-todo/usecases/project'
+    t,
+    type InnerDropdownOptionVO
+} from '@nao-todo/shared'
+import { computed } from 'vue'
+import { columnLabels, sortFieldLabels } from '../../constants'
+import { GetTasksOptions, GetTasksSortOptions, TaskColumnOptions } from '../../types'
 
 defineOptions({ name: 'TasksDropdownSortOperator' })
 const props = defineProps<{
     modelValue: GetTasksSortOptions
-    columns: ProjectPreferenceViewObject['columns']
+    columns: TaskColumnOptions
     getTasksOptions: GetTasksOptions
 }>()
-const emit = defineEmits<{
-    (e: 'update:modelValue', value: GetTasksSortOptions): void
-}>()
+const emit = defineEmits<{ (e: 'update:modelValue', value: GetTasksSortOptions): void }>()
 
 const isSorting = computed(() => props.modelValue.field !== undefined)
 
@@ -28,7 +25,7 @@ const fieldOptions = computed(() => {
     Object.keys(sortFieldLabels.value).forEach((key) => {
         options.push({
             icon: 'plus-circle',
-            label: columnLabels.value[key as keyof ProjectPreferenceViewObject['columns']]!,
+            label: columnLabels.value[key as keyof TaskColumnOptions]!,
             value: key,
             checked: props.modelValue.field === key
         })
@@ -105,4 +102,3 @@ const handleOrderDropdownExecute = (order: string) => {
 </template>
 
 <style scoped></style>
-

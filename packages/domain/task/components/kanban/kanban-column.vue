@@ -1,12 +1,11 @@
 <script lang="ts" setup>
-import { inject, onMounted } from 'vue'
-import { Loading as LoadingComponent } from '@nao-todo/components'
-import { TaskStateInfo } from '@nao-todo/components'
+import { Loading as LoadingComponent, TaskStateInfo } from '@nao-todo/shared'
 import { NueInfiniteScroll } from 'nue-ui'
+import { inject, onMounted } from 'vue'
 import TaskKanbanColumnItem from './kanban-column-item.vue'
-import useKanbanColumn from './use-kanban-column'
-import { TASK_KANBAN_CONTEXT_KEY } from './use-kanban'
 import type { TaskKanbanColumnProps, TaskKanbanContext } from './types'
+import { TASK_KANBAN_CONTEXT_KEY } from './use-kanban'
+import useKanbanColumn from './use-kanban-column'
 
 defineOptions({ name: 'TodoKanbanColumn' })
 const props = defineProps<TaskKanbanColumnProps>()
@@ -68,4 +67,3 @@ onMounted(() => fetchTasks())
     display: none;
 }
 </style>
-

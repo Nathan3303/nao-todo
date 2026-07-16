@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-defineOptions({ name: 'TasksDropdownTextFilter' })
+defineOptions({ name: 'TaskNameFilter' })
 const props = defineProps<{ placeholder?: string; modelValue: string }>()
 const emit = defineEmits<{ (e: 'update:modelValue', value: string): void }>()
 

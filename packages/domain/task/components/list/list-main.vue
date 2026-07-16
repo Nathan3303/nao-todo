@@ -6,7 +6,7 @@ import {
     TaskDateInfo,
     TaskBasicInfo,
     TaskTagBar
-} from '@nao-todo/components'
+} from '@nao-todo/shared'
 import { TASK_LIST_CONTEXT_KEY } from './use-list'
 import type { TaskListContext } from './types'
 
@@ -31,7 +31,7 @@ const {
         <nue-div
             v-for="(task, idx) in tasks"
             theme="todo-list-main__row"
-            :class="{'todo-list-main__row--small': small}"
+            :class="{ 'todo-list-main__row--small': small }"
             :key="task.id"
             :data-done="task.state === 'done'"
             :data-selected="isInMultiSelectRange(idx)"
@@ -102,10 +102,9 @@ const {
                 <task-basic-info
                     v-if="columns?.project"
                     icon="inbox-fill"
-                    :text="'清单：' + (getProjectName(task.projectId) || '收集箱')"
+                    :text="'清单：' + (getProjectName(task.projectId || '') || '收集箱')"
                 />
             </nue-div>
         </nue-div>
     </nue-div>
 </template>
-

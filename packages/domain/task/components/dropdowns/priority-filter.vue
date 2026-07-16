@@ -1,30 +1,21 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { InnerDropdown, InnerDropdownOption } from '@nao-todo/components'
-import { TaskPrioritySelectOptions } from '@nao-todo/infrastructure/consts/tasks'
-import { t } from '@nao-todo/infrastructure/locales'
+import { InnerDropdown, InnerDropdownOption } from '@nao-todo/shared'
+import { TaskPrioritySelectOptions } from '../../constants'
+import { t } from '@nao-todo/shared'
 
-defineOptions({ name: 'TasksDropdownPriorityFilter' })
+defineOptions({ name: 'TaskPriorityFilter' })
 const props = defineProps<{ modelValue: string }>()
-const emit = defineEmits<{
-    (e: 'update:modelValue', value: string): void
-}>()
+const emit = defineEmits<{ (e: 'update:modelValue', value: string): void }>()
 
-const priorities = computed(() => {
-    return props.modelValue.split(',')
-})
-
-const count = computed(() => {
-    return priorities.value.filter((item) => item).length || 0
-})
-
-const dropdownOptions = computed(() => {
-    return TaskPrioritySelectOptions.value.map((option) => ({
+const priorities = computed(() => props.modelValue.split(','))
+const count = computed(() => priorities.value.filter((item) => item).length || 0)
+const dropdownOptions = computed(() =>
+    TaskPrioritySelectOptions.value.map((option) => ({
         ...option,
         checked: priorities.value.includes(option.value)
     }))
-})
-
+)
 const handleExecute = (id: string) => {
     if (priorities.value.includes(id)) {
         priorities.value.splice(priorities.value.indexOf(id), 1)

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import TaskListMain from './list-main.vue'
-import { Loading as LoadingComp } from '@nao-todo/components'
+import { Loading as LoadingComp } from '@nao-todo/shared'
 import { useTaskList } from './use-list'
 import type { TaskListEmits, TaskListProps } from './types'
 import './list.css'

@@ -2,13 +2,12 @@ import type { ComputedRef } from 'vue'
 import type {
     TaskViewObject,
     TaskColumnOptions,
-    GetTasksSortOptions
-} from '@nao-todo/usecases/task'
-import { TagViewObject } from '@nao-todo/usecases/tag'
-import { ProjectViewObject } from '@nao-todo/usecases/project'
+    GetTasksSortOptions,
+    TaskTagViewObject
+} from '../../types'
 
 export type TaskListProps = {
-    tags: TagViewObject[]
+    tags: TaskTagViewObject[]
     tasks: TaskViewObject[]
     columns: TaskColumnOptions
     sortOptions: GetTasksSortOptions
@@ -41,7 +40,7 @@ export type TaskListEmits = {
 export type TaskListContext = {
     columns: ComputedRef<TaskColumnOptions>
     sortOptions: ComputedRef<GetTasksSortOptions>
-    tags: ComputedRef<TagViewObject[]>
+    tags: ComputedRef<TaskTagViewObject[]>
     tasks: ComputedRef<TaskViewObject[]>
     tagBarClamped: ComputedRef<number>
     small: ComputedRef<boolean>
@@ -53,7 +52,7 @@ export type TaskListContext = {
     isInMultiSelectRange: (idx: number) => boolean
     showMultiSelectPanel: (idx: number) => void
     clearMultiSelect: (fullCLear: boolean) => void
-    getProjectName: (projectId: ProjectViewObject['id']) => ProjectViewObject['name']
+    getProjectName: (projectId: string) => string
     deleteOrRestore: (taskId: TaskViewObject['id'], isDelete: boolean) => void
     handleClickTask: (task: TaskViewObject, taskIdx: number) => void
 }
@@ -67,4 +66,3 @@ export type TaskListOrderButtonProps = {
     prop: GetTasksSortOptions['field']
     text?: string
 }
-
