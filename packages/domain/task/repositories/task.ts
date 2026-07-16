@@ -1,7 +1,6 @@
-import type { GoAsync, ResponseDataPagination } from '@nao-todo/types'
-import { TaskEntity } from '../entities/task'
-import { CreateTaskValueObject } from '../valueobjects/create-task'
-import { UpdateTaskValueObject } from '../valueobjects/update-task'
+import type { GoAsync, ResponseDataPagination } from '@nao-todo/shared'
+import { TaskEntity } from '../entities'
+import { CreateTaskValueObject, UpdateTaskValueObject } from '../valueobjects'
 
 /**
  * TaskRepository 任务仓库接口
@@ -68,4 +67,3 @@ export interface TaskRepository {
      */
     snooze(id: string, durationMinutes: number): GoAsync<string>
 }
-

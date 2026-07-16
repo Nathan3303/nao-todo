@@ -1,5 +1,5 @@
-import type { AuthUseCase } from '@nao-todo/usecases/auth'
-import { InjectionKey } from 'vue'
+import type { AuthUseCase } from '@nao-todo/domain/auth'
+import type { InjectionKey } from 'vue'
 
 export type AuthViewContext = {
     authUseCase: AuthUseCase

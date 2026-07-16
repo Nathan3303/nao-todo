@@ -1,4 +1,4 @@
-import type { Go } from "@nao-todo/types"
+import type { Go } from '@nao-todo/shared'
 
 /**
  * CreateTaskCommentValueObject 创建评论值对象

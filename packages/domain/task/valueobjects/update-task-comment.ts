@@ -1,4 +1,4 @@
-import type { Go } from '@nao-todo/types'
+import type { Go } from '@nao-todo/shared'
 
 /**
  * 更新评论值对象

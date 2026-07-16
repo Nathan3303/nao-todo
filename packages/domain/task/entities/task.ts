@@ -1,4 +1,4 @@
-import { Entity } from '../../shares/entity'
+import { Entity } from '@nao-todo/shared'
 
 /**
  * TaskEntity 任务实体
@@ -33,7 +33,3 @@ export class TaskEntity extends Entity {
         super(id, createdAt, updatedAt, deletedAt)
     }
 }
-
-
-
-

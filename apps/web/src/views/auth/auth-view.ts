@@ -1,7 +1,7 @@
 import { inject, computed, provide } from 'vue'
 import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
 import { useUserStore } from '@/stores'
-import { newAuthUseCase } from '@nao-todo/usecases/auth'
+import { newAuthUseCase } from '@nao-todo/domain/auth'
 import { APP_CONTEXT_KEY } from '@/context'
 import { AUTH_VIEW_CONTEXT_KEY } from './context'
 
@@ -30,4 +30,3 @@ const useAuthView = () => {
 }
 
 export default useAuthView
-

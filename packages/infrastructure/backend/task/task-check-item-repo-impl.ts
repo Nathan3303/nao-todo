@@ -4,7 +4,7 @@ import {
     TaskCheckItemRepository,
     UpdateTaskCheckItemValueObject
 } from '@nao-todo/domain/task'
-import type { GoAsync } from '@nao-todo/types'
+import type { GoAsync } from '@nao-todo/shared'
 import type { Requester } from '../../requester'
 import { getJWTFromLocalStorage } from '../utils'
 import type { BatchUpdateTaskCheckItemRes, ResponseData, TaskCheckItemRes } from '../models'

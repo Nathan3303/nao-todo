@@ -1,4 +1,4 @@
-import type { Go } from '@nao-todo/types'
+import type { Go } from '@nao-todo/shared'
 
 /**
  * UpdateTaskCheckItemValueObject 更新任务检查项值对象

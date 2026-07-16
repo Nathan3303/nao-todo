@@ -1,9 +1,8 @@
-import { TaskCheckItemRepository } from '../repositories/task-check-item'
-import { TaskCommentRepository } from '../repositories/task-comment'
-import { QueryOptionsValueObject } from '../../shares/valueobjects/query-options'
+// import { TaskCheckItemRepository } from '../repositories/task-check-item'
+// import { TaskCommentRepository } from '../repositories/task-comment'
 import type { TaskRepository } from '../repositories/task'
 import type { TaskEntity } from '../entities/task'
-import type { GoAsync, ResponseDataPagination } from '@nao-todo/types'
+import type { GoAsync, ResponseDataPagination, QueryOptionsValueObject } from '@nao-todo/shared'
 
 /**
  * 任务领域服务
@@ -15,9 +14,9 @@ export class TaskDomain {
      * @param taskRepo 任务仓库实例
      */
     constructor(
-        private taskRepo: TaskRepository,
-        private taskCheckItemRepo: TaskCheckItemRepository,
-        private taskCommentRepo: TaskCommentRepository
+        private taskRepo: TaskRepository
+        // private taskCheckItemRepo: TaskCheckItemRepository,
+        // private taskCommentRepo: TaskCommentRepository
     ) {}
 
     /**
@@ -39,5 +38,3 @@ export class TaskDomain {
         return await this.taskRepo.list(queryString)
     }
 }
-
-

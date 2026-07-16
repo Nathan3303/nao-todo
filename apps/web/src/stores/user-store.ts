@@ -7,23 +7,11 @@ import type {
 } from '@nao-todo/usecases/user'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import { useAuthStoreBase } from '@nao-todo/domain/auth'
 
 const useUserStore = defineStore('UserStore', () => {
-    // @state 用户是否登录
-    const isAuthenticated = ref(false)
-
-    // @action 设置用户登录状态
-    const setIsAuthenticated = (value: boolean) => {
-        isAuthenticated.value = value
-    }
-
-    // @state 用户凭证（令牌）
-    const userToken = ref('')
-
-    // @action 设置用户凭证
-    const setUserToken = (token: string) => {
-        userToken.value = token
-    }
+    // @state 认证状态
+    const { getIsAuthenticated, setIsAuthenticated, clearAuthData } = useAuthStoreBase()
 
     // @state 用户配置文件
     const userProfile = ref<UserViewObject>()
@@ -58,8 +46,6 @@ const useUserStore = defineStore('UserStore', () => {
 
     // @action 清除用户数据
     const clearUserData = () => {
-        setIsAuthenticated(false)
-        setUserToken('')
         setUserProfile({} as UserViewObject)
         setUserConfig({} as UserConfigViewObject)
         localStorage.clear()
@@ -67,10 +53,11 @@ const useUserStore = defineStore('UserStore', () => {
 
     // @returns
     return {
-        isAuthenticated: computed(() => isAuthenticated.value),
+        // auth
+        getIsAuthenticated,
         setIsAuthenticated,
-        token: computed(() => userToken.value),
-        setUserToken,
+        clearAuthData,
+        // user
         profile: computed(() => userProfile.value),
         setUserProfile,
         updateUserProfile,
@@ -82,4 +69,3 @@ const useUserStore = defineStore('UserStore', () => {
 })
 
 export default useUserStore
-

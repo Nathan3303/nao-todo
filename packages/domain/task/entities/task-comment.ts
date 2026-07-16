@@ -1,4 +1,4 @@
-import { Entity } from '../../shares/entity'
+import { Entity } from '@nao-todo/shared'
 
 /**
  * 评论实体
@@ -32,5 +32,3 @@ export class TaskCommentEntity extends Entity {
     //     return null
     // }
 }
-
-

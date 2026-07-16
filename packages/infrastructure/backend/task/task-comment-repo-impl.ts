@@ -5,7 +5,7 @@ import {
     UpdateTaskCommentValueObject
 } from '@nao-todo/domain/task'
 import { Requester } from '../../requester'
-import { GoAsync } from '@nao-todo/types'
+import type { GoAsync } from '@nao-todo/shared'
 import { getJWTFromLocalStorage } from '../utils'
 import {
     createTaskCommentRes2Entity,

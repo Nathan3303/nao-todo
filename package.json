@@ -8,9 +8,8 @@
     "type": "module",
     "packageManager": "pnpm@8.12.1",
     "scripts": {
-        "webapp": "pnpm --filter @nao-todo/webapp",
-        "mobile": "pnpm --filter @nao-todo/mobile",
-        "desktop": "pnpm --filter @nao-todo/desktop"
+        "desktopapp": "pnpm --filter @nao-todo/desktopapp",
+        "webapp": "pnpm --filter @nao-todo/webapp"
     },
     "dependencies": {
         "@vitejs/plugin-vue": "^6.0.7",
@@ -30,14 +29,12 @@
         "vue-router": "^5.0.7"
     },
     "devDependencies": {
-        "@eslint/js": "^9.39.4",
-        "@nao-todo/usecases": "workspace:*",
-        "@nao-todo/components": "workspace:*",
-        "@nao-todo/desktop": "workspace:*",
+        "@nao-todo/desktopapp": "workspace:*",
+        "@nao-todo/webapp": "workspace:*",
+        "@nao-todo/shared": "workspace:*",
         "@nao-todo/domain": "workspace:*",
         "@nao-todo/infrastructure": "workspace:*",
-        "@nao-todo/types": "workspace:*",
-        "@nao-todo/webapp": "workspace:*",
+        "@eslint/js": "^9.39.4",
         "@rollup/plugin-terser": "^0.4.4",
         "@rushstack/eslint-patch": "^1.16.1",
         "@tsconfig/node20": "^20.1.9",

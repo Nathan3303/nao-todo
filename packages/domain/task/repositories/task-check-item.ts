@@ -1,7 +1,9 @@
-import type { GoAsync } from '@nao-todo/types'
-import type { TaskCheckItemEntity } from '../entities/task-check-item'
-import type { CreateTaskCheckItemValueObject } from '../valueobjects/create-task-check-item'
-import type { UpdateTaskCheckItemValueObject } from '../valueobjects/update-task-check-item'
+import type { GoAsync } from '@nao-todo/shared'
+import type { TaskCheckItemEntity } from '../entities'
+import type {
+    CreateTaskCheckItemValueObject,
+    UpdateTaskCheckItemValueObject
+} from '../valueobjects'
 
 /**
  * TaskCheckItemRepository 任务检查项仓库接口
@@ -51,4 +53,3 @@ export interface TaskCheckItemRepository {
      */
     batchUpdate(updateVOs: UpdateTaskCheckItemValueObject[]): GoAsync<TaskCheckItemEntity[]>
 }
-
