@@ -1,4 +1,4 @@
-import type { ProjectViewObject, TaskColumnOptions, TaskViewObject } from '@nao-todo/types'
+import type { TaskProjectViewObject, TaskColumnOptions, TaskViewObject } from '../../types'
 
 export type ViewAdapterNoTaskError = {
     image: string
@@ -10,10 +10,9 @@ export type ViewAdapterNoTaskError = {
 export type ViewAdapterPropsBase = {
     getNoTaskError: () => ViewAdapterNoTaskError | undefined
     getColumnLabel: (key: string) => string
-    getProjectName: (projectId: ProjectViewObject['id']) => string
+    getProjectName: (projectId: TaskProjectViewObject['id']) => string
     showTaskDetails?: (taskId: TaskViewObject['id']) => void
     updateColumns: (key: keyof TaskColumnOptions, value: boolean) => void
     updateSortOptions: (field: string, order: string) => void
     clearSortOptions: () => void
 }
-

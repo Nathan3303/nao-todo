@@ -1,3 +1,3 @@
-import TaskList from './list.vue'
+import List from './list.vue'
 
-export default TaskList
+export const TaskList = List

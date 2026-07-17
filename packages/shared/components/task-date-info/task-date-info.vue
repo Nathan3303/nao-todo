@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import dayjs from 'dayjs'
 import { TaskBasicInfo } from '../task-basic-info'
-import relativeDateParser from '@nao-todo/infrastructure/utils/relative-date-parser'
+import relativeDateParser from '../../utils/relative-date-parser'
 import type { TaskDateInfoProps } from './types'
 
 defineOptions({ name: 'TaskDateInfo' })

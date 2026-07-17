@@ -1,13 +1,9 @@
-import { useTasksStore } from '@/stores'
+import { useTasksStore } from '../../../stores'
 import type { ListViewAdapterProps } from './types'
-import useTasksLoader from '@/infrastructure/hooks/use-task-loader'
-import { computed, inject, onMounted, onUnmounted, ref } from 'vue'
-import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
+import { useTasksLoader } from '../../../hooks'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 const useListViewAdapter = (props: ListViewAdapterProps) => {
-    // @context 索引视图上下文
-    const { dialogManager } = inject(INDEX_VIEW_CONTEXT_KEY)!
-
     // @dataStore
     const tasksStore = useTasksStore()
 
@@ -44,7 +40,7 @@ const useListViewAdapter = (props: ListViewAdapterProps) => {
 
     // @onMounted
     onMounted(() => {
-        taskLoader.loadFirstPage(true).then(() => viewLoading.value = false)
+        taskLoader.loadFirstPage(true).then(() => (viewLoading.value = false))
         props.subscriber.subscribe('RefreshData', refreshHandler)
         props.subscriber.subscribe('AddNewTaskId', addNewTaskId)
     })
@@ -69,7 +65,6 @@ const useListViewAdapter = (props: ListViewAdapterProps) => {
         sortOptions,
         error: computed(() => taskLoader.states.error),
         noTaskError,
-        dialogManager,
         handleNextPage,
         handleRetry,
         viewLoading
@@ -77,6 +72,3 @@ const useListViewAdapter = (props: ListViewAdapterProps) => {
 }
 
 export default useListViewAdapter
-
-
-

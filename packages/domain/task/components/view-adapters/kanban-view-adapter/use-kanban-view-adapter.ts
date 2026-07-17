@@ -1,18 +1,13 @@
-import { useTasksStore } from '@/stores'
-import type { KanbanViewAdapterProps } from './types'
+import { computed, onMounted, onUnmounted, watch } from 'vue'
 import { useTasksLoader } from '../../../hooks'
-import { computed, onMounted, onUnmounted, watch, inject } from 'vue'
+import { useTasksStore } from '../../../stores'
+import type { KanbanViewAdapterProps } from './types'
 
 /**
  * 看板视图适配器 Hook
  * @param props 看板视图适配器 props
  */
 const useKanbanViewAdapter = (props: KanbanViewAdapterProps) => {
-    /**
-     * 首要视图上下文
-     */
-    const { dialogManager } = inject(INDEX_VIEW_CONTEXT_KEY)!
-
     /**
      * 任务存储
      */
@@ -75,7 +70,6 @@ const useKanbanViewAdapter = (props: KanbanViewAdapterProps) => {
 
     // @returns
     return {
-        dialogManager,
         tasks,
         sortOptions,
         taskLoader,

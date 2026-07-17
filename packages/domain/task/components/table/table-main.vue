@@ -6,8 +6,8 @@ import {
     TaskTagBar,
     TaskDateInfo,
     TaskBasicInfo
-} from '@nao-todo/components'
-import { parse2RelativeDate } from '@nao-todo/infrastructure/utils/relative-date-parser'
+} from '@nao-todo/shared'
+import { parse2RelativeDate } from '@nao-todo/shared/utils/relative-date-parser'
 import { TASK_TABLE_CONTEXT_KEY } from './use-table'
 import type { TaskTableContext } from './types'
 import { getColumnStyle } from './column-style'
@@ -142,7 +142,7 @@ const tasks = computed(() => {
                 <task-basic-info
                     v-else-if="column.key === 'project'"
                     class="todo-table__main__col col-attr"
-                    :text="tableCtx.getProjectName(task.projectId)"
+                    :text="tableCtx.getProjectName(task.projectId || '')"
                     no-icon
                     :style="getColumnStyle(column)"
                 />
@@ -163,4 +163,3 @@ const tasks = computed(() => {
         </nue-div>
     </nue-div>
 </template>
-

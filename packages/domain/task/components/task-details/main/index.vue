@@ -1,25 +1,21 @@
 <script setup lang="ts">
-import { inject } from 'vue'
-import DetailsRow from './row.vue'
-import DetailsMainComments from './comments.vue'
-import DetailsMainSubTasks from './subtasks.vue'
-import DetailsMainEvents from './events.vue'
-import DetailsMainPomodoroInfo from './pomodoro-info.vue'
 import {
     CommentCreator,
-    // SwitchButton,
+    parse2RelativeDate,
+    t,
+    TAG_CREATOR_DIALOG_KEY,
     TaskSelector,
     TaskTagBar
-} from '@nao-todo/components'
-import {
-    TaskPrioritySelectOptions,
-    TaskStateSelectOptions
-} from '@nao-todo/infrastructure/consts/tasks'
-import { TASK_DETAILS_CONTEXT_KEY } from '../context'
-import type { TaskViewObject } from '@nao-todo/usecases/task'
-import { parse2RelativeDate } from '@nao-todo/infrastructure/utils'
-import { t } from '@nao-todo/infrastructure/locales'
-import { TAG_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys.js'
+} from '@nao-todo/shared'
+import { inject } from 'vue'
+import { TaskPrioritySelectOptions, TaskStateSelectOptions } from '../../../constants'
+import type { TaskViewObject } from '../../../types'
+import { TASK_DETAILS_CONTEXT_KEY } from '../context.js'
+import DetailsMainComments from './comments.vue'
+import DetailsMainEvents from './events.vue'
+import DetailsMainPomodoroInfo from './pomodoro-info.vue'
+import DetailsRow from './row.vue'
+import DetailsMainSubTasks from './subtasks.vue'
 
 const {
     vo,
@@ -321,4 +317,3 @@ const createCommentHandler = async (content: string) => {
     }
 }
 </style>
-

@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { InputButton, EventRow, Loading } from '@nao-todo/components'
-import useEventDragger from '../use-event-dragger'
-import { TASK_DETAILS_CONTEXT_KEY } from '../context'
+import { EventRow, InputButton, Loading, t } from '@nao-todo/shared'
 import { computed, inject, ref, watch } from 'vue'
-import { t } from '@nao-todo/infrastructure/locales'
+import { TASK_DETAILS_CONTEXT_KEY } from '../context'
+import useEventDragger from '../use-event-dragger'
 
 type FilterStatus = 'all' | 'undone' | 'done'
 
@@ -223,4 +222,3 @@ watch(
     }
 }
 </style>
-

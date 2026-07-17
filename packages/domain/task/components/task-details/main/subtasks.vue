@@ -1,9 +1,8 @@
 <script lang="ts" setup>
-import { InputButton, Loading } from '@nao-todo/components'
+import { InputButton, Loading, t } from '@nao-todo/shared'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context'
 import { inject, nextTick, reactive, ref } from 'vue'
-import { t } from '@nao-todo/infrastructure/locales'
-import type { TaskViewObject } from '@nao-todo/usecases/task'
+import type { TaskViewObject } from '../../../types'
 import { NueInput } from 'nue-ui'
 
 const {
@@ -255,4 +254,3 @@ const handleCreateSubTask = async (payload: { value: string }) => {
     }
 }
 </style>
-

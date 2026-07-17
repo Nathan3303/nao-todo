@@ -3,9 +3,9 @@ import type {
     GetTasksOptions,
     GetTasksSortOptions,
     TaskColumnOptions,
-    TaskViewObject
-} from '@nao-todo/usecases/task'
-import type { TagViewObject } from '@nao-todo/usecases/tag'
+    TaskViewObject,
+    TaskTagViewObject
+} from '../../types'
 
 export type TableColumnConfig = {
     key: keyof TaskColumnOptions
@@ -35,7 +35,7 @@ export type ColumnResizePayload = {
 }
 
 export type TaskTableProps = {
-    tags: TagViewObject[]
+    tags: TaskTagViewObject[]
     tasks: TaskViewObject[]
     columns: TaskColumnOptions
     getOptions: GetTasksOptions
@@ -67,7 +67,7 @@ export type TaskTableContext = {
     tasks: ComputedRef<TaskViewObject[]>
     columns: ComputedRef<TaskColumnOptions>
     getOptions: ComputedRef<GetTasksOptions>
-    tags: ComputedRef<TagViewObject[]>
+    tags: ComputedRef<TaskTagViewObject[]>
     tagBarClamped: ComputedRef<number>
     layoutConfig: ComputedRef<TableLayoutConfig | undefined>
     visibleColumns: ComputedRef<TableColumnConfig[]>
@@ -108,4 +108,3 @@ export type TaskTableOrderButtonProps = {
     prop: GetTasksSortOptions['field']
     text?: string
 }
-

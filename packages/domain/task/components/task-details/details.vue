@@ -2,9 +2,9 @@
 import DetailsHeader from './header/index.vue'
 import DetailsMain from './main/index.vue'
 import DetailsFooter from './footer/index.vue'
-import useTaskDetails from './task-details'
-import { LoadingError } from '@nao-todo/components'
-import type { TaskDetailsProps } from './types'
+import useTaskDetails from './task-details.js'
+import { LoadingError } from '@nao-todo/shared'
+import type { TaskDetailsProps } from './types.js'
 
 defineOptions({ name: 'TaskDetails' })
 const props = defineProps<TaskDetailsProps>()

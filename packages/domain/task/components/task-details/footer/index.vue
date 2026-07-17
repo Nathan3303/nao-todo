@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import { DropdownDivBlock, InnerDropdownOption, TaskProjectSelector } from '@nao-todo/components'
+import {
+    DropdownDivBlock,
+    InnerDropdownOption,
+    PARENT_TASK_SELECTOR_DIALOG_KEY,
+    TaskProjectSelector,
+    t
+} from '@nao-todo/shared'
 import { inject } from 'vue'
+import type { TaskViewObject } from '../../../types'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context'
-import { t } from '@nao-todo/infrastructure/locales'
-import { PARENT_TASK_SELECTOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
-import type { TaskViewObject } from '@nao-todo/usecases/task'
 
 const {
     vo,
@@ -126,4 +130,3 @@ const handleDropdownExecute = async (executeId: string) => {
     justify-content: space-between;
 }
 </style>
-

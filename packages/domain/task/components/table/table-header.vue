@@ -98,7 +98,7 @@ const getColumnTypeClass = (key: string) => {
             :key="column.key"
             class="todo-table__header__col"
             :class="[
-                column.key === 'name' ? 'col-first' : getColumnTypeClass(column.key),
+                column.key === 'name' ? 'col-first' : getColumnTypeClass(column.key as string),
                 { 'col-pinned': column.key === pinnedColumnKey },
                 { dragging: draggingIndex === index },
                 { 'drag-over': dragOverIndex === index && column.key !== pinnedColumnKey }
@@ -124,11 +124,11 @@ const getColumnTypeClass = (key: string) => {
             @dragend="handleDragEnd"
         >
             <order-button :prop="column.key">
-                {{ tableContext.getColumnLabel(column.key) }}
+                {{ tableContext.getColumnLabel(column.key as string) }}
             </order-button>
             <div
                 class="column-resizer"
-                @mousedown="handleResizeStart($event, column.key, column)"
+                @mousedown="handleResizeStart($event, column.key as string, column)"
             ></div>
         </div>
         <div class="todo-table__header__col col-actions">
@@ -136,4 +136,3 @@ const getColumnTypeClass = (key: string) => {
         </div>
     </nue-div>
 </template>
-

@@ -2,7 +2,7 @@
 import { computed, inject } from 'vue'
 import TasksViewDetails from './details.vue'
 import TasksViewDetailsDrawer from './float-details.vue'
-import { TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
+import { TASK_DETAILS_PRE_CONTEXT_KEY } from './context.js'
 import { useRoute } from 'vue-router'
 
 defineOptions({ name: 'TasksViewDetailsAdapter' })

@@ -1,4 +1,4 @@
 import Table from './table.vue'
 
-export default Table
+export const TaskTable = Table
 

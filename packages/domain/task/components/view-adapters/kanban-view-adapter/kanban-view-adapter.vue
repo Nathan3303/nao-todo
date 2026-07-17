@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { LoadingError } from '@nao-todo/shared'
-import { TASK_CREATOR_DIALOG_KEY } from '../../../constants'
+import { LoadingError, TASK_CREATOR_DIALOG_KEY, t } from '@nao-todo/shared'
 import { TaskKanban } from '../../kanban'
 import type { KanbanViewAdapterProps } from './types'
 import useKanbanViewAdapter from './use-kanban-view-adapter'
@@ -8,8 +7,7 @@ import useKanbanViewAdapter from './use-kanban-view-adapter'
 defineOptions({ name: 'KanbanViewAdapter' })
 const props = defineProps<KanbanViewAdapterProps>()
 
-const { tasks, loading, sortOptions, error, noTaskError, handleRetry, dialogManager } =
-    useKanbanViewAdapter(props)
+const { tasks, loading, sortOptions, error, noTaskError, handleRetry } = useKanbanViewAdapter(props)
 </script>
 
 <template>

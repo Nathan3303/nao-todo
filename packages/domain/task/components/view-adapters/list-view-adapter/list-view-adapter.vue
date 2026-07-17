@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import { TaskList } from '@/components/tasks'
-import { LoadingError } from '@nao-todo/components'
+import { TaskList } from '../../list'
+import { LoadingError, TASK_CREATOR_DIALOG_KEY, t } from '@nao-todo/shared'
 import useListViewAdapter from './use-list-view-adapter'
 import type { ListViewAdapterProps } from './types'
-import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
-import { t } from '@nao-todo/infrastructure/locales'
 
 defineOptions({ name: 'ListViewAdapter' })
 const props = defineProps<ListViewAdapterProps>()
@@ -16,7 +14,6 @@ const {
     sortOptions,
     error,
     noTaskError,
-    dialogManager,
     handleNextPage,
     handleRetry
 } = useListViewAdapter(props)
@@ -73,8 +70,8 @@ const {
                         :small="small"
                         @show-task-details="showTaskDetails"
                         @task-clicked="taskClicked"
-                        @delete-task="(taskId) => taskUseCase.removeTask(taskId)"
-                        @restore-task="(taskId) => taskUseCase.restoreTask(taskId)"
+                        @delete-task="(taskId) => taskUseCase.delete(taskId)"
+                        @restore-task="(taskId) => taskUseCase.restore(taskId)"
                         @next-page="handleNextPage"
                     >
                         <template #actions="{ task }">
@@ -104,4 +101,3 @@ const {
     }
 }
 </style>
-

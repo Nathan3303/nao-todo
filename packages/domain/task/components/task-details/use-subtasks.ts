@@ -1,12 +1,10 @@
-import { computed } from 'vue'
+import { type GoAsync, unwrapError } from '@nao-todo/shared'
 import dayjs from 'dayjs'
-import useTasksLoader from '@/infrastructure/hooks/use-task-loader'
-import { newTaskUseCase, type TaskStore, type TaskViewObject } from '@nao-todo/usecases/task'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import type { GoAsync } from '@nao-todo/types'
-import type useTaskDetailsStore from '@/stores/tasks-view/task-details-store'
-
-type TaskDetailsStore = ReturnType<typeof useTaskDetailsStore>
+import { computed, inject } from 'vue'
+import { useTasksLoader } from '../../hooks'
+import type { useTaskDetailsStore } from '../../stores'
+import type { TaskViewObject } from '../../types'
+import { TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
 
 /**
  * 子任务加载器 composable
@@ -14,19 +12,19 @@ type TaskDetailsStore = ReturnType<typeof useTaskDetailsStore>
  *              并将数据写入 TaskDetailsStore 中独立的子任务 store（与主任务列表隔离）。
  * @param taskDetailsStore 任务详情存储
  */
-const useSubTasks = (taskDetailsStore: TaskDetailsStore) => {
-    // @store 适配器：将子任务 store 适配为 TaskUseCase 所需的 TaskStore 接口
-    const subTaskStore: TaskStore = {
-        setTasks: (tasks) => taskDetailsStore.setSubTasks(tasks),
-        updateTask: (id, update) => taskDetailsStore.updateSubTask(id, update),
-        addTask: (task) => taskDetailsStore.addSubTask(task),
-        addTasks: (tasks) => taskDetailsStore.addSubTasks(tasks),
-        getTask: (id) => taskDetailsStore.getSubTask(id),
-        removeTask: (id) => taskDetailsStore.removeSubTask(id)
-    }
+const useSubTasks = (taskDetailsStore: ReturnType<typeof useTaskDetailsStore>) => {
+    // @context 任务详情上下文
+    const { subTaskUseCase } = inject(TASK_DETAILS_PRE_CONTEXT_KEY)!
 
-    // @usecase 独立于主任务列表的子任务用例
-    const subTaskUseCase = newTaskUseCase(subTaskStore)
+    // @store 适配器：将子任务 store 适配为 TaskUseCase 所需的 TaskStore 接口
+    // const subTaskStore: TaskStore = {
+    //     setTasks: (tasks) => taskDetailsStore.setSubTasks(tasks),
+    //     updateTask: (id, update) => taskDetailsStore.updateSubTask(id, update),
+    //     addTask: (task) => taskDetailsStore.addSubTask(task),
+    //     addTasks: (tasks) => taskDetailsStore.addSubTasks(tasks),
+    //     getTask: (id) => taskDetailsStore.getSubTask(id),
+    //     removeTask: (id) => taskDetailsStore.removeSubTask(id)
+    // }
 
     // @loader 子任务加载器
     const subTaskLoader = useTasksLoader(subTaskUseCase, { limit: 20 })
@@ -38,6 +36,7 @@ const useSubTasks = (taskDetailsStore: TaskDetailsStore) => {
             .filter(Boolean)
     )
 
+    // @state 子任务加载&错误状态
     const subTasksLoading = computed(() => taskDetailsStore.subTasksLoading)
     const subTasksError = computed(() => taskDetailsStore.subTasksError)
 
@@ -124,4 +123,3 @@ const useSubTasks = (taskDetailsStore: TaskDetailsStore) => {
 }
 
 export default useSubTasks
-

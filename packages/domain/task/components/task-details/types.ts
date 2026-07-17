@@ -1,11 +1,9 @@
-import { TaskViewObject } from '@nao-todo/usecases/task'
-import { ProjectViewObject } from '@nao-todo/usecases/project'
-import { TagViewObject } from '@nao-todo/usecases/tag'
+import type { TaskViewObject, TaskProjectViewObject, TaskTagViewObject } from '../../types'
 
 // 任务详情面板视图对象
 export type TaskDetailsViewObject = TaskViewObject & {
-    projectName?: ProjectViewObject['name']
-    tagList: TagViewObject[]
+    projectName?: TaskProjectViewObject['name']
+    tagList: TaskTagViewObject[]
     isDone: boolean
 }
 
@@ -13,4 +11,3 @@ export type TaskDetailsViewObject = TaskViewObject & {
 export type TaskDetailsProps = {
     taskId?: TaskViewObject['id']
 }
-

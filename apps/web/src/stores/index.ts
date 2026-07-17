@@ -3,7 +3,6 @@ import useThemeStore from './theme-store'
 import useLocaleStore from './locale-store'
 import useProjectsStore from './projects-store'
 import useTagsStore from './tags-store'
-import useTasksStore from './tasks-store'
 import usePomodoroTimerStore from './pomodoro-timer-store'
 import usePomodoroFocusStore from './pomodoro-focus-store'
 
@@ -13,7 +12,6 @@ export {
     useLocaleStore,
     useProjectsStore,
     useTagsStore,
-    useTasksStore,
     usePomodoroTimerStore,
     usePomodoroFocusStore
 }

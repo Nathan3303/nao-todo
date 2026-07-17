@@ -80,9 +80,3 @@ export const prioritySNMap = { low: 1, medium: 2, high: 3 }
 // 待办事项优先级选项的反向映射
 export const prioritySNMapReverse = [null, 'low', 'medium', 'high']
 
-// 待办事项创建器弹窗键
-export const TASK_CREATOR_DIALOG_KEY = Symbol('task-creator-dialog')
-
-// 待办事项提醒器弹窗键
-export const TASK_REMINDER_DIALOG_KEY = Symbol('task-reminder-dialog')
-

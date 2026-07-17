@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import { TaskTable } from '@/components/tasks'
-import { LoadingError, Pager } from '@nao-todo/components'
-import useTableViewAdapter from './use-table-view-adapter'
+import { LoadingError, Pager, TASK_CREATOR_DIALOG_KEY, t } from '@nao-todo/shared'
+import { TaskTable } from '../../table'
 import type { TableViewAdapterProps } from './types'
-import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
-import { t } from '@nao-todo/infrastructure/locales'
+import useTableViewAdapter from './use-table-view-adapter'
 
 defineOptions({ name: 'TableViewAdapter' })
 const props = defineProps<TableViewAdapterProps>()
@@ -19,7 +17,6 @@ const {
     handleUpdatePage,
     handleUpdatePerPage,
     handleRetry,
-    dialogManager
 } = useTableViewAdapter(props)
 </script>
 
@@ -73,8 +70,8 @@ const {
                         @update-columns="updateColumns"
                         @update-sort-options="updateSortOptions"
                         @clear-sort-options="clearSortOptions"
-                        @delete-task="(taskId) => taskUseCase.removeTask(taskId)"
-                        @restore-task="(taskId) => taskUseCase.restoreTask(taskId)"
+                        @delete-task="(taskId) => taskUseCase.delete(taskId)"
+                        @restore-task="(taskId) => taskUseCase.restore(taskId)"
                     />
                 </nue-content>
             </nue-main>
@@ -111,4 +108,3 @@ const {
     }
 }
 </style>
-

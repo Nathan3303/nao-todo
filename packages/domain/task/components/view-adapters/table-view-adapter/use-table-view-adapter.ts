@@ -1,15 +1,9 @@
-import { computed, inject, onMounted, onUnmounted, ref } from 'vue'
-import useTasksLoader from '@/infrastructure/hooks/use-task-loader'
-import { useTasksStore } from '@/stores'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useTasksLoader } from '../../../hooks'
+import { useTasksStore } from '../../../stores'
 import type { TableViewAdapterProps } from './types'
-import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 
 const useTableViewAdapter = (props: TableViewAdapterProps) => {
-    /**
-     * 视图上下文
-     */
-    const { dialogManager } = inject(INDEX_VIEW_CONTEXT_KEY)!
-
     /**
      * 页面加载状态 - 非表格
      * @description 用于控制进入表格时的加载状态，而不是下一页或刷新时的加载状态
@@ -112,11 +106,8 @@ const useTableViewAdapter = (props: TableViewAdapterProps) => {
         noTaskError,
         handleUpdatePage,
         handleUpdatePerPage,
-        dialogManager,
         handleRetry
     }
 }
 
 export default useTableViewAdapter
-
-

@@ -1,18 +1,15 @@
-import { computed } from 'vue'
-import { storeToRefs } from 'pinia'
-import { TaskCheckItemHandler } from '@/infrastructure/handlers/task-check-item'
-import DialogManager from '@/infrastructure/hooks/use-dialog-manager'
-import { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 import {
-    newTaskCheckItemUseCase,
-    type TaskCheckItemViewObject,
-    type TaskViewObject
-} from '@nao-todo/usecases/task'
-import type useTaskDetailsStore from '@/stores/tasks-view/task-details-store'
-
-type TaskDetailsStore = ReturnType<typeof useTaskDetailsStore>
+    type DialogManager,
+    type Subscriber,
+    TASK_CREATOR_DIALOG_KEY,
+    unwrapError
+} from '@nao-todo/shared'
+import { storeToRefs } from 'pinia'
+import { computed, inject } from 'vue'
+import { TaskCheckItemHandler } from '../../handlers'
+import type { useTaskDetailsStore } from '../../stores'
+import type { TaskCheckItemViewObject, TaskViewObject } from '../../types'
+import { TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
 
 /**
  * 检查事项 composable
@@ -22,12 +19,12 @@ type TaskDetailsStore = ReturnType<typeof useTaskDetailsStore>
  * @param dialogManager 弹窗管理器
  */
 const useCheckItems = (
-    taskDetailsStore: TaskDetailsStore,
+    taskDetailsStore: ReturnType<typeof useTaskDetailsStore>,
     subscriber: Subscriber,
     dialogManager: DialogManager
 ) => {
-    // @usecase 任务检查事项用例
-    const taskCheckItemUseCase = newTaskCheckItemUseCase(taskDetailsStore)
+    // @context 任务详情上下文
+    const { taskCheckItemUseCase } = inject(TASK_DETAILS_PRE_CONTEXT_KEY)!
 
     // @handler 任务检查事项处理程序
     const checkItemHandler = new TaskCheckItemHandler(taskCheckItemUseCase, subscriber)

@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { inject } from 'vue'
-import { TaskCheckButton, TaskDateSelector } from '@nao-todo/components'
-import type { TaskRemindSetterUpdateVO } from '@nao-todo/components'
-import { TASK_DETAILS_CONTEXT_KEY } from '../context'
-import type { TaskViewObject, UpdateTaskViewObject } from '@nao-todo/usecases/task'
+import {
+    TaskCheckButton,
+    TaskDateSelector,
+    type TaskRemindSetterUpdateVO,
+    t
+} from '@nao-todo/shared'
 import dayjs from 'dayjs'
-import { t } from '@nao-todo/infrastructure/locales'
+import { inject } from 'vue'
+import type { TaskViewObject, UpdateTaskViewObject } from '../../../types'
+import { TASK_DETAILS_CONTEXT_KEY } from '../context'
 
 const { vo, closeDetails, updateTaskDetails } = inject(TASK_DETAILS_CONTEXT_KEY)!
 
@@ -72,4 +75,3 @@ const updateEndAtAndRemind = (updateVO: UpdateTaskViewObject) => {
     --nue-button-color: orange;
 }
 </style>
-

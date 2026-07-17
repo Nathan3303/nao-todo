@@ -4,7 +4,7 @@ import type {
     ColumnReorderPayload,
     ColumnResizePayload
 } from './types'
-import type { TaskColumnOptions } from '@nao-todo/usecases/task'
+import type { TaskColumnOptions } from '../../types'
 import { ref, computed } from 'vue'
 import { PINNED_COLUMN_MAP, enforcePinnedColumn, createDefaultTableConfig } from './column-defaults'
 import { readConfig, writeConfig, clearConfig } from './column-storage'

@@ -1,31 +1,30 @@
-import { TaskHandler } from '@/infrastructure/handlers/task'
-import { useProjectsStore, useTagsStore, useTaskDetailsStore } from '@/stores'
-import { storeToRefs } from 'pinia'
 import { inject, provide, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import type { TaskViewObject } from '@nao-todo/usecases/task'
-import type { TaskDetailsProps } from './types'
+import { TaskHandler } from '../../handlers'
+import { useTaskDetailsStore } from '../../stores'
+import type { TaskViewObject } from '../../types'
 import { TASK_DETAILS_CONTEXT_KEY, TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
-import useTaskViewObject from './use-task-view-object'
+import type { TaskDetailsProps } from './types'
 import useCheckItems from './use-check-items'
 import useComments from './use-comments'
 import useSubTasks from './use-subtasks'
+import useTaskViewObject from './use-task-view-object'
 
 const useTaskDetails = (props: TaskDetailsProps) => {
     // @viewContext TaskDetailsPre context
-    const { taskUseCase, subscriber, dialogManager, getProjectName } = inject(
-        TASK_DETAILS_PRE_CONTEXT_KEY
-    )!
+    const {
+        taskUseCase,
+        subscriber,
+        dialogManager,
+        getTag,
+        getProjectName,
+        avaliableProjects,
+        avaliableTags
+    } = inject(TASK_DETAILS_PRE_CONTEXT_KEY)!
 
     // @dataStore
     const router = useRouter()
-    const projectStore = useProjectsStore()
-    const tagStore = useTagsStore()
     const taskDetailsStore = useTaskDetailsStore()
-
-    // @presetStates
-    const { avaliableProjects: projects } = storeToRefs(projectStore)
-    const { tags } = storeToRefs(tagStore)
 
     // @hook 主任务详情
     const {
@@ -38,7 +37,7 @@ const useTaskDetails = (props: TaskDetailsProps) => {
         restoreTask,
         giveUpTask,
         ungiveUpTask
-    } = useTaskViewObject(taskUseCase, tagStore, getProjectName)
+    } = useTaskViewObject(taskUseCase, getTag, getProjectName)
 
     // @hook 检查事项
     const {
@@ -126,8 +125,8 @@ const useTaskDetails = (props: TaskDetailsProps) => {
         // ---
         vo: task,
         // ---
-        projects,
-        tags,
+        projects: avaliableProjects,
+        tags: avaliableTags,
         checkItems,
         comments,
         subTasks,
@@ -170,4 +169,3 @@ const useTaskDetails = (props: TaskDetailsProps) => {
 }
 
 export default useTaskDetails
-

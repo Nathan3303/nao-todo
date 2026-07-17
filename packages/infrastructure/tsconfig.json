@@ -3,11 +3,6 @@
     "include": [
         "./backend/**/*",
         "./built-in/**/*",
-        "./commands/**/*",
-        "./consts/**/*",
-        "./hooks/**/*",
-        "./locales/**/*",
-        "./requester/**/*",
         "./utils/**/*"
     ]
 }

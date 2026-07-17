@@ -1,20 +1,16 @@
-import type { TaskCommentHandler } from '@/infrastructure/handlers/task-comment'
-import type { TaskCheckItemHandler } from '@/infrastructure/handlers/task-check-item'
-import type { TaskHandler } from '@/infrastructure/handlers/task'
-import DialogManager from '@/infrastructure/hooks/use-dialog-manager'
-import { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
+import type { DialogManager, GoAsync, Subscriber } from '@nao-todo/shared'
 import type { ComputedRef, InjectionKey, Ref } from 'vue'
-import type { GoAsync } from '@nao-todo/types'
-import { TaskDetailsViewObject } from './types'
-import { ProjectViewObject } from '@nao-todo/usecases/project'
-import { TagViewObject } from '@nao-todo/usecases/tag'
-import {
+import type { TaskCheckItemHandler, TaskCommentHandler, TaskHandler } from '../../handlers'
+import type {
     TaskCheckItemViewObject,
     TaskCommentViewObject,
-    TaskUseCase,
+    TaskProjectViewObject,
+    TaskTagViewObject,
     TaskViewObject,
     UpdateTaskViewObject
-} from '@nao-todo/usecases/task'
+} from '../../types'
+import type { TaskCheckItemUseCase, TaskCommentUseCase, TaskUseCase } from '../../usecases'
+import type { TaskDetailsViewObject } from './types'
 
 // 任务详情上下文
 export type TaskDetailsContext = {
@@ -22,8 +18,8 @@ export type TaskDetailsContext = {
 
     vo: Ref<TaskDetailsViewObject | null>
 
-    projects: ComputedRef<ProjectViewObject[]>
-    tags: Ref<TagViewObject[]>
+    projects: ComputedRef<TaskProjectViewObject[]>
+    tags: Ref<TaskTagViewObject[]>
     checkItems: ComputedRef<TaskCheckItemViewObject[]>
     comments: ComputedRef<TaskCommentViewObject[]>
     subTasks: ComputedRef<TaskViewObject[]>
@@ -73,20 +69,26 @@ export const TASK_DETAILS_CONTEXT_KEY: InjectionKey<TaskDetailsContext> =
 // 任务详情预上下文
 export type TaskDetailsPreContext = {
     taskUseCase: TaskUseCase
+    taskCommentUseCase: TaskCommentUseCase
+    taskCheckItemUseCase: TaskCheckItemUseCase
+    subTaskUseCase: TaskUseCase
 
     dialogManager: DialogManager
     subscriber: Subscriber
+
+    avaliableProjects: ComputedRef<TaskProjectViewObject[]>
+    avaliableTags: ComputedRef<TaskTagViewObject[]>
 
     outlineWidth: Ref<string>
     isDisplayOutline: Ref<boolean>
     isUseFloatOutline: Ref<boolean>
     handleResizeOutline: (newWidth: number) => void
 
-    getProjectName: (projectId: ProjectViewObject['id']) => ProjectViewObject['name']
+    getTag: (tagId: TaskTagViewObject['id']) => TaskTagViewObject | undefined
+    getProjectName: (projectId: TaskProjectViewObject['id']) => TaskProjectViewObject['name']
 }
 
 // 任务详情预上下文键
 export const TASK_DETAILS_PRE_CONTEXT_KEY: InjectionKey<TaskDetailsPreContext> = Symbol(
     'TASK_DETAILS_PRE_CONTEXT'
 )
-

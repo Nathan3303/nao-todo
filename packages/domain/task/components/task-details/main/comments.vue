@@ -1,9 +1,8 @@
 <script lang="ts" setup>
-import { CommentRow, Loading } from '@nao-todo/components'
-import { TASK_DETAILS_CONTEXT_KEY } from '../context'
+import { CommentRow, Loading, t } from '@nao-todo/shared'
 import { inject } from 'vue'
-import type { TaskCommentViewObject } from '@nao-todo/usecases/task'
-import { t } from '@nao-todo/infrastructure/locales'
+import type { TaskCommentViewObject } from '../../../types'
+import { TASK_DETAILS_CONTEXT_KEY } from '../context'
 
 const { comments, commentHandler, commentsLoading, commentsError, retryComments } =
     inject(TASK_DETAILS_CONTEXT_KEY)!

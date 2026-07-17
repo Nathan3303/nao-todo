@@ -1,18 +1,19 @@
-import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import type { TaskUseCase } from '@nao-todo/application/web/usecases/task'
+import type { DialogManager, Subscriber } from '@nao-todo/shared'
+import type { TaskUseCase } from '../../../usecases'
 import type {
     GetTasksOptions,
-    TagViewObject,
+    TaskTagViewObject,
     TaskColumnOptions,
     TaskViewObject
-} from '@nao-todo/types'
+} from '../../../types'
 import type { ViewAdapterPropsBase } from '../types'
 
 export type ListViewAdapterProps = {
     taskUseCase: TaskUseCase
     getTasksOptions: GetTasksOptions
     subscriber: Subscriber
-    tags: TagViewObject[]
+    dialogManager: DialogManager
+    tags: TaskTagViewObject[]
     columns: TaskColumnOptions
     small?: boolean
     taskClicked?: (task: TaskViewObject) => void
@@ -20,4 +21,3 @@ export type ListViewAdapterProps = {
     ViewAdapterPropsBase,
     'getColumnLabel' | 'updateColumns' | 'updateSortOptions' | 'clearSortOptions'
 >
-

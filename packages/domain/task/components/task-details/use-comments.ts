@@ -1,10 +1,10 @@
-import { ref } from 'vue'
+import { type Subscriber, unwrapError } from '@nao-todo/shared'
 import { storeToRefs } from 'pinia'
-import { TaskCommentHandler } from '@/infrastructure/handlers/task-comment'
-import { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { newTaskCommentUseCase, type TaskViewObject } from '@nao-todo/usecases/task'
-import type useTaskDetailsStore from '@/stores/tasks-view/task-details-store'
+import { inject, ref } from 'vue'
+import { TaskCommentHandler } from '../../handlers'
+import type { useTaskDetailsStore } from '../../stores'
+import type { TaskViewObject } from '../../types'
+import { TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
 
 type TaskDetailsStore = ReturnType<typeof useTaskDetailsStore>
 
@@ -15,8 +15,8 @@ type TaskDetailsStore = ReturnType<typeof useTaskDetailsStore>
  * @param subscriber 订阅器
  */
 const useComments = (taskDetailsStore: TaskDetailsStore, subscriber: Subscriber) => {
-    // @usecase 任务评论用例
-    const taskCommentUseCase = newTaskCommentUseCase(taskDetailsStore)
+    // @context 任务详情上下文
+    const { taskCommentUseCase } = inject(TASK_DETAILS_PRE_CONTEXT_KEY)!
 
     // @handler 任务评论处理程序
     const commentHandler = new TaskCommentHandler(taskCommentUseCase, subscriber)

@@ -2,7 +2,7 @@
 import { computed, watch, inject } from 'vue'
 import { useRoute } from 'vue-router'
 import TaskDetails from './details.vue'
-import { TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
+import { TASK_DETAILS_PRE_CONTEXT_KEY } from './context.js'
 
 const route = useRoute()
 

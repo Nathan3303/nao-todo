@@ -1,24 +1,21 @@
-import { ref } from 'vue'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import type { TaskUseCase, TaskViewObject, UpdateTaskViewObject } from '@nao-todo/usecases/task'
-import type { ProjectViewObject } from '@nao-todo/usecases/project'
-import type useTagsStore from '@/stores/tags-store'
-import type { TaskDetailsViewObject } from './types'
+import { unwrapError } from '@nao-todo/shared'
 import dayjs from 'dayjs'
-
-type TagStore = ReturnType<typeof useTagsStore>
+import { ref } from 'vue'
+import type { TaskViewObject, UpdateTaskViewObject } from '../../types'
+import { TaskUseCase } from '../../usecases'
+import { TaskDetailsPreContext } from './context'
+import type { TaskDetailsViewObject } from './types'
 
 /**
  * 主任务详情 composable
  * @description 负责拉取主任务详情并组装为任务详情面板视图对象（TaskDetailsViewObject）。
- * @param taskUseCase 任务用例
- * @param tagStore 标签存储
+ * @param getTag 获取标签
  * @param getProjectName 获取项目名称
  */
 const useTaskViewObject = (
     taskUseCase: TaskUseCase,
-    tagStore: TagStore,
-    getProjectName: (projectId: ProjectViewObject['id']) => ProjectViewObject['name']
+    getTag: TaskDetailsPreContext['getTag'],
+    getProjectName: TaskDetailsPreContext['getProjectName']
 ) => {
     // @states
     const task = ref<TaskDetailsViewObject | null>(null) /** 任务视图对象 */
@@ -67,7 +64,7 @@ const useTaskViewObject = (
             isStarMarked: _task.isStarMarked,
             isGivenUp: _task.isGivenUp,
             isArchived: _task.isArchived,
-            tagList: _task.tags.map((tagId) => tagStore.getTag(tagId)!).filter(Boolean),
+            tagList: _task.tags.map((tagId) => getTag(tagId)!).filter(Boolean),
             projectName: getProjectName(_task.projectId || '')
         }
     }
@@ -152,4 +149,3 @@ const useTaskViewObject = (
 }
 
 export default useTaskViewObject
-

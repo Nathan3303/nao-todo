@@ -7,7 +7,7 @@ export type TaskViewObject = ViewObjectBase & {
     parentTaskId: NullableString
     userId: string
     name: string
-    description: NullableString
+    description: string
     state: string
     priority: string
     startAt: NullableDateString
@@ -138,6 +138,13 @@ export type TaskTagViewObject = {
     id: string
     name: string
     color: string
+}
+
+// 任务项目视图对象
+export type TaskProjectViewObject = {
+    id: string
+    name: string
+    icon: string
 }
 
 // --- Task Check Item ---
