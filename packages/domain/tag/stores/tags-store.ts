@@ -1,7 +1,8 @@
+import { useLoadingErrorStoreBase } from '@nao-todo/shared'
 import { defineStore } from 'pinia'
-import { useLoadingErrorStoreBase, useTagPreferenceStoreBase, useTagsStoreBase } from './base'
+import { useTagPreferenceStoreBase, useTagsStoreBase } from '../hooks'
 
-export default defineStore('TagsStore', () => {
+export const useTagsStore = defineStore('TagsStore', () => {
     const { tags, setTags, addTag, getTag, updateTag, updateTags, getAllTags, deleteTag } =
         useTagsStoreBase()
     const {
@@ -54,4 +55,3 @@ export default defineStore('TagsStore', () => {
         setPreferenceError
     }
 })
-

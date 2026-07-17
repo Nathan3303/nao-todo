@@ -2,13 +2,12 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { NueMessage } from 'nue-ui'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { type SignUpViewObject } from '../types'
-import { type I18nTranslator, PasswordRuleHint } from '@nao-todo/shared'
+import { t, PasswordRuleHint, unwrapError } from '@nao-todo/shared'
 import { AuthUseCase } from '../usecases'
 
 defineOptions({ name: 'AuthSignUp' })
-const props = defineProps<{ authUseCase: AuthUseCase; t: I18nTranslator }>()
+const props = defineProps<{ authUseCase: AuthUseCase }>()
 
 const router = useRouter()
 
@@ -32,7 +31,7 @@ const submit = async (e: Event) => {
         NueMessage.error(unwrapError(err))
         return
     }
-    NueMessage.success(props.t('auth.signUp.success'))
+    NueMessage.success(t('auth.signUp.success'))
     await router.push({ path: '/auth/signin' })
 }
 </script>

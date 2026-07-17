@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import { Entity } from '../../shares/entity'
+import { Entity } from '@nao-todo/shared'
 
 /**
  * 标签实体

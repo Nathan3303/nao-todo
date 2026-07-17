@@ -1,4 +1,4 @@
-import { Entity } from '../../shares/entity'
+import { Entity } from '@nao-todo/shared'
 
 /**
  * 用户实体
@@ -35,4 +35,3 @@ export class UserEntity extends Entity {
         return this.state === 2
     }
 }
-

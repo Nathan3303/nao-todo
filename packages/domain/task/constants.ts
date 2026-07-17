@@ -1,6 +1,6 @@
-import type { TaskColumnOptions, TaskSortFields } from '@nao-todo/domain/task'
-import { t } from '@nao-todo/shared/locales'
+import { type TaskColumnOptions, t } from '@nao-todo/shared'
 import { computed } from 'vue'
+import type { TaskSortFields } from './types'
 
 // 待办事项状态选项
 export const TaskStateSelectOptions = computed(() => [
@@ -49,24 +49,6 @@ export const sortFieldLabels = computed<Record<keyof TaskSortFields, string>>(()
     updatedAt: t('task.column.updatedAt'),
     deletedAt: t('task.column.deletedAt')
 }))
-
-// 默认显示的列
-export const defaultColumns: Record<keyof TaskColumnOptions, boolean> = {
-    name: true,
-    description: false,
-    state: true,
-    priority: true,
-    startAt: false,
-    endAt: true,
-    project: true,
-    tags: true,
-    givenUpAt: false,
-    starMarkAt: false,
-    archivedAt: false,
-    createdAt: false,
-    updatedAt: true,
-    deletedAt: false
-}
 
 // 待办事项状态序列号映射
 export const stateSNMap = { todo: 1, 'in-progress': 2, doing: 2, done: 3 }

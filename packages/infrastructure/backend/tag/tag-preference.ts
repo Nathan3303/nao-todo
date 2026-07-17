@@ -3,8 +3,7 @@ import {
     TagPreferenceRepository,
     UpdateTagPreferenceValueObject
 } from '@nao-todo/domain/tag'
-import { Requester } from '../../requester'
-import { GoAsync } from '@nao-todo/types'
+import type { GoAsync, Requester } from '@nao-todo/shared'
 import { ResponseData, TagPreferenceRes } from '../models'
 import {
     defaultTagPreferenceRes2Entity,
@@ -73,4 +72,3 @@ export class TagPreferenceRepoImpl implements TagPreferenceRepository {
 export const newTagPreferenceRepository = (requester: Requester) => {
     return new TagPreferenceRepoImpl(requester)
 }
-

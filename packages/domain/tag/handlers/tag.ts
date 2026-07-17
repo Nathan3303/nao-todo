@@ -1,16 +1,16 @@
-import type { useTagsStore } from '@/stores'
-import type { Go, GoAsync } from '@nao-todo/types'
-import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
+import type {
+    GetTasksOptions,
+    GetTasksSortOptions,
+    Go,
+    GoAsync,
+    Subscriber,
+    TaskColumnOptions
+} from '@nao-todo/shared'
+import { t, unwrapError } from '@nao-todo/shared'
 import { NueConfirm, NueMessage } from 'nue-ui'
-import { unwrapError } from '@nao-todo/infrastructure/utils'
-import { t } from '@nao-todo/infrastructure/locales'
-import {
-    CreateTagViewObject,
-    TagUseCase,
-    TagViewObject,
-    UpdateTagViewObject
-} from '@nao-todo/usecases/tag'
-import { GetTasksOptions, GetTasksSortOptions, TaskColumnOptions } from '@nao-todo/usecases/task'
+import type { useTagsStore } from '../stores'
+import type { CreateTagViewObject, TagViewObject, UpdateTagViewObject } from '../types'
+import { TagUseCase } from '../usecases'
 
 export class TagHandler {
     /**
@@ -162,7 +162,7 @@ export class TagHandler {
      * @returns 错误或空
      */
     async updateTagColor(tagId: string, color: string): GoAsync<void> {
-        return await this.updateTag(tagId, { id: tagId, color })
+        return await this.updateTag(tagId, { color })
     }
 
     /**
@@ -196,4 +196,3 @@ export class TagHandler {
         return this.tagsStore.tags.find((tag) => tag.id === id)?.color || 'transparent'
     }
 }
-

@@ -1,5 +1,9 @@
-import type { NullableString, ViewObjectBase } from '../shares/types'
-import type { GetTasksOptions, TaskColumnOptions } from '../task/viewobjects'
+import type {
+    NullableString,
+    ViewObjectBase,
+    GetTasksOptions,
+    TaskColumnOptions
+} from '@nao-todo/shared'
 
 // 标签视图对象
 export type TagViewObject = ViewObjectBase & {
@@ -34,4 +38,3 @@ export type TagPreferenceViewObject = ViewObjectBase & {
     getTasksOptions: Partial<GetTasksOptions>
     columns: Partial<TaskColumnOptions>
 }
-

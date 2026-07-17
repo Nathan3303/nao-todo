@@ -77,46 +77,6 @@ export type UpdateTaskViewObject = {
     isGivenUp?: boolean
 }
 
-// 获取任务列表选项
-export type GetTasksOptions = {
-    parentTaskId?: TaskViewObject['parentTaskId']
-    name?: TaskViewObject['name']
-    description?: TaskViewObject['description']
-    state?: TaskViewObject['state']
-    priority?: TaskViewObject['priority']
-    projectId?: TaskViewObject['projectId']
-    tagId?: string
-    isArchived?: TaskViewObject['isArchived']
-    isDeleted?: TaskViewObject['isDeleted']
-    isStarMarked?: TaskViewObject['isStarMarked']
-    isGivenUp?: TaskViewObject['isGivenUp']
-    sort?: GetTasksSortOptions
-    relativeDate?: 'today' | 'tomorrow' | 'week' | '-today' | 'month' | '-overdue'
-    page?: number
-    limit?: number
-}
-
-// 获取任务列表排序选项
-export type GetTasksSortOptions = { field: string; order: string }
-
-// 任务列表列选项
-export type TaskColumnOptions = {
-    name: boolean
-    description: boolean
-    state: boolean
-    priority: boolean
-    startAt: boolean
-    endAt: boolean
-    project: boolean
-    tags: boolean
-    givenUpAt: boolean
-    starMarkAt: boolean
-    archivedAt: boolean
-    createdAt: boolean
-    updatedAt: boolean
-    deletedAt: boolean
-}
-
 // 任务列表排序字段
 export type TaskSortFields = {
     name: boolean

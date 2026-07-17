@@ -1,4 +1,4 @@
-import type { GoAsync } from '@nao-todo/types'
+import type { GoAsync } from '@nao-todo/shared'
 import { TagPreferenceEntity } from '../entities/tag-preference'
 import { UpdateTagPreferenceValueObject } from '../valueobjects/update-tag-preference'
 

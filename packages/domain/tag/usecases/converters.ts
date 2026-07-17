@@ -10,8 +10,7 @@ import {
     TagViewObject,
     UpdateTagViewObject
 } from '../types/viewobjects'
-import jsonParse from '@nao-todo/infrastructure/utils/json-parse'
-import { defaultColumns } from '@nao-todo/infrastructure/consts/tasks'
+import { defaultColumns, jsonParse } from '@nao-todo/shared'
 
 /**
  * 转换 TagEntity 为 TagViewObject
@@ -114,4 +113,3 @@ export const updateTagViewObjectToValueObject = (
         updateTagValueObject.sortId = updateTagViewObject.sortId
     return updateTagValueObject
 }
-

@@ -1,7 +1,10 @@
-import type { TagPreferenceViewObject, TagViewObject } from '@nao-todo/usecases/tag'
-import type { GetTasksOptions, TaskColumnOptions } from '@nao-todo/usecases/task'
-import { useMapperStoreBase } from '../hooks/use-mapper-store-base'
-import { useStoreBase } from '../hooks/use-store-base'
+import {
+    type GetTasksOptions,
+    type TaskColumnOptions,
+    useMapperStoreBase,
+    useStoreBase
+} from '@nao-todo/shared'
+import type { TagPreferenceViewObject, TagViewObject } from '../types'
 
 export const useTagsStoreBase = () => {
     const {
@@ -92,4 +95,3 @@ export const useTagPreferenceStoreBase = () => {
 
 export type TagsStoreBase = ReturnType<typeof useTagsStoreBase>
 export type TagPreferenceStoreBase = ReturnType<typeof useTagPreferenceStoreBase>
-

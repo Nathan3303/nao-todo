@@ -4,10 +4,9 @@ import type {
     TagRepository,
     UpdateTagValueObject
 } from '@nao-todo/domain/tag'
-import type { Requester } from '../../requester'
-import { GoAsync } from '@nao-todo/types'
-import { getJWTFromLocalStorage } from '../utils'
+import type { GoAsync, Requester } from '@nao-todo/shared'
 import { CreateTagRes, ResponseData, TagRes } from '../models'
+import { getJWTFromLocalStorage } from '../utils'
 import {
     createTagRes2Entity,
     createTagValueObject2Req,
@@ -158,4 +157,3 @@ export class TagRepoImpl implements TagRepository {
 export const newTagRepository = (requester: Requester) => {
     return new TagRepoImpl(requester)
 }
-

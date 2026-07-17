@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { type GoError, Loading as LoadingComponent } from '@nao-todo/shared'
+import { type GoError, Loading as LoadingComponent, unwrapError } from '@nao-todo/shared'
 import { useRouter } from 'vue-router'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import { NueMessage } from 'nue-ui'
 import { AuthUseCase } from '../usecases'
 

@@ -1,26 +1,29 @@
 <script lang="ts" setup>
-import { NaoSmartList, type NaoSmartListLinkVO } from '@nao-todo/components/'
-import { TagColorDot } from '@nao-todo/components'
-import useProjectDragger from '@/layouts/tasks/aside/use-project-dragger'
-import { t } from '@nao-todo/infrastructure/locales'
+import { NaoSmartList, TagColorDot, useDragSorter, t, type SortHandler } from '@nao-todo/shared'
+import { TagSmartListEmits, TagSmartListProps } from './types'
 
 defineOptions({ name: 'TagSmartList' })
-withDefaults(defineProps<{ links: NaoSmartListLinkVO[]; draggable?: boolean }>(), {
-    draggable: false
-})
-const emit = defineEmits<{
-    (e: 'open-tag-manager'): void
-    (e: 'open-tag-creator'): void
-    (e: 'resort', originalId: string, boundId: string, isBefore: boolean): void
-}>()
+withDefaults(defineProps<TagSmartListProps>(), { draggable: false })
+const emit = defineEmits<TagSmartListEmits>()
 
+/**
+ * 排序处理函数
+ * @param dragged 拖动的元素
+ * @param dropped 目标元素
+ * @param isUp 是否是上移
+ */
+const sortHandler: SortHandler = (dragged, dropped, isUp) => {
+    const originalId = dragged.dataset.dragId
+    const boundId = dropped.dataset.dragId
+    // 检查拖动的元素和目标元素是否存在
+    if (!originalId || !boundId) return
+    // 触发排序事件
+    emit('resort', originalId, boundId, isUp)
+}
+
+// 拖排序器
 const { handleDragStart, handleDragOver, handleDragLeave, handleDragEnd, handleDrop } =
-    useProjectDragger((dragged, dropped, isUp) => {
-        const originalId = dragged.dataset.dragId
-        const boundId = dropped.dataset.dragId
-        if (!originalId || !boundId) return
-        emit('resort', originalId, boundId, isUp)
-    })
+    useDragSorter(sortHandler)
 </script>
 
 <template>
@@ -45,4 +48,3 @@ const { handleDragStart, handleDragOver, handleDragLeave, handleDragEnd, handleD
         </template>
     </nao-smart-list>
 </template>
-

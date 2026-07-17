@@ -1,1 +1,1 @@
-export { newTagUseCase, TagUseCase } from './tag'
+export { TagUseCase } from './tag'

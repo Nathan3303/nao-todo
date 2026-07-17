@@ -1,1 +1,1 @@
-export { newAuthUseCase, AuthUseCase } from './auth'
+export { AuthUseCase } from './auth'

@@ -1,4 +1,4 @@
-import { Go } from '@nao-todo/types'
+import type { Go } from '@nao-todo/shared'
 
 /**
  * 更新标签视图对象

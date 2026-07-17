@@ -1,6 +1,4 @@
 import { AuthDomain } from '@nao-todo/domain/auth'
-import { useAuthRepository } from '@nao-todo/infrastructure/backend/auth/repoImpl'
-import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 import type { GoAsync } from '@nao-todo/shared'
 import type { AuthStore, SignInViewObject, SignUpViewObject } from '../types'
 import { signInViewObject2ValueObject, signUpViewObject2ValueObject } from './converters'
@@ -95,9 +93,9 @@ export class AuthUseCase {
  * @param authStore 认证存储
  * @returns 认证用例
  */
-export const newAuthUseCase = (authStore: AuthStore): AuthUseCase => {
-    const requester = getRequesterImpl()
-    const repo = useAuthRepository(requester)
-    const authDomain = new AuthDomain(repo)
-    return new AuthUseCase(authDomain, authStore)
-}
+// export const newAuthUseCase = (authStore: AuthStore): AuthUseCase => {
+//     const requester = getRequesterImpl()
+//     const repo = useAuthRepository(requester)
+//     const authDomain = new AuthDomain(repo)
+//     return new AuthUseCase(authDomain, authStore)
+// }

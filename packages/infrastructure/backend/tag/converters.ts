@@ -15,7 +15,7 @@ import type {
     CreateTagReq
 } from '../models'
 import dayjs from 'dayjs'
-import { defaultColumns } from '../../consts/tasks'
+import { defaultColumns } from '@nao-todo/shared'
 
 // --- Tag ---
 

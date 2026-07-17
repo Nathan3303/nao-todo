@@ -1,14 +1,13 @@
 <script lang="ts" setup>
+import { t, unwrapError } from '@nao-todo/shared'
+import { NueMessage } from 'nue-ui'
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { NueMessage } from 'nue-ui'
 import { type SignInViewObject } from '../types'
-import { type I18nTranslator } from '@nao-todo/shared'
 import { AuthUseCase } from '../usecases'
 
 defineOptions({ name: 'AuthSignIn' })
-const props = defineProps<{ authUseCase: AuthUseCase; t: I18nTranslator }>()
+const props = defineProps<{ authUseCase: AuthUseCase }>()
 
 const router = useRouter()
 
@@ -26,7 +25,7 @@ const submit = async (e: Event) => {
         NueMessage.error(unwrapError(err))
         return
     }
-    NueMessage.success(props.t('auth.signIn.success'))
+    NueMessage.success(t('auth.signIn.success'))
     const lastRoute = localStorage.getItem('LAST_VISITED_ROUTE')
     await router.push(lastRoute || '/tasks')
 }
