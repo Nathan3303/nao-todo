@@ -1,14 +1,15 @@
 import type {
     GetTasksOptions,
     GetTasksSortOptions,
-    TaskColumnOptions,
-    TaskUseCase
-} from '@nao-todo/usecases/task'
-import type { Go } from '@nao-todo/types'
-import type { BuiltInProjectUseCase } from '@nao-todo/usecases/built-in-project'
-import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import type { BuiltInProjectsStore } from '@/stores/tasks-view/built-in-projects-store'
+    Go,
+    GoAsync,
+    Subscriber,
+    TaskColumnOptions
+} from '@nao-todo/shared'
+import type { BuiltInProjectsStore } from '../stores'
+import type { BuiltInProjectUseCase } from '../usecases'
 
+// 项目内建处理程序
 export class BuiltInProjectHandler {
     /**
      * 项目内建处理程序
@@ -19,7 +20,10 @@ export class BuiltInProjectHandler {
      */
     constructor(
         private builtInProjectUseCase: BuiltInProjectUseCase,
-        private taskUseCase: TaskUseCase,
+        private taskUseCase: {
+            // 任务用例的阴影接口（解耦任务用例的实现细节）
+            list: (getTasksOptions: GetTasksOptions) => GoAsync<any>
+        },
         private preferenceStore: BuiltInProjectsStore,
         private subscriber: Subscriber
     ) {}
@@ -136,6 +140,3 @@ export class BuiltInProjectHandler {
         return this.builtInProjectUseCase.savePreference(email, projectId, newPreference!)
     }
 }
-
-
-

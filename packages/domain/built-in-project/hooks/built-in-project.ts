@@ -1,10 +1,10 @@
-import type {
-    BuiltInProjectPreferenceViewObject,
-    BuiltInProjectViewObject
-} from '@nao-todo/usecases/built-in-project'
-import { useMapperStoreBase } from '../hooks/use-mapper-store-base'
-import type { GetTasksOptions, TaskColumnOptions } from '@nao-todo/usecases/task'
-import { useStoreBase } from '../hooks/use-store-base'
+import {
+    useMapperStoreBase,
+    useStoreBase,
+    type GetTasksOptions,
+    type TaskColumnOptions
+} from '@nao-todo/shared'
+import type { BuiltInProjectPreferenceViewObject, BuiltInProjectViewObject } from '../types'
 
 export const useBuiltInProjectsStoreBase = () => {
     const {
@@ -88,4 +88,3 @@ export type BuiltInProjectsStoreBase = ReturnType<typeof useBuiltInProjectsStore
 export type BuiltInProjectPreferenceStoreBase = ReturnType<
     typeof useBuiltInProjectPreferenceStoreBase
 >
-

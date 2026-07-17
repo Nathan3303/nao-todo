@@ -3,9 +3,9 @@ import type {
     BuiltInProjectPreferenceEntity,
     BuiltInProjectRepository
 } from '@nao-todo/domain/built-in-project'
-import type { Go } from '@nao-todo/types'
-import { defaultBuiltInProjectPreferences, defaultBuiltInProjects } from './default'
+import type { Go } from '@nao-todo/shared'
 import { bipRes2bipEntity, bippRes2bippVO, bippVO2bippRes } from './converters'
+import { defaultBuiltInProjectPreferences, defaultBuiltInProjects } from './default'
 
 const useBuiltInProjectRepository = (): BuiltInProjectRepository => {
     /**

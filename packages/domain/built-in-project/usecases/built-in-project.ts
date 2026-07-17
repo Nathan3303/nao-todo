@@ -1,13 +1,15 @@
-import { BuiltInProjectDomain } from '@nao-todo/domain/built-in-project'
-import type { BuiltInProjectStore } from './store'
-import { Go } from '@nao-todo/types'
+import type { Go } from '@nao-todo/shared'
+import type { BuiltInProjectDomain } from '../services'
+import type {
+    BuiltInProjectPreferenceViewObject,
+    BuiltInProjectStore,
+    BuiltInProjectViewObject
+} from '../types'
 import {
     builtInProjectEntities2ViewObjects,
     builtInProjectPreferenceEntity2ViewObject,
     builtInProjectPreferenceViewObject2Entity
 } from './converters'
-import { BuiltInProjectPreferenceViewObject, BuiltInProjectViewObject } from './viewobjects'
-import useBuiltInProjectRepository from '@nao-todo/infrastructure/built-in/project/repoImpl'
 
 /**
  * 内建项目用例
@@ -94,9 +96,8 @@ export class BuiltInProjectUseCase {
  * @param store 内建项目用例存储
  * @returns 内建项目用例
  */
-export const newBuiltInProjectUseCase = (store: BuiltInProjectStore): BuiltInProjectUseCase => {
-    const repo = useBuiltInProjectRepository()
-    const builtInProjectDomain = new BuiltInProjectDomain(repo)
-    return new BuiltInProjectUseCase(builtInProjectDomain, store)
-}
-
+// export const newBuiltInProjectUseCase = (store: BuiltInProjectStore): BuiltInProjectUseCase => {
+//     const repo = useBuiltInProjectRepository()
+//     const builtInProjectDomain = new BuiltInProjectDomain(repo)
+//     return new BuiltInProjectUseCase(builtInProjectDomain, store)
+// }

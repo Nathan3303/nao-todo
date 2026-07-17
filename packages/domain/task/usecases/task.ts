@@ -1,7 +1,7 @@
 import {
-    getRequesterImpl,
     type GoAsync,
     QueryOptionsValueObject,
+    type GetTasksOptions,
     type ResponseDataPagination
 } from '@nao-todo/shared'
 import dayjs from 'dayjs'
@@ -9,7 +9,6 @@ import { TaskRepository } from '../repositories'
 import { TaskDomain } from '../services'
 import type {
     CreateTaskViewObject,
-    GetTasksOptions,
     TaskStore,
     TaskViewObject,
     UpdateTaskViewObject
@@ -20,13 +19,6 @@ import {
     taskEntityToViewObject,
     updateTaskViewObjectToValueObject
 } from './converters'
-// import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
-// import {
-//     newTaskRepository,
-//     newTaskCheckItemRepository,
-//     newTaskCommentRepository,
-//     TaskRepoImpl
-// } from '@nao-todo/infrastructure/backend/task'
 
 /**
  * 任务用例

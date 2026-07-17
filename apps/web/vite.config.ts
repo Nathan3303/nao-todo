@@ -3,7 +3,6 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import terser from '@rollup/plugin-terser'
 import { visualizer } from 'rollup-plugin-visualizer'
-// import htmlTransformPlugin from './html-transform-plugin'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -31,7 +30,6 @@ export default defineConfig({
             }
         }),
         visualizer({ open: true }),
-        // htmlTransformPlugin()
     ],
     resolve: {
         alias: {
@@ -45,11 +43,6 @@ export default defineConfig({
         cssMinify: true,
         rollupOptions: {
             output: {
-                // assetFileNames: (assetInfo) => {
-                //     if (assetInfo.type === 'asset' && (assetInfo.name as string).endsWith('.css'))
-                //         return 'css/[name].[hash].[ext]'
-                //     return assetInfo.name as string
-                // },
                 chunkFileNames: 'js/[name].[hash].js',
                 manualChunks: (id) => {
                     if (id.includes('node_modules')) {

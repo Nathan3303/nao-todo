@@ -1,9 +1,6 @@
 import { defineStore } from 'pinia'
-import {
-    useBuiltInProjectsStoreBase,
-    useBuiltInProjectPreferenceStoreBase,
-    useLoadingErrorStoreBase
-} from '../base'
+import { useLoadingErrorStoreBase } from '@nao-todo/shared'
+import { useBuiltInProjectsStoreBase, useBuiltInProjectPreferenceStoreBase } from '../hooks'
 import { computed } from 'vue'
 
 const useBuiltInProjectsStore = defineStore('BuiltInProjectsStore', () => {
@@ -69,4 +66,3 @@ const useBuiltInProjectsStore = defineStore('BuiltInProjectsStore', () => {
 
 export default useBuiltInProjectsStore
 export type BuiltInProjectsStore = ReturnType<typeof useBuiltInProjectsStore>
-

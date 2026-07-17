@@ -1,14 +1,16 @@
-import type { CreateTaskViewObject } from '@nao-todo/types'
+import type { BuiltInProjectCreateTaskOptions } from '@nao-todo/domain/built-in-project'
 
+// 内建清单响应
 export type BuiltInProjectRes = {
     id: string
     icon: string
     name: string
     nameKey?: string
     description: string
-    createTaskOptions: (() => Partial<CreateTaskViewObject>) | Partial<CreateTaskViewObject>
+    createTaskOptions: (() => BuiltInProjectCreateTaskOptions) | BuiltInProjectCreateTaskOptions
 }
 
+// 内建清单偏好响应
 export type BuiltInProjectPreferenceRes = {
     projectId: BuiltInProjectRes['id']
     userId: string
@@ -16,4 +18,3 @@ export type BuiltInProjectPreferenceRes = {
     getTasksOptions: string
     columns: string
 }
-

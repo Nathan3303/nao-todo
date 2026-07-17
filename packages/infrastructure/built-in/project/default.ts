@@ -1,6 +1,6 @@
+import { defaultColumns } from '@nao-todo/shared'
 import dayjs from 'dayjs'
-import { defaultColumns } from '../../consts/tasks'
-import type { BuiltInProjectRes, BuiltInProjectPreferenceRes } from './types'
+import type { BuiltInProjectPreferenceRes, BuiltInProjectRes } from './types'
 
 export const defaultBuiltInProjects: BuiltInProjectRes[] = [
     {

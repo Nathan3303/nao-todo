@@ -1,4 +1,11 @@
-import { CreateTaskViewObject, GetTasksOptions, TaskColumnOptions } from '../task/viewobjects'
+import type { NullableDateString, GetTasksOptions, TaskColumnOptions } from '@nao-todo/shared'
+
+export type BuiltInProjectCreateTaskOptions = {
+    startAt?: NullableDateString
+    endAt?: NullableDateString
+    projectId?: string
+    isStarMarked?: boolean
+}
 
 // 内置项目视图对象
 export type BuiltInProjectViewObject = {
@@ -6,7 +13,7 @@ export type BuiltInProjectViewObject = {
     icon: string
     name: string
     description: string
-    createTaskOptions: (() => Partial<CreateTaskViewObject>) | Partial<CreateTaskViewObject>
+    createTaskOptions: (() => BuiltInProjectCreateTaskOptions) | BuiltInProjectCreateTaskOptions
 }
 
 // 内置项目偏好视图对象
@@ -17,4 +24,3 @@ export type BuiltInProjectPreferenceViewObject = {
     getTasksOptions: Partial<GetTasksOptions>
     columns: Partial<TaskColumnOptions>
 }
-
