@@ -1,17 +1,13 @@
-import {
-    CreateProjectValueObject,
-    ProjectEntity,
-    ProjectPreferenceEntity,
-    UpdateProjectValueObject
-} from '@nao-todo/domain/project'
 import { defaultColumns, jsonParse } from '@nao-todo/shared'
 import dayjs from 'dayjs'
+import { ProjectEntity, ProjectPreferenceEntity } from '../entities'
 import type {
     CreateProjectViewObject,
     ProjectPreferenceViewObject,
     ProjectViewObject,
     UpdateProjectViewObject
-} from './viewobjects'
+} from '../types'
+import { CreateProjectValueObject, UpdateProjectValueObject } from '../valueobjects'
 
 /**
  * 将项目实体转换为项目视图对象

@@ -1,4 +1,4 @@
-import type { GoAsync } from '@nao-todo/types'
+import type { GoAsync } from '@nao-todo/shared'
 import { ProjectPreferenceEntity } from '../entities/project-preference'
 import { SaveProjectPreferenceValueObject } from '../valueobjects/save-project-preference'
 

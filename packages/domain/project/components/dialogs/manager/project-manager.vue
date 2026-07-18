@@ -1,16 +1,18 @@
 <script lang="ts" setup>
 import {
     type DialogInstanceType,
-    useDialogWrapper,
+    PROJECT_MANAGER_DIALOG_KEY,
     ProjectBoard,
-    ProjectDeleteButton
-} from '@nao-todo/components'
+    ProjectDeleteButton,
+    t,
+    useDialogWrapper
+} from '@nao-todo/shared'
 import { onMounted, ref } from 'vue'
+import type { ProjectManagerDialogProps } from './types'
 import useProjectManager from './use-project-manager'
-import { PROJECT_MANAGER_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
-import { t } from '@nao-todo/infrastructure/locales'
 
 defineOptions({ name: 'ProjectManager' })
+const props = defineProps<ProjectManagerDialogProps>()
 
 // 项目管理器对话框实例
 const dialogRef = ref<DialogInstanceType>()
@@ -20,25 +22,22 @@ const {
     states,
     filteredProjects,
     loadingProjects,
-    dialogManager,
     setActiveTab,
     deleteProject,
     restoreProject,
     openProjectCreatorDialog
-} = useProjectManager()
+} = useProjectManager(props)
 
 // 对话框实例
 const { visible, close } = useDialogWrapper(dialogRef)
 
+// 打开项目管理器对话框
+const open = () => (visible.value = true)
+
 // @Mounted
 onMounted(() => {
     // 注册项目管理器
-    dialogManager.register(PROJECT_MANAGER_DIALOG_KEY, {
-        open: () => {
-            visible.value = true
-        },
-        close
-    })
+    props.dialogManager.register(PROJECT_MANAGER_DIALOG_KEY, { open, close })
 })
 </script>
 
@@ -156,4 +155,3 @@ onMounted(() => {
     }
 }
 </style>
-

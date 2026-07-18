@@ -1,20 +1,15 @@
-import { inject, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { NueMessage } from 'nue-ui'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
-import type { CreateProjectViewObject } from '@nao-todo/usecases/project'
+import { unwrapError } from '@nao-todo/shared'
+import type { CreateProjectViewObject } from '../../../types'
+import { ProjectCreatorDialogProps } from './types'
 
 /**
  * 项目创建对话框
  * @param props 项目创建对话框参数
  * @returns 项目创建对话框状态
  */
-const useProjectCreator = () => {
-    /**
-     * 项目创建对话框上下文
-     */
-    const { dialogManager, projectUseCase } = inject(INDEX_VIEW_CONTEXT_KEY)!
-
+const useProjectCreator = (props: ProjectCreatorDialogProps) => {
     /**
      * 项目创建对话框状态
      */
@@ -49,7 +44,7 @@ const useProjectCreator = () => {
         }
         // 调用 API 创建清单
         creating.value = true
-        return projectUseCase
+        return props.projectUseCase
             .create(viewObject.value)
             .then(([, error]) => {
                 if (error !== null) {
@@ -78,11 +73,9 @@ const useProjectCreator = () => {
         creating,
         isNameEmpty,
         viewObject,
-        dialogManager,
         handleConfirm,
         clearInputsValue
     }
 }
 
 export default useProjectCreator
-

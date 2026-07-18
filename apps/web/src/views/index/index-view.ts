@@ -1,25 +1,24 @@
-import useResponsiveAside from '@/infrastructure/hooks/use-responsive-aside'
-import { useDialogManager } from '@/infrastructure/hooks/use-dialog-manager'
+import {
+    useResponsiveAside,
+    useDialogManager,
+    useSubscriber,
+    responsiveTypes,
+    PROJECT_CREATOR_DIALOG_KEY,
+    TASK_CREATOR_DIALOG_KEY,
+    TASK_REMINDER_DIALOG_KEY
+} from '@nao-todo/shared'
 import {
     useThemeStore,
-    useUserStore,
     type ThemeMode,
     useProjectsStore,
     useTagsStore,
     useTasksStore
 } from '@/stores'
-import useSubscriber from '@nao-todo/infrastructure/hooks/use-subscriber'
-import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
+import { useUserStore, UserUseCase } from '@nao-todo/domain/user'
 import { inject, provide, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import {
-    PROJECT_CREATOR_DIALOG_KEY,
-    TASK_CREATOR_DIALOG_KEY,
-    TASK_REMINDER_DIALOG_KEY
-} from '@/infrastructure/constants/dialog-keys'
 import { LAST_VISITED_ROUTE_KEY } from '@/router'
-import useScope from '@/infrastructure/hooks/use-scope'
-import useShortcut from '@/infrastructure/hooks/use-shortcut'
+import { useScope, useShortcut } from '@/hooks'
 import { newUserUseCase } from '@nao-todo/usecases/user'
 import { newTaskUseCase, type TaskViewObject } from '@nao-todo/usecases/task'
 import { newProjectUseCase, ProjectViewObject } from '@nao-todo/usecases/project'
@@ -214,4 +213,3 @@ const useIndexView = () => {
 }
 
 export default useIndexView
-

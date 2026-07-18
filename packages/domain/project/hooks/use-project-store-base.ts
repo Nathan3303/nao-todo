@@ -1,8 +1,11 @@
-import type { ProjectPreferenceViewObject, ProjectViewObject } from '@nao-todo/usecases/project'
+import {
+    useMapperStoreBase,
+    useStoreBase,
+    type GetTasksOptions,
+    type TaskColumnOptions
+} from '@nao-todo/shared'
 import dayjs from 'dayjs'
-import type { GetTasksOptions, TaskColumnOptions } from '@nao-todo/usecases/task'
-import { useMapperStoreBase } from '../hooks/use-mapper-store-base'
-import { useStoreBase } from '../hooks/use-store-base'
+import type { ProjectPreferenceViewObject, ProjectViewObject } from '../types'
 
 export const useProjectsStoreBase = () => {
     const {
@@ -120,4 +123,3 @@ export const useProjectPreferenceStoreBase = () => {
 
 export type ProjectsStoreBase = ReturnType<typeof useProjectsStoreBase>
 export type ProjectPreferenceStoreBase = ReturnType<typeof useProjectPreferenceStoreBase>
-

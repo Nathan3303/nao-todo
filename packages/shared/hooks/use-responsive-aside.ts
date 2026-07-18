@@ -1,6 +1,6 @@
 import { computed, ref, watch, type Ref } from 'vue'
 
-const useResponsiveAside = (responsiveFlags: Ref<number>, responsiveType: number) => {
+export const useResponsiveAside = (responsiveFlags: Ref<number>, responsiveType: number) => {
     // @state 可见性
     const visible = ref<boolean>(false)
 
@@ -20,6 +20,3 @@ const useResponsiveAside = (responsiveFlags: Ref<number>, responsiveType: number
     // @returns
     return { visible, isFloating, switchVisible }
 }
-
-export default useResponsiveAside
-

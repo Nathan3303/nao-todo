@@ -1,4 +1,4 @@
-import { Entity } from '../../shares/entity'
+import { Entity } from '@nao-todo/shared'
 
 /**
  * 任务清单偏好实体

@@ -1,11 +1,10 @@
-import { inject, reactive, computed } from 'vue'
+import { unwrapError } from '@nao-todo/shared'
 import { NueMessage } from 'nue-ui'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
-import { useProjectsStore } from '@/stores'
+import { computed, reactive } from 'vue'
+import { useProjectsStore } from '../../../stores'
+import type { ProjectUpdaterDialogProps } from './types'
 
-const useProjectUpdater = () => {
-    const { projectUseCase, dialogManager } = inject(INDEX_VIEW_CONTEXT_KEY)!
+const useProjectUpdater = (props: ProjectUpdaterDialogProps) => {
     const projectsStore = useProjectsStore()
 
     const states = reactive({
@@ -54,7 +53,7 @@ const useProjectUpdater = () => {
             return false
         }
         states.disabled = states.updating = true
-        const err = await projectUseCase.update(states.projectId, {
+        const err = await props.projectUseCase.update(states.projectId, {
             icon: 'more2',
             name: states.name,
             description: states.description
@@ -78,8 +77,7 @@ const useProjectUpdater = () => {
         states.disabled = false
     }
 
-    return { states, formData, dialogManager, getProject, updateProject, resetStates }
+    return { states, formData, getProject, updateProject, resetStates }
 }
 
 export default useProjectUpdater
-

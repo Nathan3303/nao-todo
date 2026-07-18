@@ -13,7 +13,7 @@ export const responsiveTypes = {
     TV: 6
 }
 
-const useResponsiveFlag = () => {
+export const useResponsiveFlag = () => {
     // @state 当前响应式标记
     const flag = ref<number>(0)
 
@@ -62,5 +62,3 @@ const useResponsiveFlag = () => {
     // @returns
     return { flag }
 }
-
-export default useResponsiveFlag

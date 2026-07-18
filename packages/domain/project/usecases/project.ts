@@ -1,12 +1,13 @@
 import { ProjectDomain } from '@nao-todo/domain/project'
+import { GoAsync } from '@nao-todo/shared'
+import { ProjectPreferenceRepository, ProjectRepository } from '../repositories'
 import {
-    newProjectPreferenceRepository,
-    newProjectRepository,
-    ProjectPreferenceRepoImpl,
-    ProjectRepoImpl
-} from '@nao-todo/infrastructure/backend/project'
-import { ProjectStore } from './store'
-import { GoAsync } from '@nao-todo/types'
+    CreateProjectViewObject,
+    ProjectPreferenceViewObject,
+    ProjectStore,
+    ProjectViewObject,
+    UpdateProjectViewObject
+} from '../types'
 import {
     createProjectViewObjectToValueObject,
     projectEntitiesToViewObjects,
@@ -15,13 +16,6 @@ import {
     projectPreferenceViewObjectToEntity,
     updateProjectViewObjectToValueObject
 } from './converters'
-import {
-    CreateProjectViewObject,
-    ProjectPreferenceViewObject,
-    ProjectViewObject,
-    UpdateProjectViewObject
-} from './viewobjects'
-import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 
 /**
  * 项目用例
@@ -35,8 +29,8 @@ export class ProjectUseCase {
      */
     constructor(
         private projectDomain: ProjectDomain,
-        private projectRepo: ProjectRepoImpl,
-        private projectPreferenceRepo: ProjectPreferenceRepoImpl,
+        private projectRepo: ProjectRepository,
+        private projectPreferenceRepo: ProjectPreferenceRepository,
         private store: ProjectStore
     ) {}
 
@@ -346,11 +340,10 @@ export class ProjectUseCase {
  * @param store 项目存储层
  * @returns 项目用例
  */
-export const newProjectUseCase = (store: ProjectStore) => {
-    const requester = getRequesterImpl()
-    const projectRepo = newProjectRepository(requester)
-    const projectPreferenceRepo = newProjectPreferenceRepository(requester)
-    const domain = new ProjectDomain(projectRepo)
-    return new ProjectUseCase(domain, projectRepo, projectPreferenceRepo, store)
-}
-
+// export const newProjectUseCase = (store: ProjectStore) => {
+//     const requester = getRequesterImpl()
+//     const projectRepo = newProjectRepository(requester)
+//     const projectPreferenceRepo = newProjectPreferenceRepository(requester)
+//     const domain = new ProjectDomain(projectRepo)
+//     return new ProjectUseCase(domain, projectRepo, projectPreferenceRepo, store)
+// }

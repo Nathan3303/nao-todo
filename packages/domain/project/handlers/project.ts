@@ -1,19 +1,17 @@
-import { useProjectsStore } from '@/stores'
-import type { Go, GoAsync } from '@nao-todo/types'
-import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import { NueConfirm, NueMessage } from 'nue-ui'
-import { unwrapError } from '@nao-todo/infrastructure/utils'
-import { t } from '@nao-todo/infrastructure/locales'
-import type {
-    GetTasksOptions,
-    GetTasksSortOptions,
-    TaskColumnOptions
-} from '@nao-todo/usecases/task'
 import {
-    ProjectUseCase,
-    ProjectViewObject,
-    UpdateProjectViewObject
-} from '@nao-todo/usecases/project'
+    t,
+    unwrapError,
+    type GetTasksOptions,
+    type GetTasksSortOptions,
+    type Go,
+    type GoAsync,
+    type Subscriber,
+    type TaskColumnOptions
+} from '@nao-todo/shared'
+import { NueConfirm, NueMessage } from 'nue-ui'
+import { useProjectsStore } from '../stores'
+import { ProjectViewObject, UpdateProjectViewObject } from '../types'
+import { ProjectUseCase } from '../usecases'
 
 export class ProjectHandler {
     /**
@@ -200,4 +198,3 @@ export class ProjectHandler {
         return this.projectStore.projects.find((project) => project.id === id)?.name || '收集箱'
     }
 }
-

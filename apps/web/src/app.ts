@@ -1,15 +1,16 @@
-import useResponsiveFlag, {
-    responsiveTypes
-} from '@nao-todo/infrastructure/hooks/use-responsive-flag'
-import useResponsiveAside from '@/infrastructure/hooks/use-responsive-aside'
+import { registerAppCommands } from '@/commands/app.commands'
+import { scopeManager } from '@/commands/instance'
+import { env } from '@/env'
+import { useKeyboardShortcuts } from '@/hooks'
+import { useLocaleStore, useThemeStore } from '@nao-todo/domain/user'
+import {
+    initRequester,
+    responsiveTypes,
+    t,
+    useResponsiveAside,
+    useResponsiveFlag
+} from '@nao-todo/shared'
 import { computed, provide } from 'vue'
-import { useLocaleStore, useThemeStore } from './stores'
-import { t } from '@nao-todo/infrastructure/locales'
-import { env } from '@/infrastructure/constants/env'
-import { initRequester } from '@nao-todo/infrastructure/requester'
-import useKeyboardShortcuts from '@/infrastructure/hooks/use-keyboard-shortcuts'
-import { registerAppCommands } from '@/infrastructure/commands/app.commands'
-import { scopeManager } from '@/infrastructure/commands/instance'
 import { APP_CONTEXT_KEY, type RouterLink } from './context'
 
 const useApp = () => {
@@ -85,4 +86,3 @@ const useApp = () => {
 }
 
 export default useApp
-

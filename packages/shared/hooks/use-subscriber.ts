@@ -14,7 +14,7 @@ export interface Subscriber {
  * 事件订阅器实现
  * @returns 事件订阅器
  */
-const useSubscriber = (): Subscriber => {
+export const useSubscriber = (): Subscriber => {
     /**
      * 事件回调映射表
      */
@@ -69,6 +69,3 @@ const useSubscriber = (): Subscriber => {
      */
     return { subscribe, unsubscribe, emit }
 }
-
-export default useSubscriber
-

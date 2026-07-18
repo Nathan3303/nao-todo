@@ -1,15 +1,10 @@
 <script lang="ts" setup>
-import { NaoSmartList, type NaoSmartListLinkVO, t, useDragSorter } from '@nao-todo/shared'
+import { NaoSmartList, t, useDragSorter } from '@nao-todo/shared'
+import type { ProjectSmartListEmits, ProjectSmartListProps } from './types'
 
 defineOptions({ name: 'ProjectSmartList' })
-withDefaults(defineProps<{ links: NaoSmartListLinkVO[]; draggable?: boolean }>(), {
-    draggable: false
-})
-const emit = defineEmits<{
-    (e: 'open-project-manager'): void
-    (e: 'open-project-creator'): void
-    (e: 'resort', originalId: string, boundId: string, isBefore: boolean): void
-}>()
+defineProps<ProjectSmartListProps>()
+const emit = defineEmits<ProjectSmartListEmits>()
 
 const { handleDragStart, handleDragOver, handleDragLeave, handleDragEnd, handleDrop } =
     useDragSorter((dragged, dropped, isUp) => {

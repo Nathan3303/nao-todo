@@ -1,16 +1,21 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
 import useProjectUpdater from './use-project-updater'
-import { type DialogInstanceType, useDialogWrapper, ProjectForm } from '@nao-todo/components'
-import { PROJECT_UPDATER_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
-import { t } from '@nao-todo/infrastructure/locales'
+import {
+    type DialogInstanceType,
+    useDialogWrapper,
+    ProjectForm,
+    PROJECT_UPDATER_DIALOG_KEY,
+    t
+} from '@nao-todo/shared'
+import { ProjectUpdaterDialogProps } from './types'
 
 defineOptions({ name: 'ProjectUpdater' })
+const props = defineProps<ProjectUpdaterDialogProps>()
 
 const dialogRef = ref<DialogInstanceType>()
 
-const { states, formData, dialogManager, getProject, updateProject, resetStates } =
-    useProjectUpdater()
+const { states, formData, getProject, updateProject, resetStates } = useProjectUpdater(props)
 const { visible, close } = useDialogWrapper(dialogRef)
 
 const open = (projectId: string) => {
@@ -25,7 +30,7 @@ const handleConfirm = async () => {
 }
 
 onMounted(() => {
-    dialogManager.register(PROJECT_UPDATER_DIALOG_KEY, { open, close })
+    props.dialogManager.register(PROJECT_UPDATER_DIALOG_KEY, { open, close })
 })
 </script>
 
@@ -59,4 +64,3 @@ onMounted(() => {
     min-width: min(24rem, 100vw);
 }
 </style>
-

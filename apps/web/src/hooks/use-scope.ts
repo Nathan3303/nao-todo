@@ -1,5 +1,5 @@
+import { scopeManager } from '@/commands/instance'
 import { onMounted, onUnmounted } from 'vue'
-import { scopeManager } from '@/infrastructure/commands/instance'
 
 /**
  * 作用域绑定
@@ -13,7 +13,7 @@ import { scopeManager } from '@/infrastructure/commands/instance'
  * // mount → scopeManager.enter('task-table')
  * // unmount → scopeManager.leave('task-table')
  */
-const useScope = (name: string) => {
+export const useScope = (name: string) => {
     onMounted(() => {
         scopeManager.enter(name)
     })
@@ -22,6 +22,3 @@ const useScope = (name: string) => {
         scopeManager.leave(name)
     })
 }
-
-export default useScope
-

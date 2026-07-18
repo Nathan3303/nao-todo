@@ -1,33 +1,16 @@
-import { computed, inject, reactive, ref } from 'vue'
-import { ProjectHandler } from '@/infrastructure/handlers/project'
-import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
-import { useProjectsStore } from '@/stores'
+import { PROJECT_CREATOR_DIALOG_KEY } from '@nao-todo/shared'
 import { storeToRefs } from 'pinia'
-import { PROJECT_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
-
-/**
- * 项目管理器状态
- * @description 项目管理器状态，包含筛选信息和当前选中的标签页
- */
-export type ProjectManagerVO = {
-    filterInfo: { name?: string }
-    activeTab: 'all' | 'active' | 'deleted'
-}
-
+import { computed, reactive, ref } from 'vue'
+import { ProjectHandler } from '../../../handlers'
+import { useProjectsStore } from '../../../stores'
+import { ProjectManagerDialogProps, ProjectManagerVO } from './types'
 /**
  * 项目管理器
  * @description 管理项目列表，包括筛选、删除、恢复等操作
  * @param props 项目列表和项目创建器打开函数
  * @param emit 事件管理器
  */
-const useProjectManager = () => {
-    /**
-     * 项目管理器上下文
-     * @description 项目管理器上下文，包含项目和任务的使用案例
-     */
-    const { projectUseCase, subscriber, dialogManager } =
-        inject(INDEX_VIEW_CONTEXT_KEY)!
-
+const useProjectManager = (props: ProjectManagerDialogProps) => {
     /**
      * 项目管理器存储
      * @description 项目管理器存储，用于存储项目偏好设置
@@ -49,16 +32,13 @@ const useProjectManager = () => {
     /**
      * 项目管理器状态
      */
-    const states = reactive<ProjectManagerVO>({
-        filterInfo: { name: '' },
-        activeTab: 'all'
-    })
+    const states = reactive<ProjectManagerVO>({ filterInfo: { name: '' }, activeTab: 'all' })
 
     /**
      * 项目管理器操作器
      * @description 项目管理器操作器，用于执行项目相关的操作
      */
-    const projectHandler = new ProjectHandler(projectUseCase, projectsStore, subscriber)
+    const projectHandler = new ProjectHandler(props.projectUseCase, projectsStore, props.subscriber)
 
     /**
      * 根据 filterInfo 和 activeTab 筛选项目
@@ -112,7 +92,7 @@ const useProjectManager = () => {
      * @description 打开项目创建器对话框，用于创建新项目
      */
     const openProjectCreatorDialog = () => {
-        dialogManager.open(PROJECT_CREATOR_DIALOG_KEY)
+        props.dialogManager.open(PROJECT_CREATOR_DIALOG_KEY)
     }
 
     // @returns
@@ -120,7 +100,6 @@ const useProjectManager = () => {
         states,
         filteredProjects,
         loadingProjects,
-        dialogManager,
         setActiveTab,
         deleteProject,
         restoreProject,
@@ -129,5 +108,3 @@ const useProjectManager = () => {
 }
 
 export default useProjectManager
-
-

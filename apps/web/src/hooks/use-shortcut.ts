@@ -1,7 +1,6 @@
+import { registry } from '@/commands/instance'
+import type { Command, KeyEvent } from '@nao-todo/shared'
 import { onMounted, onUnmounted } from 'vue'
-import type { KeyEvent } from '@nao-todo/infrastructure/commands'
-import { registry } from '@/infrastructure/commands/instance'
-import type { Command } from '@nao-todo/infrastructure/commands'
 
 /**
  * 视图级快捷键注册选项
@@ -38,7 +37,7 @@ export interface UseShortcutOptions {
  *     group: '设置'
  * })
  */
-const useShortcut = (
+export const useShortcut = (
     id: string,
     keys: string,
     handler: (event?: KeyEvent) => void,
@@ -65,4 +64,3 @@ const useShortcut = (
 }
 
 export default useShortcut
-

@@ -1,17 +1,28 @@
 <script lang="ts" setup>
+import {
+    type DialogInstanceType,
+    PROJECT_CREATOR_DIALOG_KEY,
+    ProjectForm,
+    t,
+    useDialogWrapper
+} from '@nao-todo/shared'
 import { onMounted, ref } from 'vue'
+import type { ProjectCreatorDialogProps } from './types'
 import useProjectCreator from './use-project-creator'
-import { type DialogInstanceType, useDialogWrapper, ProjectForm } from '@nao-todo/components'
-import { PROJECT_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
-import { t } from '@nao-todo/infrastructure/locales'
 
 defineOptions({ name: 'ProjectCreator' })
+const props = defineProps<ProjectCreatorDialogProps>()
 
 const dialogRef = ref<DialogInstanceType>()
 
 const { visible, close } = useDialogWrapper(dialogRef)
-const { creating, isNameEmpty, viewObject, dialogManager, handleConfirm, clearInputsValue } =
-    useProjectCreator()
+const { creating, isNameEmpty, viewObject, handleConfirm, clearInputsValue } =
+    useProjectCreator(props)
+
+const open = () => {
+    clearInputsValue()
+    visible.value = true
+}
 
 const handleSubmit = async () => {
     const ok = await handleConfirm()
@@ -20,13 +31,7 @@ const handleSubmit = async () => {
 
 onMounted(() => {
     // 注册对话框生命周期
-    dialogManager.register(PROJECT_CREATOR_DIALOG_KEY, {
-        open: () => {
-            clearInputsValue()
-            visible.value = true
-        },
-        close
-    })
+    props.dialogManager.register(PROJECT_CREATOR_DIALOG_KEY, { open, close })
 })
 </script>
 
@@ -53,4 +58,3 @@ onMounted(() => {
     min-width: min(20rem, 100vw);
 }
 </style>
-

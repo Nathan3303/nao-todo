@@ -2,7 +2,7 @@ import { ref } from 'vue'
 
 const DEFAULT_STORAGE_KEY = 'ASIDE_WIDTH'
 
-export default (defaultWidth: number, storageKey?: string) => {
+export const useAsideWidth = (defaultWidth: number, storageKey?: string) => {
     storageKey = storageKey || DEFAULT_STORAGE_KEY
 
     // @states 读取侧边栏宽度记录

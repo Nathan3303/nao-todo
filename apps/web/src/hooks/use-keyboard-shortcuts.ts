@@ -1,14 +1,13 @@
+import { registry, scopeManager } from '@/commands/instance'
+import { matchesKeyEvent, parseKeys, type KeyEvent, type Platform } from '@nao-todo/shared'
 import { onMounted, onUnmounted } from 'vue'
-import { matchesKeyEvent, parseKeys } from '@nao-todo/infrastructure/commands'
-import type { KeyEvent, Platform } from '@nao-todo/infrastructure/commands'
-import { registry, scopeManager } from '@/infrastructure/commands/instance'
 
 /**
  * 键盘快捷键引擎
  * @description 在 App 根组件中调用一次，全局监听 document keydown
  * 将按键事件经 Registry + ScopeManager 匹配后派发到对应的 Command
  */
-const useKeyboardShortcuts = () => {
+export const useKeyboardShortcuts = () => {
     // 平台检测：Mac 上 $mod → metaKey，其他平台 → ctrlKey
     const isMac =
         typeof navigator !== 'undefined' &&
@@ -76,6 +75,3 @@ const useKeyboardShortcuts = () => {
         document.removeEventListener('keydown', handleKeyDown)
     })
 }
-
-export default useKeyboardShortcuts
-

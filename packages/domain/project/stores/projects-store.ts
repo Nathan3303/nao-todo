@@ -1,10 +1,9 @@
 import { defineStore } from 'pinia'
 import { computed } from 'vue'
-import { useLoadingErrorStoreBase, useProjectsStoreBase } from './base'
-import { useProjectPreferenceStoreBase } from './base/project'
-import type { ProjectPreferenceStoreBase, ProjectsStoreBase } from './base/project'
+import { useLoadingErrorStoreBase } from '@nao-todo/shared'
+import { useProjectsStoreBase, useProjectPreferenceStoreBase } from '../hooks'
 
-export default defineStore('ProjectsStore', () => {
+export const useProjectsStore = defineStore('ProjectsStore', () => {
     const {
         projects,
         getAllProjects,
@@ -16,7 +15,7 @@ export default defineStore('ProjectsStore', () => {
         deleteProject,
         restoreProject,
         updateProject
-    } = useProjectsStoreBase() as ProjectsStoreBase
+    } = useProjectsStoreBase()
 
     // @state 可用项目（按 sortId 排序）
     const avaliableProjects = computed(() => {
@@ -33,7 +32,7 @@ export default defineStore('ProjectsStore', () => {
         updatePreferenceGetTasksOptions,
         getPreferenceGetTasksOption,
         getPreferenceGetTasksOptions
-    } = useProjectPreferenceStoreBase() as ProjectPreferenceStoreBase
+    } = useProjectPreferenceStoreBase()
 
     const { loading, error, setLoading, setError } = useLoadingErrorStoreBase()
 
@@ -78,4 +77,3 @@ export default defineStore('ProjectsStore', () => {
         setPreferenceError
     }
 })
-

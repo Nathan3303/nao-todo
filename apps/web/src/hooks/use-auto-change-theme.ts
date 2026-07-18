@@ -1,7 +1,7 @@
-import { useMinuteTask } from '@nao-todo/infrastructure/hooks/use-minute-task'
+import { useMinuteTask } from '@nao-todo/shared'
 import { ref, watch } from 'vue'
 
-const useAutoChangeTheme = (defaultIsAutoChange: boolean) => {
+export const useAutoChangeTheme = (defaultIsAutoChange: boolean) => {
     // @state 当前主题标记 - 0: 日间 | 1: 夜间
     const themeFlag = ref<number>(0)
 
@@ -49,5 +49,3 @@ const useAutoChangeTheme = (defaultIsAutoChange: boolean) => {
         isAutoChange
     }
 }
-
-export default useAutoChangeTheme
