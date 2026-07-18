@@ -1,17 +1,26 @@
 <script setup lang="ts">
+import {
+    type DialogInstanceType,
+    POMODORO_CREATOR_DIALOG_KEY,
+    useDialogWrapper
+} from '@nao-todo/shared'
 import { onMounted, ref } from 'vue'
-import { type DialogInstanceType, useDialogWrapper } from '@nao-todo/components'
+import { PomodoroForm } from '../../pomodoro-form'
+import type { PomodoroCreatorDialogProps } from './types'
 import { usePomodoroCreator } from './use-pomodoro-creator'
-import { PomodoroForm } from '../pomodoro-form'
-import { POMODORO_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 
 defineOptions({ name: 'PomodoroCreator' })
+const props = defineProps<PomodoroCreatorDialogProps>()
 
 const dialogRef = ref<DialogInstanceType>()
 
 const { visible, close } = useDialogWrapper(dialogRef)
-const { creating, isNameEmpty, form, dialogManager, handleConfirm, clearInputsValue } =
-    usePomodoroCreator()
+const { creating, isNameEmpty, form, handleConfirm, clearInputsValue } = usePomodoroCreator(props)
+
+const open = () => {
+    clearInputsValue()
+    visible.value = true
+}
 
 const handleSubmit = async () => {
     const ok = await handleConfirm()
@@ -20,13 +29,7 @@ const handleSubmit = async () => {
 
 onMounted(() => {
     // 注册对话框生命周期
-    dialogManager.register(POMODORO_CREATOR_DIALOG_KEY, {
-        open: () => {
-            clearInputsValue()
-            visible.value = true
-        },
-        close
-    })
+    props.dialogManager.register(POMODORO_CREATOR_DIALOG_KEY, { open, close })
 })
 </script>
 

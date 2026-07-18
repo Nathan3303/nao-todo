@@ -1,20 +1,14 @@
-import { inject, ref, watch } from 'vue'
+import { unwrapError } from '@nao-todo/shared'
 import { NueMessage } from 'nue-ui'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import type { CreatePomodoroViewObject } from '@nao-todo/usecases/pomodoro'
-import { usePomodorosStore } from '@/stores/pomodoro-view'
-import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
+import { ref, watch } from 'vue'
+import { usePomodorosStore } from '../../../stores'
+import type { PomodoroUpdaterDialogFormState, PomodoroUpdaterDialogProps } from './types'
 
 /**
  * 常用番茄专注编辑对话框
  * @returns 常用番茄专注编辑对话框状态
  */
-export const usePomodoroUpdater = () => {
-    /**
-     * 注入番茄视图上下文
-     */
-    const { dialogManager, pomodoroUseCase } = inject(POMODORO_VIEW_CONTEXT_KEY)!
-
+export const usePomodoroUpdater = (props: PomodoroUpdaterDialogProps) => {
     /**
      * 常用专注 store
      */
@@ -38,12 +32,7 @@ export const usePomodoroUpdater = () => {
     /**
      * 表单状态（duration 以分钟为单位展示给用户）
      */
-    const form = ref<{
-        type: CreatePomodoroViewObject['type']
-        name: string
-        description: string
-        duration: number
-    }>({
+    const form = ref<PomodoroUpdaterDialogFormState>({
         type: 1,
         name: '',
         description: '',
@@ -101,7 +90,7 @@ export const usePomodoroUpdater = () => {
         }
         // 调用用例更新常用番茄专注（分钟 → 秒）
         updating.value = true
-        const error = await pomodoroUseCase.update(editingId.value, {
+        const error = await props.pomodoroUseCase.update(editingId.value, {
             type: f.type,
             name: f.name.trim(),
             description: f.description.trim() || null,
@@ -131,7 +120,6 @@ export const usePomodoroUpdater = () => {
         isNameEmpty,
         editingId,
         form,
-        dialogManager,
         loadPomodoro,
         handleConfirm,
         resetStates

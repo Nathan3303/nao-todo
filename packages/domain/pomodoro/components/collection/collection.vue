@@ -1,11 +1,13 @@
 <script setup lang="ts">
+import { Pager } from '@nao-todo/shared'
 import dayjs from 'dayjs'
-import { Pager } from '@nao-todo/components'
-import { usePomodoroCollection } from './use-pomodoro-collection'
 import { PomodoroHeader } from '../header'
-import PomodoroRecordsCompRow from '@/components/pomodoro/records/row.vue'
+import { PomodoroRecordListItem } from '../record-list'
+import type { PomodoroCollectionProps } from './types'
+import { usePomodoroCollection } from './use-pomodoro-collection'
 
 defineOptions({ name: 'PomodoroCollectionPage' })
+const props = defineProps<PomodoroCollectionProps>()
 
 const {
     loading,
@@ -22,7 +24,7 @@ const {
     recordTotalPages,
     handleRecordPageChange,
     handleRecordPerPageChange
-} = usePomodoroCollection()
+} = usePomodoroCollection(props)
 
 // 时长格式化（秒 → x 时 x 分 x 秒）
 const durationToString = (duration: number) => {
@@ -135,7 +137,7 @@ const typeToString = (type: number) => (type === 1 ? '番茄专注' : '正计时
                                     <nue-text>暂无专注记录</nue-text>
                                 </nue-div>
                                 <nue-div v-else theme="records-rows">
-                                    <pomodoro-records-comp-row
+                                    <pomodoro-record-list-item
                                         v-for="record in records"
                                         :key="record.id"
                                         :record="record"
@@ -372,4 +374,3 @@ const typeToString = (type: number) => (type === 1 ? '番茄专注' : '正计时
     }
 }
 </style>
-

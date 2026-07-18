@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { PomodoroFocusRing } from '@/components/pomodoro'
-import { formatTimeOfDay } from '@/infrastructure/utils/pomodoro'
+import { formatTimeOfDay } from '../../utils'
+import { PomodoroFocusRing } from '../focus-ring'
 import type { TimerEmits, TimerProps } from './types'
 
 defineOptions({ name: 'PomodoroTimerComp' })
@@ -175,4 +175,3 @@ const handleAdjustTime = (delta: number) => {
     border-left: 1px solid var(--nue-border-color);
 }
 </style>
-

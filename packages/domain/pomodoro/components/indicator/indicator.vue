@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NaoRouterLink } from '@nao-todo/components'
+import { NaoRouterLink } from '@nao-todo/shared'
 import { useIndicator } from './use-indicator'
 import { PomodoroFocusRing } from '../focus-ring'
 
@@ -85,4 +85,3 @@ const {
     }
 }
 </style>
-

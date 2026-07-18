@@ -1,9 +1,9 @@
-import type { GoAsync } from '@nao-todo/types'
+import type { GoAsync } from '@nao-todo/shared'
 import type {
     CreatePomodoroRecordViewObject,
     PomodoroRecordViewObject,
     PomodoroType
-} from '@nao-todo/usecases/pomodoro'
+} from '../types'
 
 /**
  * 格式化秒数为中文分钟/小时描述
@@ -93,4 +93,3 @@ export const persistPomodoroRecord = (
         if (err !== null) console.error(errorTag, err)
     })
 }
-

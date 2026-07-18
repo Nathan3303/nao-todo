@@ -1,18 +1,14 @@
+import type { GoAsync } from '@nao-todo/shared'
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import type { GoAsync } from '@nao-todo/types'
-import {
-    CreatePomodoroRecordViewObject,
-    newPomodoroRecordUseCase,
-    type PomodoroRecordViewObject
-} from '@nao-todo/usecases/pomodoro'
+import { computed, ref } from 'vue'
+import type { CreatePomodoroRecordViewObject, PomodoroRecordViewObject } from '../types'
 
 /**
  * 番茄钟设置存储键名
  */
 const POMODORO_SETTINGS_KEY = 'POMODORO_SETTINGS'
 
-const usePomodoroRecordsStore = defineStore('PomodoroRecordsStore', () => {
+export const usePomodoroRecordsStore = defineStore('PomodoroRecordsStore', () => {
     // @state 当前关联任务 ID
     const currentTaskId = ref<string | null>(null)
 
@@ -322,5 +318,3 @@ const usePomodoroRecordsStore = defineStore('PomodoroRecordsStore', () => {
         setOnRecordCreated
     }
 })
-
-export default usePomodoroRecordsStore

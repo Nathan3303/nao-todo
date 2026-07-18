@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import PomodoroRecordsCompRow from './row.vue'
+import RecordListItem from './record-list-item.vue'
 import type { PomodoroRecordsCompProps, PomodoroRecordsCompEmits } from './types'
 
-defineOptions({ name: 'PomodoroRecordsComp' })
+defineOptions({ name: 'PomodoroRecordList' })
 const props = defineProps<PomodoroRecordsCompProps>()
 const emit = defineEmits<PomodoroRecordsCompEmits>()
 
@@ -79,11 +79,7 @@ const durationToString = (duration: number) => {
                 trigger-height="2px"
             >
                 <nue-div theme="rows">
-                    <pomodoro-records-comp-row
-                        v-for="record in records"
-                        :key="record.id"
-                        :record="record"
-                    />
+                    <record-list-item v-for="record in records" :key="record.id" :record="record" />
                 </nue-div>
                 <template #loading>
                     <nue-div theme="loading-bar">
@@ -186,4 +182,3 @@ const durationToString = (duration: number) => {
     }
 }
 </style>
-

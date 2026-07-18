@@ -1,38 +1,19 @@
-import { inject, ref, watch } from 'vue'
+import { unwrapError } from '@nao-todo/shared'
 import { NueMessage } from 'nue-ui'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import type { CreatePomodoroViewObject } from '@nao-todo/usecases/pomodoro'
-import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
+import { ref, watch } from 'vue'
+import type { PomodoroCreatorDialogFormStates, PomodoroCreatorDialogProps } from './types'
 
 /**
  * 常用番茄专注创建对话框
  * @returns 常用番茄专注创建对话框状态
  */
-export const usePomodoroCreator = () => {
-    /**
-     * 注入番茄视图上下文
-     */
-    const { dialogManager, pomodoroUseCase } = inject(POMODORO_VIEW_CONTEXT_KEY)!
+export const usePomodoroCreator = (props: PomodoroCreatorDialogProps) => {
+    // @states
+    const creating = ref(false) // 创建中状态
+    const isNameEmpty = ref(false) // 名称是否为空
 
-    /**
-     * 创建中状态
-     */
-    const creating = ref(false)
-
-    /**
-     * 名称是否为空
-     */
-    const isNameEmpty = ref(false)
-
-    /**
-     * 表单状态（duration 以分钟为单位展示给用户）
-     */
-    const form = ref<{
-        type: CreatePomodoroViewObject['type']
-        name: string
-        description: string
-        duration: number
-    }>({
+    // 表单状态（duration 以分钟为单位展示给用户）
+    const form = ref<PomodoroCreatorDialogFormStates>({
         type: 1,
         name: '',
         description: '',
@@ -65,7 +46,7 @@ export const usePomodoroCreator = () => {
         }
         // 调用用例创建常用番茄专注（分钟 → 秒）
         creating.value = true
-        const [, error] = await pomodoroUseCase.create({
+        const [, error] = await props.pomodoroUseCase.create({
             type: f.type,
             name: f.name.trim(),
             description: f.description.trim() || null,
@@ -93,9 +74,7 @@ export const usePomodoroCreator = () => {
         creating,
         isNameEmpty,
         form,
-        dialogManager,
         handleConfirm,
         clearInputsValue
     }
 }
-

@@ -1,7 +1,6 @@
-import { GoAsync, ResponseDataPagination } from '@nao-todo/types'
-import { PomodoroEntity } from '../entities/pomodoro'
-import { CreatePomodoroValueObject } from '../valueobjects/create-pomodoro'
-import { UpdatePomodoroValueObject } from '../valueobjects/update-pomodoro'
+import { GoAsync, ResponseDataPagination } from '@nao-todo/shared'
+import { PomodoroEntity } from '../entities'
+import { CreatePomodoroValueObject, UpdatePomodoroValueObject } from '../valueobjects'
 
 /**
  * 番茄专注操作仓库接口
@@ -58,4 +57,3 @@ export interface PomodoroRepository {
         queryString?: string
     ): GoAsync<{ pomodoroEntities: PomodoroEntity[]; pagination?: ResponseDataPagination }>
 }
-

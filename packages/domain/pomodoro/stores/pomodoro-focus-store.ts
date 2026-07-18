@@ -1,19 +1,17 @@
+import { useTimerDriver } from '@nao-todo/shared'
+import { nanoid } from 'nanoid'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { nanoid } from 'nanoid'
-import usePomodoroRecordsStore from '@/stores/pomodoro-view/pomodoro-records-store'
 import {
-    sendNotification,
-    formatMinutes,
     buildPomodoroRecord,
-    persistPomodoroRecord
-} from '@/infrastructure/utils/pomodoro'
-import useTimerDriver from '@/infrastructure/hooks/use-timer-driver'
-import {
-    saveFocusSnapshot,
+    clearFocusSnapshot,
+    formatMinutes,
     loadFocusSnapshot,
-    clearFocusSnapshot
-} from '@/infrastructure/utils/pomodoro-persistence'
+    persistPomodoroRecord,
+    saveFocusSnapshot,
+    sendNotification
+} from '../utils'
+import { usePomodoroRecordsStore } from './pomodoro-records-store'
 
 /** 计时快照保存间隔（毫秒） */
 const PERSIST_INTERVAL_MS = 5000
@@ -308,4 +306,3 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
 })
 
 export default usePomodoroFocusStore
-

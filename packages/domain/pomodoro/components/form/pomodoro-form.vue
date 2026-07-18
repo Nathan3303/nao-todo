@@ -1,31 +1,10 @@
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
-import type { CreatePomodoroViewObject } from '@nao-todo/usecases/pomodoro'
+import { reactive, watch } from 'vue';
+import type { PomodoroFormEmits, PomodoroFormProps, PomodoroFormState } from './types';
 
 defineOptions({ name: 'PomodoroForm' })
-
-type PomodoroFormState = {
-    type: CreatePomodoroViewObject['type']
-    name: string
-    description: string
-    duration: number
-}
-
-const props = withDefaults(
-    defineProps<{
-        modelValue: PomodoroFormState
-        disabled?: boolean
-        isNameEmpty?: boolean
-    }>(),
-    {
-        disabled: false,
-        isNameEmpty: false
-    }
-)
-
-const emit = defineEmits<{
-    (e: 'update:modelValue', value: PomodoroFormState): void
-}>()
+const props = defineProps<PomodoroFormProps>()
+const emit = defineEmits<PomodoroFormEmits>()
 
 const formState = reactive<PomodoroFormState>({
     type: props.modelValue.type,

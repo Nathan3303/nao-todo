@@ -13,7 +13,7 @@ const TICK_INTERVAL_MS = 250
  * @param tick 每 250ms 执行的回调
  * @param isRunning 判定当前是否处于运行态（用于 visibility 补偿）
  */
-const useTimerDriver = (tick: () => void, isRunning: () => boolean) => {
+export const useTimerDriver = (tick: () => void, isRunning: () => boolean) => {
     // ========================================================================
     // Internal Engine State（plain variables，非响应式）
     // ========================================================================
@@ -76,5 +76,3 @@ const useTimerDriver = (tick: () => void, isRunning: () => boolean) => {
     // @returns
     return { start, stop, destroy }
 }
-
-export default useTimerDriver

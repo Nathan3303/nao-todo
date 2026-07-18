@@ -1,6 +1,6 @@
-import { usePomodoroRecordsStore, usePomodoroTimerStore, usePomodoroFocusStore } from '@/stores'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { usePomodoroFocusStore, usePomodoroRecordsStore, usePomodoroTimerStore } from '../../stores'
 
 export const useIndicator = () => {
     /**
@@ -116,6 +116,3 @@ export const useIndicator = () => {
         goToTimer
     }
 }
-
-
-

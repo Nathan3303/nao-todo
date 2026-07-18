@@ -1,48 +1,31 @@
-import { computed, inject, onMounted, ref, watch } from 'vue'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import {
-    newPomodoroRecordUseCase,
-    type PomodoroRecordViewObject,
-    type PomodoroViewObject
-} from '@nao-todo/usecases/pomodoro'
-import { usePomodorosStore } from '@/stores/pomodoro-view'
-import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
-import { POMODORO_UPDATER_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+import { POMODORO_UPDATER_DIALOG_KEY, unwrapError } from '@nao-todo/shared'
+import { computed, onMounted, ref, watch } from 'vue'
+import { usePomodorosStore } from '../../stores'
+import type { PomodoroRecordViewObject, PomodoroViewObject } from '../../types'
+import type { PomodoroCollectionProps } from './types'
 
 /**
  * 常用专注页面 composable
  * @description 加载用户创建的常用专注列表，提供主从（列表 + 详情）交互；
  *              选中某条常用专注时，按 pomodoroId 分页加载其专注记录。
  */
-export const usePomodoroCollection = () => {
-    /**
-     * 注入番茄视图上下文
-     */
-    const { pomodoroUseCase, dialogManager } = inject(POMODORO_VIEW_CONTEXT_KEY)!
+export const usePomodoroCollection = (props: PomodoroCollectionProps) => {
+    // 结构 props 中的用例
+    const { pomodoroUseCase, pomodoroRecordUseCase, dialogManager } = props
 
-    /**
-     * 常用专注 store
-     */
+    // 常用专注 store
     const store = usePomodorosStore()
 
-    /**
-     * 加载中状态
-     */
+    // 加载中状态
     const loading = ref(false)
 
-    /**
-     * 当前选中的常用专注 ID
-     */
+    // 当前选中的常用专注 ID
     const selectedId = ref<string | null>(null)
 
-    /**
-     * 常用专注列表（数据源自 store）
-     */
+    // 常用专注列表（数据源自 store）
     const pomodoros = computed(() => store.pomodoros)
 
-    /**
-     * 当前选中的常用专注
-     */
+    // 当前选中的常用专注
     const selectedPomodoro = computed<PomodoroViewObject | undefined>(() => {
         if (!selectedId.value) return void 0
         return store.getPomodoro(selectedId.value)
@@ -57,21 +40,7 @@ export const usePomodoroCollection = () => {
      */
     const recordsMap = ref(new Map<string, PomodoroRecordViewObject>())
 
-    /**
-     * 专注记录用例
-     */
-    const recordUseCase = newPomodoroRecordUseCase({
-        addRecord: (r) => {
-            recordsMap.value.set(r.id, r)
-        },
-        addRecords: (rs) => {
-            rs.forEach((r) => recordsMap.value.set(r.id, r))
-        }
-    })
-
-    /**
-     * 记录加载状态
-     */
+    // 记录加载状态
     const recordLoading = ref(false)
 
     /**
@@ -103,7 +72,7 @@ export const usePomodoroCollection = () => {
         if (!selectedId.value) return
         recordLoading.value = true
         try {
-            const [res, err] = await recordUseCase.getRecords({
+            const [res, err] = await pomodoroRecordUseCase.getRecords({
                 pomodoroId: selectedId.value,
                 page: recordPage.value,
                 limit: recordLimit.value,
@@ -211,4 +180,3 @@ export const usePomodoroCollection = () => {
         handleRecordPerPageChange
     }
 }
-

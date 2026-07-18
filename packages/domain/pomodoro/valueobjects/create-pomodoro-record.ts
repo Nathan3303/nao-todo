@@ -1,4 +1,4 @@
-import type { Go } from '@nao-todo/types'
+import type { Go } from '@nao-todo/shared'
 
 /**
  * 创建 Pomodoro 记录值对象

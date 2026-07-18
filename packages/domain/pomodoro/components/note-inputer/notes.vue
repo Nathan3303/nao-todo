@@ -3,9 +3,7 @@ import { computed } from 'vue'
 
 defineOptions({ name: 'PomodoroNotesComp' })
 const props = defineProps<{ noteText: string }>()
-const emit = defineEmits<{
-    (e: 'update:noteText', value: string): void
-}>()
+const emit = defineEmits<{ (e: 'update:noteText', value: string): void }>()
 
 // 通过 computed get/set 实现双向绑定
 const localNote = computed({
@@ -77,4 +75,3 @@ const localNote = computed({
     }
 }
 </style>
-

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { PomodoroFocusRing } from '@/components/pomodoro'
-import { formatClock, formatTimeOfDay } from '@/infrastructure/utils/pomodoro'
+import { PomodoroFocusRing } from '../focus-ring'
+import { formatClock, formatTimeOfDay } from '../../utils'
 import type { FocusEmits, FocusProps } from './types'
 
 defineOptions({ name: 'PomodoroFocusComp' })

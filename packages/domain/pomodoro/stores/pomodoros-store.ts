@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
-import { usePomodorosStoreBase } from '../base'
+import { usePomodorosStoreBase } from '../hooks'
 
-export default defineStore('PomodorosStore', () => {
+export const usePomodorosStore = defineStore('PomodorosStore', () => {
     const { pomodoros, setPomodoros, addPomodoro, getPomodoro, patchPomodoro, getAllPomodoros } =
         usePomodorosStoreBase()
 

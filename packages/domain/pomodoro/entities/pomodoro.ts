@@ -1,4 +1,4 @@
-import { Entity } from '../../shares/entity'
+import { Entity } from '@nao-todo/shared'
 
 /**
  * 番茄专注常用专注实体
@@ -20,4 +20,3 @@ export class PomodoroEntity extends Entity {
         super(id, createdAt, updatedAt, deletedAt)
     }
 }
-

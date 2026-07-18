@@ -1,24 +1,19 @@
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { useTimerDriver } from '@nao-todo/shared'
 import { nanoid } from 'nanoid'
-import type { TimerPhase, TimerStatus } from '@/components/pomodoro/timer/types'
-import usePomodoroRecordsStore from '@/stores/pomodoro-view/pomodoro-records-store'
+import { defineStore } from 'pinia'
+import { computed, ref } from 'vue'
+import type { TimerPhase, TimerStatus } from '../components/timer'
+import { POMODORO_MAX_FOCUS_SECONDS, POMODORO_MIN_FOCUS_SECONDS } from '../constants'
 import {
-    POMODORO_MIN_FOCUS_SECONDS,
-    POMODORO_MAX_FOCUS_SECONDS
-} from '@/infrastructure/constants/pomodoro'
-import {
-    sendNotification,
-    formatMinutes,
     buildPomodoroRecord,
-    persistPomodoroRecord
-} from '@/infrastructure/utils/pomodoro'
-import useTimerDriver from '@/infrastructure/hooks/use-timer-driver'
-import {
-    saveTimerSnapshot,
+    clearTimerSnapshot,
+    formatMinutes,
     loadTimerSnapshot,
-    clearTimerSnapshot
-} from '@/infrastructure/utils/pomodoro-persistence'
+    persistPomodoroRecord,
+    saveTimerSnapshot,
+    sendNotification
+} from '../utils'
+import { usePomodoroRecordsStore } from './pomodoro-records-store'
 
 /** 计时快照保存间隔（毫秒） */
 const PERSIST_INTERVAL_MS = 5000
@@ -543,4 +538,3 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
 })
 
 export default usePomodoroTimerStore
-

@@ -1,40 +1,44 @@
 <script setup lang="ts">
+import {
+    type DialogInstanceType,
+    DialogManager,
+    POMODORO_TIMER_SETTING_DIALOG_KEY,
+    useDialogWrapper
+} from '@nao-todo/shared'
 import { onMounted, ref } from 'vue'
-import { type DialogInstanceType, useDialogWrapper } from '@nao-todo/components'
 import { useTimerSettingDialog } from './use-timer-setting'
-import { POMODORO_TIMER_SETTING_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 
 defineOptions({ name: 'PomodoroTimerSettingDialog' })
 
 const dialogRef = ref<DialogInstanceType>()
+const props = defineProps<{ dialogManager: DialogManager }>()
 
-const { visible, close } = useDialogWrapper(dialogRef)
-const { form, saving, dialogManager, clearInputsValue, handleConfirm } = useTimerSettingDialog()
+const { visible, close: closeDialog } = useDialogWrapper(dialogRef)
+const { form, saving, clearInputsValue, handleConfirm } = useTimerSettingDialog()
 
 // 存储 dialogManager.open 传入的 onClose 回调
 let onCloseCallback: (() => void) | undefined
 
-const handleClose = () => {
+const open = (_payload: any, onClose?: () => void) => {
+    onCloseCallback = onClose
+    clearInputsValue()
+    visible.value = true
+}
+
+const close = () => {
     onCloseCallback?.()
     onCloseCallback = undefined
-    close()
+    closeDialog()
 }
 
 const handleSubmit = () => {
     const ok = handleConfirm()
-    if (ok) handleClose()
+    if (ok) close()
 }
 
 onMounted(() => {
     // 注册对话框生命周期
-    dialogManager.register(POMODORO_TIMER_SETTING_DIALOG_KEY, {
-        open: (_payload, onClose) => {
-            onCloseCallback = onClose
-            clearInputsValue()
-            visible.value = true
-        },
-        close: handleClose
-    })
+    props.dialogManager.register(POMODORO_TIMER_SETTING_DIALOG_KEY, { open, close })
 })
 </script>
 
@@ -42,7 +46,7 @@ onMounted(() => {
     <nue-dialog theme="timer-setting" v-model="visible" ref="dialogRef">
         <template #header>
             <nue-text>番茄钟设置</nue-text>
-            <nue-button @click="handleClose" icon="clear" theme="icon,ghost,small" />
+            <nue-button @click="close" icon="clear" theme="icon,ghost,small" />
         </template>
         <template #content>
             <nue-div vertical gap="var(--nue-gap-df)">
@@ -154,7 +158,7 @@ onMounted(() => {
             </nue-div>
         </template>
         <template #footer>
-            <nue-button @click="handleClose">取消</nue-button>
+            <nue-button @click="close">取消</nue-button>
             <nue-button :loading="saving" theme="primary" @click="handleSubmit">保存</nue-button>
         </template>
     </nue-dialog>
@@ -165,4 +169,3 @@ onMounted(() => {
     min-width: min(24rem, 100vw);
 }
 </style>
-

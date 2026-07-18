@@ -1,17 +1,22 @@
 <script setup lang="ts">
+import {
+    type DialogInstanceType,
+    POMODORO_UPDATER_DIALOG_KEY,
+    useDialogWrapper
+} from '@nao-todo/shared'
 import { onMounted, ref } from 'vue'
-import { type DialogInstanceType, useDialogWrapper } from '@nao-todo/components'
+import { PomodoroForm } from '../../form'
+import type { PomodoroUpdaterDialogProps } from './types'
 import { usePomodoroUpdater } from './use-pomodoro-updater'
-import { PomodoroForm } from '../pomodoro-form'
-import { POMODORO_UPDATER_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 
 defineOptions({ name: 'PomodoroUpdater' })
+const props = defineProps<PomodoroUpdaterDialogProps>()
 
 const dialogRef = ref<DialogInstanceType>()
 
 const { visible, close } = useDialogWrapper(dialogRef)
-const { updating, isNameEmpty, form, dialogManager, loadPomodoro, handleConfirm, resetStates } =
-    usePomodoroUpdater()
+const { updating, isNameEmpty, form, loadPomodoro, handleConfirm, resetStates } =
+    usePomodoroUpdater(props)
 
 const open = (id: string) => {
     resetStates()
@@ -26,7 +31,7 @@ const handleSubmit = async () => {
 
 onMounted(() => {
     // 注册对话框生命周期
-    dialogManager.register(POMODORO_UPDATER_DIALOG_KEY, { open, close })
+    props.dialogManager.register(POMODORO_UPDATER_DIALOG_KEY, { open, close })
 })
 </script>
 
