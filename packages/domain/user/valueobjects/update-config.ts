@@ -1,4 +1,4 @@
-import type { Go } from '@nao-todo/types'
+import type { Go } from '@nao-todo/shared'
 
 /**
  * 更新用户配置值对象
@@ -21,9 +21,8 @@ export class UpdateUserConfigValueObject {
      */
     validate(): Go<void> {
         if (this.appearance !== void 0 && !['system', 'light', 'dark'].includes(this.appearance)) {
-            return ['外观设置值无效']
+            return '外观设置值无效'
         }
         return null
     }
 }
-

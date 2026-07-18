@@ -1,25 +1,20 @@
-import { UpdateUserConfigValueObject, UserDomain } from '@nao-todo/domain/user'
-import {
-    UserRepoImpl,
-    UserConfigRepoImpl,
-    newUserRepository,
-    newUserConfigRepository
-} from '@nao-todo/infrastructure/backend/user'
-import type { UserStore } from './store'
-import type { GoAsync } from '@nao-todo/types'
+import type { GoAsync } from '@nao-todo/shared'
+import type { UserConfigRepository, UserRepository } from '../repositories'
+import type { UserDomain } from '../services'
 import type {
     UpdateNicknameViewObject,
     UpdatePasswordViewObject,
     UpdateUserConfigViewObject,
+    UserStore,
     UserViewObject
-} from './viewobjects'
+} from '../types'
+import { UpdateUserConfigValueObject } from '../valueobjects'
 import {
     updatePasswordViewObjectToValueObject,
     updateUserNicknameViewObjectToValueObject,
     userConfigEntityToViewObject,
     userEntityToViewObject
 } from './converters'
-import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
 
 /**
  * 用户用例
@@ -29,8 +24,8 @@ export class UserUseCase {
     // 构造函数
     constructor(
         private readonly userDomain: UserDomain, // 用户域
-        private readonly userRepo: UserRepoImpl, // 用户仓库
-        private readonly userConfigRepo: UserConfigRepoImpl, // 用户配置仓库
+        private readonly userRepo: UserRepository, // 用户仓库
+        private readonly userConfigRepo: UserConfigRepository, // 用户配置仓库
         private readonly userStore: UserStore // 用户存储
     ) {}
 
@@ -141,11 +136,10 @@ export class UserUseCase {
  * @param userStore 用户存储
  * @returns 用户用例
  */
-export const newUserUseCase = (userStore: UserStore) => {
-    const requester = getRequesterImpl()
-    const userRepo = newUserRepository(requester)
-    const userConfigRepo = newUserConfigRepository(requester)
-    const userDomain = new UserDomain(userRepo, userConfigRepo)
-    return new UserUseCase(userDomain, userRepo, userConfigRepo, userStore)
-}
-
+// export const newUserUseCase = (userStore: UserStore) => {
+//     const requester = getRequesterImpl()
+//     const userRepo = newUserRepository(requester)
+//     const userConfigRepo = newUserConfigRepository(requester)
+//     const userDomain = new UserDomain(userRepo, userConfigRepo)
+//     return new UserUseCase(userDomain, userRepo, userConfigRepo, userStore)
+// }

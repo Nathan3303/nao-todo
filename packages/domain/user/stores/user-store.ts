@@ -1,15 +1,15 @@
-import { env } from '@/infrastructure/constants/env'
+// import { env } from '@/infrastructure/constants/env'
+import { useAuthStoreBase } from '@nao-todo/domain/auth'
+import { defineStore } from 'pinia'
+import { computed, ref } from 'vue'
 import type {
     UpdateUserConfigViewObject,
     UpdateUserViewObject,
     UserConfigViewObject,
     UserViewObject
-} from '@nao-todo/usecases/user'
-import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
-import { useAuthStoreBase } from '@nao-todo/domain/auth'
+} from '../types'
 
-const useUserStore = defineStore('UserStore', () => {
+export const useUserStore = defineStore('UserStore', () => {
     // @state 认证状态
     const { getIsAuthenticated, setIsAuthenticated, clearAuthData } = useAuthStoreBase()
 
@@ -19,9 +19,9 @@ const useUserStore = defineStore('UserStore', () => {
     // @action 设置用户配置文件
     const setUserProfile = (profile: UserViewObject) => {
         // 处理 avatar 字段
-        if (profile.avatar) {
-            profile.avatar = `${env.baseURL}${profile.avatar}?t=${Date.now()}`
-        }
+        // if (profile.avatar) {
+        //     profile.avatar = `${env.baseURL}${profile.avatar}?t=${Date.now()}`
+        // }
         // 设置存储
         userProfile.value = profile
     }

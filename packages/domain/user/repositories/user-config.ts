@@ -1,4 +1,4 @@
-import type { GoAsync } from '@nao-todo/types'
+import type { GoAsync } from '@nao-todo/shared'
 import type { UserConfigEntity } from '../entities/user-config'
 import type { UpdateUserConfigValueObject } from '../valueobjects/update-config'
 

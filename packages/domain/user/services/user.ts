@@ -1,5 +1,4 @@
-import { UserRepository } from '../repositories/user'
-import { UserConfigRepository } from '../repositories/user-config'
+import type { UserRepository, UserConfigRepository } from '../repositories'
 
 export class UserDomain {
     /**
@@ -12,4 +11,3 @@ export class UserDomain {
         private userConfigRepo: UserConfigRepository
     ) {}
 }
-

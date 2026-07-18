@@ -1,94 +1,12 @@
-<template>
-    <nue-dialog
-        :model-value="modelValue"
-        @update:model-value="(value) => $emit('update:modelValue', value ?? false)"
-        title="裁剪头像"
-        theme="loader"
-    >
-        <template #content>
-            <nue-div vertical gap="1rem" align="center">
-                <div
-                    class="cropper-container"
-                    ref="cropperContainerRef"
-                    @mousedown="handleMouseDown"
-                    @mousemove="handleMouseMove"
-                    @mouseup="handleMouseUp"
-                    @mouseleave="handleMouseUp"
-                >
-                    <canvas ref="imageCanvasRef" class="image-canvas" />
-                    <div
-                        class="crop-overlay"
-                        :style="{
-                            left: cropState.x + 'px',
-                            top: cropState.y + 'px',
-                            width: cropState.size + 'px',
-                            height: cropState.size + 'px'
-                        }"
-                    >
-                        <div class="crop-border" />
-                        <div
-                            class="crop-handle corner top-left"
-                            @mousedown.stop="startResize('top-left', $event)"
-                        />
-                        <div
-                            class="crop-handle corner top-right"
-                            @mousedown.stop="startResize('top-right', $event)"
-                        />
-                        <div
-                            class="crop-handle corner bottom-left"
-                            @mousedown.stop="startResize('bottom-left', $event)"
-                        />
-                        <div
-                            class="crop-handle corner bottom-right"
-                            @mousedown.stop="startResize('bottom-right', $event)"
-                        />
-                        <div
-                            class="crop-handle edge top"
-                            @mousedown.stop="startResize('top', $event)"
-                        />
-                        <div
-                            class="crop-handle edge bottom"
-                            @mousedown.stop="startResize('bottom', $event)"
-                        />
-                        <div
-                            class="crop-handle edge left"
-                            @mousedown.stop="startResize('left', $event)"
-                        />
-                        <div
-                            class="crop-handle edge right"
-                            @mousedown.stop="startResize('right', $event)"
-                        />
-                    </div>
-                </div>
-            </nue-div>
-        </template>
-        <template #footer>
-            <nue-button @click="$emit('update:modelValue', false)" theme="ghost">取消</nue-button>
-            <nue-button @click="handleCropAndUpload" :loading="uploading" theme="primary"
-                >确认上传</nue-button
-            >
-        </template>
-    </nue-dialog>
-</template>
-
 <script setup lang="ts">
-import { ref, watch, nextTick } from 'vue'
-import { NueMessage } from 'nue-ui'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
+import { unwrapError } from '@nao-todo/shared';
+import { NueMessage } from 'nue-ui';
+import { nextTick, ref, watch } from 'vue';
+import type { UserAvatarCropperDialogEmits, UserAvatarCropperDialogProps } from './types';
 
-defineOptions({ name: 'SettingsProfileAvatarCropperDialog' })
-
-interface Props {
-    modelValue: boolean
-    file: File | null
-}
-interface Emits {
-    (e: 'update:modelValue', value: boolean): void
-    (e: 'success', file: File): void
-}
-
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+defineOptions({ name: 'UserAvatarCropperDialog' })
+const props = defineProps<UserAvatarCropperDialogProps>()
+const emit = defineEmits<UserAvatarCropperDialogEmits>()
 
 const cropperContainerRef = ref<HTMLDivElement>()
 const imageCanvasRef = ref<HTMLCanvasElement>()
@@ -405,6 +323,79 @@ watch(
 )
 </script>
 
+<template>
+    <nue-dialog
+        :model-value="modelValue"
+        @update:model-value="(value) => $emit('update:modelValue', value ?? false)"
+        title="裁剪头像"
+        theme="loader"
+    >
+        <template #content>
+            <nue-div vertical gap="1rem" align="center">
+                <div
+                    class="cropper-container"
+                    ref="cropperContainerRef"
+                    @mousedown="handleMouseDown"
+                    @mousemove="handleMouseMove"
+                    @mouseup="handleMouseUp"
+                    @mouseleave="handleMouseUp"
+                >
+                    <canvas ref="imageCanvasRef" class="image-canvas" />
+                    <div
+                        class="crop-overlay"
+                        :style="{
+                            left: cropState.x + 'px',
+                            top: cropState.y + 'px',
+                            width: cropState.size + 'px',
+                            height: cropState.size + 'px'
+                        }"
+                    >
+                        <div class="crop-border" />
+                        <div
+                            class="crop-handle corner top-left"
+                            @mousedown.stop="startResize('top-left', $event)"
+                        />
+                        <div
+                            class="crop-handle corner top-right"
+                            @mousedown.stop="startResize('top-right', $event)"
+                        />
+                        <div
+                            class="crop-handle corner bottom-left"
+                            @mousedown.stop="startResize('bottom-left', $event)"
+                        />
+                        <div
+                            class="crop-handle corner bottom-right"
+                            @mousedown.stop="startResize('bottom-right', $event)"
+                        />
+                        <div
+                            class="crop-handle edge top"
+                            @mousedown.stop="startResize('top', $event)"
+                        />
+                        <div
+                            class="crop-handle edge bottom"
+                            @mousedown.stop="startResize('bottom', $event)"
+                        />
+                        <div
+                            class="crop-handle edge left"
+                            @mousedown.stop="startResize('left', $event)"
+                        />
+                        <div
+                            class="crop-handle edge right"
+                            @mousedown.stop="startResize('right', $event)"
+                        />
+                    </div>
+                </div>
+            </nue-div>
+        </template>
+        <template #footer>
+            <nue-button @click="$emit('update:modelValue', false)" theme="ghost">取消</nue-button>
+            <nue-button @click="handleCropAndUpload" :loading="uploading" theme="primary">
+                确认上传
+            </nue-button>
+        </template>
+    </nue-dialog>
+</template>
+
 <style scoped>
 .cropper-container {
     position: relative;
@@ -509,4 +500,3 @@ watch(
     cursor: ew-resize;
 }
 </style>
-

@@ -44,3 +44,5 @@ export type UpdateUserConfigViewObject = {
     language?: UserConfigViewObject['language']
 }
 
+// 主题模式类型
+export type ThemeMode = 'light' | 'dark' | 'system'

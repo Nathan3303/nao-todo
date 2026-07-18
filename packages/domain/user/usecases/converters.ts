@@ -1,16 +1,12 @@
-import {
-    UpdateUserNicknameValueObject,
-    UpdateUserPasswordValueObject,
-    UserConfigEntity,
-    UserEntity
-} from '@nao-todo/domain/user'
+import { UpdateUserNicknameValueObject, UpdateUserPasswordValueObject } from '../valueobjects'
+import { UserConfigEntity, UserEntity } from '../entities'
+import dayjs from 'dayjs'
 import type {
     UpdateNicknameViewObject,
     UpdatePasswordViewObject,
     UserConfigViewObject,
     UserViewObject
-} from './viewobjects'
-import dayjs from 'dayjs'
+} from '../types'
 
 /**
  * 将用户实体转换为用户视图对象
@@ -66,4 +62,3 @@ export const userConfigEntityToViewObject = (
         appearance: userConfigEntity.appearance
     }
 }
-

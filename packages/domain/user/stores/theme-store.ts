@@ -1,21 +1,13 @@
 import { defineStore } from 'pinia'
-import { ref, computed, watch } from 'vue'
-
-/**
- * 主题模式类型
- */
-export type ThemeMode = 'light' | 'dark' | 'system'
-
-/**
- * 主题存储键名
- */
-export const THEME_MODE_KEY = 'USER_THEME_MODE'
+import { computed, ref, watch } from 'vue'
+import { THEME_MODE_KEY } from '../constants'
+import { ThemeMode } from '../types'
 
 /**
  * 主题存储
  * @description 主题存储负责管理主题模式状态和持久化存储
  */
-const useThemeStore = defineStore('ThemeStore', () => {
+export const useThemeStore = defineStore('ThemeStore', () => {
     // @state 主题模式 - light | dark | system
     const themeMode = ref<ThemeMode>('system')
 
@@ -108,6 +100,3 @@ const useThemeStore = defineStore('ThemeStore', () => {
         applyTheme
     }
 })
-
-export default useThemeStore
-

@@ -7,7 +7,7 @@
         <nue-div theme="body">
             <nue-select size="small" v-model="selectedLanguage">
                 <nue-select-option :label="t('settings.languageZhCN')" value="zh-CN" />
-                <!-- <nue-select-option :label="t('settings.languageEnUS')" value="en-US" /> -->
+                <nue-select-option :label="t('settings.languageEnUS')" value="en-US" />
             </nue-select>
         </nue-div>
     </nue-div>
@@ -15,8 +15,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { t } from '@nao-todo/infrastructure/locales'
-import useLocaleStore from '@/stores/locale-store'
+import { t } from '@nao-todo/shared'
+import { useLocaleStore } from '../../stores'
 
 defineOptions({ name: 'SettingsAppLanguage' })
 
@@ -58,4 +58,3 @@ const selectedLanguage = computed({
     }
 }
 </style>
-

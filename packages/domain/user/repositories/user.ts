@@ -1,4 +1,4 @@
-import type { GoAsync } from '@nao-todo/types'
+import type { GoAsync } from '@nao-todo/shared'
 import type { UserEntity } from '../entities/user'
 import type { UpdateUserNicknameValueObject } from '../valueobjects/update-nickname'
 import type { UpdateUserPasswordValueObject } from '../valueobjects/update-password'

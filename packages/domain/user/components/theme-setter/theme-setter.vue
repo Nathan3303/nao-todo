@@ -1,3 +1,59 @@
+<script setup lang="ts">
+import { debounce, t, unwrapError } from '@nao-todo/shared'
+import { NueMessage } from 'nue-ui'
+import { computed, ref } from 'vue'
+import { useThemeStore } from '../../stores'
+import type { ThemeMode } from '../../types'
+import type { ThemeSetterOption, ThemeSetterProps } from './types'
+
+defineOptions({ name: 'ThemeSetter' })
+const props = defineProps<ThemeSetterProps>()
+
+const themeStore = useThemeStore()
+
+const themeOptions: ThemeSetterOption[] = [
+    {
+        value: 'light',
+        label: t('settings.appearanceLight'),
+        icon: 'sun',
+        previewImage: '/images/naotodo-theme-mode-light.png'
+    },
+    {
+        value: 'dark',
+        label: t('settings.appearanceDark'),
+        icon: 'moon',
+        previewImage: '/images/naotodo-theme-mode-dark.png'
+    },
+    {
+        value: 'system',
+        label: t('settings.appearanceSystem'),
+        icon: 'desktop',
+        previewImage: '/images/naotodo-theme-mode-system.png'
+    }
+]
+const loading = ref(false)
+
+const currentTheme = computed(() => themeStore.themeMode)
+
+const debounceUpdateUserTheme = debounce((mode: ThemeMode) => {
+    props.userUseCase
+        .updateUserConfig({ appearance: mode })
+        .then((updateErr) => {
+            if (updateErr === null) return
+            NueMessage.error(`${t('settings.appearanceSyncFailed')}：${unwrapError(updateErr)}`)
+        })
+        .finally(() => {
+            loading.value = false
+        })
+}, 500)
+
+const selectTheme = async (mode: ThemeMode) => {
+    loading.value = true
+    themeStore.setTheme(mode)
+    debounceUpdateUserTheme(mode)
+}
+</script>
+
 <template>
     <nue-div theme="appereance-wrapper">
         <nue-div>
@@ -34,68 +90,6 @@
         </nue-div>
     </nue-div>
 </template>
-
-<script setup lang="ts">
-import { computed, inject, ref } from 'vue'
-import { useThemeStore, type ThemeMode } from '@/stores'
-import { unwrapError, debounce } from '@nao-todo/infrastructure/utils'
-import { NueMessage } from 'nue-ui'
-import { t } from '@nao-todo/infrastructure/locales'
-import { SETTINGS_VIEW_CONTEXT_KEY } from '@/views/index/settings/context'
-
-defineOptions({ name: 'SettingsAppAppereance' })
-
-const themeStore = useThemeStore()
-
-const themeOptions: Array<{
-    value: ThemeMode
-    label: string
-    icon: string
-    previewImage: string
-}> = [
-    {
-        value: 'light',
-        label: t('settings.appearanceLight'),
-        icon: 'sun',
-        previewImage: '/images/naotodo-theme-mode-light.png'
-    },
-    {
-        value: 'dark',
-        label: t('settings.appearanceDark'),
-        icon: 'moon',
-        previewImage: '/images/naotodo-theme-mode-dark.png'
-    },
-    {
-        value: 'system',
-        label: t('settings.appearanceSystem'),
-        icon: 'desktop',
-        previewImage: '/images/naotodo-theme-mode-system.png'
-    }
-]
-const loading = ref(false)
-
-const { userUseCase } = inject(SETTINGS_VIEW_CONTEXT_KEY)!
-
-const currentTheme = computed(() => themeStore.themeMode)
-
-const debounceUpdateUserTheme = debounce((mode: ThemeMode) => {
-    userUseCase
-        .updateUserConfig({ appearance: mode })
-        .then((updateErr) => {
-            if (updateErr === null) return
-            NueMessage.error(`${t('settings.appearanceSyncFailed')}：${unwrapError(updateErr)}`)
-        })
-        .finally(() => {
-            loading.value = false
-        })
-}, 500)
-
-const selectTheme = async (mode: ThemeMode) => {
-    loading.value = true
-    themeStore.setTheme(mode)
-    debounceUpdateUserTheme(mode)
-}
-</script>
 
 <style scoped>
 .nue-div--appereance-wrapper {
@@ -166,4 +160,3 @@ const selectTheme = async (mode: ThemeMode) => {
     }
 }
 </style>
-

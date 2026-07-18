@@ -5,7 +5,9 @@
             <nue-content v-if="profile">
                 <nue-div vertical gap=".5rem">
                     <nue-div class="settings-view__form-row">
-                        <nue-text color="gray" size=".875rem">{{ t('settings.registeredAt') }}</nue-text>
+                        <nue-text color="gray" size=".875rem">
+                            {{ t('settings.registeredAt') }}
+                        </nue-text>
                         <nue-text size=".875rem">
                             {{ profile.createdAt }}
                         </nue-text>
@@ -17,11 +19,11 @@
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from '@/stores'
+import { t } from '@nao-todo/shared'
 import { storeToRefs } from 'pinia'
-import { t } from '@nao-todo/infrastructure/locales'
+import { useUserStore } from '../../stores'
 
-defineOptions({ name: 'SettingsProfileInfo' })
+defineOptions({ name: 'UserInfoViewer' })
 
 const userStore = useUserStore()
 
@@ -37,4 +39,3 @@ const { profile } = storeToRefs(userStore)
     }
 }
 </style>
-

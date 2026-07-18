@@ -1,4 +1,4 @@
-import type { Go } from '@nao-todo/types'
+import type { Go } from '@nao-todo/shared'
 
 /**
  * 更新用户昵称值对象
