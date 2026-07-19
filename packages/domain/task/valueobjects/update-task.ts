@@ -33,8 +33,10 @@ export class UpdateTaskValueObject {
      * @returns 验证结果，如果验证通过则返回null，否则返回错误信息
      */
     validate(): Go<void> {
-        if (!this.name) return '任务名称不能为空'
-        if (this.name.length > 128) return '任务名称长度不能超过128个字符'
+        if (this.name !== void 0) {
+            if (this.name === '') return '任务名称不能为空'
+            else if (this.name.length > 128) return '任务名称长度不能超过128个字符'
+        }
         if (this.description && this.description.length > 256)
             return '任务描述长度不能超过256个字符'
         if (this.state && !['todo', 'in-progress', 'done'].includes(this.state))
@@ -78,4 +80,3 @@ export class UpdateTaskValueObject {
         return null
     }
 }
-

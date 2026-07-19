@@ -1,10 +1,5 @@
 <script setup lang="ts">
-import { inject } from 'vue'
-import {
-    TaskCreatorDialog,
-    TaskParentSelectorDialog,
-    TaskReminderDialog
-} from '@nao-todo/domain/task'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import {
     ProjectCreatorDialog,
     ProjectManagerDialog,
@@ -17,8 +12,13 @@ import {
     TagUpdaterDialog,
     useTagsStore
 } from '@nao-todo/domain/tag'
-import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
+import {
+    TaskCreatorDialog,
+    TaskParentSelectorDialog,
+    TaskReminderDialog
+} from '@nao-todo/domain/task'
 import { storeToRefs } from 'pinia'
+import { inject } from 'vue'
 
 defineOptions({ name: 'AppDialogAdapter' })
 
@@ -41,21 +41,13 @@ const { tags: avaliableTags } = storeToRefs(useTagsStore())
     />
     <task-parent-selector-dialog :task-use-case="taskUseCase" :dialog-manager="appDialogManager" />
     <task-reminder-dialog :task-use-case="taskUseCase" :dialog-manager="appDialogManager" />
-    <project-creator-dialog
-        :project-use-case="projectUseCase"
-        :dialog-manager="appDialogManager"
-        :subscriber="appSubscriber"
-    />
+    <project-creator-dialog :project-use-case="projectUseCase" :dialog-manager="appDialogManager" />
     <project-manager-dialog
         :project-use-case="projectUseCase"
         :dialog-manager="appDialogManager"
         :subscriber="appSubscriber"
     />
-    <project-updater-dialog
-        :project-use-case="projectUseCase"
-        :dialog-manager="appDialogManager"
-        :subscriber="appSubscriber"
-    />
+    <project-updater-dialog :project-use-case="projectUseCase" :dialog-manager="appDialogManager" />
     <tag-creator-dialog
         :tag-use-case="tagUseCase"
         :dialog-manager="appDialogManager"
