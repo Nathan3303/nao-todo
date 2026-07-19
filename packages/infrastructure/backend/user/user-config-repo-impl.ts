@@ -3,8 +3,7 @@ import {
     UserConfigEntity,
     UserConfigRepository
 } from '@nao-todo/domain/user'
-import type { Requester } from '../../requester'
-import { GoAsync } from '@nao-todo/types'
+import type { Requester, GoAsync } from '@nao-todo/shared'
 import { ResponseData, UserConfigRes } from '../models'
 import { getUserConfigRes2Entity, updateUserConfigValueObject2Req } from './converters'
 
@@ -68,4 +67,3 @@ export class UserConfigRepoImpl implements UserConfigRepository {
 export const newUserConfigRepository = (requester: Requester) => {
     return new UserConfigRepoImpl(requester)
 }
-

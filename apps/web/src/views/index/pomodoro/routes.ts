@@ -8,8 +8,7 @@ const routes: RouteRecordRaw = {
         {
             path: 'pomodoros',
             name: 'pomodoro-collection',
-            component: () =>
-                import('@nao-todo/domain/pomodoro/components/collection/collection.vue')
+            component: () => import('@/components/pomodoro/collection/index.vue')
         },
         {
             path: ':type(timer|focus)/:taskId?',

@@ -5,8 +5,7 @@ import {
     projectRes2Entity,
     createProjectRes2Entity
 } from './converters'
-import type { Requester } from '@nao-todo/infrastructure/requester'
-import type { GoAsync } from '@nao-todo/types'
+import type { Requester, GoAsync } from '@nao-todo/shared'
 import type {
     ProjectRes,
     CreateProjectRes,
@@ -229,4 +228,3 @@ export class ProjectRepoImpl implements ProjectRepository {
 export const newProjectRepository = (requester: Requester) => {
     return new ProjectRepoImpl(requester)
 }
-

@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import useAuthView from './auth-view'
-import { Loading as LoadingCompnent } from '@nao-todo/shared'
-import { t } from '@nao-todo/infrastructure/locales'
+import { Loading as LoadingCompnent, t } from '@nao-todo/shared'
 
 defineOptions({ name: 'AuthView' })
 

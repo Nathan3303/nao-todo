@@ -5,10 +5,10 @@ import {
     TaskDateInfo,
     TaskPriorityInfo,
     TaskStateInfo,
-    TaskTagBar
+    type TaskColumnOptions
 } from '@nao-todo/shared'
+import { TaskTagBar } from '../../'
 import { computed, inject } from 'vue'
-import type { TaskColumnOptions } from '../../types'
 import type { TaskKanbanColumnItemProps, TaskKanbanContext } from './types'
 import { TASK_KANBAN_CONTEXT_KEY } from './use-kanban'
 

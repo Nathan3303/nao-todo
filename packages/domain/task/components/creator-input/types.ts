@@ -1,4 +1,4 @@
-import type { TagViewObject, ProjectViewObject } from '@nao-todo/types'
+import type { TaskTagViewObject, TaskProjectViewObject } from '../../types'
 
 /**
  * 内联组件类型
@@ -46,15 +46,17 @@ export type TriggerState = {
     startOffset: number // 触发字符在 textContent 中的位置
 }
 
+// 下拉选择选项
 export type SelectOption = {
     label: string
     value: string
 }
 
+// 任务创建输入组件属性
 export type TaskCreatorInputProps = {
     modelValue: TaskCreatorInputValue
-    tags: TagViewObject[]
-    projects: ProjectViewObject[]
+    tags: TaskTagViewObject[]
+    projects: TaskProjectViewObject[]
     priorityOptions?: SelectOption[]
     stateOptions?: SelectOption[]
     placeholder?: string
@@ -63,6 +65,7 @@ export type TaskCreatorInputProps = {
     autofocus?: boolean
 }
 
+// 任务创建输入组件事件
 export type TaskCreatorInputEmits = {
     (e: 'update:modelValue', value: TaskCreatorInputValue): void
     (e: 'create-tag', name: string): void

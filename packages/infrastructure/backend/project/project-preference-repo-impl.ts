@@ -3,8 +3,7 @@ import {
     ProjectPreferenceRepository,
     SaveProjectPreferenceValueObject
 } from '@nao-todo/domain/project'
-import type { Requester } from '@nao-todo/infrastructure/requester'
-import { GoAsync } from '@nao-todo/types'
+import type { Requester, GoAsync } from '@nao-todo/shared'
 import {
     defaultProjectPreferenceRes2Entity,
     projectPreferenceRes2Entity,
@@ -75,4 +74,3 @@ export class ProjectPreferenceRepoImpl implements ProjectPreferenceRepository {
 export const newProjectPreferenceRepository = (requester: Requester) => {
     return new ProjectPreferenceRepoImpl(requester)
 }
-

@@ -1,8 +1,9 @@
 import { computed, provide } from 'vue'
-import type { TaskColumnOptions, TaskViewObject } from '../../types'
+import type { TaskViewObject } from '../../types'
+import type { TaskColumnOptions } from '@nao-todo/shared'
 import type { TaskListContext, TaskListEmits, TaskListProps } from './types'
 import useMultiSelect from './use-multi-select'
-import { isTaskExpired } from '@nao-todo/infrastructure/utils/date-checker'
+import { isTaskExpired } from '@nao-todo/shared'
 
 export const TASK_LIST_CONTEXT_KEY = Symbol('TASK_LIST_CONTEXT_KEY')
 

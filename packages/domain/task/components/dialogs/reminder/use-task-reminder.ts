@@ -1,4 +1,4 @@
-import { unwrapError } from '@nao-todo/infrastructure/utils'
+import { unwrapError } from '@nao-todo/shared'
 import { NueMessage } from 'nue-ui'
 import { computed, ref } from 'vue'
 import { useTasksStore } from '../../../stores'

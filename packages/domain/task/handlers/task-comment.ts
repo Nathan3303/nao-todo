@@ -1,15 +1,11 @@
+import { t, unwrapErrors, type GoAsync, type Subscriber } from '@nao-todo/shared'
+import { NueMessage } from 'nue-ui'
 import type {
     CreateTaskCommentViewObject,
-    TaskCommentUseCase,
     TaskCommentViewObject,
     UpdateTaskCommentViewObject
-} from '@nao-todo/usecases/task'
-import { unwrapErrors } from '@nao-todo/infrastructure/utils/go-error-handler'
-// import type { GoAsync } from '@nao-todo/types'
-import { NueMessage } from 'nue-ui'
-import { t } from '@nao-todo/infrastructure/locales'
-import { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import { GoAsync } from '@nao-todo/types'
+} from '../types'
+import { TaskCommentUseCase } from '../usecases'
 
 /**
  * 任务评论操作器
@@ -87,4 +83,3 @@ export class TaskCommentHandler {
         return null
     }
 }
-

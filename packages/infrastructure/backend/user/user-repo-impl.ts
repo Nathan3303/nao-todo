@@ -4,8 +4,7 @@ import {
     UserEntity,
     UserRepository
 } from '@nao-todo/domain/user'
-import type { Requester } from '../../requester'
-import type { GoAsync } from '@nao-todo/types'
+import type { GoAsync, Requester } from '@nao-todo/shared'
 import type { ResponseData, UserProfileRes, UpdateUserAvatarURLRes } from '../models'
 import {
     updateUserNicknameValueObject2Req,

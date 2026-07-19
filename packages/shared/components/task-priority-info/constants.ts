@@ -1,5 +1,5 @@
 import { computed } from 'vue'
-import { t } from '../../locales'
+import { t } from '@nao-todo/shared'
 
 export const TaskPriorityPresets = computed(() => ({
     high: ['priority-3', t('task.priority.high'), 'var(--nue-error-color-60)'],

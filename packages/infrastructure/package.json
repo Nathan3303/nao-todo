@@ -4,13 +4,7 @@
     "author": "Nathan Lee",
     "license": "MIT",
     "files": [
-        "commands/**/*",
         "backend/**/*",
-        "built-in/**/*",
-        "consts/**/*",
-        "hooks/**/*",
-        "locales/**/*",
-        "requester/**/*",
-        "utils/**/*"
+        "built-in/**/*"
     ]
 }

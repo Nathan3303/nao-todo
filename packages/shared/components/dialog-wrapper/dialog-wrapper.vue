@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { type ComponentPublicInstance, computed, ref } from 'vue'
 import type { NueDialog } from 'nue-ui'
 import type { DialogWrapperProps, DialogWrapperEmits } from './types'
-import type { ComponentRef } from '@nao-todo/types'
+
+type ComponentRef<T> = ComponentPublicInstance<T> | null | undefined
 
 defineOptions({ name: 'DialogWrapper' })
 const props = defineProps<DialogWrapperProps>()

@@ -1,10 +1,6 @@
 import type { ComputedRef } from 'vue'
-import type {
-    TaskViewObject,
-    TaskColumnOptions,
-    GetTasksSortOptions,
-    TaskTagViewObject
-} from '../../types'
+import type { TaskViewObject, TaskTagViewObject } from '../../types'
+import type { TaskColumnOptions, GetTasksSortOptions } from '@nao-todo/shared'
 
 export type TaskListProps = {
     tags: TaskTagViewObject[]

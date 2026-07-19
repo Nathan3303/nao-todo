@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import type { TaskViewObject } from '@nao-todo/types'
+import type { TaskViewObject } from '@nao-todo/domain/task'
 
 /**
  * 判断是否是今天

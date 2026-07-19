@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import {
-    TaskCheckButton,
-    TaskDateSelector,
-    type TaskRemindSetterUpdateVO,
-    t
-} from '@nao-todo/shared'
+import { TaskCheckButton, t } from '@nao-todo/shared'
+import { TaskDateSelector } from '../../date-selector'
+import type { TaskRemindSetterUpdateVO } from '../../remind-setter/types'
 import dayjs from 'dayjs'
 import { inject } from 'vue'
 import type { TaskViewObject, UpdateTaskViewObject } from '../../../types'

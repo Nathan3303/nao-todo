@@ -8,7 +8,7 @@ import {
 } from '@nao-todo/shared'
 import { computed } from 'vue'
 import { columnLabels, sortFieldLabels } from '../../constants'
-import { GetTasksOptions, GetTasksSortOptions, TaskColumnOptions } from '../../types'
+import { GetTasksOptions, GetTasksSortOptions, TaskColumnOptions } from '@nao-todo/shared'
 
 defineOptions({ name: 'TasksDropdownSortOperator' })
 const props = defineProps<{

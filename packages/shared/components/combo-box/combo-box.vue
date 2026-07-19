@@ -1,3 +1,34 @@
+<script lang="ts" setup>
+import { computed, ref } from 'vue'
+import { Checkbox } from '../checkbox'
+import type { ComboBoxProps, ComboBoxEmits } from './types'
+
+defineOptions({ name: 'ComboBox' })
+const props = withDefaults(defineProps<ComboBoxProps>(), {
+    triggerIcon: 'plus-circle',
+    triggerTitle: 'Status',
+    hideCounter: false
+})
+const emit = defineEmits<ComboBoxEmits>()
+
+const filterText = ref('')
+
+const filteredOptions = computed(() => {
+    if (!filterText.value) return props.framework
+    return props.framework.filter((option) => {
+        return option.label.toLowerCase().includes(filterText.value.toLowerCase())
+    })
+})
+
+const checkedOptionsCount = computed(() => {
+    return filteredOptions.value.filter((option) => option.checked).length
+})
+
+const handleCheck = (checked: boolean, value: unknown) => {
+    emit('change', value, { checked })
+}
+</script>
+
 <template>
     <nue-dropdown theme="combo-box" v-bind="$attrs">
         <template #trigger="{ trigger }">
@@ -45,37 +76,6 @@
     </nue-dropdown>
 </template>
 
-<script lang="ts" setup>
-import { computed, ref } from 'vue'
-import { Checkbox } from '../checkbox'
-import type { ComboBoxProps, ComboBoxEmits } from './types'
-
-defineOptions({ name: 'ComboBox' })
-const props = withDefaults(defineProps<ComboBoxProps>(), {
-    triggerIcon: 'plus-circle',
-    triggerTitle: 'Status',
-    hideCounter: false
-})
-const emit = defineEmits<ComboBoxEmits>()
-
-const filterText = ref('')
-
-const filteredOptions = computed(() => {
-    if (!filterText.value) return props.framework
-    return props.framework.filter((option) => {
-        return option.label.toLowerCase().includes(filterText.value.toLowerCase())
-    })
-})
-
-const checkedOptionsCount = computed(() => {
-    return filteredOptions.value.filter((option) => option.checked).length
-})
-
-const handleCheck = (checked: boolean, value: unknown) => {
-    emit('change', value, { checked })
-}
-</script>
-
 <style scoped>
 .nue-container#ComboBoxContainer {
     gap: 0.25rem;
@@ -95,4 +95,3 @@ const handleCheck = (checked: boolean, value: unknown) => {
     }
 }
 </style>
-

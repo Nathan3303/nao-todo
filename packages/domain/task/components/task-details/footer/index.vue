@@ -3,9 +3,9 @@ import {
     DropdownDivBlock,
     InnerDropdownOption,
     PARENT_TASK_SELECTOR_DIALOG_KEY,
-    TaskProjectSelector,
     t
 } from '@nao-todo/shared'
+import { TaskProjectSelector } from '../../project-selector'
 import { inject } from 'vue'
 import type { TaskViewObject } from '../../../types'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context'

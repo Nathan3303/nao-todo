@@ -147,7 +147,7 @@ const handleAdjustTime = (delta: number) => {
     </nue-div>
 </template>
 
-<style src="@/infrastructure/themes/pomodoro-timer.css" scoped></style>
+<style src="../pomodoro-timer.css" scoped></style>
 <style scoped>
 /* 仅 Timer 独有的 hover 显隐 ± 按钮效果 */
 .nue-div--pomodoro-timer {

@@ -1,22 +1,22 @@
 <script setup lang="ts">
-import { usePomodoroFocusStore, usePomodoroRecordsStore, usePomodoroTimerStore } from '@/stores'
-import { storeToRefs } from 'pinia'
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import type { TaskDetailsViewObject } from '../types'
 import { NueConfirm } from 'nue-ui'
+import { TASK_DETAILS_CONTEXT_KEY } from '../context'
 
 defineOptions({ name: 'DetailsMainPomodoroInfo' })
 const props = defineProps<{ taskDetails: TaskDetailsViewObject }>()
 
-/**
- * Stores
- */
-const pomodoroStore = usePomodoroRecordsStore()
-const pomodoroTimerStore = usePomodoroTimerStore()
-const pomodoroFocusStore = usePomodoroFocusStore()
-const { currentTaskId } = storeToRefs(pomodoroStore)
-const { status: timerStatus } = storeToRefs(pomodoroTimerStore)
-const { status: focusStatus } = storeToRefs(pomodoroFocusStore)
+// @context
+const {
+    pomodoroCurrentTaskId: currentTaskId,
+    pomodoroTimerStatus: timerStatus,
+    pomodoroFocusStatus: focusStatus,
+    selectTaskAndStartTimer,
+    selectTaskAndStartFocus,
+    resetTimer,
+    resetFocus
+} = inject(TASK_DETAILS_CONTEXT_KEY)!
 
 // 是否正在专注
 const isTimerRunning = computed(() => {
@@ -53,26 +53,24 @@ const executeHandler = (executeId: string) => {
                     content: '若当前处于正在专注状态并结束，将不会记录该番茄',
                     confirmButtonText: '确认结束',
                     cancelButtonText: '取消',
-                    onConfirm: () => pomodoroTimerStore.reset()
+                    onConfirm: () => resetTimer()
                 })
                 return
             }
-            pomodoroStore.selectTask(props.taskDetails.id, props.taskDetails.name)
-            pomodoroTimerStore.start()
+            selectTaskAndStartTimer(props.taskDetails.id, props.taskDetails.name)
             break
         case 'SwitchFocusStatus':
-            if (isRunning.value) {
+            if (isFocusRunning.value) {
                 NueConfirm({
                     title: '确认结束正计时专注吗？',
                     content: '若当前处于正在专注状态并结束，将不会记录该正计时专注',
                     confirmButtonText: '确认结束',
                     cancelButtonText: '取消',
-                    onConfirm: () => pomodoroFocusStore.reset()
+                    onConfirm: () => resetFocus()
                 })
                 return
             }
-            pomodoroStore.selectTask(props.taskDetails.id, props.taskDetails.name)
-            pomodoroFocusStore.start()
+            selectTaskAndStartFocus(props.taskDetails.id, props.taskDetails.name)
             break
         default:
             break
@@ -83,7 +81,6 @@ const executeHandler = (executeId: string) => {
 <template>
     <nue-dropdown placement="bottom-center" @execute="executeHandler">
         <template #trigger="{ trigger }">
-            <!-- <nue-tooltip theme="pomodoro-info" placement="top-center"> -->
             <nue-button
                 icon="focus3"
                 :theme="{ small: true, secondary: isRunning }"
@@ -91,13 +88,6 @@ const executeHandler = (executeId: string) => {
             >
                 {{ runningInfoTitle }}
             </nue-button>
-            <!-- <template #content> -->
-            <!-- <nue-div vertical gap="0"> -->
-            <!-- <nue-text>已收获 5 个番茄</nue-text> -->
-            <!-- <nue-text>专注 7 小时 37 分钟</nue-text> -->
-            <!-- </nue-div> -->
-            <!-- </template> -->
-            <!-- </nue-tooltip> -->
         </template>
         <nue-dropdown-item
             :disabled="isFocusRunning"
@@ -124,4 +114,3 @@ const executeHandler = (executeId: string) => {
     color: var(--nue-primary-color-0);
 }
 </style>
-

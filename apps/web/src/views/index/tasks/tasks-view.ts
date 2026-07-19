@@ -7,6 +7,11 @@ import {
 } from '@/hooks'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { useBuiltInProjectsStore } from '@nao-todo/domain/built-in-project'
+import {
+    usePomodoroFocusStore,
+    usePomodoroRecordsStore,
+    usePomodoroTimerStore
+} from '@nao-todo/domain/pomodoro'
 import { useProjectsStore } from '@nao-todo/domain/project'
 import { useTagsStore } from '@nao-todo/domain/tag'
 import {
@@ -40,9 +45,17 @@ const useTasksView = () => {
 
     // @stores
     const taskDetailsStore = useTaskDetailsStore()
-    const { avaliableProjects } = storeToRefs(useProjectsStore())
     const tagsStore = useTagsStore()
+    const pomodoroRecordsStore = usePomodoroRecordsStore()
+    const pomodoroTimerStore = usePomodoroTimerStore()
+    const pomodoroFocusStore = usePomodoroFocusStore()
+
+    // @presets
+    const { avaliableProjects } = storeToRefs(useProjectsStore())
     const { tags: avaliableTags } = storeToRefs(tagsStore)
+    const { currentTaskId: pomodoroCurrentTaskId } = storeToRefs(pomodoroRecordsStore)
+    const { status: pomodoroTimerStatus } = storeToRefs(pomodoroTimerStore)
+    const { status: pomodoroFocusStatus } = storeToRefs(pomodoroFocusStore)
 
     // @usecase Built-in project use case
     const builtInProjectUseCase = useBuiltInProjectUseCase(useBuiltInProjectsStore())
@@ -141,6 +154,9 @@ const useTasksView = () => {
         // ---
         avaliableProjects,
         avaliableTags,
+        pomodoroCurrentTaskId,
+        pomodoroTimerStatus,
+        pomodoroFocusStatus,
         // ---
         outlineWidth,
         isDisplayOutline,

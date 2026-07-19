@@ -1,4 +1,9 @@
-import { prioritySNMap, prioritySNMapReverse, stateSNMap, stateSNMapReverse } from '../consts/tasks'
+import {
+    prioritySNMap,
+    prioritySNMapReverse,
+    stateSNMap,
+    stateSNMapReverse
+} from '@nao-todo/domain/task'
 
 /**
  * 解析任务状态
@@ -55,4 +60,3 @@ export const parseTaskPriority = (priorityString: string): number => {
 export const parseTaskPriorityBackward = (priorityNumber: number): string => {
     return prioritySNMapReverse[priorityNumber] || 'low'
 }
-

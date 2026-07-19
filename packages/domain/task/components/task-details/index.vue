@@ -2,7 +2,7 @@
 import { computed, inject } from 'vue'
 import TasksViewDetails from './details.vue'
 import TasksViewDetailsDrawer from './float-details.vue'
-import { TASK_DETAILS_PRE_CONTEXT_KEY } from './context.js'
+import { TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
 import { useRoute } from 'vue-router'
 
 defineOptions({ name: 'TasksViewDetailsAdapter' })
@@ -28,4 +28,3 @@ const taskId = computed<string>(() => route.params.taskId as string)
 </template>
 
 <style scoped></style>
-

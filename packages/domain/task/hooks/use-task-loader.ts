@@ -1,7 +1,7 @@
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
 import type { GoAsync, ResponseDataPagination } from '@nao-todo/shared'
+import { unwrapError, type GetTasksOptions } from '@nao-todo/shared'
 import { reactive } from 'vue'
-import type { GetTasksOptions, TaskViewObject } from '../types'
+import type { TaskViewObject } from '../types'
 import { TaskUseCase } from '../usecases'
 
 /**

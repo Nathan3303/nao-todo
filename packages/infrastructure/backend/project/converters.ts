@@ -14,7 +14,7 @@ import type {
     UpdateProjectReq,
     CreateProjectReq
 } from '../models'
-import { defaultColumns } from '../../consts/tasks'
+import { defaultColumns } from '@nao-todo/shared'
 import dayjs from 'dayjs'
 
 // --- Project ---

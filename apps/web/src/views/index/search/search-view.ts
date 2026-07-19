@@ -1,7 +1,5 @@
 import { inject } from 'vue'
-import useResponsiveAside from '@/infrastructure/hooks/use-responsive-aside'
-import useAsideWidth from '@nao-todo/infrastructure/hooks/use-aside-width'
-import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
+import { useResponsiveAside, useAsideWidth, responsiveTypes } from '@nao-todo/shared'
 import { APP_CONTEXT_KEY } from '@/context'
 
 /**
@@ -44,4 +42,3 @@ export const useSearchView = () => {
         handleResizeAside
     }
 }
-

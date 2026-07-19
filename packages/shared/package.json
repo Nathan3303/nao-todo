@@ -5,5 +5,17 @@
     "license": "MIT",
     "main": "index.ts",
     "private": true,
-    "type": "module"
+    "type": "module",
+    "files": [
+        "commands/**/*",
+        "components/**/*",
+        "constants/**/*",
+        "hooks/**/*",
+        "locales/**/*",
+        "requester/**/*",
+        "types/**/*",
+        "utils/**/*",
+        "valueobjects/**/*",
+        "entity"
+    ]
 }

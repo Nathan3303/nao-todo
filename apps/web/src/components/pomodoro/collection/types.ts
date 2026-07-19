@@ -1,5 +1,5 @@
 import type { DialogManager } from '@nao-todo/shared'
-import type { PomodoroRecordUseCase, PomodoroUseCase } from '../../usecases'
+import type { PomodoroRecordUseCase, PomodoroUseCase } from '@nao-todo/domain/pomodoro'
 
 // 常用专注组件 props
 export type PomodoroCollectionProps = {

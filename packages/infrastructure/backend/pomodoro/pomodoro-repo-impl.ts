@@ -4,8 +4,7 @@ import {
     PomodoroRepository,
     UpdatePomodoroValueObject
 } from '@nao-todo/domain/pomodoro'
-import { Requester } from '../../requester'
-import { GoAsync, ResponseDataPagination } from '@nao-todo/types'
+import type { Requester, GoAsync, ResponseDataPagination } from '@nao-todo/shared'
 import { getJWTFromLocalStorage } from '../utils'
 import { CreatePomodoroRes, ListPomodoroRes, PomodoroRes, ResponseData } from '../models'
 import {

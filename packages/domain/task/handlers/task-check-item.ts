@@ -1,14 +1,11 @@
-import { unwrapErrors } from '@nao-todo/infrastructure/utils/go-error-handler'
+import { t, unwrapErrors, type GoAsync, type Subscriber } from '@nao-todo/shared'
 import { NueMessage } from 'nue-ui'
-import { t } from '@nao-todo/infrastructure/locales'
 import type {
     CreateTaskCheckItemViewObject,
-    TaskCheckItemUseCase,
     TaskCheckItemViewObject,
     UpdateTaskCheckItemViewObject
-} from '@nao-todo/usecases/task'
-import { GoAsync } from '@nao-todo/types'
-import { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
+} from '../types'
+import { TaskCheckItemUseCase } from '../usecases'
 
 /**
  * 任务检查项操作器
@@ -79,4 +76,3 @@ export class TaskCheckItemHandler {
         return null
     }
 }
-

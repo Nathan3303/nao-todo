@@ -1,7 +1,7 @@
-export type * from './create-task-check-item'
-export type * from './create-task-comment'
-export type * from './create-task'
-export type * from './update-task-check-item'
-export type * from './update-task-comment'
-export type * from './update-task'
+export * from './create-task-check-item'
+export * from './create-task-comment'
+export * from './create-task'
+export * from './update-task-check-item'
+export * from './update-task-comment'
+export * from './update-task'
 

@@ -4,8 +4,7 @@ import type {
     TaskRepository,
     UpdateTaskValueObject
 } from '@nao-todo/domain/task'
-import type { GoAsync } from '@nao-todo/types'
-import type { Requester } from '../../requester'
+import type { GoAsync, Requester } from '@nao-todo/shared'
 import type { ListTaskRes, ResponseData, ResponseDataPagination, TaskRes } from '../models'
 import { getJWTFromLocalStorage } from '../utils'
 import {
@@ -204,4 +203,3 @@ export class TaskRepoImpl implements TaskRepository {
 export const newTaskRepository = (requester: Requester) => {
     return new TaskRepoImpl(requester)
 }
-

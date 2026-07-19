@@ -4,9 +4,9 @@ import {
     parse2RelativeDate,
     t,
     TAG_CREATOR_DIALOG_KEY,
-    TaskSelector,
-    TaskTagBar
+    TaskSelector
 } from '@nao-todo/shared'
+import { TaskTagBar } from '../../tag-bar'
 import { inject } from 'vue'
 import { TaskPrioritySelectOptions, TaskStateSelectOptions } from '../../../constants'
 import type { TaskViewObject } from '../../../types'

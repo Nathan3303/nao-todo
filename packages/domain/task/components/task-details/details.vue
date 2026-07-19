@@ -2,14 +2,15 @@
 import DetailsHeader from './header/index.vue'
 import DetailsMain from './main/index.vue'
 import DetailsFooter from './footer/index.vue'
-import useTaskDetails from './task-details.js'
+import useTaskDetails from './task-details'
 import { LoadingError } from '@nao-todo/shared'
-import type { TaskDetailsProps } from './types.js'
+import type { TaskDetailsEmits, TaskDetailsProps } from './types'
 
 defineOptions({ name: 'TaskDetails' })
 const props = defineProps<TaskDetailsProps>()
+const emit = defineEmits<TaskDetailsEmits>()
 
-const { loading, error, task } = useTaskDetails(props)
+const { loading, error, task } = useTaskDetails(props, emit)
 </script>
 
 <template>
@@ -51,4 +52,3 @@ const { loading, error, task } = useTaskDetails(props)
     }
 }
 </style>
-

@@ -1,5 +1,4 @@
-import type { User } from '@nao-todo/types'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
+import { unwrapError } from '@nao-todo/shared'
 
 /**
  * 获取JWT Payload
@@ -25,11 +24,10 @@ const getJwtPayload = (jwt: string) => {
     try {
         const decoded = atob(base64)
         const payload = JSON.parse(decoded)
-        return payload.profile as User
+        return payload.profile
     } catch (e) {
         throw new Error('Failed to decode or parse payload: ' + unwrapError(e as string | Error))
     }
 }
 
 export default getJwtPayload
-

@@ -1,7 +1,10 @@
 import { POMODORO_UPDATER_DIALOG_KEY, unwrapError } from '@nao-todo/shared'
 import { computed, onMounted, ref, watch } from 'vue'
-import { usePomodorosStore } from '../../stores'
-import type { PomodoroRecordViewObject, PomodoroViewObject } from '../../types'
+import {
+    usePomodorosStore,
+    type PomodoroRecordViewObject,
+    type PomodoroViewObject
+} from '@nao-todo/domain/pomodoro'
 import type { PomodoroCollectionProps } from './types'
 
 /**

@@ -4,8 +4,7 @@ import {
     listPomodoroRecordRes2Entities,
     pomodoroRecordRes2Entity
 } from './converters'
-import type { Requester } from '../../requester/types'
-import type { GoAsync, ResponseDataPagination } from '@nao-todo/types'
+import type { Requester, GoAsync, ResponseDataPagination } from '@nao-todo/shared'
 import type {
     CreatePomodoroRecordRes,
     ListPomodoroRecordRes,
@@ -107,8 +106,3 @@ export class PomodoroRecordRepoImpl implements PomodoroRecordRepository {
 export const newPomodoroRecordRepository = (requester: Requester) => {
     return new PomodoroRecordRepoImpl(requester)
 }
-
-
-
-
-

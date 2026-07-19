@@ -1,12 +1,7 @@
 <script setup lang="ts">
 import { inject, computed } from 'vue'
-import {
-    TaskPriorityInfo,
-    TaskStateInfo,
-    TaskTagBar,
-    TaskDateInfo,
-    TaskBasicInfo
-} from '@nao-todo/shared'
+import { TaskPriorityInfo, TaskStateInfo, TaskDateInfo, TaskBasicInfo } from '@nao-todo/shared'
+import { TaskTagBar } from '../tag-bar'
 import { parse2RelativeDate } from '@nao-todo/shared/utils/relative-date-parser'
 import { TASK_TABLE_CONTEXT_KEY } from './use-table'
 import type { TaskTableContext } from './types'

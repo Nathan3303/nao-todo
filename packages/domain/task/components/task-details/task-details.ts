@@ -4,13 +4,13 @@ import { TaskHandler } from '../../handlers'
 import { useTaskDetailsStore } from '../../stores'
 import type { TaskViewObject } from '../../types'
 import { TASK_DETAILS_CONTEXT_KEY, TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
-import type { TaskDetailsProps } from './types'
+import type { TaskDetailsEmits, TaskDetailsProps } from './types'
 import useCheckItems from './use-check-items'
 import useComments from './use-comments'
 import useSubTasks from './use-subtasks'
 import useTaskViewObject from './use-task-view-object'
 
-const useTaskDetails = (props: TaskDetailsProps) => {
+const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
     // @viewContext TaskDetailsPre context
     const {
         taskUseCase,
@@ -19,7 +19,10 @@ const useTaskDetails = (props: TaskDetailsProps) => {
         getTag,
         getProjectName,
         avaliableProjects,
-        avaliableTags
+        avaliableTags,
+        pomodoroCurrentTaskId,
+        pomodoroTimerStatus,
+        pomodoroFocusStatus
     } = inject(TASK_DETAILS_PRE_CONTEXT_KEY)!
 
     // @dataStore
@@ -98,16 +101,11 @@ const useTaskDetails = (props: TaskDetailsProps) => {
     }
 
     /**
-     * 关闭任务详情面板
+     * 任务详情面板切换与关闭
      */
     const closeDetails = () => {
         router.push({ name: router.currentRoute.value.name, params: { taskId: '' } })
     }
-
-    /**
-     * 重写路由并加载任务详情
-     * @param taskId 任务 ID
-     */
     const switchTaskDetails = (taskId: TaskViewObject['id']) => {
         router.push({ name: router.currentRoute.value.name, params: { taskId } })
     }
@@ -118,6 +116,16 @@ const useTaskDetails = (props: TaskDetailsProps) => {
         (newId) => initialize(newId),
         { immediate: true }
     )
+
+    /**
+     * Pomodoro 详情上下文
+     */
+    const selectTaskAndStartTimer = (taskId: TaskViewObject['id'], name: TaskViewObject['name']) =>
+        emit('select-task-and-start-timer', taskId, name)
+    const selectTaskAndStartFocus = (taskId: TaskViewObject['id'], name: TaskViewObject['name']) =>
+        emit('select-task-and-start-focus', taskId, name)
+    const resetFocus = () => emit('reset-focus')
+    const resetTimer = () => emit('reset-timer')
 
     // @provide 任务详情面板上下文
     provide(TASK_DETAILS_CONTEXT_KEY, {
@@ -139,6 +147,9 @@ const useTaskDetails = (props: TaskDetailsProps) => {
         checkItemProgress,
         subTaskProgress,
         isCommenting,
+        pomodoroCurrentTaskId,
+        pomodoroTimerStatus,
+        pomodoroFocusStatus,
         // ---
         checkItemsLoading,
         checkItemsError,
@@ -161,7 +172,12 @@ const useTaskDetails = (props: TaskDetailsProps) => {
         createSubTask,
         // ---
         resortCheckItems,
-        makeCheckItemToTask
+        makeCheckItemToTask,
+        // ---
+        selectTaskAndStartTimer,
+        selectTaskAndStartFocus,
+        resetTimer,
+        resetFocus
     })
 
     // @returns 返回值

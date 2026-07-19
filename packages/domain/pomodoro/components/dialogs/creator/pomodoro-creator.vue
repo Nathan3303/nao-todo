@@ -5,7 +5,7 @@ import {
     useDialogWrapper
 } from '@nao-todo/shared'
 import { onMounted, ref } from 'vue'
-import { PomodoroForm } from '../../pomodoro-form'
+import { PomodoroForm } from '../../form'
 import type { PomodoroCreatorDialogProps } from './types'
 import { usePomodoroCreator } from './use-pomodoro-creator'
 

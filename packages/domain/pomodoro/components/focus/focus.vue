@@ -70,5 +70,4 @@ const handleMainAction = () => {
     </nue-div>
 </template>
 
-<style src="@/infrastructure/themes/pomodoro-timer.css" scoped></style>
-
+<style src="../pomodoro-timer.css" scoped></style>

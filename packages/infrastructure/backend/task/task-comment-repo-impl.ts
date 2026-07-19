@@ -4,8 +4,7 @@ import {
     TaskCommentRepository,
     UpdateTaskCommentValueObject
 } from '@nao-todo/domain/task'
-import { Requester } from '../../requester'
-import type { GoAsync } from '@nao-todo/shared'
+import type { GoAsync, Requester } from '@nao-todo/shared'
 import { getJWTFromLocalStorage } from '../utils'
 import {
     createTaskCommentRes2Entity,
@@ -135,4 +134,3 @@ export class TaskCommentRepoImpl implements TaskCommentRepository {
 export const newTaskCommentRepository = (requester: Requester) => {
     return new TaskCommentRepoImpl(requester)
 }
-

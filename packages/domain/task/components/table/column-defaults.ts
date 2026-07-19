@@ -1,5 +1,5 @@
 import type { TableColumnConfig, TableLayoutConfig } from './types'
-import { columnLabels } from '@nao-todo/infrastructure/consts/tasks'
+import { columnLabels } from '../../constants'
 
 // @const 内置分类对应的固定列（固定列始终显示在 name 列之后）
 const PINNED_COLUMN_MAP: Record<string, string> = {
@@ -150,4 +150,3 @@ export const createDefaultTableConfig = (tableId: string): TableLayoutConfig => 
 })
 
 export { PINNED_COLUMN_MAP, enforcePinnedColumn }
-

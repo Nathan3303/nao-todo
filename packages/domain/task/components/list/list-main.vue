@@ -1,12 +1,7 @@
 <script setup lang="ts">
 import { inject } from 'vue'
-import {
-    TaskStateInfo,
-    TaskPriorityInfo,
-    TaskDateInfo,
-    TaskBasicInfo,
-    TaskTagBar
-} from '@nao-todo/shared'
+import { TaskStateInfo, TaskPriorityInfo, TaskDateInfo, TaskBasicInfo } from '@nao-todo/shared'
+import { TaskTagBar } from '../../'
 import { TASK_LIST_CONTEXT_KEY } from './use-list'
 import type { TaskListContext } from './types'
 

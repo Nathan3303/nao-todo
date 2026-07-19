@@ -1,4 +1,3 @@
-export * from './collection'
 export * from './dialogs'
 export * from './focus'
 export * from './focus-ring'
