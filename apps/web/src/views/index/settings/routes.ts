@@ -19,7 +19,7 @@ const _routeRecords = [
     {
         path: 'app',
         name: 'settings-app',
-        componentName: 'app-setting',
+        componentName: 'app-setter',
         title: 'nav.settingsApp',
         icon: 'setting'
     }
@@ -44,11 +44,10 @@ const SettingsViewRouteRecordRaw: RouteRecordRaw = {
             path: record.path,
             name: record.name,
             meta: { title: record.title, icon: record.icon },
-            component: () => import(`@/layouts/settings/${record.componentName}/index.vue`)
+            component: () => import(`@/components/settings/${record.componentName}/index.vue`)
         }
     })
 }
 
 export default SettingsViewRouteRecordRaw
 export { SettingsViewRouteLinks }
-

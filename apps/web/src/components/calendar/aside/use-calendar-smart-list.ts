@@ -1,7 +1,8 @@
-import { useProjectsStore, useTagsStore } from '@/stores'
-import { computed, inject, ref, watch } from 'vue'
-import { storeToRefs } from 'pinia'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
+import { useProjectsStore } from '@nao-todo/domain/project'
+import { useTagsStore } from '@nao-todo/domain/tag'
+import { storeToRefs } from 'pinia'
+import { computed, inject, ref, watch } from 'vue'
 
 /**
  * 处理日历侧边栏的智能清单逻辑，包括项目和标签的选项生成以及选中状态管理。
@@ -52,6 +53,3 @@ const useCalendarSmartList = () => {
 }
 
 export default useCalendarSmartList
-
-
-

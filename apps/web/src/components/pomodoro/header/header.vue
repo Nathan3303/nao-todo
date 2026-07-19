@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject } from 'vue'
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
-import { POMODORO_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+import { POMODORO_CREATOR_DIALOG_KEY } from '@nao-todo/shared'
 
 defineOptions({ name: 'PomodoroHeader' })
 

@@ -3,7 +3,7 @@ import { useLoadingErrorStoreBase } from '@nao-todo/shared'
 import { useBuiltInProjectsStoreBase, useBuiltInProjectPreferenceStoreBase } from '../hooks'
 import { computed } from 'vue'
 
-const useBuiltInProjectsStore = defineStore('BuiltInProjectsStore', () => {
+export const useBuiltInProjectsStore = defineStore('BuiltInProjectsStore', () => {
     /**
      * 内建项目存储基础
      * 用于管理内建项目的加载状态和错误信息
@@ -64,5 +64,4 @@ const useBuiltInProjectsStore = defineStore('BuiltInProjectsStore', () => {
     }
 })
 
-export default useBuiltInProjectsStore
 export type BuiltInProjectsStore = ReturnType<typeof useBuiltInProjectsStore>

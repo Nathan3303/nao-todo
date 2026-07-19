@@ -1,9 +1,14 @@
-import { ListPomodoroValueObject, PomodoroDomain } from '@nao-todo/domain/pomodoro'
-import { newPomodoroRecordRepository, newPomodoroRepository, PomodoroRepoImpl } from '@nao-todo/infrastructure/backend/pomodoro'
-import { getRequesterImpl } from '@nao-todo/infrastructure/requester'
-import { GoAsync } from '@nao-todo/types'
-import { PomodoroStore } from './store'
-import { CreatePomodoroViewObject, PomodoroType, PomodoroViewObject, UpdatePomodoroViewObject } from './viewobjects'
+import type { GoAsync } from '@nao-todo/shared'
+import { PomodoroRepository } from '../repositories'
+import { PomodoroDomain } from '../services'
+import type {
+    CreatePomodoroViewObject,
+    PomodoroStore,
+    PomodoroType,
+    PomodoroViewObject,
+    UpdatePomodoroViewObject
+} from '../types'
+import { ListPomodoroValueObject } from '../valueobjects'
 import {
     createPomodoroViewObjectToValueObject,
     pomodoroEntitiesToViewObjects,
@@ -23,7 +28,7 @@ export class PomodoroUseCase {
      */
     constructor(
         private pomodoroDomain: PomodoroDomain,
-        private pomodoroRepo: PomodoroRepoImpl,
+        private pomodoroRepo: PomodoroRepository,
         private store: PomodoroStore
     ) {}
 
@@ -93,10 +98,15 @@ export class PomodoroUseCase {
     }
 }
 
-export const newPomodoroUseCase = (store: PomodoroStore) => {
-    const requester = getRequesterImpl()
-    const pomodoroRepo = newPomodoroRepository(requester)
-    const pomodoroRecordRepo = newPomodoroRecordRepository(requester)
-    const domain = new PomodoroDomain(pomodoroRepo, pomodoroRecordRepo)
-    return new PomodoroUseCase(domain, pomodoroRepo, store)
-}
+/**
+ * 创建 Pomodoro 用例
+ * @param store Pomodoro 存储
+ * @returns Pomodoro 用例
+ */
+// export const newPomodoroUseCase = (store: PomodoroStore) => {
+//     const requester = getRequesterImpl()
+//     const pomodoroRepo = newPomodoroRepository(requester)
+//     const pomodoroRecordRepo = newPomodoroRecordRepository(requester)
+//     const domain = new PomodoroDomain(pomodoroRepo, pomodoroRecordRepo)
+//     return new PomodoroUseCase(domain, pomodoroRepo, store)
+// }

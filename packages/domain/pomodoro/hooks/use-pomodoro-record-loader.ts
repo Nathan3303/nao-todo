@@ -26,7 +26,7 @@ export type UsePomodoroRecordLoaderStates = {
  * Pomodoro 记录加载器
  * @description 管理 Pomodoro 记录的分页加载、ID 集合和 Store 交互
  */
-const usePomodoroRecordLoader = (
+export const usePomodoroRecordLoader = (
     pomodoroRecordUseCase: PomodoroRecordUseCase,
     originalGetOptions?: GetPomodoroRecordsOptions,
     subscriber?: Subscriber
@@ -184,5 +184,3 @@ const usePomodoroRecordLoader = (
         reset
     }
 }
-
-export default usePomodoroRecordLoader

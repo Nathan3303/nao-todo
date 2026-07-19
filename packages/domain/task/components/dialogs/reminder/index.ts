@@ -1,3 +1,3 @@
-import TaskReminder from './task-reminder.vue'
+import { defineAsyncComponent } from 'vue'
 
-export { TaskReminder }
+export default defineAsyncComponent(() => import('./task-reminder.vue'))

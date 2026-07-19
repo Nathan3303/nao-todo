@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import projectSmartList from '@/components/tasks/smartlists/project-smart-list.vue'
-import TagSmartList from '@/components/tasks/smartlists/tag-smart-list.vue'
-import { AppAsideAdapter } from '@/layouts/app/'
+import { AppAsideAdapter } from '@/components/app'
+import { ProjectSmartList } from '@nao-todo/domain/project'
+import { TagSmartList } from '@nao-todo/domain/tag'
 import {
     PROJECT_CREATOR_DIALOG_KEY,
     PROJECT_MANAGER_DIALOG_KEY,
     TAG_CREATOR_DIALOG_KEY,
     TAG_MANAGER_DIALOG_KEY
-} from '@/infrastructure/constants/dialog-keys'
+} from '@nao-todo/shared'
 import dayjs from 'dayjs'
 import { useAside } from './use-aside'
 
@@ -107,4 +107,3 @@ const {
     }
 }
 </style>
-

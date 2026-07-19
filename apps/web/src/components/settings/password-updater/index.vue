@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { SettingsPasswordForm } from '@/components/settings'
-import { inject } from 'vue'
-import { t } from '@nao-todo/infrastructure/locales'
 import { SETTINGS_VIEW_CONTEXT_KEY } from '@/views/index/settings/context'
+import { UserPasswordUpdater } from '@nao-todo/domain/user'
+import { t } from '@nao-todo/shared'
+import { inject } from 'vue'
 
-defineOptions({ name: 'SettingsPassword' })
+defineOptions({ name: 'SettingsPasswordUpdater' })
 
-const { isDisplayAside, switchDisplayAside } = inject(SETTINGS_VIEW_CONTEXT_KEY)!
+const { isDisplayAside, switchDisplayAside, authUseCase, userUseCase } =
+    inject(SETTINGS_VIEW_CONTEXT_KEY)!
 </script>
 
 <template>
@@ -22,10 +23,13 @@ const { isDisplayAside, switchDisplayAside } = inject(SETTINGS_VIEW_CONTEXT_KEY)
         <nue-main>
             <nue-content fill>
                 <nue-div vertical style="padding: 1rem">
-                    <settings-password-form style="max-width: 32rem" />
+                    <user-password-updater
+                        style="max-width: 32rem"
+                        :user-use-case="userUseCase"
+                        @sign-out="() => authUseCase.signOut()"
+                    />
                 </nue-div>
             </nue-content>
         </nue-main>
     </nue-container>
 </template>
-

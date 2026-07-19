@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { inject, onMounted, onUnmounted } from 'vue'
-import { NueMessage } from 'nue-ui'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { ProjectHandler } from '@/infrastructure/handlers/project'
-import { PROJECT_EMPTY_STATE } from '../constants'
+import { ProjectHandler } from '@nao-todo/domain/project'
 import {
-    TableViewAdapter,
-    ListViewAdapter,
     KanbanViewAdapter,
+    ListViewAdapter,
+    TableViewAdapter,
     type ViewAdapterNoTaskError
-} from '@/layouts/app/view-adapters'
+} from '@nao-todo/domain/task'
+import { unwrapError } from '@nao-todo/shared'
+import { NueMessage } from 'nue-ui'
+import { computed, inject, onMounted, onUnmounted } from 'vue'
+import { PROJECT_EMPTY_STATE } from '../constants'
 import { PROJECT_VIEW_CONTEXT_KEY } from '../context'
 
 defineOptions({
@@ -95,4 +94,3 @@ const getNoTaskError = (): ViewAdapterNoTaskError | undefined => {
         </nue-content>
     </nue-main>
 </template>
-

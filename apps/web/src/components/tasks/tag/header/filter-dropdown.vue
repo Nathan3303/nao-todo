@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import TextFilter from '@/components/tasks/dropdowns/input-filter.vue'
-import StateFilter from '@/components/tasks/dropdowns/state-filter.vue'
-import PriorityFilter from '@/components/tasks/dropdowns/priority-filter.vue'
-import { DropdownDivBlock } from '@nao-todo/components'
+import {
+    TaskNameFilter,
+    TaskStateFilter,
+    TaskPriorityFilter,
+    TaskSortOperator
+} from '@nao-todo/domain/task'
+import { DropdownDivBlock } from '@nao-todo/shared'
 import { computed, inject, watch } from 'vue'
-import SortOperator from '@/components/tasks/dropdowns/sort-operator.vue'
 import { TAG_VIEW_CONTEXT_KEY } from '../context'
 
 defineOptions({ name: 'TasksTodoFilterDropdown' })
@@ -82,13 +84,13 @@ watch(
             </nue-badge>
         </template>
         <dropdown-div-block title="筛选">
-            <text-filter placeholder="筛选任务" v-model="getTasksOptionsName" />
-            <state-filter v-model="getTasksOptionsState" />
-            <priority-filter v-model="getTasksOptionsPriority" />
+            <task-name-filter placeholder="筛选任务" v-model="getTasksOptionsName" />
+            <task-state-filter v-model="getTasksOptionsState" />
+            <task-priority-filter v-model="getTasksOptionsPriority" />
         </dropdown-div-block>
         <nue-divider />
         <dropdown-div-block title="排序">
-            <sort-operator
+            <task-sort-operator
                 v-model="getTasksOptionsSort"
                 :get-tasks-options="preference.getTasksOptions"
                 :columns="preference.columns"
@@ -98,4 +100,3 @@ watch(
 </template>
 
 <style scoped></style>
-

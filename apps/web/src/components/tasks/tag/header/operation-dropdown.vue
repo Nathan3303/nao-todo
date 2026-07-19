@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from 'vue'
-import TasksOperationsDropdown from '@/components/tasks/dropdowns/operations-dropdown.vue'
-import { InnerDropdownOption, DropdownDivBlock } from '@nao-todo/components'
-import ColumnDisplayOperator from '@/components/tasks/dropdowns/column-display-operator.vue'
-import { TAG_UPDATER_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+import { TaskOperationsDropdown, TaskColumnDisplayController } from '@nao-todo/domain/task'
+import { InnerDropdownOption, DropdownDivBlock, TAG_UPDATER_DIALOG_KEY } from '@nao-todo/shared'
 import { TAG_VIEW_CONTEXT_KEY } from '../context'
 
 defineOptions({ name: 'TasksTagOperationsDropdown' })
@@ -22,7 +20,7 @@ const {
     tagUseCase
 } = inject(TAG_VIEW_CONTEXT_KEY)!
 
-const dropdownRef = ref<InstanceType<typeof TasksOperationsDropdown>>()
+const dropdownRef = ref<InstanceType<typeof TaskOperationsDropdown>>()
 
 // 注册 Dropdown 执行函数
 onMounted(() => {
@@ -45,7 +43,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <tasks-operations-dropdown v-if="preference" ref="dropdownRef">
+    <task-operations-dropdown v-if="preference" ref="dropdownRef">
         <dropdown-div-block title="视图切换">
             <inner-dropdown-option
                 icon="table"
@@ -74,7 +72,7 @@ onMounted(() => {
                 :title="`${isHideCompletedAlready ? '显示' : '隐藏'}已完成任务`"
                 execute-id="hide-completed"
             />
-            <column-display-operator
+            <task-column-display-controller
                 :columns="preference.columns"
                 :label-getter="getColumnLabel"
                 @update="(k, v) => tagHandler.updateColumns(k, v)"
@@ -95,6 +93,5 @@ onMounted(() => {
                 execute-id="delete-tag"
             />
         </dropdown-div-block>
-    </tasks-operations-dropdown>
+    </task-operations-dropdown>
 </template>
-

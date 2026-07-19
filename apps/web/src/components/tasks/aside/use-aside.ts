@@ -1,6 +1,8 @@
-import { useBuiltInProjectsStore, useProjectsStore, useTagsStore } from '@/stores'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
-import { NaoSmartListLinkVO } from '@nao-todo/components'
+import { useBuiltInProjectsStore } from '@nao-todo/domain/built-in-project'
+import { useProjectsStore } from '@nao-todo/domain/project'
+import { useTagsStore } from '@nao-todo/domain/tag'
+import { NaoSmartListLinkVO } from '@nao-todo/shared'
 import { storeToRefs } from 'pinia'
 import { computed, inject, ref } from 'vue'
 
@@ -12,7 +14,7 @@ export const useAside = () => {
      * 注入任务视图上下文
      */
     const {
-        dialogManager,
+        appDialogManager,
         asideWidth,
         handleResizeAside,
         isDisplayAside,
@@ -105,10 +107,9 @@ export const useAside = () => {
         handleProjectResort,
         handleTagResort,
         collapseItemsRecord,
-        dialogManager,
+        dialogManager: appDialogManager,
         asideWidth,
         handleResizeAside,
         isDisplayAside
     }
 }
-

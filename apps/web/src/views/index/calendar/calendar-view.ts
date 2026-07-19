@@ -1,14 +1,11 @@
 import { APP_CONTEXT_KEY } from '@/context'
-import useResponsiveAside from '@/infrastructure/hooks/use-responsive-aside'
-import { useBuiltInProjectsStore, useUserStore } from '@/stores'
+import { useResponsiveAside, useAsideWidth, responsiveTypes, unwrapError } from '@nao-todo/shared'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
-import useAsideWidth from '@nao-todo/infrastructure/hooks/use-aside-width'
-import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
-import { unwrapError } from '@nao-todo/infrastructure/utils'
-import { newAuthUseCase } from '@nao-todo/usecases/auth'
-import { newBuiltInProjectUseCase } from '@nao-todo/usecases/built-in-project'
+import { useAuthUseCase, useBuiltInProjectUseCase } from '@/hooks'
 import { inject, provide, ref } from 'vue'
 import { CALENDAR_VIEW_CONTEXT_KEY } from './context'
+import { useUserStore } from '@nao-todo/domain/user'
+import { useBuiltInProjectsStore } from '@nao-todo/domain/built-in-project'
 
 /**
  * 日历视图上下文提供器
@@ -19,8 +16,14 @@ export const useCalendarView = () => {
      * 注入应用上下文
      */
     const { responsiveFlag, isUseFloatAside } = inject(APP_CONTEXT_KEY)!
-    const { userUseCase, projectUseCase, tagUseCase, taskUseCase, dialogManager, subscriber } =
-        inject(INDEX_VIEW_CONTEXT_KEY)!
+    const {
+        userUseCase,
+        projectUseCase,
+        tagUseCase,
+        taskUseCase,
+        appDialogManager,
+        appSubscriber
+    } = inject(INDEX_VIEW_CONTEXT_KEY)!
 
     /**
      * 注入响应式侧边栏上下文
@@ -48,8 +51,8 @@ export const useCalendarView = () => {
      * @use AuthUseCase.create(useUserStore()) - 认证使用案例上下文
      * @use UserUseCase.create(useUserStore()) - 用户使用案例上下文
      */
-    const authUseCase = newAuthUseCase(useUserStore())
-    const builtInProjectUseCase = newBuiltInProjectUseCase(useBuiltInProjectsStore())
+    const authUseCase = useAuthUseCase(useUserStore())
+    const builtInProjectUseCase = useBuiltInProjectUseCase(useBuiltInProjectsStore())
 
     /**
      * 加载数据
@@ -81,8 +84,8 @@ export const useCalendarView = () => {
         authUseCase,
         userUseCase,
         taskUseCase,
-        dialogManager,
-        subscriber,
+        dialogManager: appDialogManager,
+        subscriber: appSubscriber,
         asideWidth,
         isDisplayAside,
         isUseFloatAside,
@@ -103,4 +106,3 @@ export const useCalendarView = () => {
         handleResizeAside
     }
 }
-

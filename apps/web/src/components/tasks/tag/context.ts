@@ -1,10 +1,13 @@
+import type {
+    TagHandler,
+    TagPreferenceViewObject,
+    TagUseCase,
+    TagViewObject
+} from '@nao-todo/domain/tag'
+import type { TaskUseCase, TaskViewObject } from '@nao-todo/domain/task'
+import type { UserViewObject } from '@nao-todo/domain/user'
+import type { DialogManager, Subscriber, TaskColumnOptions } from '@nao-todo/shared'
 import type { ComputedRef, InjectionKey } from 'vue'
-import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import { TaskColumnOptions, TaskUseCase, TaskViewObject } from '@nao-todo/usecases/task'
-import { TagPreferenceViewObject, TagUseCase, TagViewObject } from '@nao-todo/usecases/tag'
-import { TagHandler } from '@/infrastructure/handlers/tag'
-import { UserViewObject } from '@nao-todo/usecases/user'
-import DialogManager from '@/infrastructure/hooks/use-dialog-manager'
 
 export type TagViewContext = {
     taskUseCase: TaskUseCase
@@ -31,7 +34,3 @@ export type TagViewContext = {
 }
 
 export const TAG_VIEW_CONTEXT_KEY: InjectionKey<TagViewContext> = Symbol('TAG_VIEW_CONTEXT')
-
-
-
-

@@ -35,15 +35,8 @@ export const useTaskDetailsStore = defineStore('TaskDetailsStore', () => {
         useTaskCommentsStoreBase()
 
     // 子任务列表以及相关操作
-    const {
-        tasks: subTasks,
-        setTasks: setSubTasks,
-        addTasks: addSubTasks,
-        addTask: addSubTask,
-        getTask: getSubTask,
-        updateTask: updateSubTask,
-        removeTask: removeSubTask
-    } = useTasksStoreBase()
+    const { tasks, setTasks, addTasks, addTask, getTask, updateTask, removeTask } =
+        useTasksStoreBase()
 
     // 检查事项ID列表以及相关操作
     const {
@@ -137,13 +130,13 @@ export const useTaskDetailsStore = defineStore('TaskDetailsStore', () => {
         addCommentId,
         removeCommentId,
         // --- sub tasks store base ---
-        subTasks,
-        setSubTasks,
-        addSubTasks,
-        addSubTask,
-        getSubTask,
-        updateSubTask,
-        removeSubTask,
+        tasks,
+        setTasks,
+        addTasks,
+        addTask,
+        getTask,
+        updateTask,
+        removeTask,
         // --- sub tasks loading error ---
         subTasksLoading,
         subTasksError,

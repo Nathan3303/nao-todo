@@ -1,4 +1,4 @@
-import type { NullableDateString, NullableString } from '../types'
+import type { NullableString } from '../types'
 
 // 获取任务列表选项
 export type GetTasksOptions = {
@@ -9,8 +9,8 @@ export type GetTasksOptions = {
     priority?: string
     projectId?: NullableString
     tagId?: string
-    isArchived?: NullableDateString
-    isDeleted?: NullableDateString
+    isArchived?: boolean
+    isDeleted?: boolean
     isStarMarked?: boolean
     isGivenUp?: boolean
     sort?: GetTasksSortOptions

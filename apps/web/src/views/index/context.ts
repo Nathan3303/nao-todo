@@ -1,13 +1,9 @@
-import { ProjectHandler } from '@/infrastructure/handlers/project-handler'
-import { TagHandler } from '@/infrastructure/handlers/tag-handler'
-import { TaskHandler } from '@/infrastructure/handlers/task'
-import DialogManager from '@/infrastructure/hooks/use-dialog-manager'
-import { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import { ProjectUseCase } from '@nao-todo/usecases/project'
-import { TagUseCase } from '@nao-todo/usecases/tag'
-import { TaskUseCase, TaskViewObject } from '@nao-todo/usecases/task'
-import { UserUseCase } from '@nao-todo/usecases/user'
-import { InjectionKey, Ref } from 'vue'
+import type { ProjectHandler, ProjectUseCase } from '@nao-todo/domain/project'
+import type { TagHandler, TagUseCase } from '@nao-todo/domain/tag'
+import type { TaskHandler, TaskUseCase, TaskViewObject } from '@nao-todo/domain/task'
+import type { UserUseCase } from '@nao-todo/domain/user'
+import type { DialogManager, Subscriber } from '@nao-todo/shared'
+import type { InjectionKey, Ref } from 'vue'
 
 /**
  * 首页视图上下文
@@ -21,8 +17,8 @@ export type IndexViewContext = {
     tagUseCase: TagUseCase
     taskUseCase: TaskUseCase
     // managers
-    dialogManager: DialogManager
-    subscriber: Subscriber
+    appDialogManager: DialogManager
+    appSubscriber: Subscriber
     // handlers
     projectHandler: ProjectHandler
     tagHandler: TagHandler
@@ -41,4 +37,3 @@ export type IndexViewContext = {
 
 // 首页视图上下文注入键
 export const INDEX_VIEW_CONTEXT_KEY: InjectionKey<IndexViewContext> = Symbol('INDEX_VIEW_CONTEXT')
-

@@ -22,5 +22,5 @@ export type BuiltInProjectPreferenceViewObject = {
     userId: string
     viewType: string
     getTasksOptions: Partial<GetTasksOptions>
-    columns: Partial<TaskColumnOptions>
+    columns: TaskColumnOptions
 }

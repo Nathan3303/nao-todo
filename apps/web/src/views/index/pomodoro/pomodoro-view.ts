@@ -1,13 +1,19 @@
 import { APP_CONTEXT_KEY } from '@/context'
-import useResponsiveAside from '@/infrastructure/hooks/use-responsive-aside'
-import { TASK_DETAILS_PRE_CONTEXT_KEY } from '@/layouts/app/task-details/context'
-import { usePomodorosStore } from '@/stores/pomodoro-view'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
-import useAsideWidth from '@nao-todo/infrastructure/hooks/use-aside-width'
-import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
-import { newPomodoroUseCase } from '@nao-todo/usecases/pomodoro'
+import { usePomodorosStore } from '@nao-todo/domain/pomodoro'
+import { TASK_DETAILS_PRE_CONTEXT_KEY, useTaskDetailsStore } from '@nao-todo/domain/task'
+import { responsiveTypes, useAsideWidth, useResponsiveAside } from '@nao-todo/shared'
 import { inject, provide } from 'vue'
 import { POMODORO_VIEW_CONTEXT_KEY } from './context'
+import {
+    usePomodoroUseCase,
+    useTaskCheckItemUseCase,
+    useTaskCommentUseCase,
+    useTaskUseCase
+} from '@/hooks'
+import { storeToRefs } from 'pinia'
+import { useProjectsStore } from '@nao-todo/domain/project'
+import { useTagsStore } from '@nao-todo/domain/tag'
 
 /**
  * 番茄钟视图上下文提供器
@@ -20,15 +26,25 @@ export const usePomodoroView = () => {
      * @inject INDEX_VIEW_CONTEXT_KEY - 主要视图上下文
      */
     const { responsiveFlag } = inject(APP_CONTEXT_KEY)!
-    const { taskUseCase, dialogManager, subscriber, getProjectName, showTaskDetails } =
+    const { taskUseCase, appDialogManager, appSubscriber, getProjectName, showTaskDetails } =
         inject(INDEX_VIEW_CONTEXT_KEY)!
 
     /**
      * 常用番茄专注用例
      * @description 实例化常用番茄专注用例，注入常用番茄专注存储
      */
-    const pomodorosStore = usePomodorosStore()
-    const pomodoroUseCase = newPomodoroUseCase(pomodorosStore)
+    const pomodoroUseCase = usePomodoroUseCase(usePomodorosStore())
+
+    // @stores
+    const taskDetailsStore = useTaskDetailsStore()
+    const { avaliableProjects } = storeToRefs(useProjectsStore())
+    const tagsStore = useTagsStore()
+    const { tags: avaliableTags } = storeToRefs(tagsStore)
+
+    // @usecase 任务详情面板相关用例
+    const taskCheckItemUseCase = useTaskCheckItemUseCase(taskDetailsStore)
+    const taskCommentUseCase = useTaskCommentUseCase(taskDetailsStore)
+    const subTaskUseCase = useTaskUseCase(taskDetailsStore)
 
     /**
      * 响应式侧边栏
@@ -77,8 +93,8 @@ export const usePomodoroView = () => {
     provide(POMODORO_VIEW_CONTEXT_KEY, {
         taskUseCase,
         pomodoroUseCase,
-        dialogManager,
-        subscriber,
+        dialogManager: appDialogManager,
+        subscriber: appSubscriber,
         asideWidth,
         isDisplayAside,
         isUseFloatAside,
@@ -92,14 +108,23 @@ export const usePomodoroView = () => {
      * 提供任务详情适配器上下文
      */
     provide(TASK_DETAILS_PRE_CONTEXT_KEY, {
+        // ---
         taskUseCase,
-        dialogManager,
-        subscriber,
+        taskCommentUseCase,
+        taskCheckItemUseCase,
+        subTaskUseCase,
+        // ---
+        dialogManager: appDialogManager,
+        subscriber: appSubscriber,
+        // ---
+        avaliableProjects,
+        avaliableTags,
+        // ---
+        outlineWidth,
         isDisplayOutline,
         isUseFloatOutline,
-        outlineWidth,
         handleResizeOutline,
+        getTag: tagsStore.getTag,
         getProjectName
     })
 }
-

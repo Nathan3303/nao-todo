@@ -1,13 +1,12 @@
 import { computed, inject, provide, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import type { ProjectViewProps } from './types'
-import useUserStore from '@/stores/user-store'
+import { useUserStore } from '@nao-todo/domain/user'
 import { storeToRefs } from 'pinia'
-import { useProjectsStore, useTagsStore } from '@/stores'
+import { ProjectHandler, useProjectsStore } from '@nao-todo/domain/project'
+import { useTagsStore } from '@nao-todo/domain/tag'
 import { NueMessage } from 'nue-ui'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { ProjectHandler } from '@/infrastructure/handlers/project'
-import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+import { unwrapError, TASK_CREATOR_DIALOG_KEY } from '@nao-todo/shared'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
 import { PROJECT_VIEW_CONTEXT_KEY } from './context'
 
@@ -19,11 +18,11 @@ const useProjectView = (props: ProjectViewProps) => {
     const {
         projectUseCase,
         taskUseCase,
-        subscriber,
+        appSubscriber,
+        appDialogManager,
         getColumnLabel,
         getProjectName,
-        showTaskDetails,
-        dialogManager
+        showTaskDetails
     } = inject(TASKS_VIEW_CONTEXT_KEY)!
 
     // @dataStores
@@ -79,7 +78,7 @@ const useProjectView = (props: ProjectViewProps) => {
     )
 
     // @handler 清单操作器
-    const projectHandler = new ProjectHandler(projectUseCase, projectsStore, subscriber)
+    const projectHandler = new ProjectHandler(projectUseCase, projectsStore, appSubscriber)
 
     // @computed 是否已经是只显示未完成任务
     const isHideCompletedAlready = computed(() => {
@@ -91,7 +90,7 @@ const useProjectView = (props: ProjectViewProps) => {
 
     // @method 显示任务创建器弹窗
     const showTaskCreator = () => {
-        dialogManager.open(TASK_CREATOR_DIALOG_KEY, {
+        appDialogManager.open(TASK_CREATOR_DIALOG_KEY, {
             projectId: props.projectId
         })
     }
@@ -100,8 +99,8 @@ const useProjectView = (props: ProjectViewProps) => {
     provide(PROJECT_VIEW_CONTEXT_KEY, {
         taskUseCase,
         projectUseCase,
-        subscriber,
-        dialogManager,
+        subscriber: appSubscriber,
+        dialogManager: appDialogManager,
         projectHandler,
         project,
         preference,
@@ -122,4 +121,3 @@ const useProjectView = (props: ProjectViewProps) => {
 }
 
 export default useProjectView
-

@@ -1,15 +1,14 @@
+import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
+import { BuiltInProjectHandler, useBuiltInProjectsStore } from '@nao-todo/domain/built-in-project'
+import { useTagsStore } from '@nao-todo/domain/tag'
+import { useUserStore } from '@nao-todo/domain/user'
+import { TASK_CREATOR_DIALOG_KEY, unwrapError } from '@nao-todo/shared'
+import { NueMessage } from 'nue-ui'
+import { storeToRefs } from 'pinia'
 import { computed, inject, provide, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import type { BuiltInProjectViewProps } from './types'
-import useUserStore from '@/stores/user-store'
-import { storeToRefs } from 'pinia'
-import { BuiltInProjectHandler } from '@/infrastructure/handlers/built-in-project'
-import { useBuiltInProjectsStore, useTagsStore } from '@/stores'
-import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
-import { NueMessage } from 'nue-ui'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
 import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from './context'
+import type { BuiltInProjectViewProps } from './types'
 
 const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     // @viewStores
@@ -18,8 +17,8 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     // @viewContext TasksView context
     const {
         builtInProjectUseCase,
-        subscriber,
-        dialogManager,
+        appSubscriber,
+        appDialogManager,
         taskUseCase,
         getColumnLabel,
         getProjectName,
@@ -87,7 +86,7 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
         builtInProjectUseCase,
         taskUseCase,
         builtInProjectsStore,
-        subscriber
+        appSubscriber
     )
 
     // @computed 是否已经是只显示未完成任务
@@ -101,13 +100,13 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     const showTaskCreator = () => {
         if (!builtInProject.value) return
         if (typeof builtInProject.value.createTaskOptions === 'function') {
-            dialogManager.open(
+            appDialogManager.open(
                 TASK_CREATOR_DIALOG_KEY,
                 builtInProject.value.createTaskOptions?.() || {}
             )
             return
         }
-        dialogManager.open(TASK_CREATOR_DIALOG_KEY, builtInProject.value.createTaskOptions)
+        appDialogManager.open(TASK_CREATOR_DIALOG_KEY, builtInProject.value.createTaskOptions)
     }
 
     // @provide 提供 Project View 上下文
@@ -117,13 +116,13 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
         preference,
         profile,
         tags: computed(() => [...tags.value.values()]),
-        subscriber: subscriber,
+        subscriber: appSubscriber,
         builtInProjectHandlers,
         isHideCompletedAlready,
-        dialogManager,
-        getColumnLabel: getColumnLabel,
-        getProjectName: getProjectName,
-        showTaskDetails: showTaskDetails,
+        dialogManager: appDialogManager,
+        getColumnLabel,
+        getProjectName,
+        showTaskDetails,
         switchViewTypeToTable: () => switchViewType('table'),
         switchViewTypeToKanban: () => switchViewType('kanban'),
         switchViewTypeToList: () => switchViewType('list'),
@@ -135,4 +134,3 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
 }
 
 export default useBuiltInProjectView
-

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { inject } from 'vue'
-import { AppAsideAdapter } from '@/layouts/app/'
+import { AppAsideAdapter } from '@/components/app/'
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
 
 defineOptions({ name: 'PomodoroAside' })
@@ -37,4 +37,3 @@ const { isDisplayAside, isUseFloatAside } = inject(POMODORO_VIEW_CONTEXT_KEY)!
     gap: var(--nue-gap-lg);
 }
 </style>
-

@@ -1,3 +1,3 @@
-import SettingsAside from './aside.vue'
+import Aside from './aside.vue'
 
-export { SettingsAside }
+export const SettingsAside = Aside

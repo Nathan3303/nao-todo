@@ -1,10 +1,9 @@
-import { inject, reactive, watch } from 'vue'
-import { useTagsStore } from '@/stores'
-import { storeToRefs } from 'pinia'
-import { ViewAdapterNoTaskError } from '@/layouts/app'
-import { debounce } from '@nao-todo/infrastructure/utils'
-import type { BuiltInProjectPreferenceViewObject } from '@nao-todo/usecases/built-in-project'
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
+import { useTagsStore } from '@nao-todo/domain/tag'
+import { ViewAdapterNoTaskError } from '@nao-todo/domain/task'
+import { debounce } from '@nao-todo/shared'
+import { storeToRefs } from 'pinia'
+import { inject, reactive, watch } from 'vue'
 
 /**
  * 任务专注面板 composable
@@ -27,8 +26,7 @@ export const useTaskPanel = () => {
     /**
      * 任务视图 Preference
      */
-    const viewPreference = reactive<BuiltInProjectPreferenceViewObject>({
-        userId: '',
+    const viewPreference = reactive({
         projectId: 'PomodoroTaskSelector',
         viewType: 'table',
         columns: {
@@ -104,7 +102,3 @@ export const useTaskPanel = () => {
         refreshData
     }
 }
-
-
-
-

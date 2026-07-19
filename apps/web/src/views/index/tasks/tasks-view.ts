@@ -1,15 +1,23 @@
-import useResponsiveAside from '@/infrastructure/hooks/use-responsive-aside'
-import { useBuiltInProjectsStore } from '@/stores'
-import { columnLabels } from '@nao-todo/infrastructure/consts/tasks'
-import useAsideWidth from '@nao-todo/infrastructure/hooks/use-aside-width'
-import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { newBuiltInProjectUseCase } from '@nao-todo/usecases/built-in-project'
-import { inject, provide, ref } from 'vue'
-import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
-import { TASKS_VIEW_CONTEXT_KEY } from './context'
 import { APP_CONTEXT_KEY } from '@/context'
-import { TASK_DETAILS_PRE_CONTEXT_KEY } from '@/layouts/app/task-details/context'
+import {
+    useBuiltInProjectUseCase,
+    useTaskCheckItemUseCase,
+    useTaskCommentUseCase,
+    useTaskUseCase
+} from '@/hooks'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
+import { useBuiltInProjectsStore } from '@nao-todo/domain/built-in-project'
+import { useProjectsStore } from '@nao-todo/domain/project'
+import { useTagsStore } from '@nao-todo/domain/tag'
+import {
+    columnLabels,
+    TASK_DETAILS_PRE_CONTEXT_KEY,
+    useTaskDetailsStore
+} from '@nao-todo/domain/task'
+import { responsiveTypes, unwrapError, useAsideWidth, useResponsiveAside } from '@nao-todo/shared'
+import { storeToRefs } from 'pinia'
+import { inject, provide, ref } from 'vue'
+import { TASKS_VIEW_CONTEXT_KEY } from './context'
 
 const useTasksView = () => {
     // @context App 上下文
@@ -20,8 +28,8 @@ const useTasksView = () => {
         projectUseCase,
         tagUseCase,
         taskUseCase,
-        subscriber,
-        dialogManager,
+        appSubscriber,
+        appDialogManager,
         projectHandler,
         tagHandler,
         taskHandler,
@@ -30,8 +38,19 @@ const useTasksView = () => {
         showTaskDetails
     } = inject(INDEX_VIEW_CONTEXT_KEY)!
 
-    // @usecases
-    const builtInProjectUseCase = newBuiltInProjectUseCase(useBuiltInProjectsStore())
+    // @stores
+    const taskDetailsStore = useTaskDetailsStore()
+    const { avaliableProjects } = storeToRefs(useProjectsStore())
+    const tagsStore = useTagsStore()
+    const { tags: avaliableTags } = storeToRefs(tagsStore)
+
+    // @usecase Built-in project use case
+    const builtInProjectUseCase = useBuiltInProjectUseCase(useBuiltInProjectsStore())
+
+    // @usecase 任务详情面板相关用例
+    const taskCheckItemUseCase = useTaskCheckItemUseCase(taskDetailsStore)
+    const taskCommentUseCase = useTaskCommentUseCase(taskDetailsStore)
+    const subTaskUseCase = useTaskUseCase(taskDetailsStore)
 
     // @states&method 初始化处理程序
     const isLoading = ref<boolean>(true) // 加载状态
@@ -85,8 +104,8 @@ const useTasksView = () => {
         tagUseCase,
         taskUseCase,
         // ---
-        dialogManager,
-        subscriber,
+        appDialogManager,
+        appSubscriber,
         // ---
         projectHandler,
         tagHandler,
@@ -111,13 +130,23 @@ const useTasksView = () => {
 
     // @provide TaskDetailsPreContext
     provide(TASK_DETAILS_PRE_CONTEXT_KEY, {
+        // ---
+        taskUseCase,
+        taskCommentUseCase,
+        taskCheckItemUseCase,
+        subTaskUseCase,
+        // ---
+        dialogManager: appDialogManager,
+        subscriber: appSubscriber,
+        // ---
+        avaliableProjects,
+        avaliableTags,
+        // ---
+        outlineWidth,
         isDisplayOutline,
         isUseFloatOutline,
-        outlineWidth,
         handleResizeOutline,
-        taskUseCase,
-        subscriber,
-        dialogManager,
+        getTag: tagsStore.getTag,
         getProjectName
     })
 
@@ -126,4 +155,3 @@ const useTasksView = () => {
 }
 
 export default useTasksView
-

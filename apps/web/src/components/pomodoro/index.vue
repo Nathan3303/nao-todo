@@ -2,11 +2,11 @@
 import { computed, inject } from 'vue'
 import { storeToRefs } from 'pinia'
 import {
-    PomodoroTimerComp,
-    PomodoroFocusComp,
-    PomodoroRecordsComp,
-    PomodoroNotesComp
-} from '@/components/pomodoro'
+    PomodoroTimer,
+    PomodoroFocus,
+    PomodoroRecordList,
+    PomodoroNoteInputer
+} from '@nao-todo/domain/pomodoro'
 import { usePomodoroPage } from './use-pomodoro-page'
 import { PomodoroFocusDependDropdown } from './focus-depend-dropdown'
 import { PomodoroHeader } from './header'
@@ -73,7 +73,7 @@ const dependLabel = computed(() => {
                         </template>
                     </pomodoro-focus-depend-dropdown>
                     <!-- 番茄专注计时器 -->
-                    <pomodoro-timer-comp
+                    <pomodoro-timer
                         v-if="activeTab === 'timer'"
                         :phase="phase"
                         :is-running="isRunning"
@@ -88,9 +88,9 @@ const dependLabel = computed(() => {
                         @adjust-time="handleAdjustTime($event)"
                         @open-settings="handleOpenSettings"
                     >
-                    </pomodoro-timer-comp>
+                    </pomodoro-timer>
                     <!-- 正计时计时器 -->
-                    <pomodoro-focus-comp
+                    <pomodoro-focus
                         v-if="activeTab === 'focus'"
                         style="grid-area: timer"
                         :status="status"
@@ -102,10 +102,10 @@ const dependLabel = computed(() => {
                         @resume="handleMainAction"
                         @end="handleEnd"
                     >
-                    </pomodoro-focus-comp>
+                    </pomodoro-focus>
                 </nue-div>
                 <!-- 专注记录 -->
-                <pomodoro-records-comp
+                <pomodoro-record-list
                     style="grid-area: today"
                     :records="todayRecords"
                     :loading="recordLoading"
@@ -113,7 +113,7 @@ const dependLabel = computed(() => {
                     @next-page="handleNextPage"
                 />
                 <!-- 专注笔记 -->
-                <pomodoro-notes-comp
+                <pomodoro-note-inputer
                     style="grid-area: note"
                     :note-text="noteText"
                     @update:note-text="setNoteText($event)"
@@ -149,4 +149,3 @@ const dependLabel = computed(() => {
     }
 }
 </style>
-

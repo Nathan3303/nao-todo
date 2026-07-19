@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import { TaskDetailsAdapter } from '@/layouts/app'
-import { Loading as LoadingComp } from '@nao-todo/components'
+import { TaskDetailsAdapter } from '@nao-todo/domain/task'
+import { Loading as LoadingComp } from '@nao-todo/shared'
 import { usePomodoroView } from './pomodoro-view'
-import { PomodoroAside, PomodoroDialogAdapter } from '@/layouts/pomodoro'
+import { PomodoroAside, PomodoroDialogAdapter } from '@/components/pomodoro'
 
 defineOptions({ name: 'PomodoroView' })
 
@@ -42,4 +42,3 @@ usePomodoroView()
 </template>
 
 <style scoped></style>
-

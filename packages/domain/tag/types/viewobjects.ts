@@ -36,5 +36,5 @@ export type TagPreferenceViewObject = ViewObjectBase & {
     tagId: TagViewObject['id']
     viewType: string
     getTasksOptions: Partial<GetTasksOptions>
-    columns: Partial<TaskColumnOptions>
+    columns: TaskColumnOptions
 }

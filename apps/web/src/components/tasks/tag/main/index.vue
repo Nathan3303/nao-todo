@@ -2,15 +2,15 @@
 import { computed } from 'vue'
 import { inject, onMounted, onUnmounted } from 'vue'
 import { NueMessage } from 'nue-ui'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { TagHandler } from '@/infrastructure/handlers/tag'
+import { unwrapError } from '@nao-todo/shared'
+import { TagHandler } from '@nao-todo/domain/tag'
 import { TAG_EMPTY_STATE } from '../constants'
 import {
-    TableViewAdapter,
-    ListViewAdapter,
     KanbanViewAdapter,
+    ListViewAdapter,
+    TableViewAdapter,
     type ViewAdapterNoTaskError
-} from '@/layouts/app/view-adapters'
+} from '@nao-todo/domain/task'
 import { TAG_VIEW_CONTEXT_KEY } from '../context'
 
 defineOptions({
@@ -95,4 +95,3 @@ const getNoTaskError = (): ViewAdapterNoTaskError | undefined => {
         </nue-content>
     </nue-main>
 </template>
-

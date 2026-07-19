@@ -1,8 +1,7 @@
-import { computed, inject, onMounted, ref } from 'vue'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import type { PomodoroViewObject } from '@nao-todo/usecases/pomodoro'
-import { usePomodorosStore } from '@/stores/pomodoro-view'
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
+import { type PomodoroViewObject, usePomodorosStore } from '@nao-todo/domain/pomodoro'
+import { unwrapError } from '@nao-todo/shared'
+import { computed, inject, onMounted, ref } from 'vue'
 import type { PomodoroFocusDependDropdownProps } from './types'
 
 /**
@@ -52,4 +51,3 @@ export const usePresetPanel = (props: PomodoroFocusDependDropdownProps) => {
         refresh
     }
 }
-

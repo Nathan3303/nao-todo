@@ -1,52 +1,3 @@
-<template>
-    <nue-div vertical class="nue-calendar-monthly">
-        <!-- Month Navigation -->
-        <nue-div align="center" class="cal-header" gap="8px">
-            <nue-div align="center" gap="2px">
-                <button class="cal-nav-btn" @click="prevMonth">
-                    <nue-icon name="arrow-left-s" size="18px" />
-                </button>
-                <nue-text tag="h2" size="var(--nue-text-df)" :weight="600" class="cal-title">
-                    {{ year }} 年 {{ month }} 月
-                </nue-text>
-                <button class="cal-nav-btn" @click="nextMonth">
-                    <nue-icon name="arrow-right-s" size="18px" />
-                </button>
-            </nue-div>
-            <nue-button theme="ghost,small" @click="goToToday">今天</nue-button>
-        </nue-div>
-        <!-- Weekday Headers -->
-        <nue-div class="cal-weekdays" gap="0">
-            <div v-for="day in weekdays" :key="day" class="cal-weekday">{{ day }}</div>
-        </nue-div>
-        <!-- Date Grid -->
-        <div class="cal-grid">
-            <div
-                v-for="(day, idx) in days"
-                :key="idx"
-                class="cal-cell"
-                :class="{
-                    'cal-cell--outside': !day.isCurrentMonth,
-                    'cal-cell--today': day.isToday,
-                    'cal-cell--selected': day.isSelected,
-                    'cal-cell--weekend': day.isWeekend
-                }"
-                @click="selectDate(day)"
-            >
-                <span class="cal-date">{{ day.day }}</span>
-                <div v-if="day.hasTasks" class="cal-dots">
-                    <span
-                        v-for="(dot, di) in day.dots"
-                        :key="di"
-                        class="cal-dot"
-                        :style="{ background: dot.color }"
-                    />
-                </div>
-            </div>
-        </div>
-    </nue-div>
-</template>
-
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 
@@ -175,6 +126,55 @@ function selectDate(day: DayCell) {
     selectedDateStr.value = day.date
 }
 </script>
+
+<template>
+    <nue-div vertical class="nue-calendar-monthly">
+        <!-- Month Navigation -->
+        <nue-div align="center" class="cal-header" gap="8px">
+            <nue-div align="center" gap="2px">
+                <button class="cal-nav-btn" @click="prevMonth">
+                    <nue-icon name="arrow-left-s" size="18px" />
+                </button>
+                <nue-text tag="h2" size="var(--nue-text-df)" :weight="600" class="cal-title">
+                    {{ year }} 年 {{ month }} 月
+                </nue-text>
+                <button class="cal-nav-btn" @click="nextMonth">
+                    <nue-icon name="arrow-right-s" size="18px" />
+                </button>
+            </nue-div>
+            <nue-button theme="ghost,small" @click="goToToday">今天</nue-button>
+        </nue-div>
+        <!-- Weekday Headers -->
+        <nue-div class="cal-weekdays" gap="0">
+            <div v-for="day in weekdays" :key="day" class="cal-weekday">{{ day }}</div>
+        </nue-div>
+        <!-- Date Grid -->
+        <div class="cal-grid">
+            <div
+                v-for="(day, idx) in days"
+                :key="idx"
+                class="cal-cell"
+                :class="{
+                    'cal-cell--outside': !day.isCurrentMonth,
+                    'cal-cell--today': day.isToday,
+                    'cal-cell--selected': day.isSelected,
+                    'cal-cell--weekend': day.isWeekend
+                }"
+                @click="selectDate(day)"
+            >
+                <span class="cal-date">{{ day.day }}</span>
+                <div v-if="day.hasTasks" class="cal-dots">
+                    <span
+                        v-for="(dot, di) in day.dots"
+                        :key="di"
+                        class="cal-dot"
+                        :style="{ background: dot.color }"
+                    />
+                </div>
+            </div>
+        </div>
+    </nue-div>
+</template>
 
 <style scoped>
 /* ── Shadcn/UI 黑白灰设计系统 ── */

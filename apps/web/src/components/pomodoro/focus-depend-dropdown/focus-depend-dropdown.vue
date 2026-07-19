@@ -1,18 +1,21 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue'
+import type { PomodoroViewObject } from '@nao-todo/domain/pomodoro'
+import { ListViewAdapter, type TaskViewObject } from '@nao-todo/domain/task'
 import { NueDropdown, NueInput } from 'nue-ui'
-import { ListViewAdapter } from '@/layouts/app'
-import { usePresetPanel } from './use-preset-panel'
-import { useTaskPanel } from './use-task-panel'
-import type { PomodoroViewObject } from '@nao-todo/usecases/pomodoro'
-import type { TaskViewObject } from '@nao-todo/usecases/task'
+import { computed, inject, nextTick, ref } from 'vue'
 import type {
     FocusDependTab,
     PomodoroFocusDependDropdownEmits,
     PomodoroFocusDependDropdownProps
 } from './types'
+import { usePresetPanel } from './use-preset-panel'
+import { useTaskPanel } from './use-task-panel'
+import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
 
 defineOptions({ name: 'PomodoroFocusDependDropdown' })
+
+// @context PomodoroView 番茄钟视图上下文
+const { dialogManager } = inject(POMODORO_VIEW_CONTEXT_KEY)!
 
 // @props
 const props = defineProps<PomodoroFocusDependDropdownProps>()
@@ -127,13 +130,6 @@ const formatDuration = (seconds: number) => `${Math.round(seconds / 60)} 分钟`
         </template>
         <!-- 下拉菜单 -->
         <nue-container id="pomodoro-focus-depend-selector">
-            <!-- 下拉菜单标题 -->
-            <!-- <nue-header>
-                <nue-text theme="title">选择专注</nue-text>
-                <nue-text theme="description">
-                    选择想要关联的常用专注或任务，用于在专注结束后创建专注记录
-                </nue-text>
-            </nue-header> -->
             <!-- Tabs 切换 -->
             <nue-div theme="depend-tabs">
                 <nue-text
@@ -201,6 +197,7 @@ const formatDuration = (seconds: number) => `${Math.round(seconds / 60)} 分钟`
                     <nue-content>
                         <list-view-adapter
                             small
+                            :dialog-manager="dialogManager"
                             :task-use-case="taskUseCase"
                             :get-tasks-options="viewPreference.getTasksOptions"
                             :subscriber="subscriber"
@@ -226,189 +223,7 @@ const formatDuration = (seconds: number) => `${Math.round(seconds / 60)} 分钟`
     </nue-dropdown>
 </template>
 
-<style>
-.nue-dropdown--pomodoro-focus-depend-selector {
-    display: flex;
-    flex-direction: column;
-    width: 24rem;
-    height: 40rem;
-    overflow: hidden;
-    padding: 0;
-}
-
-#pomodoro-focus-depend-selector {
-    height: 100%;
-
-    /* > .nue-header {
-        height: auto;
-        flex-direction: column;
-        gap: var(--nue-gap-2xs);
-        align-items: start;
-        padding: var(--nue-padding-sm);
-        border: none;
-
-        > .nue-text--title {
-            color: var(--nue-primary-color-800);
-        }
-
-        > .nue-text--description {
-            font-size: var(--nue-text-xs);
-            color: var(--nue-primary-color-400);
-        }
-    } */
-
-    > .nue-div--depend-tabs {
-        display: flex;
-        flex-direction: row;
-        gap: var(--nue-gap-df);
-        padding: 0 var(--nue-padding-sm);
-        border-bottom: 1px solid var(--nue-border-color);
-        height: 3rem;
-        /* justify-content: center; */
-
-        > .nue-text--depend-tab {
-            font-size: var(--nue-text-sm);
-            color: var(--nue-primary-color-500);
-            padding: 0 0.25rem;
-            line-height: 3rem;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition:
-                color 0.2s ease,
-                border-color 0.2s ease;
-
-            &:hover {
-                color: var(--nue-primary-color-800);
-            }
-
-            &.depend-tab--actived {
-                color: var(--nue-primary-color-900);
-                border-bottom-color: var(--nue-primary-color-900);
-            }
-        }
-    }
-
-    > .nue-div--depend-status {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        gap: var(--nue-gap-2xs);
-        padding: var(--nue-padding-xs) var(--nue-padding-sm);
-        border-bottom: 1px solid var(--nue-border-color);
-        font-size: var(--nue-text-sm);
-
-        > .nue-text--depend-status-label {
-            color: var(--nue-primary-color-400);
-            flex: none;
-        }
-
-        > .nue-text--depend-status-name {
-            color: var(--nue-primary-color-800);
-            font-weight: 500;
-            flex: 0 1 auto;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            margin-right: auto;
-        }
-
-        > .nue-text--depend-status-divider {
-            color: var(--nue-primary-color-300);
-            flex: none;
-        }
-
-        > .nue-link--depend-status-clear {
-            font-size: var(--nue-text-sm);
-            color: var(--nue-primary-color-500);
-            flex: none;
-            cursor: pointer;
-
-            &:hover {
-                color: var(--nue-primary-color-900);
-                text-decoration: underline;
-            }
-        }
-    }
-
-    > .nue-main {
-        flex-direction: column;
-        overflow: hidden;
-
-        /* 常用专注面板 */
-        > .nue-content--preset-panel {
-            display: flex;
-            flex-direction: column;
-            gap: var(--nue-gap-xs);
-            padding: var(--nue-padding-sm);
-            overflow: auto;
-
-            > .nue-div--preset-item {
-                display: flex;
-                flex-direction: row;
-                align-items: center;
-                justify-content: space-between;
-                padding: 0.5rem 0.75rem;
-                border-radius: var(--nue-primary-radius);
-                cursor: pointer;
-                transition: background-color 0.2s ease;
-                background-color: var(--nue-primary-color-100);
-                border: 1px solid transparent;
-
-                &:hover {
-                    border-color: var(--nue-primary-color-500);
-                }
-
-                > .nue-text--preset-name {
-                    font-size: var(--nue-text-sm);
-                    color: var(--nue-primary-color-800);
-                }
-
-                > .nue-text--preset-duration {
-                    font-size: var(--nue-text-xs);
-                    color: var(--nue-primary-color-400);
-                }
-            }
-
-            > .nue-div--preset-empty {
-                padding: 1rem;
-                text-align: center;
-                color: var(--nue-primary-color-300);
-                font-size: var(--nue-text-sm);
-            }
-        }
-
-        /* 任务专注面板 */
-        > .nue-div--task-panel {
-            display: flex;
-            flex-direction: column;
-            flex: auto;
-            overflow: hidden;
-            gap: 0;
-
-            > .nue-div--search-bar {
-                margin: var(--nue-padding-sm) var(--nue-padding-sm) 0;
-                gap: 0.5rem;
-
-                > .nue-input {
-                    flex: auto;
-                }
-
-                > .nue-button {
-                    height: var(--nue-box-size-sm);
-                }
-            }
-
-            > .nue-content {
-                display: flex;
-                flex-direction: column;
-                padding: var(--nue-padding-sm);
-                overflow: auto;
-            }
-        }
-    }
-}
-</style>
-
+<style src="./index.css" />
 <style scoped>
 .nue-dropdown-wrapper {
     text-align: center;
@@ -420,4 +235,3 @@ const formatDuration = (seconds: number) => `${Math.round(seconds / 60)} 分钟`
     }
 }
 </style>
-

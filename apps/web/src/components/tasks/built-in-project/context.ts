@@ -1,14 +1,13 @@
-import type { ComputedRef, InjectionKey } from 'vue'
-import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import DialogManager from '@/infrastructure/hooks/use-dialog-manager'
-import { TaskColumnOptions, TaskUseCase, TaskViewObject } from '@nao-todo/usecases/task'
-import {
+import type {
+    BuiltInProjectHandler,
     BuiltInProjectPreferenceViewObject,
     BuiltInProjectViewObject
-} from '@nao-todo/usecases/built-in-project'
-import { TagViewObject } from '@nao-todo/usecases/tag'
-import { BuiltInProjectHandler } from '@/infrastructure/handlers/built-in-project'
-import { UserViewObject } from '@nao-todo/usecases/user'
+} from '@nao-todo/domain/built-in-project'
+import type { TagViewObject } from '@nao-todo/domain/tag'
+import type { TaskUseCase, TaskViewObject } from '@nao-todo/domain/task'
+import type { UserViewObject } from '@nao-todo/domain/user'
+import type { DialogManager, Subscriber, TaskColumnOptions } from '@nao-todo/shared'
+import type { ComputedRef, InjectionKey } from 'vue'
 
 // BuiltInProject 视图上下文
 export type BuiltInProjectViewContext = {
@@ -40,5 +39,3 @@ export type BuiltInProjectViewContext = {
 export const BUILT_IN_PROJECT_VIEW_CONTEXT_KEY: InjectionKey<BuiltInProjectViewContext> = Symbol(
     'BUILT_IN_PROJECT_VIEW_CONTEXT'
 )
-
-

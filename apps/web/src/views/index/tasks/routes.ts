@@ -16,7 +16,7 @@ const routes: RouteRecordRaw = {
             name: 'tasks-built-in-project',
             meta: { category: 'built-in-project' },
             props: true,
-            component: () => import('@/layouts/tasks/built-in-project/index.vue'),
+            component: () => import('@/components/tasks/built-in-project/index.vue'),
             children: [
                 {
                     path: ':viewType(table|list|kanban)/:taskId?',
@@ -24,8 +24,9 @@ const routes: RouteRecordRaw = {
                     meta: { category: 'built-in-project' },
                     props: true,
                     components: {
-                        Header: () => import('@/layouts/tasks/built-in-project/header/index.vue'),
-                        Main: () => import('@/layouts/tasks/built-in-project/main/index.vue')
+                        Header: () =>
+                            import('@/components/tasks/built-in-project/header/index.vue'),
+                        Main: () => import('@/components/tasks/built-in-project/main/index.vue')
                     }
                 }
             ]
@@ -35,7 +36,7 @@ const routes: RouteRecordRaw = {
             name: 'tasks-project',
             meta: { category: 'project' },
             props: true,
-            component: () => import('@/layouts/tasks/project/index.vue'),
+            component: () => import('@/components/tasks/project/index.vue'),
             children: [
                 {
                     path: ':viewType(table|list|kanban)/:taskId?',
@@ -43,8 +44,8 @@ const routes: RouteRecordRaw = {
                     meta: { category: 'project' },
                     props: true,
                     components: {
-                        Header: () => import('@/layouts/tasks/project/header/index.vue'),
-                        Main: () => import('@/layouts/tasks/project/main/index.vue')
+                        Header: () => import('@/components/tasks/project/header/index.vue'),
+                        Main: () => import('@/components/tasks/project/main/index.vue')
                     }
                 }
             ]
@@ -54,7 +55,7 @@ const routes: RouteRecordRaw = {
             name: 'tasks-tag',
             meta: { category: 'tag' },
             props: true,
-            component: () => import('@/layouts/tasks/tag/index.vue'),
+            component: () => import('@/components/tasks/tag/index.vue'),
             children: [
                 {
                     path: ':viewType(table|list|kanban)/:taskId?',
@@ -62,8 +63,8 @@ const routes: RouteRecordRaw = {
                     meta: { category: 'tag' },
                     props: true,
                     components: {
-                        Header: () => import('@/layouts/tasks/tag/header/index.vue'),
-                        Main: () => import('@/layouts/tasks/tag/main/index.vue')
+                        Header: () => import('@/components/tasks/tag/header/index.vue'),
+                        Main: () => import('@/components/tasks/tag/main/index.vue')
                     }
                 }
             ]
@@ -72,4 +73,3 @@ const routes: RouteRecordRaw = {
 }
 
 export default routes
-

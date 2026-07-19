@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-import { SettingsAside } from '@/layouts/settings'
+import { SettingsAside } from '@/components/settings'
+import { Loading as LoadingComp } from '@nao-todo/shared'
 import useSettingsView from './settings-view'
-import { Loading as LoadingComp } from '@nao-todo/components'
 
 defineOptions({ name: 'SettingsView' })
 
@@ -41,4 +41,3 @@ useSettingsView()
     align-items: stretch;
 }
 </style>
-

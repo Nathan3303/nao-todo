@@ -44,5 +44,5 @@ export type ProjectPreferenceViewObject = ViewObjectBase & {
     projectId: string
     viewType: string
     getTasksOptions: Partial<GetTasksOptions>
-    columns: Partial<TaskColumnOptions>
+    columns: TaskColumnOptions
 }

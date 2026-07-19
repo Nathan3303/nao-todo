@@ -1,9 +1,9 @@
 <script lang="ts" setup>
-import { TasksViewAside } from '@/layouts/tasks'
-import { TaskDetailsAdapter } from '@/layouts/app'
-import useTasksView from './tasks-view'
-import { LoadingError, Loading as LoadingComp } from '@nao-todo/components'
+import { TasksViewAside } from '@/components/tasks'
+import { TaskDetailsAdapter } from '@nao-todo/domain/task'
+import { Loading as LoadingComp, LoadingError } from '@nao-todo/shared'
 import { onMounted } from 'vue'
+import useTasksView from './tasks-view'
 
 defineOptions({ name: 'TasksView' })
 

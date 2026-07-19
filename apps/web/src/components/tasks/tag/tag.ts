@@ -1,15 +1,13 @@
+import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
+import { TagHandler, useTagsStore } from '@nao-todo/domain/tag'
+import { useUserStore } from '@nao-todo/domain/user'
+import { TASK_CREATOR_DIALOG_KEY, unwrapError } from '@nao-todo/shared'
+import { NueMessage } from 'nue-ui'
+import { storeToRefs } from 'pinia'
 import { computed, inject, provide, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import type { TagViewProps } from './types'
-import useUserStore from '@/stores/user-store'
-import { storeToRefs } from 'pinia'
-import { useTagsStore } from '@/stores'
-import { NueMessage } from 'nue-ui'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
-import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
-import { TagHandler } from '@/infrastructure/handlers/tag'
 import { TAG_VIEW_CONTEXT_KEY } from './context'
+import type { TagViewProps } from './types'
 
 const useTagView = (props: TagViewProps) => {
     // @viewStores
@@ -19,11 +17,11 @@ const useTagView = (props: TagViewProps) => {
     const {
         taskUseCase,
         tagUseCase,
-        subscriber,
+        appSubscriber,
+        appDialogManager,
         getColumnLabel,
         getProjectName,
-        showTaskDetails,
-        dialogManager
+        showTaskDetails
     } = inject(TASKS_VIEW_CONTEXT_KEY)!
 
     // @dataStores
@@ -78,7 +76,7 @@ const useTagView = (props: TagViewProps) => {
     )
 
     // @handler 标签操作器
-    const tagHandler = new TagHandler(tagUseCase, tagsStore, subscriber)
+    const tagHandler = new TagHandler(tagUseCase, tagsStore, appSubscriber)
 
     // @computed 是否已经是只显示未完成任务
     const isHideCompletedAlready = computed(() => {
@@ -90,7 +88,7 @@ const useTagView = (props: TagViewProps) => {
 
     // @method 显示任务创建器
     const showTaskCreator = () => {
-        dialogManager.open(TASK_CREATOR_DIALOG_KEY, { tags: [props.tagId] })
+        appDialogManager.open(TASK_CREATOR_DIALOG_KEY, { tags: [props.tagId] })
     }
 
     // @provide 提供 Tag View 上下文
@@ -99,10 +97,10 @@ const useTagView = (props: TagViewProps) => {
         tagUseCase,
         tag,
         preference,
-        dialogManager,
+        dialogManager: appDialogManager,
+        subscriber: appSubscriber,
         profile,
         tags: computed(() => [...tags.value.values()]),
-        subscriber,
         tagHandler,
         isHideCompletedAlready,
         getColumnLabel,
@@ -119,4 +117,3 @@ const useTagView = (props: TagViewProps) => {
 }
 
 export default useTagView
-

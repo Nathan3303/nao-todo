@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { SettingsViewRouteLinks as routeLinks } from '@/views/index/settings/routes'
-import { inject } from 'vue'
-import { AppAsideAdapter } from '@/layouts/app/'
-import { t } from '@nao-todo/infrastructure/locales'
-import type { LocaleKey } from '@nao-todo/infrastructure/locales'
+import { AppAsideAdapter } from '@/components/app'
 import { SETTINGS_VIEW_CONTEXT_KEY } from '@/views/index/settings/context'
+import { SettingsViewRouteLinks as routeLinks } from '@/views/index/settings/routes'
+import { t, type LocaleKey } from '@nao-todo/shared'
+import { inject } from 'vue'
 
 defineOptions({ name: 'SettingsAside' })
 
@@ -45,4 +44,3 @@ const { asideWidth, handleResizeAside, isDisplayAside } = inject(SETTINGS_VIEW_C
     flex: 1;
 }
 </style>
-

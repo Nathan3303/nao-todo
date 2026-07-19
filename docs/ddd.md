@@ -1,177 +1,276 @@
-# 前端领域驱动设计（DDD）架构使用指南
+# 前端领域驱动设计（DDD）架构实践指南
 
-## 1. 设计理念与目标
-
-本架构将**后端领域驱动设计（DDD）** 的思想引入前端开发，旨在解决传统“按技术分层”导致的业务逻辑分散、代码重复、难以维护等问题。
-
-**核心原则：**
-
-- **按业务领域（Domain）组织代码**，而非按技术角色（components, views, api）。
-- **高内聚、低耦合**：每个领域独立封装自己的 UI、状态、业务逻辑和类型。
-- **业务逻辑集中管理**：所有业务规则和状态变更必须通过领域内部的 Store（或 Service）操作，严禁在页面/组件中直接修改状态。
-- **单向依赖**：领域之间不直接相互引用，只能通过明确的 Service/事件进行通信。
-- **页面（View）为薄层**：仅负责路由、布局和 UI 组装，不包含任何业务逻辑。
+## 基于 Vue 3 + TypeScript + Pinia
 
 ---
 
-## 2. 项目目录结构
+### 1. 背景与目标
 
-```text
+在后端开发中，领域驱动设计（Domain-Driven Design，DDD）通过**业务领域**而非**技术分层**来组织代码，有效解决了复杂业务逻辑的维护难题。前端应用同样面临业务逻辑日益复杂、多团队协作困难等问题。本指南旨在将 DDD 核心思想引入前端（特别是 Vue 3 生态），提供一套可落地的架构方案，达成以下目标：
+
+- **业务内聚**：同一业务域的代码集中管理，降低认知负担。
+- **清晰边界**：通过限界上下文隔离不同业务，避免耦合。
+- **可测试性**：业务逻辑与 UI 解耦，易于单元测试。
+- **可持续演进**：新需求可隔离在特定领域内，不影响全局。
+
+---
+
+### 2. 整体架构分层
+
+本架构将代码分为四个层次（自底向上）：
+
+| 层次                            | 职责                                                                   | 示例目录                 |
+| ------------------------------- | ---------------------------------------------------------------------- | ------------------------ |
+| **基础设施层 (Infrastructure)** | 提供通用工具、HTTP 客户端、本地存储等，与业务无关                      | `src/shared/`            |
+| **领域层 (Domain)**             | 包含所有业务逻辑，按业务领域划分，每个领域内包含状态、服务、类型定义等 | `src/domains/`           |
+| **应用层 (Application)**        | 负责页面路由、全局配置、应用初始化，协调领域层完成用户交互             | `src/app/`、`src/views/` |
+| **展示层 (Presentation)**       | 仅负责 UI 渲染，不包含业务判断，从领域层获取数据并触发 action          | `src/views/*.vue`        |
+
+**依赖方向**：展示层 → 应用层 → 领域层 → 基础设施层（单向依赖，上层可依赖下层，反之不可）。
+
+---
+
+### 3. 项目目录结构
+
+```
 src/
-├── app/                              # 应用级配置（全局初始化、路由、全局 store 等）
-│   ├── router/
-│   ├── store/                        # 全局 store（如主题、语言，非业务状态）
-│   └── App.vue
+├── app/                          # 应用层：全局配置、初始化
+│   ├── router/                   # 路由配置
+│   ├── plugins/                  # 插件注册（如 Pinia、国际化）
+│   └── App.vue                   # 根组件
 │
-├── shared/                           # 真正的跨领域共享资源
-│   ├── components/                   # 纯 UI 组件（Button, Input, Modal 等，无业务感知）
-│   ├── composables/                  # 通用组合式函数（如 useDebounce, useLocalStorage）
-│   ├── utils/                        # 工具函数（日期格式化、正则校验等）
-│   ├── types/                        # 全局类型（如 API 响应结构）
-│   └── constants/                    # 全局常量
+├── shared/                       # 基础设施层：真正跨领域复用的代码
+│   ├── components/               # 通用 UI 组件（按钮、输入框、模态框）
+│   ├── composables/              # 全局组合式函数（如 useDebounce）
+│   ├── utils/                    # 工具函数（日期格式化、校验）
+│   ├── types/                    # 全局类型定义（如 API 响应结构）
+│   └── http/                     # 封装 axios 等请求库
 │
-├── domains/                          # 核心：按业务领域组织
-│   ├── task/                         # 任务领域（示例）
-│   │   ├── components/               # 领域专用组件（TaskCard, TaskDetailEditor）
-│   │   ├── views/                    # 领域专用页面（可选，也可统一放在上层 views）
-│   │   ├── store/                    # Pinia store（业务状态 + action）
-│   │   ├── services/                 # API 调用、领域服务（如跨领域协作）
-│   │   ├── types/                    # 领域类型定义（Task, List, Tag）
-│   │   ├── composables/              # 领域内组合式函数（如 useTaskFilters）
-│   │   └── utils/                    # 领域内工具（如任务排序算法）
-│   │
-│   ├── user/                         # 用户领域
-│   │   ├── store/
+├── domains/                      # 领域层：按业务能力划分
+│   ├── task/                     # 任务领域（核心域）
+│   │   ├── types/                # 领域类型（Task, List, Tag 等）
+│   │   ├── services/             # 领域服务（API 调用、复杂计算）
+│   │   ├── store/                # Pinia store（状态 + 业务逻辑）
+│   │   ├── components/           # 领域专用 UI 组件（仅该领域使用）
+│   │   └── composables/          # 领域专用组合函数（如 useTaskFilters）
+│   ├── user/                     # 用户领域（支撑域）
+│   │   ├── types/
 │   │   ├── services/
-│   │   └── types/
-│   │
-│   └── ...                           # 其他领域
+│   │   ├── store/
+│   │   └── components/
+│   └── ...                       # 其他领域（订单、商品等）
 │
-├── views/                            # 全局页面层（薄层，组装领域组件）
-│   ├── TaskPage.vue
-│   └── SettingsPage.vue
-│
-├── main.ts
-└── env.d.ts
+└── views/                        # 展示层：页面级组件，负责组装领域模块
+    ├── TaskPage.vue              # 任务管理页面
+    └── SettingsPage.vue          # 用户设置页面
 ```
+
+> **说明**：`domains/` 下的每个子目录代表一个独立的**限界上下文**（Bounded Context），内部高内聚，外部通过明确的接口（如 store 的公共方法）通信。`views/` 中的页面组件是**薄层**，不包含业务逻辑，仅负责路由匹配和 UI 编排。
 
 ---
 
-## 3. 领域划分指南
+### 4. 领域划分原则（如何划分领域）
 
-### 3.1 如何识别一个领域（限界上下文）
+**严禁按页面划分领域**。页面是 UI 路由，领域是业务能力，二者没有必然对应关系。正确做法是：
 
-- **以核心业务实体（名词）为中心**：例如“订单”、“用户”、“产品”往往是一个独立领域。
-- **判断数据的归属**：如果一个数据实体主要围绕某个业务概念变化（如“收货地址”属于“用户”），则放入该领域。
-- **考虑变化频率**：经常一起变更的功能应划入同一领域，减少跨域修改。
-- **避免按页面划分**：页面是 UI 路由，不是领域边界。同一个领域的数据可能出现在多个页面（如任务列表和任务详情页）。
+1. **依据业务名词（限界上下文）**
+   围绕核心实体（名词）聚合操作。例如：“订单”涉及创建、支付、取消，“商品”涉及上架、库存、搜索。
 
-### 3.2 领域大小控制
+2. **识别聚合根（Aggregate Root）**
+   每个领域至少有一个聚合根，作为访问内部实体的唯一入口。例如在任务领域，“清单 (List)” 是聚合根，所有对“任务 (Task)”的操作必须通过清单。
 
-- 一个领域通常包含 1~3 个核心实体（聚合根）。
-- 如果领域过于庞大（如 `task` 包含几十个实体），应考虑拆分子领域（如 `task-management`, `task-collaboration`）。
-- 如果领域太小（仅一个简单类型），可考虑合并到相关领域。
+3. **考量变化频率与耦合度**
+   经常一起变更的逻辑应放在同一领域。如果修改“折扣”必然影响“价格计算”，则它们同属订单或促销领域。
+
+4. **明确价值（核心/支撑/通用）**
+    - **核心域**：公司核心竞争力，投入最多资源（如任务管理）。
+    - **支撑域**：辅助核心域（如用户偏好设置）。
+    - **通用域**：可外包或使用现成方案（如身份认证，可单独拆分为 `auth` 领域）。
+
+**示例**：
+
+- 任务管理（核心）→ `domains/task`
+- 用户设置（支撑）→ `domains/user`
+- 不要将“清单”单独作为领域，因为它是任务的聚合根，天然属于任务领域。
 
 ---
 
-## 4. 核心实现模式
+### 5. 各模块职责与协作
 
-### 4.1 类型定义（`types/index.ts`）
+#### 5.1 领域层 (`domains/*`)
 
-- 定义该领域的所有实体（Entity）、值对象（Value Object）和 DTO。
-- 使用 TypeScript 接口（`interface`）或类型别名（`type`）明确数据结构。
-- **重要**：区分**实体**（有唯一标识 `id`，可变）和**值对象**（不可变，无独立标识）。
+- **`types/`**：定义该领域的 TypeScript 接口、类型别名、枚举等，确保类型安全。
+- **`services/`**：封装与后端 API 的交互，或执行复杂领域计算（如根据规则生成任务优先级）。通常返回 `Promise`，供 store 调用。
+- **`store/`**：使用 Pinia 定义 store，包含状态（`state`）、派生状态（`getters`）和业务操作（`actions`）。**所有业务逻辑必须放在 action 中**，不能泄露到组件。
+- **`components/`**：仅在该领域内部复用的 UI 组件（如任务卡片、清单下拉菜单）。若组件可被多个领域复用，应提升至 `shared/components`。
+- **`composables/`**：抽取可复用的组合逻辑（如监听任务列表变化并自动保存），仅在该领域内使用。
 
-**示例（`domains/task/types/index.ts`）：**
+**依赖规则**：
 
-```typescript
-// 值对象（标签）
-export type Tag = string
+- 领域之间**禁止直接引用**对方的内部实现（如 store、types）。必须通过明确的**服务接口**或**事件总线**通信。
+- 领域可以依赖 `shared` 层。
 
-// 实体（任务）
-export interface Task {
-    id: string
-    title: string
-    description?: string
-    completed: boolean
-    dueDate?: Date
-    tags: Tag[]
-    listId: string // 所属清单 ID
-    createdAt: number
-}
+#### 5.2 展示层 (`views/`)
 
-// 聚合根（清单）
-export interface List {
-    id: string
-    name: string
-    taskIds: string[] // 维护任务顺序
-}
-```
+- 每个页面组件（`.vue`）只负责：
+    1. 从对应领域 store 中获取数据。
+    2. 将用户操作（点击、输入）映射为 store action 调用。
+    3. 传递数据给子组件（领域组件或共享组件）进行渲染。
+- **严禁在页面组件中出现 `if (xxx) { ... }` 之类的业务判断**，应全部下沉到 store 或 service 中。
 
-### 4.2 业务 Store（`store/useXxxStore.ts`）
+#### 5.3 应用层 (`app/`)
 
-- **每个领域至少有一个 Store**，负责管理该领域的业务状态和业务逻辑。
-- 使用 Pinia 的 `defineStore`（推荐 Setup 语法）。
-- **所有状态变更必须通过 Action**，组件不得直接修改状态（如 `task.completed = true` 被禁止）。
-- Action 中可包含业务规则校验、领域事件触发等。
+- 路由配置（`router`）只需定义页面路径与 `views/*.vue` 的映射，不涉及业务。
+- 全局状态（如主题、语言）应放在 `domains/user` 的 store 中，而非 `app/` 下，因为它是用户偏好的业务概念。
 
-**示例（`domains/task/store/useTaskStore.ts`）：**
+---
+
+### 6. 状态管理（Pinia）最佳实践
+
+- **按领域拆分 store**：每个领域拥有独立的 store，例如 `useTaskStore`、`useUserStore`。避免创建 `useCommonStore` 这种技术性 store。
+- **使用 Setup 语法**：推荐使用 `defineStore(id, () => { ... })` 的组合式 API，更贴合 Vue 3 组合式函数风格，方便逻辑复用。
+- **分离 UI 状态与业务状态**：纯 UI 状态（如侧边栏展开、弹窗可见）应使用组件自身的 `ref` 或单独的非领域 store（如 `useUiStore`），避免污染业务 store。
+- **避免“巨石 store”**：单个 store 超过 500 行代码时，考虑将内部逻辑抽离到 `composables` 或 `services` 中，保持 action 简洁。
+
+示例 store 模板（以任务领域为例）：
 
 ```typescript
+// domains/task/store/useTaskStore.ts
 import { defineStore } from 'pinia'
-import type { Task, List } from '../types'
+import type { List, Task } from '../types'
 import { fetchLists, saveTask } from '../services/taskApi'
 
 export const useTaskStore = defineStore('task', () => {
-    // State
+    // 状态
     const lists = ref<List[]>([])
     const tasks = ref<Task[]>([])
     const currentListId = ref<string | null>(null)
 
-    // Getters
+    // 派生
     const currentTasks = computed(() => tasks.value.filter((t) => t.listId === currentListId.value))
 
-    // Actions（业务逻辑）
+    // 业务操作
+    const loadData = async () => {
+        /* ... */
+    }
+    const addTask = (title: string, listId: string) => {
+        /* ... */
+    }
+    const toggleTask = (taskId: string) => {
+        /* ... */
+    }
+
+    return { lists, tasks, currentListId, currentTasks, loadData, addTask, toggleTask }
+})
+```
+
+---
+
+### 7. 详细示例：Todo List 应用
+
+#### 7.1 领域模型
+
+- **聚合根**：`List`（清单），包含 `id`、`name`、`taskIds`（有序列表）。
+- **实体**：`Task`（任务），包含 `id`、`title`、`completed`、`tags`、`listId`。
+- **值对象**：`Tag`（标签），使用字符串表示，无独立标识。
+
+#### 7.2 目录与文件
+
+```
+domains/task/
+├── types/index.ts           # 定义 Task, List, Tag
+├── services/taskApi.ts      # 模拟 API：fetchLists, addTask, deleteTask
+├── store/useTaskStore.ts    # 核心业务逻辑
+└── components/              # 内部组件（如 TaskItem, ListSelector）
+
+domains/user/
+├── types/index.ts           # UserSettings
+├── services/userApi.ts
+└── store/useUserStore.ts    # 主题、语言偏好
+
+views/
+├── TaskPage.vue             # 任务管理页面（组装任务领域）
+└── SettingsPage.vue         # 设置页面（组装用户领域）
+```
+
+#### 7.3 核心代码片段
+
+**类型定义 (`domains/task/types/index.ts`)**：
+
+```typescript
+export type Tag = string
+
+export interface Task {
+    id: string
+    title: string
+    completed: boolean
+    tags: Tag[]
+    listId: string
+    createdAt: number
+}
+
+export interface List {
+    id: string
+    name: string
+    taskIds: string[] // 有序任务 ID 列表
+}
+```
+
+**任务 Store (`domains/task/store/useTaskStore.ts`)**：
+
+```typescript
+import { defineStore } from 'pinia'
+import { fetchLists, addTaskApi, deleteTaskApi, updateTaskApi } from '../services/taskApi'
+import type { List, Task, Tag } from '../types'
+
+export const useTaskStore = defineStore('task', () => {
+    const lists = ref<List[]>([])
+    const tasks = ref<Task[]>([])
+    const currentListId = ref<string | null>(null)
+
+    const currentTasks = computed(() => tasks.value.filter((t) => t.listId === currentListId.value))
+
     const loadData = async () => {
         const data = await fetchLists()
         lists.value = data.lists
         tasks.value = data.tasks
-        currentListId.value = lists.value[0]?.id || null
+        if (lists.value.length) currentListId.value = lists.value[0].id
     }
 
     const addTask = (title: string, listId: string, tags: Tag[] = []) => {
-        // 业务校验
-        if (!title.trim()) throw new Error('任务标题不能为空')
         const newTask: Task = {
             id: crypto.randomUUID(),
-            title: title.trim(),
+            title,
             completed: false,
             tags,
             listId,
             createdAt: Date.now()
         }
         tasks.value.push(newTask)
-        // 更新聚合根
         const list = lists.value.find((l) => l.id === listId)
         if (list) list.taskIds.push(newTask.id)
+        // 可选：调用 API 持久化
+        addTaskApi(newTask)
     }
 
     const toggleTask = (taskId: string) => {
         const task = tasks.value.find((t) => t.id === taskId)
         if (task) {
             task.completed = !task.completed
-            // 可触发事件：emit('task:toggled', task)
+            updateTaskApi(task)
+            // 可以触发领域事件，如 taskCompleted
         }
     }
 
-    const updateTask = (taskId: string, updates: Partial<Omit<Task, 'id'>>) => {
+    const moveTaskToList = (taskId: string, targetListId: string) => {
         const task = tasks.value.find((t) => t.id === taskId)
         if (!task) return
-        // 业务校验：结束时间不能早于创建时间
-        if (updates.dueDate && updates.dueDate < new Date(task.createdAt)) {
-            throw new Error('结束时间不能早于创建时间')
-        }
-        Object.assign(task, updates)
+        const oldList = lists.value.find((l) => l.id === task.listId)
+        if (oldList) oldList.taskIds = oldList.taskIds.filter((id) => id !== taskId)
+        const newList = lists.value.find((l) => l.id === targetListId)
+        if (newList) newList.taskIds.push(taskId)
+        task.listId = targetListId
+        updateTaskApi(task)
     }
 
     return {
@@ -182,294 +281,114 @@ export const useTaskStore = defineStore('task', () => {
         loadData,
         addTask,
         toggleTask,
-        updateTask
+        moveTaskToList
     }
 })
 ```
 
-### 4.3 领域服务（`services/`）
-
-- 负责与外部通信（API 请求）、缓存、跨领域协调等。
-- Store 调用 Service 获取数据，但不直接处理 HTTP 细节。
-- 有利于测试和替换实现。
-
-**示例（`domains/task/services/taskApi.ts`）：**
-
-```typescript
-import { http } from '@/shared/utils/http' // 封装好的 axios 实例
-import type { List, Task } from '../types'
-
-export const fetchLists = async () => {
-    const res = await http.get<{ lists: List[]; tasks: Task[] }>('/api/lists')
-    return res.data
-}
-
-export const saveTask = async (task: Task) => {
-    await http.post('/api/tasks', task)
-}
-```
-
-### 4.4 领域组件（`components/`）
-
-- **容器型组件（Smart）**：从 Store 读取数据，处理交互事件，包含业务逻辑调用。
-- **展示型组件（Dumb）**：仅接收 props，触发 emit，不直接依赖 Store。
-- 推荐将复杂组件拆分为“展示 + 容器”组合。
-
-**示例（`domains/task/components/TaskDetailEditor.vue`）：**
+**页面组件 (`views/TaskPage.vue`)**：
 
 ```vue
 <template>
-    <div v-if="localTask">
-        <input v-model="localTask.title" placeholder="任务名称" />
-        <textarea v-model="localTask.description" />
-        <input type="datetime-local" v-model="localTask.dueDate" />
-        <div>
-            <span v-for="tag in localTask.tags" :key="tag">#{{ tag }}</span>
-            <input v-model="newTag" @keyup.enter="addTag" placeholder="添加标签" />
-        </div>
-        <button @click="handleSave">保存</button>
-        <button @click="emit('close')">取消</button>
-    </div>
-</template>
-
-<script setup lang="ts">
-import { useTaskStore } from '../store/useTaskStore'
-const props = defineProps<{ taskId: string }>()
-const emit = defineEmits<{ (e: 'close'): void }>()
-
-const store = useTaskStore()
-const localTask = ref(structuredClone(store.tasks.find((t) => t.id === props.taskId)))
-const newTag = ref('')
-
-const addTag = () => {
-    if (newTag.value.trim() && localTask.value) {
-        localTask.value.tags.push(newTag.value.trim())
-        newTag.value = ''
-    }
-}
-
-const handleSave = () => {
-    try {
-        store.updateTask(props.taskId, {
-            title: localTask.value?.title,
-            description: localTask.value?.description,
-            dueDate: localTask.value?.dueDate,
-            tags: localTask.value?.tags
-        })
-        emit('close')
-    } catch (error) {
-        alert(error.message)
-    }
-}
-</script>
-```
-
-### 4.5 页面层（`views/`）
-
-- 页面（路由对应的 Vue 文件）仅负责布局、路由参数解析、组合多个领域组件。
-- **页面中不得包含业务逻辑**，所有操作通过调用 Store 的 Action 完成。
-- 页面可以跨领域组合（如任务页面调用用户 Store 显示用户信息，但必须通过明确的 API，禁止直接引用其他领域的内部实现）。
-
-**示例（`views/TaskPage.vue`）：**
-
-```vue
-<template>
-    <div>
-        <aside>
-            <div v-for="list in taskStore.lists" :key="list.id" @click="selectList(list.id)">
-                {{ list.name }}
+    <div class="task-page">
+        <aside class="list-sidebar">
+            <div
+                v-for="list in taskStore.lists"
+                :key="list.id"
+                :class="{ active: list.id === taskStore.currentListId }"
+                @click="taskStore.currentListId = list.id"
+            >
+                {{ list.name }} ({{ taskStore.tasks.filter((t) => t.listId === list.id).length }})
             </div>
-            <button @click="addNewList">新建清单</button>
+            <button @click="createNewList">新建清单</button>
         </aside>
-        <main>
-            <input v-model="newTaskTitle" placeholder="添加任务" @keyup.enter="handleAddTask" />
-            <div v-for="task in taskStore.currentTasks" :key="task.id" class="task-item">
-                <input
-                    type="checkbox"
-                    :checked="task.completed"
-                    @change="taskStore.toggleTask(task.id)"
-                />
-                <span @click="openDetail(task.id)">{{ task.title }}</span>
-                <span v-for="tag in task.tags" :key="tag">#{{ tag }}</span>
-                <button @click="taskStore.moveTaskToList(task.id, targetListId)">移动</button>
-            </div>
+
+        <main class="task-main">
+            <input placeholder="新增任务" @keyup.enter="handleAddTask" />
+            <TaskItem
+                v-for="task in taskStore.currentTasks"
+                :key="task.id"
+                :task="task"
+                @toggle="taskStore.toggleTask"
+                @move="taskStore.moveTaskToList"
+            />
         </main>
-        <TaskDetailEditor
-            v-if="editingTaskId"
-            :task-id="editingTaskId"
-            @close="editingTaskId = null"
-        />
     </div>
 </template>
 
 <script setup lang="ts">
 import { useTaskStore } from '@/domains/task/store/useTaskStore'
-import TaskDetailEditor from '@/domains/task/components/TaskDetailEditor.vue'
+import TaskItem from '@/domains/task/components/TaskItem.vue' // 内部组件
 
 const taskStore = useTaskStore()
-const newTaskTitle = ref('')
-const editingTaskId = ref<string | null>(null)
+taskStore.loadData()
 
-const handleAddTask = () => {
-    if (newTaskTitle.value.trim() && taskStore.currentListId) {
-        taskStore.addTask(newTaskTitle.value, taskStore.currentListId)
-        newTaskTitle.value = ''
+const handleAddTask = (e: Event) => {
+    const input = e.target as HTMLInputElement
+    if (input.value.trim() && taskStore.currentListId) {
+        taskStore.addTask(input.value, taskStore.currentListId)
+        input.value = ''
     }
 }
 
-const selectList = (listId: string) => {
-    taskStore.currentListId = listId
+const createNewList = () => {
+    // 通过 store 的方法创建新清单（略）
 }
-
-const openDetail = (id: string) => {
-    editingTaskId.value = id
-}
-
-// 初始化
-onMounted(() => {
-    taskStore.loadData()
-})
 </script>
 ```
 
----
+#### 7.4 跨领域通信
 
-## 5. 组件归属决策：领域组件 vs 共享组件
+若任务完成时需要增加用户积分（积分属于 `user` 领域），**不应**在任务 store 中直接调用 `useUserStore`，而应通过**事件**或**服务**解耦：
 
-| 判断维度     | 领域组件                    | 共享组件                                       |
-| ------------ | --------------------------- | ---------------------------------------------- |
-| **业务依赖** | 强依赖领域类型（如 `Task`） | 不依赖任何业务类型（仅接收 string, number 等） |
-| **业务语义** | 包含“任务”“订单”等业务术语  | 无业务含义（如 Button, Input, DatePicker）     |
-| **复用范围** | 仅在本领域或特定领域使用    | 任何领域都可能使用                             |
-| **存放位置** | `domains/xxx/components/`   | `shared/components/`                           |
+- 方式一（推荐）：在 `task` 领域内定义事件总线，用户领域监听事件。
+- 方式二：在 `app/` 层编写一个协调器（如 `TaskCompletionHandler`），同时引入两个 store，在页面组件中调用。
 
-**原则**：宁可放在领域内，也不要过早放入共享层。只有当组件真正被至少两个领域复用，且不包含业务逻辑时，才迁移至 `shared`。
+核心原则：**领域之间保持隔离，通过应用层或事件机制协调**。
 
 ---
 
-## 6. 跨领域通信与依赖规则
+### 8. 架构约束与检查清单
 
-### 6.1 依赖方向（重要）
+为确保团队遵守架构，建议在代码评审时核对：
 
-```text
-shared ← domains ← app/views
-```
-
-- `shared` 不依赖任何领域。
-- 领域之间**不直接相互导入**，避免紧耦合。
-- 页面层可以组合多个领域的 Store，但不得直接访问其他领域的内部状态（如 `taskStore.userInfo` 不允许）。
-
-### 6.2 跨领域协作方式
-
-- **通过页面/应用层协调**：页面层同时调用多个领域的 Store Action 来完成跨域操作。
-- **使用领域事件**：一个领域 Store 可以触发事件（如 `task:completed`），由全局事件总线或观察者模式通知其他领域。
-- **通过服务层调用**：在 `services/` 中定义跨域 API，由 Store 调用。
-
-**示例（跨域操作）**：当任务完成时，用户领域增加积分。在 `TaskPage.vue` 中：
-
-```typescript
-const handleToggle = (taskId: string) => {
-    taskStore.toggleTask(taskId)
-    // 假设任务已完成，增加用户积分
-    if (taskStore.tasks.find((t) => t.id === taskId)?.completed) {
-        userStore.increasePoints(10)
-    }
-}
-```
+- [ ] 是否按页面划分了领域？（应整改）
+- [ ] 业务逻辑是否全部在 store action 中，而非组件内？
+- [ ] 是否存在跨领域直接 import 另一个领域 store 的情况？（禁止）
+- [ ] 某个 store 是否超过 500 行？若是，考虑拆分。
+- [ ] `shared/` 下的组件是否真正被多个领域复用？
+- [ ] 页面组件是否只做编排，无 `if/else` 业务分支？
+- [ ] 是否使用 TypeScript 严格定义了领域类型？
 
 ---
 
-## 7. 测试策略
+### 9. 扩展建议
 
-- **单元测试**：针对 Store 和 Service 中的业务逻辑，使用 Vitest 或 Jest，模拟依赖。
-- **组件测试**：使用 Vue Test Utils 对领域组件进行测试，验证交互和状态更新。
-- **集成测试**：测试页面组合和跨域协作。
-
-**示例（Store 单元测试）**：
-
-```typescript
-import { setActivePinia, createPinia } from 'pinia'
-import { useTaskStore } from '@/domains/task/store/useTaskStore'
-
-describe('task store', () => {
-    beforeEach(() => setActivePinia(createPinia()))
-
-    it('adds task correctly', () => {
-        const store = useTaskStore()
-        store.lists = [{ id: 'l1', name: 'Test', taskIds: [] }]
-        store.addTask('New Task', 'l1')
-        expect(store.tasks.length).toBe(1)
-        expect(store.tasks[0].title).toBe('New Task')
-        expect(store.lists[0].taskIds).toContain(store.tasks[0].id)
-    })
-})
-```
+- **测试策略**：针对 store action 编写单元测试（使用 `vitest`），模拟 API 服务，验证业务逻辑的正确性。页面组件可使用 `@testing-library/vue` 进行集成测试。
+- **领域事件**：对于复杂场景，可引入 `mitt` 或 `EventEmitter` 实现领域事件发布订阅，进一步增强解耦。
+- **微前端适配**：若采用微前端架构，每个子应用可拥有自己的 `domains/`，并通过共享依赖（如 `shared`）保持一致性。
 
 ---
 
-## 8. 常见问题与 FAQ
+### 10. 常见问题 FAQ
 
-**Q1：我的领域只有一个 Store，但包含大量 Action，如何组织？**
-A：可以将 Action 按功能分组，使用 Composition 函数在 Store 内部组合，或拆分为多个 Composables，但仍通过同一个 Store 对外暴露。
+**Q1：如果业务很简单（几个页面），有必要采用 DDD 吗？**
+A：不必要。DDD 适合中大型项目或长期演进的产品。小项目可按功能目录划分，但建议保持“逻辑内聚”的原则，为未来扩展留有余地。
 
-**Q2：如何处理表单验证和临时状态？**
-A：表单的临时输入状态放在组件内部（`ref`），提交时调用 Store Action 进行业务校验，不要将临时状态存入 Store。
+**Q2：Pinia store 是否就是 DDD 中的“领域模型”？**
+A：不完全是。领域模型包含行为、规则、事件，Pinia store 承载了状态和行为，是领域模型的一种实现载体。但复杂的规则可以进一步抽离到独立的 Service 类中。
 
-**Q3：领域间的共享类型（如 `User` 被多个领域使用）放哪里？**
-A：如果 `User` 是全局通用实体，可放在 `shared/types/`；但更推荐将 `User` 归为 `domains/user/types/`，其他领域通过 `import type` 引入（仅类型，不导入逻辑）。
-
-**Q4：子组件需要调用 Store 怎么办？**
-A：通过 props 传递需要的状态或事件处理函数，或直接在子组件中 `import` 相关 Store（对于领域内组件是允许的）。但避免深层嵌套传递，可使用 provide/inject。
-
-**Q5：如何管理全局状态（如用户登录信息）？**
-A：放在 `app/store/` 下（或单独领域 `user`），作为应用级状态，在页面层注入到领域组件。
-
-**Q6：如果项目很小（几个页面），还需要这么复杂的结构吗？**
-A：可采用简化版——使用 `pages/` 替代 `domains/`，但仍遵守“业务逻辑在 composables 或 service”的原则。一旦业务增长，可平滑迁移。
+**Q3：如何划分“领域”与“子领域”？**
+A：通常一个业务模块（如订单、用户）就是一个限界上下文，作为一个顶层领域。若内部有强关联的子模块（如订单下的退款、评价），可放在该领域内的子目录（如 `domains/order/refund/`），但一般不建议嵌套过深。
 
 ---
 
-## 9. 开发规范与代码风格
+### 11. 总结
 
-1. **命名约定**：
-    - 领域目录：使用 kebab-case（`task-management`）或 camelCase（`task`），保持一致即可。
-    - Store：`useXxxStore`，文件名为 `useXxxStore.ts`。
-    - Service：`xxxApi.ts` 或 `xxxService.ts`。
-    - 组件：PascalCase（`TaskCard.vue`）。
-    - 类型：接口不加 `I` 前缀，使用 PascalCase。
-
-2. **导入规则**：
-    - 领域内部导入：使用相对路径（`./store/useTaskStore`）。
-    - 跨领域导入（仅类型）：`import type { User } from '@/domains/user/types'`。
-    - 共享层导入：`@/shared/utils/...`。
-
-3. **禁止事项**：
-    - ❌ 在组件中直接修改 Store 的 state（除非通过 action）。
-    - ❌ 在 `shared` 组件中引入任何 `domains` 的代码。
-    - ❌ 跨领域直接 import 其他领域的 store 或 service。
+本架构融合了领域驱动设计的思想与 Vue 3 技术栈，通过**按业务领域组织代码**、**明确分层职责**、**严格控制依赖**，使前端代码具备更好的可维护性和可扩展性。团队应结合自身业务，灵活调整细节，但核心原则不变：**业务逻辑收拢到领域，UI 保持薄层，领域之间松耦合**。
 
 ---
 
-## 10. 快速开始（新领域创建步骤）
+_文档版本：1.0_
+_更新日期：2026-07-19_
 
-1. 在 `src/domains/` 下新建领域目录（如 `payment`）。
-2. 创建 `types/index.ts`，定义领域实体。
-3. 创建 `store/usePaymentStore.ts`，实现业务状态和操作。
-4. 创建 `services/paymentApi.ts`，定义 API 调用。
-5. 根据需要创建 `components/`、`views/`、`composables/`。
-6. 在页面层（`views/`）组合该领域与其他领域。
-7. 编写单元测试（可选）。
-
----
-
-## 11. 总结
-
-本架构通过引入 DDD 思想，使得前端代码与业务领域对齐，显著提升了大型应用的可维护性和可扩展性。遵循本指南，团队可以在开发过程中始终保持对业务模型的清晰认知，降低变更成本，提高交付质量。
-
-**核心要诀：**
-
-- 业务逻辑在 Store，UI 在组件，页面做组装。
-- 领域内聚，跨域解耦。
-- 共享谨慎，测试先行。
-
-如有其他实践问题，欢迎团队内部讨论完善。Happy coding! 🚀

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { SettingsAppAppereance, SettingsAppLanguage } from '@/components/settings'
+import { UserThemeSetter, UserLanguageSetter } from '@nao-todo/domain/user'
 import { inject } from 'vue'
-import { t } from '@nao-todo/infrastructure/locales'
+import { t } from '@nao-todo/shared'
 import { SETTINGS_VIEW_CONTEXT_KEY } from '@/views/index/settings/context'
 
 defineOptions({ name: 'SettingsApp' })
 
-const { isDisplayAside, switchDisplayAside } = inject(SETTINGS_VIEW_CONTEXT_KEY)!
+const { isDisplayAside, switchDisplayAside, userUseCase } = inject(SETTINGS_VIEW_CONTEXT_KEY)!
 </script>
 
 <template>
@@ -22,9 +22,9 @@ const { isDisplayAside, switchDisplayAside } = inject(SETTINGS_VIEW_CONTEXT_KEY)
         <nue-main>
             <nue-content fill>
                 <nue-div vertical style="padding: 1rem">
-                    <settings-app-language />
+                    <user-language-setter />
                     <nue-divider />
-                    <settings-app-appereance />
+                    <user-theme-setter :user-use-case="userUseCase" />
                 </nue-div>
             </nue-content>
         </nue-main>
@@ -36,4 +36,3 @@ const { isDisplayAside, switchDisplayAside } = inject(SETTINGS_VIEW_CONTEXT_KEY)
     margin: 1rem 0;
 }
 </style>
-

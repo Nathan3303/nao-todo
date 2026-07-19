@@ -1,18 +1,18 @@
-import { useUserStore } from '@/stores'
+import { useAuthUseCase } from '@/hooks'
+import { useUserStore } from '@nao-todo/domain/user'
+import { useAsideWidth } from '@nao-todo/shared'
 import { inject, provide } from 'vue'
-import { newAuthUseCase } from '@nao-todo/usecases/auth'
-import useAsideWidth from '@nao-todo/infrastructure/hooks/use-aside-width'
 import { INDEX_VIEW_CONTEXT_KEY } from '../context'
 import { SETTINGS_VIEW_CONTEXT_KEY } from './context'
 
 const useSettingsView = () => {
     // @context Index view 上下文
-    const { userUseCase, isDisplayAside, isUseFloatAside, switchDisplayAside, subscriber } =
+    const { userUseCase, isDisplayAside, isUseFloatAside, switchDisplayAside, appSubscriber } =
         inject(INDEX_VIEW_CONTEXT_KEY)!
 
     // @usecases
     const userStore = useUserStore()
-    const authUseCase = newAuthUseCase(userStore)
+    const authUseCase = useAuthUseCase(userStore)
 
     // @hook 侧边栏宽度
     const { width: asideWidth, updater: handleResizeAside } = useAsideWidth(256, 'ASIDE_WIDTH')
@@ -21,7 +21,7 @@ const useSettingsView = () => {
     provide(SETTINGS_VIEW_CONTEXT_KEY, {
         authUseCase,
         userUseCase,
-        subscriber,
+        subscriber: appSubscriber,
         asideWidth,
         isDisplayAside,
         isUseFloatAside,
@@ -31,4 +31,3 @@ const useSettingsView = () => {
 }
 
 export default useSettingsView
-

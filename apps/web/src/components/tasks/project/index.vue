@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Loading as LoadingComp } from '@nao-todo/components'
+import { Loading as LoadingComp } from '@nao-todo/shared'
 import useProjectView from './project'
 import type { ProjectViewProps } from './types'
 

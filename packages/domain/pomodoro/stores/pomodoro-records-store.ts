@@ -2,6 +2,7 @@ import type { GoAsync } from '@nao-todo/shared'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { CreatePomodoroRecordViewObject, PomodoroRecordViewObject } from '../types'
+import { PomodoroUseCase } from '../usecases'
 
 /**
  * 番茄钟设置存储键名
@@ -48,18 +49,18 @@ export const usePomodoroRecordsStore = defineStore('PomodoroRecordsStore', () =>
     }
 
     // @usecase Pomodoro 记录用例
-    const pomodoroRecordUseCase = newPomodoroRecordUseCase({
-        addRecord: (record) => {
-            records.value.push(record)
-        },
-        addRecords: (newRecords) => {
-            newRecords.forEach((record) => {
-                if (!recordsMap.value.has(record.id)) {
-                    records.value.push(record)
-                }
-            })
-        }
-    })
+    // const pomodoroRecordUseCase = new PomodoroUseCase({
+    //     addRecord: (record) => {
+    //         records.value.push(record)
+    //     },
+    //     addRecords: (newRecords) => {
+    //         newRecords.forEach((record) => {
+    //             if (!recordsMap.value.has(record.id)) {
+    //                 records.value.push(record)
+    //             }
+    //         })
+    //     }
+    // })
 
     // 记录创建成功后的回调（由 use-timer-page 设置，用于 Subscriber 通知）
     let onRecordCreated: ((record: PomodoroRecordViewObject) => void) | null = null

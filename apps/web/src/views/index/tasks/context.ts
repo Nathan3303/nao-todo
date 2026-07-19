@@ -1,13 +1,9 @@
-import { ProjectHandler } from '@/infrastructure/handlers/project'
-import { TagHandler } from '@/infrastructure/handlers/tag'
-import { TaskHandler } from '@/infrastructure/handlers/task'
-import DialogManager from '@/infrastructure/hooks/use-dialog-manager'
-import { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import { BuiltInProjectUseCase } from '@nao-todo/usecases/built-in-project'
-import { ProjectUseCase } from '@nao-todo/usecases/project'
-import { TagUseCase, TagViewObject } from '@nao-todo/usecases/tag'
-import { TaskUseCase, TaskViewObject } from '@nao-todo/usecases/task'
-import { InjectionKey, Ref } from 'vue'
+import type { BuiltInProjectUseCase } from '@nao-todo/domain/built-in-project'
+import type { ProjectHandler, ProjectUseCase } from '@nao-todo/domain/project'
+import type { TagHandler, TagUseCase, TagViewObject } from '@nao-todo/domain/tag'
+import type { TaskHandler, TaskUseCase, TaskViewObject } from '@nao-todo/domain/task'
+import type { DialogManager, Subscriber } from '@nao-todo/shared'
+import type { InjectionKey, Ref } from 'vue'
 
 // 任务视图上下文
 export type TasksViewContext = {
@@ -16,8 +12,8 @@ export type TasksViewContext = {
     tagUseCase: TagUseCase
     taskUseCase: TaskUseCase
 
-    dialogManager: DialogManager
-    subscriber: Subscriber
+    appDialogManager: DialogManager
+    appSubscriber: Subscriber
 
     projectHandler: ProjectHandler
     tagHandler: TagHandler
@@ -42,5 +38,3 @@ export type TasksViewContext = {
 
 // 任务视图上下文注入键
 export const TASKS_VIEW_CONTEXT_KEY: InjectionKey<TasksViewContext> = Symbol('TASKS_VIEW_CONTEXT')
-
-

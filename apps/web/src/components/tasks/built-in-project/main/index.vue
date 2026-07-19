@@ -1,18 +1,16 @@
 <script setup lang="ts">
-import { computed, inject, onMounted, onUnmounted } from 'vue'
-import { NueMessage } from 'nue-ui'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { BUILT_IN_EMPTY_STATE_MAP } from '../constants'
+import type { BuiltInProjectHandler } from '@nao-todo/domain/built-in-project'
 import {
-    TableViewAdapter,
-    ListViewAdapter,
     KanbanViewAdapter,
+    ListViewAdapter,
+    TableViewAdapter,
     type ViewAdapterNoTaskError
-} from '@/layouts/app/view-adapters'
-import type { BuiltInProjectHandler } from '@/infrastructure/handlers/built-in-project'
-import type { TableLayoutConfig } from '@/components/tasks/table/types'
-import { TASK_CREATOR_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
-import { t } from '@nao-todo/infrastructure/locales'
+} from '@nao-todo/domain/task'
+import type { TableLayoutConfig } from '@nao-todo/domain/task/components/table/types'
+import { TASK_CREATOR_DIALOG_KEY, t, unwrapError } from '@nao-todo/shared'
+import { NueMessage } from 'nue-ui'
+import { computed, inject, onMounted, onUnmounted } from 'vue'
+import { BUILT_IN_EMPTY_STATE_MAP } from '../constants'
 import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '../context'
 
 defineOptions({
@@ -138,4 +136,3 @@ onUnmounted(() => {
         </nue-content>
     </nue-main>
 </template>
-

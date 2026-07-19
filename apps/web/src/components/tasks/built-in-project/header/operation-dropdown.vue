@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from 'vue'
-import TasksOperationsDropdown from '@/components/tasks/dropdowns/operations-dropdown.vue'
-import { InnerDropdownOption, DropdownDivBlock } from '@nao-todo/components'
-import ColumnDisplayOperator from '@/components/tasks/dropdowns/column-display-operator.vue'
+import { TaskOperationsDropdown, TaskColumnDisplayController } from '@nao-todo/domain/task'
+import { InnerDropdownOption, DropdownDivBlock } from '@nao-todo/shared'
 import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '../context'
 
 const {
@@ -17,7 +16,7 @@ const {
 } = inject(BUILT_IN_PROJECT_VIEW_CONTEXT_KEY)!
 // console.log(preference.value?.columns)
 
-const dropdownRef = ref<InstanceType<typeof TasksOperationsDropdown>>()
+const dropdownRef = ref<InstanceType<typeof TaskOperationsDropdown>>()
 
 const refreshHandler = () => subscriber.emit('RefreshData')
 const switchCompletedTaskDisplay = () => builtInProjectHandlers.switchCompletedTaskDisplay()
@@ -36,7 +35,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <tasks-operations-dropdown v-if="preference" ref="dropdownRef">
+    <task-operations-dropdown v-if="preference" ref="dropdownRef">
         <dropdown-div-block title="视图切换">
             <inner-dropdown-option
                 icon="table"
@@ -65,7 +64,7 @@ onMounted(() => {
                 :title="`${isHideCompletedAlready ? '显示' : '隐藏'}已完成任务`"
                 execute-id="hide-completed"
             />
-            <column-display-operator
+            <task-column-display-controller
                 :columns="preference.columns"
                 :label-getter="getColumnLabel"
                 @update="(k, v) => builtInProjectHandlers.updateColumns(k, v)"
@@ -76,6 +75,5 @@ onMounted(() => {
                 execute-id="save-preference"
             />
         </dropdown-div-block>
-    </tasks-operations-dropdown>
+    </task-operations-dropdown>
 </template>
-

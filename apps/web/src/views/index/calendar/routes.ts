@@ -9,25 +9,24 @@ const routes: RouteRecordRaw = {
         {
             path: 'monthly',
             name: 'monthly',
-            component: () => import('@/layouts/calendar/monthly/index.vue')
+            component: () => import('@/components/calendar/monthly/index.vue')
         }
         // {
         //     path: 'yearly',
         //     name: 'yearly',
-        //     component: () => import('@/layouts/calendar/yearly/index.vue')
+        //     component: () => import('@/components/calendar/yearly/index.vue')
         // },
         // {
         //     path: 'weekly',
         //     name: 'weekly',
-        //     component: () => import('@/layouts/calendar/weekly/index.vue')
+        //     component: () => import('@/components/calendar/weekly/index.vue')
         // },
         // {
         //     path: 'daily',
         //     name: 'daily',
-        //     component: () => import('@/layouts/calendar/daily/index.vue')
+        //     component: () => import('@/components/calendar/daily/index.vue')
         // }
     ]
 }
 
 export default routes
-

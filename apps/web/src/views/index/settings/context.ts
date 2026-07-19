@@ -1,6 +1,6 @@
-import { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import { AuthUseCase } from '@nao-todo/usecases/auth'
-import { UserUseCase } from '@nao-todo/usecases/user'
+import { AuthUseCase } from '@nao-todo/domain/auth'
+import { UserUseCase } from '@nao-todo/domain/user'
+import { Subscriber } from '@nao-todo/shared'
 import { InjectionKey, Ref } from 'vue'
 
 export type SettingsViewContext = {
@@ -18,4 +18,3 @@ export type SettingsViewContext = {
 
 export const SETTINGS_VIEW_CONTEXT_KEY: InjectionKey<SettingsViewContext> =
     Symbol('SETTINGS_VIEW_CONTEXT')
-

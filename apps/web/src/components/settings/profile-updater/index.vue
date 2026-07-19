@@ -1,16 +1,12 @@
 <script setup lang="ts">
-import {
-    SettingsProfileAvatar,
-    SettingsProfileNickname,
-    SettingsProfileInfo
-} from '@/components/settings'
-import { inject } from 'vue'
-import { t } from '@nao-todo/infrastructure/locales'
 import { SETTINGS_VIEW_CONTEXT_KEY } from '@/views/index/settings/context'
+import { UserAvatarUpdater, UserInfoViewer, UserNicknameUpdater } from '@nao-todo/domain/user'
+import { t } from '@nao-todo/shared'
+import { inject } from 'vue'
 
-defineOptions({ name: 'SettingsProfile' })
+defineOptions({ name: 'SettingsProfileUpdater' })
 
-const { isDisplayAside, switchDisplayAside } = inject(SETTINGS_VIEW_CONTEXT_KEY)!
+const { isDisplayAside, switchDisplayAside, userUseCase } = inject(SETTINGS_VIEW_CONTEXT_KEY)!
 </script>
 
 <template>
@@ -26,12 +22,11 @@ const { isDisplayAside, switchDisplayAside } = inject(SETTINGS_VIEW_CONTEXT_KEY)
         <nue-main>
             <nue-content fill>
                 <nue-div vertical style="padding: 2rem 1rem">
-                    <settings-profile-avatar />
-                    <settings-profile-nickname />
-                    <settings-profile-info />
+                    <user-avatar-updater :user-use-case="userUseCase" />
+                    <user-nickname-updater :user-use-case="userUseCase" />
+                    <user-info-viewer />
                 </nue-div>
             </nue-content>
         </nue-main>
     </nue-container>
 </template>
-

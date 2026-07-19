@@ -1,17 +1,20 @@
-import { POMODORO_TIMER_SETTING_DIALOG_KEY } from '@/infrastructure/constants/dialog-keys'
+import {
+    POMODORO_TIMER_SETTING_DIALOG_KEY,
+    type DialogManager,
+    type Subscriber
+} from '@nao-todo/shared'
 import {
     POMODORO_MAX_FOCUS_SECONDS,
-    POMODORO_MIN_FOCUS_SECONDS
-} from '@/infrastructure/constants/pomodoro'
-import type DialogManager from '@/infrastructure/hooks/use-dialog-manager'
-import usePomodoroRecordLoader from '@/infrastructure/hooks/use-pomodoro-record-loader'
-import { usePomodoroFocusStore, usePomodoroTimerStore } from '@/stores'
-import { usePomodoroRecordsStore } from '@/stores/pomodoro-view/'
+    POMODORO_MIN_FOCUS_SECONDS,
+    usePomodoroRecordLoader,
+    usePomodoroRecordsStore,
+    usePomodoroFocusStore,
+    usePomodoroTimerStore,
+    type PomodoroViewObject
+} from '@nao-todo/domain/pomodoro'
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
-import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import type { PomodoroViewObject } from '@nao-todo/usecases/pomodoro'
-import { newPomodoroRecordUseCase } from '@nao-todo/usecases/pomodoro'
-import type { TaskViewObject } from '@nao-todo/usecases/task'
+import { usePomodoroRecordUseCase } from '@/hooks'
+import type { TaskViewObject } from '@nao-todo/domain/task'
 import dayjs from 'dayjs'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { computed, inject, onMounted } from 'vue'
@@ -57,7 +60,7 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
     // Record Loader（不过滤 type → 同时展示番茄钟和正计时记录）
     // ========================================================================
 
-    const pomodoroRecordUseCase = newPomodoroRecordUseCase({
+    const pomodoroRecordUseCase = usePomodoroRecordUseCase({
         addRecord: (record) => {
             pomodoroStore.addRecord(record)
         },
@@ -276,4 +279,3 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
         handleEnd
     }
 }
-

@@ -1,34 +1,34 @@
+import { APP_CONTEXT_KEY } from '@/context'
 import {
-    useResponsiveAside,
-    useDialogManager,
-    useSubscriber,
-    responsiveTypes,
-    PROJECT_CREATOR_DIALOG_KEY,
-    TASK_CREATOR_DIALOG_KEY,
-    TASK_REMINDER_DIALOG_KEY
-} from '@nao-todo/shared'
+    useProjectUseCase,
+    useScope,
+    useShortcut,
+    useTagUseCase,
+    useTaskUseCase,
+    useUserUseCase
+} from '@/hooks'
+import { LAST_VISITED_ROUTE_KEY } from '@/router'
+import { ProjectHandler, type ProjectViewObject, useProjectsStore } from '@nao-todo/domain/project'
+import { TagHandler, type TagViewObject, useTagsStore } from '@nao-todo/domain/tag'
 import {
-    useThemeStore,
-    type ThemeMode,
-    useProjectsStore,
-    useTagsStore,
+    type SSEReminderEvent,
+    TaskHandler,
+    type TaskViewObject,
     useTasksStore
-} from '@/stores'
-import { useUserStore, UserUseCase } from '@nao-todo/domain/user'
+} from '@nao-todo/domain/task'
+import { type ThemeMode, useThemeStore, useUserStore } from '@nao-todo/domain/user'
+import {
+    PROJECT_CREATOR_DIALOG_KEY,
+    responsiveTypes,
+    TASK_CREATOR_DIALOG_KEY,
+    TASK_REMINDER_DIALOG_KEY,
+    useDialogManager,
+    useResponsiveAside,
+    useSubscriber
+} from '@nao-todo/shared'
 import { inject, provide, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { LAST_VISITED_ROUTE_KEY } from '@/router'
-import { useScope, useShortcut } from '@/hooks'
-import { newUserUseCase } from '@nao-todo/usecases/user'
-import { newTaskUseCase, type TaskViewObject } from '@nao-todo/usecases/task'
-import { newProjectUseCase, ProjectViewObject } from '@nao-todo/usecases/project'
-import { newTagUseCase, TagViewObject } from '@nao-todo/usecases/tag'
-import { SSEReminderEvent } from '@nao-todo/types/viewobjects/sse'
-import { ProjectHandler } from '@/infrastructure/handlers/project'
-import { TagHandler } from '@/infrastructure/handlers/tag'
-import { TaskHandler } from '@/infrastructure/handlers/task'
 import { INDEX_VIEW_CONTEXT_KEY } from './context'
-import { APP_CONTEXT_KEY } from '@/context'
 
 /**
  * 首页视图
@@ -52,20 +52,20 @@ const useIndexView = () => {
     const tasksStore = useTasksStore()
 
     // @usecases
-    const userUseCase = newUserUseCase(userStore)
-    const projectUseCase = newProjectUseCase(projectsStore)
-    const tagUseCase = newTagUseCase(tagsStore)
-    const taskUseCase = newTaskUseCase(tasksStore)
+    const userUseCase = useUserUseCase(userStore)
+    const projectUseCase = useProjectUseCase(projectsStore)
+    const tagUseCase = useTagUseCase(tagsStore)
+    const taskUseCase = useTaskUseCase(tasksStore)
 
     // @dialogManager 对话框管理器
     // @subscriber 事件订阅器
-    const dialogManager = useDialogManager()
-    const subscriber = useSubscriber()
+    const appDialogManager = useDialogManager()
+    const appSubscriber = useSubscriber()
 
     // @handlers 处理层
-    const projectHandler = new ProjectHandler(projectUseCase, projectsStore, subscriber)
-    const tagHandler = new TagHandler(tagUseCase, tagsStore, subscriber)
-    const taskHandler = new TaskHandler(taskUseCase, subscriber)
+    const projectHandler = new ProjectHandler(projectUseCase, projectsStore, appSubscriber)
+    const tagHandler = new TagHandler(tagUseCase, tagsStore, appSubscriber)
+    const taskHandler = new TaskHandler(taskUseCase, appSubscriber)
 
     /**
      * 快捷键管理器
@@ -73,8 +73,8 @@ const useIndexView = () => {
      * @use p 创建项目
      */
     useScope('index-view')
-    useShortcut('task.create', 'n', () => dialogManager.open(TASK_CREATOR_DIALOG_KEY))
-    useShortcut('project.create', 'p', () => dialogManager.open(PROJECT_CREATOR_DIALOG_KEY))
+    useShortcut('task.create', 'n', () => appDialogManager.open(TASK_CREATOR_DIALOG_KEY))
+    useShortcut('project.create', 'p', () => appDialogManager.open(PROJECT_CREATOR_DIALOG_KEY))
 
     /**
      * 边栏响应式状态
@@ -119,7 +119,7 @@ const useIndexView = () => {
         // 监听提醒事件
         es.addEventListener('reminder', (event: MessageEvent) => {
             const data = JSON.parse(event.data) as SSEReminderEvent
-            dialogManager.open(TASK_REMINDER_DIALOG_KEY, data)
+            appDialogManager.open(TASK_REMINDER_DIALOG_KEY, data)
             // 显示通知
             if ('Notification' in window && Notification.permission === 'granted') {
                 const notification = new Notification(data.taskName, {
@@ -190,8 +190,8 @@ const useIndexView = () => {
         tagUseCase,
         taskUseCase,
         // managers
-        dialogManager,
-        subscriber,
+        appDialogManager,
+        appSubscriber,
         // handlers
         projectHandler,
         tagHandler,

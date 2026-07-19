@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import { APP_CONTEXT_KEY } from '@/context'
+import { responsiveTypes } from '@nao-todo/shared'
 import { computed, inject } from 'vue'
 import AppAside from './aside.vue'
 import AppFloatAside from './float-aside.vue'
-import { APP_CONTEXT_KEY } from '@/context'
-import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
 
 defineOptions({ name: 'AppAsideAdapter' })
 const { responsiveFlag } = inject(APP_CONTEXT_KEY)!

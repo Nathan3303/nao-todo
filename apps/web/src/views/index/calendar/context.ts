@@ -1,9 +1,8 @@
-import DialogManager from '@/infrastructure/hooks/use-dialog-manager'
-import { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import { AuthUseCase } from '@nao-todo/usecases/auth'
-import { TaskUseCase } from '@nao-todo/usecases/task'
-import { UserUseCase } from '@nao-todo/usecases/user'
-import { InjectionKey, Ref } from 'vue'
+import type { AuthUseCase } from '@nao-todo/domain/auth'
+import type { TaskUseCase } from '@nao-todo/domain/task'
+import type { UserUseCase } from '@nao-todo/domain/user'
+import type { DialogManager, Subscriber } from '@nao-todo/shared'
+import type { InjectionKey, Ref } from 'vue'
 
 // 日历视图上下文
 export type CalendarViewContext = {
@@ -24,5 +23,3 @@ export type CalendarViewContext = {
 // 日历视图上下文注入键
 export const CALENDAR_VIEW_CONTEXT_KEY: InjectionKey<CalendarViewContext> =
     Symbol('CALENDAR_VIEW_CONTEXT')
-
-

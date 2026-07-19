@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { AppAsideAdapter } from '@/layouts/app/'
+import { AppAsideAdapter } from '@/components/app/'
 import { useSearchView } from '@/views/index/search/search-view'
 
 defineOptions({ name: 'SearchView' })
@@ -32,4 +32,3 @@ const { isDisplayAside, handleResizeAside } = useSearchView()
 </template>
 
 <style scoped></style>
-

@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { inject } from 'vue'
-import { storeToRefs } from 'pinia'
-import { NaoRouterLink } from '@nao-todo/components'
-import { useUserStore } from '@/stores'
 import { APP_CONTEXT_KEY } from '@/context'
-import { t } from '@nao-todo/infrastructure/locales'
-import { PomodoroIndicator } from '@/components/pomodoro'
+import { PomodoroIndicator } from '@nao-todo/domain/pomodoro'
+import { useUserStore } from '@nao-todo/domain/user'
+import { NaoRouterLink, t } from '@nao-todo/shared'
+import { storeToRefs } from 'pinia'
+import { inject } from 'vue'
 
 defineOptions({ name: 'AppAside' })
 
@@ -101,4 +100,3 @@ const { profile } = storeToRefs(userStore)
     }
 }
 </style>
-
