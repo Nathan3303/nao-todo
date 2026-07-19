@@ -65,6 +65,7 @@ const handleCropperSuccess = (file: File) => {
         <nue-div align="center" width="fit-content">
             <nue-avatar
                 :src="fullAvatarUrl"
+                icon="user"
                 size="8rem"
                 style="cursor: pointer"
                 @click="handleViewAvatar"
@@ -80,7 +81,7 @@ const handleCropperSuccess = (file: File) => {
             <nue-button
                 icon="edit"
                 :loading="updateAvatarLoading"
-                theme="small,updater"
+                theme="icon,updater,round"
                 use-throttle
                 :throttle-duration="300"
                 @click="handleUpdateAvatar"
@@ -102,12 +103,15 @@ const handleCropperSuccess = (file: File) => {
     display: flex;
     align-items: center;
     gap: 2rem;
-    position: relative;
 
-    .nue-button--updater {
-        position: absolute;
-        bottom: 0px;
-        right: -50%;
+    .nue-div {
+        position: relative;
+
+        .nue-button--updater {
+            position: absolute;
+            bottom: 0px;
+            left: 70%;
+        }
     }
 }
 </style>

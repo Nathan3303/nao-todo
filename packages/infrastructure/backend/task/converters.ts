@@ -70,19 +70,19 @@ export const taskRes2TaskEntity = (res: TaskRes): TaskEntity => {
  */
 export const createTaskValueObject2Req = (createVO: CreateTaskValueObject): CreateTaskReq => {
     return {
-        parentTaskId: createVO.parentTaskId || undefined,
+        parentTaskId: createVO.parentTaskId || void 0,
         name: createVO.name,
         description: createVO.description,
         state: createVO.state,
         priority: createVO.priority,
-        startAt: createVO.startAt || undefined,
-        endAt: dayjs(createVO.endAt).toISOString(),
+        startAt: createVO.startAt || void 0,
+        endAt: createVO.endAt ? dayjs(createVO.endAt).toISOString() : void 0,
         projectId: createVO.projectId,
         tags: createVO.tags,
-        remindAt: createVO.remindAt || undefined,
-        remindRepeat: createVO.remindRepeat || undefined,
-        remindTime: createVO.remindTime || undefined,
-        remindWeekdays: createVO.remindWeekdays || undefined
+        remindAt: createVO.remindAt || void 0,
+        remindRepeat: createVO.remindRepeat || 'none',
+        remindTime: createVO.remindTime || '',
+        remindWeekdays: createVO.remindWeekdays || []
     } as CreateTaskReq
 }
 
@@ -289,4 +289,3 @@ export const updateTaskCommentValueObject2Req = (
 export const listTaskCommentRes2Entities = (res: ListTaskCommentRes): TaskCommentEntity[] => {
     return res.map((taskComment) => taskCommentRes2Entity(taskComment))
 }
-

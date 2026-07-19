@@ -1,9 +1,11 @@
-import { reactive, ref, watch } from 'vue'
-import { TaskRemindSetterUpdateVO, type TaskCreatorInputValue, unwrapError } from '@nao-todo/shared'
+import { unwrapError } from '@nao-todo/shared'
 import { NueMessage } from 'nue-ui'
+import { reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import type { UpdateTaskViewObject } from '../../../types'
-import { TaskCreatorDialogProps } from './types'
+import type { TaskCreatorInputValue } from '../../creator-input'
+import type { TaskRemindSetterUpdateVO } from '../../remind-setter'
+import type { TaskCreatorDialogProps } from './types'
 
 /**
  * 任务创建器对话框
@@ -30,10 +32,7 @@ const useTaskCreator = (props: TaskCreatorDialogProps) => {
     })
 
     // 创建任务状态
-    const createStates = reactive({
-        creating: false,
-        disabled: false
-    })
+    const createStates = reactive({ creating: false, disabled: false })
 
     // 新模式：智能输入
     const TASK_CREATOR_SMART_MODE_KEY = 'TASK_CREATOR_SMART_MODE'
@@ -142,6 +141,8 @@ const useTaskCreator = (props: TaskCreatorDialogProps) => {
      * 清空输入值
      */
     const clearInputsValue = () => {
+        createStates.creating = false
+        createStates.disabled = false
         states.projectId = ''
         states.name = ''
         states.description = ''

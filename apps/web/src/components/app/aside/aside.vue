@@ -5,6 +5,7 @@ import { useUserStore } from '@nao-todo/domain/user'
 import { NaoRouterLink, t } from '@nao-todo/shared'
 import { storeToRefs } from 'pinia'
 import { inject } from 'vue'
+import { env } from '@/env'
 
 defineOptions({ name: 'AppAside' })
 
@@ -19,7 +20,7 @@ const { profile } = storeToRefs(userStore)
     <nue-div theme="app-aside">
         <nue-div v-if="profile" theme="aside-header">
             <nue-tooltip placement="right-start" size="small">
-                <nue-avatar :src="profile.avatar" size="2.5rem" />
+                <nue-avatar :src="`${env.baseURL}${profile.avatar}`" icon="user" size="2.5rem" />
                 <template #content>
                     <nue-div vertical gap=".25rem">
                         <nue-text size="var(--nue-text-sm)" color="var(--nue-primary-color-0)">

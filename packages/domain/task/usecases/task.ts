@@ -118,6 +118,8 @@ export class TaskUseCase {
     async create(createTaskViewObject: CreateTaskViewObject): GoAsync<TaskViewObject> {
         // 数据转换
         const createTaskValueObject = createTaskViewObjectToValueObject(createTaskViewObject)
+        const validateErr = createTaskValueObject.validate()
+        if (validateErr !== null) return [null, validateErr]
         // 创建任务
         const [taskEntity, err] = await this.taskRepo.create(createTaskValueObject)
         if (err !== null) return [null, err]
@@ -141,6 +143,8 @@ export class TaskUseCase {
         // const newTask = { name: oldTask?.name || undefined, ...updateViewObject }
         // 数据转换
         const updateTaskValueObject = updateTaskViewObjectToValueObject(id, updateViewObject)
+        const validateErr = updateTaskValueObject.validate()
+        if (validateErr !== null) return validateErr
         // 更新任务
         const updateError = await this.taskRepo.update(id, updateTaskValueObject)
         if (updateError !== null) return updateError

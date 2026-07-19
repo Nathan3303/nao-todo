@@ -19,9 +19,9 @@ export const useUserStore = defineStore('UserStore', () => {
     // @action 设置用户配置文件
     const setUserProfile = (profile: UserViewObject) => {
         // 处理 avatar 字段
-        // if (profile.avatar) {
-        //     profile.avatar = `${env.baseURL}${profile.avatar}?t=${Date.now()}`
-        // }
+        if (profile.avatar) {
+            profile.avatar = `${profile.avatar}?t=${Date.now()}`
+        }
         // 设置存储
         userProfile.value = profile
     }

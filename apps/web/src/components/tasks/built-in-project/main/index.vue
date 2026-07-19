@@ -112,6 +112,7 @@ onUnmounted(() => {
                 :task-use-case="taskUseCase"
                 :get-tasks-options="preference!.getTasksOptions"
                 :subscriber="subscriber"
+                :dialog-manager="dialogManager"
                 :tags="tags"
                 :columns="preference!.columns"
                 :layout-config="layoutConfig"

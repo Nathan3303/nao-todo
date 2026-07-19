@@ -12,17 +12,17 @@ const routes: RouteRecordRaw = {
         {
             path: 'signin',
             name: 'auth-signin',
-            component: () => import('@nao-todo/domain/auth/components/sign-in.vue')
+            component: () => import('@/components/auth/sign-in-page.vue')
         },
         {
             path: 'signup',
             name: 'auth-signup',
-            component: () => import('@nao-todo/domain/auth/components/sign-up.vue')
+            component: () => import('@/components/auth/sign-up-page.vue')
         },
         {
             path: 'checkin',
             name: 'auth-checkin',
-            component: () => import('@nao-todo/domain/auth/components/check-in.vue')
+            component: () => import('@/components/auth/check-in-page.vue')
         }
     ]
 }

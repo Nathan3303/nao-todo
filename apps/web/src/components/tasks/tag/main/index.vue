@@ -33,7 +33,8 @@ const {
     getProjectName,
     showTaskDetails,
     tagHandler,
-    tag
+    tag,
+    dialogManager
 } = inject(TAG_VIEW_CONTEXT_KEY)!
 
 // @computed 组件名称
@@ -82,6 +83,7 @@ const getNoTaskError = (): ViewAdapterNoTaskError | undefined => {
                 :task-use-case="taskUseCase"
                 :get-tasks-options="preference!.getTasksOptions"
                 :subscriber="subscriber"
+                :dialog-manager="dialogManager"
                 :tags="tags"
                 :columns="preference!.columns"
                 :get-column-label="getColumnLabel"
