@@ -37,16 +37,11 @@ export class PomodoroRecordUseCase {
     async createRecord(
         createViewObject: CreatePomodoroRecordViewObject
     ): GoAsync<PomodoroRecordViewObject> {
-        // 1. 视图对象 → 值对象
         const valueObject = createPomodoroRecordViewObjectToValueObject(createViewObject)
-        // 2. 调用领域服务
         const [entity, err] = await this.repo.create(valueObject)
         if (err !== null) return [null, err]
-        // 3. 实体 → 视图对象
         const viewObject = pomodoroRecordEntityToViewObject(entity)
-        // 4. 更新存储
         this.store.addRecord(viewObject)
-        // 5. 返回
         return [viewObject, null]
     }
 

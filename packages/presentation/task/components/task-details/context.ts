@@ -34,9 +34,10 @@ export type TaskDetailsContext = {
     checkItemProgress: ComputedRef<{ percentage: number; text: string }>
     subTaskProgress: ComputedRef<{ percentage: number; text: string }>
     isCommenting: Ref<boolean>
-    pomodoroCurrentTaskId: ComputedRef<TaskViewObject['id'] | null>
-    pomodoroTimerStatus: ComputedRef<'running' | 'paused'>
-    pomodoroFocusStatus: ComputedRef<'idle' | 'running' | 'paused'>
+
+    pomodoroCurrentTaskId: TaskDetailsPreContext['pomodoroCurrentTaskId']
+    pomodoroTimerStatus: TaskDetailsPreContext['pomodoroTimerStatus']
+    pomodoroFocusStatus: TaskDetailsPreContext['pomodoroFocusStatus']
 
     checkItemsLoading: Ref<boolean>
     checkItemsError: Ref<string>
@@ -66,10 +67,10 @@ export type TaskDetailsContext = {
     ) => void
     makeCheckItemToTask: (checkItemId: TaskCheckItemViewObject['id']) => void
 
-    selectTaskAndStartTimer: (taskId: TaskViewObject['id'], name: TaskViewObject['name']) => void
-    selectTaskAndStartFocus: (taskId: TaskViewObject['id'], name: TaskViewObject['name']) => void
-    resetTimer: () => void
-    resetFocus: () => void
+    selectTaskAndStartTimer: TaskDetailsPreContext['selectTaskAndStartTimer']
+    selectTaskAndStartFocus: TaskDetailsPreContext['selectTaskAndStartFocus']
+    resetTimer: TaskDetailsPreContext['resetTimer']
+    resetFocus: TaskDetailsPreContext['resetFocus']
 }
 
 // 任务详情上下文键
@@ -88,9 +89,9 @@ export type TaskDetailsPreContext = {
 
     avaliableProjects: ComputedRef<TaskProjectViewObject[]>
     avaliableTags: ComputedRef<TaskTagViewObject[]>
-    pomodoroCurrentTaskId: ComputedRef<TaskViewObject['id'] | null>
-    pomodoroTimerStatus: ComputedRef<'running' | 'paused'>
-    pomodoroFocusStatus: ComputedRef<'idle' | 'running' | 'paused'>
+    pomodoroCurrentTaskId: Ref<TaskViewObject['id'] | null>
+    pomodoroTimerStatus: Ref<'running' | 'paused'>
+    pomodoroFocusStatus: Ref<'idle' | 'running' | 'paused'>
 
     outlineWidth: Ref<string>
     isDisplayOutline: Ref<boolean>
@@ -99,6 +100,10 @@ export type TaskDetailsPreContext = {
 
     getTag: (tagId: TaskTagViewObject['id']) => TaskTagViewObject | undefined
     getProjectName: (projectId: TaskProjectViewObject['id']) => TaskProjectViewObject['name']
+    selectTaskAndStartTimer: (taskId: TaskViewObject['id'], name: TaskViewObject['name']) => void
+    selectTaskAndStartFocus: (taskId: TaskViewObject['id'], name: TaskViewObject['name']) => void
+    resetTimer: () => void
+    resetFocus: () => void
 }
 
 // 任务详情预上下文键

@@ -4,13 +4,13 @@ import { TaskHandler } from '../../handlers'
 import { useTaskDetailsStore } from '../../stores'
 import type { TaskViewObject } from '@nao-todo/application'
 import { TASK_DETAILS_CONTEXT_KEY, TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
-import type { TaskDetailsEmits, TaskDetailsProps } from './types'
+import type { TaskDetailsProps } from './types'
 import useCheckItems from './use-check-items'
 import useComments from './use-comments'
 import useSubTasks from './use-subtasks'
 import useTaskViewObject from './use-task-view-object'
 
-const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
+const useTaskDetails = (props: TaskDetailsProps) => {
     // @viewContext TaskDetailsPre context
     const {
         taskUseCase,
@@ -22,7 +22,11 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         avaliableTags,
         pomodoroCurrentTaskId,
         pomodoroTimerStatus,
-        pomodoroFocusStatus
+        pomodoroFocusStatus,
+        selectTaskAndStartTimer,
+        selectTaskAndStartFocus,
+        resetTimer,
+        resetFocus
     } = inject(TASK_DETAILS_PRE_CONTEXT_KEY)!
 
     // @dataStore
@@ -117,47 +121,31 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         { immediate: true }
     )
 
-    /**
-     * Pomodoro 详情上下文
-     */
-    const selectTaskAndStartTimer = (taskId: TaskViewObject['id'], name: TaskViewObject['name']) =>
-        emit('select-task-and-start-timer', taskId, name)
-    const selectTaskAndStartFocus = (taskId: TaskViewObject['id'], name: TaskViewObject['name']) =>
-        emit('select-task-and-start-focus', taskId, name)
-    const resetFocus = () => emit('reset-focus')
-    const resetTimer = () => emit('reset-timer')
-
     // @provide 任务详情面板上下文
     provide(TASK_DETAILS_CONTEXT_KEY, {
         dialogManager,
-        // ---
         vo: task,
-        // ---
         projects: avaliableProjects,
         tags: avaliableTags,
         checkItems,
         comments,
         subTasks,
-        // ---
         taskHandler,
         subTaskHandler,
         checkItemHandler,
         commentHandler,
-        // ---
         checkItemProgress,
         subTaskProgress,
         isCommenting,
         pomodoroCurrentTaskId,
         pomodoroTimerStatus,
         pomodoroFocusStatus,
-        // ---
         checkItemsLoading,
         checkItemsError,
         commentsLoading,
         commentsError,
         subTasksLoading,
         subTasksError,
-        // ---
         updateTaskDetails,
         deleteTask,
         restoreTask,
@@ -165,15 +153,12 @@ const useTaskDetails = (props: TaskDetailsProps, emit: TaskDetailsEmits) => {
         ungiveUpTask,
         switchTaskDetails,
         closeDetails,
-        // ---
         retryCheckItems,
         retryComments,
         retrySubTasks,
         createSubTask,
-        // ---
         resortCheckItems,
         makeCheckItemToTask,
-        // ---
         selectTaskAndStartTimer,
         selectTaskAndStartFocus,
         resetTimer,

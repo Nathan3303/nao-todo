@@ -1,9 +1,11 @@
+import type { GoAsync } from '@nao-todo/shared'
 import { useTimerDriver } from '@nao-todo/shared'
 import { nanoid } from 'nanoid'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { TimerPhase, TimerStatus } from '../components/timer'
 import { POMODORO_MAX_FOCUS_SECONDS, POMODORO_MIN_FOCUS_SECONDS } from '@nao-todo/domain/pomodoro'
+import type { CreatePomodoroRecordViewObject, PomodoroRecordViewObject } from '@nao-todo/application/pomodoro/viewobjects'
 import {
     buildPomodoroRecord,
     clearTimerSnapshot,
@@ -13,7 +15,7 @@ import {
     saveTimerSnapshot,
     sendNotification
 } from '../utils'
-import { usePomodoroRecordsStore } from './pomodoro-records-store'
+import { usePomodoroSessionStore } from './pomodoro-session-store'
 
 /** 计时快照保存间隔（毫秒） */
 const PERSIST_INTERVAL_MS = 5000
@@ -33,18 +35,21 @@ const PERSIST_INTERVAL_MS = 5000
  * 配置来源：运行时直接从 usePomodoroRecordsStore 读取，确保修改即时生效。
  */
 export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
-    // Dependencies
-    const pomodoroStore = usePomodoroRecordsStore()
+    const sessionStore = usePomodoroSessionStore()
 
-    // Reactive States
     const phase = ref<TimerPhase>('idle')
     const status = ref<TimerStatus>('paused')
-    const remainingSeconds = ref(pomodoroStore.focusDuration)
-    const totalSeconds = ref(pomodoroStore.focusDuration)
+    const remainingSeconds = ref(sessionStore.focusDuration)
+    const totalSeconds = ref(sessionStore.focusDuration)
 
-    // Computeds
     const isIdle = computed(() => phase.value === 'idle')
     const isRunning = computed(() => status.value === 'running')
+
+    let createRecordFn: ((record: CreatePomodoroRecordViewObject) => GoAsync<PomodoroRecordViewObject[]>) | null = null
+
+    const setCreateRecordFn = (fn: ((record: CreatePomodoroRecordViewObject) => GoAsync<PomodoroRecordViewObject[]>) | null) => {
+        createRecordFn = fn
+    }
 
     // Internal Engine State（plain variables，非响应式）
     let targetEndTime = 0
@@ -72,14 +77,14 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
             breakWarningSent,
             completedRoundCount,
             autoStartCount,
-            recordId: pomodoroStore.currentRecordId,
-            recordStartAt: pomodoroStore.currentRecordStartAt,
+            recordId: sessionStore.currentRecordId,
+            recordStartAt: sessionStore.currentRecordStartAt,
             session: {
-                taskId: pomodoroStore.currentTaskId,
-                taskName: pomodoroStore.currentTaskName,
-                pomodoroId: pomodoroStore.currentPomodoroId,
-                pomodoroName: pomodoroStore.currentPomodoroName,
-                noteText: pomodoroStore.noteText
+                taskId: sessionStore.currentTaskId,
+                taskName: sessionStore.currentTaskName,
+                pomodoroId: sessionStore.currentPomodoroId,
+                pomodoroName: sessionStore.currentPomodoroName,
+                noteText: sessionStore.noteText
             },
             savedAt: Date.now()
         })
@@ -120,37 +125,37 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
 
     /** 判断当前是否该进入长休息 */
     const isLongBreakDue = (): boolean =>
-        completedRoundCount >= pomodoroStore.sessionsUntilLongBreak
+        completedRoundCount >= sessionStore.sessionsUntilLongBreak
 
     /**
      * 生成新的专注会话 ID
      * @description 仅在没有当前会话时生成新 ID，避免重复创建
      */
     const generateNewSessionId = () => {
-        // if (!pomodoroStore.currentRecordId) {
+        // if (!sessionStore.currentRecordId) {
         const recordId = nanoid()
         const startAt = new Date().toISOString()
-        pomodoroStore.setCurrentSession(
-            pomodoroStore.currentTaskId,
-            pomodoroStore.currentTaskName,
+        sessionStore.setCurrentSession(
+            sessionStore.currentTaskId,
+            sessionStore.currentTaskName,
             recordId,
             startAt
         )
-        pomodoroStore.setNoteText('')
+        sessionStore.setNoteText('')
         // }
     }
 
     /** 构建一条专注记录 CreatePomodoroRecordViewObject */
     const buildRecord = (total: number) =>
         buildPomodoroRecord({
-            sessionId: pomodoroStore.currentRecordId!,
-            pomodoroId: pomodoroStore.currentPomodoroId,
+            sessionId: sessionStore.currentRecordId!,
+            pomodoroId: sessionStore.currentPomodoroId,
             type: 1, // timer=1
-            taskId: pomodoroStore.currentTaskId,
-            taskName: pomodoroStore.currentTaskName,
-            startAt: pomodoroStore.currentRecordStartAt!,
+            taskId: sessionStore.currentTaskId,
+            taskName: sessionStore.currentTaskName,
+            startAt: sessionStore.currentRecordStartAt!,
             duration: total,
-            note: pomodoroStore.noteText
+            note: sessionStore.noteText
         })
 
     // ========================================================================
@@ -209,7 +214,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
         status.value = 'paused'
         completedRoundCount = 0
         autoStartCount = 0
-        const fd = pomodoroStore.focusDuration
+        const fd = sessionStore.focusDuration
         totalSeconds.value = fd
         remainingSeconds.value = fd
         targetEndTime = 0
@@ -224,7 +229,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
         const long = isLongBreakDue()
         if (long) completedRoundCount = 0
         const nextPhase: TimerPhase = long ? 'longBreak' : 'break'
-        const nextDuration = long ? pomodoroStore.longBreakDuration : pomodoroStore.breakDuration
+        const nextDuration = long ? sessionStore.longBreakDuration : sessionStore.breakDuration
         phase.value = nextPhase
         breakWarningSent = false
         totalSeconds.value = nextDuration
@@ -239,7 +244,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
     /** 进入专注阶段（用于自动开始） */
     const enterFocusPhase = () => {
         phase.value = 'focus'
-        const fd = pomodoroStore.focusDuration
+        const fd = sessionStore.focusDuration
         totalSeconds.value = fd
         remainingSeconds.value = fd
         targetEndTime = Date.now() + fd * 1000
@@ -251,8 +256,8 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
 
     /** 休息结束后判断是否自动开始下一轮专注 */
     const transitionToNextFocusOrIdle = (): boolean => {
-        if (pomodoroStore.autoStartNextFocusSession) {
-            if (autoStartCount >= pomodoroStore.autoStartNextFocusSessionCount) {
+        if (sessionStore.autoStartNextFocusSession) {
+            if (autoStartCount >= sessionStore.autoStartNextFocusSessionCount) {
                 autoStartCount = 0
                 resetToIdle()
                 return false
@@ -283,14 +288,16 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
             const total = totalSeconds.value
             const record = buildRecord(total)
             // 异步持久化，不阻塞阶段流转
-            persistPomodoroRecord(
-                pomodoroStore.addRecord,
-                record,
-                '[Pomodoro] Failed to create record:'
-            )
+            if (createRecordFn) {
+                persistPomodoroRecord(
+                    createRecordFn,
+                    record,
+                    '[Pomodoro] Failed to create record:'
+                )
+            }
             sendNotification('专注完成', `已完成 ${formatMinutes(total)} 的专注，现在开始休息`)
 
-            if (!pomodoroStore.autoRest) {
+            if (!sessionStore.autoRest) {
                 resetToIdle()
             } else {
                 enterBreakPhase()
@@ -314,7 +321,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
     /** 初始化（重置显示状态到空闲） */
     const initialize = () => {
         if (phase.value !== 'idle') return
-        const fd = pomodoroStore.focusDuration
+        const fd = sessionStore.focusDuration
         totalSeconds.value = fd
         remainingSeconds.value = fd
         phase.value = 'idle'
@@ -332,15 +339,15 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
 
         // 恢复会话信息（记录创建所需）
         if (snapshot.recordId && snapshot.recordStartAt) {
-            pomodoroStore.setCurrentSession(
+            sessionStore.setCurrentSession(
                 snapshot.session.taskId,
                 snapshot.session.taskName,
                 snapshot.recordId,
                 snapshot.recordStartAt
             )
         }
-        pomodoroStore.selectPomodoro(snapshot.session.pomodoroId, snapshot.session.pomodoroName)
-        pomodoroStore.setNoteText(snapshot.session.noteText)
+        sessionStore.selectPomodoro(snapshot.session.pomodoroId, snapshot.session.pomodoroName)
+        sessionStore.setNoteText(snapshot.session.noteText)
 
         // 恢复引擎变量
         totalSeconds.value = snapshot.totalSeconds
@@ -386,9 +393,9 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
 
         phase.value = 'focus'
         status.value = 'running'
-        totalSeconds.value = pomodoroStore.focusDuration
-        remainingSeconds.value = pomodoroStore.focusDuration
-        targetEndTime = Date.now() + pomodoroStore.focusDuration * 1000
+        totalSeconds.value = sessionStore.focusDuration
+        remainingSeconds.value = sessionStore.focusDuration
+        targetEndTime = Date.now() + sessionStore.focusDuration * 1000
         driver.start()
         startPersistTimer()
         persist()
@@ -421,7 +428,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
     const reset = () => {
         if (phase.value === 'idle') return
         driver.stop()
-        pomodoroStore.clearCurrentSession()
+        sessionStore.clearCurrentSession()
         resetToIdle()
     }
 
@@ -439,11 +446,13 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
         if (phase.value === 'focus') {
             const elapsed = calcElapsed()
             const record = buildRecord(elapsed)
-            persistPomodoroRecord(
-                pomodoroStore.addRecord,
-                record,
-                '[Pomodoro] Failed to create record on skip:'
-            )
+            if (createRecordFn) {
+                persistPomodoroRecord(
+                    createRecordFn,
+                    record,
+                    '[Pomodoro] Failed to create record on skip:'
+                )
+            }
             generateNewSessionId()
             enterBreakPhase()
         } else if (phase.value === 'break') {
@@ -467,7 +476,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
             const newTotal = totalSeconds.value + delta
             if (newTotal < POMODORO_MIN_FOCUS_SECONDS || newTotal > POMODORO_MAX_FOCUS_SECONDS)
                 return
-            pomodoroStore.setFocusDuration(newTotal)
+            sessionStore.setFocusDuration(newTotal)
             totalSeconds.value = newTotal
             remainingSeconds.value = newTotal
         } else if (status.value === 'running') {
@@ -493,7 +502,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
      */
     const updateConfig = () => {
         if (phase.value === 'idle') {
-            const fd = pomodoroStore.focusDuration
+            const fd = sessionStore.focusDuration
             totalSeconds.value = fd
             remainingSeconds.value = fd
         }
@@ -533,6 +542,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
         skip,
         adjustTime,
         updateConfig,
+        setCreateRecordFn,
         destroy
     }
 })

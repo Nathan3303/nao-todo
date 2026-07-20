@@ -1,7 +1,9 @@
+import type { GoAsync } from '@nao-todo/shared'
 import { useTimerDriver } from '@nao-todo/shared'
 import { nanoid } from 'nanoid'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import type { CreatePomodoroRecordViewObject, PomodoroRecordViewObject } from '@nao-todo/application/pomodoro/viewobjects'
 import {
     buildPomodoroRecord,
     clearFocusSnapshot,
@@ -11,7 +13,7 @@ import {
     saveFocusSnapshot,
     sendNotification
 } from '../utils'
-import { usePomodoroRecordsStore } from './pomodoro-records-store'
+import { usePomodoroSessionStore } from './pomodoro-session-store'
 
 /** 计时快照保存间隔（毫秒） */
 const PERSIST_INTERVAL_MS = 5000
@@ -31,7 +33,7 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
     // ========================================================================
     // Dependencies
     // ========================================================================
-    const pomodoroStore = usePomodoroRecordsStore()
+    const sessionStore = usePomodoroSessionStore()
 
     // ========================================================================
     // Reactive State
@@ -42,6 +44,11 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
     // ========================================================================
     // Internal Engine State（plain variables，非响应式）
     // ========================================================================
+    let createRecordFn: ((record: CreatePomodoroRecordViewObject) => GoAsync<PomodoroRecordViewObject[]>) | null = null
+
+    const setCreateRecordFn = (fn: ((record: CreatePomodoroRecordViewObject) => GoAsync<PomodoroRecordViewObject[]>) | null) => {
+        createRecordFn = fn
+    }
     let startTimestamp = 0
     let accumulatedMs = 0
 
@@ -66,11 +73,11 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
             sessionId,
             recordStartedAt,
             session: {
-                taskId: pomodoroStore.currentTaskId,
-                taskName: pomodoroStore.currentTaskName,
-                pomodoroId: pomodoroStore.currentPomodoroId,
-                pomodoroName: pomodoroStore.currentPomodoroName,
-                noteText: pomodoroStore.noteText
+                taskId: sessionStore.currentTaskId,
+                taskName: sessionStore.currentTaskName,
+                pomodoroId: sessionStore.currentPomodoroId,
+                pomodoroName: sessionStore.currentPomodoroName,
+                noteText: sessionStore.noteText
             },
             savedAt: Date.now()
         })
@@ -108,13 +115,13 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
     const buildRecord = (elapsed: number) =>
         buildPomodoroRecord({
             sessionId: sessionId!,
-            pomodoroId: pomodoroStore.currentPomodoroId,
+            pomodoroId: sessionStore.currentPomodoroId,
             type: 2, // focus=2
-            taskId: pomodoroStore.currentTaskId,
-            taskName: pomodoroStore.currentTaskName,
+            taskId: sessionStore.currentTaskId,
+            taskName: sessionStore.currentTaskName,
             startAt: recordStartedAt!,
             duration: elapsed,
-            note: pomodoroStore.noteText
+            note: sessionStore.noteText
         })
 
     /** 重置为 idle（保留累计） */
@@ -162,13 +169,13 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
         // 生成会话
         sessionId = nanoid()
         recordStartedAt = new Date().toISOString()
-        pomodoroStore.setCurrentSession(
-            pomodoroStore.currentTaskId,
-            pomodoroStore.currentTaskName,
+        sessionStore.setCurrentSession(
+            sessionStore.currentTaskId,
+            sessionStore.currentTaskName,
             sessionId,
             recordStartedAt
         )
-        pomodoroStore.setNoteText('')
+        sessionStore.setNoteText('')
 
         // 请求通知权限
         if ('Notification' in window && Notification.permission === 'default') {
@@ -215,14 +222,16 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
             status.value === 'paused' ? Math.floor(accumulatedMs / 1000) : calcElapsedSeconds()
 
         const record = buildRecord(elapsed)
-        persistPomodoroRecord(
-            pomodoroStore.addRecord,
-            record,
-            '[PomodoroFocus] Failed to create record:'
-        )
+        if (createRecordFn) {
+            persistPomodoroRecord(
+                createRecordFn,
+                record,
+                '[PomodoroFocus] Failed to create record:'
+            )
+        }
 
         sendNotification('正计时完成', `已完成 ${formatMinutes(elapsed)} 的正计时`)
-        pomodoroStore.clearCurrentSession()
+        sessionStore.clearCurrentSession()
         resetToIdle()
     }
 
@@ -233,7 +242,7 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
     const reset = () => {
         if (status.value === 'idle') return
         driver.stop()
-        pomodoroStore.clearCurrentSession()
+        sessionStore.clearCurrentSession()
         resetToIdle()
     }
 
@@ -258,15 +267,15 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
 
         // 恢复会话信息
         if (snapshot.sessionId && snapshot.recordStartedAt) {
-            pomodoroStore.setCurrentSession(
+            sessionStore.setCurrentSession(
                 snapshot.session.taskId,
                 snapshot.session.taskName,
                 snapshot.sessionId,
                 snapshot.recordStartedAt
             )
         }
-        pomodoroStore.selectPomodoro(snapshot.session.pomodoroId, snapshot.session.pomodoroName)
-        pomodoroStore.setNoteText(snapshot.session.noteText)
+        sessionStore.selectPomodoro(snapshot.session.pomodoroId, snapshot.session.pomodoroName)
+        sessionStore.setNoteText(snapshot.session.noteText)
 
         if (snapshot.status === 'running') {
             startTimestamp = snapshot.startTimestamp
@@ -301,6 +310,7 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
         resume,
         end,
         reset,
+        setCreateRecordFn,
         destroy
     }
 })

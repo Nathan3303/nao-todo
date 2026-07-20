@@ -79,7 +79,7 @@ export const useAuthRepository = (requester: Requester): AuthRepository => {
      */
     const signOut = async (jwt: string): GoAsync<void> => {
         // 调用接口
-        const response = await requester.delete('/auth/signout', { jwt })
+        const response = await requester.delete('/auth/signout', { token: jwt })
         const result = response.data as ResponseData
         // 判断是否成功
         if (result.code !== 10031) return result.message

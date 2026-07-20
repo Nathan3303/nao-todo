@@ -85,11 +85,11 @@ export const buildPomodoroRecord = (params: {
  * @param errorTag 错误日志前缀
  */
 export const persistPomodoroRecord = (
-    addRecord: (record: CreatePomodoroRecordViewObject) => GoAsync<PomodoroRecordViewObject[]>,
+    createRecordFn: (record: CreatePomodoroRecordViewObject) => GoAsync<PomodoroRecordViewObject[]>,
     record: CreatePomodoroRecordViewObject,
     errorTag: string
 ) => {
-    addRecord(record).then(([, err]) => {
+    createRecordFn(record).then(([, err]) => {
         if (err !== null) console.error(errorTag, err)
     })
 }

@@ -1,12 +1,19 @@
 import { APP_CONTEXT_KEY } from '@/context'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
-import { usePomodorosStore } from '@nao-todo/presentation/pomodoro'
+import {
+    usePomodoroFocusStore,
+    usePomodoroRecordsStore,
+    usePomodoroSessionStore,
+    usePomodorosStore,
+    usePomodoroTimerStore
+} from '@nao-todo/presentation/pomodoro'
 import { TASK_DETAILS_PRE_CONTEXT_KEY, useTaskDetailsStore } from '@nao-todo/presentation/task'
 import { responsiveTypes, useAsideWidth, useResponsiveAside } from '@nao-todo/shared'
 import { inject, provide } from 'vue'
 import { POMODORO_VIEW_CONTEXT_KEY } from './context'
 import {
     usePomodoroUseCase,
+    usePomodoroRecordUseCase,
     useTaskCheckItemUseCase,
     useTaskCommentUseCase,
     useTaskUseCase
@@ -14,6 +21,7 @@ import {
 import { storeToRefs } from 'pinia'
 import { useProjectsStore } from '@nao-todo/presentation/project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
+import { TaskViewObject } from '@nao-todo/application'
 
 /**
  * 番茄钟视图上下文提供器
@@ -34,12 +42,19 @@ export const usePomodoroView = () => {
      * @description 实例化常用番茄专注用例，注入常用番茄专注存储
      */
     const pomodoroUseCase = usePomodoroUseCase(usePomodorosStore())
+    const pomodoroRecordUseCase = usePomodoroRecordUseCase(usePomodoroRecordsStore())
 
     // @stores
     const taskDetailsStore = useTaskDetailsStore()
-    const { avaliableProjects } = storeToRefs(useProjectsStore())
     const tagsStore = useTagsStore()
+    const pomodoroSessionStore = usePomodoroSessionStore()
+    const pomodoroTimerStore = usePomodoroTimerStore()
+    const pomodoroFocusStore = usePomodoroFocusStore()
+    const { avaliableProjects } = storeToRefs(useProjectsStore())
     const { tags: avaliableTags } = storeToRefs(tagsStore)
+    const { currentTaskId: pomodoroCurrentTaskId } = storeToRefs(pomodoroSessionStore)
+    const { status: pomodoroTimerStatus } = storeToRefs(pomodoroTimerStore)
+    const { status: pomodoroFocusStatus } = storeToRefs(pomodoroFocusStore)
 
     // @usecase 任务详情面板相关用例
     const taskCheckItemUseCase = useTaskCheckItemUseCase(taskDetailsStore)
@@ -88,11 +103,38 @@ export const usePomodoroView = () => {
     )
 
     /**
+     * 选择任务并启动番茄钟计时器
+     * @param taskId 任务 ID
+     * @param name 任务名称
+     */
+    const selectTaskAndStartTimer = (
+        taskId: TaskViewObject['id'],
+        name: TaskViewObject['name']
+    ) => {
+        pomodoroSessionStore.selectTask(taskId, name)
+        pomodoroTimerStore.start()
+    }
+
+    /**
+     * 选择任务并启动番茄钟专注
+     * @param taskId 任务 ID
+     * @param name 任务名称
+     */
+    const selectTaskAndStartFocus = (
+        taskId: TaskViewObject['id'],
+        name: TaskViewObject['name']
+    ) => {
+        pomodoroSessionStore.selectTask(taskId, name)
+        pomodoroFocusStore.start()
+    }
+
+    /**
      * 提供番茄钟视图上下文
      */
     provide(POMODORO_VIEW_CONTEXT_KEY, {
         taskUseCase,
         pomodoroUseCase,
+        pomodoroRecordUseCase,
         dialogManager: appDialogManager,
         subscriber: appSubscriber,
         asideWidth,
@@ -108,23 +150,26 @@ export const usePomodoroView = () => {
      * 提供任务详情适配器上下文
      */
     provide(TASK_DETAILS_PRE_CONTEXT_KEY, {
-        // ---
         taskUseCase,
         taskCommentUseCase,
         taskCheckItemUseCase,
         subTaskUseCase,
-        // ---
         dialogManager: appDialogManager,
         subscriber: appSubscriber,
-        // ---
         avaliableProjects,
         avaliableTags,
-        // ---
+        pomodoroCurrentTaskId,
+        pomodoroTimerStatus,
+        pomodoroFocusStatus,
         outlineWidth,
         isDisplayOutline,
         isUseFloatOutline,
         handleResizeOutline,
         getTag: tagsStore.getTag,
-        getProjectName
+        getProjectName,
+        selectTaskAndStartTimer,
+        selectTaskAndStartFocus,
+        resetTimer: () => pomodoroTimerStore.reset(),
+        resetFocus: () => pomodoroFocusStore.reset()
     })
 }

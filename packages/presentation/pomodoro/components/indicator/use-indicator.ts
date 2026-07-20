@@ -1,17 +1,10 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { usePomodoroFocusStore, usePomodoroRecordsStore, usePomodoroTimerStore } from '../../stores'
+import { usePomodoroFocusStore, usePomodoroSessionStore, usePomodoroTimerStore } from '../../stores'
 
 export const useIndicator = () => {
-    /**
-     * 前置状态
-     * @use router 路由实例
-     * @use pomodoroStore Pomodoro 状态管理实例
-     * @use pomodoroTimerStore Pomodoro 定时器状态管理实例
-     * @use pomodoroFocusStore Pomodoro 专注状态状态管理实例
-     */
     const router = useRouter()
-    const pomodoroStore = usePomodoroRecordsStore()
+    const sessionStore = usePomodoroSessionStore()
     const pomodoroTimerStore = usePomodoroTimerStore()
     const pomodoroFocusStore = usePomodoroFocusStore()
 
@@ -82,9 +75,9 @@ export const useIndicator = () => {
      * @description 优先读取正计时关联任务，再读取番茄倒计时关联任务
      */
     const taskName = computed(() => {
-        if (pomodoroFocusStore.status !== 'idle') return pomodoroStore.currentTaskName || ''
+        if (pomodoroFocusStore.status !== 'idle') return sessionStore.currentTaskName || ''
         if (pomodoroTimerStore.phase !== 'focus') return ''
-        return pomodoroStore.currentTaskName || ''
+        return sessionStore.currentTaskName || ''
     })
 
     /**

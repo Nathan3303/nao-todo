@@ -1,23 +1,21 @@
+import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
+import type { PomodoroRecordViewObject, PomodoroViewObject } from '@nao-todo/application'
+import { usePomodoroRecordsStore, usePomodorosStore } from '@nao-todo/presentation/pomodoro'
 import { POMODORO_UPDATER_DIALOG_KEY, unwrapError } from '@nao-todo/shared'
-import { computed, onMounted, ref, watch } from 'vue'
-import {
-    usePomodorosStore,
-    type PomodoroRecordViewObject,
-    type PomodoroViewObject
-} from '@nao-todo/presentation/pomodoro'
-import type { PomodoroCollectionProps } from './types'
+import { computed, inject, onMounted, ref, watch } from 'vue'
 
 /**
  * 常用专注页面 composable
  * @description 加载用户创建的常用专注列表，提供主从（列表 + 详情）交互；
  *              选中某条常用专注时，按 pomodoroId 分页加载其专注记录。
  */
-export const usePomodoroCollection = (props: PomodoroCollectionProps) => {
-    // 结构 props 中的用例
-    const { pomodoroUseCase, pomodoroRecordUseCase, dialogManager } = props
+export const usePomodoroCollection = () => {
+    const { pomodoroUseCase, pomodoroRecordUseCase, dialogManager } =
+        inject(POMODORO_VIEW_CONTEXT_KEY)!
 
     // 常用专注 store
     const store = usePomodorosStore()
+    const recordsStore = usePomodoroRecordsStore()
 
     // 加载中状态
     const loading = ref(false)
@@ -38,11 +36,6 @@ export const usePomodoroCollection = (props: PomodoroCollectionProps) => {
     // 专注记录（按 pomodoroId 分页查询）
     // ========================================================================
 
-    /**
-     * 记录视图对象缓存（承接 usecase 写入）
-     */
-    const recordsMap = ref(new Map<string, PomodoroRecordViewObject>())
-
     // 记录加载状态
     const recordLoading = ref(false)
 
@@ -60,11 +53,11 @@ export const usePomodoroCollection = (props: PomodoroCollectionProps) => {
     const currentRecordIds = ref<string[]>([])
 
     /**
-     * 当前页记录（按 ID 从缓存映射）
+     * 当前页记录（按 ID 从 Pinia store 映射）
      */
     const records = computed(() =>
         currentRecordIds.value
-            .map((id) => recordsMap.value.get(id))
+            .map((id) => recordsStore.getRecord(id))
             .filter((r): r is PomodoroRecordViewObject => Boolean(r))
     )
 

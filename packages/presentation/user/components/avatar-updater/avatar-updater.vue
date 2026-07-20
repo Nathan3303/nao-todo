@@ -88,6 +88,7 @@ const handleCropperSuccess = (file: File) => {
                 {{ t('settings.updateAvatarButtonText') }}
             </nue-button>
         </nue-div>
+        <slot></slot>
         <user-avatar-cropper-dialog
             v-model="cropperDialogVisible"
             :file="selectedFile"

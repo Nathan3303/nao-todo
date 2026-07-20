@@ -9,20 +9,18 @@ import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { useBuiltInProjectsStore } from '@nao-todo/presentation/built-in-project'
 import {
     usePomodoroFocusStore,
-    usePomodoroRecordsStore,
+    usePomodoroSessionStore,
     usePomodoroTimerStore
 } from '@nao-todo/presentation/pomodoro'
 import { useProjectsStore } from '@nao-todo/presentation/project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
-import {
-    TASK_DETAILS_PRE_CONTEXT_KEY,
-    useTaskDetailsStore
-} from '@nao-todo/presentation/task'
+import { TASK_DETAILS_PRE_CONTEXT_KEY, useTaskDetailsStore } from '@nao-todo/presentation/task'
 import { columnLabels } from '@nao-todo/domain/task'
 import { responsiveTypes, unwrapError, useAsideWidth, useResponsiveAside } from '@nao-todo/shared'
 import { storeToRefs } from 'pinia'
 import { inject, provide, ref } from 'vue'
 import { TASKS_VIEW_CONTEXT_KEY } from './context'
+import { TaskViewObject } from '@nao-todo/application'
 
 const useTasksView = () => {
     // @context App 上下文
@@ -46,14 +44,14 @@ const useTasksView = () => {
     // @stores
     const taskDetailsStore = useTaskDetailsStore()
     const tagsStore = useTagsStore()
-    const pomodoroRecordsStore = usePomodoroRecordsStore()
+    const pomodoroSessionStore = usePomodoroSessionStore()
     const pomodoroTimerStore = usePomodoroTimerStore()
     const pomodoroFocusStore = usePomodoroFocusStore()
 
     // @presets
     const { avaliableProjects } = storeToRefs(useProjectsStore())
     const { tags: avaliableTags } = storeToRefs(tagsStore)
-    const { currentTaskId: pomodoroCurrentTaskId } = storeToRefs(pomodoroRecordsStore)
+    const { currentTaskId: pomodoroCurrentTaskId } = storeToRefs(pomodoroSessionStore)
     const { status: pomodoroTimerStatus } = storeToRefs(pomodoroTimerStore)
     const { status: pomodoroFocusStatus } = storeToRefs(pomodoroFocusStore)
 
@@ -110,31 +108,52 @@ const useTasksView = () => {
         return (columnLabels.value as Record<string, string>)[key] || ''
     }
 
+    /**
+     * 选择任务并启动番茄钟计时器
+     * @param taskId 任务 ID
+     * @param name 任务名称
+     */
+    const selectTaskAndStartTimer = (
+        taskId: TaskViewObject['id'],
+        name: TaskViewObject['name']
+    ) => {
+        pomodoroSessionStore.selectTask(taskId, name)
+        pomodoroTimerStore.start()
+    }
+
+    /**
+     * 选择任务并启动番茄钟专注
+     * @param taskId 任务 ID
+     * @param name 任务名称
+     */
+    const selectTaskAndStartFocus = (
+        taskId: TaskViewObject['id'],
+        name: TaskViewObject['name']
+    ) => {
+        pomodoroSessionStore.selectTask(taskId, name)
+        pomodoroFocusStore.start()
+    }
+
     // @provide Tasks view context
     provide(TASKS_VIEW_CONTEXT_KEY, {
         builtInProjectUseCase,
         projectUseCase,
         tagUseCase,
         taskUseCase,
-        // ---
         appDialogManager,
         appSubscriber,
-        // ---
         projectHandler,
         tagHandler,
         taskHandler,
-        // ---
         asideWidth,
         isDisplayAside,
         isUseFloatAside,
         switchDisplayAside,
         handleResizeAside,
-        // ---
         outlineWidth,
         isDisplayOutline,
         isUseFloatOutline,
         handleResizeOutline,
-        // ---
         showTaskDetails,
         getProjectName,
         getTagColor,
@@ -143,27 +162,27 @@ const useTasksView = () => {
 
     // @provide TaskDetailsPreContext
     provide(TASK_DETAILS_PRE_CONTEXT_KEY, {
-        // ---
         taskUseCase,
         taskCommentUseCase,
         taskCheckItemUseCase,
         subTaskUseCase,
-        // ---
         dialogManager: appDialogManager,
         subscriber: appSubscriber,
-        // ---
         avaliableProjects,
         avaliableTags,
         pomodoroCurrentTaskId,
         pomodoroTimerStatus,
         pomodoroFocusStatus,
-        // ---
         outlineWidth,
         isDisplayOutline,
         isUseFloatOutline,
         handleResizeOutline,
         getTag: tagsStore.getTag,
-        getProjectName
+        getProjectName,
+        selectTaskAndStartTimer,
+        selectTaskAndStartFocus,
+        resetTimer: () => pomodoroTimerStore.reset(),
+        resetFocus: () => pomodoroFocusStore.reset()
     })
 
     // @returns

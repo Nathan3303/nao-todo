@@ -9,9 +9,6 @@ import { usePomodoroRecordsStore } from '../stores'
 import type { GetPomodoroRecordsOptions, PomodoroRecordViewObject } from '@nao-todo/application/pomodoro/viewobjects'
 import type { PomodoroRecordUseCase } from '@nao-todo/application/pomodoro/usecases'
 
-/**
- * Pomodoro 记录加载器状态
- */
 export type UsePomodoroRecordLoaderStates = {
     recordIds: Set<string>
     loading: boolean
@@ -22,16 +19,12 @@ export type UsePomodoroRecordLoaderStates = {
     disabled: boolean
 }
 
-/**
- * Pomodoro 记录加载器
- * @description 管理 Pomodoro 记录的分页加载、ID 集合和 Store 交互
- */
 export const usePomodoroRecordLoader = (
     pomodoroRecordUseCase: PomodoroRecordUseCase,
     originalGetOptions?: GetPomodoroRecordsOptions,
     subscriber?: Subscriber
 ) => {
-    const pomodoroStore = usePomodoroRecordsStore()
+    const recordsStore = usePomodoroRecordsStore()
 
     // @states
     const states = reactive<UsePomodoroRecordLoaderStates>({
@@ -46,7 +39,7 @@ export const usePomodoroRecordLoader = (
 
     // @computed 当前加载的数据（通过 ID 从 Store 映射）
     const records = computed(() =>
-        [...states.recordIds].map((id) => pomodoroStore.getRecord(id)!).filter(Boolean)
+        [...states.recordIds].map((id) => recordsStore.getRecord(id)!).filter(Boolean)
     )
 
     /**
@@ -163,12 +156,12 @@ export const usePomodoroRecordLoader = (
             prependRecordId(id)
         }
         subscriber.subscribe('AddNewRecordId', handleNewRecordId)
-        pomodoroStore.setOnRecordCreated((record: PomodoroRecordViewObject) => {
+        recordsStore.setOnRecordCreated((record: PomodoroRecordViewObject) => {
             subscriber.emit('AddNewRecordId', record.id)
         })
         onUnmounted(() => {
             subscriber.unsubscribe('AddNewRecordId', handleNewRecordId)
-            pomodoroStore.setOnRecordCreated(null)
+            recordsStore.setOnRecordCreated(null)
         })
     }
 

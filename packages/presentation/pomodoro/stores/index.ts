@@ -1,4 +1,5 @@
 export * from './pomodoro-focus-store'
 export * from './pomodoro-records-store'
+export * from './pomodoro-session-store'
 export * from './pomodoro-timer-store'
 export * from './pomodoros-store'

@@ -10,6 +10,7 @@ import {
 import {
     usePomodoroRecordLoader,
     usePomodoroRecordsStore,
+    usePomodoroSessionStore,
     usePomodoroFocusStore,
     usePomodoroTimerStore,
     type PomodoroViewObject
@@ -35,7 +36,8 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
     const router = useRouter()
     const { showTaskDetails } = inject(POMODORO_VIEW_CONTEXT_KEY)!
 
-    const pomodoroStore = usePomodoroRecordsStore()
+    const recordsStore = usePomodoroRecordsStore()
+    const sessionStore = usePomodoroSessionStore()
     const timerStore = usePomodoroTimerStore()
     const focusStore = usePomodoroFocusStore()
 
@@ -62,14 +64,7 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
     // Record Loader（不过滤 type → 同时展示番茄钟和正计时记录）
     // ========================================================================
 
-    const pomodoroRecordUseCase = usePomodoroRecordUseCase({
-        addRecord: (record) => {
-            pomodoroStore.addRecord(record)
-        },
-        addRecords: (records) => {
-            pomodoroStore.addRecords(records)
-        }
-    })
+    const pomodoroRecordUseCase = usePomodoroRecordUseCase(recordsStore)
 
     const recordLoader = usePomodoroRecordLoader(
         pomodoroRecordUseCase,
@@ -81,33 +76,46 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
         subscriber
     )
 
+    timerStore.setCreateRecordFn(async (record) => {
+        const [result, err] = await pomodoroRecordUseCase.createRecord(record)
+        if (err !== null) return [null, err]
+        sessionStore.setNoteText('')
+        return [[result], null]
+    })
+
+    focusStore.setCreateRecordFn(async (record) => {
+        const [result, err] = await pomodoroRecordUseCase.createRecord(record)
+        if (err !== null) return [null, err]
+        sessionStore.setNoteText('')
+        return [[result], null]
+    })
+
     // ========================================================================
     // Shared
     // ========================================================================
 
-    const taskName = computed(() => pomodoroStore.currentTaskName)
-    const taskId = computed(() => pomodoroStore.currentTaskId)
+    const taskName = computed(() => sessionStore.currentTaskName)
+    const taskId = computed(() => sessionStore.currentTaskId)
 
     const handleSelectTask = (task: TaskViewObject) => {
-        pomodoroStore.selectTask(task.id, task.name)
+        sessionStore.selectTask(task.id, task.name)
     }
 
     const handleClearTask = () => {
-        pomodoroStore.selectTask(null, '')
+        sessionStore.selectTask(null, '')
     }
 
-    const presetId = computed(() => pomodoroStore.currentPomodoroId)
-    const presetName = computed(() => pomodoroStore.currentPomodoroName)
+    const presetId = computed(() => sessionStore.currentPomodoroId)
+    const presetName = computed(() => sessionStore.currentPomodoroName)
 
     const handleSelectPreset = (preset: PomodoroViewObject | null) => {
         if (preset === null) {
-            pomodoroStore.clearPomodoroSelection()
+            sessionStore.clearPomodoroSelection()
             return
         }
-        pomodoroStore.selectPomodoro(preset.id, preset.name)
-        // 套用预设时长（仅番茄专注 timer 模式且空闲时）
+        sessionStore.selectPomodoro(preset.id, preset.name)
         if (activeTab.value === 'timer' && timerStore.phase === 'idle') {
-            pomodoroStore.setFocusDuration(preset.duration)
+            sessionStore.setFocusDuration(preset.duration)
             timerStore.updateConfig()
         }
     }
@@ -264,8 +272,8 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
         presetName,
         handleSelectPreset,
         todayRecords: recordLoader.records,
-        noteText: computed(() => pomodoroStore.noteText),
-        setNoteText: (text: string) => pomodoroStore.setNoteText(text),
+        noteText: computed(() => sessionStore.noteText),
+        setNoteText: (text: string) => sessionStore.setNoteText(text),
         recordLoading: computed(() => recordLoader.states.loading),
         recordIsDone: computed(() => recordLoader.states.isDone),
         handleNextPage,

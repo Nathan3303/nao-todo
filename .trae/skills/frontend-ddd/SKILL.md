@@ -37,7 +37,7 @@ Follow this decision workflow:
 
 For large projects with multiple applications (Web, Desktop, Mobile), use this monorepo structure:
 
-```
+```text
 project-root/
 ├── packages/                          # Shared packages
 │   ├── domain/                        # Pure domain layer
@@ -85,7 +85,7 @@ project-root/
 
 ### Package Dependencies
 
-```
+```text
 packages/domain/          # No external dependencies (pure TypeScript)
         ↑
 packages/application/     # Depends on domain
@@ -126,24 +126,9 @@ src/
 └── main.ts
 ```
 
-### Key Pattern: Composable-Based Business Logic
+### Key Pattern
 
-```typescript
-export function useTask() {
-    const tasks = ref<Task[]>([])
-
-    const loadTasks = async () => {
-        tasks.value = await fetchTasks()
-    }
-
-    const addTask = (title: string) => {
-        if (!title.trim()) throw new Error('Title required')
-        tasks.value.push({ id: uuid(), title, completed: false })
-    }
-
-    return { tasks, loadTasks, addTask }
-}
-```
+**Composable-Based Business Logic**: Encapsulate business logic in Vue composables, called directly by components. See code examples in [refs/patterns-level1.md](refs/patterns-level1.md).
 
 ### Graduation Signals
 
@@ -184,32 +169,14 @@ src/
 
 ### Domain Division Principles
 
-1. **依据业务名词（限界上下文）**：围绕核心实体聚合操作
-2. **识别聚合根（Aggregate Root）**：每个领域至少有一个聚合根
-3. **考量变化频率与耦合度**：经常一起变更的逻辑放在同一领域
-4. **明确价值**：核心域（核心竞争力）、支撑域（辅助）、通用域（可外包）
+1. **Based on business nouns (Bounded Context)**: Aggregate operations around core entities
+2. **Identify Aggregate Roots**: Each domain should have at least one aggregate root
+3. **Consider change frequency and coupling**: Group logic that changes together
+4. **Clarify value**: Core domain (core competitiveness), supporting domain (supporting), generic domain (outsourceable)
 
-### Key Pattern: Pinia Store with Business Rules
+### Key Pattern
 
-```typescript
-export const useTaskStore = defineStore('task', () => {
-    const lists = ref<List[]>([])
-    const tasks = ref<Task[]>([])
-    const currentListId = ref<string | null>(null)
-
-    const currentTasks = computed(() => tasks.value.filter((t) => t.listId === currentListId.value))
-
-    const addTask = (title: string, listId: string) => {
-        if (!title.trim()) throw new Error('任务标题不能为空')
-        const newTask = { id: uuid(), title, listId, completed: false }
-        tasks.value.push(newTask)
-        const list = lists.value.find((l) => l.id === listId)
-        if (list) list.taskIds.push(newTask.id)
-    }
-
-    return { lists, tasks, currentListId, currentTasks, addTask }
-})
-```
+**Pinia Store with Business Rules**: Manage domain state and business rules using Pinia stores. See code examples in [refs/patterns-level2.md](refs/patterns-level2.md).
 
 ### Graduation Signals
 
@@ -307,86 +274,22 @@ packages/
 
 ### Key Patterns
 
-**Cross-Domain Communication via Events:**
+| Pattern                               | Description                                                              | Reference                                                  |
+| ------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| Cross-Domain Communication via Events | Use event bus for decoupled communication between domains                | [refs/patterns-level3-key.md](refs/patterns-level3-key.md) |
+| Domain Component Pattern              | Components that depend on domain stores and implement domain-specific UI | [refs/patterns-level3-key.md](refs/patterns-level3-key.md) |
+| Page Component Pattern (Thin Layer)   | Page components only orchestrate domain components, no business logic    | [refs/patterns-level3-key.md](refs/patterns-level3-key.md) |
 
-```typescript
-// shared/utils/eventBus.ts
-export const eventBus = createEventBus<{
-    'task:completed': Task
-}>()
+### Implementation Patterns (Store & UseCase)
 
-// presentation/task/store/useTaskStore.ts
-const toggleTask = (taskId: string) => {
-    const task = tasks.value.find((t) => t.id === taskId)
-    if (task) {
-        task.completed = !task.completed
-        if (task.completed) eventBus.emit('task:completed', task)
-    }
-}
-
-// presentation/user/store/useUserStore.ts
-eventBus.on('task:completed', () => {
-    userStore.increasePoints(10)
-})
-```
-
-**Domain Component Pattern:**
-
-```vue
-<template>
-    <input v-model="localTitle" @keyup.enter="handleAdd" />
-</template>
-
-<script setup lang="ts">
-import { useTaskStore } from '@nao-todo/presentation/task/store'
-
-const store = useTaskStore()
-const localTitle = ref('')
-
-const handleAdd = () => {
-    if (localTitle.value.trim() && store.currentListId) {
-        store.addTask(localTitle.value, store.currentListId)
-        localTitle.value = ''
-    }
-}
-</script>
-```
-
-**Page Component Pattern (Thin Layer):**
-
-```vue
-<template>
-    <aside>
-        <div
-            v-for="list in taskStore.lists"
-            :key="list.id"
-            @click="taskStore.currentListId = list.id"
-        >
-            {{ list.name }}
-        </div>
-    </aside>
-    <main>
-        <input @keyup.enter="handleAdd" />
-        <TaskItem v-for="task in taskStore.currentTasks" :key="task.id" :task="task" />
-    </main>
-</template>
-
-<script setup lang="ts">
-import { TaskItem } from '@nao-todo/presentation/task/components'
-import { useTaskStore } from '@nao-todo/presentation/task/store'
-
-const taskStore = useTaskStore()
-taskStore.loadData()
-
-const handleAdd = (e: Event) => {
-    const input = e.target as HTMLInputElement
-    if (input.value.trim() && taskStore.currentListId) {
-        taskStore.addTask(input.value, taskStore.currentListId)
-        input.value = ''
-    }
-}
-</script>
-```
+| Pattern                              | Description                                                             | Reference                                                                      |
+| ------------------------------------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Store Base Hook Pattern              | Encapsulate `useMapperStoreBase<T>` to provide domain-specific naming   | [refs/patterns-level3-store-usecase.md](refs/patterns-level3-store-usecase.md) |
+| Thin Store Pattern                   | Pinia store as thin wrapper around store base hook                      | [refs/patterns-level3-store-usecase.md](refs/patterns-level3-store-usecase.md) |
+| Store Responsibility Separation      | Separate data store from session/UI state store                         | [refs/patterns-level3-store-usecase.md](refs/patterns-level3-store-usecase.md) |
+| Store Interface in Application Layer | Define store interfaces in `viewobjects.ts` to decouple UseCase from UI | [refs/patterns-level3-store-usecase.md](refs/patterns-level3-store-usecase.md) |
+| Usecase Factory Function             | Create usecase instances in hooks, injecting store implementations      | [refs/patterns-level3-store-usecase.md](refs/patterns-level3-store-usecase.md) |
+| Callback Injection Pattern           | Expose setter functions instead of direct usecase imports in stores     | [refs/patterns-level3-store-usecase.md](refs/patterns-level3-store-usecase.md) |
 
 ### Graduation Signals
 
@@ -441,118 +344,13 @@ If you have a mixed structure where domain, application, and presentation code a
 
 ### Creating a New Domain (Level 3+)
 
-**Step 1: Create domain layer** (`packages/domain/<domain-name>/`)
+See step-by-step code examples in [refs/quick-start.md](refs/quick-start.md):
 
-```typescript
-// packages/domain/task/entities/task.ts
-export class Task {
-    constructor(
-        public id: string,
-        public title: string,
-        public completed: boolean = false
-    ) {}
-
-    toggle() {
-        this.completed = !this.completed
-    }
-}
-
-// packages/domain/task/repositories/task.ts
-export interface TaskRepository {
-    findById(id: string): Promise<Task | null>
-    findAll(): Promise<Task[]>
-    save(task: Task): Promise<Task>
-    delete(id: string): Promise<void>
-}
-```
-
-**Step 2: Create application layer** (`packages/application/<domain-name>/`)
-
-```typescript
-// packages/application/task/usecases/task.ts
-import { TaskRepository } from '@nao-todo/domain/task/repositories'
-import { Task } from '@nao-todo/domain/task/entities'
-
-export class TaskUseCase {
-    constructor(private repo: TaskRepository) {}
-
-    async create(title: string): Promise<Task> {
-        if (!title.trim()) throw new Error('任务标题不能为空')
-        const task = new Task(uuid(), title)
-        return this.repo.save(task)
-    }
-}
-```
-
-**Step 3: Create presentation layer** (`packages/presentation/<domain-name>/`)
-
-```typescript
-// packages/presentation/task/store/useTaskStore.ts
-import { defineStore } from 'pinia'
-import { TaskUseCase } from '@nao-todo/application/task/usecases'
-import { taskRepository } from '@nao-todo/infrastructure/repositories/task'
-
-export const useTaskStore = defineStore('task', () => {
-    const tasks = ref<Task[]>([])
-    const useCase = new TaskUseCase(taskRepository)
-
-    const loadTasks = async () => {
-        tasks.value = await useCase.findAll()
-    }
-
-    const addTask = async (title: string) => {
-        const task = await useCase.create(title)
-        tasks.value.push(task)
-    }
-
-    return { tasks, loadTasks, addTask }
-})
-```
-
-**Step 4: Create domain component** (`packages/presentation/<domain-name>/components/`)
-
-```vue
-<!-- packages/presentation/task/components/TaskCard.vue -->
-<template>
-    <div :class="{ completed: task.completed }">
-        <input type="checkbox" :checked="task.completed" @change="$emit('toggle')" />
-        <span>{{ task.title }}</span>
-    </div>
-</template>
-
-<script setup lang="ts">
-import type { Task } from '@nao-todo/domain/task/entities'
-
-defineProps<{
-    task: Task
-}>()
-
-defineEmits<{
-    toggle: []
-}>()
-</script>
-```
-
-**Step 5: Use in application** (`apps/web/src/views/TaskPage.vue`)
-
-```vue
-<template>
-    <TaskCard
-        v-for="task in taskStore.tasks"
-        :key="task.id"
-        :task="task"
-        @toggle="taskStore.toggleTask(task.id)"
-    />
-</template>
-
-<script setup lang="ts">
-import { TaskCard } from '@nao-todo/presentation/task/components'
-import { useTaskStore } from '@nao-todo/presentation/task/store'
-
-const taskStore = useTaskStore()
-taskStore.loadTasks()
-</script>
-```
+1. **Create domain layer** — entities and repository interfaces
+2. **Create application layer** — usecases and viewobjects
+3. **Create presentation layer** — stores and hooks
+4. **Create domain component** — UI components
+5. **Use in application** — page orchestration
 
 ### Component Ownership Decision
 
@@ -594,11 +392,11 @@ For code review, verify:
 
 ## Pinia Best Practices
 
-- **按领域拆分 store**：每个领域拥有独立的 store，避免 `useCommonStore`
-- **使用 Setup 语法**：`defineStore(id, () => { ... })`
-- **分离 UI 状态与业务状态**：UI 状态使用组件 `ref` 或 `useUiStore`
-- **避免"巨石 store"**：超过 500 行时抽离到 `composables` 或 `services`
-- **Store 应依赖 UseCase**：通过 UseCase 操作领域模型，避免直接操作
+- **Split stores by domain**: Each domain has its own store, avoid `useCommonStore`
+- **Use Setup syntax**: `defineStore(id, () => { ... })`
+- **Separate UI state from business state**: Use component `ref` or `useUiStore` for UI state
+- **Avoid "god stores"**: Extract to `composables` or `services` when exceeding 500 lines
+- **Stores should depend on UseCases**: Operate domain models through UseCases, avoid direct manipulation
 
 ---
 
@@ -613,20 +411,20 @@ For code review, verify:
 
 ## Common FAQ
 
-**Q1: 如果业务很简单，有必要采用 DDD 吗？**
-A: 不必要。DDD 适合中大型项目。小项目可按功能目录划分，但保持逻辑内聚原则。
+**Q1: Is DDD necessary if the business is simple?**
+A: No. DDD is suitable for medium-to-large projects. Small projects can be organized by feature directories, but maintain the principle of logical cohesion.
 
-**Q2: Pinia store 是否就是领域模型？**
-A: 不完全是。Pinia store 承载状态和行为，是领域模型的实现载体。复杂规则应放在 Domain Service 或 UseCase 中。
+**Q2: Is Pinia store the domain model?**
+A: Not exactly. Pinia store carries state and behavior, serving as the implementation carrier of the domain model. Complex rules should be placed in Domain Service or UseCase.
 
-**Q3: 如何划分领域与子领域？**
-A: 一个业务模块就是一个限界上下文。强关联的子模块可放在领域内的子目录，但不建议嵌套过深。
+**Q3: How to divide domains and subdomains?**
+A: A business module is a bounded context. Strongly related sub-modules can be placed in sub-directories within a domain, but avoid deep nesting.
 
-**Q4: 全局状态（主题、语言）放哪里？**
-A: 放在 `packages/presentation/user/store/` 中，因为它是用户偏好的业务概念。
+**Q4: Where should global state (theme, language) be placed?**
+A: In `packages/presentation/user/store/`, as it is a business concept of user preferences.
 
-**Q5: 包含业务代码的组件如何在应用之间共享？**
-A: 创建 `packages/presentation/` 包，专门存放领域表示层代码（components、stores、hooks），可被多个应用（Web、Desktop、Mobile）共享。
+**Q5: How to share components with business logic across applications?**
+A: Create a `packages/presentation/` package dedicated to domain presentation layer code (components, stores, hooks), which can be shared by multiple applications (Web, Desktop, Mobile).
 
-**Q6: packages/domain/ 和 packages/presentation/ 的区别是什么？**
-A: packages/domain/ 是纯领域模型（无前端依赖），可被任何技术栈使用；packages/presentation/ 是领域的前端实现（依赖 Vue/Pinia），只能被 Vue 应用使用。
+**Q6: What's the difference between packages/domain/ and packages/presentation/?**
+A: packages/domain/ is pure domain model (no frontend dependencies) and can be used by any tech stack; packages/presentation/ is the frontend implementation of the domain (depends on Vue/Pinia) and can only be used by Vue applications.

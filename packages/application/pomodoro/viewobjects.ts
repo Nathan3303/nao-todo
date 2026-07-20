@@ -12,12 +12,10 @@ export type PomodoroStore = {
 
 // Pomodoro 记录存储接口
 export type PomodoroRecordStore = {
-    records: PomodoroRecordViewObject[]
+    records: Map<string, PomodoroRecordViewObject>
     addRecord: (record: PomodoroRecordViewObject) => void
     addRecords: (records: PomodoroRecordViewObject[]) => void
     getRecord: (id: string) => PomodoroRecordViewObject | undefined
-    onRecordCreated: ((record: PomodoroRecordViewObject) => void) | null
-    setOnRecordCreated: (cb: ((record: PomodoroRecordViewObject) => void) | null) => void
 }
 
 /**

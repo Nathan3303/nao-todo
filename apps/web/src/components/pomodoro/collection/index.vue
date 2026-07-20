@@ -3,11 +3,9 @@ import { Pager } from '@nao-todo/shared'
 import dayjs from 'dayjs'
 import { PomodoroHeader } from '../header'
 import { PomodoroRecordListItem } from '@nao-todo/presentation/pomodoro'
-import type { PomodoroCollectionProps } from './types'
 import { usePomodoroCollection } from './use-pomodoro-collection'
 
 defineOptions({ name: 'PomodoroCollectionPage' })
-const props = defineProps<PomodoroCollectionProps>()
 
 const {
     loading,
@@ -24,7 +22,7 @@ const {
     recordTotalPages,
     handleRecordPageChange,
     handleRecordPerPageChange
-} = usePomodoroCollection(props)
+} = usePomodoroCollection()
 
 // 时长格式化（秒 → x 时 x 分 x 秒）
 const durationToString = (duration: number) => {
