@@ -21,13 +21,13 @@ Follow this decision workflow:
 
 ### Five Layers (Bottom-Up)
 
-| Layer | Responsibility | Example Directory |
-|-------|----------------|-------------------|
-| **Infrastructure** | Generic utilities, HTTP client, local storage | `packages/infrastructure/`, `src/shared/` |
-| **Domain** | Pure business logic, entities, value objects, repository interfaces | `packages/domain/` |
-| **Application** | Use cases, view objects, coordinators | `packages/application/` |
-| **Presentation** | Domain-specific components, stores, hooks | `packages/presentation/`, `src/domains/` |
-| **Views** | Page orchestration, routing | `src/views/`, `src/app/` |
+| Layer              | Responsibility                                                      | Example Directory                         |
+| ------------------ | ------------------------------------------------------------------- | ----------------------------------------- |
+| **Infrastructure** | Generic utilities, HTTP client, local storage                       | `packages/infrastructure/`, `src/shared/` |
+| **Domain**         | Pure business logic, entities, value objects, repository interfaces | `packages/domain/`                        |
+| **Application**    | Use cases, view objects, coordinators                               | `packages/application/`                   |
+| **Presentation**   | Domain-specific components, stores, hooks                           | `packages/presentation/`, `src/domains/`  |
+| **Views**          | Page orchestration, routing                                         | `src/views/`, `src/app/`                  |
 
 **Dependency Direction**: Views → Presentation → Application → Domain → Infrastructure (one-way)
 
@@ -131,16 +131,16 @@ src/
 ```typescript
 export function useTask() {
     const tasks = ref<Task[]>([])
-    
+
     const loadTasks = async () => {
         tasks.value = await fetchTasks()
     }
-    
+
     const addTask = (title: string) => {
         if (!title.trim()) throw new Error('Title required')
         tasks.value.push({ id: uuid(), title, completed: false })
     }
-    
+
     return { tasks, loadTasks, addTask }
 }
 ```
@@ -196,19 +196,17 @@ export const useTaskStore = defineStore('task', () => {
     const lists = ref<List[]>([])
     const tasks = ref<Task[]>([])
     const currentListId = ref<string | null>(null)
-    
-    const currentTasks = computed(() => 
-        tasks.value.filter(t => t.listId === currentListId.value)
-    )
-    
+
+    const currentTasks = computed(() => tasks.value.filter((t) => t.listId === currentListId.value))
+
     const addTask = (title: string, listId: string) => {
         if (!title.trim()) throw new Error('任务标题不能为空')
         const newTask = { id: uuid(), title, listId, completed: false }
         tasks.value.push(newTask)
-        const list = lists.value.find(l => l.id === listId)
+        const list = lists.value.find((l) => l.id === listId)
         if (list) list.taskIds.push(newTask.id)
     }
-    
+
     return { lists, tasks, currentListId, currentTasks, addTask }
 })
 ```
@@ -276,28 +274,28 @@ packages/
 
 ### Domain Module Responsibilities
 
-| Module | Responsibility |
-|--------|----------------|
-| `entities/` | Domain entities with identity and behavior |
-| `valueobjects/` | Immutable value objects |
-| `repositories/` | Repository interfaces (no implementation) |
-| `services/` | Domain services (pure business logic) |
+| Module          | Responsibility                             |
+| --------------- | ------------------------------------------ |
+| `entities/`     | Domain entities with identity and behavior |
+| `valueobjects/` | Immutable value objects                    |
+| `repositories/` | Repository interfaces (no implementation)  |
+| `services/`     | Domain services (pure business logic)      |
 
 ### Application Module Responsibilities
 
-| Module | Responsibility |
-|--------|----------------|
-| `usecases/` | Application services that orchestrate domain operations |
+| Module         | Responsibility                                            |
+| -------------- | --------------------------------------------------------- |
+| `usecases/`    | Application services that orchestrate domain operations   |
 | `viewobjects/` | DTOs for UI layer, convert domain entities to view models |
 
 ### Presentation Module Responsibilities
 
-| Module | Responsibility |
-|--------|----------------|
-| `components/` | Domain-specific UI components |
-| `store/` | Pinia stores (state + getters + actions) |
-| `composables/` | Domain-specific composition logic |
-| `services/` | API interactions (implementation of repository interfaces) |
+| Module         | Responsibility                                             |
+| -------------- | ---------------------------------------------------------- |
+| `components/`  | Domain-specific UI components                              |
+| `store/`       | Pinia stores (state + getters + actions)                   |
+| `composables/` | Domain-specific composition logic                          |
+| `services/`    | API interactions (implementation of repository interfaces) |
 
 ### Dependency Rules
 
@@ -319,7 +317,7 @@ export const eventBus = createEventBus<{
 
 // presentation/task/store/useTaskStore.ts
 const toggleTask = (taskId: string) => {
-    const task = tasks.value.find(t => t.id === taskId)
+    const task = tasks.value.find((t) => t.id === taskId)
     if (task) {
         task.completed = !task.completed
         if (task.completed) eventBus.emit('task:completed', task)
@@ -359,8 +357,11 @@ const handleAdd = () => {
 ```vue
 <template>
     <aside>
-        <div v-for="list in taskStore.lists" :key="list.id"
-             @click="taskStore.currentListId = list.id">
+        <div
+            v-for="list in taskStore.lists"
+            :key="list.id"
+            @click="taskStore.currentListId = list.id"
+        >
             {{ list.name }}
         </div>
     </aside>
@@ -419,20 +420,20 @@ const handleAdd = (e: Event) => {
 If you have a mixed structure where domain, application, and presentation code are all in one folder:
 
 1. **Phase 1: Identify and extract pure domain code**
-   - Move entities, valueobjects, repositories, services to `packages/domain/`
-   - Ensure no frontend dependencies
+    - Move entities, valueobjects, repositories, services to `packages/domain/`
+    - Ensure no frontend dependencies
 
 2. **Phase 2: Extract application layer**
-   - Move usecases, viewobjects to `packages/application/`
-   - Update imports to depend on `@nao-todo/domain`
+    - Move usecases, viewobjects to `packages/application/`
+    - Update imports to depend on `@nao-todo/domain`
 
 3. **Phase 3: Extract presentation layer**
-   - Move components, stores, hooks, services to `packages/presentation/`
-   - Update imports to depend on `@nao-todo/domain` and `@nao-todo/application`
+    - Move components, stores, hooks, services to `packages/presentation/`
+    - Update imports to depend on `@nao-todo/domain` and `@nao-todo/application`
 
 4. **Phase 4: Clean up shared layer**
-   - Move domain-specific components from `packages/shared/` to `packages/presentation/`
-   - Ensure shared only contains pure UI components
+    - Move domain-specific components from `packages/shared/` to `packages/presentation/`
+    - Ensure shared only contains pure UI components
 
 ---
 
@@ -445,8 +446,12 @@ If you have a mixed structure where domain, application, and presentation code a
 ```typescript
 // packages/domain/task/entities/task.ts
 export class Task {
-    constructor(public id: string, public title: string, public completed: boolean = false) {}
-    
+    constructor(
+        public id: string,
+        public title: string,
+        public completed: boolean = false
+    ) {}
+
     toggle() {
         this.completed = !this.completed
     }
@@ -470,7 +475,7 @@ import { Task } from '@nao-todo/domain/task/entities'
 
 export class TaskUseCase {
     constructor(private repo: TaskRepository) {}
-    
+
     async create(title: string): Promise<Task> {
         if (!title.trim()) throw new Error('任务标题不能为空')
         const task = new Task(uuid(), title)
@@ -490,16 +495,16 @@ import { taskRepository } from '@nao-todo/infrastructure/repositories/task'
 export const useTaskStore = defineStore('task', () => {
     const tasks = ref<Task[]>([])
     const useCase = new TaskUseCase(taskRepository)
-    
+
     const loadTasks = async () => {
         tasks.value = await useCase.findAll()
     }
-    
+
     const addTask = async (title: string) => {
         const task = await useCase.create(title)
         tasks.value.push(task)
     }
-    
+
     return { tasks, loadTasks, addTask }
 })
 ```
@@ -532,11 +537,11 @@ defineEmits<{
 
 ```vue
 <template>
-    <TaskCard 
-        v-for="task in taskStore.tasks" 
-        :key="task.id" 
-        :task="task" 
-        @toggle="taskStore.toggleTask(task.id)" 
+    <TaskCard
+        v-for="task in taskStore.tasks"
+        :key="task.id"
+        :task="task"
+        @toggle="taskStore.toggleTask(task.id)"
     />
 </template>
 
@@ -551,11 +556,11 @@ taskStore.loadTasks()
 
 ### Component Ownership Decision
 
-| Condition | Location |
-|-----------|----------|
-| Depends on domain types | `packages/presentation/<domain>/components/` |
-| No business meaning | `packages/shared/components/` |
-| Used by ≥2 domains | `packages/shared/components/` |
+| Condition                         | Location                                     |
+| --------------------------------- | -------------------------------------------- |
+| Depends on domain types           | `packages/presentation/<domain>/components/` |
+| No business meaning               | `packages/shared/components/`                |
+| Used by ≥2 domains                | `packages/shared/components/`                |
 | Need to share across applications | `packages/presentation/<domain>/components/` |
 
 ### Forbidden Practices
