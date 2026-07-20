@@ -9,7 +9,7 @@ import {
 import { TaskTagBar } from '../../tag-bar'
 import { inject } from 'vue'
 import { TaskPrioritySelectOptions, TaskStateSelectOptions } from '@nao-todo/domain/task'
-import type { TaskViewObject } from '../../../types'
+import type { TaskViewObject } from '@nao-todo/application'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context.js'
 import DetailsMainComments from './comments.vue'
 import DetailsMainEvents from './events.vue'

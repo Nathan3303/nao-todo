@@ -4,7 +4,7 @@ import type { PomodoroFocusRingProps } from './types'
 
 const props = withDefaults(defineProps<PomodoroFocusRingProps>(), {
     isRunning: false,
-    outerColor: 'var(--nue-primary-color-400)',
+    outerColor: 'var(--nue-primary-color-200)',
     strokeWidth: 6,
     innerColor: 'var(--nue-primary-color-900)',
     scale: 1

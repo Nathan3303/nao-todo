@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, inject } from 'vue'
-import type { TaskDetailsViewObject } from '@nao-todo/application/task/viewobjects'
+import type { TaskDetailsViewObject } from '../types'
 import { NueConfirm } from 'nue-ui'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context'
 

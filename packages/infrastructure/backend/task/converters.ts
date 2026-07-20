@@ -121,10 +121,10 @@ export const updateTaskValueObject2Req = (updateVO: UpdateTaskValueObject): Upda
     if (updateVO.projectId) req.projectId = updateVO.projectId
     if (updateVO.tags) req.tags = updateVO.tags
     if (updateVO.givenUpAt !== void 0) req.givenUpAt = updateVO.givenUpAt
-    if (updateVO.remindAt !== undefined) req.remindAt = updateVO.remindAt
-    if (updateVO.remindRepeat !== undefined) req.remindRepeat = updateVO.remindRepeat
-    if (updateVO.remindTime !== undefined) req.remindTime = updateVO.remindTime
-    if (updateVO.remindWeekdays !== undefined) req.remindWeekdays = updateVO.remindWeekdays
+    if (updateVO.remindAt !== void 0) req.remindAt = updateVO.remindAt
+    if (updateVO.remindRepeat !== void 0) req.remindRepeat = updateVO.remindRepeat
+    if (updateVO.remindTime !== void 0) req.remindTime = updateVO.remindTime
+    if (updateVO.remindWeekdays !== void 0) req.remindWeekdays = updateVO.remindWeekdays
     return req
 }
 

@@ -2,7 +2,7 @@
 import { InputButton, Loading, t } from '@nao-todo/shared'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context'
 import { inject, nextTick, reactive, ref } from 'vue'
-import type { TaskViewObject } from '../../../types'
+import type { TaskViewObject } from '@nao-todo/application'
 import { NueInput } from 'nue-ui'
 
 const {

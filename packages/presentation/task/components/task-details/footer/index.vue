@@ -7,7 +7,7 @@ import {
 } from '@nao-todo/shared'
 import { TaskProjectSelector } from '../../project-selector'
 import { inject } from 'vue'
-import type { TaskViewObject } from '../../../types'
+import type { TaskViewObject } from '@nao-todo/application'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context'
 
 const {

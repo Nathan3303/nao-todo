@@ -70,7 +70,7 @@ export class UpdateTaskValueObject {
                 return '任务开始时间不能晚于结束时间'
             this.startAt = startAt.toISOString()
         }
-        if (this.givenUpAt !== void 0 && this.givenUpAt !== null) {
+        if (this.givenUpAt !== void 0 && this.givenUpAt !== null && this.givenUpAt !== '') {
             const givenUpAt = dayjs(this.givenUpAt)
             if (!givenUpAt.isValid()) return '放弃时间无效'
             if (this.startAt && givenUpAt.isBefore(dayjs(this.startAt)))

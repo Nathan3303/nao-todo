@@ -1,4 +1,8 @@
-import type { TaskViewObject, TaskProjectViewObject, TaskTagViewObject } from '@nao-todo/application/task/viewobjects'
+import type {
+    TaskViewObject,
+    TaskProjectViewObject,
+    TaskTagViewObject
+} from '@nao-todo/application/task/viewobjects'
 
 // 任务详情面板视图对象
 export type TaskDetailsViewObject = TaskViewObject & {

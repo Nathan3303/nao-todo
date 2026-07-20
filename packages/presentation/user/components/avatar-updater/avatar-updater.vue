@@ -22,8 +22,7 @@ const selectedFile = ref<File | null>(null)
 const fullAvatarUrl = computed(() => {
     const url = profile.value?.avatar
     if (!url) return ''
-    if (url.startsWith('http://') || url.startsWith('https://')) return url
-    return `http://localhost:3302${url}`
+    return url
 })
 
 const handleViewAvatar = () => {
