@@ -68,8 +68,16 @@ const handleSignOut = async () => {
                             </nue-div>
                         </nue-div>
                     </user-avatar-updater>
-                    <user-nickname-updater :user-use-case="userUseCase" />
-                    <user-info-viewer />
+                    <nue-divider />
+                    <nue-div vertical gap=".75rem">
+                        <nue-text>{{ t('settings.nickname') }}</nue-text>
+                        <user-nickname-updater :user-use-case="userUseCase" />
+                    </nue-div>
+                    <nue-divider />
+                    <nue-div vertical gap=".75rem">
+                        <nue-text>{{ t('settings.moreInfo') }}</nue-text>
+                        <user-info-viewer />
+                    </nue-div>
                 </nue-div>
             </nue-content>
         </nue-main>

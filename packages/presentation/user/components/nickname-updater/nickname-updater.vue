@@ -31,12 +31,7 @@ const handleUpdateNickname = async () => {
             :placeholder="t('settings.nicknamePlaceholder')"
             maxlength="16"
         />
-        <nue-button
-            theme="primary"
-            :disabled="!isNicknameChanged"
-            :loading="loading"
-            @click="handleUpdateNickname"
-        >
+        <nue-button :disabled="!isNicknameChanged" :loading="loading" @click="handleUpdateNickname">
             {{ t('settings.nicknameSubmit') }}
         </nue-button>
     </nue-div>
