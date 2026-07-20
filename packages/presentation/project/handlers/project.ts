@@ -10,7 +10,10 @@ import {
 } from '@nao-todo/shared'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { useProjectsStore } from '../stores'
-import type { ProjectViewObject, UpdateProjectViewObject } from '@nao-todo/application/project/viewobjects'
+import type {
+    ProjectViewObject,
+    UpdateProjectViewObject
+} from '@nao-todo/application/project/viewobjects'
 import { ProjectUseCase } from '@nao-todo/application/project/usecases'
 
 export class ProjectHandler {
@@ -135,13 +138,13 @@ export class ProjectHandler {
      */
     async deleteProject(projectId: string): GoAsync<void> {
         // 询问用户
-        const [, isByCancel] = await NueConfirm({
+        const [isByCancel] = await NueConfirm({
             title: t('dialog.projectDeleteConfirmTitle'),
             content: t('dialog.projectDeleteConfirmContent'),
             confirmButtonText: t('dialog.confirmDelete'),
             cancelButtonText: t('common.cancel')
         })
-        if (isByCancel) return 'Cancel'
+        if (isByCancel) return 'Canceled'
         // 调用用例
         const deleteError = await this.projectUseCase.delete(projectId)
         // 处理错误

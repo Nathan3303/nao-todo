@@ -181,7 +181,7 @@ export class TaskRepoImpl implements TaskRepository {
     async snooze(id: string, durationMinutes: number): GoAsync<string> {
         // 1. 调用接口
         const response = await this.requester.post(
-            `/tasks/snooze/${id}`,
+            `/tasks/${id}/snooze`,
             { durationMinutes },
             { headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` } }
         )

@@ -27,7 +27,10 @@ const useTaskViewObject = (
      * @param taskId 任务 ID
      */
     const getTaskDetails = async (taskId?: TaskViewObject['id']) => {
-        if (!taskId) return
+        if (!taskId) {
+            task.value = null
+            return
+        }
         error.value = ''
         loading.value = true
         const [_task, err] = await taskUseCase.get(taskId)

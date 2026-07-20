@@ -93,14 +93,10 @@ const useTaskDetails = (props: TaskDetailsProps) => {
     const initialize = async (taskId?: TaskViewObject['id']) => {
         error.value = ''
         // 1. 判断任务 ID
+        await getTaskDetails(taskId) // 必须获取，才能知道是否为空
         if (!taskId) return
         // 2. 并行获取任务详情、检查事项、评论和子任务
-        await Promise.all([
-            getTaskDetails(taskId),
-            loadCheckItems(taskId),
-            loadComments(taskId),
-            loadSubTasks(taskId)
-        ])
+        await Promise.all([loadCheckItems(taskId), loadComments(taskId), loadSubTasks(taskId)])
         return null
     }
 
@@ -108,7 +104,7 @@ const useTaskDetails = (props: TaskDetailsProps) => {
      * 任务详情面板切换与关闭
      */
     const closeDetails = () => {
-        router.push({ name: router.currentRoute.value.name, params: { taskId: '' } })
+        router.push({ name: router.currentRoute.value.name, params: { taskId: void 0 } })
     }
     const switchTaskDetails = (taskId: TaskViewObject['id']) => {
         router.push({ name: router.currentRoute.value.name, params: { taskId } })

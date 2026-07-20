@@ -9,7 +9,11 @@ import type {
 import { t, unwrapError } from '@nao-todo/shared'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import type { useTagsStore } from '../stores'
-import type { CreateTagViewObject, TagViewObject, UpdateTagViewObject } from '@nao-todo/application/tag/viewobjects'
+import type {
+    CreateTagViewObject,
+    TagViewObject,
+    UpdateTagViewObject
+} from '@nao-todo/application/tag/viewobjects'
 import { TagUseCase } from '@nao-todo/application/tag/usecases'
 
 export class TagHandler {
@@ -171,13 +175,13 @@ export class TagHandler {
      * @returns 错误或空
      */
     async deleteTag(tagId: string): GoAsync<void> {
-        const [, isByCancel] = await NueConfirm({
+        const [isByCancel] = await NueConfirm({
             title: t('dialog.tagDeleteConfirmTitle'),
             content: t('dialog.tagDeleteConfirmContent'),
             confirmButtonText: t('dialog.confirmDelete'),
             cancelButtonText: t('common.cancel')
         })
-        if (isByCancel) return 'Cancel'
+        if (isByCancel) return 'Canceled'
         const err = await this.tagUseCase.delete(tagId)
         if (err !== null) {
             NueMessage.error(t('dialog.tagDeleteFailed', { error: unwrapError(err) }))

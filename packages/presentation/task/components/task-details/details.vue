@@ -4,13 +4,12 @@ import DetailsMain from './main/index.vue'
 import DetailsFooter from './footer/index.vue'
 import useTaskDetails from './task-details'
 import { LoadingError } from '@nao-todo/shared'
-import type { TaskDetailsEmits, TaskDetailsProps } from './types'
+import type { TaskDetailsProps } from './types'
 
 defineOptions({ name: 'TaskDetails' })
 const props = defineProps<TaskDetailsProps>()
-const emit = defineEmits<TaskDetailsEmits>()
 
-const { loading, error, task } = useTaskDetails(props, emit)
+const { loading, error, task } = useTaskDetails(props)
 </script>
 
 <template>
