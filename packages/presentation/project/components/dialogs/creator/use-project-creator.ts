@@ -1,7 +1,7 @@
 import { ref, watch } from 'vue'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/shared'
-import type { CreateProjectViewObject } from '../../../types'
+import type { CreateProjectViewObject } from '@nao-todo/application/project/viewobjects'
 import { ProjectCreatorDialogProps } from './types'
 
 /**

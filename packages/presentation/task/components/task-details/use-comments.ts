@@ -3,7 +3,7 @@ import { storeToRefs } from 'pinia'
 import { inject, ref } from 'vue'
 import { TaskCommentHandler } from '../../handlers'
 import type { useTaskDetailsStore } from '../../stores'
-import type { TaskViewObject } from '../../types'
+import type { TaskViewObject } from '@nao-todo/application/task/viewobjects'
 import { TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
 
 type TaskDetailsStore = ReturnType<typeof useTaskDetailsStore>

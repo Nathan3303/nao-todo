@@ -9,10 +9,4 @@
         "task/**/*",
         "user/**/*"
     ],
-    "compilerOptions": {
-        "baseUrl": ".",
-        "paths": {
-            "@nao-todo/domain": ["../domain"]
-        }
-    }
 }

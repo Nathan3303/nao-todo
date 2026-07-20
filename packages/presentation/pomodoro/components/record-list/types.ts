@@ -1,4 +1,4 @@
-import type { PomodoroRecordViewObject } from '../../types'
+import type { PomodoroRecordViewObject } from '@nao-todo/application/pomodoro/viewobjects'
 
 /**
  * 专注记录组件 props

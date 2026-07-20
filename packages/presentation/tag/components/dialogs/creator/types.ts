@@ -1,5 +1,5 @@
 import type { DialogManager, Subscriber } from '@nao-todo/shared'
-import type { TagUseCase } from '../../../usecases'
+import type { TagUseCase } from '@nao-todo/application/tag/usecases'
 
 // 标签创建弹窗 props
 export type TagCreatorDialogProps = {

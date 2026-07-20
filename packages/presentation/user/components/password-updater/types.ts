@@ -1,4 +1,4 @@
-import type { UserUseCase } from '../../usecases'
+import type { UserUseCase } from '@nao-todo/application/user/usecases'
 
 // 定义组件的 props 类型
 export type UserPasswordUpdaterProps = {

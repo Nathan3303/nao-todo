@@ -1,8 +1,8 @@
 import { unwrapError } from '@nao-todo/shared'
 import dayjs from 'dayjs'
 import { ref } from 'vue'
-import type { TaskViewObject, UpdateTaskViewObject } from '../../types'
-import { TaskUseCase } from '../../usecases'
+import type { TaskViewObject, UpdateTaskViewObject } from '@nao-todo/application'
+import { TaskUseCase } from '@nao-todo/application'
 import { TaskDetailsPreContext } from './context'
 import type { TaskDetailsViewObject } from './types'
 

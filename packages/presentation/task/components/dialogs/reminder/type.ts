@@ -1,5 +1,5 @@
 import { DialogManager } from '@nao-todo/shared'
-import { TaskUseCase } from '../../../usecases'
+import type { TaskUseCase } from '@nao-todo/application/task/usecases'
 
 // 任务提醒弹窗属性
 export type TaskReminderDialogProps = {

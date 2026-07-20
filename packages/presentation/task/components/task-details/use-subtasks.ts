@@ -1,9 +1,9 @@
 import { type GoAsync, unwrapError } from '@nao-todo/shared'
 import dayjs from 'dayjs'
-import { computed, inject } from 'vue'
+import { computed, inject, ref } from 'vue'
 import { useTasksLoader } from '../../hooks'
 import type { useTaskDetailsStore } from '../../stores'
-import type { TaskViewObject } from '../../types'
+import type { TaskViewObject } from '@nao-todo/application'
 import { TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
 
 /**
@@ -29,10 +29,13 @@ const useSubTasks = (taskDetailsStore: ReturnType<typeof useTaskDetailsStore>) =
     // @loader 子任务加载器
     const subTaskLoader = useTasksLoader(subTaskUseCase, { limit: 20 })
 
+    // @state 当前父任务 ID
+    const currentParentTaskId = ref<TaskViewObject['id'] | null>(null)
+
     // @state 子任务列表
     const subTasks = computed(() =>
         [...subTaskLoader.states.taskIds]
-            .map((taskId) => taskDetailsStore.getSubTask(taskId)!)
+            .map((taskId) => taskDetailsStore.getTask(taskId)!)
             .filter(Boolean)
     )
 
@@ -49,15 +52,12 @@ const useSubTasks = (taskDetailsStore: ReturnType<typeof useTaskDetailsStore>) =
         return { percentage, text }
     })
 
-    // @state 当前父任务 ID
-    let currentParentTaskId: TaskViewObject['id'] | null = null
-
     /**
      * 加载子任务
      * @param taskId 父任务 ID
      */
     const loadSubTasks = async (taskId: TaskViewObject['id']) => {
-        currentParentTaskId = taskId
+        currentParentTaskId.value = taskId
         taskDetailsStore.setSubTasksLoading(true)
         taskDetailsStore.setSubTasksError('')
         subTaskLoader.states.taskIds.clear()
@@ -77,8 +77,8 @@ const useSubTasks = (taskDetailsStore: ReturnType<typeof useTaskDetailsStore>) =
      * 重试加载子任务
      */
     const retrySubTasks = async () => {
-        if (!currentParentTaskId) return
-        await loadSubTasks(currentParentTaskId)
+        if (!currentParentTaskId.value) return
+        await loadSubTasks(currentParentTaskId.value)
     }
 
     /**
@@ -88,9 +88,9 @@ const useSubTasks = (taskDetailsStore: ReturnType<typeof useTaskDetailsStore>) =
      * @param name 子任务名称
      */
     const createSubTask = async (name: TaskViewObject['name']): GoAsync<void> => {
-        if (!currentParentTaskId) return '缺少父任务 ID'
+        if (!currentParentTaskId.value) return '缺少父任务 ID'
         const [task, err] = await subTaskUseCase.create({
-            parentTaskId: currentParentTaskId,
+            parentTaskId: currentParentTaskId.value,
             projectId: null,
             name,
             description: '',

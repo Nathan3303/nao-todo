@@ -1,5 +1,5 @@
 import type { TriggerHandler } from '../trigger-registry'
-import type { TaskTagViewObject } from '../../../types'
+import type { TaskTagViewObject } from '@nao-todo/application/task/viewobjects'
 
 export const tagHandler: TriggerHandler = {
     character: '#',

@@ -1,5 +1,5 @@
-import type { ThemeMode } from "../../types"
-import { UserUseCase } from "../../usecases"
+import type { ThemeMode } from '@nao-todo/application/user/viewobjects'
+import type { UserUseCase } from '@nao-todo/application/user/usecases'
 
 export type ThemeSetterOption = {
     value: ThemeMode

@@ -1,5 +1,5 @@
 import { TagDomain } from '@nao-todo/domain/tag'
-import { TagPreferenceRepoImpl, TagRepoImpl } from '@nao-todo/infrastructure/backend/tag'
+import { TagPreferenceRepository, TagRepository } from '@nao-todo/domain/tag/repositories'
 import type { GoAsync } from '@nao-todo/shared'
 import {
     createTagViewObjectToValueObject,
@@ -29,8 +29,8 @@ export class TagUseCase {
      */
     constructor(
         private tagDomain: TagDomain,
-        private tagRepo: TagRepoImpl,
-        private tagPreferenceRepo: TagPreferenceRepoImpl,
+        private tagRepo: TagRepository,
+        private tagPreferenceRepo: TagPreferenceRepository,
         private store: TagStore
     ) {}
 

@@ -1,4 +1,4 @@
-import type { TaskViewObject, TaskTagViewObject } from '../../types'
+import type { TaskViewObject, TaskTagViewObject } from '@nao-todo/application/task/viewobjects'
 
 export type TaskTagBarProps = {
     /**

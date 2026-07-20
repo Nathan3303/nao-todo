@@ -3,7 +3,7 @@ import { debounce, t, unwrapError } from '@nao-todo/shared'
 import { NueMessage } from 'nue-ui'
 import { computed, ref } from 'vue'
 import { useThemeStore } from '../../stores'
-import type { ThemeMode } from '../../types'
+import type { ThemeMode } from '@nao-todo/application/user/viewobjects'
 import type { ThemeSetterOption, ThemeSetterProps } from './types'
 
 defineOptions({ name: 'ThemeSetter' })

@@ -1,5 +1,5 @@
 import type { TriggerHandler } from '../trigger-registry'
-import type { TaskProjectViewObject } from '../../../types'
+import type { TaskProjectViewObject } from '@nao-todo/application/task/viewobjects'
 
 export const projectHandler: TriggerHandler = {
     character: '@',

@@ -2,7 +2,7 @@ import { unwrapError } from '@nao-todo/shared'
 import { NueMessage } from 'nue-ui'
 import { computed, ref } from 'vue'
 import { useTasksStore } from '../../../stores'
-import type { SSEReminderEvent, TaskViewObject } from '../../../types'
+import type { SSEReminderEvent, TaskViewObject } from '@nao-todo/application/task/viewobjects'
 import { TaskReminderDialogProps } from './type'
 
 export const SNOOZE_OPTIONS = [

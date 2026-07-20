@@ -1,7 +1,7 @@
 import { unwrapError } from '@nao-todo/shared'
 import { computed, reactive } from 'vue'
 import { useTasksStore } from '../../../stores'
-import type { TaskViewObject } from '../../../types'
+import type { TaskViewObject } from '@nao-todo/application/task/viewobjects'
 import type { ParentTaskSelectorPayload, TaskParentSelectorDialogProps } from './types'
 
 export const useParentTaskSelector = (props: TaskParentSelectorDialogProps) => {

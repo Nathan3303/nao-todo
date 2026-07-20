@@ -7,9 +7,11 @@ import type {
     TaskProjectViewObject,
     TaskTagViewObject,
     TaskViewObject,
-    UpdateTaskViewObject
-} from '../../types'
-import type { TaskCheckItemUseCase, TaskCommentUseCase, TaskUseCase } from '../../usecases'
+    UpdateTaskViewObject,
+    TaskCheckItemUseCase,
+    TaskCommentUseCase,
+    TaskUseCase
+} from '@nao-todo/application'
 import type { TaskDetailsViewObject } from './types'
 
 // 任务详情上下文

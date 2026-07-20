@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import dayjs from 'dayjs'
-import type { PomodoroRecordViewObject } from '../../types'
+import type { PomodoroRecordViewObject } from '@nao-todo/application/pomodoro/viewobjects'
 
 defineOptions({ name: 'PomodoroRecordsCompRow' })
 
