@@ -1,11 +1,11 @@
-import { USER_PASSWORD_REGEXP } from '@nao-todo/infrastructure/consts/auth'
-import type { Go } from '@nao-todo/types'
+import { USER_PASSWORD_REGEXP } from '../constants'
+import type { Go } from '@nao-todo/shared'
 
 /**
  * 更新用户密码值对象
  * @description 更新用户密码值对象，包含旧密码和新密码
  */
-export class UpdatePasswordValueObject {
+export class UpdateUserPasswordValueObject {
     /**
      * 加密后的密码
      * @description 加密后的密码 ，用于登录时校验密码是否正确
@@ -56,4 +56,3 @@ export class UpdatePasswordValueObject {
         return [this.encryptedPassword, null]
     }
 }
-

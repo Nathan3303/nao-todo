@@ -1,49 +1,50 @@
-import type { GoAsync, ResponseDataPagination } from '@nao-todo/types'
+import type { GoAsync, ResponseDataPagination } from '@nao-todo/shared'
 import { TaskEntity } from '../entities'
 import { CreateTaskValueObject, UpdateTaskValueObject } from '../valueobjects'
 
 /**
- * 任务仓库接口
+ * TaskRepository 任务仓库接口
  * @description 任务仓库接口，定义了任务的CRUD操作
  */
 export interface TaskRepository {
     /**
-     * 获取任务
-     * @param taskId 任务ID
+     * get 获取任务
+     * @param id 任务ID
      * @returns 任务实体
      */
-    get(taskId: string): GoAsync<TaskEntity>
+    get(id: string): GoAsync<TaskEntity>
 
     /**
-     * 创建任务
-     * @param createTaskValueObject 创建任务值对象
+     * create 创建任务
+     * @param createVO 创建任务值对象
      * @returns 任务实体
      */
-    create(createTaskValueObject: CreateTaskValueObject): GoAsync<TaskEntity>
+    create(createVO: CreateTaskValueObject): GoAsync<TaskEntity>
 
     /**
-     * 更新任务
-     * @param taskId 任务ID
-     * @param updateTaskValueObject
+     * update 更新任务
+     * @param id 任务ID
+     * @param updateVO 更新任务值对象
+     * @returns 更新错误信息
      */
-    update(taskId: string, updateTaskValueObject: UpdateTaskValueObject): GoAsync<string>
+    update(id: string, updateVO: UpdateTaskValueObject): GoAsync<void>
 
     /**
-     * 删除任务
-     * @param taskId 任务ID
+     * remove 删除任务
+     * @param id 任务ID
      * @returns 错误信息
      */
-    remove(taskId: string): GoAsync<void>
+    remove(id: string): GoAsync<void>
 
     /**
-     * 恢复任务
-     * @param taskId 任务ID
+     * restore 恢复任务
+     * @param id 任务ID
      * @returns 错误信息
      */
-    restore(taskId: string): GoAsync<void>
+    restore(id: string): GoAsync<void>
 
     /**
-     * 获取任务列表
+     * list 获取任务列表
      * @param queryString 查询字符串
      * @returns 任务实体列表和分页信息
      */
@@ -52,18 +53,17 @@ export interface TaskRepository {
     ): GoAsync<{ taskEntities: TaskEntity[]; pagination?: ResponseDataPagination }>
 
     /**
-     * 复制任务
-     * @param taskId 任务ID
+     * copy 复制任务
+     * @param id 任务ID
      * @returns 任务实体
      */
-    copy(taskId: string): GoAsync<TaskEntity>
+    copy(id: string): GoAsync<TaskEntity>
 
     /**
-     * 稍后提醒
-     * @param taskId 任务ID
+     * snooze 稍后提醒
+     * @param id 任务ID
      * @param durationMinutes 延迟分钟数（1-1440）
      * @returns 新的提醒时间
      */
-    snooze(taskId: string, durationMinutes: number): GoAsync<string>
+    snooze(id: string, durationMinutes: number): GoAsync<string>
 }
-

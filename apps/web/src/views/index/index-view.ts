@@ -1,54 +1,33 @@
-import type { AppContext } from '@/app'
-import { APP_CONTEXT_KEY, INDEX_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import useResponsiveAside from '@/infrastructure/hooks/use-responsive-aside'
-import { useDialogManager, type DialogManager } from '@/infrastructure/hooks/use-dialog-manager'
-import { useThemeStore, useUserStore, type ThemeMode } from '@/stores'
-import { useProjectsStore, useTagsStore, useTasksStore } from '@/stores'
-import { UserUseCase } from '@nao-todo/application/web/usecases/user'
-import { ProjectUseCase } from '@nao-todo/application/web/usecases/project'
-import { TagUseCase } from '@nao-todo/application/web/usecases/tag'
-import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
-import useSubscriber, { type Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
-import { inject, provide, ref, type Ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { APP_CONTEXT_KEY } from '@/context'
+import {
+    useProjectUseCase,
+    useScope,
+    useShortcut,
+    useTagUseCase,
+    useTaskUseCase,
+    useUserUseCase
+} from '@/hooks'
+import { LAST_VISITED_ROUTE_KEY } from '@/router'
+import { ProjectHandler, useProjectsStore } from '@nao-todo/presentation/project'
+import type { ProjectViewObject } from '@nao-todo/application/project/viewobjects'
+import { TagHandler, useTagsStore } from '@nao-todo/presentation/tag'
+import type { TagViewObject } from '@nao-todo/application/tag/viewobjects'
+import { TaskHandler, useTasksStore } from '@nao-todo/presentation/task'
+import type { TaskViewObject } from '@nao-todo/application/task/viewobjects'
+import { type ThemeMode, useThemeStore, useUserStore } from '@nao-todo/presentation/user'
+import type { SSEReminderEvent } from '@nao-todo/shared'
 import {
     PROJECT_CREATOR_DIALOG_KEY,
+    responsiveTypes,
     TASK_CREATOR_DIALOG_KEY,
-    TASK_REMINDER_DIALOG_KEY
-} from '@/infrastructure/constants/dialog-keys'
-import type {
-    ProjectViewObject,
-    SSEReminderEvent,
-    TagViewObject,
-    TaskViewObject
-} from '@nao-todo/types'
-import { LAST_VISITED_ROUTE_KEY } from '@/router'
-import useScope from '@/infrastructure/hooks/use-scope'
-import useShortcut from '@/infrastructure/hooks/use-shortcut'
-
-/**
- * 首页视图上下文
- * @description 包含首页视图的所有上下文数据，包括应用上下文、用户使用案例、对话框管理器、
- *              项目使用案例、标签使用案例、任务使用案例、事件订阅器、边栏响应式状态等。
- */
-export type IndexViewContext = {
-    appContext: AppContext
-    userUseCase: UserUseCase
-    dialogManager: DialogManager
-    projectUseCase: ProjectUseCase
-    tagUseCase: TagUseCase
-    taskUseCase: TaskUseCase
-    subscriber: Subscriber
-    isDisplayAside: Ref<boolean>
-    isUseFloatAside: Ref<boolean>
-    switchDisplayAside: () => void
-    isDisplayOutline: Ref<boolean>
-    isUseFloatOutline: Ref<boolean>
-    showTaskDetails: (taskId: TaskViewObject['id']) => void
-    getProjectName: (projectId: ProjectViewObject['id']) => ProjectViewObject['name']
-    getTagColor: (tagId: TagViewObject['id']) => TagViewObject['color']
-}
+    TASK_REMINDER_DIALOG_KEY,
+    useDialogManager,
+    useResponsiveAside,
+    useSubscriber
+} from '@nao-todo/shared'
+import { inject, provide, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { INDEX_VIEW_CONTEXT_KEY } from './context'
 
 /**
  * 首页视图
@@ -57,46 +36,35 @@ export type IndexViewContext = {
  * @returns 首页视图上下文
  */
 const useIndexView = () => {
-    /**
-     * 应用上下文
-     */
-    const appContext = inject<AppContext>(APP_CONTEXT_KEY)!
+    // @context App 上下文
+    const { responsiveFlag } = inject(APP_CONTEXT_KEY)!
 
-    /**
-     * 路由实例
-     * @description 用于导航到其他路由。
-     */
+    // @router 路由实例
     const route = useRoute()
     const router = useRouter()
 
-    /**
-     * 内存存储
-     * @description 用于存储用户配置、主题模式、项目列表、标签列表、任务列表等内存数据。
-     */
+    // @stores
     const userStore = useUserStore()
     const themeStore = useThemeStore()
     const projectsStore = useProjectsStore()
     const tagsStore = useTagsStore()
     const tasksStore = useTasksStore()
 
-    /**
-     * 用例
-     */
-    const userUseCase = UserUseCase.create(userStore)
-    const projectUseCase = ProjectUseCase.create(projectsStore)
-    const tagUseCase = TagUseCase.create(tagsStore)
-    const taskUseCase = TaskUseCase.create(tasksStore)
+    // @usecases
+    const userUseCase = useUserUseCase(userStore)
+    const projectUseCase = useProjectUseCase(projectsStore)
+    const tagUseCase = useTagUseCase(tagsStore)
+    const taskUseCase = useTaskUseCase(tasksStore)
 
-    /**
-     * 对话框管理器
-     */
-    const dialogManager = useDialogManager()
+    // @dialogManager 对话框管理器
+    // @subscriber 事件订阅器
+    const appDialogManager = useDialogManager()
+    const appSubscriber = useSubscriber()
 
-    /**
-     * 事件订阅器
-     * @use 用于订阅事件，例如用户点击按钮、滚动页面等。
-     */
-    const subscriber = useSubscriber()
+    // @handlers 处理层
+    const projectHandler = new ProjectHandler(projectUseCase, projectsStore, appSubscriber)
+    const tagHandler = new TagHandler(tagUseCase, tagsStore, appSubscriber)
+    const taskHandler = new TaskHandler(taskUseCase, appSubscriber)
 
     /**
      * 快捷键管理器
@@ -104,8 +72,8 @@ const useIndexView = () => {
      * @use p 创建项目
      */
     useScope('index-view')
-    useShortcut('task.create', 'n', () => dialogManager.open(TASK_CREATOR_DIALOG_KEY))
-    useShortcut('project.create', 'p', () => dialogManager.open(PROJECT_CREATOR_DIALOG_KEY))
+    useShortcut('task.create', 'n', () => appDialogManager.open(TASK_CREATOR_DIALOG_KEY))
+    useShortcut('project.create', 'p', () => appDialogManager.open(PROJECT_CREATOR_DIALOG_KEY))
 
     /**
      * 边栏响应式状态
@@ -114,18 +82,11 @@ const useIndexView = () => {
         visible: isDisplayAside,
         isFloating: isUseFloatAside,
         switchVisible: switchDisplayAside
-    } = useResponsiveAside(appContext.responsiveFlag, responsiveTypes.MOBILE)
+    } = useResponsiveAside(responsiveFlag, responsiveTypes.MOBILE)
     const { visible: isDisplayOutline, isFloating: isUseFloatOutline } = useResponsiveAside(
-        appContext.responsiveFlag,
+        responsiveFlag,
         responsiveTypes.MOBILE_TABLE
     )
-
-    /**
-     * 从用户配置加载主题模式并应用到主题存储
-     */
-    const loadUserThemeModeFromConfig = () => {
-        themeStore.updateTheme(userStore.config?.appearance as ThemeMode | 'system')
-    }
 
     /**
      * 显示任务详情抽屉
@@ -136,21 +97,10 @@ const useIndexView = () => {
     }
 
     /**
-     * 获取项目名称
-     * @param projectId 项目 ID
-     * @returns 项目名称
+     * 从用户配置加载主题模式并应用到主题存储
      */
-    const getProjectName = (projectId: ProjectViewObject['id']) => {
-        return projectsStore.projects.find((p) => p.id === projectId)?.name || ''
-    }
-
-    /**
-     * 获取标签颜色
-     * @param tagId 标签 ID
-     * @returns 标签颜色
-     */
-    const getTagColor = (tagId: TagViewObject['id']) => {
-        return tagsStore.getTag(tagId)?.color || 'transparent'
+    const loadUserThemeModeFromConfig = () => {
+        themeStore.updateTheme(userStore.config?.appearance as ThemeMode | 'system')
     }
 
     /**
@@ -168,7 +118,7 @@ const useIndexView = () => {
         // 监听提醒事件
         es.addEventListener('reminder', (event: MessageEvent) => {
             const data = JSON.parse(event.data) as SSEReminderEvent
-            dialogManager.open(TASK_REMINDER_DIALOG_KEY, data)
+            appDialogManager.open(TASK_REMINDER_DIALOG_KEY, data)
             // 显示通知
             if ('Notification' in window && Notification.permission === 'granted') {
                 const notification = new Notification(data.taskName, {
@@ -212,21 +162,46 @@ const useIndexView = () => {
     }
 
     /**
+     * 获取项目名称
+     * @param id 项目ID
+     * @returns 项目名称
+     */
+    const getProjectName = (id: ProjectViewObject['id']): ProjectViewObject['name'] => {
+        return projectHandler.getProjectName(id)
+    }
+
+    /**
+     * 获取标签颜色
+     * @param id 标签ID
+     * @returns 标签颜色
+     */
+    const getTagColor = (id: TagViewObject['id']): TagViewObject['color'] => {
+        return tagHandler.getTagColor(id)
+    }
+
+    /**
      * 提供首页视图上下文
      */
-    provide<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY, {
-        appContext,
+    provide(INDEX_VIEW_CONTEXT_KEY, {
+        // usecases
         userUseCase,
-        dialogManager,
         projectUseCase,
         tagUseCase,
         taskUseCase,
-        subscriber,
+        // managers
+        appDialogManager,
+        appSubscriber,
+        // handlers
+        projectHandler,
+        tagHandler,
+        taskHandler,
+        // responsive
         isDisplayAside,
         isUseFloatAside,
         switchDisplayAside,
         isDisplayOutline,
         isUseFloatOutline,
+        // methods
         showTaskDetails,
         getProjectName,
         getTagColor
@@ -237,5 +212,3 @@ const useIndexView = () => {
 }
 
 export default useIndexView
-
-

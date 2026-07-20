@@ -1,6 +1,4 @@
-export * from './timer'
-export * from './focus'
-export * from './records'
-export * from './notes'
-export * from './indicator'
-export * from './focus-ring'
+import DialogAdapter from './dialog-adapter.vue'
+
+export * from './aside'
+export const PomodoroDialogAdapter = DialogAdapter

@@ -1,4 +1,4 @@
-import type { CreateTaskViewObject } from '@nao-todo/types'
+import type { BuiltInProjectCreateTaskOptions } from '../types'
 
 /**
  * 内置清单
@@ -19,8 +19,6 @@ export class BuiltInProjectEntity {
         public icon: string,
         public description: string,
         public createTaskOptions:
-            | (() => Partial<CreateTaskViewObject>)
-            | Partial<CreateTaskViewObject>
+            (() => BuiltInProjectCreateTaskOptions) | BuiltInProjectCreateTaskOptions
     ) {}
 }
-

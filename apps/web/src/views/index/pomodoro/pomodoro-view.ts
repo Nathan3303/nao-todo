@@ -1,35 +1,19 @@
-import { inject, provide, Ref } from 'vue'
+import { APP_CONTEXT_KEY } from '@/context'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
+import { usePomodorosStore } from '@nao-todo/presentation/pomodoro'
+import { TASK_DETAILS_PRE_CONTEXT_KEY, useTaskDetailsStore } from '@nao-todo/presentation/task'
+import { responsiveTypes, useAsideWidth, useResponsiveAside } from '@nao-todo/shared'
+import { inject, provide } from 'vue'
+import { POMODORO_VIEW_CONTEXT_KEY } from './context'
 import {
-    APP_CONTEXT_KEY,
-    INDEX_VIEW_CONTEXT_KEY,
-    POMODORO_VIEW_CONTEXT_KEY
-} from '@/infrastructure/constants/context-keys'
-import useResponsiveAside from '@/infrastructure/hooks/use-responsive-aside'
-import useAsideWidth from '@nao-todo/infrastructure/hooks/use-aside-width'
-import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
-import type { AppContext } from '@/app'
-import { TaskDetailsPreContext } from '@/layouts/app/task-details/types'
-import { TASK_DETAILS_PRE_CONTEXT_KEY } from '@/layouts/app/task-details/constants'
-import { IndexViewContext } from '../index-view'
-import DialogManager from '@/infrastructure/hooks/use-dialog-manager'
-import { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
-
-/**
- * 番茄钟视图上下文
- */
-export type PomodoroViewContext = {
-    asideWidth: Ref<string>
-    isDisplayAside: Ref<boolean>
-    isUseFloatAside: Ref<boolean>
-    handleResizeAside: (width: number) => void
-    switchDisplayAside: () => void
-    dialogManager: DialogManager
-    taskUseCase: TaskUseCase
-    subscriber: Subscriber
-    getProjectName: (projectId: string) => string
-    showTaskDetails: (taskId: string) => void
-}
+    usePomodoroUseCase,
+    useTaskCheckItemUseCase,
+    useTaskCommentUseCase,
+    useTaskUseCase
+} from '@/hooks'
+import { storeToRefs } from 'pinia'
+import { useProjectsStore } from '@nao-todo/presentation/project'
+import { useTagsStore } from '@nao-todo/presentation/tag'
 
 /**
  * 番茄钟视图上下文提供器
@@ -41,9 +25,26 @@ export const usePomodoroView = () => {
      * @inject APP_CONTEXT_KEY - 应用上下文
      * @inject INDEX_VIEW_CONTEXT_KEY - 主要视图上下文
      */
-    const { responsiveFlag } = inject<AppContext>(APP_CONTEXT_KEY)!
-    const { taskUseCase, dialogManager, subscriber, getProjectName, showTaskDetails } =
-        inject<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY)!
+    const { responsiveFlag } = inject(APP_CONTEXT_KEY)!
+    const { taskUseCase, appDialogManager, appSubscriber, getProjectName, showTaskDetails } =
+        inject(INDEX_VIEW_CONTEXT_KEY)!
+
+    /**
+     * 常用番茄专注用例
+     * @description 实例化常用番茄专注用例，注入常用番茄专注存储
+     */
+    const pomodoroUseCase = usePomodoroUseCase(usePomodorosStore())
+
+    // @stores
+    const taskDetailsStore = useTaskDetailsStore()
+    const { avaliableProjects } = storeToRefs(useProjectsStore())
+    const tagsStore = useTagsStore()
+    const { tags: avaliableTags } = storeToRefs(tagsStore)
+
+    // @usecase 任务详情面板相关用例
+    const taskCheckItemUseCase = useTaskCheckItemUseCase(taskDetailsStore)
+    const taskCommentUseCase = useTaskCommentUseCase(taskDetailsStore)
+    const subTaskUseCase = useTaskUseCase(taskDetailsStore)
 
     /**
      * 响应式侧边栏
@@ -89,15 +90,16 @@ export const usePomodoroView = () => {
     /**
      * 提供番茄钟视图上下文
      */
-    provide<PomodoroViewContext>(POMODORO_VIEW_CONTEXT_KEY, {
+    provide(POMODORO_VIEW_CONTEXT_KEY, {
+        taskUseCase,
+        pomodoroUseCase,
+        dialogManager: appDialogManager,
+        subscriber: appSubscriber,
         asideWidth,
         isDisplayAside,
         isUseFloatAside,
         handleResizeAside,
         switchDisplayAside,
-        dialogManager,
-        taskUseCase,
-        subscriber,
         getProjectName,
         showTaskDetails
     })
@@ -105,15 +107,24 @@ export const usePomodoroView = () => {
     /**
      * 提供任务详情适配器上下文
      */
-    provide<TaskDetailsPreContext>(TASK_DETAILS_PRE_CONTEXT_KEY, {
+    provide(TASK_DETAILS_PRE_CONTEXT_KEY, {
+        // ---
+        taskUseCase,
+        taskCommentUseCase,
+        taskCheckItemUseCase,
+        subTaskUseCase,
+        // ---
+        dialogManager: appDialogManager,
+        subscriber: appSubscriber,
+        // ---
+        avaliableProjects,
+        avaliableTags,
+        // ---
+        outlineWidth,
         isDisplayOutline,
         isUseFloatOutline,
-        outlineWidth,
         handleResizeOutline,
-        taskUseCase,
-        subscriber,
-        dialogManager,
+        getTag: tagsStore.getTag,
         getProjectName
     })
 }
-

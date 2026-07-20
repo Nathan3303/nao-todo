@@ -1,7 +1,4 @@
-import TaskTable from './table'
-import TaskKanban from './kanban'
-import TaskList from './list'
-
-export * from './smartlists'
-export { TaskTable, TaskKanban, TaskList }
-
+export * from './aside'
+export * from './built-in-project'
+export * from './project'
+export * from './tag'

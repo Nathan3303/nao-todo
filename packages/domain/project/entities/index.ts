@@ -1,2 +1,3 @@
-export { ProjectEntity } from './project'
-export { ProjectPreferenceEntity } from './project-preference'
+export * from './project'
+export * from './project-preference'
+

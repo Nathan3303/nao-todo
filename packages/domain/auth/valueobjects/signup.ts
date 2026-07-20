@@ -1,5 +1,5 @@
-import { USER_PASSWORD_REGEXP } from '@nao-todo/infrastructure/consts/auth'
-import type { Go } from '@nao-todo/types'
+import { USER_PASSWORD_REGEXP } from '../constants'
+import type { Go } from '@nao-todo/shared'
 
 /**
  * 注册值对象

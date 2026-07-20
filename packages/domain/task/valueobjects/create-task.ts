@@ -1,4 +1,4 @@
-import type { Go } from '@nao-todo/types'
+import type { Go } from '@nao-todo/shared'
 import dayjs from 'dayjs'
 
 /**
@@ -9,6 +9,7 @@ export class CreateTaskValueObject {
     /**
      * 创建任务值对象构造函数
      * @param userId 用户ID
+     * @param parentTaskId 父任务ID
      * @param name 任务名称
      * @param description 任务描述
      * @param state 任务状态
@@ -23,7 +24,8 @@ export class CreateTaskValueObject {
      * @param remindWeekdays 提醒星期几
      */
     constructor(
-        public userId: string,
+        public userId: string | null,
+        public parentTaskId: string | null,
         public name: string,
         public description: string,
         public state: string,
@@ -51,7 +53,10 @@ export class CreateTaskValueObject {
             return '任务状态无效'
         if (this.priority && !['low', 'medium', 'high'].includes(this.priority))
             return '任务优先级无效'
-        if (this.remindRepeat && !['none', 'daily', 'weekly', 'monthly'].includes(this.remindRepeat))
+        if (
+            this.remindRepeat &&
+            !['none', 'daily', 'weekly', 'monthly'].includes(this.remindRepeat)
+        )
             return '提醒重复类型无效'
         if (this.remindTime && !/^\d{2}:\d{2}$/.test(this.remindTime))
             return '提醒时间格式无效（应为 HH:mm）'
@@ -59,12 +64,14 @@ export class CreateTaskValueObject {
             const remindAt = dayjs(this.remindAt)
             if (!remindAt.isValid()) return '提醒时间无效'
         }
-        const entAt = dayjs(this.endAt)
-        if (!entAt.isValid()) return '任务结束时间无效'
+        if (this.endAt) {
+            const endAt = dayjs(this.endAt)
+            if (!endAt.isValid()) return '任务结束时间无效'
+        }
         if (this.startAt) {
             const startAt = dayjs(this.startAt)
             if (!startAt.isValid()) return '任务开始时间无效'
-            if (startAt.isAfter(entAt)) return '任务开始时间不能晚于结束时间'
+            if (startAt.isAfter(dayjs(this.endAt))) return '任务开始时间不能晚于结束时间'
         }
         return null
     }
@@ -89,8 +96,5 @@ export class CreateTaskValueObject {
         // console.log(this.startAt)
     }
 }
-
-
-
 
 

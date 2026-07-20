@@ -1,1 +1,1 @@
-export { PomodoroRecordDomain } from './pomodoro-record'
+export * from './pomodoro'

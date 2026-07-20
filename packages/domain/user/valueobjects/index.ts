@@ -1,3 +1,4 @@
-export { UpdateNicknameValueObject } from './update-nickname'
-export { UpdatePasswordValueObject } from './update-password'
-export { UpdateUserConfigValueObject } from './update-config'
+export * from './update-config'
+export * from './update-nickname'
+export * from './update-password'
+

@@ -1,2 +1,3 @@
-export { CreateTagValueObject } from './create-tag'
-export { UpdateTagValueObject } from './update-tag'
+export * from './create-tag'
+export * from './update-tag'
+export * from './update-tag-preference'

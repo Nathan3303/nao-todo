@@ -1,8 +1,0 @@
-.nue-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    --nue-icon-ratio: 1em !important;
-    --nue-icon-align-offset: 0em;
-}

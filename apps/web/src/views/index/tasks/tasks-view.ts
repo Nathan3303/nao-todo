@@ -1,79 +1,73 @@
-import { inject, provide, ref, type Ref } from 'vue'
-import { BuiltInProjectUseCase } from '@nao-todo/application/web/usecases/built-in-project'
-import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
-import { columnLabels } from '@nao-todo/infrastructure/consts/tasks'
-import useResponsiveAside from '@/infrastructure/hooks/use-responsive-aside'
-import useAsideWidth from '@nao-todo/infrastructure/hooks/use-aside-width'
+import { APP_CONTEXT_KEY } from '@/context'
 import {
-    APP_CONTEXT_KEY,
-    INDEX_VIEW_CONTEXT_KEY,
-    TASKS_VIEW_CONTEXT_KEY
-} from '@/infrastructure/constants/context-keys'
-import { useBuiltInProjectsStore } from '@/stores'
-import { unwrapError } from '@nao-todo/infrastructure/utils/go-error-handler'
-import { ProjectUseCase } from '@nao-todo/application/web/usecases/project'
-import { TagUseCase } from '@nao-todo/application/web/usecases/tag'
-import { TaskUseCase } from '@nao-todo/application/web/usecases/task'
-import type { DialogManager } from '@/infrastructure/hooks/use-dialog-manager'
-import type { Subscriber } from '@nao-todo/infrastructure/hooks/use-subscriber'
-import type { AppContext } from '@/app'
-import type { IndexViewContext } from '@/views/index/index-view'
-import type { TagViewObject, TaskViewObject } from '@nao-todo/types'
-import { TaskDetailsPreContext } from '@/layouts/app/task-details/types'
-import { TASK_DETAILS_PRE_CONTEXT_KEY } from '@/layouts/app/task-details/constants'
+    useBuiltInProjectUseCase,
+    useTaskCheckItemUseCase,
+    useTaskCommentUseCase,
+    useTaskUseCase
+} from '@/hooks'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
+import { useBuiltInProjectsStore } from '@nao-todo/presentation/built-in-project'
+import {
+    usePomodoroFocusStore,
+    usePomodoroRecordsStore,
+    usePomodoroTimerStore
+} from '@nao-todo/presentation/pomodoro'
+import { useProjectsStore } from '@nao-todo/presentation/project'
+import { useTagsStore } from '@nao-todo/presentation/tag'
+import {
+    TASK_DETAILS_PRE_CONTEXT_KEY,
+    useTaskDetailsStore
+} from '@nao-todo/presentation/task'
+import { columnLabels } from '@nao-todo/domain/task'
+import { responsiveTypes, unwrapError, useAsideWidth, useResponsiveAside } from '@nao-todo/shared'
+import { storeToRefs } from 'pinia'
+import { inject, provide, ref } from 'vue'
+import { TASKS_VIEW_CONTEXT_KEY } from './context'
 
-/**
- * 任务视图上下文
- */
-export type TasksViewContext = {
-    appContext: AppContext
-    builtInProjectUseCase: BuiltInProjectUseCase
-    projectUseCase: ProjectUseCase
-    tagUseCase: TagUseCase
-    taskUseCase: TaskUseCase
-    dialogManager: DialogManager
-    asideWidth: Ref<string>
-    isDisplayAside: Ref<boolean>
-    isUseFloatAside: Ref<boolean>
-    outlineWidth: Ref<string>
-    isDisplayOutline: Ref<boolean>
-    isUseFloatOutline: Ref<boolean>
-    subscriber: Subscriber
-    handleResizeAside: (width: number) => void
-    handleResizeOutline: (width: number) => void
-    getProjectName: (projectId: string) => string
-    getTagColor: (tagId: TagViewObject['id']) => string
-    showTaskDetails: (taskId: TaskViewObject['id']) => void
-    getColumnLabel: (key: string) => string
-    switchDisplayAside: () => void
-}
-
-/**
- * 任务视图 Hook
- */
 const useTasksView = () => {
     // @context App 上下文
-    const appContext = inject<AppContext>(APP_CONTEXT_KEY)!
+    const { responsiveFlag } = inject(APP_CONTEXT_KEY)!
 
-    // @context IndexView 上下文（共享 dialogManager、useCase 等）
-    const indexViewContext = inject<IndexViewContext>(INDEX_VIEW_CONTEXT_KEY)!
+    // @context Index 视图上下文
+    const {
+        projectUseCase,
+        tagUseCase,
+        taskUseCase,
+        appSubscriber,
+        appDialogManager,
+        projectHandler,
+        tagHandler,
+        taskHandler,
+        getProjectName,
+        getTagColor,
+        showTaskDetails
+    } = inject(INDEX_VIEW_CONTEXT_KEY)!
 
     // @stores
-    const builtInProjectsStore = useBuiltInProjectsStore()
+    const taskDetailsStore = useTaskDetailsStore()
+    const tagsStore = useTagsStore()
+    const pomodoroRecordsStore = usePomodoroRecordsStore()
+    const pomodoroTimerStore = usePomodoroTimerStore()
+    const pomodoroFocusStore = usePomodoroFocusStore()
 
-    // @usecases
-    const builtInProjectUseCase = BuiltInProjectUseCase.create(builtInProjectsStore)
-    const projectUseCase = indexViewContext.projectUseCase
-    const tagUseCase = indexViewContext.tagUseCase
-    const taskUseCase = indexViewContext.taskUseCase
+    // @presets
+    const { avaliableProjects } = storeToRefs(useProjectsStore())
+    const { tags: avaliableTags } = storeToRefs(tagsStore)
+    const { currentTaskId: pomodoroCurrentTaskId } = storeToRefs(pomodoroRecordsStore)
+    const { status: pomodoroTimerStatus } = storeToRefs(pomodoroTimerStore)
+    const { status: pomodoroFocusStatus } = storeToRefs(pomodoroFocusStore)
 
-    // @hook 事件订阅器
-    const subscriber = indexViewContext.subscriber
+    // @usecase Built-in project use case
+    const builtInProjectUseCase = useBuiltInProjectUseCase(useBuiltInProjectsStore())
+
+    // @usecase 任务详情面板相关用例
+    const taskCheckItemUseCase = useTaskCheckItemUseCase(taskDetailsStore)
+    const taskCommentUseCase = useTaskCommentUseCase(taskDetailsStore)
+    const subTaskUseCase = useTaskUseCase(taskDetailsStore)
 
     // @states&method 初始化处理程序
     const isLoading = ref<boolean>(true) // 加载状态
     const error = ref<string>('') // 错误信息
-    // 初始化处理程序
     const init = () => {
         Promise.allSettled([
             () => (isLoading.value = true),
@@ -90,33 +84,26 @@ const useTasksView = () => {
             .finally(() => (isLoading.value = false))
     }
 
-    // @hook 响应式侧边栏
+    // @hook 响应式边栏
     const {
         visible: isDisplayAside,
         isFloating: isUseFloatAside,
         switchVisible: switchDisplayAside
-    } = useResponsiveAside(appContext.responsiveFlag, responsiveTypes.MOBILE)
-
-    // @hook 响应式任务详情面板
+    } = useResponsiveAside(responsiveFlag, responsiveTypes.MOBILE)
     const { visible: isDisplayOutline, isFloating: isUseFloatOutline } = useResponsiveAside(
-        appContext.responsiveFlag,
+        responsiveFlag,
         responsiveTypes.MOBILE_TABLE
     )
 
-    // @hook 侧边栏宽度
+    // @hook 边栏宽度
     const { width: asideWidth, updater: handleResizeAside } = useAsideWidth(
         256,
         'TASKS_ASIDE_WIDTH'
     )
-
-    // @hook 任务详情面板宽度
     const { width: outlineWidth, updater: handleResizeOutline } = useAsideWidth(
         480,
         'TASKS_OUTLINE_WIDTH'
     )
-
-    // @hook 对话框管理器（复用 IndexView 实例）
-    const dialogManager = indexViewContext.dialogManager
 
     // @method 获取列选项标识
     const getColumnLabel = (key: string): string => {
@@ -124,39 +111,59 @@ const useTasksView = () => {
     }
 
     // @provide Tasks view context
-    provide<TasksViewContext>(TASKS_VIEW_CONTEXT_KEY, {
-        appContext,
+    provide(TASKS_VIEW_CONTEXT_KEY, {
         builtInProjectUseCase,
         projectUseCase,
         tagUseCase,
         taskUseCase,
-        dialogManager,
+        // ---
+        appDialogManager,
+        appSubscriber,
+        // ---
+        projectHandler,
+        tagHandler,
+        taskHandler,
+        // ---
         asideWidth,
         isDisplayAside,
         isUseFloatAside,
+        switchDisplayAside,
+        handleResizeAside,
+        // ---
         outlineWidth,
         isDisplayOutline,
         isUseFloatOutline,
-        subscriber,
-        handleResizeAside,
         handleResizeOutline,
-        getColumnLabel,
-        showTaskDetails: indexViewContext.showTaskDetails,
-        getTagColor: indexViewContext.getTagColor,
-        getProjectName: indexViewContext.getProjectName,
-        switchDisplayAside
+        // ---
+        showTaskDetails,
+        getProjectName,
+        getTagColor,
+        getColumnLabel
     })
 
     // @provide TaskDetailsPreContext
-    provide<TaskDetailsPreContext>(TASK_DETAILS_PRE_CONTEXT_KEY, {
+    provide(TASK_DETAILS_PRE_CONTEXT_KEY, {
+        // ---
+        taskUseCase,
+        taskCommentUseCase,
+        taskCheckItemUseCase,
+        subTaskUseCase,
+        // ---
+        dialogManager: appDialogManager,
+        subscriber: appSubscriber,
+        // ---
+        avaliableProjects,
+        avaliableTags,
+        pomodoroCurrentTaskId,
+        pomodoroTimerStatus,
+        pomodoroFocusStatus,
+        // ---
+        outlineWidth,
         isDisplayOutline,
         isUseFloatOutline,
-        outlineWidth,
         handleResizeOutline,
-        taskUseCase,
-        subscriber,
-        dialogManager,
-        getProjectName: indexViewContext.getProjectName
+        getTag: tagsStore.getTag,
+        getProjectName
     })
 
     // @returns
@@ -164,4 +171,3 @@ const useTasksView = () => {
 }
 
 export default useTasksView
-

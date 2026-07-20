@@ -1,4 +1,4 @@
-import type { Go } from '@nao-todo/types'
+import type { Go } from '@nao-todo/shared'
 import dayjs from 'dayjs'
 
 /**
@@ -6,6 +6,7 @@ import dayjs from 'dayjs'
  * @description 更新任务的值对象，包含任务的更新字段
  */
 export class UpdateTaskValueObject {
+    public parentTaskId?: string // 父任务ID
     public name?: string // 任务名称
     public description?: string // 任务描述
     public state?: string // 任务状态
@@ -32,17 +33,26 @@ export class UpdateTaskValueObject {
      * @returns 验证结果，如果验证通过则返回null，否则返回错误信息
      */
     validate(): Go<void> {
-        if (!this.name) return '任务名称不能为空'
-        if (this.name.length > 128) return '任务名称长度不能超过128个字符'
+        if (this.name !== void 0) {
+            if (this.name === '') return '任务名称不能为空'
+            else if (this.name.length > 128) return '任务名称长度不能超过128个字符'
+        }
         if (this.description && this.description.length > 256)
             return '任务描述长度不能超过256个字符'
         if (this.state && !['todo', 'in-progress', 'done'].includes(this.state))
             return '任务状态无效'
         if (this.priority && !['low', 'medium', 'high'].includes(this.priority))
             return '任务优先级无效'
-        if (this.remindRepeat !== undefined && !['none', 'daily', 'weekly', 'monthly'].includes(this.remindRepeat))
+        if (
+            this.remindRepeat !== undefined &&
+            !['none', 'daily', 'weekly', 'monthly'].includes(this.remindRepeat)
+        )
             return '提醒重复类型无效'
-        if (this.remindTime !== undefined && this.remindTime !== null && !/^\d{2}:\d{2}$/.test(this.remindTime))
+        if (
+            this.remindTime !== undefined &&
+            this.remindTime !== null &&
+            !/^\d{2}:\d{2}$/.test(this.remindTime)
+        )
             return '提醒时间格式无效（应为 HH:mm）'
         if (this.remindAt !== undefined && this.remindAt !== null) {
             const remindAt = dayjs(this.remindAt)
@@ -70,4 +80,3 @@ export class UpdateTaskValueObject {
         return null
     }
 }
-

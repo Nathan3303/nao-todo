@@ -4,15 +4,17 @@
     "author": "Nathan Lee",
     "license": "MIT",
     "files": [
-        "auth",
-        "built-in-project",
-        "comment",
-        "event",
-        "project",
-        "tag",
-        "task",
-        "user",
-        "pomodoro"
+        "auth/**/*",
+        "built-in-project/**/*",
+        "pomodoro/**/*",
+        "project/**/*",
+        "shares/**/*",
+        "tag/**/*",
+        "task/**/*",
+        "user/**/*"
     ],
-    "packageManager": "pnpm@8.12.1"
+    "dependencies": {
+        "@nao-todo/shared": "workspace:*"
+    }
 }
+

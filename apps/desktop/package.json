@@ -1,11 +1,10 @@
 {
-    "name": "@nao-todo/desktop",
+    "name": "@nao-todo/desktopapp",
     "version": "0.0.1",
     "description": "Desktop version of NaoTodo",
     "author": "Nathan Lee",
     "license": "MIT",
     "private": true,
-    "main": "src/main.js",
     "scripts": {},
     "build": {},
     "devDependencies": {},

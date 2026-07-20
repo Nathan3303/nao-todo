@@ -1,22 +1,16 @@
-import { Go } from '@nao-todo/types'
+import type { Go } from '@nao-todo/shared'
 
 /**
  * 创建标签视图对象
  * @description 创建标签视图对象，用于创建标签实体
  */
 export class CreateTagValueObject {
-    /**
-     * 创建标签视图对象构造函数
-     * @param name 标签名称
-     * @param color 标签颜色
-     * @param icon 标签图标
-     */
+    // 创建标签视图对象构造函数
     constructor(
-        public userId: string,
-        public name: string,
-        public description: string,
-        public color: string,
-        public icon: string
+        public name: string, // 标签名称
+        public description: string, // 标签描述
+        public color: string, // 标签颜色
+        public icon: string // 标签图标
     ) {}
 
     /**
@@ -32,3 +26,4 @@ export class CreateTagValueObject {
         return null
     }
 }
+

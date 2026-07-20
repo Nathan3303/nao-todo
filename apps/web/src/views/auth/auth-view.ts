@@ -1,20 +1,22 @@
 import { inject, computed, provide } from 'vue'
-import { APP_CONTEXT_KEY, AUTH_VIEW_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
-import { useUserStore } from '@/stores'
-import { AuthUseCase } from '@nao-todo/application/web/usecases/auth'
-import type { AppContext } from '@/app'
-import type { AuthViewContext } from './types'
+import { responsiveTypes, getRequesterImpl } from '@nao-todo/shared'
+import { useUserStore } from '@nao-todo/presentation/user'
+import { AuthDomain } from '@nao-todo/domain/auth'
+import { AuthUseCase } from '@nao-todo/application/auth/usecases'
+import { useAuthRepository } from '@nao-todo/infrastructure/backend/auth/repoImpl'
+import { APP_CONTEXT_KEY } from '@/context'
+import { AUTH_VIEW_CONTEXT_KEY } from './context'
 
 const useAuthView = () => {
     // @context App 上下文
-    const appContext = inject<AppContext>(APP_CONTEXT_KEY)!
-
-    // @stores
-    const userStore = useUserStore()
+    const appContext = inject(APP_CONTEXT_KEY)!
 
     // @usecase Auth use case
-    const authUseCase = AuthUseCase.create(userStore)
+    const userStore = useUserStore()
+    const requester = getRequesterImpl()
+    const authRepo = useAuthRepository(requester)
+    const authDomain = new AuthDomain(authRepo)
+    const authUseCase = new AuthUseCase(authDomain, userStore)
 
     // @state isDisplayAside
     const isDisplayAside = computed(() => {
@@ -22,13 +24,10 @@ const useAuthView = () => {
     })
 
     // @provide Auth view context
-    provide<AuthViewContext>(AUTH_VIEW_CONTEXT_KEY, { authUseCase })
+    provide(AUTH_VIEW_CONTEXT_KEY, { authUseCase })
 
     // @returns
-    return {
-        isDisplayAside
-    }
+    return { isDisplayAside }
 }
 
 export default useAuthView
-

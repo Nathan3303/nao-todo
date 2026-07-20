@@ -1,0 +1,21 @@
+{
+    "name": "@nao-todo/shared",
+    "version": "1.0.0",
+    "author": "Nathan Lee",
+    "license": "MIT",
+    "main": "index.ts",
+    "private": true,
+    "type": "module",
+    "files": [
+        "commands/**/*",
+        "components/**/*",
+        "constants/**/*",
+        "hooks/**/*",
+        "locales/**/*",
+        "requester/**/*",
+        "types/**/*",
+        "utils/**/*",
+        "valueobjects/**/*",
+        "entity"
+    ]
+}

@@ -1,10 +1,10 @@
 <script lang="ts" setup>
+import { AppAsideAdapter } from '@/components/app'
+import { CalendarAside } from '@/components/calendar/aside'
+import { env } from '@/env'
+import { Loading as LoadingComp } from '@nao-todo/shared'
 import { onMounted } from 'vue'
-import { AppAsideAdapter } from '@/layouts/app/'
-import { CalendarAside } from '@/layouts/calendar/aside'
 import { useCalendarView } from './calendar-view'
-import { env } from '@/infrastructure/constants/env'
-import { Loading as LoadingComp } from '@nao-todo/components'
 
 defineOptions({ name: 'CalendarView' })
 

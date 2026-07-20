@@ -1,0 +1,18 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "include": [
+        "auth/**/*",
+        "built-in-project/**/*",
+        "pomodoro/**/*",
+        "project/**/*",
+        "tag/**/*",
+        "task/**/*",
+        "user/**/*"
+    ],
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "@nao-todo/domain": ["../domain"]
+        }
+    }
+}

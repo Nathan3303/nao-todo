@@ -1,9 +1,6 @@
 import { inject } from 'vue'
-import { APP_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import useResponsiveAside from '@/infrastructure/hooks/use-responsive-aside'
-import useAsideWidth from '@nao-todo/infrastructure/hooks/use-aside-width'
-import { responsiveTypes } from '@nao-todo/infrastructure/hooks/use-responsive-flag'
-import type { AppContext } from '@/app'
+import { useResponsiveAside, useAsideWidth, responsiveTypes } from '@nao-todo/shared'
+import { APP_CONTEXT_KEY } from '@/context'
 
 /**
  * 搜索视图上下文提供器
@@ -13,7 +10,7 @@ export const useSearchView = () => {
     /**
      * 注入应用上下文
      */
-    const appContext = inject<AppContext>(APP_CONTEXT_KEY)!
+    const appContext = inject(APP_CONTEXT_KEY)!
 
     /**
      * 注入响应式侧边栏上下文
@@ -45,4 +42,3 @@ export const useSearchView = () => {
         handleResizeAside
     }
 }
-

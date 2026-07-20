@@ -4,13 +4,11 @@
     "author": "Nathan Lee",
     "license": "MIT",
     "files": [
-        "commands/**/*",
         "backend/**/*",
-        "built-in/**/*",
-        "consts/**/*",
-        "hooks/**/*",
-        "locales/**/*",
-        "utils/**/*"
+        "built-in/**/*"
     ],
-    "packageManager": "pnpm@8.12.1"
+    "dependencies": {
+        "@nao-todo/domain": "workspace:*",
+        "@nao-todo/shared": "workspace:*"
+    }
 }

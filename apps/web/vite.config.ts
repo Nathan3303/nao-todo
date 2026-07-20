@@ -3,7 +3,6 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import terser from '@rollup/plugin-terser'
 import { visualizer } from 'rollup-plugin-visualizer'
-// import htmlTransformPlugin from './html-transform-plugin'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -31,11 +30,15 @@ export default defineConfig({
             }
         }),
         visualizer({ open: true }),
-        // htmlTransformPlugin()
     ],
     resolve: {
         alias: {
-            '@': fileURLToPath(new URL('./src', import.meta.url))
+            '@': fileURLToPath(new URL('./src', import.meta.url)),
+            '@nao-todo/domain': fileURLToPath(new URL('../../packages/domain', import.meta.url)),
+            '@nao-todo/application': fileURLToPath(new URL('../../packages/application', import.meta.url)),
+            '@nao-todo/presentation': fileURLToPath(new URL('../../packages/presentation', import.meta.url)),
+            '@nao-todo/shared': fileURLToPath(new URL('../../packages/shared', import.meta.url)),
+            '@nao-todo/infrastructure': fileURLToPath(new URL('../../packages/infrastructure', import.meta.url))
         }
     },
     build: {
@@ -45,11 +48,6 @@ export default defineConfig({
         cssMinify: true,
         rollupOptions: {
             output: {
-                // assetFileNames: (assetInfo) => {
-                //     if (assetInfo.type === 'asset' && (assetInfo.name as string).endsWith('.css'))
-                //         return 'css/[name].[hash].[ext]'
-                //     return assetInfo.name as string
-                // },
                 chunkFileNames: 'js/[name].[hash].js',
                 manualChunks: (id) => {
                     if (id.includes('node_modules')) {

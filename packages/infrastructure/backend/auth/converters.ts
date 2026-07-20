@@ -1,7 +1,6 @@
 import { SignInValueObject, SignUpValueObject } from '@nao-todo/domain/auth'
-import { unwrapError } from '@nao-todo/infrastructure/utils'
-import type { SignInReq, SignUpReq } from '@nao-todo/infrastructure/backend/types/auth'
-import type { Go } from '@nao-todo/types'
+import { unwrapError, type Go } from '@nao-todo/shared'
+import type { SignInReq, SignUpReq } from '../models/auth'
 
 /**
  * 登录值对象转换为登录请求体

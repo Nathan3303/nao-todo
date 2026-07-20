@@ -1,25 +1,17 @@
-import useResponsiveFlag, {
-    responsiveTypes
-} from '@nao-todo/infrastructure/hooks/use-responsive-flag'
-import useResponsiveAside from '@/infrastructure/hooks/use-responsive-aside'
-import { computed, provide, type Ref } from 'vue'
-import { useLocaleStore, useThemeStore } from './stores'
-import { APP_CONTEXT_KEY } from '@/infrastructure/constants/context-keys'
-import { t } from '@nao-todo/infrastructure/locales'
-import { env } from '@/infrastructure/constants/env'
-import { initRequester } from '@nao-todo/infrastructure/requester'
-import useKeyboardShortcuts from '@/infrastructure/hooks/use-keyboard-shortcuts'
-import { registerAppCommands } from '@/infrastructure/commands/app.commands'
-import { scopeManager } from '@/infrastructure/commands/instance'
-
-export type AppContext = {
-    routerLinks: { name: string; icon: string; route: string; routeName: string }[]
-    responsiveFlag: Ref<number>
-    isDisplayHeader: Ref<boolean>
-    isDisplayAside: Ref<boolean>
-    isUseFloatAside: Ref<boolean>
-    switchDisplayAside: () => void
-}
+import { registerAppCommands } from '@/commands/app.commands'
+import { scopeManager } from '@/commands/instance'
+import { env } from '@/env'
+import { useKeyboardShortcuts } from '@/hooks'
+import { useLocaleStore, useThemeStore } from '@nao-todo/presentation/user'
+import {
+    initRequester,
+    responsiveTypes,
+    t,
+    useResponsiveAside,
+    useResponsiveFlag
+} from '@nao-todo/shared'
+import { computed, provide } from 'vue'
+import { APP_CONTEXT_KEY, type RouterLink } from './context'
 
 const useApp = () => {
     // @initialize 执行 App 初始化动作
@@ -40,7 +32,7 @@ const useApp = () => {
     })()
 
     // @computed 应用侧边栏链接数组
-    const routerLinks = [
+    const routerLinks: RouterLink[] = [
         { name: t('nav.tasks'), icon: 'ntd-logo1', route: '/tasks', routeName: 'tasks' },
         {
             name: t('nav.calendar'),
@@ -83,7 +75,7 @@ const useApp = () => {
 
     // @method 提供应用全局上下文
     // @description 提供应用全局上下文，用于在应用中使用
-    provide<AppContext>(APP_CONTEXT_KEY, {
+    provide(APP_CONTEXT_KEY, {
         routerLinks,
         responsiveFlag: flag,
         isDisplayHeader,
@@ -94,4 +86,3 @@ const useApp = () => {
 }
 
 export default useApp
-

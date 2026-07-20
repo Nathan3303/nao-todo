@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { onMounted } from 'vue'
 import useIndexView from './index-view'
-import { AppDialogAdapter } from '@/layouts/app/dialogs'
-import { Loading as LoadingComp } from '@nao-todo/components'
+import { AppDialogAdapter } from '@/components/app/'
+import { Loading as LoadingComp } from '@nao-todo/shared'
 
 defineOptions({ name: 'AppContainer' })
 
@@ -40,4 +40,3 @@ onMounted(() => {
         </nue-main>
     </nue-container>
 </template>
-

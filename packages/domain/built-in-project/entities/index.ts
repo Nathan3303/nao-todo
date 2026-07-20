@@ -1,2 +1,2 @@
-export { BuiltInProjectEntity } from './built-in-project'
-export { BuiltInProjectPreferenceEntity } from './built-in-project-preference'
+export * from './built-in-project'
+export * from './built-in-project-preference'
