@@ -1,7 +1,7 @@
 import { APP_CONTEXT_KEY } from '@/context'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
-import { usePomodorosStore } from '@nao-todo/domain/pomodoro'
-import { TASK_DETAILS_PRE_CONTEXT_KEY, useTaskDetailsStore } from '@nao-todo/domain/task'
+import { usePomodorosStore } from '@nao-todo/presentation/pomodoro'
+import { TASK_DETAILS_PRE_CONTEXT_KEY, useTaskDetailsStore } from '@nao-todo/presentation/task'
 import { responsiveTypes, useAsideWidth, useResponsiveAside } from '@nao-todo/shared'
 import { inject, provide } from 'vue'
 import { POMODORO_VIEW_CONTEXT_KEY } from './context'
@@ -12,8 +12,8 @@ import {
     useTaskUseCase
 } from '@/hooks'
 import { storeToRefs } from 'pinia'
-import { useProjectsStore } from '@nao-todo/domain/project'
-import { useTagsStore } from '@nao-todo/domain/tag'
+import { useProjectsStore } from '@nao-todo/presentation/project'
+import { useTagsStore } from '@nao-todo/presentation/tag'
 
 /**
  * 番茄钟视图上下文提供器

@@ -1,6 +1,6 @@
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
-import { useProjectsStore } from '@nao-todo/domain/project'
-import { useTagsStore } from '@nao-todo/domain/tag'
+import { useProjectsStore } from '@nao-todo/presentation/project'
+import { useTagsStore } from '@nao-todo/presentation/tag'
 import { storeToRefs } from 'pinia'
 import { computed, inject, ref, watch } from 'vue'
 

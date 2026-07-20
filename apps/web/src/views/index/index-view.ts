@@ -8,15 +8,14 @@ import {
     useUserUseCase
 } from '@/hooks'
 import { LAST_VISITED_ROUTE_KEY } from '@/router'
-import { ProjectHandler, type ProjectViewObject, useProjectsStore } from '@nao-todo/domain/project'
-import { TagHandler, type TagViewObject, useTagsStore } from '@nao-todo/domain/tag'
-import {
-    type SSEReminderEvent,
-    TaskHandler,
-    type TaskViewObject,
-    useTasksStore
-} from '@nao-todo/domain/task'
-import { type ThemeMode, useThemeStore, useUserStore } from '@nao-todo/domain/user'
+import { ProjectHandler, useProjectsStore } from '@nao-todo/presentation/project'
+import type { ProjectViewObject } from '@nao-todo/application/project/viewobjects'
+import { TagHandler, useTagsStore } from '@nao-todo/presentation/tag'
+import type { TagViewObject } from '@nao-todo/application/tag/viewobjects'
+import { TaskHandler, useTasksStore } from '@nao-todo/presentation/task'
+import type { TaskViewObject } from '@nao-todo/application/task/viewobjects'
+import { type ThemeMode, useThemeStore, useUserStore } from '@nao-todo/presentation/user'
+import type { SSEReminderEvent } from '@nao-todo/shared'
 import {
     PROJECT_CREATOR_DIALOG_KEY,
     responsiveTypes,

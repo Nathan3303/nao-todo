@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from 'vue'
-import { TaskOperationsDropdown, TaskColumnDisplayController } from '@nao-todo/domain/task'
+import { TaskOperationsDropdown, TaskColumnDisplayController } from '@nao-todo/presentation/task'
 import { InnerDropdownOption, DropdownDivBlock } from '@nao-todo/shared'
 import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '../context'
 

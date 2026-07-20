@@ -33,7 +33,12 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
-            '@': fileURLToPath(new URL('./src', import.meta.url))
+            '@': fileURLToPath(new URL('./src', import.meta.url)),
+            '@nao-todo/domain': fileURLToPath(new URL('../../packages/domain', import.meta.url)),
+            '@nao-todo/application': fileURLToPath(new URL('../../packages/application', import.meta.url)),
+            '@nao-todo/presentation': fileURLToPath(new URL('../../packages/presentation', import.meta.url)),
+            '@nao-todo/shared': fileURLToPath(new URL('../../packages/shared', import.meta.url)),
+            '@nao-todo/infrastructure': fileURLToPath(new URL('../../packages/infrastructure', import.meta.url))
         }
     },
     build: {

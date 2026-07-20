@@ -1,6 +1,6 @@
 
-import { PomodoroUseCase } from '@nao-todo/domain/pomodoro/usecases'
-import { TaskUseCase } from '@nao-todo/domain/task'
+import { PomodoroUseCase } from '@nao-todo/application/pomodoro/usecases'
+import { TaskUseCase } from '@nao-todo/application/task/usecases'
 import { DialogManager, Subscriber } from '@nao-todo/shared'
 import type { InjectionKey, Ref } from 'vue'
 

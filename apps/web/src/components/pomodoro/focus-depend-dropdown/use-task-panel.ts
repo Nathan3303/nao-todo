@@ -1,6 +1,6 @@
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
-import { useTagsStore } from '@nao-todo/domain/tag'
-import { ViewAdapterNoTaskError } from '@nao-todo/domain/task'
+import { useTagsStore } from '@nao-todo/presentation/tag'
+import { ViewAdapterNoTaskError } from '@nao-todo/presentation/task'
 import { debounce } from '@nao-todo/shared'
 import { storeToRefs } from 'pinia'
 import { inject, reactive, watch } from 'vue'

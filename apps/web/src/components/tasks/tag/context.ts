@@ -1,11 +1,11 @@
+import type { TagHandler } from '@nao-todo/presentation/tag'
 import type {
-    TagHandler,
     TagPreferenceViewObject,
     TagUseCase,
     TagViewObject
-} from '@nao-todo/domain/tag'
-import type { TaskUseCase, TaskViewObject } from '@nao-todo/domain/task'
-import type { UserViewObject } from '@nao-todo/domain/user'
+} from '@nao-todo/application/tag/usecases'
+import type { TaskUseCase, TaskViewObject } from '@nao-todo/application/task/usecases'
+import type { UserViewObject } from '@nao-todo/application/user/viewobjects'
 import type { DialogManager, Subscriber, TaskColumnOptions } from '@nao-todo/shared'
 import type { ComputedRef, InjectionKey } from 'vue'
 

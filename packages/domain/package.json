@@ -12,6 +12,9 @@
         "tag/**/*",
         "task/**/*",
         "user/**/*"
-    ]
+    ],
+    "dependencies": {
+        "@nao-todo/shared": "workspace:*"
+    }
 }
 

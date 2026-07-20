@@ -1,4 +1,5 @@
-import { TaskDomain, TaskStore, TaskUseCase } from '@nao-todo/domain/task'
+import { TaskDomain, TaskStore } from '@nao-todo/domain/task'
+import { TaskUseCase } from '@nao-todo/application/task/usecases'
 import { TaskRepoImpl } from '@nao-todo/infrastructure/backend'
 import { getRequesterImpl } from '@nao-todo/shared'
 

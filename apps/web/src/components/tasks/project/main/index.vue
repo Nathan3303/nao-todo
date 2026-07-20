@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ProjectHandler } from '@nao-todo/domain/project'
+import { ProjectHandler } from '@nao-todo/presentation/project'
 import {
     KanbanViewAdapter,
     ListViewAdapter,
     TableViewAdapter,
     type ViewAdapterNoTaskError
-} from '@nao-todo/domain/task'
+} from '@nao-todo/presentation/task'
 import { unwrapError } from '@nao-todo/shared'
 import { NueMessage } from 'nue-ui'
 import { computed, inject, onMounted, onUnmounted } from 'vue'

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { SETTINGS_VIEW_CONTEXT_KEY } from '@/views/index/settings/context'
-import { UserAvatarUpdater, UserInfoViewer, UserNicknameUpdater } from '@nao-todo/domain/user'
+import { UserAvatarUpdater, UserInfoViewer, UserNicknameUpdater } from '@nao-todo/presentation/user'
 import { t } from '@nao-todo/shared'
 import { inject } from 'vue'
 

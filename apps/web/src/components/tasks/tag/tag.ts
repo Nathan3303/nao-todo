@@ -1,6 +1,6 @@
 import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
-import { TagHandler, useTagsStore } from '@nao-todo/domain/tag'
-import { useUserStore } from '@nao-todo/domain/user'
+import { TagHandler, useTagsStore } from '@nao-todo/presentation/tag'
+import { useUserStore } from '@nao-todo/presentation/user'
 import { TASK_CREATOR_DIALOG_KEY, unwrapError } from '@nao-todo/shared'
 import { NueMessage } from 'nue-ui'
 import { storeToRefs } from 'pinia'

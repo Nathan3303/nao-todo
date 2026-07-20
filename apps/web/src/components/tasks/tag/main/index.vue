@@ -3,14 +3,14 @@ import { computed } from 'vue'
 import { inject, onMounted, onUnmounted } from 'vue'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/shared'
-import { TagHandler } from '@nao-todo/domain/tag'
+import { TagHandler } from '@nao-todo/presentation/tag'
 import { TAG_EMPTY_STATE } from '../constants'
 import {
     KanbanViewAdapter,
     ListViewAdapter,
     TableViewAdapter,
     type ViewAdapterNoTaskError
-} from '@nao-todo/domain/task'
+} from '@nao-todo/presentation/task'
 import { TAG_VIEW_CONTEXT_KEY } from '../context'
 
 defineOptions({

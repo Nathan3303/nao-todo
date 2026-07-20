@@ -6,19 +6,19 @@ import {
     useTaskUseCase
 } from '@/hooks'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
-import { useBuiltInProjectsStore } from '@nao-todo/domain/built-in-project'
+import { useBuiltInProjectsStore } from '@nao-todo/presentation/built-in-project'
 import {
     usePomodoroFocusStore,
     usePomodoroRecordsStore,
     usePomodoroTimerStore
-} from '@nao-todo/domain/pomodoro'
-import { useProjectsStore } from '@nao-todo/domain/project'
-import { useTagsStore } from '@nao-todo/domain/tag'
+} from '@nao-todo/presentation/pomodoro'
+import { useProjectsStore } from '@nao-todo/presentation/project'
+import { useTagsStore } from '@nao-todo/presentation/tag'
 import {
-    columnLabels,
     TASK_DETAILS_PRE_CONTEXT_KEY,
     useTaskDetailsStore
-} from '@nao-todo/domain/task'
+} from '@nao-todo/presentation/task'
+import { columnLabels } from '@nao-todo/domain/task'
 import { responsiveTypes, unwrapError, useAsideWidth, useResponsiveAside } from '@nao-todo/shared'
 import { storeToRefs } from 'pinia'
 import { inject, provide, ref } from 'vue'

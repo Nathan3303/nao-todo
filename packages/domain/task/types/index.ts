@@ -1,6 +1,15 @@
-export type * from './task-check-item-store'
-export type * from './task-comment-store'
-export type * from './task-store'
-export type * from './viewobjects'
-export type * from './see'
-
+// 任务列表排序字段
+export type TaskSortFields = {
+    name: boolean
+    state: boolean
+    priority: boolean
+    startAt: boolean
+    endAt: boolean
+    tags: boolean
+    givenUpAt: boolean
+    starMarkAt: boolean
+    archivedAt: boolean
+    createdAt: boolean
+    updatedAt: boolean
+    deletedAt: boolean
+}

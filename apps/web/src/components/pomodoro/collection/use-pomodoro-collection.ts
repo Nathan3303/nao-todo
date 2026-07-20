@@ -4,7 +4,7 @@ import {
     usePomodorosStore,
     type PomodoroRecordViewObject,
     type PomodoroViewObject
-} from '@nao-todo/domain/pomodoro'
+} from '@nao-todo/presentation/pomodoro'
 import type { PomodoroCollectionProps } from './types'
 
 /**

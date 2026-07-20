@@ -4,8 +4,8 @@ import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { useAuthUseCase, useBuiltInProjectUseCase } from '@/hooks'
 import { inject, provide, ref } from 'vue'
 import { CALENDAR_VIEW_CONTEXT_KEY } from './context'
-import { useUserStore } from '@nao-todo/domain/user'
-import { useBuiltInProjectsStore } from '@nao-todo/domain/built-in-project'
+import { useUserStore } from '@nao-todo/presentation/user'
+import { useBuiltInProjectsStore } from '@nao-todo/presentation/built-in-project'
 
 /**
  * 日历视图上下文提供器

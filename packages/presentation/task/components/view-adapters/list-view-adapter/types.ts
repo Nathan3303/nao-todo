@@ -1,0 +1,18 @@
+import type { DialogManager, GetTasksOptions, Subscriber, TaskColumnOptions } from '@nao-todo/shared'
+import type { TaskUseCase } from '@nao-todo/application/task/usecases'
+import type { TaskTagViewObject, TaskViewObject } from '@nao-todo/application/task/viewobjects'
+import type { ViewAdapterPropsBase } from '../../view-adapters/types'
+
+export type ListViewAdapterProps = {
+    taskUseCase: TaskUseCase
+    getTasksOptions: GetTasksOptions
+    subscriber: Subscriber
+    dialogManager: DialogManager
+    tags: TaskTagViewObject[]
+    columns: TaskColumnOptions
+    small?: boolean
+    taskClicked?: (task: TaskViewObject) => void
+} & Omit<
+    ViewAdapterPropsBase,
+    'getColumnLabel' | 'updateColumns' | 'updateSortOptions' | 'clearSortOptions'
+>

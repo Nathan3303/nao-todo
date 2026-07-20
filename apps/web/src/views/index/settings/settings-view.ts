@@ -1,5 +1,5 @@
 import { useAuthUseCase } from '@/hooks'
-import { useUserStore } from '@nao-todo/domain/user'
+import { useUserStore } from '@nao-todo/presentation/user'
 import { useAsideWidth } from '@nao-todo/shared'
 import { inject, provide } from 'vue'
 import { INDEX_VIEW_CONTEXT_KEY } from '../context'

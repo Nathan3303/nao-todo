@@ -1,0 +1,22 @@
+{
+    "name": "@nao-todo/presentation",
+    "version": "0.1.0",
+    "author": "Nathan Lee",
+    "license": "MIT",
+    "private": true,
+    "type": "module",
+    "files": [
+        "auth/**/*",
+        "built-in-project/**/*",
+        "pomodoro/**/*",
+        "project/**/*",
+        "tag/**/*",
+        "task/**/*",
+        "user/**/*"
+    ],
+    "dependencies": {
+        "@nao-todo/domain": "workspace:*",
+        "@nao-todo/application": "workspace:*",
+        "@nao-todo/shared": "workspace:*"
+    }
+}

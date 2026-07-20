@@ -2,7 +2,7 @@
 import { Pager } from '@nao-todo/shared'
 import dayjs from 'dayjs'
 import { PomodoroHeader } from '../header'
-import { PomodoroRecordListItem } from '@nao-todo/domain/pomodoro'
+import { PomodoroRecordListItem } from '@nao-todo/presentation/pomodoro'
 import type { PomodoroCollectionProps } from './types'
 import { usePomodoroCollection } from './use-pomodoro-collection'
 

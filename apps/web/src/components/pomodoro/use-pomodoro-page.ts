@@ -5,16 +5,18 @@ import {
 } from '@nao-todo/shared'
 import {
     POMODORO_MAX_FOCUS_SECONDS,
-    POMODORO_MIN_FOCUS_SECONDS,
+    POMODORO_MIN_FOCUS_SECONDS
+} from '@nao-todo/domain/pomodoro'
+import {
     usePomodoroRecordLoader,
     usePomodoroRecordsStore,
     usePomodoroFocusStore,
     usePomodoroTimerStore,
     type PomodoroViewObject
-} from '@nao-todo/domain/pomodoro'
+} from '@nao-todo/presentation/pomodoro'
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
 import { usePomodoroRecordUseCase } from '@/hooks'
-import type { TaskViewObject } from '@nao-todo/domain/task'
+import type { TaskViewObject } from '@nao-todo/presentation/task'
 import dayjs from 'dayjs'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { computed, inject, onMounted } from 'vue'

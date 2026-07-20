@@ -2,7 +2,7 @@ import { registerAppCommands } from '@/commands/app.commands'
 import { scopeManager } from '@/commands/instance'
 import { env } from '@/env'
 import { useKeyboardShortcuts } from '@/hooks'
-import { useLocaleStore, useThemeStore } from '@nao-todo/domain/user'
+import { useLocaleStore, useThemeStore } from '@nao-todo/presentation/user'
 import {
     initRequester,
     responsiveTypes,

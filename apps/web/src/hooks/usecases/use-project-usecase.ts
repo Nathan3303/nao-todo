@@ -1,4 +1,5 @@
-import { ProjectDomain, ProjectStore, ProjectUseCase } from '@nao-todo/domain/project'
+import { ProjectDomain, ProjectStore } from '@nao-todo/domain/project'
+import { ProjectUseCase } from '@nao-todo/application/project/usecases'
 import { ProjectPreferenceRepoImpl, ProjectRepoImpl } from '@nao-todo/infrastructure/backend'
 import { getRequesterImpl } from '@nao-todo/shared'
 

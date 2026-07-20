@@ -1,4 +1,5 @@
-import { TaskCommentStore, TaskCommentUseCase } from '@nao-todo/domain/task'
+import { TaskCommentStore } from '@nao-todo/domain/task'
+import { TaskCommentUseCase } from '@nao-todo/application/task/usecases'
 import { TaskCommentRepoImpl } from '@nao-todo/infrastructure/backend'
 import { getRequesterImpl } from '@nao-todo/shared'
 

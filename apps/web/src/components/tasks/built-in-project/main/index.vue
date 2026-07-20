@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { BuiltInProjectHandler } from '@nao-todo/domain/built-in-project'
+import type { BuiltInProjectHandler } from '@nao-todo/presentation/built-in-project'
 import {
     KanbanViewAdapter,
     ListViewAdapter,
     TableViewAdapter,
     type ViewAdapterNoTaskError
-} from '@nao-todo/domain/task'
-import type { TableLayoutConfig } from '@nao-todo/domain/task/components/table/types'
+} from '@nao-todo/presentation/task'
+import type { TableLayoutConfig } from '@nao-todo/presentation/task/components/table/types'
 import { TASK_CREATOR_DIALOG_KEY, t, unwrapError } from '@nao-todo/shared'
 import { NueMessage } from 'nue-ui'
 import { computed, inject, onMounted, onUnmounted } from 'vue'

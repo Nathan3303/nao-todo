@@ -1,8 +1,5 @@
-import {
-    PomodoroDomain,
-    PomodoroRecordStore,
-    PomodoroRecordUseCase
-} from '@nao-todo/domain/pomodoro'
+import { PomodoroDomain, PomodoroRecordStore } from '@nao-todo/domain/pomodoro'
+import { PomodoroRecordUseCase } from '@nao-todo/application/pomodoro/usecases'
 import {
     newPomodoroRecordRepository,
     newPomodoroRepository

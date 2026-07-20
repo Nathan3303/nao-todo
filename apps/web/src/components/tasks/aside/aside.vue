@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { AppAsideAdapter } from '@/components/app'
-import { ProjectSmartList } from '@nao-todo/domain/project'
-import { TagSmartList } from '@nao-todo/domain/tag'
+import { ProjectSmartList } from '@nao-todo/presentation/project'
+import { TagSmartList } from '@nao-todo/presentation/tag'
 import {
     PROJECT_CREATOR_DIALOG_KEY,
     PROJECT_MANAGER_DIALOG_KEY,

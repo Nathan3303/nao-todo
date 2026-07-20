@@ -1,5 +1,5 @@
-import { AuthUseCase } from '@nao-todo/domain/auth'
-import { UserUseCase } from '@nao-todo/domain/user'
+import { AuthUseCase } from '@nao-todo/application/auth/usecases'
+import { UserUseCase } from '@nao-todo/application/user/usecases'
 import { Subscriber } from '@nao-todo/shared'
 import { InjectionKey, Ref } from 'vue'
 

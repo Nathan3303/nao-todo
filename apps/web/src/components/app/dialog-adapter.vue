@@ -5,18 +5,18 @@ import {
     ProjectManagerDialog,
     ProjectUpdaterDialog,
     useProjectsStore
-} from '@nao-todo/domain/project'
+} from '@nao-todo/presentation/project'
 import {
     TagCreatorDialog,
     TagManagerDialog,
     TagUpdaterDialog,
     useTagsStore
-} from '@nao-todo/domain/tag'
+} from '@nao-todo/presentation/tag'
 import {
     TaskCreatorDialog,
     TaskParentSelectorDialog,
     TaskReminderDialog
-} from '@nao-todo/domain/task'
+} from '@nao-todo/presentation/task'
 import { storeToRefs } from 'pinia'
 import { inject } from 'vue'
 

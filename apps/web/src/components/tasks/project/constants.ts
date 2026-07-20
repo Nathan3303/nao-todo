@@ -1,4 +1,4 @@
-import type { ViewAdapterNoTaskError } from '@nao-todo/domain/task'
+import type { ViewAdapterNoTaskError } from '@nao-todo/presentation/task'
 /**
  * 用户清单空状态
  */

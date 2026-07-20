@@ -1,4 +1,4 @@
-import type { CreateProjectViewObject } from '@nao-todo/domain/project'
+import type { CreateProjectViewObject } from '@nao-todo/application/project/viewobjects'
 
 export type ProjectFormProps = {
     modelValue: CreateProjectViewObject

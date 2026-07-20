@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { AUTH_VIEW_CONTEXT_KEY } from '@/views/auth/context'
-import { AuthCheckIn } from '@nao-todo/domain/auth'
+import { AuthCheckIn } from '@nao-todo/presentation/auth'
 import { inject } from 'vue'
 
 defineOptions({ name: 'AuthCheckInPage' })

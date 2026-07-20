@@ -1,4 +1,5 @@
-import { TagDomain, TagStore, TagUseCase } from '@nao-todo/domain/tag'
+import { TagDomain, TagStore } from '@nao-todo/domain/tag'
+import { TagUseCase } from '@nao-todo/application/tag/usecases'
 import { TagPreferenceRepoImpl, TagRepoImpl } from '@nao-todo/infrastructure/backend'
 import { getRequesterImpl } from '@nao-todo/shared'
 

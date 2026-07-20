@@ -1,4 +1,5 @@
-import { UserDomain, UserStore, UserUseCase } from '@nao-todo/domain/user'
+import { UserDomain, UserStore } from '@nao-todo/domain/user'
+import { UserUseCase } from '@nao-todo/application/user/usecases'
 import { newUserConfigRepository, newUserRepository } from '@nao-todo/infrastructure/backend/user'
 import { getRequesterImpl } from '@nao-todo/shared'
 

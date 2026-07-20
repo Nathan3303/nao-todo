@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
-import { PomodoroTimerSettingDialog } from '@nao-todo/domain/pomodoro'
+import { PomodoroTimerSettingDialog } from '@nao-todo/presentation/pomodoro'
 import { inject } from 'vue'
 
 defineOptions({ name: 'PomodoroDialogAdapter' })

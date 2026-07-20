@@ -12,7 +12,12 @@
         "paths": {
             "@/*": [
                 "./src/*"
-            ]
+            ],
+            "@nao-todo/domain": ["../../packages/domain"],
+            "@nao-todo/application": ["../../packages/application"],
+            "@nao-todo/presentation": ["../../packages/presentation"],
+            "@nao-todo/shared": ["../../packages/shared"],
+            "@nao-todo/infrastructure": ["../../packages/infrastructure"]
         },
         "types": [
             "nue-ui/dist/global.d.ts"

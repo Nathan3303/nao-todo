@@ -4,7 +4,7 @@ import {
     TaskStateFilter,
     TaskPriorityFilter,
     TaskSortOperator
-} from '@nao-todo/domain/task'
+} from '@nao-todo/presentation/task'
 import { DropdownDivBlock } from '@nao-todo/shared'
 import { computed, inject, watch } from 'vue'
 import { TAG_VIEW_CONTEXT_KEY } from '../context'

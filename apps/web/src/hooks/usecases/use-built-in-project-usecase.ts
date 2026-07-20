@@ -1,8 +1,5 @@
-import {
-    BuiltInProjectDomain,
-    BuiltInProjectStore,
-    BuiltInProjectUseCase
-} from '@nao-todo/domain/built-in-project'
+import { BuiltInProjectDomain, BuiltInProjectStore } from '@nao-todo/domain/built-in-project'
+import { BuiltInProjectUseCase } from '@nao-todo/application/built-in-project/usecases'
 import useBuiltInProjectRepository from '@nao-todo/infrastructure/built-in/project/repoImpl'
 
 /**
