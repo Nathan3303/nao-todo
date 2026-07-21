@@ -50,14 +50,14 @@ export class AuthDomain {
      * 检入
      * @returns 新用户凭据
      */
-    async checkIn(): GoAsync<string> {
+    async checkIn(): GoAsync<AuthSessionValueObject> {
         // 1. 从本地存储获取登录凭证
         const jwtFromLocalStorage = this.authRepo.getJwtFromLocalStorage()
         if (jwtFromLocalStorage === null) {
             return [null, new Error('未登录')]
         }
         // 2. 检查登录状态
-        const [newJwt, err] = await this.authRepo.checkIn(jwtFromLocalStorage)
+        const [session, err] = await this.authRepo.checkIn(jwtFromLocalStorage)
         // 3. 若检入失败则删除凭据
         if (err !== null) {
             // 3. 移除登录凭证
@@ -65,9 +65,9 @@ export class AuthDomain {
             return [null, err]
         }
         // 4. 若检入成功则保存新凭证
-        this.authRepo.saveJwtToLocalStorage(newJwt)
+        this.authRepo.saveJwtToLocalStorage(session.jwt)
         // 3. 返回新用户凭据
-        return [newJwt, null]
+        return [session, null]
     }
 
     /**

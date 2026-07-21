@@ -28,7 +28,7 @@ export const signInResToAuthSessionValueObject = (signInRes: SignInRes): AuthSes
     return new AuthSessionValueObject(
         signInRes.jwt,
         signInRes.pendingDeletion,
-        signInRes.deletionDeadline
+        signInRes.deletedAt
     )
 }
 

@@ -157,6 +157,7 @@ export interface LocaleMessages {
     'user.restoreFailed': string
     'user.restorePasswordRequired': string
     'user.restoreAgreeRequired': string
+    'user.cancelRestore': string
 
     // Task
     'task.state.todo': string

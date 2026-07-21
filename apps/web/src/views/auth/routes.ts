@@ -24,11 +24,6 @@ const routes: RouteRecordRaw = {
             name: 'auth-checkin',
             component: () => import('@/components/auth/check-in-page.vue')
         },
-        {
-            path: 'restore',
-            name: 'auth-restore',
-            component: () => import('@/components/auth/restore-page.vue')
-        }
     ]
 }
 

@@ -12,4 +12,5 @@ export type UserRestoreFormData = {
 
 export type UserRestoreEmits = {
     (e: 'restored'): void
+    (e: 'confirm-unrestore'): void
 }

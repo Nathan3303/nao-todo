@@ -59,7 +59,7 @@ export class AuthUseCase {
      */
     async checkIn(): GoAsync<void> {
         // 调用域服务 - 检查登录状态
-        const [, err] = await this.authDomain.checkIn()
+        const [session, err] = await this.authDomain.checkIn()
         // const [newJwt, err] = await this.authDomain.checkIn()
         if (err !== null) {
             localStorage.removeItem('USER_JWT')
@@ -67,6 +67,9 @@ export class AuthUseCase {
         }
         // 存储JWT
         this.authStore.setIsAuthenticated(true)
+        // 存储注销截止时间
+        const sessionViewObject = sessionValueObject2ViewObject(session)
+        this.authStore.setDeletionDeadline(sessionViewObject.deletionDeadline || null)
         // this.authStore.setUserToken(newJwt)
         // 返回
         return null

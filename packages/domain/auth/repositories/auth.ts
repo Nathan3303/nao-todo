@@ -24,7 +24,7 @@ export interface AuthRepository {
      * @param jwt JWT
      * @returns 用户ID
      */
-    checkIn(jwt: string): GoAsync<string>
+    checkIn(jwt: string): GoAsync<AuthSessionValueObject>
 
     /**
      * 退出登录

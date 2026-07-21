@@ -114,7 +114,8 @@ const zhCN: LocaleMessages = {
     'settings.signOutButtonText': '退出登录',
     'settings.deactive.title': '注销账户',
     'settings.deactive.confirmTitle': '确认注销账户吗？',
-    'settings.deactive.confirmContent': '注销后，您的所有数据将在7天后被永久删除。在此期间，您可以撤销注销。确定要继续吗？',
+    'settings.deactive.confirmContent':
+        '注销后，您的所有数据将在7天后被永久删除。在此期间，您可以撤销注销。确定要继续吗？',
     'settings.deactive.password': '密码',
     'settings.deactive.passwordPlaceholder': '请输入密码',
     'settings.deactive.confirmPassword': '确认密码',
@@ -138,10 +139,12 @@ const zhCN: LocaleMessages = {
     'settings.restore.agreeRequired': '请同意撤销注销协议',
 
     'user.deactiveWarningTitle': '注销账户',
-    'user.deactiveWarningContent': '注销后，您的所有数据将在7天后被永久删除。在此期间，您可以撤销注销。请谨慎操作。',
+    'user.deactiveWarningContent':
+        '注销后，您的所有数据将在7天后被永久删除。在此期间，您可以撤销注销。请谨慎操作。',
     'user.deactiveButton': '注销账户',
     'user.deactiveConfirmTitle': '确认注销账户吗？',
-    'user.deactiveConfirmContent': '注销后，您的所有数据将在7天后被永久删除。在此期间，您可以撤销注销。确定要继续吗？',
+    'user.deactiveConfirmContent':
+        '注销后，您的所有数据将在7天后被永久删除。在此期间，您可以撤销注销。确定要继续吗？',
     'user.deactiveConfirmButton': '确认注销',
     'user.deactiveDialogTitle': '注销账户',
     'user.password': '密码',
@@ -153,15 +156,17 @@ const zhCN: LocaleMessages = {
     'user.deactiveFailed': '注销失败',
 
     'user.restoreWarningTitle': '撤销注销',
-    'user.restoreWarningContent': '当前账户已执行注销操作，处于待注销状态。您可以在此撤销注销，恢复账户正常使用。',
+    'user.restoreWarningContent':
+        '当前账户已执行注销操作，处于待注销状态。您可以在此撤销注销，恢复账户正常使用。',
     'user.deletionDeadline': '数据删除时间',
     'user.deletionDeadlineUnknown': '未知',
-    'user.restoreAgreement': '我同意撤销注销',
+    'user.restoreAgreement': '我确认撤销注销',
     'user.restoreSubmit': '确认撤销注销',
     'user.restoreSuccess': '撤销注销成功',
     'user.restoreFailed': '撤销注销失败',
     'user.restorePasswordRequired': '请输入密码',
     'user.restoreAgreeRequired': '请同意撤销注销协议',
+    'user.cancelRestore': '暂不恢复，在删除日前继续使用',
 
     // Task
     'task.state.todo': '待办',
@@ -448,7 +453,8 @@ const zhCN: LocaleMessages = {
     'component.accountHint.content':
         '账号可以是用户名或者电子邮箱。\n用户名要求由 6 - 32 位字母、数字或下划线组成；\n电子邮箱需要符合常规的邮箱格式要求。',
     'component.passwordHint.title': '密码提示',
-    'component.passwordHint.content': '密码格式要求长度为 8 - 24 位，且包含字母、数字以及特殊符号。',
+    'component.passwordHint.content':
+        '密码格式要求长度为 8 - 24 位，且包含字母、数字以及特殊符号。',
     'component.restoreProject': '恢复清单',
     'component.deleteProject': '删除清单',
     'component.archiveProject': '归档清单',
@@ -504,4 +510,3 @@ const zhCN: LocaleMessages = {
 }
 
 export default zhCN
-

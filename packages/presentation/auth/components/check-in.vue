@@ -6,20 +6,18 @@ import { AuthUseCase } from '@nao-todo/application/auth/usecases'
 
 defineOptions({ name: 'AuthCheckIn' })
 const props = defineProps<{ authUseCase: AuthUseCase; loadingText: string }>()
+const emit = defineEmits<{ (e: 'checkInSuccess'): void }>()
 
 const router = useRouter()
 
-props.authUseCase
-    .checkIn()
-    .then((err: GoError) => {
-        if (err === null) return null
-        NueMessage.error(unwrapError(err))
-        return router.replace('/auth/signin')
-    })
-    .then(() => {
-        const lastRoute = localStorage.getItem('LAST_VISITED_ROUTE')
-        router.replace(lastRoute || '/tasks')
-    })
+props.authUseCase.checkIn().then((err: GoError) => {
+    if (err === null) {
+        emit('checkInSuccess')
+        return null
+    }
+    NueMessage.error(unwrapError(err))
+    return router.replace('/auth/signin')
+})
 </script>
 
 <template>

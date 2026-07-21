@@ -8,7 +8,7 @@ export type SignInReq = {
 export type SignInRes = {
     jwt: string
     pendingDeletion: boolean
-    deletionDeadline?: string
+    deletedAt?: string
 }
 
 // SignUpReq 注册请求类型
@@ -33,6 +33,6 @@ export type CheckInReq = {
 // CheckInRes 检入响应类型
 export type CheckInRes = {
     jwt: string
+    pendingDeletion: boolean
+    deletedAt?: string
 }
-
-

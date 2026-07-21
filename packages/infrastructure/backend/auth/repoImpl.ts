@@ -54,7 +54,7 @@ export const useAuthRepository = (requester: Requester): AuthRepository => {
      * @param jwt 登录凭证
      * @returns 登录凭证
      */
-    const checkIn = async (jwt: string): GoAsync<string> => {
+    const checkIn = async (jwt: string): GoAsync<AuthSessionValueObject> => {
         // 调用接口
         const response = await requester.put('/auth/checkin', { jwt })
         const result = response.data as ResponseData
@@ -62,7 +62,7 @@ export const useAuthRepository = (requester: Requester): AuthRepository => {
         if (result.code !== 10020) return [null, result.message]
         // 返回
         const data = result.data as CheckInRes
-        return [data.jwt, null]
+        return [signInResToAuthSessionValueObject(data), null]
     }
 
     /**

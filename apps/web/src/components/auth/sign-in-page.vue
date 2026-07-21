@@ -14,11 +14,11 @@ const userStore = useUserStore()
 
 const onSignInSuccess = () => {
     const deletionDeadline = userStore.getDeletionDeadline()
-    if (deletionDeadline) {
-        router.push('/auth/restore')
+    if (!deletionDeadline || localStorage.getItem('CONFIRM_UNRESTORE')) {
+        router.replace(localStorage.getItem('LAST_VISITED_ROUTE') || '/tasks')
         return
     }
-    router.push(localStorage.getItem('LAST_VISITED_ROUTE') || '/tasks')
+    router.push('/user/restore')
 }
 </script>
 
