@@ -12,7 +12,6 @@ import type {
     UpdateUserPasswordReq,
     UserProfileRes
 } from '../models/user'
-import SparkMD5 from 'spark-md5'
 
 // --- User ---
 
@@ -58,8 +57,8 @@ export const updateUserPasswordValueObject2Req = (
     updateVO: UpdateUserPasswordValueObject
 ): UpdateUserPasswordReq => {
     return {
-        oldPassword: SparkMD5.hash(updateVO.oldPassword),
-        newPassword: SparkMD5.hash(updateVO.newPassword)
+        oldPassword: updateVO.oldPassword,
+        newPassword: updateVO.newPassword
     }
 }
 

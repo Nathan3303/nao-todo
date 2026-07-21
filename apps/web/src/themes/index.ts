@@ -4,6 +4,7 @@ import 'nue-ui-theme-shadlike/dist/index.css'
 import './animation.css'
 import './variables.css'
 
+import './avatar.css'
 import './div.css'
 import './confirm.css'
 import './textarea.css'

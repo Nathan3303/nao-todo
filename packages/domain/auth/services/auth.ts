@@ -24,14 +24,6 @@ export class AuthDomain {
         if (validateErr !== null) {
             return [null, validateErr]
         }
-        // 加密密码
-        const [encryptedPassword, encryptErr] = this.authRepo.encryptPassword(
-            signInValueObject.password
-        )
-        if (encryptErr !== null) {
-            return [null, encryptErr]
-        }
-        signInValueObject.setEncryptedPassword(encryptedPassword) // 设置加密后的密码
         // 执行登录
         const [jwt, signInErr] = await this.authRepo.signIn(signInValueObject)
         if (signInErr !== null) {
@@ -53,14 +45,6 @@ export class AuthDomain {
         if (validateErr !== null) {
             return validateErr
         }
-        // 加密密码
-        const [encryptedPassword, encryptErr] = this.authRepo.encryptPassword(
-            signUpValueObject.password
-        )
-        if (encryptErr !== null) {
-            return encryptErr
-        }
-        signUpValueObject.setEncryptedPassword(encryptedPassword) // 设置加密后的密码
         // 注册
         return await this.authRepo.signUp(signUpValueObject)
     }

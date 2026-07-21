@@ -13,13 +13,6 @@ export interface AuthRepository {
     signIn(signInValueObject: SignInValueObject): GoAsync<string>
 
     /**
-     * 加密密码
-     * @param password 密码
-     * @returns 加密后的密码
-     */
-    encryptPassword(password: string): Go<string>
-
-    /**
      * 注册
      * @param signUpValueObject 注册值对象
      * @returns 无

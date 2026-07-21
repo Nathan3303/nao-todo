@@ -5,7 +5,6 @@ import {
     type SignUpValueObject
 } from '@nao-todo/domain/auth'
 import type { Go, GoAsync, Requester } from '@nao-todo/shared'
-import SparkMD5 from 'spark-md5'
 import type { CheckInRes, ResponseData, SignInRes } from '../models'
 import { signInValueObjectToSignInReq, signUpValueObjectToSignUpReq } from './converters'
 
@@ -27,15 +26,6 @@ export const useAuthRepository = (requester: Requester): AuthRepository => {
         // 返回
         const data = result.data as SignInRes
         return [data.jwt, null]
-    }
-
-    /**
-     * 加密密码（md5）
-     * @param password 密码
-     * @returns 加密后的密码
-     */
-    const encryptPassword = (password: string): Go<string> => {
-        return [SparkMD5.hash(password), null]
     }
 
     /**
@@ -115,7 +105,6 @@ export const useAuthRepository = (requester: Requester): AuthRepository => {
     // @returns
     return {
         signIn,
-        encryptPassword,
         signUp,
         checkIn,
         signOut,
