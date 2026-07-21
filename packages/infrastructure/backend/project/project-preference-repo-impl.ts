@@ -36,7 +36,7 @@ export class ProjectPreferenceRepoImpl implements ProjectPreferenceRepository {
         const res = response.data as ResponseData
         // 3. 判断结果
         if (res.code !== 20080) {
-            return [defaultProjectPreferenceRes2Entity(), res.message]
+            return [defaultProjectPreferenceRes2Entity(projectId), null]
         }
         // 4. 获取失败则返回默认结果
         return [projectPreferenceRes2Entity(res.data as ProjectPreferenceRes), null]

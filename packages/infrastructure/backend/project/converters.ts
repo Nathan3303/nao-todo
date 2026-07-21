@@ -111,16 +111,16 @@ export const projectPreferenceRes2Entity = (res: ProjectPreferenceRes): ProjectP
  * 创建默认项目偏好实体
  * @returns 默认项目偏好实体
  */
-export const defaultProjectPreferenceRes2Entity = (): ProjectPreferenceEntity => {
+export const defaultProjectPreferenceRes2Entity = (projectId: string): ProjectPreferenceEntity => {
     const today = dayjs().toISOString()
     return new ProjectPreferenceEntity(
         '',
         today,
         today,
         null,
-        '',
+        projectId,
         'table',
-        '{}',
+        `{"projectId":"${projectId}"}`,
         JSON.stringify(defaultColumns)
     )
 }
@@ -139,4 +139,3 @@ export const saveProjectPreferenceValueObject2Req = (
     if (saveVO.columns !== void 0) req.columns = saveVO.columns
     return req
 }
-

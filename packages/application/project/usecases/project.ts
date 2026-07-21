@@ -127,7 +127,7 @@ export class ProjectUseCase {
      */
     async restore(projectId: ProjectViewObject['id']): GoAsync<void> {
         // 恢复任务清单
-        const err = await this.projectRepo.delete(projectId)
+        const err = await this.projectRepo.restore(projectId)
         if (err !== null) return err
         // 更新状态管理
         this.store.restoreProject(projectId)

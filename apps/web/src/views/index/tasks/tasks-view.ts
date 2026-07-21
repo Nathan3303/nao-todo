@@ -186,7 +186,12 @@ const useTasksView = () => {
     })
 
     // @returns
-    return { isLoading, error, init }
+    return {
+        isLoading,
+        error,
+        init,
+        subscriber: appSubscriber
+    }
 }
 
 export default useTasksView

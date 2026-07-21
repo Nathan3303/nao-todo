@@ -154,6 +154,7 @@ export class ProjectHandler {
         }
         // 成功
         NueMessage.success(t('dialog.projectDeleteSuccess'))
+        this.subscriber.emit('project:deleted', projectId)
         return null
     }
 

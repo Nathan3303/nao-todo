@@ -2,14 +2,33 @@
 import { TasksViewAside } from '@/components/tasks'
 import { TaskDetailsAdapter } from '@nao-todo/presentation/task'
 import { Loading as LoadingComp, LoadingError } from '@nao-todo/shared'
-import { onMounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 import useTasksView from './tasks-view'
+import { useRouter } from 'vue-router'
 
 defineOptions({ name: 'TasksView' })
 
-const { isLoading, error, init } = useTasksView()
+const router = useRouter()
+const { isLoading, error, init, subscriber } = useTasksView()
 
-onMounted(() => init())
+/**
+ * 检测被删除的清单是否正在浏览，如果正在浏览则需要跳转至 “所有任务”
+ * @param projectId 被删除的清单 ID
+ */
+const resetViewWhenProjectDeleted = (projectId: string) => {
+    const currentProjectId = router.currentRoute.value.params.projectId
+    const isSame = currentProjectId === projectId
+    if (isSame) router.replace('/tasks/all')
+}
+
+onMounted(() => {
+    init()
+    subscriber.subscribe('project:deleted', resetViewWhenProjectDeleted)
+})
+
+onUnmounted(() => {
+    subscriber.unsubscribe('project:deleted', resetViewWhenProjectDeleted)
+})
 </script>
 
 <template>
@@ -50,4 +69,3 @@ onMounted(() => init())
         </loading-error>
     </nue-container>
 </template>
-
