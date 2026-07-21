@@ -1,11 +1,13 @@
-import { UpdateUserNicknameValueObject, UpdateUserPasswordValueObject } from '@nao-todo/domain/user/valueobjects'
+import { UpdateUserNicknameValueObject, UpdateUserPasswordValueObject, DeactiveUserValueObject, RestoreUserValueObject } from '@nao-todo/domain/user/valueobjects'
 import { UserConfigEntity, UserEntity } from '@nao-todo/domain/user/entities'
 import dayjs from 'dayjs'
 import type {
     UpdateNicknameViewObject,
     UpdatePasswordViewObject,
     UserConfigViewObject,
-    UserViewObject
+    UserViewObject,
+    DeactiveUserViewObject,
+    RestoreUserViewObject
 } from '../viewobjects'
 
 /**
@@ -61,4 +63,26 @@ export const userConfigEntityToViewObject = (
     return {
         appearance: userConfigEntity.appearance
     }
+}
+
+/**
+ * 将注销用户视图对象转换为注销用户值对象
+ * @param deactiveUserViewObject 注销用户视图对象
+ * @returns 注销用户值对象
+ */
+export const deactiveUserViewObjectToValueObject = (
+    deactiveUserViewObject: DeactiveUserViewObject
+): DeactiveUserValueObject => {
+    return new DeactiveUserValueObject(deactiveUserViewObject.password)
+}
+
+/**
+ * 将撤销注销用户视图对象转换为撤销注销用户值对象
+ * @param restoreUserViewObject 撤销注销用户视图对象
+ * @returns 撤销注销用户值对象
+ */
+export const restoreUserViewObjectToValueObject = (
+    restoreUserViewObject: RestoreUserViewObject
+): RestoreUserValueObject => {
+    return new RestoreUserValueObject(restoreUserViewObject.password)
 }

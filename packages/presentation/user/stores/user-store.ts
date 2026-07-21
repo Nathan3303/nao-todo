@@ -31,6 +31,19 @@ export const useUserStore = defineStore('UserStore', () => {
         setUserProfile({ ...userProfile.value, ...updateProfile } as UserViewObject)
     }
 
+    // @state 用户注销截止时间
+    const deletionDeadline = ref<string | null>(null)
+
+    // @action 获取用户注销截止时间
+    const getDeletionDeadline = () => {
+        return deletionDeadline.value
+    }
+
+    // @action 设置用户注销截止时间
+    const setDeletionDeadline = (deadline: string | null) => {
+        deletionDeadline.value = deadline
+    }
+
     // @state 用户配置
     const userConfig = ref<UserConfigViewObject>()
 
@@ -57,6 +70,9 @@ export const useUserStore = defineStore('UserStore', () => {
         getIsAuthenticated,
         setIsAuthenticated,
         clearAuthData,
+        deletionDeadline,
+        getDeletionDeadline,
+        setDeletionDeadline,
         // user
         profile: computed(() => userProfile.value),
         setUserProfile,

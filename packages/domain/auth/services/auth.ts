@@ -1,4 +1,4 @@
-import type { SignUpValueObject, SignInValueObject } from '../valueobjects'
+import type { SignUpValueObject, SignInValueObject, AuthSessionValueObject } from '../valueobjects'
 import type { AuthRepository } from '../repositories'
 import type { GoAsync } from '@nao-todo/shared'
 
@@ -16,22 +16,19 @@ export class AuthDomain {
     /**
      * 登录
      * @param signInValueObject 登录值对象
-     * @returns 登录凭证
+     * @returns 认证会话
      */
-    async signIn(signInValueObject: SignInValueObject): GoAsync<string> {
-        // 校验数据
+    async signIn(signInValueObject: SignInValueObject): GoAsync<AuthSessionValueObject> {
         const validateErr = signInValueObject.validate()
         if (validateErr !== null) {
             return [null, validateErr]
         }
-        // 执行登录
-        const [jwt, signInErr] = await this.authRepo.signIn(signInValueObject)
+        const [session, signInErr] = await this.authRepo.signIn(signInValueObject)
         if (signInErr !== null) {
             return [null, signInErr]
         }
-        // 保存登录凭证
-        this.authRepo.saveJwtToLocalStorage(jwt)
-        return [jwt, null]
+        this.authRepo.saveJwtToLocalStorage(session.jwt)
+        return [session, null]
     }
 
     /**

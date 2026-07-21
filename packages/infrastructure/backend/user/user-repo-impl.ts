@@ -2,7 +2,9 @@ import {
     UpdateUserNicknameValueObject,
     UpdateUserPasswordValueObject,
     UserEntity,
-    UserRepository
+    UserRepository,
+    DeactiveUserValueObject,
+    RestoreUserValueObject
 } from '@nao-todo/domain/user'
 import type { GoAsync, Requester } from '@nao-todo/shared'
 import type { ResponseData, UserProfileRes, UpdateUserAvatarURLRes } from '../models'
@@ -134,40 +136,41 @@ export class UserRepoImpl implements UserRepository {
     }
 
     /**
-     * 退出登录
-     * @description 退出登录
+     * 注销用户
+     * @description 注销用户
+     * @param deactiveVO 注销用户值对象
      * @returns 无
      */
-    async deactive(): GoAsync<void> {
-        // 1. 调用接口
-        const response = await this.requester.put('/user/deactive', null, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+    async deactive(deactiveVO: DeactiveUserValueObject): GoAsync<void> {
+        const response = await this.requester.delete('/user/', {
+            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` },
+            data: { password: deactiveVO.password }
         })
-        // 2. 判断结果
         const res = response.data as ResponseData
         if (res.code !== 10090) {
             return res.message
         }
-        // 3. 返回
         return null
     }
 
     /**
-     * 重新登录
-     * @description 重新登录
+     * 撤销注销用户
+     * @description 撤销注销用户
+     * @param restoreVO 撤销注销用户值对象
      * @returns 无
      */
-    async active(): GoAsync<void> {
-        // 1. 调用接口
-        const response = await this.requester.put('/user/active', null, {
-            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
-        })
-        // 2. 判断结果
+    async restore(restoreVO: RestoreUserValueObject): GoAsync<void> {
+        const response = await this.requester.put(
+            '/user/restore',
+            { password: restoreVO.password },
+            {
+                headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+            }
+        )
         const res = response.data as ResponseData
         if (res.code !== 10090) {
             return res.message
         }
-        // 3. 返回
         return null
     }
 }

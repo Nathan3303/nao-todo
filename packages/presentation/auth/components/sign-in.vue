@@ -2,14 +2,12 @@
 import { t, unwrapError } from '@nao-todo/shared'
 import { NueMessage } from 'nue-ui'
 import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import type { SignInViewObject } from '@nao-todo/application/auth/viewobjects'
 import { AuthUseCase } from '@nao-todo/application/auth/usecases'
 
 defineOptions({ name: 'AuthSignIn' })
 const props = defineProps<{ authUseCase: AuthUseCase }>()
-
-const router = useRouter()
+const emit = defineEmits<{ (e: 'signInSuccess'): void }>()
 
 const loading = ref(false)
 const disabled = ref(false)
@@ -26,8 +24,7 @@ const submit = async (e: Event) => {
         return
     }
     NueMessage.success(t('auth.signIn.success'))
-    const lastRoute = localStorage.getItem('LAST_VISITED_ROUTE')
-    await router.push(lastRoute || '/tasks')
+    emit('signInSuccess')
 }
 </script>
 

@@ -10,5 +10,3 @@ export default {
     component: () => import('./index.vue'),
     children: [tasksRoutes, calendarRoutes, pomodoroRoutes, searchRoutes, settingsRoutes]
 }
-
-

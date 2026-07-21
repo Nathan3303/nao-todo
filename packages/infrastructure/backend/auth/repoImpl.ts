@@ -2,30 +2,33 @@ import {
     USER_JWT_LOCALSTORAGE_KEY,
     type AuthRepository,
     type SignInValueObject,
-    type SignUpValueObject
+    type SignUpValueObject,
+    AuthSessionValueObject
 } from '@nao-todo/domain/auth'
 import type { Go, GoAsync, Requester } from '@nao-todo/shared'
 import type { CheckInRes, ResponseData, SignInRes } from '../models'
-import { signInValueObjectToSignInReq, signUpValueObjectToSignUpReq } from './converters'
+import {
+    signInResToAuthSessionValueObject,
+    signInValueObjectToSignInReq,
+    signUpValueObjectToSignUpReq
+} from './converters'
 
 export const useAuthRepository = (requester: Requester): AuthRepository => {
     /**
      * 登录
      * @param signInValueObject 登录值对象
-     * @returns 登录凭证
+     * @returns 认证会话
      */
-    const signIn = async (signInValueObject: SignInValueObject): GoAsync<string> => {
-        // 实体转换请求体
+    const signIn = async (
+        signInValueObject: SignInValueObject
+    ): GoAsync<AuthSessionValueObject> => {
         const [rto, err] = signInValueObjectToSignInReq(signInValueObject)
         if (err !== null) return [null, err]
-        // 调用登录接口
         const response = await requester.post('/auth/signin', rto)
         const result = response.data as ResponseData
-        // 判断是否成功
         if (result.code !== 10010) return [null, result.message]
-        // 返回
         const data = result.data as SignInRes
-        return [data.jwt, null]
+        return [signInResToAuthSessionValueObject(data), null]
     }
 
     /**

@@ -84,6 +84,7 @@ export interface LocaleMessages {
     'settings.nicknamePlaceholder': string
     'settings.nicknameSubmit': string
     'settings.moreInfo': string
+    'settings.dangerZone': string
     'settings.registeredAt': string
     'settings.passwordHintTitle': string
     'settings.passwordHintContent': string
@@ -107,6 +108,55 @@ export interface LocaleMessages {
     'settings.avatarViewTitle': string
     'settings.updateAvatarButtonText': string
     'settings.signOutButtonText': string
+    'settings.deactive.title': string
+    'settings.deactive.confirmTitle': string
+    'settings.deactive.confirmContent': string
+    'settings.deactive.password': string
+    'settings.deactive.passwordPlaceholder': string
+    'settings.deactive.confirmPassword': string
+    'settings.deactive.confirmPasswordPlaceholder': string
+    'settings.deactive.agreeLabel': string
+    'settings.deactive.submit': string
+    'settings.deactive.success': string
+    'settings.deactive.passwordMismatch': string
+    'settings.deactive.passwordRequired': string
+    'settings.deactive.agreeRequired': string
+    'settings.restore.title': string
+    'settings.restore.pendingMessage': string
+    'settings.restore.deletionDeadline': string
+    'settings.restore.password': string
+    'settings.restore.passwordPlaceholder': string
+    'settings.restore.agreeLabel': string
+    'settings.restore.submit': string
+    'settings.restore.success': string
+    'settings.restore.passwordRequired': string
+    'settings.restore.agreeRequired': string
+
+    // User
+    'user.deactiveWarningTitle': string
+    'user.deactiveWarningContent': string
+    'user.deactiveButton': string
+    'user.deactiveConfirmTitle': string
+    'user.deactiveConfirmContent': string
+    'user.deactiveConfirmButton': string
+    'user.deactiveDialogTitle': string
+    'user.password': string
+    'user.passwordPlaceholder': string
+    'user.confirmPasswordPlaceholder': string
+    'user.deactiveAgreement': string
+    'user.deactiveSubmit': string
+    'user.deactiveSuccess': string
+    'user.deactiveFailed': string
+    'user.restoreWarningTitle': string
+    'user.restoreWarningContent': string
+    'user.deletionDeadline': string
+    'user.deletionDeadlineUnknown': string
+    'user.restoreAgreement': string
+    'user.restoreSubmit': string
+    'user.restoreSuccess': string
+    'user.restoreFailed': string
+    'user.restorePasswordRequired': string
+    'user.restoreAgreeRequired': string
 
     // Task
     'task.state.todo': string

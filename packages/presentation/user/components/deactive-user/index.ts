@@ -1,0 +1,1 @@
+export { default as UserDeactive } from './deactive-user.vue'

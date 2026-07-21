@@ -1,4 +1,4 @@
-import type { SignUpValueObject, SignInValueObject } from '../valueobjects'
+import type { SignUpValueObject, SignInValueObject, AuthSessionValueObject } from '../valueobjects'
 import type { Go, GoAsync } from '@nao-todo/shared'
 
 /**
@@ -8,9 +8,9 @@ export interface AuthRepository {
     /**
      * 登录
      * @param signInValueObject 登录值对象
-     * @returns JWT
+     * @returns 认证会话
      */
-    signIn(signInValueObject: SignInValueObject): GoAsync<string>
+    signIn(signInValueObject: SignInValueObject): GoAsync<AuthSessionValueObject>
 
     /**
      * 注册

@@ -43,6 +43,19 @@ export type UpdatePasswordViewObject = {
     confirmNewPassword: string
 }
 
+// 注销用户视图对象
+export type DeactiveUserViewObject = {
+    password: string
+    confirmPassword: string
+    agreed: boolean
+}
+
+// 撤销注销用户视图对象
+export type RestoreUserViewObject = {
+    password: string
+    agreed: boolean
+}
+
 // --- User Config ---
 
 // 用户配置视图对象

@@ -19,6 +19,7 @@ export type ResponseData = {
     message: string
     data: unknown
     error?: string
+    businessCode?: string
     pagination?: ResponseDataPagination
 }
 

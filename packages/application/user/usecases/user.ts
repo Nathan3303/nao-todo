@@ -6,14 +6,18 @@ import type {
     UpdatePasswordViewObject,
     UpdateUserConfigViewObject,
     UserStore,
-    UserViewObject
+    UserViewObject,
+    DeactiveUserViewObject,
+    RestoreUserViewObject
 } from '../viewobjects'
 import { UpdateUserConfigValueObject } from '@nao-todo/domain/user/valueobjects'
 import {
     updatePasswordViewObjectToValueObject,
     updateUserNicknameViewObjectToValueObject,
     userConfigEntityToViewObject,
-    userEntityToViewObject
+    userEntityToViewObject,
+    deactiveUserViewObjectToValueObject,
+    restoreUserViewObjectToValueObject
 } from './converters'
 
 /**
@@ -121,13 +125,45 @@ export class UserUseCase {
      * @returns 更新结果
      */
     async updateAvatarFile(file: File): GoAsync<string> {
-        // 更新用户头像
         const [avatarURL, err] = await this.userRepo.updateAvatarFile(file)
         if (err !== null) return ['', err]
-        // 更新存储
         this.userStore.updateUserProfile({ avatar: avatarURL })
-        // 返回
         return [avatarURL, null]
+    }
+
+    /**
+     * 注销用户
+     * @param deactiveUserViewObject 注销用户视图对象
+     * @returns 更新结果
+     */
+    async deactive(deactiveUserViewObject: DeactiveUserViewObject): GoAsync<void> {
+        if (deactiveUserViewObject.password !== deactiveUserViewObject.confirmPassword) {
+            return '两次输入的密码不一致'
+        }
+        if (!deactiveUserViewObject.agreed) {
+            return '请同意注销协议'
+        }
+        const deactiveUserValueObject = deactiveUserViewObjectToValueObject(deactiveUserViewObject)
+        const err = await this.userRepo.deactive(deactiveUserValueObject)
+        if (err !== null) return err
+        this.userStore.clearAuthData()
+        return null
+    }
+
+    /**
+     * 撤销注销用户
+     * @param restoreUserViewObject 撤销注销用户视图对象
+     * @returns 更新结果
+     */
+    async restore(restoreUserViewObject: RestoreUserViewObject): GoAsync<void> {
+        if (!restoreUserViewObject.agreed) {
+            return '请同意撤销注销协议'
+        }
+        const restoreUserValueObject = restoreUserViewObjectToValueObject(restoreUserViewObject)
+        const err = await this.userRepo.restore(restoreUserValueObject)
+        if (err !== null) return err
+        this.userStore.clearAuthData()
+        return null
     }
 }
 

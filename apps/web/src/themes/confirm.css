@@ -1,6 +1,7 @@
 /* Patches */
 .nue-confirm {
     min-width: 16rem;
+    max-width: 18rem;
     min-height: 9rem;
 }
 

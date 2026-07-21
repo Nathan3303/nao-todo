@@ -4,6 +4,13 @@ export type SignInViewObject = {
     password: string
 }
 
+// 登录结果视图对象
+export type SignInSessionViewObject = {
+    token: string
+    pendingDeletion: boolean
+    deletionDeadline?: string | null
+}
+
 // 注册视图对象
 export type SignUpViewObject = {
     email: string
@@ -16,6 +23,7 @@ export type SignUpViewObject = {
 export type AuthStore = {
     getIsAuthenticated: () => boolean
     setIsAuthenticated: (isAuthenticated: boolean) => void
+    getDeletionDeadline: () => string | null
+    setDeletionDeadline: (deadline: string | null) => void
     clearAuthData: () => void
 }
-

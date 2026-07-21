@@ -7,6 +7,8 @@ export type SignInReq = {
 // SignInRes 登录响应类型
 export type SignInRes = {
     jwt: string
+    pendingDeletion: boolean
+    deletionDeadline?: string
 }
 
 // SignUpReq 注册请求类型

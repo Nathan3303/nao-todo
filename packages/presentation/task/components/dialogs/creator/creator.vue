@@ -11,7 +11,7 @@ import dayjs from 'dayjs'
 import { computed, nextTick, onMounted, ref } from 'vue'
 import { TaskCreatorInput, TaskDateSelector, TaskProjectSelector, TaskTagBar } from '../../'
 import { TaskPrioritySelectOptions, TaskStateSelectOptions } from '@nao-todo/domain/task'
-import type { CreateTaskViewObject, TaskViewObject } from '../../../types'
+import type { CreateTaskViewObject, TaskViewObject } from '@nao-todo/application'
 import { TaskCreatorDialogProps } from './types'
 import useTaskCreator from './use-creator'
 

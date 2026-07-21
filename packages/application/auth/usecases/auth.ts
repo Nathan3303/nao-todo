@@ -1,7 +1,11 @@
 import { AuthDomain } from '@nao-todo/domain/auth'
 import type { GoAsync } from '@nao-todo/shared'
 import type { AuthStore, SignInViewObject, SignUpViewObject } from '../viewobjects'
-import { signInViewObject2ValueObject, signUpViewObject2ValueObject } from './converters'
+import {
+    sessionValueObject2ViewObject,
+    signInViewObject2ValueObject,
+    signUpViewObject2ValueObject
+} from './converters'
 
 /**
  * 认证用例
@@ -20,20 +24,17 @@ export class AuthUseCase {
 
     /**
      * 登录
-     * @param vo 登录值对象
+     * @param signInViewObject 登录视图对象
+     * @param onPendingDeletion 待注销状态回调
      * @returns 错误信息或空值
      */
     async signIn(signInViewObject: SignInViewObject): GoAsync<void> {
-        // 视图对象转换为值对象
         const signInValueObject = signInViewObject2ValueObject(signInViewObject)
-        // 调用域服务 - 登录
-        const [, err] = await this.authDomain.signIn(signInValueObject)
-        // const [jwt, err] = await this.authDomain.signIn(signInValueObject)
+        const [session, err] = await this.authDomain.signIn(signInValueObject)
         if (err !== null) return err
-        // 存储JWT
+        const sessionViewObject = sessionValueObject2ViewObject(session)
         this.authStore.setIsAuthenticated(true)
-        // this.authStore.setUserToken(jwt)
-        // 返回
+        this.authStore.setDeletionDeadline(sessionViewObject.deletionDeadline || null)
         return null
     }
 

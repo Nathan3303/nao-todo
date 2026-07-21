@@ -2,6 +2,8 @@ import type { GoAsync } from '@nao-todo/shared'
 import type { UserEntity } from '../entities/user'
 import type { UpdateUserNicknameValueObject } from '../valueobjects/update-nickname'
 import type { UpdateUserPasswordValueObject } from '../valueobjects/update-password'
+import type { DeactiveUserValueObject } from '../valueobjects/deactive-user'
+import type { RestoreUserValueObject } from '../valueobjects/restore-user'
 
 /**
  * 用户仓库接口
@@ -48,18 +50,20 @@ export interface UserRepository {
     updateAvatarFile(file: File): GoAsync<string>
 
     /**
-     * 禁用用户
-     * @description 禁用用户
+     * 注销用户
+     * @description 注销用户
+     * @param deactiveVO 注销用户值对象
      * @returns 无
      */
-    deactive(): GoAsync<void>
+    deactive(deactiveVO: DeactiveUserValueObject): GoAsync<void>
 
     /**
-     * 启用用户
-     * @description 启用用户
+     * 撤销注销用户
+     * @description 撤销注销用户
+     * @param restoreVO 撤销注销用户值对象
      * @returns 无
      */
-    active(): GoAsync<void>
+    restore(restoreVO: RestoreUserValueObject): GoAsync<void>
 
     /**
      * 加密用户密码
