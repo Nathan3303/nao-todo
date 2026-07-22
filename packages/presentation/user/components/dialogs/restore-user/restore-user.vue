@@ -48,9 +48,7 @@ onMounted(() => {
                         <rule-hint :title="t('user.deletionDeadline')" variant="error">
                             数据将于
                             {{
-                                dayjs(userDeletion.deadline)
-                                    .add(7, 'days')
-                                    .format('YYYY年MM月DD日HH时mm分') ||
+                                dayjs(userDeletion.deadline).format('YYYY年MM月DD日HH时mm分') ||
                                 t('user.deletionDeadlineUnknown')
                             }}
                             删除

@@ -11,7 +11,7 @@ const { userDeletion } = storeToRefs(useUserStore())
 
 const visible = ref<boolean>(false)
 const deadlineDateString = computed(() => {
-    return dayjs(userDeletion.value.deadline).add(7, 'days').format('YYYY年MM月DD日HH时mm分')
+    return dayjs(userDeletion.value.deadline).format('YYYY年MM月DD日HH时mm分')
 })
 
 onMounted(() => {

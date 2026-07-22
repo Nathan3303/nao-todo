@@ -37,7 +37,12 @@ const handleRestore = async () => {
             <nue-text>{{ t('user.deactiveWarningTitle') }}</nue-text>
             <nue-text size="xs">{{ t('user.deactiveWarningContent') }}</nue-text>
         </nue-div>
-        <nue-button @click="handleDeactive" icon="delete" theme="danger">
+        <nue-button
+            :disabled="profile.isInDeactiveCooldown"
+            @click="handleDeactive"
+            icon="delete"
+            theme="danger"
+        >
             {{ t('user.deactiveWarningTitle') }}
         </nue-button>
     </nue-div>
@@ -46,7 +51,12 @@ const handleRestore = async () => {
             <nue-text>恢复账户</nue-text>
             <nue-text size="xs">{{ t('user.restoreWarningContent') }}</nue-text>
         </nue-div>
-        <nue-button @click="handleRestore" icon="restore" theme="danger">
+        <nue-button
+            :disabled="profile.isInDeactiveCooldown"
+            @click="handleRestore"
+            icon="restore"
+            theme="danger"
+        >
             {{ t('user.restoreWarningTitle') }}
         </nue-button>
     </nue-div>
@@ -55,11 +65,11 @@ const handleRestore = async () => {
 <style scoped>
 .nue-div--deactive-user,
 .nue-div--restore-user {
-    color: var(--nue-error-color-50);
+    /* color: var(--nue-error-color-50); */
     align-items: center;
     justify-content: space-between;
     gap: 3rem;
-    font-weight: bold;
+    /* font-weight: bold; */
 
     .nue-div--title {
         flex-direction: column;

@@ -27,6 +27,7 @@ export type UserViewObject = {
     deactivedAt: string
     createdAt: string
     updatedAt: string
+    isInDeactiveCooldown: boolean
 }
 
 // 更新用户视图对象

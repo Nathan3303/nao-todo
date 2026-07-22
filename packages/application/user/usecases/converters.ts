@@ -31,6 +31,7 @@ export const userEntityToViewObject = (userEntity: UserEntity): UserViewObject =
         userEntity.deactivedAt && dayjs(userEntity.deactivedAt).format('YYYY-MM-DD HH:mm:ss')
     viewObject.createdAt = dayjs(userEntity.createdAt).format('YYYY-MM-DD HH:mm:ss')
     viewObject.updatedAt = dayjs(userEntity.updatedAt).format('YYYY-MM-DD HH:mm:ss')
+    viewObject.isInDeactiveCooldown = userEntity.isInCooldown()
     return viewObject
 }
 

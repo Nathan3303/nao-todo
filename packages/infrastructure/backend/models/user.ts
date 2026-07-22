@@ -11,6 +11,7 @@ export type UserProfileRes = ResponseBase & {
     state: number
     config: any
     deactivedAt: string
+    lastRestoreAt: string
 }
 
 export type UpdateUserNicknameReq = {

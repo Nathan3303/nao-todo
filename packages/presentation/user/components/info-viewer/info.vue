@@ -10,10 +10,10 @@ defineOptions({ name: 'UserInfoViewer' })
 const userStore = useUserStore()
 const { profile } = storeToRefs(userStore)
 
-const deletionDeadline = computed<string>(() => {
+const deactivedAt = computed<string>(() => {
     const { deactivedAt } = profile.value
     if (!deactivedAt) return ''
-    const deletionDay = dayjs(deactivedAt).add(7, 'days').format('YYYY-MM-DD HH:mm')
+    const deletionDay = dayjs(deactivedAt).subtract(7, 'days').format('YYYY-MM-DD HH:mm:ss')
     return deletionDay
 })
 </script>
@@ -24,13 +24,9 @@ const deletionDeadline = computed<string>(() => {
             <nue-text theme="label">{{ t('settings.registeredAt') }}</nue-text>
             <nue-text size=".875rem">{{ profile.createdAt }}</nue-text>
         </nue-div>
-        <nue-div theme="form-item" v-if="profile.deactivedAt">
+        <nue-div theme="form-item,deletion" v-if="deactivedAt">
             <nue-text theme="label">{{ t('settings.deactivedAt') }}</nue-text>
-            <nue-text size=".875rem">{{ profile.deactivedAt }}</nue-text>
-        </nue-div>
-        <nue-div theme="form-item,deletion" v-if="deletionDeadline">
-            <nue-text theme="label">数据删除执行时间</nue-text>
-            <nue-text size=".875rem">{{ deletionDeadline }}</nue-text>
+            <nue-text size=".875rem">{{ deactivedAt }}</nue-text>
         </nue-div>
     </nue-div>
 </template>

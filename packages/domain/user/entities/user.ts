@@ -18,29 +18,31 @@ export class UserEntity extends Entity {
         public createdFrom: string, // 注册源
         public role: string, // 用户角色
         public state: number, // 用户状态
-        public deactivedAt: string // 用户注销日期
+        public deactivedAt: string, // 用户注销日期
+        public lastRestoreAt: string // 用户最后一次恢复账户时间（用于计算是否出于注销冷却期）
     ) {
         super(id, createdAt, updatedAt, deletedAt)
     }
 
-    /**
-     * isAdmin 是否是管理员
-     */
+    // 是否是管理员
     isAdmin(): boolean {
         return this.state === 1
     }
 
-    /**
-     * isVIP 是否是VIP
-     */
+    // 是否是VIP
     isVIP(): boolean {
         return this.state === 2
     }
 
-    /**
-     * isDeactived 是否已注销（待注销）
-     */
+    // 是否已注销（待注销）
     isDeactived(): boolean {
         return !!this.deactivedAt && dayjs(this.deactivedAt).isValid()
+    }
+
+    // 是否出于注销冷却期
+    isInCooldown(): boolean {
+        const restoreDay = dayjs(this.lastRestoreAt)
+        if (!restoreDay.isValid()) return false
+        return restoreDay.add(1, 'month').isAfter(dayjs())
     }
 }

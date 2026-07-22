@@ -44,7 +44,7 @@ const submit = async () => {
     })
     loading.value = false
     if (err !== null) {
-        NueMessage.error(t('user.deactiveFailed') + `(${unwrapError(err)})`)
+        NueMessage.error(unwrapError(err))
         return
     }
     NueMessage.success(t('user.deactiveSuccess'))

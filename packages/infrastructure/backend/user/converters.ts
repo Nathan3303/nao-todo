@@ -32,7 +32,8 @@ export const userProfile2Entity = (res: UserProfileRes): UserEntity => {
         res.createdFrom,
         res.role,
         res.state,
-        res.deactivedAt
+        res.deactivedAt,
+        res.lastRestoreAt
     )
 }
 
