@@ -53,65 +53,51 @@ const submit = async () => {
         <nue-main>
             <nue-content>
                 <nue-div vertical>
-                    <rule-hint
-                        :title="t('settings.passwordHintTitle')"
-                        icon="scan"
-                        variant="warning"
-                    >
-                        {{ t('settings.passwordHintContent') }}
-                    </rule-hint>
-                    <form
-                        action=""
-                        autocomplete="off"
-                        method="post"
-                        name="UpdatePasswordForm"
-                        @submit.prevent="submit"
-                    >
-                        <nue-div align="stretch" vertical>
-                            <nue-div theme="form-item">
-                                <nue-text theme="label">{{ t('settings.passwordOld') }}</nue-text>
-                                <nue-input
-                                    v-model="formData.oldPassword"
-                                    allow-show-password
-                                    clearable
-                                    maxlength="24"
-                                    :placeholder="t('settings.passwordOldPlaceholder')"
-                                    type="password"
-                                    flex="1"
-                                />
-                            </nue-div>
-                            <nue-div theme="form-item">
-                                <nue-text theme="label">{{ t('settings.passwordNew') }}</nue-text>
-                                <password-rule-hint />
-                                <nue-input
-                                    v-model="formData.newPassword"
-                                    allow-show-password
-                                    clearable
-                                    maxlength="24"
-                                    :placeholder="t('settings.passwordNewPlaceholder')"
-                                    type="password"
-                                />
-                                <nue-input
-                                    v-model="formData.confirmNewPassword"
-                                    allow-show-password
-                                    clearable
-                                    maxlength="24"
-                                    :placeholder="t('settings.passwordConfirmPlaceholder')"
-                                    type="password"
-                                />
-                            </nue-div>
-                            <nue-div style="margin-top: 0.5rem">
-                                <nue-button
-                                    :disabled="submitButtonDisabled"
-                                    :loading="loading"
-                                    theme="primary"
-                                    type="submit"
-                                >
-                                    {{ t('settings.passwordSubmit') }}
-                                </nue-button>
-                            </nue-div>
+                    <nue-div align="stretch" vertical>
+                        <nue-div theme="form-item">
+                            <nue-text theme="label">{{ t('settings.passwordOld') }}</nue-text>
+                            <nue-input
+                                v-model="formData.oldPassword"
+                                allow-show-password
+                                clearable
+                                maxlength="24"
+                                :placeholder="t('settings.passwordOldPlaceholder')"
+                                type="password"
+                                flex="1"
+                            />
                         </nue-div>
-                    </form>
+                        <nue-div theme="form-item">
+                            <nue-text theme="label">{{ t('settings.passwordNew') }}</nue-text>
+                            <nue-input
+                                v-model="formData.newPassword"
+                                allow-show-password
+                                clearable
+                                maxlength="24"
+                                :placeholder="t('settings.passwordNewPlaceholder')"
+                                type="password"
+                            />
+                            <password-rule-hint />
+                            <nue-input
+                                v-model="formData.confirmNewPassword"
+                                allow-show-password
+                                clearable
+                                maxlength="24"
+                                :placeholder="t('settings.passwordConfirmPlaceholder')"
+                                type="password"
+                            />
+                        </nue-div>
+                        <rule-hint :title="t('settings.passwordHintTitle')" variant="warning">
+                            {{ t('settings.passwordHintContent') }}
+                        </rule-hint>
+                        <nue-button
+                            :disabled="submitButtonDisabled"
+                            :loading="loading"
+                            theme="primary"
+                            @click="submit"
+                        >
+                            {{ t('settings.passwordSubmit') }}
+                        </nue-button>
+                    </nue-div>
                 </nue-div>
             </nue-content>
         </nue-main>

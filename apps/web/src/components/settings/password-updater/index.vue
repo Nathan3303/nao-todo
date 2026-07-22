@@ -11,7 +11,7 @@ const { isDisplayAside, switchDisplayAside, authUseCase, userUseCase } =
 </script>
 
 <template>
-    <nue-container id="SettingsPasswordContainer">
+    <nue-container>
         <nue-header>
             <nue-button
                 :icon="isDisplayAside ? 'menu-close' : 'menu-open'"
@@ -20,7 +20,7 @@ const { isDisplayAside, switchDisplayAside, authUseCase, userUseCase } =
             />
             <nue-text>{{ t('settings.password') }}</nue-text>
         </nue-header>
-        <nue-main>
+        <nue-main  theme="password-updater">
             <nue-content fill>
                 <nue-div vertical style="padding: 1rem">
                     <user-password-updater
@@ -33,3 +33,9 @@ const { isDisplayAside, switchDisplayAside, authUseCase, userUseCase } =
         </nue-main>
     </nue-container>
 </template>
+
+<style scoped>
+.nue-main--password-updater {
+    max-width: 24rem;
+}
+</style>

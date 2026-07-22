@@ -81,15 +81,7 @@ const handleDeactivated = async () => {
                         <user-info-viewer />
                     </nue-div>
                     <nue-divider />
-                    <nue-div
-                        vertical
-                        gap=".75rem"
-                        align="start"
-                        style="color: var(--nue-error-color-50)"
-                    >
-                        <nue-text>{{ t('user.deactiveWarningTitle') }}</nue-text>
-                        <user-deactive-manager :dialog-manager="dialogManager" />
-                    </nue-div>
+                    <user-deactive-manager :dialog-manager="dialogManager" />
                 </nue-div>
             </nue-content>
         </nue-main>

@@ -18,3 +18,23 @@
     }
 }
 
+.nue-button--warning {
+    --warning-color: 30 70% 50%;
+
+    color: white;
+    background-color: hsl(var(--warning-color));
+    border-color: transparent;
+
+    &:hover {
+        color: white;
+        background-color: hsl(var(--warning-color) / 0.8);
+        border-color: transparent;
+    }
+
+    &:active {
+        color: white;
+        background-color: hsl(var(--warning-color) / 0.7);
+        border-color: transparent;
+    }
+}
+

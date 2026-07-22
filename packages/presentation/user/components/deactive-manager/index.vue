@@ -32,23 +32,40 @@ const handleRestore = async () => {
 </script>
 
 <template>
-    <template v-if="!profile.deactivedAt">
-        <nue-div justify="space-between" gap="3rem">
+    <nue-div v-if="!profile.deactivedAt" theme="deactive-user">
+        <nue-div theme="title">
+            <nue-text>{{ t('user.deactiveWarningTitle') }}</nue-text>
             <nue-text size="xs">{{ t('user.deactiveWarningContent') }}</nue-text>
-            <nue-button @click="handleDeactive" icon="delete" theme="small,danger">
-                {{ t('user.deactiveWarningTitle') }}
-            </nue-button>
         </nue-div>
-    </template>
-    <template v-else>
-        <nue-div justify="space-between" gap="3rem">
+        <nue-button @click="handleDeactive" icon="delete" theme="danger">
+            {{ t('user.deactiveWarningTitle') }}
+        </nue-button>
+    </nue-div>
+    <nue-div v-else theme="restore-user">
+        <nue-div theme="title">
+            <nue-text>恢复账户</nue-text>
             <nue-text size="xs">{{ t('user.restoreWarningContent') }}</nue-text>
-            <nue-button @click="handleRestore" icon="delete" theme="small,secondary">
-                {{ t('user.restoreWarningTitle') }}
-            </nue-button>
         </nue-div>
-    </template>
+        <nue-button @click="handleRestore" icon="restore" theme="danger">
+            {{ t('user.restoreWarningTitle') }}
+        </nue-button>
+    </nue-div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.nue-div--deactive-user,
+.nue-div--restore-user {
+    color: var(--nue-error-color-50);
+    align-items: center;
+    justify-content: space-between;
+    gap: 3rem;
+    font-weight: bold;
+
+    .nue-div--title {
+        flex-direction: column;
+        gap: var(--nue-gap-2xs);
+        flex: auto;
+    }
+}
+</style>
 
