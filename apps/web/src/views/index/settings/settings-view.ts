@@ -7,8 +7,14 @@ import { SETTINGS_VIEW_CONTEXT_KEY } from './context'
 
 const useSettingsView = () => {
     // @context Index view 上下文
-    const { userUseCase, isDisplayAside, isUseFloatAside, switchDisplayAside, appSubscriber } =
-        inject(INDEX_VIEW_CONTEXT_KEY)!
+    const {
+        userUseCase,
+        isDisplayAside,
+        isUseFloatAside,
+        switchDisplayAside,
+        appSubscriber,
+        appDialogManager
+    } = inject(INDEX_VIEW_CONTEXT_KEY)!
 
     // @usecases
     const userStore = useUserStore()
@@ -22,6 +28,7 @@ const useSettingsView = () => {
         authUseCase,
         userUseCase,
         subscriber: appSubscriber,
+        dialogManager: appDialogManager,
         asideWidth,
         isDisplayAside,
         isUseFloatAside,

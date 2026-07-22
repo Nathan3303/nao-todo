@@ -1,4 +1,9 @@
-import { UpdateUserNicknameValueObject, UpdateUserPasswordValueObject, DeactiveUserValueObject, RestoreUserValueObject } from '@nao-todo/domain/user/valueobjects'
+import {
+    UpdateUserNicknameValueObject,
+    UpdateUserPasswordValueObject,
+    DeactiveUserValueObject,
+    RestoreUserValueObject
+} from '@nao-todo/domain/user/valueobjects'
 import { UserConfigEntity, UserEntity } from '@nao-todo/domain/user/entities'
 import dayjs from 'dayjs'
 import type {
@@ -22,6 +27,8 @@ export const userEntityToViewObject = (userEntity: UserEntity): UserViewObject =
     viewObject.avatar = userEntity.avatar
     viewObject.role = userEntity.role
     viewObject.state = userEntity.state
+    viewObject.deactivedAt =
+        userEntity.deactivedAt && dayjs(userEntity.deactivedAt).format('YYYY-MM-DD HH:mm:ss')
     viewObject.createdAt = dayjs(userEntity.createdAt).format('YYYY-MM-DD HH:mm:ss')
     viewObject.updatedAt = dayjs(userEntity.updatedAt).format('YYYY-MM-DD HH:mm:ss')
     return viewObject

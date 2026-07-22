@@ -1,0 +1,20 @@
+.nue-button--danger {
+    --danger-color: 0 72.22% 50.59%;
+
+    color: white;
+    background-color: hsl(var(--danger-color));
+    border-color: transparent;
+
+    &:hover {
+        color: white;
+        background-color: hsl(var(--danger-color) / 0.8);
+        border-color: transparent;
+    }
+
+    &:active {
+        color: white;
+        background-color: hsl(var(--danger-color) / 0.7);
+        border-color: transparent;
+    }
+}
+

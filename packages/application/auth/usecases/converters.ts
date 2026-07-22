@@ -34,7 +34,7 @@ export const sessionValueObject2ViewObject = (
 ): SignInSessionViewObject => {
     return {
         token: valueObject.jwt,
-        pendingDeletion: valueObject.pendingDeletion,
-        deletionDeadline: valueObject.deletionDeadline || null
+        isPending: valueObject.pendingDeletion,
+        deadline: valueObject.deletionDeadline
     }
 }

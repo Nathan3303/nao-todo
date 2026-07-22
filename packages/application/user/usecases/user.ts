@@ -156,13 +156,12 @@ export class UserUseCase {
      * @returns 更新结果
      */
     async restore(restoreUserViewObject: RestoreUserViewObject): GoAsync<void> {
-        if (!restoreUserViewObject.agreed) {
-            return '请同意撤销注销协议'
-        }
+        if (!restoreUserViewObject.agreed) return '请同意撤销注销协议'
         const restoreUserValueObject = restoreUserViewObjectToValueObject(restoreUserViewObject)
         const err = await this.userRepo.restore(restoreUserValueObject)
         if (err !== null) return err
-        this.userStore.clearAuthData()
+        this.userStore.updateUserProfile({ deactivedAt: '' })
+        this.userStore.updateUserDeletion({ isPending: false, deadline: void 0 })
         return null
     }
 }

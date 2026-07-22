@@ -1,14 +1,18 @@
+import type { UserDeletion } from '../auth/viewobjects'
+
 // 用户存储接口
 export type UserStore = {
     getIsAuthenticated: () => boolean
     setIsAuthenticated: (isAuthenticated: boolean) => void
-    clearAuthData: () => void
+    setUserDeletion: (userDeletion: UserDeletion) => void
+    updateUserDeletion: (UserDeletion: UserDeletion) => void
     profile: UserViewObject | undefined
     setUserProfile: (profile: UserViewObject) => void
     updateUserProfile: (update: Partial<UserViewObject>) => void
     config: UserConfigViewObject | undefined
     setUserConfig: (config: UserConfigViewObject) => void
     updateUserConfig: (update: Partial<UserConfigViewObject>) => void
+    clearAuthData: () => void
 }
 
 // --- User ---
@@ -20,6 +24,7 @@ export type UserViewObject = {
     avatar: string
     role: string
     state: number
+    deactivedAt: string
     createdAt: string
     updatedAt: string
 }

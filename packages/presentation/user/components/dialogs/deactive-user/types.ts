@@ -1,7 +1,9 @@
 import type { UserUseCase } from '@nao-todo/application/user/usecases'
+import type { DialogManager } from '@nao-todo/shared'
 
 export type UserDeactiveProps = {
     userUseCase: UserUseCase
+    dialogManager: DialogManager
 }
 
 export type UserDeactiveFormData = {

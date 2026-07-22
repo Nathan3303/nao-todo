@@ -126,7 +126,7 @@ const zhCN: LocaleMessages = {
     'settings.deactive.passwordMismatch': '两次输入的密码不一致',
     'settings.deactive.passwordRequired': '请输入密码',
     'settings.deactive.agreeRequired': '请同意注销协议',
-
+    'settings.deactivedAt': '注销时间',
     'settings.restore.title': '撤销注销',
     'settings.restore.pendingMessage': '当前账户已执行注销操作，处于待注销状态',
     'settings.restore.deletionDeadline': '数据删除时间：{date}',
@@ -140,11 +140,10 @@ const zhCN: LocaleMessages = {
 
     'user.deactiveWarningTitle': '注销账户',
     'user.deactiveWarningContent':
-        '注销后，您的所有数据将在7天后被永久删除。在此期间，您可以撤销注销。请谨慎操作。',
+        '注销后，您的所有数据将在7天后被永久删除。在此期间，您可以继续使用，也可以选择恢复账户。撤销再恢复后需要 30 天后才能重新申请注销流程，请务必谨慎操作。',
     'user.deactiveButton': '注销账户',
     'user.deactiveConfirmTitle': '确认注销账户吗？',
-    'user.deactiveConfirmContent':
-        '注销后，您的所有数据将在7天后被永久删除。在此期间，您可以撤销注销。确定要继续吗？',
+    'user.deactiveConfirmContent': '注销后，您的所有数据将在7天后被永久删除。确定要继续吗？',
     'user.deactiveConfirmButton': '确认注销',
     'user.deactiveDialogTitle': '注销账户',
     'user.password': '密码',
@@ -157,7 +156,7 @@ const zhCN: LocaleMessages = {
 
     'user.restoreWarningTitle': '撤销注销',
     'user.restoreWarningContent':
-        '当前账户已执行注销操作，处于待注销状态。您可以在此撤销注销，恢复账户正常使用。',
+        '当前账户已执行注销操作，处于待注销状态。您可以撤销注销，恢复账户正常使用。请注意，恢复账户后需要 30 天后才可以再次申请注销用户操作。',
     'user.deletionDeadline': '数据删除时间',
     'user.deletionDeadlineUnknown': '未知',
     'user.restoreAgreement': '我确认撤销注销',
@@ -166,7 +165,7 @@ const zhCN: LocaleMessages = {
     'user.restoreFailed': '撤销注销失败',
     'user.restorePasswordRequired': '请输入密码',
     'user.restoreAgreeRequired': '请同意撤销注销协议',
-    'user.cancelRestore': '暂不恢复，在删除日前继续使用',
+    'user.cancelRestore': '暂不撤销注销，在删除日前继续使用',
 
     // Task
     'task.state.todo': '待办',

@@ -2,7 +2,11 @@
 .nue-confirm {
     min-width: 16rem;
     max-width: 18rem;
-    min-height: 9rem;
+    min-height: auto;
+
+    > .nue-confirm__footer {
+        margin-top: 1rem;
+    }
 }
 
 .nue-confirm-overlay {

@@ -1,6 +1,6 @@
 // --- User ---
 
-import { ResponseBase } from "./base"
+import { ResponseBase } from './base'
 
 export type UserProfileRes = ResponseBase & {
     email: string
@@ -10,6 +10,7 @@ export type UserProfileRes = ResponseBase & {
     createdFrom: string
     state: number
     config: any
+    deactivedAt: string
 }
 
 export type UpdateUserNicknameReq = {
@@ -44,4 +45,3 @@ export type UserConfigRes = ResponseBase & {
 export type UpdateUserConfigReq = {
     appearance?: string
 }
-

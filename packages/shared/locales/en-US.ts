@@ -117,18 +117,21 @@ const enUS: LocaleMessages = {
     'settings.signOutButtonText': 'Sign Out',
     'settings.deactive.title': 'Deactivate Account',
     'settings.deactive.confirmTitle': 'Confirm account deactivation?',
-    'settings.deactive.confirmContent': 'After deactivation, all your data will be permanently deleted after 7 days. You can cancel deactivation during this period. Continue?',
+    'settings.deactive.confirmContent':
+        'After deactivation, all your data will be permanently deleted after 7 days. You can cancel deactivation during this period. Continue?',
     'settings.deactive.password': 'Password',
     'settings.deactive.passwordPlaceholder': 'Enter password',
     'settings.deactive.confirmPassword': 'Confirm Password',
     'settings.deactive.confirmPasswordPlaceholder': 'Re-enter password',
-    'settings.deactive.agreeLabel': 'I agree to deactivate my account and understand data will be permanently deleted after 7 days',
+    'settings.deactive.agreeLabel':
+        'I agree to deactivate my account and understand data will be permanently deleted after 7 days',
     'settings.deactive.submit': 'Confirm Deactivation',
-    'settings.deactive.success': 'Account deactivated. Your data will be permanently deleted after 7 days',
+    'settings.deactive.success':
+        'Account deactivated. Your data will be permanently deleted after 7 days',
     'settings.deactive.passwordMismatch': 'Passwords do not match',
     'settings.deactive.passwordRequired': 'Please enter password',
     'settings.deactive.agreeRequired': 'Please agree to deactivation',
-
+    'settings.deactivedAt': 'Deactived At',
     'settings.restore.title': 'Restore Account',
     'settings.restore.pendingMessage': 'Your account has been deactivated and is pending deletion',
     'settings.restore.deletionDeadline': 'Data deletion time: {date}',
@@ -141,22 +144,26 @@ const enUS: LocaleMessages = {
     'settings.restore.agreeRequired': 'Please agree to restoration',
 
     'user.deactiveWarningTitle': 'Deactivate Account',
-    'user.deactiveWarningContent': 'After deactivation, all your data will be permanently deleted after 7 days. You can cancel deactivation during this period. Please proceed with caution.',
+    'user.deactiveWarningContent':
+        'After deactivation, all your data will be permanently deleted after 7 days. You can cancel deactivation during this period. Please proceed with caution.',
     'user.deactiveButton': 'Deactivate Account',
     'user.deactiveConfirmTitle': 'Confirm account deactivation?',
-    'user.deactiveConfirmContent': 'After deactivation, all your data will be permanently deleted after 7 days. You can cancel deactivation during this period. Continue?',
+    'user.deactiveConfirmContent':
+        'After deactivation, all your data will be permanently deleted after 7 days. You can cancel deactivation during this period. Continue?',
     'user.deactiveConfirmButton': 'Confirm Deactivation',
     'user.deactiveDialogTitle': 'Deactivate Account',
     'user.password': 'Password',
     'user.passwordPlaceholder': 'Enter password',
     'user.confirmPasswordPlaceholder': 'Re-enter password',
-    'user.deactiveAgreement': 'I agree to deactivate my account and understand data will be permanently deleted after 7 days',
+    'user.deactiveAgreement':
+        'I agree to deactivate my account and understand data will be permanently deleted after 7 days',
     'user.deactiveSubmit': 'Confirm Deactivation',
     'user.deactiveSuccess': 'Deactivation successful',
     'user.deactiveFailed': 'Deactivation failed',
 
     'user.restoreWarningTitle': 'Restore Account',
-    'user.restoreWarningContent': 'Your account has been deactivated and is pending deletion. You can restore your account here to resume normal usage.',
+    'user.restoreWarningContent':
+        'Your account has been deactivated and is pending deletion. You can restore your account here to resume normal usage.',
     'user.deletionDeadline': 'Data deletion time',
     'user.deletionDeadlineUnknown': 'Unknown',
     'user.restoreAgreement': 'I agree to restore my account',
@@ -165,6 +172,7 @@ const enUS: LocaleMessages = {
     'user.restoreFailed': 'Restore failed',
     'user.restorePasswordRequired': 'Please enter password',
     'user.restoreAgreeRequired': 'Please agree to restoration',
+    'user.cancelRestore': 'I don\'t want to restore, just use it.',
 
     // Task
     'task.state.todo': 'To Do',

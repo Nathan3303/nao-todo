@@ -34,7 +34,10 @@ export class AuthUseCase {
         if (err !== null) return err
         const sessionViewObject = sessionValueObject2ViewObject(session)
         this.authStore.setIsAuthenticated(true)
-        this.authStore.setDeletionDeadline(sessionViewObject.deletionDeadline || null)
+        this.authStore.setUserDeletion({
+            isPending: sessionViewObject.isPending,
+            deadline: sessionViewObject.deadline
+        })
         return null
     }
 
@@ -60,7 +63,6 @@ export class AuthUseCase {
     async checkIn(): GoAsync<void> {
         // 调用域服务 - 检查登录状态
         const [session, err] = await this.authDomain.checkIn()
-        // const [newJwt, err] = await this.authDomain.checkIn()
         if (err !== null) {
             localStorage.removeItem('USER_JWT')
             return err
@@ -69,8 +71,10 @@ export class AuthUseCase {
         this.authStore.setIsAuthenticated(true)
         // 存储注销截止时间
         const sessionViewObject = sessionValueObject2ViewObject(session)
-        this.authStore.setDeletionDeadline(sessionViewObject.deletionDeadline || null)
-        // this.authStore.setUserToken(newJwt)
+        this.authStore.setUserDeletion({
+            isPending: sessionViewObject.isPending,
+            deadline: sessionViewObject.deadline
+        })
         // 返回
         return null
     }

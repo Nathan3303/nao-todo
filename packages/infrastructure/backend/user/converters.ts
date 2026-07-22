@@ -31,7 +31,8 @@ export const userProfile2Entity = (res: UserProfileRes): UserEntity => {
         res.avatar,
         res.createdFrom,
         res.role,
-        res.state
+        res.state,
+        res.deactivedAt
     )
 }
 
@@ -80,6 +81,3 @@ export const updateUserConfigValueObject2Req = (
         appearance: updateVO.appearance
     }
 }
-
-
-

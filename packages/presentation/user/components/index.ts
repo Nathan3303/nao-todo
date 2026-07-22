@@ -1,10 +1,10 @@
 export * from './avatar-updater'
-export * from './deactive-user'
 export * from './dialogs'
 export * from './info-viewer'
 export * from './language-setter'
 export * from './nickname-updater'
 export * from './password-updater'
-export * from './restore-user'
+export * from './dialogs/restore-user'
 export * from './theme-setter'
-
+export * from './deactive-manager'
+export * from './deletion-notifier'

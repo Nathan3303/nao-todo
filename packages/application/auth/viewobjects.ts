@@ -4,12 +4,14 @@ export type SignInViewObject = {
     password: string
 }
 
-// 登录结果视图对象
-export type SignInSessionViewObject = {
-    token: string
-    pendingDeletion: boolean
-    deletionDeadline?: string | null
+// 用户注销视图对象
+export type UserDeletion = {
+    isPending: boolean
+    deadline?: string
 }
+
+// 登录结果视图对象
+export type SignInSessionViewObject = { token: string } & UserDeletion
 
 // 注册视图对象
 export type SignUpViewObject = {
@@ -21,9 +23,11 @@ export type SignUpViewObject = {
 
 // 认证存储接口
 export type AuthStore = {
+    // auth
     getIsAuthenticated: () => boolean
     setIsAuthenticated: (isAuthenticated: boolean) => void
-    getDeletionDeadline: () => string | null
-    setDeletionDeadline: (deadline: string | null) => void
+    // user
+    setUserDeletion: (userDeletion: UserDeletion) => void
+    // ---
     clearAuthData: () => void
 }

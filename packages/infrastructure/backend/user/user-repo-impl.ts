@@ -168,7 +168,7 @@ export class UserRepoImpl implements UserRepository {
             }
         )
         const res = response.data as ResponseData
-        if (res.code !== 10090) {
+        if (res.code !== 10100) {
             return res.message
         }
         return null

@@ -8,16 +8,5 @@ export default {
     path: '/',
     name: 'index',
     component: () => import('./index.vue'),
-    children: [
-        tasksRoutes,
-        calendarRoutes,
-        pomodoroRoutes,
-        searchRoutes,
-        settingsRoutes,
-        {
-            path: '/user/restore',
-            name: 'user-restore',
-            component: () => import('@/components/user/restore-page.vue')
-        }
-    ]
+    children: [tasksRoutes, calendarRoutes, pomodoroRoutes, searchRoutes, settingsRoutes]
 }

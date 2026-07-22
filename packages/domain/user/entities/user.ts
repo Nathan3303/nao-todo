@@ -1,4 +1,5 @@
 import { Entity } from '@nao-todo/shared'
+import dayjs from 'dayjs'
 
 /**
  * 用户实体
@@ -16,7 +17,8 @@ export class UserEntity extends Entity {
         public avatar: string, // 用户头像
         public createdFrom: string, // 注册源
         public role: string, // 用户角色
-        public state: number // 用户状态
+        public state: number, // 用户状态
+        public deactivedAt: string // 用户注销日期
     ) {
         super(id, createdAt, updatedAt, deletedAt)
     }
@@ -33,5 +35,12 @@ export class UserEntity extends Entity {
      */
     isVIP(): boolean {
         return this.state === 2
+    }
+
+    /**
+     * isDeactived 是否已注销（待注销）
+     */
+    isDeactived(): boolean {
+        return !!this.deactivedAt && dayjs(this.deactivedAt).isValid()
     }
 }

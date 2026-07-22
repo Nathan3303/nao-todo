@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import useIndexView from './index-view'
 import { AppDialogAdapter } from '@/components/app/'
 import { Loading as LoadingComp } from '@nao-todo/shared'
+import { UserDeletionNotifier } from '@nao-todo/presentation'
 
 defineOptions({ name: 'AppContainer' })
 
@@ -36,6 +37,7 @@ onMounted(() => {
                 </router-view>
                 <!-- 任务视图对话框 -->
                 <app-dialog-adapter />
+                <user-deletion-notifier />
             </nue-content>
         </nue-main>
     </nue-container>

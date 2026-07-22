@@ -1,8 +1,9 @@
 import type { UserUseCase } from '@nao-todo/application/user/usecases'
+import type { DialogManager } from '@nao-todo/shared'
 
 export type UserRestoreProps = {
     userUseCase: UserUseCase
-    deletionDeadline?: string | null
+    dialogManager: DialogManager
 }
 
 export type UserRestoreFormData = {
@@ -14,3 +15,4 @@ export type UserRestoreEmits = {
     (e: 'restored'): void
     (e: 'confirm-unrestore'): void
 }
+
