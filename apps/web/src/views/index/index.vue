@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { onMounted } from 'vue'
 import useIndexView from './index-view'
-import { AppDialogAdapter, AppAsideV2 } from '@/components/app/'
+import { AppDialogAdapter, AppAsideV2Adapter } from '@/components/app/'
 import { Loading as LoadingComp } from '@nao-todo/shared'
 import { UserDeletionNotifier } from '@nao-todo/presentation'
 
@@ -18,7 +18,7 @@ onMounted(() => {
     <loading-comp v-if="isLoading" height="100vh" placeholder="正在加载用户信息..." />
     <nue-container v-else id="AppContainer">
         <nue-main>
-            <app-aside-v2 />
+            <app-aside-v2-adapter />
             <nue-content fill style="overflow: hidden">
                 <!-- 路由视图 -->
                 <router-view v-slot="{ Component }">

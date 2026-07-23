@@ -8,6 +8,7 @@ import {
     TAG_MANAGER_DIALOG_KEY
 } from '@nao-todo/shared'
 import dayjs from 'dayjs'
+import { nextTick, onMounted, ref, watch } from 'vue'
 import { useAside } from './use-aside'
 
 defineOptions({ name: 'TasksViewAside' })
@@ -20,12 +21,21 @@ const {
     handleTagResort,
     collapseItemsRecord,
     dialogManager,
-    isDisplayAside
+    isDisplayAside,
+    setControllOption
 } = useAside()
+
+/**
+ * 处理侧边栏延时传送
+ * 等待侧边栏的 SubPageAsideTeleportSlot 元素渲染后再渲染 teleport
+ */
+const teleportDisabled = ref<boolean>(false)
+watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
+onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
 </script>
 
 <template>
-    <teleport v-if="isDisplayAside" to="#SubPageAsideTeleportSlot">
+    <teleport v-if="isDisplayAside && !teleportDisabled" to="#SubPageAsideTeleportSlot">
         <nue-div theme="aside-wrapper">
             <nue-div vertical gap="0.25rem">
                 <nue-link

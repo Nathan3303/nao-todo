@@ -3,14 +3,8 @@ import { scopeManager } from '@/commands/instance'
 import { env } from '@/env'
 import { useKeyboardShortcuts } from '@/hooks'
 import { useLocaleStore, useThemeStore } from '@nao-todo/presentation/user'
-import {
-    initRequester,
-    responsiveTypes,
-    t,
-    useResponsiveAside,
-    useResponsiveFlag
-} from '@nao-todo/shared'
-import { computed, provide } from 'vue'
+import { initRequester, t, useResponsiveFlag } from '@nao-todo/shared'
+import { provide } from 'vue'
 import { APP_CONTEXT_KEY, type RouterLink } from './context'
 
 const useApp = () => {
@@ -63,25 +57,11 @@ const useApp = () => {
     // 初始化响应式标志
     const { flag } = useResponsiveFlag()
 
-    // 初始化显示头标志
-    const isDisplayHeader = computed(() => flag.value > responsiveTypes.MOBILE)
-
-    // 初始化显示侧边栏标志
-    const {
-        visible: isDisplayAside,
-        isFloating: isUseFloatAside,
-        switchVisible: switchDisplayAside
-    } = useResponsiveAside(flag, responsiveTypes.MOBILE)
-
     // @method 提供应用全局上下文
     // @description 提供应用全局上下文，用于在应用中使用
     provide(APP_CONTEXT_KEY, {
         routerLinks,
-        responsiveFlag: flag,
-        isDisplayHeader,
-        isDisplayAside,
-        isUseFloatAside,
-        switchDisplayAside
+        responsiveFlag: flag
     })
 }
 

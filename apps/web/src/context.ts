@@ -6,13 +6,7 @@ export type RouterLink = { name: string; icon: string; route: string; routeName:
 // 应用上下文
 export type AppContext = {
     routerLinks: RouterLink[]
-
     responsiveFlag: Ref<number>
-
-    isDisplayHeader: Ref<boolean>
-    isDisplayAside: Ref<boolean>
-    isUseFloatAside: Ref<boolean>
-    switchDisplayAside: () => void
 }
 
 // 应用上下文键

@@ -4,7 +4,9 @@ import { useIndicator } from './use-indicator'
 import { PomodoroFocusRing } from '../focus-ring'
 
 defineOptions({ name: 'PomodoroTimerIndicator' })
-defineProps<{ route?: string }>()
+withDefaults(defineProps<{ route?: string; tooltipPlacement?: string }>(), {
+    tooltipPlacement: 'right-center'
+})
 
 const {
     progress,
@@ -19,7 +21,7 @@ const {
 </script>
 
 <template>
-    <nue-tooltip v-if="isTimerRunning" placement="right-center" size="small">
+    <nue-tooltip v-if="isTimerRunning" :placement="tooltipPlacement" size="small">
         <nue-div theme="timer-indicator" @click="goToTimer">
             <nue-progress
                 type="circle"
@@ -42,7 +44,7 @@ const {
             </nue-div>
         </template>
     </nue-tooltip>
-    <nue-tooltip v-else-if="isFocusRunning" placement="right-center" size="small">
+    <nue-tooltip v-else-if="isFocusRunning" :placement="tooltipPlacement" size="small">
         <nue-div theme="timer-indicator" @click="goToTimer">
             <pomodoro-focus-ring :scale="0.28" :stroke-width="42" :is-running="isFocusRunning" />
             <nue-icon name="ntd-fanqie" :color="indicatorColor" />
@@ -58,7 +60,7 @@ const {
             </nue-div>
         </template>
     </nue-tooltip>
-    <nue-tooltip v-else content="番茄钟" placement="right-center" size="small">
+    <nue-tooltip v-else content="番茄钟" :placement="tooltipPlacement" size="small">
         <nao-router-link icon="ntd-fanqie" :route="route" icon-link />
     </nue-tooltip>
 </template>

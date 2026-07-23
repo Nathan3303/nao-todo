@@ -1,3 +1,4 @@
+import { useAppAsideV2Controller } from '@/components/app/aside-v2'
 import { APP_CONTEXT_KEY } from '@/context'
 import {
     useProjectUseCase,
@@ -8,15 +9,14 @@ import {
     useUserUseCase
 } from '@/hooks'
 import { LAST_VISITED_ROUTE_KEY } from '@/router'
-import { ProjectHandler, useProjectsStore } from '@nao-todo/presentation/project'
-import type { ProjectViewObject } from '@nao-todo/application/project/viewobjects'
-import { TagHandler, useTagsStore } from '@nao-todo/presentation/tag'
-import type { TagViewObject } from '@nao-todo/application/tag/viewobjects'
-import { TaskHandler, useTasksStore } from '@nao-todo/presentation/task'
-import type { TaskViewObject } from '@nao-todo/application/task/viewobjects'
-import { useThemeStore, useUserStore } from '@nao-todo/presentation/user'
 import type { ThemeMode } from '@nao-todo/application'
-// import type { SSEReminderEvent } from '@nao-todo/application'
+import type { ProjectViewObject } from '@nao-todo/application/project/viewobjects'
+import type { TagViewObject } from '@nao-todo/application/tag/viewobjects'
+import type { TaskViewObject } from '@nao-todo/application/task/viewobjects'
+import { ProjectHandler, useProjectsStore } from '@nao-todo/presentation/project'
+import { TagHandler, useTagsStore } from '@nao-todo/presentation/tag'
+import { TaskHandler, useTasksStore } from '@nao-todo/presentation/task'
+import { useThemeStore, useUserStore } from '@nao-todo/presentation/user'
 import {
     PROJECT_CREATOR_DIALOG_KEY,
     responsiveTypes,
@@ -80,11 +80,8 @@ const useIndexView = () => {
     /**
      * 边栏响应式状态
      */
-    const {
-        visible: isDisplayAside,
-        isFloating: isUseFloatAside,
-        switchVisible: switchDisplayAside
-    } = useResponsiveAside(responsiveFlag, responsiveTypes.MOBILE)
+    const { isDisplayAside, isUseFloatAside, switchDisplayAside, setControllOption } =
+        useAppAsideV2Controller(responsiveFlag)
     const { visible: isDisplayOutline, isFloating: isUseFloatOutline } = useResponsiveAside(
         responsiveFlag,
         responsiveTypes.MOBILE_TABLE
@@ -204,6 +201,7 @@ const useIndexView = () => {
         isDisplayAside,
         isUseFloatAside,
         switchDisplayAside,
+        setControllOption,
         isDisplayOutline,
         isUseFloatOutline,
         // methods

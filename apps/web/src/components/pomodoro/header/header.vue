@@ -25,7 +25,7 @@ const handleOpenCreator = () => {
             />
             <nue-div theme="title">番茄专注</nue-div>
         </nue-div>
-        <nue-div theme="tabs">
+        <nue-div v-if="!isUseFloatAside" theme="tabs">
             <nue-link icon="ntd-fanqie" route="/pomodoro/timer">番茄专注</nue-link>
             <nue-link icon="ntd-zzt" route="/pomodoro/focus">正计时</nue-link>
             <nue-link icon="list" route="/pomodoro/pomodoros">常用专注</nue-link>

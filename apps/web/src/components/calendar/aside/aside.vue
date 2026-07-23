@@ -6,21 +6,34 @@ import {
     TAG_CREATOR_DIALOG_KEY,
     TAG_MANAGER_DIALOG_KEY
 } from '@nao-todo/shared'
-import { ref } from 'vue'
+import { ref, inject, onMounted, watch, nextTick } from 'vue'
 import useCalendarSmartList from './use-calendar-smart-list'
+import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
 
 defineOptions({ name: 'CalendarAside' })
 
+const { isDisplayAside, isUseFloatAside, dialogManager } = inject(CALENDAR_VIEW_CONTEXT_KEY)!
+const { projectOptions, tagOptions, selectedProjectIds, selectedTagIds } = useCalendarSmartList()
 const collapseItemsRecord = ref(['projects', 'tags'])
 
-const { projectOptions, tagOptions, selectedProjectIds, selectedTagIds, dialogManager } =
-    useCalendarSmartList()
+/**
+ * 处理侧边栏延时传送
+ * 等待侧边栏的 SubPageAsideTeleportSlot 元素渲染后再渲染 teleport
+ */
+const teleportDisabled = ref<boolean>(false)
+watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
+
+// @mounted
+onMounted(() => {
+    if (isUseFloatAside.value) return
+    isDisplayAside.value = true
+})
 </script>
 
 <template>
-    <teleport to="#SubPageAsideTeleportSlot">
-        <nue-div theme="calendar-aside">
-            <nue-div theme="controller-wrapper"></nue-div>
+    <teleport v-if="isDisplayAside && !teleportDisabled" to="#SubPageAsideTeleportSlot">
+        <nue-div theme="aside-wrapper">
+            <nue-div theme="controller-wrapper"> 日历概览 </nue-div>
             <nue-divider />
             <nue-div theme="smart-list-wrapper">
                 <nue-collapse v-model="collapseItemsRecord" theme="menu">
@@ -69,12 +82,8 @@ const { projectOptions, tagOptions, selectedProjectIds, selectedTagIds, dialogMa
 </template>
 
 <style scoped>
-.nue-div--calendar-aside {
-    flex-direction: column;
+.nue-div--aside-wrapper {
     flex: auto;
-    height: 100%;
-    padding: 1rem;
-    overflow: auto;
 
     > .nue-div--smart-list-wrapper {
         width: 100%;

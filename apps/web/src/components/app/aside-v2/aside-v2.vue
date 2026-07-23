@@ -65,5 +65,3 @@ defineExpose({ switchDisplayAside })
     <nue-separator op-target="previous" @resize="handleResizeAside" :disabled="!isDisplayAside" />
 </template>
 
-<style src="./aside-v2.css"></style>
-

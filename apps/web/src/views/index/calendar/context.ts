@@ -13,11 +13,9 @@ export type CalendarViewContext = {
     dialogManager: DialogManager
     subscriber: Subscriber
 
-    asideWidth: Ref<string>
     isDisplayAside: Ref<boolean>
     isUseFloatAside: Ref<boolean>
     switchDisplayAside: () => void
-    handleResizeAside: (newWidth: number) => void
 }
 
 // 日历视图上下文注入键

@@ -1,3 +1,4 @@
+import type { AppAsideV2ControlOption } from '@/components/app/aside-v2'
 import type { TaskUseCase, TaskViewObject } from '@nao-todo/application'
 import type { ProjectUseCase } from '@nao-todo/application/project/usecases'
 import type { TagUseCase } from '@nao-todo/application/tag/usecases'
@@ -32,6 +33,7 @@ export type IndexViewContext = {
     switchDisplayAside: () => void
     asideWidth: Ref<string>
     handleResizeAside: (newWidth: number) => void
+    setControllOption: (newOption: AppAsideV2ControlOption) => void
     isDisplayOutline: Ref<boolean>
     isUseFloatOutline: Ref<boolean>
     // methods

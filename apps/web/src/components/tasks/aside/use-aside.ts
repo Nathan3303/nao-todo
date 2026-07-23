@@ -15,7 +15,8 @@ export const useAside = () => {
      * 注入任务视图上下文
      */
     const { appDialogManager, projectUseCase, tagUseCase } = inject(TASKS_VIEW_CONTEXT_KEY)!
-    const { asideWidth, handleResizeAside, isDisplayAside } = inject(INDEX_VIEW_CONTEXT_KEY)!
+    const { asideWidth, handleResizeAside, isDisplayAside, isUseFloatAside, setControllOption } =
+        inject(INDEX_VIEW_CONTEXT_KEY)!
 
     /**
      * 数据仓库
@@ -105,6 +106,8 @@ export const useAside = () => {
         dialogManager: appDialogManager,
         asideWidth,
         handleResizeAside,
-        isDisplayAside
+        isDisplayAside,
+        isUseFloatAside,
+        setControllOption
     }
 }
