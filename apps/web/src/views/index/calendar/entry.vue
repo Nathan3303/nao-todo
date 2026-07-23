@@ -8,7 +8,7 @@ import { useCalendarView } from './calendar-view'
 
 defineOptions({ name: 'CalendarView' })
 
-const { init, isDisplayAside, asideWidth, handleResizeAside } = useCalendarView()
+const { init, isDisplayAside } = useCalendarView()
 
 onMounted(() => init())
 </script>
@@ -16,15 +16,7 @@ onMounted(() => init())
 <template>
     <nue-container>
         <nue-main v-if="env.showUnimplementedFeatures">
-            <app-aside-adapter
-                v-model:displayed="isDisplayAside"
-                :width="asideWidth"
-                :min-width="isDisplayAside ? '250px' : 'unset'"
-                max-width="350px"
-                @resize="handleResizeAside"
-            >
-                <calendar-aside />
-            </app-aside-adapter>
+            <calendar-aside />
             <nue-content fill style="overflow: hidden">
                 <router-view v-slot="{ Component }">
                     <suspense>
@@ -60,4 +52,3 @@ onMounted(() => init())
 </template>
 
 <style scoped></style>
-

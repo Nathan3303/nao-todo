@@ -18,15 +18,14 @@ import { TASK_DETAILS_PRE_CONTEXT_KEY, useTaskDetailsStore } from '@nao-todo/pre
 import { columnLabels } from '@nao-todo/domain/task'
 import { responsiveTypes, unwrapError, useAsideWidth, useResponsiveAside } from '@nao-todo/shared'
 import { storeToRefs } from 'pinia'
-import { inject, provide, ref } from 'vue'
+import { inject, onMounted, onUnmounted, provide, ref } from 'vue'
 import { TASKS_VIEW_CONTEXT_KEY } from './context'
 import { TaskViewObject } from '@nao-todo/application'
+import { useRouter } from 'vue-router'
 
 const useTasksView = () => {
-    // @context App 上下文
+    // @contexts
     const { responsiveFlag } = inject(APP_CONTEXT_KEY)!
-
-    // @context Index 视图上下文
     const {
         projectUseCase,
         tagUseCase,
@@ -42,23 +41,22 @@ const useTasksView = () => {
     } = inject(INDEX_VIEW_CONTEXT_KEY)!
 
     // @stores
+    const router = useRouter()
     const taskDetailsStore = useTaskDetailsStore()
     const tagsStore = useTagsStore()
     const pomodoroSessionStore = usePomodoroSessionStore()
     const pomodoroTimerStore = usePomodoroTimerStore()
     const pomodoroFocusStore = usePomodoroFocusStore()
 
-    // @presets
+    // @presetStates
     const { avaliableProjects } = storeToRefs(useProjectsStore())
     const { tags: avaliableTags } = storeToRefs(tagsStore)
     const { currentTaskId: pomodoroCurrentTaskId } = storeToRefs(pomodoroSessionStore)
     const { status: pomodoroTimerStatus } = storeToRefs(pomodoroTimerStore)
     const { status: pomodoroFocusStatus } = storeToRefs(pomodoroFocusStore)
 
-    // @usecase Built-in project use case
+    // @usecases
     const builtInProjectUseCase = useBuiltInProjectUseCase(useBuiltInProjectsStore())
-
-    // @usecase 任务详情面板相关用例
     const taskCheckItemUseCase = useTaskCheckItemUseCase(taskDetailsStore)
     const taskCommentUseCase = useTaskCommentUseCase(taskDetailsStore)
     const subTaskUseCase = useTaskUseCase(taskDetailsStore)
@@ -83,20 +81,9 @@ const useTasksView = () => {
     }
 
     // @hook 响应式边栏
-    const {
-        visible: isDisplayAside,
-        isFloating: isUseFloatAside,
-        switchVisible: switchDisplayAside
-    } = useResponsiveAside(responsiveFlag, responsiveTypes.MOBILE)
     const { visible: isDisplayOutline, isFloating: isUseFloatOutline } = useResponsiveAside(
         responsiveFlag,
         responsiveTypes.MOBILE_TABLE
-    )
-
-    // @hook 边栏宽度
-    const { width: asideWidth, updater: handleResizeAside } = useAsideWidth(
-        256,
-        'TASKS_ASIDE_WIDTH'
     )
     const { width: outlineWidth, updater: handleResizeOutline } = useAsideWidth(
         480,
@@ -134,6 +121,16 @@ const useTasksView = () => {
         pomodoroFocusStore.start()
     }
 
+    /**
+     * 检测被删除的清单是否正在浏览，如果正在浏览则需要跳转至 “所有任务”
+     * @param projectId 被删除的清单 ID
+     */
+    const resetViewWhenProjectDeleted = (projectId: string) => {
+        const currentProjectId = router.currentRoute.value.params.projectId
+        const isSame = currentProjectId === projectId
+        if (isSame) router.replace('/tasks/all')
+    }
+
     // @provide Tasks view context
     provide(TASKS_VIEW_CONTEXT_KEY, {
         builtInProjectUseCase,
@@ -145,11 +142,6 @@ const useTasksView = () => {
         projectHandler,
         tagHandler,
         taskHandler,
-        asideWidth,
-        isDisplayAside,
-        isUseFloatAside,
-        switchDisplayAside,
-        handleResizeAside,
         outlineWidth,
         isDisplayOutline,
         isUseFloatOutline,
@@ -183,6 +175,17 @@ const useTasksView = () => {
         selectTaskAndStartFocus,
         resetTimer: () => pomodoroTimerStore.reset(),
         resetFocus: () => pomodoroFocusStore.reset()
+    })
+
+    // @mounted 组件挂载
+    onMounted(() => {
+        init()
+        appSubscriber.subscribe('project:deleted', resetViewWhenProjectDeleted)
+    })
+
+    // @unmounted 组件卸载
+    onUnmounted(() => {
+        appSubscriber.unsubscribe('project:deleted', resetViewWhenProjectDeleted)
     })
 
     // @returns

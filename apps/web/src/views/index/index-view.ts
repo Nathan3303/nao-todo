@@ -14,13 +14,15 @@ import { TagHandler, useTagsStore } from '@nao-todo/presentation/tag'
 import type { TagViewObject } from '@nao-todo/application/tag/viewobjects'
 import { TaskHandler, useTasksStore } from '@nao-todo/presentation/task'
 import type { TaskViewObject } from '@nao-todo/application/task/viewobjects'
-import { type ThemeMode, useThemeStore, useUserStore } from '@nao-todo/presentation/user'
-import type { SSEReminderEvent } from '@nao-todo/shared'
+import { useThemeStore, useUserStore } from '@nao-todo/presentation/user'
+import type { ThemeMode } from '@nao-todo/application'
+// import type { SSEReminderEvent } from '@nao-todo/application'
 import {
     PROJECT_CREATOR_DIALOG_KEY,
     responsiveTypes,
     TASK_CREATOR_DIALOG_KEY,
     TASK_REMINDER_DIALOG_KEY,
+    useAsideWidth,
     useDialogManager,
     useResponsiveAside,
     useSubscriber
@@ -87,6 +89,7 @@ const useIndexView = () => {
         responsiveFlag,
         responsiveTypes.MOBILE_TABLE
     )
+    const { width: asideWidth, updater: handleResizeAside } = useAsideWidth(300, 'ASIDE_WIDTH')
 
     /**
      * 显示任务详情抽屉
@@ -117,7 +120,7 @@ const useIndexView = () => {
         const es = new EventSource(url)
         // 监听提醒事件
         es.addEventListener('reminder', (event: MessageEvent) => {
-            const data = JSON.parse(event.data) as SSEReminderEvent
+            const data = JSON.parse(event.data)
             appDialogManager.open(TASK_REMINDER_DIALOG_KEY, data)
             // 显示通知
             if ('Notification' in window && Notification.permission === 'granted') {
@@ -196,6 +199,8 @@ const useIndexView = () => {
         tagHandler,
         taskHandler,
         // responsive
+        asideWidth,
+        handleResizeAside,
         isDisplayAside,
         isUseFloatAside,
         switchDisplayAside,
@@ -208,7 +213,7 @@ const useIndexView = () => {
     })
 
     // @return
-    return { isLoading, IndexViewInitialize }
+    return { isLoading, IndexViewInitialize, appSubscriber }
 }
 
 export default useIndexView

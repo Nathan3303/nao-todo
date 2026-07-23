@@ -12,10 +12,8 @@ export type PomodoroViewContext = {
     dialogManager: DialogManager
     subscriber: Subscriber
 
-    asideWidth: Ref<string>
     isDisplayAside: Ref<boolean>
     isUseFloatAside: Ref<boolean>
-    handleResizeAside: (width: number) => void
     switchDisplayAside: () => void
 
     getProjectName: (projectId: string) => string

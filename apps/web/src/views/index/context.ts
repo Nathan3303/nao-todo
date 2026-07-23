@@ -1,10 +1,10 @@
-import type { ProjectHandler } from '@nao-todo/presentation/project'
+import type { TaskUseCase, TaskViewObject } from '@nao-todo/application'
 import type { ProjectUseCase } from '@nao-todo/application/project/usecases'
-import type { TagHandler } from '@nao-todo/presentation/tag'
 import type { TagUseCase } from '@nao-todo/application/tag/usecases'
-import type { TaskHandler } from '@nao-todo/presentation/task'
-import type { TaskUseCase, TaskViewObject } from '@nao-todo/application/task/usecases'
 import type { UserUseCase } from '@nao-todo/application/user/usecases'
+import type { ProjectHandler } from '@nao-todo/presentation/project'
+import type { TagHandler } from '@nao-todo/presentation/tag'
+import type { TaskHandler } from '@nao-todo/presentation/task'
 import type { DialogManager, Subscriber } from '@nao-todo/shared'
 import type { InjectionKey, Ref } from 'vue'
 
@@ -30,6 +30,8 @@ export type IndexViewContext = {
     isDisplayAside: Ref<boolean>
     isUseFloatAside: Ref<boolean>
     switchDisplayAside: () => void
+    asideWidth: Ref<string>
+    handleResizeAside: (newWidth: number) => void
     isDisplayOutline: Ref<boolean>
     isUseFloatOutline: Ref<boolean>
     // methods

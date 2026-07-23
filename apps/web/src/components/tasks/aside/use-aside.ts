@@ -1,3 +1,4 @@
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
 import { useBuiltInProjectsStore } from '@nao-todo/presentation/built-in-project'
 import { useProjectsStore } from '@nao-todo/presentation/project'
@@ -13,14 +14,8 @@ export const useAside = () => {
     /**
      * 注入任务视图上下文
      */
-    const {
-        appDialogManager,
-        asideWidth,
-        handleResizeAside,
-        isDisplayAside,
-        projectUseCase,
-        tagUseCase
-    } = inject(TASKS_VIEW_CONTEXT_KEY)!
+    const { appDialogManager, projectUseCase, tagUseCase } = inject(TASKS_VIEW_CONTEXT_KEY)!
+    const { asideWidth, handleResizeAside, isDisplayAside } = inject(INDEX_VIEW_CONTEXT_KEY)!
 
     /**
      * 数据仓库

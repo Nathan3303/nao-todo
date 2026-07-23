@@ -1,12 +1,11 @@
 import { useAuthUseCase } from '@/hooks'
 import { useUserStore } from '@nao-todo/presentation/user'
-import { useAsideWidth } from '@nao-todo/shared'
 import { inject, provide } from 'vue'
 import { INDEX_VIEW_CONTEXT_KEY } from '../context'
 import { SETTINGS_VIEW_CONTEXT_KEY } from './context'
 
 const useSettingsView = () => {
-    // @context Index view 上下文
+    // @contexts
     const {
         userUseCase,
         isDisplayAside,
@@ -16,12 +15,11 @@ const useSettingsView = () => {
         appDialogManager
     } = inject(INDEX_VIEW_CONTEXT_KEY)!
 
-    // @usecases
+    // @stores
     const userStore = useUserStore()
-    const authUseCase = useAuthUseCase(userStore)
 
-    // @hook 侧边栏宽度
-    const { width: asideWidth, updater: handleResizeAside } = useAsideWidth(256, 'ASIDE_WIDTH')
+    // @usecases
+    const authUseCase = useAuthUseCase(userStore)
 
     // @provide Settings view 上下文
     provide(SETTINGS_VIEW_CONTEXT_KEY, {
@@ -29,11 +27,9 @@ const useSettingsView = () => {
         userUseCase,
         subscriber: appSubscriber,
         dialogManager: appDialogManager,
-        asideWidth,
         isDisplayAside,
         isUseFloatAside,
-        switchDisplayAside,
-        handleResizeAside
+        switchDisplayAside
     })
 }
 

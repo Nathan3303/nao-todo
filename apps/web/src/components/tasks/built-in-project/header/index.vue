@@ -2,13 +2,13 @@
 import { inject } from 'vue'
 import OperationDropdown from './operation-dropdown.vue'
 import FilterDropdown from './filter-dropdown.vue'
-import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
 import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '../context'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context.js'
 
 defineOptions({ name: 'TasksMainProjectHeader' })
 defineProps<{ projectId?: string; viewType?: string; taskId?: string }>()
 
-const { isDisplayAside, switchDisplayAside } = inject(TASKS_VIEW_CONTEXT_KEY)!
+const { isDisplayAside, switchDisplayAside } = inject(INDEX_VIEW_CONTEXT_KEY)!
 
 const { builtInProject, showTaskCreator } = inject(BUILT_IN_PROJECT_VIEW_CONTEXT_KEY)!
 </script>
@@ -38,4 +38,3 @@ const { builtInProject, showTaskCreator } = inject(BUILT_IN_PROJECT_VIEW_CONTEXT
         </nue-div>
     </nue-header>
 </template>
-

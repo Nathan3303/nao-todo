@@ -10,11 +10,9 @@ export type SettingsViewContext = {
     subscriber: Subscriber
     dialogManager: DialogManager
 
-    asideWidth: Ref<string>
     isDisplayAside: Ref<boolean>
     isUseFloatAside: Ref<boolean>
     switchDisplayAside: () => void
-    handleResizeAside: (newWidth: number) => void
 }
 
 export const SETTINGS_VIEW_CONTEXT_KEY: InjectionKey<SettingsViewContext> =

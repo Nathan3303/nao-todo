@@ -52,7 +52,6 @@ const { profile } = storeToRefs(userStore)
                 <nue-div theme="aside__actions" v-if="$slots.actions">
                     <slot name="actions"></slot>
                 </nue-div>
-                <!-- <pomodoro-timer-indicator /> -->
             </nue-div>
         </nue-div>
         <slot></slot>

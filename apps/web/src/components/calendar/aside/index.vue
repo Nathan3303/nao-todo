@@ -18,52 +18,54 @@ const { projectOptions, tagOptions, selectedProjectIds, selectedTagIds, dialogMa
 </script>
 
 <template>
-    <nue-div theme="calendar-aside">
-        <nue-div theme="controller-wrapper"></nue-div>
-        <nue-divider />
-        <nue-div theme="smart-list-wrapper">
-            <nue-collapse v-model="collapseItemsRecord" theme="menu">
-                <nao-smart-list
-                    collapse-item-name="projects"
-                    name="清单"
-                    :count="projectOptions.length"
-                    manage-btn-tooltip="管理清单"
-                    create-btn-tooltip="新建清单"
-                    @manage="dialogManager.open(PROJECT_MANAGER_DIALOG_KEY)"
-                    @create="dialogManager.open(PROJECT_CREATOR_DIALOG_KEY)"
-                >
-                    <template #actions></template>
-                    <nue-checkbox-group v-model="selectedProjectIds">
-                        <nue-checkbox
-                            v-for="p in projectOptions"
-                            :key="p.id"
-                            :name="p.id"
-                            :label="p.name"
-                        />
-                    </nue-checkbox-group>
-                </nao-smart-list>
-                <nao-smart-list
-                    collapse-item-name="tags"
-                    name="标签"
-                    :count="tagOptions.length"
-                    manage-btn-tooltip="管理标签"
-                    create-btn-tooltip="新建标签"
-                    @manage="dialogManager.open(TAG_MANAGER_DIALOG_KEY)"
-                    @create="dialogManager.open(TAG_CREATOR_DIALOG_KEY)"
-                >
-                    <template #actions></template>
-                    <nue-checkbox-group v-model="selectedTagIds">
-                        <nue-checkbox
-                            v-for="t in tagOptions"
-                            :key="t.id"
-                            :name="t.id"
-                            :label="t.name"
-                        />
-                    </nue-checkbox-group>
-                </nao-smart-list>
-            </nue-collapse>
+    <teleport to="#SubPageAsideTeleportSlot">
+        <nue-div theme="calendar-aside">
+            <nue-div theme="controller-wrapper"></nue-div>
+            <nue-divider />
+            <nue-div theme="smart-list-wrapper">
+                <nue-collapse v-model="collapseItemsRecord" theme="menu">
+                    <nao-smart-list
+                        collapse-item-name="projects"
+                        name="清单"
+                        :count="projectOptions.length"
+                        manage-btn-tooltip="管理清单"
+                        create-btn-tooltip="新建清单"
+                        @manage="dialogManager.open(PROJECT_MANAGER_DIALOG_KEY)"
+                        @create="dialogManager.open(PROJECT_CREATOR_DIALOG_KEY)"
+                    >
+                        <template #actions></template>
+                        <nue-checkbox-group v-model="selectedProjectIds">
+                            <nue-checkbox
+                                v-for="p in projectOptions"
+                                :key="p.id"
+                                :name="p.id"
+                                :label="p.name"
+                            />
+                        </nue-checkbox-group>
+                    </nao-smart-list>
+                    <nao-smart-list
+                        collapse-item-name="tags"
+                        name="标签"
+                        :count="tagOptions.length"
+                        manage-btn-tooltip="管理标签"
+                        create-btn-tooltip="新建标签"
+                        @manage="dialogManager.open(TAG_MANAGER_DIALOG_KEY)"
+                        @create="dialogManager.open(TAG_CREATOR_DIALOG_KEY)"
+                    >
+                        <template #actions></template>
+                        <nue-checkbox-group v-model="selectedTagIds">
+                            <nue-checkbox
+                                v-for="t in tagOptions"
+                                :key="t.id"
+                                :name="t.id"
+                                :label="t.name"
+                            />
+                        </nue-checkbox-group>
+                    </nao-smart-list>
+                </nue-collapse>
+            </nue-div>
         </nue-div>
-    </nue-div>
+    </teleport>
 </template>
 
 <style scoped>

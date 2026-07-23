@@ -34,8 +34,16 @@ export const usePomodoroView = () => {
      * @inject INDEX_VIEW_CONTEXT_KEY - 主要视图上下文
      */
     const { responsiveFlag } = inject(APP_CONTEXT_KEY)!
-    const { taskUseCase, appDialogManager, appSubscriber, getProjectName, showTaskDetails } =
-        inject(INDEX_VIEW_CONTEXT_KEY)!
+    const {
+        taskUseCase,
+        appDialogManager,
+        appSubscriber,
+        getProjectName,
+        showTaskDetails,
+        isDisplayAside,
+        isUseFloatAside,
+        switchDisplayAside
+    } = inject(INDEX_VIEW_CONTEXT_KEY)!
 
     /**
      * 常用番茄专注用例
@@ -66,11 +74,11 @@ export const usePomodoroView = () => {
      * @description 应用响应式侧栏 Hook，提供响应式侧边栏上下文
      * @use useResponsiveAside(responsiveFlag, responsiveTypes.MOBILE) - 响应式侧边栏上下文
      */
-    const {
-        visible: isDisplayAside,
-        isFloating: isUseFloatAside,
-        switchVisible: switchDisplayAside
-    } = useResponsiveAside(responsiveFlag, responsiveTypes.MOBILE)
+    // const {
+    //     visible: isDisplayAside,
+    //     isFloating: isUseFloatAside,
+    //     switchVisible: switchDisplayAside
+    // } = useResponsiveAside(responsiveFlag, responsiveTypes.MOBILE)
 
     /**
      * 响应式任务详情面板
@@ -87,10 +95,10 @@ export const usePomodoroView = () => {
      * @description 应用响应式侧栏宽度 Hook，提供响应式侧边栏宽度上下文
      * @use useAsideWidth(320, 'POMODORO_ASIDE_WIDTH') - 响应式侧边栏宽度上下文
      */
-    const { width: asideWidth, updater: handleResizeAside } = useAsideWidth(
-        320,
-        'POMODORO_ASIDE_WIDTH'
-    )
+    // const { width: asideWidth, updater: handleResizeAside } = useAsideWidth(
+    //     320,
+    //     'POMODORO_ASIDE_WIDTH'
+    // )
 
     /**
      * 响应式任务详情面板宽度
@@ -137,10 +145,8 @@ export const usePomodoroView = () => {
         pomodoroRecordUseCase,
         dialogManager: appDialogManager,
         subscriber: appSubscriber,
-        asideWidth,
         isDisplayAside,
         isUseFloatAside,
-        handleResizeAside,
         switchDisplayAside,
         getProjectName,
         showTaskDetails
