@@ -8,8 +8,8 @@ import {
     useDialogWrapper
 } from '@nao-todo/shared'
 import dayjs from 'dayjs'
-import { computed, nextTick, onMounted, ref } from 'vue'
-import { TaskCreatorInput, TaskDateSelector, TaskProjectSelector, TaskTagBar } from '../../'
+import { computed, onMounted, ref } from 'vue'
+import { TaskDateSelector, TaskProjectSelector, TaskTagBar } from '../../'
 import { TaskPrioritySelectOptions, TaskStateSelectOptions } from '@nao-todo/domain/task'
 import type { CreateTaskViewObject, TaskViewObject } from '@nao-todo/application'
 import { TaskCreatorDialogProps } from './types'
@@ -19,7 +19,6 @@ defineOptions({ name: 'TaskCreatorDialog' })
 const props = defineProps<TaskCreatorDialogProps>()
 
 const dialogRef = ref<DialogInstanceType>()
-const taskCreatorInputRef = ref<InstanceType<typeof TaskCreatorInput>>()
 
 const {
     states,
@@ -31,9 +30,7 @@ const {
     clearInputsValue,
     handleUpdateEndAt,
     handleUpdateRemind,
-    handleUpdateEndAtAndRemind,
-    useSmartCreator,
-    taskInputValue
+    handleUpdateEndAtAndRemind
 } = useTaskCreator(props)
 const { visible, close: closeDialog } = useDialogWrapper(dialogRef)
 
@@ -42,7 +39,6 @@ const isExpired = computed(() => {
 })
 
 const open = (createTaskOptions: CreateTaskViewObject) => {
-    useSmartCreator.value = localStorage.getItem('TASK_CREATOR_SMART_MODE') === 'true'
     clearInputsValue()
     if (createTaskOptions) {
         Object.keys(createTaskOptions).forEach((key) => {
@@ -53,22 +49,8 @@ const open = (createTaskOptions: CreateTaskViewObject) => {
                 ;(states as any)[targetKey] = presetVal
             }
         })
-        // 预填充智能输入中的 tags 和 projectId
-        if (createTaskOptions.tags?.length) {
-            taskInputValue.value = {
-                ...taskInputValue.value,
-                tags: [...createTaskOptions.tags]
-            }
-        }
-        if (createTaskOptions.projectId) {
-            taskInputValue.value = {
-                ...taskInputValue.value,
-                projectId: createTaskOptions.projectId
-            }
-        }
     }
     visible.value = true
-    nextTick(() => taskCreatorInputRef.value?.focus())
 }
 
 const close = () => {
@@ -85,7 +67,7 @@ onMounted(() => dialogManager.register(TASK_CREATOR_DIALOG_KEY, { open, close })
 
 <template>
     <nue-dialog
-        :theme="useSmartCreator ? 'task-creator-v2' : 'task-creator'"
+        :theme="'task-creator'"
         v-model="visible"
         ref="dialogRef"
         :title="t('dialog.taskCreator.title')"
@@ -93,7 +75,6 @@ onMounted(() => dialogManager.register(TASK_CREATOR_DIALOG_KEY, { open, close })
         <template #content>
             <nue-div vertical align="stretch" gap="0.75rem">
                 <!-- ═══ 旧模式 ═══ -->
-                <template v-if="!useSmartCreator">
                     <nue-input
                         v-model="states.name"
                         clearable
@@ -147,45 +128,9 @@ onMounted(() => dialogManager.register(TASK_CREATOR_DIALOG_KEY, { open, close })
                             (name: string) => dialogManager.open(TAG_CREATOR_DIALOG_KEY, { name })
                         "
                     />
-                </template>
-                <!-- ═══ 新模式 ═══ -->
-                <template v-if="useSmartCreator">
-                    <nue-div vertical gap="var(--nue-gap-sm)">
-                        <task-creator-input
-                            ref="taskCreatorInputRef"
-                            v-model="taskInputValue"
-                            :tags="avaliableTags || []"
-                            :projects="avaliableProjects || []"
-                            :priority-options="TaskPrioritySelectOptions"
-                            :state-options="TaskStateSelectOptions"
-                            :placeholder="t('dialog.taskCreator.smartPlaceholder')"
-                            @create-tag="
-                                (name: string) =>
-                                    dialogManager.open(TAG_CREATOR_DIALOG_KEY, { name })
-                            "
-                        />
-                        <nue-textarea
-                            v-model="states.description"
-                            maxlength="256"
-                            :autosize="{ minRows: 1, maxRows: 4 }"
-                            :placeholder="t('dialog.taskCreator.descPlaceholder')"
-                            theme="pure"
-                        />
-                    </nue-div>
-                </template>
             </nue-div>
         </template>
         <template #footer>
-            <template v-if="useSmartCreator">
-                <task-date-selector
-                    :colored="!isExpired"
-                    v-model="states.endAt!"
-                    :task-remind-data="states"
-                    @change="handleUpdateEndAt"
-                    @remind-change="handleUpdateRemind"
-                    @update-all="handleUpdateEndAtAndRemind"
-                />
-            </template>
             <nue-div gap="var(--nue-gap-xs)" flex="1" justify="flex-end">
                 <nue-button theme="small" :disabled="createStates.disabled" @click="close">
                     {{ t('common.cancel') }}
@@ -208,7 +153,4 @@ onMounted(() => dialogManager.register(TASK_CREATOR_DIALOG_KEY, { open, close })
     width: 24rem;
 }
 
-.nue-dialog--task-creator-v2 {
-    width: 28rem;
-}
 </style>

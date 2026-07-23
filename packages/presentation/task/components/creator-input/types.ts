@@ -1,74 +1,162 @@
-import type { TaskTagViewObject, TaskProjectViewObject } from '@nao-todo/application/task/viewobjects'
+import type { TaskProjectViewObject, TaskTagViewObject } from '@nao-todo/application/task/viewobjects'
+
+// ============== 核心类型 ==============
 
 /**
- * 内联组件类型
- *
- * 内置类型: 'tag' | 'project' | 'priority' | 'state'
- * 扩展方式: 添加新字符到 InlineChipType 联合类型 + 创建 TriggerHandler
- * @see TriggerHandler
+ * Token 类型 - 词法分析的结果类型
  */
-export type InlineChipType = 'tag' | 'project' | 'priority' | 'state'
+export type TokenType = 'text' | 'tag' | 'project' | 'priority' | 'status' | 'date'
 
-/** 内联组件数据 — 对应一个 TagNode 或 TaskBasicInfo 实例 */
-export type InlineChipData = {
-    chipId: string // 唯一标识（用于 DOM 定位）
-    type: InlineChipType
-    entityId: string // 选中实体的 id (tagId / projectId)
-    label: string // 显示文本（如 "工作"）
-    color?: string // 标签颜色（仅 tag 有）
+/**
+ * 词法 Token - 单个解析标记
+ */
+export interface Token {
+  /** 标记类型 */
+  type: TokenType
+  /** 原始文本（含前缀，如 #工作） */
+  raw: string
+  /** 解析后的值（不含前缀） */
+  value: string
+  /** 起始位置 */
+  start: number
+  /** 结束位置 */
+  end: number
+  /** 是否已匹配到现有数据（如已存在的标签） */
+  resolved?: boolean
+  /** 匹配到的实体 ID（如标签 ID） */
+  id?: string
 }
 
-/** 输入组件 v-model 的值 */
-export type TaskCreatorInputValue = {
-    text: string // 纯文本（不含 chip 标签内容）
-    tags: string[] // 选中的 tag id 列表
-    projectId: string | null // 选中的 project id
-    priority?: string | null // 选中的优先级
-    state?: string | null // 选中的状态
-    /** 扩展 slot：新 TriggerHandler 可将值写入自有 key */
-    [key: string]: any
+/**
+ * 自动补全建议项
+ */
+export interface SuggestionItem {
+  id: string
+  label: string
+  type: TokenType
+  icon?: string
+  color?: string
+  /** 是否为新建项（如不存在的标签） */
+  isNew?: boolean
 }
 
-/** 建议弹窗选项 */
-export type SuggestionOption = {
-    id: string
-    label: string
-    type: InlineChipType
-    description?: string
-    color?: string // 仅 tag 有
+/**
+ * 解析结果 - 包含所有解析出的任务属性
+ */
+export interface ParsedResult {
+  /** 解析出的所有 Token */
+  tokens: Token[]
+  /** 纯任务标题（移除所有已解析的语法标记） */
+  text: string
+  /** 标签 ID 列表 */
+  tags: string[]
+  /** 项目/清单 ID */
+  projectId: string | null
+  /** 优先级 */
+  priority: 'low' | 'medium' | 'high' | null
+  /** 任务状态 */
+  state: 'todo' | 'in-progress' | 'done' | null
+  /** 截止日期（ISO 字符串） */
+  dueAt: string | null
 }
 
-/** 触发状态 */
-export type TriggerState = {
-    active: boolean
-    type: InlineChipType | null
-    query: string
-    startOffset: number // 触发字符在 textContent 中的位置
+/**
+ * 输入框输出值 - 保持与现有系统兼容
+ */
+export interface TaskCreatorInputValue {
+  text: string
+  tags: string[]
+  projectId: string | null
+  priority: string | null
+  state: string | null
+  dueAt: string | null
 }
 
-// 下拉选择选项
-export type SelectOption = {
-    label: string
-    value: string
+// ============== 组件 Props ==============
+
+/**
+ * 任务创建器输入框 Props
+ */
+export interface TaskCreatorInputProps {
+  modelValue: TaskCreatorInputValue
+  /** 可用标签列表 */
+  tags: TaskTagViewObject[]
+  /** 可用项目/清单列表 */
+  projects: TaskProjectViewObject[]
+  /** 优先级选项 */
+  priorityOptions: SelectOption[]
+  /** 状态选项 */
+  stateOptions: SelectOption[]
+  /** 占位符文本 */
+  placeholder?: string
+  /** 是否自动聚焦 */
+  autofocus?: boolean
 }
 
-// 任务创建输入组件属性
-export type TaskCreatorInputProps = {
-    modelValue: TaskCreatorInputValue
-    tags: TaskTagViewObject[]
-    projects: TaskProjectViewObject[]
-    priorityOptions?: SelectOption[]
-    stateOptions?: SelectOption[]
-    placeholder?: string
-    disabled?: boolean
-    maxLength?: number
-    autofocus?: boolean
+/**
+ * 任务创建器输入框 Emits
+ */
+export interface TaskCreatorInputEmits {
+  (e: 'update:modelValue', value: TaskCreatorInputValue): void
+  (e: 'create-tag', name: string): void
+  (e: 'submit'): void
 }
 
-// 任务创建输入组件事件
-export type TaskCreatorInputEmits = {
-    (e: 'update:modelValue', value: TaskCreatorInputValue): void
-    (e: 'create-tag', name: string): void
-    (e: 'focus'): void
-    (e: 'blur'): void
+// ============== 内部类型 ==============
+
+/**
+ * 选择选项 - 通用类型
+ */
+export interface SelectOption {
+  label: string
+  value: string
+  icon?: string
+}
+
+/**
+ * 触发字符配置
+ */
+export interface TriggerConfig {
+  /** 触发字符 */
+  char: string
+  /** 对应的 Token 类型 */
+  type: TokenType
+  /** 显示名称 */
+  label: string
+  /** 图标 */
+  icon: string
+}
+
+/**
+ * 光标位置信息 - 用于自动补全
+ */
+export interface CursorPosition {
+  /** 触发字符类型 */
+  type: TokenType | null
+  /** 查询关键词 */
+  query: string
+  /** 触发字符起始位置 */
+  start: number
+  /** 当前光标位置 */
+  end: number
+}
+
+/**
+ * 优先级映射值类型
+ */
+export type PriorityValue = 'low' | 'medium' | 'high'
+
+/**
+ * 状态映射值类型
+ */
+export type StateValue = 'todo' | 'in-progress' | 'done'
+
+/**
+ * 自动补全建议结果类型
+ */
+export type SuggestionResult = {
+  id: string
+  label: string
+  type: string
+  isNew?: boolean
 }

@@ -1,9 +1,8 @@
 import { unwrapError } from '@nao-todo/shared'
 import { NueMessage } from 'nue-ui'
-import { reactive, ref, watch } from 'vue'
+import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import type { UpdateTaskViewObject } from '@nao-todo/application/task/viewobjects'
-import type { TaskCreatorInputValue } from '../../creator-input'
 import type { TaskRemindSetterUpdateVO } from '../../remind-setter'
 import type { TaskCreatorDialogProps } from './types'
 
@@ -33,24 +32,6 @@ const useTaskCreator = (props: TaskCreatorDialogProps) => {
 
     // 创建任务状态
     const createStates = reactive({ creating: false, disabled: false })
-
-    // 新模式：智能输入
-    const TASK_CREATOR_SMART_MODE_KEY = 'TASK_CREATOR_SMART_MODE'
-
-    // 智能输入模式下，任务输入值
-    const taskInputValue = ref<TaskCreatorInputValue>({
-        text: '',
-        tags: [],
-        projectId: null,
-        priority: null,
-        state: null
-    })
-
-    // 是否使用智能输入模式
-    const useSmartCreator = ref(false)
-
-    // 监听 useSmartCreator 变化，更新 localStorage
-    watch(useSmartCreator, (val) => localStorage.setItem(TASK_CREATOR_SMART_MODE_KEY, String(val)))
 
     /**
      * 更新任务结束时间
@@ -92,22 +73,9 @@ const useTaskCreator = (props: TaskCreatorDialogProps) => {
     const handleCreateTask = async (): Promise<boolean> => {
         createStates.creating = createStates.disabled = true
 
-        let name: string
-        let tags: string[]
-        let projectId: string
-
-        if (useSmartCreator.value) {
-            name = taskInputValue.value.text
-            tags = taskInputValue.value.tags
-            projectId = taskInputValue.value.projectId || states.projectId || ''
-            // 智能模式中 priority/state 由 chip 指定，否则 fallback 到表单值
-            states.priority = taskInputValue.value.priority || states.priority || 'low'
-            states.state = taskInputValue.value.state || states.state || 'todo'
-        } else {
-            name = states.name || ''
-            tags = states.tags || []
-            projectId = states.projectId || ''
-        }
+        const name = states.name || ''
+        const tags = states.tags || []
+        const projectId = states.projectId || ''
 
         const [task, err] = await taskUseCase.create({
             projectId,
@@ -151,13 +119,6 @@ const useTaskCreator = (props: TaskCreatorDialogProps) => {
         states.startAt = ''
         states.endAt = ''
         states.tags = []
-        taskInputValue.value = {
-            text: '',
-            tags: [],
-            projectId: null,
-            priority: null,
-            state: null
-        }
     }
 
     // @returns
@@ -171,9 +132,7 @@ const useTaskCreator = (props: TaskCreatorDialogProps) => {
         clearInputsValue,
         handleUpdateEndAt,
         handleUpdateRemind,
-        handleUpdateEndAtAndRemind,
-        useSmartCreator,
-        taskInputValue
+        handleUpdateEndAtAndRemind
     }
 }
 
