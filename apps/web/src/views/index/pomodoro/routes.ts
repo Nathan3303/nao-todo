@@ -11,6 +11,11 @@ const routes: RouteRecordRaw = {
             component: () => import('@/components/pomodoro/collection/index.vue')
         },
         {
+            path: 'records',
+            name: 'pomodoro-records',
+            component: () => import('@/components/pomodoro/records/index.vue')
+        },
+        {
             path: ':type(timer|focus)/:taskId?',
             name: 'pomodoro',
             props: true,

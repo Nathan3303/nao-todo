@@ -29,6 +29,7 @@ const handleOpenCreator = () => {
             <nue-link icon="ntd-fanqie" route="/pomodoro/timer">番茄专注</nue-link>
             <nue-link icon="ntd-zzt" route="/pomodoro/focus">正计时</nue-link>
             <nue-link icon="list" route="/pomodoro/pomodoros">常用专注</nue-link>
+            <nue-link icon="history" route="/pomodoro/records">专注记录</nue-link>
         </nue-div>
         <nue-div theme="actions">
             <nue-tooltip content="新建常用番茄专注" size="small">

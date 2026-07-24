@@ -34,6 +34,7 @@ onMounted(() => setControllOption({ useSlot: false, useDrawerSlot: true }))
                 </nue-link>
                 <nue-link icon="ntd-zzt" theme="route" route="/pomodoro/focus">正计时</nue-link>
                 <nue-link icon="list" theme="route" route="/pomodoro/pomodoros">常用专注</nue-link>
+                <nue-link icon="history" theme="route" route="/pomodoro/records">专注记录</nue-link>
             </nue-div>
             <!-- <nue-div vertical gap="0.25rem" flex="1" justify="end">
                 <nue-button icon="plus" @click="handleOpenCreator">新建常用番茄专注</nue-button>
