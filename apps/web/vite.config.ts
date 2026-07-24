@@ -1,12 +1,12 @@
 import { fileURLToPath, URL } from 'node:url'
-import { defineConfig } from 'vite'
+import { defineConfig, lazyPlugins } from 'vite-plus'
 import vue from '@vitejs/plugin-vue'
 import terser from '@rollup/plugin-terser'
 import { visualizer } from 'rollup-plugin-visualizer'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-    plugins: [
+    plugins: lazyPlugins(() => [
         vue(),
         terser({
             compress: {
@@ -29,16 +29,22 @@ export default defineConfig({
                 eval: true
             }
         }),
-        visualizer({ open: true }),
-    ],
+        visualizer({ open: true })
+    ]),
     resolve: {
         alias: {
             '@': fileURLToPath(new URL('./src', import.meta.url)),
             '@nao-todo/domain': fileURLToPath(new URL('../../packages/domain', import.meta.url)),
-            '@nao-todo/application': fileURLToPath(new URL('../../packages/application', import.meta.url)),
-            '@nao-todo/presentation': fileURLToPath(new URL('../../packages/presentation', import.meta.url)),
+            '@nao-todo/application': fileURLToPath(
+                new URL('../../packages/application', import.meta.url)
+            ),
+            '@nao-todo/presentation': fileURLToPath(
+                new URL('../../packages/presentation', import.meta.url)
+            ),
             '@nao-todo/shared': fileURLToPath(new URL('../../packages/shared', import.meta.url)),
-            '@nao-todo/infrastructure': fileURLToPath(new URL('../../packages/infrastructure', import.meta.url))
+            '@nao-todo/infrastructure': fileURLToPath(
+                new URL('../../packages/infrastructure', import.meta.url)
+            )
         }
     },
     build: {

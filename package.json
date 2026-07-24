@@ -6,10 +6,11 @@
     "license": "MIT",
     "private": true,
     "type": "module",
-    "packageManager": "pnpm@8.12.1",
+    "packageManager": "pnpm@9.5.0",
     "scripts": {
         "desktopapp": "pnpm --filter @nao-todo/desktopapp",
-        "webapp": "pnpm --filter @nao-todo/webapp"
+        "webapp": "pnpm --filter @nao-todo/webapp",
+        "prepare": "vp config"
     },
     "dependencies": {
         "@vitejs/plugin-vue": "^6.0.7",
@@ -35,33 +36,38 @@
         "@nao-todo/application": "workspace:*",
         "@nao-todo/presentation": "workspace:*",
         "@nao-todo/infrastructure": "workspace:*",
-        "@eslint/js": "^9.39.4",
         "@rollup/plugin-terser": "^0.4.4",
         "@rushstack/eslint-patch": "^1.16.1",
         "@tsconfig/node20": "^20.1.9",
         "@types/markdown-it": "^14.1.2",
         "@types/node": "^20.19.41",
         "@types/validator": "^13.15.10",
-        "@typescript-eslint/eslint-plugin": "^8.60.0",
-        "@typescript-eslint/parser": "^8.60.0",
-        "@vue/eslint-config-prettier": "^9.0.0",
         "@vue/tsconfig": "^0.5.1",
         "cross-env": "^7.0.3",
-        "eslint": "^9.39.4",
-        "eslint-config-prettier": "^9.1.2",
-        "eslint-plugin-prettier": "^5.5.5",
-        "eslint-plugin-vue": "^9.33.0",
         "font-slice": "^1.0.2",
         "globals": "^15.15.0",
         "nue-ui-resolver": "0.2.1",
-        "prettier": "^3.8.3",
         "rollup-plugin-visualizer": "^5.14.0",
         "typescript": "~5.4.5",
-        "typescript-eslint": "^8.60.0",
-        "vite": "^8.0.14",
-        "vue-tsc": "^2.2.12"
+        "vite": "catalog:",
+        "vue-tsc": "^2.2.12",
+        "vite-plus": "catalog:"
     },
     "workspaces": [
         "packages/*"
-    ]
+    ],
+    "pnpm": {
+        "overrides": {
+            "vite": "npm:@voidzero-dev/vite-plus-core@0.2.6"
+        },
+        "peerDependencyRules": {
+            "allowAny": [
+                "vite"
+            ],
+            "allowedVersions": {
+                "vite": "*"
+            }
+        }
+    }
 }
+

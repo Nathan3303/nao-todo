@@ -1,12 +1,15 @@
 packages:
-  - 'apps/*'
-  - 'packages/*'
+    - 'apps/*'
+    - 'packages/*'
 allowBuilds:
-  ttf2woff2: true
-  vue-demi: true
+    ttf2woff2: true
+    vue-demi: true
 overrides:
-  axios: '>=1.15.2'
-  fast-xml-parser: '>=5.7.0'
-  serialize-javascript: '>=7.0.5'
-  tar: '>=7.5.11'
-  vite: '>=8.0.14'
+    axios: '>=1.15.2'
+    fast-xml-parser: '>=5.7.0'
+    serialize-javascript: '>=7.0.5'
+    tar: '>=7.5.11'
+    vite: '>=8.0.14'
+catalog:
+    vite: npm:@voidzero-dev/vite-plus-core@0.2.6
+    vite-plus: 0.2.6
