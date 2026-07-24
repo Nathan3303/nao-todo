@@ -36,7 +36,7 @@ export class TaskUseCase {
     constructor(private repo: TaskRepository) {}
 
     async create(title: string): Promise<Task> {
-        if (!title.trim()) throw new Error('任务标题不能为空')
+        if (!title.trim()) throw new Error('Task title cannot be empty')
         const task = new Task(uuid(), title)
         return this.repo.save(task)
     }

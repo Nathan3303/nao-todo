@@ -19,11 +19,13 @@ Follow this decision workflow:
 
 ## Core Concepts
 
-- **Business logic is first-class citizen**: Domain models (entities, value objects, domain services) are pure TypeScript with no framework dependencies.
-- **Vertical slicing first**: Organize code by Bounded Contexts (orders, products, customers), each with complete `domain/application/presentation` layers.
-- **Framework as plugin**: Presentation layer (composables/hooks) adapts by framework, isolated through independent packages (`vue-domain-*`, `react-domain-*`), keeping the domain kernel pure.
-- **Application layer as glue**: Application services are orchestrators for individual use cases; presentation layer combines multiple application services to build page functionality.
-- **Infrastructure is replaceable**: Repository interfaces defined in domain layer, concrete implementations in infrastructure packages, switched via dependency injection (Web API / Mini Program / Local Storage).
+- **Business logic is first-class citizen**: Domain models are pure TypeScript with no framework dependencies.
+- **Vertical slicing first**: Organize code by Bounded Contexts, each with complete `domain/application/presentation` layers.
+- **Framework as plugin**: Presentation layer adapts by framework, isolated through independent packages (`vue-domain-*`, `react-domain-*`).
+- **Application layer as glue**: UseCase orchestrates domain operations; presentation layer composes multiple usecases for page functionality.
+- **Infrastructure is replaceable**: Repository interfaces in domain layer, concrete implementations in infrastructure, switched via DI.
+
+> **Rich Domain Model**: Entities should have private fields + behavior methods + computed getters. Business rules belong in entity methods, not in converters or VO.validate(). Store holds ViewObject (read model), Entity lives in UseCase scope (write model). See [refs/rich-domain-model.md](refs/rich-domain-model.md) for full guide.
 
 ---
 
@@ -45,170 +47,43 @@ Follow this decision workflow:
 
 ```text
 ┌───────────────────────────────────────────┐
-│                   页面层                    │
+│               Views Layer                  │
 │   (apps/web, apps/miniapp)                │
-│   - 组装多个领域的 composable 和组件       │
-│   - 处理路由、布局、环境配置               │
+│   - Compose composables & components      │
+│   - Handle routing, layout, env config    │
 └──────────────┬────────────────────────────┘
-               │ 使用
+               │ uses
 ┌──────────────▼────────────────────────────┐
-│            表现层适配器                     │
+│          Presentation Adapters             │
 │   (vue-domain-order, react-domain-order)  │
 │   - Composables / Hooks                   │
-│   - 领域专用展示组件                       │
-│   - 封装 UI 状态（loading, error）         │
+│   - Domain-specific UI components         │
+│   - Encapsulate UI state (loading, error) │
 └──────────────┬────────────────────────────┘
-               │ 调用
+               │ calls
 ┌──────────────▼────────────────────────────┐
-│           应用层 (usecases)                 │
+│        Application Layer (usecases)        │
 │   (domain-order/application)              │
-│   - 应用服务：用例流程编排                  │
-│   - 调用领域服务、仓储、事件                │
+│   - Application services: orchestrate     │
+│   - Call domain services, repos, events   │
 └──────────────┬────────────────────────────┘
-               │ 操作
+               │ operates
 ┌──────────────▼────────────────────────────┐
-│           领域层 (纯业务)                   │
+│       Domain Layer (pure business)         │
 │   (domain-order/domain)                   │
-│   - 实体、值对象、领域事件                  │
-│   - 领域服务（跨聚合逻辑）                  │
-│   - 端口接口（仓储、事件总线）              │
+│   - Entities, value objects, domain events│
+│   - Domain services (cross-aggregate)     │
+│   - Port interfaces (repos, event bus)    │
 └───────────────────────────────────────────┘
-        依赖抽象              实现抽象
+        depends on abstract     implements
 ┌──────────────▼──────────────┐
-│      基础设施层              │
+│      Infrastructure Layer    │
 │   (infrastructure)          │
-│   - HTTP 客户端（Web/小程序） │
-│   - 仓储实现                 │
-│   - 事件总线                 │
-│   - IoC 容器                 │
+│   - HTTP client (Web/Mini)  │
+│   - Repository impls        │
+│   - Event bus               │
+│   - IoC container           │
 └─────────────────────────────┘
-```
-
----
-
-## Monorepo Structure (Level 3+)
-
-For large projects with multiple applications (Web, Desktop, Mini Program), use this monorepo structure:
-
-```text
-project-root/
-├── apps/
-│   ├── web/                  # Web C端 (Vue 3 + Vite)
-│   ├── admin/                # 后台管理 (Vue 3)
-│   └── miniapp/              # 小程序 (uni-app Vue 3)
-│
-├── packages/
-│   ├── domain/               # 框架无关的领域内核（可发布 @scope/domain-order 等）
-│   │   ├── order/
-│   │   ├── catalog/
-│   │   ├── customer/
-│   │   └── payment/
-│   │
-│   ├── presentation/         # 框架特定的表现层适配器（可发布 @scope/vue-domain-order 等）
-│   │   ├── vue-order/        # 依赖 domain/order + Vue 3
-│   │   ├── vue-catalog/
-│   │   └── ...
-│   │
-│   ├── shared/               # 前后端共享的纯类型与契约（可发布 @scope/shared）
-│   │   ├── events/           # 领域事件名称和载荷类型
-│   │   ├── dtos/             # API DTO 接口定义
-│   │   └── index.ts
-│   │
-│   └── infrastructure/       # 通用基础设施接口与实现（可发布 @scope/infrastructure）
-│       ├── api-client/       # HttpClient 接口 + Web/小程序实现
-│       ├── repositories/     # 可选：通用仓储基类
-│       ├── event-bus/        # 领域事件总线
-│       └── ioc/              # 简易 IoC 容器
-│
-├── pnpm-workspace.yaml
-├── turbo.json
-├── package.json
-└── tsconfig.base.json
-```
-
-**Toolchain**: pnpm workspace + Turborepo + TypeScript + ESLint + Prettier + Vitest.
-
-### Domain Package Internal Structure (e.g., `packages/domain/order`)
-
-```text
-packages/domain/order/
-├── src/
-│   ├── domain/                    # 领域层（纯逻辑，零依赖）
-│   │   ├── entities/
-│   │   │   └── Order.ts
-│   │   ├── value-objects/
-│   │   │   ├── OrderStatus.ts
-│   │   │   ├── Money.ts
-│   │   │   └── Address.ts
-│   │   ├── events/
-│   │   │   └── OrderPlaced.ts
-│   │   ├── services/
-│   │   │   └── PricingService.ts  # 领域服务
-│   │   └── ports/                 # 依赖的抽象接口（仓储、事件总线）
-│   │       ├── IOrderRepository.ts
-│   │       └── IEventBus.ts
-│   │
-│   ├── application/               # 应用层（用例编排，无框架依赖）
-│   │   ├── commands/
-│   │   │   └── PlaceOrderCommand.ts
-│   │   ├── queries/
-│   │   │   └── GetOrderDetailQuery.ts
-│   │   └── services/
-│   │       └── OrderApplicationService.ts
-│   │
-│   ├── index.ts                   # 对外暴露：领域对象、应用服务、端口接口、类型
-│   └── package.json
-```
-
-**Important**: The domain package **does not contain any UI code** and has no `presentation` directory. Its `package.json` should only depend on pure utility libraries (like `date-fns`), never Vue/React.
-
-### Presentation Layer Adapter Package (e.g., `packages/presentation/vue-order`)
-
-```text
-packages/presentation/vue-order/
-├── src/
-│   ├── composables/
-│   │   ├── usePlaceOrder.ts       # 封装 PlaceOrder 用例的 UI 状态
-│   │   ├── useOrderDetail.ts
-│   │   └── useOrderList.ts
-│   ├── components/                # 可选：领域专用的展示组件
-│   │   ├── OrderStatusBadge.vue
-│   │   └── OrderItemCard.vue
-│   ├── index.ts
-│   └── package.json
-```
-
-`package.json` declaration:
-
-```json
-{
-    "name": "@your-scope/vue-domain-order",
-    "peerDependencies": {
-        "vue": "^3.0.0"
-    },
-    "dependencies": {
-        "@your-scope/domain-order": "workspace:^",
-        "@your-scope/infrastructure": "workspace:^"
-    }
-}
-```
-
-### Package Dependencies
-
-```text
-packages/domain/          # No external dependencies (pure TypeScript)
-        ↑
-packages/application/     # Depends on domain (inside domain package)
-        ↑
-packages/presentation/    # Depends on domain + application + infrastructure + shared
-        ↑
-packages/shared/          # No external dependencies
-        ↑
-packages/infrastructure/  # Depends on domain (implements interfaces)
-        ↑
-apps/web/                 # Depends on presentation adapters + shared
-apps/admin/               # Depends on presentation adapters + shared
-apps/miniapp/             # Depends on presentation adapters + shared
 ```
 
 ---
@@ -217,36 +92,25 @@ apps/miniapp/             # Depends on presentation adapters + shared
 
 ### Entry Criteria
 
-- < 5k LOC
-- 1-2 developers
-- 5-10 pages/features
-- Simple data flow (mostly API → UI)
+- < 5k LOC, 1-2 developers, 5-10 pages/features, simple data flow
 
 ### Minimal Structure
 
 ```text
 src/
 ├── composables/          # Business logic in composables
-│   └── useTask.ts
 ├── services/             # API calls
-│   └── taskApi.ts
 ├── types/                # Shared types
-│   └── task.ts
 ├── components/           # All components
 ├── views/                # Pages
 └── main.ts
 ```
 
-### Key Pattern
-
-**Composable-Based Business Logic**: Encapsulate business logic in Vue composables, called directly by components. See code examples in [refs/patterns-level1.md](refs/patterns-level1.md).
+**Key Pattern**: Composable-based business logic. See [refs/patterns-level1.md](refs/patterns-level1.md).
 
 ### Graduation Signals
 
-- Business logic scattered across components
-- Duplicate API calls in multiple places
-- Team grows beyond 2 developers
-- Complex state management needed
+- Business logic scattered across components; duplicate API calls; team > 2; complex state management needed.
 
 ---
 
@@ -254,10 +118,7 @@ src/
 
 ### Entry Criteria
 
-- 5k-20k LOC
-- 3-5 developers
-- 10-30 features
-- Multiple related entities (Task + List + Tag)
+- 5k-20k LOC, 3-5 developers, 10-30 features, multiple related entities
 
 ### Minimal Structure
 
@@ -265,16 +126,13 @@ src/
 src/
 ├── domains/
 │   └── task/
-│       ├── types/
-│       │   └── index.ts
-│       ├── services/
-│       │   └── taskApi.ts
-│       └── store/
-│           └── useTaskStore.ts
+│       ├── types/        # Domain types
+│       ├── services/     # API layer
+│       └── store/        # Pinia store
 ├── shared/
 │   ├── components/       # Pure UI components
 │   └── utils/
-├── views/                # Pages assemble domain components
+├── views/                # Pages
 └── main.ts
 ```
 
@@ -285,17 +143,11 @@ src/
 3. **Consider change frequency and coupling**: Group logic that changes together
 4. **Clarify value**: Core domain (core competitiveness), supporting domain (supporting), generic domain (outsourceable)
 
-### Key Pattern
-
-**Pinia Store with Business Rules**: Manage domain state and business rules using Pinia stores. See code examples in [refs/patterns-level2.md](refs/patterns-level2.md).
+**Key Pattern**: Pinia store with business rules. See [refs/patterns-level2.md](refs/patterns-level2.md).
 
 ### Graduation Signals
 
-- Multiple domains with cross-cutting concerns
-- Need for explicit cross-domain communication
-- Testing becomes critical
-- Complex business rules spanning domains
-- Need to share components across multiple applications
+- Multiple domains with cross-cutting concerns; need for explicit cross-domain communication; testing becomes critical; complex business rules spanning domains; need to share components across multiple applications.
 
 ---
 
@@ -303,11 +155,7 @@ src/
 
 ### Entry Criteria
 
-- > 20k LOC
-- 5+ developers
-- Multiple domains (task, user, payment, etc.)
-- Complex cross-domain workflows
-- Multiple applications (Web, Desktop, Mini Program)
+- > 20k LOC, 5+ developers, multiple domains, complex cross-domain workflows, multiple applications
 
 ### Full Structure (Monorepo)
 
@@ -325,7 +173,7 @@ packages/
 │       ├── repositories/      # UserRepository interface
 │       └── services/          # UserService
 │
-├── application/               # Application layer (inside domain package or separate)
+├── application/               # Application layer
 │   ├── task/
 │   │   ├── usecases/          # TaskUseCase
 │   │   └── viewobjects/       # TaskViewObject, CreateTaskViewObject
@@ -350,34 +198,30 @@ packages/
     └── hooks/                 # Generic hooks
 ```
 
-### Domain Module Responsibilities
+### Module Responsibilities
 
-| Module          | Responsibility                             |
-| --------------- | ------------------------------------------ |
-| `entities/`     | Domain entities with identity and behavior |
-| `valueobjects/` | Immutable value objects                    |
-| `repositories/` | Repository interfaces (no implementation)  |
-| `services/`     | Domain services (pure business logic)      |
-| `events/`       | Domain event definitions                   |
-| `ports/`        | Abstract interfaces (IRepository, IEventBus) |
+| Domain Module   | Responsibility                                                                                  |
+| --------------- | ----------------------------------------------------------------------------------------------- |
+| `entities/`     | Domain entities with **identity + behavior** (private fields, public methods, computed getters) |
+| `valueobjects/` | Immutable; **Create\*VO** for creation validation, **Update\*VO** as pure DTO (no validate)     |
+| `repositories/` | Repository interfaces; provide `get()` + `save(entity)` for rich model                          |
+| `services/`     | Domain services (cross-aggregate logic, not single-entity CRUD)                                 |
+| `events/`       | Domain event definitions                                                                        |
+| `ports/`        | Abstract interfaces (IRepository, IEventBus)                                                    |
 
-### Application Module Responsibilities
+| Application Module | Responsibility                                            |
+| ------------------ | --------------------------------------------------------- |
+| `commands/`        | Command objects for write operations                      |
+| `queries/`         | Query objects for read operations                         |
+| `services/`        | Application services orchestrating domain operations      |
+| `viewobjects/`     | DTOs for UI layer, convert domain entities to view models |
 
-| Module         | Responsibility                                            |
-| -------------- | --------------------------------------------------------- |
-| `commands/`    | Command objects for write operations                      |
-| `queries/`     | Query objects for read operations                         |
-| `services/`    | Application services that orchestrate domain operations   |
-| `viewobjects/` | DTOs for UI layer, convert domain entities to view models |
-
-### Presentation Module Responsibilities
-
-| Module         | Responsibility                                             |
-| -------------- | ---------------------------------------------------------- |
-| `components/`  | Domain-specific UI components                              |
-| `store/`       | Pinia stores (state + getters + actions)                   |
-| `composables/` | Domain-specific composition logic with UI state (loading, error) |
-| `services/`    | API interactions (implementation of repository interfaces) |
+| Presentation Module | Responsibility                                             |
+| ------------------- | ---------------------------------------------------------- |
+| `components/`       | Domain-specific UI components                              |
+| `store/`            | Pinia stores (state + getters + actions)                   |
+| `composables/`      | Domain-specific composition logic with UI state            |
+| `services/`         | API interactions (implementation of repository interfaces) |
 
 ### Dependency Rules
 
@@ -387,90 +231,28 @@ packages/
 - ✅ Domain layer has **no external dependencies** (no Vue, no React)
 - ✅ Cross-domain communication via **events** or **application layer coordinator**
 
-### IoC Container Configuration
-
-In `packages/infrastructure/ioc`, provide a simple container:
-
-```typescript
-export const container = new Container()
-// Register implementations at app startup
-container.register('IOrderRepository', () => new HttpOrderRepository(httpClient))
-container.register('IEventBus', () => eventBusInstance)
-container.register(
-    'OrderApplicationService',
-    () => new OrderApplicationService(container.get('IOrderRepository'), container.get('IEventBus'))
-)
-```
-
-### Infrastructure Implementations (Platform Switching)
-
-- `WebHttpClient` (based on `fetch`) → for Web applications
-- `MiniappHttpClient` (based on `uni.request`) → for Mini Programs
-  Inject different implementations through conditional compilation or runtime detection.
-
 ### Key Patterns
 
-| Pattern                               | Description                                                              | Reference                                                  |
-| ------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------- |
-| Cross-Domain Communication via Events | Use event bus for decoupled communication between domains                | [refs/patterns-level3-key.md](refs/patterns-level3-key.md) |
-| Domain Component Pattern              | Components that depend on domain stores and implement domain-specific UI | [refs/patterns-level3-key.md](refs/patterns-level3-key.md) |
-| Page Component Pattern (Thin Layer)   | Page components only orchestrate domain components, no business logic    | [refs/patterns-level3-key.md](refs/patterns-level3-key.md) |
-| Presentation Adapter Pattern          | Framework-specific composables wrapping pure application services        | [refs/patterns-level3-adapter.md](refs/patterns-level3-adapter.md) |
-| IoC Container Pattern                 | Dependency injection for repository and service implementations          | [refs/patterns-level3-ioc.md](refs/patterns-level3-ioc.md) |
-
-### Implementation Patterns (Store & UseCase)
-
-| Pattern                              | Description                                                             | Reference                                                                      |
-| ------------------------------------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Store Base Hook Pattern              | Encapsulate `useMapperStoreBase<T>` to provide domain-specific naming   | [refs/patterns-level3-store-usecase.md](refs/patterns-level3-store-usecase.md) |
-| Thin Store Pattern                   | Pinia store as thin wrapper around store base hook                      | [refs/patterns-level3-store-usecase.md](refs/patterns-level3-store-usecase.md) |
-| Store Responsibility Separation      | Separate data store from session/UI state store                         | [refs/patterns-level3-store-usecase.md](refs/patterns-level3-store-usecase.md) |
-| Store Interface in Application Layer | Define store interfaces in `viewobjects.ts` to decouple UseCase from UI | [refs/patterns-level3-store-usecase.md](refs/patterns-level3-store-usecase.md) |
-| Usecase Factory Function             | Create usecase instances in hooks, injecting store implementations      | [refs/patterns-level3-store-usecase.md](refs/patterns-level3-store-usecase.md) |
-| Callback Injection Pattern           | Expose setter functions instead of direct usecase imports in stores     | [refs/patterns-level3-store-usecase.md](refs/patterns-level3-store-usecase.md) |
-
-### Publishing as npm Packages
-
-**Publishing Strategy**:
-
-- Domain kernel packages: `@your-scope/domain-order` (private/public both acceptable)
-- Vue adapter packages: `@your-scope/vue-domain-order`
-- Infrastructure packages: `@your-scope/infrastructure`
-- Shared type packages: `@your-scope/shared`
-
-**Key points in each package's `package.json`**:
-
-```json
-{
-    "private": false,
-    "main": "./dist/index.js",
-    "module": "./dist/index.mjs",
-    "types": "./dist/index.d.ts",
-    "files": ["dist"],
-    "scripts": {
-        "build": "tsup src/index.ts --format cjs,esm --dts --clean",
-        "prepublishOnly": "pnpm build"
-    },
-    "publishConfig": {
-        "access": "public"
-    }
-}
-```
-
-**Version Management**: Use Changesets to manage multi-package versions and Changelog uniformly.
-
-### Graduation Signals
-
-- Monorepo needed for independent domain deployment
-- Microservices backend architecture
-- Domain-driven frontend with separate deployments
-- Need to share domain packages across tech stacks
+| Pattern                               | Description                                                  | Reference                                                                      |
+| ------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| Cross-Domain Communication via Events | Event bus for decoupled communication                        | [refs/patterns-level3-key.md](refs/patterns-level3-key.md)                     |
+| Domain Component Pattern              | Components depending on domain stores                        | [refs/patterns-level3-key.md](refs/patterns-level3-key.md)                     |
+| Page Component Pattern (Thin Layer)   | Pages only orchestrate, no business logic                    | [refs/patterns-level3-key.md](refs/patterns-level3-key.md)                     |
+| Presentation Adapter Pattern          | Framework-specific composables wrapping application services | [refs/patterns-level3-adapter.md](refs/patterns-level3-adapter.md)             |
+| IoC Container Pattern                 | DI for repository and service implementations                | [refs/patterns-level3-ioc.md](refs/patterns-level3-ioc.md)                     |
+| Store Base Hook Pattern               | `useMapperStoreBase<T>` with domain-specific naming          | [refs/patterns-level3-store-usecase.md](refs/patterns-level3-store-usecase.md) |
+| Thin Store Pattern                    | Pinia store as thin wrapper around store base hook           | [refs/patterns-level3-store-usecase.md](refs/patterns-level3-store-usecase.md) |
+| Store Responsibility Separation       | Data store vs session/UI state store                         | [refs/patterns-level3-store-usecase.md](refs/patterns-level3-store-usecase.md) |
+| Store Interface in Application Layer  | Store interfaces in `viewobjects.ts`                         | [refs/patterns-level3-store-usecase.md](refs/patterns-level3-store-usecase.md) |
+| Usecase Factory Function              | Factory hooks in `apps/{app}/src/hooks/usecases/`            | [refs/patterns-level3-store-usecase.md](refs/patterns-level3-store-usecase.md) |
+| Callback Injection Pattern            | Setters instead of direct usecase imports in stores          | [refs/patterns-level3-store-usecase.md](refs/patterns-level3-store-usecase.md) |
+| **Rich Domain Model**                 | Entities with behavior, CQRS-lite, entity caching            | [refs/rich-domain-model.md](refs/rich-domain-model.md)                         |
 
 ---
 
 ## Core Code Examples
 
-### Domain Entity (Framework Agnostic)
+### Domain Entity (Rich)
 
 ```typescript
 // packages/domain/order/src/domain/entities/Order.ts
@@ -486,27 +268,24 @@ export class Order {
     ) {}
 
     addItem(item: OrderItem) {
-        if (this._status !== OrderStatus.Pending) throw new Error('仅待支付订单可修改')
+        if (this._status !== OrderStatus.Pending)
+            throw new Error('Only pending orders can be modified')
         this._items.push(item)
         this.recalculateTotal()
     }
 
     place(): OrderPlaced {
-        if (this._items.length === 0) throw new Error('订单必须包含至少一件商品')
+        if (this._items.length === 0) throw new Error('Order must contain at least one item')
         this._status = OrderStatus.Placed
         return new OrderPlaced(this)
     }
-    // ...other behaviors
 }
 ```
 
-### Application Service (Framework Agnostic)
+### Application Service
 
 ```typescript
 // packages/domain/order/src/application/services/OrderApplicationService.ts
-import { IOrderRepository } from '../domain/ports/IOrderRepository'
-import { IEventBus } from '../domain/ports/IEventBus'
-
 export class OrderApplicationService {
     constructor(
         private orderRepo: IOrderRepository,
@@ -514,29 +293,20 @@ export class OrderApplicationService {
     ) {}
 
     async placeOrder(cmd: PlaceOrderCommand): Promise<Order> {
-        // Basic validation
-        if (!cmd.items.length) throw new Error('订单项不能为空')
-        // Create aggregate
+        if (!cmd.items.length) throw new Error('Order items cannot be empty')
         const order = new Order(cmd.orderId, cmd.customerId, cmd.totalMoney, cmd.address)
-        // Execute domain behavior
         const event = order.place()
-        // Persist
         await this.orderRepo.save(order)
-        // Publish event
         this.eventBus.publish(event)
         return order
     }
 }
 ```
 
-### Vue Composable (Presentation Layer Adapter)
+### Vue Composable (Presentation Adapter)
 
 ```typescript
 // packages/presentation/vue-order/src/composables/usePlaceOrder.ts
-import { ref } from 'vue'
-import { PlaceOrderCommand, OrderApplicationService } from '@your-scope/domain-order'
-import { useContainer } from '@your-scope/infrastructure/ioc'
-
 export function usePlaceOrder() {
     const orderService = useContainer().get<OrderApplicationService>('OrderApplicationService')
     const loading = ref(false)
@@ -554,12 +324,11 @@ export function usePlaceOrder() {
             loading.value = false
         }
     }
-
     return { execute, loading, error }
 }
 ```
 
-### Usage in Page (Glue Layer)
+### Page Usage (Glue Layer)
 
 ```vue
 <!-- apps/web/src/pages/checkout/CheckoutPage.vue -->
@@ -571,12 +340,7 @@ const { cartItems } = useCart()
 const { execute: placeOrder, loading } = usePlaceOrder()
 
 async function handleSubmit() {
-    await placeOrder({
-        orderId: generateId(),
-        customerId: '123',
-        totalMoney: cartTotal.value,
-        address: selectedAddress.value
-    })
+    await placeOrder({ orderId: generateId(), customerId: '123', ... })
 }
 </script>
 ```
@@ -587,7 +351,7 @@ async function handleSubmit() {
 
 ### Level 1 → Level 2
 
-1. Identify core business entities and group related logic
+1. Identify core business entities, group related logic
 2. Create `domains/` folder
 3. Move types, composables, services into domain subfolders
 4. Replace composables with Pinia stores
@@ -595,33 +359,23 @@ async function handleSubmit() {
 ### Level 2 → Level 3
 
 1. Create `packages/domain/` — extract pure entities, valueobjects, repositories, services
-2. Create `packages/application/` — extract usecases, viewobjects (or keep inside domain package)
-3. Create `packages/presentation/` — extract components, stores, hooks, services as framework-specific adapter packages
+2. Create `packages/application/` — extract usecases, viewobjects
+3. Create `packages/presentation/` — extract components, stores, hooks as adapter packages
 4. Create `packages/infrastructure/` — IoC container, HTTP clients, repository implementations
 5. Configure pnpm workspace and tsconfig path aliases
-6. Update import paths across the codebase
-7. Implement domain event system
-8. Establish testing infrastructure
+6. Implement domain event system
+7. Establish testing infrastructure
 
-### Mixed Structure → Layered Structure
+### Anemic → Rich Model
 
-If you have a mixed structure where domain, application, and presentation code are all in one folder:
+See [refs/rich-domain-model.md](refs/rich-domain-model.md) for step-by-step migration:
 
-1. **Phase 1: Identify and extract pure domain code**
-    - Move entities, valueobjects, repositories, services to `packages/domain/`
-    - Ensure no frontend dependencies
-
-2. **Phase 2: Extract application layer**
-    - Move usecases, viewobjects to `packages/application/` (or inside domain package)
-    - Update imports to depend on `@nao-todo/domain`
-
-3. **Phase 3: Extract presentation layer**
-    - Move components, stores, hooks, services to `packages/presentation/vue-*/` adapter packages
-    - Update imports to depend on `@nao-todo/domain` and `@nao-todo/application`
-
-4. **Phase 4: Clean up shared layer**
-    - Move domain-specific components from `packages/shared/` to `packages/presentation/`
-    - Ensure shared only contains pure UI components and shared types
+1. Make entity fields private, add getters for computed properties
+2. Add behavior methods (rename, start, complete, giveUp, etc.)
+3. Move UpdateVO.validate() logic into entity methods
+4. Add `repo.save(entity)` to Repository interface
+5. Add `entityCache` to UseCase for loaded entities
+6. Simplify converter to only field mapping (no computation)
 
 ---
 
@@ -629,25 +383,27 @@ If you have a mixed structure where domain, application, and presentation code a
 
 ### Creating a New Domain (Level 3+)
 
-See step-by-step code examples in [refs/quick-start.md](refs/quick-start.md):
+See [refs/quick-start.md](refs/quick-start.md):
 
 1. **Create domain layer** — entities, value objects, events, and repository interfaces
 2. **Create application layer** — commands, queries, and application services
-3. **Create presentation adapter** — composables wrapping UI state (loading, error), stores, and hooks
+3. **Create presentation adapter** — composables, stores, and hooks
 4. **Create domain components** — UI components specific to this domain
 5. **Use in application** — page orchestration through presentation adapters
 6. **Configure IoC container** — register repository and service implementations
 
 ### Component Ownership Decision
 
-| Condition                         | Location                                     |
-| --------------------------------- | -------------------------------------------- |
+| Condition                         | Location                                         |
+| --------------------------------- | ------------------------------------------------ |
 | Depends on domain types           | `packages/presentation/vue-<domain>/components/` |
-| No business meaning               | `packages/shared/components/`                |
-| Used by ≥2 domains                | `packages/shared/components/`                |
+| No business meaning               | `packages/shared/components/`                    |
+| Used by ≥2 domains                | `packages/shared/components/`                    |
 | Need to share across applications | `packages/presentation/vue-<domain>/components/` |
 
-### Forbidden Practices
+---
+
+## Forbidden Practices
 
 - ❌ Direct state modification in components
 - ❌ Domain imports in shared components
@@ -655,27 +411,16 @@ See step-by-step code examples in [refs/quick-start.md](refs/quick-start.md):
 - ❌ Business logic in page components
 - ❌ Creating "common" technical stores
 - ❌ Mixing domain models with frontend code in the same package
-- ❌ Including domain-specific components in `packages/shared/`
 - ❌ Any frontend framework dependencies in `packages/domain/`
 - ❌ Application services directly depending on Vue/Pinia
-- ❌ Presentation layer bypassing application services to call domain entities directly
-
----
-
-## Testing Strategy
-
-| Layer                         | Test Type           | Tools                    | Description                                            |
-| ----------------------------- | ------------------- | ------------------------ | ------------------------------------------------------ |
-| domain                        | Unit Tests          | Vitest                   | Pure logic, no Mock, test entity behavior, VO immutability |
-| application                   | Unit Tests          | Vitest + Mock repositories| Test use case flows, Mock repositories and event bus |
-| presentation (composables)    | Component Tests     | Vitest + Vue Test Utils  | Test UI state logic, Mock application services         |
-| pages                         | E2E                 | Playwright / Cypress     | Verify complete user flows                             |
+- ❌ **Anemic entities**: All-public fields, no behavior methods
+- ❌ **Business rules in converters**: Computation in converter — should be entity getter
+- ❌ **Business rules in UpdateValueObject.validate()**: Should be in entity methods
+- ❌ **Entity as transient DTO**: Creating entity only to immediately convert to ViewObject
 
 ---
 
 ## Architecture Checklist
-
-For code review, verify:
 
 - [ ] No domains are divided by page
 - [ ] All business logic is in store actions, not components
@@ -683,13 +428,15 @@ For code review, verify:
 - [ ] No store exceeds 500 lines (consider splitting)
 - [ ] Shared components are truly reusable across domains
 - [ ] Page components only do orchestration, no business if/else
-- [ ] Domain types are strictly defined with TypeScript
-- [ ] packages/domain/ has no frontend dependencies
-- [ ] packages/presentation/ correctly depends on domain, application, and infrastructure
-- [ ] packages/shared/ contains only pure UI components and shared types
-- [ ] IoC container is properly configured for dependency injection
+- [ ] `packages/domain/` has no frontend dependencies
+- [ ] `packages/shared/` contains only pure UI components and shared types
 - [ ] Presentation layer adapters encapsulate UI state (loading, error)
 - [ ] Application services are pure TypeScript with no framework dependencies
+- [ ] **Entities are not anemic**: Private fields, behavior methods, computed getters
+- [ ] **Converters are thin**: Only field mapping, all computation in entity getters
+- [ ] **Entity lifecycle is meaningful**: UseCase loads entity, calls methods, saves
+
+> See [refs/rich-domain-model.md](refs/rich-domain-model.md) for the full rich model checklist.
 
 ---
 
@@ -705,44 +452,33 @@ For code review, verify:
 
 ---
 
-## Core Advantages
+## Testing Strategy
 
-- **Business assets reusable across projects**: Domain packages can be installed via npm in any Web, Mini Program, or even Node.js backend.
-- **Complete decoupling of UI and business**: Changing frontend frameworks only requires rewriting the presentation layer adapter packages; domain and application layers require zero changes.
-- **Parallel team development**: Domain experts maintain `domain-*`, UI teams maintain `vue-domain-*` and pages, no blocking each other.
-- **Compliant with DDD Bounded Context philosophy**: Each domain package is a highly cohesive independent unit that can evolve and be published independently.
-
----
-
-## Extension Suggestions
-
-- **Domain Events**: Use `mitt` or `EventEmitter` for pub/sub pattern
-- **Micro-frontends**: Each sub-app can have its own `domains/` or share `packages/presentation/`
-- **Type-safe APIs**: Use OpenAPI or Zod for type-safe API contracts
-- **Changesets**: Manage multi-package versions and Changelog
-- **Turborepo**: Cache build outputs for monorepo efficiency
+| Layer        | Test Type       | Tools                   | Description                                                |
+| ------------ | --------------- | ----------------------- | ---------------------------------------------------------- |
+| domain       | Unit Tests      | Vitest                  | Pure logic, no Mock, test entity behavior, VO immutability |
+| application  | Unit Tests      | Vitest + Mock repos     | Test use case flows, Mock repositories and event bus       |
+| presentation | Component Tests | Vitest + Vue Test Utils | Test UI state logic, Mock application services             |
+| pages        | E2E             | Playwright / Cypress    | Verify complete user flows                                 |
 
 ---
 
 ## Common FAQ
 
 **Q1: Is DDD necessary if the business is simple?**
-A: No. DDD is suitable for medium-to-large projects. Small projects can be organized by feature directories, but maintain the principle of logical cohesion.
+A: No. DDD is suitable for medium-to-large projects. Small projects can be organized by feature directories.
 
 **Q2: Is Pinia store the domain model?**
-A: Not exactly. Pinia store carries state and behavior, serving as the implementation carrier of the domain model. Complex rules should be placed in Domain Service or UseCase. In Level 3+, the domain model is pure TypeScript in `packages/domain/`, completely separate from Pinia.
+A: Not exactly. Pinia store carries state and behavior as the implementation carrier. In Level 3+, the domain model is pure TypeScript in `packages/domain/`, completely separate from Pinia.
 
-**Q3: How to divide domains and subdomains?**
-A: A business module is a bounded context. Strongly related sub-modules can be placed in sub-directories within a domain, but avoid deep nesting.
-
-**Q4: Where should global state (theme, language) be placed?**
+**Q3: Where should global state (theme, language) be placed?**
 A: In `packages/presentation/user/store/`, as it is a business concept of user preferences.
 
-**Q5: How to share components with business logic across applications?**
-A: Create a `packages/presentation/vue-*/` package dedicated to domain presentation layer code (components, stores, composables), which can be shared by multiple applications (Web, Desktop, Mini Program).
+**Q4: What's the difference between packages/domain/ and packages/presentation/?**
+A: `packages/domain/` is pure domain model (no frontend dependencies); `packages/presentation/` is the frontend implementation (depends on Vue/Pinia).
 
-**Q6: What's the difference between packages/domain/ and packages/presentation/?**
-A: packages/domain/ is pure domain model (no frontend dependencies) and can be used by any tech stack; packages/presentation/ is the frontend implementation of the domain (depends on Vue/Pinia) and can only be used by Vue applications.
+**Q5: Should I put Entity in Pinia Store?**
+A: No. Store holds ViewObject (read model). Entity lives in UseCase scope (write model). See [refs/rich-domain-model.md](refs/rich-domain-model.md).
 
-**Q7: Why separate domain and presentation packages?**
-A: This enables true framework independence. When migrating from Vue 3 to React (or a future framework), only the presentation adapter packages need to be rewritten - the entire domain and application layers remain completely unchanged. This also allows sharing business logic across different frontend applications (Web, Mini Program, Desktop) with a single domain kernel.
+**Q6: What's the difference between CreateValueObject and UpdateValueObject in a rich model?**
+A: `CreateVO` still needs `validate()` — entity doesn't exist yet. `UpdateVO` should NOT have `validate()` — entity methods enforce rules. See [refs/rich-domain-model.md](refs/rich-domain-model.md).

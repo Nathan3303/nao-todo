@@ -44,9 +44,9 @@ export function usePlaceOrder() {
         }
     }
 
-    return { 
-        execute, 
-        loading, 
+    return {
+        execute,
+        loading,
         error,
         isError: computed(() => error.value !== null)
     }
@@ -67,10 +67,10 @@ const props = defineProps<{
 
 const statusConfig = computed(() => {
     const configs = {
-        [OrderStatus.Pending]: { text: '待支付', class: 'bg-yellow-100 text-yellow-800' },
-        [OrderStatus.Placed]: { text: '已下单', class: 'bg-green-100 text-green-800' },
-        [OrderStatus.Shipped]: { text: '配送中', class: 'bg-blue-100 text-blue-800' },
-        [OrderStatus.Delivered]: { text: '已送达', class: 'bg-gray-100 text-gray-800' }
+        [OrderStatus.Pending]: { text: 'Pending', class: 'bg-yellow-100 text-yellow-800' },
+        [OrderStatus.Placed]: { text: 'Placed', class: 'bg-green-100 text-green-800' },
+        [OrderStatus.Shipped]: { text: 'Shipping', class: 'bg-blue-100 text-blue-800' },
+        [OrderStatus.Delivered]: { text: 'Delivered', class: 'bg-gray-100 text-gray-800' }
     }
     return configs[props.status]
 })
@@ -95,11 +95,11 @@ import { useContainer } from '@scope/infrastructure/ioc'
 export const useOrderStore = defineStore('order', () => {
     const orders = ref<Order[]>([])
     const selectedOrderId = ref<string | null>(null)
-    
+
     const orderService = useContainer().get<OrderApplicationService>('OrderApplicationService')
 
-    const selectedOrder = computed(() => 
-        orders.value.find(o => o.id === selectedOrderId.value) ?? null
+    const selectedOrder = computed(
+        () => orders.value.find((o) => o.id === selectedOrderId.value) ?? null
     )
 
     async function placeOrder(cmd: { orderId: string; customerId: string; items: any[] }) {

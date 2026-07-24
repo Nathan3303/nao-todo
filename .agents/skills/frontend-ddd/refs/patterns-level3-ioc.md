@@ -3,6 +3,7 @@
 ## Overview
 
 Dependency Injection (DI) through Inversion of Control (IoC) containers enables complete decoupling of interface definitions from concrete implementations. This is essential for:
+
 - Testing (easily mock repositories)
 - Platform switching (Web vs Mini Program HTTP clients)
 - Dependency management in large codebases
@@ -162,13 +163,13 @@ export class HttpOrderRepository implements IOrderRepository {
 
     async findByCustomerId(customerId: string): Promise<Order[]> {
         const data = await this.httpClient.get<any[]>(`/customers/${customerId}/orders`)
-        return data.map(item => this.hydrateOrder(item))
+        return data.map((item) => this.hydrateOrder(item))
     }
 
     async save(order: Order): Promise<void> {
         await this.httpClient.post('/orders', {
             id: order.id,
-            customerId: order.customerId,
+            customerId: order.customerId
             // ... map order properties
         })
     }
@@ -181,7 +182,7 @@ export class HttpOrderRepository implements IOrderRepository {
         // Convert plain data to domain entity
         return new Order(
             data.id,
-            data.customerId,
+            data.customerId
             // ... hydrate value objects
         )
     }
@@ -203,16 +204,12 @@ import App from './App.vue'
 const httpClient = new WebHttpClient(import.meta.env.VITE_API_BASE_URL)
 
 // Register repositories
-container.register('IOrderRepository', () => 
-    new HttpOrderRepository(httpClient)
-)
+container.register('IOrderRepository', () => new HttpOrderRepository(httpClient))
 
 // Register application services
-container.register('OrderApplicationService', () => 
-    new OrderApplicationService(
-        container.get('IOrderRepository'),
-        container.get('IEventBus')
-    )
+container.register(
+    'OrderApplicationService',
+    () => new OrderApplicationService(container.get('IOrderRepository'), container.get('IEventBus'))
 )
 
 createApp(App).mount('#app')
@@ -230,13 +227,13 @@ describe('OrderApplicationService', () => {
     it('should place order successfully', async () => {
         // Create test container with mocks
         const testContainer = new Container()
-        
+
         // Mock repository
         const mockRepo = {
             save: vi.fn().mockResolvedValue(undefined)
         }
         testContainer.register('IOrderRepository', () => mockRepo)
-        
+
         // Mock event bus
         const mockEventBus = {
             publish: vi.fn()
