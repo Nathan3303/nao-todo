@@ -1,6 +1,12 @@
-import { defineConfig } from 'vite-plus'
+import { defineConfig, lazyPlugins } from 'vite-plus'
+import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
+    // Vue 插件供 vp test 转换被间接引入的 .vue 组件（如 @nao-todo/shared 的展示组件）
+    plugins: lazyPlugins(() => [vue()]),
+    test: {
+        include: ['packages/**/*.{test,spec}.ts', 'apps/**/*.{test,spec}.ts']
+    },
     staged: {
         '*': 'vp check --fix'
     },

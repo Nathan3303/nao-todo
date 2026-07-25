@@ -1,4 +1,5 @@
 import { Entity } from '@nao-todo/shared'
+import dayjs from 'dayjs'
 
 /**
  * TaskEntity 任务实体
@@ -31,5 +32,29 @@ export class TaskEntity extends Entity {
         public remindWeekdays: number[] // 提醒星期几
     ) {
         super(id, createdAt, updatedAt, deletedAt)
+    }
+
+    /**
+     * isGivenUp 是否已放弃
+     * @description givenUpAt 为合法日期时视为已放弃
+     */
+    get isGivenUp(): boolean {
+        return dayjs(this.givenUpAt).isValid()
+    }
+
+    /**
+     * isArchived 是否已归档
+     * @description archivedAt 为合法日期时视为已归档
+     */
+    get isArchived(): boolean {
+        return dayjs(this.archivedAt).isValid()
+    }
+
+    /**
+     * isStarMarked 是否已星标
+     * @description starMarkAt 为合法日期时视为已星标
+     */
+    get isStarMarked(): boolean {
+        return dayjs(this.starMarkAt).isValid()
     }
 }

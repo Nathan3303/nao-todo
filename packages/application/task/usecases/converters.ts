@@ -51,10 +51,10 @@ export const taskEntityToViewObject = (entity: TaskEntity): TaskViewObject => {
     taskViewObject.updatedAt = entity.updatedAt
     taskViewObject.deletedAt = entity.deletedAt
     taskViewObject.givenUpAt = entity.givenUpAt
-    taskViewObject.isStarMarked = dayjs(entity.starMarkAt).isValid()
+    taskViewObject.isStarMarked = entity.isStarMarked
     taskViewObject.isDeleted = dayjs(entity.deletedAt).isValid()
-    taskViewObject.isArchived = dayjs(entity.archivedAt).isValid()
-    taskViewObject.isGivenUp = dayjs(entity.givenUpAt).isValid()
+    taskViewObject.isArchived = entity.isArchived
+    taskViewObject.isGivenUp = entity.isGivenUp
     taskViewObject.remindAt = entity.remindAt || null
     taskViewObject.remindRepeat = (entity.remindRepeat || 'none') as TaskViewObject['remindRepeat']
     taskViewObject.remindTime = entity.remindTime || null
