@@ -5,8 +5,8 @@
 export class Entity {
     // constructor 实体类构造函数
     constructor(
-        public id: string, // 实体ID
-        public createdAt: string, // 创建时间
+        public readonly id: string, // 实体ID
+        public readonly createdAt: string, // 创建时间
         public updatedAt: string, // 更新时间
         public deletedAt: string | null // 删除时间
     ) {}
@@ -15,16 +15,15 @@ export class Entity {
      * isIdValid 是否ID有效
      * @description 检测是否为雪花 ID 格式，长度在 1 到 20 之间字符
      */
-    isIdValid(): boolean {
+    get isIdValid(): boolean {
         return this.id.length > 0 && this.id.length <= 20
     }
 
     /**
      * isDeleted 是否已删除
+     * @description 通过 deletedAt 判断
      */
-    isDeleted(): boolean {
+    get isDeleted(): boolean {
         return this.deletedAt !== null
     }
 }
-
-
