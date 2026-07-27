@@ -113,9 +113,9 @@ export const provideRecordsTableContext = () => {
     // ====================================
     // Init on mount
     // ====================================
-    onMounted(() => {
-        pomodoroUseCase.loadPomodoros()
-        loadFirstPage()
+    onMounted(async () => {
+        await pomodoroUseCase.loadPomodoros()
+        await loadFirstPage()
     })
 
     const ctx = {
@@ -150,4 +150,3 @@ export const provideRecordsTableContext = () => {
 }
 
 export const useRecordsTable = () => inject(POMODORO_RECORDS_TABLE_CONTEXT_KEY)!
-

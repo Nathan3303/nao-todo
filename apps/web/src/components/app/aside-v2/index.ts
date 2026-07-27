@@ -6,4 +6,3 @@ export const AppAsideV2 = AsideV2
 export const AppAsideV2Drawer = AsideV2Drawer
 export const AppAsideV2Adapter = AsideV2Adapter
 export * from './use-app-aside-v2-controller'
-

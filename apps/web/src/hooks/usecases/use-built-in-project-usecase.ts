@@ -1,4 +1,5 @@
-import { BuiltInProjectDomain, BuiltInProjectStore } from '@nao-todo/domain/built-in-project'
+import { BuiltInProjectDomain } from '@nao-todo/domain/built-in-project'
+import type { BuiltInProjectStore } from '@nao-todo/application/built-in-project/viewobjects'
 import { BuiltInProjectUseCase } from '@nao-todo/application/built-in-project/usecases'
 import useBuiltInProjectRepository from '@nao-todo/infrastructure/built-in/project/repoImpl'
 
@@ -12,4 +13,3 @@ export const useBuiltInProjectUseCase = (store: BuiltInProjectStore): BuiltInPro
     const builtInProjectDomain = new BuiltInProjectDomain(repo)
     return new BuiltInProjectUseCase(builtInProjectDomain, store)
 }
-

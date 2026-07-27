@@ -1,4 +1,5 @@
-import { ProjectDomain, ProjectStore } from '@nao-todo/domain/project'
+import { ProjectDomain } from '@nao-todo/domain/project'
+import type { ProjectStore } from '@nao-todo/application/project/viewobjects'
 import { ProjectUseCase } from '@nao-todo/application/project/usecases'
 import { ProjectPreferenceRepoImpl, ProjectRepoImpl } from '@nao-todo/infrastructure/backend'
 import { getRequesterImpl } from '@nao-todo/shared'
@@ -15,4 +16,3 @@ export const useProjectUseCase = (store: ProjectStore) => {
     const projectDomain = new ProjectDomain(projectRepo)
     return new ProjectUseCase(projectDomain, projectRepo, projectPrefereneRepo, store)
 }
-

@@ -1,4 +1,5 @@
-import { UserDomain, UserStore } from '@nao-todo/domain/user'
+import { UserDomain } from '@nao-todo/domain/user'
+import type { UserStore } from '@nao-todo/application/user/viewobjects'
 import { UserUseCase } from '@nao-todo/application/user/usecases'
 import { newUserConfigRepository, newUserRepository } from '@nao-todo/infrastructure/backend/user'
 import { getRequesterImpl } from '@nao-todo/shared'
@@ -15,4 +16,3 @@ export const useUserUseCase = (store: UserStore) => {
     const userDomain = new UserDomain(userRepo, userConfigRepo)
     return new UserUseCase(userDomain, userRepo, userConfigRepo, store)
 }
-

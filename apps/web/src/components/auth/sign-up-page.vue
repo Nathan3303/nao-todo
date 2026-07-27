@@ -11,4 +11,3 @@ const { authUseCase } = inject(AUTH_VIEW_CONTEXT_KEY)!
 <template>
     <auth-sign-up :auth-use-case="authUseCase" />
 </template>
-

@@ -64,4 +64,3 @@ defineExpose({ switchDisplayAside })
     <!-- 侧边栏宽度调整分割线 -->
     <nue-separator op-target="previous" @resize="handleResizeAside" :disabled="!isDisplayAside" />
 </template>
-

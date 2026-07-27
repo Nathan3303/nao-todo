@@ -20,7 +20,7 @@ const { isDisplayAside, switchDisplayAside, authUseCase, userUseCase } =
             />
             <nue-text>{{ t('settings.password') }}</nue-text>
         </nue-header>
-        <nue-main  theme="password-updater">
+        <nue-main theme="password-updater">
             <nue-content fill>
                 <nue-div vertical style="padding: 1rem">
                     <user-password-updater

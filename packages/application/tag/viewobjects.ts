@@ -7,7 +7,7 @@ import type {
 
 // 标签存储接口
 export type TagStore = {
-    tags: Map<string, TagViewObject>
+    tags: TagViewObject[]
     setTags: (tags: TagViewObject[]) => void
     addTag: (tag: TagViewObject) => void
     getTag: (id: string) => TagViewObject | undefined
@@ -19,7 +19,10 @@ export type TagStore = {
     setTagPreference: (preference: TagPreferenceViewObject) => void
     getTagPreference: () => TagPreferenceViewObject | undefined
     updatePreferenceColumns: (key: keyof TaskColumnOptions, value: boolean) => void
-    updatePreferenceGetTasksOptions: <T extends keyof GetTasksOptions>(key: T, value: GetTasksOptions[T]) => void
+    updatePreferenceGetTasksOptions: <T extends keyof GetTasksOptions>(
+        key: T,
+        value: GetTasksOptions[T]
+    ) => void
     getPreferenceGetTasksOption: <T extends keyof GetTasksOptions>(key: T) => GetTasksOptions[T]
     getPreferenceGetTasksOptions: () => GetTasksOptions
 }

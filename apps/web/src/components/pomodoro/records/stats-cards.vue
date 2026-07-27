@@ -73,4 +73,3 @@ const formattedPercentage = computed(() => Math.round(props.pomodoroPercentage))
     }
 }
 </style>
-

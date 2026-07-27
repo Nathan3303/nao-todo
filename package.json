@@ -29,13 +29,14 @@
         "vue-router": "^5.0.7"
     },
     "devDependencies": {
-        "@nao-todo/desktopapp": "workspace:*",
-        "@nao-todo/webapp": "workspace:*",
-        "@nao-todo/shared": "workspace:*",
-        "@nao-todo/domain": "workspace:*",
+        "@configurajs/vite-plus": "^0.2.6",
         "@nao-todo/application": "workspace:*",
-        "@nao-todo/presentation": "workspace:*",
+        "@nao-todo/desktopapp": "workspace:*",
+        "@nao-todo/domain": "workspace:*",
         "@nao-todo/infrastructure": "workspace:*",
+        "@nao-todo/presentation": "workspace:*",
+        "@nao-todo/shared": "workspace:*",
+        "@nao-todo/webapp": "workspace:*",
         "@rollup/plugin-terser": "^0.4.4",
         "@rushstack/eslint-patch": "^1.16.1",
         "@tsconfig/node20": "^20.1.9",
@@ -50,15 +51,31 @@
         "rollup-plugin-visualizer": "^5.14.0",
         "typescript": "~5.4.5",
         "vite": "catalog:",
-        "vue-tsc": "^2.2.12",
-        "vite-plus": "catalog:"
+        "vite-plus": "catalog:",
+        "vue-tsc": "^2.2.12"
     },
     "workspaces": [
         "packages/*"
     ],
     "pnpm": {
         "overrides": {
-            "vite": "npm:@voidzero-dev/vite-plus-core@0.2.6"
+            "vite": "npm:@voidzero-dev/vite-plus-core@0.2.6",
+            "tar@<7.5.7": ">=7.5.7",
+            "tar@<=7.5.2": ">=7.5.3",
+            "tar@<7.5.8": ">=7.5.8",
+            "serialize-javascript@<=7.0.2": ">=7.0.3",
+            "tar@<=7.5.9": ">=7.5.10",
+            "tar@<=7.5.10": ">=7.5.11",
+            "tar@<=7.5.3": ">=7.5.4",
+            "fast-xml-parser@<5.7.0": ">=5.7.0",
+            "serialize-javascript@>=5.0.0 <7.0.5": ">=7.0.5",
+            "uuid@<11.1.1": ">=11.1.1",
+            "tar@<=7.5.15": ">=7.5.16",
+            "tar@<=7.5.17": ">=7.5.18",
+            "tar@<=7.5.18": ">=7.5.19",
+            "tar@<=7.5.16": ">=7.5.17",
+            "tar@<=7.5.20": ">=7.5.21",
+            "brace-expansion@<=5.0.7": ">=5.0.8"
         },
         "peerDependencyRules": {
             "allowAny": [
@@ -70,4 +87,3 @@
         }
     }
 }
-

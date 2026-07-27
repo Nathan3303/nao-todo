@@ -42,19 +42,18 @@ export const useCalendarView = () => {
      */
     const isLoading = ref<boolean>(true) // 加载状态
     const error = ref<string>('') // 错误信息
-    const init = () => {
-        Promise.allSettled([
-            () => (isLoading.value = true),
-            builtInProjectUseCase.loadBuiltInProjects(),
-            projectUseCase.loadProjects(),
-            tagUseCase.loadTags()
-        ]).then((results) => {
-            isLoading.value = false
-            results.forEach((result) => {
-                if (result.status !== 'rejected') return
-                error.value = unwrapError(result.reason)
-            })
-        })
+    const init = async () => {
+        isLoading.value = true
+        builtInProjectUseCase.loadBuiltInProjects()
+        await Promise.allSettled([projectUseCase.loadProjects(), tagUseCase.loadTags()]).then(
+            (results) => {
+                isLoading.value = false
+                results.forEach((result) => {
+                    if (result.status !== 'rejected') return
+                    error.value = unwrapError(result.reason)
+                })
+            }
+        )
     }
 
     /**

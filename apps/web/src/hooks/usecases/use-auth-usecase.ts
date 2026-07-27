@@ -1,4 +1,5 @@
-import { AuthDomain, AuthStore } from '@nao-todo/domain/auth'
+import { AuthDomain } from '@nao-todo/domain/auth'
+import type { AuthStore } from '@nao-todo/application/auth/viewobjects'
 import { getRequesterImpl } from '@nao-todo/shared'
 import { useAuthRepository } from '@nao-todo/infrastructure/backend'
 import { AuthUseCase } from '@nao-todo/application/auth/usecases'
@@ -14,4 +15,3 @@ export const useAuthUseCase = (store: AuthStore) => {
     const authDomain = new AuthDomain(authRepo)
     return new AuthUseCase(authDomain, store)
 }
-

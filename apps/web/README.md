@@ -157,4 +157,3 @@ pnpm webapp preview
 | `@nao-todo/domain`         | 领域模型与仓储接口     |
 | `@nao-todo/infrastructure` | 基础设施实现           |
 | `@nao-todo/shared`         | 共享工具、类型、国际化 |
-

@@ -1,6 +1,7 @@
 {
     "extends": "../../tsconfig.base.json",
     "include": [
+        "../../env.d.ts",
         "auth/**/*",
         "built-in-project/**/*",
         "pomodoro/**/*",
@@ -8,5 +9,5 @@
         "tag/**/*",
         "task/**/*",
         "user/**/*"
-    ],
+    ]
 }

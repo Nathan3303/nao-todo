@@ -65,32 +65,6 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
----
-
-## 5. Project Conventions
-
-**Store Naming:** `use{Domain}{Type}Store` (e.g., `useTasksStore`, `usePomodoroSessionStore`)
-
-**Store Structure:**
-
-- Data store: `{domain}-{plural}-store.ts` (e.g., `pomodoro-records-store.ts`)
-- Session/UI state store: `{domain}-session-store.ts` (e.g., `pomodoro-session-store.ts`)
-- Store base hook: `use-{domain}-{plural}-store-base.ts` (e.g., `use-pomodoro-record-store-base.ts`)
-
-**Store Base Hook Pattern:** Wrap `useMapperStoreBase<T>` to provide domain-specific naming and behavior (e.g., `addRecord` with `onRecordCreated` callback).
-
-**Thin Store Pattern:** Pinia store should be a thin wrapper around store base hook, delegating all state management to the hook.
-
-**Store Interface Location:** Define store interfaces (e.g., `TaskStore`, `PomodoroRecordStore`) in `packages/application/{domain}/viewobjects.ts`.
-
-**Usecase Factory:** Create usecase factory functions in `apps/{app}/src/hooks/usecases/use-{domain}-usecase.ts`, accepting store interface as parameter.
-
-**Callback Injection Pattern:** For stores that need to trigger usecase operations (e.g., timer completion), expose `setCreateRecordFn` instead of directly importing usecase.
-
-**Dependency Direction:** Strictly follow Views → Presentation → Application → Domain → Infrastructure (one-way).
-
----
-
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
 
 <!--VITE PLUS START-->

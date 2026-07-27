@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import useApp from "./app";
+import useApp from './app'
 
-defineOptions({ name: "AppView" });
+defineOptions({ name: 'AppView' })
 
-useApp();
+useApp()
 </script>
 
 <template>

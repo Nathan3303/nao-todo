@@ -96,19 +96,19 @@ export const usePomodoroCollection = () => {
      * 切换记录页码
      * @param page 目标页码
      */
-    const handleRecordPageChange = (page: number) => {
+    const handleRecordPageChange = async (page: number) => {
         recordPage.value = page
-        loadRecords()
+        await loadRecords()
     }
 
     /**
      * 切换每页条数
      * @param limit 每页条数
      */
-    const handleRecordPerPageChange = (limit: number) => {
+    const handleRecordPerPageChange = async (limit: number) => {
         recordLimit.value = limit
         recordPage.value = 1
-        loadRecords()
+        await loadRecords()
     }
 
     /**
@@ -148,11 +148,11 @@ export const usePomodoroCollection = () => {
     }
 
     // 选中项变化时重置分页并重新加载记录
-    watch(selectedId, (id) => {
+    watch(selectedId, async (id) => {
         if (!id) return
         recordPage.value = 1
         currentRecordIds.value = []
-        loadRecords()
+        await loadRecords()
     })
 
     onMounted(loadData)

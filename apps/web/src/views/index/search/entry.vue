@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useSearchView } from './search-view';
+import { useSearchView } from './search-view'
 
 defineOptions({ name: 'SearchView' })
 

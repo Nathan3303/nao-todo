@@ -2,7 +2,7 @@ import type { ViewObjectBase, NullableDateString, NullableString } from '@nao-to
 
 // 任务存储接口
 export type TaskStore = {
-    tasks: Map<string, TaskViewObject>
+    tasks: TaskViewObject[]
     setTasks: (tasks: TaskViewObject[]) => void
     updateTask: (id: string, update: Partial<TaskViewObject>) => void
     addTask: (task: TaskViewObject) => void
@@ -13,7 +13,7 @@ export type TaskStore = {
 
 // 任务检查项存储接口
 export type TaskCheckItemStore = {
-    checkItems: Map<string, TaskCheckItemViewObject>
+    checkItems: TaskCheckItemViewObject[]
     addCheckItem: (item: TaskCheckItemViewObject) => void
     getCheckItem: (id: string) => TaskCheckItemViewObject | undefined
     setCheckItems: (items: TaskCheckItemViewObject[]) => void
@@ -202,14 +202,3 @@ export type UpdateTaskCommentViewObject = {
     content?: TaskCommentViewObject['content']
     isTopUp?: TaskCommentViewObject['isTopUp']
 }
-
-
-
-
-
-
-
-
-
-
-

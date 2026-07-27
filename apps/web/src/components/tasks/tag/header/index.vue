@@ -2,13 +2,13 @@
 import { inject } from 'vue'
 import OperationDropdown from './operation-dropdown.vue'
 import FilterDropdown from './filter-dropdown.vue'
-import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
 import { TAG_VIEW_CONTEXT_KEY } from '../context'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context.js'
 
 defineOptions({ name: 'TasksMainTagHeader' })
 defineProps<{ tagId?: string; viewType?: string; taskId?: string }>()
 
-const { isDisplayAside, switchDisplayAside } = inject(TASKS_VIEW_CONTEXT_KEY)!
+const { isDisplayAside, switchDisplayAside } = inject(INDEX_VIEW_CONTEXT_KEY)!
 const { tag, showTaskCreator } = inject(TAG_VIEW_CONTEXT_KEY)!
 </script>
 
@@ -42,4 +42,3 @@ const { tag, showTaskCreator } = inject(TAG_VIEW_CONTEXT_KEY)!
         </nue-div>
     </nue-header>
 </template>
-

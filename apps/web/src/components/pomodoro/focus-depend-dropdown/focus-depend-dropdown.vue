@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { PomodoroViewObject } from '@nao-todo/presentation/pomodoro'
-import { ListViewAdapter, type TaskViewObject } from '@nao-todo/presentation/task'
+import type { PomodoroViewObject, TaskViewObject } from '@nao-todo/application'
+import { ListViewAdapter } from '@nao-todo/presentation/task'
 import { NueDropdown, NueInput } from 'nue-ui'
 import { computed, inject, nextTick, ref } from 'vue'
 import type {

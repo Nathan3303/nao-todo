@@ -14,4 +14,3 @@ export const usePomodoroRecordUseCase = (store: PomodoroRecordStore) => {
     const domain = new PomodoroDomain(pomodoroRepo, pomodoroRecordRepo)
     return new PomodoroRecordUseCase(domain, pomodoroRecordRepo, store)
 }
-

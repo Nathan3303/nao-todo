@@ -1,6 +1,18 @@
-import type { PomodoroType } from '@nao-todo/application/pomodoro/viewobjects'
+import type {
+    PomodoroRecordViewObject,
+    PomodoroType,
+    PomodoroViewObject
+} from '@nao-todo/application/pomodoro/viewobjects'
+import { GetTasksOptions } from '@nao-todo/shared'
 
-export type PomodoroRecordsColumnKey = 'type' | 'taskName' | 'pomodoroName' | 'duration' | 'startAt' | 'endAt' | 'note'
+export type PomodoroRecordsColumnKey =
+    | 'type'
+    | 'taskName'
+    | 'pomodoroName'
+    | 'duration'
+    | 'startAt'
+    | 'endAt'
+    | 'note'
 
 export type PomodoroRecordsColumnConfig = {
     key: PomodoroRecordsColumnKey
@@ -22,14 +34,14 @@ export type PomodoroRecordsFilterState = {
 }
 
 export type PomodoroRecordsTableContext = {
-    records: { value: any[] }
+    records: { value: PomodoroRecordViewObject[] }
     filters: PomodoroRecordsFilterState
     pagination: { total: number; page: number; limit: number; maxPage: number }
-    getOptions: { value: any }
+    getOptions: { value: GetTasksOptions }
     loading: { value: boolean }
     isDone: { value: boolean }
-    pomodoros: { value: any[] }
-    selectedRecord: { value: any | null }
+    pomodoros: { value: PomodoroViewObject[] }
+    selectedRecord: { value: PomodoroRecordViewObject | null }
     detailVisible: { value: boolean }
     changeSort: (field: string, order: 'asc' | 'desc') => Promise<void>
     goToPage: (page: number) => Promise<void>

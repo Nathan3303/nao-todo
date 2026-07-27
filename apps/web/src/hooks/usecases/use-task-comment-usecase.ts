@@ -1,4 +1,4 @@
-import { TaskCommentStore } from '@nao-todo/domain/task'
+import type { TaskCommentStore } from '@nao-todo/application/task/viewobjects'
 import { TaskCommentUseCase } from '@nao-todo/application/task/usecases'
 import { TaskCommentRepoImpl } from '@nao-todo/infrastructure/backend'
 import { getRequesterImpl } from '@nao-todo/shared'
@@ -8,4 +8,3 @@ export const useTaskCommentUseCase = (store: TaskCommentStore) => {
     const taskCommentRepo = new TaskCommentRepoImpl(requester)
     return new TaskCommentUseCase(taskCommentRepo, store)
 }
-

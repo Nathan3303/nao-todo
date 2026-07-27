@@ -39,6 +39,3 @@ export const useAppAsideV2 = () => {
         maxWidth
     }
 }
-
-
-

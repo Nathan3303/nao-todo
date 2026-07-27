@@ -20,4 +20,3 @@ const isMobile = computed(() => responsiveFlag.value <= responsiveTypes.MOBILE)
 </template>
 
 <style src="./aside-v2.css"></style>
-

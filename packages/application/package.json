@@ -3,8 +3,8 @@
     "version": "0.1.0",
     "author": "Nathan Lee",
     "license": "MIT",
-    "private": true,
     "type": "module",
+    "main": "index.ts",
     "files": [
         "auth/**/*",
         "built-in-project/**/*",
@@ -13,8 +13,5 @@
         "tag/**/*",
         "task/**/*",
         "user/**/*"
-    ],
-    "dependencies": {
-        "@nao-todo/domain": "workspace:*"
-    }
+    ]
 }

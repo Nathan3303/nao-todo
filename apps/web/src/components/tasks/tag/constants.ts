@@ -9,4 +9,3 @@ export const TAG_EMPTY_STATE: ViewAdapterNoTaskError = {
     message: 'task.empty.tag',
     isShowTaskCreateButton: true
 }
-

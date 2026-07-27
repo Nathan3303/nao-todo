@@ -1167,11 +1167,9 @@ export default defineConfig({
             SVGDiscardElement: 'readonly'
         },
         ignorePatterns: [
-            'node_modules/',
-            'dist/',
-            'packages/core/dist/*',
-            'apps/document/.vitepress/cache/*',
-            'apps/**/dist/*',
+            '**/node_modules/**',
+            '**/dist/**',
+            '**/cache/**',
             '*.test.js',
             'src/legacy/**/*.js'
         ],
@@ -1423,6 +1421,13 @@ export default defineConfig({
                     DecompressionStream: 'readonly',
                     defaultstatus: 'readonly',
                     defaultStatus: 'readonly',
+                    defineEmits: 'readonly',
+                    defineExpose: 'readonly',
+                    defineModel: 'readonly',
+                    defineOptions: 'readonly',
+                    defineProps: 'readonly',
+                    defineSlots: 'readonly',
+                    withDefaults: 'readonly',
                     DelayNode: 'readonly',
                     DeviceMotionEvent: 'readonly',
                     DeviceOrientationEvent: 'readonly',

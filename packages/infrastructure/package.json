@@ -6,9 +6,5 @@
     "files": [
         "backend/**/*",
         "built-in/**/*"
-    ],
-    "dependencies": {
-        "@nao-todo/domain": "workspace:*",
-        "@nao-todo/shared": "workspace:*"
-    }
+    ]
 }

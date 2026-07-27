@@ -64,20 +64,18 @@ const useTasksView = () => {
     // @states&method 初始化处理程序
     const isLoading = ref<boolean>(true) // 加载状态
     const error = ref<string>('') // 错误信息
-    const init = () => {
-        Promise.allSettled([
-            () => (isLoading.value = true),
-            builtInProjectUseCase.loadBuiltInProjects(),
-            projectUseCase.loadProjects(),
-            tagUseCase.loadTags()
-        ])
-            .then((results) => {
+    const init = async () => {
+        isLoading.value = true
+        builtInProjectUseCase.loadBuiltInProjects()
+        await Promise.allSettled([projectUseCase.loadProjects(), tagUseCase.loadTags()]).then(
+            (results) => {
                 results.forEach((result) => {
                     if (result.status !== 'rejected') return
                     error.value = unwrapError(result.reason)
                 })
-            })
-            .finally(() => (isLoading.value = false))
+            }
+        )
+        isLoading.value = false
     }
 
     // @hook 响应式边栏
@@ -125,10 +123,10 @@ const useTasksView = () => {
      * 检测被删除的清单是否正在浏览，如果正在浏览则需要跳转至 “所有任务”
      * @param projectId 被删除的清单 ID
      */
-    const resetViewWhenProjectDeleted = (projectId: string) => {
+    const resetViewWhenProjectDeleted = async (projectId: string) => {
         const currentProjectId = router.currentRoute.value.params.projectId
         const isSame = currentProjectId === projectId
-        if (isSame) router.replace('/tasks/all')
+        if (isSame) await router.replace('/tasks/all')
     }
 
     // @provide Tasks view context
@@ -178,8 +176,8 @@ const useTasksView = () => {
     })
 
     // @mounted 组件挂载
-    onMounted(() => {
-        init()
+    onMounted(async () => {
+        await init()
         appSubscriber.subscribe('project:deleted', resetViewWhenProjectDeleted)
     })
 

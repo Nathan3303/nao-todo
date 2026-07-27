@@ -38,4 +38,3 @@ const asideStyles = computed(() => ({ width: !isDisplayed.value ? 'auto' : void 
 </template>
 
 <style scoped></style>
-

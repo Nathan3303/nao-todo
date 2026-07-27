@@ -342,4 +342,3 @@ function selectDate(day: DayCell) {
     flex-shrink: 0;
 }
 </style>
-

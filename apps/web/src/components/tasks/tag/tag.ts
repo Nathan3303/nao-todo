@@ -36,10 +36,10 @@ const useTagView = (props: TagViewProps) => {
     const loading = ref(true)
 
     // @method 视图切换
-    const switchViewType = (viewType: string) => {
+    const switchViewType = async (viewType: string) => {
         if (!viewType) return
         if (viewType === (router.currentRoute.value.params.viewType as string)) return
-        router.replace({ name: 'tasks-tag-main', params: { viewType } }).then(() => {
+        await router.replace({ name: 'tasks-tag-main', params: { viewType } }).then(() => {
             preference.value!.viewType = viewType
         })
     }
@@ -63,7 +63,7 @@ const useTagView = (props: TagViewProps) => {
             return
         }
         // 3. 跳转至指定视图类型
-        switchViewType(preference.value?.viewType || 'table')
+        await switchViewType(preference.value?.viewType || 'table')
         loading.value = false
     }
 

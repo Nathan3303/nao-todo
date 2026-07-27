@@ -5,7 +5,10 @@ import {
     type TaskColumnOptions
 } from '@nao-todo/shared'
 import dayjs from 'dayjs'
-import type { ProjectPreferenceViewObject, ProjectViewObject } from '@nao-todo/application/project/viewobjects'
+import type {
+    ProjectPreferenceViewObject,
+    ProjectViewObject
+} from '@nao-todo/application/project/viewobjects'
 
 export const useProjectsStoreBase = () => {
     const {

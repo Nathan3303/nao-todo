@@ -1,4 +1,5 @@
-import { PomodoroDomain, PomodoroStore } from '@nao-todo/domain/pomodoro'
+import { PomodoroDomain } from '@nao-todo/domain/pomodoro'
+import type { PomodoroStore } from '@nao-todo/application/pomodoro/viewobjects'
 import { PomodoroUseCase } from '@nao-todo/application/pomodoro/usecases'
 import {
     newPomodoroRecordRepository,
@@ -18,4 +19,3 @@ export const usePomodoroUseCase = (store: PomodoroStore) => {
     const domain = new PomodoroDomain(pomodoroRepo, pomodoroRecordRepo)
     return new PomodoroUseCase(domain, pomodoroRepo, store)
 }
-

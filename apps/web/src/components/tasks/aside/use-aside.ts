@@ -81,8 +81,8 @@ export const useAside = () => {
      * @param boundId 目标项目 ID
      * @param isBefore 是否在目标项目之前
      */
-    const handleProjectResort = (originalId: string, boundId: string, isBefore: boolean) => {
-        projectUseCase.resort(originalId, boundId, isBefore)
+    const handleProjectResort = async (originalId: string, boundId: string, isBefore: boolean) => {
+        await projectUseCase.resort(originalId, boundId, isBefore)
     }
 
     /**
@@ -91,8 +91,8 @@ export const useAside = () => {
      * @param boundId 目标标签 ID
      * @param isBefore 是否在目标标签之前
      */
-    const handleTagResort = (originalId: string, boundId: string, isBefore: boolean) => {
-        tagUseCase.resort(originalId, boundId, isBefore)
+    const handleTagResort = async (originalId: string, boundId: string, isBefore: boolean) => {
+        await tagUseCase.resort(originalId, boundId, isBefore)
     }
 
     // @returns

@@ -9,4 +9,7 @@
         "task/**/*",
         "user/**/*"
     ],
+    "compilerOptions": {
+        "rootDir": "."
+    }
 }

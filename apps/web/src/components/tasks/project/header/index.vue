@@ -42,4 +42,3 @@ const { project, showTaskCreator } = inject(PROJECT_VIEW_CONTEXT_KEY)!
         </nue-div>
     </nue-header>
 </template>
-

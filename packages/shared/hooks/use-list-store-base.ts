@@ -7,7 +7,7 @@ import { computed, ref } from 'vue'
  */
 export const useListStoreBase = <T>() => {
     // @state 列表
-    const list = ref<T[] | null | void>(void 0)
+    const list = ref<T[]>([])
 
     /**
      * 设置列表
@@ -66,4 +66,3 @@ export const useListStoreBase = <T>() => {
         removeItems
     }
 }
-

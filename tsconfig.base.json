@@ -13,18 +13,10 @@
         "allowSyntheticDefaultImports": true,
         "strict": true,
         "forceConsistentCasingInFileNames": true,
-        "target": "ES2022",
-        "lib": [
-            "ES2022",
-            "DOM",
-            "DOM.Iterable"
-        ],
+        "target": "ESNext",
+        "lib": ["ESNext", "DOM", "DOM.Iterable"],
         "module": "ESNext",
         "moduleResolution": "bundler",
-        "rootDir": ".",
-        "types": [
-            "nue-ui/dist/global.d.ts"
-        ],
         "resolveJsonModule": true,
         "isolatedModules": true,
         "allowJs": false,
@@ -33,6 +25,6 @@
         "noUnusedParameters": true,
         "noImplicitReturns": true,
         "noFallthroughCasesInSwitch": true,
-        "noUncheckedIndexedAccess": true,
+        "noUncheckedIndexedAccess": true
     }
 }

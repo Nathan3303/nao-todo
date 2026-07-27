@@ -92,8 +92,8 @@ const useIndexView = () => {
      * 显示任务详情抽屉
      * @param taskId 任务 ID
      */
-    const showTaskDetails = (taskId: TaskViewObject['id']) => {
-        router.push({ name: router.currentRoute.value.name, params: { taskId } })
+    const showTaskDetails = async (taskId: TaskViewObject['id']) => {
+        await router.push({ name: router.currentRoute.value.name, params: { taskId } })
     }
 
     /**
@@ -106,10 +106,10 @@ const useIndexView = () => {
     /**
      * SSE 提醒连接
      */
-    const connectReminderSSE = () => {
+    const connectReminderSSE = async () => {
         // 请求通知权限
         if ('Notification' in window && Notification.permission === 'default') {
-            Notification.requestPermission()
+            await Notification.requestPermission()
         }
         // 连接 SSE 事件源
         const token = localStorage.getItem('USER_JWT')
@@ -143,18 +143,18 @@ const useIndexView = () => {
     /**
      * 首页视图依赖数据初始化
      */
-    const IndexViewInitialize = () => {
+    const IndexViewInitialize = async () => {
         // 初始化用户配置、主题模式、项目列表、标签列表、任务列表
-        Promise.all([
+        loadUserThemeModeFromConfig()
+        await Promise.all([
             userUseCase.loadUserProfile(),
             userUseCase.loadUserConfig(),
-            loadUserThemeModeFromConfig(),
             connectReminderSSE()
         ])
             .then(() => {
                 if (route.name !== 'index') return
                 const lastRoute = localStorage.getItem(LAST_VISITED_ROUTE_KEY)
-                router.replace(lastRoute || '/tasks')
+                return router.replace(lastRoute || '/tasks')
             })
             .finally(() => {
                 isLoading.value = false

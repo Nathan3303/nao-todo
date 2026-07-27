@@ -2,7 +2,7 @@ import type { NullableString, ViewObjectBase } from '@nao-todo/shared'
 
 // Pomodoro 存储接口
 export type PomodoroStore = {
-    pomodoros: Map<string, PomodoroViewObject>
+    pomodoros: PomodoroViewObject[]
     setPomodoros: (pomodoros: PomodoroViewObject[]) => void
     addPomodoro: (pomodoro: PomodoroViewObject) => void
     getPomodoro: (id: string) => PomodoroViewObject | undefined

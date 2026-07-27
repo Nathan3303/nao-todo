@@ -37,10 +37,10 @@ export const useAppAsideV2Controller = (responsiveFlags: Ref<number>) => {
     }
 
     // @watch 监听响应式检测结果
-    watch(isFloating, (nv) => {
+    watch(isFloating, async (nv) => {
         if (nv) return
         visible.value = false
-        nextTick(() => (visible.value = option.value.useSlot))
+        await nextTick(() => (visible.value = option.value.useSlot))
     })
 
     // @watch 当侧栏配置变化后，匹配一次初始值至 visible 以适配视图
@@ -54,4 +54,3 @@ export const useAppAsideV2Controller = (responsiveFlags: Ref<number>) => {
         setControllOption: setOption
     }
 }
-
