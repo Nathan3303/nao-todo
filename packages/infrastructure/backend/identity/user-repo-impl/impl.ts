@@ -5,15 +5,15 @@ import {
     UserRepository,
     DeactiveUserValueObject,
     RestoreUserValueObject
-} from '@nao-todo/domain/user'
+} from '@nao-todo/identity-domain'
 import type { GoAsync, Requester } from '@nao-todo/shared'
-import type { ResponseData, UserProfileRes, UpdateUserAvatarURLRes } from '../models'
+import type { ResponseData, UserProfileRes, UpdateUserAvatarURLRes } from '../../models'
 import {
     updateUserNicknameValueObject2Req,
     updateUserPasswordValueObject2Req,
     userProfile2Entity
 } from './converters'
-import { getJWTFromLocalStorage } from '../utils'
+import { getJWTFromLocalStorage } from '../../utils'
 
 /**
  * 用户仓库实现类
@@ -183,4 +183,3 @@ export class UserRepoImpl implements UserRepository {
 export const newUserRepository = (requester: Requester) => {
     return new UserRepoImpl(requester)
 }
-

@@ -1,19 +1,13 @@
 import {
-    UpdateUserConfigValueObject,
     UpdateUserNicknameValueObject,
     UpdateUserPasswordValueObject,
-    UserConfigEntity,
     UserEntity
-} from '@nao-todo/domain/user'
+} from '@nao-todo/identity-domain'
 import type {
-    UserConfigRes,
-    UpdateUserConfigReq,
     UpdateUserNicknameReq,
     UpdateUserPasswordReq,
     UserProfileRes
-} from '../models/user'
-
-// --- User ---
+} from '../../models/user'
 
 /**
  * 将用户配置响应转换为用户实体
@@ -61,24 +55,5 @@ export const updateUserPasswordValueObject2Req = (
     return {
         oldPassword: updateVO.oldPassword,
         newPassword: updateVO.newPassword
-    }
-}
-
-// --- User Config ---
-
-/**
- * 将获取用户配置响应转换为用户配置实体
- * @param res 获取用户配置响应
- * @returns 用户配置实体
- */
-export const getUserConfigRes2Entity = (res: UserConfigRes): UserConfigEntity => {
-    return new UserConfigEntity(res.id, res.createdAt, res.updatedAt, res.deletedAt, res.appearance)
-}
-
-export const updateUserConfigValueObject2Req = (
-    updateVO: UpdateUserConfigValueObject
-): UpdateUserConfigReq => {
-    return {
-        appearance: updateVO.appearance
     }
 }

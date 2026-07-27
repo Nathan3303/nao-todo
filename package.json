@@ -37,6 +37,7 @@
         "@nao-todo/presentation": "workspace:*",
         "@nao-todo/shared": "workspace:*",
         "@nao-todo/webapp": "workspace:*",
+        "@nao-todo/identity-domain": "workspace:*",
         "@rollup/plugin-terser": "^0.4.4",
         "@rushstack/eslint-patch": "^1.16.1",
         "@tsconfig/node20": "^20.1.9",

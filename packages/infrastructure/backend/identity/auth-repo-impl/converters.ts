@@ -1,6 +1,10 @@
-import { AuthSessionValueObject, SignInValueObject, SignUpValueObject } from '@nao-todo/domain/auth'
+import {
+    AuthSessionValueObject,
+    SignInValueObject,
+    SignUpValueObject
+} from '@nao-todo/identity-domain'
 import type { Go } from '@nao-todo/shared'
-import type { SignInReq, SignInRes, SignUpReq } from '../models/auth'
+import type { SignInReq, SignInRes, SignUpReq } from '../../models/auth'
 
 /**
  * 登录值对象转换为登录请求
@@ -10,13 +14,7 @@ import type { SignInReq, SignInRes, SignUpReq } from '../models/auth'
 export const signInValueObjectToSignInReq = (
     signInValueObject: SignInValueObject
 ): Go<SignInReq> => {
-    return [
-        {
-            email: signInValueObject.email,
-            password: signInValueObject.password
-        },
-        null
-    ]
+    return [{ email: signInValueObject.email, password: signInValueObject.password }, null]
 }
 
 /**
@@ -25,11 +23,7 @@ export const signInValueObjectToSignInReq = (
  * @returns 认证会话值对象
  */
 export const signInResToAuthSessionValueObject = (signInRes: SignInRes): AuthSessionValueObject => {
-    return new AuthSessionValueObject(
-        signInRes.jwt,
-        signInRes.pendingDeletion,
-        signInRes.deletedAt
-    )
+    return new AuthSessionValueObject(signInRes.jwt, signInRes.pendingDeletion, signInRes.deletedAt)
 }
 
 /**

@@ -1,12 +1,11 @@
 import {
-    USER_JWT_LOCALSTORAGE_KEY,
     type AuthRepository,
     type SignInValueObject,
     type SignUpValueObject,
     AuthSessionValueObject
-} from '@nao-todo/domain/auth'
-import type { Go, GoAsync, Requester } from '@nao-todo/shared'
-import type { CheckInRes, ResponseData, SignInRes } from '../models'
+} from '@nao-todo/identity-domain'
+import type { GoAsync, Requester } from '@nao-todo/shared'
+import type { CheckInRes, ResponseData, SignInRes } from '../../models'
 import {
     signInResToAuthSessionValueObject,
     signInValueObjectToSignInReq,
@@ -80,39 +79,11 @@ export const useAuthRepository = (requester: Requester): AuthRepository => {
         return null
     }
 
-    /**
-     * 保存登录凭证
-     * @param jwt 登录凭证
-     */
-    const saveJwtToLocalStorage = (jwt: string): Go<void> => {
-        localStorage.setItem(USER_JWT_LOCALSTORAGE_KEY, jwt)
-        return null
-    }
-
-    /**
-     * 获取登录凭证
-     * @returns 登录凭证
-     */
-    const getJwtFromLocalStorage = (): string | null => {
-        return localStorage.getItem(USER_JWT_LOCALSTORAGE_KEY)
-    }
-
-    /**
-     * 移除登录凭证
-     */
-    const removeJwtFromLocalStorage = (): Go<void> => {
-        localStorage.removeItem(USER_JWT_LOCALSTORAGE_KEY)
-        return null
-    }
-
     // @returns
     return {
         signIn,
         signUp,
         checkIn,
-        signOut,
-        saveJwtToLocalStorage,
-        getJwtFromLocalStorage,
-        removeJwtFromLocalStorage
+        signOut
     }
 }

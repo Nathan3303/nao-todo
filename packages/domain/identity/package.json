@@ -1,5 +1,5 @@
 {
-    "name": "@nao-todo/task-domain",
+    "name": "@nao-todo/identity-domain",
     "version": "1.0.0",
     "author": "Nathan Lee",
     "main": "index.ts",

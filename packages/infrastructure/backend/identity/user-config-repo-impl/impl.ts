@@ -1,10 +1,6 @@
-import {
-    UpdateUserConfigValueObject,
-    UserConfigEntity,
-    UserConfigRepository
-} from '@nao-todo/domain/user'
+import { UserConfigEntity, UserConfigRepository } from '@nao-todo/identity-domain'
 import type { Requester, GoAsync } from '@nao-todo/shared'
-import { ResponseData, UserConfigRes } from '../models'
+import { ResponseData, UserConfigRes } from '../../models'
 import { getUserConfigRes2Entity, updateUserConfigValueObject2Req } from './converters'
 
 /**
@@ -39,13 +35,12 @@ export class UserConfigRepoImpl implements UserConfigRepository {
 
     /**
      * 更新用户配置
-     * @description 更新用户配置
-     * @param updateVO 更新用户配置值对象
+     * @param updatedEntity 更新用户配置实体
      * @returns 更新结果
      */
-    async save(updateVO: UpdateUserConfigValueObject): GoAsync<void> {
+    async save(updatedEntity: UserConfigEntity): GoAsync<void> {
         // 转换值对象
-        const updateRto = updateUserConfigValueObject2Req(updateVO)
+        const updateRto = updateUserConfigValueObject2Req(updatedEntity)
         // 更新用户配置
         const response = await this.requester.put('/user/config', updateRto, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }

@@ -1,6 +1,7 @@
 packages:
     - 'apps/*'
     - 'packages/*'
+    - 'packages/domain/*'
 allowBuilds:
     ttf2woff2: true
     vue-demi: true
