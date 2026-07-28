@@ -1,0 +1,13 @@
+{
+    "name": "@nao-todo/domain-identity",
+    "version": "1.0.0",
+    "author": "Nathan Lee",
+    "main": "index.ts",
+    "files": [
+        "src/application/**/*",
+        "src/domain/**/*"
+    ],
+    "dependencies": {
+        "@nao-todo/shared": "workspace:*"
+    }
+}

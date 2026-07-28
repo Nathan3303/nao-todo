@@ -1,0 +1,17 @@
+{
+    "name": "@nao-todo/presentation-identity",
+    "description": "Presentation layer with Vue 3 for domain identity",
+    "version": "1.0.0",
+    "author": "Nathan Lee",
+    "main": "index.ts",
+    "files": [
+        "src/components/**/*",
+        "src/hooks/**/*",
+        "src/stores/**/*",
+        "index.ts"
+    ],
+    "dependencies": {
+        "@nao-todo/shared": "workspace:^",
+        "@nao-todo/domain-identity": "workspace:^"
+    }
+}

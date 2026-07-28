@@ -1,19 +1,11 @@
 {
     "extends": "../../tsconfig.base.json",
     "include": [
-        "auth/**/*",
         "built-in-project/**/*",
         "pomodoro/**/*",
         "project/**/*",
         "shares/**/*",
         "tag/**/*",
-        "task/**/*",
-        "user/**/*",
-        "identity/src/domain/entities",
-        "identity/src/domain/valueobjects/deactive-user.ts",
-        "identity/src/domain/valueobjects/restore-user.ts",
-        "identity/src/domain/valueobjects/update-config.ts",
-        "identity/src/domain/valueobjects/update-nickname.ts",
-        "identity/src/domain/valueobjects/update-password.ts"
+        "task/**/*"
     ]
 }
