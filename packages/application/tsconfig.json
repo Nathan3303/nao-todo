@@ -1,14 +1,6 @@
 {
     "extends": "../../tsconfig.base.json",
-    "include": [
-        "auth/**/*",
-        "built-in-project/**/*",
-        "pomodoro/**/*",
-        "project/**/*",
-        "tag/**/*",
-        "task/**/*",
-        "user/**/*"
-    ],
+    "include": ["built-in-project/**/*", "pomodoro/**/*", "task/**/*"],
     "compilerOptions": {
         "rootDir": "."
     }

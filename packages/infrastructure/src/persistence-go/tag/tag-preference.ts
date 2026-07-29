@@ -2,7 +2,7 @@ import {
     TagPreferenceEntity,
     TagPreferenceRepository,
     UpdateTagPreferenceValueObject
-} from '@nao-todo/domain/tag'
+} from '@nao-todo/domain-tag'
 import type { GoAsync, Requester } from '@nao-todo/shared'
 import { ResponseData, TagPreferenceRes } from '../models'
 import {

@@ -1,10 +1,8 @@
 import {
     TagPreferenceEntity,
     TagEntity,
-    UpdateTagValueObject,
-    CreateTagValueObject,
     UpdateTagPreferenceValueObject
-} from '@nao-todo/domain/tag'
+} from '@nao-todo/domain-tag'
 import type {
     CreateTagRes,
     TagPreferenceRes,
@@ -44,11 +42,11 @@ export const tagRes2Entity = (res: TagRes): TagEntity => {
  * @param createVO 创建标签值对象
  * @returns 创建标签请求
  */
-export const createTagValueObject2Req = (createVO: CreateTagValueObject): CreateTagReq => {
+export const tagEntity2CreateReq = (entity: TagEntity): CreateTagReq => {
     const req = {} as CreateTagReq
-    req.name = createVO.name
-    req.description = createVO.description || ''
-    req.color = createVO.color || 'transparent'
+    req.name = entity.name
+    req.description = entity.description
+    req.color = entity.color
     return req
 }
 
@@ -66,13 +64,14 @@ export const createTagRes2Entity = (res: CreateTagRes): TagEntity => {
  * @param updateVO 更新标签值对象
  * @returns 更新标签请求
  */
-export const updateTagValueObject2Req = (updateVO: UpdateTagValueObject): UpdateTagReq => {
-    const req: UpdateTagReq = {}
-    if (updateVO.id) req.id = updateVO.id
-    if (updateVO.name) req.name = updateVO.name
-    if (updateVO.description) req.description = updateVO.description
-    if (updateVO.color) req.color = updateVO.color
-    if (updateVO.sortId !== undefined) req.sortId = updateVO.sortId
+export const tagEntity2UpdateReq = (entity: TagEntity): UpdateTagReq => {
+    const req: UpdateTagReq = {
+        id: entity.id,
+        name: entity.name,
+        description: entity.description,
+        color: entity.color,
+        sortId: entity.sortId
+    }
     return req
 }
 

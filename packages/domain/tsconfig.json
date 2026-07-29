@@ -1,11 +1,4 @@
 {
     "extends": "../../tsconfig.base.json",
-    "include": [
-        "built-in-project/**/*",
-        "pomodoro/**/*",
-        "project/**/*",
-        "shares/**/*",
-        "tag/**/*",
-        "task/**/*"
-    ]
+    "include": ["built-in-project/**/*", "pomodoro/**/*", "task/**/*"]
 }

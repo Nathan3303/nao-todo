@@ -4,13 +4,8 @@
     "author": "Nathan Lee",
     "license": "MIT",
     "files": [
-        "auth/**/*",
         "built-in-project/**/*",
         "pomodoro/**/*",
-        "project/**/*",
-        "shares/**/*",
-        "tag/**/*",
-        "task/**/*",
-        "user/**/*"
+        "task/**/*"
     ]
 }

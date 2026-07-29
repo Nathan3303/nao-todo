@@ -1,15 +1,8 @@
-import {
-    ProjectPreferenceEntity,
-    ProjectPreferenceRepository,
-    SaveProjectPreferenceValueObject
-} from '@nao-todo/domain/project'
+import { ProjectPreferenceEntity, ProjectPreferenceRepository } from '@nao-todo/domain-project'
 import type { Requester, GoAsync } from '@nao-todo/shared'
-import {
-    defaultProjectPreferenceRes2Entity,
-    projectPreferenceRes2Entity,
-    saveProjectPreferenceValueObject2Req
-} from './converters'
+import { defaultProjectPreferenceRes2Entity, projectPreferenceRes2Entity } from './converters'
 import { ProjectPreferenceRes, ResponseData } from '../models'
+import { getJWTFromLocalStorage } from '../utils'
 
 /**
  * 项目偏好仓库实现
@@ -27,10 +20,10 @@ export class ProjectPreferenceRepoImpl implements ProjectPreferenceRepository {
      * @param projectId 项目ID
      * @returns 项目偏好实体
      */
-    async get(projectId: string): GoAsync<ProjectPreferenceEntity> {
+    async getByProjectId(projectId: string): GoAsync<ProjectPreferenceEntity> {
         // 1. 调用接口
         const response = await this.requester.get(`/projects/${projectId}/preference`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
+            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
         })
         // 2. 获取结果
         const res = response.data as ResponseData
@@ -44,17 +37,21 @@ export class ProjectPreferenceRepoImpl implements ProjectPreferenceRepository {
 
     /**
      * 保存项目偏好
-     * @param saveVO 保存偏好值对象
+     * @param updatedEntity 项目偏好实体
      * @returns 保存结果
      */
-    async save(saveVO: SaveProjectPreferenceValueObject): GoAsync<void> {
+    async save(updatedEntity: ProjectPreferenceEntity): GoAsync<void> {
         // 1. 构建 rto
-        const saveRto = saveProjectPreferenceValueObject2Req(saveVO)
+        const saveRto = {
+            viewType: updatedEntity.viewType,
+            getTasksOptions: updatedEntity.getTasksOptions.unmarshal(),
+            columns: updatedEntity.columns.unmarshal()
+        }
         // 2. 调用接口
         const response = await this.requester.post(
-            `/projects/${saveVO.projectId}/preference`,
+            `/projects/${updatedEntity.projectId}/preference`,
             saveRto,
-            { headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` } }
+            { headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` } }
         )
         // 3. 判断结果
         const res = response.data as ResponseData

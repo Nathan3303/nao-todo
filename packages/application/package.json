@@ -6,12 +6,8 @@
     "type": "module",
     "main": "index.ts",
     "files": [
-        "auth/**/*",
         "built-in-project/**/*",
         "pomodoro/**/*",
-        "project/**/*",
-        "tag/**/*",
-        "task/**/*",
-        "user/**/*"
+        "task/**/*"
     ]
 }
