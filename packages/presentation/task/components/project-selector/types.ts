@@ -1,4 +1,4 @@
-import type { TaskProjectViewObject } from '@nao-todo/application/task/viewobjects'
+import type { TaskProjectViewObject } from '@nao-todo/domain-task/viewobjects'
 
 export type TaskProjectSelectorProps = {
     projects: TaskProjectViewObject[]

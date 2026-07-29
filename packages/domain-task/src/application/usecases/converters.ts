@@ -8,7 +8,7 @@ import {
     UpdateTaskCheckItemValueObject,
     UpdateTaskCommentValueObject,
     UpdateTaskValueObject
-} from '@nao-todo/domain/task'
+} from '../../domain'
 import type {
     CreateTaskCheckItemViewObject,
     CreateTaskCommentViewObject,

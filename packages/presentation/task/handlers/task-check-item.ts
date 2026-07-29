@@ -4,8 +4,8 @@ import type {
     CreateTaskCheckItemViewObject,
     TaskCheckItemViewObject,
     UpdateTaskCheckItemViewObject
-} from '@nao-todo/application/task/viewobjects'
-import { TaskCheckItemUseCase } from '@nao-todo/application/task/usecases'
+} from '@nao-todo/domain-task/viewobjects'
+import { TaskCheckItemUseCase } from '@nao-todo/domain-task/usecases'
 
 /**
  * 任务检查项操作器

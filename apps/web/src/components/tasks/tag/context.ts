@@ -4,7 +4,7 @@ import type {
     TagViewObject,
     TaskViewObject
 } from '@nao-todo/application'
-import type { TaskUseCase } from '@nao-todo/application/task/usecases'
+import type { TaskUseCase } from '@nao-todo/domain-task/usecases'
 import type { UserViewObject } from '@nao-todo/application/user/viewobjects'
 import type { TagHandler } from '@nao-todo/presentation/tag'
 import type { DialogManager, Subscriber, TaskColumnOptions } from '@nao-todo/shared'

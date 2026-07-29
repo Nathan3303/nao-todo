@@ -1,5 +1,5 @@
-import type { TaskCheckItemStore } from '@nao-todo/application/task/viewobjects'
-import { TaskCheckItemUseCase } from '@nao-todo/application/task/usecases'
+import type { TaskCheckItemStore } from '@nao-todo/domain-task/viewobjects'
+import { TaskCheckItemUseCase } from '@nao-todo/domain-task/usecases'
 import { TaskCheckItemRepoImpl } from '@nao-todo/infrastructure/backend'
 import { getRequesterImpl } from '@nao-todo/shared'
 

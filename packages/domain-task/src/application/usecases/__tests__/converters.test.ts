@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vite-plus/test'
-import { TaskEntity } from '@nao-todo/domain/task'
+import { TaskEntity } from '@nao-todo/domain-task'
 import { taskEntityToViewObject, taskEntitiesToViewObjects } from '../converters'
 
 /**

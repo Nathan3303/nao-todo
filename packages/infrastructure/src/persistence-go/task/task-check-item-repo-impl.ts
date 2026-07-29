@@ -3,7 +3,7 @@ import {
     TaskCheckItemEntity,
     TaskCheckItemRepository,
     UpdateTaskCheckItemValueObject
-} from '@nao-todo/domain/task'
+} from '@nao-todo/domain-task'
 import type { GoAsync, Requester } from '@nao-todo/shared'
 import { getJWTFromLocalStorage } from '../utils'
 import type { BatchUpdateTaskCheckItemRes, ResponseData, TaskCheckItemRes } from '../models'

@@ -3,14 +3,14 @@
 //     TaskCheckItemRepoImpl
 // } from '@nao-todo/infrastructure/backend/task'
 import type { GoAsync } from '@nao-todo/shared'
-import { TaskCheckItemRepository } from '@nao-todo/domain/task/repositories'
+import { TaskCheckItemRepository } from '../../domain/repositories'
 import type {
     CreateTaskCheckItemViewObject,
-    TaskCheckItemStore,
     TaskCheckItemViewObject,
     TaskViewObject,
     UpdateTaskCheckItemViewObject
 } from '../viewobjects'
+import type { TaskCheckItemStore } from '../stores'
 import {
     createTaskCheckItemViewObjectToValueObject,
     taskCheckItemEntityToViewObject,

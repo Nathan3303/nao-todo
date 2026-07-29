@@ -1,8 +1,8 @@
 import { t, unwrapError, type GoAsync, type Subscriber } from '@nao-todo/shared'
 import dayjs from 'dayjs'
 import { NueConfirm, NueMessage } from 'nue-ui'
-import type { CreateTaskViewObject, TaskViewObject, UpdateTaskViewObject } from '@nao-todo/application/task/viewobjects'
-import { TaskUseCase } from '@nao-todo/application/task/usecases'
+import type { CreateTaskViewObject, TaskViewObject, UpdateTaskViewObject } from '@nao-todo/domain-task/viewobjects'
+import { TaskUseCase } from '@nao-todo/domain-task/usecases'
 
 /**
  * 任务操作器

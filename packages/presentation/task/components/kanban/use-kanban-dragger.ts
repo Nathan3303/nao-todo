@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import type { TaskViewObject } from '@nao-todo/application/task/viewobjects'
+import type { TaskViewObject } from '@nao-todo/domain-task/viewobjects'
 
 const useKanbanDragger = (
     onDrop?: (taskId: TaskViewObject['id'], category: TaskViewObject['state']) => void

@@ -12,7 +12,7 @@ import type {
     TaskRemindSetterVO
 } from './types'
 import { pad, onFocus } from './utils'
-import type { TaskViewObject } from '@nao-todo/application/task/viewobjects'
+import type { TaskViewObject } from '@nao-todo/domain-task/viewobjects'
 
 const DEFAULT_SETTER_VO: TaskRemindSetterVO = {
     enabled: false,

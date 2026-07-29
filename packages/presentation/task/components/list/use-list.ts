@@ -1,5 +1,5 @@
 import { computed, provide } from 'vue'
-import type { TaskViewObject } from '@nao-todo/application/task/viewobjects'
+import type { TaskViewObject } from '@nao-todo/domain-task/viewobjects'
 import type { TaskColumnOptions } from '@nao-todo/shared'
 import type { TaskListContext, TaskListEmits, TaskListProps } from './types'
 import useMultiSelect from './use-multi-select'

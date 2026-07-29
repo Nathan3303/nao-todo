@@ -1,6 +1,6 @@
 import { computed, reactive } from 'vue'
 import type { TaskKanbanColumnProps } from './types'
-import type { TaskViewObject } from '@nao-todo/application/task/viewobjects'
+import type { TaskViewObject } from '@nao-todo/domain-task/viewobjects'
 
 const useKanbanColumn = (props: TaskKanbanColumnProps) => {
     const states = reactive({

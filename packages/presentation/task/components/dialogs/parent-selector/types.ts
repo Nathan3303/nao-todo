@@ -1,6 +1,6 @@
 import type { DialogManager } from '@nao-todo/shared'
-import type { TaskUseCase } from '@nao-todo/application/task/usecases'
-import type { TaskViewObject } from '@nao-todo/application/task/viewobjects'
+import type { TaskUseCase } from '@nao-todo/domain-task/usecases'
+import type { TaskViewObject } from '@nao-todo/domain-task/viewobjects'
 
 export type TaskParentSelectorDialogProps = {
     dialogManager: DialogManager

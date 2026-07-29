@@ -5,14 +5,14 @@ import {
     type ResponseDataPagination
 } from '@nao-todo/shared'
 import dayjs from 'dayjs'
-import { TaskRepository } from '@nao-todo/domain/task/repositories'
-import { TaskDomain } from '@nao-todo/domain/task/services'
+import { TaskRepository } from '../../domain/repositories'
+import { TaskDomain } from '../../domain/services'
 import type {
     CreateTaskViewObject,
-    TaskStore,
     TaskViewObject,
     UpdateTaskViewObject
 } from '../viewobjects'
+import type { TaskStore } from '../stores'
 import {
     createTaskViewObjectToValueObject,
     taskEntitiesToViewObjects,

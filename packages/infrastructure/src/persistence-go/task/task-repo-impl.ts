@@ -3,7 +3,7 @@ import type {
     TaskEntity,
     TaskRepository,
     UpdateTaskValueObject
-} from '@nao-todo/domain/task'
+} from '@nao-todo/domain-task'
 import type { GoAsync, Requester } from '@nao-todo/shared'
 import type { ListTaskRes, ResponseData, ResponseDataPagination, TaskRes } from '../models'
 import { getJWTFromLocalStorage } from '../utils'

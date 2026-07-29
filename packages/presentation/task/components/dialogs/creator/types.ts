@@ -1,6 +1,6 @@
 import type { DialogManager, Subscriber } from '@nao-todo/shared'
-import type { TaskUseCase } from '@nao-todo/application/task/usecases'
-import type { TaskProjectViewObject, TaskTagViewObject } from '@nao-todo/application/task/viewobjects'
+import type { TaskUseCase } from '@nao-todo/domain-task/usecases'
+import type { TaskProjectViewObject, TaskTagViewObject } from '@nao-todo/domain-task/viewobjects'
 
 // 任务创建器对话框属性
 export type TaskCreatorDialogProps = {

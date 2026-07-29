@@ -4,8 +4,8 @@ import type {
     CreateTaskCommentViewObject,
     TaskCommentViewObject,
     UpdateTaskCommentViewObject
-} from '@nao-todo/application/task/viewobjects'
-import { TaskCommentUseCase } from '@nao-todo/application/task/usecases'
+} from '@nao-todo/domain-task/viewobjects'
+import { TaskCommentUseCase } from '@nao-todo/domain-task/usecases'
 
 /**
  * 任务评论操作器

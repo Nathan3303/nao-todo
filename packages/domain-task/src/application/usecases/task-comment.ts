@@ -3,15 +3,15 @@
 //     TaskCommentRepoImpl
 // } from '@nao-todo/infrastructure/backend/task'
 import type { GoAsync } from '@nao-todo/shared'
-import { TaskCommentRepository } from '@nao-todo/domain/task/repositories'
+import { TaskCommentRepository } from '../../domain/repositories'
 import type {
     CreateTaskCommentViewObject,
     TaskCheckItemViewObject,
-    TaskCommentStore,
     TaskCommentViewObject,
     TaskViewObject,
     UpdateTaskCommentViewObject
 } from '../viewobjects'
+import type { TaskCommentStore } from '../stores'
 import {
     createTaskCommentViewObjectToValueObject,
     taskCommentEntityToViewObject,

@@ -1,6 +1,6 @@
 import { computed, provide, watch } from 'vue'
 import type { TaskTableContext, TaskTableEmits, TaskTableProps } from './types'
-import type { TaskViewObject } from '@nao-todo/application/task/viewobjects'
+import type { TaskViewObject } from '@nao-todo/domain-task/viewobjects'
 import { type GetTasksSortOptions, type TaskColumnOptions, isTaskExpired } from '@nao-todo/shared'
 import useMultiSelect from './use-multi-select'
 import useColumnConfig from './use-column-config'

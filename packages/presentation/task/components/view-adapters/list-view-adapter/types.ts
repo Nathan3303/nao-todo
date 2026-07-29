@@ -1,6 +1,6 @@
 import type { DialogManager, GetTasksOptions, Subscriber, TaskColumnOptions } from '@nao-todo/shared'
-import type { TaskUseCase } from '@nao-todo/application/task/usecases'
-import type { TaskTagViewObject, TaskViewObject } from '@nao-todo/application/task/viewobjects'
+import type { TaskUseCase } from '@nao-todo/domain-task/usecases'
+import type { TaskTagViewObject, TaskViewObject } from '@nao-todo/domain-task/viewobjects'
 import type { ViewAdapterPropsBase } from '../../view-adapters/types'
 
 export type ListViewAdapterProps = {

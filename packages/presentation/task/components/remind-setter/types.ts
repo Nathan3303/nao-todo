@@ -1,4 +1,4 @@
-import type { TaskViewObject } from '@nao-todo/application/task/viewobjects'
+import type { TaskViewObject } from '@nao-todo/domain-task/viewobjects'
 
 export type TaskRemindData = {
     remindAt?: string | null

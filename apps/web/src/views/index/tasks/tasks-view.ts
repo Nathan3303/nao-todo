@@ -15,7 +15,7 @@ import {
 import { useProjectsStore } from '@nao-todo/presentation/project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
 import { TASK_DETAILS_PRE_CONTEXT_KEY, useTaskDetailsStore } from '@nao-todo/presentation/task'
-import { columnLabels } from '@nao-todo/domain/task'
+import { columnLabels } from '@nao-todo/domain-task'
 import { responsiveTypes, unwrapError, useAsideWidth, useResponsiveAside } from '@nao-todo/shared'
 import { storeToRefs } from 'pinia'
 import { inject, onMounted, onUnmounted, provide, ref } from 'vue'

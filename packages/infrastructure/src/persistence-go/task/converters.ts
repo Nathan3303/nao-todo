@@ -7,7 +7,7 @@ import {
     TaskEntity,
     UpdateTaskCheckItemValueObject,
     UpdateTaskCommentValueObject
-} from '@nao-todo/domain/task'
+} from '@nao-todo/domain-task'
 import type {
     CreateTaskRes,
     TaskRes,
@@ -27,7 +27,7 @@ import type {
     ListTaskCommentRes,
     BatchUpdateTaskCheckItemReq
 } from '../models'
-import { UpdateTaskValueObject } from '@nao-todo/domain/task'
+import { UpdateTaskValueObject } from '@nao-todo/domain-task'
 import dayjs from 'dayjs'
 
 // --- Task ---

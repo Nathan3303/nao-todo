@@ -11,7 +11,7 @@ import type { useTaskDetailsStore } from '../../stores'
 import type {
     TaskCheckItemViewObject,
     TaskViewObject
-} from '@nao-todo/application/task/viewobjects'
+} from '@nao-todo/domain-task/viewobjects'
 import { TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
 
 /**

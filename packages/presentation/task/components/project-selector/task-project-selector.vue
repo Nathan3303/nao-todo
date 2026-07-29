@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { TaskProjectViewObject } from '@nao-todo/application/task/viewobjects'
+import type { TaskProjectViewObject } from '@nao-todo/domain-task/viewobjects'
 import type { TaskProjectSelectorProps, TaskProjectSelectorEmits } from './types'
 
 defineOptions({ name: 'TaskProjectSelector', inheritAttrs: false })
