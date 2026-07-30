@@ -1,6 +1,6 @@
 import { inject, computed, provide } from 'vue'
 import { responsiveTypes } from '@nao-todo/shared'
-import { useUserStore } from '@nao-todo/presentation/user'
+import { useUserStore } from '@nao-todo/presentation-identity'
 import { APP_CONTEXT_KEY } from '@/context'
 import { AUTH_VIEW_CONTEXT_KEY } from './context'
 import { useAuthUseCase, useUserUseCase } from '@/hooks'

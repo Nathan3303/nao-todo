@@ -1,11 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import dayjs from 'dayjs'
-import { formatDuration } from '@nao-todo/presentation/pomodoro/hooks/use-pomodoro-records-stats'
-import type {
-    PomodoroRecordViewObject,
-    PomodoroViewObject
-} from '@nao-todo/domain-pomodoro'
+import { formatDuration } from '@nao-todo/presentation/pomodoro'
+import type { PomodoroRecordViewObject, PomodoroViewObject } from '@nao-todo/domain-pomodoro'
 
 defineOptions({ name: 'PomodoroRecordsDetailPanel' })
 

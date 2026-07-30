@@ -1,6 +1,5 @@
-import type { TaskCheckItemStore } from '@nao-todo/domain-task/viewobjects'
-import { TaskCheckItemUseCase } from '@nao-todo/domain-task/usecases'
-import { TaskCheckItemRepoImpl } from '@nao-todo/infrastructure/backend'
+import { TaskCheckItemStore, TaskCheckItemUseCase } from '@nao-todo/domain-task'
+import { TaskCheckItemRepoImpl } from '@nao-todo/infrastructure'
 import { getRequesterImpl } from '@nao-todo/shared'
 
 export const useTaskCheckItemUseCase = (store: TaskCheckItemStore) => {

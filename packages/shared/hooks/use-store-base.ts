@@ -5,9 +5,9 @@ import { computed, ref } from 'vue'
  * @template T 状态类型
  * @returns 状态管理对象
  */
-export const useStoreBase = <T extends object>() => {
+export const useStoreBase = <T extends object>(initialValue?: T) => {
     // @state 状态
-    const state = ref<T | null | void>(void 0)
+    const state = ref<T | null | void>(initialValue)
 
     /**
      * 设置状态
@@ -44,4 +44,3 @@ export const useStoreBase = <T extends object>() => {
         patchState
     }
 }
-

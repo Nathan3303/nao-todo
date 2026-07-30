@@ -21,7 +21,7 @@ import {
 import { storeToRefs } from 'pinia'
 import { useProjectsStore } from '@nao-todo/presentation/project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
-import { TaskViewObject } from '@nao-todo/application'
+import { TaskViewObject } from '@nao-todo/domain-task'
 
 /**
  * 番茄钟视图上下文提供器

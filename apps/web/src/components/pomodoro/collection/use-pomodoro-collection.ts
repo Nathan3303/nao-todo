@@ -1,5 +1,5 @@
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
-import type { PomodoroRecordViewObject, PomodoroViewObject } from '@nao-todo/application'
+import type { PomodoroRecordViewObject, PomodoroViewObject } from '@nao-todo/domain-pomodoro'
 import { usePomodoroRecordsStore, usePomodorosStore } from '@nao-todo/presentation/pomodoro'
 import { POMODORO_UPDATER_DIALOG_KEY, unwrapError } from '@nao-todo/shared'
 import { computed, inject, onMounted, ref, watch } from 'vue'

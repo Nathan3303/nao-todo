@@ -1,11 +1,7 @@
-import type {
-    BuiltInProjectUseCase,
-    ProjectUseCase,
-    TagUseCase,
-    TagViewObject,
-    TaskUseCase,
-    TaskViewObject
-} from '@nao-todo/application'
+import type { BuiltInProjectUseCase } from '@nao-todo/domain-built-in-project'
+import { ProjectUseCase } from '@nao-todo/domain-project'
+import { TagUseCase, TagViewObject } from '@nao-todo/domain-tag'
+import { TaskUseCase, TaskViewObject } from '@nao-todo/domain-task'
 import type { ProjectHandler, TagHandler, TaskHandler } from '@nao-todo/presentation'
 import type { DialogManager, Subscriber } from '@nao-todo/shared'
 import type { InjectionKey, Ref } from 'vue'

@@ -1,6 +1,5 @@
-import type { AuthUseCase } from '@nao-todo/application/auth/usecases'
-import type { TaskUseCase } from '@nao-todo/domain-task/usecases'
-import type { UserUseCase } from '@nao-todo/application/user/usecases'
+import { AuthUseCase, UserUseCase } from '@nao-todo/domain-identity'
+import { TaskUseCase } from '@nao-todo/domain-task'
 import type { DialogManager, Subscriber } from '@nao-todo/shared'
 import type { InjectionKey, Ref } from 'vue'
 

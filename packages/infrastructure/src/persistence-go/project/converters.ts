@@ -4,7 +4,7 @@ import {
     ProjectPreferenceEntity,
     SaveProjectPreferenceValueObject,
     UpdateProjectValueObject
-} from '@nao-todo/domain/project'
+} from '@nao-todo/domain-project'
 import type {
     CreateProjectRes,
     ProjectPreferenceRes,
@@ -14,7 +14,7 @@ import type {
     UpdateProjectReq,
     CreateProjectReq
 } from '../models'
-import { defaultColumns } from '@nao-todo/shared'
+import { defaultColumns, JsonStringValueObject } from '@nao-todo/shared'
 import dayjs from 'dayjs'
 
 // --- Project ---
@@ -102,8 +102,8 @@ export const projectPreferenceRes2Entity = (res: ProjectPreferenceRes): ProjectP
         res.deletedAt,
         res.projectId,
         res.viewType,
-        res.getTasksOptions,
-        res.columns
+        JsonStringValueObject.CreateByJsonString(res.getTasksOptions),
+        JsonStringValueObject.CreateByJsonString(res.columns)
     )
 }
 
@@ -120,8 +120,8 @@ export const defaultProjectPreferenceRes2Entity = (projectId: string): ProjectPr
         null,
         projectId,
         'table',
-        `{"projectId":"${projectId}"}`,
-        JSON.stringify(defaultColumns)
+        JsonStringValueObject.CreateByJsonString(`{"projectId":"${projectId}"}`),
+        JsonStringValueObject.CreateByObject(defaultColumns)
     )
 }
 

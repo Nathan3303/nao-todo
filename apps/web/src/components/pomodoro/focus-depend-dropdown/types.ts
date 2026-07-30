@@ -1,4 +1,5 @@
-import type { PomodoroType, PomodoroViewObject, TaskViewObject } from '@nao-todo/application'
+import type { PomodoroType, PomodoroViewObject } from '@nao-todo/domain-pomodoro'
+import type { TaskViewObject } from '@nao-todo/domain-task'
 
 /**
  * 专注依赖选择下拉菜单组件属性

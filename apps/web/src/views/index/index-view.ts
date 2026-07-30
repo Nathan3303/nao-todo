@@ -9,14 +9,14 @@ import {
     useUserUseCase
 } from '@/hooks'
 import { LAST_VISITED_ROUTE_KEY } from '@/router'
-import type { ThemeMode } from '@nao-todo/application'
-import type { ProjectViewObject } from '@nao-todo/application/project/viewobjects'
-import type { TagViewObject } from '@nao-todo/application/tag/viewobjects'
-import type { TaskViewObject } from '@nao-todo/domain-task/viewobjects'
+import { ThemeMode } from '@nao-todo/domain-identity'
+import { ProjectViewObject } from '@nao-todo/domain-project'
+import { TagViewObject } from '@nao-todo/domain-tag'
+import { TaskViewObject } from '@nao-todo/domain-task'
+import { useThemeStore, useUserStore } from '@nao-todo/presentation-identity'
 import { ProjectHandler, useProjectsStore } from '@nao-todo/presentation/project'
 import { TagHandler, useTagsStore } from '@nao-todo/presentation/tag'
 import { TaskHandler, useTasksStore } from '@nao-todo/presentation/task'
-import { useThemeStore, useUserStore } from '@nao-todo/presentation/user'
 import {
     PROJECT_CREATOR_DIALOG_KEY,
     responsiveTypes,

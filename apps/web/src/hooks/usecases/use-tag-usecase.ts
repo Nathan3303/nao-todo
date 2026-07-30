@@ -1,7 +1,5 @@
-import { TagDomain } from '@nao-todo/domain/tag'
-import type { TagStore } from '@nao-todo/application/tag/viewobjects'
-import { TagUseCase } from '@nao-todo/application/tag/usecases'
-import { TagPreferenceRepoImpl, TagRepoImpl } from '@nao-todo/infrastructure/backend'
+import { TagService, TagStore, TagUseCase } from '@nao-todo/domain-tag'
+import { TagPreferenceRepoImpl, TagRepoImpl } from '@nao-todo/infrastructure'
 import { getRequesterImpl } from '@nao-todo/shared'
 
 /**
@@ -13,6 +11,6 @@ export const useTagUseCase = (store: TagStore) => {
     const requester = getRequesterImpl()
     const tagRepo = new TagRepoImpl(requester)
     const tagPreferenceRepo = new TagPreferenceRepoImpl(requester)
-    const domain = new TagDomain(tagRepo)
+    const domain = new TagService(tagRepo)
     return new TagUseCase(domain, tagRepo, tagPreferenceRepo, store)
 }

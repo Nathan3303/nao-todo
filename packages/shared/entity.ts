@@ -1,3 +1,5 @@
+import dayjs from 'dayjs'
+
 /**
  * Entity 类
  * @description 用于表示实体对象，包含实体的基本属性和方法
@@ -24,6 +26,6 @@ export class Entity {
      * @description 通过 deletedAt 判断
      */
     get isDeleted(): boolean {
-        return this.deletedAt !== null
+        return this.deletedAt !== null && dayjs(this.deletedAt).isValid()
     }
 }

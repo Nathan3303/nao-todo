@@ -17,7 +17,7 @@ import {
     TaskParentSelectorDialog,
     TaskReminderDialog
 } from '@nao-todo/presentation/task'
-import { UserRestoreDialog } from '@nao-todo/presentation/user'
+import { UserRestoreDialog } from '@nao-todo/presentation-identity'
 import { storeToRefs } from 'pinia'
 import { inject } from 'vue'
 

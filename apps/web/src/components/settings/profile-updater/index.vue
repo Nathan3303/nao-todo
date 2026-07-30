@@ -8,7 +8,7 @@ import {
     UserDeactiveDialog,
     UserRestoreDialog,
     UserDeactiveManager
-} from '@nao-todo/presentation/user'
+} from '@nao-todo/presentation-identity'
 import { t, unwrapError, USER_DEACTIVE_DIALOG_KEY } from '@nao-todo/shared'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { storeToRefs } from 'pinia'

@@ -4,7 +4,7 @@ import {
     useBuiltInProjectsStore
 } from '@nao-todo/presentation/built-in-project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
-import { useUserStore } from '@nao-todo/presentation/user'
+import { useUserStore } from '@nao-todo/presentation-identity'
 import { TASK_CREATOR_DIALOG_KEY, unwrapError } from '@nao-todo/shared'
 import { NueMessage } from 'nue-ui'
 import { storeToRefs } from 'pinia'

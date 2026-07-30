@@ -1,5 +1,4 @@
 import type { Go } from '../types'
-import { unwrapError } from '../utils'
 
 export class JsonStringValueObject {
     // JSON 对象
@@ -28,8 +27,8 @@ export class JsonStringValueObject {
     static CreateByJsonString(jstring: string): JsonStringValueObject {
         const vo = new JsonStringValueObject()
         const [res, error] = vo.marshall(jstring)
-        if (error != null) {
-            throw new Error(unwrapError(error))
+        if (error !== null) {
+            console.error(error)
         }
         vo.value = res
         return vo
@@ -54,18 +53,18 @@ export class JsonStringValueObject {
     marshall(ostr: string): Go<Record<string, unknown>> {
         try {
             // 空字符串返回空对象
-            if (!ostr) return [null, 'JSON is NULL']
+            if (!ostr) return [null, '[JsonParser] JSON string is empty.']
             // 解析
             const parsed = JSON.parse(ostr)
             // 判断是否是空对象
             if (Object.keys(parsed).length === 0) {
-                return [null, 'JSON is NULL']
+                return [{}, '[JsonParser] Object length is zero.']
             }
             // 正常返回
             return [parsed, null]
         } catch (err) {
             console.error('[JsonParser]', err)
-            return [null, 'JSON parse failed']
+            return [null, '[JsonParser] JSON parse failed.']
         }
     }
 

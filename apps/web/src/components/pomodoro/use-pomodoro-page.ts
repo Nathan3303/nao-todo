@@ -1,6 +1,7 @@
 import { usePomodoroRecordUseCase } from '@/hooks'
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
-import type { PomodoroViewObject, TaskViewObject } from '@nao-todo/application'
+import type { PomodoroViewObject } from '@nao-todo/domain-pomodoro'
+import type { TaskViewObject } from '@nao-todo/domain-task'
 import { POMODORO_MAX_FOCUS_SECONDS, POMODORO_MIN_FOCUS_SECONDS } from '@nao-todo/domain-pomodoro'
 import {
     usePomodoroFocusStore,

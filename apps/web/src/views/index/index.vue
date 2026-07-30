@@ -3,7 +3,7 @@ import { onMounted } from 'vue'
 import useIndexView from './index-view'
 import { AppDialogAdapter, AppAsideV2Adapter } from '@/components/app/'
 import { Loading as LoadingComp } from '@nao-todo/shared'
-import { UserDeletionNotifier } from '@nao-todo/presentation'
+import { UserDeletionNotifier } from '@nao-todo/presentation-identity'
 
 defineOptions({ name: 'AppContainer' })
 

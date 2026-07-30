@@ -1,5 +1,5 @@
 import { useAuthUseCase } from '@/hooks'
-import { useUserStore } from '@nao-todo/presentation/user'
+import { useUserStore } from '@nao-todo/presentation-identity'
 import { inject, provide } from 'vue'
 import { INDEX_VIEW_CONTEXT_KEY } from '../context'
 import { SETTINGS_VIEW_CONTEXT_KEY } from './context'

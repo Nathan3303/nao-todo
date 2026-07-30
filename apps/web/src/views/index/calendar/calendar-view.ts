@@ -3,7 +3,7 @@ import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { useAuthUseCase, useBuiltInProjectUseCase } from '@/hooks'
 import { inject, provide, ref } from 'vue'
 import { CALENDAR_VIEW_CONTEXT_KEY } from './context'
-import { useUserStore } from '@nao-todo/presentation/user'
+import { useUserStore } from '@nao-todo/presentation-identity'
 import { useBuiltInProjectsStore } from '@nao-todo/presentation/built-in-project'
 
 /**

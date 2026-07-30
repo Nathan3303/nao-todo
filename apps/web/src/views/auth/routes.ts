@@ -1,6 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router'
-import { useUserStore } from '@nao-todo/presentation/user'
-import { USER_JWT_LOCALSTORAGE_KEY } from '@nao-todo/domain/auth'
+import { useUserStore } from '@nao-todo/presentation-identity'
+import { USER_JWT_LOCALSTORAGE_KEY } from '@nao-todo/domain-identity'
 
 // @typedef AuthViewRoutes 身份验证视图路由
 const routes: RouteRecordRaw = {

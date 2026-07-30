@@ -36,6 +36,7 @@ export class AuthUseCase {
         }
         const sessionViewObject = sessionValueObject2ViewObject(authSession)
         this.authStore.setIsAuthenticated(true)
+        this.authStore.setUserToken(sessionViewObject.token)
         this.authStore.setUserDeletion({
             isPending: sessionViewObject.isPending,
             deadline: sessionViewObject.deadline

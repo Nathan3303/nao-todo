@@ -20,7 +20,7 @@ import { responsiveTypes, unwrapError, useAsideWidth, useResponsiveAside } from 
 import { storeToRefs } from 'pinia'
 import { inject, onMounted, onUnmounted, provide, ref } from 'vue'
 import { TASKS_VIEW_CONTEXT_KEY } from './context'
-import { TaskViewObject } from '@nao-todo/application'
+import { TaskViewObject } from '@nao-todo/domain-task'
 import { useRouter } from 'vue-router'
 
 const useTasksView = () => {

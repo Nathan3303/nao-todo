@@ -7,7 +7,7 @@ import type { Go } from '@nao-todo/shared'
 import { bipRes2bipEntity, bippRes2bippVO, bippVO2bippRes } from './converters'
 import { defaultBuiltInProjectPreferences, defaultBuiltInProjects } from './default'
 
-const useBuiltInProjectRepository = (): BuiltInProjectRepository => {
+export const useBuiltInProjectRepository = (): BuiltInProjectRepository => {
     /**
      * 获取指定 ID 的清单
      * @param id 清单 ID
@@ -104,5 +104,3 @@ const useBuiltInProjectRepository = (): BuiltInProjectRepository => {
         savePreference
     }
 }
-
-export default useBuiltInProjectRepository

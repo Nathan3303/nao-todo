@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { SETTINGS_VIEW_CONTEXT_KEY } from '@/views/index/settings/context'
-import { UserPasswordUpdater } from '@nao-todo/presentation/user'
+import { UserPasswordUpdater } from '@nao-todo/presentation-identity'
 import { t } from '@nao-todo/shared'
 import { inject } from 'vue'
 

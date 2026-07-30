@@ -1,12 +1,26 @@
-import type { UserConfigViewObject, UserDeletion, UserViewObject } from '@nao-todo/domain-identity'
+import {
+    USER_JWT_LOCALSTORAGE_KEY,
+    type UserConfigViewObject,
+    type UserDeletion,
+    type UserViewObject
+} from '@nao-todo/domain-identity'
 import { useStoreBase } from '@nao-todo/shared'
 import { defineStore } from 'pinia'
-import { computed } from 'vue'
-import { useAuthStoreBase } from '../hooks'
+import { computed, watch } from 'vue'
 
 export const useUserStore = defineStore('UserStore', () => {
-    // @state 认证状态
-    const { getIsAuthenticated, setIsAuthenticated, clearAuthData } = useAuthStoreBase()
+    // @storebase 认证状态
+    const { state, updateState } = useStoreBase<{
+        isAuthenticated: boolean
+        userToken: string
+    }>({ isAuthenticated: false, userToken: '' })
+
+    // @storebase 用户注销相关
+    const {
+        state: userDeletion,
+        setState: setUserDeletion,
+        updateState: updateUserDeletion
+    } = useStoreBase<UserDeletion>()
 
     // @storebase 用户信息
     const {
@@ -22,14 +36,10 @@ export const useUserStore = defineStore('UserStore', () => {
         updateState: updateUserConfig
     } = useStoreBase<UserConfigViewObject>()
 
-    // @storebase 用户注销相关
-    const {
-        state: userDeletion,
-        setState: setUserDeletion,
-        updateState: updateUserDeletion
-    } = useStoreBase<UserDeletion>()
-
-    // @action 设置用户信息
+    /**
+     * 设置用户信息
+     * @param profile
+     */
     const setUserProfile = (profile: UserViewObject) => {
         // 处理 avatar 字段
         if (profile.avatar) {
@@ -39,7 +49,17 @@ export const useUserStore = defineStore('UserStore', () => {
         setUserProfileBase(profile)
     }
 
-    // @action 清除用户数据
+    /**
+     * 清除认证数据
+     */
+    const clearAuthData = () => {
+        updateState({ isAuthenticated: false, userToken: '' })
+        clearUserData()
+    }
+
+    /**
+     * 清除用户数据
+     */
     const clearUserData = () => {
         setUserProfile({} as UserViewObject)
         setUserConfig({} as UserConfigViewObject)
@@ -47,11 +67,20 @@ export const useUserStore = defineStore('UserStore', () => {
         localStorage.clear()
     }
 
+    /**
+     * 侦听 UserToken 变化,并持久化到 LocalStorage
+     */
+    watch(
+        () => state.value.userToken,
+        (nv) => localStorage.setItem(USER_JWT_LOCALSTORAGE_KEY, nv)
+    )
+
     // @returns
     return {
         // auth
-        getIsAuthenticated,
-        setIsAuthenticated,
+        getIsAuthenticated: () => state.value.isAuthenticated,
+        setIsAuthenticated: (isAuthenticated: boolean) => updateState({ isAuthenticated }),
+        setUserToken: (token: string) => updateState({ userToken: token }),
         clearAuthData,
         // user
         profile: computed(() => userProfile.value),

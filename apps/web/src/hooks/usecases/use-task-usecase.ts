@@ -1,7 +1,5 @@
-import { TaskDomain } from '@nao-todo/domain-task'
-import type { TaskStore } from '@nao-todo/domain-task/viewobjects'
-import { TaskUseCase } from '@nao-todo/domain-task/usecases'
-import { TaskRepoImpl } from '@nao-todo/infrastructure/backend'
+import { TaskDomain, TaskStore, TaskUseCase } from '@nao-todo/domain-task'
+import { TaskRepoImpl } from '@nao-todo/infrastructure'
 import { getRequesterImpl } from '@nao-todo/shared'
 
 export const useTaskUseCase = (store: TaskStore) => {

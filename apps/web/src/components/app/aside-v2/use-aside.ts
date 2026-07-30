@@ -1,6 +1,6 @@
 import { APP_CONTEXT_KEY } from '@/context'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
-import { useUserStore } from '@nao-todo/presentation'
+import { useUserStore } from '@nao-todo/presentation-identity'
 import { storeToRefs } from 'pinia'
 import { computed, inject } from 'vue'
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { UserThemeSetter, UserLanguageSetter } from '@nao-todo/presentation/user'
+import { UserThemeSetter, UserLanguageSetter } from '@nao-todo/presentation-identity'
 import { inject } from 'vue'
 import { t } from '@nao-todo/shared'
 import { SETTINGS_VIEW_CONTEXT_KEY } from '@/views/index/settings/context'

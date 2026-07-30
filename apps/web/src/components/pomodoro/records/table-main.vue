@@ -1,9 +1,6 @@
 <script setup lang="ts">
-import type {
-    PomodoroRecordViewObject,
-    PomodoroViewObject
-} from '@nao-todo/domain-pomodoro'
-import { formatDuration } from '@nao-todo/presentation/pomodoro/hooks/use-pomodoro-records-stats'
+import type { PomodoroRecordViewObject, PomodoroViewObject } from '@nao-todo/domain-pomodoro'
+import { formatDuration } from '@nao-todo/presentation/pomodoro'
 import dayjs from 'dayjs'
 
 defineOptions({ name: 'PomodoroRecordsTableMain' })

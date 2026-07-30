@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { APP_CONTEXT_KEY } from '@/context'
 import { PomodoroIndicator } from '@nao-todo/presentation/pomodoro'
-import { useUserStore } from '@nao-todo/presentation/user'
+import { useUserStore } from '@nao-todo/presentation-identity'
 import { NaoRouterLink } from '@nao-todo/shared'
 import { storeToRefs } from 'pinia'
 import { computed, inject } from 'vue'

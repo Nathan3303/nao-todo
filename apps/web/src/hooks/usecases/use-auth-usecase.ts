@@ -1,8 +1,6 @@
-import { AuthDomain } from '@nao-todo/domain/auth'
-import type { AuthStore } from '@nao-todo/application/auth/viewobjects'
+import { AuthService, AuthStore, AuthUseCase } from '@nao-todo/domain-identity'
+import { useAuthRepository } from '@nao-todo/infrastructure'
 import { getRequesterImpl } from '@nao-todo/shared'
-import { useAuthRepository } from '@nao-todo/infrastructure/backend'
-import { AuthUseCase } from '@nao-todo/application/auth/usecases'
 
 /**
  * 认证用例
@@ -12,6 +10,6 @@ import { AuthUseCase } from '@nao-todo/application/auth/usecases'
 export const useAuthUseCase = (store: AuthStore) => {
     const requester = getRequesterImpl()
     const authRepo = useAuthRepository(requester)
-    const authDomain = new AuthDomain(authRepo)
+    const authDomain = new AuthService(authRepo)
     return new AuthUseCase(authDomain, store)
 }

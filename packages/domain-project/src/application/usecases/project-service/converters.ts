@@ -65,6 +65,7 @@ export const projectPreferenceEntityToViewObject = (
     vo.viewType = entity.viewType
     vo.getTasksOptions = entity.getTasksOptions.value as GetTasksOptions
     vo.columns = entity.columns.value as TaskColumnOptions
+    // console.log(entity)
     return vo
 }
 
