@@ -1,7 +1,0 @@
-{
-    "extends": "../../tsconfig.base.json",
-    "include": ["built-in-project/**/*", "pomodoro/**/*"],
-    "compilerOptions": {
-        "rootDir": "."
-    }
-}

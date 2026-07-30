@@ -4,7 +4,7 @@ import {
     PomodoroEntity,
     PomodoroRecordEntity,
     UpdatePomodoroValueObject
-} from '@nao-todo/domain/pomodoro'
+} from '@nao-todo/domain-pomodoro'
 import dayjs from 'dayjs'
 import type {
     CreatePomodoroRecordViewObject,
@@ -12,7 +12,7 @@ import type {
     PomodoroRecordViewObject,
     PomodoroViewObject,
     UpdatePomodoroViewObject
-} from '../viewobjects'
+} from '../viewobjects/pomodoro'
 
 /**
  * 常用番茄专注实体 → 常用番茄专注视图对象

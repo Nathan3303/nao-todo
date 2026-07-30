@@ -1,12 +1,11 @@
-import { PomodoroDomain } from '@nao-todo/domain/pomodoro/services'
-import { PomodoroRecordRepository } from '@nao-todo/domain/pomodoro/repositories'
+import { PomodoroDomain, PomodoroRecordRepository } from '@nao-todo/domain-pomodoro'
 import type { GoAsync, ResponseDataPagination } from '@nao-todo/shared'
 import type {
     CreatePomodoroRecordViewObject,
     GetPomodoroRecordsOptions,
-    PomodoroRecordStore,
     PomodoroRecordViewObject
-} from '../viewobjects'
+} from '../viewobjects/pomodoro'
+import type { PomodoroRecordStore } from '../stores'
 import {
     createPomodoroRecordViewObjectToValueObject,
     pomodoroRecordEntitiesToViewObjects,

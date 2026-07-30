@@ -6,8 +6,8 @@ import {
 } from '@nao-todo/shared'
 import { computed, onUnmounted, reactive } from 'vue'
 import { usePomodoroRecordsStore } from '../stores'
-import type { GetPomodoroRecordsOptions, PomodoroRecordViewObject } from '@nao-todo/application/pomodoro/viewobjects'
-import type { PomodoroRecordUseCase } from '@nao-todo/application/pomodoro/usecases'
+import type { GetPomodoroRecordsOptions, PomodoroRecordViewObject } from '@nao-todo/domain-pomodoro'
+import type { PomodoroRecordUseCase } from '@nao-todo/domain-pomodoro'
 
 export type UsePomodoroRecordLoaderStates = {
     recordIds: Set<string>

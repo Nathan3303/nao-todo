@@ -2,7 +2,7 @@
 import type {
     PomodoroRecordViewObject,
     PomodoroViewObject
-} from '@nao-todo/application/pomodoro/viewobjects'
+} from '@nao-todo/domain-pomodoro'
 import { formatDuration } from '@nao-todo/presentation/pomodoro/hooks/use-pomodoro-records-stats'
 import dayjs from 'dayjs'
 

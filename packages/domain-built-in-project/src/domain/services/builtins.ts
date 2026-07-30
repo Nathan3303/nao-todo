@@ -1,6 +1,6 @@
 import type { Go } from '@nao-todo/shared'
-import { BuiltInProjectEntity, BuiltInProjectPreferenceEntity } from './entities'
-import type { BuiltInProjectRepository } from './repositories'
+import { BuiltInProjectEntity, BuiltInProjectPreferenceEntity } from '../entities'
+import type { BuiltInProjectRepository } from '../repositories'
 
 export class BuiltInProjectDomain {
     /**

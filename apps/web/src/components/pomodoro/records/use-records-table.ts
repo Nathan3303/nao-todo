@@ -1,5 +1,5 @@
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
-import type { GetPomodoroRecordsOptions } from '@nao-todo/application/pomodoro/viewobjects'
+import type { GetPomodoroRecordsOptions } from '@nao-todo/domain-pomodoro'
 import {
     usePomodoroRecordLoader,
     usePomodoroRecordsStats,

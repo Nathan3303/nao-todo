@@ -2,7 +2,7 @@ import type {
     BuiltInProjectEntity,
     BuiltInProjectPreferenceEntity,
     BuiltInProjectRepository
-} from '@nao-todo/domain/built-in-project'
+} from '@nao-todo/domain-built-in-project'
 import type { Go } from '@nao-todo/shared'
 import { bipRes2bipEntity, bippRes2bippVO, bippVO2bippRes } from './converters'
 import { defaultBuiltInProjectPreferences, defaultBuiltInProjects } from './default'

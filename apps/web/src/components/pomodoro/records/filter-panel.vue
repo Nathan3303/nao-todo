@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
-import type { PomodoroViewObject } from '@nao-todo/application/pomodoro/viewobjects'
+import type { PomodoroViewObject } from '@nao-todo/domain-pomodoro'
 import type { PomodoroRecordsFilterState } from './types'
 
 defineOptions({ name: 'PomodoroRecordsFilterPanel' })

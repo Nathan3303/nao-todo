@@ -1,23 +1,5 @@
 import type { NullableString, ViewObjectBase } from '@nao-todo/shared'
 
-// Pomodoro 存储接口
-export type PomodoroStore = {
-    pomodoros: PomodoroViewObject[]
-    setPomodoros: (pomodoros: PomodoroViewObject[]) => void
-    addPomodoro: (pomodoro: PomodoroViewObject) => void
-    getPomodoro: (id: string) => PomodoroViewObject | undefined
-    patchPomodoro: (id: string, update: Partial<UpdatePomodoroViewObject>) => void
-    getAllPomodoros: () => PomodoroViewObject[]
-}
-
-// Pomodoro 记录存储接口
-export type PomodoroRecordStore = {
-    records: Map<string, PomodoroRecordViewObject>
-    addRecord: (record: PomodoroRecordViewObject) => void
-    addRecords: (records: PomodoroRecordViewObject[]) => void
-    getRecord: (id: string) => PomodoroRecordViewObject | undefined
-}
-
 /**
  * Pomodoro 记录类型
  * @description 映射后端 uint8：1=timer(番茄专注), 2=focus(正计时)

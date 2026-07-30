@@ -4,8 +4,8 @@ import { nanoid } from 'nanoid'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { TimerPhase, TimerStatus } from '../components/timer'
-import { POMODORO_MAX_FOCUS_SECONDS, POMODORO_MIN_FOCUS_SECONDS } from '@nao-todo/domain/pomodoro'
-import type { CreatePomodoroRecordViewObject, PomodoroRecordViewObject } from '@nao-todo/application/pomodoro/viewobjects'
+import { POMODORO_MAX_FOCUS_SECONDS, POMODORO_MIN_FOCUS_SECONDS } from '@nao-todo/domain-pomodoro'
+import type { CreatePomodoroRecordViewObject, PomodoroRecordViewObject } from '@nao-todo/domain-pomodoro'
 import {
     buildPomodoroRecord,
     clearTimerSnapshot,

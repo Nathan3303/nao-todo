@@ -3,7 +3,7 @@ import {
     PomodoroEntity,
     PomodoroRepository,
     UpdatePomodoroValueObject
-} from '@nao-todo/domain/pomodoro'
+} from '@nao-todo/domain-pomodoro'
 import type { Requester, GoAsync, ResponseDataPagination } from '@nao-todo/shared'
 import { getJWTFromLocalStorage } from '../utils'
 import { CreatePomodoroRes, ListPomodoroRes, PomodoroRes, ResponseData } from '../models'

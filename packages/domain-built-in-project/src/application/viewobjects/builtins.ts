@@ -1,16 +1,5 @@
 import type { NullableDateString, GetTasksOptions, TaskColumnOptions } from '@nao-todo/shared'
 
-// 内建项目存储接口
-export type BuiltInProjectStore = {
-    setBuiltInProjects: (projects: BuiltInProjectViewObject[]) => void
-    setBuiltInProjectPreference: (preference: BuiltInProjectPreferenceViewObject) => void
-    getBuiltInProjectPreference: () => BuiltInProjectPreferenceViewObject | undefined
-    updatePreferenceColumns: (key: keyof TaskColumnOptions, value: boolean) => void
-    updatePreferenceGetTasksOptions: <T extends keyof GetTasksOptions>(key: T, value: GetTasksOptions[T]) => void
-    getPreferenceGetTasksOption: <T extends keyof GetTasksOptions>(key: T) => GetTasksOptions[T]
-    getPreferenceGetTasksOptions: () => GetTasksOptions
-}
-
 export type BuiltInProjectCreateTaskOptions = {
     startAt?: NullableDateString
     endAt?: NullableDateString

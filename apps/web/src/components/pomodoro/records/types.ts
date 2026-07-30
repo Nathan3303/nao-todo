@@ -2,7 +2,7 @@ import type {
     PomodoroRecordViewObject,
     PomodoroType,
     PomodoroViewObject
-} from '@nao-todo/application/pomodoro/viewobjects'
+} from '@nao-todo/domain-pomodoro'
 import { GetTasksOptions } from '@nao-todo/shared'
 
 export type PomodoroRecordsColumnKey =

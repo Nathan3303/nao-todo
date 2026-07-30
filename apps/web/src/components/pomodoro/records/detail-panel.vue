@@ -5,7 +5,7 @@ import { formatDuration } from '@nao-todo/presentation/pomodoro/hooks/use-pomodo
 import type {
     PomodoroRecordViewObject,
     PomodoroViewObject
-} from '@nao-todo/application/pomodoro/viewobjects'
+} from '@nao-todo/domain-pomodoro'
 
 defineOptions({ name: 'PomodoroRecordsDetailPanel' })
 

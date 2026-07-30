@@ -7,7 +7,7 @@ import type {
     TaskColumnOptions
 } from '@nao-todo/shared'
 import type { BuiltInProjectsStore } from '../stores'
-import type { BuiltInProjectUseCase } from '@nao-todo/application/built-in-project/usecases'
+import type { BuiltInProjectUseCase } from '@nao-todo/domain-built-in-project'
 
 // 项目内建处理程序
 export class BuiltInProjectHandler {
@@ -22,7 +22,7 @@ export class BuiltInProjectHandler {
         private builtInProjectUseCase: BuiltInProjectUseCase,
         private taskUseCase: {
             // 任务用例的阴影接口（解耦任务用例的实现细节）
-            list: (getTasksOptions: GetTasksOptions) => GoAsync<any>
+            list: (getTasksOptions: GetTasksOptions) => GoAsync<unknown>
         },
         private preferenceStore: BuiltInProjectsStore,
         private subscriber: Subscriber

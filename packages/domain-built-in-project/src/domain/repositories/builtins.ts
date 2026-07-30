@@ -1,5 +1,5 @@
 import type { Go } from '@nao-todo/shared'
-import type { BuiltInProjectEntity, BuiltInProjectPreferenceEntity } from './entities'
+import type { BuiltInProjectEntity, BuiltInProjectPreferenceEntity } from '../entities'
 
 export interface BuiltInProjectRepository {
     // 获取指定 ID 的清单

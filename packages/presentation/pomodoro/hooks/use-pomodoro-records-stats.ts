@@ -1,5 +1,5 @@
 import { computed, type ComputedRef } from 'vue'
-import type { PomodoroRecordViewObject } from '@nao-todo/application/pomodoro/viewobjects'
+import type { PomodoroRecordViewObject } from '@nao-todo/domain-pomodoro'
 
 /**
  * Format duration in seconds to a readable string

@@ -3,7 +3,7 @@ import { useTimerDriver } from '@nao-todo/shared'
 import { nanoid } from 'nanoid'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { CreatePomodoroRecordViewObject, PomodoroRecordViewObject } from '@nao-todo/application/pomodoro/viewobjects'
+import type { CreatePomodoroRecordViewObject, PomodoroRecordViewObject } from '@nao-todo/domain-pomodoro'
 import {
     buildPomodoroRecord,
     clearFocusSnapshot,

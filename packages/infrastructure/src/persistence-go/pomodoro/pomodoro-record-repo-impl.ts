@@ -15,7 +15,7 @@ import {
     CreatePomodoroRecordValueObject,
     PomodoroRecordEntity,
     type PomodoroRecordRepository
-} from '@nao-todo/domain/pomodoro'
+} from '@nao-todo/domain-pomodoro'
 import { getJWTFromLocalStorage } from '../utils'
 
 /**

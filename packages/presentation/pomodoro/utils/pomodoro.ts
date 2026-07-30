@@ -3,7 +3,7 @@ import type {
     CreatePomodoroRecordViewObject,
     PomodoroRecordViewObject,
     PomodoroType
-} from '@nao-todo/application/pomodoro/viewobjects'
+} from '@nao-todo/domain-pomodoro'
 
 /**
  * 格式化秒数为中文分钟/小时描述

@@ -1,4 +1,4 @@
-import type { BuiltInProjectCreateTaskOptions } from '@nao-todo/domain/built-in-project'
+import type { BuiltInProjectCreateTaskOptions } from '@nao-todo/domain-built-in-project'
 
 // 内建清单响应
 export type BuiltInProjectRes = {

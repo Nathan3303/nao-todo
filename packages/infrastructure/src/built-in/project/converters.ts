@@ -1,7 +1,7 @@
 import type {
     BuiltInProjectEntity,
     BuiltInProjectPreferenceEntity
-} from '@nao-todo/domain/built-in-project'
+} from '@nao-todo/domain-built-in-project'
 import type { BuiltInProjectPreferenceRes, BuiltInProjectRes } from './types'
 
 /**
@@ -15,7 +15,7 @@ export const bipRes2bipEntity = (bipRes: BuiltInProjectRes): BuiltInProjectEntit
     bipe.icon = bipRes.icon
     bipe.name = bipRes.name
     bipe.description = bipRes.description
-    bipe.createTaskOptions = bipRes.createTaskOptions
+    bipe.createTaskOptions = bipRes.createTaskOptions as never
     return bipe
 }
 

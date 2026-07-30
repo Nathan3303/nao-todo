@@ -3,7 +3,7 @@ import {
     PomodoroEntity,
     PomodoroRecordEntity,
     UpdatePomodoroValueObject
-} from '@nao-todo/domain/pomodoro'
+} from '@nao-todo/domain-pomodoro'
 import type {
     PomodoroRecordRes,
     CreatePomodoroRecordRes,
@@ -15,7 +15,7 @@ import type {
     UpdatePomodoroReq,
     ListPomodoroRes
 } from '../models'
-import { CreatePomodoroRecordValueObject } from '@nao-todo/domain/pomodoro'
+import { CreatePomodoroRecordValueObject } from '@nao-todo/domain-pomodoro'
 
 // --- Pomodoro ---
 

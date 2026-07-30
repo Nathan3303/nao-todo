@@ -1,7 +1,7 @@
 import { NueMessage } from 'nue-ui'
 import { ref } from 'vue'
 import { usePomodoroSessionStore } from '../../../stores'
-import type { PomodoroTimerSettingViewObject } from '@nao-todo/application/pomodoro/viewobjects'
+import type { PomodoroTimerSettingViewObject } from '@nao-todo/domain-pomodoro'
 
 /**
  * 番茄钟计时器设置对话框

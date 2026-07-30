@@ -1,14 +1,14 @@
 import type { GoAsync } from '@nao-todo/shared'
-import { PomodoroRepository } from '@nao-todo/domain/pomodoro/repositories'
-import { PomodoroDomain } from '@nao-todo/domain/pomodoro/services'
+import { PomodoroRepository } from '@nao-todo/domain-pomodoro'
+import { PomodoroDomain } from '@nao-todo/domain-pomodoro'
 import type {
     CreatePomodoroViewObject,
-    PomodoroStore,
     PomodoroType,
     PomodoroViewObject,
     UpdatePomodoroViewObject
-} from '../viewobjects'
-import { ListPomodoroValueObject } from '@nao-todo/domain/pomodoro/valueobjects'
+} from '../viewobjects/pomodoro'
+import type { PomodoroStore } from '../stores'
+import { ListPomodoroValueObject } from '@nao-todo/domain-pomodoro'
 import {
     createPomodoroViewObjectToValueObject,
     pomodoroEntitiesToViewObjects,

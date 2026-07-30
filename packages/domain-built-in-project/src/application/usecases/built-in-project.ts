@@ -1,5 +1,5 @@
 import type { Go } from '@nao-todo/shared'
-import type { BuiltInProjectDomain } from '@nao-todo/domain/built-in-project/services'
+import type { BuiltInProjectDomain } from '@nao-todo/domain-built-in-project'
 import type {
     BuiltInProjectPreferenceViewObject,
     BuiltInProjectStore,

@@ -1,10 +1,7 @@
-import { PomodoroDomain } from '@nao-todo/domain/pomodoro'
-import { PomodoroRecordUseCase } from '@nao-todo/application/pomodoro/usecases'
-import type { PomodoroRecordStore } from '@nao-todo/application/pomodoro/viewobjects'
-import {
-    newPomodoroRecordRepository,
-    newPomodoroRepository
-} from '@nao-todo/infrastructure/backend'
+import { PomodoroDomain } from '@nao-todo/domain-pomodoro'
+import { PomodoroRecordUseCase } from '@nao-todo/domain-pomodoro'
+import type { PomodoroRecordStore } from '@nao-todo/domain-pomodoro'
+import { newPomodoroRecordRepository, newPomodoroRepository } from '@nao-todo/infrastructure'
 import { getRequesterImpl } from '@nao-todo/shared'
 
 export const usePomodoroRecordUseCase = (store: PomodoroRecordStore) => {

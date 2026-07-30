@@ -1,5 +1,5 @@
 import { defaultColumns, jsonParse, type GetTasksOptions } from '@nao-todo/shared'
-import { BuiltInProjectEntity, BuiltInProjectPreferenceEntity } from '@nao-todo/domain/built-in-project/entities'
+import { BuiltInProjectEntity, BuiltInProjectPreferenceEntity } from '@nao-todo/domain-built-in-project'
 import type { BuiltInProjectPreferenceViewObject, BuiltInProjectViewObject } from '../viewobjects'
 
 /**

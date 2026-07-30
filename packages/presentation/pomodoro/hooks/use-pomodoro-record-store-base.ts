@@ -1,4 +1,4 @@
-import type { PomodoroRecordViewObject } from '@nao-todo/application/pomodoro/viewobjects'
+import type { PomodoroRecordViewObject } from '@nao-todo/domain-pomodoro'
 import { useMapperStoreBase } from '@nao-todo/shared'
 
 export const usePomodoroRecordStoreBase = () => {

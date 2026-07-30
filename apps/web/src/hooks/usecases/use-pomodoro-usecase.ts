@@ -1,10 +1,7 @@
-import { PomodoroDomain } from '@nao-todo/domain/pomodoro'
-import type { PomodoroStore } from '@nao-todo/application/pomodoro/viewobjects'
-import { PomodoroUseCase } from '@nao-todo/application/pomodoro/usecases'
-import {
-    newPomodoroRecordRepository,
-    newPomodoroRepository
-} from '@nao-todo/infrastructure/backend'
+import { PomodoroDomain } from '@nao-todo/domain-pomodoro'
+import type { PomodoroStore } from '@nao-todo/domain-pomodoro'
+import { PomodoroUseCase } from '@nao-todo/domain-pomodoro'
+import { newPomodoroRecordRepository, newPomodoroRepository } from '@nao-todo/infrastructure'
 import { getRequesterImpl } from '@nao-todo/shared'
 
 /**
