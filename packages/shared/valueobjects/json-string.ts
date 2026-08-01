@@ -4,7 +4,8 @@ export class JsonStringValueObject {
     // JSON 对象
     // 用于存储 JSON 字符串解析后的对象
     // 用于在需要时进行 JSON 操作，如序列化、反序列化等
-    public value: Record<string, unknown> | null = null
+    // 恒为对象，解析失败时为空对象，避免 null 流入下游
+    public value: Record<string, unknown> = {}
 
     // JSON 字符串构造函数
     // 用于将 JSON 字符串转换为 JSON 对象
@@ -30,7 +31,7 @@ export class JsonStringValueObject {
         if (error !== null) {
             console.error(error)
         }
-        vo.value = res
+        vo.value = res ?? {}
         return vo
     }
 
@@ -46,14 +47,25 @@ export class JsonStringValueObject {
     }
 
     /**
+     * 读取值并与兜底对象合并
+     * @description 用于列配置这类「必须有完整字段」的场景，
+     *              解析结果中缺失的键由 fallback 补齐
+     * @param fallback 兜底对象
+     * @returns 合并后的对象
+     */
+    valueOr<T extends Record<string, unknown>>(fallback: T): T {
+        return { ...fallback, ...this.value } as T
+    }
+
+    /**
      * 解析 JSON 字符串为对象
      * @param ostr JSON 字符串
      * @returns 解析后的对象
      */
     marshall(ostr: string): Go<Record<string, unknown>> {
         try {
-            // 空字符串返回空对象
-            if (!ostr) return [null, '[JsonParser] JSON string is empty.']
+            // 空字符串视为空对象，避免污染 value
+            if (!ostr) return [{}, '[JsonParser] JSON string is empty.']
             // 解析
             const parsed = JSON.parse(ostr)
             // 判断是否是空对象
@@ -64,7 +76,7 @@ export class JsonStringValueObject {
             return [parsed, null]
         } catch (err) {
             console.error('[JsonParser]', err)
-            return [null, '[JsonParser] JSON parse failed.']
+            return [{}, '[JsonParser] JSON parse failed.']
         }
     }
 

@@ -50,13 +50,18 @@ export const useBuiltInProjectRepository = (): BuiltInProjectRepository => {
         // 2. 查询 localStorage
         const builtInProjectPreferenceInLocalStorage = localStorage.getItem(key)
         if (builtInProjectPreferenceInLocalStorage) {
-            // 2.1 转换为实体
-            const bippvo = bippRes2bippVO({
-                ...JSON.parse(builtInProjectPreferenceInLocalStorage),
-                projectId: id
-            })
-            // 2.2 返回
-            return [bippvo, null]
+            try {
+                // 2.1 转换为实体
+                const bippvo = bippRes2bippVO({
+                    ...JSON.parse(builtInProjectPreferenceInLocalStorage),
+                    projectId: id
+                })
+                // 2.2 返回
+                return [bippvo, null]
+            } catch (err) {
+                // 2.3 本地存储被写坏时忽略，回退到默认偏好
+                console.error('[BuiltInProjectRepo]', err)
+            }
         }
         // 3. 若不存在，则返回默认值
         const defaultBuiltInProjectPreference = defaultBuiltInProjectPreferences.find(

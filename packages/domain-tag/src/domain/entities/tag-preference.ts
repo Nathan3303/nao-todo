@@ -1,4 +1,4 @@
-import { Entity } from '@nao-todo/shared'
+import { Entity, JsonStringValueObject } from '@nao-todo/shared'
 
 /**
  * 标签偏好实体
@@ -14,8 +14,8 @@ export class TagPreferenceEntity extends Entity {
         // public userId: string, // 用户ID
         public tagId: string, // 标签ID
         public viewType: string, // 视图类型
-        public getTasksOptions: string, // 获取任务选项
-        public columns: string // 列配置
+        public getTasksOptions: JsonStringValueObject, // 获取任务选项
+        public columns: JsonStringValueObject // 列配置
     ) {
         super(id, createdAt, updatedAt, deletedAt)
     }

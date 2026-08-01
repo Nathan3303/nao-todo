@@ -1,7 +1,6 @@
-import type {
-    BuiltInProjectEntity,
-    BuiltInProjectPreferenceEntity
-} from '@nao-todo/domain-built-in-project'
+import type { BuiltInProjectEntity } from '@nao-todo/domain-built-in-project'
+import { BuiltInProjectPreferenceEntity } from '@nao-todo/domain-built-in-project'
+import { JsonStringValueObject } from '@nao-todo/shared'
 import type { BuiltInProjectPreferenceRes, BuiltInProjectRes } from './types'
 
 /**
@@ -20,24 +19,26 @@ export const bipRes2bipEntity = (bipRes: BuiltInProjectRes): BuiltInProjectEntit
 }
 
 /**
- * 内建清单偏好响应转换为视图对象
+ * 内建清单偏好响应转换为实体
  * @param bippRes 内建清单偏好响应
- * @returns 内建清单偏好视图对象
+ * @returns 内建清单偏好实体
  */
 export const bippRes2bippVO = (
     bippRes: BuiltInProjectPreferenceRes
 ): BuiltInProjectPreferenceEntity => {
-    const bippvo = {} as BuiltInProjectPreferenceEntity
-    bippvo.projectId = bippRes.projectId
-    bippvo.viewType = bippRes.viewType
-    bippvo.getTasksOptions = bippRes.getTasksOptions
-    bippvo.columns = bippRes.columns
-    return bippvo
+    return new BuiltInProjectPreferenceEntity(
+        '',
+        bippRes.userId,
+        bippRes.projectId,
+        bippRes.viewType,
+        JsonStringValueObject.CreateByJsonString(bippRes.getTasksOptions),
+        JsonStringValueObject.CreateByJsonString(bippRes.columns)
+    )
 }
 
 /**
- * 内建清单偏好视图对象转换为响应
- * @param bippvo 内建清单偏好视图对象
+ * 内建清单偏好实体转换为响应
+ * @param bippvo 内建清单偏好实体
  * @returns 内建清单偏好响应
  */
 export const bippVO2bippRes = (
@@ -45,8 +46,9 @@ export const bippVO2bippRes = (
 ): BuiltInProjectPreferenceRes => {
     const bipp = {} as BuiltInProjectPreferenceRes
     bipp.projectId = bippvo.projectId || ''
+    bipp.userId = bippvo.userId
     bipp.viewType = bippvo.viewType
-    bipp.getTasksOptions = bippvo.getTasksOptions
-    bipp.columns = bippvo.columns
+    bipp.getTasksOptions = bippvo.getTasksOptions.unmarshal()
+    bipp.columns = bippvo.columns.unmarshal()
     return bipp
 }

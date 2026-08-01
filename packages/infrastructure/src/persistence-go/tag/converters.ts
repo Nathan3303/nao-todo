@@ -1,8 +1,4 @@
-import {
-    TagPreferenceEntity,
-    TagEntity,
-    UpdateTagPreferenceValueObject
-} from '@nao-todo/domain-tag'
+import { TagPreferenceEntity, TagEntity } from '@nao-todo/domain-tag'
 import type {
     CreateTagRes,
     TagPreferenceRes,
@@ -13,7 +9,7 @@ import type {
     CreateTagReq
 } from '../models'
 import dayjs from 'dayjs'
-import { defaultColumns } from '@nao-todo/shared'
+import { defaultColumns, JsonStringValueObject } from '@nao-todo/shared'
 
 // --- Tag ---
 
@@ -100,8 +96,8 @@ export const tagPreferenceRes2Entity = (res: TagPreferenceRes): TagPreferenceEnt
         // res.userId,
         res.tagId,
         res.viewType,
-        res.getTasksOptions,
-        res.columns
+        JsonStringValueObject.CreateByJsonString(res.getTasksOptions),
+        JsonStringValueObject.CreateByJsonString(res.columns)
     )
 }
 
@@ -118,22 +114,22 @@ export const defaultTagPreferenceRes2Entity = (): TagPreferenceEntity => {
         null,
         '',
         'table',
-        '{}',
-        JSON.stringify(defaultColumns)
+        JsonStringValueObject.CreateByJsonString('{}'),
+        JsonStringValueObject.CreateByObject(defaultColumns)
     )
 }
 
 /**
- * 更新标签偏好值对象转换为更新标签偏好请求
- * @param updateVO 更新标签偏好值对象
+ * 标签偏好实体转换为更新标签偏好请求
+ * @param updatedEntity 更新后的标签偏好实体
  * @returns 更新标签偏好请求
  */
-export const updateTagPreferenceValueObject2Req = (
-    updateVO: UpdateTagPreferenceValueObject
+export const tagPreferenceEntity2UpdateReq = (
+    updatedEntity: TagPreferenceEntity
 ): UpdateTagPreferenceReq => {
     const rto = {} as UpdateTagPreferenceReq
-    if (updateVO.viewType !== void 0) rto.viewType = updateVO.viewType
-    if (updateVO.getTasksOptions !== void 0) rto.getTasksOptions = updateVO.getTasksOptions
-    if (updateVO.columns !== void 0) rto.columns = updateVO.columns
+    rto.viewType = updatedEntity.viewType
+    rto.getTasksOptions = updatedEntity.getTasksOptions.unmarshal()
+    rto.columns = updatedEntity.columns.unmarshal()
     return rto
 }

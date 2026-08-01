@@ -1,3 +1,5 @@
+import { JsonStringValueObject } from '@nao-todo/shared'
+
 /**
  * 内置清单偏好
  * @description 内置清单偏好实体
@@ -17,7 +19,7 @@ export class BuiltInProjectPreferenceEntity {
         public userId: string,
         public projectId: string,
         public viewType: string,
-        public getTasksOptions: string,
-        public columns: string
+        public getTasksOptions: JsonStringValueObject,
+        public columns: JsonStringValueObject
     ) {}
 }

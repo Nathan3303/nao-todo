@@ -1,5 +1,13 @@
-import { defaultColumns, jsonParse, type GetTasksOptions } from '@nao-todo/shared'
-import { BuiltInProjectEntity, BuiltInProjectPreferenceEntity } from '@nao-todo/domain-built-in-project'
+import {
+    defaultColumns,
+    JsonStringValueObject,
+    type GetTasksOptions,
+    type TaskColumnOptions
+} from '@nao-todo/shared'
+import {
+    BuiltInProjectEntity,
+    BuiltInProjectPreferenceEntity
+} from '@nao-todo/domain-built-in-project'
 import type { BuiltInProjectPreferenceViewObject, BuiltInProjectViewObject } from '../viewobjects'
 
 /**
@@ -40,19 +48,10 @@ export const builtInProjectPreferenceEntity2ViewObject = (
 ): BuiltInProjectPreferenceViewObject => {
     const vo = {} as BuiltInProjectPreferenceViewObject
     vo.projectId = entity.projectId
+    vo.userId = entity.userId
     vo.viewType = entity.viewType
-    const [getTasksOptions, err] = jsonParse(entity.getTasksOptions)
-    if (err !== null) {
-        vo.getTasksOptions = {} as GetTasksOptions
-    } else {
-        vo.getTasksOptions = getTasksOptions as GetTasksOptions
-    }
-    const [columns, err2] = jsonParse(entity.columns)
-    if (err2 !== null) {
-        vo.columns = defaultColumns
-    } else {
-        vo.columns = { ...defaultColumns, ...columns }
-    }
+    vo.getTasksOptions = entity.getTasksOptions.valueOr({}) as GetTasksOptions
+    vo.columns = entity.columns.valueOr(defaultColumns) as TaskColumnOptions
     return vo
 }
 
@@ -64,10 +63,12 @@ export const builtInProjectPreferenceEntity2ViewObject = (
 export const builtInProjectPreferenceViewObject2Entity = (
     viewObject: BuiltInProjectPreferenceViewObject
 ): BuiltInProjectPreferenceEntity => {
-    const entity = {} as BuiltInProjectPreferenceEntity
-    entity.projectId = viewObject.projectId
-    entity.viewType = viewObject.viewType
-    entity.getTasksOptions = JSON.stringify(viewObject.getTasksOptions)
-    entity.columns = JSON.stringify(viewObject.columns)
-    return entity
+    return new BuiltInProjectPreferenceEntity(
+        '',
+        viewObject.userId,
+        viewObject.projectId,
+        viewObject.viewType,
+        JsonStringValueObject.CreateByObject(viewObject.getTasksOptions),
+        JsonStringValueObject.CreateByObject(viewObject.columns)
+    )
 }

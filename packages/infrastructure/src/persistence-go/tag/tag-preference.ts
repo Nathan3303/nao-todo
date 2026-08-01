@@ -1,14 +1,10 @@
-import {
-    TagPreferenceEntity,
-    TagPreferenceRepository,
-    UpdateTagPreferenceValueObject
-} from '@nao-todo/domain-tag'
+import { TagPreferenceEntity, TagPreferenceRepository } from '@nao-todo/domain-tag'
 import type { GoAsync, Requester } from '@nao-todo/shared'
 import { ResponseData, TagPreferenceRes } from '../models'
 import {
     defaultTagPreferenceRes2Entity,
     tagPreferenceRes2Entity,
-    updateTagPreferenceValueObject2Req
+    tagPreferenceEntity2UpdateReq
 } from './converters'
 
 /**
@@ -33,25 +29,24 @@ export class TagPreferenceRepoImpl implements TagPreferenceRepository {
         })
         // 2. 获取
         const res = response.data as ResponseData
-        // 3. 判断结果
+        // 3. 判断结果 - 获取失败返回默认结果
         if (res.code !== 30050) {
-            // 失败应返回默认值
-            return [defaultTagPreferenceRes2Entity(), res.message]
+            return [defaultTagPreferenceRes2Entity(), null]
         }
-        // 4. 失败返回默认值
+        // 4. 返回
         return [tagPreferenceRes2Entity(res.data as TagPreferenceRes), null]
     }
 
     /**
      * 保存标签偏好
-     * @param updateVO 更新标签偏好值对象
+     * @param updatedEntity 更新后的标签偏好实体
      * @returns 无结果
      */
-    async save(updateVO: UpdateTagPreferenceValueObject): GoAsync<void> {
+    async save(updatedEntity: TagPreferenceEntity): GoAsync<void> {
         // 1. 构建 rto
-        const rto = updateTagPreferenceValueObject2Req(updateVO)
+        const rto = tagPreferenceEntity2UpdateReq(updatedEntity)
         // 2. 调用接口
-        const response = await this.requester.post(`/tags/${updateVO.id}/preference`, rto, {
+        const response = await this.requester.post(`/tags/${updatedEntity.tagId}/preference`, rto, {
             headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
         })
         // 3. 判断结果

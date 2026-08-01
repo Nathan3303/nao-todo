@@ -1,6 +1,5 @@
 import type { GoAsync } from '@nao-todo/shared'
 import { TagPreferenceEntity } from '../entities/tag-preference'
-import { UpdateTagPreferenceValueObject } from '../valueobjects/update-tag-preference'
 
 /**
  * 标签偏好仓库接口
@@ -16,8 +15,8 @@ export interface TagPreferenceRepository {
 
     /**
      * 保存标签偏好
-     * @param updateVO 更新标签偏好值对象
-     * @returns 标签偏好实体
+     * @param updatedEntity 更新后的标签偏好实体
+     * @returns 无结果
      */
-    save(updateVO: UpdateTagPreferenceValueObject): GoAsync<void>
+    save(updatedEntity: TagPreferenceEntity): GoAsync<void>
 }

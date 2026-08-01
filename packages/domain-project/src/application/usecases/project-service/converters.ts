@@ -1,4 +1,5 @@
 import {
+    defaultColumns,
     type GetTasksOptions,
     JsonStringValueObject,
     type TaskColumnOptions
@@ -63,9 +64,8 @@ export const projectPreferenceEntityToViewObject = (
     // vo.id = entity.id
     vo.projectId = entity.projectId
     vo.viewType = entity.viewType
-    vo.getTasksOptions = entity.getTasksOptions.value as GetTasksOptions
-    vo.columns = entity.columns.value as TaskColumnOptions
-    // console.log(entity)
+    vo.getTasksOptions = entity.getTasksOptions.valueOr({ limit: 20 }) as GetTasksOptions
+    vo.columns = entity.columns.valueOr(defaultColumns) as TaskColumnOptions
     return vo
 }
 

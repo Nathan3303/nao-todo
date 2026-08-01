@@ -10,7 +10,12 @@ import {
     TagViewObject,
     UpdateTagViewObject
 } from '../viewobjects'
-import { defaultColumns, jsonParse } from '@nao-todo/shared'
+import {
+    defaultColumns,
+    type GetTasksOptions,
+    JsonStringValueObject,
+    type TaskColumnOptions
+} from '@nao-todo/shared'
 
 /**
  * 转换 TagEntity 为 TagViewObject
@@ -52,10 +57,10 @@ export const tagPreferenceEntityToViewObject = (
     vo.id = tagPreferenceEntity.id
     vo.tagId = tagPreferenceEntity.tagId
     vo.viewType = tagPreferenceEntity.viewType
-    const [getTasksOptions, err1] = jsonParse(tagPreferenceEntity.getTasksOptions)
-    vo.getTasksOptions = err1 !== null ? { limit: 20 } : getTasksOptions
-    const [columns, err2] = jsonParse(tagPreferenceEntity.columns)
-    vo.columns = err2 !== null ? defaultColumns : { ...defaultColumns, ...columns }
+    vo.getTasksOptions = tagPreferenceEntity.getTasksOptions.valueOr({
+        limit: 20
+    }) as GetTasksOptions
+    vo.columns = tagPreferenceEntity.columns.valueOr(defaultColumns) as TaskColumnOptions
     return vo
 }
 
@@ -74,8 +79,8 @@ export const tagPreferenceViewObjectToEntity = (
         tagPreferenceViewObject.deletedAt,
         tagPreferenceViewObject.tagId,
         tagPreferenceViewObject.viewType,
-        JSON.stringify(tagPreferenceViewObject.getTasksOptions),
-        JSON.stringify(tagPreferenceViewObject.columns)
+        JsonStringValueObject.CreateByObject(tagPreferenceViewObject.getTasksOptions),
+        JsonStringValueObject.CreateByObject(tagPreferenceViewObject.columns)
     )
 }
 
