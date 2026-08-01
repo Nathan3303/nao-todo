@@ -328,6 +328,28 @@ export interface LocaleMessages {
     'task.empty.project': string
     'task.empty.tag': string
     'task.error.loadFailed': string
+    'task.error.nameEmpty': string
+    'task.error.nameTooLong': string
+    'task.error.descTooLong': string
+    'task.error.stateInvalid': string
+    'task.error.priorityInvalid': string
+    'task.error.remindRepeatInvalid': string
+    'task.error.remindTimeFormatInvalid': string
+    'task.error.remindAtInvalid': string
+    'task.error.startAtInvalid': string
+    'task.error.endAtInvalid': string
+    'task.error.startAfterEnd': string
+    'task.error.givenUpAtInvalid': string
+    'task.error.givenUpBeforeStart': string
+    'task.error.snoozeDurationNotInteger': string
+    'task.error.snoozeDurationOutOfRange': string
+    'task.error.taskIdEmpty': string
+    'task.error.checkItemNameEmpty': string
+    'task.error.checkItemNameTooLong': string
+    'task.error.checkItemSortIdNegative': string
+    'task.error.checkItemNotFound': string
+    'task.error.commentContentEmpty': string
+    'task.error.commentContentTooLong': string
 
     // Calendar
     'calendar.today': string

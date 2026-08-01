@@ -172,7 +172,7 @@ const enUS: LocaleMessages = {
     'user.restoreFailed': 'Restore failed',
     'user.restorePasswordRequired': 'Please enter password',
     'user.restoreAgreeRequired': 'Please agree to restoration',
-    'user.cancelRestore': 'I don\'t want to restore, just use it.',
+    'user.cancelRestore': "I don't want to restore, just use it.",
 
     // Task
     'task.state.todo': 'To Do',
@@ -343,6 +343,28 @@ const enUS: LocaleMessages = {
     'task.empty.project': 'No tasks in this project',
     'task.empty.tag': 'No tasks under this tag',
     'task.error.loadFailed': 'Failed to load, please try again',
+    'task.error.nameEmpty': 'Task name cannot be empty',
+    'task.error.nameTooLong': 'Task name must be at most 128 characters',
+    'task.error.descTooLong': 'Task description must be at most 256 characters',
+    'task.error.stateInvalid': 'Invalid task state',
+    'task.error.priorityInvalid': 'Invalid task priority',
+    'task.error.remindRepeatInvalid': 'Invalid reminder repeat type',
+    'task.error.remindTimeFormatInvalid': 'Invalid reminder time format (expected HH:mm)',
+    'task.error.remindAtInvalid': 'Invalid reminder time',
+    'task.error.startAtInvalid': 'Invalid task start time',
+    'task.error.endAtInvalid': 'Invalid task end time',
+    'task.error.startAfterEnd': 'Task start time cannot be later than end time',
+    'task.error.givenUpAtInvalid': 'Invalid give-up time',
+    'task.error.givenUpBeforeStart': 'Give-up time cannot be earlier than task start time',
+    'task.error.snoozeDurationNotInteger': 'Snooze duration must be a whole number of minutes',
+    'task.error.snoozeDurationOutOfRange': 'Snooze duration must be between 1 and 1440 minutes',
+    'task.error.taskIdEmpty': 'Task ID cannot be empty',
+    'task.error.checkItemNameEmpty': 'Checklist item content cannot be empty',
+    'task.error.checkItemNameTooLong': 'Checklist item content must be at most 64 characters',
+    'task.error.checkItemSortIdNegative': 'Checklist item sort ID cannot be negative',
+    'task.error.checkItemNotFound': 'Checklist item not found',
+    'task.error.commentContentEmpty': 'Comment content cannot be empty',
+    'task.error.commentContentTooLong': 'Comment content is too long',
 
     // Calendar
     'calendar.today': 'Go to Today',
@@ -518,4 +540,3 @@ const enUS: LocaleMessages = {
 }
 
 export default enUS
-
