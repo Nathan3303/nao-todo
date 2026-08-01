@@ -6,7 +6,9 @@ import type { GoAsync, ResponseDataPagination, QueryOptionsValueObject } from '@
 
 /**
  * 任务领域服务
- * @description 任务领域服务类，用于处理任务的业务逻辑和数据操作。
+ * @description 当前仅承载「查询选项 → 仓储查询串」的转换。
+ *              跨实体的业务规则（如父子任务状态联动）后续在此扩展。
+ * @todo 若长期无跨实体规则，考虑与 TaskRepository 合并
  */
 export class TaskDomain {
     /**

@@ -4,6 +4,8 @@
 // } from '@nao-todo/infrastructure/backend/task'
 import type { GoAsync } from '@nao-todo/shared'
 import { TaskCheckItemRepository } from '../../domain/repositories'
+import { TaskErrorCode } from '../../domain/errors'
+import { UpdateTaskCheckItemValueObject } from '../../domain/valueobjects'
 import type {
     CreateTaskCheckItemViewObject,
     TaskCheckItemViewObject,
@@ -127,21 +129,19 @@ export class TaskCheckItemUseCase {
         // 获取被拖拽和目标事件
         const originalEvent = this.store.getCheckItem(originalId)
         const boundEvent = this.store.getCheckItem(boundId)
-        if (!originalEvent || !boundEvent) return '事件不存在'
+        if (!originalEvent || !boundEvent) return TaskErrorCode.CHECK_ITEM_NOT_FOUND
         // 如果拖拽到自己，不执行任何操作
         if (originalId === boundId) return null
         // 获取所有事件
         const allEvents = this.store.checkItems
         if (!allEvents) return null
-        // 处理 ref 类型的 events
-        const eventsValue = 'value' in allEvents ? (allEvents as any).value : allEvents
-        if (!eventsValue || eventsValue.length <= 1) return null
+        if (allEvents.length <= 1) return null
         // 按当前 sortId 排序
-        const sortedEvents = [...eventsValue].sort((a, b) => a.sortId - b.sortId)
+        const sortedEvents = [...allEvents].sort((a, b) => a.sortId - b.sortId)
         // 找到被拖拽和目标事件的索引
         const originalIndex = sortedEvents.findIndex((e) => e.id === originalId)
         const boundIndex = sortedEvents.findIndex((e) => e.id === boundId)
-        if (originalIndex === -1 || boundIndex === -1) return '事件不存在'
+        if (originalIndex === -1 || boundIndex === -1) return TaskErrorCode.CHECK_ITEM_NOT_FOUND
         // 创建临时数组用于计算相邻元素
         const tempEvents = [...sortedEvents]
         tempEvents.splice(originalIndex, 1)
@@ -156,12 +156,12 @@ export class TaskCheckItemUseCase {
         let prevEvent: TaskCheckItemViewObject | null = null
         let nextEvent: TaskCheckItemViewObject | null = null
         if (newIndex === 0) {
-            nextEvent = tempEvents[0]
+            nextEvent = tempEvents[0] ?? null
         } else if (newIndex === tempEvents.length) {
-            prevEvent = tempEvents[tempEvents.length - 1]
+            prevEvent = tempEvents[tempEvents.length - 1] ?? null
         } else {
-            prevEvent = tempEvents[newIndex - 1]
-            nextEvent = tempEvents[newIndex]
+            prevEvent = tempEvents[newIndex - 1] ?? null
+            nextEvent = tempEvents[newIndex] ?? null
         }
         // 计算新的 sortId - 使用浮动间隔
         let newSortId: number
@@ -218,16 +218,16 @@ export class TaskCheckItemUseCase {
         // 获取所有事件
         const allEvents = this.store.checkItems
         if (!allEvents) return null
-        const eventsValue = 'value' in allEvents ? (allEvents as any).value : allEvents
-        if (!eventsValue) return null
+        if (allEvents.length === 0) return null
         // 按当前 sortId 排序
-        const sortedEvents = [...eventsValue].sort((a, b) => a.sortId - b.sortId)
+        const sortedEvents = [...allEvents].sort((a, b) => a.sortId - b.sortId)
         // 找到被拖拽和目标事件的索引
         const originalIndex = sortedEvents.findIndex((e) => e.id === originalId)
         const boundIndex = sortedEvents.findIndex((e) => e.id === boundId)
-        if (originalIndex === -1 || boundIndex === -1) return '事件不存在'
+        if (originalIndex === -1 || boundIndex === -1) return TaskErrorCode.CHECK_ITEM_NOT_FOUND
         // 从原位置移除被拖拽事件
         const [movedEvent] = sortedEvents.splice(originalIndex, 1)
+        if (!movedEvent) return TaskErrorCode.CHECK_ITEM_NOT_FOUND
         // 计算新位置
         let newIndex = boundIndex
         if (originalIndex < boundIndex) {
@@ -245,18 +245,16 @@ export class TaskCheckItemUseCase {
         }))
         // 乐观更新本地
         this.store.updateCheckItems(eventsToUpdate)
-        // 构建 EventEntity 数组用于批量更新
-        const eventEntities = eventsToUpdate.map((event) => {
-            return {
-                id: event.id,
-                taskId: event.taskId,
-                name: event.name,
-                isDone: event.isDone,
-                sortId: event.sortId
-            }
+        // 构建更新值对象数组用于批量更新
+        const updateVOs = eventsToUpdate.map((event) => {
+            const vo = new UpdateTaskCheckItemValueObject(event.id)
+            vo.name = event.name
+            vo.isDone = event.isDone
+            vo.sortId = event.sortId
+            return vo
         })
         // 调用后端批量更新
-        const [batchResult, err] = await this.repo.batchUpdate(eventEntities as any)
+        const [batchResult, err] = await this.repo.batchUpdate(updateVOs)
         if (err !== null) return err
         // 使用后端返回的最新数据同步本地
         const updatedEvents = batchResult.map(taskCheckItemEntityToViewObject)

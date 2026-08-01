@@ -1,4 +1,6 @@
 import type { Go } from '@nao-todo/shared'
+import { CHECK_ITEM_NAME_MAX_LENGTH } from '../constants'
+import { TaskErrorCode } from '../errors'
 
 /**
  * CreateTaskCheckItemValueObject 创建任务检查项值对象
@@ -24,10 +26,10 @@ export class CreateTaskCheckItemValueObject {
      * @returns 验证结果
      */
     validate(): Go<void> {
-        if (!this.taskId) return '任务 ID不能为空'
-        if (!this.name) return '检查事项内容不能为空'
-        if (this.name.length > 64) return '检查事项内容最多 64 个字符'
+        if (!this.taskId) return TaskErrorCode.TASK_ID_EMPTY
+        if (!this.name) return TaskErrorCode.CHECK_ITEM_NAME_EMPTY
+        if (this.name.length > CHECK_ITEM_NAME_MAX_LENGTH)
+            return TaskErrorCode.CHECK_ITEM_NAME_TOO_LONG
         return null
     }
 }
-

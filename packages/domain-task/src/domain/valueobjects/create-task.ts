@@ -1,5 +1,16 @@
 import type { Go } from '@nao-todo/shared'
 import dayjs from 'dayjs'
+import {
+    TASK_DESC_MAX_LENGTH,
+    TASK_NAME_MAX_LENGTH,
+    TASK_PRIORITIES,
+    TASK_REMIND_REPEATS,
+    TASK_STATES,
+    type TaskPriority,
+    type TaskRemindRepeat,
+    type TaskState
+} from '../constants'
+import { TaskErrorCode } from '../errors'
 
 /**
  * 创建任务值对象
@@ -46,32 +57,33 @@ export class CreateTaskValueObject {
      * @returns 验证结果，如果验证通过则返回null，否则返回错误信息
      */
     validate(): Go<void> {
-        if (!this.name) return '任务名称不能为空'
-        if (this.name.length > 128) return '任务名称最多128个字符'
-        if (this.description && this.description.length > 256) return '任务描述最多256个字符'
-        if (this.state && !['todo', 'in-progress', 'done'].includes(this.state))
-            return '任务状态无效'
-        if (this.priority && !['low', 'medium', 'high'].includes(this.priority))
-            return '任务优先级无效'
+        if (!this.name) return TaskErrorCode.NAME_EMPTY
+        if (this.name.length > TASK_NAME_MAX_LENGTH) return TaskErrorCode.NAME_TOO_LONG
+        if (this.description && this.description.length > TASK_DESC_MAX_LENGTH)
+            return TaskErrorCode.DESC_TOO_LONG
+        if (this.state && !TASK_STATES.includes(this.state as TaskState))
+            return TaskErrorCode.STATE_INVALID
+        if (this.priority && !TASK_PRIORITIES.includes(this.priority as TaskPriority))
+            return TaskErrorCode.PRIORITY_INVALID
         if (
             this.remindRepeat &&
-            !['none', 'daily', 'weekly', 'monthly'].includes(this.remindRepeat)
+            !TASK_REMIND_REPEATS.includes(this.remindRepeat as TaskRemindRepeat)
         )
-            return '提醒重复类型无效'
+            return TaskErrorCode.REMIND_REPEAT_INVALID
         if (this.remindTime && !/^\d{2}:\d{2}$/.test(this.remindTime))
-            return '提醒时间格式无效（应为 HH:mm）'
+            return TaskErrorCode.REMIND_TIME_FORMAT_INVALID
         if (this.remindAt) {
             const remindAt = dayjs(this.remindAt)
-            if (!remindAt.isValid()) return '提醒时间无效'
+            if (!remindAt.isValid()) return TaskErrorCode.REMIND_AT_INVALID
         }
         if (this.endAt) {
             const endAt = dayjs(this.endAt)
-            if (!endAt.isValid()) return '任务结束时间无效'
+            if (!endAt.isValid()) return TaskErrorCode.END_AT_INVALID
         }
         if (this.startAt) {
             const startAt = dayjs(this.startAt)
-            if (!startAt.isValid()) return '任务开始时间无效'
-            if (startAt.isAfter(dayjs(this.endAt))) return '任务开始时间不能晚于结束时间'
+            if (!startAt.isValid()) return TaskErrorCode.START_AT_INVALID
+            if (startAt.isAfter(dayjs(this.endAt))) return TaskErrorCode.START_AFTER_END
         }
         return null
     }
@@ -96,5 +108,3 @@ export class CreateTaskValueObject {
         // console.log(this.startAt)
     }
 }
-
-

@@ -1,4 +1,6 @@
 import type { Go } from '@nao-todo/shared'
+import { COMMENT_CONTENT_MAX_CHARS } from '../constants'
+import { TaskErrorCode } from '../errors'
 
 /**
  * CreateTaskCommentValueObject 创建评论值对象
@@ -19,14 +21,12 @@ export class CreateTaskCommentValueObject {
      * @returns 校验结果
      */
     validate(): Go<void> {
-        if (!this.taskId) return '任务ID不能为空'
-        if (!this.content) return '评论内容不能为空'
+        if (!this.taskId) return TaskErrorCode.TASK_ID_EMPTY
+        if (!this.content) return TaskErrorCode.COMMENT_CONTENT_EMPTY
         const validCharPattern =
             /[\u4e00-\u9fa5\u3040-\u30ff\uac00-\ud7af\u0041-\u005a\u0061-\u007a\u1f300-\u1f5ff\u1f600-\u1f64f\u1f680-\u1f6ff\u2600-\u26ff\u2700-\u27bf]/g
         const charCount = (this.content.match(validCharPattern) || []).length
-        if (charCount >= 1000) return '评论内容过长'
+        if (charCount >= COMMENT_CONTENT_MAX_CHARS) return TaskErrorCode.COMMENT_CONTENT_TOO_LONG
         return null
     }
 }
-
-

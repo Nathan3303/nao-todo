@@ -1,5 +1,16 @@
-import { Entity } from '@nao-todo/shared'
+import { Entity, type Go } from '@nao-todo/shared'
 import dayjs from 'dayjs'
+import { SNOOZE_MAX_MINUTES, SNOOZE_MIN_MINUTES } from '../constants'
+import { TaskErrorCode } from '../errors'
+
+/**
+ * isGivenUpBy 判定是否已放弃
+ * @description 「什么算已放弃」的领域规则唯一来源，供实体与应用层共用
+ * @param givenUpAt 放弃时间
+ */
+export const isGivenUpBy = (givenUpAt: string | null | undefined): boolean => {
+    return dayjs(givenUpAt).isValid()
+}
 
 /**
  * TaskEntity 任务实体
@@ -39,7 +50,7 @@ export class TaskEntity extends Entity {
      * @description givenUpAt 为合法日期时视为已放弃
      */
     get isGivenUp(): boolean {
-        return dayjs(this.givenUpAt).isValid()
+        return isGivenUpBy(this.givenUpAt)
     }
 
     /**
@@ -56,5 +67,36 @@ export class TaskEntity extends Entity {
      */
     get isStarMarked(): boolean {
         return dayjs(this.starMarkAt).isValid()
+    }
+
+    /**
+     * isDone 是否已完成
+     */
+    get isDone(): boolean {
+        return this.state === 'done'
+    }
+
+    /**
+     * canSnooze 是否可稍后提醒
+     * @description 已删除、已归档、已放弃的任务不允许延迟提醒
+     */
+    get canSnooze(): boolean {
+        return !this.isDeleted && !this.isArchived && !this.isGivenUp
+    }
+
+    /**
+     * validateSnoozeDuration 校验稍后提醒时长
+     * @description 领域规则：必须为整数分钟，且落在允许区间内
+     * @param durationMinutes 延迟分钟数
+     * @returns 校验通过返回 null，否则返回领域错误码
+     */
+    static validateSnoozeDuration(durationMinutes: number): Go<void> {
+        if (!Number.isInteger(durationMinutes)) {
+            return TaskErrorCode.SNOOZE_DURATION_NOT_INTEGER
+        }
+        if (durationMinutes < SNOOZE_MIN_MINUTES || durationMinutes > SNOOZE_MAX_MINUTES) {
+            return TaskErrorCode.SNOOZE_DURATION_OUT_OF_RANGE
+        }
+        return null
     }
 }

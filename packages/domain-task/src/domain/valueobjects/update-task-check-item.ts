@@ -1,4 +1,6 @@
 import type { Go } from '@nao-todo/shared'
+import { CHECK_ITEM_NAME_MAX_LENGTH } from '../constants'
+import { TaskErrorCode } from '../errors'
 
 /**
  * UpdateTaskCheckItemValueObject 更新任务检查项值对象
@@ -20,9 +22,9 @@ export class UpdateTaskCheckItemValueObject {
      * @returns 验证结果
      */
     validate(): Go<void> {
-        if (this.name && this.name.length > 64) return '任务检查项名称最多 64 个字符'
-        if (this.sortId && this.sortId < 0) return '任务检查项排序 ID 不能小于 0'
+        if (this.name && this.name.length > CHECK_ITEM_NAME_MAX_LENGTH)
+            return TaskErrorCode.CHECK_ITEM_NAME_TOO_LONG
+        if (this.sortId && this.sortId < 0) return TaskErrorCode.CHECK_ITEM_SORT_ID_NEGATIVE
         return null
     }
 }
-

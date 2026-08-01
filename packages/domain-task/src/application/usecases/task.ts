@@ -5,13 +5,10 @@ import {
     type ResponseDataPagination
 } from '@nao-todo/shared'
 import dayjs from 'dayjs'
+import { isGivenUpBy, TaskEntity } from '../../domain/entities'
 import { TaskRepository } from '../../domain/repositories'
 import { TaskDomain } from '../../domain/services'
-import type {
-    CreateTaskViewObject,
-    TaskViewObject,
-    UpdateTaskViewObject
-} from '../viewobjects'
+import type { CreateTaskViewObject, TaskViewObject, UpdateTaskViewObject } from '../viewobjects'
 import type { TaskStore } from '../stores'
 import {
     createTaskViewObjectToValueObject,
@@ -151,7 +148,7 @@ export class TaskUseCase {
         // 更新内存数据（根据 givenUpAt 计算 isGivenUp）
         const storeUpdateData = { ...updateViewObject }
         if (storeUpdateData.givenUpAt !== undefined) {
-            storeUpdateData.isGivenUp = dayjs(storeUpdateData.givenUpAt).isValid()
+            storeUpdateData.isGivenUp = isGivenUpBy(storeUpdateData.givenUpAt)
         }
         this.taskStore.updateTask(id, storeUpdateData)
         // 返回成功
@@ -178,12 +175,13 @@ export class TaskUseCase {
     /**
      * 稍后提醒
      * @param id 任务ID
-     * @param durationMinutes 延迟分钟数（1-1440）
-     * @returns 新的提醒时间
+     * @param durationMinutes 延迟分钟数
+     * @returns 错误信息
      */
     async snooze(id: TaskViewObject['id'], durationMinutes: number): GoAsync<void> {
-        // 判断数据是否合法
-        if (durationMinutes < 1 || durationMinutes > 1440) return '延迟时间需在 1-1440 分钟之间'
+        // 时长合法性由领域层裁定
+        const invalidErr = TaskEntity.validateSnoozeDuration(durationMinutes)
+        if (invalidErr !== null) return invalidErr
         // 执行延迟提醒
         const [newRemindAt, err] = await this.taskRepo.snooze(id, durationMinutes)
         if (err !== null) return err

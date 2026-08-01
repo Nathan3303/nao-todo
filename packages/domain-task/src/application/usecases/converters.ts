@@ -2,12 +2,18 @@ import {
     CreateTaskCheckItemValueObject,
     CreateTaskCommentValueObject,
     CreateTaskValueObject,
+    DEFAULT_TASK_PRIORITY,
+    DEFAULT_TASK_STATE,
+    TASK_PRIORITIES,
+    TASK_STATES,
     TaskCheckItemEntity,
     TaskCommentEntity,
     TaskEntity,
     UpdateTaskCheckItemValueObject,
     UpdateTaskCommentValueObject,
-    UpdateTaskValueObject
+    UpdateTaskValueObject,
+    type TaskPriority,
+    type TaskState
 } from '../../domain'
 import type {
     CreateTaskCheckItemViewObject,
@@ -20,7 +26,6 @@ import type {
     UpdateTaskCommentViewObject,
     UpdateTaskViewObject
 } from '../viewobjects'
-import dayjs from 'dayjs'
 
 // --- Task ---
 
@@ -37,12 +42,12 @@ export const taskEntityToViewObject = (entity: TaskEntity): TaskViewObject => {
     taskViewObject.name = entity.name
     taskViewObject.description = entity.description
     taskViewObject.projectId = entity.projectId
-    taskViewObject.state = ['todo', 'in-progress', 'done'].includes(entity.state)
+    taskViewObject.state = TASK_STATES.includes(entity.state as TaskState)
         ? entity.state
-        : 'todo'
-    taskViewObject.priority = ['low', 'medium', 'high'].includes(entity.priority)
+        : DEFAULT_TASK_STATE
+    taskViewObject.priority = TASK_PRIORITIES.includes(entity.priority as TaskPriority)
         ? entity.priority
-        : 'low'
+        : DEFAULT_TASK_PRIORITY
     taskViewObject.tags = entity.tags || []
     taskViewObject.startAt = entity.startAt
     taskViewObject.endAt = entity.endAt
@@ -52,7 +57,7 @@ export const taskEntityToViewObject = (entity: TaskEntity): TaskViewObject => {
     taskViewObject.deletedAt = entity.deletedAt
     taskViewObject.givenUpAt = entity.givenUpAt
     taskViewObject.isStarMarked = entity.isStarMarked
-    taskViewObject.isDeleted = dayjs(entity.deletedAt).isValid()
+    taskViewObject.isDeleted = entity.isDeleted
     taskViewObject.isArchived = entity.isArchived
     taskViewObject.isGivenUp = entity.isGivenUp
     taskViewObject.remindAt = entity.remindAt || null
