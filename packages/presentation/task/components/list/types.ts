@@ -1,5 +1,5 @@
 import type { ComputedRef } from 'vue'
-import type { TaskViewObject, TaskTagViewObject } from '@nao-todo/domain-task/viewobjects'
+import type { TaskViewObject, TaskTagViewObject } from '@nao-todo/domain-task'
 import type { TaskColumnOptions, GetTasksSortOptions } from '@nao-todo/shared'
 
 export type TaskListProps = {

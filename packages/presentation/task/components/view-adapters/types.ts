@@ -1,5 +1,5 @@
-import type { TaskColumnOptions, TaskViewObject } from '@nao-todo/domain-task/viewobjects'
-import type { TaskProjectViewObject } from '@nao-todo/domain-task/viewobjects'
+import type { TaskColumnOptions } from '@nao-todo/shared'
+import type { TaskProjectViewObject, TaskViewObject } from '@nao-todo/domain-task'
 
 export type ViewAdapterNoTaskError = {
     image: string
@@ -11,7 +11,7 @@ export type ViewAdapterNoTaskError = {
 export type ViewAdapterPropsBase = {
     getNoTaskError: () => ViewAdapterNoTaskError | undefined
     getColumnLabel: (key: string) => string
-    getProjectName: (projectId: TaskProjectViewObject['id']) => string
+    getProjectName: (projectId: TaskProjectViewObject['id'] | null) => string
     showTaskDetails?: (taskId: TaskViewObject['id']) => void
     updateColumns: (key: keyof TaskColumnOptions, value: boolean) => void
     updateSortOptions: (field: string, order: string) => void

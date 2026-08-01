@@ -7,6 +7,7 @@
 ## 参考结构
 
 `packages/domain-task/` (已完成迁移) - 参照模板：
+
 ```
 domain-task/
 ├── package.json
@@ -108,21 +109,26 @@ domain-task/
 ## 关键注意事项
 
 ### Pomodoro 拆分 viewobjects.ts
+
 源文件 `packages/application/pomodoro/viewobjects.ts` 包含两类内容：
+
 - **Store 类型** (`PomodoroStore`, `PomodoroRecordStore`) → 移动到 `stores.ts`
 - **视图对象类型** (`PomodoroViewObject`, `CreatePomodoroViewObject`, `UpdatePomodoroViewObject`, `PomodoroTimerSettingViewObject`, `PomodoroRecordViewObject`, `CreatePomodoroRecordViewObject`, `GetPomodoroRecordsOptions`, `PomodoroType`) → 移动到 `viewobjects/pomodoro.ts`
 
 ### Built-in-project 结构差异
+
 - `repositories.ts` 和 `services.ts` 当前是平铺单文件，迁移时需改为目录形式（与 `domain-task` 一致）
 - 同样的 viewobjects.ts 拆分
 
 ### Import 路径更新
+
 新包内部使用相对路径或 `@nao-todo/domain-{name}`：
-- 旧: `from '@nao-todo/domain/pomodoro'` 
+
+- 旧: `from '@nao-todo/domain/pomodoro'`
 - 新: `from '@nao-todo/domain-pomodoro'`
 - 旧: `from '@nao-todo/domain/built-in-project'`
 - 新: `from '@nao-todo/domain-built-in-project'`
 
 ### viewobjects.ts 中的 GetPomodoroRecordsOptions
-注意：viewobjects.ts 中有 `GetPomodoroRecordsOptions` 类型，而 domain 层 types.ts 也有。检查后保留在 viewobjects 中（用于 store 查询选项），domain 层 types.ts 中的用于 value object 验证。
 
+注意：viewobjects.ts 中有 `GetPomodoroRecordsOptions` 类型，而 domain 层 types.ts 也有。检查后保留在 viewobjects 中（用于 store 查询选项），domain 层 types.ts 中的用于 value object 验证。

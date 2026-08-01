@@ -22,13 +22,13 @@
 
 ### 决策（用户确认）
 
-* **调用方策略**：在 timer/focus stores 中通过 setter 注入 `createRecord` 函数
+- **调用方策略**：在 timer/focus stores 中通过 setter 注入 `createRecord` 函数
 
-* **副作用处理**：`onRecordCreated` 保留在 Store 中（由新接口方法 `addRecord(record)` 触发）；`noteText` 重置移出（timer/focus stores 在 session start 时已调用 `setNoteText('')`，原 `addRecord` 中的重置冗余）
+- **副作用处理**：`onRecordCreated` 保留在 Store 中（由新接口方法 `addRecord(record)` 触发）；`noteText` 重置移出（timer/focus stores 在 session start 时已调用 `setNoteText('')`，原 `addRecord` 中的重置冗余）
 
-* **代码风格**：严格遵循现有项目代码风格（`// @state`/`// @action` 注释、arrow function、import 排序）
+- **代码风格**：严格遵循现有项目代码风格（`// @state`/`// @action` 注释、arrow function、import 排序）
 
-***
+---
 
 ## Proposed Changes
 
@@ -88,19 +88,19 @@ const addRecord = (record: PomodoroRecordViewObject) => {
 
 **说明**：
 
-* 去重检查（`recordsMap.value.has`）保持与 `addRecords` 一致的语义
+- 去重检查（`recordsMap.value.has`）保持与 `addRecords` 一致的语义
 
-* `onRecordCreated?.(record)` 仅在新增成功时触发（保持 loader subscriber 通知链路）
+- `onRecordCreated?.(record)` 仅在新增成功时触发（保持 loader subscriber 通知链路）
 
-* 移除 `noteText.value = ''`（用户决策：冗余）
+- 移除 `noteText.value = ''`（用户决策：冗余）
 
-* 移除 usecase 调用（Store 不再持有 usecase）
+- 移除 usecase 调用（Store 不再持有 usecase）
 
 #### 1.4 return 语句无需改动
 
 `addRecord` 名称不变，return 中 `addRecord` 引用仍然有效（指向新方法）。L287-L320 保持原样。
 
-***
+---
 
 ### 2. `packages/domain/pomodoro/utils/pomodoro.ts`
 
@@ -134,13 +134,13 @@ export const persistPomodoroRecord = (
 
 **说明**：
 
-* 参数名 `addRecord` → `createRecord`（语义对齐 usecase 方法名）
+- 参数名 `addRecord` → `createRecord`（语义对齐 usecase 方法名）
 
-* 返回类型从 `GoAsync<PomodoroRecordViewObject[]>` 改为 `GoAsync<PomodoroRecordViewObject>`（匹配 [PomodoroRecordUseCase.createRecord](file:///c:/Users/LEE19/Projects/nao-todo/packages/domain/pomodoro/usecases/pomodoro-record.ts#L37-L51) 的签名）
+- 返回类型从 `GoAsync<PomodoroRecordViewObject[]>` 改为 `GoAsync<PomodoroRecordViewObject>`（匹配 [PomodoroRecordUseCase.createRecord](file:///c:/Users/LEE19/Projects/nao-todo/packages/domain/pomodoro/usecases/pomodoro-record.ts#L37-L51) 的签名）
 
-* `.then(([, err]) => ...)` 解构不变（`GoAsync<T> = [T, Error | null]`，无论 T 是单个值还是数组，解构都成立）
+- `.then(([, err]) => ...)` 解构不变（`GoAsync<T> = [T, Error | null]`，无论 T 是单个值还是数组，解构都成立）
 
-***
+---
 
 ### 3. `packages/domain/pomodoro/stores/pomodoro-timer-store.ts`
 
@@ -152,10 +152,7 @@ export const persistPomodoroRecord = (
 
 ```typescript
 import type { GoAsync } from '@nao-todo/shared'
-import type {
-    CreatePomodoroRecordViewObject,
-    PomodoroRecordViewObject
-} from '../types'
+import type { CreatePomodoroRecordViewObject, PomodoroRecordViewObject } from '../types'
 ```
 
 （若 `pomodoro-timer-store.ts` 已有 `@nao-todo/shared` 的 import，则合并到该 import 中。）
@@ -173,7 +170,9 @@ let createRecordFn:
     | null = null
 
 const setCreateRecordFn = (
-    fn: ((createViewObject: CreatePomodoroRecordViewObject) => GoAsync<PomodoroRecordViewObject>) | null
+    fn:
+        | ((createViewObject: CreatePomodoroRecordViewObject) => GoAsync<PomodoroRecordViewObject>)
+        | null
 ) => {
     createRecordFn = fn
 }
@@ -183,19 +182,11 @@ const setCreateRecordFn = (
 
 ```typescript
 // Before:
-persistPomodoroRecord(
-    pomodoroStore.addRecord,
-    record,
-    '[Pomodoro] Failed to create record:'
-)
+persistPomodoroRecord(pomodoroStore.addRecord, record, '[Pomodoro] Failed to create record:')
 
 // After:
 if (createRecordFn) {
-    persistPomodoroRecord(
-        createRecordFn,
-        record,
-        '[Pomodoro] Failed to create record:'
-    )
+    persistPomodoroRecord(createRecordFn, record, '[Pomodoro] Failed to create record:')
 }
 ```
 
@@ -211,11 +202,7 @@ persistPomodoroRecord(
 
 // After:
 if (createRecordFn) {
-    persistPomodoroRecord(
-        createRecordFn,
-        record,
-        '[Pomodoro] Failed to create record on skip:'
-    )
+    persistPomodoroRecord(createRecordFn, record, '[Pomodoro] Failed to create record on skip:')
 }
 ```
 
@@ -248,7 +235,7 @@ return {
 
 **说明**：`if (createRecordFn)` 守卫处理 restore-from-storage 时（`usePomodoroTimerStore()` setup 阶段调用 `restoreFromStorage` → `handlePhaseComplete`）`createRecordFn` 尚未注入的场景。此为**预存在**的 broken 行为（原代码 `pomodoroStore.addRecord` 调用 undefined 的 `pomodoroRecordUseCase` 也会抛错），本次不修复，仅避免抛错。
 
-***
+---
 
 ### 4. `packages/domain/pomodoro/stores/pomodoro-focus-store.ts`
 
@@ -260,10 +247,7 @@ return {
 
 ```typescript
 import type { GoAsync } from '@nao-todo/shared'
-import type {
-    CreatePomodoroRecordViewObject,
-    PomodoroRecordViewObject
-} from '../types'
+import type { CreatePomodoroRecordViewObject, PomodoroRecordViewObject } from '../types'
 ```
 
 在 `Dependencies` 区块（L31-L34 附近）下方新增：
@@ -279,7 +263,9 @@ let createRecordFn:
     | null = null
 
 const setCreateRecordFn = (
-    fn: ((createViewObject: CreatePomodoroRecordViewObject) => GoAsync<PomodoroRecordViewObject>) | null
+    fn:
+        | ((createViewObject: CreatePomodoroRecordViewObject) => GoAsync<PomodoroRecordViewObject>)
+        | null
 ) => {
     createRecordFn = fn
 }
@@ -289,19 +275,11 @@ const setCreateRecordFn = (
 
 ```typescript
 // Before:
-persistPomodoroRecord(
-    pomodoroStore.addRecord,
-    record,
-    '[PomodoroFocus] Failed to create record:'
-)
+persistPomodoroRecord(pomodoroStore.addRecord, record, '[PomodoroFocus] Failed to create record:')
 
 // After:
 if (createRecordFn) {
-    persistPomodoroRecord(
-        createRecordFn,
-        record,
-        '[PomodoroFocus] Failed to create record:'
-    )
+    persistPomodoroRecord(createRecordFn, record, '[PomodoroFocus] Failed to create record:')
 }
 ```
 
@@ -326,7 +304,7 @@ return {
 }
 ```
 
-***
+---
 
 ### 5. `apps/web/src/components/pomodoro/use-pomodoro-page.ts`
 
@@ -366,7 +344,7 @@ focusStore.setCreateRecordFn(boundCreateRecord)
 
 **说明**：`.bind(usecase)` 确保 `this` 上下文正确（usecase 方法内访问 `this.store`、`this.repo`、`this.domain`）。
 
-***
+---
 
 ## Assumptions & Decisions
 
@@ -382,41 +360,40 @@ focusStore.setCreateRecordFn(boundCreateRecord)
 
 6. **代码风格**：所有新增代码遵循现有 `// @state`/`// @action`/`// @injected` 注释风格、arrow function 定义、section 分隔注释（`// ===...`）。
 
-***
+---
 
 ## Verification Steps
 
 1. **类型检查**：在仓库根目录运行 `pnpm typecheck`（或对应的 workspace 命令），确认无类型错误。重点检查：
 
-   * `pomodoro-records-store.ts` 无未使用 import、无 `pomodoroRecordUseCase` 引用
+    - `pomodoro-records-store.ts` 无未使用 import、无 `pomodoroRecordUseCase` 引用
 
-   * `pomodoro-timer-store.ts` 和 `pomodoro-focus-store.ts` 的 `setCreateRecordFn` 类型正确
+    - `pomodoro-timer-store.ts` 和 `pomodoro-focus-store.ts` 的 `setCreateRecordFn` 类型正确
 
-   * `use-pomodoro-page.ts` 的 `newPomodoroRecordUseCase(pomodoroStore)` 类型匹配（`pomodoroStore` 结构满足 `PomodoroRecordStore` 接口）
+    - `use-pomodoro-page.ts` 的 `newPomodoroRecordUseCase(pomodoroStore)` 类型匹配（`pomodoroStore` 结构满足 `PomodoroRecordStore` 接口）
 
 2. **运行时验证**：
 
-   * 启动 dev server，进入番茄钟页面
+    - 启动 dev server，进入番茄钟页面
 
-   * **倒计时模式**：开始专注 → 等待完成 → 确认记录列表新增一条记录（验证 `createRecordFn` 注入 + usecase.createRecord → store.addRecord → onRecordCreated → loader prepend）
+    - **倒计时模式**：开始专注 → 等待完成 → 确认记录列表新增一条记录（验证 `createRecordFn` 注入 + usecase.createRecord → store.addRecord → onRecordCreated → loader prepend）
 
-   * **正计时模式**：开始正计时 → 点击结束 → 确认记录列表新增一条记录
+    - **正计时模式**：开始正计时 → 点击结束 → 确认记录列表新增一条记录
 
-   * **跳过专注**：开始专注 → 点击跳过 → 确认部分时长记录被创建
+    - **跳过专注**：开始专注 → 点击跳过 → 确认部分时长记录被创建
 
-   * **分页加载**：滚动加载更多记录 → 确认 `addRecords` 去重正常
+    - **分页加载**：滚动加载更多记录 → 确认 `addRecords` 去重正常
 
 3. **回归验证**：
 
-   * 刷新页面后计时器状态恢复（`restoreFromStorage`）不抛错（即使 `createRecordFn` 未注入，`if` 守卫保护）
+    - 刷新页面后计时器状态恢复（`restoreFromStorage`）不抛错（即使 `createRecordFn` 未注入，`if` 守卫保护）
 
-   * 笔记输入在专注完成后清空（下次 start 时重置）
+    - 笔记输入在专注完成后清空（下次 start 时重置）
 
 4. **代码审查**：
 
-   * `pomodoro-records-store.ts` 中 grep `pomodoroRecordUseCase` 应无结果
+    - `pomodoro-records-store.ts` 中 grep `pomodoroRecordUseCase` 应无结果
 
-   * `pomodoro-records-store.ts` 中 grep `PomodoroUseCase` 应无结果
+    - `pomodoro-records-store.ts` 中 grep `PomodoroUseCase` 应无结果
 
-   * timer/focus stores 中 grep `pomodoroStore.addRecord` 应无结果（替换为 `createRecordFn`）
-
+    - timer/focus stores 中 grep `pomodoroStore.addRecord` 应无结果（替换为 `createRecordFn`）

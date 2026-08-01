@@ -8,7 +8,7 @@ export type ResponseDataPagination = {
 }
 
 // Backend api response type
-export type ResponseData<V = any> = {
+export type ResponseData<V = unknown> = {
     code: number
     message: string
     data: V

@@ -29,5 +29,5 @@ export const SelectableTagColors = [
     // 粉色系
     { value: '#8E4A5E', name: '玫瑰粉' },
     { value: '#8A4A60', name: '洋红' },
-    { value: '#9A5A6A', name: '粉紫' },
+    { value: '#9A5A6A', name: '粉紫' }
 ]

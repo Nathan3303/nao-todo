@@ -14,12 +14,12 @@ const isEditing = ref(false)
 const loading = ref(false)
 const deleting = ref(false)
 const isClamped = ref(true)
-const textRef = ref<any>()
+const textRef = ref<HTMLElement | undefined>()
 const isOverflowing = ref(false)
 
 const checkOverflow = () => {
     nextTick(() => {
-        const el = textRef.value?.$el as HTMLElement | undefined
+        const el = textRef.value as HTMLElement
         if (!el) return
         isOverflowing.value = el.scrollHeight > el.clientHeight
     })
@@ -122,4 +122,3 @@ const handleCancelEdit = () => {
 <style scoped>
 @import './row.css';
 </style>
-

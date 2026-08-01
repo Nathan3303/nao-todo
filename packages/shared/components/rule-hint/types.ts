@@ -5,4 +5,3 @@ export type RuleHintProps = {
     hidden?: boolean
     variant?: 'warning' | 'success' | 'error'
 }
-

@@ -169,5 +169,3 @@ export const parse2RelativeDate = (dateStrOrDayJs: string | dayjs.Dayjs) => {
 }
 
 export default date2RelativeDate
-
-

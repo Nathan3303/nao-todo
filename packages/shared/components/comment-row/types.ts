@@ -16,4 +16,3 @@ export type CommentRowEmits = {
     (event: 'delete', commentId: string): void
     (event: 'edit', commentId: string, newContent: string): void
 }
-

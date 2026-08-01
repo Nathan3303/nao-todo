@@ -22,4 +22,3 @@ const info = computed(() => {
     flex: 1;
 }
 </style>
-

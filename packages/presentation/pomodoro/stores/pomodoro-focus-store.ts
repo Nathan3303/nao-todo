@@ -3,7 +3,10 @@ import { useTimerDriver } from '@nao-todo/shared'
 import { nanoid } from 'nanoid'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { CreatePomodoroRecordViewObject, PomodoroRecordViewObject } from '@nao-todo/domain-pomodoro'
+import type {
+    CreatePomodoroRecordViewObject,
+    PomodoroRecordViewObject
+} from '@nao-todo/domain-pomodoro'
 import {
     buildPomodoroRecord,
     clearFocusSnapshot,
@@ -44,9 +47,13 @@ export const usePomodoroFocusStore = defineStore('PomodoroFocusStore', () => {
     // ========================================================================
     // Internal Engine State（plain variables，非响应式）
     // ========================================================================
-    let createRecordFn: ((record: CreatePomodoroRecordViewObject) => GoAsync<PomodoroRecordViewObject[]>) | null = null
+    let createRecordFn:
+        | ((record: CreatePomodoroRecordViewObject) => GoAsync<PomodoroRecordViewObject[]>)
+        | null = null
 
-    const setCreateRecordFn = (fn: ((record: CreatePomodoroRecordViewObject) => GoAsync<PomodoroRecordViewObject[]>) | null) => {
+    const setCreateRecordFn = (
+        fn: ((record: CreatePomodoroRecordViewObject) => GoAsync<PomodoroRecordViewObject[]>) | null
+    ) => {
         createRecordFn = fn
     }
     let startTimestamp = 0

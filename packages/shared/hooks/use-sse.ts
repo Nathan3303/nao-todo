@@ -10,11 +10,7 @@ export const useSSE = (url: string) => {
         eventSource = null
     }
 
-    const connect = (
-        uri: string,
-        messageHandler: MessageHandler,
-        errorHandler?: ErrorHandler
-    ) => {
+    const connect = (uri: string, messageHandler: MessageHandler, errorHandler?: ErrorHandler) => {
         if (eventSource) return
 
         eventSource = new EventSource(url + uri)

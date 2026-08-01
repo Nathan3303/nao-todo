@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import type { TaskViewObject } from '@nao-todo/domain-task/viewobjects'
+import type { TaskViewObject } from '@nao-todo/domain-task'
 
 const useKanbanDragger = (
     onDrop?: (taskId: TaskViewObject['id'], category: TaskViewObject['state']) => void
@@ -21,6 +21,7 @@ const useKanbanDragger = (
                 node = node.parentNode as HTMLElement
             }
         }
+        return undefined
     }
 
     const getTargetNode = (node: HTMLElement) => {
@@ -32,6 +33,7 @@ const useKanbanDragger = (
                 node = node.parentNode as HTMLElement
             }
         }
+        return undefined
     }
 
     const handleDragStart = (event: DragEvent) => {

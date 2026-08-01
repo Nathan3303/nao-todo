@@ -4,7 +4,7 @@ import { TaskDateSelector } from '../../date-selector'
 import type { TaskRemindSetterUpdateVO } from '../../remind-setter/types'
 import dayjs from 'dayjs'
 import { inject } from 'vue'
-import type { TaskViewObject, UpdateTaskViewObject } from '@nao-todo/application'
+import type { TaskViewObject, UpdateTaskViewObject } from '@nao-todo/domain-task'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context'
 
 const { vo, closeDetails, updateTaskDetails } = inject(TASK_DETAILS_CONTEXT_KEY)!

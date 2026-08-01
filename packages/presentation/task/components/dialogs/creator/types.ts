@@ -1,6 +1,5 @@
 import type { DialogManager, Subscriber } from '@nao-todo/shared'
-import type { TaskUseCase } from '@nao-todo/domain-task/usecases'
-import type { TaskProjectViewObject, TaskTagViewObject } from '@nao-todo/domain-task/viewobjects'
+import type { TaskUseCase, TaskProjectViewObject, TaskTagViewObject } from '@nao-todo/domain-task'
 
 // 任务创建器对话框属性
 export type TaskCreatorDialogProps = {
@@ -10,4 +9,3 @@ export type TaskCreatorDialogProps = {
     avaliableTags: TaskTagViewObject[]
     avaliableProjects: TaskProjectViewObject[]
 }
-

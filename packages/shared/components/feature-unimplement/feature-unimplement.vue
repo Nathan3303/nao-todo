@@ -15,4 +15,3 @@ const emit = defineEmits(['back'])
 </template>
 
 <style scoped></style>
-

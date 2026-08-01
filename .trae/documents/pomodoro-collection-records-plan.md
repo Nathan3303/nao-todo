@@ -20,17 +20,17 @@ handleSelect(id) → loadRecords(pomodoroId, page, limit)
 
 ### 已具备（直接复用，无需改动）
 
-* **查询选项已含 pomodoroId**：`GetPomodoroRecordsOptions.pomodoroId?: string | null`（[viewobjects.ts L68-L79](file:///home/nathan/Projects/nao-todo/packages/usecases/pomodoro/viewobjects.ts#L68-L79)）。
+- **查询选项已含 pomodoroId**：`GetPomodoroRecordsOptions.pomodoroId?: string | null`（[viewobjects.ts L68-L79](file:///home/nathan/Projects/nao-todo/packages/usecases/pomodoro/viewobjects.ts#L68-L79)）。
 
-* **usecase 查询方法**：`PomodoroRecordUseCase.getRecords(options)` 返回 `{ recordIds, pagination }`，内部调用 `domain.listRecord` 并把视图对象写入注入的 store（[pomodoro-record.ts L63-L76](file:///home/nathan/Projects/nao-todo/packages/usecases/pomodoro/pomodoro-record.ts#L63-L76)）。
+- **usecase 查询方法**：`PomodoroRecordUseCase.getRecords(options)` 返回 `{ recordIds, pagination }`，内部调用 `domain.listRecord` 并把视图对象写入注入的 store（[pomodoro-record.ts L63-L76](file:///home/nathan/Projects/nao-todo/packages/usecases/pomodoro/pomodoro-record.ts#L63-L76)）。
 
-* **domain / repo**：`PomodoroDomain.listRecord` → `PomodoroRecordRepoImpl.list`（`GET /pomodoro-records/?<query>`，成功码 `70030`，返回 `pagination`）（[services/pomodoro.ts L56-L63](file:///home/nathan/Projects/nao-todo/packages/domain/pomodoro/services/pomodoro.ts#L56-L63)、[pomodoro-record-repo-impl.ts L79-L99](file:///home/nathan/Projects/nao-todo/packages/infrastructure/backend/pomodoro/pomodoro-record-repo-impl.ts#L79-L99)）。
+- **domain / repo**：`PomodoroDomain.listRecord` → `PomodoroRecordRepoImpl.list`（`GET /pomodoro-records/?<query>`，成功码 `70030`，返回 `pagination`）（[services/pomodoro.ts L56-L63](file:///home/nathan/Projects/nao-todo/packages/domain/pomodoro/services/pomodoro.ts#L56-L63)、[pomodoro-record-repo-impl.ts L79-L99](file:///home/nathan/Projects/nao-todo/packages/infrastructure/backend/pomodoro/pomodoro-record-repo-impl.ts#L79-L99)）。
 
-* **usecase 工厂**：`newPomodoroRecordUseCase(store)`，`store` 仅需 `{ addRecord, addRecords }`（[pomodoro-record.ts L84-L90](file:///home/nathan/Projects/nao-todo/packages/usecases/pomodoro/pomodoro-record.ts#L84-L90)、[store.ts](file:///home/nathan/Projects/nao-todo/packages/usecases/pomodoro/store.ts)）。
+- **usecase 工厂**：`newPomodoroRecordUseCase(store)`，`store` 仅需 `{ addRecord, addRecords }`（[pomodoro-record.ts L84-L90](file:///home/nathan/Projects/nao-todo/packages/usecases/pomodoro/pomodoro-record.ts#L84-L90)、[store.ts](file:///home/nathan/Projects/nao-todo/packages/usecases/pomodoro/store.ts)）。
 
-* **Pager 组件**：`@nao-todo/components` 导出 `Pager`，props `{ page, total?, limit?, totalPages, simple?, disabled? }`，emits `pageChange(number)` / `perPageChange(number)`（[pager.vue](file:///home/nathan/Projects/nao-todo/packages/components/pager/pager.vue)、[types.ts](file:///home/nathan/Projects/nao-todo/packages/components/pager/types.ts)）。已在 [table-view-adapter.vue L87-L94](file:///home/nathan/Projects/nao-todo/apps/web/src/layouts/app/view-adapters/table-view-adapter/table-view-adapter.vue#L87-L94) 中作为分页器示范使用。
+- **Pager 组件**：`@nao-todo/components` 导出 `Pager`，props `{ page, total?, limit?, totalPages, simple?, disabled? }`，emits `pageChange(number)` / `perPageChange(number)`（[pager.vue](file:///home/nathan/Projects/nao-todo/packages/components/pager/pager.vue)、[types.ts](file:///home/nathan/Projects/nao-todo/packages/components/pager/types.ts)）。已在 [table-view-adapter.vue L87-L94](file:///home/nathan/Projects/nao-todo/apps/web/src/layouts/app/view-adapters/table-view-adapter/table-view-adapter.vue#L87-L94) 中作为分页器示范使用。
 
-* **记录行组件**：`PomodoroRecordsCompRow`（[components/pomodoro/records/row.vue](file:///home/nathan/Projects/nao-todo/apps/web/src/components/pomodoro/records/row.vue)），入参 `{ record: PomodoroRecordViewObject }`，可复用于单条记录渲染。
+- **记录行组件**：`PomodoroRecordsCompRow`（[components/pomodoro/records/row.vue](file:///home/nathan/Projects/nao-todo/apps/web/src/components/pomodoro/records/row.vue)），入参 `{ record: PomodoroRecordViewObject }`，可复用于单条记录渲染。
 
 ### 缺口（需新增）
 
@@ -39,11 +39,11 @@ handleSelect(id) → loadRecords(pomodoroId, page, limit)
 
 ### 关键约定
 
-* **不复用今日记录的** **`usePomodoroRecordLoader`**：该 loader 面向 `nue-infinite-scroll` 无限滚动（追加式），而本需求为**显式分页器（每页替换式）**。故在 composable 内自管分页状态（page/limit/total/maxPage）。
+- **不复用今日记录的** **`usePomodoroRecordLoader`**：该 loader 面向 `nue-infinite-scroll` 无限滚动（追加式），而本需求为**显式分页器（每页替换式）**。故在 composable 内自管分页状态（page/limit/total/maxPage）。
 
-* **记录默认排序**：`sort: 'startAt:desc'`（与今日记录一致）。
+- **记录默认排序**：`sort: 'startAt:desc'`（与今日记录一致）。
 
-* **每页默认 20 条**（Pager 默认 limit）。
+- **每页默认 20 条**（Pager 默认 limit）。
 
 ## Proposed Changes
 
@@ -51,136 +51,143 @@ handleSelect(id) → loadRecords(pomodoroId, page, limit)
 
 在现有基础上新增「专注记录」加载与分页逻辑：
 
-* **新增导入**：
+- **新增导入**：
 
-  * `watch`（vue）。
+    - `watch`（vue）。
 
-  * `newPomodoroRecordUseCase`、`PomodoroRecordViewObject`（`@nao-todo/usecases/pomodoro`）。
+    - `newPomodoroRecordUseCase`、`PomodoroRecordViewObject`（`@nao-todo/usecases/pomodoro`）。
 
-* **本地记录 store（composable 内闭包）**：
+- **本地记录 store（composable 内闭包）**：
 
-  ```ts
-  const recordsMap = ref(new Map<string, PomodoroRecordViewObject>())
-  const recordUseCase = newPomodoroRecordUseCase({
-      addRecord: (r) => { recordsMap.value.set(r.id, r) },
-      addRecords: (rs) => { rs.forEach((r) => recordsMap.value.set(r.id, r)) }
-  })
-  ```
+    ```ts
+    const recordsMap = ref(new Map<string, PomodoroRecordViewObject>())
+    const recordUseCase = newPomodoroRecordUseCase({
+        addRecord: (r) => {
+            recordsMap.value.set(r.id, r)
+        },
+        addRecords: (rs) => {
+            rs.forEach((r) => recordsMap.value.set(r.id, r))
+        }
+    })
+    ```
 
-  说明：`getRecords` 会把当前页视图对象写入该 map，并返回 `recordIds`；页面按 `recordIds` 映射展示。
+    说明：`getRecords` 会把当前页视图对象写入该 map，并返回 `recordIds`；页面按 `recordIds` 映射展示。
 
-* **分页与状态**：
+- **分页与状态**：
 
-  ```ts
-  const recordLoading = ref(false)
-  const recordPage = ref(1)
-  const recordLimit = ref(20)
-  const recordTotalPages = ref(1)
-  const recordTotal = ref(0)
-  const currentRecordIds = ref<string[]>([])
-  const records = computed(() =>
-      currentRecordIds.value
-          .map((id) => recordsMap.value.get(id))
-          .filter((r): r is PomodoroRecordViewObject => Boolean(r))
-  )
-  ```
+    ```ts
+    const recordLoading = ref(false)
+    const recordPage = ref(1)
+    const recordLimit = ref(20)
+    const recordTotalPages = ref(1)
+    const recordTotal = ref(0)
+    const currentRecordIds = ref<string[]>([])
+    const records = computed(() =>
+        currentRecordIds.value
+            .map((id) => recordsMap.value.get(id))
+            .filter((r): r is PomodoroRecordViewObject => Boolean(r))
+    )
+    ```
 
-* **加载方法**（每页替换）：
+- **加载方法**（每页替换）：
 
-  ```ts
-  const loadRecords = async () => {
-      if (!selectedId.value) return
-      recordLoading.value = true
-      try {
-          const [res, err] = await recordUseCase.getRecords({
-              pomodoroId: selectedId.value,
-              page: recordPage.value,
-              limit: recordLimit.value,
-              sort: 'startAt:desc'
-          })
-          if (err !== null) { console.warn(unwrapError(err)); return }
-          currentRecordIds.value = res.recordIds
-          if (res.pagination) {
-              recordTotal.value = res.pagination.total
-              recordTotalPages.value = res.pagination.maxPage
-          }
-      } finally {
-          recordLoading.value = false
-      }
-  }
-  ```
+    ```ts
+    const loadRecords = async () => {
+        if (!selectedId.value) return
+        recordLoading.value = true
+        try {
+            const [res, err] = await recordUseCase.getRecords({
+                pomodoroId: selectedId.value,
+                page: recordPage.value,
+                limit: recordLimit.value,
+                sort: 'startAt:desc'
+            })
+            if (err !== null) {
+                console.warn(unwrapError(err))
+                return
+            }
+            currentRecordIds.value = res.recordIds
+            if (res.pagination) {
+                recordTotal.value = res.pagination.total
+                recordTotalPages.value = res.pagination.maxPage
+            }
+        } finally {
+            recordLoading.value = false
+        }
+    }
+    ```
 
-* **分页事件处理**：
+- **分页事件处理**：
 
-  ```ts
-  const handleRecordPageChange = (page: number) => {
-      recordPage.value = page
-      loadRecords()
-  }
-  const handleRecordPerPageChange = (limit: number) => {
-      recordLimit.value = limit
-      recordPage.value = 1
-      loadRecords()
-  }
-  ```
+    ```ts
+    const handleRecordPageChange = (page: number) => {
+        recordPage.value = page
+        loadRecords()
+    }
+    const handleRecordPerPageChange = (limit: number) => {
+        recordLimit.value = limit
+        recordPage.value = 1
+        loadRecords()
+    }
+    ```
 
-* **选中项变化时重新加载**（`handleSelect` 保持不变，新增 watch）：
+- **选中项变化时重新加载**（`handleSelect` 保持不变，新增 watch）：
 
-  ```ts
-  watch(selectedId, (id) => {
-      if (!id) return
-      recordPage.value = 1
-      currentRecordIds.value = []
-      loadRecords()
-  })
-  ```
+    ```ts
+    watch(selectedId, (id) => {
+        if (!id) return
+        recordPage.value = 1
+        currentRecordIds.value = []
+        loadRecords()
+    })
+    ```
 
-  说明：`loadData` 中默认选中第一项会触发该 watch，自动加载首个 pomodoro 的记录。为覆盖「onMounted 默认选中」场景，watch 使用 `{ immediate: false }`（默认选中通过赋值触发 watch）。
+    说明：`loadData` 中默认选中第一项会触发该 watch，自动加载首个 pomodoro 的记录。为覆盖「onMounted 默认选中」场景，watch 使用 `{ immediate: false }`（默认选中通过赋值触发 watch）。
 
-* **return 追加**：`records`、`recordLoading`、`recordPage`、`recordLimit`、`recordTotal`、`recordTotalPages`、`handleRecordPageChange`、`handleRecordPerPageChange`。
+- **return 追加**：`records`、`recordLoading`、`recordPage`、`recordLimit`、`recordTotal`、`recordTotalPages`、`handleRecordPageChange`、`handleRecordPerPageChange`。
 
 **why**：记录查询走已存在的 `PomodoroRecordUseCase` 执行链，仅在页面 composable 层管理显式分页状态，符合「点击展示详情时按 pomodoroId 查询并分页」的需求。
 
 ### 2. 改造 `apps/web/src/layouts/pomodoro/collection/index.vue`
 
-* **`<script setup>`**：
+- **`<script setup>`**：
 
-  * 从 `usePomodoroCollection()` 解构新增返回值。
+    - 从 `usePomodoroCollection()` 解构新增返回值。
 
-  * 引入 `import { Pager } from '@nao-todo/components'`。
+    - 引入 `import { Pager } from '@nao-todo/components'`。
 
-  * 引入 `import PomodoroRecordsCompRow from '@/components/pomodoro/records/row.vue'` 复用记录行。
+    - 引入 `import PomodoroRecordsCompRow from '@/components/pomodoro/records/row.vue'` 复用记录行。
 
-* **详细区域模板**：在现有基本信息卡片（`detail-card`）下方、`v-if="selectedPomodoro"` 分支内新增「专注记录」区块：
+- **详细区域模板**：在现有基本信息卡片（`detail-card`）下方、`v-if="selectedPomodoro"` 分支内新增「专注记录」区块：
 
-  * 小标题「专注记录」+ 总数 `共 {{ recordTotal }} 条`。
+    - 小标题「专注记录」+ 总数 `共 {{ recordTotal }} 条`。
 
-  * 列表：
+    - 列表：
 
-    * `recordLoading` 时显示「加载中...」。
+        - `recordLoading` 时显示「加载中...」。
 
-    * `!recordLoading && records.length === 0` 显示空态「暂无专注记录」。
+        - `!recordLoading && records.length === 0` 显示空态「暂无专注记录」。
 
-    * 否则 `v-for` 渲染 `PomodoroRecordsCompRow`（`:record="record"`）。
+        - 否则 `v-for` 渲染 `PomodoroRecordsCompRow`（`:record="record"`）。
 
-  * 底部分页器：
+    - 底部分页器：
 
-    ```html
-    <pager
-        :page="recordPage"
-        :limit="recordLimit"
-        :total="recordTotal"
-        :total-pages="recordTotalPages"
-        :disabled="recordLoading"
-        simple
-        @page-change="handleRecordPageChange"
-        @per-page-change="handleRecordPerPageChange"
-    />
-    ```
+        ```html
+        <pager
+            :page="recordPage"
+            :limit="recordLimit"
+            :total="recordTotal"
+            :total-pages="recordTotalPages"
+            :disabled="recordLoading"
+            simple
+            @page-change="handleRecordPageChange"
+            @per-page-change="handleRecordPerPageChange"
+        />
+        ```
 
-    （`simple` 模式更适合详情窄栏；如空间足够可去掉 `simple`。默认采用 `simple`。）
+        （`simple` 模式更适合详情窄栏；如空间足够可去掉 `simple`。默认采用 `simple`。）
 
-* **`<style scoped>`**：为记录区块新增样式（标题、列表滚动、分页器对齐），沿用现有 `nue-div--xxx` BEM 风格与 `--nue-*` 变量；记录列表设 `overflow-y: auto`，与详情卡片共处纵向布局。
+- **`<style scoped>`**：为记录区块新增样式（标题、列表滚动、分页器对齐），沿用现有 `nue-div--xxx` BEM 风格与 `--nue-*` 变量；记录列表设 `overflow-y: auto`，与详情卡片共处纵向布局。
 
 **why**：满足「详情除基本信息外，展示该常用专注的分页专注记录」，复用现成记录行组件与 Pager 保持 UI 一致。
 
@@ -199,15 +206,16 @@ handleSelect(id) → loadRecords(pomodoroId, page, limit)
 1. **类型检查**：`npx vue-tsc --noEmit -p apps/web/tsconfig.json` 退出码 0（重点：`getRecords` 选项类型、Pager props/emits、记录 `Map` 类型收窄）。
 2. **运行时手测**：
 
-   * 进入 `/pomodoro/pomodoros`，默认选中第一条常用专注 → 详情区展示基本信息 + 下方「专注记录」列表首页（若有数据），显示总数。
+    - 进入 `/pomodoro/pomodoros`，默认选中第一条常用专注 → 详情区展示基本信息 + 下方「专注记录」列表首页（若有数据），显示总数。
 
-   * 点击其它常用专注 → 记录区重置到第 1 页并重新按该 `pomodoroId` 查询。
+    - 点击其它常用专注 → 记录区重置到第 1 页并重新按该 `pomodoroId` 查询。
 
-   * 点击分页器「下一页/上一页」→ 记录列表替换为对应页；`page`/`totalPages` 显示正确；请求 `GET /pomodoro-records/?...&pomodoroId=...&page=...&limit=...`。
+    - 点击分页器「下一页/上一页」→ 记录列表替换为对应页；`page`/`totalPages` 显示正确；请求 `GET /pomodoro-records/?...&pomodoroId=...&page=...&limit=...`。
 
-   * 修改「每页条数」→ 回到第 1 页并按新 limit 查询。
+    - 修改「每页条数」→ 回到第 1 页并按新 limit 查询。
 
-   * 无记录的常用专注 → 显示空态「暂无专注记录」，分页器 `totalPages=1` 且按钮禁用。
+    - 无记录的常用专注 → 显示空态「暂无专注记录」，分页器 `totalPages=1` 且按钮禁用。
+
 3. **回归**：常用专注列表加载、详情基本信息、timer/focus 页今日记录不受影响。
 
 ## 执行顺序
@@ -215,4 +223,3 @@ handleSelect(id) → loadRecords(pomodoroId, page, limit)
 1. 改造 `use-pomodoro-collection.ts`（记录加载 + 分页状态 + watch）。
 2. 改造 `collection/index.vue`（记录区块 + Pager + 样式）。
 3. `vue-tsc` 类型检查 + 手测。
-

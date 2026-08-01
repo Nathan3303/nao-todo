@@ -2,7 +2,7 @@ import { unwrapError } from '@nao-todo/shared'
 import { NueMessage } from 'nue-ui'
 import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import type { UpdateTaskViewObject } from '@nao-todo/domain-task/viewobjects'
+import type { UpdateTaskViewObject } from '@nao-todo/domain-task'
 import type { TaskRemindSetterUpdateVO } from '../../remind-setter'
 import type { TaskCreatorDialogProps } from './types'
 

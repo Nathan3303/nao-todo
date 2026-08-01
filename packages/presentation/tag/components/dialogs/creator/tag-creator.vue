@@ -8,7 +8,7 @@ import {
     type DialogInstanceType
 } from '@nao-todo/shared'
 import { computed, onMounted, ref } from 'vue'
-import type { TagViewObject } from '../../../types'
+import type { TagViewObject } from '@nao-todo/domain-tag'
 import { TagCreatorDialogProps } from './types'
 import useTagCreator from './use-tag-creator'
 

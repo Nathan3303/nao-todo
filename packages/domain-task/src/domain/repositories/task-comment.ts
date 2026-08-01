@@ -1,9 +1,6 @@
 import type { GoAsync } from '@nao-todo/shared'
 import type { TaskCommentEntity } from '../entities'
-import type {
-    CreateTaskCommentValueObject,
-    UpdateTaskCommentValueObject
-} from '../valueobjects'
+import type { CreateTaskCommentValueObject, UpdateTaskCommentValueObject } from '../valueobjects'
 
 export interface TaskCommentRepository {
     /**
@@ -42,4 +39,3 @@ export interface TaskCommentRepository {
      */
     list(taskId: string): GoAsync<TaskCommentEntity[]>
 }
-

@@ -54,18 +54,22 @@ type BatchUpdateEventRes struct {
 ## 实现步骤
 
 ### 1. 更新 EventDomain 接口
+
 - 添加 `batchUpdate` 方法，对应后端 BatchUpdate API
 
 ### 2. 更新 EventStore 接口
+
 - 确保 `events` 可访问
 - 确保 `setEvents` 方法可用
 
 ### 3. 重写 EventUseCase.resort 方法
+
 - 实现新的排序算法
 - 调用 EventDomain.batchUpdate
 - 使用后端返回的数据更新本地状态
 
 ### 4. 更新 EventRepository 实现
+
 - 实现 batchUpdate 方法调用后端 API
 
 ## 文件修改清单
@@ -89,7 +93,7 @@ if (err !== null) return err
 // 3. 使用后端返回的数据更新本地
 const updatedEvents = batchResult.Events.map(eventEntityToViewObject)
 this.store.setEvents(updatedEvents)
-this.store.setEventIds(updatedEvents.map(e => e.id))
+this.store.setEventIds(updatedEvents.map((e) => e.id))
 ```
 
 ### 边界情况处理
@@ -98,4 +102,3 @@ this.store.setEventIds(updatedEvents.map(e => e.id))
 2. 事件不存在 - 返回错误
 3. 单个事件 - 不执行排序
 4. 后端返回错误 - 直接返回错误，不修改本地状态
-

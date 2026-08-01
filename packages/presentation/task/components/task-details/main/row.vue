@@ -19,4 +19,3 @@ defineProps<{
         </slot>
     </nue-div>
 </template>
-

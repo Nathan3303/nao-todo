@@ -11,7 +11,7 @@ import dayjs from 'dayjs'
 import { computed, onMounted, ref } from 'vue'
 import { TaskDateSelector, TaskProjectSelector, TaskTagBar } from '../../'
 import { TaskPrioritySelectOptions, TaskStateSelectOptions } from '../../../constants'
-import type { CreateTaskViewObject, TaskViewObject } from '@nao-todo/application'
+import type { CreateTaskViewObject, TaskViewObject } from '@nao-todo/domain-task'
 import { TaskCreatorDialogProps } from './types'
 import useTaskCreator from './use-creator'
 
@@ -38,11 +38,11 @@ const isExpired = computed(() => {
     return states.state !== 'done' && dayjs(states.endAt).isBefore(dayjs())
 })
 
-const open = (createTaskOptions: CreateTaskViewObject) => {
+const open = <T = CreateTaskViewObject>(createTaskOptions?: T) => {
     clearInputsValue()
     if (createTaskOptions) {
         Object.keys(createTaskOptions).forEach((key) => {
-            const presetVal = createTaskOptions[key as keyof CreateTaskViewObject]
+            const presetVal = createTaskOptions[key as keyof T]
             if (!presetVal) return
             const targetKey = key as keyof typeof states
             if (targetKey in states) {
@@ -104,12 +104,14 @@ onMounted(() => dialogManager.register(TASK_CREATOR_DIALOG_KEY, { open, close })
                     <task-selector
                         :options="TaskStateSelectOptions"
                         :value="states.state"
-                        @change="(s: any) => (states.state = s as TaskViewObject['state'])"
+                        @change="(s: unknown) => (states.state = s as TaskViewObject['state'])"
                     />
                     <task-selector
                         :options="TaskPrioritySelectOptions"
                         :value="states.priority"
-                        @change="(p: any) => (states.priority = p as TaskViewObject['priority'])"
+                        @change="
+                            (p: unknown) => (states.priority = p as TaskViewObject['priority'])
+                        "
                     />
                     <nue-div flex="1" />
                     <task-project-selector
@@ -121,7 +123,7 @@ onMounted(() => dialogManager.register(TASK_CREATOR_DIALOG_KEY, { open, close })
                 <task-tag-bar
                     :available-tags="avaliableTags || []"
                     :task-tag-ids="states.tags || []"
-                    @update-tags="(_tags: any) => (states.tags = _tags)"
+                    @update-tags="(_tags: unknown) => (states.tags = _tags as string[])"
                     @create-tag="
                         (name: string) => dialogManager.open(TAG_CREATOR_DIALOG_KEY, { name })
                     "

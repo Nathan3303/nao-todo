@@ -4,7 +4,7 @@
 
 移除永久删除功能，优化删除和恢复功能，添加 loading 状态，使用 provide/inject 解耦。
 
-***
+---
 
 ## 当前架构分析
 
@@ -21,23 +21,23 @@ TasksViewDialogs (layouts/tasks/dialogs)
 
 ### 现有方法
 
-* **ProjectUseCase** (packages/application/web/usecases/project.ts)
+- **ProjectUseCase** (packages/application/web/usecases/project.ts)
 
-  * `delete(projectId)` - 删除项目（包含确认弹窗）
+    - `delete(projectId)` - 删除项目（包含确认弹窗）
 
-  * `archive(projectId)` - 归档项目（包含确认弹窗）
+    - `archive(projectId)` - 归档项目（包含确认弹窗）
 
-* **ProjectDomain** (packages/domain/project/services.ts)
+- **ProjectDomain** (packages/domain/project/services.ts)
 
-  * `remove(projectId)` - 执行删除
+    - `remove(projectId)` - 执行删除
 
-  * `restore(projectId)` - 执行恢复
+    - `restore(projectId)` - 执行恢复
 
-  * `archive(projectId)` - 执行归档
+    - `archive(projectId)` - 执行归档
 
-  * `unarchive(projectId)` - 取消归档
+    - `unarchive(projectId)` - 取消归档
 
-***
+---
 
 ## 详细实施步骤
 
@@ -71,7 +71,7 @@ async unarchive(projectId: ProjectViewObject['id']): GoAsync<void> {
 }
 ```
 
-***
+---
 
 ### 第二步：优化 ProjectDeleteButton 组件
 
@@ -96,7 +96,7 @@ export type ProjectDeleteButtonProps = {
 >
 ```
 
-***
+---
 
 ### 第三步：重构 ProjectBoard 组件
 
@@ -109,7 +109,7 @@ export type ProjectDeleteButtonProps = {
 
 **方案选择：** 保持 emit 方式，由父组件处理 loading 状态（推荐，更解耦）
 
-***
+---
 
 ### 第四步：重构 ProjectManager 组件
 
@@ -123,7 +123,7 @@ export type ProjectDeleteButtonProps = {
 
 修改 `types.ts`：
 
-* 移除 `hardDeleteProject` 事件
+- 移除 `hardDeleteProject` 事件
 
 修改 `index.vue`：
 
@@ -172,20 +172,20 @@ const handleRestoreProject = async (projectId: string) => {
 
 **或：** 修改 ProjectBoard 支持传递 loading 状态到 slot scope
 
-***
+---
 
 ### 第五步：清理相关代码
 
 **文件：**
 
-* `apps/web/src/components/tasks/dialogs/project-manager/use-project-manager.ts`
+- `apps/web/src/components/tasks/dialogs/project-manager/use-project-manager.ts`
 
-* `apps/web/src/components/tasks/dialogs/project-manager/types.ts`
+- `apps/web/src/components/tasks/dialogs/project-manager/types.ts`
 
 1. 移除 `hardDeleteProject` 相关的处理函数和类型定义
 2. 保持 `use-project-manager.ts` 专注于筛选和 tab 管理
 
-***
+---
 
 ## 关键设计决策
 
@@ -194,44 +194,44 @@ const handleRestoreProject = async (projectId: string) => {
 **选择：** 在 `ProjectManager` 中管理，而不是 `ProjectBoard` 中
 **理由：**
 
-* ProjectManager 已经有 inject 的 projectUseCase
+- ProjectManager 已经有 inject 的 projectUseCase
 
-* 更符合职责分离：ProjectBoard 负责展示，ProjectManager 负责业务逻辑
+- 更符合职责分离：ProjectBoard 负责展示，ProjectManager 负责业务逻辑
 
-* 避免在 ProjectBoard 中引入业务逻辑依赖
+- 避免在 ProjectBoard 中引入业务逻辑依赖
 
 ### 2. 移除确认弹窗
 
 **选择：** 完全移除，因为用户在 ProjectManager 对话框中已经是明确的管理操作
 **理由：**
 
-* 用户在 ProjectManager 中的操作意图明确
+- 用户在 ProjectManager 中的操作意图明确
 
-* 与现有的警告提示配合，已有足够的提醒
+- 与现有的警告提示配合，已有足够的提醒
 
-* 减少操作步骤，提升用户体验
+- 减少操作步骤，提升用户体验
 
 ### 3. 数据传递方式
 
 **选择：** 保持 emit 事件机制，在 ProjectManager 中处理
 **理由：** 保持组件解耦，ProjectBoard 和 ProjectCard 不需要知道具体的业务逻辑
 
-***
+---
 
 ## 文件修改清单
 
-| 文件路径                                                                           | 修改内容                                 |
-| ------------------------------------------------------------------------------ | ------------------------------------ |
-| `packages/application/web/usecases/project.ts`                                 | 添加 restore/unarchive，移除确认弹窗          |
-| `packages/components/project-delete-button/types.ts`                           | 添加 loading prop 类型                   |
-| `packages/components/project-delete-button/project-delete-button.vue`          | 添加 loading 状态渲染                      |
-| `packages/components/project-board/types.ts`                                   | 移除 deleteProjectPermanently 事件       |
-| `packages/components/project-board/project-board.vue`                          | 移除永久删除按钮，优化 slot 支持 loading 传递       |
-| `apps/web/src/components/tasks/dialogs/project-manager/types.ts`               | 移除 hardDeleteProject 事件              |
-| `apps/web/src/components/tasks/dialogs/project-manager/use-project-manager.ts` | 移除 hardDeleteProject 处理              |
+| 文件路径                                                                       | 修改内容                                                |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| `packages/application/web/usecases/project.ts`                                 | 添加 restore/unarchive，移除确认弹窗                    |
+| `packages/components/project-delete-button/types.ts`                           | 添加 loading prop 类型                                  |
+| `packages/components/project-delete-button/project-delete-button.vue`          | 添加 loading 状态渲染                                   |
+| `packages/components/project-board/types.ts`                                   | 移除 deleteProjectPermanently 事件                      |
+| `packages/components/project-board/project-board.vue`                          | 移除永久删除按钮，优化 slot 支持 loading 传递           |
+| `apps/web/src/components/tasks/dialogs/project-manager/types.ts`               | 移除 hardDeleteProject 事件                             |
+| `apps/web/src/components/tasks/dialogs/project-manager/use-project-manager.ts` | 移除 hardDeleteProject 处理                             |
 | `apps/web/src/components/tasks/dialogs/project-manager/index.vue`              | 实现完整的删除/恢复逻辑，添加 loading 管理，使用 inject |
 
-***
+---
 
 ## 注意事项
 
@@ -240,7 +240,7 @@ const handleRestoreProject = async (projectId: string) => {
 3. **类型安全：** 确保所有类型定义正确更新
 4. **用户体验：** 确保 loading 状态清晰，按钮在执行期间不可重复点击
 
-***
+---
 
 ## 实施顺序建议
 
@@ -250,4 +250,3 @@ const handleRestoreProject = async (projectId: string) => {
 4. 重构 ProjectManager（核心改动）
 5. 清理类型定义
 6. 测试验证
-

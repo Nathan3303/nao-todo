@@ -45,4 +45,3 @@ withDefaults(defineProps<LoadingErrorProps>(), {
     }
 }
 </style>
-

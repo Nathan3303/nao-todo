@@ -19,6 +19,7 @@ export class BuiltInProjectEntity {
         public icon: string,
         public description: string,
         public createTaskOptions:
-            (() => BuiltInProjectCreateTaskOptions) | BuiltInProjectCreateTaskOptions
+            | (() => BuiltInProjectCreateTaskOptions)
+            | BuiltInProjectCreateTaskOptions
     ) {}
 }

@@ -1,14 +1,13 @@
-import { TagViewObject } from '@nao-todo/domain/tag'
+import type { TagCardVO } from '../tag-card/types'
 
 export type TagBoardProps = {
     loadingState?: boolean
-    tags: TagViewObject[]
+    tags: TagCardVO[]
 }
 export type TagBoardEmits = {
-    (event: 'delete', tagId: TagViewObject['id']): void
-    (event: 'recolor', tagId: TagViewObject['id']): void
+    (event: 'delete', tagId: TagCardVO['id']): void
+    (event: 'recolor', tagId: TagCardVO['id']): void
 }
 export type TagBoardSlots = {
-    ops: { tag: TagViewObject }
+    ops: { tag: TagCardVO }
 }
-

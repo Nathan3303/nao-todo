@@ -57,4 +57,3 @@ export const defaultColumns: Record<keyof TaskColumnOptions, boolean> = {
     updatedAt: true,
     deletedAt: false
 }
-

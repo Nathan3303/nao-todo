@@ -105,4 +105,3 @@ const handleDelete = () => {
 <style scoped>
 @import './row.css';
 </style>
-

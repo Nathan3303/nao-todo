@@ -1,113 +1,109 @@
 {
-  "schema_version": 2,
-  "active_work_id": "migrate-pomodoro-builtin-2026",
-  "works": {
-    "migrate-pomodoro-builtin-2026": {
-      "work_id": "migrate-pomodoro-builtin-2026",
-      "active_plan": ".omo/plans/migrate-pomodoro-builtin-to-domain.md",
-      "plan_name": "migrate-pomodoro-builtin-to-domain",
-      "session_ids": [
-        "opencode:ses_0528360caffeSpbSUZWakDZfs7"
-      ],
-      "status": "completed",
-      "worktree_path": null,
-      "started_at": "2026-07-30T05:07:30.997Z",
-      "session_origins": {},
-      "task_sessions": {
+    "schema_version": 2,
+    "active_work_id": "migrate-pomodoro-builtin-2026",
+    "works": {
+        "migrate-pomodoro-builtin-2026": {
+            "work_id": "migrate-pomodoro-builtin-2026",
+            "active_plan": ".omo/plans/migrate-pomodoro-builtin-to-domain.md",
+            "plan_name": "migrate-pomodoro-builtin-to-domain",
+            "session_ids": ["opencode:ses_0528360caffeSpbSUZWakDZfs7"],
+            "status": "completed",
+            "worktree_path": null,
+            "started_at": "2026-07-30T05:07:30.997Z",
+            "session_origins": {},
+            "task_sessions": {
+                "todo:1": {
+                    "task_key": "todo:1",
+                    "task_label": "1",
+                    "task_title": "创建 `packages/domain-pomodoro/package.json` (与 domain-task 结构一致)",
+                    "session_id": "opencode:ses_04e93177dffe7Kss0B7SKN9cmE",
+                    "agent": "Sisyphus-Junior",
+                    "category": "deep",
+                    "started_at": "2026-07-30T05:08:38.201Z",
+                    "status": "completed",
+                    "updated_at": "2026-07-30T05:12:14.279Z",
+                    "ended_at": "2026-07-30T05:12:14.279Z",
+                    "elapsed_ms": 216078
+                },
+                "todo:18": {
+                    "task_key": "todo:18",
+                    "task_label": "18",
+                    "task_title": "创建 `packages/domain-built-in-project/package.json`",
+                    "session_id": "opencode:ses_04e8fa343ffe5tQJBwmOZBPiy0",
+                    "agent": "Sisyphus-Junior",
+                    "category": "deep",
+                    "updated_at": "2026-07-30T05:15:12.584Z",
+                    "started_at": "2026-07-30T05:14:53.991Z",
+                    "status": "completed",
+                    "ended_at": "2026-07-30T05:15:12.583Z",
+                    "elapsed_ms": 18592
+                },
+                "todo:35": {
+                    "task_key": "todo:35",
+                    "task_label": "35",
+                    "task_title": "更新 `apps/web/src/hooks/usecases/use-pomodoro-usecase.ts`: `@nao-todo/domain/pomodoro` → `@nao-todo/domain-pomodoro`",
+                    "session_id": "opencode:ses_04e8cf034ffeFRoqhwgMjmcEpI",
+                    "agent": "Sisyphus-Junior",
+                    "started_at": "2026-07-30T05:15:47.133Z",
+                    "status": "completed",
+                    "updated_at": "2026-07-30T05:39:30.630Z",
+                    "ended_at": "2026-07-30T05:39:30.630Z",
+                    "elapsed_ms": 1423497
+                }
+            },
+            "updated_at": "2026-07-30T05:40:48.741Z",
+            "ended_at": "2026-07-30T05:40:48.741Z",
+            "elapsed_ms": 1997744
+        }
+    },
+    "session_ids": ["opencode:ses_0528360caffeSpbSUZWakDZfs7"],
+    "session_origins": {},
+    "task_sessions": {
         "todo:1": {
-          "task_key": "todo:1",
-          "task_label": "1",
-          "task_title": "创建 `packages/domain-pomodoro/package.json` (与 domain-task 结构一致)",
-          "session_id": "opencode:ses_04e93177dffe7Kss0B7SKN9cmE",
-          "agent": "Sisyphus-Junior",
-          "category": "deep",
-          "started_at": "2026-07-30T05:08:38.201Z",
-          "status": "completed",
-          "updated_at": "2026-07-30T05:12:14.279Z",
-          "ended_at": "2026-07-30T05:12:14.279Z",
-          "elapsed_ms": 216078
+            "task_key": "todo:1",
+            "task_label": "1",
+            "task_title": "创建 `packages/domain-pomodoro/package.json` (与 domain-task 结构一致)",
+            "session_id": "opencode:ses_04e93177dffe7Kss0B7SKN9cmE",
+            "agent": "Sisyphus-Junior",
+            "category": "deep",
+            "started_at": "2026-07-30T05:08:38.201Z",
+            "status": "completed",
+            "updated_at": "2026-07-30T05:12:14.279Z",
+            "ended_at": "2026-07-30T05:12:14.279Z",
+            "elapsed_ms": 216078
         },
         "todo:18": {
-          "task_key": "todo:18",
-          "task_label": "18",
-          "task_title": "创建 `packages/domain-built-in-project/package.json`",
-          "session_id": "opencode:ses_04e8fa343ffe5tQJBwmOZBPiy0",
-          "agent": "Sisyphus-Junior",
-          "category": "deep",
-          "updated_at": "2026-07-30T05:15:12.584Z",
-          "started_at": "2026-07-30T05:14:53.991Z",
-          "status": "completed",
-          "ended_at": "2026-07-30T05:15:12.583Z",
-          "elapsed_ms": 18592
+            "task_key": "todo:18",
+            "task_label": "18",
+            "task_title": "创建 `packages/domain-built-in-project/package.json`",
+            "session_id": "opencode:ses_04e8fa343ffe5tQJBwmOZBPiy0",
+            "agent": "Sisyphus-Junior",
+            "category": "deep",
+            "updated_at": "2026-07-30T05:15:12.584Z",
+            "started_at": "2026-07-30T05:14:53.991Z",
+            "status": "completed",
+            "ended_at": "2026-07-30T05:15:12.583Z",
+            "elapsed_ms": 18592
         },
         "todo:35": {
-          "task_key": "todo:35",
-          "task_label": "35",
-          "task_title": "更新 `apps/web/src/hooks/usecases/use-pomodoro-usecase.ts`: `@nao-todo/domain/pomodoro` → `@nao-todo/domain-pomodoro`",
-          "session_id": "opencode:ses_04e8cf034ffeFRoqhwgMjmcEpI",
-          "agent": "Sisyphus-Junior",
-          "started_at": "2026-07-30T05:15:47.133Z",
-          "status": "completed",
-          "updated_at": "2026-07-30T05:39:30.630Z",
-          "ended_at": "2026-07-30T05:39:30.630Z",
-          "elapsed_ms": 1423497
+            "task_key": "todo:35",
+            "task_label": "35",
+            "task_title": "更新 `apps/web/src/hooks/usecases/use-pomodoro-usecase.ts`: `@nao-todo/domain/pomodoro` → `@nao-todo/domain-pomodoro`",
+            "session_id": "opencode:ses_04e8cf034ffeFRoqhwgMjmcEpI",
+            "agent": "Sisyphus-Junior",
+            "started_at": "2026-07-30T05:15:47.133Z",
+            "status": "completed",
+            "updated_at": "2026-07-30T05:39:30.630Z",
+            "ended_at": "2026-07-30T05:39:30.630Z",
+            "elapsed_ms": 1423497
         }
-      },
-      "updated_at": "2026-07-30T05:40:48.741Z",
-      "ended_at": "2026-07-30T05:40:48.741Z",
-      "elapsed_ms": 1997744
-    }
-  },
-  "session_ids": [
-    "opencode:ses_0528360caffeSpbSUZWakDZfs7"
-  ],
-  "session_origins": {},
-  "task_sessions": {
-    "todo:1": {
-      "task_key": "todo:1",
-      "task_label": "1",
-      "task_title": "创建 `packages/domain-pomodoro/package.json` (与 domain-task 结构一致)",
-      "session_id": "opencode:ses_04e93177dffe7Kss0B7SKN9cmE",
-      "agent": "Sisyphus-Junior",
-      "category": "deep",
-      "started_at": "2026-07-30T05:08:38.201Z",
-      "status": "completed",
-      "updated_at": "2026-07-30T05:12:14.279Z",
-      "ended_at": "2026-07-30T05:12:14.279Z",
-      "elapsed_ms": 216078
     },
-    "todo:18": {
-      "task_key": "todo:18",
-      "task_label": "18",
-      "task_title": "创建 `packages/domain-built-in-project/package.json`",
-      "session_id": "opencode:ses_04e8fa343ffe5tQJBwmOZBPiy0",
-      "agent": "Sisyphus-Junior",
-      "category": "deep",
-      "updated_at": "2026-07-30T05:15:12.584Z",
-      "started_at": "2026-07-30T05:14:53.991Z",
-      "status": "completed",
-      "ended_at": "2026-07-30T05:15:12.583Z",
-      "elapsed_ms": 18592
-    },
-    "todo:35": {
-      "task_key": "todo:35",
-      "task_label": "35",
-      "task_title": "更新 `apps/web/src/hooks/usecases/use-pomodoro-usecase.ts`: `@nao-todo/domain/pomodoro` → `@nao-todo/domain-pomodoro`",
-      "session_id": "opencode:ses_04e8cf034ffeFRoqhwgMjmcEpI",
-      "agent": "Sisyphus-Junior",
-      "started_at": "2026-07-30T05:15:47.133Z",
-      "status": "completed",
-      "updated_at": "2026-07-30T05:39:30.630Z",
-      "ended_at": "2026-07-30T05:39:30.630Z",
-      "elapsed_ms": 1423497
-    }
-  },
-  "active_plan": ".omo/plans/migrate-pomodoro-builtin-to-domain.md",
-  "plan_name": "migrate-pomodoro-builtin-to-domain",
-  "status": "completed",
-  "started_at": "2026-07-30T05:07:30.997Z",
-  "updated_at": "2026-07-30T05:40:48.741Z",
-  "worktree_path": null,
-  "ended_at": "2026-07-30T05:40:48.741Z",
-  "elapsed_ms": 1997744
+    "active_plan": ".omo/plans/migrate-pomodoro-builtin-to-domain.md",
+    "plan_name": "migrate-pomodoro-builtin-to-domain",
+    "status": "completed",
+    "started_at": "2026-07-30T05:07:30.997Z",
+    "updated_at": "2026-07-30T05:40:48.741Z",
+    "worktree_path": null,
+    "ended_at": "2026-07-30T05:40:48.741Z",
+    "elapsed_ms": 1997744
 }

@@ -3,6 +3,7 @@
 ## 问题分析
 
 当前方案的问题：
+
 - 每次排序都更新所有事件的 sortId
 - 十几个检查事项就要更新十几条数据
 - 不必要的数据库开销
@@ -37,8 +38,8 @@ const boundEvent = this.store.getEvent(boundId)
 const sortedEvents = [...eventsValue].sort((a, b) => a.sortId - b.sortId)
 
 // 找到位置
-const originalIndex = sortedEvents.findIndex(e => e.id === originalId)
-const boundIndex = sortedEvents.findIndex(e => e.id === boundId)
+const originalIndex = sortedEvents.findIndex((e) => e.id === originalId)
+const boundIndex = sortedEvents.findIndex((e) => e.id === boundId)
 
 // 计算新位置
 // ... (同前)
@@ -74,8 +75,7 @@ if (!prevEvent) {
 }
 
 // 检查间隔是否太小
-const needsRebuild = prevEvent && nextEvent && 
-    Math.abs(nextEvent.sortId - prevEvent.sortId) < 2
+const needsRebuild = prevEvent && nextEvent && Math.abs(nextEvent.sortId - prevEvent.sortId) < 2
 
 if (needsRebuild) {
     // 间隔太小，触发重建
@@ -92,11 +92,11 @@ if (needsRebuild) {
 async resortSingle(originalId: string, newSortId: number): GoAsync<void> {
     // 乐观更新本地
     this.store.updateEvent(originalId, { sortId: newSortId })
-    
+
     // 更新后端
     const [, err] = await this.update(originalId, { sortId: newSortId })
     if (err !== null) return err
-    
+
     return null
 }
 ```
@@ -120,7 +120,7 @@ async resortWithRebuild(
 
 ```typescript
 // 创建新事件时，sortId = 当前最大 sortId + 1000
-const maxSortId = Math.max(...events.map(e => e.sortId), 0)
+const maxSortId = Math.max(...events.map((e) => e.sortId), 0)
 const newEventSortId = maxSortId + 1000
 ```
 
@@ -132,16 +132,16 @@ const newEventSortId = maxSortId + 1000
 async loadEvents(taskId: string): GoAsync<EventViewObject['id'][]> {
     const [eventEntities, err] = await this.eventDomain.list(taskId)
     if (err !== null) return [null, err]
-    
+
     let events = eventEntities.map(eventEntityToViewObject)
-    
+
     // 检查是否需要重建
     const needsRebuild = this.checkNeedsRebuild(events)
     if (needsRebuild) {
         events = this.rebuildSortIds(events)
         // 可选：同步到后端
     }
-    
+
     const eventIds = events.map((event) => event.id)
     this.store.setEvents(events)
     this.store.setEventIds(eventIds)
@@ -151,11 +151,11 @@ async loadEvents(taskId: string): GoAsync<EventViewObject['id'][]> {
 
 ## 优势对比
 
-| 方案 | 平均更新次数 | 实现复杂度 | 推荐度 |
-|------|------------|----------|--------|
-| 当前方案（每次全量） | N | 低 | ⭐⭐ |
-| 浮动间隔方案 | 1 (偶尔 N) | 中 | ⭐⭐⭐⭐⭐ |
-| 链表方案（prevId/nextId） | 2-3 | 高 | ⭐⭐⭐ |
+| 方案                      | 平均更新次数 | 实现复杂度 | 推荐度     |
+| ------------------------- | ------------ | ---------- | ---------- |
+| 当前方案（每次全量）      | N            | 低         | ⭐⭐       |
+| 浮动间隔方案              | 1 (偶尔 N)   | 中         | ⭐⭐⭐⭐⭐ |
+| 链表方案（prevId/nextId） | 2-3          | 高         | ⭐⭐⭐     |
 
 ## 实现步骤
 
@@ -168,4 +168,3 @@ async loadEvents(taskId: string): GoAsync<EventViewObject['id'][]> {
 ## 文件修改清单
 
 1. `packages/application/web/usecases/event.ts` - 重写 resort 方法，添加浮动间隔逻辑
-

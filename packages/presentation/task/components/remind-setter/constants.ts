@@ -28,4 +28,3 @@ export const TASK_REMIND_REPEAT_REVERSE: Record<number, string> = {
     2: 'weekly',
     3: 'monthly'
 }
-

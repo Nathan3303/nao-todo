@@ -22,55 +22,55 @@ CreatePomodoroViewObject (usecases)
 
 ### 已有基础设施（可直接复用）
 
-* **domain 层已完备**：
+- **domain 层已完备**：
 
-  * [pomodoro.ts](file:///home/nathan/Projects/nao-todo/packages/domain/pomodoro/entities/pomodoro.ts) — `PomodoroEntity`（id/createdAt/updatedAt/deletedAt/type/name/description/duration/archivedAt/totalDuration）
+    - [pomodoro.ts](file:///home/nathan/Projects/nao-todo/packages/domain/pomodoro/entities/pomodoro.ts) — `PomodoroEntity`（id/createdAt/updatedAt/deletedAt/type/name/description/duration/archivedAt/totalDuration）
 
-  * [create-pomodoro.ts](file:///home/nathan/Projects/nao-todo/packages/domain/pomodoro/valueobjects/create-pomodoro.ts) — `CreatePomodoroValueObject(type, name, description, duration)`
+    - [create-pomodoro.ts](file:///home/nathan/Projects/nao-todo/packages/domain/pomodoro/valueobjects/create-pomodoro.ts) — `CreatePomodoroValueObject(type, name, description, duration)`
 
-  * [pomodoro.ts](file:///home/nathan/Projects/nao-todo/packages/domain/pomodoro/repositories/pomodoro.ts) — `PomodoroRepository.create()`
+    - [pomodoro.ts](file:///home/nathan/Projects/nao-todo/packages/domain/pomodoro/repositories/pomodoro.ts) — `PomodoroRepository.create()`
 
-  * domain `index.ts` 已导出上述类型
+    - domain `index.ts` 已导出上述类型
 
-* **infrastructure 层已完备**：
+- **infrastructure 层已完备**：
 
-  * [pomodoro-repo-impl.ts](file:///home/nathan/Projects/nao-todo/packages/infrastructure/backend/pomodoro/pomodoro-repo-impl.ts) — `PomodoroRepoImpl.create()` 已实现（POST `/pomodoros/`，成功码 `70050`）
+    - [pomodoro-repo-impl.ts](file:///home/nathan/Projects/nao-todo/packages/infrastructure/backend/pomodoro/pomodoro-repo-impl.ts) — `PomodoroRepoImpl.create()` 已实现（POST `/pomodoros/`，成功码 `70050`）
 
-  * [converters.ts](file:///home/nathan/Projects/nao-todo/packages/infrastructure/backend/pomodoro/converters.ts) — `createPomodoroValueObject2Req` / `createPomodoroRes2Entity` / `pomodoroRes2Entity` 已实现
+    - [converters.ts](file:///home/nathan/Projects/nao-todo/packages/infrastructure/backend/pomodoro/converters.ts) — `createPomodoroValueObject2Req` / `createPomodoroRes2Entity` / `pomodoroRes2Entity` 已实现
 
-  * [pomodoro.ts (models)](file:///home/nathan/Projects/nao-todo/packages/infrastructure/backend/models/pomodoro.ts) — `CreatePomodoroReq` / `CreatePomodoroRes` 已定义
+    - [pomodoro.ts (models)](file:///home/nathan/Projects/nao-todo/packages/infrastructure/backend/models/pomodoro.ts) — `CreatePomodoroReq` / `CreatePomodoroRes` 已定义
 
-* **usecases 层缺口**：
+- **usecases 层缺口**：
 
-  * [pomodoro.ts (usecase)](file:///home/nathan/Projects/nao-todo/packages/usecases/pomodoro/pomodoro.ts) — `PomodoroUseCase` 是空壳，**无** **`create`** **方法、无 store**
+    - [pomodoro.ts (usecase)](file:///home/nathan/Projects/nao-todo/packages/usecases/pomodoro/pomodoro.ts) — `PomodoroUseCase` 是空壳，**无** **`create`** **方法、无 store**
 
-  * [viewobjects.ts](file:///home/nathan/Projects/nao-todo/packages/usecases/pomodoro/viewobjects.ts) — 只有 Record 相关 ViewObject，**缺** **`PomodoroViewObject`** **/** **`CreatePomodoroViewObject`**
+    - [viewobjects.ts](file:///home/nathan/Projects/nao-todo/packages/usecases/pomodoro/viewobjects.ts) — 只有 Record 相关 ViewObject，**缺** **`PomodoroViewObject`** **/** **`CreatePomodoroViewObject`**
 
-  * [converters.ts (usecase)](file:///home/nathan/Projects/nao-todo/packages/usecases/pomodoro/converters.ts) — 只有 Record 相关转换，**缺 Pomodoro 的 entity↔viewObject / viewObject→valueObject**
+    - [converters.ts (usecase)](file:///home/nathan/Projects/nao-todo/packages/usecases/pomodoro/converters.ts) — 只有 Record 相关转换，**缺 Pomodoro 的 entity↔viewObject / viewObject→valueObject**
 
-  * [store.ts](file:///home/nathan/Projects/nao-todo/packages/usecases/pomodoro/store.ts) — 只有 `PomodoroRecordStore`，**缺** **`PomodoroStore`** **接口**
+    - [store.ts](file:///home/nathan/Projects/nao-todo/packages/usecases/pomodoro/store.ts) — 只有 `PomodoroRecordStore`，**缺** **`PomodoroStore`** **接口**
 
-* **web 层**：
+- **web 层**：
 
-  * [dialogs/index.ts](file:///home/nathan/Projects/nao-todo/apps/web/src/layouts/pomodoro/dialogs/index.ts) + [dialog-adapter.vue](file:///home/nathan/Projects/nao-todo/apps/web/src/layouts/pomodoro/dialogs/dialog-adapter.vue) — 目前仅挂载 `timer-setting` 对话框
+    - [dialogs/index.ts](file:///home/nathan/Projects/nao-todo/apps/web/src/layouts/pomodoro/dialogs/index.ts) + [dialog-adapter.vue](file:///home/nathan/Projects/nao-todo/apps/web/src/layouts/pomodoro/dialogs/dialog-adapter.vue) — 目前仅挂载 `timer-setting` 对话框
 
-  * [dialog-keys.ts](file:///home/nathan/Projects/nao-todo/apps/web/src/infrastructure/constants/dialog-keys.ts) — 需新增 key
+    - [dialog-keys.ts](file:///home/nathan/Projects/nao-todo/apps/web/src/infrastructure/constants/dialog-keys.ts) — 需新增 key
 
-  * [context.ts](file:///home/nathan/Projects/nao-todo/apps/web/src/views/index/pomodoro/context.ts) + [pomodoro-view.ts](file:///home/nathan/Projects/nao-todo/apps/web/src/views/index/pomodoro/pomodoro-view.ts) — 番茄视图上下文，需注入 `pomodoroUseCase`
+    - [context.ts](file:///home/nathan/Projects/nao-todo/apps/web/src/views/index/pomodoro/context.ts) + [pomodoro-view.ts](file:///home/nathan/Projects/nao-todo/apps/web/src/views/index/pomodoro/pomodoro-view.ts) — 番茄视图上下文，需注入 `pomodoroUseCase`
 
-  * [index.vue](file:///home/nathan/Projects/nao-todo/apps/web/src/layouts/pomodoro/index.vue) — 头部 `actions` 区，添加"新建常用"按钮
+    - [index.vue](file:///home/nathan/Projects/nao-todo/apps/web/src/layouts/pomodoro/index.vue) — 头部 `actions` 区，添加"新建常用"按钮
 
-  * 现有 `PomodoroStore`（Pinia）[pomodoro-store.ts](file:///home/nathan/Projects/nao-todo/apps/web/src/stores/pomodoro-store.ts) 是设置/记录状态，**与新增的"常用番茄专注列表 store"是不同概念**，需新建独立 Pinia store 避免污染。
+    - 现有 `PomodoroStore`（Pinia）[pomodoro-store.ts](file:///home/nathan/Projects/nao-todo/apps/web/src/stores/pomodoro-store.ts) 是设置/记录状态，**与新增的"常用番茄专注列表 store"是不同概念**，需新建独立 Pinia store 避免污染。
 
 ### 关键约定（来自现有代码）
 
-* `PomodoroType`：后端 `uint8`，`0=timer`（番茄钟）/ `1=focus`（专注正计时）。参考 [viewobjects.ts](file:///home/nathan/Projects/nao-todo/packages/usecases/pomodoro/viewobjects.ts#L7)。
+- `PomodoroType`：后端 `uint8`，`0=timer`（番茄钟）/ `1=focus`（专注正计时）。参考 [viewobjects.ts](file:///home/nathan/Projects/nao-todo/packages/usecases/pomodoro/viewobjects.ts#L7)。
 
-* `duration` 单位为**秒**；表单以**分钟**展示（参考 timer-setting 的分钟↔秒换算）。
+- `duration` 单位为**秒**；表单以**分钟**展示（参考 timer-setting 的分钟↔秒换算）。
 
-* 用例创建方法返回 `GoAsync<T>`，错误用 `unwrapError` 处理（参考 project-creator）。
+- 用例创建方法返回 `GoAsync<T>`，错误用 `unwrapError` 处理（参考 project-creator）。
 
-* 存储通过依赖注入的 `Store` 接口解耦（usecases 定义接口，Pinia store 实现，`newXxxUseCase(store)` 注入）。
+- 存储通过依赖注入的 `Store` 接口解耦（usecases 定义接口，Pinia store 实现，`newXxxUseCase(store)` 注入）。
 
 ## Proposed Changes
 
@@ -106,9 +106,9 @@ export type CreatePomodoroViewObject = {
 }
 ```
 
-* **why**：作为对话框表单与用例创建的输入/输出契约。
+- **why**：作为对话框表单与用例创建的输入/输出契约。
 
-* 复用现有 `PomodoroType`、`ViewObjectBase`、`NullableString`。
+- 复用现有 `PomodoroType`、`ViewObjectBase`、`NullableString`。
 
 #### 2. [converters.ts (usecase)](file:///home/nathan/Projects/nao-todo/packages/usecases/pomodoro/converters.ts) — 新增转换函数
 
@@ -127,9 +127,9 @@ export const createPomodoroViewObjectToValueObject = (
 )
 ```
 
-* **why**：完成 ViewObject↔Entity、ViewObject→ValueObject 转换。
+- **why**：完成 ViewObject↔Entity、ViewObject→ValueObject 转换。
 
-* 引入 `PomodoroEntity`、`CreatePomodoroValueObject`、`dayjs`。
+- 引入 `PomodoroEntity`、`CreatePomodoroValueObject`、`dayjs`。
 
 #### 3. [store.ts](file:///home/nathan/Projects/nao-todo/packages/usecases/pomodoro/store.ts) — 新增 `PomodoroStore` 接口
 
@@ -142,23 +142,23 @@ export interface PomodoroStore {
 }
 ```
 
-* **why**：解耦用例与 Pinia store。仅按当前需求提供 `set`/`add`（不过度设计）。
+- **why**：解耦用例与 Pinia store。仅按当前需求提供 `set`/`add`（不过度设计）。
 
 #### 4. [pomodoro.ts (usecase)](file:///home/nathan/Projects/nao-todo/packages/usecases/pomodoro/pomodoro.ts) — 实现 `create` + 注入 store
 
-* 构造函数新增 `private store: PomodoroStore`（取消原注释占位）。
+- 构造函数新增 `private store: PomodoroStore`（取消原注释占位）。
 
-* 新增 `create(createViewObject: CreatePomodoroViewObject): GoAsync<PomodoroViewObject>`，流程参考 `PomodoroRecordUseCase.createRecord` / `ProjectUseCase.create`：
+- 新增 `create(createViewObject: CreatePomodoroViewObject): GoAsync<PomodoroViewObject>`，流程参考 `PomodoroRecordUseCase.createRecord` / `ProjectUseCase.create`：
 
-  1. `createPomodoroViewObjectToValueObject`
-  2. `this.pomodoroRepo.create(valueObject)`（domain `create` 未提供，直接用 repo，与 Record 用例一致地保持最短路径；见"Assumptions"）
-  3. `pomodoroEntityToViewObject`
-  4. `this.store.addPomodoro(viewObject)`
-  5. 返回 `[viewObject, null]`
+    1. `createPomodoroViewObjectToValueObject`
+    2. `this.pomodoroRepo.create(valueObject)`（domain `create` 未提供，直接用 repo，与 Record 用例一致地保持最短路径；见"Assumptions"）
+    3. `pomodoroEntityToViewObject`
+    4. `this.store.addPomodoro(viewObject)`
+    5. 返回 `[viewObject, null]`
 
-* `newPomodoroUseCase` 改为接收 `store: PomodoroStore` 参数并传入。
+- `newPomodoroUseCase` 改为接收 `store: PomodoroStore` 参数并传入。
 
-* **why**：打通用例层创建逻辑并落库到 store。
+- **why**：打通用例层创建逻辑并落库到 store。
 
 #### 5. [index.ts (usecase)](file:///home/nathan/Projects/nao-todo/packages/usecases/pomodoro/index.ts) — 导出 `PomodoroStore`
 
@@ -167,6 +167,7 @@ export interface PomodoroStore {
 ### 二、web 层（对话框 + 入口 + Pinia store）
 
 #### 6. 新增 Pinia store（使用 `useMapperStoreBase`）
+
 严格遵循 `projects-store` 的两文件模式（base 组合式 hook + `defineStore` 包装），基于 `useMapperStoreBase`：
 
 **6a. 新增 base hook：`apps/web/src/stores/base/pomodoro.ts`**
@@ -216,11 +217,11 @@ export default defineStore('PomodorosStore', () => {
 
 参考 `dialogs/timer-setting/` 与 `app/dialogs/project-creator/` 结构：
 
-* **`use-pomodoro-creator.ts`**：`inject(POMODORO_VIEW_CONTEXT_KEY)` 取 `dialogManager` + `pomodoroUseCase`；`viewObject` ref（`{ type: 0, name: '', description: '', duration: 25 }`，duration 以分钟展示）；`creating`/`isNameEmpty` 状态；`clearInputsValue`；`handleConfirm`（校验 name 非空、duration 范围 5-180；调用 `pomodoroUseCase.create`，成功 `NueMessage.success('常用番茄专注创建成功')`，失败 `console.warn(unwrapError(error))`）。**分钟→秒换算在提交时进行**。
+- **`use-pomodoro-creator.ts`**：`inject(POMODORO_VIEW_CONTEXT_KEY)` 取 `dialogManager` + `pomodoroUseCase`；`viewObject` ref（`{ type: 0, name: '', description: '', duration: 25 }`，duration 以分钟展示）；`creating`/`isNameEmpty` 状态；`clearInputsValue`；`handleConfirm`（校验 name 非空、duration 范围 5-180；调用 `pomodoroUseCase.create`，成功 `NueMessage.success('常用番茄专注创建成功')`，失败 `console.warn(unwrapError(error))`）。**分钟→秒换算在提交时进行**。
 
-* **`pomodoro-creator.vue`**：`nue-dialog theme="pomodoro-creator"`，注册到 `dialogManager`（参考 timer-setting 的 `onMounted` 注册模式）；表单含：类型选择（`nue-select`：番茄钟=0 / 正计时=1）、名称（`nue-input`，`is-name-empty` 提示）、描述（`nue-input` textarea）、专注时长（分钟，`nue-input` number，min 5 max 180）。header/footer 结构参考 timer-setting。
+- **`pomodoro-creator.vue`**：`nue-dialog theme="pomodoro-creator"`，注册到 `dialogManager`（参考 timer-setting 的 `onMounted` 注册模式）；表单含：类型选择（`nue-select`：番茄钟=0 / 正计时=1）、名称（`nue-input`，`is-name-empty` 提示）、描述（`nue-input` textarea）、专注时长（分钟，`nue-input` number，min 5 max 180）。header/footer 结构参考 timer-setting。
 
-* **`index.ts`**：`export const PomodoroCreatorDialog = PomodoroCreator`
+- **`index.ts`**：`export const PomodoroCreatorDialog = PomodoroCreator`
 
 #### 9. [dialogs/dialog-adapter.vue](file:///home/nathan/Projects/nao-todo/apps/web/src/layouts/pomodoro/dialogs/dialog-adapter.vue) — 挂载新对话框
 
@@ -232,17 +233,17 @@ export default defineStore('PomodorosStore', () => {
 
 #### 11. [pomodoro-view.ts](file:///home/nathan/Projects/nao-todo/apps/web/src/views/index/pomodoro/pomodoro-view.ts) — 实例化并 provide
 
-* `const pomodorosStore = usePomodorosStore()`
+- `const pomodorosStore = usePomodorosStore()`
 
-* `const pomodoroUseCase = newPomodoroUseCase(pomodorosStore)`
+- `const pomodoroUseCase = newPomodoroUseCase(pomodorosStore)`
 
-* 在 `provide(POMODORO_VIEW_CONTEXT_KEY, { ... pomodoroUseCase })` 中加入。
+- 在 `provide(POMODORO_VIEW_CONTEXT_KEY, { ... pomodoroUseCase })` 中加入。
 
 #### 12. [layouts/pomodoro/index.vue](file:///home/nathan/Projects/nao-todo/apps/web/src/layouts/pomodoro/index.vue) — 头部按钮入口
 
-* 在 `nue-div theme="actions"` 区、历史按钮旁新增"新建常用番茄专注"按钮（`nue-button icon="plus" theme="icon,ghost"` + `nue-tooltip`）。
+- 在 `nue-div theme="actions"` 区、历史按钮旁新增"新建常用番茄专注"按钮（`nue-button icon="plus" theme="icon,ghost"` + `nue-tooltip`）。
 
-* 从 `usePomodoroPage` 或直接用注入的 `dialogManager` 调用 `dialogManager.open(POMODORO_CREATOR_DIALOG_KEY)`。采用直接注入 `dialogManager`（`index.vue` 已注入）新增 `handleOpenCreator` 内联方法，最小改动。
+- 从 `usePomodoroPage` 或直接用注入的 `dialogManager` 调用 `dialogManager.open(POMODORO_CREATOR_DIALOG_KEY)`。采用直接注入 `dialogManager`（`index.vue` 已注入）新增 `handleOpenCreator` 内联方法，最小改动。
 
 ## Assumptions & Decisions
 
@@ -259,13 +260,14 @@ export default defineStore('PomodorosStore', () => {
 1. **类型检查**：`pnpm -C apps/web type-check` 或项目根 `pnpm build` 无 TS 报错（重点：新 ViewObject/Store 导出、`newPomodoroUseCase` 签名变更无遗漏调用点——已确认仅 `pomodoro-view.ts` 会调用）。
 2. **运行时手测**：
 
-   * 启动 web，进入 `/pomodoro/timer`，点击头部"新建常用番茄专注"按钮 → 对话框弹出。
+    - 启动 web，进入 `/pomodoro/timer`，点击头部"新建常用番茄专注"按钮 → 对话框弹出。
 
-   * 名称留空点创建 → 出现空名校验提示，不提交。
+    - 名称留空点创建 → 出现空名校验提示，不提交。
 
-   * 填写名称、选类型、设时长，点创建 → `NueMessage.success`，对话框关闭，网络面板出现 `POST /pomodoros/`（返回码 `70050`）。
+    - 填写名称、选类型、设时长，点创建 → `NueMessage.success`，对话框关闭，网络面板出现 `POST /pomodoros/`（返回码 `70050`）。
 
-   * 创建后 `usePomodorosStore().pomodoros` 含新条目（可临时 console 验证）。
+    - 创建后 `usePomodorosStore().pomodoros` 含新条目（可临时 console 验证）。
+
 3. **回归**：timer-setting 对话框与番茄计时功能不受影响（未改动其逻辑）。
 
 ## 执行顺序（建议）
@@ -276,4 +278,3 @@ export default defineStore('PomodorosStore', () => {
 4. context → pomodoro-view（注入）
 5. index.vue 头部按钮
 6. 类型检查 + 手测
-

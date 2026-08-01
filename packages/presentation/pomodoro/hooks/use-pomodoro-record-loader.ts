@@ -110,7 +110,10 @@ export const usePomodoroRecordLoader = (
      * @param isReplace 是否替换已有数据（默认 true）
      * @param extraGetOptions 额外的查询选项（用于传递动态筛选条件）
      */
-    const loadFirstPage = async (isReplace: boolean = true, extraGetOptions?: GetPomodoroRecordsOptions) => {
+    const loadFirstPage = async (
+        isReplace: boolean = true,
+        extraGetOptions?: GetPomodoroRecordsOptions
+    ) => {
         if (states.disabled) return
         if (states.pagination.page !== 1) states.pagination.page = 1
         if (isReplace) {
@@ -160,7 +163,11 @@ export const usePomodoroRecordLoader = (
      * @param order 排序方向 'asc' | 'desc'
      * @param extraGetOptions 额外的查询选项（用于传递动态筛选条件）
      */
-    const changeSort = async (field: string, order: 'asc' | 'desc', extraGetOptions?: GetPomodoroRecordsOptions) => {
+    const changeSort = async (
+        field: string,
+        order: 'asc' | 'desc',
+        extraGetOptions?: GetPomodoroRecordsOptions
+    ) => {
         if (states.disabled) return
         states.sort = `${field}:${order}`
         await loadAndReplace(extraGetOptions)

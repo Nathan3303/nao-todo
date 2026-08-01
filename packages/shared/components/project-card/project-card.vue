@@ -63,4 +63,3 @@ const statusColor = computed(() => {
 <style scoped>
 @import url('./project-card.css');
 </style>
-

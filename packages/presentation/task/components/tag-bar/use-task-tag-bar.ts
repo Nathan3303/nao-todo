@@ -1,7 +1,7 @@
 import { computed, ref, watch } from 'vue'
 import type { TaskTagBarEmits, TaskTagBarProps } from './types'
 import type { ComboBoxOption } from '@nao-todo/shared/components/combo-box/types'
-import type { TaskTagViewObject } from '@nao-todo/domain-task/viewobjects'
+import type { TaskTagViewObject } from '@nao-todo/domain-task'
 
 export const useTaskTagBar = (props: TaskTagBarProps, emit: TaskTagBarEmits) => {
     /**

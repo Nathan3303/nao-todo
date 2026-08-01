@@ -99,4 +99,3 @@ export class CommandRegistry {
         return this.commands.size
     }
 }
-

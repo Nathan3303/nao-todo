@@ -1,36 +1,26 @@
-import {
-    type DialogManager,
-    type Subscriber,
-    TASK_CREATOR_DIALOG_KEY,
-    unwrapError
-} from '@nao-todo/shared'
+import { type DialogManager, TASK_CREATOR_DIALOG_KEY, unwrapError } from '@nao-todo/shared'
 import { storeToRefs } from 'pinia'
 import { computed, inject } from 'vue'
 import { TaskCheckItemHandler } from '../../handlers'
 import type { useTaskDetailsStore } from '../../stores'
-import type {
-    TaskCheckItemViewObject,
-    TaskViewObject
-} from '@nao-todo/domain-task/viewobjects'
+import type { TaskCheckItemViewObject, TaskViewObject } from '@nao-todo/domain-task'
 import { TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
 
 /**
  * 检查事项 composable
  * @description 管理任务检查事项的用例、处理程序、加载/重试、进度计算、排序及转任务。
  * @param taskDetailsStore 任务详情存储
- * @param subscriber 订阅器
  * @param dialogManager 弹窗管理器
  */
 const useCheckItems = (
     taskDetailsStore: ReturnType<typeof useTaskDetailsStore>,
-    subscriber: Subscriber,
     dialogManager: DialogManager
 ) => {
     // @context 任务详情上下文
     const { taskCheckItemUseCase } = inject(TASK_DETAILS_PRE_CONTEXT_KEY)!
 
     // @handler 任务检查事项处理程序
-    const checkItemHandler = new TaskCheckItemHandler(taskCheckItemUseCase, subscriber)
+    const checkItemHandler = new TaskCheckItemHandler(taskCheckItemUseCase)
 
     // @presetStates
     const {

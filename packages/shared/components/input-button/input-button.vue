@@ -88,4 +88,3 @@ const handleCancel = () => {
 <style scoped>
 @import url('./input-button.css');
 </style>
-

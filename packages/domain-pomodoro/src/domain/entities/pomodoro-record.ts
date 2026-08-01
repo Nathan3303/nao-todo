@@ -25,4 +25,3 @@ export class PomodoroRecordEntity extends Entity {
         super(id, createdAt, updatedAt, deletedAt)
     }
 }
-

@@ -2,7 +2,7 @@ import { computed, provide, reactive } from 'vue'
 import useKanbanDragger from './use-kanban-dragger'
 import { KANBAN_GROUP_BY_NAMES, KANBAN_DEFAULT_GROUP_BY } from './constants'
 import type { TaskKanbanVO, TaskKanbanProps, TaskKanbanEmits, TaskKanbanContext } from './types'
-import type { TaskViewObject } from '@nao-todo/domain-task/viewobjects'
+import type { TaskViewObject } from '@nao-todo/domain-task'
 import type { TaskColumnOptions, GetTasksSortOptions } from '@nao-todo/shared'
 
 export const TASK_KANBAN_CONTEXT_KEY = Symbol('TASK_KANBAN_CONTEXT_KEY')

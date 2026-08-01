@@ -22,8 +22,8 @@
 ## Background & Context
 
 - 后端接口已就绪：
-  - 注销用户：`DELETE /user/`，请求体 `{ password: string }`
-  - 激活用户（取消注销）：`PUT /user/restore`，请求体 `{ password: string }`
+    - 注销用户：`DELETE /user/`，请求体 `{ password: string }`
+    - 激活用户（取消注销）：`PUT /user/restore`，请求体 `{ password: string }`
 - 登录成功响应包含 `pendingDeletion` 和 `deletionDeadline` 字段，分别表示用户是否处于待注销状态和数据删除执行时间
 - 项目采用五层架构：Views → Presentation → Application → Domain → Infrastructure
 - 使用 NueUI 组件库构建 UI 组件

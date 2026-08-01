@@ -10,12 +10,12 @@
 
 task 表已有 `remind_at`（单次提醒时间），新增 3 个字段：
 
-| 字段 | 类型 | 默认值 | 说明 |
-| --- | --- | --- | --- |
-| `remind_at` | DATETIME NULL | NULL | 已存在。下一次触发时间，单次提醒直接用此字段 |
-| `remind_repeat` | TINYINT | 0 | 0=不重复, 1=每天, 2=每周, 3=每月 |
-| `remind_time` | VARCHAR(5) | NULL | "HH:mm" 格式，提醒的具体时刻 |
-| `remind_weekdays` | TINYINT | 0 | 位掩码，bit0(1)=周日..bit6(64)=周六，仅 weekly 时有效 |
+| 字段              | 类型          | 默认值 | 说明                                                  |
+| ----------------- | ------------- | ------ | ----------------------------------------------------- |
+| `remind_at`       | DATETIME NULL | NULL   | 已存在。下一次触发时间，单次提醒直接用此字段          |
+| `remind_repeat`   | TINYINT       | 0      | 0=不重复, 1=每天, 2=每周, 3=每月                      |
+| `remind_time`     | VARCHAR(5)    | NULL   | "HH:mm" 格式，提醒的具体时刻                          |
+| `remind_weekdays` | TINYINT       | 0      | 位掩码，bit0(1)=周日..bit6(64)=周六，仅 weekly 时有效 |
 
 ### 位掩码映射
 

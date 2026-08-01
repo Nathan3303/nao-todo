@@ -1,6 +1,11 @@
-import type { DialogManager, GetTasksOptions, Subscriber, TaskColumnOptions } from '@nao-todo/shared'
-import type { TaskTagViewObject } from '@nao-todo/domain-task/viewobjects'
-import type { TaskUseCase } from '@nao-todo/domain-task/usecases'
+import type {
+    DialogManager,
+    GetTasksOptions,
+    Subscriber,
+    TaskColumnOptions
+} from '@nao-todo/shared'
+import type { TaskTagViewObject } from '@nao-todo/domain-task'
+import type { TaskUseCase } from '@nao-todo/domain-task'
 import type { TableLayoutConfig } from '../../table/types'
 import type { ViewAdapterPropsBase } from '../../view-adapters/types'
 

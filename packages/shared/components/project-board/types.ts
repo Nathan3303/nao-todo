@@ -1,15 +1,14 @@
-import type { ProjectViewObject } from '@nao-todo/usecases/project'
+import type { ProjectCardVO } from '../project-card/types'
 
 export type ProjectBoardProps = {
-    projects?: ProjectViewObject[]
+    projects?: ProjectCardVO[]
     loadingState?: boolean
     allowRoute?: boolean
 }
 
 export type ProjectBoardEmits = {
-    (event: 'archiveProject', projectId: ProjectViewObject['id']): void
-    (event: 'unarchiveProject', projectId: ProjectViewObject['id']): void
-    (event: 'deleteProject', projectId: ProjectViewObject['id']): void
-    (event: 'restoreProject', projectId: ProjectViewObject['id']): void
+    (event: 'archiveProject', projectId: ProjectCardVO['id']): void
+    (event: 'unarchiveProject', projectId: ProjectCardVO['id']): void
+    (event: 'deleteProject', projectId: ProjectCardVO['id']): void
+    (event: 'restoreProject', projectId: ProjectCardVO['id']): void
 }
-

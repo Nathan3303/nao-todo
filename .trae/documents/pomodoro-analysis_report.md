@@ -3,6 +3,7 @@
 ## 一、数据流转架构
 
 ### 整体架构层次
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        UI 层 (timer.vue)                        │
@@ -36,15 +37,15 @@
 
 ### 数据流转流程
 
-| 操作 | 触发路径 | 数据流向 |
-|------|----------|----------|
-| 开始专注 | UI → handleStart → startNewFocusSession → timer.start | store ← setCurrentSession → stateMachine.start |
-| 暂停/继续 | UI → emit('pause'/'resume') → timer.pause/resume | stateMachine 内部状态转换 |
-| 跳过阶段 | UI → emit('skip') → timer.skip | stateMachine → 触发 onSkip 回调 |
-| 阶段完成 | tick() → PHASE_COMPLETE | stateMachine → 触发 onPhaseComplete 回调 → store.addRecord |
-| 调整时间 | UI → handleAdjustTime → timer.adjustTime | stateMachine 更新 → (空闲时) store.setFocusDuration |
-| 重置 | UI → handleReset → timer.reset | stateMachine.reset → store.clearCurrentSession |
-| 配置更新 | SettingDialog → store → timer.updateConfig | store ← form values → stateMachine.updateConfig |
+| 操作      | 触发路径                                              | 数据流向                                                   |
+| --------- | ----------------------------------------------------- | ---------------------------------------------------------- |
+| 开始专注  | UI → handleStart → startNewFocusSession → timer.start | store ← setCurrentSession → stateMachine.start             |
+| 暂停/继续 | UI → emit('pause'/'resume') → timer.pause/resume      | stateMachine 内部状态转换                                  |
+| 跳过阶段  | UI → emit('skip') → timer.skip                        | stateMachine → 触发 onSkip 回调                            |
+| 阶段完成  | tick() → PHASE_COMPLETE                               | stateMachine → 触发 onPhaseComplete 回调 → store.addRecord |
+| 调整时间  | UI → handleAdjustTime → timer.adjustTime              | stateMachine 更新 → (空闲时) store.setFocusDuration        |
+| 重置      | UI → handleReset → timer.reset                        | stateMachine.reset → store.clearCurrentSession             |
+| 配置更新  | SettingDialog → store → timer.updateConfig            | store ← form values → stateMachine.updateConfig            |
 
 ---
 
@@ -55,6 +56,7 @@
 **位置**: `use-pomodoro-state-machine.ts`
 
 **问题描述**:
+
 ```typescript
 // 第 451-452 行：这些是普通数字变量，不是响应式引用
 let completedRoundCount = 0
@@ -62,8 +64,8 @@ let autoStartCount = 0
 
 // 第 575-594 行：ctx 对象中的这些属性是值拷贝，不是引用
 const ctx: MachineContext = {
-    completedRoundCount,  // 值拷贝
-    autoStartCount,       // 值拷贝
+    completedRoundCount, // 值拷贝
+    autoStartCount // 值拷贝
     // ...
 }
 
@@ -73,11 +75,13 @@ autoStartCount = ctx.autoStartCount
 ```
 
 **问题本质**:
+
 - `completedRoundCount` 和 `autoStartCount` 是原始类型（number），在 `ctx` 对象中是值拷贝
 - 在 action 中修改 `ctx.completedRoundCount` 只会修改拷贝的值，不会影响外部的 `completedRoundCount` 变量
 - 导致 `isLongBreakDue()` 计算错误，长休息触发逻辑失效
 
 **影响**:
+
 - 长休息永远不会触发（因为 `completedRoundCount` 始终为 0）
 - 自动开始计数限制失效
 
@@ -88,6 +92,7 @@ autoStartCount = ctx.autoStartCount
 **位置**: `use-pomodoro-state-machine.ts` 第 561-572 行
 
 **问题代码**:
+
 ```typescript
 const transitionToNextFocusOrIdle = () => {
     if (options.config.autoStartNextFocusSession) {
@@ -99,14 +104,16 @@ const transitionToNextFocusOrIdle = () => {
         }
         autoStartCount++
     }
-    enterFocusPhase()  // ⚠️ 无论 autoStartNextFocusSession 是否为 true，都会进入专注阶段
+    enterFocusPhase() // ⚠️ 无论 autoStartNextFocusSession 是否为 true，都会进入专注阶段
 }
 ```
 
 **问题本质**:
+
 - `enterFocusPhase()` 在条件判断之外，导致即使 `autoStartNextFocusSession` 为 `false`，休息结束后仍然会自动开始专注
 
 **影响**:
+
 - 用户关闭"自动开始下一轮专注"选项后无效
 - 休息结束后总是自动进入专注阶段
 
@@ -117,6 +124,7 @@ const transitionToNextFocusOrIdle = () => {
 **位置**: `use-pomodoro-state-machine.ts` 第 465-467 行
 
 **问题代码**:
+
 ```typescript
 const isLongBreakDue = (): boolean => {
     return completedRoundCount + 1 >= options.config.sessionsUntilLongBreak
@@ -124,11 +132,13 @@ const isLongBreakDue = (): boolean => {
 ```
 
 **问题本质**:
+
 - 假设 `sessionsUntilLongBreak = 4`，期望完成 4 轮专注后触发长休息
 - 当前逻辑：`completedRoundCount = 3` 时，`3 + 1 >= 4` 为 `true`，在第 4 轮开始前就认为应该长休息
 - 正确逻辑应该是完成 4 轮后才触发，即 `completedRoundCount >= sessionsUntilLongBreak`
 
 **影响**:
+
 - 长休息提前一轮触发
 
 ---
@@ -138,15 +148,18 @@ const isLongBreakDue = (): boolean => {
 **位置**: `use-pomodoro-state-machine.ts` 第 1 行
 
 **问题描述**:
+
 ```typescript
 import { ref, computed, onBeforeUnmount } from 'vue'
 ```
 
 **问题本质**:
+
 - 文件中 `MachineContext` 接口使用了 `Ref<TimerPhase>` 等类型
 - 但 `Ref` 类型未从 `vue` 导入
 
 **影响**:
+
 - TypeScript 编译错误
 
 ---
@@ -156,11 +169,12 @@ import { ref, computed, onBeforeUnmount } from 'vue'
 **位置**: `use-pomodoro-state-machine.ts` 第 154-167 行
 
 **问题代码**:
+
 ```typescript
 PHASE_COMPLETE: {
     action: (ctx) => {
-        const elapsed = ctx.totalSeconds.value  // ⚠️ 应该是已用时间
-        const total = ctx.totalSeconds.value    // ⚠️ 两者相同
+        const elapsed = ctx.totalSeconds.value // ⚠️ 应该是已用时间
+        const total = ctx.totalSeconds.value // ⚠️ 两者相同
         ctx.callbacks.onFocusComplete(elapsed, total)
         // ...
     }
@@ -168,6 +182,7 @@ PHASE_COMPLETE: {
 ```
 
 **问题本质**:
+
 - `elapsed` 和 `total` 值相同，语义混淆
 - 虽然在计时结束时 `elapsed === total` 是正确的，但代码语义不清晰
 
@@ -178,6 +193,7 @@ PHASE_COMPLETE: {
 **位置**: `use-pomodoro-state-machine.ts` 第 626-660 行
 
 **问题代码**:
+
 ```typescript
 const updateConfig = (newConfig: {...}) => {
     if (newConfig.focusDuration !== undefined) {
@@ -189,6 +205,7 @@ const updateConfig = (newConfig: {...}) => {
 ```
 
 **问题分析**:
+
 - `ctx.config` 和 `options.config` 指向同一个对象，所以修改 `options.config` 的属性会自动反映到 `ctx.config`
 - **但问题是**：如果传入一个全新的配置对象替换整个 `options.config`，则 `ctx.config` 仍然指向旧对象
 
@@ -199,15 +216,17 @@ const updateConfig = (newConfig: {...}) => {
 **位置**: `use-pomodoro-state-machine.ts` 第 511-515 行
 
 **问题代码**:
+
 ```typescript
 const handleVisibilityChange = () => {
     if (document.hidden) return
     if (status.value !== 'running') return
-    tick()  // ⚠️ 可能与正常的 interval tick 冲突
+    tick() // ⚠️ 可能与正常的 interval tick 冲突
 }
 ```
 
 **问题分析**:
+
 - 当页面重新获得焦点时立即调用 `tick()`
 - 如果此时 interval 的 tick 也正好触发，可能导致短时间内两次 tick
 - 虽然 `remainingSeconds` 计算是幂等的，但可能触发多次 `onBreakWarning`
@@ -234,15 +253,15 @@ const autoStartCount = ref(0)
 // 在 ctx 中使用引用
 const ctx: MachineContext = {
     // ...
-    completedRoundCount: counters,  // 或直接使用 ref
-    autoStartCount: counters,
+    completedRoundCount: counters, // 或直接使用 ref
+    autoStartCount: counters
     // ...
 }
 
 // 在 action 中修改
-ctx.completedRoundCount.completedRoundCount++  // 方案 A
+ctx.completedRoundCount.completedRoundCount++ // 方案 A
 // 或
-ctx.completedRoundCount.value++  // 方案 B
+ctx.completedRoundCount.value++ // 方案 B
 ```
 
 ### 优化 2：修复自动开始逻辑
@@ -257,9 +276,9 @@ const transitionToNextFocusOrIdle = () => {
             return
         }
         autoStartCount++
-        enterFocusPhase()  // ✅ 只在启用自动开始时进入专注
+        enterFocusPhase() // ✅ 只在启用自动开始时进入专注
     } else {
-        resetToIdle()  // ✅ 未启用时重置到空闲状态
+        resetToIdle() // ✅ 未启用时重置到空闲状态
     }
 }
 ```
@@ -283,7 +302,7 @@ import { ref, computed, onBeforeUnmount, type Ref } from 'vue'
 ```typescript
 PHASE_COMPLETE: {
     action: (ctx) => {
-        const elapsed = ctx.totalSeconds.value  // 计时结束时 elapsed === total
+        const elapsed = ctx.totalSeconds.value // 计时结束时 elapsed === total
         const total = ctx.totalSeconds.value
         ctx.callbacks.onFocusComplete(elapsed, total)
         // 或者更清晰地：
@@ -304,7 +323,7 @@ const updateConfig = (newConfig: {
 }) => {
     if (newConfig.focusDuration !== undefined) {
         options.config.focusDuration = newConfig.focusDuration
-        ctx.config.focusDuration = newConfig.focusDuration  // 显式同步
+        ctx.config.focusDuration = newConfig.focusDuration // 显式同步
         if (phase.value === 'idle') {
             totalSeconds.value = newConfig.focusDuration
             remainingSeconds.value = newConfig.focusDuration
@@ -320,7 +339,7 @@ const updateConfig = (newConfig: {
 const handleVisibilityChange = () => {
     if (document.hidden) return
     if (status.value !== 'running') return
-    
+
     // 使用 requestAnimationFrame 避免与 interval 冲突
     requestAnimationFrame(() => {
         if (status.value === 'running') {
@@ -405,15 +424,15 @@ const dispatch = (event: MachineEvent) => {
 
 ## 五、问题严重性汇总
 
-| 问题 | 严重性 | 影响 | 优先级 |
-|------|--------|------|--------|
-| 计数器同步错误 | 严重 | 长休息和自动开始失效 | P0 |
-| 自动开始逻辑错误 | 严重 | 用户设置无效 | P0 |
-| 长休息触发条件错误 | 中等 | 长休息提前触发 | P1 |
-| 缺少 Ref 导入 | 中等 | TypeScript 编译错误 | P1 |
-| elapsed 计算冗余 | 轻微 | 代码可读性差 | P3 |
-| updateConfig 同步问题 | 中等 | 配置更新可能失效 | P2 |
-| VisibilityChange 重复 tick | 轻微 | 潜在的重复回调 | P3 |
+| 问题                       | 严重性 | 影响                 | 优先级 |
+| -------------------------- | ------ | -------------------- | ------ |
+| 计数器同步错误             | 严重   | 长休息和自动开始失效 | P0     |
+| 自动开始逻辑错误           | 严重   | 用户设置无效         | P0     |
+| 长休息触发条件错误         | 中等   | 长休息提前触发       | P1     |
+| 缺少 Ref 导入              | 中等   | TypeScript 编译错误  | P1     |
+| elapsed 计算冗余           | 轻微   | 代码可读性差         | P3     |
+| updateConfig 同步问题      | 中等   | 配置更新可能失效     | P2     |
+| VisibilityChange 重复 tick | 轻微   | 潜在的重复回调       | P3     |
 
 ---
 

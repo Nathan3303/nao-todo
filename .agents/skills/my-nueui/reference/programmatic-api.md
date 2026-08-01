@@ -9,20 +9,20 @@ Toast notifications.
 **Requires**: `<NueMessageWrapper />` mounted somewhere in your app (e.g., in `App.vue`).
 
 ```ts
-import { NueMessage } from 'nue-ui';
+import { NueMessage } from 'nue-ui'
 
 // Basic
-NueMessage({ message: 'Operation succeeded', type: 'success', duration: 3000 });
+NueMessage({ message: 'Operation succeeded', type: 'success', duration: 3000 })
 
 // Convenience methods
-NueMessage.success('Saved!');
-NueMessage.error('Failed to save');
-NueMessage.warn('Proceed with caution');
-NueMessage.info('New update available');
-NueMessage.log('Debug info');
+NueMessage.success('Saved!')
+NueMessage.error('Failed to save')
+NueMessage.warn('Proceed with caution')
+NueMessage.info('New update available')
+NueMessage.log('Debug info')
 
 // Persistent (no duration, shows close button)
-NueMessage({ message: 'Persistent message', type: 'info' });
+NueMessage({ message: 'Persistent message', type: 'info' })
 ```
 
 **Payload**: `{ message: string; type?: 'success' | 'error' | 'warning' | 'info' | 'log'; duration?: number; icon?: string; size?: 'small' | 'large' }`
@@ -32,14 +32,14 @@ NueMessage({ message: 'Persistent message', type: 'info' });
 Programmatic confirmation dialog.
 
 ```ts
-import { NueConfirm } from 'nue-ui';
+import { NueConfirm } from 'nue-ui'
 
 const [isCancelled, result] = await NueConfirm({
     title: 'Delete item?',
     content: 'This action cannot be undone.',
     confirmButtonText: 'Delete',
     cancelButtonText: 'Cancel'
-});
+})
 
 if (!isCancelled) {
     // user confirmed — result is the value passed to onConfirm or the dialog state
@@ -73,20 +73,20 @@ if (!isCancelled) {
 Programmatic input prompt dialog.
 
 ```ts
-import { NuePrompt } from 'nue-ui';
+import { NuePrompt } from 'nue-ui'
 
 const [isCancelled, inputValue] = await NuePrompt({
     title: 'Enter name',
     placeholder: 'Your name',
     inputType: 'text',
-    validator: value => {
-        if (!value) return 'Name is required';
-        return null; // null = valid, string = error message
+    validator: (value) => {
+        if (!value) return 'Name is required'
+        return null // null = valid, string = error message
     }
-});
+})
 
 if (!isCancelled) {
-    console.log('User entered:', inputValue);
+    console.log('User entered:', inputValue)
 }
 ```
 

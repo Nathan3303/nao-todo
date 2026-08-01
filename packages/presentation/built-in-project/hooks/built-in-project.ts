@@ -4,7 +4,10 @@ import {
     type GetTasksOptions,
     type TaskColumnOptions
 } from '@nao-todo/shared'
-import type { BuiltInProjectPreferenceViewObject, BuiltInProjectViewObject } from '@nao-todo/domain-built-in-project'
+import type {
+    BuiltInProjectPreferenceViewObject,
+    BuiltInProjectViewObject
+} from '@nao-todo/domain-built-in-project'
 
 export const useBuiltInProjectsStoreBase = () => {
     const {

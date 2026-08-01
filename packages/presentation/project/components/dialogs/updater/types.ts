@@ -1,5 +1,5 @@
-import { DialogManager } from "@nao-todo/shared"
-import type { ProjectUseCase } from '@nao-todo/application/project/usecases'
+import { DialogManager } from '@nao-todo/shared'
+import type { ProjectUseCase } from '@nao-todo/domain-project'
 
 // 项目更新器对话框属性
 export type ProjectUpdaterDialogProps = {

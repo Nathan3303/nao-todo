@@ -10,11 +10,11 @@ import { t, unwrapError } from '@nao-todo/shared'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import type { useTagsStore } from '../stores'
 import type {
+    TagUseCase,
     CreateTagViewObject,
     TagViewObject,
     UpdateTagViewObject
-} from '@nao-todo/application/tag/viewobjects'
-import { TagUseCase } from '@nao-todo/application/tag/usecases'
+} from '@nao-todo/domain-tag'
 
 export class TagHandler {
     /**

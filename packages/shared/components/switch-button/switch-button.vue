@@ -15,7 +15,7 @@ const themes = computed(() => {
     } else {
         _return = [theme as string, activeTheme]
     }
-    return _return.filter(Boolean as any) as string[]
+    return _return.filter(Boolean) as string[]
 })
 
 const handleClick = () => {

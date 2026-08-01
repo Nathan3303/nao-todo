@@ -1,15 +1,12 @@
 import type { Go } from '@nao-todo/shared'
-import type { BuiltInProjectDomain } from '@nao-todo/domain-built-in-project'
-import type {
-    BuiltInProjectPreferenceViewObject,
-    BuiltInProjectStore,
-    BuiltInProjectViewObject
-} from '../viewobjects'
+import type { BuiltInProjectDomain } from '../../domain'
+import type { BuiltInProjectPreferenceViewObject, BuiltInProjectViewObject } from '../viewobjects'
 import {
     builtInProjectEntities2ViewObjects,
     builtInProjectPreferenceEntity2ViewObject,
     builtInProjectPreferenceViewObject2Entity
 } from './converters'
+import type { BuiltInProjectStore } from '../stores'
 
 /**
  * 内建项目用例

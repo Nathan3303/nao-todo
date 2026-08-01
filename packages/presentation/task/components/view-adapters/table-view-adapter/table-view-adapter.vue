@@ -16,7 +16,7 @@ const {
     noTaskError,
     handleUpdatePage,
     handleUpdatePerPage,
-    handleRetry,
+    handleRetry
 } = useTableViewAdapter(props)
 </script>
 
@@ -42,7 +42,7 @@ const {
             <template #empty>
                 <nue-div vertical align="center">
                     <nue-text size="var(--nue-text-sm)">
-                        {{ noTaskError?.message ? t(noTaskError.message as any) : '' }}
+                        {{ noTaskError?.message ? t(noTaskError.message as never) : '' }}
                     </nue-text>
                     <slot name="emptyActions">
                         <nue-button

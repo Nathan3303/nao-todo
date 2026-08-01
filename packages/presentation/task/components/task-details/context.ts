@@ -11,7 +11,7 @@ import type {
     TaskCheckItemUseCase,
     TaskCommentUseCase,
     TaskUseCase
-} from '@nao-todo/application'
+} from '@nao-todo/domain-task'
 import type { TaskDetailsViewObject } from './types'
 
 // 任务详情上下文

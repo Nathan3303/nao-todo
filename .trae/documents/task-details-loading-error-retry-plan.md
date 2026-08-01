@@ -7,17 +7,17 @@
 ## 当前状态分析
 
 1. **现有结构**：
-   - `task-details-store.ts` 已经有 `useLoadingErrorStoreBase`，提供统一的 `loading` 和 `error` 状态
-   - `task-details.ts` 中的 `initialize` 方法按顺序加载 events 和 comments
-   - `details.vue` 已经有统一的 loading 展示，但没有细分到 events 和 comments
-   - events 和 comments 已经在 `main/index.vue` 中分开展示（分别通过 `details-main-events` 和 `details-main-comments` 组件）
-   - `/packages/components/loading/loading.vue` 中已有 Loading 组件可用于显示加载态
+    - `task-details-store.ts` 已经有 `useLoadingErrorStoreBase`，提供统一的 `loading` 和 `error` 状态
+    - `task-details.ts` 中的 `initialize` 方法按顺序加载 events 和 comments
+    - `details.vue` 已经有统一的 loading 展示，但没有细分到 events 和 comments
+    - events 和 comments 已经在 `main/index.vue` 中分开展示（分别通过 `details-main-events` 和 `details-main-comments` 组件）
+    - `/packages/components/loading/loading.vue` 中已有 Loading 组件可用于显示加载态
 
 2. **需要改进的点**：
-   - events 和 comments 应该有独立的加载和错误状态
-   - 每个板块失败时需要提供单独的重试按钮
-   - 使用 store 中的 loading/error 状态而不是组件内的局部状态
-   - 使用已有的 Loading 组件展示加载状态
+    - events 和 comments 应该有独立的加载和错误状态
+    - 每个板块失败时需要提供单独的重试按钮
+    - 使用 store 中的 loading/error 状态而不是组件内的局部状态
+    - 使用已有的 Loading 组件展示加载状态
 
 ## 实现步骤
 
@@ -26,8 +26,8 @@
 **文件**：`/home/nathanlee/Development/nao-todo/apps/web/src/stores/base/loading-error-store-base.ts`
 
 - 创建一个新的基础 store `useDualLoadingErrorStoreBase`，支持两组 loading/error 状态
-  - 一组用于 events
-  - 一组用于 comments
+    - 一组用于 events
+    - 一组用于 comments
 
 ### 2. 更新 TaskDetailsStore
 
@@ -51,12 +51,12 @@
 **文件**：`/home/nathanlee/Development/nao-todo/apps/web/src/layouts/tasks/task-details/types.ts`
 
 - 更新 `TaskDetailsMainContext` 接口，添加新的状态和方法：
-  - `eventsLoading: ComputedRef<boolean>`
-  - `eventsError: ComputedRef<string>`
-  - `commentsLoading: ComputedRef<boolean>`
-  - `commentsError: ComputedRef<string>`
-  - `retryEvents: () => Promise<void>`
-  - `retryComments: () => Promise<void>`
+    - `eventsLoading: ComputedRef<boolean>`
+    - `eventsError: ComputedRef<string>`
+    - `commentsLoading: ComputedRef<boolean>`
+    - `commentsError: ComputedRef<string>`
+    - `retryEvents: () => Promise<void>`
+    - `retryComments: () => Promise<void>`
 
 ### 5. 更新 details.vue 主组件
 

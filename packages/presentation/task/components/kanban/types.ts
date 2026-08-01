@@ -1,7 +1,6 @@
-import type { ComputedRef } from 'vue'
-import type { TaskTagViewObject, TaskViewObject } from '@nao-todo/domain-task/viewobjects'
+import type { TaskTagViewObject, TaskUseCase, TaskViewObject } from '@nao-todo/domain-task'
 import type { GetTasksSortOptions, TaskColumnOptions } from '@nao-todo/shared'
-import type { TaskUseCase } from '@nao-todo/domain-task/usecases'
+import type { ComputedRef } from 'vue'
 
 /**
  * Task Kanban

@@ -1,8 +1,8 @@
 import type { GoAsync, ResponseDataPagination } from '@nao-todo/shared'
 import { unwrapError, type GetTasksOptions } from '@nao-todo/shared'
 import { reactive } from 'vue'
-import type { TaskViewObject } from '@nao-todo/domain-task/viewobjects'
-import { TaskUseCase } from '@nao-todo/domain-task/usecases'
+import type { TaskViewObject } from '@nao-todo/domain-task'
+import { TaskUseCase } from '@nao-todo/domain-task'
 
 /**
  * 任务加载器状态

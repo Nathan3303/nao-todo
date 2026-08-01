@@ -8,20 +8,20 @@
 
 ### 2.1 Domain 层
 
-| 文件 | 涉及内容 |
-|------|----------|
-| `packages/domain/auth/repositories/auth.ts` | `AuthRepository` 接口定义了 `encryptPassword` 方法 |
-| `packages/domain/auth/services/auth.ts` | `AuthDomain` 服务调用了 `encryptPassword` 和 `setEncryptedPassword` |
-| `packages/domain/auth/valueobjects/signin.ts` | `SignInValueObject` 有 `encryptedPassword` 属性及相关方法 |
-| `packages/domain/auth/valueobjects/signup.ts` | `SignUpValueObject` 有 `encryptedPassword` 属性及相关方法 |
+| 文件                                          | 涉及内容                                                            |
+| --------------------------------------------- | ------------------------------------------------------------------- |
+| `packages/domain/auth/repositories/auth.ts`   | `AuthRepository` 接口定义了 `encryptPassword` 方法                  |
+| `packages/domain/auth/services/auth.ts`       | `AuthDomain` 服务调用了 `encryptPassword` 和 `setEncryptedPassword` |
+| `packages/domain/auth/valueobjects/signin.ts` | `SignInValueObject` 有 `encryptedPassword` 属性及相关方法           |
+| `packages/domain/auth/valueobjects/signup.ts` | `SignUpValueObject` 有 `encryptedPassword` 属性及相关方法           |
 
 ### 2.2 Infrastructure 层
 
-| 文件 | 涉及内容 |
-|------|----------|
-| `packages/infrastructure/backend/auth/repoImpl.ts` | 实现了 `encryptPassword` 方法，使用 SparkMD5 |
-| `packages/infrastructure/backend/auth/converters.ts` | 使用 `getEncryptedPassword()` 获取加密密码 |
-| `packages/infrastructure/backend/user/converters.ts` | 更新密码时使用 SparkMD5 加密 |
+| 文件                                                 | 涉及内容                                     |
+| ---------------------------------------------------- | -------------------------------------------- |
+| `packages/infrastructure/backend/auth/repoImpl.ts`   | 实现了 `encryptPassword` 方法，使用 SparkMD5 |
+| `packages/infrastructure/backend/auth/converters.ts` | 使用 `getEncryptedPassword()` 获取加密密码   |
+| `packages/infrastructure/backend/user/converters.ts` | 更新密码时使用 SparkMD5 加密                 |
 
 ### 2.3 根 package.json
 
@@ -40,6 +40,7 @@
 **文件**: `packages/domain/auth/services/auth.ts`
 
 **操作**:
+
 - 删除 `signIn` 方法中的密码加密逻辑（第 28-34 行）
 - 删除 `signUp` 方法中的密码加密逻辑（第 57-63 行）
 
@@ -48,6 +49,7 @@
 **文件**: `packages/domain/auth/valueobjects/signin.ts`
 
 **操作**:
+
 - 删除 `encryptedPassword` 属性
 - 删除 `setEncryptedPassword` 方法
 - 删除 `getEncryptedPassword` 方法
@@ -57,6 +59,7 @@
 **文件**: `packages/domain/auth/valueobjects/signup.ts`
 
 **操作**:
+
 - 删除 `encryptedPassword` 属性
 - 删除 `setEncryptedPassword` 方法
 - 删除 `getEncryptedPassword` 方法
@@ -66,6 +69,7 @@
 **文件**: `packages/infrastructure/backend/auth/converters.ts`
 
 **操作**:
+
 - `signInValueObjectToSignInReq`: 直接使用 `signInValueObject.password` 替代 `getEncryptedPassword()`
 - `signUpValueObjectToSignUpReq`: 直接使用 `signUpValueObject.password` 替代 `getEncryptedPassword()`
 
@@ -74,6 +78,7 @@
 **文件**: `packages/infrastructure/backend/auth/repoImpl.ts`
 
 **操作**:
+
 - 删除 `SparkMD5` 导入
 - 删除 `encryptPassword` 方法实现
 - 从返回对象中移除 `encryptPassword`
@@ -83,6 +88,7 @@
 **文件**: `packages/infrastructure/backend/user/converters.ts`
 
 **操作**:
+
 - 删除 `SparkMD5` 导入
 - `updateUserPasswordValueObject2Req`: 直接使用明文密码，移除 `SparkMD5.hash()` 调用
 
@@ -91,6 +97,7 @@
 **文件**: `package.json`
 
 **操作**:
+
 - 删除 `dependencies` 中的 `spark-md5`
 - 删除 `devDependencies` 中的 `@types/spark-md5`
 

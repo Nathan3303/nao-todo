@@ -46,11 +46,11 @@
 ### 1. 新建 `apps/web/src/stores/pomodoro-records-store.ts`
 
 - 内容复制自现 `pomodoro-store.ts`，并：
-  - `defineStore('PomodoroStore', ...)` → `defineStore('PomodoroRecordsStore', ...)`
-  - `const usePomodoroStore = ...` → `const usePomodoroRecordsStore = ...`
-  - `export default usePomodoroStore` → `export default usePomodoroRecordsStore`
-  - 删除 `setRecords`（含定义与 return 中的导出）
-  - 删除 `updateNote`（含定义与 return 中的导出）
+    - `defineStore('PomodoroStore', ...)` → `defineStore('PomodoroRecordsStore', ...)`
+    - `const usePomodoroStore = ...` → `const usePomodoroRecordsStore = ...`
+    - `export default usePomodoroStore` → `export default usePomodoroRecordsStore`
+    - 删除 `setRecords`（含定义与 return 中的导出）
+    - 删除 `updateNote`（含定义与 return 中的导出）
 - **why**：文件+符号名一致，避免与复数的 `usePomodorosStore` 混淆；同时清理死代码。
 - 随后删除旧文件 `pomodoro-store.ts`。
 

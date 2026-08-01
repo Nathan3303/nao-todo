@@ -3,12 +3,12 @@ import {
     TASK_REMINDER_DIALOG_KEY,
     t,
     useDialogWrapper,
-    type DialogInstanceType
+    type DialogInstanceType,
+    type SSEReminderEvent
 } from '@nao-todo/shared'
 import { onMounted, ref } from 'vue'
-import type { SSEReminderEvent } from '../../../types'
-import useTaskReminder, { SNOOZE_OPTIONS } from './use-task-reminder'
 import { TaskReminderDialogProps } from './type'
+import useTaskReminder, { SNOOZE_OPTIONS } from './use-task-reminder'
 
 defineOptions({ name: 'TaskReminderDialog' })
 const props = defineProps<TaskReminderDialogProps>()
@@ -50,7 +50,7 @@ const handleSnoozeExecute = (executeId: string) => {
 
 onMounted(() => {
     dialogManager.register(TASK_REMINDER_DIALOG_KEY, {
-        open: (payload?: SSEReminderEvent) => {
+        open: <T = SSEReminderEvent>(payload?: T) => {
             if (!payload) return
             const wasEmpty = totalCount.value === 0
             enqueue(payload)

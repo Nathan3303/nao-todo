@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { reactive, watch } from 'vue';
-import type { PomodoroFormEmits, PomodoroFormProps, PomodoroFormState } from './types';
+import { reactive, watch } from 'vue'
+import type { PomodoroFormEmits, PomodoroFormProps, PomodoroFormState } from './types'
 
 defineOptions({ name: 'PomodoroForm' })
 const props = defineProps<PomodoroFormProps>()

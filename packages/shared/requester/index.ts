@@ -60,7 +60,7 @@ export const replayFailedOperations = async () => {
                     continue
             }
             // 归一化网络错误在顶层携带字符串 code，视为仍失败，保留日志
-            if (typeof (response as any)?.code !== 'string') {
+            if (typeof (response as RequesterOpRtn)?.code !== 'string') {
                 await removeLog(log.id)
             }
         } catch {

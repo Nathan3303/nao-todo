@@ -22,12 +22,12 @@ Debounced search input with a search button.
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { ref } from 'vue'
 
-const query = ref('');
+const query = ref('')
 
 function handleSearch() {
-    if (!query.value.trim()) return;
+    if (!query.value.trim()) return
     // Call your search API with query.value
 }
 </script>
@@ -79,29 +79,29 @@ Username + password + remember-me checkbox. Includes loading state on submit.
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref } from 'vue';
-import { NueMessage } from 'nue-ui';
+import { reactive, ref } from 'vue'
+import { NueMessage } from 'nue-ui'
 
 const form = reactive({
     username: '',
     password: '',
     remember: false
-});
-const loading = ref(false);
+})
+const loading = ref(false)
 
 async function handleLogin() {
     if (!form.username || !form.password) {
-        NueMessage.warn('Please fill in all fields');
-        return;
+        NueMessage.warn('Please fill in all fields')
+        return
     }
-    loading.value = true;
+    loading.value = true
     try {
         // await authApi.login(form);
-        NueMessage.success('Welcome back!');
+        NueMessage.success('Welcome back!')
     } catch {
-        NueMessage.error('Login failed. Please check your credentials.');
+        NueMessage.error('Login failed. Please check your credentials.')
     } finally {
-        loading.value = false;
+        loading.value = false
     }
 }
 
@@ -173,8 +173,8 @@ Full registration with validation and async submission.
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref } from 'vue';
-import { NueMessage } from 'nue-ui';
+import { reactive, ref } from 'vue'
+import { NueMessage } from 'nue-ui'
 
 const form = reactive({
     name: '',
@@ -183,26 +183,26 @@ const form = reactive({
     confirmPassword: '',
     role: '',
     newsletter: false
-});
-const loading = ref(false);
+})
+const loading = ref(false)
 
 async function handleRegister() {
     if (!form.name || !form.email || !form.password) {
-        NueMessage.warn('Please fill in all required fields');
-        return;
+        NueMessage.warn('Please fill in all required fields')
+        return
     }
     if (form.password !== form.confirmPassword) {
-        NueMessage.error('Passwords do not match');
-        return;
+        NueMessage.error('Passwords do not match')
+        return
     }
-    loading.value = true;
+    loading.value = true
     try {
         // await api.register(form);
-        NueMessage.success('Account created! Check your email to verify.');
+        NueMessage.success('Account created! Check your email to verify.')
     } catch {
-        NueMessage.error('Registration failed. Please try again.');
+        NueMessage.error('Registration failed. Please try again.')
     } finally {
-        loading.value = false;
+        loading.value = false
     }
 }
 </script>
@@ -243,17 +243,17 @@ Avatar + name + role badge + action dropdown.
 <script lang="ts" setup>
 defineProps<{
     user: {
-        name: string;
-        email: string;
-        avatar?: string;
-        role: string;
-    };
-}>();
+        name: string
+        email: string
+        avatar?: string
+        role: string
+    }
+}>()
 
 const emit = defineEmits<{
-    edit: [user: typeof user];
-    delete: [user: typeof user];
-}>();
+    edit: [user: typeof user]
+    delete: [user: typeof user]
+}>()
 
 // Listen to dropdown @execute event on the parent
 </script>
@@ -271,7 +271,7 @@ Uses the programmatic `NueConfirm` API — no template needed.
 </template>
 
 <script lang="ts" setup>
-import { NueConfirm, NueMessage } from 'nue-ui';
+import { NueConfirm, NueMessage } from 'nue-ui'
 
 async function handleDelete() {
     const [cancelled] = await NueConfirm({
@@ -279,15 +279,15 @@ async function handleDelete() {
         content: 'This action cannot be undone. The item will be permanently removed.',
         confirmButtonText: 'Delete',
         cancelButtonText: 'Cancel'
-    });
+    })
 
-    if (cancelled) return;
+    if (cancelled) return
 
     try {
         // await api.deleteItem(id);
-        NueMessage.success('Item deleted');
+        NueMessage.success('Item deleted')
     } catch {
-        NueMessage.error('Failed to delete item');
+        NueMessage.error('Failed to delete item')
     }
 }
 </script>
@@ -347,9 +347,9 @@ Collapsible filter section with select, date picker, checkbox group, and action 
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref } from 'vue';
+import { reactive, ref } from 'vue'
 
-const activePanel = ref<string[]>([]);
+const activePanel = ref<string[]>([])
 
 const defaultFilters = {
     status: '',
@@ -357,16 +357,16 @@ const defaultFilters = {
     startDate: null as string | null,
     endDate: null as string | null,
     tags: [] as string[]
-};
+}
 
-const filters = reactive({ ...defaultFilters });
+const filters = reactive({ ...defaultFilters })
 
 function applyFilters() {
     // Call API with filters
 }
 
 function resetFilters() {
-    Object.assign(filters, defaultFilters);
+    Object.assign(filters, defaultFilters)
     // Re-fetch unfiltered data
 }
 </script>
@@ -420,11 +420,11 @@ A slide-in settings panel with form controls and save/cancel.
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref } from 'vue';
-import { NueMessage } from 'nue-ui';
+import { reactive, ref } from 'vue'
+import { NueMessage } from 'nue-ui'
 
-const open = ref(false);
-const saving = ref(false);
+const open = ref(false)
+const saving = ref(false)
 
 const settings = reactive({
     emailNotifications: true,
@@ -432,22 +432,22 @@ const settings = reactive({
     desktopNotifications: true,
     darkMode: false,
     language: 'en'
-});
+})
 
 function toggleDarkMode(value: boolean) {
-    document.documentElement.style.setProperty('--nue-dark-switch', value ? '1' : '0');
+    document.documentElement.style.setProperty('--nue-dark-switch', value ? '1' : '0')
 }
 
 async function save(close: () => void) {
-    saving.value = true;
+    saving.value = true
     try {
         // await api.saveSettings(settings);
-        NueMessage.success('Settings saved');
-        close();
+        NueMessage.success('Settings saved')
+        close()
     } catch {
-        NueMessage.error('Failed to save settings');
+        NueMessage.error('Failed to save settings')
     } finally {
-        saving.value = false;
+        saving.value = false
     }
 }
 </script>
@@ -523,35 +523,35 @@ A scrollable list that loads more items as the user scrolls down. Includes loadi
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { ref } from 'vue'
 
 interface Item {
-    id: number;
-    title: string;
-    description: string;
-    image?: string;
-    status: string;
+    id: number
+    title: string
+    description: string
+    image?: string
+    status: string
 }
 
-const search = ref('');
-const items = ref<Item[]>([]);
-const loading = ref(false);
-const noMore = ref(false);
-let page = 1;
+const search = ref('')
+const items = ref<Item[]>([])
+const loading = ref(false)
+const noMore = ref(false)
+let page = 1
 
 async function fetchItems() {
-    loading.value = true;
+    loading.value = true
     try {
         // const newItems = await api.getItems({ page, search: search.value });
-        const newItems: Item[] = [];
+        const newItems: Item[] = []
         if (newItems.length === 0) {
-            noMore.value = true;
+            noMore.value = true
         } else {
-            items.value.push(...newItems);
-            page++;
+            items.value.push(...newItems)
+            page++
         }
     } finally {
-        loading.value = false;
+        loading.value = false
     }
 }
 

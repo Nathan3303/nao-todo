@@ -4,9 +4,12 @@
  * @param delay 延迟时间
  * @returns
  */
-export const throttle = (callback: (...args: any[]) => void | Promise<any>, delay: number) => {
+export const throttle = (
+    callback: (...args: unknown[]) => void | Promise<unknown>,
+    delay: number
+) => {
     let timer: number | null = null
-    return async (...args: any[]) => {
+    return async (...args: unknown[]) => {
         if (timer) return
         const result = await callback(...args)
         timer = setTimeout(() => (timer = null), delay) as unknown as number
@@ -46,4 +49,3 @@ export function generateId(length: number = 6) {
         .toString(36)
         .slice(2, 2 + length)
 }
-

@@ -5,7 +5,7 @@ import { LANGUAGE_KEY } from '@nao-todo/domain-identity'
 
 export const useLocaleStore = defineStore('LocaleStore', () => {
     // 当前语言
-    const language = computed<SupportedLocale>(() => getLocale() as SupportedLocale)
+    const language = computed<SupportedLocale>(() => getLocale().value as SupportedLocale)
 
     /**
      * 设置当前语言

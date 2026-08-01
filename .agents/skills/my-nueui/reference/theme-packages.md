@@ -32,7 +32,7 @@ pnpm install nue-ui-theme-shadlike
 
 ```ts
 // main.ts
-import 'nue-ui-theme-shadlike/dist/index.css';
+import 'nue-ui-theme-shadlike/dist/index.css'
 ```
 
 This gives you: CSS reset, scrollbar styles, animations, all component styles, and all design tokens (~30 component CSS files bundled).
@@ -40,7 +40,7 @@ This gives you: CSS reset, scrollbar styles, animations, all component styles, a
 **Global-only (use your own component styles):**
 
 ```ts
-import 'nue-ui-theme-shadlike/dist/global/index.css';
+import 'nue-ui-theme-shadlike/dist/global/index.css'
 ```
 
 Provides: CSS reset, scrollbar, animations, and all `--nue-*` CSS variables. Component classes will have no visual styling — you provide that yourself.
@@ -48,10 +48,10 @@ Provides: CSS reset, scrollbar, animations, and all `--nue-*` CSS variables. Com
 **Per-component (tree-shake for production):**
 
 ```ts
-import 'nue-ui-theme-shadlike/dist/global/index.css'; // Always needed for tokens
-import 'nue-ui-theme-shadlike/dist/components/button.css';
-import 'nue-ui-theme-shadlike/dist/components/input.css';
-import 'nue-ui-theme-shadlike/dist/components/dialog.css';
+import 'nue-ui-theme-shadlike/dist/global/index.css' // Always needed for tokens
+import 'nue-ui-theme-shadlike/dist/components/button.css'
+import 'nue-ui-theme-shadlike/dist/components/input.css'
+import 'nue-ui-theme-shadlike/dist/components/dialog.css'
 ```
 
 Only import the component CSS files you actually use. The full list of available component CSS files: `avatar`, `badge`, `breadcrumb`, `button`, `button-group`, `checkbox`, `collapse`, `confirm`, `container`, `date-picker`, `dialog`, `div`, `divider`, `drawer`, `dropdown`, `empty`, `icon`, `infinite-scroll`, `input`, `link`, `marquee`, `message`, `overlay`, `popup-pool`, `progress`, `prompt`, `select`, `switch`, `text`, `textarea`, `tooltip`.
@@ -69,14 +69,14 @@ The entire theme is controlled by a single CSS variable:
 
 ```js
 // Enable dark mode
-document.documentElement.style.setProperty('--nue-dark-switch', '1');
+document.documentElement.style.setProperty('--nue-dark-switch', '1')
 
 // Enable light mode
-document.documentElement.style.setProperty('--nue-dark-switch', '0');
+document.documentElement.style.setProperty('--nue-dark-switch', '0')
 
 // Detect current mode
 const isDark =
-    getComputedStyle(document.documentElement).getPropertyValue('--nue-dark-switch').trim() === '1';
+    getComputedStyle(document.documentElement).getPropertyValue('--nue-dark-switch').trim() === '1'
 ```
 
 **Toggle in CSS (e.g., with a class):**
@@ -148,7 +148,7 @@ pnpm install nue-ui-iconfont
 
 ```ts
 // main.ts — import once, available everywhere
-import 'nue-ui-iconfont/dist/iconfont.css';
+import 'nue-ui-iconfont/dist/iconfont.css'
 ```
 
 The CSS file contains:

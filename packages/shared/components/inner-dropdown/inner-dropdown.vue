@@ -61,4 +61,3 @@ const suffix = computed(() => {
     cursor: not-allowed;
 }
 </style>
-

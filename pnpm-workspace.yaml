@@ -9,7 +9,6 @@ overrides:
     fast-xml-parser: '>=5.7.0'
     serialize-javascript: '>=7.0.5'
     tar: '>=7.5.11'
-    vite: '>=8.0.14'
 catalog:
     vite: npm:@voidzero-dev/vite-plus-core@0.2.6
     vite-plus: 0.2.6

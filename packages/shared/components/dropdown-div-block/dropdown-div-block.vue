@@ -36,4 +36,3 @@ defineProps<{ title: string }>()
     }
 }
 </style>
-

@@ -1,6 +1,12 @@
 import { computed, provide, watch } from 'vue'
-import type { TaskTableContext, TaskTableEmits, TaskTableProps } from './types'
-import type { TaskViewObject } from '@nao-todo/domain-task/viewobjects'
+import type {
+    ColumnReorderPayload,
+    ColumnResizePayload,
+    TaskTableContext,
+    TaskTableEmits,
+    TaskTableProps
+} from './types'
+import type { TaskViewObject } from '@nao-todo/domain-task'
 import { type GetTasksSortOptions, type TaskColumnOptions, isTaskExpired } from '@nao-todo/shared'
 import useMultiSelect from './use-multi-select'
 import useColumnConfig from './use-column-config'
@@ -60,14 +66,14 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
     }
 
     // @method 处理列排序
-    const handleColumnReorder = (payload: any) => {
+    const handleColumnReorder = (payload: ColumnReorderPayload) => {
         reorderColumns(payload)
         emit('columnReorder', payload)
         emit('updateLayoutConfig', layoutConfig.value)
     }
 
     // @method 处理列宽调整
-    const handleColumnResize = (payload: any) => {
+    const handleColumnResize = (payload: ColumnResizePayload) => {
         resizeColumn(payload)
         emit('columnResize', payload)
         emit('updateLayoutConfig', layoutConfig.value)

@@ -1,6 +1,6 @@
 import { useListStoreBase, useMapperStoreBase } from '@nao-todo/shared'
 import { computed } from 'vue'
-import type { TaskCheckItemViewObject, UpdateTaskCheckItemViewObject } from '@nao-todo/domain-task/viewobjects'
+import type { TaskCheckItemViewObject, UpdateTaskCheckItemViewObject } from '@nao-todo/domain-task'
 
 export const useTaskCheckItemsStoreBase = () => {
     const {

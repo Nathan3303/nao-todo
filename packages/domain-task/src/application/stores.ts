@@ -1,4 +1,10 @@
-import type { TaskViewObject, TaskCheckItemViewObject, UpdateTaskCheckItemViewObject, TaskCommentViewObject, UpdateTaskCommentViewObject } from './viewobjects/task'
+import type {
+    TaskViewObject,
+    TaskCheckItemViewObject,
+    UpdateTaskCheckItemViewObject,
+    TaskCommentViewObject,
+    UpdateTaskCommentViewObject
+} from './viewobjects/task'
 
 // 任务存储接口
 export type TaskStore = {

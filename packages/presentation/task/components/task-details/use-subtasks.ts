@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { computed, inject, ref } from 'vue'
 import { useTasksLoader } from '../../hooks'
 import type { useTaskDetailsStore } from '../../stores'
-import type { TaskViewObject } from '@nao-todo/application'
+import type { TaskViewObject } from '@nao-todo/domain-task'
 import { TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
 
 /**

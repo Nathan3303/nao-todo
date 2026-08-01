@@ -43,4 +43,3 @@ const emit = defineEmits<TagBoardEmits>()
     }
 }
 </style>
-

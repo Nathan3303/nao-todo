@@ -42,4 +42,3 @@ export const usePomodoroRecordStoreBase = () => {
 }
 
 export type PomodoroRecordStoreBase = ReturnType<typeof usePomodoroRecordStoreBase>
-

@@ -1,3 +1,5 @@
+import { AxiosError } from 'axios'
+
 /**
  * 最大重试次数
  */
@@ -9,7 +11,7 @@ export const MAX_RETRY = 2
  * @param error 请求错误对象
  * @returns 是否可重试
  */
-export const isRetriableError = (error: any): boolean => {
+export const isRetriableError = (error: AxiosError): boolean => {
     return error?.code === 'ECONNABORTED' || error?.code === 'ERR_NETWORK'
 }
 

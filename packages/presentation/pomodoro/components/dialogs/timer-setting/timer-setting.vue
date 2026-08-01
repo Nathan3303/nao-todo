@@ -19,7 +19,7 @@ const { form, saving, clearInputsValue, handleConfirm } = useTimerSettingDialog(
 // 存储 dialogManager.open 传入的 onClose 回调
 let onCloseCallback: (() => void) | undefined
 
-const open = (_payload: any, onClose?: () => void) => {
+const open = (_payload: unknown, onClose?: () => void) => {
     onCloseCallback = onClose
     clearInputsValue()
     visible.value = true

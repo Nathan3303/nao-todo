@@ -35,4 +35,3 @@ export type TimerEmits = {
     (e: 'adjustTime', delta: number): void
     (e: 'openSettings'): void
 }
-

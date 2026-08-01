@@ -1,8 +1,8 @@
 import type { AxiosInstance } from 'axios'
 
-export type RequesterOpRtn = Record<string, any> & { data: unknown }
+export type RequesterOpRtn = Record<string, unknown> & { data: unknown }
 
-export type RequesterConfig = { data?: Record<string, any> } | Record<string, any>
+export type RequesterConfig = { data?: Record<string, unknown> } | Record<string, unknown>
 
 export type Requester = {
     _instance: AxiosInstance | null

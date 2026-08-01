@@ -1,7 +1,7 @@
 import { ref, watch } from 'vue'
 import { NueMessage } from 'nue-ui'
 import { unwrapError } from '@nao-todo/shared'
-import type { CreateProjectViewObject } from '@nao-todo/application/project/viewobjects'
+import type { CreateProjectViewObject } from '@nao-todo/domain-project'
 import { ProjectCreatorDialogProps } from './types'
 
 /**
@@ -45,7 +45,7 @@ const useProjectCreator = (props: ProjectCreatorDialogProps) => {
         // 调用 API 创建清单
         creating.value = true
         return props.projectUseCase
-            .create(viewObject.value)
+            .createProject(viewObject.value)
             .then(([, error]) => {
                 if (error !== null) {
                     console.warn(unwrapError(error))

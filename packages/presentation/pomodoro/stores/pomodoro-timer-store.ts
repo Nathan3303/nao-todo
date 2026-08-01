@@ -5,7 +5,10 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { TimerPhase, TimerStatus } from '../components/timer'
 import { POMODORO_MAX_FOCUS_SECONDS, POMODORO_MIN_FOCUS_SECONDS } from '@nao-todo/domain-pomodoro'
-import type { CreatePomodoroRecordViewObject, PomodoroRecordViewObject } from '@nao-todo/domain-pomodoro'
+import type {
+    CreatePomodoroRecordViewObject,
+    PomodoroRecordViewObject
+} from '@nao-todo/domain-pomodoro'
 import {
     buildPomodoroRecord,
     clearTimerSnapshot,
@@ -45,9 +48,13 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
     const isIdle = computed(() => phase.value === 'idle')
     const isRunning = computed(() => status.value === 'running')
 
-    let createRecordFn: ((record: CreatePomodoroRecordViewObject) => GoAsync<PomodoroRecordViewObject[]>) | null = null
+    let createRecordFn:
+        | ((record: CreatePomodoroRecordViewObject) => GoAsync<PomodoroRecordViewObject[]>)
+        | null = null
 
-    const setCreateRecordFn = (fn: ((record: CreatePomodoroRecordViewObject) => GoAsync<PomodoroRecordViewObject[]>) | null) => {
+    const setCreateRecordFn = (
+        fn: ((record: CreatePomodoroRecordViewObject) => GoAsync<PomodoroRecordViewObject[]>) | null
+    ) => {
         createRecordFn = fn
     }
 
@@ -124,8 +131,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
     const calcElapsed = (): number => totalSeconds.value - calcRemaining()
 
     /** 判断当前是否该进入长休息 */
-    const isLongBreakDue = (): boolean =>
-        completedRoundCount >= sessionStore.sessionsUntilLongBreak
+    const isLongBreakDue = (): boolean => completedRoundCount >= sessionStore.sessionsUntilLongBreak
 
     /**
      * 生成新的专注会话 ID
@@ -289,11 +295,7 @@ export const usePomodoroTimerStore = defineStore('PomodoroTimerStore', () => {
             const record = buildRecord(total)
             // 异步持久化，不阻塞阶段流转
             if (createRecordFn) {
-                persistPomodoroRecord(
-                    createRecordFn,
-                    record,
-                    '[Pomodoro] Failed to create record:'
-                )
+                persistPomodoroRecord(createRecordFn, record, '[Pomodoro] Failed to create record:')
             }
             sendNotification('专注完成', `已完成 ${formatMinutes(total)} 的专注，现在开始休息`)
 

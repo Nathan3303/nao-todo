@@ -34,6 +34,3 @@ export class CreatePomodoroRecordValueObject {
         return null
     }
 }
-
-
-

@@ -1305,7 +1305,8 @@ export default defineConfig({
                     'no-with': 'off',
                     'prefer-const': 'error',
                     'prefer-rest-params': 'error',
-                    'prefer-spread': 'error'
+                    'prefer-spread': 'error',
+                    'no-floating-promises': 'off'
                 }
             },
             {

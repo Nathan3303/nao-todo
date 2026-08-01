@@ -11,7 +11,7 @@ export type DialogWrapperEmits = {
     (e: 'update:modelValue', value: boolean): void
 }
 
-export type DialogPayload = Record<string, any>
+export type DialogPayload = Record<string, unknown>
 
 export type DialogInstanceType = InstanceType<typeof NueDialog>
 

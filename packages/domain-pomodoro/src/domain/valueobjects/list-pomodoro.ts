@@ -23,12 +23,11 @@ export class ListPomodoroValueObject {
     /**
      * 转换为对象
      */
-    makeQueryOptions(): Record<string, any> {
-        const queryOptions: Record<string, any> = {}
+    makeQueryOptions(): Record<string, unknown> {
+        const queryOptions: Record<string, unknown> = {}
         if (this.type !== void 0) queryOptions.type = this.type
         if (this.name !== void 0) queryOptions.name = this.name
         if (this.isArchived !== void 0) queryOptions.isArchived = this.isArchived
         return queryOptions
     }
 }
-

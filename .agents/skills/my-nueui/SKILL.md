@@ -40,15 +40,15 @@ pnpm install nue-ui nue-ui-theme-shadlike nue-ui-iconfont
 
 ```ts
 // main.ts
-import { createApp } from 'vue';
-import NueUI from 'nue-ui';
-import 'nue-ui-iconfont/dist/iconfont.css'; // Icons (required for NueIcon)
-import 'nue-ui-theme-shadlike/dist/index.css'; // Theme (strongly recommended)
+import { createApp } from 'vue'
+import NueUI from 'nue-ui'
+import 'nue-ui-iconfont/dist/iconfont.css' // Icons (required for NueIcon)
+import 'nue-ui-theme-shadlike/dist/index.css' // Theme (strongly recommended)
 // Or per-component: import 'nue-ui-theme-shadlike/dist/components/button.css';
 
-const app = createApp(App);
-app.use(NueUI); // Registers all 32 components globally as <nue-*>
-app.mount('#app');
+const app = createApp(App)
+app.use(NueUI) // Registers all 32 components globally as <nue-*>
+app.mount('#app')
 ```
 
 After `app.use(NueUI)`, all components are available in templates as `<nue-*>` — no manual imports needed.
@@ -57,9 +57,9 @@ After `app.use(NueUI)`, all components are available in templates as `<nue-*>` �
 
 ```js
 // Switch to dark mode
-document.documentElement.style.setProperty('--nue-dark-switch', '1');
+document.documentElement.style.setProperty('--nue-dark-switch', '1')
 // Switch to light mode
-document.documentElement.style.setProperty('--nue-dark-switch', '0');
+document.documentElement.style.setProperty('--nue-dark-switch', '0')
 ```
 
 ## Theming System
@@ -184,17 +184,17 @@ Use these levels to determine the complexity of your output. Match the user's re
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref } from 'vue';
+import { reactive, ref } from 'vue'
 
-const form = reactive({ username: '', password: '', remember: false });
-const loading = ref(false);
+const form = reactive({ username: '', password: '', remember: false })
+const loading = ref(false)
 
 async function handleLogin() {
-    loading.value = true;
+    loading.value = true
     try {
-        await loginApi(form);
+        await loginApi(form)
     } finally {
-        loading.value = false;
+        loading.value = false
     }
 }
 </script>
@@ -540,15 +540,15 @@ When asked to generate a business component, always include everything needed to
 Include the complete `main.ts` with all three package imports:
 
 ```ts
-import { createApp } from 'vue';
-import NueUI from 'nue-ui';
-import 'nue-ui-iconfont/dist/iconfont.css';
-import 'nue-ui-theme-shadlike/dist/index.css';
-import App from './App.vue';
+import { createApp } from 'vue'
+import NueUI from 'nue-ui'
+import 'nue-ui-iconfont/dist/iconfont.css'
+import 'nue-ui-theme-shadlike/dist/index.css'
+import App from './App.vue'
 
-const app = createApp(App);
-app.use(NueUI);
-app.mount('#app');
+const app = createApp(App)
+app.use(NueUI)
+app.mount('#app')
 ```
 
 ### For a business component
@@ -561,7 +561,7 @@ Output a complete `.vue` SFC:
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed } from 'vue'
 // NueUI components are globally registered — no imports needed
 // For hooks: import { useBoolState, useLoadingState } from '@nue-ui/hooks';
 // For programmatic APIs: import { NueMessage, NueConfirm, NuePrompt } from 'nue-ui';

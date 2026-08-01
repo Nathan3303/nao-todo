@@ -6,7 +6,3 @@ export const TaskPriorityPresets = computed(() => ({
     medium: ['priority-2', t('task.priority.medium'), 'var(--nue-warning-color-60)'],
     low: ['priority-1', t('task.priority.low'), 'inherit']
 }))
-
-
-
-

@@ -30,4 +30,3 @@ const isExpired = computed(() => {
     color: var(--nue-error-color-60) !important;
 }
 </style>
-

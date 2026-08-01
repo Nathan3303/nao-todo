@@ -16,4 +16,3 @@ export class TaskCheckItemEntity extends Entity {
         super(id, createdAt, updatedAt, deletedAt)
     }
 }
-

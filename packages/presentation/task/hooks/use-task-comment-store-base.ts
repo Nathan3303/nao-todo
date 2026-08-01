@@ -1,7 +1,7 @@
 import { useListStoreBase, useMapperStoreBase } from '@nao-todo/shared'
 import dayjs from 'dayjs'
 import { computed } from 'vue'
-import type { TaskCommentViewObject } from '@nao-todo/domain-task/viewobjects'
+import type { TaskCommentViewObject } from '@nao-todo/domain-task'
 // import { env } from '@/infrastructure/constants/env'
 
 export const useTaskCommentsStoreBase = () => {

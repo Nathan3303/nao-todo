@@ -34,4 +34,3 @@ const inputValue = computed({
     color: var(--nue-primary-color-900);
 }
 </style>
-

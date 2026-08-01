@@ -1,4 +1,8 @@
-import type { UpdatePomodoroViewObject, PomodoroViewObject, PomodoroRecordViewObject } from './viewobjects/pomodoro'
+import type {
+    UpdatePomodoroViewObject,
+    PomodoroViewObject,
+    PomodoroRecordViewObject
+} from './viewobjects/pomodoro'
 
 // Pomodoro 存储接口
 export type PomodoroStore = {

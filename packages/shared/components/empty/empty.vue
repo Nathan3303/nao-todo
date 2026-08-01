@@ -30,4 +30,3 @@ const height = computed(() => (props.fullHeight ? '100%' : 'auto'))
     flex: auto;
 }
 </style>
-

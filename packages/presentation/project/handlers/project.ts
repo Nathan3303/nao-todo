@@ -11,10 +11,10 @@ import {
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { useProjectsStore } from '../stores'
 import type {
+    ProjectUseCase,
     ProjectViewObject,
     UpdateProjectViewObject
-} from '@nao-todo/application/project/viewobjects'
-import { ProjectUseCase } from '@nao-todo/application/project/usecases'
+} from '@nao-todo/domain-project'
 
 export class ProjectHandler {
     /**
@@ -128,7 +128,7 @@ export class ProjectHandler {
         // 2. 配置项目ID
         preference.projectId = projectId
         // 3. 调用用例
-        return await this.projectUseCase.savePreference(projectId, preference)
+        return await this.projectUseCase.saveProjectPreference(projectId, preference)
     }
 
     /**

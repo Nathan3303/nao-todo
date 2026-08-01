@@ -100,4 +100,3 @@ const selectedColor = computed({
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
 }
 </style>
-

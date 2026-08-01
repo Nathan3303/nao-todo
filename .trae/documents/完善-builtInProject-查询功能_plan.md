@@ -5,21 +5,21 @@
 通过探索代码库，我已经了解了以下关键信息：
 
 1. **后端 API**（`/home/nathan-lee/devs/nao-todo/docs/backend-api.md`）：GET /tasks 接口支持丰富的查询参数，包括：
-   - projectId, tagId, name, description
-   - state, priority
-   - startAt, endAt
-   - isDeleted, isArchived, isStarMarked, isGivenUp
-   - relativeDate（today, tomorrow, week, -today）
-   - sort, page, limit
+    - projectId, tagId, name, description
+    - state, priority
+    - startAt, endAt
+    - isDeleted, isArchived, isStarMarked, isGivenUp
+    - relativeDate（today, tomorrow, week, -today）
+    - sort, page, limit
 
 2. **类型定义**：
-   - `GetTasksOptions` 位于 `/home/nathan-lee/devs/nao-todo/packages/types/viewobjects/task.ts:40-55`
-   - 使用 `isStarMarked` 而不是 `isFavorited`
+    - `GetTasksOptions` 位于 `/home/nathan-lee/devs/nao-todo/packages/types/viewobjects/task.ts:40-55`
+    - 使用 `isStarMarked` 而不是 `isFavorited`
 
 3. **当前实现**：
-   - 内置清单定义位于 `/home/nathan-lee/devs/nao-todo/packages/infrastructure/built-in/project/default.ts`
-   - 内置清单偏好配置位于同一个文件
-   - 当前部分内置清单的 `getTasksOptions` 配置需要完善
+    - 内置清单定义位于 `/home/nathan-lee/devs/nao-todo/packages/infrastructure/built-in/project/default.ts`
+    - 内置清单偏好配置位于同一个文件
+    - 当前部分内置清单的 `getTasksOptions` 配置需要完善
 
 ## 需要修改的文件
 

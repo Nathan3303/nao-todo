@@ -5,14 +5,14 @@
 通过分析 Tasks 页面和 Settings 页面的代码，发现：
 
 1. **Tasks 页面侧边栏实现方式**：
-   - 使用 `useResponsiveAside` 钩子管理侧边栏状态
-   - 使用 `AppAsideAdapter` 组件实现响应式侧边栏（移动端浮动，桌面端固定）
-   - 提供侧边栏宽度调整功能（`handleResizeAside`）
+    - 使用 `useResponsiveAside` 钩子管理侧边栏状态
+    - 使用 `AppAsideAdapter` 组件实现响应式侧边栏（移动端浮动，桌面端固定）
+    - 提供侧边栏宽度调整功能（`handleResizeAside`）
 
 2. **Settings 页面当前状态**：
-   - `settings-view.ts` 已经提供了完整的侧边栏上下文（`asideWidth`、`isDisplayAside`、`handleResizeAside` 等）
-   - `aside.vue` 直接使用 `nue-aside`，未使用 `AppAsideAdapter`
-   - 没有实现响应式侧边栏功能
+    - `settings-view.ts` 已经提供了完整的侧边栏上下文（`asideWidth`、`isDisplayAside`、`handleResizeAside` 等）
+    - `aside.vue` 直接使用 `nue-aside`，未使用 `AppAsideAdapter`
+    - 没有实现响应式侧边栏功能
 
 ## 需要修改的文件
 
@@ -22,9 +22,9 @@
 ## 实现步骤
 
 1. 修改 `apps/web/src/layouts/settings/aside/aside.vue`：
-   - 注入 SettingsViewContext 以获取侧边栏状态
-   - 使用 AppAsideAdapter 替换当前的 nue-aside
-   - 添加侧边栏内容的条件渲染（根据 isDisplayAside）
+    - 注入 SettingsViewContext 以获取侧边栏状态
+    - 使用 AppAsideAdapter 替换当前的 nue-aside
+    - 添加侧边栏内容的条件渲染（根据 isDisplayAside）
 
 2. 更新 `apps/web/src/layouts/settings/aside/index.ts`，统一导出方式
 
