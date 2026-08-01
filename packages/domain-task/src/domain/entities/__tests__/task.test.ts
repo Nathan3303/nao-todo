@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vite-plus/test'
-import { TaskEntity } from '../task'
+import { isGivenUpBy, TaskEntity } from '../task'
+import { TaskErrorCode } from '../../errors'
 
 /**
  * TaskEntity 构造函数参数顺序（20 个位置参数）：
@@ -96,7 +97,86 @@ describe('TaskEntity.isStarMarked', () => {
 
 describe('TaskEntity 继承自 Entity', () => {
     it('isDeleted 由基类根据 deletedAt 判定', () => {
-        expect(makeEntity({ deletedAt: null }).isDeleted()).toBe(false)
-        expect(makeEntity({ deletedAt: '2024-01-05T00:00:00.000Z' }).isDeleted()).toBe(true)
+        expect(makeEntity({ deletedAt: null }).isDeleted).toBe(false)
+        expect(makeEntity({ deletedAt: '2024-01-05T00:00:00.000Z' }).isDeleted).toBe(true)
+    })
+})
+
+describe('isGivenUpBy', () => {
+    it('null 返回 false', () => {
+        expect(isGivenUpBy(null)).toBe(false)
+    })
+    it('undefined 返回 false', () => {
+        expect(isGivenUpBy(undefined)).toBe(false)
+    })
+    it('空字符串返回 false', () => {
+        expect(isGivenUpBy('')).toBe(false)
+    })
+    it('非法日期返回 false', () => {
+        expect(isGivenUpBy('not-a-date')).toBe(false)
+    })
+    it('合法日期返回 true', () => {
+        expect(isGivenUpBy('2024-01-05T00:00:00.000Z')).toBe(true)
+    })
+})
+
+describe('TaskEntity.isDone', () => {
+    it('state 为 done 时返回 true', () => {
+        expect(makeEntity({ state: 'done' }).isDone).toBe(true)
+    })
+    it('state 为 todo 时返回 false', () => {
+        expect(makeEntity({ state: 'todo' }).isDone).toBe(false)
+    })
+    it('state 为 in-progress 时返回 false', () => {
+        expect(makeEntity({ state: 'in-progress' }).isDone).toBe(false)
+    })
+})
+
+describe('TaskEntity.canSnooze', () => {
+    it('正常任务可以延迟提醒', () => {
+        expect(makeEntity().canSnooze).toBe(true)
+    })
+    it('已删除的任务不可延迟提醒', () => {
+        expect(makeEntity({ deletedAt: '2024-01-05T00:00:00.000Z' }).canSnooze).toBe(false)
+    })
+    it('已归档的任务不可延迟提醒', () => {
+        expect(makeEntity({ archivedAt: '2024-01-05T00:00:00.000Z' }).canSnooze).toBe(false)
+    })
+    it('已放弃的任务不可延迟提醒', () => {
+        expect(makeEntity({ givenUpAt: '2024-01-05T00:00:00.000Z' }).canSnooze).toBe(false)
+    })
+})
+
+describe('TaskEntity.validateSnoozeDuration', () => {
+    it('下边界 1 分钟通过', () => {
+        expect(TaskEntity.validateSnoozeDuration(1)).toBe(null)
+    })
+    it('上边界 1440 分钟通过', () => {
+        expect(TaskEntity.validateSnoozeDuration(1440)).toBe(null)
+    })
+    it('0 分钟超出范围', () => {
+        expect(TaskEntity.validateSnoozeDuration(0)).toBe(
+            TaskErrorCode.SNOOZE_DURATION_OUT_OF_RANGE
+        )
+    })
+    it('1441 分钟超出范围', () => {
+        expect(TaskEntity.validateSnoozeDuration(1441)).toBe(
+            TaskErrorCode.SNOOZE_DURATION_OUT_OF_RANGE
+        )
+    })
+    it('负数超出范围', () => {
+        expect(TaskEntity.validateSnoozeDuration(-10)).toBe(
+            TaskErrorCode.SNOOZE_DURATION_OUT_OF_RANGE
+        )
+    })
+    it('非整数被拒绝', () => {
+        expect(TaskEntity.validateSnoozeDuration(1.5)).toBe(
+            TaskErrorCode.SNOOZE_DURATION_NOT_INTEGER
+        )
+    })
+    it('NaN 被拒绝', () => {
+        expect(TaskEntity.validateSnoozeDuration(Number.NaN)).toBe(
+            TaskErrorCode.SNOOZE_DURATION_NOT_INTEGER
+        )
     })
 })
