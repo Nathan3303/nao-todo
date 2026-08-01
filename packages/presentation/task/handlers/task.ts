@@ -1,8 +1,13 @@
-import { t, unwrapError, type GoAsync, type Subscriber } from '@nao-todo/shared'
+import { t, type GoAsync, type Subscriber } from '@nao-todo/shared'
 import dayjs from 'dayjs'
 import { NueConfirm, NueMessage } from 'nue-ui'
-import type { CreateTaskViewObject, TaskViewObject, UpdateTaskViewObject } from '@nao-todo/domain-task/viewobjects'
-import { TaskUseCase } from '@nao-todo/domain-task/usecases'
+import {
+    TaskUseCase,
+    type CreateTaskViewObject,
+    type TaskViewObject,
+    type UpdateTaskViewObject
+} from '@nao-todo/domain-task'
+import { translateTaskError } from '../utils/error-message'
 
 /**
  * 任务操作器
@@ -26,7 +31,9 @@ export class TaskHandler {
     async create(createViewObject: CreateTaskViewObject): GoAsync<void> {
         const [, createError] = await this.taskUseCase.create(createViewObject)
         if (createError !== null) {
-            NueMessage.error(t('task.createFailed', { error: `(${unwrapError(createError)})` }))
+            NueMessage.error(
+                t('task.createFailed', { error: `(${translateTaskError(createError)})` })
+            )
             return createError
         }
         NueMessage.success(t('task.createSuccess'))
@@ -46,7 +53,9 @@ export class TaskHandler {
             updatedAt: dayjs().toISOString()
         })
         if (updateError !== null) {
-            NueMessage.error(t('task.updateFailed', { error: `(${unwrapError(updateError)})` }))
+            NueMessage.error(
+                t('task.updateFailed', { error: `(${translateTaskError(updateError)})` })
+            )
             return updateError
         }
         NueMessage.success(t('task.updateSuccess'))
@@ -117,7 +126,9 @@ export class TaskHandler {
     async delete(id: TaskViewObject['id']): GoAsync<void> {
         const deleteError = await this.taskUseCase.delete(id)
         if (deleteError !== null) {
-            NueMessage.error(t('task.deleteFailed', { error: `(${unwrapError(deleteError)})` }))
+            NueMessage.error(
+                t('task.deleteFailed', { error: `(${translateTaskError(deleteError)})` })
+            )
             return deleteError
         }
         NueMessage.success(t('task.deleteSuccess'))
@@ -132,7 +143,9 @@ export class TaskHandler {
     async restore(id: TaskViewObject['id']): GoAsync<void> {
         const restoreError = await this.taskUseCase.restore(id)
         if (restoreError !== null) {
-            NueMessage.error(t('task.restoreFailed', { error: `(${unwrapError(restoreError)})` }))
+            NueMessage.error(
+                t('task.restoreFailed', { error: `(${translateTaskError(restoreError)})` })
+            )
             return restoreError
         }
         NueMessage.success(t('task.restoreSuccess'))
@@ -156,7 +169,7 @@ export class TaskHandler {
                 })
                 if (updateError !== null) {
                     NueMessage.error(
-                        t('task.updateFailed', { error: `(${unwrapError(updateError)})` })
+                        t('task.updateFailed', { error: `(${translateTaskError(updateError)})` })
                     )
                     return updateError
                 }
@@ -190,7 +203,9 @@ export class TaskHandler {
             onConfirm: async () => {
                 const [taskViewObject, err] = await this.taskUseCase.copy(id)
                 if (err !== null) {
-                    NueMessage.error(t('task.copyFailed', { error: `(${unwrapError(err)})` }))
+                    NueMessage.error(
+                        t('task.copyFailed', { error: `(${translateTaskError(err)})` })
+                    )
                     return
                 }
                 NueMessage.success(t('task.copySuccess'))
