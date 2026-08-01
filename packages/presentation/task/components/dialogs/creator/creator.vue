@@ -10,7 +10,7 @@ import {
 import dayjs from 'dayjs'
 import { computed, onMounted, ref } from 'vue'
 import { TaskDateSelector, TaskProjectSelector, TaskTagBar } from '../../'
-import { TaskPrioritySelectOptions, TaskStateSelectOptions } from '@nao-todo/domain-task'
+import { TaskPrioritySelectOptions, TaskStateSelectOptions } from '../../../constants'
 import type { CreateTaskViewObject, TaskViewObject } from '@nao-todo/application'
 import { TaskCreatorDialogProps } from './types'
 import useTaskCreator from './use-creator'
@@ -46,7 +46,7 @@ const open = (createTaskOptions: CreateTaskViewObject) => {
             if (!presetVal) return
             const targetKey = key as keyof typeof states
             if (targetKey in states) {
-                ;(states as any)[targetKey] = presetVal
+                ;(states as Record<string, unknown>)[targetKey] = presetVal
             }
         })
     }
@@ -75,59 +75,57 @@ onMounted(() => dialogManager.register(TASK_CREATOR_DIALOG_KEY, { open, close })
         <template #content>
             <nue-div vertical align="stretch" gap="0.75rem">
                 <!-- ═══ 旧模式 ═══ -->
-                    <nue-input
-                        v-model="states.name"
-                        clearable
-                        :placeholder="t('dialog.taskCreator.namePlaceholder')"
-                        maxlength="64"
-                        counter="word-left"
+                <nue-input
+                    v-model="states.name"
+                    clearable
+                    :placeholder="t('dialog.taskCreator.namePlaceholder')"
+                    maxlength="64"
+                    counter="word-left"
+                />
+                <nue-textarea
+                    v-model="states.description"
+                    maxlength="256"
+                    counter="word-left"
+                    :autosize="{ minRows: 1, maxRows: 4 }"
+                    :placeholder="t('dialog.taskCreator.descPlaceholder')"
+                    theme="fix-padding"
+                />
+                <nue-div align="center" gap="0.5rem">
+                    <task-date-selector
+                        :colored="!isExpired"
+                        v-model="states.endAt!"
+                        :task-remind-data="states"
+                        @change="handleUpdateEndAt"
+                        @remind-change="handleUpdateRemind"
+                        @update-all="handleUpdateEndAtAndRemind"
                     />
-                    <nue-textarea
-                        v-model="states.description"
-                        maxlength="256"
-                        counter="word-left"
-                        :autosize="{ minRows: 1, maxRows: 4 }"
-                        :placeholder="t('dialog.taskCreator.descPlaceholder')"
-                        theme="fix-padding"
+                </nue-div>
+                <nue-div wrap="wrap" gap=".5rem">
+                    <task-selector
+                        :options="TaskStateSelectOptions"
+                        :value="states.state"
+                        @change="(s: any) => (states.state = s as TaskViewObject['state'])"
                     />
-                    <nue-div align="center" gap="0.5rem">
-                        <task-date-selector
-                            :colored="!isExpired"
-                            v-model="states.endAt!"
-                            :task-remind-data="states"
-                            @change="handleUpdateEndAt"
-                            @remind-change="handleUpdateRemind"
-                            @update-all="handleUpdateEndAtAndRemind"
-                        />
-                    </nue-div>
-                    <nue-div wrap="wrap" gap=".5rem">
-                        <task-selector
-                            :options="TaskStateSelectOptions"
-                            :value="states.state"
-                            @change="(s: any) => (states.state = s as TaskViewObject['state'])"
-                        />
-                        <task-selector
-                            :options="TaskPrioritySelectOptions"
-                            :value="states.priority"
-                            @change="
-                                (p: any) => (states.priority = p as TaskViewObject['priority'])
-                            "
-                        />
-                        <nue-div flex="1" />
-                        <task-project-selector
-                            :project-id="states.projectId || ''"
-                            :projects="avaliableProjects || []"
-                            @select="(pid: string) => (states.projectId = pid)"
-                        />
-                    </nue-div>
-                    <task-tag-bar
-                        :available-tags="avaliableTags || []"
-                        :task-tag-ids="states.tags || []"
-                        @update-tags="(_tags: any) => (states.tags = _tags)"
-                        @create-tag="
-                            (name: string) => dialogManager.open(TAG_CREATOR_DIALOG_KEY, { name })
-                        "
+                    <task-selector
+                        :options="TaskPrioritySelectOptions"
+                        :value="states.priority"
+                        @change="(p: any) => (states.priority = p as TaskViewObject['priority'])"
                     />
+                    <nue-div flex="1" />
+                    <task-project-selector
+                        :project-id="states.projectId || ''"
+                        :projects="avaliableProjects || []"
+                        @select="(pid: string) => (states.projectId = pid)"
+                    />
+                </nue-div>
+                <task-tag-bar
+                    :available-tags="avaliableTags || []"
+                    :task-tag-ids="states.tags || []"
+                    @update-tags="(_tags: any) => (states.tags = _tags)"
+                    @create-tag="
+                        (name: string) => dialogManager.open(TAG_CREATOR_DIALOG_KEY, { name })
+                    "
+                />
             </nue-div>
         </template>
         <template #footer>
@@ -152,5 +150,4 @@ onMounted(() => dialogManager.register(TASK_CREATOR_DIALOG_KEY, { open, close })
 .nue-dialog--task-creator {
     width: 24rem;
 }
-
 </style>

@@ -7,7 +7,7 @@ import {
     type InnerDropdownOptionVO
 } from '@nao-todo/shared'
 import { computed } from 'vue'
-import { columnLabels, sortFieldLabels } from '@nao-todo/domain-task'
+import { columnLabels, sortFieldLabels } from '../../constants'
 import { GetTasksOptions, GetTasksSortOptions, TaskColumnOptions } from '@nao-todo/shared'
 
 defineOptions({ name: 'TasksDropdownSortOperator' })

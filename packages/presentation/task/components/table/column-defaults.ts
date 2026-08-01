@@ -1,5 +1,5 @@
 import type { TableColumnConfig, TableLayoutConfig } from './types'
-import { columnLabels } from '@nao-todo/domain-task'
+import { columnLabels } from '../../constants'
 
 // @const 内置分类对应的固定列（固定列始终显示在 name 列之后）
 const PINNED_COLUMN_MAP: Record<string, string> = {
@@ -31,7 +31,10 @@ const enforcePinnedColumn = (
     return newColumns
 }
 
-export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
+// @helper 生成默认列配置
+// 注意：必须是函数而非模块级常量，一是让 label 随 locale 变化重新求值，
+// 二是每次返回全新对象，避免多个表格实例（不同 tableId）共享列对象导致列宽互相污染
+const getDefaultTableColumns = (): TableColumnConfig[] => [
     {
         key: 'name',
         label: columnLabels.value.name,
@@ -143,7 +146,7 @@ export const DEFAULT_TABLE_COLUMNS: TableColumnConfig[] = [
 ]
 
 export const createDefaultTableConfig = (tableId: string): TableLayoutConfig => ({
-    columns: DEFAULT_TABLE_COLUMNS,
+    columns: getDefaultTableColumns(),
     tableId,
     version: '1.0.0',
     updatedAt: new Date().toISOString()
