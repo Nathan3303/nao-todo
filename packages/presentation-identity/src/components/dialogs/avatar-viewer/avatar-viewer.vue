@@ -13,7 +13,7 @@ defineEmits<UserAvatarViewerDialogEmits>()
         title="头像查看"
         theme="auto"
     >
-        <nue-avatar :src="avatarUrl" alt="头像" size="fit-content" />
+        <nue-avatar :src="avatarUrl" alt="头像" icon="user" size="fit-content" />
     </nue-dialog>
 </template>
 

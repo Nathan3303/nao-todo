@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { t, unwrapError } from '@nao-todo/shared'
+import { getAvatarSrc, t, unwrapError } from '@nao-todo/shared'
 import { NueMessage } from 'nue-ui'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
@@ -12,7 +12,7 @@ const props = defineProps<UserAvatarUpdaterProps>()
 
 const userStore = useUserStore()
 
-const { profile } = storeToRefs(userStore)
+const { profile, userToken } = storeToRefs(userStore)
 const avatarFileInputRef = ref<HTMLInputElement>()
 const updateAvatarLoading = ref(false)
 const cropperDialogVisible = ref(false)
@@ -22,7 +22,7 @@ const selectedFile = ref<File | null>(null)
 const fullAvatarUrl = computed(() => {
     const url = profile.value?.avatar
     if (!url) return ''
-    return url
+    return getAvatarSrc(url, userToken.value)
 })
 
 const handleViewAvatar = () => {

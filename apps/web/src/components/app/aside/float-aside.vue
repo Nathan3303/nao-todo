@@ -2,7 +2,7 @@
 import { APP_CONTEXT_KEY } from '@/context'
 import { PomodoroIndicator } from '@nao-todo/presentation/pomodoro'
 import { useUserStore } from '@nao-todo/presentation-identity'
-import { NaoRouterLink } from '@nao-todo/shared'
+import { getAvatarSrc, NaoRouterLink } from '@nao-todo/shared'
 import { storeToRefs } from 'pinia'
 import { computed, inject } from 'vue'
 
@@ -16,7 +16,8 @@ const props = defineProps<{
 const emit = defineEmits<{ (e: 'update:modelValue', value: boolean): void }>()
 const { routerLinks } = inject(APP_CONTEXT_KEY)!
 
-const { profile } = storeToRefs(useUserStore())
+const { profile, userToken } = storeToRefs(useUserStore())
+const avatarSrc = computed(() => getAvatarSrc(profile.value?.avatar || '', userToken.value))
 
 const visible = computed({
     get: () => props.modelValue,
@@ -29,7 +30,7 @@ const visible = computed({
         <nue-container id="AppAsideContainer">
             <nue-header v-if="profile">
                 <nue-div align="center">
-                    <nue-avatar :src="profile.avatar" size="2rem" />
+                    <nue-avatar :src="avatarSrc" icon="user" size="2rem" />
                     <nue-text>{{ profile.nickname }}</nue-text>
                 </nue-div>
             </nue-header>

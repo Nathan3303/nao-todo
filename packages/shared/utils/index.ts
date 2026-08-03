@@ -1,3 +1,4 @@
+export * from './avatar'
 export * from './commons'
 export * from './date-checker'
 export * from './relative-date-parser'

@@ -1,12 +1,15 @@
 <script lang="ts" setup>
-import { nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { NueTextarea } from 'nue-ui'
-import { parse2RelativeDate } from '@nao-todo/shared'
+import { getAvatarSrc, parse2RelativeDate } from '@nao-todo/shared'
 import type { CommentRowProps, CommentRowEmits } from './types'
 
 defineOptions({ name: 'CommentRow' })
 const props = defineProps<CommentRowProps>()
 defineEmits<CommentRowEmits>()
+
+// @computed 头像地址（本地头像携带登录凭证）
+const avatarSrc = computed(() => getAvatarSrc(props.comment.avatar || '', props.token || ''))
 
 const editInputerRef = ref<InstanceType<typeof NueTextarea>>()
 const shadowContent = ref<string>(props.comment.content || '')
@@ -68,7 +71,7 @@ const handleCancelEdit = () => {
 
 <template>
     <nue-div theme="comment-row">
-        <nue-avatar :src="comment.avatar || ''" />
+        <nue-avatar :src="avatarSrc" icon="user" />
         <nue-div theme="details">
             <nue-div theme="title">
                 <nue-text theme="nickname">{{ comment.nickname }}</nue-text>

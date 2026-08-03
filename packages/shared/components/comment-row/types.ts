@@ -8,6 +8,8 @@ export type CommentRowPayload = {
 
 export type CommentRowProps = {
     comment: CommentRowPayload
+    /** 当前登录 JWT，用于本地头像携带凭证 */
+    token?: string
     updater?: (commentId: string, newContent: string) => void
     deleter?: (commentId: string) => void
 }

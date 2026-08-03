@@ -1,11 +1,16 @@
 <script lang="ts" setup>
 import { CommentRow, Loading, t } from '@nao-todo/shared'
+import { useUserStore } from '@nao-todo/presentation-identity'
+import { storeToRefs } from 'pinia'
 import { inject } from 'vue'
 import type { TaskCommentViewObject } from '@nao-todo/domain-task'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context'
 
 const { comments, commentHandler, commentsLoading, commentsError, retryComments } =
     inject(TASK_DETAILS_CONTEXT_KEY)!
+
+// @presetStates 登录凭证（头像加载需要）
+const { userToken } = storeToRefs(useUserStore())
 
 const commentUpdater = async (id: TaskCommentViewObject['id'], content: string) =>
     commentHandler.update(id, { content })
@@ -37,6 +42,7 @@ const deleteComment = async (id: TaskCommentViewObject['id']) => commentHandler.
                         v-for="comment in comments"
                         :key="comment.id"
                         :comment="comment"
+                        :token="userToken"
                         :updater="commentUpdater"
                         :deleter="deleteComment"
                     />

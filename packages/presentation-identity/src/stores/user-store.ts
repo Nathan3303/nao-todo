@@ -81,6 +81,7 @@ export const useUserStore = defineStore('UserStore', () => {
         getIsAuthenticated: () => state.value.isAuthenticated,
         setIsAuthenticated: (isAuthenticated: boolean) => updateState({ isAuthenticated }),
         setUserToken: (token: string) => updateState({ userToken: token }),
+        userToken: computed(() => state.value.userToken),
         clearAuthData,
         // user
         profile: computed(() => userProfile.value),

@@ -9,6 +9,7 @@ defineOptions({ name: 'AppAsideV2' })
 const {
     routerLinks,
     profile,
+    avatarSrc,
     isDisplayAside,
     switchDisplayAside,
     asideWidth,
@@ -32,7 +33,7 @@ defineExpose({ switchDisplayAside })
         <!-- 主要侧栏 -->
         <nue-div v-if="profile" theme="mainly-aside">
             <!-- 用户头像 -->
-            <nue-avatar :src="profile.avatar" icon="user" size="2.5rem" />
+            <nue-avatar :src="avatarSrc" icon="user" size="2.5rem" />
             <!-- 页面链接 -->
             <nue-div theme="aside__navs">
                 <template v-for="(rl, idx) in routerLinks" :key="idx">

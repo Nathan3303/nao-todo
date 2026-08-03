@@ -7,7 +7,7 @@ import { useAppAsideV2 } from './use-aside'
 defineOptions({ name: 'AppAsideV2Drawer' })
 
 // @composable Use app aside v2
-const { routerLinks, profile, isDisplayAside } = useAppAsideV2()
+const { routerLinks, profile, avatarSrc, isDisplayAside } = useAppAsideV2()
 
 // @computed isDisplayAside proxy
 const visible = computed({
@@ -21,7 +21,7 @@ const visible = computed({
         <nue-container id="AppAsideContainer">
             <nue-header v-if="profile">
                 <nue-div align="center">
-                    <nue-avatar :src="profile.avatar" size="2rem" />
+                    <nue-avatar :src="avatarSrc" icon="user" size="2rem" />
                     <nue-text>{{ profile.nickname }}</nue-text>
                 </nue-div>
             </nue-header>
