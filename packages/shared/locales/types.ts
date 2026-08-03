@@ -303,6 +303,27 @@ export interface LocaleMessages {
     'task.multiSelect.priority': string
     'task.multiSelect.moveToProject': string
     'task.multiSelect.permanentDelete': string
+    'task.multiSelect.batchTitle': string
+    'task.multiSelect.setTo': string
+    'task.multiSelect.properties': string
+    'task.multiSelect.actions': string
+    'task.multiSelect.endAt': string
+    'task.multiSelect.tags': string
+    'task.multiSelect.addTags': string
+    'task.multiSelect.removeTags': string
+    'task.multiSelect.delete': string
+    'task.multiSelect.restore': string
+    'task.multiSelect.giveUp': string
+    'task.multiSelect.ungiveUp': string
+    'task.multiSelect.batchSuccess': string
+    'task.multiSelect.batchFailed': string
+    'task.multiSelect.deleteConfirmTitle': string
+    'task.multiSelect.deleteConfirmContent': string
+    'task.multiSelect.giveUpConfirmTitle': string
+    'task.multiSelect.giveUpConfirmContent': string
+    'task.multiSelect.blockedByTrashed': string
+    'task.multiSelect.processing': string
+    'task.multiSelect.taskNotFound': string
     'task.smartlist.project': string
     'task.smartlist.projectManage': string
     'task.smartlist.projectCreate': string
