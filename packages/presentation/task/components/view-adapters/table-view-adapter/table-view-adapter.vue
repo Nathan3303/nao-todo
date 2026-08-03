@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { LoadingError, Pager, TASK_CREATOR_DIALOG_KEY, t } from '@nao-todo/shared'
 import { TaskTable } from '../../table'
-import type { TableViewAdapterProps } from './types'
+import type { TableViewAdapterEmits, TableViewAdapterProps } from './types'
 import useTableViewAdapter from './use-table-view-adapter'
 
 defineOptions({ name: 'TableViewAdapter' })
 const props = defineProps<TableViewAdapterProps>()
+const emit = defineEmits<TableViewAdapterEmits>()
 
 const {
     tasks,
@@ -66,7 +67,9 @@ const {
                         :column-label-getter="getColumnLabel"
                         :project-name-getter="getProjectName"
                         :layout-config="layoutConfig"
+                        :multi-select-clear-signal="multiSelectClearSignal"
                         @show-task-details="showTaskDetails"
+                        @show-multi-select-panel="(payload) => emit('multiSelectChanged', payload)"
                         @update-columns="updateColumns"
                         @update-sort-options="updateSortOptions"
                         @clear-sort-options="clearSortOptions"

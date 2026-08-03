@@ -2,10 +2,11 @@
 import { TaskList } from '../../list'
 import { LoadingError, TASK_CREATOR_DIALOG_KEY, t } from '@nao-todo/shared'
 import useListViewAdapter from './use-list-view-adapter'
-import type { ListViewAdapterProps } from './types'
+import type { ListViewAdapterEmits, ListViewAdapterProps } from './types'
 
 defineOptions({ name: 'ListViewAdapter' })
 const props = defineProps<ListViewAdapterProps>()
+const emit = defineEmits<ListViewAdapterEmits>()
 
 const {
     tasks,
@@ -68,8 +69,10 @@ const {
                         :sort-options="sortOptions"
                         :project-name-getter="getProjectName"
                         :small="small"
+                        :multi-select-clear-signal="multiSelectClearSignal"
                         @show-task-details="showTaskDetails"
                         @task-clicked="taskClicked"
+                        @show-multi-select-panel="(payload) => emit('multiSelectChanged', payload)"
                         @delete-task="(taskId) => taskUseCase.delete(taskId)"
                         @restore-task="(taskId) => taskUseCase.restore(taskId)"
                         @next-page="handleNextPage"

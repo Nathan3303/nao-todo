@@ -15,4 +15,9 @@ export type KanbanViewAdapterProps = {
     dialogManager: DialogManager
     tags: TaskTagViewObject[]
     columns: TaskColumnOptions
+    /**
+     * 多选清除信号
+     * @description 与列表/表格视图保持一致，看板视图暂不支持多选，该属性仅透传占位
+     */
+    multiSelectClearSignal?: number
 } & ViewAdapterPropsBase

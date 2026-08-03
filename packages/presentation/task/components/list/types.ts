@@ -12,6 +12,11 @@ export type TaskListProps = {
     loading: boolean
     error: string | null
     small?: boolean
+    /**
+     * 多选清除信号
+     * @description 外部（如批量编辑面板）递增该值以清空本视图的多选范围
+     */
+    multiSelectClearSignal?: number
     // taskLister: TaskApp['list']
 }
 

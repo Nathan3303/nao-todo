@@ -1,4 +1,4 @@
-import { computed, provide } from 'vue'
+import { computed, provide, watch } from 'vue'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import type { TaskColumnOptions } from '@nao-todo/shared'
 import type { TaskListContext, TaskListEmits, TaskListProps } from './types'
@@ -49,6 +49,14 @@ export const useTaskList = (props: TaskListProps, emit: TaskListEmits) => {
         showTaskDetails(task.id, taskIdx)
         emit('task-clicked', task)
     }
+
+    // @watch 多选清除信号 - 外部（批量编辑面板）递增时清空多选范围
+    watch(
+        () => props.multiSelectClearSignal,
+        (newSignal, oldSignal) => {
+            if (oldSignal !== undefined && newSignal !== oldSignal) clearMultiSelect(true)
+        }
+    )
 
     // @provide 任务列表上下文
     provide<TaskListContext>(TASK_LIST_CONTEXT_KEY, {

@@ -16,14 +16,22 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
 
     // @method 多选待办处理
     const showMultiSelectPanel = (idx: number) => {
-        if (selectRange.original === -1 || selectRange.original === idx) return
-        if (selectRange.original > idx) {
+        // 首次 shift+点击：以当前行为基准并打开面板
+        if (selectRange.original === -1) {
+            selectRange.original = idx
             selectRange.start = idx
-            selectRange.end = selectRange.original
-        } else {
-            selectRange.start = selectRange.original
             selectRange.end = idx
+        } else if (selectRange.original !== idx) {
+            // 以基准行为起点、当前行为终点确定选择范围
+            if (selectRange.original > idx) {
+                selectRange.start = idx
+                selectRange.end = selectRange.original
+            } else {
+                selectRange.start = selectRange.original
+                selectRange.end = idx
+            }
         }
+        // original === idx（重复点击基准行）：保持现有范围，重新 emit 以便重开面板
         const selectedIds = props.tasks
             .slice(selectRange.start, selectRange.end + 1)
             .map((todo) => todo.id)

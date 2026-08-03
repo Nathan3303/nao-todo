@@ -85,6 +85,14 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         emit('updateLayoutConfig', layoutConfig.value)
     }
 
+    // @watch 多选清除信号 - 外部（批量编辑面板）递增时清空多选范围
+    watch(
+        () => props.multiSelectClearSignal,
+        (newSignal, oldSignal) => {
+            if (oldSignal !== undefined && newSignal !== oldSignal) clearMultiSelect(true)
+        }
+    )
+
     // @watch 同步列配置到 props
     watch(
         () => props.columns,

@@ -33,6 +33,7 @@ const {
             :data-deleted="task.isDeleted"
             @click.stop.exact="handleClickTask(task, idx)"
             @click.stop.shift.exact="showMultiSelectPanel(idx)"
+            @mousedown="(event) => event.shiftKey && event.preventDefault()"
         >
             <nue-div theme="todo-list-main__row__first">
                 <nue-div theme="todo-list__main__row__first__name-wrapper">

@@ -31,6 +31,7 @@ const tasks = computed(() => {
             class="todo-table__main__row"
             @click.stop.exact="tableCtx.showTaskDetails(task.id, idx)"
             @click.stop.shift.exact="tableCtx.showMultiSelectPanel(idx)"
+            @mousedown="(event) => event.shiftKey && event.preventDefault()"
         >
             <template v-for="column in visibleColumns" :key="column.key">
                 <nue-div
