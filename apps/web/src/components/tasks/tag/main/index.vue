@@ -12,6 +12,7 @@ import {
     type ViewAdapterNoTaskError
 } from '@nao-todo/presentation/task'
 import { TAG_VIEW_CONTEXT_KEY } from '../context'
+import { MULTI_SELECT_CONTEXT_KEY } from '@/views/index/tasks/multi-select-context'
 
 defineOptions({
     name: 'TasksMainTagContent',
@@ -36,6 +37,12 @@ const {
     tag,
     dialogManager
 } = inject(TAG_VIEW_CONTEXT_KEY)!
+
+// @multiSelectContext 多选编辑上下文
+const multiSelectCtx = inject(MULTI_SELECT_CONTEXT_KEY)!
+
+// @computed 多选清除信号（解包上下文中的 ref，供模板使用）
+const multiSelectClearSignal = computed(() => multiSelectCtx.clearSignal.value)
 
 // @computed 组件名称
 const componentName = computed(() => `${props.viewType || 'table'}-view`)
@@ -93,6 +100,8 @@ const getNoTaskError = (): ViewAdapterNoTaskError | undefined => {
                 :update-sort-options="updateSortOptions"
                 :clear-sort-options="() => tagHandler.clearSortOption()"
                 :get-no-task-error="getNoTaskError"
+                :multi-select-clear-signal="multiSelectClearSignal"
+                @multi-select-changed="multiSelectCtx?.openPanel"
             />
         </nue-content>
     </nue-main>

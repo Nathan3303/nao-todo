@@ -3,6 +3,7 @@ import { TasksViewAside } from '@/components/tasks'
 import { TaskDetailsAdapter } from '@nao-todo/presentation/task'
 import { Loading as LoadingComp, LoadingError } from '@nao-todo/shared'
 import useTasksView from './tasks-view'
+import TaskMultiSelectAdapter from './multi-select-adapter.vue'
 
 defineOptions({ name: 'TasksView' })
 
@@ -43,6 +44,8 @@ const { isLoading, error, init } = useTasksView()
                 </nue-content>
                 <!-- 详情适配器 -->
                 <task-details-adapter />
+                <!-- 多选编辑适配器 -->
+                <task-multi-select-adapter />
             </nue-main>
         </loading-error>
     </nue-container>

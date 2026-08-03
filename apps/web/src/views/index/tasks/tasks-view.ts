@@ -21,8 +21,9 @@ import {
 } from '@nao-todo/presentation/task'
 import { responsiveTypes, unwrapError, useAsideWidth, useResponsiveAside } from '@nao-todo/shared'
 import { storeToRefs } from 'pinia'
-import { inject, onMounted, onUnmounted, provide, ref } from 'vue'
+import { inject, onMounted, onUnmounted, provide, ref, watch } from 'vue'
 import { TASKS_VIEW_CONTEXT_KEY } from './context'
+import { MULTI_SELECT_CONTEXT_KEY } from './multi-select-context'
 import { TaskViewObject } from '@nao-todo/domain-task'
 import { useRouter } from 'vue-router'
 
@@ -152,6 +153,38 @@ const useTasksView = () => {
         getTagColor,
         getColumnLabel
     })
+
+    // @provide 多选编辑上下文
+    const multiSelectIsOpen = ref<boolean>(false)
+    const multiSelectSelectedIds = ref<TaskViewObject['id'][]>([])
+    const multiSelectClearSignal = ref<number>(0)
+
+    const openMultiSelectPanel = (payload: { selectedIds: TaskViewObject['id'][] }) => {
+        multiSelectSelectedIds.value = payload.selectedIds
+        multiSelectIsOpen.value = true
+    }
+    const closeMultiSelectPanel = () => {
+        multiSelectIsOpen.value = false
+    }
+    const requestClearMultiSelect = () => {
+        multiSelectClearSignal.value++
+        multiSelectIsOpen.value = false
+        multiSelectSelectedIds.value = []
+    }
+    provide(MULTI_SELECT_CONTEXT_KEY, {
+        isOpen: multiSelectIsOpen,
+        selectedIds: multiSelectSelectedIds,
+        clearSignal: multiSelectClearSignal,
+        openPanel: openMultiSelectPanel,
+        closePanel: closeMultiSelectPanel,
+        requestClear: requestClearMultiSelect
+    })
+
+    // @watch 路由变化时清空多选状态
+    watch(
+        () => router.currentRoute.value.fullPath,
+        () => requestClearMultiSelect()
+    )
 
     // @provide TaskDetailsPreContext
     provide(TASK_DETAILS_PRE_CONTEXT_KEY, {
