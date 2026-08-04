@@ -14,6 +14,11 @@
         "@nao-todo/domain-identity": "workspace:*",
         "@nao-todo/domain-tag": "workspace:*",
         "@nao-todo/domain-pomodoro": "workspace:*",
-        "@nao-todo/domain-task": "workspace:*"
+        "@nao-todo/domain-task": "workspace:*",
+        "dayjs": "^1.11.21",
+        "dexie": "^4.4.2"
+    },
+    "devDependencies": {
+        "fake-indexeddb": "^6.0.0"
     }
 }

@@ -1,4 +1,9 @@
 {
     "extends": "../../tsconfig.base.json",
-    "include": ["src/persistence-go/**/*", "src/built-in/**/*", "index.ts"]
+    "include": [
+        "src/persistence-go/**/*",
+        "src/persistence-local/**/*",
+        "src/built-in/**/*",
+        "index.ts"
+    ]
 }
