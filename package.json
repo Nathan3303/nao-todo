@@ -9,7 +9,10 @@
     "scripts": {
         "desktopapp": "pnpm --filter @nao-todo/desktopapp",
         "webapp": "pnpm --filter @nao-todo/webapp",
-        "prepare": "vp config"
+        "prepare": "vp config",
+        "desktop:dev": "pnpm --filter @nao-todo/desktopapp dev",
+        "desktop:build": "pnpm --filter @nao-todo/desktopapp build",
+        "desktop:dist": "pnpm --filter @nao-todo/desktopapp dist"
     },
     "dependencies": {
         "@vitejs/plugin-vue": "^6.0.7",

@@ -105,9 +105,11 @@ const useIndexView = () => {
 
     /**
      * SSE 提醒连接
+     * @description 桌面版通过 VITE_DISABLE_SSE=true 禁用（本地定时扫描替代）
      */
     const connectReminderSSE = async () => {
         // 请求通知权限
+        if (import.meta.env.VITE_DISABLE_SSE === 'true') return
         if ('Notification' in window && Notification.permission === 'default') {
             await Notification.requestPermission()
         }

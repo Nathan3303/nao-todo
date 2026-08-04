@@ -4,6 +4,9 @@ packages:
 allowBuilds:
     ttf2woff2: true
     vue-demi: true
+    electron: true
+    esbuild: true
+    electron-winstaller: true
 overrides:
     axios: '>=1.15.2'
     fast-xml-parser: '>=5.7.0'

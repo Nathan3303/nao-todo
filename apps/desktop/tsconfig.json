@@ -1,0 +1,15 @@
+{
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "extends": "../../tsconfig.base.json",
+    "include": ["../../env.d.ts", "electron.vite.config.ts", "src/**/*", "../web/src/**/*"],
+    "compilerOptions": {
+        "composite": true,
+        "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo",
+        "types": ["node", "nue-ui/dist/global.d.ts"],
+        "paths": {
+            "@/hooks": ["./src/renderer/src/hooks/index.ts"],
+            "@/hooks/*": ["./src/renderer/src/hooks/*"],
+            "@/*": ["../web/src/*"]
+        }
+    }
+}

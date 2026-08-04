@@ -1,0 +1,16 @@
+# NaoTodo 桌面端打包配置
+appId: com.nathanao.naotodo
+productName: NaoTodo
+directories:
+    output: release
+files:
+    - out/**
+    - package.json
+win:
+    target:
+        - nsis
+nsis:
+    oneClick: false
+    allowToChangeInstallationDirectory: true
+    createDesktopShortcut: true
+    createStartMenuShortcut: true
