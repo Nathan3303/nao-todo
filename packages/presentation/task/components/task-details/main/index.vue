@@ -98,7 +98,7 @@ const createCommentHandler = async (content: string) => {
             </nue-div>
             <nue-div class="tasks-details-view__progress">
                 <nue-progress
-                    :percentage="checkItemProgress.percentage"
+                    :percentage="(checkItemProgress.percentage + subTaskProgress.percentage) / 2"
                     :stroke-width="2"
                     hide-text
                 />

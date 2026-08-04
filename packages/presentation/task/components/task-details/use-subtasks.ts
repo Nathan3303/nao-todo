@@ -48,7 +48,7 @@ const useSubTasks = (taskDetailsStore: ReturnType<typeof useTaskDetailsStore>) =
         const progress = subTasks.value.filter((subTask) => subTask.state === 'done').length
         const total = subTasks.value.length
         const percentage = total ? Math.floor((progress / total) * 100) : 0
-        const text = total ? `已完成 ${progress}/${total}, ${percentage}%` : '暂无子任务'
+        const text = total ? `已完成 ${progress}/${total}` : '暂无子任务'
         return { percentage, text }
     })
 

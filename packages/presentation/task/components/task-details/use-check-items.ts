@@ -40,7 +40,7 @@ const useCheckItems = (
         const progress = _e ? _e.filter((event) => event.isDone).length : 0
         const total = _e ? _e.length : 0
         const percentage = total ? Math.floor((progress / total) * 100) : 0
-        const text = total ? `已完成 ${progress}/${total}, ${percentage}%` : '暂无检查事项'
+        const text = total ? `已完成 ${progress}/${total}` : '暂无检查事项'
         return { percentage, text }
     })
 

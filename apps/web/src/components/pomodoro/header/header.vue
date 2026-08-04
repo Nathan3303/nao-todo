@@ -35,9 +35,9 @@ const handleOpenCreator = () => {
             <nue-tooltip content="新建常用番茄专注" size="small">
                 <nue-button icon="plus" theme="icon,ghost" @click="handleOpenCreator" />
             </nue-tooltip>
-            <nue-tooltip content="查看历史专注记录" size="small">
+            <!-- <nue-tooltip content="查看历史专注记录" size="small">
                 <nue-button icon="ntd-history" theme="icon,ghost" />
-            </nue-tooltip>
+            </nue-tooltip> -->
         </nue-div>
     </nue-header>
 </template>
