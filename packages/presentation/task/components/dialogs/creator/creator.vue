@@ -132,13 +132,13 @@ onMounted(() => dialogManager.register(TASK_CREATOR_DIALOG_KEY, { open, close })
         </template>
         <template #footer>
             <nue-div gap="var(--nue-gap-xs)" flex="1" justify="flex-end">
-                <nue-button theme="small" :disabled="createStates.disabled" @click="close">
+                <nue-button :disabled="createStates.disabled" @click="close">
                     {{ t('common.cancel') }}
                 </nue-button>
                 <nue-button
                     :disabled="createStates.disabled"
                     :loading="createStates.creating"
-                    theme="small,primary"
+                    theme="primary"
                     @click="submit"
                 >
                     {{ t('common.create') }}
