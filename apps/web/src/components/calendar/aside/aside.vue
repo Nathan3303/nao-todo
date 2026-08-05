@@ -10,12 +10,16 @@ import { ref, inject, onMounted, watch, nextTick } from 'vue'
 import useCalendarSmartList from './use-calendar-smart-list'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
 import { env } from '@/env'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 
 defineOptions({ name: 'CalendarAside' })
 
-const { isDisplayAside, isUseFloatAside, dialogManager } = inject(CALENDAR_VIEW_CONTEXT_KEY)!
+const { isDisplayAside, dialogManager } = inject(CALENDAR_VIEW_CONTEXT_KEY)!
+const { setControllOption } = inject(INDEX_VIEW_CONTEXT_KEY)!
 const { projectOptions, tagOptions, selectedProjectIds, selectedTagIds } = useCalendarSmartList()
 const collapseItemsRecord = ref(['projects', 'tags'])
+
+setControllOption({ useSlot: false, useDrawerSlot: false })
 
 /**
  * 处理侧边栏延时传送
@@ -23,18 +27,12 @@ const collapseItemsRecord = ref(['projects', 'tags'])
  */
 const teleportDisabled = ref<boolean>(false)
 watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
-
-// @mounted
-onMounted(() => {
-    if (isUseFloatAside.value) return
-    isDisplayAside.value = env.showUnimplementedFeatures && true
-})
 </script>
 
 <template>
     <teleport v-if="isDisplayAside && !teleportDisabled" to="#SubPageAsideTeleportSlot">
         <nue-div theme="aside-wrapper">
-            <nue-div theme="controller-wrapper"> 日历概览 </nue-div>
+            <nue-div theme="controller-wrapper">日历概览</nue-div>
             <nue-divider />
             <nue-div theme="smart-list-wrapper">
                 <nue-collapse v-model="collapseItemsRecord" theme="menu">

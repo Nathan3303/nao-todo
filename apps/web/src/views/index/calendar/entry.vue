@@ -24,9 +24,10 @@ onMounted(() => init())
             </template>
             <!-- 内容区域 -->
             <nue-main>
+                <!-- 侧边栏 -->
+                <calendar-aside />
+                <!-- 开发环境日历主体 -->
                 <template v-if="env.showUnimplementedFeatures">
-                    <!-- 侧边栏 -->
-                    <calendar-aside />
                     <nue-content fill style="overflow: hidden">
                         <router-view v-slot="{ Component }">
                             <suspense>
@@ -45,7 +46,7 @@ onMounted(() => init())
                         </router-view>
                     </nue-content>
                 </template>
-                <!-- 生产环境敬请期待页面 -->
+                <!-- 生产环境敬请期待 -->
                 <template v-else>
                     <nue-content fill style="overflow: hidden">
                         <nue-empty
@@ -60,7 +61,6 @@ onMounted(() => init())
                         </nue-empty>
                     </nue-content>
                 </template>
-                <!-- 侧边栏 -->
             </nue-main>
         </loading-error>
     </nue-container>
