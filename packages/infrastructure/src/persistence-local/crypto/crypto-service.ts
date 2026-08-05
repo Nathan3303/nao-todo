@@ -7,9 +7,15 @@ import { localDatabase } from '../db/local-database'
 const PBKDF2_ITERATIONS = 600_000
 
 /**
- * 密钥包在 meta 表中的主键
+ * 密钥包在 meta 表中的主键前缀
+ * @description 多用户场景下按用户隔离密钥包：`${userId}:key-bundle`
  */
-const KEY_BUNDLE_ID = 'key-bundle'
+const KEY_BUNDLE_ID_PREFIX = 'key-bundle'
+
+/**
+ * 生成某用户密钥包在 meta 表中的主键
+ */
+const keyBundleId = (userId: string) => `${userId}:${KEY_BUNDLE_ID_PREFIX}`
 
 const textEncoder = new TextEncoder()
 const textDecoder = new TextDecoder()
@@ -53,10 +59,12 @@ export class CryptoService {
 
     /**
      * 首次初始化：生成 DEK 并用密码派生的 KEK 包裹，密钥包写入 meta 表
+     * @param userId 用户 ID
      * @param password 用户密码
      */
-    async setup(password: string): Promise<void> {
+    async setup(userId: string, password: string): Promise<void> {
         if (!password) throw new Error('密码不能为空')
+        if (!userId) throw new Error('用户 ID 不能为空')
         // 1. 生成随机 DEK
         const dek = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, [
             'encrypt',
@@ -69,9 +77,9 @@ export class CryptoService {
         // 3. 用 KEK 包裹 DEK
         const iv = crypto.getRandomValues(new Uint8Array(12))
         const wrappedDek = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, kek, dekRaw)
-        // 4. 密钥包持久化
+        // 4. 密钥包持久化（按用户隔离）
         await localDatabase.meta.put({
-            id: KEY_BUNDLE_ID,
+            id: keyBundleId(userId),
             salt: toBase64(salt),
             iv: toBase64(iv),
             wrappedDek: toBase64(wrappedDek)
@@ -81,12 +89,14 @@ export class CryptoService {
 
     /**
      * 解锁：用密码派生 KEK 解开 DEK
+     * @param userId 用户 ID
      * @param password 用户密码
      * @throws 密码错误或密钥包缺失时抛出异常
      */
-    async unlock(password: string): Promise<void> {
+    async unlock(userId: string, password: string): Promise<void> {
         if (!password) throw new Error('密码不能为空')
-        const bundle = await localDatabase.meta.get(KEY_BUNDLE_ID)
+        if (!userId) throw new Error('用户 ID 不能为空')
+        const bundle = await localDatabase.meta.get(keyBundleId(userId))
         if (!bundle) throw new Error('本地密钥包不存在，请先初始化')
         const kek = await this.deriveKek(password, fromBase64(bundle.salt))
         const dekRaw = await crypto.subtle.decrypt(
@@ -109,34 +119,38 @@ export class CryptoService {
 
     /**
      * 是否已存在本地密钥包（决定首次 setup 还是 unlock）
+     * @param userId 用户 ID
      */
-    async hasKeyBundle(): Promise<boolean> {
-        const bundle = await localDatabase.meta.get(KEY_BUNDLE_ID)
+    async hasKeyBundle(userId: string): Promise<boolean> {
+        const bundle = await localDatabase.meta.get(keyBundleId(userId))
         return bundle !== undefined
     }
 
     /**
      * 确保本地数据已解锁
      * @description 已解锁直接返回；有密钥包则用密码解锁，否则用密码初始化密钥包
+     * @param userId 用户 ID
      * @param password 用户密码
      */
-    async ensureUnlocked(password: string): Promise<void> {
+    async ensureUnlocked(userId: string, password: string): Promise<void> {
         if (this.dek !== null) return
-        if (await this.hasKeyBundle()) {
-            await this.unlock(password)
+        if (await this.hasKeyBundle(userId)) {
+            await this.unlock(userId, password)
         } else {
-            await this.setup(password)
+            await this.setup(userId, password)
         }
     }
 
     /**
      * 修改密码：用旧密码解开 DEK，用新密码重新包裹
+     * @param userId 用户 ID
      * @param oldPassword 旧密码
      * @param newPassword 新密码
      */
-    async changePassword(oldPassword: string, newPassword: string): Promise<void> {
+    async changePassword(userId: string, oldPassword: string, newPassword: string): Promise<void> {
         if (!newPassword) throw new Error('新密码不能为空')
-        const bundle = await localDatabase.meta.get(KEY_BUNDLE_ID)
+        if (!userId) throw new Error('用户 ID 不能为空')
+        const bundle = await localDatabase.meta.get(keyBundleId(userId))
         if (!bundle) throw new Error('本地密钥包不存在，请先初始化')
         // 1. 旧密码解开 DEK（密码错误在此抛异常）
         const oldKek = await this.deriveKek(oldPassword, fromBase64(bundle.salt))
@@ -155,7 +169,7 @@ export class CryptoService {
         const iv = crypto.getRandomValues(new Uint8Array(12))
         const wrappedDek = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, newKek, dekRaw)
         await localDatabase.meta.put({
-            id: KEY_BUNDLE_ID,
+            id: keyBundleId(userId),
             salt: toBase64(salt),
             iv: toBase64(iv),
             wrappedDek: toBase64(wrappedDek)

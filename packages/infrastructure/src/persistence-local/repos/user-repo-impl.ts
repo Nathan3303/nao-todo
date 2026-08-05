@@ -10,6 +10,7 @@ import type { GoAsync } from '@nao-todo/shared'
 import { userEntityToRecord, userRecordToEntity } from '../converters/user'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
+import { localSession } from '../session/local-session'
 
 /**
  * 本地用户仓储实现
@@ -21,10 +22,15 @@ export class LocalUserRepoImpl implements UserRepository {
 
     constructor(private db: NaoTodoLocalDatabase = localDatabase) {}
 
+    /** 当前会话用户 ID（数据归属标识） */
+    private get currentUserId(): string {
+        return localSession.getCurrentUserId() ?? ''
+    }
+
     async getProfile(): GoAsync<UserEntity> {
         try {
             const record = await this.db.users.get(LocalUserRepoImpl.LOCAL_USER_ID)
-            if (!record) return [null, '本地用户资料不存在']
+            if (!record || record.userId !== this.currentUserId) return [null, '本地用户资料不存在']
             return [await userRecordToEntity(record), null]
         } catch (err) {
             return [null, String(err)]
@@ -34,11 +40,11 @@ export class LocalUserRepoImpl implements UserRepository {
     async updateNickname(updateVO: UpdateUserNicknameValueObject): GoAsync<void> {
         try {
             const record = await this.db.users.get(LocalUserRepoImpl.LOCAL_USER_ID)
-            if (!record) return '本地用户资料不存在'
+            if (!record || record.userId !== this.currentUserId) return '本地用户资料不存在'
             const entity = await userRecordToEntity(record)
             entity.nickname = updateVO.nickname
             entity.updatedAt = new Date().toISOString()
-            await this.db.users.put(await userEntityToRecord(entity))
+            await this.db.users.put(await userEntityToRecord(entity, this.currentUserId))
             return null
         } catch (err) {
             return String(err)
@@ -52,11 +58,11 @@ export class LocalUserRepoImpl implements UserRepository {
     async updateAvatarURL(url: string): GoAsync<string> {
         try {
             const record = await this.db.users.get(LocalUserRepoImpl.LOCAL_USER_ID)
-            if (!record) return [null, '本地用户资料不存在']
+            if (!record || record.userId !== this.currentUserId) return [null, '本地用户资料不存在']
             const entity = await userRecordToEntity(record)
             entity.avatar = url
             entity.updatedAt = new Date().toISOString()
-            await this.db.users.put(await userEntityToRecord(entity))
+            await this.db.users.put(await userEntityToRecord(entity, this.currentUserId))
             return [url, null]
         } catch (err) {
             return [null, String(err)]

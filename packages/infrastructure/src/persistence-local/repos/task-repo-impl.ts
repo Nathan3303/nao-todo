@@ -9,6 +9,7 @@ import dayjs from 'dayjs'
 import { taskEntityToRecord, taskRecordToEntity } from '../converters/task'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
+import { localSession } from '../session/local-session'
 
 /**
  * 解析 list 查询串
@@ -57,10 +58,15 @@ const matchRelativeDate = (endAt: string, relativeDate: string): boolean => {
 export class LocalTaskRepoImpl implements TaskRepository {
     constructor(private db: NaoTodoLocalDatabase = localDatabase) {}
 
+    /** 当前会话用户 ID（数据归属标识） */
+    private get currentUserId(): string {
+        return localSession.getCurrentUserId() ?? ''
+    }
+
     async get(id: string): GoAsync<TaskEntity> {
         try {
             const record = await this.db.tasks.get(id)
-            if (!record) return [null, '任务不存在']
+            if (!record || record.userId !== this.currentUserId) return [null, '任务不存在']
             return [await taskRecordToEntity(record), null]
         } catch (err) {
             return [null, String(err)]
@@ -92,7 +98,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
                 createVO.remindTime ?? '',
                 createVO.remindWeekdays ?? []
             )
-            await this.db.tasks.add(await taskEntityToRecord(entity))
+            await this.db.tasks.add(await taskEntityToRecord(entity, this.currentUserId))
             return [entity, null]
         } catch (err) {
             return [null, String(err)]
@@ -102,7 +108,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
     async update(id: string, updateVO: UpdateTaskValueObject): GoAsync<void> {
         try {
             const record = await this.db.tasks.get(id)
-            if (!record) return '任务不存在'
+            if (!record || record.userId !== this.currentUserId) return '任务不存在'
             const entity = await taskRecordToEntity(record)
             if (updateVO.parentTaskId !== undefined) entity.parentTaskId = updateVO.parentTaskId
             if (updateVO.name !== undefined) entity.name = updateVO.name
@@ -120,7 +126,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
             if (updateVO.remindWeekdays !== undefined)
                 entity.remindWeekdays = updateVO.remindWeekdays
             entity.updatedAt = new Date().toISOString()
-            await this.db.tasks.put(await taskEntityToRecord(entity))
+            await this.db.tasks.put(await taskEntityToRecord(entity, this.currentUserId))
             return null
         } catch (err) {
             return String(err)
@@ -130,11 +136,11 @@ export class LocalTaskRepoImpl implements TaskRepository {
     async remove(id: string): GoAsync<void> {
         try {
             const record = await this.db.tasks.get(id)
-            if (!record) return '任务不存在'
+            if (!record || record.userId !== this.currentUserId) return '任务不存在'
             const entity = await taskRecordToEntity(record)
             entity.deletedAt = new Date().toISOString()
             entity.updatedAt = entity.deletedAt
-            await this.db.tasks.put(await taskEntityToRecord(entity))
+            await this.db.tasks.put(await taskEntityToRecord(entity, this.currentUserId))
             return null
         } catch (err) {
             return String(err)
@@ -144,11 +150,11 @@ export class LocalTaskRepoImpl implements TaskRepository {
     async restore(id: string): GoAsync<void> {
         try {
             const record = await this.db.tasks.get(id)
-            if (!record) return '任务不存在'
+            if (!record || record.userId !== this.currentUserId) return '任务不存在'
             const entity = await taskRecordToEntity(record)
             entity.deletedAt = null
             entity.updatedAt = new Date().toISOString()
-            await this.db.tasks.put(await taskEntityToRecord(entity))
+            await this.db.tasks.put(await taskEntityToRecord(entity, this.currentUserId))
             return null
         } catch (err) {
             return String(err)
@@ -160,8 +166,8 @@ export class LocalTaskRepoImpl implements TaskRepository {
     ): GoAsync<{ taskEntities: TaskEntity[]; pagination?: ResponseDataPagination }> {
         try {
             const query = parseListQuery(queryString)
-            // 1. 结构字段过滤（明文，走索引语义）
-            let records = await this.db.tasks.toArray()
+            // 1. 结构字段过滤（明文，走索引语义；先按当前用户隔离）
+            let records = await this.db.tasks.where('userId').equals(this.currentUserId).toArray()
             if (query.isDeleted === 'true') {
                 records = records.filter((r) => r.deletedAt !== null)
             } else if (query.isDeleted === 'false') {
@@ -246,7 +252,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
     async copy(id: string): GoAsync<TaskEntity> {
         try {
             const record = await this.db.tasks.get(id)
-            if (!record) return [null, '任务不存在']
+            if (!record || record.userId !== this.currentUserId) return [null, '任务不存在']
             const entity = await taskRecordToEntity(record)
             const now = new Date().toISOString()
             const copyEntity = new TaskEntity(
@@ -271,7 +277,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
                 entity.remindTime,
                 entity.remindWeekdays
             )
-            await this.db.tasks.add(await taskEntityToRecord(copyEntity))
+            await this.db.tasks.add(await taskEntityToRecord(copyEntity, this.currentUserId))
             return [copyEntity, null]
         } catch (err) {
             return [null, String(err)]
@@ -281,12 +287,12 @@ export class LocalTaskRepoImpl implements TaskRepository {
     async snooze(id: string, durationMinutes: number): GoAsync<string> {
         try {
             const record = await this.db.tasks.get(id)
-            if (!record) return [null, '任务不存在']
+            if (!record || record.userId !== this.currentUserId) return [null, '任务不存在']
             const entity = await taskRecordToEntity(record)
             const newRemindAt = dayjs().add(durationMinutes, 'minute').toISOString()
             entity.remindAt = newRemindAt
             entity.updatedAt = new Date().toISOString()
-            await this.db.tasks.put(await taskEntityToRecord(entity))
+            await this.db.tasks.put(await taskEntityToRecord(entity, this.currentUserId))
             return [newRemindAt, null]
         } catch (err) {
             return [null, String(err)]

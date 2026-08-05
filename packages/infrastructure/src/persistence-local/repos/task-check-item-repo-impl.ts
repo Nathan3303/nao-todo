@@ -8,6 +8,7 @@ import type { GoAsync } from '@nao-todo/shared'
 import { taskCheckItemEntityToRecord, taskCheckItemRecordToEntity } from '../converters/task'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
+import { localSession } from '../session/local-session'
 
 /**
  * 本地任务检查项仓储实现
@@ -15,10 +16,15 @@ import { localDatabase } from '../db/local-database'
 export class LocalTaskCheckItemRepoImpl implements TaskCheckItemRepository {
     constructor(private db: NaoTodoLocalDatabase = localDatabase) {}
 
+    /** 当前会话用户 ID（数据归属标识） */
+    private get currentUserId(): string {
+        return localSession.getCurrentUserId() ?? ''
+    }
+
     async get(id: string): GoAsync<TaskCheckItemEntity> {
         try {
             const record = await this.db.taskCheckItems.get(id)
-            if (!record) return [null, '检查项不存在']
+            if (!record || record.userId !== this.currentUserId) return [null, '检查项不存在']
             return [await taskCheckItemRecordToEntity(record), null]
         } catch (err) {
             return [null, String(err)]
@@ -38,7 +44,9 @@ export class LocalTaskCheckItemRepoImpl implements TaskCheckItemRepository {
                 createVO.isDone,
                 1
             )
-            await this.db.taskCheckItems.add(await taskCheckItemEntityToRecord(entity))
+            await this.db.taskCheckItems.add(
+                await taskCheckItemEntityToRecord(entity, this.currentUserId)
+            )
             return [entity, null]
         } catch (err) {
             return [null, String(err)]
@@ -48,13 +56,15 @@ export class LocalTaskCheckItemRepoImpl implements TaskCheckItemRepository {
     async update(id: string, updateVO: UpdateTaskCheckItemValueObject): GoAsync<void> {
         try {
             const record = await this.db.taskCheckItems.get(id)
-            if (!record) return '检查项不存在'
+            if (!record || record.userId !== this.currentUserId) return '检查项不存在'
             const entity = await taskCheckItemRecordToEntity(record)
             if (updateVO.name !== undefined) entity.name = updateVO.name
             if (updateVO.isDone !== undefined) entity.isDone = updateVO.isDone
             if (updateVO.sortId !== undefined) entity.sortId = updateVO.sortId
             entity.updatedAt = new Date().toISOString()
-            await this.db.taskCheckItems.put(await taskCheckItemEntityToRecord(entity))
+            await this.db.taskCheckItems.put(
+                await taskCheckItemEntityToRecord(entity, this.currentUserId)
+            )
             return null
         } catch (err) {
             return String(err)
@@ -64,11 +74,13 @@ export class LocalTaskCheckItemRepoImpl implements TaskCheckItemRepository {
     async delete(id: string): GoAsync<void> {
         try {
             const record = await this.db.taskCheckItems.get(id)
-            if (!record) return '检查项不存在'
+            if (!record || record.userId !== this.currentUserId) return '检查项不存在'
             const entity = await taskCheckItemRecordToEntity(record)
             entity.deletedAt = new Date().toISOString()
             entity.updatedAt = entity.deletedAt
-            await this.db.taskCheckItems.put(await taskCheckItemEntityToRecord(entity))
+            await this.db.taskCheckItems.put(
+                await taskCheckItemEntityToRecord(entity, this.currentUserId)
+            )
             return null
         } catch (err) {
             return String(err)
@@ -77,7 +89,11 @@ export class LocalTaskCheckItemRepoImpl implements TaskCheckItemRepository {
 
     async list(taskId: string): GoAsync<TaskCheckItemEntity[]> {
         try {
-            const records = await this.db.taskCheckItems.where('taskId').equals(taskId).toArray()
+            const records = await this.db.taskCheckItems
+                .where('taskId')
+                .equals(taskId)
+                .filter((r) => r.userId === this.currentUserId)
+                .toArray()
             const entities: TaskCheckItemEntity[] = []
             for (const record of records) {
                 entities.push(await taskCheckItemRecordToEntity(record))
@@ -100,7 +116,9 @@ export class LocalTaskCheckItemRepoImpl implements TaskCheckItemRepository {
                 if (updateVO.isDone !== undefined) current.isDone = updateVO.isDone
                 if (updateVO.sortId !== undefined) current.sortId = updateVO.sortId
                 current.updatedAt = new Date().toISOString()
-                await this.db.taskCheckItems.put(await taskCheckItemEntityToRecord(current))
+                await this.db.taskCheckItems.put(
+                    await taskCheckItemEntityToRecord(current, this.currentUserId)
+                )
                 entities.push(current)
             }
             return [entities, null]

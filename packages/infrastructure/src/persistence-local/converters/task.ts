@@ -6,8 +6,12 @@ import type { TaskCheckItemRecord, TaskCommentRecord, TaskRecord } from '../db/l
  * TaskEntity → TaskRecord
  * @description name/description 敏感字段加密存储，tags 为明文 string[]（外键）
  */
-export const taskEntityToRecord = async (entity: TaskEntity): Promise<TaskRecord> => ({
+export const taskEntityToRecord = async (
+    entity: TaskEntity,
+    userId: string
+): Promise<TaskRecord> => ({
     id: entity.id,
+    userId,
     parentTaskId: entity.parentTaskId,
     name: await cryptoService.encrypt(entity.name),
     description: await cryptoService.encrypt(entity.description),
@@ -16,14 +20,14 @@ export const taskEntityToRecord = async (entity: TaskEntity): Promise<TaskRecord
     startAt: entity.startAt,
     endAt: entity.endAt,
     projectId: entity.projectId,
-    tags: entity.tags,
+    tags: [...entity.tags],
     archivedAt: entity.archivedAt,
     starMarkAt: entity.starMarkAt,
     givenUpAt: entity.givenUpAt,
     remindAt: entity.remindAt,
     remindRepeat: entity.remindRepeat,
     remindTime: entity.remindTime,
-    remindWeekdays: entity.remindWeekdays,
+    remindWeekdays: [...entity.remindWeekdays],
     createdAt: entity.createdAt,
     updatedAt: entity.updatedAt,
     deletedAt: entity.deletedAt
@@ -60,9 +64,11 @@ export const taskRecordToEntity = async (record: TaskRecord): Promise<TaskEntity
  * TaskCheckItemEntity → TaskCheckItemRecord
  */
 export const taskCheckItemEntityToRecord = async (
-    entity: TaskCheckItemEntity
+    entity: TaskCheckItemEntity,
+    userId: string
 ): Promise<TaskCheckItemRecord> => ({
     id: entity.id,
+    userId,
     taskId: entity.taskId,
     name: await cryptoService.encrypt(entity.name),
     isDone: entity.isDone,
@@ -94,12 +100,14 @@ export const taskCheckItemRecordToEntity = async (
  * @description content/nickname/avatar 敏感字段加密存储，attachments 为明文 string[]
  */
 export const taskCommentEntityToRecord = async (
-    entity: TaskCommentEntity
+    entity: TaskCommentEntity,
+    userId: string
 ): Promise<TaskCommentRecord> => ({
     id: entity.id,
+    userId,
     taskId: entity.taskId,
     content: await cryptoService.encrypt(entity.content),
-    attachments: entity.attachments,
+    attachments: [...entity.attachments],
     isTopUp: entity.isTopUp,
     avatar: await cryptoService.encrypt(entity.avatar),
     nickname: await cryptoService.encrypt(entity.nickname),

@@ -7,6 +7,8 @@ import {
 } from '../converters/preference'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
+import { localSession } from '../session/local-session'
+import { defaultProjectPreferenceRes2Entity } from '../../persistence-go/project/converters'
 
 /**
  * 本地项目偏好仓储实现
@@ -15,13 +17,20 @@ import { localDatabase } from '../db/local-database'
 export class LocalProjectPreferenceRepoImpl implements ProjectPreferenceRepository {
     constructor(private db: NaoTodoLocalDatabase = localDatabase) {}
 
+    /** 当前会话用户 ID（数据归属标识） */
+    private get currentUserId(): string {
+        return localSession.getCurrentUserId() ?? ''
+    }
+
     async getByProjectId(projectId: string): GoAsync<ProjectPreferenceEntity> {
         try {
             const record = await this.db.projectPreferences
                 .where('projectId')
                 .equals(projectId)
+                .filter((r) => r.userId === this.currentUserId)
                 .first()
-            if (!record) return [null, '项目偏好不存在']
+            // 与远程行为一致：无偏好时返回默认偏好（viewType=table），不报错
+            if (!record) return [defaultProjectPreferenceRes2Entity(projectId), null]
             return [await projectPreferenceRecordToEntity(record), null]
         } catch (err) {
             return [null, String(err)]
@@ -31,7 +40,7 @@ export class LocalProjectPreferenceRepoImpl implements ProjectPreferenceReposito
     async save(updatedEntity: ProjectPreferenceEntity): GoAsync<void> {
         try {
             await this.db.projectPreferences.put(
-                await projectPreferenceEntityToRecord(updatedEntity)
+                await projectPreferenceEntityToRecord(updatedEntity, this.currentUserId)
             )
             return null
         } catch (err) {

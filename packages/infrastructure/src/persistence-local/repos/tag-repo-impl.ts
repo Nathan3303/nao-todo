@@ -3,6 +3,7 @@ import type { GoAsync } from '@nao-todo/shared'
 import { tagEntityToRecord, tagRecordToEntity } from '../converters/tag'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
+import { localSession } from '../session/local-session'
 
 /**
  * 本地标签仓储实现
@@ -11,10 +12,15 @@ import { localDatabase } from '../db/local-database'
 export class LocalTagRepoImpl implements TagRepository {
     constructor(private db: NaoTodoLocalDatabase = localDatabase) {}
 
+    /** 当前会话用户 ID（数据归属标识） */
+    private get currentUserId(): string {
+        return localSession.getCurrentUserId() ?? ''
+    }
+
     async getById(id: string): GoAsync<TagEntity> {
         try {
             const record = await this.db.tags.get(id)
-            if (!record) return [null, '标签不存在']
+            if (!record || record.userId !== this.currentUserId) return [null, '标签不存在']
             return [await tagRecordToEntity(record), null]
         } catch (err) {
             return [null, String(err)]
@@ -23,7 +29,7 @@ export class LocalTagRepoImpl implements TagRepository {
 
     async create(createdEntity: TagEntity): GoAsync<TagEntity> {
         try {
-            await this.db.tags.add(await tagEntityToRecord(createdEntity))
+            await this.db.tags.add(await tagEntityToRecord(createdEntity, this.currentUserId))
             return [createdEntity, null]
         } catch (err) {
             return [null, String(err)]
@@ -33,7 +39,7 @@ export class LocalTagRepoImpl implements TagRepository {
     async update(updatedEntity: TagEntity): GoAsync<void> {
         try {
             updatedEntity.updatedAt = new Date().toISOString()
-            await this.db.tags.put(await tagEntityToRecord(updatedEntity))
+            await this.db.tags.put(await tagEntityToRecord(updatedEntity, this.currentUserId))
             return null
         } catch (err) {
             return String(err)
@@ -43,11 +49,11 @@ export class LocalTagRepoImpl implements TagRepository {
     async deleteById(id: string): GoAsync<void> {
         try {
             const record = await this.db.tags.get(id)
-            if (!record) return '标签不存在'
+            if (!record || record.userId !== this.currentUserId) return '标签不存在'
             const entity = await tagRecordToEntity(record)
             entity.deletedAt = new Date().toISOString()
             entity.updatedAt = entity.deletedAt
-            await this.db.tags.put(await tagEntityToRecord(entity))
+            await this.db.tags.put(await tagEntityToRecord(entity, this.currentUserId))
             return null
         } catch (err) {
             return String(err)
@@ -56,7 +62,7 @@ export class LocalTagRepoImpl implements TagRepository {
 
     async list(): GoAsync<TagEntity[]> {
         try {
-            const records = await this.db.tags.toArray()
+            const records = await this.db.tags.where('userId').equals(this.currentUserId).toArray()
             const entities: TagEntity[] = []
             for (const record of records) {
                 entities.push(await tagRecordToEntity(record))
@@ -85,7 +91,7 @@ export class LocalTagRepoImpl implements TagRepository {
             const entities: TagEntity[] = []
             for (const entity of updatedEntities) {
                 entity.updatedAt = new Date().toISOString()
-                await this.db.tags.put(await tagEntityToRecord(entity))
+                await this.db.tags.put(await tagEntityToRecord(entity, this.currentUserId))
                 entities.push(entity)
             }
             return [entities, null]

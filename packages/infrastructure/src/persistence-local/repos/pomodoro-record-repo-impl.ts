@@ -7,6 +7,7 @@ import type { GoAsync, ResponseDataPagination } from '@nao-todo/shared'
 import { pomodoroRecordEntityToItem, pomodoroRecordItemToEntity } from '../converters/pomodoro'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
+import { localSession } from '../session/local-session'
 
 /**
  * 本地番茄钟记录仓储实现
@@ -14,10 +15,15 @@ import { localDatabase } from '../db/local-database'
 export class LocalPomodoroRecordRepoImpl implements PomodoroRecordRepository {
     constructor(private db: NaoTodoLocalDatabase = localDatabase) {}
 
+    /** 当前会话用户 ID（数据归属标识） */
+    private get currentUserId(): string {
+        return localSession.getCurrentUserId() ?? ''
+    }
+
     async get(id: string): GoAsync<PomodoroRecordEntity> {
         try {
             const record = await this.db.pomodoroRecords.get(id)
-            if (!record) return [null, '专注记录不存在']
+            if (!record || record.userId !== this.currentUserId) return [null, '专注记录不存在']
             return [await pomodoroRecordItemToEntity(record), null]
         } catch (err) {
             return [null, String(err)]
@@ -43,7 +49,9 @@ export class LocalPomodoroRecordRepoImpl implements PomodoroRecordRepository {
                 createVO.duration,
                 createVO.note
             )
-            await this.db.pomodoroRecords.add(await pomodoroRecordEntityToItem(entity))
+            await this.db.pomodoroRecords.add(
+                await pomodoroRecordEntityToItem(entity, this.currentUserId)
+            )
             return [entity, null]
         } catch (err) {
             return [null, String(err)]
@@ -55,7 +63,10 @@ export class LocalPomodoroRecordRepoImpl implements PomodoroRecordRepository {
     ): GoAsync<{ entities: PomodoroRecordEntity[]; pagination?: ResponseDataPagination }> {
         try {
             const params = new URLSearchParams(queryString ?? '')
-            let records = await this.db.pomodoroRecords.toArray()
+            let records = await this.db.pomodoroRecords
+                .where('userId')
+                .equals(this.currentUserId)
+                .toArray()
             if (params.get('isDeleted') === 'true') {
                 records = records.filter((r) => r.deletedAt !== null)
             } else if (params.get('isDeleted') === 'false') {

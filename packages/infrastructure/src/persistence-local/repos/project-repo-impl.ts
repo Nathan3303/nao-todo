@@ -8,6 +8,7 @@ import type { GoAsync } from '@nao-todo/shared'
 import { projectEntityToRecord, projectRecordToEntity } from '../converters/project'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
+import { localSession } from '../session/local-session'
 
 /**
  * 本地项目仓储实现
@@ -16,10 +17,15 @@ import { localDatabase } from '../db/local-database'
 export class LocalProjectRepoImpl implements ProjectRepository {
     constructor(private db: NaoTodoLocalDatabase = localDatabase) {}
 
+    /** 当前会话用户 ID（数据归属标识） */
+    private get currentUserId(): string {
+        return localSession.getCurrentUserId() ?? ''
+    }
+
     async get(id: string): GoAsync<ProjectEntity> {
         try {
             const record = await this.db.projects.get(id)
-            if (!record) return [null, '项目不存在']
+            if (!record || record.userId !== this.currentUserId) return [null, '项目不存在']
             return [await projectRecordToEntity(record), null]
         } catch (err) {
             return [null, String(err)]
@@ -41,7 +47,7 @@ export class LocalProjectRepoImpl implements ProjectRepository {
                 null,
                 0
             )
-            await this.db.projects.add(await projectEntityToRecord(entity))
+            await this.db.projects.add(await projectEntityToRecord(entity, this.currentUserId))
             return [entity, null]
         } catch (err) {
             return [null, String(err)]
@@ -51,14 +57,14 @@ export class LocalProjectRepoImpl implements ProjectRepository {
     async update(updateVO: UpdateProjectValueObject): GoAsync<void> {
         try {
             const record = await this.db.projects.get(updateVO.id)
-            if (!record) return '项目不存在'
+            if (!record || record.userId !== this.currentUserId) return '项目不存在'
             const entity = await projectRecordToEntity(record)
             if (updateVO.name !== undefined) entity.name = updateVO.name
             if (updateVO.icon !== undefined) entity.icon = updateVO.icon
             if (updateVO.description !== undefined) entity.description = updateVO.description
             if (updateVO.sortId !== undefined) entity.sortId = updateVO.sortId
             entity.updatedAt = new Date().toISOString()
-            await this.db.projects.put(await projectEntityToRecord(entity))
+            await this.db.projects.put(await projectEntityToRecord(entity, this.currentUserId))
             return null
         } catch (err) {
             return String(err)
@@ -68,11 +74,11 @@ export class LocalProjectRepoImpl implements ProjectRepository {
     async delete(id: string): GoAsync<void> {
         try {
             const record = await this.db.projects.get(id)
-            if (!record) return '项目不存在'
+            if (!record || record.userId !== this.currentUserId) return '项目不存在'
             const entity = await projectRecordToEntity(record)
             entity.deletedAt = new Date().toISOString()
             entity.updatedAt = entity.deletedAt
-            await this.db.projects.put(await projectEntityToRecord(entity))
+            await this.db.projects.put(await projectEntityToRecord(entity, this.currentUserId))
             return null
         } catch (err) {
             return String(err)
@@ -82,11 +88,11 @@ export class LocalProjectRepoImpl implements ProjectRepository {
     async restore(id: string): GoAsync<void> {
         try {
             const record = await this.db.projects.get(id)
-            if (!record) return '项目不存在'
+            if (!record || record.userId !== this.currentUserId) return '项目不存在'
             const entity = await projectRecordToEntity(record)
             entity.deletedAt = null
             entity.updatedAt = new Date().toISOString()
-            await this.db.projects.put(await projectEntityToRecord(entity))
+            await this.db.projects.put(await projectEntityToRecord(entity, this.currentUserId))
             return null
         } catch (err) {
             return String(err)
@@ -96,11 +102,11 @@ export class LocalProjectRepoImpl implements ProjectRepository {
     async archive(id: string): GoAsync<void> {
         try {
             const record = await this.db.projects.get(id)
-            if (!record) return '项目不存在'
+            if (!record || record.userId !== this.currentUserId) return '项目不存在'
             const entity = await projectRecordToEntity(record)
             entity.archivedAt = new Date().toISOString()
             entity.updatedAt = entity.archivedAt
-            await this.db.projects.put(await projectEntityToRecord(entity))
+            await this.db.projects.put(await projectEntityToRecord(entity, this.currentUserId))
             return null
         } catch (err) {
             return String(err)
@@ -110,11 +116,11 @@ export class LocalProjectRepoImpl implements ProjectRepository {
     async unarchive(id: string): GoAsync<void> {
         try {
             const record = await this.db.projects.get(id)
-            if (!record) return '项目不存在'
+            if (!record || record.userId !== this.currentUserId) return '项目不存在'
             const entity = await projectRecordToEntity(record)
             entity.archivedAt = null
             entity.updatedAt = new Date().toISOString()
-            await this.db.projects.put(await projectEntityToRecord(entity))
+            await this.db.projects.put(await projectEntityToRecord(entity, this.currentUserId))
             return null
         } catch (err) {
             return String(err)
@@ -123,7 +129,10 @@ export class LocalProjectRepoImpl implements ProjectRepository {
 
     async list(): GoAsync<ProjectEntity[]> {
         try {
-            const records = await this.db.projects.toArray()
+            const records = await this.db.projects
+                .where('userId')
+                .equals(this.currentUserId)
+                .toArray()
             const entities: ProjectEntity[] = []
             for (const record of records) {
                 entities.push(await projectRecordToEntity(record))
@@ -146,7 +155,7 @@ export class LocalProjectRepoImpl implements ProjectRepository {
                 if (updateVO.description !== undefined) current.description = updateVO.description
                 if (updateVO.sortId !== undefined) current.sortId = updateVO.sortId
                 current.updatedAt = new Date().toISOString()
-                await this.db.projects.put(await projectEntityToRecord(current))
+                await this.db.projects.put(await projectEntityToRecord(current, this.currentUserId))
                 entities.push(current)
             }
             return [entities, null]

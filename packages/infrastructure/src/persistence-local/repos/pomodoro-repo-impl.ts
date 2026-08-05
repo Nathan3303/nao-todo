@@ -8,6 +8,7 @@ import type { GoAsync, ResponseDataPagination } from '@nao-todo/shared'
 import { pomodoroEntityToRecord, pomodoroRecordToEntity } from '../converters/pomodoro'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
+import { localSession } from '../session/local-session'
 
 /**
  * 本地番茄钟仓储实现
@@ -15,10 +16,15 @@ import { localDatabase } from '../db/local-database'
 export class LocalPomodoroRepoImpl implements PomodoroRepository {
     constructor(private db: NaoTodoLocalDatabase = localDatabase) {}
 
+    /** 当前会话用户 ID（数据归属标识） */
+    private get currentUserId(): string {
+        return localSession.getCurrentUserId() ?? ''
+    }
+
     async get(id: string): GoAsync<PomodoroEntity> {
         try {
             const record = await this.db.pomodoros.get(id)
-            if (!record) return [null, '番茄钟不存在']
+            if (!record || record.userId !== this.currentUserId) return [null, '番茄钟不存在']
             return [await pomodoroRecordToEntity(record), null]
         } catch (err) {
             return [null, String(err)]
@@ -40,7 +46,7 @@ export class LocalPomodoroRepoImpl implements PomodoroRepository {
                 null,
                 createVO.duration
             )
-            await this.db.pomodoros.add(await pomodoroEntityToRecord(entity))
+            await this.db.pomodoros.add(await pomodoroEntityToRecord(entity, this.currentUserId))
             return [entity, null]
         } catch (err) {
             return [null, String(err)]
@@ -50,14 +56,14 @@ export class LocalPomodoroRepoImpl implements PomodoroRepository {
     async update(updateVO: UpdatePomodoroValueObject): GoAsync<void> {
         try {
             const record = await this.db.pomodoros.get(updateVO.id)
-            if (!record) return '番茄钟不存在'
+            if (!record || record.userId !== this.currentUserId) return '番茄钟不存在'
             const entity = await pomodoroRecordToEntity(record)
             if (updateVO.type !== undefined) entity.type = updateVO.type
             if (updateVO.name !== undefined) entity.name = updateVO.name
             if (updateVO.description !== undefined) entity.description = updateVO.description
             if (updateVO.duration !== undefined) entity.duration = updateVO.duration
             entity.updatedAt = new Date().toISOString()
-            await this.db.pomodoros.put(await pomodoroEntityToRecord(entity))
+            await this.db.pomodoros.put(await pomodoroEntityToRecord(entity, this.currentUserId))
             return null
         } catch (err) {
             return String(err)
@@ -67,11 +73,11 @@ export class LocalPomodoroRepoImpl implements PomodoroRepository {
     async delete(id: string): GoAsync<void> {
         try {
             const record = await this.db.pomodoros.get(id)
-            if (!record) return '番茄钟不存在'
+            if (!record || record.userId !== this.currentUserId) return '番茄钟不存在'
             const entity = await pomodoroRecordToEntity(record)
             entity.deletedAt = new Date().toISOString()
             entity.updatedAt = entity.deletedAt
-            await this.db.pomodoros.put(await pomodoroEntityToRecord(entity))
+            await this.db.pomodoros.put(await pomodoroEntityToRecord(entity, this.currentUserId))
             return null
         } catch (err) {
             return String(err)
@@ -81,11 +87,11 @@ export class LocalPomodoroRepoImpl implements PomodoroRepository {
     async archived(id: string): GoAsync<void> {
         try {
             const record = await this.db.pomodoros.get(id)
-            if (!record) return '番茄钟不存在'
+            if (!record || record.userId !== this.currentUserId) return '番茄钟不存在'
             const entity = await pomodoroRecordToEntity(record)
             entity.archivedAt = new Date().toISOString()
             entity.updatedAt = entity.archivedAt
-            await this.db.pomodoros.put(await pomodoroEntityToRecord(entity))
+            await this.db.pomodoros.put(await pomodoroEntityToRecord(entity, this.currentUserId))
             return null
         } catch (err) {
             return String(err)
@@ -95,11 +101,11 @@ export class LocalPomodoroRepoImpl implements PomodoroRepository {
     async unarchived(id: string): GoAsync<void> {
         try {
             const record = await this.db.pomodoros.get(id)
-            if (!record) return '番茄钟不存在'
+            if (!record || record.userId !== this.currentUserId) return '番茄钟不存在'
             const entity = await pomodoroRecordToEntity(record)
             entity.archivedAt = null
             entity.updatedAt = new Date().toISOString()
-            await this.db.pomodoros.put(await pomodoroEntityToRecord(entity))
+            await this.db.pomodoros.put(await pomodoroEntityToRecord(entity, this.currentUserId))
             return null
         } catch (err) {
             return String(err)
@@ -111,7 +117,10 @@ export class LocalPomodoroRepoImpl implements PomodoroRepository {
     ): GoAsync<{ pomodoroEntities: PomodoroEntity[]; pagination?: ResponseDataPagination }> {
         try {
             const params = new URLSearchParams(queryString ?? '')
-            let records = await this.db.pomodoros.toArray()
+            let records = await this.db.pomodoros
+                .where('userId')
+                .equals(this.currentUserId)
+                .toArray()
             if (params.get('isDeleted') === 'true') {
                 records = records.filter((r) => r.deletedAt !== null)
             } else if (params.get('isDeleted') === 'false') {

@@ -6,8 +6,12 @@ import type { PomodoroRecordItem, PomodoroRecord } from '../db/local-database'
  * PomodoroEntity → PomodoroRecord
  * @description name/description 敏感字段加密存储
  */
-export const pomodoroEntityToRecord = async (entity: PomodoroEntity): Promise<PomodoroRecord> => ({
+export const pomodoroEntityToRecord = async (
+    entity: PomodoroEntity,
+    userId: string
+): Promise<PomodoroRecord> => ({
     id: entity.id,
+    userId,
     type: entity.type,
     name: await cryptoService.encrypt(entity.name),
     description:
@@ -42,9 +46,11 @@ export const pomodoroRecordToEntity = async (record: PomodoroRecord): Promise<Po
  * @description taskName/description/note 敏感字段加密存储
  */
 export const pomodoroRecordEntityToItem = async (
-    entity: PomodoroRecordEntity
+    entity: PomodoroRecordEntity,
+    userId: string
 ): Promise<PomodoroRecordItem> => ({
     id: entity.id,
+    userId,
     sessionId: entity.sessionId,
     pomodoroId: entity.pomodoroId,
     type: entity.type,

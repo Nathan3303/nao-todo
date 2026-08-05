@@ -6,8 +6,12 @@ import type { UserConfigRecord, UserRecord } from '../db/local-database'
  * UserEntity → UserRecord
  * @description email/nickname/avatar 敏感字段加密存储
  */
-export const userEntityToRecord = async (entity: UserEntity): Promise<UserRecord> => ({
+export const userEntityToRecord = async (
+    entity: UserEntity,
+    userId: string
+): Promise<UserRecord> => ({
     id: entity.id,
+    userId,
     email: await cryptoService.encrypt(entity.email),
     nickname: await cryptoService.encrypt(entity.nickname),
     avatar: await cryptoService.encrypt(entity.avatar),
@@ -44,8 +48,12 @@ export const userRecordToEntity = async (record: UserRecord): Promise<UserEntity
  * UserConfigEntity → UserConfigRecord
  * @description appearance 为枚举值，明文存储
  */
-export const userConfigEntityToRecord = (entity: UserConfigEntity): UserConfigRecord => ({
+export const userConfigEntityToRecord = (
+    entity: UserConfigEntity,
+    userId: string
+): UserConfigRecord => ({
     id: entity.id,
+    userId,
     appearance: entity.appearance,
     createdAt: entity.createdAt,
     updatedAt: entity.updatedAt,

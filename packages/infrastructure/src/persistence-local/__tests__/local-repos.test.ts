@@ -4,20 +4,34 @@ import { CreateProjectValueObject, UpdateProjectValueObject } from '@nao-todo/do
 import { CreateTaskValueObject } from '@nao-todo/domain-task'
 import { cryptoService } from '../crypto/crypto-service'
 import { localDatabase } from '../db/local-database'
+import { localSession } from '../session/local-session'
 import { LocalProjectRepoImpl } from '../repos/project-repo-impl'
+import { LocalProjectPreferenceRepoImpl } from '../repos/project-preference-repo-impl'
+import { LocalTagPreferenceRepoImpl } from '../repos/tag-preference-repo-impl'
 import { LocalTaskRepoImpl } from '../repos/task-repo-impl'
 
 /**
  * 重置本地数据库并解锁密钥
  */
-const setup = async () => {
+const setup = async (userId = 'test-user') => {
     await Promise.all([
         localDatabase.projects.clear(),
         localDatabase.tasks.clear(),
         localDatabase.meta.clear()
     ])
     cryptoService.lock()
-    await cryptoService.setup('test-password')
+    localSession.setCurrentUserId(userId)
+    await cryptoService.setup(userId, 'test-password')
+}
+
+/**
+ * 切换当前用户（保留库内既有数据，仅更换会话与密钥）
+ * @description 已有密钥包则用密码 unlock 还原原 DEK，没有则首次 setup
+ */
+const switchUser = async (userId: string) => {
+    cryptoService.lock()
+    localSession.setCurrentUserId(userId)
+    await cryptoService.ensureUnlocked(userId, 'test-password')
 }
 
 const makeTaskVO = (overrides: Partial<CreateTaskValueObject> = {}): CreateTaskValueObject =>
@@ -188,5 +202,105 @@ describe('LocalTaskRepoImpl', () => {
         expect(copied!.name).toBe('原任务')
         const [all] = await repo.list('isDeleted=false')
         expect(all!.taskEntities).toHaveLength(2)
+    })
+
+    it('Proxy（reactive）数组创建任务不抛 DataCloneError，入库为普通数组', async () => {
+        const repo = new LocalTaskRepoImpl()
+        // 模拟 Vue reactive 包装的数组（IndexedDB 结构化克隆无法克隆 Proxy）
+        const reactiveTags = new Proxy(['tag-1'], {}) as string[]
+        const reactiveWeekdays = new Proxy([1, 3], {}) as number[]
+
+        const [created, err] = await repo.create(
+            makeTaskVO({
+                name: '代理数组任务',
+                tags: reactiveTags,
+                remindWeekdays: reactiveWeekdays
+            })
+        )
+        expect(err).toBeNull()
+        expect(created).not.toBeNull()
+
+        // 入库记录为普通数组，且不引用传入的 Proxy
+        const record = await localDatabase.tasks.get(created!.id)
+        expect(record!.tags).toEqual(['tag-1'])
+        expect(record!.tags).not.toBe(reactiveTags)
+        expect(record!.remindWeekdays).toEqual([1, 3])
+        expect(record!.remindWeekdays).not.toBe(reactiveWeekdays)
+    })
+})
+
+describe('偏好默认值', () => {
+    beforeEach(async () => {
+        await setup()
+    })
+
+    it('项目偏好不存在时返回默认偏好（不报错）', async () => {
+        const repo = new LocalProjectPreferenceRepoImpl()
+        const [pref, err] = await repo.getByProjectId('project-x')
+        expect(err).toBeNull()
+        expect(pref!.projectId).toBe('project-x')
+        expect(pref!.viewType).toBe('table')
+    })
+
+    it('保存后按 projectId 取回已存偏好', async () => {
+        const repo = new LocalProjectPreferenceRepoImpl()
+        const [defaultPref] = await repo.getByProjectId('project-y')
+        await repo.save(defaultPref!)
+
+        const [saved, err] = await repo.getByProjectId('project-y')
+        expect(err).toBeNull()
+        expect(saved!.projectId).toBe('project-y')
+    })
+
+    it('标签偏好不存在时返回默认偏好（不报错），参数按 tagId 查询', async () => {
+        const repo = new LocalTagPreferenceRepoImpl()
+        const [pref, err] = await repo.get('tag-1')
+        expect(err).toBeNull()
+        expect(pref!.viewType).toBe('table')
+    })
+})
+
+describe('多用户数据隔离', () => {
+    beforeEach(async () => {
+        await setup('user-1')
+    })
+
+    it('不同用户的 project/task 数据互不可见', async () => {
+        const repo = new LocalProjectRepoImpl()
+        const [project] = await repo.create(
+            new CreateProjectValueObject('user-1 的项目', 'more2', '')
+        )
+        expect(project).not.toBeNull()
+        await new LocalTaskRepoImpl().create(
+            makeTaskVO({ name: 'user-1 的任务', projectId: project!.id })
+        )
+
+        // 切到 user-2（沿用同一库，不清数据），应看不到 user-1 的数据
+        await switchUser('user-2')
+
+        const [projectList] = await repo.list()
+        expect(projectList).toHaveLength(0)
+        const [taskList] = await new LocalTaskRepoImpl().list('isDeleted=false')
+        expect(taskList!.taskEntities).toHaveLength(0)
+
+        // 跨用户按 id 直接 get 也应返回不存在
+        const [entity, err] = await repo.get(project!.id)
+        expect(entity).toBeNull()
+        expect(err).not.toBeNull()
+    })
+
+    it('切回 user-1 数据仍在', async () => {
+        const repo = new LocalProjectRepoImpl()
+        const [project] = await repo.create(
+            new CreateProjectValueObject('user-1 的项目', 'more2', '')
+        )
+        const projectId = project!.id
+
+        await switchUser('user-2')
+        await switchUser('user-1')
+
+        const [fetched, err] = await repo.get(projectId)
+        expect(err).toBeNull()
+        expect(fetched!.name).toBe('user-1 的项目')
     })
 })

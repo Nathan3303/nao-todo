@@ -6,8 +6,12 @@ import type { ProjectRecord } from '../db/local-database'
  * ProjectEntity → ProjectRecord
  * @description name/description 敏感字段加密存储，结构字段明文
  */
-export const projectEntityToRecord = async (entity: ProjectEntity): Promise<ProjectRecord> => ({
+export const projectEntityToRecord = async (
+    entity: ProjectEntity,
+    userId: string
+): Promise<ProjectRecord> => ({
     id: entity.id,
+    userId,
     name: await cryptoService.encrypt(entity.name),
     icon: entity.icon,
     description:

@@ -6,8 +6,9 @@ import type { TagRecord } from '../db/local-database'
  * TagEntity → TagRecord
  * @description name/description 敏感字段加密存储
  */
-export const tagEntityToRecord = async (entity: TagEntity): Promise<TagRecord> => ({
+export const tagEntityToRecord = async (entity: TagEntity, userId: string): Promise<TagRecord> => ({
     id: entity.id,
+    userId,
     icon: entity.icon,
     name: await cryptoService.encrypt(entity.name),
     description: await cryptoService.encrypt(entity.description),

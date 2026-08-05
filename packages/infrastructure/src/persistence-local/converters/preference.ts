@@ -9,9 +9,11 @@ import type { ProjectPreferenceRecord, TagPreferenceRecord } from '../db/local-d
  * @description JSON 配置字段加密存储，projectId 明文保索引
  */
 export const projectPreferenceEntityToRecord = async (
-    entity: ProjectPreferenceEntity
+    entity: ProjectPreferenceEntity,
+    userId: string
 ): Promise<ProjectPreferenceRecord> => ({
     id: entity.id,
+    userId,
     projectId: entity.projectId,
     viewType: entity.viewType,
     getTasksOptions: await cryptoService.encrypt(entity.getTasksOptions.unmarshal()),
@@ -44,9 +46,11 @@ export const projectPreferenceRecordToEntity = async (
  * TagPreferenceEntity → TagPreferenceRecord
  */
 export const tagPreferenceEntityToRecord = async (
-    entity: TagPreferenceEntity
+    entity: TagPreferenceEntity,
+    userId: string
 ): Promise<TagPreferenceRecord> => ({
     id: entity.id,
+    userId,
     tagId: entity.tagId,
     viewType: entity.viewType,
     getTasksOptions: await cryptoService.encrypt(entity.getTasksOptions.unmarshal()),

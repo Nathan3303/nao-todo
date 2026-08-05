@@ -1,13 +1,15 @@
 import { UserStore, UserUseCase } from '@nao-todo/domain-identity'
-import { newLocalUserConfigRepository, newLocalUserRepository } from '@nao-todo/infrastructure'
+import { newUserConfigRepository, newUserRepository } from '@nao-todo/infrastructure'
+import { getRequesterImpl } from '@nao-todo/shared'
 
 /**
- * 用户用例（桌面版本地资料 + 本地用户配置）
+ * 用户用例工厂（桌面版：用户资料/账号操作/外观配置全部走后端 API，与 Web 端一致）
  * @param store 用户存储
  * @returns 用户用例
  */
 export const useUserUseCase = (store: UserStore) => {
-    const userRepo = newLocalUserRepository()
-    const userConfigRepo = newLocalUserConfigRepository()
+    const requester = getRequesterImpl()
+    const userRepo = newUserRepository(requester)
+    const userConfigRepo = newUserConfigRepository(requester)
     return new UserUseCase(userRepo, userConfigRepo, store)
 }

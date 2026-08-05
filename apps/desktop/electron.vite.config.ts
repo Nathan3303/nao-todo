@@ -12,12 +12,13 @@ export default defineConfig({
     },
     renderer: {
         resolve: {
-            alias: {
+            alias: [
+                // 注意顺序：@/hooks 必须排在 @ 之前，
+                // 否则前缀匹配会把 @/hooks 解析到 webapp 的 hooks（远程装配）
+                { find: '@/hooks', replacement: resolve(__dirname, 'src/renderer/src/hooks') },
                 // @ → webapp 源码（views/components/themes/router/commands/context/env 全部复用）
-                '@': resolve(__dirname, '../web/src'),
-                // @/hooks → desktopapp 自有装配层（阶段 4 换本地仓储实现）
-                '@/hooks': resolve(__dirname, 'src/renderer/src/hooks')
-            }
+                { find: '@', replacement: resolve(__dirname, '../web/src') }
+            ]
         },
         // 复用 webapp 的静态资源（字体 iconfont/pf/poppins、图片、favicon）
         publicDir: resolve(__dirname, '../web/public'),
