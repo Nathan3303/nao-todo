@@ -14,7 +14,7 @@ import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
 
 defineOptions({ name: 'PomodoroPage' })
 
-const { dialogManager, subscriber } = inject(POMODORO_VIEW_CONTEXT_KEY)!
+const { dialogManager, subscriber, isUseFloatAside } = inject(POMODORO_VIEW_CONTEXT_KEY)!
 
 const {
     activeTab,
@@ -55,9 +55,11 @@ const dependLabel = computed(() => {
     <nue-container id="Pomodoro">
         <!-- 页面标题 -->
         <pomodoro-header />
+        <!-- 页面主体 -->
         <nue-main>
             <nue-content>
-                <nue-div vertical align="center" justify="center" style="grid-area: timer" gap="0">
+                <nue-div theme="timer-wrapper">
+                    <!-- 常用专注 & 专注任务 选择器 -->
                     <pomodoro-focus-depend-dropdown
                         :type="activeTab === 'timer' ? 1 : 2"
                         :preset-name="presetName"
@@ -124,28 +126,33 @@ const dependLabel = computed(() => {
 </template>
 
 <style scoped>
-#Pomodoro {
-    /* gap: var(--nue-gap-lg); */
+#Pomodoro > .nue-main .nue-content {
+    display: grid;
+    grid-template-columns: auto-fill minmax(20rem, 3fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: 'timer today' 'note today';
+    width: 100%;
+    height: 100%;
+    flex: none;
+    gap: var(--nue-gap-df);
+    overflow: visible;
+    padding: var(--nue-padding-df);
+    box-sizing: border-box;
 
-    > .nue-main .nue-content {
-        display: grid;
-        grid-template-columns: 4fr 3fr;
-        grid-template-rows: 4fr 3fr;
-        grid-template-areas: 'timer today' 'note today';
-        width: 100%;
-        height: 100%;
-        flex: none;
-        gap: var(--nue-gap-df);
-        overflow: visible;
-        padding: var(--nue-padding-df);
-        box-sizing: border-box;
+    @media (max-width: 950px) {
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(auto-fit);
+        grid-template-areas: 'timer' 'note' 'today';
+        gap: var(--nue-gap-lg);
+    }
 
-        @media (max-width: 720px) {
-            grid-template-columns: 1fr;
-            grid-template-rows: 1fr 1fr 1fr;
-            grid-template-areas: 'timer' 'note' 'today';
-            gap: var(--nue-gap-lg);
-        }
+    > .nue-div--timer-wrapper {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        grid-area: timer;
+        gap: 0;
+        margin: var(--nue-padding-sm);
     }
 }
 </style>

@@ -9,6 +9,7 @@ import {
 import { ref, inject, onMounted, watch, nextTick } from 'vue'
 import useCalendarSmartList from './use-calendar-smart-list'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
+import { env } from '@/env'
 
 defineOptions({ name: 'CalendarAside' })
 
@@ -26,7 +27,7 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
 // @mounted
 onMounted(() => {
     if (isUseFloatAside.value) return
-    isDisplayAside.value = true
+    isDisplayAside.value = env.showUnimplementedFeatures && true
 })
 </script>
 

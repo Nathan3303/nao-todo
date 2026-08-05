@@ -1,40 +1,58 @@
 <script setup lang="ts">
-import { inject } from 'vue'
+import { computed, inject } from 'vue'
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
-import { POMODORO_CREATOR_DIALOG_KEY } from '@nao-todo/shared'
+import { useRoute } from 'vue-router'
+// import { POMODORO_CREATOR_DIALOG_KEY } from '@nao-todo/shared'
 
 defineOptions({ name: 'PomodoroHeader' })
 
-const { dialogManager, isUseFloatAside, isDisplayAside, switchDisplayAside } =
-    inject(POMODORO_VIEW_CONTEXT_KEY)!
+const route = useRoute()
+const {
+    // dialogManager,
+    // isUseFloatAside,
+    isDisplayAside,
+    switchDisplayAside
+} = inject(POMODORO_VIEW_CONTEXT_KEY)!
 
 // 打开新建常用番茄专注对话框
-const handleOpenCreator = () => {
-    dialogManager.open(POMODORO_CREATOR_DIALOG_KEY)
-}
+// const handleOpenCreator = () => {
+//     dialogManager.open(POMODORO_CREATOR_DIALOG_KEY)
+// }
+
+const pageTitle = computed(() => {
+    switch (route.name) {
+        case 'pomodoro-collection':
+            return '常用专注'
+        case 'pomodoro-records':
+            return '专注记录'
+        case 'pomodoro':
+            return route.params.type === 'timer' ? '番茄专注' : '正计时'
+        default:
+            return '番茄专注'
+    }
+})
 </script>
 
 <template>
     <nue-header>
         <nue-div theme="title-wrapper">
             <nue-button
-                v-if="isUseFloatAside"
                 :icon="isDisplayAside ? 'menu-close' : 'menu-open'"
                 theme="icon,ghost"
                 @click="switchDisplayAside"
             />
-            <nue-div theme="title">番茄专注</nue-div>
+            <nue-div theme="title">{{ pageTitle }}</nue-div>
         </nue-div>
-        <nue-div v-if="!isUseFloatAside" theme="tabs">
+        <!-- <nue-div v-if="!isUseFloatAside" theme="tabs">
             <nue-link icon="ntd-fanqie" route="/pomodoro/timer">番茄专注</nue-link>
             <nue-link icon="ntd-zzt" route="/pomodoro/focus">正计时</nue-link>
             <nue-link icon="list" route="/pomodoro/pomodoros">常用专注</nue-link>
             <nue-link icon="history" route="/pomodoro/records">专注记录</nue-link>
-        </nue-div>
+        </nue-div> -->
         <nue-div theme="actions">
-            <nue-tooltip content="新建常用番茄专注" size="small">
+            <!-- <nue-tooltip content="新建常用番茄专注" size="small">
                 <nue-button icon="plus" theme="icon,ghost" @click="handleOpenCreator" />
-            </nue-tooltip>
+            </nue-tooltip> -->
             <!-- <nue-tooltip content="查看历史专注记录" size="small">
                 <nue-button icon="ntd-history" theme="icon,ghost" />
             </nue-tooltip> -->
@@ -59,7 +77,7 @@ const handleOpenCreator = () => {
         }
     }
 
-    > .nue-div--tabs {
+    /* > .nue-div--tabs {
         gap: var(--nue-gap-2xs);
         height: 100%;
 
@@ -80,10 +98,10 @@ const handleOpenCreator = () => {
                 border-bottom: 2px solid var(--nue-primary-color-900);
             }
         }
-    }
+    } */
 
-    > .nue-div--actions {
+    /* > .nue-div--actions {
         width: fit-content;
-    }
+    } */
 }
 </style>
