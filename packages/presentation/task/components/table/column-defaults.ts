@@ -51,7 +51,7 @@ const getDefaultTableColumns = (): TableColumnConfig[] => [
         width: null,
         minWidth: 100,
         maxWidth: 200,
-        defaultWidth: 120
+        defaultWidth: 140
     },
     {
         key: 'starMarkAt',
@@ -60,7 +60,7 @@ const getDefaultTableColumns = (): TableColumnConfig[] => [
         width: null,
         minWidth: 100,
         maxWidth: 200,
-        defaultWidth: 120
+        defaultWidth: 140
     },
     {
         key: 'givenUpAt',
@@ -69,7 +69,7 @@ const getDefaultTableColumns = (): TableColumnConfig[] => [
         width: null,
         minWidth: 100,
         maxWidth: 200,
-        defaultWidth: 120
+        defaultWidth: 140
     },
     {
         key: 'archivedAt',
@@ -78,7 +78,7 @@ const getDefaultTableColumns = (): TableColumnConfig[] => [
         width: null,
         minWidth: 100,
         maxWidth: 200,
-        defaultWidth: 120
+        defaultWidth: 140
     },
     {
         key: 'createdAt',
@@ -87,7 +87,7 @@ const getDefaultTableColumns = (): TableColumnConfig[] => [
         width: null,
         minWidth: 100,
         maxWidth: 200,
-        defaultWidth: 120
+        defaultWidth: 140
     },
     {
         key: 'updatedAt',
@@ -96,7 +96,7 @@ const getDefaultTableColumns = (): TableColumnConfig[] => [
         width: null,
         minWidth: 100,
         maxWidth: 200,
-        defaultWidth: 120
+        defaultWidth: 140
     },
     {
         key: 'startAt',
@@ -105,7 +105,7 @@ const getDefaultTableColumns = (): TableColumnConfig[] => [
         width: null,
         minWidth: 100,
         maxWidth: 200,
-        defaultWidth: 120
+        defaultWidth: 140
     },
     {
         key: 'endAt',
@@ -114,7 +114,7 @@ const getDefaultTableColumns = (): TableColumnConfig[] => [
         width: null,
         minWidth: 100,
         maxWidth: 200,
-        defaultWidth: 120
+        defaultWidth: 140
     },
     {
         key: 'priority',
@@ -123,7 +123,7 @@ const getDefaultTableColumns = (): TableColumnConfig[] => [
         width: null,
         minWidth: 100,
         maxWidth: 120,
-        defaultWidth: 110
+        defaultWidth: 120
     },
     {
         key: 'state',
@@ -132,7 +132,7 @@ const getDefaultTableColumns = (): TableColumnConfig[] => [
         width: null,
         minWidth: 100,
         maxWidth: 120,
-        defaultWidth: 110
+        defaultWidth: 120
     },
     {
         key: 'project',
