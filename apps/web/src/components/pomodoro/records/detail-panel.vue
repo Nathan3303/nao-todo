@@ -68,9 +68,9 @@ const handleClose = () => {
                 </div>
                 <div class="pomodoro-records-detail__field">
                     <nue-text theme="field-label">专注模板</nue-text>
-                    <nue-text theme="field-value">{{
-                        getPomodoroName(record.pomodoroId)
-                    }}</nue-text>
+                    <nue-text theme="field-value">
+                        {{ getPomodoroName(record.pomodoroId) }}
+                    </nue-text>
                 </div>
             </div>
             <div class="pomodoro-records-detail__section">

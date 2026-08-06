@@ -1,24 +1,43 @@
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it } from 'vite-plus/test'
+import dayjs from 'dayjs'
 import { CreateProjectValueObject, UpdateProjectValueObject } from '@nao-todo/domain-project'
-import { CreateTaskValueObject } from '@nao-todo/domain-task'
+import { TagEntity } from '@nao-todo/domain-tag'
+import {
+    CreatePomodoroRecordValueObject,
+    CreatePomodoroValueObject
+} from '@nao-todo/domain-pomodoro'
+import { CreateTaskCheckItemValueObject, CreateTaskValueObject } from '@nao-todo/domain-task'
 import { cryptoService } from '../crypto/crypto-service'
 import { localDatabase } from '../db/local-database'
 import { localSession } from '../session/local-session'
 import { LocalProjectRepoImpl } from '../repos/project-repo-impl'
 import { LocalProjectPreferenceRepoImpl } from '../repos/project-preference-repo-impl'
+import { LocalPomodoroRecordRepoImpl } from '../repos/pomodoro-record-repo-impl'
+import { LocalPomodoroRepoImpl } from '../repos/pomodoro-repo-impl'
 import { LocalTagPreferenceRepoImpl } from '../repos/tag-preference-repo-impl'
+import { LocalTagRepoImpl } from '../repos/tag-repo-impl'
+import { LocalTaskCheckItemRepoImpl } from '../repos/task-check-item-repo-impl'
 import { LocalTaskRepoImpl } from '../repos/task-repo-impl'
 
 /**
  * 重置本地数据库并解锁密钥
  */
 const setup = async (userId = 'test-user') => {
-    await Promise.all([
-        localDatabase.projects.clear(),
-        localDatabase.tasks.clear(),
-        localDatabase.meta.clear()
-    ])
+    // 串行清空，避免 fake-indexeddb 下并行事务竞态导致 clear 丢失
+    await localDatabase.projects.clear()
+    await localDatabase.projectPreferences.clear()
+    await localDatabase.tags.clear()
+    await localDatabase.tagPreferences.clear()
+    await localDatabase.tasks.clear()
+    await localDatabase.taskCheckItems.clear()
+    await localDatabase.taskComments.clear()
+    await localDatabase.pomodoros.clear()
+    await localDatabase.pomodoroRecords.clear()
+    await localDatabase.users.clear()
+    await localDatabase.userConfigs.clear()
+    await localDatabase.meta.clear()
+    await localDatabase.deletionSchedules.clear()
     cryptoService.lock()
     localSession.setCurrentUserId(userId)
     await cryptoService.setup(userId, 'test-password')
@@ -204,6 +223,56 @@ describe('LocalTaskRepoImpl', () => {
         expect(all!.taskEntities).toHaveLength(2)
     })
 
+    it('state 逗号分隔多值查询（todo,in-progress）返回对应状态任务', async () => {
+        const repo = new LocalTaskRepoImpl()
+        await repo.create(makeTaskVO({ name: '待办', state: 'todo' }))
+        await repo.create(makeTaskVO({ name: '进行中', state: 'in-progress' }))
+        await repo.create(makeTaskVO({ name: '已完成', state: 'done' }))
+
+        const [result, err] = await repo.list('isDeleted=false&state=todo,in-progress')
+        expect(err).toBeNull()
+        expect(result!.taskEntities.map((t) => t.name).sort()).toEqual(['待办', '进行中'])
+    })
+
+    it('relativeDate=-overdue 下未来截止与无截止时间任务保留，已逾期排除', async () => {
+        const repo = new LocalTaskRepoImpl()
+        await repo.create(makeTaskVO({ name: '无截止时间', endAt: null }))
+        await repo.create(
+            makeTaskVO({ name: '已逾期', endAt: dayjs().subtract(1, 'day').toISOString() })
+        )
+        await repo.create(
+            makeTaskVO({ name: '未来截止', endAt: dayjs().add(1, 'day').toISOString() })
+        )
+
+        const [result, err] = await repo.list('isDeleted=false&relativeDate=-overdue')
+        expect(err).toBeNull()
+        expect(result!.taskEntities.map((t) => t.name).sort()).toEqual(['无截止时间', '未来截止'])
+    })
+
+    it('未传 parentTaskId 时默认只返回顶层任务（子任务排除）', async () => {
+        const repo = new LocalTaskRepoImpl()
+        const [parent] = await repo.create(makeTaskVO({ name: '顶层任务' }))
+        await repo.create(makeTaskVO({ name: '子任务一', parentTaskId: parent!.id }))
+        await repo.create(makeTaskVO({ name: '子任务二', parentTaskId: parent!.id }))
+
+        const [result, err] = await repo.list('isDeleted=false')
+        expect(err).toBeNull()
+        expect(result!.taskEntities.map((t) => t.name)).toEqual(['顶层任务'])
+    })
+
+    it('传 parentTaskId 时只返回对应子任务', async () => {
+        const repo = new LocalTaskRepoImpl()
+        const [parent] = await repo.create(makeTaskVO({ name: '顶层任务' }))
+        await repo.create(makeTaskVO({ name: '子任务一', parentTaskId: parent!.id }))
+        await repo.create(makeTaskVO({ name: '子任务二', parentTaskId: parent!.id }))
+
+        const [result, err] = await repo.list(
+            `isDeleted=false&parentTaskId=${encodeURIComponent(parent!.id)}`
+        )
+        expect(err).toBeNull()
+        expect(result!.taskEntities.map((t) => t.name).sort()).toEqual(['子任务一', '子任务二'])
+    })
+
     it('Proxy（reactive）数组创建任务不抛 DataCloneError，入库为普通数组', async () => {
         const repo = new LocalTaskRepoImpl()
         // 模拟 Vue reactive 包装的数组（IndexedDB 结构化克隆无法克隆 Proxy）
@@ -302,5 +371,239 @@ describe('多用户数据隔离', () => {
         const [fetched, err] = await repo.get(projectId)
         expect(err).toBeNull()
         expect(fetched!.name).toBe('user-1 的项目')
+    })
+})
+
+describe('TaskCheckItem 排序', () => {
+    beforeEach(async () => {
+        await setup('user-1')
+    })
+
+    const createItem = async (repo: LocalTaskCheckItemRepoImpl, taskId: string, name: string) => {
+        const [entity, err] = await repo.create(
+            new CreateTaskCheckItemValueObject(taskId, name, false, false)
+        )
+        expect(err).toBeNull()
+        return entity!
+    }
+
+    it('同一任务连续创建：sortId 依次递增且 list 顺序正确', async () => {
+        const repo = new LocalTaskCheckItemRepoImpl()
+        const first = await createItem(repo, 'task-1', '第一项')
+        const second = await createItem(repo, 'task-1', '第二项')
+        const third = await createItem(repo, 'task-1', '第三项')
+
+        expect(first.sortId).toBe(1)
+        expect(second.sortId).toBe(2)
+        expect(third.sortId).toBe(3)
+
+        const [listResult, err] = await repo.list('task-1')
+        expect(err).toBeNull()
+        expect(listResult!.map((item) => item.sortId)).toEqual([1, 2, 3])
+        expect(listResult!.map((item) => item.name)).toEqual(['第一项', '第二项', '第三项'])
+    })
+
+    it('不同 taskId 各自独立计数', async () => {
+        const repo = new LocalTaskCheckItemRepoImpl()
+        await createItem(repo, 'task-a', 'A1')
+        await createItem(repo, 'task-a', 'A2')
+        const b1 = await createItem(repo, 'task-b', 'B1')
+
+        expect(b1.sortId).toBe(1)
+    })
+
+    it('跨用户隔离：user-2 创建不影响 user-1 的 max 计算', async () => {
+        const repo = new LocalTaskCheckItemRepoImpl()
+        await createItem(repo, 'task-1', 'user-1 第一项')
+        await createItem(repo, 'task-1', 'user-1 第二项')
+
+        // 切到 user-2 在同一任务下创建
+        await switchUser('user-2')
+        const u2 = await createItem(repo, 'task-1', 'user-2 项')
+        expect(u2.sortId).toBe(1)
+
+        // 切回 user-1 继续创建，sortId 接续原最大值
+        await switchUser('user-1')
+        const u1Third = await createItem(repo, 'task-1', 'user-1 第三项')
+        expect(u1Third.sortId).toBe(3)
+    })
+})
+
+describe('LocalTagRepoImpl 创建与列表', () => {
+    beforeEach(async () => {
+        await setup()
+    })
+
+    const makeTagEntity = (name: string) =>
+        // 模拟调用方：create 传入 id 为空串的实体（TagEntity._createWithEmpty 语义）
+        new TagEntity(
+            '',
+            new Date().toISOString(),
+            new Date().toISOString(),
+            null,
+            'more2',
+            name,
+            '',
+            '#666666',
+            1
+        )
+
+    it('创建后自动生成唯一 id，list 可正常展示（名称解密正确）', async () => {
+        const repo = new LocalTagRepoImpl()
+        const [first, err1] = await repo.create(makeTagEntity('工作'))
+        expect(err1).toBeNull()
+        expect(first!.id).not.toBe('')
+        const [second, err2] = await repo.create(makeTagEntity('生活'))
+        expect(err2).toBeNull()
+        expect(second!.id).not.toBe(first!.id)
+
+        const [listResult, listErr] = await repo.list()
+        expect(listErr).toBeNull()
+        expect(listResult!.map((tag) => tag.name).sort()).toEqual(['工作', '生活'])
+        expect(listResult!.every((tag) => tag.id !== '')).toBe(true)
+    })
+
+    it('getById 按生成的 id 可取回', async () => {
+        const repo = new LocalTagRepoImpl()
+        const [created] = await repo.create(makeTagEntity('重要'))
+        const [fetched, err] = await repo.getById(created!.id)
+        expect(err).toBeNull()
+        expect(fetched!.name).toBe('重要')
+    })
+})
+
+describe('LocalPomodoroRecordRepoImpl 记录列表', () => {
+    beforeEach(async () => {
+        await setup()
+    })
+
+    const makeRecord = (overrides: Partial<CreatePomodoroRecordValueObject> = {}) =>
+        new CreatePomodoroRecordValueObject(
+            overrides.sessionId ?? `session-${crypto.randomUUID()}`,
+            overrides.type ?? 1,
+            overrides.startAt ?? new Date().toISOString(),
+            overrides.endAt ?? new Date().toISOString(),
+            overrides.duration ?? 1500,
+            overrides.pomodoroId ?? 'pomodoro-a',
+            overrides.taskId ?? '',
+            overrides.taskName ?? '',
+            overrides.description ?? '',
+            overrides.note ?? ''
+        )
+
+    it('按 pomodoroId 过滤：只返回该模板的记录', async () => {
+        const repo = new LocalPomodoroRecordRepoImpl()
+        await repo.create(makeRecord({ pomodoroId: 'pomodoro-a' }))
+        await repo.create(makeRecord({ pomodoroId: 'pomodoro-a' }))
+        await repo.create(makeRecord({ pomodoroId: 'pomodoro-b' }))
+
+        const [result, err] = await repo.list('pomodoroId=pomodoro-a')
+        expect(err).toBeNull()
+        expect(result!.entities).toHaveLength(2)
+        expect(result!.entities.every((r) => r.pomodoroId === 'pomodoro-a')).toBe(true)
+    })
+
+    it('分页：limit/page 切片与 pagination 正确', async () => {
+        const repo = new LocalPomodoroRecordRepoImpl()
+        for (let i = 0; i < 5; i++) {
+            await repo.create(
+                makeRecord({ startAt: new Date(Date.now() - i * 1000).toISOString() })
+            )
+        }
+
+        const [page1, err1] = await repo.list('page=1&limit=2')
+        expect(err1).toBeNull()
+        expect(page1!.entities).toHaveLength(2)
+        expect(page1!.pagination).toEqual({ total: 5, page: 1, limit: 2, maxPage: 3 })
+
+        const [page3, err3] = await repo.list('page=3&limit=2')
+        expect(err3).toBeNull()
+        expect(page3!.entities).toHaveLength(1)
+        expect(page3!.pagination!.maxPage).toBe(3)
+    })
+
+    it('切换 pomodoroId 返回不同记录（常用专注切换刷新）', async () => {
+        const repo = new LocalPomodoroRecordRepoImpl()
+        await repo.create(makeRecord({ pomodoroId: 'pomodoro-a' }))
+        await repo.create(makeRecord({ pomodoroId: 'pomodoro-b' }))
+
+        const [forA] = await repo.list('pomodoroId=pomodoro-a')
+        const [forB] = await repo.list('pomodoroId=pomodoro-b')
+
+        expect(forA!.entities.map((r) => r.pomodoroId)).toEqual(['pomodoro-a'])
+        expect(forB!.entities.map((r) => r.pomodoroId)).toEqual(['pomodoro-b'])
+    })
+})
+
+describe('LocalPomodoroRecordRepoImpl 累计时长累加', () => {
+    beforeEach(async () => {
+        await setup('user-1')
+    })
+
+    const makeRecord = (overrides: Partial<CreatePomodoroRecordValueObject> = {}) =>
+        new CreatePomodoroRecordValueObject(
+            overrides.sessionId ?? `session-${crypto.randomUUID()}`,
+            overrides.type ?? 1,
+            overrides.startAt ?? new Date().toISOString(),
+            overrides.endAt ?? new Date().toISOString(),
+            overrides.duration ?? 1500,
+            overrides.pomodoroId ?? 'pomodoro-a',
+            overrides.taskId ?? '',
+            overrides.taskName ?? '',
+            overrides.description ?? '',
+            overrides.note ?? ''
+        )
+
+    const createPomodoro = async (name = '模板') => {
+        const [entity, err] = await new LocalPomodoroRepoImpl().create(
+            new CreatePomodoroValueObject(1, name, '描述', 1500)
+        )
+        expect(err).toBeNull()
+        return entity!
+    }
+
+    it('完成专注后 totalDuration 累加本次时长', async () => {
+        const pomodoro = await createPomodoro()
+        // 初始 totalDuration = 单次时长（1500）
+        expect(pomodoro.totalDuration).toBe(1500)
+
+        const repo = new LocalPomodoroRecordRepoImpl()
+        await repo.create(makeRecord({ pomodoroId: pomodoro.id, duration: 1500 }))
+
+        const [updated] = await new LocalPomodoroRepoImpl().get(pomodoro.id)
+        expect(updated!.totalDuration).toBe(3000)
+    })
+
+    it('多次完成专注逐次累加', async () => {
+        const pomodoro = await createPomodoro()
+        const repo = new LocalPomodoroRecordRepoImpl()
+        await repo.create(makeRecord({ pomodoroId: pomodoro.id, duration: 1500 }))
+        await repo.create(makeRecord({ pomodoroId: pomodoro.id, duration: 1500 }))
+        await repo.create(makeRecord({ pomodoroId: pomodoro.id, duration: 1200 }))
+
+        const [updated] = await new LocalPomodoroRepoImpl().get(pomodoro.id)
+        expect(updated!.totalDuration).toBe(1500 + 1500 + 1500 + 1200)
+    })
+
+    it('pomodoroId 为空时不影响累计时长', async () => {
+        const pomodoro = await createPomodoro()
+        const repo = new LocalPomodoroRecordRepoImpl()
+        await repo.create(makeRecord({ pomodoroId: null as unknown as string }))
+
+        const [updated] = await new LocalPomodoroRepoImpl().get(pomodoro.id)
+        expect(updated!.totalDuration).toBe(1500)
+    })
+
+    it('多用户隔离：他人记录不累加本用户常用专注', async () => {
+        const pomodoro = await createPomodoro()
+        const recordRepo = new LocalPomodoroRecordRepoImpl()
+
+        // user-2 用 user-1 的 pomodoroId 创建记录：应跳过累加
+        await switchUser('user-2')
+        await recordRepo.create(makeRecord({ pomodoroId: pomodoro.id, duration: 999 }))
+        await switchUser('user-1')
+
+        const [updated] = await new LocalPomodoroRepoImpl().get(pomodoro.id)
+        expect(updated!.totalDuration).toBe(1500)
     })
 })

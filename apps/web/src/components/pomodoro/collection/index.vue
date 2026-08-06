@@ -69,8 +69,9 @@ const typeToString = (type: number) => (type === 1 ? '番茄专注' : '正计时
                             >
                                 <nue-text theme="name" :clamped="1">{{ item.name }}</nue-text>
                                 <nue-text theme="meta">
-                                    {{ typeToString(item.type) }}，{{
-                                        durationToString(item.duration)
+                                    {{ typeToString(item.type) }}
+                                    {{
+                                        item.type == 1 ? `，${durationToString(item.duration)}` : ''
                                     }}
                                 </nue-text>
                             </nue-div>
@@ -96,7 +97,7 @@ const typeToString = (type: number) => (type === 1 ? '番茄专注' : '正计时
                             {{ selectedPomodoro.description }}
                         </nue-text>
                         <nue-divider />
-                        <nue-div theme="detail-field">
+                        <nue-div theme="detail-field" v-if="selectedPomodoro.type === 1">
                             <nue-text theme="label">单次专注时长</nue-text>
                             <nue-text theme="value">
                                 {{ durationToString(selectedPomodoro.duration) }}

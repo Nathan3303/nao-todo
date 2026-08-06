@@ -40,7 +40,7 @@ const submit = async (e: Event) => {
         <nue-header>
             <nue-div align="center" gap="0.5rem" vertical>
                 <nue-text size="1.725rem" weight="bold">{{ t('auth.signUp.title') }}</nue-text>
-                <nue-text align="center" color="grey" size="0.875rem">
+                <nue-text align="center" color="grey" size="0.875rem" style="white-space: pre-line">
                     {{ t('auth.signUp.subtitle') }}
                 </nue-text>
             </nue-div>

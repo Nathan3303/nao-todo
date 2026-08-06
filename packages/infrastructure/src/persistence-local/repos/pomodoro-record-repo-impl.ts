@@ -49,8 +49,24 @@ export class LocalPomodoroRecordRepoImpl implements PomodoroRecordRepository {
                 createVO.duration,
                 createVO.note
             )
-            await this.db.pomodoroRecords.add(
-                await pomodoroRecordEntityToItem(entity, this.currentUserId)
+            // 异步加密在事务外完成（WebCrypto await 会中断 Dexie 事务）
+            const record = await pomodoroRecordEntityToItem(entity, this.currentUserId)
+            await this.db.transaction(
+                'rw',
+                this.db.pomodoroRecords,
+                this.db.pomodoros,
+                async () => {
+                    await this.db.pomodoroRecords.add(record)
+                    // 完成专注时累加对应常用专注的累计时长（与远程后端行为一致）；
+                    // pomodoroId 为空或常用专注不存在/不属于当前用户则跳过
+                    if (record.pomodoroId) {
+                        const pomodoro = await this.db.pomodoros.get(record.pomodoroId)
+                        if (pomodoro && pomodoro.userId === this.currentUserId) {
+                            pomodoro.totalDuration += record.duration
+                            await this.db.pomodoros.put(pomodoro)
+                        }
+                    }
+                }
             )
             return [entity, null]
         } catch (err) {
@@ -72,13 +88,25 @@ export class LocalPomodoroRecordRepoImpl implements PomodoroRecordRepository {
             } else if (params.get('isDeleted') === 'false') {
                 records = records.filter((r) => r.deletedAt === null)
             }
+            // 常用专注详情：按 pomodoroId 过滤（未传则不过滤，兼容其他调用）
+            const pomodoroId = params.get('pomodoroId')
+            if (pomodoroId) {
+                records = records.filter((r) => r.pomodoroId === pomodoroId)
+            }
             // 按开始时间倒序，与远程行为一致
             records.sort((a, b) => b.startAt.localeCompare(a.startAt))
+            // 分页（page/limit，limit 默认 20）
+            const page = Math.max(parseInt(params.get('page') ?? '1', 10) || 1, 1)
+            const limit = Math.max(parseInt(params.get('limit') ?? '20', 10) || 20, 1)
+            const total = records.length
+            const maxPage = Math.max(Math.ceil(total / limit), 1)
+            const start = (page - 1) * limit
+            const pageRecords = records.slice(start, start + limit)
             const entities: PomodoroRecordEntity[] = []
-            for (const record of records) {
+            for (const record of pageRecords) {
                 entities.push(await pomodoroRecordItemToEntity(record))
             }
-            return [{ entities }, null]
+            return [{ entities, pagination: { total, page, limit, maxPage } }, null]
         } catch (err) {
             return [null, String(err)]
         }

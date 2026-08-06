@@ -6,6 +6,7 @@
     "license": "MIT",
     "private": true,
     "type": "module",
+    "packageManager": "pnpm@11.18.0",
     "scripts": {
         "desktopapp": "pnpm --filter @nao-todo/desktopapp",
         "webapp": "pnpm --filter @nao-todo/webapp",

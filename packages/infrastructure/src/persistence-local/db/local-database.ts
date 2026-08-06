@@ -173,10 +173,18 @@ export interface MetaRecord {
     wrappedDek: string
 }
 
+export interface DeletionScheduleRecord {
+    /** 主键 = 用户 ID */
+    id: string
+    /** 数据删除截止时间（注销成功时间 + 7 天） */
+    deadline: string
+    createdAt: string
+}
+
 /**
- * 各业务表名（用于 upgrade 迁移）
+ * 各业务表名（用于 upgrade 迁移与到期清理）
  */
-const BUSINESS_TABLES = [
+export const BUSINESS_TABLES = [
     'projects',
     'projectPreferences',
     'tags',
@@ -208,6 +216,7 @@ export class NaoTodoLocalDatabase extends Dexie {
     users!: Table<UserRecord, string>
     userConfigs!: Table<UserConfigRecord, string>
     meta!: Table<MetaRecord, string>
+    deletionSchedules!: Table<DeletionScheduleRecord, string>
 
     constructor() {
         super('nao-todo-desktop')
@@ -253,6 +262,22 @@ export class NaoTodoLocalDatabase extends Dexie {
                         })
                 }
             })
+        // v3：新增删除调度表（注销反悔期到期自动清理本地数据）
+        this.version(3).stores({
+            projects: '&id, userId, deletedAt, archivedAt',
+            projectPreferences: '&id, userId, projectId',
+            tags: '&id, userId, deletedAt',
+            tagPreferences: '&id, userId, tagId',
+            tasks: '&id, userId, parentTaskId, projectId, state, startAt, endAt, archivedAt, starMarkAt, givenUpAt, remindAt, deletedAt',
+            taskCheckItems: '&id, userId, taskId',
+            taskComments: '&id, userId, taskId',
+            pomodoros: '&id, userId, archivedAt, deletedAt',
+            pomodoroRecords: '&id, userId, sessionId, pomodoroId, taskId, startAt, endAt',
+            users: '&id, userId',
+            userConfigs: '&id, userId',
+            meta: '&id',
+            deletionSchedules: '&id'
+        })
     }
 }
 

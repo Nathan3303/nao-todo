@@ -34,6 +34,14 @@ export class LocalTaskCheckItemRepoImpl implements TaskCheckItemRepository {
     async create(createVO: CreateTaskCheckItemValueObject): GoAsync<TaskCheckItemEntity> {
         try {
             const now = new Date().toISOString()
+            // 默认排最后：取该任务下最大 sortId + 1（首个为 1）
+            const existing = await this.db.taskCheckItems
+                .where('taskId')
+                .equals(createVO.taskId)
+                .filter((r) => r.userId === this.currentUserId)
+                .toArray()
+            const maxSortId = existing.reduce((max, r) => Math.max(max, r.sortId), 0)
+            const sortId = maxSortId + 1
             const entity = new TaskCheckItemEntity(
                 crypto.randomUUID(),
                 now,
@@ -42,7 +50,7 @@ export class LocalTaskCheckItemRepoImpl implements TaskCheckItemRepository {
                 createVO.taskId,
                 createVO.name,
                 createVO.isDone,
-                1
+                sortId
             )
             await this.db.taskCheckItems.add(
                 await taskCheckItemEntityToRecord(entity, this.currentUserId)

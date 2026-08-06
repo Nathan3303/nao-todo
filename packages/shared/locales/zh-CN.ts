@@ -12,7 +12,7 @@ const zhCN: LocaleMessages = {
     'auth.signIn.goToRegister': '一个！',
     'auth.signIn.success': '登录成功',
     'auth.signUp.title': '创建 NaoTodo 账户',
-    'auth.signUp.subtitle': '在下方输入您的电子邮箱、密码以及昵称来创建您的 NaoTodo 账户',
+    'auth.signUp.subtitle': '在下方输入您的电子邮箱、密码以及昵称来创建\n您的 NaoTodo 账户',
     'auth.signUp.emailPlaceholder': '电子邮箱',
     'auth.signUp.passwordPlaceholder': '密码',
     'auth.signUp.confirmPassword': '确认密码',

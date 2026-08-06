@@ -45,10 +45,10 @@ export const useAuthUseCase = (store: AuthStore) => {
 
     useCase.signOut = async (token: string) => {
         const err = await originalSignOut(token)
-        if (err !== null) return err
+        // 本地会话清理不依赖远程结果（改密后旧 token 可能已失效，登出仍须完成）
         localSession.clear()
         cryptoService.lock()
-        return null
+        return err
     }
 
     return useCase

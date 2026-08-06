@@ -27,10 +27,12 @@ const parseListQuery = (queryString?: string): Record<string, string> => {
 
 /**
  * 相对日期匹配（按任务 endAt 判定）
+ * @description 负向条件（-today/-overdue）下无截止时间的任务视为保留（不误过滤）；
+ *              正向条件（today/tomorrow/week/month）下无截止时间不匹配。
  */
 const matchRelativeDate = (endAt: string, relativeDate: string): boolean => {
     const d = dayjs(endAt)
-    if (!d.isValid()) return false
+    if (!d.isValid()) return relativeDate.startsWith('-')
     const now = dayjs()
     switch (relativeDate) {
         case 'today':
@@ -44,7 +46,8 @@ const matchRelativeDate = (endAt: string, relativeDate: string): boolean => {
         case '-today':
             return d.isBefore(now.startOf('day'))
         case '-overdue':
-            return d.isBefore(now)
+            // 未逾期（endAt 为未来/当下）保留；已逾期排除
+            return !d.isBefore(now)
         default:
             return true
     }
@@ -188,12 +191,17 @@ export class LocalTaskRepoImpl implements TaskRepository {
             } else if (query.isGivenUp === 'false') {
                 records = records.filter((r) => !dayjs(r.givenUpAt).isValid())
             }
-            if (query.state) records = records.filter((r) => r.state === query.state)
+            // state 支持逗号分隔多值（与后端语义一致，如 'todo,in-progress'）
+            if (query.state) {
+                const states = query.state.split(',').filter(Boolean)
+                records = records.filter((r) => states.includes(r.state))
+            }
             if (query.priority) records = records.filter((r) => r.priority === query.priority)
             if (query.projectId) records = records.filter((r) => r.projectId === query.projectId)
-            if (query.parentTaskId) {
-                records = records.filter((r) => r.parentTaskId === query.parentTaskId)
-            }
+            // 未传 parentTaskId 时默认只查顶层任务（parentTaskId 为空），
+            // 子任务仅在任务详情面板按 parentTaskId 查询（与后端语义一致）
+            const parentTaskId = query.parentTaskId ?? ''
+            records = records.filter((r) => r.parentTaskId === parentTaskId)
             const tagId = query.tagId
             if (tagId !== undefined) records = records.filter((r) => r.tags.includes(tagId))
             const relativeDate = query.relativeDate

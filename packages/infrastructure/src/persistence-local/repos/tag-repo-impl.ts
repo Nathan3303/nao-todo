@@ -29,8 +29,21 @@ export class LocalTagRepoImpl implements TagRepository {
 
     async create(createdEntity: TagEntity): GoAsync<TagEntity> {
         try {
-            await this.db.tags.add(await tagEntityToRecord(createdEntity, this.currentUserId))
-            return [createdEntity, null]
+            // 远程模式 id 由后端生成；本地必须自生成唯一 id，
+            // 否则传入实体 id 为空串（_createWithEmpty），多次 add 主键冲突导致创建失败
+            const entity = new TagEntity(
+                crypto.randomUUID(),
+                createdEntity.createdAt,
+                createdEntity.updatedAt,
+                createdEntity.deletedAt,
+                createdEntity.icon,
+                createdEntity.name,
+                createdEntity.description,
+                createdEntity.color,
+                createdEntity.sortId
+            )
+            await this.db.tags.add(await tagEntityToRecord(entity, this.currentUserId))
+            return [entity, null]
         } catch (err) {
             return [null, String(err)]
         }
