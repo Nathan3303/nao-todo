@@ -7,7 +7,11 @@ import {
     CreatePomodoroRecordValueObject,
     CreatePomodoroValueObject
 } from '@nao-todo/domain-pomodoro'
-import { CreateTaskCheckItemValueObject, CreateTaskValueObject } from '@nao-todo/domain-task'
+import {
+    CreateTaskCheckItemValueObject,
+    CreateTaskValueObject,
+    UpdateTaskValueObject
+} from '@nao-todo/domain-task'
 import { cryptoService } from '../crypto/crypto-service'
 import { localDatabase } from '../db/local-database'
 import { localSession } from '../session/local-session'
@@ -271,6 +275,46 @@ describe('LocalTaskRepoImpl', () => {
         )
         expect(err).toBeNull()
         expect(result!.taskEntities.map((t) => t.name).sort()).toEqual(['子任务一', '子任务二'])
+    })
+
+    it('默认（未传 isGivenUp）不查询已放弃任务', async () => {
+        const repo = new LocalTaskRepoImpl()
+        const [task] = await repo.create(makeTaskVO({ name: '正常任务' }))
+        // 放弃任务
+        const updateVO = new UpdateTaskValueObject(task!.id)
+        updateVO.givenUpAt = new Date().toISOString()
+        await repo.update(task!.id, updateVO)
+
+        const [result, err] = await repo.list('isDeleted=false')
+        expect(err).toBeNull()
+        expect(result!.taskEntities).toHaveLength(0)
+    })
+
+    it('isGivenUp=false 不查询已放弃任务，isGivenUp=true 只查询已放弃', async () => {
+        const repo = new LocalTaskRepoImpl()
+        const [normal] = await repo.create(makeTaskVO({ name: '正常任务' }))
+        const [givenUp] = await repo.create(makeTaskVO({ name: '已放弃' }))
+        const updateVO = new UpdateTaskValueObject(givenUp!.id)
+        updateVO.givenUpAt = new Date().toISOString()
+        await repo.update(givenUp!.id, updateVO)
+
+        const [normalList] = await repo.list('isDeleted=false&isGivenUp=false')
+        expect(normalList!.taskEntities.map((t) => t.name)).toEqual(['正常任务'])
+        expect(normal!.id).toBeTruthy()
+
+        const [givenUpList] = await repo.list('isDeleted=false&isGivenUp=true')
+        expect(givenUpList!.taskEntities.map((t) => t.name)).toEqual(['已放弃'])
+    })
+
+    it('priority 逗号分隔多值查询（high,urgent）返回对应优先级任务', async () => {
+        const repo = new LocalTaskRepoImpl()
+        await repo.create(makeTaskVO({ name: '高优先级', priority: 'high' }))
+        await repo.create(makeTaskVO({ name: '紧急', priority: 'urgent' }))
+        await repo.create(makeTaskVO({ name: '中优先级', priority: 'medium' }))
+
+        const [result, err] = await repo.list('isDeleted=false&priority=high,urgent')
+        expect(err).toBeNull()
+        expect(result!.taskEntities.map((t) => t.name).sort()).toEqual(['紧急', '高优先级'])
     })
 
     it('Proxy（reactive）数组创建任务不抛 DataCloneError，入库为普通数组', async () => {

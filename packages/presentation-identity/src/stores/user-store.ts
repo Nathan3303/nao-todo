@@ -13,7 +13,7 @@ export const useUserStore = defineStore('UserStore', () => {
     const { state, updateState } = useStoreBase<{
         isAuthenticated: boolean
         userToken: string
-    }>({ isAuthenticated: false, userToken: '' })
+    }>({ isAuthenticated: false, userToken: localStorage.getItem(USER_JWT_LOCALSTORAGE_KEY) || '' })
 
     // @storebase 用户注销相关
     const {

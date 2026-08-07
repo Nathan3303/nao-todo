@@ -186,17 +186,26 @@ export class LocalTaskRepoImpl implements TaskRepository {
             } else if (query.isStarMarked === 'false') {
                 records = records.filter((r) => r.starMarkAt === null)
             }
+            // 已放弃判定：givenUpAt 非空且为有效日期（undefined/null/'' 均视为未放弃，
+            // 规避 dayjs(undefined) 视为当前时间的陷阱）
+            const isGivenUp = (r: { givenUpAt: string | null }) =>
+                Boolean(r.givenUpAt) && dayjs(r.givenUpAt).isValid()
             if (query.isGivenUp === 'true') {
-                records = records.filter((r) => dayjs(r.givenUpAt).isValid())
-            } else if (query.isGivenUp === 'false') {
-                records = records.filter((r) => !dayjs(r.givenUpAt).isValid())
+                records = records.filter(isGivenUp)
+            } else {
+                // 未传（普通视图默认）或 isGivenUp=false：不查询已放弃任务
+                records = records.filter((r) => !isGivenUp(r))
             }
             // state 支持逗号分隔多值（与后端语义一致，如 'todo,in-progress'）
             if (query.state) {
                 const states = query.state.split(',').filter(Boolean)
                 records = records.filter((r) => states.includes(r.state))
             }
-            if (query.priority) records = records.filter((r) => r.priority === query.priority)
+            if (query.priority) {
+                // priority 支持逗号分隔多值（与 state 一致，如 'high,urgent'）
+                const priorities = query.priority.split(',').filter(Boolean)
+                records = records.filter((r) => priorities.includes(r.priority))
+            }
             if (query.projectId) records = records.filter((r) => r.projectId === query.projectId)
             // 未传 parentTaskId 时默认只查顶层任务（parentTaskId 为空），
             // 子任务仅在任务详情面板按 parentTaskId 查询（与后端语义一致）
