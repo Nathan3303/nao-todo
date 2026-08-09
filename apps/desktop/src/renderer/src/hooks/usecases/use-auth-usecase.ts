@@ -2,6 +2,7 @@ import { AuthService, AuthStore, AuthUseCase } from '@nao-todo/domain-identity'
 import type { SignInViewObject } from '@nao-todo/domain-identity'
 import {
     cryptoService,
+    initSnowflakeEpoch,
     localSession,
     resolveUserIdFromStoredJwt,
     useAuthRepository
@@ -34,6 +35,8 @@ export const useAuthUseCase = (store: AuthStore) => {
             return '本地数据解锁失败，请重新登录'
         }
         localSession.setCurrentUserId(userId)
+        // 登录后拉取后端雪花 Epoch 配置本地生成器（失败回退缓存/默认，不阻塞登录与解锁）
+        void initSnowflakeEpoch()
         try {
             await cryptoService.ensureUnlocked(userId, signInViewObject.password)
         } catch (unlockErr) {

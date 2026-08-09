@@ -2,6 +2,7 @@
 import {
     cryptoService,
     deletionService,
+    initSnowflakeEpoch,
     localSession,
     resolveUserIdFromStoredJwt
 } from '@nao-todo/infrastructure'
@@ -35,6 +36,8 @@ onMounted(async () => {
     }
     localSession.setCurrentUserId(currentUserId)
     userId.value = currentUserId
+    // 冷启动（已有 JWT）：刷新后端雪花 Epoch（失败回退缓存/默认，不阻塞）
+    void initSnowflakeEpoch()
     // 注销反悔期到期：清空该用户本地数据（密钥包一并删除，按全新用户放行）
     await deletionService.checkAndCleanExpired(currentUserId)
     // 无密钥包 = 该用户首次使用，直接放行（首次登录时由 signIn 建立密钥包）

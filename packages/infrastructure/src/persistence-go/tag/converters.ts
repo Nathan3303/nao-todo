@@ -103,18 +103,19 @@ export const tagPreferenceRes2Entity = (res: TagPreferenceRes): TagPreferenceEnt
 
 /**
  * 创建默认标签偏好实体
- * @returns 默认标签偏好实体
+ * @param tagId 标签 ID（默认偏好的 getTasksOptions 须含 tagId，
+ *              否则标签面板任务查询无标签过滤，会误展示无该标签的任务）
  */
-export const defaultTagPreferenceRes2Entity = (): TagPreferenceEntity => {
+export const defaultTagPreferenceRes2Entity = (tagId: string): TagPreferenceEntity => {
     const today = dayjs().toISOString()
     return new TagPreferenceEntity(
         '',
         today,
         today,
         null,
-        '',
+        tagId,
         'table',
-        JsonStringValueObject.CreateByJsonString('{}'),
+        JsonStringValueObject.CreateByJsonString(`{"tagId":"${tagId}"}`),
         JsonStringValueObject.CreateByObject(defaultColumns)
     )
 }

@@ -6,10 +6,19 @@ import {
 } from '@nao-todo/domain-task'
 import type { GoAsync, ResponseDataPagination } from '@nao-todo/shared'
 import dayjs from 'dayjs'
-import { taskEntityToRecord, taskRecordToEntity } from '../converters/task'
+import {
+    taskCheckItemEntityToRecord,
+    taskCheckItemRecordToEntity,
+    taskCommentEntityToRecord,
+    taskCommentRecordToEntity,
+    taskEntityToRecord,
+    taskRecordToEntity
+} from '../converters/task'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
 import { localSession } from '../session/local-session'
+import { snowflake } from '../../persistence-sync/snowflake'
+import { syncTracker } from '../../persistence-sync/sync-tracker'
 
 /**
  * 解析 list 查询串
@@ -36,7 +45,9 @@ const matchRelativeDate = (endAt: string, relativeDate: string): boolean => {
     const now = dayjs()
     switch (relativeDate) {
         case 'today':
-            return d.isSame(now, 'day')
+            // 今日任务：结束日期在今天及之后（未到期）都算——今天内还可继续完成；
+            // 今天到期的任务也包含（今天结束前都未过期）
+            return !d.isBefore(now.startOf('day'))
         case 'tomorrow':
             return d.isSame(now.add(1, 'day'), 'day')
         case 'week':
@@ -80,7 +91,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
         try {
             const now = new Date().toISOString()
             const entity = new TaskEntity(
-                crypto.randomUUID(),
+                snowflake.nextId(),
                 now,
                 now,
                 null,
@@ -102,6 +113,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
                 createVO.remindWeekdays ?? []
             )
             await this.db.tasks.add(await taskEntityToRecord(entity, this.currentUserId))
+            await syncTracker.markDirty('tasks', entity.id, 'upsert', entity.updatedAt)
             return [entity, null]
         } catch (err) {
             return [null, String(err)]
@@ -130,6 +142,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
                 entity.remindWeekdays = updateVO.remindWeekdays
             entity.updatedAt = new Date().toISOString()
             await this.db.tasks.put(await taskEntityToRecord(entity, this.currentUserId))
+            await syncTracker.markDirty('tasks', id, 'upsert', entity.updatedAt)
             return null
         } catch (err) {
             return String(err)
@@ -144,9 +157,63 @@ export class LocalTaskRepoImpl implements TaskRepository {
             entity.deletedAt = new Date().toISOString()
             entity.updatedAt = entity.deletedAt
             await this.db.tasks.put(await taskEntityToRecord(entity, this.currentUserId))
+            await syncTracker.markDirty('tasks', id, 'delete', entity.deletedAt ?? entity.updatedAt)
+            // 级联软删：子任务（递归）+ 检查项 + 评论（与删除一起入队，防远程残留孤儿子实体，见 data-sync-plan.md §5）
+            await this.cascadeRemove(id, entity.deletedAt)
             return null
         } catch (err) {
             return String(err)
+        }
+    }
+
+    /**
+     * 级联软删任务关联子实体（子任务递归、检查项、评论）
+     * @description 本地与远程删除均为软删墓碑；级联删除保证远程不残留孤儿（任务删除连带子实体 delete 入队）
+     */
+    private async cascadeRemove(taskId: string, deletedAt: string): Promise<void> {
+        // 子任务（递归）
+        const subtasks = await this.db.tasks
+            .where('parentTaskId')
+            .equals(taskId)
+            .filter((r) => r.userId === this.currentUserId && r.deletedAt === null)
+            .toArray()
+        for (const sub of subtasks) {
+            const subEntity = await taskRecordToEntity(sub)
+            subEntity.deletedAt = deletedAt
+            subEntity.updatedAt = deletedAt
+            await this.db.tasks.put(await taskEntityToRecord(subEntity, this.currentUserId))
+            await syncTracker.markDirty('tasks', sub.id, 'delete', deletedAt)
+            await this.cascadeRemove(sub.id, deletedAt)
+        }
+        // 检查项
+        const checkItems = await this.db.taskCheckItems
+            .where('taskId')
+            .equals(taskId)
+            .filter((r) => r.userId === this.currentUserId && r.deletedAt === null)
+            .toArray()
+        for (const item of checkItems) {
+            const itemEntity = await taskCheckItemRecordToEntity(item)
+            itemEntity.deletedAt = deletedAt
+            itemEntity.updatedAt = deletedAt
+            await this.db.taskCheckItems.put(
+                await taskCheckItemEntityToRecord(itemEntity, this.currentUserId)
+            )
+            await syncTracker.markDirty('taskCheckItems', item.id, 'delete', deletedAt)
+        }
+        // 评论
+        const comments = await this.db.taskComments
+            .where('taskId')
+            .equals(taskId)
+            .filter((r) => r.userId === this.currentUserId && r.deletedAt === null)
+            .toArray()
+        for (const comment of comments) {
+            const commentEntity = await taskCommentRecordToEntity(comment)
+            commentEntity.deletedAt = deletedAt
+            commentEntity.updatedAt = deletedAt
+            await this.db.taskComments.put(
+                await taskCommentEntityToRecord(commentEntity, this.currentUserId)
+            )
+            await syncTracker.markDirty('taskComments', comment.id, 'delete', deletedAt)
         }
     }
 
@@ -158,6 +225,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
             entity.deletedAt = null
             entity.updatedAt = new Date().toISOString()
             await this.db.tasks.put(await taskEntityToRecord(entity, this.currentUserId))
+            await syncTracker.markDirty('tasks', id, 'upsert', entity.updatedAt)
             return null
         } catch (err) {
             return String(err)
@@ -273,7 +341,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
             const entity = await taskRecordToEntity(record)
             const now = new Date().toISOString()
             const copyEntity = new TaskEntity(
-                crypto.randomUUID(),
+                snowflake.nextId(),
                 now,
                 now,
                 null,
@@ -295,6 +363,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
                 entity.remindWeekdays
             )
             await this.db.tasks.add(await taskEntityToRecord(copyEntity, this.currentUserId))
+            await syncTracker.markDirty('tasks', copyEntity.id, 'upsert', copyEntity.updatedAt)
             return [copyEntity, null]
         } catch (err) {
             return [null, String(err)]
@@ -310,6 +379,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
             entity.remindAt = newRemindAt
             entity.updatedAt = new Date().toISOString()
             await this.db.tasks.put(await taskEntityToRecord(entity, this.currentUserId))
+            await syncTracker.markDirty('tasks', id, 'upsert', entity.updatedAt)
             return [newRemindAt, null]
         } catch (err) {
             return [null, String(err)]

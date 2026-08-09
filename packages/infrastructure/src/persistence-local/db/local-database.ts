@@ -181,6 +181,35 @@ export interface DeletionScheduleRecord {
     createdAt: string
 }
 
+export type SyncAction = 'upsert' | 'delete'
+
+export interface SyncQueueRecord {
+    /** 主键：`${userId}:${table}:${entityId}`，天然去重 */
+    id: string
+    userId: string
+    table: string
+    entityId: string
+    action: SyncAction
+    /** 本地实体 updatedAt（删除时为 deletedAt） */
+    localUpdatedAt: string
+    /** 推送失败重试计数 */
+    retryCount: number
+    createdAt: string
+    updatedAt: string
+}
+
+export interface SyncCursorRecord {
+    /** 主键：`${userId}:${table}` */
+    id: string
+    userId: string
+    table: string
+    /** 上次成功增量拉取的远程 updatedAt 游标 */
+    lastPullAt: string
+    /** keyset 游标辅助：(updated_at, id) > (lastPullAt, lastPullId) */
+    lastPullId: string
+    updatedAt: string
+}
+
 /**
  * 各业务表名（用于 upgrade 迁移与到期清理）
  */
@@ -217,6 +246,8 @@ export class NaoTodoLocalDatabase extends Dexie {
     userConfigs!: Table<UserConfigRecord, string>
     meta!: Table<MetaRecord, string>
     deletionSchedules!: Table<DeletionScheduleRecord, string>
+    syncQueue!: Table<SyncQueueRecord, string>
+    syncCursor!: Table<SyncCursorRecord, string>
 
     constructor() {
         super('nao-todo-desktop')
@@ -277,6 +308,24 @@ export class NaoTodoLocalDatabase extends Dexie {
             userConfigs: '&id, userId',
             meta: '&id',
             deletionSchedules: '&id'
+        })
+        // v4：新增同步元数据表（脏实体队列 + 拉取游标，多用户按 userId 隔离，见 data-sync-plan.md §3）
+        this.version(4).stores({
+            projects: '&id, userId, deletedAt, archivedAt',
+            projectPreferences: '&id, userId, projectId',
+            tags: '&id, userId, deletedAt',
+            tagPreferences: '&id, userId, tagId',
+            tasks: '&id, userId, parentTaskId, projectId, state, startAt, endAt, archivedAt, starMarkAt, givenUpAt, remindAt, deletedAt',
+            taskCheckItems: '&id, userId, taskId',
+            taskComments: '&id, userId, taskId',
+            pomodoros: '&id, userId, archivedAt, deletedAt',
+            pomodoroRecords: '&id, userId, sessionId, pomodoroId, taskId, startAt, endAt',
+            users: '&id, userId',
+            userConfigs: '&id, userId',
+            meta: '&id',
+            deletionSchedules: '&id',
+            syncQueue: '&id, userId, table, retryCount',
+            syncCursor: '&id, userId'
         })
     }
 }

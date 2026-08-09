@@ -2,7 +2,12 @@
 
 ## 🚀 项目简介
 
-NaoTodo 是一个待办任务管理平台，旨在为用户提供简洁高效的任务管理体验。该平台基于 Vue 3、Vite、TypeScript、NueUI、Pinia 构建，采用 pnpm monorepo 架构，并遵循 DDD（领域驱动设计）分层设计。
+NaoTodo 是一个待办任务管理平台，旨在为用户提供简洁高效的任务管理体验。该平台基于 Vue 3、Vite+（Rolldown）、TypeScript、NueUI、Pinia 构建，采用 pnpm monorepo 架构，并遵循 DDD（领域驱动设计）分层设计。
+
+项目包含两个客户端：
+
+- **Web 客户端**（`apps/web`）：基于 Vue 3 + Vite+ 的在线版本
+- **桌面客户端**（`apps/desktop`）：基于 Electron 的桌面版本，业务数据完全本地化（IndexedDB + AES-GCM 加密），认证沿用远程后端
 
 ## 🌐 站点地址
 
@@ -16,34 +21,38 @@ NaoTodo 是一个待办任务管理平台，旨在为用户提供简洁高效的
 ## 🛠️ 技术栈
 
 - **前端框架**：Vue 3 (Composition API)
-- **构建工具**：Vite 8
+- **构建工具**：[Vite+](https://viteplus.dev/)（基于 Vite 7 / Rolldown）
 - **UI 框架**：[NueUI](https://github.com/Nathan3303/nue-ui) + NueUI Theme Shadlike
 - **状态管理**：Pinia
-- **路由**：Vue Router
+- **路由**：Vue Router（Hash 模式）
 - **国际化**：Vue I18n
 - **HTTP 请求**：Axios
-- **本地存储**：Dexie (IndexedDB)
-- **密码加密**：SparkMD5
 - **日期处理**：Day.js
-- **Markdown 渲染**：markdown-it
+- **本地存储**：localStorage（Web）/ Dexie + IndexedDB（桌面端，AES-GCM 加密）
+- **桌面框架**：Electron（electron-vite 构建）
 - **编程语言**：TypeScript
-- **包管理**：pnpm (monorepo)
+- **包管理**：pnpm（monorepo）
 
 ## 📐 架构
 
-项目遵循 DDD 分层架构，依赖方向为 **Views → Presentation → Application → Domain → Infrastructure**（单向依赖）。
+项目遵循 DDD 分层架构，依赖方向为 **Views → Presentation → Application → Domain → Infrastructure**（单向依赖）。视图层位于 `apps/`，领域与应用层按限界上下文拆分在 `packages/domain-*`，每个领域包内含 `domain/`（实体、值对象、仓储接口、领域服务）与 `application/`（usecases、viewobjects）两层。
 
 ```
 nao-todo/
 ├── apps/
-│   ├── web/              # Web 客户端
-│   └── desktop/          # 桌面客户端（规划中）
+│   ├── web/                    # Web 客户端
+│   └── desktop/                # Electron 桌面客户端（本地加密存储）
 └── packages/
-    ├── presentation/     # 表现层 — Pinia Store、UI 状态管理
-    ├── application/      # 应用层 — 用例（usecases）、数据转换
-    ├── domain/           # 领域层 — 实体、仓储接口、领域服务
-    ├── infrastructure/   # 基础设施层 — API 封装、IndexedDB 实现
-    └── shared/           # 共享层 — 工具函数、通用组件、类型定义、国际化
+    ├── domain-built-in-project/# 内置项目领域（今天 / 本周等）
+    ├── domain-identity/        # 身份认证领域（用户、JWT）
+    ├── domain-pomodoro/        # 番茄钟领域
+    ├── domain-project/         # 项目领域
+    ├── domain-tag/             # 标签领域
+    ├── domain-task/            # 任务领域（任务、检查项、评论）
+    ├── infrastructure/         # 基础设施层 — persistence-go（Web API）、persistence-local（IndexedDB + 加密）
+    ├── presentation/           # 表现层 — 组件、hooks、Pinia Store
+    ├── presentation-identity/  # 身份表现层 — 用户 Store、认证组件
+    └── shared/                 # 共享层 — 工具函数、通用组件、类型定义、国际化
 ```
 
 ## 📁 项目结构
@@ -52,14 +61,21 @@ nao-todo/
 nao-todo/
 ├── apps/
 │   ├── web/              # Web 客户端
-│   └── desktop/          # 桌面客户端（规划中）
+│   └── desktop/          # 桌面客户端（Electron）
 ├── packages/
-│   ├── presentation/     # 表现层
-│   ├── application/      # 应用层
-│   ├── domain/           # 领域层
-│   ├── infrastructure/   # 基础设施层
-│   └── shared/           # 共享层
-└── pnpm-workspace.yaml   # pnpm 工作区配置
+│   ├── domain-built-in-project/  # 内置项目领域
+│   ├── domain-identity/          # 身份认证领域
+│   ├── domain-pomodoro/          # 番茄钟领域
+│   ├── domain-project/           # 项目领域
+│   ├── domain-tag/               # 标签领域
+│   ├── domain-task/              # 任务领域
+│   ├── infrastructure/           # 基础设施层
+│   ├── presentation/             # 表现层
+│   ├── presentation-identity/    # 身份表现层
+│   └── shared/                   # 共享层
+├── pnpm-workspace.yaml   # pnpm 工作区配置
+├── package.json          # 根脚本与依赖
+└── vite.config.ts        # 工具链配置
 ```
 
 ## 🎨 功能特性
@@ -73,16 +89,18 @@ nao-todo/
 7. **评论功能**：为任务添加评论，记录任务进展与想法。
 8. **清单与标签**：创建清单和标签以分类和标记任务。
 9. **番茄钟**：专注计时器，支持自定义时长、任务关联与记录统计。
-10. **全局搜索**：跨模块搜索任务和内容。
-11. **用户系统**：支持账号注册、登录及个人信息管理。
-12. **多语言**：支持中文、英文等多语言切换。
+10. **日历视图**：按截止日期在日历中查看任务分布。
+11. **任务提醒**：为任务设置提醒时间；Web 端经 SSE 实时提醒，桌面端本地定时扫描并发送系统通知。
+12. **全局搜索**：跨模块搜索任务和内容。
+13. **用户系统**：支持账号注册、登录及个人信息管理。
+14. **多语言**：支持中文、英文等多语言切换。
 
 ## 🚀 快速开始
 
 ### 环境要求
 
 - Node.js >= 24
-- pnpm >= 8
+- pnpm >= 8（推荐 11，见根 `package.json` 的 `packageManager` 字段）
 
 ### 安装与运行
 
@@ -92,6 +110,19 @@ pnpm install
 
 # 启动 Web 客户端
 pnpm webapp dev
+```
+
+### 桌面端（Electron）
+
+```bash
+# 开发（electron-vite dev，HMR）
+pnpm desktop:dev
+
+# 构建三端产物到 out/
+pnpm desktop:build
+
+# 构建 + electron-builder 出 NSIS 安装包
+pnpm desktop:dist
 ```
 
 ### 构建

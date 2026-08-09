@@ -9,6 +9,8 @@ import { taskCommentEntityToRecord, taskCommentRecordToEntity } from '../convert
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
 import { localSession } from '../session/local-session'
+import { snowflake } from '../../persistence-sync/snowflake'
+import { syncTracker } from '../../persistence-sync/sync-tracker'
 
 /**
  * 本地任务评论仓储实现
@@ -36,7 +38,7 @@ export class LocalTaskCommentRepoImpl implements TaskCommentRepository {
         try {
             const now = new Date().toISOString()
             const entity = new TaskCommentEntity(
-                crypto.randomUUID(),
+                snowflake.nextId(),
                 now,
                 now,
                 null,
@@ -50,6 +52,7 @@ export class LocalTaskCommentRepoImpl implements TaskCommentRepository {
             await this.db.taskComments.add(
                 await taskCommentEntityToRecord(entity, this.currentUserId)
             )
+            await syncTracker.markDirty('taskComments', entity.id, 'upsert', entity.updatedAt)
             return [entity, null]
         } catch (err) {
             return [null, String(err)]
@@ -67,6 +70,7 @@ export class LocalTaskCommentRepoImpl implements TaskCommentRepository {
             await this.db.taskComments.put(
                 await taskCommentEntityToRecord(entity, this.currentUserId)
             )
+            await syncTracker.markDirty('taskComments', updateVO.id, 'upsert', entity.updatedAt)
             return null
         } catch (err) {
             return String(err)
@@ -82,6 +86,12 @@ export class LocalTaskCommentRepoImpl implements TaskCommentRepository {
             entity.updatedAt = entity.deletedAt
             await this.db.taskComments.put(
                 await taskCommentEntityToRecord(entity, this.currentUserId)
+            )
+            await syncTracker.markDirty(
+                'taskComments',
+                id,
+                'delete',
+                entity.deletedAt ?? entity.updatedAt
             )
             return null
         } catch (err) {

@@ -9,6 +9,8 @@ import { pomodoroEntityToRecord, pomodoroRecordToEntity } from '../converters/po
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
 import { localSession } from '../session/local-session'
+import { snowflake } from '../../persistence-sync/snowflake'
+import { syncTracker } from '../../persistence-sync/sync-tracker'
 
 /**
  * 本地番茄钟仓储实现
@@ -35,7 +37,7 @@ export class LocalPomodoroRepoImpl implements PomodoroRepository {
         try {
             const now = new Date().toISOString()
             const entity = new PomodoroEntity(
-                crypto.randomUUID(),
+                snowflake.nextId(),
                 now,
                 now,
                 null,
@@ -47,6 +49,7 @@ export class LocalPomodoroRepoImpl implements PomodoroRepository {
                 createVO.duration
             )
             await this.db.pomodoros.add(await pomodoroEntityToRecord(entity, this.currentUserId))
+            await syncTracker.markDirty('pomodoros', entity.id, 'upsert', entity.updatedAt)
             return [entity, null]
         } catch (err) {
             return [null, String(err)]
@@ -64,6 +67,7 @@ export class LocalPomodoroRepoImpl implements PomodoroRepository {
             if (updateVO.duration !== undefined) entity.duration = updateVO.duration
             entity.updatedAt = new Date().toISOString()
             await this.db.pomodoros.put(await pomodoroEntityToRecord(entity, this.currentUserId))
+            await syncTracker.markDirty('pomodoros', updateVO.id, 'upsert', entity.updatedAt)
             return null
         } catch (err) {
             return String(err)
@@ -78,6 +82,12 @@ export class LocalPomodoroRepoImpl implements PomodoroRepository {
             entity.deletedAt = new Date().toISOString()
             entity.updatedAt = entity.deletedAt
             await this.db.pomodoros.put(await pomodoroEntityToRecord(entity, this.currentUserId))
+            await syncTracker.markDirty(
+                'pomodoros',
+                id,
+                'delete',
+                entity.deletedAt ?? entity.updatedAt
+            )
             return null
         } catch (err) {
             return String(err)
@@ -92,6 +102,7 @@ export class LocalPomodoroRepoImpl implements PomodoroRepository {
             entity.archivedAt = new Date().toISOString()
             entity.updatedAt = entity.archivedAt
             await this.db.pomodoros.put(await pomodoroEntityToRecord(entity, this.currentUserId))
+            await syncTracker.markDirty('pomodoros', id, 'upsert', entity.updatedAt)
             return null
         } catch (err) {
             return String(err)
@@ -106,6 +117,7 @@ export class LocalPomodoroRepoImpl implements PomodoroRepository {
             entity.archivedAt = null
             entity.updatedAt = new Date().toISOString()
             await this.db.pomodoros.put(await pomodoroEntityToRecord(entity, this.currentUserId))
+            await syncTracker.markDirty('pomodoros', id, 'upsert', entity.updatedAt)
             return null
         } catch (err) {
             return String(err)

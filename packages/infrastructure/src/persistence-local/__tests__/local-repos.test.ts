@@ -253,6 +253,24 @@ describe('LocalTaskRepoImpl', () => {
         expect(result!.taskEntities.map((t) => t.name).sort()).toEqual(['无截止时间', '未来截止'])
     })
 
+    it('relativeDate=today 下今日及未来截止任务保留（未到期可继续完成），已过期排除', async () => {
+        const repo = new LocalTaskRepoImpl()
+        await repo.create(makeTaskVO({ name: '无截止时间', endAt: null }))
+        await repo.create(
+            makeTaskVO({ name: '已过期', endAt: dayjs().subtract(1, 'day').toISOString() })
+        )
+        await repo.create(
+            makeTaskVO({ name: '今日到期', endAt: dayjs().add(1, 'hour').toISOString() })
+        )
+        await repo.create(
+            makeTaskVO({ name: '明日到期', endAt: dayjs().add(1, 'day').toISOString() })
+        )
+
+        const [result, err] = await repo.list('isDeleted=false&relativeDate=today')
+        expect(err).toBeNull()
+        expect(result!.taskEntities.map((t) => t.name).sort()).toEqual(['今日到期', '明日到期'])
+    })
+
     it('未传 parentTaskId 时默认只返回顶层任务（子任务排除）', async () => {
         const repo = new LocalTaskRepoImpl()
         const [parent] = await repo.create(makeTaskVO({ name: '顶层任务' }))

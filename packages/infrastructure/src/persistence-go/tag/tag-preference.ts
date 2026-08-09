@@ -29,9 +29,9 @@ export class TagPreferenceRepoImpl implements TagPreferenceRepository {
         })
         // 2. 获取
         const res = response.data as ResponseData
-        // 3. 判断结果 - 获取失败返回默认结果
+        // 3. 判断结果 - 获取失败返回默认结果（含 tagId 过滤）
         if (res.code !== 30050) {
-            return [defaultTagPreferenceRes2Entity(), null]
+            return [defaultTagPreferenceRes2Entity(id), null]
         }
         // 4. 返回
         return [tagPreferenceRes2Entity(res.data as TagPreferenceRes), null]

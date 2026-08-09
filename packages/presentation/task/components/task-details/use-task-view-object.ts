@@ -82,7 +82,30 @@ const useTaskViewObject = (
         const updateError = await taskUseCase.update(id, updateVO)
         if (updateError !== null) return
         if (task.value === null) return
-        task.value = { ...task.value, ...updateVO, updatedAt: dayjs().toISOString() }
+        // 同步派生字段（state/starMarkAt/givenUpAt/archivedAt/deletedAt 更新时，
+        // isDone/isStarMarked/isGivenUp/isArchived/isDeleted 须随之刷新，否则 UI 图标不联动）
+        task.value = {
+            ...task.value,
+            ...updateVO,
+            updatedAt: dayjs().toISOString(),
+            isDone: updateVO.state !== undefined ? updateVO.state === 'done' : task.value.isDone,
+            isStarMarked:
+                updateVO.starMarkAt !== undefined
+                    ? Boolean(updateVO.starMarkAt)
+                    : task.value.isStarMarked,
+            isGivenUp:
+                updateVO.givenUpAt !== undefined
+                    ? Boolean(updateVO.givenUpAt)
+                    : task.value.isGivenUp,
+            isArchived:
+                updateVO.archivedAt !== undefined
+                    ? Boolean(updateVO.archivedAt)
+                    : task.value.isArchived,
+            isDeleted:
+                updateVO.deletedAt !== undefined
+                    ? Boolean(updateVO.deletedAt)
+                    : task.value.isDeleted
+        }
     }
 
     /**

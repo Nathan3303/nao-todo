@@ -9,6 +9,8 @@ import { taskCheckItemEntityToRecord, taskCheckItemRecordToEntity } from '../con
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
 import { localSession } from '../session/local-session'
+import { snowflake } from '../../persistence-sync/snowflake'
+import { syncTracker } from '../../persistence-sync/sync-tracker'
 
 /**
  * 本地任务检查项仓储实现
@@ -43,7 +45,7 @@ export class LocalTaskCheckItemRepoImpl implements TaskCheckItemRepository {
             const maxSortId = existing.reduce((max, r) => Math.max(max, r.sortId), 0)
             const sortId = maxSortId + 1
             const entity = new TaskCheckItemEntity(
-                crypto.randomUUID(),
+                snowflake.nextId(),
                 now,
                 now,
                 null,
@@ -55,6 +57,7 @@ export class LocalTaskCheckItemRepoImpl implements TaskCheckItemRepository {
             await this.db.taskCheckItems.add(
                 await taskCheckItemEntityToRecord(entity, this.currentUserId)
             )
+            await syncTracker.markDirty('taskCheckItems', entity.id, 'upsert', entity.updatedAt)
             return [entity, null]
         } catch (err) {
             return [null, String(err)]
@@ -73,6 +76,7 @@ export class LocalTaskCheckItemRepoImpl implements TaskCheckItemRepository {
             await this.db.taskCheckItems.put(
                 await taskCheckItemEntityToRecord(entity, this.currentUserId)
             )
+            await syncTracker.markDirty('taskCheckItems', id, 'upsert', entity.updatedAt)
             return null
         } catch (err) {
             return String(err)
@@ -88,6 +92,12 @@ export class LocalTaskCheckItemRepoImpl implements TaskCheckItemRepository {
             entity.updatedAt = entity.deletedAt
             await this.db.taskCheckItems.put(
                 await taskCheckItemEntityToRecord(entity, this.currentUserId)
+            )
+            await syncTracker.markDirty(
+                'taskCheckItems',
+                id,
+                'delete',
+                entity.deletedAt ?? entity.updatedAt
             )
             return null
         } catch (err) {
@@ -126,6 +136,12 @@ export class LocalTaskCheckItemRepoImpl implements TaskCheckItemRepository {
                 current.updatedAt = new Date().toISOString()
                 await this.db.taskCheckItems.put(
                     await taskCheckItemEntityToRecord(current, this.currentUserId)
+                )
+                await syncTracker.markDirty(
+                    'taskCheckItems',
+                    current.id,
+                    'upsert',
+                    current.updatedAt
                 )
                 entities.push(current)
             }

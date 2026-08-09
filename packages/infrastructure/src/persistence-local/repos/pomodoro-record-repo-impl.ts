@@ -8,6 +8,8 @@ import { pomodoroRecordEntityToItem, pomodoroRecordItemToEntity } from '../conve
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
 import { localSession } from '../session/local-session'
+import { snowflake } from '../../persistence-sync/snowflake'
+import { syncTracker } from '../../persistence-sync/sync-tracker'
 
 /**
  * 本地番茄钟记录仓储实现
@@ -34,7 +36,7 @@ export class LocalPomodoroRecordRepoImpl implements PomodoroRecordRepository {
         try {
             const now = new Date().toISOString()
             const entity = new PomodoroRecordEntity(
-                crypto.randomUUID(),
+                snowflake.nextId(),
                 now,
                 now,
                 null,
@@ -58,7 +60,9 @@ export class LocalPomodoroRecordRepoImpl implements PomodoroRecordRepository {
                 async () => {
                     await this.db.pomodoroRecords.add(record)
                     // 完成专注时累加对应常用专注的累计时长（与远程后端行为一致）；
-                    // pomodoroId 为空或常用专注不存在/不属于当前用户则跳过
+                    // pomodoroId 为空或常用专注不存在/不属于当前用户则跳过。
+                    // 注意：totalDuration 有意不 markDirty —— 同步策略"信任远程 totalDuration 字段"（
+                    // 后端原子维护，见 sync-service.recalculateTotalDurations 注释），拉取时远程值会覆盖本地，勿在此登记脏队列
                     if (record.pomodoroId) {
                         const pomodoro = await this.db.pomodoros.get(record.pomodoroId)
                         if (pomodoro && pomodoro.userId === this.currentUserId) {
@@ -68,6 +72,7 @@ export class LocalPomodoroRecordRepoImpl implements PomodoroRecordRepository {
                     }
                 }
             )
+            await syncTracker.markDirty('pomodoroRecords', entity.id, 'upsert', entity.updatedAt)
             return [entity, null]
         } catch (err) {
             return [null, String(err)]

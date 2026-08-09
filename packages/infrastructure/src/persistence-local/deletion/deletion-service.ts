@@ -47,17 +47,21 @@ export class DeletionService {
         if (!schedule) return false
         // 未到期：反悔期内，数据保留
         if (new Date(schedule.deadline).getTime() > Date.now()) return false
-        // 到期：事务清空该用户业务数据、密钥包与调度记录
+        // 到期：事务清空该用户业务数据、密钥包、调度记录与同步元数据
         const tables = BUSINESS_TABLES as readonly string[]
         await localDatabase.transaction(
             'rw',
-            [...tables, 'meta', 'deletionSchedules'],
+            [...tables, 'meta', 'deletionSchedules', 'syncQueue', 'syncCursor'],
             async () => {
                 for (const tableName of tables) {
                     await localDatabase.table(tableName).where('userId').equals(userId).delete()
                 }
                 await localDatabase.meta.delete(`${userId}:key-bundle`)
                 await localDatabase.deletionSchedules.delete(userId)
+                // 同步元数据一并清理：防残留脏队列把注销前未推送的本地修改在恢复后继续推送到远程
+                // （见审查报告缺陷 6）
+                await localDatabase.syncQueue.where('userId').equals(userId).delete()
+                await localDatabase.syncCursor.where('userId').equals(userId).delete()
             }
         )
         return true

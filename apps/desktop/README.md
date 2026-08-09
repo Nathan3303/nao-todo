@@ -37,10 +37,10 @@ apps/desktop/
 ## 命令
 
 ```bash
-pnpm desktop:dev     # 开发（electron-vite dev，HMR）
-pnpm desktop:build   # 构建三端产物到 out/
-pnpm desktop:dist    # 构建 + electron-builder 出 NSIS 安装包
-pnpm desktop:dist:dir # 构建 + 仅出 unpacked 目录（免安装运行）
+pnpm desktop:dev      # 开发（electron-vite dev，HMR）
+pnpm desktop:build    # 构建三端产物到 out/
+pnpm desktop:dist     # 构建 + electron-builder 出 NSIS 安装包
+pnpm desktopapp dist:dir  # 构建 + 仅出 unpacked 目录（免安装运行）
 ```
 
 ## 已知行为与限制

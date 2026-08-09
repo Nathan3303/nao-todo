@@ -8,6 +8,8 @@ import type { GoAsync } from '@nao-todo/shared'
 import { projectEntityToRecord, projectRecordToEntity } from '../converters/project'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
+import { snowflake } from '../../persistence-sync/snowflake'
+import { syncTracker } from '../../persistence-sync/sync-tracker'
 import { localSession } from '../session/local-session'
 
 /**
@@ -36,7 +38,7 @@ export class LocalProjectRepoImpl implements ProjectRepository {
         try {
             const now = new Date().toISOString()
             const entity = new ProjectEntity(
-                crypto.randomUUID(),
+                snowflake.nextId(),
                 now,
                 now,
                 null,
@@ -48,6 +50,7 @@ export class LocalProjectRepoImpl implements ProjectRepository {
                 0
             )
             await this.db.projects.add(await projectEntityToRecord(entity, this.currentUserId))
+            await syncTracker.markDirty('projects', entity.id, 'upsert', entity.updatedAt)
             return [entity, null]
         } catch (err) {
             return [null, String(err)]
@@ -65,6 +68,7 @@ export class LocalProjectRepoImpl implements ProjectRepository {
             if (updateVO.sortId !== undefined) entity.sortId = updateVO.sortId
             entity.updatedAt = new Date().toISOString()
             await this.db.projects.put(await projectEntityToRecord(entity, this.currentUserId))
+            await syncTracker.markDirty('projects', updateVO.id, 'upsert', entity.updatedAt)
             return null
         } catch (err) {
             return String(err)
@@ -79,6 +83,12 @@ export class LocalProjectRepoImpl implements ProjectRepository {
             entity.deletedAt = new Date().toISOString()
             entity.updatedAt = entity.deletedAt
             await this.db.projects.put(await projectEntityToRecord(entity, this.currentUserId))
+            await syncTracker.markDirty(
+                'projects',
+                id,
+                'delete',
+                entity.deletedAt ?? entity.updatedAt
+            )
             return null
         } catch (err) {
             return String(err)
@@ -93,6 +103,7 @@ export class LocalProjectRepoImpl implements ProjectRepository {
             entity.deletedAt = null
             entity.updatedAt = new Date().toISOString()
             await this.db.projects.put(await projectEntityToRecord(entity, this.currentUserId))
+            await syncTracker.markDirty('projects', id, 'upsert', entity.updatedAt)
             return null
         } catch (err) {
             return String(err)
@@ -107,6 +118,7 @@ export class LocalProjectRepoImpl implements ProjectRepository {
             entity.archivedAt = new Date().toISOString()
             entity.updatedAt = entity.archivedAt
             await this.db.projects.put(await projectEntityToRecord(entity, this.currentUserId))
+            await syncTracker.markDirty('projects', id, 'upsert', entity.updatedAt)
             return null
         } catch (err) {
             return String(err)
@@ -121,6 +133,7 @@ export class LocalProjectRepoImpl implements ProjectRepository {
             entity.archivedAt = null
             entity.updatedAt = new Date().toISOString()
             await this.db.projects.put(await projectEntityToRecord(entity, this.currentUserId))
+            await syncTracker.markDirty('projects', id, 'upsert', entity.updatedAt)
             return null
         } catch (err) {
             return String(err)
@@ -156,6 +169,7 @@ export class LocalProjectRepoImpl implements ProjectRepository {
                 if (updateVO.sortId !== undefined) current.sortId = updateVO.sortId
                 current.updatedAt = new Date().toISOString()
                 await this.db.projects.put(await projectEntityToRecord(current, this.currentUserId))
+                await syncTracker.markDirty('projects', current.id, 'upsert', current.updatedAt)
                 entities.push(current)
             }
             return [entities, null]

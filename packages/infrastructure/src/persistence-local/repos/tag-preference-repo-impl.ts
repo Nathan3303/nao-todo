@@ -26,8 +26,8 @@ export class LocalTagPreferenceRepoImpl implements TagPreferenceRepository {
                 .equals(id)
                 .filter((r) => r.userId === this.currentUserId)
                 .first()
-            // 与远程行为一致：无偏好时返回默认偏好（viewType=table），不报错
-            if (!record) return [defaultTagPreferenceRes2Entity(), null]
+            // 与远程行为一致：无偏好时返回默认偏好（viewType=table，getTasksOptions 含 tagId 过滤），不报错
+            if (!record) return [defaultTagPreferenceRes2Entity(id), null]
             return [await tagPreferenceRecordToEntity(record), null]
         } catch (err) {
             return [null, String(err)]
