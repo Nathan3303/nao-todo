@@ -95,3 +95,22 @@ describe('UpdateTaskValueObject.validate 放弃时间校验', () => {
         expect(makeVO({ givenUpAt: null }).validate()).toBe(null)
     })
 })
+
+describe('UpdateTaskValueObject.validate 星标时间校验', () => {
+    it('非法星标时间返回 STAR_MARK_AT_INVALID', () => {
+        expect(makeVO({ starMarkAt: 'not-a-date' }).validate()).toBe(
+            TaskErrorCode.STAR_MARK_AT_INVALID
+        )
+    })
+    it('合法星标时间通过校验并标准化为 ISO', () => {
+        const vo = makeVO({ starMarkAt: '2024-01-05T00:00:00.000Z' })
+        expect(vo.validate()).toBe(null)
+        expect(vo.starMarkAt).toBe('2024-01-05T00:00:00.000Z')
+    })
+    it('星标时间为空串时跳过校验', () => {
+        expect(makeVO({ starMarkAt: '' }).validate()).toBe(null)
+    })
+    it('星标时间为 null 时跳过校验（取消收藏）', () => {
+        expect(makeVO({ starMarkAt: null }).validate()).toBe(null)
+    })
+})

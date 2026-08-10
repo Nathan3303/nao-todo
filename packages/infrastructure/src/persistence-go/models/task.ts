@@ -49,7 +49,7 @@ export type UpdateTaskReq = {
     endAt?: string | null
     projectId?: string
     tags?: string[]
-    isStarMarked?: boolean
+    starMarkAt?: string | null
     givenUpAt?: string | null
     remindAt?: string | null
     remindRepeat?: string

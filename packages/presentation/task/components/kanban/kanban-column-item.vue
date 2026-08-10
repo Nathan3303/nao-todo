@@ -73,7 +73,15 @@ const handleFinish = () => {
             <nue-div class="todo-card__info">
                 <nue-div align="center">
                     <nue-text v-if="task.isGivenUp" class="todo-card__giveup-tag">已放弃</nue-text>
-                    <nue-text class="todo-card__name" :clamped="1">{{ task.name }}</nue-text>
+                    <nue-div class="todo-card__name-cell">
+                        <nue-text class="todo-card__name" :clamped="1">{{ task.name }}</nue-text>
+                        <!-- 星标 -->
+                        <nue-icon
+                            v-if="task.isStarMarked"
+                            class="todo-card__star"
+                            name="heart-fill"
+                        />
+                    </nue-div>
                     <nue-div class="todo-card__actions">
                         <nue-button
                             theme="pure"

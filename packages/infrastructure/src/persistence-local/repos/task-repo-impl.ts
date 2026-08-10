@@ -135,6 +135,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
             if (updateVO.projectId !== undefined) entity.projectId = updateVO.projectId
             if (updateVO.tags !== undefined) entity.tags = updateVO.tags
             if (updateVO.givenUpAt !== undefined) entity.givenUpAt = updateVO.givenUpAt
+            if (updateVO.starMarkAt !== undefined) entity.starMarkAt = updateVO.starMarkAt
             if (updateVO.remindAt !== undefined) entity.remindAt = updateVO.remindAt ?? ''
             if (updateVO.remindRepeat !== undefined) entity.remindRepeat = updateVO.remindRepeat
             if (updateVO.remindTime !== undefined) entity.remindTime = updateVO.remindTime ?? ''

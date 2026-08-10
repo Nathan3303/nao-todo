@@ -1,7 +1,12 @@
 import { unwrapError } from '@nao-todo/shared'
 import dayjs from 'dayjs'
 import { ref } from 'vue'
-import type { TaskUseCase, TaskViewObject, UpdateTaskViewObject } from '@nao-todo/domain-task'
+import {
+    isStarMarkedBy,
+    type TaskUseCase,
+    type TaskViewObject,
+    type UpdateTaskViewObject
+} from '@nao-todo/domain-task'
 import { TaskDetailsPreContext } from './context'
 import type { TaskDetailsViewObject } from './types'
 
@@ -91,7 +96,7 @@ const useTaskViewObject = (
             isDone: updateVO.state !== undefined ? updateVO.state === 'done' : task.value.isDone,
             isStarMarked:
                 updateVO.starMarkAt !== undefined
-                    ? Boolean(updateVO.starMarkAt)
+                    ? isStarMarkedBy(updateVO.starMarkAt)
                     : task.value.isStarMarked,
             isGivenUp:
                 updateVO.givenUpAt !== undefined

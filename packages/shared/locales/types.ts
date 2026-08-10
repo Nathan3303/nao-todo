@@ -362,6 +362,8 @@ export interface LocaleMessages {
     'task.error.startAfterEnd': string
     'task.error.givenUpAtInvalid': string
     'task.error.givenUpBeforeStart': string
+    'task.error.starMarkAtInvalid': string
+    'task.error.starMarkForbidden': string
     'task.error.snoozeDurationNotInteger': string
     'task.error.snoozeDurationOutOfRange': string
     'task.error.taskIdEmpty': string

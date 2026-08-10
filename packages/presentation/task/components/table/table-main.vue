@@ -48,9 +48,17 @@ const tasks = computed(() => {
                             >已放弃</nue-text
                         >
                         <!-- 名称 -->
-                        <nue-text theme="todo-name" :clamped="1" :title="task.name">
-                            {{ task.name }}
-                        </nue-text>
+                        <nue-div class="col-first__name-cell">
+                            <nue-text theme="todo-name" :clamped="1" :title="task.name">
+                                {{ task.name }}
+                            </nue-text>
+                            <!-- 星标 -->
+                            <nue-icon
+                                v-if="task.isStarMarked"
+                                class="col-first__star"
+                                name="heart-fill"
+                            />
+                        </nue-div>
                         <!-- 标签 -->
                         <task-tag-bar
                             v-if="tableCtx.columns.value.tags && task.tags && task.tags.length"

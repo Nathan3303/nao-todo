@@ -5,7 +5,7 @@ import {
     type ResponseDataPagination
 } from '@nao-todo/shared'
 import dayjs from 'dayjs'
-import { isGivenUpBy, TaskEntity } from '../../domain/entities'
+import { isGivenUpBy, isStarMarkedBy, TaskEntity } from '../../domain/entities'
 import { TaskRepository } from '../../domain/repositories'
 import { TaskDomain } from '../../domain/services'
 import type { CreateTaskViewObject, TaskViewObject, UpdateTaskViewObject } from '../viewobjects'
@@ -142,13 +142,27 @@ export class TaskUseCase {
         const updateTaskValueObject = updateTaskViewObjectToValueObject(id, updateViewObject)
         const validateErr = updateTaskValueObject.validate()
         if (validateErr !== null) return validateErr
+        // 星标变更走实体行为方法（领域规则：已删除/已归档任务禁止收藏）
+        if (updateTaskValueObject.starMarkAt !== undefined) {
+            const [entity, getError] = await this.taskRepo.get(id)
+            if (getError !== null) return getError
+            if (!entity) return '任务不存在'
+            const starError = isStarMarkedBy(updateTaskValueObject.starMarkAt)
+                ? entity.star()
+                : entity.unstar()
+            if (starError !== null) return starError
+            updateTaskValueObject.starMarkAt = entity.starMarkAt
+        }
         // 更新任务
         const updateError = await this.taskRepo.update(id, updateTaskValueObject)
         if (updateError !== null) return updateError
-        // 更新内存数据（根据 givenUpAt 计算 isGivenUp）
+        // 更新内存数据（根据 givenUpAt 计算 isGivenUp，根据 starMarkAt 计算 isStarMarked）
         const storeUpdateData = { ...updateViewObject }
         if (storeUpdateData.givenUpAt !== undefined) {
             storeUpdateData.isGivenUp = isGivenUpBy(storeUpdateData.givenUpAt)
+        }
+        if (storeUpdateData.starMarkAt !== undefined) {
+            storeUpdateData.isStarMarked = isStarMarkedBy(storeUpdateData.starMarkAt)
         }
         this.taskStore.updateTask(id, storeUpdateData)
         // 返回成功

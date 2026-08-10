@@ -52,6 +52,7 @@ export const taskEntityToViewObject = (entity: TaskEntity): TaskViewObject => {
     taskViewObject.startAt = entity.startAt
     taskViewObject.endAt = entity.endAt
     taskViewObject.archivedAt = entity.archivedAt
+    taskViewObject.starMarkAt = entity.starMarkAt
     taskViewObject.createdAt = entity.createdAt
     taskViewObject.updatedAt = entity.updatedAt
     taskViewObject.deletedAt = entity.deletedAt
@@ -123,6 +124,7 @@ export const updateTaskViewObjectToValueObject = (
     if (viewObject.projectId) valueObject.projectId = viewObject.projectId
     if (viewObject.tags) valueObject.tags = viewObject.tags
     if (viewObject.givenUpAt !== void 0) valueObject.givenUpAt = viewObject.givenUpAt
+    if (viewObject.starMarkAt !== void 0) valueObject.starMarkAt = viewObject.starMarkAt
     if (viewObject.remindAt !== void 0) valueObject.remindAt = viewObject.remindAt
     if (viewObject.remindRepeat !== void 0) valueObject.remindRepeat = viewObject.remindRepeat
     if (viewObject.remindTime !== void 0) valueObject.remindTime = viewObject.remindTime

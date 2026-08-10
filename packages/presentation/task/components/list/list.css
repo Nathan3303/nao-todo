@@ -133,10 +133,23 @@
                             width: 100%;
                             align-items: center;
 
-                            > .nue-text {
-                                font-size: var(--nue-text-df2);
-                                color: var(--nue-primary-color-800);
+                            .list-name-cell {
+                                display: flex;
+                                align-items: center;
+                                gap: 0.25rem;
+                                min-width: 0;
+                                flex: auto;
                                 margin-right: auto;
+
+                                > .nue-text {
+                                    font-size: var(--nue-text-df2);
+                                    color: var(--nue-primary-color-800);
+                                }
+
+                                .list-name-cell__star {
+                                    --nue-icon-color: var(--nue-error-color-70);
+                                    flex: none;
+                                }
                             }
 
                             > .nue-div--tag-bar {

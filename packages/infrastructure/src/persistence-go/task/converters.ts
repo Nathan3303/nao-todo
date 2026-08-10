@@ -121,6 +121,7 @@ export const updateTaskValueObject2Req = (updateVO: UpdateTaskValueObject): Upda
     if (updateVO.projectId) req.projectId = updateVO.projectId
     if (updateVO.tags) req.tags = updateVO.tags
     if (updateVO.givenUpAt !== void 0) req.givenUpAt = updateVO.givenUpAt
+    if (updateVO.starMarkAt !== void 0) req.starMarkAt = updateVO.starMarkAt
     if (updateVO.remindAt !== void 0) req.remindAt = updateVO.remindAt
     if (updateVO.remindRepeat !== void 0) req.remindRepeat = updateVO.remindRepeat
     if (updateVO.remindTime !== void 0) req.remindTime = updateVO.remindTime

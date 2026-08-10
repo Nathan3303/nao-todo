@@ -371,6 +371,8 @@ const zhCN: LocaleMessages = {
     'task.error.startAfterEnd': '任务开始时间不能晚于结束时间',
     'task.error.givenUpAtInvalid': '放弃时间无效',
     'task.error.givenUpBeforeStart': '放弃时间不能早于任务开始时间',
+    'task.error.starMarkAtInvalid': '星标时间无效',
+    'task.error.starMarkForbidden': '已删除或已归档的任务不可收藏',
     'task.error.snoozeDurationNotInteger': '延迟时间必须为整数分钟',
     'task.error.snoozeDurationOutOfRange': '延迟时间需在 1-1440 分钟之间',
     'task.error.taskIdEmpty': '任务 ID 不能为空',

@@ -183,9 +183,22 @@
                                     flex: none;
                                 }
 
+                                .col-first__name-cell {
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 0.25rem;
+                                    min-width: 0;
+                                    flex: auto;
+                                    margin-right: auto;
+
+                                    .col-first__star {
+                                        --nue-icon-color: var(--nue-error-color-70);
+                                        flex: none;
+                                    }
+                                }
+
                                 .nue-text--todo-name {
                                     color: var(--nue-primary-color-900);
-                                    margin-right: auto;
                                 }
                             }
 

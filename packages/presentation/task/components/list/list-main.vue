@@ -37,7 +37,15 @@ const {
         >
             <nue-div theme="todo-list-main__row__first">
                 <nue-div theme="todo-list__main__row__first__name-wrapper">
-                    <nue-text :clamped="1" :title="task.name">{{ task.name }}</nue-text>
+                    <nue-div class="list-name-cell">
+                        <nue-text :clamped="1" :title="task.name">{{ task.name }}</nue-text>
+                        <!-- 星标 -->
+                        <nue-icon
+                            v-if="task.isStarMarked"
+                            class="list-name-cell__star"
+                            name="heart-fill"
+                        />
+                    </nue-div>
                     <task-tag-bar
                         v-if="columns.tags && task.tags.length"
                         :clamped="tagBarClamped"

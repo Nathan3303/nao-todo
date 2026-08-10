@@ -380,6 +380,8 @@ const enUS: LocaleMessages = {
     'task.error.startAfterEnd': 'Task start time cannot be later than end time',
     'task.error.givenUpAtInvalid': 'Invalid give-up time',
     'task.error.givenUpBeforeStart': 'Give-up time cannot be earlier than task start time',
+    'task.error.starMarkAtInvalid': 'Invalid star mark time',
+    'task.error.starMarkForbidden': 'Deleted or archived tasks cannot be starred',
     'task.error.snoozeDurationNotInteger': 'Snooze duration must be a whole number of minutes',
     'task.error.snoozeDurationOutOfRange': 'Snooze duration must be between 1 and 1440 minutes',
     'task.error.taskIdEmpty': 'Task ID cannot be empty',

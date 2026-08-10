@@ -27,6 +27,7 @@ export class UpdateTaskValueObject {
     public projectId?: string // 项目ID
     public tags?: string[] // 任务标签
     public givenUpAt?: string | null // 放弃时间
+    public starMarkAt?: string | null // 星标时间
     public remindAt?: string | null // 提醒时间
     public remindRepeat?: string // 提醒重复类型
     public remindTime?: string | null // 提醒时刻
@@ -87,6 +88,11 @@ export class UpdateTaskValueObject {
             if (this.startAt && givenUpAt.isBefore(dayjs(this.startAt)))
                 return TaskErrorCode.GIVEN_UP_BEFORE_START
             this.givenUpAt = givenUpAt.toISOString()
+        }
+        if (this.starMarkAt !== void 0 && this.starMarkAt !== null && this.starMarkAt !== '') {
+            const starMarkAt = dayjs(this.starMarkAt)
+            if (!starMarkAt.isValid()) return TaskErrorCode.STAR_MARK_AT_INVALID
+            this.starMarkAt = starMarkAt.toISOString()
         }
         return null
     }

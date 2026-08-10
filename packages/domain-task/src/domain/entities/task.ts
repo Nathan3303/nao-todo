@@ -13,6 +13,15 @@ export const isGivenUpBy = (givenUpAt: string | null | undefined): boolean => {
 }
 
 /**
+ * isStarMarkedBy 判定是否已星标
+ * @description 「什么算已星标」的领域规则唯一来源，供实体与应用层共用
+ * @param starMarkAt 星标时间
+ */
+export const isStarMarkedBy = (starMarkAt: string | null | undefined): boolean => {
+    return dayjs(starMarkAt).isValid()
+}
+
+/**
  * TaskEntity 任务实体
  * @description 任务实体类，用于表示任务的业务逻辑和数据存储。
  */
@@ -66,7 +75,30 @@ export class TaskEntity extends Entity {
      * @description starMarkAt 为合法日期时视为已星标
      */
     get isStarMarked(): boolean {
-        return dayjs(this.starMarkAt).isValid()
+        return isStarMarkedBy(this.starMarkAt)
+    }
+
+    /**
+     * star 收藏任务
+     * @description 将 starMarkAt 置为当前时间（ISO 8601）；已删除、已归档的任务不允许收藏
+     * @param now 收藏时间，默认当前时间
+     * @returns 校验通过返回 null，否则返回领域错误码
+     */
+    star(now = new Date().toISOString()): Go<void> {
+        if (this.isDeleted || this.isArchived) return TaskErrorCode.STAR_MARK_FORBIDDEN
+        this.starMarkAt = now
+        return null
+    }
+
+    /**
+     * unstar 取消收藏
+     * @description 清除 starMarkAt（后端以空字符串表示清除星标）
+     * @returns 校验通过返回 null，否则返回领域错误码
+     */
+    unstar(): Go<void> {
+        if (this.isDeleted || this.isArchived) return TaskErrorCode.STAR_MARK_FORBIDDEN
+        this.starMarkAt = ''
+        return null
     }
 
     /**

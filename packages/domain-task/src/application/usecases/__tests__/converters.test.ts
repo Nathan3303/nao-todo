@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vite-plus/test'
 import { TaskEntity } from '@nao-todo/domain-task'
-import { taskEntityToViewObject, taskEntitiesToViewObjects } from '../converters'
+import {
+    taskEntityToViewObject,
+    taskEntitiesToViewObjects,
+    updateTaskViewObjectToValueObject
+} from '../converters'
 
 /**
  * TaskEntity 构造函数参数顺序（20 个位置参数）：
@@ -71,6 +75,7 @@ describe('taskEntityToViewObject - 字段映射', () => {
         expect(vo.updatedAt).toBe('2024-01-02T00:00:00.000Z')
         expect(vo.deletedAt).toBeNull()
         expect(vo.archivedAt).toBeNull()
+        expect(vo.starMarkAt).toBeNull()
         expect(vo.givenUpAt).toBeNull()
     })
 })
@@ -171,5 +176,22 @@ describe('taskEntitiesToViewObjects - 批量转换', () => {
         const entities = [makeEntity({ id: 'a' }), makeEntity({ id: 'b' }), makeEntity({ id: 'c' })]
         const vos = taskEntitiesToViewObjects(entities)
         expect(vos.map((v) => v.id)).toEqual(['a', 'b', 'c'])
+    })
+})
+
+describe('updateTaskViewObjectToValueObject - starMarkAt 透传', () => {
+    it('未设置 starMarkAt 时值对象不包含该字段', () => {
+        const vo = updateTaskViewObjectToValueObject('task-1', { name: '改名' })
+        expect(vo.starMarkAt).toBeUndefined()
+    })
+    it('starMarkAt 为合法日期时透传', () => {
+        const vo = updateTaskViewObjectToValueObject('task-1', {
+            starMarkAt: '2024-01-05T00:00:00.000Z'
+        })
+        expect(vo.starMarkAt).toBe('2024-01-05T00:00:00.000Z')
+    })
+    it('starMarkAt 为 null 时透传（取消收藏）', () => {
+        const vo = updateTaskViewObjectToValueObject('task-1', { starMarkAt: null })
+        expect(vo.starMarkAt).toBeNull()
     })
 })

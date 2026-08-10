@@ -95,6 +95,40 @@ describe('TaskEntity.isStarMarked', () => {
     })
 })
 
+describe('TaskEntity.star / unstar 行为方法', () => {
+    it('star() 将 starMarkAt 置为指定时间并返回 null', () => {
+        const entity = makeEntity({ starMarkAt: null })
+        expect(entity.star('2024-06-01T00:00:00.000Z')).toBe(null)
+        expect(entity.starMarkAt).toBe('2024-06-01T00:00:00.000Z')
+        expect(entity.isStarMarked).toBe(true)
+    })
+    it('star() 不传参时使用当前时间（ISO 8601 合法）', () => {
+        const entity = makeEntity({ starMarkAt: null })
+        expect(entity.star()).toBe(null)
+        expect(entity.isStarMarked).toBe(true)
+    })
+    it('unstar() 将 starMarkAt 清除为空字符串', () => {
+        const entity = makeEntity({ starMarkAt: '2024-06-01T00:00:00.000Z' })
+        expect(entity.unstar()).toBe(null)
+        expect(entity.starMarkAt).toBe('')
+        expect(entity.isStarMarked).toBe(false)
+    })
+    it('已删除任务 star() 返回 STAR_MARK_FORBIDDEN 且不修改星标', () => {
+        const entity = makeEntity({ deletedAt: '2024-01-05T00:00:00.000Z', starMarkAt: null })
+        expect(entity.star()).toBe(TaskErrorCode.STAR_MARK_FORBIDDEN)
+        expect(entity.starMarkAt).toBeNull()
+    })
+    it('已归档任务 star() 返回 STAR_MARK_FORBIDDEN', () => {
+        const entity = makeEntity({ archivedAt: '2024-01-05T00:00:00.000Z', starMarkAt: null })
+        expect(entity.star()).toBe(TaskErrorCode.STAR_MARK_FORBIDDEN)
+        expect(entity.starMarkAt).toBeNull()
+    })
+    it('已删除任务 unstar() 返回 STAR_MARK_FORBIDDEN', () => {
+        const entity = makeEntity({ deletedAt: '2024-01-05T00:00:00.000Z' })
+        expect(entity.unstar()).toBe(TaskErrorCode.STAR_MARK_FORBIDDEN)
+    })
+})
+
 describe('TaskEntity 继承自 Entity', () => {
     it('isDeleted 由基类根据 deletedAt 判定', () => {
         expect(makeEntity({ deletedAt: null }).isDeleted).toBe(false)
