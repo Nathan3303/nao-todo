@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Loading as LoadingComp, Pager } from '@nao-todo/shared'
+import { LoadingError, Pager, t } from '@nao-todo/shared'
 import StatsCards from './stats-cards.vue'
 import FilterPanel from './filter-panel.vue'
 import TableMain from './table-main.vue'
@@ -17,6 +17,7 @@ const {
     pomodoros,
     applyFilters,
     loading,
+    error,
     records,
     showDetail,
     pagination,
@@ -36,7 +37,7 @@ const handleReset = () => {
     <nue-container id="PomodoroRecordsContainer">
         <pomodoro-header />
         <nue-main>
-            <nue-content fill style="overflow-y: auto">
+            <nue-content fill style="overflow: hidden">
                 <nue-div class="pomodoro-records-page">
                     <!-- 统计卡片区域 -->
                     <stats-cards
@@ -57,18 +58,27 @@ const handleReset = () => {
 
                     <!-- 表格主体 -->
                     <div class="pomodoro-records-page__table">
-                        <loading-comp v-if="loading" height="auto" />
-                        <nue-empty
-                            v-else-if="!loading && records.length === 0"
-                            image-size="4rem"
-                            description="暂无专注记录"
-                        />
-                        <table-main
-                            v-else
-                            :records="records"
-                            :pomodoros="pomodoros"
-                            @show-detail="showDetail"
-                        />
+                        <loading-error
+                            :loading="loading"
+                            :error="!!error"
+                            :empty="!loading && !error && records.length === 0"
+                            empty-message="暂无专注记录"
+                            style="height: 100%"
+                        >
+                            <template #error>
+                                <nue-div vertical align="center">
+                                    <nue-text size="var(--nue-text-sm)">{{ error }}</nue-text>
+                                    <nue-button theme="primary,small" @click="loadFirstPage">
+                                        {{ t('common.retry') }}
+                                    </nue-button>
+                                </nue-div>
+                            </template>
+                            <table-main
+                                :records="records"
+                                :pomodoros="pomodoros"
+                                @show-detail="showDetail"
+                            />
+                        </loading-error>
                     </div>
 
                     <!-- 分页器 -->
@@ -99,8 +109,13 @@ const handleReset = () => {
 <style scoped>
 #PomodoroRecordsContainer {
     > .nue-main {
+        min-height: 0;
+
         > .nue-content {
+            display: flex;
+            flex-direction: column;
             padding: var(--nue-padding-md);
+            box-sizing: border-box;
         }
     }
 }
@@ -112,13 +127,23 @@ const handleReset = () => {
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
+    /* 以 flex 撑满 content，而非依赖 height:100% 百分比链 */
+    flex: 1;
+    min-height: 0;
 }
 
 .pomodoro-records-page__table {
     background-color: var(--nue-bg-color);
     border-radius: var(--nue-radius-md);
-    padding: var(--nue-padding-md);
-    min-height: 200px;
+    /* 作为 flex 容器，让 table-main 以 flex:1 撑满 */
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    height: 100%;
+
+    :deep(.nue-scroll-bar) {
+        flex: 1;
+    }
 }
 
 .pomodoro-records-page__pagination {

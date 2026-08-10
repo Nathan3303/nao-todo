@@ -124,6 +124,7 @@ export const provideRecordsTableContext = () => {
         pagination: loader.states.pagination,
         filterOptions,
         loading: computed(() => loader.states.loading),
+        error: computed(() => loader.states.error),
         isDone: computed(() => loader.states.isDone),
         stats,
         pomodoros,
