@@ -243,6 +243,11 @@ export interface LocaleMessages {
     'task.details.subTaskNamePlaceholder': string
     'task.details.moveToSubTask': string
     'task.details.backToParent': string
+    'task.details.reschedule': string
+    'task.details.rescheduleDescription': string
+    'task.details.rescheduleConfirmContent': string
+    'task.details.rescheduleSuccess': string
+    'task.details.rescheduleFailed': string
     'task.restore': string
     'task.delete': string
     'task.createTask': string

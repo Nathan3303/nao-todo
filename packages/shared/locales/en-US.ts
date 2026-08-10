@@ -257,6 +257,12 @@ const enUS: LocaleMessages = {
     'task.details.subTaskNamePlaceholder': 'Enter sub-task name...',
     'task.details.moveToSubTask': 'Move to sub-task...',
     'task.details.backToParent': 'Back to Parent Task',
+    'task.details.reschedule': 'Reschedule',
+    'task.details.rescheduleDescription':
+        'Select a date to reschedule all overdue tasks in this view',
+    'task.details.rescheduleConfirmContent': 'Reschedule {count} overdue tasks to {date}?',
+    'task.details.rescheduleSuccess': 'Rescheduled {count} tasks',
+    'task.details.rescheduleFailed': 'Reschedule failed',
     'task.restore': 'Restore Task',
     'task.delete': 'Delete Task',
     'task.createTask': 'New Task',

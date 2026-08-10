@@ -2,6 +2,7 @@
 // import { TaskCommentRepository } from '../repositories/task-comment'
 import type { TaskRepository } from '../repositories/task'
 import type { TaskEntity } from '../entities/task'
+import type { UpdateTaskValueObject } from '../valueobjects/update-task'
 import type { GoAsync, ResponseDataPagination, QueryOptionsValueObject } from '@nao-todo/shared'
 
 /**
@@ -38,5 +39,21 @@ export class TaskDomain {
         })
         // 2. 调用仓库方法
         return await this.taskRepo.list(queryString)
+    }
+
+    /**
+     * batchUpdate 批量更新任务
+     * @description 后端暂无任务批量更新接口，先采用 for 方式逐个调用仓储更新；
+     *              单条失败不中断，返回成功条数。待后端支持批量接口后切换为仓储批量方法。
+     * @param updateTaskValueObjects 更新任务值对象列表（每个携带任务 ID）
+     * @returns 成功更新的任务数量
+     */
+    async batchUpdate(updateTaskValueObjects: UpdateTaskValueObject[]): GoAsync<number> {
+        let succeeded = 0
+        for (const updateVO of updateTaskValueObjects) {
+            const err = await this.taskRepo.update(updateVO.id, updateVO)
+            if (err === null) succeeded++
+        }
+        return [succeeded, null]
     }
 }

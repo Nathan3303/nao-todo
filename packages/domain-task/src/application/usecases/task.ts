@@ -8,6 +8,7 @@ import dayjs from 'dayjs'
 import { isGivenUpBy, isStarMarkedBy, TaskEntity } from '../../domain/entities'
 import { TaskRepository } from '../../domain/repositories'
 import { TaskDomain } from '../../domain/services'
+import type { UpdateTaskValueObject } from '../../domain/valueobjects'
 import type { CreateTaskViewObject, TaskViewObject, UpdateTaskViewObject } from '../viewobjects'
 import type { TaskStore } from '../stores'
 import {
@@ -167,6 +168,42 @@ export class TaskUseCase {
         this.taskStore.updateTask(id, storeUpdateData)
         // 返回成功
         return null
+    }
+
+    /**
+     * 批量更新任务
+     * @description 逐个转换与校验后交由领域服务批量更新（后端暂无批量接口，领域层 for 方式执行）；
+     *              同步刷新内存数据的派生字段（isGivenUp / isStarMarked）
+     * @param updates 更新任务视图对象列表（每个携带任务 ID）
+     * @returns 成功更新的任务数量
+     */
+    async batchUpdate(
+        updates: Array<UpdateTaskViewObject & { id: TaskViewObject['id'] }>
+    ): GoAsync<number> {
+        // 1. 逐个转换为值对象并校验
+        const updateValueObjects: UpdateTaskValueObject[] = []
+        for (const update of updates) {
+            const valueObject = updateTaskViewObjectToValueObject(update.id, update)
+            const validateErr = valueObject.validate()
+            if (validateErr !== null) return [null, validateErr]
+            updateValueObjects.push(valueObject)
+        }
+        // 2. 调用领域服务批量更新
+        const [succeeded, batchError] = await this.taskDomain.batchUpdate(updateValueObjects)
+        if (batchError !== null) return [null, batchError]
+        // 3. 更新内存数据（同步派生字段）
+        for (const update of updates) {
+            const storeUpdateData = { ...update }
+            if (storeUpdateData.givenUpAt !== undefined) {
+                storeUpdateData.isGivenUp = isGivenUpBy(storeUpdateData.givenUpAt)
+            }
+            if (storeUpdateData.starMarkAt !== undefined) {
+                storeUpdateData.isStarMarked = isStarMarkedBy(storeUpdateData.starMarkAt)
+            }
+            this.taskStore.updateTask(update.id, storeUpdateData)
+        }
+        // 4. 返回成功条数
+        return [succeeded, null]
     }
 
     /**
