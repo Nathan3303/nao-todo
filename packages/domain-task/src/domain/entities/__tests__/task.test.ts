@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vite-plus/test'
-import { isGivenUpBy, TaskEntity } from '../task'
+import { isGivenUpBy, isStarMarkedBy, TaskEntity } from '../task'
 import { TaskErrorCode } from '../../errors'
 
 /**
@@ -151,6 +151,24 @@ describe('isGivenUpBy', () => {
     })
     it('合法日期返回 true', () => {
         expect(isGivenUpBy('2024-01-05T00:00:00.000Z')).toBe(true)
+    })
+})
+
+describe('isStarMarkedBy', () => {
+    it('null 返回 false', () => {
+        expect(isStarMarkedBy(null)).toBe(false)
+    })
+    it('undefined 返回 false', () => {
+        expect(isStarMarkedBy(undefined)).toBe(false)
+    })
+    it('空字符串返回 false', () => {
+        expect(isStarMarkedBy('')).toBe(false)
+    })
+    it('非法日期返回 false', () => {
+        expect(isStarMarkedBy('not-a-date')).toBe(false)
+    })
+    it('合法日期返回 true', () => {
+        expect(isStarMarkedBy('2024-01-05T00:00:00.000Z')).toBe(true)
     })
 })
 

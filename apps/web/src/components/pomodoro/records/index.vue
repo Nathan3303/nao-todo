@@ -63,7 +63,6 @@ const handleReset = () => {
                             :error="!!error"
                             :empty="!loading && !error && records.length === 0"
                             empty-message="暂无专注记录"
-                            style="height: 100%"
                         >
                             <template #error>
                                 <nue-div vertical align="center">
@@ -130,6 +129,7 @@ const handleReset = () => {
     /* 以 flex 撑满 content，而非依赖 height:100% 百分比链 */
     flex: 1;
     min-height: 0;
+    overflow: hidden;
 }
 
 .pomodoro-records-page__table {
@@ -140,6 +140,7 @@ const handleReset = () => {
     flex-direction: column;
     flex: 1;
     height: 100%;
+    overflow: hidden;
 
     :deep(.nue-scroll-bar) {
         flex: 1;

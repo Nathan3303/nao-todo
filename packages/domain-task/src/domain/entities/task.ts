@@ -9,7 +9,7 @@ import { TaskErrorCode } from '../errors'
  * @param givenUpAt 放弃时间
  */
 export const isGivenUpBy = (givenUpAt: string | null | undefined): boolean => {
-    return dayjs(givenUpAt).isValid()
+    return typeof givenUpAt === 'string' && givenUpAt.length > 0 && dayjs(givenUpAt).isValid()
 }
 
 /**
@@ -18,7 +18,7 @@ export const isGivenUpBy = (givenUpAt: string | null | undefined): boolean => {
  * @param starMarkAt 星标时间
  */
 export const isStarMarkedBy = (starMarkAt: string | null | undefined): boolean => {
-    return dayjs(starMarkAt).isValid()
+    return typeof starMarkAt === 'string' && starMarkAt.length > 0 && dayjs(starMarkAt).isValid()
 }
 
 /**

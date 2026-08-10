@@ -9,6 +9,8 @@ defineOptions({ name: 'PomodoroCollectionPage' })
 
 const {
     loading,
+    listError,
+    loadData,
     selectedId,
     pomodoros,
     selectedPomodoro,
@@ -16,6 +18,8 @@ const {
     handleEdit,
     records,
     recordLoading,
+    recordError,
+    loadRecords,
     recordPage,
     recordLimit,
     recordTotal,

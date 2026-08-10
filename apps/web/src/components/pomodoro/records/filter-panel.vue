@@ -9,7 +9,6 @@ const props = defineProps<{
     filters: PomodoroRecordsFilterState
     pomodoros: PomodoroViewObject[]
 }>()
-console.log(props.pomodoros)
 
 const emit = defineEmits<{
     (e: 'update:filters', filters: Partial<PomodoroRecordsFilterState>): void

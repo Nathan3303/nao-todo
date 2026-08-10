@@ -131,7 +131,7 @@ const formatDate = (time: string) => dayjs(time).format('YYYY-MM-DD HH:mm')
     position: sticky;
     top: 0;
     z-index: 1;
-    background-color: var(--nue-bg-color);
+    background-color: var(--nue-primary-color-0);
     min-width: 760px;
 }
 
