@@ -1,9 +1,9 @@
-import { unwrapError } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared'
 import { NueMessage } from 'nue-ui'
+import { translateTaskError } from '../../../utils/error-message'
 import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import type { UpdateTaskViewObject } from '@nao-todo/domain-task'
-import type { TaskRemindSetterUpdateVO } from '../../remind-setter'
 import type { TaskCreatorDialogProps } from './types'
 
 /**
@@ -34,36 +34,16 @@ const useTaskCreator = (props: TaskCreatorDialogProps) => {
     const createStates = reactive({ creating: false, disabled: false })
 
     /**
-     * 更新任务结束时间
-     * @param value 任务结束时间
+     * 更新任务日期与提醒
+     * @param value 任务视图对象（开始/结束时间 + 提醒设置）
      */
-    const handleUpdateEndAt = (value: string | null) => {
-        states.endAt = value || ''
-    }
-
-    /**
-     * 更新任务提醒
-     * @param value 任务提醒设置值
-     */
-    const handleUpdateRemind = (value: TaskRemindSetterUpdateVO) => {
-        states.remindAt = value.remindAt
-        states.remindRepeat = value.remindRepeat
-        states.remindTime = value.remindTime
-        states.remindWeekdays = value.remindWeekdays
-    }
-
-    /**
-     * 更新任务结束时间和提醒
-     * @param value 任务视图对象
-     */
-    const handleUpdateEndAtAndRemind = (value: UpdateTaskViewObject) => {
-        handleUpdateEndAt(value.endAt || '')
-        handleUpdateRemind({
-            remindAt: value.remindAt || null,
-            remindRepeat: value.remindRepeat || 'none',
-            remindTime: value.remindTime || null,
-            remindWeekdays: value.remindWeekdays || []
-        })
+    const handleUpdateDateAndRemind = (value: UpdateTaskViewObject) => {
+        if (value.startAt !== undefined) states.startAt = value.startAt
+        if (value.endAt !== undefined) states.endAt = value.endAt
+        if (value.remindAt !== undefined) states.remindAt = value.remindAt
+        if (value.remindRepeat !== undefined) states.remindRepeat = value.remindRepeat
+        if (value.remindTime !== undefined) states.remindTime = value.remindTime
+        if (value.remindWeekdays !== undefined) states.remindWeekdays = value.remindWeekdays
     }
 
     /**
@@ -93,11 +73,11 @@ const useTaskCreator = (props: TaskCreatorDialogProps) => {
         })
         createStates.creating = false
         if (err !== null) {
-            NueMessage.error(unwrapError(err))
+            NueMessage.error(translateTaskError(err))
             createStates.disabled = false
             return false
         }
-        NueMessage.success('待办任务创建成功')
+        NueMessage.success(t('task.createSuccess'))
         if (task) {
             subscriber.emit('AddNewTaskId', task.id)
             router.push({ name: router.currentRoute.value.name, params: { taskId: task.id } })
@@ -130,9 +110,7 @@ const useTaskCreator = (props: TaskCreatorDialogProps) => {
         dialogManager,
         handleCreateTask,
         clearInputsValue,
-        handleUpdateEndAt,
-        handleUpdateRemind,
-        handleUpdateEndAtAndRemind
+        handleUpdateDateAndRemind
     }
 }
 

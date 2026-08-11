@@ -102,6 +102,33 @@ export class TaskEntity extends Entity {
     }
 
     /**
+     * updateSchedule 更新开始/结束时间
+     * @description 边界判定：已删除、已归档的任务禁止修改；日期须合法；
+     *              合并后的开始时间不得晚于结束时间
+     * @param startAt 开始时间（null 表示清除，不传表示沿用现有值）
+     * @param endAt 结束时间（null 表示清除，不传表示沿用现有值）
+     * @returns 校验通过返回 null，否则返回领域错误码
+     */
+    updateSchedule(startAt?: string | null, endAt?: string | null): Go<void> {
+        if (this.isDeleted || this.isArchived) return TaskErrorCode.SCHEDULE_FORBIDDEN
+        // 合并出最终值（未传入的字段沿用现有值）
+        const nextStart = startAt === undefined ? this.startAt : startAt
+        const nextEnd = endAt === undefined ? this.endAt : endAt
+        // 日期合法性
+        if (nextStart !== null && nextStart !== '' && !dayjs(nextStart).isValid())
+            return TaskErrorCode.START_AT_INVALID
+        if (nextEnd !== null && nextEnd !== '' && !dayjs(nextEnd).isValid())
+            return TaskErrorCode.END_AT_INVALID
+        // 边界：开始时间不得晚于结束时间（两者均存在时）
+        if (nextStart && nextEnd && dayjs(nextStart).isAfter(dayjs(nextEnd)))
+            return TaskErrorCode.START_AFTER_END
+        // 写入（null 表示清除，统一存空字符串）
+        if (startAt !== undefined) this.startAt = startAt === null ? '' : startAt
+        if (endAt !== undefined) this.endAt = endAt === null ? '' : endAt
+        return null
+    }
+
+    /**
      * isDone 是否已完成
      */
     get isDone(): boolean {

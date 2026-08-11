@@ -243,6 +243,14 @@ export interface LocaleMessages {
     'task.details.subTaskNamePlaceholder': string
     'task.details.moveToSubTask': string
     'task.details.backToParent': string
+    'task.details.startTime': string
+    'task.details.endTime': string
+    'task.details.setTime': string
+    'task.details.startedAt': string
+    'task.details.dueAt': string
+    'task.details.remindAt': string
+    'task.details.startTimePlaceholder': string
+    'task.details.endTimePlaceholder': string
     'task.details.reschedule': string
     'task.details.rescheduleDescription': string
     'task.details.rescheduleConfirmContent': string
@@ -369,6 +377,8 @@ export interface LocaleMessages {
     'task.error.givenUpBeforeStart': string
     'task.error.starMarkAtInvalid': string
     'task.error.starMarkForbidden': string
+    'task.error.scheduleForbidden': string
+    'task.error.taskNotFound': string
     'task.error.snoozeDurationNotInteger': string
     'task.error.snoozeDurationOutOfRange': string
     'task.error.taskIdEmpty': string

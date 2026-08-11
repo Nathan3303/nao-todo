@@ -1,13 +1,15 @@
-import { unwrapError } from '@nao-todo/shared'
 import dayjs from 'dayjs'
 import { ref } from 'vue'
+import { NueMessage } from 'nue-ui'
 import {
+    isGivenUpBy,
     isStarMarkedBy,
     type TaskUseCase,
     type TaskViewObject,
     type UpdateTaskViewObject
 } from '@nao-todo/domain-task'
 import { TaskDetailsPreContext } from './context'
+import { translateTaskError } from '../../utils/error-message'
 import type { TaskDetailsViewObject } from './types'
 
 /**
@@ -40,7 +42,7 @@ const useTaskViewObject = (
         const [_task, err] = await taskUseCase.get(taskId)
         loading.value = false
         if (err !== null) {
-            error.value = unwrapError(err)
+            error.value = translateTaskError(err)
             return
         }
         task.value = {
@@ -85,7 +87,10 @@ const useTaskViewObject = (
     const updateTaskDetails = async (id: TaskViewObject['id'], updateVO: UpdateTaskViewObject) => {
         if (!id) return
         const updateError = await taskUseCase.update(id, updateVO)
-        if (updateError !== null) return
+        if (updateError !== null) {
+            NueMessage.error(translateTaskError(updateError))
+            return
+        }
         if (task.value === null) return
         // 同步派生字段（state/starMarkAt/givenUpAt/archivedAt/deletedAt 更新时，
         // isDone/isStarMarked/isGivenUp/isArchived/isDeleted 须随之刷新，否则 UI 图标不联动）
@@ -100,7 +105,7 @@ const useTaskViewObject = (
                     : task.value.isStarMarked,
             isGivenUp:
                 updateVO.givenUpAt !== undefined
-                    ? Boolean(updateVO.givenUpAt)
+                    ? isGivenUpBy(updateVO.givenUpAt)
                     : task.value.isGivenUp,
             isArchived:
                 updateVO.archivedAt !== undefined
@@ -146,7 +151,10 @@ const useTaskViewObject = (
         if (!id) return
         const updateVO = { givenUpAt: dayjs().toISOString() }
         const giveUpError = await taskUseCase.update(id, updateVO)
-        if (giveUpError !== null) return
+        if (giveUpError !== null) {
+            NueMessage.error(translateTaskError(giveUpError))
+            return
+        }
         if (task.value === null) return
         task.value = { ...task.value, ...updateVO, isGivenUp: true }
     }
@@ -159,7 +167,10 @@ const useTaskViewObject = (
         if (!id) return
         const updateVO = { givenUpAt: '' }
         const ungiveUpError = await taskUseCase.update(id, updateVO)
-        if (ungiveUpError !== null) return
+        if (ungiveUpError !== null) {
+            NueMessage.error(translateTaskError(ungiveUpError))
+            return
+        }
         if (task.value === null) return
         task.value = { ...task.value, ...updateVO, isGivenUp: false }
     }

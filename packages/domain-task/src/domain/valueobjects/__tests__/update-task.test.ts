@@ -58,20 +58,7 @@ describe('UpdateTaskValueObject.validate 时间校验', () => {
     it('非法提醒时间返回 REMIND_AT_INVALID', () => {
         expect(makeVO({ remindAt: 'not-a-date' }).validate()).toBe(TaskErrorCode.REMIND_AT_INVALID)
     })
-    it('非法结束时间返回 END_AT_INVALID', () => {
-        expect(makeVO({ endAt: 'not-a-date' }).validate()).toBe(TaskErrorCode.END_AT_INVALID)
-    })
-    it('非法开始时间返回 START_AT_INVALID', () => {
-        expect(makeVO({ startAt: 'not-a-date' }).validate()).toBe(TaskErrorCode.START_AT_INVALID)
-    })
-    it('开始时间晚于结束时间返回 START_AFTER_END', () => {
-        expect(
-            makeVO({
-                startAt: '2024-01-05T00:00:00.000Z',
-                endAt: '2024-01-03T00:00:00.000Z'
-            }).validate()
-        ).toBe(TaskErrorCode.START_AFTER_END)
-    })
+    // 开始/结束时间的合法性及先后关系已委托实体行为方法 updateSchedule 裁决，UpdateVO 不再校验
 })
 
 describe('UpdateTaskValueObject.validate 放弃时间校验', () => {

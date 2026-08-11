@@ -28,9 +28,7 @@ const {
     dialogManager,
     handleCreateTask,
     clearInputsValue,
-    handleUpdateEndAt,
-    handleUpdateRemind,
-    handleUpdateEndAtAndRemind
+    handleUpdateDateAndRemind
 } = useTaskCreator(props)
 const { visible, close: closeDialog } = useDialogWrapper(dialogRef)
 
@@ -93,11 +91,9 @@ onMounted(() => dialogManager.register(TASK_CREATOR_DIALOG_KEY, { open, close })
                 <nue-div align="center" gap="0.5rem">
                     <task-date-selector
                         :colored="!isExpired"
-                        v-model="states.endAt!"
-                        :task-remind-data="states"
-                        @change="handleUpdateEndAt"
-                        @remind-change="handleUpdateRemind"
-                        @update-all="handleUpdateEndAtAndRemind"
+                        :start-at="states.startAt"
+                        :end-at="states.endAt"
+                        @update-all="handleUpdateDateAndRemind"
                     />
                 </nue-div>
                 <nue-div wrap="wrap" gap=".5rem">

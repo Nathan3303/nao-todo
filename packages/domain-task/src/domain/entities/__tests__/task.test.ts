@@ -129,6 +129,62 @@ describe('TaskEntity.star / unstar 行为方法', () => {
     })
 })
 
+describe('TaskEntity.updateSchedule 边界判定', () => {
+    it('合法开始/结束时间写入实体', () => {
+        const entity = makeEntity({ startAt: '', endAt: '' })
+        expect(entity.updateSchedule('2024-06-01T00:00:00.000Z', '2024-06-02T00:00:00.000Z')).toBe(
+            null
+        )
+        expect(entity.startAt).toBe('2024-06-01T00:00:00.000Z')
+        expect(entity.endAt).toBe('2024-06-02T00:00:00.000Z')
+    })
+    it('开始时间晚于结束时间返回 START_AFTER_END', () => {
+        const entity = makeEntity({ startAt: '', endAt: '' })
+        expect(entity.updateSchedule('2024-06-02T00:00:00.000Z', '2024-06-01T00:00:00.000Z')).toBe(
+            TaskErrorCode.START_AFTER_END
+        )
+    })
+    it('非法开始时间返回 START_AT_INVALID', () => {
+        expect(makeEntity().updateSchedule('not-a-date')).toBe(TaskErrorCode.START_AT_INVALID)
+    })
+    it('非法结束时间返回 END_AT_INVALID', () => {
+        expect(makeEntity().updateSchedule(void 0, 'not-a-date')).toBe(TaskErrorCode.END_AT_INVALID)
+    })
+    it('null 清除对应字段', () => {
+        const entity = makeEntity({
+            startAt: '2024-06-01T00:00:00.000Z',
+            endAt: '2024-06-02T00:00:00.000Z'
+        })
+        expect(entity.updateSchedule(null)).toBe(null)
+        expect(entity.startAt).toBe('')
+        expect(entity.endAt).toBe('2024-06-02T00:00:00.000Z')
+    })
+    it('单字段更新沿用另一字段现有值参与边界判定', () => {
+        const entity = makeEntity({
+            startAt: '2024-06-01T00:00:00.000Z',
+            endAt: '2024-06-02T00:00:00.000Z'
+        })
+        expect(entity.updateSchedule('2024-06-03T00:00:00.000Z')).toBe(
+            TaskErrorCode.START_AFTER_END
+        )
+        expect(entity.updateSchedule(void 0, '2024-05-01T00:00:00.000Z')).toBe(
+            TaskErrorCode.START_AFTER_END
+        )
+    })
+    it('已删除任务返回 SCHEDULE_FORBIDDEN', () => {
+        const entity = makeEntity({ deletedAt: '2024-01-05T00:00:00.000Z' })
+        expect(entity.updateSchedule('2024-06-01T00:00:00.000Z')).toBe(
+            TaskErrorCode.SCHEDULE_FORBIDDEN
+        )
+    })
+    it('已归档任务返回 SCHEDULE_FORBIDDEN', () => {
+        const entity = makeEntity({ archivedAt: '2024-01-05T00:00:00.000Z' })
+        expect(entity.updateSchedule(void 0, '2024-06-01T00:00:00.000Z')).toBe(
+            TaskErrorCode.SCHEDULE_FORBIDDEN
+        )
+    })
+})
+
 describe('TaskEntity 继承自 Entity', () => {
     it('isDeleted 由基类根据 deletedAt 判定', () => {
         expect(makeEntity({ deletedAt: null }).isDeleted).toBe(false)

@@ -6,6 +6,7 @@ import {
 } from '@nao-todo/shared'
 import dayjs from 'dayjs'
 import { isGivenUpBy, isStarMarkedBy, TaskEntity } from '../../domain/entities'
+import { TaskErrorCode } from '../../domain/errors'
 import { TaskRepository } from '../../domain/repositories'
 import { TaskDomain } from '../../domain/services'
 import type { UpdateTaskValueObject } from '../../domain/valueobjects'
@@ -143,16 +144,38 @@ export class TaskUseCase {
         const updateTaskValueObject = updateTaskViewObjectToValueObject(id, updateViewObject)
         const validateErr = updateTaskValueObject.validate()
         if (validateErr !== null) return validateErr
-        // 星标变更走实体行为方法（领域规则：已删除/已归档任务禁止收藏）
-        if (updateTaskValueObject.starMarkAt !== undefined) {
+        // 星标/时间变更走实体行为方法（领域规则：已删除/已归档禁止收藏与修改时间）
+        if (
+            updateTaskValueObject.starMarkAt !== undefined ||
+            updateTaskValueObject.startAt !== undefined ||
+            updateTaskValueObject.endAt !== undefined
+        ) {
             const [entity, getError] = await this.taskRepo.get(id)
             if (getError !== null) return getError
-            if (!entity) return '任务不存在'
-            const starError = isStarMarkedBy(updateTaskValueObject.starMarkAt)
-                ? entity.star()
-                : entity.unstar()
-            if (starError !== null) return starError
-            updateTaskValueObject.starMarkAt = entity.starMarkAt
+            if (!entity) return TaskErrorCode.TASK_NOT_FOUND
+            // 星标变更
+            if (updateTaskValueObject.starMarkAt !== undefined) {
+                const starError = isStarMarkedBy(updateTaskValueObject.starMarkAt)
+                    ? entity.star()
+                    : entity.unstar()
+                if (starError !== null) return starError
+                updateTaskValueObject.starMarkAt = entity.starMarkAt
+            }
+            // 开始/结束时间变更
+            if (
+                updateTaskValueObject.startAt !== undefined ||
+                updateTaskValueObject.endAt !== undefined
+            ) {
+                const scheduleError = entity.updateSchedule(
+                    updateTaskValueObject.startAt,
+                    updateTaskValueObject.endAt
+                )
+                if (scheduleError !== null) return scheduleError
+                if (updateTaskValueObject.startAt !== undefined)
+                    updateTaskValueObject.startAt = entity.startAt === '' ? null : entity.startAt
+                if (updateTaskValueObject.endAt !== undefined)
+                    updateTaskValueObject.endAt = entity.endAt === '' ? null : entity.endAt
+            }
         }
         // 更新任务
         const updateError = await this.taskRepo.update(id, updateTaskValueObject)
@@ -188,11 +211,13 @@ export class TaskUseCase {
             if (validateErr !== null) return [null, validateErr]
             updateValueObjects.push(valueObject)
         }
-        // 2. 调用领域服务批量更新
-        const [succeeded, batchError] = await this.taskDomain.batchUpdate(updateValueObjects)
+        // 2. 调用领域服务批量更新（返回成功数与失败 ID 列表）
+        const [result, batchError] = await this.taskDomain.batchUpdate(updateValueObjects)
         if (batchError !== null) return [null, batchError]
-        // 3. 更新内存数据（同步派生字段）
+        // 3. 更新内存数据（仅同步成功项，避免部分失败时 store 与后端不一致）
+        const failedIdSet = new Set(result.failedIds)
         for (const update of updates) {
+            if (failedIdSet.has(update.id)) continue
             const storeUpdateData = { ...update }
             if (storeUpdateData.givenUpAt !== undefined) {
                 storeUpdateData.isGivenUp = isGivenUpBy(storeUpdateData.givenUpAt)
@@ -203,7 +228,7 @@ export class TaskUseCase {
             this.taskStore.updateTask(update.id, storeUpdateData)
         }
         // 4. 返回成功条数
-        return [succeeded, null]
+        return [result.succeeded, null]
     }
 
     /**

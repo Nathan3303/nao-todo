@@ -70,18 +70,7 @@ export class UpdateTaskValueObject {
             const remindAt = dayjs(this.remindAt)
             if (!remindAt.isValid()) return TaskErrorCode.REMIND_AT_INVALID
         }
-        if (this.endAt !== void 0 && this.endAt !== null) {
-            const entAt = dayjs(this.endAt)
-            if (!entAt.isValid()) return TaskErrorCode.END_AT_INVALID
-            this.endAt = entAt.toISOString()
-        }
-        if (this.startAt !== void 0 && this.startAt !== null) {
-            const startAt = dayjs(this.startAt)
-            if (!startAt.isValid()) return TaskErrorCode.START_AT_INVALID
-            if (this.endAt && startAt.isAfter(dayjs(this.endAt)))
-                return TaskErrorCode.START_AFTER_END
-            this.startAt = startAt.toISOString()
-        }
+        // 开始/结束时间的合法性及先后关系由实体行为方法 updateSchedule 裁决（见 entities/task.ts）
         if (this.givenUpAt !== void 0 && this.givenUpAt !== null && this.givenUpAt !== '') {
             const givenUpAt = dayjs(this.givenUpAt)
             if (!givenUpAt.isValid()) return TaskErrorCode.GIVEN_UP_AT_INVALID

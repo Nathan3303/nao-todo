@@ -195,3 +195,25 @@ describe('updateTaskViewObjectToValueObject - starMarkAt 透传', () => {
         expect(vo.starMarkAt).toBeNull()
     })
 })
+
+describe('updateTaskViewObjectToValueObject - startAt/endAt 透传', () => {
+    it('未设置 startAt/endAt 时值对象不包含该字段', () => {
+        const vo = updateTaskViewObjectToValueObject('task-1', { name: '改名' })
+        expect(vo.startAt).toBeUndefined()
+        expect(vo.endAt).toBeUndefined()
+    })
+    it('startAt 为合法日期时透传', () => {
+        const vo = updateTaskViewObjectToValueObject('task-1', {
+            startAt: '2024-01-05T00:00:00.000Z'
+        })
+        expect(vo.startAt).toBe('2024-01-05T00:00:00.000Z')
+    })
+    it('startAt 为 null 时透传（清除）', () => {
+        const vo = updateTaskViewObjectToValueObject('task-1', { startAt: null })
+        expect(vo.startAt).toBeNull()
+    })
+    it('endAt 为 null 时透传（清除）', () => {
+        const vo = updateTaskViewObjectToValueObject('task-1', { endAt: null })
+        expect(vo.endAt).toBeNull()
+    })
+})

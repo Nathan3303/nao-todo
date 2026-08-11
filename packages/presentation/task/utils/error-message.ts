@@ -21,6 +21,8 @@ const CODE_TO_LOCALE_KEY: Record<TaskErrorCodeValue, LocaleKey> = {
     [TaskErrorCode.GIVEN_UP_BEFORE_START]: 'task.error.givenUpBeforeStart',
     [TaskErrorCode.STAR_MARK_AT_INVALID]: 'task.error.starMarkAtInvalid',
     [TaskErrorCode.STAR_MARK_FORBIDDEN]: 'task.error.starMarkForbidden',
+    [TaskErrorCode.SCHEDULE_FORBIDDEN]: 'task.error.scheduleForbidden',
+    [TaskErrorCode.TASK_NOT_FOUND]: 'task.error.taskNotFound',
     [TaskErrorCode.SNOOZE_DURATION_NOT_INTEGER]: 'task.error.snoozeDurationNotInteger',
     [TaskErrorCode.SNOOZE_DURATION_OUT_OF_RANGE]: 'task.error.snoozeDurationOutOfRange',
     [TaskErrorCode.TASK_ID_EMPTY]: 'task.error.taskIdEmpty',

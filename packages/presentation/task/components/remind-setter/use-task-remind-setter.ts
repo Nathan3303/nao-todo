@@ -300,12 +300,6 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
                 !hasRemindWeekdaysChanged
             )
                 return
-            console.log(
-                !hasRemindAtChanged &&
-                    !hasRemindRepeatChanged &&
-                    !hasRemindTimeChanged &&
-                    !hasRemindWeekdaysChanged
-            )
             // 触发更新事件
             emits('update', updateVO)
         },
