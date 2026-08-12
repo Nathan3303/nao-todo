@@ -1,6 +1,6 @@
 ---
 name: 'nao-frontend-ddd'
-description: 'Frontend Domain-Driven Design architecture guide based on Vue 3 + TypeScript + Pinia. Invoke when user wants to implement DDD, create new domains, or refactor project structure.'
+description: 'Frontend Domain-Driven Design architecture guide based on Vue / React. Invoke when user wants to implement DDD, create new domains, or refactor project structure.'
 ---
 
 # Frontend DDD Architecture
