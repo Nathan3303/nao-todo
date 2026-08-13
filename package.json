@@ -9,6 +9,7 @@
     "packageManager": "pnpm@11.18.0",
     "scripts": {
         "desktopapp": "pnpm --filter @nao-todo/desktopapp",
+        "mobileapp": "pnpm --filter @nao-todo/mobileapp",
         "webapp": "pnpm --filter @nao-todo/webapp",
         "prepare": "vp config",
         "desktop:dev": "pnpm --filter @nao-todo/desktopapp dev",
@@ -33,6 +34,7 @@
     },
     "devDependencies": {
         "@nao-todo/desktopapp": "workspace:*",
+        "@nao-todo/mobileapp": "workspace:*",
         "@nao-todo/webapp": "workspace:*",
         "@nao-todo/domain-identity": "workspace:*",
         "@nao-todo/domain-project": "workspace:*",
