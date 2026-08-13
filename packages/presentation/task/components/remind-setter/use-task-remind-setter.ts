@@ -287,18 +287,15 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
         () => {
             // 构建更新视图对象
             const updateVO = buildUpdateVO()
-            // 判断是否变更
-            const hasRemindAtChanged = updateVO.remindAt === props.task?.remindAt
-            const hasRemindRepeatChanged = updateVO.remindRepeat === props.task?.remindRepeat
-            const hasRemindTimeChanged = updateVO.remindTime === props.task?.remindTime
-            const hasRemindWeekdaysChanged =
-                updateVO.remindWeekdays.toString() === props.task?.remindWeekdays.toString()
-            if (
-                !hasRemindAtChanged &&
-                !hasRemindRepeatChanged &&
-                !hasRemindTimeChanged &&
-                !hasRemindWeekdaysChanged
-            )
+            // 判断是否变更（基准归一化：task 缺失时按无提醒默认值比较，避免 undefined 恒不等导致永不触发）
+            const isRemindAtSame = updateVO.remindAt === (props.task?.remindAt ?? null)
+            const isRemindRepeatSame =
+                updateVO.remindRepeat === (props.task?.remindRepeat ?? 'none')
+            const isRemindTimeSame = updateVO.remindTime === (props.task?.remindTime ?? null)
+            const isRemindWeekdaysSame =
+                updateVO.remindWeekdays.toString() === (props.task?.remindWeekdays ?? []).toString()
+            // 全部字段与当前值相同（未变更）时不触发更新事件
+            if (isRemindAtSame && isRemindRepeatSame && isRemindTimeSame && isRemindWeekdaysSame)
                 return
             // 触发更新事件
             emits('update', updateVO)

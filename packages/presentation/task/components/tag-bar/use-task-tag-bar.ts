@@ -36,6 +36,16 @@ export const useTaskTagBar = (props: TaskTagBarProps, emit: TaskTagBarEmits) => 
     })
 
     /**
+     * @computed 有效选中标签数
+     * @description taskTagIds 中存在于 availableTags 的 ID 数量；
+     *              无效（已删除/不存在）标签 ID 不参与标签溢出计算
+     */
+    const validSelectedCount = computed(() => {
+        const availableIds = new Set(props.availableTags.map((tag) => tag.id))
+        return props.taskTagIds.filter((id) => availableIds.has(id)).length
+    })
+
+    /**
      * 处理添加任务标签
      * @param tagId 任务标签ID
      * @param checked 是否选中任务标签
@@ -111,6 +121,7 @@ export const useTaskTagBar = (props: TaskTagBarProps, emit: TaskTagBarEmits) => 
         comboBoxOptions,
         selectedTags,
         isSearchEmpty,
+        validSelectedCount,
         pushTagHandler,
         dropTagHandler,
         createTagHandler

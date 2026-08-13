@@ -11,7 +11,7 @@ import {
     createTaskCommentValueObject2Req,
     listTaskCommentRes2Entities,
     taskCommentRes2Entity,
-    updateTaskValueObject2Req
+    updateTaskCommentValueObject2Req
 } from './converters'
 import { CreateTaskCommentRes, ResponseData, TaskCommentRes } from '../models'
 
@@ -73,7 +73,7 @@ export class TaskCommentRepoImpl implements TaskCommentRepository {
      */
     async update(updateVO: UpdateTaskCommentValueObject): GoAsync<void> {
         // 1. 构建 rto
-        const updateRto = updateTaskValueObject2Req(updateVO)
+        const updateRto = updateTaskCommentValueObject2Req(updateVO)
         // 2. 调用接口
         const response = await this.requester.put(`/comments/${updateVO.id}`, updateRto, {
             headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }

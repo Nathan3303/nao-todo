@@ -10,16 +10,25 @@ const props = withDefaults(defineProps<TaskTagBarProps>(), {
     clamped: Infinity
 })
 
-const overflowCount = computed(() => props.taskTagIds.length - props.clamped)
+const {
+    styles,
+    comboBoxOptions,
+    selectedTags,
+    validSelectedCount,
+    pushTagHandler,
+    dropTagHandler,
+    createTagHandler
+} = useTaskTagBar(props, emit)
 
-const overflowTag = {
+// @computed 溢出数量：仅统计有效标签（无效/已删除标签 ID 不参与溢出计算）
+const overflowCount = computed(() => validSelectedCount.value - props.clamped)
+
+// @computed 溢出标签：名称随溢出数量响应式更新（标签增删后 +N 刷新）
+const overflowTag = computed(() => ({
     id: 'overflow-tag',
     name: `+${overflowCount.value}`,
     color: 'var(--nue-primary-color-500)'
-}
-
-const { styles, comboBoxOptions, selectedTags, pushTagHandler, dropTagHandler, createTagHandler } =
-    useTaskTagBar(props, emit)
+}))
 </script>
 
 <template>

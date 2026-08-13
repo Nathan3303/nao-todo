@@ -51,8 +51,10 @@ const handleUpdateComment = async () => {
         return
     }
     loading.value = true
-    props.updater(props.comment.id, shadowContent.value)
+    // 等待保存完成（store patch 后 prop 已更新）；失败时保留编辑框与输入（错误提示由调用方/handler 负责）
+    const updateError = await props.updater(props.comment.id, shadowContent.value)
     loading.value = false
+    if (updateError) return
     handleCancelEdit()
 }
 

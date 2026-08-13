@@ -276,7 +276,7 @@ export const updateTaskCommentValueObject2Req = (
     updateVO: UpdateTaskCommentValueObject
 ): UpdateTaskCommentReq => {
     const req = {} as UpdateTaskCommentReq
-    if (updateVO.content) req.content = updateVO.content
+    if (updateVO.content !== void 0) req.content = updateVO.content
     // if (updateVO.attachments !== void 0) req.attachments = updateVO.attachments
     if (updateVO.isTopUp !== void 0) req.isTopUp = updateVO.isTopUp
     return req

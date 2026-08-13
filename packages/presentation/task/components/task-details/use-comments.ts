@@ -1,4 +1,4 @@
-import { unwrapError } from '@nao-todo/shared'
+import { t, unwrapError } from '@nao-todo/shared'
 import { storeToRefs } from 'pinia'
 import { inject, ref } from 'vue'
 import { TaskCommentHandler } from '../../handlers'
@@ -43,7 +43,9 @@ const useComments = (taskDetailsStore: TaskDetailsStore) => {
         taskDetailsStore.setCommentsError('')
         const [, err] = await taskCommentUseCase.list(taskId)
         if (err !== null) {
-            taskDetailsStore.setCommentsError('评论获取失败：' + unwrapError(err))
+            taskDetailsStore.setCommentsError(
+                t('task.commentLoadFailed', { error: unwrapError(err) })
+            )
         }
         taskDetailsStore.setCommentsLoading(false)
     }

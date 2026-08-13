@@ -69,10 +69,14 @@ export const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: Ge
     const loadAndPush = async (extraGetOptions?: GetTasksOptions) => {
         if (states.disabled) return
         states.disabled = true
-        const [taskIds, err] = await load(extraGetOptions)
-        if (err !== null) return
-        taskIds.forEach((id) => states.taskIds.add(id))
-        setTimeout(() => (states.disabled = false), states.delay)
+        try {
+            const [taskIds, err] = await load(extraGetOptions)
+            if (err !== null) return
+            taskIds.forEach((id) => states.taskIds.add(id))
+        } finally {
+            // 无论成功失败都重置 disabled，否则加载失败后"重试"会被 if (states.disabled) 拦截
+            setTimeout(() => (states.disabled = false), states.delay)
+        }
     }
 
     /**
@@ -83,10 +87,14 @@ export const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: Ge
     const loadAndReplace = async (extraGetOptions?: GetTasksOptions) => {
         if (states.disabled) return
         states.disabled = true
-        const [taskIds, err] = await load(extraGetOptions)
-        if (err !== null) return
-        states.taskIds = new Set(taskIds)
-        setTimeout(() => (states.disabled = false), states.delay)
+        try {
+            const [taskIds, err] = await load(extraGetOptions)
+            if (err !== null) return
+            states.taskIds = new Set(taskIds)
+        } finally {
+            // 无论成功失败都重置 disabled，否则加载失败后"重试"会被 if (states.disabled) 拦截
+            setTimeout(() => (states.disabled = false), states.delay)
+        }
     }
 
     /**
