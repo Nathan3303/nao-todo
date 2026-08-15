@@ -17,12 +17,12 @@ let requester: Requester = emptyRequester
 export const getRequesterImpl = () => requester
 
 export const initRequester = (options: UseRequesterOptions) => {
-    const { name, baseURL, enableRetry = true } = options
+    const { name, baseURL, enableRetry = true, onAuthExpired } = options
 
     switch (name) {
         case 'AxiosRequester':
         default: {
-            requester = useAxiosRequester(baseURL, enableRetry)
+            requester = useAxiosRequester(baseURL, enableRetry, onAuthExpired)
             break
         }
     }

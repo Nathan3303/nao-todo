@@ -37,6 +37,19 @@ export type DeactiveUserReq = {
 
 export type ActiveUserReq = DeactiveUserReq
 
+// --- User Session ---
+
+export type UserSessionRes = {
+    id: string
+    deviceId: string
+    deviceType: string
+    ip4: string
+    region: string
+    createdAt: string
+    updatedAt: string
+    current: boolean
+}
+
 // --- User Config ---
 
 export type UserConfigRes = ResponseBase & {

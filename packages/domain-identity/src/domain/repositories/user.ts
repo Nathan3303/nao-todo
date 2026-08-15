@@ -1,5 +1,6 @@
 import type { GoAsync } from '@nao-todo/shared'
 import type { UserEntity } from '../entities'
+import type { UserSessionValueObject } from '../valueobjects/user-session'
 import type { UpdateUserNicknameValueObject } from '../valueobjects/update-nickname'
 import type { UpdateUserPasswordValueObject } from '../valueobjects/update-password'
 import type { DeactiveUserValueObject } from '../valueobjects/deactive-user'
@@ -64,4 +65,26 @@ export interface UserRepository {
      * @returns 无
      */
     restore(restoreVO: RestoreUserValueObject): GoAsync<void>
+
+    /**
+     * 获取登录会话列表
+     * @description 查看当前用户全部未过期的登录会话
+     * @returns 会话列表
+     */
+    listSessions(): GoAsync<UserSessionValueObject[]>
+
+    /**
+     * 下线单个会话
+     * @description 踢下线指定设备（当前会话除外）
+     * @param sessionId 会话 ID
+     * @returns 无
+     */
+    signOutSession(sessionId: string): GoAsync<void>
+
+    /**
+     * 退出其他全部设备
+     * @description 删除当前用户除当前 token 外的全部会话，当前设备保持登录
+     * @returns 无
+     */
+    signOutOtherSessions(): GoAsync<void>
 }

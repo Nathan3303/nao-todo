@@ -132,6 +132,34 @@ export interface LocaleMessages {
     'settings.restore.success': string
     'settings.restore.passwordRequired': string
     'settings.restore.agreeRequired': string
+    // --- Session ---
+    'settings.sessionTitle': string
+    'settings.sessionRefresh': string
+    'settings.sessionLoading': string
+    'settings.sessionEmpty': string
+    'settings.sessionLoadFailed': string
+    'settings.sessionCurrent': string
+    'settings.sessionRegionUnknown': string
+    'settings.sessionLoggedAt': string
+    'settings.sessionActiveAt': string
+    'settings.sessionSignOut': string
+    'settings.sessionSignOutConfirmTitle': string
+    'settings.sessionSignOutConfirmContent': string
+    'settings.sessionSignOutFailed': string
+    'settings.sessionSignOutSuccess': string
+    'settings.sessionSignOutOther': string
+    'settings.sessionSignOutOtherConfirmTitle': string
+    'settings.sessionSignOutOtherConfirmContent': string
+    'settings.sessionSignOutOtherFailed': string
+    'settings.sessionSignOutOtherSuccess': string
+    'settings.sessionDeviceChrome': string
+    'settings.sessionDeviceSafari': string
+    'settings.sessionDeviceFirefox': string
+    'settings.sessionDeviceIOS': string
+    'settings.sessionDeviceAndroid': string
+    'settings.sessionDeviceWeChat': string
+    'settings.sessionDeviceAlipay': string
+    'settings.sessionDeviceUnknown': string
 
     // User
     'user.deactiveWarningTitle': string

@@ -4,7 +4,8 @@ import {
     UpdateUserNicknameValueObject,
     UpdateUserPasswordValueObject,
     UserEntity,
-    UserRepository
+    UserRepository,
+    UserSessionValueObject
 } from '@nao-todo/domain-identity'
 import type { GoAsync } from '@nao-todo/shared'
 import { userEntityToRecord, userRecordToEntity } from '../converters/user'
@@ -79,6 +80,18 @@ export class LocalUserRepoImpl implements UserRepository {
 
     async restore(_restoreVO: RestoreUserValueObject): GoAsync<void> {
         return '桌面版暂不支持恢复账号，请前往 Web 端操作'
+    }
+
+    async listSessions(): GoAsync<UserSessionValueObject[]> {
+        return [null, '桌面版暂不支持会话管理，请前往 Web 端操作']
+    }
+
+    async signOutSession(_sessionId: string): GoAsync<void> {
+        return '桌面版暂不支持会话管理，请前往 Web 端操作'
+    }
+
+    async signOutOtherSessions(): GoAsync<void> {
+        return '桌面版暂不支持会话管理，请前往 Web 端操作'
     }
 }
 

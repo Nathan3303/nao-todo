@@ -7,7 +7,8 @@ import {
     useUserStore,
     UserDeactiveDialog,
     UserRestoreDialog,
-    UserDeactiveManager
+    UserDeactiveManager,
+    UserSessionManager
 } from '@nao-todo/presentation-identity'
 import { t, unwrapError, USER_DEACTIVE_DIALOG_KEY } from '@nao-todo/shared'
 import { NueConfirm, NueMessage } from 'nue-ui'
@@ -80,6 +81,8 @@ const handleDeactivated = async () => {
                         <nue-text>{{ t('settings.moreInfo') }}</nue-text>
                         <user-info-viewer />
                     </nue-div>
+                    <nue-divider />
+                    <user-session-manager :user-use-case="userUseCase" />
                     <nue-divider />
                     <user-deactive-manager :dialog-manager="dialogManager" />
                 </nue-div>

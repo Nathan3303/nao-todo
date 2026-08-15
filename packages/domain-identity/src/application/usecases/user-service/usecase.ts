@@ -1,7 +1,8 @@
 import type { GoAsync } from '@nao-todo/shared'
 import {
     type UserConfigRepository,
-    type UserRepository
+    type UserRepository,
+    type UserSessionValueObject
     // type UserService
 } from '../../../domain'
 import type {
@@ -169,5 +170,30 @@ export class UserUseCase {
         this.userStore.updateUserProfile({ deactivedAt: '' })
         this.userStore.updateUserDeletion({ isPending: false, deadline: void 0 })
         return null
+    }
+
+    /**
+     * 获取登录会话列表
+     * @returns 会话列表
+     */
+    async loadSessions(): GoAsync<UserSessionValueObject[]> {
+        return await this.userRepo.listSessions()
+    }
+
+    /**
+     * 下线单个会话
+     * @param sessionId 会话 ID
+     * @returns 无
+     */
+    async signOutSession(sessionId: string): GoAsync<void> {
+        return await this.userRepo.signOutSession(sessionId)
+    }
+
+    /**
+     * 退出其他全部设备
+     * @returns 无
+     */
+    async signOutOtherSessions(): GoAsync<void> {
+        return await this.userRepo.signOutOtherSessions()
     }
 }

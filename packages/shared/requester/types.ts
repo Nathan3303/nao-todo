@@ -22,6 +22,11 @@ export type UseRequesterOptions = {
      * @description 默认开启（true）
      */
     enableRetry?: boolean
+    /**
+     * 凭证失效回调
+     * @description 响应 code === 10041（被下线/被顶号/会话过期）时触发，由应用层注入登出处理
+     */
+    onAuthExpired?: () => void
 }
 
 /**

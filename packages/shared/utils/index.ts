@@ -1,6 +1,7 @@
 export * from './avatar'
 export * from './commons'
 export * from './date-checker'
+export * from './device-id'
 export * from './relative-date-parser'
 export * from './reminder-parser'
 export * from './task-attributes-parser'

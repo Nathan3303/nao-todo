@@ -1,16 +1,46 @@
 {
     "name": "@nao-todo/desktopapp",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "description": "Desktop version of NaoTodo",
     "author": "Nathan Lee",
     "license": "MIT",
     "private": true,
     "main": "./out/main/index.js",
+    "repository": "https://github.com/Nathan3303/nao-todo.git",
     "scripts": {
         "dev": "electron-vite dev",
         "build": "electron-vite build",
         "dist": "electron-vite build && electron-builder",
         "dist:dir": "electron-vite build && electron-builder --dir"
+    },
+    "build": {
+        "appId": "space.nathanao.todo",
+        "productName": "NaoTodo",
+        "files": [
+            "out/renderer/**/*",
+            "out/main/index.js",
+            "out/preload/index.js"
+        ],
+        "directories": {
+            "output": "release"
+        },
+        "mac": {
+            "target": [
+                "dmg",
+                "zip"
+            ]
+        },
+        "win": {
+            "target": [
+                "nsis"
+            ]
+        },
+        "linux": {
+            "target": [
+                "AppImage",
+                "deb"
+            ]
+        }
     },
     "dependencies": {
         "@nao-todo/domain-built-in-project": "workspace:*",

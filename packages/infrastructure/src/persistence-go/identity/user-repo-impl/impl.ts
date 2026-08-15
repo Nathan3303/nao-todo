@@ -4,14 +4,21 @@ import {
     UserEntity,
     UserRepository,
     DeactiveUserValueObject,
-    RestoreUserValueObject
+    RestoreUserValueObject,
+    UserSessionValueObject
 } from '@nao-todo/domain-identity'
 import type { GoAsync, Requester } from '@nao-todo/shared'
-import type { ResponseData, UserProfileRes, UpdateUserAvatarURLRes } from '../../models'
+import type {
+    ResponseData,
+    UserProfileRes,
+    UpdateUserAvatarURLRes,
+    UserSessionRes
+} from '../../models'
 import {
     updateUserNicknameValueObject2Req,
     updateUserPasswordValueObject2Req,
-    userProfile2Entity
+    userProfile2Entity,
+    userSessionRes2ValueObject
 } from './converters'
 import { getJWTFromLocalStorage } from '../../utils'
 
@@ -171,6 +178,65 @@ export class UserRepoImpl implements UserRepository {
         if (res.code !== 10100) {
             return res.message
         }
+        return null
+    }
+
+    /**
+     * 获取登录会话列表
+     * @description 获取当前用户全部未过期的登录会话
+     * @returns 会话列表
+     */
+    async listSessions(): GoAsync<UserSessionValueObject[]> {
+        // 1. 调用接口
+        const response = await this.requester.get('/user/sessions', {
+            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+        })
+        // 2. 判断结果
+        const res = response.data as ResponseData
+        if (res.code !== 10130) {
+            return [null, res.message]
+        }
+        // 3. 转换并返回
+        const sessions = (res.data as UserSessionRes[]).map(userSessionRes2ValueObject)
+        return [sessions, null]
+    }
+
+    /**
+     * 下线单个会话
+     * @description 踢下线指定设备
+     * @param sessionId 会话 ID
+     * @returns 无
+     */
+    async signOutSession(sessionId: string): GoAsync<void> {
+        // 1. 调用接口
+        const response = await this.requester.delete(`/user/sessions/${sessionId}`, {
+            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+        })
+        // 2. 判断结果（10142：会话不存在或已下线，视为已下线成功，由前端刷新列表兜底）
+        const res = response.data as ResponseData
+        if (res.code !== 10140 && res.code !== 10142) {
+            return res.message
+        }
+        // 3. 返回
+        return null
+    }
+
+    /**
+     * 退出其他全部设备
+     * @description 删除当前用户除当前 token 外的全部会话，当前设备保持登录
+     * @returns 无
+     */
+    async signOutOtherSessions(): GoAsync<void> {
+        // 1. 调用接口
+        const response = await this.requester.delete('/user/sessions', {
+            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
+        })
+        // 2. 判断结果
+        const res = response.data as ResponseData
+        if (res.code !== 10150) {
+            return res.message
+        }
+        // 3. 返回
         return null
     }
 }

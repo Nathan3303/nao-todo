@@ -2,14 +2,16 @@ import Axios, { AxiosError } from 'axios'
 import type { HttpMethod, Requester, RequesterOpRtn } from './types'
 import { createLog, markFailed, removeLog } from './operation-log'
 import { MAX_RETRY, delay, getBackoffDelay, isIdempotentMethod, isRetriableError } from './retry'
+import { getDeviceId } from '../utils/device-id'
 
 /**
  * 创建 Axios 请求器
  * @param baseURL 基础 URL
  * @param enableRetry 是否开启幂等请求自动重试（默认开启）
+ * @param onAuthExpired 凭证失效回调（响应 code === 10041 时触发，由应用层注入登出处理）
  * @returns Axios 请求器
  */
-export default (baseURL: string, enableRetry = true): Requester => {
+export default (baseURL: string, enableRetry = true, onAuthExpired?: () => void): Requester => {
     /**
      * 创建 Axios 实例
      */
@@ -23,13 +25,37 @@ export default (baseURL: string, enableRetry = true): Requester => {
     })
 
     /**
-     * 添加响应拦截器
-     * @description 对幂等请求的网络错误自动重试；重试耗尽或关闭时归一化错误响应
+     * 添加请求拦截器
+     * @description 全局注入设备 ID 请求头（登录/所有 /api 请求统一携带，供服务端把会话绑定到具体登录端）
      */
+    axiosInstance.interceptors.request.use((config) => {
+        config.headers['X-Device-Id'] = getDeviceId()
+        return config
+    })
+
+    /**
+     * 添加响应拦截器
+     * @description 对幂等请求的网络错误自动重试；重试耗尽或关闭时归一化错误响应；
+     *              检测凭证失效（code 10041，被下线/被顶号）并触发应用层回调（成功/错误分支同检，仅触发一次）
+     */
+    let authExpiredFired = false
+    const notifyAuthExpired = () => {
+        if (authExpiredFired) return
+        authExpiredFired = true
+        onAuthExpired?.()
+    }
     axiosInstance.interceptors.response.use(
-        (response) => response,
+        (response) => {
+            const code = (response.data as { code?: number })?.code
+            if (code === 10041) notifyAuthExpired()
+            return response
+        },
         async (error) => {
             const config = error.config || {}
+
+            // 错误响应（HTTP 非 200）同样可能携带业务码 10041
+            const errorCode = (error.response?.data as { code?: number })?.code
+            if (errorCode === 10041) notifyAuthExpired()
 
             // 幂等请求的网络/超时错误自动重试（受 enableRetry 开关控制）
             if (enableRetry && isRetriableError(error) && isIdempotentMethod(config.method)) {

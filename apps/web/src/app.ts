@@ -2,7 +2,8 @@ import { registerAppCommands } from '@/commands/app.commands'
 import { scopeManager } from '@/commands/instance'
 import { env } from '@/env'
 import { useKeyboardShortcuts } from '@/hooks'
-import { useLocaleStore, useThemeStore } from '@nao-todo/presentation-identity'
+import router from '@/router'
+import { useLocaleStore, useThemeStore, useUserStore } from '@nao-todo/presentation-identity'
 import { initRequester, t, useResponsiveFlag } from '@nao-todo/shared'
 import { provide } from 'vue'
 import { APP_CONTEXT_KEY, type RouterLink } from './context'
@@ -11,7 +12,15 @@ const useApp = () => {
     // @initialize 执行 App 初始化动作
     ;(() => {
         // 初始化网络请求器
-        initRequester({ name: 'AxiosRequester', baseURL: env.apiBaseURL })
+        initRequester({
+            name: 'AxiosRequester',
+            baseURL: env.apiBaseURL,
+            // 凭证失效（code 10041：被下线/被同设备重登顶掉/会话过期）：清空登录态并跳转登录页
+            onAuthExpired: () => {
+                useUserStore().clearAuthData()
+                router.replace('/auth/signin')
+            }
+        })
         // 加载本地的用户主题偏好 - 应该是先应用本地数据在加载服务器数据
         const themeStore = useThemeStore()
         themeStore.loadSavedTheme()

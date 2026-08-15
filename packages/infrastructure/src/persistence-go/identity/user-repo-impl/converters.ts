@@ -1,12 +1,14 @@
 import {
     UpdateUserNicknameValueObject,
     UpdateUserPasswordValueObject,
-    UserEntity
+    UserEntity,
+    UserSessionValueObject
 } from '@nao-todo/domain-identity'
 import type {
     UpdateUserNicknameReq,
     UpdateUserPasswordReq,
-    UserProfileRes
+    UserProfileRes,
+    UserSessionRes
 } from '../../models/user'
 
 /**
@@ -56,4 +58,22 @@ export const updateUserPasswordValueObject2Req = (
         oldPassword: updateVO.oldPassword,
         newPassword: updateVO.newPassword
     }
+}
+
+/**
+ * 将会话响应转换为会话值对象
+ * @param res 会话响应
+ * @returns 会话值对象
+ */
+export const userSessionRes2ValueObject = (res: UserSessionRes): UserSessionValueObject => {
+    return new UserSessionValueObject(
+        res.id,
+        res.deviceId,
+        res.deviceType,
+        res.ip4,
+        res.region,
+        res.createdAt,
+        res.updatedAt,
+        res.current
+    )
 }

@@ -1,0 +1,67 @@
+name: Build and Release NaoTodo desktop app
+
+on:
+    push:
+        tags:
+            - 'v*.*.*'
+    workflow_dispatch:
+
+permissions:
+    contents: write
+
+jobs:
+    build:
+        strategy:
+            matrix:
+                include:
+                    - os: macos-latest
+                      platform: mac
+                    - os: windows-latest
+                      platform: win
+                    - os: ubuntu-latest
+                      platform: linux
+        runs-on: ${{ matrix.os }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 24.18.0
+
+            - name: Install pnpm
+              run: npm install -g pnpm@11.18.0
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Package Electron app
+              run: pnpm desktopapp dist --${{ matrix.platform }} --publish never
+              env:
+                  CSC_IDENTITY_AUTO_DISCOVERY: false
+
+            - name: Upload artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: ${{ matrix.platform }}-artifacts
+                  path: release/*
+                  if-no-files-found: ignore
+
+    release:
+        needs: build
+        runs-on: ubuntu-latest
+        steps:
+            - name: Download all artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  path: artifacts
+
+            - name: Create GitHub Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  files: artifacts/**/*
+                  draft: false
+                  prerelease: false
+              env:
+                  GITHUB_TOKEN: ${{ secrets.NAOTODO_GH_TOKEN }}
