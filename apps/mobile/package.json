@@ -8,7 +8,12 @@
         "preview": "rspeedy preview"
     },
     "dependencies": {
-        "@lynx-js/react": "^0.123.3"
+        "@lynx-js/lynx-ui": "^3.136.0",
+        "@lynx-js/react": "^0.123.3",
+        "@nao-todo/domain-identity": "workspace:*",
+        "@nao-todo/infrastructure": "workspace:*",
+        "@nao-todo/presentation-react": "workspace:*",
+        "@nao-todo/shared": "workspace:*"
     },
     "devDependencies": {
         "@lynx-js/preact-devtools": "5.0.1-20260716151326-abdb87c",

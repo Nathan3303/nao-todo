@@ -1,8 +1,6 @@
-import {
-    AuthSessionValueObject,
-    SignInValueObject,
-    SignUpValueObject
-} from '@nao-todo/domain-identity'
+import { AuthSessionValueObject } from '@nao-todo/domain-identity/src/domain/valueobjects/auth-session'
+import { SignInValueObject } from '@nao-todo/domain-identity/src/domain/valueobjects/signin'
+import { SignUpValueObject } from '@nao-todo/domain-identity/src/domain/valueobjects/signup'
 import type { Go } from '@nao-todo/shared'
 import type { SignInReq, SignInRes, SignUpReq } from '../../models/auth'
 

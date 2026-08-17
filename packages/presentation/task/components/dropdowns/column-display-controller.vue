@@ -24,7 +24,7 @@ const columnOptions = computed<InnerDropdownOptionVO[]>(() => {
     const options: InnerDropdownOptionVO[] = []
     Object.keys(props.columns).forEach((key) => {
         options.push({
-            icon: 'plus-circle',
+            icon: '',
             label: props.labelGetter(key as keyof TaskColumnOptions),
             value: key,
             checked: props.columns[key as keyof TaskColumnOptions]
@@ -43,6 +43,7 @@ const handleExecute = (id: string) => {
 <template>
     <inner-dropdown
         title="显示与隐藏列"
+        icon="plus-circle"
         @click.stop
         :suffix="count"
         :close-when-executed="false"

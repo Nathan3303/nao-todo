@@ -1,5 +1,6 @@
 import type { Requester, UseRequesterOptions, RequesterOpRtn } from './types'
 import useAxiosRequester from './axios'
+import { useLynxRequester } from './lynx'
 import { listLogs, listFailedIdempotentLogs, removeLog } from './operation-log'
 
 const emptyRequester: Requester = {
@@ -20,6 +21,11 @@ export const initRequester = (options: UseRequesterOptions) => {
     const { name, baseURL, enableRetry = true, onAuthExpired } = options
 
     switch (name) {
+        case 'LynxRequester': {
+            // Lynx 运行时（ReactLynx）：基于内置 Fetch API，无 axios/dexie/localStorage 依赖
+            requester = useLynxRequester(baseURL, onAuthExpired)
+            break
+        }
         case 'AxiosRequester':
         default: {
             requester = useAxiosRequester(baseURL, enableRetry, onAuthExpired)

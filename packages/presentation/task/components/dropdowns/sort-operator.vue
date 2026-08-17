@@ -24,7 +24,7 @@ const fieldOptions = computed(() => {
     const options: InnerDropdownOptionVO[] = []
     Object.keys(sortFieldLabels.value).forEach((key) => {
         options.push({
-            icon: 'plus-circle',
+            icon: '',
             label: columnLabels.value[key as keyof TaskColumnOptions]!,
             value: key,
             checked: props.modelValue.field === key

@@ -165,6 +165,7 @@
                     .todo-card__attrs {
                         gap: 0.25rem 1rem;
                         flex-wrap: wrap;
+                        padding-right: var(--nue-padding-sm);
 
                         .nue-div--basic-info {
                             flex: 0 0 auto;

@@ -6,7 +6,7 @@ export type RequesterConfig = { data?: Record<string, unknown> } | Record<string
 
 export type Requester = {
     _instance: AxiosInstance | null
-    name: 'AxiosRequester' | 'UniRequester' | ''
+    name: 'AxiosRequester' | 'UniRequester' | 'LynxRequester' | ''
     baseURL: string
     get: (url: string, config?: RequesterConfig) => Promise<RequesterOpRtn>
     post: (url: string, data?: unknown, config?: RequesterConfig) => Promise<RequesterOpRtn>

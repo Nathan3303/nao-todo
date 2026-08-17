@@ -586,3 +586,8 @@ export interface LocaleMessages {
 }
 
 export type LocaleKey = keyof LocaleMessages
+
+/**
+ * 支持的语言
+ */
+export type SupportedLocale = 'zh-CN' | 'en-US'

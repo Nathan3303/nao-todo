@@ -1,9 +1,9 @@
 import { createI18n } from 'vue-i18n'
-import type { LocaleMessages, LocaleKey } from './types'
+import type { LocaleMessages, LocaleKey, SupportedLocale } from './types'
 import zhCN from './zh-CN'
 import enUS from './en-US'
 
-export type SupportedLocale = 'zh-CN' | 'en-US'
+export type { SupportedLocale } from './types'
 
 const messages: Record<SupportedLocale, LocaleMessages> = {
     'zh-CN': zhCN,

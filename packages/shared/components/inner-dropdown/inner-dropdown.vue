@@ -40,7 +40,7 @@ import type { InnerDropdownEmits, InnerDropdownProps } from './types'
 defineOptions({ name: 'InnerDropdown' })
 const props = withDefaults(defineProps<InnerDropdownProps>(), {
     title: '选项标题',
-    icon: 'plus-circle',
+    icon: '',
     closeWhenExecuted: true,
     groupName: 'default',
     transparent: false
@@ -55,6 +55,15 @@ const suffix = computed(() => {
 </script>
 
 <style scoped>
+.nue-dropdown-item {
+    padding: var(--nue-padding-xs) !important;
+    gap: var(--nue-gap-xs) !important;
+
+    &:deep(.nue-dropdown-item__icon) {
+        font-size: var(--nue-text-df2) !important;
+    }
+}
+
 .nue-dropdown-item[data-disabled='true'] {
     background-color: var(--nue-primary-color-300);
     opacity: 0.6;

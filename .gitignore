@@ -39,3 +39,6 @@ apps/web/stats.html
 # 环境变量
 .env.local
 .env.*.local
+
+# 环境目录
+.reasonix/

@@ -1,0 +1,33 @@
+/**
+ * NaoTodo Mobile 设计令牌（深色主题）
+ * @description 设计概念：「深夜任务账本」——墨蓝深底 + 暖沙文字 + 琥珀强调。
+ *              克制的深色氛围，单一暖色强调，移动端优先的圆角与间距。
+ */
+:root {
+    /* 背景层级 */
+    --nao-bg: #0e1116;
+    --nao-bg-elevated: #151a21;
+    --nao-surface: #1b212b;
+    --nao-surface-hover: #232b37;
+    --nao-border: rgba(255, 255, 255, 0.08);
+
+    /* 文字层级（暖沙） */
+    --nao-text: #f3eee2;
+    --nao-text-secondary: #a3a9b4;
+    --nao-text-muted: #636b76;
+
+    /* 强调（琥珀）与状态 */
+    --nao-accent: #e8a84c;
+    --nao-accent-soft: rgba(232, 168, 76, 0.16);
+    --nao-accent-pressed: #d6953a;
+    --nao-danger: #e57368;
+    --nao-success: #7cc49a;
+
+    /* 圆角与间距 */
+    --nao-radius-sm: 12rpx;
+    --nao-radius-md: 24rpx;
+    --nao-radius-lg: 40rpx;
+    --nao-gap-sm: 12rpx;
+    --nao-gap: 24rpx;
+    --nao-gap-lg: 48rpx;
+}

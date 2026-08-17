@@ -28,9 +28,10 @@ const inputValue = computed({
     border: none;
     border-radius: 0;
     font-size: var(--nue-text-sm);
-    padding: 0 var(--nue-padding-sm);
+    padding: 0 var(--nue-padding-xs);
     height: var(--nue-box-size-xs);
-    gap: var(--nue-gap-2xs);
+    gap: var(--nue-gap-xs);
     color: var(--nue-primary-color-900);
+    opacity: 0.8;
 }
 </style>
