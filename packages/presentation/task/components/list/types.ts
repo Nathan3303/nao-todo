@@ -1,4 +1,4 @@
-import type { ComputedRef } from 'vue'
+import type { ComputedRef, Ref } from 'vue'
 import type { TaskViewObject, TaskTagViewObject } from '@nao-todo/domain-task'
 import type { TaskColumnOptions, GetTasksSortOptions } from '@nao-todo/shared'
 
@@ -56,6 +56,9 @@ export type TaskListContext = {
     getProjectName: (projectId: string) => string
     deleteOrRestore: (taskId: TaskViewObject['id'], isDelete: boolean) => void
     handleClickTask: (task: TaskViewObject, taskIdx: number) => void
+    refreshKey: Ref<number>
+    startRefreshKeyIncrement: () => void
+    stopRefreshKeyIncrement: () => void
 }
 
 export type TaskListMultiSelectPayload = {

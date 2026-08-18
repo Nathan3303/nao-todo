@@ -1,4 +1,4 @@
-import { inject, provide, watch } from 'vue'
+import { inject, onMounted, onUnmounted, provide, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { TaskHandler } from '../../handlers'
 import { useTaskDetailsStore } from '../../stores'
@@ -9,6 +9,7 @@ import useCheckItems from './use-check-items'
 import useComments from './use-comments'
 import useSubTasks from './use-subtasks'
 import useTaskViewObject from './use-task-view-object'
+import { useMinuteTask } from '@nao-todo/shared'
 
 const useTaskDetails = (props: TaskDetailsProps) => {
     // @viewContext TaskDetailsPre context
@@ -110,6 +111,14 @@ const useTaskDetails = (props: TaskDetailsProps) => {
         router.push({ name: router.currentRoute.value.name, params: { taskId } })
     }
 
+    /**
+     * 重新渲染任务详情中的结束日期样式，通过 key 的变化来触发组件的重新渲染，判断条件为结束日期。
+     */
+    const refreshKey = ref(1)
+    const { run: startRefreshKeyIncrement, stop: stopRefreshKeyIncrement } = useMinuteTask(
+        () => (refreshKey.value += 1)
+    )
+
     // @watch 监听任务 ID
     watch(
         () => props.taskId,
@@ -117,10 +126,21 @@ const useTaskDetails = (props: TaskDetailsProps) => {
         { immediate: true }
     )
 
+    // @onmounted
+    onMounted(() => {
+        startRefreshKeyIncrement()
+    })
+
+    // @onunmounted
+    onUnmounted(() => {
+        stopRefreshKeyIncrement()
+    })
+
     // @provide 任务详情面板上下文
     provide(TASK_DETAILS_CONTEXT_KEY, {
         dialogManager,
         vo: task,
+        refreshKey,
         projects: avaliableProjects,
         tags: avaliableTags,
         checkItems,

@@ -5,7 +5,7 @@ import { inject } from 'vue'
 import type { UpdateTaskViewObject } from '@nao-todo/domain-task'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context'
 
-const { vo, closeDetails, updateTaskDetails } = inject(TASK_DETAILS_CONTEXT_KEY)!
+const { vo, refreshKey, closeDetails, updateTaskDetails } = inject(TASK_DETAILS_CONTEXT_KEY)!
 
 const switchState = () => {
     if (vo.value === null) return
@@ -28,6 +28,7 @@ const updateDateAndRemind = (updateVO: UpdateTaskViewObject) => {
                 :start-at="vo.startAt"
                 :end-at="vo.endAt"
                 :task="vo"
+                :refresh-key="refreshKey"
                 @update-all="updateDateAndRemind"
             />
         </nue-div>

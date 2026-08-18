@@ -38,6 +38,7 @@
         .nue-div--reminder__name-desc {
             flex-direction: column;
             gap: var(--nue-gap-2xs);
+            overflow: hidden;
 
             .nue-text--reminder__task-name {
                 font-size: var(--nue-text-df);
@@ -53,6 +54,7 @@
             .nue-text--reminder__task-desc {
                 font-size: var(--nue-text-sm);
                 color: var(--nue-primary-color-500);
+                word-break: break-all;
             }
         }
 

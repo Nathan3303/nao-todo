@@ -11,17 +11,13 @@ defineOptions({ name: 'TodoKanbanColumn' })
 const props = defineProps<TaskKanbanColumnProps>()
 
 const { states, columnTasks, fetchTasks, loadMore } = useKanbanColumn(props)
-const kanbanCtx = inject<TaskKanbanContext>(TASK_KANBAN_CONTEXT_KEY)
+const { refreshKey, tags, updatingTaskIds } = inject<TaskKanbanContext>(TASK_KANBAN_CONTEXT_KEY)!
 
 onMounted(() => fetchTasks())
 </script>
 
 <template>
-    <nue-container
-        v-if="kanbanCtx"
-        class="kanban-column"
-        :class="{ 'kanban-column--disabled': disabled }"
-    >
+    <nue-container class="kanban-column" :class="{ 'kanban-column--disabled': disabled }">
         <nue-header class="kanban-column__header">
             <task-state-info :state="category" />
             <nue-text color="var(--nue-primary-color-600)" size="var(--nue-text-xs)">
@@ -45,15 +41,15 @@ onMounted(() => fetchTasks())
                     <task-kanban-column-item
                         v-else
                         v-for="task in columnTasks"
-                        :key="task.id"
+                        :key="`${task.id}.${refreshKey}`"
                         :actived="task.id === $route.params.taskId"
                         :columns="columns"
                         :data-taskId="task.id"
                         :data-todoId="task.id"
                         :task="task"
-                        :tags="kanbanCtx.tags.value"
-                        :is-updating="kanbanCtx.updatingTaskIds.value.has(task.id)"
-                        :draggable="!kanbanCtx.updatingTaskIds.value.has(task.id)"
+                        :tags="tags"
+                        :is-updating="updatingTaskIds.has(task.id)"
+                        :draggable="!updatingTaskIds.has(task.id)"
                     />
                 </nue-content>
             </nue-main>

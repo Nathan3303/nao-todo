@@ -1,9 +1,9 @@
-import { computed, provide, watch } from 'vue'
+import { computed, onMounted, onUnmounted, provide, ref, watch } from 'vue'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import type { TaskColumnOptions } from '@nao-todo/shared'
 import type { TaskListContext, TaskListEmits, TaskListProps } from './types'
 import useMultiSelect from './use-multi-select'
-import { isTaskExpired } from '@nao-todo/shared'
+import { isTaskExpired, useMinuteTask } from '@nao-todo/shared'
 
 export const TASK_LIST_CONTEXT_KEY = Symbol('TASK_LIST_CONTEXT_KEY')
 
@@ -58,6 +58,22 @@ export const useTaskList = (props: TaskListProps, emit: TaskListEmits) => {
         }
     )
 
+    // @hook 刷新 key
+    const refreshKey = ref(1)
+    const { run: startRefreshKeyIncrement, stop: stopRefreshKeyIncrement } = useMinuteTask(
+        () => (refreshKey.value += 1)
+    )
+
+    // @onmounted
+    onMounted(() => {
+        startRefreshKeyIncrement()
+    })
+
+    // @onunmounted
+    onUnmounted(() => {
+        stopRefreshKeyIncrement()
+    })
+
     // @provide 任务列表上下文
     provide<TaskListContext>(TASK_LIST_CONTEXT_KEY, {
         columns: computed(() => props.columns),
@@ -76,6 +92,9 @@ export const useTaskList = (props: TaskListProps, emit: TaskListEmits) => {
         clearMultiSelect,
         getProjectName: props.projectNameGetter,
         deleteOrRestore,
-        handleClickTask
+        handleClickTask,
+        refreshKey,
+        startRefreshKeyIncrement,
+        stopRefreshKeyIncrement
     })
 }

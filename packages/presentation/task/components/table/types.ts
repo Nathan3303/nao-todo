@@ -1,4 +1,4 @@
-import type { ComputedRef } from 'vue'
+import type { ComputedRef, Ref } from 'vue'
 import type { TaskViewObject, TaskTagViewObject } from '@nao-todo/domain-task'
 import type { GetTasksOptions, GetTasksSortOptions, TaskColumnOptions } from '@nao-todo/shared'
 
@@ -97,6 +97,9 @@ export type TaskTableContext = {
     resetTableConfig: () => void
     // handleUpdatePage: (page: number) => void
     // handleUpdatePerPage: (limit: number) => void
+    refreshKey: Ref<number>
+    startRefreshKeyIncrement: () => void
+    stopRefreshKeyIncrement: () => void
 }
 
 export type TaskTableMultiSelectPayload = {

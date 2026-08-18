@@ -10,6 +10,7 @@ import {
     TagCreatorDialog,
     TagManagerDialog,
     TagUpdaterDialog,
+    TagColorUpdaterDialog,
     useTagsStore
 } from '@nao-todo/presentation/tag'
 import {
@@ -60,6 +61,11 @@ const { tags: avaliableTags } = storeToRefs(useTagsStore())
         :subscriber="appSubscriber"
     />
     <tag-updater-dialog
+        :tag-use-case="tagUseCase"
+        :dialog-manager="appDialogManager"
+        :subscriber="appSubscriber"
+    />
+    <tag-color-updater-dialog
         :tag-use-case="tagUseCase"
         :dialog-manager="appDialogManager"
         :subscriber="appSubscriber"

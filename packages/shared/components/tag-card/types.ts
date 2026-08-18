@@ -1,3 +1,8 @@
-export type TagCardVO = { id: string; name: string; color: string }
-
-export type TagCardProps = { tag: TagCardVO }
+export type TagCardProps = {
+    tag: {
+        id: string
+        name: string
+        color: string
+        description: string
+    }
+}

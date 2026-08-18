@@ -19,6 +19,7 @@ export type TaskDetailsContext = {
     dialogManager: DialogManager
 
     vo: Ref<TaskDetailsViewObject | null>
+    refreshKey: Ref<number>
 
     projects: ComputedRef<TaskProjectViewObject[]>
     tags: Ref<TaskTagViewObject[]>

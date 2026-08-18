@@ -6,6 +6,7 @@ export type TaskDateSelectorProps = {
     startAt?: string | null
     endAt?: string | null
     task?: TaskViewObject
+    refreshKey?: number
 }
 
 // 任务日期选择器事件

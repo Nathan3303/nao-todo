@@ -13,6 +13,7 @@ const {
     columns,
     tagBarClamped,
     small,
+    refreshKey,
     isInMultiSelectRange,
     getProjectName,
     showMultiSelectPanel,
@@ -27,13 +28,13 @@ const {
             v-for="(task, idx) in tasks"
             theme="todo-list-main__row"
             :class="{ 'todo-list-main__row--small': small }"
-            :key="task.id"
+            :key="`${task.id}.${refreshKey}`"
             :data-done="task.state === 'done'"
             :data-selected="isInMultiSelectRange(idx)"
             :data-deleted="task.isDeleted"
             @click.stop.exact="handleClickTask(task, idx)"
             @click.stop.shift.exact="showMultiSelectPanel(idx)"
-            @mousedown="(event) => event.shiftKey && event.preventDefault()"
+            @mousedown="(event: MouseEvent) => event.shiftKey && event.preventDefault()"
         >
             <nue-div theme="todo-list-main__row__first">
                 <nue-div theme="todo-list__main__row__first__name-wrapper">

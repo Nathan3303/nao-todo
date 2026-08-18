@@ -2,10 +2,11 @@
 import { onMounted, ref } from 'vue'
 import {
     TagBoard,
-    TagColorDot,
     type DialogInstanceType,
     useDialogWrapper,
-    TAG_MANAGER_DIALOG_KEY
+    TAG_MANAGER_DIALOG_KEY,
+    TAG_UPDATER_DIALOG_KEY,
+    RuleHint
 } from '@nao-todo/shared'
 import useTagManager from './use-tag-manager'
 import { TagManagerDialogProps } from './types'
@@ -30,44 +31,35 @@ onMounted(() => {
 <template>
     <nue-dialog v-model="visible" ref="dialogRef" theme="large" title="标签管理">
         <nue-container id="TagManager" theme="in-dialog">
+            <rule-hint
+                icon="priority-2"
+                title="关于删除标签"
+                content="删除标签后无法恢复，所有标记了该标签的任务都将失去此标签，请谨慎操作。"
+                variant="warning"
+            />
             <nue-header class="tag-manager-header">
-                <nue-div align="center" gap="0.75rem">
-                    <nue-input
-                        v-model="states.filterInfo.name"
-                        icon="search"
-                        theme="small"
-                        clearable
-                        placeholder="搜索标签"
-                        style="width: 200px"
-                    />
-                </nue-div>
-                <nue-div align="center" gap="0.75rem">
-                    <nue-tooltip
-                        size="small"
-                        theme="danger"
-                        content="删除标签后无法恢复，所有标记了该标签的任务都将失去此标签。请谨慎操作。"
-                        placement="bottom-center"
-                    >
-                        <nue-div align="center" gap="0.25rem" class="danger-trigger">
-                            <nue-icon name="warning" size="14px" />
-                            <nue-text size="12px">删除功能重要提醒</nue-text>
-                        </nue-div>
-                    </nue-tooltip>
-                    <nue-divider vertical />
-                    <nue-button icon="plus-circle" theme="small,primary" @click="openTagCreator">
-                        新增标签
-                    </nue-button>
-                </nue-div>
+                <nue-input
+                    v-model="states.filterInfo.name"
+                    icon="search"
+                    theme="small"
+                    clearable
+                    placeholder="搜索标签"
+                    style="width: 200px"
+                />
+                <nue-button icon="plus-circle" theme="small,primary" @click="openTagCreator">
+                    新增标签
+                </nue-button>
             </nue-header>
             <nue-divider />
             <nue-main>
                 <nue-content fill style="overflow: hidden">
                     <tag-board :tags="filteredTags" @recolor="openTagColorUpdater">
                         <template #ops="{ tag }">
-                            <nue-tooltip content="修改标签提示色" size="small">
-                                <tag-color-dot
-                                    :color="tag.color"
-                                    @click="openTagColorUpdater(tag.id)"
+                            <nue-tooltip content="修改标签" size="small">
+                                <nue-button
+                                    icon="edit"
+                                    theme="pure,pure-icon"
+                                    @click.stop="dialogManager.open(TAG_UPDATER_DIALOG_KEY, tag.id)"
                                 />
                             </nue-tooltip>
                             <nue-tooltip content="删除标签" size="small">

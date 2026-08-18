@@ -1,4 +1,4 @@
-import { computed, provide, watch } from 'vue'
+import { computed, provide, ref, watch } from 'vue'
 import type {
     ColumnReorderPayload,
     ColumnResizePayload,
@@ -7,7 +7,12 @@ import type {
     TaskTableProps
 } from './types'
 import type { TaskViewObject } from '@nao-todo/domain-task'
-import { type GetTasksSortOptions, type TaskColumnOptions, isTaskExpired } from '@nao-todo/shared'
+import {
+    type GetTasksSortOptions,
+    type TaskColumnOptions,
+    isTaskExpired,
+    useMinuteTask
+} from '@nao-todo/shared'
 import useMultiSelect from './use-multi-select'
 import useColumnConfig from './use-column-config'
 
@@ -34,6 +39,12 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         syncFromProps,
         pinnedColumn
     } = useColumnConfig(initialConfig, tableId)
+
+    // @hook 刷新 key
+    const refreshKey = ref(1)
+    const { run: startRefreshKeyIncrement, stop: stopRefreshKeyIncrement } = useMinuteTask(
+        () => (refreshKey.value += 1)
+    )
 
     // @computed 计算标签显示数量 - 用于响应式变化时变化标签显示个数
     const tagBarClamped = computed(() => {
@@ -132,6 +143,9 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         deleteOrRestore,
         columnReorder: handleColumnReorder,
         columnResize: handleColumnResize,
-        resetTableConfig: handleResetTableConfig
+        resetTableConfig: handleResetTableConfig,
+        refreshKey,
+        startRefreshKeyIncrement,
+        stopRefreshKeyIncrement
     })
 }

@@ -23,8 +23,9 @@ const remindSetterKey = ref(0)
 
 // @computed 结束时间是否过期（colored 时高亮）
 const isEndExpired = computed(() => {
-    if (!props.colored || !endAtLocal.value) return false
-    return dayjs(endAtLocal.value).isBefore(dayjs())
+    const { endAt, refreshKey } = props
+    if (!endAt) return false
+    return refreshKey && dayjs(endAt).isBefore(dayjs())
 })
 const endPickerTheme = computed(() => ({ small: true, expired: isEndExpired.value }))
 
@@ -90,7 +91,7 @@ const handleCancel = () => {
     <nue-dropdown ref="dropdownRef" placement="bottom-start" @before-open="handleBeforeOpen">
         <!-- 触发按钮 -->
         <template #trigger="{ trigger }">
-            <nue-button theme="small" @click="trigger">
+            <nue-button :theme="{ small: true, expired: isEndExpired }" @click="trigger">
                 <nue-div
                     gap="var(--nue-gap-2xs)"
                     :divider="triggerText.remind ? ',' : null"
@@ -152,6 +153,13 @@ const handleCancel = () => {
     </nue-dropdown>
 </template>
 
+<style scoped>
+.nue-dropdown-wrapper .nue-button--expired {
+    --nue-button-base-color: var(--nue-error-color-20);
+    --nue-button-color: var(--nue-error-color-90);
+}
+</style>
+
 <style>
 /* 任务日期选择器下拉面板（NueDropdown 内容经 Teleport 渲染至 body，需全局样式） */
 .task-date-selector-panel {
@@ -183,6 +191,11 @@ const handleCancel = () => {
         .nue-button {
             flex: 1;
         }
+    }
+
+    .nue-button--expired {
+        --nue-button-base-color: var(--nue-error-color-20);
+        --nue-button-color: var(--nue-error-color-90);
     }
 }
 </style>
