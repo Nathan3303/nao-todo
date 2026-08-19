@@ -271,6 +271,26 @@ describe('LocalTaskRepoImpl', () => {
         expect(result!.taskEntities.map((t) => t.name).sort()).toEqual(['今日到期', '明日到期'])
     })
 
+    it('deletedAt 为空串（远程拉取未删记录）时按未删除处理', async () => {
+        const repo = new LocalTaskRepoImpl()
+        const [task, createErr] = await repo.create(makeTaskVO({ name: '远程任务' }))
+        expect(createErr).toBeNull()
+        // 模拟远程同步拉取写入：deletedAt 为 ''（后端空串表示未删）
+        const record = await localDatabase.tasks.get(task!.id)
+        expect(record).toBeDefined()
+        await localDatabase.tasks.put({ ...record!, deletedAt: '' })
+
+        // 默认查询显示（未删）
+        const [defaultResult] = await repo.list()
+        expect(defaultResult!.taskEntities.map((t) => t.name)).toContain('远程任务')
+        // isDeleted=false 匹配
+        const [notDeleted] = await repo.list('isDeleted=false')
+        expect(notDeleted!.taskEntities.map((t) => t.name)).toContain('远程任务')
+        // isDeleted=true 不匹配
+        const [deleted] = await repo.list('isDeleted=true')
+        expect(deleted!.taskEntities.map((t) => t.name)).not.toContain('远程任务')
+    })
+
     it('未传 parentTaskId 时默认只返回顶层任务（子任务排除）', async () => {
         const repo = new LocalTaskRepoImpl()
         const [parent] = await repo.create(makeTaskVO({ name: '顶层任务' }))
@@ -523,6 +543,38 @@ describe('LocalTagRepoImpl 创建与列表', () => {
         expect(listErr).toBeNull()
         expect(listResult!.map((tag) => tag.name).sort()).toEqual(['工作', '生活'])
         expect(listResult!.every((tag) => tag.id !== '')).toBe(true)
+    })
+
+    it('删除标签后 list 不再返回（默认排除已删，防侧边栏 TagSmartList 展示）', async () => {
+        const repo = new LocalTagRepoImpl()
+        const [tag, createErr] = await repo.create(makeTagEntity('临时标签'))
+        expect(createErr).toBeNull()
+        const [before] = await repo.list()
+        expect(before!.length).toBe(1)
+
+        const delErr = await repo.deleteById(tag!.id)
+        expect(delErr).toBeNull()
+
+        const [after] = await repo.list()
+        expect(after!.length).toBe(0)
+        // getById 仍可取回已删标签（供删除反悔/恢复场景）；任务关联渲染走 list 过滤后的 store，
+        // 已删标签关联不再展示（与远程 GET /tags/ 不返回已删语义一致）
+        const [byId, byIdErr] = await repo.getById(tag!.id)
+        expect(byIdErr).toBeNull()
+        expect(byId!.deletedAt).not.toBeNull()
+    })
+
+    it('deletedAt 为空串（远程拉取未删记录）时 list 正常展示', async () => {
+        const repo = new LocalTagRepoImpl()
+        const [tag, createErr] = await repo.create(makeTagEntity('远程标签'))
+        expect(createErr).toBeNull()
+        // 模拟远程同步拉取写入：deletedAt 为 ''（后端空串表示未删）
+        const record = await localDatabase.tags.get(tag!.id)
+        expect(record).toBeDefined()
+        await localDatabase.tags.put({ ...record!, deletedAt: '' })
+
+        const [listResult] = await repo.list()
+        expect(listResult!.map((t) => t.name)).toContain('远程标签')
     })
 
     it('getById 按生成的 id 可取回', async () => {

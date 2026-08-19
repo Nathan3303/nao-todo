@@ -4,6 +4,7 @@ import { tagEntityToRecord, tagRecordToEntity } from '../converters/tag'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
 import { localSession } from '../session/local-session'
+import { isNotDeleted } from '../utils'
 import { snowflake } from '../../persistence-sync/snowflake'
 import { syncTracker } from '../../persistence-sync/sync-tracker'
 
@@ -80,7 +81,13 @@ export class LocalTagRepoImpl implements TagRepository {
 
     async list(): GoAsync<TagEntity[]> {
         try {
-            const records = await this.db.tags.where('userId').equals(this.currentUserId).toArray()
+            // 对齐远程 GET /tags/ 语义：默认只返回未删除标签（deletedAt 为空），
+            // 否则侧边栏 TagSmartList 会展示已删除标签
+            const records = await this.db.tags
+                .where('userId')
+                .equals(this.currentUserId)
+                .filter((r) => isNotDeleted(r.deletedAt))
+                .toArray()
             const entities: TagEntity[] = []
             for (const record of records) {
                 entities.push(await tagRecordToEntity(record))

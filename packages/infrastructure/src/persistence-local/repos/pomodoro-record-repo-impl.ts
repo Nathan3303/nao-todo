@@ -8,6 +8,7 @@ import { pomodoroRecordEntityToItem, pomodoroRecordItemToEntity } from '../conve
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
 import { localSession } from '../session/local-session'
+import { isNotDeleted } from '../utils'
 import { snowflake } from '../../persistence-sync/snowflake'
 import { syncTracker } from '../../persistence-sync/sync-tracker'
 
@@ -89,9 +90,9 @@ export class LocalPomodoroRecordRepoImpl implements PomodoroRecordRepository {
                 .equals(this.currentUserId)
                 .toArray()
             if (params.get('isDeleted') === 'true') {
-                records = records.filter((r) => r.deletedAt !== null)
+                records = records.filter((r) => !isNotDeleted(r.deletedAt))
             } else if (params.get('isDeleted') === 'false') {
-                records = records.filter((r) => r.deletedAt === null)
+                records = records.filter((r) => isNotDeleted(r.deletedAt))
             }
             // 常用专注详情：按 pomodoroId 过滤（未传则不过滤，兼容其他调用）
             const pomodoroId = params.get('pomodoroId')

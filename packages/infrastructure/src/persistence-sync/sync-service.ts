@@ -39,6 +39,7 @@ import { pomodoroRecordRes2Entity, pomodoroRes2Entity } from '../persistence-go/
 import { setServerTimeOffset } from './sync-config'
 import { syncTracker } from './sync-tracker'
 import { syncStatus } from './sync-status'
+import { isNotDeleted } from '../persistence-local/utils'
 
 // ---------------------------------------------------------------------------
 // 同步表配置（7 张业务表；preferences 随父实体、users/userConfigs 走远程用户域，均不入同步）
@@ -234,8 +235,34 @@ export class SyncService {
     /** 同步操作串行队列（pull/push 互斥，避免在途旧版 push 覆盖远程新版，见审查报告缺陷 3） */
     private opChain: Promise<unknown> = Promise.resolve()
 
+    /** 拉取写入本地数据后的回调（装配层注入：通知视图刷新） */
+    private dataChangedListener: (() => void) | null = null
+
+    /** 会话失效回调（业务码 10041：凭证验证失败 → 装配层清 JWT 回登录页） */
+    private sessionExpiredListener: (() => void) | null = null
+
     constructor(requester?: Requester) {
         this.injectedRequester = requester ?? null
+    }
+
+    /** 注册拉取写入回调（数据变化 → 视图刷新，见 data-sync-plan.md §8 Phase 3） */
+    setDataChangedListener(listener: () => void): void {
+        this.dataChangedListener = listener
+    }
+
+    /** 注册会话失效回调（10041：用户凭证验证失败） */
+    setSessionExpiredListener(listener: () => void): void {
+        this.sessionExpiredListener = listener
+    }
+
+    /** 判定业务码是否为会话失效（用户凭证验证失败） */
+    private isSessionExpiredCode(code: unknown): boolean {
+        return code === 10041
+    }
+
+    /** 触发会话失效回调（不删除本地数据，仅通知装配层清 JWT 回登录页） */
+    private notifySessionExpired(): void {
+        this.sessionExpiredListener?.()
     }
 
     /** 排队执行同步操作（前序失败不阻塞后续） */
@@ -284,10 +311,17 @@ export class SyncService {
     async start(): Promise<void> {
         return this.enqueue(async () => {
             const userId = this.currentUserId()
-            if (!userId) return
+            if (!userId) {
+                // 无会话：标记同步结束（空计数），避免调用方（如 InitialSyncGate）永久停留在同步中
+                await this.refreshCounts()
+                return
+            }
             // 注销反悔期：deletionSchedules 有调度记录则跳过启动
             const schedule = await localDatabase.deletionSchedules.get(userId)
-            if (schedule) return
+            if (schedule) {
+                await this.refreshCounts()
+                return
+            }
             await this.pullAllInner()
             await this.pushAllInner()
         })
@@ -333,6 +367,13 @@ export class SyncService {
         // 不识别会被当作"空数据成功"静默吞掉（见审查报告缺陷 1）
         const raw = response as { code?: unknown; data?: unknown } | undefined
         const data = raw?.data as { data?: unknown; serverTime?: string | number } | undefined
+        // 业务码 10041（用户凭证验证失败）：HTTP 可能仍为 200，须在归一化检测前识别
+        if (this.isSessionExpiredCode((data as { code?: unknown })?.code)) {
+            console.error('[sync] 拉取被拒绝：用户凭证验证失败（10041）')
+            this.notifySessionExpired()
+            await this.refreshCounts('登录已过期，请重新登录')
+            return
+        }
         if (typeof raw?.code === 'string' || data?.data === null) {
             console.error('[sync] 拉取归一化错误（断网/超时）', raw?.code)
             await this.refreshCounts('拉取失败：网络错误')
@@ -342,12 +383,25 @@ export class SyncService {
         // 后端结构：response.data = { code, message, data: { data: { [table]: { items, total, nextCursor, nextCursorId } } }, serverTime }
         const inner = (data?.data as { data?: Record<string, PullTableResult> } | undefined)?.data
         const results = inner ?? {}
+        let writtenCount = 0
         for (const config of SYNC_TABLES) {
             const result = results[config.table]
             if (!result?.items) continue
-            await this.applyPullBatch(config, result)
+            writtenCount += await this.applyPullBatch(config, result)
         }
         await this.refreshCounts()
+        // 有实际写入（新增/覆盖/删除墓碑）→ 通知视图刷新（store 缓存绕过，需事件驱动重拉）
+        if (writtenCount > 0) {
+            this.notifyDataChanged()
+        }
+    }
+
+    /** 派发数据变化事件（防御无 window 环境） */
+    private notifyDataChanged(): void {
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('nao-todo:data-changed'))
+        }
+        this.dataChangedListener?.()
     }
 
     /** 刷新待推送/失败计数并结束同步状态（供 UI 展示） */
@@ -364,11 +418,16 @@ export class SyncService {
         })
     }
 
-    /** 应用一批拉取记录（LWW 判定后加密落库，直连表不触发 markDirty） */
-    private async applyPullBatch(config: SyncTableConfig, result: PullTableResult): Promise<void> {
+    /** 应用一批拉取记录（LWW 判定后加密落库，直连表不触发 markDirty）
+     *  @returns 本批实际写入（含覆盖/删除墓碑）的记录数 */
+    private async applyPullBatch(
+        config: SyncTableConfig,
+        result: PullTableResult
+    ): Promise<number> {
         const userId = this.currentUserId()
-        if (!userId) return
+        if (!userId) return 0
         const records = result.items ?? []
+        let written = 0
         for (const res of records) {
             const entity = config.resToEntity(res) as Record<string, unknown>
             const id = String((entity.id as string | number) ?? '')
@@ -383,11 +442,13 @@ export class SyncService {
                     // 远程胜：覆盖本地 + 移除队列项（本地修改作废）
                     await this.tableOf(config).put(await config.entityToRecord(entity, userId))
                     await syncTracker.removeQueued(config.table, id)
+                    written += 1
                 }
                 // 本地胜：跳过（保留 queue，交给推送）
             } else {
                 // 本地未改：远程胜直接覆盖（含删除墓碑）
                 await this.tableOf(config).put(await config.entityToRecord(entity, userId))
+                written += 1
             }
         }
         // 推进游标（keyset：只前进不后退；尾页无 nextCursor 时推进到本批最大 updatedAt，
@@ -406,6 +467,7 @@ export class SyncService {
             lastPullId: result.nextCursorId ?? '',
             updatedAt: new Date().toISOString()
         })
+        return written
     }
 
     /**
@@ -423,7 +485,7 @@ export class SyncService {
             const records = await localDatabase.pomodoroRecords
                 .where('pomodoroId')
                 .equals(id)
-                .filter((r) => r.userId === uid && r.deletedAt === null)
+                .filter((r) => r.userId === uid && isNotDeleted(r.deletedAt))
                 .toArray()
             const total = records.reduce((sum, r) => sum + (r.duration ?? 0), 0)
             if (pomodoro.totalDuration !== total) {
@@ -509,6 +571,14 @@ export class SyncService {
         }
         // 归一化网络错误检测（断网/超时 resolve 场景，见审查报告缺陷 1）
         const raw = response as { code?: unknown; data?: unknown }
+        // 业务码 10041（用户凭证验证失败）：HTTP 可能仍为 200，须在归一化检测前识别
+        const dataRaw = raw?.data as { code?: unknown } | undefined
+        if (this.isSessionExpiredCode(dataRaw?.code)) {
+            console.error('[sync] 推送被拒绝：用户凭证验证失败（10041）')
+            this.notifySessionExpired()
+            await this.refreshCounts('登录已过期，请重新登录')
+            return
+        }
         if (typeof raw?.code === 'string') {
             console.error('[sync] 推送归一化错误（断网/超时）', raw?.code)
             for (const item of queue) {

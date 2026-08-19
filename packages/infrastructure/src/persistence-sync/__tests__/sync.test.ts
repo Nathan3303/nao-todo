@@ -445,4 +445,141 @@ describe('SyncService', () => {
         expect(item).toBeDefined()
         expect(item!.localUpdatedAt).toBe('2025-01-01T00:00:00Z')
     })
+
+    it('拉取返回业务码 10041（用户凭证验证失败）：触发会话失效回调并提示重新登录', async () => {
+        const service = new SyncService(
+            mockRequester(() => ({
+                code: 10041,
+                message: '用户凭证验证失败',
+                data: null
+            }))
+        )
+        let expiredCalled = false
+        service.setSessionExpiredListener(() => {
+            expiredCalled = true
+        })
+        await service.pullAll()
+        expect(expiredCalled).toBe(true)
+        const state = syncStatus.get()
+        expect(state.lastError).toBe('登录已过期，请重新登录')
+    })
+
+    it('推送返回业务码 10041（用户凭证验证失败）：触发会话失效回调并提示重新登录', async () => {
+        const taskRepo = newLocalTaskRepository()
+        const [task, taskErr] = await taskRepo.create(
+            new CreateTaskValueObject(
+                null,
+                null,
+                '任务',
+                '',
+                'todo',
+                'medium',
+                null,
+                null,
+                'project-1',
+                [],
+                null,
+                'none',
+                null,
+                []
+            )
+        )
+        expect(taskErr).toBeNull()
+        const taskId = (task as { id: string }).id
+        await syncTracker.markDirty('tasks', taskId, 'upsert', new Date().toISOString())
+
+        const service = new SyncService(
+            mockRequester(() => ({
+                code: 10041,
+                message: '用户凭证验证失败'
+            }))
+        )
+        let expiredCalled = false
+        service.setSessionExpiredListener(() => {
+            expiredCalled = true
+        })
+        await service.pushAll()
+        expect(expiredCalled).toBe(true)
+        const state = syncStatus.get()
+        expect(state.lastError).toBe('登录已过期，请重新登录')
+        // 失败不累加 retryCount（凭证失效非网络错误，避免被 5 次上限永久暂停）
+        const [item] = await syncTracker.listDirty()
+        expect(item).toBeDefined()
+        expect(item!.retryCount).toBe(0)
+    })
+
+    it('拉取有实际写入时触发数据变化回调（通知视图刷新）', async () => {
+        const now = new Date().toISOString()
+        const remoteProject = {
+            id: 'p-remote',
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+            name: '远程项目',
+            description: '',
+            archivedAt: null,
+            deactivedAt: null,
+            sortId: 0
+        }
+        const service = new SyncService(
+            mockRequester((url) => {
+                if (url === '/sync/pull') {
+                    return {
+                        data: {
+                            data: {
+                                projects: { items: [remoteProject], nextCursor: null },
+                                tags: { items: [], nextCursor: null },
+                                tasks: { items: [], nextCursor: null },
+                                taskCheckItems: { items: [], nextCursor: null },
+                                taskComments: { items: [], nextCursor: null },
+                                pomodoros: { items: [], nextCursor: null },
+                                pomodoroRecords: { items: [], nextCursor: null }
+                            }
+                        },
+                        serverTime: Date.now()
+                    }
+                }
+                return { data: { results: [] }, serverTime: Date.now() }
+            })
+        )
+        let dataChanged = false
+        service.setDataChangedListener(() => {
+            dataChanged = true
+        })
+        await service.pullAll()
+        expect(dataChanged).toBe(true)
+        // 拉取落库成功
+        const record = await localDatabase.projects.get('p-remote')
+        expect(record).toBeDefined()
+    })
+
+    it('拉取无实际写入（空数据）时不触发数据变化回调', async () => {
+        const service = new SyncService(
+            mockRequester((url) => {
+                if (url === '/sync/pull') {
+                    return {
+                        data: {
+                            data: {
+                                projects: { items: [], nextCursor: null },
+                                tags: { items: [], nextCursor: null },
+                                tasks: { items: [], nextCursor: null },
+                                taskCheckItems: { items: [], nextCursor: null },
+                                taskComments: { items: [], nextCursor: null },
+                                pomodoros: { items: [], nextCursor: null },
+                                pomodoroRecords: { items: [], nextCursor: null }
+                            }
+                        },
+                        serverTime: Date.now()
+                    }
+                }
+                return { data: { results: [] }, serverTime: Date.now() }
+            })
+        )
+        let dataChanged = false
+        service.setDataChangedListener(() => {
+            dataChanged = true
+        })
+        await service.pullAll()
+        expect(dataChanged).toBe(false)
+    })
 })

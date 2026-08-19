@@ -17,6 +17,7 @@ import {
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
 import { localSession } from '../session/local-session'
+import { isNotDeleted } from '../utils'
 import { snowflake } from '../../persistence-sync/snowflake'
 import { syncTracker } from '../../persistence-sync/sync-tracker'
 
@@ -176,7 +177,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
         const subtasks = await this.db.tasks
             .where('parentTaskId')
             .equals(taskId)
-            .filter((r) => r.userId === this.currentUserId && r.deletedAt === null)
+            .filter((r) => r.userId === this.currentUserId && isNotDeleted(r.deletedAt))
             .toArray()
         for (const sub of subtasks) {
             const subEntity = await taskRecordToEntity(sub)
@@ -190,7 +191,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
         const checkItems = await this.db.taskCheckItems
             .where('taskId')
             .equals(taskId)
-            .filter((r) => r.userId === this.currentUserId && r.deletedAt === null)
+            .filter((r) => r.userId === this.currentUserId && isNotDeleted(r.deletedAt))
             .toArray()
         for (const item of checkItems) {
             const itemEntity = await taskCheckItemRecordToEntity(item)
@@ -205,7 +206,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
         const comments = await this.db.taskComments
             .where('taskId')
             .equals(taskId)
-            .filter((r) => r.userId === this.currentUserId && r.deletedAt === null)
+            .filter((r) => r.userId === this.currentUserId && isNotDeleted(r.deletedAt))
             .toArray()
         for (const comment of comments) {
             const commentEntity = await taskCommentRecordToEntity(comment)
@@ -241,9 +242,9 @@ export class LocalTaskRepoImpl implements TaskRepository {
             // 1. 结构字段过滤（明文，走索引语义；先按当前用户隔离）
             let records = await this.db.tasks.where('userId').equals(this.currentUserId).toArray()
             if (query.isDeleted === 'true') {
-                records = records.filter((r) => r.deletedAt !== null)
+                records = records.filter((r) => !isNotDeleted(r.deletedAt))
             } else if (query.isDeleted === 'false') {
-                records = records.filter((r) => r.deletedAt === null)
+                records = records.filter((r) => isNotDeleted(r.deletedAt))
             }
             if (query.isArchived === 'true') {
                 records = records.filter((r) => r.archivedAt !== null)

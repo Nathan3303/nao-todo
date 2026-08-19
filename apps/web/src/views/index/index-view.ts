@@ -27,7 +27,7 @@ import {
     useResponsiveAside,
     useSubscriber
 } from '@nao-todo/shared'
-import { inject, provide, ref } from 'vue'
+import { inject, onUnmounted, provide, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { INDEX_VIEW_CONTEXT_KEY } from './context'
 
@@ -62,6 +62,15 @@ const useIndexView = () => {
     // @subscriber 事件订阅器
     const appDialogManager = useDialogManager()
     const appSubscriber = useSubscriber()
+
+    // 桌面端同步拉取写入本地库后刷新视图（SyncService 直连表落库绕过 store，
+    // 经 'nao-todo:data-changed' 事件触发 RefreshData 重拉；Web 端无 SyncService，事件永不触发）
+    // 卸载时移除监听，避免路由离开再进入时重复注册导致多次刷新
+    if (typeof window !== 'undefined') {
+        const handleDataChanged = () => appSubscriber.emit('RefreshData')
+        window.addEventListener('nao-todo:data-changed', handleDataChanged)
+        onUnmounted(() => window.removeEventListener('nao-todo:data-changed', handleDataChanged))
+    }
 
     // @handlers 处理层
     const projectHandler = new ProjectHandler(projectUseCase, projectsStore, appSubscriber)
