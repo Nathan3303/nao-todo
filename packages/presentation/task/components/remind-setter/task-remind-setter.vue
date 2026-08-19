@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import useTaskRemindSetter from './use-task-remind-setter'
-import { TASK_REMIND_REPEAT_WAYS, TASK_REMIND_REPEAT_DAYS } from './constants'
+import {
+    TASK_REMIND_REPEAT_MAP,
+    TASK_REMIND_REPEAT_WAYS,
+    TASK_REMIND_REPEAT_DAYS
+} from './constants'
 import type { TaskRemindSetterProps, TaskRemindSetterEmits } from './types'
 
 defineOptions({ name: 'TaskRemindSetter' })
@@ -17,6 +21,7 @@ const {
     onHourBlur,
     onMinuteBlur,
     repeatDayText,
+    repeatWayText,
     handleRepeatWayDropdownExecute,
     handleRepeatDayDropdownExecute
 } = useTaskRemindSetter(props, emits)
@@ -24,22 +29,15 @@ const {
 
 <template>
     <nue-div theme="task-remind-setter">
+        <nue-text theme="title">提醒</nue-text>
         <!-- 提醒开关 -->
-        <nue-div
-            justify="space-between"
-            align="center"
-            style="height: var(--nue-box-size-xs); padding: 0 var(--nue-padding-sm)"
-        >
-            <nue-text size="var(--nue-text-xs)">提醒</nue-text>
+        <nue-div theme="row">
+            <nue-text>启用提醒</nue-text>
             <nue-switch v-model="vo.enabled" size="small" style="--nue-switch-height: 1rem" />
         </nue-div>
         <template v-if="vo.enabled">
             <!-- 提醒时间 -->
-            <nue-div
-                justify="space-between"
-                align="center"
-                style="height: var(--nue-box-size-xs); padding: 0 var(--nue-padding-sm)"
-            >
+            <nue-div theme="row">
                 <nue-text size="var(--nue-text-xs)">提醒时间</nue-text>
                 <nue-div theme="remind-time-setter" align="center">
                     <input
@@ -73,9 +71,7 @@ const {
                     <nue-dropdown-item @click="trigger" size="small" use-suffix-icon>
                         提醒周期
                         <template #append>
-                            <nue-text>{{
-                                vo.repeatWay === 0 ? '不重复' : vo.repeatWay === 1 ? '每天' : '每周'
-                            }}</nue-text>
+                            <nue-text>{{ repeatWayText }}</nue-text>
                         </template>
                     </nue-dropdown-item>
                 </template>
@@ -87,7 +83,10 @@ const {
                 >
                     {{ item.label }}
                     <template #append>
-                        <nue-icon name="check" v-if="vo.repeatWay === Number(item.executeId)" />
+                        <nue-icon
+                            name="check"
+                            v-if="vo.repeatWay === TASK_REMIND_REPEAT_MAP[item.executeId]"
+                        />
                     </template>
                 </nue-dropdown-item>
             </nue-dropdown>
@@ -103,9 +102,7 @@ const {
                     <nue-dropdown-item @click="trigger" size="small" use-suffix-icon>
                         提醒日
                         <template #append>
-                            <nue-text style="margin-left: 1rem" :clamped="1">
-                                {{ repeatDayText }}
-                            </nue-text>
+                            <nue-text :clamped="1">{{ repeatDayText }}</nue-text>
                         </template>
                     </nue-dropdown-item>
                 </template>
@@ -132,6 +129,22 @@ const {
     align-items: stretch;
     width: 100%;
     color: var(--nue-primary-color-900);
+
+    > .nue-text--title {
+        font-size: var(--nue-text-xs);
+        color: var(--nue-primary-color-400);
+        flex: none;
+        padding: 0 var(--nue-padding-xs);
+    }
+
+    .nue-div--row {
+        padding: 0 var(--nue-padding-xs);
+        font-size: var(--nue-text-xs);
+        flex: none;
+        height: var(--nue-box-size-xs);
+        align-items: center;
+        justify-content: space-between;
+    }
 
     .nue-div--remind-time-setter {
         gap: var(--nue-gap-xs);
@@ -166,6 +179,16 @@ const {
                 -webkit-appearance: none;
                 margin: 0; /* 防止隐藏后右侧残留空白或布局偏移 */
             }
+        }
+    }
+
+    .nue-dropdown-item {
+        height: var(--nue-box-size-xs);
+        padding: 0 var(--nue-padding-xs);
+
+        &:deep(.nue-dropdown-item__append) {
+            gap: var(--nue-gap-xs);
+            color: var(--nue-primary-color-800);
         }
     }
 }

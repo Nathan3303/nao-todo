@@ -500,6 +500,9 @@ export interface LocaleMessages {
     'component.createNew': string
     'component.noProject': string
     'component.noTag': string
+    'component.tagCard.colorTip': string
+    'component.tagCard.colorTransparent': string
+    'component.tagCard.noDescription': string
     'component.pager.pageInfo': string
     'component.pager.perPage': string
     'component.pager.compact': string

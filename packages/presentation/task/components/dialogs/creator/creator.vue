@@ -19,6 +19,9 @@ defineOptions({ name: 'TaskCreatorDialog' })
 const props = defineProps<TaskCreatorDialogProps>()
 
 const dialogRef = ref<DialogInstanceType>()
+// 兜底加载防重标记（加载中重复打开对话框不重复触发 loadProjects/loadTags）
+const projectsLoading = ref(false)
+const tagsLoading = ref(false)
 
 const {
     states,
@@ -47,6 +50,16 @@ const open = <T = CreateTaskViewObject>(createTaskOptions?: T) => {
                 ;(states as Record<string, unknown>)[targetKey] = presetVal
             }
         })
+    }
+    // 数据就绪兜底：清单/标签 store 为空时触发加载（store 为响应式，数据到后下拉自动填充）
+    // 防重：加载中重复打开对话框不重复触发（loadProjects/loadTags 无内部防重）
+    if (!avaliableProjects.length && props.loadProjects && !projectsLoading.value) {
+        projectsLoading.value = true
+        void props.loadProjects().finally(() => (projectsLoading.value = false))
+    }
+    if (!avaliableTags.length && props.loadTags && !tagsLoading.value) {
+        tagsLoading.value = true
+        void props.loadTags().finally(() => (tagsLoading.value = false))
     }
     visible.value = true
 }

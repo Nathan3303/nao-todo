@@ -20,7 +20,7 @@ const updateDateAndRemind = (updateVO: UpdateTaskViewObject) => {
 
 <template>
     <nue-header v-if="vo">
-        <nue-div align="center" flex="1">
+        <nue-div align="center" gap="var(--nue-gap-sm)">
             <task-check-button :is-done="vo.isDone" @change="switchState" />
             <nue-divider vertical />
             <task-date-selector
@@ -33,7 +33,7 @@ const updateDateAndRemind = (updateVO: UpdateTaskViewObject) => {
             />
         </nue-div>
         <nue-div align="center" gap="0">
-            <nue-button icon="clear" theme="small" @click="closeDetails">
+            <nue-button icon="clear" theme="icon,small" @click="closeDetails">
                 {{ t('task.details.close') }}
             </nue-button>
         </nue-div>
@@ -45,5 +45,8 @@ const updateDateAndRemind = (updateVO: UpdateTaskViewObject) => {
     padding: 1rem;
     height: auto;
     width: 100%;
+    align-items: center;
+    gap: 0;
+    justify-content: space-between;
 }
 </style>

@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { t } from '@nao-todo/shared'
 import type { TagCardProps } from './types'
+import TagColorDot from '../tag-color-dot/tag-color-dot.vue'
 
 defineOptions({ name: 'TagCard', inheritAttrs: false })
 defineProps<TagCardProps>()
@@ -8,14 +10,22 @@ defineProps<TagCardProps>()
 <template>
     <nue-div theme="card,tag-card">
         <nue-div theme="name-wrapper">
-            <nue-icon theme="icon" name="tag" />
+            <tag-color-dot
+                :color="tag.color"
+                :title="
+                    t('component.tagCard.colorTip', {
+                        color:
+                            tag.color === 'transparent'
+                                ? t('component.tagCard.colorTransparent')
+                                : tag.color
+                    })
+                "
+            />
             <nue-text theme="name" :clamped="1">{{ tag.name }}</nue-text>
-            <nue-div theme="ops">
-                <slot name="ops" />
-            </nue-div>
+            <nue-div theme="ops"> <slot name="ops" /> </nue-div>
         </nue-div>
         <nue-text theme="description" :clamped="2">
-            {{ tag.description || '标签无描述' }}
+            {{ tag.description || t('component.tagCard.noDescription') }}
         </nue-text>
     </nue-div>
 </template>
@@ -38,7 +48,9 @@ defineProps<TagCardProps>()
         }
 
         .nue-div--ops {
+            align-items: center;
             margin-left: auto;
+            gap: var(--nue-gap-sm);
         }
     }
 

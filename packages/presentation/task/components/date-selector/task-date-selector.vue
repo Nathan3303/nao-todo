@@ -29,7 +29,17 @@ const isEndExpired = computed(() => {
 })
 const endPickerTheme = computed(() => ({ small: true, expired: isEndExpired.value }))
 
-// @computed trigger 按钮文本：开始 ~ 结束 + 简要提醒
+// @computed 下一次提醒时间（用于提醒设置器的默认值）
+const nextRemindTime = computed(() => {
+    const { task } = props
+    if (!task) return null
+    if (task.remindAt && task.remindTime) {
+        return parse2RelativeDate(`${dayjs(task.remindAt).format('YYYY-MM-DD')} ${task.remindTime}`)
+    }
+    return null
+})
+
+// @computed trigger 按钮文本：开始 ~ 结束 + 下一次提醒时间
 const triggerText = computed(() => {
     const start = props.startAt ? parse2RelativeDate(props.startAt) : ''
     const end = props.endAt ? parse2RelativeDate(props.endAt) : ''
@@ -44,7 +54,7 @@ const triggerText = computed(() => {
     const hasReminder = props.task && props.task.remindAt !== null && props.task.remindTime !== null
     const remind =
         hasReminder && props.task?.remindTime
-            ? t('task.details.remindAt', { time: props.task.remindTime })
+            ? t('task.details.remindAt', { time: nextRemindTime.value || '' })
             : ''
     return { range: range || t('task.details.setTime'), remind }
 })
@@ -98,13 +108,7 @@ const handleCancel = () => {
                     align="center"
                 >
                     <nue-text>{{ triggerText.range }}</nue-text>
-                    <nue-text
-                        v-if="triggerText.remind"
-                        size="var(--nue-text-xs)"
-                        color="var(--nue-primary-color-500)"
-                    >
-                        {{ triggerText.remind }}
-                    </nue-text>
+                    <nue-text v-if="triggerText.remind">{{ triggerText.remind }}</nue-text>
                 </nue-div>
             </nue-button>
         </template>
@@ -123,6 +127,7 @@ const handleCancel = () => {
                     :placeholder="t('task.details.startTimePlaceholder')"
                 />
             </nue-div>
+            <nue-divider />
             <nue-div class="task-date-selector-panel__row">
                 <nue-text size="var(--nue-text-xs)">
                     {{ t('task.details.endTime') }}
@@ -155,8 +160,8 @@ const handleCancel = () => {
 
 <style scoped>
 .nue-dropdown-wrapper .nue-button--expired {
-    --nue-button-base-color: var(--nue-error-color-20);
-    --nue-button-color: var(--nue-error-color-90);
+    --nue-button-base-color: var(--nue-error-color-10);
+    --nue-button-color: var(--nue-error-color-80);
 }
 </style>
 
@@ -166,7 +171,7 @@ const handleCancel = () => {
     display: flex;
     flex-direction: column;
     gap: var(--nue-gap-xs);
-    width: 16rem;
+    width: 14rem;
     color: var(--nue-primary-color-900);
     padding: var(--nue-padding-2xs) 0;
 
@@ -178,8 +183,21 @@ const handleCancel = () => {
         gap: var(--nue-gap-2xs);
 
         > .nue-text {
-            color: var(--nue-primary-color-500);
+            color: var(--nue-primary-color-400);
             flex: none;
+            padding: 0 var(--nue-padding-xs);
+        }
+
+        > .nue-date-picker {
+            width: 100%;
+            box-sizing: border-box;
+
+            .nue-button {
+                width: 100%;
+                border: none;
+                box-shadow: none;
+                padding: 0 var(--nue-padding-xs);
+            }
         }
     }
 
@@ -191,11 +209,6 @@ const handleCancel = () => {
         .nue-button {
             flex: 1;
         }
-    }
-
-    .nue-button--expired {
-        --nue-button-base-color: var(--nue-error-color-20);
-        --nue-button-color: var(--nue-error-color-90);
     }
 }
 </style>

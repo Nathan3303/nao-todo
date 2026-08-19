@@ -30,8 +30,13 @@ const DEFAULT_SETTER_VO: TaskRemindSetterVO = {
 const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSetterEmits) => {
     /**
      * 任务提醒设置器状态
+     * @description repeatDays 需深拷贝：浅拷贝会与 DEFAULT_SETTER_VO 共享同一数组，
+     *              组件每次重挂载（remindSetterKey++）都会继承上一次操作残留的选中状态
      */
-    const vo = reactive<TaskRemindSetterVO>({ ...DEFAULT_SETTER_VO })
+    const vo = reactive<TaskRemindSetterVO>({
+        ...DEFAULT_SETTER_VO,
+        repeatDays: [...DEFAULT_SETTER_VO.repeatDays]
+    })
 
     /**
      * 任务提醒设置器时间输入框显示值
@@ -44,17 +49,23 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
      * @param taskViewObject 任务视图
      */
     const taskViewObjectToSetterVO = (taskViewObject: TaskViewObject) => {
-        // 判断是否有提醒设置
-        const hasReminder = taskViewObject.remindTime !== null && taskViewObject.remindAt !== null
+        // 判断是否有提醒设置（空串也视为无提醒：infrastructure 层存在 '' 兜底 null 的路径）
+        const hasReminder =
+            taskViewObject.remindTime !== null &&
+            taskViewObject.remindTime !== '' &&
+            taskViewObject.remindAt !== null &&
+            taskViewObject.remindAt !== ''
         if (!hasReminder) {
             vo.enabled = false
             vo.hour = DEFAULT_SETTER_VO.hour
             vo.minute = DEFAULT_SETTER_VO.minute
             vo.repeatWay = DEFAULT_SETTER_VO.repeatWay
-            vo.repeatDays = DEFAULT_SETTER_VO.repeatDays
+            vo.repeatDays.fill(false)
             return
         }
         vo.enabled = true
+        // 重置重复天数，避免同一实例多次解析时残留上一次的选中状态
+        vo.repeatDays.fill(false)
         // 处理提醒时间
         if (taskViewObject.remindTime) {
             const parts = taskViewObject.remindTime.split(':').map(Number)
@@ -173,6 +184,22 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
                 break
         }
     }
+
+    /**
+     * @computed 重复方式文本计算
+     */
+    const repeatWayText = computed<string>(() => {
+        switch (vo.repeatWay) {
+            case 1:
+                return '每天'
+            case 2:
+                return '每周'
+            case 3:
+                return '每月'
+            default:
+                return '不重复'
+        }
+    })
 
     /**
      * 任务提醒设置器重复天数下拉框执行事件
@@ -314,6 +341,7 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
         onHourBlur,
         onMinuteBlur,
         repeatDayText,
+        repeatWayText,
         handleRepeatWayDropdownExecute,
         handleRepeatDayDropdownExecute
     }

@@ -40,6 +40,8 @@ const { tags: avaliableTags } = storeToRefs(useTagsStore())
         :subscriber="appSubscriber"
         :avaliable-projects="avaliableProjects"
         :avaliable-tags="avaliableTags"
+        :load-projects="() => projectUseCase.loadProjects()"
+        :load-tags="() => tagUseCase.loadTags()"
     />
     <task-parent-selector-dialog :task-use-case="taskUseCase" :dialog-manager="appDialogManager" />
     <task-reminder-dialog :task-use-case="taskUseCase" :dialog-manager="appDialogManager" />
