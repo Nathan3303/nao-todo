@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { assetUrl } from '@nao-todo/shared'
 import { useSearchView } from './search-view'
 
 defineOptions({ name: 'SearchView' })
@@ -11,7 +12,7 @@ useSearchView()
         <nue-main>
             <nue-content fill>
                 <nue-empty
-                    image-src="/images/feature.webp"
+                    :image-src="assetUrl('/images/feature.webp')"
                     image-size="8rem"
                     description="搜索页面还在规划中，敬请期待"
                     style="height: 100%"

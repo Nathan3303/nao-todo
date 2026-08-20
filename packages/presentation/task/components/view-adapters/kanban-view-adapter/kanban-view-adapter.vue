@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LoadingError, TASK_CREATOR_DIALOG_KEY, t } from '@nao-todo/shared'
+import { LoadingError, TASK_CREATOR_DIALOG_KEY, t, assetUrl } from '@nao-todo/shared'
 import { TaskKanban } from '../../kanban'
 import type { KanbanViewAdapterProps } from './types'
 import useKanbanViewAdapter from './use-kanban-view-adapter'
@@ -18,9 +18,9 @@ const { tasks, loading, sortOptions, error, noTaskError, handleRetry } = useKanb
                     :loading="loading"
                     :error="!!error"
                     error-image-size="6rem"
-                    error-image-src="/images/error.webp"
+                    :error-image-src="assetUrl('/images/error.webp')"
                     :empty="!error && !tasks.length && !!noTaskError"
-                    :empty-image-src="noTaskError?.image || '/images/notaskhere.webp'"
+                    :empty-image-src="noTaskError?.image || assetUrl('/images/notaskhere.webp')"
                     :empty-image-size="noTaskError?.imageSize || '6rem'"
                 >
                     <template #error>

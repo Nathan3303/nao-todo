@@ -1,4 +1,5 @@
 export * from './avatar'
+export * from './asset-url'
 export * from './commons'
 export * from './date-checker'
 export * from './device-id'

@@ -1,17 +1,17 @@
-import { inject, onMounted, onUnmounted, provide, ref, watch } from 'vue'
+import { inject, onMounted, onUnmounted, provide, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { TaskHandler } from '../../handlers'
 import { useTaskDetailsStore } from '../../stores'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { TASK_DETAILS_CONTEXT_KEY, TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
-import type { TaskDetailsProps } from './types'
+// import type { TaskDetailsProps } from './types'
 import useCheckItems from './use-check-items'
 import useComments from './use-comments'
 import useSubTasks from './use-subtasks'
 import useTaskViewObject from './use-task-view-object'
 import { useMinuteTask } from '@nao-todo/shared'
 
-const useTaskDetails = (props: TaskDetailsProps) => {
+const useTaskDetails = () => {
     // @viewContext TaskDetailsPre context
     const {
         taskUseCase,
@@ -119,13 +119,6 @@ const useTaskDetails = (props: TaskDetailsProps) => {
         () => (refreshKey.value += 1)
     )
 
-    // @watch 监听任务 ID
-    watch(
-        () => props.taskId,
-        (newId) => initialize(newId),
-        { immediate: true }
-    )
-
     // @onmounted
     onMounted(() => {
         startRefreshKeyIncrement()
@@ -182,7 +175,7 @@ const useTaskDetails = (props: TaskDetailsProps) => {
     })
 
     // @returns 返回值
-    return { loading, error, task, closeDetails }
+    return { loading, error, task, initialize, closeDetails }
 }
 
 export default useTaskDetails

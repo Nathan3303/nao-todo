@@ -302,14 +302,16 @@ export class LocalTaskRepoImpl implements TaskRepository {
             if (descriptionFilter !== undefined) {
                 result = result.filter((e) => e.description.includes(descriptionFilter))
             }
-            // 4. 排序
+            // 4. 排序（sort 格式为 field:order，与 domain 层序列化及后端契约一致，如 createdAt:desc）
             if (query.sort) {
-                try {
-                    const sort = JSON.parse(query.sort) as { field: string; order: string }
-                    const dir = sort.order === 'desc' ? -1 : 1
+                const sep = query.sort.indexOf(':')
+                if (sep > 0) {
+                    const field = query.sort.slice(0, sep)
+                    const order = query.sort.slice(sep + 1)
+                    const dir = order === 'desc' ? -1 : 1
                     result.sort((a, b) => {
-                        const av = (a as unknown as Record<string, unknown>)[sort.field]
-                        const bv = (b as unknown as Record<string, unknown>)[sort.field]
+                        const av = (a as unknown as Record<string, unknown>)[field]
+                        const bv = (b as unknown as Record<string, unknown>)[field]
                         if (av === bv) return 0
                         if (av === null || av === undefined) return 1
                         if (bv === null || bv === undefined) return -1
@@ -320,8 +322,6 @@ export class LocalTaskRepoImpl implements TaskRepository {
                             ) * dir
                         )
                     })
-                } catch {
-                    // sort JSON 解析失败时忽略排序
                 }
             }
             // 5. 分页

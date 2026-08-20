@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { TaskDetailsAdapter } from '@nao-todo/presentation/task'
-import { Loading as LoadingComp } from '@nao-todo/shared'
+import { Loading as LoadingComp, assetUrl } from '@nao-todo/shared'
 import { usePomodoroView } from './pomodoro-view'
 import { PomodoroAside, PomodoroDialogAdapter } from '@/components/pomodoro'
 
@@ -24,7 +24,10 @@ usePomodoroView()
                             <loading-comp height="100%" />
                         </template>
                         <template #fallback>
-                            <nue-empty image-src="/images/error.webp" image-size="6rem">
+                            <nue-empty
+                                :image-src="assetUrl('/images/error.webp')"
+                                image-size="6rem"
+                            >
                                 <nue-text size="var(--nue-text-sm)">
                                     加载失败, 请刷新页面重试
                                 </nue-text>

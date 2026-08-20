@@ -11,7 +11,8 @@
         "dev": "electron-vite dev",
         "build": "electron-vite build",
         "dist": "electron-vite build && electron-builder",
-        "dist:dir": "electron-vite build && electron-builder --dir"
+        "dist:dir": "electron-vite build && electron-builder --dir",
+        "icon": "node scripts/generate-icon.mjs"
     },
     "build": {
         "appId": "space.nathanao.todo",

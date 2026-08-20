@@ -582,4 +582,98 @@ describe('SyncService', () => {
         await service.pullAll()
         expect(dataChanged).toBe(false)
     })
+
+    it('远程任务 tags 为 null（后端 nil slice）：拉取不抛错且本地落库为空数组', async () => {
+        const now = new Date().toISOString()
+        const remoteTask = {
+            id: 't-null-tags',
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+            parentTaskId: '',
+            name: '远程任务',
+            description: '',
+            state: 'todo',
+            priority: 'medium',
+            startAt: '',
+            endAt: '',
+            tags: null, // 后端 Go nil slice 序列化为 JSON null，与类型声明不符
+            projectId: 'project-1',
+            archivedAt: null,
+            starMarkAt: null,
+            givenUpAt: null,
+            remindAt: null,
+            remindRepeat: 'none',
+            remindTime: null,
+            remindWeekdays: []
+        }
+        const service = new SyncService(
+            mockRequester((url) => {
+                if (url === '/sync/pull') {
+                    return {
+                        data: {
+                            data: {
+                                projects: { items: [], nextCursor: null },
+                                tags: { items: [], nextCursor: null },
+                                tasks: { items: [remoteTask], nextCursor: null },
+                                taskCheckItems: { items: [], nextCursor: null },
+                                taskComments: { items: [], nextCursor: null },
+                                pomodoros: { items: [], nextCursor: null },
+                                pomodoroRecords: { items: [], nextCursor: null }
+                            }
+                        },
+                        serverTime: Date.now()
+                    }
+                }
+                return { data: { results: [] }, serverTime: Date.now() }
+            })
+        )
+        // 修复前 taskEntityToRecord 的 [...entity.tags] 会抛 "entity.tags is not iterable"
+        await service.pullAll()
+        const record = await localDatabase.tasks.get('t-null-tags')
+        expect(record).toBeDefined()
+        expect(record!.tags).toEqual([])
+    })
+
+    it('远程评论 attachments 为 null：拉取不抛错且本地落库为空数组', async () => {
+        const now = new Date().toISOString()
+        const remoteComment = {
+            id: 'c-null-attachments',
+            createdAt: now,
+            updatedAt: now,
+            deletedAt: null,
+            taskId: 't-null-tags',
+            content: '远程评论',
+            attachments: null, // 后端 nil slice 序列化为 JSON null
+            isTopUp: false,
+            avatar: '',
+            nickname: '用户'
+        }
+        const service = new SyncService(
+            mockRequester((url) => {
+                if (url === '/sync/pull') {
+                    return {
+                        data: {
+                            data: {
+                                projects: { items: [], nextCursor: null },
+                                tags: { items: [], nextCursor: null },
+                                tasks: { items: [], nextCursor: null },
+                                taskCheckItems: { items: [], nextCursor: null },
+                                taskComments: { items: [remoteComment], nextCursor: null },
+                                pomodoros: { items: [], nextCursor: null },
+                                pomodoroRecords: { items: [], nextCursor: null }
+                            }
+                        },
+                        serverTime: Date.now()
+                    }
+                }
+                return { data: { results: [] }, serverTime: Date.now() }
+            })
+        )
+        // 修复前 taskCommentEntityToRecord 的 [...entity.attachments] 会抛 "entity.attachments is not iterable"
+        await service.pullAll()
+        const record = await localDatabase.taskComments.get('c-null-attachments')
+        expect(record).toBeDefined()
+        expect(record!.attachments).toEqual([])
+    })
 })

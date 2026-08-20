@@ -101,15 +101,9 @@ const handleCancel = () => {
     <nue-dropdown ref="dropdownRef" placement="bottom-start" @before-open="handleBeforeOpen">
         <!-- 触发按钮 -->
         <template #trigger="{ trigger }">
-            <nue-button :theme="{ small: true, expired: isEndExpired }" @click="trigger">
-                <nue-div
-                    gap="var(--nue-gap-2xs)"
-                    :divider="triggerText.remind ? ',' : null"
-                    align="center"
-                >
-                    <nue-text>{{ triggerText.range }}</nue-text>
-                    <nue-text v-if="triggerText.remind">{{ triggerText.remind }}</nue-text>
-                </nue-div>
+            <nue-button :theme="{ small: true, expired: colored && isEndExpired }" @click="trigger">
+                <nue-text>{{ triggerText.range }}</nue-text>
+                <nue-text v-if="triggerText.remind"> , {{ triggerText.remind }}</nue-text>
             </nue-button>
         </template>
         <!-- 下拉面板 -->
@@ -159,9 +153,11 @@ const handleCancel = () => {
 </template>
 
 <style scoped>
-.nue-dropdown-wrapper .nue-button--expired {
-    --nue-button-base-color: var(--nue-error-color-10);
-    --nue-button-color: var(--nue-error-color-80);
+.nue-dropdown-wrapper .nue-button {
+    &.nue-button--expired {
+        --nue-button-base-color: var(--nue-error-color-10);
+        --nue-button-color: var(--nue-error-color-80);
+    }
 }
 </style>
 

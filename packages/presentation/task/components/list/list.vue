@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import TaskListMain from './list-main.vue'
-import { Loading as LoadingComp } from '@nao-todo/shared'
+import { Loading as LoadingComp, assetUrl } from '@nao-todo/shared'
 import { useTaskList } from './use-list'
 import type { TaskListEmits, TaskListProps } from './types'
 import './list.css'
@@ -19,7 +19,7 @@ useTaskList(props, emit)
                 <nue-empty
                     v-if="error || (!loading && tasks.length === 0)"
                     image-size="4rem"
-                    image-src="/images/coffee.webp"
+                    :image-src="assetUrl('/images/coffee.webp')"
                     style="height: 100%"
                 >
                     <nue-text>{{ error || '暂无待办任务' }}</nue-text>

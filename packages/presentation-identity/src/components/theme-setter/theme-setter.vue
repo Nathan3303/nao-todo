@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { debounce, t, unwrapError } from '@nao-todo/shared'
+import { debounce, t, unwrapError, assetUrl } from '@nao-todo/shared'
 import { NueMessage } from 'nue-ui'
 import { computed, ref } from 'vue'
 import { useThemeStore } from '../../stores'
@@ -16,19 +16,19 @@ const themeOptions: ThemeSetterOption[] = [
         value: 'light',
         label: t('settings.appearanceLight'),
         icon: 'sun',
-        previewImage: '/images/naotodo-theme-mode-light.png'
+        previewImage: assetUrl('/images/naotodo-theme-mode-light.png')
     },
     {
         value: 'dark',
         label: t('settings.appearanceDark'),
         icon: 'moon',
-        previewImage: '/images/naotodo-theme-mode-dark.png'
+        previewImage: assetUrl('/images/naotodo-theme-mode-dark.png')
     },
     {
         value: 'system',
         label: t('settings.appearanceSystem'),
         icon: 'desktop',
-        previewImage: '/images/naotodo-theme-mode-system.png'
+        previewImage: assetUrl('/images/naotodo-theme-mode-system.png')
     }
 ]
 const loading = ref(false)

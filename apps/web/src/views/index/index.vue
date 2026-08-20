@@ -2,7 +2,7 @@
 import { onMounted } from 'vue'
 import useIndexView from './index-view'
 import { AppDialogAdapter, AppAsideV2Adapter } from '@/components/app/'
-import { Loading as LoadingComp } from '@nao-todo/shared'
+import { Loading as LoadingComp, assetUrl } from '@nao-todo/shared'
 import { UserDeletionNotifier } from '@nao-todo/presentation-identity'
 
 defineOptions({ name: 'AppContainer' })
@@ -28,7 +28,10 @@ onMounted(() => {
                             <loading-comp height="100%" />
                         </template>
                         <template #fallback>
-                            <nue-empty image-src="/images/error.webp" image-size="6rem">
+                            <nue-empty
+                                :image-src="assetUrl('/images/error.webp')"
+                                image-size="6rem"
+                            >
                                 <nue-text size="var(--nue-text-sm)">
                                     应用加载失败, 请刷新页面重试
                                 </nue-text>

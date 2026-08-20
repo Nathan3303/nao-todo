@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { CalendarAside } from '@/components/calendar/aside'
 import { env } from '@/env'
-import { Loading as LoadingComp, LoadingError } from '@nao-todo/shared'
+import { Loading as LoadingComp, LoadingError, assetUrl } from '@nao-todo/shared'
 import { onMounted } from 'vue'
 import { useCalendarView } from './calendar-view'
 
@@ -36,7 +36,10 @@ onMounted(() => init())
                                     <loading-comp height="100%" />
                                 </template>
                                 <template #fallback>
-                                    <nue-empty image-src="/images/error.webp" image-size="6rem">
+                                    <nue-empty
+                                        :image-src="assetUrl('/images/error.webp')"
+                                        image-size="6rem"
+                                    >
                                         <nue-text size="var(--nue-text-sm)">
                                             加载失败, 请刷新页面重试
                                         </nue-text>
@@ -50,7 +53,7 @@ onMounted(() => init())
                 <template v-else>
                     <nue-content fill style="overflow: hidden">
                         <nue-empty
-                            image-src="/images/feature.webp"
+                            :image-src="assetUrl('/images/feature.webp')"
                             image-size="8rem"
                             description="日历页面还在规划中，敬请期待"
                             style="height: 100%"

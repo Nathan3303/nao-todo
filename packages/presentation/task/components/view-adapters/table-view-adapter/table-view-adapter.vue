@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LoadingError, Pager, TASK_CREATOR_DIALOG_KEY, t } from '@nao-todo/shared'
+import { LoadingError, Pager, TASK_CREATOR_DIALOG_KEY, t, assetUrl } from '@nao-todo/shared'
 import { TaskTable } from '../../table'
 import type { TableViewAdapterEmits, TableViewAdapterProps } from './types'
 import useTableViewAdapter from './use-table-view-adapter'
@@ -27,9 +27,9 @@ const {
             :loading="adapterLoading"
             :error="!!error"
             error-image-size="6rem"
-            error-image-src="/images/error.webp"
+            :error-image-src="assetUrl('/images/error.webp')"
             :empty="!error && !tasks.length && !!noTaskError"
-            :empty-image-src="noTaskError?.image || '/images/notaskhere.webp'"
+            :empty-image-src="noTaskError?.image || assetUrl('/images/notaskhere.webp')"
             :empty-image-size="noTaskError?.imageSize || '6rem'"
         >
             <template #error>

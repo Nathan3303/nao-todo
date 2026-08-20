@@ -10,8 +10,10 @@ import {
 import {
     CreateTaskCheckItemValueObject,
     CreateTaskValueObject,
+    TaskDomain,
     UpdateTaskValueObject
 } from '@nao-todo/domain-task'
+import { QueryOptionsValueObject } from '@nao-todo/shared'
 import { cryptoService } from '../crypto/crypto-service'
 import { localDatabase } from '../db/local-database'
 import { localSession } from '../session/local-session'
@@ -377,6 +379,36 @@ describe('LocalTaskRepoImpl', () => {
         expect(record!.tags).not.toBe(reactiveTags)
         expect(record!.remindWeekdays).toEqual([1, 3])
         expect(record!.remindWeekdays).not.toBe(reactiveWeekdays)
+    })
+
+    it('sort=field:order 排序生效（修复前 JSON.parse 解析失败被静默忽略）', async () => {
+        const repo = new LocalTaskRepoImpl()
+        await repo.create(makeTaskVO({ name: 'banana' }))
+        await repo.create(makeTaskVO({ name: 'apple' }))
+        await repo.create(makeTaskVO({ name: 'cherry' }))
+
+        const [asc] = await repo.list('isDeleted=false&sort=name:asc')
+        expect(asc!.taskEntities.map((t) => t.name)).toEqual(['apple', 'banana', 'cherry'])
+
+        const [desc] = await repo.list('isDeleted=false&sort=name:desc')
+        expect(desc!.taskEntities.map((t) => t.name)).toEqual(['cherry', 'banana', 'apple'])
+    })
+
+    it('sort 经 TaskDomain + QueryOptionsValueObject 完整链路（field:order）解析生效', async () => {
+        const repo = new LocalTaskRepoImpl()
+        await repo.create(makeTaskVO({ name: 'banana' }))
+        await repo.create(makeTaskVO({ name: 'apple' }))
+
+        // 模拟桌面端真实调用链：TaskUseCase.list → TaskDomain.listTasks → repo.list
+        const domain = new TaskDomain(repo)
+        const [result, err] = await domain.listTasks(
+            new QueryOptionsValueObject({
+                isDeleted: false,
+                sort: { field: 'name', order: 'desc' }
+            })
+        )
+        expect(err).toBeNull()
+        expect(result!.taskEntities.map((t) => t.name)).toEqual(['banana', 'apple'])
     })
 })
 

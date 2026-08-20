@@ -5,6 +5,8 @@ import { inject } from 'vue'
 import type { UpdateTaskViewObject } from '@nao-todo/domain-task'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context'
 
+const emit = defineEmits<{ (e: 'reload'): void }>()
+
 const { vo, refreshKey, closeDetails, updateTaskDetails } = inject(TASK_DETAILS_CONTEXT_KEY)!
 
 const switchState = () => {
@@ -20,9 +22,8 @@ const updateDateAndRemind = (updateVO: UpdateTaskViewObject) => {
 
 <template>
     <nue-header v-if="vo">
-        <nue-div align="center" gap="var(--nue-gap-sm)">
+        <nue-div theme="left">
             <task-check-button :is-done="vo.isDone" @change="switchState" />
-            <nue-divider vertical />
             <task-date-selector
                 :colored="!vo.isDone"
                 :start-at="vo.startAt"
@@ -33,6 +34,9 @@ const updateDateAndRemind = (updateVO: UpdateTaskViewObject) => {
             />
         </nue-div>
         <nue-div align="center" gap="0">
+            <!-- <nue-button-group>
+                <nue-button icon="refresh" theme="icon,small" />
+            </nue-button-group> -->
             <nue-button icon="clear" theme="icon,small" @click="closeDetails">
                 {{ t('task.details.close') }}
             </nue-button>
@@ -43,10 +47,15 @@ const updateDateAndRemind = (updateVO: UpdateTaskViewObject) => {
 <style scoped>
 .nue-header {
     padding: 1rem;
-    height: auto;
     width: 100%;
+    height: auto;
     align-items: center;
     gap: 0;
     justify-content: space-between;
+    flex-wrap: wrap;
+
+    > .nue-div--left {
+        align-items: center;
+    }
 }
 </style>

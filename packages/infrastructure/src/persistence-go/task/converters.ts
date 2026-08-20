@@ -52,7 +52,7 @@ export const taskRes2TaskEntity = (res: TaskRes): TaskEntity => {
         res.startAt,
         res.endAt,
         res.projectId,
-        res.tags,
+        res.tags || [],
         res.archivedAt,
         res.starMarkAt,
         res.givenUpAt,
@@ -237,7 +237,7 @@ export const taskCommentRes2Entity = (res: TaskCommentRes): TaskCommentEntity =>
         res.deletedAt,
         res.taskId,
         res.content,
-        res.attachments,
+        res.attachments || [],
         res.isTopUp,
         res.avatar,
         res.nickname
