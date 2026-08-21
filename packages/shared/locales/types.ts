@@ -189,6 +189,7 @@ export interface LocaleMessages {
     'user.cancelRestore': string
 
     // Task
+    'task.reminder.title': string
     'task.state.todo': string
     'task.state.inProgress': string
     'task.state.done': string

@@ -197,6 +197,7 @@ const zhCN: LocaleMessages = {
     'user.cancelRestore': '暂不撤销注销，在删除日前继续使用',
 
     // Task
+    'task.reminder.title': '任务提醒',
     'task.state.todo': '待办',
     'task.state.inProgress': '正在进行',
     'task.state.done': '已完成',

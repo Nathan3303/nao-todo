@@ -20,8 +20,10 @@ import { TaskHandler, useTasksStore } from '@nao-todo/presentation/task'
 import {
     PROJECT_CREATOR_DIALOG_KEY,
     responsiveTypes,
+    sendNotification,
     TASK_CREATOR_DIALOG_KEY,
     TASK_REMINDER_DIALOG_KEY,
+    t,
     useAsideWidth,
     useDialogManager,
     useResponsiveAside,
@@ -130,17 +132,8 @@ const useIndexView = () => {
         es.addEventListener('reminder', (event: MessageEvent) => {
             const data = JSON.parse(event.data)
             appDialogManager.open(TASK_REMINDER_DIALOG_KEY, data)
-            // 显示通知
-            if ('Notification' in window && Notification.permission === 'granted') {
-                const notification = new Notification(data.taskName, {
-                    body: data.description || '',
-                    icon: '/favicon.ico'
-                })
-                notification.onclick = () => {
-                    window.focus()
-                    notification.close()
-                }
-            }
+            // 系统通知仅显示任务名称（不含描述，见需求）
+            sendNotification(t('task.reminder.title'), data.taskName)
         })
         // 监听错误事件，关闭连接
         es.addEventListener('error', () => es.close())

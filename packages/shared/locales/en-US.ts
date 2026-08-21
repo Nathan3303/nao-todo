@@ -204,6 +204,7 @@ const enUS: LocaleMessages = {
     'user.cancelRestore': "I don't want to restore, just use it.",
 
     // Task
+    'task.reminder.title': 'Task Reminder',
     'task.state.todo': 'To Do',
     'task.state.inProgress': 'In Progress',
     'task.state.done': 'Done',
