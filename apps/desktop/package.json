@@ -10,9 +10,9 @@
     "scripts": {
         "dev": "electron-vite dev",
         "build": "electron-vite build",
-        "dist": "electron-vite build && electron-builder",
-        "dist:dir": "electron-vite build && electron-builder --dir",
-        "icon": "node scripts/generate-icon.mjs"
+        "icon": "pnpm dlx electron-icon-builder --input=./build/icon-source.png --output=./build",
+        "dist": "pnpm icon && electron-vite build && electron-builder",
+        "dist:dir": "pnpm icon && electron-vite build && electron-builder --dir"
     },
     "build": {
         "appId": "space.nathanao.todo",
@@ -32,9 +32,16 @@
             ]
         },
         "win": {
+            "icon": "build/icons/win/icon.ico",
             "target": [
                 "nsis"
             ]
+        },
+        "nsis": {
+            "oneClick": false,
+            "allowToChangeInstallationDirectory": true,
+            "createDesktopShortcut": true,
+            "createStartMenuShortcut": true
         },
         "linux": {
             "target": [
