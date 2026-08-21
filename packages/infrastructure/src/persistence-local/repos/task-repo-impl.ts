@@ -379,6 +379,9 @@ export class LocalTaskRepoImpl implements TaskRepository {
             const entity = await taskRecordToEntity(record)
             const newRemindAt = dayjs().add(durationMinutes, 'minute').toISOString()
             entity.remindAt = newRemindAt
+            // 同步提醒时刻：DateSelector 显示条件要求 remindTime 非空（task-date-selector.vue），
+            // Snooze 场景任务常无 remindTime，不同步会导致详情面板不显示下一次提醒时间
+            entity.remindTime = dayjs(newRemindAt).format('HH:mm')
             entity.updatedAt = new Date().toISOString()
             await this.db.tasks.put(await taskEntityToRecord(entity, this.currentUserId))
             await syncTracker.markDirty('tasks', id, 'upsert', entity.updatedAt)

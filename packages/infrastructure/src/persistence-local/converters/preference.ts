@@ -12,7 +12,9 @@ export const projectPreferenceEntityToRecord = async (
     entity: ProjectPreferenceEntity,
     userId: string
 ): Promise<ProjectPreferenceRecord> => ({
-    id: entity.id,
+    // 默认偏好实体 id 为空串（defaultProjectPreferenceRes2Entity），
+    // 直接 put 会触发 Dexie 主键无效 DataError；空 id 时生成稳定主键（每项目一条，重复 save 覆盖）
+    id: entity.id || `${userId}:${entity.projectId}`,
     userId,
     projectId: entity.projectId,
     viewType: entity.viewType,
@@ -49,7 +51,9 @@ export const tagPreferenceEntityToRecord = async (
     entity: TagPreferenceEntity,
     userId: string
 ): Promise<TagPreferenceRecord> => ({
-    id: entity.id,
+    // 默认偏好实体 id 为空串（defaultTagPreferenceRes2Entity），
+    // 直接 put 会触发 Dexie 主键无效 DataError；空 id 时生成稳定主键（每标签一条，重复 save 覆盖）
+    id: entity.id || `${userId}:${entity.tagId}`,
     userId,
     tagId: entity.tagId,
     viewType: entity.viewType,

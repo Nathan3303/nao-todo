@@ -216,6 +216,8 @@ describe('LocalTaskRepoImpl', () => {
         expect(newRemindAt).not.toBeNull()
         const [after] = await repo.get(created!.id)
         expect(after!.remindAt).toBe(newRemindAt)
+        // Snooze 同步提醒时刻（DateSelector 显示条件：remindAt 与 remindTime 双非空）
+        expect(after!.remindTime).toBe(dayjs(newRemindAt!).format('HH:mm'))
     })
 
     it('copy 生成新任务', async () => {
@@ -428,11 +430,33 @@ describe('偏好默认值', () => {
     it('保存后按 projectId 取回已存偏好', async () => {
         const repo = new LocalProjectPreferenceRepoImpl()
         const [defaultPref] = await repo.getByProjectId('project-y')
-        await repo.save(defaultPref!)
+        // 默认偏好 id 为空串：save 须自动生成稳定主键（否则 Dexie put 报 DataError）
+        expect(defaultPref!.id).toBe('')
+        const saveErr = await repo.save(defaultPref!)
+        expect(saveErr).toBeNull()
 
         const [saved, err] = await repo.getByProjectId('project-y')
         expect(err).toBeNull()
         expect(saved!.projectId).toBe('project-y')
+
+        // 修改后再次 save：覆盖同一条（不新增）
+        saved!.viewType = 'kanban'
+        expect(await repo.save(saved!)).toBeNull()
+        const records = await localDatabase.projectPreferences.toArray()
+        expect(records.length).toBe(1)
+        expect(records[0]!.id).toBe(`test-user:project-y`)
+        const [after] = await repo.getByProjectId('project-y')
+        expect(after!.viewType).toBe('kanban')
+    })
+
+    it('标签偏好默认 id 为空串时 save 不报错并生成稳定主键', async () => {
+        const repo = new LocalTagPreferenceRepoImpl()
+        const [defaultPref] = await repo.get('tag-9')
+        expect(defaultPref!.id).toBe('')
+        expect(await repo.save(defaultPref!)).toBeNull()
+        const records = await localDatabase.tagPreferences.toArray()
+        expect(records.length).toBe(1)
+        expect(records[0]!.id).toBe(`test-user:tag-9`)
     })
 
     it('标签偏好不存在时返回默认偏好（不报错），参数按 tagId 查询', async () => {
