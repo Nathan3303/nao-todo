@@ -116,7 +116,7 @@ export const updateTaskViewObjectToValueObject = (
     const valueObject = new UpdateTaskValueObject(taskId)
     if (viewObject.parentTaskId) valueObject.parentTaskId = viewObject.parentTaskId
     if (viewObject.name) valueObject.name = viewObject.name
-    if (viewObject.description) valueObject.description = viewObject.description
+    if (viewObject.description !== void 0) valueObject.description = viewObject.description
     if (viewObject.state) valueObject.state = viewObject.state
     if (viewObject.priority) valueObject.priority = viewObject.priority
     if (viewObject.startAt !== void 0) valueObject.startAt = viewObject.startAt

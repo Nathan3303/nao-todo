@@ -217,3 +217,14 @@ describe('updateTaskViewObjectToValueObject - startAt/endAt 透传', () => {
         expect(vo.endAt).toBeNull()
     })
 })
+
+describe('updateTaskViewObjectToValueObject - description 透传', () => {
+    it('description 为空串时透传（清空描述）', () => {
+        const vo = updateTaskViewObjectToValueObject('task-1', { description: '' })
+        expect(vo.description).toBe('')
+    })
+    it('未设置 description 时值对象不包含该字段', () => {
+        const vo = updateTaskViewObjectToValueObject('task-1', { name: '改名' })
+        expect(vo.description).toBeUndefined()
+    })
+})

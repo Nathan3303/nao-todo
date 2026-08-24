@@ -113,7 +113,7 @@ export const updateTaskValueObject2Req = (updateVO: UpdateTaskValueObject): Upda
     const req = {} as UpdateTaskReq
     if (updateVO.parentTaskId) req.parentTaskId = updateVO.parentTaskId
     if (updateVO.name) req.name = updateVO.name
-    if (updateVO.description) req.description = updateVO.description
+    if (updateVO.description !== void 0) req.description = updateVO.description
     if (updateVO.state) req.state = updateVO.state
     if (updateVO.priority) req.priority = updateVO.priority
     if (updateVO.startAt !== void 0) req.startAt = updateVO.startAt
