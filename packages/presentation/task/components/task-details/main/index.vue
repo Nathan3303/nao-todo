@@ -136,8 +136,12 @@ const createCommentHandler = async (content: string) => {
                     />
                 </nue-div>
                 <!-- 任务详情事件 -->
-                <nue-div vertical style="padding: 0 1rem 1rem; margin-bottom: auto">
+                <nue-div vertical style="padding: 0 1rem 1rem">
                     <details-main-events />
+                </nue-div>
+                <!-- 任务详情子任务（填充剩余空间） -->
+                <nue-div class="tasks-details-view__subtasks" vertical>
+                    <details-main-sub-tasks />
                 </nue-div>
                 <!-- 任务详情标签 -->
                 <nue-div vertical style="padding: 1rem">
@@ -150,8 +154,6 @@ const createCommentHandler = async (content: string) => {
                         "
                     />
                 </nue-div>
-                <!-- 任务详情子任务 -->
-                <details-main-sub-tasks />
                 <!-- 任务详情评论 -->
                 <details-main-comments />
                 <!-- 任务详情删除标签 -->
@@ -284,6 +286,27 @@ const createCommentHandler = async (content: string) => {
         .nue-textarea--description {
             --nue-textarea-font-size: var(--nue-text-sm);
             --nue-textarea-color: var(--nue-primary-color-500);
+        }
+    }
+
+    .tasks-details-view__subtasks {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+
+        /* 子任务容器填充剩余空间，列表超出时区内滚动（标签栏/评论保持底部可见） */
+        :deep(#TodoDetailsSubTasksContainer) {
+            flex: 1;
+            min-height: 0;
+            height: auto;
+        }
+
+        :deep(#TodoDetailsSubTasksContainer > .nue-main) {
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
         }
     }
 
