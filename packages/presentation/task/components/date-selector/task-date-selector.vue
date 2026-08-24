@@ -31,10 +31,12 @@ const endPickerTheme = computed(() => ({ small: true, expired: isEndExpired.valu
 
 // @computed 下一次提醒时间（用于提醒设置器的默认值）
 const nextRemindTime = computed(() => {
-    const { task } = props
-    if (!task) return null
-    if (task.remindAt && task.remindTime) {
-        return parse2RelativeDate(`${dayjs(task.remindAt).format('YYYY-MM-DD')} ${task.remindTime}`)
+    const remindData = props.task ?? props.remind
+    if (!remindData) return null
+    if (remindData.remindAt && remindData.remindTime) {
+        return parse2RelativeDate(
+            `${dayjs(remindData.remindAt).format('YYYY-MM-DD')} ${remindData.remindTime}`
+        )
     }
     return null
 })
@@ -51,9 +53,14 @@ const triggerText = computed(() => {
     } else if (end) {
         range = t('task.details.dueAt', { time: end })
     }
-    const hasReminder = props.task && props.task.remindAt !== null && props.task.remindTime !== null
+    const remindData = props.task ?? props.remind
+    const hasReminder = !!(
+        remindData &&
+        remindData.remindAt !== null &&
+        remindData.remindTime !== null
+    )
     const remind =
-        hasReminder && props.task?.remindTime
+        hasReminder && remindData?.remindTime
             ? t('task.details.remindAt', { time: nextRemindTime.value || '' })
             : ''
     return { range: range || t('task.details.setTime'), remind }
@@ -137,7 +144,12 @@ const handleCancel = () => {
             </nue-div>
             <nue-divider />
             <!-- 提醒设置 -->
-            <task-remind-setter :key="remindSetterKey" :task="task" @update="handleRemindUpdate" />
+            <task-remind-setter
+                :key="remindSetterKey"
+                :task="task"
+                :remind="remind"
+                @update="handleRemindUpdate"
+            />
             <nue-divider />
             <!-- 操作区 -->
             <nue-div class="task-date-selector-panel__actions">

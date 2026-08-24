@@ -24,6 +24,7 @@ export type TaskRemindSetterUpdateVO = {
 
 export type TaskRemindSetterProps = {
     task?: TaskViewObject
+    remind?: TaskRemindData
     date?: string
 }
 

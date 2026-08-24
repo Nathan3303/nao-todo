@@ -1,4 +1,5 @@
 import type { TaskViewObject, UpdateTaskViewObject } from '@nao-todo/domain-task'
+import type { TaskRemindData } from '../remind-setter/types'
 
 // 任务日期选择器属性
 export type TaskDateSelectorProps = {
@@ -6,6 +7,7 @@ export type TaskDateSelectorProps = {
     startAt?: string | null
     endAt?: string | null
     task?: TaskViewObject
+    remind?: TaskRemindData
     refreshKey?: number
 }
 

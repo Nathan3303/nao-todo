@@ -6,6 +6,7 @@ import {
     TASK_REMIND_REPEAT_REVERSE
 } from './constants'
 import type {
+    TaskRemindData,
     TaskRemindSetterEmits,
     TaskRemindSetterProps,
     TaskRemindSetterUpdateVO,
@@ -20,6 +21,70 @@ const DEFAULT_SETTER_VO: TaskRemindSetterVO = {
     minute: 0,
     repeatWay: 0,
     repeatDays: [false, false, false, false, false, false, false]
+}
+
+/**
+ * 提醒数据转换为设置器 VO 的提醒字段（纯函数）
+ * @description 输入 TaskRemindData（remindAt/remindRepeat/remindTime/remindWeekdays），
+ *              输出设置器初始值；空串视为无提醒（infrastructure 层存在 '' 兜底 null 的路径）
+ * @param remind 提醒数据
+ * @returns 设置器提醒字段
+ */
+export const remindDataToSetterVO = (remind: TaskRemindData): Partial<TaskRemindSetterVO> => {
+    // 判断是否有提醒设置（remindAt/remindTime 任一缺失或为空均视为无提醒）
+    const hasReminder =
+        remind.remindTime != null &&
+        remind.remindTime !== '' &&
+        remind.remindAt != null &&
+        remind.remindAt !== ''
+    if (!hasReminder) {
+        return {
+            enabled: false,
+            hour: DEFAULT_SETTER_VO.hour,
+            minute: DEFAULT_SETTER_VO.minute,
+            repeatWay: DEFAULT_SETTER_VO.repeatWay,
+            repeatDays: [...DEFAULT_SETTER_VO.repeatDays]
+        }
+    }
+    const repeatDays: TaskRemindSetterVO['repeatDays'] = [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+    ]
+    const setter: Partial<TaskRemindSetterVO> = {
+        enabled: true,
+        hour: DEFAULT_SETTER_VO.hour,
+        minute: DEFAULT_SETTER_VO.minute,
+        // 重置重复天数，避免同一实例多次解析时残留上一次的选中状态
+        repeatDays
+    }
+    // 处理提醒时间
+    if (remind.remindTime) {
+        const parts = remind.remindTime.split(':').map(Number)
+        const h = parts[0]
+        const m = parts[1]
+        if (h !== undefined && m !== undefined && !isNaN(h) && !isNaN(m)) {
+            setter.hour = h
+            setter.minute = m
+        }
+    }
+    // 处理重复方式
+    if (remind.remindRepeat && remind.remindRepeat in TASK_REMIND_REPEAT_MAP) {
+        const way = TASK_REMIND_REPEAT_MAP[remind.remindRepeat] as number | undefined
+        if (way !== undefined && way > 0) setter.repeatWay = way
+    }
+    // 处理重复天数
+    if (remind.remindWeekdays && remind.remindWeekdays.length > 0) {
+        for (const day of remind.remindWeekdays) {
+            const idx = day === 7 ? 6 : day - 1
+            if (idx >= 0 && idx < 7) repeatDays[idx] = true
+        }
+    }
+    return setter
 }
 
 /**
@@ -45,49 +110,35 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
     const minuteText = ref(pad(vo.minute))
 
     /**
+     * 应用提醒数据到设置器显示值
+     * @param remind 提醒数据
+     */
+    const applyRemindData = (remind: TaskRemindData) => {
+        const reminder = remindDataToSetterVO(remind)
+        vo.enabled = reminder.enabled ?? DEFAULT_SETTER_VO.enabled
+        vo.hour = reminder.hour ?? DEFAULT_SETTER_VO.hour
+        vo.minute = reminder.minute ?? DEFAULT_SETTER_VO.minute
+        vo.repeatWay = reminder.repeatWay ?? DEFAULT_SETTER_VO.repeatWay
+        vo.repeatDays.fill(false)
+        const days = reminder.repeatDays
+        if (days) {
+            for (let i = 0; i < days.length; i++) {
+                if (days[i]) vo.repeatDays[i] = true
+            }
+        }
+    }
+
+    /**
      * 任务视图转换为任务提醒设置器显示值
      * @param taskViewObject 任务视图
      */
     const taskViewObjectToSetterVO = (taskViewObject: TaskViewObject) => {
-        // 判断是否有提醒设置（空串也视为无提醒：infrastructure 层存在 '' 兜底 null 的路径）
-        const hasReminder =
-            taskViewObject.remindTime !== null &&
-            taskViewObject.remindTime !== '' &&
-            taskViewObject.remindAt !== null &&
-            taskViewObject.remindAt !== ''
-        if (!hasReminder) {
-            vo.enabled = false
-            vo.hour = DEFAULT_SETTER_VO.hour
-            vo.minute = DEFAULT_SETTER_VO.minute
-            vo.repeatWay = DEFAULT_SETTER_VO.repeatWay
-            vo.repeatDays.fill(false)
-            return
-        }
-        vo.enabled = true
-        // 重置重复天数，避免同一实例多次解析时残留上一次的选中状态
-        vo.repeatDays.fill(false)
-        // 处理提醒时间
-        if (taskViewObject.remindTime) {
-            const parts = taskViewObject.remindTime.split(':').map(Number)
-            const h = parts[0]
-            const m = parts[1]
-            if (h !== undefined && m !== undefined && !isNaN(h) && !isNaN(m)) {
-                vo.hour = h
-                vo.minute = m
-            }
-        }
-        // 处理重复方式
-        if (taskViewObject.remindRepeat && taskViewObject.remindRepeat in TASK_REMIND_REPEAT_MAP) {
-            const way = TASK_REMIND_REPEAT_MAP[taskViewObject.remindRepeat] as number | undefined
-            if (way !== undefined && way > 0) vo.repeatWay = way
-        }
-        // 处理重复天数
-        if (taskViewObject.remindWeekdays && taskViewObject.remindWeekdays.length > 0) {
-            for (const day of taskViewObject.remindWeekdays) {
-                const idx = day === 7 ? 6 : day - 1
-                if (idx >= 0 && idx < 7) vo.repeatDays[idx] = true
-            }
-        }
+        applyRemindData({
+            remindAt: taskViewObject.remindAt,
+            remindRepeat: taskViewObject.remindRepeat as TaskRemindData['remindRepeat'],
+            remindTime: taskViewObject.remindTime,
+            remindWeekdays: taskViewObject.remindWeekdays
+        })
     }
 
     /**
@@ -306,6 +357,19 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
     )
 
     /**
+     * 监听提醒数据（无 task 场景，如任务创建器）初始化显示值
+     * @description task 优先：详情面板等传 task 的场景由 task 初始化；创建器无 task，以 remind 兜底
+     */
+    watch(
+        () => props.remind,
+        (remind) => {
+            if (props.task || !remind) return
+            applyRemindData(remind)
+        },
+        { deep: true, immediate: true }
+    )
+
+    /**
      * 监听任务提醒设置器状态变化，触发更新事件
      * @description 监听任务提醒设置器状态变化，触发更新事件
      */
@@ -314,13 +378,17 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
         () => {
             // 构建更新视图对象
             const updateVO = buildUpdateVO()
-            // 判断是否变更（基准归一化：task 缺失时按无提醒默认值比较，避免 undefined 恒不等导致永不触发）
-            const isRemindAtSame = updateVO.remindAt === (props.task?.remindAt ?? null)
+            // 判断是否变更（基准归一化：task/remind 均缺失时按无提醒默认值比较，避免 undefined 恒不等导致永不触发）
+            const isRemindAtSame =
+                updateVO.remindAt === (props.task?.remindAt ?? props.remind?.remindAt ?? null)
             const isRemindRepeatSame =
-                updateVO.remindRepeat === (props.task?.remindRepeat ?? 'none')
-            const isRemindTimeSame = updateVO.remindTime === (props.task?.remindTime ?? null)
+                updateVO.remindRepeat ===
+                (props.task?.remindRepeat ?? props.remind?.remindRepeat ?? 'none')
+            const isRemindTimeSame =
+                updateVO.remindTime === (props.task?.remindTime ?? props.remind?.remindTime ?? null)
             const isRemindWeekdaysSame =
-                updateVO.remindWeekdays.toString() === (props.task?.remindWeekdays ?? []).toString()
+                updateVO.remindWeekdays.toString() ===
+                (props.task?.remindWeekdays ?? props.remind?.remindWeekdays ?? []).toString()
             // 全部字段与当前值相同（未变更）时不触发更新事件
             if (isRemindAtSame && isRemindRepeatSame && isRemindTimeSame && isRemindWeekdaysSame)
                 return

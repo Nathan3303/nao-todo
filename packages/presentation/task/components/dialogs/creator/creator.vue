@@ -12,6 +12,7 @@ import { computed, onMounted, ref } from 'vue'
 import { TaskDateSelector, TaskProjectSelector, TaskTagBar } from '../../'
 import { TaskPrioritySelectOptions, TaskStateSelectOptions } from '../../../constants'
 import type { CreateTaskViewObject, TaskViewObject } from '@nao-todo/domain-task'
+import type { TaskRemindData } from '../../remind-setter/types'
 import { TaskCreatorDialogProps } from './types'
 import useTaskCreator from './use-creator'
 
@@ -39,6 +40,14 @@ const isExpired = computed(() => {
     return states.state !== 'done' && dayjs(states.endAt).isBefore(dayjs())
 })
 
+// @computed 提醒数据（透传给日期选择器，供触发按钮文本与提醒设置器回显）
+const remindData = computed<TaskRemindData>(() => ({
+    remindAt: states.remindAt,
+    remindRepeat: states.remindRepeat as TaskRemindData['remindRepeat'],
+    remindTime: states.remindTime,
+    remindWeekdays: states.remindWeekdays
+}))
+
 const open = <T = CreateTaskViewObject>(createTaskOptions?: T) => {
     clearInputsValue()
     if (createTaskOptions) {
@@ -53,11 +62,11 @@ const open = <T = CreateTaskViewObject>(createTaskOptions?: T) => {
     }
     // 数据就绪兜底：清单/标签 store 为空时触发加载（store 为响应式，数据到后下拉自动填充）
     // 防重：加载中重复打开对话框不重复触发（loadProjects/loadTags 无内部防重）
-    if (!avaliableProjects.length && props.loadProjects && !projectsLoading.value) {
+    if (!avaliableProjects.value.length && props.loadProjects && !projectsLoading.value) {
         projectsLoading.value = true
         void props.loadProjects().finally(() => (projectsLoading.value = false))
     }
-    if (!avaliableTags.length && props.loadTags && !tagsLoading.value) {
+    if (!avaliableTags.value.length && props.loadTags && !tagsLoading.value) {
         tagsLoading.value = true
         void props.loadTags().finally(() => (tagsLoading.value = false))
     }
@@ -106,6 +115,7 @@ onMounted(() => dialogManager.register(TASK_CREATOR_DIALOG_KEY, { open, close })
                         :colored="!isExpired"
                         :start-at="states.startAt"
                         :end-at="states.endAt"
+                        :remind="remindData"
                         @update-all="handleUpdateDateAndRemind"
                     />
                 </nue-div>

@@ -1,7 +1,7 @@
 import { t } from '@nao-todo/shared'
 import { NueMessage } from 'nue-ui'
 import { translateTaskError } from '../../../utils/error-message'
-import { reactive } from 'vue'
+import { computed, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import type { UpdateTaskViewObject } from '@nao-todo/domain-task'
 import type { TaskCreatorDialogProps } from './types'
@@ -11,8 +11,14 @@ import type { TaskCreatorDialogProps } from './types'
  * @param props 任务创建器对话框属性
  */
 const useTaskCreator = (props: TaskCreatorDialogProps) => {
-    const { taskUseCase, subscriber, dialogManager, avaliableTags, avaliableProjects } = props
+    const { taskUseCase, subscriber, dialogManager } = props
     const router = useRouter()
+
+    // @computed 可用清单/标签（响应式读取 props）
+    // @description 不可在 setup 一次性解构：父级传入的是 storeToRefs 计算属性返回的新数组引用，
+    //              解构后即快照，store 数据到达（主视图 init 或本组件兜底加载）时下拉不会刷新
+    const avaliableProjects = computed(() => props.avaliableProjects)
+    const avaliableTags = computed(() => props.avaliableTags)
 
     // 任务视图对象
     const states = reactive<UpdateTaskViewObject>({
@@ -99,6 +105,11 @@ const useTaskCreator = (props: TaskCreatorDialogProps) => {
         states.startAt = ''
         states.endAt = ''
         states.tags = []
+        // 提醒字段一并重置，防止创建过带提醒任务后静默继承上一次提醒
+        states.remindAt = null
+        states.remindRepeat = 'none'
+        states.remindTime = null
+        states.remindWeekdays = []
     }
 
     // @returns
