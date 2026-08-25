@@ -1,0 +1,71 @@
+/* 设置屏幕 —— 账本扉页 */
+.st-body {
+    padding: 28rpx;
+}
+
+.st-profile {
+    display: flex;
+    align-items: center;
+}
+
+/* 用户头像：黄铜双环印章 */
+.st-avatar {
+    width: 96rpx;
+    height: 96rpx;
+    border-radius: 50%;
+    border: 2rpx solid var(--nao-accent);
+    background: var(--nao-accent-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.st-avatar-text {
+    font-family: var(--nao-serif);
+    font-size: 40rpx;
+    font-weight: 700;
+    color: var(--nao-accent);
+}
+
+.st-profile-info {
+    margin-left: 24rpx;
+    flex: 1;
+    min-width: 0;
+}
+
+.st-nickname {
+    font-family: var(--nao-serif);
+    font-size: 32rpx;
+    font-weight: 600;
+    color: var(--nao-text);
+}
+
+.st-email {
+    display: block;
+    margin-top: 6rpx;
+    font-size: 23rpx;
+    color: var(--nao-text-secondary);
+    letter-spacing: 1rpx;
+}
+
+.st-signout {
+    height: 92rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1rpx solid rgba(217, 123, 108, 0.45);
+    border-radius: 0;
+    background-color: transparent;
+    margin-top: 24rpx;
+}
+
+.st-signout.ui-active {
+    background-color: rgba(217, 123, 108, 0.12);
+}
+
+.st-signout-text {
+    font-size: 26rpx;
+    color: var(--nao-danger);
+    letter-spacing: 4rpx;
+}

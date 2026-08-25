@@ -1,0 +1,49 @@
+/* 自绘底部弹层 */
+.bs-root {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.bs-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(5, 7, 10, 0.62);
+    animation: bs-fade 0.2s ease-out both;
+}
+
+.bs-panel {
+    position: relative;
+    background-color: var(--nao-bg-elevated);
+    border-top: 1rpx solid var(--nao-border-strong);
+    border-radius: 24rpx 24rpx 0 0;
+    max-height: 80vh;
+    animation: bs-rise 0.28s ease-out both;
+}
+
+@keyframes bs-fade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes bs-rise {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}

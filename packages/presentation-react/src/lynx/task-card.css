@@ -1,0 +1,165 @@
+/* 任务卡片 —— 账本条目 */
+.tcard {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--nao-surface);
+    border: 1rpx solid var(--nao-border);
+    border-radius: 0;
+    padding: 26rpx 28rpx;
+    margin-bottom: 20rpx;
+    animation: ts-entry 0.45s ease-out both;
+}
+
+.tcard.ui-active {
+    background-color: var(--nao-surface-hover);
+}
+
+.tcard-main {
+    display: flex;
+    flex-direction: column;
+}
+
+.tcard-name-row {
+    display: flex;
+    align-items: baseline;
+}
+
+/* 状态墨点：待办空心 / 进行中黄铜 / 完成苔绿实心 */
+.tcard-state-dot {
+    width: 18rpx;
+    height: 18rpx;
+    border-radius: 50%;
+    margin-right: 16rpx;
+    flex-shrink: 0;
+    align-self: center;
+}
+
+.tcard-state-todo {
+    border: 2rpx solid var(--nao-text-muted);
+    background-color: transparent;
+}
+
+.tcard-state-in-progress {
+    background-color: var(--nao-accent);
+    box-shadow: 0 0 0 6rpx var(--nao-accent-soft);
+}
+
+.tcard-state-done {
+    background-color: var(--nao-success);
+}
+
+/* 任务名：衬线书写 */
+.tcard-name {
+    flex: 1;
+    font-family: var(--nao-serif);
+    font-size: 31rpx;
+    color: var(--nao-text);
+    line-height: 1.5;
+}
+
+.tcard-state-done + .tcard-name {
+    color: var(--nao-text-muted);
+    text-decoration: line-through;
+    text-decoration-color: var(--nao-accent);
+}
+
+/* 元信息行：等宽日期 + 印章 chip */
+.tcard-meta {
+    display: flex;
+    align-items: center;
+    margin-top: 18rpx;
+    gap: 14rpx;
+}
+
+.tcard-chip {
+    height: 40rpx;
+    padding: 0 16rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1rpx solid var(--nao-border-strong);
+}
+
+.tcard-chip-text {
+    font-size: 20rpx;
+    color: var(--nao-text-muted);
+    letter-spacing: 2rpx;
+}
+
+.tcard-priority-high {
+    border-color: rgba(217, 123, 108, 0.5);
+}
+
+.tcard-priority-high .tcard-chip-text {
+    color: var(--nao-danger);
+}
+
+.tcard-priority-medium {
+    border-color: rgba(217, 164, 65, 0.5);
+}
+
+.tcard-priority-medium .tcard-chip-text {
+    color: var(--nao-accent);
+}
+
+.tcard-priority-low {
+    border-color: rgba(127, 174, 143, 0.5);
+}
+
+.tcard-priority-low .tcard-chip-text {
+    color: var(--nao-success);
+}
+
+/* 日期：等宽账目数字 */
+.tcard-date {
+    font-family: var(--nao-mono);
+    font-size: 21rpx;
+    color: var(--nao-text-muted);
+    margin-left: auto;
+    letter-spacing: 1rpx;
+}
+
+/* 完成印章（黄铜盖戳） */
+.tcard-seal {
+    width: 40rpx;
+    height: 40rpx;
+    border-radius: 50%;
+    border: 1rpx solid var(--nao-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 14rpx;
+    flex-shrink: 0;
+    background-color: var(--nao-accent-soft);
+}
+
+.tcard-seal-text {
+    font-size: 22rpx;
+    color: var(--nao-accent);
+    font-weight: 700;
+}
+
+.tcard-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12rpx;
+    margin-top: 18rpx;
+    padding-top: 18rpx;
+    border-top: 1rpx dashed var(--nao-border-strong);
+}
+
+.tcard-tag {
+    height: 40rpx;
+    padding: 0 16rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--nao-accent-soft);
+}
+
+.tcard-tag-text {
+    font-size: 20rpx;
+    color: var(--nao-accent);
+    letter-spacing: 1rpx;
+}

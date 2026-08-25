@@ -1,0 +1,100 @@
+/* 日期选择弹层 */
+.dps-panel {
+    background-color: var(--nao-bg-elevated);
+    border-top: 1rpx solid var(--nao-border-strong);
+    padding: 28rpx 32rpx calc(40rpx + var(--dps-safe-bottom, 0rpx));
+}
+
+.dps-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24rpx;
+}
+
+.dps-head-btn {
+    min-width: 120rpx;
+    height: 64rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0;
+    background-color: transparent;
+}
+
+.dps-head-btn.ui-active {
+    background-color: var(--nao-surface-hover);
+}
+
+.dps-head-btn-text {
+    font-size: 26rpx;
+}
+
+.dps-cancel {
+    color: var(--nao-text-secondary);
+}
+
+.dps-ok {
+    color: var(--nao-accent);
+    font-weight: 600;
+}
+
+.dps-head-title {
+    font-family: var(--nao-mono);
+    font-size: 30rpx;
+    color: var(--nao-text);
+    letter-spacing: 2rpx;
+}
+
+.dps-quick {
+    margin-bottom: 28rpx;
+}
+
+/* 步进字段 */
+.dps-fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16rpx;
+}
+
+.dps-field {
+    flex: 1 1 calc(33.33% - 12rpx);
+    min-width: 150rpx;
+    background-color: var(--nao-surface);
+    border: 1rpx solid var(--nao-border);
+    padding: 16rpx 12rpx;
+}
+
+.dps-field-label {
+    display: block;
+    text-align: center;
+    font-family: var(--nao-mono);
+    font-size: 34rpx;
+    color: var(--nao-text);
+    margin-bottom: 12rpx;
+}
+
+.dps-field-row {
+    display: flex;
+    gap: 12rpx;
+}
+
+.dps-step {
+    flex: 1;
+    height: 56rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0;
+    border: 1rpx solid var(--nao-border-strong);
+    background-color: transparent;
+}
+
+.dps-step.ui-active {
+    background-color: var(--nao-surface-hover);
+}
+
+.dps-step-text {
+    font-size: 28rpx;
+    color: var(--nao-accent);
+}

@@ -31,26 +31,29 @@
 .home-brand-mark {
     width: 96rpx;
     height: 96rpx;
-    border-radius: 28rpx;
-    background: linear-gradient(135deg, var(--nao-accent) 0%, #f5c981 100%);
+    border-radius: 50%;
+    border: 2rpx solid var(--nao-accent);
+    background: var(--nao-accent-soft);
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 40rpx;
-    box-shadow: 0 16rpx 40rpx rgba(232, 168, 76, 0.28);
+    box-shadow: 0 0 0 10rpx rgba(217, 164, 65, 0.14);
 }
 
 .home-brand-mark-text {
+    font-family: var(--nao-serif);
     font-size: 52rpx;
-    font-weight: 800;
-    color: #1a140b;
+    font-weight: 700;
+    color: var(--nao-accent);
 }
 
 .home-title {
+    font-family: var(--nao-serif);
     font-size: 44rpx;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--nao-text);
-    letter-spacing: 1rpx;
+    letter-spacing: 2rpx;
     text-align: center;
 }
 

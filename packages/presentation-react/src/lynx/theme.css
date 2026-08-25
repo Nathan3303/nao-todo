@@ -1,32 +1,40 @@
 /**
- * NaoTodo Mobile 设计令牌（深色主题）
- * @description 设计概念：「深夜任务账本」——墨蓝深底 + 暖沙文字 + 琥珀强调。
- *              克制的深色氛围，单一暖色强调，移动端优先的圆角与间距。
+ * NaoTodo Mobile 设计令牌 ——「夜间账本」Night Ledger
+ * @description 设计概念：深夜书桌上的任务账本。深墨蓝纸面 + 暖沙文字 + 黄铜印章强调；
+ *              衬线（宋体/老式衬线）书写任务名与标题，等宽字体记录日期数字，
+ *              细发丝线分隔条目 —— 克制、精确、编辑部气质。
+ *              完成的任务如同被黄铜印章盖戳的账目条目。
  */
 :root {
-    /* 背景层级 */
-    --nao-bg: #0e1116;
-    --nao-bg-elevated: #151a21;
-    --nao-surface: #1b212b;
-    --nao-surface-hover: #232b37;
-    --nao-border: rgba(255, 255, 255, 0.08);
+    /* 纸面层级（墨蓝 → 暖褐的微渐变底） */
+    --nao-bg: #0b0e13;
+    --nao-bg-elevated: #11151c;
+    --nao-surface: #161b24;
+    --nao-surface-hover: #1d2430;
+    --nao-border: rgba(240, 226, 195, 0.07);
+    --nao-border-strong: rgba(240, 226, 195, 0.16);
 
-    /* 文字层级（暖沙） */
-    --nao-text: #f3eee2;
-    --nao-text-secondary: #a3a9b4;
-    --nao-text-muted: #636b76;
+    /* 文字层级（暖羊皮纸） */
+    --nao-text: #f2e8d4;
+    --nao-text-secondary: #a99c85;
+    --nao-text-muted: #6f6757;
 
-    /* 强调（琥珀）与状态 */
-    --nao-accent: #e8a84c;
-    --nao-accent-soft: rgba(232, 168, 76, 0.16);
-    --nao-accent-pressed: #d6953a;
-    --nao-danger: #e57368;
-    --nao-success: #7cc49a;
+    /* 强调（黄铜）与状态 */
+    --nao-accent: #d9a441;
+    --nao-accent-soft: rgba(217, 164, 65, 0.13);
+    --nao-accent-pressed: #c18d2e;
+    --nao-danger: #d97b6c;
+    --nao-success: #7fae8f;
 
-    /* 圆角与间距 */
-    --nao-radius-sm: 12rpx;
-    --nao-radius-md: 24rpx;
-    --nao-radius-lg: 40rpx;
+    /* 字体族（衬线显示 / 人文无衬线正文 / 等宽账目数字） */
+    --nao-serif: 'Iowan Old Style', 'Songti SC', Georgia, 'Times New Roman', serif;
+    --nao-sans: 'Avenir Next', 'PingFang SC', 'Helvetica Neue', sans-serif;
+    --nao-mono: Menlo, 'Courier New', 'SF Mono', monospace;
+
+    /* 圆角与间距（更利落的账目边缘） */
+    --nao-radius-sm: 10rpx;
+    --nao-radius-md: 20rpx;
+    --nao-radius-lg: 32rpx;
     --nao-gap-sm: 12rpx;
     --nao-gap: 24rpx;
     --nao-gap-lg: 48rpx;

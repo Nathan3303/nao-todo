@@ -1,0 +1,351 @@
+/**
+ * 任务模块共享样式（task-list / task-detail / task-create / manage / settings / sidebar）
+ * @description 「夜间账本」延续：细发丝线、衬线标题、黄铜印章、等宽日期；
+ *              所有可点区域复用 lynx-ui Button（headless 定制视觉）。
+ */
+
+/* --- 屏幕骨架（固定 100vh，防子项撑出导致不可滚动） --- */
+.ts-screen {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--nao-bg);
+    position: relative;
+    overflow: hidden;
+}
+
+.ts-screen-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 顶部氛围光（暖琥珀，克制地落在纸面上方） */
+.ts-glow {
+    position: absolute;
+    top: -28vh;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 96vw;
+    height: 56vh;
+    border-radius: 50%;
+    background: radial-gradient(
+        ellipse at center,
+        rgba(217, 164, 65, 0.09) 0%,
+        rgba(217, 164, 65, 0) 68%
+    );
+    pointer-events: none;
+}
+
+/* --- 顶栏（账本页眉：衬线标题 + 细发丝线） --- */
+.ts-safe-top {
+    background-color: var(--nao-bg-elevated);
+}
+
+.ts-header {
+    height: 108rpx;
+    padding: 0 28rpx;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1rpx solid var(--nao-border);
+    background-color: var(--nao-bg-elevated);
+    flex-shrink: 0;
+}
+
+.ts-header-left {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+}
+
+.ts-header-btn {
+    width: 64rpx;
+    height: 64rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--nao-radius-sm);
+    background-color: transparent;
+    border: 1rpx solid var(--nao-border);
+}
+
+.ts-header-btn.ui-active {
+    background-color: var(--nao-surface-hover);
+}
+
+.ts-header-btn-text {
+    font-size: 32rpx;
+    color: var(--nao-text-secondary);
+    font-family: var(--nao-serif);
+}
+
+.ts-header-title {
+    font-family: var(--nao-serif);
+    font-size: 34rpx;
+    font-weight: 600;
+    color: var(--nao-text);
+    margin-left: 22rpx;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    letter-spacing: 1rpx;
+}
+
+/* --- 列表容器 --- */
+.ts-scroll {
+    flex: 1;
+    min-height: 0;
+}
+
+/* 直接作为 ts-screen 子项（详情/创建/管理等无 body 包裹的屏幕） */
+.ts-screen > .ts-scroll {
+    flex: 1;
+    min-height: 0;
+}
+
+.ts-list {
+    padding: 28rpx 28rpx 200rpx;
+}
+
+/* --- 状态提示（引言式空态） --- */
+.ts-empty {
+    padding: 140rpx 64rpx;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.ts-empty-mark {
+    width: 88rpx;
+    height: 88rpx;
+    border-radius: 50%;
+    border: 2rpx solid var(--nao-border-strong);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 32rpx;
+}
+
+.ts-empty-mark-text {
+    font-family: var(--nao-serif);
+    font-size: 36rpx;
+    color: var(--nao-text-muted);
+}
+
+.ts-empty-text {
+    font-family: var(--nao-serif);
+    font-size: 27rpx;
+    color: var(--nao-text-muted);
+    text-align: center;
+    line-height: 1.9;
+    letter-spacing: 1rpx;
+}
+
+.ts-loading {
+    padding: 140rpx 48rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ts-loading-text {
+    font-size: 24rpx;
+    color: var(--nao-text-muted);
+    letter-spacing: 4rpx;
+}
+
+/* --- 表单（下划线式账目栏线） --- */
+.ts-field {
+    margin-bottom: 32rpx;
+}
+
+.ts-field-label {
+    font-size: 22rpx;
+    color: var(--nao-text-muted);
+    margin-bottom: 14rpx;
+    letter-spacing: 4rpx;
+}
+
+.ts-input {
+    width: 100%;
+    height: 92rpx;
+    padding: 0 4rpx;
+    background-color: transparent;
+    border: none;
+    border-bottom: 1rpx solid var(--nao-border-strong);
+    border-radius: 0;
+    font-size: 30rpx;
+    color: var(--nao-text);
+    font-family: var(--nao-serif);
+}
+
+.ts-input::placeholder {
+    color: var(--nao-text-muted);
+}
+
+.ts-textarea {
+    width: 100%;
+    min-height: 150rpx;
+    padding: 18rpx 4rpx;
+    background-color: transparent;
+    border: none;
+    border-bottom: 1rpx solid var(--nao-border-strong);
+    border-radius: 0;
+    font-size: 28rpx;
+    color: var(--nao-text);
+    font-family: var(--nao-serif);
+    line-height: 1.7;
+}
+
+.ts-textarea::placeholder {
+    color: var(--nao-text-muted);
+}
+
+/* --- 选项印章（描边式，选中有黄铜填充） --- */
+.ts-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14rpx;
+}
+
+.ts-chip {
+    height: 62rpx;
+    padding: 0 26rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0;
+    border: 1rpx solid var(--nao-border-strong);
+    background-color: transparent;
+}
+
+.ts-chip.ui-active {
+    background-color: var(--nao-accent-soft);
+    border-color: var(--nao-accent);
+}
+
+.ts-chip-text {
+    font-size: 24rpx;
+    color: var(--nao-text-secondary);
+    letter-spacing: 1rpx;
+}
+
+.ts-chip.ui-active .ts-chip-text {
+    color: var(--nao-accent);
+    font-weight: 600;
+}
+
+/* 彩色点（项目/标签色） */
+.ts-dot {
+    width: 16rpx;
+    height: 16rpx;
+    border-radius: 50%;
+    margin-right: 12rpx;
+}
+
+/* --- 主按钮（黄铜印章） --- */
+.ts-primary-btn {
+    height: 92rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--nao-accent);
+    border-radius: 0;
+    box-shadow: 0 10rpx 28rpx rgba(217, 164, 65, 0.22);
+}
+
+.ts-primary-btn.ui-active {
+    background-color: var(--nao-accent-pressed);
+}
+
+.ts-primary-btn.ui-disabled {
+    opacity: 0.55;
+    box-shadow: none;
+}
+
+.ts-primary-btn-text {
+    font-size: 28rpx;
+    font-weight: 700;
+    color: #171207;
+    letter-spacing: 4rpx;
+}
+
+/* --- 危险按钮（朱砂描边） --- */
+.ts-danger-btn {
+    height: 84rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1rpx solid rgba(217, 123, 108, 0.45);
+    border-radius: 0;
+    background-color: transparent;
+}
+
+.ts-danger-btn.ui-active {
+    background-color: rgba(217, 123, 108, 0.12);
+}
+
+.ts-danger-btn-text {
+    font-size: 26rpx;
+    color: var(--nao-danger);
+    letter-spacing: 2rpx;
+}
+
+/* --- 悬浮按钮（黄铜双环印章） --- */
+.ts-fab {
+    position: fixed;
+    right: 36rpx;
+    bottom: 48rpx;
+    width: 116rpx;
+    height: 116rpx;
+    border-radius: 50%;
+    background-color: var(--nao-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+        0 0 0 8rpx rgba(217, 164, 65, 0.18),
+        0 16rpx 40rpx rgba(217, 164, 65, 0.3);
+}
+
+.ts-fab.ui-active {
+    background-color: var(--nao-accent-pressed);
+    box-shadow:
+        0 0 0 8rpx rgba(217, 164, 65, 0.12),
+        0 10rpx 24rpx rgba(217, 164, 65, 0.24);
+}
+
+.ts-fab-text {
+    font-family: var(--nao-serif);
+    font-size: 56rpx;
+    font-weight: 400;
+    color: #171207;
+    line-height: 1;
+}
+
+/* --- 卡片（账目纸页） --- */
+.ts-card {
+    background-color: var(--nao-surface);
+    border: 1rpx solid var(--nao-border);
+    border-left: 4rpx solid var(--nao-accent);
+    border-radius: 0;
+    padding: 28rpx;
+    margin-bottom: 20rpx;
+}
+
+/* --- 入场动画（卡片逐条上浮） --- */
+@keyframes ts-entry {
+    from {
+        opacity: 0;
+        transform: translateY(16rpx);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

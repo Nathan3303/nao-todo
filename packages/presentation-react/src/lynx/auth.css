@@ -48,25 +48,28 @@
 .auth-brand-mark {
     width: 72rpx;
     height: 72rpx;
-    border-radius: 20rpx;
-    background: linear-gradient(135deg, var(--nao-accent) 0%, #f5c981 100%);
+    border-radius: 50%;
+    border: 2rpx solid var(--nao-accent);
+    background: var(--nao-accent-soft);
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 20rpx;
-    box-shadow: 0 12rpx 32rpx rgba(232, 168, 76, 0.28);
+    box-shadow: 0 0 0 8rpx rgba(217, 164, 65, 0.12);
 }
 
 .auth-brand-mark-text {
+    font-family: var(--nao-serif);
     font-size: 40rpx;
-    font-weight: 800;
-    color: #1a140b;
+    font-weight: 700;
+    color: var(--nao-accent);
 }
 
 .auth-brand-name {
+    font-family: var(--nao-serif);
     font-size: 34rpx;
-    font-weight: 700;
-    letter-spacing: 2rpx;
+    font-weight: 600;
+    letter-spacing: 4rpx;
     color: var(--nao-text);
 }
 
@@ -82,16 +85,18 @@
     width: 100%;
     background-color: var(--nao-surface);
     border: 1rpx solid var(--nao-border);
-    border-radius: var(--nao-radius-lg);
+    border-left: 4rpx solid var(--nao-accent);
+    border-radius: 0;
     padding: 40rpx 36rpx 36rpx;
     animation: auth-fade-in 0.5s ease-out 0.1s both;
 }
 
 .auth-title {
+    font-family: var(--nao-serif);
     font-size: 40rpx;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--nao-text);
-    letter-spacing: 1rpx;
+    letter-spacing: 2rpx;
 }
 
 .auth-subtitle {
@@ -145,16 +150,18 @@
     letter-spacing: 1rpx;
 }
 
-/* lynx-ui Input headless 定制 */
+/* lynx-ui Input headless 定制：下划线式账目栏线 */
 .auth-input {
     width: 100%;
     height: 92rpx;
-    padding: 0 24rpx;
-    background-color: var(--nao-bg-elevated);
-    border: 1rpx solid var(--nao-border);
-    border-radius: var(--nao-radius-md);
+    padding: 0 4rpx;
+    background-color: transparent;
+    border: none;
+    border-bottom: 1rpx solid var(--nao-border-strong);
+    border-radius: 0;
     font-size: 28rpx;
     color: var(--nao-text);
+    font-family: var(--nao-serif);
 }
 
 .auth-input::placeholder {
@@ -184,10 +191,10 @@
 }
 
 .auth-submit-text {
-    font-size: 30rpx;
+    font-size: 29rpx;
     font-weight: 700;
-    color: #1a140b;
-    letter-spacing: 2rpx;
+    color: #171207;
+    letter-spacing: 4rpx;
 }
 
 /* lynx-ui 状态类：按压 / 禁用 */

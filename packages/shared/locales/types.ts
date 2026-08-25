@@ -587,6 +587,85 @@ export interface LocaleMessages {
     // Welcome
     'welcome.greeting': string
     'welcome.message': string
+
+    // Mobile task screens
+    'mobile.taskList.empty': string
+    'mobile.taskList.loading': string
+    'mobile.taskList.createTask': string
+    'mobile.taskList.menu': string
+    'mobile.taskCreate.title': string
+    'mobile.taskCreate.namePlaceholder': string
+    'mobile.taskCreate.descriptionPlaceholder': string
+    'mobile.taskCreate.submit': string
+    'mobile.taskCreate.state': string
+    'mobile.taskCreate.priority': string
+    'mobile.taskCreate.project': string
+    'mobile.taskCreate.tags': string
+    'mobile.taskCreate.startAtPlaceholder': string
+    'mobile.taskCreate.endAtPlaceholder': string
+    'mobile.taskCreate.projectEmpty': string
+    'mobile.taskCreate.tagEmpty': string
+    'mobile.taskDetail.description': string
+    'mobile.taskDetail.checkItems': string
+    'mobile.taskDetail.addCheckItem': string
+    'mobile.taskDetail.checkItemPlaceholder': string
+    'mobile.taskDetail.subTasks': string
+    'mobile.taskDetail.subTaskPlaceholder': string
+    'mobile.taskDetail.addSubTask': string
+    'mobile.taskDetail.subTaskProgress': string
+    'mobile.taskDetail.subTaskEmpty': string
+    'mobile.taskDetail.comments': string
+    'mobile.taskDetail.addComment': string
+    'mobile.taskDetail.commentPlaceholder': string
+    'mobile.taskDetail.delete': string
+    'mobile.taskDetail.restore': string
+    'mobile.taskDetail.deletedTip': string
+    'mobile.taskDetail.dangerZone': string
+    'mobile.project.title': string
+    'mobile.project.create': string
+    'mobile.project.namePlaceholder': string
+    'mobile.project.color': string
+    'mobile.project.delete': string
+    'mobile.project.restore': string
+    'mobile.project.deletedSection': string
+    'mobile.tag.title': string
+    'mobile.tag.create': string
+    'mobile.tag.namePlaceholder': string
+    'mobile.tag.color': string
+    'mobile.tag.delete': string
+    'mobile.sidebar.lists': string
+    'mobile.sidebar.projects': string
+    'mobile.sidebar.tags': string
+    'mobile.sidebar.manageProjects': string
+    'mobile.sidebar.manageTags': string
+    'mobile.sidebar.profile': string
+    'mobile.settings.signOut': string
+    'mobile.common.back': string
+    'mobile.common.save': string
+    'mobile.common.cancel': string
+    'mobile.common.loadFailed': string
+
+    // Date picker
+    'mobile.datePicker.today': string
+    'mobile.datePicker.tomorrow': string
+    'mobile.datePicker.weekSunday': string
+    'mobile.datePicker.weekMonday': string
+    'mobile.datePicker.clear': string
+    'mobile.datePicker.cancel': string
+    'mobile.datePicker.confirm': string
+
+    // List toolbar (sort / filter / more)
+    'mobile.taskList.sort': string
+    'mobile.taskList.sortField': string
+    'mobile.taskList.sortOrder': string
+    'mobile.taskList.sortAsc': string
+    'mobile.taskList.sortDesc': string
+    'mobile.taskList.filter': string
+    'mobile.taskList.filterAll': string
+    'mobile.taskList.more': string
+    'mobile.taskList.refresh': string
+    'mobile.taskList.hideCompleted': string
+    'mobile.taskList.showCompleted': string
 }
 
 export type LocaleKey = keyof LocaleMessages

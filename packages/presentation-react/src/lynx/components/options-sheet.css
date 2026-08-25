@@ -1,0 +1,97 @@
+/* 通用选项弹层（排序/筛选/更多） */
+.ops-panel {
+    background-color: var(--nao-bg-elevated);
+    border-top: 1rpx solid var(--nao-border-strong);
+    padding: 28rpx 32rpx 48rpx;
+}
+
+.ops-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8rpx;
+}
+
+.ops-head-title {
+    font-family: var(--nao-serif);
+    font-size: 32rpx;
+    font-weight: 600;
+    color: var(--nao-text);
+    letter-spacing: 2rpx;
+}
+
+.ops-close {
+    width: 56rpx;
+    height: 56rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0;
+    background-color: transparent;
+}
+
+.ops-close.ui-active {
+    background-color: var(--nao-surface-hover);
+}
+
+.ops-close-text {
+    font-size: 26rpx;
+    color: var(--nao-text-muted);
+}
+
+.ops-section {
+    margin-top: 24rpx;
+}
+
+.ops-section-title {
+    display: block;
+    font-size: 22rpx;
+    color: var(--nao-text-muted);
+    margin-bottom: 14rpx;
+    letter-spacing: 4rpx;
+}
+
+.ops-confirm {
+    margin-top: 32rpx;
+}
+
+/* 操作列表（更多） */
+.ops-action {
+    width: 100%;
+    height: 84rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0;
+    border: 1rpx solid var(--nao-border);
+    background-color: transparent;
+    margin-top: 16rpx;
+}
+
+.ops-action.ui-active {
+    background-color: var(--nao-surface-hover);
+}
+
+.ops-action.checked {
+    border-color: rgba(217, 164, 65, 0.5);
+    background-color: var(--nao-accent-soft);
+}
+
+.ops-action.danger {
+    border-color: rgba(217, 123, 108, 0.45);
+}
+
+.ops-action-text {
+    font-size: 26rpx;
+    color: var(--nao-text-secondary);
+    letter-spacing: 2rpx;
+}
+
+.ops-action.checked .ops-action-text {
+    color: var(--nao-accent);
+    font-weight: 600;
+}
+
+.ops-action.danger .ops-action-text {
+    color: var(--nao-danger);
+}

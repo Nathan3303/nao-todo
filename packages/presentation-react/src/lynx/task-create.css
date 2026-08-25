@@ -1,0 +1,44 @@
+/* 任务创建屏幕 —— 记账表单页 */
+.tc-body {
+    padding: 40rpx 32rpx;
+}
+
+.tc-empty-tip {
+    font-size: 23rpx;
+    color: var(--nao-text-muted);
+    line-height: 1.6;
+    letter-spacing: 1rpx;
+}
+
+.tc-error {
+    margin-top: 8rpx;
+    margin-bottom: 20rpx;
+    font-size: 24rpx;
+    color: var(--nao-danger);
+    line-height: 1.4;
+}
+
+.tc-submit {
+    margin-top: 16rpx;
+}
+
+/* 日期字段按钮（复用 ts-input 下划线式） */
+.tc-date-btn {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0 4rpx;
+}
+
+.tc-date-btn-text {
+    font-family: var(--nao-mono);
+    font-size: 26rpx;
+    color: var(--nao-text);
+    letter-spacing: 1rpx;
+}
+
+.tc-date-btn.empty .tc-date-btn-text {
+    font-family: var(--nao-serif);
+    font-size: 26rpx;
+    color: var(--nao-text-muted);
+}
