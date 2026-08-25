@@ -69,7 +69,6 @@
     justify-content: center;
     border-radius: var(--nao-radius-sm);
     background-color: transparent;
-    border: 1rpx solid var(--nao-border);
 }
 
 .ts-header-btn.ui-active {
@@ -79,7 +78,7 @@
 .ts-header-btn-text {
     font-size: 32rpx;
     color: var(--nao-text-secondary);
-    font-family: var(--nao-serif);
+    line-height: 1.4;
 }
 
 .ts-header-title {
@@ -325,7 +324,7 @@
     font-size: 56rpx;
     font-weight: 400;
     color: #171207;
-    line-height: 1;
+    line-height: 1.2;
 }
 
 /* --- 卡片（账目纸页） --- */

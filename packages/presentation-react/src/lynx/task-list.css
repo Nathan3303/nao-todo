@@ -31,7 +31,6 @@
     align-items: center;
     justify-content: center;
     border-radius: var(--nao-radius-sm);
-    border: 1rpx solid var(--nao-border);
     background-color: transparent;
     position: relative;
 }
@@ -43,7 +42,7 @@
 .tl-action-icon {
     font-size: 30rpx;
     color: var(--nao-text-secondary);
-    line-height: 1;
+    line-height: 1.4;
 }
 
 /* 筛选启用红点（黄铜点） */

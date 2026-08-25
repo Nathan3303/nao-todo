@@ -6,11 +6,6 @@
     right: 0;
     bottom: 0;
     z-index: 100;
-    display: none;
-}
-
-.sb-root.open {
-    display: block;
 }
 
 .sb-backdrop {
@@ -20,6 +15,7 @@
     right: 0;
     bottom: 0;
     background-color: rgba(5, 7, 10, 0.62);
+    animation: sb-fade 0.2s ease-out both;
 }
 
 .sb-panel {
@@ -32,6 +28,52 @@
     border-right: 1rpx solid var(--nao-border-strong);
     display: flex;
     flex-direction: column;
+    animation: sb-slide-in 0.28s ease-out both;
+}
+
+/* 退出动画（延迟卸载时播放） */
+.sb-root.closing .sb-backdrop {
+    animation-name: sb-fade-out;
+}
+
+.sb-root.closing .sb-panel {
+    animation-name: sb-slide-out;
+}
+
+@keyframes sb-fade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes sb-fade-out {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes sb-slide-in {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+@keyframes sb-slide-out {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-100%);
+    }
 }
 
 /* 顶部用户区 */

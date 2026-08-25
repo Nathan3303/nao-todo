@@ -138,6 +138,7 @@
     font-size: 22rpx;
     color: var(--nao-accent);
     font-weight: 700;
+    line-height: 1.3;
 }
 
 .tcard-tags {

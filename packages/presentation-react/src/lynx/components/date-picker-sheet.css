@@ -97,4 +97,5 @@
 .dps-step-text {
     font-size: 28rpx;
     color: var(--nao-accent);
+    line-height: 1.3;
 }

@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from '@lynx-js/react'
+import { useEffect, useRef, useState, useSyncExternalStore } from '@lynx-js/react'
 import { Button } from '@lynx-js/lynx-ui'
 import type { UserViewObject } from '@nao-todo/domain-identity/src/application/viewobjects'
 import { useBuiltInProjectStore } from '../hooks/use-built-in-project-store'
@@ -20,11 +20,14 @@ export type AppSidebarProps = {
     onClose: () => void
 }
 
+/** 退出动画时长（ms，与 CSS sb-slide-out 0.28s 对齐） */
+const EXIT_DURATION = 280
+
 /**
  * 应用侧边栏抽屉
  * @description 对齐 Web 端 FloatAppAside 三段布局：
  *              顶部用户区（头像 + 昵称）→ 中部子页链接（内建清单 / 项目 / 标签）→ 底部页面切换（任务 / 设置）。
- *              当前路由高亮；点击链接后替换/入栈导航并收起抽屉。
+ *              当前路由高亮；点击链接后替换/入栈导航并收起抽屉；打开/收起均有侧滑动画（延迟卸载）。
  */
 export const AppSidebar = ({ app, open, onClose }: AppSidebarProps) => {
     const { t } = useI18n()
@@ -38,6 +41,29 @@ export const AppSidebar = ({ app, open, onClose }: AppSidebarProps) => {
         app.authStore.getUserProfile
     )
 
+    // 挂载/关闭态（延迟卸载：先播退出动画再卸载）
+    const [mounted, setMounted] = useState(open)
+    const [closing, setClosing] = useState(false)
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+    useEffect(() => {
+        if (open) {
+            if (timerRef.current !== null) clearTimeout(timerRef.current)
+            setMounted(true)
+            setClosing(false)
+        } else if (mounted) {
+            setClosing(true)
+            if (timerRef.current !== null) clearTimeout(timerRef.current)
+            timerRef.current = setTimeout(() => {
+                setMounted(false)
+                setClosing(false)
+            }, EXIT_DURATION)
+        }
+        return () => {
+            if (timerRef.current !== null) clearTimeout(timerRef.current)
+        }
+    }, [open, mounted])
+
     const { screen, params } = route
     const { builtinId, projectId, tagId } = params
     const nickname = profile?.nickname || 'NaoTodo'
@@ -50,8 +76,10 @@ export const AppSidebar = ({ app, open, onClose }: AppSidebarProps) => {
 
     const activeProjects = projects.filter((p) => !p.isDeleted)
 
+    if (!mounted) return null
+
     return (
-        <view className={`sb-root${open ? ' open' : ''}`}>
+        <view className={`sb-root${closing ? ' closing' : ''}`}>
             {/* 遮罩 */}
             <view className="sb-backdrop" bindtap={onClose} />
             {/* 抽屉面板 */}

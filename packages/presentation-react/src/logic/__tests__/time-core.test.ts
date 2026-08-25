@@ -27,7 +27,11 @@ describe('timeCore - 时间格式化', () => {
     })
 
     it('formatRelativeTime：昨天 / N 天前 / 空值', () => {
-        const yesterday = new Date(Date.now() - 1000 * 60 * 60 * 24 * 1.2).toISOString()
+        // 稳定构造：昨天 0 点（距现在必然 ≥24h，走自然日判断；避免跨天/小时边界 flaky）
+        const yesterdayDate = new Date()
+        yesterdayDate.setDate(yesterdayDate.getDate() - 1)
+        yesterdayDate.setHours(0, 0, 0, 0)
+        const yesterday = yesterdayDate.toISOString()
         expect(formatRelativeTime(yesterday)).toBe('昨天')
         const daysAgo = new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString()
         expect(formatRelativeTime(daysAgo)).toBe('3 天前')

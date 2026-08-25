@@ -30,6 +30,15 @@
     animation: bs-rise 0.28s ease-out both;
 }
 
+/* 退出动画（延迟卸载时播放） */
+.bs-root.closing .bs-backdrop {
+    animation-name: bs-fade-out;
+}
+
+.bs-root.closing .bs-panel {
+    animation-name: bs-rise-out;
+}
+
 @keyframes bs-fade {
     from {
         opacity: 0;
@@ -39,11 +48,29 @@
     }
 }
 
+@keyframes bs-fade-out {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
 @keyframes bs-rise {
     from {
         transform: translateY(100%);
     }
     to {
         transform: translateY(0);
+    }
+}
+
+@keyframes bs-rise-out {
+    from {
+        transform: translateY(0);
+    }
+    to {
+        transform: translateY(100%);
     }
 }

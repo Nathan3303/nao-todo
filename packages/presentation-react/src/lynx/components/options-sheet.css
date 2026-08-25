@@ -37,6 +37,7 @@
 .ops-close-text {
     font-size: 26rpx;
     color: var(--nao-text-muted);
+    line-height: 1.3;
 }
 
 .ops-section {
