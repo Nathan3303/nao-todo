@@ -1,4 +1,4 @@
-import { JsonStringValueObject } from '@nao-todo/shared'
+import { JsonStringValueObject } from '@nao-todo/shared/valueobjects/json-string'
 
 /**
  * 内置清单偏好

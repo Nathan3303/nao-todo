@@ -1,5 +1,5 @@
 import dayjs from 'dayjs'
-import { Entity } from '@nao-todo/shared'
+import { Entity } from '@nao-todo/shared/entity'
 
 /**
  * 任务清单实体

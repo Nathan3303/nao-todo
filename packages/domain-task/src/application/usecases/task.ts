@@ -1,9 +1,5 @@
-import {
-    type GoAsync,
-    QueryOptionsValueObject,
-    type GetTasksOptions,
-    type ResponseDataPagination
-} from '@nao-todo/shared'
+import { type GoAsync, type GetTasksOptions, type ResponseDataPagination } from '@nao-todo/shared'
+import { QueryOptionsValueObject } from '@nao-todo/shared/valueobjects/query-options'
 import dayjs from 'dayjs'
 import { isGivenUpBy, isStarMarkedBy, TaskEntity } from '../../domain/entities'
 import { TaskErrorCode } from '../../domain/errors'

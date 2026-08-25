@@ -1,4 +1,5 @@
-import { Entity, type Go } from '@nao-todo/shared'
+import { Entity } from '@nao-todo/shared/entity'
+import type { Go } from '@nao-todo/shared'
 import dayjs from 'dayjs'
 import { SNOOZE_MAX_MINUTES, SNOOZE_MIN_MINUTES } from '../constants'
 import { TaskErrorCode } from '../errors'

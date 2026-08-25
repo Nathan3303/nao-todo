@@ -1,5 +1,6 @@
 import { UserConfigEntity, UserConfigRepository } from '@nao-todo/domain-identity'
 import type { Requester, GoAsync } from '@nao-todo/shared'
+import { getJWTFromLocalStorage } from '../../utils'
 import { ResponseData, UserConfigRes } from '../../models'
 import { getUserConfigRes2Entity, updateUserConfigValueObject2Req } from './converters'
 
@@ -22,7 +23,7 @@ export class UserConfigRepoImpl implements UserConfigRepository {
     async get(): GoAsync<UserConfigEntity> {
         // 获取用户配置
         const response = await this.requester.get('/user/config', {
-            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
+            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
         })
         // 处理响应
         const res = response.data as ResponseData
@@ -43,7 +44,7 @@ export class UserConfigRepoImpl implements UserConfigRepository {
         const updateRto = updateUserConfigValueObject2Req(updatedEntity)
         // 更新用户配置
         const response = await this.requester.put('/user/config', updateRto, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('USER_JWT')}` }
+            headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
         })
         // 处理响应
         const res = response.data as ResponseData

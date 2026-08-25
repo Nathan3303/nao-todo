@@ -30,9 +30,14 @@ const DEFAULT_TIMEOUT = 5000
  *              - 检测凭证失效（code 10041，被下线/被顶号）并触发 onAuthExpired 回调（与 axios 版同语义）
  * @param baseURL 基础 URL
  * @param onAuthExpired 凭证失效回调
+ * @param getToken 令牌读取函数（Lynx 无 localStorage，由应用层注入；请求时实时读取，登录后自动携带）
  * @returns Lynx 请求器
  */
-export const useLynxRequester = (baseURL: string, onAuthExpired?: () => void): Requester => {
+export const useLynxRequester = (
+    baseURL: string,
+    onAuthExpired?: () => void,
+    getToken?: () => string | null
+): Requester => {
     // 凭证失效回调仅触发一次（与 AxiosRequester 的 authExpiredFired 语义一致）
     let authExpiredFired = false
     const notifyAuthExpired = () => {
@@ -49,14 +54,20 @@ export const useLynxRequester = (baseURL: string, onAuthExpired?: () => void): R
         let response: Response
         let timer: ReturnType<typeof setTimeout> | undefined
         try {
+            // 请求头：内容类型 + 设备 ID + 令牌（登录后携带 Authorization）
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json; charset=UTF-8',
+                'X-Device-Id': getLynxDeviceId()
+            }
+            const token = getToken?.() ?? ''
+            if (token !== '') {
+                headers['Authorization'] = `Bearer ${token}`
+            }
             // 超时控制：Promise.race 实现（Lynx fetch 无内置 timeout 选项）
             response = await Promise.race([
                 fetch(`${baseURL}${url}`, {
                     method: method.toUpperCase(),
-                    headers: {
-                        'Content-Type': 'application/json; charset=UTF-8',
-                        'X-Device-Id': getLynxDeviceId()
-                    },
+                    headers,
                     body: data !== undefined ? JSON.stringify(data) : undefined
                 }),
                 new Promise<Response>((_resolve, reject) => {

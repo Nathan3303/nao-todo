@@ -1,9 +1,6 @@
-import {
-    defaultColumns,
-    JsonStringValueObject,
-    type GetTasksOptions,
-    type TaskColumnOptions
-} from '@nao-todo/shared'
+import { type GetTasksOptions, type TaskColumnOptions } from '@nao-todo/shared'
+import { JsonStringValueObject } from '@nao-todo/shared/valueobjects/json-string'
+import { defaultColumns } from '@nao-todo/shared/constants/task'
 import {
     BuiltInProjectEntity,
     BuiltInProjectPreferenceEntity

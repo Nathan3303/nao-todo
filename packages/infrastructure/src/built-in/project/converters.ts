@@ -1,6 +1,6 @@
 import type { BuiltInProjectEntity } from '@nao-todo/domain-built-in-project'
 import { BuiltInProjectPreferenceEntity } from '@nao-todo/domain-built-in-project'
-import { JsonStringValueObject } from '@nao-todo/shared'
+import { JsonStringValueObject } from '@nao-todo/shared/valueobjects/json-string'
 import type { BuiltInProjectPreferenceRes, BuiltInProjectRes } from './types'
 
 /**

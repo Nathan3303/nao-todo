@@ -14,7 +14,8 @@ import type {
     UpdateProjectReq,
     CreateProjectReq
 } from '../models'
-import { defaultColumns, JsonStringValueObject } from '@nao-todo/shared'
+import { defaultColumns } from '@nao-todo/shared/constants/task'
+import { JsonStringValueObject } from '@nao-todo/shared/valueobjects/json-string'
 import dayjs from 'dayjs'
 
 // --- Project ---

@@ -1,4 +1,4 @@
-import { Entity } from '@nao-todo/shared'
+import { Entity } from '@nao-todo/shared/entity'
 
 // TaskCheckItemEntity 待办任务检查事项实体
 export class TaskCheckItemEntity extends Entity {

@@ -1,4 +1,5 @@
-import { Entity, type Go } from '@nao-todo/shared'
+import { Entity } from '@nao-todo/shared/entity'
+import type { Go } from '@nao-todo/shared'
 
 /**
  * 用户配置实体

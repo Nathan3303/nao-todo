@@ -9,7 +9,8 @@ import type {
     CreateTagReq
 } from '../models'
 import dayjs from 'dayjs'
-import { defaultColumns, JsonStringValueObject } from '@nao-todo/shared'
+import { defaultColumns } from '@nao-todo/shared/constants/task'
+import { JsonStringValueObject } from '@nao-todo/shared/valueobjects/json-string'
 
 // --- Tag ---
 

@@ -1,4 +1,5 @@
-import { Entity, Go } from '@nao-todo/shared'
+import { Entity } from '@nao-todo/shared/entity'
+import type { Go } from '@nao-todo/shared'
 import dayjs from 'dayjs'
 
 /**

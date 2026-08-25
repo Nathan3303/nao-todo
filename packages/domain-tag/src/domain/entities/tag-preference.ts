@@ -1,4 +1,5 @@
-import { Entity, JsonStringValueObject } from '@nao-todo/shared'
+import { Entity } from '@nao-todo/shared/entity'
+import { JsonStringValueObject } from '@nao-todo/shared/valueobjects/json-string'
 
 /**
  * 标签偏好实体

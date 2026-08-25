@@ -1,4 +1,4 @@
-import { defaultColumns } from '@nao-todo/shared'
+import { defaultColumns } from '@nao-todo/shared/constants/task'
 import dayjs from 'dayjs'
 import type { BuiltInProjectPreferenceRes, BuiltInProjectRes } from './types'
 

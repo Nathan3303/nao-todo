@@ -1,4 +1,4 @@
-import { Entity } from '@nao-todo/shared'
+import { Entity } from '@nao-todo/shared/entity'
 
 /**
  * 评论实体
