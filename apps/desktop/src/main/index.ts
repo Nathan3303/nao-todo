@@ -4,7 +4,7 @@ import { BrowserWindow, app, shell } from 'electron'
 /**
  * Windows toast 通知依赖 AppUserModelID，未设置则打包版系统通知不显示
  */
-app.setAppUserModelId('com.nathanao.naotodo')
+app.setAppUserModelId('space.nathanao.todo')
 
 const isDev = !app.isPackaged
 

@@ -2,10 +2,11 @@
     "name": "@nao-todo/desktopapp",
     "version": "1.0.0",
     "description": "Desktop version of NaoTodo",
-    "author": "Nathan Lee",
+    "author": "Nathan Lee <Lee1928@outlook.com>",
     "license": "MIT",
     "private": true,
     "main": "./out/main/index.js",
+    "desktopName": "nao-todo.desktop",
     "repository": "https://github.com/Nathan3303/nao-todo.git",
     "scripts": {
         "dev": "electron-vite dev",
@@ -44,10 +45,18 @@
             "createStartMenuShortcut": true
         },
         "linux": {
+            "icon": "build/icons/png",
+            "executableName": "nao-todo",
+            "category": "Office",
+            "syncDesktopName": true,
             "target": [
                 "AppImage",
                 "deb"
             ]
+        },
+        "deb": {
+            "artifactName": "${productName}_${version}_${arch}.${ext}",
+            "packageName": "nao-todo"
         }
     },
     "dependencies": {
