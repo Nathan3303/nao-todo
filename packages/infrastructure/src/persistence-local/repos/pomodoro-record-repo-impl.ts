@@ -99,6 +99,16 @@ export class LocalPomodoroRecordRepoImpl implements PomodoroRecordRepository {
             if (pomodoroId) {
                 records = records.filter((r) => r.pomodoroId === pomodoroId)
             }
+            // 时间范围过滤：startAt 落在 [startTime, endTime] 区间（与远程语义一致；
+            // Date.parse 数值比较兼容远端可能带回的时区后缀，避免 ISO 字符串字典序误判）
+            const startTimeMs = Date.parse(params.get('startTime') ?? '')
+            const endTimeMs = Date.parse(params.get('endTime') ?? '')
+            if (!Number.isNaN(startTimeMs)) {
+                records = records.filter((r) => Date.parse(r.startAt) >= startTimeMs)
+            }
+            if (!Number.isNaN(endTimeMs)) {
+                records = records.filter((r) => Date.parse(r.startAt) <= endTimeMs)
+            }
             // 按开始时间倒序，与远程行为一致
             records.sort((a, b) => b.startAt.localeCompare(a.startAt))
             // 分页（page/limit，limit 默认 20）

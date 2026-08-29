@@ -815,6 +815,41 @@ describe('LocalPomodoroRecordRepoImpl 记录列表', () => {
         expect(forA!.entities.map((r) => r.pomodoroId)).toEqual(['pomodoro-a'])
         expect(forB!.entities.map((r) => r.pomodoroId)).toEqual(['pomodoro-b'])
     })
+
+    it('startTime/endTime 过滤：只返回 startAt 落在区间内的记录', async () => {
+        const repo = new LocalPomodoroRecordRepoImpl()
+        const todayStart = new Date(new Date().setHours(0, 0, 0, 0)).toISOString()
+        const todayEnd = new Date(new Date().setHours(23, 59, 59, 999)).toISOString()
+        const yesterday = new Date(Date.now() - 24 * 3600 * 1000).toISOString()
+        const tomorrow = new Date(Date.now() + 24 * 3600 * 1000).toISOString()
+
+        await repo.create(makeRecord({ startAt: todayStart, endAt: todayStart }))
+        await repo.create(makeRecord({ startAt: yesterday, endAt: yesterday }))
+        await repo.create(makeRecord({ startAt: tomorrow, endAt: tomorrow }))
+
+        const [result, err] = await repo.list(
+            `startTime=${encodeURIComponent(todayStart)}&endTime=${encodeURIComponent(todayEnd)}`
+        )
+        expect(err).toBeNull()
+        expect(result!.entities).toHaveLength(1)
+        expect(result!.entities[0]!.startAt).toBe(todayStart)
+    })
+
+    it('仅 startTime 或仅 endTime 时边界正确', async () => {
+        const repo = new LocalPomodoroRecordRepoImpl()
+        const before = '2023-12-31T23:00:00.000Z'
+        const after = '2024-01-02T01:00:00.000Z'
+        const boundary = '2024-01-01T00:00:00.000Z'
+
+        await repo.create(makeRecord({ startAt: before, endAt: before }))
+        await repo.create(makeRecord({ startAt: after, endAt: after }))
+
+        const [afterOnly] = await repo.list(`startTime=${encodeURIComponent(boundary)}`)
+        expect(afterOnly!.entities.map((r) => r.startAt)).toEqual([after])
+
+        const [beforeOnly] = await repo.list(`endTime=${encodeURIComponent(boundary)}`)
+        expect(beforeOnly!.entities.map((r) => r.startAt)).toEqual([before])
+    })
 })
 
 describe('LocalPomodoroRecordRepoImpl 累计时长累加', () => {
