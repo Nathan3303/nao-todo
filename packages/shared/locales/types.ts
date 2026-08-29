@@ -430,6 +430,30 @@ export interface LocaleMessages {
     'calendar.weekday.sat': string
     'calendar.weekday.sun': string
 
+    // Date relative
+    'date.today': string
+    'date.yesterday': string
+    'date.tomorrow': string
+    'date.dayAfterTomorrow': string
+    'date.thisWeek': string
+    'date.lastWeek': string
+    'date.nextWeek': string
+    'date.thisMonth': string
+    'date.lastMonth': string
+    'date.nextMonth': string
+    'date.thisYear': string
+    'date.lastYear': string
+    'date.nextYear': string
+    'date.fallbackFormat': string
+    'date.invalid': string
+    'date.weekday.0': string
+    'date.weekday.1': string
+    'date.weekday.2': string
+    'date.weekday.3': string
+    'date.weekday.4': string
+    'date.weekday.5': string
+    'date.weekday.6': string
+
     // Dialog
     'dialog.projectCreator.title': string
     'dialog.projectManager.title': string
