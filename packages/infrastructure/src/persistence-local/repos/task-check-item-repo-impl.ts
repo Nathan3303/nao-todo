@@ -6,6 +6,7 @@ import {
 } from '@nao-todo/domain-task'
 import type { GoAsync } from '@nao-todo/shared'
 import { taskCheckItemEntityToRecord, taskCheckItemRecordToEntity } from '../converters/task'
+import { isNotDeleted } from '../utils'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
 import { localSession } from '../session/local-session'
@@ -110,7 +111,7 @@ export class LocalTaskCheckItemRepoImpl implements TaskCheckItemRepository {
             const records = await this.db.taskCheckItems
                 .where('taskId')
                 .equals(taskId)
-                .filter((r) => r.userId === this.currentUserId)
+                .filter((r) => r.userId === this.currentUserId && isNotDeleted(r.deletedAt))
                 .toArray()
             const entities: TaskCheckItemEntity[] = []
             for (const record of records) {

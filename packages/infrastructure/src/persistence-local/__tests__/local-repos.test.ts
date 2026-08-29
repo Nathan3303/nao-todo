@@ -141,6 +141,60 @@ describe('LocalProjectRepoImpl', () => {
     })
 })
 
+describe('LocalProjectRepoImpl 软删过滤', () => {
+    beforeEach(async () => {
+        await setup()
+    })
+
+    const createProject = async (repo: LocalProjectRepoImpl, name: string) => {
+        const [entity, err] = await repo.create(new CreateProjectValueObject(name, 'more2', ''))
+        expect(err).toBeNull()
+        return entity!
+    }
+
+    it('软删（repo.delete）后 list 不再返回该项，墓碑仍在库中', async () => {
+        const repo = new LocalProjectRepoImpl()
+        const project = await createProject(repo, '待删项目')
+
+        expect(await repo.delete(project.id)).toBeNull()
+
+        // 软删语义：记录保留（deletedAt 置位），仅查询过滤
+        const tombstone = await localDatabase.projects.get(project.id)
+        expect(tombstone?.deletedAt).not.toBeNull()
+
+        const [listResult, err] = await repo.list()
+        expect(err).toBeNull()
+        expect(listResult).toEqual([])
+    })
+
+    it('deletedAt 为空串（远端同步拉取的未删记录）视为未删除，list 返回', async () => {
+        const repo = new LocalProjectRepoImpl()
+        const project = await createProject(repo, '远端未删项目')
+
+        // 模拟远程同步写入：后端空串表示未删（见 isNotDeleted 语义）
+        const record = await localDatabase.projects.get(project.id)
+        record!.deletedAt = ''
+        await localDatabase.projects.put(record!)
+
+        const [listResult, err] = await repo.list()
+        expect(err).toBeNull()
+        expect(listResult!.map((p) => p.id)).toEqual([project.id])
+    })
+
+    it('混合场景：已删项被过滤，未删项保留', async () => {
+        const repo = new LocalProjectRepoImpl()
+        const a = await createProject(repo, '保留项目A')
+        const b = await createProject(repo, '删除项目B')
+        const c = await createProject(repo, '保留项目C')
+
+        await repo.delete(b.id)
+
+        const [listResult, err] = await repo.list()
+        expect(err).toBeNull()
+        expect(listResult!.map((p) => p.id)).toEqual([a.id, c.id])
+    })
+})
+
 describe('LocalTaskRepoImpl', () => {
     beforeEach(async () => {
         await setup()
@@ -564,6 +618,64 @@ describe('TaskCheckItem 排序', () => {
         await switchUser('user-1')
         const u1Third = await createItem(repo, 'task-1', 'user-1 第三项')
         expect(u1Third.sortId).toBe(3)
+    })
+})
+
+describe('TaskCheckItem 软删过滤', () => {
+    beforeEach(async () => {
+        await setup('user-1')
+    })
+
+    const createItem = async (repo: LocalTaskCheckItemRepoImpl, taskId: string, name: string) => {
+        const [entity, err] = await repo.create(
+            new CreateTaskCheckItemValueObject(taskId, name, false, false)
+        )
+        expect(err).toBeNull()
+        return entity!
+    }
+
+    it('软删（repo.delete）后 list 不再返回该项，墓碑仍在库中', async () => {
+        const repo = new LocalTaskCheckItemRepoImpl()
+        const item = await createItem(repo, 'task-1', '待删项')
+
+        const deleteErr = await repo.delete(item.id)
+        expect(deleteErr).toBeNull()
+
+        // 软删语义：记录保留（deletedAt 置位），仅查询过滤
+        const tombstone = await localDatabase.taskCheckItems.get(item.id)
+        expect(tombstone?.deletedAt).not.toBeNull()
+
+        const [listResult, err] = await repo.list('task-1')
+        expect(err).toBeNull()
+        expect(listResult).toEqual([])
+    })
+
+    it('deletedAt 为空串（远端同步拉取的未删记录）视为未删除，list 返回', async () => {
+        const repo = new LocalTaskCheckItemRepoImpl()
+        const item = await createItem(repo, 'task-1', '远端未删项')
+
+        // 模拟远程同步写入：后端空串表示未删（见 isNotDeleted 语义）
+        const record = await localDatabase.taskCheckItems.get(item.id)
+        record!.deletedAt = ''
+        await localDatabase.taskCheckItems.put(record!)
+
+        const [listResult, err] = await repo.list('task-1')
+        expect(err).toBeNull()
+        expect(listResult!.map((i) => i.id)).toEqual([item.id])
+    })
+
+    it('混合场景：已删项被过滤，未删项保留且按 sortId 升序', async () => {
+        const repo = new LocalTaskCheckItemRepoImpl()
+        const a = await createItem(repo, 'task-1', '保留项A')
+        const b = await createItem(repo, 'task-1', '删除项B')
+        const c = await createItem(repo, 'task-1', '保留项C')
+
+        await repo.delete(b.id)
+
+        const [listResult, err] = await repo.list('task-1')
+        expect(err).toBeNull()
+        expect(listResult!.map((i) => i.id)).toEqual([a.id, c.id])
+        expect(listResult!.map((i) => i.sortId)).toEqual([1, 3])
     })
 })
 

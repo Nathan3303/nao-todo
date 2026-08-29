@@ -6,6 +6,7 @@ import {
 } from '@nao-todo/domain-project'
 import type { GoAsync } from '@nao-todo/shared'
 import { projectEntityToRecord, projectRecordToEntity } from '../converters/project'
+import { isNotDeleted } from '../utils'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
 import { snowflake } from '../../persistence-sync/snowflake'
@@ -142,9 +143,12 @@ export class LocalProjectRepoImpl implements ProjectRepository {
 
     async list(): GoAsync<ProjectEntity[]> {
         try {
+            // 对齐远程 GET /projects/ 语义：默认只返回未删除项目（deletedAt 为空），
+            // 否则侧边栏会展示本地软删墓碑（deactivedAt 停用态由视图对象 isDeleted 层过滤）
             const records = await this.db.projects
                 .where('userId')
                 .equals(this.currentUserId)
+                .filter((r) => isNotDeleted(r.deletedAt))
                 .toArray()
             const entities: ProjectEntity[] = []
             for (const record of records) {
