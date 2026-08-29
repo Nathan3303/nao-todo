@@ -255,7 +255,7 @@ const handleCreateSubTask = async (payload: { value: string }) => {
         min-width: 0;
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: 0;
     }
 
     .subtask-row__title-line {

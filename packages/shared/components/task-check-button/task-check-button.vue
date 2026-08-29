@@ -16,7 +16,7 @@
 import { ref, computed } from 'vue'
 import type { TaskCheckButtonProps, TaskCheckButtonEmits } from './types'
 
-defineOptions({ name: 'TaskCheckButton', inheritAttrs: false })
+defineOptions({ name: 'TaskCheckButton' })
 const props = defineProps<TaskCheckButtonProps>()
 const emit = defineEmits<TaskCheckButtonEmits>()
 

@@ -7,7 +7,7 @@ import {
     TaskSelector
 } from '@nao-todo/shared'
 import { TaskTagBar } from '../../tag-bar'
-import { inject } from 'vue'
+import { computed, inject } from 'vue'
 import { TaskPrioritySelectOptions, TaskStateSelectOptions } from '../../../constants'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context.js'
@@ -21,6 +21,8 @@ const {
     vo,
     checkItemProgress,
     subTaskProgress,
+    checkItems,
+    subTasks,
     isCommenting,
     commentHandler,
     tags,
@@ -28,6 +30,11 @@ const {
     switchTaskDetails,
     updateTaskDetails
 } = inject(TASK_DETAILS_CONTEXT_KEY)!
+
+const percentage = computed(() => {
+    const total = checkItemProgress.value.percentage + subTaskProgress.value.percentage
+    return checkItems.value.length && subTasks.value.length ? total / 2 : total
+})
 
 const backToParent = () => {
     if (!vo.value?.parentTaskId) return
@@ -97,11 +104,7 @@ const createCommentHandler = async (content: string) => {
                 /> -->
             </nue-div>
             <nue-div class="tasks-details-view__progress">
-                <nue-progress
-                    :percentage="(checkItemProgress.percentage + subTaskProgress.percentage) / 2"
-                    :stroke-width="2"
-                    hide-text
-                />
+                <nue-progress :percentage="percentage" :stroke-width="2" hide-text />
             </nue-div>
         </nue-header>
         <!-- 任务详情主体 -->
