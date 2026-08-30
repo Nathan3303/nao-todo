@@ -33,6 +33,7 @@ package-lock.json
 **/.swc
 **/.old/
 apps/web/stats.html
+apps/desktop/stats.html
 .bak
 .omo/run-continuation
 
