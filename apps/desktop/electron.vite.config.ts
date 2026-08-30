@@ -42,7 +42,10 @@ export default defineConfig({
                     toplevel: true
                 },
                 format: {
-                    semicolons: false,
+                    // 必须保留分号：Vite 的 vite:css-post 在清理纯 CSS chunk 时
+                    // 用正则 `import"...";` 改写引用（getEmptyChunkReplacer），
+                    // semicolons:false 会让正则失配 → 悬空 import → 运行时 404
+                    semicolons: true,
                     shorthand: true,
                     braces: false,
                     comments: false
@@ -53,6 +56,9 @@ export default defineConfig({
                 }
             },
             cssMinify: true,
+            // 全部 CSS 合并为单个文件（由 index.html 直接引用），
+            // 不再按 chunk 拆分 CSS，避免纯 CSS chunk 清理相关的构建问题
+            cssCodeSplit: false,
             // vendor 拆分：避免把全部依赖打进单个巨型 chunk（基线约 1.1MB 单块）
             rollupOptions: {
                 output: {
