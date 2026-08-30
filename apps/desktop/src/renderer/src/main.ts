@@ -1,5 +1,4 @@
 import '@/themes'
-import NueUI from 'nue-ui'
 import { createPinia } from 'pinia'
 import { createApp } from 'vue'
 import { i18n, initRequester } from '@nao-todo/shared'
@@ -7,6 +6,7 @@ import { useUserStore } from '@nao-todo/presentation-identity'
 import AppRoot from './AppRoot.vue'
 import router from '@/router'
 import { env } from '@/env'
+import { nueUI } from '@/nue-ui-register'
 
 // 初始化网络请求器
 initRequester({
@@ -19,4 +19,4 @@ initRequester({
     }
 })
 
-createApp(AppRoot).use(NueUI).use(createPinia()).use(router).use(i18n).mount('#app')
+createApp(AppRoot).use(nueUI).use(createPinia()).use(router).use(i18n).mount('#app')
