@@ -6,6 +6,7 @@ import {
 } from '@nao-todo/domain-task'
 import type { GoAsync } from '@nao-todo/shared'
 import { taskCommentEntityToRecord, taskCommentRecordToEntity } from '../converters/task'
+import { isNotDeleted } from '../utils'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
 import { localSession } from '../session/local-session'
@@ -104,7 +105,7 @@ export class LocalTaskCommentRepoImpl implements TaskCommentRepository {
             const records = await this.db.taskComments
                 .where('taskId')
                 .equals(taskId)
-                .filter((r) => r.userId === this.currentUserId)
+                .filter((r) => r.userId === this.currentUserId && isNotDeleted(r.deletedAt))
                 .toArray()
             const entities: TaskCommentEntity[] = []
             for (const record of records) {

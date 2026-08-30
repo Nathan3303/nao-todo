@@ -9,6 +9,7 @@ import {
 } from '@nao-todo/domain-pomodoro'
 import {
     CreateTaskCheckItemValueObject,
+    CreateTaskCommentValueObject,
     CreateTaskValueObject,
     TaskDomain,
     UpdateTaskValueObject
@@ -24,6 +25,7 @@ import { LocalPomodoroRepoImpl } from '../repos/pomodoro-repo-impl'
 import { LocalTagPreferenceRepoImpl } from '../repos/tag-preference-repo-impl'
 import { LocalTagRepoImpl } from '../repos/tag-repo-impl'
 import { LocalTaskCheckItemRepoImpl } from '../repos/task-check-item-repo-impl'
+import { LocalTaskCommentRepoImpl } from '../repos/task-comment-repo-impl'
 import { LocalTaskRepoImpl } from '../repos/task-repo-impl'
 
 /**
@@ -676,6 +678,67 @@ describe('TaskCheckItem 软删过滤', () => {
         expect(err).toBeNull()
         expect(listResult!.map((i) => i.id)).toEqual([a.id, c.id])
         expect(listResult!.map((i) => i.sortId)).toEqual([1, 3])
+    })
+})
+
+describe('TaskComment 软删过滤', () => {
+    beforeEach(async () => {
+        await setup('user-1')
+    })
+
+    const createComment = async (
+        repo: LocalTaskCommentRepoImpl,
+        taskId: string,
+        content: string
+    ) => {
+        const [entity, err] = await repo.create(
+            new CreateTaskCommentValueObject(taskId, content, [], false)
+        )
+        expect(err).toBeNull()
+        return entity!
+    }
+
+    it('软删（repo.delete）后 list 不再返回该评论，墓碑仍在库中', async () => {
+        const repo = new LocalTaskCommentRepoImpl()
+        const comment = await createComment(repo, 'task-1', '待删评论')
+
+        const deleteErr = await repo.delete(comment.id)
+        expect(deleteErr).toBeNull()
+
+        // 软删语义：记录保留（deletedAt 置位），仅查询过滤
+        const tombstone = await localDatabase.taskComments.get(comment.id)
+        expect(tombstone?.deletedAt).not.toBeNull()
+
+        const [listResult, err] = await repo.list('task-1')
+        expect(err).toBeNull()
+        expect(listResult).toEqual([])
+    })
+
+    it('deletedAt 为空串（远端同步拉取的未删记录）视为未删除，list 返回', async () => {
+        const repo = new LocalTaskCommentRepoImpl()
+        const comment = await createComment(repo, 'task-1', '远端未删评论')
+
+        // 模拟远程同步写入：后端空串表示未删（见 isNotDeleted 语义）
+        const record = await localDatabase.taskComments.get(comment.id)
+        record!.deletedAt = ''
+        await localDatabase.taskComments.put(record!)
+
+        const [listResult, err] = await repo.list('task-1')
+        expect(err).toBeNull()
+        expect(listResult!.map((c) => c.id)).toEqual([comment.id])
+    })
+
+    it('混合场景：已删评论被过滤，未删评论保留且按 createdAt 升序', async () => {
+        const repo = new LocalTaskCommentRepoImpl()
+        const a = await createComment(repo, 'task-1', '保留评论A')
+        const b = await createComment(repo, 'task-1', '删除评论B')
+        const c = await createComment(repo, 'task-1', '保留评论C')
+
+        await repo.delete(b.id)
+
+        const [listResult, err] = await repo.list('task-1')
+        expect(err).toBeNull()
+        expect(listResult!.map((c) => c.id)).toEqual([a.id, c.id])
     })
 })
 
