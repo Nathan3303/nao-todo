@@ -25,7 +25,6 @@ coverage
 dist.tar
 **/download.zip
 **/download
-pnpm-lock.yaml
 package-lock.json
 **/deploy_versions/
 **/.temp/
