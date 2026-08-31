@@ -45,7 +45,13 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                   name: ${{ matrix.platform }}-artifacts
-                  path: apps/desktop/release/*
+                  path: |
+                      apps/desktop/release/*.exe
+                      apps/desktop/release/*.dmg
+                      apps/desktop/release/*.zip
+                      apps/desktop/release/*.AppImage
+                      apps/desktop/release/*.deb
+                      apps/desktop/release/latest*.yml
                   if-no-files-found: ignore
 
     release:
