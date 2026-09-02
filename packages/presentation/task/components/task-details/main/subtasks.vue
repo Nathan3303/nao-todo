@@ -232,11 +232,19 @@ const handleDetachSubTask = async (subTask: TaskViewObject) => {
     border-top: 1px solid var(--nue-divider-color);
     padding: 0.5rem;
     gap: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    /* 子任务过多时区内滚动（max-height 封顶），评论保持紧贴下方 */
     height: auto;
+    max-height: 45vh;
+    min-height: 0;
     overflow: unset;
 
     > .nue-main {
+        flex: 1;
         height: auto;
+        min-height: 0;
+        overflow: auto;
         border: none;
 
         > .nue-content {

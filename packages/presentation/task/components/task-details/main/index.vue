@@ -300,24 +300,10 @@ const createCommentHandler = async (content: string) => {
     }
 
     .tasks-details-view__subtasks {
-        flex: 1;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
+        /* 不撑满剩余空间：高度随子任务内容，超出上限时区内滚动（见 subtasks.vue 的 max-height），
+           使标签栏/评论紧贴子任务下方 */
+        flex: none;
         padding: 0;
-
-        /* 子任务容器填充剩余空间，列表超出时区内滚动（标签栏/评论保持底部可见） */
-        :deep(#TodoDetailsSubTasksContainer) {
-            flex: 1;
-            min-height: 0;
-            height: auto;
-        }
-
-        :deep(#TodoDetailsSubTasksContainer > .nue-main) {
-            flex: 1;
-            min-height: 0;
-            overflow: auto;
-        }
     }
 
     .tasks-details-view__progress {
