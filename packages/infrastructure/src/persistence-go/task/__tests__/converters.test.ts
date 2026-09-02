@@ -16,3 +16,18 @@ describe('updateTaskValueObject2Req - description 透传', () => {
         expect(req.description).toBeUndefined()
     })
 })
+
+describe('updateTaskValueObject2Req - parentTaskId 空串透传（脱离父任务）', () => {
+    it('parentTaskId 为空串时透传（脱离父任务/回到顶层）', () => {
+        const updateVO = new UpdateTaskValueObject('task-1')
+        updateVO.parentTaskId = ''
+        const req = updateTaskValueObject2Req(updateVO)
+        expect(req.parentTaskId).toBe('')
+    })
+
+    it('未设置 parentTaskId 时请求体不包含该字段', () => {
+        const updateVO = new UpdateTaskValueObject('task-1')
+        const req = updateTaskValueObject2Req(updateVO)
+        expect(req.parentTaskId).toBeUndefined()
+    })
+})

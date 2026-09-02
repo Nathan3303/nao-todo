@@ -111,7 +111,8 @@ export const listTaskRes2TaskEntities = (res: ListTaskRes): TaskEntity[] => {
  */
 export const updateTaskValueObject2Req = (updateVO: UpdateTaskValueObject): UpdateTaskReq => {
     const req = {} as UpdateTaskReq
-    if (updateVO.parentTaskId) req.parentTaskId = updateVO.parentTaskId
+    // parentTaskId 空串 = 脱离父任务/回到顶层，需显式透传（truthy 判断会吞掉 ""）
+    if (updateVO.parentTaskId !== void 0) req.parentTaskId = updateVO.parentTaskId
     if (updateVO.name) req.name = updateVO.name
     if (updateVO.description !== void 0) req.description = updateVO.description
     if (updateVO.state) req.state = updateVO.state
