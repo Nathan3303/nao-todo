@@ -144,7 +144,9 @@ const createCommentHandler = async (content: string) => {
                 <nue-div vertical style="padding: 0 1rem 1rem">
                     <details-main-events />
                 </nue-div>
-                <!-- 任务详情子任务（仅顶层任务可有一级子任务，子任务详情不渲染；深度限制） -->
+                <!-- 任务详情子任务（仅顶层任务可有一级子任务，子任务详情不渲染；深度限制）。
+                     无论模块是否渲染都保留 tasks-details-view__subtasks 的弹性空隙，
+                     使标签栏/评论区始终贴住面板底部（子任务任务仅占位不渲染内容） -->
                 <nue-div
                     v-if="vo && !vo.parentTaskId"
                     class="tasks-details-view__subtasks"
@@ -152,6 +154,7 @@ const createCommentHandler = async (content: string) => {
                 >
                     <details-main-sub-tasks />
                 </nue-div>
+                <nue-div v-else class="tasks-details-view__subtasks" />
                 <!-- 任务详情标签 -->
                 <nue-div vertical style="padding: 1rem">
                     <task-tag-bar
@@ -300,10 +303,24 @@ const createCommentHandler = async (content: string) => {
     }
 
     .tasks-details-view__subtasks {
-        /* 不撑满剩余空间：高度随子任务内容，超出上限时区内滚动（见 subtasks.vue 的 max-height），
-           使标签栏/评论紧贴子任务下方 */
-        flex: none;
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
         padding: 0;
+
+        /* 子任务容器填充剩余空间，列表超出时区内滚动（标签栏/评论保持底部可见） */
+        :deep(#TodoDetailsSubTasksContainer) {
+            flex: 1;
+            min-height: 0;
+            height: auto;
+        }
+
+        :deep(#TodoDetailsSubTasksContainer > .nue-main) {
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
+        }
     }
 
     .tasks-details-view__progress {
