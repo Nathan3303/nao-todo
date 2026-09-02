@@ -13,5 +13,9 @@
         "tag/**/*",
         "task/**/*",
         "user/**/*"
-    ]
+    ],
+    "peerDependencies": {
+        "pinia": "^3.0.0",
+        "vue": "^3.5.0"
+    }
 }

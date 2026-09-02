@@ -17,5 +17,13 @@
         "utils/**/*",
         "valueobjects/**/*",
         "entity"
-    ]
+    ],
+    "peerDependencies": {
+        "vue": "^3.5.0"
+    },
+    "peerDependenciesMeta": {
+        "vue": {
+            "optional": true
+        }
+    }
 }
