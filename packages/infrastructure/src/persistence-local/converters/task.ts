@@ -35,13 +35,15 @@ export const taskEntityToRecord = async (
 
 /**
  * TaskRecord → TaskEntity（解密敏感字段）
+ * @description 空串时间戳归一为 null：远程同步空字段以 "" 落库（deletedAt/archivedAt/starMarkAt
+ *              惯例一致），读边界统一归一避免下游 === null 严格比较误判。
  */
 export const taskRecordToEntity = async (record: TaskRecord): Promise<TaskEntity> =>
     new TaskEntity(
         record.id,
         record.createdAt,
         record.updatedAt,
-        record.deletedAt,
+        record.deletedAt === '' ? null : record.deletedAt,
         record.parentTaskId,
         await cryptoService.decrypt(record.name),
         await cryptoService.decrypt(record.description),
@@ -51,8 +53,8 @@ export const taskRecordToEntity = async (record: TaskRecord): Promise<TaskEntity
         record.endAt,
         record.projectId,
         record.tags,
-        record.archivedAt,
-        record.starMarkAt,
+        record.archivedAt === '' ? null : record.archivedAt,
+        record.starMarkAt === '' ? null : record.starMarkAt,
         record.givenUpAt,
         record.remindAt,
         record.remindRepeat,

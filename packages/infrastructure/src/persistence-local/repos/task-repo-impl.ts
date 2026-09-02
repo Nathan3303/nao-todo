@@ -17,7 +17,7 @@ import {
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
 import { localSession } from '../session/local-session'
-import { isNotDeleted } from '../utils'
+import { isAbsentStamp, isNotDeleted } from '../utils'
 import { snowflake } from '../../persistence-sync/snowflake'
 import { syncTracker } from '../../persistence-sync/sync-tracker'
 
@@ -170,9 +170,16 @@ export class LocalTaskRepoImpl implements TaskRepository {
 
     /**
      * 级联软删任务关联子实体（子任务递归、检查项、评论）
-     * @description 本地与远程删除均为软删墓碑；级联删除保证远程不残留孤儿（任务删除连带子实体 delete 入队）
+     * @description 本地与远程删除均为软删墓碑；级联删除保证远程不残留孤儿（任务删除连带子实体 delete 入队）；
+     *              visited 集合防历史脏数据（父子环）导致递归死循环
      */
-    private async cascadeRemove(taskId: string, deletedAt: string): Promise<void> {
+    private async cascadeRemove(
+        taskId: string,
+        deletedAt: string,
+        visited: Set<string> = new Set()
+    ): Promise<void> {
+        if (visited.has(taskId)) return
+        visited.add(taskId)
         // 子任务（递归）
         const subtasks = await this.db.tasks
             .where('parentTaskId')
@@ -247,14 +254,14 @@ export class LocalTaskRepoImpl implements TaskRepository {
                 records = records.filter((r) => isNotDeleted(r.deletedAt))
             }
             if (query.isArchived === 'true') {
-                records = records.filter((r) => r.archivedAt !== null)
+                records = records.filter((r) => !isAbsentStamp(r.archivedAt))
             } else if (query.isArchived === 'false') {
-                records = records.filter((r) => r.archivedAt === null)
+                records = records.filter((r) => isAbsentStamp(r.archivedAt))
             }
             if (query.isStarMarked === 'true') {
-                records = records.filter((r) => r.starMarkAt !== null)
+                records = records.filter((r) => !isAbsentStamp(r.starMarkAt))
             } else if (query.isStarMarked === 'false') {
-                records = records.filter((r) => r.starMarkAt === null)
+                records = records.filter((r) => isAbsentStamp(r.starMarkAt))
             }
             // 已放弃判定：givenUpAt 非空且为有效日期（undefined/null/'' 均视为未放弃，
             // 规避 dayjs(undefined) 视为当前时间的陷阱）

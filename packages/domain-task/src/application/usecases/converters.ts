@@ -114,7 +114,9 @@ export const updateTaskViewObjectToValueObject = (
     viewObject: UpdateTaskViewObject
 ): UpdateTaskValueObject => {
     const valueObject = new UpdateTaskValueObject(taskId)
-    if (viewObject.parentTaskId) valueObject.parentTaskId = viewObject.parentTaskId
+    // parentTaskId 需在 string 范围（含 '' = 脱离父任务/回到顶层）内透传；null 沿用旧语义忽略
+    if (viewObject.parentTaskId !== void 0 && viewObject.parentTaskId !== null)
+        valueObject.parentTaskId = viewObject.parentTaskId
     if (viewObject.name) valueObject.name = viewObject.name
     if (viewObject.description !== void 0) valueObject.description = viewObject.description
     if (viewObject.state) valueObject.state = viewObject.state

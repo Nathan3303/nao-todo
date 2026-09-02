@@ -10,7 +10,8 @@ import {
 import { TASK_DETAILS_CONTEXT_KEY } from '../context'
 import { inject, nextTick, reactive, ref } from 'vue'
 import type { TaskViewObject } from '@nao-todo/domain-task'
-import { NueInput } from 'nue-ui'
+import { NueConfirm, NueInput, NueMessage } from 'nue-ui'
+import { translateTaskError } from '../../../utils/error-message'
 
 const {
     subTasks,
@@ -19,7 +20,8 @@ const {
     retrySubTasks,
     switchTaskDetails,
     subTaskHandler,
-    createSubTask
+    createSubTask,
+    detachSubTask
 } = inject(TASK_DETAILS_CONTEXT_KEY)!
 
 // 优先级 → 颜色（与 TaskPriorityInfo 共用 TaskPriorityPresets 常量；low/inherit 视为默认色不覆盖）
@@ -96,6 +98,25 @@ const submitEditName = (subTask: TaskViewObject) => {
 const handleCreateSubTask = async (payload: { value: string }) => {
     await createSubTask(payload.value)
 }
+
+// 脱离父任务（提升为顶层任务）：先确认，成功后从列表移除并刷新顶层列表
+const handleDetachSubTask = async (subTask: TaskViewObject) => {
+    if (updatingIds.has(subTask.id)) return
+    const [isByCancel] = await NueConfirm({
+        title: t('task.details.detachFromParent'),
+        content: t('task.details.detachFromParentConfirm'),
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel')
+    })
+    if (isByCancel) return
+    updatingIds.add(subTask.id)
+    try {
+        const err = await detachSubTask(subTask.id)
+        if (err !== null) NueMessage.error(translateTaskError(err))
+    } finally {
+        updatingIds.delete(subTask.id)
+    }
+}
 </script>
 
 <template>
@@ -166,6 +187,13 @@ const handleCreateSubTask = async (payload: { value: string }) => {
                                     theme="small,pure"
                                     :title="t('common.edit')"
                                     @click="startEditName(subTask)"
+                                />
+                                <nue-button
+                                    icon="arrow-up"
+                                    theme="small,pure"
+                                    :disabled="updatingIds.has(subTask.id)"
+                                    :title="t('task.details.detachFromParent')"
+                                    @click="handleDetachSubTask(subTask)"
                                 />
                             </template>
                             <template v-else>

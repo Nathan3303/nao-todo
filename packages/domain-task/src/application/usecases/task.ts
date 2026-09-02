@@ -35,6 +35,37 @@ export class TaskUseCase {
     // --- Task ---
 
     /**
+     * 校验父任务赋值是否合法
+     * @description 产品深度限制：仅一级子任务 ⇒ 父任务必须是顶层任务（parentTaskId === ''），
+     *              天然杜绝循环嵌套（只剩自指需拦截）。
+     * @param targetId 被移动方任务 ID（null = 新建任务场景，跳过自指/已有子任务检查）
+     * @param parentId 候选父任务 ID（'' = 解除父子关系，始终放行）
+     * @returns 校验通过返回 null，否则返回领域错误码
+     */
+    private async assertParentAssignable(
+        targetId: TaskViewObject['id'] | null,
+        parentId: string
+    ): GoAsync<void> {
+        // 1. 解除父子关系（移动到顶层）始终放行
+        if (parentId === '') return null
+        // 2. 禁止自指
+        if (targetId !== null && parentId === targetId) return TaskErrorCode.PARENT_SELF
+        // 3. 父任务必须存在
+        const [parent, getError] = await this.taskRepo.get(parentId)
+        if (getError !== null || !parent) return TaskErrorCode.PARENT_NOT_FOUND
+        // 4. 父任务必须是顶层任务（子任务不能作为父，深度限制的核心防线）
+        if (parent.parentTaskId !== '') return TaskErrorCode.PARENT_MUST_BE_TOP_LEVEL
+        // 5. 被移动方若已有子任务，移动成子任务会造出第二层，拒绝（需先处理子任务）
+        if (targetId !== null) {
+            const [children] = await this.taskDomain.listTasks(
+                new QueryOptionsValueObject({ parentTaskId: targetId, isDeleted: false, limit: 1 })
+            )
+            if ((children?.taskEntities.length ?? 0) > 0) return TaskErrorCode.PARENT_HAS_SUBTASKS
+        }
+        return null
+    }
+
+    /**
      * 加载任务
      * @param id 任务ID
      * @returns 任务视图对象
@@ -115,6 +146,14 @@ export class TaskUseCase {
         const createTaskValueObject = createTaskViewObjectToValueObject(createTaskViewObject)
         const validateErr = createTaskValueObject.validate()
         if (validateErr !== null) return [null, validateErr]
+        // 父任务赋值校验（父必须存在且为顶层任务；深度限制）
+        if (createTaskValueObject.parentTaskId) {
+            const parentErr = await this.assertParentAssignable(
+                null,
+                createTaskValueObject.parentTaskId
+            )
+            if (parentErr !== null) return [null, parentErr]
+        }
         // 创建任务
         const [taskEntity, err] = await this.taskRepo.create(createTaskValueObject)
         if (err !== null) return [null, err]
@@ -172,6 +211,14 @@ export class TaskUseCase {
                 if (updateTaskValueObject.endAt !== undefined)
                     updateTaskValueObject.endAt = entity.endAt === '' ? null : entity.endAt
             }
+        }
+        // 父任务赋值校验（自指/父必须为顶层/被移动方不得已有子任务）
+        if (updateTaskValueObject.parentTaskId !== undefined) {
+            const parentErr = await this.assertParentAssignable(
+                id,
+                updateTaskValueObject.parentTaskId
+            )
+            if (parentErr !== null) return parentErr
         }
         // 更新任务
         const updateError = await this.taskRepo.update(id, updateTaskValueObject)

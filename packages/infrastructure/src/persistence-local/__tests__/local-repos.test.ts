@@ -351,6 +351,51 @@ describe('LocalTaskRepoImpl', () => {
         expect(deleted!.taskEntities.map((t) => t.name)).not.toContain('远程任务')
     })
 
+    it('archivedAt 为空串（远程拉取未归档记录）时 isArchived=false 仍命中', async () => {
+        const repo = new LocalTaskRepoImpl()
+        const [a, createErr] = await repo.create(makeTaskVO({ name: '空串归档字段' }))
+        expect(createErr).toBeNull()
+        await repo.create(makeTaskVO({ name: '正常归档字段' }))
+        // 模拟远程同步拉取写入：未归档 archivedAt 为 ''（后端空串惯例，同 deletedAt）
+        const record = await localDatabase.tasks.get(a!.id)
+        await localDatabase.tasks.put({ ...record!, archivedAt: '' })
+
+        const [result, err] = await repo.list('isDeleted=false&isArchived=false')
+        expect(err).toBeNull()
+        expect(result!.taskEntities.map((t) => t.name).sort()).toEqual([
+            '正常归档字段',
+            '空串归档字段'
+        ])
+        // isArchived=true 同样不把空串误判为已归档
+        const [archived] = await repo.list('isDeleted=false&isArchived=true')
+        expect(archived!.taskEntities).toHaveLength(0)
+    })
+
+    it('starMarkAt 为空串（远程/本地 unstar 惯例）时 isStarMarked 过滤语义正确', async () => {
+        const repo = new LocalTaskRepoImpl()
+        const [blank] = await repo.create(makeTaskVO({ name: '空串星标' }))
+        const [starred] = await repo.create(makeTaskVO({ name: '已星标' }))
+        const [none] = await repo.create(makeTaskVO({ name: 'null星标' }))
+        // 模拟远程同步/本地 unstar 写入：starMarkAt 为 ''
+        const blankRecord = await localDatabase.tasks.get(blank!.id)
+        await localDatabase.tasks.put({ ...blankRecord!, starMarkAt: '' })
+        // 已星标：经仓储 update 写入合法时间
+        const updateVO = new UpdateTaskValueObject(starred!.id)
+        updateVO.starMarkAt = new Date().toISOString()
+        await repo.update(starred!.id, updateVO)
+
+        const [notStarred] = await repo.list('isDeleted=false&isStarMarked=false')
+        expect(notStarred!.taskEntities.map((t) => t.name).sort()).toEqual(['null星标', '空串星标'])
+        const [isStarred] = await repo.list('isDeleted=false&isStarMarked=true')
+        expect(isStarred!.taskEntities.map((t) => t.name)).toEqual(['已星标'])
+
+        // 读边界归一：空串在实体层表现为 null
+        const [entity] = await repo.get(blank!.id)
+        expect(entity!.starMarkAt).toBeNull()
+        const [archivedEntity] = await repo.get(none!.id)
+        expect(archivedEntity!.archivedAt).toBeNull()
+    })
+
     it('未传 parentTaskId 时默认只返回顶层任务（子任务排除）', async () => {
         const repo = new LocalTaskRepoImpl()
         const [parent] = await repo.create(makeTaskVO({ name: '顶层任务' }))
@@ -467,6 +512,24 @@ describe('LocalTaskRepoImpl', () => {
         )
         expect(err).toBeNull()
         expect(result!.taskEntities.map((t) => t.name)).toEqual(['banana', 'apple'])
+    })
+
+    it('父子数据成环（历史脏数据）时级联删除不死循环', async () => {
+        const repo = new LocalTaskRepoImpl()
+        const [a] = await repo.create(makeTaskVO({ name: '任务A' }))
+        const [b] = await repo.create(makeTaskVO({ name: '任务B' }))
+        // 直接注入环：A 的父是 B，B 的父是 A（绕过守卫的历史脏数据）
+        const recA = await localDatabase.tasks.get(a!.id)
+        await localDatabase.tasks.put({ ...recA!, parentTaskId: b!.id })
+        const recB = await localDatabase.tasks.get(b!.id)
+        await localDatabase.tasks.put({ ...recB!, parentTaskId: a!.id })
+
+        // 删除 A：级联应终止且不抛异常（visited 集合兜底）
+        await expect(repo.remove(a!.id)).resolves.toBeNull()
+        const [afterA] = await repo.get(a!.id)
+        const [afterB] = await repo.get(b!.id)
+        expect(afterA!.deletedAt).not.toBeNull()
+        expect(afterB!.deletedAt).not.toBeNull()
     })
 })
 
@@ -985,5 +1048,32 @@ describe('LocalPomodoroRecordRepoImpl 累计时长累加', () => {
 
         const [updated] = await new LocalPomodoroRepoImpl().get(pomodoro.id)
         expect(updated!.totalDuration).toBe(1500)
+    })
+})
+
+describe('LocalPomodoroRepoImpl 空串归档过滤', () => {
+    beforeEach(async () => {
+        await setup('user-1')
+    })
+
+    it('archivedAt 为空串（远程拉取未归档记录）时 isArchived=false 仍命中', async () => {
+        const repo = new LocalPomodoroRepoImpl()
+        const [blank] = await repo.create(
+            new CreatePomodoroValueObject(1, '空串归档', '描述', 1500)
+        )
+        await repo.create(new CreatePomodoroValueObject(1, '正常归档', '描述', 1500))
+        // 模拟远程同步拉取写入：未归档 archivedAt 为 ''（后端空串惯例）
+        const record = await localDatabase.pomodoros.get(blank!.id)
+        await localDatabase.pomodoros.put({ ...record!, archivedAt: '' })
+
+        const [result, err] = await repo.list('isDeleted=false&isArchived=false')
+        expect(err).toBeNull()
+        expect(result!.pomodoroEntities.map((p) => p.name).sort()).toEqual(['正常归档', '空串归档'])
+        const [archived] = await repo.list('isDeleted=false&isArchived=true')
+        expect(archived!.pomodoroEntities).toHaveLength(0)
+
+        // 读边界归一：空串在实体层表现为 null
+        const [entity] = await repo.get(blank!.id)
+        expect(entity!.archivedAt).toBeNull()
     })
 })

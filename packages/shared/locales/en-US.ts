@@ -287,6 +287,9 @@ const enUS: LocaleMessages = {
     'task.details.subTaskNamePlaceholder': 'Enter sub-task name...',
     'task.details.moveToSubTask': 'Move to sub-task...',
     'task.details.backToParent': 'Back to Parent Task',
+    'task.details.detachFromParent': 'Detach from parent',
+    'task.details.detachFromParentConfirm':
+        'The task will become top-level after detaching. Continue?',
     'task.details.startTime': 'Start time',
     'task.details.endTime': 'End time',
     'task.details.setTime': 'Set time',
@@ -428,6 +431,11 @@ const enUS: LocaleMessages = {
     'task.error.starMarkForbidden': 'Deleted or archived tasks cannot be starred',
     'task.error.scheduleForbidden': 'Deleted or archived tasks cannot modify time',
     'task.error.taskNotFound': 'Task not found',
+    'task.error.parentSelf': 'A task cannot be its own parent',
+    'task.error.parentNotFound': 'Parent task not found',
+    'task.error.parentMustBeTopLevel':
+        'Only top-level tasks can be parents (subtasks cannot be nested)',
+    'task.error.parentHasSubtasks': 'This task has subtasks; resolve them before moving',
     'task.error.snoozeDurationNotInteger': 'Snooze duration must be a whole number of minutes',
     'task.error.snoozeDurationOutOfRange': 'Snooze duration must be between 1 and 1440 minutes',
     'task.error.taskIdEmpty': 'Task ID cannot be empty',

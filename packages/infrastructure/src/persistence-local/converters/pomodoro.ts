@@ -26,18 +26,19 @@ export const pomodoroEntityToRecord = async (
 
 /**
  * PomodoroRecord → PomodoroEntity（解密敏感字段）
+ * @description 空串时间戳归一为 null（远程同步空字段 "" 惯例，见 taskRecordToEntity 同款处理）
  */
 export const pomodoroRecordToEntity = async (record: PomodoroRecord): Promise<PomodoroEntity> =>
     new PomodoroEntity(
         record.id,
         record.createdAt,
         record.updatedAt,
-        record.deletedAt,
+        record.deletedAt === '' ? null : record.deletedAt,
         record.type,
         await cryptoService.decrypt(record.name),
         record.description === null ? null : await cryptoService.decrypt(record.description),
         record.duration,
-        record.archivedAt,
+        record.archivedAt === '' ? null : record.archivedAt,
         record.totalDuration
     )
 

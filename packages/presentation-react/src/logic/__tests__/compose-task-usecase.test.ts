@@ -227,6 +227,8 @@ describe('composeTaskUseCase - 复用 domain-task 全链路（mock Requester）'
         const store = new TaskStoreCore()
         const requester = makeRequester({
             get: {
+                // 父任务存在性校验（domain 守卫：父必须存在且为顶层；get 成功码为 40000）
+                '/tasks/t1?isDeleted=true': { code: 40000, data: makeTaskRes() },
                 '/tasks/?parentTaskId=t1&limit=20&isDeleted=false': {
                     code: 40050,
                     data: [makeTaskRes({ id: 's1', name: '子任务1', parentTaskId: 't1' })]

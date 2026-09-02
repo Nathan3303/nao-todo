@@ -272,6 +272,8 @@ export interface LocaleMessages {
     'task.details.subTaskNamePlaceholder': string
     'task.details.moveToSubTask': string
     'task.details.backToParent': string
+    'task.details.detachFromParent': string
+    'task.details.detachFromParentConfirm': string
     'task.details.startTime': string
     'task.details.endTime': string
     'task.details.setTime': string
@@ -408,6 +410,10 @@ export interface LocaleMessages {
     'task.error.starMarkForbidden': string
     'task.error.scheduleForbidden': string
     'task.error.taskNotFound': string
+    'task.error.parentSelf': string
+    'task.error.parentNotFound': string
+    'task.error.parentMustBeTopLevel': string
+    'task.error.parentHasSubtasks': string
     'task.error.snoozeDurationNotInteger': string
     'task.error.snoozeDurationOutOfRange': string
     'task.error.taskIdEmpty': string

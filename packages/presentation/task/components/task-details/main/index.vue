@@ -32,6 +32,8 @@ const {
 } = inject(TASK_DETAILS_CONTEXT_KEY)!
 
 const percentage = computed(() => {
+    // 子任务详情不渲染子任务板块（深度限制），进度仅计检查事项
+    if (vo.value?.parentTaskId) return checkItemProgress.value.percentage
     const total = checkItemProgress.value.percentage + subTaskProgress.value.percentage
     return checkItems.value.length && subTasks.value.length ? total / 2 : total
 })
@@ -142,8 +144,12 @@ const createCommentHandler = async (content: string) => {
                 <nue-div vertical style="padding: 0 1rem 1rem">
                     <details-main-events />
                 </nue-div>
-                <!-- 任务详情子任务（填充剩余空间） -->
-                <nue-div class="tasks-details-view__subtasks" vertical>
+                <!-- 任务详情子任务（仅顶层任务可有一级子任务，子任务详情不渲染；深度限制） -->
+                <nue-div
+                    v-if="vo && !vo.parentTaskId"
+                    class="tasks-details-view__subtasks"
+                    vertical
+                >
                     <details-main-sub-tasks />
                 </nue-div>
                 <!-- 任务详情标签 -->
@@ -190,6 +196,7 @@ const createCommentHandler = async (content: string) => {
                     :label="t('task.details.eventProgress')"
                 />
                 <details-row
+                    v-if="vo && !vo.parentTaskId"
                     :text="subTaskProgress.text"
                     :label="t('task.details.subTaskProgress')"
                 />

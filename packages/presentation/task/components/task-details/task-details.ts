@@ -80,7 +80,8 @@ const useTaskDetails = () => {
         subTaskProgress,
         loadSubTasks,
         retrySubTasks,
-        createSubTask
+        createSubTask,
+        detachSubTask
     } = useSubTasks(taskDetailsStore)
 
     // @handler 任务/子任务处理程序
@@ -97,7 +98,13 @@ const useTaskDetails = () => {
         await getTaskDetails(taskId) // 必须获取，才能知道是否为空
         if (!taskId) return
         // 2. 并行获取任务详情、检查事项、评论和子任务
-        await Promise.all([loadCheckItems(taskId), loadComments(taskId), loadSubTasks(taskId)])
+        // 深度限制（仅一级子任务）：当前任务本身是子任务时不再加载其子任务板块
+        const isSubTask = Boolean(task.value?.parentTaskId)
+        await Promise.all([
+            loadCheckItems(taskId),
+            loadComments(taskId),
+            isSubTask ? null : loadSubTasks(taskId)
+        ])
         return null
     }
 
@@ -166,6 +173,7 @@ const useTaskDetails = () => {
         retryComments,
         retrySubTasks,
         createSubTask,
+        detachSubTask,
         resortCheckItems,
         makeCheckItemToTask,
         selectTaskAndStartTimer,

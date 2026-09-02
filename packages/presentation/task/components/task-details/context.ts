@@ -60,6 +60,7 @@ export type TaskDetailsContext = {
     retryComments: () => Promise<void>
     retrySubTasks: () => Promise<void>
     createSubTask: (name: TaskViewObject['name']) => GoAsync<void>
+    detachSubTask: (subTaskId: TaskViewObject['id']) => GoAsync<void>
 
     resortCheckItems: (
         oldEid: TaskCheckItemViewObject['id'],

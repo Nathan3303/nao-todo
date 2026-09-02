@@ -14,7 +14,7 @@ import { TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
  */
 const useSubTasks = (taskDetailsStore: ReturnType<typeof useTaskDetailsStore>) => {
     // @context 任务详情上下文
-    const { subTaskUseCase } = inject(TASK_DETAILS_PRE_CONTEXT_KEY)!
+    const { subTaskUseCase, subscriber } = inject(TASK_DETAILS_PRE_CONTEXT_KEY)!
 
     // @store 适配器：将子任务 store 适配为 TaskUseCase 所需的 TaskStore 接口
     // const subTaskStore: TaskStore = {
@@ -109,6 +109,20 @@ const useSubTasks = (taskDetailsStore: ReturnType<typeof useTaskDetailsStore>) =
         return null
     }
 
+    /**
+     * 脱离父任务（提升为顶层任务）
+     * @description 将子任务 parentTaskId 置空串并交由领域层守卫校验（'' = 解除父子，始终放行）；
+     *              成功后从当前子任务列表即时移除，并触发 RefreshData 让顶层列表刷新出现该任务。
+     * @param subTaskId 子任务 ID
+     */
+    const detachSubTask = async (subTaskId: TaskViewObject['id']): GoAsync<void> => {
+        const err = await subTaskUseCase.update(subTaskId, { parentTaskId: '' })
+        if (err !== null) return err
+        subTaskLoader.states.taskIds.delete(subTaskId)
+        subscriber.emit('RefreshData')
+        return null
+    }
+
     // @returns
     return {
         subTaskUseCase,
@@ -118,7 +132,8 @@ const useSubTasks = (taskDetailsStore: ReturnType<typeof useTaskDetailsStore>) =
         subTaskProgress,
         loadSubTasks,
         retrySubTasks,
-        createSubTask
+        createSubTask,
+        detachSubTask
     }
 }
 

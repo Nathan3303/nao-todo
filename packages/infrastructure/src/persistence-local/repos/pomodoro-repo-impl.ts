@@ -9,7 +9,7 @@ import { pomodoroEntityToRecord, pomodoroRecordToEntity } from '../converters/po
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
 import { localSession } from '../session/local-session'
-import { isNotDeleted } from '../utils'
+import { isAbsentStamp, isNotDeleted } from '../utils'
 import { snowflake } from '../../persistence-sync/snowflake'
 import { syncTracker } from '../../persistence-sync/sync-tracker'
 
@@ -140,9 +140,9 @@ export class LocalPomodoroRepoImpl implements PomodoroRepository {
                 records = records.filter((r) => isNotDeleted(r.deletedAt))
             }
             if (params.get('isArchived') === 'true') {
-                records = records.filter((r) => r.archivedAt !== null)
+                records = records.filter((r) => !isAbsentStamp(r.archivedAt))
             } else if (params.get('isArchived') === 'false') {
-                records = records.filter((r) => r.archivedAt === null)
+                records = records.filter((r) => isAbsentStamp(r.archivedAt))
             }
             const entities: PomodoroEntity[] = []
             for (const record of records) {
