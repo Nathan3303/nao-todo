@@ -1,6 +1,7 @@
 import dayjs from 'dayjs'
 import { ref, watch } from 'vue'
 import { NueMessage } from 'nue-ui'
+import type { GoError } from '@nao-todo/shared'
 import {
     isGivenUpBy,
     isStarMarkedBy,
@@ -122,18 +123,22 @@ const useTaskViewObject = (
 
     /**
      * 更新任务详情
+     * @description 成功时同步本地派生字段并返回 null；失败时 toast 并返回错误码（供调用方分支）
      * @param id 任务 ID
      * @param updateVO 任务更新视图对象
-     * @returns 更新结果
+     * @returns 错误码（null = 成功）
      */
-    const updateTaskDetails = async (id: TaskViewObject['id'], updateVO: UpdateTaskViewObject) => {
-        if (!id) return
+    const updateTaskDetails = async (
+        id: TaskViewObject['id'],
+        updateVO: UpdateTaskViewObject
+    ): Promise<GoError> => {
+        if (!id) return null
         const updateError = await taskUseCase.update(id, updateVO)
         if (updateError !== null) {
             NueMessage.error(translateTaskError(updateError))
-            return
+            return updateError
         }
-        if (task.value === null) return
+        if (task.value === null) return null
         // 同步派生字段（state/starMarkAt/givenUpAt/archivedAt/deletedAt 更新时，
         // isDone/isStarMarked/isGivenUp/isArchived/isDeleted 须随之刷新，否则 UI 图标不联动）
         task.value = {
@@ -158,6 +163,7 @@ const useTaskViewObject = (
                     ? Boolean(updateVO.deletedAt)
                     : task.value.isDeleted
         }
+        return null
     }
 
     /**

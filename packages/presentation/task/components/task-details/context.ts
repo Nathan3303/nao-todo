@@ -1,4 +1,4 @@
-import type { DialogManager, GoAsync, Subscriber } from '@nao-todo/shared'
+import type { DialogManager, GoAsync, GoError, Subscriber } from '@nao-todo/shared'
 import type { ComputedRef, InjectionKey, Ref } from 'vue'
 import type { TaskCheckItemHandler, TaskCommentHandler, TaskHandler } from '../../handlers'
 import type {
@@ -47,7 +47,10 @@ export type TaskDetailsContext = {
     subTasksLoading: ComputedRef<boolean>
     subTasksError: ComputedRef<string>
 
-    updateTaskDetails: (id: TaskViewObject['id'], updateVO: UpdateTaskViewObject) => Promise<void>
+    updateTaskDetails: (
+        id: TaskViewObject['id'],
+        updateVO: UpdateTaskViewObject
+    ) => Promise<GoError>
     deleteTask: (id: TaskViewObject['id']) => Promise<void>
     restoreTask: (id: TaskViewObject['id']) => Promise<void>
     giveUpTask: (id: TaskViewObject['id']) => Promise<void>

@@ -2,14 +2,13 @@ import { inject, onMounted, onUnmounted, provide, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { TaskHandler } from '../../handlers'
 import { useTaskDetailsStore } from '../../stores'
-import type { TaskViewObject } from '@nao-todo/domain-task'
+import type { TaskViewObject, UpdateTaskViewObject } from '@nao-todo/domain-task'
+import { useMinuteTask, type GoError } from '@nao-todo/shared'
 import { TASK_DETAILS_CONTEXT_KEY, TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
-// import type { TaskDetailsProps } from './types'
 import useCheckItems from './use-check-items'
 import useComments from './use-comments'
 import useSubTasks from './use-subtasks'
 import useTaskViewObject from './use-task-view-object'
-import { useMinuteTask } from '@nao-todo/shared'
 
 const useTaskDetails = () => {
     // @viewContext TaskDetailsPre context
@@ -40,12 +39,31 @@ const useTaskDetails = () => {
         loading,
         error,
         getTaskDetails,
-        updateTaskDetails,
+        updateTaskDetails: rawUpdateTaskDetails,
         deleteTask,
         restoreTask,
         giveUpTask,
         ungiveUpTask
     } = useTaskViewObject(taskUseCase, getTag, getProjectName)
+
+    /**
+     * 更新任务详情（父任务变更时联动刷新当前列表）
+     * @description 顶层任务被设为子任务（parentTaskId '' → 非空）后即离开列表/表格/看板
+     *              （主列表仅含顶层任务），成功后触发 RefreshData 由视图适配器重载移除；
+     *              脱离父任务（置空）走 detachSubTask 独立刷新，此处不重复触发。
+     */
+    const updateTaskDetails = async (
+        id: TaskViewObject['id'],
+        updateVO: UpdateTaskViewObject
+    ): Promise<GoError> => {
+        const prevParentId = task.value?.parentTaskId
+        const err = await rawUpdateTaskDetails(id, updateVO)
+        const becomesSubTask = Boolean(updateVO.parentTaskId) && !prevParentId
+        if (err === null && becomesSubTask) {
+            subscriber.emit('RefreshData')
+        }
+        return err
+    }
 
     // @hook 检查事项
     const {
