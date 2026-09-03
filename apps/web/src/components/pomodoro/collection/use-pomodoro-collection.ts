@@ -1,26 +1,33 @@
-import { POMODORO_UPDATER_DIALOG_KEY, unwrapError } from '@nao-todo/shared'
-import { computed, onMounted, ref, watch } from 'vue'
+import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
+import type { PomodoroRecordViewObject, PomodoroViewObject } from '@nao-todo/domain-pomodoro'
+import { usePomodoroRecordsStore, usePomodorosStore } from '@nao-todo/presentation/pomodoro'
 import {
-    usePomodorosStore,
-    type PomodoroRecordViewObject,
-    type PomodoroViewObject
-} from '@nao-todo/presentation/pomodoro'
-import type { PomodoroCollectionProps } from './types'
+    POMODORO_UPDATER_DIALOG_KEY,
+    unwrapError,
+    useLoadingErrorStoreBase
+} from '@nao-todo/shared'
+import { computed, inject, onMounted, ref, watch } from 'vue'
 
 /**
  * 常用专注页面 composable
  * @description 加载用户创建的常用专注列表，提供主从（列表 + 详情）交互；
  *              选中某条常用专注时，按 pomodoroId 分页加载其专注记录。
  */
-export const usePomodoroCollection = (props: PomodoroCollectionProps) => {
-    // 结构 props 中的用例
-    const { pomodoroUseCase, pomodoroRecordUseCase, dialogManager } = props
+export const usePomodoroCollection = () => {
+    const { pomodoroUseCase, pomodoroRecordUseCase, dialogManager } =
+        inject(POMODORO_VIEW_CONTEXT_KEY)!
 
     // 常用专注 store
     const store = usePomodorosStore()
+    const recordsStore = usePomodoroRecordsStore()
 
-    // 加载中状态
-    const loading = ref(false)
+    // 加载中/错误状态（复用 LoadingError StoreBase）
+    const {
+        loading,
+        error: listError,
+        setLoading,
+        setError: setListError
+    } = useLoadingErrorStoreBase()
 
     // 当前选中的常用专注 ID
     const selectedId = ref<string | null>(null)
@@ -38,13 +45,13 @@ export const usePomodoroCollection = (props: PomodoroCollectionProps) => {
     // 专注记录（按 pomodoroId 分页查询）
     // ========================================================================
 
-    /**
-     * 记录视图对象缓存（承接 usecase 写入）
-     */
-    const recordsMap = ref(new Map<string, PomodoroRecordViewObject>())
-
-    // 记录加载状态
-    const recordLoading = ref(false)
+    // 记录加载/错误状态（独立 StoreBase 实例）
+    const {
+        loading: recordLoading,
+        error: recordError,
+        setLoading: setRecordLoading,
+        setError: setRecordError
+    } = useLoadingErrorStoreBase()
 
     /**
      * 记录分页状态
@@ -60,11 +67,11 @@ export const usePomodoroCollection = (props: PomodoroCollectionProps) => {
     const currentRecordIds = ref<string[]>([])
 
     /**
-     * 当前页记录（按 ID 从缓存映射）
+     * 当前页记录（按 ID 从 Pinia store 映射）
      */
     const records = computed(() =>
         currentRecordIds.value
-            .map((id) => recordsMap.value.get(id))
+            .map((id) => recordsStore.getRecord(id))
             .filter((r): r is PomodoroRecordViewObject => Boolean(r))
     )
 
@@ -73,7 +80,8 @@ export const usePomodoroCollection = (props: PomodoroCollectionProps) => {
      */
     const loadRecords = async () => {
         if (!selectedId.value) return
-        recordLoading.value = true
+        setRecordLoading(true)
+        setRecordError('')
         try {
             const [res, err] = await pomodoroRecordUseCase.getRecords({
                 pomodoroId: selectedId.value,
@@ -82,7 +90,7 @@ export const usePomodoroCollection = (props: PomodoroCollectionProps) => {
                 sort: 'startAt:desc'
             })
             if (err !== null) {
-                console.warn(unwrapError(err))
+                setRecordError(unwrapError(err))
                 return
             }
             currentRecordIds.value = res.recordIds
@@ -95,7 +103,7 @@ export const usePomodoroCollection = (props: PomodoroCollectionProps) => {
                 }
             }
         } finally {
-            recordLoading.value = false
+            setRecordLoading(false)
         }
     }
 
@@ -103,30 +111,31 @@ export const usePomodoroCollection = (props: PomodoroCollectionProps) => {
      * 切换记录页码
      * @param page 目标页码
      */
-    const handleRecordPageChange = (page: number) => {
+    const handleRecordPageChange = async (page: number) => {
         recordPage.value = page
-        loadRecords()
+        await loadRecords()
     }
 
     /**
      * 切换每页条数
      * @param limit 每页条数
      */
-    const handleRecordPerPageChange = (limit: number) => {
+    const handleRecordPerPageChange = async (limit: number) => {
         recordLimit.value = limit
         recordPage.value = 1
-        loadRecords()
+        await loadRecords()
     }
 
     /**
      * 加载常用专注列表
      */
     const loadData = async () => {
-        loading.value = true
+        setLoading(true)
+        setListError('')
         try {
             const error = await pomodoroUseCase.loadPomodoros()
             if (error !== null) {
-                console.warn(unwrapError(error))
+                setListError(unwrapError(error))
                 return
             }
             // 默认选中第一项
@@ -134,7 +143,7 @@ export const usePomodoroCollection = (props: PomodoroCollectionProps) => {
                 selectedId.value = pomodoros.value[0]!.id || null
             }
         } finally {
-            loading.value = false
+            setLoading(false)
         }
     }
 
@@ -155,17 +164,18 @@ export const usePomodoroCollection = (props: PomodoroCollectionProps) => {
     }
 
     // 选中项变化时重置分页并重新加载记录
-    watch(selectedId, (id) => {
+    watch(selectedId, async (id) => {
         if (!id) return
         recordPage.value = 1
         currentRecordIds.value = []
-        loadRecords()
+        await loadRecords()
     })
 
     onMounted(loadData)
 
     return {
         loading,
+        listError,
         selectedId,
         pomodoros,
         selectedPomodoro,
@@ -175,10 +185,12 @@ export const usePomodoroCollection = (props: PomodoroCollectionProps) => {
         // 专注记录
         records,
         recordLoading,
+        recordError,
         recordPage,
         recordLimit,
         recordTotal,
         recordTotalPages,
+        loadRecords,
         handleRecordPageChange,
         handleRecordPerPageChange
     }

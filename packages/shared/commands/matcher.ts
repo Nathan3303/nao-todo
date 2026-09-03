@@ -56,11 +56,7 @@ export function parseKeys(keys: string): ParsedKey {
  * @param event 归一化的按键事件
  * @param platform 当前平台，用于 $mod 的展开
  */
-export function matchesKeyEvent(
-    binding: ParsedKey,
-    event: KeyEvent,
-    platform: Platform
-): boolean {
+export function matchesKeyEvent(binding: ParsedKey, event: KeyEvent, platform: Platform): boolean {
     // 主键匹配（字母不区分大小写）
     const keyMatch = binding.key.toLowerCase() === event.key.toLowerCase()
     if (!keyMatch) return false

@@ -3,8 +3,8 @@
     "version": "0.1.0",
     "author": "Nathan Lee",
     "license": "MIT",
-    "private": true,
     "type": "module",
+    "main": "index.ts",
     "files": [
         "auth/**/*",
         "built-in-project/**/*",
@@ -14,9 +14,8 @@
         "task/**/*",
         "user/**/*"
     ],
-    "dependencies": {
-        "@nao-todo/domain": "workspace:*",
-        "@nao-todo/application": "workspace:*",
-        "@nao-todo/shared": "workspace:*"
+    "peerDependencies": {
+        "pinia": "^3.0.0",
+        "vue": "^3.5.0"
     }
 }

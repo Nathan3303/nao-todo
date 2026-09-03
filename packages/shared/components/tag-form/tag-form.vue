@@ -40,9 +40,7 @@ watch(formState, (newVal) => {
                 maxlength="36"
                 counter="word-left"
             />
-            <nue-text v-if="isNameEmpty" color="#f56c6c" size="12px">
-                * 标签名称不能为空
-            </nue-text>
+            <nue-text v-if="isNameEmpty" color="#f56c6c" size="12px"> * 标签名称不能为空 </nue-text>
         </nue-div>
         <nue-div align="stretch" gap="8px" vertical>
             <nue-textarea

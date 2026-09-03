@@ -1,9 +1,9 @@
-import { type Subscriber, unwrapError } from '@nao-todo/shared'
+import { t, unwrapError } from '@nao-todo/shared'
 import { storeToRefs } from 'pinia'
 import { inject, ref } from 'vue'
 import { TaskCommentHandler } from '../../handlers'
 import type { useTaskDetailsStore } from '../../stores'
-import type { TaskViewObject } from '../../types'
+import type { TaskViewObject } from '@nao-todo/domain-task'
 import { TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
 
 type TaskDetailsStore = ReturnType<typeof useTaskDetailsStore>
@@ -12,14 +12,13 @@ type TaskDetailsStore = ReturnType<typeof useTaskDetailsStore>
  * 评论 composable
  * @description 管理任务评论的用例、处理程序、加载/重试及评论中状态。
  * @param taskDetailsStore 任务详情存储
- * @param subscriber 订阅器
  */
-const useComments = (taskDetailsStore: TaskDetailsStore, subscriber: Subscriber) => {
+const useComments = (taskDetailsStore: TaskDetailsStore) => {
     // @context 任务详情上下文
     const { taskCommentUseCase } = inject(TASK_DETAILS_PRE_CONTEXT_KEY)!
 
     // @handler 任务评论处理程序
-    const commentHandler = new TaskCommentHandler(taskCommentUseCase, subscriber)
+    const commentHandler = new TaskCommentHandler(taskCommentUseCase)
 
     // @presetStates
     const {
@@ -44,7 +43,9 @@ const useComments = (taskDetailsStore: TaskDetailsStore, subscriber: Subscriber)
         taskDetailsStore.setCommentsError('')
         const [, err] = await taskCommentUseCase.list(taskId)
         if (err !== null) {
-            taskDetailsStore.setCommentsError('评论获取失败：' + unwrapError(err))
+            taskDetailsStore.setCommentsError(
+                t('task.commentLoadFailed', { error: unwrapError(err) })
+            )
         }
         taskDetailsStore.setCommentsLoading(false)
     }

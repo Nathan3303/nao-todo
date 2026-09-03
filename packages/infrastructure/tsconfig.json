@@ -1,8 +1,10 @@
 {
     "extends": "../../tsconfig.base.json",
     "include": [
-        "./backend/**/*",
-        "./built-in/**/*",
-        "./utils/**/*"
+        "src/persistence-go/**/*",
+        "src/persistence-local/**/*",
+        "src/persistence-sync/**/*",
+        "src/built-in/**/*",
+        "index.ts"
     ]
 }

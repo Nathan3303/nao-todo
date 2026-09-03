@@ -42,4 +42,3 @@ const clearConfig = (tableId: string): void => {
 
 export { STORAGE_KEY_PREFIX, getStorageKey, readConfig, writeConfig, clearConfig }
 export type { SavedTableConfig }
-

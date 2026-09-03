@@ -1,8 +1,13 @@
-import { t, unwrapError, type GoAsync, type Subscriber } from '@nao-todo/shared'
+import { t, type GoAsync, type GoError, type LocaleKey, type Subscriber } from '@nao-todo/shared'
 import dayjs from 'dayjs'
 import { NueConfirm, NueMessage } from 'nue-ui'
-import type { CreateTaskViewObject, TaskViewObject, UpdateTaskViewObject } from '@nao-todo/application/task/viewobjects'
-import { TaskUseCase } from '@nao-todo/application/task/usecases'
+import {
+    TaskUseCase,
+    type CreateTaskViewObject,
+    type TaskViewObject,
+    type UpdateTaskViewObject
+} from '@nao-todo/domain-task'
+import { translateTaskError } from '../utils/error-message'
 
 /**
  * 任务操作器
@@ -19,6 +24,31 @@ export class TaskHandler {
     ) {}
 
     /**
+     * 静默模式
+     * @description 批量操作时置为 true，由调用方统一汇总提示，避免逐条消息刷屏
+     */
+    silent = false
+
+    /**
+     * 错误提示
+     * @param key 错误文案键
+     * @param error 错误对象
+     */
+    private notifyError(key: LocaleKey, error: unknown) {
+        if (this.silent) return
+        NueMessage.error(t(key, { error: `(${translateTaskError(error as GoError)})` }))
+    }
+
+    /**
+     * 成功提示
+     * @param key 成功文案键
+     */
+    private notifySuccess(key: LocaleKey) {
+        if (this.silent) return
+        NueMessage.success(t(key))
+    }
+
+    /**
      * 创建任务
      * @param createViewObject 创建任务视图对象
      * @returns 任务视图对象
@@ -26,10 +56,10 @@ export class TaskHandler {
     async create(createViewObject: CreateTaskViewObject): GoAsync<void> {
         const [, createError] = await this.taskUseCase.create(createViewObject)
         if (createError !== null) {
-            NueMessage.error(t('task.createFailed', { error: `(${unwrapError(createError)})` }))
+            this.notifyError('task.createFailed', createError)
             return createError
         }
-        NueMessage.success(t('task.createSuccess'))
+        this.notifySuccess('task.createSuccess')
         return null
     }
 
@@ -46,10 +76,10 @@ export class TaskHandler {
             updatedAt: dayjs().toISOString()
         })
         if (updateError !== null) {
-            NueMessage.error(t('task.updateFailed', { error: `(${unwrapError(updateError)})` }))
+            this.notifyError('task.updateFailed', updateError)
             return updateError
         }
-        NueMessage.success(t('task.updateSuccess'))
+        this.notifySuccess('task.updateSuccess')
         return null
     }
 
@@ -117,10 +147,10 @@ export class TaskHandler {
     async delete(id: TaskViewObject['id']): GoAsync<void> {
         const deleteError = await this.taskUseCase.delete(id)
         if (deleteError !== null) {
-            NueMessage.error(t('task.deleteFailed', { error: `(${unwrapError(deleteError)})` }))
+            this.notifyError('task.deleteFailed', deleteError)
             return deleteError
         }
-        NueMessage.success(t('task.deleteSuccess'))
+        this.notifySuccess('task.deleteSuccess')
         return null
     }
 
@@ -132,10 +162,10 @@ export class TaskHandler {
     async restore(id: TaskViewObject['id']): GoAsync<void> {
         const restoreError = await this.taskUseCase.restore(id)
         if (restoreError !== null) {
-            NueMessage.error(t('task.restoreFailed', { error: `(${unwrapError(restoreError)})` }))
+            this.notifyError('task.restoreFailed', restoreError)
             return restoreError
         }
-        NueMessage.success(t('task.restoreSuccess'))
+        this.notifySuccess('task.restoreSuccess')
         return null
     }
 
@@ -155,12 +185,10 @@ export class TaskHandler {
                     givenUpAt: dayjs().toISOString()
                 })
                 if (updateError !== null) {
-                    NueMessage.error(
-                        t('task.updateFailed', { error: `(${unwrapError(updateError)})` })
-                    )
+                    this.notifyError('task.updateFailed', updateError)
                     return updateError
                 }
-                NueMessage.success(t('task.updateSuccess'))
+                this.notifySuccess('task.updateSuccess')
                 return null
             }
         })
@@ -190,10 +218,10 @@ export class TaskHandler {
             onConfirm: async () => {
                 const [taskViewObject, err] = await this.taskUseCase.copy(id)
                 if (err !== null) {
-                    NueMessage.error(t('task.copyFailed', { error: `(${unwrapError(err)})` }))
+                    this.notifyError('task.copyFailed', err)
                     return
                 }
-                NueMessage.success(t('task.copySuccess'))
+                this.notifySuccess('task.copySuccess')
                 this.subscriber.emit('AddNewTaskId', taskViewObject.id)
                 onSuccess?.(taskViewObject)
             }

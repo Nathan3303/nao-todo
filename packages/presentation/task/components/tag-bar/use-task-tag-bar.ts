@@ -1,7 +1,7 @@
 import { computed, ref, watch } from 'vue'
 import type { TaskTagBarEmits, TaskTagBarProps } from './types'
 import type { ComboBoxOption } from '@nao-todo/shared/components/combo-box/types'
-import type { TaskTagViewObject } from '../../types'
+import type { TaskTagViewObject } from '@nao-todo/domain-task'
 
 export const useTaskTagBar = (props: TaskTagBarProps, emit: TaskTagBarEmits) => {
     /**
@@ -33,6 +33,16 @@ export const useTaskTagBar = (props: TaskTagBarProps, emit: TaskTagBarEmits) => 
     const isSearchEmpty = computed(() => {
         // 若有可用标签，且搜索结果为空，则认为搜索为空
         return props.availableTags.length && comboBoxOptions.value.length === 0
+    })
+
+    /**
+     * @computed 有效选中标签数
+     * @description taskTagIds 中存在于 availableTags 的 ID 数量；
+     *              无效（已删除/不存在）标签 ID 不参与标签溢出计算
+     */
+    const validSelectedCount = computed(() => {
+        const availableIds = new Set(props.availableTags.map((tag) => tag.id))
+        return props.taskTagIds.filter((id) => availableIds.has(id)).length
     })
 
     /**
@@ -111,6 +121,7 @@ export const useTaskTagBar = (props: TaskTagBarProps, emit: TaskTagBarEmits) => 
         comboBoxOptions,
         selectedTags,
         isSearchEmpty,
+        validSelectedCount,
         pushTagHandler,
         dropTagHandler,
         createTagHandler

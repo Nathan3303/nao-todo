@@ -35,4 +35,3 @@ const handleClick = () => {
     transition: all var(--nue-animation-duration-short);
 }
 </style>
-

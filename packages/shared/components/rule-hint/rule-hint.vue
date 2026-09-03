@@ -7,7 +7,7 @@ defineProps<RuleHintProps>()
 
 <template>
     <nue-div v-if="!hidden || content" theme="rule-hint" :data-variant="variant">
-        <nue-icon theme="rule-hint__icon" :name="icon" />
+        <nue-icon v-if="icon" theme="rule-hint__icon" :name="icon" />
         <nue-div theme="rule-hint__content-wrapper">
             <nue-text v-if="title" theme="title">{{ title }}</nue-text>
             <nue-text theme="content">
@@ -63,4 +63,3 @@ defineProps<RuleHintProps>()
     color: var(--nue-error-color-80);
 }
 </style>
-

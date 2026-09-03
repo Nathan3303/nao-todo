@@ -84,6 +84,7 @@ export interface LocaleMessages {
     'settings.nicknamePlaceholder': string
     'settings.nicknameSubmit': string
     'settings.moreInfo': string
+    'settings.dangerZone': string
     'settings.registeredAt': string
     'settings.passwordHintTitle': string
     'settings.passwordHintContent': string
@@ -107,8 +108,88 @@ export interface LocaleMessages {
     'settings.avatarViewTitle': string
     'settings.updateAvatarButtonText': string
     'settings.signOutButtonText': string
+    'settings.deactive.title': string
+    'settings.deactive.confirmTitle': string
+    'settings.deactive.confirmContent': string
+    'settings.deactive.password': string
+    'settings.deactive.passwordPlaceholder': string
+    'settings.deactive.confirmPassword': string
+    'settings.deactive.confirmPasswordPlaceholder': string
+    'settings.deactive.agreeLabel': string
+    'settings.deactive.submit': string
+    'settings.deactive.success': string
+    'settings.deactive.passwordMismatch': string
+    'settings.deactive.passwordRequired': string
+    'settings.deactive.agreeRequired': string
+    'settings.deactivedAt': string
+    'settings.restore.title': string
+    'settings.restore.pendingMessage': string
+    'settings.restore.deletionDeadline': string
+    'settings.restore.password': string
+    'settings.restore.passwordPlaceholder': string
+    'settings.restore.agreeLabel': string
+    'settings.restore.submit': string
+    'settings.restore.success': string
+    'settings.restore.passwordRequired': string
+    'settings.restore.agreeRequired': string
+    // --- Session ---
+    'settings.sessionTitle': string
+    'settings.sessionRefresh': string
+    'settings.sessionLoading': string
+    'settings.sessionEmpty': string
+    'settings.sessionLoadFailed': string
+    'settings.sessionCurrent': string
+    'settings.sessionRegionUnknown': string
+    'settings.sessionLoggedAt': string
+    'settings.sessionActiveAt': string
+    'settings.sessionSignOut': string
+    'settings.sessionSignOutConfirmTitle': string
+    'settings.sessionSignOutConfirmContent': string
+    'settings.sessionSignOutFailed': string
+    'settings.sessionSignOutSuccess': string
+    'settings.sessionSignOutOther': string
+    'settings.sessionSignOutOtherConfirmTitle': string
+    'settings.sessionSignOutOtherConfirmContent': string
+    'settings.sessionSignOutOtherFailed': string
+    'settings.sessionSignOutOtherSuccess': string
+    'settings.sessionDeviceChrome': string
+    'settings.sessionDeviceSafari': string
+    'settings.sessionDeviceFirefox': string
+    'settings.sessionDeviceIOS': string
+    'settings.sessionDeviceAndroid': string
+    'settings.sessionDeviceWeChat': string
+    'settings.sessionDeviceAlipay': string
+    'settings.sessionDeviceUnknown': string
+
+    // User
+    'user.deactiveWarningTitle': string
+    'user.deactiveWarningContent': string
+    'user.deactiveButton': string
+    'user.deactiveConfirmTitle': string
+    'user.deactiveConfirmContent': string
+    'user.deactiveConfirmButton': string
+    'user.deactiveDialogTitle': string
+    'user.password': string
+    'user.passwordPlaceholder': string
+    'user.confirmPasswordPlaceholder': string
+    'user.deactiveAgreement': string
+    'user.deactiveSubmit': string
+    'user.deactiveSuccess': string
+    'user.deactiveFailed': string
+    'user.restoreWarningTitle': string
+    'user.restoreWarningContent': string
+    'user.deletionDeadline': string
+    'user.deletionDeadlineUnknown': string
+    'user.restoreAgreement': string
+    'user.restoreSubmit': string
+    'user.restoreSuccess': string
+    'user.restoreFailed': string
+    'user.restorePasswordRequired': string
+    'user.restoreAgreeRequired': string
+    'user.cancelRestore': string
 
     // Task
+    'task.reminder.title': string
     'task.state.todo': string
     'task.state.inProgress': string
     'task.state.done': string
@@ -191,6 +272,21 @@ export interface LocaleMessages {
     'task.details.subTaskNamePlaceholder': string
     'task.details.moveToSubTask': string
     'task.details.backToParent': string
+    'task.details.detachFromParent': string
+    'task.details.detachFromParentConfirm': string
+    'task.details.startTime': string
+    'task.details.endTime': string
+    'task.details.setTime': string
+    'task.details.startedAt': string
+    'task.details.dueAt': string
+    'task.details.remindAt': string
+    'task.details.startTimePlaceholder': string
+    'task.details.endTimePlaceholder': string
+    'task.details.reschedule': string
+    'task.details.rescheduleDescription': string
+    'task.details.rescheduleConfirmContent': string
+    'task.details.rescheduleSuccess': string
+    'task.details.rescheduleFailed': string
     'task.restore': string
     'task.delete': string
     'task.createTask': string
@@ -251,6 +347,27 @@ export interface LocaleMessages {
     'task.multiSelect.priority': string
     'task.multiSelect.moveToProject': string
     'task.multiSelect.permanentDelete': string
+    'task.multiSelect.batchTitle': string
+    'task.multiSelect.setTo': string
+    'task.multiSelect.properties': string
+    'task.multiSelect.actions': string
+    'task.multiSelect.endAt': string
+    'task.multiSelect.tags': string
+    'task.multiSelect.addTags': string
+    'task.multiSelect.removeTags': string
+    'task.multiSelect.delete': string
+    'task.multiSelect.restore': string
+    'task.multiSelect.giveUp': string
+    'task.multiSelect.ungiveUp': string
+    'task.multiSelect.batchSuccess': string
+    'task.multiSelect.batchFailed': string
+    'task.multiSelect.deleteConfirmTitle': string
+    'task.multiSelect.deleteConfirmContent': string
+    'task.multiSelect.giveUpConfirmTitle': string
+    'task.multiSelect.giveUpConfirmContent': string
+    'task.multiSelect.blockedByTrashed': string
+    'task.multiSelect.processing': string
+    'task.multiSelect.taskNotFound': string
     'task.smartlist.project': string
     'task.smartlist.projectManage': string
     'task.smartlist.projectCreate': string
@@ -276,6 +393,36 @@ export interface LocaleMessages {
     'task.empty.project': string
     'task.empty.tag': string
     'task.error.loadFailed': string
+    'task.error.nameEmpty': string
+    'task.error.nameTooLong': string
+    'task.error.descTooLong': string
+    'task.error.stateInvalid': string
+    'task.error.priorityInvalid': string
+    'task.error.remindRepeatInvalid': string
+    'task.error.remindTimeFormatInvalid': string
+    'task.error.remindAtInvalid': string
+    'task.error.startAtInvalid': string
+    'task.error.endAtInvalid': string
+    'task.error.startAfterEnd': string
+    'task.error.givenUpAtInvalid': string
+    'task.error.givenUpBeforeStart': string
+    'task.error.starMarkAtInvalid': string
+    'task.error.starMarkForbidden': string
+    'task.error.scheduleForbidden': string
+    'task.error.taskNotFound': string
+    'task.error.parentSelf': string
+    'task.error.parentNotFound': string
+    'task.error.parentMustBeTopLevel': string
+    'task.error.parentHasSubtasks': string
+    'task.error.snoozeDurationNotInteger': string
+    'task.error.snoozeDurationOutOfRange': string
+    'task.error.taskIdEmpty': string
+    'task.error.checkItemNameEmpty': string
+    'task.error.checkItemNameTooLong': string
+    'task.error.checkItemSortIdNegative': string
+    'task.error.checkItemNotFound': string
+    'task.error.commentContentEmpty': string
+    'task.error.commentContentTooLong': string
 
     // Calendar
     'calendar.today': string
@@ -288,6 +435,30 @@ export interface LocaleMessages {
     'calendar.weekday.fri': string
     'calendar.weekday.sat': string
     'calendar.weekday.sun': string
+
+    // Date relative
+    'date.today': string
+    'date.yesterday': string
+    'date.tomorrow': string
+    'date.dayAfterTomorrow': string
+    'date.thisWeek': string
+    'date.lastWeek': string
+    'date.nextWeek': string
+    'date.thisMonth': string
+    'date.lastMonth': string
+    'date.nextMonth': string
+    'date.thisYear': string
+    'date.lastYear': string
+    'date.nextYear': string
+    'date.fallbackFormat': string
+    'date.invalid': string
+    'date.weekday.0': string
+    'date.weekday.1': string
+    'date.weekday.2': string
+    'date.weekday.3': string
+    'date.weekday.4': string
+    'date.weekday.5': string
+    'date.weekday.6': string
 
     // Dialog
     'dialog.projectCreator.title': string
@@ -360,6 +531,9 @@ export interface LocaleMessages {
     'component.createNew': string
     'component.noProject': string
     'component.noTag': string
+    'component.tagCard.colorTip': string
+    'component.tagCard.colorTransparent': string
+    'component.tagCard.noDescription': string
     'component.pager.pageInfo': string
     'component.pager.perPage': string
     'component.pager.compact': string
@@ -443,10 +617,90 @@ export interface LocaleMessages {
     // Welcome
     'welcome.greeting': string
     'welcome.message': string
+
+    // Mobile task screens
+    'mobile.taskList.empty': string
+    'mobile.taskList.loading': string
+    'mobile.taskList.createTask': string
+    'mobile.taskList.menu': string
+    'mobile.taskCreate.title': string
+    'mobile.taskCreate.namePlaceholder': string
+    'mobile.taskCreate.descriptionPlaceholder': string
+    'mobile.taskCreate.submit': string
+    'mobile.taskCreate.state': string
+    'mobile.taskCreate.priority': string
+    'mobile.taskCreate.project': string
+    'mobile.taskCreate.tags': string
+    'mobile.taskCreate.startAtPlaceholder': string
+    'mobile.taskCreate.endAtPlaceholder': string
+    'mobile.taskCreate.projectEmpty': string
+    'mobile.taskCreate.tagEmpty': string
+    'mobile.taskDetail.description': string
+    'mobile.taskDetail.checkItems': string
+    'mobile.taskDetail.addCheckItem': string
+    'mobile.taskDetail.checkItemPlaceholder': string
+    'mobile.taskDetail.subTasks': string
+    'mobile.taskDetail.subTaskPlaceholder': string
+    'mobile.taskDetail.addSubTask': string
+    'mobile.taskDetail.subTaskProgress': string
+    'mobile.taskDetail.subTaskEmpty': string
+    'mobile.taskDetail.comments': string
+    'mobile.taskDetail.addComment': string
+    'mobile.taskDetail.commentPlaceholder': string
+    'mobile.taskDetail.delete': string
+    'mobile.taskDetail.restore': string
+    'mobile.taskDetail.deletedTip': string
+    'mobile.taskDetail.dangerZone': string
+    'mobile.project.title': string
+    'mobile.project.create': string
+    'mobile.project.namePlaceholder': string
+    'mobile.project.color': string
+    'mobile.project.delete': string
+    'mobile.project.restore': string
+    'mobile.project.deletedSection': string
+    'mobile.tag.title': string
+    'mobile.tag.create': string
+    'mobile.tag.namePlaceholder': string
+    'mobile.tag.color': string
+    'mobile.tag.delete': string
+    'mobile.sidebar.lists': string
+    'mobile.sidebar.projects': string
+    'mobile.sidebar.tags': string
+    'mobile.sidebar.manageProjects': string
+    'mobile.sidebar.manageTags': string
+    'mobile.sidebar.profile': string
+    'mobile.settings.signOut': string
+    'mobile.common.back': string
+    'mobile.common.save': string
+    'mobile.common.cancel': string
+    'mobile.common.loadFailed': string
+
+    // Date picker
+    'mobile.datePicker.today': string
+    'mobile.datePicker.tomorrow': string
+    'mobile.datePicker.weekSunday': string
+    'mobile.datePicker.weekMonday': string
+    'mobile.datePicker.clear': string
+    'mobile.datePicker.cancel': string
+    'mobile.datePicker.confirm': string
+
+    // List toolbar (sort / filter / more)
+    'mobile.taskList.sort': string
+    'mobile.taskList.sortField': string
+    'mobile.taskList.sortOrder': string
+    'mobile.taskList.sortAsc': string
+    'mobile.taskList.sortDesc': string
+    'mobile.taskList.filter': string
+    'mobile.taskList.filterAll': string
+    'mobile.taskList.more': string
+    'mobile.taskList.refresh': string
+    'mobile.taskList.hideCompleted': string
+    'mobile.taskList.showCompleted': string
 }
 
 export type LocaleKey = keyof LocaleMessages
 
-
-
-
+/**
+ * 支持的语言
+ */
+export type SupportedLocale = 'zh-CN' | 'en-US'

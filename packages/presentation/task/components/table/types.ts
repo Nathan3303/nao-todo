@@ -1,5 +1,5 @@
-import type { ComputedRef } from 'vue'
-import type { TaskViewObject, TaskTagViewObject } from '../../types'
+import type { ComputedRef, Ref } from 'vue'
+import type { TaskViewObject, TaskTagViewObject } from '@nao-todo/domain-task'
 import type { GetTasksOptions, GetTasksSortOptions, TaskColumnOptions } from '@nao-todo/shared'
 
 export type TableColumnConfig = {
@@ -38,6 +38,11 @@ export type TaskTableProps = {
     columnLabelGetter: (key: string) => string
     projectNameGetter: (projectId: string) => string
     layoutConfig?: TableLayoutConfig
+    /**
+     * 多选清除信号
+     * @description 外部（如批量编辑面板）递增该值以清空本视图的多选范围
+     */
+    multiSelectClearSignal?: number
 }
 
 export type TaskTableEmits = {
@@ -92,6 +97,9 @@ export type TaskTableContext = {
     resetTableConfig: () => void
     // handleUpdatePage: (page: number) => void
     // handleUpdatePerPage: (limit: number) => void
+    refreshKey: Ref<number>
+    startRefreshKeyIncrement: () => void
+    stopRefreshKeyIncrement: () => void
 }
 
 export type TaskTableMultiSelectPayload = {

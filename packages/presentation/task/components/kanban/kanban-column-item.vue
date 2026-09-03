@@ -15,7 +15,8 @@ import { TASK_KANBAN_CONTEXT_KEY } from './use-kanban'
 defineOptions({ name: 'TaskKanbanColumnItem' })
 const props = defineProps<TaskKanbanColumnItemProps>()
 
-const kanbanCtx = inject<TaskKanbanContext>(TASK_KANBAN_CONTEXT_KEY)
+const { showTaskDetails, deleteOrRestore, unfinishTask, finishTask, getProjectName } =
+    inject<TaskKanbanContext>(TASK_KANBAN_CONTEXT_KEY)!
 
 const isAttrsNone = computed(() => {
     if (!props.columns) return true
@@ -33,31 +34,27 @@ const isAttrsNone = computed(() => {
 const isDone = computed(() => props.task.state === 'done')
 
 const handleClick = () => {
-    if (kanbanCtx && !props.isUpdating) {
-        kanbanCtx.showTaskDetails(props.task.id)
-    }
+    if (props.isUpdating) return
+    showTaskDetails(props.task.id)
 }
 
 const handleDelete = () => {
-    if (kanbanCtx && !props.isUpdating) {
-        kanbanCtx.deleteOrRestore(props.task.id, props.task.isDeleted)
-    }
+    if (props.isUpdating) return
+    deleteOrRestore(props.task.id, props.task.isDeleted)
 }
 
 const handleFinish = () => {
-    if (kanbanCtx && !props.isUpdating) {
-        if (isDone.value) {
-            kanbanCtx.unfinishTask(props.task.id)
-        } else {
-            kanbanCtx.finishTask(props.task.id)
-        }
+    if (props.isUpdating) return
+    if (isDone.value) {
+        unfinishTask(props.task.id)
+    } else {
+        finishTask(props.task.id)
     }
 }
 </script>
 
 <template>
     <nue-div
-        v-if="kanbanCtx"
         class="todo-card"
         @click="handleClick"
         :data-is-done="isDone"
@@ -73,7 +70,15 @@ const handleFinish = () => {
             <nue-div class="todo-card__info">
                 <nue-div align="center">
                     <nue-text v-if="task.isGivenUp" class="todo-card__giveup-tag">已放弃</nue-text>
-                    <nue-text class="todo-card__name" :clamped="1">{{ task.name }}</nue-text>
+                    <nue-div class="todo-card__name-cell">
+                        <nue-text class="todo-card__name" :clamped="1">{{ task.name }}</nue-text>
+                        <!-- 星标 -->
+                        <nue-icon
+                            v-if="task.isStarMarked"
+                            class="todo-card__star"
+                            name="heart-fill"
+                        />
+                    </nue-div>
                     <nue-div class="todo-card__actions">
                         <nue-button
                             theme="pure"
@@ -122,7 +127,7 @@ const handleFinish = () => {
                 <task-basic-info
                     v-if="columns?.project"
                     icon="inbox-fill"
-                    :text="kanbanCtx.getProjectName(task.projectId) || '收集箱'"
+                    :text="getProjectName(task.projectId) || '收集箱'"
                 />
             </nue-div>
         </nue-div>

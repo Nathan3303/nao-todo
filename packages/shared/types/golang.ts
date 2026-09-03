@@ -26,11 +26,11 @@ export type GoWithoutReturnValue = GoError
 //   if (e !== null) { /* error handle */ }
 //   console.log(v) /* v: string */
 //   ```
-export type Go<V = unknown, E extends GoError = GoError> = V extends void
+export type Go<V = undefined, E extends GoError = GoError> = V extends void
     ? GoWithoutReturnValue
     : E extends null
       ? GoSuccess<Exclude<V, null>>
       : GoFailure<V, Exclude<E, null>>
 
 // 异步函数返回类型（与同步函数返回类型相同）
-export type GoAsync<V = unknown> = Promise<Go<V>>
+export type GoAsync<V = undefined> = Promise<Go<V>>

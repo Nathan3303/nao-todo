@@ -1,4 +1,4 @@
-import type { CreatePomodoroViewObject } from '../../types'
+import type { CreatePomodoroViewObject } from '@nao-todo/domain-pomodoro'
 
 // 番茄专注表单状态
 export type PomodoroFormState = {

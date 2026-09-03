@@ -6,10 +6,15 @@
     "license": "MIT",
     "private": true,
     "type": "module",
-    "packageManager": "pnpm@8.12.1",
+    "packageManager": "pnpm@11.18.0",
     "scripts": {
         "desktopapp": "pnpm --filter @nao-todo/desktopapp",
-        "webapp": "pnpm --filter @nao-todo/webapp"
+        "mobileapp": "pnpm --filter @nao-todo/mobileapp",
+        "webapp": "pnpm --filter @nao-todo/webapp",
+        "prepare": "vp config",
+        "desktop:dev": "pnpm --filter @nao-todo/desktopapp dev",
+        "desktop:build": "pnpm --filter @nao-todo/desktopapp build",
+        "desktop:dist": "pnpm --filter @nao-todo/desktopapp dist"
     },
     "dependencies": {
         "@vitejs/plugin-vue": "^6.0.7",
@@ -19,51 +24,54 @@
         "markdown-it": "^14.2.0",
         "moment": "^2.30.1",
         "nanoid": "^5.1.11",
-        "nue-ui": "1.10.58",
+        "nue-ui": "1.11.0",
         "nue-ui-iconfont": "0.2.6",
         "nue-ui-theme-shadlike": "0.13.24",
         "pinia": "^3.0.4",
-        "spark-md5": "^3.0.2",
         "vue": "^3.5.34",
         "vue-i18n": "^11.4.4",
         "vue-router": "^5.0.7"
     },
     "devDependencies": {
         "@nao-todo/desktopapp": "workspace:*",
+        "@nao-todo/mobileapp": "workspace:*",
         "@nao-todo/webapp": "workspace:*",
-        "@nao-todo/shared": "workspace:*",
-        "@nao-todo/domain": "workspace:*",
-        "@nao-todo/application": "workspace:*",
-        "@nao-todo/presentation": "workspace:*",
+        "@nao-todo/domain-identity": "workspace:*",
+        "@nao-todo/domain-project": "workspace:*",
+        "@nao-todo/domain-tag": "workspace:*",
+        "@nao-todo/domain-pomodoro": "workspace:*",
+        "@nao-todo/domain-task": "workspace:*",
+        "@nao-todo/domain-built-in-project": "workspace:*",
         "@nao-todo/infrastructure": "workspace:*",
-        "@eslint/js": "^9.39.4",
+        "@nao-todo/presentation": "workspace:*",
+        "@nao-todo/presentation-identity": "workspace:*",
+        "@nao-todo/shared": "workspace:*",
+        "@configurajs/vite-plus": "^0.2.6",
         "@rollup/plugin-terser": "^0.4.4",
         "@rushstack/eslint-patch": "^1.16.1",
         "@tsconfig/node20": "^20.1.9",
         "@types/markdown-it": "^14.1.2",
         "@types/node": "^20.19.41",
-        "@types/spark-md5": "^3.0.5",
         "@types/validator": "^13.15.10",
-        "@typescript-eslint/eslint-plugin": "^8.60.0",
-        "@typescript-eslint/parser": "^8.60.0",
-        "@vue/eslint-config-prettier": "^9.0.0",
         "@vue/tsconfig": "^0.5.1",
         "cross-env": "^7.0.3",
-        "eslint": "^9.39.4",
-        "eslint-config-prettier": "^9.1.2",
-        "eslint-plugin-prettier": "^5.5.5",
-        "eslint-plugin-vue": "^9.33.0",
         "font-slice": "^1.0.2",
         "globals": "^15.15.0",
-        "nue-ui-resolver": "0.2.1",
-        "prettier": "^3.8.3",
+        "nue-ui-resolver": "0.3.0",
         "rollup-plugin-visualizer": "^5.14.0",
         "typescript": "~5.4.5",
-        "typescript-eslint": "^8.60.0",
-        "vite": "^8.0.14",
+        "vite": "catalog:",
+        "vite-plus": "catalog:",
         "vue-tsc": "^2.2.12"
     },
     "workspaces": [
         "packages/*"
-    ]
+    ],
+    "devEngines": {
+        "packageManager": {
+            "name": "pnpm",
+            "version": "11.18.0",
+            "onFail": "download"
+        }
+    }
 }

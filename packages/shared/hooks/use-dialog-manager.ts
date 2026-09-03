@@ -3,7 +3,8 @@
  * @param payload 对话框打开时的参数
  * @param onClose 对话框关闭时的回调函数
  */
-export type DialogOpener = (payload?: any, onClose?: () => void) => void
+export type DialogOpenerPayload = unknown
+export type DialogOpener = <T>(payload?: T, onClose?: () => void) => void
 
 /**
  * 对话框关闭函数
@@ -20,7 +21,7 @@ export type DialogCloser = (afterClose?: () => void) => void
 export type DialogLifecycle = {
     open: DialogOpener
     close: DialogCloser
-    context?: Record<string, any>
+    context?: Record<string, unknown>
 }
 
 /**
@@ -53,7 +54,7 @@ class DialogManager {
      * @param payload 对话框打开时的参数
      * @param onClose 对话框关闭时的回调函数
      */
-    open(dialogName: string | symbol, payload?: any, onClose?: () => void) {
+    open(dialogName: string | symbol, payload?: DialogOpenerPayload, onClose?: () => void) {
         // 检查对话框是否已注册
         const isExist = this.dialogMapper.has(String(dialogName))
         if (!isExist) {

@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { LoadingError, Pager, TASK_CREATOR_DIALOG_KEY, t } from '@nao-todo/shared'
+import { LoadingError, Pager, TASK_CREATOR_DIALOG_KEY, t, assetUrl } from '@nao-todo/shared'
 import { TaskTable } from '../../table'
-import type { TableViewAdapterProps } from './types'
+import type { TableViewAdapterEmits, TableViewAdapterProps } from './types'
 import useTableViewAdapter from './use-table-view-adapter'
 
 defineOptions({ name: 'TableViewAdapter' })
 const props = defineProps<TableViewAdapterProps>()
+const emit = defineEmits<TableViewAdapterEmits>()
 
 const {
     tasks,
@@ -16,7 +17,7 @@ const {
     noTaskError,
     handleUpdatePage,
     handleUpdatePerPage,
-    handleRetry,
+    handleRetry
 } = useTableViewAdapter(props)
 </script>
 
@@ -26,9 +27,9 @@ const {
             :loading="adapterLoading"
             :error="!!error"
             error-image-size="6rem"
-            error-image-src="/images/error.webp"
+            :error-image-src="assetUrl('/images/error.webp')"
             :empty="!error && !tasks.length && !!noTaskError"
-            :empty-image-src="noTaskError?.image || '/images/notaskhere.webp'"
+            :empty-image-src="noTaskError?.image || assetUrl('/images/notaskhere.webp')"
             :empty-image-size="noTaskError?.imageSize || '6rem'"
         >
             <template #error>
@@ -42,7 +43,7 @@ const {
             <template #empty>
                 <nue-div vertical align="center">
                     <nue-text size="var(--nue-text-sm)">
-                        {{ noTaskError?.message ? t(noTaskError.message as any) : '' }}
+                        {{ noTaskError?.message ? t(noTaskError.message as never) : '' }}
                     </nue-text>
                     <slot name="emptyActions">
                         <nue-button
@@ -66,7 +67,9 @@ const {
                         :column-label-getter="getColumnLabel"
                         :project-name-getter="getProjectName"
                         :layout-config="layoutConfig"
+                        :multi-select-clear-signal="multiSelectClearSignal"
                         @show-task-details="showTaskDetails"
+                        @show-multi-select-panel="(payload) => emit('multiSelectChanged', payload)"
                         @update-columns="updateColumns"
                         @update-sort-options="updateSortOptions"
                         @clear-sort-options="clearSortOptions"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, computed } from 'vue'
+import { inject, onMounted, onUnmounted } from 'vue'
 import { TaskPriorityInfo, TaskStateInfo, TaskDateInfo, TaskBasicInfo } from '@nao-todo/shared'
 import { TaskTagBar } from '../tag-bar'
 import { parse2RelativeDate } from '@nao-todo/shared/utils/relative-date-parser'
@@ -9,28 +9,45 @@ import { getColumnStyle } from './column-style'
 
 defineOptions({ name: 'TaskTableMain' })
 
-const tableCtx = inject<TaskTableContext>(TASK_TABLE_CONTEXT_KEY)!
+const {
+    visibleColumns,
+    tasks,
+    suppressDeletedStyle,
+    suppressGivenUpLabel,
+    tagBarClamped,
+    tags,
+    columns,
+    refreshKey,
+    startRefreshKeyIncrement,
+    stopRefreshKeyIncrement,
+    isInMultiSelectRange,
+    showTaskDetails,
+    showMultiSelectPanel,
+    getProjectName,
+    deleteOrRestore
+} = inject<TaskTableContext>(TASK_TABLE_CONTEXT_KEY)!
 
-const visibleColumns = computed(() => {
-    return tableCtx.visibleColumns.value || []
+onMounted(() => {
+    startRefreshKeyIncrement()
 })
 
-const tasks = computed(() => {
-    return tableCtx.tasks.value || []
+onUnmounted(() => {
+    stopRefreshKeyIncrement()
 })
 </script>
 
 <template>
-    <nue-div v-if="tableCtx" class="todo-table__main">
+    <nue-div class="todo-table__main">
         <nue-div
             v-for="(task, idx) in tasks"
             :key="task.id"
             :data-done="task.state === 'done'"
-            :data-selected="tableCtx.isInMultiSelectRange(idx)"
-            :data-deleted="task.isDeleted && !tableCtx.suppressDeletedStyle.value"
+            :data-selected="isInMultiSelectRange(idx)"
+            :data-deleted="task.isDeleted && !suppressDeletedStyle"
             class="todo-table__main__row"
-            @click.stop.exact="tableCtx.showTaskDetails(task.id, idx)"
-            @click.stop.shift.exact="tableCtx.showMultiSelectPanel(idx)"
+            @click.stop.exact="showTaskDetails(task.id, idx)"
+            @click.stop.shift.exact="showMultiSelectPanel(idx)"
+            @mousedown="(event: MouseEvent) => event.shiftKey && event.preventDefault()"
         >
             <template v-for="column in visibleColumns" :key="column.key">
                 <nue-div
@@ -42,30 +59,35 @@ const tasks = computed(() => {
                     <nue-div class="col-first__name-wrapper">
                         <!-- 已放弃 -->
                         <nue-text
-                            v-if="task.isGivenUp && !tableCtx.suppressGivenUpLabel.value"
+                            v-if="task.isGivenUp && !suppressGivenUpLabel"
                             theme="todo-givenup"
-                            >已放弃</nue-text
                         >
-                        <!-- 名称 -->
-                        <nue-text theme="todo-name" :clamped="1" :title="task.name">
-                            {{ task.name }}
+                            已放弃
                         </nue-text>
+                        <!-- 名称 -->
+                        <nue-div class="col-first__name-cell">
+                            <nue-text theme="todo-name" :clamped="1" :title="task.name">
+                                {{ task.name }}
+                            </nue-text>
+                            <!-- 星标 -->
+                            <nue-icon
+                                v-if="task.isStarMarked"
+                                class="col-first__star"
+                                name="heart-fill"
+                            />
+                        </nue-div>
                         <!-- 标签 -->
                         <task-tag-bar
-                            v-if="tableCtx.columns.value.tags && task.tags && task.tags.length"
-                            :clamped="tableCtx.tagBarClamped.value"
-                            :available-tags="tableCtx.tags.value"
+                            v-if="columns.tags && task.tags && task.tags.length"
+                            :clamped="tagBarClamped"
+                            :available-tags="tags"
                             :task-tag-ids="task.tags"
                             readonly
                             small
                         />
                     </nue-div>
                     <!-- 描述 -->
-                    <nue-div
-                        v-if="tableCtx.columns.value.description && task.description"
-                        vertical
-                        width="100%"
-                    >
+                    <nue-div v-if="columns.description && task.description" vertical width="100%">
                         <nue-text
                             :clamped="1"
                             class="col-first__description"
@@ -110,6 +132,7 @@ const tasks = computed(() => {
                 <!-- 结束时间 -->
                 <task-date-info
                     v-else-if="column.key === 'endAt'"
+                    :key="refreshKey"
                     class="todo-table__main__col col-datetime"
                     :date="task.endAt!"
                     :colored="!(task.state === 'done')"
@@ -119,7 +142,6 @@ const tasks = computed(() => {
                 <task-priority-info
                     v-else-if="column.key === 'priority'"
                     class="todo-table__main__col col-attr"
-                    :key="task.priority"
                     :priority="task.priority"
                     use-clamped
                     :style="getColumnStyle(column)"
@@ -137,7 +159,7 @@ const tasks = computed(() => {
                 <task-basic-info
                     v-else-if="column.key === 'project'"
                     class="todo-table__main__col col-attr"
-                    :text="tableCtx.getProjectName(task.projectId || '')"
+                    :text="getProjectName(task.projectId || '')"
                     no-icon
                     :style="getColumnStyle(column)"
                 />
@@ -152,7 +174,7 @@ const tasks = computed(() => {
             <nue-div class="todo-table__main__col col-actions">
                 <nue-icon
                     :name="task.isDeleted ? 'restore' : 'delete'"
-                    @click.stop="tableCtx.deleteOrRestore(task.id, task.isDeleted)"
+                    @click.stop="deleteOrRestore(task.id, task.isDeleted)"
                 />
             </nue-div>
         </nue-div>

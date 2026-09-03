@@ -1,12 +1,15 @@
 <script lang="ts" setup>
-import { nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { NueTextarea } from 'nue-ui'
-import { parse2RelativeDate } from '@nao-todo/shared'
+import { getAvatarSrc, parse2RelativeDate } from '@nao-todo/shared'
 import type { CommentRowProps, CommentRowEmits } from './types'
 
 defineOptions({ name: 'CommentRow' })
 const props = defineProps<CommentRowProps>()
 defineEmits<CommentRowEmits>()
+
+// @computed 头像地址（本地头像携带登录凭证）
+const avatarSrc = computed(() => getAvatarSrc(props.comment.avatar || '', props.token || ''))
 
 const editInputerRef = ref<InstanceType<typeof NueTextarea>>()
 const shadowContent = ref<string>(props.comment.content || '')
@@ -14,12 +17,12 @@ const isEditing = ref(false)
 const loading = ref(false)
 const deleting = ref(false)
 const isClamped = ref(true)
-const textRef = ref<any>()
+const textRef = ref<HTMLElement | undefined>()
 const isOverflowing = ref(false)
 
 const checkOverflow = () => {
     nextTick(() => {
-        const el = textRef.value?.$el as HTMLElement | undefined
+        const el = textRef.value as HTMLElement
         if (!el) return
         isOverflowing.value = el.scrollHeight > el.clientHeight
     })
@@ -48,8 +51,10 @@ const handleUpdateComment = async () => {
         return
     }
     loading.value = true
-    props.updater(props.comment.id, shadowContent.value)
+    // 等待保存完成（store patch 后 prop 已更新）；失败时保留编辑框与输入（错误提示由调用方/handler 负责）
+    const updateError = await props.updater(props.comment.id, shadowContent.value)
     loading.value = false
+    if (updateError) return
     handleCancelEdit()
 }
 
@@ -68,7 +73,7 @@ const handleCancelEdit = () => {
 
 <template>
     <nue-div theme="comment-row">
-        <nue-avatar :src="comment.avatar || ''" />
+        <nue-avatar :src="avatarSrc" icon="user" />
         <nue-div theme="details">
             <nue-div theme="title">
                 <nue-text theme="nickname">{{ comment.nickname }}</nue-text>
@@ -122,4 +127,3 @@ const handleCancelEdit = () => {
 <style scoped>
 @import './row.css';
 </style>
-

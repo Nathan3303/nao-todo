@@ -169,4 +169,3 @@ export default (initialConfig?: TableLayoutConfig, tableId: string = 'default') 
         pinnedColumn: computed(() => PINNED_COLUMN_MAP[tableId] || undefined)
     }
 }
-

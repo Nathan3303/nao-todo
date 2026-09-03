@@ -8,14 +8,14 @@ export class QueryOptionsValueObject {
      * @description 用于存储查询选项的值对象
      * @param options 查询选项
      */
-    constructor(public options: Record<string, any>) {}
+    constructor(public options: Record<string, unknown>) {}
 
     /**
      * 归一化每个查询选项值
      * @param value 查询选项值
      * @returns 归一化后的查询选项值
      */
-    private normalizeEachHandler(value: any): string | void {
+    private normalizeEachHandler(value: unknown): string | void {
         // 1. 判断值是否为空
         if (value === void 0 || value === null || value === '') {
             return void 0
@@ -26,7 +26,7 @@ export class QueryOptionsValueObject {
         }
         // 3. 判断值是否为数组
         if (Array.isArray(value)) {
-            return (value as any[]).join(',')
+            return (value as unknown[]).join(',')
         }
         // 4. 其他情况，直接转换为字符串
         return value as string
@@ -37,7 +37,7 @@ export class QueryOptionsValueObject {
      * @param eachHandler 自定义处理每个查询选项值的函数
      * @returns 转换后的请求字符串
      */
-    public toString(eachHandler?: (key: string, value: any) => string | void): string {
+    public toString(eachHandler?: (key: string, value: unknown) => string | void): string {
         const queryPairs: string[] = []
         // 1. 判断是否为空对象，为空则返回空字符串
         if (Object.keys(this.options).length === 0) return ''
@@ -69,5 +69,3 @@ export class QueryOptionsValueObject {
         return queryString
     }
 }
-
-

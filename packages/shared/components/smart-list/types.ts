@@ -2,8 +2,8 @@ export type NaoSmartListLinkVO = {
     id: string
     title: string
     icon?: string
-    route: { name: string; params: Record<string, any> } | string
-    payload?: Record<string, any>
+    route: { name: string; params: Record<string, unknown> } | string
+    payload?: Record<string, unknown>
 }
 
 export type NaoSmartListProps = {

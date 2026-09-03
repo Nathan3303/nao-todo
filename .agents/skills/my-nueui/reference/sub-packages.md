@@ -32,13 +32,13 @@ Import: `import { ... } from '@nue-ui/utils'` (or `'nue-ui'` re-exports everythi
 ### Types
 
 ```typescript
-type ObjectLikeThemes = Record<string, boolean>;
+type ObjectLikeThemes = Record<string, boolean>
 
 interface GlobalProps {
-    theme?: string | string[] | ObjectLikeThemes;
+    theme?: string | string[] | ObjectLikeThemes
 }
 
-type NuePopupItemAnimation = string | { name: string; duration?: number };
+type NuePopupItemAnimation = string | { name: string; duration?: number }
 ```
 
 ## @nue-ui/hooks
@@ -56,7 +56,7 @@ Returns `[state, switchState, setState]`:
 - `setState(newState: boolean)` — set directly
 
 ```ts
-const [isOpen, toggleOpen, setOpen] = useBoolState(false);
+const [isOpen, toggleOpen, setOpen] = useBoolState(false)
 ```
 
 **`useLoadingState(initialValue?: boolean | (() => boolean))`**
@@ -64,11 +64,11 @@ const [isOpen, toggleOpen, setOpen] = useBoolState(false);
 Returns `{ isLoading, load, loadSync }` for async operation management.
 
 ```ts
-const { isLoading, load } = useLoadingState();
+const { isLoading, load } = useLoadingState()
 
-load(done => {
-    fetchData().finally(done);
-});
+load((done) => {
+    fetchData().finally(done)
+})
 ```
 
 ### Layout Hooks
@@ -90,8 +90,8 @@ Creates a Teleport anchor element in the popup pool. Returns `{ mountPopupAnchor
 ### Placement Types
 
 ```typescript
-type PopperDirection = 'top' | 'bottom' | 'left' | 'right';
-type PopperAlignment = 'start' | 'center' | 'end';
-type PopperPlacement = `${PopperDirection}-${PopperAlignment}`;
+type PopperDirection = 'top' | 'bottom' | 'left' | 'right'
+type PopperAlignment = 'start' | 'center' | 'end'
+type PopperPlacement = `${PopperDirection}-${PopperAlignment}`
 // Examples: 'bottom-start', 'top-center', 'left-end'
 ```

@@ -1,11 +1,11 @@
-import { t, unwrapErrors, type GoAsync, type Subscriber } from '@nao-todo/shared'
+import { t, unwrapErrors, type GoAsync } from '@nao-todo/shared'
 import { NueMessage } from 'nue-ui'
 import type {
     CreateTaskCheckItemViewObject,
     TaskCheckItemViewObject,
     UpdateTaskCheckItemViewObject
-} from '@nao-todo/application/task/viewobjects'
-import { TaskCheckItemUseCase } from '@nao-todo/application/task/usecases'
+} from '@nao-todo/domain-task'
+import { TaskCheckItemUseCase } from '@nao-todo/domain-task'
 
 /**
  * 任务检查项操作器
@@ -14,12 +14,8 @@ export class TaskCheckItemHandler {
     /**
      * 任务检查项操作器
      * @param taskCheckItemUseCase 任务检查项用例
-     * @param subscriber 事件订阅器
      */
-    constructor(
-        private taskCheckItemUseCase: TaskCheckItemUseCase,
-        private subscriber: Subscriber
-    ) {}
+    constructor(private taskCheckItemUseCase: TaskCheckItemUseCase) {}
 
     /**
      * 创建任务检查项

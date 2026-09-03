@@ -1,5 +1,5 @@
 import type { DialogManager, Subscriber } from '@nao-todo/shared'
-import type { ProjectUseCase } from '../../../usecases'
+import type { ProjectUseCase } from '@nao-todo/domain-project'
 
 // 项目管理器对话框属性
 export type ProjectManagerDialogProps = {
@@ -16,4 +16,3 @@ export type ProjectManagerVO = {
     filterInfo: { name?: string }
     activeTab: 'all' | 'active' | 'deleted'
 }
-

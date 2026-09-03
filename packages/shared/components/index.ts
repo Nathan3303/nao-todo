@@ -35,4 +35,3 @@ export * from './task-delete-button'
 export * from './task-priority-info'
 export * from './task-selector'
 export * from './task-state-info'
-

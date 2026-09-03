@@ -1,10 +1,8 @@
-import type { BuiltInProjectUseCase } from '@nao-todo/application/built-in-project/usecases'
-import type { ProjectHandler } from '@nao-todo/presentation/project'
-import type { ProjectUseCase } from '@nao-todo/application/project/usecases'
-import type { TagHandler } from '@nao-todo/presentation/tag'
-import type { TagUseCase, TagViewObject } from '@nao-todo/application/tag/usecases'
-import type { TaskHandler } from '@nao-todo/presentation/task'
-import type { TaskUseCase, TaskViewObject } from '@nao-todo/application/task/usecases'
+import type { BuiltInProjectUseCase } from '@nao-todo/domain-built-in-project'
+import { ProjectUseCase } from '@nao-todo/domain-project'
+import { TagUseCase, TagViewObject } from '@nao-todo/domain-tag'
+import { TaskUseCase, TaskViewObject } from '@nao-todo/domain-task'
+import type { ProjectHandler, TagHandler, TaskHandler } from '@nao-todo/presentation'
 import type { DialogManager, Subscriber } from '@nao-todo/shared'
 import type { InjectionKey, Ref } from 'vue'
 
@@ -21,12 +19,6 @@ export type TasksViewContext = {
     projectHandler: ProjectHandler
     tagHandler: TagHandler
     taskHandler: TaskHandler
-
-    asideWidth: Ref<string>
-    isDisplayAside: Ref<boolean>
-    isUseFloatAside: Ref<boolean>
-    switchDisplayAside: () => void
-    handleResizeAside: (width: number) => void
 
     outlineWidth: Ref<string>
     isDisplayOutline: Ref<boolean>

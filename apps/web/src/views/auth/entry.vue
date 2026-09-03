@@ -8,7 +8,7 @@ const { isDisplayAside } = useAuthView()
 </script>
 
 <template>
-    <nue-container>
+    <nue-container theme="auth-view">
         <nue-main>
             <nue-aside v-if="isDisplayAside" min-width="256px" max-width="512px" width="480px">
                 <nue-div flex="1" justify="space-between" vertical>
@@ -31,3 +31,9 @@ const { isDisplayAside } = useAuthView()
         </nue-main>
     </nue-container>
 </template>
+
+<style scoped>
+.nue-container--auth-view > .nue-main > .nue-aside {
+    background-color: var(--nue-primary-color-900);
+}
+</style>

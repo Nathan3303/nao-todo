@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import useTaskTable from './use-table'
-import { Loading as LoadingComp } from '@nao-todo/shared'
+import { Loading as LoadingComp, assetUrl } from '@nao-todo/shared'
 import TaskTableHeader from './table-header.vue'
 import TaskTableMain from './table-main.vue'
 import type { TaskTableProps, TaskTableEmits } from './types'
@@ -22,7 +22,7 @@ useTaskTable(props, emit)
                 <nue-empty
                     v-else-if="!loading && !tasks.length"
                     image-size="4rem"
-                    image-src="/images/coffee.webp"
+                    :image-src="assetUrl('/images/coffee.webp')"
                     description="当前暂无待办"
                     style="flex: auto"
                 />
@@ -31,4 +31,3 @@ useTaskTable(props, emit)
         </nue-main>
     </nue-container>
 </template>
-

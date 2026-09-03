@@ -7,7 +7,7 @@ import {
     type InnerDropdownOptionVO
 } from '@nao-todo/shared'
 import { computed } from 'vue'
-import { columnLabels, sortFieldLabels } from '@nao-todo/domain/task'
+import { columnLabels, sortFieldLabels } from '../../constants'
 import { GetTasksOptions, GetTasksSortOptions, TaskColumnOptions } from '@nao-todo/shared'
 
 defineOptions({ name: 'TasksDropdownSortOperator' })
@@ -24,7 +24,7 @@ const fieldOptions = computed(() => {
     const options: InnerDropdownOptionVO[] = []
     Object.keys(sortFieldLabels.value).forEach((key) => {
         options.push({
-            icon: 'plus-circle',
+            icon: '',
             label: columnLabels.value[key as keyof TaskColumnOptions]!,
             value: key,
             checked: props.modelValue.field === key

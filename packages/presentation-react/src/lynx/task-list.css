@@ -1,0 +1,58 @@
+/* 任务列表屏幕 */
+
+/* 空态引言符号（默认隐藏，空态组件按需显示） */
+.ts-empty-mark {
+    display: flex;
+}
+
+/* 列表氛围光为 fixed（悬浮在滚动内容之上、可点区域之下） */
+.ts-screen > .ts-glow {
+    position: fixed;
+    top: -28vh;
+    left: 0;
+    right: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* 右上角操作按钮组（排序/筛选/更多） */
+.tl-actions {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
+    margin-left: 16rpx;
+    flex-shrink: 0;
+}
+
+.tl-action-btn {
+    width: 60rpx;
+    height: 60rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--nao-radius-sm);
+    background-color: transparent;
+    position: relative;
+}
+
+.tl-action-btn.ui-active {
+    background-color: var(--nao-surface-hover);
+}
+
+.tl-action-icon {
+    font-size: 30rpx;
+    color: var(--nao-text-secondary);
+    line-height: 1.4;
+}
+
+/* 筛选启用红点（黄铜点） */
+.tl-action-dot {
+    position: absolute;
+    top: 6rpx;
+    right: 6rpx;
+    width: 12rpx;
+    height: 12rpx;
+    border-radius: 50%;
+    background-color: var(--nao-accent);
+    box-shadow: 0 0 0 4rpx var(--nao-accent-soft);
+}

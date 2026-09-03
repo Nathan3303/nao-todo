@@ -1,11 +1,11 @@
 import type {
-    BuiltInProjectHandler,
     BuiltInProjectPreferenceViewObject,
     BuiltInProjectViewObject
-} from '@nao-todo/presentation/built-in-project'
-import type { TagViewObject } from '@nao-todo/application/tag/viewobjects'
-import type { TaskUseCase, TaskViewObject } from '@nao-todo/application/task/usecases'
-import type { UserViewObject } from '@nao-todo/application/user/viewobjects'
+} from '@nao-todo/domain-built-in-project'
+import type { UserViewObject } from '@nao-todo/domain-identity'
+import type { TagViewObject } from '@nao-todo/domain-tag'
+import type { TaskUseCase, TaskViewObject } from '@nao-todo/domain-task'
+import type { BuiltInProjectHandler } from '@nao-todo/presentation/built-in-project'
 import type { DialogManager, Subscriber, TaskColumnOptions } from '@nao-todo/shared'
 import type { ComputedRef, InjectionKey } from 'vue'
 

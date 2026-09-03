@@ -31,4 +31,3 @@ const { loading } = useProjectView(props)
     }
 }
 </style>
-

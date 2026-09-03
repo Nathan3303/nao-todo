@@ -27,6 +27,10 @@
             font-size: var(--nue-text-df);
             gap: var(--nue-gap-xs);
 
+            > .nue-icon {
+                font-size: var(--nue-text-df);
+            }
+
             > .nue-text {
                 flex: auto;
             }
@@ -46,4 +50,3 @@
         font-size: var(--nue-text-xs);
     }
 }
-

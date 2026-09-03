@@ -44,4 +44,3 @@ onMounted(() => getKanbanColumns())
         </nue-main>
     </nue-container>
 </template>
-

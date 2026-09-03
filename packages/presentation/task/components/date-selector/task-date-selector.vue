@@ -1,134 +1,222 @@
-<script lang="ts" setup>
-import { computed, ref, watch } from 'vue'
+<script setup lang="ts">
 import dayjs from 'dayjs'
+import { NueDropdown } from 'nue-ui'
+import { parse2RelativeDate, t } from '@nao-todo/shared'
+import { computed, ref } from 'vue'
+import type { UpdateTaskViewObject } from '@nao-todo/domain-task'
 import { TaskRemindSetter } from '../remind-setter'
-import type { TaskDateSelectorProps, TaskDateSelectorEmits } from './types'
 import type { TaskRemindSetterUpdateVO } from '../remind-setter/types'
+import type { TaskDateSelectorEmits, TaskDateSelectorProps } from './types'
 
 defineOptions({ name: 'TaskDateSelector', inheritAttrs: false })
 const props = defineProps<TaskDateSelectorProps>()
 const emit = defineEmits<TaskDateSelectorEmits>()
 
-// @ref 组件日期
-const date = ref<string>('')
+// @ref 下拉面板
+const dropdownRef = ref<InstanceType<typeof NueDropdown>>()
 
-// @ref 待处理提醒更新VO
+// @state 本地日期与待提交提醒
+const startAtLocal = ref<string>('')
+const endAtLocal = ref<string>('')
 const pendingRemindUpdate = ref<TaskRemindSetterUpdateVO | null>(null)
+const remindSetterKey = ref(0)
 
-// @computed 是否过期
-const isExpired = computed(() => {
-    if (!props.modelValue) return false
-    return dayjs(props.modelValue).isBefore(dayjs())
+// @computed 结束时间是否过期（colored 时高亮）
+const isEndExpired = computed(() => {
+    const { endAt, refreshKey } = props
+    if (!endAt) return false
+    return refreshKey && dayjs(endAt).isBefore(dayjs())
+})
+const endPickerTheme = computed(() => ({ small: true, expired: isEndExpired.value }))
+
+// @computed 下一次提醒时间（用于提醒设置器的默认值）
+const nextRemindTime = computed(() => {
+    const remindData = props.task ?? props.remind
+    if (!remindData) return null
+    if (remindData.remindAt && remindData.remindTime) {
+        return parse2RelativeDate(
+            `${dayjs(remindData.remindAt).format('YYYY-MM-DD')} ${remindData.remindTime}`
+        )
+    }
+    return null
 })
 
-// @computed 日期选择器主题
-const datePickerTheme = computed(() => {
-    return { small: true, expired: props.colored && isExpired.value }
+// @computed trigger 按钮文本：开始 ~ 结束 + 下一次提醒时间
+const triggerText = computed(() => {
+    const start = props.startAt ? parse2RelativeDate(props.startAt) : ''
+    const end = props.endAt ? parse2RelativeDate(props.endAt) : ''
+    let range: string = ''
+    if (start && end) {
+        range = `${start} ~ ${end}`
+    } else if (start) {
+        range = t('task.details.startedAt', { time: start })
+    } else if (end) {
+        range = t('task.details.dueAt', { time: end })
+    }
+    const remindData = props.task ?? props.remind
+    const hasReminder = !!(
+        remindData &&
+        remindData.remindAt !== null &&
+        remindData.remindTime !== null
+    )
+    const remind =
+        hasReminder && remindData?.remindTime
+            ? t('task.details.remindAt', { time: nextRemindTime.value || '' })
+            : ''
+    return { range: range || t('task.details.setTime'), remind }
 })
 
-/**
- * 计算日期
- * @description 根据 modelValue 计算日期，返回 ISO 格式的日期字符串
- */
-const calculateDate = (newValue: string | null) => {
-    if (!newValue) return ''
-    const dayjsDate = dayjs(newValue)
-    if (!dayjsDate.isValid()) return ''
-    return dayjsDate.toISOString()
+// @method 打开面板前重置本地状态（并按 key 重挂载提醒设置器）
+const handleBeforeOpen = () => {
+    startAtLocal.value = props.startAt || ''
+    endAtLocal.value = props.endAt || ''
+    pendingRemindUpdate.value = null
+    remindSetterKey.value++
 }
 
-/**
- * 处理提醒更新
- * @param vo 提醒更新VO
- */
+// @method 提醒设置变更缓存
 const handleRemindUpdate = (vo: TaskRemindSetterUpdateVO) => {
-    // 判断属性值是否相同
-    const isRemindAtSame = vo.remindAt === props.task?.remindAt
-    const isRemindRepeatSame = vo.remindRepeat === props.task?.remindRepeat
-    const isRemindTimeSame = vo.remindTime === props.task?.remindTime
-    const isRemindWeekdaysSame =
-        vo.remindWeekdays?.toString() === props.task?.remindWeekdays?.toString()
-    // 如果所有属性值都相同，不更新 pendingRemindUpdate
-    if (isRemindAtSame && isRemindRepeatSame && isRemindTimeSame && isRemindWeekdaysSame) return
-    // 更新 pendingRemindUpdate
     pendingRemindUpdate.value = vo
 }
 
-/**
- * 处理关闭
- * @description 关闭日期选择器时，判断是否有日期变化，如果有则更新 modelValue 和 change 事件
- */
-const handleClose = () => {
-    const dayjsDate = dayjs(date.value)
-    const dateChanged = !dayjsDate.isSame(dayjs(props.modelValue))
-    const remindChanged = pendingRemindUpdate.value !== null
-
-    // 同时更新？
-    if (dateChanged && remindChanged) {
-        emit('update-all', {
-            endAt: dayjsDate.toISOString(),
-            remindAt: pendingRemindUpdate.value!.remindAt,
-            remindRepeat: pendingRemindUpdate.value!.remindRepeat,
-            remindTime: pendingRemindUpdate.value!.remindTime,
-            remindWeekdays: pendingRemindUpdate.value!.remindWeekdays
-        })
-        pendingRemindUpdate.value = null
-        return
+// @method 保存：构建变更并提交后关闭
+const handleSave = () => {
+    const normalize = (v: string | null | undefined) => (v ? dayjs(v).toISOString() : '')
+    const updateVO: UpdateTaskViewObject = {}
+    if (normalize(startAtLocal.value) !== normalize(props.startAt)) {
+        updateVO.startAt = startAtLocal.value ? dayjs(startAtLocal.value).toISOString() : null
     }
-
-    // 分别更新日期和提醒时间
-    if (dateChanged) {
-        const newValue = dayjsDate.format('YYYY-MM-DDTHH:mm')
-        emit('update:modelValue', newValue)
-        emit('change', newValue)
+    if (normalize(endAtLocal.value) !== normalize(props.endAt)) {
+        updateVO.endAt = endAtLocal.value ? dayjs(endAtLocal.value).toISOString() : null
     }
     if (pendingRemindUpdate.value) {
-        emit('remind-change', pendingRemindUpdate.value)
-        pendingRemindUpdate.value = null
+        Object.assign(updateVO, pendingRemindUpdate.value)
+    }
+    dropdownRef.value?.close()
+    if (Object.keys(updateVO).length > 0) {
+        emit('update-all', updateVO)
     }
 }
 
-// @watch modelValue 变化时，更新日期选择器日期
-watch(
-    () => props.modelValue,
-    (newValue) => (date.value = calculateDate(newValue)),
-    { immediate: true }
-)
+// @method 取消：关闭且不提交
+const handleCancel = () => {
+    dropdownRef.value?.close()
+}
 </script>
 
 <template>
-    <nue-date-picker
-        :theme="datePickerTheme"
-        v-model="date"
-        type="datetime"
-        clearable
-        @close="handleClose"
-        size="small"
-    >
-        <template #footer>
-            <task-remind-setter :task="task" :date="date" @update="handleRemindUpdate" />
+    <nue-dropdown ref="dropdownRef" placement="bottom-start" @before-open="handleBeforeOpen">
+        <!-- 触发按钮 -->
+        <template #trigger="{ trigger }">
+            <nue-button :theme="{ small: true, expired: colored && isEndExpired }" @click="trigger">
+                <nue-text>{{ triggerText.range }}</nue-text>
+                <nue-text v-if="triggerText.remind"> , {{ triggerText.remind }}</nue-text>
+            </nue-button>
         </template>
-    </nue-date-picker>
+        <!-- 下拉面板 -->
+        <nue-div class="task-date-selector-panel">
+            <!-- 日期设置 -->
+            <nue-div class="task-date-selector-panel__row">
+                <nue-text size="var(--nue-text-xs)">
+                    {{ t('task.details.startTime') }}
+                </nue-text>
+                <nue-date-picker
+                    v-model="startAtLocal"
+                    type="datetime"
+                    clearable
+                    size="small"
+                    :placeholder="t('task.details.startTimePlaceholder')"
+                />
+            </nue-div>
+            <nue-divider />
+            <nue-div class="task-date-selector-panel__row">
+                <nue-text size="var(--nue-text-xs)">
+                    {{ t('task.details.endTime') }}
+                </nue-text>
+                <nue-date-picker
+                    v-model="endAtLocal"
+                    :theme="endPickerTheme"
+                    type="datetime"
+                    clearable
+                    size="small"
+                    :placeholder="t('task.details.endTimePlaceholder')"
+                />
+            </nue-div>
+            <nue-divider />
+            <!-- 提醒设置 -->
+            <task-remind-setter
+                :key="remindSetterKey"
+                :task="task"
+                :remind="remind"
+                @update="handleRemindUpdate"
+            />
+            <nue-divider />
+            <!-- 操作区 -->
+            <nue-div class="task-date-selector-panel__actions">
+                <nue-button theme="small" @click="handleCancel">
+                    {{ t('common.cancel') }}
+                </nue-button>
+                <nue-button theme="primary,small" @click="handleSave">
+                    {{ t('common.save') }}
+                </nue-button>
+            </nue-div>
+        </nue-div>
+    </nue-dropdown>
 </template>
 
 <style scoped>
-.nue-date-picker:deep() .nue-button {
-    background-color: var(--nue-primary-color-0);
-    border-color: var(--nue-primary-color-200);
-    color: var(--nue-primary-color-900);
-
-    &:hover {
-        border-color: var(--nue-primary-color-300);
+.nue-dropdown-wrapper .nue-button {
+    &.nue-button--expired {
+        --nue-button-base-color: var(--nue-error-color-10);
+        --nue-button-color: var(--nue-error-color-80);
     }
 }
+</style>
 
-.nue-date-picker--expired:deep() .nue-button {
-    background-color: var(--nue-error-color-10);
-    border-color: var(--nue-error-color-30);
-    color: var(--nue-error-color-50);
+<style>
+/* 任务日期选择器下拉面板（NueDropdown 内容经 Teleport 渲染至 body，需全局样式） */
+.task-date-selector-panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--nue-gap-xs);
+    width: 14rem;
+    color: var(--nue-primary-color-900);
+    padding: var(--nue-padding-2xs) 0;
 
-    &:hover {
-        border-color: var(--nue-error-color-40);
+    .task-date-selector-panel__row {
+        display: flex;
+        flex-direction: column;
+        align-items: start;
+        justify-content: space-between;
+        gap: var(--nue-gap-2xs);
+
+        > .nue-text {
+            color: var(--nue-primary-color-400);
+            flex: none;
+            padding: 0 var(--nue-padding-xs);
+        }
+
+        > .nue-date-picker {
+            width: 100%;
+            box-sizing: border-box;
+
+            .nue-button {
+                width: 100%;
+                border: none;
+                box-shadow: none;
+                padding: 0 var(--nue-padding-xs);
+            }
+        }
+    }
+
+    .task-date-selector-panel__actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--nue-gap-2xs);
+
+        .nue-button {
+            flex: 1;
+        }
     }
 }
 </style>

@@ -1,15 +1,13 @@
 <script lang="ts" setup>
 import { TasksViewAside } from '@/components/tasks'
 import { TaskDetailsAdapter } from '@nao-todo/presentation/task'
-import { Loading as LoadingComp, LoadingError } from '@nao-todo/shared'
-import { onMounted } from 'vue'
+import { Loading as LoadingComp, LoadingError, assetUrl } from '@nao-todo/shared'
 import useTasksView from './tasks-view'
+import TaskMultiSelectAdapter from './multi-select-adapter.vue'
 
 defineOptions({ name: 'TasksView' })
 
 const { isLoading, error, init } = useTasksView()
-
-onMounted(() => init())
 </script>
 
 <template>
@@ -35,7 +33,10 @@ onMounted(() => init())
                                 <loading-comp height="100%" />
                             </template>
                             <template #fallback>
-                                <nue-empty image-src="/images/error.webp" image-size="6rem">
+                                <nue-empty
+                                    :image-src="assetUrl('/images/error.webp')"
+                                    image-size="6rem"
+                                >
                                     <nue-text size="var(--nue-text-sm)">
                                         加载失败, 请刷新页面重试
                                     </nue-text>
@@ -46,8 +47,9 @@ onMounted(() => init())
                 </nue-content>
                 <!-- 详情适配器 -->
                 <task-details-adapter />
+                <!-- 多选编辑适配器 -->
+                <task-multi-select-adapter />
             </nue-main>
         </loading-error>
     </nue-container>
 </template>
-

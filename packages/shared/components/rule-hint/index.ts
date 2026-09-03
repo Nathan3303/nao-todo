@@ -5,4 +5,3 @@ const PasswordRuleHint = defineAsyncComponent(() => import('./password-rule-hint
 const AccountRuleHint = defineAsyncComponent(() => import('./account-rule-hint.vue'))
 
 export { RuleHint, PasswordRuleHint, AccountRuleHint }
-

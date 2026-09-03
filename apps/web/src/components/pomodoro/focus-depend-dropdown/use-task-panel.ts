@@ -1,7 +1,7 @@
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
 import { useTagsStore } from '@nao-todo/presentation/tag'
 import { ViewAdapterNoTaskError } from '@nao-todo/presentation/task'
-import { debounce } from '@nao-todo/shared'
+import { debounce, GetTasksOptions, assetUrl } from '@nao-todo/shared'
 import { storeToRefs } from 'pinia'
 import { inject, reactive, watch } from 'vue'
 
@@ -53,7 +53,7 @@ export const useTaskPanel = () => {
             isArchived: false,
             isGivenUp: false,
             sort: { field: 'priority', order: 'desc' },
-            relativeDate: '-overdue'
+            relativeDate: '-overdue' as GetTasksOptions['relativeDate']
         }
     })
 
@@ -62,7 +62,7 @@ export const useTaskPanel = () => {
      */
     const getNoTaskError = (): ViewAdapterNoTaskError => {
         return {
-            image: '/images/notaskhere.webp',
+            image: assetUrl('/images/notaskhere.webp'),
             imageSize: '8rem',
             message: 'task.noTasks',
             isShowTaskCreateButton: false

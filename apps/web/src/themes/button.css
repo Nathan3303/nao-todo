@@ -1,0 +1,39 @@
+.nue-button--danger {
+    --danger-color: 0 72.22% 50.59%;
+
+    color: white;
+    background-color: hsl(var(--danger-color));
+    border-color: transparent;
+
+    &:hover {
+        color: white;
+        background-color: hsl(var(--danger-color) / 0.8);
+        border-color: transparent;
+    }
+
+    &:active {
+        color: white;
+        background-color: hsl(var(--danger-color) / 0.7);
+        border-color: transparent;
+    }
+}
+
+.nue-button--warning {
+    --warning-color: 30 70% 50%;
+
+    color: white;
+    background-color: hsl(var(--warning-color));
+    border-color: transparent;
+
+    &:hover {
+        color: white;
+        background-color: hsl(var(--warning-color) / 0.8);
+        border-color: transparent;
+    }
+
+    &:active {
+        color: white;
+        background-color: hsl(var(--warning-color) / 0.7);
+        border-color: transparent;
+    }
+}

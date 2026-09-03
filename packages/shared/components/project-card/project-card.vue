@@ -7,8 +7,6 @@ defineOptions({ name: 'ProjectCard' })
 const props = defineProps<ProjectCardProps>()
 defineEmits<ProjectCardEmits>()
 
-// const router = useRouter()
-console.log(props.project)
 const isDeleted = computed(() => props.project.isDeleted)
 const isArchived = computed(() => props.project.isArchived)
 
@@ -39,7 +37,7 @@ const statusColor = computed(() => {
             <!-- 项目描述 -->
             <nue-text
                 theme="description"
-                size="var(--nue-text-sm)"
+                size="var(--nue-text-xs)"
                 color="var(--nue-primary-color-500)"
                 :clamped="3"
                 style="word-break: break-word"
@@ -63,4 +61,3 @@ const statusColor = computed(() => {
 <style scoped>
 @import url('./project-card.css');
 </style>
-

@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { Pager } from '@nao-todo/shared'
+import { LoadingError, Pager, t } from '@nao-todo/shared'
 import dayjs from 'dayjs'
 import { PomodoroHeader } from '../header'
 import { PomodoroRecordListItem } from '@nao-todo/presentation/pomodoro'
-import type { PomodoroCollectionProps } from './types'
 import { usePomodoroCollection } from './use-pomodoro-collection'
 
 defineOptions({ name: 'PomodoroCollectionPage' })
-const props = defineProps<PomodoroCollectionProps>()
 
 const {
     loading,
+    listError,
+    loadData,
     selectedId,
     pomodoros,
     selectedPomodoro,
@@ -18,13 +18,15 @@ const {
     handleEdit,
     records,
     recordLoading,
+    recordError,
+    loadRecords,
     recordPage,
     recordLimit,
     recordTotal,
     recordTotalPages,
     handleRecordPageChange,
     handleRecordPerPageChange
-} = usePomodoroCollection(props)
+} = usePomodoroCollection()
 
 // 时长格式化（秒 → x 时 x 分 x 秒）
 const durationToString = (duration: number) => {
@@ -58,25 +60,40 @@ const typeToString = (type: number) => (type === 1 ? '番茄专注' : '正计时
                         <nue-text theme="count">共 {{ pomodoros.length }} 个</nue-text>
                     </nue-div>
                     <nue-div theme="main">
-                        <nue-div v-if="!loading && pomodoros.length === 0" theme="empty">
-                            <nue-text>暂无常用专注</nue-text>
-                        </nue-div>
-                        <nue-div v-else theme="rows">
-                            <nue-div
-                                v-for="item in pomodoros"
-                                :key="item.id"
-                                theme="card,collection-row"
-                                :data-selected="item.id === selectedId"
-                                @click="handleSelect(item.id)"
-                            >
-                                <nue-text theme="name" :clamped="1">{{ item.name }}</nue-text>
-                                <nue-text theme="meta">
-                                    {{ typeToString(item.type) }}，{{
-                                        durationToString(item.duration)
-                                    }}
-                                </nue-text>
+                        <loading-error
+                            :loading="loading"
+                            :error="!!listError"
+                            :empty="!loading && !listError && pomodoros.length === 0"
+                            empty-message="暂无常用专注"
+                        >
+                            <template #error>
+                                <nue-div vertical align="center">
+                                    <nue-text size="var(--nue-text-sm)">{{ listError }}</nue-text>
+                                    <nue-button theme="primary,small" @click="loadData">
+                                        {{ t('common.retry') }}
+                                    </nue-button>
+                                </nue-div>
+                            </template>
+                            <nue-div theme="rows">
+                                <nue-div
+                                    v-for="item in pomodoros"
+                                    :key="item.id"
+                                    theme="card,collection-row"
+                                    :data-selected="item.id === selectedId"
+                                    @click="handleSelect(item.id)"
+                                >
+                                    <nue-text theme="name" :clamped="1">{{ item.name }}</nue-text>
+                                    <nue-text theme="meta">
+                                        {{ typeToString(item.type) }}
+                                        {{
+                                            item.type == 1
+                                                ? `，${durationToString(item.duration)}`
+                                                : ''
+                                        }}
+                                    </nue-text>
+                                </nue-div>
                             </nue-div>
-                        </nue-div>
+                        </loading-error>
                     </nue-div>
                 </nue-div>
                 <!-- 详细区域 -->
@@ -98,7 +115,7 @@ const typeToString = (type: number) => (type === 1 ? '番茄专注' : '正计时
                             {{ selectedPomodoro.description }}
                         </nue-text>
                         <nue-divider />
-                        <nue-div theme="detail-field">
+                        <nue-div theme="detail-field" v-if="selectedPomodoro.type === 1">
                             <nue-text theme="label">单次专注时长</nue-text>
                             <nue-text theme="value">
                                 {{ durationToString(selectedPomodoro.duration) }}
@@ -130,19 +147,30 @@ const typeToString = (type: number) => (type === 1 ? '番茄专注' : '正计时
                                 <nue-text theme="records-count">共 {{ recordTotal }} 条</nue-text>
                             </nue-div>
                             <nue-div theme="records-main">
-                                <nue-div v-if="recordLoading" theme="records-tip">
-                                    <nue-text>加载中...</nue-text>
-                                </nue-div>
-                                <nue-div v-else-if="records.length === 0" theme="records-tip">
-                                    <nue-text>暂无专注记录</nue-text>
-                                </nue-div>
-                                <nue-div v-else theme="records-rows">
-                                    <pomodoro-record-list-item
-                                        v-for="record in records"
-                                        :key="record.id"
-                                        :record="record"
-                                    />
-                                </nue-div>
+                                <loading-error
+                                    :loading="recordLoading"
+                                    :error="!!recordError"
+                                    :empty="!recordLoading && !recordError && records.length === 0"
+                                    empty-message="暂无专注记录"
+                                >
+                                    <template #error>
+                                        <nue-div vertical align="center">
+                                            <nue-text size="var(--nue-text-sm)">
+                                                {{ recordError }}
+                                            </nue-text>
+                                            <nue-button theme="primary,small" @click="loadRecords">
+                                                {{ t('common.retry') }}
+                                            </nue-button>
+                                        </nue-div>
+                                    </template>
+                                    <nue-div theme="records-rows">
+                                        <pomodoro-record-list-item
+                                            v-for="record in records"
+                                            :key="record.id"
+                                            :record="record"
+                                        />
+                                    </nue-div>
+                                </loading-error>
                             </nue-div>
                             <nue-div theme="records-footer">
                                 <pager

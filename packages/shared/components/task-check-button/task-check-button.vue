@@ -5,6 +5,7 @@
         :icon="iconName"
         :loading="isUpdating"
         :disabled="isUpdating"
+        :style="priorityColor ? { '--nue-button-color': priorityColor } : undefined"
         @click="handleClick"
         @mouseover="isHover = true"
         @mouseout="isHover = false"
@@ -15,7 +16,7 @@
 import { ref, computed } from 'vue'
 import type { TaskCheckButtonProps, TaskCheckButtonEmits } from './types'
 
-defineOptions({ name: 'TaskCheckButton', inheritAttrs: false })
+defineOptions({ name: 'TaskCheckButton' })
 const props = defineProps<TaskCheckButtonProps>()
 const emit = defineEmits<TaskCheckButtonEmits>()
 
@@ -38,7 +39,7 @@ const handleClick = (e: Event) => {
     cursor: pointer;
 
     &.nue-button--small {
-        --nue-button-font-size: 1rem;
+        --nue-button-font-size: 1.125rem;
     }
 
     &.nue-button--large {
@@ -46,4 +47,3 @@ const handleClick = (e: Event) => {
     }
 }
 </style>
-

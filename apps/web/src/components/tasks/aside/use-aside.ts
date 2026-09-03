@@ -1,3 +1,4 @@
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
 import { useBuiltInProjectsStore } from '@nao-todo/presentation/built-in-project'
 import { useProjectsStore } from '@nao-todo/presentation/project'
@@ -13,14 +14,9 @@ export const useAside = () => {
     /**
      * 注入任务视图上下文
      */
-    const {
-        appDialogManager,
-        asideWidth,
-        handleResizeAside,
-        isDisplayAside,
-        projectUseCase,
-        tagUseCase
-    } = inject(TASKS_VIEW_CONTEXT_KEY)!
+    const { appDialogManager, projectUseCase, tagUseCase } = inject(TASKS_VIEW_CONTEXT_KEY)!
+    const { asideWidth, handleResizeAside, isDisplayAside, isUseFloatAside, setControllOption } =
+        inject(INDEX_VIEW_CONTEXT_KEY)!
 
     /**
      * 数据仓库
@@ -85,8 +81,8 @@ export const useAside = () => {
      * @param boundId 目标项目 ID
      * @param isBefore 是否在目标项目之前
      */
-    const handleProjectResort = (originalId: string, boundId: string, isBefore: boolean) => {
-        projectUseCase.resort(originalId, boundId, isBefore)
+    const handleProjectResort = async (originalId: string, boundId: string, isBefore: boolean) => {
+        await projectUseCase.resort(originalId, boundId, isBefore)
     }
 
     /**
@@ -95,8 +91,8 @@ export const useAside = () => {
      * @param boundId 目标标签 ID
      * @param isBefore 是否在目标标签之前
      */
-    const handleTagResort = (originalId: string, boundId: string, isBefore: boolean) => {
-        tagUseCase.resort(originalId, boundId, isBefore)
+    const handleTagResort = async (originalId: string, boundId: string, isBefore: boolean) => {
+        await tagUseCase.resort(originalId, boundId, isBefore)
     }
 
     // @returns
@@ -110,6 +106,8 @@ export const useAside = () => {
         dialogManager: appDialogManager,
         asideWidth,
         handleResizeAside,
-        isDisplayAside
+        isDisplayAside,
+        isUseFloatAside,
+        setControllOption
     }
 }

@@ -1,0 +1,28 @@
+{
+    "name": "@nao-todo/presentation-react",
+    "description": "Presentation layer with React for NaoTodo (ReactLynx / Lynx)",
+    "version": "0.1.0",
+    "author": "Nathan Lee",
+    "license": "MIT",
+    "type": "module",
+    "main": "index.ts",
+    "files": [
+        "src/**/*",
+        "index.ts"
+    ],
+    "dependencies": {
+        "@lynx-js/lynx-ui": "^3.136.0",
+        "@nao-todo/domain-identity": "workspace:*",
+        "@nao-todo/infrastructure": "workspace:*",
+        "@nao-todo/shared": "workspace:*"
+    },
+    "devDependencies": {
+        "@lynx-js/react": "^0.123.3",
+        "@types/react": "^19.2.17",
+        "typescript": "~6.0.3"
+    },
+    "peerDependencies": {
+        "@lynx-js/react": ">=0.123",
+        "react": ">=19"
+    }
+}

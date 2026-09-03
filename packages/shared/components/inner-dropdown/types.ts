@@ -27,4 +27,3 @@ export type InnerDropdownOptionVO = {
     value: string
     checked?: boolean
 }
-

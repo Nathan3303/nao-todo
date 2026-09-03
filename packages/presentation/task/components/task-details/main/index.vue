@@ -7,9 +7,9 @@ import {
     TaskSelector
 } from '@nao-todo/shared'
 import { TaskTagBar } from '../../tag-bar'
-import { inject } from 'vue'
-import { TaskPrioritySelectOptions, TaskStateSelectOptions } from '@nao-todo/domain/task'
-import type { TaskViewObject } from '../../../types'
+import { computed, inject } from 'vue'
+import { TaskPrioritySelectOptions, TaskStateSelectOptions } from '../../../constants'
+import type { TaskViewObject } from '@nao-todo/domain-task'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context.js'
 import DetailsMainComments from './comments.vue'
 import DetailsMainEvents from './events.vue'
@@ -21,6 +21,8 @@ const {
     vo,
     checkItemProgress,
     subTaskProgress,
+    checkItems,
+    subTasks,
     isCommenting,
     commentHandler,
     tags,
@@ -28,6 +30,13 @@ const {
     switchTaskDetails,
     updateTaskDetails
 } = inject(TASK_DETAILS_CONTEXT_KEY)!
+
+const percentage = computed(() => {
+    // 子任务详情不渲染子任务板块（深度限制），进度仅计检查事项
+    if (vo.value?.parentTaskId) return checkItemProgress.value.percentage
+    const total = checkItemProgress.value.percentage + subTaskProgress.value.percentage
+    return checkItems.value.length && subTasks.value.length ? total / 2 : total
+})
 
 const backToParent = () => {
     if (!vo.value?.parentTaskId) return
@@ -97,11 +106,7 @@ const createCommentHandler = async (content: string) => {
                 /> -->
             </nue-div>
             <nue-div class="tasks-details-view__progress">
-                <nue-progress
-                    :percentage="checkItemProgress.percentage"
-                    :stroke-width="2"
-                    hide-text
-                />
+                <nue-progress :percentage="percentage" :stroke-width="2" hide-text />
             </nue-div>
         </nue-header>
         <!-- 任务详情主体 -->
@@ -136,9 +141,20 @@ const createCommentHandler = async (content: string) => {
                     />
                 </nue-div>
                 <!-- 任务详情事件 -->
-                <nue-div vertical style="padding: 0 1rem 1rem; margin-bottom: auto">
+                <nue-div vertical style="padding: 0 1rem 1rem">
                     <details-main-events />
                 </nue-div>
+                <!-- 任务详情子任务（仅顶层任务可有一级子任务，子任务详情不渲染；深度限制）。
+                     无论模块是否渲染都保留 tasks-details-view__subtasks 的弹性空隙，
+                     使标签栏/评论区始终贴住面板底部（子任务任务仅占位不渲染内容） -->
+                <nue-div
+                    v-if="vo && !vo.parentTaskId"
+                    class="tasks-details-view__subtasks"
+                    vertical
+                >
+                    <details-main-sub-tasks />
+                </nue-div>
+                <nue-div v-else class="tasks-details-view__subtasks" />
                 <!-- 任务详情标签 -->
                 <nue-div vertical style="padding: 1rem">
                     <task-tag-bar
@@ -150,8 +166,6 @@ const createCommentHandler = async (content: string) => {
                         "
                     />
                 </nue-div>
-                <!-- 任务详情子任务 -->
-                <details-main-sub-tasks />
                 <!-- 任务详情评论 -->
                 <details-main-comments />
                 <!-- 任务详情删除标签 -->
@@ -185,6 +199,7 @@ const createCommentHandler = async (content: string) => {
                     :label="t('task.details.eventProgress')"
                 />
                 <details-row
+                    v-if="vo && !vo.parentTaskId"
                     :text="subTaskProgress.text"
                     :label="t('task.details.subTaskProgress')"
                 />
@@ -284,6 +299,27 @@ const createCommentHandler = async (content: string) => {
         .nue-textarea--description {
             --nue-textarea-font-size: var(--nue-text-sm);
             --nue-textarea-color: var(--nue-primary-color-500);
+        }
+    }
+
+    .tasks-details-view__subtasks {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+
+        /* 子任务容器填充剩余空间，列表超出时区内滚动（标签栏/评论保持底部可见） */
+        :deep(#TodoDetailsSubTasksContainer) {
+            flex: 1;
+            min-height: 0;
+            height: auto;
+        }
+
+        :deep(#TodoDetailsSubTasksContainer > .nue-main) {
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
         }
     }
 

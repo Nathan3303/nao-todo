@@ -1,5 +1,5 @@
 import { useMapperStoreBase } from '@nao-todo/shared'
-import type { PomodoroViewObject } from '@nao-todo/application/pomodoro/viewobjects'
+import type { PomodoroViewObject } from '@nao-todo/domain-pomodoro'
 
 export const usePomodorosStoreBase = () => {
     const {

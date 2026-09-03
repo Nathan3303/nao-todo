@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { SettingsAside } from '@/components/settings'
-import { Loading as LoadingComp } from '@nao-todo/shared'
+import { Loading as LoadingComp, assetUrl } from '@nao-todo/shared'
 import useSettingsView from './settings-view'
 
 defineOptions({ name: 'SettingsView' })
@@ -20,7 +20,10 @@ useSettingsView()
                             <loading-comp height="100%" />
                         </template>
                         <template #fallback>
-                            <nue-empty image-src="/images/error.webp" image-size="6rem">
+                            <nue-empty
+                                :image-src="assetUrl('/images/error.webp')"
+                                image-size="6rem"
+                            >
                                 <nue-text size="var(--nue-text-sm)">
                                     加载失败, 请刷新页面重试
                                 </nue-text>

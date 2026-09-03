@@ -127,10 +127,22 @@
                             color: var(--nue-warning-color-70);
                         }
 
-                        .todo-card__name {
-                            font-size: var(--nue-text-df2);
-                            line-height: var(--nue-text-xl);
+                        .todo-card__name-cell {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.25rem;
+                            min-width: 0;
                             flex: 1;
+
+                            .todo-card__name {
+                                font-size: var(--nue-text-df2);
+                                line-height: var(--nue-text-xl);
+                            }
+
+                            .todo-card__star {
+                                --nue-icon-color: var(--nue-error-color-70);
+                                flex: none;
+                            }
                         }
 
                         .todo-card__actions {
@@ -153,6 +165,7 @@
                     .todo-card__attrs {
                         gap: 0.25rem 1rem;
                         flex-wrap: wrap;
+                        padding-right: var(--nue-padding-sm);
 
                         .nue-div--basic-info {
                             flex: 0 0 auto;
@@ -244,4 +257,3 @@
         }
     }
 }
-

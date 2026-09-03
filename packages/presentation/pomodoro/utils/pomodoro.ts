@@ -3,7 +3,7 @@ import type {
     CreatePomodoroRecordViewObject,
     PomodoroRecordViewObject,
     PomodoroType
-} from '@nao-todo/application/pomodoro/viewobjects'
+} from '@nao-todo/domain-pomodoro'
 
 /**
  * 格式化秒数为中文分钟/小时描述
@@ -42,13 +42,11 @@ export const formatClock = (seconds: number): string => {
 
 /**
  * 发送浏览器系统通知
- * @param title 通知标题
+ * @description 复用 @nao-todo/shared 的统一通知封装（权限守卫/默认图标/点击聚焦）
+ * @param title 通知标题（动作语义，如"专注完成"）
  * @param body 通知内容
  */
-export const sendNotification = (title: string, body: string) => {
-    if (!('Notification' in window) || Notification.permission !== 'granted') return
-    new Notification(title, { body })
-}
+export { sendNotification } from '@nao-todo/shared'
 
 /**
  * 构建一条专注记录 CreatePomodoroRecordViewObject
@@ -85,11 +83,11 @@ export const buildPomodoroRecord = (params: {
  * @param errorTag 错误日志前缀
  */
 export const persistPomodoroRecord = (
-    addRecord: (record: CreatePomodoroRecordViewObject) => GoAsync<PomodoroRecordViewObject[]>,
+    createRecordFn: (record: CreatePomodoroRecordViewObject) => GoAsync<PomodoroRecordViewObject[]>,
     record: CreatePomodoroRecordViewObject,
     errorTag: string
 ) => {
-    addRecord(record).then(([, err]) => {
+    createRecordFn(record).then(([, err]) => {
         if (err !== null) console.error(errorTag, err)
     })
 }

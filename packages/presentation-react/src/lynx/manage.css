@@ -1,0 +1,106 @@
+/* 项目/标签管理屏幕 —— 账本索引页 */
+.mg-body {
+    padding: 28rpx;
+}
+
+.mg-row {
+    display: flex;
+    align-items: center;
+    gap: 16rpx;
+}
+
+.mg-name-input {
+    flex: 1;
+}
+
+.mg-add-btn {
+    height: 88rpx;
+    padding: 0 28rpx;
+    flex-shrink: 0;
+}
+
+.mg-colors {
+    margin-top: 22rpx;
+}
+
+/* 色板：方形色章 */
+.mg-color-dot-wrap {
+    width: 60rpx;
+    height: 60rpx;
+    border-radius: 0;
+    border: 1rpx solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+}
+
+.mg-color-dot-wrap.ui-active {
+    border-color: var(--nao-accent);
+    background-color: var(--nao-surface-hover);
+}
+
+.mg-color-dot {
+    width: 40rpx;
+    height: 40rpx;
+    border-radius: 6rpx;
+}
+
+.mg-list {
+    margin-top: 8rpx;
+}
+
+.mg-item {
+    display: flex;
+    align-items: center;
+}
+
+.mg-item-name {
+    flex: 1;
+    font-family: var(--nao-serif);
+    font-size: 28rpx;
+    color: var(--nao-text);
+    margin-left: 16rpx;
+}
+
+.mg-item-btn {
+    height: 58rpx;
+    padding: 0 22rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0;
+    border: 1rpx solid rgba(217, 123, 108, 0.4);
+    background-color: transparent;
+}
+
+.mg-item-btn.ui-active {
+    background-color: rgba(217, 123, 108, 0.12);
+}
+
+.mg-item-btn-text {
+    font-size: 22rpx;
+    color: var(--nao-danger);
+    letter-spacing: 1rpx;
+}
+
+.mg-item-btn.mg-restore {
+    border-color: rgba(217, 164, 65, 0.5);
+}
+
+.mg-item-btn.mg-restore .mg-item-btn-text {
+    color: var(--nao-accent);
+}
+
+.mg-deleted {
+    margin-top: 8rpx;
+}
+
+/* 分节标题：字距拉开的账目小节 */
+.mg-section-title {
+    display: block;
+    font-size: 21rpx;
+    color: var(--nao-text-muted);
+    margin: 28rpx 8rpx 16rpx;
+    letter-spacing: 6rpx;
+}

@@ -1,16 +1,16 @@
 import { NueMessage } from 'nue-ui'
 import { ref } from 'vue'
-import { usePomodoroRecordsStore } from '../../../stores'
-import type { PomodoroTimerSettingViewObject } from '../../../types'
+import { usePomodoroSessionStore } from '../../../stores'
+import type { PomodoroTimerSettingViewObject } from '@nao-todo/domain-pomodoro'
 
 /**
  * 番茄钟计时器设置对话框
  */
 export const useTimerSettingDialog = () => {
     /**
-     * 番茄钟 store
+     * 番茄钟 session store
      */
-    const store = usePomodoroRecordsStore()
+    const store = usePomodoroSessionStore()
 
     /**
      * 保存中状态

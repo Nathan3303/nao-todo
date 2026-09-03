@@ -7,7 +7,8 @@ import {
 } from '@nao-todo/shared'
 import { TaskProjectSelector } from '../../project-selector'
 import { inject } from 'vue'
-import type { TaskViewObject } from '../../../types'
+import dayjs from 'dayjs'
+import type { TaskViewObject } from '@nao-todo/domain-task'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context'
 
 const {
@@ -38,6 +39,12 @@ const openParentTaskSelector = () => {
 const handleDropdownExecute = async (executeId: string) => {
     if (!vo.value) return
     switch (executeId) {
+        case 'star-mark':
+            await updateTaskDetails(vo.value.id, { starMarkAt: dayjs().toISOString() })
+            break
+        case 'un-star-mark':
+            await updateTaskDetails(vo.value.id, { starMarkAt: '' })
+            break
         case 'comment-todo':
             isCommenting.value = true
             break
@@ -85,6 +92,15 @@ const handleDropdownExecute = async (executeId: string) => {
                 </nue-button>
             </template>
             <dropdown-div-block :title="t('task.details.moreOperations')">
+                <inner-dropdown-option
+                    :disabled="vo.isDeleted"
+                    :title="
+                        vo.isStarMarked ? t('task.details.unfavorite') : t('task.details.favorite')
+                    "
+                    :icon="vo.isStarMarked ? 'heart-fill' : 'heart'"
+                    :checked="vo.isStarMarked"
+                    :execute-id="vo.isStarMarked ? 'un-star-mark' : 'star-mark'"
+                />
                 <inner-dropdown-option
                     :title="t('task.details.addComment')"
                     icon="chat"

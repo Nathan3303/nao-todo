@@ -1,6 +1,6 @@
+import type { TaskViewObject } from '@nao-todo/domain-task'
 import { computed, reactive } from 'vue'
 import type { TaskKanbanColumnProps } from './types'
-import type { TaskViewObject } from '../../types'
 
 const useKanbanColumn = (props: TaskKanbanColumnProps) => {
     const states = reactive({
@@ -32,4 +32,3 @@ const useKanbanColumn = (props: TaskKanbanColumnProps) => {
 }
 
 export default useKanbanColumn
-

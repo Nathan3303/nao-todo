@@ -1,0 +1,21 @@
+/* 用户头像 */
+.uavatar-img {
+    flex-shrink: 0;
+    border: 1rpx solid var(--nao-border-strong);
+}
+
+/* 字母兜底：黄铜双环印章 */
+.uavatar-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2rpx solid var(--nao-accent);
+    background: var(--nao-accent-soft);
+    flex-shrink: 0;
+}
+
+.uavatar-fallback-text {
+    font-family: var(--nao-serif);
+    font-weight: 700;
+    color: var(--nao-accent);
+}

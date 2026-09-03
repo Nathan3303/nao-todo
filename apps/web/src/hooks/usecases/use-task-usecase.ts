@@ -1,6 +1,5 @@
-import { TaskDomain, TaskStore } from '@nao-todo/domain/task'
-import { TaskUseCase } from '@nao-todo/application/task/usecases'
-import { TaskRepoImpl } from '@nao-todo/infrastructure/backend'
+import { TaskDomain, TaskStore, TaskUseCase } from '@nao-todo/domain-task'
+import { TaskRepoImpl } from '@nao-todo/infrastructure'
 import { getRequesterImpl } from '@nao-todo/shared'
 
 export const useTaskUseCase = (store: TaskStore) => {
@@ -9,4 +8,3 @@ export const useTaskUseCase = (store: TaskStore) => {
     const taskDomain = new TaskDomain(taskRepo)
     return new TaskUseCase(taskDomain, taskRepo, store)
 }
-

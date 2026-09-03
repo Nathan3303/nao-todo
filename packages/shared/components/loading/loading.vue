@@ -15,4 +15,3 @@ import type { LoadingProps } from './types'
 defineOptions({ name: 'Loading' })
 defineProps<LoadingProps>()
 </script>
-

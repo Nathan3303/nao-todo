@@ -1,7 +1,12 @@
 /* Patches */
 .nue-confirm {
     min-width: 16rem;
-    min-height: 9rem;
+    max-width: 18rem;
+    min-height: auto;
+
+    > .nue-confirm__footer {
+        margin-top: 1rem;
+    }
 }
 
 .nue-confirm-overlay {
@@ -26,4 +31,3 @@
         }
     }
 }
-

@@ -12,6 +12,7 @@ import { NueMessage } from 'nue-ui'
 import { computed, inject, onMounted, onUnmounted } from 'vue'
 import { BUILT_IN_EMPTY_STATE_MAP } from '../constants'
 import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '../context'
+import { MULTI_SELECT_CONTEXT_KEY } from '@/views/index/tasks/multi-select-context'
 
 defineOptions({
     name: 'TasksMainProjectContent',
@@ -37,6 +38,12 @@ const {
     profile,
     dialogManager
 } = inject(BUILT_IN_PROJECT_VIEW_CONTEXT_KEY)!
+
+// @multiSelectContext 多选编辑上下文
+const multiSelectCtx = inject(MULTI_SELECT_CONTEXT_KEY)!
+
+// @computed 多选清除信号（解包上下文中的 ref，供模板使用）
+const multiSelectClearSignal = computed(() => multiSelectCtx.clearSignal.value)
 
 // @computed componentName
 const componentName = computed(() => `${props.viewType || 'table'}-view`)
@@ -123,6 +130,8 @@ onUnmounted(() => {
                 :update-sort-options="updateSortOptions"
                 :clear-sort-options="() => builtInProjectHandlers.clearSortOption()"
                 :get-no-task-error="getNoTaskError"
+                :multi-select-clear-signal="multiSelectClearSignal"
+                @multi-select-changed="multiSelectCtx?.openPanel"
             >
                 <template #emptyActions>
                     <nue-button

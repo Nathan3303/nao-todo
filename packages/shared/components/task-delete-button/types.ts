@@ -1,4 +1,4 @@
-import { NueButtonSize } from "nue-ui"
+import { NueButtonSize } from 'nue-ui'
 
 export type TaskDeleteButtonProps = {
     isDeleted?: boolean

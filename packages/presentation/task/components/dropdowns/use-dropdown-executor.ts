@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 
 type ExecuteId = string
-type ExecutePayload = Record<string, any>
+type ExecutePayload = Record<string, unknown>
 type ExecuteFunc = (payload?: ExecutePayload) => unknown
 type ExecuteFuncs = Map<ExecuteId, ExecuteFunc>
 

@@ -1,0 +1,234 @@
+/* 应用侧边栏 —— 账本目录（侧栏索引） */
+.sb-root {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+}
+
+.sb-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(5, 7, 10, 0.62);
+    animation: sb-fade 0.2s ease-out both;
+}
+
+.sb-panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 78vw;
+    background-color: var(--nao-bg-elevated);
+    border-right: 1rpx solid var(--nao-border-strong);
+    display: flex;
+    flex-direction: column;
+    animation: sb-slide-in 0.28s ease-out both;
+}
+
+/* 退出动画（延迟卸载时播放） */
+.sb-root.closing .sb-backdrop {
+    animation-name: sb-fade-out;
+}
+
+.sb-root.closing .sb-panel {
+    animation-name: sb-slide-out;
+}
+
+@keyframes sb-fade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes sb-fade-out {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes sb-slide-in {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+@keyframes sb-slide-out {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-100%);
+    }
+}
+
+/* 顶部用户区 */
+.sb-safe-top {
+    background-color: var(--nao-bg-elevated);
+}
+
+.sb-profile {
+    padding: 40rpx 32rpx 30rpx;
+    display: flex;
+    align-items: center;
+    border-bottom: 1rpx solid var(--nao-border);
+}
+
+/* 用户头像：黄铜双环印章 */
+.sb-avatar {
+    width: 88rpx;
+    height: 88rpx;
+    border-radius: 50%;
+    border: 2rpx solid var(--nao-accent);
+    background: var(--nao-accent-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.sb-avatar-text {
+    font-family: var(--nao-serif);
+    font-size: 36rpx;
+    font-weight: 700;
+    color: var(--nao-accent);
+}
+
+.sb-profile-info {
+    margin-left: 20rpx;
+    flex: 1;
+    min-width: 0;
+}
+
+.sb-nickname {
+    font-family: var(--nao-serif);
+    font-size: 30rpx;
+    font-weight: 600;
+    color: var(--nao-text);
+}
+
+.sb-email {
+    display: block;
+    margin-top: 4rpx;
+    font-size: 21rpx;
+    color: var(--nao-text-secondary);
+    letter-spacing: 1rpx;
+}
+
+/* 中部链接（目录条目） */
+.sb-scroll {
+    flex: 1;
+    min-height: 0;
+    padding: 24rpx 20rpx;
+}
+
+/* 分节标题：字距拉开的账目小节 */
+.sb-section-title {
+    display: block;
+    font-size: 21rpx;
+    color: var(--nao-text-muted);
+    margin: 28rpx 8rpx 10rpx;
+    letter-spacing: 6rpx;
+}
+
+.sb-link {
+    width: 100%;
+    height: 78rpx;
+    padding: 0 22rpx;
+    display: flex;
+    align-items: center;
+    border-radius: 0;
+    margin-bottom: 2rpx;
+    border-left: 4rpx solid transparent;
+}
+
+.sb-link.ui-active,
+.sb-link.active {
+    background-color: var(--nao-accent-soft);
+    border-left-color: var(--nao-accent);
+}
+
+.sb-link-text {
+    font-size: 26rpx;
+    color: var(--nao-text-secondary);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    letter-spacing: 1rpx;
+}
+
+.sb-link.ui-active .sb-link-text,
+.sb-link.active .sb-link-text {
+    color: var(--nao-text);
+    font-weight: 600;
+}
+
+.sb-link.sb-manage {
+    margin-top: 6rpx;
+}
+
+.sb-link.sb-manage .sb-link-text {
+    color: var(--nao-accent);
+    font-size: 23rpx;
+    letter-spacing: 2rpx;
+}
+
+.sb-empty-tip {
+    display: block;
+    font-size: 23rpx;
+    color: var(--nao-text-muted);
+    padding: 12rpx 22rpx;
+}
+
+/* 底部页面切换：目录封底 */
+.sb-footer {
+    display: flex;
+    border-top: 1rpx solid var(--nao-border);
+    padding: 18rpx;
+    gap: 16rpx;
+}
+
+.sb-footer-link {
+    flex: 1;
+    height: 82rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0;
+    border: 1rpx solid var(--nao-border-strong);
+    background-color: transparent;
+}
+
+.sb-footer-link.ui-active,
+.sb-footer-link.active {
+    background-color: var(--nao-accent-soft);
+    border-color: var(--nao-accent);
+}
+
+.sb-footer-text {
+    font-size: 25rpx;
+    color: var(--nao-text-secondary);
+    letter-spacing: 2rpx;
+}
+
+.sb-footer-link.ui-active .sb-footer-text,
+.sb-footer-link.active .sb-footer-text {
+    color: var(--nao-text);
+    font-weight: 600;
+}

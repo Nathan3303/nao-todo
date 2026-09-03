@@ -11,4 +11,3 @@ export const TaskOperationsDropdown = OperationsDropdown
 export const TaskPriorityFilter = PriorityFilter
 export const TaskStateFilter = StateFilter
 export const TaskSortOperator = SortOperator
-

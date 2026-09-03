@@ -67,4 +67,3 @@ F
 <style scoped>
 @import url('./smart-list.css');
 </style>
-

@@ -15,8 +15,8 @@ export type InputButtonProps = {
     submitOnBlur?: boolean
     disabled?: boolean
     placeholder?: string
-    onSubmit?: (payload: InputButtonSubmitPayload) => Promise<any>
-    onButtonClick?: (event: MouseEvent, payload: OnButtonClickPayload) => void | Promise<any>
+    onSubmit?: (payload: InputButtonSubmitPayload) => Promise<void>
+    onButtonClick?: (event: MouseEvent, payload: OnButtonClickPayload) => void | Promise<void>
 }
 
 export type InputButtonEmits = {

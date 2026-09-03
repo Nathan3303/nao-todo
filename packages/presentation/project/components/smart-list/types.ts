@@ -10,4 +10,3 @@ export type ProjectSmartListEmits = {
     (e: 'open-project-creator'): void
     (e: 'resort', originalId: string, boundId: string, isBefore: boolean): void
 }
-

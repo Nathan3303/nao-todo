@@ -14,4 +14,3 @@ export const pad = (n: number) => {
 export const onFocus = (e: Event) => {
     ;(e.target as HTMLInputElement).select()
 }
-

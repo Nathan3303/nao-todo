@@ -3,7 +3,7 @@ import {
     prioritySNMapReverse,
     stateSNMap,
     stateSNMapReverse
-} from '@nao-todo/domain/task'
+} from '@nao-todo/domain-task'
 
 /**
  * 解析任务状态

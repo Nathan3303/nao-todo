@@ -8,11 +8,10 @@ export type EventRowUpdatePayload = Partial<EventInfo>
 
 export type EventRowProps = {
     event: EventInfo
-    onUpdate: (id: string, payload: EventRowUpdatePayload) => Promise<any>
-    onDelete: (id: string) => Promise<any>
+    onUpdate: (id: string, payload: EventRowUpdatePayload) => Promise<void>
+    onDelete: (id: string) => Promise<void>
 }
 
 export type EventRowEmits = {
     (event: 'toTask', id: string): void
 }
-

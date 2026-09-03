@@ -11,4 +11,3 @@ defineOptions({ name: 'AccountRuleHint' })
         电子邮箱需要符合常规的邮箱格式要求。
     </rule-hint>
 </template>
-

@@ -160,7 +160,7 @@ Slide-in panel from screen edges.
 | theme            | same as GlobalProps               | -           | Theme (primary, success, warning, danger, ghost, icon) |
 
 **Emits**: `click(MouseEvent)`
-**Slots**: `default` (label), `append`
+**Slots**: `default` (label), `prepend`, `append`
 
 ```vue
 <NueButton theme="primary" icon="plus" @click="create">Create</NueButton>

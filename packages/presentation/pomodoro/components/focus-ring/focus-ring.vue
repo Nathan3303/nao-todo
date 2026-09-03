@@ -4,7 +4,7 @@ import type { PomodoroFocusRingProps } from './types'
 
 const props = withDefaults(defineProps<PomodoroFocusRingProps>(), {
     isRunning: false,
-    outerColor: 'var(--nue-primary-color-400)',
+    outerColor: 'var(--nue-primary-color-200)',
     strokeWidth: 6,
     innerColor: 'var(--nue-primary-color-900)',
     scale: 1
@@ -59,8 +59,11 @@ const dashOffset = computed(() =>
     .circle-path {
         fill: transparent;
         stroke-width: v-bind('trulyStrokeWidth');
+        transform-box: view-box;
         transform-origin: center;
-        scale: 0.9;
+        /* 用 transform 而非独立 scale 属性：Firefox 对"独立 scale 属性 × SVG transform 动画"
+           组合存在未修复缺陷（Bug 1887423），会导致运行环与静态环缩放不一致（圆环小一圈） */
+        transform: scale(0.9);
         cx: 50%;
         cy: 50%;
         r: 50%;
@@ -74,23 +77,21 @@ const dashOffset = computed(() =>
         stroke-dasharray: v-bind('CIRCUMFERENCE');
         stroke-dashoffset: v-bind('dashOffset');
         stroke-linecap: round;
-        transform: rotate(-90deg);
+        transform: scale(0.9) rotate(-90deg);
         transition: stroke-dashoffset 0.24s linear;
     }
 
     .track-path {
-        transform: rotate(-90deg);
+        transform: scale(0.9) rotate(-90deg);
     }
 }
 
 @keyframes spin-ring {
     from {
-        transform: rotate(0deg);
-        scale: 0.9;
+        transform: scale(0.9) rotate(0deg);
     }
     to {
-        transform: rotate(360deg);
-        scale: 0.9;
+        transform: scale(0.9) rotate(360deg);
     }
 }
 </style>

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { AppAsideAdapter } from '@/components/app'
 import { ProjectSmartList } from '@nao-todo/presentation/project'
 import { TagSmartList } from '@nao-todo/presentation/tag'
 import {
@@ -9,6 +8,7 @@ import {
     TAG_MANAGER_DIALOG_KEY
 } from '@nao-todo/shared'
 import dayjs from 'dayjs'
+import { nextTick, onMounted, ref, watch } from 'vue'
 import { useAside } from './use-aside'
 
 defineOptions({ name: 'TasksViewAside' })
@@ -21,21 +21,22 @@ const {
     handleTagResort,
     collapseItemsRecord,
     dialogManager,
-    asideWidth,
-    handleResizeAside,
-    isDisplayAside
+    isDisplayAside,
+    setControllOption
 } = useAside()
+
+/**
+ * 处理侧边栏延时传送
+ * 等待侧边栏的 SubPageAsideTeleportSlot 元素渲染后再渲染 teleport
+ */
+const teleportDisabled = ref<boolean>(false)
+watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
+onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
 </script>
 
 <template>
-    <app-aside-adapter
-        @resize="handleResizeAside"
-        v-model:displayed="isDisplayAside"
-        :width="asideWidth"
-        :min-width="isDisplayAside ? '250px' : 'unset'"
-        max-width="350px"
-    >
-        <nue-div v-if="isDisplayAside" theme="aside-wrapper">
+    <teleport v-if="isDisplayAside && !teleportDisabled" to="#SubPageAsideTeleportSlot">
+        <nue-div theme="aside-wrapper">
             <nue-div vertical gap="0.25rem">
                 <nue-link
                     v-for="link in builtInProjectLinks.slice(0, 5)"
@@ -82,28 +83,20 @@ const {
                 </nue-link>
             </nue-div>
         </nue-div>
-    </app-aside-adapter>
+    </teleport>
 </template>
 
 <style scoped>
-.nue-div--aside-wrapper {
+.nue-div--block {
     flex-direction: column;
-    box-sizing: border-box;
-    padding: var(--nue-padding-df);
-    overflow: auto;
-    flex: 1;
+    gap: 0.5rem;
+}
 
-    .nue-div--block {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
+.nue-collapse--menu {
+    gap: 0;
 
-    .nue-collapse--menu {
-        gap: 0;
-
-        .nue-collapse-item {
-            border: none;
-        }
+    .nue-collapse-item {
+        border: none;
     }
 }
 </style>

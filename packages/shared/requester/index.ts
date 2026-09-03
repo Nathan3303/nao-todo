@@ -1,5 +1,6 @@
 import type { Requester, UseRequesterOptions, RequesterOpRtn } from './types'
 import useAxiosRequester from './axios'
+import { useLynxRequester } from './lynx'
 import { listLogs, listFailedIdempotentLogs, removeLog } from './operation-log'
 
 const emptyRequester: Requester = {
@@ -17,12 +18,17 @@ let requester: Requester = emptyRequester
 export const getRequesterImpl = () => requester
 
 export const initRequester = (options: UseRequesterOptions) => {
-    const { name, baseURL, enableRetry = true } = options
+    const { name, baseURL, enableRetry = true, onAuthExpired } = options
 
     switch (name) {
+        case 'LynxRequester': {
+            // Lynx 运行时（ReactLynx）：基于内置 Fetch API，无 axios/dexie/localStorage 依赖
+            requester = useLynxRequester(baseURL, onAuthExpired)
+            break
+        }
         case 'AxiosRequester':
         default: {
-            requester = useAxiosRequester(baseURL, enableRetry)
+            requester = useAxiosRequester(baseURL, enableRetry, onAuthExpired)
             break
         }
     }
@@ -60,7 +66,7 @@ export const replayFailedOperations = async () => {
                     continue
             }
             // 归一化网络错误在顶层携带字符串 code，视为仍失败，保留日志
-            if (typeof (response as any)?.code !== 'string') {
+            if (typeof (response as RequesterOpRtn)?.code !== 'string') {
                 await removeLog(log.id)
             }
         } catch {

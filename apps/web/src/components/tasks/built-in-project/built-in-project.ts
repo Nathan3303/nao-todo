@@ -1,7 +1,10 @@
 import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
-import { BuiltInProjectHandler, useBuiltInProjectsStore } from '@nao-todo/presentation/built-in-project'
+import {
+    BuiltInProjectHandler,
+    useBuiltInProjectsStore
+} from '@nao-todo/presentation/built-in-project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
-import { useUserStore } from '@nao-todo/presentation/user'
+import { useUserStore } from '@nao-todo/presentation-identity'
 import { TASK_CREATOR_DIALOG_KEY, unwrapError } from '@nao-todo/shared'
 import { NueMessage } from 'nue-ui'
 import { storeToRefs } from 'pinia'
@@ -39,12 +42,14 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     const loading = ref(true)
 
     // @method 视图切换
-    const switchViewType = (viewType: string) => {
+    const switchViewType = async (viewType: string) => {
         if (!viewType) return
         if (viewType === (router.currentRoute.value.params.viewType as string)) return
-        router.replace({ name: 'tasks-built-in-project-main', params: { viewType } }).then(() => {
-            preference.value!.viewType = viewType
-        })
+        await router
+            .replace({ name: 'tasks-built-in-project-main', params: { viewType } })
+            .then(() => {
+                preference.value!.viewType = viewType
+            })
     }
 
     // @state 清单详情
@@ -69,7 +74,7 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
             return
         }
         // 3. 跳转至指定视图类型
-        switchViewType(preference.value?.viewType || 'table')
+        await switchViewType(preference.value?.viewType || 'table')
         loading.value = false
     }
 

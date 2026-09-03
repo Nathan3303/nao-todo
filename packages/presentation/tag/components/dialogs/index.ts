@@ -7,4 +7,3 @@ export const TagColorUpdaterDialog = ColorUpdater
 export const TagCreatorDialog = Creator
 export const TagManagerDialog = Manager
 export const TagUpdaterDialog = Updater
-

@@ -1,25 +1,18 @@
 <script lang="ts" setup>
-import { AppAsideAdapter } from '@/components/app/'
-import { useSearchView } from '@/views/index/search/search-view'
+import { assetUrl } from '@nao-todo/shared'
+import { useSearchView } from './search-view'
 
 defineOptions({ name: 'SearchView' })
 
-const { isDisplayAside, handleResizeAside } = useSearchView()
+useSearchView()
 </script>
 
 <template>
     <nue-container>
         <nue-main>
-            <app-aside-adapter
-                v-model:displayed="isDisplayAside"
-                width="auto"
-                min-width="unset"
-                max-width="350px"
-                @resize="handleResizeAside"
-            />
             <nue-content fill>
                 <nue-empty
-                    image-src="/images/feature.webp"
+                    :image-src="assetUrl('/images/feature.webp')"
                     image-size="8rem"
                     description="搜索页面还在规划中，敬请期待"
                     style="height: 100%"

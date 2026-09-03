@@ -1,6 +1,5 @@
-
-import { PomodoroUseCase } from '@nao-todo/application/pomodoro/usecases'
-import { TaskUseCase } from '@nao-todo/application/task/usecases'
+import { PomodoroRecordUseCase, PomodoroUseCase } from '@nao-todo/domain-pomodoro'
+import { TaskUseCase } from '@nao-todo/domain-task'
 import { DialogManager, Subscriber } from '@nao-todo/shared'
 import type { InjectionKey, Ref } from 'vue'
 
@@ -8,14 +7,13 @@ import type { InjectionKey, Ref } from 'vue'
 export type PomodoroViewContext = {
     taskUseCase: TaskUseCase
     pomodoroUseCase: PomodoroUseCase
+    pomodoroRecordUseCase: PomodoroRecordUseCase
 
     dialogManager: DialogManager
     subscriber: Subscriber
 
-    asideWidth: Ref<string>
     isDisplayAside: Ref<boolean>
     isUseFloatAside: Ref<boolean>
-    handleResizeAside: (width: number) => void
     switchDisplayAside: () => void
 
     getProjectName: (projectId: string) => string
@@ -25,7 +23,3 @@ export type PomodoroViewContext = {
 // 番茄钟视图上下文键
 export const POMODORO_VIEW_CONTEXT_KEY: InjectionKey<PomodoroViewContext> =
     Symbol('POMODORO_VIEW_CONTEXT')
-
-
-
-

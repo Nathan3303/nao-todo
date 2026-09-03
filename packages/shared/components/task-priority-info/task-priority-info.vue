@@ -23,4 +23,3 @@ const info = computed(
     color: v-bind('info[2]') !important;
 }
 </style>
-

@@ -10,6 +10,7 @@ import {
     TagCreatorDialog,
     TagManagerDialog,
     TagUpdaterDialog,
+    TagColorUpdaterDialog,
     useTagsStore
 } from '@nao-todo/presentation/tag'
 import {
@@ -17,13 +18,14 @@ import {
     TaskParentSelectorDialog,
     TaskReminderDialog
 } from '@nao-todo/presentation/task'
+import { UserRestoreDialog } from '@nao-todo/presentation-identity'
 import { storeToRefs } from 'pinia'
 import { inject } from 'vue'
 
 defineOptions({ name: 'AppDialogAdapter' })
 
 // 从上下文注入依赖
-const { taskUseCase, projectUseCase, tagUseCase, appDialogManager, appSubscriber } =
+const { userUseCase, taskUseCase, projectUseCase, tagUseCase, appDialogManager, appSubscriber } =
     inject(INDEX_VIEW_CONTEXT_KEY)!
 
 // 从 pinia 中获取项目和标签列表
@@ -38,6 +40,8 @@ const { tags: avaliableTags } = storeToRefs(useTagsStore())
         :subscriber="appSubscriber"
         :avaliable-projects="avaliableProjects"
         :avaliable-tags="avaliableTags"
+        :load-projects="() => projectUseCase.loadProjects()"
+        :load-tags="() => tagUseCase.loadTags()"
     />
     <task-parent-selector-dialog :task-use-case="taskUseCase" :dialog-manager="appDialogManager" />
     <task-reminder-dialog :task-use-case="taskUseCase" :dialog-manager="appDialogManager" />
@@ -63,5 +67,10 @@ const { tags: avaliableTags } = storeToRefs(useTagsStore())
         :dialog-manager="appDialogManager"
         :subscriber="appSubscriber"
     />
+    <tag-color-updater-dialog
+        :tag-use-case="tagUseCase"
+        :dialog-manager="appDialogManager"
+        :subscriber="appSubscriber"
+    />
+    <user-restore-dialog :user-use-case="userUseCase" :dialog-manager="appDialogManager" />
 </template>
-

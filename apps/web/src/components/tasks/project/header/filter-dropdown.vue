@@ -12,36 +12,24 @@ import { PROJECT_VIEW_CONTEXT_KEY } from '../context'
 defineOptions({ name: 'TasksTodoFilterDropdown' })
 defineEmits<{ (e: 'getTodos'): void }>()
 
-const { preference, subscriber } = inject(PROJECT_VIEW_CONTEXT_KEY)!
+const { preference, subscriber, projectHandler } = inject(PROJECT_VIEW_CONTEXT_KEY)!
 
 // @proxy 清单偏好上下文 名称 属性代理
 const getTasksOptionsName = computed({
     get: () => preference.value?.getTasksOptions?.name || '',
-    set: (name) => {
-        if (!preference.value) return
-        preference.value.getTasksOptions.name = name
-        subscriber.emit('RefreshData')
-    }
+    set: (name) => projectHandler.updateGetTasksOptions('name', name)
 })
 
 // @proxy 清单偏好上下文 状态 属性代理
 const getTasksOptionsState = computed({
     get: () => preference.value?.getTasksOptions?.state || '',
-    set: (state) => {
-        if (!preference.value) return
-        preference.value.getTasksOptions.state = state
-        subscriber.emit('RefreshData')
-    }
+    set: (state) => projectHandler.updateGetTasksOptions('state', state)
 })
 
 // @proxy 清单偏好上下文 优先级 属性代理
 const getTasksOptionsPriority = computed({
     get: () => preference.value?.getTasksOptions?.priority || '',
-    set: (priority) => {
-        if (!preference.value) return
-        preference.value.getTasksOptions.priority = priority
-        subscriber.emit('RefreshData')
-    }
+    set: (priority) => projectHandler.updateGetTasksOptions('priority', priority)
 })
 
 // @proxy 清单偏好上下文 排序 属性代理
@@ -51,11 +39,7 @@ const getTasksOptionsSort = computed({
             field: 'createdAt',
             order: 'asc'
         },
-    set: (sort) => {
-        if (!preference.value) return
-        preference.value.getTasksOptions.sort = sort
-        subscriber.emit('RefreshData')
-    }
+    set: (sort) => projectHandler.updateGetTasksOptions('sort', sort)
 })
 
 // @watch 清单偏好上下文 状态 属性代理

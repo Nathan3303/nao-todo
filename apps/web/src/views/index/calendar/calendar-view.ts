@@ -1,10 +1,9 @@
-import { APP_CONTEXT_KEY } from '@/context'
-import { useResponsiveAside, useAsideWidth, responsiveTypes, unwrapError } from '@nao-todo/shared'
+import { unwrapError } from '@nao-todo/shared'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { useAuthUseCase, useBuiltInProjectUseCase } from '@/hooks'
 import { inject, provide, ref } from 'vue'
 import { CALENDAR_VIEW_CONTEXT_KEY } from './context'
-import { useUserStore } from '@nao-todo/presentation/user'
+import { useUserStore } from '@nao-todo/presentation-identity'
 import { useBuiltInProjectsStore } from '@nao-todo/presentation/built-in-project'
 
 /**
@@ -15,35 +14,17 @@ export const useCalendarView = () => {
     /**
      * 注入应用上下文
      */
-    const { responsiveFlag, isUseFloatAside } = inject(APP_CONTEXT_KEY)!
     const {
         userUseCase,
         projectUseCase,
         tagUseCase,
         taskUseCase,
         appDialogManager,
-        appSubscriber
+        appSubscriber,
+        isUseFloatAside,
+        isDisplayAside,
+        switchDisplayAside
     } = inject(INDEX_VIEW_CONTEXT_KEY)!
-
-    /**
-     * 注入响应式侧边栏上下文
-     * @description 提供日历视图的响应式侧边栏上下文
-     * @use useResponsiveAside(appContext.responsiveFlag, responsiveTypes.MOBILE) - 响应式侧边栏上下文
-     */
-    const { visible: isDisplayAside, switchVisible: switchDisplayAside } = useResponsiveAside(
-        responsiveFlag,
-        responsiveTypes.MOBILE
-    )
-
-    /**
-     * 注入侧边栏宽度上下文
-     * @description 提供日历视图的侧边栏宽度上下文
-     * @use useAsideWidth(256, 'CALENDAR_ASIDE_WIDTH') - 侧边栏宽度上下文
-     */
-    const { width: asideWidth, updater: handleResizeAside } = useAsideWidth(
-        256,
-        'CALENDAR_ASIDE_WIDTH'
-    )
 
     /**
      * 注入认证使用案例上下文
@@ -61,19 +42,18 @@ export const useCalendarView = () => {
      */
     const isLoading = ref<boolean>(true) // 加载状态
     const error = ref<string>('') // 错误信息
-    const init = () => {
-        Promise.allSettled([
-            () => (isLoading.value = true),
-            builtInProjectUseCase.loadBuiltInProjects(),
-            projectUseCase.loadProjects(),
-            tagUseCase.loadTags()
-        ]).then((results) => {
-            isLoading.value = false
-            results.forEach((result) => {
-                if (result.status !== 'rejected') return
-                error.value = unwrapError(result.reason)
-            })
-        })
+    const init = async () => {
+        isLoading.value = true
+        builtInProjectUseCase.loadBuiltInProjects()
+        await Promise.allSettled([projectUseCase.loadProjects(), tagUseCase.loadTags()]).then(
+            (results) => {
+                isLoading.value = false
+                results.forEach((result) => {
+                    if (result.status !== 'rejected') return
+                    error.value = unwrapError(result.reason)
+                })
+            }
+        )
     }
 
     /**
@@ -86,11 +66,9 @@ export const useCalendarView = () => {
         taskUseCase,
         dialogManager: appDialogManager,
         subscriber: appSubscriber,
-        asideWidth,
         isDisplayAside,
         isUseFloatAside,
-        switchDisplayAside,
-        handleResizeAside
+        switchDisplayAside
     })
 
     /**
@@ -99,10 +77,6 @@ export const useCalendarView = () => {
     return {
         init,
         isLoading,
-        error,
-        isDisplayAside,
-        switchDisplayAside,
-        asideWidth,
-        handleResizeAside
+        error
     }
 }

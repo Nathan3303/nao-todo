@@ -1,0 +1,328 @@
+import { type GoAsync, type GetTasksOptions, type ResponseDataPagination } from '@nao-todo/shared'
+import { QueryOptionsValueObject } from '@nao-todo/shared/valueobjects/query-options'
+import dayjs from 'dayjs'
+import { isGivenUpBy, isStarMarkedBy, TaskEntity } from '../../domain/entities'
+import { TaskErrorCode } from '../../domain/errors'
+import { TaskRepository } from '../../domain/repositories'
+import { TaskDomain } from '../../domain/services'
+import type { UpdateTaskValueObject } from '../../domain/valueobjects'
+import type { CreateTaskViewObject, TaskViewObject, UpdateTaskViewObject } from '../viewobjects'
+import type { TaskStore } from '../stores'
+import {
+    createTaskViewObjectToValueObject,
+    taskEntitiesToViewObjects,
+    taskEntityToViewObject,
+    updateTaskViewObjectToValueObject
+} from './converters'
+
+/**
+ * 任务用例
+ * @description 任务用例负责处理任务相关的业务逻辑，包括加载、删除、创建、更新任务等。
+ */
+export class TaskUseCase {
+    /**
+     * 任务用例
+     * @param taskDomain 任务领域服务
+     * @param taskRepo 任务仓库
+     * @param taskStore 任务用例存储
+     */
+    constructor(
+        private taskDomain: TaskDomain,
+        private taskRepo: TaskRepository,
+        private taskStore: TaskStore
+    ) {}
+
+    // --- Task ---
+
+    /**
+     * 校验父任务赋值是否合法
+     * @description 产品深度限制：仅一级子任务 ⇒ 父任务必须是顶层任务（parentTaskId === ''），
+     *              天然杜绝循环嵌套（只剩自指需拦截）。
+     * @param targetId 被移动方任务 ID（null = 新建任务场景，跳过自指/已有子任务检查）
+     * @param parentId 候选父任务 ID（'' = 解除父子关系，始终放行）
+     * @returns 校验通过返回 null，否则返回领域错误码
+     */
+    private async assertParentAssignable(
+        targetId: TaskViewObject['id'] | null,
+        parentId: string
+    ): GoAsync<void> {
+        // 1. 解除父子关系（移动到顶层）始终放行
+        if (parentId === '') return null
+        // 2. 禁止自指
+        if (targetId !== null && parentId === targetId) return TaskErrorCode.PARENT_SELF
+        // 3. 父任务必须存在
+        const [parent, getError] = await this.taskRepo.get(parentId)
+        if (getError !== null || !parent) return TaskErrorCode.PARENT_NOT_FOUND
+        // 4. 父任务必须是顶层任务（子任务不能作为父，深度限制的核心防线）
+        if (parent.parentTaskId !== '') return TaskErrorCode.PARENT_MUST_BE_TOP_LEVEL
+        // 5. 被移动方若已有子任务，移动成子任务会造出第二层，拒绝（需先处理子任务）
+        if (targetId !== null) {
+            const [children] = await this.taskDomain.listTasks(
+                new QueryOptionsValueObject({ parentTaskId: targetId, isDeleted: false, limit: 1 })
+            )
+            if ((children?.taskEntities.length ?? 0) > 0) return TaskErrorCode.PARENT_HAS_SUBTASKS
+        }
+        return null
+    }
+
+    /**
+     * 加载任务
+     * @param id 任务ID
+     * @returns 任务视图对象
+     */
+    async get(id: TaskViewObject['id']): GoAsync<TaskViewObject> {
+        // 获取任务实体
+        const [taskEntity, err] = await this.taskRepo.get(id)
+        if (err !== null) return [null, err]
+        // 实体转换为视图对象
+        const taskViewObject = taskEntityToViewObject(taskEntity)
+        // 存储任务
+        this.taskStore.addTask(taskViewObject)
+        // 实体转换为视图对象
+        return [taskViewObject, null]
+    }
+
+    /**
+     * 加载任务列表
+     * @param getTasksOptions 获取任务选项
+     * @returns 任务ID列表
+     */
+    async list(getTasksOptions: GetTasksOptions): GoAsync<{
+        taskIds: TaskViewObject['id'][]
+        pagination?: ResponseDataPagination
+    }> {
+        // 数据转换
+        const queryOptionsVO = new QueryOptionsValueObject(getTasksOptions)
+        // 获取任务实体列表
+        const [listResult, err] = await this.taskDomain.listTasks(queryOptionsVO)
+        if (err !== null) return [null, err]
+        // 实体转换为视图对象
+        const { taskEntities, pagination } = listResult
+        const taskViewObjects = taskEntitiesToViewObjects(taskEntities)
+        const taskIds = taskViewObjects.map((task) => task.id)
+        // 存储任务列表
+        this.taskStore.addTasks(taskViewObjects)
+        // 返回任务ID列表
+        return [{ taskIds, pagination }, null]
+    }
+
+    /**
+     * 删除任务
+     * @param id 任务ID
+     * @returns 错误信息
+     */
+    async delete(id: TaskViewObject['id']): GoAsync<void> {
+        // 删除任务
+        const err = await this.taskRepo.remove(id)
+        if (err !== null) return err
+        // 更新任务状态为已删除
+        this.taskStore.updateTask(id, { deletedAt: dayjs().toISOString() })
+        // 返回成功
+        return null
+    }
+
+    /**
+     * 恢复任务
+     * @param id 任务ID
+     * @returns 错误信息
+     */
+    async restore(id: TaskViewObject['id']): GoAsync<void> {
+        // 恢复
+        const err = await this.taskRepo.restore(id)
+        if (err !== null) return err
+        // 更新任务状态为未删除
+        this.taskStore.updateTask(id, { deletedAt: null })
+        // 返回成功
+        return null
+    }
+
+    /**
+     * 创建任务
+     * @param createTaskViewObject 创建任务视图对象
+     * @returns 任务视图对象
+     */
+    async create(createTaskViewObject: CreateTaskViewObject): GoAsync<TaskViewObject> {
+        // 数据转换
+        const createTaskValueObject = createTaskViewObjectToValueObject(createTaskViewObject)
+        const validateErr = createTaskValueObject.validate()
+        if (validateErr !== null) return [null, validateErr]
+        // 父任务赋值校验（父必须存在且为顶层任务；深度限制）
+        if (createTaskValueObject.parentTaskId) {
+            const parentErr = await this.assertParentAssignable(
+                null,
+                createTaskValueObject.parentTaskId
+            )
+            if (parentErr !== null) return [null, parentErr]
+        }
+        // 创建任务
+        const [taskEntity, err] = await this.taskRepo.create(createTaskValueObject)
+        if (err !== null) return [null, err]
+        // 实体转换为视图对象
+        const taskViewObject = taskEntityToViewObject(taskEntity)
+        // 存储任务列表
+        this.taskStore.addTask(taskViewObject)
+        // 返回任务视图对象
+        return [taskViewObject, null]
+    }
+
+    /**
+     * 更新任务
+     * @param id 任务ID
+     * @param updateViewObject 更新任务视图对象
+     * @returns 错误信息
+     */
+    async update(id: TaskViewObject['id'], updateViewObject: UpdateTaskViewObject): GoAsync<void> {
+        // 获取原始数据
+        // const oldTask = this.taskStore.getTask(id)
+        // const newTask = { name: oldTask?.name || undefined, ...updateViewObject }
+        // 数据转换
+        const updateTaskValueObject = updateTaskViewObjectToValueObject(id, updateViewObject)
+        const validateErr = updateTaskValueObject.validate()
+        if (validateErr !== null) return validateErr
+        // 星标/时间变更走实体行为方法（领域规则：已删除/已归档禁止收藏与修改时间）
+        if (
+            updateTaskValueObject.starMarkAt !== undefined ||
+            updateTaskValueObject.startAt !== undefined ||
+            updateTaskValueObject.endAt !== undefined
+        ) {
+            const [entity, getError] = await this.taskRepo.get(id)
+            if (getError !== null) return getError
+            if (!entity) return TaskErrorCode.TASK_NOT_FOUND
+            // 星标变更
+            if (updateTaskValueObject.starMarkAt !== undefined) {
+                const starError = isStarMarkedBy(updateTaskValueObject.starMarkAt)
+                    ? entity.star()
+                    : entity.unstar()
+                if (starError !== null) return starError
+                updateTaskValueObject.starMarkAt = entity.starMarkAt
+            }
+            // 开始/结束时间变更
+            if (
+                updateTaskValueObject.startAt !== undefined ||
+                updateTaskValueObject.endAt !== undefined
+            ) {
+                const scheduleError = entity.updateSchedule(
+                    updateTaskValueObject.startAt,
+                    updateTaskValueObject.endAt
+                )
+                if (scheduleError !== null) return scheduleError
+                if (updateTaskValueObject.startAt !== undefined)
+                    updateTaskValueObject.startAt = entity.startAt === '' ? null : entity.startAt
+                if (updateTaskValueObject.endAt !== undefined)
+                    updateTaskValueObject.endAt = entity.endAt === '' ? null : entity.endAt
+            }
+        }
+        // 父任务赋值校验（自指/父必须为顶层/被移动方不得已有子任务）
+        if (updateTaskValueObject.parentTaskId !== undefined) {
+            const parentErr = await this.assertParentAssignable(
+                id,
+                updateTaskValueObject.parentTaskId
+            )
+            if (parentErr !== null) return parentErr
+        }
+        // 更新任务
+        const updateError = await this.taskRepo.update(id, updateTaskValueObject)
+        if (updateError !== null) return updateError
+        // 更新内存数据（根据 givenUpAt 计算 isGivenUp，根据 starMarkAt 计算 isStarMarked）
+        const storeUpdateData = { ...updateViewObject }
+        if (storeUpdateData.givenUpAt !== undefined) {
+            storeUpdateData.isGivenUp = isGivenUpBy(storeUpdateData.givenUpAt)
+        }
+        if (storeUpdateData.starMarkAt !== undefined) {
+            storeUpdateData.isStarMarked = isStarMarkedBy(storeUpdateData.starMarkAt)
+        }
+        this.taskStore.updateTask(id, storeUpdateData)
+        // 返回成功
+        return null
+    }
+
+    /**
+     * 批量更新任务
+     * @description 逐个转换与校验后交由领域服务批量更新（后端暂无批量接口，领域层 for 方式执行）；
+     *              同步刷新内存数据的派生字段（isGivenUp / isStarMarked）
+     * @param updates 更新任务视图对象列表（每个携带任务 ID）
+     * @returns 成功更新的任务数量
+     */
+    async batchUpdate(
+        updates: Array<UpdateTaskViewObject & { id: TaskViewObject['id'] }>
+    ): GoAsync<number> {
+        // 1. 逐个转换为值对象并校验
+        const updateValueObjects: UpdateTaskValueObject[] = []
+        for (const update of updates) {
+            const valueObject = updateTaskViewObjectToValueObject(update.id, update)
+            const validateErr = valueObject.validate()
+            if (validateErr !== null) return [null, validateErr]
+            updateValueObjects.push(valueObject)
+        }
+        // 2. 调用领域服务批量更新（返回成功数与失败 ID 列表）
+        const [result, batchError] = await this.taskDomain.batchUpdate(updateValueObjects)
+        if (batchError !== null) return [null, batchError]
+        // 3. 更新内存数据（仅同步成功项，避免部分失败时 store 与后端不一致）
+        const failedIdSet = new Set(result.failedIds)
+        for (const update of updates) {
+            if (failedIdSet.has(update.id)) continue
+            const storeUpdateData = { ...update }
+            if (storeUpdateData.givenUpAt !== undefined) {
+                storeUpdateData.isGivenUp = isGivenUpBy(storeUpdateData.givenUpAt)
+            }
+            if (storeUpdateData.starMarkAt !== undefined) {
+                storeUpdateData.isStarMarked = isStarMarkedBy(storeUpdateData.starMarkAt)
+            }
+            this.taskStore.updateTask(update.id, storeUpdateData)
+        }
+        // 4. 返回成功条数
+        return [result.succeeded, null]
+    }
+
+    /**
+     * 复制任务
+     * @param id 任务ID
+     * @returns 任务视图对象
+     */
+    async copy(id: TaskViewObject['id']): GoAsync<TaskViewObject> {
+        // 复制
+        const [taskEntity, err] = await this.taskRepo.copy(id)
+        if (err !== null) return [null, err]
+        // 实体转换为视图对象
+        const taskViewObject = taskEntityToViewObject(taskEntity)
+        // 存储任务列表
+        this.taskStore.addTask(taskViewObject)
+        // 返回任务视图对象
+        return [taskViewObject, null]
+    }
+
+    /**
+     * 稍后提醒
+     * @param id 任务ID
+     * @param durationMinutes 延迟分钟数
+     * @returns 错误信息
+     */
+    async snooze(id: TaskViewObject['id'], durationMinutes: number): GoAsync<void> {
+        // 时长合法性由领域层裁定
+        const invalidErr = TaskEntity.validateSnoozeDuration(durationMinutes)
+        if (invalidErr !== null) return invalidErr
+        // 执行延迟提醒
+        const [newRemindAt, err] = await this.taskRepo.snooze(id, durationMinutes)
+        if (err !== null) return err
+        // 更新本地数据
+        this.taskStore.updateTask(id, { remindAt: newRemindAt })
+        // 返回
+        return null
+    }
+}
+
+/**
+ * 创建任务用例
+ * @param taskStore 任务存储实现
+ * @param taskCheckItemStore 任务检查项存储实现
+ * @param taskCommentStore 任务评论存储实现
+ * @returns TaskUseCase 实例
+ */
+// export const newTaskUseCase = (taskStore: TaskStore) => {
+//     const requester = getRequesterImpl()
+//     const taskRepo = newTaskRepository(requester)
+//     const taskCheckItemRepo = newTaskCheckItemRepository(requester)
+//     const taskCommentRepo = newTaskCommentRepository(requester)
+//     const taskDomain = new TaskDomain(taskRepo, taskCheckItemRepo, taskCommentRepo)
+//     return new TaskUseCase(taskDomain, taskRepo, taskStore)
+// }

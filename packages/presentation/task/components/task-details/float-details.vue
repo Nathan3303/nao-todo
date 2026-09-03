@@ -29,4 +29,3 @@ watch(
         <task-details :task-id="taskId" />
     </nue-drawer>
 </template>
-

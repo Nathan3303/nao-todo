@@ -1,22 +1,20 @@
+import { usePomodoroRecordUseCase } from '@/hooks'
+import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
+import type { PomodoroViewObject } from '@nao-todo/domain-pomodoro'
+import type { TaskViewObject } from '@nao-todo/domain-task'
+import { POMODORO_MAX_FOCUS_SECONDS, POMODORO_MIN_FOCUS_SECONDS } from '@nao-todo/domain-pomodoro'
+import {
+    usePomodoroFocusStore,
+    usePomodoroRecordLoader,
+    usePomodoroRecordsStore,
+    usePomodoroSessionStore,
+    usePomodoroTimerStore
+} from '@nao-todo/presentation/pomodoro'
 import {
     POMODORO_TIMER_SETTING_DIALOG_KEY,
     type DialogManager,
     type Subscriber
 } from '@nao-todo/shared'
-import {
-    POMODORO_MAX_FOCUS_SECONDS,
-    POMODORO_MIN_FOCUS_SECONDS
-} from '@nao-todo/domain/pomodoro'
-import {
-    usePomodoroRecordLoader,
-    usePomodoroRecordsStore,
-    usePomodoroFocusStore,
-    usePomodoroTimerStore,
-    type PomodoroViewObject
-} from '@nao-todo/presentation/pomodoro'
-import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
-import { usePomodoroRecordUseCase } from '@/hooks'
-import type { TaskViewObject } from '@nao-todo/presentation/task'
 import dayjs from 'dayjs'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { computed, inject, onMounted } from 'vue'
@@ -35,7 +33,8 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
     const router = useRouter()
     const { showTaskDetails } = inject(POMODORO_VIEW_CONTEXT_KEY)!
 
-    const pomodoroStore = usePomodoroRecordsStore()
+    const recordsStore = usePomodoroRecordsStore()
+    const sessionStore = usePomodoroSessionStore()
     const timerStore = usePomodoroTimerStore()
     const focusStore = usePomodoroFocusStore()
 
@@ -51,10 +50,10 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
 
     const activeTabLocal = computed({
         get: () => activeTab.value,
-        set: (tab: PomodoroTab) => {
+        set: async (tab: PomodoroTab) => {
             const base = `/pomodoro/${tab}`
-            const taskId = route.params.taskId
-            router.push(taskId ? `${base}/${taskId}` : base)
+            const taskId = route.params.taskId as string
+            await router.push(taskId ? `${base}/${taskId}` : base)
         }
     })
 
@@ -62,14 +61,7 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
     // Record Loader（不过滤 type → 同时展示番茄钟和正计时记录）
     // ========================================================================
 
-    const pomodoroRecordUseCase = usePomodoroRecordUseCase({
-        addRecord: (record) => {
-            pomodoroStore.addRecord(record)
-        },
-        addRecords: (records) => {
-            pomodoroStore.addRecords(records)
-        }
-    })
+    const pomodoroRecordUseCase = usePomodoroRecordUseCase(recordsStore)
 
     const recordLoader = usePomodoroRecordLoader(
         pomodoroRecordUseCase,
@@ -81,50 +73,63 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
         subscriber
     )
 
+    timerStore.setCreateRecordFn(async (record) => {
+        const [result, err] = await pomodoroRecordUseCase.createRecord(record)
+        if (err !== null) return [null, err]
+        sessionStore.setNoteText('')
+        return [[result], null]
+    })
+
+    focusStore.setCreateRecordFn(async (record) => {
+        const [result, err] = await pomodoroRecordUseCase.createRecord(record)
+        if (err !== null) return [null, err]
+        sessionStore.setNoteText('')
+        return [[result], null]
+    })
+
     // ========================================================================
     // Shared
     // ========================================================================
 
-    const taskName = computed(() => pomodoroStore.currentTaskName)
-    const taskId = computed(() => pomodoroStore.currentTaskId)
+    const taskName = computed(() => sessionStore.currentTaskName)
+    const taskId = computed(() => sessionStore.currentTaskId)
 
     const handleSelectTask = (task: TaskViewObject) => {
-        pomodoroStore.selectTask(task.id, task.name)
+        sessionStore.selectTask(task.id, task.name)
     }
 
     const handleClearTask = () => {
-        pomodoroStore.selectTask(null, '')
+        sessionStore.selectTask(null, '')
     }
 
-    const presetId = computed(() => pomodoroStore.currentPomodoroId)
-    const presetName = computed(() => pomodoroStore.currentPomodoroName)
+    const presetId = computed(() => sessionStore.currentPomodoroId)
+    const presetName = computed(() => sessionStore.currentPomodoroName)
 
     const handleSelectPreset = (preset: PomodoroViewObject | null) => {
         if (preset === null) {
-            pomodoroStore.clearPomodoroSelection()
+            sessionStore.clearPomodoroSelection()
             return
         }
-        pomodoroStore.selectPomodoro(preset.id, preset.name)
-        // 套用预设时长（仅番茄专注 timer 模式且空闲时）
+        sessionStore.selectPomodoro(preset.id, preset.name)
         if (activeTab.value === 'timer' && timerStore.phase === 'idle') {
-            pomodoroStore.setFocusDuration(preset.duration)
+            sessionStore.setFocusDuration(preset.duration)
             timerStore.updateConfig()
         }
     }
 
-    const handleNextPage = () => {
-        recordLoader.loadNextPage()
+    const handleNextPage = async () => {
+        await recordLoader.loadNextPage()
     }
 
-    onMounted(() => {
-        recordLoader.loadFirstPage()
+    onMounted(async () => {
+        await recordLoader.loadFirstPage()
     })
 
     // ========================================================================
     // Timer Handlers
     // ========================================================================
 
-    const handleStart = () => {
+    const handleStart = async () => {
         const seconds = timerStore.totalSeconds
         if (seconds < POMODORO_MIN_FOCUS_SECONDS) {
             NueMessage.warn('专注时间不能小于 5 分钟')
@@ -135,9 +140,9 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
             return
         }
 
-        const doStart = () => {
+        const doStart = async () => {
             if ('Notification' in window && Notification.permission === 'default') {
-                Notification.requestPermission()
+                await Notification.requestPermission()
             }
             // 互斥安全网
             const focusS = usePomodoroFocusStore()
@@ -148,27 +153,16 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
         // 互斥提醒
         const focusS = usePomodoroFocusStore()
         if (focusS.status !== 'idle') {
-            NueConfirm({
+            return NueConfirm({
                 title: '正计时正在运行',
                 content: '当前有正在运行的正计时，开始番茄专注将结束正计时。是否继续？',
                 confirmButtonText: '继续',
                 cancelButtonText: '取消',
                 onConfirm: doStart
             })
-            return
         }
 
-        if (!pomodoroStore.currentTaskId) {
-            NueConfirm({
-                title: '确认开始专注',
-                content: '还没有选择待办任务，是否要继续开始专注？',
-                confirmButtonText: '继续',
-                cancelButtonText: '取消',
-                onConfirm: doStart
-            })
-        } else {
-            doStart()
-        }
+        return await doStart()
     }
 
     const handleAdjustTime = (delta: number) => {
@@ -189,10 +183,10 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
     // Focus Handlers
     // ========================================================================
 
-    const handleFocusStart = () => {
-        const doStart = () => {
+    const handleFocusStart = async () => {
+        const doStart = async () => {
             if ('Notification' in window && Notification.permission === 'default') {
-                Notification.requestPermission()
+                await Notification.requestPermission()
             }
             // 互斥安全网
             const timerS = usePomodoroTimerStore()
@@ -203,32 +197,21 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
         // 互斥提醒
         const timerS = usePomodoroTimerStore()
         if (timerS.phase !== 'idle') {
-            NueConfirm({
+            return NueConfirm({
                 title: '番茄钟正在运行',
                 content: '当前有正在进行的番茄专注，开始正计时将结束当前番茄钟。是否继续？',
                 confirmButtonText: '继续',
                 cancelButtonText: '取消',
                 onConfirm: doStart
             })
-            return
         }
 
-        if (!pomodoroStore.currentTaskId) {
-            NueConfirm({
-                title: '确认开始正计时',
-                content: '还没有选择待办任务，是否要继续开始？',
-                confirmButtonText: '继续',
-                cancelButtonText: '取消',
-                onConfirm: doStart
-            })
-        } else {
-            doStart()
-        }
+        return await doStart()
     }
 
-    const handleMainAction = () => {
+    const handleMainAction = async () => {
         if (focusStore.status === 'idle') {
-            handleFocusStart()
+            await handleFocusStart()
         } else if (focusStore.status === 'running') {
             focusStore.pause()
         } else {
@@ -264,8 +247,8 @@ export const usePomodoroPage = (dialogManager: DialogManager, subscriber?: Subsc
         presetName,
         handleSelectPreset,
         todayRecords: recordLoader.records,
-        noteText: computed(() => pomodoroStore.noteText),
-        setNoteText: (text: string) => pomodoroStore.setNoteText(text),
+        noteText: computed(() => sessionStore.noteText),
+        setNoteText: (text: string) => sessionStore.setNoteText(text),
         recordLoading: computed(() => recordLoader.states.loading),
         recordIsDone: computed(() => recordLoader.states.isDone),
         handleNextPage,

@@ -28,4 +28,3 @@ withDefaults(defineProps<TaskBasicInfoProps>(), { icon: 'more2', clamped: 1 })
     }
 }
 </style>
-

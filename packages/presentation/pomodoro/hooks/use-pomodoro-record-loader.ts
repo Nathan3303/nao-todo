@@ -6,12 +6,9 @@ import {
 } from '@nao-todo/shared'
 import { computed, onUnmounted, reactive } from 'vue'
 import { usePomodoroRecordsStore } from '../stores'
-import type { GetPomodoroRecordsOptions, PomodoroRecordViewObject } from '@nao-todo/application/pomodoro/viewobjects'
-import type { PomodoroRecordUseCase } from '@nao-todo/application/pomodoro/usecases'
+import type { GetPomodoroRecordsOptions, PomodoroRecordViewObject } from '@nao-todo/domain-pomodoro'
+import type { PomodoroRecordUseCase } from '@nao-todo/domain-pomodoro'
 
-/**
- * Pomodoro 记录加载器状态
- */
 export type UsePomodoroRecordLoaderStates = {
     recordIds: Set<string>
     loading: boolean
@@ -20,18 +17,15 @@ export type UsePomodoroRecordLoaderStates = {
     isDone: boolean
     lastGetOptions: GetPomodoroRecordsOptions
     disabled: boolean
+    sort: string
 }
 
-/**
- * Pomodoro 记录加载器
- * @description 管理 Pomodoro 记录的分页加载、ID 集合和 Store 交互
- */
 export const usePomodoroRecordLoader = (
     pomodoroRecordUseCase: PomodoroRecordUseCase,
     originalGetOptions?: GetPomodoroRecordsOptions,
     subscriber?: Subscriber
 ) => {
-    const pomodoroStore = usePomodoroRecordsStore()
+    const recordsStore = usePomodoroRecordsStore()
 
     // @states
     const states = reactive<UsePomodoroRecordLoaderStates>({
@@ -41,12 +35,13 @@ export const usePomodoroRecordLoader = (
         pagination: { total: 0, page: 1, limit: originalGetOptions?.limit ?? 20, maxPage: 1 },
         isDone: false,
         lastGetOptions: originalGetOptions ?? {},
-        disabled: false
+        disabled: false,
+        sort: originalGetOptions?.sort ?? ''
     })
 
     // @computed 当前加载的数据（通过 ID 从 Store 映射）
     const records = computed(() =>
-        [...states.recordIds].map((id) => pomodoroStore.getRecord(id)!).filter(Boolean)
+        [...states.recordIds].map((id) => recordsStore.getRecord(id)!).filter(Boolean)
     )
 
     /**
@@ -63,6 +58,7 @@ export const usePomodoroRecordLoader = (
         }
         getOptions.page = states.pagination.page
         getOptions.limit = extraGetOptions?.limit ?? states.pagination.limit
+        getOptions.sort = extraGetOptions?.sort ?? states.sort
         const [res, err] = await pomodoroRecordUseCase.getRecords(getOptions)
         if (err !== null) {
             states.error = unwrapError(err)
@@ -112,25 +108,69 @@ export const usePomodoroRecordLoader = (
     /**
      * 加载第一页
      * @param isReplace 是否替换已有数据（默认 true）
+     * @param extraGetOptions 额外的查询选项（用于传递动态筛选条件）
      */
-    const loadFirstPage = async (isReplace: boolean = true) => {
+    const loadFirstPage = async (
+        isReplace: boolean = true,
+        extraGetOptions?: GetPomodoroRecordsOptions
+    ) => {
         if (states.disabled) return
         if (states.pagination.page !== 1) states.pagination.page = 1
         if (isReplace) {
-            await loadAndReplace()
+            await loadAndReplace(extraGetOptions)
         } else {
-            await loadAndPush()
+            await loadAndPush(extraGetOptions)
         }
     }
 
     /**
      * 加载下一页
+     * @param extraGetOptions 额外的查询选项（用于传递动态筛选条件）
      */
-    const loadNextPage = async () => {
+    const loadNextPage = async (extraGetOptions?: GetPomodoroRecordsOptions) => {
         if (states.disabled) return
         if (states.isDone) return
         states.pagination.page += 1
-        await loadAndPush()
+        await loadAndPush(extraGetOptions)
+    }
+
+    /**
+     * 跳转到指定页码
+     * @param page 目标页码
+     * @param extraGetOptions 额外的查询选项（用于传递动态筛选条件）
+     */
+    const goToPage = async (page: number, extraGetOptions?: GetPomodoroRecordsOptions) => {
+        if (states.disabled) return
+        states.pagination.page = page
+        await loadAndReplace(extraGetOptions)
+    }
+
+    /**
+     * 设置每页数量
+     * @param limit 每页数量
+     * @param extraGetOptions 额外的查询选项（用于传递动态筛选条件）
+     */
+    const setPageSize = async (limit: number, extraGetOptions?: GetPomodoroRecordsOptions) => {
+        if (states.disabled) return
+        states.pagination.limit = limit
+        states.pagination.page = 1
+        await loadAndReplace(extraGetOptions)
+    }
+
+    /**
+     * 更改排序
+     * @param field 排序字段
+     * @param order 排序方向 'asc' | 'desc'
+     * @param extraGetOptions 额外的查询选项（用于传递动态筛选条件）
+     */
+    const changeSort = async (
+        field: string,
+        order: 'asc' | 'desc',
+        extraGetOptions?: GetPomodoroRecordsOptions
+    ) => {
+        if (states.disabled) return
+        states.sort = `${field}:${order}`
+        await loadAndReplace(extraGetOptions)
     }
 
     /**
@@ -155,6 +195,7 @@ export const usePomodoroRecordLoader = (
         states.isDone = false
         states.lastGetOptions = {}
         states.disabled = false
+        states.sort = ''
     }
 
     // @subscriber 记录创建通知（Subscriber 模式）
@@ -163,12 +204,12 @@ export const usePomodoroRecordLoader = (
             prependRecordId(id)
         }
         subscriber.subscribe('AddNewRecordId', handleNewRecordId)
-        pomodoroStore.setOnRecordCreated((record: PomodoroRecordViewObject) => {
+        recordsStore.setOnRecordCreated((record: PomodoroRecordViewObject) => {
             subscriber.emit('AddNewRecordId', record.id)
         })
         onUnmounted(() => {
             subscriber.unsubscribe('AddNewRecordId', handleNewRecordId)
-            pomodoroStore.setOnRecordCreated(null)
+            recordsStore.setOnRecordCreated(null)
         })
     }
 
@@ -180,6 +221,9 @@ export const usePomodoroRecordLoader = (
         loadAndReplace,
         loadFirstPage,
         loadNextPage,
+        goToPage,
+        setPageSize,
+        changeSort,
         prependRecordId,
         reset
     }

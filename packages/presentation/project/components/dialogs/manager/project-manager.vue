@@ -5,7 +5,8 @@ import {
     ProjectBoard,
     ProjectDeleteButton,
     t,
-    useDialogWrapper
+    useDialogWrapper,
+    RuleHint
 } from '@nao-todo/shared'
 import { onMounted, ref } from 'vue'
 import type { ProjectManagerDialogProps } from './types'
@@ -49,6 +50,12 @@ onMounted(() => {
         :title="t('dialog.projectManager.title')"
     >
         <nue-container id="ProjectManager" theme="in-dialog">
+            <rule-hint
+                icon="priority-2"
+                :title="t('dialog.projectManager.deleteReminder')"
+                :content="t('dialog.projectManager.deleteWarning')"
+                variant="warning"
+            />
             <nue-header class="project-manager-header">
                 <nue-div align="center" gap="0.75rem">
                     <nue-button-group>
@@ -81,29 +88,13 @@ onMounted(() => {
                         style="width: 200px"
                     />
                 </nue-div>
-                <nue-div align="center" gap="0.75rem">
-                    <nue-tooltip
-                        size="small"
-                        theme="warning"
-                        :content="t('dialog.projectManager.deleteWarning')"
-                        placement="bottom-center"
-                    >
-                        <nue-div align="center" gap="0.25rem" class="warning-trigger">
-                            <nue-icon name="warning" size="14px" />
-                            <nue-text size="12px">{{
-                                t('dialog.projectManager.deleteReminder')
-                            }}</nue-text>
-                        </nue-div>
-                    </nue-tooltip>
-                    <nue-divider vertical />
-                    <nue-button
-                        icon="plus-circle"
-                        theme="small,primary"
-                        @click="openProjectCreatorDialog"
-                    >
-                        {{ t('dialog.projectManager.createNew') }}
-                    </nue-button>
-                </nue-div>
+                <nue-button
+                    icon="plus-circle"
+                    theme="small,primary"
+                    @click="openProjectCreatorDialog"
+                >
+                    {{ t('dialog.projectManager.createNew') }}
+                </nue-button>
             </nue-header>
             <nue-divider />
             <nue-main>

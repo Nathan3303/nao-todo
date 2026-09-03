@@ -1,29 +1,13 @@
 {
     "extends": "../../tsconfig.base.json",
-    "include": [
-        "src/**/*",
-        "../../packages/**/*",
-        "../../types/**/*"
-    ],
+    "include": ["../../env.d.ts", "src/**/*"],
     "exclude": [],
     "compilerOptions": {
         "composite": true,
         "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
         "paths": {
-            "@/*": [
-                "./src/*"
-            ],
-            "@nao-todo/domain": ["../../packages/domain"],
-            "@nao-todo/application": ["../../packages/application"],
-            "@nao-todo/presentation": ["../../packages/presentation"],
-            "@nao-todo/shared": ["../../packages/shared"],
-            "@nao-todo/infrastructure": ["../../packages/infrastructure"]
+            "@/*": ["./src/*"]
         },
-        "types": [
-            "nue-ui/dist/global.d.ts"
-        ],
-        "rootDirs": [
-            ".",
-        ],
+        "types": ["nue-ui/dist/global.d.ts"]
     }
 }

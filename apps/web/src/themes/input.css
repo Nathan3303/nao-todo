@@ -1,3 +1,7 @@
 .nue-input--pure {
     border-radius: 0;
 }
+
+.nue-input--small {
+    height: var(--nue-box-size-xs);
+}

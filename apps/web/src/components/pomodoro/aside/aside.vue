@@ -1,30 +1,46 @@
 <script setup lang="ts">
-import { inject } from 'vue'
-import { AppAsideAdapter } from '@/components/app/'
+import { inject, onMounted, ref, watch, nextTick } from 'vue'
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
+import { POMODORO_CREATOR_DIALOG_KEY } from '@nao-todo/shared'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 
 defineOptions({ name: 'PomodoroAside' })
 
-// @context PomodoroView 番茄钟视图上下文
-const { isDisplayAside, isUseFloatAside } = inject(POMODORO_VIEW_CONTEXT_KEY)!
+// @contexts
+const { isDisplayAside, dialogManager } = inject(POMODORO_VIEW_CONTEXT_KEY)!
+const { setControllOption } = inject(INDEX_VIEW_CONTEXT_KEY)!
+
+//打开新建常用番茄专注对话框
+const handleOpenCreator = () => dialogManager.open(POMODORO_CREATOR_DIALOG_KEY)
+
+/**
+ * 处理侧边栏延时传送
+ * 等待侧边栏的 SubPageAsideTeleportSlot 元素渲染后再渲染 teleport
+ */
+const teleportDisabled = ref<boolean>(false)
+watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
+onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
 </script>
 
 <template>
-    <app-aside-adapter
-        v-model:displayed="isDisplayAside"
-        width="auto"
-        min-width="unset"
-        max-width="350px"
-    >
-        <nue-div v-if="isUseFloatAside" theme="pomodoro-aside">
+    <teleport v-if="isDisplayAside && !teleportDisabled" to="#SubPageAsideTeleportSlot">
+        <nue-div theme="pomodoro-aside">
             <nue-div vertical gap="0.25rem" flex="1">
                 <nue-link icon="ntd-fanqie" theme="route" route="/pomodoro/timer">
                     番茄专注
                 </nue-link>
                 <nue-link icon="ntd-zzt" theme="route" route="/pomodoro/focus">正计时</nue-link>
+                <nue-link icon="list" theme="route" route="/pomodoro/pomodoros">常用专注</nue-link>
+                <nue-link icon="history" theme="route" route="/pomodoro/records">专注记录</nue-link>
+            </nue-div>
+            <nue-div vertical gap="0.25rem" flex="1" justify="end">
+                <nue-button icon="plus" theme="ghost" @click="handleOpenCreator">
+                    新建常用番茄专注
+                </nue-button>
+                <!-- <nue-button icon="ntd-history">查看历史专注记录</nue-button> -->
             </nue-div>
         </nue-div>
-    </app-aside-adapter>
+    </teleport>
 </template>
 
 <style scoped>

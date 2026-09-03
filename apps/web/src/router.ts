@@ -42,4 +42,3 @@ router.afterEach((to) => {
 
 export default router
 export { LAST_VISITED_ROUTE_KEY }
-

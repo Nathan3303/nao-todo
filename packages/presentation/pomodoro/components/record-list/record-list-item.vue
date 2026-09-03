@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import dayjs from 'dayjs'
-import type { PomodoroRecordViewObject } from '../../types'
+import type { PomodoroRecordViewObject } from '@nao-todo/domain-pomodoro'
+import { usePomodorosStore } from '../../stores'
 
 defineOptions({ name: 'PomodoroRecordsCompRow' })
-
-// @props
 const props = defineProps<{ record: PomodoroRecordViewObject }>()
+
+const pomodorosStore = usePomodorosStore()
 
 // @computed 格式化时长显示
 const displayDuration = computed(() => {
@@ -19,12 +20,20 @@ const displayDuration = computed(() => {
     const secondsStr = seconds ? `${seconds} 秒 ` : ''
     return hoursStr + minutesStr + secondsStr
 })
-</script>
 
+// @computed 格式化标题显示
+const title = computed(() => {
+    const pomodoro = pomodorosStore.getPomodoro(props.record.pomodoroId || '')
+    const taskName = props.record.taskName || '无关联任务'
+    const pomodoroName = pomodoro?.name || ''
+    return [pomodoroName, taskName].filter(Boolean).join(' / ')
+})
+</script>
+F
 <template>
     <nue-div theme="card,pomodoro-records-row" :data-has-note="!!record.note">
         <nue-div theme="title-and-duration">
-            <nue-text theme="task" :clamped="1">{{ record.taskName || '无关联任务' }}</nue-text>
+            <nue-text theme="task" :clamped="1">{{ title }}</nue-text>
             <nue-text theme="meta">
                 {{ record.type === 2 ? '正计时' : '番茄钟' }}，开始于
                 {{ dayjs(record.startAt).format('HH:mm') }}，{{ displayDuration }}
@@ -52,7 +61,7 @@ const displayDuration = computed(() => {
         gap: var(--nue-gap-2xs);
 
         > .nue-text--task {
-            font-size: var(--nue-text-df2);
+            font-size: var(--nue-text-sm);
             font-weight: 500;
             flex: auto;
             overflow: hidden;
@@ -71,9 +80,8 @@ const displayDuration = computed(() => {
 
     > .nue-text--note {
         font-size: var(--nue-text-sm);
-        color: var(--nue-primary-color-600);
+        color: var(--nue-primary-color-500);
         word-break: break-word;
     }
 }
 </style>
-

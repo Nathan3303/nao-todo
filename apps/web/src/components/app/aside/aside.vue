@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { APP_CONTEXT_KEY } from '@/context'
 import { PomodoroIndicator } from '@nao-todo/presentation/pomodoro'
-import { useUserStore } from '@nao-todo/presentation/user'
-import { NaoRouterLink, t } from '@nao-todo/shared'
+import { useUserStore } from '@nao-todo/presentation-identity'
+import { getAvatarSrc, NaoRouterLink, t } from '@nao-todo/shared'
 import { storeToRefs } from 'pinia'
-import { inject } from 'vue'
-import { env } from '@/env'
+import { computed, inject } from 'vue'
 
 defineOptions({ name: 'AppAside' })
 
@@ -13,14 +12,15 @@ const userStore = useUserStore()
 
 const { routerLinks } = inject(APP_CONTEXT_KEY)!
 
-const { profile } = storeToRefs(userStore)
+const { profile, userToken } = storeToRefs(userStore)
+const avatarSrc = computed(() => getAvatarSrc(profile.value?.avatar || '', userToken.value))
 </script>
 
 <template>
     <nue-div theme="app-aside">
         <nue-div v-if="profile" theme="aside-header">
             <nue-tooltip placement="right-start" size="small">
-                <nue-avatar :src="`${env.baseURL}${profile.avatar}`" icon="user" size="2.5rem" />
+                <nue-avatar :src="avatarSrc" icon="user" size="2.5rem" />
                 <template #content>
                     <nue-div vertical gap=".25rem">
                         <nue-text size="var(--nue-text-sm)" color="var(--nue-primary-color-0)">
@@ -53,7 +53,6 @@ const { profile } = storeToRefs(userStore)
                 <nue-div theme="aside__actions" v-if="$slots.actions">
                     <slot name="actions"></slot>
                 </nue-div>
-                <!-- <pomodoro-timer-indicator /> -->
             </nue-div>
         </nue-div>
         <slot></slot>

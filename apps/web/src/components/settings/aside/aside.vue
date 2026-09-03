@@ -1,26 +1,29 @@
 <script setup lang="ts">
-import { AppAsideAdapter } from '@/components/app'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { SETTINGS_VIEW_CONTEXT_KEY } from '@/views/index/settings/context'
 import { SettingsViewRouteLinks as routeLinks } from '@/views/index/settings/routes'
 import { t, type LocaleKey } from '@nao-todo/shared'
-import { inject } from 'vue'
+import { inject, nextTick, onMounted, ref, watch } from 'vue'
 
 defineOptions({ name: 'SettingsAside' })
 
-// @context Settingsview 任务视图上下文
-const { asideWidth, handleResizeAside, isDisplayAside } = inject(SETTINGS_VIEW_CONTEXT_KEY)!
+// @contexts
+const { isDisplayAside } = inject(SETTINGS_VIEW_CONTEXT_KEY)!
+const { setControllOption } = inject(INDEX_VIEW_CONTEXT_KEY)!
+
+/**
+ * 处理侧边栏延时传送
+ * 等待侧边栏的 SubPageAsideTeleportSlot 元素渲染后再渲染 teleport
+ */
+const teleportDisabled = ref<boolean>(false)
+watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
+onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
 </script>
 
 <template>
-    <app-aside-adapter
-        @resize="handleResizeAside"
-        v-model:displayed="isDisplayAside"
-        :width="asideWidth"
-        :min-width="isDisplayAside ? '250px' : 'unset'"
-        max-width="350px"
-    >
-        <nue-div v-if="isDisplayAside" theme="aside-wrapper">
-            <nue-div vertical gap="0.5rem">
+    <teleport v-if="isDisplayAside && !teleportDisabled" to="#SubPageAsideTeleportSlot">
+        <nue-div theme="aside-wrapper">
+            <nue-div vertical gap="0.25rem">
                 <nue-link
                     v-for="(link, idx) in routeLinks"
                     :icon="link.icon"
@@ -32,7 +35,7 @@ const { asideWidth, handleResizeAside, isDisplayAside } = inject(SETTINGS_VIEW_C
                 </nue-link>
             </nue-div>
         </nue-div>
-    </app-aside-adapter>
+    </teleport>
 </template>
 
 <style scoped>

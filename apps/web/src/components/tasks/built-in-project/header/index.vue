@@ -1,16 +1,19 @@
 <script setup lang="ts">
 import { inject } from 'vue'
+import { TaskReschedulePanel } from '@nao-todo/presentation/task'
 import OperationDropdown from './operation-dropdown.vue'
 import FilterDropdown from './filter-dropdown.vue'
-import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
 import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from '../context'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context.js'
 
 defineOptions({ name: 'TasksMainProjectHeader' })
 defineProps<{ projectId?: string; viewType?: string; taskId?: string }>()
 
-const { isDisplayAside, switchDisplayAside } = inject(TASKS_VIEW_CONTEXT_KEY)!
+const { isDisplayAside, switchDisplayAside } = inject(INDEX_VIEW_CONTEXT_KEY)!
 
-const { builtInProject, showTaskCreator } = inject(BUILT_IN_PROJECT_VIEW_CONTEXT_KEY)!
+const { builtInProject, showTaskCreator, taskUseCase, preference, subscriber } = inject(
+    BUILT_IN_PROJECT_VIEW_CONTEXT_KEY
+)!
 </script>
 
 <template>
@@ -28,6 +31,12 @@ const { builtInProject, showTaskCreator } = inject(BUILT_IN_PROJECT_VIEW_CONTEXT
                     </nue-text>
                 </nue-div>
                 <nue-div align="center">
+                    <task-reschedule-panel
+                        v-if="builtInProject!.id === 'overdue'"
+                        :task-use-case="taskUseCase"
+                        :get-tasks-options="preference!.getTasksOptions"
+                        @refresh="subscriber.emit('RefreshData')"
+                    />
                     <nue-tooltip content="新增待办" size="small" @click="showTaskCreator">
                         <nue-button icon="plus" theme="icon,ghost" />
                     </nue-tooltip>
@@ -38,4 +47,3 @@ const { builtInProject, showTaskCreator } = inject(BUILT_IN_PROJECT_VIEW_CONTEXT
         </nue-div>
     </nue-header>
 </template>
-

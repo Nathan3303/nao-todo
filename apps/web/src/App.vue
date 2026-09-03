@@ -9,4 +9,3 @@ useApp()
 <template>
     <router-view />
 </template>
-

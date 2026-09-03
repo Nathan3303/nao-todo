@@ -10,4 +10,3 @@ import { t } from '@nao-todo/shared'
 
 defineOptions({ name: 'PasswordRuleHint' })
 </script>
-

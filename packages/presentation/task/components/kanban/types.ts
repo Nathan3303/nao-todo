@@ -1,7 +1,6 @@
-import type { ComputedRef } from 'vue'
-import type { TaskTagViewObject, TaskViewObject } from '../../types'
+import type { TaskTagViewObject, TaskUseCase, TaskViewObject } from '@nao-todo/domain-task'
 import type { GetTasksSortOptions, TaskColumnOptions } from '@nao-todo/shared'
-import type { TaskUseCase } from '../../usecases'
+import type { ComputedRef, Ref } from 'vue'
 
 /**
  * Task Kanban
@@ -57,6 +56,7 @@ export type TaskKanbanContext = {
     ) => void
     clearSortOptions: () => void
     updatingTaskIds: ComputedRef<Set<TaskViewObject['id']>>
+    refreshKey: Ref<number>
 }
 
 /**

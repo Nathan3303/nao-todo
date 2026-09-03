@@ -1,0 +1,88 @@
+/**
+ * 首页样式（登录成功落地页）
+ * @description 深色「深夜任务账本」主题的延续：品牌标记 + 欢迎语 + 登出按钮
+ */
+.home-screen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48rpx 40rpx;
+    background-color: var(--nao-bg);
+    position: relative;
+}
+
+.home-glow {
+    position: absolute;
+    top: -30vh;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90vw;
+    height: 60vh;
+    border-radius: 50%;
+    background: radial-gradient(
+        ellipse at center,
+        rgba(232, 168, 76, 0.14) 0%,
+        rgba(232, 168, 76, 0) 70%
+    );
+}
+
+.home-brand-mark {
+    width: 96rpx;
+    height: 96rpx;
+    border-radius: 50%;
+    border: 2rpx solid var(--nao-accent);
+    background: var(--nao-accent-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 40rpx;
+    box-shadow: 0 0 0 10rpx rgba(217, 164, 65, 0.14);
+}
+
+.home-brand-mark-text {
+    font-family: var(--nao-serif);
+    font-size: 52rpx;
+    font-weight: 700;
+    color: var(--nao-accent);
+}
+
+.home-title {
+    font-family: var(--nao-serif);
+    font-size: 44rpx;
+    font-weight: 600;
+    color: var(--nao-text);
+    letter-spacing: 2rpx;
+    text-align: center;
+}
+
+.home-message {
+    margin-top: 16rpx;
+    font-size: 26rpx;
+    color: var(--nao-text-secondary);
+    line-height: 1.6;
+    text-align: center;
+}
+
+.home-signout {
+    margin-top: 72rpx;
+    height: 88rpx;
+    padding: 0 64rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1rpx solid var(--nao-border);
+    border-radius: var(--nao-radius-md);
+    background-color: var(--nao-surface);
+}
+
+.home-signout.ui-active {
+    background-color: var(--nao-surface-hover);
+}
+
+.home-signout-text {
+    font-size: 28rpx;
+    color: var(--nao-text-secondary);
+    letter-spacing: 2rpx;
+}

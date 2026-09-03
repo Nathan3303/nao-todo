@@ -1,7 +1,18 @@
-import { computed, provide, watch } from 'vue'
-import type { TaskTableContext, TaskTableEmits, TaskTableProps } from './types'
-import type { TaskViewObject } from '../../types'
-import { type GetTasksSortOptions, type TaskColumnOptions, isTaskExpired } from '@nao-todo/shared'
+import { computed, provide, ref, watch } from 'vue'
+import type {
+    ColumnReorderPayload,
+    ColumnResizePayload,
+    TaskTableContext,
+    TaskTableEmits,
+    TaskTableProps
+} from './types'
+import type { TaskViewObject } from '@nao-todo/domain-task'
+import {
+    type GetTasksSortOptions,
+    type TaskColumnOptions,
+    isTaskExpired,
+    useMinuteTask
+} from '@nao-todo/shared'
 import useMultiSelect from './use-multi-select'
 import useColumnConfig from './use-column-config'
 
@@ -28,6 +39,12 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         syncFromProps,
         pinnedColumn
     } = useColumnConfig(initialConfig, tableId)
+
+    // @hook 刷新 key
+    const refreshKey = ref(1)
+    const { run: startRefreshKeyIncrement, stop: stopRefreshKeyIncrement } = useMinuteTask(
+        () => (refreshKey.value += 1)
+    )
 
     // @computed 计算标签显示数量 - 用于响应式变化时变化标签显示个数
     const tagBarClamped = computed(() => {
@@ -60,14 +77,14 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
     }
 
     // @method 处理列排序
-    const handleColumnReorder = (payload: any) => {
+    const handleColumnReorder = (payload: ColumnReorderPayload) => {
         reorderColumns(payload)
         emit('columnReorder', payload)
         emit('updateLayoutConfig', layoutConfig.value)
     }
 
     // @method 处理列宽调整
-    const handleColumnResize = (payload: any) => {
+    const handleColumnResize = (payload: ColumnResizePayload) => {
         resizeColumn(payload)
         emit('columnResize', payload)
         emit('updateLayoutConfig', layoutConfig.value)
@@ -78,6 +95,14 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         resetConfig()
         emit('updateLayoutConfig', layoutConfig.value)
     }
+
+    // @watch 多选清除信号 - 外部（批量编辑面板）递增时清空多选范围
+    watch(
+        () => props.multiSelectClearSignal,
+        (newSignal, oldSignal) => {
+            if (oldSignal !== undefined && newSignal !== oldSignal) clearMultiSelect(true)
+        }
+    )
 
     // @watch 同步列配置到 props
     watch(
@@ -118,6 +143,9 @@ export default (props: TaskTableProps, emit: TaskTableEmits) => {
         deleteOrRestore,
         columnReorder: handleColumnReorder,
         columnResize: handleColumnResize,
-        resetTableConfig: handleResetTableConfig
+        resetTableConfig: handleResetTableConfig,
+        refreshKey,
+        startRefreshKeyIncrement,
+        stopRefreshKeyIncrement
     })
 }

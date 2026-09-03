@@ -4,7 +4,7 @@ import {
     useMapperStoreBase,
     useStoreBase
 } from '@nao-todo/shared'
-import type { TagPreferenceViewObject, TagViewObject } from '@nao-todo/application/tag/viewobjects'
+import type { TagPreferenceViewObject, TagViewObject } from '@nao-todo/domain-tag'
 
 export const useTagsStoreBase = () => {
     const {

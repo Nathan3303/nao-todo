@@ -1,3 +1,10 @@
-import { TagViewObject } from '@nao-todo/domain/tag'
+export type TagCardVO = {
+    id: string
+    name: string
+    color: string
+    description: string | null
+}
 
-export type TagCardProps = { tag: TagViewObject }
+export type TagCardProps = {
+    tag: TagCardVO
+}

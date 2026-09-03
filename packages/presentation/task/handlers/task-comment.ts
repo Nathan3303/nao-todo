@@ -1,11 +1,11 @@
-import { t, unwrapErrors, type GoAsync, type Subscriber } from '@nao-todo/shared'
+import { t, unwrapErrors, type GoAsync } from '@nao-todo/shared'
 import { NueMessage } from 'nue-ui'
 import type {
     CreateTaskCommentViewObject,
     TaskCommentViewObject,
     UpdateTaskCommentViewObject
-} from '@nao-todo/application/task/viewobjects'
-import { TaskCommentUseCase } from '@nao-todo/application/task/usecases'
+} from '@nao-todo/domain-task'
+import { TaskCommentUseCase } from '@nao-todo/domain-task'
 
 /**
  * 任务评论操作器
@@ -16,13 +16,8 @@ export class TaskCommentHandler {
      * 任务评论操作器
      * @description 任务评论操作器，用于执行任务评论相关的操作
      * @param taskCommentUseCase 任务评论使用案例
-     * @param subscriber 事件订阅器
-
      */
-    constructor(
-        private taskCommentUseCase: TaskCommentUseCase,
-        private subscriber: Subscriber
-    ) {}
+    constructor(private taskCommentUseCase: TaskCommentUseCase) {}
 
     /**
      * 创建任务评论

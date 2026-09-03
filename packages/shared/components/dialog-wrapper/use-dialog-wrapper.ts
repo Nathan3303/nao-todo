@@ -26,4 +26,3 @@ const useDialogWrapper = (dialogRef: DialogRef) => {
 }
 
 export default useDialogWrapper
-

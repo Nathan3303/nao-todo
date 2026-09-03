@@ -8,7 +8,7 @@ import {
     type DialogInstanceType
 } from '@nao-todo/shared'
 import { computed, onMounted, ref } from 'vue'
-import type { TagViewObject } from '../../../types'
+import type { TagViewObject } from '@nao-todo/domain-tag'
 import { TagCreatorDialogProps } from './types'
 import useTagCreator from './use-tag-creator'
 
@@ -36,8 +36,13 @@ const handleSubmit = async () => {
 const open = (payload: Partial<TagViewObject>) => {
     clearInputsValue()
     if (payload) {
-        formData.value.name = payload.name || ''
-        formData.value.description = payload.description || ''
+        // 必须整体赋值以触发 computed setter：
+        // formData.value.name = x 只修改 computed 缓存对象、不同步 states，
+        // 会导致输入框显示预填文本但 states.value.name 仍为空、校验误报"不能为空"
+        formData.value = {
+            name: payload.name || '',
+            description: payload.description || ''
+        }
     }
     visible.value = true
 }

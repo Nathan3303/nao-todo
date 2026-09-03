@@ -52,9 +52,8 @@ const durationToString = (duration: number) => {
         <nue-div theme="card">
             <nue-text theme="duration">专注时长 {{ totalDurationString }}</nue-text>
             <nue-div theme="pomodoro-records-info">
-                <nue-text theme="count">
-                    {{ props.records.length }} 条专注记录，{{ sessionCount }} 个专注会话
-                </nue-text>
+                <nue-text theme="count">{{ props.records.length }} 条专注记录</nue-text>
+                <nue-text theme="count">/</nue-text>
                 <nue-text theme="count">已收获 {{ fanqieCount }} 个番茄</nue-text>
             </nue-div>
             <nue-div theme="daily-goal">
@@ -123,7 +122,7 @@ const durationToString = (duration: number) => {
 
     > .nue-div--card {
         flex-direction: column;
-        gap: var(--nue-gap-2xs);
+        gap: var(--nue-gap-xs);
         font-size: var(--nue-text-sm);
         color: var(--nue-primary-color-600);
 
@@ -132,19 +131,21 @@ const durationToString = (duration: number) => {
         }
 
         > .nue-div--pomodoro-records-info {
-            gap: var(--nue-gap-2xs);
+            gap: var(--nue-gap-xs);
             align-items: center;
-            justify-content: space-between;
         }
 
         > .nue-div--daily-goal {
             display: flex;
             gap: var(--nue-gap-2xs);
             flex-direction: column;
-            margin-top: var(--nue-padding-xs);
 
             .nue-text--goal-count {
                 color: var(--nue-primary-color-600);
+            }
+
+            .nue-progress {
+                margin-top: var(--nue-padding-2xs);
             }
         }
     }

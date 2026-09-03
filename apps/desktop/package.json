@@ -1,13 +1,91 @@
 {
     "name": "@nao-todo/desktopapp",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "description": "Desktop version of NaoTodo",
-    "author": "Nathan Lee",
+    "author": "Nathan Lee <Lee1928@outlook.com>",
     "license": "MIT",
     "private": true,
-    "scripts": {},
-    "build": {},
-    "devDependencies": {},
-    "dependencies": {},
-    "packageManager": "pnpm@8.12.1"
+    "main": "./out/main/index.js",
+    "desktopName": "nao-todo.desktop",
+    "repository": "https://github.com/Nathan3303/nao-todo.git",
+    "scripts": {
+        "dev": "electron-vite dev",
+        "build": "electron-vite build",
+        "icon": "pnpm dlx electron-icon-builder --input=./build/icon-source.png --output=./build",
+        "dist": "pnpm icon && electron-vite build && electron-builder",
+        "dist:dir": "pnpm icon && electron-vite build && electron-builder --dir"
+    },
+    "build": {
+        "appId": "space.nathanao.todo",
+        "productName": "NaoTodo",
+        "files": [
+            "out/renderer/**/*",
+            "out/main/index.js",
+            "out/preload/index.js"
+        ],
+        "directories": {
+            "output": "release"
+        },
+        "mac": {
+            "target": [
+                "dmg",
+                "zip"
+            ]
+        },
+        "win": {
+            "icon": "build/icons/win/icon.ico",
+            "target": [
+                "nsis"
+            ]
+        },
+        "nsis": {
+            "oneClick": false,
+            "allowToChangeInstallationDirectory": true,
+            "createDesktopShortcut": true,
+            "createStartMenuShortcut": true
+        },
+        "linux": {
+            "icon": "build/icons/png",
+            "executableName": "nao-todo",
+            "category": "Office",
+            "syncDesktopName": true,
+            "target": [
+                "AppImage",
+                "deb"
+            ]
+        },
+        "deb": {
+            "artifactName": "${productName}_${version}_${arch}.${ext}",
+            "packageName": "nao-todo"
+        }
+    },
+    "dependencies": {
+        "@nao-todo/domain-built-in-project": "workspace:*",
+        "@nao-todo/domain-identity": "workspace:*",
+        "@nao-todo/domain-pomodoro": "workspace:*",
+        "@nao-todo/domain-project": "workspace:*",
+        "@nao-todo/domain-tag": "workspace:*",
+        "@nao-todo/domain-task": "workspace:*",
+        "@nao-todo/infrastructure": "workspace:*",
+        "@nao-todo/presentation": "workspace:*",
+        "@nao-todo/presentation-identity": "workspace:*",
+        "@nao-todo/shared": "workspace:*",
+        "@nao-todo/webapp": "workspace:*",
+        "nue-ui": "1.10.58",
+        "nue-ui-iconfont": "0.2.6",
+        "nue-ui-theme-shadlike": "0.13.24",
+        "pinia": "^3.0.4",
+        "vue": "^3.5.40",
+        "vue-i18n": "^11.4.6",
+        "vue-router": "^5.2.0"
+    },
+    "devDependencies": {
+        "@types/node": "^20.19.43",
+        "concurrently": "^10.0.4",
+        "electron": "^43.2.0",
+        "electron-builder": "^26.15.3",
+        "electron-vite": "^5.0.0",
+        "typescript": "~5.4.5",
+        "vite": "^7.3.6"
+    }
 }
