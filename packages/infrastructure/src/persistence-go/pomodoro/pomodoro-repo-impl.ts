@@ -1,10 +1,11 @@
+import type { Pagination } from '@nao-todo/shared/types/pagination'
 import {
     CreatePomodoroValueObject,
     PomodoroEntity,
     PomodoroRepository,
     UpdatePomodoroValueObject
 } from '@nao-todo/domain-pomodoro'
-import type { Requester, GoAsync, ResponseDataPagination } from '@nao-todo/shared'
+import type { Requester, GoAsync } from '@nao-todo/shared'
 import { getJWTFromLocalStorage } from '../utils'
 import { CreatePomodoroRes, ListPomodoroRes, PomodoroRes, ResponseData } from '../models'
 import {
@@ -118,7 +119,7 @@ export class PomodoroRepoImpl implements PomodoroRepository {
      */
     async list(
         queryString?: string
-    ): GoAsync<{ pomodoroEntities: PomodoroEntity[]; pagination?: ResponseDataPagination }> {
+    ): GoAsync<{ pomodoroEntities: PomodoroEntity[]; pagination?: Pagination }> {
         const response = await this.requester.get(`/pomodoros/?${queryString ?? ''}`, {
             headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }
         })

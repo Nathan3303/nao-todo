@@ -1,5 +1,5 @@
+import type { Go } from '@nao-todo/shared/types'
 import { Entity } from '@nao-todo/shared/entity'
-import type { Go } from '@nao-todo/shared'
 
 /**
  * 标签实体

@@ -14,7 +14,8 @@
         "prepare": "vp config",
         "desktop:dev": "pnpm --filter @nao-todo/desktopapp dev",
         "desktop:build": "pnpm --filter @nao-todo/desktopapp build",
-        "desktop:dist": "pnpm --filter @nao-todo/desktopapp dist"
+        "desktop:dist": "pnpm --filter @nao-todo/desktopapp dist",
+        "guard:ddd": "node scripts/guard-domain-isolation.mjs"
     },
     "dependencies": {
         "@vitejs/plugin-vue": "^6.0.7",

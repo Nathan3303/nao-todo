@@ -1,4 +1,4 @@
-import type { ViewObjectBase, NullableDateString, NullableString } from '@nao-todo/shared'
+import type { NullableDateString, NullableString, ViewObjectBase } from '@nao-todo/shared/types'
 
 // --- Task ---
 

@@ -1,4 +1,4 @@
-import { Entity } from '@nao-todo/shared'
+import { Entity } from '@nao-todo/shared/entity'
 
 /**
  * 番茄专注常用专注实体

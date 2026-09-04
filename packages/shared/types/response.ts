@@ -1,18 +1,12 @@
 // Backend api response type
-export type ResponseDataPagination = {
-    total: number
-    page: number
-    limit: number
-    maxPage: number
-    current?: number
-}
+import type { Pagination } from './pagination'
 
 // Backend api response type
 export type ResponseData<V = unknown> = {
     code: number
     message: string
     data: V
-    pagination?: ResponseDataPagination
+    pagination?: Pagination
 }
 
 // Backend api request type

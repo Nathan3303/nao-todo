@@ -1,4 +1,4 @@
-import type { Go } from '@nao-todo/shared'
+import type { Go } from '@nao-todo/shared/types'
 import dayjs from 'dayjs'
 import {
     TASK_DESC_MAX_LENGTH,

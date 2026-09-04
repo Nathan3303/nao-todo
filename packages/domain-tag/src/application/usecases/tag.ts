@@ -1,5 +1,6 @@
+import type { GoAsync } from '@nao-todo/shared/types'
 import { TagService } from '../../domain'
-import type { GoAsync } from '@nao-todo/shared'
+
 import type { TagPreferenceRepository, TagRepository } from '../../domain'
 import type { TagStore } from '../stores'
 import {

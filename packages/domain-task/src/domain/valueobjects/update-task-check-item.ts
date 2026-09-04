@@ -1,4 +1,4 @@
-import type { Go } from '@nao-todo/shared'
+import type { Go } from '@nao-todo/shared/types'
 import { CHECK_ITEM_NAME_MAX_LENGTH } from '../constants'
 import { TaskErrorCode } from '../errors'
 

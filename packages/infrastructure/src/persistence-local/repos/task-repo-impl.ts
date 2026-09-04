@@ -1,10 +1,11 @@
+import type { Pagination } from '@nao-todo/shared/types/pagination'
 import {
     CreateTaskValueObject,
     TaskEntity,
     TaskRepository,
     UpdateTaskValueObject
 } from '@nao-todo/domain-task'
-import type { GoAsync, ResponseDataPagination } from '@nao-todo/shared'
+import type { GoAsync } from '@nao-todo/shared'
 import dayjs from 'dayjs'
 import {
     taskCheckItemEntityToRecord,
@@ -243,7 +244,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
 
     async list(
         queryString?: string
-    ): GoAsync<{ taskEntities: TaskEntity[]; pagination?: ResponseDataPagination }> {
+    ): GoAsync<{ taskEntities: TaskEntity[]; pagination?: Pagination }> {
         try {
             const query = parseListQuery(queryString)
             // 1. 结构字段过滤（明文，走索引语义；先按当前用户隔离）

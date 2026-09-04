@@ -1,6 +1,6 @@
+import type { Go } from '@nao-todo/shared/types'
 import { Entity } from '@nao-todo/shared/entity'
 import { JsonStringValueObject } from '@nao-todo/shared/valueobjects/json-string'
-import type { Go } from '@nao-todo/shared'
 
 /**
  * 任务清单偏好实体

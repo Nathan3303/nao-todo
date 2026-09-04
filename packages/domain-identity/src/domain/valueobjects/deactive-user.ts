@@ -1,5 +1,5 @@
+import type { Go } from '@nao-todo/shared/types'
 import { USER_PASSWORD_REGEXP } from '../constants'
-import type { Go } from '@nao-todo/shared'
 
 export class DeactiveUserValueObject {
     constructor(public password: string) {}

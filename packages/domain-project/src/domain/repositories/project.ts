@@ -1,4 +1,4 @@
-import type { GoAsync } from '@nao-todo/shared'
+import type { GoAsync } from '@nao-todo/shared/types'
 import { ProjectEntity } from '../entities/project'
 import { CreateProjectValueObject } from '../valueobjects/create-project'
 import { UpdateProjectValueObject } from '../valueobjects/update-project'

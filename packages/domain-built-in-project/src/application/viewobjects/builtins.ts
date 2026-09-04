@@ -1,4 +1,5 @@
-import type { NullableDateString, GetTasksOptions, TaskColumnOptions } from '@nao-todo/shared'
+import type { NullableDateString } from '@nao-todo/shared/types'
+import type { GetTasksOptions, TaskColumnOptions } from '@nao-todo/shared/constants/task'
 
 export type BuiltInProjectCreateTaskOptions = {
     startAt?: NullableDateString

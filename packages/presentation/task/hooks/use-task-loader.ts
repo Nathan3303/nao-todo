@@ -1,4 +1,5 @@
-import type { GoAsync, ResponseDataPagination } from '@nao-todo/shared'
+import type { Pagination } from '@nao-todo/shared/types/pagination'
+import type { GoAsync } from '@nao-todo/shared'
 import { unwrapError, type GetTasksOptions } from '@nao-todo/shared'
 import { reactive } from 'vue'
 import type { TaskViewObject } from '@nao-todo/domain-task'
@@ -11,7 +12,7 @@ export type UseTasksLoaderStates = {
     taskIds: Set<TaskViewObject['id']>
     loading: boolean
     error: string
-    pagination: ResponseDataPagination
+    pagination: Pagination
     isDone: boolean
     lastGetOptions: GetTasksOptions
     delay: number

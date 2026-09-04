@@ -1,4 +1,4 @@
-import { type GetTasksOptions, type TaskColumnOptions } from '@nao-todo/shared'
+import type { GetTasksOptions, TaskColumnOptions } from '@nao-todo/shared/constants/task'
 import { JsonStringValueObject } from '@nao-todo/shared/valueobjects/json-string'
 import { defaultColumns } from '@nao-todo/shared/constants/task'
 import dayjs from 'dayjs'

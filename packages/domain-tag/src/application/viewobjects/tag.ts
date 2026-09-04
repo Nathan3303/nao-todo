@@ -1,4 +1,4 @@
-import type { NullableString, ViewObjectBase } from '@nao-todo/shared'
+import type { NullableString, ViewObjectBase } from '@nao-todo/shared/types'
 
 // 标签视图对象
 export type TagViewObject = ViewObjectBase & {

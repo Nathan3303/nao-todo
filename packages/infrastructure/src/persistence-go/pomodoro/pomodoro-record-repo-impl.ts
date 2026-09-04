@@ -1,10 +1,11 @@
+import type { Pagination } from '@nao-todo/shared/types/pagination'
 import {
     createPomodoroRecordRes2Entity,
     createPomodoroRecordValueObjectToReq,
     listPomodoroRecordRes2Entities,
     pomodoroRecordRes2Entity
 } from './converters'
-import type { Requester, GoAsync, ResponseDataPagination } from '@nao-todo/shared'
+import type { Requester, GoAsync } from '@nao-todo/shared'
 import type {
     CreatePomodoroRecordRes,
     ListPomodoroRecordRes,
@@ -77,7 +78,7 @@ export class PomodoroRecordRepoImpl implements PomodoroRecordRepository {
      */
     async list(
         queryString?: string
-    ): GoAsync<{ entities: PomodoroRecordEntity[]; pagination?: ResponseDataPagination }> {
+    ): GoAsync<{ entities: PomodoroRecordEntity[]; pagination?: Pagination }> {
         // 1. 调用接口
         const response = await this.requester.get(`/pomodoro-records/?${queryString ?? ''}`, {
             headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }

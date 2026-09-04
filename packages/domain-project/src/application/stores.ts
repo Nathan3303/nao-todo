@@ -1,4 +1,4 @@
-import type { GetTasksOptions, TaskColumnOptions } from '@nao-todo/shared'
+import type { GetTasksOptions, TaskColumnOptions } from '@nao-todo/shared/constants/task'
 import type {
     ProjectViewObject,
     UpdateProjectViewObject,

@@ -14,19 +14,13 @@ export type ListRequestBase = {
 }
 
 // 数据响应模型
+import type { Pagination } from '@nao-todo/shared/types/pagination'
+
 export type ResponseData = {
     code: number
     message: string
     data: unknown
     error?: string
     businessCode?: string
-    pagination?: ResponseDataPagination
-}
-
-// 数据分页模型
-export type ResponseDataPagination = {
-    total: number
-    page: number
-    limit: number
-    maxPage: number
+    pagination?: Pagination
 }

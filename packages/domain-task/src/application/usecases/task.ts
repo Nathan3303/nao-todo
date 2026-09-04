@@ -1,4 +1,5 @@
-import { type GoAsync, type GetTasksOptions, type ResponseDataPagination } from '@nao-todo/shared'
+import type { GoAsync, Pagination } from '@nao-todo/shared/types'
+import type { GetTasksOptions } from '@nao-todo/shared/constants/task'
 import { QueryOptionsValueObject } from '@nao-todo/shared/valueobjects/query-options'
 import dayjs from 'dayjs'
 import { isGivenUpBy, isStarMarkedBy, TaskEntity } from '../../domain/entities'
@@ -89,7 +90,7 @@ export class TaskUseCase {
      */
     async list(getTasksOptions: GetTasksOptions): GoAsync<{
         taskIds: TaskViewObject['id'][]
-        pagination?: ResponseDataPagination
+        pagination?: Pagination
     }> {
         // 数据转换
         const queryOptionsVO = new QueryOptionsValueObject(getTasksOptions)

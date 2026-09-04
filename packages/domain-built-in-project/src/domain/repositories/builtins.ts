@@ -1,4 +1,4 @@
-import type { Go } from '@nao-todo/shared'
+import type { Go } from '@nao-todo/shared/types'
 import type { BuiltInProjectEntity, BuiltInProjectPreferenceEntity } from '../entities'
 
 export interface BuiltInProjectRepository {

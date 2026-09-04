@@ -1,4 +1,4 @@
-import type { GoAsync } from '@nao-todo/shared'
+import type { GoAsync } from '@nao-todo/shared/types'
 import type { AuthService } from '../../../domain'
 import type { AuthStore, SignInViewObject, SignUpViewObject } from '../../viewobjects'
 import {
