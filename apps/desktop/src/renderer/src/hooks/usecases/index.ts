@@ -1,4 +1,5 @@
 export * from './use-auth-usecase'
+export * from './use-app-handlers'
 export * from './use-built-in-project-usecase'
 export * from './use-tag-usecase'
 export * from './use-project-usecase'

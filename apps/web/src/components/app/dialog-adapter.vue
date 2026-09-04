@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
+import { useProjectUseCase, useTagUseCase, useTaskUseCase, useUserUseCase } from '@/hooks'
+import { useUserStore } from '@nao-todo/presentation-identity'
+import { useTasksStore } from '@nao-todo/presentation/task'
 import {
     ProjectCreatorDialog,
     ProjectManagerDialog,
@@ -24,13 +27,24 @@ import { inject } from 'vue'
 
 defineOptions({ name: 'AppDialogAdapter' })
 
-// 从上下文注入依赖
-const { userUseCase, taskUseCase, projectUseCase, tagUseCase, appDialogManager, appSubscriber } =
-    inject(INDEX_VIEW_CONTEXT_KEY)!
+// 从上下文注入依赖（仅 UI 服务/总线；业务用例本地组装）
+const { appDialogManager, appSubscriber } = inject(INDEX_VIEW_CONTEXT_KEY)!
+
+// @stores
+const projectsStore = useProjectsStore()
+const tagsStore = useTagsStore()
+const tasksStore = useTasksStore()
+const userStore = useUserStore()
+
+// @usecases 业务依赖本地组装（DI 入口）
+const projectUseCase = useProjectUseCase(projectsStore)
+const tagUseCase = useTagUseCase(tagsStore)
+const taskUseCase = useTaskUseCase(tasksStore)
+const userUseCase = useUserUseCase(userStore)
 
 // 从 pinia 中获取项目和标签列表
-const { avaliableProjects } = storeToRefs(useProjectsStore())
-const { tags: avaliableTags } = storeToRefs(useTagsStore())
+const { avaliableProjects } = storeToRefs(projectsStore)
+const { tags: avaliableTags } = storeToRefs(tagsStore)
 </script>
 
 <template>

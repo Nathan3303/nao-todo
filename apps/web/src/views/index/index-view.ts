@@ -1,11 +1,11 @@
 import { useAppAsideV2Controller } from '@/components/app/aside-v2'
 import { APP_CONTEXT_KEY } from '@/context'
 import {
+    useAppHandlers,
     useProjectUseCase,
     useScope,
     useShortcut,
     useTagUseCase,
-    useTaskUseCase,
     useUserUseCase
 } from '@/hooks'
 import { LAST_VISITED_ROUTE_KEY } from '@/router'
@@ -14,9 +14,8 @@ import { ProjectViewObject } from '@nao-todo/domain-project'
 import { TagViewObject } from '@nao-todo/domain-tag'
 import { TaskViewObject } from '@nao-todo/domain-task'
 import { useThemeStore, useUserStore } from '@nao-todo/presentation-identity'
-import { ProjectHandler, useProjectsStore } from '@nao-todo/presentation/project'
-import { TagHandler, useTagsStore } from '@nao-todo/presentation/tag'
-import { TaskHandler, useTasksStore } from '@nao-todo/presentation/task'
+import { useProjectsStore } from '@nao-todo/presentation/project'
+import { useTagsStore } from '@nao-todo/presentation/tag'
 import {
     PROJECT_CREATOR_DIALOG_KEY,
     responsiveTypes,
@@ -52,13 +51,11 @@ const useIndexView = () => {
     const themeStore = useThemeStore()
     const projectsStore = useProjectsStore()
     const tagsStore = useTagsStore()
-    const tasksStore = useTasksStore()
 
     // @usecases
     const userUseCase = useUserUseCase(userStore)
     const projectUseCase = useProjectUseCase(projectsStore)
     const tagUseCase = useTagUseCase(tagsStore)
-    const taskUseCase = useTaskUseCase(tasksStore)
 
     // @dialogManager 对话框管理器
     // @subscriber 事件订阅器
@@ -79,10 +76,8 @@ const useIndexView = () => {
         onUnmounted(() => window.removeEventListener('nao-todo:data-changed', handleDataChanged))
     }
 
-    // @handlers 处理层
-    const projectHandler = new ProjectHandler(projectUseCase, projectsStore, appSubscriber)
-    const tagHandler = new TagHandler(tagUseCase, tagsStore, appSubscriber)
-    const taskHandler = new TaskHandler(taskUseCase, appSubscriber)
+    // @handlers 应用级 Handler 单例（绑定应用级事件总线与全局 store）
+    const { projectHandler, tagHandler } = useAppHandlers()
 
     /**
      * 快捷键管理器
@@ -192,18 +187,9 @@ const useIndexView = () => {
      * 提供首页视图上下文
      */
     provide(INDEX_VIEW_CONTEXT_KEY, {
-        // usecases
-        userUseCase,
-        projectUseCase,
-        tagUseCase,
-        taskUseCase,
         // managers
         appDialogManager,
         appSubscriber,
-        // handlers
-        projectHandler,
-        tagHandler,
-        taskHandler,
         // responsive
         asideWidth,
         handleResizeAside,

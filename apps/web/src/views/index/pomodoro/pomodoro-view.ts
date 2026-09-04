@@ -7,7 +7,11 @@ import {
     usePomodorosStore,
     usePomodoroTimerStore
 } from '@nao-todo/presentation/pomodoro'
-import { TASK_DETAILS_PRE_CONTEXT_KEY, useTaskDetailsStore } from '@nao-todo/presentation/task'
+import {
+    TASK_DETAILS_PRE_CONTEXT_KEY,
+    useTaskDetailsStore,
+    useTasksStore
+} from '@nao-todo/presentation/task'
 import { responsiveTypes, useAsideWidth, useResponsiveAside } from '@nao-todo/shared'
 import { inject, provide } from 'vue'
 import { POMODORO_VIEW_CONTEXT_KEY } from './context'
@@ -35,7 +39,6 @@ export const usePomodoroView = () => {
      */
     const { responsiveFlag } = inject(APP_CONTEXT_KEY)!
     const {
-        taskUseCase,
         appDialogManager,
         appSubscriber,
         getProjectName,
@@ -64,7 +67,8 @@ export const usePomodoroView = () => {
     const { status: pomodoroTimerStatus } = storeToRefs(pomodoroTimerStore)
     const { status: pomodoroFocusStatus } = storeToRefs(pomodoroFocusStore)
 
-    // @usecase 任务详情面板相关用例
+    // @usecase 业务依赖在此由组合式组装（DI 入口；不来自父视图上下文）
+    const taskUseCase = useTaskUseCase(useTasksStore())
     const taskCheckItemUseCase = useTaskCheckItemUseCase(taskDetailsStore)
     const taskCommentUseCase = useTaskCommentUseCase(taskDetailsStore)
     const subTaskUseCase = useTaskUseCase(taskDetailsStore)

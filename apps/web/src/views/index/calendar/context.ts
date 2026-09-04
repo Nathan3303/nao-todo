@@ -1,5 +1,4 @@
-import { AuthUseCase, UserUseCase } from '@nao-todo/domain-identity'
-import { TaskUseCase, TaskViewObject } from '@nao-todo/domain-task'
+import { TaskViewObject } from '@nao-todo/domain-task'
 import type { DialogManager, Subscriber } from '@nao-todo/shared'
 import type { InjectionKey, Ref } from 'vue'
 
@@ -9,12 +8,8 @@ export type CalendarTaskScope =
     | { type: 'tag'; id: string }
     | { type: 'all' }
 
-// 日历视图上下文
+// 日历视图上下文（仅 UI 状态/服务；业务依赖由各消费者组合式自行组装）
 export type CalendarViewContext = {
-    authUseCase: AuthUseCase
-    userUseCase: UserUseCase
-    taskUseCase: TaskUseCase
-
     dialogManager: DialogManager
     subscriber: Subscriber
 

@@ -1,6 +1,8 @@
 import { APP_CONTEXT_KEY } from '@/context'
 import {
     useBuiltInProjectUseCase,
+    useProjectUseCase,
+    useTagUseCase,
     useTaskCheckItemUseCase,
     useTaskCommentUseCase,
     useTaskUseCase
@@ -17,7 +19,8 @@ import { useTagsStore } from '@nao-todo/presentation/tag'
 import {
     columnLabels,
     TASK_DETAILS_PRE_CONTEXT_KEY,
-    useTaskDetailsStore
+    useTaskDetailsStore,
+    useTasksStore
 } from '@nao-todo/presentation/task'
 import { responsiveTypes, unwrapError, useAsideWidth, useResponsiveAside } from '@nao-todo/shared'
 import { storeToRefs } from 'pinia'
@@ -30,30 +33,26 @@ import { useRouter } from 'vue-router'
 const useTasksView = () => {
     // @contexts
     const { responsiveFlag } = inject(APP_CONTEXT_KEY)!
-    const {
-        projectUseCase,
-        tagUseCase,
-        taskUseCase,
-        appSubscriber,
-        appDialogManager,
-        projectHandler,
-        tagHandler,
-        taskHandler,
-        getProjectName,
-        getTagColor,
-        showTaskDetails
-    } = inject(INDEX_VIEW_CONTEXT_KEY)!
+    const { appSubscriber, appDialogManager, getProjectName, getTagColor, showTaskDetails } =
+        inject(INDEX_VIEW_CONTEXT_KEY)!
 
     // @stores
     const router = useRouter()
+    const projectsStore = useProjectsStore()
+    const tasksStore = useTasksStore()
     const taskDetailsStore = useTaskDetailsStore()
     const tagsStore = useTagsStore()
     const pomodoroSessionStore = usePomodoroSessionStore()
     const pomodoroTimerStore = usePomodoroTimerStore()
     const pomodoroFocusStore = usePomodoroFocusStore()
 
+    // @usecase 业务依赖在此由组合式组装（DI 入口；不来自父视图上下文）
+    const projectUseCase = useProjectUseCase(projectsStore)
+    const tagUseCase = useTagUseCase(tagsStore)
+    const taskUseCase = useTaskUseCase(tasksStore)
+
     // @presetStates
-    const { avaliableProjects } = storeToRefs(useProjectsStore())
+    const { avaliableProjects } = storeToRefs(projectsStore)
     const { tags: avaliableTags } = storeToRefs(tagsStore)
     const { currentTaskId: pomodoroCurrentTaskId } = storeToRefs(pomodoroSessionStore)
     const { status: pomodoroTimerStatus } = storeToRefs(pomodoroTimerStore)
@@ -135,15 +134,8 @@ const useTasksView = () => {
 
     // @provide Tasks view context
     provide(TASKS_VIEW_CONTEXT_KEY, {
-        builtInProjectUseCase,
-        projectUseCase,
-        tagUseCase,
-        taskUseCase,
         appDialogManager,
         appSubscriber,
-        projectHandler,
-        tagHandler,
-        taskHandler,
         outlineWidth,
         isDisplayOutline,
         isUseFloatOutline,

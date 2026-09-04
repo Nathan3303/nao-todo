@@ -3,13 +3,16 @@ import { computed, inject } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useProjectsStore } from '@nao-todo/presentation/project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
-import { TaskHandler, TaskMultiSelectPanel } from '@nao-todo/presentation/task'
-import { TASKS_VIEW_CONTEXT_KEY } from './context'
+import { TaskHandler, useTasksStore, TaskMultiSelectPanel } from '@nao-todo/presentation/task'
+import { useTaskUseCase } from '@/hooks'
+import { useSubscriber } from '@nao-todo/shared'
 import { MULTI_SELECT_CONTEXT_KEY } from './multi-select-context'
 
 defineOptions({ name: 'TaskMultiSelectAdapter' })
 
-const { taskUseCase, appSubscriber } = inject(TASKS_VIEW_CONTEXT_KEY)!
+// @usecase/总线 本地组装（DI 入口；不来自父视图上下文）
+const taskUseCase = useTaskUseCase(useTasksStore())
+const appSubscriber = useSubscriber()
 const multiSelectCtx = inject(MULTI_SELECT_CONTEXT_KEY)!
 
 // 批量操作专用操作器（静默单条提示，由面板统一汇总）

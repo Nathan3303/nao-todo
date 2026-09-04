@@ -7,7 +7,7 @@ type cbFunc = (...args: never[]) => void
 
 /**
  * 事件订阅器接口
- * @description 事件订阅器接口，用于订阅和触发事件
+ * @description 订阅器接口，用于订阅和触发事件
  */
 export interface Subscriber {
     emit: (eventName: string, ...args: unknown[]) => void
@@ -16,10 +16,10 @@ export interface Subscriber {
 }
 
 /**
- * 事件订阅器实现
+ * 创建事件订阅器实例
  * @returns 事件订阅器
  */
-export const useSubscriber = (): Subscriber => {
+const createSubscriber = (): Subscriber => {
     /**
      * 事件回调映射表
      */
@@ -74,3 +74,12 @@ export const useSubscriber = (): Subscriber => {
      */
     return { subscribe, unsubscribe, emit }
 }
+
+/**
+ * 应用级事件总线（单例）
+ * @description 同一应用内所有视图/组件共享同一实例，保证跨视图事件（如数据变更、
+ *              任务新建后刷新）可互达；handlers 等业务对象由此总线与各组件联动。
+ */
+const appSubscriber: Subscriber = createSubscriber()
+
+export const useSubscriber = (): Subscriber => appSubscriber

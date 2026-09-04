@@ -1,17 +1,21 @@
 import { responsiveTypes, unwrapError, useAsideWidth, useResponsiveAside } from '@nao-todo/shared'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import {
-    useAuthUseCase,
     useBuiltInProjectUseCase,
+    useProjectUseCase,
+    useTagUseCase,
     useTaskCheckItemUseCase,
     useTaskCommentUseCase,
     useTaskUseCase
 } from '@/hooks'
 import { inject, provide, ref } from 'vue'
 import { CALENDAR_VIEW_CONTEXT_KEY, type CalendarTaskScope } from './context'
-import { useUserStore } from '@nao-todo/presentation-identity'
 import { useBuiltInProjectsStore } from '@nao-todo/presentation/built-in-project'
-import { useTaskDetailsStore, TASK_DETAILS_PRE_CONTEXT_KEY } from '@nao-todo/presentation/task'
+import {
+    useTaskDetailsStore,
+    useTasksStore,
+    TASK_DETAILS_PRE_CONTEXT_KEY
+} from '@nao-todo/presentation/task'
 import { useProjectsStore } from '@nao-todo/presentation/project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
 import {
@@ -32,10 +36,6 @@ export const useCalendarView = () => {
     // @viewContext 应用与首页上下文
     const { responsiveFlag } = inject(APP_CONTEXT_KEY)!
     const {
-        userUseCase,
-        projectUseCase,
-        tagUseCase,
-        taskUseCase,
         appDialogManager,
         appSubscriber,
         isUseFloatAside,
@@ -46,21 +46,25 @@ export const useCalendarView = () => {
     } = inject(INDEX_VIEW_CONTEXT_KEY)!
 
     // @stores
+    const projectsStore = useProjectsStore()
     const tagsStore = useTagsStore()
+    const tasksStore = useTasksStore()
     const taskDetailsStore = useTaskDetailsStore()
     const pomodoroSessionStore = usePomodoroSessionStore()
     const pomodoroTimerStore = usePomodoroTimerStore()
     const pomodoroFocusStore = usePomodoroFocusStore()
 
     // @presetStates
-    const { avaliableProjects } = storeToRefs(useProjectsStore())
+    const { avaliableProjects } = storeToRefs(projectsStore)
     const { tags: avaliableTags } = storeToRefs(tagsStore)
     const { currentTaskId: pomodoroCurrentTaskId } = storeToRefs(pomodoroSessionStore)
     const { status: pomodoroTimerStatus } = storeToRefs(pomodoroTimerStore)
     const { status: pomodoroFocusStatus } = storeToRefs(pomodoroFocusStore)
 
-    // @usecases
-    const authUseCase = useAuthUseCase(useUserStore())
+    // @usecases 业务依赖在视图内由组合式组装（不来自父视图上下文）
+    const projectUseCase = useProjectUseCase(projectsStore)
+    const tagUseCase = useTagUseCase(tagsStore)
+    const taskUseCase = useTaskUseCase(tasksStore)
     const builtInProjectUseCase = useBuiltInProjectUseCase(useBuiltInProjectsStore())
     const taskCheckItemUseCase = useTaskCheckItemUseCase(taskDetailsStore)
     const taskCommentUseCase = useTaskCommentUseCase(taskDetailsStore)
@@ -143,9 +147,6 @@ export const useCalendarView = () => {
      * 提供日历视图上下文
      */
     provide(CALENDAR_VIEW_CONTEXT_KEY, {
-        authUseCase,
-        userUseCase,
-        taskUseCase,
         dialogManager: appDialogManager,
         subscriber: appSubscriber,
         isDisplayAside,
