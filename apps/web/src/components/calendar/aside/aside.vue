@@ -74,11 +74,10 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
                     </nao-smart-list>
                 </nue-collapse>
             </nue-div>
-            <!-- <nue-divider />
-            <nue-div align="center" justify="space-between" class="hide-completed-row">
-                <nue-text size="var(--nue-text-df2)">隐藏已完成任务</nue-text>
-                <nue-switch v-model="hideCompleted" size="small" />
-            </nue-div> -->
+            <nue-divider />
+            <nue-div align="center" class="hide-completed-row">
+                <nue-checkbox v-model="hideCompleted">隐藏已完成</nue-checkbox>
+            </nue-div>
         </nue-div>
     </teleport>
 </template>
@@ -89,11 +88,11 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
 
     > .hide-completed-row {
         width: 100%;
-        padding: 0.375rem 0.25rem;
-        gap: 0.5rem;
+        padding: 0.25rem 0;
 
-        .nue-switch {
-            flex-shrink: 0;
+        /* 与 smart-list 内 checkbox 一致：默认字号/色值 + 去除默认横向内距保持左对齐 */
+        .nue-checkbox {
+            padding: 0;
         }
     }
 

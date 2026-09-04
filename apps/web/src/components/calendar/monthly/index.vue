@@ -51,6 +51,8 @@ const filterActive = computed(
 )
 const hasMonthTasks = computed(() => model.value.rows.some((row) => row.segments.length > 0))
 const emptyState = computed(() => {
+    // 本月有可见任务：直接渲染网格（筛选/隐藏已完成只是收敛数据，不触发空态）
+    if (hasMonthTasks.value) return null
     if (filterActive.value) {
         return {
             text: '当前筛选条件下，本月暂无任务',
@@ -65,8 +67,7 @@ const emptyState = computed(() => {
             run: () => (hideCompleted.value = false)
         }
     }
-    if (!hasMonthTasks.value) return { text: '本月暂无任务', action: '', run: () => {} }
-    return null
+    return { text: '本月暂无任务', action: '', run: () => {} }
 })
 
 // @method 打开某日面板（同时选中该日）
