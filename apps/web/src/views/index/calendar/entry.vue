@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { CalendarAside } from '@/components/calendar/aside'
-import { env } from '@/env'
+import { TaskDetailsAdapter } from '@nao-todo/presentation/task'
 import { Loading as LoadingComp, LoadingError, assetUrl } from '@nao-todo/shared'
 import { onMounted } from 'vue'
 import { useCalendarView } from './calendar-view'
@@ -26,44 +26,29 @@ onMounted(() => init())
             <nue-main>
                 <!-- 侧边栏 -->
                 <calendar-aside />
-                <!-- 开发环境日历主体 -->
-                <template v-if="env.showUnimplementedFeatures">
-                    <nue-content fill style="overflow: hidden">
-                        <router-view v-slot="{ Component }">
-                            <suspense>
-                                <component :is="Component" />
-                                <template #pending>
-                                    <loading-comp height="100%" />
-                                </template>
-                                <template #fallback>
-                                    <nue-empty
-                                        :image-src="assetUrl('/images/error.webp')"
-                                        image-size="6rem"
-                                    >
-                                        <nue-text size="var(--nue-text-sm)">
-                                            加载失败, 请刷新页面重试
-                                        </nue-text>
-                                    </nue-empty>
-                                </template>
-                            </suspense>
-                        </router-view>
-                    </nue-content>
-                </template>
-                <!-- 生产环境敬请期待 -->
-                <template v-else>
-                    <nue-content fill style="overflow: hidden">
-                        <nue-empty
-                            :image-src="assetUrl('/images/feature.webp')"
-                            image-size="8rem"
-                            description="日历页面还在规划中，敬请期待"
-                            style="height: 100%"
-                        >
-                            <nue-button theme="small,primary" @click="$router.back()">
-                                返回
-                            </nue-button>
-                        </nue-empty>
-                    </nue-content>
-                </template>
+                <!-- 日历主体 -->
+                <nue-content fill style="overflow: hidden">
+                    <router-view v-slot="{ Component }">
+                        <suspense>
+                            <component :is="Component" />
+                            <template #pending>
+                                <loading-comp height="100%" />
+                            </template>
+                            <template #fallback>
+                                <nue-empty
+                                    :image-src="assetUrl('/images/error.webp')"
+                                    image-size="6rem"
+                                >
+                                    <nue-text size="var(--nue-text-sm)">
+                                        加载失败, 请刷新页面重试
+                                    </nue-text>
+                                </nue-empty>
+                            </template>
+                        </suspense>
+                    </router-view>
+                </nue-content>
+                <!-- 任务详情适配器（Q5-B：日历区内嵌） -->
+                <task-details-adapter />
             </nue-main>
         </loading-error>
     </nue-container>

@@ -1,11 +1,13 @@
 import { useProjectsStore } from '@nao-todo/presentation/project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
 import { storeToRefs } from 'pinia'
-import { computed, ref, watch } from 'vue'
+import { computed, inject } from 'vue'
+import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
 
 /**
  * useCalendarSmartList
- * 处理日历侧边栏的智能清单逻辑，包括项目和标签的选项生成以及选中状态管理。
+ * @description 处理日历侧边栏的智能清单逻辑：清单/标签选项生成；
+ *              选中状态来自日历视图共享筛选状态（与头部范围菜单同源）。
  */
 const useCalendarSmartList = () => {
     // @stores
@@ -16,9 +18,8 @@ const useCalendarSmartList = () => {
     const { avaliableProjects: projects } = storeToRefs(projectsStore)
     const { tags } = storeToRefs(tagsStore)
 
-    // @states
-    const selectedProjectIds = ref<string[]>([]) // 已选择的清单（筛选）
-    const selectedTagIds = ref<string[]>([]) // 已选择的标签（筛选）
+    // @filterState 共享筛选状态（侧边栏复选框读写同一份数据）
+    const { selectedProjectIds, selectedTagIds } = inject(CALENDAR_VIEW_CONTEXT_KEY)!
 
     // @computeds
     const projectOptions = computed(() => {
@@ -29,10 +30,6 @@ const useCalendarSmartList = () => {
             .sort((a, b) => a.sortId - b.sortId)
             .map((t) => ({ id: t.id, name: t.name, color: t.color || 'default' }))
     })
-
-    // @watchs 调试
-    watch(selectedProjectIds, (val) => console.log('Selected project IDs:', val), { deep: true })
-    watch(selectedTagIds, (val) => console.log('Selected tag IDs:', val), { deep: true })
 
     // @returns
     return {

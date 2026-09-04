@@ -6,20 +6,20 @@ import {
     TAG_CREATOR_DIALOG_KEY,
     TAG_MANAGER_DIALOG_KEY
 } from '@nao-todo/shared'
-import { ref, inject, onMounted, watch, nextTick } from 'vue'
+import { ref, inject, watch, nextTick, onMounted } from 'vue'
 import useCalendarSmartList from './use-calendar-smart-list'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
-import { env } from '@/env'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 
 defineOptions({ name: 'CalendarAside' })
 
-const { isDisplayAside, dialogManager } = inject(CALENDAR_VIEW_CONTEXT_KEY)!
+const { isDisplayAside, dialogManager, hideCompleted } = inject(CALENDAR_VIEW_CONTEXT_KEY)!
 const { setControllOption } = inject(INDEX_VIEW_CONTEXT_KEY)!
 const { projectOptions, tagOptions, selectedProjectIds, selectedTagIds } = useCalendarSmartList()
 const collapseItemsRecord = ref(['projects', 'tags'])
 
-setControllOption({ useSlot: false, useDrawerSlot: false })
+// 恢复侧边栏显示：与任务页 aside 一致，展开应用左侧子栏以承载筛选内容
+onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
 
 /**
  * 处理侧边栏延时传送
@@ -32,8 +32,6 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
 <template>
     <teleport v-if="isDisplayAside && !teleportDisabled" to="#SubPageAsideTeleportSlot">
         <nue-div theme="aside-wrapper">
-            <nue-div theme="controller-wrapper">日历概览</nue-div>
-            <nue-divider />
             <nue-div theme="smart-list-wrapper">
                 <nue-collapse v-model="collapseItemsRecord" theme="menu">
                     <nao-smart-list
@@ -76,6 +74,11 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
                     </nao-smart-list>
                 </nue-collapse>
             </nue-div>
+            <!-- <nue-divider />
+            <nue-div align="center" justify="space-between" class="hide-completed-row">
+                <nue-text size="var(--nue-text-df2)">隐藏已完成任务</nue-text>
+                <nue-switch v-model="hideCompleted" size="small" />
+            </nue-div> -->
         </nue-div>
     </teleport>
 </template>
@@ -83,6 +86,16 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
 <style scoped>
 .nue-div--aside-wrapper {
     flex: auto;
+
+    > .hide-completed-row {
+        width: 100%;
+        padding: 0.375rem 0.25rem;
+        gap: 0.5rem;
+
+        .nue-switch {
+            flex-shrink: 0;
+        }
+    }
 
     > .nue-div--smart-list-wrapper {
         width: 100%;

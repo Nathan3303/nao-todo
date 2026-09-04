@@ -1,19 +1,36 @@
-import { unwrapError } from '@nao-todo/shared'
+import { responsiveTypes, unwrapError, useAsideWidth, useResponsiveAside } from '@nao-todo/shared'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
-import { useAuthUseCase, useBuiltInProjectUseCase } from '@/hooks'
+import {
+    useAuthUseCase,
+    useBuiltInProjectUseCase,
+    useTaskCheckItemUseCase,
+    useTaskCommentUseCase,
+    useTaskUseCase
+} from '@/hooks'
 import { inject, provide, ref } from 'vue'
-import { CALENDAR_VIEW_CONTEXT_KEY } from './context'
+import { CALENDAR_VIEW_CONTEXT_KEY, type CalendarTaskScope } from './context'
 import { useUserStore } from '@nao-todo/presentation-identity'
 import { useBuiltInProjectsStore } from '@nao-todo/presentation/built-in-project'
+import { useTaskDetailsStore, TASK_DETAILS_PRE_CONTEXT_KEY } from '@nao-todo/presentation/task'
+import { useProjectsStore } from '@nao-todo/presentation/project'
+import { useTagsStore } from '@nao-todo/presentation/tag'
+import {
+    usePomodoroFocusStore,
+    usePomodoroSessionStore,
+    usePomodoroTimerStore
+} from '@nao-todo/presentation/pomodoro'
+import { storeToRefs } from 'pinia'
+import { APP_CONTEXT_KEY } from '@/context'
+import { TaskViewObject } from '@nao-todo/domain-task'
 
 /**
  * 日历视图上下文提供器
- * @description 提供日历视图上下文，包括日历视图的宽度、是否显示侧边栏、是否使用浮动侧边栏等
+ * @description 提供日历视图上下文，包括日历视图的宽度、是否显示侧边栏、是否使用浮动侧边栏等，
+ *              并内嵌任务详情抽屉所需的预上下文（Q5-B：详情在日历区内打开）。
  */
 export const useCalendarView = () => {
-    /**
-     * 注入应用上下文
-     */
+    // @viewContext 应用与首页上下文
+    const { responsiveFlag } = inject(APP_CONTEXT_KEY)!
     const {
         userUseCase,
         projectUseCase,
@@ -23,22 +40,88 @@ export const useCalendarView = () => {
         appSubscriber,
         isUseFloatAside,
         isDisplayAside,
-        switchDisplayAside
+        switchDisplayAside,
+        getProjectName,
+        showTaskDetails
     } = inject(INDEX_VIEW_CONTEXT_KEY)!
 
-    /**
-     * 注入认证使用案例上下文
-     * @description 提供日历视图的认证使用案例上下文，用于认证相关的操作
-     * @use AuthUseCase.create(useUserStore()) - 认证使用案例上下文
-     * @use UserUseCase.create(useUserStore()) - 用户使用案例上下文
-     */
+    // @stores
+    const tagsStore = useTagsStore()
+    const taskDetailsStore = useTaskDetailsStore()
+    const pomodoroSessionStore = usePomodoroSessionStore()
+    const pomodoroTimerStore = usePomodoroTimerStore()
+    const pomodoroFocusStore = usePomodoroFocusStore()
+
+    // @presetStates
+    const { avaliableProjects } = storeToRefs(useProjectsStore())
+    const { tags: avaliableTags } = storeToRefs(tagsStore)
+    const { currentTaskId: pomodoroCurrentTaskId } = storeToRefs(pomodoroSessionStore)
+    const { status: pomodoroTimerStatus } = storeToRefs(pomodoroTimerStore)
+    const { status: pomodoroFocusStatus } = storeToRefs(pomodoroFocusStore)
+
+    // @usecases
     const authUseCase = useAuthUseCase(useUserStore())
     const builtInProjectUseCase = useBuiltInProjectUseCase(useBuiltInProjectsStore())
+    const taskCheckItemUseCase = useTaskCheckItemUseCase(taskDetailsStore)
+    const taskCommentUseCase = useTaskCommentUseCase(taskDetailsStore)
+    const subTaskUseCase = useTaskUseCase(taskDetailsStore)
+
+    // @hook 详情抽屉右侧栏（与任务区同一套响应式组件，宽度独立记忆）
+    const { visible: isDisplayOutline, isFloating: isUseFloatOutline } = useResponsiveAside(
+        responsiveFlag,
+        responsiveTypes.MOBILE_TABLE
+    )
+    const { width: outlineWidth, updater: handleResizeOutline } = useAsideWidth(
+        480,
+        'CALENDAR_OUTLINE_WIDTH'
+    )
+
+    // @states 任务筛选状态（侧边栏复选框与头部范围菜单同源）
+    const selectedProjectIds = ref<string[]>([]) // 勾选的清单
+    const selectedTagIds = ref<string[]>([]) // 勾选的标签
+    const hideCompleted = ref<boolean>(false) // 隐藏已完成任务
+
+    // @action 清除清单/标签两组筛选（不影响 hideCompleted）
+    const clearFilter = () => {
+        selectedProjectIds.value = []
+        selectedTagIds.value = []
+    }
+
+    // @action 快捷设置单一范围（替换式）
+    const applyScope = (scope: CalendarTaskScope) => {
+        if (scope.type === 'project') {
+            selectedProjectIds.value = [scope.id ?? '']
+            selectedTagIds.value = []
+        } else if (scope.type === 'tag') {
+            selectedProjectIds.value = []
+            selectedTagIds.value = [scope.id ?? '']
+        } else {
+            selectedProjectIds.value = []
+            selectedTagIds.value = []
+        }
+    }
+
+    // @method 选择任务并启动番茄钟计时器（详情抽屉复用）
+    const selectTaskAndStartTimer = (
+        taskId: TaskViewObject['id'],
+        name: TaskViewObject['name']
+    ) => {
+        pomodoroSessionStore.selectTask(taskId, name)
+        pomodoroTimerStore.start()
+    }
+
+    // @method 选择任务并启动番茄钟专注（详情抽屉复用）
+    const selectTaskAndStartFocus = (
+        taskId: TaskViewObject['id'],
+        name: TaskViewObject['name']
+    ) => {
+        pomodoroSessionStore.selectTask(taskId, name)
+        pomodoroFocusStore.start()
+    }
 
     /**
      * 加载数据
      * @description 加载内置项目、项目和标签数据，并处理加载状态和错误信息
-     * @use Promise.allSettled([...]) - 加载内置项目、项目和标签数据，并处理加载状态和错误信息
      */
     const isLoading = ref<boolean>(true) // 加载状态
     const error = ref<string>('') // 错误信息
@@ -58,7 +141,6 @@ export const useCalendarView = () => {
 
     /**
      * 提供日历视图上下文
-     * @description 提供日历视图的宽度、是否显示侧边栏、是否使用浮动侧边栏等上下文
      */
     provide(CALENDAR_VIEW_CONTEXT_KEY, {
         authUseCase,
@@ -68,7 +150,41 @@ export const useCalendarView = () => {
         subscriber: appSubscriber,
         isDisplayAside,
         isUseFloatAside,
-        switchDisplayAside
+        switchDisplayAside,
+        showTaskDetails,
+        selectedProjectIds,
+        selectedTagIds,
+        hideCompleted,
+        clearFilter,
+        applyScope
+    })
+
+    /**
+     * 提供任务详情预上下文（Q5-B）
+     * @description 与任务区同构：日历内容区直接复用 TaskDetailsAdapter 打开详情抽屉
+     */
+    provide(TASK_DETAILS_PRE_CONTEXT_KEY, {
+        taskUseCase,
+        taskCommentUseCase,
+        taskCheckItemUseCase,
+        subTaskUseCase,
+        dialogManager: appDialogManager,
+        subscriber: appSubscriber,
+        avaliableProjects,
+        avaliableTags,
+        pomodoroCurrentTaskId,
+        pomodoroTimerStatus,
+        pomodoroFocusStatus,
+        outlineWidth,
+        isDisplayOutline,
+        isUseFloatOutline,
+        handleResizeOutline,
+        getTag: tagsStore.getTag,
+        getProjectName,
+        selectTaskAndStartTimer,
+        selectTaskAndStartFocus,
+        resetTimer: () => pomodoroTimerStore.reset(),
+        resetFocus: () => pomodoroFocusStore.reset()
     })
 
     /**
