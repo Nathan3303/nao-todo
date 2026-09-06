@@ -33,7 +33,7 @@ const { init, isLoading: viewLoading, error: viewError } = useSearchView()
 const { showTaskDetails, getProjectName } = inject(INDEX_VIEW_CONTEXT_KEY)!
 const tagsStore = useTagsStore()
 
-const searchInputEl = ref<HTMLInputElement | null>(null)
+const searchBoxRef = ref<HTMLElement | null>(null)
 
 // @computed 门禁：首拉（无缓存）+ 项目/标签初始化
 const gateLoading = computed(() => viewLoading.value || firstLoading.value)
@@ -42,11 +42,16 @@ const gateError = computed(() => {
     return viewError.value !== '' || error.value !== ''
 })
 
-// @method 输入/清空（输入绑定原生 input；去抖/结果重算在引擎内）
-const onInput = (e: Event) => writeKeyword((e.target as HTMLInputElement).value)
+// @method 输入（NueInput update:model-value → 去抖/结果重算在引擎内；清空由 clearable 内置按钮触发同路径）
 const onClear = () => {
     clearKeyword()
-    nextTick(() => searchInputEl.value?.focus())
+    focusSearchBox()
+}
+
+// @method 搜索框聚焦（NueInput 内部 input）
+const focusSearchBox = () => {
+    const inner = searchBoxRef.value?.querySelector<HTMLInputElement>('input')
+    inner?.focus()
 }
 
 // @method 重试（整页门禁或后台刷新的统一出口）
@@ -91,12 +96,12 @@ const priorityDotOf = (task: SearchRow['task']) => {
 // @lifecycle 视图初始化 + 输入自动聚焦（门禁通过后聚焦）
 onMounted(() => {
     void init()
-    nextTick(() => searchInputEl.value?.focus())
+    nextTick(focusSearchBox)
 })
 watch(
     () => gateLoading.value,
     (loading) => {
-        if (!loading) nextTick(() => searchInputEl.value?.focus())
+        if (!loading) nextTick(focusSearchBox)
     }
 )
 </script>
@@ -115,23 +120,16 @@ watch(
             <nue-main>
                 <nue-content fill class="search-page">
                     <nue-div vertical class="search-toolbar" gap="4px">
-                        <nue-div class="search-box-row" align="center" gap="10px">
-                            <input
-                                ref="searchInputEl"
-                                class="search-input"
-                                type="text"
-                                :value="keyword"
+                        <div ref="searchBoxRef" class="search-input-row">
+                            <nue-input
+                                :model-value="keyword"
+                                icon="search"
+                                clearable
+                                width="100%"
                                 placeholder="搜索全部任务的名称 / 备注…"
-                                @input="onInput"
+                                @update:model-value="writeKeyword"
                             />
-                            <nue-button
-                                v-if="keyword"
-                                theme="icon,small"
-                                icon="clear"
-                                aria-label="清空关键词"
-                                @click="onClear"
-                            />
-                        </nue-div>
+                        </div>
                         <!-- 结果 N + 子任务补拉/失败/超限/后台刷新轻提示 -->
                         <nue-div class="search-toolbar__meta" align="center" gap="8px">
                             <nue-text
@@ -304,32 +302,8 @@ watch(
     margin: 0 auto;
 }
 
-.search-box-row {
+.search-input-row {
     width: 100%;
-    padding: 6px 12px;
-    box-sizing: border-box;
-    border: 1px solid var(--nue-border-color);
-    border-radius: var(--nue-primary-radius);
-    background: var(--nue-primary-color-0);
-    transition: border-color 0.16s ease;
-}
-.search-box-row:focus-within {
-    border-color: var(--nue-primary-color-500, var(--nue-border-color));
-}
-
-.search-input {
-    flex: 1;
-    min-width: 0;
-    border: none;
-    outline: none;
-    background: transparent;
-    color: var(--nue-primary-text-color);
-    font-size: 0.9375rem;
-    line-height: 1.5;
-    padding: 2px 0;
-}
-.search-input::placeholder {
-    color: color-mix(in srgb, var(--nue-primary-text-color) 45%, transparent);
 }
 
 .search-toolbar__meta {
