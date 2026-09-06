@@ -157,13 +157,12 @@ watch(
             <!-- 内容区域 -->
             <nue-main>
                 <nue-content fill class="search-page">
-                    <nue-div vertical class="search-toolbar" gap="4px">
+                    <nue-div vertical class="search-toolbar" gap="var(--nue-gap-sm)">
                         <div ref="searchBoxRef" class="search-input-row">
                             <nue-input
                                 :model-value="keyword"
                                 icon="search"
                                 clearable
-                                width="100%"
                                 placeholder="搜索全部任务的名称 / 备注…"
                                 @update:model-value="writeKeyword"
                             />
@@ -182,7 +181,11 @@ watch(
                             @clear="onClearFilters"
                         />
                         <!-- 结果 N + 子任务补拉/失败/超限/后台刷新轻提示 -->
-                        <nue-div class="search-toolbar__meta" align="center" gap="8px">
+                        <nue-div
+                            class="search-toolbar__meta"
+                            align="center"
+                            gap="var(--nue-gap-sm)"
+                        >
                             <nue-text
                                 v-if="keyword && ready"
                                 size="var(--nue-text-sm)"

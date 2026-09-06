@@ -69,20 +69,10 @@ const isChecked = (list: string[], id: string) => list.includes(id)
                 @execute="(id: string) => emit('toggleProject', id)"
             >
                 <template #trigger="{ trigger, visible }">
-                    <nue-button
-                        class="filter-trigger"
-                        :class="{ 'filter-trigger--active': selectedProjectIds.length > 0 }"
-                        :aria-expanded="visible"
-                        @click="trigger($event)"
-                    >
-                        <nue-icon name="filter" class="filter-trigger__icon" />
-                        <span class="filter-trigger__label">清单</span>
-                        <template #append>
-                            <span
-                                v-if="selectedProjectIds.length > 0"
-                                class="filter-count"
-                                :aria-label="`已选 ${selectedProjectIds.length} 项`"
-                            >
+                    <nue-button :aria-expanded="visible" @click="trigger($event)" theme="small">
+                        清单
+                        <template v-if="selectedProjectIds.length > 0" #append>
+                            <span :aria-label="`已选 ${selectedProjectIds.length} 项`">
                                 {{ selectedProjectIds.length }}
                             </span>
                         </template>
@@ -116,20 +106,10 @@ const isChecked = (list: string[], id: string) => list.includes(id)
                 @execute="(id: string) => emit('toggleTag', id)"
             >
                 <template #trigger="{ trigger, visible }">
-                    <nue-button
-                        class="filter-trigger"
-                        :class="{ 'filter-trigger--active': selectedTagIds.length > 0 }"
-                        :aria-expanded="visible"
-                        @click="trigger($event)"
-                    >
-                        <nue-icon name="filter" class="filter-trigger__icon" />
-                        <span class="filter-trigger__label">标签</span>
-                        <template #append>
-                            <span
-                                v-if="selectedTagIds.length > 0"
-                                class="filter-count"
-                                :aria-label="`已选 ${selectedTagIds.length} 项`"
-                            >
+                    <nue-button :aria-expanded="visible" @click="trigger($event)" theme="small">
+                        标签
+                        <template v-if="selectedTagIds.length > 0" #append>
+                            <span :aria-label="`已选 ${selectedTagIds.length} 项`">
                                 {{ selectedTagIds.length }}
                             </span>
                         </template>
@@ -173,20 +153,10 @@ const isChecked = (list: string[], id: string) => list.includes(id)
                 @execute="(id: string) => emit('togglePriority', id)"
             >
                 <template #trigger="{ trigger, visible }">
-                    <nue-button
-                        class="filter-trigger"
-                        :class="{ 'filter-trigger--active': selectedPriorities.length > 0 }"
-                        :aria-expanded="visible"
-                        @click="trigger($event)"
-                    >
-                        <nue-icon name="filter" class="filter-trigger__icon" />
-                        <span class="filter-trigger__label">优先级</span>
-                        <template #append>
-                            <span
-                                v-if="selectedPriorities.length > 0"
-                                class="filter-count"
-                                :aria-label="`已选 ${selectedPriorities.length} 项`"
-                            >
+                    <nue-button :aria-expanded="visible" @click="trigger($event)" theme="small">
+                        优先级
+                        <template v-if="selectedPriorities.length > 0" #append>
+                            <span :aria-label="`已选 ${selectedPriorities.length} 项`">
                                 {{ selectedPriorities.length }}
                             </span>
                         </template>
@@ -214,20 +184,10 @@ const isChecked = (list: string[], id: string) => list.includes(id)
                 @execute="(id: string) => emit('toggleState', id)"
             >
                 <template #trigger="{ trigger, visible }">
-                    <nue-button
-                        class="filter-trigger"
-                        :class="{ 'filter-trigger--active': selectedStates.length > 0 }"
-                        :aria-expanded="visible"
-                        @click="trigger($event)"
-                    >
-                        <nue-icon name="filter" class="filter-trigger__icon" />
-                        <span class="filter-trigger__label">状态</span>
-                        <template #append>
-                            <span
-                                v-if="selectedStates.length > 0"
-                                class="filter-count"
-                                :aria-label="`已选 ${selectedStates.length} 项`"
-                            >
+                    <nue-button :aria-expanded="visible" @click="trigger($event)" theme="small">
+                        状态
+                        <template v-if="selectedStates.length > 0" #append>
+                            <span :aria-label="`已选 ${selectedStates.length} 项`">
                                 {{ selectedStates.length }}
                             </span>
                         </template>
@@ -271,7 +231,7 @@ const isChecked = (list: string[], id: string) => list.includes(id)
 .search-filter-bar__dims {
     display: inline-flex;
     align-items: center;
-    gap: var(--nue-gap-2xs);
+    gap: var(--nue-gap-xs);
     flex-wrap: wrap;
     min-width: 0;
 }
@@ -313,8 +273,6 @@ const isChecked = (list: string[], id: string) => list.includes(id)
     line-height: 18px;
     font-weight: 700;
     color: var(--nue-warning-color-80);
-    background: var(--nue-warning-color-10);
-    border: 1px solid color-mix(in srgb, var(--nue-warning-color-60) 35%, transparent);
 }
 
 .filter-option-name {
