@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Loading as LoadingComp } from '@nao-todo/shared'
-import { computed, inject, ref } from 'vue'
+import dayjs from 'dayjs'
+import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import CalendarDayDrawer from './day-drawer.vue'
-import useCalendarMonthly from './use-calendar-monthly'
-import { GRID_COLUMNS, MAX_VISIBLE_LANES, type CalendarRow } from './monthly-layout'
+import useCalendarMonthly, { isTaskOverdue } from './use-calendar-monthly'
+import { GRID_COLUMNS, GRID_ROWS, MAX_VISIBLE_LANES, type CalendarRow } from './monthly-layout'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 
 defineOptions({ name: 'CalendarMonthly' })
@@ -15,6 +16,9 @@ const ITEM_STEP = 18 // 单条任务条高度(16) + 纵向间距(2)
 
 // @viewContext 应用级子侧栏开关（与任务页 header 行为一致）
 const { isDisplayAside, switchDisplayAside } = inject(INDEX_VIEW_CONTEXT_KEY)!
+
+// @states 动态可视轨道数（DEF-2：由行高实测决定；未测得前回退 3）
+const laneLimit = ref<number>(MAX_VISIBLE_LANES)
 
 // @viewLogic 月历视图逻辑
 const {
@@ -29,6 +33,7 @@ const {
     goToToday,
     getDayTasks,
     toggleDone,
+    deferToToday,
     createTaskOnDay,
     openTaskDetails,
     // —— 筛选（空态/清除出口） ——
@@ -36,7 +41,7 @@ const {
     selectedTagIds,
     hideCompleted,
     clearFilter
-} = useCalendarMonthly()
+} = useCalendarMonthly(laneLimit)
 
 const weekdays = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -70,6 +75,45 @@ const emptyState = computed(() => {
     return { text: '本月暂无任务', action: '', run: () => {} }
 })
 
+// —— 动态可视轨道数：ResizeObserver + 100ms 防抖，随行高实时调整（DEF-2） ——
+const calBodyEl = ref<HTMLElement | null>(null)
+let laneResizeTimer: ReturnType<typeof setTimeout> | undefined
+let laneBodyObserver: ResizeObserver | undefined
+
+// @method 按行实际高度计算可视条数：max(1, floor((行高 − 日期区26 − 底部留白4) / 18))
+const measureAndApplyLaneLimit = () => {
+    const firstRow = calBodyEl.value?.querySelector<HTMLElement>('.cal-row')
+    const rowHeight = firstRow?.clientHeight ?? 0
+    if (rowHeight <= 0) return
+    const next = Math.max(1, Math.floor((rowHeight - DATE_OFFSET - 4) / ITEM_STEP))
+    if (next !== laneLimit.value) laneLimit.value = next
+}
+const scheduleLaneMeasure = () => {
+    clearTimeout(laneResizeTimer)
+    laneResizeTimer = setTimeout(measureAndApplyLaneLimit, 100)
+}
+
+// @lifecycle 观测网格容器高度（网格出现/消失、窗口缩放等）
+onMounted(() => {
+    laneBodyObserver = new ResizeObserver(scheduleLaneMeasure)
+    if (calBodyEl.value) laneBodyObserver.observe(calBodyEl.value)
+    measureAndApplyLaneLimit()
+})
+onUnmounted(() => {
+    laneBodyObserver?.disconnect()
+    laneBodyObserver = undefined
+    clearTimeout(laneResizeTimer)
+})
+
+// @watch 数据/视图状态就绪后再量一次（等高校换场景 RO 不触发时补量）
+watch(
+    [loading, error, () => emptyState.value],
+    () => {
+        void nextTick(measureAndApplyLaneLimit)
+    },
+    { flush: 'post' }
+)
+
 // @method 打开某日面板（同时选中该日）
 const openDay = (dateKey: string) => {
     selectDate(dateKey)
@@ -77,9 +121,9 @@ const openDay = (dateKey: string) => {
     dayDrawerOpen.value = true
 }
 
-// @method 可视轨道内的任务条
+// @method 可视轨道内的任务条（随动态 laneLimit 实时增减）
 const visibleSegments = (row: CalendarRow) =>
-    row.segments.filter((seg) => seg.lane < MAX_VISIBLE_LANES)
+    row.segments.filter((seg) => seg.lane < laneLimit.value)
 
 // @method 某格溢出 +N
 const overflowOn = (row: CalendarRow, dateKey: string) =>
@@ -95,6 +139,36 @@ const segStyle = (seg: { colStart: number; colEnd: number; lane: number }) => {
         top: `${DATE_OFFSET + seg.lane * ITEM_STEP}px`
     }
 }
+
+// @method 条左缘色：逾期红 > 优先级色（high=error 红 / medium=warning 琥珀 / low 中性无条）
+const taskBarColor = (task: TaskViewObject): string => {
+    if (isTaskOverdue(task)) return 'var(--nue-error-color-60)'
+    if (task.priority === 'high') return 'var(--nue-error-color-60)'
+    if (task.priority === 'medium') return 'var(--nue-warning-color-60)'
+    return 'transparent'
+}
+
+// @method 段首时刻文本：仅真起始段（HH:mm）；跨行续接段/被网格裁剪的可见段不显示，避免误导
+const segTimeText = (
+    seg: { task: TaskViewObject; isStart: boolean; colStart: number },
+    row: CalendarRow
+): string => {
+    const task = seg.task
+    if (!seg.isStart || !task.startAt) return ''
+    const start = dayjs(task.startAt)
+    if (!start.isValid()) return ''
+    const firstCellKey = row.cells[seg.colStart]?.dateKey
+    if (start.format('YYYY-MM-DD') !== firstCellKey) return ''
+    return start.format('HH:mm')
+}
+
+// @method 跨行续接标记：行尾（后续行继续）只在与网格内下一行相接处显示
+const isRowEnd = (seg: { colEnd: number; isEnd: boolean }, row: CalendarRow): boolean =>
+    row.row < GRID_ROWS - 1 && seg.colEnd === GRID_COLUMNS - 1 && !seg.isEnd
+
+// @method 跨行续接标记：行首（承接上一行）只在与网格内上一行相接处显示
+const isRowStart = (seg: { colStart: number; isStart: boolean }, row: CalendarRow): boolean =>
+    row.row > 0 && seg.colStart === 0 && !seg.isStart
 
 // @method 从当日面板打开任务详情
 const openTaskFromPanel = (taskId: TaskViewObject['id']) => {
@@ -141,7 +215,7 @@ const openTaskFromPanel = (taskId: TaskViewObject['id']) => {
         </nue-div>
 
         <!-- 月历主体 -->
-        <div class="cal-body">
+        <div ref="calBodyEl" class="cal-body">
             <!-- 加载中 -->
             <div v-if="loading" class="cal-body-state">
                 <loading-comp height="100%" />
@@ -205,13 +279,29 @@ const openTaskFromPanel = (taskId: TaskViewObject['id']) => {
                             class="cal-item"
                             :class="{
                                 'is-done': seg.task.state === 'done',
+                                'is-overdue': isTaskOverdue(seg.task),
                                 'is-start': seg.isStart,
-                                'is-end': seg.isEnd
+                                'is-end': seg.isEnd,
+                                'has-cont-start': isRowStart(seg, row),
+                                'has-cont-end': isRowEnd(seg, row)
                             }"
-                            :style="segStyle(seg)"
+                            :style="[segStyle(seg), { '--cal-pri': taskBarColor(seg.task) }]"
                             :title="seg.task.name"
                             @click.stop="openTaskDetails(seg.task.id)"
                         >
+                            <span v-if="segTimeText(seg, row)" class="cal-item-time">
+                                {{ segTimeText(seg, row) }}
+                            </span>
+                            <span
+                                v-if="isRowStart(seg, row)"
+                                class="cal-cont cal-cont--start"
+                                title="承接上一周"
+                            ></span>
+                            <span
+                                v-if="isRowEnd(seg, row)"
+                                class="cal-cont cal-cont--end"
+                                title="续至下一周"
+                            ></span>
                             <span class="cal-item-text">{{ seg.task.name }}</span>
                         </div>
                     </div>
@@ -225,6 +315,7 @@ const openTaskFromPanel = (taskId: TaskViewObject['id']) => {
             :date-key="dayDrawerDate"
             :tasks="dayTasks"
             :on-toggle-done="toggleDone"
+            :on-defer="deferToToday"
             :on-open-task="openTaskFromPanel"
             :on-create="() => createTaskOnDay(dayDrawerDate)"
         />
@@ -466,9 +557,65 @@ const openTaskFromPanel = (taskId: TaskViewObject['id']) => {
 }
 
 .cal-item-text {
+    flex: 1;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     padding-right: 2px;
+}
+
+/* 左缘色条：优先级色（逾期红覆盖），done 弱化至 ~30% 原色痕 */
+.cal-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 1px;
+    bottom: 1px;
+    width: 2px;
+    border-radius: 1px;
+    background: var(--cal-pri, transparent);
+    pointer-events: none;
+}
+.cal-item.is-done::before {
+    opacity: 0.3;
+}
+
+/* 段首时刻文本（HH:mm，随条超宽省略） */
+.cal-item-time {
+    flex: none;
+    margin-right: 6px;
+    color: var(--cal-muted);
+    font-size: 0.6875rem;
+    line-height: 16px;
+    font-variant-numeric: tabular-nums;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+/* 跨行续接圆点（承接上一周 / 续至下一周） */
+.cal-cont {
+    position: absolute;
+    top: 50%;
+    width: 5px;
+    height: 5px;
+    margin-top: -2.5px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--cal-fg) 58%, var(--cal-bg));
+    pointer-events: none;
+}
+.cal-cont--start {
+    left: 3px;
+}
+.cal-cont--end {
+    right: 3px;
+}
+
+/* 有续接标记的条体：为圆点预留文本间距（名称 ellipsis 不压圆点） */
+.cal-item.has-cont-start {
+    padding-left: 14px;
+}
+.cal-item.has-cont-end {
+    padding-right: 14px;
 }
 
 /* ── 溢出 +N ── */

@@ -4,18 +4,31 @@ import { useTasksStore } from '@nao-todo/presentation/task'
 import { useTaskUseCase } from '@/hooks'
 import { NueMessage } from 'nue-ui'
 import dayjs from 'dayjs'
-import { computed, inject, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, inject, onMounted, onUnmounted, ref, watch, type Ref } from 'vue'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
-import { buildGridModel, spanCoversDate, todayDateKey } from './monthly-layout'
+import { buildGridModel, MAX_VISIBLE_LANES, spanCoversDate, todayDateKey } from './monthly-layout'
 import { buildCalendarListQuery, MAX_PAGES, PAGE_LIMIT } from './list-query'
+
+/**
+ * 任务是否逾期（天级口径，与任务页「已过期」一致）
+ * @description endAt < 今日 0 点且未完成；endAt 为空/非法或已完成一律不判逾期。
+ */
+export const isTaskOverdue = (task: TaskViewObject): boolean => {
+    if (task.state === 'done' || !task.endAt) return false
+    const end = dayjs(task.endAt)
+    return end.isValid() && end.isBefore(dayjs().startOf('day'))
+}
 
 /**
  * useCalendarMonthly
  * @description 月历视图逻辑：任务全量拉取（服务端过滤：多清单/多标签/隐藏已完成，
  *              顶层/未删除/未归档/未放弃）+ 翻月 + 日期选中 + 网格模型计算 +
  *              完成切换/当日新建/打开详情等动作。
+ * @param laneLimit 每行可视轨道数（渲染侧按行高动态测得；缺省回退 3）
  */
-const useCalendarMonthly = () => {
+const useCalendarMonthly = (laneLimit?: Ref<number>) => {
+    // @dynamic 可视轨道数（外部测得传入；未提供时使用默认回退值）
+    const internalLaneLimit = laneLimit ?? ref(MAX_VISIBLE_LANES)
     // @viewContext 日历视图上下文
     const {
         dialogManager,
@@ -138,7 +151,13 @@ const useCalendarMonthly = () => {
 
     // @computed 网格模型（快照任务即服务端过滤结果 -> 行/轨道/溢出）
     const model = computed(() =>
-        buildGridModel(year.value, monthIndex.value, tasks.value, selectedKey.value)
+        buildGridModel(
+            year.value,
+            monthIndex.value,
+            tasks.value,
+            selectedKey.value,
+            internalLaneLimit.value
+        )
     )
 
     // @method 某日的任务列表（含跨月任务，按 R6 排序；数据源与网格一致）
@@ -187,6 +206,15 @@ const useCalendarMonthly = () => {
         if (err !== null) NueMessage.error(unwrapError(err))
     }
 
+    // @method 延期到今天：仅把 endAt 改为今日末，startAt 不变（失败 toast，视觉不变）
+    const deferToToday = async (task: TaskViewObject): Promise<void> => {
+        const err = await taskUseCase.update(task.id, {
+            endAt: dayjs().endOf('day').toISOString(),
+            updatedAt: dayjs().toISOString()
+        })
+        if (err !== null) NueMessage.error(unwrapError(err))
+    }
+
     // @method 以某日为截止日新建任务（打开创建器并预填当日 + 当前范围上下文）
     const createTaskOnDay = (dateKey: string) => {
         const payload: { startAt: string; endAt: string } & Record<string, unknown> = {
@@ -221,6 +249,7 @@ const useCalendarMonthly = () => {
         goToToday,
         getDayTasks,
         toggleDone,
+        deferToToday,
         createTaskOnDay,
         openTaskDetails,
         // —— 筛选（空态/清除出口使用） ——

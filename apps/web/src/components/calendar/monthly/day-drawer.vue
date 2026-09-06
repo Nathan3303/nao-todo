@@ -2,7 +2,8 @@
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { TaskCheckButton } from '@nao-todo/shared'
 import dayjs from 'dayjs'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { isTaskOverdue } from './use-calendar-monthly'
 
 defineOptions({ name: 'CalendarDayDrawer' })
 
@@ -11,10 +12,25 @@ const props = defineProps<{
     dateKey: string
     tasks: TaskViewObject[]
     onToggleDone: (task: TaskViewObject) => void
+    onDefer: (task: TaskViewObject) => void | Promise<void>
     onOpenTask: (taskId: TaskViewObject['id']) => void
     onCreate: () => void
 }>()
 const emit = defineEmits<{ (e: 'update:open', value: boolean): void }>()
+
+// @states 延期请求进行中（防重复点击）
+const deferringId = ref<TaskViewObject['id']>('')
+
+// @method 延期到今天：调用方负责失败 toast，此处只维护按钮忙态
+const runDefer = async (task: TaskViewObject): Promise<void> => {
+    if (deferringId.value) return
+    deferringId.value = task.id
+    try {
+        await props.onDefer(task)
+    } finally {
+        deferringId.value = ''
+    }
+}
 
 // @computed 抽屉显隐（v-model 桥接）
 const visible = computed({
@@ -67,7 +83,7 @@ const title = computed(() => {
                     v-for="task in tasks"
                     :key="task.id"
                     class="dd-item"
-                    :class="{ 'is-done': task.state === 'done' }"
+                    :class="{ 'is-done': task.state === 'done', 'is-overdue': isTaskOverdue(task) }"
                     @click="onOpenTask(task.id)"
                 >
                     <TaskCheckButton
@@ -75,6 +91,17 @@ const title = computed(() => {
                         @change="onToggleDone(task)"
                     />
                     <span class="dd-name">{{ task.name }}</span>
+                    <template v-if="isTaskOverdue(task)">
+                        <span class="dd-overdue-chip">已过期</span>
+                        <nue-button
+                            theme="small,ghost"
+                            class="dd-defer-btn"
+                            :disabled="deferringId === task.id"
+                            @click.stop="runDefer(task)"
+                        >
+                            {{ deferringId === task.id ? '延期…' : '延期到今天' }}
+                        </nue-button>
+                    </template>
                 </div>
             </template>
             <nue-div v-else vertical align="center" class="dd-empty" gap="4px">
@@ -144,6 +171,23 @@ const title = computed(() => {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+}
+
+.dd-overdue-chip {
+    flex: none;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--nue-error-color-10);
+    color: var(--nue-error-color-80);
+    font-size: 0.6875rem;
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+.dd-defer-btn {
+    flex: none;
 }
 
 .dd-empty {

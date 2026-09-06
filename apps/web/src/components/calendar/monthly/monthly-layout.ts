@@ -15,7 +15,8 @@ export const GRID_COLUMNS = 7
 export const GRID_ROWS = 6
 export const GRID_TOTAL = GRID_COLUMNS * GRID_ROWS
 
-// 每格最多直接渲染的任务轨道数，超出部分以 "+N" 折叠
+// 可视轨道数默认值（回退）：行高测量前/无测量时使用；超出部分以 "+N" 折叠。
+// 实际可视数由渲染侧按行高动态决定并作为 maxLanes 传入。
 export const MAX_VISIBLE_LANES = 3
 
 /** 月份归属：-1 上个月 / 0 本月 / 1 下个月 */
@@ -113,12 +114,14 @@ const compareKeys = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
  * @param monthIndex 月份（0-based）
  * @param tasks 参与渲染的任务（可含其他月份，内部按跨度裁剪）
  * @param selectedKey 当前选中日期键
+ * @param maxLanes 该月每行可视轨道数（由真实行高决定；默认回退 3）
  */
 export const buildGridModel = (
     year: number,
     monthIndex: number,
     tasks: TaskViewObject[],
-    selectedKey?: string | null
+    selectedKey?: string | null,
+    maxLanes: number = MAX_VISIBLE_LANES
 ): CalendarGridModel => {
     const firstOfMonth = dayjs(new Date(year, monthIndex, 1))
     // 周日开头：从本月 1 号所在周的周日开始铺 42 格
@@ -200,7 +203,7 @@ export const buildGridModel = (
         for (const cell of rowCells) {
             const col = cell.cell % GRID_COLUMNS
             const overlapped = segments.filter((s) => s.colStart <= col && s.colEnd >= col)
-            const drawn = overlapped.filter((s) => s.lane < MAX_VISIBLE_LANES).length
+            const drawn = overlapped.filter((s) => s.lane < maxLanes).length
             const hidden = overlapped.length - drawn
             if (hidden > 0) overflow.push({ cell: cell.cell, dateKey: cell.dateKey, count: hidden })
         }
@@ -219,12 +222,14 @@ export const buildGridModel = (
 }
 
 /** 获取某日期格在行内被绘制的任务（可视轨道内），供点击命中/样式使用 */
-export const segmentsOnCell = (row: CalendarRow, dateKey: string): CalendarSegment[] => {
+export const segmentsOnCell = (
+    row: CalendarRow,
+    dateKey: string,
+    maxLanes: number = MAX_VISIBLE_LANES
+): CalendarSegment[] => {
     const col = row.cells.findIndex((c) => c.dateKey === dateKey)
     if (col < 0) return []
-    return row.segments.filter(
-        (s) => s.lane < MAX_VISIBLE_LANES && s.colStart <= col && s.colEnd >= col
-    )
+    return row.segments.filter((s) => s.lane < maxLanes && s.colStart <= col && s.colEnd >= col)
 }
 
 /** 任务跨度是否覆盖某个日期键 */
