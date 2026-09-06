@@ -2,9 +2,8 @@
 import { computed, inject, nextTick, onMounted, ref, watch } from 'vue'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { TaskDetailsAdapter, TaskTagBar } from '@nao-todo/presentation/task'
-import { LoadingError, assetUrl } from '@nao-todo/shared'
-import { isTaskOverdue } from '@/components/calendar/monthly/use-calendar-monthly'
-import { dateKeyLabel, type SearchRow } from '@/components/search/search-tasks'
+import { LoadingError, assetUrl, TaskBasicInfo, TaskDateInfo } from '@nao-todo/shared'
+import { type SearchRow } from '@/components/search/search-tasks'
 import type { TaskTagViewObject } from '@nao-todo/domain-task'
 import useSearchEngine from '@/components/search/use-search'
 import { useTagsStore } from '@nao-todo/presentation/tag'
@@ -93,11 +92,8 @@ const availableTagOptions = computed<TaskTagViewObject[]>(() =>
     }))
 )
 const isDone = (task: SearchRow['task']) => task.state === 'done'
-const dateTextOf = (task: SearchRow['task']) => {
-    const raw = task.endAt || task.startAt
-    return dateKeyLabel(raw ? raw.slice(0, 10) : '', new Date().getFullYear())
-}
-const isRowOverdue = (task: SearchRow['task']) => isTaskOverdue(task)
+// 日期展示源：沿用 endAt ?? startAt（原始 ISO 交给 TaskDateInfo 相对文案 + 时刻级过期着色）
+const dateIsoOf = (task: SearchRow['task']) => task.endAt || task.startAt || ''
 // 优先级圆点色（high=error 红 / medium=warning 琥珀 / low 无；完成态不显示）
 const priorityDotOf = (task: SearchRow['task']) => {
     if (isDone(task)) return ''
@@ -238,10 +234,7 @@ watch(
                                 :aria-label="row.task.name"
                                 :title="row.task.name"
                                 class="search-row"
-                                :class="{
-                                    'search-row--done': isDone(row.task),
-                                    'search-row--overdue': isRowOverdue(row.task)
-                                }"
+                                :class="{ 'search-row--done': isDone(row.task) }"
                                 @click="openTaskDetails(row)"
                                 @keydown="handleRowKeydown(row, $event)"
                             >
@@ -281,14 +274,12 @@ watch(
                                         </template>
                                     </span>
                                 </nue-div>
-                                <nue-div class="search-row__meta" align="center" gap="8px">
-                                    <nue-text
+                                <nue-div class="search-row__meta" align="center">
+                                    <task-basic-info
                                         v-if="row.task.projectId"
-                                        size="var(--nue-text-sm)"
-                                        class="search-row__project"
-                                    >
-                                        {{ getProjectName(row.task.projectId) }}
-                                    </nue-text>
+                                        no-icon
+                                        :text="`清单：${getProjectName(row.task.projectId)}`"
+                                    />
                                     <task-tag-bar
                                         v-if="row.task.tags.length"
                                         :available-tags="availableTagOptions"
@@ -296,13 +287,11 @@ watch(
                                         readonly
                                         small
                                     />
-                                    <nue-text
-                                        v-if="dateTextOf(row.task)"
-                                        size="var(--nue-text-sm)"
-                                        class="search-row__date"
-                                    >
-                                        {{ dateTextOf(row.task) }}
-                                    </nue-text>
+                                    <task-date-info
+                                        v-if="dateIsoOf(row.task)"
+                                        :date="dateIsoOf(row.task)"
+                                        :colored="!isDone(row.task)"
+                                    />
                                 </nue-div>
                             </nue-div>
                         </nue-div>
@@ -401,7 +390,7 @@ watch(
     border-radius: var(--nue-primary-radius);
     cursor: pointer;
     outline: none;
-    gap: var(--nue-gap-2xs);
+    gap: 0;
     transition:
         background-color var(--nue-animation-duration-short) var(--nue-animation-timing-function),
         border-color var(--nue-animation-duration-short) var(--nue-animation-timing-function);
@@ -474,15 +463,11 @@ watch(
 .search-row__meta {
     width: 100%;
     margin-top: var(--nue-gap-2xs);
-    gap: var(--nue-gap-2xs);
+    row-gap: var(--nue-gap-xs);
+    column-gap: var(--nue-gap-sm); /* 清单/标签/日期分隔间距保持可辨 */
     flex-wrap: wrap;
     min-height: 20px;
-}
-.search-row__project,
-.search-row__date {
-    font-size: var(--nue-text-sm);
-    line-height: 1.5;
-    color: var(--nue-primary-color-800);
+    align-items: center;
 }
 
 /* 完成态：整行 opacity .8 + 名称删划线 + 无优先级点；meta 保持可读 */
@@ -495,11 +480,5 @@ watch(
 }
 .search-row--done .search-row__dot {
     display: none;
-}
-
-/* 逾期日期：红色（口径同日历 isTaskOverdue；跨页统一 error-30 属 P2 另立，此处保持现状） */
-.search-row--overdue .search-row__date {
-    color: var(--nue-error-color-60);
-    font-weight: 500;
 }
 </style>
