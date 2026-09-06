@@ -255,6 +255,7 @@ watch(
                         </nue-empty>
                         <loading-error
                             v-else
+                            :loading="false"
                             :error="!!(ready && error)"
                             error-image-size="6rem"
                             :error-image-src="assetUrl('/images/error.webp')"
