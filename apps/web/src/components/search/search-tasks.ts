@@ -14,7 +14,10 @@ export type SearchRow = {
     task: TaskViewObject
     /** 名称完整高亮分段（未命中态无此行） */
     nameSegments: SearchHitSegment[]
-    /** 备注命中片段预览（未命中备注时为 null；命中时按首命中窗口截取） */
+    /**
+     * 描述行分段（恒显语义 SEA-D2-1：有描述即非 null；命中时为首命中窗口高亮，
+     * 未命中时为整段纯文本 —— 不以「是否命中」当显隐开关）
+     */
     descriptionSegments: SearchHitSegment[] | null
 }
 
@@ -101,8 +104,11 @@ export const searchTasks = (tasks: TaskViewObject[], keyword: string): SearchRow
         const row: SearchRow = {
             task,
             nameSegments: highlightSegments(task.name, kwLower),
-            descriptionSegments: descriptionHit
-                ? buildDescriptionPreview(task.description, kwLower)
+            // 恒显：有描述即输出描述行（命中 → 高亮窗口；未命中 → 整段纯文本，由展示层 clamp/title）
+            descriptionSegments: task.description
+                ? descriptionHit
+                    ? buildDescriptionPreview(task.description, kwLower)
+                    : [{ text: task.description, hit: false }]
                 : null
         }
         // 排序键（避免行内重复计算字符串比较）

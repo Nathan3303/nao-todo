@@ -1,10 +1,11 @@
 <script lang="ts" setup>
 import { computed, inject, nextTick, onMounted, ref, watch } from 'vue'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
-import { TaskDetailsAdapter } from '@nao-todo/presentation/task'
+import { TaskDetailsAdapter, TaskTagBar } from '@nao-todo/presentation/task'
 import { LoadingError, assetUrl } from '@nao-todo/shared'
 import { isTaskOverdue } from '@/components/calendar/monthly/use-calendar-monthly'
 import { dateKeyLabel, type SearchRow } from '@/components/search/search-tasks'
+import type { TaskTagViewObject } from '@nao-todo/domain-task'
 import useSearchEngine from '@/components/search/use-search'
 import { useTagsStore } from '@nao-todo/presentation/tag'
 import { useSearchView } from './search-view'
@@ -83,13 +84,14 @@ const handleRowKeydown = (row: SearchRow, event: KeyboardEvent) => {
     }
 }
 
-// @method 行内展示辅助（纯展示口径，随 store 联动）
-const tagOf = (id: string) => tagsStore.getTag(id)
-const chipsOf = (tags: string[]) =>
-    tags
-        .map((id) => tagOf(id))
-        .filter((tag): tag is NonNullable<typeof tag> => !!tag)
-        .map((tag) => ({ id: tag.id, name: tag.name, color: tag.color }))
+// @computed 可用标签（TaskTagBar 所需 props；标签色为用户数据，展示层唯一颜色豁免）
+const availableTagOptions = computed<TaskTagViewObject[]>(() =>
+    [...tagsStore.tags.values()].map((tag) => ({
+        id: tag.id,
+        name: tag.name,
+        color: tag.color
+    }))
+)
 const isDone = (task: SearchRow['task']) => task.state === 'done'
 const dateTextOf = (task: SearchRow['task']) => {
     const raw = task.endAt || task.startAt
@@ -196,9 +198,9 @@ watch(
                                 class="srch-tip srch-tip--warn"
                             >
                                 清单/标签加载失败，部分名称可能缺失
-                                <nue-button theme="small,ghost" @click="retryViewInit"
-                                    >重试</nue-button
-                                >
+                                <nue-button theme="small,ghost" @click="retryViewInit">
+                                    重试
+                                </nue-button>
                             </nue-text>
                         </nue-div>
                     </nue-div>
@@ -264,7 +266,10 @@ watch(
                                     class="search-row__desc"
                                     align="center"
                                 >
-                                    <span class="search-row__desc-text">
+                                    <span
+                                        class="search-row__desc-text"
+                                        :title="row.task.description"
+                                    >
                                         <template
                                             v-for="(seg, idx) in row.descriptionSegments"
                                             :key="idx"
@@ -284,17 +289,13 @@ watch(
                                     >
                                         {{ getProjectName(row.task.projectId) }}
                                     </nue-text>
-                                    <span
-                                        v-for="chip in chipsOf(row.task.tags)"
-                                        :key="chip.id"
-                                        class="search-row__tag"
-                                    >
-                                        <span
-                                            class="search-row__tag-dot"
-                                            :style="{ background: chip.color }"
-                                        />
-                                        {{ chip.name }}
-                                    </span>
+                                    <task-tag-bar
+                                        v-if="row.task.tags.length"
+                                        :available-tags="availableTagOptions"
+                                        :task-tag-ids="row.task.tags"
+                                        readonly
+                                        small
+                                    />
                                     <nue-text
                                         v-if="dateTextOf(row.task)"
                                         size="var(--nue-text-sm)"
@@ -396,10 +397,11 @@ watch(
 .search-row {
     width: 100%;
     box-sizing: border-box;
-    padding: var(--nue-padding-xs) var(--nue-padding-sm);
+    padding: var(--nue-padding-sm) var(--nue-padding-df);
     border-radius: var(--nue-primary-radius);
     cursor: pointer;
     outline: none;
+    gap: var(--nue-gap-2xs);
     transition:
         background-color var(--nue-animation-duration-short) var(--nue-animation-timing-function),
         border-color var(--nue-animation-duration-short) var(--nue-animation-timing-function);
@@ -444,7 +446,7 @@ watch(
 /* 描述：sm / primary-500；同两行 clamp（命中片段预览） */
 .search-row__desc-text {
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 3; /* 对齐任务列表行口径（list-main：clamp 3 + title 全文） */
     -webkit-box-orient: vertical;
     overflow: hidden;
     overflow-wrap: anywhere;
@@ -481,29 +483,6 @@ watch(
     font-size: var(--nue-text-sm);
     line-height: 1.5;
     color: var(--nue-primary-color-800);
-}
-
-/* chips：令牌化（高度对齐 20px 行度量，radius/padding/gap/border/文字全令牌） */
-.search-row__tag {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--nue-gap-2xs);
-    padding: 0 var(--nue-padding-xs);
-    height: calc(var(--nue-box-size-2xs) - 0.25rem); /* 1.5rem - 4px = 20px */
-    line-height: calc(var(--nue-box-size-2xs) - 0.25rem);
-    box-sizing: border-box;
-    border-radius: var(--nue-radius-lg);
-    border: 1px solid var(--nue-border-color);
-    font-size: var(--nue-text-xs);
-    color: var(--nue-primary-color-800);
-    background: var(--nue-primary-color-100);
-}
-/* 标签色点为后端用户数据（唯一颜色豁免） */
-.search-row__tag-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    flex: none;
 }
 
 /* 完成态：整行 opacity .8 + 名称删划线 + 无优先级点；meta 保持可读 */

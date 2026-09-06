@@ -161,7 +161,7 @@ describe('searchTasks - 排序', () => {
 })
 
 describe('searchTasks - 高亮分段与备注预览', () => {
-    it('名称行携带分段；备注未命中为 null', () => {
+    it('名称行携带分段；描述为空 → 描述行 null（不占行）', () => {
         const row = searchTasks([makeTask({ id: 't1', name: '买菜清单' })], '菜')[0]!
         expect(row.nameSegments).toEqual([
             { text: '买', hit: false },
@@ -169,6 +169,22 @@ describe('searchTasks - 高亮分段与备注预览', () => {
             { text: '清单', hit: false }
         ])
         expect(row.descriptionSegments).toBeNull()
+    })
+    it('SEA-D2-1 恒显：有描述但未命中关键词 → 整段纯文本（非 null、hit=false）', () => {
+        const row = searchTasks(
+            [makeTask({ id: 't1', name: '买菜', description: '周末去超市采购生活用品' })],
+            '买菜'
+        )[0]!
+        expect(row.descriptionSegments).not.toBeNull()
+        expect(row.descriptionSegments).toEqual([{ text: '周末去超市采购生活用品', hit: false }])
+    })
+    it('SEA-D2-1 恒显：描述命中关键词 → 高亮窗口仍生效', () => {
+        const row = searchTasks(
+            [makeTask({ id: 't1', name: '买菜', description: '记得去超市买鸡蛋和牛奶' })],
+            '超市'
+        )[0]!
+        expect(row.descriptionSegments).not.toBeNull()
+        expect(row.descriptionSegments!.some((s) => s.hit && s.text === '超市')).toBe(true)
     })
     it('备注命中提供截取窗口 + 省略号（窗口含命中、前后按需省略）', () => {
         const long = `这是很长的一段备注前面铺垫内容，${'甲'.repeat(60)}关键命中点买菜清单，${'乙'.repeat(80)}结尾`
