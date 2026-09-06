@@ -43,6 +43,7 @@ const { isDisplayAside, switchDisplayAside } = inject(INDEX_VIEW_CONTEXT_KEY)!
 // —— 周几何常量（与 scoped 样式一致）——
 const WEEK_TOP = 34 // 日期区（日期号+周几）高度 + 首条间距
 const ITEM_STEP = 18 // 条高 16 + 间距 2
+const BAND_HEIGHT = 24 // 格底预留条带（DEF-1：+/+N/编辑器占用，任务条区其上截断）
 
 const weekdays = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -88,7 +89,7 @@ const measureAndApplyLaneLimit = () => {
     const row = bodyEl.value?.querySelector<HTMLElement>('.wk-row')
     const rowHeight = row?.clientHeight ?? 0
     if (rowHeight <= 0) return
-    const next = Math.max(1, Math.floor((rowHeight - WEEK_TOP - 4) / ITEM_STEP))
+    const next = Math.max(1, Math.floor((rowHeight - WEEK_TOP - BAND_HEIGHT) / ITEM_STEP))
     if (next !== laneLimit.value) laneLimit.value = next
 }
 const scheduleLaneMeasure = () => {
@@ -130,17 +131,10 @@ const segStyle = (seg: { colStart: number; colEnd: number; lane: number }) => {
 const segShowTime = (seg: { task: TaskViewObject; isStart: boolean; colStart: number }): boolean =>
     !!seg.isStart && !!seg.task.startAt && dayjs(seg.task.startAt).isValid()
 
-// @computed 格内编辑器定位（B6：周内列号 -> 覆盖层位置）
-const quickPos = computed<{ left: string; width: string; top: string } | null>(() => {
-    if (!props.quickCreateDate) return null
-    const idx = model.value.days.findIndex((cell) => cell.dateKey === props.quickCreateDate)
-    if (idx < 0) return null
-    return {
-        left: `${(idx / GRID_COLUMNS) * 100}%`,
-        width: `${100 / GRID_COLUMNS}%`,
-        top: `${WEEK_TOP}px`
-    }
-})
+// @method 回车提交（dateKey 来自所在格条带）
+const quickSubmitCell = (dateKey: string, name: string) => {
+    void props.onQuickSubmit(dateKey, name)
+}
 
 // @method 溢出 +N 与 点击日期格（打开当日面板）
 const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateKey === dateKey)
@@ -247,23 +241,34 @@ const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateK
                     @click="onOpenDay(cell.dateKey)"
                 >
                     <span class="wk-date">{{ cell.day }}</span>
-                    <button
-                        v-if="overflowOn(cell.dateKey)"
-                        type="button"
-                        class="wk-more"
-                        :title="`还有 ${overflowOn(cell.dateKey)!.count} 个任务`"
-                        @click.stop="onOpenDay(cell.dateKey)"
-                    >
-                        +{{ overflowOn(cell.dateKey)!.count }}
-                    </button>
-                    <button
-                        type="button"
-                        class="wk-quick-add"
-                        title="快速新建"
-                        @click.stop="onQuickOpen(cell.dateKey)"
-                    >
-                        +
-                    </button>
+                    <div class="wk-band" @click.stop>
+                        <template v-if="quickCreateDate === cell.dateKey">
+                            <quick-create
+                                :pending="quickPending"
+                                @submit="(name) => quickSubmitCell(cell.dateKey, name)"
+                                @cancel="onQuickCancel"
+                            />
+                        </template>
+                        <template v-else>
+                            <button
+                                type="button"
+                                class="wk-quick-add"
+                                title="快速新建"
+                                @click.stop="onQuickOpen(cell.dateKey)"
+                            >
+                                +
+                            </button>
+                            <button
+                                v-if="overflowOn(cell.dateKey)"
+                                type="button"
+                                class="wk-more"
+                                :title="`还有 ${overflowOn(cell.dateKey)!.count} 个任务`"
+                                @click.stop="onOpenDay(cell.dateKey)"
+                            >
+                                +{{ overflowOn(cell.dateKey)!.count }}
+                            </button>
+                        </template>
+                    </div>
                 </div>
                 <!-- 任务条层 -->
                 <div class="cal-lanes">
@@ -278,14 +283,6 @@ const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateK
                         @open="onOpenTask(seg.task.id)"
                     />
                 </div>
-                <!-- 格内快速新建编辑器（B6 临时覆盖层，不进轨道计数） -->
-                <quick-create
-                    v-if="quickPos"
-                    :pos="quickPos"
-                    :pending="quickPending"
-                    @submit="(name) => onQuickSubmit(props.quickCreateDate, name)"
-                    @cancel="onQuickCancel"
-                />
             </div>
         </div>
     </nue-div>
@@ -475,11 +472,22 @@ const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateK
     pointer-events: none;
 }
 
-/* 悬停快速新建 +（周 7 日格；右下角，避开 +N） */
-.wk-quick-add {
+/* 格底预留条带（DEF-1：任务条渲染区在其上截断；+/+N/编辑器占用区） */
+.wk-band {
     position: absolute;
-    right: 34px;
-    bottom: 4px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 6px;
+    box-sizing: border-box;
+}
+/* 悬停快速新建 +（左下） */
+.wk-quick-add {
+    flex: none;
     width: 18px;
     height: 16px;
     padding: 0;
@@ -502,11 +510,10 @@ const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateK
     background: var(--cal-select-bg);
 }
 
-/* 溢出 +N */
+/* 溢出 +N（右下） */
 .wk-more {
-    position: absolute;
-    right: 4px;
-    bottom: 4px;
+    flex: none;
+    margin-left: auto;
     padding: 1px 6px;
     border: none;
     border-radius: 999px;

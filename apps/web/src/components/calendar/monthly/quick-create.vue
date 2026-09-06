@@ -4,8 +4,6 @@ import { onMounted, ref } from 'vue'
 defineOptions({ name: 'CalendarQuickCreate' })
 
 const props = defineProps<{
-    /** 编辑器定位（父按所在格计算 left/width/top） */
-    pos: { left: string; width: string; top: string }
     /** 创建请求进行中（Enter 期间防连点；失败保留文本由父保持挂载） */
     pending?: boolean
 }>()
@@ -45,7 +43,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="quick-create" :style="pos">
+    <div class="quick-create">
         <input
             ref="inputEl"
             v-model="draft"
@@ -60,17 +58,17 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* 内嵌于格子底部预留条带（B6/DEF-1）：不绝对定位、占满条带、不遮任务条 */
 .quick-create {
-    position: absolute;
-    z-index: 30;
-    padding: 0 1px;
+    width: 100%;
+    height: 100%;
     box-sizing: border-box;
-    pointer-events: auto;
 }
 
 .quick-create__input {
     width: 100%;
-    height: 16px;
+    height: 20px;
+    margin-top: 1px;
     padding: 0 6px;
     box-sizing: border-box;
     border: 1px solid var(--nue-border-color);
@@ -78,9 +76,8 @@ onMounted(() => {
     background: var(--nue-primary-color-0);
     color: var(--nue-primary-text-color);
     font-size: 0.75rem;
-    line-height: 16px;
+    line-height: 20px;
     outline: none;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
 }
 .quick-create__input:disabled {
     opacity: 0.7;

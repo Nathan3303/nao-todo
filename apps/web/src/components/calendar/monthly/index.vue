@@ -22,6 +22,7 @@ defineOptions({ name: 'CalendarMonthly' })
 // 布局常量（与下方 scoped 样式中的数值保持一致）
 const DATE_OFFSET = 26 // 日期号区域高度 + 首个任务条上间距
 const ITEM_STEP = 18 // 单条任务条高度(16) + 纵向间距(2)
+const BAND_HEIGHT = 24 // 格底预留条带（DEF-1：+/+N/编辑器占用，任务条区其上截断）
 
 // @viewContext 应用级子侧栏开关（与任务页 header 行为一致）
 const { isDisplayAside, switchDisplayAside } = inject(INDEX_VIEW_CONTEXT_KEY)!
@@ -118,7 +119,7 @@ const measureAndApplyLaneLimit = () => {
     const firstRow = calBodyEl.value?.querySelector<HTMLElement>('.cal-row')
     const rowHeight = firstRow?.clientHeight ?? 0
     if (rowHeight <= 0) return
-    const next = Math.max(1, Math.floor((rowHeight - DATE_OFFSET - 4) / ITEM_STEP))
+    const next = Math.max(1, Math.floor((rowHeight - DATE_OFFSET - BAND_HEIGHT) / ITEM_STEP))
     if (next !== laneLimit.value) laneLimit.value = next
 }
 const scheduleLaneMeasure = () => {
@@ -171,35 +172,9 @@ const visibleSegments = (row: CalendarRow) =>
 const overflowOn = (row: CalendarRow, dateKey: string) =>
     row.overflow.find((item) => item.dateKey === dateKey)
 
-// @computed 格内编辑器定位（B6：活动格在模型中的行/列 -> 覆盖层位置；不在本视图则 null）
-const activeQuick = computed<{
-    dateKey: string
-    row: number
-    pos: { left: string; width: string; top: string }
-} | null>(() => {
-    const key = quickCreateDate.value
-    if (!key) return null
-    for (const row of model.value.rows) {
-        const idx = row.cells.findIndex((cell) => cell.dateKey === key)
-        if (idx < 0) continue
-        return {
-            dateKey: key,
-            row: row.row,
-            pos: {
-                left: `${(idx / GRID_COLUMNS) * 100}%`,
-                width: `${100 / GRID_COLUMNS}%`,
-                top: `${DATE_OFFSET}px`
-            }
-        }
-    }
-    return null
-})
-
-// @method 回车提交（成功由 composable 清除活动格并卸载；失败保持文本可重试）
-const handleQuickSubmit = (name: string) => {
-    const key = activeQuick.value?.dateKey
-    if (!key) return
-    void inlineCreateTask(key, name)
+// @method 回车提交（dateKey 来自所在格条带；成功由 composable 清除并卸载，失败保留文本可重试）
+const quickSubmit = (dateKey: string, name: string) => {
+    void inlineCreateTask(dateKey, name)
 }
 
 // @method 任务条定位样式（连续条按列区间铺满）
@@ -359,24 +334,35 @@ const showWeekOf = (dateKey: string) => {
                             @click="openDay(cell.dateKey)"
                         >
                             <span class="cal-date">{{ cell.day }}</span>
-                            <button
-                                v-if="overflowOn(row, cell.dateKey)"
-                                type="button"
-                                class="cal-more"
-                                :title="`还有 ${overflowOn(row, cell.dateKey)!.count} 个任务`"
-                                @click.stop="openDay(cell.dateKey)"
-                            >
-                                +{{ overflowOn(row, cell.dateKey)!.count }}
-                            </button>
-                            <button
-                                v-if="cell.monthOffset === 0"
-                                type="button"
-                                class="cal-quick-add"
-                                title="快速新建"
-                                @click.stop="openQuickCreate(cell.dateKey)"
-                            >
-                                +
-                            </button>
+                            <div class="cal-band" @click.stop>
+                                <template v-if="quickCreateDate === cell.dateKey">
+                                    <quick-create
+                                        :pending="quickCreatePending"
+                                        @submit="(name) => quickSubmit(cell.dateKey, name)"
+                                        @cancel="closeQuickCreate"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <button
+                                        v-if="cell.monthOffset === 0"
+                                        type="button"
+                                        class="cal-quick-add"
+                                        title="快速新建"
+                                        @click.stop="openQuickCreate(cell.dateKey)"
+                                    >
+                                        +
+                                    </button>
+                                    <button
+                                        v-if="overflowOn(row, cell.dateKey)"
+                                        type="button"
+                                        class="cal-more"
+                                        :title="`还有 ${overflowOn(row, cell.dateKey)!.count} 个任务`"
+                                        @click.stop="openDay(cell.dateKey)"
+                                    >
+                                        +{{ overflowOn(row, cell.dateKey)!.count }}
+                                    </button>
+                                </template>
+                            </div>
                         </div>
 
                         <!-- 任务条层（连续条跨格/跨行） -->
@@ -392,14 +378,6 @@ const showWeekOf = (dateKey: string) => {
                                 @open="openTaskDetails(seg.task.id)"
                             />
                         </div>
-                        <!-- 格内快速新建编辑器（B6 临时覆盖层，不进轨道计数） -->
-                        <quick-create
-                            v-if="activeQuick && activeQuick.row === row.row"
-                            :pos="activeQuick.pos"
-                            :pending="quickCreatePending"
-                            @submit="handleQuickSubmit"
-                            @cancel="closeQuickCreate"
-                        />
                     </div>
                 </template>
             </div>
@@ -688,11 +666,22 @@ const showWeekOf = (dateKey: string) => {
     pointer-events: none;
 }
 /* 任务条视觉（色条/色痕/时刻/续接圆点/周裁剪圆角）已抽至 ./task-bar.vue；--cal-* 令牌由本根定义 */
-/* 悬停快速新建 +（仅本月格；右下角，避开 +N） */
-.cal-quick-add {
+/* 格底预留条带（DEF-1：任务条渲染区在其上截断；+/+N/编辑器占用区） */
+.cal-band {
     position: absolute;
-    right: 34px;
-    bottom: 2px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 6px;
+    box-sizing: border-box;
+}
+/* 悬停快速新建 +（左下；补位格无按钮由 v-if 控制） */
+.cal-quick-add {
+    flex: none;
     width: 18px;
     height: 16px;
     padding: 0;
@@ -715,11 +704,10 @@ const showWeekOf = (dateKey: string) => {
     background: var(--cal-select-bg);
 }
 
-/* ── 溢出 +N ── */
+/* ── 溢出 +N（右下） ── */
 .cal-more {
-    position: absolute;
-    right: 4px;
-    bottom: 2px;
+    flex: none;
+    margin-left: auto;
     padding: 1px 6px;
     border: none;
     border-radius: 999px;
