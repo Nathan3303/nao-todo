@@ -1,16 +1,17 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
-import { InnerDropdown, InnerDropdownOption } from '@nao-todo/shared'
+import { InnerDropdownOption } from '@nao-todo/shared'
 import { TaskPrioritySelectOptions, TaskStateSelectOptions } from '@nao-todo/presentation/task'
 import { useProjectsStore } from '@nao-todo/presentation/project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
 import { storeToRefs } from 'pinia'
 
 /**
- * 搜索页结构化筛选栏（SEA-03）
+ * 搜索页结构化筛选栏（SEA-03 / DEF-1）
  * @description 四维内联多选（清单/标签/优先级/状态）：维内 OR、维间 AND、空=不限；
- *              计数徽标 + 激活高亮 + 单项再点取消 + 一键清空。状态由父（引擎）持有，
- *              本组件仅展示与上抛事件（props 驱动、零业务逻辑）。
+ *              触发器为 NueButton，已选数量放 #append 徽标（未选无徽标、激活底色高亮）；
+ *              点击展开 NueDropdown 多选面板；状态由父（引擎）持有，本组件 props 驱动、
+ *              仅展示与上抛事件（零业务逻辑）。
  */
 
 defineOptions({ name: 'SearchFilterBar' })
@@ -31,7 +32,7 @@ const emit = defineEmits<{
     (e: 'clear'): void
 }>()
 
-// @options 清单：收件箱哨兵（projectId=''）+ 用户清单（与任务列表 getProjectName 兜底同文案）
+// @options 清单：收件箱哨兵（projectId=''）+ 用户清单
 const { avaliableProjects } = storeToRefs(useProjectsStore())
 const projectOptions = computed<{ id: string; name: string }[]>(() => [
     { id: '', name: '收集箱' },
@@ -48,7 +49,7 @@ const tagOptions = computed(() =>
     }))
 )
 
-// @options 优先级 / 状态（复用任务侧常量，含图标与本地化文案）
+// @options 优先级 / 状态（复用任务侧常量）
 const priorityOptions = computed(() => TaskPrioritySelectOptions.value)
 const stateOptions = computed(() => TaskStateSelectOptions.value)
 
@@ -58,19 +59,36 @@ const isChecked = (list: string[], id: string) => list.includes(id)
 <template>
     <div class="search-filter-bar">
         <div class="search-filter-bar__dims">
-            <!-- 清单（含收件箱哨兵） -->
-            <div
-                class="filter-dim"
-                :class="{ 'filter-dim--active': selectedProjectIds.length > 0 }"
+            <!-- 清单（收件箱哨兵 + 用户清单） -->
+            <nue-dropdown
+                placement="bottom-start"
+                theme="menu"
+                size="small"
+                group="search-filter"
+                :close-when-executed="false"
+                @execute="(id: string) => emit('toggleProject', id)"
             >
-                <inner-dropdown
-                    title="清单"
-                    icon="filter"
-                    group="search-filter"
-                    :suffix="selectedProjectIds.length"
-                    :close-when-executed="false"
-                    @execute="(id) => emit('toggleProject', id)"
-                >
+                <template #trigger="{ trigger, visible }">
+                    <nue-button
+                        class="filter-trigger"
+                        :class="{ 'filter-trigger--active': selectedProjectIds.length > 0 }"
+                        :aria-expanded="visible"
+                        @click="trigger($event)"
+                    >
+                        <nue-icon name="filter" class="filter-trigger__icon" />
+                        <span class="filter-trigger__label">清单</span>
+                        <template #append>
+                            <span
+                                v-if="selectedProjectIds.length > 0"
+                                class="filter-count"
+                                :aria-label="`已选 ${selectedProjectIds.length} 项`"
+                            >
+                                {{ selectedProjectIds.length }}
+                            </span>
+                        </template>
+                    </nue-button>
+                </template>
+                <nue-div theme="block">
                     <nue-dropdown-item
                         v-for="option in projectOptions"
                         :key="option.id"
@@ -85,19 +103,39 @@ const isChecked = (list: string[], id: string) => list.includes(id)
                             />
                         </template>
                     </nue-dropdown-item>
-                </inner-dropdown>
-            </div>
+                </nue-div>
+            </nue-dropdown>
 
             <!-- 标签（色点为用户数据） -->
-            <div class="filter-dim" :class="{ 'filter-dim--active': selectedTagIds.length > 0 }">
-                <inner-dropdown
-                    title="标签"
-                    icon="filter"
-                    group="search-filter"
-                    :suffix="selectedTagIds.length"
-                    :close-when-executed="false"
-                    @execute="(id) => emit('toggleTag', id)"
-                >
+            <nue-dropdown
+                placement="bottom-start"
+                theme="menu"
+                size="small"
+                group="search-filter"
+                :close-when-executed="false"
+                @execute="(id: string) => emit('toggleTag', id)"
+            >
+                <template #trigger="{ trigger, visible }">
+                    <nue-button
+                        class="filter-trigger"
+                        :class="{ 'filter-trigger--active': selectedTagIds.length > 0 }"
+                        :aria-expanded="visible"
+                        @click="trigger($event)"
+                    >
+                        <nue-icon name="filter" class="filter-trigger__icon" />
+                        <span class="filter-trigger__label">标签</span>
+                        <template #append>
+                            <span
+                                v-if="selectedTagIds.length > 0"
+                                class="filter-count"
+                                :aria-label="`已选 ${selectedTagIds.length} 项`"
+                            >
+                                {{ selectedTagIds.length }}
+                            </span>
+                        </template>
+                    </nue-button>
+                </template>
+                <nue-div theme="block">
                     <nue-dropdown-item
                         v-for="tag in tagOptions"
                         :key="tag.id"
@@ -122,22 +160,39 @@ const isChecked = (list: string[], id: string) => list.includes(id)
                     >
                         <span class="filter-option-name">暂无标签</span>
                     </nue-dropdown-item>
-                </inner-dropdown>
-            </div>
+                </nue-div>
+            </nue-dropdown>
 
             <!-- 优先级 -->
-            <div
-                class="filter-dim"
-                :class="{ 'filter-dim--active': selectedPriorities.length > 0 }"
+            <nue-dropdown
+                placement="bottom-start"
+                theme="menu"
+                size="small"
+                group="search-filter"
+                :close-when-executed="false"
+                @execute="(id: string) => emit('togglePriority', id)"
             >
-                <inner-dropdown
-                    title="优先级"
-                    icon="filter"
-                    group="search-filter"
-                    :suffix="selectedPriorities.length"
-                    :close-when-executed="false"
-                    @execute="(id) => emit('togglePriority', id)"
-                >
+                <template #trigger="{ trigger, visible }">
+                    <nue-button
+                        class="filter-trigger"
+                        :class="{ 'filter-trigger--active': selectedPriorities.length > 0 }"
+                        :aria-expanded="visible"
+                        @click="trigger($event)"
+                    >
+                        <nue-icon name="filter" class="filter-trigger__icon" />
+                        <span class="filter-trigger__label">优先级</span>
+                        <template #append>
+                            <span
+                                v-if="selectedPriorities.length > 0"
+                                class="filter-count"
+                                :aria-label="`已选 ${selectedPriorities.length} 项`"
+                            >
+                                {{ selectedPriorities.length }}
+                            </span>
+                        </template>
+                    </nue-button>
+                </template>
+                <nue-div theme="block">
                     <inner-dropdown-option
                         v-for="option in priorityOptions"
                         :key="option.value"
@@ -146,19 +201,39 @@ const isChecked = (list: string[], id: string) => list.includes(id)
                         :execute-id="option.value"
                         :checked="isChecked(selectedPriorities, option.value)"
                     />
-                </inner-dropdown>
-            </div>
+                </nue-div>
+            </nue-dropdown>
 
             <!-- 状态 -->
-            <div class="filter-dim" :class="{ 'filter-dim--active': selectedStates.length > 0 }">
-                <inner-dropdown
-                    title="状态"
-                    icon="filter"
-                    group="search-filter"
-                    :suffix="selectedStates.length"
-                    :close-when-executed="false"
-                    @execute="(id) => emit('toggleState', id)"
-                >
+            <nue-dropdown
+                placement="bottom-start"
+                theme="menu"
+                size="small"
+                group="search-filter"
+                :close-when-executed="false"
+                @execute="(id: string) => emit('toggleState', id)"
+            >
+                <template #trigger="{ trigger, visible }">
+                    <nue-button
+                        class="filter-trigger"
+                        :class="{ 'filter-trigger--active': selectedStates.length > 0 }"
+                        :aria-expanded="visible"
+                        @click="trigger($event)"
+                    >
+                        <nue-icon name="filter" class="filter-trigger__icon" />
+                        <span class="filter-trigger__label">状态</span>
+                        <template #append>
+                            <span
+                                v-if="selectedStates.length > 0"
+                                class="filter-count"
+                                :aria-label="`已选 ${selectedStates.length} 项`"
+                            >
+                                {{ selectedStates.length }}
+                            </span>
+                        </template>
+                    </nue-button>
+                </template>
+                <nue-div theme="block">
                     <inner-dropdown-option
                         v-for="option in stateOptions"
                         :key="option.value"
@@ -167,8 +242,8 @@ const isChecked = (list: string[], id: string) => list.includes(id)
                         :execute-id="option.value"
                         :checked="isChecked(selectedStates, option.value)"
                     />
-                </inner-dropdown>
-            </div>
+                </nue-div>
+            </nue-dropdown>
         </div>
 
         <!-- 一键清空（任一维度激活时出现） -->
@@ -185,7 +260,7 @@ const isChecked = (list: string[], id: string) => list.includes(id)
 </template>
 
 <style scoped>
-/* 全部颜色走 shadlike 令牌（标签色点为用户数据豁免）；布局 flex wrap 窄行换行 */
+/* 颜色全走 shadlike 令牌（标签色点为用户数据豁免） */
 .search-filter-bar {
     display: flex;
     align-items: center;
@@ -201,14 +276,45 @@ const isChecked = (list: string[], id: string) => list.includes(id)
     min-width: 0;
 }
 
-.filter-dim {
-    min-width: 0;
+/* —— NueButton 触发器 —— */
+.filter-trigger {
+    --nue-button-font-size: var(--nue-text-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--nue-gap-2xs);
+    transition:
+        background-color var(--nue-animation-duration-short) var(--nue-animation-timing-function),
+        color var(--nue-animation-duration-short) var(--nue-animation-timing-function);
+}
+.filter-trigger__icon {
+    flex: none;
+}
+.filter-trigger__label {
+    line-height: 1;
 }
 
-/* 激活态高亮：计数徽标已是橙色；这里再加深触发器底/文字以双主题可辨 */
-.filter-dim--active :deep(.nue-dropdown-item) {
+/* 已选状态：底色提亮 + 正文加粗（与未选 ghost 两态可辨；双主题自适应） */
+.filter-trigger--active {
     background: color-mix(in srgb, var(--nue-primary-text-color) 10%, var(--nue-primary-color-0));
     font-weight: 600;
+}
+
+/* 计数徽标（#append）：橙色语义、灰阶外框令牌，明暗均可辨 */
+.filter-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    box-sizing: border-box;
+    border-radius: 999px;
+    font-size: var(--nue-text-2xs);
+    line-height: 18px;
+    font-weight: 700;
+    color: var(--nue-warning-color-80);
+    background: var(--nue-warning-color-10);
+    border: 1px solid color-mix(in srgb, var(--nue-warning-color-60) 35%, transparent);
 }
 
 .filter-option-name {
