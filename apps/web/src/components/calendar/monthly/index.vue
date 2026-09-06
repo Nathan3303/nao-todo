@@ -257,6 +257,7 @@ const showWeekOf = (dateKey: string) => {
                             周
                         </nue-button>
                     </nue-div>
+                    <span class="cal-view-sep" aria-hidden="true"></span>
                     <nue-button
                         theme="ghost,small"
                         :disabled="unscheduledBtnDisabled"
@@ -484,9 +485,11 @@ const showWeekOf = (dateKey: string) => {
 }
 
 /* 月/周视图切换（分段按钮） */
+/* 月/周视图切换（分段按钮：零间隙贴合） */
 .cal-view-toggle {
     display: inline-flex;
     align-items: center;
+    gap: 0;
     border: 1px solid var(--cal-border);
     border-radius: var(--nue-primary-radius);
     overflow: hidden;
@@ -498,6 +501,16 @@ const showWeekOf = (dateKey: string) => {
     background: var(--cal-select-bg);
     color: var(--cal-fg);
     font-weight: 600;
+}
+
+/* 切换区与右侧控件之间的垂直分割线 */
+.cal-view-sep {
+    align-self: center;
+    width: 1px;
+    height: 16px;
+    margin: 0 4px;
+    background: var(--cal-border);
+    flex: none;
 }
 
 /* ── 星期表头 ── */

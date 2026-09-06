@@ -14,12 +14,8 @@ const props = defineProps<{
     showTime?: boolean
     /** 承接上一行（月视图跨行续接圆点） */
     contStart?: boolean
-    /** 续至下一行（月视图跨行续接圆点） */
+    /** 续至下一行 / 周跨界右侧（延续圆点） */
     contEnd?: boolean
-    /** 周跨界：左侧被裁剪 → 左圆角 */
-    clipStart?: boolean
-    /** 周跨界：右侧被裁剪 → 右圆角 */
-    clipEnd?: boolean
 }>()
 const emit = defineEmits<{ (e: 'open'): void }>()
 
@@ -50,9 +46,7 @@ const timeText = computed(() => {
             'is-done': isDone,
             'is-overdue': isOverdue,
             'has-cont-start': contStart,
-            'has-cont-end': contEnd,
-            'clip-start': clipStart,
-            'clip-end': clipEnd
+            'has-cont-end': contEnd
         }"
         :style="[pos, { '--cal-pri': barColor }]"
         :title="task.name"
@@ -94,16 +88,6 @@ const timeText = computed(() => {
 }
 .cal-item.is-done:hover {
     background: var(--cal-chip-bg-hover);
-}
-
-/* 周跨界单侧圆角（clip = 边界被周裁剪，视觉提示片段） */
-.cal-item.clip-start {
-    border-top-left-radius: var(--nue-primary-radius);
-    border-bottom-left-radius: var(--nue-primary-radius);
-}
-.cal-item.clip-end {
-    border-top-right-radius: var(--nue-primary-radius);
-    border-bottom-right-radius: var(--nue-primary-radius);
 }
 
 .cal-item-text {

@@ -172,6 +172,7 @@ const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateK
                         周
                     </nue-button>
                 </nue-div>
+                <span class="wk-view-sep" aria-hidden="true"></span>
                 <nue-button
                     theme="ghost,small"
                     :disabled="unscheduledDisabled"
@@ -245,8 +246,8 @@ const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateK
                         :task="seg.task"
                         :pos="segStyle(seg)"
                         :show-time="segShowTime(seg)"
-                        :clip-start="!seg.isStart && seg.colStart === 0"
-                        :clip-end="!seg.isEnd && seg.colEnd === GRID_COLUMNS - 1"
+                        :cont-start="!seg.isStart && seg.colStart === 0"
+                        :cont-end="!seg.isEnd && seg.colEnd === GRID_COLUMNS - 1"
                         @open="onOpenTask(seg.task.id)"
                     />
                 </div>
@@ -306,9 +307,11 @@ const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateK
     font-size: var(--nue-text-df);
 }
 
+/* 月/周视图切换（分段按钮：零间隙贴合） */
 .wk-view-toggle {
     display: inline-flex;
     align-items: center;
+    gap: 0;
     border: 1px solid var(--cal-border);
     border-radius: var(--nue-primary-radius);
     overflow: hidden;
@@ -320,6 +323,16 @@ const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateK
     background: var(--cal-select-bg);
     color: var(--cal-fg);
     font-weight: 600;
+}
+
+/* 切换区与右侧控件之间的垂直分割线 */
+.wk-view-sep {
+    align-self: center;
+    width: 1px;
+    height: 16px;
+    margin: 0 4px;
+    background: var(--cal-border);
+    flex: none;
 }
 
 .wk-weekdays {
