@@ -450,11 +450,10 @@ const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateK
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 24px;
+    width: 24px;
     height: 20px;
-    padding: 0 4px;
-    font-size: 0.875rem;
-    font-weight: 550;
+    font-size: 0.8125rem;
+    font-weight: 450;
     line-height: 20px;
     color: var(--cal-fg);
     border: 1px solid transparent;
@@ -464,12 +463,12 @@ const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateK
 }
 .wk-cell--today .wk-date {
     border-color: var(--cal-fg);
-    font-weight: 700;
+    font-weight: 600;
 }
 .wk-cell--selected .wk-date {
     background: var(--cal-fg);
     color: var(--cal-bg);
-    font-weight: 700;
+    font-weight: 600;
     border-color: var(--cal-fg);
 }
 .wk-cell--outside .wk-date {
