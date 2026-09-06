@@ -1,11 +1,13 @@
 import type { GetTasksOptions } from '@nao-todo/shared'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { computed, inject, onMounted, onUnmounted, ref, shallowRef } from 'vue'
+import type { Ref } from 'vue'
 import { useTaskUseCase } from '@/hooks'
 import { useTasksStore } from '@nao-todo/presentation/task'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import {
     isRateLimitError,
+    matchTaskFilters,
     retryDelayFor,
     RATE_MAX_ATTEMPTS,
     RATE_PAUSE_THRESHOLD,
@@ -91,6 +93,12 @@ const useSearchEngine = () => {
     const enumFailures = ref(0) // 本次补拉失败的父任务数（>0 时轻提示）
     const enumRatePaused = ref(false) // 枚举连续限流暂停（提示「限流，稍后自动重试」）
 
+    // @states 结构化筛选（SEA-03：会话内状态；空数组=不过滤；收件箱=projectId ''）
+    const filterProjectIds = ref<string[]>([]) // 清单（含收件箱哨兵 ''）
+    const filterTagIds = ref<string[]>([]) // 标签
+    const filterPriorities = ref<string[]>([]) // 优先级 high/medium/low
+    const filterStates = ref<string[]>([]) // 状态 todo/in-progress/done
+
     let debounceTimer: ReturnType<typeof setTimeout> | undefined
     let reloadQueued = false
     let enumerateBusy = false
@@ -110,9 +118,26 @@ const useSearchEngine = () => {
             .map((id) => tasksStore.getTask(id))
             .filter((task): task is TaskViewObject => !!task)
     )
-    // @results 就绪数据 + 去抖关键词 → 纯函数过滤/排序/高亮（未就绪输入就绪后自动重放）
-    const rows = computed(() => searchTasks(flatTasks.value, debouncedKeyword.value))
+    // @results 四维筛选（即时重算）→ 关键词 200ms 去抖 → 纯函数排序/高亮（未就绪输入就绪后自动重放）
+    const rows = computed(() => {
+        const base = flatTasks.value.filter((task) =>
+            matchTaskFilters(task, {
+                projectIds: filterProjectIds.value,
+                tagIds: filterTagIds.value,
+                priorities: filterPriorities.value,
+                states: filterStates.value
+            })
+        )
+        return searchTasks(base, debouncedKeyword.value)
+    })
     const resultCount = computed(() => rows.value.length)
+    const filtersActive = computed(
+        () =>
+            filterProjectIds.value.length > 0 ||
+            filterTagIds.value.length > 0 ||
+            filterPriorities.value.length > 0 ||
+            filterStates.value.length > 0
+    )
     const rootCount = computed(() => sessionCache.value?.rootIds.size ?? 0)
     const ready = computed(() => !!sessionCache.value)
 
@@ -135,6 +160,25 @@ const useSearchEngine = () => {
         if (debounceTimer) clearTimeout(debounceTimer)
         keyword.value = ''
         debouncedKeyword.value = ''
+    }
+
+    // @method 单值切换（维内多选；再点取消）
+    const toggleIn = (arr: Ref<string[]>, id: string) => {
+        const index = arr.value.indexOf(id)
+        if (index >= 0) arr.value.splice(index, 1)
+        else arr.value.push(id)
+    }
+    const toggleProjectFilter = (id: string) => toggleIn(filterProjectIds, id)
+    const toggleTagFilter = (id: string) => toggleIn(filterTagIds, id)
+    const togglePriorityFilter = (id: string) => toggleIn(filterPriorities, id)
+    const toggleStateFilter = (id: string) => toggleIn(filterStates, id)
+
+    // @method 一键清空全部筛选（恢复默认：不限，含已完成）
+    const clearFilters = () => {
+        filterProjectIds.value = []
+        filterTagIds.value = []
+        filterPriorities.value = []
+        filterStates.value = []
     }
 
     /**
@@ -342,6 +386,17 @@ const useSearchEngine = () => {
         keyword,
         writeKeyword,
         clearKeyword,
+        // —— 结构化筛选（SEA-03） ——
+        filterProjectIds,
+        filterTagIds,
+        filterPriorities,
+        filterStates,
+        filtersActive,
+        toggleProjectFilter,
+        toggleTagFilter,
+        togglePriorityFilter,
+        toggleStateFilter,
+        clearFilters,
         ready,
         firstLoading,
         refreshing,

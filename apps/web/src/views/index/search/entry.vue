@@ -6,6 +6,7 @@ import { LoadingError, assetUrl, TaskBasicInfo, TaskDateInfo } from '@nao-todo/s
 import { type SearchRow } from '@/components/search/search-tasks'
 import type { TaskTagViewObject } from '@nao-todo/domain-task'
 import useSearchEngine from '@/components/search/use-search'
+import SearchFilterBar from '@/components/search/search-filter-bar.vue'
 import { useTagsStore } from '@nao-todo/presentation/tag'
 import { useSearchView } from './search-view'
 
@@ -25,7 +26,17 @@ const {
     enumFailures,
     enumRatePaused,
     rows,
-    resultCount
+    resultCount,
+    filterProjectIds,
+    filterTagIds,
+    filterPriorities,
+    filterStates,
+    filtersActive,
+    toggleProjectFilter,
+    toggleTagFilter,
+    togglePriorityFilter,
+    toggleStateFilter,
+    clearFilters
 } = useSearchEngine()
 const { init, isLoading: viewLoading, error: viewError } = useSearchView()
 
@@ -68,6 +79,18 @@ const retryViewInit = () => {
     viewError.value = ''
     void init()
 }
+
+// @computed 已应用筛选项总数（无结果态双清入口文案用）
+const filterTotalCount = computed(
+    () =>
+        filterProjectIds.value.length +
+        filterTagIds.value.length +
+        filterPriorities.value.length +
+        filterStates.value.length
+)
+
+// @method 一键清空筛选（关键词保留）
+const onClearFilters = () => clearFilters()
 
 // @method 行点击 → 打开内嵌详情（当前路由 name 推送 taskId；返回后关键词/结果保持）
 const openTaskDetails = (row: SearchRow) => showTaskDetails(row.task.id)
@@ -145,6 +168,19 @@ watch(
                                 @update:model-value="writeKeyword"
                             />
                         </div>
+                        <!-- 结构化筛选栏（SEA-03：四维多选 + 一键清空） -->
+                        <search-filter-bar
+                            :selected-project-ids="filterProjectIds"
+                            :selected-tag-ids="filterTagIds"
+                            :selected-priorities="filterPriorities"
+                            :selected-states="filterStates"
+                            :active="filtersActive"
+                            @toggle-project="toggleProjectFilter"
+                            @toggle-tag="toggleTagFilter"
+                            @toggle-priority="togglePriorityFilter"
+                            @toggle-state="toggleStateFilter"
+                            @clear="onClearFilters"
+                        />
                         <!-- 结果 N + 子任务补拉/失败/超限/后台刷新轻提示 -->
                         <nue-div class="search-toolbar__meta" align="center" gap="8px">
                             <nue-text
@@ -201,100 +237,141 @@ watch(
                         </nue-div>
                     </nue-div>
 
-                    <!-- 结果独立滚动区（工具栏吸顶：输入/提示固定，长列表滚动不丢关键词） -->
+                    <!-- 结果独立滚动区（工具栏吸顶：输入/提示固定；空/错状态 = LoadingError 范式） -->
                     <nue-div vertical class="search-scroll">
-                        <!-- 空词态 -->
+                        <!-- 空词引导态（无关键词且无错误；图片口径与任务子视图一致） -->
                         <nue-empty
-                            v-if="!keyword && ready"
-                            description="输入关键词，查找全部任务的名称与备注"
-                            image-size="7rem"
-                            class="search-state"
-                        />
-                        <!-- 无结果态（清词入口） -->
-                        <nue-empty
-                            v-else-if="keyword && ready && resultCount === 0"
-                            :image-src="assetUrl('/images/error.webp')"
-                            image-size="7rem"
+                            v-if="ready && !error && !keyword"
+                            :image-src="assetUrl('/images/notaskhere.webp')"
+                            image-size="6rem"
                             class="search-state"
                         >
                             <nue-text size="var(--nue-text-sm)"
-                                >未找到与「{{ keyword }}」匹配的任务</nue-text
+                                >输入关键词，查找全部任务的名称与备注</nue-text
                             >
-                            <nue-button theme="small,ghost" @click="onClear">清空关键词</nue-button>
                         </nue-empty>
-
-                        <!-- 结果列表（行点击开内嵌详情） -->
-                        <nue-div v-else vertical class="search-results">
-                            <nue-div
-                                v-for="row in rows"
-                                :key="row.task.id"
-                                vertical
-                                role="button"
-                                tabindex="0"
-                                :aria-label="row.task.name"
-                                :title="row.task.name"
-                                class="search-row"
-                                :class="{ 'search-row--done': isDone(row.task) }"
-                                @click="openTaskDetails(row)"
-                                @keydown="handleRowKeydown(row, $event)"
-                            >
-                                <nue-div class="search-row__name" align="center" gap="8px">
-                                    <span
-                                        v-if="priorityDotOf(row.task)"
-                                        :title="priorityTitleOf(row.task)"
-                                        class="search-row__dot"
-                                        :style="{ background: priorityDotOf(row.task) }"
-                                    />
-                                    <span class="search-row__name-text">
-                                        <template v-for="(seg, idx) in row.nameSegments" :key="idx">
-                                            <span v-if="seg.hit" class="srch-hl">{{
-                                                seg.text
-                                            }}</span>
-                                            <template v-else>{{ seg.text }}</template>
-                                        </template>
-                                    </span>
-                                </nue-div>
-                                <nue-div
-                                    v-if="row.descriptionSegments"
-                                    class="search-row__desc"
-                                    align="center"
-                                >
-                                    <span
-                                        class="search-row__desc-text"
-                                        :title="row.task.description"
+                        <loading-error
+                            v-else
+                            :error="!!(ready && error)"
+                            error-image-size="6rem"
+                            :error-image-src="assetUrl('/images/error.webp')"
+                            :empty="ready && resultCount === 0"
+                            empty-image-size="6rem"
+                            :empty-image-src="assetUrl('/images/notaskhere.webp')"
+                        >
+                            <template #error>
+                                <nue-div vertical align="center" gap="10px">
+                                    <nue-text size="var(--nue-text-sm)"
+                                        >搜索失败，请稍后重试</nue-text
                                     >
-                                        <template
-                                            v-for="(seg, idx) in row.descriptionSegments"
-                                            :key="idx"
-                                        >
-                                            <span v-if="seg.hit" class="srch-hl">{{
-                                                seg.text
-                                            }}</span>
-                                            <template v-else>{{ seg.text }}</template>
-                                        </template>
-                                    </span>
+                                    <nue-button theme="primary,small" @click="retry"
+                                        >重试</nue-button
+                                    >
                                 </nue-div>
-                                <nue-div class="search-row__meta" align="center">
-                                    <task-basic-info
-                                        v-if="row.task.projectId"
-                                        no-icon
-                                        :text="`清单：${getProjectName(row.task.projectId)}`"
-                                    />
-                                    <task-tag-bar
-                                        v-if="row.task.tags.length"
-                                        :available-tags="availableTagOptions"
-                                        :task-tag-ids="row.task.tags"
-                                        readonly
-                                        small
-                                    />
-                                    <task-date-info
-                                        v-if="dateIsoOf(row.task)"
-                                        :date="dateIsoOf(row.task)"
-                                        :colored="!isDone(row.task)"
-                                    />
+                            </template>
+                            <template #empty>
+                                <nue-div vertical align="center" gap="10px">
+                                    <nue-text size="var(--nue-text-sm)"
+                                        >未找到与「{{ keyword }}」匹配的任务</nue-text
+                                    >
+                                    <nue-text
+                                        v-if="filterTotalCount > 0"
+                                        size="var(--nue-text-xs)"
+                                        class="srch-tip"
+                                    >
+                                        已应用 {{ filterTotalCount }} 项筛选，可清空后重试
+                                    </nue-text>
+                                    <nue-div align="center" gap="10px">
+                                        <nue-button
+                                            v-if="filterTotalCount > 0"
+                                            theme="small,ghost"
+                                            @click="onClearFilters"
+                                        >
+                                            清空筛选
+                                        </nue-button>
+                                        <nue-button theme="small,primary" @click="onClear"
+                                            >清空关键词</nue-button
+                                        >
+                                    </nue-div>
+                                </nue-div>
+                            </template>
+
+                            <!-- 结果列表（行点击开内嵌详情；loading-error 默认槽，空/错时自动隐藏） -->
+                            <nue-div vertical class="search-results">
+                                <nue-div
+                                    v-for="row in rows"
+                                    :key="row.task.id"
+                                    vertical
+                                    role="button"
+                                    tabindex="0"
+                                    :aria-label="row.task.name"
+                                    :title="row.task.name"
+                                    class="search-row"
+                                    :class="{ 'search-row--done': isDone(row.task) }"
+                                    @click="openTaskDetails(row)"
+                                    @keydown="handleRowKeydown(row, $event)"
+                                >
+                                    <nue-div class="search-row__name" align="center" gap="8px">
+                                        <span
+                                            v-if="priorityDotOf(row.task)"
+                                            :title="priorityTitleOf(row.task)"
+                                            class="search-row__dot"
+                                            :style="{ background: priorityDotOf(row.task) }"
+                                        />
+                                        <span class="search-row__name-text">
+                                            <template
+                                                v-for="(seg, idx) in row.nameSegments"
+                                                :key="idx"
+                                            >
+                                                <span v-if="seg.hit" class="srch-hl">{{
+                                                    seg.text
+                                                }}</span>
+                                                <template v-else>{{ seg.text }}</template>
+                                            </template>
+                                        </span>
+                                    </nue-div>
+                                    <nue-div
+                                        v-if="row.descriptionSegments"
+                                        class="search-row__desc"
+                                        align="center"
+                                    >
+                                        <span
+                                            class="search-row__desc-text"
+                                            :title="row.task.description"
+                                        >
+                                            <template
+                                                v-for="(seg, idx) in row.descriptionSegments"
+                                                :key="idx"
+                                            >
+                                                <span v-if="seg.hit" class="srch-hl">{{
+                                                    seg.text
+                                                }}</span>
+                                                <template v-else>{{ seg.text }}</template>
+                                            </template>
+                                        </span>
+                                    </nue-div>
+                                    <nue-div class="search-row__meta" align="center">
+                                        <task-basic-info
+                                            v-if="row.task.projectId"
+                                            no-icon
+                                            :text="`清单：${getProjectName(row.task.projectId)}`"
+                                        />
+                                        <task-tag-bar
+                                            v-if="row.task.tags.length"
+                                            :available-tags="availableTagOptions"
+                                            :task-tag-ids="row.task.tags"
+                                            readonly
+                                            small
+                                        />
+                                        <task-date-info
+                                            v-if="dateIsoOf(row.task)"
+                                            :date="dateIsoOf(row.task)"
+                                            :colored="!isDone(row.task)"
+                                        />
+                                    </nue-div>
                                 </nue-div>
                             </nue-div>
-                        </nue-div>
+                        </loading-error>
                     </nue-div>
                 </nue-content>
                 <!-- 任务详情适配器（内嵌：路由 taskId 参数驱动，返回保持关键词/结果） -->

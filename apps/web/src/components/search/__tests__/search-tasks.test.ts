@@ -10,6 +10,7 @@ import {
     RATE_MAX_ATTEMPTS,
     RATE_PAUSE_THRESHOLD
 } from '../search-tasks'
+import { matchTaskFilters, type SearchFilterSet } from '../search-tasks'
 
 /** 构造最小任务 VO（默认顶层/未删除/未归档/未放弃；name 必填） */
 const makeTask = (
@@ -266,5 +267,162 @@ describe('性能实测（5000 条本地过滤基准，供 SEA-01 汇报）', () 
         )
         expect(elapsed).toBeLessThan(100)
         expect(hits.length).toBeGreaterThan(0)
+    })
+})
+describe('matchTaskFilters - SEA-03 结构化筛选（纯函数）', () => {
+    const make = (o: Partial<TaskViewObject> & { id: string; name: string }) => makeTask(o)
+    it('SEA-3-4a 空数组=不限（默认含已完成/收件箱）', () => {
+        const none: SearchFilterSet = { projectIds: [], tagIds: [], priorities: [], states: [] }
+        const tasks = [
+            make({ id: 'a', name: 'x', state: 'done', projectId: '' }),
+            make({ id: 'b', name: 'y', projectId: 'p1' })
+        ]
+        expect(tasks.filter((tt) => matchTaskFilters(tt, none))).toHaveLength(2)
+    })
+    it('SEA-3-4b 收件箱哨兵：projectId="" 与 null 均命中哨兵、p1 不命中', () => {
+        const inbox: SearchFilterSet = { projectIds: [''], tagIds: [], priorities: [], states: [] }
+        const t1 = make({ id: 'a', name: 'x', projectId: '' })
+        const t2 = make({ id: 'b', name: 'y', projectId: null as unknown as string })
+        const t3 = make({ id: 'c', name: 'z', projectId: 'p1' })
+        expect(matchTaskFilters(t1, inbox)).toBe(true)
+        expect(matchTaskFilters(t2, inbox)).toBe(true)
+        expect(matchTaskFilters(t3, inbox)).toBe(false)
+    })
+    it('SEA-3-4c 标签维内 OR：任务标签任一命中即过', () => {
+        const f: SearchFilterSet = {
+            projectIds: [],
+            tagIds: ['t2', 't3'],
+            priorities: [],
+            states: []
+        }
+        const t1 = make({ id: 'a', name: 'x', tags: ['t1', 't2'] })
+        const t2 = make({ id: 'b', name: 'y', tags: ['t9'] })
+        expect(matchTaskFilters(t1, f)).toBe(true)
+        expect(matchTaskFilters(t2, f)).toBe(false)
+    })
+    it('SEA-3-4d 优先级/状态 OR 多选', () => {
+        const prio: SearchFilterSet = {
+            projectIds: [],
+            tagIds: [],
+            priorities: ['high', 'medium'],
+            states: []
+        }
+        expect(matchTaskFilters(make({ id: 'a', name: 'x', priority: 'medium' }), prio)).toBe(true)
+        expect(matchTaskFilters(make({ id: 'b', name: 'y', priority: 'low' }), prio)).toBe(false)
+        const states: SearchFilterSet = {
+            projectIds: [],
+            tagIds: [],
+            priorities: [],
+            states: ['todo', 'done']
+        }
+        expect(matchTaskFilters(make({ id: 'c', name: 'z', state: 'done' }), states)).toBe(true)
+        expect(matchTaskFilters(make({ id: 'd', name: 'w', state: 'in-progress' }), states)).toBe(
+            false
+        )
+    })
+    it('SEA-3-4e 维间 AND：四维同时限定全中才过', () => {
+        const f: SearchFilterSet = {
+            projectIds: ['p1'],
+            tagIds: ['t1'],
+            priorities: ['high'],
+            states: ['todo']
+        }
+        const pass = make({
+            id: 'ok',
+            name: 'k',
+            projectId: 'p1',
+            tags: ['t1', 't2'],
+            priority: 'high',
+            state: 'todo'
+        })
+        const failTag = make({
+            id: 'x',
+            name: 'k',
+            projectId: 'p1',
+            tags: ['t3'],
+            priority: 'high',
+            state: 'todo'
+        })
+        const failState = make({
+            id: 'y',
+            name: 'k',
+            projectId: 'p1',
+            tags: ['t1'],
+            priority: 'high',
+            state: 'done'
+        })
+        expect(matchTaskFilters(pass, f)).toBe(true)
+        expect(matchTaskFilters(failTag, f)).toBe(false)
+        expect(matchTaskFilters(failState, f)).toBe(false)
+    })
+    it('SEA-3-8 过滤后排序规则不变（关键词相关度优先 + updatedAt 倒序）', () => {
+        const f: SearchFilterSet = { projectIds: ['p1'], tagIds: [], priorities: [], states: [] }
+        const descOnly = make({
+            id: 'b',
+            name: '杂项',
+            description: '发布上线检查',
+            projectId: 'p1',
+            updatedAt: '2026-02-01T00:00:00.000Z'
+        })
+        const nameHitNewer = make({
+            id: 'a',
+            name: '上线检查',
+            projectId: 'p1',
+            updatedAt: '2026-03-01T00:00:00.000Z'
+        })
+        const other = make({
+            id: 'c',
+            name: '别的上线',
+            projectId: 'p2',
+            updatedAt: '2026-04-01T00:00:00.000Z'
+        })
+        const base = [other, descOnly, nameHitNewer]
+        const filtered = base.filter((task) => matchTaskFilters(task, f))
+        const ids = searchTasks(filtered, '上线').map((r) => r.task.id)
+        expect(ids).toEqual(['a', 'b'])
+    })
+})
+
+describe('性能实测（SEA-03：5000 行 + 四维组合过滤基准）', () => {
+    it('5000 条 + 两维筛选过滤与排序 < 50ms（宽松断言 100ms，数值输出）', () => {
+        const count = 5000
+        const tasks: TaskViewObject[] = []
+        for (let i = 0; i < count; i++) {
+            const projectId = i % 5 === 0 ? '' : `p${i % 7}`
+            tasks.push(
+                makeTask({
+                    id: `t${String(i).padStart(5, '0')}`,
+                    name:
+                        i % 3 === 0 ? `普通事项 ${i}` : `买菜${i % 2 === 0 ? '清单' : '安排'}${i}`,
+                    description: i % 4 === 0 ? `备注里也写了买菜${i}、报销单据` : `杂项描述 ${i}`,
+                    projectId,
+                    tags: [`tag${i % 9}`, `tag${(i + 1) % 9}`],
+                    priority: i % 4 === 0 ? 'high' : i % 4 === 1 ? 'medium' : 'low',
+                    state: i % 6 === 0 ? 'done' : i % 6 === 1 ? 'in-progress' : 'todo',
+                    updatedAt: new Date(2026, 0, 1, 0, 0, i % 60).toISOString()
+                })
+            )
+        }
+        const filters: SearchFilterSet = {
+            projectIds: ['p2', ''],
+            tagIds: ['tag3'],
+            priorities: [],
+            states: ['todo', 'done']
+        }
+        searchTasks(
+            tasks.filter((task) => matchTaskFilters(task, filters)),
+            '买菜'
+        )
+        const t0 = performance.now()
+        const rows = searchTasks(
+            tasks.filter((task) => matchTaskFilters(task, filters)),
+            '买菜'
+        )
+        const elapsed = performance.now() - t0
+        // eslint-disable-next-line no-console
+        console.log(
+            `[SEA-03 perf] ${count} 条四维组合过滤+排序+高亮: ${elapsed.toFixed(2)} ms（命中 ${rows.length} 条）`
+        )
+        expect(elapsed).toBeLessThan(100)
     })
 })

@@ -141,6 +141,39 @@ export const dateKeyLabel = (dateKey: string | null | undefined, nowYear: number
     return year === nowYear ? md : `${year}年${md}`
 }
 
+/**
+ * 结构化筛选集合（SEA-03）
+ * @description 四维全部为空数组 = 不过滤；维度数组为多选集合。
+ *              收件箱以 projectId='' 哨兵表达（任务 projectId 为空串或 null 均命中）。
+ */
+export type SearchFilterSet = {
+    projectIds: string[]
+    tagIds: string[]
+    priorities: string[]
+    states: string[]
+}
+
+export const EMPTY_FILTER_SET: SearchFilterSet = {
+    projectIds: [],
+    tagIds: [],
+    priorities: [],
+    states: []
+}
+
+/**
+ * 任务是否通过筛选（纯函数）
+ * @description 维内 OR（多选任一命中即过）、维间 AND、与关键词由 searchTasks 另行 AND；
+ *              空数组=不限（默认含已完成不变）。优先级/状态直接比 string 值。
+ */
+export const matchTaskFilters = (task: TaskViewObject, filters: SearchFilterSet): boolean => {
+    const { projectIds, tagIds, priorities, states } = filters
+    if (projectIds.length > 0 && !projectIds.includes(task.projectId || '')) return false
+    if (tagIds.length > 0 && !task.tags.some((id) => tagIds.includes(id))) return false
+    if (priorities.length > 0 && !priorities.includes(task.priority)) return false
+    if (states.length > 0 && !states.includes(task.state)) return false
+    return true
+}
+
 /* —— 后端限流（10051 / 429 家族）识别与退避调度（纯函数，可单测） —— */
 
 /** 限流信号特征（业务码或后端/网关文案） */
