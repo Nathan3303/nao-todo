@@ -118,6 +118,13 @@ export const buildTaskSpan = (task: TaskViewObject): CalendarTaskSpan | null => 
 /** 两个字符串日期键（YYYY-MM-DD）的大小比较 */
 const compareKeys = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
 
+/** 周起始口径（C9：sunday=0 / monday=1） */
+export type CalendarWeekStart = 'sunday' | 'monday'
+
+/** 某日期距本周起始的天数（按周起始口径折算） */
+export const weekStartOffsetDays = (date: dayjs.Dayjs, weekStart: CalendarWeekStart): number =>
+    (date.day() - (weekStart === 'monday' ? 1 : 0) + 7) % 7
+
 /**
  * 生成月网格模型
  * @param year 年份
@@ -125,17 +132,19 @@ const compareKeys = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
  * @param tasks 参与渲染的任务（可含其他月份，内部按跨度裁剪）
  * @param selectedKey 当前选中日期键
  * @param maxLanes 该月每行可视轨道数（由真实行高决定；默认回退 3）
+ * @param weekStart 周起始口径（C9：周日/周一；默认 sunday）
  */
 export const buildGridModel = (
     year: number,
     monthIndex: number,
     tasks: TaskViewObject[],
     selectedKey?: string | null,
-    maxLanes: number = MAX_VISIBLE_LANES
+    maxLanes: number = MAX_VISIBLE_LANES,
+    weekStart: CalendarWeekStart = 'sunday'
 ): CalendarGridModel => {
     const firstOfMonth = dayjs(new Date(year, monthIndex, 1))
-    // 周日开头：从本月 1 号所在周的周日开始铺 42 格
-    const gridStart = firstOfMonth.subtract(firstOfMonth.day(), 'day')
+    // 周起始口径：从本月 1 号所在周的起始日开始铺 42 格（sunday=日 / monday=一）
+    const gridStart = firstOfMonth.subtract(weekStartOffsetDays(firstOfMonth, weekStart), 'day')
     const todayKey = todayDateKey()
     const targetKey = selectedKey || ''
 
@@ -240,10 +249,13 @@ const buildRowContent = (
     return { segments, overflow }
 }
 
-/** 某日期键所在周的周日（周起始）日期键 */
-export const weekStartKeyOf = (dateKey: string): string => {
+/** 某日期键所在周的起始日（按周起始口径，C9）日期键 */
+export const weekStartKeyOf = (
+    dateKey: string,
+    weekStart: CalendarWeekStart = 'sunday'
+): string => {
     const anchor = dayjs(dateKey)
-    return fmtKey(anchor.subtract(anchor.day(), 'day'))
+    return fmtKey(anchor.subtract(weekStartOffsetDays(anchor, weekStart), 'day'))
 }
 
 /**
@@ -251,14 +263,16 @@ export const weekStartKeyOf = (dateKey: string): string => {
  * @param anchorKey 锚点日期键（YYYY-MM-DD）
  * @param tasks 任务快照（与月视图同源，跨周任务在此裁剪）
  * @param maxLanes 可视轨道数（行高实测；默认回退 3）
+ * @param weekStart 周起始口径（C9；默认 sunday）
  */
 export const buildWeekGrid = (
     anchorKey: string,
     tasks: TaskViewObject[],
-    maxLanes: number = MAX_VISIBLE_LANES
+    maxLanes: number = MAX_VISIBLE_LANES,
+    weekStart: CalendarWeekStart = 'sunday'
 ): CalendarWeekModel => {
     const anchor = dayjs(anchorKey)
-    const weekStart = anchor.subtract(anchor.day(), 'day')
+    const weekFirstDay = anchor.subtract(weekStartOffsetDays(anchor, weekStart), 'day')
     const year = anchor.year()
     const monthIndex = anchor.month()
     const todayKey = todayDateKey()
@@ -266,7 +280,7 @@ export const buildWeekGrid = (
 
     const days: CalendarDayCell[] = []
     for (let i = 0; i < GRID_COLUMNS; i++) {
-        const date = weekStart.add(i, 'day')
+        const date = weekFirstDay.add(i, 'day')
         const key = fmtKey(date)
         days.push({
             cell: i,

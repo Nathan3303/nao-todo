@@ -1,3 +1,4 @@
+import type { CalendarWeekStart } from '@/components/calendar/monthly/monthly-layout'
 import { TaskViewObject } from '@nao-todo/domain-task'
 import type { DialogManager, Subscriber } from '@nao-todo/shared'
 import type { InjectionKey, Ref } from 'vue'
@@ -27,6 +28,10 @@ export type CalendarViewContext = {
     selectedTagIds: Ref<string[]>
     /** 隐藏已完成任务（独立显示开关） */
     hideCompleted: Ref<boolean>
+    /** 周起始口径（C9；localStorage CALENDAR_WEEKSTART 持久化，sunday/monday） */
+    weekStart: Ref<CalendarWeekStart>
+    /** 设置周起始口径（切换即重排并持久化） */
+    setWeekStart: (weekStart: CalendarWeekStart) => void
     /** 清除清单/标签两组筛选（不影响 hideCompleted） */
     clearFilter: () => void
     /** 快捷设置单一范围（替换式：仅选中一个清单或标签；all 清空两组） */

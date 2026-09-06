@@ -5,7 +5,12 @@ import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from '
 import dayjs from 'dayjs'
 import QuickCreate from '../monthly/quick-create.vue'
 import TaskBar from '../monthly/task-bar.vue'
-import { buildWeekGrid, GRID_COLUMNS, MAX_VISIBLE_LANES } from '../monthly/monthly-layout'
+import {
+    buildWeekGrid,
+    GRID_COLUMNS,
+    MAX_VISIBLE_LANES,
+    type CalendarWeekStart
+} from '../monthly/monthly-layout'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 
 defineOptions({ name: 'CalendarWeekly' })
@@ -35,6 +40,8 @@ const props = defineProps<{
     onQuickOpen: (dateKey: string) => void
     onQuickCancel: () => void
     onQuickSubmit: (dateKey: string, name: string) => void | Promise<boolean>
+    /** 周起始口径（C9） */
+    weekStart: CalendarWeekStart
 }>()
 
 // @viewContext 应用级子侧栏开关（与月视图 header 一致）
@@ -45,7 +52,12 @@ const WEEK_TOP = 34 // 日期区（日期号+周几）高度 + 首条间距
 const ITEM_STEP = 18 // 条高 16 + 间距 2
 const BAND_HEIGHT = 24 // 格底预留条带（DEF-1：+/+N/编辑器占用，任务条区其上截断）
 
-const weekdays = ['日', '一', '二', '三', '四', '五', '六']
+// @computed 星期表头（随周起始口径）
+const weekdays = computed(() =>
+    props.weekStart === 'monday'
+        ? ['一', '二', '三', '四', '五', '六', '日']
+        : ['日', '一', '二', '三', '四', '五', '六']
+)
 
 // @states 动态可视轨道数（DEF-2 语义：行高实测；首帧回退 3）
 const laneLimit = ref<number>(MAX_VISIBLE_LANES)
@@ -54,7 +66,9 @@ let resizeTimer: ReturnType<typeof setTimeout> | undefined
 let bodyObserver: ResizeObserver | undefined
 
 // @computed 周模型（锚点=selectedKey 所在周；跨周任务裁剪，复用 buildRowContent）
-const model = computed(() => buildWeekGrid(props.selectedKey, props.tasks, laneLimit.value))
+const model = computed(() =>
+    buildWeekGrid(props.selectedKey, props.tasks, laneLimit.value, props.weekStart)
+)
 
 const visibleSegments = computed(() =>
     model.value.segments.filter((seg) => seg.lane < laneLimit.value)

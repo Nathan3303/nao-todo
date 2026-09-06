@@ -54,6 +54,8 @@ const {
     selectedTagIds,
     hideCompleted,
     clearFilter,
+    // —— 周起始口径（C9） ——
+    weekStart,
     // —— 视图态（A1 月/周） ——
     viewMode,
     goToWeekView,
@@ -69,7 +71,12 @@ const {
     inlineCreateTask
 } = useCalendarMonthly(laneLimit)
 
-const weekdays = ['日', '一', '二', '三', '四', '五', '六']
+// @computed 星期表头（随周起始口径：sunday 日~六 / monday 一~日）
+const weekdays = computed(() =>
+    weekStart.value === 'monday'
+        ? ['一', '二', '三', '四', '五', '六', '日']
+        : ['日', '一', '二', '三', '四', '五', '六']
+)
 
 // @states 当日面板
 const dayDrawerDate = ref('')
@@ -409,6 +416,7 @@ const showWeekOf = (dateKey: string) => {
                 :on-quick-open="openQuickCreate"
                 :on-quick-cancel="closeQuickCreate"
                 :on-quick-submit="inlineCreateTask"
+                :week-start="weekStart"
             />
         </template>
 

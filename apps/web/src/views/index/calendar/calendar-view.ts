@@ -8,7 +8,7 @@ import {
     useTaskCommentUseCase,
     useTaskUseCase
 } from '@/hooks'
-import { inject, provide, ref } from 'vue'
+import { inject, provide, ref, watch } from 'vue'
 import { CALENDAR_VIEW_CONTEXT_KEY, type CalendarTaskScope } from './context'
 import { useBuiltInProjectsStore } from '@nao-todo/presentation/built-in-project'
 import {
@@ -25,7 +25,28 @@ import {
 } from '@nao-todo/presentation/pomodoro'
 import { storeToRefs } from 'pinia'
 import { APP_CONTEXT_KEY } from '@/context'
+import type { CalendarWeekStart } from '@/components/calendar/monthly/monthly-layout'
 import { TaskViewObject } from '@nao-todo/domain-task'
+
+/** 周起始偏好存储键（C9） */
+const CALENDAR_WEEK_START_KEY = 'CALENDAR_WEEKSTART'
+
+/** 读取周起始偏好：null/非法 → sunday 并规范写回（异常静默降级） */
+const readWeekStart = (): CalendarWeekStart => {
+    let raw: string | null = null
+    try {
+        raw = localStorage.getItem(CALENDAR_WEEK_START_KEY)
+    } catch {
+        /* ignore */
+    }
+    if (raw === 'sunday' || raw === 'monday') return raw
+    try {
+        localStorage.setItem(CALENDAR_WEEK_START_KEY, 'sunday')
+    } catch {
+        /* ignore */
+    }
+    return 'sunday'
+}
 
 /**
  * 日历视图上下文提供器
@@ -84,6 +105,16 @@ export const useCalendarView = () => {
     const selectedProjectIds = ref<string[]>([]) // 勾选的清单
     const selectedTagIds = ref<string[]>([]) // 勾选的标签
     const hideCompleted = ref<boolean>(false) // 隐藏已完成任务
+
+    // @states 周起始口径（C9：localStorage 持久化；非法值已在模块层回退并规范写入）
+    const weekStart = ref<CalendarWeekStart>(readWeekStart())
+    watch(weekStart, (value) => {
+        try {
+            localStorage.setItem(CALENDAR_WEEK_START_KEY, value)
+        } catch {
+            /* ignore */
+        }
+    })
 
     // @action 清除清单/标签两组筛选（不影响 hideCompleted）
     const clearFilter = () => {
@@ -156,6 +187,10 @@ export const useCalendarView = () => {
         selectedProjectIds,
         selectedTagIds,
         hideCompleted,
+        weekStart,
+        setWeekStart: (value: CalendarWeekStart) => {
+            weekStart.value = value
+        },
         clearFilter,
         applyScope
     })

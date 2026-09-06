@@ -43,7 +43,8 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         selectedProjectIds,
         selectedTagIds,
         hideCompleted,
-        clearFilter
+        clearFilter,
+        weekStart
     } = inject(CALENDAR_VIEW_CONTEXT_KEY)!
 
     // @dataStore 任务缓存（与任务区共用全局 map，变更即时联动）
@@ -173,7 +174,8 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
             monthIndex.value,
             tasks.value,
             selectedKey.value,
-            internalLaneLimit.value
+            internalLaneLimit.value,
+            weekStart.value
         )
     )
 
@@ -370,6 +372,8 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         goNextWeek,
         // —— 任务快照（周视图同源数据；含跨月任务，按跨度裁剪） ——
         tasks,
+        // —— 周起始口径（C9） ——
+        weekStart,
         // —— 格内快速新建（B6） ——
         quickCreateDate,
         quickCreatePending,
