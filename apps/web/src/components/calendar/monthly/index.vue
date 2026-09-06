@@ -4,6 +4,7 @@ import dayjs from 'dayjs'
 import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import CalendarDayDrawer from './day-drawer.vue'
+import UnscheduledDrawer from './unscheduled-drawer.vue'
 import useCalendarMonthly, { isTaskOverdue } from './use-calendar-monthly'
 import { GRID_COLUMNS, GRID_ROWS, MAX_VISIBLE_LANES, type CalendarRow } from './monthly-layout'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
@@ -34,6 +35,8 @@ const {
     getDayTasks,
     toggleDone,
     deferToToday,
+    scheduleToDay,
+    unscheduledTasks,
     createTaskOnDay,
     openTaskDetails,
     // —— 筛选（空态/清除出口） ——
@@ -50,9 +53,17 @@ const dayDrawerDate = ref('')
 const dayDrawerOpen = ref(false)
 const dayTasks = computed(() => (dayDrawerDate.value ? getDayTasks(dayDrawerDate.value) : []))
 
+// @states 未安排抽屉（B7）
+const unscheduledOpen = ref(false)
+
 // @computed 筛选激活态（空态出口）
 const filterActive = computed(
     () => selectedProjectIds.value.length > 0 || selectedTagIds.value.length > 0
+)
+
+// @computed 未安排按钮灰态：仅真无（N=0 且非筛选/隐藏完成所致）时禁用；筛选导致时保留入口看空态出口
+const unscheduledBtnDisabled = computed(
+    () => unscheduledTasks.value.length === 0 && !filterActive.value && !hideCompleted.value
 )
 const hasMonthTasks = computed(() => model.value.rows.some((row) => row.segments.length > 0))
 const emptyState = computed(() => {
@@ -205,6 +216,14 @@ const openTaskFromPanel = (taskId: TaskViewObject['id']) => {
                 </nue-button>
             </nue-div>
             <nue-div align="center" gap="6px">
+                <nue-button
+                    theme="ghost,small"
+                    :disabled="unscheduledBtnDisabled"
+                    title="未安排任务：快速安排到某日"
+                    @click="unscheduledOpen = true"
+                >
+                    未安排 {{ unscheduledTasks.length }}
+                </nue-button>
                 <nue-button theme="ghost,small" @click="goToToday">今天</nue-button>
             </nue-div>
         </nue-div>
@@ -318,6 +337,19 @@ const openTaskFromPanel = (taskId: TaskViewObject['id']) => {
             :on-defer="deferToToday"
             :on-open-task="openTaskFromPanel"
             :on-create="() => createTaskOnDay(dayDrawerDate)"
+        />
+
+        <!-- 未安排任务抽屉（B7） -->
+        <unscheduled-drawer
+            v-model:open="unscheduledOpen"
+            :tasks="unscheduledTasks"
+            :filter-active="filterActive"
+            :hide-completed="hideCompleted"
+            :on-toggle-done="toggleDone"
+            :on-schedule-to-day="scheduleToDay"
+            :on-open-task="openTaskFromPanel"
+            :on-clear-filter="clearFilter"
+            :on-show-completed="() => (hideCompleted = false)"
         />
     </nue-div>
 </template>

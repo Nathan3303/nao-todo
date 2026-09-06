@@ -149,6 +149,17 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
     // @computed 当前月标题
     const monthTitle = computed(() => `${year.value} 年 ${monthIndex.value + 1} 月`)
 
+    // @computed 未安排任务（B7：endAt 为空；数据源=当前筛选下全量快照，不限当月；createdAt desc）
+    const unscheduledTasks = computed<TaskViewObject[]>(() =>
+        tasks.value
+            .filter((task) => !task.endAt)
+            .sort(
+                (a, b) =>
+                    dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf() ||
+                    (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+            )
+    )
+
     // @computed 网格模型（快照任务即服务端过滤结果 -> 行/轨道/溢出）
     const model = computed(() =>
         buildGridModel(
@@ -206,14 +217,18 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         if (err !== null) NueMessage.error(unwrapError(err))
     }
 
-    // @method 延期到今天：仅把 endAt 改为今日末，startAt 不变（失败 toast，视觉不变）
-    const deferToToday = async (task: TaskViewObject): Promise<void> => {
+    // @method 安排到某日：仅把 endAt 改为该日末（startAt 保留，失败 toast 且列表保留）
+    const scheduleToDay = async (task: TaskViewObject, dateKey: string): Promise<void> => {
         const err = await taskUseCase.update(task.id, {
-            endAt: dayjs().endOf('day').toISOString(),
+            endAt: dayjs(dateKey).endOf('day').toISOString(),
             updatedAt: dayjs().toISOString()
         })
         if (err !== null) NueMessage.error(unwrapError(err))
     }
+
+    // @method 延期到今天（A3 别名）：scheduleToDay 的今日特例
+    const deferToToday = async (task: TaskViewObject): Promise<void> =>
+        scheduleToDay(task, todayDateKey())
 
     // @method 以某日为截止日新建任务（打开创建器并预填当日 + 当前范围上下文）
     const createTaskOnDay = (dateKey: string) => {
@@ -250,6 +265,8 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         getDayTasks,
         toggleDone,
         deferToToday,
+        scheduleToDay,
+        unscheduledTasks,
         createTaskOnDay,
         openTaskDetails,
         // —— 筛选（空态/清除出口使用） ——
