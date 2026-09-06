@@ -45,8 +45,9 @@ apps/web/
 │   ├── components/       # 展示组件
 │   │   ├── app/          # 应用布局（侧边栏 aside / aside-v2、对话框适配）
 │   │   ├── auth/         # 认证组件（登录、注册、检入）
-│   │   ├── calendar/     # 日历组件（月视图、侧边栏）
+│   │   ├── calendar/     # 日历组件（月/周视图、任务条/抽屉/格内新建、侧边栏）
 │   │   ├── pomodoro/     # 番茄钟组件（计时器、记录、侧边栏）
+│   │   ├── search/       # 搜索组件（搜索引擎、结果行、筛选栏）
 │   │   ├── settings/     # 设置组件（个人信息、密码、应用）
 │   │   └── tasks/        # 任务组件（内置项目、项目、标签、表格/看板/列表、详情）
 │   ├── hooks/            # 组合式函数（快捷键、主题、usecases 装配）
@@ -120,7 +121,7 @@ pnpm webapp preview
 | `/tasks/t/:tagId`                             | tasks-tag                   | 标签                              |
 | `/tasks/t/:tagId/:viewType/:taskId?`          | tasks-tag-main              | 标签任务视图与详情                |
 | `/calendar`                                   | calendar                    | 日历视图（重定向到 monthly）      |
-| `/calendar/monthly`                           | calendar-monthly            | 月视图                            |
+| `/calendar/monthly`                           | calendar-monthly            | 月视图（可切换周视图）            |
 | `/pomodoro`                                   | pomodoro                    | 番茄钟（重定向到 timer）          |
 | `/pomodoro/timer`、`/pomodoro/focus/:taskId?` | pomodoro                    | 计时器 / 专注模式                 |
 | `/pomodoro/pomodoros`                         | pomodoro-collection         | 番茄钟集合                        |
@@ -153,11 +154,18 @@ pnpm webapp preview
 
 ### 日历
 
-- 日历视图查看任务的截止日期分布
+- **月/周双视图**：月视图全局概览，可切换到周视图单周聚焦，切换保持所选日期焦点
+- **任务条增强**：按截止/区间渲染任务条（优先级色条、时刻、逾期红色、跨行/跨界续接圆点），可视轨道数随行高动态
+- **无日期收纳**：侧栏抽屉收纳无日期任务，可一键安排到任意日期
+- **格内快速新建**：格子悬浮「+」输入名称回车即建（默认当日截止，可按单选范围预填清单/标签）
+- **周起始偏好**：周日/周一可配（本地持久化 `CALENDAR_WEEKSTART`）
+- **侧栏筛选**：按清单/标签多选过滤 + 隐藏已完成
 
 ### 全局搜索
 
-- 跨模块搜索任务和内容
+- **关键词回找**：匹配全部任务名称与备注（含子任务、已完成），客户端全量本地过滤，相关度排序 + 命中高亮
+- **属性筛选栏**：按清单（含收集箱）/标签/优先级/状态多选组合收敛结果
+- **结果直达**：点击任务行打开内嵌详情，返回后保持关键词与结果
 
 ### 用户设置
 

@@ -1,4 +1,4 @@
-import type { GoAsync, ResponseDataPagination } from '@nao-todo/shared'
+import type { GoAsync, Pagination } from '@nao-todo/shared/types'
 import { TaskEntity } from '../entities'
 import { CreateTaskValueObject, UpdateTaskValueObject } from '../valueobjects'
 
@@ -48,9 +48,7 @@ export interface TaskRepository {
      * @param queryString 查询字符串
      * @returns 任务实体列表和分页信息
      */
-    list(
-        queryString?: string
-    ): GoAsync<{ taskEntities: TaskEntity[]; pagination?: ResponseDataPagination }>
+    list(queryString?: string): GoAsync<{ taskEntities: TaskEntity[]; pagination?: Pagination }>
 
     /**
      * copy 复制任务

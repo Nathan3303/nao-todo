@@ -2,7 +2,8 @@
 // newTaskCheckItemRepository,
 //     TaskCheckItemRepoImpl
 // } from '@nao-todo/infrastructure/backend/task'
-import type { GoAsync } from '@nao-todo/shared'
+
+import type { GoAsync } from '@nao-todo/shared/types'
 import { TaskCheckItemRepository } from '../../domain/repositories'
 import { TaskErrorCode } from '../../domain/errors'
 import { UpdateTaskCheckItemValueObject } from '../../domain/valueobjects'

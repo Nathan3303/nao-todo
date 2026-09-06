@@ -1,4 +1,4 @@
-import type { Go } from '@nao-todo/shared'
+import type { Go } from '@nao-todo/shared/types'
 import { COMMENT_CONTENT_MAX_CHARS } from '../constants'
 import { TaskErrorCode } from '../errors'
 

@@ -1,4 +1,4 @@
-import type { Go } from '@nao-todo/shared'
+import type { Go } from '@nao-todo/shared/types'
 
 /**
  * Pomodoro 列表查询选项

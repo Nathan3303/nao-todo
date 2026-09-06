@@ -1,3 +1,4 @@
+import type { GetTasksOptions, TaskColumnOptions } from '@nao-todo/shared/constants/task'
 import {
     CreateTagValueObject,
     TagEntity,
@@ -10,7 +11,7 @@ import {
     TagViewObject,
     UpdateTagViewObject
 } from '../viewobjects'
-import { type GetTasksOptions, type TaskColumnOptions } from '@nao-todo/shared'
+
 import { JsonStringValueObject } from '@nao-todo/shared/valueobjects/json-string'
 import { defaultColumns } from '@nao-todo/shared/constants/task'
 

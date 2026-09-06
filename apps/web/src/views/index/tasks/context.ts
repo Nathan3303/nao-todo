@@ -1,24 +1,12 @@
-import type { BuiltInProjectUseCase } from '@nao-todo/domain-built-in-project'
-import { ProjectUseCase } from '@nao-todo/domain-project'
-import { TagUseCase, TagViewObject } from '@nao-todo/domain-tag'
-import { TaskUseCase, TaskViewObject } from '@nao-todo/domain-task'
-import type { ProjectHandler, TagHandler, TaskHandler } from '@nao-todo/presentation'
 import type { DialogManager, Subscriber } from '@nao-todo/shared'
+import { TagViewObject } from '@nao-todo/domain-tag'
+import { TaskViewObject } from '@nao-todo/domain-task'
 import type { InjectionKey, Ref } from 'vue'
 
-// 任务视图上下文
+// 任务视图上下文（仅 UI 状态/服务与方法；业务依赖由各消费组合式自行组装）
 export type TasksViewContext = {
-    builtInProjectUseCase: BuiltInProjectUseCase
-    projectUseCase: ProjectUseCase
-    tagUseCase: TagUseCase
-    taskUseCase: TaskUseCase
-
     appDialogManager: DialogManager
     appSubscriber: Subscriber
-
-    projectHandler: ProjectHandler
-    tagHandler: TagHandler
-    taskHandler: TaskHandler
 
     outlineWidth: Ref<string>
     isDisplayOutline: Ref<boolean>

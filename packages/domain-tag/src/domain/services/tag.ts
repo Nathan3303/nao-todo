@@ -1,4 +1,4 @@
-import type { GoAsync } from '@nao-todo/shared'
+import type { GoAsync } from '@nao-todo/shared/types'
 import type { TagRepository } from '../repositories/tag'
 import { TagEntity } from '../entities/tag'
 import type { CreateTagValueObject } from '../valueobjects/create-tag'

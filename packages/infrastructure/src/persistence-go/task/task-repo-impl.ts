@@ -1,3 +1,4 @@
+import type { Pagination } from '@nao-todo/shared/types/pagination'
 import type {
     CreateTaskValueObject,
     TaskEntity,
@@ -5,7 +6,7 @@ import type {
     UpdateTaskValueObject
 } from '@nao-todo/domain-task'
 import type { GoAsync, Requester } from '@nao-todo/shared'
-import type { ListTaskRes, ResponseData, ResponseDataPagination, TaskRes } from '../models'
+import type { ListTaskRes, ResponseData, TaskRes } from '../models'
 import { getJWTFromLocalStorage } from '../utils'
 import {
     createTaskValueObject2Req,
@@ -133,7 +134,7 @@ export class TaskRepoImpl implements TaskRepository {
      */
     async list(
         queryString?: string
-    ): GoAsync<{ taskEntities: TaskEntity[]; pagination?: ResponseDataPagination }> {
+    ): GoAsync<{ taskEntities: TaskEntity[]; pagination?: Pagination }> {
         // 1. 调用接口
         const response = await this.requester.get(`/tasks/?${queryString}`, {
             headers: { Authorization: `Bearer ${getJWTFromLocalStorage()}` }

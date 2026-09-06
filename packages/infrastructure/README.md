@@ -26,6 +26,7 @@ packages/infrastructure/
 - `tag/` — 标签与偏好仓储
 - `task/` — 任务、检查事项、评论仓储
 - `models/` — 后端 API 数据模型（user / project / tag / task / pomodoro / auth / base）
+- 更新透传遵循三态清空语义：缺省/`null`=不改动，空串/空数组=清除字段（如 `projectId:''` 回到默认容器、`parentTaskId:''` 脱离父任务）
 - `utils.ts` — 请求辅助工具
 
 ### `persistence-local/` — 本地持久化（桌面端）

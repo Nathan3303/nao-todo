@@ -1,210 +1,495 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { Loading as LoadingComp } from '@nao-todo/shared'
+import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import type { TaskViewObject } from '@nao-todo/domain-task'
+import CalendarDayDrawer from './day-drawer.vue'
+import CalendarWeekly from '../weekly/index.vue'
+import QuickCreate from './quick-create.vue'
+import TaskBar from './task-bar.vue'
+import UnscheduledDrawer from './unscheduled-drawer.vue'
+import useCalendarMonthly from './use-calendar-monthly'
+import {
+    dateKeyOf,
+    GRID_COLUMNS,
+    GRID_ROWS,
+    MAX_VISIBLE_LANES,
+    type CalendarRow
+} from './monthly-layout'
+import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 
 defineOptions({ name: 'CalendarMonthly' })
 
-const weekdays = ['日', '一', '二', '三', '四', '五', '六']
+// 布局常量（与下方 scoped 样式中的数值保持一致）
+const DATE_OFFSET = 26 // 日期号区域高度 + 首个任务条上间距
+const ITEM_STEP = 18 // 单条任务条高度(16) + 纵向间距(2)
+const BAND_HEIGHT = 24 // 格底预留条带（DEF-1：+/+N/编辑器占用，任务条区其上截断）
 
-interface DayCell {
-    day: number
-    date: string // ISO string YYYY-MM-DD
-    isCurrentMonth: boolean
-    isToday: boolean
-    isSelected: boolean
-    isWeekend: boolean
-    hasTasks: boolean
-    dots: { color: string }[]
+// @viewContext 应用级子侧栏开关（与任务页 header 行为一致）
+const { isDisplayAside, switchDisplayAside } = inject(INDEX_VIEW_CONTEXT_KEY)!
+
+// @states 动态可视轨道数（DEF-2：由行高实测决定；未测得前回退 3）
+const laneLimit = ref<number>(MAX_VISIBLE_LANES)
+
+// @viewLogic 月历视图逻辑
+const {
+    loading,
+    error,
+    retry,
+    model,
+    monthTitle,
+    selectedKey,
+    selectDate,
+    goPrevMonth,
+    goNextMonth,
+    goToToday,
+    getDayTasks,
+    toggleDone,
+    deferToToday,
+    scheduleToDay,
+    unscheduledTasks,
+    createTaskOnDay,
+    openTaskDetails,
+    // —— 筛选（空态/清除出口） ——
+    selectedProjectIds,
+    selectedTagIds,
+    hideCompleted,
+    clearFilter,
+    // —— 周起始口径（C9） ——
+    weekStart,
+    // —— 视图态（A1 月/周） ——
+    viewMode,
+    goToWeekView,
+    goToMonthView,
+    goPrevWeek,
+    goNextWeek,
+    tasks,
+    // —— 格内快速新建（B6） ——
+    quickCreateDate,
+    quickCreatePending,
+    openQuickCreate,
+    closeQuickCreate,
+    inlineCreateTask
+} = useCalendarMonthly(laneLimit)
+
+// @computed 星期表头（随周起始口径：sunday 日~六 / monday 一~日）
+const weekdays = computed(() =>
+    weekStart.value === 'monday'
+        ? ['一', '二', '三', '四', '五', '六', '日']
+        : ['日', '一', '二', '三', '四', '五', '六']
+)
+
+// @states 当日面板
+const dayDrawerDate = ref('')
+const dayDrawerOpen = ref(false)
+const dayTasks = computed(() => (dayDrawerDate.value ? getDayTasks(dayDrawerDate.value) : []))
+
+// @states 未安排抽屉（B7）
+const unscheduledOpen = ref(false)
+
+// @computed 筛选激活态（空态出口）
+const filterActive = computed(
+    () => selectedProjectIds.value.length > 0 || selectedTagIds.value.length > 0
+)
+
+// @computed 未安排按钮灰态：仅真无（N=0 且非筛选/隐藏完成所致）时禁用；筛选导致时保留入口看空态出口
+const unscheduledBtnDisabled = computed(
+    () => unscheduledTasks.value.length === 0 && !filterActive.value && !hideCompleted.value
+)
+const hasMonthTasks = computed(() => model.value.rows.some((row) => row.segments.length > 0))
+const emptyState = computed(() => {
+    // 本月有可见任务：直接渲染网格（筛选/隐藏已完成只是收敛数据，不触发空态）
+    if (hasMonthTasks.value) return null
+    if (filterActive.value) {
+        return {
+            text: '当前筛选条件下，本月暂无任务',
+            action: '清除筛选',
+            run: () => clearFilter()
+        }
+    }
+    if (hideCompleted.value) {
+        return {
+            text: '已隐藏已完成任务，本月暂无未完成任务',
+            action: '显示已完成',
+            run: () => (hideCompleted.value = false)
+        }
+    }
+    return { text: '本月暂无任务', action: '', run: () => {} }
+})
+
+// —— 动态可视轨道数：ResizeObserver + 100ms 防抖，随行高实时调整（DEF-2） ——
+const calBodyEl = ref<HTMLElement | null>(null)
+let laneResizeTimer: ReturnType<typeof setTimeout> | undefined
+let laneBodyObserver: ResizeObserver | undefined
+
+// @method 按行实际高度计算可视条数：max(1, floor((行高 − 日期区26 − 底部留白4) / 18))
+const measureAndApplyLaneLimit = () => {
+    const firstRow = calBodyEl.value?.querySelector<HTMLElement>('.cal-row')
+    const rowHeight = firstRow?.clientHeight ?? 0
+    if (rowHeight <= 0) return
+    const next = Math.max(1, Math.floor((rowHeight - DATE_OFFSET - BAND_HEIGHT) / ITEM_STEP))
+    if (next !== laneLimit.value) laneLimit.value = next
+}
+const scheduleLaneMeasure = () => {
+    clearTimeout(laneResizeTimer)
+    laneResizeTimer = setTimeout(measureAndApplyLaneLimit, 100)
 }
 
-const now = new Date()
-const currentYear = ref(now.getFullYear())
-const currentMonth = ref(now.getMonth()) // 0-indexed
-const selectedDateStr = ref('')
+// @lifecycle 观测网格容器高度（网格出现/消失、窗口缩放、月/周切换重建后重挂）
+onMounted(() => {
+    attachBodyObserver()
+    measureAndApplyLaneLimit()
+})
+onUnmounted(() => {
+    laneBodyObserver?.disconnect()
+    laneBodyObserver = undefined
+    clearTimeout(laneResizeTimer)
+})
 
-const year = computed(() => currentYear.value)
-const month = computed(() => currentMonth.value + 1)
-
-function buildDays(): DayCell[] {
-    const year = currentYear.value
-    const month = currentMonth.value
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-
-    // First day of month
-    const firstDay = new Date(year, month, 1)
-    const startDayOfWeek = firstDay.getDay() // 0=Sun
-
-    // Days in month
-    const daysInMonth = new Date(year, month + 1, 0).getDate()
-    // Days in previous month
-    const daysInPrevMonth = new Date(year, month, 0).getDate()
-
-    const cells: DayCell[] = []
-
-    // Previous month's trailing days
-    const prevMonthStart = daysInPrevMonth - startDayOfWeek + 1
-    for (let d = prevMonthStart; d <= daysInPrevMonth; d++) {
-        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`
-        cells.push({
-            day: d,
-            date: dateStr,
-            isCurrentMonth: false,
-            isToday: false,
-            isSelected: selectedDateStr.value === dateStr,
-            isWeekend: cells.length % 7 === 0 || cells.length % 7 === 6,
-            hasTasks: d % 3 === 0,
-            dots: d % 3 === 0 ? [{ color: 'var(--cal-dot-default)' }] : []
-        })
-    }
-
-    // Current month
-    for (let d = 1; d <= daysInMonth; d++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
-        const isToday = dateStr === todayStr
-        cells.push({
-            day: d,
-            date: dateStr,
-            isCurrentMonth: true,
-            isToday,
-            isSelected: selectedDateStr.value === dateStr,
-            isWeekend: cells.length % 7 === 0 || cells.length % 7 === 6,
-            hasTasks: d % 5 === 0 || d === 15,
-            dots:
-                d % 5 === 0
-                    ? [{ color: 'var(--cal-dot-default)' }, { color: 'var(--cal-dot-accent)' }]
-                    : d === 15
-                      ? [{ color: 'var(--cal-dot-default)' }]
-                      : []
-        })
-    }
-
-    // Next month's leading days (fill to 6 rows = 42 cells)
-    const remaining = 42 - cells.length
-    for (let d = 1; d <= remaining; d++) {
-        const dateStr = `${year}-${String(month + 2 > 12 ? 1 : month + 2).padStart(2, '0')}-${String(d).padStart(2, '0')}`
-        cells.push({
-            day: d,
-            date: dateStr,
-            isCurrentMonth: false,
-            isToday: false,
-            isSelected: selectedDateStr.value === dateStr,
-            isWeekend: cells.length % 7 === 0 || cells.length % 7 === 6,
-            hasTasks: false,
-            dots: []
-        })
-    }
-
-    return cells
+// @method 将 RO 挂到当前 .cal-body（v-if 重建后需要重新 observe）
+const attachBodyObserver = () => {
+    laneBodyObserver?.disconnect()
+    const el = calBodyEl.value
+    if (!el) return
+    laneBodyObserver = new ResizeObserver(scheduleLaneMeasure)
+    laneBodyObserver.observe(el)
 }
 
-const days = computed(() => buildDays())
+// @watch 数据/视图状态就绪后再量一次（等高校换场景 RO 不触发时补量）
+watch(
+    [loading, error, () => emptyState.value, () => viewMode.value],
+    () => {
+        attachBodyObserver()
+        void nextTick(measureAndApplyLaneLimit)
+    },
+    { flush: 'post' }
+)
 
-function prevMonth() {
-    if (currentMonth.value === 0) {
-        currentMonth.value = 11
-        currentYear.value--
-    } else {
-        currentMonth.value--
+// @method 打开某日面板（同时选中该日）
+const openDay = (dateKey: string) => {
+    selectDate(dateKey)
+    dayDrawerDate.value = dateKey
+    dayDrawerOpen.value = true
+}
+
+// @method 可视轨道内的任务条（随动态 laneLimit 实时增减）
+const visibleSegments = (row: CalendarRow) =>
+    row.segments.filter((seg) => seg.lane < laneLimit.value)
+
+// @method 某格溢出 +N
+const overflowOn = (row: CalendarRow, dateKey: string) =>
+    row.overflow.find((item) => item.dateKey === dateKey)
+
+// @method 回车提交（dateKey 来自所在格条带；成功由 composable 清除并卸载，失败保留文本可重试）
+const quickSubmit = (dateKey: string, name: string) => {
+    void inlineCreateTask(dateKey, name)
+}
+
+// @method 任务条定位样式（连续条按列区间铺满）
+const segStyle = (seg: { colStart: number; colEnd: number; lane: number }) => {
+    const left = (seg.colStart / GRID_COLUMNS) * 100
+    const width = ((seg.colEnd - seg.colStart + 1) / GRID_COLUMNS) * 100
+    return {
+        left: `${left}%`,
+        width: `${width}%`,
+        top: `${DATE_OFFSET + seg.lane * ITEM_STEP}px`
     }
 }
 
-function nextMonth() {
-    if (currentMonth.value === 11) {
-        currentMonth.value = 0
-        currentYear.value++
-    } else {
-        currentMonth.value++
-    }
+// @method 段首是否显示开始时刻：仅真起始段且首格即 startAt 当日（跨行续接/裁剪可见段不显示）
+const segShowTime = (
+    seg: { task: TaskViewObject; isStart: boolean; colStart: number },
+    row: CalendarRow
+): boolean => {
+    const task = seg.task
+    return (
+        !!seg.isStart &&
+        !!task.startAt &&
+        row.cells[seg.colStart]?.dateKey === dateKeyOf(task.startAt)
+    )
 }
 
-function goToToday() {
-    currentYear.value = now.getFullYear()
-    currentMonth.value = now.getMonth()
-    selectedDateStr.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+// @method 跨行续接标记：行尾（后续行继续）只在与网格内下一行相接处显示
+const isRowEnd = (seg: { colEnd: number; isEnd: boolean }, row: CalendarRow): boolean =>
+    row.row < GRID_ROWS - 1 && seg.colEnd === GRID_COLUMNS - 1 && !seg.isEnd
+
+// @method 跨行续接标记：行首（承接上一行）只在与网格内上一行相接处显示
+const isRowStart = (seg: { colStart: number; isStart: boolean }, row: CalendarRow): boolean =>
+    row.row > 0 && seg.colStart === 0 && !seg.isStart
+
+// @method 从当日面板打开任务详情
+const openTaskFromPanel = (taskId: TaskViewObject['id']) => {
+    openTaskDetails(taskId)
 }
 
-function selectDate(day: DayCell) {
-    selectedDateStr.value = day.date
+// @method 当日面板「本周」下钻：锚定该日并切到周视图
+const showWeekOf = (dateKey: string) => {
+    selectDate(dateKey)
+    goToWeekView()
+    dayDrawerOpen.value = false
 }
 </script>
 
 <template>
-    <nue-div vertical class="nue-calendar-monthly">
-        <!-- Month Navigation -->
-        <nue-div align="center" class="cal-header" gap="8px">
-            <nue-div align="center" gap="2px">
-                <button class="cal-nav-btn" @click="prevMonth">
-                    <nue-icon name="arrow-left-s" size="18px" />
-                </button>
-                <nue-text tag="h2" size="var(--nue-text-df)" :weight="600" class="cal-title">
-                    {{ year }} 年 {{ month }} 月
-                </nue-text>
-                <button class="cal-nav-btn" @click="nextMonth">
-                    <nue-icon name="arrow-right-s" size="18px" />
-                </button>
-            </nue-div>
-            <nue-button theme="ghost,small" @click="goToToday">今天</nue-button>
-        </nue-div>
-        <!-- Weekday Headers -->
-        <nue-div class="cal-weekdays" gap="0">
-            <div v-for="day in weekdays" :key="day" class="cal-weekday">{{ day }}</div>
-        </nue-div>
-        <!-- Date Grid -->
-        <div class="cal-grid">
-            <div
-                v-for="(day, idx) in days"
-                :key="idx"
-                class="cal-cell"
-                :class="{
-                    'cal-cell--outside': !day.isCurrentMonth,
-                    'cal-cell--today': day.isToday,
-                    'cal-cell--selected': day.isSelected,
-                    'cal-cell--weekend': day.isWeekend
-                }"
-                @click="selectDate(day)"
-            >
-                <span class="cal-date">{{ day.day }}</span>
-                <div v-if="day.hasTasks" class="cal-dots">
-                    <span
-                        v-for="(dot, di) in day.dots"
-                        :key="di"
-                        class="cal-dot"
-                        :style="{ background: dot.color }"
+    <nue-div vertical class="nue-calendar-monthly" gap="0">
+        <!-- 月视图（默认） -->
+        <template v-if="viewMode === 'month'">
+            <!-- 月份导航 -->
+            <nue-div align="center" class="cal-header" gap="8px">
+                <nue-div align="center" gap="2px">
+                    <nue-button
+                        :icon="isDisplayAside ? 'menu-close' : 'menu-open'"
+                        theme="icon,ghost"
+                        @click="switchDisplayAside"
                     />
+                    <nue-button
+                        icon="arrow-left"
+                        theme="icon,ghost"
+                        title="上个月"
+                        @click="goPrevMonth"
+                    >
+                    </nue-button>
+                    <nue-text tag="h2" size="var(--nue-text-df)" :weight="600" class="cal-title">
+                        {{ monthTitle }}
+                    </nue-text>
+                    <nue-button
+                        icon="arrow-right"
+                        theme="icon,ghost"
+                        title="下个月"
+                        @click="goNextMonth"
+                    >
+                    </nue-button>
+                </nue-div>
+                <nue-div align="center" gap="6px">
+                    <nue-div class="cal-view-toggle" role="group" aria-label="视图切换">
+                        <nue-button
+                            theme="small,ghost"
+                            class="cal-view-btn is-active"
+                            title="当前：月视图"
+                        >
+                            月
+                        </nue-button>
+                        <nue-button
+                            theme="small,ghost"
+                            class="cal-view-btn"
+                            title="切换周视图"
+                            @click="goToWeekView"
+                        >
+                            周
+                        </nue-button>
+                    </nue-div>
+                    <span class="cal-view-sep" aria-hidden="true"></span>
+                    <nue-button
+                        theme="ghost,small"
+                        :disabled="unscheduledBtnDisabled"
+                        title="未安排任务：快速安排到某日"
+                        @click="unscheduledOpen = true"
+                    >
+                        未安排 {{ unscheduledTasks.length }}
+                    </nue-button>
+                    <nue-button theme="ghost,small" @click="goToToday">今天</nue-button>
+                </nue-div>
+            </nue-div>
+
+            <!-- 星期表头 -->
+            <nue-div class="cal-weekdays" gap="0">
+                <div v-for="day in weekdays" :key="day" class="cal-weekday">{{ day }}</div>
+            </nue-div>
+
+            <!-- 月历主体 -->
+            <div ref="calBodyEl" class="cal-body">
+                <!-- 加载中 -->
+                <div v-if="loading" class="cal-body-state">
+                    <loading-comp height="100%" />
                 </div>
+                <!-- 加载失败 -->
+                <div v-else-if="error" class="cal-body-state">
+                    <nue-div vertical align="center" gap="8px">
+                        <nue-text size="var(--nue-text-sm)">{{ error }}</nue-text>
+                        <nue-button theme="primary,small" @click="retry">重试</nue-button>
+                    </nue-div>
+                </div>
+                <!-- 空态（筛选/隐藏完成/当月无任务） -->
+                <div v-else-if="emptyState" class="cal-body-state">
+                    <nue-div vertical align="center" gap="8px">
+                        <nue-text size="var(--nue-text-sm)" class="cal-empty-text">
+                            {{ emptyState.text }}
+                        </nue-text>
+                        <nue-button
+                            v-if="emptyState.action"
+                            theme="primary,small"
+                            @click="emptyState.run"
+                        >
+                            {{ emptyState.action }}
+                        </nue-button>
+                    </nue-div>
+                </div>
+                <!-- 网格 -->
+                <template v-else>
+                    <div v-for="row in model.rows" :key="row.row" class="cal-row">
+                        <!-- 日期格（点击选中并打开当日面板） -->
+                        <div
+                            v-for="cell in row.cells"
+                            :key="cell.cell"
+                            class="cal-cell"
+                            :class="{
+                                'cal-cell--outside': cell.monthOffset !== 0,
+                                'cal-cell--today': cell.isToday,
+                                'cal-cell--selected': cell.isSelected,
+                                'cal-cell--weekend': cell.isWeekend,
+                                'cal-cell--edge': cell.cell % 7 === 6
+                            }"
+                            @click="openDay(cell.dateKey)"
+                        >
+                            <span class="cal-date">{{ cell.day }}</span>
+                            <div class="cal-band" @click.stop>
+                                <template v-if="quickCreateDate === cell.dateKey">
+                                    <quick-create
+                                        :pending="quickCreatePending"
+                                        @submit="(name) => quickSubmit(cell.dateKey, name)"
+                                        @cancel="closeQuickCreate"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <button
+                                        v-if="cell.monthOffset === 0"
+                                        type="button"
+                                        class="cal-quick-add"
+                                        title="快速新建"
+                                        @click.stop="openQuickCreate(cell.dateKey)"
+                                    >
+                                        +
+                                    </button>
+                                    <button
+                                        v-if="overflowOn(row, cell.dateKey)"
+                                        type="button"
+                                        class="cal-more"
+                                        :title="`还有 ${overflowOn(row, cell.dateKey)!.count} 个任务`"
+                                        @click.stop="openDay(cell.dateKey)"
+                                    >
+                                        +{{ overflowOn(row, cell.dateKey)!.count }}
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- 任务条层（连续条跨格/跨行） -->
+                        <div class="cal-lanes">
+                            <task-bar
+                                v-for="seg in visibleSegments(row)"
+                                :key="`${seg.task.id}-${seg.colStart}`"
+                                :task="seg.task"
+                                :pos="segStyle(seg)"
+                                :show-time="segShowTime(seg, row)"
+                                :cont-start="isRowStart(seg, row)"
+                                :cont-end="isRowEnd(seg, row)"
+                                @open="openTaskDetails(seg.task.id)"
+                            />
+                        </div>
+                    </div>
+                </template>
             </div>
-        </div>
+        </template>
+
+        <!-- 周视图（A1） -->
+        <template v-else>
+            <calendar-weekly
+                :loading="loading"
+                :error="error"
+                :on-retry="retry"
+                :tasks="tasks"
+                :selected-key="selectedKey"
+                :filter-active="filterActive"
+                :hide-completed="hideCompleted"
+                :on-clear-filter="clearFilter"
+                :on-show-completed="() => (hideCompleted = false)"
+                :on-open-day="openDay"
+                :on-open-task="openTaskFromPanel"
+                :on-go-month="goToMonthView"
+                :on-prev-week="goPrevWeek"
+                :on-next-week="goNextWeek"
+                :on-go-today="goToToday"
+                :unscheduled-count="unscheduledTasks.length"
+                :unscheduled-disabled="unscheduledBtnDisabled"
+                :on-open-unscheduled="() => (unscheduledOpen = true)"
+                :quick-create-date="quickCreateDate"
+                :quick-pending="quickCreatePending"
+                :on-quick-open="openQuickCreate"
+                :on-quick-cancel="closeQuickCreate"
+                :on-quick-submit="inlineCreateTask"
+                :week-start="weekStart"
+            />
+        </template>
+
+        <!-- 当日任务面板 -->
+        <calendar-day-drawer
+            v-model:open="dayDrawerOpen"
+            :date-key="dayDrawerDate"
+            :tasks="dayTasks"
+            :on-toggle-done="toggleDone"
+            :on-defer="deferToToday"
+            :on-open-task="openTaskFromPanel"
+            :on-create="() => createTaskOnDay(dayDrawerDate)"
+            :on-go-week="showWeekOf"
+        />
+
+        <!-- 未安排任务抽屉（B7） -->
+        <unscheduled-drawer
+            v-model:open="unscheduledOpen"
+            :tasks="unscheduledTasks"
+            :filter-active="filterActive"
+            :hide-completed="hideCompleted"
+            :on-toggle-done="toggleDone"
+            :on-schedule-to-day="scheduleToDay"
+            :on-open-task="openTaskFromPanel"
+            :on-clear-filter="clearFilter"
+            :on-show-completed="() => (hideCompleted = false)"
+        />
     </nue-div>
 </template>
 
 <style scoped>
-/* ── Shadcn/UI 黑白灰设计系统 ── */
+/* ── 设计底座（沿用既有 NueUI 黑白灰令牌） ── */
 .nue-calendar-monthly {
     --cal-bg: var(--nue-primary-color-0);
     --cal-fg: var(--nue-primary-text-color);
-    --cal-muted: var(--nue-primary-color-100);
-    --cal-muted-fg: color-mix(
+    --cal-muted: color-mix(in srgb, var(--nue-primary-text-color) 45%, var(--nue-primary-color-0));
+    --cal-border: var(--nue-border-color);
+    --cal-hover: color-mix(in srgb, var(--nue-primary-text-color) 5%, var(--nue-primary-color-0));
+    --cal-select-bg: color-mix(
         in srgb,
-        var(--nue-primary-text-color) 45%,
+        var(--nue-primary-text-color) 9%,
         var(--nue-primary-color-0)
     );
-    --cal-border: var(--nue-border-color);
-    --cal-hover: var(--nue-primary-color-50);
-    --cal-selected-bg: var(--nue-primary-text-color);
-    --cal-selected-fg: var(--nue-primary-color-0);
-    --cal-today-ring: var(--nue-primary-text-color);
-    --cal-dot-default: var(--nue-primary-color-600);
-    --cal-dot-accent: var(--nue-primary-color-400);
+    --cal-chip-bg: color-mix(in srgb, var(--nue-primary-text-color) 6%, var(--nue-primary-color-0));
+    --cal-chip-bg-hover: color-mix(
+        in srgb,
+        var(--nue-primary-text-color) 18%,
+        var(--nue-primary-color-0)
+    );
+    --cal-chip-done-bg: color-mix(
+        in srgb,
+        var(--nue-primary-text-color) 6%,
+        var(--nue-primary-color-0)
+    );
+    --cal-chip-done-fg: color-mix(
+        in srgb,
+        var(--nue-primary-text-color) 38%,
+        var(--nue-primary-color-0)
+    );
 
     height: 100%;
-    gap: 0;
-    padding: 1.5rem 1.75rem;
+    padding: 1.5rem 1.75rem 1.25rem;
     background: var(--cal-bg);
+    overflow: hidden;
 }
 
-/* ── Header ── */
+/* ── 月份导航 ── */
 .cal-header {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     user-select: none;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
 .cal-nav-btn {
@@ -223,122 +508,226 @@ function selectDate(day: DayCell) {
         border-color 60ms;
 }
 .cal-nav-btn:hover {
-    background: var(--cal-muted);
+    background: var(--cal-hover);
     border-color: var(--cal-border);
 }
 .cal-nav-btn:active {
     background: var(--cal-border);
 }
 
-.cal-title {
-    min-width: 120px;
-    text-align: center;
-    letter-spacing: 0.02em;
+.cal-aside-toggle {
+    margin-right: 4px;
 }
 
-/* ── Weekday Headers ── */
+.cal-empty-text {
+    color: var(--cal-muted);
+}
+
+.cal-title {
+    min-width: 132px;
+    text-align: center;
+    letter-spacing: 0.02em;
+    margin: 0;
+}
+
+/* 月/周视图切换（分段按钮） */
+/* 月/周视图切换（分段按钮：零间隙贴合） */
+.cal-view-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--cal-border);
+    border-radius: var(--nue-primary-radius);
+    overflow: hidden;
+}
+.cal-view-btn {
+    border-radius: 0 !important;
+}
+.cal-view-btn.is-active {
+    background: var(--cal-select-bg);
+    color: var(--cal-fg);
+    font-weight: 600;
+}
+
+/* 切换区与右侧控件之间的垂直分割线 */
+.cal-view-sep {
+    align-self: center;
+    width: 1px;
+    height: 16px;
+    margin: 0 4px;
+    background: var(--cal-border);
+    flex: none;
+}
+
+/* ── 星期表头 ── */
 .cal-weekdays {
     display: flex;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
 }
 .cal-weekday {
     flex: 1;
     text-align: center;
     font-size: 0.75rem;
     font-weight: 500;
-    color: var(--cal-muted-fg);
-    padding: 0.375rem 0;
+    color: var(--cal-muted);
+    padding: 0.25rem 0;
     letter-spacing: 0.04em;
-    text-transform: uppercase;
 }
 
-/* ── Grid ── */
-.cal-grid {
+/* ── 网格主体 ── */
+.cal-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--cal-border);
+    border-radius: var(--nue-primary-radius);
+    overflow: hidden;
+    background: var(--cal-bg);
+}
+
+.cal-body-state {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+}
+
+/* ── 行：内部 7 等分 + 独立任务条层 ── */
+.cal-row {
+    position: relative;
+    flex: 1;
+    min-height: 80px;
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    flex: 1;
-    gap: 1px;
-    background: var(--cal-border);
-    border: 1px solid var(--cal-border);
-    border-radius: 8px;
     overflow: hidden;
+    border-top: 1px solid var(--nue-divider-color);
+}
+.cal-row:first-child {
+    border-top: none;
 }
 
-/* ── Cell ── */
+/* 格内竖分隔线用 inset 阴影实现，不挤占列宽，保证任务条百分比定位精确 */
 .cal-cell {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    padding: 6px 4px 4px;
+    padding: 3px 2px 2px;
     background: var(--cal-bg);
     cursor: pointer;
+    box-shadow: inset -1px 0 0 var(--cal-border);
     transition: background 50ms;
-    min-height: 64px;
-    position: relative;
+}
+.cal-cell--edge {
+    box-shadow: none;
 }
 .cal-cell:hover {
     background: var(--cal-hover);
-    z-index: 1;
+    z-index: 0;
 }
-.cal-cell:active {
-    background: color-mix(in srgb, var(--cal-hover) 80%, var(--cal-border));
-}
-
-/* Today: subtle ring */
-.cal-cell--today {
-    box-shadow: inset 0 0 0 1.5px var(--cal-today-ring);
-    z-index: 2;
+.cal-cell--outside {
+    background: color-mix(in srgb, var(--cal-bg) 92%, var(--cal-border));
 }
 
-/* Selected: black bg + white text */
-.cal-cell--selected {
-    background: var(--cal-selected-bg) !important;
-    z-index: 3;
-}
-.cal-cell--selected .cal-date {
-    color: var(--cal-selected-fg);
-    font-weight: 600;
-}
-.cal-cell--selected .cal-dot {
-    background: var(--cal-selected-fg) !important;
-}
-
-/* Outside month: muted */
-.cal-cell--outside .cal-date {
-    color: var(--cal-muted-fg);
-}
-.cal-cell--outside.cal-cell--selected .cal-date {
-    color: var(--cal-selected-fg);
-}
-
-/* Weekend: slightly dimmed */
-.cal-cell--weekend:not(.cal-cell--selected) .cal-date {
-    opacity: 0.7;
-}
-
-/* ── Date Number ── */
+/* 今日/选中日期号 */
 .cal-date {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 20px;
     font-size: 0.8125rem;
     font-weight: 450;
+    line-height: 20px;
     color: var(--cal-fg);
-    line-height: 1.4;
-    transition: color 60ms;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    user-select: none;
+    box-sizing: border-box;
+}
+.cal-cell--today .cal-date {
+    border-color: var(--cal-fg);
+    font-weight: 600;
+}
+.cal-cell--selected {
+    background: var(--cal-select-bg);
+}
+.cal-cell--selected .cal-date {
+    background: var(--cal-fg);
+    color: var(--cal-bg);
+    font-weight: 600;
+    border-color: var(--cal-fg);
+}
+.cal-cell--outside .cal-date {
+    color: var(--cal-muted);
+}
+.cal-cell--weekend:not(.cal-cell--selected) .cal-date {
+    opacity: 0.72;
 }
 
-/* ── Task Dots ── */
-.cal-dots {
+/* ── 任务条 ── */
+.cal-lanes {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+/* 任务条视觉（色条/色痕/时刻/续接圆点/周裁剪圆角）已抽至 ./task-bar.vue；--cal-* 令牌由本根定义 */
+/* 格底预留条带（DEF-1：任务条渲染区在其上截断；+/+N/编辑器占用区） */
+.cal-band {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 24px;
     display: flex;
     align-items: center;
-    gap: 3px;
-    margin-top: auto;
-    min-height: 12px;
-    padding-bottom: 2px;
+    gap: 6px;
+    padding: 0 6px;
+    box-sizing: border-box;
 }
-.cal-dot {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    flex-shrink: 0;
+/* 悬停快速新建 +（左下；补位格无按钮由 v-if 控制） */
+.cal-quick-add {
+    flex: none;
+    width: 18px;
+    height: 16px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: var(--cal-chip-bg-hover);
+    color: var(--cal-fg);
+    font-size: 0.9375rem;
+    line-height: 16px;
+    cursor: pointer;
+    opacity: 0;
+    transition:
+        opacity 60ms,
+        background 60ms;
+}
+.cal-cell:hover .cal-quick-add {
+    opacity: 1;
+}
+.cal-quick-add:hover {
+    background: var(--cal-select-bg);
+}
+
+/* ── 溢出 +N（右下） ── */
+.cal-more {
+    flex: none;
+    margin-left: auto;
+    padding: 1px 6px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--cal-muted);
+    font-size: 0.6875rem;
+    line-height: 1.4;
+    cursor: pointer;
+    transition: background 60ms;
+}
+.cal-more:hover {
+    background: var(--cal-hover);
+    color: var(--cal-fg);
 }
 </style>

@@ -1,5 +1,6 @@
+import type { GoAsync, Pagination } from '@nao-todo/shared/types'
 import { PomodoroDomain, PomodoroRecordRepository } from '@nao-todo/domain-pomodoro'
-import type { GoAsync, ResponseDataPagination } from '@nao-todo/shared'
+
 import type {
     CreatePomodoroRecordViewObject,
     GetPomodoroRecordsOptions,
@@ -51,7 +52,7 @@ export class PomodoroRecordUseCase {
      */
     async getRecords(
         options: GetPomodoroRecordsOptions
-    ): GoAsync<{ recordIds: string[]; pagination?: ResponseDataPagination }> {
+    ): GoAsync<{ recordIds: string[]; pagination?: Pagination }> {
         // 1. 调用领域服务
         const [result, err] = await this.domain.listRecord(options)
         if (err !== null) return [null, err]

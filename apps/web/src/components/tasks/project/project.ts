@@ -1,5 +1,7 @@
 import { computed, inject, provide, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useProjectUseCase, useTaskUseCase } from '@/hooks'
+import { useTasksStore } from '@nao-todo/presentation/task'
 import type { ProjectViewProps } from './types'
 import { useUserStore } from '@nao-todo/presentation-identity'
 import { storeToRefs } from 'pinia'
@@ -15,20 +17,17 @@ const useProjectView = (props: ProjectViewProps) => {
     const router = useRouter()
 
     // @viewContext TasksView context
-    const {
-        projectUseCase,
-        taskUseCase,
-        appSubscriber,
-        appDialogManager,
-        getColumnLabel,
-        getProjectName,
-        showTaskDetails
-    } = inject(TASKS_VIEW_CONTEXT_KEY)!
+    const { appSubscriber, appDialogManager, getColumnLabel, getProjectName, showTaskDetails } =
+        inject(TASKS_VIEW_CONTEXT_KEY)!
 
     // @dataStores
     const userStore = useUserStore()
     const projectsStore = useProjectsStore()
     const tagsStore = useTagsStore()
+
+    // @usecase 业务依赖本地组装（DI 入口；不来自父视图上下文）
+    const projectUseCase = useProjectUseCase(projectsStore)
+    const taskUseCase = useTaskUseCase(useTasksStore())
 
     // @presetStates
     const { projectPreference: preference } = storeToRefs(projectsStore)

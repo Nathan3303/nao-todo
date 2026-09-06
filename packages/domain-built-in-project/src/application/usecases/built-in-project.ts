@@ -1,4 +1,4 @@
-import type { Go } from '@nao-todo/shared'
+import type { Go } from '@nao-todo/shared/types'
 import type { BuiltInProjectDomain } from '../../domain'
 import type { BuiltInProjectPreferenceViewObject, BuiltInProjectViewObject } from '../viewobjects'
 import {

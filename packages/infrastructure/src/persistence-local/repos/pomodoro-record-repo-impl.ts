@@ -1,9 +1,10 @@
+import type { Pagination } from '@nao-todo/shared/types/pagination'
 import {
     CreatePomodoroRecordValueObject,
     PomodoroRecordEntity,
     PomodoroRecordRepository
 } from '@nao-todo/domain-pomodoro'
-import type { GoAsync, ResponseDataPagination } from '@nao-todo/shared'
+import type { GoAsync } from '@nao-todo/shared'
 import { pomodoroRecordEntityToItem, pomodoroRecordItemToEntity } from '../converters/pomodoro'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
@@ -82,7 +83,7 @@ export class LocalPomodoroRecordRepoImpl implements PomodoroRecordRepository {
 
     async list(
         queryString?: string
-    ): GoAsync<{ entities: PomodoroRecordEntity[]; pagination?: ResponseDataPagination }> {
+    ): GoAsync<{ entities: PomodoroRecordEntity[]; pagination?: Pagination }> {
         try {
             const params = new URLSearchParams(queryString ?? '')
             let records = await this.db.pomodoroRecords

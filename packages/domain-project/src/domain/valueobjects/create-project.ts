@@ -1,4 +1,4 @@
-import type { Go } from '@nao-todo/shared'
+import type { Go } from '@nao-todo/shared/types'
 
 /**
  * 创建任务清单值对象

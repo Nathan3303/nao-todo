@@ -1,4 +1,4 @@
-import type { NullableString, ViewObjectBase } from '@nao-todo/shared'
+import type { NullableString, ViewObjectBase } from '@nao-todo/shared/types'
 
 /**
  * Pomodoro 记录类型

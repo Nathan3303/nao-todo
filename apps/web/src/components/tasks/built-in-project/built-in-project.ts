@@ -1,3 +1,5 @@
+import { useBuiltInProjectUseCase, useTaskUseCase } from '@/hooks'
+import { useTasksStore } from '@nao-todo/presentation/task'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
 import {
     BuiltInProjectHandler,
@@ -17,21 +19,18 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
     // @viewStores
     const router = useRouter()
 
-    // @viewContext TasksView context
-    const {
-        builtInProjectUseCase,
-        appSubscriber,
-        appDialogManager,
-        taskUseCase,
-        getColumnLabel,
-        getProjectName,
-        showTaskDetails
-    } = inject(TASKS_VIEW_CONTEXT_KEY)!
+    // @viewContext TasksView context（仅注入 UI/方法；业务依赖下方本地组装）
+    const { appSubscriber, appDialogManager, getColumnLabel, getProjectName, showTaskDetails } =
+        inject(TASKS_VIEW_CONTEXT_KEY)!
 
     // @dataStores
     const userStore = useUserStore()
     const builtInProjectsStore = useBuiltInProjectsStore()
     const tagsStore = useTagsStore()
+
+    // @usecase 业务依赖本地组装（DI 入口；不来自父视图上下文）
+    const builtInProjectUseCase = useBuiltInProjectUseCase(builtInProjectsStore)
+    const taskUseCase = useTaskUseCase(useTasksStore())
 
     // @presetStates
     const { builtInProjectPreference: preference } = storeToRefs(builtInProjectsStore)

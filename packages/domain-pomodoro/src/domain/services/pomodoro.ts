@@ -1,8 +1,5 @@
-import {
-    QueryOptionsValueObject,
-    type GoAsync,
-    type ResponseDataPagination
-} from '@nao-todo/shared'
+import { QueryOptionsValueObject } from '@nao-todo/shared/valueobjects/query-options'
+import type { GoAsync, Pagination } from '@nao-todo/shared/types'
 import { PomodoroEntity, PomodoroRecordEntity } from '../entities'
 import type { PomodoroRecordRepository, PomodoroRepository } from '../repositories'
 import type { GetPomodoroRecordsOptions } from '../types'
@@ -30,7 +27,7 @@ export class PomodoroDomain {
      */
     async list(
         listVO: ListPomodoroValueObject
-    ): GoAsync<{ pomodoroEntities: PomodoroEntity[]; pagination?: ResponseDataPagination }> {
+    ): GoAsync<{ pomodoroEntities: PomodoroEntity[]; pagination?: Pagination }> {
         // 1. 转换查询选项 -> 查询字符串
         const queryOptions = listVO.makeQueryOptions()
         const queryString = new QueryOptionsValueObject(queryOptions).toString()
@@ -71,7 +68,7 @@ export class PomodoroDomain {
      */
     async listRecord(
         listOptions?: GetPomodoroRecordsOptions
-    ): GoAsync<{ entities: PomodoroRecordEntity[]; pagination?: ResponseDataPagination }> {
+    ): GoAsync<{ entities: PomodoroRecordEntity[]; pagination?: Pagination }> {
         // 1. 转换查询选项 -> 查询字符串
         const queryString = new QueryOptionsValueObject(listOptions || {}).toString()
         // 2. 调用仓库方法

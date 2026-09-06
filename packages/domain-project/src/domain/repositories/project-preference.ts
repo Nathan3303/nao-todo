@@ -1,4 +1,4 @@
-import type { GoAsync } from '@nao-todo/shared'
+import type { GoAsync } from '@nao-todo/shared/types'
 import type { ProjectPreferenceEntity } from '../entities/project-preference'
 
 export interface ProjectPreferenceRepository {

@@ -1,4 +1,4 @@
-import type { Go } from '@nao-todo/shared'
+import type { Go } from '@nao-todo/shared/types'
 
 /**
  * 更新用户配置值对象

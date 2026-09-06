@@ -1,3 +1,5 @@
+import { useTagUseCase, useTaskUseCase } from '@/hooks'
+import { useTasksStore } from '@nao-todo/presentation/task'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
 import { TagHandler, useTagsStore } from '@nao-todo/presentation/tag'
 import { useUserStore } from '@nao-todo/presentation-identity'
@@ -14,19 +16,16 @@ const useTagView = (props: TagViewProps) => {
     const router = useRouter()
 
     // @viewContext TasksView context
-    const {
-        taskUseCase,
-        tagUseCase,
-        appSubscriber,
-        appDialogManager,
-        getColumnLabel,
-        getProjectName,
-        showTaskDetails
-    } = inject(TASKS_VIEW_CONTEXT_KEY)!
+    const { appSubscriber, appDialogManager, getColumnLabel, getProjectName, showTaskDetails } =
+        inject(TASKS_VIEW_CONTEXT_KEY)!
 
     // @dataStores
     const userStore = useUserStore()
     const tagsStore = useTagsStore()
+
+    // @usecase 业务依赖本地组装（DI 入口；不来自父视图上下文）
+    const tagUseCase = useTagUseCase(tagsStore)
+    const taskUseCase = useTaskUseCase(useTasksStore())
 
     // @presetStates
     const { profile } = storeToRefs(userStore)

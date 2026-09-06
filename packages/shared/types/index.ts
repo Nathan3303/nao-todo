@@ -1,6 +1,9 @@
 // Backend api response type
 export type * from './response'
 
+// 分页元数据（领域中立）
+export type * from './pagination'
+
 // Golang like error handling type support
 export type * from './golang'
 

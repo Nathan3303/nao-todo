@@ -2,7 +2,8 @@
 //     newTaskCommentRepository,
 //     TaskCommentRepoImpl
 // } from '@nao-todo/infrastructure/backend/task'
-import type { GoAsync } from '@nao-todo/shared'
+
+import type { GoAsync } from '@nao-todo/shared/types'
 import { TaskCommentRepository } from '../../domain/repositories'
 import type {
     CreateTaskCommentViewObject,

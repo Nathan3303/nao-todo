@@ -1,4 +1,4 @@
-import type { NullableDateString, NullableString, ViewObjectBase } from '@nao-todo/shared'
+import type { NullableDateString, NullableString, ViewObjectBase } from '@nao-todo/shared/types'
 
 // 项目视图对象
 export type ProjectViewObject = ViewObjectBase & {

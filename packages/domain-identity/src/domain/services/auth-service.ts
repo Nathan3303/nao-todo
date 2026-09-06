@@ -1,6 +1,6 @@
+import type { GoAsync } from '@nao-todo/shared/types'
 import type { SignUpValueObject, SignInValueObject, AuthSessionValueObject } from '../valueobjects'
 import type { AuthRepository } from '../repositories'
-import type { GoAsync } from '@nao-todo/shared'
 
 /**
  * 认证服务

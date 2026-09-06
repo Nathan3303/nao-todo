@@ -7,7 +7,7 @@ const routes: RouteRecordRaw = {
     redirect: { name: 'calendar-monthly' },
     children: [
         {
-            path: 'monthly',
+            path: 'monthly/:taskId?',
             name: 'calendar-monthly',
             component: () => import('@/components/calendar/monthly/index.vue')
         }

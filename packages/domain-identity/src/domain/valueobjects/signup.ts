@@ -1,5 +1,5 @@
+import type { Go } from '@nao-todo/shared/types'
 import { USER_EMAIL_REGEXP, USER_PASSWORD_REGEXP } from '../constants'
-import type { Go } from '@nao-todo/shared'
 
 /**
  * 注册值对象

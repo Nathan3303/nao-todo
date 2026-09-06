@@ -1,9 +1,4 @@
-import {
-    unwrapError,
-    type GoAsync,
-    type ResponseDataPagination,
-    type Subscriber
-} from '@nao-todo/shared'
+import { unwrapError, type GoAsync, type Pagination, type Subscriber } from '@nao-todo/shared'
 import { computed, onUnmounted, reactive } from 'vue'
 import { usePomodoroRecordsStore } from '../stores'
 import type { GetPomodoroRecordsOptions, PomodoroRecordViewObject } from '@nao-todo/domain-pomodoro'
@@ -13,7 +8,7 @@ export type UsePomodoroRecordLoaderStates = {
     recordIds: Set<string>
     loading: boolean
     error: string
-    pagination: ResponseDataPagination
+    pagination: Pagination
     isDone: boolean
     lastGetOptions: GetPomodoroRecordsOptions
     disabled: boolean

@@ -1,4 +1,4 @@
-import type { GetTasksOptions, TaskColumnOptions } from '@nao-todo/shared'
+import type { GetTasksOptions, TaskColumnOptions } from '@nao-todo/shared/constants/task'
 import { TagViewObject, UpdateTagViewObject } from './viewobjects/tag'
 import { TagPreferenceViewObject } from './viewobjects/tag-preference'
 

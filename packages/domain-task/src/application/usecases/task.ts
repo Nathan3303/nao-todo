@@ -1,4 +1,5 @@
-import { type GoAsync, type GetTasksOptions, type ResponseDataPagination } from '@nao-todo/shared'
+import type { GoAsync, Pagination } from '@nao-todo/shared/types'
+import type { GetTasksOptions } from '@nao-todo/shared/constants/task'
 import { QueryOptionsValueObject } from '@nao-todo/shared/valueobjects/query-options'
 import dayjs from 'dayjs'
 import { isGivenUpBy, isStarMarkedBy, TaskEntity } from '../../domain/entities'
@@ -89,7 +90,7 @@ export class TaskUseCase {
      */
     async list(getTasksOptions: GetTasksOptions): GoAsync<{
         taskIds: TaskViewObject['id'][]
-        pagination?: ResponseDataPagination
+        pagination?: Pagination
     }> {
         // 数据转换
         const queryOptionsVO = new QueryOptionsValueObject(getTasksOptions)
@@ -206,10 +207,12 @@ export class TaskUseCase {
                     updateTaskValueObject.endAt
                 )
                 if (scheduleError !== null) return scheduleError
+                // 清空语义：清空后实体值为 ''（服务端契约：''=清除、null/缺省=不改），
+                // 原样回写实体最终值，远程仓储据此上送 ''；undefined 仍表示本次不触碰
                 if (updateTaskValueObject.startAt !== undefined)
-                    updateTaskValueObject.startAt = entity.startAt === '' ? null : entity.startAt
+                    updateTaskValueObject.startAt = entity.startAt
                 if (updateTaskValueObject.endAt !== undefined)
-                    updateTaskValueObject.endAt = entity.endAt === '' ? null : entity.endAt
+                    updateTaskValueObject.endAt = entity.endAt
             }
         }
         // 父任务赋值校验（自指/父必须为顶层/被移动方不得已有子任务）

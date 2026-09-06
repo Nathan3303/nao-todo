@@ -1,3 +1,4 @@
+import { useProjectUseCase, useTagUseCase } from '@/hooks'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
 import { useBuiltInProjectsStore } from '@nao-todo/presentation/built-in-project'
@@ -14,7 +15,7 @@ export const useAside = () => {
     /**
      * 注入任务视图上下文
      */
-    const { appDialogManager, projectUseCase, tagUseCase } = inject(TASKS_VIEW_CONTEXT_KEY)!
+    const { appDialogManager } = inject(TASKS_VIEW_CONTEXT_KEY)!
     const { asideWidth, handleResizeAside, isDisplayAside, isUseFloatAside, setControllOption } =
         inject(INDEX_VIEW_CONTEXT_KEY)!
 
@@ -24,6 +25,10 @@ export const useAside = () => {
     const builtInProjectsStore = useBuiltInProjectsStore()
     const projectsStore = useProjectsStore()
     const tagsStore = useTagsStore()
+
+    // @usecase 业务依赖本地组装（DI 入口；不来自父视图上下文）
+    const projectUseCase = useProjectUseCase(projectsStore)
+    const tagUseCase = useTagUseCase(tagsStore)
 
     /**
      * 前置数据

@@ -11,6 +11,7 @@
     - `repositories/` — 仓储接口：`TaskRepository`、`TaskCheckItemRepository`、`TaskCommentRepository`（由 `@nao-todo/infrastructure` 实现）
     - `services/` — 领域服务 `TaskDomain`
     - `valueobjects/` — 值对象与入参校验：`CreateTask`、`UpdateTask`、`CreateTaskCheckItem`、`UpdateTaskCheckItem`、`CreateTaskComment`、`UpdateTaskComment`
+    - 清空语义（update 三态契约）：缺省/`null` 表示不改动；空串 `''` 与空数组 `[]` 表示清除字段——含 `projectId:''`（回到默认容器）与 `parentTaskId:''`（脱离父任务）
     - `constants.ts` / `errors.ts` / `types/` — 常量、错误码与类型
 - **`application/`** — 应用层
     - `usecases/` — 用例：`TaskUseCase`（任务加载/创建/更新/删除/排序等）、`TaskCheckItemUseCase`、`TaskCommentUseCase`

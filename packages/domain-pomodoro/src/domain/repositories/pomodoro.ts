@@ -1,4 +1,4 @@
-import { GoAsync, ResponseDataPagination } from '@nao-todo/shared'
+import type { GoAsync, Pagination } from '@nao-todo/shared/types'
 import { PomodoroEntity } from '../entities'
 import { CreatePomodoroValueObject, UpdatePomodoroValueObject } from '../valueobjects'
 
@@ -55,5 +55,5 @@ export interface PomodoroRepository {
      */
     list(
         queryString?: string
-    ): GoAsync<{ pomodoroEntities: PomodoroEntity[]; pagination?: ResponseDataPagination }>
+    ): GoAsync<{ pomodoroEntities: PomodoroEntity[]; pagination?: Pagination }>
 }

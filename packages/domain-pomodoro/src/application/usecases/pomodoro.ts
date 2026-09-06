@@ -1,4 +1,4 @@
-import type { GoAsync } from '@nao-todo/shared'
+import type { GoAsync } from '@nao-todo/shared/types'
 import { PomodoroRepository } from '@nao-todo/domain-pomodoro'
 import { PomodoroDomain } from '@nao-todo/domain-pomodoro'
 import type {

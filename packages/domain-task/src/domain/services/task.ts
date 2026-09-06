@@ -1,9 +1,10 @@
 // import { TaskCheckItemRepository } from '../repositories/task-check-item'
 // import { TaskCommentRepository } from '../repositories/task-comment'
+import type { GoAsync, Pagination } from '@nao-todo/shared/types'
+import { QueryOptionsValueObject } from '@nao-todo/shared/valueobjects/query-options'
 import type { TaskRepository } from '../repositories/task'
 import { isStarMarkedBy, type TaskEntity } from '../entities/task'
 import type { UpdateTaskValueObject } from '../valueobjects/update-task'
-import type { GoAsync, ResponseDataPagination, QueryOptionsValueObject } from '@nao-todo/shared'
 
 // 批量更新结果
 export type TaskBatchUpdateResult = {
@@ -35,7 +36,7 @@ export class TaskDomain {
      */
     async listTasks(
         listOptions: QueryOptionsValueObject
-    ): GoAsync<{ taskEntities: TaskEntity[]; pagination?: ResponseDataPagination }> {
+    ): GoAsync<{ taskEntities: TaskEntity[]; pagination?: Pagination }> {
         // 1. 转换查询选项
         const queryString = listOptions.toString((key, value) => {
             if (key !== 'sort') return
@@ -82,10 +83,9 @@ export class TaskDomain {
                     failedIds.push(updateVO.id)
                     continue
                 }
-                if (updateVO.startAt !== undefined)
-                    updateVO.startAt = entity.startAt === '' ? null : entity.startAt
-                if (updateVO.endAt !== undefined)
-                    updateVO.endAt = entity.endAt === '' ? null : entity.endAt
+                // 清空语义同单条更新：清空后实体值为 ''，原样回写（''=清除、null/缺省=不改）
+                if (updateVO.startAt !== undefined) updateVO.startAt = entity.startAt
+                if (updateVO.endAt !== undefined) updateVO.endAt = entity.endAt
             }
             // 2. 逐条更新
             const updateError = await this.taskRepo.update(updateVO.id, updateVO)
