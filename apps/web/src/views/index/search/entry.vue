@@ -23,6 +23,7 @@ const {
     capped,
     enumerating,
     enumFailures,
+    enumRatePaused,
     rows,
     resultCount
 } = useSearchEngine()
@@ -140,8 +141,17 @@ watch(
                             >
                                 找到 {{ resultCount }} 条
                             </nue-text>
-                            <nue-text v-if="enumerating" size="var(--nue-text-sm)" class="srch-tip">
-                                子任务补拉中…
+                            <nue-text
+                                v-if="enumerating || enumRatePaused"
+                                size="var(--nue-text-sm)"
+                                class="srch-tip"
+                                :class="{ 'srch-tip--warn': enumRatePaused }"
+                            >
+                                {{
+                                    enumRatePaused
+                                        ? '子任务补拉受限流，稍后自动重试…'
+                                        : '子任务补拉中…'
+                                }}
                             </nue-text>
                             <nue-text
                                 v-if="enumFailures > 0"

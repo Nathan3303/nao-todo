@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vite-plus/test'
 import type { TaskViewObject } from '@nao-todo/domain-task'
-import { highlightSegments, searchTasks, dateKeyLabel, isTaskHit } from '../search-tasks'
+import {
+    highlightSegments,
+    searchTasks,
+    dateKeyLabel,
+    isTaskHit,
+    isRateLimitError,
+    retryDelayFor,
+    RATE_MAX_ATTEMPTS,
+    RATE_PAUSE_THRESHOLD
+} from '../search-tasks'
 
 /** 构造最小任务 VO（默认顶层/未删除/未归档/未放弃；name 必填） */
 const makeTask = (
@@ -188,6 +197,30 @@ describe('dateKeyLabel - 日期展示口径', () => {
         expect(dateKeyLabel('', 2026)).toBe('')
         expect(dateKeyLabel(null, 2026)).toBe('')
         expect(dateKeyLabel('not-a-date', 2026)).toBe('')
+    })
+})
+
+describe('限流识别与退避调度（10051 / 429 家族）', () => {
+    it('识别业务码与文案特征', () => {
+        expect(isRateLimitError('请求过于频繁，请稍后再试')).toBe(true)
+        expect(isRateLimitError('code 10051')).toBe(true)
+        expect(isRateLimitError('10051 限流')).toBe(true)
+        expect(isRateLimitError('任务不存在')).toBe(false)
+        expect(isRateLimitError('网络错误，请检查您的网络连接')).toBe(false)
+    })
+    it('退避指数递增并封顶 ~15s（固定抖动 0 便于断言）', () => {
+        const zero = () => 0
+        const delays = [0, 1, 2, 3, 4].map((a) => retryDelayFor(a, 15_000, zero))
+        expect(delays).toEqual([1000, 2000, 4000, 8000, 15000])
+    })
+    it('抖动不越过封顶', () => {
+        const one = () => 1 // 最大抖动
+        expect(retryDelayFor(0, 15_000, one)).toBeLessThanOrEqual(15_000)
+        expect(retryDelayFor(3, 15_000, one)).toBeLessThanOrEqual(15_000)
+    })
+    it('常量语义：最多尝试 5 次、连续 3 次暂停', () => {
+        expect(RATE_MAX_ATTEMPTS).toBe(5)
+        expect(RATE_PAUSE_THRESHOLD).toBe(3)
     })
 })
 

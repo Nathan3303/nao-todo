@@ -134,3 +134,27 @@ export const dateKeyLabel = (dateKey: string | null | undefined, nowYear: number
     const md = `${month}月${day}日`
     return year === nowYear ? md : `${year}年${md}`
 }
+
+/* —— 后端限流（10051 / 429 家族）识别与退避调度（纯函数，可单测） —— */
+
+/** 限流信号特征（业务码或后端/网关文案） */
+export const RATE_LIMIT_MARKERS = ['10051', '42900', '请求过于频繁', '请求太频繁', '限流'] as const
+
+/** 是否限流类错误（列表/枚举/详情兜底共用） */
+export const isRateLimitError = (message: string): boolean =>
+    RATE_LIMIT_MARKERS.some((marker) => message.includes(marker))
+
+/** 限流退避单次重试等待（指数 + 抖动；起点 1s、上限 ~15s） */
+export const retryDelayFor = (
+    failedAttempt: number,
+    capMs = 15_000,
+    rand: () => number = Math.random
+): number => {
+    const base = Math.min(capMs, 1000 * 2 ** failedAttempt)
+    return Math.min(capMs, base * (1 + 0.2 * rand()))
+}
+
+/** 限流单请求最多尝试次数（含首次；之后仍失败则显式上抛给状态层，不静默） */
+export const RATE_MAX_ATTEMPTS = 5
+/** 枚举中连续限流父任务达到该阈值 → 暂停本轮并稍后自动恢复 */
+export const RATE_PAUSE_THRESHOLD = 3

@@ -4,7 +4,13 @@ import { computed, inject, onMounted, onUnmounted, ref, shallowRef } from 'vue'
 import { useTaskUseCase } from '@/hooks'
 import { useTasksStore } from '@nao-todo/presentation/task'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
-import { searchTasks } from './search-tasks'
+import {
+    isRateLimitError,
+    retryDelayFor,
+    RATE_MAX_ATTEMPTS,
+    RATE_PAUSE_THRESHOLD,
+    searchTasks
+} from './search-tasks'
 
 /**
  * 搜索数据管线组合式（SEA-01）
@@ -39,6 +45,11 @@ const MAX_ROOT_PAGES = Math.ceil(MAX_ROWS / PAGE_LIMIT)
 const MAX_CHILD_PAGES = 10
 /** 子任务补拉并发数（方案 A） */
 const ENUMERATE_CONCURRENCY = 4
+/** 限流暂停后自动恢复间隔 */
+const RATE_PAUSE_RESUME_MS = 8_000
+
+/** 等待毫秒 */
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
 
 /** 顶层列表查询（与日历同口径：顶层/未删除/未归档/未放弃/含已完成；id asc 稳定翻页） */
 const buildRootQuery = (page: number): GetTasksOptions => ({
@@ -78,10 +89,12 @@ const useSearchEngine = () => {
     const capped = ref(false) // 顶层已达 5000 上限
     const enumerating = ref(false) // 子任务补拉中（顶部轻提示）
     const enumFailures = ref(0) // 本次补拉失败的父任务数（>0 时轻提示）
+    const enumRatePaused = ref(false) // 枚举连续限流暂停（提示「限流，稍后自动重试」）
 
     let debounceTimer: ReturnType<typeof setTimeout> | undefined
     let reloadQueued = false
     let enumerateBusy = false
+    let enumResumeTimer: ReturnType<typeof setTimeout> | undefined
 
     // @computed 顶层 + 子任务归并全量（渲染源；store map 变更自动联动）
     const flatTaskIds = computed<Set<string>>(() => {
@@ -124,13 +137,29 @@ const useSearchEngine = () => {
         debouncedKeyword.value = ''
     }
 
+    /**
+     * 列表调用（限流退避重试：指数+抖动，最多 RATE_MAX_ATTEMPTS 次后上抛；期间不叠加新请求）
+     * @description 退避在单请求内串行等待；外层 reload/enumerate 各自合并，不会堆叠请求
+     */
+    const callList = async (options: GetTasksOptions) => {
+        for (let attempt = 0; ; attempt++) {
+            const [res, err] = await taskUseCase.list(options)
+            if (err === null) return res
+            const message = typeof err === 'string' ? err : String(err)
+            if (isRateLimitError(message) && attempt + 1 < RATE_MAX_ATTEMPTS) {
+                await sleep(retryDelayFor(attempt))
+                continue
+            }
+            throw err
+        }
+    }
+
     /** 分页拉取顶层到集合；穷尽或触顶探测后设置 capped */
     const sweepRootsInto = async (target: Set<string>): Promise<void> => {
         capped.value = false
         let exhausted = false
         for (let page = 1; page <= MAX_ROOT_PAGES; page++) {
-            const [res, err] = await taskUseCase.list(buildRootQuery(page))
-            if (err !== null) throw err
+            const res = await callList(buildRootQuery(page))
             res.taskIds.forEach((id) => target.add(id))
             if (res.taskIds.length < PAGE_LIMIT) {
                 exhausted = true
@@ -144,9 +173,15 @@ const useSearchEngine = () => {
             if (target.size >= MAX_ROWS) break
         }
         if (!exhausted && target.size >= MAX_ROWS) {
-            // 触顶探测：再取 1 条判断是否仍有数据（精确「仅搜索前 5000 条」提示）
-            const [probe, probeErr] = await taskUseCase.list(buildRootQuery(MAX_ROOT_PAGES + 1))
-            if (probeErr === null && probe.taskIds.length > 0) capped.value = true
+            // 触顶探测：再取 1 条判断是否仍有数据（精确「仅搜索前 5000 条」提示）；探测失败不阻塞已拉取结果
+            try {
+                const [probeRes, probeErr] = await taskUseCase.list(
+                    buildRootQuery(MAX_ROOT_PAGES + 1)
+                )
+                if (probeErr === null && probeRes.taskIds.length > 0) capped.value = true
+            } catch {
+                /* 忽略探测错误：5000 条快照已可用 */
+            }
         }
     }
 
@@ -156,8 +191,7 @@ const useSearchEngine = () => {
         if (!cache || cache.enumeratedParents.has(parentId)) return
         const childSet = new Set<string>()
         for (let page = 1; page <= MAX_CHILD_PAGES; page++) {
-            const [res, err] = await taskUseCase.list(buildChildQuery(parentId, page))
-            if (err !== null) throw err
+            const res = await callList(buildChildQuery(parentId, page))
             res.taskIds.forEach((id) => childSet.add(id))
             const maxPage = res.pagination?.maxPage ?? page
             if (res.taskIds.length < PAGE_LIMIT || page >= maxPage) break
@@ -174,23 +208,44 @@ const useSearchEngine = () => {
         enumerateBusy = true
         enumerating.value = true
         enumFailures.value = 0
+        enumRatePaused.value = false
+        if (enumResumeTimer) {
+            clearTimeout(enumResumeTimer)
+            enumResumeTimer = undefined
+        }
         try {
             const missing = [...cache.rootIds].filter((id) => !cache.enumeratedParents.has(id))
             if (missing.length === 0) return
+            let consecutiveRate = 0
+            let abort = false
             let cursor = 0
             const size = Math.min(ENUMERATE_CONCURRENCY, missing.length)
             const run = async (): Promise<void> => {
-                while (cursor < missing.length) {
+                while (cursor < missing.length && !abort) {
                     const parentId = missing[cursor]!
                     cursor++
                     try {
                         await loadChildrenOf(parentId)
-                    } catch {
-                        enumFailures.value += 1
+                        consecutiveRate = 0
+                    } catch (err) {
+                        const message = typeof err === 'string' ? err : String(err)
+                        if (isRateLimitError(message)) {
+                            consecutiveRate += 1
+                            if (consecutiveRate >= RATE_PAUSE_THRESHOLD) abort = true
+                        } else {
+                            enumFailures.value += 1
+                        }
                     }
                 }
             }
             await Promise.all(Array.from({ length: size }, () => run()))
+            if (abort) {
+                enumRatePaused.value = true
+                enumResumeTimer = setTimeout(() => {
+                    enumResumeTimer = undefined
+                    void ensureChildrenOnce()
+                }, RATE_PAUSE_RESUME_MS)
+            }
         } finally {
             enumerateBusy = false
             enumerating.value = false
@@ -280,6 +335,7 @@ const useSearchEngine = () => {
         appSubscriber.unsubscribe('RefreshData', onRefreshData)
         appSubscriber.unsubscribe('AddNewTaskId', onAddNewTaskId)
         if (debounceTimer) clearTimeout(debounceTimer)
+        if (enumResumeTimer) clearTimeout(enumResumeTimer)
     })
 
     return {
@@ -294,6 +350,7 @@ const useSearchEngine = () => {
         capped,
         enumerating,
         enumFailures,
+        enumRatePaused,
         rows,
         resultCount,
         rootCount
