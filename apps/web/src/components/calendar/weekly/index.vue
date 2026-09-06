@@ -48,7 +48,7 @@ const props = defineProps<{
 const { isDisplayAside, switchDisplayAside } = inject(INDEX_VIEW_CONTEXT_KEY)!
 
 // —— 周几何常量（与 scoped 样式一致）——
-const WEEK_TOP = 34 // 日期区（日期号+周几）高度 + 首条间距
+const WEEK_TOP = 26 // 日期区（日期号+周几）高度 + 首条间距
 const ITEM_STEP = 18 // 条高 16 + 间距 2
 const BAND_HEIGHT = 24 // 格底预留条带（DEF-1：+/+N/编辑器占用，任务条区其上截断）
 
@@ -429,7 +429,7 @@ const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateK
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 4px 2px;
+    padding: 3px 2px 2px;
     background: var(--cal-bg);
     cursor: pointer;
     box-shadow: inset -1px 0 0 var(--cal-border);
