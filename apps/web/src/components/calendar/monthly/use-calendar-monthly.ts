@@ -6,7 +6,13 @@ import { NueMessage } from 'nue-ui'
 import dayjs from 'dayjs'
 import { computed, inject, onMounted, onUnmounted, ref, watch, type Ref } from 'vue'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
-import { buildGridModel, MAX_VISIBLE_LANES, spanCoversDate, todayDateKey } from './monthly-layout'
+import {
+    buildGridModel,
+    dateKeyOf,
+    MAX_VISIBLE_LANES,
+    spanCoversDate,
+    todayDateKey
+} from './monthly-layout'
 import { buildCalendarListQuery, MAX_PAGES, PAGE_LIMIT } from './list-query'
 
 /**
@@ -202,6 +208,34 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         selectedKey.value = todayDateKey()
     }
 
+    // @states 视图模式（A1：月/周切换；默认月）
+    const viewMode = ref<'month' | 'week'>('month')
+
+    // @method 锚点月同步：切回月视图前把月定位到选中日所在月（跨月周导航后仍准确定位）
+    const syncAnchorMonth = () => {
+        const anchor = dayjs(selectedKey.value)
+        if (!anchor.isValid()) return
+        year.value = anchor.year()
+        monthIndex.value = anchor.month()
+    }
+
+    // @method 视图切换（不重拉数据：复用同一筛选/任务快照）
+    const goToWeekView = () => {
+        viewMode.value = 'week'
+    }
+    const goToMonthView = () => {
+        syncAnchorMonth()
+        viewMode.value = 'month'
+    }
+
+    // @method 周导航：±7 天移动锚点（周视图头部用；月份由 syncAnchorMonth 延迟对齐）
+    const goPrevWeek = () => {
+        selectedKey.value = dateKeyOf(dayjs(selectedKey.value).subtract(7, 'day').valueOf())
+    }
+    const goNextWeek = () => {
+        selectedKey.value = dateKeyOf(dayjs(selectedKey.value).add(7, 'day').valueOf())
+    }
+
     // @method 选中日期
     const selectDate = (dateKey: string) => {
         selectedKey.value = dateKey
@@ -269,6 +303,14 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         unscheduledTasks,
         createTaskOnDay,
         openTaskDetails,
+        // —— 视图态（A1 周视图） ——
+        viewMode,
+        goToWeekView,
+        goToMonthView,
+        goPrevWeek,
+        goNextWeek,
+        // —— 任务快照（周视图同源数据；含跨月任务，按跨度裁剪） ——
+        tasks,
         // —— 筛选（空态/清除出口使用） ——
         selectedProjectIds,
         selectedTagIds,

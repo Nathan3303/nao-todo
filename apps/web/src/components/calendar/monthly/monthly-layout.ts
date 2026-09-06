@@ -75,6 +75,16 @@ export type CalendarGridModel = {
     lastKey: string
 }
 
+/** 周网格模型（锚点日所在周，周日开头 7 列单行） */
+export type CalendarWeekModel = {
+    anchorKey: string
+    year: number
+    monthIndex: number // 0-based（锚点日所在月，用于补位天置灰与标题）
+    days: CalendarDayCell[] // 长度 7
+    segments: CalendarSegment[]
+    overflow: CalendarOverflow[]
+}
+
 const fmtKey = (d: dayjs.Dayjs): string => d.format('YYYY-MM-DD')
 
 /** 任意可解析时间 -> YYYY-MM-DD */
@@ -150,64 +160,7 @@ export const buildGridModel = (
     const rows: CalendarRow[] = []
     for (let r = 0; r < GRID_ROWS; r++) {
         const rowCells = cells.slice(r * GRID_COLUMNS, (r + 1) * GRID_COLUMNS)
-        const rowStartKey = rowCells[0]!.dateKey
-        const rowEndKey = rowCells[GRID_COLUMNS - 1]!.dateKey
-        const taskBySpanId = new Map(tasks.map((t) => [t.id, t]))
-
-        // 与该行相交的任务跨度（含跨行任务在本行的切片）
-        const rowSpans = spans
-            .filter(
-                (s) =>
-                    compareKeys(s.startKey, rowEndKey) <= 0 &&
-                    compareKeys(s.endKey, rowStartKey) >= 0
-            )
-            .map((s) => {
-                const startKey = compareKeys(s.startKey, rowStartKey) < 0 ? rowStartKey : s.startKey
-                const endKey = compareKeys(s.endKey, rowEndKey) > 0 ? rowEndKey : s.endKey
-                const colAt = (key: string) => rowCells.findIndex((c) => c.dateKey === key)
-                return {
-                    span: s,
-                    colStart: colAt(startKey),
-                    colEnd: colAt(endKey),
-                    isStart: s.startKey === startKey,
-                    isEnd: s.endKey === endKey
-                }
-            })
-            // 早开始的在上方/左侧优先；同一开始列长的优先（贪婪轨道分配的前提）
-            .sort((a, b) => a.colStart - b.colStart || b.colEnd - a.colEnd)
-
-        // 贪婪分配轨道：每个 span 放入首个与其无重叠的轨道
-        const laneEnds: number[][] = [] // lane -> 该轨道已占用区间的结束列
-        const segments: CalendarSegment[] = []
-        for (const item of rowSpans) {
-            const task = taskBySpanId.get(item.span.taskId)!
-            let lane = 0
-            while (true) {
-                const ends = laneEnds[lane]
-                if (!ends || !ends.some((end) => item.colStart <= end)) break
-                lane++
-            }
-            ;(laneEnds[lane] ??= []).push(item.colEnd)
-            segments.push({
-                task,
-                colStart: item.colStart,
-                colEnd: item.colEnd,
-                lane,
-                isStart: item.isStart,
-                isEnd: item.isEnd
-            })
-        }
-
-        // R5 溢出统计：该格内所有任务数 - 落在可视轨道内的任务数
-        const overflow: CalendarOverflow[] = []
-        for (const cell of rowCells) {
-            const col = cell.cell % GRID_COLUMNS
-            const overlapped = segments.filter((s) => s.colStart <= col && s.colEnd >= col)
-            const drawn = overlapped.filter((s) => s.lane < maxLanes).length
-            const hidden = overlapped.length - drawn
-            if (hidden > 0) overflow.push({ cell: cell.cell, dateKey: cell.dateKey, count: hidden })
-        }
-
+        const { segments, overflow } = buildRowContent(rowCells, spans, tasks, maxLanes)
         rows.push({ row: r, cells: rowCells, segments, overflow })
     }
 
@@ -219,6 +172,116 @@ export const buildGridModel = (
         firstKey: cells[0]!.dateKey,
         lastKey: cells[GRID_TOTAL - 1]!.dateKey
     }
+}
+
+/** 某一行/周内的任务分段与溢出计算（月/周共享；周 = 单行 7 格） */
+const buildRowContent = (
+    rowCells: CalendarDayCell[],
+    spans: CalendarTaskSpan[],
+    tasks: TaskViewObject[],
+    maxLanes: number
+): { segments: CalendarSegment[]; overflow: CalendarOverflow[] } => {
+    const rowStartKey = rowCells[0]!.dateKey
+    const rowEndKey = rowCells[rowCells.length - 1]!.dateKey
+    const taskBySpanId = new Map(tasks.map((t) => [t.id, t]))
+
+    // 与该行相交的任务跨度（含跨行任务在本行的切片）
+    const rowSpans = spans
+        .filter(
+            (s) =>
+                compareKeys(s.startKey, rowEndKey) <= 0 && compareKeys(s.endKey, rowStartKey) >= 0
+        )
+        .map((s) => {
+            const startKey = compareKeys(s.startKey, rowStartKey) < 0 ? rowStartKey : s.startKey
+            const endKey = compareKeys(s.endKey, rowEndKey) > 0 ? rowEndKey : s.endKey
+            const colAt = (key: string) => rowCells.findIndex((c) => c.dateKey === key)
+            return {
+                span: s,
+                colStart: colAt(startKey),
+                colEnd: colAt(endKey),
+                isStart: s.startKey === startKey,
+                isEnd: s.endKey === endKey
+            }
+        })
+        // 早开始的在上方/左侧优先；同一开始列长的优先（贪婪轨道分配的前提）
+        .sort((a, b) => a.colStart - b.colStart || b.colEnd - a.colEnd)
+
+    // 贪婪分配轨道：每个 span 放入首个与其无重叠的轨道
+    const laneEnds: number[][] = [] // lane -> 该轨道已占用区间的结束列
+    const segments: CalendarSegment[] = []
+    for (const item of rowSpans) {
+        const task = taskBySpanId.get(item.span.taskId)!
+        let lane = 0
+        while (true) {
+            const ends = laneEnds[lane]
+            if (!ends || !ends.some((end) => item.colStart <= end)) break
+            lane++
+        }
+        ;(laneEnds[lane] ??= []).push(item.colEnd)
+        segments.push({
+            task,
+            colStart: item.colStart,
+            colEnd: item.colEnd,
+            lane,
+            isStart: item.isStart,
+            isEnd: item.isEnd
+        })
+    }
+
+    // R5 溢出统计：该格内所有任务数 - 落在可视轨道内的任务数
+    const overflow: CalendarOverflow[] = []
+    for (const cell of rowCells) {
+        const col = cell.cell % GRID_COLUMNS
+        const overlapped = segments.filter((s) => s.colStart <= col && s.colEnd >= col)
+        const drawn = overlapped.filter((s) => s.lane < maxLanes).length
+        const hidden = overlapped.length - drawn
+        if (hidden > 0) overflow.push({ cell: cell.cell, dateKey: cell.dateKey, count: hidden })
+    }
+    return { segments, overflow }
+}
+
+/** 某日期键所在周的周日（周起始）日期键 */
+export const weekStartKeyOf = (dateKey: string): string => {
+    const anchor = dayjs(dateKey)
+    return fmtKey(anchor.subtract(anchor.day(), 'day'))
+}
+
+/**
+ * 周网格模型：锚点日所在周（周日开头 7 列），跨界任务裁剪到周内
+ * @param anchorKey 锚点日期键（YYYY-MM-DD）
+ * @param tasks 任务快照（与月视图同源，跨周任务在此裁剪）
+ * @param maxLanes 可视轨道数（行高实测；默认回退 3）
+ */
+export const buildWeekGrid = (
+    anchorKey: string,
+    tasks: TaskViewObject[],
+    maxLanes: number = MAX_VISIBLE_LANES
+): CalendarWeekModel => {
+    const anchor = dayjs(anchorKey)
+    const weekStart = anchor.subtract(anchor.day(), 'day')
+    const year = anchor.year()
+    const monthIndex = anchor.month()
+    const todayKey = todayDateKey()
+    const targetKey = anchorKey
+
+    const days: CalendarDayCell[] = []
+    for (let i = 0; i < GRID_COLUMNS; i++) {
+        const date = weekStart.add(i, 'day')
+        const key = fmtKey(date)
+        days.push({
+            cell: i,
+            dateKey: key,
+            day: date.date(),
+            monthOffset: date.month() < monthIndex ? -1 : date.month() > monthIndex ? 1 : 0,
+            isToday: key === todayKey,
+            isSelected: key === targetKey,
+            isWeekend: date.day() === 0 || date.day() === 6
+        })
+    }
+
+    const spans = tasks.map(buildTaskSpan).filter((s): s is CalendarTaskSpan => !!s)
+    const { segments, overflow } = buildRowContent(days, spans, tasks, maxLanes)
+    return { anchorKey, year, monthIndex, days, segments, overflow }
 }
 
 /** 获取某日期格在行内被绘制的任务（可视轨道内），供点击命中/样式使用 */

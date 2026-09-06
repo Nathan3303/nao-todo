@@ -15,6 +15,8 @@ const props = defineProps<{
     onDefer: (task: TaskViewObject) => void | Promise<void>
     onOpenTask: (taskId: TaskViewObject['id']) => void
     onCreate: () => void
+    /** 「本周」下钻：由调用方切周视图并锚定该日（缺省不显示） */
+    onGoWeek?: (dateKey: string) => void
 }>()
 const emit = defineEmits<{ (e: 'update:open', value: boolean): void }>()
 
@@ -37,6 +39,13 @@ const visible = computed({
     get: () => props.open,
     set: (value: boolean) => emit('update:open', value)
 })
+
+// @method 「本周」：关闭抽屉并交由调用方切周视图锚定该日
+const goToWeekViewOfDate = () => {
+    if (!props.onGoWeek) return
+    emit('update:open', false)
+    props.onGoWeek(props.dateKey)
+}
 
 // @computed 日期标题，如「6 月 3 日 · 周二」
 const weekdayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
@@ -66,6 +75,14 @@ const title = computed(() => {
                 </nue-text>
             </nue-div>
             <nue-div>
+                <nue-button
+                    v-if="onGoWeek"
+                    theme="small,ghost"
+                    title="切到该日所在周视图"
+                    @click.stop="goToWeekViewOfDate"
+                >
+                    本周
+                </nue-button>
                 <nue-button
                     icon="plus"
                     theme="primary,small"
