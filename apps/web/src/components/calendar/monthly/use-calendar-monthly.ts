@@ -1,6 +1,6 @@
 import { TASK_CREATOR_DIALOG_KEY, unwrapError } from '@nao-todo/shared'
 import type { TaskViewObject } from '@nao-todo/domain-task'
-import { useTasksStore } from '@nao-todo/presentation/task'
+import { translateTaskError, useTasksStore } from '@nao-todo/presentation/task'
 import { useTaskUseCase } from '@/hooks'
 import { NueMessage } from 'nue-ui'
 import dayjs from 'dayjs'
@@ -236,6 +236,67 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         selectedKey.value = dateKeyOf(dayjs(selectedKey.value).add(7, 'day').valueOf())
     }
 
+    // @states 格内快速新建（B6：单编辑器按 dateKey 定位；同视图仅一个）
+    const quickCreateDate = ref('')
+    const quickCreatePending = ref(false)
+
+    // @method 打开/关闭 快速新建编辑器
+    const openQuickCreate = (dateKey: string) => {
+        quickCreateDate.value = dateKey
+    }
+    const closeQuickCreate = () => {
+        quickCreateDate.value = ''
+    }
+
+    // @watch 翻月/翻周/换视图/切日期 → 编辑器自动关闭（随所在格失效，不残留）
+    watch([year, monthIndex, selectedKey, viewMode], () => {
+        quickCreateDate.value = ''
+    })
+
+    // @method 单选范围预填（Q5：单清单无标签→projectId；单标签无清单→tags；多选/混合省略走默认）
+    const prefillScope = (): { projectId?: string; tags?: string[] } => {
+        if (selectedProjectIds.value.length === 1 && selectedTagIds.value.length === 0) {
+            return { projectId: selectedProjectIds.value[0] }
+        }
+        if (selectedTagIds.value.length === 1 && selectedProjectIds.value.length === 0) {
+            return { tags: [selectedTagIds.value[0]!] }
+        }
+        return {}
+    }
+
+    // @method 格内回车创建：仅名称；endAt=该日末、startAt 不设；成功广播 AddNewTaskId 不跳详情
+    const inlineCreateTask = async (dateKey: string, rawName: string): Promise<boolean> => {
+        const name = (rawName || '').trim()
+        if (!name || quickCreatePending.value) return false
+        quickCreatePending.value = true
+        try {
+            const scope = prefillScope()
+            const [task, err] = await taskUseCase.create({
+                projectId: scope.projectId ?? '',
+                name,
+                description: '',
+                state: 'todo',
+                priority: 'low',
+                startAt: null,
+                endAt: dayjs(dateKey).endOf('day').toISOString(),
+                tags: scope.tags ?? [],
+                remindAt: null,
+                remindRepeat: 'none',
+                remindTime: null,
+                remindWeekdays: []
+            })
+            if (err !== null) {
+                NueMessage.error(translateTaskError(err))
+                return false
+            }
+            if (task) subscriber.emit('AddNewTaskId', task.id)
+            quickCreateDate.value = ''
+            return true
+        } finally {
+            quickCreatePending.value = false
+        }
+    }
+
     // @method 选中日期
     const selectDate = (dateKey: string) => {
         selectedKey.value = dateKey
@@ -270,12 +331,10 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
             startAt: dayjs(dateKey).startOf('day').toISOString(),
             endAt: dayjs(dateKey).endOf('day').toISOString()
         }
-        // Q5 联动：恰好选中单一清单或标签时预填，多选/混合不预填避免歧义
-        if (selectedProjectIds.value.length === 1 && selectedTagIds.value.length === 0) {
-            payload.projectId = selectedProjectIds.value[0]
-        } else if (selectedTagIds.value.length === 1 && selectedProjectIds.value.length === 0) {
-            payload.tags = [selectedTagIds.value[0]]
-        }
+        // Q5 联动：单选清单/标签预填（多选/混合省略走默认收件箱）
+        const scope = prefillScope()
+        if (scope.projectId) payload.projectId = scope.projectId
+        if (scope.tags) payload.tags = scope.tags
         dialogManager.open(TASK_CREATOR_DIALOG_KEY, payload)
     }
 
@@ -311,6 +370,12 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         goNextWeek,
         // —— 任务快照（周视图同源数据；含跨月任务，按跨度裁剪） ——
         tasks,
+        // —— 格内快速新建（B6） ——
+        quickCreateDate,
+        quickCreatePending,
+        openQuickCreate,
+        closeQuickCreate,
+        inlineCreateTask,
         // —— 筛选（空态/清除出口使用） ——
         selectedProjectIds,
         selectedTagIds,

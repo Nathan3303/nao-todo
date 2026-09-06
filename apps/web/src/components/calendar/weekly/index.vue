@@ -3,6 +3,7 @@ import { Loading as LoadingComp } from '@nao-todo/shared'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import dayjs from 'dayjs'
+import QuickCreate from '../monthly/quick-create.vue'
 import TaskBar from '../monthly/task-bar.vue'
 import { buildWeekGrid, GRID_COLUMNS, MAX_VISIBLE_LANES } from '../monthly/monthly-layout'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
@@ -28,6 +29,12 @@ const props = defineProps<{
     unscheduledCount: number
     unscheduledDisabled: boolean
     onOpenUnscheduled: () => void
+    // —— 格内快速新建（B6，由父级共享状态透传） ——
+    quickCreateDate: string
+    quickPending: boolean
+    onQuickOpen: (dateKey: string) => void
+    onQuickCancel: () => void
+    onQuickSubmit: (dateKey: string, name: string) => void | Promise<boolean>
 }>()
 
 // @viewContext 应用级子侧栏开关（与月视图 header 一致）
@@ -122,6 +129,18 @@ const segStyle = (seg: { colStart: number; colEnd: number; lane: number }) => {
 // @method 段首是否显示开始时刻：仅当任务真起始落在本周内可见列
 const segShowTime = (seg: { task: TaskViewObject; isStart: boolean; colStart: number }): boolean =>
     !!seg.isStart && !!seg.task.startAt && dayjs(seg.task.startAt).isValid()
+
+// @computed 格内编辑器定位（B6：周内列号 -> 覆盖层位置）
+const quickPos = computed<{ left: string; width: string; top: string } | null>(() => {
+    if (!props.quickCreateDate) return null
+    const idx = model.value.days.findIndex((cell) => cell.dateKey === props.quickCreateDate)
+    if (idx < 0) return null
+    return {
+        left: `${(idx / GRID_COLUMNS) * 100}%`,
+        width: `${100 / GRID_COLUMNS}%`,
+        top: `${WEEK_TOP}px`
+    }
+})
 
 // @method 溢出 +N 与 点击日期格（打开当日面板）
 const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateKey === dateKey)
@@ -237,6 +256,14 @@ const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateK
                     >
                         +{{ overflowOn(cell.dateKey)!.count }}
                     </button>
+                    <button
+                        type="button"
+                        class="wk-quick-add"
+                        title="快速新建"
+                        @click.stop="onQuickOpen(cell.dateKey)"
+                    >
+                        +
+                    </button>
                 </div>
                 <!-- 任务条层 -->
                 <div class="cal-lanes">
@@ -251,6 +278,14 @@ const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateK
                         @open="onOpenTask(seg.task.id)"
                     />
                 </div>
+                <!-- 格内快速新建编辑器（B6 临时覆盖层，不进轨道计数） -->
+                <quick-create
+                    v-if="quickPos"
+                    :pos="quickPos"
+                    :pending="quickPending"
+                    @submit="(name) => onQuickSubmit(props.quickCreateDate, name)"
+                    @cancel="onQuickCancel"
+                />
             </div>
         </div>
     </nue-div>
@@ -438,6 +473,33 @@ const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateK
     position: absolute;
     inset: 0;
     pointer-events: none;
+}
+
+/* 悬停快速新建 +（周 7 日格；右下角，避开 +N） */
+.wk-quick-add {
+    position: absolute;
+    right: 34px;
+    bottom: 4px;
+    width: 18px;
+    height: 16px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: var(--cal-chip-bg-hover);
+    color: var(--cal-fg);
+    font-size: 0.9375rem;
+    line-height: 16px;
+    cursor: pointer;
+    opacity: 0;
+    transition:
+        opacity 60ms,
+        background 60ms;
+}
+.wk-cell:hover .wk-quick-add {
+    opacity: 1;
+}
+.wk-quick-add:hover {
+    background: var(--cal-select-bg);
 }
 
 /* 溢出 +N */

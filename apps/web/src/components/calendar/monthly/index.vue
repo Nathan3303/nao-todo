@@ -4,6 +4,7 @@ import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from '
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import CalendarDayDrawer from './day-drawer.vue'
 import CalendarWeekly from '../weekly/index.vue'
+import QuickCreate from './quick-create.vue'
 import TaskBar from './task-bar.vue'
 import UnscheduledDrawer from './unscheduled-drawer.vue'
 import useCalendarMonthly from './use-calendar-monthly'
@@ -58,7 +59,13 @@ const {
     goToMonthView,
     goPrevWeek,
     goNextWeek,
-    tasks
+    tasks,
+    // —— 格内快速新建（B6） ——
+    quickCreateDate,
+    quickCreatePending,
+    openQuickCreate,
+    closeQuickCreate,
+    inlineCreateTask
 } = useCalendarMonthly(laneLimit)
 
 const weekdays = ['日', '一', '二', '三', '四', '五', '六']
@@ -163,6 +170,37 @@ const visibleSegments = (row: CalendarRow) =>
 // @method 某格溢出 +N
 const overflowOn = (row: CalendarRow, dateKey: string) =>
     row.overflow.find((item) => item.dateKey === dateKey)
+
+// @computed 格内编辑器定位（B6：活动格在模型中的行/列 -> 覆盖层位置；不在本视图则 null）
+const activeQuick = computed<{
+    dateKey: string
+    row: number
+    pos: { left: string; width: string; top: string }
+} | null>(() => {
+    const key = quickCreateDate.value
+    if (!key) return null
+    for (const row of model.value.rows) {
+        const idx = row.cells.findIndex((cell) => cell.dateKey === key)
+        if (idx < 0) continue
+        return {
+            dateKey: key,
+            row: row.row,
+            pos: {
+                left: `${(idx / GRID_COLUMNS) * 100}%`,
+                width: `${100 / GRID_COLUMNS}%`,
+                top: `${DATE_OFFSET}px`
+            }
+        }
+    }
+    return null
+})
+
+// @method 回车提交（成功由 composable 清除活动格并卸载；失败保持文本可重试）
+const handleQuickSubmit = (name: string) => {
+    const key = activeQuick.value?.dateKey
+    if (!key) return
+    void inlineCreateTask(key, name)
+}
 
 // @method 任务条定位样式（连续条按列区间铺满）
 const segStyle = (seg: { colStart: number; colEnd: number; lane: number }) => {
@@ -330,6 +368,15 @@ const showWeekOf = (dateKey: string) => {
                             >
                                 +{{ overflowOn(row, cell.dateKey)!.count }}
                             </button>
+                            <button
+                                v-if="cell.monthOffset === 0"
+                                type="button"
+                                class="cal-quick-add"
+                                title="快速新建"
+                                @click.stop="openQuickCreate(cell.dateKey)"
+                            >
+                                +
+                            </button>
                         </div>
 
                         <!-- 任务条层（连续条跨格/跨行） -->
@@ -345,6 +392,14 @@ const showWeekOf = (dateKey: string) => {
                                 @open="openTaskDetails(seg.task.id)"
                             />
                         </div>
+                        <!-- 格内快速新建编辑器（B6 临时覆盖层，不进轨道计数） -->
+                        <quick-create
+                            v-if="activeQuick && activeQuick.row === row.row"
+                            :pos="activeQuick.pos"
+                            :pending="quickCreatePending"
+                            @submit="handleQuickSubmit"
+                            @cancel="closeQuickCreate"
+                        />
                     </div>
                 </template>
             </div>
@@ -371,6 +426,11 @@ const showWeekOf = (dateKey: string) => {
                 :unscheduled-count="unscheduledTasks.length"
                 :unscheduled-disabled="unscheduledBtnDisabled"
                 :on-open-unscheduled="() => (unscheduledOpen = true)"
+                :quick-create-date="quickCreateDate"
+                :quick-pending="quickCreatePending"
+                :on-quick-open="openQuickCreate"
+                :on-quick-cancel="closeQuickCreate"
+                :on-quick-submit="inlineCreateTask"
             />
         </template>
 
@@ -628,6 +688,33 @@ const showWeekOf = (dateKey: string) => {
     pointer-events: none;
 }
 /* 任务条视觉（色条/色痕/时刻/续接圆点/周裁剪圆角）已抽至 ./task-bar.vue；--cal-* 令牌由本根定义 */
+/* 悬停快速新建 +（仅本月格；右下角，避开 +N） */
+.cal-quick-add {
+    position: absolute;
+    right: 34px;
+    bottom: 2px;
+    width: 18px;
+    height: 16px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: var(--cal-chip-bg-hover);
+    color: var(--cal-fg);
+    font-size: 0.9375rem;
+    line-height: 16px;
+    cursor: pointer;
+    opacity: 0;
+    transition:
+        opacity 60ms,
+        background 60ms;
+}
+.cal-cell:hover .cal-quick-add {
+    opacity: 1;
+}
+.cal-quick-add:hover {
+    background: var(--cal-select-bg);
+}
+
 /* ── 溢出 +N ── */
 .cal-more {
     position: absolute;
