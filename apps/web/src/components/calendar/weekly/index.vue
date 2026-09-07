@@ -54,6 +54,8 @@ const props = defineProps<{
     onDragBar: (task: TaskViewObject, event: PointerEvent) => void
     /** C2-F9 周视图标题年-月跳转：目标年月上抛（父级落含 1 号的周并选中 1 号，不切回月视图） */
     onJumpYearMonth: (year: number, month: number) => void
+    /** B1-F5 专注角标：取某日标签（'' = 不显示；父级持有区间聚合） */
+    onBadgeLabel: (dateKey: string) => string
 }>()
 
 // @viewContext 应用级子侧栏开关（与月视图 header 一致）
@@ -319,7 +321,16 @@ const onWeekJumpSelect = (targetYear: number, targetMonth: number): void => {
                     }"
                     @click="onOpenDay(cell.dateKey)"
                 >
-                    <span class="wk-date">{{ cell.day }}</span>
+                    <span class="wk-cell-top">
+                        <span class="wk-date">{{ cell.day }}</span>
+                        <span
+                            v-if="onBadgeLabel(cell.dateKey)"
+                            class="wk-badge"
+                            :title="`当日完成 ${onBadgeLabel(cell.dateKey)} 轮专注`"
+                        >
+                            {{ onBadgeLabel(cell.dateKey) }}
+                        </span>
+                    </span>
                     <div class="wk-band" @click.stop>
                         <template v-if="quickCreateDate === cell.dateKey">
                             <quick-create
@@ -529,6 +540,28 @@ const onWeekJumpSelect = (targetYear: number, targetMonth: number): void => {
 }
 .wk-cell--outside {
     background: color-mix(in srgb, var(--cal-bg) 92%, var(--cal-border));
+}
+
+/* 周日期号 + B1-F5 专注角标（列头日期旁；不叠压列头内容、不抢格点击） */
+.wk-cell-top {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 20px;
+}
+
+.wk-badge {
+    flex: none;
+    min-width: 14px;
+    padding: 0 4px;
+    border-radius: 7px;
+    background: var(--cal-chip-bg);
+    color: var(--cal-muted);
+    font-size: 0.625rem;
+    line-height: 14px;
+    text-align: center;
+    box-sizing: border-box;
 }
 
 .wk-date {

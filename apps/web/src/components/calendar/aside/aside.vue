@@ -13,7 +13,7 @@ import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 
 defineOptions({ name: 'CalendarAside' })
 
-const { isDisplayAside, dialogManager, hideCompleted, weekStart, setWeekStart } =
+const { isDisplayAside, dialogManager, hideCompleted, weekStart, setWeekStart, pomodoroBadge } =
     inject(CALENDAR_VIEW_CONTEXT_KEY)!
 const { setControllOption } = inject(INDEX_VIEW_CONTEXT_KEY)!
 const { projectOptions, tagOptions, selectedProjectIds, selectedTagIds } = useCalendarSmartList()
@@ -79,6 +79,12 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
             <nue-div align="center" class="hide-completed-row">
                 <nue-checkbox v-model="hideCompleted">隐藏已完成</nue-checkbox>
             </nue-div>
+            <!-- B1-F5 专注徽标开关（off=停拉区间记录；即时生效并持久化） -->
+            <nue-div align="center" class="badge-row">
+                <nue-text size="var(--nue-text-sm)">专注徽标</nue-text>
+                <nue-div flex="1" />
+                <nue-switch v-model="pomodoroBadge" />
+            </nue-div>
             <nue-div align="center" class="weekstart-row" gap="8px">
                 <nue-text size="var(--nue-text-sm)" class="weekstart-label">周起始</nue-text>
                 <nue-div class="weekstart-toggle" role="group" aria-label="周起始">
@@ -108,10 +114,18 @@ watch(isDisplayAside, (nv) => nextTick(() => (teleportDisabled.value = !nv)))
 .nue-div--aside-wrapper {
     flex: auto;
 
-    > .hide-completed-row {
+    > .hide-completed-row,
+    > .badge-row {
         width: 100%;
         padding: 0.25rem 0;
+    }
 
+    > .badge-row {
+        color: color-mix(in srgb, var(--nue-primary-text-color) 62%, var(--nue-primary-color-0));
+        font-size: var(--nue-text-sm);
+    }
+
+    > .hide-completed-row {
         /* 与 smart-list 内 checkbox 一致：默认字号/色值 + 去除默认横向内距保持左对齐 */
         .nue-checkbox {
             padding: 0;

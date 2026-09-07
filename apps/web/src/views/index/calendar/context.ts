@@ -32,6 +32,10 @@ export type CalendarViewContext = {
     weekStart: Ref<CalendarWeekStart>
     /** 设置周起始口径（切换即重排并持久化） */
     setWeekStart: (weekStart: CalendarWeekStart) => void
+    /** 专注徽标开关（B1-F5；localStorage CALENDAR_POMODORO_BADGE 持久化，default on） */
+    pomodoroBadge: Ref<boolean>
+    /** 设置专注徽标开关（off=停拉区间记录；on=恢复拉取） */
+    setPomodoroBadge: (value: boolean) => void
     /** 清除清单/标签两组筛选（不影响 hideCompleted） */
     clearFilter: () => void
     /** 快捷设置单一范围（替换式：仅选中一个清单或标签；all 清空两组） */

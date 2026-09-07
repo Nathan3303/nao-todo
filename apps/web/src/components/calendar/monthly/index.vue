@@ -18,8 +18,12 @@ import {
     GRID_ROWS,
     MAX_VISIBLE_LANES,
     todayDateKey,
+    weekStartKeyOf,
     type CalendarRow
 } from './monthly-layout'
+import dayjs from 'dayjs'
+import { usePomodoroBadge, type PomodoroBadgeRange } from './use-pomodoro-badge'
+import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
 import { useScope, useShortcut } from '@/hooks'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 
@@ -32,6 +36,7 @@ const BAND_HEIGHT = 24 // 格底预留条带（DEF-1：+/+N/编辑器占用，�
 
 // @viewContext 应用级子侧栏开关（与任务页 header 行为一致）
 const { isDisplayAside, switchDisplayAside } = inject(INDEX_VIEW_CONTEXT_KEY)!
+const { pomodoroBadge } = inject(CALENDAR_VIEW_CONTEXT_KEY)!
 
 // @states 动态可视轨道数（DEF-2：由行高实测决定；未测得前回退 3）
 const laneLimit = ref<number>(MAX_VISIBLE_LANES)
@@ -87,6 +92,20 @@ const {
     closeQuickCreate,
     inlineCreateTask
 } = useCalendarMonthly(laneLimit)
+// —— B1-F5 专注徽标（区间=当前可见格：月=网格首末格 / 周=锚点所在周；开关 off=停拉+清零） ——
+const badgeRange = computed<PomodoroBadgeRange | null>(() => {
+    if (!pomodoroBadge.value) return null
+    if (viewMode.value === 'month') {
+        if (!model.value) return null
+        return { fromKey: model.value.firstKey, toKey: model.value.lastKey }
+    }
+    const anchor = dayjs(selectedKey.value)
+    if (!selectedKey.value || !anchor.isValid()) return null
+    const fromKey = weekStartKeyOf(selectedKey.value, weekStart.value)
+    const toKey = dateKeyOf(dayjs(fromKey).add(6, 'day').valueOf())
+    return { fromKey, toKey }
+})
+const { badgeLabel } = usePomodoroBadge(badgeRange, pomodoroBadge)
 
 // @computed 星期表头（随周起始口径：sunday 日~六 / monday 一~日）
 const weekdays = computed(() =>
@@ -474,7 +493,16 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                             }"
                             @click="openDay(cell.dateKey)"
                         >
-                            <span class="cal-date">{{ cell.day }}</span>
+                            <span class="cal-cell-top">
+                                <span class="cal-date">{{ cell.day }}</span>
+                                <span
+                                    v-if="badgeLabel(cell.dateKey)"
+                                    class="cal-badge"
+                                    :title="`当日完成 ${badgeLabel(cell.dateKey)} 轮专注`"
+                                >
+                                    {{ badgeLabel(cell.dateKey) }}
+                                </span>
+                            </span>
                             <div class="cal-band" @click.stop>
                                 <template v-if="quickCreateDate === cell.dateKey">
                                     <quick-create
@@ -569,6 +597,7 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                 :drag-hover-key="drag.session.hoverKey"
                 :on-drag-bar="(task, event) => drag.startPossible(task, 'bar', event)"
                 :on-jump-year-month="(year, month) => jumpToWeekOfMonthFirst(year, month)"
+                :on-badge-label="badgeLabel"
                 :week-start="weekStart"
             />
         </template>
@@ -820,6 +849,28 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
 }
 .cal-cell--outside {
     background: color-mix(in srgb, var(--cal-bg) 92%, var(--cal-border));
+}
+
+/* 日期号 + B1-F5 专注角标（同一行，角标不抢日格点击） */
+.cal-cell-top {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 20px;
+}
+
+.cal-badge {
+    flex: none;
+    min-width: 14px;
+    padding: 0 4px;
+    border-radius: 7px;
+    background: var(--cal-chip-bg);
+    color: var(--cal-muted);
+    font-size: 0.625rem;
+    line-height: 14px;
+    text-align: center;
+    box-sizing: border-box;
 }
 
 /* 今日/选中日期号 */
