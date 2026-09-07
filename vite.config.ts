@@ -1,9 +1,16 @@
+import { fileURLToPath, URL } from 'node:url'
 import { defineConfig, lazyPlugins } from 'vite-plus'
 import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
     // Vue 插件供 vp test 转换被间接引入的 .vue 组件（如 @nao-todo/shared 的展示组件）
     plugins: lazyPlugins(() => [vue()]),
+    // @/* 源码别名（apps/web/src）：供 vitest 解析组件测试链路（build 下 vp 自带等价解析）
+    resolve: {
+        alias: {
+            '@': fileURLToPath(new URL('./apps/web/src/', import.meta.url))
+        }
+    },
     test: {
         include: ['packages/**/*.{test,spec}.ts', 'apps/**/*.{test,spec}.ts']
     },

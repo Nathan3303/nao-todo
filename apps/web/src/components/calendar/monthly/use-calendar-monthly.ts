@@ -149,7 +149,6 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         subscriber.subscribe('AddNewTaskId', onAddNewTaskId)
     })
     onUnmounted(() => {
-        clearTimeout(undoActionTimer)
         undoAction.value = null // 视图卸载/页面切换 → 撤销快照失效（U2 同视图生命周期约束）
         subscriber.unsubscribe('RefreshData', onRefreshData)
         subscriber.unsubscribe('AddNewTaskId', onAddNewTaskId)
@@ -323,18 +322,12 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         if (err !== null) NueMessage.error(unwrapError(err))
     }
 
-    // @method 安排到某日（T1 + U2 内核）：动作前快照 → 计算目标日应上送字段 → 串行小步写回；
-    //              成功弹「已移至 X 月 X 日 + 撤销」，失败 toast 且列表保留（负向闭环）
     // ===== U2 最近一次撤销（单条/批量共用内核；M2/F4、M3/F1 复用此机制） =====
-
-    // @constant 撤销 toast 停留时长（约 5s；超时即不可撤销为既定语义）
-    const UNDO_ACTION_DURATION = 5000
 
     // @states 最近一次成功写回动作（仅保留最近一个：新成功动作替换旧快照）；撤销/超时后失效
     const undoAction = ref<ScheduleUndoAction | null>(null)
     const undoBusy = ref(false) // 撤销写回防连点
     const scheduleBusy = ref(false) // 批量排期防连点
-    let undoActionTimer: ReturnType<typeof setTimeout> | undefined
 
     // @method 「X 月 X 日」日期标签（按日期键直接拆分，无时区偏移）
     const monthDayLabelOf = (dateKey: string): string => {
@@ -342,16 +335,11 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         return `${Number(month)} 月 ${Number(day)} 日`
     }
 
-    // @method 弹出/刷新撤销 toast（替换最近一次；自动超时失效）
+    // @method 弹出/刷新撤销 toast（替换最近一次；约 5s 自动超时失效由 undo-toast 内部计时并 dismiss）
     const showUndoAction = (action: ScheduleUndoAction): void => {
         undoAction.value = action
-        clearTimeout(undoActionTimer)
-        undoActionTimer = setTimeout(() => {
-            undoAction.value = null
-        }, UNDO_ACTION_DURATION)
     }
     const dismissUndoAction = (): void => {
-        clearTimeout(undoActionTimer)
         undoAction.value = null
     }
 
@@ -373,15 +361,27 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         return { ok: true, err: null }
     }
 
-    // @method 单条安排到某日（B7 单行操作复用；成功提供「撤销」入口）
+    // @method 单条安排到某日（B7 抽屉行/F4 菜单/F1 共用；成功提供「撤销」入口）
+    //              同任务 busy 防连点（不同任务可并行，与 B7 逐行语义一致）
+    const rescheduleBusyId = ref<TaskViewObject['id']>('')
     const scheduleToDay = async (task: TaskViewObject, dateKey: string): Promise<void> => {
-        const snapshots: TaskScheduleSnapshot[] = []
-        const { ok, err } = await writeScheduleOnce(task, dateKey, snapshots)
-        if (!ok) {
-            if (err !== null) NueMessage.error(translateTaskError(err))
-            return
+        if (rescheduleBusyId.value === task.id) return
+        rescheduleBusyId.value = task.id
+        try {
+            const snapshots: TaskScheduleSnapshot[] = []
+            const { ok, err } = await writeScheduleOnce(task, dateKey, snapshots)
+            if (!ok) {
+                if (err !== null) NueMessage.error(translateTaskError(err))
+                return
+            }
+            showUndoAction({
+                text: `已移至 ${monthDayLabelOf(dateKey)}`,
+                tone: 'success',
+                snapshots
+            })
+        } finally {
+            rescheduleBusyId.value = ''
         }
-        showUndoAction({ text: `已移至 ${monthDayLabelOf(dateKey)}`, tone: 'success', snapshots })
     }
 
     // @method 延期到今天（A3 别名）：scheduleToDay 的今日特例
@@ -425,9 +425,11 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
     }
 
     // @method 撤销最近一次动作：以快照原值回写（串行、busy 防连点、失败 toast）；成功/失败均不再保留入口
+    //              P3-1：与批量排期互斥——批量写回进行中不执行撤销（慢网批量中入口禁用/串行化）
     const undoLast = async (): Promise<void> => {
         const action = undoAction.value
         if (!action || undoBusy.value) return
+        if (scheduleBusy.value) return // 批量串行写回中：撤销延迟到批结束后（新动作将替换旧快照）
         if (action.snapshots.length === 0) {
             dismissUndoAction()
             return
@@ -485,12 +487,15 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         deferToToday,
         scheduleToDay,
         unscheduledTasks,
+        // —— 单条排期/改期（F4）busy 标识（逐任务防连点，月/周条 + 抽屉行共用） ——
+        rescheduleBusyId,
         // —— 批量排期（F3）+ U2 最近一次撤销（M2/F4、M3/F1 复用） ——
         scheduleBusy,
         runBatchSchedule,
         undoAction,
         undoBusy,
         undoLast,
+        dismissUndoAction,
         createTaskOnDay,
         openTaskDetails,
         // —— 视图态（A1 周视图） ——

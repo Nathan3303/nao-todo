@@ -67,10 +67,20 @@ export const endOfDayIsoOf = (dateKey: string): string => {
     return new Date(y!, m! - 1, d!, 23, 59, 59, 999).toISOString()
 }
 
-/** 日历日序数（1970-01-01 起的天数；按日期键的 UTC 日历计算，无 DST 23/25 小时误差） */
+/** 日期键 → 日历日序数（UTC 构造，跨 DST 也无 23/25 小时误差） */
 const dayOrdinalOf = (dateKey: string): number => {
     const [y, m, d] = dateKey.split('-').map(Number)
     return Math.floor(Date.UTC(y!, m! - 1, d!) / MS_PER_DAY)
+}
+
+/**
+ * 日期键偏移 N 天（纯日历算术，无时区偏移；非法键返回原键）
+ * @description F4「下周同日」= 锚点日键 +7 天；跨月/跨年/闰年边界由 UTC 日历序数保证
+ */
+export const dateKeyOffset = (dateKey: string, deltaDays: number): string => {
+    if (!isValidDateKey(dateKey)) return dateKey
+    const target = dayOrdinalOf(dateKey) + deltaDays
+    return dateKeyOfOrdinal(target)
 }
 
 /** 由日历日序数还原日期键 */

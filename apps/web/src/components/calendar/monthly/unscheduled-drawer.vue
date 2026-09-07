@@ -6,8 +6,9 @@ import { useProjectsStore } from '@nao-todo/presentation/project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
 import { TaskCheckButton } from '@nao-todo/shared'
 import dayjs from 'dayjs'
-import { computed, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { todayDateKey } from './monthly-layout'
+import RescheduleMenu from './reschedule-menu.vue'
 import type { BatchScheduleResult } from './reschedule'
 
 defineOptions({ name: 'CalendarUnscheduledDrawer' })
@@ -18,6 +19,8 @@ const props = defineProps<{
     filterActive: boolean
     hideCompleted: boolean
     scheduleBusy: boolean
+    /** 单条排期/改期写回中的任务 ID（F4 逐任务 busy，来自父级内核） */
+    busyTaskId: string
     onToggleDone: (task: TaskViewObject) => void
     onScheduleToDay: (task: TaskViewObject, dateKey: string) => void | Promise<void>
     onBatchScheduleToDay: (tasks: TaskViewObject[], dateKey: string) => Promise<BatchScheduleResult>
@@ -33,16 +36,14 @@ const visible = computed({
     set: (value: boolean) => emit('update:open', value)
 })
 
-// @states 行内操作（普通模式，B7）：安排中 / 展开日期选择的行 / 待选日期
-const busyId = ref<TaskViewObject['id']>('')
-const pickingId = ref<TaskViewObject['id']>('')
-const pickDate = ref<string>('')
-
 // @states 多选模式（F3）：模式开关 / 选中集合 / 批量日期面板
 const multiMode = ref(false)
 const selectedIds = ref<Set<TaskViewObject['id']>>(new Set())
 const batchPicking = ref(false)
 const batchPickDate = ref<string>('')
+
+// @states 单行「安排到…」菜单（F4 收敛；抽屉行统一为三项裁剪菜单，共享单实例）
+const rowMenu = reactive({ open: false, x: 0, y: 0, taskId: '' })
 
 // @computed 行上下文（清单名 + 标签，缺数据时优雅降级为空）
 type RowMeta = { project?: ProjectViewObject; tags: TagViewObject[] }
@@ -85,9 +86,7 @@ const isSelected = (taskId: TaskViewObject['id']): boolean => selectedIds.value.
 const toggleMultiMode = (): void => {
     if (props.scheduleBusy) return
     multiMode.value = !multiMode.value
-    // 收起普通模式展开的行内日期面板/批量日期面板，选择清空
-    pickingId.value = ''
-    pickDate.value = ''
+    closeRowMenu()
     batchPicking.value = false
     batchPickDate.value = ''
     selectedIds.value = new Set()
@@ -120,8 +119,7 @@ const resetSelectionUI = (): void => {
     selectedIds.value = new Set()
     batchPicking.value = false
     batchPickDate.value = ''
-    pickingId.value = ''
-    pickDate.value = ''
+    closeRowMenu()
 }
 
 // @watch 抽屉打开 → 复位（普通模式开始；B7 单行行为不回归）
@@ -157,36 +155,39 @@ const runBatch = async (dateKey: string): Promise<void> => {
     batchPickDate.value = ''
 }
 
+// @method ISO（NueDatePicker 输出）-> YYYY-MM-DD
+const keyOfIso = (iso: string): string => dayjs(iso).format('YYYY-MM-DD')
+
 // @method 批量日期面板：确定
 const confirmBatchPick = (): void => {
     if (!batchPickDate.value) return
     void runBatch(keyOfIso(batchPickDate.value))
 }
 
-// @method ISO（NueDatePicker 输出）-> YYYY-MM-DD
-const keyOfIso = (iso: string): string => dayjs(iso).format('YYYY-MM-DD')
+// —— 单行「安排到…」菜单（F4 收敛：三项=今天/明天/选择日期…；首位今天=B7 等价） ——
 
-// —— 普通模式行内安排（B7 单行，双按钮保持不变；M2 才收敛为菜单） ——
-
-// @method 安排任务到某日（dateKey YYYY-MM-DD；成功后任务移出列表由数据联动完成）
-const runSchedule = async (task: TaskViewObject, dateKey: string): Promise<void> => {
-    if (busyId.value) return
-    busyId.value = task.id
-    try {
-        await props.onScheduleToDay(task, dateKey)
-    } finally {
-        busyId.value = ''
-        if (pickingId.value === task.id) {
-            pickingId.value = ''
-            pickDate.value = ''
-        }
-    }
+// @method 以「安排到…」按钮为锚点打开菜单（视口边缘收拢）
+const openRowMenu = (task: TaskViewObject, event: Event): void => {
+    if (props.scheduleBusy || props.busyTaskId === task.id || task.state === 'done') return
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+    rowMenu.taskId = task.id
+    rowMenu.x = Math.min(Math.max(4, rect.left), window.innerWidth - 208)
+    rowMenu.y = Math.min(Math.max(4, rect.bottom + 4), window.innerHeight - 232)
+    rowMenu.open = true
 }
 
-// @method 展开/收起某行的日期选择
-const togglePick = (task: TaskViewObject) => {
-    pickingId.value = pickingId.value === task.id ? '' : task.id
-    pickDate.value = ''
+// @method 收起行内菜单
+const closeRowMenu = (): void => {
+    rowMenu.open = false
+    rowMenu.taskId = ''
+}
+
+// @method 菜单选中：交给父级内核串行写回（同 B7 单行语义：未安排=endAt 直写目标日末）
+const onRowMenuSelect = (dateKey: string): void => {
+    const task = props.tasks.find((item) => item.id === rowMenu.taskId)
+    closeRowMenu()
+    if (!task) return
+    void props.onScheduleToDay(task, dateKey)
 }
 </script>
 
@@ -282,42 +283,30 @@ const togglePick = (task: TaskViewObject) => {
                             </div>
                         </div>
 
-                        <!-- 多选模式隐藏行内安排按钮（语义归到底部操作条） -->
+                        <!-- 普通模式行内「安排到…」菜单（M2 收敛；多选模式隐藏、语义归到底部操作条） -->
                         <div v-if="!multiMode" class="us-actions" @click.stop>
                             <nue-button
-                                theme="small"
-                                :disabled="busyId === task.id"
-                                @click="runSchedule(task, todayDateKey())"
-                            >
-                                {{ busyId === task.id ? '安排…' : '安排到今天' }}
-                            </nue-button>
-                            <nue-button
                                 theme="small,ghost"
-                                :disabled="busyId === task.id"
-                                @click="togglePick(task)"
+                                :disabled="busyTaskId === task.id || task.state === 'done'"
+                                title="安排到某日（含过去日期）"
+                                @click="openRowMenu(task, $event)"
                             >
-                                选择日期…
+                                {{ busyTaskId === task.id ? '安排中…' : '安排到…' }}
                             </nue-button>
                         </div>
                     </div>
-                    <!-- 普通模式：展开日期选择 + 确定 -->
-                    <div v-if="!multiMode && pickingId === task.id" class="us-pick" @click.stop>
-                        <nue-date-picker
-                            v-model="pickDate"
-                            class="us-pick__picker"
-                            type="date"
-                            size="small"
-                            placeholder="选择日期"
-                        />
-                        <nue-button
-                            theme="primary,small"
-                            :disabled="!pickDate || busyId === task.id"
-                            @click="runSchedule(task, keyOfIso(pickDate))"
-                        >
-                            {{ busyId === task.id ? '安排…' : '确定' }}
-                        </nue-button>
-                    </div>
                 </div>
+
+                <!-- 行内「安排到…」菜单（共享单实例；抽屉行=未安排 → 三项裁剪） -->
+                <reschedule-menu
+                    :open="rowMenu.open"
+                    :x="rowMenu.x"
+                    :y="rowMenu.y"
+                    :scheduled="false"
+                    :busy="rowMenu.taskId ? busyTaskId === rowMenu.taskId : false"
+                    @select="onRowMenuSelect"
+                    @close="closeRowMenu"
+                />
             </template>
             <!-- 空态（真无/筛选区分出口，B7 不回归） -->
             <nue-div v-else vertical align="center" class="us-empty" gap="4px">
@@ -579,18 +568,6 @@ const togglePick = (task: TaskViewObject) => {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-}
-
-.us-pick {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 0.5rem var(--nue-padding-df) 0.75rem calc(var(--nue-padding-df) + 2rem);
-}
-
-.us-pick__picker {
-    flex: 1;
-    min-width: 0;
 }
 
 /* —— 多选底部操作条 —— */

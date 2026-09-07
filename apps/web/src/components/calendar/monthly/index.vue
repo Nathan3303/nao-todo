@@ -50,9 +50,11 @@ const {
     unscheduledTasks,
     scheduleBusy,
     runBatchSchedule,
+    rescheduleBusyId,
     undoAction,
     undoBusy,
     undoLast,
+    dismissUndoAction,
     createTaskOnDay,
     openTaskDetails,
     // —— 筛选（空态/清除出口） ——
@@ -388,7 +390,9 @@ const showWeekOf = (dateKey: string) => {
                                 :show-time="segShowTime(seg, row)"
                                 :cont-start="isRowStart(seg, row)"
                                 :cont-end="isRowEnd(seg, row)"
+                                :busy="rescheduleBusyId === seg.task.id"
                                 @open="openTaskDetails(seg.task.id)"
+                                @reschedule="(dateKey) => scheduleToDay(seg.task, dateKey)"
                             />
                         </div>
                     </div>
@@ -422,6 +426,8 @@ const showWeekOf = (dateKey: string) => {
                 :on-quick-open="openQuickCreate"
                 :on-quick-cancel="closeQuickCreate"
                 :on-quick-submit="inlineCreateTask"
+                :busy-task-id="rescheduleBusyId"
+                :on-reschedule-task="scheduleToDay"
                 :week-start="weekStart"
             />
         </template>
@@ -445,6 +451,7 @@ const showWeekOf = (dateKey: string) => {
             :filter-active="filterActive"
             :hide-completed="hideCompleted"
             :schedule-busy="scheduleBusy"
+            :busy-task-id="rescheduleBusyId"
             :on-toggle-done="toggleDone"
             :on-schedule-to-day="scheduleToDay"
             :on-batch-schedule-to-day="runBatchSchedule"
@@ -457,8 +464,9 @@ const showWeekOf = (dateKey: string) => {
         <schedule-undo-toast
             v-if="undoAction"
             :action="undoAction"
-            :busy="undoBusy"
+            :busy="undoBusy || scheduleBusy"
             @undo="undoLast"
+            @dismiss="dismissUndoAction"
         />
     </nue-div>
 </template>

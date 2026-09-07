@@ -1,19 +1,44 @@
 <script setup lang="ts">
+import { onBeforeUnmount, watch } from 'vue'
 import type { ScheduleUndoAction } from './reschedule'
 
 /**
  * U2 撤销 action-toast（轻量自建）
- * @description NueMessage 不支持 action 按钮（见 PM 决议 #3），本组件为排期动作的
- *              撤销入口载体：顶部居中胶囊（success/warning 双主题一致，跟随当前主题令牌）、
- *              内含「撤销」动作；自动超时失效由父级（use-calendar-monthly 计时器）控制。
+ * @description NueMessage 不支持 action 按钮（PM 决议 #3）：顶部居中胶囊（success/warning
+ *              双主题一致），内含「撤销」动作；约 5s 自动消失（超时不可撤销=既定语义，A1-U2-06），
+ *              动作替换/卸载时计时重置并清理；busy（撤销/批量写回中）禁用按钮（P3-1 互斥）。
  */
 defineOptions({ name: 'CalendarScheduleUndoToast' })
 
-defineProps<{
+const props = defineProps<{
     action: ScheduleUndoAction
     busy: boolean
 }>()
-const emit = defineEmits<{ (e: 'undo'): void }>()
+const emit = defineEmits<{
+    (e: 'undo'): void
+    (e: 'dismiss'): void
+}>()
+
+// @constant 停留时长约 5s（超时不可撤销为既定语义）
+const UNDO_DURATION = 5000
+let dismissTimer: ReturnType<typeof setTimeout> | undefined
+
+// @watch 每次动作变化重置计时；action 为空（被父级移除）时不再计时
+watch(
+    () => props.action,
+    (action) => {
+        clearTimeout(dismissTimer)
+        if (!action) return
+        dismissTimer = setTimeout(() => {
+            emit('dismiss')
+        }, UNDO_DURATION)
+    },
+    { immediate: true }
+)
+
+onBeforeUnmount(() => {
+    clearTimeout(dismissTimer)
+})
 </script>
 
 <template>
@@ -26,9 +51,14 @@ const emit = defineEmits<{ (e: 'undo'): void }>()
                 role="status"
             >
                 <span class="utoast__text">{{ action.text }}</span>
-                <button type="button" class="utoast__undo" :disabled="busy" @click="emit('undo')">
+                <nue-button
+                    theme="pure"
+                    class="utoast__undo"
+                    :disabled="busy"
+                    @click="emit('undo')"
+                >
                     {{ busy ? '撤销中…' : '撤销' }}
-                </button>
+                </nue-button>
             </div>
         </transition>
     </teleport>
@@ -77,9 +107,8 @@ const emit = defineEmits<{ (e: 'undo'): void }>()
 }
 
 .utoast__undo {
+    --nue-button-color: var(--utoast-color);
     flex: none;
-    border: none;
-    background: transparent;
     padding: 2px 4px;
     border-radius: calc(var(--nue-primary-radius, 8px) / 2);
     color: var(--utoast-color);

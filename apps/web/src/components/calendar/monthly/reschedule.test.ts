@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test'
 import dayjs from 'dayjs'
 import {
+    dateKeyOffset,
     endOfDayIsoOf,
     isValidDateKey,
     shiftTaskDates,
@@ -158,5 +159,25 @@ describe('snapshotTaskDates - U2 撤销快照', () => {
         expect(snapA.prevEndAt).toBe('')
         const snapB = snapshotTaskDates({ id: 't2', startAt: null, endAt: null })
         expect(snapB.prevEndAt).toBeNull()
+    })
+})
+
+describe('dateKeyOffset - 日期键偏移（F4 下周同日 = +7）', () => {
+    it('+7 下周同日（含月末跨月）', () => {
+        expect(dateKeyOffset('2026-10-05', 7)).toBe('2026-10-12')
+        expect(dateKeyOffset('2026-10-31', 7)).toBe('2026-11-07')
+        expect(dateKeyOffset('2026-12-31', 7)).toBe('2027-01-07')
+    })
+
+    it('+1 跨月/闰年边界', () => {
+        expect(dateKeyOffset('2026-10-31', 1)).toBe('2026-11-01')
+        expect(dateKeyOffset('2026-02-28', 1)).toBe('2026-03-01') // 非闰年
+        expect(dateKeyOffset('2024-02-28', 1)).toBe('2024-02-29') // 闰年
+        expect(dateKeyOffset('2026-12-31', 1)).toBe('2027-01-01')
+    })
+
+    it('非法键原样返回（防御）', () => {
+        expect(dateKeyOffset('2026-13-01', 7)).toBe('2026-13-01')
+        expect(dateKeyOffset('', 7)).toBe('')
     })
 })

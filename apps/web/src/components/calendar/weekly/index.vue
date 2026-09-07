@@ -42,6 +42,10 @@ const props = defineProps<{
     onQuickSubmit: (dateKey: string, name: string) => void | Promise<boolean>
     /** 周起始口径（C9） */
     weekStart: CalendarWeekStart
+    /** 单条改期写回中的任务 ID（F4 逐任务 busy） */
+    busyTaskId: string
+    /** F4 快速改期：目标日键上抛（父级走 reschedule 内核 + U2 撤销） */
+    onRescheduleTask: (task: TaskViewObject, dateKey: string) => void | Promise<void>
 }>()
 
 // @viewContext 应用级子侧栏开关（与月视图 header 一致）
@@ -294,7 +298,9 @@ const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateK
                         :show-time="segShowTime(seg)"
                         :cont-start="!seg.isStart && seg.colStart === 0"
                         :cont-end="!seg.isEnd && seg.colEnd === GRID_COLUMNS - 1"
+                        :busy="busyTaskId === seg.task.id"
                         @open="onOpenTask(seg.task.id)"
+                        @reschedule="(dateKey) => onRescheduleTask(seg.task, dateKey)"
                     />
                 </div>
             </div>
