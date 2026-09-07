@@ -18,7 +18,9 @@ export const CALENDAR_KEY_SCOPE = 'calendar'
 export const isCalendarKeyLocked = (doc: {
     querySelector(selector: string): Element | null
 }): boolean =>
-    !!doc.querySelector('.rmenu') || !!doc.querySelector('.nue-popup-pool[data-actived="true"]')
+    !!doc.querySelector('.rmenu') ||
+    !!doc.querySelector('.month-jump-panel') ||
+    !!doc.querySelector('.nue-popup-pool[data-actived="true"]')
 
 /** 交互可聚焦控件选择器（Enter 目标守卫：命中则放行原生激活，不执行"开当日面板"） */
 export const INTERACTIVE_KEY_TARGET_SELECTOR =

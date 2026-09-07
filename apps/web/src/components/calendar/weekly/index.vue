@@ -5,6 +5,7 @@ import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from '
 import dayjs from 'dayjs'
 import QuickCreate from '../monthly/quick-create.vue'
 import TaskBar from '../monthly/task-bar.vue'
+import MonthJumpPanel from '../monthly/month-jump-panel.vue'
 import {
     buildWeekGrid,
     GRID_COLUMNS,
@@ -51,6 +52,8 @@ const props = defineProps<{
     dragTaskId: string
     dragHoverKey: string | null
     onDragBar: (task: TaskViewObject, event: PointerEvent) => void
+    /** C2-F9 周视图标题年-月跳转：目标年月上抛（父级落含 1 号的周并选中 1 号，不切回月视图） */
+    onJumpYearMonth: (year: number, month: number) => void
 }>()
 
 // @viewContext 应用级子侧栏开关（与月视图 header 一致）
@@ -161,6 +164,40 @@ const quickSubmitCell = (dateKey: string, name: string) => {
 
 // @method 溢出 +N 与 点击日期格（打开当日面板）
 const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateKey === dateKey)
+
+// —— C2-F9 周视图标题年-月跳转（面板弹层；再点标题 toggle 收起；关闭归还焦点；跳转不切月视图） ——
+const wjpOpen = ref(false)
+const wjpPos = ref({ x: 0, y: 0 })
+const wjpTitleEl = ref<HTMLElement | null>(null)
+// 面板锚点年/月 = 当前锚点（选中日）所在年月；非法回退今天
+const jumpAnchorYear = computed(() => {
+    const anchor = dayjs(props.selectedKey)
+    return anchor.isValid() ? anchor.year() : dayjs().year()
+})
+const jumpAnchorMonth = computed(() => {
+    const anchor = dayjs(props.selectedKey)
+    return anchor.isValid() ? anchor.month() + 1 : dayjs().month() + 1
+})
+const closeWeekJump = (): void => {
+    wjpOpen.value = false
+    void nextTick(() => wjpTitleEl.value?.focus())
+}
+const toggleWeekJump = (event: MouseEvent): void => {
+    if (wjpOpen.value) {
+        closeWeekJump()
+        return
+    }
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+    wjpPos.value = {
+        x: Math.min(Math.max(4, rect.left), window.innerWidth - 248),
+        y: Math.min(Math.max(4, rect.bottom + 4), window.innerHeight - 260)
+    }
+    wjpOpen.value = true
+}
+const onWeekJumpSelect = (targetYear: number, targetMonth: number): void => {
+    props.onJumpYearMonth(targetYear, targetMonth)
+    closeWeekJump()
+}
 </script>
 
 <template>
@@ -179,9 +216,16 @@ const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateK
                     title="上一周"
                     @click="onPrevWeek"
                 />
-                <nue-text tag="h2" size="var(--nue-text-df)" :weight="600" class="wk-title">
+                <button
+                    ref="wjpTitleEl"
+                    type="button"
+                    class="wk-title"
+                    data-mjp-trigger
+                    title="跳转到年月"
+                    @click="toggleWeekJump"
+                >
                     {{ title }}
-                </nue-text>
+                </button>
                 <nue-button
                     icon="arrow-right"
                     theme="icon,ghost"
@@ -189,6 +233,16 @@ const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateK
                     @click="onNextWeek"
                 />
             </nue-div>
+            <!-- 年-月跳转面板（C2-F9；周视图内落周，不切回月视图） -->
+            <month-jump-panel
+                :open="wjpOpen"
+                :x="wjpPos.x"
+                :y="wjpPos.y"
+                :anchor-year="jumpAnchorYear"
+                :anchor-month="jumpAnchorMonth"
+                @select="onWeekJumpSelect"
+                @close="closeWeekJump"
+            />
             <nue-div align="center" gap="6px">
                 <nue-div class="wk-view-toggle" role="group" aria-label="视图切换">
                     <nue-button
@@ -365,7 +419,23 @@ const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateK
     text-align: center;
     letter-spacing: 0.02em;
     margin: 0;
+    padding: 2px 8px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--cal-fg);
+    font-family: inherit;
     font-size: var(--nue-text-df);
+    font-weight: 600;
+    line-height: inherit;
+    cursor: pointer;
+    transition: background 60ms;
+}
+.wk-title:hover {
+    background: var(--cal-hover);
+}
+.wk-title:focus-visible {
+    outline: 1px solid var(--cal-border);
 }
 
 /* 月/周视图切换（分段按钮：零间隙贴合） */

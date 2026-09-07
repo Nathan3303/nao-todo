@@ -21,6 +21,7 @@ import {
     type ScheduleUndoAction,
     type TaskScheduleSnapshot
 } from './reschedule'
+import { isDateKeyInMonth, monthFirstDateKey } from './month-jump'
 
 /**
  * 任务是否逾期（天级口径，与任务页「已过期」一致）
@@ -216,6 +217,24 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         year.value = now.year()
         monthIndex.value = now.month()
         selectedKey.value = todayDateKey()
+    }
+
+    // @method 月视图跳转（C2-F9）：锚定所选年月（与 ←/→ 翻月同一 anchor 状态源，不开当日面板）；
+    //              原选中日落在目标月内则保留高亮，否则清除选中（C-F9-05）
+    const jumpToMonth = (targetYear: number, targetMonth: number): void => {
+        year.value = targetYear
+        monthIndex.value = targetMonth - 1
+        if (selectedKey.value && !isDateKeyInMonth(selectedKey.value, targetYear, targetMonth)) {
+            selectedKey.value = ''
+        }
+    }
+
+    // @method 周视图跳转（C2-F9）：落含所选月 1 号的周并选中 1 号（周锚点=selectedKey，
+    //              周起点按 weekStart 口径）；同步月锚点为所选月供切回月视图定位
+    const jumpToWeekOfMonthFirst = (targetYear: number, targetMonth: number): void => {
+        selectedKey.value = monthFirstDateKey(targetYear, targetMonth)
+        year.value = targetYear
+        monthIndex.value = targetMonth - 1
     }
 
     // @states 视图模式（A1：月/周切换；默认月）
@@ -482,6 +501,11 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         goPrevMonth,
         goNextMonth,
         goToToday,
+        // —— 标题年月跳转（C2-F9）：anchor 状态源 + 视图跳转动作 ——
+        year,
+        monthIndex,
+        jumpToMonth,
+        jumpToWeekOfMonthFirst,
         getDayTasks,
         toggleDone,
         deferToToday,

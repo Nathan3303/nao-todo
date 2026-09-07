@@ -9,6 +9,7 @@ import TaskBar from './task-bar.vue'
 import UnscheduledDrawer from './unscheduled-drawer.vue'
 import ScheduleUndoToast from './undo-toast.vue'
 import { ghostPointOf, useDragSchedule } from './use-drag-schedule'
+import MonthJumpPanel from './month-jump-panel.vue'
 import { CALENDAR_KEY_SCOPE, isCalendarKeyLocked, isInteractiveKeyTarget } from './keyboard-nav'
 import useCalendarMonthly from './use-calendar-monthly'
 import {
@@ -47,6 +48,10 @@ const {
     goPrevMonth,
     goNextMonth,
     goToToday,
+    year,
+    monthIndex,
+    jumpToMonth,
+    jumpToWeekOfMonthFirst,
     getDayTasks,
     toggleDone,
     deferToToday,
@@ -255,6 +260,32 @@ const showWeekOf = (dateKey: string) => {
     dayDrawerOpen.value = false
 }
 
+// —— C2-F9 月视图标题年-月跳转（面板弹层；再点标题 toggle 收起；关闭归还焦点） ——
+const mjpOpen = ref(false)
+const mjpPos = ref({ x: 0, y: 0 })
+const mjpTitleEl = ref<HTMLElement | null>(null)
+
+const closeMonthJump = (): void => {
+    mjpOpen.value = false
+    void nextTick(() => mjpTitleEl.value?.focus())
+}
+const toggleMonthJump = (event: MouseEvent): void => {
+    if (mjpOpen.value) {
+        closeMonthJump()
+        return
+    }
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+    mjpPos.value = {
+        x: Math.min(Math.max(4, rect.left), window.innerWidth - 248),
+        y: Math.min(Math.max(4, rect.bottom + 4), window.innerHeight - 260)
+    }
+    mjpOpen.value = true
+}
+const onMonthJumpSelect = (targetYear: number, targetMonth: number): void => {
+    jumpToMonth(targetYear, targetMonth)
+    closeMonthJump()
+}
+
 // —— C1-F8 键盘导航（calendar scope 激活窗口 = 组件挂载期，卸载即失效）——
 // 键位与既有控件按钮同一出口（goPrev/NextMonth、goPrev/NextWeek、goToToday、视图切换、
 // openDay、openQuickCreate）；弹层集合开启（F4 菜单/日期面板/当日面板/未安排抽屉/任务详情/对话框）
@@ -332,9 +363,16 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                         @click="goPrevMonth"
                     >
                     </nue-button>
-                    <nue-text tag="h2" size="var(--nue-text-df)" :weight="600" class="cal-title">
+                    <button
+                        ref="mjpTitleEl"
+                        type="button"
+                        class="cal-title"
+                        data-mjp-trigger
+                        title="跳转到年月"
+                        @click="toggleMonthJump"
+                    >
                         {{ monthTitle }}
-                    </nue-text>
+                    </button>
                     <nue-button
                         icon="arrow-right"
                         theme="icon,ghost"
@@ -343,6 +381,16 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                     >
                     </nue-button>
                 </nue-div>
+                <!-- 年-月跳转面板（C2-F9） -->
+                <month-jump-panel
+                    :open="mjpOpen"
+                    :x="mjpPos.x"
+                    :y="mjpPos.y"
+                    :anchor-year="year"
+                    :anchor-month="monthIndex + 1"
+                    @select="onMonthJumpSelect"
+                    @close="closeMonthJump"
+                />
                 <nue-div align="center" gap="6px">
                     <nue-div class="cal-view-toggle" role="group" aria-label="视图切换">
                         <nue-button
@@ -520,6 +568,7 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                 "
                 :drag-hover-key="drag.session.hoverKey"
                 :on-drag-bar="(task, event) => drag.startPossible(task, 'bar', event)"
+                :on-jump-year-month="(year, month) => jumpToWeekOfMonthFirst(year, month)"
                 :week-start="weekStart"
             />
         </template>
@@ -647,11 +696,29 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
     color: var(--cal-muted);
 }
 
+/* 月标题（C2-F9：可点按钮语义，可聚焦/hover 可达；文本样式与旧 h2 一致） */
 .cal-title {
     min-width: 132px;
     text-align: center;
     letter-spacing: 0.02em;
     margin: 0;
+    padding: 2px 8px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--cal-fg);
+    font-family: inherit;
+    font-size: var(--nue-text-df);
+    font-weight: 600;
+    line-height: inherit;
+    cursor: pointer;
+    transition: background 60ms;
+}
+.cal-title:hover {
+    background: var(--cal-hover);
+}
+.cal-title:focus-visible {
+    outline: 1px solid var(--cal-border);
 }
 
 /* 月/周视图切换（分段按钮） */

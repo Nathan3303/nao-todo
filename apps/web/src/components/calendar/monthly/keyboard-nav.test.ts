@@ -21,9 +21,10 @@ describe('C1-F8 keyboard-nav 纯逻辑', () => {
         expect(CALENDAR_KEY_SCOPE).toBe('calendar')
     })
 
-    it('弹层抑制谓词：F4 菜单(.rmenu) 或 激活弹层(popup-pool[data-actived=true]) 任一命中即抑制', () => {
+    it('弹层抑制谓词：F4 菜单(.rmenu)、年月面板(.month-jump-panel) 或 激活弹层(popup-pool[data-actived=true]) 任一命中即抑制', () => {
         expect(isCalendarKeyLocked(fakeDoc([]))).toBe(false)
         expect(isCalendarKeyLocked(fakeDoc(['.rmenu']))).toBe(true)
+        expect(isCalendarKeyLocked(fakeDoc(['.month-jump-panel']))).toBe(true)
         expect(isCalendarKeyLocked(fakeDoc(['.nue-popup-pool[data-actived="true"]']))).toBe(true)
         expect(
             isCalendarKeyLocked(fakeDoc(['.rmenu', '.nue-popup-pool[data-actived="true"]']))
