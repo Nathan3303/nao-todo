@@ -2,7 +2,7 @@ import { computed, ref, watch, type Ref } from 'vue'
 import dayjs from 'dayjs'
 import { usePomodoroRecordsStore } from '@nao-todo/presentation/pomodoro'
 import { usePomodoroRecordUseCase } from '@/hooks'
-import { badgeLabelOf, countTimerRoundsByDate } from './pomodoro-badge'
+import { badgeLabelOf, countTimerRoundsByDate, toTimerRecordList } from './pomodoro-badge'
 
 /**
  * B1-F5 专注徽标 - 数据加载/聚合组合式（组装点在月历视图根）
@@ -20,13 +20,39 @@ const dayKeyOfLocal = (iso: string): string => dayjs(iso).format('YYYY-MM-DD')
 
 export type PomodoroBadgeRange = { fromKey: string; toKey: string }
 
-export const usePomodoroBadge = (range: Ref<PomodoroBadgeRange | null>, enabled: Ref<boolean>) => {
+/** 分页拉取器（测试可注入；缺省走服务端 usecase） */
+export type PomodoroBadgeLoader = (
+    page: number
+) => Promise<{ ids: string[]; maxPage: number } | null>
+
+export const usePomodoroBadge = (
+    range: Ref<PomodoroBadgeRange | null>,
+    enabled: Ref<boolean>,
+    loadPageOverride?: PomodoroBadgeLoader
+) => {
     const recordsStore = usePomodoroRecordsStore()
     const recordUseCase = usePomodoroRecordUseCase(recordsStore)
     const loading = ref(false)
     let runId = 0
 
-    // @method 拉取当前区间（type=1；含孤儿完成快照口径=服务端返回全量记录，不做任务存在过滤）
+    // @loader 服务端分页拉取（type=1 + startAt 区间）；失败/不可用返回 null（静默）
+    const loadPage = async (page: number): Promise<{ ids: string[]; maxPage: number } | null> => {
+        if (loadPageOverride) return loadPageOverride(page)
+        const target = range.value
+        if (!target) return null
+        const [res, err] = await recordUseCase.getRecords({
+            type: 1,
+            startTime: dayjs(target.fromKey).startOf('day').toISOString(),
+            endTime: dayjs(target.toKey).endOf('day').toISOString(),
+            page,
+            limit: PAGE_LIMIT,
+            sort: 'startAt:asc'
+        })
+        if (err !== null) return null
+        return { ids: res?.recordIds ?? [], maxPage: res?.pagination?.maxPage ?? page }
+    }
+
+    // @method 拉取当前区间（开启时才发请求；锚点/开关已变化则放弃旧响应）
     const loadRange = async (): Promise<void> => {
         if (!enabled.value) return
         const target = range.value
@@ -36,18 +62,11 @@ export const usePomodoroBadge = (range: Ref<PomodoroBadgeRange | null>, enabled:
         try {
             for (let page = 1; page <= MAX_PAGES; page++) {
                 if (id !== runId || !enabled.value) break // 锚点已移动/已关闭：放弃本次
-                const [res, err] = await recordUseCase.getRecords({
-                    type: 1,
-                    startTime: dayjs(target.fromKey).startOf('day').toISOString(),
-                    endTime: dayjs(target.toKey).endOf('day').toISOString(),
-                    page,
-                    limit: PAGE_LIMIT,
-                    sort: 'startAt:asc'
-                })
-                if (err !== null) break // 静默失败：不阻塞日历，后续翻月重试自然恢复
+                const result = await loadPage(page)
+                if (result === null) break // 静默失败：不阻塞日历，后续翻月重试自然恢复
                 if (id !== runId || !enabled.value) break
-                const maxPage = res?.pagination?.maxPage ?? page
-                const isLast = !res || res.recordIds.length < PAGE_LIMIT || page >= maxPage
+                const maxPage = Math.max(result.maxPage || page, page)
+                const isLast = result.ids.length < PAGE_LIMIT || page >= maxPage
                 if (isLast) break
             }
         } finally {
@@ -68,15 +87,9 @@ export const usePomodoroBadge = (range: Ref<PomodoroBadgeRange | null>, enabled:
     const labelMap = computed<Map<string, string>>(() => {
         const target = range.value
         if (!enabled.value || !target || !target.fromKey || !target.toKey) return new Map()
-        const counts = countTimerRoundsByDate(
-            recordsStore.records as unknown as Array<{
-                type: number
-                startAt: string
-            }>,
-            target.fromKey,
-            target.toKey,
-            dayKeyOfLocal
-        )
+        // store.records 为 Map<id, record>：先归一为数组再聚合（数组/MaP 形态错配 = 徽标恒空根因）
+        const records = toTimerRecordList(recordsStore.records)
+        const counts = countTimerRoundsByDate(records, target.fromKey, target.toKey, dayKeyOfLocal)
         const result = new Map<string, string>()
         counts.forEach((count, dateKey) => {
             result.set(dateKey, badgeLabelOf(count))

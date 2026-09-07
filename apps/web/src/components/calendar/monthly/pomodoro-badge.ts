@@ -18,8 +18,18 @@ export const badgeLabelOf = (count: number): string => {
 export const isTimerRound = (type: number): boolean => type === 1
 
 /**
+ * 记录容器归一为可迭代数组（真实 store 的 records 为 Map<id,record>，防数组/MaP 形态错配）
+ */
+export const toTimerRecordList = (records: unknown): Array<{ type: number; startAt: string }> => {
+    if (Array.isArray(records)) return records as Array<{ type: number; startAt: string }>
+    if (records instanceof Map)
+        return [...records.values()] as Array<{ type: number; startAt: string }>
+    return []
+}
+
+/**
  * 按本地日聚合 type=1 计数（含孤儿：不按任务存在过滤——type=1 为完成快照）
- * @param records 记录（可为 store 全量）
+ * @param records 记录数组（Map 形态请先经 toTimerRecordList 归一）
  * @param fromKey 区间起点日期键 YYYY-MM-DD（含）
  * @param toKey 区间终点日期键 YYYY-MM-DD（含）
  * @param dayKeyOfIso 开始时刻 → 本地日键（口径注入，便于测试；生产=dayjs local format）

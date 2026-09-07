@@ -6,6 +6,7 @@ import {
     isTimerRound,
     POMODORO_BADGE_CAP,
     readPomodoroBadgePref,
+    toTimerRecordList,
     writePomodoroBadgePref
 } from './pomodoro-badge'
 
@@ -54,6 +55,30 @@ describe('B1-F5 番茄徽标纯逻辑', () => {
             s.slice(0, 10)
         )
         expect(map.get('2026-09-05')).toBe(POMODORO_BADGE_CAP)
+    })
+
+    it('toTimerRecordList：Map<id,record> → values 数组（防形态错配致徽标恒空）；数组原样；其它 → []', () => {
+        const map = new Map([
+            ['r1', rec(1, iso('2026-09-05'))],
+            ['r2', rec(1, iso('2026-09-06'))]
+        ])
+        const list = toTimerRecordList(map)
+        expect(list).toHaveLength(2)
+        expect(list[0]!.type).toBe(1)
+        // Map 迭代产物（[id, record] 对）若被当数组用：type 为 undefined（回归根因的坏路径）
+        const badPairIteration = countTimerRoundsByDate(
+            map as unknown as Array<{ type: number; startAt: string }>,
+            '2026-09-05',
+            '2026-09-07',
+            (s) => s.slice(0, 10)
+        )
+        expect(badPairIteration.size).toBe(0)
+        // 正确路径：归一后计数命中
+        const good = countTimerRoundsByDate(list, '2026-09-05', '2026-09-07', (s) => s.slice(0, 10))
+        expect(good.get('2026-09-05')).toBe(1)
+        expect(good.get('2026-09-06')).toBe(1)
+        expect(toTimerRecordList([rec(1, iso('2026-09-05'))])).toHaveLength(1)
+        expect(toTimerRecordList(undefined)).toHaveLength(0)
     })
 
     it('偏好读写：缺省/非法回退开并规范写回；on/off 往返', () => {
