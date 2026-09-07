@@ -7,14 +7,24 @@ import CalendarWeekly from '../weekly/index.vue'
 import QuickCreate from './quick-create.vue'
 import TaskBar from './task-bar.vue'
 import UnscheduledDrawer from './unscheduled-drawer.vue'
+import ScheduleUndoToast from './undo-toast.vue'
+import { ghostPointOf, useDragSchedule } from './use-drag-schedule'
+import MonthJumpPanel from './month-jump-panel.vue'
+import { CALENDAR_KEY_SCOPE, isCalendarKeyLocked, isInteractiveKeyTarget } from './keyboard-nav'
 import useCalendarMonthly from './use-calendar-monthly'
 import {
     dateKeyOf,
     GRID_COLUMNS,
     GRID_ROWS,
     MAX_VISIBLE_LANES,
+    todayDateKey,
+    weekStartKeyOf,
     type CalendarRow
 } from './monthly-layout'
+import dayjs from 'dayjs'
+import { usePomodoroBadge, type PomodoroBadgeRange } from './use-pomodoro-badge'
+import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
+import { useScope, useShortcut } from '@/hooks'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 
 defineOptions({ name: 'CalendarMonthly' })
@@ -26,6 +36,7 @@ const BAND_HEIGHT = 24 // 格底预留条带（DEF-1：+/+N/编辑器占用，�
 
 // @viewContext 应用级子侧栏开关（与任务页 header 行为一致）
 const { isDisplayAside, switchDisplayAside } = inject(INDEX_VIEW_CONTEXT_KEY)!
+const { pomodoroBadge } = inject(CALENDAR_VIEW_CONTEXT_KEY)!
 
 // @states 动态可视轨道数（DEF-2：由行高实测决定；未测得前回退 3）
 const laneLimit = ref<number>(MAX_VISIBLE_LANES)
@@ -42,11 +53,22 @@ const {
     goPrevMonth,
     goNextMonth,
     goToToday,
+    year,
+    monthIndex,
+    jumpToMonth,
+    jumpToWeekOfMonthFirst,
     getDayTasks,
     toggleDone,
     deferToToday,
     scheduleToDay,
     unscheduledTasks,
+    scheduleBusy,
+    runBatchSchedule,
+    rescheduleBusyId,
+    undoAction,
+    undoBusy,
+    undoLast,
+    dismissUndoAction,
     createTaskOnDay,
     openTaskDetails,
     // —— 筛选（空态/清除出口） ——
@@ -70,6 +92,20 @@ const {
     closeQuickCreate,
     inlineCreateTask
 } = useCalendarMonthly(laneLimit)
+// —— B1-F5 专注徽标（区间=当前可见格：月=网格首末格 / 周=锚点所在周；开关 off=停拉+清零） ——
+const badgeRange = computed<PomodoroBadgeRange | null>(() => {
+    if (!pomodoroBadge.value) return null
+    if (viewMode.value === 'month') {
+        if (!model.value) return null
+        return { fromKey: model.value.firstKey, toKey: model.value.lastKey }
+    }
+    const anchor = dayjs(selectedKey.value)
+    if (!selectedKey.value || !anchor.isValid()) return null
+    const fromKey = weekStartKeyOf(selectedKey.value, weekStart.value)
+    const toKey = dateKeyOf(dayjs(fromKey).add(6, 'day').valueOf())
+    return { fromKey, toKey }
+})
+const { badgeLabel } = usePomodoroBadge(badgeRange, pomodoroBadge)
 
 // @computed 星期表头（随周起始口径：sunday 日~六 / monday 一~日）
 const weekdays = computed(() =>
@@ -85,6 +121,21 @@ const dayTasks = computed(() => (dayDrawerDate.value ? getDayTasks(dayDrawerDate
 
 // @states 未安排抽屉（B7）
 const unscheduledOpen = ref(false)
+
+// —— F1 拖拽排期会话（月/周网格为 drop 面；行源拖起激活时收起抽屉；busy 禁起；drop 走 scheduleToDay = T1 + U2 单条链路） ——
+const drag = useDragSchedule({
+    isBusy: () => rescheduleBusyId.value !== '' || scheduleBusy.value || undoBusy.value,
+    closeUnscheduled: () => {
+        unscheduledOpen.value = false
+    },
+    scheduleOne: scheduleToDay
+})
+
+// @method 浮空胶囊定位样式（fixed 固定跟随，非 DOM 克隆）
+const ghostStyle = () => {
+    const point = ghostPointOf(drag.session.x, drag.session.y)
+    return { left: `${point.x}px`, top: `${point.y}px` }
+}
 
 // @computed 筛选激活态（空态出口）
 const filterActive = computed(
@@ -227,6 +278,89 @@ const showWeekOf = (dateKey: string) => {
     goToWeekView()
     dayDrawerOpen.value = false
 }
+
+// —— C2-F9 月视图标题年-月跳转（面板弹层；再点标题 toggle 收起；关闭归还焦点） ——
+const mjpOpen = ref(false)
+const mjpPos = ref({ x: 0, y: 0 })
+const mjpTitleEl = ref<HTMLElement | null>(null)
+
+const closeMonthJump = (): void => {
+    mjpOpen.value = false
+    void nextTick(() => mjpTitleEl.value?.focus())
+}
+const toggleMonthJump = (event: MouseEvent): void => {
+    if (mjpOpen.value) {
+        closeMonthJump()
+        return
+    }
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+    mjpPos.value = {
+        x: Math.min(Math.max(4, rect.left), window.innerWidth - 248),
+        y: Math.min(Math.max(4, rect.bottom + 4), window.innerHeight - 260)
+    }
+    mjpOpen.value = true
+}
+const onMonthJumpSelect = (targetYear: number, targetMonth: number): void => {
+    jumpToMonth(targetYear, targetMonth)
+    closeMonthJump()
+}
+
+// —— C1-F8 键盘导航（calendar scope 激活窗口 = 组件挂载期，卸载即失效）——
+// 键位与既有控件按钮同一出口（goPrev/NextMonth、goPrev/NextWeek、goToToday、视图切换、
+// openDay、openQuickCreate）；弹层集合开启（F4 菜单/日期面板/当日面板/未安排抽屉/任务详情/对话框）
+// 一律抑制（PM Q1/Q2；undo-toast/NueMessage 轻提示除外）；小写裸键、修饰键严格匹配由引擎保证。
+useScope(CALENDAR_KEY_SCOPE)
+const calendarKeyLocked = (): boolean => isCalendarKeyLocked(document)
+const guardNav = (action: () => void) => (): void => {
+    if (calendarKeyLocked()) return
+    action()
+}
+const NAV_GROUP = '日历'
+useShortcut(
+    'calendar.nav.prev',
+    'arrowleft',
+    guardNav(() => (viewMode.value === 'month' ? goPrevMonth() : goPrevWeek())),
+    { scope: CALENDAR_KEY_SCOPE, label: '上个月/上周', group: NAV_GROUP, preventDefault: true }
+)
+useShortcut(
+    'calendar.nav.next',
+    'arrowright',
+    guardNav(() => (viewMode.value === 'month' ? goNextMonth() : goNextWeek())),
+    { scope: CALENDAR_KEY_SCOPE, label: '下个月/下周', group: NAV_GROUP, preventDefault: true }
+)
+useShortcut(
+    'calendar.nav.today',
+    't',
+    guardNav(() => goToToday()),
+    { scope: CALENDAR_KEY_SCOPE, label: '回到今天', group: NAV_GROUP }
+)
+useShortcut(
+    'calendar.nav.week',
+    'w',
+    guardNav(() => goToWeekView()),
+    { scope: CALENDAR_KEY_SCOPE, label: '切到周视图', group: NAV_GROUP }
+)
+useShortcut(
+    'calendar.nav.month',
+    'm',
+    guardNav(() => goToMonthView()),
+    { scope: CALENDAR_KEY_SCOPE, label: '切到月视图', group: NAV_GROUP }
+)
+// 格内快速新建（遮蔽 index-view 全局新建任务 n；离开日历后 n 恢复全局——scope 卸载即解蔽）
+useShortcut(
+    'calendar.quick-create',
+    'n',
+    guardNav(() => openQuickCreate(selectedKey.value || todayDateKey())),
+    { scope: CALENDAR_KEY_SCOPE, label: '在选中日快速新建', group: NAV_GROUP }
+)
+// 打开当日面板（PM Q6/te v1.1）：目标为可聚焦交互控件时放行原生激活（不拦截、不开面板）
+useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || todayDateKey()), {
+    scope: CALENDAR_KEY_SCOPE,
+    label: '打开当日面板',
+    group: NAV_GROUP,
+    preventDefault: true,
+    available: (context) => !calendarKeyLocked() && !isInteractiveKeyTarget(context.event?.target)
+})
 </script>
 
 <template>
@@ -248,9 +382,16 @@ const showWeekOf = (dateKey: string) => {
                         @click="goPrevMonth"
                     >
                     </nue-button>
-                    <nue-text tag="h2" size="var(--nue-text-df)" :weight="600" class="cal-title">
+                    <button
+                        ref="mjpTitleEl"
+                        type="button"
+                        class="cal-title"
+                        data-mjp-trigger
+                        title="跳转到年月"
+                        @click="toggleMonthJump"
+                    >
                         {{ monthTitle }}
-                    </nue-text>
+                    </button>
                     <nue-button
                         icon="arrow-right"
                         theme="icon,ghost"
@@ -259,6 +400,16 @@ const showWeekOf = (dateKey: string) => {
                     >
                     </nue-button>
                 </nue-div>
+                <!-- 年-月跳转面板（C2-F9） -->
+                <month-jump-panel
+                    :open="mjpOpen"
+                    :x="mjpPos.x"
+                    :y="mjpPos.y"
+                    :anchor-year="year"
+                    :anchor-month="monthIndex + 1"
+                    @select="onMonthJumpSelect"
+                    @close="closeMonthJump"
+                />
                 <nue-div align="center" gap="6px">
                     <nue-div class="cal-view-toggle" role="group" aria-label="视图切换">
                         <nue-button
@@ -331,16 +482,27 @@ const showWeekOf = (dateKey: string) => {
                             v-for="cell in row.cells"
                             :key="cell.cell"
                             class="cal-cell"
+                            :data-cal-drop="cell.dateKey"
                             :class="{
                                 'cal-cell--outside': cell.monthOffset !== 0,
                                 'cal-cell--today': cell.isToday,
                                 'cal-cell--selected': cell.isSelected,
                                 'cal-cell--weekend': cell.isWeekend,
-                                'cal-cell--edge': cell.cell % 7 === 6
+                                'cal-cell--edge': cell.cell % 7 === 6,
+                                'cal-cell--drop': drag.isTarget(cell.dateKey)
                             }"
                             @click="openDay(cell.dateKey)"
                         >
-                            <span class="cal-date">{{ cell.day }}</span>
+                            <span class="cal-cell-top">
+                                <span class="cal-date">{{ cell.day }}</span>
+                                <span
+                                    v-if="badgeLabel(cell.dateKey)"
+                                    class="cal-badge"
+                                    :title="`当日完成 ${badgeLabel(cell.dateKey)} 轮专注`"
+                                >
+                                    {{ badgeLabel(cell.dateKey) }}
+                                </span>
+                            </span>
                             <div class="cal-band" @click.stop>
                                 <template v-if="quickCreateDate === cell.dateKey">
                                     <quick-create
@@ -382,7 +544,17 @@ const showWeekOf = (dateKey: string) => {
                                 :show-time="segShowTime(seg, row)"
                                 :cont-start="isRowStart(seg, row)"
                                 :cont-end="isRowEnd(seg, row)"
+                                :busy="rescheduleBusyId === seg.task.id"
+                                :dragging="
+                                    drag.session.active &&
+                                    drag.session.kind === 'bar' &&
+                                    drag.session.taskId === seg.task.id
+                                "
                                 @open="openTaskDetails(seg.task.id)"
+                                @reschedule="(dateKey) => scheduleToDay(seg.task, dateKey)"
+                                @drag-pointer-down="
+                                    (event) => drag.startPossible(seg.task, 'bar', event)
+                                "
                             />
                         </div>
                     </div>
@@ -416,6 +588,16 @@ const showWeekOf = (dateKey: string) => {
                 :on-quick-open="openQuickCreate"
                 :on-quick-cancel="closeQuickCreate"
                 :on-quick-submit="inlineCreateTask"
+                :busy-task-id="rescheduleBusyId"
+                :on-reschedule-task="scheduleToDay"
+                :drag-active="drag.session.active"
+                :drag-task-id="
+                    drag.session.active && drag.session.kind === 'bar' ? drag.session.taskId : ''
+                "
+                :drag-hover-key="drag.session.hoverKey"
+                :on-drag-bar="(task, event) => drag.startPossible(task, 'bar', event)"
+                :on-jump-year-month="(year, month) => jumpToWeekOfMonthFirst(year, month)"
+                :on-badge-label="badgeLabel"
                 :week-start="weekStart"
             />
         </template>
@@ -432,18 +614,38 @@ const showWeekOf = (dateKey: string) => {
             :on-go-week="showWeekOf"
         />
 
-        <!-- 未安排任务抽屉（B7） -->
+        <!-- 未安排任务抽屉（B7 + F3 多选批量 / U2 撤销接线） -->
         <unscheduled-drawer
             v-model:open="unscheduledOpen"
             :tasks="unscheduledTasks"
             :filter-active="filterActive"
             :hide-completed="hideCompleted"
+            :schedule-busy="scheduleBusy"
+            :busy-task-id="rescheduleBusyId"
             :on-toggle-done="toggleDone"
             :on-schedule-to-day="scheduleToDay"
+            :on-batch-schedule-to-day="runBatchSchedule"
+            :on-row-drag-start="(task, event) => drag.startPossible(task, 'row', event)"
             :on-open-task="openTaskFromPanel"
             :on-clear-filter="clearFilter"
             :on-show-completed="() => (hideCompleted = false)"
         />
+
+        <!-- U2 撤销 action-toast（NueMessage 无 action 按钮，自建轻量载体） -->
+        <schedule-undo-toast
+            v-if="undoAction"
+            :action="undoAction"
+            :busy="undoBusy || scheduleBusy"
+            @undo="undoLast"
+            @dismiss="dismissUndoAction"
+        />
+
+        <!-- F1 浮空胶囊（拖拽跟随，fixed 非 DOM 克隆） -->
+        <teleport to="body">
+            <div v-if="drag.session.active" class="drag-ghost" :style="ghostStyle()">
+                {{ drag.session.name }}
+            </div>
+        </teleport>
     </nue-div>
 </template>
 
@@ -523,11 +725,29 @@ const showWeekOf = (dateKey: string) => {
     color: var(--cal-muted);
 }
 
+/* 月标题（C2-F9：可点按钮语义，可聚焦/hover 可达；文本样式与旧 h2 一致） */
 .cal-title {
     min-width: 132px;
     text-align: center;
     letter-spacing: 0.02em;
     margin: 0;
+    padding: 2px 8px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--cal-fg);
+    font-family: inherit;
+    font-size: var(--nue-text-df);
+    font-weight: 600;
+    line-height: inherit;
+    cursor: pointer;
+    transition: background 60ms;
+}
+.cal-title:hover {
+    background: var(--cal-hover);
+}
+.cal-title:focus-visible {
+    outline: 1px solid var(--cal-border);
 }
 
 /* 月/周视图切换（分段按钮） */
@@ -631,6 +851,28 @@ const showWeekOf = (dateKey: string) => {
     background: color-mix(in srgb, var(--cal-bg) 92%, var(--cal-border));
 }
 
+/* 日期号 + B1-F5 专注角标（同一行，角标不抢日格点击） */
+.cal-cell-top {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 20px;
+}
+
+.cal-badge {
+    flex: none;
+    min-width: 14px;
+    padding: 0 4px;
+    border-radius: 7px;
+    background: var(--cal-chip-bg);
+    color: var(--cal-muted);
+    font-size: 0.625rem;
+    line-height: 14px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
 /* 今日/选中日期号 */
 .cal-date {
     display: inline-flex;
@@ -653,6 +895,14 @@ const showWeekOf = (dateKey: string) => {
 }
 .cal-cell--selected {
     background: var(--cal-select-bg);
+}
+/* F1 drop 目标高亮（含补位灰格/过去日期格，整格指示） */
+.cal-cell--drop {
+    background: color-mix(in srgb, var(--nue-success-color-60) 14%, var(--cal-bg));
+    box-shadow: inset 0 0 0 2px var(--nue-success-color-60);
+}
+.cal-cell--drop .cal-date {
+    border-color: var(--nue-success-color-60);
 }
 .cal-cell--selected .cal-date {
     background: var(--cal-fg);
@@ -729,5 +979,25 @@ const showWeekOf = (dateKey: string) => {
 .cal-more:hover {
     background: var(--cal-hover);
     color: var(--cal-fg);
+}
+
+/* F1 浮空胶囊（拖拽跟随；fixed 顶层，非 DOM 克隆；teleport body 用全局主题令牌） */
+.drag-ghost {
+    position: fixed;
+    z-index: 1300;
+    pointer-events: none;
+    max-width: 220px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    background: var(--nue-primary-color-200);
+    color: var(--nue-primary-text-color);
+    font-size: 0.75rem;
+    line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--nue-primary-text-color) 20%, transparent);
+    border: 1px solid var(--nue-border-color);
+    box-sizing: border-box;
 }
 </style>

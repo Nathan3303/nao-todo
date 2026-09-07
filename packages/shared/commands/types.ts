@@ -65,8 +65,8 @@ export interface Command {
     handler: (event?: KeyEvent) => void
     /** 快捷键绑定 */
     keyboard?: KeyboardBinding
-    /** 可用性判断，返回 false 时命令不可执行 */
-    available?: (context: { scope: string }) => boolean
+    /** 可用性判断，返回 false 时命令不可执行（context.event = 触发按键的原始 DOM 事件，供目标守卫等判定） */
+    available?: (context: { scope: string; event?: KeyboardEvent }) => boolean
 }
 
 /**

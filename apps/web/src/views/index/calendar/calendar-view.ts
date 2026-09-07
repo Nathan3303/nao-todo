@@ -26,6 +26,10 @@ import {
 import { storeToRefs } from 'pinia'
 import { APP_CONTEXT_KEY } from '@/context'
 import type { CalendarWeekStart } from '@/components/calendar/monthly/monthly-layout'
+import {
+    readPomodoroBadgePref,
+    writePomodoroBadgePref
+} from '@/components/calendar/monthly/pomodoro-badge'
 import { TaskViewObject } from '@nao-todo/domain-task'
 
 /** 周起始偏好存储键（C9） */
@@ -116,6 +120,12 @@ export const useCalendarView = () => {
         }
     })
 
+    // @states 专注徽标开关（B1-F5：default on；localStorage 持久化，非法值模块层回退并规范写入）
+    const pomodoroBadge = ref<boolean>(readPomodoroBadgePref(localStorage))
+    watch(pomodoroBadge, (value) => {
+        writePomodoroBadgePref(localStorage, value)
+    })
+
     // @action 清除清单/标签两组筛选（不影响 hideCompleted）
     const clearFilter = () => {
         selectedProjectIds.value = []
@@ -190,6 +200,10 @@ export const useCalendarView = () => {
         weekStart,
         setWeekStart: (value: CalendarWeekStart) => {
             weekStart.value = value
+        },
+        pomodoroBadge,
+        setPomodoroBadge: (value: boolean) => {
+            pomodoroBadge.value = value
         },
         clearFilter,
         applyScope

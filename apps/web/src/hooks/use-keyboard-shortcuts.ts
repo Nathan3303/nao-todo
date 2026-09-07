@@ -50,8 +50,8 @@ export const useKeyboardShortcuts = () => {
                 const bindingPlatforms = command.keyboard.platforms
                 if (bindingPlatforms != null && !bindingPlatforms.includes(platform)) continue
 
-                // 可用性检查
-                if (command.available != null && !command.available({ scope })) continue
+                // 可用性检查（context.event 供目标守卫等按 DOM 目标判定）
+                if (command.available != null && !command.available({ scope, event })) continue
 
                 // 快捷键匹配
                 const parsed = parseKeys(command.keyboard.keys)
