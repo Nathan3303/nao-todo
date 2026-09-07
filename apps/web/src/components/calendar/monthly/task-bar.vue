@@ -194,7 +194,10 @@ const onPointerDown = (event: PointerEvent): void => {
 .cal-item.is-done {
     background: var(--cal-chip-done-bg);
     color: var(--cal-chip-done-fg);
-    text-decoration: line-through;
+
+    span {
+        text-decoration: line-through;
+    }
 }
 .cal-item.is-done:hover {
     background: var(--cal-chip-bg-hover);
