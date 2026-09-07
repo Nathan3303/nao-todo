@@ -9,14 +9,17 @@ import TaskBar from './task-bar.vue'
 import UnscheduledDrawer from './unscheduled-drawer.vue'
 import ScheduleUndoToast from './undo-toast.vue'
 import { ghostPointOf, useDragSchedule } from './use-drag-schedule'
+import { CALENDAR_KEY_SCOPE, isCalendarKeyLocked, isInteractiveKeyTarget } from './keyboard-nav'
 import useCalendarMonthly from './use-calendar-monthly'
 import {
     dateKeyOf,
     GRID_COLUMNS,
     GRID_ROWS,
     MAX_VISIBLE_LANES,
+    todayDateKey,
     type CalendarRow
 } from './monthly-layout'
+import { useScope, useShortcut } from '@/hooks'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 
 defineOptions({ name: 'CalendarMonthly' })
@@ -251,6 +254,63 @@ const showWeekOf = (dateKey: string) => {
     goToWeekView()
     dayDrawerOpen.value = false
 }
+
+// —— C1-F8 键盘导航（calendar scope 激活窗口 = 组件挂载期，卸载即失效）——
+// 键位与既有控件按钮同一出口（goPrev/NextMonth、goPrev/NextWeek、goToToday、视图切换、
+// openDay、openQuickCreate）；弹层集合开启（F4 菜单/日期面板/当日面板/未安排抽屉/任务详情/对话框）
+// 一律抑制（PM Q1/Q2；undo-toast/NueMessage 轻提示除外）；小写裸键、修饰键严格匹配由引擎保证。
+useScope(CALENDAR_KEY_SCOPE)
+const calendarKeyLocked = (): boolean => isCalendarKeyLocked(document)
+const guardNav = (action: () => void) => (): void => {
+    if (calendarKeyLocked()) return
+    action()
+}
+const NAV_GROUP = '日历'
+useShortcut(
+    'calendar.nav.prev',
+    'arrowleft',
+    guardNav(() => (viewMode.value === 'month' ? goPrevMonth() : goPrevWeek())),
+    { scope: CALENDAR_KEY_SCOPE, label: '上个月/上周', group: NAV_GROUP, preventDefault: true }
+)
+useShortcut(
+    'calendar.nav.next',
+    'arrowright',
+    guardNav(() => (viewMode.value === 'month' ? goNextMonth() : goNextWeek())),
+    { scope: CALENDAR_KEY_SCOPE, label: '下个月/下周', group: NAV_GROUP, preventDefault: true }
+)
+useShortcut(
+    'calendar.nav.today',
+    't',
+    guardNav(() => goToToday()),
+    { scope: CALENDAR_KEY_SCOPE, label: '回到今天', group: NAV_GROUP }
+)
+useShortcut(
+    'calendar.nav.week',
+    'w',
+    guardNav(() => goToWeekView()),
+    { scope: CALENDAR_KEY_SCOPE, label: '切到周视图', group: NAV_GROUP }
+)
+useShortcut(
+    'calendar.nav.month',
+    'm',
+    guardNav(() => goToMonthView()),
+    { scope: CALENDAR_KEY_SCOPE, label: '切到月视图', group: NAV_GROUP }
+)
+// 格内快速新建（遮蔽 index-view 全局新建任务 n；离开日历后 n 恢复全局——scope 卸载即解蔽）
+useShortcut(
+    'calendar.quick-create',
+    'n',
+    guardNav(() => openQuickCreate(selectedKey.value || todayDateKey())),
+    { scope: CALENDAR_KEY_SCOPE, label: '在选中日快速新建', group: NAV_GROUP }
+)
+// 打开当日面板（PM Q6/te v1.1）：目标为可聚焦交互控件时放行原生激活（不拦截、不开面板）
+useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || todayDateKey()), {
+    scope: CALENDAR_KEY_SCOPE,
+    label: '打开当日面板',
+    group: NAV_GROUP,
+    preventDefault: true,
+    available: (context) => !calendarKeyLocked() && !isInteractiveKeyTarget(context.event?.target)
+})
 </script>
 
 <template>

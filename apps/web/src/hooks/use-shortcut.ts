@@ -14,6 +14,8 @@ export interface UseShortcutOptions {
     scope?: string
     /** 是否阻止浏览器默认行为 */
     preventDefault?: boolean
+    /** 可用性判定（如弹层开启/交互控件目标时禁用；context.event 供目标守卫） */
+    available?: Command['available']
 }
 
 /**
@@ -53,7 +55,8 @@ export const useShortcut = (
                 scope: options?.scope,
                 preventDefault: options?.preventDefault
             },
-            group: options?.group
+            group: options?.group,
+            available: options?.available
         }
         registry.register(command)
     })

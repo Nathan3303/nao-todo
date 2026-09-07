@@ -85,8 +85,15 @@ const useIndexView = () => {
      * @use p 创建项目
      */
     useScope('index-view')
-    useShortcut('task.create', 'n', () => appDialogManager.open(TASK_CREATOR_DIALOG_KEY))
-    useShortcut('project.create', 'p', () => appDialogManager.open(PROJECT_CREATOR_DIALOG_KEY))
+    // 键位作用域化（C1-F8）：'n'/'p' 绑定 index-view scope——避免以无 scope 形式被任意深层 scope
+    // 一并纳入而靠注册序抢先；绑定后日历等更深层 scope 可遮蔽 n（日历内 n=格内快速新建），
+    // 其余 tab 仍经作用域栈回退执行同一全局动作（C-F8-08 n 遮蔽语义前提）
+    useShortcut('task.create', 'n', () => appDialogManager.open(TASK_CREATOR_DIALOG_KEY), {
+        scope: 'index-view'
+    })
+    useShortcut('project.create', 'p', () => appDialogManager.open(PROJECT_CREATOR_DIALOG_KEY), {
+        scope: 'index-view'
+    })
 
     /**
      * 边栏响应式状态
