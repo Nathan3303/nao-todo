@@ -111,6 +111,18 @@ describe('CalendarTaskBar - F4 快速改期入口', () => {
         expect(w.emitted('open')).toBeUndefined()
     })
 
+    it('再次点击三点 = 收起（触发器 toggle；S23 同源口径）', async () => {
+        const w = mountBar()
+        moreBtn().click()
+        await nextTick()
+        expect(document.body.querySelector('.rmenu')).toBeTruthy()
+        moreBtn().click()
+        await nextTick()
+        expect(document.body.querySelector('.rmenu')).toBeNull()
+        expect(w.emitted('open')).toBeUndefined()
+        expect(w.emitted('reschedule')).toBeUndefined()
+    })
+
     it('busy：右键不弹菜单、三点禁用（防连点；A1-F4-13）', async () => {
         const w = mountBar(true)
         expect(moreBtn().disabled).toBe(true)

@@ -117,6 +117,16 @@ describe('CalendarUnscheduledDrawer - 单行「安排到…」B7 语义（done �
         expect(w.emitted('update:open')).toBeUndefined()
     })
 
+    it('再次点击「安排到…」= 收起（触发器 toggle；S23 回归）', async () => {
+        mountDrawer({ task: makeTask() })
+        rowActionBtn()!.click()
+        await nextTick()
+        expect(document.body.querySelector('.rmenu')).toBeTruthy()
+        rowActionBtn()!.click()
+        await nextTick()
+        expect(document.body.querySelector('.rmenu')).toBeNull()
+    })
+
     it('busy（busyTaskId=该任务）→「安排到…」禁用，右键路径不可开（防连点）', async () => {
         mountDrawer({ task: makeTask(), busyTaskId: 't1' })
         const btn = rowActionBtn()!

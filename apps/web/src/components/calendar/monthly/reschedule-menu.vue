@@ -68,12 +68,17 @@ const confirmDate = (): void => {
 
 // —— 外点/Esc 关闭（开启时挂载，关闭/卸载摘除） ——
 
+// 外点判定：命中以下三类不关闭，其余一律视为外点：
+//   ① 本菜单自身（.rmenu）
+//   ② 触发器（data-rmenu-trigger：抽屉「安排到…」/条三点——点击它由触发器自身 toggle 收起）
+//   ③ 展开日期面板后，日期选择弹层（nue-date-picker-panel；其它 popup-pool 内容视为外点，
+//      修复抽屉因整体处于 .nue-popup-pool 内而永不外点关闭的问题）
 const onPointerDown = (event: PointerEvent): void => {
     const target = event.target as Element | null
     if (!target) return
-    // 命中本菜单或 Nue 弹层容器（日期面板所在 popup-pool）不关闭，其余视为外点
     if (target.closest('.rmenu')) return
-    if (target.closest('.nue-popup-pool')) return
+    if (target.closest('[data-rmenu-trigger]')) return
+    if (dateOpen.value && target.closest('.nue-date-picker-panel')) return
     emit('close')
 }
 const onKeyDown = (event: KeyboardEvent): void => {

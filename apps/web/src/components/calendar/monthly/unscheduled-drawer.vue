@@ -169,9 +169,14 @@ const confirmBatchPick = (): void => {
 // —— 单行「安排到…」菜单（F4 收敛：三项=今天/明天/选择日期…；首位今天=B7 等价） ——
 
 // @method 以「安排到…」按钮为锚点打开菜单（视口边缘收拢）
+//              同任务再次点击 = 收起（toggle）；换行点击 = 切换到该行菜单
 //              B7 旧行为恢复：done 行单行可安排，disabled 仅随 busy（多选模式 done 排除由 Q4 另管）
 const openRowMenu = (task: TaskViewObject, event: Event): void => {
     if (props.scheduleBusy || props.busyTaskId === task.id) return
+    if (rowMenu.open && rowMenu.taskId === task.id) {
+        closeRowMenu()
+        return
+    }
     const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
     rowMenu.taskId = task.id
     rowMenu.x = Math.min(Math.max(4, rect.left), window.innerWidth - 208)
@@ -301,6 +306,7 @@ const onRowMenuSelect = (dateKey: string): void => {
                         <div v-if="!multiMode" class="us-actions" @click.stop>
                             <nue-button
                                 theme="small,ghost"
+                                data-rmenu-trigger
                                 :disabled="busyTaskId === task.id"
                                 title="安排到某日（含过去日期）"
                                 @click="openRowMenu(task, $event)"

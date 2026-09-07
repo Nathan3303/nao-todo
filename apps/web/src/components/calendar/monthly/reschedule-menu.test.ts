@@ -118,3 +118,50 @@ describe('RescheduleMenu - F4 快速改期菜单', () => {
         expect(w.emitted('close')).toHaveLength(1)
     })
 })
+
+describe('RescheduleMenu - 外点豁免收窄（S23 回归）', () => {
+    const poolEl = (): HTMLElement => {
+        const pool = document.createElement('div')
+        pool.className = 'nue-popup-pool'
+        document.body.appendChild(pool)
+        return pool
+    }
+    const panelEl = (parent: HTMLElement): HTMLElement => {
+        const panel = document.createElement('div')
+        panel.className = 'nue-date-picker-panel'
+        parent.appendChild(panel)
+        return panel
+    }
+    const fireDown = (target: Element): void => {
+        target.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+    }
+
+    it('根因修复：未展开日期面板时，点 popup-pool 内（抽屉整体所在）元素 = 外点关闭', () => {
+        const w = mountMenu({ scheduled: true })
+        const pool = poolEl()
+        const drawerArea = document.createElement('div')
+        pool.appendChild(drawerArea)
+        fireDown(drawerArea)
+        expect(w.emitted('close')).toHaveLength(1)
+    })
+
+    it('触发器（data-rmenu-trigger）pointerdown 不关闭（由触发器自身 toggle 收起）', () => {
+        const w = mountMenu({ scheduled: true })
+        const trigger = document.createElement('button')
+        trigger.dataset.rmenuTrigger = ''
+        document.body.appendChild(trigger)
+        fireDown(trigger)
+        expect(w.emitted('close')).toBeUndefined()
+    })
+
+    it('展开日期面板后，点日期选择弹层（nue-date-picker-panel）不关闭', () => {
+        const w = mountMenu({ scheduled: true })
+        const items = [...(menuEl()!.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])]
+        const item = items.find((b) => b.textContent?.trim() === '选择日期…')!
+        item.click() // 展开面板
+        const pool = poolEl()
+        const panel = panelEl(pool)
+        fireDown(panel)
+        expect(w.emitted('close')).toBeUndefined()
+    })
+})

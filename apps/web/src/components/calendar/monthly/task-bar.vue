@@ -74,10 +74,14 @@ const onContextMenu = (event: MouseEvent): void => {
     openMenuAt(event.clientX, event.clientY)
 }
 
-// @method 三点按钮：以按钮位置为锚点（悬停/聚焦出现；条内小尺寸）
+// @method 三点按钮：以按钮位置为锚点（悬停/聚焦出现；条内小尺寸）；已开则收起（toggle）
 const onMoreClick = (event: MouseEvent): void => {
     event.stopPropagation()
     if (props.busy) return
+    if (menuState.open) {
+        menuState.open = false
+        return
+    }
     const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
     openMenuAt(rect.right - 4, rect.bottom + 4)
 }
@@ -131,6 +135,7 @@ const onPointerDown = (event: PointerEvent): void => {
         <nue-button
             theme="pure,icon"
             icon="more-vertical"
+            data-rmenu-trigger
             class="cal-item-more"
             title="改期…"
             :disabled="busy"
@@ -180,11 +185,11 @@ const onPointerDown = (event: PointerEvent): void => {
 }
 /* 逾期背景提示（A1 冒烟修正）：error-20 浅红；hover/focus-visible 转 error-40（键盘可达性与 hover 同口径） */
 .cal-item.is-overdue {
-    background: var(--nue-error-color-20);
+    background: var(--nue-error-color-10);
 }
 .cal-item.is-overdue:hover,
 .cal-item.is-overdue:focus-visible {
-    background: var(--nue-error-color-40);
+    background: var(--nue-error-color-20);
 }
 .cal-item.is-done {
     background: var(--cal-chip-done-bg);
