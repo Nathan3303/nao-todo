@@ -27,6 +27,8 @@ const props = defineProps<{
     onOpenTask: (taskId: TaskViewObject['id']) => void
     onClearFilter: () => void
     onShowCompleted: () => void
+    /** F1 拖源：行内左键按下（普通模式；由父级阈值消歧 + 会话接管，拖起激活时收起抽屉） */
+    onRowDragStart?: (task: TaskViewObject, event: PointerEvent) => void
 }>()
 const emit = defineEmits<{ (e: 'update:open', value: boolean): void }>()
 
@@ -183,6 +185,16 @@ const closeRowMenu = (): void => {
     rowMenu.taskId = ''
 }
 
+// @method 行内交互控件不参与拖源（完成勾选/选择勾/「安排到…」/行内其它按钮各自保语义）；
+//              多选态行不可作拖源（互斥声明）；busy/写回期禁起由父级守卫兜底
+const onRowPointerDown = (task: TaskViewObject, event: PointerEvent): void => {
+    if (!props.onRowDragStart) return
+    if (multiMode.value || props.scheduleBusy) return
+    const target = event.target as Element | null
+    if (target?.closest('.us-actions, .us-select-box, .nue-button, .nue-checkbox')) return
+    props.onRowDragStart(task, event)
+}
+
 // @method 菜单选中：交给父级内核串行写回（同 B7 单行语义：未安排=endAt 直写目标日末）
 const onRowMenuSelect = (dateKey: string): void => {
     const task = props.tasks.find((item) => item.id === rowMenu.taskId)
@@ -238,6 +250,7 @@ const onRowMenuSelect = (dateKey: string): void => {
                         :role="multiMode ? 'checkbox' : undefined"
                         :aria-checked="multiMode ? isSelected(task.id) : undefined"
                         @click="onRowClick(task)"
+                        @pointerdown="onRowPointerDown(task, $event)"
                     >
                         <!-- 行首：普通模式=完成勾选（B7）；多选模式=选择勾（done 置灰不可选） -->
                         <template v-if="multiMode">

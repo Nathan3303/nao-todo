@@ -60,7 +60,10 @@ const mountDrawer = (opts: {
             scheduleBusy: false,
             busyTaskId: opts.busyTaskId ?? '',
             onToggleDone: vi.fn(),
-            onScheduleToDay: opts.onSchedule ?? vi.fn(),
+            onScheduleToDay: (opts.onSchedule ?? vi.fn()) as unknown as (
+                task: TaskViewObject,
+                dateKey: string
+            ) => void | Promise<void>,
             onBatchScheduleToDay: noopBatch,
             onOpenTask: vi.fn(),
             onClearFilter: vi.fn(),
@@ -146,5 +149,69 @@ describe('CalendarUnscheduledDrawer - 单行「安排到…」B7 语义（done �
         row.click()
         await nextTick()
         expect(onSchedule).not.toHaveBeenCalled()
+    })
+})
+
+describe('CalendarUnscheduledDrawer - F1 行拖源上抛', () => {
+    const mountWithDrag = (overrides: { task?: TaskViewObject; multi?: boolean } = {}) => {
+        const onRowDragStart = vi.fn()
+        const w = mount(UnscheduledDrawer, {
+            attachTo: document.body,
+            props: {
+                open: true,
+                tasks: [overrides.task ?? makeTask()],
+                filterActive: false,
+                hideCompleted: false,
+                scheduleBusy: false,
+                busyTaskId: '',
+                onToggleDone: vi.fn(),
+                onScheduleToDay: vi.fn() as unknown as (
+                    task: TaskViewObject,
+                    dateKey: string
+                ) => void | Promise<void>,
+                onBatchScheduleToDay: noopBatch,
+                onOpenTask: vi.fn() as unknown as (taskId: TaskViewObject['id']) => void,
+                onClearFilter: vi.fn() as unknown as () => void,
+                onShowCompleted: vi.fn() as unknown as () => void,
+                onRowDragStart: onRowDragStart as unknown as (
+                    task: TaskViewObject,
+                    event: PointerEvent
+                ) => void
+            },
+            global: {
+                plugins: [createPinia()],
+                components: { 'nue-button': NueButton },
+                stubs: {
+                    'nue-div': slotStub,
+                    'nue-text': slotStub,
+                    'nue-drawer': drawerStub,
+                    'nue-date-picker': NueDatePicker
+                }
+            }
+        })
+        return { w, onRowDragStart }
+    }
+
+    const pointerDownOn = (target: Element, x = 10, y = 10): void => {
+        target.dispatchEvent(
+            new PointerEvent('pointerdown', { bubbles: true, button: 0, clientX: x, clientY: y })
+        )
+    }
+
+    it('普通模式行主体按下 → 上抛 onRowDragStart（F1-01 拖源；阈值消歧在父级）', () => {
+        const { onRowDragStart } = mountWithDrag()
+        const main = document.body.querySelector<HTMLElement>('.us-item__row .us-main')!
+        pointerDownOn(main)
+        expect(onRowDragStart).toHaveBeenCalledTimes(1)
+        const [task, event] = onRowDragStart.mock.calls[0]! as [TaskViewObject, PointerEvent]
+        expect(task.id).toBe('t1')
+        expect(event.clientX).toBe(10)
+    })
+
+    it('行内交互控件（「安排到…」按钮）按下不视为拖源', () => {
+        const { onRowDragStart } = mountWithDrag()
+        const actionBtn = document.body.querySelector<HTMLElement>('.us-actions .nue-button')!
+        pointerDownOn(actionBtn)
+        expect(onRowDragStart).not.toHaveBeenCalled()
     })
 })

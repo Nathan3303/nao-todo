@@ -20,13 +20,17 @@ const props = withDefaults(
         contEnd?: boolean
         /** 该任务排期写回中（F4：busy 防连点，禁用菜单入口与项） */
         busy?: boolean
+        /** F1：本任务条正在被拖起（原条半透明占位视觉） */
+        dragging?: boolean
     }>(),
-    { busy: false }
+    { busy: false, dragging: false }
 )
 const emit = defineEmits<{
     (e: 'open'): void
     /** F4 快速改期：目标日键上抛（语义由父级走 reschedule 内核 + U2 撤销） */
     (e: 'reschedule', dateKey: string): void
+    /** F1 拖拽：左键按下（父级接阈值消歧与会话接管） */
+    (e: 'drag-pointer-down', event: PointerEvent): void
 }>()
 
 // @computed 逾期/完成态（A3 语义：逾期红覆盖优先级色；done 永不逾期）
@@ -92,6 +96,15 @@ const onKeyDown = (event: KeyboardEvent): void => {
         emit('open')
     }
 }
+
+// @method F1 起拖：左键按下即上抛（F4 三点按钮/右键不受影响；busy 期不起）；
+//              阈值内释放仍为点击 → 开详情（点击语义零回归，消歧由会话控制器裁决）
+const onPointerDown = (event: PointerEvent): void => {
+    const target = event.target as Element | null
+    if (target?.closest('.cal-item-more')) return
+    if (props.busy || props.dragging) return
+    emit('drag-pointer-down', event)
+}
 </script>
 
 <template>
@@ -101,13 +114,15 @@ const onKeyDown = (event: KeyboardEvent): void => {
             'is-done': isDone,
             'is-overdue': isOverdue,
             'has-cont-start': contStart,
-            'has-cont-end': contEnd
+            'has-cont-end': contEnd,
+            'is-drag-source': dragging
         }"
         :style="[pos, { '--cal-pri': barColor }]"
         :title="task.name"
         tabindex="0"
         @click="emit('open')"
         @contextmenu="onContextMenu"
+        @pointerdown="onPointerDown"
         @keydown="onKeyDown"
     >
         <span v-if="timeText" class="cal-item-time">{{ timeText }}</span>
@@ -266,5 +281,11 @@ const onKeyDown = (event: KeyboardEvent): void => {
 }
 .cal-item-more:disabled {
     cursor: default;
+}
+
+/* F1 拖起中的原条：半透明占位（不阻碍落点命中） */
+.cal-item.is-drag-source {
+    opacity: 0.35;
+    cursor: grabbing;
 }
 </style>

@@ -8,6 +8,7 @@ import QuickCreate from './quick-create.vue'
 import TaskBar from './task-bar.vue'
 import UnscheduledDrawer from './unscheduled-drawer.vue'
 import ScheduleUndoToast from './undo-toast.vue'
+import { ghostPointOf, useDragSchedule } from './use-drag-schedule'
 import useCalendarMonthly from './use-calendar-monthly'
 import {
     dateKeyOf,
@@ -93,6 +94,21 @@ const dayTasks = computed(() => (dayDrawerDate.value ? getDayTasks(dayDrawerDate
 
 // @states 未安排抽屉（B7）
 const unscheduledOpen = ref(false)
+
+// —— F1 拖拽排期会话（月/周网格为 drop 面；行源拖起激活时收起抽屉；busy 禁起；drop 走 scheduleToDay = T1 + U2 单条链路） ——
+const drag = useDragSchedule({
+    isBusy: () => rescheduleBusyId.value !== '' || scheduleBusy.value || undoBusy.value,
+    closeUnscheduled: () => {
+        unscheduledOpen.value = false
+    },
+    scheduleOne: scheduleToDay
+})
+
+// @method 浮空胶囊定位样式（fixed 固定跟随，非 DOM 克隆）
+const ghostStyle = () => {
+    const point = ghostPointOf(drag.session.x, drag.session.y)
+    return { left: `${point.x}px`, top: `${point.y}px` }
+}
 
 // @computed 筛选激活态（空态出口）
 const filterActive = computed(
@@ -339,12 +355,14 @@ const showWeekOf = (dateKey: string) => {
                             v-for="cell in row.cells"
                             :key="cell.cell"
                             class="cal-cell"
+                            :data-cal-drop="cell.dateKey"
                             :class="{
                                 'cal-cell--outside': cell.monthOffset !== 0,
                                 'cal-cell--today': cell.isToday,
                                 'cal-cell--selected': cell.isSelected,
                                 'cal-cell--weekend': cell.isWeekend,
-                                'cal-cell--edge': cell.cell % 7 === 6
+                                'cal-cell--edge': cell.cell % 7 === 6,
+                                'cal-cell--drop': drag.isTarget(cell.dateKey)
                             }"
                             @click="openDay(cell.dateKey)"
                         >
@@ -391,8 +409,16 @@ const showWeekOf = (dateKey: string) => {
                                 :cont-start="isRowStart(seg, row)"
                                 :cont-end="isRowEnd(seg, row)"
                                 :busy="rescheduleBusyId === seg.task.id"
+                                :dragging="
+                                    drag.session.active &&
+                                    drag.session.kind === 'bar' &&
+                                    drag.session.taskId === seg.task.id
+                                "
                                 @open="openTaskDetails(seg.task.id)"
                                 @reschedule="(dateKey) => scheduleToDay(seg.task, dateKey)"
+                                @drag-pointer-down="
+                                    (event) => drag.startPossible(seg.task, 'bar', event)
+                                "
                             />
                         </div>
                     </div>
@@ -428,6 +454,12 @@ const showWeekOf = (dateKey: string) => {
                 :on-quick-submit="inlineCreateTask"
                 :busy-task-id="rescheduleBusyId"
                 :on-reschedule-task="scheduleToDay"
+                :drag-active="drag.session.active"
+                :drag-task-id="
+                    drag.session.active && drag.session.kind === 'bar' ? drag.session.taskId : ''
+                "
+                :drag-hover-key="drag.session.hoverKey"
+                :on-drag-bar="(task, event) => drag.startPossible(task, 'bar', event)"
                 :week-start="weekStart"
             />
         </template>
@@ -455,6 +487,7 @@ const showWeekOf = (dateKey: string) => {
             :on-toggle-done="toggleDone"
             :on-schedule-to-day="scheduleToDay"
             :on-batch-schedule-to-day="runBatchSchedule"
+            :on-row-drag-start="(task, event) => drag.startPossible(task, 'row', event)"
             :on-open-task="openTaskFromPanel"
             :on-clear-filter="clearFilter"
             :on-show-completed="() => (hideCompleted = false)"
@@ -468,6 +501,13 @@ const showWeekOf = (dateKey: string) => {
             @undo="undoLast"
             @dismiss="dismissUndoAction"
         />
+
+        <!-- F1 浮空胶囊（拖拽跟随，fixed 非 DOM 克隆） -->
+        <teleport to="body">
+            <div v-if="drag.session.active" class="drag-ghost" :style="ghostStyle()">
+                {{ drag.session.name }}
+            </div>
+        </teleport>
     </nue-div>
 </template>
 
@@ -678,6 +718,14 @@ const showWeekOf = (dateKey: string) => {
 .cal-cell--selected {
     background: var(--cal-select-bg);
 }
+/* F1 drop 目标高亮（含补位灰格/过去日期格，整格指示） */
+.cal-cell--drop {
+    background: color-mix(in srgb, var(--nue-success-color-60) 14%, var(--cal-bg));
+    box-shadow: inset 0 0 0 2px var(--nue-success-color-60);
+}
+.cal-cell--drop .cal-date {
+    border-color: var(--nue-success-color-60);
+}
 .cal-cell--selected .cal-date {
     background: var(--cal-fg);
     color: var(--cal-bg);
@@ -753,5 +801,25 @@ const showWeekOf = (dateKey: string) => {
 .cal-more:hover {
     background: var(--cal-hover);
     color: var(--cal-fg);
+}
+
+/* F1 浮空胶囊（拖拽跟随；fixed 顶层，非 DOM 克隆；teleport body 用全局主题令牌） */
+.drag-ghost {
+    position: fixed;
+    z-index: 1300;
+    pointer-events: none;
+    max-width: 220px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    background: var(--nue-primary-color-200);
+    color: var(--nue-primary-text-color);
+    font-size: 0.75rem;
+    line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--nue-primary-text-color) 20%, transparent);
+    border: 1px solid var(--nue-border-color);
+    box-sizing: border-box;
 }
 </style>

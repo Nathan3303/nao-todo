@@ -46,6 +46,11 @@ const props = defineProps<{
     busyTaskId: string
     /** F4 快速改期：目标日键上抛（父级走 reschedule 内核 + U2 撤销） */
     onRescheduleTask: (task: TaskViewObject, dateKey: string) => void | Promise<void>
+    /** F1 拖拽：拖拽会话激活态 / 被拖任务 ID / 当前高亮日期键 / 任务条左键按下（父级接管阈值与会话） */
+    dragActive: boolean
+    dragTaskId: string
+    dragHoverKey: string | null
+    onDragBar: (task: TaskViewObject, event: PointerEvent) => void
 }>()
 
 // @viewContext 应用级子侧栏开关（与月视图 header 一致）
@@ -249,12 +254,14 @@ const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateK
                     v-for="cell in model.days"
                     :key="cell.dateKey"
                     class="wk-cell"
+                    :data-cal-drop="cell.dateKey"
                     :class="{
                         'wk-cell--outside': cell.monthOffset !== 0,
                         'wk-cell--today': cell.isToday,
                         'wk-cell--selected': cell.isSelected,
                         'wk-cell--weekend': cell.isWeekend,
-                        'wk-cell--edge': cell.cell % 7 === 6
+                        'wk-cell--edge': cell.cell % 7 === 6,
+                        'wk-cell--drop': dragActive && dragHoverKey === cell.dateKey
                     }"
                     @click="onOpenDay(cell.dateKey)"
                 >
@@ -299,8 +306,10 @@ const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateK
                         :cont-start="!seg.isStart && seg.colStart === 0"
                         :cont-end="!seg.isEnd && seg.colEnd === GRID_COLUMNS - 1"
                         :busy="busyTaskId === seg.task.id"
+                        :dragging="dragActive && dragTaskId === seg.task.id"
                         @open="onOpenTask(seg.task.id)"
                         @reschedule="(dateKey) => onRescheduleTask(seg.task, dateKey)"
+                        @drag-pointer-down="(event) => onDragBar(seg.task, event)"
                     />
                 </div>
             </div>
@@ -482,6 +491,15 @@ const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateK
 }
 .wk-cell--weekend:not(.wk-cell--selected) .wk-date {
     opacity: 0.72;
+}
+
+/* F1 drop 目标高亮（周整列格） */
+.wk-cell--drop {
+    background: color-mix(in srgb, var(--nue-success-color-60) 14%, var(--cal-bg));
+    box-shadow: inset 0 0 0 2px var(--nue-success-color-60);
+}
+.wk-cell--drop .wk-date {
+    border-color: var(--nue-success-color-60);
 }
 
 /* 任务条层（task-bar 视觉） */
