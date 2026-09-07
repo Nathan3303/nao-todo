@@ -33,13 +33,12 @@ const emit = defineEmits<{
     (e: 'drag-pointer-down', event: PointerEvent): void
 }>()
 
-// @computed 逾期/完成态（A3 语义：逾期红覆盖优先级色；done 永不逾期）
+// @computed 逾期/完成态（done 永不逾期，两者互斥）
 const isDone = computed(() => props.task.state === 'done')
 const isOverdue = computed(() => isTaskOverdue(props.task))
 
-// @computed 左缘色条：逾期红 > 优先级（high=error 红 / medium=warning 琥珀 / low 无色）
+// @computed 左缘色条：仅随优先级（high=error 红 / medium=warning 琥珀 / low 无色）；逾期改由背景提示
 const barColor = computed<string>(() => {
-    if (isOverdue.value) return 'var(--nue-error-color-60)'
     if (props.task.priority === 'high') return 'var(--nue-error-color-60)'
     if (props.task.priority === 'medium') return 'var(--nue-warning-color-60)'
     return 'transparent'
@@ -179,6 +178,14 @@ const onPointerDown = (event: PointerEvent): void => {
     background: var(--cal-chip-bg-hover);
     outline: 1px solid var(--cal-border);
 }
+/* 逾期背景提示（A1 冒烟修正）：error-20 浅红；hover/focus-visible 转 error-40（键盘可达性与 hover 同口径） */
+.cal-item.is-overdue {
+    background: var(--nue-error-color-20);
+}
+.cal-item.is-overdue:hover,
+.cal-item.is-overdue:focus-visible {
+    background: var(--nue-error-color-40);
+}
 .cal-item.is-done {
     background: var(--cal-chip-done-bg);
     color: var(--cal-chip-done-fg);
@@ -196,7 +203,7 @@ const onPointerDown = (event: PointerEvent): void => {
     padding-right: 2px;
 }
 
-/* 左缘色条：优先级色（逾期红覆盖），done 弱化至 ~30% 原色痕 */
+/* 左缘色条：优先级色（high=红 / medium=琥珀 / low 无色），done 弱化至 ~30% 原色痕；逾期底色另见 .cal-item.is-overdue */
 .cal-item::before {
     content: '';
     position: absolute;
