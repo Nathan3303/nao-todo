@@ -14,6 +14,13 @@ import {
     todayDateKey
 } from './monthly-layout'
 import { buildCalendarListQuery, MAX_PAGES, PAGE_LIMIT } from './list-query'
+import {
+    shiftTaskDates,
+    snapshotTaskDates,
+    type BatchScheduleResult,
+    type ScheduleUndoAction,
+    type TaskScheduleSnapshot
+} from './reschedule'
 
 /**
  * 任务是否逾期（天级口径，与任务页「已过期」一致）
@@ -142,6 +149,8 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         subscriber.subscribe('AddNewTaskId', onAddNewTaskId)
     })
     onUnmounted(() => {
+        clearTimeout(undoActionTimer)
+        undoAction.value = null // 视图卸载/页面切换 → 撤销快照失效（U2 同视图生命周期约束）
         subscriber.unsubscribe('RefreshData', onRefreshData)
         subscriber.unsubscribe('AddNewTaskId', onAddNewTaskId)
     })
@@ -314,18 +323,132 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         if (err !== null) NueMessage.error(unwrapError(err))
     }
 
-    // @method 安排到某日：仅把 endAt 改为该日末（startAt 保留，失败 toast 且列表保留）
-    const scheduleToDay = async (task: TaskViewObject, dateKey: string): Promise<void> => {
+    // @method 安排到某日（T1 + U2 内核）：动作前快照 → 计算目标日应上送字段 → 串行小步写回；
+    //              成功弹「已移至 X 月 X 日 + 撤销」，失败 toast 且列表保留（负向闭环）
+    // ===== U2 最近一次撤销（单条/批量共用内核；M2/F4、M3/F1 复用此机制） =====
+
+    // @constant 撤销 toast 停留时长（约 5s；超时即不可撤销为既定语义）
+    const UNDO_ACTION_DURATION = 5000
+
+    // @states 最近一次成功写回动作（仅保留最近一个：新成功动作替换旧快照）；撤销/超时后失效
+    const undoAction = ref<ScheduleUndoAction | null>(null)
+    const undoBusy = ref(false) // 撤销写回防连点
+    const scheduleBusy = ref(false) // 批量排期防连点
+    let undoActionTimer: ReturnType<typeof setTimeout> | undefined
+
+    // @method 「X 月 X 日」日期标签（按日期键直接拆分，无时区偏移）
+    const monthDayLabelOf = (dateKey: string): string => {
+        const [, month, day] = dateKey.split('-')
+        return `${Number(month)} 月 ${Number(day)} 日`
+    }
+
+    // @method 弹出/刷新撤销 toast（替换最近一次；自动超时失效）
+    const showUndoAction = (action: ScheduleUndoAction): void => {
+        undoAction.value = action
+        clearTimeout(undoActionTimer)
+        undoActionTimer = setTimeout(() => {
+            undoAction.value = null
+        }, UNDO_ACTION_DURATION)
+    }
+    const dismissUndoAction = (): void => {
+        clearTimeout(undoActionTimer)
+        undoAction.value = null
+    }
+
+    // @method 单次写回尝试：成功返回 true 并记录前值快照（供批量撤销整体回写）
+    const writeScheduleOnce = async (
+        task: TaskViewObject,
+        dateKey: string,
+        snapshots: TaskScheduleSnapshot[]
+    ): Promise<{ ok: boolean; err: Error | string | null }> => {
+        const snapshot = snapshotTaskDates(task)
+        const patch = shiftTaskDates(task, dateKey)
+        if (patch === null) return { ok: false, err: null } // dateKey 非法防御（UI 键均合法，不可达）
         const err = await taskUseCase.update(task.id, {
-            endAt: dayjs(dateKey).endOf('day').toISOString(),
+            ...patch,
             updatedAt: dayjs().toISOString()
         })
-        if (err !== null) NueMessage.error(unwrapError(err))
+        if (err !== null) return { ok: false, err }
+        snapshots.push(snapshot)
+        return { ok: true, err: null }
+    }
+
+    // @method 单条安排到某日（B7 单行操作复用；成功提供「撤销」入口）
+    const scheduleToDay = async (task: TaskViewObject, dateKey: string): Promise<void> => {
+        const snapshots: TaskScheduleSnapshot[] = []
+        const { ok, err } = await writeScheduleOnce(task, dateKey, snapshots)
+        if (!ok) {
+            if (err !== null) NueMessage.error(translateTaskError(err))
+            return
+        }
+        showUndoAction({ text: `已移至 ${monthDayLabelOf(dateKey)}`, tone: 'success', snapshots })
     }
 
     // @method 延期到今天（A3 别名）：scheduleToDay 的今日特例
     const deferToToday = async (task: TaskViewObject): Promise<void> =>
         scheduleToDay(task, todayDateKey())
+
+    // @method 批量安排到某日（F3）：对选中任务串行小步写回；busy 防连点；
+    //              全成/部分失败弹撤销 toast（部分失败仅还原成功项）；全败无撤销、错误 toast
+    const runBatchSchedule = async (
+        tasks: TaskViewObject[],
+        dateKey: string
+    ): Promise<BatchScheduleResult> => {
+        const allIds = tasks.map((t) => t.id)
+        if (scheduleBusy.value || tasks.length === 0)
+            return { ok: 0, fail: allIds.length, failedIds: allIds }
+        scheduleBusy.value = true
+        const snapshots: TaskScheduleSnapshot[] = []
+        const failedIds: TaskViewObject['id'][] = []
+        try {
+            for (const task of tasks) {
+                const { ok } = await writeScheduleOnce(task, dateKey, snapshots)
+                if (!ok) failedIds.push(task.id)
+            }
+            const fail = failedIds.length
+            const ok = tasks.length - fail
+            if (ok > 0 && fail > 0) {
+                showUndoAction({
+                    text: `成功 ${ok} · 失败 ${fail}，失败项已保留选中`,
+                    tone: 'warning',
+                    snapshots
+                })
+            } else if (ok > 0) {
+                showUndoAction({ text: `已安排 ${ok} 个任务`, tone: 'success', snapshots })
+            } else {
+                NueMessage.error(`成功 0 · 失败 ${fail}，已保留选中`)
+            }
+            return { ok, fail, failedIds }
+        } finally {
+            scheduleBusy.value = false
+        }
+    }
+
+    // @method 撤销最近一次动作：以快照原值回写（串行、busy 防连点、失败 toast）；成功/失败均不再保留入口
+    const undoLast = async (): Promise<void> => {
+        const action = undoAction.value
+        if (!action || undoBusy.value) return
+        if (action.snapshots.length === 0) {
+            dismissUndoAction()
+            return
+        }
+        undoBusy.value = true
+        try {
+            let firstErr: Error | string | null = null
+            for (const snap of action.snapshots) {
+                const err = await taskUseCase.update(snap.id, {
+                    startAt: snap.prevStartAt,
+                    endAt: snap.prevEndAt,
+                    updatedAt: dayjs().toISOString()
+                })
+                if (err !== null && firstErr === null) firstErr = err
+            }
+            dismissUndoAction()
+            if (firstErr !== null) NueMessage.error(translateTaskError(firstErr))
+        } finally {
+            undoBusy.value = false
+        }
+    }
 
     // @method 以某日为截止日新建任务（打开创建器并预填当日 + 当前范围上下文）
     const createTaskOnDay = (dateKey: string) => {
@@ -362,6 +485,12 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         deferToToday,
         scheduleToDay,
         unscheduledTasks,
+        // —— 批量排期（F3）+ U2 最近一次撤销（M2/F4、M3/F1 复用） ——
+        scheduleBusy,
+        runBatchSchedule,
+        undoAction,
+        undoBusy,
+        undoLast,
         createTaskOnDay,
         openTaskDetails,
         // —— 视图态（A1 周视图） ——

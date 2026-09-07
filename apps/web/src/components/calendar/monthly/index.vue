@@ -7,6 +7,7 @@ import CalendarWeekly from '../weekly/index.vue'
 import QuickCreate from './quick-create.vue'
 import TaskBar from './task-bar.vue'
 import UnscheduledDrawer from './unscheduled-drawer.vue'
+import ScheduleUndoToast from './undo-toast.vue'
 import useCalendarMonthly from './use-calendar-monthly'
 import {
     dateKeyOf,
@@ -47,6 +48,11 @@ const {
     deferToToday,
     scheduleToDay,
     unscheduledTasks,
+    scheduleBusy,
+    runBatchSchedule,
+    undoAction,
+    undoBusy,
+    undoLast,
     createTaskOnDay,
     openTaskDetails,
     // —— 筛选（空态/清除出口） ——
@@ -432,17 +438,27 @@ const showWeekOf = (dateKey: string) => {
             :on-go-week="showWeekOf"
         />
 
-        <!-- 未安排任务抽屉（B7） -->
+        <!-- 未安排任务抽屉（B7 + F3 多选批量 / U2 撤销接线） -->
         <unscheduled-drawer
             v-model:open="unscheduledOpen"
             :tasks="unscheduledTasks"
             :filter-active="filterActive"
             :hide-completed="hideCompleted"
+            :schedule-busy="scheduleBusy"
             :on-toggle-done="toggleDone"
             :on-schedule-to-day="scheduleToDay"
+            :on-batch-schedule-to-day="runBatchSchedule"
             :on-open-task="openTaskFromPanel"
             :on-clear-filter="clearFilter"
             :on-show-completed="() => (hideCompleted = false)"
+        />
+
+        <!-- U2 撤销 action-toast（NueMessage 无 action 按钮，自建轻量载体） -->
+        <schedule-undo-toast
+            v-if="undoAction"
+            :action="undoAction"
+            :busy="undoBusy"
+            @undo="undoLast"
         />
     </nue-div>
 </template>

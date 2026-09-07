@@ -6,8 +6,9 @@ import { useProjectsStore } from '@nao-todo/presentation/project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
 import { TaskCheckButton } from '@nao-todo/shared'
 import dayjs from 'dayjs'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { todayDateKey } from './monthly-layout'
+import type { BatchScheduleResult } from './reschedule'
 
 defineOptions({ name: 'CalendarUnscheduledDrawer' })
 
@@ -16,8 +17,10 @@ const props = defineProps<{
     tasks: TaskViewObject[]
     filterActive: boolean
     hideCompleted: boolean
+    scheduleBusy: boolean
     onToggleDone: (task: TaskViewObject) => void
     onScheduleToDay: (task: TaskViewObject, dateKey: string) => void | Promise<void>
+    onBatchScheduleToDay: (tasks: TaskViewObject[], dateKey: string) => Promise<BatchScheduleResult>
     onOpenTask: (taskId: TaskViewObject['id']) => void
     onClearFilter: () => void
     onShowCompleted: () => void
@@ -30,10 +33,16 @@ const visible = computed({
     set: (value: boolean) => emit('update:open', value)
 })
 
-// @states 行内操作：安排中 / 展开日期选择的行 / 待选日期
+// @states 行内操作（普通模式，B7）：安排中 / 展开日期选择的行 / 待选日期
 const busyId = ref<TaskViewObject['id']>('')
 const pickingId = ref<TaskViewObject['id']>('')
 const pickDate = ref<string>('')
+
+// @states 多选模式（F3）：模式开关 / 选中集合 / 批量日期面板
+const multiMode = ref(false)
+const selectedIds = ref<Set<TaskViewObject['id']>>(new Set())
+const batchPicking = ref(false)
+const batchPickDate = ref<string>('')
 
 // @computed 行上下文（清单名 + 标签，缺数据时优雅降级为空）
 type RowMeta = { project?: ProjectViewObject; tags: TagViewObject[] }
@@ -46,7 +55,7 @@ const metaOf = (task: TaskViewObject): RowMeta => ({
         .filter((tag): tag is TagViewObject => !!tag)
 })
 
-// @computed 空态：真无 与 筛选导致 区分（后者给清除出口）
+// @computed 空态：真无 与 筛选导致 区分（后者给清除出口；B7 语义不回归）
 const emptyHint = computed<{ text: string; action: string; run: () => void } | null>(() => {
     if (props.tasks.length) return null
     if (props.filterActive) {
@@ -61,6 +70,103 @@ const emptyHint = computed<{ text: string; action: string; run: () => void } | n
     }
     return null
 })
+
+// —— 多选模式（F3） ——
+
+// @computed 当前可见行中被选中的数量（隐藏完成/筛选联动后自动收口）
+const selectedCount = computed(
+    () => props.tasks.filter((task) => selectedIds.value.has(task.id)).length
+)
+
+// @method 选中态判定
+const isSelected = (taskId: TaskViewObject['id']): boolean => selectedIds.value.has(taskId)
+
+// @method 开关多选模式（进入/退出均清空选择；busy 期锁定）
+const toggleMultiMode = (): void => {
+    if (props.scheduleBusy) return
+    multiMode.value = !multiMode.value
+    // 收起普通模式展开的行内日期面板/批量日期面板，选择清空
+    pickingId.value = ''
+    pickDate.value = ''
+    batchPicking.value = false
+    batchPickDate.value = ''
+    selectedIds.value = new Set()
+}
+
+// @method 勾选/取消勾选（选择语义，非完成切换）；done 行不可选、busy 期锁定
+const toggleSelect = (task: TaskViewObject): void => {
+    if (!multiMode.value || props.scheduleBusy || task.state === 'done') return
+    const next = new Set(selectedIds.value)
+    if (next.has(task.id)) next.delete(task.id)
+    else next.add(task.id)
+    selectedIds.value = next
+}
+
+// @method 行主体点击：普通模式开详情；多选模式整行切换选择（不开详情）
+const onMainClick = (task: TaskViewObject): void => {
+    if (multiMode.value) return
+    props.onOpenTask(task.id)
+}
+
+// @method 整行点击（多选模式切换选择）
+const onRowClick = (task: TaskViewObject): void => {
+    if (!multiMode.value) return
+    toggleSelect(task)
+}
+
+// @method 复位多选/单行交互状态（抽屉重新打开时回到普通模式，不悬挂选择 UI）
+const resetSelectionUI = (): void => {
+    multiMode.value = false
+    selectedIds.value = new Set()
+    batchPicking.value = false
+    batchPickDate.value = ''
+    pickingId.value = ''
+    pickDate.value = ''
+}
+
+// @watch 抽屉打开 → 复位（普通模式开始；B7 单行行为不回归）
+watch(visible, (open) => {
+    if (open) resetSelectionUI()
+})
+
+// @watch 列表联动收口：非 busy 时把选择收口到当前可见行；排空自动退出多选（空态出口）
+watch(
+    () => props.tasks.map((task) => task.id).join(','),
+    () => {
+        if (props.scheduleBusy) return
+        const visibleIds = new Set(props.tasks.map((task) => task.id))
+        selectedIds.value = new Set([...selectedIds.value].filter((id) => visibleIds.has(id)))
+        if (props.tasks.length === 0) resetSelectionUI()
+    }
+)
+
+// @method 明天的日期键
+const tomorrowDateKey = (): string => dayjs().add(1, 'day').format('YYYY-MM-DD')
+
+// @method 批量执行：串行写回由父级完成；成功后成功项已移出列表，失败项保持选中可原地重试
+const runBatch = async (dateKey: string): Promise<void> => {
+    if (props.scheduleBusy) return
+    const targets = props.tasks.filter((task) => selectedIds.value.has(task.id))
+    if (targets.length === 0) return
+    const result = await props.onBatchScheduleToDay(targets, dateKey)
+    // 成功项移出（数据联动）+ 选择清空；失败项保持选中（重试入口）；抽屉保持打开可连续作业
+    selectedIds.value = new Set(result.failedIds)
+    // 全部安排完（列表排空）→ 空态出口，多选态自动退出、不悬挂空选择 UI
+    if (props.tasks.length === 0) resetSelectionUI()
+    batchPicking.value = false
+    batchPickDate.value = ''
+}
+
+// @method 批量日期面板：确定
+const confirmBatchPick = (): void => {
+    if (!batchPickDate.value) return
+    void runBatch(keyOfIso(batchPickDate.value))
+}
+
+// @method ISO（NueDatePicker 输出）-> YYYY-MM-DD
+const keyOfIso = (iso: string): string => dayjs(iso).format('YYYY-MM-DD')
+
+// —— 普通模式行内安排（B7 单行，双按钮保持不变；M2 才收敛为菜单） ——
 
 // @method 安排任务到某日（dateKey YYYY-MM-DD；成功后任务移出列表由数据联动完成）
 const runSchedule = async (task: TaskViewObject, dateKey: string): Promise<void> => {
@@ -82,9 +188,6 @@ const togglePick = (task: TaskViewObject) => {
     pickingId.value = pickingId.value === task.id ? '' : task.id
     pickDate.value = ''
 }
-
-// @method ISO（NueDatePicker 输出）-> YYYY-MM-DD
-const keyOfIso = (iso: string): string => dayjs(iso).format('YYYY-MM-DD')
 </script>
 
 <template>
@@ -103,19 +206,57 @@ const keyOfIso = (iso: string): string => dayjs(iso).format('YYYY-MM-DD')
                 </nue-text>
             </nue-div>
             <nue-div>
+                <nue-button
+                    v-if="tasks.length"
+                    theme="small,ghost"
+                    class="us-multi-toggle"
+                    :class="{ 'us-multi-toggle--on': multiMode }"
+                    :disabled="scheduleBusy"
+                    title="多选：勾选多个任务批量安排到某日（再次点击退出）"
+                    @click="toggleMultiMode"
+                >
+                    多选
+                </nue-button>
                 <nue-button icon="clear" theme="small,icon" @click="close" />
             </nue-div>
         </template>
         <template #default>
             <template v-if="tasks.length">
                 <div v-for="task in tasks" :key="task.id" class="us-item">
-                    <!-- 主行：勾选 + 名称/上下文 + 行内操作（点击行打开详情） -->
-                    <div class="us-item__row" :class="{ 'is-done': task.state === 'done' }">
-                        <TaskCheckButton
-                            :is-done="task.state === 'done'"
-                            @change="onToggleDone(task)"
-                        />
-                        <div class="us-main" @click="onOpenTask(task.id)">
+                    <!-- 主行 -->
+                    <div
+                        class="us-item__row"
+                        :class="{
+                            'is-done': task.state === 'done',
+                            'is-multi': multiMode,
+                            'is-selected': multiMode && isSelected(task.id),
+                            'is-multi-disabled':
+                                multiMode && (task.state === 'done' || scheduleBusy)
+                        }"
+                        :role="multiMode ? 'checkbox' : undefined"
+                        :aria-checked="multiMode ? isSelected(task.id) : undefined"
+                        @click="onRowClick(task)"
+                    >
+                        <!-- 行首：普通模式=完成勾选（B7）；多选模式=选择勾（done 置灰不可选） -->
+                        <template v-if="multiMode">
+                            <button
+                                type="button"
+                                class="us-select-box"
+                                :class="{ 'is-on': isSelected(task.id) }"
+                                :disabled="task.state === 'done' || scheduleBusy"
+                                :aria-pressed="isSelected(task.id)"
+                                aria-label="选择任务"
+                                @click.stop="toggleSelect(task)"
+                            />
+                        </template>
+                        <template v-else>
+                            <TaskCheckButton
+                                :is-done="task.state === 'done'"
+                                @change="onToggleDone(task)"
+                            />
+                        </template>
+
+                        <div class="us-main" @click="onMainClick(task)">
                             <div class="us-name" :title="task.name">{{ task.name }}</div>
                             <div
                                 v-if="metaOf(task).project || metaOf(task).tags.length"
@@ -140,7 +281,9 @@ const keyOfIso = (iso: string): string => dayjs(iso).format('YYYY-MM-DD')
                                 </span>
                             </div>
                         </div>
-                        <div class="us-actions" @click.stop>
+
+                        <!-- 多选模式隐藏行内安排按钮（语义归到底部操作条） -->
+                        <div v-if="!multiMode" class="us-actions" @click.stop>
                             <nue-button
                                 theme="small"
                                 :disabled="busyId === task.id"
@@ -157,8 +300,8 @@ const keyOfIso = (iso: string): string => dayjs(iso).format('YYYY-MM-DD')
                             </nue-button>
                         </div>
                     </div>
-                    <!-- 展开：日期选择 + 确定 -->
-                    <div v-if="pickingId === task.id" class="us-pick" @click.stop>
+                    <!-- 普通模式：展开日期选择 + 确定 -->
+                    <div v-if="!multiMode && pickingId === task.id" class="us-pick" @click.stop>
                         <nue-date-picker
                             v-model="pickDate"
                             class="us-pick__picker"
@@ -176,7 +319,7 @@ const keyOfIso = (iso: string): string => dayjs(iso).format('YYYY-MM-DD')
                     </div>
                 </div>
             </template>
-            <!-- 空态 -->
+            <!-- 空态（真无/筛选区分出口，B7 不回归） -->
             <nue-div v-else vertical align="center" class="us-empty" gap="4px">
                 <template v-if="emptyHint">
                     <nue-text size="var(--nue-text-sm)" class="us-sub">
@@ -194,11 +337,66 @@ const keyOfIso = (iso: string): string => dayjs(iso).format('YYYY-MM-DD')
                 </template>
             </nue-div>
         </template>
+
+        <!-- 多选模式底部操作条：今天 / 明天 / 选择日期…（日期面板支持过去日期） -->
+        <template #footer>
+            <nue-div v-if="multiMode && tasks.length" vertical class="us-batch" gap="8px">
+                <div v-if="batchPicking" class="us-batch__pick">
+                    <nue-date-picker
+                        v-model="batchPickDate"
+                        class="us-batch__picker"
+                        type="date"
+                        size="small"
+                        placeholder="选择日期"
+                    />
+                    <nue-button
+                        theme="primary,small"
+                        :disabled="!batchPickDate || scheduleBusy"
+                        @click="confirmBatchPick"
+                    >
+                        {{ scheduleBusy ? '安排中…' : '确定' }}
+                    </nue-button>
+                </div>
+                <nue-div align="center" class="us-batch__bar" gap="6px">
+                    <span class="us-batch__count">
+                        {{
+                            scheduleBusy
+                                ? '安排中…'
+                                : selectedCount
+                                  ? `已选 ${selectedCount} 项`
+                                  : '请选择任务'
+                        }}
+                    </span>
+                    <span class="us-batch__spacer" aria-hidden="true"></span>
+                    <nue-button
+                        theme="small"
+                        :disabled="!selectedCount || scheduleBusy"
+                        @click="runBatch(todayDateKey())"
+                    >
+                        今天
+                    </nue-button>
+                    <nue-button
+                        theme="small,ghost"
+                        :disabled="!selectedCount || scheduleBusy"
+                        @click="runBatch(tomorrowDateKey())"
+                    >
+                        明天
+                    </nue-button>
+                    <nue-button
+                        theme="small,ghost"
+                        :disabled="scheduleBusy"
+                        @click="batchPicking = !batchPicking"
+                    >
+                        选择日期…
+                    </nue-button>
+                </nue-div>
+            </nue-div>
+        </template>
     </nue-drawer>
 </template>
 
 <style>
-/* 抽屉外壳样式（NueDrawer 头部经 Teleport 渲染，需全局作用域 + theme 类前缀） */
+/* 抽屉外壳样式（NueDrawer 头部/底部经 Teleport 渲染，需全局作用域 + theme 类前缀） */
 .nue-drawer--unscheduled-drawer {
     .nue-drawer__header {
         display: flex;
@@ -211,6 +409,11 @@ const keyOfIso = (iso: string): string => dayjs(iso).format('YYYY-MM-DD')
 
     .nue-drawer__content {
         padding: var(--nue-padding-df) 0;
+    }
+
+    .nue-drawer__footer {
+        padding: var(--nue-padding-df);
+        border-top: 1px solid var(--nue-divider-color);
     }
 }
 </style>
@@ -227,6 +430,17 @@ const keyOfIso = (iso: string): string => dayjs(iso).format('YYYY-MM-DD')
 
 .us-sub {
     color: color-mix(in srgb, var(--nue-primary-text-color) 52%, var(--nue-primary-color-0));
+}
+
+/* 头部多选开关（激活态高亮；再次点击退出并清空选择） */
+.us-multi-toggle {
+    margin-right: 2px;
+}
+
+.us-multi-toggle--on {
+    background: color-mix(in srgb, var(--nue-primary-text-color) 10%, var(--nue-primary-color-0));
+    color: var(--nue-primary-text-color);
+    font-weight: 600;
 }
 
 .us-item {
@@ -248,12 +462,62 @@ const keyOfIso = (iso: string): string => dayjs(iso).format('YYYY-MM-DD')
     );
 }
 
+/* 多选模式：整行可点切换选择；选中高亮 */
+.us-item__row.is-multi {
+    user-select: none;
+}
+
+.us-item__row.is-selected {
+    background: color-mix(in srgb, var(--nue-primary-text-color) 9%, var(--nue-primary-color-0));
+}
+
+.us-item__row.is-multi-disabled {
+    cursor: default;
+    opacity: 0.55;
+}
+
 .us-item__row.is-done .us-name {
     color: color-mix(in srgb, var(--nue-primary-text-color) 45%, var(--nue-primary-color-0));
     text-decoration: line-through;
 }
 .us-item__row.is-done .us-chip {
     opacity: 0.6;
+}
+
+/* 多选选择勾（普通方块 → 选中填充对勾） */
+.us-select-box {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 1px solid var(--nue-primary-text-color);
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    transition:
+        background 60ms,
+        border-color 60ms;
+}
+
+.us-select-box.is-on {
+    background: var(--nue-primary-text-color);
+    border-color: var(--nue-primary-text-color);
+}
+
+.us-select-box.is-on::after {
+    content: '✓';
+    color: var(--nue-primary-color-0);
+    font-size: 0.75rem;
+    line-height: 1;
+}
+
+.us-select-box:disabled {
+    border-color: color-mix(in srgb, var(--nue-primary-text-color) 30%, var(--nue-primary-color-0));
+    cursor: default;
 }
 
 .us-main {
@@ -327,6 +591,39 @@ const keyOfIso = (iso: string): string => dayjs(iso).format('YYYY-MM-DD')
 .us-pick__picker {
     flex: 1;
     min-width: 0;
+}
+
+/* —— 多选底部操作条 —— */
+.us-batch {
+    width: 100%;
+}
+
+.us-batch__pick {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 2px;
+}
+
+.us-batch__picker {
+    flex: 1;
+    min-width: 0;
+}
+
+.us-batch__bar {
+    width: 100%;
+}
+
+.us-batch__count {
+    flex: none;
+    color: color-mix(in srgb, var(--nue-primary-text-color) 52%, var(--nue-primary-color-0));
+    font-size: var(--nue-text-sm);
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.us-batch__spacer {
+    flex: 1;
 }
 
 .us-empty {
