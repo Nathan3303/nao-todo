@@ -17,7 +17,7 @@
     },
     "build": {
         "appId": "space.nathanao.todo",
-        "productName": "NaoTodo",
+        "productName": "nao-todo",
         "files": [
             "out/renderer/**/*",
             "out/main/index.js",
@@ -32,6 +32,9 @@
                 "zip"
             ]
         },
+        "dmg": {
+            "artifactName": "${productName}-${arch}.${ext}"
+        },
         "win": {
             "icon": "build/icons/win/icon.ico",
             "target": [
@@ -42,7 +45,8 @@
             "oneClick": false,
             "allowToChangeInstallationDirectory": true,
             "createDesktopShortcut": true,
-            "createStartMenuShortcut": true
+            "createStartMenuShortcut": true,
+            "artifactName": "${productName}-${arch}.${ext}"
         },
         "linux": {
             "icon": "build/icons/png",
@@ -55,8 +59,11 @@
             ]
         },
         "deb": {
-            "artifactName": "${productName}_${version}_${arch}.${ext}",
+            "artifactName": "${productName}-${arch}.${ext}",
             "packageName": "nao-todo"
+        },
+        "appImage": {
+            "artifactName": "${productName}-${arch}.${ext}"
         }
     },
     "dependencies": {
