@@ -50,8 +50,8 @@ defineExpose({ switchDisplayAside })
         <nue-div v-if="profile" theme="mainly-aside">
             <!-- 用户头像 -->
             <nue-avatar :src="avatarSrc" icon="user" size="2.5rem" />
-            <!-- 底部导航区（SHELL-01：任务/日历/番茄/搜索 + 独立设置齿轮，均不再经路由跳转） -->
-            <nue-div theme="aside__bottom">
+            <!-- 页面链接（任务/日历/番茄/搜索，头像之下；高亮/番茄指示器照常） -->
+            <nue-div theme="aside__navs">
                 <template v-for="(rl, idx) in routerLinks" :key="idx">
                     <!-- 适配番茄时钟指示器 -->
                     <template v-if="rl.route === '/pomodoro'">
@@ -69,7 +69,9 @@ defineExpose({ switchDisplayAside })
                         </nue-tooltip>
                     </template>
                 </template>
-                <!-- 独立齿轮（设置）按钮：直开对话框 -->
+            </nue-div>
+            <!-- 底部：独立齿轮（设置）按钮，直开对话框（SHELL-01） -->
+            <nue-div theme="aside__bottom">
                 <nue-tooltip :content="t('nav.settings')" placement="right-center" size="small">
                     <button
                         id="AppAsideSettingsGearBtn"
