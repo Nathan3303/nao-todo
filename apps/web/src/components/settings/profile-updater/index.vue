@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SETTINGS_VIEW_CONTEXT_KEY } from '@/views/index/settings/context'
+import { SETTINGS_VIEW_CONTEXT_KEY } from '../context'
 import {
     UserAvatarUpdater,
     UserInfoViewer,

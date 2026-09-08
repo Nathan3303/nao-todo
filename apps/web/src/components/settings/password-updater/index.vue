@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SETTINGS_VIEW_CONTEXT_KEY } from '@/views/index/settings/context'
+import { SETTINGS_VIEW_CONTEXT_KEY } from '../context'
 import { UserPasswordUpdater } from '@nao-todo/presentation-identity'
 import { USER_JWT_LOCALSTORAGE_KEY } from '@nao-todo/domain-identity'
 import { t } from '@nao-todo/shared'

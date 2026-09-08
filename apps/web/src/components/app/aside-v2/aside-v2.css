@@ -16,17 +16,30 @@
         gap: 2rem;
         padding: var(--nue-padding-df);
 
-        .nue-div.nue-div--aside__navs {
-            flex-direction: column;
-            align-items: center;
-            gap: 1.5rem;
-            flex: auto;
-        }
-
         .nue-div.nue-div--aside__bottom {
             flex-direction: column;
             align-items: center;
-            gap: 0.5rem;
+            gap: 1.25rem;
+            margin-top: auto;
+
+            .aside-gear-btn {
+                margin-top: 0.5rem;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 2.25rem;
+                height: 2.25rem;
+                border-radius: var(--nue-primary-radius);
+                border: none;
+                background: transparent;
+                color: var(--nue-primary-color-500);
+                cursor: pointer;
+
+                &:hover {
+                    color: var(--nue-primary-color);
+                    background: var(--nue-primary-color-100);
+                }
+            }
         }
     }
 
