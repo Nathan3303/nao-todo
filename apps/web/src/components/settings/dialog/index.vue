@@ -148,12 +148,19 @@ onUnmounted(unbindSettingsDialogHost)
 }
 
 .sd-tab:hover {
-    background: var(--nue-primary-color-100);
+    background: var(--nue-primary-color-200);
 }
 
+.sd-tab:focus-visible {
+    outline: 1px solid var(--nue-primary-color-600);
+    outline-offset: 1px;
+}
+
+/* 激活态 = NueUI primary 同款色对（由 color-900 按 dark-switch 偏移 + color-100 前景，双主题恒定可见） */
 .sd-tab.is-active {
-    background: var(--nue-primary-color);
-    border-color: var(--nue-primary-color);
-    color: var(--nue-primary-color-0);
+    background: hsl(from var(--nue-primary-color-900) h s calc(l - var(--nue-dark-switch) * 10));
+    border-color: hsl(from var(--nue-primary-color-900) h s calc(l - var(--nue-dark-switch) * 10));
+    color: var(--nue-primary-color-100);
+    font-weight: 600;
 }
 </style>

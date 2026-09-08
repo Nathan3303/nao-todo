@@ -32,17 +32,17 @@
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
-                width: 2.25rem;
-                height: 2.25rem;
-                border-radius: var(--nue-primary-radius);
+                /* 与上部 icon-link 图标同尺寸（route-icon 字号 = text-2xl） */
+                font-size: var(--nue-text-2xl);
+                line-height: 1;
+                padding: 0;
                 border: none;
                 background: transparent;
-                color: var(--nue-primary-color-500);
+                color: var(--nue-primary-color-600);
                 cursor: pointer;
 
                 &:hover {
-                    color: var(--nue-primary-color);
-                    background: var(--nue-primary-color-100);
+                    color: var(--nue-primary-color-900);
                 }
             }
         }
