@@ -37,7 +37,7 @@ const handleSignOut = async () => {
         </nue-header>
         <nue-main theme="password-updater">
             <nue-content fill>
-                <nue-div vertical style="padding: 1rem">
+                <nue-div vertical>
                     <user-password-updater
                         style="max-width: 32rem"
                         :user-use-case="userUseCase"

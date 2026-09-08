@@ -76,19 +76,19 @@ onUnmounted(unbindSettingsDialogHost)
     <nue-dialog v-model="open" theme="settings" :title="t('nav.settings')">
         <!-- 三区切换（原 settings 页面级左栏导航收敛为对话框内分区条） -->
         <div class="sd-tabs" role="tablist" aria-label="设置分区">
-            <button
+            <nue-button
                 v-for="section in sections"
                 :key="section.key"
-                type="button"
                 class="sd-tab"
                 :class="{ 'is-active': section.key === activeKey }"
                 role="tab"
                 :aria-selected="section.key === activeKey"
                 @click="activeKey = section.key"
+                :icon="section.icon"
+                theme="ghost"
             >
-                <nue-icon :name="section.icon" />
-                <span>{{ t(section.titleKey) }}</span>
-            </button>
+                {{ t(section.titleKey) }}
+            </nue-button>
         </div>
         <component :is="activeSection.component" :key="activeKey" />
     </nue-dialog>
