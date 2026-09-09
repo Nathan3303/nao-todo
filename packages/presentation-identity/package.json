@@ -1,7 +1,7 @@
 {
     "name": "@nao-todo/presentation-identity",
     "description": "Presentation layer with Vue 3 for domain identity",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "author": "Nathan Lee",
     "main": "index.ts",
     "files": [
