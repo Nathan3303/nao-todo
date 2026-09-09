@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { PasswordRuleHint, RuleHint, t, unwrapError } from '@nao-todo/shared'
-import { NueMessage } from 'nue-ui'
-import { computed, reactive, ref } from 'vue'
+import { NueInput, NueMessage } from 'nue-ui'
+import { computed, onMounted, reactive, ref } from 'vue'
 import type {
     UserPasswordUpdaterEmits,
     UserPasswordUpdaterFormData,
@@ -26,6 +26,18 @@ const submitButtonDisabled = computed(() => {
         formData.confirmNewPassword.length < 8 ||
         formData.newPassword !== formData.confirmNewPassword
     )
+})
+
+// @autocomplete 改密表单语义隔离（防浏览器凭据自动填充误判为登录表单，见 SHELL-01-DEF-01）：
+// 旧密码 = current-password；新密码/确认 = new-password。nue-input 不透传 autocomplete
+// 至内层 input，经暴露的 innerInputRef 设于真实输入元素。
+const oldPasswordInput = ref<InstanceType<typeof NueInput>>()
+const newPasswordInput = ref<InstanceType<typeof NueInput>>()
+const confirmPasswordInput = ref<InstanceType<typeof NueInput>>()
+onMounted(() => {
+    oldPasswordInput.value?.innerInputRef?.setAttribute('autocomplete', 'current-password')
+    newPasswordInput.value?.innerInputRef?.setAttribute('autocomplete', 'new-password')
+    confirmPasswordInput.value?.innerInputRef?.setAttribute('autocomplete', 'new-password')
 })
 
 const submit = async () => {
@@ -57,6 +69,7 @@ const submit = async () => {
                         <nue-div theme="form-item">
                             <nue-text theme="label">{{ t('settings.passwordOld') }}</nue-text>
                             <nue-input
+                                ref="oldPasswordInput"
                                 v-model="formData.oldPassword"
                                 allow-show-password
                                 clearable
@@ -69,6 +82,7 @@ const submit = async () => {
                         <nue-div theme="form-item">
                             <nue-text theme="label">{{ t('settings.passwordNew') }}</nue-text>
                             <nue-input
+                                ref="newPasswordInput"
                                 v-model="formData.newPassword"
                                 allow-show-password
                                 clearable
@@ -78,6 +92,7 @@ const submit = async () => {
                             />
                             <password-rule-hint />
                             <nue-input
+                                ref="confirmPasswordInput"
                                 v-model="formData.confirmNewPassword"
                                 allow-show-password
                                 clearable
