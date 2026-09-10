@@ -10,10 +10,11 @@ import type { TaskDetailsViewObject } from './types'
  *              - `startAt`/`endAt` **一律显式给值（含 `null`）**，禁省略为 `undefined`（C-T3：
  *                `dayjs(undefined)` = 当前时刻 ⇒ 未来 `startAt` 会被误判 `START_AFTER_END`）
  *              - 父 VO 不可得 ⇒ 未安排 + 清单缺失，不抛错（C-T4，理论上不可达）
+ *              - 继承规则（endAt 为锚）：`endAt` 有效 ⇒ **一定继承** `endAt`，`startAt` 仅在
+ *                "有效且 `start ≤ end`" 时继承，否则 `startAt = null`（**不得因 `startAt` 缺失/无效/倒置
+ *                而丢弃有效的 `endAt`**）；`endAt` 缺失或无效 ⇒ 两者皆 `null`（未安排）
  *              - **不调用**领域层 `CreateTaskValueObject.fillStartAt()`（该方法是全仓零调用点的死方法）：
  *                仅 `endAt` 场景下 `startAt` 就是 `null`，与既有 endAt-only 创建行为一致
- *              - 继承规则：两者皆有效且 `start ≤ end` ⇒ 逐字拷贝两者；仅 `endAt` ⇒ 拷贝 `endAt` 且
- *                `startAt = null`；仅 `startAt` / 皆无 / 无效 / `start > end` ⇒ 两者皆 `null`（未安排）
  * @param parent 父任务详情视图对象（未就绪为 null）
  * @param name 子任务名称
  * @param parentTaskId 父任务 ID
@@ -33,18 +34,18 @@ export const resolveSubTaskDraft = (
     let startAt: string | null = null
     let endAt: string | null = null
     if (parentEndAt && dayjs(parentEndAt).isValid()) {
-        if (!parentStartAt) {
-            // 仅 endAt ⇒ 拷贝 endAt；startAt 保持 null（不派生）
-            endAt = parentEndAt
-        } else if (
+        // endAt 有效 ⇒ **一定继承**（本域锚点：未安排谓词/日历格子/逾期判定均以 endAt 为准）；
+        // 不得因 startAt 缺失/无效/倒置而丢弃有效的 endAt
+        endAt = parentEndAt
+        // startAt 仅在「有效且 start ≤ end」时继承；其余（缺失 / 无效 / 倒置）置 null
+        if (
+            parentStartAt &&
             dayjs(parentStartAt).isValid() &&
             !dayjs(parentStartAt).isAfter(dayjs(parentEndAt))
         ) {
-            // 两者皆有效且 start ≤ end ⇒ 逐字拷贝两者（值快照，不做任何重算）
+            // 两者皆有效且 start ≤ end ⇒ 逐字拷贝 startAt（值快照，不做任何重算）
             startAt = parentStartAt
-            endAt = parentEndAt
         }
-        // 其余（startAt 无效 / start > end）⇒ 保持未安排（两者皆 null）
     }
 
     return {

@@ -110,8 +110,8 @@ describe('useSubTasks.createSubTask - TASK-01 继承父任务清单与时间窗'
         expect(Object.hasOwn(captured.payload ?? {}, 'startAt')).toBe(true)
     })
 
-    it('U3：未安排 / 仅 startAt / start > end ⇒ 子任务两者皆 null', async () => {
-        // 皆无
+    it('U3：endAt 缺失/无效 ⇒ 两者皆 null；startAt 无效/倒置 ⇒ 保留有效 endAt 仅 startAt 置 null', async () => {
+        // 皆无 ⇒ 未安排
         const none = await setup(ref(makeParentTask()))
         await none.api.createSubTask('子任务')
         expect(none.captured.payload?.startAt).toBeNull()
@@ -123,7 +123,21 @@ describe('useSubTasks.createSubTask - TASK-01 继承父任务清单与时间窗'
         expect(onlyStart.captured.payload?.startAt).toBeNull()
         expect(onlyStart.captured.payload?.endAt).toBeNull()
 
-        // start > end（矛盾窗口 ⇒ 未安排，避免"有开始却半窗口"矛盾态）
+        // endAt 无效 ⇒ 未安排
+        const invalidEnd = await setup(ref(makeParentTask({ endAt: 'not-a-date' })))
+        await invalidEnd.api.createSubTask('子任务')
+        expect(invalidEnd.captured.payload?.startAt).toBeNull()
+        expect(invalidEnd.captured.payload?.endAt).toBeNull()
+
+        // 回归线：无效 startAt + 有效 endAt ⇒ **保留 endAt**，仅 startAt 置 null
+        const invalidStart = await setup(
+            ref(makeParentTask({ startAt: 'not-a-date', endAt: '2026-09-11T00:00:00.000Z' }))
+        )
+        await invalidStart.api.createSubTask('子任务')
+        expect(invalidStart.captured.payload?.endAt).toBe('2026-09-11T00:00:00.000Z')
+        expect(invalidStart.captured.payload?.startAt).toBeNull()
+
+        // 回归线：start > end + 有效 endAt ⇒ **保留 endAt**，仅 startAt 置 null
         const inverted = await setup(
             ref(
                 makeParentTask({
@@ -133,8 +147,8 @@ describe('useSubTasks.createSubTask - TASK-01 继承父任务清单与时间窗'
             )
         )
         await inverted.api.createSubTask('子任务')
+        expect(inverted.captured.payload?.endAt).toBe('2026-09-11T00:00:00.000Z')
         expect(inverted.captured.payload?.startAt).toBeNull()
-        expect(inverted.captured.payload?.endAt).toBeNull()
     })
 
     it("U4：projectId 空（'' / null）⇒ 收集箱语义，且 payload 显式 null 而非 undefined", async () => {
