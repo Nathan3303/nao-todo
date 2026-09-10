@@ -54,12 +54,6 @@ const useApp = () => {
             icon: 'ntd-search',
             route: '/search',
             routeName: 'search'
-        },
-        {
-            name: t('nav.settings'),
-            icon: 'ntd-settings',
-            route: '/settings',
-            routeName: 'settings'
         }
     ]
 

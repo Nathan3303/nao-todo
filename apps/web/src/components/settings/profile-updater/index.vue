@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SETTINGS_VIEW_CONTEXT_KEY } from '@/views/index/settings/context'
+import { SETTINGS_VIEW_CONTEXT_KEY } from '../context'
 import {
     UserAvatarUpdater,
     UserInfoViewer,
@@ -21,7 +21,7 @@ defineOptions({ name: 'SettingsProfileUpdater' })
 const router = useRouter()
 const { isDisplayAside, switchDisplayAside, userUseCase, authUseCase, dialogManager } =
     inject(SETTINGS_VIEW_CONTEXT_KEY)!
-const { profile } = storeToRefs(useUserStore())
+const { profile, userToken } = storeToRefs(useUserStore())
 
 const handleSignOut = async () => {
     const [isByCancel] = await NueConfirm({
@@ -32,7 +32,7 @@ const handleSignOut = async () => {
     })
     if (isByCancel) return
 
-    const err = await authUseCase.signOut()
+    const err = await authUseCase.signOut(userToken.value)
     if (err !== null) {
         NueMessage.error('退出登录失败' + `(${unwrapError(err)})`)
         return
@@ -59,8 +59,8 @@ const handleDeactivated = async () => {
         </nue-header>
         <nue-main>
             <nue-content fill>
-                <nue-div vertical style="padding: 2rem 1rem">
-                    <user-avatar-updater :user-use-case="userUseCase">
+                <nue-div vertical>
+                    <user-avatar-updater :user-use-case="userUseCase" style="padding: 1rem">
                         <nue-div vertical flex="1" align="start">
                             <nue-div v-if="profile" vertical gap="0.25rem">
                                 <nue-text size="1.25rem">{{ profile.nickname }}</nue-text>

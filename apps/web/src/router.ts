@@ -6,8 +6,7 @@ const LAST_VISITED_ROUTE_KEY = 'LAST_VISITED_ROUTE'
 
 const SECTION_LAST_ROUTE_MAP: Record<string, string> = {
     tasks: 'LAST_TASKS_ROUTE',
-    calendar: 'LAST_CALENDAR_ROUTE',
-    settings: 'LAST_SETTINGS_ROUTE'
+    calendar: 'LAST_CALENDAR_ROUTE'
 }
 
 const router = createRouter({

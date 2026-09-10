@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SETTINGS_VIEW_CONTEXT_KEY } from '@/views/index/settings/context'
+import { SETTINGS_VIEW_CONTEXT_KEY } from '../context'
 import { UserPasswordUpdater } from '@nao-todo/presentation-identity'
 import { USER_JWT_LOCALSTORAGE_KEY } from '@nao-todo/domain-identity'
 import { t } from '@nao-todo/shared'
@@ -37,7 +37,7 @@ const handleSignOut = async () => {
         </nue-header>
         <nue-main theme="password-updater">
             <nue-content fill>
-                <nue-div vertical style="padding: 1rem">
+                <nue-div vertical>
                     <user-password-updater
                         style="max-width: 32rem"
                         :user-use-case="userUseCase"

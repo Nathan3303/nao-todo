@@ -1,3 +1,4 @@
+import { openSettingsDialog } from '@/components/settings/dialog/state'
 import { registry } from './instance'
 
 /**
@@ -45,12 +46,13 @@ export function registerAppCommands() {
     registry.register({
         id: 'app.settings.open',
         label: '打开设置',
-        description: '跳转到设置页面',
+        description: '打开设置对话框',
         group: '导航',
         icon: 'ntd-settings',
         keyboard: { keys: '$mod+,', scope: 'global' },
         handler: () => {
-            console.info('[Command] 打开设置 — 待对接路由')
+            // SHELL-01：设置对话框化——不再路由跳转；宿主（桌面侧栏区）未在屏时静默无操作
+            openSettingsDialog()
         }
     })
 }
