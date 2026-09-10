@@ -26,7 +26,14 @@
         .nue-div.nue-div--aside__bottom {
             flex-direction: column;
             align-items: center;
-            gap: 0.5rem;
+            gap: 1.5rem;
+
+            /* SHELL-02 注入点：display:contents 自身不成为 flex 项，
+               空注入点不贡献 gap（web 端侧栏零可见变化），
+               注入内容直接作为齿轮上方的一个 flex 项参与布局 */
+            .aside-rail-bottom-slot {
+                display: contents;
+            }
 
             .aside-gear-btn {
                 display: inline-flex;

@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { PomodoroIndicator } from '@nao-todo/presentation/pomodoro'
 import { NaoRouterLink } from '@nao-todo/shared'
+import { UserInitialAvatar } from '@nao-todo/presentation-identity'
 import { computed } from 'vue'
 import { useAppAsideV2 } from './use-aside'
 
 defineOptions({ name: 'AppAsideV2Drawer' })
 
 // @composable Use app aside v2
-const { routerLinks, profile, avatarSrc, isDisplayAside } = useAppAsideV2()
+const { routerLinks, profile, avatarSrc, displayNickname, identityLabel, isDisplayAside } =
+    useAppAsideV2()
 
 // @computed isDisplayAside proxy
 const visible = computed({
@@ -19,10 +21,16 @@ const visible = computed({
 <template>
     <nue-drawer v-model="visible" open-from="left" theme="app-aside-v2" allow-close-by-overlay>
         <nue-container id="AppAsideContainer">
-            <nue-header v-if="profile">
-                <nue-div align="center">
-                    <nue-avatar :src="avatarSrc" icon="user" size="2rem" />
-                    <nue-text>{{ profile.nickname }}</nue-text>
+            <!-- SHELL-03 C-05：header 身份区不阻塞抽屉（去 profile 门，离线降级为占位；无昵称则不显示文字行） -->
+            <nue-header>
+                <nue-div align="center" gap="0.5rem">
+                    <user-initial-avatar
+                        :nickname="displayNickname"
+                        :src="avatarSrc"
+                        :label="identityLabel"
+                        size="2rem"
+                    />
+                    <nue-text v-if="displayNickname">{{ displayNickname }}</nue-text>
                 </nue-div>
             </nue-header>
             <nue-main>
