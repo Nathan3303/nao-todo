@@ -1,5 +1,6 @@
 import dayjs from 'dayjs'
 import { BUSINESS_TABLES, localDatabase } from '../db/local-database'
+import { clearCachedNickname } from '../session/profile-cache'
 
 /**
  * 注销反悔期天数（与后端一致：注销后 7 天内可恢复，到期彻底删除）
@@ -64,6 +65,8 @@ export class DeletionService {
                 await localDatabase.syncCursor.where('userId').equals(userId).delete()
             }
         )
+        // SHELL-03 C-16：注销清理必须显式清离线身份缓存（本方法原仅清 Dexie，不碰 localStorage）
+        clearCachedNickname()
         return true
     }
 }

@@ -6,6 +6,7 @@ import {
     type UpdatePasswordViewObject
 } from '@nao-todo/domain-identity'
 import {
+    cacheNickname,
     cryptoService,
     deletionService,
     localSession,
@@ -26,6 +27,23 @@ export const useUserUseCase = (store: UserStore) => {
     const userRepo = newUserRepository(requester)
     const userConfigRepo = newUserConfigRepository(requester)
     const useCase = new UserUseCase(userRepo, userConfigRepo, store)
+
+    // SHELL-03 C-21：在线成功取得昵称时写离线身份缓存（装配层单点；同文件已有 deactive/restore 先例）
+    const originalLoadUserProfile = useCase.loadUserProfile.bind(useCase)
+    const originalUpdateNickname = useCase.updateNickname.bind(useCase)
+
+    useCase.loadUserProfile = async () => {
+        const result = await originalLoadUserProfile()
+        const [profile, err] = result
+        if (err === null && profile) cacheNickname(profile.nickname ?? '')
+        return result
+    }
+
+    useCase.updateNickname = async (updateUserNicknameViewObject) => {
+        const err = await originalUpdateNickname(updateUserNicknameViewObject)
+        if (err === null) cacheNickname(updateUserNicknameViewObject.nickname ?? '')
+        return err
+    }
 
     const originalDeactive = useCase.deactive.bind(useCase)
     const originalRestore = useCase.restore.bind(useCase)

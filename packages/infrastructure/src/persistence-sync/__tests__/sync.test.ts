@@ -677,3 +677,151 @@ describe('SyncService', () => {
         expect(record!.attachments).toEqual([])
     })
 })
+
+describe('SyncService 运行级语义（SHELL-03：DEF-SYNC-01/02/03、BC-3a/b/c、BC-6）', () => {
+    beforeEach(async () => {
+        await setup()
+    })
+
+    /** 造一条脏队列项（真实仓储写入 → markDirty），返回队列项 id */
+    const seedDirtyTask = async (name: string): Promise<string> => {
+        const repo = newLocalTaskRepository()
+        const [task, err] = await repo.create(
+            new CreateTaskValueObject(
+                null,
+                null,
+                name,
+                '',
+                'todo',
+                'medium',
+                null,
+                null,
+                'project-1',
+                [],
+                null,
+                'none',
+                null,
+                []
+            )
+        )
+        expect(err).toBeNull()
+        const taskId = (task as { id: string }).id
+        await syncTracker.markDirty('tasks', taskId, 'upsert', new Date().toISOString())
+        const [item] = await syncTracker.listDirty()
+        return item!.id
+    }
+
+    /** 断网（归一化网络错误）：pull 与 push 均失败（直连响应形状，同既有测试） */
+    const networkFailRequester = (): Requester =>
+        ({
+            post: async (url: string) =>
+                url === '/sync/pull'
+                    ? { code: 'ERR_NETWORK', data: { data: null } }
+                    : { code: 'ERR_NETWORK' },
+            get: async () => ({ data: {} }),
+            put: async () => ({ data: {} }),
+            delete: async () => ({ data: {} })
+        }) as unknown as Requester
+
+    it('BC-3a/DEF-SYNC-01：断网 + 脏队列为空 ⇒ 拉取错误不被末阶段清除（start 返回 ok=false）', async () => {
+        const before = syncStatus.get().lastSyncAt
+        const service = new SyncService(networkFailRequester())
+        const result = await service.start()
+        expect(result.ok).toBe(false)
+        expect(result.lastError).toBe('拉取失败：网络错误')
+        expect(result.phase).toBe('pull')
+        const state = syncStatus.get()
+        expect(state.syncing).toBe(false)
+        expect(state.lastError).toBe('拉取失败：网络错误')
+        // DEF-SYNC-03/C-11：失败运行不推进 lastSyncAt
+        expect(state.lastSyncAt).toBe(before)
+    })
+
+    it('BC-3b：两阶段皆失败 ⇒ lastError 取首个（拉取）且 errorCount≥2', async () => {
+        await seedDirtyTask('离线任务')
+        const service = new SyncService(networkFailRequester())
+        const result = await service.start()
+        expect(result.ok).toBe(false)
+        expect(result.lastError).toBe('拉取失败：网络错误')
+        expect(result.phase).toBe('pull')
+        expect(result.errors.length).toBe(2)
+        const state = syncStatus.get()
+        expect(state.errorCount).toBe(2)
+        // 推送失败语义不变：未确认/失败项 markFailed 生效
+        expect(state.failedCount).toBe(1)
+    })
+
+    it('BC-3c：仅推送失败 ⇒ lastError 为推送文案（现状语义不回退）', async () => {
+        await seedDirtyTask('仅推送失败')
+        const service = new SyncService({
+            post: async (url: string) =>
+                url === '/sync/pull'
+                    ? { data: { data: { data: {} } }, serverTime: Date.now() }
+                    : { code: 'ERR_NETWORK' },
+            get: async () => ({ data: {} }),
+            put: async () => ({ data: {} }),
+            delete: async () => ({ data: {} })
+        } as unknown as Requester)
+        const result = await service.start()
+        expect(result.ok).toBe(false)
+        expect(result.lastError).toBe('推送失败：网络错误')
+        expect(result.phase).toBe('push')
+        expect(syncStatus.get().syncing).toBe(false)
+    })
+
+    it('BC-6/DEF-SYNC-02：全部队列项重试超限 ⇒ 运行必终结且 ok=false（不得假成功）', async () => {
+        const queueId = await seedDirtyTask('超限任务')
+        for (let i = 0; i < 5; i += 1) await syncTracker.markFailed(queueId)
+        const service = new SyncService(
+            mockRequester((url: string) =>
+                url === '/sync/pull'
+                    ? { data: { data: {} }, serverTime: Date.now() }
+                    : { code: 'ERR_NETWORK' }
+            )
+        )
+        const pushResult = await service.pushAll()
+        expect(pushResult.ok).toBe(false)
+        expect(pushResult.lastError).toBe('推送失败：重试次数已达上限')
+        expect(syncStatus.get().syncing).toBe(false)
+        expect(await syncTracker.countDirty()).toBe(1)
+        // 冷启动路径（start）同样不得假成功
+        const startResult = await service.start()
+        expect(startResult.ok).toBe(false)
+        expect(syncStatus.get().syncing).toBe(false)
+    })
+
+    it('Q3：推送响应未确认实体 ⇒ 运行失败且同阶段只上报一次（队列语义不变）', async () => {
+        await seedDirtyTask('未确认A')
+        await seedDirtyTask('未确认B')
+        const service = new SyncService(
+            mockRequester((url: string) =>
+                url === '/sync/pull'
+                    ? { data: { data: {} }, serverTime: Date.now() }
+                    : { data: { results: [] }, serverTime: Date.now() }
+            )
+        )
+        const result = await service.pushAll()
+        expect(result.ok).toBe(false)
+        expect(result.lastError).toBe('推送失败：部分数据未确认')
+        expect(result.errors.length).toBe(1)
+        expect(syncStatus.get().errorCount).toBe(1)
+        // 未确认项仍保留在队列且 retryCount 自增（markFailed 语义不变）
+        const dirty = await syncTracker.listDirty()
+        expect(dirty.length).toBe(2)
+        expect(dirty.every((item) => item.retryCount === 1)).toBe(true)
+    })
+
+    it('C-11：成功运行推进 lastSyncAt 且 counts 在运行结束时刷新', async () => {
+        const service = new SyncService(
+            mockRequester(() => ({ data: { data: {} }, serverTime: Date.now() }))
+        )
+        const before = syncStatus.get().lastSyncAt
+        const result = await service.start()
+        expect(result.ok).toBe(true)
+        expect(result.lastError).toBeNull()
+        expect(result.phase).toBeNull()
+        const after = syncStatus.get().lastSyncAt
+        expect(after).toBeTruthy()
+        expect(after).not.toBe(before)
+    })
+})
