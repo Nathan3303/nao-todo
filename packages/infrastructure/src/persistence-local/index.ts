@@ -1,6 +1,7 @@
 export * from './crypto/crypto-service'
 export * from './db/local-database'
 export * from './session/local-session'
+export * from './session/profile-cache'
 export * from './deletion/deletion-service'
 export * from './repos/project-repo-impl'
 export * from './repos/project-preference-repo-impl'

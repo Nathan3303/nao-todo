@@ -37,6 +37,21 @@ const enUS: LocaleMessages = {
     'nav.search': 'Search',
     'nav.pomodoro': 'Pomodoro',
 
+    // Sync status (desktop rail, SHELL-02)
+    'sync.title': 'Sync',
+    'sync.syncing': 'Syncing…',
+    'sync.neverSynced': 'Never synced',
+    'sync.lastSyncAt': 'Last sync {time}',
+    'sync.pending': '{count} pending',
+    'sync.failed': '{count} failed',
+    'sync.syncNow': 'Sync now',
+
+    // Offline identity / gates (SHELL-03)
+    'identity.offline': 'Offline',
+    'identity.offlineName': '{name} (offline)',
+    'gate.enterOffline': 'Enter offline',
+    'gate.signInAgain': 'Sign in again',
+
     // Common
     'common.cancel': 'Cancel',
     'common.confirm': 'Confirm',

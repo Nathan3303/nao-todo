@@ -1,6 +1,6 @@
 {
     "name": "@nao-todo/desktopapp",
-    "version": "1.0.0",
+    "version": "1.4.0",
     "description": "Desktop version of NaoTodo",
     "author": "Nathan Lee <Lee1928@outlook.com>",
     "license": "MIT",
@@ -33,7 +33,7 @@
             ]
         },
         "dmg": {
-            "artifactName": "${productName}-${arch}.${ext}"
+            "artifactName": "${productName}-${version}-${arch}.${ext}"
         },
         "win": {
             "icon": "build/icons/win/icon.ico",
@@ -46,7 +46,7 @@
             "allowToChangeInstallationDirectory": true,
             "createDesktopShortcut": true,
             "createStartMenuShortcut": true,
-            "artifactName": "${productName}-${arch}.${ext}"
+            "artifactName": "${productName}-${version}-${arch}.${ext}"
         },
         "linux": {
             "icon": "build/icons/png",
@@ -59,11 +59,11 @@
             ]
         },
         "deb": {
-            "artifactName": "${productName}-${arch}.${ext}",
+            "artifactName": "${productName}-${version}-${arch}.${ext}",
             "packageName": "nao-todo"
         },
         "appImage": {
-            "artifactName": "${productName}-${arch}.${ext}"
+            "artifactName": "${productName}-${version}-${arch}.${ext}"
         }
     },
     "dependencies": {

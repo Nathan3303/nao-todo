@@ -36,6 +36,21 @@ const zhCN: LocaleMessages = {
     'nav.search': '搜索',
     'nav.pomodoro': '番茄钟',
 
+    // Sync status（桌面端侧栏轨道，SHELL-02）
+    'sync.title': '同步',
+    'sync.syncing': '同步中…',
+    'sync.neverSynced': '从未同步',
+    'sync.lastSyncAt': '上次同步 {time}',
+    'sync.pending': '待推送 {count}',
+    'sync.failed': '失败 {count}',
+    'sync.syncNow': '立即同步',
+
+    // Offline identity / gates（SHELL-03）
+    'identity.offline': '离线',
+    'identity.offlineName': '{name}（离线）',
+    'gate.enterOffline': '离线进入',
+    'gate.signInAgain': '重新登录',
+
     // Common
     'common.cancel': '取消',
     'common.confirm': '确认',

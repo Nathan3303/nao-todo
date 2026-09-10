@@ -2,13 +2,15 @@
 import { useAppAsideV2 } from './use-aside'
 import { PomodoroIndicator } from '@nao-todo/presentation/pomodoro'
 import { NaoRouterLink } from '@nao-todo/shared'
+import { UserInitialAvatar } from '@nao-todo/presentation-identity'
 import {
     AppSettingsDialog,
     open as settingsDialogOpen,
     openSettingsDialog
 } from '@/components/settings/dialog'
+import { bindRailBottomHost, unbindRailBottomHost } from './rail-host'
 import { t } from '@nao-todo/shared'
-import { nextTick, watch } from 'vue'
+import { nextTick, onBeforeUnmount, watch, type ComponentPublicInstance } from 'vue'
 
 defineOptions({ name: 'AppAsideV2' })
 
@@ -17,6 +19,8 @@ const {
     routerLinks,
     profile,
     avatarSrc,
+    displayNickname,
+    identityLabel,
     isDisplayAside,
     switchDisplayAside,
     asideWidth,
@@ -34,6 +38,14 @@ watch(settingsDialogOpen, (visible) => {
     })
 })
 
+// —— SHELL-02 轨道底部注入点（desktop 同步状态组件的 Teleport 宿主）——
+// 函数 ref 用稳定引用（避免每次重渲染先置空再置位引发消费侧反复卸载）；卸载兜底清空。
+const setRailBottomSlot = (el: Element | ComponentPublicInstance | null): void => {
+    if (el instanceof HTMLElement) bindRailBottomHost(el)
+    else unbindRailBottomHost()
+}
+onBeforeUnmount(unbindRailBottomHost)
+
 // @export
 defineExpose({ switchDisplayAside })
 </script>
@@ -46,10 +58,15 @@ defineExpose({ switchDisplayAside })
         :min-width="minWidth"
         :max-width="maxWidth"
     >
-        <!-- 主要侧栏 -->
-        <nue-div v-if="profile" theme="mainly-aside">
-            <!-- 用户头像 -->
-            <nue-avatar :src="avatarSrc" icon="user" size="2.5rem" />
+        <!-- 主要侧栏（SHELL-03 C-05：去 `v-if="profile"` ⇒ 离线时轨道常驻，导航/齿轮/SHELL-02 注入点照常） -->
+        <nue-div theme="mainly-aside">
+            <!-- 用户头像（离线降级为缓存昵称首字母 / 通用图标占位，仅装饰不影响渲染条件） -->
+            <user-initial-avatar
+                :nickname="displayNickname"
+                :src="avatarSrc"
+                :label="identityLabel"
+                size="2.5rem"
+            />
             <!-- 页面链接（任务/日历/番茄/搜索，头像之下；高亮/番茄指示器照常） -->
             <nue-div theme="aside__navs">
                 <template v-for="(rl, idx) in routerLinks" :key="idx">
@@ -70,8 +87,13 @@ defineExpose({ switchDisplayAside })
                     </template>
                 </template>
             </nue-div>
-            <!-- 底部：独立齿轮（设置）按钮，直开对话框（SHELL-01） -->
+            <!-- 底部：轨道底部注入点（SHELL-02 同步状态，恒在齿轮上方）+ 独立齿轮（设置）按钮，直开对话框（SHELL-01） -->
             <nue-div theme="aside__bottom">
+                <div
+                    id="AppAsideRailBottomSlot"
+                    :ref="setRailBottomSlot"
+                    class="aside-rail-bottom-slot"
+                />
                 <nue-tooltip :content="t('nav.settings')" placement="right-center" size="small">
                     <button
                         id="AppAsideSettingsGearBtn"
@@ -84,7 +106,6 @@ defineExpose({ switchDisplayAside })
                         <nue-icon name="ntd-settings" />
                     </button>
                 </nue-tooltip>
-                <slot name="bottom" />
             </nue-div>
         </nue-div>
         <!-- 子视图侧栏 -->

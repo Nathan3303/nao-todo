@@ -38,7 +38,7 @@ import {
 import { pomodoroRecordRes2Entity, pomodoroRes2Entity } from '../persistence-go/pomodoro/converters'
 import { setServerTimeOffset } from './sync-config'
 import { syncTracker } from './sync-tracker'
-import { syncStatus } from './sync-status'
+import { syncStatus, type SyncPhase, type SyncRunResult } from './sync-status'
 import { isNotDeleted } from '../persistence-local/utils'
 
 // ---------------------------------------------------------------------------
@@ -225,6 +225,19 @@ const PUSH_DEBOUNCE_MS = 2000
 /** 单实体推送失败重试上限（超限暂停推送，防离线无限重试） */
 const MAX_PUSH_RETRY = 5
 
+// ---------------------------------------------------------------------------
+// 错误文案（C-12 家族约束：仅三种前缀；禁拼接原始异常/URL）
+// ---------------------------------------------------------------------------
+const ERR_PULL_EXPIRED = '拉取失败：登录已过期，请重新登录'
+const ERR_PULL_NETWORK = '拉取失败：网络错误'
+const ERR_PULL_DATA = '拉取失败：数据异常'
+const ERR_PUSH_EXPIRED = '推送失败：登录已过期，请重新登录'
+const ERR_PUSH_NETWORK = '推送失败：网络错误'
+const ERR_PUSH_DATA = '推送失败：数据异常'
+const ERR_PUSH_UNCONFIRMED = '推送失败：部分数据未确认'
+const ERR_PUSH_RETRY_EXCEEDED = '推送失败：重试次数已达上限'
+const ERR_SESSION_EXPIRED = '登录已过期，请重新登录'
+
 export class SyncService {
     /** 变更后 2s 防抖推送（同实体重复写合并为最新，见 data-sync-plan.md §4.2） */
     private pushTimer: ReturnType<typeof setTimeout> | null = null
@@ -306,37 +319,64 @@ export class SyncService {
 
     /**
      * 启动同步（解锁后调用，先拉后推；经串行队列与防抖/手动同步互斥）
-     * @description 注销反悔期内跳过（反悔期内不同步，见 data-sync-plan.md §6）
+     * @description 注销反悔期内跳过（反悔期内不同步，见 data-sync-plan.md §6）；
+     *              单运行边界，返回值供门判成败（C-08/C-10）
      */
-    async start(): Promise<void> {
-        return this.enqueue(async () => {
-            const userId = this.currentUserId()
-            if (!userId) {
-                // 无会话：标记同步结束（空计数），避免调用方（如 InitialSyncGate）永久停留在同步中
-                await this.refreshCounts()
-                return
-            }
-            // 注销反悔期：deletionSchedules 有调度记录则跳过启动
-            const schedule = await localDatabase.deletionSchedules.get(userId)
-            if (schedule) {
-                await this.refreshCounts()
-                return
-            }
-            await this.pullAllInner()
-            await this.pushAllInner()
-        })
+    async start(): Promise<SyncRunResult> {
+        return this.enqueue(() =>
+            this.runFull(async () => {
+                const userId = this.currentUserId()
+                if (!userId) return
+                // 注销反悔期：deletionSchedules 有调度记录则跳过启动
+                const schedule = await localDatabase.deletionSchedules.get(userId)
+                if (schedule) return
+                await this.pullAllInner()
+                await this.pushAllInner()
+            })
+        )
     }
 
     /** 拉取全部同步表（每表 keyset 游标增量，LWW 冲突判定） */
-    async pullAll(): Promise<void> {
-        return this.enqueue(() => this.pullAllInner())
+    async pullAll(): Promise<SyncRunResult> {
+        return this.enqueue(() => this.runFull(() => this.pullAllInner(), 'pull'))
+    }
+
+    /**
+     * 单运行边界：beginRun → 阶段执行 → 必达 endRun（C-08：禁任何 return/throw 绕过结束）
+     * @param inner 阶段主体（网络/业务错误已在阶段内捕获）
+     * @param phase 运行入口阶段（意外异常时的归因阶段）
+     */
+    private async runFull(
+        inner: () => Promise<void>,
+        phase: SyncPhase = 'pull'
+    ): Promise<SyncRunResult> {
+        syncStatus.beginRun(phase)
+        try {
+            await inner()
+        } catch (err) {
+            // 不可达防御：阶段内已捕获网络/业务错误；此处兜底存储/加解密等意外异常，
+            // 仍须结束运行（否则 syncing 永久 true —— DEF-SYNC-02 同族）；
+            // 文案归因为「数据异常」（PM 裁定：不得复用“网络错误”以免误导排查）
+            console.error('[sync] 同步运行未预期异常', err)
+            syncStatus.noteRunError(phase, phase === 'pull' ? ERR_PULL_DATA : ERR_PUSH_DATA)
+        }
+        return await this.finishRun()
+    }
+
+    /** 运行结束：刷新待推送/失败计数一次并落定状态（C-11） */
+    private async finishRun(): Promise<SyncRunResult> {
+        const userId = this.currentUserId()
+        if (!userId) return syncStatus.endRun({ pendingCount: 0, failedCount: 0 })
+        return syncStatus.endRun({
+            pendingCount: await syncTracker.countDirty(userId),
+            failedCount: await syncTracker.countFailed(userId)
+        })
     }
 
     /** 拉取全部同步表（串行队列内执行） */
     private async pullAllInner(): Promise<void> {
         const userId = this.currentUserId()
         if (!userId) return
-        syncStatus.markSyncing()
         const pullBody: Record<string, Record<string, unknown>> = {}
         for (const config of SYNC_TABLES) {
             const cursor = await localDatabase.syncCursor.get(`${userId}:${config.table}`)
@@ -356,10 +396,10 @@ export class SyncService {
             const status = (err as { response?: { status?: number } })?.response?.status
             if (status === 401 || status === 403) {
                 console.error('[sync] 拉取被拒绝：登录已过期（401/403）', status)
-                await this.refreshCounts('拉取失败：登录已过期，请重新登录')
+                syncStatus.noteRunError('pull', ERR_PULL_EXPIRED)
             } else {
                 console.error('[sync] 拉取请求失败（网络/HTTP 错误）', err)
-                await this.refreshCounts('拉取失败：网络错误')
+                syncStatus.noteRunError('pull', ERR_PULL_NETWORK)
             }
             return
         }
@@ -371,12 +411,12 @@ export class SyncService {
         if (this.isSessionExpiredCode((data as { code?: unknown })?.code)) {
             console.error('[sync] 拉取被拒绝：用户凭证验证失败（10041）')
             this.notifySessionExpired()
-            await this.refreshCounts('登录已过期，请重新登录')
+            syncStatus.noteRunError('pull', ERR_SESSION_EXPIRED)
             return
         }
         if (typeof raw?.code === 'string' || data?.data === null) {
             console.error('[sync] 拉取归一化错误（断网/超时）', raw?.code)
-            await this.refreshCounts('拉取失败：网络错误')
+            syncStatus.noteRunError('pull', ERR_PULL_NETWORK)
             return
         }
         this.calibrateServerTime(Number((data as { serverTime?: string | number }).serverTime))
@@ -389,7 +429,6 @@ export class SyncService {
             if (!result?.items) continue
             writtenCount += await this.applyPullBatch(config, result)
         }
-        await this.refreshCounts()
         // 有实际写入（新增/覆盖/删除墓碑）→ 通知视图刷新（store 缓存绕过，需事件驱动重拉）
         if (writtenCount > 0) {
             this.notifyDataChanged()
@@ -402,20 +441,6 @@ export class SyncService {
             window.dispatchEvent(new CustomEvent('nao-todo:data-changed'))
         }
         this.dataChangedListener?.()
-    }
-
-    /** 刷新待推送/失败计数并结束同步状态（供 UI 展示） */
-    private async refreshCounts(lastError: string | null = null): Promise<void> {
-        const userId = this.currentUserId()
-        if (!userId) {
-            syncStatus.markSynced({ pendingCount: 0, failedCount: 0, lastError })
-            return
-        }
-        syncStatus.markSynced({
-            pendingCount: await syncTracker.countDirty(userId),
-            failedCount: await syncTracker.countFailed(userId),
-            lastError
-        })
     }
 
     /** 应用一批拉取记录（LWW 判定后加密落库，直连表不触发 markDirty）
@@ -496,20 +521,16 @@ export class SyncService {
     }
 
     /** 推送脏队列（批量 upsert + deletions，幂等） */
-    async pushAll(): Promise<void> {
-        return this.enqueue(() => this.pushAllInner())
+    async pushAll(): Promise<SyncRunResult> {
+        return this.enqueue(() => this.runFull(() => this.pushAllInner(), 'push'))
     }
 
     /** 推送脏队列（串行队列内执行） */
     private async pushAllInner(): Promise<void> {
         const userId = this.currentUserId()
         if (!userId) return
-        syncStatus.markSyncing()
         const queue = await syncTracker.listDirty(userId)
-        if (queue.length === 0) {
-            await this.refreshCounts()
-            return
-        }
+        if (queue.length === 0) return
 
         const pushBody: Record<string, Record<string, unknown>[]> = {}
         const deletions: { table: string; id: string }[] = []
@@ -520,7 +541,11 @@ export class SyncService {
             // 重试上限：retryCount 超限暂停推送（避免离线时无限重试堆积请求），状态经 SyncStatus 暴露
             if (item.retryCount >= MAX_PUSH_RETRY) continue
             const config = SYNC_TABLES.find((c) => c.table === item.table)
-            if (!config) continue
+            if (!config) {
+                // 不可达防御（与写队列同常量源）：仅诊断，归因并入本阶段同一错误上报（见 ADR A-3）
+                console.error('[sync] 推送队列项缺少表配置', item.table)
+                continue
+            }
             snapshots.set(`${item.table}:${item.entityId}`, item.localUpdatedAt)
             const record = await this.tableOf(config).get(item.entityId)
             if (!record) {
@@ -536,7 +561,12 @@ export class SyncService {
             const target = (pushBody[item.table] ??= [])
             target.push({ id: item.entityId, ...config.entityToPush(entity) })
         }
-        if (Object.keys(pushBody).length === 0 && deletions.length === 0) return
+        if (Object.keys(pushBody).length === 0 && deletions.length === 0) {
+            // 队列非空但无可推送内容（全部重试超限 / 缺表配置不可达防御）：
+            // 必须上报运行错误，否则 syncing 卡死且门读到 null ⇒ 假成功（DEF-SYNC-02 / BC-6 / ADR A-3）
+            syncStatus.noteRunError('push', ERR_PUSH_RETRY_EXCEEDED)
+            return
+        }
 
         console.log(
             '[sync] 推送请求 /sync/push 样本',
@@ -557,7 +587,7 @@ export class SyncService {
             const status = (err as { response?: { status?: number } })?.response?.status
             if (status === 401 || status === 403) {
                 console.error('[sync] 推送被拒绝：登录已过期（401/403）', status)
-                await this.refreshCounts('推送失败：登录已过期，请重新登录')
+                syncStatus.noteRunError('push', ERR_PUSH_EXPIRED)
             } else {
                 console.error('[sync] 推送请求失败（网络/HTTP 错误）', err)
                 for (const item of queue) {
@@ -565,7 +595,7 @@ export class SyncService {
                         await syncTracker.markFailed(item.id)
                     }
                 }
-                await this.refreshCounts('推送失败：网络错误')
+                syncStatus.noteRunError('push', ERR_PUSH_NETWORK)
             }
             return
         }
@@ -576,7 +606,7 @@ export class SyncService {
         if (this.isSessionExpiredCode(dataRaw?.code)) {
             console.error('[sync] 推送被拒绝：用户凭证验证失败（10041）')
             this.notifySessionExpired()
-            await this.refreshCounts('登录已过期，请重新登录')
+            syncStatus.noteRunError('push', ERR_SESSION_EXPIRED)
             return
         }
         if (typeof raw?.code === 'string') {
@@ -586,7 +616,7 @@ export class SyncService {
                     await syncTracker.markFailed(item.id)
                 }
             }
-            await this.refreshCounts('推送失败：网络错误')
+            syncStatus.noteRunError('push', ERR_PUSH_NETWORK)
             return
         }
         const data = (raw?.data as { data?: { results?: PushResult[] }; serverTime?: number }) ?? {}
@@ -594,6 +624,7 @@ export class SyncService {
         this.calibrateServerTime((data as { serverTime?: number }).serverTime)
         const results = data.data?.results ?? []
         const pushed = new Set(results.map((r) => `${r.table}:${r.id}`))
+        let unconfirmed = false
         for (const item of queue) {
             if (pushed.has(`${item.table}:${item.entityId}`)) {
                 const snapshot = snapshots.get(`${item.table}:${item.entityId}`)
@@ -610,10 +641,12 @@ export class SyncService {
                         id: item.entityId
                     })
                     await syncTracker.markFailed(item.id)
+                    unconfirmed = true
                 }
             }
         }
-        await this.refreshCounts()
+        // 部分数据未确认 ⇒ 运行失败（否则门会假成功）；同阶段同类错误只上报一次（见 ADR A-2）
+        if (unconfirmed) syncStatus.noteRunError('push', ERR_PUSH_UNCONFIRMED)
     }
 
     /** 变更后 2s 防抖推送 */
@@ -626,9 +659,13 @@ export class SyncService {
     }
 
     /** 手动完整同步（拉取全部 + 推送全部，供 UI 触发） */
-    async manualSync(): Promise<void> {
-        await this.pullAll()
-        await this.pushAll()
+    async manualSync(): Promise<SyncRunResult> {
+        return this.enqueue(() =>
+            this.runFull(async () => {
+                await this.pullAllInner()
+                await this.pushAllInner()
+            })
+        )
     }
 }
 

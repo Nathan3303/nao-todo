@@ -33,6 +33,21 @@ export interface LocaleMessages {
     'nav.search': string
     'nav.pomodoro': string
 
+    // Sync status（桌面端侧栏轨道，SHELL-02）
+    'sync.title': string
+    'sync.syncing': string
+    'sync.neverSynced': string
+    'sync.lastSyncAt': string
+    'sync.pending': string
+    'sync.failed': string
+    'sync.syncNow': string
+
+    // Offline identity / gates（SHELL-03）
+    'identity.offline': string
+    'identity.offlineName': string
+    'gate.enterOffline': string
+    'gate.signInAgain': string
+
     // Common
     'common.cancel': string
     'common.confirm': string
