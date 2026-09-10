@@ -1,18 +1,23 @@
 import { type GoAsync, unwrapError } from '@nao-todo/shared'
-import dayjs from 'dayjs'
-import { computed, inject, ref } from 'vue'
+import { computed, inject, ref, type Ref } from 'vue'
 import { useTasksLoader } from '../../hooks'
 import type { useTaskDetailsStore } from '../../stores'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
+import type { TaskDetailsViewObject } from './types'
+import { resolveSubTaskDraft } from './subtask-inheritance'
 
 /**
  * 子任务加载器 composable
  * @description 复用 useTasksLoader，以 parentTaskId 为条件加载子任务，
  *              并将数据写入 TaskDetailsStore 中独立的子任务 store（与主任务列表隔离）。
  * @param taskDetailsStore 任务详情存储
+ * @param parentTask 当前父任务详情视图对象（用于创建子任务时**快照继承** `projectId/startAt/endAt`）
  */
-const useSubTasks = (taskDetailsStore: ReturnType<typeof useTaskDetailsStore>) => {
+const useSubTasks = (
+    taskDetailsStore: ReturnType<typeof useTaskDetailsStore>,
+    parentTask: Ref<TaskDetailsViewObject | null>
+) => {
     // @context 任务详情上下文
     const { subTaskUseCase, subscriber } = inject(TASK_DETAILS_PRE_CONTEXT_KEY)!
 
@@ -85,25 +90,15 @@ const useSubTasks = (taskDetailsStore: ReturnType<typeof useTaskDetailsStore>) =
      * 创建子任务
      * @description 以当前父任务 ID 创建子任务，成功后将新任务 ID 追加到加载器列表，
      *              使其即时展示于子任务列表末尾。
+     *              `projectId`/`startAt`/`endAt` 由 `resolveSubTaskDraft()` 从父任务视图对象
+     *              **创建时快照**继承（TASK-01 R1–R5；规则见 subtask-inheritance.ts）
      * @param name 子任务名称
      */
     const createSubTask = async (name: TaskViewObject['name']): GoAsync<void> => {
         if (!currentParentTaskId.value) return '缺少父任务 ID'
-        const [task, err] = await subTaskUseCase.create({
-            parentTaskId: currentParentTaskId.value,
-            projectId: null,
-            name,
-            description: '',
-            state: 'todo',
-            priority: 'low',
-            startAt: null,
-            endAt: dayjs().toISOString(),
-            tags: [],
-            remindAt: null,
-            remindRepeat: 'none',
-            remindTime: null,
-            remindWeekdays: []
-        })
+        const [task, err] = await subTaskUseCase.create(
+            resolveSubTaskDraft(parentTask.value, name, currentParentTaskId.value)
+        )
         if (err !== null) return err
         subTaskLoader.states.taskIds.add(task.id)
         return null

@@ -23,10 +23,15 @@ import { connectRenderer, sleep } from './lib/cdp.mjs'
 import { assertVisible, bootstrap } from './lib/app.mjs'
 import { shell02SyncRail } from './checks/shell-02-sync-rail.mjs'
 import { shell03Offline } from './checks/shell-03-offline.mjs'
+import { task01SubtaskInherit } from './checks/task-01-subtask-inherit.mjs'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = resolve(HERE, '..', '..')
-const FEATURES = { 'shell-02': shell02SyncRail, 'shell-03': shell03Offline }
+const FEATURES = {
+    'shell-02': shell02SyncRail,
+    'shell-03': shell03Offline,
+    'task-01': task01SubtaskInherit
+}
 
 const options = parseArgs(process.argv.slice(2))
 if (options.help) {
