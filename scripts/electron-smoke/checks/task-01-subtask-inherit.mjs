@@ -108,7 +108,7 @@ const ANCHORS = {
 }
 
 import { sleep } from '../lib/cdp.mjs'
-import { SEL, clickPanelPrimary, openPanel } from '../lib/app.mjs'
+import { SEL, bootstrap, clickPanelPrimary, openPanel } from '../lib/app.mjs'
 
 /** 本次运行的唯一标签：避免与历史遗留的 `[QA-TASK01]` 任务同名而被误匹配（清理仍按前缀） */
 const RUN_TAG = Date.now().toString(36)
@@ -913,8 +913,17 @@ async function cleanup(ctx) {
         info(checks, 'CLEANUP.project', '探针清单删除（best-effort）', String(gone))
     }
     // 同步一次并核 0 pending / 0 failed
-    await openPanel(cdp)
-    await clickPanelPrimary(cdp)
+    try {
+        await openPanel(cdp)
+        await clickPanelPrimary(cdp)
+    } catch (err) {
+        info(
+            checks,
+            'CLEANUP.panel',
+            '同步面板操作异常（已降级为 INFO，不中断清理）',
+            String(err).slice(0, 200)
+        )
+    }
     const idle = await cdp.evaluate(`
         for (let i = 0; i < 40; i++) {
             const btn = document.querySelector('.sync-rail-btn')
@@ -983,27 +992,15 @@ async function case1Recheck(ctx) {
     `)
     info(checks, 'RECHECK.sync', '同步收口（0 pending / 0 failed）', String(synced))
 
-    // 刷新/重进：reload → 解锁（如需要）→ 等壳 → 重新读回
+    // 刷新/重进：reload → **复用 bootstrap**（登录/解锁/等壳，避免内联解锁在时序上失手）
     await cdp.reload(3000)
-    for (let i = 0; i < 10; i++) {
-        if (await cdp.evaluate(`return !!document.querySelector('${SEL.unlockPassword}')`)) break
-        if (await cdp.evaluate(`return !!document.querySelector('${SEL.railBtn}')`)) break
-        await sleep(700)
-    }
-    if (
-        password &&
-        (await cdp.evaluate(`return !!document.querySelector('${SEL.unlockPassword}')`))
-    ) {
-        await cdp.evaluate(`
-            const input = document.querySelector('${SEL.unlockPassword}')
-            Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(password)})
-            input.dispatchEvent(new Event('input', { bubbles: true }))
-            await new Promise((r) => setTimeout(r, 300))
-            ;[...document.querySelectorAll('#app button')].find((b) => /解锁/.test(b.innerText || ''))?.click()
-            return 'unlocked'
-        `)
-        await sleep(6000)
-    }
+    const session = await bootstrap(cdp, { email: ctx.email, password })
+    info(
+        checks,
+        'RECHECK.reboot',
+        '刷新后重新引导（bootstrap）',
+        `ok=${session.ok} hash=${session.hash} notes=${JSON.stringify(session.notes)}`
+    )
     // 等壳就绪（解锁后仍需等初始同步门退出/任务列表加载）
     for (let i = 0; i < 30; i++) {
         if (await cdp.evaluate(`return !!document.querySelector('${SEL.railBtn}')`)) break
@@ -1126,6 +1123,32 @@ async function apiCrossCheck(ctx) {
         api
     )
     return checks
+}
+
+/**
+ * 供其它 feature 复用的最小工具集（TASK-02 起）：**只读/构造夹具**用，避免同一套 CDP 手法二处漂移
+ * @description 不导出各 case 自身，导出的是：断言工具 + 任务/清单读取与创建 + 唯一运行标签
+ *
+ * ⚠️ **多副本口径（PM seq 92 批准，即时生效）**：同一任务可能同时存在于 `TasksStore`（列表）与
+ *    `TaskDetailsStore`（详情），**二者不同步**——详情副本的 `startAt/endAt/projectId` 可能仍是陈旧值
+ *    （实测：列表 `endAt=2026-09-10T04:56Z` / 详情 `''` / API 已落库；记 **DEF-STORE-01 候选**，另立单）。
+ *    ⇒ **断言必须取"信息最全"的副本**（见 `task-02` 的 `voOf()`）；`readTasks().find()` 这种**单副本读取
+ *    不作强断言依据**（它命中首个副本，在详情副本陈旧时会误判）。
+ */
+export const qaKit = {
+    ANCHORS,
+    RUN_TAG,
+    expect,
+    info,
+    skip,
+    sleep,
+    readTasks,
+    readProjects,
+    ensureProject,
+    ensureTaskList,
+    pickDates,
+    createTaskViaUi,
+    createSubTaskViaUi
 }
 
 export const task01SubtaskInherit = {
