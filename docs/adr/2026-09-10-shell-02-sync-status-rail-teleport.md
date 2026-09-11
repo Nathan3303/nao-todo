@@ -1,7 +1,7 @@
 # 2026-09-10 SHELL-02：桌面端同步状态并入侧栏轨道（跨端宿主契约 + 堆叠基线治理）
 
 - **评审对象**：SHELL-02 PRD 摘要 + 第二轮《交互定稿》（用户拍板：现成组件组合 = Tooltip + Dropdown + Button）
-- **结论**：✅ **有条件可行**（约束 C1–C16；待拍板 D2/D5）
+- **结论**：✅ **有条件可行**（约束 C1–C16；D5 已拍板 = B `transparent:true`（r4）；D2 已拍板 = A 采纳修正（2026-09-12，代码自 v1.4.0 已含））
 - **评审日期**：2026-09-10（架构评审终签日；第二轮复核同日）
 - **范围**：`apps/web` 侧栏注入点 + `apps/desktop` `SyncStatusBar` 改造；无后端改动
 - **代码边界**：本 ADR 为纯文档产出，评审方不修改仓库代码（零代码红线；验证用探针置于仓库外 `~/shell02probe`）
@@ -74,7 +74,7 @@ Vue 3.5.41 `TeleportImpl`：字符串目标仅在挂载时解析一次，失败�
 - **C8′** 禁依赖未文档化内部行为：`tpState`/`popupAnchor`/`mountPopupAnchor` 等**不得由我方代码直接调用或断言**（仅可作为评审证据/测试的间接观测，如 `data-actived`）。
 - **C8″** 若未来升级 desktop 至 1.11.0+，等价子集需重新验证（等价性有版本时效）。
 
-### D-5 / Q5：NFR 可行性（r1 结论保持；颜色令牌项仍待拍板）
+### D-5 / Q5：NFR 可行性（r1 结论保持；颜色令牌项已拍板 = A 采纳修正，2026-09-12）
 
 零 layout shift ✅（注入点 `display:contents`；弹层/tooltip 均池外置；`.nue-dropdown-wrapper`/`.nue-tooltip-wrapper` 均 `flex:none;width:fit-content` 不撑轨道）｜无无界定时器 ✅（本方案零自建定时器；库内 `setTimeout(focus)` 为单次；`transparent` 模式的 scroll/ResizeObserver 为事件驱动且关闭即断开）｜lastError 禁 v-html ✅（`:title` + 文本插值；截断用 CSS；`aria-live` 只播摘要）｜i18n 类型强制 ✅（`LocaleKey = keyof LocaleMessages`，`packages/shared/locales/types.ts:701`）｜三态颜色：**现状两处令牌无效**（`var(--warning-color)` 裸用 HSL 三元组 / `var(--nue-danger-hsl-color)` 全仓无定义）→ 改用实测存在的 `--nue-warning-color-60` / `--nue-error-color-60`（见 D2 待拍板）。
 
