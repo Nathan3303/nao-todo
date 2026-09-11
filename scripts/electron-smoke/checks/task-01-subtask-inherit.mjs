@@ -1126,16 +1126,193 @@ async function apiCrossCheck(ctx) {
 }
 
 /**
+ * 服务端真相读回（HTTP，兜底路径 ①）——**副本一致性口径**的真相基准
+ * @description ⚠️ 口径修正（PM seq 96，架构纠正）：**真相优先取服务端读回**，Pinia 两副本只作辅助；
+ *              不得用"取信息最全副本"静默抹平副本差异（否则 `DEF-STORE-01` 会被口径永久掩盖）。
+ * @returns {Promise<{ok: boolean, value?: {startAt: string|null, endAt: string|null, projectId: string|null, state: string|null}, status?: number, error?: string}>}
+ */
+export async function readViaApi(cdp, taskId) {
+    const result = await cdp.json(`(async () => {
+        const jwt = localStorage.getItem('USER_JWT')
+        try {
+            const res = await fetch('http://localhost:3302/api/tasks/' + ${JSON.stringify(taskId)}, { headers: { Authorization: 'Bearer ' + jwt } })
+            const body = await res.json()
+            const record = body?.data ?? null
+            const norm = (v) => (v === '' || v === undefined ? null : v)
+            return {
+                ok: !!record,
+                status: res.status,
+                value: record
+                    ? {
+                          startAt: norm(record.startAt),
+                          endAt: norm(record.endAt),
+                          projectId: norm(record.projectId),
+                          state: norm(record.state),
+                          deletedAt: norm(record.deletedAt),
+                          createdAt: norm(record.createdAt),
+                          updatedAt: norm(record.updatedAt)
+                      }
+                    : null,
+                raw: record ? undefined : body
+            }
+        } catch (err) {
+            return { ok: false, error: String(err).slice(0, 200) }
+        }
+    })()`)
+    return result
+}
+
+/**
+ * **副本一致性探针**（PM seq 96 要求：每轮都跑）——对同一 id **同时**读列表副本与详情副本并比较
+ * @description 比较字段：`startAt / endAt / projectId / state`。**有差异 ⇒ 登记 + 告警**（返回 diff 行，供报告单列）；
+ *              **不得**静默取"最全副本"抹平。`picked` 字段仅作**兜底读法**（取最全副本），必须与 `diff` 结论分开呈现。
+ * @returns {Promise<{id: string, list: object|null, details: object|null, diff: string[], picked: object|null}>}
+ */
+export async function readCopies(cdp, taskId) {
+    const result = await cdp.json(`(async () => {
+        const app = document.getElementById('app')
+        const pinia = app.__vue_app__.config.globalProperties.$pinia
+        const norm = (v) => (v === '' || v === undefined ? null : v)
+        const toVo = (vo) =>
+            vo
+                ? { name: vo.name ?? null, state: norm(vo.state), parentTaskId: norm(vo.parentTaskId), projectId: norm(vo.projectId), startAt: norm(vo.startAt), endAt: norm(vo.endAt) }
+                : null
+        /** 在一个 store 的**所有任务型数组**里找同一 id（详情 store 可能把子任务放在 subTasks 等属性上） */
+        const scan = (storeName) => {
+            const store = pinia._s.get(storeName)
+            if (!store) return { storeFound: false, sources: [] }
+            const sources = []
+            for (const key of Object.keys(store)) {
+                let value = null
+                try { value = store[key] } catch (err) { continue }
+                if (!Array.isArray(value) || value.length === 0) continue
+                if (!value.some((item) => item && typeof item === 'object' && 'id' in item && 'name' in item)) continue
+                const hit = value.find((item) => item && item.id === ${JSON.stringify(taskId)})
+                sources.push({ key, size: value.length, vo: toVo(hit ?? null) })
+            }
+            return { storeFound: true, sources }
+        }
+        return { tasks: scan('TasksStore'), details: scan('TaskDetailsStore'), stores: [...pinia._s.keys()] }
+    })()`)
+    const FIELDS = ['state', 'projectId', 'startAt', 'endAt']
+    const tasksSources = (result.tasks?.sources ?? []).filter((source) => source.vo)
+    const detailsSources = (result.details?.sources ?? []).filter((source) => source.vo)
+    const presentInTasksStore = tasksSources.length > 0
+    const presentInDetailsStore = detailsSources.length > 0
+    const bothPresent = presentInTasksStore && presentInDetailsStore
+    const diff = []
+    if (bothPresent) {
+        const listVo = tasksSources[0].vo
+        for (const source of detailsSources) {
+            for (const field of FIELDS) {
+                if ((listVo[field] ?? null) !== (source.vo[field] ?? null))
+                    diff.push(
+                        `${field}: list=${JSON.stringify(listVo[field] ?? null)} details.${source.key}=${JSON.stringify(source.vo[field] ?? null)}`
+                    )
+            }
+        }
+    }
+    const score = (vo) => (vo ? FIELDS.filter((f) => vo[f] !== null).length : -1)
+    const picked =
+        [tasksSources[0]?.vo, ...detailsSources.map((source) => source.vo)]
+            .filter(Boolean)
+            .sort((a, b) => score(b) - score(a))[0] ?? null
+    return {
+        id: taskId,
+        presentInTasksStore,
+        presentInDetailsStore,
+        bothPresent,
+        tasksStoreSources: (result.tasks?.sources ?? []).map((source) => ({
+            key: source.key,
+            size: source.size,
+            hit: !!source.vo
+        })),
+        detailsStoreSources: (result.details?.sources ?? []).map((source) => ({
+            key: source.key,
+            size: source.size,
+            hit: !!source.vo
+        })),
+        list: tasksSources[0]?.vo ?? null,
+        details: detailsSources[0]?.vo ?? null,
+        stores: result.stores,
+        diff,
+        picked
+    }
+}
+
+/**
+ * 对一组 id 批量跑副本一致性探针，并附**服务端真相**
+ * @returns {Promise<{checked: number, hits: Array, clean: Array}>}
+ */
+export async function storeConsistencyProbe(cdp, ids) {
+    const hits = []
+    const clean = []
+    const invalid = []
+    for (const id of ids.slice(0, 20)) {
+        const copies = await readCopies(cdp, id)
+        // **空集比较无信息量**：两副本未同时在场时，0 差异不算"一致"
+        if (!copies.bothPresent) {
+            invalid.push({
+                id,
+                presentInTasksStore: copies.presentInTasksStore,
+                presentInDetailsStore: copies.presentInDetailsStore,
+                list: copies.list,
+                details: copies.details
+            })
+            continue
+        }
+        if (copies.diff.length > 0) {
+            const api = await readViaApi(cdp, id)
+            hits.push({
+                id,
+                diff: copies.diff,
+                list: copies.list,
+                details: copies.details,
+                api: api.value ?? null
+            })
+        } else {
+            clean.push({ id, list: copies.list, details: copies.details })
+        }
+    }
+    return {
+        checked: Math.min(ids.length, 20),
+        valid: clean.length + hits.length,
+        hits,
+        clean,
+        invalid
+    }
+}
+
+/**
+ * **只经服务端**改任务字段（P3 受控可见性用：让"列表侧"先变、详情副本不动）
+ * @description `PUT /tasks/{id}`（`updateTaskValueObject2Req` 语义）；成功码 `40020`
+ */
+export async function apiUpdateTask(cdp, taskId, patch) {
+    return cdp.json(`(async () => {
+        const jwt = localStorage.getItem('USER_JWT')
+        const res = await fetch('http://localhost:3302/api/tasks/' + ${JSON.stringify(taskId)}, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + jwt },
+            body: JSON.stringify(${JSON.stringify(patch)})
+        })
+        const body = await res.json()
+        return { status: res.status, code: body?.code ?? null, message: body?.message ?? null }
+    })()`)
+}
+
+/**
  * 供其它 feature 复用的最小工具集（TASK-02 起）：**只读/构造夹具**用，避免同一套 CDP 手法二处漂移
  * @description 不导出各 case 自身，导出的是：断言工具 + 任务/清单读取与创建 + 唯一运行标签
  *
- * ⚠️ **多副本口径（PM 修订版）**：任务实体在两个 Pinia store 各存一份 —— `TasksStore.tasks` 与
- *    `TaskDetailsStore.tasks`（两个独立 Map、无跨 store 同步）。且**两副本同 id 同时在场是必然**：
- *    打开子任务详情会经 `TaskUseCase.get` 末尾 `addTask` 写进**列表 store**（`task.ts:74-84`），
- *    而父任务的子任务列表由 `subTaskUseCase` 写进**详情 store**（`tasks-view.ts:52/65`、`use-subtasks.ts:38-45`）
- *    ⇒ 任一侧后续写入必然让另一侧陈旧。**但"用户可见的陈旧"属未复现（非否定）**：探针差异 0/10 的
- *    **前置条件未满足**（未断言两副本同 id 同时在场；且那轮未产生任何写入）⇒ 见 `DEF-STORE-01`（观察项，暂不定级）。
- *    ⇒ **读回断言的真相优先取服务端读回**（HTTP）；Pinia 双副本仅作辅助；**不得用"取最全副本"静默抹平差异**。
+ * ⚠️ **多副本口径（PM seq 96 修正版，架构纠正后即时生效）**：同一任务可能同时存在于 `TasksStore`（列表）
+ *    与 `TaskDetailsStore`（详情），**二者不同步**（实测：列表 `endAt=2026-09-10T04:56Z` / 详情 `''` /
+ *    API 已落库；记 **DEF-STORE-01 候选**）。口径：
+ *    1. **真相优先取服务端读回**（`readViaApi()`，HTTP）；Pinia 两副本**只作辅助**；
+ *    2. **每轮都跑副本一致性探针**（`storeConsistencyProbe()` / `readCopies()`）：同 id 同时读两副本并比较
+ *       `startAt/endAt/projectId/state`，**有差异 ⇒ 登记 + 告警 + 报告单列**；
+ *    3. "取信息最全副本"（`task-02` 的 `voOf()`）**仅作兜底读法**，必须**先出差异结论**再使用；
+ *       **禁止**用最全副本静默抹平差异（否则 DEF-STORE-01 会被口径永久掩盖）；
+ *    4. `readTasks().find()` 这种**单副本读取**不作强断言依据（命中首个副本，详情副本陈旧时会误判）。
  */
 export const qaKit = {
     ANCHORS,
@@ -1150,7 +1327,11 @@ export const qaKit = {
     ensureTaskList,
     pickDates,
     createTaskViaUi,
-    createSubTaskViaUi
+    createSubTaskViaUi,
+    readViaApi,
+    readCopies,
+    storeConsistencyProbe,
+    apiUpdateTask
 }
 
 export const task01SubtaskInherit = {

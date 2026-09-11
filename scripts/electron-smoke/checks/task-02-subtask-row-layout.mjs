@@ -24,12 +24,24 @@
  * 跨端不一致（移动端无时间/无改名/有删除；web 有脱离无删除，C-R1 已登记）｜时间整体截断**可能切在 `~` 中间**（预期）｜
  * 名称截断后**无 tooltip**（全文经详情页）｜`common.edit` 词典键**零引用属预期**｜`TaskHandler.updateTaskName` 零调用属**登记死代码**。
  *
+ * ── DEF-STORE-01 探针/复现实测记录（2026-09-11，PM seq 107 后置轮）─────────
+ * 1. **副本一致性探针**：对 10 个夹具 id 比较 `TasksStore.tasks` 与 `TaskDetailsStore` 各任务型数组 ⇒
+ *    **有效轮次（两副本同 id 同时在场）= 3，命中差异 = 2**：四态-仅截止/仅开始 在**经详情页 UI 改期后**，
+ *    列表 `endAt/startAt` 有新值而详情副本 `null`（机制级证据；但该行渲染仍取会重取的源 ⇒ **未观察到用户可见陈旧**）。
+ * 2. **5 步受控复现**（API 直写 + 立即同步）：步骤②前置断言通过（服务端 endAt `…09-30T15:36+08` → `…09-14T16:00+08`）；
+ *    **步骤④未命中**（两副本一致 `diff=[]`）；P3 **未复现用户可见陈旧**（行文案与本地 store 一致）。
+ * 3. **附带新观察（登记，不判 FAIL）**：外部 API 直写的服务端变更经「立即同步」**未被拉回本地**
+ *    （服务端已新、本地 store 与行文案仍旧值）⇒ 属「本地⇄服务端拉取」方向，与 DEF-STORE-01（两副本间）不同，交架构定性。
+ * 4. UI 改期路径备注：子任务**已有时间窗**时，「选择开始/截止日期」按钮**打不开日历**（`.nue-date-picker-panel` 不出现），
+ *    仅新建时（无时间窗、触发器「设置时间」）可用 ⇒ 复现改用 API 直写制造服务端变更。
+ *
  * ── 数据纪律 ─────────────────────────────────────────────────────────────
  * 探针前缀 `[QA-TASK02]`（长名称恰 64 字）；含**无描述**与**有描述**子任务各一；夹具清单复用 TASK-01 的
  * `[QA-TASK01] 清单`（**有意保留的测试夹具**，`ensureProject()` 先查后建）；测完清理 + 核 `0 pending / 0 failed`；
  * 数据构造失败 ⇒ **SKIP + 诊断**，不判 FAIL。
  */
 import { sleep } from '../lib/cdp.mjs'
+import { bootstrap, clickPanelPrimary, openPanel } from '../lib/app.mjs'
 import { qaKit } from './task-01-subtask-inherit.mjs'
 
 const {
@@ -38,6 +50,10 @@ const {
     info,
     skip,
     readTasks,
+    readViaApi,
+    readCopies,
+    storeConsistencyProbe,
+    apiUpdateTask,
     ensureProject,
     ensureTaskList,
     pickDates,
@@ -46,6 +62,8 @@ const {
 } = qaKit
 
 const PREFIX = '[QA-TASK02]'
+/** DEF-STORE-01 有界复现专用前缀（PM seq 96） */
+const STORE01_PREFIX = '[QA-STORE01]'
 /** 复用 TASK-01 夹具清单（脚本注释中已登记为「有意保留的测试夹具」） */
 const FIXTURE_PROJECT = `${ANCHORS.taskTitlePrefix} 清单`
 const RUN_TAG = Date.now().toString(36)
@@ -1001,6 +1019,637 @@ async function auxA11y(ctx) {
     return checks
 }
 
+/* ─────── 副本一致性探针 + DEF-STORE-01 受控复现（PM seq 96/107：在场性 + 步骤②前置断言）─────── */
+
+/**
+ * 改期（可诊断 + 回退）：先在详情页 header 的 TaskDateSelector 里改**截止**日期；
+ * 若**服务端值未变**（实测：已有时间窗时点「选择截止日期」打不开日历 `.nue-date-picker-panel`），
+ * 回退改**开始**日期（已多次证实可用的路径）⇒ 目的只有一个：**稳定产生可观测修改**。
+ */
+async function changeSubtaskEndDate(cdp, taskId, day, { prevMonth = false } = {}) {
+    const before = await readViaApi(cdp, taskId)
+    const attempts = []
+    for (const field of ['end', 'start']) {
+        await closeDatePanel(cdp)
+        const picked = await pickDates(cdp, { scope: 'details', [field]: day, prevMonth })
+        await closeDatePanel(cdp)
+        await sleep(2000)
+        const after = await readViaApi(cdp, taskId)
+        const changed = JSON.stringify(after.value) !== JSON.stringify(before.value)
+        attempts.push({
+            field,
+            day,
+            pickedOk: picked.ok,
+            steps: picked.steps?.slice(0, 3),
+            before: before.value?.endAt ?? null,
+            after: after.value?.endAt ?? null,
+            startBefore: before.value?.startAt ?? null,
+            startAfter: after.value?.startAt ?? null,
+            changed
+        })
+        if (changed) return { ok: true, field, attempts, server: after }
+    }
+    return { ok: false, field: null, attempts, server: before }
+}
+
+/**
+ * 每轮都跑：对本次夹具 id 批量比较两副本（**必须先断言"两副本同 id 同时在场"**，
+ * 否则 0 差异属**空集比较、无信息量**）
+ */
+async function consistency(ctx) {
+    const { cdp } = ctx
+    const checks = []
+    if (!(await ensureFixtures(ctx)).length) return checks
+    if (!fixtureGuard(checks, 'CONSISTENCY.guard', '副本一致性探针')) return checks
+    const ids = [
+        FIXTURES.parentA?.id,
+        FIXTURES.parentB?.id,
+        ...Object.values(FIXTURES.subs).map((task) => task.id)
+    ].filter(Boolean)
+    await openTaskDetails(cdp, FIXTURES.parentA.id)
+    // 先在父面板里把子任务行渲染出来（详情 store 的 subTasks 在场），再逐 id 检查两副本在场性
+    const result = await storeConsistencyProbe(cdp, ids)
+    info(
+        checks,
+        'CONSISTENCY.summary',
+        '副本一致性探针（同 id 比较 startAt/endAt/projectId/state）',
+        `checked=${result.checked} **有效轮次（两副本均在场）**=${result.valid} 命中差异=${result.hits.length} 空集（未同时在场）=${result.invalid.length}`
+    )
+    expect(
+        checks,
+        'CONSISTENCY.presence',
+        '探针**在场性**：至少一个 id 在两副本同时在场（否则 0 差异无信息量）',
+        result.valid > 0,
+        `有效=${result.valid}/${result.checked}；空集样例=${JSON.stringify(result.invalid.slice(0, 2).map((row) => ({ id: row.id, tasksStore: row.presentInTasksStore, detailsStore: row.presentInDetailsStore, detailsSize: row.details ? 1 : 0 })))}`
+    )
+    for (const hit of result.hits.slice(0, 6)) {
+        info(
+            checks,
+            'CONSISTENCY.diff',
+            `⚠️ 差异行 id=${hit.id}`,
+            `diff=${JSON.stringify(hit.diff)}｜list=${JSON.stringify(hit.list)}｜details=${JSON.stringify(hit.details)}｜**服务端真相**=${JSON.stringify(hit.api)}`
+        )
+    }
+    expect(
+        checks,
+        'CONSISTENCY.noSilentMask',
+        '差异**单列**（不因"取最全副本"抹平）；有效轮次内 0 差异方判 PASS',
+        result.hits.length === 0,
+        result.hits.length === 0
+            ? `有效轮次=${result.valid} 全部一致（本轮未见副本差异）`
+            : `有效轮次=${result.valid} **命中 ${result.hits.length} 条差异**（见 CONSISTENCY.diff）`
+    )
+    return checks
+}
+
+/**
+ * DEF-STORE-01 **受控复现**（PM seq 107）
+ * @description 步骤：① 建 P（带时间窗）+ S → 打开 P 面板（子任务列表加载）并断言**两副本在场**
+ *              ② 进 S 详情**改截止日期**，且**改期前后各读一次服务端值**做前置断言（未变 ⇒ 本轮作废重试）
+ *              ③ 返回 P；④ 比较两副本（未返回 P 的那次量测）
+ *              ⑤ 触发重取 ⇒ 差异是否消失（"副本未同步"而非"数据丢失"）
+ *              **P3 受控可见性**：**只经服务端**改 S 的 endAt（API 直写）→ 触发一次同步/刷新 →
+ *              看**父面板里 S 行的时间文案**：旧值/空 ⇒ **用户可见 = P1**；新值 ⇒ 记"自愈"保持观察。
+ */
+async function defStore01(ctx) {
+    const { cdp } = ctx
+    const checks = []
+    const today = new Date().getDate()
+    const sName = `${STORE01_PREFIX} ${RUN_TAG} 子任务S`
+    await ensureTaskList(cdp)
+    const parent = await createTaskViaUi(cdp, {
+        title: `${STORE01_PREFIX} ${RUN_TAG} 顶层任务P`,
+        scheduled: true
+    })
+    if (!parent.ok)
+        return skip(checks, 'STORE01.parent', '复现夹具 P', `创建失败：${parent.reason}`)
+    const child = await createSubTaskViaUi(cdp, { parentId: parent.task.id, title: sName })
+    if (!child.ok) return skip(checks, 'STORE01.child', '复现夹具 S', `创建失败：${child.reason}`)
+    info(
+        checks,
+        'STORE01.parent',
+        '① 夹具 P/S 就绪（P 带时间窗，S 继承）',
+        JSON.stringify({
+            parent: { id: parent.task.id, startAt: parent.task.startAt, endAt: parent.task.endAt },
+            child: { id: child.task.id, startAt: child.task.startAt, endAt: child.task.endAt }
+        })
+    )
+
+    // ① 先打开 **S 自身详情**（`TaskUseCase.get` ⇒ 写入列表 store），再回 P 面板取基线 ⇒ 建立"两副本同 id 同时在场"
+    await openTaskDetails(cdp, child.task.id)
+    await sleep(1500)
+    await openTaskDetails(cdp, parent.task.id)
+    const baselineRow = await probeRow(cdp, sName)
+    const presence = await readCopies(cdp, child.task.id)
+    expect(
+        checks,
+        'STORE01.presence',
+        '① **在场性**：S 同时存在于 `TasksStore` 与 `TaskDetailsStore`（此后写入才有比较意义）',
+        presence.bothPresent,
+        `presentInTasksStore=${presence.presentInTasksStore}${JSON.stringify(presence.tasksStoreSources)} presentInDetailsStore=${presence.presentInDetailsStore}${JSON.stringify(presence.detailsStoreSources)} list=${JSON.stringify(presence.list)} details=${JSON.stringify(presence.details)}`
+    )
+    info(
+        checks,
+        'STORE01.step1',
+        '① 打开 P 面板后的基线',
+        `row.time=${JSON.stringify(baselineRow.time?.text)} diff=${JSON.stringify(presence.diff)}`
+    )
+    if (!presence.bothPresent) {
+        skip(
+            checks,
+            'STORE01.step2',
+            '② 改期 + 服务端前置断言',
+            `卡在①：两副本未同时在场（tasksStore=${presence.presentInTasksStore} detailsStore=${presence.presentInDetailsStore}）⇒ 后续无比较意义`
+        )
+        return checks
+    }
+
+    // ② UI 改期**诊断**（已试路径，如实记录）：S 已有时间窗时，「选择开始/截止日期」均打不开日历 ⇒ UI 改期不可用
+    const uiDiag = await changeSubtaskEndDate(cdp, child.task.id, Math.max(1, today - 3))
+    info(
+        checks,
+        'STORE01.step2.diag',
+        '② UI 改期诊断（试过的路径 = end/start 日期按钮，均打不开日历）',
+        `已试：${JSON.stringify((uiDiag.attempts ?? []).map((a) => ({ field: a.field, steps: a.steps, changed: a.changed })))}；服务端未被 UI 修改`
+    )
+    // ② 改用 **API 直写**（PM 提供的前置条件：可控第二写入客户端）⇒ 稳定产生可观测修改
+    const newEndAt = (() => {
+        const base = new Date()
+        base.setUTCDate(base.getUTCDate() + 3)
+        base.setUTCHours(8, 0, 0, 0)
+        return base.toISOString()
+    })()
+    const serverBefore = await readViaApi(cdp, child.task.id)
+    const apiWrite = await apiUpdateTask(cdp, child.task.id, { endAt: newEndAt })
+    const serverAfter = await readViaApi(cdp, child.task.id)
+    expect(
+        checks,
+        'STORE01.step2pre',
+        '② **前置断言**：服务端 `endAt` 前后不同（API 直写已产生可观测修改）',
+        (serverBefore.value?.endAt ?? null) !== (serverAfter.value?.endAt ?? null),
+        `apiWrite=${JSON.stringify(apiWrite)}｜before=${JSON.stringify(serverBefore.value?.endAt)} → after=${JSON.stringify(serverAfter.value?.endAt)}`
+    )
+
+    // ②.5 **P3 受控可见性**：留在 P 面板，API 直写后触发**一次同步** ⇒ 看 S 行文案是否跟随新值
+    await openTaskDetails(cdp, parent.task.id)
+    const rowBefore = await probeRow(cdp, sName)
+    const synced = await openPanel(cdp)
+        .then(() => clickPanelPrimary(cdp))
+        .then(() => sleep(5000))
+        .then(() => 'ok')
+        .catch((err) => `panel-error:${String(err).slice(0, 120)}`)
+    const rowLive = await probeRow(cdp, sName)
+    const copiesLive = await readCopies(cdp, child.task.id)
+    const serverLive = await readViaApi(cdp, child.task.id)
+    // 真值行文案：离开再回（重取自愈）后渲染的文案
+    await openTaskDetails(cdp, child.task.id)
+    await sleep(1200)
+    await openTaskDetails(cdp, parent.task.id)
+    const rowTruth = await probeRow(cdp, sName)
+    const liveChanged =
+        !!rowLive.time && !!rowBefore.time && rowLive.time.text !== rowBefore.time.text
+    const liveStale =
+        !!rowTruth.time &&
+        !!rowLive.time &&
+        rowLive.time.text === rowBefore.time.text &&
+        rowLive.time.text !== rowTruth.time.text
+    info(
+        checks,
+        'STORE01.p3',
+        'P3 受控可见性：API 直写 endAt → 一次同步 → P 面板行文案',
+        `apiWrite=${JSON.stringify(apiWrite)}（endAt=${JSON.stringify(newEndAt)}）同步=${synced}｜行文案：改前=${JSON.stringify(rowBefore.time?.text)} → 同步后=${JSON.stringify(rowLive.time?.text)}（变化=${liveChanged}）→ 重取真值=${JSON.stringify(rowTruth.time?.text)}（**陈旧=${liveStale}**）｜两副本 diff=${JSON.stringify(copiesLive.diff)} list=${JSON.stringify(copiesLive.list)} details=${JSON.stringify(copiesLive.details)}｜服务端=${JSON.stringify(serverLive.value)}`
+    )
+    expect(
+        checks,
+        'STORE01.p3class',
+        'P3 判定：同步后行文案**跟随新值**（或重取真值一致）⇒ 自愈；行仍显示旧值 ⇒ **用户可见陈旧 = P1**',
+        !liveStale,
+        liveStale
+            ? `**P1 证据**：同步后行仍显示旧值 ${JSON.stringify(rowLive.time?.text)}（真值=${JSON.stringify(rowTruth.time?.text)}，服务端 endAt=${JSON.stringify(serverLive.value?.endAt)}）`
+            : `自愈：同步后行文案=${JSON.stringify(rowLive.time?.text)}，与真值=${JSON.stringify(rowTruth.time?.text)}一致或已更新（服务端=${JSON.stringify(serverLive.value?.endAt)}）`
+    )
+    // ④ 副本比较（同步后，仍在 P 面板）
+    info(
+        checks,
+        'STORE01.step4',
+        '④ 同步后两副本比较（仍在 P 面板）',
+        `present(list/details)=${copiesLive.presentInTasksStore}/${copiesLive.presentInDetailsStore} diff=${JSON.stringify(copiesLive.diff)}｜list=${JSON.stringify(copiesLive.list)}｜details=${JSON.stringify(copiesLive.details)}｜服务端=${JSON.stringify(serverLive.value)}`
+    )
+    const hitStep4 = copiesLive.diff.length > 0
+    info(
+        checks,
+        'STORE01.step4hit',
+        '④ 副本差异命中判定（endAt/projectId/state 任一不等 = 命中）',
+        hitStep4
+            ? `**命中** ${JSON.stringify(copiesLive.diff)}`
+            : `未命中（两副本一致；服务端=${JSON.stringify(serverLive.value)}）`
+    )
+
+    // ③ 返回 P：路由 / history.back() 两种路径的渲染值
+    await openTaskDetails(cdp, parent.task.id)
+    const routeRow = await probeRow(cdp, sName)
+    const routeCopies = await readCopies(cdp, child.task.id)
+    await openTaskDetails(cdp, child.task.id)
+    await sleep(1200)
+    await cdp.evaluate(`history.back(); return true`)
+    await sleep(2500)
+    const backRow = await probeRow(cdp, sName)
+    info(
+        checks,
+        'STORE01.step3',
+        '③ 返回 P 后的渲染值（路由 / history.back）',
+        `route.row.time=${JSON.stringify(routeRow.time?.text)} (diff=${JSON.stringify(routeCopies.diff)})｜back.row.time=${JSON.stringify(backRow.time?.text)}｜期望（服务端/列表侧）endAt=${JSON.stringify(serverAfter.value?.endAt)}`
+    )
+
+    // ⑤ 触发重取 ⇒ 差异是否消失
+    const retried = await cdp.json(`(async () => {
+        const drawer = document.querySelector('${DETAILS_DRAWER}')
+        if (!drawer) return { ok: false, reason: '抽屉未就绪' }
+        const btn = [...drawer.querySelectorAll('button')].find((b) => /重试|刷新/.test(b.innerText || ''))
+        if (btn) { btn.click(); await new Promise((r) => setTimeout(r, 2500)); return { ok: true, via: 'retry-button' } }
+        return { ok: true, via: 'reopen-details' }
+    })()`)
+    await sleep(2000)
+    const afterRetryCopies = await readCopies(cdp, child.task.id)
+    expect(
+        checks,
+        'STORE01.step5',
+        '⑤ 重取后差异消失（证明"副本未同步"而非"数据丢失"）',
+        afterRetryCopies.diff.length === 0,
+        `触发=${JSON.stringify(retried)} diff=${JSON.stringify(afterRetryCopies.diff)} list=${JSON.stringify(afterRetryCopies.list)} details=${JSON.stringify(afterRetryCopies.details)}`
+    )
+    info(
+        checks,
+        'STORE01.grade',
+        'P1/P2 判定要素（**判级交 PM/架构**）',
+        JSON.stringify({
+            在场性: presence.bothPresent,
+            步骤2前置断言通过:
+                (serverBefore.value?.endAt ?? null) !== (serverAfter.value?.endAt ?? null),
+            步骤4命中: hitStep4,
+            步骤4差异: copiesLive.diff,
+            P3行文案陈旧同步后未跟随: liveStale,
+            P3行文案同步后: rowLive.time?.text ?? null,
+            P3行文案真值: rowTruth.time?.text ?? null,
+            步骤5差异消失: afterRetryCopies.diff.length === 0
+        })
+    )
+    return checks
+}
+
+/* ─────────── 探针A：DEF-SYNC-05 根因二分 · 探针B：DEF-UI-01 隔离（PM seq 5）─────────── */
+
+const TS = (v) => (v ? new Date(v).getTime() : null)
+
+/** 等「立即同步」收口（idle 且 0 pending / 0 failed），最多 40s */
+async function waitSyncIdle(cdp) {
+    return cdp.evaluate(`
+        for (let i = 0; i < 80; i++) {
+            const btn = document.querySelector('.sync-rail-btn')
+            const rows = window.__qa?.panelRows ? window.__qa.panelRows() : []
+            if (btn && !btn.disabled && !rows.some((row) => /待推送|失败/.test(row))) return true
+            await new Promise((r) => setTimeout(r, 500))
+        }
+        return false
+    `)
+}
+
+/**
+ * 探针B 专用：在当前详情页（或创建器）对日期选择器做一次"开外层面板 → 点内层 开始/截止 → 日历是否出现"的完整探针
+ * @param {string} scope 'details' | 'creator'
+ */
+async function probeDatePanel(cdp, scope) {
+    const hostExpr =
+        scope === 'creator'
+            ? `[...document.querySelectorAll('.nue-dialog--task-creator')].find((d) => d.getBoundingClientRect().width > 0)`
+            : `document.querySelector('${DETAILS_DRAWER}')`
+    const targetDay = Math.min(28, new Date().getDate() + 2) // 有效：必须晚于 start(=今天)，否则被 start<=end 校验拒绝
+    return cdp.json(`(async () => {
+        const host = ${hostExpr}
+        if (!host) return { ok: false, reason: 'no-host' }
+        const closePanel = async () => {
+            for (let i = 0; i < 3; i++) {
+                const p = [...document.querySelectorAll('[class*="task-date-selector-panel"]')].find((e) => e.getBoundingClientRect().width > 0)
+                if (!p) return
+                const cancel = [...p.querySelectorAll('button')].find((b) => (b.innerText || '').trim() === '取消')
+                if (cancel) cancel.click()
+                await new Promise((r) => setTimeout(r, 600))
+            }
+        }
+        await closePanel()
+        const trigger = [...host.querySelectorAll('button')].find((b) => {
+            const text = (b.innerText || '').trim()
+            // 兼容：无 ~ 的仅截止文案与完整区间两种触发器形态
+            return /设置时间/.test(text) || (/今天|本月|昨天|截止|开始于/.test(text) && !/保存|取消|清除|更多|返回/.test(text))
+        })
+        if (!trigger) return { ok: false, reason: 'no-trigger', hostText: (host.innerText || '').slice(0, 60) }
+        const triggerText = (trigger.innerText || '').trim()
+        trigger.click()
+        await new Promise((r) => setTimeout(r, 900))
+        const panel = [...document.querySelectorAll('[class*="task-date-selector-panel"]')].find((e) => e.getBoundingClientRect().width > 0)
+        if (!panel) return { ok: true, triggerText, outerOpened: false, calendarOpened: null, gridCount: 0, cellCount: 0, selectionRegistered: null, serverChanged: null }
+        const gridCount = panel.querySelectorAll('.date-grid').length
+        const cellCount = panel.querySelectorAll('.date-grid .date-cell').length
+        let selectionRegistered = null
+        let serverChanged = null
+        if (gridCount > 0) {
+            const grids = [...panel.querySelectorAll('.date-grid')]
+            const endGrid = grids[grids.length - 1]
+            const cells = endGrid ? [...endGrid.querySelectorAll('.date-cell')].filter((c) => !String(c.className).includes('other-month')) : []
+            const cell = cells.find((c) => String(c.innerText || '').trim() === String(${targetDay})) ?? null
+            if (cell) {
+                cell.click()
+                await new Promise((r) => setTimeout(r, 900))
+                const dtNow = [...panel.querySelectorAll('button')].filter((b) => ((b.innerText || '').trim()).includes('2026年'))
+                selectionRegistered = dtNow.length > 1 ? (dtNow[dtNow.length - 1].innerText || '').trim() : null
+                const save = [...panel.querySelectorAll('button')].find((b) => (b.innerText || '').trim() === '保存')
+                if (save) { save.click(); await new Promise((r) => setTimeout(r, 2400)); serverChanged = 'clicked-save' } else { serverChanged = 'clicked-no-save' }
+            } else { serverChanged = 'no-target-cell' }
+        } else { serverChanged = 'no-grid' }
+        await closePanel()
+        return { ok: true, triggerText, outerOpened: true, calendarOpened: gridCount > 0, gridCount, cellCount, selectionRegistered, serverChanged }
+    })()`)
+}
+
+/**
+ * 探针A：DEF-SYNC-05 根因二分（PM seq 5，架构判据树）
+ * @description ①建子任务取 A → ②外部 API 直写 B（记录服务端 updated_at 前后）→ ③立即同步 → ④本地库读回
+ *              （=B ⇒ 副本刷新覆盖，归 DEF-STORE-01 同域 P1；=A ⇒ 查 updated_at：未 bump ⇒ DEF-SYNC-04 同域 P1 / bump ⇒ 客户端 LWW 次级）
+ *              → ⑤重启自愈（自愈 ⇒ 降 P2 依据）
+ */
+async function defsync05(ctx) {
+    const { cdp, email, password } = ctx
+    const checks = []
+    const sName = `${STORE01_PREFIX} ${RUN_TAG} SYNC05子任务`
+    await ensureTaskList(cdp)
+    const parent = await createTaskViaUi(cdp, {
+        title: `${STORE01_PREFIX} ${RUN_TAG} SYNC05父任务`,
+        scheduled: true
+    })
+    if (!parent.ok) return skip(checks, 'SYNC05.parent', '父任务 P', `创建失败：${parent.reason}`)
+    const child = await createSubTaskViaUi(cdp, { parentId: parent.task.id, title: sName })
+    if (!child.ok) return skip(checks, 'SYNC05.child', '子任务 S', `创建失败：${child.reason}`)
+    // ① 本地基线 A
+    await openTaskDetails(cdp, child.task.id)
+    await sleep(1200)
+    await openTaskDetails(cdp, parent.task.id)
+    const rowA = await probeRow(cdp, sName)
+    const localA = (await readCopies(cdp, child.task.id)).list
+    info(
+        checks,
+        'SYNC05.step1',
+        '① 本地基线 A（行文案 + 列表副本 endAt）',
+        `row=${JSON.stringify(rowA.time?.text)} list.endAt=${JSON.stringify(localA?.endAt)}`
+    )
+    // ② 服务端 updated_at 前后 + API 直写 B
+    const serverBefore = await readViaApi(cdp, child.task.id)
+    const newEndAt = (() => {
+        const base = new Date()
+        base.setUTCDate(base.getUTCDate() + 3)
+        base.setUTCHours(8, 0, 0, 0)
+        return base.toISOString()
+    })()
+    const apiWrite = await apiUpdateTask(cdp, child.task.id, { endAt: newEndAt })
+    await sleep(800)
+    const serverAfter = await readViaApi(cdp, child.task.id)
+    const updatedBumped = TS(serverAfter.value?.updatedAt) !== TS(serverBefore.value?.updatedAt)
+    info(
+        checks,
+        'SYNC05.step2',
+        '② 服务端 updated_at 前后 + 直写 B',
+        `apiWrite=${JSON.stringify(apiWrite)}｜before: endAt=${JSON.stringify(serverBefore.value?.endAt)} updatedAt=${JSON.stringify(serverBefore.value?.updatedAt)}｜after: endAt=${JSON.stringify(serverAfter.value?.endAt)} updatedAt=${JSON.stringify(serverAfter.value?.updatedAt)}｜**updated_at bump=${updatedBumped}**`
+    )
+    // ③ 立即同步
+    await openPanel(cdp)
+    await clickPanelPrimary(cdp)
+    const synced = await waitSyncIdle(cdp)
+    info(checks, 'SYNC05.step3', '③ 立即同步收口', `synced=${synced}`)
+    // ④ 本地库读回
+    const localAfter = (await readCopies(cdp, child.task.id)).list
+    const localGotB = TS(localAfter?.endAt) === TS(serverAfter.value?.endAt)
+    const rowLive = await probeRow(cdp, sName)
+    const copiesLive = await readCopies(cdp, child.task.id)
+    info(
+        checks,
+        'SYNC05.step4',
+        '④ 同步后本地库读回 + 副本 + 行文案',
+        `list.endAt=${JSON.stringify(localAfter?.endAt)}（=B? ${localGotB}）｜两副本 diff=${JSON.stringify(copiesLive.diff)}｜行=${JSON.stringify(rowLive.time?.text)}｜服务端=${JSON.stringify(serverAfter.value?.endAt)}`
+    )
+    // 判据树
+    if (localGotB) {
+        info(
+            checks,
+            'SYNC05.branch',
+            '判据树分支',
+            '**拉取成功（本地=B）** ⇒ 缺口在**副本刷新覆盖**（RefreshData 未重载子任务副本）⇒ 归 **DEF-STORE-01 同域**；行文案/详情副本若仍 A ⇒ **用户可见 P1**（P3 外部变更触发路径）'
+        )
+    } else {
+        if (!updatedBumped) {
+            info(
+                checks,
+                'SYNC05.branch',
+                '判据树分支',
+                '**本地=A 且 服务端 updated_at 未 bump** ⇒ 服务端写路径缺陷（keyset `updated_at > cursor` 会漏）⇒ 并入 **DEF-SYNC-04 同域 P1**'
+            )
+        } else {
+            info(
+                checks,
+                'SYNC05.branch',
+                '判据树分支',
+                '**本地=A 且 updated_at 已 bump 仍未应用** ⇒ 客户端 LWW/时钟偏差（次级假设）'
+            )
+        }
+    }
+    // ⑤ 重启自愈（重载后轮询等列表 store 填充；行文案为最终呈现证据）
+    await cdp.reload(3000)
+    await bootstrap(cdp, { email, password })
+    await sleep(4000)
+    await openTaskDetails(cdp, parent.task.id)
+    let localAfterReload = (await readCopies(cdp, child.task.id)).list
+    for (let i = 0; i < 16 && !localAfterReload?.endAt; i++) {
+        await sleep(1000)
+        localAfterReload = (await readCopies(cdp, child.task.id)).list
+    }
+    const rowAfterReload = await probeRow(cdp, sName)
+    const copyHealed = TS(localAfterReload?.endAt) === TS(serverAfter.value?.endAt)
+    // **自愈主判据 = 行文案**：重启后行文案与基线（A 形态）不同且不再含旧"本月30日" ⇒ 拉到 B 并渲染。
+    // 本地列表副本在重载后常为空（子任务未进列表 store，除非开过其详情）⇒ 不作为主判据。
+    const rowAfterText = rowAfterReload.time?.text ?? ''
+    const rowBaselineText = rowA.time?.text ?? ''
+    const rowHealed =
+        !!rowAfterText && rowAfterText !== rowBaselineText && !/本月|30日/.test(rowAfterText)
+    const selfHealed = copyHealed || rowHealed
+    expect(
+        checks,
+        'SYNC05.step5',
+        '⑤ 重启/重进后面板自愈（行/本地回到 B）⇒ 可降 P2 依据',
+        selfHealed,
+        `自愈=${selfHealed}（copyHealed=${copyHealed} rowHealed=${rowHealed}）list.endAt=${JSON.stringify(localAfterReload?.endAt)} 服务端=${JSON.stringify(serverAfter.value?.endAt)}｜行重启后=${JSON.stringify(rowAfterText)}（基线=${JSON.stringify(rowBaselineText)}）`
+    )
+    info(
+        checks,
+        'SYNC05.grade',
+        'DEF-SYNC-05 定级建议（判级交 PM/架构）',
+        JSON.stringify({
+            '本地=B(立即同步后)': localGotB,
+            updated_at_bump: updatedBumped,
+            重启自愈: selfHealed,
+            服务端endAt: serverAfter.value?.endAt,
+            立即同步后本地endAt: localAfter?.endAt ?? null,
+            重启后本地endAt: localAfterReload?.endAt ?? null
+        })
+    )
+    return checks
+}
+
+/**
+ * 探针B：DEF-UI-01 隔离（PM seq 5，架构 3 探针 + clearable）
+ * ① 外层 nue-dropdown 开不开 ② creator 预填时间窗后是否同样失败 ③ 主任务详情头是否同样失败 ④ clearable（清空重设）
+ */
+async function defui01(ctx) {
+    const { cdp } = ctx
+    const checks = []
+    const sName = `${STORE01_PREFIX} ${RUN_TAG} UI01子任务`
+    const pName = `${STORE01_PREFIX} ${RUN_TAG} UI01父任务`
+    await ensureTaskList(cdp)
+    const parent = await createTaskViaUi(cdp, { title: pName, scheduled: true })
+    if (!parent.ok)
+        return skip(checks, 'UI01.parent', '父任务 P（已排期）', `创建失败：${parent.reason}`)
+    const child = await createSubTaskViaUi(cdp, { parentId: parent.task.id, title: sName })
+    if (!child.ok)
+        return skip(checks, 'UI01.child', '子任务 S（继承时间窗）', `创建失败：${child.reason}`)
+
+    // ① 子任务详情（已有时间窗）：面板是否打开 + 两窗格日历是否在 + 点 END 日单元保存后服务端是否变化
+    await openTaskDetails(cdp, child.task.id)
+    const endBefore = await readViaApi(cdp, child.task.id)
+    const p1 = await probeDatePanel(cdp, 'details')
+    const endAfter = await readViaApi(cdp, child.task.id)
+    const p1Changed = TS(endAfter.value?.endAt) !== TS(endBefore.value?.endAt)
+    expect(
+        checks,
+        'UI01.outer',
+        'B① 子任务详情：面板打开 + 两窗格日历可用（点 END 日单元→保存→服务端 endAt 变化）',
+        p1.ok && p1.outerOpened === true && p1.calendarOpened === true && p1Changed,
+        `trigger=${JSON.stringify(p1.triggerText)} outer=${p1.outerOpened} grid=${p1.gridCount} cells=${p1.cellCount} picked=${p1.pickedChanged}｜服务端 endAt ${JSON.stringify(endBefore.value?.endAt)} → ${JSON.stringify(endAfter.value?.endAt)}（变化=${p1Changed}）`
+    )
+    // ② creator 预填时间窗后再次改期
+    await ensureTaskList(cdp)
+    await cdp.pressKey('n', 1500)
+    const c2 = await cdp.json(`(async () => {
+        const dialog = [...document.querySelectorAll('.nue-dialog--task-creator')].find((d) => d.getBoundingClientRect().width > 0)
+        if (!dialog) return { ok: false, reason: 'creator 未打开' }
+        const input = dialog.querySelector('input[placeholder="待办事项名称"]')
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(`${STORE01_PREFIX} ${RUN_TAG} UI01创建器任务`)})
+        input.dispatchEvent(new Event('input', { bubbles: true }))
+        await new Promise((r) => setTimeout(r, 300))
+        return { ok: true }
+    })()`)
+    let creatorResult = { ok: false, reason: 'creator 预填失败' }
+    if (c2.ok) {
+        const today = new Date().getDate()
+        const picked = await pickDates(cdp, { scope: 'creator', start: today, end: null })
+        if (picked.ok) {
+            creatorResult = await probeDatePanel(cdp, 'creator')
+        } else {
+            creatorResult = { ok: false, reason: `设窗失败 ${picked.reason}` }
+        }
+        // 关闭创建器（避免影响后续）
+        await cdp.json(`(async () => {
+            const d = [...document.querySelectorAll('.nue-dialog--task-creator')].find((x) => x.getBoundingClientRect().width > 0)
+            const esc = [...(d?.querySelectorAll('button') ?? [])].find((b) => (b.innerText || '').trim() === '取消')
+            if (esc) esc.click()
+            await new Promise((r) => setTimeout(r, 1000))
+            return true
+        })()`)
+    }
+    info(
+        checks,
+        'UI01.creator',
+        'B② creator 预填时间窗后再次改期（隔离"值状态"变量）',
+        `creator=${JSON.stringify(creatorResult.ok ? { outerOpened: creatorResult.outerOpened, calendarOpened: creatorResult.calendarOpened, grid: creatorResult.gridCount, cells: creatorResult.cellCount, picked: creatorResult.pickedChanged } : creatorResult)}`
+    )
+    // ③ 主任务详情头（已排期父任务）
+    await openTaskDetails(cdp, parent.task.id)
+    const p3Before = await readViaApi(cdp, parent.task.id)
+    const p3 = await probeDatePanel(cdp, 'details')
+    const p3After = await readViaApi(cdp, parent.task.id)
+    const p3Changed = TS(p3After.value?.endAt) !== TS(p3Before.value?.endAt)
+    expect(
+        checks,
+        'UI01.mainTask',
+        'B③ 主任务详情头（已排期）日历是否可用（影响面定界：子任务特有 or 全任务）',
+        p3.ok && p3.calendarOpened === true && p3Changed,
+        `outer=${p3.outerOpened} grid=${p3.gridCount} cells=${p3.cellCount} picked=${p3.pickedChanged}｜服务端 endAt ${JSON.stringify(p3Before.value?.endAt)} → ${JSON.stringify(p3After.value?.endAt)}（变化=${p3Changed}）`
+    )
+    // ④ clearable：清空后能否重开日历（能清空重设 ⇒ P2；不能 ⇒ P1-leaning）
+    await openTaskDetails(cdp, child.task.id)
+    const clearProbe = await cdp.json(`(async () => {
+        const closeP = async () => {
+            for (let i = 0; i < 3; i++) {
+                const p = [...document.querySelectorAll('[class*="task-date-selector-panel"]')].find((e) => e.getBoundingClientRect().width > 0)
+                if (!p) return
+                const cancel = [...p.querySelectorAll('button')].find((b) => (b.innerText || '').trim() === '取消')
+                if (cancel) cancel.click()
+                await new Promise((r) => setTimeout(r, 600))
+            }
+        }
+        await closeP()
+        const drawer = document.querySelector('${DETAILS_DRAWER}')
+        const trigger = [...(drawer?.querySelectorAll('button') ?? [])].find((b) => { const t = (b.innerText || '').trim(); return /设置时间/.test(t) || (/[~]/.test(t) && /今天|本月|月|昨天|日/.test(t)) })
+        if (!trigger) return { ok: false, reason: 'no-trigger' }
+        trigger.click()
+        await new Promise((r) => setTimeout(r, 900))
+        const panel = [...document.querySelectorAll('[class*="task-date-selector-panel"]')].find((e) => e.getBoundingClientRect().width > 0)
+        if (!panel) return { ok: false, reason: 'no-panel' }
+        const clearBtn = [...panel.querySelectorAll('button')].find((b) => (b.innerText || '').trim() === '清除')
+        if (!clearBtn) return { ok: false, reason: 'no-clear-button', buttons: [...panel.querySelectorAll('button')].map((b) => (b.innerText || '').trim()) }
+        clearBtn.click()
+        await new Promise((r) => setTimeout(r, 900))
+        // 清空后点「选择截止日期」看日历
+        const pick = [...panel.querySelectorAll('button')].find((b) => (b.innerText || '').trim() === '选择截止日期')
+        const pickFound = !!pick
+        if (pick) { pick.click(); await new Promise((r) => setTimeout(r, 900)) }
+        const cal = document.querySelector('.nue-date-picker-panel')
+        const grid = document.querySelector('.date-grid')
+        const calendarAfterClear = !!(cal || grid)
+        // 点保存看是否真的清空（服务端值变化）
+        const save = [...panel.querySelectorAll('button')].find((b) => (b.innerText || '').trim() === '保存')
+        if (save) { save.click(); await new Promise((r) => setTimeout(r, 1500)) }
+        return { ok: true, clearButtonFound: !!clearBtn, pickFound, calendarAfterClear, panelButtonsAfter: [...panel.querySelectorAll('button')].map((b) => (b.innerText || '').trim()) }
+    })()`)
+    const clearServer = await readViaApi(cdp, child.task.id)
+    info(
+        checks,
+        'UI01.clearable',
+        'B④ clearable（清空重设）',
+        `probe=${JSON.stringify(clearProbe)}｜清空后服务端 endAt=${JSON.stringify(clearServer.value?.endAt)}`
+    )
+    expect(
+        checks,
+        'UI01.clearableWorked',
+        'B④ 判定输入：清空按钮存在 + 清空后日历可开 + 服务端被清（可清空重设 ⇒ P2；否则 P1-leaning）',
+        !!clearProbe.ok &&
+            !!clearProbe.clearButtonFound &&
+            (clearProbe.calendarAfterClear || (clearServer.value?.endAt ?? null) === null),
+        `clearButton=${clearProbe.clearButtonFound} calendarAfterClear=${clearProbe.calendarAfterClear} 服务端endAt=${JSON.stringify(clearServer.value?.endAt)}`
+    )
+    info(
+        checks,
+        'UI01.grade',
+        'DEF-UI-01 定级建议（判级交 PM/架构）',
+        JSON.stringify({
+            外层: p1.outerOpened,
+            日历可用子任务: p1.calendarOpened,
+            子任务改期生效: p1Changed,
+            creator同状态日历: creatorResult.ok ? creatorResult.calendarOpened : null,
+            主任务日历: p3.calendarOpened,
+            主任务改期生效: p3Changed,
+            可清空重设: !!clearProbe.ok && !!clearProbe.clearButtonFound
+        })
+    )
+    return checks
+}
+
 /* ────────────────────────────── 清理 ────────────────────────────── */
 
 async function cleanup(ctx) {
@@ -1008,7 +1657,11 @@ async function cleanup(ctx) {
     const checks = []
     const before = await readTasks(cdp)
     const targets = (before.ok ? before.tasks : [])
-        .filter((task) => String(task.name || '').startsWith(PREFIX))
+        .filter(
+            (task) =>
+                String(task.name || '').startsWith(PREFIX) ||
+                String(task.name || '').startsWith(STORE01_PREFIX)
+        )
         // id 为递增雪花：**新→旧**排序，优先处理本轮新建（多为存活）；已软删除的旧项在详情页只显示"恢复"⇒ 空转
         .sort((a, b) => String(b.id).localeCompare(String(a.id)))
     info(
@@ -1038,7 +1691,10 @@ async function cleanup(ctx) {
     }
     const after = await readTasks(cdp)
     const aliveLocal = (after.ok ? after.tasks : []).filter(
-        (task) => String(task.name || '').startsWith(PREFIX) && !task.isDeleted
+        (task) =>
+            (String(task.name || '').startsWith(PREFIX) ||
+                String(task.name || '').startsWith(STORE01_PREFIX)) &&
+            !task.isDeleted
     )
     const storeBreakdown = await cdp.json(`(async () => {
         const app = document.getElementById('app')
@@ -1067,7 +1723,7 @@ async function cleanup(ctx) {
     expect(
         checks,
         'CLEANUP.a',
-        '`[QA-TASK02]` 任务已删除（本地软删除口径）',
+        '`[QA-TASK02]` / `[QA-STORE01]` 任务已删除（本地软删除口径）',
         targets.length === 0 || deleted > 0 || aliveLocal.length === 0,
         `待清理=${targets.length} 本轮删除成功=${deleted} 本地剩余未删=${aliveLocal.length} 样例=${JSON.stringify(aliveLocal.slice(0, 3).map((t) => t.name))}`
     )
@@ -1112,6 +1768,26 @@ export const task02SubtaskRowLayout = {
         { id: 'ac7', title: 'AC⑦ 描述行（无描述不渲染 / 有描述仅描述）', run: ac7 },
         { id: 'ac8', title: 'AC⑧ 勾选 / 脱离 / 创建条行为一致', run: ac8 },
         { id: 'aux', title: '附 脱离按钮 hover + 键盘可达性', run: auxA11y },
+        {
+            id: 'consistency',
+            title: '副本一致性探针（TasksStore vs TaskDetailsStore，每轮必跑）',
+            run: consistency
+        },
+        {
+            id: 'defstore01',
+            title: 'DEF-STORE-01 有界复现（5 步 + P1/P2 判定要素）',
+            run: defStore01
+        },
+        {
+            id: 'defsync05',
+            title: '探针A DEF-SYNC-05 根因二分（updated_at 前后 + 本地读回 + 重启自愈）',
+            run: defsync05
+        },
+        {
+            id: 'defui01',
+            title: '探针B DEF-UI-01 隔离（外层/creator/主任务/clearable）',
+            run: defui01
+        },
         {
             id: 'cleanup',
             title: '受控数据清理（[QA-TASK02] + 核 0 pending/0 failed）',
