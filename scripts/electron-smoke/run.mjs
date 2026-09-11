@@ -25,6 +25,7 @@ import { shell02SyncRail } from './checks/shell-02-sync-rail.mjs'
 import { shell03Offline } from './checks/shell-03-offline.mjs'
 import { task01SubtaskInherit } from './checks/task-01-subtask-inherit.mjs'
 import { task02SubtaskRowLayout } from './checks/task-02-subtask-row-layout.mjs'
+import { defStore06StoreInvalidation } from './checks/def-store-06-store-invalidation.mjs'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = resolve(HERE, '..', '..')
@@ -32,7 +33,8 @@ const FEATURES = {
     'shell-02': shell02SyncRail,
     'shell-03': shell03Offline,
     'task-01': task01SubtaskInherit,
-    'task-02': task02SubtaskRowLayout
+    'task-02': task02SubtaskRowLayout,
+    'def-store-06': defStore06StoreInvalidation
 }
 
 const options = parseArgs(process.argv.slice(2))
