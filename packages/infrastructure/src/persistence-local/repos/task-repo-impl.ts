@@ -251,7 +251,8 @@ export class LocalTaskRepoImpl implements TaskRepository {
             let records = await this.db.tasks.where('userId').equals(this.currentUserId).toArray()
             if (query.isDeleted === 'true') {
                 records = records.filter((r) => !isNotDeleted(r.deletedAt))
-            } else if (query.isDeleted === 'false') {
+            } else {
+                // 默认（未传）或 isDeleted=false：不查询已删除任务（含子任务——行级过滤，父/子一视同仁；对齐项目仓库默认语义）
                 records = records.filter((r) => isNotDeleted(r.deletedAt))
             }
             if (query.isArchived === 'true') {
