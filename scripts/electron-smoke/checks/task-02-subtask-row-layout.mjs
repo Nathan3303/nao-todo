@@ -45,7 +45,7 @@
  * 数据构造失败 ⇒ **SKIP + 诊断**，不判 FAIL。
  */
 import { sleep } from '../lib/cdp.mjs'
-import { bootstrap, clickPanelPrimary, openPanel } from '../lib/app.mjs'
+import { SEL, bootstrap, clickPanelPrimary, openPanel } from '../lib/app.mjs'
 import { qaKit } from './task-01-subtask-inherit.mjs'
 
 const {
@@ -1376,6 +1376,35 @@ async function probeDatePanel(cdp, scope) {
 }
 
 /**
+ * **本地 DB 读回**（Dexie `nao-todo-desktop`.tasks）——判据树里的"本地库"层（离线持久层）
+ * @description `endAt` 属明文结构字段（索引字段），可直接读；`name/description` 为 AES-GCM 密文，本探针不读
+ */
+async function dbReadTask(cdp, taskId) {
+    return cdp.json(`(async () => {
+        return await new Promise((resolve) => {
+            const req = indexedDB.open('nao-todo-desktop')
+            req.onerror = () => resolve({ found: false, error: String(req.error) })
+            req.onsuccess = () => {
+                try {
+                    const st = req.result.transaction('tasks', 'readonly').objectStore('tasks')
+                    const g = st.get(${JSON.stringify(taskId)})
+                    g.onerror = () => resolve({ found: false, error: 'get-error' })
+                    g.onsuccess = () =>
+                        resolve({
+                            found: !!g.result,
+                            endAt: g.result ? (g.result.endAt ?? null) : null,
+                            startAt: g.result ? (g.result.startAt ?? null) : null,
+                            updatedAt: g.result ? (g.result.updatedAt ?? null) : null
+                        })
+                } catch (err) {
+                    resolve({ found: false, error: String(err) })
+                }
+            }
+        })
+    })()`)
+}
+
+/**
  * 探针A：DEF-SYNC-05 根因二分（PM seq 5，架构判据树）
  * @description ①建子任务取 A → ②外部 API 直写 B（记录服务端 updated_at 前后）→ ③立即同步 → ④本地库读回
  *              （=B ⇒ 副本刷新覆盖，归 DEF-STORE-01 同域 P1；=A ⇒ 查 updated_at：未 bump ⇒ DEF-SYNC-04 同域 P1 / bump ⇒ 客户端 LWW 次级）
@@ -1423,21 +1452,65 @@ async function defsync05(ctx) {
         '② 服务端 updated_at 前后 + 直写 B',
         `apiWrite=${JSON.stringify(apiWrite)}｜before: endAt=${JSON.stringify(serverBefore.value?.endAt)} updatedAt=${JSON.stringify(serverBefore.value?.updatedAt)}｜after: endAt=${JSON.stringify(serverAfter.value?.endAt)} updatedAt=${JSON.stringify(serverAfter.value?.updatedAt)}｜**updated_at bump=${updatedBumped}**`
     )
-    // ③ 立即同步
+    // ③ 立即同步（**同时观测 ADR §7 的"多余刷新"**：清空请求记录后同步，统计视图重拉次数）
     await openPanel(cdp)
+    const readSyncStamp = () =>
+        cdp.evaluate(`
+            const el = document.querySelector('${SEL.panel}')
+            const lines = (el?.innerText || '').split(String.fromCharCode(10))
+            const line = lines.find((item) => item.includes('上次同步'))
+            return line ? line.trim() : null
+        `)
+    const syncStampBefore = await readSyncStamp()
+    cdp.clearRequests()
     await clickPanelPrimary(cdp)
     const synced = await waitSyncIdle(cdp)
-    info(checks, 'SYNC05.step3', '③ 立即同步收口', `synced=${synced}`)
-    // ④ 本地库读回
+    // "同步确实执行"判据：面板「上次同步 …」文案发生变化（渲染进程网络计数在 IPC 传输下可能盲 ⇒ 不作唯一依据）
+    let syncStampAfter = syncStampBefore
+    for (let i = 0; i < 25 && syncStampAfter === syncStampBefore; i++) {
+        await sleep(1000)
+        syncStampAfter = await readSyncStamp()
+    }
+    const countReqs = () => {
+        const urls = cdp.requests()
+        const count = (pattern) => urls.filter((url) => pattern.test(url)).length
+        return {
+            total: urls.length,
+            pulls: count(/api\/sync\/pull/),
+            pushes: count(/api\/sync\/push/),
+            listFetches: count(/api\/tasks\/?(\?|$)/)
+        }
+    }
+    const reqsAfterSync = countReqs()
+    // 「同步确实执行」判据：**以 pull 请求计数为主**（面板修正后可开 ⇒ 请求可观测），
+    // 面板「上次同步 HH:MM」仅**分钟粒度**、同分钟内同步无法识别（曾导致误判 SKIP）⇒ 退为辅助证据。
+    const syncRan = reqsAfterSync.pulls >= 1 || syncStampAfter !== syncStampBefore
+    await sleep(3000)
+    const reqsAfterSettle = countReqs()
+    info(
+        checks,
+        'SYNC05.step3',
+        '③ 立即同步收口 + **是否确实执行**（面板「上次同步」文案变化为证）',
+        `synced=${synced} syncRan=${syncRan}（pull 请求=${reqsAfterSync.pulls}）｜上次同步（分钟粒度，仅辅助）：${JSON.stringify(syncStampBefore)} → ${JSON.stringify(syncStampAfter)}`
+    )
+    info(
+        checks,
+        'SYNC05.jitter',
+        'ADR §7 观测：回拉窗口是否带来**多余视图重拉**（不判 FAIL，仅记录/归因）',
+        `同步窗口内：total=${reqsAfterSync.total} pull=${reqsAfterSync.pulls} push=${reqsAfterSync.pushes} **list 拉取=${reqsAfterSync.listFetches}**｜静置 3s 后新增：total=${reqsAfterSettle.total} list 拉取=${reqsAfterSettle.listFetches}⇒若 list 拉取 > 1 属"§7 已登记的窗口内重复 put ⇒ 多触发 data-changed"，幂等无数据风险`
+    )
+    // ④ **本地 DB（判据树"本地库"层）** + store 副本
+    const dbAfter = await dbReadTask(cdp, child.task.id)
     const localAfter = (await readCopies(cdp, child.task.id)).list
-    const localGotB = TS(localAfter?.endAt) === TS(serverAfter.value?.endAt)
+    const dbGotB = TS(dbAfter.endAt) === TS(serverAfter.value?.endAt)
+    const localGotB = dbGotB
     const rowLive = await probeRow(cdp, sName)
     const copiesLive = await readCopies(cdp, child.task.id)
     info(
         checks,
         'SYNC05.step4',
-        '④ 同步后本地库读回 + 副本 + 行文案',
-        `list.endAt=${JSON.stringify(localAfter?.endAt)}（=B? ${localGotB}）｜两副本 diff=${JSON.stringify(copiesLive.diff)}｜行=${JSON.stringify(rowLive.time?.text)}｜服务端=${JSON.stringify(serverAfter.value?.endAt)}`
+        '④ 同步后（重载前）本地 **DB** 读回 + store 副本 + 行文案',
+        `**DB.endAt=${JSON.stringify(dbAfter.endAt)}（=B? ${dbGotB}）**（DB.updatedAt=${JSON.stringify(dbAfter.updatedAt)}）｜store.list=${JSON.stringify(localAfter?.endAt)}｜两副本 diff=${JSON.stringify(copiesLive.diff)}｜行=${JSON.stringify(rowLive.time?.text)}｜服务端=${JSON.stringify(serverAfter.value?.endAt)}`
     )
     // 判据树
     if (localGotB) {
@@ -1474,6 +1547,8 @@ async function defsync05(ctx) {
         await sleep(1000)
         localAfterReload = (await readCopies(cdp, child.task.id)).list
     }
+    const dbAfterReload = await dbReadTask(cdp, child.task.id)
+    const dbHealed = TS(dbAfterReload.endAt) === TS(serverAfter.value?.endAt)
     const rowAfterReload = await probeRow(cdp, sName)
     const copyHealed = TS(localAfterReload?.endAt) === TS(serverAfter.value?.endAt)
     // **自愈主判据 = 行文案**：重启后行文案与基线（A 形态）不同且不再含旧"本月30日" ⇒ 拉到 B 并渲染。
@@ -1482,7 +1557,23 @@ async function defsync05(ctx) {
     const rowBaselineText = rowA.time?.text ?? ''
     const rowHealed =
         !!rowAfterText && rowAfterText !== rowBaselineText && !/本月|30日/.test(rowAfterText)
-    const selfHealed = copyHealed || rowHealed
+    const selfHealed = dbHealed || copyHealed || rowHealed
+    if (!syncRan) {
+        skip(
+            checks,
+            'SYNC05.dbFix',
+            '【修复验收】立即同步后（未重载）本地 DB 已应用 B',
+            `本轮**作废**：未能证实「立即同步」确实执行（面板「上次同步」文案未变化 ${JSON.stringify(syncStampBefore)}；渲染进程请求计数=${JSON.stringify(reqsAfterSync)}）⇒ 不下结论、不判 FAIL`
+        )
+    } else {
+        expect(
+            checks,
+            'SYNC05.dbFix',
+            '【修复验收】立即同步后（未重载）本地 **DB** 已应用 B（DEF-SYNC-05 修复的硬判据）',
+            dbGotB,
+            `DB.endAt=${JSON.stringify(dbAfter.endAt)} 服务端=${JSON.stringify(serverAfter.value?.endAt)}（bump=${updatedBumped}）⇒ ${dbGotB ? '拉取已落库 ✓' : '仍未落库'}`
+        )
+    }
     expect(
         checks,
         'SYNC05.step5',
