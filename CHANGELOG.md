@@ -2,6 +2,39 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.4.3] - 2026-09-11
+
+发布批次：`DEF-SYNC-05` 客户端拉取游标修复 + 零调用 API/死字段清理（补丁；含一处**包导出面收窄**）。Tag: `v1.4.3` · root `1.4.3` / `@nao-todo/presentation` `0.2.0` / `@nao-todo/infrastructure` `0.2.1` / `@nao-todo/desktopapp` `1.4.3`。范围：web + desktop（+ `infrastructure` 同步层）；**移动端不动**。设计记录：ADR `docs/adr/2026-09-11-def-sync-05-client-pull-cursor.md` + `docs/adr/2026-09-11-infra-cleanup.md`。
+
+### Fixed（缺陷修复）
+
+- **`DEF-SYNC-05`：外部变更经「立即同步」不回灌本地（P2）**。根因**两处叠加**：① 客户端游标推进用**字符串 max**（`applyPullBatch`，混合 `+08:00`/`Z` 表示法时**字典序即错**）；② 服务端 keyset 为**严格 `>`**（`updated_at > cursor OR (= AND id > cursorId)`，`query/sync.go:26-36`）⇒ 游标一旦越过某行 bump 后的 `updated_at`（毫秒级/同秒 + 更高 `cursorId`），该行**静默漏拉且永不重拉**（重载/重启自愈走的是**非 pull** 路径，故表现得像“能自愈”）。修法（ADR 选 **A**）：游标推进改**瞬时（ms）比较**；请求游标按瞬时**回拉 Δ=1s**，回拉时 `cursorId` 置空（同刻低 id 行否则仍被跳过）、**保持原时区后缀与精度形态**、**不可解析/无时区 ⇒ 原样返回**（退化为修复前行为，不冒险）。**存储游标只前进不后退**；BC-3a/b/c 回归线未触碰（diff 内相关符号出现 0 次）。
+- 被否方案：**B**（拉取后以本地 `max(updatedAt)` 比对补偿 —— 受客户端时钟、未推送写入、服务端秒级截断干扰 ⇒ 易假阳性 ⇒ 触发重复拉取风暴）｜**服务端改 `>=`**（破坏 keyset 分页契约）。
+- 验收：新增 4 例（含**硬判据**：预置 `syncCursor` ≥ 变更行 `updatedAt`（ms 级）+ fake requester 按服务端 keyset 严格 `>` 过滤 ⇒ 断言该行**仍被应用**）；并做**突变验证**（回退旧实现 ⇒ 新增 4 例**全 FAIL**，硬判据症状 `expected undefined to be defined` = 外部变更行确实未落库）⇒ 证明测试能抓住旧缺陷。
+
+### Changed（API 收窄）
+
+- **移除零调用公开 API 与死字段（`@nao-todo/presentation` 导出面收窄）**：`TaskHandler.updateTaskName` / `updateTaskDescription` / `updateTaskEndAt` / `giveUp`（4 个方法**全仓零引用**）+ `TaskDetailsStore.taskDetails` / `setTaskDetails`（**连带删除孤儿 import**）—— **同批一次删完，禁止半删**（避免留下语义不明的半成品 API）。判据三条：**零引用 + 无孤儿 + 不改运行时行为**。
+- **保留**：`common.edit` 词典键（被 TASK-02 单测**反向断言**依赖，删除会静默弱化断言）；`TaskHandler` 其余存活方法。
+- **延后**：客户端 `CreateTaskValueObject.fillStartAt()`（保留作服务端 `DEF-SYNC-04` 的语义参考，跨单协调后再处理）。
+- ⇒ 版本语义：`@nao-todo/presentation` `0.1.3 → 0.2.0`（**移除导出面成员属破坏性变更**，0.x 下走 minor 位；本仓消费者对这 4 个方法零引用 ⇒ **实际破坏为 0**，语义如实标注）。
+
+### 质量门槛
+
+- `vp test run`：**55 文件 / 499 例全绿**（v1.4.2 基线 495 + 新增 4）｜`vp check --no-fmt`：**1005 文件 0 错 0 警**。
+- 实机：QA `defsync05` 探针（外部 API 直写 → 「立即同步」→ 读本地 DB）在修复后应从 FAIL **转 PASS**（列后置复跑）。
+
+### 已知遗留（本版不修）
+
+- **回拉窗口的重复写入**：窗口内已应用的行会被再次 `put()` 并计入 `writtenCount`（`applyPullBatch` 未入队分支无条件 `put`）⇒ 理论上游轮同步**可能多触发一次 `data-changed`（视图重拉）**；**无数据风险**（同 id upsert 幂等）。若观察到刷新抖动 ⇒ 另单加“内容未变跳过写入”。
+- **`DEF-SYNC-04`（服务端 P1，另一仓库）**：`FillStartAt()` 覆盖客户端显式 `startAt` ⇒ 已在 `nao-todo-server` 修复（`fae99e2` 提交；`go test -count=1` 三包通过，已独立复跑核对），待该仓发版。
+- **`DEF-STORE-01`（观察项，P2-leaning）**：Pinia 任务多副本（两副本同 id 同时在场为**必然**、任一侧后续写入会让另一侧陈旧）；**用户可见陈旧未复现**（受控 P3 阴性）；修复方向 = **单一权威源**（另立设计单，不混入清理单）。
+- **`DEF-UI-01`**：**已驳回关闭** —— 原判“已有时间窗子任务日历打不开”系**探针误报**（误找 creator 式按钮 + 误用无效区间）；实测日历可用、无效区间提交**有 toast 校验**非静默。
+- **清理单延后/另立**：A6 `fillStartAt()`｜C1 `DEF-STORE-01` 单一权威源重构｜C2 `giveUp()`（含确认弹窗）与批量 `update({givenUpAt})`（静默）的**行为差异**（产品语义决策）｜C3 TASK-01 移动端遗留（继承未覆盖、继承规则升级 B、行内日期编辑）｜C4 SHELL-02/03 遗留（nue-ui 版本对齐、infrastructure 硬编码中文 i18n、离线写入口径、`apps/mobile` 壳耦合）。
+- 其余沿用 v1.4.2/v1.4.1/v1.4.0 已登记遗留。
+
+[v1.4.3]: https://github.com/Nathan3303/nao-todo/releases/tag/v1.4.3
+
 ## [v1.4.2] - 2026-09-11
 
 发布批次：TASK-02 子任务行布局精简（补丁）。Tag: `v1.4.2` · root `1.4.2` / `@nao-todo/presentation` `0.1.3` / `@nao-todo/desktopapp` `1.4.2`。范围：**仅 web + desktop**（均消费 `@nao-todo/presentation`）；**移动端不动**。明细见归档 PRD（`docs/prds/2026-09-11-subtask-row-layout.md`）+ ADR（`docs/adr/2026-09-11-task-02-subtask-row-layout.md`）。
