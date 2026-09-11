@@ -57,7 +57,7 @@ const setup = async (parentTask: Ref<TaskDetailsViewObject | null>) => {
                 provide: {
                     [TASK_DETAILS_PRE_CONTEXT_KEY as symbol]: {
                         subTaskUseCase,
-                        subscriber: { emit: vi.fn() }
+                        subscriber: { emit: vi.fn(), subscribe: vi.fn(), unsubscribe: vi.fn() }
                     }
                 }
             }
@@ -179,5 +179,66 @@ describe('useSubTasks.createSubTask - TASK-01 继承父任务清单与时间窗'
         expect(captured.payload?.startAt).toBeNull()
         expect(captured.payload?.endAt).toBeNull()
         expect(captured.payload?.parentTaskId).toBe(PARENT_ID)
+    })
+})
+
+describe('useSubTasks - DEF-STORE-06 方向 2（RefreshData 失效重取）', () => {
+    /** 迷你事件总线（模拟 appSubscriber 的 subscribe/unsubscribe/emit 语义） */
+    const createMiniSubscriber = () => {
+        const cbs = new Map<string, Set<() => void>>()
+        return {
+            emit: (name: string) => cbs.get(name)?.forEach((cb) => cb()),
+            subscribe: (name: string, cb: () => void) => {
+                if (!cbs.has(name)) cbs.set(name, new Set())
+                cbs.get(name)!.add(cb)
+            },
+            unsubscribe: (name: string, cb: () => void) => {
+                cbs.get(name)?.delete(cb)
+            }
+        }
+    }
+
+    it('收到 RefreshData 后按当前父任务整体重取（等价 initialize()），卸载后不再重取', async () => {
+        setActivePinia(createPinia())
+        const store = useTaskDetailsStore()
+        const subscriber = createMiniSubscriber()
+        const list = vi
+            .fn()
+            .mockResolvedValueOnce([{ taskIds: ['s1'], pagination: undefined }, null])
+            .mockResolvedValueOnce([{ taskIds: ['s1', 's2'], pagination: undefined }, null])
+        const subTaskUseCase = { create: vi.fn(), list } as unknown as TaskUseCase
+
+        let api: ReturnType<typeof useSubTasks> | null = null
+        const wrapper = mount(
+            defineComponent({
+                setup() {
+                    api = useSubTasks(store, ref(null) as Ref<TaskDetailsViewObject | null>)
+                    return () => null
+                }
+            }),
+            {
+                global: {
+                    provide: {
+                        [TASK_DETAILS_PRE_CONTEXT_KEY as symbol]: {
+                            subTaskUseCase,
+                            subscriber
+                        }
+                    }
+                }
+            }
+        )
+        wrappers.push(wrapper)
+        await api!.loadSubTasks('parent-1')
+        expect(list).toHaveBeenCalledTimes(1)
+        // 应用级 RefreshData（由 store-invalidation hub 派发）⇒ 整体重取当前父任务
+        subscriber.emit('RefreshData')
+        await new Promise((r) => setTimeout(r, 0))
+        expect(list).toHaveBeenCalledTimes(2)
+        expect(list.mock.calls[1]![0]?.parentTaskId).toBe('parent-1')
+        // 卸载 ⇒ 反订阅 ⇒ 再触发不重取（防泄漏/重复重取）
+        wrapper.unmount()
+        subscriber.emit('RefreshData')
+        await new Promise((r) => setTimeout(r, 0))
+        expect(list).toHaveBeenCalledTimes(2)
     })
 })

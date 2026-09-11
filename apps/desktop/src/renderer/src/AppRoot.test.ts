@@ -45,7 +45,8 @@ vi.mock('./hooks/usecases/use-task-reminder', () => ({
 }))
 
 vi.mock('@nao-todo/presentation/task', () => ({
-    TaskReminderDialog: defineComponent({ name: 'TaskReminderDialog', render: () => null })
+    TaskReminderDialog: defineComponent({ name: 'TaskReminderDialog', render: () => null }),
+    useStoreInvalidationHub: vi.fn()
 }))
 
 vi.mock('@nao-todo/infrastructure', () => ({

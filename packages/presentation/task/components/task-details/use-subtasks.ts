@@ -1,5 +1,5 @@
 import { type GoAsync, unwrapError } from '@nao-todo/shared'
-import { computed, inject, ref, type Ref } from 'vue'
+import { computed, inject, onUnmounted, ref, type Ref } from 'vue'
 import { useTasksLoader } from '../../hooks'
 import type { useTaskDetailsStore } from '../../stores'
 import type { TaskViewObject } from '@nao-todo/domain-task'
@@ -85,6 +85,15 @@ const useSubTasks = (
         if (!currentParentTaskId.value) return
         await loadSubTasks(currentParentTaskId.value)
     }
+
+    /**
+     * 失效通路（DEF-STORE-06 方向 2）：订阅应用级 `RefreshData`（由 store-invalidation hub 派发），
+     * 等价 `initialize()` 的整体失效 —— 以当前父任务 id 清空重取（事件驱动"最终一致"）。
+     * 组件作用域订阅 ⇒ 卸载时必须反订阅（防泄漏/重复重取）。
+     */
+    const onRefresh = () => void retrySubTasks()
+    subscriber.subscribe('RefreshData', onRefresh)
+    onUnmounted(() => subscriber.unsubscribe('RefreshData', onRefresh))
 
     /**
      * 创建子任务

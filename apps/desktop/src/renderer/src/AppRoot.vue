@@ -10,7 +10,7 @@ import { useTaskReminder } from './hooks/usecases/use-task-reminder'
 import { grantOfflineEntry, revokeOfflineEntry } from '@/views/auth/offline-entry'
 import { LAST_VISITED_ROUTE_KEY } from '@/router'
 import { useUserStore } from '@nao-todo/presentation-identity'
-import { TaskReminderDialog } from '@nao-todo/presentation/task'
+import { TaskReminderDialog, useStoreInvalidationHub } from '@nao-todo/presentation/task'
 import { useDialogManager } from '@nao-todo/shared'
 import { cryptoService, localSession, syncService, syncTracker } from '@nao-todo/infrastructure'
 
@@ -42,6 +42,9 @@ syncTracker.setDirtyListener(() => {
     syncService.schedulePush()
     rescanReminder()
 })
+
+// 应用级失效中心接线（DEF-STORE-06 方向 1：落库后经 hub 派发 RefreshData；幂等注册，见 store-invalidation.ts）
+useStoreInvalidationHub()
 
 // 会话失效（10041 用户凭证验证失败）：仅删除 USER_JWT 并回登录页，不删除本地业务数据
 syncService.setSessionExpiredListener(() => {

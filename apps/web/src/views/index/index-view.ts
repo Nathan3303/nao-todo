@@ -17,6 +17,7 @@ import { TaskViewObject } from '@nao-todo/domain-task'
 import { useThemeStore, useUserStore } from '@nao-todo/presentation-identity'
 import { useProjectsStore } from '@nao-todo/presentation/project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
+import { useStoreInvalidationHub } from '@nao-todo/presentation/task'
 import {
     PROJECT_CREATOR_DIALOG_KEY,
     responsiveTypes,
@@ -64,18 +65,20 @@ const useIndexView = () => {
     const appSubscriber = useSubscriber()
 
     // 桌面端同步拉取写入本地库后刷新视图（SyncService 直连表落库绕过 store，
-    // 经 'nao-todo:data-changed' 事件重拉项目/标签 + 触发 RefreshData 重拉任务；
-    // Web 端无 SyncService，事件永不触发）
+    // 经 'nao-todo:data-changed' 事件重拉项目/标签；Web 端无 SyncService，事件永不触发）
+    // 任务侧失效由**应用级失效中心**接管（useStoreInvalidationHub，DEF-STORE-06 方向 1：
+    // 失效订阅移出视图域、不再随路由漂移）；本监听仅保留项目/标签重载。
     // 卸载时移除监听，避免路由离开再进入时重复注册导致多次刷新
     if (typeof window !== 'undefined') {
         const handleDataChanged = () => {
             void projectUseCase.loadProjects()
             void tagUseCase.loadTags()
-            appSubscriber.emit('RefreshData')
         }
         window.addEventListener('nao-todo:data-changed', handleDataChanged)
         onUnmounted(() => window.removeEventListener('nao-todo:data-changed', handleDataChanged))
     }
+    // 应用级失效中心接线（幂等：进程内只注册一次监听；应用级单例不做卸载清理）
+    useStoreInvalidationHub()
 
     // @handlers 应用级 Handler 单例（绑定应用级事件总线与全局 store）
     const { projectHandler, tagHandler } = useAppHandlers()
