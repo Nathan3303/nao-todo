@@ -1310,9 +1310,13 @@ export async function apiUpdateTask(cdp, taskId, patch) {
  * 供其它 feature 复用的最小工具集（TASK-02 起）：**只读/构造夹具**用，避免同一套 CDP 手法二处漂移
  * @description 不导出各 case 自身，导出的是：断言工具 + 任务/清单读取与创建 + 唯一运行标签
  *
- * ⚠️ **多副本口径（PM seq 96 修正版，架构纠正后即时生效）**：同一任务可能同时存在于 `TasksStore`（列表）
- *    与 `TaskDetailsStore`（详情），**二者不同步**（实测：列表 `endAt=2026-09-10T04:56Z` / 详情 `''` /
- *    API 已落库；记 **DEF-STORE-01 候选**）。口径：
+ * ⚠️ **多副本口径（PM 修订版）**：任务实体在两个 Pinia store 各存一份 —— `TasksStore.tasks` 与
+ *    `TaskDetailsStore.tasks`（两个独立 Map、无跨 store 同步）。且**两副本同 id 同时在场是必然**：打开子任务详情会经
+ *    `TaskUseCase.get` 末尾 `addTask` 写进**列表 store**（`task.ts:74-84`），而父任务的子任务列表由 `subTaskUseCase`
+ *    写进**详情 store**（`tasks-view.ts:52/65`、`use-subtasks.ts:38-45`）⇒ 任一侧后续写入必然让另一侧陈旧。
+ *    **但"用户可见的陈旧"属未复现（非否定）**：探针差异 0/10 的**前置条件未满足**；后置结论：consistency 探针
+ *    **有效轮 3/10、命中 2/3**（列表有值/详情副本 null）⇒ 机制**已复现**；受控 P3 **阴性**（行渲染源会重取自愈）
+ *    ⇒ 见 `DEF-STORE-01`（观察项，P2-leaning；`DEF-SYNC-05` 落叶3 已排除「副本刷新覆盖」升级路径）。口径：
  *    1. **真相优先取服务端读回**（`readViaApi()`，HTTP）；Pinia 两副本**只作辅助**；
  *    2. **每轮都跑副本一致性探针**（`storeConsistencyProbe()` / `readCopies()`）：同 id 同时读两副本并比较
  *       `startAt/endAt/projectId/state`，**有差异 ⇒ 登记 + 告警 + 报告单列**；
