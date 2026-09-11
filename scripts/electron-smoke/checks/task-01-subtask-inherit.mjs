@@ -187,7 +187,13 @@ const COLLECT_TASKS = `
 const NORMALIZE_TS = (value) => (value ? new Date(value).getTime() : null)
 const sameTime = (a, b) => NORMALIZE_TS(a) === NORMALIZE_TS(b)
 
-/** 读取页内全部任务 VO（主路径 ②） */
+/**
+ * 读取页内全部任务 VO（主路径 ②）
+ * @deprecated ⚠️ **单副本读法**（`readTasks().find()` / 只读一个 store）：仅作便捷读法**保留**，
+ *             但**不得作为强断言依据** —— 真相优先取服务端读回 `readViaApi()`（HTTP）；需要两副本比对时
+ *             先出差异结论（见本文件 `qaKit` JSDoc「多副本口径」）。
+ *             注：本函数本身（读全量 VO 列表）仍是主路径 ②，**未废弃**；废弃的是「单副本当唯一真相」的用法。
+ */
 async function readTasks(cdp) {
     const result = await cdp.json(`(() => { ${COLLECT_TASKS} })()`)
     return result
