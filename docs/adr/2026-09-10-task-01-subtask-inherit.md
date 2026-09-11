@@ -7,22 +7,30 @@
 - **代码边界**：本 ADR 为纯文档产出，评审方未修改仓库代码（只读评审）
 - **关联**：与 SHELL-02/SHELL-03 无耦合（不同领域）；本单判据沿用 ADR 家族既有原则（"默认值 vs 不变量"、"不新增 domain 端口"、"升级判据显式化"）
 
+## 修订记录
+
+| 轮次   | 日期           | 变更                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| :----- | :------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| r1     | 2026-09-10     | 首轮评审：D7 落点 = A（3 补丁 + 6 条升级判据）；继承规则（`endAt` 为锚）；C-T1…C-T8；测试口径                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| **r2** | **2026-09-10** | ① **§3 规则措辞澄清（语义性）**："无效/倒置"**只作用于 `startAt`**——`endAt` 有效时**必定继承**，`startAt` 视情况取原值或 `null`；"无效"专指 **`endAt` 无效/缺失**（修正原合写表述，避免被读成"连有效 endAt 也丢弃"）② **事实修正**：`fillStartAt()` 为**全仓零调用点死方法**（`create-task.ts:98`）⇒ 仅 `endAt` 场景下 `startAt` 就是显式 `null`，无任何派生 ③ **D7-a 用户裁决 = B**（不修移动端，显式登记跨端不一致；B-5 已命中）④ 新增 **C-T9（B 模式文档约束）/ C-T10（死代码纪律，`fillStartAt()` 保持零调用）/ C-T11（endAt 锚定：禁止因 `startAt` 无效/倒置而丢弃有效 `endAt`）**；U3 断言口径同步修正为 4 例（后两例均"保留 endAt、`startAt=null`"） |
+| **r3** | **2026-09-10** | C-T2 补**适用范围**（仅约束客户端拷贝；跨表示法按**秒级瞬时**判定，不算快照破坏）；新增 **§12 衍生发现**：同步往返后 `startAt` 被**服务端**改写（根因已定位到服务端行号）⇒ 建议另立 `DEF-SYNC-04`（P1）                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+
 ---
 
 ## 1. 现状与证据
 
-| 事实                                                    | 证据                                                                                                                                                                                                                                                                                                                                                                                               |
-| :------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 唯一 **Vue 侧** 子任务创建入口                          | `packages/presentation/task/components/task-details/main/subtasks.vue:99`（快速输入）→ `use-subtasks.ts:90 createSubTask(name)`                                                                                                                                                                                                                                                                    |
-| 现状硬编码默认值（缺陷面）                              | `use-subtasks.ts:92-106`：`parentTaskId=当前父` ✅；`projectId: null` ❌；`startAt: null` ❌；`endAt: dayjs().toISOString()`（"今天"）❌；`state/'todo'`、`priority/'low'`、`tags/[]`、`description/''`、提醒默认                                                                                                                                                                                  |
-| 父任务 VO 就绪且可取（方案 A 可行）                     | `task-details.ts:41`（`const { task } = useTaskViewObject(...)`，类型 `TaskDetailsViewObject = TaskViewObject & {...}`，含 `startAt/endAt/projectId`）→ 在 `:103`（`useSubTasks(taskDetailsStore)`）的同一 setup 作用域内 ✔                                                                                                                                                                        |
-| **陷阱**：`taskDetailsStore.taskDetails` 并非父任务来源 | 该 ref 的 setter `setTaskDetails` **全仓无调用点**（`stores/task-details-store.ts:18,90`）⇒ 若 RD 从它读父任务会永远 `undefined`，静默退化为"未安排"（功能无声失效）                                                                                                                                                                                                                               |
-| 子任务数据**与主列表隔离**（关键）                      | `subTaskUseCase = useTaskUseCase(taskDetailsStore)`（`apps/web/src/views/index/tasks/tasks-view.ts:65`）→ 子任务写入 **taskDetailsStore**；日历/任务视图读 **tasksStore** ⇒ 子任务**结构性不出现在**日历与未安排桶                                                                                                                                                                                 |
-| **新增发现 1**：移动端存在**同源重复实现**              | `packages/presentation-react/src/logic/compose-task-usecase.ts:129-131` 独立实现 `createSubTask`，默认值与 Vue 侧逐字相同（`projectId: null`、`endAt: new Date().toISOString()`）；调用点 `presentation-react/src/lynx/use-task-detail.ts:108` ⇒ **"其它入口会漂移"的假设已成立（现在就存在 2 份）**                                                                                               |
-| **新增发现 2**：本域所有日期语义**以 `endAt` 为锚**     | 未安排桶谓词 `!task.endAt`（`use-calendar-monthly.ts:169-175`）｜日历格子：`仅 endAt → 截止日当天；仅 startAt/无日期 → null（不占格子）`（`monthly-layout.ts:98-105`）｜逾期：`!task.endAt ⇒ false`（`use-calendar-monthly.ts:30-34`）｜批量安排：`未安排(endAt 空) → endAt 直写目标日 23:59:59.999、startAt 不动`（`reschedule.ts:8-11`）                                                         |
-| **新增发现 3**：创建路径的两个时间语义细节              | ① `CreateTaskValueObject.fillStartAt()`（`create-task.ts:107-124`）：`startAt` 空且 `endAt` 存在 ⇒ 自动派生 startAt（= 现在，或 endAt−1min）｜② `validate()`：`startAt` 存在时与 `dayjs(this.endAt)` 比较 ⇒ **实测 `dayjs(undefined)` 为当前时刻且 `isAfter` 为 true、`dayjs(null)` 为 Invalid 且 `isAfter` 为 false** ⇒ **省略 `endAt`（undefined）会误触发 `START_AFTER_END`；显式 `null` 不会** |
-| 其它创建路径（非子任务，不受本单影响）                  | 任务创建器（`use-creator.ts:29-38`，默认 both null = 未安排）｜检查事项转任务（`use-check-items.ts:74-81`，走创建器对话框＝顶层任务，不带 parentTaskId）｜日历快速创建（顶层 + 当天）                                                                                                                                                                                                              |
-| 深度限制：仅一级子任务                                  | `task-details.ts:116+`（"当前任务本身是子任务时不再加载其子任务板块"）⇒ 继承链恒为 1 层                                                                                                                                                                                                                                                                                                            |
+| 事实                                                    | 证据                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| :------------------------------------------------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 唯一 **Vue 侧** 子任务创建入口                          | `packages/presentation/task/components/task-details/main/subtasks.vue:99`（快速输入）→ `use-subtasks.ts:90 createSubTask(name)`                                                                                                                                                                                                                                                                                                                                                                                        |
+| 现状硬编码默认值（缺陷面）                              | `use-subtasks.ts:92-106`：`parentTaskId=当前父` ✅；`projectId: null` ❌；`startAt: null` ❌；`endAt: dayjs().toISOString()`（"今天"）❌；`state/'todo'`、`priority/'low'`、`tags/[]`、`description/''`、提醒默认                                                                                                                                                                                                                                                                                                      |
+| 父任务 VO 就绪且可取（方案 A 可行）                     | `task-details.ts:41`（`const { task } = useTaskViewObject(...)`，类型 `TaskDetailsViewObject = TaskViewObject & {...}`，含 `startAt/endAt/projectId`）→ 在 `:103`（`useSubTasks(taskDetailsStore)`）的同一 setup 作用域内 ✔                                                                                                                                                                                                                                                                                            |
+| **陷阱**：`taskDetailsStore.taskDetails` 并非父任务来源 | 该 ref 的 setter `setTaskDetails` **全仓无调用点**（`stores/task-details-store.ts:18,90`）⇒ 若 RD 从它读父任务会永远 `undefined`，静默退化为"未安排"（功能无声失效）                                                                                                                                                                                                                                                                                                                                                   |
+| 子任务数据**与主列表隔离**（关键）                      | `subTaskUseCase = useTaskUseCase(taskDetailsStore)`（`apps/web/src/views/index/tasks/tasks-view.ts:65`）→ 子任务写入 **taskDetailsStore**；日历/任务视图读 **tasksStore** ⇒ 子任务**结构性不出现在**日历与未安排桶                                                                                                                                                                                                                                                                                                     |
+| **新增发现 1**：移动端存在**同源重复实现**              | `packages/presentation-react/src/logic/compose-task-usecase.ts:129-131` 独立实现 `createSubTask`，默认值与 Vue 侧逐字相同（`projectId: null`、`endAt: new Date().toISOString()`）；调用点 `presentation-react/src/lynx/use-task-detail.ts:108` ⇒ **"其它入口会漂移"的假设已成立（现在就存在 2 份）**                                                                                                                                                                                                                   |
+| **新增发现 2**：本域所有日期语义**以 `endAt` 为锚**     | 未安排桶谓词 `!task.endAt`（`use-calendar-monthly.ts:169-175`）｜日历格子：`仅 endAt → 截止日当天；仅 startAt/无日期 → null（不占格子）`（`monthly-layout.ts:98-105`）｜逾期：`!task.endAt ⇒ false`（`use-calendar-monthly.ts:30-34`）｜批量安排：`未安排(endAt 空) → endAt 直写目标日 23:59:59.999、startAt 不动`（`reschedule.ts:8-11`）                                                                                                                                                                             |
+| **新增发现 3**：创建路径的两个时间语义细节              | ① `CreateTaskValueObject.fillStartAt()` 为**全仓零调用点死方法**（定义于 `create-task.ts:98`；除定义外仅测试/注释提及）⇒ **它不会在创建时派生 `startAt`**，现有"仅 endAt"任务就是 `startAt=null` 的状态（日历按"仅 endAt ⇒ 截止日当天"呈现，该状态已被产品支持）｜② `validate()`：`startAt` 存在时与 `dayjs(this.endAt)` 比较 ⇒ **实测 `dayjs(undefined)` 为当前时刻且 `isAfter` 为 true、`dayjs(null)` 为 Invalid 且 `isAfter` 为 false** ⇒ **省略 `endAt`（undefined）会误触发 `START_AFTER_END`；显式 `null` 不会** |
+| 其它创建路径（非子任务，不受本单影响）                  | 任务创建器（`use-creator.ts:29-38`，默认 both null = 未安排）｜检查事项转任务（`use-check-items.ts:74-81`，走创建器对话框＝顶层任务，不带 parentTaskId）｜日历快速创建（顶层 + 当天）                                                                                                                                                                                                                                                                                                                                  |
+| 深度限制：仅一级子任务                                  | `task-details.ts:116+`（"当前任务本身是子任务时不再加载其子任务板块"）⇒ 继承链恒为 1 层                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 ---
 
@@ -54,17 +62,28 @@
 
 **升级形态（预登记，避免届时不决）**：在共享 `TaskUseCase.create`（application 层）内做**默认解析**（读父 → 填 `projectId/startAt/endAt`），**无需改 API/契约**；仅当 B-3 成立才考虑服务端兜底。
 
+> **B-5 状态更新（r2）**：D7-a 选 B 后，**B-5（同类硬编码默认值第二次回归）已命中**（Vue 侧本单第 1 次修复 + React 侧既有第 2 份实现）⇒ **下一次触碰"子任务创建默认值"时直接升级为上述 application 层默认解析，不得再逐端修**（同步写入 §10 变更管理）。
+
 ---
 
 ## 3. 继承规则（**以 `endAt` 为锚**的窗口拷贝）
 
-| 父任务状态                                           | 子任务继承结果                                                                                      | 依据                                                                             |
-| :--------------------------------------------------- | :-------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------- |
-| `startAt` 与 `endAt` 均有效且 `startAt ≤ endAt`      | **原样拷贝两者**（值快照，不做时区/粒度转换）                                                       | D1「时间窗自洽」；消费侧 `monthly-layout` 双端闭区间语义                         |
-| 仅 `endAt` 有效                                      | 拷贝 `endAt`；`startAt = null`（由 `fillStartAt()` 派生）                                           | 与"仅截止（endAt-only）"任务的既有创建路径行为一致（`create-task.ts:107-124`）   |
-| 仅 `startAt` / 两者皆无 / 无效值 / `startAt > endAt` | **两者皆 null**（= 未安排）                                                                         | 本域"没有 endAt ⇒ 未安排"（§1 发现 2）；避免"有开始但被视作未安排"的半窗口矛盾态 |
-| `projectId`（`string \| null`，`''`=收集箱）         | **原样拷贝**；`''/null` 均表收集箱（由既有 converter `projectId \|\| ''` 承接，`converters.ts:97`） | D5「清单缺失 ⇒ 收集箱」＝不特殊处理，沿既有语义                                  |
-| 其余字段                                             | **保持现状默认**（`state:'todo'`/`priority:'low'`/`tags:[]`/`description:''`/提醒默认）             | 用户规则（D1 只列三项）                                                          |
+| 父任务状态                                            | 子任务继承结果                                                                                                         | 依据                                                                                                                             |
+| :---------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------- |
+| `startAt` 与 `endAt` 均有效且 `startAt ≤ endAt`       | **原样拷贝两者**（值快照，不做时区/粒度转换）                                                                          | D1「时间窗自洽」；消费侧 `monthly-layout` 双端闭区间语义                                                                         |
+| 仅 `endAt` 有效                                       | 拷贝 `endAt`；`startAt` **显式 `null`**（`fillStartAt()` 为**死方法（`create-task.ts:98`，全仓零调用），本单不启用**） | 与既有 endAt-only 任务同状态（`updateSchedule` 允许两者各自单独存在）                                                            |
+| **`endAt` 无效/缺失**（`startAt` 任何取值均落此分支） | `startAt = endAt = null`（未安排）                                                                                     | 本域"没有 endAt ⇒ 未安排"（§1 发现 2）；避免"有开始但被视作未安排"的半窗口矛盾态（**但不得因此丢弃有效 endAt**，见下两段式规则） |
+| `projectId`（`string \| null`，`''`=收集箱）          | **原样拷贝**；`''/null` 均表收集箱（由既有 converter `projectId \|\| ''` 承接，`converters.ts:97`）                    | D5「清单缺失 ⇒ 收集箱」＝不特殊处理，沿既有语义                                                                                  |
+| 其余字段                                              | **保持现状默认**（`state:'todo'`/`priority:'low'`/`tags:[]`/`description:''`/提醒默认）                                | 用户规则（D1 只列三项）                                                                                                          |
+
+**规则两段式表述（r2 权威口径，取代上表歧义读法）**
+
+```
+① 若 endAt 有效      ⇒ endAt 一定继承；startAt =（有效 且 start ≤ end）? 父 startAt : null
+② 否则（endAt 缺失/无效）⇒ startAt = endAt = null（未安排）
+```
+
+⇒ **"无效/倒置"只作用于 `startAt`**（视同缺失，置 `null`），**绝不影响 `endAt` 的继承**；表中第三行的"无效"**专指 `endAt` 无效/缺失**。理由：需求（D1）是"继承父任务的**时间窗**"，`endAt` 是本域的时间锚（§1 发现 2）⇒ 父有有效截止日时子任务不应变成未安排。
 
 **硬约束（实现坑）**：传给 `create` 的 `startAt`/`endAt` **必须显式 `null`，严禁省略为 `undefined`** —— 实测 `dayjs(undefined).isAfter(...)` 为 `true` ⇒ 未来 `startAt` + 省略 `endAt` 会误报 `START_AFTER_END`（§1 发现 3）。
 
@@ -109,43 +128,50 @@
 
 ---
 
+**补充风险（r2）**
+
+- **R8（D7-a=B 衍生）**：移动端未覆盖被**误当作已实现**（文档/验收/回归均可能误判）⇒ 影响：QA 按"全端继承"验收失败 / 后续维护者重复投资 ⇒ 应对：**C-T9**（ADR/PRD/看板/验收口径必须显式标注"移动端未覆盖"，移动端不得在 UI/文案/注释中声称"继承"）。
+
 ## 7. 测试口径（4 单测 + 冒烟；请勿扩大）
 
-| 编号   | 断言                                                                                                                                           |
-| :----- | :--------------------------------------------------------------------------------------------------------------------------------------------- |
-| **U1** | 父 `{projectId:'p1', startAt, endAt}`（有效且 start ≤ end）⇒ 子任务三者与父**逐字相等**（含 ISO 字符串原样，无重算）                           |
-| **U2** | 父仅 `endAt` ⇒ 子 `endAt` = 父值；`startAt` **非 null**（由 `fillStartAt` 派生，且不晚于 endAt）                                               |
-| **U3** | 父 `{startAt:null,endAt:null}` / 仅 `startAt` / `startAt > endAt` 三例 ⇒ 子 `startAt=null && endAt=null`（未安排）                             |
-| **U4** | 父 `projectId` 为 `''`/`null` ⇒ 子 `projectId` 为空（收集箱语义）；**spy 断言 create payload 中 `startAt`/`endAt` 为 `null` 而非 `undefined`** |
-| **U5** | 父 VO 缺失（`null`）⇒ 走"未安排 + 收集箱"兜底、**不抛错**、返回成功（R3/C-T4）                                                                 |
-| 冒烟 1 | 父已排期 → 新增子任务行 meta 显示与父一致的时间窗                                                                                              |
-| 冒烟 2 | 父未排期 → 子任务行无时间文案；日历/未安排桶**前后计数不变**                                                                                   |
-| 冒烟 3 | 刷新/切筛选后子任务保持继承值（快照语义）                                                                                                      |
-| 冒烟 4 | 父任务改时间窗/改清单后，**已存在子任务字段不变**（禁级联）                                                                                    |
+| 编号   | 断言                                                                                                                                                                                                                                                                                              |
+| :----- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **U1** | 父 `{projectId:'p1', startAt, endAt}`（有效且 start ≤ end）⇒ 子任务三者与父**逐字相等**（含 ISO 字符串原样，无重算）                                                                                                                                                                              |
+| **U2** | 父仅 `endAt` ⇒ 子 `endAt` = 父值；`startAt` **为 `null`**（**不派生**，且**不得调用** `fillStartAt()`——死方法）                                                                                                                                                                                   |
+| **U3** | **（r2 修正为 4 例）** ① 父 `{startAt:null,endAt:null}` ⇒ 子两者皆 `null`；② 父仅 `startAt`（无 endAt）⇒ 子两者皆 `null`；③ 父**有效 `endAt` + `startAt` 无效** ⇒ **子 `endAt` = 父值、`startAt=null`**（不得丢弃 endAt）；④ 父 `startAt > endAt` ⇒ **子 `endAt` = 父值、`startAt=null`**（同上） |
+| **U4** | 父 `projectId` 为 `''`/`null` ⇒ 子 `projectId` 为空（收集箱语义）；**spy 断言 create payload 中 `startAt`/`endAt` 为 `null` 而非 `undefined`**                                                                                                                                                    |
+| **U5** | 父 VO 缺失（`null`）⇒ 走"未安排 + 收集箱"兜底、**不抛错**、返回成功（R3/C-T4）                                                                                                                                                                                                                    |
+| 冒烟 1 | 父已排期 → 新增子任务行 meta 显示与父一致的时间窗                                                                                                                                                                                                                                                 |
+| 冒烟 2 | 父未排期 → 子任务行无时间文案；日历/未安排桶**前后计数不变**                                                                                                                                                                                                                                      |
+| 冒烟 3 | 刷新/切筛选后子任务保持继承值（快照语义）                                                                                                                                                                                                                                                         |
+| 冒烟 4 | 父任务改时间窗/改清单后，**已存在子任务字段不变**（禁级联）                                                                                                                                                                                                                                       |
 
 ---
 
 ## 8. 约束清单（可勾选验收）
 
 - [ ] **C-T1 继承范围**：仅 `projectId` + `startAt` + `endAt`；其余字段保持现状默认（禁顺手扩字段）
-- [ ] **C-T2 值快照**：拷贝必须**原样使用父值**，禁任何时区/粒度/格式重算（仅允许"缺失 ⇒ null"）
+- [ ] **C-T2 值快照**：拷贝必须**原样使用父值**，禁任何时区/粒度/格式重算（仅允许"缺失 ⇒ null"）；**适用范围（r3）**：仅约束**客户端拷贝逻辑**（同步往返后由**服务端**改写 `startAt` 不属本约束，见 §12）；跨表示法（`Z`+毫秒 ↔ `+08:00` 秒级）以**秒级瞬时相等**判定（`Math.floor(ts/1000)`），**不算快照破坏**
 - [ ] **C-T3 显式 null**：`startAt`/`endAt` 必须以 `null` 显式传入，**禁 `undefined`**
 - [ ] **C-T4 兜底不抛错**：父 VO 不可得 ⇒ 按"未安排 + 清单缺失"创建，返回成功，不阻塞快速输入
 - [ ] **C-T5 禁级联**：任何路径不得把父任务字段回写到已存在子任务（父子关系除外）
 - [ ] **C-T6 单一实现**：拷贝逻辑为**一个导出纯函数**并附单测；第二入口（React/Lynx）同规则或**显式登记不一致**
 - [ ] **C-T7 父 VO 来源**：只允许 `task-details.ts` 的 `task` ref（**禁** `taskDetailsStore.taskDetails`）
 - [ ] **C-T8 零 API/契约变更**：不改后端、不改同步协议/表结构/游标、不新增埋点（D4）
+- [ ] **C-T9 B 模式文档约束（r2）**：ADR/PRD/验收口径必须显式声明"**移动端（`presentation-react`）不继承，为已知并接受的跨端不一致**"；移动端不得声称"继承"；后续若要求全端一致 ⇒ 直接走 §2.3 升级形态（application 层默认解析）
+- [ ] **C-T10 死代码纪律（r2）**：**不得**为 `fillStartAt()` 新增调用点（保持零调用）；如需启用须单独评审（会改变既有创建语义）
+- [ ] **C-T11 endAt 锚定（r2 语义约束）**：**`endAt` 有效则必定继承**；"无效/倒置"只作用于 `startAt`（置 `null`）；**禁止**因 `startAt` 无效/倒置而丢弃有效 `endAt`
 
 ---
 
-## 9. 待拍板 / 需知会
+## 9. 裁决与知会（r2：D7-a 已关闭）
 
-| ID                       | 议题                                         | 选项                                                                   | 架构建议                                                             |
-| :----------------------- | :------------------------------------------- | :--------------------------------------------------------------------- | :------------------------------------------------------------------- |
-| **D7-a**（需用户/PM）    | 移动端（React/Lynx）同源实现是否随本单一起修 | A. 同步修（约 5 行 + 复用同规则）／B. 本单不覆盖，登记为已知跨端不一致 | **A**：成本极低且规则属产品级；若选 B，必须写进 PRD 并在本文 §1 登记 |
-| D7-b（技术裁决，仅知会） | 继承规则的锚点                               | `endAt` 为锚（§3）                                                     | 已裁决；"仅 startAt 也拷贝"会造半窗口矛盾态 ⇒ 不建议                 |
-| D7-c（仅知会 QA）        | 存量不回填导致新旧并存                       | —                                                                      | D3 既定；无日历/逾期副作用，不得当缺陷报                             |
-| D7-d                     | 落点升级为 B 的时点                          | 见 §2.3（B-1…B-6）                                                     | 本单维持 A；触发即回评审                                             |
+| ID                       | 议题                                     | 选项                 | 架构建议                                                                                                                                                                                                                                                          |
+| :----------------------- | :--------------------------------------- | :------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **D7-a**（已裁决）       | 移动端（React/Lynx）同源实现是否随本单修 | A. 同步修／B. 不覆盖 | **B（用户裁决 2026-09-10）**：`compose-task-usecase.ts:129` 不随本单修 ⇒ 手机端仍为 `projectId: null` + 当天（与 Vue 修复前逐字相同）；**该跨端不一致为已知且显式接受**（本轮范围控制优先），登记遗留项；**B-5 已命中** ⇒ 下次直接升级 application 层，不得逐端修 |
+| D7-b（技术裁决，仅知会） | 继承规则的锚点                           | `endAt` 为锚（§3）   | 已裁决；"仅 startAt 也拷贝"会造半窗口矛盾态 ⇒ 不建议                                                                                                                                                                                                              |
+| D7-c（仅知会 QA）        | 存量不回填导致新旧并存                   | —                    | D3 既定；无日历/逾期副作用，不得当缺陷报                                                                                                                                                                                                                          |
+| D7-d                     | 落点升级为 B 的时点                      | 见 §2.3（B-1…B-6）   | 本单维持 A；触发即回评审                                                                                                                                                                                                                                          |
 
 ---
 
@@ -155,19 +181,35 @@
 2. 若产品规则新增继承字段（超出 D1 三项）→ 需同步更新 §3 表与 C-T1，并评估是否触发 §2.3 的 B-2（规则向不变量演化）。
 3. 若新增第 3 个创建入口 → 先读 §2.3：**B-1 已触发 ⇒ 必须升级为 B**（或在 ADR 记录豁免理由）。
 4. 归档：`docs/adr/`，索引见 `docs/adr/README.md`；日期取评审终签日。
+5. **下次触碰"子任务创建默认值"（任一端）⇒ 不得逐端修**：B-5 已命中 ⇒ 直接按 §2.3 升级形态（application 层默认解析）执行；移动端若要补齐继承，也走同一升级路径（不得在 `presentation-react` 再写一份规则）。
+6. **`fillStartAt()` 保持零调用**（C-T10）；**`endAt` 锚定语义不得回退**（C-T11：不得因 `startAt` 无效/倒置而丢弃有效 `endAt`）。
 
 ---
 
 ## 11. 证据索引
 
 - `packages/presentation/task/components/task-details/use-subtasks.ts:90-110,118-124`；`.../task-details.ts:41,103,116+`
+- **实现产物（r2 核）**：`packages/presentation/task/components/task-details/subtask-inheritance.ts`（`resolveSubTaskDraft`；单测 `__tests__/use-subtasks.test.ts`）。**r2 待 RD 修正点**：现实现对"有效 endAt + `startAt` 无效/倒置"仍回落为两者皆 null（其注释自述"其余⇒保持未安排"）⇒ 需按 C-T11/§3 两段式改为**保留 endAt、仅 `startAt=null`**
+- **`fillStartAt()` 死方法证据（r2）**：定义于 `packages/domain-task/src/domain/valueobjects/create-task.ts:98`，除定义外全仓仅测试/注释提及（**零调用点**）
 - `packages/presentation/task/components/task-details/main/subtasks.vue:38-50,99`
 - `packages/presentation/task/stores/task-details-store.ts:13-20,38-39,90`
 - `apps/web/src/views/index/tasks/tasks-view.ts:63-65,182-192`
-- `packages/domain-task/src/domain/valueobjects/create-task.ts:55-124`（`validate`/`fillStartAt`）
+- `packages/domain-task/src/domain/valueobjects/create-task.ts:98`（`fillStartAt` 定义；**零调用**）与同文件 `validate()`（`startAt`/`endAt` 比较）
 - `packages/domain-task/src/domain/entities/task.ts:114-131`（`updateSchedule`：**startAt-only 可被 update 路径接受**）
 - `packages/domain-task/src/application/usecases/converters.ts:85-104`（`projectId || ''`）
 - `apps/web/src/components/calendar/monthly/use-calendar-monthly.ts:30-34,68-95,169-175`；`monthly-layout.ts:98-105`；`reschedule.ts:8-11`
 - `packages/presentation-react/src/logic/compose-task-usecase.ts:129-131`；`presentation-react/src/lynx/use-task-detail.ts:105-110`
 - `packages/presentation/task/components/dialogs/creator/use-creator.ts:29-38`；`.../use-check-items.ts:74-81`
 - 实测（node + dayjs）：`dayjs(null).isValid()===false`；`dayjs('2030-01-01').isAfter(dayjs(null))===false`；`dayjs('2030-01-01').isAfter(dayjs(undefined))===true`
+
+---
+
+## 12. 衍生发现（r3）：同步往返后 `startAt` 被服务端改写（非本单缺陷，已定位到行）
+
+**现象（QA 实机）**：本地父/子 `startAt` 逐字相等（TASK-01 已满足），但 **push→pull 往返后父子 `startAt` 各差数秒**（父 +30s / 子 +38s），`endAt`/`projectId` 不变；**父任务（非本单代码创建）同样被改写** ⇒ 与继承逻辑无关。
+
+**根因（服务端，只读定位；`nao-todo-server`）**：`domain/task/valueobjects/createTask.go:49-61 FillStartAt()` 在**客户端已提供 `startAt` 且 `endAt` 非空**时，用 `time.Now()` **覆盖** `startAt`（`endAt` 已过去则取 `now−1min`；仅当二者之一为空时提前 return）；该方法于 VO 构造时无条件调用（`:109`），并被 `/sync/push` 链路命中：`interfaces/controllers/sync.go:78` → `application/task/appImpl.go:75` → `NewCreateTask(...)` → `FillStartAt()`；**覆盖分支**同样由该 VO 构造 `CreateTaskVOToUpdateMap`（`infrastructure/persistence/task/repoImpl.go:127`）⇒ **每次被接受的推送都会把 `startAt` 刷成该次服务端 now**（父子各取自身写入时刻 ⇒ 相差数秒）。
+
+**影响**：① 用户显式设置的开始时间被丢弃，且**每次编辑/推送都可能漂移**；② `endAt < now` 时产出 `startAt > endAt`（客户端 `updateSchedule` 会拒绝该组合 ⇒ 该记录“不可再保存”；日历 `[startAt日, endAt日]` 反向 ⇒ 格子呈现待验证）；③ TASK-01 的“创建时快照”**在本地成立、跨同步被服务端重写**（本地 AC/快照语义不受影响，跨端语义受损）。
+
+**归口与处置（建议）**：服务端缺陷 ⇒ **另立 `DEF-SYNC-04`**（不并入“离线写入边界”批次：不同仓库/不同风险面）；**优先级 P1**（用户可见 + 可产出非法时间窗 + 破坏 TASK-01 跨端语义）。**修复口径**：`startAt` **已提供时不得覆盖**（仅当缺失/空时按既有“单时间 ⇒ 取创建时刻”语义推导），或直接删除该覆盖（客户端同名方法 `create-task.ts:98` 已是死代码，本域已改以 `endAt` 为锚）；**须补服务端回归**：提供 `startAt` ⇒ 往返后**秒级瞬时**不变。
