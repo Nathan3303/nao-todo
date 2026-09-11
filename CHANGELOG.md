@@ -2,6 +2,34 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.4.4] - 2026-09-11
+
+发布批次：`DEF-STORE-06` 内存 store 未随落库失效（P1 用户可见陈旧）修复。Tag: `v1.4.4` · root `1.4.4` / `@nao-todo/presentation` `0.2.1` / `@nao-todo/desktopapp` `1.4.4`（`@nao-todo/infrastructure` 本版零改动，不 bump）。范围：web + desktop（presentation 层）。设计记录：ADR `docs/adr/2026-09-11-def-store-06-store-invalidation.md`。
+
+### Fixed（缺陷修复）
+
+- **`DEF-STORE-06`（P1，用户可见陈旧）：外部变更经「立即同步」已落本地 DB，但重载前内存 store 与面板行文案仍旧值**。根因 = 失效（invalidation）依赖**视图域订阅**：`nao-todo:data-changed` 的监听与 `RefreshData` 发射绑在 `index-view.ts`（随视图挂载存在/卸载消失），且 `TaskDetailsStore` 无任何 `RefreshData` 订阅者 ⇒ 详情副本只在 `initialize()`（路由变更/重挂载/重试）刷新。修复（ADR 决策，提交 `4e51ca30`）：
+    - **方向 1**：新增应用级失效中心 `useStoreInvalidationHub()`（`packages/presentation/task/stores/store-invalidation.ts`）—— `window 'nao-todo:data-changed'` → 全局 `useSubscriber().emit('RefreshData')`，与视图挂载解耦；web/desktop 各一行接线；幂等守卫保证整应用只注册一次。
+    - **方向 2**：`use-subtasks.ts` 订阅 `RefreshData` → `retrySubTasks()`（以当前父任务 id 清空整体重取 = 等价 `initialize()` 语义），`onUnmounted` 反订阅。
+    - **方向 4（事件不丢失）**：`use-task-loader.ts` 的 `loadAndReplace` 由"在飞时静默丢弃"改为**单槽 pending**（置脏 → 完成后重跑一次；单槽天然防风暴）。
+- 验收（QA 实机 T1 断言）：外部直写 + 立即同步 + **静置 3s 零交互** ⇒ `store.details` 与面板行文案**应变新**（重载自愈对照）。【QA 结论：**PASS**（`RUN_TAG=mtwulk95`：T1 时 `store.details`=B 且行文案=新值；T2 重载自愈对照通过；`pulls=1`、重复 pull=0 ⇒ hub 幂等守卫有效）】
+
+### Changed
+
+- 无公开 API 变更（`presentation` `0.2.0 → 0.2.1` 为 patch）。`stores/index.ts` 补导出 `store-invalidation`（接线所需）。
+
+### 质量门槛
+
+- `vp test run`：**55 文件 / 502 例全绿**（499 + 新增 3：在飞不丢失 / RefreshData 重取 / mock 补导出）｜`vp check --no-fmt`：**1006 文件 0 错 0 警**。
+- 回归线：`sync-service.ts` / `syncStatus`（BC-3a/b/c）、五个视图适配器、`loadAndPush`/翻页均未触碰。
+
+### 已知遗留
+
+- 列表 store 的"顶层行 T1 仍陈旧"已**静态判定为分页作用域假象**（主列表默认只查顶层任务，子任务不进页内数据集；滚动/筛选触发新批次即新）⇒ **不立新单**。
+- `DEF-STORE-01`（观察项，P2-leaning）维持；A6 `fillStartAt()` 死方法删除、§7"内容未变跳过写入"、T1 断言落常驻探针等仍为延后/待触发。
+
+[v1.4.4]: https://github.com/Nathan3303/nao-todo/releases/tag/v1.4.4
+
 ## [v1.4.3] - 2026-09-11
 
 发布批次：`DEF-SYNC-05` 客户端拉取游标修复 + 零调用 API/死字段清理（补丁；含一处**包导出面收窄**）。Tag: `v1.4.3` · root `1.4.3` / `@nao-todo/presentation` `0.2.0` / `@nao-todo/infrastructure` `0.2.1` / `@nao-todo/desktopapp` `1.4.3`。范围：web + desktop（+ `infrastructure` 同步层）；**移动端不动**。设计记录：ADR `docs/adr/2026-09-11-def-sync-05-client-pull-cursor.md` + `docs/adr/2026-09-11-infra-cleanup.md`。
