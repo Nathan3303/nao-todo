@@ -1129,11 +1129,13 @@ async function apiCrossCheck(ctx) {
  * 供其它 feature 复用的最小工具集（TASK-02 起）：**只读/构造夹具**用，避免同一套 CDP 手法二处漂移
  * @description 不导出各 case 自身，导出的是：断言工具 + 任务/清单读取与创建 + 唯一运行标签
  *
- * ⚠️ **多副本口径（PM seq 92 批准，即时生效）**：同一任务可能同时存在于 `TasksStore`（列表）与
- *    `TaskDetailsStore`（详情），**二者不同步**——详情副本的 `startAt/endAt/projectId` 可能仍是陈旧值
- *    （实测：列表 `endAt=2026-09-10T04:56Z` / 详情 `''` / API 已落库；记 **DEF-STORE-01 候选**，另立单）。
- *    ⇒ **断言必须取"信息最全"的副本**（见 `task-02` 的 `voOf()`）；`readTasks().find()` 这种**单副本读取
- *    不作强断言依据**（它命中首个副本，在详情副本陈旧时会误判）。
+ * ⚠️ **多副本口径（PM 修订版）**：任务实体在两个 Pinia store 各存一份 —— `TasksStore.tasks` 与
+ *    `TaskDetailsStore.tasks`（两个独立 Map、无跨 store 同步）。且**两副本同 id 同时在场是必然**：
+ *    打开子任务详情会经 `TaskUseCase.get` 末尾 `addTask` 写进**列表 store**（`task.ts:74-84`），
+ *    而父任务的子任务列表由 `subTaskUseCase` 写进**详情 store**（`tasks-view.ts:52/65`、`use-subtasks.ts:38-45`）
+ *    ⇒ 任一侧后续写入必然让另一侧陈旧。**但"用户可见的陈旧"属未复现（非否定）**：探针差异 0/10 的
+ *    **前置条件未满足**（未断言两副本同 id 同时在场；且那轮未产生任何写入）⇒ 见 `DEF-STORE-01`（观察项，暂不定级）。
+ *    ⇒ **读回断言的真相优先取服务端读回**（HTTP）；Pinia 双副本仅作辅助；**不得用"取最全副本"静默抹平差异**。
  */
 export const qaKit = {
     ANCHORS,
