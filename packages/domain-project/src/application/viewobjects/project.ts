@@ -9,6 +9,8 @@ export type ProjectViewObject = ViewObjectBase & {
     archivedAt: NullableDateString
     deactivedAt: NullableDateString
     sortId: number
+    // 领域统计属性（服务端 owned，只读透传）
+    taskCount: number
     // -- Others
     isArchived: boolean
     isDeleted: boolean

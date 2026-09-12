@@ -51,7 +51,11 @@ export class TaskEntity extends Entity {
         public remindAt: string, // 提醒时间
         public remindRepeat: string, // 提醒重复类型
         public remindTime: string, // 提醒时刻
-        public remindWeekdays: number[] // 提醒星期几
+        public remindWeekdays: number[], // 提醒星期几
+        // 领域统计属性（服务端反规范化计数，只读透传；尾部可选默认 0，不破坏既有构造）
+        public checkItemCount = 0, // 检查事项数量（总数含已完成）
+        public commentCount = 0, // 评论数量（不含已删除）
+        public subtaskCount = 0 // 子任务数量（直接子，1 层）
     ) {
         super(id, createdAt, updatedAt, deletedAt)
     }

@@ -59,7 +59,11 @@ export const taskRes2TaskEntity = (res: TaskRes): TaskEntity => {
         res.remindAt || '',
         res.remindRepeat || 'none',
         res.remindTime || '',
-        res.remindWeekdays || []
+        res.remindWeekdays || [],
+        // 领域统计属性（服务端 owned；旧服务端/存量响应缺失时兜底 0）
+        res.checkItemCount ?? 0,
+        res.commentCount ?? 0,
+        res.subtaskCount ?? 0
     )
 }
 

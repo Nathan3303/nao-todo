@@ -8,6 +8,7 @@ export type ProjectRes = ResponseBase & {
     sortId: number
     archivedAt: string | null
     deactivedAt: string | null
+    taskCount: number
 }
 
 export type CreateProjectReq = {

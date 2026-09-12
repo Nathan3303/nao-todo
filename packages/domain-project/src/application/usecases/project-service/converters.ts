@@ -32,6 +32,7 @@ export const projectEntityToViewObject = (projectEntity: ProjectEntity): Project
         archivedAt: projectEntity.archivedAt,
         deactivedAt: projectEntity.deactivedAt,
         sortId: projectEntity.sortId,
+        taskCount: projectEntity.taskCount,
         isArchived: dayjs(projectEntity.archivedAt).isValid(),
         isDeleted: dayjs(projectEntity.deactivedAt).isValid(),
         createTaskOptions: { projectId: projectEntity.id }

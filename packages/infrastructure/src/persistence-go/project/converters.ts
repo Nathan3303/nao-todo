@@ -36,7 +36,9 @@ export const projectRes2Entity = (res: ProjectRes): ProjectEntity => {
         res.description,
         res.archivedAt,
         res.deactivedAt,
-        res.sortId
+        res.sortId,
+        // 领域统计属性（服务端 owned；旧服务端/存量响应缺失时兜底 0）
+        res.taskCount ?? 0
     )
 }
 

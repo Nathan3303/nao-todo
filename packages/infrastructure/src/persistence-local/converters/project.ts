@@ -21,7 +21,9 @@ export const projectEntityToRecord = async (
     deletedAt: entity.deletedAt,
     archivedAt: entity.archivedAt,
     deactivedAt: entity.deactivedAt,
-    sortId: entity.sortId
+    sortId: entity.sortId,
+    // 领域统计属性（服务端 owned；本地不维护，仅快照透传）
+    taskCount: entity.taskCount
 })
 
 /**
@@ -38,5 +40,7 @@ export const projectRecordToEntity = async (record: ProjectRecord): Promise<Proj
         record.description === null ? null : await cryptoService.decrypt(record.description),
         record.archivedAt,
         record.deactivedAt,
-        record.sortId
+        record.sortId,
+        // 存量记录无计数字段（旧库）时兜底 0
+        record.taskCount ?? 0
     )

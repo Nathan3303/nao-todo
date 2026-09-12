@@ -65,6 +65,10 @@ export const taskEntityToViewObject = (entity: TaskEntity): TaskViewObject => {
     taskViewObject.remindRepeat = (entity.remindRepeat || 'none') as TaskViewObject['remindRepeat']
     taskViewObject.remindTime = entity.remindTime || null
     taskViewObject.remindWeekdays = entity.remindWeekdays || []
+    // 领域统计属性显式透传（非 spread）
+    taskViewObject.checkItemCount = entity.checkItemCount
+    taskViewObject.commentCount = entity.commentCount
+    taskViewObject.subtaskCount = entity.subtaskCount
     return taskViewObject
 }
 

@@ -17,7 +17,9 @@ export class ProjectEntity extends Entity {
         public description: string | null, // 任务清单描述
         public archivedAt: string | null, // 归档时间
         public deactivedAt: string | null, // 停用(软删除)时间
-        public sortId: number // 排序ID
+        public sortId: number, // 排序ID
+        // 领域统计属性（服务端反规范化计数，只读透传；尾部可选默认 0，不破坏既有构造）
+        public taskCount = 0 // 任务数量（含子任务；不含已删除）
     ) {
         super(id, createdAt, updatedAt, deletedAt)
     }
