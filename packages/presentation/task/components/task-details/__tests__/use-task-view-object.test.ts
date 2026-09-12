@@ -100,6 +100,34 @@ describe('useTaskViewObject - store 联动保护未保存输入', () => {
         expect(task.value!.priority).toBe('high')
     })
 
+    it('领域统计属性（计数）透传进详情视图对象，且随 store 同步刷新', async () => {
+        const taskUseCase = makeUseCase(
+            makeTask({ checkItemCount: 3, commentCount: 5, subtaskCount: 2 })
+        )
+        const tasksStore = useTasksStore()
+        tasksStore.addTask(makeTask({ checkItemCount: 3, commentCount: 5, subtaskCount: 2 }))
+        const { task, getTaskDetails } = useTaskViewObject(
+            taskUseCase,
+            () => undefined,
+            () => ''
+        )
+
+        await getTaskDetails('t1')
+        await flushWatchers()
+
+        expect(task.value!.checkItemCount).toBe(3)
+        expect(task.value!.commentCount).toBe(5)
+        expect(task.value!.subtaskCount).toBe(2)
+
+        // store 侧计数更新（服务端 pull 后）⇒ 详情视图对象同步刷新
+        tasksStore.updateTask('t1', { checkItemCount: 4, commentCount: 6, subtaskCount: 1 })
+        await flushWatchers()
+
+        expect(task.value!.checkItemCount).toBe(4)
+        expect(task.value!.commentCount).toBe(6)
+        expect(task.value!.subtaskCount).toBe(1)
+    })
+
     it('提交后（updateTaskDetails 同步 store）不误判为编辑中', async () => {
         const taskUseCase = makeUseCase(makeTask())
         const tasksStore = useTasksStore()
