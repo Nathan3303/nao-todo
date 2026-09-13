@@ -24,7 +24,7 @@
 | 2026-09-06 | 搜索节点样式优化（SEA-02：P0+P1 + 描述恒显/展示件复用 + meta 对齐）                                             | commit `0ba23a65` / `829b3a28` / `97a06fc9`                                            | ✅ 通过（用户复验+自行样式）                                                           |
 | 2026-09-06 | 搜索页筛选栏（SEA-03 + DEF-1/2）                                                                                | commit `48079667` / `b874ec4e` / `77cde7a9`（用户样式 `cca0c161`）                     | ✅ 通过（用户冒烟）                                                                    |
 | 2026-09-13 | 领域统计属性联动收尾（STAT-01：Task 检查项/评论/子任务数 + Project 任务数；O(1) 读；跨领域事件；ADR r3）        | 客户端 `8ce494cb`/`b4a6bb50`/`b1360952`；服务端 `d934c11`/`a777f94`（nao-todo-server） | ✅ 通过（用户 2026-09-13 确认上线：服务端部署 + 生产回填 + 客户端 tag `v1.5.0`）       |
-| 2026-09-13 | 详情面板子任务拖拽排序（SORT-01：per-group `sort_id` / 客户端重排 + 服务端组末 / 拖拽 UI 模仿检查项；ADR r3）   | 客户端 `c176c922`/`afdb8228`/`c8d12d73`；服务端 `fc20c74`（nao-todo-server）           | 🟡 自动化 QA PASS + 用户手动通过；待发版                                               |
+| 2026-09-13 | 详情面板子任务拖拽排序（SORT-01：per-group `sort_id` / 客户端重排 + 服务端组末 / 拖拽 UI 模仿检查项；ADR r3）   | 客户端 `c176c922`/`afdb8228`/`c8d12d73`；服务端 `fc20c74`（nao-todo-server）           | ✅ 通过（自动化 QA PASS + 用户手动通过；2026-09-13 发版 Tag `v1.6.0`）                 |
 
 ## 发布记录
 
@@ -37,3 +37,4 @@
 | `v1.4.2`    | 发版提交（root 1.4.2 / presentation 0.1.3 / desktopapp 1.4.2），tag 指向该提交                                                                                            | 2026-09-11 | TASK-02 子任务行布局精简（时间内联〔α + 时间上限 60%〕/ 移除行内改名与编辑按钮 / 脱离按钮并入名称末尾）；衍生观察项 `DEF-STORE-01`（未复现，暂不定级）                   |
 | `v1.4.3`    | 发版提交（root 1.4.3 / presentation 0.2.0 / infrastructure 0.2.1 / desktopapp 1.4.3），tag 指向该提交                                                                     | 2026-09-11 | `DEF-SYNC-05` 客户端拉取游标修复（瞬时比较 + 回拉窗口 Δ=1s）+ 零调用 API/死字段清理（导出面收窄 ⇒ presentation 0.2.0）；设计记录 = ADR ×2（def-sync-05 / infra-cleanup） |
 | `v1.5.0`    | 发版提交 `b1360952`（root 1.5.0 / desktopapp 1.5.0 / presentation 0.3.0 / infrastructure 0.3.0 / domain-task 1.1.0 / domain-project 1.1.0）；服务端 `d934c11` + `a777f94` | 2026-09-13 | STAT-01 领域统计属性（Task 检查项/评论/子任务数 + Project 任务数，O(1) 读，跨领域事件同事务联动）；上线顺序：服务端建列 → 回填 `backfill_counts.sql` → 客户端发版        |
+| `v1.6.0`    | 发版提交 `cda9f58f`（root 1.6.0 / desktopapp 1.6.0 / presentation 0.4.0 / infrastructure 0.4.0 / domain-task 1.2.0）；服务端 `fc20c74` + `ecb4e83`                        | 2026-09-13 | SORT-01 详情面板子任务拖拽排序（per-group `sort_id`；客户端重排 + 服务端组末；拖拽 UI 模仿检查项 + 半透明灰底 ghost）；含独立修复 Copy 吞错致 nil panic（`ecb4e83`）     |
