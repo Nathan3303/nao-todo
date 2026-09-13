@@ -263,4 +263,32 @@ describe('子任务拖拽排序（整行拖拽 + 插入指示线 + 交互元素�
         await new Promise((resolve) => setTimeout(resolve, 0))
         expect(h.resortSubTasks).toHaveBeenCalledWith('sub-1', 'sub-2', false)
     })
+
+    it('dragstart 设置自定义半透明拖拽预览（setDragImage）并在 dragstart 后移除 clone', async () => {
+        const h = mountRows([makeSubTask({ id: 'sub-1' })])
+        const row = h.wrapper.find('.subtask-row').element
+        const setDragImage = vi.fn()
+        const dataTransfer = { setData: vi.fn(), effectAllowed: '', dropEffect: '', setDragImage }
+        const event = new Event('dragstart', { bubbles: true, cancelable: true })
+        Object.defineProperty(event, 'dataTransfer', { value: dataTransfer })
+        Object.defineProperty(event, 'clientX', { value: 12 })
+        Object.defineProperty(event, 'clientY', { value: 24 })
+        row.dispatchEvent(event)
+
+        expect(setDragImage).toHaveBeenCalledTimes(1)
+        const [clone, offsetX, offsetY] = setDragImage.mock.calls[0] as [
+            HTMLElement,
+            number,
+            number
+        ]
+        expect(clone).toBeInstanceOf(HTMLElement)
+        expect(clone.style.opacity).toBe('0.35')
+        // jsdom getBoundingClientRect 全 0 ⇒ offset = clientX/Y
+        expect(offsetX).toBe(12)
+        expect(offsetY).toBe(24)
+        expect(document.body.contains(clone)).toBe(true)
+
+        await new Promise((resolve) => setTimeout(resolve, 0))
+        expect(document.body.contains(clone)).toBe(false)
+    })
 })

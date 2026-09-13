@@ -21,6 +21,9 @@ const DEFAULT_OPTIONS: Required<EventDraggerOptions> = {
 // 交互元素：从其发起 dragstart 时不进入拖拽（防误触勾选/点名称/脱离）
 const INTERACTIVE_SELECTOR = 'button, input, a, textarea, select, [data-no-drag]'
 
+// 自定义拖拽预览（drag image / ghost）不透明度：默认预览过实会压住插入指示线
+const DRAG_IMAGE_OPACITY = 0.35
+
 /**
  * 事件行拖拽处理函数
  * @param handler 事件行拖拽处理函数
@@ -100,7 +103,33 @@ const useEventDragger = (handler: EventDraggerHandler, options: EventDraggerOpti
         resetDragElementDOD()
         if (dragged) {
             dragged.dataset['dragging'] = 'true'
+            // 自定义半透明拖拽预览（跟随光标的 ghost），避免默认预览过实压住插入 bar
+            applyDragImage(event, dragged)
         }
+    }
+
+    /**
+     * 应用自定义拖拽预览（drag image / ghost）
+     * @description `cloneNode(true)` 被拖行 → 半透明 + `position: fixed` 离屏挂 body
+     *              （Firefox 要求预览元素在文档树内）→ `setDragImage(clone, offsetX, offsetY)`
+     *              按 `clientX/Y - rect.left/top` 保持光标对位；`dragstart` 后异步移除，防 DOM 泄漏。
+     *              两列表共用本 composable ⇒ 子任务与检查项同时生效。
+     */
+    const applyDragImage = (event: DragEvent, source: HTMLElement) => {
+        if (typeof event.dataTransfer?.setDragImage !== 'function') return
+        const rect = source.getBoundingClientRect()
+        const clone = source.cloneNode(true) as HTMLElement
+        clone.style.position = 'fixed'
+        clone.style.top = '-1000px'
+        clone.style.left = '-1000px'
+        clone.style.width = `${rect.width}px`
+        clone.style.margin = '0'
+        clone.style.opacity = String(DRAG_IMAGE_OPACITY)
+        clone.style.pointerEvents = 'none'
+        document.body.appendChild(clone)
+        event.dataTransfer.setDragImage(clone, event.clientX - rect.left, event.clientY - rect.top)
+        // 预览已被浏览器捕获 ⇒ 异步移除（勿泄漏 DOM）
+        setTimeout(() => clone.remove(), 0)
     }
 
     /**

@@ -220,10 +220,5 @@ watch(
         bottom: -2px;
         animation: pulse-down 0.3s ease;
     }
-
-    /* 拖拽行变淡（与子任务列表一致；插入指示线 ::before z-index: 10 仍在其上） */
-    &[data-dragging='true'] {
-        opacity: 0.3;
-    }
 }
 </style>

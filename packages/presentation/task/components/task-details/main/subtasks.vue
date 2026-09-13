@@ -346,7 +346,7 @@ const handleDetachSubTask = async (subTask: TaskViewObject) => {
     }
 
     &[data-dragging='true'] {
-        opacity: 0.3;
+        opacity: 0.5;
     }
 }
 </style>
