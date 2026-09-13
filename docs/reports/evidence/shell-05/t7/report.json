@@ -1,0 +1,310 @@
+{
+ "meta": {
+  "feature": {
+   "id": "shell-03",
+   "title": "SHELL-03 离线可用性（BC-1…BC-7）",
+   "pending": "W1（门/壳重构）落地后按 PM 派发正式运行",
+   "groups": [
+    {
+     "id": "bc1",
+     "title": "BC-1 有界终态（≤2s 可解锁 + 网络上界 + 唯一终态）"
+    },
+    {
+     "id": "bc2",
+     "title": "BC-2 无白屏（≥1 可交互 + console 0 warn/error）"
+    },
+    {
+     "id": "bc3",
+     "title": "BC-3 失败可见（DEF-SYNC-01 实机回归线）"
+    },
+    {
+     "id": "bc4",
+     "title": "BC-4 逃生入口完备（重试/登出/离线进入）"
+    },
+    {
+     "id": "bc5",
+     "title": "BC-5 离线壳可用（F-6 回归线）"
+    },
+    {
+     "id": "bc5cred",
+     "title": "BC-5 安全子项：凭证类失败 ⇒ 离线进入不得可用（C-22…C-25）"
+    },
+    {
+     "id": "bc6",
+     "title": "BC-6 运行必终结（实机可选，默认 SKIP）"
+    },
+    {
+     "id": "bc7",
+     "title": "BC-7 离线身份呈现（缓存/无缓存两变体）"
+    }
+   ]
+  },
+  "outDir": "/tmp/nao-shell05/t7/shell03-fresh",
+  "options": {
+   "feature": "shell-03",
+   "port": 9333,
+   "urlMatch": "index.html",
+   "only": [
+    "bc1",
+    "bc2",
+    "bc5",
+    "bc7"
+   ],
+   "launch": false,
+   "list": false,
+   "help": false,
+   "probeTask": false,
+   "title": "[QA-PROBE] 受控探针任务",
+   "email": "qa.shell05.1789301180@qa.local",
+   "password": "Qa!Shell05#1789301180",
+   "out": "/tmp/nao-shell05/t7/shell03-fresh"
+  },
+  "duration": {
+   "bc1": 690,
+   "bc2": 717,
+   "bc5": 13664,
+   "bc7": 39376
+  },
+  "session": {
+   "ok": true,
+   "hash": "#/tasks/all/table",
+   "visibility": "visible",
+   "notes": [
+    "#0 登录页 → 以 qa.shell05.1789301180@qa.local 登录"
+   ]
+  }
+ },
+ "checks": [
+  {
+   "id": "BC-1.timeline",
+   "title": "冷启动时间线（100ms 采样，仅变化点）",
+   "status": "INFO",
+   "detail": "[{\"ms\":2,\"hash\":\"#/auth/checkin\",\"interactive\":3,\"markers\":[\"unlockable\"]}]",
+   "group": "bc1"
+  },
+  {
+   "id": "BC-1.a",
+   "title": "≤2000ms 进入可解锁态（不等待网络）",
+   "status": "PASS",
+   "detail": "实测 2ms",
+   "group": "bc1"
+  },
+  {
+   "id": "BC-1.b",
+   "title": "终态出现 ≤ 网络等待上界（17400ms = timeout 5000×3 + backoff 900 + 余量）",
+   "status": "PASS",
+   "detail": "实测 2ms；上界来源=packages/shared/requester/axios.ts:20 (timeout: 5000) / packages/shared/requester/retry.ts:6 (MAX_RETRY = 2) / packages/shared/requester/retry.ts:36 (backoff 300*2^n)",
+   "group": "bc1"
+  },
+  {
+   "id": "BC-1.c",
+   "title": "进入且仅进入一个显式终态",
+   "status": "PASS",
+   "detail": "markers=[\"unlockable\"] 终态=unlockable",
+   "group": "bc1"
+  },
+  {
+   "id": "BC-1.restore",
+   "title": "恢复后端可达",
+   "status": "INFO",
+   "detail": "OK",
+   "group": "bc1"
+  },
+  {
+   "id": "BC-2.a",
+   "title": "门内 ≥1 个可交互元素（button/input/a[role]）",
+   "status": "PASS",
+   "detail": "interactive=3 样例=[\"输入密码解锁\",\"解锁\",\"登出用户\"] hash=#/auth/checkin",
+   "group": "bc2"
+  },
+  {
+   "id": "BC-2.b",
+   "title": "#app 非空壳（渲染出内容而非白屏）",
+   "status": "PASS",
+   "detail": "hasApp=true htmlLen=1867",
+   "group": "bc2"
+  },
+  {
+   "id": "BC-2.c",
+   "title": "无 Vue warn / 未捕获异常 / Teleport 告警（归因）",
+   "status": "PASS",
+   "detail": "无致命日志",
+   "group": "bc2"
+  },
+  {
+   "id": "BC-2.logs",
+   "title": "console 原文（预期基础设施日志，供 PM 判定）",
+   "status": "INFO",
+   "detail": "{\"expected\":[],\"unknown\":[],\"total\":0}",
+   "group": "bc2"
+  },
+  {
+   "id": "BC-2.restore",
+   "title": "恢复后端可达",
+   "status": "INFO",
+   "detail": "OK",
+   "group": "bc2"
+  },
+  {
+   "id": "BC-5.info",
+   "title": "冷启动 → 解锁 → 离线进入",
+   "status": "INFO",
+   "detail": "unlockFormSeen=true unlockedLeftGate=true clickedOfflineEnter=true",
+   "group": "bc5"
+  },
+  {
+   "id": "BC-5.timeline",
+   "title": "离线冷启动时间线",
+   "status": "INFO",
+   "detail": "[{\"ms\":11,\"hash\":\"#/auth/checkin\",\"interactive\":3,\"markers\":[\"unlockable\"]}]",
+   "group": "bc5"
+  },
+  {
+   "id": "BC-5.0",
+   "title": "离线进入后落在 index 路由（LAST_VISITED_ROUTE || /tasks，非 #/auth/*）",
+   "status": "PASS",
+   "detail": "hash=#/tasks/all/table LAST_VISITED_ROUTE=\"/tasks/all/table\"",
+   "group": "bc5"
+  },
+  {
+   "id": "BC-5.a",
+   "title": "离线态下轨道注入点仍存在",
+   "status": "PASS",
+   "detail": "{\"hash\":\"#/tasks/all/table\",\"railSlot\":true,\"gear\":true,\"railBtn\":true,\"interactive\":13}",
+   "group": "bc5"
+  },
+  {
+   "id": "BC-5.b",
+   "title": "离线态下齿轮仍在（设置入口可用）",
+   "status": "PASS",
+   "detail": "gear=true hash=#/tasks/all/table",
+   "group": "bc5"
+  },
+  {
+   "id": "BC-5.c",
+   "title": "离线态下同步组件仍挂载（轨道按钮存在）",
+   "status": "PASS",
+   "detail": "railBtn=true",
+   "group": "bc5"
+  },
+  {
+   "id": "BC-5.restore",
+   "title": "恢复后端可达",
+   "status": "INFO",
+   "detail": "OK",
+   "group": "bc5"
+  },
+  {
+   "id": "BC-7.pre0",
+   "title": "账号昵称（决定缓存是否应写入）",
+   "status": "INFO",
+   "detail": "nickname=\"QA-Shell05\"",
+   "group": "bc7"
+  },
+  {
+   "id": "BC-7.pre",
+   "title": "在线预热后离线身份缓存已写入（白名单键 userId/nickname/cachedAt）",
+   "status": "PASS",
+   "detail": "shell=true cache={\"present\":true,\"keys\":[\"cachedAt\",\"nickname\",\"userId\"],\"nickname\":\"QA-Shell05\",\"rawLen\":93} nickname=\"QA-Shell05\"",
+   "group": "bc7"
+  },
+  {
+   "id": "BC-7.pre.whitelist",
+   "title": "缓存内容仅白名单字段（禁 email/头像/token）",
+   "status": "PASS",
+   "detail": "keys=[\"cachedAt\",\"nickname\",\"userId\"] rawLen=93",
+   "group": "bc7"
+  },
+  {
+   "id": "BC-7.A1",
+   "title": "解锁门离线身份快照",
+   "status": "INFO",
+   "detail": "{\"initials\":[\"Q\"],\"offlineBadge\":{\"visible\":true,\"semantic\":true,\"any\":true},\"hash\":\"#/auth/checkin\",\"interactive\":3}",
+   "group": "bc7"
+  },
+  {
+   "id": "BC-7.a",
+   "title": "有效缓存：解锁门呈现首字母头像",
+   "status": "PASS",
+   "detail": "initials=[\"Q\"] 期望首字母=\"Q\"",
+   "group": "bc7"
+  },
+  {
+   "id": "BC-7.b",
+   "title": "有效缓存：呈现离线标识（可见小字「离线」**或** title/aria-label 语义命中）",
+   "status": "PASS",
+   "detail": "visible=true semantic=true（防误报：轨道 70px 不放可见小字）",
+   "group": "bc7"
+  },
+  {
+   "id": "BC-7.A2",
+   "title": "进入离线壳后 3s 内请求（口径 b：应为 0）",
+   "status": "INFO",
+   "detail": "mounted=true clickedOfflineEnter=true requests=[]",
+   "group": "bc7"
+  },
+  {
+   "id": "BC-7.A2",
+   "title": "离线壳内零新增业务请求（身份渲染不依赖网络，口径 b）",
+   "status": "PASS",
+   "detail": "shellMounted=true 新增请求=0 明细=[]",
+   "group": "bc7"
+  },
+  {
+   "id": "BC-7.B1",
+   "title": "清缓存后的离线身份快照",
+   "status": "INFO",
+   "detail": "{\"initials\":[],\"hasFallbackIcon\":true,\"interactive\":3}",
+   "group": "bc7"
+  },
+  {
+   "id": "BC-7.d",
+   "title": "清缓存：回落 icon=\"user\"（无首字母、不空白）",
+   "status": "PASS",
+   "detail": "{\"initials\":[],\"hasFallbackIcon\":true,\"interactive\":3}",
+   "group": "bc7"
+  },
+  {
+   "id": "BC-7.e",
+   "title": "清缓存：缓存路径静默（无相关 console 日志，C-17）",
+   "status": "PASS",
+   "detail": "相关日志=[]；全部日志=[]",
+   "group": "bc7"
+  },
+  {
+   "id": "BC-7.B2",
+   "title": "缓存损坏后的离线身份快照",
+   "status": "INFO",
+   "detail": "{\"initials\":[],\"hasFallbackIcon\":true,\"interactive\":3,\"cacheAfter\":null}",
+   "group": "bc7"
+  },
+  {
+   "id": "BC-7.f",
+   "title": "缓存损坏：回落 icon=\"user\"（不空白/不报错）",
+   "status": "PASS",
+   "detail": "{\"initials\":[],\"hasFallbackIcon\":true,\"interactive\":3,\"cacheAfter\":null}",
+   "group": "bc7"
+  },
+  {
+   "id": "BC-7.g",
+   "title": "缓存损坏：缓存路径静默（无相关 console 日志，C-17）",
+   "status": "PASS",
+   "detail": "相关日志=[]；全部日志=[]",
+   "group": "bc7"
+  },
+  {
+   "id": "BC-7.h",
+   "title": "缓存损坏：无效键被删除（C-16 修复后预期）",
+   "status": "PASS",
+   "detail": "cacheAfter=null",
+   "group": "bc7"
+  },
+  {
+   "id": "BC-7.restore",
+   "title": "恢复后端可达 + 清理探针残留键",
+   "status": "INFO",
+   "detail": "OK / cache={\"present\":false,\"keys\":null,\"nickname\":null,\"rawLen\":0}",
+   "group": "bc7"
+  }
+ ]
+}

@@ -1,0 +1,84 @@
+{
+  "meta": {
+    "port": 9341,
+    "urlMatch": "index.html",
+    "mode": "file",
+    "at": "2026-09-13T14:09:30.963Z"
+  },
+  "before": {
+    "label": "before",
+    "url": "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/index.html#/auth/signin",
+    "hash": "#/auth/signin",
+    "title": "NaoTodo",
+    "hasApp": true,
+    "appHtmlLen": 1867,
+    "interactiveCount": 3,
+    "unlockGate": true,
+    "initialSyncGate": false,
+    "railBtn": false,
+    "router": {
+      "name": "auth-signin",
+      "fullPath": "/auth/signin"
+    },
+    "bodyText": "Q QA-Shell05 离线 解锁 登出用户",
+    "errorLogLen": 0,
+    "errorLogSample": []
+  },
+  "onlineReload": {
+    "label": "online-reload",
+    "url": "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/index.html#/auth/signin",
+    "hash": "#/auth/signin",
+    "title": "NaoTodo",
+    "hasApp": true,
+    "appHtmlLen": 1885,
+    "interactiveCount": 3,
+    "unlockGate": false,
+    "initialSyncGate": false,
+    "railBtn": false,
+    "router": {
+      "name": "auth-signin",
+      "fullPath": "/auth/signin"
+    },
+    "bodyText": "登录到 NaoTodo 使用您的电子邮件和密码进行登录 登录 还没有 NaoTodo 账号吗？去 注册 一个！",
+    "errorLogLen": 0,
+    "errorLogSample": []
+  },
+  "offlineReload": {
+    "label": "offline-reload",
+    "url": "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/index.html#/auth/signin",
+    "hash": "#/auth/signin",
+    "title": "NaoTodo",
+    "hasApp": true,
+    "appHtmlLen": 1885,
+    "interactiveCount": 3,
+    "unlockGate": false,
+    "initialSyncGate": false,
+    "railBtn": false,
+    "router": {
+      "name": "auth-signin",
+      "fullPath": "/auth/signin"
+    },
+    "bodyText": "登录到 NaoTodo 使用您的电子邮件和密码进行登录 登录 还没有 NaoTodo 账号吗？去 注册 一个！",
+    "errorLogLen": 0,
+    "errorLogSample": []
+  },
+  "recovered": {
+    "label": "recovered",
+    "url": "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/index.html#/auth/signin",
+    "hash": "#/auth/signin",
+    "title": "NaoTodo",
+    "hasApp": true,
+    "appHtmlLen": 1885,
+    "interactiveCount": 3,
+    "unlockGate": false,
+    "initialSyncGate": false,
+    "railBtn": false,
+    "router": {
+      "name": "auth-signin",
+      "fullPath": "/auth/signin"
+    },
+    "bodyText": "登录到 NaoTodo 使用您的电子邮件和密码进行登录 登录 还没有 NaoTodo 账号吗？去 注册 一个！",
+    "errorLogLen": 0,
+    "errorLogSample": []
+  }
+}

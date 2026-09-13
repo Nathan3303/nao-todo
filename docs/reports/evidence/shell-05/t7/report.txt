@@ -1,0 +1,37 @@
+feature: shell-03 SHELL-03 离线可用性（BC-1…BC-7）
+time: 2026-09-13T13:54:05.641Z
+env: visibility=visible hash=#/tasks/all/table bootstrap=true
+
+[INFO] bc1/BC-1.timeline 冷启动时间线（100ms 采样，仅变化点） — [{"ms":2,"hash":"#/auth/checkin","interactive":3,"markers":["unlockable"]}]
+[PASS] bc1/BC-1.a ≤2000ms 进入可解锁态（不等待网络） — 实测 2ms
+[PASS] bc1/BC-1.b 终态出现 ≤ 网络等待上界（17400ms = timeout 5000×3 + backoff 900 + 余量） — 实测 2ms；上界来源=packages/shared/requester/axios.ts:20 (timeout: 5000) / packages/shared/requester/retry.ts:6 (MAX_RETRY = 2) / packages/shared/requester/retry.ts:36 (backoff 300*2^n)
+[PASS] bc1/BC-1.c 进入且仅进入一个显式终态 — markers=["unlockable"] 终态=unlockable
+[INFO] bc1/BC-1.restore 恢复后端可达 — OK
+[PASS] bc2/BC-2.a 门内 ≥1 个可交互元素（button/input/a[role]） — interactive=3 样例=["输入密码解锁","解锁","登出用户"] hash=#/auth/checkin
+[PASS] bc2/BC-2.b #app 非空壳（渲染出内容而非白屏） — hasApp=true htmlLen=1867
+[PASS] bc2/BC-2.c 无 Vue warn / 未捕获异常 / Teleport 告警（归因） — 无致命日志
+[INFO] bc2/BC-2.logs console 原文（预期基础设施日志，供 PM 判定） — {"expected":[],"unknown":[],"total":0}
+[INFO] bc2/BC-2.restore 恢复后端可达 — OK
+[INFO] bc5/BC-5.info 冷启动 → 解锁 → 离线进入 — unlockFormSeen=true unlockedLeftGate=true clickedOfflineEnter=true
+[INFO] bc5/BC-5.timeline 离线冷启动时间线 — [{"ms":11,"hash":"#/auth/checkin","interactive":3,"markers":["unlockable"]}]
+[PASS] bc5/BC-5.0 离线进入后落在 index 路由（LAST_VISITED_ROUTE || /tasks，非 #/auth/*） — hash=#/tasks/all/table LAST_VISITED_ROUTE="/tasks/all/table"
+[PASS] bc5/BC-5.a 离线态下轨道注入点仍存在 — {"hash":"#/tasks/all/table","railSlot":true,"gear":true,"railBtn":true,"interactive":13}
+[PASS] bc5/BC-5.b 离线态下齿轮仍在（设置入口可用） — gear=true hash=#/tasks/all/table
+[PASS] bc5/BC-5.c 离线态下同步组件仍挂载（轨道按钮存在） — railBtn=true
+[INFO] bc5/BC-5.restore 恢复后端可达 — OK
+[INFO] bc7/BC-7.pre0 账号昵称（决定缓存是否应写入） — nickname="QA-Shell05"
+[PASS] bc7/BC-7.pre 在线预热后离线身份缓存已写入（白名单键 userId/nickname/cachedAt） — shell=true cache={"present":true,"keys":["cachedAt","nickname","userId"],"nickname":"QA-Shell05","rawLen":93} nickname="QA-Shell05"
+[PASS] bc7/BC-7.pre.whitelist 缓存内容仅白名单字段（禁 email/头像/token） — keys=["cachedAt","nickname","userId"] rawLen=93
+[INFO] bc7/BC-7.A1 解锁门离线身份快照 — {"initials":["Q"],"offlineBadge":{"visible":true,"semantic":true,"any":true},"hash":"#/auth/checkin","interactive":3}
+[PASS] bc7/BC-7.a 有效缓存：解锁门呈现首字母头像 — initials=["Q"] 期望首字母="Q"
+[PASS] bc7/BC-7.b 有效缓存：呈现离线标识（可见小字「离线」**或** title/aria-label 语义命中） — visible=true semantic=true（防误报：轨道 70px 不放可见小字）
+[INFO] bc7/BC-7.A2 进入离线壳后 3s 内请求（口径 b：应为 0） — mounted=true clickedOfflineEnter=true requests=[]
+[PASS] bc7/BC-7.A2 离线壳内零新增业务请求（身份渲染不依赖网络，口径 b） — shellMounted=true 新增请求=0 明细=[]
+[INFO] bc7/BC-7.B1 清缓存后的离线身份快照 — {"initials":[],"hasFallbackIcon":true,"interactive":3}
+[PASS] bc7/BC-7.d 清缓存：回落 icon="user"（无首字母、不空白） — {"initials":[],"hasFallbackIcon":true,"interactive":3}
+[PASS] bc7/BC-7.e 清缓存：缓存路径静默（无相关 console 日志，C-17） — 相关日志=[]；全部日志=[]
+[INFO] bc7/BC-7.B2 缓存损坏后的离线身份快照 — {"initials":[],"hasFallbackIcon":true,"interactive":3,"cacheAfter":null}
+[PASS] bc7/BC-7.f 缓存损坏：回落 icon="user"（不空白/不报错） — {"initials":[],"hasFallbackIcon":true,"interactive":3,"cacheAfter":null}
+[PASS] bc7/BC-7.g 缓存损坏：缓存路径静默（无相关 console 日志，C-17） — 相关日志=[]；全部日志=[]
+[PASS] bc7/BC-7.h 缓存损坏：无效键被删除（C-16 修复后预期） — cacheAfter=null
+[INFO] bc7/BC-7.restore 恢复后端可达 + 清理探针残留键 — OK / cache={"present":false,"keys":null,"nickname":null,"rawLen":0}
