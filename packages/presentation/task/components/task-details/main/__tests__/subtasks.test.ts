@@ -283,6 +283,9 @@ describe('子任务拖拽排序（整行拖拽 + 插入指示线 + 交互元素�
         ]
         expect(clone).toBeInstanceOf(HTMLElement)
         expect(clone.style.opacity).toBe('0.35')
+        // 灰色底 + 圆角（jsdom 不解析 var()，断言原文；浏览器中 :root 变量可解析）
+        expect(clone.style.backgroundColor).toBe('var(--nue-primary-color-100)')
+        expect(clone.style.borderRadius).toBe('var(--nue-primary-radius)')
         // jsdom getBoundingClientRect 全 0 ⇒ offset = clientX/Y
         expect(offsetX).toBe(12)
         expect(offsetY).toBe(24)

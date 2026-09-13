@@ -126,6 +126,9 @@ const useEventDragger = (handler: EventDraggerHandler, options: EventDraggerOpti
         clone.style.margin = '0'
         clone.style.opacity = String(DRAG_IMAGE_OPACITY)
         clone.style.pointerEvents = 'none'
+        // 灰色底 + 圆角（与行 hover 同款；变量定义在 :root，body 挂载可继承解析）
+        clone.style.backgroundColor = 'var(--nue-primary-color-100)'
+        clone.style.borderRadius = 'var(--nue-primary-radius)'
         document.body.appendChild(clone)
         event.dataTransfer.setDragImage(clone, event.clientX - rect.left, event.clientY - rect.top)
         // 预览已被浏览器捕获 ⇒ 异步移除（勿泄漏 DOM）
