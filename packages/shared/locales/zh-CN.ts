@@ -50,6 +50,7 @@ const zhCN: LocaleMessages = {
     'identity.offlineName': '{name}（离线）',
     'gate.enterOffline': '离线进入',
     'gate.signInAgain': '重新登录',
+    'gate.offlineUnavailable': '无法离线进入，请重试或重新登录',
 
     // Common
     'common.cancel': '取消',

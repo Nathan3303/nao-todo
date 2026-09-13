@@ -82,4 +82,22 @@ describe('SyncStatus 运行级语义', () => {
         status.endRun()
         expect(status.get().syncing).toBe(false)
     })
+
+    it('C-34：markCredentialFailure 运行内累积、endRun 落定、下次运行重置', () => {
+        const status = new SyncStatus()
+        status.beginRun('pull')
+        status.markCredentialFailure()
+        status.noteRunError('pull', '登录已过期，请重新登录')
+        const result = status.endRun()
+        expect(result.credentialFailure).toBe(true)
+        expect(status.get().credentialFailure).toBe(true)
+        // credentialFailure 为追加字段，不改变既有判定
+        expect(result.ok).toBe(false)
+        expect(result.phase).toBe('pull')
+
+        status.beginRun('push')
+        const clean = status.endRun()
+        expect(clean.credentialFailure).toBe(false)
+        expect(status.get().credentialFailure).toBe(false)
+    })
 })

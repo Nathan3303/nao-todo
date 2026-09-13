@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onUnmounted, ref, watch } from 'vue'
 import App from '@/App.vue'
-import { recordShellError } from '@/error-observability'
 import { reportRouterInjection, resolveRouter } from '@/router-access'
 import UnlockGate from './components/unlock-gate.vue'
 import InitialSyncGate from './components/initial-sync-gate.vue'
@@ -10,7 +9,7 @@ import { useLocalReminder } from './hooks/use-local-reminder'
 import { useTaskReminder } from './hooks/usecases/use-task-reminder'
 import { grantOfflineEntry, revokeOfflineEntry } from '@/views/auth/offline-entry'
 import { LAST_VISITED_ROUTE_KEY, SECTION_LAST_ROUTE_MAP } from '@/router'
-import { pickSafeNavigationTarget } from '@/safe-navigation'
+import { safeReplace, safeReplaceDeepLink } from '@/safe-navigation'
 import { useUserStore } from '@nao-todo/presentation-identity'
 import { TaskReminderDialog, useStoreInvalidationHub } from '@nao-todo/presentation/task'
 import { useDialogManager } from '@nao-todo/shared'
@@ -22,18 +21,6 @@ defineOptions({ name: 'AppRoot' })
 const routerResolution = resolveRouter()
 reportRouterInjection(routerResolution)
 const router = routerResolution.router
-
-/**
- * 导航入口（onOffline/onSignOut/session-expired 共用）
- * @description router 不可用时显式报错，不静默（终态推进兜底见 SHELL-05 T2）
- */
-const navigate = async (target: string): Promise<void> => {
-    if (!router) {
-        recordShellError('app-root:navigation-unavailable', `router 不可用，导航中止：${target}`)
-        return
-    }
-    await router.replace(target)
-}
 
 const userStore = useUserStore()
 
@@ -70,9 +57,8 @@ syncService.setSessionExpiredListener(() => {
     userStore.clearAuthData() // localStorage.clear() → 删除 USER_JWT
     localSession.clear()
     cryptoService.lock()
-    void navigate('/auth/signin').catch((err) => {
-        recordShellError('app-root:session-expired-navigation', err)
-    })
+    // C-35：统一导航封装（失败结构化记录，不抛错）
+    void safeReplace(router, '/auth/signin', 'app-root:session-expired-navigation')
 })
 
 /** 初始同步成功（门通过）：路由由来路决定，无需跳转 */
@@ -90,9 +76,9 @@ const onSynced = (): void => {
 const onOffline = async (): Promise<void> => {
     grantOfflineEntry()
     try {
-        // C-28：回退链 LAST_VISITED → SECTION_LAST(tasks) → '/tasks'，逐项 resolve 校验 + 失效键清理
+        // C-28/C-35：回退链 LAST_VISITED → SECTION_LAST(tasks) → '/tasks'，逐项 resolve 校验 + 失效键清理
         const tasksRouteKey = SECTION_LAST_ROUTE_MAP.tasks!
-        const target = pickSafeNavigationTarget(
+        await safeReplaceDeepLink(
             router,
             [
                 {
@@ -102,12 +88,9 @@ const onOffline = async (): Promise<void> => {
                 { key: tasksRouteKey, value: localStorage.getItem(tasksRouteKey) }
             ],
             '/tasks',
+            'app-root:offline-navigation',
             localStorage
         )
-        await navigate(target)
-    } catch (err) {
-        // C-26/R1：导航失败不阻塞进壳；结构化记录（禁静默）
-        recordShellError('app-root:offline-navigation', err)
     } finally {
         // 终态推进必须在 finally：任何异常/失败仍进入壳（永不卡门）
         gatePassed.value = true
@@ -118,9 +101,7 @@ const onOffline = async (): Promise<void> => {
 const onSignOut = async (): Promise<void> => {
     revokeOfflineEntry() // C-25：登出必须清离线进入授权
     try {
-        await navigate('/auth/signin')
-    } catch (err) {
-        recordShellError('app-root:signout-navigation', err)
+        await safeReplace(router, '/auth/signin', 'app-root:signout-navigation')
     } finally {
         gatePassed.value = true
     }

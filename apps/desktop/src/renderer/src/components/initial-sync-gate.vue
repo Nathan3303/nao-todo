@@ -14,6 +14,7 @@ import { LoadingError, t } from '@nao-todo/shared'
 import { cryptoService, localSession, syncService } from '@nao-todo/infrastructure'
 import { useUserStore } from '@nao-todo/presentation-identity'
 import { recordShellError } from '@/error-observability'
+import { checkOfflineEntryPrerequisites } from '@/views/auth/offline-prerequisites'
 
 defineOptions({ name: 'InitialSyncGate' })
 
@@ -33,12 +34,16 @@ const userStore = useUserStore()
 const syncing = ref(true)
 const failed = ref(false)
 const errorMessage = ref('')
+// C-34：凭证类失败由结构化字段判定（不再用文案正则；文案变更不影响按钮可用性）
+const credentialFailure = ref(false)
+// C-29：四条件预检不通过时的显式出口提示（不静默回落）
+const offlineBlocked = ref(false)
 
 /**
- * 凭证类失败（C-06/C-23）：会话失效 ⇒ 主按钮语义切「重新登录」，
+ * 凭证类失败（C-06/C-23/C-34）：会话失效 ⇒ 主按钮语义切「重新登录」，
  * 且**不得提供「离线进入」**（用无效凭证进壳属安全绕过）
  */
-const isCredentialFailure = computed(() => /登录已过期|401|403/.test(errorMessage.value))
+const isCredentialFailure = computed(() => credentialFailure.value)
 
 /**
  * 执行初始同步（先拉后推，单运行边界）
@@ -51,6 +56,8 @@ const runSync = async () => {
     syncing.value = true
     failed.value = false
     errorMessage.value = ''
+    credentialFailure.value = false
+    offlineBlocked.value = false
     try {
         const result = await syncService.start()
         if (result.ok) {
@@ -59,6 +66,8 @@ const runSync = async () => {
             return
         }
         failed.value = true
+        // C-34：以运行结果的结构化字段判定凭证类失败
+        credentialFailure.value = result.credentialFailure === true
         errorMessage.value = result.lastError ?? ''
     } catch (err) {
         // 意外异常（B-02）：中性文案 + 结构化记录，不因异常停在 syncing
@@ -75,9 +84,18 @@ void runSync()
 
 /**
  * 离线进入：以本地数据继续（D-1/D-3）
- * @description 仅 emit 意图（B-1：路由跳转唯一点 = AppRoot，gate 不得 import router）
+ * @description 仅 emit 意图（B-1：路由跳转唯一点 = AppRoot，gate 不得 import router）。
+ *              C-29：点击后先预检四条件；不满足⇒显式文案 + 动作（重试/重新登录），
+ *              原因码入结构化日志（无 PII），**不得静默回落**。
  */
 const onEnterOffline = () => {
+    const prerequisites = checkOfflineEntryPrerequisites()
+    if (!prerequisites.ok) {
+        offlineBlocked.value = true
+        recordShellError('sync-gate:offline-prerequisites', `原因码=${prerequisites.reason}`)
+        return
+    }
+    offlineBlocked.value = false
     emit('offline')
 }
 
@@ -110,6 +128,14 @@ const onSignOut = () => {
                     >
                         {{ t('gate.enterOffline') }}
                     </nue-button>
+                    <!-- C-29：四条件预检不通过的显式出口（不静默回落） -->
+                    <nue-text
+                        v-if="offlineBlocked"
+                        size="var(--nue-text-xs)"
+                        class="offline-blocked"
+                    >
+                        {{ t('gate.offlineUnavailable') }}
+                    </nue-text>
                     <nue-button size="small" theme="pure" @click="onSignOut">
                         {{ isCredentialFailure ? t('gate.signInAgain') : '登出用户' }}
                     </nue-button>

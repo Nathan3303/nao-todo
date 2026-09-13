@@ -15,13 +15,22 @@ import InitialSyncGate from './initial-sync-gate.vue'
 const mocks = vi.hoisted(() => ({
     start: vi.fn(),
     clearSession: vi.fn(),
-    lock: vi.fn()
+    lock: vi.fn(),
+    isUnlocked: true,
+    jwtUserId: 'u-1' as string | null,
+    sessionUserId: 'u-1' as string | null
 }))
 
 vi.mock('@nao-todo/infrastructure', () => ({
     syncService: { start: mocks.start },
-    localSession: { clear: mocks.clearSession },
-    cryptoService: { lock: mocks.lock }
+    localSession: { clear: mocks.clearSession, getCurrentUserId: () => mocks.sessionUserId },
+    cryptoService: {
+        lock: mocks.lock,
+        get isUnlocked() {
+            return mocks.isUnlocked
+        }
+    },
+    resolveUserIdFromStoredJwt: () => mocks.jwtUserId
 }))
 
 let wrapper: VueWrapper | null = null
@@ -56,6 +65,9 @@ const clickButton = (label: string): void => {
 
 beforeEach(() => {
     vi.clearAllMocks()
+    mocks.isUnlocked = true
+    mocks.jwtUserId = 'u-1'
+    mocks.sessionUserId = 'u-1'
 })
 
 afterEach(() => {
@@ -119,7 +131,8 @@ describe('InitialSyncGate - SHELL-03 终态与逃生入口', () => {
             ok: false,
             errors: ['登录已过期，请重新登录'],
             lastError: '登录已过期，请重新登录',
-            phase: 'pull'
+            phase: 'pull',
+            credentialFailure: true
         })
         mountGate()
         await flushPromises()
@@ -159,7 +172,8 @@ describe('InitialSyncGate - SHELL-03 终态与逃生入口', () => {
             ok: false,
             errors: ['登录已过期，请重新登录'],
             lastError: '登录已过期，请重新登录',
-            phase: 'pull'
+            phase: 'pull',
+            credentialFailure: true
         })
         const gate = mountGate()
         await flushPromises()
@@ -186,6 +200,58 @@ describe('InitialSyncGate - SHELL-03 终态与逃生入口', () => {
         expect(errorSpy).toHaveBeenCalledWith(
             expect.stringContaining('[SHELL-05]'),
             expect.objectContaining({ source: 'sync-gate:start' })
+        )
+    })
+
+    it('C-34：凭证类失败由结构化字段判定（文案无关）', async () => {
+        mocks.start.mockResolvedValue({
+            ok: false,
+            errors: ['任意文案'],
+            lastError: '任意文案',
+            phase: 'pull',
+            credentialFailure: true
+        })
+        mountGate()
+        await flushPromises()
+        expect(buttonsText()).toContain('重新登录')
+        expect(buttonsText()).not.toContain('离线进入')
+    })
+
+    it('C-34：文案含“登录已过期”但结构化字段为 false ⇒ 离线进入仍可见（文案不影响按钮）', async () => {
+        mocks.start.mockResolvedValue({
+            ok: false,
+            errors: ['登录已过期，请重新登录'],
+            lastError: '登录已过期，请重新登录',
+            phase: 'pull',
+            credentialFailure: false
+        })
+        mountGate()
+        await flushPromises()
+        expect(buttonsText()).toContain('离线进入')
+        expect(buttonsText()).toContain('登出用户')
+    })
+
+    it('C-29：四条件不满足 ⇒ 点离线进入给出显式文案 + 原因码日志，不 emit', async () => {
+        mocks.isUnlocked = false
+        mocks.start.mockResolvedValue({
+            ok: false,
+            errors: ['推送失败：网络错误'],
+            lastError: '推送失败：网络错误',
+            phase: 'push',
+            credentialFailure: false
+        })
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+        const gate = mountGate()
+        await flushPromises()
+
+        clickButton('离线进入')
+        await flushPromises()
+
+        expect(gate.emitted('offline')).toBeFalsy()
+        expect(document.body.textContent).toContain('无法离线进入')
+        expect(errorSpy).toHaveBeenCalledWith(
+            expect.stringContaining('[SHELL-05]'),
+            expect.objectContaining({ source: 'sync-gate:offline-prerequisites' })
         )
     })
 })

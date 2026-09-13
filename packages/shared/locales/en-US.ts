@@ -51,6 +51,7 @@ const enUS: LocaleMessages = {
     'identity.offlineName': '{name} (offline)',
     'gate.enterOffline': 'Enter offline',
     'gate.signInAgain': 'Sign in again',
+    'gate.offlineUnavailable': 'Cannot enter offline. Please retry or sign in again.',
 
     // Common
     'common.cancel': 'Cancel',

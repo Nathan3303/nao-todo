@@ -452,6 +452,7 @@ export class SyncService {
         // 业务码 10041（用户凭证验证失败）：HTTP 可能仍为 200，须在归一化检测前识别
         if (this.isSessionExpiredCode((data as { code?: unknown })?.code)) {
             console.error('[sync] 拉取被拒绝：用户凭证验证失败（10041）')
+            syncStatus.markCredentialFailure()
             this.notifySessionExpired()
             syncStatus.noteRunError('pull', ERR_SESSION_EXPIRED)
             return
@@ -661,6 +662,7 @@ export class SyncService {
         const dataRaw = raw?.data as { code?: unknown } | undefined
         if (this.isSessionExpiredCode(dataRaw?.code)) {
             console.error('[sync] 推送被拒绝：用户凭证验证失败（10041）')
+            syncStatus.markCredentialFailure()
             this.notifySessionExpired()
             syncStatus.noteRunError('push', ERR_SESSION_EXPIRED)
             return

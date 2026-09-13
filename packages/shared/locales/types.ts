@@ -47,6 +47,7 @@ export interface LocaleMessages {
     'identity.offlineName': string
     'gate.enterOffline': string
     'gate.signInAgain': string
+    'gate.offlineUnavailable': string
 
     // Common
     'common.cancel': string

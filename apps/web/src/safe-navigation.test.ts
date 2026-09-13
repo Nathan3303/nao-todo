@@ -1,8 +1,11 @@
 import { describe, expect, it, vi } from 'vite-plus/test'
+import { SHELL_ERROR_LOG_PREFIX } from './error-observability'
 import {
     pickSafeNavigationTarget,
     resolveNavigableTarget,
     resolveSectionRedirect,
+    safeReplace,
+    safeReplaceDeepLink,
     type NavigationCandidate,
     type NavigationStorage,
     type SafeNavigationRouter
@@ -142,5 +145,56 @@ describe('pickSafeNavigationTarget - 异常防御', () => {
                 throwingStorage
             )
         ).toBe('/tasks')
+    })
+})
+
+describe('safeReplace / safeReplaceDeepLink - C-35 统一导航', () => {
+    const makeNavigableRouter = (replace: (to: string) => Promise<unknown>): SafeNavigationRouter =>
+        ({
+            resolve: (target: string) => ({
+                matched: ['/tasks', '/tasks/all/table'].includes(target) ? [{}] : [],
+                fullPath: target
+            }),
+            replace
+        }) as unknown as SafeNavigationRouter
+
+    it('router 不可用 → 结构化记录且不抛错', async () => {
+        const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+        await expect(safeReplace(undefined, '/tasks', 'src:test')).resolves.toBeUndefined()
+        expect(spy).toHaveBeenCalledWith(
+            expect.stringContaining(SHELL_ERROR_LOG_PREFIX),
+            expect.objectContaining({ source: 'src:test' })
+        )
+    })
+
+    it('replace reject → 记录且不抛错（不卡死）', async () => {
+        const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+        const router = makeNavigableRouter(() => Promise.reject(new Error('nav failed')))
+        await expect(safeReplace(router, '/tasks', 'src:test')).resolves.toBeUndefined()
+        expect(spy).toHaveBeenCalledWith(
+            expect.stringContaining(SHELL_ERROR_LOG_PREFIX),
+            expect.objectContaining({ source: 'src:test' })
+        )
+    })
+
+    it('成功路径 → 调用 replace', async () => {
+        const replace = vi.fn().mockResolvedValue(undefined)
+        await safeReplace(makeNavigableRouter(replace), '/tasks', 'src:test')
+        expect(replace).toHaveBeenCalledWith('/tasks')
+    })
+
+    it('safeReplaceDeepLink：失效深链清理并回退 /tasks', async () => {
+        const replace = vi.fn().mockResolvedValue(undefined)
+        const storage = makeStorage()
+        vi.spyOn(console, 'error').mockImplementation(() => {})
+        await safeReplaceDeepLink(
+            makeNavigableRouter(replace),
+            [{ key: 'LAST_VISITED_ROUTE', value: '/gone' }],
+            '/tasks',
+            'src:test',
+            storage
+        )
+        expect(storage.removed).toEqual(['LAST_VISITED_ROUTE'])
+        expect(replace).toHaveBeenCalledWith('/tasks')
     })
 })

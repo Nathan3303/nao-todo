@@ -19,6 +19,8 @@ export interface SyncRunResult {
     lastError: string | null
     /** 首个错误所属阶段（无错误为 null，见 ADR 附录 A-1） */
     phase: SyncPhase | null
+    /** 本次运行是否发生凭证类失败（10041 会话失效）；C-34：结构化判定，替代文案正则 */
+    credentialFailure: boolean
 }
 
 export interface SyncStatusState {
@@ -36,6 +38,8 @@ export interface SyncStatusState {
     errors: string[]
     /** 最近一次运行的错误数 */
     errorCount: number
+    /** 最近一次运行是否发生凭证类失败（10041）；纯追加字段（C-34） */
+    credentialFailure: boolean
 }
 
 export class SyncStatus {
@@ -46,13 +50,17 @@ export class SyncStatus {
         failedCount: 0,
         lastError: null,
         errors: [],
-        errorCount: 0
+        errorCount: 0,
+        credentialFailure: false
     }
 
     private listeners = new Set<() => void>()
 
     /** 本次运行累积错误（保序去重：阶段 + 文案 唯一） */
     private runErrors: { phase: SyncPhase; message: string }[] = []
+
+    /** 本次运行是否发生凭证类失败（10041）；运行边界重置（C-34） */
+    private runCredentialFailure = false
 
     /** 获取当前状态快照（errors 为副本，防外部直改内部数组） */
     get(): SyncStatusState {
@@ -79,6 +87,7 @@ export class SyncStatus {
      */
     beginRun(_phase: SyncPhase): void {
         this.runErrors = []
+        this.runCredentialFailure = false
         this.set({ syncing: true, lastError: null, errors: [], errorCount: 0 })
     }
 
@@ -89,6 +98,14 @@ export class SyncStatus {
     noteRunError(phase: SyncPhase, message: string): void {
         if (this.runErrors.some((e) => e.phase === phase && e.message === message)) return
         this.runErrors.push({ phase, message })
+    }
+
+    /**
+     * 标记本次运行发生凭证类失败（10041 会话失效）
+     * @description C-34：由同步服务在识别 10041 时调用；运行内累积，endRun 落定
+     */
+    markCredentialFailure(): void {
+        this.runCredentialFailure = true
     }
 
     /**
@@ -104,17 +121,21 @@ export class SyncStatus {
             lastError,
             errors,
             errorCount: errors.length,
+            credentialFailure: this.runCredentialFailure,
             ...counts
         }
         // 仅无错误时推进「上次成功同步」（修正 DEF-SYNC-03）
         if (lastError === null) partial.lastSyncAt = new Date().toISOString()
+        const credentialFailure = this.runCredentialFailure
         this.runErrors = []
+        this.runCredentialFailure = false
         this.set(partial)
         return {
             ok: lastError === null,
             errors,
             lastError,
-            phase: lastError === null ? null : (first?.phase ?? null)
+            phase: lastError === null ? null : (first?.phase ?? null),
+            credentialFailure
         }
     }
 }

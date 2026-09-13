@@ -1,13 +1,16 @@
 /**
- * 安全导航工具（SHELL-05 T4 / C-28 / C-30）
- * @description 纯函数工具：路由候选目标的合法化校验 + 失效键清理 + section 重定向决策。
+ * 安全导航工具（SHELL-05 T4 / C-28 / C-30；T6 / C-35）
+ * @description 纯函数工具：路由候选目标的合法化校验 + 失效键清理 + section 重定向决策 +
+ *              统一导航封装（safeReplace / safeReplaceDeepLink）。
  *              判据：`router.resolve(target).matched.length > 0` 且 `fullPath` 不以 `/auth` 开头。
- *              零框架依赖（只依赖 structural 的 resolve），可单测。
+ *              统一失败处理：不静默（走 error-observability）、不卡死（不抛错冒泡）。
  */
+import { recordShellError } from './error-observability'
 
-/** 仅需 resolve 的 router 视图（避免直接依赖具体 Router 类型） */
+/** 仅需 resolve/replace 的 router 视图（避免直接依赖具体 Router 类型） */
 export type SafeNavigationRouter = {
     resolve: (target: string) => { matched: unknown[]; fullPath: string }
+    replace: (target: string) => Promise<unknown>
 }
 
 /** localStorage 最小接口（清理失效键） */
@@ -80,4 +83,41 @@ export const resolveSectionRedirect = (
     // 与当前目标等价：放行，避免循环
     if (resolved === toFullPath) return { target: null, cleanup: false }
     return { target: resolved, cleanup: false }
+}
+
+/* —— C-35：统一导航封装（门/壳/auth 页收敛入口） —— */
+
+/**
+ * 统一 `router.replace` 封装：router 不可用/导航失败均结构化记录，**绝不抛错**
+ * @param source 结构化日志来源（稳定字符串）
+ */
+export const safeReplace = async (
+    router: SafeNavigationRouter | undefined,
+    to: string,
+    source: string
+): Promise<void> => {
+    if (!router) {
+        recordShellError(source, `router 不可用，导航中止：${to}`)
+        return
+    }
+    try {
+        await router.replace(to)
+    } catch (error) {
+        recordShellError(source, error)
+    }
+}
+
+/**
+ * 深链回退链 + 安全导航：候选链取首个合法目标（失效键清理）后 replace
+ * @description 收敛 `localStorage.getItem(...) || '/tasks'` 类裸导航（C-35/B-13）。
+ */
+export const safeReplaceDeepLink = async (
+    router: SafeNavigationRouter | undefined,
+    candidates: readonly NavigationCandidate[],
+    fallback: string,
+    source: string,
+    storage?: NavigationStorage
+): Promise<void> => {
+    const target = pickSafeNavigationTarget(router, candidates, fallback, storage)
+    await safeReplace(router, target, source)
 }

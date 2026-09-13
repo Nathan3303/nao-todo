@@ -10,6 +10,7 @@ import {
     useUserUseCase
 } from '@/hooks'
 import { LAST_VISITED_ROUTE_KEY } from '@/router'
+import { safeReplaceDeepLink } from '@/safe-navigation'
 import { ThemeMode } from '@nao-todo/domain-identity'
 import { ProjectViewObject } from '@nao-todo/domain-project'
 import { TagViewObject } from '@nao-todo/domain-tag'
@@ -173,7 +174,14 @@ const useIndexView = () => {
             .then(() => {
                 if (route.name !== 'index') return
                 const lastRoute = localStorage.getItem(LAST_VISITED_ROUTE_KEY)
-                return router.replace(lastRoute || '/tasks')
+                // C-35：收敛裸导航（深链校验 + 回退 + 失效键清理）
+                return safeReplaceDeepLink(
+                    router,
+                    [{ key: LAST_VISITED_ROUTE_KEY, value: lastRoute }],
+                    '/tasks',
+                    'index-view:initialize',
+                    localStorage
+                )
             })
             .finally(() => {
                 isLoading.value = false
