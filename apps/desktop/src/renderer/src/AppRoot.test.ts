@@ -210,8 +210,8 @@ describe('AppRoot - SHELL-03 离线进入编排', () => {
         expect(mocks.replace).toHaveBeenCalledWith('/calendar')
         expect(root.find('#app-stub').exists()).toBe(true)
         expect(console.error).toHaveBeenCalledWith(
-            expect.stringContaining('[SHELL-05/C-37]'),
-            expect.objectContaining({ source: 'global' })
+            expect.stringContaining('[SHELL-05]'),
+            expect.objectContaining({ source: 'router-injection:global' })
         )
     })
 

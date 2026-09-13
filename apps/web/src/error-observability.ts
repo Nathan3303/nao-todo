@@ -9,6 +9,7 @@
  *                不落任务正文与凭证原文。
  *              T1 的 router 注入自检、T2 的门/壳导航 catch 均复用本通道。
  */
+import type { App } from 'vue'
 
 /** 统一日志前缀（SHELL-05 家族） */
 export const SHELL_ERROR_LOG_PREFIX = '[SHELL-05]'
@@ -44,7 +45,7 @@ const truncate = (value: string, max: number): string =>
 /** 脱敏：email / Bearer / JWT / token= —— 只做特征替换，不解析业务语义 */
 export const redactSensitive = (value: string): string =>
     value
-        .replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, '[redacted-email]')
+        .replace(/\b[\w.%+-]+@[\w-]+(?:\.[\w-]+)*\.[a-zA-Z]{2,}\b/g, '[redacted-email]')
         .replace(/(Bearer\s+)[\w~+/-]+/gi, '$1[redacted]')
         .replace(/\beyJ[\w-]*\.[\w-]+\.[\w-]+/g, '[redacted-jwt]')
         .replace(/((?:access[_-]?)?token\s*[=:]\s*)[^\s,;"']+/gi, '$1[redacted]')
@@ -99,4 +100,60 @@ export const readShellErrorLog = (): readonly ShellErrorEntry[] => buffer
 /** 清空缓冲（测试/手动复位） */
 export const clearShellErrorLog = (): void => {
     buffer.length = 0
+}
+
+/* —— C-27：全局钩子安装（web/desktop 各自入口调用同一实现） —— */
+
+/** 仅需 onError 的 router 视图（避免直接依赖具体 Router 类型） */
+export type ErrorObservabilityRouter = {
+    onError: (handler: (error: unknown) => unknown) => unknown
+}
+
+export type ErrorObservabilityOptions = {
+    /** Vue app（注册 `errorHandler`） */
+    app?: App
+    /** vue-router 实例（注册 `onError`） */
+    router?: ErrorObservabilityRouter
+    /** 事件宿主（默认 window；测试可注入） */
+    target?: Window
+}
+
+declare global {
+    interface Window {
+        /** QA 只读导出：当前错误缓冲快照 */
+        __NAO_ERROR_LOG__?: readonly ShellErrorEntry[]
+    }
+}
+
+/**
+ * 注册「同源单点」全局未捕获异常钩子
+ * @description 四类：`window error` / `window unhandledrejection` / Vue `errorHandler` /
+ *              `router.onError`；均落统一结构化通道（console + 有界缓冲）。
+ *              入口调用一次（web: main.ts / desktop: main.ts）。
+ */
+export const installGlobalErrorObservability = ({
+    app,
+    router,
+    target = window
+}: ErrorObservabilityOptions): void => {
+    target.addEventListener('error', (event) => {
+        const errorEvent = event as ErrorEvent
+        recordShellError('window:error', errorEvent.error ?? errorEvent.message)
+    })
+    target.addEventListener('unhandledrejection', (event) => {
+        recordShellError('window:unhandledrejection', (event as PromiseRejectionEvent).reason)
+    })
+    if (app) {
+        app.config.errorHandler = (err, _instance, info) => {
+            recordShellError(`vue:errorHandler:${info}`, err)
+        }
+    }
+    router?.onError((error) => {
+        recordShellError('router:onError', error)
+    })
+    // QA 只读导出（不可赋值；快照由 getter 动态返回）
+    Object.defineProperty(target, '__NAO_ERROR_LOG__', {
+        get: () => readShellErrorLog(),
+        configurable: true
+    })
 }

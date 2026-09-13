@@ -1,11 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { Router } from 'vue-router'
-import {
-    ROUTER_INJECTION_LOG_PREFIX,
-    reportRouterInjection,
-    selectRouter,
-    type RouterResolution
-} from './router-access'
+import { SHELL_ERROR_LOG_PREFIX } from './error-observability'
+import { reportRouterInjection, selectRouter, type RouterResolution } from './router-access'
 
 /**
  * SHELL-05 T1 / C-37：实例无关 router 访问纯层
@@ -49,22 +45,22 @@ describe('reportRouterInjection - C-37① 自检可观测', () => {
         expect(spy).not.toHaveBeenCalled()
     })
 
-    it('global 降级路径输出固定前缀结构化日志', () => {
+    it('global 降级路径输出统一前缀结构化日志', () => {
         const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
         const resolution: RouterResolution = { router: fakeRouter('g'), source: 'global' }
         reportRouterInjection(resolution)
         expect(spy).toHaveBeenCalledWith(
-            expect.stringContaining(ROUTER_INJECTION_LOG_PREFIX),
-            expect.objectContaining({ source: 'global' })
+            expect.stringContaining(SHELL_ERROR_LOG_PREFIX),
+            expect.objectContaining({ source: 'router-injection:global' })
         )
     })
 
-    it('none 路径输出固定前缀结构化日志', () => {
+    it('none 路径输出统一前缀结构化日志', () => {
         const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
         reportRouterInjection({ router: undefined, source: 'none' })
         expect(spy).toHaveBeenCalledWith(
-            expect.stringContaining(ROUTER_INJECTION_LOG_PREFIX),
-            expect.objectContaining({ source: 'none' })
+            expect.stringContaining(SHELL_ERROR_LOG_PREFIX),
+            expect.objectContaining({ source: 'router-injection:none' })
         )
     })
 })
