@@ -28,7 +28,8 @@ const mocks = vi.hoisted(() => ({
 // 注：不 mock 'vue-router'。AppRoot 经 @/router-access 取 router；测试环境无 router 注入 ⇒
 // 真实 useRouter() 返回 undefined（等价 H6 双实例现场），由 app 级 $router 降级完成导航。
 vi.mock('@/router', () => ({
-    LAST_VISITED_ROUTE_KEY: 'LAST_VISITED_ROUTE'
+    LAST_VISITED_ROUTE_KEY: 'LAST_VISITED_ROUTE',
+    SECTION_LAST_ROUTE_MAP: { tasks: 'LAST_TASKS_ROUTE', calendar: 'LAST_CALENDAR_ROUTE' }
 }))
 
 vi.mock('@/App.vue', () => ({
@@ -78,6 +79,14 @@ const InitialSyncGateStub = defineComponent({
 
 let wrapper: VueWrapper | null = null
 
+/** 已知可导航路由表（resolve 替身用；其他一律视为失效 deep link） */
+const NAVIGABLE_TARGETS = ['/tasks', '/calendar', '/tasks/all', '/tasks/all/table']
+
+const fakeResolve = (target: string) => ({
+    matched: NAVIGABLE_TARGETS.includes(target) ? [{}] : [],
+    fullPath: target
+})
+
 /**
  * app 级 $router 注入插件（等价 `app.use(router)` 写入 globalProperties，C-37② 降级层入口）
  * @description VTU 的 `global.mocks` 不写 appContext.globalProperties，故用插件模拟真实安装路径。
@@ -85,7 +94,8 @@ let wrapper: VueWrapper | null = null
 const routerFallbackPlugin = {
     install(app: App) {
         ;(app.config.globalProperties as { $router?: unknown }).$router = {
-            replace: mocks.replace
+            replace: mocks.replace,
+            resolve: fakeResolve
         }
     }
 }
@@ -247,5 +257,19 @@ describe('AppRoot - SHELL-03 离线进入编排', () => {
             expect.stringContaining('[SHELL-05]'),
             expect.objectContaining({ source: 'app-root:signout-navigation' })
         )
+    })
+
+    it('C-28：LAST_VISITED 失效 ⇒ 清理该键并回落 SECTION_LAST（/tasks）', async () => {
+        localStorage.setItem(LAST_VISITED_ROUTE_KEY, '/gone/deep')
+        localStorage.setItem('LAST_TASKS_ROUTE', '/tasks')
+
+        const root = mountRoot()
+        const gate = await reachSyncGate(root)
+        gate.$emit('offline')
+        await flushPromises()
+
+        expect(mocks.replace).toHaveBeenCalledWith('/tasks')
+        expect(localStorage.getItem(LAST_VISITED_ROUTE_KEY)).toBeNull()
+        expect(root.find('#app-stub').exists()).toBe(true)
     })
 })

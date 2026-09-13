@@ -9,7 +9,8 @@ import SyncStatusBar from './components/sync-status-bar.vue'
 import { useLocalReminder } from './hooks/use-local-reminder'
 import { useTaskReminder } from './hooks/usecases/use-task-reminder'
 import { grantOfflineEntry, revokeOfflineEntry } from '@/views/auth/offline-entry'
-import { LAST_VISITED_ROUTE_KEY } from '@/router'
+import { LAST_VISITED_ROUTE_KEY, SECTION_LAST_ROUTE_MAP } from '@/router'
+import { pickSafeNavigationTarget } from '@/safe-navigation'
 import { useUserStore } from '@nao-todo/presentation-identity'
 import { TaskReminderDialog, useStoreInvalidationHub } from '@nao-todo/presentation/task'
 import { useDialogManager } from '@nao-todo/shared'
@@ -89,7 +90,21 @@ const onSynced = (): void => {
 const onOffline = async (): Promise<void> => {
     grantOfflineEntry()
     try {
-        await navigate(localStorage.getItem(LAST_VISITED_ROUTE_KEY) || '/tasks')
+        // C-28：回退链 LAST_VISITED → SECTION_LAST(tasks) → '/tasks'，逐项 resolve 校验 + 失效键清理
+        const tasksRouteKey = SECTION_LAST_ROUTE_MAP.tasks!
+        const target = pickSafeNavigationTarget(
+            router,
+            [
+                {
+                    key: LAST_VISITED_ROUTE_KEY,
+                    value: localStorage.getItem(LAST_VISITED_ROUTE_KEY)
+                },
+                { key: tasksRouteKey, value: localStorage.getItem(tasksRouteKey) }
+            ],
+            '/tasks',
+            localStorage
+        )
+        await navigate(target)
     } catch (err) {
         // C-26/R1：导航失败不阻塞进壳；结构化记录（禁静默）
         recordShellError('app-root:offline-navigation', err)
