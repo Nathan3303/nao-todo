@@ -64,6 +64,11 @@ export type TaskDetailsContext = {
     retrySubTasks: () => Promise<void>
     createSubTask: (name: TaskViewObject['name']) => GoAsync<void>
     detachSubTask: (subTaskId: TaskViewObject['id']) => GoAsync<void>
+    resortSubTasks: (
+        originalId: TaskViewObject['id'],
+        boundId: TaskViewObject['id'],
+        isBefore: boolean
+    ) => GoAsync<void>
 
     resortCheckItems: (
         oldEid: TaskCheckItemViewObject['id'],

@@ -82,6 +82,7 @@ export interface TaskRecord {
     checkItemCount: number
     commentCount: number
     subtaskCount: number
+    sortId: number
     createdAt: string
     updatedAt: string
     deletedAt: string | null

@@ -32,6 +32,8 @@ export const taskEntityToRecord = async (
     checkItemCount: entity.checkItemCount,
     commentCount: entity.commentCount,
     subtaskCount: entity.subtaskCount,
+    // 组内排序值（服务端 owned；本地不维护，仅快照透传）
+    sortId: entity.sortId,
     createdAt: entity.createdAt,
     updatedAt: entity.updatedAt,
     deletedAt: entity.deletedAt
@@ -67,7 +69,9 @@ export const taskRecordToEntity = async (record: TaskRecord): Promise<TaskEntity
         // 存量记录无计数字段（旧库）时兜底 0
         record.checkItemCount ?? 0,
         record.commentCount ?? 0,
-        record.subtaskCount ?? 0
+        record.subtaskCount ?? 0,
+        // 存量记录无排序字段（旧库）时兜底 0 = 未设置
+        record.sortId ?? 0
     )
 
 /**

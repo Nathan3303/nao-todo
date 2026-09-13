@@ -55,7 +55,9 @@ export class TaskEntity extends Entity {
         // 领域统计属性（服务端反规范化计数，只读透传；尾部可选默认 0，不破坏既有构造）
         public checkItemCount = 0, // 检查事项数量（总数含已完成）
         public commentCount = 0, // 评论数量（不含已删除）
-        public subtaskCount = 0 // 子任务数量（直接子，1 层）
+        public subtaskCount = 0, // 子任务数量（直接子，1 层）
+        // 排序属性（per-group 组内序，服务端 owned；0 = 未设置/由服务端分配）
+        public sortId = 0 // 组内排序值（sort_id ASC, id ASC）
     ) {
         super(id, createdAt, updatedAt, deletedAt)
     }

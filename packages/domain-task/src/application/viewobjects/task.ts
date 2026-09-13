@@ -25,6 +25,8 @@ export type TaskViewObject = ViewObjectBase & {
     checkItemCount: number
     commentCount: number
     subtaskCount: number
+    // 组内排序属性（服务端 owned；0 = 未设置/由服务端分配）
+    sortId: number
     // 额外属性
     // project?: { name: string }
     // events?: Event[]
@@ -72,6 +74,7 @@ export type UpdateTaskViewObject = {
     remindRepeat?: TaskViewObject['remindRepeat']
     remindTime?: TaskViewObject['remindTime']
     remindWeekdays?: TaskViewObject['remindWeekdays']
+    sortId?: TaskViewObject['sortId']
     // 额外属性
     // project?: { name: string }
     // events?: Event[]

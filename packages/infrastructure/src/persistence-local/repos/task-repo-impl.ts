@@ -112,7 +112,11 @@ export class LocalTaskRepoImpl implements TaskRepository {
                 createVO.remindAt ?? '',
                 createVO.remindRepeat,
                 createVO.remindTime ?? '',
-                createVO.remindWeekdays ?? []
+                createVO.remindWeekdays ?? [],
+                0,
+                0,
+                0,
+                createVO.sortId ?? 0
             )
             await this.db.tasks.add(await taskEntityToRecord(entity, this.currentUserId))
             await syncTracker.markDirty('tasks', entity.id, 'upsert', entity.updatedAt)
@@ -143,6 +147,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
             if (updateVO.remindTime !== undefined) entity.remindTime = updateVO.remindTime ?? ''
             if (updateVO.remindWeekdays !== undefined)
                 entity.remindWeekdays = updateVO.remindWeekdays
+            if (updateVO.sortId !== undefined) entity.sortId = updateVO.sortId
             entity.updatedAt = new Date().toISOString()
             await this.db.tasks.put(await taskEntityToRecord(entity, this.currentUserId))
             await syncTracker.markDirty('tasks', id, 'upsert', entity.updatedAt)

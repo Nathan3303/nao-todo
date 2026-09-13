@@ -33,6 +33,7 @@ export class CreateTaskValueObject {
      * @param remindRepeat 提醒重复类型
      * @param remindTime 提醒时刻
      * @param remindWeekdays 提醒星期几
+     * @param sortId 组内排序值（0 = 未设置/由服务端分配）
      */
     constructor(
         public userId: string | null,
@@ -48,7 +49,8 @@ export class CreateTaskValueObject {
         public remindAt: string | null,
         public remindRepeat: string,
         public remindTime: string | null,
-        public remindWeekdays: number[]
+        public remindWeekdays: number[],
+        public sortId = 0
     ) {}
 
     /**

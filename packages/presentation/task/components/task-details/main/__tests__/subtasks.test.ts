@@ -47,6 +47,7 @@ type Harness = {
     detachSubTask: ReturnType<typeof vi.fn>
     updateTaskState: ReturnType<typeof vi.fn>
     createSubTask: ReturnType<typeof vi.fn>
+    resortSubTasks: ReturnType<typeof vi.fn>
 }
 
 let wrapper: VueWrapper | null = null
@@ -63,6 +64,7 @@ const mountRows = (subTasks: TaskViewObject[]): Harness => {
     const detachSubTask = vi.fn(async () => null)
     const updateTaskState = vi.fn(async () => null)
     const createSubTask = vi.fn(async () => {})
+    const resortSubTasks = vi.fn(async () => null)
     const context = {
         subTasks: computed(() => subTasks),
         subTasksLoading: computed(() => false),
@@ -71,7 +73,8 @@ const mountRows = (subTasks: TaskViewObject[]): Harness => {
         switchTaskDetails,
         subTaskHandler: { updateTaskState },
         createSubTask,
-        detachSubTask
+        detachSubTask,
+        resortSubTasks
     }
     wrapper = mount(DetailsSubTasks, {
         global: {
@@ -79,7 +82,14 @@ const mountRows = (subTasks: TaskViewObject[]): Harness => {
             config: { warnHandler: () => {} }
         }
     })
-    return { wrapper, switchTaskDetails, detachSubTask, updateTaskState, createSubTask }
+    return {
+        wrapper,
+        switchTaskDetails,
+        detachSubTask,
+        updateTaskState,
+        createSubTask,
+        resortSubTasks
+    }
 }
 
 const timeTextOf = (startAt: string | null, endAt: string | null): string => {
@@ -206,5 +216,51 @@ describe('TASK-02 子任务行：时间内联 + 行内改名移除 + 脱离按�
         await h.wrapper.find('.subtask-row').trigger('click')
         await h.wrapper.find('.subtask-row__title-line').trigger('click')
         expect(h.switchTaskDetails).not.toHaveBeenCalled()
+    })
+})
+
+describe('子任务拖拽排序（整行拖拽 + 插入指示线 + 交互元素防误触）', () => {
+    const dragstart = (el: Element, dataTransfer: Record<string, unknown>) => {
+        const event = new Event('dragstart', { bubbles: true, cancelable: true })
+        Object.defineProperty(event, 'dataTransfer', { value: dataTransfer })
+        return el.dispatchEvent(event)
+    }
+
+    it('行携带 draggable / data-drag-item / data-sid', () => {
+        const h = mountRows([makeSubTask({ id: 'sub-1' }), makeSubTask({ id: 'sub-2' })])
+        const rows = h.wrapper.findAll('.subtask-row')
+        expect(rows[0]!.attributes('draggable')).toBe('true')
+        expect(rows[0]!.attributes('data-drag-item')).toBe('true')
+        expect(rows[0]!.attributes('data-sid')).toBe('sub-1')
+        expect(rows[1]!.attributes('data-sid')).toBe('sub-2')
+    })
+
+    it('交互元素（名称）发起 dragstart 被 preventDefault，不进入拖拽态（B10）', async () => {
+        const h = mountRows([makeSubTask({ id: 'sub-1' })])
+        const name = h.wrapper.find('.subtask-row__name').element
+        const dataTransfer = { setData: vi.fn(), effectAllowed: '', dropEffect: '' }
+        const notPrevented = dragstart(name, dataTransfer)
+        expect(notPrevented).toBe(false)
+        expect(dataTransfer.setData).not.toHaveBeenCalled()
+        expect(h.wrapper.find('.subtask-row').attributes('data-dragging')).toBeUndefined()
+    })
+
+    it('整行拖拽 → dragover → drop ⇒ 调用 resortSubTasks（子任务 ID 契约）', async () => {
+        const h = mountRows([makeSubTask({ id: 'sub-1' }), makeSubTask({ id: 'sub-2' })])
+        const rows = h.wrapper.findAll('.subtask-row').map((row) => row.element)
+        const dataTransfer = { setData: vi.fn(), effectAllowed: '', dropEffect: '' }
+
+        expect(dragstart(rows[0]!, dataTransfer)).toBe(true)
+        expect(rows[0]!.getAttribute('data-dragging')).toBe('true')
+
+        const over = new Event('dragover', { bubbles: true, cancelable: true })
+        Object.defineProperty(over, 'dataTransfer', { value: dataTransfer })
+        Object.defineProperty(over, 'clientY', { value: 10 })
+        rows[1]!.dispatchEvent(over)
+        expect(rows[1]!.getAttribute('data-dod')).toBe('down')
+
+        rows[1]!.dispatchEvent(new Event('drop', { bubbles: true, cancelable: true }))
+        await new Promise((resolve) => setTimeout(resolve, 0))
+        expect(h.resortSubTasks).toHaveBeenCalledWith('sub-1', 'sub-2', false)
     })
 })

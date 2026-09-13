@@ -32,6 +32,7 @@ export class UpdateTaskValueObject {
     public remindRepeat?: string // 提醒重复类型
     public remindTime?: string | null // 提醒时刻
     public remindWeekdays?: number[] // 提醒星期几
+    public sortId?: number // 组内排序值（sort_id ASC, id ASC；0 = 未设置，不产出）
 
     /**s
      * 更新任务值对象构造函数

@@ -12,6 +12,7 @@ import { inject, reactive } from 'vue'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { translateTaskError } from '../../../utils/error-message'
+import useEventDragger from '../use-event-dragger'
 
 const {
     subTasks,
@@ -21,8 +22,22 @@ const {
     switchTaskDetails,
     subTaskHandler,
     createSubTask,
-    detachSubTask
+    detachSubTask,
+    resortSubTasks
 } = inject(TASK_DETAILS_CONTEXT_KEY)!
+
+// 子任务拖拽排序（整行拖拽 + up/down 蓝色插入指示线；
+// 选择器/ID 键按子任务契约传参，默认值仍为检查项契约）
+const { handleDragStart, handleDragOver, handleDragLeave, handleDragEnd, handleDrop } =
+    useEventDragger(
+        (dragged, dropped, isUp) => {
+            const originalId = dragged.dataset.sid
+            const boundId = dropped.dataset.sid
+            if (!originalId || !boundId) return
+            void resortSubTasks(originalId, boundId, isUp)
+        },
+        { rowSelector: '.subtask-row', listSelector: '.subtask-list', idKey: 'sid' }
+    )
 
 // 优先级 → 颜色（与 TaskPriorityInfo 共用 TaskPriorityPresets 常量；low/inherit 视为默认色不覆盖）
 const priorityColorOf = (priority: string): string | undefined => {
@@ -95,54 +110,69 @@ const handleDetachSubTask = async (subTask: TaskViewObject) => {
                 </nue-empty>
                 <template v-else>
                     <nue-div
-                        v-for="subTask in subTasks"
-                        :key="subTask.id"
-                        class="subtask-row"
-                        :data-done="subTask.state === 'done'"
+                        class="subtask-list"
+                        vertical
+                        gap="0"
+                        @dragover="handleDragOver"
+                        @dragstart="handleDragStart"
+                        @dragleave="handleDragLeave"
+                        @dragend="handleDragEnd"
+                        @drop="handleDrop"
                     >
-                        <task-check-button
-                            class="subtask-row__check"
-                            size="small"
-                            :is-done="subTask.state === 'done'"
-                            :is-updating="updatingIds.has(subTask.id)"
-                            :priority-color="
-                                subTask.state === 'done'
-                                    ? undefined
-                                    : priorityColorOf(subTask.priority)
-                            "
-                            @change="toggleState(subTask)"
-                        />
-                        <nue-div class="subtask-row__body">
-                            <nue-div class="subtask-row__title-line">
+                        <nue-div
+                            v-for="subTask in subTasks"
+                            :key="subTask.id"
+                            class="subtask-row"
+                            draggable="true"
+                            data-drag-item="true"
+                            :data-sid="subTask.id"
+                            :data-done="subTask.state === 'done'"
+                        >
+                            <task-check-button
+                                class="subtask-row__check"
+                                size="small"
+                                :is-done="subTask.state === 'done'"
+                                :is-updating="updatingIds.has(subTask.id)"
+                                :priority-color="
+                                    subTask.state === 'done'
+                                        ? undefined
+                                        : priorityColorOf(subTask.priority)
+                                "
+                                @change="toggleState(subTask)"
+                            />
+                            <nue-div class="subtask-row__body">
+                                <nue-div class="subtask-row__title-line">
+                                    <nue-text
+                                        class="subtask-row__name"
+                                        data-no-drag="true"
+                                        @click="switchTaskDetails(subTask.id)"
+                                    >
+                                        {{ subTask.name }}
+                                    </nue-text>
+                                    <nue-text
+                                        v-if="timeText(subTask)"
+                                        class="subtask-row__time"
+                                        :title="timeText(subTask)"
+                                    >
+                                        {{ timeText(subTask) }}
+                                    </nue-text>
+                                    <nue-button
+                                        class="subtask-row__detach"
+                                        icon="arrow-up"
+                                        theme="small,pure"
+                                        :disabled="updatingIds.has(subTask.id)"
+                                        :title="t('task.details.detachFromParent')"
+                                        @click="handleDetachSubTask(subTask)"
+                                    />
+                                </nue-div>
                                 <nue-text
-                                    class="subtask-row__name"
-                                    @click="switchTaskDetails(subTask.id)"
+                                    v-if="subTask.description"
+                                    :clamped="2"
+                                    class="subtask-row__meta"
                                 >
-                                    {{ subTask.name }}
+                                    {{ subTask.description }}
                                 </nue-text>
-                                <nue-text
-                                    v-if="timeText(subTask)"
-                                    class="subtask-row__time"
-                                    :title="timeText(subTask)"
-                                >
-                                    {{ timeText(subTask) }}
-                                </nue-text>
-                                <nue-button
-                                    class="subtask-row__detach"
-                                    icon="arrow-up"
-                                    theme="small,pure"
-                                    :disabled="updatingIds.has(subTask.id)"
-                                    :title="t('task.details.detachFromParent')"
-                                    @click="handleDetachSubTask(subTask)"
-                                />
                             </nue-div>
-                            <nue-text
-                                v-if="subTask.description"
-                                :clamped="2"
-                                class="subtask-row__meta"
-                            >
-                                {{ subTask.description }}
-                            </nue-text>
                         </nue-div>
                     </nue-div>
                     <input-button
@@ -197,6 +227,8 @@ const handleDetachSubTask = async (subTask: TaskViewObject) => {
     border-radius: var(--nue-primary-radius);
     cursor: default;
     line-height: 1;
+    position: relative;
+    overflow: visible;
 
     &:hover,
     &:focus-within {
@@ -278,6 +310,43 @@ const handleDetachSubTask = async (subTask: TaskViewObject) => {
             text-decoration: line-through;
             color: var(--nue-primary-color-600);
         }
+    }
+}
+
+/* 拖拽插入指示线（up/down；与检查项列表同型） */
+.subtask-row {
+    &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(
+            90deg,
+            var(--nue-primary-color-500),
+            var(--nue-primary-color-300)
+        );
+        visibility: hidden;
+        z-index: 10;
+        border-radius: 2px;
+        box-shadow: 0 0 8px rgba(var(--nue-primary-color-rgb), 0.4);
+        transition: opacity 0.15s ease;
+    }
+
+    &[data-dod='up']::before {
+        visibility: visible;
+        top: -2px;
+        animation: pulse-up 0.3s ease;
+    }
+
+    &[data-dod='down']::before {
+        visibility: visible;
+        bottom: -2px;
+        animation: pulse-down 0.3s ease;
+    }
+
+    &[data-dragging='true'] {
+        opacity: 0.5;
     }
 }
 </style>

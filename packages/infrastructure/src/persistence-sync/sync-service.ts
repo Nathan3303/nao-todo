@@ -68,6 +68,38 @@ const buildPush =
         return record
     }
 
+/**
+ * 构建任务推送记录
+ * @description `sortId = 0` 表示未设置（服务端分配）⇒ 不产出该字段，
+ *              否则存量本地记录的 0 会在服务端覆盖分支把组内序清零（ADR B1 / G4）。
+ */
+const buildTaskPush = (entity: Record<string, unknown>): Record<string, unknown> => {
+    const record = buildPush([
+        'parentTaskId',
+        'name',
+        'description',
+        'state',
+        'priority',
+        'startAt',
+        'endAt',
+        'projectId',
+        'tags',
+        'archivedAt',
+        'starMarkAt',
+        'givenUpAt',
+        'remindAt',
+        'remindRepeat',
+        'remindTime',
+        'remindWeekdays',
+        'sortId',
+        'createdAt',
+        'updatedAt',
+        'deletedAt'
+    ])(entity)
+    if (!record.sortId) delete record.sortId
+    return record
+}
+
 const SYNC_TABLES: SyncTableConfig[] = [
     {
         table: 'projects',
@@ -107,27 +139,7 @@ const SYNC_TABLES: SyncTableConfig[] = [
         resToEntity: taskRes2TaskEntity as unknown as SyncTableConfig['resToEntity'],
         entityToRecord: taskEntityToRecord as unknown as SyncTableConfig['entityToRecord'],
         recordToEntity: taskRecordToEntity as unknown as SyncTableConfig['recordToEntity'],
-        entityToPush: buildPush([
-            'parentTaskId',
-            'name',
-            'description',
-            'state',
-            'priority',
-            'startAt',
-            'endAt',
-            'projectId',
-            'tags',
-            'archivedAt',
-            'starMarkAt',
-            'givenUpAt',
-            'remindAt',
-            'remindRepeat',
-            'remindTime',
-            'remindWeekdays',
-            'createdAt',
-            'updatedAt',
-            'deletedAt'
-        ])
+        entityToPush: buildTaskPush
     },
     {
         table: 'taskCheckItems',

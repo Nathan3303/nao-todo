@@ -63,7 +63,9 @@ export const taskRes2TaskEntity = (res: TaskRes): TaskEntity => {
         // 领域统计属性（服务端 owned；旧服务端/存量响应缺失时兜底 0）
         res.checkItemCount ?? 0,
         res.commentCount ?? 0,
-        res.subtaskCount ?? 0
+        res.subtaskCount ?? 0,
+        // 组内排序值（旧服务端/存量响应缺失时兜底 0 = 未设置）
+        res.sortId ?? 0
     )
 }
 
@@ -73,7 +75,7 @@ export const taskRes2TaskEntity = (res: TaskRes): TaskEntity => {
  * @returns 创建任务请求
  */
 export const createTaskValueObject2Req = (createVO: CreateTaskValueObject): CreateTaskReq => {
-    return {
+    const req = {
         parentTaskId: createVO.parentTaskId || void 0,
         name: createVO.name,
         description: createVO.description,
@@ -88,6 +90,9 @@ export const createTaskValueObject2Req = (createVO: CreateTaskValueObject): Crea
         remindTime: createVO.remindTime || '',
         remindWeekdays: createVO.remindWeekdays || []
     } as CreateTaskReq
+    // sortId = 0 视为未设置，不产出（避免客户端产出 0；服务端覆盖分支也会跳过 0）
+    if (createVO.sortId) req.sortId = createVO.sortId
+    return req
 }
 
 /**
@@ -131,6 +136,7 @@ export const updateTaskValueObject2Req = (updateVO: UpdateTaskValueObject): Upda
     if (updateVO.remindRepeat !== void 0) req.remindRepeat = updateVO.remindRepeat
     if (updateVO.remindTime !== void 0) req.remindTime = updateVO.remindTime
     if (updateVO.remindWeekdays !== void 0) req.remindWeekdays = updateVO.remindWeekdays
+    if (updateVO.sortId !== void 0) req.sortId = updateVO.sortId
     return req
 }
 
