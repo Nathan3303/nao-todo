@@ -32,6 +32,7 @@ const {
     filterTagIds,
     filterPriorities,
     filterStates,
+    includeExcluded,
     filtersActive,
     toggleProjectFilter,
     toggleTagFilter,
@@ -192,10 +193,12 @@ watch(
                             :selected-priorities="filterPriorities"
                             :selected-states="filterStates"
                             :active="filtersActive"
+                            :include-excluded="includeExcluded"
                             @toggle-project="toggleProjectFilter"
                             @toggle-tag="toggleTagFilter"
                             @toggle-priority="togglePriorityFilter"
                             @toggle-state="toggleStateFilter"
+                            @toggle-excluded="includeExcluded = $event"
                             @clear="onClearFilters"
                         />
                         <!-- 结果 N + 子任务补拉/失败/超限/后台刷新轻提示 -->
@@ -416,6 +419,29 @@ watch(
                                         </span>
                                     </nue-div>
                                     <nue-div class="search-row__meta" align="center">
+                                        <!-- S7a：仅名称未命中、备注命中时显示命中来源 -->
+                                        <nue-text
+                                            v-if="row.descriptionOnlyHit"
+                                            size="var(--nue-text-xs)"
+                                            class="search-row__badge"
+                                        >
+                                            {{ t('search.hitInDescription') }}
+                                        </nue-text>
+                                        <!-- S7b：已纳入的已删除/已放弃状态标识 -->
+                                        <nue-text
+                                            v-if="row.task.isDeleted"
+                                            size="var(--nue-text-xs)"
+                                            class="search-row__badge search-row__badge--excluded"
+                                        >
+                                            {{ t('search.state.deleted') }}
+                                        </nue-text>
+                                        <nue-text
+                                            v-if="row.task.isGivenUp"
+                                            size="var(--nue-text-xs)"
+                                            class="search-row__badge search-row__badge--excluded"
+                                        >
+                                            {{ t('search.state.givenUp') }}
+                                        </nue-text>
                                         <task-basic-info
                                             v-if="row.task.projectId"
                                             no-icon
@@ -644,6 +670,18 @@ watch(
     flex-wrap: wrap;
     min-height: 20px;
     align-items: center;
+}
+
+/* —— 行内标识（S7 命中来源 / 已删除·已放弃；令牌色，双主题可辨） —— */
+.search-row__badge {
+    flex: none;
+    padding: 0 var(--nue-padding-2xs);
+    border-radius: var(--nue-radius-sm);
+    color: var(--nue-secondary-text-color);
+    background: color-mix(in srgb, var(--nue-primary-text-color) 8%, var(--nue-primary-color-0));
+}
+.search-row__badge--excluded {
+    color: var(--nue-warning-color-60);
 }
 
 /* 完成态：整行 opacity .8 + 名称删划线 + 无优先级点；meta 保持可读 */

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
-import { InnerDropdownOption } from '@nao-todo/shared'
+import { InnerDropdownOption, t } from '@nao-todo/shared'
 import { TaskPrioritySelectOptions, TaskStateSelectOptions } from '@nao-todo/presentation/task'
 import { useProjectsStore } from '@nao-todo/presentation/project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
@@ -22,6 +22,8 @@ defineProps<{
     selectedPriorities: string[]
     selectedStates: string[]
     active: boolean
+    /** S7b：是否纳入已删除/已放弃 */
+    includeExcluded: boolean
 }>()
 
 const emit = defineEmits<{
@@ -29,6 +31,7 @@ const emit = defineEmits<{
     (e: 'toggleTag', id: string): void
     (e: 'togglePriority', id: string): void
     (e: 'toggleState', id: string): void
+    (e: 'toggleExcluded', value: boolean): void
     (e: 'clear'): void
 }>()
 
@@ -205,6 +208,16 @@ const isChecked = (list: string[], id: string) => list.includes(id)
                 </nue-div>
             </nue-dropdown>
         </div>
+
+        <!-- S7b：纳入已删除/已放弃（默认关；archived 恒排除） -->
+        <nue-switch
+            :model-value="includeExcluded"
+            size="small"
+            class="search-filter-bar__excluded"
+            @update:model-value="(value: boolean) => emit('toggleExcluded', value)"
+        >
+            {{ t('search.includeExcluded') }}
+        </nue-switch>
 
         <!-- 一键清空（任一维度激活时出现） -->
         <nue-button

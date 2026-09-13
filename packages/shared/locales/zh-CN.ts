@@ -85,6 +85,10 @@ const zhCN: LocaleMessages = {
     'search.history.title': '最近搜索',
     'search.history.clear': '清除',
     'search.history.remove': '移除',
+    'search.includeExcluded': '包含已删除/已放弃',
+    'search.hitInDescription': '备注命中',
+    'search.state.deleted': '已删除',
+    'search.state.givenUp': '已放弃',
 
     // Settings
     'settings.profile': '用户信息',

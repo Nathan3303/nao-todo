@@ -82,6 +82,10 @@ export interface LocaleMessages {
     'search.history.title': string
     'search.history.clear': string
     'search.history.remove': string
+    'search.includeExcluded': string
+    'search.hitInDescription': string
+    'search.state.deleted': string
+    'search.state.givenUp': string
 
     // Settings
     'settings.profile': string

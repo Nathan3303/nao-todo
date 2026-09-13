@@ -33,8 +33,16 @@ describe('parseSearchQuery - URL → 状态', () => {
             projectIds: ['p1', 'p2'],
             tagIds: ['t1'],
             priorities: ['high', 'medium'],
-            states: ['todo', 'in-progress']
+            states: ['todo', 'in-progress'],
+            includeExcluded: false
         })
+    })
+
+    it('S7b：excluded=1 解析为纳入已删除/已放弃；其他值忽略（AC9）', () => {
+        expect(parseSearchQuery({ excluded: '1' }).includeExcluded).toBe(true)
+        expect(parseSearchQuery({ excluded: '0' }).includeExcluded).toBe(false)
+        expect(parseSearchQuery({ excluded: ['1', '0'] }).includeExcluded).toBe(true)
+        expect(parseSearchQuery({ excluded: 'bogus' }).includeExcluded).toBe(false)
     })
 
     it('D1 收件箱哨兵：inbox token ↔ projectId=""（可与普通清单混排）', () => {
@@ -74,21 +82,26 @@ describe('serializeSearchQuery - 状态 → URL', () => {
         expect(serializeSearchQuery({ ...EMPTY_SEARCH_QUERY, keyword: '   ' })).toEqual({})
     })
 
-    it('四维 CSV 与收件箱哨兵回写', () => {
+    it('四维 CSV 与收件箱哨兵回写 + excluded 开关', () => {
         const state: SearchQueryState = {
             keyword: '买菜',
             projectIds: ['', 'p1'],
             tagIds: ['t1', 't2'],
             priorities: ['high'],
-            states: ['todo']
+            states: ['todo'],
+            includeExcluded: true
         }
         expect(serializeSearchQuery(state)).toEqual({
             q: '买菜',
             project: 'inbox,p1',
             tag: 't1,t2',
             priority: 'high',
-            state: 'todo'
+            state: 'todo',
+            excluded: '1'
         })
+        expect(serializeSearchQuery({ ...state, includeExcluded: false })).not.toHaveProperty(
+            'excluded'
+        )
     })
 })
 
@@ -99,7 +112,8 @@ describe('往返一致与等价判定', () => {
             projectIds: ['', 'p1'],
             tagIds: ['t1'],
             priorities: ['medium', 'low'],
-            states: ['done']
+            states: ['done'],
+            includeExcluded: true
         }
         expect(parseSearchQuery(serializeSearchQuery(state))).toEqual(state)
     })
@@ -115,11 +129,13 @@ describe('往返一致与等价判定', () => {
             projectIds: ['p1', 'p2'],
             tagIds: [],
             priorities: [],
-            states: []
+            states: [],
+            includeExcluded: false
         }
         expect(searchQueryEquals(base, { ...base })).toBe(true)
         expect(searchQueryEquals(base, { ...base, keyword: 'b' })).toBe(false)
         expect(searchQueryEquals(base, { ...base, projectIds: ['p2', 'p1'] })).toBe(false)
         expect(searchQueryEquals(base, { ...base, tagIds: ['t1'] })).toBe(false)
+        expect(searchQueryEquals(base, { ...base, includeExcluded: true })).toBe(false)
     })
 })

@@ -5,7 +5,8 @@ import { TASK_PRIORITIES, TASK_STATES } from '@nao-todo/domain-task'
  * @description URL query 为搜索状态唯一真源：纯函数、零框架、可单测。
  *              - 数组维度以 `,` 连接；空值不写入（URL 保持干净）；
  *              - 收件箱哨兵 projectId='' 编码为 `inbox` token（D1）；
- *              - 优先级/状态按领域白名单过滤非法值（AC9 忽略非法值）。
+ *              - 优先级/状态按领域白名单过滤非法值（AC9 忽略非法值）；
+ *              - `excluded=1` 表示纳入已删除/已放弃的开关（S7b）。
  */
 
 /** 搜索状态（URL query 的真源投影） */
@@ -15,6 +16,7 @@ export type SearchQueryState = {
     tagIds: string[]
     priorities: string[]
     states: string[]
+    includeExcluded: boolean
 }
 
 /** URL query 原始值域（vue-router LocationQuery 的宽松对账口径） */
@@ -26,11 +28,15 @@ export const EMPTY_SEARCH_QUERY: SearchQueryState = {
     projectIds: [],
     tagIds: [],
     priorities: [],
-    states: []
+    states: [],
+    includeExcluded: false
 }
 
 /** 收件箱哨兵 token（D1） */
 const INBOX_TOKEN = 'inbox'
+
+/** 纳入已删除/已放弃开关的 URL 编码值（S7b） */
+const EXCLUDED_ON = '1'
 
 /** 数组维度分隔符 */
 const LIST_SEPARATOR = ','
@@ -62,7 +68,8 @@ export const parseSearchQuery = (raw: RawSearchQuery): SearchQueryState => ({
     projectIds: dedupe(toTokens(raw.project).map((token) => (token === INBOX_TOKEN ? '' : token))),
     tagIds: dedupe(toTokens(raw.tag)),
     priorities: dedupe(toTokens(raw.priority).filter((value) => isAllowed(TASK_PRIORITIES, value))),
-    states: dedupe(toTokens(raw.state).filter((value) => isAllowed(TASK_STATES, value)))
+    states: dedupe(toTokens(raw.state).filter((value) => isAllowed(TASK_STATES, value))),
+    includeExcluded: toSingle(raw.excluded) === EXCLUDED_ON
 })
 
 /** 搜索状态 → URL query（空值省略；收件箱哨兵回写 token） */
@@ -78,6 +85,7 @@ export const serializeSearchQuery = (state: SearchQueryState): Record<string, st
     if (state.tagIds.length > 0) query.tag = state.tagIds.join(LIST_SEPARATOR)
     if (state.priorities.length > 0) query.priority = state.priorities.join(LIST_SEPARATOR)
     if (state.states.length > 0) query.state = state.states.join(LIST_SEPARATOR)
+    if (state.includeExcluded) query.excluded = EXCLUDED_ON
     return query
 }
 
@@ -90,6 +98,7 @@ export const searchQueryEquals = (a: SearchQueryState, b: SearchQueryState): boo
         sameList(a.projectIds, b.projectIds) &&
         sameList(a.tagIds, b.tagIds) &&
         sameList(a.priorities, b.priorities) &&
-        sameList(a.states, b.states)
+        sameList(a.states, b.states) &&
+        a.includeExcluded === b.includeExcluded
     )
 }

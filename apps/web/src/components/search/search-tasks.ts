@@ -19,6 +19,14 @@ export type SearchRow = {
      * 未命中时为整段纯文本 —— 不以「是否命中」当显隐开关）
      */
     descriptionSegments: SearchHitSegment[] | null
+    /** 命中来源：仅“名称未命中、备注命中”为 true（S7a，行内显示「备注命中」） */
+    descriptionOnlyHit: boolean
+}
+
+/** 搜索选项（S7b：范围开关） */
+export type SearchTasksOptions = {
+    /** 是否纳入已删除/已放弃（默认 false；archived 恒排除） */
+    includeExcluded?: boolean
 }
 
 /** 备注预览窗口最大长度（命中周围截取） */
@@ -86,16 +94,22 @@ export const isTaskHit = (task: TaskViewObject, kwLower: string): boolean =>
  * 搜索结果构建（过滤 + 排序 + 高亮分段）
  * @description 排序：名称命中 > 仅备注命中；组内「短命中」优先（命中位置更靠前，
  *              同位置取名称更短）；平局 updatedAt 倒序（再做 id 稳定收敛）。
- *              已删除/已归档/已放弃 一律不参与（纯层防御，管线查询已同口径排除）。
+ *              已归档恒排除；已删除/已放弃默认排除，options.includeExcluded 开启后纳入（S7b）。
  */
-export const searchTasks = (tasks: TaskViewObject[], keyword: string): SearchRow[] => {
+export const searchTasks = (
+    tasks: TaskViewObject[],
+    keyword: string,
+    options: SearchTasksOptions = {}
+): SearchRow[] => {
     const kwLower = keyword.trim().toLowerCase()
     if (!kwLower) return []
+    const includeExcluded = options.includeExcluded === true
     type RankKey = [number, number, number]
     type RankedRow = { rank: RankKey; row: SearchRow }
     const ranked: RankedRow[] = []
     for (const task of tasks) {
-        if (task.isDeleted || task.isArchived || task.isGivenUp) continue
+        if (task.isArchived) continue
+        if (!includeExcluded && (task.isDeleted || task.isGivenUp)) continue
         const nameHitStart = hitStartIndexOf(task.name, kwLower)
         const nameHit = nameHitStart >= 0
         const descriptionHitStart = hitStartIndexOf(task.description, kwLower)
@@ -109,7 +123,8 @@ export const searchTasks = (tasks: TaskViewObject[], keyword: string): SearchRow
                 ? descriptionHit
                     ? buildDescriptionPreview(task.description, kwLower)
                     : [{ text: task.description, hit: false }]
-                : null
+                : null,
+            descriptionOnlyHit: !nameHit && descriptionHit
         }
         // 排序键（避免行内重复计算字符串比较）
         const rank: RankKey = nameHit

@@ -86,6 +86,10 @@ const enUS: LocaleMessages = {
     'search.history.title': 'Recent searches',
     'search.history.clear': 'Clear',
     'search.history.remove': 'Remove',
+    'search.includeExcluded': 'Include deleted / given up',
+    'search.hitInDescription': 'Note match',
+    'search.state.deleted': 'Deleted',
+    'search.state.givenUp': 'Given up',
 
     // Settings
     'settings.profile': 'User Profile',
