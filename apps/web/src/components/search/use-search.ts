@@ -1,10 +1,18 @@
 import type { GetTasksOptions } from '@nao-todo/shared'
 import type { TaskViewObject } from '@nao-todo/domain-task'
-import { computed, inject, onMounted, onUnmounted, ref, shallowRef } from 'vue'
+import { computed, inject, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import type { Ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useTaskUseCase } from '@/hooks'
 import { useTasksStore } from '@nao-todo/presentation/task'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
+import {
+    parseSearchQuery,
+    searchQueryEquals,
+    serializeSearchQuery,
+    type RawSearchQuery,
+    type SearchQueryState
+} from './search-query'
 import {
     isRateLimitError,
     matchTaskFilters,
@@ -82,9 +90,14 @@ const useSearchEngine = () => {
     const tasksStore = useTasksStore()
     const taskUseCase = useTaskUseCase(tasksStore)
 
+    // @url URL 深链（SEA-04 / S2）：URL query 为搜索状态唯一真源；进入时还原（D1 哨兵见 search-query）
+    const route = useRoute()
+    const router = useRouter()
+    const initialState = parseSearchQuery(route.query as RawSearchQuery)
+
     // @states 视图状态
-    const keyword = ref('')
-    const debouncedKeyword = ref('')
+    const keyword = ref(initialState.keyword)
+    const debouncedKeyword = ref(initialState.keyword.trim())
     const firstLoading = ref<boolean>(!sessionCache.value) // 首拉门（无缓存时整页加载）
     const refreshing = ref<boolean>(false) // 后台刷新（有缓存不闪屏）
     const error = ref('') // 拉取错误（重试出口）
@@ -93,11 +106,11 @@ const useSearchEngine = () => {
     const enumFailures = ref(0) // 本次补拉失败的父任务数（>0 时轻提示）
     const enumRatePaused = ref(false) // 枚举连续限流暂停（提示「限流，稍后自动重试」）
 
-    // @states 结构化筛选（SEA-03：会话内状态；空数组=不过滤；收件箱=projectId ''）
-    const filterProjectIds = ref<string[]>([]) // 清单（含收件箱哨兵 ''）
-    const filterTagIds = ref<string[]>([]) // 标签
-    const filterPriorities = ref<string[]>([]) // 优先级 high/medium/low
-    const filterStates = ref<string[]>([]) // 状态 todo/in-progress/done
+    // @states 结构化筛选（SEA-03：空数组=不过滤；收件箱=projectId ''；初值来自 URL）
+    const filterProjectIds = ref<string[]>([...initialState.projectIds]) // 清单（含收件箱哨兵 ''）
+    const filterTagIds = ref<string[]>([...initialState.tagIds]) // 标签
+    const filterPriorities = ref<string[]>([...initialState.priorities]) // 优先级 high/medium/low
+    const filterStates = ref<string[]>([...initialState.states]) // 状态 todo/in-progress/done
 
     let debounceTimer: ReturnType<typeof setTimeout> | undefined
     let reloadQueued = false
@@ -295,6 +308,40 @@ const useSearchEngine = () => {
             enumerating.value = false
         }
     }
+
+    // @url 状态 → URL（replace 不污染后退栈 D2；空值省略；与当前 query 对账避免回环）
+    const currentQueryState = (): SearchQueryState => ({
+        keyword: keyword.value,
+        projectIds: filterProjectIds.value,
+        tagIds: filterTagIds.value,
+        priorities: filterPriorities.value,
+        states: filterStates.value
+    })
+    const writeQueryToUrl = () => {
+        const next = serializeSearchQuery(currentQueryState())
+        const current = serializeSearchQuery(parseSearchQuery(route.query as RawSearchQuery))
+        if (JSON.stringify(next) === JSON.stringify(current)) return
+        void router.replace({ query: next })
+    }
+    watch(keyword, writeQueryToUrl)
+    watch([filterProjectIds, filterTagIds, filterPriorities, filterStates], writeQueryToUrl, {
+        deep: true
+    })
+    // @url URL → 状态（刷新/前进后退/分享还原；非法值经解析忽略后回写清洗）
+    watch(
+        () => route.query,
+        (raw) => {
+            const next = parseSearchQuery(raw as RawSearchQuery)
+            if (searchQueryEquals(next, currentQueryState())) return
+            keyword.value = next.keyword
+            debouncedKeyword.value = next.keyword.trim()
+            filterProjectIds.value = [...next.projectIds]
+            filterTagIds.value = [...next.tagIds]
+            filterPriorities.value = [...next.priorities]
+            filterStates.value = [...next.states]
+            if (next.keyword.trim() !== '') void ensureChildrenOnce()
+        }
+    )
 
     /**
      * 顶层快照重拉（激活/刷新/重试统一出口；运行中合并防连点）
