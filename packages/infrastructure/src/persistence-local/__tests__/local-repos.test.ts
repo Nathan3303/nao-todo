@@ -449,6 +449,37 @@ describe('LocalTaskRepoImpl', () => {
         expect(givenUpList!.taskEntities.map((t) => t.name)).toEqual(['已放弃'])
     })
 
+    it('默认（未传 isDeleted）不查询已删除任务', async () => {
+        const repo = new LocalTaskRepoImpl()
+        await repo.create(makeTaskVO({ name: 'A' }))
+        const [b] = await repo.create(makeTaskVO({ name: 'B' }))
+        await repo.remove(b!.id)
+
+        const [defaultList] = await repo.list()
+        expect(defaultList!.taskEntities.map((t) => t.name)).toEqual(['A'])
+
+        const [deletedList] = await repo.list('isDeleted=true')
+        expect(deletedList!.taskEntities.map((t) => t.name)).toEqual(['B'])
+
+        const [activeList] = await repo.list('isDeleted=false')
+        expect(activeList!.taskEntities.map((t) => t.name)).toEqual(['A'])
+    })
+
+    it('默认（未传 isDeleted）不查询已删除的子任务', async () => {
+        const repo = new LocalTaskRepoImpl()
+        const [parent] = await repo.create(makeTaskVO({ name: '父任务' }))
+        const [sub] = await repo.create(makeTaskVO({ name: '子任务', parentTaskId: parent!.id }))
+        await repo.remove(sub!.id)
+
+        const [defaultList] = await repo.list(`parentTaskId=${encodeURIComponent(parent!.id)}`)
+        expect(defaultList!.taskEntities).toHaveLength(0)
+
+        const [deletedList] = await repo.list(
+            `parentTaskId=${encodeURIComponent(parent!.id)}&isDeleted=true`
+        )
+        expect(deletedList!.taskEntities.map((t) => t.name)).toEqual(['子任务'])
+    })
+
     it('priority 逗号分隔多值查询（high,urgent）返回对应优先级任务', async () => {
         const repo = new LocalTaskRepoImpl()
         await repo.create(makeTaskVO({ name: '高优先级', priority: 'high' }))

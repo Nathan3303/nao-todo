@@ -21,6 +21,10 @@ export type TaskViewObject = ViewObjectBase & {
     remindRepeat: 'none' | 'daily' | 'weekly' | 'monthly'
     remindTime: NullableDateString
     remindWeekdays: number[]
+    // 领域统计属性（服务端 owned，只读透传）
+    checkItemCount: number
+    commentCount: number
+    subtaskCount: number
     // 额外属性
     // project?: { name: string }
     // events?: Event[]

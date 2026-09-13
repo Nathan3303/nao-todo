@@ -28,6 +28,10 @@ export const taskEntityToRecord = async (
     remindRepeat: entity.remindRepeat,
     remindTime: entity.remindTime,
     remindWeekdays: [...entity.remindWeekdays],
+    // 领域统计属性（服务端 owned；本地不维护，仅快照透传）
+    checkItemCount: entity.checkItemCount,
+    commentCount: entity.commentCount,
+    subtaskCount: entity.subtaskCount,
     createdAt: entity.createdAt,
     updatedAt: entity.updatedAt,
     deletedAt: entity.deletedAt
@@ -59,7 +63,11 @@ export const taskRecordToEntity = async (record: TaskRecord): Promise<TaskEntity
         record.remindAt,
         record.remindRepeat,
         record.remindTime,
-        record.remindWeekdays
+        record.remindWeekdays,
+        // 存量记录无计数字段（旧库）时兜底 0
+        record.checkItemCount ?? 0,
+        record.commentCount ?? 0,
+        record.subtaskCount ?? 0
     )
 
 /**

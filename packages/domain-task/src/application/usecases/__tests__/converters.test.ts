@@ -228,3 +228,16 @@ describe('updateTaskViewObjectToValueObject - description 透传', () => {
         expect(vo.description).toBeUndefined()
     })
 })
+
+describe('taskEntityToViewObject - 领域统计属性透传（U-C2）', () => {
+    it('实体计数透传到视图对象', () => {
+        const entity = makeEntity()
+        entity.checkItemCount = 3
+        entity.commentCount = 2
+        entity.subtaskCount = 1
+        const vo = taskEntityToViewObject(entity)
+        expect(vo.checkItemCount).toBe(3)
+        expect(vo.commentCount).toBe(2)
+        expect(vo.subtaskCount).toBe(1)
+    })
+})

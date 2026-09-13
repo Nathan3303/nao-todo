@@ -19,6 +19,9 @@ export type TaskRes = ResponseBase & {
     remindRepeat: string
     remindTime: string
     remindWeekdays: number[]
+    checkItemCount: number
+    commentCount: number
+    subtaskCount: number
 }
 
 export type CreateTaskReq = {

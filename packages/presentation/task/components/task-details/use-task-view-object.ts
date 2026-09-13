@@ -65,6 +65,10 @@ const useTaskViewObject = (
         remindRepeat: taskVO.remindRepeat,
         remindTime: taskVO.remindTime,
         remindWeekdays: taskVO.remindWeekdays,
+        // 领域统计属性（服务端 owned，只读透传）
+        checkItemCount: taskVO.checkItemCount,
+        commentCount: taskVO.commentCount,
+        subtaskCount: taskVO.subtaskCount,
         // Others
         isDone: taskVO.state === 'done',
         isDeleted: taskVO.isDeleted,

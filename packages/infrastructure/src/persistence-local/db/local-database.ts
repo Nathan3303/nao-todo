@@ -20,6 +20,7 @@ export interface ProjectRecord {
     archivedAt: string | null
     deactivedAt: string | null
     sortId: number
+    taskCount: number
 }
 
 export interface ProjectPreferenceRecord {
@@ -78,6 +79,9 @@ export interface TaskRecord {
     remindRepeat: string
     remindTime: string
     remindWeekdays: number[]
+    checkItemCount: number
+    commentCount: number
+    subtaskCount: number
     createdAt: string
     updatedAt: string
     deletedAt: string | null

@@ -2,6 +2,68 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.5.0] - 2026-09-13
+
+发布批次：领域统计属性（计数）字段透传 —— 客户端收尾单。**Tag `v1.5.0` 待 PM 放行后打**（架构评审修正：服务端上线 + `backfill_counts.sql` 回填完成后才可客户端发版；本版只做版本号/CHANGELOG 准备与提交）· root `1.5.0` / `@nao-todo/desktopapp` `1.5.0` / `@nao-todo/presentation` `0.3.0` / `@nao-todo/infrastructure` `0.3.0` / `@nao-todo/domain-task` `1.1.0` / `@nao-todo/domain-project` `1.1.0`（`@nao-todo/shared` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（presentation / infrastructure 层）。设计记录：ADR `docs/adr/2026-09-12-stat-counts-denormalized-events.md`（r2）；PRD `docs/prds/2026-09-13-stat-counts-denormalized-completion.md`（AC11–AC15）。
+
+### Added（新增）
+
+- **领域统计属性（客户端只读透传；计数 = 服务端 owned）**：Task +`checkItemCount / commentCount / subtaskCount`，Project +`taskCount`。字段透传（提交 `8ce494cb`，ADR §13.2 全 13 项）：
+    - 远程模型 `TaskRes` +3 / `ProjectRes` +1；`taskRes2TaskEntity` / `projectRes2Entity` 映射，旧服务端/存量响应缺失兜底 `?? 0`（AC11）。
+    - 实体 `TaskEntity` +3 / `ProjectEntity` +1 **尾部可选参数（默认 0）** ⇒ 既有 8 个 `new TaskEntity(...)` 调用点零改动（AC14）。
+    - 视图对象 `TaskViewObject` +3 / `ProjectViewObject` +1；`taskEntityToViewObject` / project 转换器逐字段显式透传（AC12）。
+    - 本地 `TaskRecord` / `ProjectRecord` 接口 +字段（**无 Dexie version bump、无索引**，ADR §5.3）；record↔entity 映射 `undefined` 兜底 0（AC13）。
+    - `sync-service.ts` push 白名单**不含计数**（双向拒绝客户端计数；服务端 req 亦无），回归断言把关（AC15）。
+- **任务详情视图对象计数透传 + 单测**：`TaskDetailsViewObject` 组装器 `use-task-view-object.ts` 显式透传 3 个计数字段（逐字段复制模式的涟漪），并补单测断言计数进入详情视图对象且随 store 同步刷新（QA 复核缺口）。
+
+### Changed
+
+- 版本协同 bump（ADR §9）：root / `@nao-todo/desktopapp` `1.4.5 → 1.5.0`；`@nao-todo/presentation` `0.2.1 → 0.3.0`；`@nao-todo/infrastructure` `0.2.2 → 0.3.0`；`@nao-todo/domain-task` / `@nao-todo/domain-project` `1.0.0 → 1.1.0`。
+- 实体构造器为**非破坏 minor**（尾部可选参数，签名不破坏）⇒ 未升 major。
+- 无公开 API 导出面变更；`shared` / `presentation-react`（移动端红线）零改动。
+
+### 质量门槛
+
+- `vp test run`：**58 文件 / 515 例全绿**。
+- `vp check --no-fmt`：**1010 文件 0 错 0 警**。
+- 突变验证：移除详情组装器 3 行计数透传 ⇒ 新增单测 1 failed（真实护栏）。
+
+### 已知遗留
+
+- 计数**展示 UI**（角标位置/文案/项目列表任务数）不在本单，另立 UI 单（ADR §14）。
+- 本地乐观增量（离线写后本地计数 +1 回显）首版不做（ADR §5.4 可选增强）。
+- 按计数排序若要索引 ⇒ 才需 Dexie version(5)（观察项）。
+- 发版顺序约束：客户端 `v1.5.0` 必须晚于服务端上线 + 回填完成（本版未打 tag）。
+
+[v1.5.0]: https://github.com/Nathan3303/nao-todo/releases/tag/v1.5.0
+
+## [v1.4.5] - 2026-09-12
+
+发布批次：任务查询默认排除已删除（快速修复）。Tag: `v1.4.5` · root `1.4.5` / `@nao-todo/infrastructure` `0.2.2` / `@nao-todo/desktopapp` `1.4.5`（`@nao-todo/presentation` `0.2.1` 不变）。范围：本地查询层（web + desktop 共用；mobile 走服务端仓库，零影响）。
+
+### Fixed（缺陷修复）
+
+- **任务查询默认包含已删除任务（含子任务）**：`task-repo-impl.ts` 未传 `isDeleted` 时不过滤，已删除任务（含子任务）照常出现在默认视图查询里——与项目仓库（`project-repo-impl.ts`「对齐远程 GET /projects/ 语义」）及 `isGivenUp`「默认排除」惯例不一致。修复（提交 `8f5dbb6a`）：默认（未传）或 `isDeleted=false` ⇒ 排除已删除；`isDeleted=true` ⇒ 仅已删除（行级过滤，父/子一视同仁）。
+- 影响面：父任务选择器显式 `isDeleted:false` 不受影响；「垃圾桶」内置视图（`builtin.deleted`）显式 `isDeleted:true`，**不受默认排除影响**；移动端走服务端仓库，零跨端涟漪。
+- 恢复路径（订正，2026-09-12 用户提示「垃圾桶」后核实）：「垃圾桶」内置视图**已存在**（`builtin.deleted`，`default.ts:177` 偏好 `getTasksOptions` 显式含 `isDeleted: true` + `sort: deletedAt desc`）——显式传参不受默认排除影响 ⇒ **恢复入口完好**，本批不触碰它。
+
+### Changed
+
+- 无公开 API 变更（`infrastructure` `0.2.1 → 0.2.2` 为 patch；行为默认值变更属缺陷修复）。
+
+### 质量门槛
+
+- `vp test run`：**503 passed**（唯一失败 = 已裁决的周六边界 flake `task-filter-core tomorrow/week`，与本次无关；`local-repos.test.ts` 59/59 全绿）｜`vp check --no-fmt`：**1007 文件 0 错 0 警**。
+- 突变验证：回退旧实现跑新 2 测试 ⇒ 2 failed（真实护栏）。
+- 新增测试：默认不查已删除任务 / 默认不查已删除的子任务。
+
+### 已知遗留
+
+- 周六边界 flake（`task-filter-core.test.ts`，presentation-react 红线包内）未修（test-only 修复待用户放行）。
+- 其余同 v1.4.4（A6 删除 / 协议 v2.3 落 PRD §9 / DEF-STORE-01 重构 / C4 前半 / §7）。
+
+[v1.4.5]: https://github.com/Nathan3303/nao-todo/releases/tag/v1.4.5
+
 ## [v1.4.4] - 2026-09-11
 
 发布批次：`DEF-STORE-06` 内存 store 未随落库失效（P1 用户可见陈旧）修复。Tag: `v1.4.4` · root `1.4.4` / `@nao-todo/presentation` `0.2.1` / `@nao-todo/desktopapp` `1.4.4`（`@nao-todo/infrastructure` 本版零改动，不 bump）。范围：web + desktop（presentation 层）。设计记录：ADR `docs/adr/2026-09-11-def-store-06-store-invalidation.md`。
