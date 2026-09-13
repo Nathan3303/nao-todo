@@ -960,7 +960,11 @@ describe('SyncService 运行级语义（SHELL-03：DEF-SYNC-01/02/03、BC-3a/b/c
         expect(after).not.toBe(before)
     })
 })
-describe('SyncService 推送载荷不含计数字段（U-C4 回归）', () => {
+describe('SyncService 推送载荷计数字段/排序字段（U-C4 回归）', () => {
+    beforeEach(async () => {
+        await setup()
+    })
+
     it('tasks push 白名单不含 checkItemCount/commentCount/subtaskCount（实体带非零计数亦然）', async () => {
         const taskRepo = newLocalTaskRepository()
         const [task, taskErr] = await taskRepo.create(
@@ -1014,5 +1018,55 @@ describe('SyncService 推送载荷不含计数字段（U-C4 回归）', () => {
         expect(pushed.checkItemCount).toBeUndefined()
         expect(pushed.commentCount).toBeUndefined()
         expect(pushed.subtaskCount).toBeUndefined()
+        // sortId = 0（本地新建未同步到值）⇒ 不产出该字段（ADR B1）
+        expect(Object.hasOwn(pushed, 'sortId')).toBe(false)
+    })
+
+    it('tasks push 白名单含 sortId（非零快照透传）', async () => {
+        const taskRepo = newLocalTaskRepository()
+        const [task, taskErr] = await taskRepo.create(
+            new CreateTaskValueObject(
+                null,
+                null,
+                '任务',
+                '',
+                'todo',
+                'medium',
+                null,
+                null,
+                'project-1',
+                [],
+                null,
+                'none',
+                null,
+                []
+            )
+        )
+        expect(taskErr).toBeNull()
+        const taskId = (task as { id: string }).id
+        // 模拟重排/拉取后本地快照带排序值
+        await localDatabase.tasks.update(taskId, { sortId: 3000 })
+        await syncTracker.markDirty('tasks', taskId, 'upsert', '2024-01-01T00:00:00Z')
+
+        let capturedBody: unknown
+        const service = new SyncService({
+            post: async (_url: string, body: unknown) => {
+                capturedBody = body
+                return {
+                    data: {
+                        data: { results: [{ table: 'tasks', id: taskId }] },
+                        serverTime: Date.now()
+                    }
+                }
+            },
+            get: async () => ({ data: {} }),
+            put: async () => ({ data: {} }),
+            delete: async () => ({ data: {} })
+        } as unknown as Requester)
+        await service.pushAll()
+
+        const body = capturedBody as { tasks?: Array<Record<string, unknown>> }
+        const pushed = body.tasks![0]!
+        expect(pushed.sortId).toBe(3000)
     })
 })

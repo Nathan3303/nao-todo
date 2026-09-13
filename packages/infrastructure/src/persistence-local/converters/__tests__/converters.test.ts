@@ -21,7 +21,7 @@ const setup = async (userId = 'test-user') => {
     await cryptoService.setup(userId, 'test-password')
 }
 
-describe('本地 record↔entity 计数兜底（U-C2）', () => {
+describe('本地 record↔entity 计数/排序兜底（U-C2）', () => {
     beforeEach(async () => {
         await setup()
     })
@@ -50,22 +50,25 @@ describe('本地 record↔entity 计数兜底（U-C2）', () => {
             [],
             3,
             2,
-            1
+            1,
+            2500
         )
         const record = await taskEntityToRecord(entity, 'test-user')
         expect(record.checkItemCount).toBe(3)
         expect(record.commentCount).toBe(2)
         expect(record.subtaskCount).toBe(1)
-
-        // 模拟存量记录（旧库无计数字段）
+        expect(record.sortId).toBe(2500)
+        // 模拟存量记录（旧库无计数字段/排序字段）
         const legacy = { ...record } as Record<string, unknown>
         delete legacy.checkItemCount
         delete legacy.commentCount
         delete legacy.subtaskCount
+        delete legacy.sortId
         const restored = await taskRecordToEntity(legacy as unknown as TaskRecord)
         expect(restored.checkItemCount).toBe(0)
         expect(restored.commentCount).toBe(0)
         expect(restored.subtaskCount).toBe(0)
+        expect(restored.sortId).toBe(0)
     })
 
     it('projectEntityToRecord 写入 taskCount；存量记录兜底 0', async () => {

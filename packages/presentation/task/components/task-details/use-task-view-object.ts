@@ -69,6 +69,8 @@ const useTaskViewObject = (
         checkItemCount: taskVO.checkItemCount,
         commentCount: taskVO.commentCount,
         subtaskCount: taskVO.subtaskCount,
+        // 组内排序值（服务端 owned，只读透传）
+        sortId: taskVO.sortId,
         // Others
         isDone: taskVO.state === 'done',
         isDeleted: taskVO.isDeleted,

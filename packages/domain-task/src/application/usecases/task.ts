@@ -6,7 +6,7 @@ import { isGivenUpBy, isStarMarkedBy, TaskEntity } from '../../domain/entities'
 import { TaskErrorCode } from '../../domain/errors'
 import { TaskRepository } from '../../domain/repositories'
 import { TaskDomain } from '../../domain/services'
-import type { UpdateTaskValueObject } from '../../domain/valueobjects'
+import { UpdateTaskValueObject } from '../../domain/valueobjects'
 import type { CreateTaskViewObject, TaskViewObject, UpdateTaskViewObject } from '../viewobjects'
 import type { TaskStore } from '../stores'
 import {
@@ -275,6 +275,136 @@ export class TaskUseCase {
         }
         // 4. 返回成功条数
         return [result.succeeded, null]
+    }
+
+    /** 组内排序最大重建行数（uint16 溢出边界：65 × 1000 = 65000 ≤ 65535） */
+    private static readonly RESORT_MAX_REBUILD_SIZE = 65
+
+    /** 取当前组（同一 parentTaskId）任务，按 sortId ASC, id ASC 排序 */
+    private groupTasksOf(parentTaskId: string): TaskViewObject[] {
+        return this.taskStore.tasks
+            .filter((task) => (task.parentTaskId ?? '') === parentTaskId)
+            .sort((a, b) => a.sortId - b.sortId || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+    }
+
+    /** 计算插入位置（移除被拖拽项后的临时数组坐标；与检查项先例同式） */
+    private resolveNewIndex(originalIndex: number, boundIndex: number, isBefore: boolean): number {
+        if (originalIndex < boundIndex) return isBefore ? boundIndex - 1 : boundIndex
+        return isBefore ? boundIndex : boundIndex + 1
+    }
+
+    /**
+     * 重新排序任务（per-group 组内重排；浮动间隔 + 本组重建）
+     * @description 排序键 `sortId ASC, id ASC`；仅同组生效；重建**仅本组**（复用 `batchUpdate`）。
+     *              预检「目标位置 == 当前位置」⇒ no-op（不请求/不改 store）；
+     *              触发重建：相邻差 < 2、newSortId ≤ 0（前插得 0 会丢失）或 > 65535；
+     *              重建条件与检查项先例有意偏离 `newSortId <= 0`（ADR Q4 注记）。
+     *              组 > 65 行或未取尽（调用方传 allowRebuild=false）⇒ 禁用重建，仅单条浮动赋值。
+     * @param originalId 被拖拽任务 ID
+     * @param boundId 目标任务 ID
+     * @param isBefore 是否插入到目标之前
+     * @param options.allowRebuild 是否允许本组重建（默认 true；R1 守卫由调用方判定）
+     * @returns 错误信息
+     */
+    async resort(
+        originalId: TaskViewObject['id'],
+        boundId: TaskViewObject['id'],
+        isBefore: boolean,
+        options: { allowRebuild?: boolean } = {}
+    ): GoAsync<void> {
+        const allowRebuild = options.allowRebuild ?? true
+        const originalTask = this.taskStore.getTask(originalId)
+        const boundTask = this.taskStore.getTask(boundId)
+        if (!originalTask || !boundTask) return TaskErrorCode.TASK_NOT_FOUND
+        if (originalId === boundId) return null
+        // 仅同组（同一 parentTaskId）
+        const parentTaskId = originalTask.parentTaskId ?? ''
+        if ((boundTask.parentTaskId ?? '') !== parentTaskId) return null
+        const group = this.groupTasksOf(parentTaskId)
+        if (group.length <= 1) return null
+        const originalIndex = group.findIndex((task) => task.id === originalId)
+        const boundIndex = group.findIndex((task) => task.id === boundId)
+        if (originalIndex === -1 || boundIndex === -1) return TaskErrorCode.TASK_NOT_FOUND
+        const newIndex = this.resolveNewIndex(originalIndex, boundIndex, isBefore)
+        // 预检：目标位置与当前位置相同 ⇒ 无变化，不发起请求、不改 store
+        if (newIndex === originalIndex) return null
+        // 计算相邻项与浮动 sortId（移除被拖拽项后的临时数组坐标）
+        const tempTasks = [...group]
+        tempTasks.splice(originalIndex, 1)
+        let prevTask: TaskViewObject | null = null
+        let nextTask: TaskViewObject | null = null
+        if (newIndex === 0) {
+            nextTask = tempTasks[0] ?? null
+        } else if (newIndex === tempTasks.length) {
+            prevTask = tempTasks[tempTasks.length - 1] ?? null
+        } else {
+            prevTask = tempTasks[newIndex - 1] ?? null
+            nextTask = tempTasks[newIndex] ?? null
+        }
+        const INTERVAL = 1000
+        let newSortId: number
+        if (!prevTask) {
+            newSortId = nextTask!.sortId - INTERVAL
+        } else if (!nextTask) {
+            newSortId = prevTask.sortId + INTERVAL
+        } else {
+            newSortId = Math.round((prevTask.sortId + nextTask.sortId) / 2)
+        }
+        const needsRebuild =
+            (prevTask && nextTask && Math.abs(nextTask.sortId - prevTask.sortId) < 2) ||
+            newSortId <= 0 ||
+            newSortId > 65535
+        if (needsRebuild) {
+            if (!allowRebuild || group.length > TaskUseCase.RESORT_MAX_REBUILD_SIZE) {
+                // 禁用重建：浮动值合法时单条赋值，否则 no-op（不报错）
+                if (newSortId > 0 && newSortId <= 65535)
+                    return await this.resortSingle(originalId, newSortId)
+                return null
+            }
+            return await this.resortWithRebuild(originalId, boundId, isBefore)
+        }
+        const singleError = await this.resortSingle(originalId, newSortId)
+        if (singleError === null) return null
+        // 服务端溢出等明确失败：允许时本组重建后重试一次
+        if (!allowRebuild || group.length > TaskUseCase.RESORT_MAX_REBUILD_SIZE) return singleError
+        return await this.resortWithRebuild(originalId, boundId, isBefore)
+    }
+
+    /** 单条浮动赋值（乐观更新 + 失败回退） */
+    private async resortSingle(originalId: string, newSortId: number): GoAsync<void> {
+        const previousSortId = this.taskStore.getTask(originalId)?.sortId
+        // 乐观更新本地，提供即时 UI 反馈
+        this.taskStore.updateTask(originalId, { sortId: newSortId })
+        const updateVO = new UpdateTaskValueObject(originalId)
+        updateVO.sortId = newSortId
+        const updateError = await this.taskRepo.update(originalId, updateVO)
+        if (updateError !== null && previousSortId !== undefined) {
+            // 失败回退（以服务端返回为准）
+            this.taskStore.updateTask(originalId, { sortId: previousSortId })
+        }
+        return updateError
+    }
+
+    /** 本组重建排序：重排为 1000, 2000, …（仅本组；走 batchUpdate） */
+    private async resortWithRebuild(
+        originalId: string,
+        boundId: string,
+        isBefore: boolean
+    ): GoAsync<void> {
+        const originalTask = this.taskStore.getTask(originalId)
+        if (!originalTask) return TaskErrorCode.TASK_NOT_FOUND
+        const group = this.groupTasksOf(originalTask.parentTaskId ?? '')
+        if (group.length === 0) return null
+        const originalIndex = group.findIndex((task) => task.id === originalId)
+        const boundIndex = group.findIndex((task) => task.id === boundId)
+        if (originalIndex === -1 || boundIndex === -1) return TaskErrorCode.TASK_NOT_FOUND
+        const [movedTask] = group.splice(originalIndex, 1)
+        if (!movedTask) return TaskErrorCode.TASK_NOT_FOUND
+        const newIndex = this.resolveNewIndex(originalIndex, boundIndex, isBefore)
+        group.splice(newIndex, 0, movedTask)
+        const updates = group.map((task, index) => ({ id: task.id, sortId: (index + 1) * 1000 }))
+        const [, rebuildError] = await this.batchUpdate(updates)
+        return rebuildError
     }
 
     /**

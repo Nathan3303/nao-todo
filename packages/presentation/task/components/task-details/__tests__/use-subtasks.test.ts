@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { defineComponent, ref, type Ref } from 'vue'
-import type { TaskUseCase } from '@nao-todo/domain-task'
+import type { TaskUseCase, TaskViewObject } from '@nao-todo/domain-task'
 import { useTaskDetailsStore } from '../../../stores'
 import { TASK_DETAILS_PRE_CONTEXT_KEY } from '../context'
 import type { TaskDetailsViewObject } from '../types'
@@ -240,5 +240,83 @@ describe('useSubTasks - DEF-STORE-06 方向 2（RefreshData 失效重取）', ()
         subscriber.emit('RefreshData')
         await new Promise((r) => setTimeout(r, 0))
         expect(list).toHaveBeenCalledTimes(2)
+    })
+})
+
+describe('useSubTasks - 组内排序与重建守卫（U-C）', () => {
+    const makeSubTask = (id: string, sortId: number): TaskViewObject =>
+        ({ id, parentTaskId: PARENT_ID, sortId, name: id, tags: [] }) as unknown as TaskViewObject
+
+    const mountApi = async (tasks: TaskViewObject[], total: number) => {
+        setActivePinia(createPinia())
+        const store = useTaskDetailsStore()
+        tasks.forEach((task) => store.addTask(task))
+        const list = vi.fn().mockResolvedValue([
+            {
+                taskIds: tasks.map((task) => task.id),
+                pagination: { total, page: 1, limit: 100, maxPage: 1 }
+            },
+            null
+        ])
+        const resort = vi.fn().mockResolvedValue(null)
+        const subTaskUseCase = { create: vi.fn(), list, resort } as unknown as TaskUseCase
+
+        let api: ReturnType<typeof useSubTasks> | null = null
+        const wrapper = mount(
+            defineComponent({
+                setup() {
+                    api = useSubTasks(store, ref(null) as Ref<TaskDetailsViewObject | null>)
+                    return () => null
+                }
+            }),
+            {
+                global: {
+                    provide: {
+                        [TASK_DETAILS_PRE_CONTEXT_KEY as symbol]: {
+                            subTaskUseCase,
+                            subscriber: { emit: vi.fn(), subscribe: vi.fn(), unsubscribe: vi.fn() }
+                        }
+                    }
+                }
+            }
+        )
+        wrappers.push(wrapper)
+        await api!.loadSubTasks(PARENT_ID)
+        return { api: api!, resort }
+    }
+
+    it('subTasks 按 sortId ASC, id ASC 展示（同值以 id 兜底；存量 0 排最前）', async () => {
+        // 输入顺序打乱，且含同 sortId（b/c）与存量 0（z）
+        const tasks = [
+            makeSubTask('c', 1000),
+            makeSubTask('a', 3000),
+            makeSubTask('z', 0),
+            makeSubTask('b', 1000)
+        ]
+        const { api } = await mountApi(tasks, tasks.length)
+        expect(api.subTasks.value.map((task) => task.id)).toEqual(['z', 'b', 'c', 'a'])
+    })
+
+    it('已取尽（loaded === total）⇒ allowRebuild=true', async () => {
+        const tasks = [makeSubTask('a', 1000), makeSubTask('b', 2000)]
+        const { api, resort } = await mountApi(tasks, tasks.length)
+        await api.resortSubTasks('b', 'a', true)
+        expect(resort).toHaveBeenCalledWith('b', 'a', true, { allowRebuild: true })
+    })
+
+    it('未取尽（loaded < total）⇒ 禁用重建（allowRebuild=false，Q2）', async () => {
+        const tasks = [makeSubTask('a', 1000), makeSubTask('b', 2000)]
+        const { api, resort } = await mountApi(tasks, tasks.length + 50)
+        await api.resortSubTasks('b', 'a', true)
+        expect(resort).toHaveBeenCalledWith('b', 'a', true, { allowRebuild: false })
+    })
+
+    it('组 > 65 行 ⇒ 禁用重建（allowRebuild=false）', async () => {
+        const tasks = Array.from({ length: 66 }, (_, index) =>
+            makeSubTask(`t${index}`, (index + 1) * 1000)
+        )
+        const { api, resort } = await mountApi(tasks, tasks.length)
+        await api.resortSubTasks('t65', 't0', true)
+        expect(resort).toHaveBeenCalledWith('t65', 't0', true, { allowRebuild: false })
     })
 })

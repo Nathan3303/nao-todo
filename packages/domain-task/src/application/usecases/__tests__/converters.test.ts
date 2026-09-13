@@ -241,3 +241,15 @@ describe('taskEntityToViewObject - 领域统计属性透传（U-C2）', () => {
         expect(vo.subtaskCount).toBe(1)
     })
 })
+describe('组内排序值透传（U-C1）', () => {
+    it('taskEntityToViewObject：实体 sortId 透传到视图对象', () => {
+        const entity = makeEntity()
+        entity.sortId = 2500
+        expect(taskEntityToViewObject(entity).sortId).toBe(2500)
+    })
+
+    it('updateTaskViewObjectToValueObject：sortId 透传（未设置则不带）', () => {
+        expect(updateTaskViewObjectToValueObject('task-1', { sortId: 2500 }).sortId).toBe(2500)
+        expect(updateTaskViewObjectToValueObject('task-1', {}).sortId).toBeUndefined()
+    })
+})

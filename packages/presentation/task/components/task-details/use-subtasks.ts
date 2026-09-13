@@ -31,17 +31,20 @@ const useSubTasks = (
     //     removeTask: (id) => taskDetailsStore.removeSubTask(id)
     // }
 
-    // @loader 子任务加载器
-    const subTaskLoader = useTasksLoader(subTaskUseCase, { limit: 20 })
+    // @loader 子任务加载器（ADR R1：按组全量加载，limit = 组容量上界 100；
+    //          已加载 < total 时禁用重建，避免只重建可见页导致隐藏行跳到前面）
+    const SUB_TASK_GROUP_LIMIT = 100
+    const subTaskLoader = useTasksLoader(subTaskUseCase, { limit: SUB_TASK_GROUP_LIMIT })
 
     // @state 当前父任务 ID
     const currentParentTaskId = ref<TaskViewObject['id'] | null>(null)
 
-    // @state 子任务列表
+    // @state 子任务列表（按 sortId ASC, id ASC 展示；组内序）
     const subTasks = computed(() =>
         [...subTaskLoader.states.taskIds]
             .map((taskId) => taskDetailsStore.getTask(taskId)!)
             .filter(Boolean)
+            .sort((a, b) => a.sortId - b.sortId || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
     )
 
     // @state 子任务加载&错误状态
@@ -127,6 +130,25 @@ const useSubTasks = (
         return null
     }
 
+    /**
+     * 重排子任务（per-group 组内拖拽）
+     * @description 重建守卫（ADR R1）：已加载数 < 分页 total（未取尽）或组 > 65 行 ⇒ 禁用重建，
+     *              仅允许单条浮动赋值；否则允许本组重建。
+     * @param originalId 被拖拽子任务 ID
+     * @param boundId 目标子任务 ID
+     * @param isBefore 是否插入到目标之前
+     */
+    const resortSubTasks = async (
+        originalId: TaskViewObject['id'],
+        boundId: TaskViewObject['id'],
+        isBefore: boolean
+    ) => {
+        const loadedCount = subTasks.value.length
+        const total = subTaskLoader.states.pagination.total
+        const allowRebuild = loadedCount >= total && total <= 65
+        return await subTaskUseCase.resort(originalId, boundId, isBefore, { allowRebuild })
+    }
+
     // @returns
     return {
         subTaskUseCase,
@@ -137,7 +159,8 @@ const useSubTasks = (
         loadSubTasks,
         retrySubTasks,
         createSubTask,
-        detachSubTask
+        detachSubTask,
+        resortSubTasks
     }
 }
 

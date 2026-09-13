@@ -22,6 +22,7 @@ export type TaskRes = ResponseBase & {
     checkItemCount: number
     commentCount: number
     subtaskCount: number
+    sortId: number
 }
 
 export type CreateTaskReq = {
@@ -38,6 +39,7 @@ export type CreateTaskReq = {
     remindRepeat?: string
     remindTime?: string
     remindWeekdays?: number[]
+    sortId?: number
 }
 
 export type CreateTaskRes = TaskRes
@@ -58,6 +60,7 @@ export type UpdateTaskReq = {
     remindRepeat?: string
     remindTime?: string | null
     remindWeekdays?: number[]
+    sortId?: number
 }
 
 export type ListTaskReq = {

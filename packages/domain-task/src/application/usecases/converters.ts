@@ -69,6 +69,8 @@ export const taskEntityToViewObject = (entity: TaskEntity): TaskViewObject => {
     taskViewObject.checkItemCount = entity.checkItemCount
     taskViewObject.commentCount = entity.commentCount
     taskViewObject.subtaskCount = entity.subtaskCount
+    // 组内排序属性
+    taskViewObject.sortId = entity.sortId
     return taskViewObject
 }
 
@@ -135,6 +137,7 @@ export const updateTaskViewObjectToValueObject = (
     if (viewObject.remindRepeat !== void 0) valueObject.remindRepeat = viewObject.remindRepeat
     if (viewObject.remindTime !== void 0) valueObject.remindTime = viewObject.remindTime
     if (viewObject.remindWeekdays !== void 0) valueObject.remindWeekdays = viewObject.remindWeekdays
+    if (viewObject.sortId !== void 0) valueObject.sortId = viewObject.sortId
     return valueObject
 }
 

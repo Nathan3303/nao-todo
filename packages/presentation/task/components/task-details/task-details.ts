@@ -99,7 +99,8 @@ const useTaskDetails = () => {
         loadSubTasks,
         retrySubTasks,
         createSubTask,
-        detachSubTask
+        detachSubTask,
+        resortSubTasks
     } = useSubTasks(taskDetailsStore, task)
 
     // @handler 任务/子任务处理程序
@@ -192,6 +193,7 @@ const useTaskDetails = () => {
         retrySubTasks,
         createSubTask,
         detachSubTask,
+        resortSubTasks,
         resortCheckItems,
         makeCheckItemToTask,
         selectTaskAndStartTimer,
