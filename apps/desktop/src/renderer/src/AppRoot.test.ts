@@ -214,4 +214,38 @@ describe('AppRoot - SHELL-03 离线进入编排', () => {
             expect.objectContaining({ source: 'global' })
         )
     })
+
+    it('C-26：离线进入导航 reject ⇒ 结构化打点 + finally 仍进壳（不卡门）', async () => {
+        localStorage.setItem(LAST_VISITED_ROUTE_KEY, '/calendar')
+        mocks.replace.mockRejectedValueOnce(new Error('navigation failed'))
+
+        const root = mountRoot()
+        const gate = await reachSyncGate(root)
+        gate.$emit('offline')
+        await flushPromises()
+
+        // 失败仍进入终态（永不卡门）；授权先于跳转仍生效
+        expect(root.find('#app-stub').exists()).toBe(true)
+        expect(isOfflineEntryGranted()).toBe(true)
+        expect(console.error).toHaveBeenCalledWith(
+            expect.stringContaining('[SHELL-05]'),
+            expect.objectContaining({ source: 'app-root:offline-navigation' })
+        )
+    })
+
+    it('C-26：登出导航 reject ⇒ 打点 + finally 仍进壳', async () => {
+        grantOfflineEntry()
+        mocks.replace.mockRejectedValueOnce(new Error('navigation failed'))
+
+        const root = mountRoot()
+        const gate = await reachSyncGate(root)
+        gate.$emit('signOut')
+        await flushPromises()
+
+        expect(root.find('#app-stub').exists()).toBe(true)
+        expect(console.error).toHaveBeenCalledWith(
+            expect.stringContaining('[SHELL-05]'),
+            expect.objectContaining({ source: 'app-root:signout-navigation' })
+        )
+    })
 })

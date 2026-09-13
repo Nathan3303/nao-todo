@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { onUnmounted, ref, watch } from 'vue'
 import App from '@/App.vue'
-import { ROUTER_INJECTION_LOG_PREFIX, reportRouterInjection, resolveRouter } from '@/router-access'
+import { recordShellError } from '@/error-observability'
+import { reportRouterInjection, resolveRouter } from '@/router-access'
 import UnlockGate from './components/unlock-gate.vue'
 import InitialSyncGate from './components/initial-sync-gate.vue'
 import SyncStatusBar from './components/sync-status-bar.vue'
@@ -27,7 +28,7 @@ const router = routerResolution.router
  */
 const navigate = async (target: string): Promise<void> => {
     if (!router) {
-        console.error(`${ROUTER_INJECTION_LOG_PREFIX} 导航中止：router 不可用`, { target })
+        recordShellError('app-root:navigation-unavailable', `router 不可用，导航中止：${target}`)
         return
     }
     await router.replace(target)
@@ -68,7 +69,9 @@ syncService.setSessionExpiredListener(() => {
     userStore.clearAuthData() // localStorage.clear() → 删除 USER_JWT
     localSession.clear()
     cryptoService.lock()
-    void navigate('/auth/signin')
+    void navigate('/auth/signin').catch((err) => {
+        recordShellError('app-root:session-expired-navigation', err)
+    })
 })
 
 /** 初始同步成功（门通过）：路由由来路决定，无需跳转 */
@@ -85,15 +88,27 @@ const onSynced = (): void => {
  */
 const onOffline = async (): Promise<void> => {
     grantOfflineEntry()
-    await navigate(localStorage.getItem(LAST_VISITED_ROUTE_KEY) || '/tasks')
-    gatePassed.value = true
+    try {
+        await navigate(localStorage.getItem(LAST_VISITED_ROUTE_KEY) || '/tasks')
+    } catch (err) {
+        // C-26/R1：导航失败不阻塞进壳；结构化记录（禁静默）
+        recordShellError('app-root:offline-navigation', err)
+    } finally {
+        // 终态推进必须在 finally：任何异常/失败仍进入壳（永不卡门）
+        gatePassed.value = true
+    }
 }
 
 /** 登出/重新登录（B-1 同源修正：显式跳转，不依赖 checkin 失败“顺带”跳转） */
 const onSignOut = async (): Promise<void> => {
     revokeOfflineEntry() // C-25：登出必须清离线进入授权
-    await navigate('/auth/signin')
-    gatePassed.value = true
+    try {
+        await navigate('/auth/signin')
+    } catch (err) {
+        recordShellError('app-root:signout-navigation', err)
+    } finally {
+        gatePassed.value = true
+    }
 }
 
 watch(unlocked, (value) => {

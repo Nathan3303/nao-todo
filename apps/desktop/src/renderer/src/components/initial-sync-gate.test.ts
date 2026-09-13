@@ -170,4 +170,22 @@ describe('InitialSyncGate - SHELL-03 终态与逃生入口', () => {
         expect(mocks.lock).toHaveBeenCalled()
         expect(gate.emitted('signOut')).toBeTruthy()
     })
+
+    it('C-26：start() reject ⇒ 进入 failed 终态（不永加载）+ 结构化打点', async () => {
+        mocks.start.mockRejectedValue(new Error('boom'))
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+        mountGate()
+        await flushPromises()
+
+        // 不得停在 syncing：loading 文案消失，失败三键出现
+        expect(document.body.textContent).not.toContain('正在同步数据…')
+        expect(buttonsText()).toContain('重试')
+        expect(buttonsText()).toContain('离线进入')
+        expect(document.body.textContent).toContain('加载失败')
+        // 异常不静默：统一通道固定前缀 + source
+        expect(errorSpy).toHaveBeenCalledWith(
+            expect.stringContaining('[SHELL-05]'),
+            expect.objectContaining({ source: 'sync-gate:start' })
+        )
+    })
 })
