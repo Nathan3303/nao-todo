@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vite-plus/test'
 import {
     backoffDelayMs,
     classifyPushFailure,
+    computeBackfillDelayMs,
     isQueueOverLimit,
     isRetryDue,
     PUSH_BACKOFF_MAX_MS
@@ -52,6 +53,36 @@ describe('isRetryDue - 到期判定（C-39/C-44）', () => {
     it('未到期 ⇒ 不可推；已到期 ⇒ 可推', () => {
         expect(isRetryDue({ nextAttemptAt: new Date(now + 1000).toISOString() }, now)).toBe(false)
         expect(isRetryDue({ nextAttemptAt: new Date(now - 1000).toISOString() }, now)).toBe(true)
+    })
+})
+
+describe('computeBackfillDelayMs - 暂停到期安排 tick（SHELL-06-DEF-01）', () => {
+    const base = {
+        nowMs: 1000,
+        pausedUntilMs: 0,
+        dueCount: 0,
+        earliestNextAttemptAtMs: null as number | null,
+        level: 0
+    }
+
+    it('暂停中：按 pausedUntil 到期安排（不得返回 null 导致不自愈）', () => {
+        expect(computeBackfillDelayMs({ ...base, pausedUntilMs: 6000 })).toBe(5000)
+        expect(computeBackfillDelayMs({ ...base, pausedUntilMs: 1000 + 200000 })).toBe(120000)
+    })
+
+    it('有到期项：指数间隔（5s 起步、120s 封顶）', () => {
+        expect(computeBackfillDelayMs({ ...base, dueCount: 2, level: 0 })).toBe(5000)
+        expect(computeBackfillDelayMs({ ...base, dueCount: 2, level: 2 })).toBe(20000)
+        expect(computeBackfillDelayMs({ ...base, dueCount: 2, level: 9 })).toBe(120000)
+    })
+
+    it('业务退避未到期：按最早 nextAttemptAt 唤醒（可为 0）', () => {
+        expect(computeBackfillDelayMs({ ...base, earliestNextAttemptAtMs: 7000 })).toBe(6000)
+        expect(computeBackfillDelayMs({ ...base, earliestNextAttemptAtMs: 500 })).toBe(0)
+    })
+
+    it('无待推送/暂停项 ⇒ null（不创建定时器）', () => {
+        expect(computeBackfillDelayMs(base)).toBeNull()
     })
 })
 

@@ -39,7 +39,13 @@ import { pomodoroRecordRes2Entity, pomodoroRes2Entity } from '../persistence-go/
 import { setServerTimeOffset } from './sync-config'
 import { syncTracker } from './sync-tracker'
 import { syncStatus, type SyncPhase, type SyncRunResult } from './sync-status'
-import { backoffDelayMs, classifyPushFailure, isRetryDue, PUSH_BACKOFF_MAX_MS } from './sync-retry'
+import {
+    backoffDelayMs,
+    classifyPushFailure,
+    computeBackfillDelayMs,
+    isQueueOverLimit,
+    isRetryDue
+} from './sync-retry'
 import { isNotDeleted } from '../persistence-local/utils'
 
 // ---------------------------------------------------------------------------
@@ -243,14 +249,9 @@ const PULL_LIMIT = 200
  */
 const PULL_BACKTRACK_MS = 1000
 const PUSH_DEBOUNCE_MS = 2000
-/** 业务/数据类退避上限（毫秒；与 sync-retry 同源，C-39） */
-const PUSH_RETRY_MAX_DELAY_MS = PUSH_BACKOFF_MAX_MS
 /** 队列上限：单表 1000 / 总量 2000（SHELL-06 C-41；仅提示不阻断） */
 const QUEUE_LIMIT_PER_TABLE = 1000
 const QUEUE_LIMIT_TOTAL = 2000
-/** 条件退避定时基础间隔（毫秒，5s 起） */
-const BACKFILL_TICK_MS = 5000
-
 // ---------------------------------------------------------------------------
 // 错误文案（C-12 家族约束：仅三种前缀；禁拼接原始异常/URL）
 // ---------------------------------------------------------------------------
@@ -742,7 +743,7 @@ export class SyncService {
         } finally {
             // C-41 上限可见性（仅提示不阻断）+ C-40 条件退避定时（按需启停）
             await this.refreshQueuePressure()
-            this.scheduleBackfillTick()
+            await this.scheduleBackfillTick()
         }
     }
 
@@ -804,7 +805,7 @@ export class SyncService {
             await syncTracker.resetFailed(userId)
         }
         const result = await this.pushAll()
-        this.scheduleBackfillTick()
+        await this.scheduleBackfillTick()
         return result
     }
 
@@ -818,27 +819,40 @@ export class SyncService {
         void this.resumeBackfill()
     }
 
-    /** 按需启动条件退避定时；无待推送/暂停项时不得存在（C-40 有界且可停） */
-    private scheduleBackfillTick(): void {
+    /**
+     * 按需启动条件退避定时（C-40 / SHELL-06-DEF-01）
+     * @description 暂停期**不得 return**：按 `pausedUntil` 到期安排 tick（clamp ≤120s），
+     *              到期自动 `resumeBackfill`；业务退避按最早 `nextAttemptAt` 唤醒；
+     *              有到期项时按指数间隔；无待推送/暂停项时不创建（有界且可停）。
+     *              单一定时器：调用即先清旧（可重排，不叠加/泄漏）。
+     */
+    private async scheduleBackfillTick(): Promise<void> {
         this.clearBackfillTick()
         const userId = this.currentUserId()
-        if (!userId || this.pausedUntil > Date.now()) return
-        void syncTracker.countDue(userId).then((due) => {
-            if (due === 0) {
-                this.backfillLevel = 0
-                return
-            }
-            const delay = Math.min(
-                BACKFILL_TICK_MS * 2 ** this.backfillLevel,
-                PUSH_RETRY_MAX_DELAY_MS
-            )
-            this.backfillLevel = Math.min(this.backfillLevel + 1, 5)
-            this.backfillTimer = setTimeout(() => {
-                this.backfillTimer = null
-                void this.pushAll()
-                this.scheduleBackfillTick()
-            }, delay)
+        if (!userId) return
+        const nowMs = Date.now()
+        const pending = await syncTracker.countDirty(userId)
+        if (pending === 0) {
+            this.backfillLevel = 0
+            return
+        }
+        const due = await syncTracker.countDue(userId, nowMs)
+        const earliest = await syncTracker.earliestNextAttemptAt(userId)
+        const delay = computeBackfillDelayMs({
+            nowMs,
+            pausedUntilMs: this.pausedUntil,
+            dueCount: due,
+            earliestNextAttemptAtMs: earliest,
+            level: this.backfillLevel
         })
+        if (delay === null) return
+        if (this.pausedUntil <= nowMs && due > 0) {
+            this.backfillLevel = Math.min(this.backfillLevel + 1, 5)
+        }
+        this.backfillTimer = setTimeout(() => {
+            this.backfillTimer = null
+            void this.resumeBackfill()
+        }, delay)
     }
 
     /** 停止条件退避定时（成功/清空/卸载调用） */
@@ -854,13 +868,11 @@ export class SyncService {
         const userId = this.currentUserId()
         if (!userId) return
         const counts = await syncTracker.countByTable(userId)
-        let total = 0
-        let overLimit = false
-        counts.forEach((count) => {
-            total += count
-            if (count >= QUEUE_LIMIT_PER_TABLE) overLimit = true
-        })
-        if (total >= QUEUE_LIMIT_TOTAL) overLimit = true
+        const overLimit = isQueueOverLimit(
+            counts.values(),
+            QUEUE_LIMIT_PER_TABLE,
+            QUEUE_LIMIT_TOTAL
+        )
         if (overLimit) syncStatus.setPaused('over-limit')
         else if (this.pausedUntil <= Date.now()) syncStatus.clearPaused()
     }

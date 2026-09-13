@@ -128,6 +128,20 @@ export class SyncTracker {
         return records.filter((record) => isRetryDue(record, nowMs)).length
     }
 
+    /** 队列中最早的 nextAttemptAt（ms epoch；无有效值返回 null）——供退避定时安排 */
+    async earliestNextAttemptAt(userId?: string): Promise<number | null> {
+        const uid = userId ?? localSession.getCurrentUserId()
+        if (!uid) return null
+        const records = await localDatabase.syncQueue.where('userId').equals(uid).toArray()
+        let earliest: number | null = null
+        for (const record of records) {
+            const at = Date.parse(record.nextAttemptAt ?? '')
+            if (!Number.isFinite(at)) continue
+            if (earliest === null || at < earliest) earliest = at
+        }
+        return earliest
+    }
+
     /** 当前用户处于退避未到期的项数（SHELL-06 C-41 暂停可见性） */
     async countPaused(userId?: string, nowMs = Date.now()): Promise<number> {
         const uid = userId ?? localSession.getCurrentUserId()

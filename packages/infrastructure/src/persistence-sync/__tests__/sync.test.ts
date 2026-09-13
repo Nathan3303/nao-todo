@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto'
-import { beforeEach, describe, expect, it } from 'vite-plus/test'
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { Requester } from '@nao-todo/shared'
 import { cryptoService } from '../../persistence-local/crypto/crypto-service'
 import { localDatabase } from '../../persistence-local/db/local-database'
@@ -1019,6 +1019,32 @@ describe('SyncService 运行级语义（SHELL-03：DEF-SYNC-01/02/03、BC-3a/b/c
         expect(recovered.ok).toBe(true)
         expect(await syncTracker.countDirty()).toBe(0)
         expect(syncStatus.get().paused).toBe(false)
+    })
+
+    it('SHELL-06-DEF-01：网络暂停后仍安排回传定时器；成功后清除且不叠加', async () => {
+        await seedDirtyTask('定时器任务')
+        let down = true
+        const service = new SyncService(echoResultsRequester(() => down))
+        const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout')
+        const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout')
+        try {
+            await service.pushAll()
+            const delays = setTimeoutSpy.mock.calls
+                .map((call) => call[1])
+                .filter((delay): delay is number => typeof delay === 'number')
+            // 暂停期安排了到期 tick（延时在 (0, 120000]），而非直接 return 不安排
+            expect(delays.some((delay) => delay > 0 && delay <= 120000)).toBe(true)
+
+            down = false
+            await service.resumeBackfill()
+            expect(await syncTracker.countDirty()).toBe(0)
+            expect(syncStatus.get().paused).toBe(false)
+            // 成功/清空后清理定时器（单一定时器、可重排）
+            expect(clearTimeoutSpy).toHaveBeenCalled()
+        } finally {
+            setTimeoutSpy.mockRestore()
+            clearTimeoutSpy.mockRestore()
+        }
     })
 
     it('SHELL-06 C-39/C-42：业务类失败退避计数（含删除项），resetFailed 恢复入列', async () => {
