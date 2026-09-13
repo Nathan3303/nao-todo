@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
 import {
     useTaskCommentsStoreBase,
     useTaskCommentIdsStoreBase,
@@ -8,17 +7,8 @@ import {
     useTasksStoreBase
 } from '../hooks'
 import { useLoadingErrorStoreBase } from '@nao-todo/shared'
-import type { TaskDetailsViewObject } from '../components/task-details/types'
 
 export const useTaskDetailsStore = defineStore('TaskDetailsStore', () => {
-    // 任务详情
-    const taskDetails = ref<TaskDetailsViewObject>()
-
-    // 设置任务详情
-    const setTaskDetails = (newTaskDetails: TaskDetailsViewObject) => {
-        taskDetails.value = newTaskDetails
-    }
-
     // 检查事项列表以及相关操作
     const {
         checkItems,
@@ -85,9 +75,6 @@ export const useTaskDetailsStore = defineStore('TaskDetailsStore', () => {
 
     // @returns
     return {
-        // --- task details ---
-        taskDetails,
-        setTaskDetails,
         // --- loading error ---
         loading,
         error,

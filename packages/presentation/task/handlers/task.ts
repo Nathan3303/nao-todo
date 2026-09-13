@@ -84,29 +84,6 @@ export class TaskHandler {
     }
 
     /**
-     * 更新任务名称
-     * @param id 任务 ID
-     * @param name 任务名称
-     * @returns 任务视图对象
-     */
-    async updateTaskName(id: TaskViewObject['id'], name: TaskViewObject['name']): GoAsync<void> {
-        return await this.update(id, { name })
-    }
-
-    /**
-     * 更新任务描述
-     * @param id 任务 ID
-     * @param description 任务描述
-     * @returns 任务视图对象
-     */
-    async updateTaskDescription(
-        id: TaskViewObject['id'],
-        description: TaskViewObject['description']
-    ): GoAsync<void> {
-        return await this.update(id, { description })
-    }
-
-    /**
      * 更新任务状态
      * @param id 任务 ID
      * @param state 任务状态
@@ -127,16 +104,6 @@ export class TaskHandler {
         priority: TaskViewObject['priority']
     ): GoAsync<void> {
         return await this.update(id, { priority })
-    }
-
-    /**
-     * 更新任务结束时间
-     * @param id 任务 ID
-     * @param endAt 任务结束时间
-     * @returns 任务视图对象
-     */
-    async updateTaskEndAt(id: TaskViewObject['id'], endAt: TaskViewObject['endAt']): GoAsync<void> {
-        return await this.update(id, { endAt })
     }
 
     /**
@@ -167,31 +134,6 @@ export class TaskHandler {
         }
         this.notifySuccess('task.restoreSuccess')
         return null
-    }
-
-    /**
-     * 任务放弃
-     * @param id 任务 ID
-     * @returns 任务视图对象
-     */
-    async giveUp(id: TaskViewObject['id']) {
-        NueConfirm({
-            title: t('task.confirmGiveUpTitle'),
-            content: t('task.confirmGiveUpContent'),
-            confirmButtonText: t('task.confirmGiveUp'),
-            cancelButtonText: t('common.cancel'),
-            onConfirm: async () => {
-                const updateError = await this.taskUseCase.update(id, {
-                    givenUpAt: dayjs().toISOString()
-                })
-                if (updateError !== null) {
-                    this.notifyError('task.updateFailed', updateError)
-                    return updateError
-                }
-                this.notifySuccess('task.updateSuccess')
-                return null
-            }
-        })
     }
 
     /**

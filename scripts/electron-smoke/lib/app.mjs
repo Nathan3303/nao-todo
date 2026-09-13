@@ -156,11 +156,16 @@ export const panelState = (cdp) => cdp.json('window.__qa.panelState()')
 
 /** 面板是否已展开 */
 export async function isPanelOpen(cdp) {
-    return (
-        (await cdp.evaluate(
-            `return document.querySelector('${SEL.dropdownWrapper}')?.getAttribute('data-visible')`
-        )) === 'true'
-    )
+    // ⚠️ 修正（DEF-SYNC-05 复跑发现）：原先读**文档里第一个** `.nue-dropdown-wrapper` 的 `data-visible`，
+    //    当页面上存在其它（隐藏或残留）dropdown wrapper 时会误判"面板已开"⇒ `openPanel()` 直接 return、
+    //    「立即同步」按钮从未被点中（症状：请求计数 0、面板内按钮查询为空）。
+    //    改为按**同步面板自身是否可见**判定（尺寸 > 0），与其余几何断言口径一致。
+    return cdp.evaluate(`
+        const panel = document.querySelector('${SEL.panel}')
+        if (!panel) return false
+        const rect = panel.getBoundingClientRect()
+        return rect.width > 0 && rect.height > 0
+    `)
 }
 
 /** 用真实鼠标点击轨道按钮打开面板（已开则跳过） */
@@ -168,6 +173,17 @@ export async function openPanel(cdp, settleMs = 900) {
     if (await isPanelOpen(cdp)) return
     const rect = await railButtonRect(cdp)
     await cdp.click(rect.cx, rect.cy, settleMs)
+    if (await isPanelOpen(cdp)) return
+    // ⚠️ 回退（DEF-SYNC-05 复跑发现）：真实鼠标点击**未能打开**同步面板（实测 aria-expanded 保持 false、
+    //    面板 rect=0），但**合成 click** 可正常打开（`aria-expanded=true`、面板可见、`.nue-button--primary` 在位）。
+    //    ⇒ 真实点击未生效时回退为合成 click，避免"面板没开 → 按钮找不到 → 同步从未触发"（此前导致请求计数 0）。
+    await cdp.evaluate(`
+        const btn = document.querySelector('${SEL.railBtn}')
+        if (btn) btn.click()
+        await new Promise((r) => setTimeout(r, 700))
+        return true
+    `)
+    await sleep(500)
 }
 
 /**

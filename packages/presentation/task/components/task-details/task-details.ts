@@ -100,7 +100,7 @@ const useTaskDetails = () => {
         retrySubTasks,
         createSubTask,
         detachSubTask
-    } = useSubTasks(taskDetailsStore)
+    } = useSubTasks(taskDetailsStore, task)
 
     // @handler 任务/子任务处理程序
     const taskHandler = new TaskHandler(taskUseCase, subscriber)

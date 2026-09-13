@@ -221,6 +221,14 @@ interface PushResult {
 // ---------------------------------------------------------------------------
 
 const PULL_LIMIT = 200
+/**
+ * 拉取请求游标回拉窗口（DEF-SYNC-05 缺陷2）
+ * @description 服务端 keyset 为**严格** `updated_at > cursor`（`query/sync.go:26-36`）：
+ *              当某行 bump 后的 `updated_at` ≤ 客户端已存游标时（同秒毫秒级差、
+ *              时间戳秒级截断、同 ms 且 id 更小）会被静默跳过且永不重拉。
+ *              故请求时按**瞬时**回拉 Δ 幂等重放补齐窗口；存储游标仍只前进不后退。
+ */
+const PULL_BACKTRACK_MS = 1000
 const PUSH_DEBOUNCE_MS = 2000
 /** 单实体推送失败重试上限（超限暂停推送，防离线无限重试） */
 const MAX_PUSH_RETRY = 5
@@ -237,6 +245,23 @@ const ERR_PUSH_DATA = '推送失败：数据异常'
 const ERR_PUSH_UNCONFIRMED = '推送失败：部分数据未确认'
 const ERR_PUSH_RETRY_EXCEEDED = '推送失败：重试次数已达上限'
 const ERR_SESSION_EXPIRED = '登录已过期，请重新登录'
+
+/**
+ * 请求游标回拉（DEF-SYNC-05 缺陷2 的窗口值）
+ * @description 保持原游标的时区后缀与精度形态（服务端 RFC3339：`Z` 或 `±hh:mm`），
+ *              避免把 `+08:00` 改写为 `Z` 而改变服务端的时间解析口径；
+ *              不可解析或无时区后缀（服务端本地时间口径不明）时**原样返回** ⇒ 退化为修复前行为。
+ */
+const rewindIsoCursor = (at: string, deltaMs: number): string => {
+    const ts = Date.parse(at)
+    const suffix = /(Z|[+-]\d{2}:\d{2})$/.exec(at)?.[1]
+    if (!at || !Number.isFinite(ts) || !suffix) return at
+    const minutes =
+        suffix === 'Z' ? 0 : Number(suffix.slice(1, 3)) * 60 + Number(suffix.slice(4, 6))
+    const offsetMs = (suffix.startsWith('-') ? -1 : 1) * minutes * 60000
+    const shifted = new Date(ts - deltaMs + offsetMs).toISOString()
+    return `${/\.\d{1,3}(Z|[+-]\d{2}:\d{2})$/.test(at) ? shifted.slice(0, 23) : shifted.slice(0, 19)}${suffix}`
+}
 
 export class SyncService {
     /** 变更后 2s 防抖推送（同实体重复写合并为最新，见 data-sync-plan.md §4.2） */
@@ -380,9 +405,14 @@ export class SyncService {
         const pullBody: Record<string, Record<string, unknown>> = {}
         for (const config of SYNC_TABLES) {
             const cursor = await localDatabase.syncCursor.get(`${userId}:${config.table}`)
+            const cursorAt = cursor?.lastPullAt ?? ''
+            const windowAt = rewindIsoCursor(cursorAt, PULL_BACKTRACK_MS)
             pullBody[config.table] = {
-                updatedAt: cursor?.lastPullAt ?? '',
-                cursorId: cursor?.lastPullId ?? '',
+                // 回拉窗口（DEF-SYNC-05 缺陷2）：请求按瞬时回拉 Δ，靠 LWW 幂等重放补齐严格 `>` 漏拉的行
+                updatedAt: windowAt,
+                // 回拉改变时间点 ⇒ 边界时刻必须从最小 id 起（服务端 keyset `updated_at = c AND id > cursorId`），
+                // 否则同一时刻较低 id 的行仍会被跳过；未回拉（含不可解析退化）时保持原 keyset 位置
+                cursorId: windowAt === cursorAt ? (cursor?.lastPullId ?? '') : '',
                 limit: PULL_LIMIT
             }
         }
@@ -478,18 +508,32 @@ export class SyncService {
         }
         // 推进游标（keyset：只前进不后退；尾页无 nextCursor 时推进到本批最大 updatedAt，
         // 避免每轮同步从旧游标重拉重放，见审查报告缺陷 5）
+        // ⚠️ DEF-SYNC-05 缺陷1：时间戳一律按 UTC ms **瞬时**比较（与上方 LWW 同源）——
+        //    远程 `updatedAt` 可能带 `+08:00` / `Z` 等不同后缀，字典序会把「字面量更大但瞬时更早」
+        //    的值误判为更晚，导致游标错位（跳过未应用行或整段重放）。
         const cursorId = `${userId}:${config.table}`
         const existing = await localDatabase.syncCursor.get(cursorId)
-        const batchMaxUpdatedAt = records.reduce((max, res) => {
+        let lastPullAt = existing?.lastPullAt ?? ''
+        let lastPullTs = Date.parse(lastPullAt) || 0
+        for (const res of records) {
             const ts = String((res as { updatedAt?: string }).updatedAt ?? '')
-            return ts > max ? ts : max
-        }, existing?.lastPullAt ?? '')
+            const parsed = Date.parse(ts) || 0
+            if (ts && parsed > lastPullTs) {
+                lastPullAt = ts
+                lastPullTs = parsed
+            }
+        }
+        // 服务端游标（指向同一 keyset 位置）瞬时不早于本批最大值时采用之：
+        // 同时取回 nextCursorId 以对齐 (updatedAt, id) 二元组，避免边界行每轮重放
+        const nextCursor = result.nextCursor ?? ''
+        const nextCursorTs = Date.parse(nextCursor) || 0
+        const useNextCursor = nextCursor !== '' && nextCursorTs >= lastPullTs
         await localDatabase.syncCursor.put({
             id: cursorId,
             userId,
             table: config.table,
-            lastPullAt: result.nextCursor ?? batchMaxUpdatedAt,
-            lastPullId: result.nextCursorId ?? '',
+            lastPullAt: useNextCursor ? nextCursor : lastPullAt,
+            lastPullId: useNextCursor ? (result.nextCursorId ?? '') : '',
             updatedAt: new Date().toISOString()
         })
         return written

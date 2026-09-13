@@ -678,6 +678,141 @@ describe('SyncService', () => {
     })
 })
 
+describe('SyncService 游标瞬时比较与回拉窗口（DEF-SYNC-05）', () => {
+    beforeEach(async () => {
+        await setup()
+    })
+
+    const remoteProject = (id: string, updatedAt: string) => ({
+        id,
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt,
+        deletedAt: null,
+        name: '项目',
+        description: '',
+        archivedAt: null,
+        deactivedAt: null,
+        sortId: 0
+    })
+
+    /** 服务端 keyset 语义（与 `query/sync.go:26-36` 同口径）：`updated_at > c OR (= c AND id > cid)`（严格 `>`） */
+    const keysetFilter = (
+        rows: { id: string; updatedAt: string }[],
+        cursorAt: string,
+        cursorId: string
+    ) =>
+        rows.filter(
+            (row) => row.updatedAt > cursorAt || (row.updatedAt === cursorAt && row.id > cursorId)
+        )
+
+    /** 预置本地游标（模拟已推进到某位置） */
+    const seedCursor = async (at: string, id = '') => {
+        await localDatabase.syncCursor.put({
+            id: 'test-user:projects',
+            userId: 'test-user',
+            table: 'projects',
+            lastPullAt: at,
+            lastPullId: id,
+            updatedAt: new Date().toISOString()
+        })
+    }
+
+    /** 仅返回 projects 表的拉取响应（其余表缺省 ⇒ 跳过，不影响游标） */
+    const pullResponse = (items: Record<string, unknown>[], nextCursor: string | null = null) => ({
+        data: { data: { projects: { items, nextCursor, nextCursorId: null } } },
+        serverTime: Date.now()
+    })
+
+    it('缺陷1：混合 +08:00 / Z 时按瞬时取 max（字典序会把瞬时更早的值当成更晚）', async () => {
+        // 瞬时：'2024-03-05T00:00:00+08:00' = 2024-03-04T16:00Z < '2024-03-04T20:00:00Z'
+        // 字典序：'…03-**05**T…+08:00' > '…03-**04**T…Z' ⇒ 旧实现取到瞬时更早的那个
+        const service = new SyncService(
+            mockRequester((url) =>
+                url === '/sync/pull'
+                    ? pullResponse([
+                          remoteProject('p-offset', '2024-03-05T00:00:00+08:00'),
+                          remoteProject('p-utc', '2024-03-04T20:00:00Z')
+                      ])
+                    : { data: { results: [] }, serverTime: Date.now() }
+            )
+        )
+        await service.pullAll()
+        const cursor = await localDatabase.syncCursor.get('test-user:projects')
+        expect(cursor?.lastPullAt).toBe('2024-03-04T20:00:00Z')
+    })
+
+    it('游标只前进不后退：服务端游标瞬时早于本地游标时不回退', async () => {
+        await seedCursor('2024-03-05T10:00:00Z')
+        const service = new SyncService(
+            mockRequester((url) =>
+                url === '/sync/pull'
+                    ? pullResponse(
+                          [remoteProject('p-old', '2024-03-05T09:00:00Z')],
+                          '2024-03-05T09:00:00Z'
+                      )
+                    : { data: { results: [] }, serverTime: Date.now() }
+            )
+        )
+        await service.pullAll()
+        const cursor = await localDatabase.syncCursor.get('test-user:projects')
+        expect(cursor?.lastPullAt).toBe('2024-03-05T10:00:00Z')
+    })
+
+    it('缺陷2（唯一硬判据）：游标 ≥ 变更行 updatedAt（ms 级）时，外部变更行仍被应用', async () => {
+        // 外部设备直写在 12:00:00.400 落库；本地游标已被推进到 12:00:00.401（ms 级越过）
+        const changedAt = '2024-03-05T12:00:00.400Z'
+        const advanced = '2024-03-05T12:00:00.401Z'
+        await seedCursor(advanced)
+        const serverRows = [remoteProject('p-ext', changedAt)]
+        const sentCursors: string[] = []
+        const service = new SyncService(
+            mockRequester((url, body) => {
+                if (url !== '/sync/pull') return { data: { results: [] }, serverTime: Date.now() }
+                const sent = (body as { projects: { updatedAt: string; cursorId: string } })
+                    .projects
+                sentCursors.push(sent.updatedAt)
+                return pullResponse(keysetFilter(serverRows, sent.updatedAt, sent.cursorId))
+            })
+        )
+        await service.pullAll()
+        // ① 请求游标按瞬时回拉（旧实现直接发 advanced，服务端严格 `>` 会跳过该行）
+        expect(sentCursors).toHaveLength(1)
+        expect(Date.parse(sentCursors[0]!)).toBeLessThan(Date.parse(advanced))
+        // ② 外部变更行仍被应用
+        const applied = await localDatabase.projects.get('p-ext')
+        expect(applied).toBeDefined()
+        expect(String(applied?.updatedAt)).toBe(changedAt)
+        // ③ 游标只前进不后退
+        const cursor = await localDatabase.syncCursor.get('test-user:projects')
+        expect(Date.parse(String(cursor?.lastPullAt))).toBeGreaterThanOrEqual(Date.parse(advanced))
+    })
+
+    it('Δ 回拉窗口幂等：每轮只请求一次、重复拉取不重复建行、游标不滑退', async () => {
+        const changedAt = '2024-03-05T12:00:00Z'
+        const serverRows = [remoteProject('p-ext', changedAt)]
+        const sentCursors: string[] = []
+        const service = new SyncService(
+            mockRequester((url, body) => {
+                if (url !== '/sync/pull') return { data: { results: [] }, serverTime: Date.now() }
+                const sent = (body as { projects: { updatedAt: string; cursorId: string } })
+                    .projects
+                sentCursors.push(sent.updatedAt)
+                return pullResponse(keysetFilter(serverRows, sent.updatedAt, sent.cursorId))
+            })
+        )
+        await service.pullAll()
+        const afterFirst = await localDatabase.syncCursor.get('test-user:projects')
+        await service.pullAll()
+        const afterSecond = await localDatabase.syncCursor.get('test-user:projects')
+        // 每轮一次请求（无补偿轮/无拉取风暴）；重放幂等：仍只有一行
+        expect(sentCursors).toHaveLength(2)
+        expect(await localDatabase.projects.count()).toBe(1)
+        // 游标稳定：第二轮请求 = 存储游标 − Δ，且二轮后游标不滑退
+        expect(Date.parse(sentCursors[1]!)).toBe(Date.parse(String(afterFirst?.lastPullAt)) - 1000)
+        expect(afterSecond?.lastPullAt).toBe(afterFirst?.lastPullAt)
+    })
+})
+
 describe('SyncService 运行级语义（SHELL-03：DEF-SYNC-01/02/03、BC-3a/b/c、BC-6）', () => {
     beforeEach(async () => {
         await setup()

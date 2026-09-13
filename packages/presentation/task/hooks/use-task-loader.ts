@@ -17,6 +17,8 @@ export type UseTasksLoaderStates = {
     lastGetOptions: GetTasksOptions
     delay: number
     disabled: boolean
+    /** DEF-STORE-06 方向 4：在飞中到达的刷新请求（单槽，完成后重跑一次；null = 无待重跑） */
+    pendingRefresh: { requested?: GetTasksOptions } | null
 }
 
 /**
@@ -32,7 +34,8 @@ export const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: Ge
         isDone: false,
         lastGetOptions: originalGetOptions ?? {},
         delay: 0,
-        disabled: false
+        disabled: false,
+        pendingRefresh: null
     })
 
     /**
@@ -86,7 +89,14 @@ export const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: Ge
      * @returns 无
      */
     const loadAndReplace = async (extraGetOptions?: GetTasksOptions) => {
-        if (states.disabled) return
+        if (states.disabled) {
+            // DEF-STORE-06 方向 4：在飞中到达的刷新**置脏不丢弃**，完成后重跑一次
+            // （单槽防循环：重跑自身在飞时到达的刷新会再入本分支，依次收敛）
+            // 注：须包 `requested` 壳（与下方 `pending.requested` 重跑行一致）——派单初稿此处
+            //    写 `{ ...(extraGetOptions ?? {}) }` 会把 options 直接展开，导致 pending.requested 恒 undefined
+            states.pendingRefresh = { requested: { ...extraGetOptions } }
+            return
+        }
         states.disabled = true
         try {
             const [taskIds, err] = await load(extraGetOptions)
@@ -94,7 +104,12 @@ export const useTasksLoader = (taskUseCase: TaskUseCase, originalGetOptions?: Ge
             states.taskIds = new Set(taskIds)
         } finally {
             // 无论成功失败都重置 disabled，否则加载失败后"重试"会被 if (states.disabled) 拦截
-            setTimeout(() => (states.disabled = false), states.delay)
+            const pending = states.pendingRefresh
+            states.pendingRefresh = null
+            setTimeout(() => {
+                states.disabled = false
+                if (pending) void loadAndReplace(pending.requested) // 完成后重跑一次（单槽防循环）
+            }, states.delay)
         }
     }
 
