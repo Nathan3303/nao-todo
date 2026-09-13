@@ -188,7 +188,6 @@ console.log('=== 3) 番茄 ===')
 {
     const e0 = cdp.warnings().length
     await goto('#/pomodoro/timer', 3000)
-    const s1 = await snap()
     const started = await clickText('/开始专注/')
     await sleep(2500)
     const s2 = await snap()

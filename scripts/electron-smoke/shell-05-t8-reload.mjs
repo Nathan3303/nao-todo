@@ -35,7 +35,7 @@ async function snap(label) {
 
 async function reloadOffline() {
     await cdp.emulateNetwork({ offline: true })
-    await cdp.clearConsole()
+    cdp.clearConsole()
     await cdp.send('Page.reload', { ignoreCache: true }).catch(() => {})
     await sleep(6000)
     return snap('offline-reload')

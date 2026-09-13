@@ -174,7 +174,7 @@ async function gotoOfflineGate({ blockHttp = true } = {}) {
     const started = Date.now()
     for (let i = 0; i < 120; i++) {
         const gate = await cdp.json(`(() => ({ offline: [...document.querySelectorAll('#app button')].some((b)=> /离线进入/.test(b.innerText||'')), gate: !!document.querySelector('.initial-sync-gate'), hash: location.hash }))()`)
-        if (gate.offline || (!gate.gate && !/^#\/auth\/checkin/.test(gate.hash))) return { ms: Date.now() - started, ...gate }
+        if (gate.offline || (!gate.gate && !gate.hash.startsWith('#/auth/checkin'))) return { ms: Date.now() - started, ...gate }
         await sleep(250)
     }
     return { ms: Date.now() - started, timeout: true }
@@ -307,7 +307,7 @@ if (await ensureOnline()) {
         { urlPattern: '*api/sync/pull', status: 200, body: body10041 },
         { urlPattern: '*api/sync/push', status: 200, body: body10041 }
     ])
-    await cdp.clearConsole()
+    cdp.clearConsole()
     await cdp.reload(0)
     for (let i = 0; i < 40; i++) { if (await cdp.evaluate('return !!document.body')) break; await sleep(100) }
     if (await cdp.evaluate(`return !!document.querySelector('.nue-container--unlock-gate input[type=password]')`)) await fillUnlock(args.password)
@@ -331,7 +331,7 @@ if (await ensureOnline()) {
 console.log('\n=== F2: 401 文案但非凭证判定 ===')
 if (await ensureOnline()) {
     await cdp.mockResponses([{ urlPattern: '*api/sync/pull', status: 401, body: '{"code":401,"message":"unauthorized"}' }])
-    await cdp.clearConsole()
+    cdp.clearConsole()
     await cdp.reload(0)
     for (let i = 0; i < 40; i++) { if (await cdp.evaluate('return !!document.body')) break; await sleep(100) }
     if (await cdp.evaluate(`return !!document.querySelector('.nue-container--unlock-gate input[type=password]')`)) await fillUnlock(args.password)

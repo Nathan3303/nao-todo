@@ -179,7 +179,7 @@ const bizDrainMs = await waitQueueEmpty(20000)
 raw.bizDrainMs = bizDrainMs
 const token = await evaluate("return localStorage.getItem('USER_JWT')")
 let names = []
-try { const r = await fetch('http://127.0.0.1:3302/api/tasks/?limit=100', { headers: { Authorization: 'Bearer ' + token } }); const b = await r.json(); names = (Array.isArray(b?.data) ? b.data : []).map((x) => x.name) } catch {}
+try { const r = await fetch('http://127.0.0.1:3302/api/tasks/?limit=100', { headers: { Authorization: 'Bearer ' + token } }); const b = await r.json(); names = (Array.isArray(b?.data) ? b.data : []).map((x) => x.name) } catch { /* 探测失败：忽略，保持 names 为空 */ }
 raw.bizServerHasT5 = names.includes(t5)
 check('BC-15(删除项).恢复后回传完成、远端无该任务(不复活)', bizDrainMs !== null && names.includes(t5) === false, `drainMs=${bizDrainMs} serverHasT5=${names.includes(t5)}`)
 
