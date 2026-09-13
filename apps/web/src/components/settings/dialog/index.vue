@@ -73,9 +73,9 @@ onUnmounted(unbindSettingsDialogHost)
 </script>
 
 <template>
-    <nue-dialog v-model="open" theme="settings" :title="t('nav.settings')">
-        <!-- 三区切换（原 settings 页面级左栏导航收敛为对话框内分区条） -->
-        <div class="sd-tabs" role="tablist" aria-label="设置分区">
+    <nue-dialog v-model="open" theme="large,settings" :title="t('nav.settings')">
+        <!-- 三区切换（左栏竖排分区条：原 settings 页面级左栏导航收敛至此） -->
+        <div class="sd-tabs" role="tablist" aria-orientation="vertical" aria-label="设置分区">
             <nue-button
                 v-for="section in sections"
                 :key="section.key"
@@ -90,15 +90,17 @@ onUnmounted(unbindSettingsDialogHost)
                 {{ t(section.titleKey) }}
             </nue-button>
         </div>
-        <component :is="activeSection.component" :key="activeKey" />
+        <!-- 右栏：当前区内容（外框定尺，仅本区内部滚动） -->
+        <div class="sd-panel">
+            <component :is="activeSection.component" :key="activeKey" />
+        </div>
     </nue-dialog>
 </template>
 
 <style>
 /* 对话框宿主级样式（NueDialog 传送至 body 弹层池，需非 scoped） */
+/* 外框定尺：仅随视口变化，切区/内容增减不变（SHELL-04） */
 .nue-dialog--settings {
-    width: min(46rem, calc(100vw - 2rem));
-    max-height: calc(100vh - 4rem);
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
@@ -110,12 +112,13 @@ onUnmounted(unbindSettingsDialogHost)
     display: flex;
 }
 
+/* 左右分栏：左栏固定，右栏内容区内部滚动 */
 .nue-dialog--settings .nue-dialog__content {
     flex: 1;
     min-height: 0;
     display: flex;
-    flex-direction: column;
-    overflow: auto;
+    flex-direction: row;
+    overflow: hidden;
 }
 
 /* 三区组件自身的页面级页头（原路由页「菜单/标题」行）在对话框内由分区条替代，隐藏之 */
@@ -123,37 +126,39 @@ onUnmounted(unbindSettingsDialogHost)
     display: none;
 }
 
-/* 分区条 */
+/* 左栏分区条：竖排、定宽不收缩 */
 .sd-tabs {
     display: flex;
-    gap: 0.25rem;
-    padding: 0 0 0.75rem;
-    border-bottom: 1px solid var(--nue-border-color);
-    margin-bottom: 0.75rem;
+    flex-direction: column;
+    gap: var(--nue-gap-xs);
     flex: none;
+    width: 12rem;
+    padding: 0 0.75rem 0 0;
+    border-right: 1px solid var(--nue-border-color);
+}
+
+/* 右栏内容区：占据剩余宽度，溢出时仅本区滚动 */
+.sd-panel {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
 }
 
 .sd-tab {
     display: inline-flex;
     align-items: center;
-    gap: 0.375rem;
     padding: 0.375rem 0.875rem;
     border-radius: var(--nue-primary-radius);
     border: 1px solid transparent;
     background: transparent;
     color: var(--nue-primary-color-600);
     font-size: var(--nue-text-sm);
-    line-height: 1.25;
     cursor: pointer;
+    outline: none;
 }
 
 .sd-tab:hover {
     background: var(--nue-primary-color-200);
-}
-
-.sd-tab:focus-visible {
-    outline: 1px solid var(--nue-primary-color-600);
-    outline-offset: 1px;
 }
 
 /* 激活态 = NueUI primary 同款色对（由 color-900 按 dark-switch 偏移 + color-100 前景，双主题恒定可见） */
@@ -161,6 +166,5 @@ onUnmounted(unbindSettingsDialogHost)
     background: hsl(from var(--nue-primary-color-900) h s calc(l - var(--nue-dark-switch) * 10));
     border-color: hsl(from var(--nue-primary-color-900) h s calc(l - var(--nue-dark-switch) * 10));
     color: var(--nue-primary-color-100);
-    font-weight: 600;
 }
 </style>

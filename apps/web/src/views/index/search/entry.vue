@@ -2,11 +2,12 @@
 import { computed, inject, nextTick, onMounted, ref, watch } from 'vue'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { TaskDetailsAdapter, TaskTagBar } from '@nao-todo/presentation/task'
-import { LoadingError, assetUrl, TaskBasicInfo, TaskDateInfo } from '@nao-todo/shared'
+import { LoadingError, assetUrl, t, TaskBasicInfo, TaskDateInfo } from '@nao-todo/shared'
 import { type SearchRow } from '@/components/search/search-tasks'
 import type { TaskTagViewObject } from '@nao-todo/domain-task'
 import useSearchEngine from '@/components/search/use-search'
 import SearchFilterBar from '@/components/search/search-filter-bar.vue'
+import { useSearchHistory } from '@/components/search/use-search-history'
 import { useTagsStore } from '@nao-todo/presentation/tag'
 import { useSearchView } from './search-view'
 
@@ -31,6 +32,7 @@ const {
     filterTagIds,
     filterPriorities,
     filterStates,
+    includeExcluded,
     filtersActive,
     toggleProjectFilter,
     toggleTagFilter,
@@ -43,6 +45,14 @@ const { init, isLoading: viewLoading, error: viewError } = useSearchView()
 // @context UI 级方法/取色（业务依赖已由引擎/视图本地组装）
 const { showTaskDetails, getProjectName } = inject(INDEX_VIEW_CONTEXT_KEY)!
 const tagsStore = useTagsStore()
+
+// @composable 搜索历史（S6：空词态展示 / 点选复用 / 单条·全部清除）
+const {
+    history,
+    record: recordSearchHistory,
+    remove: removeSearchHistory,
+    clear: clearSearchHistory
+} = useSearchHistory()
 
 const searchBoxRef = ref<HTMLElement | null>(null)
 
@@ -92,8 +102,17 @@ const filterTotalCount = computed(
 // @method 一键清空筛选（关键词保留）
 const onClearFilters = () => clearFilters()
 
-// @method 行点击 → 打开内嵌详情（当前路由 name 推送 taskId；返回后关键词/结果保持）
-const openTaskDetails = (row: SearchRow) => showTaskDetails(row.task.id)
+// @method 行点击 → 打开内嵌详情（D3：有效回找即记录历史；返回后关键词/结果保持）
+const openTaskDetails = (row: SearchRow) => {
+    recordSearchHistory(keyword.value)
+    showTaskDetails(row.task.id)
+}
+
+// @method 历史点选复用（写入关键词并回焦搜索框）
+const applyHistory = (value: string) => {
+    writeKeyword(value)
+    focusSearchBox()
+}
 
 // @method 行键盘可达：Enter 开详情 / Esc 回搜索框（SEA-02 SR-3）
 const handleRowKeydown = (row: SearchRow, event: KeyboardEvent) => {
@@ -126,8 +145,8 @@ const priorityDotOf = (task: SearchRow['task']) => {
 }
 // 优先级可读文案（title，非仅颜色）
 const priorityTitleOf = (task: SearchRow['task']) => {
-    if (task.priority === 'high') return '高优先级'
-    if (task.priority === 'medium') return '中优先级'
+    if (task.priority === 'high') return t('task.priority.high')
+    if (task.priority === 'medium') return t('task.priority.medium')
     return ''
 }
 
@@ -151,7 +170,9 @@ watch(
             <template #error>
                 <nue-div vertical align="center" gap="12px">
                     <nue-text>{{ viewError || error }}</nue-text>
-                    <nue-button theme="primary,small" @click="handleRetry">重试</nue-button>
+                    <nue-button theme="primary,small" @click="handleRetry">
+                        {{ t('common.retry') }}
+                    </nue-button>
                 </nue-div>
             </template>
             <!-- 内容区域 -->
@@ -163,7 +184,7 @@ watch(
                                 :model-value="keyword"
                                 icon="search"
                                 clearable
-                                placeholder="搜索全部任务的名称 / 备注…"
+                                :placeholder="t('search.placeholder')"
                                 @update:model-value="writeKeyword"
                             />
                         </div>
@@ -174,10 +195,12 @@ watch(
                             :selected-priorities="filterPriorities"
                             :selected-states="filterStates"
                             :active="filtersActive"
+                            :include-excluded="includeExcluded"
                             @toggle-project="toggleProjectFilter"
                             @toggle-tag="toggleTagFilter"
                             @toggle-priority="togglePriorityFilter"
                             @toggle-state="toggleStateFilter"
+                            @toggle-excluded="includeExcluded = $event"
                             @clear="onClearFilters"
                         />
                         <!-- 结果 N + 子任务补拉/失败/超限/后台刷新轻提示 -->
@@ -191,7 +214,7 @@ watch(
                                 size="var(--nue-text-sm)"
                                 class="srch-count"
                             >
-                                找到 {{ resultCount }} 条
+                                {{ t('search.foundCount', { count: resultCount }) }}
                             </nue-text>
                             <nue-text
                                 v-if="enumerating || enumRatePaused"
@@ -201,8 +224,8 @@ watch(
                             >
                                 {{
                                     enumRatePaused
-                                        ? '子任务补拉受限流，稍后自动重试…'
-                                        : '子任务补拉中…'
+                                        ? t('search.enumRatePaused')
+                                        : t('search.enumerating')
                                 }}
                             </nue-text>
                             <nue-text
@@ -210,31 +233,33 @@ watch(
                                 size="var(--nue-text-sm)"
                                 class="srch-tip srch-tip--warn"
                             >
-                                部分子任务拉取失败（{{ enumFailures }} 个父任务），再次输入将重试
+                                {{ t('search.enumFailures', { count: enumFailures }) }}
                             </nue-text>
                             <nue-text
                                 v-if="capped"
                                 size="var(--nue-text-sm)"
                                 class="srch-tip srch-tip--warn"
                             >
-                                任务超过 5000 条，仅搜索前 5000 条
+                                {{ t('search.capped') }}
                             </nue-text>
                             <nue-text
                                 v-if="error && ready"
                                 size="var(--nue-text-sm)"
                                 class="srch-tip srch-tip--warn"
                             >
-                                刷新失败，仍在展示上次结果
-                                <nue-button theme="small,ghost" @click="retry">重试</nue-button>
+                                {{ t('search.refreshFailed') }}
+                                <nue-button theme="small,ghost" @click="retry">
+                                    {{ t('common.retry') }}
+                                </nue-button>
                             </nue-text>
                             <nue-text
                                 v-if="viewError && ready"
                                 size="var(--nue-text-sm)"
                                 class="srch-tip srch-tip--warn"
                             >
-                                清单/标签加载失败，部分名称可能缺失
+                                {{ t('search.viewLoadFailed') }}
                                 <nue-button theme="small,ghost" @click="retryViewInit">
-                                    重试
+                                    {{ t('common.retry') }}
                                 </nue-button>
                             </nue-text>
                         </nue-div>
@@ -242,17 +267,60 @@ watch(
 
                     <!-- 结果独立滚动区（工具栏吸顶：输入/提示固定；空/错状态 = LoadingError 范式） -->
                     <nue-div vertical class="search-scroll">
-                        <!-- 空词引导态（无关键词且无错误；图片口径与任务子视图一致） -->
-                        <nue-empty
+                        <!-- 空词引导态（无关键词且无错误；图片口径与任务子视图一致）+ 最近搜索 -->
+                        <nue-div
                             v-if="ready && !error && !keyword"
-                            :image-src="assetUrl('/images/notaskhere.webp')"
-                            image-size="6rem"
-                            class="search-state"
+                            vertical
+                            class="search-empty"
+                            gap="var(--nue-gap-sm)"
                         >
-                            <nue-text size="var(--nue-text-sm)"
-                                >输入关键词，查找全部任务的名称与备注</nue-text
+                            <nue-empty
+                                :image-src="assetUrl('/images/notaskhere.webp')"
+                                image-size="6rem"
+                                class="search-state"
                             >
-                        </nue-empty>
+                                <nue-text size="var(--nue-text-sm)">{{
+                                    t('search.emptyHint')
+                                }}</nue-text>
+                            </nue-empty>
+                            <!-- 最近搜索（AC3/AC4；无历史时不渲染标题，避免空标题） -->
+                            <nue-div v-if="history.length > 0" vertical class="search-history">
+                                <nue-div align="center" class="search-history__head">
+                                    <nue-text size="var(--nue-text-sm)" class="srch-tip">
+                                        {{ t('search.history.title') }}
+                                    </nue-text>
+                                    <nue-button
+                                        theme="small,ghost"
+                                        class="search-history__clear"
+                                        @click="clearSearchHistory"
+                                    >
+                                        {{ t('search.history.clear') }}
+                                    </nue-button>
+                                </nue-div>
+                                <nue-div vertical class="search-history__list">
+                                    <nue-div
+                                        v-for="item in history"
+                                        :key="item"
+                                        align="center"
+                                        class="search-history__item"
+                                    >
+                                        <nue-button
+                                            theme="small,ghost"
+                                            class="search-history__reuse"
+                                            @click="applyHistory(item)"
+                                        >
+                                            {{ item }}
+                                        </nue-button>
+                                        <nue-button
+                                            theme="icon,ghost,small"
+                                            icon="clear"
+                                            :aria-label="t('search.history.remove')"
+                                            @click="removeSearchHistory(item)"
+                                        />
+                                    </nue-div>
+                                </nue-div>
+                            </nue-div>
+                        </nue-div>
                         <loading-error
                             v-else
                             :loading="false"
@@ -265,25 +333,27 @@ watch(
                         >
                             <template #error>
                                 <nue-div vertical align="center" gap="10px">
-                                    <nue-text size="var(--nue-text-sm)"
-                                        >搜索失败，请稍后重试</nue-text
-                                    >
-                                    <nue-button theme="primary,small" @click="retry"
-                                        >重试</nue-button
-                                    >
+                                    <nue-text size="var(--nue-text-sm)">
+                                        {{ t('search.searchFailed') }}
+                                    </nue-text>
+                                    <nue-button theme="primary,small" @click="retry">
+                                        {{ t('common.retry') }}
+                                    </nue-button>
                                 </nue-div>
                             </template>
                             <template #empty>
                                 <nue-div vertical align="center" gap="10px">
-                                    <nue-text size="var(--nue-text-sm)"
-                                        >未找到与「{{ keyword }}」匹配的任务</nue-text
-                                    >
+                                    <nue-text size="var(--nue-text-sm)">
+                                        {{ t('search.noResult', { keyword }) }}
+                                    </nue-text>
                                     <nue-text
                                         v-if="filterTotalCount > 0"
                                         size="var(--nue-text-xs)"
                                         class="srch-tip"
                                     >
-                                        已应用 {{ filterTotalCount }} 项筛选，可清空后重试
+                                        {{
+                                            t('search.filtersApplied', { count: filterTotalCount })
+                                        }}
                                     </nue-text>
                                     <nue-div align="center" gap="10px">
                                         <nue-button
@@ -291,11 +361,11 @@ watch(
                                             theme="small,ghost"
                                             @click="onClearFilters"
                                         >
-                                            清空筛选
+                                            {{ t('search.clearFilters') }}
                                         </nue-button>
-                                        <nue-button theme="small,primary" @click="onClear"
-                                            >清空关键词</nue-button
-                                        >
+                                        <nue-button theme="small,primary" @click="onClear">
+                                            {{ t('search.clearKeyword') }}
+                                        </nue-button>
                                     </nue-div>
                                 </nue-div>
                             </template>
@@ -355,10 +425,37 @@ watch(
                                         </span>
                                     </nue-div>
                                     <nue-div class="search-row__meta" align="center">
+                                        <!-- S7a：仅名称未命中、备注命中时显示命中来源 -->
+                                        <nue-text
+                                            v-if="row.descriptionOnlyHit"
+                                            size="var(--nue-text-xs)"
+                                            class="search-row__badge"
+                                        >
+                                            {{ t('search.hitInDescription') }}
+                                        </nue-text>
+                                        <!-- S7b：已纳入的已删除/已放弃状态标识 -->
+                                        <nue-text
+                                            v-if="row.task.isDeleted"
+                                            size="var(--nue-text-xs)"
+                                            class="search-row__badge search-row__badge--excluded"
+                                        >
+                                            {{ t('search.state.deleted') }}
+                                        </nue-text>
+                                        <nue-text
+                                            v-if="row.task.isGivenUp"
+                                            size="var(--nue-text-xs)"
+                                            class="search-row__badge search-row__badge--excluded"
+                                        >
+                                            {{ t('search.state.givenUp') }}
+                                        </nue-text>
                                         <task-basic-info
                                             v-if="row.task.projectId"
                                             no-icon
-                                            :text="`清单：${getProjectName(row.task.projectId)}`"
+                                            :text="
+                                                t('search.projectName', {
+                                                    name: getProjectName(row.task.projectId)
+                                                })
+                                            "
                                         />
                                         <task-tag-bar
                                             v-if="row.task.tags.length"
@@ -455,6 +552,40 @@ watch(
     min-height: 160px;
 }
 
+/* —— 空词态：引导 + 最近搜索（S6） —— */
+.search-empty {
+    flex: 1;
+    width: 100%;
+    min-height: 160px;
+    align-items: stretch;
+}
+
+.search-history {
+    width: 100%;
+}
+.search-history__head {
+    width: 100%;
+    justify-content: space-between;
+}
+.search-history__list {
+    width: 100%;
+    gap: var(--nue-gap-2xs);
+}
+.search-history__item {
+    width: 100%;
+    justify-content: space-between;
+    border-radius: var(--nue-primary-radius);
+}
+.search-history__item:hover {
+    background: color-mix(in srgb, var(--nue-primary-text-color) 7%, var(--nue-primary-color-0));
+}
+.search-history__reuse {
+    flex: 1;
+    min-width: 0;
+    justify-content: flex-start;
+    text-align: left;
+}
+
 /* —— 结果列表 —— */
 .search-results {
     width: 100%;
@@ -549,6 +680,18 @@ watch(
     flex-wrap: wrap;
     min-height: 20px;
     align-items: center;
+}
+
+/* —— 行内标识（S7 命中来源 / 已删除·已放弃；令牌色，双主题可辨） —— */
+.search-row__badge {
+    flex: none;
+    padding: 0 var(--nue-padding-2xs);
+    border-radius: var(--nue-radius-sm);
+    color: var(--nue-secondary-text-color);
+    background: color-mix(in srgb, var(--nue-primary-text-color) 8%, var(--nue-primary-color-0));
+}
+.search-row__badge--excluded {
+    color: var(--nue-warning-color-60);
 }
 
 /* 完成态：整行 opacity .8 + 名称删划线 + 无优先级点；meta 保持可读 */

@@ -10,6 +10,7 @@ import {
     useUserUseCase
 } from '@/hooks'
 import { LAST_VISITED_ROUTE_KEY } from '@/router'
+import { safeReplaceDeepLink } from '@/safe-navigation'
 import { ThemeMode } from '@nao-todo/domain-identity'
 import { ProjectViewObject } from '@nao-todo/domain-project'
 import { TagViewObject } from '@nao-todo/domain-tag'
@@ -33,6 +34,7 @@ import {
 import { inject, onUnmounted, provide, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { INDEX_VIEW_CONTEXT_KEY } from './context'
+import { taskDetailsLocation } from './task-details-location'
 
 /**
  * 首页视图
@@ -118,7 +120,7 @@ const useIndexView = () => {
      * @param taskId 任务 ID
      */
     const showTaskDetails = async (taskId: TaskViewObject['id']) => {
-        await router.push({ name: router.currentRoute.value.name, params: { taskId } })
+        await router.push(taskDetailsLocation(router.currentRoute.value, taskId))
     }
 
     /**
@@ -172,7 +174,14 @@ const useIndexView = () => {
             .then(() => {
                 if (route.name !== 'index') return
                 const lastRoute = localStorage.getItem(LAST_VISITED_ROUTE_KEY)
-                return router.replace(lastRoute || '/tasks')
+                // C-35：收敛裸导航（深链校验 + 回退 + 失效键清理）
+                return safeReplaceDeepLink(
+                    router,
+                    [{ key: LAST_VISITED_ROUTE_KEY, value: lastRoute }],
+                    '/tasks',
+                    'index-view:initialize',
+                    localStorage
+                )
             })
             .finally(() => {
                 isLoading.value = false

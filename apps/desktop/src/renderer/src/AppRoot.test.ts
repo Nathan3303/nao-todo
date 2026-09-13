@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia } from 'pinia'
 import { defineComponent } from 'vue'
+import type { App } from 'vue'
 import { LAST_VISITED_ROUTE_KEY } from '@/router'
 import {
     grantOfflineEntry,
@@ -24,12 +25,11 @@ const mocks = vi.hoisted(() => ({
     sessionExpiredListener: null as null | (() => void)
 }))
 
-vi.mock('vue-router', () => ({
-    useRouter: () => ({ replace: mocks.replace })
-}))
-
+// 注：不 mock 'vue-router'。AppRoot 经 @/router-access 取 router；测试环境无 router 注入 ⇒
+// 真实 useRouter() 返回 undefined（等价 H6 双实例现场），由 app 级 $router 降级完成导航。
 vi.mock('@/router', () => ({
-    LAST_VISITED_ROUTE_KEY: 'LAST_VISITED_ROUTE'
+    LAST_VISITED_ROUTE_KEY: 'LAST_VISITED_ROUTE',
+    SECTION_LAST_ROUTE_MAP: { tasks: 'LAST_TASKS_ROUTE', calendar: 'LAST_CALENDAR_ROUTE' }
 }))
 
 vi.mock('@/App.vue', () => ({
@@ -50,6 +50,8 @@ vi.mock('@nao-todo/presentation/task', () => ({
 }))
 
 vi.mock('@nao-todo/infrastructure', () => ({
+    // SHELL-06：装配层回传触发注册（测试桩；返回卸载函数）
+    registerBackfillTriggers: () => () => {},
     cryptoService: { lock: mocks.lock, isUnlocked: true },
     deletionService: { checkAndCleanExpired: vi.fn() },
     initSnowflakeEpoch: vi.fn(),
@@ -79,10 +81,32 @@ const InitialSyncGateStub = defineComponent({
 
 let wrapper: VueWrapper | null = null
 
+/** 已知可导航路由表（resolve 替身用；其他一律视为失效 deep link） */
+const NAVIGABLE_TARGETS = ['/tasks', '/calendar', '/tasks/all', '/tasks/all/table']
+
+const fakeResolve = (target: string) => ({
+    matched: NAVIGABLE_TARGETS.includes(target) ? [{}] : [],
+    fullPath: target
+})
+
+/**
+ * app 级 $router 注入插件（等价 `app.use(router)` 写入 globalProperties，C-37② 降级层入口）
+ * @description VTU 的 `global.mocks` 不写 appContext.globalProperties，故用插件模拟真实安装路径。
+ */
+const routerFallbackPlugin = {
+    install(app: App) {
+        ;(app.config.globalProperties as { $router?: unknown }).$router = {
+            replace: mocks.replace,
+            resolve: fakeResolve
+        }
+    }
+}
+
+/** 挂载 AppRoot；通过 app 级 $router 提供导航 */
 const mountRoot = (): VueWrapper => {
     wrapper = mount(AppRoot, {
         global: {
-            plugins: [createPinia()],
+            plugins: [createPinia(), routerFallbackPlugin],
             stubs: {
                 'unlock-gate': UnlockGateStub,
                 'initial-sync-gate': InitialSyncGateStub,
@@ -108,6 +132,8 @@ beforeEach(() => {
     localStorage.clear()
     revokeOfflineEntry()
     mocks.replace.mockResolvedValue(undefined)
+    // 自检在 setup 期输出降级告警：静默即可（C-37① 可观测）
+    vi.spyOn(console, 'error').mockImplementation(() => {})
 })
 
 afterEach(() => {
@@ -182,5 +208,70 @@ describe('AppRoot - SHELL-03 离线进入编排', () => {
         expect(mocks.clearSession).toHaveBeenCalled()
         expect(mocks.lock).toHaveBeenCalled()
         expect(mocks.replace).toHaveBeenCalledWith('/auth/signin')
+    })
+
+    it('C-37②：useRouter() 返回 undefined ⇒ 经 app 级 $router 降级仍完成离线进入终态', async () => {
+        // H6 现场：composable 取不到 router（双实例）→ 必须降级且告警，不得 TypeError 卡门
+        localStorage.setItem(LAST_VISITED_ROUTE_KEY, '/calendar')
+
+        const root = mountRoot()
+        const gate = await reachSyncGate(root)
+        gate.$emit('offline')
+        await flushPromises()
+
+        expect(mocks.replace).toHaveBeenCalledWith('/calendar')
+        expect(root.find('#app-stub').exists()).toBe(true)
+        expect(console.error).toHaveBeenCalledWith(
+            expect.stringContaining('[SHELL-05]'),
+            expect.objectContaining({ source: 'router-injection:global' })
+        )
+    })
+
+    it('C-26：离线进入导航 reject ⇒ 结构化打点 + finally 仍进壳（不卡门）', async () => {
+        localStorage.setItem(LAST_VISITED_ROUTE_KEY, '/calendar')
+        mocks.replace.mockRejectedValueOnce(new Error('navigation failed'))
+
+        const root = mountRoot()
+        const gate = await reachSyncGate(root)
+        gate.$emit('offline')
+        await flushPromises()
+
+        // 失败仍进入终态（永不卡门）；授权先于跳转仍生效
+        expect(root.find('#app-stub').exists()).toBe(true)
+        expect(isOfflineEntryGranted()).toBe(true)
+        expect(console.error).toHaveBeenCalledWith(
+            expect.stringContaining('[SHELL-05]'),
+            expect.objectContaining({ source: 'app-root:offline-navigation' })
+        )
+    })
+
+    it('C-26：登出导航 reject ⇒ 打点 + finally 仍进壳', async () => {
+        grantOfflineEntry()
+        mocks.replace.mockRejectedValueOnce(new Error('navigation failed'))
+
+        const root = mountRoot()
+        const gate = await reachSyncGate(root)
+        gate.$emit('signOut')
+        await flushPromises()
+
+        expect(root.find('#app-stub').exists()).toBe(true)
+        expect(console.error).toHaveBeenCalledWith(
+            expect.stringContaining('[SHELL-05]'),
+            expect.objectContaining({ source: 'app-root:signout-navigation' })
+        )
+    })
+
+    it('C-28：LAST_VISITED 失效 ⇒ 清理该键并回落 SECTION_LAST（/tasks）', async () => {
+        localStorage.setItem(LAST_VISITED_ROUTE_KEY, '/gone/deep')
+        localStorage.setItem('LAST_TASKS_ROUTE', '/tasks')
+
+        const root = mountRoot()
+        const gate = await reachSyncGate(root)
+        gate.$emit('offline')
+        await flushPromises()
+
+        expect(mocks.replace).toHaveBeenCalledWith('/tasks')
+        expect(localStorage.getItem(LAST_VISITED_ROUTE_KEY)).toBeNull()
+        expect(root.find('#app-stub').exists()).toBe(true)
     })
 })

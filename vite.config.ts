@@ -1317,6 +1317,13 @@ export default defineConfig({
                 }
             },
             {
+                // Node 工具脚本（QA electron-smoke 等）：声明 node 环境 globals（process 等）
+                files: ['scripts/**/*.mjs', 'scripts/**/*.js'],
+                env: {
+                    node: true
+                }
+            },
+            {
                 files: ['*.vue', '**/*.vue'],
                 globals: {
                     AbortController: 'readonly',
@@ -2110,6 +2117,7 @@ export default defineConfig({
         printWidth: 100,
         trailingComma: 'none',
         sortPackageJson: false,
-        ignorePatterns: []
+        // Node 工具脚本（QA electron-smoke 等）保留长行风格，避免 formatter 重排噪声
+        ignorePatterns: ['scripts/**']
     }
 })

@@ -11,13 +11,14 @@ const { userDeletion } = storeToRefs(useUserStore())
 
 const visible = ref<boolean>(false)
 const deadlineDateString = computed(() => {
-    return dayjs(userDeletion.value.deadline).format('YYYY年MM月DD日HH时mm分')
+    return dayjs(userDeletion.value?.deadline).format('YYYY年MM月DD日HH时mm分')
 })
 
 onMounted(() => {
     // const isConfirmUnrestore = localStorage.getItem('USER_CONFIRM_UNRESTORE') || false
-    // visible.value = isConfirmUnrestore !== 'True' && userDeletion.value.isPending
-    visible.value = userDeletion.value.isPending
+    // visible.value = isConfirmUnrestore !== 'True' && userDeletion.value?.isPending
+    // N-02：普通用户无待注销记录时 userDeletion 为 null，须判空（不得抛未捕获 TypeError）
+    visible.value = userDeletion.value?.isPending === true
     if (!visible.value) return
     NueConfirm({
         title: '用户处于待注销状态',

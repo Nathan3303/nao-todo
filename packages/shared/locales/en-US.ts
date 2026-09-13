@@ -45,12 +45,15 @@ const enUS: LocaleMessages = {
     'sync.pending': '{count} pending',
     'sync.failed': '{count} failed',
     'sync.syncNow': 'Sync now',
+    'sync.pendingOffline': '{count} change(s) pending sync (offline, auto-syncs when online)',
+    'sync.retryNow': 'Retry now',
 
     // Offline identity / gates (SHELL-03)
     'identity.offline': 'Offline',
     'identity.offlineName': '{name} (offline)',
     'gate.enterOffline': 'Enter offline',
     'gate.signInAgain': 'Sign in again',
+    'gate.offlineUnavailable': 'Cannot enter offline. Please retry or sign in again.',
 
     // Common
     'common.cancel': 'Cancel',
@@ -80,6 +83,38 @@ const enUS: LocaleMessages = {
     'common.loadFailed': 'Load failed',
     'common.reminder': 'To-Do Task Reminder',
     'common.snooze': 'Snooze Reminder',
+
+    // Search（SEA-04）
+    'search.emptyHint': 'Type a keyword to search task names and notes',
+    'search.history.title': 'Recent searches',
+    'search.history.clear': 'Clear',
+    'search.history.remove': 'Remove',
+    'search.includeExcluded': 'Include deleted / given up',
+    'search.hitInDescription': 'Note match',
+    'search.state.deleted': 'Deleted',
+    'search.state.givenUp': 'Given up',
+    'search.placeholder': 'Search all task names / notes…',
+    'search.foundCount': '{count} results',
+    'search.enumerating': 'Fetching subtasks…',
+    'search.enumRatePaused': 'Subtask fetching is rate-limited, will retry later…',
+    'search.enumFailures':
+        'Failed to fetch subtasks for {count} parent task(s). Type again to retry',
+    'search.capped': 'More than 5000 tasks. Searching the first 5000 only',
+    'search.refreshFailed': 'Refresh failed, showing the previous results',
+    'search.viewLoadFailed': 'Failed to load projects/tags; some names may be missing',
+    'search.searchFailed': 'Search failed, please try again later',
+    'search.noResult': 'No tasks matching “{keyword}”',
+    'search.filtersApplied': '{count} filter(s) applied. Clear them and try again',
+    'search.clearFilters': 'Clear filters',
+    'search.clearKeyword': 'Clear keyword',
+    'search.projectName': 'Project: {name}',
+    'search.filter.project': 'Project',
+    'search.filter.tag': 'Tag',
+    'search.filter.priority': 'Priority',
+    'search.filter.state': 'State',
+    'search.filter.noTags': 'No tags',
+    'search.filter.selectedCount': '{count} selected',
+    'search.filter.clear': 'Clear filters',
 
     // Settings
     'settings.profile': 'User Profile',
@@ -163,6 +198,7 @@ const enUS: LocaleMessages = {
     'settings.sessionLoading': 'Loading sessions...',
     'settings.sessionEmpty': 'No other signed-in sessions',
     'settings.sessionLoadFailed': 'Failed to load sessions',
+    'settings.sessionNeedsNetwork': 'Requires network',
     'settings.sessionCurrent': 'Current device',
     'settings.sessionRegionUnknown': 'Unknown',
     'settings.sessionLoggedAt': 'Signed in at',

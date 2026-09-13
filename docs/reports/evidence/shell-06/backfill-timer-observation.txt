@@ -1,0 +1,25 @@
+SHELL-06 BC-13 退避定时路径观测（生产构建 file:// + localhost API，前台可见窗口）
+脚本：scripts/electron-smoke/ 对应探针（s06-bc13timer.mjs，临时只读探针）
+观测时间：2026-09-13 22:4x（HEAD 9b24ce3b）
+
+前置：在线壳、已解锁、document.visibilityState='visible'
+1) 断网（CDP Network.setBlockedURLs ['*localhost:3302*','*127.0.0.1:3302*']）
+2) 经 UI 新建 2 个任务 → queue = 2（action=upsert）
+3) 恢复网络（unblockUrls，**不派发 online 事件**，模拟"后端从 5xx/超时恢复但网卡未变化"）
+4) 每 2s 采样 syncQueue，持续 40s（每轮 Page.bringToFront 保前台）：
+
+t+2s … t+40s：count 恒为 2（未补传）
+整段窗口内 /api/sync/push 请求数 = 1（仅防抖那次失败尝试）
+server tasks：不含本轮 TMR 任务
+
+5) 对照组：派发 window Event('online') → 1.5s 内 count 2→0，server 立即出现任务。
+
+静态根因（packages/infrastructure/src/persistence-sync/sync-service.ts）：
+  private scheduleBackfillTick(): void {
+      this.clearBackfillTick()
+      const userId = this.currentUserId()
+      if (!userId || this.pausedUntil > Date.now()) return   // ← 暂停期内直接 return，未安排任何定时器
+      void syncTracker.countDue(userId).then((due) => { ... setTimeout(...) })
+  }
+  pauseForNetworkFailure(): this.pausedUntil = Date.now() + backoffDelayMs(1)  // 5s
+⇒ 暂停 5s 到期后无任何自动唤醒；仅 online / visibilitychange / 手动同步 / 重启 可恢复。

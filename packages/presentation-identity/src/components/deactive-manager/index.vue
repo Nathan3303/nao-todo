@@ -32,7 +32,7 @@ const handleRestore = async () => {
 </script>
 
 <template>
-    <nue-div v-if="!profile.deactivedAt" theme="deactive-user">
+    <nue-div v-if="profile && !profile.deactivedAt" theme="deactive-user">
         <nue-div theme="title">
             <nue-text>{{ t('user.deactiveWarningTitle') }}</nue-text>
             <nue-text size="xs">{{ t('user.deactiveWarningContent') }}</nue-text>
@@ -46,7 +46,7 @@ const handleRestore = async () => {
             {{ t('user.deactiveWarningTitle') }}
         </nue-button>
     </nue-div>
-    <nue-div v-else theme="restore-user">
+    <nue-div v-else-if="profile" theme="restore-user">
         <nue-div theme="title">
             <nue-text>恢复账户</nue-text>
             <nue-text size="xs">{{ t('user.restoreWarningContent') }}</nue-text>

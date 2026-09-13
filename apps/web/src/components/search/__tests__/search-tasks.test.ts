@@ -94,6 +94,33 @@ describe('searchTasks - 过滤', () => {
         child.isDeleted = true
         expect(searchTasks([child], '买菜')).toEqual([])
     })
+
+    it('S7b includeExcluded=true：纳入 deleted/given-up，archived 恒排除', () => {
+        const base = makeTask({ id: 't1', name: '买菜' })
+        const tasks = [
+            base,
+            { ...base, id: 't2', isDeleted: true },
+            { ...base, id: 't3', isArchived: true },
+            { ...base, id: 't4', isGivenUp: true },
+            { ...base, id: 't5', isDeleted: true, isGivenUp: true }
+        ]
+        const ids = searchTasks(tasks, '买菜', { includeExcluded: true }).map((r) => r.task.id)
+        expect(ids).toEqual(['t1', 't2', 't4', 't5'])
+        // 默认（未传 options）仍与开启前口径一致
+        expect(searchTasks(tasks, '买菜').map((r) => r.task.id)).toEqual(['t1'])
+    })
+
+    it('S7a 命中来源：仅备注命中 descriptionOnlyHit=true，名称命中为 false', () => {
+        const nameHit = makeTask({ id: 'n1', name: '买菜', description: '无' })
+        const descOnly = makeTask({ id: 'd1', name: '杂项', description: '去超市买菜' })
+        const rows = searchTasks([nameHit, descOnly], '买菜')
+        const byId = (id: string) => rows.find((r) => r.task.id === id)!
+        expect(byId('n1').descriptionOnlyHit).toBe(false)
+        expect(byId('d1').descriptionOnlyHit).toBe(true)
+        // 名称+备注同时命中 → 按名称命中处理，不显示「备注命中」
+        const both = makeTask({ id: 'b1', name: '买菜做饭', description: '买菜清单' })
+        expect(searchTasks([both], '买菜')[0]!.descriptionOnlyHit).toBe(false)
+    })
 })
 
 describe('searchTasks - 排序', () => {

@@ -41,12 +41,15 @@ export interface LocaleMessages {
     'sync.pending': string
     'sync.failed': string
     'sync.syncNow': string
+    'sync.pendingOffline': string
+    'sync.retryNow': string
 
     // Offline identity / gates（SHELL-03）
     'identity.offline': string
     'identity.offlineName': string
     'gate.enterOffline': string
     'gate.signInAgain': string
+    'gate.offlineUnavailable': string
 
     // Common
     'common.cancel': string
@@ -76,6 +79,37 @@ export interface LocaleMessages {
     'common.loadFailed': string
     'common.reminder': string
     'common.snooze': string
+
+    // Search（SEA-04）
+    'search.emptyHint': string
+    'search.history.title': string
+    'search.history.clear': string
+    'search.history.remove': string
+    'search.includeExcluded': string
+    'search.hitInDescription': string
+    'search.state.deleted': string
+    'search.state.givenUp': string
+    'search.placeholder': string
+    'search.foundCount': string
+    'search.enumerating': string
+    'search.enumRatePaused': string
+    'search.enumFailures': string
+    'search.capped': string
+    'search.refreshFailed': string
+    'search.viewLoadFailed': string
+    'search.searchFailed': string
+    'search.noResult': string
+    'search.filtersApplied': string
+    'search.clearFilters': string
+    'search.clearKeyword': string
+    'search.projectName': string
+    'search.filter.project': string
+    'search.filter.tag': string
+    'search.filter.priority': string
+    'search.filter.state': string
+    'search.filter.noTags': string
+    'search.filter.selectedCount': string
+    'search.filter.clear': string
 
     // Settings
     'settings.profile': string
@@ -153,6 +187,7 @@ export interface LocaleMessages {
     'settings.sessionLoading': string
     'settings.sessionEmpty': string
     'settings.sessionLoadFailed': string
+    'settings.sessionNeedsNetwork': string
     'settings.sessionCurrent': string
     'settings.sessionRegionUnknown': string
     'settings.sessionLoggedAt': string

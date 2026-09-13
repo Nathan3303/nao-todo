@@ -199,6 +199,12 @@ export interface SyncQueueRecord {
     localUpdatedAt: string
     /** 推送失败重试计数 */
     retryCount: number
+    /** 业务/数据类失败累计次数（SHELL-06 C-44 纯追加；旧记录缺失视为 0） */
+    attempts?: number
+    /** 下次可推送时间（ISO；业务类退避用；缺失/过期即可推，C-39/C-44） */
+    nextAttemptAt?: string | null
+    /** 最近一次失败分类（SHELL-06 C-38；凭证类维持会话失效路径） */
+    lastErrorClass?: 'network' | 'business' | 'credential'
     createdAt: string
     updatedAt: string
 }

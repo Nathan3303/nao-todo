@@ -1,0 +1,101 @@
+{
+  "create": {
+    "title": "QA离线走查-B0712",
+    "filled": "nodialog",
+    "appeared": false
+  },
+  "settings": {
+    "text": "设置 账户与个人信息 密码与安全 应用设置 退出登录 修改用户昵称 修改 更多信息 登录设备 退出其他全部设备 Chrome 浏览器 当前设备 未知 · 172.19.0.1 登录时间：2026/9/13 21:53:04 最近活跃：2026/9/13 21:56:31 Chrome 浏览器 未知 · 172.19.0.1 登录时间：2026/9/13 21:52:29 最近活跃：2026/9/13 21:52:29 下线 Chrome 浏览器 未知 · 172.19.0.1 登录时间：2026/9/13 21:50:04 最近活跃：2026/9/13 21:50:04 下线 Chrome 浏览器 未知 · 172.19.0.1 登录时间：2026/9/13 21:48:47 最近活跃：2026/9/13 21:49:36 下线 Chrome 浏览器 未知 · 172.19.0.1 登录时间：2026/9/13 21:10:29 最近活跃：2026/9/13 21:48:34 下线 Chrome 浏览器 未知 · 172.19.0.1 登录时间：2026/9/13 20:08:00 最",
+    "toggles": [
+      {
+        "tag": "BUTTON",
+        "t": "",
+        "aria": null,
+        "cls": "nue-button nue-button--icon nue-button--ghost nue-"
+      },
+      {
+        "tag": "BUTTON",
+        "t": "账户与个人信息",
+        "aria": null,
+        "cls": "nue-button nue-button--ghost sd-tab is-active"
+      },
+      {
+        "tag": "BUTTON",
+        "t": "密码与安全",
+        "aria": null,
+        "cls": "nue-button nue-button--ghost sd-tab"
+      },
+      {
+        "tag": "BUTTON",
+        "t": "应用设置",
+        "aria": null,
+        "cls": "nue-button nue-button--ghost sd-tab"
+      },
+      {
+        "tag": "BUTTON",
+        "t": "",
+        "aria": null,
+        "cls": "nue-button nue-button--icon nue-button--updater nu"
+      },
+      {
+        "tag": "BUTTON",
+        "t": "退出登录",
+        "aria": null,
+        "cls": "nue-button nue-button--small"
+      },
+      {
+        "tag": "BUTTON",
+        "t": "修改",
+        "aria": null,
+        "cls": "nue-button"
+      },
+      {
+        "tag": "BUTTON",
+        "t": "",
+        "aria": null,
+        "cls": "nue-button nue-button--icon nue-button--ghost nue-"
+      },
+      {
+        "tag": "BUTTON",
+        "t": "退出其他全部设备",
+        "aria": null,
+        "cls": "nue-button nue-button--secondary nue-button--small"
+      },
+      {
+        "tag": "BUTTON",
+        "t": "下线",
+        "aria": null,
+        "cls": "nue-button nue-button--small"
+      },
+      {
+        "tag": "BUTTON",
+        "t": "下线",
+        "aria": null,
+        "cls": "nue-button nue-button--small"
+      },
+      {
+        "tag": "BUTTON",
+        "t": "下线",
+        "aria": null,
+        "cls": "nue-button nue-button--small"
+      },
+      {
+        "tag": "BUTTON",
+        "t": "下线",
+        "aria": null,
+        "cls": "nue-button nue-button--small"
+      },
+      {
+        "tag": "BUTTON",
+        "t": "下线",
+        "aria": null,
+        "cls": "nue-button nue-button--small"
+      }
+    ]
+  },
+  "themeClick": [],
+  "langCands": [],
+  "settingsErrs": [
+    "error: [SHELL-05] vue:errorHandler:https://vuejs.org/error-reference/#runtime-1 Object"
+  ]
+}

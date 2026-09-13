@@ -1,0 +1,80 @@
+{
+  "results": {
+    "AC3.前置在线壳": {
+      "status": "PASS",
+      "detail": "ensureOnline=true"
+    },
+    "gate": {
+      "offline": true,
+      "gate": true,
+      "hash": "#/auth/checkin"
+    },
+    "guardRegistered": "function",
+    "t300": {
+      "label": "AC3+300ms",
+      "hash": "#/auth/checkin",
+      "router": {
+        "name": "auth-checkin",
+        "fullPath": "/auth/checkin"
+      },
+      "gate": false,
+      "rail": false,
+      "bodyText": "正在验证用户凭据，请稍后 ...",
+      "errorLog": [
+        {
+          "time": "2026-09-13T13:50:14.467Z",
+          "source": "router:onError",
+          "message": "QA-INJECT-NAV-REJECT",
+          "stack": "Error: QA-INJECT-NAV-REJECT\n    at <anonymous>:4:60\n    at file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-router-Bo2RCaOp.js:1:3886\n    at a (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-router-Bo2RCaOp.js:1:3579)\n    at file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-router-Bo2RCaOp.js:1:3878\n    at new Promise (<anonymous>)\n    at file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-router-Bo2RCaOp.js:1:3651\n    at Object.runWithContext (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-ecosystem-B2lk6veD.js:1:42084)\n    at B (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-router-Bo2RCaOp.js:1:1…"
+        },
+        {
+          "time": "2026-09-13T13:50:14.468Z",
+          "source": "app-root:offline-navigation",
+          "message": "QA-INJECT-NAV-REJECT",
+          "stack": "Error: QA-INJECT-NAV-REJECT\n    at <anonymous>:4:60\n    at file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-router-Bo2RCaOp.js:1:3886\n    at a (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-router-Bo2RCaOp.js:1:3579)\n    at file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-router-Bo2RCaOp.js:1:3878\n    at new Promise (<anonymous>)\n    at file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-router-Bo2RCaOp.js:1:3651\n    at Object.runWithContext (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-ecosystem-B2lk6veD.js:1:42084)\n    at B (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-router-Bo2RCaOp.js:1:1…"
+        }
+      ]
+    },
+    "t3500": {
+      "label": "AC3+3.5s",
+      "hash": "#/auth/checkin",
+      "router": {
+        "name": "auth-checkin",
+        "fullPath": "/auth/checkin"
+      },
+      "gate": false,
+      "rail": false,
+      "bodyText": "网络错误，请检查您的网络连接 重试 重新登录",
+      "errorLog": [
+        {
+          "time": "2026-09-13T13:50:14.467Z",
+          "source": "router:onError",
+          "message": "QA-INJECT-NAV-REJECT",
+          "stack": "Error: QA-INJECT-NAV-REJECT\n    at <anonymous>:4:60\n    at file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-router-Bo2RCaOp.js:1:3886\n    at a (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-router-Bo2RCaOp.js:1:3579)\n    at file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-router-Bo2RCaOp.js:1:3878\n    at new Promise (<anonymous>)\n    at file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-router-Bo2RCaOp.js:1:3651\n    at Object.runWithContext (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-ecosystem-B2lk6veD.js:1:42084)\n    at B (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-router-Bo2RCaOp.js:1:1…"
+        },
+        {
+          "time": "2026-09-13T13:50:14.468Z",
+          "source": "app-root:offline-navigation",
+          "message": "QA-INJECT-NAV-REJECT",
+          "stack": "Error: QA-INJECT-NAV-REJECT\n    at <anonymous>:4:60\n    at file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-router-Bo2RCaOp.js:1:3886\n    at a (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-router-Bo2RCaOp.js:1:3579)\n    at file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-router-Bo2RCaOp.js:1:3878\n    at new Promise (<anonymous>)\n    at file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-router-Bo2RCaOp.js:1:3651\n    at Object.runWithContext (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-ecosystem-B2lk6veD.js:1:42084)\n    at B (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-router-Bo2RCaOp.js:1:1…"
+        }
+      ]
+    },
+    "AC3.门不永久停留（gatePassed 必达）": {
+      "status": "PASS",
+      "detail": "gate@3.5s=false hash=#/auth/checkin rail=false"
+    },
+    "AC3.有界终结（有限时间内离开门）": {
+      "status": "PASS",
+      "detail": "gate@300ms=false @3.5s=false"
+    },
+    "AC3.结构化记录导航失败": {
+      "status": "PASS",
+      "detail": "sources=[\"router:onError\",\"app-root:offline-navigation\"]"
+    },
+    "AC3.记录含注入标记": {
+      "status": "PASS",
+      "detail": "matched=true"
+    }
+  }
+}

@@ -1,0 +1,164 @@
+{
+  "meta": {
+    "at": "2026-09-13T14:57:06.918Z",
+    "port": 9345,
+    "head": "95a9744b"
+  },
+  "checks": [
+    {
+      "id": "SETUP",
+      "status": "INFO",
+      "detail": "signed=true queue=0"
+    },
+    {
+      "id": "BC-13(定时).网络类暂停到期后自动补传（无 online）",
+      "status": "PASS",
+      "detail": "drainedMs=1511 queueOffline=2"
+    },
+    {
+      "id": "BC-13(定时).补传耗时 ≤ 暂停窗口+一个退避周期(≤15s)",
+      "status": "PASS",
+      "detail": "drainedMs=1511"
+    },
+    {
+      "id": "BC-13(反向).成功清空后定时器停止（无残留 tick）",
+      "status": "PASS",
+      "detail": "idleΔpush=0"
+    },
+    {
+      "id": "G11.无请求风暴(一次写→≤2 次 push，含暂停到期重试)",
+      "status": "PASS",
+      "detail": "p1=1 p2=2（第 2 次为暂停到期自动重试，符合 C-40；非每次写触发）"
+    },
+    {
+      "id": "提前唤醒(online)立即补传",
+      "status": "PASS",
+      "detail": "wakeMs=505"
+    },
+    {
+      "id": "提前唤醒后无重复风暴",
+      "status": "PASS",
+      "detail": "Δpush=1"
+    },
+    {
+      "id": "BC-15(删除项).业务失败累加 attempts 且条目为 delete",
+      "status": "PASS",
+      "detail": "[{\"table\":\"tasks\",\"action\":\"delete\",\"retryCount\":1,\"attempts\":1,\"nextAttemptAt\":\"2026-09-13T14:56:40.642Z\",\"lastErrorClass\":\"business\"}]"
+    },
+    {
+      "id": "BC-15(删除项).恢复后回传完成、远端无该任务(不复活)",
+      "status": "PASS",
+      "detail": "drainMs=503 serverHasT5=false"
+    },
+    {
+      "id": "立即重试按钮存在并可触发",
+      "status": "FAIL",
+      "detail": "clicked=\"nobutton\" panel={\"panelText\":\"\",\"poolText\":\"\",\"hasRetry\":false}"
+    },
+    {
+      "id": "立即重试后队列清空",
+      "status": "FAIL",
+      "detail": "drainMs=null"
+    },
+    {
+      "id": "G13.离线显示「需联网查看」占位",
+      "status": "FAIL",
+      "detail": "needsNetwork=false settingsOpen=true"
+    },
+    {
+      "id": "G13.离线无 toast 噪声",
+      "status": "PASS",
+      "detail": "toasts=[]"
+    }
+  ],
+  "raw": {
+    "qOffline": {
+      "count": 2,
+      "items": [
+        {
+          "table": "tasks",
+          "action": "upsert",
+          "retryCount": 0
+        },
+        {
+          "table": "tasks",
+          "action": "upsert",
+          "retryCount": 0
+        }
+      ]
+    },
+    "pushesAtPause": 1,
+    "drainedMs": 1511,
+    "pushesAfter": 2,
+    "idleDelta": 0,
+    "errLogLen": 0,
+    "pausePushDelta": 1,
+    "wake": {
+      "wakeMs": 505,
+      "beforeWake": 0,
+      "afterWake": 1
+    },
+    "bizDelete": {
+      "del": {
+        "clicked": "clicked",
+        "confirmed": "noconfirm",
+        "gone": false
+      },
+      "queue": {
+        "count": 1,
+        "items": [
+          {
+            "table": "tasks",
+            "action": "delete",
+            "retryCount": 0
+          }
+        ]
+      }
+    },
+    "bizDeleteFailed": {
+      "count": 1,
+      "items": [
+        {
+          "table": "tasks",
+          "action": "delete",
+          "retryCount": 1,
+          "attempts": 1,
+          "nextAttemptAt": "2026-09-13T14:56:40.642Z",
+          "lastErrorClass": "business"
+        }
+      ]
+    },
+    "bizDrainMs": 503,
+    "bizServerHasT5": false,
+    "panel": {
+      "panelText": "",
+      "poolText": "",
+      "hasRetry": false
+    },
+    "retryClicked": "nobutton",
+    "retryDrainMs": null,
+    "offlineShell": "#/tasks/all/table",
+    "g13": {
+      "gearClicked": 1,
+      "settingsOpen": true,
+      "needsNetwork": false,
+      "toasts": []
+    }
+  },
+  "console": [
+    "error: [sync] 推送归一化错误（断网/超时） ERR_NETWORK",
+    "error: [sync] 推送归一化错误（断网/超时） ERR_NETWORK",
+    "error: [sync] 推送归一化错误（断网/超时） ERR_NETWORK",
+    "error: [sync] 推送归一化错误（断网/超时） ERR_NETWORK",
+    "error: [sync] 推送归一化错误（断网/超时） ERR_NETWORK",
+    "warning: [sync] 推送未确认的实体 Object",
+    "warning: [sync] 推送未确认的实体 Object",
+    "error: [sync] 推送归一化错误（断网/超时） ERR_NETWORK",
+    "error: [sync] 推送归一化错误（断网/超时） ERR_NETWORK",
+    "error: [sync] 推送归一化错误（断网/超时） ERR_NETWORK",
+    "error: [sync] 推送归一化错误（断网/超时） ERR_NETWORK",
+    "error: [sync] 推送归一化错误（断网/超时） ERR_NETWORK",
+    "warning: [sync] 推送未确认的实体 Object",
+    "error: [sync] 拉取归一化错误（断网/超时） ERR_NETWORK"
+  ]
+}

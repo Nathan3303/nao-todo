@@ -95,15 +95,6 @@ const createCommentHandler = async (content: string) => {
             </nue-div>
             <nue-div>
                 <details-main-pomodoro-info :task-details="vo" />
-                <!-- <switch-button
-                    v-model="vo.isStarMarked"
-                    active-icon="heart-fill"
-                    :active-text="t('task.details.unfavorite')"
-                    icon="heart"
-                    size="small"
-                    :text="t('task.details.favorite')"
-                    @change="updateTaskIsStarMark"
-                /> -->
             </nue-div>
             <nue-div class="tasks-details-view__progress">
                 <nue-progress :percentage="percentage" :stroke-width="2" hide-text />
@@ -156,7 +147,7 @@ const createCommentHandler = async (content: string) => {
                 </nue-div>
                 <nue-div v-else class="tasks-details-view__subtasks" />
                 <!-- 任务详情标签 -->
-                <nue-div vertical style="padding: 1rem">
+                <nue-div vertical style="padding: 1rem" flex="none">
                     <task-tag-bar
                         :available-tags="tags"
                         :task-tag-ids="vo.tags"
@@ -248,6 +239,7 @@ const createCommentHandler = async (content: string) => {
             display: flex;
             flex-direction: column;
             gap: 0;
+            flex-wrap: nowrap;
         }
     }
 
@@ -304,7 +296,6 @@ const createCommentHandler = async (content: string) => {
 
     .tasks-details-view__subtasks {
         flex: 1;
-        min-height: 0;
         display: flex;
         flex-direction: column;
         padding: 0;

@@ -1,0 +1,322 @@
+{
+  "meta": {
+    "email": "qa.shell05.1789301180@qa.local",
+    "startedAt": "2026-09-13T12:09:01.050Z"
+  },
+  "phases": {
+    "bootstrap": {
+      "ok": true,
+      "notes": []
+    },
+    "onlineShell": {
+      "label": "online-shell",
+      "at": 1789301343558,
+      "dom": {
+        "hash": "#/tasks/all/table",
+        "router": {
+          "name": "tasks-built-in-project-main",
+          "path": "/tasks/all/table",
+          "fullPath": "/tasks/all/table",
+          "params": {
+            "projectId": "all",
+            "viewType": "table"
+          },
+          "query": {},
+          "matched": [
+            "index",
+            "tasks",
+            "tasks-built-in-project",
+            "tasks-built-in-project-main"
+          ]
+        },
+        "interactiveCount": 2,
+        "interactiveSample": [
+          "BUTTON",
+          "BUTTON"
+        ],
+        "initialSyncGate": false,
+        "unlockGate": false,
+        "railSlot": true,
+        "railBtn": true,
+        "gear": true,
+        "appHtmlLen": 4749,
+        "bodyText": "Q 加载中...",
+        "offlineEnterBtn": false
+      }
+    },
+    "onlineIdentity": {
+      "hasJwt": true,
+      "lastVisited": "/tasks/all/table",
+      "lastTasks": "/tasks/all/table"
+    },
+    "offlineAfterReload": {
+      "label": "offline-after-reload",
+      "at": 1789301345288,
+      "dom": {
+        "hash": "#/auth/checkin",
+        "router": {
+          "name": "auth-checkin",
+          "path": "/auth/checkin",
+          "fullPath": "/auth/checkin",
+          "params": {},
+          "query": {},
+          "matched": [
+            "auth",
+            "auth-checkin"
+          ]
+        },
+        "interactiveCount": 3,
+        "interactiveSample": [
+          "输入密码解锁",
+          "解锁",
+          "登出用户"
+        ],
+        "initialSyncGate": false,
+        "unlockGate": true,
+        "railSlot": false,
+        "railBtn": false,
+        "gear": false,
+        "appHtmlLen": 2011,
+        "bodyText": "Q QA-Shell05 离线 解锁 登出用户",
+        "offlineEnterBtn": false
+      }
+    },
+    "offlineUnlockSeen": true,
+    "failureGate": {
+      "label": "gate-poll",
+      "at": 1789301350399,
+      "dom": {
+        "hash": "#/auth/checkin",
+        "router": {
+          "name": "auth-checkin",
+          "path": "/auth/checkin",
+          "fullPath": "/auth/checkin",
+          "params": {},
+          "query": {},
+          "matched": [
+            "auth",
+            "auth-checkin"
+          ]
+        },
+        "interactiveCount": 3,
+        "interactiveSample": [
+          "重试",
+          "离线进入",
+          "登出用户"
+        ],
+        "initialSyncGate": true,
+        "unlockGate": false,
+        "railSlot": false,
+        "railBtn": false,
+        "gear": false,
+        "appHtmlLen": 5694,
+        "bodyText": "拉取失败：网络错误 重试 离线进入 登出用户",
+        "offlineEnterBtn": true
+      }
+    },
+    "failureWaitMs": 2,
+    "failureEvents": {
+      "console": [
+        {
+          "t": 1789301343685,
+          "level": "debug",
+          "msg": "[vite] connecting..."
+        },
+        {
+          "t": 1789301343696,
+          "level": "debug",
+          "msg": "[vite] connected."
+        },
+        {
+          "t": 1789301345169,
+          "level": "info",
+          "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
+        },
+        {
+          "t": 1789301346706,
+          "level": "error",
+          "msg": "[sync] 拉取归一化错误（断网/超时） ERR_NETWORK"
+        }
+      ],
+      "rejections": [],
+      "errors": []
+    },
+    "beforeClick": {
+      "label": "before-click",
+      "at": 1789301350403,
+      "dom": {
+        "hash": "#/auth/checkin",
+        "router": {
+          "name": "auth-checkin",
+          "path": "/auth/checkin",
+          "fullPath": "/auth/checkin",
+          "params": {},
+          "query": {},
+          "matched": [
+            "auth",
+            "auth-checkin"
+          ]
+        },
+        "interactiveCount": 3,
+        "interactiveSample": [
+          "重试",
+          "离线进入",
+          "登出用户"
+        ],
+        "initialSyncGate": true,
+        "unlockGate": false,
+        "railSlot": false,
+        "railBtn": false,
+        "gear": false,
+        "appHtmlLen": 5694,
+        "bodyText": "拉取失败：网络错误 重试 离线进入 登出用户",
+        "offlineEnterBtn": true
+      }
+    },
+    "beforeClickEvents": {
+      "console": [
+        {
+          "t": 1789301343685,
+          "level": "debug",
+          "msg": "[vite] connecting..."
+        },
+        {
+          "t": 1789301343696,
+          "level": "debug",
+          "msg": "[vite] connected."
+        },
+        {
+          "t": 1789301345169,
+          "level": "info",
+          "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
+        },
+        {
+          "t": 1789301346706,
+          "level": "error",
+          "msg": "[sync] 拉取归一化错误（断网/超时） ERR_NETWORK"
+        }
+      ],
+      "rejections": [],
+      "errors": []
+    },
+    "clickRect": {
+      "x": 500.984375,
+      "y": 431.25,
+      "w": 78.015625,
+      "h": 36,
+      "cx": 539.9921875,
+      "cy": 449.25
+    },
+    "clickMode": "real-mouse",
+    "afterClick": {
+      "t300": {
+        "label": "after-click+300ms",
+        "at": 1789301351089,
+        "dom": {
+          "hash": "#/definitely-not-a-route-xyz",
+          "router": {
+            "path": "/definitely-not-a-route-xyz",
+            "fullPath": "/definitely-not-a-route-xyz",
+            "params": {},
+            "query": {},
+            "matched": []
+          },
+          "interactiveCount": 0,
+          "interactiveSample": [],
+          "initialSyncGate": false,
+          "unlockGate": false,
+          "railSlot": false,
+          "railBtn": false,
+          "gear": false,
+          "appHtmlLen": 87,
+          "bodyText": "",
+          "offlineEnterBtn": false
+        }
+      },
+      "t3000": {
+        "label": "after-click+3s",
+        "at": 1789301353794,
+        "dom": {
+          "hash": "#/definitely-not-a-route-xyz",
+          "router": {
+            "path": "/definitely-not-a-route-xyz",
+            "fullPath": "/definitely-not-a-route-xyz",
+            "params": {},
+            "query": {},
+            "matched": []
+          },
+          "interactiveCount": 0,
+          "interactiveSample": [],
+          "initialSyncGate": false,
+          "unlockGate": false,
+          "railSlot": false,
+          "railBtn": false,
+          "gear": false,
+          "appHtmlLen": 87,
+          "bodyText": "",
+          "offlineEnterBtn": false
+        }
+      },
+      "t10000": {
+        "label": "after-click+10s",
+        "at": 1789301360799,
+        "dom": {
+          "hash": "#/definitely-not-a-route-xyz",
+          "router": {
+            "path": "/definitely-not-a-route-xyz",
+            "fullPath": "/definitely-not-a-route-xyz",
+            "params": {},
+            "query": {},
+            "matched": []
+          },
+          "interactiveCount": 0,
+          "interactiveSample": [],
+          "initialSyncGate": false,
+          "unlockGate": false,
+          "railSlot": false,
+          "railBtn": false,
+          "gear": false,
+          "appHtmlLen": 87,
+          "bodyText": "",
+          "offlineEnterBtn": false
+        }
+      }
+    },
+    "afterClickEvents": {
+      "console": [
+        {
+          "t": 1789301343685,
+          "level": "debug",
+          "msg": "[vite] connecting..."
+        },
+        {
+          "t": 1789301343696,
+          "level": "debug",
+          "msg": "[vite] connected."
+        },
+        {
+          "t": 1789301345169,
+          "level": "info",
+          "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
+        },
+        {
+          "t": 1789301346706,
+          "level": "error",
+          "msg": "[sync] 拉取归一化错误（断网/超时） ERR_NETWORK"
+        },
+        {
+          "t": 1789301350580,
+          "level": "warn",
+          "msg": "[VUE_ROUTER_R0004] No match found for location with path \"/definitely-not-a-route-xyz\"\n├▶ fix: Add a route matching this path or check for typos in the location.\n╰▶ see: https://router.vuejs.org/guide/essentials/dynamic-matching.html#Catch-all-404-Not-found-Route"
+        }
+      ],
+      "rejections": [],
+      "errors": []
+    },
+    "requests": [],
+    "console": [
+      "error: [sync] 拉取归一化错误（断网/超时） ERR_NETWORK",
+      "warning: [VUE_ROUTER_R0004] No match found for location with path \"/definitely-not-a-route-xyz\"\n├▶ fix: Add a route matching this path or check for typos in the location.\n╰▶ see: https://router.vuejs.org/guide/essentials/dynamic-matching.html#Catch-all-404-Not-found-Route"
+    ]
+  }
+}

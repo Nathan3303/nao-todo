@@ -1,22 +1,33 @@
 <script setup lang="ts">
 import { onUnmounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import App from '@/App.vue'
+import { reportRouterInjection, resolveRouter } from '@/router-access'
 import UnlockGate from './components/unlock-gate.vue'
 import InitialSyncGate from './components/initial-sync-gate.vue'
 import SyncStatusBar from './components/sync-status-bar.vue'
 import { useLocalReminder } from './hooks/use-local-reminder'
 import { useTaskReminder } from './hooks/usecases/use-task-reminder'
 import { grantOfflineEntry, revokeOfflineEntry } from '@/views/auth/offline-entry'
-import { LAST_VISITED_ROUTE_KEY } from '@/router'
+import { LAST_VISITED_ROUTE_KEY, SECTION_LAST_ROUTE_MAP } from '@/router'
+import { safeReplace, safeReplaceDeepLink } from '@/safe-navigation'
 import { useUserStore } from '@nao-todo/presentation-identity'
 import { TaskReminderDialog, useStoreInvalidationHub } from '@nao-todo/presentation/task'
 import { useDialogManager } from '@nao-todo/shared'
-import { cryptoService, localSession, syncService, syncTracker } from '@nao-todo/infrastructure'
+import {
+    cryptoService,
+    localSession,
+    registerBackfillTriggers,
+    syncService,
+    syncTracker
+} from '@nao-todo/infrastructure'
 
 defineOptions({ name: 'AppRoot' })
 
-const router = useRouter()
+// SHELL-05 T1/C-37：实例无关的 router 访问（useRouter 优先，$router 降级）+ 启动自检
+const routerResolution = resolveRouter()
+reportRouterInjection(routerResolution)
+const router = routerResolution.router
+
 const userStore = useUserStore()
 
 // 本地数据解锁门：解锁完成后才渲染主应用（webapp 复用）
@@ -52,7 +63,8 @@ syncService.setSessionExpiredListener(() => {
     userStore.clearAuthData() // localStorage.clear() → 删除 USER_JWT
     localSession.clear()
     cryptoService.lock()
-    void router.replace('/auth/signin')
+    // C-35：统一导航封装（失败结构化记录，不抛错）
+    void safeReplace(router, '/auth/signin', 'app-root:session-expired-navigation')
 })
 
 /** 初始同步成功（门通过）：路由由来路决定，无需跳转 */
@@ -69,23 +81,50 @@ const onSynced = (): void => {
  */
 const onOffline = async (): Promise<void> => {
     grantOfflineEntry()
-    await router.replace(localStorage.getItem(LAST_VISITED_ROUTE_KEY) || '/tasks')
-    gatePassed.value = true
+    try {
+        // C-28/C-35：回退链 LAST_VISITED → SECTION_LAST(tasks) → '/tasks'，逐项 resolve 校验 + 失效键清理
+        const tasksRouteKey = SECTION_LAST_ROUTE_MAP.tasks!
+        await safeReplaceDeepLink(
+            router,
+            [
+                {
+                    key: LAST_VISITED_ROUTE_KEY,
+                    value: localStorage.getItem(LAST_VISITED_ROUTE_KEY)
+                },
+                { key: tasksRouteKey, value: localStorage.getItem(tasksRouteKey) }
+            ],
+            '/tasks',
+            'app-root:offline-navigation',
+            localStorage
+        )
+    } finally {
+        // 终态推进必须在 finally：任何异常/失败仍进入壳（永不卡门）
+        gatePassed.value = true
+    }
 }
 
 /** 登出/重新登录（B-1 同源修正：显式跳转，不依赖 checkin 失败“顺带”跳转） */
 const onSignOut = async (): Promise<void> => {
     revokeOfflineEntry() // C-25：登出必须清离线进入授权
-    await router.replace('/auth/signin')
-    gatePassed.value = true
+    try {
+        await safeReplace(router, '/auth/signin', 'app-root:signout-navigation')
+    } finally {
+        gatePassed.value = true
+    }
 }
+
+// SHELL-06 C-40/C-43：回传触发（online / 前台恢复）仅作触发，不作鉴权；卸载清理防重复注册
+const unregisterBackfillTriggers = registerBackfillTriggers(syncService)
 
 watch(unlocked, (value) => {
     if (value) {
         startReminder()
     }
 })
-onUnmounted(() => stopReminder())
+onUnmounted(() => {
+    stopReminder()
+    unregisterBackfillTriggers()
+})
 </script>
 
 <template>

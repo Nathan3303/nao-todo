@@ -1,0 +1,1 @@
+(node:321144) electron: Failed to load URL: http://localhost:5173/#/auth/checkin with error: ERR_INTERNET_DISCONNECTED

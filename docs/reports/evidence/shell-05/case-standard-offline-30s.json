@@ -1,0 +1,470 @@
+{
+  "meta": {
+    "email": "qa.shell05.1789301180@qa.local",
+    "startedAt": "2026-09-13T12:16:20.682Z"
+  },
+  "phases": {
+    "bootstrap": {
+      "ok": true,
+      "notes": [
+        "#1 解锁门 → 解锁"
+      ]
+    },
+    "onlineShell": {
+      "label": "online-shell",
+      "at": 1789301798940,
+      "dom": {
+        "hash": "#/tasks/all/table",
+        "router": {
+          "name": "tasks-built-in-project-main",
+          "path": "/tasks/all/table",
+          "fullPath": "/tasks/all/table",
+          "params": {
+            "projectId": "all",
+            "viewType": "table"
+          },
+          "query": {},
+          "matched": [
+            "index",
+            "tasks",
+            "tasks-built-in-project",
+            "tasks-built-in-project-main"
+          ]
+        },
+        "interactiveCount": 13,
+        "interactiveSample": [
+          "BUTTON",
+          "BUTTON",
+          "清单\n0",
+          "BUTTON",
+          "BUTTON",
+          "标签\n0"
+        ],
+        "initialSyncGate": false,
+        "unlockGate": false,
+        "railSlot": true,
+        "railBtn": true,
+        "gear": true,
+        "appHtmlLen": 14241,
+        "bodyText": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 还没有任务，开始创建一个吧 新增待办",
+        "offlineEnterBtn": false
+      }
+    },
+    "onlineIdentity": {
+      "hasJwt": true,
+      "lastVisited": "/tasks/all/table",
+      "lastTasks": "/tasks/all/table"
+    },
+    "offlineAfterReload": {
+      "label": "offline-after-reload",
+      "at": 1789301800537,
+      "dom": {
+        "hash": "#/auth/checkin",
+        "router": {
+          "name": "auth-checkin",
+          "path": "/auth/checkin",
+          "fullPath": "/auth/checkin",
+          "params": {},
+          "query": {},
+          "matched": [
+            "auth",
+            "auth-checkin"
+          ]
+        },
+        "interactiveCount": 3,
+        "interactiveSample": [
+          "输入密码解锁",
+          "解锁",
+          "登出用户"
+        ],
+        "initialSyncGate": false,
+        "unlockGate": true,
+        "railSlot": false,
+        "railBtn": false,
+        "gear": false,
+        "appHtmlLen": 2011,
+        "bodyText": "Q QA-Shell05 离线 解锁 登出用户",
+        "offlineEnterBtn": false
+      }
+    },
+    "offlineUnlockSeen": true,
+    "failureGate": {
+      "label": "gate-poll",
+      "at": 1789301805647,
+      "dom": {
+        "hash": "#/auth/checkin",
+        "router": {
+          "name": "auth-checkin",
+          "path": "/auth/checkin",
+          "fullPath": "/auth/checkin",
+          "params": {},
+          "query": {},
+          "matched": [
+            "auth",
+            "auth-checkin"
+          ]
+        },
+        "interactiveCount": 3,
+        "interactiveSample": [
+          "重试",
+          "离线进入",
+          "登出用户"
+        ],
+        "initialSyncGate": true,
+        "unlockGate": false,
+        "railSlot": false,
+        "railBtn": false,
+        "gear": false,
+        "appHtmlLen": 5694,
+        "bodyText": "拉取失败：网络错误 重试 离线进入 登出用户",
+        "offlineEnterBtn": true
+      }
+    },
+    "failureWaitMs": 2,
+    "failureEvents": {
+      "console": [
+        {
+          "t": 1789301799065,
+          "level": "debug",
+          "msg": "[vite] connecting..."
+        },
+        {
+          "t": 1789301799094,
+          "level": "debug",
+          "msg": "[vite] connected."
+        },
+        {
+          "t": 1789301800365,
+          "level": "info",
+          "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
+        },
+        {
+          "t": 1789301801957,
+          "level": "error",
+          "msg": "[sync] 拉取归一化错误（断网/超时） ERR_NETWORK"
+        }
+      ],
+      "rejections": [],
+      "errors": []
+    },
+    "beforeClick": {
+      "label": "before-click",
+      "at": 1789301805650,
+      "dom": {
+        "hash": "#/auth/checkin",
+        "router": {
+          "name": "auth-checkin",
+          "path": "/auth/checkin",
+          "fullPath": "/auth/checkin",
+          "params": {},
+          "query": {},
+          "matched": [
+            "auth",
+            "auth-checkin"
+          ]
+        },
+        "interactiveCount": 3,
+        "interactiveSample": [
+          "重试",
+          "离线进入",
+          "登出用户"
+        ],
+        "initialSyncGate": true,
+        "unlockGate": false,
+        "railSlot": false,
+        "railBtn": false,
+        "gear": false,
+        "appHtmlLen": 5694,
+        "bodyText": "拉取失败：网络错误 重试 离线进入 登出用户",
+        "offlineEnterBtn": true
+      }
+    },
+    "beforeClickEvents": {
+      "console": [
+        {
+          "t": 1789301799065,
+          "level": "debug",
+          "msg": "[vite] connecting..."
+        },
+        {
+          "t": 1789301799094,
+          "level": "debug",
+          "msg": "[vite] connected."
+        },
+        {
+          "t": 1789301800365,
+          "level": "info",
+          "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
+        },
+        {
+          "t": 1789301801957,
+          "level": "error",
+          "msg": "[sync] 拉取归一化错误（断网/超时） ERR_NETWORK"
+        }
+      ],
+      "rejections": [],
+      "errors": []
+    },
+    "clickRect": {
+      "x": 500.984375,
+      "y": 991.25,
+      "w": 78.015625,
+      "h": 36,
+      "cx": 539.9921875,
+      "cy": 1009.25
+    },
+    "clickMode": "real-mouse",
+    "afterClick": {
+      "t300": {
+        "label": "after-click+300ms",
+        "at": 1789301806338,
+        "dom": {
+          "hash": "#/tasks/all/table",
+          "router": {
+            "name": "tasks-built-in-project-main",
+            "path": "/tasks/all/table",
+            "fullPath": "/tasks/all/table",
+            "params": {
+              "projectId": "all",
+              "viewType": "table"
+            },
+            "query": {},
+            "matched": [
+              "index",
+              "tasks",
+              "tasks-built-in-project",
+              "tasks-built-in-project-main"
+            ]
+          },
+          "interactiveCount": 0,
+          "interactiveSample": [],
+          "initialSyncGate": false,
+          "unlockGate": false,
+          "railSlot": false,
+          "railBtn": false,
+          "gear": false,
+          "appHtmlLen": 466,
+          "bodyText": "正在加载用户信息...",
+          "offlineEnterBtn": false
+        }
+      },
+      "t3000": {
+        "label": "after-click+3s",
+        "at": 1789301809041,
+        "dom": {
+          "hash": "#/tasks/all/table",
+          "router": {
+            "name": "tasks-built-in-project-main",
+            "path": "/tasks/all/table",
+            "fullPath": "/tasks/all/table",
+            "params": {
+              "projectId": "all",
+              "viewType": "table"
+            },
+            "query": {},
+            "matched": [
+              "index",
+              "tasks",
+              "tasks-built-in-project",
+              "tasks-built-in-project-main"
+            ]
+          },
+          "interactiveCount": 2,
+          "interactiveSample": [
+            "BUTTON",
+            "BUTTON"
+          ],
+          "initialSyncGate": false,
+          "unlockGate": false,
+          "railSlot": true,
+          "railBtn": true,
+          "gear": true,
+          "appHtmlLen": 4749,
+          "bodyText": "Q 加载中...",
+          "offlineEnterBtn": false
+        }
+      },
+      "t10000": {
+        "label": "after-click+10s",
+        "at": 1789301816046,
+        "dom": {
+          "hash": "#/tasks/all/table",
+          "router": {
+            "name": "tasks-built-in-project-main",
+            "path": "/tasks/all/table",
+            "fullPath": "/tasks/all/table",
+            "params": {
+              "projectId": "all",
+              "viewType": "table"
+            },
+            "query": {},
+            "matched": [
+              "index",
+              "tasks",
+              "tasks-built-in-project",
+              "tasks-built-in-project-main"
+            ]
+          },
+          "interactiveCount": 2,
+          "interactiveSample": [
+            "BUTTON",
+            "BUTTON"
+          ],
+          "initialSyncGate": false,
+          "unlockGate": false,
+          "railSlot": true,
+          "railBtn": true,
+          "gear": true,
+          "appHtmlLen": 4749,
+          "bodyText": "Q 加载中...",
+          "offlineEnterBtn": false
+        }
+      },
+      "t30000": {
+        "label": "after-click+30s",
+        "at": 1789301836054,
+        "dom": {
+          "hash": "#/tasks/all/table",
+          "router": {
+            "name": "tasks-built-in-project-main",
+            "path": "/tasks/all/table",
+            "fullPath": "/tasks/all/table",
+            "params": {
+              "projectId": "all",
+              "viewType": "table"
+            },
+            "query": {},
+            "matched": [
+              "index",
+              "tasks",
+              "tasks-built-in-project",
+              "tasks-built-in-project-main"
+            ]
+          },
+          "interactiveCount": 2,
+          "interactiveSample": [
+            "BUTTON",
+            "BUTTON"
+          ],
+          "initialSyncGate": false,
+          "unlockGate": false,
+          "railSlot": true,
+          "railBtn": true,
+          "gear": true,
+          "appHtmlLen": 4749,
+          "bodyText": "Q 加载中...",
+          "offlineEnterBtn": false
+        }
+      }
+    },
+    "afterClickEvents": {
+      "console": [
+        {
+          "t": 1789301799065,
+          "level": "debug",
+          "msg": "[vite] connecting..."
+        },
+        {
+          "t": 1789301799094,
+          "level": "debug",
+          "msg": "[vite] connected."
+        },
+        {
+          "t": 1789301800365,
+          "level": "info",
+          "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
+        },
+        {
+          "t": 1789301801957,
+          "level": "error",
+          "msg": "[sync] 拉取归一化错误（断网/超时） ERR_NETWORK"
+        },
+        {
+          "t": 1789301806964,
+          "level": "info",
+          "msg": "<Suspense> is an experimental feature and its API will likely change."
+        },
+        {
+          "t": 1789301806987,
+          "level": "warn",
+          "msg": "[Vue warn]: Unhandled error during execution of mounted hook \n  at <UserDeletionNotifierDialog> \n  at <NueContent fill=\"\" style= {\"overflow\":\"hidden\"} > \n  at <NueMain> \n  at <NueContainer key=1 id=\"AppContainer\" > \n  at <AppContainer onVnodeUnmounted=fn<onVnodeUnmounted> ref=Ref< {} > > \n  at <RouterView> \n  at <AppView key=2 > \n  at <AppRoot>"
+        }
+      ],
+      "rejections": [
+        {
+          "t": 1789301806990,
+          "name": "TypeError",
+          "reason": "TypeError: Cannot read properties of undefined (reading 'isPending')\n    at http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation-identity/src/components/deletion-notifier/index.vue:20:39\n    at http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/desktop/node_modules/.vite/deps/chunk-55IIA3VX.js?v=81944ae2:5370:40\n    at callWithErrorHandling (http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/desktop/node_modules/.vite/deps/chunk-55IIA3VX.js?v=81944ae2:2377:19)\n    at callWithAsyncErrorHandling (http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/desktop/node_modules/.vite/deps/chunk-55IIA3VX.js?v=81944ae2:2384:17)\n    at hook.__weh.hook.__weh (http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/desktop/node_modules/.vite/deps/chunk-55IIA3VX.js?v=81944ae2:5350:19)\n    at flushPostFlushCbs (http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/desktop/node_modules/.vite/deps/chunk-55IIA3VX.js?v=81944ae2:2566:28)\n    at flushJobs (http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/desktop/node_modules/.vite/deps/chunk-55IIA3VX.js?v=81944ae2:2608:5)"
+        }
+      ],
+      "errors": []
+    },
+    "requests": [
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/settings/password-updater/index.ts",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/settings/app-setter/index.ts",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/settings/context.ts",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/settings/dialog/index.vue?vue&type=style&index=0&lang.css",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/pomodoro/components/pomodoro-timer.css?vue&type=style&index=0&src=a52b4517&scoped=a52b4517&lang.css",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/pomodoro/components/dialogs/creator/pomodoro-creator.vue",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/pomodoro/components/dialogs/updater/pomodoro-updater.vue",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/pomodoro/components/focus-ring/focus-ring.vue?vue&type=style&index=0&scoped=b54e7fdc&lang.css",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/pomodoro/components/record-list/record-list.vue?vue&type=style&index=0&scoped=ad46c5fc&lang.css",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/pomodoro/components/record-list/record-list-item.vue?vue&type=style&index=0&scoped=23a2a7aa&lang.css",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/pomodoro/components/dialogs/timer-setting/timer-setting.vue",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/pomodoro/components/note-inputer/notes.vue?vue&type=style&index=0&scoped=14cfc0e3&lang.css",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/pomodoro/components/indicator/use-indicator.ts",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/pomodoro/components/indicator/indicator.vue?vue&type=style&index=0&scoped=19e8ddd6&lang.css",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/pomodoro/components/pomodoro-timer.css?vue&type=style&index=0&src=76efcaa0&scoped=76efcaa0&lang.css",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/pomodoro/components/timer/timer.vue?vue&type=style&index=1&scoped=76efcaa0&lang.css",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/settings/profile-updater/index.vue",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/settings/password-updater/index.vue",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/settings/app-setter/index.vue",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/pomodoro/components/dialogs/updater/use-pomodoro-updater.ts",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/pomodoro/components/dialogs/updater/pomodoro-updater.vue?vue&type=style&index=0&lang.css",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/pomodoro/components/dialogs/creator/use-pomodoro-creator.ts",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/pomodoro/components/dialogs/creator/pomodoro-creator.vue?vue&type=style&index=0&lang.css",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/pomodoro/components/dialogs/timer-setting/use-timer-setting.ts",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/pomodoro/components/dialogs/timer-setting/timer-setting.vue?vue&type=style&index=0&lang.css",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/settings/password-updater/index.vue?vue&type=style&index=0&scoped=13de8bee&lang.css",
+      "http://localhost:3302/api/user/profile",
+      "http://localhost:3302/api/user/config",
+      "http://localhost:3302/api/user/profile",
+      "http://localhost:3302/api/user/config",
+      "http://localhost:3302/api/user/profile",
+      "http://localhost:3302/api/user/config",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/task/components/dialogs/creator/creator.vue",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/task/components/dialogs/parent-selector/parent-selector.vue",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/project/components/dialogs/creator/index.vue",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/project/components/dialogs/manager/project-manager.vue",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/project/components/dialogs/updater/project-updater.vue",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/tag/components/dialogs/creator/tag-creator.vue",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/tag/components/dialogs/manager/tag-manager.vue",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/tag/components/dialogs/updater/tag-updater.vue",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/tag/components/dialogs/color-updater/tag-color-updater.vue",
+      "http://localhost:5173/fonts/iconfont/iconfont.woff2?t=1780897299935",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/task/components/dialogs/creator/use-creator.ts",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/task/components/dialogs/creator/creator.vue?vue&type=style&index=0&lang.css",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/task/components/dialogs/parent-selector/use-parent-selector.ts",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/task/components/dialogs/parent-selector/parent-selector.vue?vue&type=style&index=0&lang.css",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/tag/components/dialogs/manager/use-tag-manager.ts",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/tag/components/dialogs/manager/tag-manager.vue?vue&type=style&index=0&scoped=64f89125&lang.css",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/tag/components/dialogs/manager/tag-manager.vue?vue&type=style&index=1&lang.css",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/tag/components/dialogs/updater/use-tag-updater.ts",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/project/components/dialogs/creator/use-project-creator.ts",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/project/components/dialogs/creator/index.vue?vue&type=style&index=0&lang.css",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/project/components/dialogs/updater/use-project-updater.ts",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/project/components/dialogs/updater/project-updater.vue?vue&type=style&index=0&lang.css",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/project/components/dialogs/manager/use-project-manager.ts",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/project/components/dialogs/manager/project-manager.vue?vue&type=style&index=0&scoped=4bc8bc8e&lang.css",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/project/components/dialogs/manager/project-manager.vue?vue&type=style&index=1&lang.css",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/tag/components/dialogs/creator/use-tag-creator.ts",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/tag/components/dialogs/creator/tag-creator.vue?vue&type=style&index=0&lang.css",
+      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation/tag/components/dialogs/color-updater/use-tag-color-updater.ts"
+    ],
+    "console": [
+      "error: [sync] 拉取归一化错误（断网/超时） ERR_NETWORK",
+      "warning: [Vue warn]: Unhandled error during execution of mounted hook \n  at <UserDeletionNotifierDialog> \n  at <NueContent fill=\"\" style= Object > \n  at <NueMain> \n  at <NueContainer key=1 id=\"AppContainer\" > \n  at <AppContainer onVnodeUnmounted=fn<onVnodeUnmounted> ref=Ref< Proxy(Object) > > \n  at <RouterVi",
+      "exception: TypeError: Cannot read properties of undefined (reading 'isPending')\n    at http://localhost:5173/@fs/home/nathan/Project/nao-todo/packages/presentation-identity/src/components/deletion-notifier/index.vue:20:39\n    at http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/desktop/node_modules/."
+    ]
+  }
+}

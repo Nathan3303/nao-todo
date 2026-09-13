@@ -1,5 +1,6 @@
 // import { useViewStore } from '@/stores/global'
 import type { RouteRecordRaw } from 'vue-router'
+import { DEFAULT_TASKS_VIEW_TYPE } from '@/components/tasks/view-type'
 
 const routes: RouteRecordRaw = {
     path: 'tasks',
@@ -7,7 +8,11 @@ const routes: RouteRecordRaw = {
     component: () => import('./entry.vue'),
     beforeEnter: (to) => {
         if (to.name !== 'tasks') return
-        return { name: 'tasks-built-in-project', params: { projectId: 'all' } }
+        // C-32 双保险：/tasks 落点显式带默认 viewType（避免仅落到无 viewType 的父级）
+        return {
+            name: 'tasks-built-in-project-main',
+            params: { projectId: 'all', viewType: DEFAULT_TASKS_VIEW_TYPE }
+        }
     },
     children: [
         {

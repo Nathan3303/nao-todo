@@ -7,6 +7,7 @@ import AppRoot from './AppRoot.vue'
 import router from '@/router'
 import { env } from '@/env'
 import { nueUI } from '@/nue-ui-register'
+import { installGlobalErrorObservability } from '@/error-observability'
 
 // 初始化网络请求器
 initRequester({
@@ -19,4 +20,7 @@ initRequester({
     }
 })
 
-createApp(AppRoot).use(nueUI).use(createPinia()).use(router).use(i18n).mount('#app')
+// SHELL-05 C-27：全局未捕获异常可观测（同源单点；与 web 端同一实现）
+const app = createApp(AppRoot).use(nueUI).use(createPinia()).use(router).use(i18n)
+installGlobalErrorObservability({ app, router })
+app.mount('#app')

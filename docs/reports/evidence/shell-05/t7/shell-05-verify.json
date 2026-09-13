@@ -1,0 +1,859 @@
+{
+  "meta": {
+    "startedAt": "2026-09-13T13:49:08.003Z",
+    "email": "qa.shell05.1789301180@qa.local",
+    "outDir": "/tmp/nao-shell05/t7"
+  },
+  "pass": 24,
+  "fail": 1,
+  "info": 2,
+  "checks": [
+    {
+      "id": "A.gate",
+      "status": "INFO",
+      "detail": "{\"ms\":1,\"offline\":true,\"hash\":\"#/auth/checkin\"}"
+    },
+    {
+      "id": "AC1.门关闭",
+      "status": "PASS",
+      "detail": "gate@3s=false"
+    },
+    {
+      "id": "AC1.进入任务(壳+mapped)",
+      "status": "PASS",
+      "detail": "hash=#/tasks/all/table router=tasks-built-in-project-main rail=true"
+    },
+    {
+      "id": "AC1.无 TypeError replace",
+      "status": "PASS",
+      "detail": "命中=false"
+    },
+    {
+      "id": "AC1b.router 注入自检为 composable（无降级告警）",
+      "status": "PASS",
+      "detail": "[]"
+    },
+    {
+      "id": "AC2.内容非永久 loading",
+      "status": "PASS",
+      "detail": "loadingText@3s=false @10s=false body=\"Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已\""
+    },
+    {
+      "id": "AC2.内容终态(有数据或显式空态)",
+      "status": "PASS",
+      "detail": "table=0 empty=true inter=13"
+    },
+    {
+      "id": "AC8.无 deletion-notifier TypeError",
+      "status": "PASS",
+      "detail": "命中=false"
+    },
+    {
+      "id": "AC7.错误缓冲可导出",
+      "status": "PASS",
+      "detail": "__NAO_ERROR_LOG__ len=0"
+    },
+    {
+      "id": "AC3.门不永久停留(gatePassed 必达)",
+      "status": "PASS",
+      "detail": "gate@3s=false"
+    },
+    {
+      "id": "AC3.记录结构化导航错误",
+      "status": "FAIL",
+      "detail": "sources=[]"
+    },
+    {
+      "id": "B.终态",
+      "status": "INFO",
+      "detail": "hash=#/ router=index rail=true loading=false"
+    },
+    {
+      "id": "AC5.落点 matched>0 且非 auth",
+      "status": "PASS",
+      "detail": "hash=#/tasks/all/table router=tasks-built-in-project-main matched=[\"index\",\"tasks\",\"tasks-built-in-project\",\"tasks-built-in-project-main\"]"
+    },
+    {
+      "id": "AC5.不白屏（有渲染内容）",
+      "status": "PASS",
+      "detail": "rail=true inter=13"
+    },
+    {
+      "id": "AC5.失效键不再残留非法值",
+      "status": "PASS",
+      "detail": "{\"lv\":\"/tasks/all/table\",\"lt\":\"/tasks/all/table\"}"
+    },
+    {
+      "id": "AC6.viewType 自愈为默认",
+      "status": "PASS",
+      "detail": "viewType=table path=/tasks/all/table"
+    },
+    {
+      "id": "AC6.内容非永久 loading",
+      "status": "PASS",
+      "detail": "loadingText=false body=\"Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已\""
+    },
+    {
+      "id": "AC9.不 emit/不导航（仍在门）",
+      "status": "PASS",
+      "detail": "gate=true hash=#/auth/checkin"
+    },
+    {
+      "id": "AC9.显式文案出现",
+      "status": "PASS",
+      "detail": "sources=[\"sync-gate:offline-prerequisites\"] body=\"拉取失败：网络错误 重试 离线进入 无法离线进入，请重试或重新登录 登出用户\""
+    },
+    {
+      "id": "AC9.凭证失败不展示「离线进入」",
+      "status": "PASS",
+      "detail": "present=false hash=#/auth/signin body=\"登录已过期，请重新登录 重试 重新登录\""
+    },
+    {
+      "id": "AC9.主按钮语义=重新登录 或 已跳登录页",
+      "status": "PASS",
+      "detail": "signin=false body=\"登录已过期，请重新登录 重试 重新登录\""
+    },
+    {
+      "id": "AC9.文案含\"登录已过期\"但离线进入仍可见",
+      "status": "PASS",
+      "detail": "present=true body=\"拉取失败：登录已过期，请重新登录 重试 离线进入 登出用户\""
+    },
+    {
+      "id": "AC10.在线路径可进壳",
+      "status": "PASS",
+      "detail": "ensureOnline=true"
+    },
+    {
+      "id": "AC10.在线内容非 loading",
+      "status": "PASS",
+      "detail": "loading=false rail=true"
+    },
+    {
+      "id": "AC10.双主题壳均渲染",
+      "status": "PASS",
+      "detail": "[{\"v\":\"0\",\"rail\":true,\"inter\":13,\"loading\":false},{\"v\":\"1\",\"rail\":true,\"inter\":13,\"loading\":false}]"
+    },
+    {
+      "id": "AC10.主题切换无新增未捕获",
+      "status": "PASS",
+      "detail": "rejections=0 errors=0"
+    },
+    {
+      "id": "AC7.错误缓冲无 PII/token",
+      "status": "PASS",
+      "detail": "{\"hasEmail\":false,\"hasBearer\":false,\"hasJwt\":false,\"len\":0}"
+    }
+  ],
+  "raw": {
+    "A_preGate": {
+      "at": "2026-09-13T13:47:07.546Z",
+      "label": "A-pre-gate",
+      "hash": "#/auth/checkin",
+      "router": {
+        "name": "auth-checkin",
+        "fullPath": "/auth/checkin",
+        "params": {},
+        "matched": [
+          "auth",
+          "auth-checkin"
+        ]
+      },
+      "initialSyncGate": true,
+      "unlockGate": false,
+      "railSlot": false,
+      "railBtn": false,
+      "gear": false,
+      "interactiveCount": 3,
+      "interactiveSample": [
+        "重试",
+        "离线进入",
+        "登出用户"
+      ],
+      "bodyText": "拉取失败：网络错误 重试 离线进入 登出用户",
+      "loadingText": false,
+      "emptyState": false,
+      "tableCount": 0,
+      "errorLogLen": 0,
+      "errorLog": [],
+      "offlineEnterBtn": true
+    },
+    "A": {
+      "gate": {
+        "ms": 1,
+        "offline": true,
+        "gate": true,
+        "hash": "#/auth/checkin"
+      },
+      "click": "real-mouse",
+      "t300": {
+        "at": "2026-09-13T13:47:08.300Z",
+        "label": "A+300ms",
+        "hash": "#/tasks/all/table",
+        "router": {
+          "name": "tasks-built-in-project-main",
+          "fullPath": "/tasks/all/table",
+          "params": {
+            "projectId": "all",
+            "viewType": "table"
+          },
+          "matched": [
+            "index",
+            "tasks",
+            "tasks-built-in-project",
+            "tasks-built-in-project-main"
+          ]
+        },
+        "initialSyncGate": false,
+        "unlockGate": false,
+        "railSlot": false,
+        "railBtn": false,
+        "gear": false,
+        "interactiveCount": 0,
+        "interactiveSample": [],
+        "bodyText": "正在加载用户信息...",
+        "loadingText": true,
+        "emptyState": false,
+        "tableCount": 0,
+        "errorLogLen": 0,
+        "errorLog": [],
+        "offlineEnterBtn": false
+      },
+      "t3000": {
+        "at": "2026-09-13T13:47:11.006Z",
+        "label": "A+3s",
+        "hash": "#/tasks/all/table",
+        "router": {
+          "name": "tasks-built-in-project-main",
+          "fullPath": "/tasks/all/table",
+          "params": {
+            "projectId": "all",
+            "viewType": "table"
+          },
+          "matched": [
+            "index",
+            "tasks",
+            "tasks-built-in-project",
+            "tasks-built-in-project-main"
+          ]
+        },
+        "initialSyncGate": false,
+        "unlockGate": false,
+        "railSlot": true,
+        "railBtn": true,
+        "gear": true,
+        "interactiveCount": 13,
+        "interactiveSample": [
+          "BUTTON",
+          "BUTTON",
+          "清单\n0",
+          "BUTTON",
+          "BUTTON",
+          "标签\n0",
+          "BUTTON",
+          "BUTTON"
+        ],
+        "bodyText": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 还没有任务，开始创建一个吧 新增待办",
+        "loadingText": false,
+        "emptyState": true,
+        "tableCount": 0,
+        "errorLogLen": 0,
+        "errorLog": [],
+        "offlineEnterBtn": false
+      },
+      "t10000": {
+        "at": "2026-09-13T13:47:18.011Z",
+        "label": "A+10s",
+        "hash": "#/tasks/all/table",
+        "router": {
+          "name": "tasks-built-in-project-main",
+          "fullPath": "/tasks/all/table",
+          "params": {
+            "projectId": "all",
+            "viewType": "table"
+          },
+          "matched": [
+            "index",
+            "tasks",
+            "tasks-built-in-project",
+            "tasks-built-in-project-main"
+          ]
+        },
+        "initialSyncGate": false,
+        "unlockGate": false,
+        "railSlot": true,
+        "railBtn": true,
+        "gear": true,
+        "interactiveCount": 13,
+        "interactiveSample": [
+          "BUTTON",
+          "BUTTON",
+          "清单\n0",
+          "BUTTON",
+          "BUTTON",
+          "标签\n0",
+          "BUTTON",
+          "BUTTON"
+        ],
+        "bodyText": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 还没有任务，开始创建一个吧 新增待办",
+        "loadingText": false,
+        "emptyState": true,
+        "tableCount": 0,
+        "errorLogLen": 0,
+        "errorLog": [],
+        "offlineEnterBtn": false
+      },
+      "events": {
+        "console": [
+          {
+            "t": 1789307222550,
+            "level": "info",
+            "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
+          },
+          {
+            "t": 1789307222550,
+            "level": "info",
+            "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
+          },
+          {
+            "t": 1789307223846,
+            "level": "error",
+            "msg": "[sync] 拉取归一化错误（断网/超时） ERR_NETWORK"
+          }
+        ],
+        "rejections": [],
+        "errors": []
+      },
+      "console": [
+        "error: [sync] 拉取归一化错误（断网/超时） ERR_NETWORK"
+      ]
+    },
+    "B": {
+      "pre": {
+        "at": "2026-09-13T13:47:31.930Z",
+        "label": "B-pre",
+        "hash": "#/auth/checkin",
+        "router": {
+          "name": "auth-checkin",
+          "fullPath": "/auth/checkin",
+          "params": {},
+          "matched": [
+            "auth",
+            "auth-checkin"
+          ]
+        },
+        "initialSyncGate": true,
+        "unlockGate": false,
+        "railSlot": false,
+        "railBtn": false,
+        "gear": false,
+        "interactiveCount": 3,
+        "interactiveSample": [
+          "重试",
+          "离线进入",
+          "登出用户"
+        ],
+        "bodyText": "拉取失败：网络错误 重试 离线进入 登出用户",
+        "loadingText": false,
+        "emptyState": false,
+        "tableCount": 0,
+        "errorLogLen": 0,
+        "errorLog": [],
+        "offlineEnterBtn": true
+      },
+      "click": "real-mouse",
+      "t300": {
+        "at": "2026-09-13T13:47:32.670Z",
+        "label": "B+300ms",
+        "hash": "#/",
+        "router": {
+          "name": "index",
+          "fullPath": "/",
+          "params": {},
+          "matched": [
+            "index"
+          ]
+        },
+        "initialSyncGate": false,
+        "unlockGate": false,
+        "railSlot": false,
+        "railBtn": false,
+        "gear": false,
+        "interactiveCount": 0,
+        "interactiveSample": [],
+        "bodyText": "正在加载用户信息...",
+        "loadingText": true,
+        "emptyState": false,
+        "tableCount": 0,
+        "errorLogLen": 0,
+        "errorLog": [],
+        "offlineEnterBtn": false
+      },
+      "t3000": {
+        "at": "2026-09-13T13:47:35.373Z",
+        "label": "B+3s",
+        "hash": "#/",
+        "router": {
+          "name": "index",
+          "fullPath": "/",
+          "params": {},
+          "matched": [
+            "index"
+          ]
+        },
+        "initialSyncGate": false,
+        "unlockGate": false,
+        "railSlot": true,
+        "railBtn": true,
+        "gear": true,
+        "interactiveCount": 2,
+        "interactiveSample": [
+          "BUTTON",
+          "BUTTON"
+        ],
+        "bodyText": "Q",
+        "loadingText": false,
+        "emptyState": false,
+        "tableCount": 0,
+        "errorLogLen": 0,
+        "errorLog": [],
+        "offlineEnterBtn": false
+      },
+      "t8000": {
+        "at": "2026-09-13T13:47:40.378Z",
+        "label": "B+8s",
+        "hash": "#/",
+        "router": {
+          "name": "index",
+          "fullPath": "/",
+          "params": {},
+          "matched": [
+            "index"
+          ]
+        },
+        "initialSyncGate": false,
+        "unlockGate": false,
+        "railSlot": true,
+        "railBtn": true,
+        "gear": true,
+        "interactiveCount": 2,
+        "interactiveSample": [
+          "BUTTON",
+          "BUTTON"
+        ],
+        "bodyText": "Q",
+        "loadingText": false,
+        "emptyState": false,
+        "tableCount": 0,
+        "errorLogLen": 0,
+        "errorLog": [],
+        "offlineEnterBtn": false
+      },
+      "events": {
+        "console": [
+          {
+            "t": 1789307246942,
+            "level": "info",
+            "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
+          },
+          {
+            "t": 1789307246942,
+            "level": "info",
+            "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
+          },
+          {
+            "t": 1789307248253,
+            "level": "error",
+            "msg": "[sync] 拉取归一化错误（断网/超时） ERR_NETWORK"
+          }
+        ],
+        "rejections": [],
+        "errors": []
+      },
+      "console": [
+        "error: [sync] 拉取归一化错误（断网/超时） ERR_NETWORK"
+      ]
+    },
+    "C": {
+      "click": "real-mouse",
+      "t300": {
+        "at": "2026-09-13T13:47:54.786Z",
+        "label": "C+300ms",
+        "hash": "#/tasks/all/table",
+        "router": {
+          "name": "tasks-built-in-project-main",
+          "fullPath": "/tasks/all/table",
+          "params": {
+            "projectId": "all",
+            "viewType": "table"
+          },
+          "matched": [
+            "index",
+            "tasks",
+            "tasks-built-in-project",
+            "tasks-built-in-project-main"
+          ]
+        },
+        "initialSyncGate": false,
+        "unlockGate": false,
+        "railSlot": false,
+        "railBtn": false,
+        "gear": false,
+        "interactiveCount": 0,
+        "interactiveSample": [],
+        "bodyText": "正在加载用户信息...",
+        "loadingText": true,
+        "emptyState": false,
+        "tableCount": 0,
+        "errorLogLen": 0,
+        "errorLog": [],
+        "offlineEnterBtn": false
+      },
+      "t4000": {
+        "at": "2026-09-13T13:47:58.793Z",
+        "label": "C+4s",
+        "hash": "#/tasks/all/table",
+        "router": {
+          "name": "tasks-built-in-project-main",
+          "fullPath": "/tasks/all/table",
+          "params": {
+            "projectId": "all",
+            "viewType": "table"
+          },
+          "matched": [
+            "index",
+            "tasks",
+            "tasks-built-in-project",
+            "tasks-built-in-project-main"
+          ]
+        },
+        "initialSyncGate": false,
+        "unlockGate": false,
+        "railSlot": true,
+        "railBtn": true,
+        "gear": true,
+        "interactiveCount": 13,
+        "interactiveSample": [
+          "BUTTON",
+          "BUTTON",
+          "清单\n0",
+          "BUTTON",
+          "BUTTON",
+          "标签\n0",
+          "BUTTON",
+          "BUTTON"
+        ],
+        "bodyText": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 还没有任务，开始创建一个吧 新增待办",
+        "loadingText": false,
+        "emptyState": true,
+        "tableCount": 0,
+        "errorLogLen": 0,
+        "errorLog": [],
+        "offlineEnterBtn": false
+      },
+      "persisted": {
+        "lv": "/tasks/all/table",
+        "lt": "/tasks/all/table"
+      }
+    },
+    "D": {
+      "t300": {
+        "at": "2026-09-13T13:48:13.239Z",
+        "label": "D+300ms",
+        "hash": "#/tasks/all/table",
+        "router": {
+          "name": "tasks-built-in-project-main",
+          "fullPath": "/tasks/all/table",
+          "params": {
+            "projectId": "all",
+            "viewType": "table"
+          },
+          "matched": [
+            "index",
+            "tasks",
+            "tasks-built-in-project",
+            "tasks-built-in-project-main"
+          ]
+        },
+        "initialSyncGate": false,
+        "unlockGate": false,
+        "railSlot": false,
+        "railBtn": false,
+        "gear": false,
+        "interactiveCount": 0,
+        "interactiveSample": [],
+        "bodyText": "正在加载用户信息...",
+        "loadingText": true,
+        "emptyState": false,
+        "tableCount": 0,
+        "errorLogLen": 0,
+        "errorLog": [],
+        "offlineEnterBtn": false
+      },
+      "t4000": {
+        "at": "2026-09-13T13:48:17.244Z",
+        "label": "D+4s",
+        "hash": "#/tasks/all/table",
+        "router": {
+          "name": "tasks-built-in-project-main",
+          "fullPath": "/tasks/all/table",
+          "params": {
+            "projectId": "all",
+            "viewType": "table"
+          },
+          "matched": [
+            "index",
+            "tasks",
+            "tasks-built-in-project",
+            "tasks-built-in-project-main"
+          ]
+        },
+        "initialSyncGate": false,
+        "unlockGate": false,
+        "railSlot": true,
+        "railBtn": true,
+        "gear": true,
+        "interactiveCount": 13,
+        "interactiveSample": [
+          "BUTTON",
+          "BUTTON",
+          "清单\n0",
+          "BUTTON",
+          "BUTTON",
+          "标签\n0",
+          "BUTTON",
+          "BUTTON"
+        ],
+        "bodyText": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 还没有任务，开始创建一个吧 新增待办",
+        "loadingText": false,
+        "emptyState": true,
+        "tableCount": 0,
+        "errorLogLen": 0,
+        "errorLog": [],
+        "offlineEnterBtn": false
+      }
+    },
+    "E": {
+      "eClick": "real-mouse",
+      "snap": {
+        "at": "2026-09-13T13:48:32.565Z",
+        "label": "E-after-click",
+        "hash": "#/auth/checkin",
+        "router": {
+          "name": "auth-checkin",
+          "fullPath": "/auth/checkin",
+          "params": {},
+          "matched": [
+            "auth",
+            "auth-checkin"
+          ]
+        },
+        "initialSyncGate": true,
+        "unlockGate": false,
+        "railSlot": false,
+        "railBtn": false,
+        "gear": false,
+        "interactiveCount": 3,
+        "interactiveSample": [
+          "重试",
+          "离线进入",
+          "登出用户"
+        ],
+        "bodyText": "拉取失败：网络错误 重试 离线进入 无法离线进入，请重试或重新登录 登出用户",
+        "loadingText": false,
+        "emptyState": false,
+        "tableCount": 0,
+        "errorLogLen": 1,
+        "errorLog": [
+          {
+            "time": "2026-09-13T13:48:31.108Z",
+            "source": "sync-gate:offline-prerequisites",
+            "message": "原因码=jwt-unresolvable",
+            "stack": ""
+          }
+        ],
+        "offlineEnterBtn": true
+      },
+      "events": {
+        "console": [
+          {
+            "t": 1789307305927,
+            "level": "info",
+            "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
+          },
+          {
+            "t": 1789307305928,
+            "level": "info",
+            "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
+          },
+          {
+            "t": 1789307307251,
+            "level": "error",
+            "msg": "[sync] 拉取归一化错误（断网/超时） ERR_NETWORK"
+          },
+          {
+            "t": 1789307311108,
+            "level": "error",
+            "msg": "[SHELL-05] sync-gate:offline-prerequisites 原因码=jwt-unresolvable"
+          }
+        ],
+        "rejections": [],
+        "errors": []
+      }
+    },
+    "F1": {
+      "snap": {
+        "at": "2026-09-13T13:48:46.251Z",
+        "label": "F1-poll",
+        "hash": "#/auth/signin",
+        "router": {
+          "name": "auth-signin",
+          "fullPath": "/auth/signin",
+          "params": {},
+          "matched": [
+            "auth",
+            "auth-signin"
+          ]
+        },
+        "initialSyncGate": true,
+        "unlockGate": false,
+        "railSlot": false,
+        "railBtn": false,
+        "gear": false,
+        "interactiveCount": 2,
+        "interactiveSample": [
+          "重试",
+          "重新登录"
+        ],
+        "bodyText": "登录已过期，请重新登录 重试 重新登录",
+        "loadingText": false,
+        "emptyState": false,
+        "tableCount": 0,
+        "errorLogLen": 0,
+        "errorLog": [],
+        "offlineEnterBtn": false
+      },
+      "isSignin": false
+    },
+    "F2": {
+      "snap": {
+        "at": "2026-09-13T13:48:58.354Z",
+        "label": "F2-poll",
+        "hash": "#/auth/checkin",
+        "router": {
+          "name": "auth-checkin",
+          "fullPath": "/auth/checkin",
+          "params": {},
+          "matched": [
+            "auth",
+            "auth-checkin"
+          ]
+        },
+        "initialSyncGate": true,
+        "unlockGate": false,
+        "railSlot": false,
+        "railBtn": false,
+        "gear": false,
+        "interactiveCount": 3,
+        "interactiveSample": [
+          "重试",
+          "离线进入",
+          "登出用户"
+        ],
+        "bodyText": "拉取失败：登录已过期，请重新登录 重试 离线进入 登出用户",
+        "loadingText": false,
+        "emptyState": false,
+        "tableCount": 0,
+        "errorLogLen": 0,
+        "errorLog": [],
+        "offlineEnterBtn": true
+      },
+      "console": [
+        "log-error: Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "error: AxiosError: Request failed with status code 401\n    at He (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/axios@1.20.0_debug@4.4.3_supports-color@10.2.2__supports-color@10.2.2-fm2qWOBP.js:1:24206)\n    at XMLHttpRequest.b (file:///home/nathan/Project/nao-todo/apps/deskto",
+        "error: [sync] 拉取被拒绝：登录已过期（401/403） 401"
+      ]
+    },
+    "G": {
+      "online": true,
+      "snap": {
+        "at": "2026-09-13T13:49:06.967Z",
+        "label": "G-online",
+        "hash": "#/tasks/all/table",
+        "router": {
+          "name": "tasks-built-in-project-main",
+          "fullPath": "/tasks/all/table",
+          "params": {
+            "projectId": "all",
+            "viewType": "table"
+          },
+          "matched": [
+            "index",
+            "tasks",
+            "tasks-built-in-project",
+            "tasks-built-in-project-main"
+          ]
+        },
+        "initialSyncGate": false,
+        "unlockGate": false,
+        "railSlot": true,
+        "railBtn": true,
+        "gear": true,
+        "interactiveCount": 13,
+        "interactiveSample": [
+          "BUTTON",
+          "BUTTON",
+          "清单\n0",
+          "BUTTON",
+          "BUTTON",
+          "标签\n0",
+          "BUTTON",
+          "BUTTON"
+        ],
+        "bodyText": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 还没有任务，开始创建一个吧 新增待办",
+        "loadingText": false,
+        "emptyState": true,
+        "tableCount": 0,
+        "errorLogLen": 0,
+        "errorLog": [],
+        "offlineEnterBtn": false
+      },
+      "themes": [
+        {
+          "v": "0",
+          "rail": true,
+          "inter": 13,
+          "loading": false
+        },
+        {
+          "v": "1",
+          "rail": true,
+          "inter": 13,
+          "loading": false
+        }
+      ],
+      "events": {
+        "console": [
+          {
+            "t": 1789307338956,
+            "level": "info",
+            "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
+          },
+          {
+            "t": 1789307338956,
+            "level": "info",
+            "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
+          }
+        ],
+        "rejections": [],
+        "errors": []
+      }
+    },
+    "PII": {
+      "len": 0,
+      "hasEmail": false,
+      "hasBearer": false,
+      "hasJwt": false,
+      "sample": []
+    }
+  }
+}

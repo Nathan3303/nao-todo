@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto'
-import { beforeEach, describe, expect, it } from 'vite-plus/test'
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { Requester } from '@nao-todo/shared'
 import { cryptoService } from '../../persistence-local/crypto/crypto-service'
 import { localDatabase } from '../../persistence-local/db/local-database'
@@ -882,8 +882,9 @@ describe('SyncService 运行级语义（SHELL-03：DEF-SYNC-01/02/03、BC-3a/b/c
         expect(result.errors.length).toBe(2)
         const state = syncStatus.get()
         expect(state.errorCount).toBe(2)
-        // 推送失败语义不变：未确认/失败项 markFailed 生效
-        expect(state.failedCount).toBe(1)
+        // SHELL-06 C-38：网络类失败不消耗重试额度 ⇒ failedCount 不增，进入暂停态
+        expect(state.failedCount).toBe(0)
+        expect(state.paused).toBe(true)
     })
 
     it('BC-3c：仅推送失败 ⇒ lastError 为推送文案（现状语义不回退）', async () => {
@@ -904,25 +905,30 @@ describe('SyncService 运行级语义（SHELL-03：DEF-SYNC-01/02/03、BC-3a/b/c
         expect(syncStatus.get().syncing).toBe(false)
     })
 
-    it('BC-6/DEF-SYNC-02：全部队列项重试超限 ⇒ 运行必终结且 ok=false（不得假成功）', async () => {
+    it('BC-6/SHELL-06：退避未到期 ⇒ 运行必终结且不误发；start 重置退避后可重试', async () => {
         const queueId = await seedDirtyTask('超限任务')
         for (let i = 0; i < 5; i += 1) await syncTracker.markFailed(queueId)
-        const service = new SyncService(
-            mockRequester((url: string) =>
+        expect(await syncTracker.countPaused()).toBe(1)
+        const service = new SyncService({
+            post: async (url: string) =>
                 url === '/sync/pull'
                     ? { data: { data: {} }, serverTime: Date.now() }
-                    : { code: 'ERR_NETWORK' }
-            )
-        )
+                    : { code: 'ERR_NETWORK' },
+            get: async () => ({ data: {} }),
+            put: async () => ({ data: {} }),
+            delete: async () => ({ data: {} })
+        } as unknown as Requester)
+        // 退避未到期：不发请求，运行正常终结（不再“重试次数已达上限”永久失败）
         const pushResult = await service.pushAll()
-        expect(pushResult.ok).toBe(false)
-        expect(pushResult.lastError).toBe('推送失败：重试次数已达上限')
+        expect(pushResult.ok).toBe(true)
         expect(syncStatus.get().syncing).toBe(false)
         expect(await syncTracker.countDirty()).toBe(1)
-        // 冷启动路径（start）同样不得假成功
+
+        // 冷启动路径：start 先重置退避 ⇒ 重试（网络失败 ⇒ ok=false 且暂停，非永久失败）
         const startResult = await service.start()
         expect(startResult.ok).toBe(false)
         expect(syncStatus.get().syncing).toBe(false)
+        expect(syncStatus.get().paused).toBe(true)
     })
 
     it('Q3：推送响应未确认实体 ⇒ 运行失败且同阶段只上报一次（队列语义不变）', async () => {
@@ -958,6 +964,114 @@ describe('SyncService 运行级语义（SHELL-03：DEF-SYNC-01/02/03、BC-3a/b/c
         const after = syncStatus.get().lastSyncAt
         expect(after).toBeTruthy()
         expect(after).not.toBe(before)
+    })
+    /* —— SHELL-06 T1：失败三分类 / nextAttemptAt 退避 / 恢复回传 —— */
+
+    const echoResultsRequester = (isDown: () => boolean): Requester =>
+        ({
+            post: async (url: string, body: unknown) => {
+                if (url === '/sync/pull') return { data: { data: {} }, serverTime: Date.now() }
+                if (isDown()) return { code: 'ERR_NETWORK' }
+                const payload = body as Record<string, unknown>
+                const rows = Object.entries(payload).filter(([key]) => key !== 'deletions')
+                const results = rows.flatMap(([table, value]) =>
+                    (value as { id: string }[]).map((row) => ({ table, id: row.id }))
+                )
+                const deletions = (payload.deletions as { table: string; id: string }[]) ?? []
+                return {
+                    data: {
+                        data: {
+                            results: [
+                                ...results,
+                                ...deletions.map((item) => ({ table: item.table, id: item.id }))
+                            ]
+                        },
+                        serverTime: Date.now()
+                    }
+                }
+            },
+            get: async () => ({ data: {} }),
+            put: async () => ({ data: {} }),
+            delete: async () => ({ data: {} })
+        }) as unknown as Requester
+
+    it('SHELL-06 C-38/C-40：网络类失败暂停且不消耗重试额度；resumeBackfill 恢复后自动补传', async () => {
+        await seedDirtyTask('离线任务A')
+        let down = true
+        const service = new SyncService(echoResultsRequester(() => down))
+
+        const failed = await service.pushAll()
+        expect(failed.ok).toBe(false)
+        expect(failed.lastError).toBe('推送失败：网络错误')
+        const state = syncStatus.get()
+        expect(state.paused).toBe(true)
+        expect(state.pausedReason).toBe('offline')
+        // 网络类不写 item、不累加任何计数（C-38）
+        const [queued] = await syncTracker.listDirty()
+        expect(queued!.attempts ?? 0).toBe(0)
+        expect(queued!.retryCount).toBe(0)
+        expect(queued!.nextAttemptAt ?? null).toBeNull()
+        expect(await syncTracker.countPaused()).toBe(0)
+
+        // 网络恢复：resumeBackfill 清暂停 + 重推成功出队
+        down = false
+        const recovered = await service.resumeBackfill()
+        expect(recovered.ok).toBe(true)
+        expect(await syncTracker.countDirty()).toBe(0)
+        expect(syncStatus.get().paused).toBe(false)
+    })
+
+    it('SHELL-06-DEF-01：网络暂停后仍安排回传定时器；成功后清除且不叠加', async () => {
+        await seedDirtyTask('定时器任务')
+        let down = true
+        const service = new SyncService(echoResultsRequester(() => down))
+        const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout')
+        const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout')
+        try {
+            await service.pushAll()
+            const delays = setTimeoutSpy.mock.calls
+                .map((call) => call[1])
+                .filter((delay): delay is number => typeof delay === 'number')
+            // 暂停期安排了到期 tick（延时在 (0, 120000]），而非直接 return 不安排
+            expect(delays.some((delay) => delay > 0 && delay <= 120000)).toBe(true)
+
+            down = false
+            await service.resumeBackfill()
+            expect(await syncTracker.countDirty()).toBe(0)
+            expect(syncStatus.get().paused).toBe(false)
+            // 成功/清空后清理定时器（单一定时器、可重排）
+            expect(clearTimeoutSpy).toHaveBeenCalled()
+        } finally {
+            setTimeoutSpy.mockRestore()
+            clearTimeoutSpy.mockRestore()
+        }
+    })
+
+    it('SHELL-06 C-39/C-42：业务类失败退避计数（含删除项），resetFailed 恢复入列', async () => {
+        await seedDirtyTask('业务失败A')
+        await syncTracker.markDirty('tasks', 't-deleted', 'delete', new Date().toISOString())
+        const service = new SyncService(
+            mockRequester((url: string) =>
+                url === '/sync/pull'
+                    ? { data: { data: {} }, serverTime: Date.now() }
+                    : { data: { results: [] }, serverTime: Date.now() }
+            )
+        )
+        const result = await service.pushAll()
+        expect(result.ok).toBe(false)
+        expect(result.lastError).toBe('推送失败：部分数据未确认')
+
+        const dirty = await syncTracker.listDirty()
+        expect(dirty.length).toBe(2)
+        expect(dirty.every((item) => (item.attempts ?? 0) === 1)).toBe(true)
+        expect(dirty.every((item) => !!item.nextAttemptAt)).toBe(true)
+        expect(dirty.every((item) => item.lastErrorClass === 'business')).toBe(true)
+        expect(await syncTracker.countPaused()).toBe(2)
+
+        // 触顶恢复：resetFailed 清退避 ⇒ 重新入列（含删除项）
+        await syncTracker.resetFailed()
+        expect(await syncTracker.countPaused()).toBe(0)
+        expect(await syncTracker.countDue()).toBe(2)
     })
 })
 describe('SyncService 推送载荷计数字段/排序字段（U-C4 回归）', () => {

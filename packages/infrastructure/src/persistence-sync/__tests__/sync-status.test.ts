@@ -82,4 +82,44 @@ describe('SyncStatus 运行级语义', () => {
         status.endRun()
         expect(status.get().syncing).toBe(false)
     })
+
+    it('SHELL-06 C-41：paused 跨运行保持，setPaused/clearPaused 生效', () => {
+        const status = new SyncStatus()
+        expect(status.get().paused).toBe(false)
+        expect(status.get().pausedReason).toBeUndefined()
+
+        status.setPaused('offline')
+        expect(status.get().paused).toBe(true)
+        expect(status.get().pausedReason).toBe('offline')
+
+        // 跨运行状态：beginRun/endRun 不改动
+        status.beginRun('pull')
+        status.endRun()
+        expect(status.get().paused).toBe(true)
+
+        status.setPaused('over-limit')
+        expect(status.get().pausedReason).toBe('over-limit')
+
+        status.clearPaused()
+        expect(status.get().paused).toBe(false)
+        expect(status.get().pausedReason).toBeUndefined()
+    })
+
+    it('C-34：markCredentialFailure 运行内累积、endRun 落定、下次运行重置', () => {
+        const status = new SyncStatus()
+        status.beginRun('pull')
+        status.markCredentialFailure()
+        status.noteRunError('pull', '登录已过期，请重新登录')
+        const result = status.endRun()
+        expect(result.credentialFailure).toBe(true)
+        expect(status.get().credentialFailure).toBe(true)
+        // credentialFailure 为追加字段，不改变既有判定
+        expect(result.ok).toBe(false)
+        expect(result.phase).toBe('pull')
+
+        status.beginRun('push')
+        const clean = status.endRun()
+        expect(clean.credentialFailure).toBe(false)
+        expect(status.get().credentialFailure).toBe(false)
+    })
 })

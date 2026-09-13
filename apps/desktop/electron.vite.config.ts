@@ -13,6 +13,11 @@ export default defineConfig({
     },
     renderer: {
         resolve: {
+            // SHELL-05 C-36：桌面渲染层复用 webapp 源码（@ → apps/web/src），
+            // 必须保证共享运行时依赖单物理实例；否则 vue-router 双实例 →
+            // AppRoot 的 useRouter() 返回 undefined（H6）。
+            // 显式排除 nue-ui：桌面 1.10.58 / web 1.11.0 双版本为 SHELL-02 已裁决行为，不得去重。
+            dedupe: ['vue', 'vue-router', 'pinia'],
             alias: [
                 // 注意顺序：@/hooks 必须排在 @ 之前，
                 // 否则前缀匹配会把 @/hooks 解析到 webapp 的 hooks（远程装配）

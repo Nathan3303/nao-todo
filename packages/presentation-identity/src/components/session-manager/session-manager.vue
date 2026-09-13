@@ -2,7 +2,9 @@
 import { t, throttle } from '@nao-todo/shared'
 import type { UserSessionValueObject, UserUseCase } from '@nao-todo/domain-identity'
 import { NueConfirm, NueMessage } from 'nue-ui'
+import { storeToRefs } from 'pinia'
 import { onMounted, ref } from 'vue'
+import { useUserStore } from '../../stores'
 
 defineOptions({ name: 'UserSessionManager' })
 const props = defineProps<{ userUseCase: UserUseCase }>()
@@ -10,6 +12,9 @@ const props = defineProps<{ userUseCase: UserUseCase }>()
 // @states
 const sessions = ref<UserSessionValueObject[]>([])
 const loading = ref(false)
+// SHELL-06 G13：离线（profile 缺失）时列表不可用 ⇒ 显示「需联网」占位，不弹 toast 噪声
+const needsNetwork = ref(false)
+const { profile } = storeToRefs(useUserStore())
 
 /**
  * 加载会话列表
@@ -19,9 +24,15 @@ const loadSessions = async () => {
     const [list, err] = await props.userUseCase.loadSessions()
     loading.value = false
     if (err !== null) {
+        // 离线无 profile：显示占位而非 toast 噪声（不阻塞、不打断）
+        if (!profile.value) {
+            needsNetwork.value = true
+            return
+        }
         NueMessage.error(t('settings.sessionLoadFailed'))
         return
     }
+    needsNetwork.value = false
     sessions.value = list ?? []
 }
 onMounted(loadSessions)
@@ -122,6 +133,7 @@ const handleSignOutOtherSessions = async () => {
                 {{ t('settings.sessionLoading') }}
             </nue-text>
         </nue-div>
+        <nue-empty v-else-if="needsNetwork" :description="t('settings.sessionNeedsNetwork')" />
         <nue-empty v-else-if="!sessions.length" :description="t('settings.sessionEmpty')" />
         <nue-div v-else theme="session-list" vertical gap="0.5rem">
             <nue-div

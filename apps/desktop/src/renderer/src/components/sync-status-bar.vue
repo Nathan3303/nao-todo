@@ -36,7 +36,7 @@ const syncing = computed(() => status.value.syncing || manualSyncing.value)
 const statusTheme = computed(() => {
     if (syncing.value) return ''
     if (status.value.failedCount > 0) return 'is-failed'
-    if (status.value.pendingCount > 0) return 'is-pending'
+    if (status.value.paused || status.value.pendingCount > 0) return 'is-pending'
     return ''
 })
 
@@ -123,7 +123,13 @@ watch(settingsDialogOpen, (visible) => {
                 <li class="sync-panel__row">
                     <nue-text size="xs">{{ lastSyncText }}</nue-text>
                 </li>
-                <li v-if="status.pendingCount > 0" class="sync-panel__row">
+                <!-- SHELL-06 C-41：暂停（离线/超限）显式可见，仅提示不阻断 -->
+                <li v-if="status.paused" class="sync-panel__row is-pending">
+                    <nue-text size="xs">
+                        {{ t('sync.pendingOffline', { count: status.pendingCount }) }}
+                    </nue-text>
+                </li>
+                <li v-else-if="status.pendingCount > 0" class="sync-panel__row">
                     <nue-text size="xs">
                         {{ t('sync.pending', { count: status.pendingCount }) }}
                     </nue-text>
@@ -166,7 +172,7 @@ watch(settingsDialogOpen, (visible) => {
                     :loading="manualSyncing"
                     @click="runManualSync"
                 >
-                    {{ t('sync.syncNow') }}
+                    {{ status.paused ? t('sync.retryNow') : t('sync.syncNow') }}
                 </nue-button>
             </li>
         </nue-dropdown>
@@ -209,6 +215,10 @@ watch(settingsDialogOpen, (visible) => {
 
 .sync-panel__row.is-failed {
     color: var(--nue-error-color-60);
+}
+
+.sync-panel__row.is-pending {
+    color: var(--nue-warning-color-60);
 }
 
 /* 读屏活动区域：视觉隐藏（WCAG sr-only，非 display:none/hidden）；绝对定位脱离 flex 布局 */
