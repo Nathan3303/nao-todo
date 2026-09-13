@@ -21,7 +21,7 @@ const { isDisplayAside, switchDisplayAside, userUseCase } = inject(SETTINGS_VIEW
         </nue-header>
         <nue-main>
             <nue-content fill>
-                <nue-div vertical>
+                <nue-div vertical style="padding: 1rem">
                     <user-language-setter />
                     <nue-divider />
                     <user-theme-setter :user-use-case="userUseCase" />

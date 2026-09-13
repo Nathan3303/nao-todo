@@ -59,7 +59,7 @@ const handleDeactivated = async () => {
         </nue-header>
         <nue-main>
             <nue-content fill>
-                <nue-div vertical>
+                <nue-div vertical style="padding: 1rem">
                     <user-avatar-updater :user-use-case="userUseCase" style="padding: 1rem">
                         <nue-div vertical flex="1" align="start">
                             <nue-div v-if="profile" vertical gap="0.25rem">

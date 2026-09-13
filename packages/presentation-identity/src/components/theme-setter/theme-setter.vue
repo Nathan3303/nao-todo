@@ -108,31 +108,24 @@ const selectTheme = async (mode: ThemeMode) => {
     .nue-div--body {
         flex-direction: column;
         flex-wrap: nowrap;
-        gap: 1rem;
-        margin-top: 0.5rem;
 
         .theme-card {
             position: relative;
             cursor: pointer;
-            overflow: hidden;
             box-sizing: border-box;
-            flex: auto;
-            width: 30%;
-            max-width: 20rem;
-            aspect-ratio: 16/9;
-            border: 2px solid var(--nue-border-color);
+            width: 8rem;
+            aspect-ratio: 16 / 9;
             border-radius: var(--nue-primary-radius);
-            box-shadow: var(--nue-secondary-shadow);
+            overflow: hidden;
 
             &:hover {
-                transform: translateY(-0.25rem);
-                transition: transform var(--nue-animation-duration-short) linear;
+                box-shadow: var(--nue-secondary-shadow);
             }
 
             .preview-image {
                 width: 100%;
                 height: 100%;
-                object-fit: contain;
+                object-fit: fill;
             }
 
             .theme-card__info {
