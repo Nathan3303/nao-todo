@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onUnmounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import App from '@/App.vue'
+import { ROUTER_INJECTION_LOG_PREFIX, reportRouterInjection, resolveRouter } from '@/router-access'
 import UnlockGate from './components/unlock-gate.vue'
 import InitialSyncGate from './components/initial-sync-gate.vue'
 import SyncStatusBar from './components/sync-status-bar.vue'
@@ -16,7 +16,23 @@ import { cryptoService, localSession, syncService, syncTracker } from '@nao-todo
 
 defineOptions({ name: 'AppRoot' })
 
-const router = useRouter()
+// SHELL-05 T1/C-37：实例无关的 router 访问（useRouter 优先，$router 降级）+ 启动自检
+const routerResolution = resolveRouter()
+reportRouterInjection(routerResolution)
+const router = routerResolution.router
+
+/**
+ * 导航入口（onOffline/onSignOut/session-expired 共用）
+ * @description router 不可用时显式报错，不静默（终态推进兜底见 SHELL-05 T2）
+ */
+const navigate = async (target: string): Promise<void> => {
+    if (!router) {
+        console.error(`${ROUTER_INJECTION_LOG_PREFIX} 导航中止：router 不可用`, { target })
+        return
+    }
+    await router.replace(target)
+}
+
 const userStore = useUserStore()
 
 // 本地数据解锁门：解锁完成后才渲染主应用（webapp 复用）
@@ -52,7 +68,7 @@ syncService.setSessionExpiredListener(() => {
     userStore.clearAuthData() // localStorage.clear() → 删除 USER_JWT
     localSession.clear()
     cryptoService.lock()
-    void router.replace('/auth/signin')
+    void navigate('/auth/signin')
 })
 
 /** 初始同步成功（门通过）：路由由来路决定，无需跳转 */
@@ -69,14 +85,14 @@ const onSynced = (): void => {
  */
 const onOffline = async (): Promise<void> => {
     grantOfflineEntry()
-    await router.replace(localStorage.getItem(LAST_VISITED_ROUTE_KEY) || '/tasks')
+    await navigate(localStorage.getItem(LAST_VISITED_ROUTE_KEY) || '/tasks')
     gatePassed.value = true
 }
 
 /** 登出/重新登录（B-1 同源修正：显式跳转，不依赖 checkin 失败“顺带”跳转） */
 const onSignOut = async (): Promise<void> => {
     revokeOfflineEntry() // C-25：登出必须清离线进入授权
-    await router.replace('/auth/signin')
+    await navigate('/auth/signin')
     gatePassed.value = true
 }
 
