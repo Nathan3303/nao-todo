@@ -44,6 +44,8 @@ const zhCN: LocaleMessages = {
     'sync.pending': '待推送 {count}',
     'sync.failed': '失败 {count}',
     'sync.syncNow': '立即同步',
+    'sync.pendingOffline': '有 {count} 项修改待同步（离线，联网后自动同步）',
+    'sync.retryNow': '立即重试',
 
     // Offline identity / gates（SHELL-03）
     'identity.offline': '离线',
@@ -190,6 +192,7 @@ const zhCN: LocaleMessages = {
     'settings.sessionLoading': '正在加载会话列表...',
     'settings.sessionEmpty': '暂无其他登录会话',
     'settings.sessionLoadFailed': '会话列表加载失败',
+    'settings.sessionNeedsNetwork': '需联网查看',
     'settings.sessionCurrent': '当前设备',
     'settings.sessionRegionUnknown': '未知',
     'settings.sessionLoggedAt': '登录时间',

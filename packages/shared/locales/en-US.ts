@@ -45,6 +45,8 @@ const enUS: LocaleMessages = {
     'sync.pending': '{count} pending',
     'sync.failed': '{count} failed',
     'sync.syncNow': 'Sync now',
+    'sync.pendingOffline': '{count} change(s) pending sync (offline, auto-syncs when online)',
+    'sync.retryNow': 'Retry now',
 
     // Offline identity / gates (SHELL-03)
     'identity.offline': 'Offline',
@@ -196,6 +198,7 @@ const enUS: LocaleMessages = {
     'settings.sessionLoading': 'Loading sessions...',
     'settings.sessionEmpty': 'No other signed-in sessions',
     'settings.sessionLoadFailed': 'Failed to load sessions',
+    'settings.sessionNeedsNetwork': 'Requires network',
     'settings.sessionCurrent': 'Current device',
     'settings.sessionRegionUnknown': 'Unknown',
     'settings.sessionLoggedAt': 'Signed in at',

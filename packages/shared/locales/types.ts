@@ -41,6 +41,8 @@ export interface LocaleMessages {
     'sync.pending': string
     'sync.failed': string
     'sync.syncNow': string
+    'sync.pendingOffline': string
+    'sync.retryNow': string
 
     // Offline identity / gates（SHELL-03）
     'identity.offline': string
@@ -185,6 +187,7 @@ export interface LocaleMessages {
     'settings.sessionLoading': string
     'settings.sessionEmpty': string
     'settings.sessionLoadFailed': string
+    'settings.sessionNeedsNetwork': string
     'settings.sessionCurrent': string
     'settings.sessionRegionUnknown': string
     'settings.sessionLoggedAt': string
