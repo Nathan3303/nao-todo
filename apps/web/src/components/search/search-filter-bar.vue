@@ -38,7 +38,7 @@ const emit = defineEmits<{
 // @options 清单：收件箱哨兵（projectId=''）+ 用户清单
 const { avaliableProjects } = storeToRefs(useProjectsStore())
 const projectOptions = computed<{ id: string; name: string }[]>(() => [
-    { id: '', name: '收集箱' },
+    { id: '', name: t('component.taskSelector.inbox') },
     ...avaliableProjects.value.map((project) => ({ id: project.id, name: project.name }))
 ])
 
@@ -73,9 +73,15 @@ const isChecked = (list: string[], id: string) => list.includes(id)
             >
                 <template #trigger="{ trigger, visible }">
                     <nue-button :aria-expanded="visible" @click="trigger($event)" theme="small">
-                        清单
+                        {{ t('search.filter.project') }}
                         <template v-if="selectedProjectIds.length > 0" #append>
-                            <span :aria-label="`已选 ${selectedProjectIds.length} 项`">
+                            <span
+                                :aria-label="
+                                    t('search.filter.selectedCount', {
+                                        count: selectedProjectIds.length
+                                    })
+                                "
+                            >
                                 {{ selectedProjectIds.length }}
                             </span>
                         </template>
@@ -110,9 +116,15 @@ const isChecked = (list: string[], id: string) => list.includes(id)
             >
                 <template #trigger="{ trigger, visible }">
                     <nue-button :aria-expanded="visible" @click="trigger($event)" theme="small">
-                        标签
+                        {{ t('search.filter.tag') }}
                         <template v-if="selectedTagIds.length > 0" #append>
-                            <span :aria-label="`已选 ${selectedTagIds.length} 项`">
+                            <span
+                                :aria-label="
+                                    t('search.filter.selectedCount', {
+                                        count: selectedTagIds.length
+                                    })
+                                "
+                            >
                                 {{ selectedTagIds.length }}
                             </span>
                         </template>
@@ -141,7 +153,7 @@ const isChecked = (list: string[], id: string) => list.includes(id)
                         size="small"
                         disabled
                     >
-                        <span class="filter-option-name">暂无标签</span>
+                        <span class="filter-option-name">{{ t('search.filter.noTags') }}</span>
                     </nue-dropdown-item>
                 </nue-div>
             </nue-dropdown>
@@ -157,9 +169,15 @@ const isChecked = (list: string[], id: string) => list.includes(id)
             >
                 <template #trigger="{ trigger, visible }">
                     <nue-button :aria-expanded="visible" @click="trigger($event)" theme="small">
-                        优先级
+                        {{ t('search.filter.priority') }}
                         <template v-if="selectedPriorities.length > 0" #append>
-                            <span :aria-label="`已选 ${selectedPriorities.length} 项`">
+                            <span
+                                :aria-label="
+                                    t('search.filter.selectedCount', {
+                                        count: selectedPriorities.length
+                                    })
+                                "
+                            >
                                 {{ selectedPriorities.length }}
                             </span>
                         </template>
@@ -188,9 +206,15 @@ const isChecked = (list: string[], id: string) => list.includes(id)
             >
                 <template #trigger="{ trigger, visible }">
                     <nue-button :aria-expanded="visible" @click="trigger($event)" theme="small">
-                        状态
+                        {{ t('search.filter.state') }}
                         <template v-if="selectedStates.length > 0" #append>
-                            <span :aria-label="`已选 ${selectedStates.length} 项`">
+                            <span
+                                :aria-label="
+                                    t('search.filter.selectedCount', {
+                                        count: selectedStates.length
+                                    })
+                                "
+                            >
                                 {{ selectedStates.length }}
                             </span>
                         </template>
@@ -227,7 +251,7 @@ const isChecked = (list: string[], id: string) => list.includes(id)
             class="search-filter-bar__clear"
             @click="emit('clear')"
         >
-            清空筛选
+            {{ t('search.filter.clear') }}
         </nue-button>
     </div>
 </template>

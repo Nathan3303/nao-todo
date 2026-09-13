@@ -145,8 +145,8 @@ const priorityDotOf = (task: SearchRow['task']) => {
 }
 // 优先级可读文案（title，非仅颜色）
 const priorityTitleOf = (task: SearchRow['task']) => {
-    if (task.priority === 'high') return '高优先级'
-    if (task.priority === 'medium') return '中优先级'
+    if (task.priority === 'high') return t('task.priority.high')
+    if (task.priority === 'medium') return t('task.priority.medium')
     return ''
 }
 
@@ -170,7 +170,9 @@ watch(
             <template #error>
                 <nue-div vertical align="center" gap="12px">
                     <nue-text>{{ viewError || error }}</nue-text>
-                    <nue-button theme="primary,small" @click="handleRetry">重试</nue-button>
+                    <nue-button theme="primary,small" @click="handleRetry">
+                        {{ t('common.retry') }}
+                    </nue-button>
                 </nue-div>
             </template>
             <!-- 内容区域 -->
@@ -182,7 +184,7 @@ watch(
                                 :model-value="keyword"
                                 icon="search"
                                 clearable
-                                placeholder="搜索全部任务的名称 / 备注…"
+                                :placeholder="t('search.placeholder')"
                                 @update:model-value="writeKeyword"
                             />
                         </div>
@@ -212,7 +214,7 @@ watch(
                                 size="var(--nue-text-sm)"
                                 class="srch-count"
                             >
-                                找到 {{ resultCount }} 条
+                                {{ t('search.foundCount', { count: resultCount }) }}
                             </nue-text>
                             <nue-text
                                 v-if="enumerating || enumRatePaused"
@@ -222,8 +224,8 @@ watch(
                             >
                                 {{
                                     enumRatePaused
-                                        ? '子任务补拉受限流，稍后自动重试…'
-                                        : '子任务补拉中…'
+                                        ? t('search.enumRatePaused')
+                                        : t('search.enumerating')
                                 }}
                             </nue-text>
                             <nue-text
@@ -231,31 +233,33 @@ watch(
                                 size="var(--nue-text-sm)"
                                 class="srch-tip srch-tip--warn"
                             >
-                                部分子任务拉取失败（{{ enumFailures }} 个父任务），再次输入将重试
+                                {{ t('search.enumFailures', { count: enumFailures }) }}
                             </nue-text>
                             <nue-text
                                 v-if="capped"
                                 size="var(--nue-text-sm)"
                                 class="srch-tip srch-tip--warn"
                             >
-                                任务超过 5000 条，仅搜索前 5000 条
+                                {{ t('search.capped') }}
                             </nue-text>
                             <nue-text
                                 v-if="error && ready"
                                 size="var(--nue-text-sm)"
                                 class="srch-tip srch-tip--warn"
                             >
-                                刷新失败，仍在展示上次结果
-                                <nue-button theme="small,ghost" @click="retry">重试</nue-button>
+                                {{ t('search.refreshFailed') }}
+                                <nue-button theme="small,ghost" @click="retry">
+                                    {{ t('common.retry') }}
+                                </nue-button>
                             </nue-text>
                             <nue-text
                                 v-if="viewError && ready"
                                 size="var(--nue-text-sm)"
                                 class="srch-tip srch-tip--warn"
                             >
-                                清单/标签加载失败，部分名称可能缺失
+                                {{ t('search.viewLoadFailed') }}
                                 <nue-button theme="small,ghost" @click="retryViewInit">
-                                    重试
+                                    {{ t('common.retry') }}
                                 </nue-button>
                             </nue-text>
                         </nue-div>
@@ -329,25 +333,27 @@ watch(
                         >
                             <template #error>
                                 <nue-div vertical align="center" gap="10px">
-                                    <nue-text size="var(--nue-text-sm)"
-                                        >搜索失败，请稍后重试</nue-text
-                                    >
-                                    <nue-button theme="primary,small" @click="retry"
-                                        >重试</nue-button
-                                    >
+                                    <nue-text size="var(--nue-text-sm)">
+                                        {{ t('search.searchFailed') }}
+                                    </nue-text>
+                                    <nue-button theme="primary,small" @click="retry">
+                                        {{ t('common.retry') }}
+                                    </nue-button>
                                 </nue-div>
                             </template>
                             <template #empty>
                                 <nue-div vertical align="center" gap="10px">
-                                    <nue-text size="var(--nue-text-sm)"
-                                        >未找到与「{{ keyword }}」匹配的任务</nue-text
-                                    >
+                                    <nue-text size="var(--nue-text-sm)">
+                                        {{ t('search.noResult', { keyword }) }}
+                                    </nue-text>
                                     <nue-text
                                         v-if="filterTotalCount > 0"
                                         size="var(--nue-text-xs)"
                                         class="srch-tip"
                                     >
-                                        已应用 {{ filterTotalCount }} 项筛选，可清空后重试
+                                        {{
+                                            t('search.filtersApplied', { count: filterTotalCount })
+                                        }}
                                     </nue-text>
                                     <nue-div align="center" gap="10px">
                                         <nue-button
@@ -355,11 +361,11 @@ watch(
                                             theme="small,ghost"
                                             @click="onClearFilters"
                                         >
-                                            清空筛选
+                                            {{ t('search.clearFilters') }}
                                         </nue-button>
-                                        <nue-button theme="small,primary" @click="onClear"
-                                            >清空关键词</nue-button
-                                        >
+                                        <nue-button theme="small,primary" @click="onClear">
+                                            {{ t('search.clearKeyword') }}
+                                        </nue-button>
                                     </nue-div>
                                 </nue-div>
                             </template>
@@ -445,7 +451,11 @@ watch(
                                         <task-basic-info
                                             v-if="row.task.projectId"
                                             no-icon
-                                            :text="`清单：${getProjectName(row.task.projectId)}`"
+                                            :text="
+                                                t('search.projectName', {
+                                                    name: getProjectName(row.task.projectId)
+                                                })
+                                            "
                                         />
                                         <task-tag-bar
                                             v-if="row.task.tags.length"

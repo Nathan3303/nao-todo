@@ -86,6 +86,27 @@ export interface LocaleMessages {
     'search.hitInDescription': string
     'search.state.deleted': string
     'search.state.givenUp': string
+    'search.placeholder': string
+    'search.foundCount': string
+    'search.enumerating': string
+    'search.enumRatePaused': string
+    'search.enumFailures': string
+    'search.capped': string
+    'search.refreshFailed': string
+    'search.viewLoadFailed': string
+    'search.searchFailed': string
+    'search.noResult': string
+    'search.filtersApplied': string
+    'search.clearFilters': string
+    'search.clearKeyword': string
+    'search.projectName': string
+    'search.filter.project': string
+    'search.filter.tag': string
+    'search.filter.priority': string
+    'search.filter.state': string
+    'search.filter.noTags': string
+    'search.filter.selectedCount': string
+    'search.filter.clear': string
 
     // Settings
     'settings.profile': string
