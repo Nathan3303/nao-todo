@@ -77,6 +77,12 @@ export interface LocaleMessages {
     'common.reminder': string
     'common.snooze': string
 
+    // Search（SEA-04）
+    'search.emptyHint': string
+    'search.history.title': string
+    'search.history.clear': string
+    'search.history.remove': string
+
     // Settings
     'settings.profile': string
     'settings.password': string

@@ -80,6 +80,12 @@ const zhCN: LocaleMessages = {
     'common.reminder': '待办任务提醒',
     'common.snooze': '稍后提醒',
 
+    // Search（SEA-04）
+    'search.emptyHint': '输入关键词，查找全部任务的名称与备注',
+    'search.history.title': '最近搜索',
+    'search.history.clear': '清除',
+    'search.history.remove': '移除',
+
     // Settings
     'settings.profile': '用户信息',
     'settings.password': '密码修改',

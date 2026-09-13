@@ -81,6 +81,12 @@ const enUS: LocaleMessages = {
     'common.reminder': 'To-Do Task Reminder',
     'common.snooze': 'Snooze Reminder',
 
+    // Search（SEA-04）
+    'search.emptyHint': 'Type a keyword to search task names and notes',
+    'search.history.title': 'Recent searches',
+    'search.history.clear': 'Clear',
+    'search.history.remove': 'Remove',
+
     // Settings
     'settings.profile': 'User Profile',
     'settings.password': 'Change Password',
