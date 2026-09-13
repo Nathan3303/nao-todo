@@ -13,7 +13,13 @@ import { safeReplace, safeReplaceDeepLink } from '@/safe-navigation'
 import { useUserStore } from '@nao-todo/presentation-identity'
 import { TaskReminderDialog, useStoreInvalidationHub } from '@nao-todo/presentation/task'
 import { useDialogManager } from '@nao-todo/shared'
-import { cryptoService, localSession, syncService, syncTracker } from '@nao-todo/infrastructure'
+import {
+    cryptoService,
+    localSession,
+    registerBackfillTriggers,
+    syncService,
+    syncTracker
+} from '@nao-todo/infrastructure'
 
 defineOptions({ name: 'AppRoot' })
 
@@ -107,12 +113,18 @@ const onSignOut = async (): Promise<void> => {
     }
 }
 
+// SHELL-06 C-40/C-43：回传触发（online / 前台恢复）仅作触发，不作鉴权；卸载清理防重复注册
+const unregisterBackfillTriggers = registerBackfillTriggers(syncService)
+
 watch(unlocked, (value) => {
     if (value) {
         startReminder()
     }
 })
-onUnmounted(() => stopReminder())
+onUnmounted(() => {
+    stopReminder()
+    unregisterBackfillTriggers()
+})
 </script>
 
 <template>

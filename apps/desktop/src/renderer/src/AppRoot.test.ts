@@ -50,6 +50,8 @@ vi.mock('@nao-todo/presentation/task', () => ({
 }))
 
 vi.mock('@nao-todo/infrastructure', () => ({
+    // SHELL-06：装配层回传触发注册（测试桩；返回卸载函数）
+    registerBackfillTriggers: () => () => {},
     cryptoService: { lock: mocks.lock, isUnlocked: true },
     deletionService: { checkAndCleanExpired: vi.fn() },
     initSnowflakeEpoch: vi.fn(),

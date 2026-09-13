@@ -40,6 +40,10 @@ export interface SyncStatusState {
     errorCount: number
     /** 最近一次运行是否发生凭证类失败（10041）；纯追加字段（C-34） */
     credentialFailure: boolean
+    /** 是否处于待同步暂停态（SHELL-06 C-41；离线/超限） */
+    paused: boolean
+    /** 暂停原因（可选） */
+    pausedReason?: 'offline' | 'over-limit'
 }
 
 export class SyncStatus {
@@ -51,7 +55,8 @@ export class SyncStatus {
         lastError: null,
         errors: [],
         errorCount: 0,
-        credentialFailure: false
+        credentialFailure: false,
+        paused: false
     }
 
     private listeners = new Set<() => void>()
@@ -106,6 +111,18 @@ export class SyncStatus {
      */
     markCredentialFailure(): void {
         this.runCredentialFailure = true
+    }
+
+    /**
+     * 标记暂停（离线/超限）；跨运行状态，beginRun/endRun 不改动（C-45）
+     */
+    setPaused(reason: 'offline' | 'over-limit'): void {
+        this.set({ paused: true, pausedReason: reason })
+    }
+
+    /** 清除暂停态（恢复回传/触顶恢复） */
+    clearPaused(): void {
+        this.set({ paused: false, pausedReason: undefined })
     }
 
     /**

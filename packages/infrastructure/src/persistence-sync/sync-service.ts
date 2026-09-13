@@ -7,7 +7,7 @@
  */
 import { getRequesterImpl, type Requester } from '@nao-todo/shared'
 import { getJWTFromLocalStorage } from '../persistence-go/utils'
-import { localDatabase } from '../persistence-local/db/local-database'
+import { localDatabase, type SyncQueueRecord } from '../persistence-local/db/local-database'
 import { localSession } from '../persistence-local/session/local-session'
 import {
     projectEntityToRecord,
@@ -39,6 +39,7 @@ import { pomodoroRecordRes2Entity, pomodoroRes2Entity } from '../persistence-go/
 import { setServerTimeOffset } from './sync-config'
 import { syncTracker } from './sync-tracker'
 import { syncStatus, type SyncPhase, type SyncRunResult } from './sync-status'
+import { backoffDelayMs, classifyPushFailure, isRetryDue, PUSH_BACKOFF_MAX_MS } from './sync-retry'
 import { isNotDeleted } from '../persistence-local/utils'
 
 // ---------------------------------------------------------------------------
@@ -242,8 +243,13 @@ const PULL_LIMIT = 200
  */
 const PULL_BACKTRACK_MS = 1000
 const PUSH_DEBOUNCE_MS = 2000
-/** 单实体推送失败重试上限（超限暂停推送，防离线无限重试） */
-const MAX_PUSH_RETRY = 5
+/** 业务/数据类退避上限（毫秒；与 sync-retry 同源，C-39） */
+const PUSH_RETRY_MAX_DELAY_MS = PUSH_BACKOFF_MAX_MS
+/** 队列上限：单表 1000 / 总量 2000（SHELL-06 C-41；仅提示不阻断） */
+const QUEUE_LIMIT_PER_TABLE = 1000
+const QUEUE_LIMIT_TOTAL = 2000
+/** 条件退避定时基础间隔（毫秒，5s 起） */
+const BACKFILL_TICK_MS = 5000
 
 // ---------------------------------------------------------------------------
 // 错误文案（C-12 家族约束：仅三种前缀；禁拼接原始异常/URL）
@@ -255,7 +261,6 @@ const ERR_PUSH_EXPIRED = '推送失败：登录已过期，请重新登录'
 const ERR_PUSH_NETWORK = '推送失败：网络错误'
 const ERR_PUSH_DATA = '推送失败：数据异常'
 const ERR_PUSH_UNCONFIRMED = '推送失败：部分数据未确认'
-const ERR_PUSH_RETRY_EXCEEDED = '推送失败：重试次数已达上限'
 const ERR_SESSION_EXPIRED = '登录已过期，请重新登录'
 
 /**
@@ -278,6 +283,15 @@ const rewindIsoCursor = (at: string, deltaMs: number): string => {
 export class SyncService {
     /** 变更后 2s 防抖推送（同实体重复写合并为最新，见 data-sync-plan.md §4.2） */
     private pushTimer: ReturnType<typeof setTimeout> | null = null
+
+    /** 网络类失败暂停截止时间（ms epoch；SHELL-06 C-38，网络类不写 item） */
+    private pausedUntil = 0
+
+    /** 条件退避定时器（仅有待推送/暂停项时存在；C-40 有界且可停） */
+    private backfillTimer: ReturnType<typeof setTimeout> | null = null
+
+    /** 退避定时当前间隔索引（成功/清空清零） */
+    private backfillLevel = 0
 
     /** 测试可注入 mock；生产不注入则每次动态取全局 requester（避免模块加载时序捕获到 emptyRequester） */
     private readonly injectedRequester: Requester | null
@@ -367,6 +381,9 @@ export class SyncService {
                 // 注销反悔期：deletionSchedules 有调度记录则跳过启动
                 const schedule = await localDatabase.deletionSchedules.get(userId)
                 if (schedule) return
+                // SHELL-06 C-42/G6：启动先重置退避/暂停（含删除项），避免触顶使 start 恒失败
+                this.resumeBackfillState()
+                await syncTracker.resetFailed(userId)
                 await this.pullAllInner()
                 await this.pushAllInner()
             })
@@ -587,124 +604,158 @@ export class SyncService {
         const userId = this.currentUserId()
         if (!userId) return
         const queue = await syncTracker.listDirty(userId)
-        if (queue.length === 0) return
-
-        const pushBody: Record<string, Record<string, unknown>[]> = {}
-        const deletions: { table: string; id: string }[] = []
-        // 发送前快照各实体 localUpdatedAt：确认后仅当队列项未被推送期间的新修改覆盖才移除，
-        // 否则保留下轮重推，避免本地修改被误删丢失（见审查报告缺陷 2）
-        const snapshots = new Map<string, string>()
-        for (const item of queue) {
-            // 重试上限：retryCount 超限暂停推送（避免离线时无限重试堆积请求），状态经 SyncStatus 暴露
-            if (item.retryCount >= MAX_PUSH_RETRY) continue
-            const config = SYNC_TABLES.find((c) => c.table === item.table)
-            if (!config) {
-                // 不可达防御（与写队列同常量源）：仅诊断，归因并入本阶段同一错误上报（见 ADR A-3）
-                console.error('[sync] 推送队列项缺少表配置', item.table)
-                continue
-            }
-            snapshots.set(`${item.table}:${item.entityId}`, item.localUpdatedAt)
-            const record = await this.tableOf(config).get(item.entityId)
-            if (!record) {
-                // 本地记录已不存在（物理清理）：按删除推送兜底
-                deletions.push({ table: item.table, id: item.entityId })
-                continue
-            }
-            if (item.action === 'delete') {
-                deletions.push({ table: item.table, id: item.entityId })
-                continue
-            }
-            const entity = await config.recordToEntity(record)
-            const target = (pushBody[item.table] ??= [])
-            target.push({ id: item.entityId, ...config.entityToPush(entity) })
-        }
-        if (Object.keys(pushBody).length === 0 && deletions.length === 0) {
-            // 队列非空但无可推送内容（全部重试超限 / 缺表配置不可达防御）：
-            // 必须上报运行错误，否则 syncing 卡死且门读到 null ⇒ 假成功（DEF-SYNC-02 / BC-6 / ADR A-3）
-            syncStatus.noteRunError('push', ERR_PUSH_RETRY_EXCEEDED)
-            return
-        }
-
-        console.log(
-            '[sync] 推送请求 /sync/push 样本',
-            JSON.stringify({
-                firstItem: Object.values(pushBody)[0]?.[0] ?? null,
-                deletions
-            })
-        )
-        let response
         try {
-            response = await this.requester.post(
-                '/sync/push',
-                { ...pushBody, deletions },
-                { headers: this.authHeaders() }
+            if (queue.length === 0) return
+            const nowMs = Date.now()
+            // SHELL-06 C-38/C-39：网络暂停期不发起；退避未到期项跳过（旧记录无 nextAttemptAt 视为可推）
+            const dueQueue =
+                this.pausedUntil > nowMs ? [] : queue.filter((item) => isRetryDue(item, nowMs))
+            if (dueQueue.length === 0) return
+
+            const pushBody: Record<string, Record<string, unknown>[]> = {}
+            const deletions: { table: string; id: string }[] = []
+            // 发送前快照各实体 localUpdatedAt：确认后仅当队列项未被推送期间的新修改覆盖才移除，
+            // 否则保留下轮重推，避免本地修改被误删丢失（见审查报告缺陷 2）
+            const snapshots = new Map<string, string>()
+            for (const item of dueQueue) {
+                const config = SYNC_TABLES.find((c) => c.table === item.table)
+                if (!config) {
+                    // 不可达防御（与写队列同常量源）：仅诊断，归因并入本阶段同一错误上报（见 ADR A-3）
+                    console.error('[sync] 推送队列项缺少表配置', item.table)
+                    continue
+                }
+                snapshots.set(`${item.table}:${item.entityId}`, item.localUpdatedAt)
+                const record = await this.tableOf(config).get(item.entityId)
+                if (!record) {
+                    // 本地记录已不存在（物理清理）：按删除推送兜底
+                    deletions.push({ table: item.table, id: item.entityId })
+                    continue
+                }
+                if (item.action === 'delete') {
+                    deletions.push({ table: item.table, id: item.entityId })
+                    continue
+                }
+                const entity = await config.recordToEntity(record)
+                const target = (pushBody[item.table] ??= [])
+                target.push({ id: item.entityId, ...config.entityToPush(entity) })
+            }
+            if (Object.keys(pushBody).length === 0 && deletions.length === 0) {
+                // 到期项均缺表配置（不可达防御）：必须上报运行错误，否则 syncing 卡死且门读到 null ⇒ 假成功
+                syncStatus.noteRunError('push', ERR_PUSH_DATA)
+                return
+            }
+
+            console.log(
+                '[sync] 推送请求 /sync/push 样本',
+                JSON.stringify({
+                    firstItem: Object.values(pushBody)[0]?.[0] ?? null,
+                    deletions
+                })
             )
-        } catch (err) {
-            // HTTP 4xx/5xx：区分鉴权失败（不累加 retryCount，避免推送被 5 次上限永久暂停）
-            const status = (err as { response?: { status?: number } })?.response?.status
-            if (status === 401 || status === 403) {
-                console.error('[sync] 推送被拒绝：登录已过期（401/403）', status)
-                syncStatus.noteRunError('push', ERR_PUSH_EXPIRED)
-            } else {
-                console.error('[sync] 推送请求失败（网络/HTTP 错误）', err)
-                for (const item of queue) {
+            let response
+            try {
+                response = await this.requester.post(
+                    '/sync/push',
+                    { ...pushBody, deletions },
+                    { headers: this.authHeaders() }
+                )
+            } catch (err) {
+                // SHELL-06 C-38：三分类 —— 凭证（401/403）维持会话失效；网络类暂停不计数；其余业务退避
+                const status = (err as { response?: { status?: number } })?.response?.status
+                const errorClass = classifyPushFailure({ httpStatus: status })
+                if (errorClass === 'credential') {
+                    console.error('[sync] 推送被拒绝：登录已过期（401/403）', status)
+                    syncStatus.noteRunError('push', ERR_PUSH_EXPIRED)
+                } else if (errorClass === 'network') {
+                    console.error('[sync] 推送请求失败（网络/HTTP 错误）', err)
+                    this.pauseForNetworkFailure()
+                    syncStatus.noteRunError('push', ERR_PUSH_NETWORK)
+                } else {
+                    console.error('[sync] 推送请求失败（业务/数据错误）', err)
+                    for (const item of dueQueue) {
+                        if (snapshots.has(`${item.table}:${item.entityId}`)) {
+                            await syncTracker.markBusinessFailure(
+                                item.id,
+                                this.businessNextAttemptAt(item)
+                            )
+                        }
+                    }
+                    syncStatus.noteRunError('push', ERR_PUSH_DATA)
+                }
+                return
+            }
+            // 归一化网络错误检测（断网/超时 resolve 场景，见审查报告缺陷 1）
+            const raw = response as { code?: unknown; data?: unknown }
+            // 业务码 10041（用户凭证验证失败）：HTTP 可能仍为 200，须在归一化检测前识别
+            const dataRaw = raw?.data as { code?: unknown } | undefined
+            if (this.isSessionExpiredCode(dataRaw?.code)) {
+                console.error('[sync] 推送被拒绝：用户凭证验证失败（10041）')
+                syncStatus.markCredentialFailure()
+                this.notifySessionExpired()
+                syncStatus.noteRunError('push', ERR_SESSION_EXPIRED)
+                return
+            }
+            if (typeof raw?.code === 'string') {
+                // C-38：归一化断网/超时 ⇒ 暂停，不消耗重试额度（不 markFailed）
+                console.error('[sync] 推送归一化错误（断网/超时）', raw?.code)
+                this.pauseForNetworkFailure()
+                syncStatus.noteRunError('push', ERR_PUSH_NETWORK)
+                return
+            }
+            const data =
+                (raw?.data as { data?: { results?: PushResult[] }; serverTime?: number }) ?? {}
+            console.log('[sync] 推送响应', JSON.stringify(response?.data))
+            this.calibrateServerTime((data as { serverTime?: number }).serverTime)
+            const results = data.data?.results ?? []
+            const pushed = new Set(results.map((r) => `${r.table}:${r.id}`))
+            let unconfirmed = false
+            for (const item of dueQueue) {
+                if (pushed.has(`${item.table}:${item.entityId}`)) {
+                    const snapshot = snapshots.get(`${item.table}:${item.entityId}`)
+                    // 推送期间本地对同一实体有新修改（localUpdatedAt 已变化）：保留队列项下轮重推，防止本地修改丢失
+                    const current = await localDatabase.syncQueue.get(item.id)
+                    if (current && snapshot !== undefined && current.localUpdatedAt === snapshot) {
+                        await syncTracker.removeQueued(item.table, item.entityId)
+                    }
+                } else {
+                    // 响应中无该实体：后端拒绝或字段不匹配 ⇒ 业务类退避（C-38/C-39）
                     if (snapshots.has(`${item.table}:${item.entityId}`)) {
-                        await syncTracker.markFailed(item.id)
+                        console.warn('[sync] 推送未确认的实体', {
+                            table: item.table,
+                            id: item.entityId
+                        })
+                        await syncTracker.markBusinessFailure(
+                            item.id,
+                            this.businessNextAttemptAt(item)
+                        )
+                        unconfirmed = true
                     }
                 }
-                syncStatus.noteRunError('push', ERR_PUSH_NETWORK)
             }
-            return
-        }
-        // 归一化网络错误检测（断网/超时 resolve 场景，见审查报告缺陷 1）
-        const raw = response as { code?: unknown; data?: unknown }
-        // 业务码 10041（用户凭证验证失败）：HTTP 可能仍为 200，须在归一化检测前识别
-        const dataRaw = raw?.data as { code?: unknown } | undefined
-        if (this.isSessionExpiredCode(dataRaw?.code)) {
-            console.error('[sync] 推送被拒绝：用户凭证验证失败（10041）')
-            syncStatus.markCredentialFailure()
-            this.notifySessionExpired()
-            syncStatus.noteRunError('push', ERR_SESSION_EXPIRED)
-            return
-        }
-        if (typeof raw?.code === 'string') {
-            console.error('[sync] 推送归一化错误（断网/超时）', raw?.code)
-            for (const item of queue) {
-                if (snapshots.has(`${item.table}:${item.entityId}`)) {
-                    await syncTracker.markFailed(item.id)
-                }
+            // 部分数据未确认 ⇒ 运行失败（否则门会假成功）；同阶段同类错误只上报一次（见 ADR A-2）
+            if (unconfirmed) syncStatus.noteRunError('push', ERR_PUSH_UNCONFIRMED)
+            // 全部确认 ⇒ 回传完成：清暂停与退避定时（C-40 成功即停）
+            if (!unconfirmed) {
+                this.resumeBackfillState()
+                this.clearBackfillTick()
             }
-            syncStatus.noteRunError('push', ERR_PUSH_NETWORK)
-            return
+        } finally {
+            // C-41 上限可见性（仅提示不阻断）+ C-40 条件退避定时（按需启停）
+            await this.refreshQueuePressure()
+            this.scheduleBackfillTick()
         }
-        const data = (raw?.data as { data?: { results?: PushResult[] }; serverTime?: number }) ?? {}
-        console.log('[sync] 推送响应', JSON.stringify(response?.data))
-        this.calibrateServerTime((data as { serverTime?: number }).serverTime)
-        const results = data.data?.results ?? []
-        const pushed = new Set(results.map((r) => `${r.table}:${r.id}`))
-        let unconfirmed = false
-        for (const item of queue) {
-            if (pushed.has(`${item.table}:${item.entityId}`)) {
-                const snapshot = snapshots.get(`${item.table}:${item.entityId}`)
-                // 推送期间本地对同一实体有新修改（localUpdatedAt 已变化）：保留队列项下轮重推，防止本地修改丢失
-                const current = await localDatabase.syncQueue.get(item.id)
-                if (current && snapshot !== undefined && current.localUpdatedAt === snapshot) {
-                    await syncTracker.removeQueued(item.table, item.entityId)
-                }
-            } else {
-                // 响应中无该实体：后端拒绝或字段不匹配，标记失败并记录响应便于诊断
-                if (snapshots.has(`${item.table}:${item.entityId}`)) {
-                    console.warn('[sync] 推送未确认的实体', {
-                        table: item.table,
-                        id: item.entityId
-                    })
-                    await syncTracker.markFailed(item.id)
-                    unconfirmed = true
-                }
-            }
-        }
-        // 部分数据未确认 ⇒ 运行失败（否则门会假成功）；同阶段同类错误只上报一次（见 ADR A-2）
-        if (unconfirmed) syncStatus.noteRunError('push', ERR_PUSH_UNCONFIRMED)
+    }
+
+    /** 网络类失败：服务级暂停（不写 item、不累加计数；C-38） */
+    private pauseForNetworkFailure(): void {
+        this.pausedUntil = Date.now() + backoffDelayMs(1)
+        syncStatus.setPaused('offline')
+    }
+
+    /** 业务/数据类退避时间（基于队列项既有 attempts；指数封顶 120s，C-39） */
+    private businessNextAttemptAt(item: SyncQueueRecord): string {
+        const attempts = (item.attempts ?? item.retryCount ?? 0) + 1
+        return new Date(Date.now() + backoffDelayMs(attempts)).toISOString()
     }
 
     /** 变更后 2s 防抖推送 */
@@ -716,14 +767,102 @@ export class SyncService {
         }, PUSH_DEBOUNCE_MS)
     }
 
-    /** 手动完整同步（拉取全部 + 推送全部，供 UI 触发） */
+    /** 手动完整同步（拉取全部 + 推送全部，供 UI 触发；先重置退避/暂停 C-42） */
     async manualSync(): Promise<SyncRunResult> {
         return this.enqueue(() =>
             this.runFull(async () => {
+                const userId = this.currentUserId()
+                if (userId) {
+                    this.resumeBackfillState()
+                    await syncTracker.resetFailed(userId)
+                }
                 await this.pullAllInner()
                 await this.pushAllInner()
             })
         )
+    }
+
+    /* —— SHELL-06 C-40：回传触发源与条件退避 —— */
+
+    /**
+     * 清暂停并重置退避进度（仅内存态；队列项重置由 `resetFailed` 负责）
+     */
+    private resumeBackfillState(): void {
+        this.pausedUntil = 0
+        this.backfillLevel = 0
+        syncStatus.clearPaused()
+    }
+
+    /**
+     * 恢复回传（网络恢复/前台恢复/手动）：清暂停 + 重置退避 + 经 enqueue 立即推一次
+     * @description C-43：`online`/可见性仅作触发，不得作鉴权/放行；C-40：均经 enqueue 串行
+     */
+    async resumeBackfill(): Promise<SyncRunResult> {
+        const userId = this.currentUserId()
+        if (userId) {
+            this.resumeBackfillState()
+            await syncTracker.resetFailed(userId)
+        }
+        const result = await this.pushAll()
+        this.scheduleBackfillTick()
+        return result
+    }
+
+    /** `online` 事件触发（仅触发，不作鉴权，C-43） */
+    handleOnline(): void {
+        void this.resumeBackfill()
+    }
+
+    /** 前台恢复（`visibilitychange→visible`）触发（节流由 scheduleBackfillTick 统一收敛） */
+    handleVisibility(): void {
+        void this.resumeBackfill()
+    }
+
+    /** 按需启动条件退避定时；无待推送/暂停项时不得存在（C-40 有界且可停） */
+    private scheduleBackfillTick(): void {
+        this.clearBackfillTick()
+        const userId = this.currentUserId()
+        if (!userId || this.pausedUntil > Date.now()) return
+        void syncTracker.countDue(userId).then((due) => {
+            if (due === 0) {
+                this.backfillLevel = 0
+                return
+            }
+            const delay = Math.min(
+                BACKFILL_TICK_MS * 2 ** this.backfillLevel,
+                PUSH_RETRY_MAX_DELAY_MS
+            )
+            this.backfillLevel = Math.min(this.backfillLevel + 1, 5)
+            this.backfillTimer = setTimeout(() => {
+                this.backfillTimer = null
+                void this.pushAll()
+                this.scheduleBackfillTick()
+            }, delay)
+        })
+    }
+
+    /** 停止条件退避定时（成功/清空/卸载调用） */
+    private clearBackfillTick(): void {
+        if (this.backfillTimer) clearTimeout(this.backfillTimer)
+        this.backfillTimer = null
+    }
+
+    /**
+     * 刷新队列压力（C-41 上限可见性）：超限仅提示不阻断
+     */
+    private async refreshQueuePressure(): Promise<void> {
+        const userId = this.currentUserId()
+        if (!userId) return
+        const counts = await syncTracker.countByTable(userId)
+        let total = 0
+        let overLimit = false
+        counts.forEach((count) => {
+            total += count
+            if (count >= QUEUE_LIMIT_PER_TABLE) overLimit = true
+        })
+        if (total >= QUEUE_LIMIT_TOTAL) overLimit = true
+        if (overLimit) syncStatus.setPaused('over-limit')
+        else if (this.pausedUntil <= Date.now()) syncStatus.clearPaused()
     }
 }
 
