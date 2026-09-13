@@ -11,7 +11,8 @@ const userStore = useUserStore()
 const { profile } = storeToRefs(userStore)
 
 const deactivedAt = computed<string>(() => {
-    const { deactivedAt } = profile.value
+    // N-04：profile 离线为 undefined，须判空（不得抛未捕获 TypeError）
+    const deactivedAt = profile.value?.deactivedAt
     if (!deactivedAt) return ''
     const deletionDay = dayjs(deactivedAt).subtract(7, 'days').format('YYYY-MM-DD HH:mm:ss')
     return deletionDay
