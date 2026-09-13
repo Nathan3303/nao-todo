@@ -2,6 +2,47 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.7.0] - 2026-09-13
+
+发布批次：设置分栏 / 搜索增强 / 离线边界加固 / 离线写入与自动回传 协同收尾。**Tag `v1.7.0` 待 PM 放行后打** · **前置：服务端 `5c0b25d3`（SYNC-DEF-01）已部署** · root `1.7.0` / `@nao-todo/desktopapp` `1.7.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/presentation` `0.4.1` / `@nao-todo/shared` `1.3.0`（`@nao-todo/domain-task` `1.2.0` / `@nao-todo/domain-project` `1.1.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（views / presentation / presentation-identity / shared / infrastructure 层）。设计记录：PRD `docs/prds/2026-09-13-shell-05-offline-boundary-hardening.md`、`docs/prds/2026-09-13-shell-06-offline-backfill.md`；ADR `docs/adr/2026-09-13-shell-06-offline-backfill.md`（C-38–C-45）。
+
+### Added（新增）
+
+- **离线写入与自动回传（SHELL-06）**：单机离线可写 + 恢复后自动补传，失败三分类（凭证 / 网络 / 业务）：
+    - **失败三分类 + 退避（C-38/C-39，提交 `8cb1effa`）**：网络类（离线 / 超时 / 5xx / 归一化离线）⇒ 服务级 `pausedUntil`，**不写 item、不消耗重试额度**；业务 / 数据类 ⇒ item `nextAttemptAt` 指数退避（5s → 10s → 30s → 60s → 120s 封顶）；凭证类（401 / 403 / `10041`）维持既有「会话失效不自动重试」。可推判定改为 `isRetryDue`（替换 `retryCount >= MAX_PUSH_RETRY`，删除项同规则）。
+    - **回传触发（C-40/C-43）**：启动 / 解锁、前台恢复（`visibilitychange → visible`，节流）、`online` 事件（**仅触发、不作鉴权**）、条件退避定时（有 pending 才存在，5s→10s→30s→60s→120s，成功即清）；全部经 `syncService.enqueue` 串行化 / 去重 / 节流；去除离线期无效推送（G11）。
+    - **队列上限可见性与触顶恢复（C-41/C-42，提交 `9b24ce3b`）**：单表 1000 / 总量 2000，**仅提示不阻断、无数据丢失**；状态栏显示「有 N 项修改待同步（离线，联网后自动同步）」+「立即重试」；手动同步 / 网络恢复 / 前台恢复 / 重启经 `resetFailed` 重置暂停与退避并重新入列（含删除项）。
+    - **暂停到期定时修复（SHELL-06-DEF-01，提交 `95a9744b`）**：暂停期不再直接 `return`，按 `pausedUntil` 到期安排 tick（clamp ≤120s），到期自动重试；单一定时器可重排、成功即清 ⇒ 修复「网卡在线但后端 5xx/超时」不自愈（BC-13）。
+    - 存储层 `SyncQueueRecord` **纯追加可选字段**（`attempts` / `nextAttemptAt` / `lastErrorClass`）；**无 Dexie version bump、无新增索引**（C-44/C-45）。
+- **搜索增强（SEA-04；`c11b755b` / `5d1b4366` / `81931547` / `e5733066`）**：URL 深链持久化（查询 / 筛选 / 命中字段 / 已删·已弃开关 / 分页）、搜索历史（本地持久化 + 回填）、命中字段标识与「含已删 / 已弃」开关、i18n 文案；DEF-01（`6e36d2d1`）详情下钻保留查询、DEF-02（`1987a641`）本地状态为单一事实源。
+- **离线边界加固（SHELL-05）**：H6 vue-router 去重（`resolve.dedupe`）+ `$router` 降级（`6273acc3`）；门壳必达兜底与同步有界失败（`f7576426`）；全局未捕获错误可观测（`0b031a4c`）；导航目标合法化与回退链（`3f288ffa`）；内容视图去 profile 前置 + 默认视图自愈（`3c6a8fc6`）；离线进入前置校验、结构化凭证失败、`safeReplace` 收敛（`e58cf46f`）；离线登出（本地优先）与缓存昵称占位（`385e1d75`）；判空加固 `c1f86354` / `9e6f41c7`。会话管理离线显示「需联网」占位（G13）。
+- **设置对话框左右分栏 + 定尺（SHELL-04；`ed081748`）**。
+- **`@nao-todo/shared` 新增 locale 键**：SEA-04 `search.*`、SHELL-05/06 `sync.*` / `identity.*` / `gate.*`（zh-CN / en-US / types 同步）。
+
+### Fixed（修复）
+
+- **任务详情面板标签栏覆盖子任务（TASK-03；`25fef945`）**：`task-details/main` 标签栏与子任务区重叠修复。
+
+### Changed
+
+- 版本协同 bump（功能批次 → minor）：root / `@nao-todo/desktopapp` `1.6.0 → 1.7.0`；`@nao-todo/infrastructure` `0.4.0 → 0.5.0`（离线回传能力）；`@nao-todo/presentation-identity` `1.1.0 → 1.2.0`（离线身份 / 判空）；`@nao-todo/shared` `1.2.0 → 1.3.0`（新增 locale 键）；`@nao-todo/presentation` `0.4.0 → 0.4.1`（TASK-03 修复，patch）。
+- **发布前置**：服务端 `5c0b25d3`（SYNC-DEF-01）**已部署**；**无 Dexie 版本迁移**；同步协议 / 表结构 / 游标未变。
+- 无公开 API 导出面破坏；移动端红线 `@nao-todo/presentation-react` 零改动。
+
+### 质量门槛
+
+- `vp test --run`：**73 文件 / 641 例全绿**。
+- `vp check --no-fmt apps packages`：**1025 文件 0 错 0 警**（仓库内未跟踪 `scripts/electron-smoke/*.mjs` 为 QA 工具脚本，不计入本版范围）。
+- `pnpm webapp build` ✓ / `pnpm desktop:build` ✓ / `pnpm guard:ddd` OK。
+
+### 已知遗留
+
+- 本版未打 tag：`v1.7.0` 待 PM 放行后打注解 tag。
+- 客户端 `v1.7.0` 发版须晚于服务端 `5c0b25d3` 上线（已部署）。
+- SHELL-06 触发源注册与上限提示 UI 未补独立组件测试（能力经纯层单测 + 门禁构建覆盖）；`crypto-service` 多用户隔离用例偶发超时（隔离运行通过）。
+
+[v1.7.0]: https://github.com/Nathan3303/nao-todo/releases/tag/v1.7.0
+
 ## [v1.6.0] - 2026-09-13
 
 发布批次：SORT-01 详情面板子任务拖拽排序（per-group `sort_id`）。**Tag `v1.6.0` 待 PM 放行后打** · **前置：服务端 `fc20c74` 需先上线**（`GetMaxSortId` 按组 + `CreateTaskReq.sortId` + `parentTaskId` 查询默认序）· root `1.6.0` / `@nao-todo/desktopapp` `1.6.0` / `@nao-todo/presentation` `0.4.0` / `@nao-todo/infrastructure` `0.4.0` / `@nao-todo/domain-task` `1.2.0`（`@nao-todo/shared` `1.2.0` / `@nao-todo/domain-project` `1.1.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（presentation / infrastructure / domain-task 层；移动端红线零改动）。设计记录：ADR `docs/adr/2026-09-13-subtask-reorder.md`（r3）；PRD `docs/prds/2026-09-13-subtask-reorder.md`（AC1–AC15）。
