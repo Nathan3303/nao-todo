@@ -33,6 +33,7 @@ import {
 import { inject, onUnmounted, provide, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { INDEX_VIEW_CONTEXT_KEY } from './context'
+import { taskDetailsLocation } from './task-details-location'
 
 /**
  * 首页视图
@@ -118,7 +119,7 @@ const useIndexView = () => {
      * @param taskId 任务 ID
      */
     const showTaskDetails = async (taskId: TaskViewObject['id']) => {
-        await router.push({ name: router.currentRoute.value.name, params: { taskId } })
+        await router.push(taskDetailsLocation(router.currentRoute.value, taskId))
     }
 
     /**
