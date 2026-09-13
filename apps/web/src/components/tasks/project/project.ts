@@ -10,6 +10,8 @@ import { useTagsStore } from '@nao-todo/presentation/tag'
 import { NueMessage } from 'nue-ui'
 import { unwrapError, TASK_CREATOR_DIALOG_KEY } from '@nao-todo/shared'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
+import { recordShellError } from '@/error-observability'
+import { resolveTasksViewType, runBoundedTasksInitialize } from '@/components/tasks/view-type'
 import { PROJECT_VIEW_CONTEXT_KEY } from './context'
 
 const useProjectView = (props: ProjectViewProps) => {
@@ -52,20 +54,24 @@ const useProjectView = (props: ProjectViewProps) => {
         return projectsStore.getProject(props.projectId)
     })
 
-    // @method 初始化 - 触发获取清单详情
+    // @method 初始化 - 触发获取清单详情（C-31：不得以 profile 为前置；loading 有界）
     const initialize = async () => {
-        // 1. 检查参数
-        if (!props.projectId || !profile.value) return
-        loading.value = true
-        // 2. 获取清单详情
-        const err = await projectUseCase.loadProjectPreference(props.projectId)
-        if (err !== null) {
-            NueMessage.error(unwrapError(err))
-            return
-        }
-        // 3. 跳转至指定视图类型
-        await switchViewType(preference.value?.viewType || 'table')
-        loading.value = false
+        await runBoundedTasksInitialize(
+            async () => {
+                // 1. 检查参数
+                if (!props.projectId) return
+                // 2. 获取清单详情（离线失败/抛错均落终态，不永加载）
+                const err = await projectUseCase.loadProjectPreference(props.projectId)
+                if (err !== null) {
+                    NueMessage.error(unwrapError(err))
+                    return
+                }
+                // 3. 跳转至指定视图类型（C-32：本地 preference 优先，缺省硬默认 table）
+                await switchViewType(resolveTasksViewType(preference.value))
+            },
+            (value) => (loading.value = value),
+            (error) => recordShellError('tasks:project:initialize', error)
+        )
     }
 
     // @watch 监听 projectId 变化

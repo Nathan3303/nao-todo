@@ -12,6 +12,8 @@ import { NueMessage } from 'nue-ui'
 import { storeToRefs } from 'pinia'
 import { computed, inject, provide, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { recordShellError } from '@/error-observability'
+import { resolveTasksViewType, runBoundedTasksInitialize } from '@/components/tasks/view-type'
 import { BUILT_IN_PROJECT_VIEW_CONTEXT_KEY } from './context'
 import type { BuiltInProjectViewProps } from './types'
 
@@ -57,24 +59,27 @@ const useBuiltInProjectView = (props: BuiltInProjectViewProps) => {
         return builtInProjectsStore.getBuiltInProject(props.projectId)
     })
 
-    // @method 初始化 - 触发获取清单详情
+    // @method 初始化 - 触发获取清单详情（C-31：不得以 profile 为前置；loading 有界）
     const initialize = async () => {
-        // 1. 检查参数
-        if (!props.projectId || !profile.value) return
-        loading.value = true
-        // 2. 获取清单详情
-        const err = builtInProjectUseCase.loadBuiltInProjectPreference(
-            profile.value.email,
-            props.projectId
+        await runBoundedTasksInitialize(
+            async () => {
+                // 1. 检查参数
+                if (!props.projectId) return
+                // 2. 获取清单详情（离线 profile 缺失时用空 userId → 本地默认 preference 回落）
+                const err = builtInProjectUseCase.loadBuiltInProjectPreference(
+                    profile.value?.email ?? '',
+                    props.projectId
+                )
+                if (err !== null) {
+                    NueMessage.error(unwrapError(err))
+                    return
+                }
+                // 3. 跳转至指定视图类型（C-32：本地 preference 优先，缺省硬默认 table）
+                await switchViewType(resolveTasksViewType(preference.value))
+            },
+            (value) => (loading.value = value),
+            (error) => recordShellError('tasks:built-in-project:initialize', error)
         )
-        if (err !== null) {
-            NueMessage.error(unwrapError(err))
-            loading.value = false
-            return
-        }
-        // 3. 跳转至指定视图类型
-        await switchViewType(preference.value?.viewType || 'table')
-        loading.value = false
     }
 
     // @watch 监听 projectId 变化

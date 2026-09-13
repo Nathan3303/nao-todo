@@ -8,6 +8,8 @@ import { NueMessage } from 'nue-ui'
 import { storeToRefs } from 'pinia'
 import { computed, inject, provide, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { recordShellError } from '@/error-observability'
+import { resolveTasksViewType, runBoundedTasksInitialize } from '@/components/tasks/view-type'
 import { TAG_VIEW_CONTEXT_KEY } from './context'
 import type { TagViewProps } from './types'
 
@@ -49,21 +51,24 @@ const useTagView = (props: TagViewProps) => {
         return tagsStore.getTag(props.tagId)
     })
 
-    // @method 初始化 - 触发获取标签详情
+    // @method 初始化 - 触发获取标签详情（C-31：不得以 profile 为前置；loading 有界）
     const initialize = async () => {
-        // 1. 检查参数
-        if (!props.tagId || !profile.value) return
-        loading.value = true
-        // 2. 获取标签详情
-        const err = await tagUseCase.loadTagPreference(props.tagId)
-        if (err !== null) {
-            NueMessage.error(unwrapError(err))
-            loading.value = false
-            return
-        }
-        // 3. 跳转至指定视图类型
-        await switchViewType(preference.value?.viewType || 'table')
-        loading.value = false
+        await runBoundedTasksInitialize(
+            async () => {
+                // 1. 检查参数
+                if (!props.tagId) return
+                // 2. 获取标签详情（离线失败/抛错均落终态，不永加载）
+                const err = await tagUseCase.loadTagPreference(props.tagId)
+                if (err !== null) {
+                    NueMessage.error(unwrapError(err))
+                    return
+                }
+                // 3. 跳转至指定视图类型（C-32：本地 preference 优先，缺省硬默认 table）
+                await switchViewType(resolveTasksViewType(preference.value))
+            },
+            (value) => (loading.value = value),
+            (error) => recordShellError('tasks:tag:initialize', error)
+        )
     }
 
     // @watch 监听 tagId 变化
