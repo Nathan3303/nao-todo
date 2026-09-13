@@ -1,0 +1,383 @@
+{
+  "meta": {
+    "email": "qa.shell06.1789310105@qa.local",
+    "startedAt": "2026-09-13T14:58:36.856Z"
+  },
+  "phases": {
+    "bootstrap": {
+      "ok": true,
+      "notes": [
+        "#0 解锁门 → 解锁"
+      ]
+    },
+    "onlineShell": {
+      "label": "online-shell",
+      "at": 1789311529469,
+      "dom": {
+        "hash": "#/",
+        "router": {
+          "name": "index",
+          "path": "/",
+          "fullPath": "/",
+          "params": {},
+          "query": {},
+          "matched": [
+            "index"
+          ]
+        },
+        "interactiveCount": 2,
+        "interactiveSample": [
+          "BUTTON",
+          "BUTTON"
+        ],
+        "initialSyncGate": false,
+        "unlockGate": false,
+        "railSlot": true,
+        "railBtn": true,
+        "gear": true,
+        "appHtmlLen": 2963,
+        "bodyText": "Q",
+        "offlineEnterBtn": false
+      }
+    },
+    "onlineIdentity": {
+      "hasJwt": true,
+      "lastVisited": "/",
+      "lastTasks": null
+    },
+    "offlineAfterReload": {
+      "label": "offline-after-reload",
+      "at": 1789311529634,
+      "dom": {
+        "hash": "#/auth/checkin",
+        "router": {
+          "name": "auth-checkin",
+          "path": "/auth/checkin",
+          "fullPath": "/auth/checkin",
+          "params": {},
+          "query": {},
+          "matched": [
+            "auth",
+            "auth-checkin"
+          ]
+        },
+        "interactiveCount": 3,
+        "interactiveSample": [
+          "输入密码解锁",
+          "解锁",
+          "登出用户"
+        ],
+        "initialSyncGate": false,
+        "unlockGate": true,
+        "railSlot": false,
+        "railBtn": false,
+        "gear": false,
+        "appHtmlLen": 1855,
+        "bodyText": "Q QA-S06 离线 解锁 登出用户",
+        "offlineEnterBtn": false
+      }
+    },
+    "offlineUnlockSeen": true,
+    "failureGate": {
+      "label": "gate-poll",
+      "at": 1789311534751,
+      "dom": {
+        "hash": "#/auth/checkin",
+        "router": {
+          "name": "auth-checkin",
+          "path": "/auth/checkin",
+          "fullPath": "/auth/checkin",
+          "params": {},
+          "query": {},
+          "matched": [
+            "auth",
+            "auth-checkin"
+          ]
+        },
+        "interactiveCount": 3,
+        "interactiveSample": [
+          "重试",
+          "离线进入",
+          "登出用户"
+        ],
+        "initialSyncGate": true,
+        "unlockGate": false,
+        "railSlot": false,
+        "railBtn": false,
+        "gear": false,
+        "appHtmlLen": 5658,
+        "bodyText": "拉取失败：网络错误 重试 离线进入 登出用户",
+        "offlineEnterBtn": true
+      }
+    },
+    "failureWaitMs": 1,
+    "failureEvents": {
+      "console": [
+        {
+          "t": 1789311529556,
+          "level": "info",
+          "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
+        },
+        {
+          "t": 1789311529556,
+          "level": "info",
+          "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
+        },
+        {
+          "t": 1789311531087,
+          "level": "error",
+          "msg": "[sync] 拉取归一化错误（断网/超时） ERR_NETWORK"
+        }
+      ],
+      "rejections": [],
+      "errors": []
+    },
+    "beforeClick": {
+      "label": "before-click",
+      "at": 1789311534756,
+      "dom": {
+        "hash": "#/auth/checkin",
+        "router": {
+          "name": "auth-checkin",
+          "path": "/auth/checkin",
+          "fullPath": "/auth/checkin",
+          "params": {},
+          "query": {},
+          "matched": [
+            "auth",
+            "auth-checkin"
+          ]
+        },
+        "interactiveCount": 3,
+        "interactiveSample": [
+          "重试",
+          "离线进入",
+          "登出用户"
+        ],
+        "initialSyncGate": true,
+        "unlockGate": false,
+        "railSlot": false,
+        "railBtn": false,
+        "gear": false,
+        "appHtmlLen": 5658,
+        "bodyText": "拉取失败：网络错误 重试 离线进入 登出用户",
+        "offlineEnterBtn": true
+      }
+    },
+    "beforeClickEvents": {
+      "console": [
+        {
+          "t": 1789311529556,
+          "level": "info",
+          "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
+        },
+        {
+          "t": 1789311529556,
+          "level": "info",
+          "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
+        },
+        {
+          "t": 1789311531087,
+          "level": "error",
+          "msg": "[sync] 拉取归一化错误（断网/超时） ERR_NETWORK"
+        }
+      ],
+      "rejections": [],
+      "errors": []
+    },
+    "clickRect": {
+      "x": 500.984375,
+      "y": 991.25,
+      "w": 78.015625,
+      "h": 36,
+      "cx": 539.9921875,
+      "cy": 1009.25
+    },
+    "clickMode": "real-mouse",
+    "afterClick": {
+      "t300": {
+        "label": "after-click+300ms",
+        "at": 1789311535474,
+        "dom": {
+          "hash": "#/",
+          "router": {
+            "name": "index",
+            "path": "/",
+            "fullPath": "/",
+            "params": {},
+            "query": {},
+            "matched": [
+              "index"
+            ]
+          },
+          "interactiveCount": 0,
+          "interactiveSample": [],
+          "initialSyncGate": false,
+          "unlockGate": false,
+          "railSlot": false,
+          "railBtn": false,
+          "gear": false,
+          "appHtmlLen": 400,
+          "bodyText": "正在加载用户信息...",
+          "offlineEnterBtn": false
+        }
+      },
+      "t3000": {
+        "label": "after-click+3s",
+        "at": 1789311538181,
+        "dom": {
+          "hash": "#/",
+          "router": {
+            "name": "index",
+            "path": "/",
+            "fullPath": "/",
+            "params": {},
+            "query": {},
+            "matched": [
+              "index"
+            ]
+          },
+          "interactiveCount": 2,
+          "interactiveSample": [
+            "BUTTON",
+            "BUTTON"
+          ],
+          "initialSyncGate": false,
+          "unlockGate": false,
+          "railSlot": true,
+          "railBtn": true,
+          "gear": true,
+          "appHtmlLen": 2971,
+          "bodyText": "Q",
+          "offlineEnterBtn": false
+        }
+      },
+      "t10000": {
+        "label": "after-click+10s",
+        "at": 1789311545187,
+        "dom": {
+          "hash": "#/",
+          "router": {
+            "name": "index",
+            "path": "/",
+            "fullPath": "/",
+            "params": {},
+            "query": {},
+            "matched": [
+              "index"
+            ]
+          },
+          "interactiveCount": 2,
+          "interactiveSample": [
+            "BUTTON",
+            "BUTTON"
+          ],
+          "initialSyncGate": false,
+          "unlockGate": false,
+          "railSlot": true,
+          "railBtn": true,
+          "gear": true,
+          "appHtmlLen": 2971,
+          "bodyText": "Q",
+          "offlineEnterBtn": false
+        }
+      },
+      "t30000": {
+        "label": "after-click+30s",
+        "at": 1789311565195,
+        "dom": {
+          "hash": "#/",
+          "router": {
+            "name": "index",
+            "path": "/",
+            "fullPath": "/",
+            "params": {},
+            "query": {},
+            "matched": [
+              "index"
+            ]
+          },
+          "interactiveCount": 2,
+          "interactiveSample": [
+            "BUTTON",
+            "BUTTON"
+          ],
+          "initialSyncGate": false,
+          "unlockGate": false,
+          "railSlot": true,
+          "railBtn": true,
+          "gear": true,
+          "appHtmlLen": 2971,
+          "bodyText": "Q",
+          "offlineEnterBtn": false
+        }
+      }
+    },
+    "afterClickEvents": {
+      "console": [
+        {
+          "t": 1789311529556,
+          "level": "info",
+          "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
+        },
+        {
+          "t": 1789311529556,
+          "level": "info",
+          "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
+        },
+        {
+          "t": 1789311531087,
+          "level": "error",
+          "msg": "[sync] 拉取归一化错误（断网/超时） ERR_NETWORK"
+        }
+      ],
+      "rejections": [],
+      "errors": []
+    },
+    "requests": [
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/index-lZO4Z28L.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/context-CqLwN8tv.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/task-Dl9BvRFN.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/error-message-CdsJAbPM.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/use-shortcut-DTavWGit.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/project-BF3kCJnG.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/projects-store-DfPe3gfC.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/use-loading-error-store-base-C0XptUoy.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/tag-dmVeZtd5.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/tags-store-Br0BdHrk.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/use-project-usecase-DA12nh1A.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/preference-BPg644ZX.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/use-tag-usecase-CSjan3lr.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/rule-hint-FgCiXvio.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/pomodoro-timer-store-D_V3n3b6.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/index-BRNbN1cf.js",
+      "http://localhost:3302/api/user/profile",
+      "http://localhost:3302/api/user/config",
+      "http://localhost:3302/api/user/profile",
+      "http://localhost:3302/api/user/config",
+      "http://localhost:3302/api/user/profile",
+      "http://localhost:3302/api/user/config",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/creator-BcMxk-m3.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/task-project-selector-CLXXPcmr.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/relative-date-parser-DAJkLHWe.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/labels-C1UgLQCo.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/task-tag-bar-CtqCibiK.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/parent-selector-DdWgBIJ0.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/index-Bb7As_Ea.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/project-form.vue_vue_type_script_setup_true_lang-Blx2sZ0B.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/project-manager-C86sjhZe.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/project-updater-368QArW-.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/tag-creator-DF97yZza.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/index-CRr2Brxt.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/index-CDDkEXL0.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/tag-color-dot-ByT4XWMI.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/tag-form.vue_vue_type_script_setup_true_lang-B1pMi_k4.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/tag-manager-DT0jjI0T.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/tag-updater-mO8BXT4_.js",
+      "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/tag-color-updater-CNII_9zu.js"
+    ],
+    "console": [
+      "error: [sync] 拉取归一化错误（断网/超时） ERR_NETWORK"
+    ]
+  }
+}
