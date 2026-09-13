@@ -102,3 +102,11 @@ export const searchQueryEquals = (a: SearchQueryState, b: SearchQueryState): boo
         a.includeExcluded === b.includeExcluded
     )
 }
+
+/**
+ * 是否需要把本地状态再导出到 URL（SEA-04-DEF-02 / B 方案）
+ * @description 本地状态为真源：当本地状态与当前 query 不等价时需 replace 回写；
+ *              等价（含非法值清洗后等价）则短路，避免冗余导航与回环。
+ */
+export const needsSearchQueryReExport = (local: SearchQueryState, raw: RawSearchQuery): boolean =>
+    !searchQueryEquals(local, parseSearchQuery(raw))

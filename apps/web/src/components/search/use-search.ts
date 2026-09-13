@@ -7,8 +7,8 @@ import { useTaskUseCase } from '@/hooks'
 import { useTasksStore } from '@nao-todo/presentation/task'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import {
+    needsSearchQueryReExport,
     parseSearchQuery,
-    searchQueryEquals,
     serializeSearchQuery,
     type RawSearchQuery,
     type SearchQueryState
@@ -340,7 +340,7 @@ const useSearchEngine = () => {
         }
     }
 
-    // @url 状态 → URL（replace 不污染后退栈 D2；空值省略；与当前 query 对账避免回环）
+    // @url 状态 → URL（replace 不污染后退栈 D2；空值省略；等价则短路避免回环）
     const currentQueryState = (): SearchQueryState => ({
         keyword: keyword.value,
         projectIds: filterProjectIds.value,
@@ -350,10 +350,9 @@ const useSearchEngine = () => {
         includeExcluded: includeExcluded.value
     })
     const writeQueryToUrl = () => {
-        const next = serializeSearchQuery(currentQueryState())
-        const current = serializeSearchQuery(parseSearchQuery(route.query as RawSearchQuery))
-        if (JSON.stringify(next) === JSON.stringify(current)) return
-        void router.replace({ query: next })
+        const local = currentQueryState()
+        if (!needsSearchQueryReExport(local, route.query as RawSearchQuery)) return
+        void router.replace({ query: serializeSearchQuery(local) })
     }
     watch(keyword, writeQueryToUrl)
     watch(
@@ -361,20 +360,14 @@ const useSearchEngine = () => {
         writeQueryToUrl,
         { deep: true }
     )
-    // @url URL → 状态（刷新/前进后退/分享还原；非法值经解析忽略后回写清洗）
+    // @url 本地状态为真源（SEA-04-DEF-02 B 方案）：路由 query 变化时仅对账再导出，
+    //      覆盖 closeDetails / switchTaskDetails / after-close 等丢 query 的导航；
+    //      绝不反向导入清空本地状态（深链还原只在 setup 期由 initialState 完成）。
     watch(
         () => route.query,
-        (raw) => {
-            const next = parseSearchQuery(raw as RawSearchQuery)
-            if (searchQueryEquals(next, currentQueryState())) return
-            keyword.value = next.keyword
-            debouncedKeyword.value = next.keyword.trim()
-            filterProjectIds.value = [...next.projectIds]
-            filterTagIds.value = [...next.tagIds]
-            filterPriorities.value = [...next.priorities]
-            filterStates.value = [...next.states]
-            includeExcluded.value = next.includeExcluded
-            if (next.keyword.trim() !== '') void ensureChildrenOnce()
+        () => {
+            if (route.name !== 'search') return
+            writeQueryToUrl()
         }
     )
 

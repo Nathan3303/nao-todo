@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test'
 import {
     EMPTY_SEARCH_QUERY,
+    needsSearchQueryReExport,
     parseSearchQuery,
     searchQueryEquals,
     serializeSearchQuery,
@@ -137,5 +138,37 @@ describe('往返一致与等价判定', () => {
         expect(searchQueryEquals(base, { ...base, projectIds: ['p2', 'p1'] })).toBe(false)
         expect(searchQueryEquals(base, { ...base, tagIds: ['t1'] })).toBe(false)
         expect(searchQueryEquals(base, { ...base, includeExcluded: true })).toBe(false)
+    })
+})
+
+describe('needsSearchQueryReExport - 本地真源对账（SEA-04-DEF-02 B 方案）', () => {
+    const local: SearchQueryState = {
+        keyword: '买菜',
+        projectIds: [''],
+        tagIds: [],
+        priorities: ['high'],
+        states: [],
+        includeExcluded: true
+    }
+
+    it('本地有状态而路由 query 丢失（关详情/切详情场景）→ 需再导出', () => {
+        expect(needsSearchQueryReExport(local, {})).toBe(true)
+        expect(needsSearchQueryReExport(local, { project: 'inbox' })).toBe(true)
+    })
+
+    it('本地与路由等价（含解析归一）→ 不需再导出（短路防回环）', () => {
+        const raw = {
+            q: '买菜',
+            project: 'inbox',
+            priority: 'high',
+            excluded: '1'
+        }
+        expect(needsSearchQueryReExport(local, raw)).toBe(false)
+    })
+
+    it('非法值被忽略后等价 → 不需再导出（不回写无意义导航）', () => {
+        expect(needsSearchQueryReExport(EMPTY_SEARCH_QUERY, { priority: 'bogus', q: '' })).toBe(
+            false
+        )
     })
 })
