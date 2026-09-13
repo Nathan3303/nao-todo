@@ -2,6 +2,39 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.6.0] - 2026-09-13
+
+发布批次：SORT-01 详情面板子任务拖拽排序（per-group `sort_id`）。**Tag `v1.6.0` 待 PM 放行后打** · **前置：服务端 `fc20c74` 需先上线**（`GetMaxSortId` 按组 + `CreateTaskReq.sortId` + `parentTaskId` 查询默认序）· root `1.6.0` / `@nao-todo/desktopapp` `1.6.0` / `@nao-todo/presentation` `0.4.0` / `@nao-todo/infrastructure` `0.4.0` / `@nao-todo/domain-task` `1.2.0`（`@nao-todo/shared` `1.2.0` / `@nao-todo/domain-project` `1.1.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（presentation / infrastructure / domain-task 层；移动端红线零改动）。设计记录：ADR `docs/adr/2026-09-13-subtask-reorder.md`（r1）；PRD `docs/prds/2026-09-13-subtask-reorder.md`（AC1–AC15）。
+
+### Added（新增）
+
+- **子任务拖拽排序（SORT-01；per-group 作用域）**：详情面板子任务区支持整行拖拽重排，排序键 `sortId ASC, id ASC`；组 = 同一 `parentTaskId`（`0` = 顶层组）。落点（提交 `c176c922`）：
+    - **`sortId` 全链路透传**：`TaskRes` / `TaskEntity`（尾部可选 `=0`）/ `TaskViewObject` / `UpdateTaskViewObject` / `CreateTaskReq`；`persistence-go`·`persistence-local` 转换器与 `TaskRecord`（**无 Dexie version bump**，ADR §5.3）；旧响应/旧记录缺失兜底 `0`；sync tasks `entityToPush` 白名单 +`sortId`。
+    - **`0` 不产出**：`createTaskValueObject2Req` 与 push 载荷在 `sortId = 0` 时省略该字段（ADR B1/G4，防存量推送清零组内序）。
+    - **`TaskUseCase.resort(originalId, boundId, isBefore, { allowRebuild })`**：组内浮动间隔 1000 + **仅本组**重建（`1000, 2000, …`，复用 `batchUpdate`）；预检「目标位置 == 当前位置」⇒ no-op；重建触发 `newSortId <= 0`（前插得 0）/ `> 65535` / 相邻差 `< 2`；单条失败 ⇒ 本组重建后重试一次；组 `> 65` 行或未取尽（R1/Q2）⇒ 禁用重建，仅单条浮动赋值。
+    - **子任务按组全量加载**（`limit = 100`）并按 `(sortId, id)` 展示，`resortSubTasks` 带 `pagination.total` 判定的 `allowRebuild`（R1 数据顺序阻断项处置）。
+    - **拖拽 UI 模仿检查项**：`useEventDragger` 参数化（row/list/idKey，默认值保持检查项契约）+ 同列表守卫 + 交互元素 `dragstart` 防误触；`subtasks.vue` 整行拖拽 + up/down 蓝色插入指示线；dragImage 自定义半透明鬼影（提交 `afdb8228`：`setDragImage` clone，`opacity 0.35`、离屏挂 body、光标对位 offset、异步移除；提交 `c8d12d73`：补 `--nue-primary-color-100` 浅灰底 + `--nue-primary-radius` 圆角）——两列表统一观感。
+
+### Changed
+
+- 版本协同 bump：root / `@nao-todo/desktopapp` `1.5.0 → 1.6.0`；`@nao-todo/presentation` `0.3.0 → 0.4.0`；`@nao-todo/infrastructure` `0.3.0 → 0.4.0`；`@nao-todo/domain-task` `1.1.0 → 1.2.0`。
+- `TaskEntity` 构造器新增**尾部可选** `sortId = 0` ⇒ 非破坏 minor，既有调用点零改动；`TaskUseCase.resort` 为新增方法，无导出面破坏。
+
+### 质量门槛
+
+- `vp test run`：**59 文件 / 541 例全绿**（SORT-01 新增 +26 例：resort 10、转换器与 push 白名单、排序与重建守卫、拖拽组件/ghost）。
+- `vp check --no-fmt`：**1011 文件 0 错 0 警**。
+- 突变验证：重建条件回改 `< 0` ⇒ 2 failed；移除 push 的 `0` 省略 ⇒ 1 failed；注释 `applyDragImage` ⇒ 1 failed。
+
+### 已知遗留
+
+- 顶层任务列表手动排序（组 0）与顶层默认序（需先做 `sort_id = 0` 数据普查/回填）另立（ADR §12）。
+- 跨父拖拽 reparent 另立；换父仍走既有父选择器/脱离入口。
+- `Restore` 保留原 `sort_id` 不重排（B7）；组内 `> 65` 行重建降级策略、服务端按组 `resort` 接口为观察项。
+- 发版顺序约束：客户端 `v1.6.0` 必须晚于服务端 `fc20c74` 上线（本版未打 tag）。
+
+[v1.6.0]: https://github.com/Nathan3303/nao-todo/releases/tag/v1.6.0
+
 ## [v1.5.0] - 2026-09-13
 
 发布批次：领域统计属性（计数）字段透传 —— 客户端收尾单。**Tag `v1.5.0` 待 PM 放行后打**（架构评审修正：服务端上线 + `backfill_counts.sql` 回填完成后才可客户端发版；本版只做版本号/CHANGELOG 准备与提交）· root `1.5.0` / `@nao-todo/desktopapp` `1.5.0` / `@nao-todo/presentation` `0.3.0` / `@nao-todo/infrastructure` `0.3.0` / `@nao-todo/domain-task` `1.1.0` / `@nao-todo/domain-project` `1.1.0`（`@nao-todo/shared` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（presentation / infrastructure 层）。设计记录：ADR `docs/adr/2026-09-12-stat-counts-denormalized-events.md`（r2）；PRD `docs/prds/2026-09-13-stat-counts-denormalized-completion.md`（AC11–AC15）。
