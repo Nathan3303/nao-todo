@@ -302,7 +302,7 @@ const handleDetachSubTask = async (subTask: TaskViewObject) => {
         font-size: var(--nue-text-xs);
         font-weight: 500;
         color: var(--nue-primary-color-600);
-        line-height: 1.4;
+        line-height: 1.5;
     }
 
     .subtask-row__detach {
