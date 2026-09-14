@@ -7,6 +7,7 @@ import {
     TaskCheckButton,
     TaskPriorityPresets
 } from '@nao-todo/shared'
+import { TaskTagBar } from '../../tag-bar'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context'
 import { inject, reactive } from 'vue'
 import type { TaskViewObject } from '@nao-todo/domain-task'
@@ -23,7 +24,8 @@ const {
     subTaskHandler,
     createSubTask,
     detachSubTask,
-    resortSubTasks
+    resortSubTasks,
+    tags
 } = inject(TASK_DETAILS_CONTEXT_KEY)!
 
 // 子任务拖拽排序（整行拖拽 + up/down 蓝色插入指示线；
@@ -50,7 +52,7 @@ const formatDateTime = (iso: string | null): string => {
     return (iso && parse2RelativeDate(iso)) || ''
 }
 
-// 子任务时间文案（开始/结束时间内联于名称末尾，格式与文案与改动前一致：
+// 子任务时间文案（独立行展示于名称下、描述上；格式与文案与改动前一致：
 // 仅拼接非空部分，分隔符只在对应部分存在时出现，避免悬空 ~）
 const timeText = (subTask: TaskViewObject): string => {
     const timeParts: string[] = []
@@ -149,13 +151,15 @@ const handleDetachSubTask = async (subTask: TaskViewObject) => {
                                     >
                                         {{ subTask.name }}
                                     </nue-text>
-                                    <nue-text
-                                        v-if="timeText(subTask)"
-                                        class="subtask-row__time"
-                                        :title="timeText(subTask)"
-                                    >
-                                        {{ timeText(subTask) }}
-                                    </nue-text>
+                                    <task-tag-bar
+                                        v-if="subTask.tags && subTask.tags.length"
+                                        class="subtask-row__tags"
+                                        :available-tags="tags"
+                                        :task-tag-ids="subTask.tags"
+                                        readonly
+                                        small
+                                        :clamped="2"
+                                    />
                                     <nue-button
                                         class="subtask-row__detach"
                                         icon="arrow-up"
@@ -165,6 +169,13 @@ const handleDetachSubTask = async (subTask: TaskViewObject) => {
                                         @click="handleDetachSubTask(subTask)"
                                     />
                                 </nue-div>
+                                <nue-text
+                                    v-if="timeText(subTask)"
+                                    class="subtask-row__time"
+                                    :title="timeText(subTask)"
+                                >
+                                    {{ timeText(subTask) }}
+                                </nue-text>
                                 <nue-text
                                     v-if="subTask.description"
                                     :clamped="2"
@@ -259,7 +270,7 @@ const handleDetachSubTask = async (subTask: TaskViewObject) => {
         height: 1.5rem; /* 与左右组件等高 */
     }
 
-    /* 行内唯一可收缩项 ⇒ 空间不足时先被截断（省略号，全文见详情页标题） */
+    /* 行内主收缩项 ⇒ 空间不足时名称先被截断（省略号，全文见详情页标题） */
     .subtask-row__name {
         flex: 1 1 auto;
         min-width: 0;
@@ -275,17 +286,23 @@ const handleDetachSubTask = async (subTask: TaskViewObject) => {
         }
     }
 
-    /* 时间内联于名称末尾：宽度随内容、不收缩；超上限时省略号截断（不硬裁切）
+    /* 只读 small 标签栏（名称右侧）：宽度随内容、可收缩；上限防长标签把名称挤没 */
+    .subtask-row__tags {
+        flex: 0 1 auto;
+        min-width: 0;
+        max-width: 55%;
+    }
+
+    /* 时间独立行（名称下、描述上）：整行宽度、超宽省略号截断（不硬裁切）
        全文由 title 提供；点击不触发详情导航（无独立交互） */
     .subtask-row__time {
-        flex: 0 0 auto;
-        max-width: var(--subtask-row-time-max-width, 60%);
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
         font-size: var(--nue-text-xs);
         font-weight: 500;
         color: var(--nue-primary-color-600);
+        line-height: 1.4;
     }
 
     .subtask-row__detach {
