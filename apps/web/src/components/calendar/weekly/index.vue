@@ -14,6 +14,8 @@ import { isInteractiveKeyTarget } from '../monthly/keyboard-nav'
 import { buildCalendarEmptyState } from '../monthly/empty-state'
 import { CALENDAR_WEEKLY_CONTEXT_KEY } from '../weekly-context'
 
+import '../calendar-grid.css'
+
 defineOptions({ name: 'CalendarWeekly' })
 
 // —— O14 props 收敛：周视图上下文由月视图（父）provide，本组件直接 inject 消费 ——
@@ -336,10 +338,6 @@ const wjp = useMonthJump({
         </div>
     </nue-div>
 </template>
-
-<style>
-@import './calendar-grid.css';
-</style>
 
 <style scoped>
 /* ── 周视图根布局（令牌与网格样式已归并至 calendar-grid.css） ── */

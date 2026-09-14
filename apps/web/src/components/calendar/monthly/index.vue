@@ -33,6 +33,8 @@ import { useScope, useShortcut } from '@/hooks'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { CALENDAR_WEEKLY_CONTEXT_KEY, type CalendarWeeklyContext } from '../weekly-context'
 
+import '../calendar-grid.css'
+
 defineOptions({ name: 'CalendarMonthly' })
 
 // —— O2 网格共享几何 + DEF-2 动态可视轨道数（行高实测；未测得前回退 3） ——
@@ -616,10 +618,6 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
         </teleport>
     </nue-div>
 </template>
-
-<style>
-@import './calendar-grid.css';
-</style>
 
 <style scoped>
 /* ── 设计底座根布局（令牌本体已归并至 calendar-grid.css） ── */
