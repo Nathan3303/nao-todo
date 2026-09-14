@@ -19,7 +19,9 @@ import {
     MAX_VISIBLE_LANES,
     todayDateKey,
     weekStartKeyOf,
-    type CalendarRow
+    type CalendarOverflow,
+    type CalendarRow,
+    type CalendarSegment
 } from './monthly-layout'
 import dayjs from 'dayjs'
 import { usePomodoroBadge, type PomodoroBadgeRange } from './use-pomodoro-badge'
@@ -222,13 +224,34 @@ const openDay = (dateKey: string) => {
     dayDrawerOpen.value = true
 }
 
-// @method 可视轨道内的任务条（随动态 laneLimit 实时增减）
-const visibleSegments = (row: CalendarRow) =>
-    row.segments.filter((seg) => seg.lane < laneLimit.value)
+// —— O3 每格派生数据预计算（性能：42 格 × 模板 3 次重复调用纯函数 → 每格一次；显示语义零变更） ——
 
-// @method 某格溢出 +N
-const overflowOn = (row: CalendarRow, dateKey: string) =>
-    row.overflow.find((item) => item.dateKey === dateKey)
+/** 单个日期格派生视图（专注角标 + 溢出 +N 预计算） */
+type CellView = {
+    cell: CalendarRow['cells'][number]
+    badge: string // 专注角标（'' = 不显示）
+    overflow: CalendarOverflow | null // +N
+}
+
+/** 单行派生视图（格数据 + 可视任务条；visibleSegments 由方法改 computed，对齐 weekly） */
+type RowView = {
+    row: CalendarRow
+    cells: CellView[]
+    segments: CalendarSegment[]
+}
+
+// @computed 网格派生视图（badgeLabel/overflowOn/visibleSegments 每格/每行一次，模板直接消费）
+const rowViews = computed<RowView[]>(() =>
+    model.value.rows.map((row) => ({
+        row,
+        cells: row.cells.map((cell) => ({
+            cell,
+            badge: badgeLabel(cell.dateKey),
+            overflow: row.overflow.find((item) => item.dateKey === cell.dateKey) ?? null
+        })),
+        segments: row.segments.filter((seg) => seg.lane < laneLimit.value)
+    }))
+)
 
 // @method 回车提交（dateKey 来自所在格条带；成功由 composable 清除并卸载，失败保留文本可重试）
 const quickSubmit = (dateKey: string, name: string) => {
@@ -476,59 +499,59 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                 </div>
                 <!-- 网格 -->
                 <template v-else>
-                    <div v-for="row in model.rows" :key="row.row" class="cal-row">
+                    <div v-for="rv in rowViews" :key="rv.row.row" class="cal-row">
                         <!-- 日期格（点击选中并打开当日面板） -->
                         <div
-                            v-for="cell in row.cells"
-                            :key="cell.cell"
+                            v-for="cv in rv.cells"
+                            :key="cv.cell.cell"
                             class="cal-cell"
-                            :data-cal-drop="cell.dateKey"
+                            :data-cal-drop="cv.cell.dateKey"
                             :class="{
-                                'cal-cell--outside': cell.monthOffset !== 0,
-                                'cal-cell--today': cell.isToday,
-                                'cal-cell--selected': cell.isSelected,
-                                'cal-cell--weekend': cell.isWeekend,
-                                'cal-cell--edge': cell.cell % 7 === 6,
-                                'cal-cell--drop': drag.isTarget(cell.dateKey)
+                                'cal-cell--outside': cv.cell.monthOffset !== 0,
+                                'cal-cell--today': cv.cell.isToday,
+                                'cal-cell--selected': cv.cell.isSelected,
+                                'cal-cell--weekend': cv.cell.isWeekend,
+                                'cal-cell--edge': cv.cell.cell % 7 === 6,
+                                'cal-cell--drop': drag.isTarget(cv.cell.dateKey)
                             }"
-                            @click="openDay(cell.dateKey)"
+                            @click="openDay(cv.cell.dateKey)"
                         >
                             <span class="cal-cell-top">
-                                <span class="cal-date">{{ cell.day }}</span>
+                                <span class="cal-date">{{ cv.cell.day }}</span>
                                 <span
-                                    v-if="badgeLabel(cell.dateKey)"
+                                    v-if="cv.badge"
                                     class="cal-badge"
-                                    :title="`当日完成 ${badgeLabel(cell.dateKey)} 轮专注`"
+                                    :title="`当日完成 ${cv.badge} 轮专注`"
                                 >
-                                    {{ badgeLabel(cell.dateKey) }}
+                                    {{ cv.badge }}
                                 </span>
                             </span>
                             <div class="cal-band" @click.stop>
-                                <template v-if="quickCreateDate === cell.dateKey">
+                                <template v-if="quickCreateDate === cv.cell.dateKey">
                                     <quick-create
                                         :pending="quickCreatePending"
-                                        @submit="(name) => quickSubmit(cell.dateKey, name)"
+                                        @submit="(name) => quickSubmit(cv.cell.dateKey, name)"
                                         @cancel="closeQuickCreate"
                                     />
                                 </template>
                                 <template v-else>
                                     <button
-                                        v-if="cell.monthOffset === 0"
+                                        v-if="cv.cell.monthOffset === 0"
                                         type="button"
                                         class="cal-quick-add"
                                         title="快速新建"
-                                        @click.stop="openQuickCreate(cell.dateKey)"
+                                        @click.stop="openQuickCreate(cv.cell.dateKey)"
                                     >
                                         +
                                     </button>
                                     <button
-                                        v-if="overflowOn(row, cell.dateKey)"
+                                        v-if="cv.overflow"
                                         type="button"
                                         class="cal-more"
-                                        :title="`还有 ${overflowOn(row, cell.dateKey)!.count} 个任务`"
-                                        @click.stop="openDay(cell.dateKey)"
+                                        :title="`还有 ${cv.overflow.count} 个任务`"
+                                        @click.stop="openDay(cv.cell.dateKey)"
                                     >
-                                        +{{ overflowOn(row, cell.dateKey)!.count }}
+                                        +{{ cv.overflow.count }}
                                     </button>
                                 </template>
                             </div>
@@ -537,13 +560,13 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                         <!-- 任务条层（连续条跨格/跨行） -->
                         <div class="cal-lanes">
                             <task-bar
-                                v-for="seg in visibleSegments(row)"
+                                v-for="seg in rv.segments"
                                 :key="`${seg.task.id}-${seg.colStart}`"
                                 :task="seg.task"
                                 :pos="segStyle(seg)"
-                                :show-time="segShowTime(seg, row)"
-                                :cont-start="isRowStart(seg, row)"
-                                :cont-end="isRowEnd(seg, row)"
+                                :show-time="segShowTime(seg, rv.row)"
+                                :cont-start="isRowStart(seg, rv.row)"
+                                :cont-end="isRowEnd(seg, rv.row)"
                                 :busy="rescheduleBusyId === seg.task.id"
                                 :dragging="
                                     drag.session.active &&
