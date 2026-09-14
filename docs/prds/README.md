@@ -32,6 +32,7 @@
 | 2026-09-13 | 搜索界面优化（SEA-04：URL 深链持久化 / 搜索历史 / 备注命标识 + 含已删/已弃开关 / i18n 对齐）                                              | commit `c11b755b`/`5d1b4366`/`81931547`/`e5733066`；热修 `6e36d2d1`/`1987a641`                            | ✅ 通过（用户手动测试；含 DEF-01/02 修复，不启用 QA）                                  |
 | 2026-09-14 | 任务详情面板子任务行标签展示（TASK-04：名称右侧只读标签栏 clamped=2 / 时间下移独立行 / 脱离按钮 hover 锁定）                              | commit `d3c5e5cc` / tag `v1.7.1`                                                                          | ✅ 通过（用户手工冒烟；不启用 QA）                                                     |
 | 2026-09-14 | 设置界面版本号显示（TASK-05：webapp 首次纳入版本协同 / 应用设置区底部版本号 / 双端 vite define 注入 / ADR C9 修订）                       | commit `80bcb217` / `69d1c4d6` / tag `v1.7.3`                                                             | ✅ 通过（用户验收双端版本号可见；不启用 QA）                                           |
+| 2026-09-14 | 子任务标签栏 flex 修复 + oxfmt 全仓归一化 + .agents 重组（v1.7.4：用户手动样式修复 / 829 文件纯格式零语义 / 工具链目录重组）              | commit `4b7eae3`/`b0db5d6`/`764044c` / tag `v1.7.4`                                                       | ✅ 通过（用户指示发版；门禁全绿）                                                      |
 
 ## 发布记录
 
@@ -48,3 +49,4 @@
 | `v1.7.1`    | 发版提交 `6288d3d3`（root 1.7.1 / desktopapp 1.7.1 / presentation 0.4.2）；TASK-04 代码 `d3c5e5cc` + 样式 `ba94a7c7`                                                      | 2026-09-14 | TASK-04 任务详情面板子任务行标签展示（名称右侧只读 small 标签栏 clamped=2 溢出 +N / 时间下移独立行 / 脱离按钮 hover 锁定）                                                             |
 | `v1.7.2`    | 代码 `33f6067a` + 发版提交 `b2c7ec36`（root 1.7.2 / desktopapp 1.7.2）；presentation 0.4.2 不动                                                                           | 2026-09-14 | 桌面端同步状态栏面板重构（nue-text 化 / placement 调整 / 图标 ntd-sync2）+ 日历月/周边距微调 + sync-status-bar 测试同步（2 failed→全绿）；ADR C9 语义变化（panelOpen 门控废除，见 r5） |
 | `v1.7.3`    | 代码 `80bcb217` + 发版提交 `69d1c4d6`（root 1.7.3 / desktopapp 1.7.3 / webapp 1.7.3 首次纳入）；ADR `13fac912`                                                            | 2026-09-14 | TASK-05 设置界面版本号显示（应用设置区底部 / 双端 vite define 注入 VITE_APP_VERSION / i18n 中英）+ ADR C9 语义修订                                                                     |
+| `v1.7.4`    | 代码 `4b7eae3`（agents）/ `b0db5d6`（style）/ `764044c`（format）+ 发版提交 `070625b6`（root 1.7.4 / webapp 1.7.4 / desktopapp 1.7.4 / presentation 0.4.3）               | 2026-09-14 | 子任务标签栏 flex 压缩修复（用户手动，nowrap/gap/2xs）+ oxfmt 全仓归一化（829 文件纯格式零语义 + CRLF 对齐）+ .agents 目录重组（25 文件）                                              |
