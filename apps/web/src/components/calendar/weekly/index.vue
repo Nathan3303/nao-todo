@@ -361,6 +361,7 @@ const onWeekJumpSelect = (targetYear: number, targetMonth: number): void => {
                         </template>
                         <template v-else>
                             <button
+                                v-if="cell.monthOffset === 0"
                                 type="button"
                                 class="wk-quick-add"
                                 title="快速新建"

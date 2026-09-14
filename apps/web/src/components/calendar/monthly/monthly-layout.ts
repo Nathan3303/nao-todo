@@ -4,7 +4,7 @@ import type { TaskViewObject } from '@nao-todo/domain-task'
 /**
  * 月历布局纯函数模块
  * @description 与 UI 解耦的日期/任务分段计算：
- *              1. 生成 6 行 7 列的月网格（周日开头，与既有视觉一致）；
+ *              1. 生成 6 行 7 列的月网格（周起始按 weekStart 口径可配，默认周日）；
  *              2. 按业务规则 R1 把任务折算为 [startAt日, endAt日] 闭区间跨度；
  *              3. 按行拆段（R2 跨行续接）并分配轨道（lane），同一天不重叠；
  *              4. 统计每个日期格超出可视轨道上限的任务数（R5 溢出 +N）。
@@ -75,7 +75,7 @@ export type CalendarGridModel = {
     lastKey: string
 }
 
-/** 周网格模型（锚点日所在周，周日开头 7 列单行） */
+/** 周网格模型（锚点日所在周，7 列单行；周起始按 weekStart 口径） */
 export type CalendarWeekModel = {
     anchorKey: string
     year: number
@@ -259,7 +259,7 @@ export const weekStartKeyOf = (
 }
 
 /**
- * 周网格模型：锚点日所在周（周日开头 7 列），跨界任务裁剪到周内
+ * 周网格模型：锚点日所在周（7 列，周起始按 weekStart 口径），跨界任务裁剪到周内
  * @param anchorKey 锚点日期键（YYYY-MM-DD）
  * @param tasks 任务快照（与月视图同源，跨周任务在此裁剪）
  * @param maxLanes 可视轨道数（行高实测；默认回退 3）
