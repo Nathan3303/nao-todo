@@ -16,17 +16,12 @@ import DetailsSubTasks from '../subtasks.vue'
  * TASK-04 子任务行标签展示（只读标签栏上移名称行 / 时间下移独立行）：
  *              覆盖 AC①主路径（标签栏 + 时间独立行布局）、AC②空态、AC③溢出 +N、只读无编辑入口；
  *              真实排版（宽度/换行/溢出视觉效果）由用户手工验收（jsdom 无布局引擎）。
+ * TASK-06 子任务节点 UI 优化（脱离按钮移除 / 时间·描述合并单行 / 数量徽标）：
+ *              覆盖① 脱离按钮/逻辑/样式整体移除（DOM 无 detach 按钮、无确认流）；
+ *              ② 时间·描述合并单行（` · ` 拼接、任缺剩另一部分、皆空不渲染、无悬空分隔符、
+ *              title 提供全文、摘要行不导航）；③ 检查项/子任务数量徽标（>0 才渲染、两者独立、
+ *              名称行末标签栏后 flex 0 0 auto 不挤占名称）；样式数值为 CSS 契约以静态论证列入汇报。
  */
-const { confirmMock, messageErrorMock } = vi.hoisted(() => ({
-    confirmMock: vi.fn(),
-    messageErrorMock: vi.fn()
-}))
-
-vi.mock('nue-ui', async (importOriginal) => {
-    const actual = await importOriginal<Record<string, unknown>>()
-    return { ...actual, NueConfirm: confirmMock, NueMessage: { error: messageErrorMock } }
-})
-
 const futureIso = (days: number): string => new Date(Date.now() + days * 86_400_000).toISOString()
 
 /** 相对日期文案（与组件内 `formatDateTime` 同口径：空值回退空串） */
@@ -42,13 +37,14 @@ const makeSubTask = (overrides: Partial<TaskViewObject> = {}): TaskViewObject =>
         startAt: null,
         endAt: null,
         projectId: null,
+        checkItemCount: 0,
+        subtaskCount: 0,
         ...overrides
     }) as TaskViewObject
 
 type Harness = {
     wrapper: VueWrapper
     switchTaskDetails: ReturnType<typeof vi.fn>
-    detachSubTask: ReturnType<typeof vi.fn>
     updateTaskState: ReturnType<typeof vi.fn>
     createSubTask: ReturnType<typeof vi.fn>
     resortSubTasks: ReturnType<typeof vi.fn>
@@ -65,7 +61,6 @@ afterEach(() => {
 
 const mountRows = (subTasks: TaskViewObject[], tags: TaskTagViewObject[] = []): Harness => {
     const switchTaskDetails = vi.fn()
-    const detachSubTask = vi.fn(async () => null)
     const updateTaskState = vi.fn(async () => null)
     const createSubTask = vi.fn(async () => {})
     const resortSubTasks = vi.fn(async () => null)
@@ -77,7 +72,6 @@ const mountRows = (subTasks: TaskViewObject[], tags: TaskTagViewObject[] = []): 
         switchTaskDetails,
         subTaskHandler: { updateTaskState },
         createSubTask,
-        detachSubTask,
         resortSubTasks,
         tags: ref(tags)
     }
@@ -90,7 +84,6 @@ const mountRows = (subTasks: TaskViewObject[], tags: TaskTagViewObject[] = []): 
     return {
         wrapper,
         switchTaskDetails,
-        detachSubTask,
         updateTaskState,
         createSubTask,
         resortSubTasks
@@ -104,55 +97,64 @@ const timeTextOf = (startAt: string | null, endAt: string | null): string => {
     return parts.join(' ~ ')
 }
 
+/** 摘要文案（与组件内 `subTaskMeta` 同口径：时间 · 描述，空段过滤） */
+const subTaskMetaOf = (
+    startAt: string | null,
+    endAt: string | null,
+    description?: string
+): string => [timeTextOf(startAt, endAt), description].filter(Boolean).join(' · ')
+
 describe('TASK-02 子任务行：时间内联 + 行内改名移除 + 脱离按钮并入标题行', () => {
-    it('U-R1 时间文案四态：仅开始 / 仅结束 / 两者 / 皆无（文案与格式不变，且渲染在名称下方独立行）', () => {
+    it('U-R1 时间文案四态：仅开始 / 仅结束 / 两者 / 皆无（文案与格式不变，与描述同住摘要行）', () => {
         const startAt = futureIso(1)
         const endAt = futureIso(3)
 
-        // 两者：`开始 <相对> ~ 结束 <相对>`，位于名称行（title-line）之下的独立行（AC①）
+        // 两者：`开始 <相对> ~ 结束 <相对>`；无描述时摘要行仅时间（合并后仍无悬空 `·`）
         const both = mountRows([makeSubTask({ startAt, endAt })])
-        const time = both.wrapper.find('.subtask-row__time')
-        expect(time.exists()).toBe(true)
-        expect(time.text()).toBe(timeTextOf(startAt, endAt))
-        expect(time.text()).toContain(' ~ ')
+        const meta = both.wrapper.find('.subtask-row__meta')
+        expect(meta.exists()).toBe(true)
+        expect(meta.text()).toBe(timeTextOf(startAt, endAt))
+        expect(meta.text()).toContain(' ~ ')
+        expect(meta.text()).not.toContain('·')
+        // 摘要行位于 body 内名称行（title-line）之后（AC① 布局）
         const titleLine = both.wrapper.find('.subtask-row__title-line')
-        // 时间不再内联于标题行：从标题行移出、落回 body 内名称行之后（AC① 布局）
-        expect(titleLine.find('.subtask-row__time').exists()).toBe(false)
+        expect(titleLine.find('.subtask-row__meta').exists()).toBe(false)
         const nameEl = both.wrapper.find('.subtask-row__name').element
         expect(
-            nameEl.compareDocumentPosition(time.element) & Node.DOCUMENT_POSITION_FOLLOWING
+            nameEl.compareDocumentPosition(meta.element) & Node.DOCUMENT_POSITION_FOLLOWING
         ).toBeTruthy()
 
         // 仅开始 / 仅结束
         const onlyStart = mountRows([makeSubTask({ startAt })])
-        expect(onlyStart.wrapper.find('.subtask-row__time').text()).toBe(timeTextOf(startAt, null))
+        expect(onlyStart.wrapper.find('.subtask-row__meta').text()).toBe(timeTextOf(startAt, null))
         const onlyEnd = mountRows([makeSubTask({ endAt })])
-        expect(onlyEnd.wrapper.find('.subtask-row__time').text()).toBe(timeTextOf(null, endAt))
+        expect(onlyEnd.wrapper.find('.subtask-row__meta').text()).toBe(timeTextOf(null, endAt))
 
-        // 皆无 ⇒ 时间元素不渲染（无悬空 `~`，也无空占位）
+        // 皆无且无描述 ⇒ 摘要行不渲染（无悬空 `~`/`·`，也无空占位）
         const none = mountRows([makeSubTask()])
-        expect(none.wrapper.find('.subtask-row__time').exists()).toBe(false)
+        expect(none.wrapper.find('.subtask-row__meta').exists()).toBe(false)
         expect(none.wrapper.text()).not.toContain('~')
     })
 
-    it('U-R2 时间移出 meta 行：无描述 ⇒ 不渲染 meta 行；有描述 ⇒ 第二行仅描述（且时间行位于描述上方）', () => {
-        const withDesc = mountRows([
-            makeSubTask({ description: '描述文本', startAt: futureIso(1), endAt: futureIso(2) })
-        ])
+    it('U-R2 时间·描述合并单行：两者以 ` · ` 拼接；任缺剩另一部分；皆空不渲染', () => {
+        const startAt = futureIso(1)
+        const endAt = futureIso(2)
+
+        // 两者：`时间 · 描述` 单行合并（TASK-06：原时间独立行与 meta 行合并）
+        const withDesc = mountRows([makeSubTask({ description: '描述文本', startAt, endAt })])
         const meta = withDesc.wrapper.find('.subtask-row__meta')
         expect(meta.exists()).toBe(true)
-        // 描述仍留末行，且不再拼接时间（死分支已清理）
-        expect(meta.text()).toBe('描述文本')
-        expect(meta.text()).not.toContain('~')
-        expect(meta.text()).not.toContain('·')
-        // AC① 布局：时间独立行在名称下、描述上
-        const timeEl = withDesc.wrapper.find('.subtask-row__time').element
-        expect(
-            timeEl.compareDocumentPosition(meta.element) & Node.DOCUMENT_POSITION_FOLLOWING
-        ).toBeTruthy()
+        expect(meta.text()).toBe(subTaskMetaOf(startAt, endAt, '描述文本'))
+        expect(meta.text()).toContain(' · ')
 
-        const noDesc = mountRows([makeSubTask({ description: undefined })])
-        expect(noDesc.wrapper.find('.subtask-row__meta').exists()).toBe(false)
+        // 仅描述：不产生前导/尾随 ` · `（无悬空分隔符）
+        const descOnly = mountRows([makeSubTask({ description: '描述文本' })])
+        expect(descOnly.wrapper.find('.subtask-row__meta').text()).toBe('描述文本')
+        expect(descOnly.wrapper.find('.subtask-row__meta').text()).not.toContain('·')
+
+        // 皆无：不渲染
+        const none = mountRows([makeSubTask({ description: undefined })])
+        expect(none.wrapper.find('.subtask-row__meta').exists()).toBe(false)
     })
 
     it('U-R3 行内改名机制整体移除：无编辑入口 / 无编辑输入 / 无 editing 属性与 actions 列', () => {
@@ -166,48 +168,33 @@ describe('TASK-02 子任务行：时间内联 + 行内改名移除 + 脱离按�
         ).toHaveLength(0)
     })
 
-    it('U-R4 时间完整文案由 title 取得，且脱离按钮常驻标题行（不以 v-if 隐藏）', () => {
+    it('U-R4 摘要行 title 提供全文（时间+描述），脱离按钮已整体移除（无按钮元素/无确认流）', () => {
         const startAt = futureIso(1)
         const endAt = futureIso(2)
-        const { wrapper: w } = mountRows([makeSubTask({ startAt, endAt })])
-        // AC④：title = 完整展示文案（不做绝对时间转换）
-        expect(w.find('.subtask-row__time').attributes('title')).toBe(timeTextOf(startAt, endAt))
-        // AC③/C-R6：脱离按钮仍常驻标题行且始终在 DOM 中（隐藏只走 opacity + hover/focus-within）；
-        // 时间已移出标题行，落入 body 独立行
-        const titleLine = w.find('.subtask-row__title-line')
-        expect(titleLine.find('.subtask-row__detach').exists()).toBe(true)
-        expect(titleLine.find('.subtask-row__time').exists()).toBe(false)
-        expect(w.find('.subtask-row__body').find('.subtask-row__time').exists()).toBe(true)
+        const { wrapper: w } = mountRows([makeSubTask({ startAt, endAt, description: '描述文本' })])
+        // title = 合并全文（不做绝对时间转换）
+        expect(w.find('.subtask-row__meta').attributes('title')).toBe(
+            subTaskMetaOf(startAt, endAt, '描述文本')
+        )
+        // TASK-06：脱离按钮移除 —— DOM 无 detach 按钮；旧时间独立行也已合并（无残留元素）
+        expect(w.find('.subtask-row__detach').exists()).toBe(false)
+        expect(w.find('.subtask-row__time').exists()).toBe(false)
+        // 摘要行位于 body（名称行之下）
+        expect(w.find('.subtask-row__body').find('.subtask-row__meta').exists()).toBe(true)
     })
 
-    it('AC⑥ 点击口径：名称导航、时间不导航、脱离按钮不误触导航（且确认后调用 detachSubTask）', async () => {
+    it('AC⑥ 点击口径：名称导航、摘要行不导航（脱离按钮已移除）', async () => {
         const subTask = makeSubTask({ startAt: futureIso(1), endAt: futureIso(2) })
         const h = mountRows([subTask])
 
-        // 点击名称 ⇒ 进入详情（改名唯一入口）
+        // 点击名称 ⇒ 进入详情
         await h.wrapper.find('.subtask-row__name').trigger('click')
         expect(h.switchTaskDetails).toHaveBeenCalledWith(subTask.id)
 
-        // 点击时间 ⇒ 不导航
+        // 点击摘要行 ⇒ 不导航
         h.switchTaskDetails.mockClear()
-        await h.wrapper.find('.subtask-row__time').trigger('click')
+        await h.wrapper.find('.subtask-row__meta').trigger('click')
         expect(h.switchTaskDetails).not.toHaveBeenCalled()
-
-        // 点击脱离按钮 ⇒ 确认弹窗 + detachSubTask，且不导航（AC⑧ 行为不变）
-        confirmMock.mockResolvedValueOnce([false])
-        await h.wrapper.find('.subtask-row__detach').trigger('click')
-        await new Promise((resolve) => setTimeout(resolve, 0))
-        expect(confirmMock).toHaveBeenCalledTimes(1)
-        expect(h.detachSubTask).toHaveBeenCalledWith(subTask.id)
-        expect(h.switchTaskDetails).not.toHaveBeenCalled()
-        expect(messageErrorMock).not.toHaveBeenCalled()
-
-        // 取消确认 ⇒ 不调用 detachSubTask
-        h.detachSubTask.mockClear()
-        confirmMock.mockResolvedValueOnce([true])
-        await h.wrapper.find('.subtask-row__detach').trigger('click')
-        await new Promise((resolve) => setTimeout(resolve, 0))
-        expect(h.detachSubTask).not.toHaveBeenCalled()
     })
 
     it('AC⑧ 行为不变：勾选切换状态、创建输入条仍走 createSubTask、行与标题行不挂导航点击', async () => {
@@ -363,11 +350,12 @@ describe('TASK-04 子任务行：名称右侧只读标签栏 + 时间下移独�
         const names = h.wrapper.findAll('.tag-node__name').map((n) => n.text())
         // 前 2 个标签 + 溢出计数 +1（第 3 个不重复渲染，由 +N 汇总）
         expect(names).toEqual(['工作', '紧急', '+1'])
-        // 时间独立行与标签栏共存（AC1 主路径叠加）
-        expect(h.wrapper.find('.subtask-row__time').exists()).toBe(true)
+        // 摘要行（含时间，TASK-06 合并）与标签栏共存（AC1 主路径叠加）
+        const startAt = futureIso(1)
+        expect(h.wrapper.find('.subtask-row__meta').text()).toBe(timeTextOf(startAt, null))
     })
 
-    it('AC4 负向闭环：无标签子任务拖拽排序 / 勾选 / 脱离按钮仍常驻标题行（零回归）', async () => {
+    it('AC4 负向闭环：无标签子任务拖拽排序 / 勾选正常（脱离按钮已移除，零回归）', async () => {
         const h = mountRows([makeSubTask({ id: 'sub-1', tags: [] })])
         expect(h.wrapper.findComponent(TaskTagBar).exists()).toBe(false)
         // 拖拽契约不变（行级 draggable / data-drag-item / data-sid）
@@ -375,11 +363,84 @@ describe('TASK-04 子任务行：名称右侧只读标签栏 + 时间下移独�
         expect(row.attributes('draggable')).toBe('true')
         expect(row.attributes('data-drag-item')).toBe('true')
         expect(row.attributes('data-sid')).toBe('sub-1')
-        // 勾选完成 / 脱离按钮仍在标题行
+        // 勾选完成正常；脱离按钮已在 TASK-06 移除（不再常驻标题行）
         h.wrapper.findComponent(TaskCheckButton).vm.$emit('change')
         expect(h.updateTaskState).toHaveBeenCalledWith('sub-1', 'done')
+        expect(h.wrapper.find('.subtask-row__detach').exists()).toBe(false)
+    })
+})
+
+describe('TASK-06 子任务节点：数量徽标（检查项 / 子任务）', () => {
+    it('>0 才渲染且各自独立：仅检查项 ⇒ 只有 check 徽标；仅子任务 ⇒ 只有 subtask 徽标；皆 0 不渲染', () => {
+        const checkOnly = mountRows([makeSubTask({ checkItemCount: 3, subtaskCount: 0 })])
+        const checkBadge = checkOnly.wrapper.find('.subtask-row__badge--check')
+        const subBadge = checkOnly.wrapper.find('.subtask-row__badge--subtask')
+        expect(checkBadge.exists()).toBe(true)
+        expect(checkBadge.text()).toBe('3')
+        expect(subBadge.exists()).toBe(false)
+
+        const subOnly = mountRows([makeSubTask({ checkItemCount: 0, subtaskCount: 2 })])
+        expect(subOnly.wrapper.find('.subtask-row__badge--check').exists()).toBe(false)
+        const subBadgeOnly = subOnly.wrapper.find('.subtask-row__badge--subtask')
+        expect(subBadgeOnly.exists()).toBe(true)
+        expect(subBadgeOnly.text()).toBe('2')
+
+        const none = mountRows([makeSubTask()])
+        expect(none.wrapper.find('.subtask-row__badge').exists()).toBe(false)
+    })
+
+    it('徽标位于标题行、名称与标签栏之后；title 提供 i18n 文案（含数量）', async () => {
+        const h = mountRows(
+            [makeSubTask({ tags: ['tag-1'], checkItemCount: 3, subtaskCount: 2 })],
+            [{ id: 'tag-1', name: '工作', color: '#3b82f6' }]
+        )
+        const titleLine = h.wrapper.find('.subtask-row__title-line')
+        const checkBadge = titleLine.find('.subtask-row__badge--check')
+        const subBadge = titleLine.find('.subtask-row__badge--subtask')
+        expect(checkBadge.exists()).toBe(true)
+        expect(subBadge.exists()).toBe(true)
+        // 位于名称之后、行尾（check 徽标在 subtask 徽标前）
+        const nameEl = h.wrapper.find('.subtask-row__name').element
         expect(
-            h.wrapper.find('.subtask-row__title-line').find('.subtask-row__detach').exists()
+            nameEl.compareDocumentPosition(checkBadge.element) & Node.DOCUMENT_POSITION_FOLLOWING
+        ).toBeTruthy()
+        expect(
+            checkBadge.element.compareDocumentPosition(subBadge.element) &
+                Node.DOCUMENT_POSITION_FOLLOWING
+        ).toBeTruthy()
+        // title = i18n 文案（含数量插值）
+        expect(checkBadge.attributes('title')).toBe(t('task.details.checkItemCount', { count: 3 }))
+        expect(subBadge.attributes('title')).toBe(t('task.details.subtaskCount', { count: 2 }))
+        // 徽标不触发详情导航
+        await checkBadge.trigger('click')
+        expect(h.switchTaskDetails).not.toHaveBeenCalled()
+    })
+
+    it('徽标与标签栏共存：顺序为 名称 → 标签栏 → 徽标（flex 0 0 auto 防挤占为 CSS 契约，静态论证）', () => {
+        const h = mountRows(
+            [
+                makeSubTask({
+                    tags: ['tag-1', 'tag-2'],
+                    checkItemCount: 5,
+                    subtaskCount: 1
+                })
+            ],
+            [
+                { id: 'tag-1', name: '工作', color: '#3b82f6' },
+                { id: 'tag-2', name: '紧急', color: '#ef4444' }
+            ]
+        )
+        expect(h.wrapper.findComponent(TaskTagBar).exists()).toBe(true)
+        const badges = h.wrapper.findAll('.subtask-row__badge')
+        expect(badges).toHaveLength(2)
+        const tagBarEl = h.wrapper.findComponent(TaskTagBar).element
+        const firstBadgeEl = badges[0]!.element
+        expect(
+            tagBarEl.compareDocumentPosition(firstBadgeEl) & Node.DOCUMENT_POSITION_FOLLOWING
+        ).toBeTruthy()
+        // 徽标均位于标题行内（与标签栏同一行，互不换行挤占）
+        expect(
+            h.wrapper.find('.subtask-row__title-line').find('.subtask-row__badge').exists()
         ).toBe(true)
     })
 })

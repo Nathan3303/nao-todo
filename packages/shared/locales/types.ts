@@ -321,6 +321,8 @@ export interface LocaleMessages {
     'task.details.subTasksLoading': string
     'task.details.subTaskCreate': string
     'task.details.subTaskNamePlaceholder': string
+    'task.details.checkItemCount': string
+    'task.details.subtaskCount': string
     'task.details.moveToSubTask': string
     'task.details.backToParent': string
     'task.details.detachFromParent': string
