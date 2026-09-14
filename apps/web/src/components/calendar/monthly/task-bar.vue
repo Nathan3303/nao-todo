@@ -160,14 +160,14 @@ const onPointerDown = (event: PointerEvent): void => {
 /* ── 任务条（月/周共用；父级根容器需定义 --cal-* 令牌） ── */
 .cal-item {
     position: absolute;
-    height: 18px; /* TASK-07：16→18 行高增加（GRID_ITEM_STEP 同步 20） */
+    height: 20px; /* TASK-07：16→20 行高增加（GRID_ITEM_STEP 同步 22） */
     display: flex;
     align-items: center;
     padding: 0 8px;
     background: var(--cal-chip-bg);
     color: var(--cal-fg);
     font-size: 0.75rem;
-    line-height: 18px;
+    line-height: 20px;
     white-space: nowrap;
     overflow: hidden;
     cursor: pointer;

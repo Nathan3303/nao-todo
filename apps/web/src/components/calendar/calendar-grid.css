@@ -14,14 +14,18 @@
     --cal-muted: color-mix(in srgb, var(--nue-primary-text-color) 45%, var(--nue-primary-color-0));
     --cal-border: var(--nue-border-color);
     /* 网格分隔线（TASK-07：较 --cal-border 淡化约 28%，降低亮度） */
-    --cal-grid-line: color-mix(in srgb, var(--cal-border) 72%, var(--cal-bg));
+    --cal-grid-line: color-mix(in srgb, var(--cal-border) 64%, var(--cal-bg));
     --cal-hover: color-mix(in srgb, var(--nue-primary-text-color) 5%, var(--nue-primary-color-0));
     --cal-select-bg: color-mix(
         in srgb,
         var(--nue-primary-text-color) 9%,
         var(--nue-primary-color-0)
     );
-    --cal-chip-bg: color-mix(in srgb, var(--nue-primary-text-color) 6%, var(--nue-primary-color-0));
+    --cal-chip-bg: color-mix(
+        in srgb,
+        var(--nue-primary-text-color) 12%,
+        var(--nue-primary-color-0)
+    );
     --cal-chip-bg-hover: color-mix(
         in srgb,
         var(--nue-primary-text-color) 18%,
@@ -310,7 +314,7 @@
         transparent calc(85.7142% - 1px),
         var(--cal-grid-line) calc(85.7142% - 1px),
         var(--cal-grid-line) calc(85.7142%),
-        transparent 100%
+        transparent 0
     );
 }
 /* 任务条视觉（色条/色痕/时刻/周裁剪圆角）已抽至 ./task-bar.vue；--cal-* 令牌由本文件定义 */
