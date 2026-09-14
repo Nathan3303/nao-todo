@@ -1,6 +1,6 @@
 @font-face {
     font-family: 'iconfont'; /* Project id 4627189 */
-    src: url('iconfont.woff2?t=1780897299935') format('woff2');
+    src: url('iconfont.woff2?t=1789345691544') format('woff2');
 }
 
 .iconfont {
@@ -9,6 +9,14 @@
     font-style: normal;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-ntd-sync2:before {
+    content: '\e024';
+}
+
+.icon-ntd-sync:before {
+    content: '\e023';
 }
 
 .icon-ntd-settings:before {

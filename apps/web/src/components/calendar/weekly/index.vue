@@ -418,11 +418,10 @@ const onWeekJumpSelect = (targetYear: number, targetMonth: number): void => {
 }
 
 .wk-header {
-    margin-bottom: 1rem;
     user-select: none;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    margin-bottom: var(--nue-gap-sm);
 }
 
 .wk-title {
