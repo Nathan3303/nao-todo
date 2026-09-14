@@ -2,6 +2,28 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.7.2] - 2026-09-14
+
+发布批次：桌面端同步状态栏 UI 重构 + 日历月/周边距微调（patch）。**Tag `v1.7.2`** · root `1.7.2` / `@nao-todo/desktopapp` `1.7.2`（`@nao-todo/presentation` `0.4.2` / `@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` 不动；webapp 无 version 不参与）。范围：web + desktop（renderer UI 层）。
+
+### Fixed（修复 / 重构）
+
+- **桌面端同步状态栏 UI 重构**：面板结构 nue-text 化（li 行改直挂面板根）、`placement` 调整 `right-center → top-start`、新图标 `ntd-sync2`、footer 动作按钮去包装；内容可见性改由库 `data-visible` 控制（移除组件级 @close 卸载）。
+- **日历月 / 周边距微调**（`apps/web/src/components/calendar/monthly|weekly/index.vue`）；新增 iconfont 图标（`iconfont.css` / `.woff2`）。
+- **测试同步**（`sync-status-bar.test.ts`）：选择器对齐新结构（`.sync-panel__row` / `.sync-panel__footer` / `.sync-panel__error` → 面板根 / 按钮 / title 全文定位），行为断言全部保留（三态文案 / 错误 title 全文+无子元素 / 焦点归还 / live summary / 无障碍）。
+
+### Changed
+
+- 版本协同 bump（patch）：root / `@nao-todo/desktopapp` `1.7.1 → 1.7.2`。其余包不动；无公开 API 导出面破坏。
+
+### 质量门槛
+
+- `vp test`：**73 文件 / 645 例全绿**（含 `sync-status-bar.test.ts` 4/4，原 2 failed 已同步修复）。
+- `vp check`：目标文件 pass（fmt / lint / type）。
+- `pnpm webapp build` ✓ / `pnpm desktopapp build` ✓。
+
+[v1.7.2]: https://github.com/Nathan3303/nao-todo/releases/tag/v1.7.2
+
 ## [v1.7.1] - 2026-09-14
 
 发布批次：TASK-04 详情面板子任务行标签展示（patch）。**Tag `v1.7.1`** · root `1.7.1` / `@nao-todo/desktopapp` `1.7.1` / `@nao-todo/presentation` `0.4.2`（`@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` / `@nao-todo/domain-project` `1.1.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（presentation 层）。设计记录：PRD `docs/prds/2026-09-14-task-details-subtask-tags.md`。
