@@ -12,13 +12,13 @@
 
 ## 0. 判定速览
 
-| 问题 | 结论 |
-| :--- | :--- |
-| 生产态能否复现「点击离线进入无反应」 | ✅ **能**（门 30s 不动，`hash` 不变） |
-| 报错是否与用户一致 | ✅ **逐字一致**：`TypeError: Cannot read properties of undefined (reading 'replace')` @ `u`(AppRoot.onOffline) |
-| `useRouter()` 是否 undefined | ✅ **确认**：运行时在 app 上下文调用该 chunk 导出的 `useRouter` 返回 `undefined`（而 `$router` 正常存在） |
-| 根因 | ✅ **双 `vue-router` 实例**（构建图 + 运行时双证）：`apps/desktop/…/AppRoot.vue` → store A；`apps/web/...`（含 `router.ts` 的 `createRouter`）→ store B |
-| 是否旧包残留 | ❌ 不是。当前 HEAD 重建即复现（故与用户 app chunk hash 不同无关） |
+| 问题                                 | 结论                                                                                                                                                    |
+| :----------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 生产态能否复现「点击离线进入无反应」 | ✅ **能**（门 30s 不动，`hash` 不变）                                                                                                                   |
+| 报错是否与用户一致                   | ✅ **逐字一致**：`TypeError: Cannot read properties of undefined (reading 'replace')` @ `u`(AppRoot.onOffline)                                          |
+| `useRouter()` 是否 undefined         | ✅ **确认**：运行时在 app 上下文调用该 chunk 导出的 `useRouter` 返回 `undefined`（而 `$router` 正常存在）                                               |
+| 根因                                 | ✅ **双 `vue-router` 实例**（构建图 + 运行时双证）：`apps/desktop/…/AppRoot.vue` → store A；`apps/web/...`（含 `router.ts` 的 `createRouter`）→ store B |
+| 是否旧包残留                         | ❌ 不是。当前 HEAD 重建即复现（故与用户 app chunk hash 不同无关）                                                                                       |
 
 ---
 
@@ -26,11 +26,11 @@
 
 构建命令：`pnpm desktop:build`（渲染进程 terser 生产丑化 + manualChunks vendor 拆分）。
 
-| # | 构建 | API Base | `index` 入口 chunk | sha256 | 备注 |
-| :-: | :--- | :--- | :--- | :--- | :--- |
-| B1 | 默认生产构建 | `https://todobe.nathanao.space/api` | `index-BRaOVFTK.js`（171.07 kB） | `2407fd0d51781df60d7201dd98e455f4f344300afd26aa61d1be755382e44958` | 用于 hash 对比 / 构建图核验 |
-| B2 | 覆盖 `VITE_API_BASE_URL=http://localhost:3302/api` | `http://localhost:3302/api` | `index-Dr1MGVC-.js`（171.06 kB） | `27078d9ceff90f044bc77495313669f87ce20f10e6e51f357d2d3eba145afd03` | **运行复现用**（可连本地后端登录建密钥包） |
-| — | 用户报错产物 | — | `index-DOz7xaey.js` | —（用户提供） | **与本地产物名不同 ≠ 用户跑旧包**：B1/B2 均复现同一缺陷 |
+|  #  | 构建                                               | API Base                            | `index` 入口 chunk               | sha256                                                             | 备注                                                    |
+| :-: | :------------------------------------------------- | :---------------------------------- | :------------------------------- | :----------------------------------------------------------------- | :------------------------------------------------------ |
+| B1  | 默认生产构建                                       | `https://todobe.nathanao.space/api` | `index-BRaOVFTK.js`（171.07 kB） | `2407fd0d51781df60d7201dd98e455f4f344300afd26aa61d1be755382e44958` | 用于 hash 对比 / 构建图核验                             |
+| B2  | 覆盖 `VITE_API_BASE_URL=http://localhost:3302/api` | `http://localhost:3302/api`         | `index-Dr1MGVC-.js`（171.06 kB） | `27078d9ceff90f044bc77495313669f87ce20f10e6e51f357d2d3eba145afd03` | **运行复现用**（可连本地后端登录建密钥包）              |
+|  —  | 用户报错产物                                       | —                                   | `index-DOz7xaey.js`              | —（用户提供）                                                      | **与本地产物名不同 ≠ 用户跑旧包**：B1/B2 均复现同一缺陷 |
 
 - 两份 vendor chunk 在 B1/B2 中一致（与 API base 无关）：
     - `assets/vender/vue-router-DrofmNyp.js` = `25e231146f6198722b011f6c8ed05c0c1739f4d0ca8c1b6b059d91f10af3f0bb`
@@ -43,13 +43,13 @@
 
 路径：`file://…/index.html` 冷启动 → 去壳在线登录（建立本地密钥包）→ 封锁 `localhost:3302` + reload → 输入本地密码解锁 → 初始同步门失败态 → **点击「离线进入」** → 抓 300ms/3s/10s/30s。
 
-| 时间窗 | `location.hash` | `router.currentRoute.name` | `.initial-sync-gate` | `.sync-rail-btn` | 可交互元素 | 结论 |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| 点击前 | `#/auth/checkin` | `auth-checkin` | 在 | 无 | 3（重试/离线进入/登出用户） | — |
-| +300ms | `#/auth/checkin` | `auth-checkin` | **在** | 无 | **3** | 无变化 |
-| +3s | `#/auth/checkin` | `auth-checkin` | **在** | 无 | **3** | 无变化 |
-| +10s | `#/auth/checkin` | `auth-checkin` | **在** | 无 | **3** | 无变化 |
-| +30s | `#/auth/checkin` | `auth-checkin` | **在** | 无 | **3** | 无变化 |
+| 时间窗 | `location.hash`  | `router.currentRoute.name` | `.initial-sync-gate` | `.sync-rail-btn` | 可交互元素                  | 结论   |
+| :----- | :--------------- | :------------------------- | :------------------- | :--------------- | :-------------------------- | :----- |
+| 点击前 | `#/auth/checkin` | `auth-checkin`             | 在                   | 无               | 3（重试/离线进入/登出用户） | —      |
+| +300ms | `#/auth/checkin` | `auth-checkin`             | **在**               | 无               | **3**                       | 无变化 |
+| +3s    | `#/auth/checkin` | `auth-checkin`             | **在**               | 无               | **3**                       | 无变化 |
+| +10s   | `#/auth/checkin` | `auth-checkin`             | **在**               | 无               | **3**                       | 无变化 |
+| +30s   | `#/auth/checkin` | `auth-checkin`             | **在**               | 无               | **3**                       | 无变化 |
 
 Console（原始，完整见 JSON）：
 
@@ -73,20 +73,20 @@ error: TypeError: Cannot read properties of undefined (reading 'replace')
 
 ```json
 {
-  "exported": ["a", "b", "c", "d", "u"],
-  "results": {
-    "b": { "call": "OK",  "isRouter": true,  "sameAsGlobal": true  },
-    "c": { "call": "THREW", "err": "Cannot read properties of undefined (reading 'routes')" },
-    "u": { "call": "OK",  "valIsUndefined": true, "sameAsGlobal": false }
-  },
-  "globalRouter": "defined"
+    "exported": ["a", "b", "c", "d", "u"],
+    "results": {
+        "b": { "call": "OK", "isRouter": true, "sameAsGlobal": true },
+        "c": { "call": "THREW", "err": "Cannot read properties of undefined (reading 'routes')" },
+        "u": { "call": "OK", "valIsUndefined": true, "sameAsGlobal": false }
+    },
+    "globalRouter": "defined"
 }
 ```
 
 - `globalProperties.$router` **存在**（object）——说明 router 已安装、且安装的是「**能正常工作**的那份」。
 - `provides` 里 **只有一个** router symbol（`app._context.provides` 共 5 个 symbol，其中 1 个 `isRouter`）。
 - **`u`（= AppRoot 实际 import 的 `useRouter`，入口映射 `u as ve`）在同一 app 上下文调用返回 `undefined`**；而 `b` 返回全局 router（`sameAsGlobal: true`）。
-    ⇒ 同一个 chunk 文件里存在**两套 `routerKey` 注入契约**，AppRoot 用的是**未被 `app.use()` 安装**的那一套。
+  ⇒ 同一个 chunk 文件里存在**两套 `routerKey` 注入契约**，AppRoot 用的是**未被 `app.use()` 安装**的那一套。
 - 无法读取 AppRoot 实例的 `setupState`（生产构建下为 `null`），故以上「在 app 上下文调用 entry 实际引用的 `useRouter`」是等价且更直接的判定。
 
 ### 3.1 构建图核验（stats.html）
@@ -129,10 +129,10 @@ node_modules/vue-router (root)        ──→ store B（…_@voidzero-dev+vite
 ## 5. 修复建议（**仅建议，本次未改任何代码**）
 
 1. **首选（最小、根治）**：在 `apps/desktop/electron.vite.config.ts` 的 `renderer.resolve` 增加去重：
-   ```ts
-   resolve: { dedupe: ['vue', 'vue-router', 'pinia'], alias: [ … ] }
-   ```
-   （`vue`/`pinia` 当前恰好单实例，一并 dedupe 可防回归。）
+    ```ts
+    resolve: { dedupe: ['vue', 'vue-router', 'pinia'], alias: [ … ] }
+    ```
+    （`vue`/`pinia` 当前恰好单实例，一并 dedupe 可防回归。）
 2. **依赖收敛**：把 `vue-router` 显式声明进 `apps/web/package.json`，使 web/desktop 解析同一 store 版本；或在根 `package.json` 加 `pnpm.overrides` 统一 peer 变体。
 3. **兜底（与 SHELL-05 主单一致）**：`onOffline`/`onSignOut` 加 `try/catch/finally`，确保 `gatePassed` 必达；并注册 `router.onError`。
 4. **回归门禁**：CI 增加「生产包 vendor 去重」断言（如 `stats.html` 中同一包不得出现 ≥2 个 store 路径），或至少对 `vue-router` 断言单实例。

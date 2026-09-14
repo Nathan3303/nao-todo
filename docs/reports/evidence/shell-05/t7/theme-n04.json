@@ -1,14 +1,14 @@
 {
-  "accountTabErr": [
-    {
-      "time": "2026-09-13T14:00:11.094Z",
-      "source": "vue:errorHandler:https://vuejs.org/error-reference/#runtime-1",
-      "message": "Cannot read properties of undefined (reading 'deactivedAt')",
-      "stack": "TypeError: Cannot read properties of undefined (reading 'deactivedAt')\n    at Proxy.<anonymous> (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/index--ku28NEa.js:2:23422)\n    at Hr (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-ecosystem-B2lk6veD.js:1:43410)\n    at Qe.fn (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-ecosystem-B2lk6veD.js:1:53653)\n    at Qe.run (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-ecosystem-B2lk6veD.js:1:6008)\n    at F (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-ecosystem-B2lk6veD.js:1:53986)\n    at w (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-ecosystem-B2lk6veD…"
-    }
-  ],
-  "accountBody": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 Projects 0 Use projects to collect, organize and manage your tasks Tags 0 View tasks across different projects by tag 收藏夹 垃圾桶 已过",
-  "themeBefore": "1",
-  "themeClick": "clicked-light",
-  "themeAfter": "0"
+    "accountTabErr": [
+        {
+            "time": "2026-09-13T14:00:11.094Z",
+            "source": "vue:errorHandler:https://vuejs.org/error-reference/#runtime-1",
+            "message": "Cannot read properties of undefined (reading 'deactivedAt')",
+            "stack": "TypeError: Cannot read properties of undefined (reading 'deactivedAt')\n    at Proxy.<anonymous> (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/index--ku28NEa.js:2:23422)\n    at Hr (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-ecosystem-B2lk6veD.js:1:43410)\n    at Qe.fn (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-ecosystem-B2lk6veD.js:1:53653)\n    at Qe.run (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-ecosystem-B2lk6veD.js:1:6008)\n    at F (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-ecosystem-B2lk6veD.js:1:53986)\n    at w (file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/assets/vender/vue-ecosystem-B2lk6veD…"
+        }
+    ],
+    "accountBody": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 Projects 0 Use projects to collect, organize and manage your tasks Tags 0 View tasks across different projects by tag 收藏夹 垃圾桶 已过",
+    "themeBefore": "1",
+    "themeClick": "clicked-light",
+    "themeAfter": "0"
 }

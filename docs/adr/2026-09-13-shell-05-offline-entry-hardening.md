@@ -10,13 +10,13 @@
 
 ## 0. 评审输入与证据方法
 
-| 输入                  | 说明                                                                                                                                 |
-| :-------------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
-| PRD（勘察报告）       | `docs/prds/2026-09-13-shell-05-offline-boundary-recon.md`                                                                            |
-| 前序 ADR              | `docs/adr/2026-09-10-shell-03-offline-availability.md`（附录 B 定义了离线进入的路由语义与四条件守卫，**BC-5 要求重验**）             |
-| 关键代码              | `apps/desktop/.../AppRoot.vue`、`apps/desktop/.../components/initial-sync-gate.vue`、`apps/web/src/views/auth/routes.ts`、`apps/web/src/router.ts`、`apps/web/src/views/index/tasks/routes.ts` |
-| 上游框架事实          | `vue-router@5.2.0`（非 4.x，行为有差异——见 §1.2 实测）                                                                               |
-| 实测方法（本次新增）  | 用 `createMemoryHistory` 复刻 `router.ts` 三段守卫 + `tasks/calendar` 路由结构，跑 16 组 `LAST_VISITED / LAST_TASKS` 组合，观察 `router.replace` 是 resolve 还是 reject（临时脚本，评审后已删） |
+| 输入                 | 说明                                                                                                                                                                                            |
+| :------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PRD（勘察报告）      | `docs/prds/2026-09-13-shell-05-offline-boundary-recon.md`                                                                                                                                       |
+| 前序 ADR             | `docs/adr/2026-09-10-shell-03-offline-availability.md`（附录 B 定义了离线进入的路由语义与四条件守卫，**BC-5 要求重验**）                                                                        |
+| 关键代码             | `apps/desktop/.../AppRoot.vue`、`apps/desktop/.../components/initial-sync-gate.vue`、`apps/web/src/views/auth/routes.ts`、`apps/web/src/router.ts`、`apps/web/src/views/index/tasks/routes.ts`  |
+| 上游框架事实         | `vue-router@5.2.0`（非 4.x，行为有差异——见 §1.2 实测）                                                                                                                                          |
+| 实测方法（本次新增） | 用 `createMemoryHistory` 复刻 `router.ts` 三段守卫 + `tasks/calendar` 路由结构，跑 16 组 `LAST_VISITED / LAST_TASKS` 组合，观察 `router.replace` 是 resolve 还是 reject（临时脚本，评审后已删） |
 
 **证据缺口（评审前置）**：用户未导出 Console。**本单所有触发源判定都必须以 QA 实机 Console + 未捕获异常为终审**；本报告的静态结论只用于收敛范围，不得当作触发源定论。
 
@@ -31,8 +31,8 @@
 ```ts
 const onOffline = async (): Promise<void> => {
     grantOfflineEntry()
-    await router.replace(localStorage.getItem(LAST_VISITED_ROUTE_KEY) || '/tasks')  // 无 try/catch
-    gatePassed.value = true                                                          // reject/hang 即永不到达
+    await router.replace(localStorage.getItem(LAST_VISITED_ROUTE_KEY) || '/tasks') // 无 try/catch
+    gatePassed.value = true // reject/hang 即永不到达
 }
 ```
 
@@ -44,13 +44,13 @@ const onOffline = async (): Promise<void> => {
 
 `vue-router@5.2.0` 的 `push/replace` 只在以下情况 **reject**（源码 `pushWithRedirect` / `navigate` / `triggerError` / `handleRedirectRecord`）：
 
-| #   | reject 触发                      | 本次实测结论                                                                                                      |
-| :-- | :------------------------------- | :---------------------------------------------------------------------------------------------------------------- |
-| R-a | 守卫**抛出/返回 rejected promise** | 可能；但静态通读三个守卫（`authBeforeEnter`、`router.beforeEach`、`tasks.beforeEnter`）**全为同步安全路径**，无网络调用、无抛点 |
-| R-b | 懒加载组件 `import()` **reject**  | 可能；**唯一天然与"断网"相关的 reject**（chunk 需走网络时）。桌面端打包后走 `file://` 本地 chunk，概率低；**浏览器态 / dev 态概率高** |
-| R-c | `handleRedirectRecord` 得 `Invalid redirect` | 不可能（本仓库所有 record `redirect` 均为合法 `path`/命名路由）                                              |
-| R-d | 守卫重定向**成环 > 30 次**（`Infinite redirect in navigation guard`） | 已证伪：16 组 `LAST_VISITED/LAST_TASKS` 组合（含 `'/tasks'`、`'/tasks/'`、`'/settings/general'`、失效深链）**全部 resolve** |
-| 非 reject | 重定向 / 无匹配 / 重复导航       | **resolve（返回 NavigationFailure 或 `matched=0`）**，不 reject。**无匹配 → `matched=0` ⇒ 空壳（属 B-04，见 §1.4）** |
+| #         | reject 触发                                                           | 本次实测结论                                                                                                                          |
+| :-------- | :-------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------ |
+| R-a       | 守卫**抛出/返回 rejected promise**                                    | 可能；但静态通读三个守卫（`authBeforeEnter`、`router.beforeEach`、`tasks.beforeEnter`）**全为同步安全路径**，无网络调用、无抛点       |
+| R-b       | 懒加载组件 `import()` **reject**                                      | 可能；**唯一天然与"断网"相关的 reject**（chunk 需走网络时）。桌面端打包后走 `file://` 本地 chunk，概率低；**浏览器态 / dev 态概率高** |
+| R-c       | `handleRedirectRecord` 得 `Invalid redirect`                          | 不可能（本仓库所有 record `redirect` 均为合法 `path`/命名路由）                                                                       |
+| R-d       | 守卫重定向**成环 > 30 次**（`Infinite redirect in navigation guard`） | 已证伪：16 组 `LAST_VISITED/LAST_TASKS` 组合（含 `'/tasks'`、`'/tasks/'`、`'/settings/general'`、失效深链）**全部 resolve**           |
+| 非 reject | 重定向 / 无匹配 / 重复导航                                            | **resolve（返回 NavigationFailure 或 `matched=0`）**，不 reject。**无匹配 → `matched=0` ⇒ 空壳（属 B-04，见 §1.4）**                  |
 
 **可证伪机制链条（H1，待实机验证）**：
 `点击离线进入 → grantOfflineEntry() → router.replace(target) → [触发源：守卫抛错 或 目标 chunk import reject 或 悬挂] → onOffline 永不置位 gatePassed → 门停留 → 无反应`。
@@ -60,36 +60,36 @@ const onOffline = async (): Promise<void> => {
 
 ### 1.3 H2–H5 评估
 
-| #   | 假设                     | 评估                                                                                                                                                                                                 | 结论                                                                                     |
-| :-- | :----------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------- |
-| H2  | 放行四条件不成立         | 四条件全为本地事实，解锁成功后 `localSession` 已置位、`cryptoService.isUnlocked===true`、JWT 可解析；若不成立，守卫**返回重定向**（resolve）→ 最终落 `/auth/checkin` → 可见跳登录页。**与"无反应"形态不符**；且单测已覆盖四条件 | **非主因**（但"失败无可见性"是真缺陷 → C-29）                                            |
-| H3  | 目标路由失效/无匹配      | **实测确认**：无匹配路径 `router.replace` resolve 但 `matched=0` ⇒ `App` 挂载后 router-view 空 ⇒ **空壳/白屏**（不是门停留）。这是"无反应"的**可信替代解释**，必须由 QA 用 `router.currentRoute.value.matched.length` 区分 | **需排除**（纳入 P0：目标合法化 C-28/C-30）                                              |
-| H4  | 门卡在 `syncing`         | `runSync()` 顶层无 try/catch 属实（真缺陷）。但若 `start()` reject，`syncing` 恒 true、**按钮根本不出现**，与"按钮可见可点"矛盾 ⇒ 本次非此形态                                                                            | **非本次主因**（仍须修：C-26）                                                           |
-| H5  | `isCredentialFailure` 误判 | 用文案正则 `/登录已过期\|401\|403/` 判定，脆弱（SHELL-03 L8）。误判结果 = **隐藏「离线进入」按钮**，与"按钮可点"矛盾                                                                                                     | **非本次主因**（仍须修：C-34）                                                           |
+| #   | 假设                       | 评估                                                                                                                                                                                                                            | 结论                                          |
+| :-- | :------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :-------------------------------------------- |
+| H2  | 放行四条件不成立           | 四条件全为本地事实，解锁成功后 `localSession` 已置位、`cryptoService.isUnlocked===true`、JWT 可解析；若不成立，守卫**返回重定向**（resolve）→ 最终落 `/auth/checkin` → 可见跳登录页。**与"无反应"形态不符**；且单测已覆盖四条件 | **非主因**（但"失败无可见性"是真缺陷 → C-29） |
+| H3  | 目标路由失效/无匹配        | **实测确认**：无匹配路径 `router.replace` resolve 但 `matched=0` ⇒ `App` 挂载后 router-view 空 ⇒ **空壳/白屏**（不是门停留）。这是"无反应"的**可信替代解释**，必须由 QA 用 `router.currentRoute.value.matched.length` 区分      | **需排除**（纳入 P0：目标合法化 C-28/C-30）   |
+| H4  | 门卡在 `syncing`           | `runSync()` 顶层无 try/catch 属实（真缺陷）。但若 `start()` reject，`syncing` 恒 true、**按钮根本不出现**，与"按钮可见可点"矛盾 ⇒ 本次非此形态                                                                                  | **非本次主因**（仍须修：C-26）                |
+| H5  | `isCredentialFailure` 误判 | 用文案正则 `/登录已过期\|401\|403/` 判定，脆弱（SHELL-03 L8）。误判结果 = **隐藏「离线进入」按钮**，与"按钮可点"矛盾                                                                                                            | **非本次主因**（仍须修：C-34）                |
 
 ### 1.4 【New】D-08：`profile` 门控内容视图初始化 ⇒ 离线内容区**永久 loading**（确定性、离线必现、无报错）
 
 **这是本次评审新发现的根因级缺陷，PRD 未列。**
 
-| 事实                                                                 | 证据                                                                                                              |
-| :------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------- |
+| 事实                                                                                                | 证据                                                                                                                                                          |
+| :-------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 任务视图以 `profile` 为**初始化前置**；profile 为 null 时**直接 return**，`loading` 停在初始 `true` | `apps/web/src/components/tasks/built-in-project/built-in-project.ts:63`（`if (!props.projectId \|\| !profile.value) return`，`loading = ref(true)` 在 `:38`） |
-| 同型另两处（同类扫描）                                               | `project.ts:58`、`tag.ts:55`（`loading = ref(true)` 同处）                                                        |
-| `profile` 离线必为 null                                              | SHELL-03 §1.1：`profile` **仅内存**（`use-store-base` 纯 `ref`），冷启动离线加载失败 ⇒ 恒 null                      |
-| 默认 viewType 自愈也**依赖 profile 之后的代码**                       | `built-in-project.ts:67`（`await switchViewType(preference.value?.viewType \|\| 'table')` 在 `!profile` 早退之后） |
-| 组件渲染分支                                                         | `built-in-project/index.vue`：`<loading-comp v-if="loading" /> / <nue-container v-else>` ⇒ `loading` 恒 true 即**永久转圈**，且**无 `console.error`** |
-| 后果                                                                 | 离线进入后：门消失 → 壳 + 侧栏出现 → **内容区永久 loading**（用户口语即"点了没反应"/"进不去任务"）。**完全解释"无控制台导出"** |
+| 同型另两处（同类扫描）                                                                              | `project.ts:58`、`tag.ts:55`（`loading = ref(true)` 同处）                                                                                                    |
+| `profile` 离线必为 null                                                                             | SHELL-03 §1.1：`profile` **仅内存**（`use-store-base` 纯 `ref`），冷启动离线加载失败 ⇒ 恒 null                                                                |
+| 默认 viewType 自愈也**依赖 profile 之后的代码**                                                     | `built-in-project.ts:67`（`await switchViewType(preference.value?.viewType \|\| 'table')` 在 `!profile` 早退之后）                                            |
+| 组件渲染分支                                                                                        | `built-in-project/index.vue`：`<loading-comp v-if="loading" /> / <nue-container v-else>` ⇒ `loading` 恒 true 即**永久转圈**，且**无 `console.error`**         |
+| 后果                                                                                                | 离线进入后：门消失 → 壳 + 侧栏出现 → **内容区永久 loading**（用户口语即"点了没反应"/"进不去任务"）。**完全解释"无控制台导出"**                                |
 
 **性质**：SHELL-03 C-03（"网络装饰数据不得作为门/壳就绪条件"）**只施加于门/壳，未施加于视图内容层**——属约束覆盖漏项，同类缺陷大概率还有（本次只扫到 tasks 三视图）。
 
 ### 1.5 综合判定
 
-| 层级 | 结论                                                                                                                                     |
-| :--- | :--------------------------------------------------------------------------------------------------------------------------------------- |
+| 层级                    | 结论                                                                                                                                                                                                                                                               |
+| :---------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **触发根因（r2 实锤）** | **H6**：桌面渲染层打包了**两个物理 `vue-router` 实例**；`AppRoot` 的 `useRouter()` 取 B 实例的 `routerKey`，而 router 由 A 实例 `createRouter` 安装、只提供 A 的 `routerKey` ⇒ `useRouter()` 恒 `undefined` ⇒ `t.replace` 抛 `TypeError`。**必须修**（P0，见 §10） |
-| 结构根因（放大器） | **H1（门非总函数）**：`onOffline/onSignOut` 无兜底 ⇒ 任一导航异常/悬挂即永久卡门（把 H6 的一次 TypeError 放大为"点了没反应"）。**必须修**（P0） |
-| 并列根因 | **D-08（新）**：`profile` 门控视图初始化 ⇒ 离线内容区永久 loading（确定性、无报错）。**必须修**（P0）；否则即便 H1/H6 修好，用户仍"看不到任务" |
-| 观测缺口 | B-07（无全局未捕获异常处理）是"无控制台导出"的元凶 ⇒ **P0 必做可观测**，否则本单无法闭环验收                                               |
+| 结构根因（放大器）      | **H1（门非总函数）**：`onOffline/onSignOut` 无兜底 ⇒ 任一导航异常/悬挂即永久卡门（把 H6 的一次 TypeError 放大为"点了没反应"）。**必须修**（P0）                                                                                                                    |
+| 并列根因                | **D-08（新）**：`profile` 门控视图初始化 ⇒ 离线内容区永久 loading（确定性、无报错）。**必须修**（P0）；否则即便 H1/H6 修好，用户仍"看不到任务"                                                                                                                     |
+| 观测缺口                | B-07（无全局未捕获异常处理）是"无控制台导出"的元凶 ⇒ **P0 必做可观测**，否则本单无法闭环验收                                                                                                                                                                       |
 
 ---
 
@@ -122,22 +122,22 @@ const onOffline = async (): Promise<void> => {
 
 ## 3. 边界 B-01…B-13 逐条裁决
 
-| ID   | 边界                                   | 是否纳入本单 | 约束          | 建议方案                                                                                                                                          | 风险                                                                                       |
-| :--- | :------------------------------------- | :----------- | :------------ | :------------------------------------------------------------------------------------------------------------------------------------------------ | :----------------------------------------------------------------------------------------- |
-| B-01 | `onOffline/onSignOut` 无 try/catch     | **P0 纳入**  | C-26          | `try/catch/finally`；`gatePassed` 移入 `finally`；失败走 C-28 回退链 + C-27 打点                                                                    | 失败静默若只 catch 不打点 ⇒ 问题被隐藏；必须捆绑 C-27                                       |
-| B-02 | `runSync()` 顶层无 catch               | **P0 纳入**  | C-26          | `try/catch/finally` 进入 `failed` 终态；文案归入既有 error family（C-12）                                                                          | 误把基础设施异常当"网络错误"展示 ⇒ 归因不准；用中性文案                                                     |
-| B-03 | 四条件失败无可见性                     | **P1 纳入**  | C-29          | 门侧预检 + 显式文案/动作；日志带原因码（无 PII）                                                                                                   | 过度暴露判据细节有安全/体验争议 → 只给"无法离线进入，请重试/重新登录"级别                                |
-| B-04 | `LAST_VISITED` 可为失效深链            | **P0 纳入**  | C-28/C-30     | `resolve` 校验 + 回退链 + 清理非法键                                                                                                               | 无匹配 `matched=0` 表现为空壳（实测），非门停留；必须区分                                          |
-| B-05 | section 重定向指向失效路由             | **P0 纳入**  | C-30          | 同 B-04；重定向目标合法性校验，非法则清键放行                                                                                                       | 与 B-04 同一封装，避免两处实现漂移                                                          |
-| B-06 | 懒加载 chunk 离线不可用                | **P1 部分**  | C-27          | 桌面端（本地 chunk）不在本单修 chunk 预缓存；**先靠 C-27 捕获是否真的发生**；浏览器/Web 端预缓存另立单                                              | 若误判为根因投入预缓存，收益低；应先证据后投入                                              |
-| B-07 | 无全局未捕获异常兜底                   | **P0 纳入**  | C-27          | 四类钩子（`error`/`unhandledrejection`/`errorHandler`/`router.onError`）+ 有界缓冲                                                                  | 日志泄 PII/token → 白名单字段；缓冲无界 → 显式上限                                          |
-| B-08 | `/tasks` 落点缺 `viewType`             | **P0 纳入**  | C-31/C-32     | `/tasks` 重定向带默认 viewType + 视图自愈；**注意**：D-08 的 profile 早退会让自愈也失效，两者必须同批                                                | 只补 viewType 不修 D-08 ⇒ 仍永久 loading（假修复）                                          |
-| B-09 | 离线标志仅内存（刷新失效）             | **不纳入**   | —             | 保持现状（C-22 已定：内存 flag、刷新即失效属无粘性绕过）                                                                                            | 无                                                                                          |
-| B-10 | 使用中断网无在线/离线提示与再同步入口  | **P2 另立**  | —             | 单独立项（顶栏状态 + 手动同步）                                                                                                                     | 与 SHELL-02 轨道/状态面板边界交叉，须先对齐宿主契约                                         |
-| B-11 | `isCredentialFailure` 文案正则脆弱     | **P1 纳入**  | C-34          | 结构化错误分类替代正则                                                                                                                              | 需触达错误类型来源（infrastructure 错误对象），跨包改动面见 §4                               |
-| B-12 | 本地库为空/无该用户数据仍放行离线进入  | **P1 纳入**  | C-33          | 视图空态引导（"本地暂无数据，联网后将自动同步"）+ 重试；**不阻断进入**                                                                               | 阻断进入会违背"离线优先"；只做引导                                                          |
-| B-13 | check-in 对 replace 返回值处理不一致   | **P1 纳入**  | C-35          | 统一 `safeNavigate`；`sign-in-page.vue:13`/`index-view.ts:176` 的裸调用一并收敛                                                                     | 收敛面较大，可分两步（先 AppRoot，再其余）；不得在 P0 引入回归                              |
-| B-14 | **（新）`profile` 门控任务视图初始化** | **P0 纳入**  | C-31          | tasks 三视图去 `profile` 前置；离线走本地默认 preference + 硬默认 viewType；loading 三终态                                                          | 远端 preference 的离线降级口径需产品确认（见 D2/D3）                                        |
+| ID   | 边界                                   | 是否纳入本单 | 约束      | 建议方案                                                                                               | 风险                                                                      |
+| :--- | :------------------------------------- | :----------- | :-------- | :----------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------ |
+| B-01 | `onOffline/onSignOut` 无 try/catch     | **P0 纳入**  | C-26      | `try/catch/finally`；`gatePassed` 移入 `finally`；失败走 C-28 回退链 + C-27 打点                       | 失败静默若只 catch 不打点 ⇒ 问题被隐藏；必须捆绑 C-27                     |
+| B-02 | `runSync()` 顶层无 catch               | **P0 纳入**  | C-26      | `try/catch/finally` 进入 `failed` 终态；文案归入既有 error family（C-12）                              | 误把基础设施异常当"网络错误"展示 ⇒ 归因不准；用中性文案                   |
+| B-03 | 四条件失败无可见性                     | **P1 纳入**  | C-29      | 门侧预检 + 显式文案/动作；日志带原因码（无 PII）                                                       | 过度暴露判据细节有安全/体验争议 → 只给"无法离线进入，请重试/重新登录"级别 |
+| B-04 | `LAST_VISITED` 可为失效深链            | **P0 纳入**  | C-28/C-30 | `resolve` 校验 + 回退链 + 清理非法键                                                                   | 无匹配 `matched=0` 表现为空壳（实测），非门停留；必须区分                 |
+| B-05 | section 重定向指向失效路由             | **P0 纳入**  | C-30      | 同 B-04；重定向目标合法性校验，非法则清键放行                                                          | 与 B-04 同一封装，避免两处实现漂移                                        |
+| B-06 | 懒加载 chunk 离线不可用                | **P1 部分**  | C-27      | 桌面端（本地 chunk）不在本单修 chunk 预缓存；**先靠 C-27 捕获是否真的发生**；浏览器/Web 端预缓存另立单 | 若误判为根因投入预缓存，收益低；应先证据后投入                            |
+| B-07 | 无全局未捕获异常兜底                   | **P0 纳入**  | C-27      | 四类钩子（`error`/`unhandledrejection`/`errorHandler`/`router.onError`）+ 有界缓冲                     | 日志泄 PII/token → 白名单字段；缓冲无界 → 显式上限                        |
+| B-08 | `/tasks` 落点缺 `viewType`             | **P0 纳入**  | C-31/C-32 | `/tasks` 重定向带默认 viewType + 视图自愈；**注意**：D-08 的 profile 早退会让自愈也失效，两者必须同批  | 只补 viewType 不修 D-08 ⇒ 仍永久 loading（假修复）                        |
+| B-09 | 离线标志仅内存（刷新失效）             | **不纳入**   | —         | 保持现状（C-22 已定：内存 flag、刷新即失效属无粘性绕过）                                               | 无                                                                        |
+| B-10 | 使用中断网无在线/离线提示与再同步入口  | **P2 另立**  | —         | 单独立项（顶栏状态 + 手动同步）                                                                        | 与 SHELL-02 轨道/状态面板边界交叉，须先对齐宿主契约                       |
+| B-11 | `isCredentialFailure` 文案正则脆弱     | **P1 纳入**  | C-34      | 结构化错误分类替代正则                                                                                 | 需触达错误类型来源（infrastructure 错误对象），跨包改动面见 §4            |
+| B-12 | 本地库为空/无该用户数据仍放行离线进入  | **P1 纳入**  | C-33      | 视图空态引导（"本地暂无数据，联网后将自动同步"）+ 重试；**不阻断进入**                                 | 阻断进入会违背"离线优先"；只做引导                                        |
+| B-13 | check-in 对 replace 返回值处理不一致   | **P1 纳入**  | C-35      | 统一 `safeNavigate`；`sign-in-page.vue:13`/`index-view.ts:176` 的裸调用一并收敛                        | 收敛面较大，可分两步（先 AppRoot，再其余）；不得在 P0 引入回归            |
+| B-14 | **（新）`profile` 门控任务视图初始化** | **P0 纳入**  | C-31      | tasks 三视图去 `profile` 前置；离线走本地默认 preference + 硬默认 viewType；loading 三终态             | 远端 preference 的离线降级口径需产品确认（见 D2/D3）                      |
 
 ---
 
@@ -145,28 +145,28 @@ const onOffline = async (): Promise<void> => {
 
 ### 4.1 P0（根治"无反应" + 可观测 + 离线可见内容）
 
-| #   | 文件                                                                                      | 改动                                                                 | 边界/约束                                                                 |
-| :-- | :---------------------------------------------------------------------------------------- | :------------------------------------------------------------------- | :------------------------------------------------------------------------ |
-| P0-1 | `apps/desktop/src/renderer/src/AppRoot.vue`                                              | `onOffline/onSignOut` 加 `try/catch/finally`；`gatePassed` 入 `finally`；调用 C-28 校验/回退；catch 走 C-27 打点 | desktop 源；`@/*` → `apps/web/src/*`（同一 bundle）                        |
-| P0-2 | `apps/desktop/src/renderer/src/components/initial-sync-gate.vue`                         | `runSync()` 加 `try/catch/finally`，异常必落 `failed` 终态             | 同上                                                                      |
-| P0-3 | `apps/desktop/src/renderer/src/main.ts` + `apps/web/src/main.ts`（或 `packages/shared`） | 注册 C-27 四类全局钩子 + 有界日志缓冲                                  | **若落 `packages/shared`** ⇒ 纯工具、无 domain-* 反向依赖，`guard:ddd` 不受影响 |
-| P0-4 | `apps/web/src/router.ts`（+ 新 `apps/web/src/.../safe-navigation.ts`）                    | C-28/C-30 目标合法化、回退链、非法键清理、`safeNavigate` 雏形          | web 源被 desktop 复用；**单写者**                                          |
-| P0-5 | `apps/web/src/components/tasks/{built-in-project,project,tag}/*.ts`                       | C-31：去 `profile` 前置、离线本地默认 preference、loading 三终态       | 视图层（app），不涉及 domain-*；`guard:ddd` 不受影响                        |
-| P0-6 | `apps/web/src/views/index/tasks/routes.ts`                                               | C-32：`/tasks` 重定向显式带默认 viewType                               | 与 P0-5 同批，否则 B-08 变成假修复                                         |
+| #    | 文件                                                                                     | 改动                                                                                                             | 边界/约束                                                                       |
+| :--- | :--------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------ |
+| P0-1 | `apps/desktop/src/renderer/src/AppRoot.vue`                                              | `onOffline/onSignOut` 加 `try/catch/finally`；`gatePassed` 入 `finally`；调用 C-28 校验/回退；catch 走 C-27 打点 | desktop 源；`@/*` → `apps/web/src/*`（同一 bundle）                             |
+| P0-2 | `apps/desktop/src/renderer/src/components/initial-sync-gate.vue`                         | `runSync()` 加 `try/catch/finally`，异常必落 `failed` 终态                                                       | 同上                                                                            |
+| P0-3 | `apps/desktop/src/renderer/src/main.ts` + `apps/web/src/main.ts`（或 `packages/shared`） | 注册 C-27 四类全局钩子 + 有界日志缓冲                                                                            | **若落 `packages/shared`** ⇒ 纯工具、无 domain-* 反向依赖，`guard:ddd` 不受影响 |
+| P0-4 | `apps/web/src/router.ts`（+ 新 `apps/web/src/.../safe-navigation.ts`）                   | C-28/C-30 目标合法化、回退链、非法键清理、`safeNavigate` 雏形                                                    | web 源被 desktop 复用；**单写者**                                               |
+| P0-5 | `apps/web/src/components/tasks/{built-in-project,project,tag}/*.ts`                      | C-31：去 `profile` 前置、离线本地默认 preference、loading 三终态                                                 | 视图层（app），不涉及 domain-*；`guard:ddd` 不受影响                            |
+| P0-6 | `apps/web/src/views/index/tasks/routes.ts`                                               | C-32：`/tasks` 重定向显式带默认 viewType                                                                         | 与 P0-5 同批，否则 B-08 变成假修复                                              |
 
 ### 4.2 P1（加固）
 
-| #   | 文件                                                          | 改动                                                     | 约束  |
-| :-- | :------------------------------------------------------------ | :------------------------------------------------------- | :---- |
-| P1-1 | `initial-sync-gate.vue` + `auth/routes.ts`                   | 离线进入前预检四条件 + 显式出口                          | C-29  |
-| P1-2 | 内容视图加载/空态组件                                        | loading 有界 + 空态/错误态可前进（B-12）                 | C-33  |
-| P1-3 | `initial-sync-gate.vue` / 错误对象来源                        | 凭证类失败结构化判定替正则                               | C-34  |
-| P1-4 | `check-in-page.vue` / `sign-in-page.vue` / `index-view.ts`   | 收敛到 `safeNavigate`                                    | C-35  |
-| P1-5 | （证据驱动）chunk/网络探针                                   | 仅在 C-27 证实 chunk reject 后，再评估预缓存（另立）      | B-06  |
+| #    | 文件                                                       | 改动                                                 | 约束 |
+| :--- | :--------------------------------------------------------- | :--------------------------------------------------- | :--- |
+| P1-1 | `initial-sync-gate.vue` + `auth/routes.ts`                 | 离线进入前预检四条件 + 显式出口                      | C-29 |
+| P1-2 | 内容视图加载/空态组件                                      | loading 有界 + 空态/错误态可前进（B-12）             | C-33 |
+| P1-3 | `initial-sync-gate.vue` / 错误对象来源                     | 凭证类失败结构化判定替正则                           | C-34 |
+| P1-4 | `check-in-page.vue` / `sign-in-page.vue` / `index-view.ts` | 收敛到 `safeNavigate`                                | C-35 |
+| P1-5 | （证据驱动）chunk/网络探针                                 | 仅在 C-27 证实 chunk reject 后，再评估预缓存（另立） | B-06 |
 
 ### 4.3 DDD / 跨包约束
 
-- 改动面集中在 **app 层**（`apps/web` + `apps/desktop`），**不新增 domain-* 端口/不变量**；`guard:ddd`（`scripts/guard-domain-isolation.mjs`）预期**零命中**。
+- 改动面集中在 **app 层**（`apps/web` + `apps/desktop`），_*不新增 domain-* 端口/不变量_*；`guard:ddd`（`scripts/guard-domain-isolation.mjs`）预期**零命中**。
 - **不得**为省事把导航/日志工具塞进 `packages/domain-*`（会引入 infra/传输概念）；若需共享，落 `packages/shared` 中立工具或 app 层。
 - `AppRoot.vue`（desktop）→ `@/*`（web）已存在跨包复用，本次**不扩大**该模式；C-28 helper 优先落在 web 源并经 `@/` 复用，避免两端各写一份（C-20 同源纪律的类推）。
 - **单写者纪律**：P0-1/2（desktop）与 P0-4/5/6（web）**由同一 writer 串行**完成，避免离线验收对象漂移；`packages/shared`（P0-3 若采用）需确认无其它在飞单改同文件。
@@ -175,16 +175,16 @@ const onOffline = async (): Promise<void> => {
 
 ## 5. 风险清单
 
-| #   | 风险                                                        | 影响                                        | 应对                                                                 |
-| :-- | :---------------------------------------------------------- | :------------------------------------------ | :------------------------------------------------------------------- |
-| R1  | 只修 H1（gate 兜底）不修 D-08                              | 门会消失，但任务内容区仍永久 loading ⇒ 用户仍"进不去" | P0-5/P0-6 与 P0-1 同批；BC 增补"离线进入后内容终态"断言               |
-| R2  | 只修 D-08 不修 H1                                          | 一旦导航 reject/hang，门仍永久卡死          | P0-1/P0-2 必做                                                       |
-| R3  | `catch` 后静默进壳，问题被隐藏                              | 同类缺陷复发且不可见                        | P0-1 catch 必须配 C-27 打点；验收要求"失败路径有日志"                 |
-| R4  | 全局日志泄 PII/token                                        | 隐私/安全                                    | C-27 白名单字段；禁记录 token/email；有界缓冲                        |
-| R5  | 无匹配 `matched=0` 被误判为"门卡死"                        | 根因误判、修错方向                          | QA 必报 `router.currentRoute.value.{fullPath,name,matched.length}`    |
-| R6  | D-08 的离线 preference 降级改变既有偏好语义                 | 视图偏好漂移/回归                            | 离线只用**本地已存 preference**；无则硬默认 `table`，不写远端         |
-| R7  | 触发源实为 chunk reject（浏览器/dev 态）而 P0 未覆盖预缓存  | 该环境仍失败                                | C-27 先捕获；确证后 B-06 另立单，不在本单扩大                         |
-| R8  | vue-router 5 与 4 的失败语义差异被旧经验误导                | 误判 reject/resolve                         | 本文 §1.2 实测为准；后续升级框架须重跑该探针                          |
+| #   | 风险                                                       | 影响                                                  | 应对                                                               |
+| :-- | :--------------------------------------------------------- | :---------------------------------------------------- | :----------------------------------------------------------------- |
+| R1  | 只修 H1（gate 兜底）不修 D-08                              | 门会消失，但任务内容区仍永久 loading ⇒ 用户仍"进不去" | P0-5/P0-6 与 P0-1 同批；BC 增补"离线进入后内容终态"断言            |
+| R2  | 只修 D-08 不修 H1                                          | 一旦导航 reject/hang，门仍永久卡死                    | P0-1/P0-2 必做                                                     |
+| R3  | `catch` 后静默进壳，问题被隐藏                             | 同类缺陷复发且不可见                                  | P0-1 catch 必须配 C-27 打点；验收要求"失败路径有日志"              |
+| R4  | 全局日志泄 PII/token                                       | 隐私/安全                                             | C-27 白名单字段；禁记录 token/email；有界缓冲                      |
+| R5  | 无匹配 `matched=0` 被误判为"门卡死"                        | 根因误判、修错方向                                    | QA 必报 `router.currentRoute.value.{fullPath,name,matched.length}` |
+| R6  | D-08 的离线 preference 降级改变既有偏好语义                | 视图偏好漂移/回归                                     | 离线只用**本地已存 preference**；无则硬默认 `table`，不写远端      |
+| R7  | 触发源实为 chunk reject（浏览器/dev 态）而 P0 未覆盖预缓存 | 该环境仍失败                                          | C-27 先捕获；确证后 B-06 另立单，不在本单扩大                      |
+| R8  | vue-router 5 与 4 的失败语义差异被旧经验误导               | 误判 reject/resolve                                   | 本文 §1.2 实测为准；后续升级框架须重跑该探针                       |
 
 ---
 
@@ -192,16 +192,16 @@ const onOffline = async (): Promise<void> => {
 
 > 以下 trade-off 不替 PM 拍板；建议仅作架构偏好。
 
-| ID   | 议题                                                                     | 建议 | 说明/影响                                                                                              |
-| :--- | :----------------------------------------------------------------------- | :--- | :----------------------------------------------------------------------------------------------------- |
-| D1   | P0 是否含 **D-08（C-31，tasks 三视图去 `profile` 前置）**                | 含   | 不含则离线进入后内容永久 loading，"无反应"在用户侧依旧；且属 SHELL-03 C-03 的约束覆盖漏项，应闭环      |
-| D2   | 导航失败语义：**(A) 永不阻塞，进壳 + 回退 `/tasks` + 记录**，还是 **(B) 门停留并显式报错 + 重试** | A    | A 符合"门/壳总函数/永不卡死"；B 更保守但违背本轮根因。建议 A（配 C-27 日志）                          |
-| D3   | 离线 preference 降级口径：远端 preference 不可用时用什么？               | 硬默认 `table` + 本地缓存（若有） | 影响 D-08 的落地与回归面；需产品确认是否接受"离线默认表格视图"                          |
-| D4   | 全局错误日志落点：仅 console / console + 本地有界缓冲 / 远端上报          | console + 本地有界缓冲（本轮不做远端） | 远端上报涉隐私与基建，另立                                                       |
-| D5   | B-12 本地库为空：只做空态引导，还是阻断离线进入？                        | 只做空态引导 | 阻断违背离线优先                                                                                       |
-| D6   | B-06（chunk 预缓存）是否本轮做？                                         | 不做，证据驱动后另立 | 桌面端本地 chunk 概率低；浏览器态命中再投入                                                      |
-| D7   | B-10（在线/离线状态与手动再同步）是否本轮做？                            | P2 另立 | 与 SHELL-02 轨道宿主契约交叉                                                                           |
-| D8   | C-34（凭证类失败结构化）本轮是否做？                                     | 做（P1） | 若要压缩范围可延后，但需登记；不做则保留正则脆弱性                                                      |
+| ID  | 议题                                                                                              | 建议                                   | 说明/影响                                                                                         |
+| :-- | :------------------------------------------------------------------------------------------------ | :------------------------------------- | :------------------------------------------------------------------------------------------------ |
+| D1  | P0 是否含 **D-08（C-31，tasks 三视图去 `profile` 前置）**                                         | 含                                     | 不含则离线进入后内容永久 loading，"无反应"在用户侧依旧；且属 SHELL-03 C-03 的约束覆盖漏项，应闭环 |
+| D2  | 导航失败语义：**(A) 永不阻塞，进壳 + 回退 `/tasks` + 记录**，还是 **(B) 门停留并显式报错 + 重试** | A                                      | A 符合"门/壳总函数/永不卡死"；B 更保守但违背本轮根因。建议 A（配 C-27 日志）                      |
+| D3  | 离线 preference 降级口径：远端 preference 不可用时用什么？                                        | 硬默认 `table` + 本地缓存（若有）      | 影响 D-08 的落地与回归面；需产品确认是否接受"离线默认表格视图"                                    |
+| D4  | 全局错误日志落点：仅 console / console + 本地有界缓冲 / 远端上报                                  | console + 本地有界缓冲（本轮不做远端） | 远端上报涉隐私与基建，另立                                                                        |
+| D5  | B-12 本地库为空：只做空态引导，还是阻断离线进入？                                                 | 只做空态引导                           | 阻断违背离线优先                                                                                  |
+| D6  | B-06（chunk 预缓存）是否本轮做？                                                                  | 不做，证据驱动后另立                   | 桌面端本地 chunk 概率低；浏览器态命中再投入                                                       |
+| D7  | B-10（在线/离线状态与手动再同步）是否本轮做？                                                     | P2 另立                                | 与 SHELL-02 轨道宿主契约交叉                                                                      |
+| D8  | C-34（凭证类失败结构化）本轮是否做？                                                              | 做（P1）                               | 若要压缩范围可延后，但需登记；不做则保留正则脆弱性                                                |
 
 ---
 
@@ -278,11 +278,11 @@ A、B 是同版本（5.2.0）但**不同物理模块**，各自持有独立 `rou
 
 ### 10.2 为何“看运气”：构建图与产物证据
 
-| 证据 | 结果 | 含义 |
-| :--- | :--- | :--- |
-| `pnpm why vue-router` | 1 version / **2 instances** | 双实例存在于依赖图 |
-| `stats.html` `vender/vue-router-*.js` | 同时列 A、B 两套 `dist/*` | 两实例都被打进**同一 chunk**（`manualChunks` 只“同文件”不“去重”） |
-| 产物 `vender/vue-router-*.js` | `provide(R,me)` 与 `function Ue(){return e(We)}` 的 `R≠We` | 提供的是 A 的 key，注入的是 B 的 key |
+| 证据                                  | 结果                                                       | 含义                                                              |
+| :------------------------------------ | :--------------------------------------------------------- | :---------------------------------------------------------------- |
+| `pnpm why vue-router`                 | 1 version / **2 instances**                                | 双实例存在于依赖图                                                |
+| `stats.html` `vender/vue-router-*.js` | 同时列 A、B 两套 `dist/*`                                  | 两实例都被打进**同一 chunk**（`manualChunks` 只“同文件”不“去重”） |
+| 产物 `vender/vue-router-*.js`         | `provide(R,me)` 与 `function Ue(){return e(We)}` 的 `R≠We` | 提供的是 A 的 key，注入的是 B 的 key                              |
 
 **与 `manualChunks` 的关系**：当前 `manualChunks` 把所有 `vue-router` id 归 `vender/vue-router`，但 **Rollup/Rolldown 按模块物理路径去重、不按包名**；两实例路径不同 ⇒ 仍两份。故 `manualChunks` **不是修复**（只会把两份放一个文件）。
 
@@ -292,13 +292,13 @@ A、B 是同版本（5.2.0）但**不同物理模块**，各自持有独立 `rou
 
 ### 10.4 修复方向对比（只评不改）
 
-| 方案 | 做法 | 评价 |
-| :--- | :--- | :--- |
-| **A（推荐，P0）** | `electron.vite.config.ts` renderer 加 `resolve.dedupe: ['vue', 'vue-router', 'pinia']` | 最小、只动构建配置；Vite 强制从工程根解析到**同一实例**（A 或 B 均可，只要唯一）。**不改 lockfile/版本** |
-| B | `.npmrc` `resolve-peers-from-workspace-root=true`（+`dedupe-peer-dependents=true`），重装 | 从依赖图根治，惠及未来其它包；但需 `pnpm install`、可能改 lockfile，风险与评审面更大 |
-| C | `resolve.alias` 把 `vue-router` 指向单一物理包 | 与 A 等价但更硬编码；A 更通用（含 vue/pinia） |
-| D | `pnpm.overrides` | **无效**：两实例同版本 5.2.0，差异在 peer 上下文，overrides 不合并 peer 变体 |
-| E | 仅改 `manualChunks` | **无效**（见 §10.2） |
+| 方案              | 做法                                                                                      | 评价                                                                                                     |
+| :---------------- | :---------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------- |
+| **A（推荐，P0）** | `electron.vite.config.ts` renderer 加 `resolve.dedupe: ['vue', 'vue-router', 'pinia']`    | 最小、只动构建配置；Vite 强制从工程根解析到**同一实例**（A 或 B 均可，只要唯一）。**不改 lockfile/版本** |
+| B                 | `.npmrc` `resolve-peers-from-workspace-root=true`（+`dedupe-peer-dependents=true`），重装 | 从依赖图根治，惠及未来其它包；但需 `pnpm install`、可能改 lockfile，风险与评审面更大                     |
+| C                 | `resolve.alias` 把 `vue-router` 指向单一物理包                                            | 与 A 等价但更硬编码；A 更通用（含 vue/pinia）                                                            |
+| D                 | `pnpm.overrides`                                                                          | **无效**：两实例同版本 5.2.0，差异在 peer 上下文，overrides 不合并 peer 变体                             |
+| E                 | 仅改 `manualChunks`                                                                       | **无效**（见 §10.2）                                                                                     |
 
 **建议**：A 为 P0；B 为 P1 卫生（另开小单，避免与 SHELL-05 功能修复同批改 lockfile）。
 
@@ -325,9 +325,9 @@ A、B 是同版本（5.2.0）但**不同物理模块**，各自持有独立 `rou
 
 ### 10.8 遗留/待拍板（追加）
 
-| ID | 议题 | 建议 |
-| :--- | :--- | :--- |
-| D9 | H6 修复走 A（`resolve.dedupe`）还是 B（`.npmrc` 根治） | **A（P0）+ B（P1 另单）** |
+| ID  | 议题                                                    | 建议                                                                                 |
+| :-- | :------------------------------------------------------ | :----------------------------------------------------------------------------------- |
+| D9  | H6 修复走 A（`resolve.dedupe`）还是 B（`.npmrc` 根治）  | **A（P0）+ B（P1 另单）**                                                            |
 | D10 | 是否加入 C-37① 的“`$router` 降级”防御层（非仅自检报错） | 建议加（廉价且跨实例安全；`$router` 由 `app.use(router)` 直接写在 app 上，实例无关） |
 
 ---
@@ -345,42 +345,42 @@ A、B 是同版本（5.2.0）但**不同物理模块**，各自持有独立 `rou
 
 ### 11.2 逐面扫描结果
 
-| 面 | 离线行为 | 判定 | 证据 |
-| :--- | :--- | :--- | :--- |
-| 门/壳（进入） | 离线进入 + 壳渲染 | ✅（SHELL-05 T1–T5 已修） | H6/H1/D-08/B-07/B-04 |
-| 任务·浏览/分页 | 本地 Dexie 查询；`use-task-loader` 失败置 `error` 并非永载 | ✅ | `LocalTaskRepoImpl.list`（try/catch 返回元组）；`use-task-loader.ts` |
-| 任务·新建/完成/编辑/删除/拖拽排序 | 本地写 + `markDirty`（后台队列） | ✅（写可用） | `LocalTaskRepoImpl`（`:122,153,168,243` 等 markDirty） |
-| 任务·详情（子任务/评论/检查项） | 本地仓储 | ✅ | `newLocalTaskCommentRepository` / `newLocalTaskCheckItemRepository` |
-| 日历（月/周） | 本地 `taskUseCase.list`，`runSweep` try/finally 有界 | ✅ | `use-calendar-monthly.ts:75-100` |
-| 番茄（计时/记录） | 本地仓储；记录 loader 失败置 error | ✅ | `use-pomodoro-usecase.ts` / `use-pomodoro-record-usecase.ts` |
-| 搜索 | 本地 `taskUseCase.list`；项目/标签 `allSettled` | ✅ | `use-search.ts:220,254` |
-| 清单/标签 | 本地仓储 + 本地偏好（localStorage/Dexie） | ✅ | `use-project-usecase.ts` / `use-tag-usecase.ts` |
-| 本地提醒 | 扫描本地任务 + 精确调度，零网络 | ✅ | `use-local-reminder.ts` |
-| 侧栏/同步状态轨 | 身份降级为缓存首字母；状态只展示不同步 | ✅ | `use-aside.ts`；`sync-status-bar.vue` |
-| 设置·主题/语言/快捷键 | 本地 | ✅ | `theme-store` / `locale-store` |
-| 设置·退出登录 | `authUseCase.signOut(userToken)` **远程**；离线 err ⇒ toast"退出登录失败"并 **return（不本地登出）** | ⚠️ Should | `settings/profile-updater/index.vue` |
-| 设置·会话管理 | `loadSessions` 远程；离线 toast，不阻塞 | ⚠️ Could | `session-manager.vue:18-27` |
-| 设置·资料展示 | `profile` 离线为 null ⇒ 字段空（未复用缓存昵称） | ⚠️ Could | `settings/profile-updater` |
-| 身份 profile/config 拉取 | `IndexViewInitialize` 的 `Promise.all(...)` + `.finally` 置 `isLoading=false` ⇒ **有界**；服务身份类操作离线必失败（合理） | ✅ | `index-view.ts:167-184` |
-| 同步（拉/推） | 离线失败 → 状态可见；**但存在永久不回传风险（G1–G4/G8/G11）** | ❌ Must | `sync-service.ts` / `sync-tracker.ts` |
+| 面                                | 离线行为                                                                                                                   | 判定                      | 证据                                                                 |
+| :-------------------------------- | :------------------------------------------------------------------------------------------------------------------------- | :------------------------ | :------------------------------------------------------------------- |
+| 门/壳（进入）                     | 离线进入 + 壳渲染                                                                                                          | ✅（SHELL-05 T1–T5 已修） | H6/H1/D-08/B-07/B-04                                                 |
+| 任务·浏览/分页                    | 本地 Dexie 查询；`use-task-loader` 失败置 `error` 并非永载                                                                 | ✅                        | `LocalTaskRepoImpl.list`（try/catch 返回元组）；`use-task-loader.ts` |
+| 任务·新建/完成/编辑/删除/拖拽排序 | 本地写 + `markDirty`（后台队列）                                                                                           | ✅（写可用）              | `LocalTaskRepoImpl`（`:122,153,168,243` 等 markDirty）               |
+| 任务·详情（子任务/评论/检查项）   | 本地仓储                                                                                                                   | ✅                        | `newLocalTaskCommentRepository` / `newLocalTaskCheckItemRepository`  |
+| 日历（月/周）                     | 本地 `taskUseCase.list`，`runSweep` try/finally 有界                                                                       | ✅                        | `use-calendar-monthly.ts:75-100`                                     |
+| 番茄（计时/记录）                 | 本地仓储；记录 loader 失败置 error                                                                                         | ✅                        | `use-pomodoro-usecase.ts` / `use-pomodoro-record-usecase.ts`         |
+| 搜索                              | 本地 `taskUseCase.list`；项目/标签 `allSettled`                                                                            | ✅                        | `use-search.ts:220,254`                                              |
+| 清单/标签                         | 本地仓储 + 本地偏好（localStorage/Dexie）                                                                                  | ✅                        | `use-project-usecase.ts` / `use-tag-usecase.ts`                      |
+| 本地提醒                          | 扫描本地任务 + 精确调度，零网络                                                                                            | ✅                        | `use-local-reminder.ts`                                              |
+| 侧栏/同步状态轨                   | 身份降级为缓存首字母；状态只展示不同步                                                                                     | ✅                        | `use-aside.ts`；`sync-status-bar.vue`                                |
+| 设置·主题/语言/快捷键             | 本地                                                                                                                       | ✅                        | `theme-store` / `locale-store`                                       |
+| 设置·退出登录                     | `authUseCase.signOut(userToken)` **远程**；离线 err ⇒ toast"退出登录失败"并 **return（不本地登出）**                       | ⚠️ Should                 | `settings/profile-updater/index.vue`                                 |
+| 设置·会话管理                     | `loadSessions` 远程；离线 toast，不阻塞                                                                                    | ⚠️ Could                  | `session-manager.vue:18-27`                                          |
+| 设置·资料展示                     | `profile` 离线为 null ⇒ 字段空（未复用缓存昵称）                                                                           | ⚠️ Could                  | `settings/profile-updater`                                           |
+| 身份 profile/config 拉取          | `IndexViewInitialize` 的 `Promise.all(...)` + `.finally` 置 `isLoading=false` ⇒ **有界**；服务身份类操作离线必失败（合理） | ✅                        | `index-view.ts:167-184`                                              |
+| 同步（拉/推）                     | 离线失败 → 状态可见；**但存在永久不回传风险（G1–G4/G8/G11）**                                                              | ❌ Must                   | `sync-service.ts` / `sync-tracker.ts`                                |
 
 > **重要防线已存在**：拉取 LWW 冲突时若本地有未推送修改（在 `syncQueue`）则**保留队列**（`applyPullBatch:505-518`）；推送确认前快照 `localUpdatedAt`，推送期间本地新改则保留队列重推（`:687-693`）。⇒ 不存在"拉取静默覆盖本地未推送"的普通场景。残余风险 = **远端时间戳新于本地未推送修改**时按 LWW 本地丢弃（设计口径，非缺陷；需在 SHELL-06 明确）。
 
 ### 11.3 缺口清单（G1–G14；Must/Should/Could）
 
-| ID | 面 | 现象 | 根因 | 严重度 | 建议 | 归属 |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **G1** | 同步 | 离线写入项触顶后**永不重推**，联网恢复也不补传 | `MAX_PUSH_RETRY=5` + `retryCount>=5 continue` + **无重置路径** | **Must** | R2/R4（暂停语义 + 可恢复） | **SHELL-06** |
-| **G2** | 同步 | 离线几次编辑即触顶 | 一次网络失败对**整批脏队列** `markFailed()`（每项 +1） | **Must** | R2（离线暂停不计数） | **SHELL-06** |
-| **G3** | 同步 | 恢复网络后**不自动补传**，只能手动重试/重启 | 无 `online` 监听、无周期退避、无前台恢复触发 | **Must** | R1 | **SHELL-06** |
-| **G4** | 同步 | 无本地写上限/暂停可见性 | 无队列上限与暂停态 UI | **Must** | R3 | **SHELL-06** |
-| **G6** | 同步/门 | 触顶后每次冷启动 `start()` 恒失败 ⇒ 门恒失败，每次需手动离线进入 | G1 衍生（`noteRunError(ERR_PUSH_RETRY_EXCEEDED)`） | Should | R4 | **SHELL-06** |
-| **G8** | 同步 | 触顶的**删除**项永不推送 ⇒ 远端数据"复活" | 同 G1（`deletions` 也受 `retryCount` 跳过） | **Must** | R2/R4 | **SHELL-06** |
-| **G11** | 同步 | 离线期每次写仍 2s 防抖发起推送 ⇒ 无效请求 + 加速触顶 | `setDirtyListener → schedulePush` 无离线/退避判断 | Must/Should | R1/R2 | **SHELL-06** |
-| G7 | 同步 | 远端时间戳新于本地未推送修改 ⇒ LWW 丢弃本地 | 设计口径（LWW） | 非缺口 | SHELL-06 文档化 | SHELL-06 |
-| G13 | 设置 | 会话管理离线 toast 噪声 | 网络子功能离线无降级态 | Could | 离线置"需联网"占位 | 可随 SHELL-06 P1 |
-| G14 | 设置 | 资料页离线字段空 | `profile` null，未复用 C-15 缓存昵称 | Could | 复用 `readCachedNickname` 占位 | 可随 SHELL-05 P1 |
-| G12 | 设置 | 离线无法退出登录 | `signOut` 远程失败即 return | Should | 本地清认证 + 导航，远程登出尽力而为（与 `password-updater` 同构） | 小修，随 SHELL-05 P1 或 SHELL-06 |
+| ID      | 面      | 现象                                                             | 根因                                                           | 严重度      | 建议                                                              | 归属                             |
+| :------ | :------ | :--------------------------------------------------------------- | :------------------------------------------------------------- | :---------- | :---------------------------------------------------------------- | :------------------------------- |
+| **G1**  | 同步    | 离线写入项触顶后**永不重推**，联网恢复也不补传                   | `MAX_PUSH_RETRY=5` + `retryCount>=5 continue` + **无重置路径** | **Must**    | R2/R4（暂停语义 + 可恢复）                                        | **SHELL-06**                     |
+| **G2**  | 同步    | 离线几次编辑即触顶                                               | 一次网络失败对**整批脏队列** `markFailed()`（每项 +1）         | **Must**    | R2（离线暂停不计数）                                              | **SHELL-06**                     |
+| **G3**  | 同步    | 恢复网络后**不自动补传**，只能手动重试/重启                      | 无 `online` 监听、无周期退避、无前台恢复触发                   | **Must**    | R1                                                                | **SHELL-06**                     |
+| **G4**  | 同步    | 无本地写上限/暂停可见性                                          | 无队列上限与暂停态 UI                                          | **Must**    | R3                                                                | **SHELL-06**                     |
+| **G6**  | 同步/门 | 触顶后每次冷启动 `start()` 恒失败 ⇒ 门恒失败，每次需手动离线进入 | G1 衍生（`noteRunError(ERR_PUSH_RETRY_EXCEEDED)`）             | Should      | R4                                                                | **SHELL-06**                     |
+| **G8**  | 同步    | 触顶的**删除**项永不推送 ⇒ 远端数据"复活"                        | 同 G1（`deletions` 也受 `retryCount` 跳过）                    | **Must**    | R2/R4                                                             | **SHELL-06**                     |
+| **G11** | 同步    | 离线期每次写仍 2s 防抖发起推送 ⇒ 无效请求 + 加速触顶             | `setDirtyListener → schedulePush` 无离线/退避判断              | Must/Should | R1/R2                                                             | **SHELL-06**                     |
+| G7      | 同步    | 远端时间戳新于本地未推送修改 ⇒ LWW 丢弃本地                      | 设计口径（LWW）                                                | 非缺口      | SHELL-06 文档化                                                   | SHELL-06                         |
+| G13     | 设置    | 会话管理离线 toast 噪声                                          | 网络子功能离线无降级态                                         | Could       | 离线置"需联网"占位                                                | 可随 SHELL-06 P1                 |
+| G14     | 设置    | 资料页离线字段空                                                 | `profile` null，未复用 C-15 缓存昵称                           | Could       | 复用 `readCachedNickname` 占位                                    | 可随 SHELL-05 P1                 |
+| G12     | 设置    | 离线无法退出登录                                                 | `signOut` 远程失败即 return                                    | Should      | 本地清认证 + 导航，远程登出尽力而为（与 `password-updater` 同构） | 小修，随 SHELL-05 P1 或 SHELL-06 |
 
 **结论：功能面无 Must 缺口**（均本地优先）；**所有 Must 均在同步回传层（G1/G2/G3/G4/G8/G11）**。
 
@@ -412,10 +412,10 @@ A、B 是同版本（5.2.0）但**不同物理模块**，各自持有独立 `rou
 
 ### 11.6 待拍板（追加）
 
-| ID | 议题 | 建议 |
-| :--- | :--- | :--- |
-| D11 | 同步回传缺口（G1–G4/G8/G11）**并入 SHELL-05 P0** 还是**拆 SHELL-06** | **拆 SHELL-06**（风险面在同步层） |
-| D12 | R2 重试语义：维持 `retryCount` 上限 + 恢复重置，还是改 `nextAttemptAt` 指数退避 | 推荐后者（退避 + 可恢复，消除"触顶即永久"） |
-| D13 | R1 是否引入周期退避定时器（保活/耗电权衡） | 仅在有待推送/失败时启用，最长 120s，成功即停 |
-| D14 | R3 本地写硬上限阈值与超限文案 | 需 PM/用户定阈值与文案 |
-| D15 | G12/G14 是否随 SHELL-05 P1 同批 | 建议同批（小改、离线体验） |
+| ID  | 议题                                                                            | 建议                                         |
+| :-- | :------------------------------------------------------------------------------ | :------------------------------------------- |
+| D11 | 同步回传缺口（G1–G4/G8/G11）**并入 SHELL-05 P0** 还是**拆 SHELL-06**            | **拆 SHELL-06**（风险面在同步层）            |
+| D12 | R2 重试语义：维持 `retryCount` 上限 + 恢复重置，还是改 `nextAttemptAt` 指数退避 | 推荐后者（退避 + 可恢复，消除"触顶即永久"）  |
+| D13 | R1 是否引入周期退避定时器（保活/耗电权衡）                                      | 仅在有待推送/失败时启用，最长 120s，成功即停 |
+| D14 | R3 本地写硬上限阈值与超限文案                                                   | 需 PM/用户定阈值与文案                       |
+| D15 | G12/G14 是否随 SHELL-05 P1 同批                                                 | 建议同批（小改、离线体验）                   |

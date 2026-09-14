@@ -1,696 +1,620 @@
 {
-  "meta": {
-    "at": "2026-09-13T13:57:41.108Z",
-    "outDir": "/tmp/nao-shell05/sweep"
-  },
-  "items": [
-    {
-      "feature": "环境",
-      "id": "offline-shell",
-      "status": "可用",
-      "detail": "hash=#/ rail=true body=\"Q\"",
-      "evidence": {
-        "hash": "#/",
-        "router": {
-          "name": "index",
-          "fullPath": "/",
-          "params": {}
-        },
-        "rail": true,
-        "body": "Q",
-        "inputs": [],
-        "buttons": []
-      }
+    "meta": {
+        "at": "2026-09-13T13:57:41.108Z",
+        "outDir": "/tmp/nao-shell05/sweep"
     },
-    {
-      "feature": "任务",
-      "id": "浏览-table",
-      "status": "可用",
-      "detail": "hash=#/tasks/all/table router=table body=\"Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展\" errs=0",
-      "evidence": {
-        "snap": {
-          "hash": "#/tasks/all/table",
-          "router": {
-            "name": "tasks-built-in-project-main",
-            "fullPath": "/tasks/all/table",
-            "params": {
-              "projectId": "all",
-              "viewType": "table"
+    "items": [
+        {
+            "feature": "环境",
+            "id": "offline-shell",
+            "status": "可用",
+            "detail": "hash=#/ rail=true body=\"Q\"",
+            "evidence": {
+                "hash": "#/",
+                "router": {
+                    "name": "index",
+                    "fullPath": "/",
+                    "params": {}
+                },
+                "rail": true,
+                "body": "Q",
+                "inputs": [],
+                "buttons": []
             }
-          },
-          "rail": true,
-          "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页",
-          "inputs": [],
-          "buttons": [
-            "清单\n0",
-            "标签\n0",
-            "20 条每页"
-          ]
         },
-        "errs": []
-      }
-    },
-    {
-      "feature": "任务",
-      "id": "浏览-list",
-      "status": "可用",
-      "detail": "hash=#/tasks/all/list router=list body=\"Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展\" errs=0",
-      "evidence": {
-        "snap": {
-          "hash": "#/tasks/all/list",
-          "router": {
-            "name": "tasks-built-in-project-main",
-            "fullPath": "/tasks/all/list",
-            "params": {
-              "projectId": "all",
-              "viewType": "list"
+        {
+            "feature": "任务",
+            "id": "浏览-table",
+            "status": "可用",
+            "detail": "hash=#/tasks/all/table router=table body=\"Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展\" errs=0",
+            "evidence": {
+                "snap": {
+                    "hash": "#/tasks/all/table",
+                    "router": {
+                        "name": "tasks-built-in-project-main",
+                        "fullPath": "/tasks/all/table",
+                        "params": {
+                            "projectId": "all",
+                            "viewType": "table"
+                        }
+                    },
+                    "rail": true,
+                    "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页",
+                    "inputs": [],
+                    "buttons": ["清单\n0", "标签\n0", "20 条每页"]
+                },
+                "errs": []
             }
-          },
-          "rail": true,
-          "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 QA离线走查任务-A 更新于今天 21:55 待办 低优先级 清单：收集箱 1 条待办任务已全部加载完成",
-          "inputs": [],
-          "buttons": [
-            "清单\n0",
-            "标签\n0"
-          ]
         },
-        "errs": []
-      }
-    },
-    {
-      "feature": "任务",
-      "id": "浏览-kanban",
-      "status": "可用",
-      "detail": "hash=#/tasks/all/kanban router=kanban body=\"Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展\" errs=0",
-      "evidence": {
-        "snap": {
-          "hash": "#/tasks/all/kanban",
-          "router": {
-            "name": "tasks-built-in-project-main",
-            "fullPath": "/tasks/all/kanban",
-            "params": {
-              "projectId": "all",
-              "viewType": "kanban"
+        {
+            "feature": "任务",
+            "id": "浏览-list",
+            "status": "可用",
+            "detail": "hash=#/tasks/all/list router=list body=\"Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展\" errs=0",
+            "evidence": {
+                "snap": {
+                    "hash": "#/tasks/all/list",
+                    "router": {
+                        "name": "tasks-built-in-project-main",
+                        "fullPath": "/tasks/all/list",
+                        "params": {
+                            "projectId": "all",
+                            "viewType": "list"
+                        }
+                    },
+                    "rail": true,
+                    "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 QA离线走查任务-A 更新于今天 21:55 待办 低优先级 清单：收集箱 1 条待办任务已全部加载完成",
+                    "inputs": [],
+                    "buttons": ["清单\n0", "标签\n0"]
+                },
+                "errs": []
             }
-          },
-          "rail": true,
-          "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 待办 1 QA离线走查任务-A 修改于今天 21:55 待办 低优先级 收集箱 正在进行 0 无待办任务 已完成 0 无待办任务",
-          "inputs": [],
-          "buttons": [
-            "清单\n0",
-            "标签\n0"
-          ]
         },
-        "errs": []
-      }
-    },
-    {
-      "feature": "任务",
-      "id": "新建",
-      "status": "不可用",
-      "detail": "title=\"QA离线走查-14748\" 出现=false errs=0",
-      "evidence": {
-        "snap": {
-          "hash": "#/tasks/all/table",
-          "router": {
-            "name": "tasks-built-in-project-main",
-            "fullPath": "/tasks/all/table",
-            "params": {
-              "projectId": "all",
-              "viewType": "table"
+        {
+            "feature": "任务",
+            "id": "浏览-kanban",
+            "status": "可用",
+            "detail": "hash=#/tasks/all/kanban router=kanban body=\"Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展\" errs=0",
+            "evidence": {
+                "snap": {
+                    "hash": "#/tasks/all/kanban",
+                    "router": {
+                        "name": "tasks-built-in-project-main",
+                        "fullPath": "/tasks/all/kanban",
+                        "params": {
+                            "projectId": "all",
+                            "viewType": "kanban"
+                        }
+                    },
+                    "rail": true,
+                    "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 待办 1 QA离线走查任务-A 修改于今天 21:55 待办 低优先级 收集箱 正在进行 0 无待办任务 已完成 0 无待办任务",
+                    "inputs": [],
+                    "buttons": ["清单\n0", "标签\n0"]
+                },
+                "errs": []
             }
-          },
-          "rail": true,
-          "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页",
-          "inputs": [],
-          "buttons": [
-            "清单\n0",
-            "标签\n0",
-            "20 条每页"
-          ]
         },
-        "errs": []
-      }
-    },
-    {
-      "feature": "任务",
-      "id": "勾选完成",
-      "status": "未覆盖",
-      "detail": "hit=norow errs=0",
-      "evidence": {
-        "snap": {
-          "hash": "#/tasks/all/table",
-          "router": {
-            "name": "tasks-built-in-project-main",
-            "fullPath": "/tasks/all/table",
-            "params": {
-              "projectId": "all",
-              "viewType": "table"
+        {
+            "feature": "任务",
+            "id": "新建",
+            "status": "不可用",
+            "detail": "title=\"QA离线走查-14748\" 出现=false errs=0",
+            "evidence": {
+                "snap": {
+                    "hash": "#/tasks/all/table",
+                    "router": {
+                        "name": "tasks-built-in-project-main",
+                        "fullPath": "/tasks/all/table",
+                        "params": {
+                            "projectId": "all",
+                            "viewType": "table"
+                        }
+                    },
+                    "rail": true,
+                    "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页",
+                    "inputs": [],
+                    "buttons": ["清单\n0", "标签\n0", "20 条每页"]
+                },
+                "errs": []
             }
-          },
-          "rail": true,
-          "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页",
-          "inputs": [],
-          "buttons": [
-            "清单\n0",
-            "标签\n0",
-            "20 条每页"
-          ]
         },
-        "errs": []
-      }
-    },
-    {
-      "feature": "任务",
-      "id": "编辑/详情",
-      "status": "未覆盖",
-      "detail": "opened=true drawer=false hash=#/tasks/all/table errs=0",
-      "evidence": {
-        "snap": {
-          "hash": "#/tasks/all/table",
-          "router": {
-            "name": "tasks-built-in-project-main",
-            "fullPath": "/tasks/all/table",
-            "params": {
-              "projectId": "all",
-              "viewType": "table"
+        {
+            "feature": "任务",
+            "id": "勾选完成",
+            "status": "未覆盖",
+            "detail": "hit=norow errs=0",
+            "evidence": {
+                "snap": {
+                    "hash": "#/tasks/all/table",
+                    "router": {
+                        "name": "tasks-built-in-project-main",
+                        "fullPath": "/tasks/all/table",
+                        "params": {
+                            "projectId": "all",
+                            "viewType": "table"
+                        }
+                    },
+                    "rail": true,
+                    "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页",
+                    "inputs": [],
+                    "buttons": ["清单\n0", "标签\n0", "20 条每页"]
+                },
+                "errs": []
             }
-          },
-          "rail": true,
-          "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页",
-          "inputs": [],
-          "buttons": [
-            "清单\n0",
-            "标签\n0",
-            "20 条每页"
-          ]
         },
-        "errs": []
-      }
-    },
-    {
-      "feature": "任务",
-      "id": "子任务/检查项（入口）",
-      "status": "未覆盖",
-      "detail": "details__subtasks=false",
-      "evidence": {
-        "snap": {
-          "hash": "#/tasks/all/table",
-          "router": {
-            "name": "tasks-built-in-project-main",
-            "fullPath": "/tasks/all/table",
-            "params": {
-              "projectId": "all",
-              "viewType": "table"
+        {
+            "feature": "任务",
+            "id": "编辑/详情",
+            "status": "未覆盖",
+            "detail": "opened=true drawer=false hash=#/tasks/all/table errs=0",
+            "evidence": {
+                "snap": {
+                    "hash": "#/tasks/all/table",
+                    "router": {
+                        "name": "tasks-built-in-project-main",
+                        "fullPath": "/tasks/all/table",
+                        "params": {
+                            "projectId": "all",
+                            "viewType": "table"
+                        }
+                    },
+                    "rail": true,
+                    "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页",
+                    "inputs": [],
+                    "buttons": ["清单\n0", "标签\n0", "20 条每页"]
+                },
+                "errs": []
             }
-          },
-          "rail": true,
-          "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页",
-          "inputs": [],
-          "buttons": [
-            "清单\n0",
-            "标签\n0",
-            "20 条每页"
-          ]
+        },
+        {
+            "feature": "任务",
+            "id": "子任务/检查项（入口）",
+            "status": "未覆盖",
+            "detail": "details__subtasks=false",
+            "evidence": {
+                "snap": {
+                    "hash": "#/tasks/all/table",
+                    "router": {
+                        "name": "tasks-built-in-project-main",
+                        "fullPath": "/tasks/all/table",
+                        "params": {
+                            "projectId": "all",
+                            "viewType": "table"
+                        }
+                    },
+                    "rail": true,
+                    "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页",
+                    "inputs": [],
+                    "buttons": ["清单\n0", "标签\n0", "20 条每页"]
+                }
+            }
+        },
+        {
+            "feature": "任务",
+            "id": "拖拽排序",
+            "status": "未覆盖",
+            "detail": "CDP 无稳定拖拽手势封装，需人工/专项脚本",
+            "evidence": null
+        },
+        {
+            "feature": "日历",
+            "id": "进入+月视图",
+            "status": "可用",
+            "detail": "hash=#/calendar/monthly hasMonth=true body=\"Q 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 用清单来分类收集、组织和管理你的待办任务 隐藏已完成 专注徽标 周起始 周\"",
+            "evidence": {
+                "snap": {
+                    "hash": "#/calendar/monthly",
+                    "router": {
+                        "name": "calendar-monthly",
+                        "fullPath": "/calendar/monthly",
+                        "params": {}
+                    },
+                    "rail": true,
+                    "body": "Q 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 用清单来分类收集、组织和管理你的待办任务 隐藏已完成 专注徽标 周起始 周日 周一 2026 年 9 月 月 周 未安排 1 今天 日 一 二 三 四 五 六 本月暂无任务",
+                    "inputs": [],
+                    "buttons": [
+                        "清单\n0",
+                        "标签\n0",
+                        "周日",
+                        "周一",
+                        "2026 年 9 月",
+                        "月",
+                        "周",
+                        "未安排 1",
+                        "今天"
+                    ]
+                }
+            }
+        },
+        {
+            "feature": "日历",
+            "id": "切换周视图",
+            "status": "可用",
+            "detail": "clicked=true 变更=false errs=0",
+            "evidence": {
+                "snap": {
+                    "hash": "#/calendar/monthly",
+                    "router": {
+                        "name": "calendar-monthly",
+                        "fullPath": "/calendar/monthly",
+                        "params": {}
+                    },
+                    "rail": true,
+                    "body": "Q 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 用清单来分类收集、组织和管理你的待办任务 隐藏已完成 专注徽标 周起始 周日 周一 2026 年 9 月 月 周 未安排 1 今天 日 一 二 三 四 五 六 本月暂无任务",
+                    "inputs": [],
+                    "buttons": [
+                        "清单\n0",
+                        "标签\n0",
+                        "周日",
+                        "周一",
+                        "2026 年 9 月",
+                        "月",
+                        "周",
+                        "未安排 1",
+                        "今天"
+                    ]
+                },
+                "errs": []
+            }
+        },
+        {
+            "feature": "日历",
+            "id": "查看任务条",
+            "status": "未覆盖",
+            "detail": "离线本地无日程任务；需构造带时间任务后人工核对（本轮未构造）",
+            "evidence": null
+        },
+        {
+            "feature": "番茄",
+            "id": "进入+启动计时",
+            "status": "降级",
+            "detail": "clicked=true t1=21:57 t2=21:57 errs=0",
+            "evidence": {
+                "snap": {
+                    "hash": "#/pomodoro/timer",
+                    "router": {
+                        "name": "pomodoro",
+                        "fullPath": "/pomodoro/timer",
+                        "params": {
+                            "type": "timer"
+                        }
+                    },
+                    "rail": true,
+                    "body": "Q 番茄专注 正计时 常用专注 专注记录 新建常用番茄专注 番茄专注 < 专注 > 21:57:12 - 22:22:12 24:58 暂停 今日专注 专注时长 0 条专注记录 / 已收获 0 个番茄 今日专注目标 5 小时 已完成 0 % 暂无专注记录 专注笔记 0 / 1000 , 1000",
+                    "inputs": [
+                        {
+                            "type": "textarea",
+                            "ph": "你在思考什么？在这里记录详细见解、任务突破或深度头脑风暴 ...",
+                            "val": ""
+                        }
+                    ],
+                    "buttons": ["新建常用番茄专注", "暂停"]
+                },
+                "errs": []
+            }
+        },
+        {
+            "feature": "番茄",
+            "id": "暂停/停止",
+            "status": "可用",
+            "detail": "paused=true body=\"Q 番茄专注 正计时 常用专注 专注记录 新建常用番茄专注 番茄专注 < 专注 > 21:57:12 - 22:22:12 24:55 结束\"",
+            "evidence": {
+                "snap": {
+                    "hash": "#/pomodoro/timer",
+                    "router": {
+                        "name": "pomodoro",
+                        "fullPath": "/pomodoro/timer",
+                        "params": {
+                            "type": "timer"
+                        }
+                    },
+                    "rail": true,
+                    "body": "Q 番茄专注 正计时 常用专注 专注记录 新建常用番茄专注 番茄专注 < 专注 > 21:57:12 - 22:22:12 24:55 结束专注 继续 跳过专注 今日专注 专注时长 0 条专注记录 / 已收获 0 个番茄 今日专注目标 5 小时 已完成 0 % 暂无专注记录 专注笔记 0 / 1000 , 1000",
+                    "inputs": [
+                        {
+                            "type": "textarea",
+                            "ph": "你在思考什么？在这里记录详细见解、任务突破或深度头脑风暴 ...",
+                            "val": ""
+                        }
+                    ],
+                    "buttons": ["新建常用番茄专注", "结束专注", "继续", "跳过专注"]
+                }
+            }
+        },
+        {
+            "feature": "番茄",
+            "id": "记录页",
+            "status": "可用",
+            "detail": "hash=#/pomodoro/records body=\"Q 番茄专注 正计时 常用专注 专注记录 新建常用番茄专注 专注记录 总专注时长 0秒 总记录数 0 会话数 0 番茄占比 0% 开始日期 \"",
+            "evidence": {
+                "snap": {
+                    "hash": "#/pomodoro/records",
+                    "router": {
+                        "name": "pomodoro-records",
+                        "fullPath": "/pomodoro/records",
+                        "params": {}
+                    },
+                    "rail": true,
+                    "body": "Q 番茄专注 正计时 常用专注 专注记录 新建常用番茄专注 专注记录 总专注时长 0秒 总记录数 0 会话数 0 番茄占比 0% 开始日期 选择日期 结束日期 选择日期 类型 全部 任务名称 专注模板 全部 筛选 重置 暂无专注记录",
+                    "inputs": [
+                        {
+                            "type": "text",
+                            "ph": "搜索任务名称",
+                            "val": ""
+                        }
+                    ],
+                    "buttons": [
+                        "新建常用番茄专注",
+                        "选择日期",
+                        "选择日期",
+                        "全部",
+                        "全部",
+                        "筛选",
+                        "重置"
+                    ]
+                }
+            }
+        },
+        {
+            "feature": "搜索",
+            "id": "输入+结果",
+            "status": "可用",
+            "detail": "typed=true result=true errs=0 body=\"Q 清单 标签 优先级 状态 找到 1 条 QA离线走查任务-A 清单：收集箱\"",
+            "evidence": {
+                "snap": {
+                    "hash": "#/search?q=QA%E7%A6%BB%E7%BA%BF",
+                    "router": {
+                        "name": "search",
+                        "fullPath": "/search?q=QA%E7%A6%BB%E7%BA%BF",
+                        "params": {}
+                    },
+                    "rail": true,
+                    "body": "Q 清单 标签 优先级 状态 找到 1 条 QA离线走查任务-A 清单：收集箱",
+                    "inputs": [
+                        {
+                            "type": "text",
+                            "ph": "搜索全部任务的名称 / 备注…",
+                            "val": "QA离线"
+                        }
+                    ],
+                    "buttons": ["清单", "标签", "优先级", "状态"]
+                },
+                "errs": []
+            }
+        },
+        {
+            "feature": "搜索",
+            "id": "筛选面板",
+            "status": "可用",
+            "detail": "clicked=true",
+            "evidence": {
+                "snap": {
+                    "hash": "#/search?q=QA%E7%A6%BB%E7%BA%BF",
+                    "router": {
+                        "name": "search",
+                        "fullPath": "/search?q=QA%E7%A6%BB%E7%BA%BF",
+                        "params": {}
+                    },
+                    "rail": true,
+                    "body": "Q 清单 标签 优先级 状态 找到 1 条 QA离线走查任务-A 清单：收集箱 收集箱",
+                    "inputs": [
+                        {
+                            "type": "text",
+                            "ph": "搜索全部任务的名称 / 备注…",
+                            "val": "QA离线"
+                        }
+                    ],
+                    "buttons": ["清单", "标签", "优先级", "状态"]
+                }
+            }
+        },
+        {
+            "feature": "清单/标签",
+            "id": "侧栏显示",
+            "status": "可用",
+            "detail": "清单&标签可见=true",
+            "evidence": {
+                "snap": {
+                    "hash": "#/tasks/all/table",
+                    "router": {
+                        "name": "tasks-built-in-project-main",
+                        "fullPath": "/tasks/all/table",
+                        "params": {
+                            "projectId": "all",
+                            "viewType": "table"
+                        }
+                    },
+                    "rail": true,
+                    "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页",
+                    "inputs": [],
+                    "buttons": ["清单\n0", "标签\n0", "20 条每页"]
+                }
+            }
+        },
+        {
+            "feature": "清单/标签",
+            "id": "切换清单视图",
+            "status": "可用",
+            "detail": "clicked=true hash=#/tasks/all/table",
+            "evidence": {
+                "snap": {
+                    "hash": "#/tasks/all/table",
+                    "router": {
+                        "name": "tasks-built-in-project-main",
+                        "fullPath": "/tasks/all/table",
+                        "params": {
+                            "projectId": "all",
+                            "viewType": "table"
+                        }
+                    },
+                    "rail": true,
+                    "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页",
+                    "inputs": [],
+                    "buttons": ["清单\n0", "标签\n0", "20 条每页"]
+                }
+            }
+        },
+        {
+            "feature": "清单/标签",
+            "id": "创建/重命名",
+            "status": "未覆盖",
+            "detail": "创建入口按钮存在=false（重命名未自动执行）",
+            "evidence": {
+                "snap": {
+                    "hash": "#/tasks/all/table",
+                    "router": {
+                        "name": "tasks-built-in-project-main",
+                        "fullPath": "/tasks/all/table",
+                        "params": {
+                            "projectId": "all",
+                            "viewType": "table"
+                        }
+                    },
+                    "rail": true,
+                    "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页",
+                    "inputs": [],
+                    "buttons": ["清单\n0", "标签\n0", "20 条每页"]
+                },
+                "errs": []
+            }
+        },
+        {
+            "feature": "设置",
+            "id": "打开对话框",
+            "status": "可用",
+            "detail": "opened=1 settings=true body=\"Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展\"",
+            "evidence": {
+                "snap": {
+                    "hash": "#/tasks/all/table",
+                    "router": {
+                        "name": "tasks-built-in-project-main",
+                        "fullPath": "/tasks/all/table",
+                        "params": {
+                            "projectId": "all",
+                            "viewType": "table"
+                        }
+                    },
+                    "rail": true,
+                    "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页 会话列表加载失败 设置 账户与个人信息 密码与安全 应用设置 退出登录 修改用户昵称 修改 更多信息 登录设备 暂无其他登录会话",
+                    "inputs": [],
+                    "buttons": ["清单\n0", "标签\n0", "20 条每页"]
+                }
+            }
+        },
+        {
+            "feature": "设置",
+            "id": "主题切换",
+            "status": "未覆盖",
+            "detail": "clicked=false darkSwitch 1→1",
+            "evidence": {
+                "snap": {
+                    "hash": "#/tasks/all/table",
+                    "router": {
+                        "name": "tasks-built-in-project-main",
+                        "fullPath": "/tasks/all/table",
+                        "params": {
+                            "projectId": "all",
+                            "viewType": "table"
+                        }
+                    },
+                    "rail": true,
+                    "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页 会话列表加载失败 设置 账户与个人信息 密码与安全 应用设置 退出登录 修改用户昵称 修改 更多信息 登录设备 暂无其他登录会话",
+                    "inputs": [],
+                    "buttons": ["清单\n0", "标签\n0", "20 条每页"]
+                }
+            }
+        },
+        {
+            "feature": "设置",
+            "id": "语言切换",
+            "status": "未覆盖",
+            "detail": "clicked=false body=\"Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签\" errs=1",
+            "evidence": {
+                "snap": {
+                    "hash": "#/tasks/all/table",
+                    "router": {
+                        "name": "tasks-built-in-project-main",
+                        "fullPath": "/tasks/all/table",
+                        "params": {
+                            "projectId": "all",
+                            "viewType": "table"
+                        }
+                    },
+                    "rail": true,
+                    "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页 会话列表加载失败 设置 账户与个人信息 密码与安全 应用设置 退出登录 修改用户昵称 修改 更多信息 登录设备 暂无其他登录会话",
+                    "inputs": [],
+                    "buttons": ["清单\n0", "标签\n0", "20 条每页"]
+                },
+                "errs": [
+                    "error: [SHELL-05] vue:errorHandler:https://vuejs.org/error-reference/#runtime-1 Object"
+                ]
+            }
+        },
+        {
+            "feature": "本地提醒",
+            "id": "调度启动（解锁后）",
+            "status": "降级",
+            "detail": "无网络依赖（静态：useLocalReminder.start 于 unlock 触发）；无可观测 DOM 锚点 → 仅记录环境：{\"visibility\":\"visible\",\"hasNotificationApi\":true,\"permission\":\"granted\"}",
+            "evidence": {
+                "visibility": "visible",
+                "hasNotificationApi": true,
+                "permission": "granted"
+            }
+        },
+        {
+            "feature": "同步",
+            "id": "状态面板失败/待推送",
+            "status": "降级",
+            "detail": "panel=\"undefined\" errs=0",
+            "evidence": {
+                "snap": {
+                    "hash": "#/tasks/all/table",
+                    "router": {
+                        "name": "tasks-built-in-project-main",
+                        "fullPath": "/tasks/all/table",
+                        "params": {
+                            "projectId": "all",
+                            "viewType": "table"
+                        }
+                    },
+                    "rail": true,
+                    "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页 从未同步 拉取失败：网络错误 立即同步",
+                    "inputs": [],
+                    "buttons": ["清单\n0", "标签\n0", "20 条每页"]
+                },
+                "errs": []
+            }
+        },
+        {
+            "feature": "同步",
+            "id": "不阻塞功能",
+            "status": "可用",
+            "detail": "面板关闭后任务视图可用=true",
+            "evidence": {
+                "snap": {
+                    "hash": "#/tasks/all/table",
+                    "router": {
+                        "name": "tasks-built-in-project-main",
+                        "fullPath": "/tasks/all/table",
+                        "params": {
+                            "projectId": "all",
+                            "viewType": "table"
+                        }
+                    },
+                    "rail": true,
+                    "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页",
+                    "inputs": [],
+                    "buttons": ["清单\n0", "标签\n0", "20 条每页"]
+                }
+            }
         }
-      }
-    },
-    {
-      "feature": "任务",
-      "id": "拖拽排序",
-      "status": "未覆盖",
-      "detail": "CDP 无稳定拖拽手势封装，需人工/专项脚本",
-      "evidence": null
-    },
-    {
-      "feature": "日历",
-      "id": "进入+月视图",
-      "status": "可用",
-      "detail": "hash=#/calendar/monthly hasMonth=true body=\"Q 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 用清单来分类收集、组织和管理你的待办任务 隐藏已完成 专注徽标 周起始 周\"",
-      "evidence": {
-        "snap": {
-          "hash": "#/calendar/monthly",
-          "router": {
-            "name": "calendar-monthly",
-            "fullPath": "/calendar/monthly",
-            "params": {}
-          },
-          "rail": true,
-          "body": "Q 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 用清单来分类收集、组织和管理你的待办任务 隐藏已完成 专注徽标 周起始 周日 周一 2026 年 9 月 月 周 未安排 1 今天 日 一 二 三 四 五 六 本月暂无任务",
-          "inputs": [],
-          "buttons": [
-            "清单\n0",
-            "标签\n0",
-            "周日",
-            "周一",
-            "2026 年 9 月",
-            "月",
-            "周",
-            "未安排 1",
-            "今天"
-          ]
-        }
-      }
-    },
-    {
-      "feature": "日历",
-      "id": "切换周视图",
-      "status": "可用",
-      "detail": "clicked=true 变更=false errs=0",
-      "evidence": {
-        "snap": {
-          "hash": "#/calendar/monthly",
-          "router": {
-            "name": "calendar-monthly",
-            "fullPath": "/calendar/monthly",
-            "params": {}
-          },
-          "rail": true,
-          "body": "Q 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 用清单来分类收集、组织和管理你的待办任务 隐藏已完成 专注徽标 周起始 周日 周一 2026 年 9 月 月 周 未安排 1 今天 日 一 二 三 四 五 六 本月暂无任务",
-          "inputs": [],
-          "buttons": [
-            "清单\n0",
-            "标签\n0",
-            "周日",
-            "周一",
-            "2026 年 9 月",
-            "月",
-            "周",
-            "未安排 1",
-            "今天"
-          ]
-        },
-        "errs": []
-      }
-    },
-    {
-      "feature": "日历",
-      "id": "查看任务条",
-      "status": "未覆盖",
-      "detail": "离线本地无日程任务；需构造带时间任务后人工核对（本轮未构造）",
-      "evidence": null
-    },
-    {
-      "feature": "番茄",
-      "id": "进入+启动计时",
-      "status": "降级",
-      "detail": "clicked=true t1=21:57 t2=21:57 errs=0",
-      "evidence": {
-        "snap": {
-          "hash": "#/pomodoro/timer",
-          "router": {
-            "name": "pomodoro",
-            "fullPath": "/pomodoro/timer",
-            "params": {
-              "type": "timer"
-            }
-          },
-          "rail": true,
-          "body": "Q 番茄专注 正计时 常用专注 专注记录 新建常用番茄专注 番茄专注 < 专注 > 21:57:12 - 22:22:12 24:58 暂停 今日专注 专注时长 0 条专注记录 / 已收获 0 个番茄 今日专注目标 5 小时 已完成 0 % 暂无专注记录 专注笔记 0 / 1000 , 1000",
-          "inputs": [
-            {
-              "type": "textarea",
-              "ph": "你在思考什么？在这里记录详细见解、任务突破或深度头脑风暴 ...",
-              "val": ""
-            }
-          ],
-          "buttons": [
-            "新建常用番茄专注",
-            "暂停"
-          ]
-        },
-        "errs": []
-      }
-    },
-    {
-      "feature": "番茄",
-      "id": "暂停/停止",
-      "status": "可用",
-      "detail": "paused=true body=\"Q 番茄专注 正计时 常用专注 专注记录 新建常用番茄专注 番茄专注 < 专注 > 21:57:12 - 22:22:12 24:55 结束\"",
-      "evidence": {
-        "snap": {
-          "hash": "#/pomodoro/timer",
-          "router": {
-            "name": "pomodoro",
-            "fullPath": "/pomodoro/timer",
-            "params": {
-              "type": "timer"
-            }
-          },
-          "rail": true,
-          "body": "Q 番茄专注 正计时 常用专注 专注记录 新建常用番茄专注 番茄专注 < 专注 > 21:57:12 - 22:22:12 24:55 结束专注 继续 跳过专注 今日专注 专注时长 0 条专注记录 / 已收获 0 个番茄 今日专注目标 5 小时 已完成 0 % 暂无专注记录 专注笔记 0 / 1000 , 1000",
-          "inputs": [
-            {
-              "type": "textarea",
-              "ph": "你在思考什么？在这里记录详细见解、任务突破或深度头脑风暴 ...",
-              "val": ""
-            }
-          ],
-          "buttons": [
-            "新建常用番茄专注",
-            "结束专注",
-            "继续",
-            "跳过专注"
-          ]
-        }
-      }
-    },
-    {
-      "feature": "番茄",
-      "id": "记录页",
-      "status": "可用",
-      "detail": "hash=#/pomodoro/records body=\"Q 番茄专注 正计时 常用专注 专注记录 新建常用番茄专注 专注记录 总专注时长 0秒 总记录数 0 会话数 0 番茄占比 0% 开始日期 \"",
-      "evidence": {
-        "snap": {
-          "hash": "#/pomodoro/records",
-          "router": {
-            "name": "pomodoro-records",
-            "fullPath": "/pomodoro/records",
-            "params": {}
-          },
-          "rail": true,
-          "body": "Q 番茄专注 正计时 常用专注 专注记录 新建常用番茄专注 专注记录 总专注时长 0秒 总记录数 0 会话数 0 番茄占比 0% 开始日期 选择日期 结束日期 选择日期 类型 全部 任务名称 专注模板 全部 筛选 重置 暂无专注记录",
-          "inputs": [
-            {
-              "type": "text",
-              "ph": "搜索任务名称",
-              "val": ""
-            }
-          ],
-          "buttons": [
-            "新建常用番茄专注",
-            "选择日期",
-            "选择日期",
-            "全部",
-            "全部",
-            "筛选",
-            "重置"
-          ]
-        }
-      }
-    },
-    {
-      "feature": "搜索",
-      "id": "输入+结果",
-      "status": "可用",
-      "detail": "typed=true result=true errs=0 body=\"Q 清单 标签 优先级 状态 找到 1 条 QA离线走查任务-A 清单：收集箱\"",
-      "evidence": {
-        "snap": {
-          "hash": "#/search?q=QA%E7%A6%BB%E7%BA%BF",
-          "router": {
-            "name": "search",
-            "fullPath": "/search?q=QA%E7%A6%BB%E7%BA%BF",
-            "params": {}
-          },
-          "rail": true,
-          "body": "Q 清单 标签 优先级 状态 找到 1 条 QA离线走查任务-A 清单：收集箱",
-          "inputs": [
-            {
-              "type": "text",
-              "ph": "搜索全部任务的名称 / 备注…",
-              "val": "QA离线"
-            }
-          ],
-          "buttons": [
-            "清单",
-            "标签",
-            "优先级",
-            "状态"
-          ]
-        },
-        "errs": []
-      }
-    },
-    {
-      "feature": "搜索",
-      "id": "筛选面板",
-      "status": "可用",
-      "detail": "clicked=true",
-      "evidence": {
-        "snap": {
-          "hash": "#/search?q=QA%E7%A6%BB%E7%BA%BF",
-          "router": {
-            "name": "search",
-            "fullPath": "/search?q=QA%E7%A6%BB%E7%BA%BF",
-            "params": {}
-          },
-          "rail": true,
-          "body": "Q 清单 标签 优先级 状态 找到 1 条 QA离线走查任务-A 清单：收集箱 收集箱",
-          "inputs": [
-            {
-              "type": "text",
-              "ph": "搜索全部任务的名称 / 备注…",
-              "val": "QA离线"
-            }
-          ],
-          "buttons": [
-            "清单",
-            "标签",
-            "优先级",
-            "状态"
-          ]
-        }
-      }
-    },
-    {
-      "feature": "清单/标签",
-      "id": "侧栏显示",
-      "status": "可用",
-      "detail": "清单&标签可见=true",
-      "evidence": {
-        "snap": {
-          "hash": "#/tasks/all/table",
-          "router": {
-            "name": "tasks-built-in-project-main",
-            "fullPath": "/tasks/all/table",
-            "params": {
-              "projectId": "all",
-              "viewType": "table"
-            }
-          },
-          "rail": true,
-          "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页",
-          "inputs": [],
-          "buttons": [
-            "清单\n0",
-            "标签\n0",
-            "20 条每页"
-          ]
-        }
-      }
-    },
-    {
-      "feature": "清单/标签",
-      "id": "切换清单视图",
-      "status": "可用",
-      "detail": "clicked=true hash=#/tasks/all/table",
-      "evidence": {
-        "snap": {
-          "hash": "#/tasks/all/table",
-          "router": {
-            "name": "tasks-built-in-project-main",
-            "fullPath": "/tasks/all/table",
-            "params": {
-              "projectId": "all",
-              "viewType": "table"
-            }
-          },
-          "rail": true,
-          "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页",
-          "inputs": [],
-          "buttons": [
-            "清单\n0",
-            "标签\n0",
-            "20 条每页"
-          ]
-        }
-      }
-    },
-    {
-      "feature": "清单/标签",
-      "id": "创建/重命名",
-      "status": "未覆盖",
-      "detail": "创建入口按钮存在=false（重命名未自动执行）",
-      "evidence": {
-        "snap": {
-          "hash": "#/tasks/all/table",
-          "router": {
-            "name": "tasks-built-in-project-main",
-            "fullPath": "/tasks/all/table",
-            "params": {
-              "projectId": "all",
-              "viewType": "table"
-            }
-          },
-          "rail": true,
-          "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页",
-          "inputs": [],
-          "buttons": [
-            "清单\n0",
-            "标签\n0",
-            "20 条每页"
-          ]
-        },
-        "errs": []
-      }
-    },
-    {
-      "feature": "设置",
-      "id": "打开对话框",
-      "status": "可用",
-      "detail": "opened=1 settings=true body=\"Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展\"",
-      "evidence": {
-        "snap": {
-          "hash": "#/tasks/all/table",
-          "router": {
-            "name": "tasks-built-in-project-main",
-            "fullPath": "/tasks/all/table",
-            "params": {
-              "projectId": "all",
-              "viewType": "table"
-            }
-          },
-          "rail": true,
-          "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页 会话列表加载失败 设置 账户与个人信息 密码与安全 应用设置 退出登录 修改用户昵称 修改 更多信息 登录设备 暂无其他登录会话",
-          "inputs": [],
-          "buttons": [
-            "清单\n0",
-            "标签\n0",
-            "20 条每页"
-          ]
-        }
-      }
-    },
-    {
-      "feature": "设置",
-      "id": "主题切换",
-      "status": "未覆盖",
-      "detail": "clicked=false darkSwitch 1→1",
-      "evidence": {
-        "snap": {
-          "hash": "#/tasks/all/table",
-          "router": {
-            "name": "tasks-built-in-project-main",
-            "fullPath": "/tasks/all/table",
-            "params": {
-              "projectId": "all",
-              "viewType": "table"
-            }
-          },
-          "rail": true,
-          "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页 会话列表加载失败 设置 账户与个人信息 密码与安全 应用设置 退出登录 修改用户昵称 修改 更多信息 登录设备 暂无其他登录会话",
-          "inputs": [],
-          "buttons": [
-            "清单\n0",
-            "标签\n0",
-            "20 条每页"
-          ]
-        }
-      }
-    },
-    {
-      "feature": "设置",
-      "id": "语言切换",
-      "status": "未覆盖",
-      "detail": "clicked=false body=\"Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签\" errs=1",
-      "evidence": {
-        "snap": {
-          "hash": "#/tasks/all/table",
-          "router": {
-            "name": "tasks-built-in-project-main",
-            "fullPath": "/tasks/all/table",
-            "params": {
-              "projectId": "all",
-              "viewType": "table"
-            }
-          },
-          "rail": true,
-          "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页 会话列表加载失败 设置 账户与个人信息 密码与安全 应用设置 退出登录 修改用户昵称 修改 更多信息 登录设备 暂无其他登录会话",
-          "inputs": [],
-          "buttons": [
-            "清单\n0",
-            "标签\n0",
-            "20 条每页"
-          ]
-        },
-        "errs": [
-          "error: [SHELL-05] vue:errorHandler:https://vuejs.org/error-reference/#runtime-1 Object"
-        ]
-      }
-    },
-    {
-      "feature": "本地提醒",
-      "id": "调度启动（解锁后）",
-      "status": "降级",
-      "detail": "无网络依赖（静态：useLocalReminder.start 于 unlock 触发）；无可观测 DOM 锚点 → 仅记录环境：{\"visibility\":\"visible\",\"hasNotificationApi\":true,\"permission\":\"granted\"}",
-      "evidence": {
-        "visibility": "visible",
-        "hasNotificationApi": true,
-        "permission": "granted"
-      }
-    },
-    {
-      "feature": "同步",
-      "id": "状态面板失败/待推送",
-      "status": "降级",
-      "detail": "panel=\"undefined\" errs=0",
-      "evidence": {
-        "snap": {
-          "hash": "#/tasks/all/table",
-          "router": {
-            "name": "tasks-built-in-project-main",
-            "fullPath": "/tasks/all/table",
-            "params": {
-              "projectId": "all",
-              "viewType": "table"
-            }
-          },
-          "rail": true,
-          "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页 从未同步 拉取失败：网络错误 立即同步",
-          "inputs": [],
-          "buttons": [
-            "清单\n0",
-            "标签\n0",
-            "20 条每页"
-          ]
-        },
-        "errs": []
-      }
-    },
-    {
-      "feature": "同步",
-      "id": "不阻塞功能",
-      "status": "可用",
-      "detail": "面板关闭后任务视图可用=true",
-      "evidence": {
-        "snap": {
-          "hash": "#/tasks/all/table",
-          "router": {
-            "name": "tasks-built-in-project-main",
-            "fullPath": "/tasks/all/table",
-            "params": {
-              "projectId": "all",
-              "viewType": "table"
-            }
-          },
-          "rail": true,
-          "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 QA离线走查任务-A 今天 21:55 低优先级 待办 收集箱 当前列表 1 项， 共计 1 项。 第 1 页，共 1 页 20 条每页",
-          "inputs": [],
-          "buttons": [
-            "清单\n0",
-            "标签\n0",
-            "20 条每页"
-          ]
-        }
-      }
-    }
-  ],
-  "console": [
-    "error: [sync] 拉取归一化错误（断网/超时） ERR_NETWORK",
-    "error: [SHELL-05] vue:errorHandler:https://vuejs.org/error-reference/#runtime-1 Object",
-    "error: [SHELL-05] vue:errorHandler:https://vuejs.org/error-reference/#runtime-1 Object",
-    "warning: [Subscriber/emit] 事件 RefreshData 未订阅",
-    "error: [sync] 拉取归一化错误（断网/超时） ERR_NETWORK",
-    "error: [SHELL-05] vue:errorHandler:https://vuejs.org/error-reference/#runtime-1 Object"
-  ]
+    ],
+    "console": [
+        "error: [sync] 拉取归一化错误（断网/超时） ERR_NETWORK",
+        "error: [SHELL-05] vue:errorHandler:https://vuejs.org/error-reference/#runtime-1 Object",
+        "error: [SHELL-05] vue:errorHandler:https://vuejs.org/error-reference/#runtime-1 Object",
+        "warning: [Subscriber/emit] 事件 RefreshData 未订阅",
+        "error: [sync] 拉取归一化错误（断网/超时） ERR_NETWORK",
+        "error: [SHELL-05] vue:errorHandler:https://vuejs.org/error-reference/#runtime-1 Object"
+    ]
 }

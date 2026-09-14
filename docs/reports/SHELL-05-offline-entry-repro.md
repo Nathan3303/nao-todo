@@ -16,15 +16,15 @@
 
 ## 1. 定罪 / 判定结论
 
-| 假设                                | 判定                          | 依据（可复核）                                                                                                                          |
-| :---------------------------------- | :---------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------- |
-| **H1 `onOffline` 无兜底**           | ✅ **结构性确证（注入触发）** | 注入「点击瞬间彻底断网」→ `router.replace` reject → `[VUE_ROUTER_R0010]` + `[Vue warn] Unhandled error during execution of component event handler at <InitialSyncGate onOffline>`，门 30s 后仍在、`location.hash` 与 `#app` 内容 0 变化 |
-| H2 放行四条件不成立 → 踢回登录/检入 | ❌ 排除                       | 正常离线路径下守卫放行，落 `LAST_VISITED=/tasks/all/table`，未出现 `auth/*` 回落                                                       |
-| H3 目标路由无匹配                   | ⚠️ **确认存在（但需 LAST_VISITED 失效）** | 注入 `LAST_VISITED=/definitely-not-a-route-xyz` → 门**关闭**（gatePassed 生效），但 `#app` 空壳（`appHtmlLen=87`）、0 可交互 → **白屏**，非「停在门」 |
-| H4 门卡 `syncing`                   | ❌ 排除                       | 失败态三键齐备（`重试 / 离线进入 / 登出用户`），按钮可见可点                                                                             |
-| H5 凭证误判隐藏按钮                 | ❌ 排除                       | 离线网络失败文案 `拉取失败：网络错误`（不含 401/403/登录已过期），「离线进入」可见                                                       |
-| **N-01 离线壳主区永久加载（新发现）** | ✅ **确认**                 | 门关闭、壳挂载（rail 出现），但主区 3s/10s/30s 恒为 `加载中...`；代码根因见 §5.1                                                          |
-| **N-02 注销通知组件未满挂载态（新发现）** | ✅ **确认（未捕获异常）**  | `deletion-notifier` `onMounted` 读 `userDeletion.value.isPending`，正常用户无该对象 → `TypeError`（unhandledrejection）                  |
+| 假设                                      | 判定                                      | 依据（可复核）                                                                                                                                                                                                                           |
+| :---------------------------------------- | :---------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **H1 `onOffline` 无兜底**                 | ✅ **结构性确证（注入触发）**             | 注入「点击瞬间彻底断网」→ `router.replace` reject → `[VUE_ROUTER_R0010]` + `[Vue warn] Unhandled error during execution of component event handler at <InitialSyncGate onOffline>`，门 30s 后仍在、`location.hash` 与 `#app` 内容 0 变化 |
+| H2 放行四条件不成立 → 踢回登录/检入       | ❌ 排除                                   | 正常离线路径下守卫放行，落 `LAST_VISITED=/tasks/all/table`，未出现 `auth/*` 回落                                                                                                                                                         |
+| H3 目标路由无匹配                         | ⚠️ **确认存在（但需 LAST_VISITED 失效）** | 注入 `LAST_VISITED=/definitely-not-a-route-xyz` → 门**关闭**（gatePassed 生效），但 `#app` 空壳（`appHtmlLen=87`）、0 可交互 → **白屏**，非「停在门」                                                                                    |
+| H4 门卡 `syncing`                         | ❌ 排除                                   | 失败态三键齐备（`重试 / 离线进入 / 登出用户`），按钮可见可点                                                                                                                                                                             |
+| H5 凭证误判隐藏按钮                       | ❌ 排除                                   | 离线网络失败文案 `拉取失败：网络错误`（不含 401/403/登录已过期），「离线进入」可见                                                                                                                                                       |
+| **N-01 离线壳主区永久加载（新发现）**     | ✅ **确认**                               | 门关闭、壳挂载（rail 出现），但主区 3s/10s/30s 恒为 `加载中...`；代码根因见 §5.1                                                                                                                                                         |
+| **N-02 注销通知组件未满挂载态（新发现）** | ✅ **确认（未捕获异常）**                 | `deletion-notifier` `onMounted` 读 `userDeletion.value.isPending`，正常用户无该对象 → `TypeError`（unhandledrejection）                                                                                                                  |
 
 > **给 PM 的直答**：**H1 可以定罪为「结构性缺陷且是唯一能产生『完全无反应』的机制」，但不能单凭本次证据断言它就是用户那台机器上的触发点**——因为在其字面环境（后端断、dev server 在）下导航**并未 reject**。要闭环用户个案，仍需其**控制台报错**或**点击后最终画面**（停在门 → H1；空白 → H3/N-01）。
 
@@ -32,12 +32,12 @@
 
 ## 2. 场景与结果总览
 
-| # | 场景（注入能力均来自 CDP，未改功能代码） | `LAST_VISITED` | 点击前 | +300ms | +3s | +10s | +30s | 结论 |
-| :-: | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| S1 | **忠实建模**：封锁 `localhost:3302`，dev server（5173）可达 | `/tasks/all/table` | 门失败态+离线进入 | 门关、hash→任务路由 | 壳挂载、主区`加载中` | 同左 | 同左 | **门反应正常**；主区**卡死**（N-01） |
-| S2 | **注入断网**：点击前 `Network.emulateNetworkConditions{offline:true}` | `/tasks/all/table` | 同上 | **门仍在、hash 不变** | **门仍在** | **门仍在** | — | **H1 命中：卡门无反应** |
-| S3 | 注入失效深链 | `/definitely-not-a-route-xyz` | 同上 | 门关、空白 | 空白 | 空白 | — | H3/B-04：**白屏**（非卡门） |
-| S4 | 注入缺 `viewType`（B-08） | `/tasks/all` | 同上 | `正在加载用户信息...` | 壳挂载、`加载中` | `加载中` | — | B-08：与 N-01 同族，主区不产出 |
+|  #  | 场景（注入能力均来自 CDP，未改功能代码）                              | `LAST_VISITED`                | 点击前            | +300ms                | +3s                  | +10s       | +30s | 结论                                 |
+| :-: | :-------------------------------------------------------------------- | :---------------------------- | :---------------- | :-------------------- | :------------------- | :--------- | :--- | :----------------------------------- |
+| S1  | **忠实建模**：封锁 `localhost:3302`，dev server（5173）可达           | `/tasks/all/table`            | 门失败态+离线进入 | 门关、hash→任务路由   | 壳挂载、主区`加载中` | 同左       | 同左 | **门反应正常**；主区**卡死**（N-01） |
+| S2  | **注入断网**：点击前 `Network.emulateNetworkConditions{offline:true}` | `/tasks/all/table`            | 同上              | **门仍在、hash 不变** | **门仍在**           | **门仍在** | —    | **H1 命中：卡门无反应**              |
+| S3  | 注入失效深链                                                          | `/definitely-not-a-route-xyz` | 同上              | 门关、空白            | 空白                 | 空白       | —    | H3/B-04：**白屏**（非卡门）          |
+| S4  | 注入缺 `viewType`（B-08）                                             | `/tasks/all`                  | 同上              | `正在加载用户信息...` | 壳挂载、`加载中`     | `加载中`   | —    | B-08：与 N-01 同族，主区不产出       |
 
 原始证据：`evidence/shell-05/case-standard-offline.json`、`case-standard-offline-30s.json`、`case-full-offline-chunkfail.json`、`case-invalid-lastvisited.json`、`case-b08-no-viewtype.json`。
 
@@ -62,12 +62,12 @@ TypeError: Failed to fetch dynamically imported module:
 
 DOM / 路由对照（S2）：
 
-| 时间窗 | `location.hash` | `router.currentRoute.name` | `.initial-sync-gate` | `.sync-rail-btn` | 可交互元素 |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| 点击前 | `#/auth/checkin` | `auth-checkin` | 在 | 无 | 3（重试/离线进入/登出用户） |
-| +300ms | `#/auth/checkin` | `auth-checkin` | **在** | 无 | **3** |
-| +3s | `#/auth/checkin` | `auth-checkin` | **在** | 无 | **3** |
-| +10s | `#/auth/checkin` | `auth-checkin` | **在** | 无 | **3** |
+| 时间窗 | `location.hash`  | `router.currentRoute.name` | `.initial-sync-gate` | `.sync-rail-btn` | 可交互元素                  |
+| :----- | :--------------- | :------------------------- | :------------------- | :--------------- | :-------------------------- |
+| 点击前 | `#/auth/checkin` | `auth-checkin`             | 在                   | 无               | 3（重试/离线进入/登出用户） |
+| +300ms | `#/auth/checkin` | `auth-checkin`             | **在**               | 无               | **3**                       |
+| +3s    | `#/auth/checkin` | `auth-checkin`             | **在**               | 无               | **3**                       |
+| +10s   | `#/auth/checkin` | `auth-checkin`             | **在**               | 无               | **3**                       |
 
 → **零变化 = 用户口中的「点击无反应」**。代码级根因（`apps/desktop/src/renderer/src/AppRoot.vue`）：
 
@@ -102,12 +102,12 @@ console: [VUE_ROUTER_R0004] No match found for location with path "/definitely-n
 
 S1 实测 DOM（门已关闭、rail 已挂载，主区始终不产出）：
 
-| 时间窗 | railBtn | 可交互元素 | `#app` 内文 |
-| :--- | :--- | :--- | :--- |
-| +300ms | 无 | 0 | `正在加载用户信息...` |
-| +3s | 有 | 2 | `Q 加载中...` |
-| +10s | 有 | 2 | `Q 加载中...` |
-| +30s | 有 | 2 | `Q 加载中...` |
+| 时间窗 | railBtn | 可交互元素 | `#app` 内文           |
+| :----- | :------ | :--------- | :-------------------- |
+| +300ms | 无      | 0          | `正在加载用户信息...` |
+| +3s    | 有      | 2          | `Q 加载中...`         |
+| +10s   | 有      | 2          | `Q 加载中...`         |
+| +30s   | 有      | 2          | `Q 加载中...`         |
 
 代码根因（`apps/web/src/components/tasks/built-in-project/built-in-project.ts`）：
 
@@ -139,17 +139,17 @@ console: [Vue warn]: Unhandled error during execution of mounted hook
 
 ## 6. 边界清单实测（可行项）
 
-| ID | 边界 | 本次结果 | 证据/备注 |
-| :--- | :--- | :--- | :--- |
-| B-01 | `onOffline`/`onSignOut` 无 try/catch | ✅ **确证**（S2） | 导航 reject ⇒ 永久卡门；`onSignOut` 同构未测（同代码形状） |
-| B-02 | `runSync()` 顶层无 try/catch | ⚪ **不可判定**（需注入 `syncService.start()` reject；不改功能代码无法直达） | 静态：`initial-sync-gate.vue` `runSync()` 无 try/catch，`start()` reject ⇒ `syncing` 永真 |
-| B-03 | 四条件不满足时静默回落 | ⚪ **未构造**（无法在不改代码前提下破坏 `localSession`/`isUnlocked`） | 静态：`auth/routes.ts` 回落三分支；表现为可见检入失败态，非静默 |
-| B-04 | `LAST_VISITED_ROUTE` 失效深链 | ✅ **确证**（S3） | 白屏（`appHtmlLen=87`），非卡门 |
-| B-05 | section 重定向 `LAST_TASKS_ROUTE` 失效 | ⚪ 未单测 | 与 B-04 同族，建议并入 |
-| B-06 | 懒加载 chunk 离线不可用 | ✅ **确证**（S2） | dev 下 5 条 chunk import 失败；**需注记：Electron 打包/生产走本地资源，此项对 dev 更敏感** |
-| B-07 | 无全局 `unhandledrejection`/`onerror` 兜底 | ✅ **确证** | 全量异常仅进控制台，无上报（N-02 亦因此不可见） |
-| B-08 | 离线落 `tasks` 缺 `viewType` | ✅ **确证**（S4） | 壳挂载但主区不产出（N-01 同族） |
-| B-09…B-13 | 见勘察报告 | ⚪ 未在本单覆盖 | — |
+| ID        | 边界                                       | 本次结果                                                                     | 证据/备注                                                                                  |
+| :-------- | :----------------------------------------- | :--------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------- |
+| B-01      | `onOffline`/`onSignOut` 无 try/catch       | ✅ **确证**（S2）                                                            | 导航 reject ⇒ 永久卡门；`onSignOut` 同构未测（同代码形状）                                 |
+| B-02      | `runSync()` 顶层无 try/catch               | ⚪ **不可判定**（需注入 `syncService.start()` reject；不改功能代码无法直达） | 静态：`initial-sync-gate.vue` `runSync()` 无 try/catch，`start()` reject ⇒ `syncing` 永真  |
+| B-03      | 四条件不满足时静默回落                     | ⚪ **未构造**（无法在不改代码前提下破坏 `localSession`/`isUnlocked`）        | 静态：`auth/routes.ts` 回落三分支；表现为可见检入失败态，非静默                            |
+| B-04      | `LAST_VISITED_ROUTE` 失效深链              | ✅ **确证**（S3）                                                            | 白屏（`appHtmlLen=87`），非卡门                                                            |
+| B-05      | section 重定向 `LAST_TASKS_ROUTE` 失效     | ⚪ 未单测                                                                    | 与 B-04 同族，建议并入                                                                     |
+| B-06      | 懒加载 chunk 离线不可用                    | ✅ **确证**（S2）                                                            | dev 下 5 条 chunk import 失败；**需注记：Electron 打包/生产走本地资源，此项对 dev 更敏感** |
+| B-07      | 无全局 `unhandledrejection`/`onerror` 兜底 | ✅ **确证**                                                                  | 全量异常仅进控制台，无上报（N-02 亦因此不可见）                                            |
+| B-08      | 离线落 `tasks` 缺 `viewType`               | ✅ **确证**（S4）                                                            | 壳挂载但主区不产出（N-01 同族）                                                            |
+| B-09…B-13 | 见勘察报告                                 | ⚪ 未在本单覆盖                                                              | —                                                                                          |
 
 ---
 
