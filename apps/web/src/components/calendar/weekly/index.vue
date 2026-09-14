@@ -13,6 +13,7 @@ import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { isInteractiveKeyTarget } from '../monthly/keyboard-nav'
 import { buildCalendarEmptyState } from '../monthly/empty-state'
 import { CALENDAR_WEEKLY_CONTEXT_KEY } from '../weekly-context'
+import CalendarSortDropdown from '../monthly/calendar-sort-dropdown.vue'
 
 import '../calendar-grid.css'
 
@@ -24,6 +25,7 @@ const {
     error,
     onRetry,
     tasks,
+    sort,
     selectedKey,
     filterActive,
     hideCompleted,
@@ -204,6 +206,7 @@ const {
                 @close="closeWeekJump"
             />
             <nue-div align="center" gap="6px">
+                <calendar-sort-dropdown v-model="sort" />
                 <nue-div class="wk-view-toggle" role="group" aria-label="视图切换">
                     <nue-button
                         theme="small,ghost"

@@ -1,6 +1,7 @@
 import type { InjectionKey, Ref } from 'vue'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import type { CalendarWeekStart } from './monthly/monthly-layout'
+import type { CalendarSort } from './monthly/calendar-sort'
 
 /**
  * 周视图上下文（O14 props 收敛）
@@ -12,7 +13,10 @@ export type CalendarWeeklyContext = {
     loading: Ref<boolean>
     error: Ref<string>
     onRetry: () => void
+    /** 展示任务快照（TASK-08：已按日历排序重排；与月视图同源） */
     tasks: Ref<TaskViewObject[]>
+    /** 日历排序状态（TASK-08：月/周共享；仅影响展示顺序） */
+    sort: Ref<CalendarSort>
     selectedKey: Ref<string>
     filterActive: Ref<boolean>
     hideCompleted: Ref<boolean>

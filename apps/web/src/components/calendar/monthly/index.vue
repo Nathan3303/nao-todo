@@ -12,6 +12,7 @@ import { buildCalendarEmptyState } from './empty-state'
 import { ghostPointOf, useDragSchedule } from './use-drag-schedule'
 import { segmentStyleOf, useCalendarGrid } from './use-calendar-grid'
 import { useMonthJump } from './use-month-jump'
+import CalendarSortDropdown from './calendar-sort-dropdown.vue'
 import MonthJumpPanel from './month-jump-panel.vue'
 import { CALENDAR_KEY_SCOPE, isCalendarKeyLocked, isInteractiveKeyTarget } from './keyboard-nav'
 import useCalendarMonthly from './use-calendar-monthly'
@@ -98,7 +99,10 @@ const {
     quickCreatePending,
     openQuickCreate,
     closeQuickCreate,
-    inlineCreateTask
+    inlineCreateTask,
+    // —— 排序（TASK-08：月/周共享；仅展示顺序） ——
+    sort,
+    sortedTasks
 } = useCalendarMonthly(laneLimit)
 // —— B1-F5 专注徽标（区间=当前可见格：月=网格首末格 / 周=锚点所在周；开关 off=停拉+清零） ——
 const badgeRange = computed<PomodoroBadgeRange | null>(() => {
@@ -266,7 +270,9 @@ provide<CalendarWeeklyContext>(CALENDAR_WEEKLY_CONTEXT_KEY, {
     loading,
     error,
     onRetry: retry,
-    tasks,
+    // TASK-08：周视图展示已排序快照（与月视图同源同排序）
+    tasks: sortedTasks,
+    sort,
     selectedKey,
     filterActive,
     hideCompleted,
@@ -418,6 +424,7 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                     @close="closeMonthJump"
                 />
                 <nue-div align="center" gap="6px">
+                    <calendar-sort-dropdown v-model="sort" />
                     <nue-div class="cal-view-toggle" role="group" aria-label="视图切换">
                         <nue-button
                             theme="small,ghost"

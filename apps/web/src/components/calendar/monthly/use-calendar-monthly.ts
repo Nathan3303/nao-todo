@@ -16,6 +16,7 @@ import {
 import { isDateKeyInMonth, monthFirstDateKey } from './month-jump'
 import { useCalendarTaskQuery } from './use-calendar-task-query'
 import { useCalendarSchedule } from './use-calendar-schedule'
+import { useCalendarSort } from './use-calendar-sort'
 
 /**
  * useCalendarMonthly
@@ -62,6 +63,11 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         deferToToday
     } = useCalendarSchedule({ taskUseCase })
 
+    // —— TASK-08 日历排序（月/周双视图共享；localStorage 独立键；仅影响展示顺序） ——
+    const { sort, sortTasks } = useCalendarSort()
+    // @computed 排序后的任务快照（月模型/周视图共用；未选字段=默认按名称升序）
+    const sortedTasks = computed(() => sortTasks(tasks.value))
+
     // @states 视图状态
     const year = ref<number>(dayjs().year())
     const monthIndex = ref<number>(dayjs().month()) // 0-based
@@ -70,12 +76,12 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
     // @computed 当前月标题
     const monthTitle = computed(() => `${year.value} 年 ${monthIndex.value + 1} 月`)
 
-    // @computed 网格模型（快照任务即服务端过滤结果 -> 行/轨道/溢出）
+    // @computed 网格模型（快照任务即服务端过滤结果 -> 行/轨道/溢出；TASK-08 按排序快照）
     const model = computed(() =>
         buildGridModel(
             year.value,
             monthIndex.value,
-            tasks.value,
+            sortedTasks.value,
             selectedKey.value,
             internalLaneLimit.value,
             weekStart.value
@@ -294,6 +300,9 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         goNextWeek,
         // —— 任务快照（周视图同源数据；含跨月任务，按跨度裁剪） ——
         tasks,
+        // —— 排序快照与排序状态（TASK-08：月/周展示层共用；仅显示顺序，不回写服务端） ——
+        sortedTasks,
+        sort,
         // —— 周起始口径（C9） ——
         weekStart,
         // —— 格内快速新建（B6） ——
