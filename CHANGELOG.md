@@ -2,6 +2,26 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.7.1] - 2026-09-14
+
+发布批次：TASK-04 详情面板子任务行标签展示（patch）。**Tag `v1.7.1`** · root `1.7.1` / `@nao-todo/desktopapp` `1.7.1` / `@nao-todo/presentation` `0.4.2`（`@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` / `@nao-todo/domain-project` `1.1.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（presentation 层）。设计记录：PRD `docs/prds/2026-09-14-task-details-subtask-tags.md`。
+
+### Added（新增）
+
+- **详情面板子任务行标签展示（TASK-04；`d3c5e5cc`）**：名称右侧原时间内联位改挂**只读 small 标签栏**（`clamped=2` 溢出 +N，标签池复用详情上下文，空标签不渲染）；时间下移为名称下、描述上**独立行**（文案 / 拼接规则不变，无时间不渲染）；脱离按钮 hover / focus-within 展示语义锁定；`.subtask-row__tags` 收缩上限防长标签挤没名称。
+
+### Changed
+
+- 版本协同 bump（patch）：root / `@nao-todo/desktopapp` `1.7.0 → 1.7.1`；`@nao-todo/presentation` `0.4.1 → 0.4.2`（TASK-04 展示增强，patch）。无公开 API 导出面破坏；移动端红线 `@nao-todo/presentation-react` 零改动。
+
+### 质量门槛
+
+- `vp test`：TASK-04 目标 14/14 绿（全仓 643/645，2 失败为既有 sync-status-bar 工作树状态，与本次零交集）。
+- `vp check`：目标文件 pass（fmt / lint / type）。
+- `pnpm webapp build` ✓ / `pnpm desktopapp build` ✓。
+
+[v1.7.1]: https://github.com/Nathan3303/nao-todo/releases/tag/v1.7.1
+
 ## [v1.7.0] - 2026-09-13
 
 发布批次：设置分栏 / 搜索增强 / 离线边界加固 / 离线写入与自动回传 协同收尾。**Tag `v1.7.0` 待 PM 放行后打** · **前置：服务端 `5c0b25d3`（SYNC-DEF-01）已部署** · root `1.7.0` / `@nao-todo/desktopapp` `1.7.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/presentation` `0.4.1` / `@nao-todo/shared` `1.3.0`（`@nao-todo/domain-task` `1.2.0` / `@nao-todo/domain-project` `1.1.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（views / presentation / presentation-identity / shared / infrastructure 层）。设计记录：PRD `docs/prds/2026-09-13-shell-05-offline-boundary-hardening.md`、`docs/prds/2026-09-13-shell-06-offline-backfill.md`；ADR `docs/adr/2026-09-13-shell-06-offline-backfill.md`（C-38–C-45）。
