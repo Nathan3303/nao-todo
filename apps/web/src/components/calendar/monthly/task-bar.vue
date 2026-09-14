@@ -3,7 +3,7 @@ import type { TaskViewObject } from '@nao-todo/domain-task'
 import dayjs from 'dayjs'
 import { computed, reactive } from 'vue'
 import RescheduleMenu from './reschedule-menu.vue'
-import { isTaskOverdue } from './use-calendar-monthly'
+import { isTaskOverdue } from './overdue'
 
 defineOptions({ name: 'CalendarTaskBar' })
 

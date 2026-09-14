@@ -3,7 +3,7 @@ import type { TaskViewObject } from '@nao-todo/domain-task'
 import { TaskCheckButton } from '@nao-todo/shared'
 import dayjs from 'dayjs'
 import { computed, ref } from 'vue'
-import { isTaskOverdue } from './use-calendar-monthly'
+import { isTaskOverdue } from './overdue'
 
 defineOptions({ name: 'CalendarDayDrawer' })
 

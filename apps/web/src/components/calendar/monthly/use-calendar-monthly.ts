@@ -24,16 +24,6 @@ import {
 import { isDateKeyInMonth, monthFirstDateKey } from './month-jump'
 
 /**
- * 任务是否逾期（天级口径，与任务页「已过期」一致）
- * @description endAt < 今日 0 点且未完成；endAt 为空/非法或已完成一律不判逾期。
- */
-export const isTaskOverdue = (task: TaskViewObject): boolean => {
-    if (task.state === 'done' || !task.endAt) return false
-    const end = dayjs(task.endAt)
-    return end.isValid() && end.isBefore(dayjs().startOf('day'))
-}
-
-/**
  * useCalendarMonthly
  * @description 月历视图逻辑：任务全量拉取（服务端过滤：多清单/多标签/隐藏已完成，
  *              顶层/未删除/未归档/未放弃）+ 翻月 + 日期选中 + 网格模型计算 +
