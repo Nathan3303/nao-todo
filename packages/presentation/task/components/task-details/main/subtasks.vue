@@ -134,15 +134,6 @@ const handleCreateSubTask = async (payload: { value: string }) => {
                                     >
                                         {{ subTask.name }}
                                     </nue-text>
-                                    <task-tag-bar
-                                        v-if="subTask.tags && subTask.tags.length"
-                                        class="subtask-row__tags"
-                                        :available-tags="tags"
-                                        :task-tag-ids="subTask.tags"
-                                        readonly
-                                        small
-                                        :clamped="2"
-                                    />
                                     <nue-div
                                         v-if="subTask.checkItemCount > 0"
                                         class="subtask-row__badge subtask-row__badge--check"
@@ -155,6 +146,15 @@ const handleCreateSubTask = async (payload: { value: string }) => {
                                         <nue-icon name="check" />
                                         <span>{{ subTask.checkItemCount }}</span>
                                     </nue-div>
+                                    <task-tag-bar
+                                        v-if="subTask.tags && subTask.tags.length"
+                                        class="subtask-row__tags"
+                                        :available-tags="tags"
+                                        :task-tag-ids="subTask.tags"
+                                        readonly
+                                        small
+                                        :clamped="2"
+                                    />
                                     <nue-div
                                         v-if="subTask.subtaskCount > 0"
                                         class="subtask-row__badge subtask-row__badge--subtask"
@@ -258,7 +258,7 @@ const handleCreateSubTask = async (payload: { value: string }) => {
     .subtask-row__title-line {
         display: flex;
         align-items: center;
-        gap: var(--nue-gap-2xs);
+        gap: var(--nue-gap-xs);
         min-width: 0;
         height: 1.5rem; /* 与左右组件等高 */
         flex-wrap: nowrap;
@@ -309,7 +309,7 @@ const handleCreateSubTask = async (payload: { value: string }) => {
         font-size: var(--nue-text-xs);
         font-weight: 500;
         color: var(--nue-primary-color-600);
-        line-height: 1.4;
+        line-height: 1.5;
     }
 
     &[data-done='true'] {

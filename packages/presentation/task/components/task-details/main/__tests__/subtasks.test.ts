@@ -389,7 +389,7 @@ describe('TASK-06 子任务节点：数量徽标（检查项 / 子任务）', ()
         expect(none.wrapper.find('.subtask-row__badge').exists()).toBe(false)
     })
 
-    it('徽标位于标题行、名称与标签栏之后；title 提供 i18n 文案（含数量）', async () => {
+    it('徽标与标签栏共存：顺序为 名称 → check 徽标 → 标签栏 → subtask 徽标；title 提供 i18n 文案（含数量）', async () => {
         const h = mountRows(
             [makeSubTask({ tags: ['tag-1'], checkItemCount: 3, subtaskCount: 2 })],
             [{ id: 'tag-1', name: '工作', color: '#3b82f6' }]
@@ -397,16 +397,19 @@ describe('TASK-06 子任务节点：数量徽标（检查项 / 子任务）', ()
         const titleLine = h.wrapper.find('.subtask-row__title-line')
         const checkBadge = titleLine.find('.subtask-row__badge--check')
         const subBadge = titleLine.find('.subtask-row__badge--subtask')
+        const tagBarEl = titleLine.findComponent(TaskTagBar).element
         expect(checkBadge.exists()).toBe(true)
         expect(subBadge.exists()).toBe(true)
-        // 位于名称之后、行尾（check 徽标在 subtask 徽标前）
+        // 新顺序（用户样式微调）：名称 → check 徽标 → 标签栏 → subtask 徽标（行尾）
         const nameEl = h.wrapper.find('.subtask-row__name').element
         expect(
             nameEl.compareDocumentPosition(checkBadge.element) & Node.DOCUMENT_POSITION_FOLLOWING
         ).toBeTruthy()
         expect(
-            checkBadge.element.compareDocumentPosition(subBadge.element) &
-                Node.DOCUMENT_POSITION_FOLLOWING
+            checkBadge.element.compareDocumentPosition(tagBarEl) & Node.DOCUMENT_POSITION_FOLLOWING
+        ).toBeTruthy()
+        expect(
+            tagBarEl.compareDocumentPosition(subBadge.element) & Node.DOCUMENT_POSITION_FOLLOWING
         ).toBeTruthy()
         // title = i18n 文案（含数量插值）
         expect(checkBadge.attributes('title')).toBe(t('task.details.checkItemCount', { count: 3 }))
@@ -416,7 +419,7 @@ describe('TASK-06 子任务节点：数量徽标（检查项 / 子任务）', ()
         expect(h.switchTaskDetails).not.toHaveBeenCalled()
     })
 
-    it('徽标与标签栏共存：顺序为 名称 → 标签栏 → 徽标（flex 0 0 auto 防挤占为 CSS 契约，静态论证）', () => {
+    it('徽标与标签栏共存且不挤占名称（flex 0 0 auto 为 CSS 契约，静态论证）', () => {
         const h = mountRows(
             [
                 makeSubTask({
@@ -433,11 +436,6 @@ describe('TASK-06 子任务节点：数量徽标（检查项 / 子任务）', ()
         expect(h.wrapper.findComponent(TaskTagBar).exists()).toBe(true)
         const badges = h.wrapper.findAll('.subtask-row__badge')
         expect(badges).toHaveLength(2)
-        const tagBarEl = h.wrapper.findComponent(TaskTagBar).element
-        const firstBadgeEl = badges[0]!.element
-        expect(
-            tagBarEl.compareDocumentPosition(firstBadgeEl) & Node.DOCUMENT_POSITION_FOLLOWING
-        ).toBeTruthy()
         // 徽标均位于标题行内（与标签栏同一行，互不换行挤占）
         expect(
             h.wrapper.find('.subtask-row__title-line').find('.subtask-row__badge').exists()
