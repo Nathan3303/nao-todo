@@ -2,6 +2,27 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.7.3] - 2026-09-14
+
+发布批次：设置-应用设置新增版本号显示（patch；webapp 首次纳入版本协同）。**Tag `v1.7.3`** · root `1.7.3` / `@nao-todo/desktopapp` `1.7.3` / `@nao-todo/webapp` `1.7.3`（新增 version 字段，首次纳入协同；`@nao-todo/presentation` `0.4.2` / `@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` 不动）。范围：web + desktop（设置页 UI + 构建配置）。
+
+### Added（新增）
+
+- **设置-应用设置版本号显示**：底部（语言 / 主题之后）新增只读版本号行（i18n `settings.version`，zh-CN / en-US / types 同步）。版本号**双端区分**：vite `define` 构建期从各自 package.json 注入 `import.meta.env.VITE_APP_VERSION`——Web 显示 `@nao-todo/webapp` 版本、Desktop 显示 `@nao-todo/desktopapp` 版本（desktop 复用 web 源码，经构建期注入区分）。
+- **webapp 首次纳入版本协同**：`apps/web/package.json` 新增 `version: 1.7.3`（此前无此字段）。
+
+### Changed
+
+- 版本协同 bump（patch）：root / `@nao-todo/desktopapp` `1.7.2 → 1.7.3`；`@nao-todo/webapp` `1.7.3`（新增）。其余包不动；无公开 API 导出面破坏。
+
+### 质量门槛
+
+- `vp test`：73 文件 / 645 例全绿。
+- `vp check`：目标文件 pass（fmt / lint / type）。
+- `pnpm webapp build` ✓ / `pnpm desktopapp build` ✓；产物核验：web 注入 `1.7.3`、desktop 注入桌面端版本（bump 前实测 `1.7.2`，bump 后 `1.7.3`）。
+
+[v1.7.3]: https://github.com/Nathan3303/nao-todo/releases/tag/v1.7.3
+
 ## [v1.7.2] - 2026-09-14
 
 发布批次：桌面端同步状态栏 UI 重构 + 日历月/周边距微调（patch）。**Tag `v1.7.2`** · root `1.7.2` / `@nao-todo/desktopapp` `1.7.2`（`@nao-todo/presentation` `0.4.2` / `@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` 不动；webapp 无 version 不参与）。范围：web + desktop（renderer UI 层）。
