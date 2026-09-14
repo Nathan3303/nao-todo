@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Loading as LoadingComp } from '@nao-todo/shared'
-import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, inject, nextTick, ref, watch } from 'vue'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import CalendarDayDrawer from './day-drawer.vue'
 import CalendarWeekly from '../weekly/index.vue'
@@ -10,6 +10,8 @@ import UnscheduledDrawer from './unscheduled-drawer.vue'
 import ScheduleUndoToast from './undo-toast.vue'
 import { buildCalendarEmptyState } from './empty-state'
 import { ghostPointOf, useDragSchedule } from './use-drag-schedule'
+import { segmentStyleOf, useCalendarGrid } from './use-calendar-grid'
+import { useMonthJump } from './use-month-jump'
 import MonthJumpPanel from './month-jump-panel.vue'
 import { CALENDAR_KEY_SCOPE, isCalendarKeyLocked, isInteractiveKeyTarget } from './keyboard-nav'
 import useCalendarMonthly from './use-calendar-monthly'
@@ -17,9 +19,9 @@ import {
     dateKeyOf,
     GRID_COLUMNS,
     GRID_ROWS,
-    MAX_VISIBLE_LANES,
     todayDateKey,
     weekStartKeyOf,
+    weekdaysOf,
     type CalendarOverflow,
     type CalendarRow,
     type CalendarSegment
@@ -32,17 +34,17 @@ import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 
 defineOptions({ name: 'CalendarMonthly' })
 
-// 布局常量（与下方 scoped 样式中的数值保持一致）
-const DATE_OFFSET = 26 // 日期号区域高度 + 首个任务条上间距
-const ITEM_STEP = 18 // 单条任务条高度(16) + 纵向间距(2)
-const BAND_HEIGHT = 24 // 格底预留条带（DEF-1：+/+N/编辑器占用，任务条区其上截断）
+// —— O2 网格共享几何 + DEF-2 动态可视轨道数（行高实测；未测得前回退 3） ——
+const calBodyEl = ref<HTMLElement | null>(null)
+const {
+    laneLimit,
+    measure: measureAndApplyLaneLimit,
+    attach: attachBodyObserver
+} = useCalendarGrid({ containerEl: calBodyEl, rowSelector: '.cal-row' })
 
 // @viewContext 应用级子侧栏开关（与任务页 header 行为一致）
 const { isDisplayAside, switchDisplayAside } = inject(INDEX_VIEW_CONTEXT_KEY)!
 const { pomodoroBadge } = inject(CALENDAR_VIEW_CONTEXT_KEY)!
-
-// @states 动态可视轨道数（DEF-2：由行高实测决定；未测得前回退 3）
-const laneLimit = ref<number>(MAX_VISIBLE_LANES)
 
 // @viewLogic 月历视图逻辑
 const {
@@ -111,11 +113,7 @@ const badgeRange = computed<PomodoroBadgeRange | null>(() => {
 const { badgeLabel } = usePomodoroBadge(badgeRange, pomodoroBadge)
 
 // @computed 星期表头（随周起始口径：sunday 日~六 / monday 一~日）
-const weekdays = computed(() =>
-    weekStart.value === 'monday'
-        ? ['一', '二', '三', '四', '五', '六', '日']
-        : ['日', '一', '二', '三', '四', '五', '六']
-)
+const weekdays = computed(() => weekdaysOf(weekStart.value))
 
 // @states 当日面板
 const dayDrawerDate = ref('')
@@ -164,45 +162,7 @@ const emptyState = computed(() =>
     })
 )
 
-// —— 动态可视轨道数：ResizeObserver + 100ms 防抖，随行高实时调整（DEF-2） ——
-const calBodyEl = ref<HTMLElement | null>(null)
-let laneResizeTimer: ReturnType<typeof setTimeout> | undefined
-let laneBodyObserver: ResizeObserver | undefined
-
-// @method 按行实际高度计算可视条数：max(1, floor((行高 − 日期区26 − 底部留白4) / 18))
-const measureAndApplyLaneLimit = () => {
-    const firstRow = calBodyEl.value?.querySelector<HTMLElement>('.cal-row')
-    const rowHeight = firstRow?.clientHeight ?? 0
-    if (rowHeight <= 0) return
-    const next = Math.max(1, Math.floor((rowHeight - DATE_OFFSET - BAND_HEIGHT) / ITEM_STEP))
-    if (next !== laneLimit.value) laneLimit.value = next
-}
-const scheduleLaneMeasure = () => {
-    clearTimeout(laneResizeTimer)
-    laneResizeTimer = setTimeout(measureAndApplyLaneLimit, 100)
-}
-
-// @lifecycle 观测网格容器高度（网格出现/消失、窗口缩放、月/周切换重建后重挂）
-onMounted(() => {
-    attachBodyObserver()
-    measureAndApplyLaneLimit()
-})
-onUnmounted(() => {
-    laneBodyObserver?.disconnect()
-    laneBodyObserver = undefined
-    clearTimeout(laneResizeTimer)
-})
-
-// @method 将 RO 挂到当前 .cal-body（v-if 重建后需要重新 observe）
-const attachBodyObserver = () => {
-    laneBodyObserver?.disconnect()
-    const el = calBodyEl.value
-    if (!el) return
-    laneBodyObserver = new ResizeObserver(scheduleLaneMeasure)
-    laneBodyObserver.observe(el)
-}
-
-// @watch 数据/视图状态就绪后再量一次（等高校换场景 RO 不触发时补量）
+// —— 动态可视轨道数：数据/视图状态就绪后再量一次（等高校换场景 RO 不触发时补量；DEF-2） ——
 watch(
     [loading, error, () => emptyState.value, () => viewMode.value],
     () => {
@@ -253,16 +213,8 @@ const quickSubmit = (dateKey: string, name: string) => {
     void inlineCreateTask(dateKey, name)
 }
 
-// @method 任务条定位样式（连续条按列区间铺满）
-const segStyle = (seg: { colStart: number; colEnd: number; lane: number }) => {
-    const left = (seg.colStart / GRID_COLUMNS) * 100
-    const width = ((seg.colEnd - seg.colStart + 1) / GRID_COLUMNS) * 100
-    return {
-        left: `${left}%`,
-        width: `${width}%`,
-        top: `${DATE_OFFSET + seg.lane * ITEM_STEP}px`
-    }
-}
+// @method 任务条定位样式（连续条按列区间铺满；O2 共享几何纯函数）
+const segStyle = segmentStyleOf
 
 // @method 段首是否显示开始时刻：仅真起始段且首格即 startAt 当日（跨行续接/裁剪可见段不显示）
 const segShowTime = (
@@ -306,31 +258,10 @@ const showWeekOf = (dateKey: string) => {
     dayDrawerOpen.value = false
 }
 
-// —— C2-F9 月视图标题年-月跳转（面板弹层；再点标题 toggle 收起；关闭归还焦点） ——
-const mjpOpen = ref(false)
-const mjpPos = ref({ x: 0, y: 0 })
-const mjpTitleEl = ref<HTMLElement | null>(null)
-
-const closeMonthJump = (): void => {
-    mjpOpen.value = false
-    void nextTick(() => mjpTitleEl.value?.focus())
-}
-const toggleMonthJump = (event: MouseEvent): void => {
-    if (mjpOpen.value) {
-        closeMonthJump()
-        return
-    }
-    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
-    mjpPos.value = {
-        x: Math.min(Math.max(4, rect.left), window.innerWidth - 248),
-        y: Math.min(Math.max(4, rect.bottom + 4), window.innerHeight - 260)
-    }
-    mjpOpen.value = true
-}
-const onMonthJumpSelect = (targetYear: number, targetMonth: number): void => {
-    jumpToMonth(targetYear, targetMonth)
-    closeMonthJump()
-}
+// —— C2-F9 月视图标题年-月跳转（面板弹层状态机；O2 抽取 useMonthJump） ——
+const mjp = useMonthJump({
+    onSelect: (targetYear, targetMonth) => jumpToMonth(targetYear, targetMonth)
+})
 
 // —— C1-F8 键盘导航（calendar scope 激活窗口 = 组件挂载期，卸载即失效）——
 // 键位与既有控件按钮同一出口（goPrev/NextMonth、goPrev/NextWeek、goToToday、视图切换、
@@ -410,12 +341,12 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                     >
                     </nue-button>
                     <button
-                        ref="mjpTitleEl"
+                        ref="mjp.titleEl"
                         type="button"
                         class="cal-title"
                         data-mjp-trigger
                         title="跳转到年月"
-                        @click="toggleMonthJump"
+                        @click="mjp.toggle"
                     >
                         {{ monthTitle }}
                     </button>
@@ -429,13 +360,13 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                 </nue-div>
                 <!-- 年-月跳转面板（C2-F9） -->
                 <month-jump-panel
-                    :open="mjpOpen"
-                    :x="mjpPos.x"
-                    :y="mjpPos.y"
+                    :open="mjp.open"
+                    :x="mjp.pos.x"
+                    :y="mjp.pos.y"
                     :anchor-year="year"
                     :anchor-month="monthIndex + 1"
-                    @select="onMonthJumpSelect"
-                    @close="closeMonthJump"
+                    @select="mjp.select"
+                    @close="mjp.close"
                 />
                 <nue-div align="center" gap="6px">
                     <nue-div class="cal-view-toggle" role="group" aria-label="视图切换">

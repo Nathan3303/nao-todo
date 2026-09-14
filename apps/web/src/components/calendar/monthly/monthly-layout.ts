@@ -121,6 +121,12 @@ const compareKeys = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
 /** 周起始口径（C9：sunday=0 / monday=1） */
 export type CalendarWeekStart = 'sunday' | 'monday'
 
+/** 星期表头（随周起始口径：sunday 日~六 / monday 一~日；O2 月/周共用） */
+export const weekdaysOf = (weekStart: CalendarWeekStart): string[] =>
+    weekStart === 'monday'
+        ? ['一', '二', '三', '四', '五', '六', '日']
+        : ['日', '一', '二', '三', '四', '五', '六']
+
 /** 某日期距本周起始的天数（按周起始口径折算） */
 export const weekStartOffsetDays = (date: dayjs.Dayjs, weekStart: CalendarWeekStart): number =>
     (date.day() - (weekStart === 'monday' ? 1 : 0) + 7) % 7

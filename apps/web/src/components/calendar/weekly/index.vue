@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Loading as LoadingComp } from '@nao-todo/shared'
 import type { TaskViewObject } from '@nao-todo/domain-task'
-import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, inject, nextTick, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import QuickCreate from '../monthly/quick-create.vue'
 import TaskBar from '../monthly/task-bar.vue'
@@ -9,9 +9,11 @@ import MonthJumpPanel from '../monthly/month-jump-panel.vue'
 import {
     buildWeekGrid,
     GRID_COLUMNS,
-    MAX_VISIBLE_LANES,
+    weekdaysOf,
     type CalendarWeekStart
 } from '../monthly/monthly-layout'
+import { segmentStyleOf, useCalendarGrid } from '../monthly/use-calendar-grid'
+import { useMonthJump } from '../monthly/use-month-jump'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { isInteractiveKeyTarget } from '../monthly/keyboard-nav'
 import { buildCalendarEmptyState } from '../monthly/empty-state'
@@ -63,23 +65,15 @@ const props = defineProps<{
 // @viewContext 应用级子侧栏开关（与月视图 header 一致）
 const { isDisplayAside, switchDisplayAside } = inject(INDEX_VIEW_CONTEXT_KEY)!
 
-// —— 周几何常量（与 scoped 样式一致）——
-const WEEK_TOP = 26 // 日期区（日期号+周几）高度 + 首条间距
-const ITEM_STEP = 18 // 条高 16 + 间距 2
-const BAND_HEIGHT = 24 // 格底预留条带（DEF-1：+/+N/编辑器占用，任务条区其上截断）
+// —— O2 网格共享几何 + DEF-2 动态可视轨道数（行高实测；首帧回退 3） ——
+const bodyEl = ref<HTMLElement | null>(null)
+const { laneLimit, measure: measureAndApplyLaneLimit } = useCalendarGrid({
+    containerEl: bodyEl,
+    rowSelector: '.wk-row'
+})
 
 // @computed 星期表头（随周起始口径）
-const weekdays = computed(() =>
-    props.weekStart === 'monday'
-        ? ['一', '二', '三', '四', '五', '六', '日']
-        : ['日', '一', '二', '三', '四', '五', '六']
-)
-
-// @states 动态可视轨道数（DEF-2 语义：行高实测；首帧回退 3）
-const laneLimit = ref<number>(MAX_VISIBLE_LANES)
-const bodyEl = ref<HTMLElement | null>(null)
-let resizeTimer: ReturnType<typeof setTimeout> | undefined
-let bodyObserver: ResizeObserver | undefined
+const weekdays = computed(() => weekdaysOf(props.weekStart))
 
 // @computed 周模型（锚点=selectedKey 所在周；跨周任务裁剪，复用 buildRowContent）
 const model = computed(() =>
@@ -117,30 +111,8 @@ const emptyHint = computed(() =>
     })
 )
 
-// @method 按行高计算可视条数（同月视图 DEF-2 公式）
-const measureAndApplyLaneLimit = () => {
-    const row = bodyEl.value?.querySelector<HTMLElement>('.wk-row')
-    const rowHeight = row?.clientHeight ?? 0
-    if (rowHeight <= 0) return
-    const next = Math.max(1, Math.floor((rowHeight - WEEK_TOP - BAND_HEIGHT) / ITEM_STEP))
-    if (next !== laneLimit.value) laneLimit.value = next
-}
-const scheduleLaneMeasure = () => {
-    clearTimeout(resizeTimer)
-    resizeTimer = setTimeout(measureAndApplyLaneLimit, 100)
-}
-
-// @lifecycle 高度观测（ResizeObserver + 防抖；数据就绪后补量）
-onMounted(() => {
-    bodyObserver = new ResizeObserver(scheduleLaneMeasure)
-    if (bodyEl.value) bodyObserver.observe(bodyEl.value)
-    measureAndApplyLaneLimit()
-})
-onUnmounted(() => {
-    bodyObserver?.disconnect()
-    bodyObserver = undefined
-    clearTimeout(resizeTimer)
-})
+// @method 按行高计算可视条数（同月视图 DEF-2 公式；measure 由 useCalendarGrid 提供）
+// @lifecycle 高度观测（ResizeObserver + 防抖）与卸载清理已内置 useCalendarGrid
 watch(
     [() => props.loading, () => props.error, () => props.tasks, () => weekHasTasks.value],
     () => {
@@ -149,16 +121,8 @@ watch(
     { flush: 'post' }
 )
 
-// @method 任务条定位（7 列等分；top 按轨道步进）
-const segStyle = (seg: { colStart: number; colEnd: number; lane: number }) => {
-    const left = (seg.colStart / GRID_COLUMNS) * 100
-    const width = ((seg.colEnd - seg.colStart + 1) / GRID_COLUMNS) * 100
-    return {
-        left: `${left}%`,
-        width: `${width}%`,
-        top: `${WEEK_TOP + seg.lane * ITEM_STEP}px`
-    }
-}
+// @method 任务条定位（7 列等分；top 按轨道步进；O2 共享几何纯函数）
+const segStyle = segmentStyleOf
 
 // @method 段首是否显示开始时刻：仅当任务真起始落在本周内可见列
 const segShowTime = (seg: { task: TaskViewObject; isStart: boolean; colStart: number }): boolean =>
@@ -181,10 +145,7 @@ const onCellEnter = (event: KeyboardEvent, dateKey: string): void => {
 // @method 溢出 +N 与 点击日期格（打开当日面板）
 const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateKey === dateKey)
 
-// —— C2-F9 周视图标题年-月跳转（面板弹层；再点标题 toggle 收起；关闭归还焦点；跳转不切月视图） ——
-const wjpOpen = ref(false)
-const wjpPos = ref({ x: 0, y: 0 })
-const wjpTitleEl = ref<HTMLElement | null>(null)
+// —— C2-F9 周视图标题年-月跳转（面板弹层状态机；O2 抽取 useMonthJump；跳转不切月视图） ——
 // 面板锚点年/月 = 当前锚点（选中日）所在年月；非法回退今天
 const jumpAnchorYear = computed(() => {
     const anchor = dayjs(props.selectedKey)
@@ -194,26 +155,9 @@ const jumpAnchorMonth = computed(() => {
     const anchor = dayjs(props.selectedKey)
     return anchor.isValid() ? anchor.month() + 1 : dayjs().month() + 1
 })
-const closeWeekJump = (): void => {
-    wjpOpen.value = false
-    void nextTick(() => wjpTitleEl.value?.focus())
-}
-const toggleWeekJump = (event: MouseEvent): void => {
-    if (wjpOpen.value) {
-        closeWeekJump()
-        return
-    }
-    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
-    wjpPos.value = {
-        x: Math.min(Math.max(4, rect.left), window.innerWidth - 248),
-        y: Math.min(Math.max(4, rect.bottom + 4), window.innerHeight - 260)
-    }
-    wjpOpen.value = true
-}
-const onWeekJumpSelect = (targetYear: number, targetMonth: number): void => {
-    props.onJumpYearMonth(targetYear, targetMonth)
-    closeWeekJump()
-}
+const wjp = useMonthJump({
+    onSelect: (year, month) => props.onJumpYearMonth(year, month)
+})
 </script>
 
 <template>
@@ -233,12 +177,12 @@ const onWeekJumpSelect = (targetYear: number, targetMonth: number): void => {
                     @click="onPrevWeek"
                 />
                 <button
-                    ref="wjpTitleEl"
+                    ref="wjp.titleEl"
                     type="button"
                     class="wk-title"
                     data-mjp-trigger
                     title="跳转到年月"
-                    @click="toggleWeekJump"
+                    @click="wjp.toggle"
                 >
                     {{ title }}
                 </button>
@@ -251,13 +195,13 @@ const onWeekJumpSelect = (targetYear: number, targetMonth: number): void => {
             </nue-div>
             <!-- 年-月跳转面板（C2-F9；周视图内落周，不切回月视图） -->
             <month-jump-panel
-                :open="wjpOpen"
-                :x="wjpPos.x"
-                :y="wjpPos.y"
+                :open="wjp.open"
+                :x="wjp.pos.x"
+                :y="wjp.pos.y"
                 :anchor-year="jumpAnchorYear"
                 :anchor-month="jumpAnchorMonth"
-                @select="onWeekJumpSelect"
-                @close="closeWeekJump"
+                @select="wjp.select"
+                @close="wjp.close"
             />
             <nue-div align="center" gap="6px">
                 <nue-div class="wk-view-toggle" role="group" aria-label="视图切换">
