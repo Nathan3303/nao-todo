@@ -1,81 +1,81 @@
 {
-  "meta": {
-    "port": 9343,
-    "urlMatch": "localhost:5174",
-    "mode": "web",
-    "at": "2026-09-13T14:15:29.714Z"
-  },
-  "before": {
-    "label": "before",
-    "url": "http://localhost:5174/#/auth/signin",
-    "hash": "#/auth/signin",
-    "title": "NaoTodo",
-    "hasApp": true,
-    "appHtmlLen": 1875,
-    "interactiveCount": 3,
-    "unlockGate": false,
-    "initialSyncGate": false,
-    "railBtn": false,
-    "router": {
-      "name": "auth-signin",
-      "fullPath": "/auth/signin"
+    "meta": {
+        "port": 9343,
+        "urlMatch": "localhost:5174",
+        "mode": "web",
+        "at": "2026-09-13T14:15:29.714Z"
     },
-    "bodyText": "登录到 NaoTodo 使用您的电子邮件和密码进行登录 登录 还没有 NaoTodo 账号吗？去 注册 一个！",
-    "errorLogLen": 0,
-    "errorLogSample": []
-  },
-  "onlineReload": {
-    "label": "online-reload",
-    "url": "http://localhost:5174/#/auth/signin",
-    "hash": "#/auth/signin",
-    "title": "NaoTodo",
-    "hasApp": true,
-    "appHtmlLen": 1875,
-    "interactiveCount": 3,
-    "unlockGate": false,
-    "initialSyncGate": false,
-    "railBtn": false,
-    "router": {
-      "name": "auth-signin",
-      "fullPath": "/auth/signin"
+    "before": {
+        "label": "before",
+        "url": "http://localhost:5174/#/auth/signin",
+        "hash": "#/auth/signin",
+        "title": "NaoTodo",
+        "hasApp": true,
+        "appHtmlLen": 1875,
+        "interactiveCount": 3,
+        "unlockGate": false,
+        "initialSyncGate": false,
+        "railBtn": false,
+        "router": {
+            "name": "auth-signin",
+            "fullPath": "/auth/signin"
+        },
+        "bodyText": "登录到 NaoTodo 使用您的电子邮件和密码进行登录 登录 还没有 NaoTodo 账号吗？去 注册 一个！",
+        "errorLogLen": 0,
+        "errorLogSample": []
     },
-    "bodyText": "登录到 NaoTodo 使用您的电子邮件和密码进行登录 登录 还没有 NaoTodo 账号吗？去 注册 一个！",
-    "errorLogLen": 0,
-    "errorLogSample": []
-  },
-  "offlineReload": {
-    "label": "offline-reload",
-    "url": "chrome-error://chromewebdata/",
-    "hash": "",
-    "title": "",
-    "hasApp": false,
-    "appHtmlLen": -1,
-    "interactiveCount": 0,
-    "unlockGate": false,
-    "initialSyncGate": false,
-    "railBtn": false,
-    "router": null,
-    "bodyText": "",
-    "errorLogLen": -1,
-    "errorLogSample": null
-  },
-  "recovered": {
-    "label": "recovered",
-    "url": "http://localhost:5174/#/auth/signin",
-    "hash": "#/auth/signin",
-    "title": "NaoTodo",
-    "hasApp": true,
-    "appHtmlLen": 1875,
-    "interactiveCount": 3,
-    "unlockGate": false,
-    "initialSyncGate": false,
-    "railBtn": false,
-    "router": {
-      "name": "auth-signin",
-      "fullPath": "/auth/signin"
+    "onlineReload": {
+        "label": "online-reload",
+        "url": "http://localhost:5174/#/auth/signin",
+        "hash": "#/auth/signin",
+        "title": "NaoTodo",
+        "hasApp": true,
+        "appHtmlLen": 1875,
+        "interactiveCount": 3,
+        "unlockGate": false,
+        "initialSyncGate": false,
+        "railBtn": false,
+        "router": {
+            "name": "auth-signin",
+            "fullPath": "/auth/signin"
+        },
+        "bodyText": "登录到 NaoTodo 使用您的电子邮件和密码进行登录 登录 还没有 NaoTodo 账号吗？去 注册 一个！",
+        "errorLogLen": 0,
+        "errorLogSample": []
     },
-    "bodyText": "登录到 NaoTodo 使用您的电子邮件和密码进行登录 登录 还没有 NaoTodo 账号吗？去 注册 一个！",
-    "errorLogLen": 0,
-    "errorLogSample": []
-  }
+    "offlineReload": {
+        "label": "offline-reload",
+        "url": "chrome-error://chromewebdata/",
+        "hash": "",
+        "title": "",
+        "hasApp": false,
+        "appHtmlLen": -1,
+        "interactiveCount": 0,
+        "unlockGate": false,
+        "initialSyncGate": false,
+        "railBtn": false,
+        "router": null,
+        "bodyText": "",
+        "errorLogLen": -1,
+        "errorLogSample": null
+    },
+    "recovered": {
+        "label": "recovered",
+        "url": "http://localhost:5174/#/auth/signin",
+        "hash": "#/auth/signin",
+        "title": "NaoTodo",
+        "hasApp": true,
+        "appHtmlLen": 1875,
+        "interactiveCount": 3,
+        "unlockGate": false,
+        "initialSyncGate": false,
+        "railBtn": false,
+        "router": {
+            "name": "auth-signin",
+            "fullPath": "/auth/signin"
+        },
+        "bodyText": "登录到 NaoTodo 使用您的电子邮件和密码进行登录 登录 还没有 NaoTodo 账号吗？去 注册 一个！",
+        "errorLogLen": 0,
+        "errorLogSample": []
+    }
 }

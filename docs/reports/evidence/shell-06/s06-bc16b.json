@@ -1,14 +1,14 @@
 {
-  "injected": {
-    "ok": true
-  },
-  "rail": {
-    "cls": "nue-button nue-button--pure sync-rail-btn is-pending"
-  },
-  "taskAppeared": true,
-  "bodyHasPending": true,
-  "crud": true,
-  "cleanup": {
-    "deleted": 2001
-  }
+    "injected": {
+        "ok": true
+    },
+    "rail": {
+        "cls": "nue-button nue-button--pure sync-rail-btn is-pending"
+    },
+    "taskAppeared": true,
+    "bodyHasPending": true,
+    "crud": true,
+    "cleanup": {
+        "deleted": 2001
+    }
 }

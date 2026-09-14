@@ -1,111 +1,111 @@
 {
-  "meta": {
-    "port": 9342,
-    "email": "qa.t8.reload.1789308707@example.com",
-    "at": "2026-09-13T14:12:15.260Z"
-  },
-  "onlineSignIn": true,
-  "before": {
-    "label": "before-online",
-    "url": "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/index.html#/tasks/all/table",
-    "hash": "#/tasks/all/table",
-    "title": "NaoTodo",
-    "hasApp": true,
-    "appHtmlLen": 12712,
-    "interactiveCount": 13,
-    "unlockGate": false,
-    "initialSyncGate": false,
-    "railBtn": true,
-    "offlineEnterBtn": false,
-    "router": {
-      "name": "tasks-built-in-project-main",
-      "fullPath": "/tasks/all/table"
+    "meta": {
+        "port": 9342,
+        "email": "qa.t8.reload.1789308707@example.com",
+        "at": "2026-09-13T14:12:15.260Z"
     },
-    "bodyText": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 还没有任务，开始创建一个吧 新增待办",
-    "errorLog": []
-  },
-  "offlineReload": {
-    "label": "offline-reload",
-    "url": "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/index.html#/auth/checkin",
-    "hash": "#/auth/checkin",
-    "title": "NaoTodo",
-    "hasApp": true,
-    "appHtmlLen": 1852,
-    "interactiveCount": 3,
-    "unlockGate": true,
-    "initialSyncGate": false,
-    "railBtn": false,
-    "offlineEnterBtn": false,
-    "router": {
-      "name": "auth-checkin",
-      "fullPath": "/auth/checkin"
+    "onlineSignIn": true,
+    "before": {
+        "label": "before-online",
+        "url": "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/index.html#/tasks/all/table",
+        "hash": "#/tasks/all/table",
+        "title": "NaoTodo",
+        "hasApp": true,
+        "appHtmlLen": 12712,
+        "interactiveCount": 13,
+        "unlockGate": false,
+        "initialSyncGate": false,
+        "railBtn": true,
+        "offlineEnterBtn": false,
+        "router": {
+            "name": "tasks-built-in-project-main",
+            "fullPath": "/tasks/all/table"
+        },
+        "bodyText": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 还没有任务，开始创建一个吧 新增待办",
+        "errorLog": []
     },
-    "bodyText": "Q QA-T8 离线 解锁 登出用户",
-    "errorLog": []
-  },
-  "offlineConsole": [
-    "log-error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
-    "log-error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
-    "log-error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
-    "log-error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
-    "log-error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
-    "log-error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED"
-  ],
-  "gate": {
-    "label": "offline-gate",
-    "url": "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/index.html?#/auth/checkin",
-    "hash": "#/auth/checkin",
-    "title": "NaoTodo",
-    "hasApp": true,
-    "appHtmlLen": 5658,
-    "interactiveCount": 3,
-    "unlockGate": false,
-    "initialSyncGate": true,
-    "railBtn": false,
-    "offlineEnterBtn": true,
-    "router": {
-      "name": "auth-checkin",
-      "fullPath": "/auth/checkin"
+    "offlineReload": {
+        "label": "offline-reload",
+        "url": "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/index.html#/auth/checkin",
+        "hash": "#/auth/checkin",
+        "title": "NaoTodo",
+        "hasApp": true,
+        "appHtmlLen": 1852,
+        "interactiveCount": 3,
+        "unlockGate": true,
+        "initialSyncGate": false,
+        "railBtn": false,
+        "offlineEnterBtn": false,
+        "router": {
+            "name": "auth-checkin",
+            "fullPath": "/auth/checkin"
+        },
+        "bodyText": "Q QA-T8 离线 解锁 登出用户",
+        "errorLog": []
     },
-    "bodyText": "拉取失败：网络错误 重试 离线进入 登出用户",
-    "errorLog": []
-  },
-  "afterOfflineEntry": {
-    "label": "after-offline-entry",
-    "url": "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/index.html?#/tasks/all/table",
-    "hash": "#/tasks/all/table",
-    "title": "NaoTodo",
-    "hasApp": true,
-    "appHtmlLen": 12635,
-    "interactiveCount": 13,
-    "unlockGate": false,
-    "initialSyncGate": false,
-    "railBtn": true,
-    "offlineEnterBtn": false,
-    "router": {
-      "name": "tasks-built-in-project-main",
-      "fullPath": "/tasks/all/table"
+    "offlineConsole": [
+        "log-error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+        "log-error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+        "log-error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+        "log-error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+        "log-error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+        "log-error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED"
+    ],
+    "gate": {
+        "label": "offline-gate",
+        "url": "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/index.html?#/auth/checkin",
+        "hash": "#/auth/checkin",
+        "title": "NaoTodo",
+        "hasApp": true,
+        "appHtmlLen": 5658,
+        "interactiveCount": 3,
+        "unlockGate": false,
+        "initialSyncGate": true,
+        "railBtn": false,
+        "offlineEnterBtn": true,
+        "router": {
+            "name": "auth-checkin",
+            "fullPath": "/auth/checkin"
+        },
+        "bodyText": "拉取失败：网络错误 重试 离线进入 登出用户",
+        "errorLog": []
     },
-    "bodyText": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 还没有任务，开始创建一个吧 新增待办",
-    "errorLog": []
-  },
-  "recovered": {
-    "label": "recovered",
-    "url": "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/index.html?#/auth/checkin",
-    "hash": "#/auth/checkin",
-    "title": "NaoTodo",
-    "hasApp": true,
-    "appHtmlLen": 1920,
-    "interactiveCount": 3,
-    "unlockGate": true,
-    "initialSyncGate": false,
-    "railBtn": false,
-    "offlineEnterBtn": false,
-    "router": {
-      "name": "auth-checkin",
-      "fullPath": "/auth/checkin"
+    "afterOfflineEntry": {
+        "label": "after-offline-entry",
+        "url": "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/index.html?#/tasks/all/table",
+        "hash": "#/tasks/all/table",
+        "title": "NaoTodo",
+        "hasApp": true,
+        "appHtmlLen": 12635,
+        "interactiveCount": 13,
+        "unlockGate": false,
+        "initialSyncGate": false,
+        "railBtn": true,
+        "offlineEnterBtn": false,
+        "router": {
+            "name": "tasks-built-in-project-main",
+            "fullPath": "/tasks/all/table"
+        },
+        "bodyText": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 还没有任务，开始创建一个吧 新增待办",
+        "errorLog": []
     },
-    "bodyText": "Q QA-T8 qa.t8.reload.1789308707@example.com 解锁 登出用户",
-    "errorLog": []
-  }
+    "recovered": {
+        "label": "recovered",
+        "url": "file:///home/nathan/Project/nao-todo/apps/desktop/out/renderer/index.html?#/auth/checkin",
+        "hash": "#/auth/checkin",
+        "title": "NaoTodo",
+        "hasApp": true,
+        "appHtmlLen": 1920,
+        "interactiveCount": 3,
+        "unlockGate": true,
+        "initialSyncGate": false,
+        "railBtn": false,
+        "offlineEnterBtn": false,
+        "router": {
+            "name": "auth-checkin",
+            "fullPath": "/auth/checkin"
+        },
+        "bodyText": "Q QA-T8 qa.t8.reload.1789308707@example.com 解锁 登出用户",
+        "errorLog": []
+    }
 }

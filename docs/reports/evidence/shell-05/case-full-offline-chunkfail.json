@@ -1,403 +1,355 @@
 {
-  "meta": {
-    "email": "qa.shell05.1789301180@qa.local",
-    "startedAt": "2026-09-13T12:11:43.107Z"
-  },
-  "phases": {
-    "bootstrap": {
-      "ok": true,
-      "notes": [
-        "#1 解锁门 → 解锁"
-      ]
+    "meta": {
+        "email": "qa.shell05.1789301180@qa.local",
+        "startedAt": "2026-09-13T12:11:43.107Z"
     },
-    "onlineShell": {
-      "label": "online-shell",
-      "at": 1789301517115,
-      "dom": {
-        "hash": "#/tasks/all/table",
-        "router": {
-          "name": "tasks-built-in-project-main",
-          "path": "/tasks/all/table",
-          "fullPath": "/tasks/all/table",
-          "params": {
-            "projectId": "all",
-            "viewType": "table"
-          },
-          "query": {},
-          "matched": [
-            "index",
-            "tasks",
-            "tasks-built-in-project",
-            "tasks-built-in-project-main"
-          ]
+    "phases": {
+        "bootstrap": {
+            "ok": true,
+            "notes": ["#1 解锁门 → 解锁"]
         },
-        "interactiveCount": 13,
-        "interactiveSample": [
-          "BUTTON",
-          "BUTTON",
-          "清单\n0",
-          "BUTTON",
-          "BUTTON",
-          "标签\n0"
+        "onlineShell": {
+            "label": "online-shell",
+            "at": 1789301517115,
+            "dom": {
+                "hash": "#/tasks/all/table",
+                "router": {
+                    "name": "tasks-built-in-project-main",
+                    "path": "/tasks/all/table",
+                    "fullPath": "/tasks/all/table",
+                    "params": {
+                        "projectId": "all",
+                        "viewType": "table"
+                    },
+                    "query": {},
+                    "matched": [
+                        "index",
+                        "tasks",
+                        "tasks-built-in-project",
+                        "tasks-built-in-project-main"
+                    ]
+                },
+                "interactiveCount": 13,
+                "interactiveSample": ["BUTTON", "BUTTON", "清单\n0", "BUTTON", "BUTTON", "标签\n0"],
+                "initialSyncGate": false,
+                "unlockGate": false,
+                "railSlot": true,
+                "railBtn": true,
+                "gear": true,
+                "appHtmlLen": 14241,
+                "bodyText": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 还没有任务，开始创建一个吧 新增待办",
+                "offlineEnterBtn": false
+            }
+        },
+        "onlineIdentity": {
+            "hasJwt": true,
+            "lastVisited": "/tasks/all/table",
+            "lastTasks": "/tasks/all/table"
+        },
+        "offlineAfterReload": {
+            "label": "offline-after-reload",
+            "at": 1789301518646,
+            "dom": {
+                "hash": "#/tasks/all/table",
+                "router": {
+                    "path": "/",
+                    "fullPath": "/",
+                    "params": {},
+                    "query": {},
+                    "matched": []
+                },
+                "interactiveCount": 3,
+                "interactiveSample": ["输入密码解锁", "解锁", "登出用户"],
+                "initialSyncGate": false,
+                "unlockGate": true,
+                "railSlot": false,
+                "railBtn": false,
+                "gear": false,
+                "appHtmlLen": 2011,
+                "bodyText": "Q QA-Shell05 离线 解锁 登出用户",
+                "offlineEnterBtn": false
+            }
+        },
+        "offlineUnlockSeen": true,
+        "failureGate": {
+            "label": "gate-poll",
+            "at": 1789301524167,
+            "dom": {
+                "hash": "#/auth/checkin",
+                "router": {
+                    "name": "auth-checkin",
+                    "path": "/auth/checkin",
+                    "fullPath": "/auth/checkin",
+                    "params": {},
+                    "query": {},
+                    "matched": ["auth", "auth-checkin"]
+                },
+                "interactiveCount": 3,
+                "interactiveSample": ["重试", "离线进入", "登出用户"],
+                "initialSyncGate": true,
+                "unlockGate": false,
+                "railSlot": false,
+                "railBtn": false,
+                "gear": false,
+                "appHtmlLen": 5694,
+                "bodyText": "拉取失败：网络错误 重试 离线进入 登出用户",
+                "offlineEnterBtn": true
+            }
+        },
+        "failureWaitMs": 2,
+        "failureEvents": {
+            "console": [
+                {
+                    "t": 1789301517215,
+                    "level": "debug",
+                    "msg": "[vite] connecting..."
+                },
+                {
+                    "t": 1789301517234,
+                    "level": "debug",
+                    "msg": "[vite] connected."
+                },
+                {
+                    "t": 1789301518567,
+                    "level": "info",
+                    "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
+                },
+                {
+                    "t": 1789301520484,
+                    "level": "error",
+                    "msg": "[sync] 拉取归一化错误（断网/超时） ERR_NETWORK"
+                }
+            ],
+            "rejections": [],
+            "errors": []
+        },
+        "beforeClick": {
+            "label": "before-click",
+            "at": 1789301524171,
+            "dom": {
+                "hash": "#/auth/checkin",
+                "router": {
+                    "name": "auth-checkin",
+                    "path": "/auth/checkin",
+                    "fullPath": "/auth/checkin",
+                    "params": {},
+                    "query": {},
+                    "matched": ["auth", "auth-checkin"]
+                },
+                "interactiveCount": 3,
+                "interactiveSample": ["重试", "离线进入", "登出用户"],
+                "initialSyncGate": true,
+                "unlockGate": false,
+                "railSlot": false,
+                "railBtn": false,
+                "gear": false,
+                "appHtmlLen": 5694,
+                "bodyText": "拉取失败：网络错误 重试 离线进入 登出用户",
+                "offlineEnterBtn": true
+            }
+        },
+        "beforeClickEvents": {
+            "console": [
+                {
+                    "t": 1789301517215,
+                    "level": "debug",
+                    "msg": "[vite] connecting..."
+                },
+                {
+                    "t": 1789301517234,
+                    "level": "debug",
+                    "msg": "[vite] connected."
+                },
+                {
+                    "t": 1789301518567,
+                    "level": "info",
+                    "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
+                },
+                {
+                    "t": 1789301520484,
+                    "level": "error",
+                    "msg": "[sync] 拉取归一化错误（断网/超时） ERR_NETWORK"
+                }
+            ],
+            "rejections": [],
+            "errors": []
+        },
+        "emulateOfflineAtClick": true,
+        "clickRect": {
+            "x": 500.984375,
+            "y": 991.25,
+            "w": 78.015625,
+            "h": 36,
+            "cx": 539.9921875,
+            "cy": 1009.25
+        },
+        "clickMode": "real-mouse",
+        "afterClick": {
+            "t300": {
+                "label": "after-click+300ms",
+                "at": 1789301524863,
+                "dom": {
+                    "hash": "#/auth/checkin",
+                    "router": {
+                        "name": "auth-checkin",
+                        "path": "/auth/checkin",
+                        "fullPath": "/auth/checkin",
+                        "params": {},
+                        "query": {},
+                        "matched": ["auth", "auth-checkin"]
+                    },
+                    "interactiveCount": 3,
+                    "interactiveSample": ["重试", "离线进入", "登出用户"],
+                    "initialSyncGate": true,
+                    "unlockGate": false,
+                    "railSlot": false,
+                    "railBtn": false,
+                    "gear": false,
+                    "appHtmlLen": 5694,
+                    "bodyText": "拉取失败：网络错误 重试 离线进入 登出用户",
+                    "offlineEnterBtn": true
+                }
+            },
+            "t3000": {
+                "label": "after-click+3s",
+                "at": 1789301527565,
+                "dom": {
+                    "hash": "#/auth/checkin",
+                    "router": {
+                        "name": "auth-checkin",
+                        "path": "/auth/checkin",
+                        "fullPath": "/auth/checkin",
+                        "params": {},
+                        "query": {},
+                        "matched": ["auth", "auth-checkin"]
+                    },
+                    "interactiveCount": 3,
+                    "interactiveSample": ["重试", "离线进入", "登出用户"],
+                    "initialSyncGate": true,
+                    "unlockGate": false,
+                    "railSlot": false,
+                    "railBtn": false,
+                    "gear": false,
+                    "appHtmlLen": 5694,
+                    "bodyText": "拉取失败：网络错误 重试 离线进入 登出用户",
+                    "offlineEnterBtn": true
+                }
+            },
+            "t10000": {
+                "label": "after-click+10s",
+                "at": 1789301534573,
+                "dom": {
+                    "hash": "#/auth/checkin",
+                    "router": {
+                        "name": "auth-checkin",
+                        "path": "/auth/checkin",
+                        "fullPath": "/auth/checkin",
+                        "params": {},
+                        "query": {},
+                        "matched": ["auth", "auth-checkin"]
+                    },
+                    "interactiveCount": 3,
+                    "interactiveSample": ["重试", "离线进入", "登出用户"],
+                    "initialSyncGate": true,
+                    "unlockGate": false,
+                    "railSlot": false,
+                    "railBtn": false,
+                    "gear": false,
+                    "appHtmlLen": 5694,
+                    "bodyText": "拉取失败：网络错误 重试 离线进入 登出用户",
+                    "offlineEnterBtn": true
+                }
+            }
+        },
+        "afterClickEvents": {
+            "console": [
+                {
+                    "t": 1789301517215,
+                    "level": "debug",
+                    "msg": "[vite] connecting..."
+                },
+                {
+                    "t": 1789301517234,
+                    "level": "debug",
+                    "msg": "[vite] connected."
+                },
+                {
+                    "t": 1789301518567,
+                    "level": "info",
+                    "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
+                },
+                {
+                    "t": 1789301520484,
+                    "level": "error",
+                    "msg": "[sync] 拉取归一化错误（断网/超时） ERR_NETWORK"
+                },
+                {
+                    "t": 1789301524358,
+                    "level": "warn",
+                    "msg": "[VUE_ROUTER_R0010] Uncaught error during route navigation\n╰▶ fix: Register an error handler with `router.onError()` to handle navigation errors."
+                },
+                {
+                    "t": 1789301524358,
+                    "level": "error",
+                    "msg": "TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/views/index/index.vue"
+                },
+                {
+                    "t": 1789301524359,
+                    "level": "warn",
+                    "msg": "[Vue warn]: Unhandled error during execution of component event handler \n  at <InitialSyncGate key=1 onSynced=fn<onSynced> onOffline=fn<onOffline>  ... > \n  at <AppRoot>"
+                }
+            ],
+            "rejections": [
+                {
+                    "t": 1789301524359,
+                    "name": "TypeError",
+                    "reason": "TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/views/index/index.vue"
+                },
+                {
+                    "t": 1789301524360,
+                    "name": "TypeError",
+                    "reason": "TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/views/index/tasks/entry.vue"
+                },
+                {
+                    "t": 1789301524361,
+                    "name": "TypeError",
+                    "reason": "TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/tasks/built-in-project/index.vue"
+                },
+                {
+                    "t": 1789301524361,
+                    "name": "TypeError",
+                    "reason": "TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/tasks/built-in-project/header/index.vue"
+                },
+                {
+                    "t": 1789301524361,
+                    "name": "TypeError",
+                    "reason": "TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/tasks/built-in-project/main/index.vue"
+                }
+            ],
+            "errors": []
+        },
+        "requests": [
+            "http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/views/index/index.vue",
+            "http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/views/index/tasks/entry.vue",
+            "http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/tasks/built-in-project/index.vue",
+            "http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/tasks/built-in-project/header/index.vue",
+            "http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/tasks/built-in-project/main/index.vue"
         ],
-        "initialSyncGate": false,
-        "unlockGate": false,
-        "railSlot": true,
-        "railBtn": true,
-        "gear": true,
-        "appHtmlLen": 14241,
-        "bodyText": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 还没有任务，开始创建一个吧 新增待办",
-        "offlineEnterBtn": false
-      }
-    },
-    "onlineIdentity": {
-      "hasJwt": true,
-      "lastVisited": "/tasks/all/table",
-      "lastTasks": "/tasks/all/table"
-    },
-    "offlineAfterReload": {
-      "label": "offline-after-reload",
-      "at": 1789301518646,
-      "dom": {
-        "hash": "#/tasks/all/table",
-        "router": {
-          "path": "/",
-          "fullPath": "/",
-          "params": {},
-          "query": {},
-          "matched": []
-        },
-        "interactiveCount": 3,
-        "interactiveSample": [
-          "输入密码解锁",
-          "解锁",
-          "登出用户"
-        ],
-        "initialSyncGate": false,
-        "unlockGate": true,
-        "railSlot": false,
-        "railBtn": false,
-        "gear": false,
-        "appHtmlLen": 2011,
-        "bodyText": "Q QA-Shell05 离线 解锁 登出用户",
-        "offlineEnterBtn": false
-      }
-    },
-    "offlineUnlockSeen": true,
-    "failureGate": {
-      "label": "gate-poll",
-      "at": 1789301524167,
-      "dom": {
-        "hash": "#/auth/checkin",
-        "router": {
-          "name": "auth-checkin",
-          "path": "/auth/checkin",
-          "fullPath": "/auth/checkin",
-          "params": {},
-          "query": {},
-          "matched": [
-            "auth",
-            "auth-checkin"
-          ]
-        },
-        "interactiveCount": 3,
-        "interactiveSample": [
-          "重试",
-          "离线进入",
-          "登出用户"
-        ],
-        "initialSyncGate": true,
-        "unlockGate": false,
-        "railSlot": false,
-        "railBtn": false,
-        "gear": false,
-        "appHtmlLen": 5694,
-        "bodyText": "拉取失败：网络错误 重试 离线进入 登出用户",
-        "offlineEnterBtn": true
-      }
-    },
-    "failureWaitMs": 2,
-    "failureEvents": {
-      "console": [
-        {
-          "t": 1789301517215,
-          "level": "debug",
-          "msg": "[vite] connecting..."
-        },
-        {
-          "t": 1789301517234,
-          "level": "debug",
-          "msg": "[vite] connected."
-        },
-        {
-          "t": 1789301518567,
-          "level": "info",
-          "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
-        },
-        {
-          "t": 1789301520484,
-          "level": "error",
-          "msg": "[sync] 拉取归一化错误（断网/超时） ERR_NETWORK"
-        }
-      ],
-      "rejections": [],
-      "errors": []
-    },
-    "beforeClick": {
-      "label": "before-click",
-      "at": 1789301524171,
-      "dom": {
-        "hash": "#/auth/checkin",
-        "router": {
-          "name": "auth-checkin",
-          "path": "/auth/checkin",
-          "fullPath": "/auth/checkin",
-          "params": {},
-          "query": {},
-          "matched": [
-            "auth",
-            "auth-checkin"
-          ]
-        },
-        "interactiveCount": 3,
-        "interactiveSample": [
-          "重试",
-          "离线进入",
-          "登出用户"
-        ],
-        "initialSyncGate": true,
-        "unlockGate": false,
-        "railSlot": false,
-        "railBtn": false,
-        "gear": false,
-        "appHtmlLen": 5694,
-        "bodyText": "拉取失败：网络错误 重试 离线进入 登出用户",
-        "offlineEnterBtn": true
-      }
-    },
-    "beforeClickEvents": {
-      "console": [
-        {
-          "t": 1789301517215,
-          "level": "debug",
-          "msg": "[vite] connecting..."
-        },
-        {
-          "t": 1789301517234,
-          "level": "debug",
-          "msg": "[vite] connected."
-        },
-        {
-          "t": 1789301518567,
-          "level": "info",
-          "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
-        },
-        {
-          "t": 1789301520484,
-          "level": "error",
-          "msg": "[sync] 拉取归一化错误（断网/超时） ERR_NETWORK"
-        }
-      ],
-      "rejections": [],
-      "errors": []
-    },
-    "emulateOfflineAtClick": true,
-    "clickRect": {
-      "x": 500.984375,
-      "y": 991.25,
-      "w": 78.015625,
-      "h": 36,
-      "cx": 539.9921875,
-      "cy": 1009.25
-    },
-    "clickMode": "real-mouse",
-    "afterClick": {
-      "t300": {
-        "label": "after-click+300ms",
-        "at": 1789301524863,
-        "dom": {
-          "hash": "#/auth/checkin",
-          "router": {
-            "name": "auth-checkin",
-            "path": "/auth/checkin",
-            "fullPath": "/auth/checkin",
-            "params": {},
-            "query": {},
-            "matched": [
-              "auth",
-              "auth-checkin"
-            ]
-          },
-          "interactiveCount": 3,
-          "interactiveSample": [
-            "重试",
-            "离线进入",
-            "登出用户"
-          ],
-          "initialSyncGate": true,
-          "unlockGate": false,
-          "railSlot": false,
-          "railBtn": false,
-          "gear": false,
-          "appHtmlLen": 5694,
-          "bodyText": "拉取失败：网络错误 重试 离线进入 登出用户",
-          "offlineEnterBtn": true
-        }
-      },
-      "t3000": {
-        "label": "after-click+3s",
-        "at": 1789301527565,
-        "dom": {
-          "hash": "#/auth/checkin",
-          "router": {
-            "name": "auth-checkin",
-            "path": "/auth/checkin",
-            "fullPath": "/auth/checkin",
-            "params": {},
-            "query": {},
-            "matched": [
-              "auth",
-              "auth-checkin"
-            ]
-          },
-          "interactiveCount": 3,
-          "interactiveSample": [
-            "重试",
-            "离线进入",
-            "登出用户"
-          ],
-          "initialSyncGate": true,
-          "unlockGate": false,
-          "railSlot": false,
-          "railBtn": false,
-          "gear": false,
-          "appHtmlLen": 5694,
-          "bodyText": "拉取失败：网络错误 重试 离线进入 登出用户",
-          "offlineEnterBtn": true
-        }
-      },
-      "t10000": {
-        "label": "after-click+10s",
-        "at": 1789301534573,
-        "dom": {
-          "hash": "#/auth/checkin",
-          "router": {
-            "name": "auth-checkin",
-            "path": "/auth/checkin",
-            "fullPath": "/auth/checkin",
-            "params": {},
-            "query": {},
-            "matched": [
-              "auth",
-              "auth-checkin"
-            ]
-          },
-          "interactiveCount": 3,
-          "interactiveSample": [
-            "重试",
-            "离线进入",
-            "登出用户"
-          ],
-          "initialSyncGate": true,
-          "unlockGate": false,
-          "railSlot": false,
-          "railBtn": false,
-          "gear": false,
-          "appHtmlLen": 5694,
-          "bodyText": "拉取失败：网络错误 重试 离线进入 登出用户",
-          "offlineEnterBtn": true
-        }
-      }
-    },
-    "afterClickEvents": {
-      "console": [
-        {
-          "t": 1789301517215,
-          "level": "debug",
-          "msg": "[vite] connecting..."
-        },
-        {
-          "t": 1789301517234,
-          "level": "debug",
-          "msg": "[vite] connected."
-        },
-        {
-          "t": 1789301518567,
-          "level": "info",
-          "msg": "%c NueUI is running in production mode. \n                background: linear-gradient(\n                    to right,\n                    #ff2400, #ff5733, #ff8300, #ffaa00,\n                    #ffd14d, #00e436, #00c9ff, #4d80ff,\n                    #8333ff, #aa00ff, #ff00cc\n                );\n                -webkit-background-clip: text;\n                -webkit-text-fill-color: transparent;\n                font-size: 12px;\n                line-height: 1;\n                font-family: monospace;\n                font-weight: bold;\n            "
-        },
-        {
-          "t": 1789301520484,
-          "level": "error",
-          "msg": "[sync] 拉取归一化错误（断网/超时） ERR_NETWORK"
-        },
-        {
-          "t": 1789301524358,
-          "level": "warn",
-          "msg": "[VUE_ROUTER_R0010] Uncaught error during route navigation\n╰▶ fix: Register an error handler with `router.onError()` to handle navigation errors."
-        },
-        {
-          "t": 1789301524358,
-          "level": "error",
-          "msg": "TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/views/index/index.vue"
-        },
-        {
-          "t": 1789301524359,
-          "level": "warn",
-          "msg": "[Vue warn]: Unhandled error during execution of component event handler \n  at <InitialSyncGate key=1 onSynced=fn<onSynced> onOffline=fn<onOffline>  ... > \n  at <AppRoot>"
-        }
-      ],
-      "rejections": [
-        {
-          "t": 1789301524359,
-          "name": "TypeError",
-          "reason": "TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/views/index/index.vue"
-        },
-        {
-          "t": 1789301524360,
-          "name": "TypeError",
-          "reason": "TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/views/index/tasks/entry.vue"
-        },
-        {
-          "t": 1789301524361,
-          "name": "TypeError",
-          "reason": "TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/tasks/built-in-project/index.vue"
-        },
-        {
-          "t": 1789301524361,
-          "name": "TypeError",
-          "reason": "TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/tasks/built-in-project/header/index.vue"
-        },
-        {
-          "t": 1789301524361,
-          "name": "TypeError",
-          "reason": "TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/tasks/built-in-project/main/index.vue"
-        }
-      ],
-      "errors": []
-    },
-    "requests": [
-      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/views/index/index.vue",
-      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/views/index/tasks/entry.vue",
-      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/tasks/built-in-project/index.vue",
-      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/tasks/built-in-project/header/index.vue",
-      "http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/tasks/built-in-project/main/index.vue"
-    ],
-    "console": [
-      "error: [sync] 拉取归一化错误（断网/超时） ERR_NETWORK",
-      "log-error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
-      "warning: [VUE_ROUTER_R0010] Uncaught error during route navigation\n╰▶ fix: Register an error handler with `router.onError()` to handle navigation errors.",
-      "error: TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/views/index/index.vue",
-      "warning: [Vue warn]: Unhandled error during execution of component event handler \n  at <InitialSyncGate key=1 onSynced=fn<onSynced> onOffline=fn<onOffline>  ... > \n  at <AppRoot>",
-      "exception: TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/views/index/index.vue",
-      "log-error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
-      "log-error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
-      "log-error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
-      "log-error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
-      "exception: TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/views/index/tasks/entry.vue",
-      "exception: TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/tasks/built-in-project/index.vue",
-      "exception: TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/tasks/built-in-project/header/index.vue",
-      "exception: TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/tasks/built-in-project/main/index.vue"
-    ]
-  }
+        "console": [
+            "error: [sync] 拉取归一化错误（断网/超时） ERR_NETWORK",
+            "log-error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+            "warning: [VUE_ROUTER_R0010] Uncaught error during route navigation\n╰▶ fix: Register an error handler with `router.onError()` to handle navigation errors.",
+            "error: TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/views/index/index.vue",
+            "warning: [Vue warn]: Unhandled error during execution of component event handler \n  at <InitialSyncGate key=1 onSynced=fn<onSynced> onOffline=fn<onOffline>  ... > \n  at <AppRoot>",
+            "exception: TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/views/index/index.vue",
+            "log-error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+            "log-error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+            "log-error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+            "log-error: Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+            "exception: TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/views/index/tasks/entry.vue",
+            "exception: TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/tasks/built-in-project/index.vue",
+            "exception: TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/tasks/built-in-project/header/index.vue",
+            "exception: TypeError: Failed to fetch dynamically imported module: http://localhost:5173/@fs/home/nathan/Project/nao-todo/apps/web/src/components/tasks/built-in-project/main/index.vue"
+        ]
+    }
 }

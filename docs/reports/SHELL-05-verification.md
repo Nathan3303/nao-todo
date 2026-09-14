@@ -13,10 +13,10 @@
 
 ## 1. 生产构建与产物 hash（BC-12）
 
-| 构建 | API Base | 入口 chunk | sha256 | vue-router 实例数 |
-| :--- | :--- | :--- | :--- | :--- |
-| B1 默认生产 | `https://todobe.nathanao.space/api` | `index-5cd2LKBq.js`（174.88 kB） | `52169b9dc4860ffd4267b70efec0be19da8984c3d2ad9651f78c498784da37be` | **1** |
-| B2 运行用（API 覆写本地） | `http://localhost:3302/api` | `index-COw2sUKV.js`（174.87 kB） | `3643452cc243b50164febce5521f080a541c1b9c923229bcf4be8d3f8003bc92` | **1** |
+| 构建                      | API Base                            | 入口 chunk                       | sha256                                                             | vue-router 实例数 |
+| :------------------------ | :---------------------------------- | :------------------------------- | :----------------------------------------------------------------- | :---------------- |
+| B1 默认生产               | `https://todobe.nathanao.space/api` | `index-5cd2LKBq.js`（174.88 kB） | `52169b9dc4860ffd4267b70efec0be19da8984c3d2ad9651f78c498784da37be` | **1**             |
+| B2 运行用（API 覆写本地） | `http://localhost:3302/api`         | `index-COw2sUKV.js`（174.87 kB） | `3643452cc243b50164febce5521f080a541c1b9c923229bcf4be8d3f8003bc92` | **1**             |
 
 - `assets/vender/vue-router-Bo2RCaOp.js` = `427aa6f916649503de398b12a2d8ec302025e980c741af95b83e224555dfecb8`（B1/B2 一致）。
 - `apps/desktop/stats.html`：`vue-router@5.2.0_…_@vue+compiler-sfc@3.5.41_esbu_996…` **仅 1 条**（修复前为 2 条）；`vue@3.5.41`、`pinia` 亦单实例。**H6 根治在构建层确认**。
@@ -27,19 +27,19 @@
 
 ## 2. AC 结论表
 
-| AC | 结论 | 证据（`evidence/shell-05/t7/`） |
-| :--- | :--- | :--- |
-| **AC1** 生产离线进入可达、无 `TypeError 'replace'` | ✅ PASS | 门 `true→false`；落 `#/tasks/all/table`（`tasks-built-in-project-main`）；`reading 'replace'` 命中=false |
-| **AC1b** 注入自检 router 可用 / `$router` 降级 | ✅ PASS | `errorLog` 无 `router-injection:*`（composable 路径）；构建层单实例 |
-| **AC2** 内容有限时间进入非 loading 终态 | ✅ PASS | 3s/10s `loadingText=false`；body 显示「所有任务…还没有任务，开始创建一个吧」（显式空态） |
-| **AC3** 导航 reject 仍进终态 + 结构化记录 | ✅ PASS | AC3 专项：注入 `router.beforeEach` 抛错 → 门 300ms 关闭；日志 `["router:onError","app-root:offline-navigation"]` 含注入标记 |
-| **AC4** `syncService.start()` reject 不永加载 | ✅ PASS（单测 + 实机归因） | `runSync` `try/catch/finally`；实机 `[sync]` 网络失败后门达 failed 三键；异常分支由单测覆盖 |
-| **AC5** 失效 `LAST_VISITED`/`/auth/*` 回退、清理、不白屏 | ✅ PASS | 注入 `/definitely-not-a-route-xyz`+`/also-invalid-xyz` → 落 `#/tasks/all/table`，`matched` 4 项、非 auth；失效串不再残留 |
-| **AC6** `/tasks` 无 viewType 自愈默认 table | ✅ PASS | 注入 `LAST_VISITED='/tasks'` → `router.params.viewType='table'`，内容非 loading |
-| **AC7** 未捕获异常结构化、无 PII | ✅ PASS | `__NAO_ERROR_LOG__` 可导出；缓冲正则命中 email/Bearer/JWT 全 false |
-| **AC8** 无 `deletion-notifier` TypeError | ✅ PASS | 进入壳全量 console/异常无 `isPending` |
-| **AC9** 四条件不满足显式出口 / 凭证失败不展示离线进入 | ✅ PASS | E：清 JWT 后点「离线进入」→ 仍在门、显式文案「无法离线进入，请重试或重新登录」、日志 `sync-gate:offline-prerequisites`；F1：mock 10041 → 离线进入 absent、主按钮「重新登录」；F2：mock HTTP 401（文案含「登录已过期」）→ `credentialFailure=false`，离线进入**仍可见** |
-| **AC10** 回归（在线/双主题/SHELL-03/guard） | ✅ PASS（详见 §4、§5） | 在线壳可进、双主题 `--nue-dark-switch` 0/1 均渲染、SHELL-03 BC-1/2/5/7 20 PASS/0 FAIL |
+| AC                                                       | 结论                       | 证据（`evidence/shell-05/t7/`）                                                                                                                                                                                                                                        |
+| :------------------------------------------------------- | :------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **AC1** 生产离线进入可达、无 `TypeError 'replace'`       | ✅ PASS                    | 门 `true→false`；落 `#/tasks/all/table`（`tasks-built-in-project-main`）；`reading 'replace'` 命中=false                                                                                                                                                               |
+| **AC1b** 注入自检 router 可用 / `$router` 降级           | ✅ PASS                    | `errorLog` 无 `router-injection:*`（composable 路径）；构建层单实例                                                                                                                                                                                                    |
+| **AC2** 内容有限时间进入非 loading 终态                  | ✅ PASS                    | 3s/10s `loadingText=false`；body 显示「所有任务…还没有任务，开始创建一个吧」（显式空态）                                                                                                                                                                               |
+| **AC3** 导航 reject 仍进终态 + 结构化记录                | ✅ PASS                    | AC3 专项：注入 `router.beforeEach` 抛错 → 门 300ms 关闭；日志 `["router:onError","app-root:offline-navigation"]` 含注入标记                                                                                                                                            |
+| **AC4** `syncService.start()` reject 不永加载            | ✅ PASS（单测 + 实机归因） | `runSync` `try/catch/finally`；实机 `[sync]` 网络失败后门达 failed 三键；异常分支由单测覆盖                                                                                                                                                                            |
+| **AC5** 失效 `LAST_VISITED`/`/auth/*` 回退、清理、不白屏 | ✅ PASS                    | 注入 `/definitely-not-a-route-xyz`+`/also-invalid-xyz` → 落 `#/tasks/all/table`，`matched` 4 项、非 auth；失效串不再残留                                                                                                                                               |
+| **AC6** `/tasks` 无 viewType 自愈默认 table              | ✅ PASS                    | 注入 `LAST_VISITED='/tasks'` → `router.params.viewType='table'`，内容非 loading                                                                                                                                                                                        |
+| **AC7** 未捕获异常结构化、无 PII                         | ✅ PASS                    | `__NAO_ERROR_LOG__` 可导出；缓冲正则命中 email/Bearer/JWT 全 false                                                                                                                                                                                                     |
+| **AC8** 无 `deletion-notifier` TypeError                 | ✅ PASS                    | 进入壳全量 console/异常无 `isPending`                                                                                                                                                                                                                                  |
+| **AC9** 四条件不满足显式出口 / 凭证失败不展示离线进入    | ✅ PASS                    | E：清 JWT 后点「离线进入」→ 仍在门、显式文案「无法离线进入，请重试或重新登录」、日志 `sync-gate:offline-prerequisites`；F1：mock 10041 → 离线进入 absent、主按钮「重新登录」；F2：mock HTTP 401（文案含「登录已过期」）→ `credentialFailure=false`，离线进入**仍可见** |
+| **AC10** 回归（在线/双主题/SHELL-03/guard）              | ✅ PASS（详见 §4、§5）     | 在线壳可进、双主题 `--nue-dark-switch` 0/1 均渲染、SHELL-03 BC-1/2/5/7 20 PASS/0 FAIL                                                                                                                                                                                  |
 
 **核心日志（AC1/AC2 侧，节选）**：`[sync] 拉取归一化错误（断网/超时） ERR_NETWORK`，**无** `TypeError … 'replace'`、**无** `[Vue warn] Unhandled error … onOffline`。
 
@@ -47,12 +47,12 @@
 
 ## 3. 自动化结果计数
 
-| 套件 | 命令 | 结果 |
-| :--- | :--- | :--- |
-| T7 主回归 | `shell-05-verify.mjs` | **PASS 24 / FAIL 1 / INFO 2**（唯一 FAIL 见下） |
-| AC3 专项 | `shell-05-ac3.mjs` | **PASS 5 / FAIL 0** |
-| SHELL-03 抽验 | `run.mjs --feature shell-03 --only bc1,bc2,bc5,bc7` | **PASS 20 / FAIL 0 / SKIP 0 / INFO 13** |
-| 离线功能面走查 | `shell-05-offline-sweep.mjs` + 定点探针 | 可用 14 / 不可用 1（**假阴性**，见 §5）/ 未覆盖 8 / 降级 3 |
+| 套件           | 命令                                                | 结果                                                       |
+| :------------- | :-------------------------------------------------- | :--------------------------------------------------------- |
+| T7 主回归      | `shell-05-verify.mjs`                               | **PASS 24 / FAIL 1 / INFO 2**（唯一 FAIL 见下）            |
+| AC3 专项       | `shell-05-ac3.mjs`                                  | **PASS 5 / FAIL 0**                                        |
+| SHELL-03 抽验  | `run.mjs --feature shell-03 --only bc1,bc2,bc5,bc7` | **PASS 20 / FAIL 0 / SKIP 0 / INFO 13**                    |
+| 离线功能面走查 | `shell-05-offline-sweep.mjs` + 定点探针             | 可用 14 / 不可用 1（**假阴性**，见 §5）/ 未覆盖 8 / 降级 3 |
 
 > 主回归唯一 FAIL = **B 场景「注入导航 reject」未真正触发**：`Network.emulateNetwork{offline}` 未能阻断**已加载/本地 `file://`** 的路由 chunk，导航照常成功（门仍按时关闭），故无 reject、无错误记录——属**注入有效性**问题，非产品缺陷。已用 **AC3 专项**（真实 `router.beforeEach` 抛错）替代验证并通过。
 
@@ -70,30 +70,30 @@
 
 前置：**生产构建 B2 + 断网（封锁 `localhost:3302`）+ 已离线进入**（`#/tasks/all/table`）。逐项状态：
 
-| 模块 | 项 | 状态 | 证据 |
-| :--- | :--- | :--- | :--- |
-| 任务 | 浏览 表格/列表/看板 | ✅ 可用 | 路由 `viewType` = `table`/`list`/`kanban`，console errs=0 |
-| 任务 | 新建 | ✅ 可用 | `n` → 对话框 → `创建` → 标题出现（`appeared=true`；另 probe 见「创建任务成功」） |
-| 任务 | 详情 / 子任务 / 检查事项入口 | ✅ 可用 | 点击标题 → `#/tasks/all/table/<id>`，`.tasks-details-view` + `.tasks-details-view__subtasks` 存在 |
-| 任务 | 勾选完成 | ⬜ 未覆盖 | 自动化未定位完成控件（表格行为自定义控件，非 `input[type=checkbox]`） |
-| 任务 | 编辑名称/描述、删除 | ⬜ 未覆盖 | 抽屉可开，未执行字段编辑/删除（需人工或专项脚本） |
-| 任务 | 拖拽排序（子任务/检查项） | ⬜ 未覆盖 | CDP 无稳定拖拽手势封装 |
-| 日历 | 进入 + 月视图 | ✅ 可用 | `#/calendar/monthly`，出现「2026 年 9 月」/「月/周」切换，errs=0 |
-| 日历 | 切换周视图 | ✅ 可用（入口可点，未断言内容差异） | 「周」按钮 `title="切换周视图"` 可点，errs=0 |
-| 日历 | 查看任务条 | ⬜ 未覆盖 | 离线本地无日程任务，未构造 |
-| 番茄 | 进入 + 启动计时 | ✅ 可用 | 点击「开始专注」→ 显示 `25:00→24:55` 倒计时 + 「结束」，errs=0 |
-| 番茄 | 暂停/停止 | ✅ 可用 | 「暂停」按钮可点，errs=0 |
-| 番茄 | 记录页 | ✅ 可用 | `#/pomodoro/records` 渲染 |
-| 搜索 | 输入 + 结果 | ✅ 可用 | 输入「QA离线」→「找到 1 条 QA离线走查任务-A」 |
-| 搜索 | 筛选面板 | ✅ 可用 | 「清单/标签/优先级/状态」可点开 |
-| 清单/标签 | 侧栏显示 / 切换 | ✅ 可用 | 侧栏「清单/标签」可见、可切换 |
-| 清单/标签 | 创建 / 重命名 | ⬜ 未覆盖 | 未见稳定「新建清单」按钮锚点，未执行 |
-| 设置 | 打开对话框 | ⚠️ 降级 | 可打开；但**切到「账户与个人信息」触发未捕获异常 → 见 N-04** |
-| 设置 | 主题切换 | ✅ 可用 | 点击 light 主题卡：`--nue-dark-switch` `1 → 0`（dark/light 均可渲染） |
-| 设置 | 语言切换 | ✅ 可用 | 语言下拉选「English」→ UI 文案切英文（`Projects/Use projects…`），errs=0 |
-| 本地提醒 | 解锁后调度 | ⚠️ 降级（静态） | `useLocalReminder.start()` 于 `unlock` 触发、无网络依赖；无 DOM 锚点故仅记录环境（`Notification.permission=granted`） |
-| 同步 | 状态面板失败/待推送 | ✅ 可用 | 面板显示「从未同步 / 拉取失败：网络错误 / 立即同步」 |
-| 同步 | 不阻塞功能 | ✅ 可用 | 同步失败态下上述任务/日历/番茄/搜索均正常操作 |
+| 模块      | 项                           | 状态                                | 证据                                                                                                                  |
+| :-------- | :--------------------------- | :---------------------------------- | :-------------------------------------------------------------------------------------------------------------------- |
+| 任务      | 浏览 表格/列表/看板          | ✅ 可用                             | 路由 `viewType` = `table`/`list`/`kanban`，console errs=0                                                             |
+| 任务      | 新建                         | ✅ 可用                             | `n` → 对话框 → `创建` → 标题出现（`appeared=true`；另 probe 见「创建任务成功」）                                      |
+| 任务      | 详情 / 子任务 / 检查事项入口 | ✅ 可用                             | 点击标题 → `#/tasks/all/table/<id>`，`.tasks-details-view` + `.tasks-details-view__subtasks` 存在                     |
+| 任务      | 勾选完成                     | ⬜ 未覆盖                           | 自动化未定位完成控件（表格行为自定义控件，非 `input[type=checkbox]`）                                                 |
+| 任务      | 编辑名称/描述、删除          | ⬜ 未覆盖                           | 抽屉可开，未执行字段编辑/删除（需人工或专项脚本）                                                                     |
+| 任务      | 拖拽排序（子任务/检查项）    | ⬜ 未覆盖                           | CDP 无稳定拖拽手势封装                                                                                                |
+| 日历      | 进入 + 月视图                | ✅ 可用                             | `#/calendar/monthly`，出现「2026 年 9 月」/「月/周」切换，errs=0                                                      |
+| 日历      | 切换周视图                   | ✅ 可用（入口可点，未断言内容差异） | 「周」按钮 `title="切换周视图"` 可点，errs=0                                                                          |
+| 日历      | 查看任务条                   | ⬜ 未覆盖                           | 离线本地无日程任务，未构造                                                                                            |
+| 番茄      | 进入 + 启动计时              | ✅ 可用                             | 点击「开始专注」→ 显示 `25:00→24:55` 倒计时 + 「结束」，errs=0                                                        |
+| 番茄      | 暂停/停止                    | ✅ 可用                             | 「暂停」按钮可点，errs=0                                                                                              |
+| 番茄      | 记录页                       | ✅ 可用                             | `#/pomodoro/records` 渲染                                                                                             |
+| 搜索      | 输入 + 结果                  | ✅ 可用                             | 输入「QA离线」→「找到 1 条 QA离线走查任务-A」                                                                         |
+| 搜索      | 筛选面板                     | ✅ 可用                             | 「清单/标签/优先级/状态」可点开                                                                                       |
+| 清单/标签 | 侧栏显示 / 切换              | ✅ 可用                             | 侧栏「清单/标签」可见、可切换                                                                                         |
+| 清单/标签 | 创建 / 重命名                | ⬜ 未覆盖                           | 未见稳定「新建清单」按钮锚点，未执行                                                                                  |
+| 设置      | 打开对话框                   | ⚠️ 降级                             | 可打开；但**切到「账户与个人信息」触发未捕获异常 → 见 N-04**                                                          |
+| 设置      | 主题切换                     | ✅ 可用                             | 点击 light 主题卡：`--nue-dark-switch` `1 → 0`（dark/light 均可渲染）                                                 |
+| 设置      | 语言切换                     | ✅ 可用                             | 语言下拉选「English」→ UI 文案切英文（`Projects/Use projects…`），errs=0                                              |
+| 本地提醒  | 解锁后调度                   | ⚠️ 降级（静态）                     | `useLocalReminder.start()` 于 `unlock` 触发、无网络依赖；无 DOM 锚点故仅记录环境（`Notification.permission=granted`） |
+| 同步      | 状态面板失败/待推送          | ✅ 可用                             | 面板显示「从未同步 / 拉取失败：网络错误 / 立即同步」                                                                  |
+| 同步      | 不阻塞功能                   | ✅ 可用                             | 同步失败态下上述任务/日历/番茄/搜索均正常操作                                                                         |
 
 **结论**：**离线进入后，除「同步」外的主要功能均可本地使用**；网络仅影响同步状态展示与数据往返；无功能因同步失败被阻塞（符合用户口径）。走查中唯一的真实异常见 N-04（设置页，非阻断）。
 
@@ -157,11 +157,11 @@ f9f956912ed8ccad2a516aa6bd275b58cab1a378402b8321d83c0395ef64ee91  packages/prese
 - **被测 hash**：HEAD `385e1d75`（含 T7 后的 `9e6f41c7` N-04 修复、`385e1d75` G12/G14）；生产入口 `assets/index-csY7brKv.js` sha256 `0cfa6d930981620ecbfafa51606515b1f7e673e0d3e977ad3fc88f07b2c5aeba`；`stats.html` vue-router **单实例**。
 - **方法**：CDP `Network.emulateNetwork({offline:true})` + `Page.reload({ignoreCache:true})`（等价 DevTools 置「离线」+ Ctrl+R），三态分别抓 `#app` 长度/可交互元素数/`location.href`/hash/`window.__NAO_ERROR_LOG__`/Console。
 
-| 情形 | 在线 Ctrl+R | **离线 Ctrl+R** | 判定 |
-| :--- | :--- | :--- | :--- |
-| **① 生产构建 file://**（默认在线 API，真实注册账号） | ✅ 正常（appLen 12712，进入壳） | ✅ **不白屏**：`file://…/index.html#/auth/checkin`，`#app` len **1852**、可交互 **3**、`.nue-container--unlock-gate` 在；错误缓冲 **0 条** | ✅ SHELL-05 **闭环**，非回归 |
-| **② dev（Vite 5173）** | ✅ 正常（appLen 2401） | ❌ 白屏：`location.href = chrome-error://chromewebdata/`，`hasApp=false`、可交互 0；主进程日志 `Failed to load URL http://localhost:5173/… ERR_INTERNET_DISCONNECTED` | dev 特性：整页需从 Vite 重拉，断网必失败 |
-| **③ Web（Vite 5174，无 SW）** | ✅ 正常（appLen 1875） | ❌ 白屏：`chrome-error://chromewebdata/` | web 统一架构前提（无 SW ⇒ 离线刷新白屏） |
+| 情形                                                 | 在线 Ctrl+R                     | **离线 Ctrl+R**                                                                                                                                                       | 判定                                     |
+| :--------------------------------------------------- | :------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------- |
+| **① 生产构建 file://**（默认在线 API，真实注册账号） | ✅ 正常（appLen 12712，进入壳） | ✅ **不白屏**：`file://…/index.html#/auth/checkin`，`#app` len **1852**、可交互 **3**、`.nue-container--unlock-gate` 在；错误缓冲 **0 条**                            | ✅ SHELL-05 **闭环**，非回归             |
+| **② dev（Vite 5173）**                               | ✅ 正常（appLen 2401）          | ❌ 白屏：`location.href = chrome-error://chromewebdata/`，`hasApp=false`、可交互 0；主进程日志 `Failed to load URL http://localhost:5173/… ERR_INTERNET_DISCONNECTED` | dev 特性：整页需从 Vite 重拉，断网必失败 |
+| **③ Web（Vite 5174，无 SW）**                        | ✅ 正常（appLen 1875）          | ❌ 白屏：`chrome-error://chromewebdata/`                                                                                                                              | web 统一架构前提（无 SW ⇒ 离线刷新白屏） |
 
 ### 10.1 生产端到端整链（①情形，默认在线 API 产物的真实路径）
 

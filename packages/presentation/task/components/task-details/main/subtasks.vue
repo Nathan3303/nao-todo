@@ -265,9 +265,10 @@ const handleDetachSubTask = async (subTask: TaskViewObject) => {
     .subtask-row__title-line {
         display: flex;
         align-items: center;
-        gap: var(--nue-gap-xs);
+        gap: var(--nue-gap-2xs);
         min-width: 0;
         height: 1.5rem; /* 与左右组件等高 */
+        flex-wrap: nowrap;
     }
 
     /* 行内主收缩项 ⇒ 空间不足时名称先被截断（省略号，全文见详情页标题） */
@@ -288,9 +289,8 @@ const handleDetachSubTask = async (subTask: TaskViewObject) => {
 
     /* 只读 small 标签栏（名称右侧）：宽度随内容、可收缩；上限防长标签把名称挤没 */
     .subtask-row__tags {
-        flex: 0 1 auto;
-        min-width: 0;
-        max-width: 55%;
+        flex: 0 0 auto;
+        flex-wrap: nowrap;
     }
 
     /* 时间独立行（名称下、描述上）：整行宽度、超宽省略号截断（不硬裁切）

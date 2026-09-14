@@ -1,92 +1,92 @@
 {
-  "create": {
-    "title": "QA离线走查-81211",
-    "filled": "clicked",
-    "appeared": true
-  },
-  "details": {
-    "click": "clicked",
-    "hash": "#/tasks/all/table/468416438158626816",
-    "drawer": true,
-    "subtasks": true,
-    "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 Projects 0 Use projects to collect, organize and manage your tasks Tags 0 View tasks across different projects by tag 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 Name Updated At End Time Priority State Project QA离线走查任务-A Today 21:55 Low Priority To Do 收集箱 QA离线走查-81211 Today 21:59 Low Priority To Do 收集箱 当前列表 2 项， 共计 2 项。 第 1 页，共 1 页 20 条每页 Set time To Do Low Priority 专注 Add Item Add "
-  },
-  "settingsPanel": true,
-  "settingsErrDelta": [],
-  "themeBefore": "1",
-  "themeControls": [
-    {
-      "tag": "BUTTON",
-      "t": "English",
-      "cls": "nue-button nue-button--small",
-      "src": null
+    "create": {
+        "title": "QA离线走查-81211",
+        "filled": "clicked",
+        "appeared": true
     },
-    {
-      "tag": "DIV",
-      "t": "",
-      "cls": "nue-div theme-cards",
-      "src": null
+    "details": {
+        "click": "clicked",
+        "hash": "#/tasks/all/table/468416438158626816",
+        "drawer": true,
+        "subtasks": true,
+        "body": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 Projects 0 Use projects to collect, organize and manage your tasks Tags 0 View tasks across different projects by tag 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 Name Updated At End Time Priority State Project QA离线走查任务-A Today 21:55 Low Priority To Do 收集箱 QA离线走查-81211 Today 21:59 Low Priority To Do 收集箱 当前列表 2 项， 共计 2 项。 第 1 页，共 1 页 20 条每页 Set time To Do Low Priority 专注 Add Item Add "
     },
-    {
-      "tag": "DIV",
-      "t": "",
-      "cls": "theme-card",
-      "src": null
-    },
-    {
-      "tag": "DIV",
-      "t": "",
-      "cls": "theme-card__preview",
-      "src": null
-    },
-    {
-      "tag": "IMG",
-      "t": "",
-      "cls": "preview-image",
-      "src": "./images/naotodo-theme-mode-light.png"
-    },
-    {
-      "tag": "DIV",
-      "t": "",
-      "cls": "theme-card",
-      "src": null
-    },
-    {
-      "tag": "DIV",
-      "t": "",
-      "cls": "theme-card__preview",
-      "src": null
-    },
-    {
-      "tag": "IMG",
-      "t": "",
-      "cls": "preview-image",
-      "src": "./images/naotodo-theme-mode-dark.png"
-    },
-    {
-      "tag": "DIV",
-      "t": "",
-      "cls": "theme-card theme-card--active",
-      "src": null
-    },
-    {
-      "tag": "DIV",
-      "t": "",
-      "cls": "theme-card__preview",
-      "src": null
-    },
-    {
-      "tag": "IMG",
-      "t": "",
-      "cls": "preview-image",
-      "src": "./images/naotodo-theme-mode-system.png"
-    },
-    {
-      "tag": "DIV",
-      "t": "",
-      "cls": "theme-card__check",
-      "src": null
-    }
-  ],
-  "syncPanelBody": null
+    "settingsPanel": true,
+    "settingsErrDelta": [],
+    "themeBefore": "1",
+    "themeControls": [
+        {
+            "tag": "BUTTON",
+            "t": "English",
+            "cls": "nue-button nue-button--small",
+            "src": null
+        },
+        {
+            "tag": "DIV",
+            "t": "",
+            "cls": "nue-div theme-cards",
+            "src": null
+        },
+        {
+            "tag": "DIV",
+            "t": "",
+            "cls": "theme-card",
+            "src": null
+        },
+        {
+            "tag": "DIV",
+            "t": "",
+            "cls": "theme-card__preview",
+            "src": null
+        },
+        {
+            "tag": "IMG",
+            "t": "",
+            "cls": "preview-image",
+            "src": "./images/naotodo-theme-mode-light.png"
+        },
+        {
+            "tag": "DIV",
+            "t": "",
+            "cls": "theme-card",
+            "src": null
+        },
+        {
+            "tag": "DIV",
+            "t": "",
+            "cls": "theme-card__preview",
+            "src": null
+        },
+        {
+            "tag": "IMG",
+            "t": "",
+            "cls": "preview-image",
+            "src": "./images/naotodo-theme-mode-dark.png"
+        },
+        {
+            "tag": "DIV",
+            "t": "",
+            "cls": "theme-card theme-card--active",
+            "src": null
+        },
+        {
+            "tag": "DIV",
+            "t": "",
+            "cls": "theme-card__preview",
+            "src": null
+        },
+        {
+            "tag": "IMG",
+            "t": "",
+            "cls": "preview-image",
+            "src": "./images/naotodo-theme-mode-system.png"
+        },
+        {
+            "tag": "DIV",
+            "t": "",
+            "cls": "theme-card__check",
+            "src": null
+        }
+    ],
+    "syncPanelBody": null
 }

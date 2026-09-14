@@ -21,31 +21,31 @@ UnlockGate(unlocked) → InitialSyncGate(syncService.start())
 
 ## 2. 根因假设（按可能性排序，**待控制台报错确认**）
 
-| # | 假设 | 机制 | 证据 | 是否解释"无反应+报错" |
-| :--- | :--- | :--- | :--- | :--- |
-| **H1** | `onOffline` 未兜底 | `await router.replace(...)` 若 **reject**（守卫抛错 / 懒加载 chunk 加载失败 / 导航被中断），异常冒泡 → `gatePassed` 永不置位 → 停在门，按钮"点了没反应" | `AppRoot.vue` `onOffline` 无 try/catch；对比 `check-in-page.vue` 对返回值有处理 | ✅ 高度吻合 |
-| **H2** | 放行四条件在真实环境不成立 | 离线进入后导航到 `/tasks` 仍走 `authBeforeEnter`；若 `localSession.getCurrentUserId()` 或 `cryptoService.isUnlocked` 不满足 → 回落 `auth-checkin` → 离线检入失败 → 跳登录页 | `routes.ts` 四条件；`unlock-gate.checkLocal` 置 `localSession` | ✅ 表现像"被踢回登录页" |
-| **H3** | 目标路由不可达/无匹配 | `LAST_VISITED_ROUTE` 指向已失效深链（如已删任务详情、`/settings*`、`/search/<id>`）→ 重定向/无匹配/空白 | `router.afterEach` 写入 `LAST_VISITED`；`settings-legacy-fallback` 等 | 部分（可能白屏而非报错） |
-| **H4** | 门卡在 `syncing` | `syncService.start()` 内部 `finishRun` 若抛错 → `start()` reject；`initial-sync-gate` 的 `runSync()` 无 try/catch → `syncing` 永真，**按钮根本不出现** | `initial-sync-gate.vue` `runSync()` 顶层调用无 catch | 部分（按钮不可见） |
-| **H5** | 凭证误判隐藏按钮 | `isCredentialFailure` 用文案正则 `/登录已过期\|401\|403/` 匹配，离线错误文案若含 "401/403" 片段 → 离线进入被隐藏 | `initial-sync-gate.vue`；SHELL-03 L8 已登记脆弱性 | 部分 |
+| #      | 假设                       | 机制                                                                                                                                                                        | 证据                                                                            | 是否解释"无反应+报错"    |
+| :----- | :------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------ | :----------------------- |
+| **H1** | `onOffline` 未兜底         | `await router.replace(...)` 若 **reject**（守卫抛错 / 懒加载 chunk 加载失败 / 导航被中断），异常冒泡 → `gatePassed` 永不置位 → 停在门，按钮"点了没反应"                     | `AppRoot.vue` `onOffline` 无 try/catch；对比 `check-in-page.vue` 对返回值有处理 | ✅ 高度吻合              |
+| **H2** | 放行四条件在真实环境不成立 | 离线进入后导航到 `/tasks` 仍走 `authBeforeEnter`；若 `localSession.getCurrentUserId()` 或 `cryptoService.isUnlocked` 不满足 → 回落 `auth-checkin` → 离线检入失败 → 跳登录页 | `routes.ts` 四条件；`unlock-gate.checkLocal` 置 `localSession`                  | ✅ 表现像"被踢回登录页"  |
+| **H3** | 目标路由不可达/无匹配      | `LAST_VISITED_ROUTE` 指向已失效深链（如已删任务详情、`/settings*`、`/search/<id>`）→ 重定向/无匹配/空白                                                                     | `router.afterEach` 写入 `LAST_VISITED`；`settings-legacy-fallback` 等           | 部分（可能白屏而非报错） |
+| **H4** | 门卡在 `syncing`           | `syncService.start()` 内部 `finishRun` 若抛错 → `start()` reject；`initial-sync-gate` 的 `runSync()` 无 try/catch → `syncing` 永真，**按钮根本不出现**                      | `initial-sync-gate.vue` `runSync()` 顶层调用无 catch                            | 部分（按钮不可见）       |
+| **H5** | 凭证误判隐藏按钮           | `isCredentialFailure` 用文案正则 `/登录已过期\|401\|403/` 匹配，离线错误文案若含 "401/403" 片段 → 离线进入被隐藏                                                            | `initial-sync-gate.vue`；SHELL-03 L8 已登记脆弱性                               | 部分                     |
 
 ## 3. 潜在边界清单（B-01…）
 
-| ID | 边界 | 现状 | 风险 |
-| :--- | :--- | :--- | :--- |
-| B-01 | `onOffline` / `onSignOut` 无 try/catch | 任一导航异常即永久卡门 | **高**（当前疑似命中） |
-| B-02 | `runSync()` 顶层调用无 try/catch | `start()` 意外 reject → 永加载 | 高 |
-| B-03 | 离线放行四条件无"失败可见性" | 不满足时静默回落检入→登录，用户不知为何 | 中 |
-| B-04 | `LAST_VISITED_ROUTE` 可为失效深链 | 直接 replace → 无匹配/白屏 | 中 |
-| B-05 | `router.beforeEach` 的 section 重定向用 `LAST_TASKS_ROUTE`，可能指向失效路由 | 循环/落空白 | 中 |
-| B-06 | 懒加载路由 chunk 离线不可用（web 尤其） | `router.replace` reject | 中（desktop 本地 chunk 影响小） |
-| B-07 | 无全局 `unhandledrejection` / `uncaughtException` / `window.onerror` 兜底 | 错误不可见、无法上报 | 中 |
-| B-08 | 离线进入后落 `tasks` 重定向缺 `viewType` | `/tasks` → `tasks-built-in-project`（无 viewType）→ 可能空壳 | 中 |
-| B-09 | 离线标志仅内存：离线中刷新即失效，需重新走门 | 可接受，但快速刷新体验差 | 低 |
-| B-10 | 使用中（非冷启动）断网无任何在线/离线状态提示与再同步入口 | 同步失败只在状态面板，任务页无提示 | 中 |
-| B-11 | `isCredentialFailure` 文案正则脆弱 | 文案一变即误判 | 中（SHELL-03 L8） |
-| B-12 | 本地库为空/无该用户数据时仍放行离线进入 | 进壳后空白无引导 | 低-中 |
-| B-13 | `check-in-page` 对 `router.replace` 返回值处理与 AppRoot 不一致 | 语义漂移 | 低 |
+| ID   | 边界                                                                         | 现状                                                         | 风险                            |
+| :--- | :--------------------------------------------------------------------------- | :----------------------------------------------------------- | :------------------------------ |
+| B-01 | `onOffline` / `onSignOut` 无 try/catch                                       | 任一导航异常即永久卡门                                       | **高**（当前疑似命中）          |
+| B-02 | `runSync()` 顶层调用无 try/catch                                             | `start()` 意外 reject → 永加载                               | 高                              |
+| B-03 | 离线放行四条件无"失败可见性"                                                 | 不满足时静默回落检入→登录，用户不知为何                      | 中                              |
+| B-04 | `LAST_VISITED_ROUTE` 可为失效深链                                            | 直接 replace → 无匹配/白屏                                   | 中                              |
+| B-05 | `router.beforeEach` 的 section 重定向用 `LAST_TASKS_ROUTE`，可能指向失效路由 | 循环/落空白                                                  | 中                              |
+| B-06 | 懒加载路由 chunk 离线不可用（web 尤其）                                      | `router.replace` reject                                      | 中（desktop 本地 chunk 影响小） |
+| B-07 | 无全局 `unhandledrejection` / `uncaughtException` / `window.onerror` 兜底    | 错误不可见、无法上报                                         | 中                              |
+| B-08 | 离线进入后落 `tasks` 重定向缺 `viewType`                                     | `/tasks` → `tasks-built-in-project`（无 viewType）→ 可能空壳 | 中                              |
+| B-09 | 离线标志仅内存：离线中刷新即失效，需重新走门                                 | 可接受，但快速刷新体验差                                     | 低                              |
+| B-10 | 使用中（非冷启动）断网无任何在线/离线状态提示与再同步入口                    | 同步失败只在状态面板，任务页无提示                           | 中                              |
+| B-11 | `isCredentialFailure` 文案正则脆弱                                           | 文案一变即误判                                               | 中（SHELL-03 L8）               |
+| B-12 | 本地库为空/无该用户数据时仍放行离线进入                                      | 进壳后空白无引导                                             | 低-中                           |
+| B-13 | `check-in-page` 对 `router.replace` 返回值处理与 AppRoot 不一致              | 语义漂移                                                     | 低                              |
 
 ## 4. 拟议范围（待用户圈定）
 
@@ -77,12 +77,12 @@ vue-ecosystem-Dowj-6PF.js:1 TypeError: Cannot read properties of undefined (read
 
 **逐帧定罪（用当前 `apps/desktop/out` 产物反查列偏移）**：
 
-| 帧 | 归属 | 含义 |
-| :--- | :--- | :--- |
-| `_` (nue-ui) | NueButton `onClick` | `function _(e){m.useThrottle?b(e):c("click",e)}` = 一次**按钮点击**（离线进入为 `nue-button`） |
-| `l` (app) | `initial-sync-gate` 的 `onEnterOffline` | `l=()=>{a("offline")}` = emit offline |
-| `u` (app) | `AppRoot.onOffline` | `u=async()=>{Rs=!0,await t.replace(localStorage.getItem(Ls)||"/tasks"),r.value=!0}` |
-| `t` | `const t=ve()`，`ve` = vue-router 的 `u as ve` = **`useRouter()`** | `t.replace` 读 undefined ⇒ **`useRouter()` 返回 undefined** |
+| 帧           | 归属                                                               | 含义                                                                                           |
+| :----------- | :----------------------------------------------------------------- | :--------------------------------------------------------------------------------------------- |
+| `_` (nue-ui) | NueButton `onClick`                                                | `function _(e){m.useThrottle?b(e):c("click",e)}` = 一次**按钮点击**（离线进入为 `nue-button`） |
+| `l` (app)    | `initial-sync-gate` 的 `onEnterOffline`                            | `l=()=>{a("offline")}` = emit offline                                                          |
+| `u` (app)    | `AppRoot.onOffline`                                                | `u=async()=>{Rs=!0,await t.replace(localStorage.getItem(Ls)                                    |     | "/tasks"),r.value=!0}` |
+| `t`          | `const t=ve()`，`ve` = vue-router 的 `u as ve` = **`useRouter()`** | `t.replace` 读 undefined ⇒ **`useRouter()` 返回 undefined**                                    |
 
 **判定**：用户个案 = **H6（生产态 `AppRoot` 的 `useRouter()` 为 undefined）**，与 H1（导航 reject 未兜底）是**不同机制但同处一线**（两者都使 `gatePassed` 永不置位 ⇒ 停在门 = "点击无反应"）。
 

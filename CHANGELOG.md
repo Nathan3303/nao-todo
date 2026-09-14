@@ -2,6 +2,31 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.7.4] - 2026-09-14
+
+发布批次：子任务行标签栏 flex 压缩修复 + oxfmt 全仓归一化 + .agents 目录重组（patch）。**Tag `v1.7.4`** · root `1.7.4` / `@nao-todo/desktopapp` `1.7.4` / `@nao-todo/webapp` `1.7.4`（`@nao-todo/presentation` `0.4.3` / `@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（presentation 子任务行样式）+ 全仓工程（oxfmt 归一化 / .agents）。
+
+### Fixed（修复）
+
+- **子任务行标签栏 flex 压缩修复（`b0db5d6`，用户手动修复）**：`.subtask-row__title-line` `gap` `xs → 2xs` + `flex-wrap: nowrap`；`.subtask-row__tags` `flex 0 1 auto → 0 0 auto` + `nowrap`，移除 `max-width: 55%` 上限——修复长标签把名称挤没 / 标签栏被压缩的布局问题。
+
+### Chore（工程）
+
+- **oxfmt 全仓归一化（`764044c`）**：829 文件（ts / vue / css / json / md）统一 oxfmt 规范，含换行符对齐 `.editorconfig`（CRLF）；`git diff -w` 验证纯格式零语义变更。
+- **.agents 目录重组（`4b7eae3`）**：prompts / common / scripts / skills 重构与技能包拆分，删除旧命令 / 技能。
+
+### Changed
+
+- 版本协同 bump（patch）：root / `@nao-todo/desktopapp` / `@nao-todo/webapp` `1.7.3 → 1.7.4`；`@nao-todo/presentation` `0.4.2 → 0.4.3`（subtasks.vue 真实样式修复，沿 v1.7.1 先例）。其余包不动（oxfmt 纯格式零语义，不触发语义 bump）；无公开 API 导出面破坏。
+
+### 质量门槛
+
+- `vp check`：1219 文件格式全对 + 1045 文件无 lint / type 错误。
+- `vp test`：73 文件 / 645 例全绿（含 `subtasks.test.ts` 14/14）。
+- `pnpm webapp build` ✓ / `pnpm desktopapp build` ✓。
+
+[v1.7.4]: https://github.com/Nathan3303/nao-todo/releases/tag/v1.7.4
+
 ## [v1.7.3] - 2026-09-14
 
 发布批次：设置-应用设置新增版本号显示（patch；webapp 首次纳入版本协同）。**Tag `v1.7.3`** · root `1.7.3` / `@nao-todo/desktopapp` `1.7.3` / `@nao-todo/webapp` `1.7.3`（新增 version 字段，首次纳入协同；`@nao-todo/presentation` `0.4.2` / `@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` 不动）。范围：web + desktop（设置页 UI + 构建配置）。

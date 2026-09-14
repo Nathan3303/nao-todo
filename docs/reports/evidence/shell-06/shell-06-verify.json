@@ -1,300 +1,289 @@
 {
-  "meta": {
-    "at": "2026-09-13T14:41:39.955Z",
-    "email": "qa.shell06.1789310105@qa.local",
-    "port": 9344
-  },
-  "checks": [
-    {
-      "id": "SETUP.在线登录",
-      "status": "PASS",
-      "detail": "rail=true"
+    "meta": {
+        "at": "2026-09-13T14:41:39.955Z",
+        "email": "qa.shell06.1789310105@qa.local",
+        "port": 9344
     },
-    {
-      "id": "SETUP.baseline",
-      "status": "INFO",
-      "detail": "queue=0 serverTasks={\"status\":200,\"count\":0,\"names\":[]}"
-    },
-    {
-      "id": "BC-13.离线写均落地队列(含删除)",
-      "status": "PASS",
-      "detail": "queue=3 items=[\"tasks:upsert\",\"tasks:upsert\",\"tasks:delete\"]"
-    },
-    {
-      "id": "BC-14.网络类失败不消耗额度(attempts 恒 0)",
-      "status": "PASS",
-      "detail": "attempts=[null,null,null]"
-    },
-    {
-      "id": "BC-14/G11.离线期无 /sync/push 请求",
-      "status": "FAIL",
-      "detail": "pushDuringOffline=2"
-    },
-    {
-      "id": "BC-16/UI.面板显示暂停/待同步文案",
-      "status": "FAIL",
-      "detail": "panel=\"undefined\""
-    },
-    {
-      "id": "BC-13.恢复网络后自动补传(队列清空)",
-      "status": "FAIL",
-      "detail": "wait=140324ms queue=3 remaining=[{\"id\":\"468425346396459008:tasks:468425981074210816\",\"table\":\"tasks\",\"action\":\"upsert\",\"retryCount\":0},{\"id\":\"468425346396459008:tasks:468425997624934400\",\"table\":\"tasks\",\"action\":\"upsert\",\"retryCount\":0},{\"id\":\"468425346396459008:tasks:468426014163075072\",\"table\":\"tasks\",\"action\":\"delete\",\"retryCount\":0}]"
-    },
-    {
-      "id": "BC-13.远端与本地一致(含删除不复活)",
-      "status": "FAIL",
-      "detail": "serverNames=[]"
-    },
-    {
-      "id": "BC-15.业务类失败累加 attempts（触发触顶路径）",
-      "status": "PASS",
-      "detail": "queue=[{\"id\":\"468425346396459008:tasks:468425981074210816\",\"table\":\"tasks\",\"action\":\"upsert\",\"retryCount\":1,\"attempts\":1,\"nextAttemptAt\":\"2026-09-13T14:40:29.573Z\",\"lastErrorClass\":\"business\"},{\"id\":\"468425346396459008:tasks:468425997624934400\",\"table\":\"tasks\",\"action\":\"upsert\",\"retryCount\":1,\"attempts\":1,\"nextAttemptAt\":\"2026-09-13T14:40:29.576Z\",\"lastErrorClass\":\"business\"},{\"id\":\"468425346396459008:tasks:468426014163075072\",\"table\":\"tasks\",\"action\":\"delete\",\"retryCount\":1,\"attempts\":1,\"nextAttemptAt\":\"2026-09-13T14:40:29.578Z\",\"lastErrorClass\":\"business\"},{\"id\":\"468425346396459008:tasks:468426676120715264\",\"table\":\"tasks\",\"action\":\"upsert\",\"retryCount\":1,\"attempts\":1,\"nextAttemptAt\":\"2026-09-13T14:40:29.580Z\",\"lastErrorClass\":\"business\"}]"
-    },
-    {
-      "id": "BC-15.触顶项恢复后完成回传",
-      "status": "FAIL",
-      "detail": "queue=4 server=[]"
-    },
-    {
-      "id": "AC6/回归.凭证失效走登录/重登（离线进入不可用）",
-      "status": "FAIL",
-      "detail": "hash=#/auth/checkin body=\"Q QA-S06 qa.shell06.1789310105@qa.local 解锁 登出用户\""
-    }
-  ],
-  "raw": {
-    "baselineQueue": {
-      "count": 0,
-      "items": []
-    },
-    "baselineServer": {
-      "status": 200,
-      "count": 0,
-      "names": []
-    },
-    "create": {
-      "t1": {
-        "res": "ok",
-        "appeared": true
-      },
-      "t2": {
-        "res": "ok",
-        "appeared": true
-      },
-      "t3": {
-        "res": "ok",
-        "appeared": true
-      }
-    },
-    "delete": {
-      "ok": false,
-      "clicked": "delete-clicked",
-      "confirmed": "noconfirm",
-      "gone": false
-    },
-    "offlineQueue": {
-      "count": 3,
-      "items": [
+    "checks": [
         {
-          "id": "468425346396459008:tasks:468425981074210816",
-          "table": "tasks",
-          "action": "upsert",
-          "retryCount": 0
+            "id": "SETUP.在线登录",
+            "status": "PASS",
+            "detail": "rail=true"
         },
         {
-          "id": "468425346396459008:tasks:468425997624934400",
-          "table": "tasks",
-          "action": "upsert",
-          "retryCount": 0
+            "id": "SETUP.baseline",
+            "status": "INFO",
+            "detail": "queue=0 serverTasks={\"status\":200,\"count\":0,\"names\":[]}"
         },
         {
-          "id": "468425346396459008:tasks:468426014163075072",
-          "table": "tasks",
-          "action": "delete",
-          "retryCount": 0
+            "id": "BC-13.离线写均落地队列(含删除)",
+            "status": "PASS",
+            "detail": "queue=3 items=[\"tasks:upsert\",\"tasks:upsert\",\"tasks:delete\"]"
+        },
+        {
+            "id": "BC-14.网络类失败不消耗额度(attempts 恒 0)",
+            "status": "PASS",
+            "detail": "attempts=[null,null,null]"
+        },
+        {
+            "id": "BC-14/G11.离线期无 /sync/push 请求",
+            "status": "FAIL",
+            "detail": "pushDuringOffline=2"
+        },
+        {
+            "id": "BC-16/UI.面板显示暂停/待同步文案",
+            "status": "FAIL",
+            "detail": "panel=\"undefined\""
+        },
+        {
+            "id": "BC-13.恢复网络后自动补传(队列清空)",
+            "status": "FAIL",
+            "detail": "wait=140324ms queue=3 remaining=[{\"id\":\"468425346396459008:tasks:468425981074210816\",\"table\":\"tasks\",\"action\":\"upsert\",\"retryCount\":0},{\"id\":\"468425346396459008:tasks:468425997624934400\",\"table\":\"tasks\",\"action\":\"upsert\",\"retryCount\":0},{\"id\":\"468425346396459008:tasks:468426014163075072\",\"table\":\"tasks\",\"action\":\"delete\",\"retryCount\":0}]"
+        },
+        {
+            "id": "BC-13.远端与本地一致(含删除不复活)",
+            "status": "FAIL",
+            "detail": "serverNames=[]"
+        },
+        {
+            "id": "BC-15.业务类失败累加 attempts（触发触顶路径）",
+            "status": "PASS",
+            "detail": "queue=[{\"id\":\"468425346396459008:tasks:468425981074210816\",\"table\":\"tasks\",\"action\":\"upsert\",\"retryCount\":1,\"attempts\":1,\"nextAttemptAt\":\"2026-09-13T14:40:29.573Z\",\"lastErrorClass\":\"business\"},{\"id\":\"468425346396459008:tasks:468425997624934400\",\"table\":\"tasks\",\"action\":\"upsert\",\"retryCount\":1,\"attempts\":1,\"nextAttemptAt\":\"2026-09-13T14:40:29.576Z\",\"lastErrorClass\":\"business\"},{\"id\":\"468425346396459008:tasks:468426014163075072\",\"table\":\"tasks\",\"action\":\"delete\",\"retryCount\":1,\"attempts\":1,\"nextAttemptAt\":\"2026-09-13T14:40:29.578Z\",\"lastErrorClass\":\"business\"},{\"id\":\"468425346396459008:tasks:468426676120715264\",\"table\":\"tasks\",\"action\":\"upsert\",\"retryCount\":1,\"attempts\":1,\"nextAttemptAt\":\"2026-09-13T14:40:29.580Z\",\"lastErrorClass\":\"business\"}]"
+        },
+        {
+            "id": "BC-15.触顶项恢复后完成回传",
+            "status": "FAIL",
+            "detail": "queue=4 server=[]"
+        },
+        {
+            "id": "AC6/回归.凭证失效走登录/重登（离线进入不可用）",
+            "status": "FAIL",
+            "detail": "hash=#/auth/checkin body=\"Q QA-S06 qa.shell06.1789310105@qa.local 解锁 登出用户\""
         }
-      ]
-    },
-    "pushDuringOffline": 2,
-    "offlineRail": {
-      "label": "offline-rail",
-      "hash": "#/tasks/all/table",
-      "router": {
-        "name": "tasks-built-in-project-main",
-        "fullPath": "/tasks/all/table"
-      },
-      "rail": true,
-      "railClass": "nue-button nue-button--pure sync-rail-btn is-pending",
-      "live": null,
-      "bodyText": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 S06探针任务-3046 今天 22:36 低优先级 待办 收集箱 S06DEL-6364 今天 22:36 低优先级 待办 收集箱 S06DEL-2313 今天 22:36 低优先级 待办 收集箱 S06-T1-5053 今天 22:37 低优先级 待办 收集箱 S06-T2-5053 今天 22:37 低优先级 待办 收集箱 S",
-      "clickable": [
-        "清单\n0",
-        "标签\n0",
-        "20 条每页"
-      ]
-    },
-    "autoBackfillWaitMs": 140324,
-    "finalQueue": {
-      "count": 3,
-      "items": [
-        {
-          "id": "468425346396459008:tasks:468425981074210816",
-          "table": "tasks",
-          "action": "upsert",
-          "retryCount": 0
+    ],
+    "raw": {
+        "baselineQueue": {
+            "count": 0,
+            "items": []
         },
-        {
-          "id": "468425346396459008:tasks:468425997624934400",
-          "table": "tasks",
-          "action": "upsert",
-          "retryCount": 0
+        "baselineServer": {
+            "status": 200,
+            "count": 0,
+            "names": []
         },
-        {
-          "id": "468425346396459008:tasks:468426014163075072",
-          "table": "tasks",
-          "action": "delete",
-          "retryCount": 0
+        "create": {
+            "t1": {
+                "res": "ok",
+                "appeared": true
+            },
+            "t2": {
+                "res": "ok",
+                "appeared": true
+            },
+            "t3": {
+                "res": "ok",
+                "appeared": true
+            }
+        },
+        "delete": {
+            "ok": false,
+            "clicked": "delete-clicked",
+            "confirmed": "noconfirm",
+            "gone": false
+        },
+        "offlineQueue": {
+            "count": 3,
+            "items": [
+                {
+                    "id": "468425346396459008:tasks:468425981074210816",
+                    "table": "tasks",
+                    "action": "upsert",
+                    "retryCount": 0
+                },
+                {
+                    "id": "468425346396459008:tasks:468425997624934400",
+                    "table": "tasks",
+                    "action": "upsert",
+                    "retryCount": 0
+                },
+                {
+                    "id": "468425346396459008:tasks:468426014163075072",
+                    "table": "tasks",
+                    "action": "delete",
+                    "retryCount": 0
+                }
+            ]
+        },
+        "pushDuringOffline": 2,
+        "offlineRail": {
+            "label": "offline-rail",
+            "hash": "#/tasks/all/table",
+            "router": {
+                "name": "tasks-built-in-project-main",
+                "fullPath": "/tasks/all/table"
+            },
+            "rail": true,
+            "railClass": "nue-button nue-button--pure sync-rail-btn is-pending",
+            "live": null,
+            "bodyText": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 S06探针任务-3046 今天 22:36 低优先级 待办 收集箱 S06DEL-6364 今天 22:36 低优先级 待办 收集箱 S06DEL-2313 今天 22:36 低优先级 待办 收集箱 S06-T1-5053 今天 22:37 低优先级 待办 收集箱 S06-T2-5053 今天 22:37 低优先级 待办 收集箱 S",
+            "clickable": ["清单\n0", "标签\n0", "20 条每页"]
+        },
+        "autoBackfillWaitMs": 140324,
+        "finalQueue": {
+            "count": 3,
+            "items": [
+                {
+                    "id": "468425346396459008:tasks:468425981074210816",
+                    "table": "tasks",
+                    "action": "upsert",
+                    "retryCount": 0
+                },
+                {
+                    "id": "468425346396459008:tasks:468425997624934400",
+                    "table": "tasks",
+                    "action": "upsert",
+                    "retryCount": 0
+                },
+                {
+                    "id": "468425346396459008:tasks:468426014163075072",
+                    "table": "tasks",
+                    "action": "delete",
+                    "retryCount": 0
+                }
+            ]
+        },
+        "finalServer": {
+            "status": 200,
+            "count": 0,
+            "names": []
+        },
+        "finalRail": {
+            "label": "after-backfill",
+            "hash": "#/tasks/all/table",
+            "router": {
+                "name": "tasks-built-in-project-main",
+                "fullPath": "/tasks/all/table"
+            },
+            "rail": true,
+            "railClass": "nue-button nue-button--pure sync-rail-btn is-pending",
+            "live": null,
+            "bodyText": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 S06探针任务-3046 今天 22:36 低优先级 待办 收集箱 S06DEL-6364 今天 22:36 低优先级 待办 收集箱 S06DEL-2313 今天 22:36 低优先级 待办 收集箱 S06-T1-5053 今天 22:37 低优先级 待办 收集箱 S06-T2-5053 今天 22:37 低优先级 待办 收集箱 S",
+            "clickable": ["清单\n0", "标签\n0", "20 条每页"]
+        },
+        "bizCreate": {
+            "res": "ok",
+            "appeared": true
+        },
+        "bizQueue": {
+            "count": 4,
+            "items": [
+                {
+                    "id": "468425346396459008:tasks:468425981074210816",
+                    "table": "tasks",
+                    "action": "upsert",
+                    "retryCount": 1,
+                    "attempts": 1,
+                    "nextAttemptAt": "2026-09-13T14:40:29.573Z",
+                    "lastErrorClass": "business"
+                },
+                {
+                    "id": "468425346396459008:tasks:468425997624934400",
+                    "table": "tasks",
+                    "action": "upsert",
+                    "retryCount": 1,
+                    "attempts": 1,
+                    "nextAttemptAt": "2026-09-13T14:40:29.576Z",
+                    "lastErrorClass": "business"
+                },
+                {
+                    "id": "468425346396459008:tasks:468426014163075072",
+                    "table": "tasks",
+                    "action": "delete",
+                    "retryCount": 1,
+                    "attempts": 1,
+                    "nextAttemptAt": "2026-09-13T14:40:29.578Z",
+                    "lastErrorClass": "business"
+                },
+                {
+                    "id": "468425346396459008:tasks:468426676120715264",
+                    "table": "tasks",
+                    "action": "upsert",
+                    "retryCount": 1,
+                    "attempts": 1,
+                    "nextAttemptAt": "2026-09-13T14:40:29.580Z",
+                    "lastErrorClass": "business"
+                }
+            ]
+        },
+        "bizRetry": {
+            "clicked": false
+        },
+        "bizFinalQueue": {
+            "count": 4,
+            "items": [
+                {
+                    "id": "468425346396459008:tasks:468425981074210816",
+                    "table": "tasks",
+                    "action": "upsert",
+                    "retryCount": 1,
+                    "attempts": 1,
+                    "nextAttemptAt": "2026-09-13T14:40:29.573Z",
+                    "lastErrorClass": "business"
+                },
+                {
+                    "id": "468425346396459008:tasks:468425997624934400",
+                    "table": "tasks",
+                    "action": "upsert",
+                    "retryCount": 1,
+                    "attempts": 1,
+                    "nextAttemptAt": "2026-09-13T14:40:29.576Z",
+                    "lastErrorClass": "business"
+                },
+                {
+                    "id": "468425346396459008:tasks:468426014163075072",
+                    "table": "tasks",
+                    "action": "delete",
+                    "retryCount": 1,
+                    "attempts": 1,
+                    "nextAttemptAt": "2026-09-13T14:40:29.578Z",
+                    "lastErrorClass": "business"
+                },
+                {
+                    "id": "468425346396459008:tasks:468426676120715264",
+                    "table": "tasks",
+                    "action": "upsert",
+                    "retryCount": 1,
+                    "attempts": 1,
+                    "nextAttemptAt": "2026-09-13T14:40:29.580Z",
+                    "lastErrorClass": "business"
+                }
+            ]
+        },
+        "bizFinalServer": {
+            "status": 200,
+            "count": 0,
+            "names": []
+        },
+        "credential": {
+            "label": "credential-failure",
+            "hash": "#/auth/checkin",
+            "router": {
+                "name": "auth-checkin",
+                "fullPath": "/auth/checkin"
+            },
+            "rail": false,
+            "railClass": null,
+            "live": null,
+            "bodyText": "Q QA-S06 qa.shell06.1789310105@qa.local 解锁 登出用户",
+            "clickable": ["解锁", "登出用户"]
         }
-      ]
     },
-    "finalServer": {
-      "status": 200,
-      "count": 0,
-      "names": []
-    },
-    "finalRail": {
-      "label": "after-backfill",
-      "hash": "#/tasks/all/table",
-      "router": {
-        "name": "tasks-built-in-project-main",
-        "fullPath": "/tasks/all/table"
-      },
-      "rail": true,
-      "railClass": "nue-button nue-button--pure sync-rail-btn is-pending",
-      "live": null,
-      "bodyText": "Q 所有任务 今日任务 9月13日 明日任务 本周任务 收集箱 清单 0 用清单来分类收集、组织和管理你的待办任务 标签 0 以标签的维度展示不同清单的待办任务 收藏夹 垃圾桶 已过期的任务 已放弃的待办 所有任务 名称 更新时间 结束时间 优先级 状态 所属清单 S06探针任务-3046 今天 22:36 低优先级 待办 收集箱 S06DEL-6364 今天 22:36 低优先级 待办 收集箱 S06DEL-2313 今天 22:36 低优先级 待办 收集箱 S06-T1-5053 今天 22:37 低优先级 待办 收集箱 S06-T2-5053 今天 22:37 低优先级 待办 收集箱 S",
-      "clickable": [
-        "清单\n0",
-        "标签\n0",
-        "20 条每页"
-      ]
-    },
-    "bizCreate": {
-      "res": "ok",
-      "appeared": true
-    },
-    "bizQueue": {
-      "count": 4,
-      "items": [
-        {
-          "id": "468425346396459008:tasks:468425981074210816",
-          "table": "tasks",
-          "action": "upsert",
-          "retryCount": 1,
-          "attempts": 1,
-          "nextAttemptAt": "2026-09-13T14:40:29.573Z",
-          "lastErrorClass": "business"
-        },
-        {
-          "id": "468425346396459008:tasks:468425997624934400",
-          "table": "tasks",
-          "action": "upsert",
-          "retryCount": 1,
-          "attempts": 1,
-          "nextAttemptAt": "2026-09-13T14:40:29.576Z",
-          "lastErrorClass": "business"
-        },
-        {
-          "id": "468425346396459008:tasks:468426014163075072",
-          "table": "tasks",
-          "action": "delete",
-          "retryCount": 1,
-          "attempts": 1,
-          "nextAttemptAt": "2026-09-13T14:40:29.578Z",
-          "lastErrorClass": "business"
-        },
-        {
-          "id": "468425346396459008:tasks:468426676120715264",
-          "table": "tasks",
-          "action": "upsert",
-          "retryCount": 1,
-          "attempts": 1,
-          "nextAttemptAt": "2026-09-13T14:40:29.580Z",
-          "lastErrorClass": "business"
-        }
-      ]
-    },
-    "bizRetry": {
-      "clicked": false
-    },
-    "bizFinalQueue": {
-      "count": 4,
-      "items": [
-        {
-          "id": "468425346396459008:tasks:468425981074210816",
-          "table": "tasks",
-          "action": "upsert",
-          "retryCount": 1,
-          "attempts": 1,
-          "nextAttemptAt": "2026-09-13T14:40:29.573Z",
-          "lastErrorClass": "business"
-        },
-        {
-          "id": "468425346396459008:tasks:468425997624934400",
-          "table": "tasks",
-          "action": "upsert",
-          "retryCount": 1,
-          "attempts": 1,
-          "nextAttemptAt": "2026-09-13T14:40:29.576Z",
-          "lastErrorClass": "business"
-        },
-        {
-          "id": "468425346396459008:tasks:468426014163075072",
-          "table": "tasks",
-          "action": "delete",
-          "retryCount": 1,
-          "attempts": 1,
-          "nextAttemptAt": "2026-09-13T14:40:29.578Z",
-          "lastErrorClass": "business"
-        },
-        {
-          "id": "468425346396459008:tasks:468426676120715264",
-          "table": "tasks",
-          "action": "upsert",
-          "retryCount": 1,
-          "attempts": 1,
-          "nextAttemptAt": "2026-09-13T14:40:29.580Z",
-          "lastErrorClass": "business"
-        }
-      ]
-    },
-    "bizFinalServer": {
-      "status": 200,
-      "count": 0,
-      "names": []
-    },
-    "credential": {
-      "label": "credential-failure",
-      "hash": "#/auth/checkin",
-      "router": {
-        "name": "auth-checkin",
-        "fullPath": "/auth/checkin"
-      },
-      "rail": false,
-      "railClass": null,
-      "live": null,
-      "bodyText": "Q QA-S06 qa.shell06.1789310105@qa.local 解锁 登出用户",
-      "clickable": [
-        "解锁",
-        "登出用户"
-      ]
-    }
-  },
-  "console": [
-    "error: [sync] 推送归一化错误（断网/超时） ERR_NETWORK",
-    "error: [sync] 推送归一化错误（断网/超时） ERR_NETWORK",
-    "warning: [sync] 推送未确认的实体 Object",
-    "warning: [sync] 推送未确认的实体 Object",
-    "warning: [sync] 推送未确认的实体 Object",
-    "warning: [sync] 推送未确认的实体 Object"
-  ]
+    "console": [
+        "error: [sync] 推送归一化错误（断网/超时） ERR_NETWORK",
+        "error: [sync] 推送归一化错误（断网/超时） ERR_NETWORK",
+        "warning: [sync] 推送未确认的实体 Object",
+        "warning: [sync] 推送未确认的实体 Object",
+        "warning: [sync] 推送未确认的实体 Object",
+        "warning: [sync] 推送未确认的实体 Object"
+    ]
 }
