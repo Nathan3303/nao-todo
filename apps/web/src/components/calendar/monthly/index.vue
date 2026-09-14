@@ -300,7 +300,15 @@ provide<CalendarWeeklyContext>(CALENDAR_WEEKLY_CONTEXT_KEY, {
 })
 
 // —— C2-F9 月视图标题年-月跳转（面板弹层状态机；O2 抽取 useMonthJump） ——
-const mjp = useMonthJump({
+// 调用点解构为顶层 ref（模板嵌套 ref 不解包；:x="mjpPos.x" 恢复顶层解包语义，REG-01 修复）
+const {
+    open: mjpOpen,
+    pos: mjpPos,
+    titleEl: mjpTitleEl,
+    toggle: toggleMonthJump,
+    close: closeMonthJump,
+    select: onMonthJumpSelect
+} = useMonthJump({
     onSelect: (targetYear, targetMonth) => jumpToMonth(targetYear, targetMonth)
 })
 
@@ -382,12 +390,12 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                     >
                     </nue-button>
                     <button
-                        ref="mjp.titleEl"
+                        ref="mjpTitleEl"
                         type="button"
                         class="cal-title"
                         data-mjp-trigger
                         title="跳转到年月"
-                        @click="mjp.toggle"
+                        @click="toggleMonthJump"
                     >
                         {{ monthTitle }}
                     </button>
@@ -401,13 +409,13 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                 </nue-div>
                 <!-- 年-月跳转面板（C2-F9） -->
                 <month-jump-panel
-                    :open="mjp.open"
-                    :x="mjp.pos.x"
-                    :y="mjp.pos.y"
+                    :open="mjpOpen"
+                    :x="mjpPos.x"
+                    :y="mjpPos.y"
                     :anchor-year="year"
                     :anchor-month="monthIndex + 1"
-                    @select="mjp.select"
-                    @close="mjp.close"
+                    @select="onMonthJumpSelect"
+                    @close="closeMonthJump"
                 />
                 <nue-div align="center" gap="6px">
                     <nue-div class="cal-view-toggle" role="group" aria-label="视图切换">

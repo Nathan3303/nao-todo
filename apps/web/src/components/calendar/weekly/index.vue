@@ -147,7 +147,15 @@ const jumpAnchorMonth = computed(() => {
     const anchor = dayjs(selectedKey.value)
     return anchor.isValid() ? anchor.month() + 1 : dayjs().month() + 1
 })
-const wjp = useMonthJump({
+// 调用点解构为顶层 ref（模板嵌套 ref 不解包；:x="wjpPos.x" 恢复顶层解包语义，REG-01 修复）
+const {
+    open: wjpOpen,
+    pos: wjpPos,
+    titleEl: wjpTitleEl,
+    toggle: toggleWeekJump,
+    close: closeWeekJump,
+    select: onWeekJumpSelect
+} = useMonthJump({
     onSelect: (year, month) => onJumpYearMonth(year, month)
 })
 </script>
@@ -169,12 +177,12 @@ const wjp = useMonthJump({
                     @click="onPrevWeek"
                 />
                 <button
-                    ref="wjp.titleEl"
+                    ref="wjpTitleEl"
                     type="button"
                     class="wk-title"
                     data-mjp-trigger
                     title="跳转到年月"
-                    @click="wjp.toggle"
+                    @click="toggleWeekJump"
                 >
                     {{ title }}
                 </button>
@@ -187,13 +195,13 @@ const wjp = useMonthJump({
             </nue-div>
             <!-- 年-月跳转面板（C2-F9；周视图内落周，不切回月视图） -->
             <month-jump-panel
-                :open="wjp.open"
-                :x="wjp.pos.x"
-                :y="wjp.pos.y"
+                :open="wjpOpen"
+                :x="wjpPos.x"
+                :y="wjpPos.y"
                 :anchor-year="jumpAnchorYear"
                 :anchor-month="jumpAnchorMonth"
-                @select="wjp.select"
-                @close="wjp.close"
+                @select="onWeekJumpSelect"
+                @close="closeWeekJump"
             />
             <nue-div align="center" gap="6px">
                 <nue-div class="wk-view-toggle" role="group" aria-label="视图切换">
