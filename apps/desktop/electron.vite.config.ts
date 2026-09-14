@@ -1,4 +1,5 @@
 import { resolve } from 'node:path'
+import { readFileSync } from 'node:fs'
 import vue from '@vitejs/plugin-vue'
 import type { Plugin } from 'vite'
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
@@ -12,6 +13,12 @@ export default defineConfig({
         plugins: [externalizeDepsPlugin()]
     },
     renderer: {
+        // 应用版本号（设置页展示）：desktop 复用 web 源码，构建期从本包 package.json 注入桌面端版本
+        define: {
+            'import.meta.env.VITE_APP_VERSION': JSON.stringify(
+                JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8')).version
+            )
+        },
         resolve: {
             // SHELL-05 C-36：桌面渲染层复用 webapp 源码（@ → apps/web/src），
             // 必须保证共享运行时依赖单物理实例；否则 vue-router 双实例 →

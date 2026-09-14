@@ -2,6 +2,69 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.7.3] - 2026-09-14
+
+发布批次：设置-应用设置新增版本号显示（patch；webapp 首次纳入版本协同）。**Tag `v1.7.3`** · root `1.7.3` / `@nao-todo/desktopapp` `1.7.3` / `@nao-todo/webapp` `1.7.3`（新增 version 字段，首次纳入协同；`@nao-todo/presentation` `0.4.2` / `@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` 不动）。范围：web + desktop（设置页 UI + 构建配置）。
+
+### Added（新增）
+
+- **设置-应用设置版本号显示**：底部（语言 / 主题之后）新增只读版本号行（i18n `settings.version`，zh-CN / en-US / types 同步）。版本号**双端区分**：vite `define` 构建期从各自 package.json 注入 `import.meta.env.VITE_APP_VERSION`——Web 显示 `@nao-todo/webapp` 版本、Desktop 显示 `@nao-todo/desktopapp` 版本（desktop 复用 web 源码，经构建期注入区分）。
+- **webapp 首次纳入版本协同**：`apps/web/package.json` 新增 `version: 1.7.3`（此前无此字段）。
+
+### Changed
+
+- 版本协同 bump（patch）：root / `@nao-todo/desktopapp` `1.7.2 → 1.7.3`；`@nao-todo/webapp` `1.7.3`（新增）。其余包不动；无公开 API 导出面破坏。
+
+### 质量门槛
+
+- `vp test`：73 文件 / 645 例全绿。
+- `vp check`：目标文件 pass（fmt / lint / type）。
+- `pnpm webapp build` ✓ / `pnpm desktopapp build` ✓；产物核验：web 注入 `1.7.3`、desktop 注入桌面端版本（bump 前实测 `1.7.2`，bump 后 `1.7.3`）。
+
+[v1.7.3]: https://github.com/Nathan3303/nao-todo/releases/tag/v1.7.3
+
+## [v1.7.2] - 2026-09-14
+
+发布批次：桌面端同步状态栏 UI 重构 + 日历月/周边距微调（patch）。**Tag `v1.7.2`** · root `1.7.2` / `@nao-todo/desktopapp` `1.7.2`（`@nao-todo/presentation` `0.4.2` / `@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` 不动；webapp 无 version 不参与）。范围：web + desktop（renderer UI 层）。
+
+### Fixed（修复 / 重构）
+
+- **桌面端同步状态栏 UI 重构**：面板结构 nue-text 化（li 行改直挂面板根）、`placement` 调整 `right-center → top-start`、新图标 `ntd-sync2`、footer 动作按钮去包装；内容可见性改由库 `data-visible` 控制（移除组件级 @close 卸载）。
+- **日历月 / 周边距微调**（`apps/web/src/components/calendar/monthly|weekly/index.vue`）；新增 iconfont 图标（`iconfont.css` / `.woff2`）。
+- **测试同步**（`sync-status-bar.test.ts`）：选择器对齐新结构（`.sync-panel__row` / `.sync-panel__footer` / `.sync-panel__error` → 面板根 / 按钮 / title 全文定位），行为断言全部保留（三态文案 / 错误 title 全文+无子元素 / 焦点归还 / live summary / 无障碍）。
+
+### Changed
+
+- 版本协同 bump（patch）：root / `@nao-todo/desktopapp` `1.7.1 → 1.7.2`。其余包不动；无公开 API 导出面破坏。
+
+### 质量门槛
+
+- `vp test`：**73 文件 / 645 例全绿**（含 `sync-status-bar.test.ts` 4/4，原 2 failed 已同步修复）。
+- `vp check`：目标文件 pass（fmt / lint / type）。
+- `pnpm webapp build` ✓ / `pnpm desktopapp build` ✓。
+
+[v1.7.2]: https://github.com/Nathan3303/nao-todo/releases/tag/v1.7.2
+
+## [v1.7.1] - 2026-09-14
+
+发布批次：TASK-04 详情面板子任务行标签展示（patch）。**Tag `v1.7.1`** · root `1.7.1` / `@nao-todo/desktopapp` `1.7.1` / `@nao-todo/presentation` `0.4.2`（`@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` / `@nao-todo/domain-project` `1.1.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（presentation 层）。设计记录：PRD `docs/prds/2026-09-14-task-details-subtask-tags.md`。
+
+### Added（新增）
+
+- **详情面板子任务行标签展示（TASK-04；`d3c5e5cc`）**：名称右侧原时间内联位改挂**只读 small 标签栏**（`clamped=2` 溢出 +N，标签池复用详情上下文，空标签不渲染）；时间下移为名称下、描述上**独立行**（文案 / 拼接规则不变，无时间不渲染）；脱离按钮 hover / focus-within 展示语义锁定；`.subtask-row__tags` 收缩上限防长标签挤没名称。
+
+### Changed
+
+- 版本协同 bump（patch）：root / `@nao-todo/desktopapp` `1.7.0 → 1.7.1`；`@nao-todo/presentation` `0.4.1 → 0.4.2`（TASK-04 展示增强，patch）。无公开 API 导出面破坏；移动端红线 `@nao-todo/presentation-react` 零改动。
+
+### 质量门槛
+
+- `vp test`：TASK-04 目标 14/14 绿（全仓 643/645，2 失败为既有 sync-status-bar 工作树状态，与本次零交集）。
+- `vp check`：目标文件 pass（fmt / lint / type）。
+- `pnpm webapp build` ✓ / `pnpm desktopapp build` ✓。
+
+[v1.7.1]: https://github.com/Nathan3303/nao-todo/releases/tag/v1.7.1
+
 ## [v1.7.0] - 2026-09-13
 
 发布批次：设置分栏 / 搜索增强 / 离线边界加固 / 离线写入与自动回传 协同收尾。**Tag `v1.7.0` 待 PM 放行后打** · **前置：服务端 `5c0b25d3`（SYNC-DEF-01）已部署** · root `1.7.0` / `@nao-todo/desktopapp` `1.7.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/presentation` `0.4.1` / `@nao-todo/shared` `1.3.0`（`@nao-todo/domain-task` `1.2.0` / `@nao-todo/domain-project` `1.1.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（views / presentation / presentation-identity / shared / infrastructure 层）。设计记录：PRD `docs/prds/2026-09-13-shell-05-offline-boundary-hardening.md`、`docs/prds/2026-09-13-shell-06-offline-backfill.md`；ADR `docs/adr/2026-09-13-shell-06-offline-backfill.md`（C-38–C-45）。

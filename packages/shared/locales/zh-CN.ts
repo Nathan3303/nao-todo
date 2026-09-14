@@ -118,6 +118,7 @@ const zhCN: LocaleMessages = {
     'settings.profile': '用户信息',
     'settings.password': '密码修改',
     'settings.app': '应用设置',
+    'settings.version': '版本号 {version}',
     'settings.userInfo': '用户信息',
     'settings.passwordChange': '密码修改',
     'settings.appSettings': '应用设置',

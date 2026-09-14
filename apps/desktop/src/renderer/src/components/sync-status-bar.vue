@@ -98,19 +98,19 @@ watch(settingsDialogOpen, (visible) => {
             ref="dropdownRef"
             theme="sync-panel"
             trigger-type="click"
-            placement="right-center"
+            placement="top-start"
             :transparent="true"
             @open="handleOpen"
             @close="handleClose"
         >
             <!-- 轨道按钮：可访问名走 aria-label（C13，tooltip 不能当可访问名），展开态走 trigger slot 的 visible -->
             <template #trigger="{ trigger, visible }">
-                <nue-tooltip :content="t('sync.title')" placement="top-center" size="small">
+                <nue-tooltip :content="t('sync.title')" placement="right-center" size="small">
                     <nue-button
                         class="sync-rail-btn"
                         :class="statusTheme"
                         theme="pure"
-                        icon="refresh"
+                        icon="ntd-sync2"
                         :loading="syncing"
                         :aria-label="t('sync.title')"
                         :aria-expanded="visible"
@@ -119,38 +119,34 @@ watch(settingsDialogOpen, (visible) => {
                 </nue-tooltip>
             </template>
             <!-- 内容行：@open 渲染 / @close 移除（C9）；面板根是库内 <ul>，故每行均为 <li> -->
-            <template v-if="panelOpen">
-                <li class="sync-panel__row">
-                    <nue-text size="xs">{{ lastSyncText }}</nue-text>
-                </li>
-                <!-- SHELL-06 C-41：暂停（离线/超限）显式可见，仅提示不阻断 -->
-                <li v-if="status.paused" class="sync-panel__row is-pending">
-                    <nue-text size="xs">
-                        {{ t('sync.pendingOffline', { count: status.pendingCount }) }}
-                    </nue-text>
-                </li>
-                <li v-else-if="status.pendingCount > 0" class="sync-panel__row">
-                    <nue-text size="xs">
-                        {{ t('sync.pending', { count: status.pendingCount }) }}
-                    </nue-text>
-                </li>
-                <li v-if="status.failedCount > 0" class="sync-panel__row is-failed">
-                    <nue-text size="xs">{{
-                        t('sync.failed', { count: status.failedCount })
-                    }}</nue-text>
-                </li>
-                <li v-if="status.lastError" class="sync-panel__row is-failed">
-                    <!-- 全文仅经 title 与文本插值输出（禁 v-html）；2 行截断由 CSS 完成；
+            <nue-text size="xs" color="var(--nue-secondary-text-color)">
+                {{ lastSyncText }}
+            </nue-text>
+            <!-- SHELL-06 C-41：暂停（离线/超限）显式可见，仅提示不阻断 -->
+            <nue-text v-if="status.paused" size="xs" color="var(--nue-warning-color-60)">
+                {{ t('sync.pendingOffline', { count: status.pendingCount }) }}
+            </nue-text>
+            <nue-text
+                v-else-if="status.pendingCount > 0"
+                size="xs"
+                color="var(--nue-secondary-text-color)"
+            >
+                {{ t('sync.pending', { count: status.pendingCount }) }}
+            </nue-text>
+            <nue-text v-if="status.failedCount > 0" size="xs" color="var(--nue-error-color-60)">
+                {{ t('sync.failed', { count: status.failedCount }) }}
+            </nue-text>
+            <!-- 全文仅经 title 与文本插值输出（禁 v-html）；2 行截断由 CSS 完成；
                          live region 只播摘要（见下方常驻活动区域），此处不带 aria-live -->
-                    <nue-text
-                        class="sync-panel__error"
-                        size="xs"
-                        :clamped="2"
-                        :title="status.lastError"
-                        >{{ status.lastError }}</nue-text
-                    >
-                </li>
-            </template>
+            <nue-text
+                v-if="status.lastError"
+                size="xs"
+                color="var(--nue-error-color-60)"
+                :clamped="2"
+                :title="status.lastError"
+            >
+                {{ status.lastError }}
+            </nue-text>
             <!--
               常驻结构位（非内容、无文案/无图标、非 nue-dropdown-item）：default slot 全为注释时，
               Vue 3.5.41 renderSlot + ensureValidVNode 判定“无有效内容”→ 回落库内
@@ -165,16 +161,9 @@ watch(settingsDialogOpen, (visible) => {
               （execute-id + closeWhenExecuted）；本轮 footer 是动作按钮且按 C15 不挂 execute-id。
               行为等价子集内合法：不给控件补 role="menu"/"menuitem"，不给只读行套 item。
             -->
-            <li class="sync-panel__footer">
-                <nue-button
-                    v-if="panelOpen"
-                    theme="primary,small"
-                    :loading="manualSyncing"
-                    @click="runManualSync"
-                >
-                    {{ status.paused ? t('sync.retryNow') : t('sync.syncNow') }}
-                </nue-button>
-            </li>
+            <nue-button theme="pure,small" :loading="manualSyncing" @click="runManualSync">
+                {{ status.paused ? t('sync.retryNow') : t('sync.syncNow') }}
+            </nue-button>
         </nue-dropdown>
         <!--
           常驻读屏活动区域（NFR「只播摘要」）：只播同步中/失败计数摘要，**不含** lastError 全文。
@@ -196,7 +185,6 @@ watch(settingsDialogOpen, (visible) => {
        故清零边框保证与齿轮 rect 同尺寸（库内无 border-width 令牌可用） */
     border: 0;
     font-size: var(--nue-text-2xl);
-    line-height: 1;
 }
 
 /* D2：修正状态色令牌（原 --warning-color 是局部分组令牌、--nue-danger-hsl-color 全仓无定义） */
@@ -240,5 +228,6 @@ watch(settingsDialogOpen, (visible) => {
 .nue-dropdown--sync-panel {
     min-width: 12rem;
     max-width: 18rem;
+    padding: var(--nue-padding-xs);
 }
 </style>

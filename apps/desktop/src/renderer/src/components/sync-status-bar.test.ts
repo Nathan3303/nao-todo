@@ -174,10 +174,15 @@ describe('SyncStatusBar - SHELL-02 轨道同步状态', () => {
         openPanel()
         await settle()
 
-        // 打开态：面板生效（data-visible）且我方门控内容已渲染；footer 动作按钮结构在位（AC-03 Tab 目标）
+        // 打开态：面板生效（data-visible）且内容行/动作按钮结构在位（AC-03 Tab 目标）。
+        // 重构后 nue-text 化：无 .sync-panel__row/.sync-panel__footer，行与按钮直挂面板根
         expect(document.querySelector('.nue-dropdown')?.getAttribute('data-visible')).toBe('true')
-        expect(document.querySelector('.sync-panel__row')).toBeTruthy()
-        expect(document.querySelector('.sync-panel__footer button')).toBeTruthy()
+        const panel = document.querySelector<HTMLElement>('.nue-dropdown--sync-panel')
+        expect(panel).toBeTruthy()
+        expect(panel?.textContent).toContain('从未同步')
+        const actionButton = panel?.querySelector<HTMLButtonElement>('button.nue-button')
+        expect(actionButton).toBeTruthy()
+        expect(actionButton?.textContent).toContain('立即同步')
         expect(button?.getAttribute('aria-expanded')).toBe('true')
 
         // Esc 关闭（NueOverlay 承接 keydown → 库 emit('close')）
@@ -186,9 +191,12 @@ describe('SyncStatusBar - SHELL-02 轨道同步状态', () => {
         overlay?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
         await settle()
 
-        // 关闭态口径（C9/C10）：只断言 data-visible 与我方门控内容，不断言池为空/面板彻底移除
+        // 关闭态口径（重构后 C9 语义变化）：内容行不再由组件 @close 卸载，改由库常驻挂载 +
+        // data-visible 控制面板可见性；断言面板关闭且结构仍完整，不断言池为空/面板彻底移除
         expect(document.querySelector('.nue-dropdown')?.getAttribute('data-visible')).toBe('false')
-        expect(document.querySelector('.sync-panel__row')).toBeNull()
+        const panelAfterClose = document.querySelector<HTMLElement>('.nue-dropdown--sync-panel')
+        expect(panelAfterClose?.textContent).toContain('从未同步')
+        expect(panelAfterClose?.querySelector('button.nue-button')).toBeTruthy()
         // C16：@close + nextTick 归还焦点
         expect(document.activeElement).toBe(button)
     })
@@ -224,7 +232,8 @@ describe('SyncStatusBar - SHELL-02 轨道同步状态', () => {
         expect(panelText()).toContain('待推送 2')
         expect(panelText()).toContain('失败 1')
         expect(panelText()).toContain('上次同步')
-        const error = document.querySelector('.sync-panel__error')
+        // 错误行（重构后 nue-text 化、无 .sync-panel__error 类）：以 title 全文定位，断言全文/无子元素（禁 v-html）
+        const error = document.querySelector<HTMLElement>('[title="Sync failed: boom"]')
         expect(error?.getAttribute('title')).toBe('Sync failed: boom')
         expect(error?.textContent).toContain('Sync failed: boom')
         expect(error?.querySelector('*')).toBeNull()

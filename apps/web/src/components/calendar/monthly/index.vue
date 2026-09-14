@@ -680,18 +680,17 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
     );
 
     height: 100%;
-    padding: 1.5rem 1.75rem 1.25rem;
+    padding: 1rem;
     background: var(--cal-bg);
     overflow: hidden;
 }
 
 /* ── 月份导航 ── */
 .cal-header {
-    margin-bottom: 1rem;
     user-select: none;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    margin-bottom: var(--nue-gap-sm);
 }
 
 .cal-nav-btn {

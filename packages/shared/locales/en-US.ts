@@ -120,6 +120,7 @@ const enUS: LocaleMessages = {
     'settings.profile': 'User Profile',
     'settings.password': 'Change Password',
     'settings.app': 'App Settings',
+    'settings.version': 'Version {version}',
     'settings.userInfo': 'User Profile',
     'settings.passwordChange': 'Change Password',
     'settings.appSettings': 'App Settings',

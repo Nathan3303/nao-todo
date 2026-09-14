@@ -115,6 +115,7 @@ export interface LocaleMessages {
     'settings.profile': string
     'settings.password': string
     'settings.app': string
+    'settings.version': string
     'settings.userInfo': string
     'settings.passwordChange': string
     'settings.appSettings': string

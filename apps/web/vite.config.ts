@@ -44,8 +44,16 @@ const precompress = (): Plugin => {
 }
 
 // https://vitejs.dev/config/
+// 应用版本号（设置页展示）：单一事实源 = 本包 package.json，构建期 define 注入 import.meta.env.VITE_APP_VERSION
+const webappVersion = JSON.parse(
+    readFileSync(fileURLToPath(new URL('./package.json', import.meta.url)), 'utf-8')
+).version
+
 export default defineConfig({
     plugins: lazyPlugins(() => [vue(), visualizer({ open: true }), precompress()]),
+    define: {
+        'import.meta.env.VITE_APP_VERSION': JSON.stringify(webappVersion)
+    },
     resolve: {
         alias: {
             '@': fileURLToPath(new URL('./src', import.meta.url))
