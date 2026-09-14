@@ -4,7 +4,7 @@ import { translateTaskError, useTasksStore } from '@nao-todo/presentation/task'
 import { useTaskUseCase } from '@/hooks'
 import { NueMessage } from 'nue-ui'
 import dayjs from 'dayjs'
-import { computed, inject, onMounted, onUnmounted, ref, watch, type Ref } from 'vue'
+import { computed, inject, ref, watch, type Ref } from 'vue'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
 import {
     buildGridModel,
@@ -13,21 +13,15 @@ import {
     spanCoversDate,
     todayDateKey
 } from './monthly-layout'
-import { buildCalendarListQuery, MAX_PAGES, PAGE_LIMIT } from './list-query'
-import {
-    shiftTaskDates,
-    snapshotTaskDates,
-    type BatchScheduleResult,
-    type ScheduleUndoAction,
-    type TaskScheduleSnapshot
-} from './reschedule'
 import { isDateKeyInMonth, monthFirstDateKey } from './month-jump'
+import { useCalendarTaskQuery } from './use-calendar-task-query'
+import { useCalendarSchedule } from './use-calendar-schedule'
 
 /**
  * useCalendarMonthly
- * @description 月历视图逻辑：任务全量拉取（服务端过滤：多清单/多标签/隐藏已完成，
- *              顶层/未删除/未归档/未放弃）+ 翻月 + 日期选中 + 网格模型计算 +
- *              完成切换/当日新建/打开详情等动作。
+ * @description 月历视图逻辑组装（O12 拆分后）：任务拉取/订阅（useCalendarTaskQuery）与
+ *              排期/撤销（useCalendarSchedule）已抽离；本组合式保留视图导航、选中、模型、
+ *              快速新建、任务详情等，并作为 DI 唯一组装点（store/usecase 在此创建并注入）。
  * @param laneLimit 每行可视轨道数（渲染侧按行高动态测得；缺省回退 3）
  */
 const useCalendarMonthly = (laneLimit?: Ref<number>) => {
@@ -51,120 +45,30 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
     // @usecase 业务依赖在此由组合式组装（DI 入口；不来自视图上下文）
     const taskUseCase = useTaskUseCase(tasksStore)
 
+    // —— O12 拆分子组合式：任务拉取+订阅 / 排期+撤销（DI 依赖由本组装点注入） ——
+    const { loading, error, retry, tasks, unscheduledTasks } = useCalendarTaskQuery({
+        tasksStore,
+        taskUseCase
+    })
+    const {
+        rescheduleBusyId,
+        scheduleBusy,
+        runBatchSchedule,
+        undoAction,
+        undoBusy,
+        undoLast,
+        dismissUndoAction,
+        scheduleToDay,
+        deferToToday
+    } = useCalendarSchedule({ taskUseCase })
+
     // @states 视图状态
-    const loading = ref<boolean>(true) // 任务加载中
-    const error = ref<string>('') // 任务加载错误
-    const taskIds = ref<Set<TaskViewObject['id']>>(new Set()) // 已加载任务快照
-    const pendingLoad = ref<boolean>(false) // 拉取请求合并标记（运行中触发只补跑一次）
     const year = ref<number>(dayjs().year())
     const monthIndex = ref<number>(dayjs().month()) // 0-based
     const selectedKey = ref<string>(todayDateKey())
 
-    // @method 单次全量拉取（服务端过滤，分页归并到快照；只携带发起时的筛选条件）
-    const runSweep = async (): Promise<void> => {
-        error.value = ''
-        loading.value = taskIds.value.size === 0
-        const nextIds = new Set<TaskViewObject['id']>()
-        try {
-            for (let page = 1; page <= MAX_PAGES; page++) {
-                const getOptions = buildCalendarListQuery(
-                    {
-                        projectIds: selectedProjectIds.value,
-                        tagIds: selectedTagIds.value,
-                        hideCompleted: hideCompleted.value
-                    },
-                    page
-                )
-                const [res, err] = await taskUseCase.list(getOptions)
-                if (err !== null) {
-                    error.value = unwrapError(err)
-                    break
-                }
-                res.taskIds.forEach((id) => nextIds.add(id))
-                const maxPage = res.pagination?.maxPage ?? page
-                const isLastPage = res.taskIds.length < PAGE_LIMIT || page >= maxPage
-                if (isLastPage) break
-            }
-            if (!error.value) taskIds.value = nextIds
-        } finally {
-            loading.value = false
-        }
-    }
-
-    // @method 请求全量拉取（运行中合并：结束后若又有请求则补跑，防快速连点丢最后一次变化）
-    const requestLoad = (): void => {
-        if (pendingLoad.value) return
-        pendingLoad.value = true
-        void (async () => {
-            while (pendingLoad.value) {
-                pendingLoad.value = false
-                await runSweep()
-            }
-        })()
-    }
-
-    // @method 清空并重新拉取（筛选变化/刷新/重试统一出口）
-    const resetAndLoad = (): void => {
-        taskIds.value = new Set()
-        requestLoad()
-    }
-
-    // @computed 筛选是否激活（服务端查询条件非空；空态文案复用）
-    const filterActive = computed(
-        () =>
-            selectedProjectIds.value.length > 0 ||
-            selectedTagIds.value.length > 0 ||
-            hideCompleted.value
-    )
-
-    // @watch 筛选变化 -> 重置快照并按新条件服务端重查（快速连点由 requestLoad 合并）
-    watch([selectedProjectIds, selectedTagIds, hideCompleted], () => resetAndLoad(), { deep: true })
-
-    // @method 事件订阅刷新（与其他任务区一致：RefreshData 全量、AddNewTaskId 增量）
-    const onRefreshData = () => {
-        resetAndLoad()
-    }
-    const onAddNewTaskId = (id: TaskViewObject['id']) => {
-        // 服务端过滤激活时，增量 id 可能不匹配当前范围：改为全量重查保证一致
-        if (filterActive.value) {
-            resetAndLoad()
-            return
-        }
-        taskIds.value = new Set(taskIds.value).add(id)
-    }
-
-    // @lifecycle
-    onMounted(() => {
-        resetAndLoad()
-        subscriber.subscribe('RefreshData', onRefreshData)
-        subscriber.subscribe('AddNewTaskId', onAddNewTaskId)
-    })
-    onUnmounted(() => {
-        undoAction.value = null // 视图卸载/页面切换 → 撤销快照失效（U2 同视图生命周期约束）
-        subscriber.unsubscribe('RefreshData', onRefreshData)
-        subscriber.unsubscribe('AddNewTaskId', onAddNewTaskId)
-    })
-
-    // @computed 快照对应的任务对象（map 项被改期/勾选后自动联动）
-    const tasks = computed<TaskViewObject[]>(() =>
-        [...taskIds.value]
-            .map((id) => tasksStore.getTask(id))
-            .filter((task): task is TaskViewObject => !!task)
-    )
-
     // @computed 当前月标题
     const monthTitle = computed(() => `${year.value} 年 ${monthIndex.value + 1} 月`)
-
-    // @computed 未安排任务（B7：endAt 为空；数据源=当前筛选下全量快照，不限当月；createdAt desc）
-    const unscheduledTasks = computed<TaskViewObject[]>(() =>
-        tasks.value
-            .filter((task) => !task.endAt)
-            .sort(
-                (a, b) =>
-                    dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf() ||
-                    (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
-            )
-    )
 
     // @computed 网格模型（快照任务即服务端过滤结果 -> 行/轨道/溢出）
     const model = computed(() =>
@@ -331,136 +235,6 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         if (err !== null) NueMessage.error(unwrapError(err))
     }
 
-    // ===== U2 最近一次撤销（单条/批量共用内核；M2/F4、M3/F1 复用此机制） =====
-
-    // @states 最近一次成功写回动作（仅保留最近一个：新成功动作替换旧快照）；撤销/超时后失效
-    const undoAction = ref<ScheduleUndoAction | null>(null)
-    const undoBusy = ref(false) // 撤销写回防连点
-    const scheduleBusy = ref(false) // 批量排期防连点
-
-    // @method 「X 月 X 日」日期标签（按日期键直接拆分，无时区偏移）
-    const monthDayLabelOf = (dateKey: string): string => {
-        const [, month, day] = dateKey.split('-')
-        return `${Number(month)} 月 ${Number(day)} 日`
-    }
-
-    // @method 弹出/刷新撤销 toast（替换最近一次；约 5s 自动超时失效由 undo-toast 内部计时并 dismiss）
-    const showUndoAction = (action: ScheduleUndoAction): void => {
-        undoAction.value = action
-    }
-    const dismissUndoAction = (): void => {
-        undoAction.value = null
-    }
-
-    // @method 单次写回尝试：成功返回 true 并记录前值快照（供批量撤销整体回写）
-    const writeScheduleOnce = async (
-        task: TaskViewObject,
-        dateKey: string,
-        snapshots: TaskScheduleSnapshot[]
-    ): Promise<{ ok: boolean; err: Error | string | null }> => {
-        const snapshot = snapshotTaskDates(task)
-        const patch = shiftTaskDates(task, dateKey)
-        if (patch === null) return { ok: false, err: null } // dateKey 非法防御（UI 键均合法，不可达）
-        const err = await taskUseCase.update(task.id, {
-            ...patch,
-            updatedAt: dayjs().toISOString()
-        })
-        if (err !== null) return { ok: false, err }
-        snapshots.push(snapshot)
-        return { ok: true, err: null }
-    }
-
-    // @method 单条安排到某日（B7 抽屉行/F4 菜单/F1 共用；成功提供「撤销」入口）
-    //              同任务 busy 防连点（不同任务可并行，与 B7 逐行语义一致）
-    const rescheduleBusyId = ref<TaskViewObject['id']>('')
-    const scheduleToDay = async (task: TaskViewObject, dateKey: string): Promise<void> => {
-        if (rescheduleBusyId.value === task.id) return
-        rescheduleBusyId.value = task.id
-        try {
-            const snapshots: TaskScheduleSnapshot[] = []
-            const { ok, err } = await writeScheduleOnce(task, dateKey, snapshots)
-            if (!ok) {
-                if (err !== null) NueMessage.error(translateTaskError(err))
-                return
-            }
-            showUndoAction({
-                text: `已移至 ${monthDayLabelOf(dateKey)}`,
-                tone: 'success',
-                snapshots
-            })
-        } finally {
-            rescheduleBusyId.value = ''
-        }
-    }
-
-    // @method 延期到今天（A3 别名）：scheduleToDay 的今日特例
-    const deferToToday = async (task: TaskViewObject): Promise<void> =>
-        scheduleToDay(task, todayDateKey())
-
-    // @method 批量安排到某日（F3）：对选中任务串行小步写回；busy 防连点；
-    //              全成/部分失败弹撤销 toast（部分失败仅还原成功项）；全败无撤销、错误 toast
-    const runBatchSchedule = async (
-        tasks: TaskViewObject[],
-        dateKey: string
-    ): Promise<BatchScheduleResult> => {
-        const allIds = tasks.map((t) => t.id)
-        if (scheduleBusy.value || tasks.length === 0)
-            return { ok: 0, fail: allIds.length, failedIds: allIds }
-        scheduleBusy.value = true
-        const snapshots: TaskScheduleSnapshot[] = []
-        const failedIds: TaskViewObject['id'][] = []
-        try {
-            for (const task of tasks) {
-                const { ok } = await writeScheduleOnce(task, dateKey, snapshots)
-                if (!ok) failedIds.push(task.id)
-            }
-            const fail = failedIds.length
-            const ok = tasks.length - fail
-            if (ok > 0 && fail > 0) {
-                showUndoAction({
-                    text: `成功 ${ok} · 失败 ${fail}，失败项已保留选中`,
-                    tone: 'warning',
-                    snapshots
-                })
-            } else if (ok > 0) {
-                showUndoAction({ text: `已安排 ${ok} 个任务`, tone: 'success', snapshots })
-            } else {
-                NueMessage.error(`成功 0 · 失败 ${fail}，已保留选中`)
-            }
-            return { ok, fail, failedIds }
-        } finally {
-            scheduleBusy.value = false
-        }
-    }
-
-    // @method 撤销最近一次动作：以快照原值回写（串行、busy 防连点、失败 toast）；成功/失败均不再保留入口
-    //              P3-1：与批量排期互斥——批量写回进行中不执行撤销（慢网批量中入口禁用/串行化）
-    const undoLast = async (): Promise<void> => {
-        const action = undoAction.value
-        if (!action || undoBusy.value) return
-        if (scheduleBusy.value) return // 批量串行写回中：撤销延迟到批结束后（新动作将替换旧快照）
-        if (action.snapshots.length === 0) {
-            dismissUndoAction()
-            return
-        }
-        undoBusy.value = true
-        try {
-            let firstErr: Error | string | null = null
-            for (const snap of action.snapshots) {
-                const err = await taskUseCase.update(snap.id, {
-                    startAt: snap.prevStartAt,
-                    endAt: snap.prevEndAt,
-                    updatedAt: dayjs().toISOString()
-                })
-                if (err !== null && firstErr === null) firstErr = err
-            }
-            dismissUndoAction()
-            if (firstErr !== null) NueMessage.error(translateTaskError(firstErr))
-        } finally {
-            undoBusy.value = false
-        }
-    }
-
     // @method 以某日为截止日新建任务（打开创建器并预填当日 + 当前范围上下文）
     const createTaskOnDay = (dateKey: string) => {
         const payload: { startAt: string; endAt: string } & Record<string, unknown> = {
@@ -483,7 +257,7 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
     return {
         loading,
         error,
-        retry: resetAndLoad,
+        retry,
         model,
         monthTitle,
         selectedKey,
