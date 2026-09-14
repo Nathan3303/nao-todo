@@ -6,61 +6,51 @@ import dayjs from 'dayjs'
 import QuickCreate from '../monthly/quick-create.vue'
 import TaskBar from '../monthly/task-bar.vue'
 import MonthJumpPanel from '../monthly/month-jump-panel.vue'
-import {
-    buildWeekGrid,
-    GRID_COLUMNS,
-    weekdaysOf,
-    type CalendarWeekStart
-} from '../monthly/monthly-layout'
+import { buildWeekGrid, GRID_COLUMNS, weekdaysOf } from '../monthly/monthly-layout'
 import { segmentStyleOf, useCalendarGrid } from '../monthly/use-calendar-grid'
 import { useMonthJump } from '../monthly/use-month-jump'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { isInteractiveKeyTarget } from '../monthly/keyboard-nav'
 import { buildCalendarEmptyState } from '../monthly/empty-state'
+import { CALENDAR_WEEKLY_CONTEXT_KEY } from '../weekly-context'
 
 defineOptions({ name: 'CalendarWeekly' })
 
-const props = defineProps<{
-    loading: boolean
-    error: string
-    onRetry: () => void
-    tasks: TaskViewObject[]
-    selectedKey: string
-    filterActive: boolean
-    hideCompleted: boolean
-    onClearFilter: () => void
-    onShowCompleted: () => void
-    onOpenDay: (dateKey: string) => void
-    onOpenTask: (taskId: TaskViewObject['id']) => void
-    onGoMonth: () => void
-    onPrevWeek: () => void
-    onNextWeek: () => void
-    onGoToday: () => void
-    unscheduledCount: number
-    unscheduledDisabled: boolean
-    onOpenUnscheduled: () => void
-    // —— 格内快速新建（B6，由父级共享状态透传） ——
-    quickCreateDate: string
-    quickPending: boolean
-    onQuickOpen: (dateKey: string) => void
-    onQuickCancel: () => void
-    onQuickSubmit: (dateKey: string, name: string) => void | Promise<boolean>
-    /** 周起始口径（C9） */
-    weekStart: CalendarWeekStart
-    /** 单条改期写回中的任务 ID（F4 逐任务 busy） */
-    busyTaskId: string
-    /** F4 快速改期：目标日键上抛（父级走 reschedule 内核 + U2 撤销） */
-    onRescheduleTask: (task: TaskViewObject, dateKey: string) => void | Promise<void>
-    /** F1 拖拽：拖拽会话激活态 / 被拖任务 ID / 当前高亮日期键 / 任务条左键按下（父级接管阈值与会话） */
-    dragActive: boolean
-    dragTaskId: string
-    dragHoverKey: string | null
-    onDragBar: (task: TaskViewObject, event: PointerEvent) => void
-    /** C2-F9 周视图标题年-月跳转：目标年月上抛（父级落含 1 号的周并选中 1 号，不切回月视图） */
-    onJumpYearMonth: (year: number, month: number) => void
-    /** B1-F5 专注角标：取某日标签（'' = 不显示；父级持有区间聚合） */
-    onBadgeLabel: (dateKey: string) => string
-}>()
+// —— O14 props 收敛：周视图上下文由月视图（父）provide，本组件直接 inject 消费 ——
+const {
+    loading,
+    error,
+    onRetry,
+    tasks,
+    selectedKey,
+    filterActive,
+    hideCompleted,
+    onClearFilter,
+    onShowCompleted,
+    onOpenDay,
+    onOpenTask,
+    onGoMonth,
+    onPrevWeek,
+    onNextWeek,
+    onGoToday,
+    unscheduledCount,
+    unscheduledDisabled,
+    onOpenUnscheduled,
+    quickCreateDate,
+    quickPending,
+    onQuickOpen,
+    onQuickCancel,
+    onQuickSubmit,
+    weekStart,
+    busyTaskId,
+    onRescheduleTask,
+    dragActive,
+    dragTaskId,
+    dragHoverKey,
+    onDragBar,
+    onJumpYearMonth,
+    onBadgeLabel
+} = inject(CALENDAR_WEEKLY_CONTEXT_KEY)!
 
 // @viewContext 应用级子侧栏开关（与月视图 header 一致）
 const { isDisplayAside, switchDisplayAside } = inject(INDEX_VIEW_CONTEXT_KEY)!
@@ -73,11 +63,11 @@ const { laneLimit, measure: measureAndApplyLaneLimit } = useCalendarGrid({
 })
 
 // @computed 星期表头（随周起始口径）
-const weekdays = computed(() => weekdaysOf(props.weekStart))
+const weekdays = computed(() => weekdaysOf(weekStart.value))
 
 // @computed 周模型（锚点=selectedKey 所在周；跨周任务裁剪，复用 buildRowContent）
 const model = computed(() =>
-    buildWeekGrid(props.selectedKey, props.tasks, laneLimit.value, props.weekStart)
+    buildWeekGrid(selectedKey.value, tasks.value, laneLimit.value, weekStart.value)
 )
 
 const visibleSegments = computed(() =>
@@ -101,20 +91,20 @@ const weekHasTasks = computed(() => model.value.segments.length > 0)
 const emptyHint = computed(() =>
     buildCalendarEmptyState({
         hasTasks: weekHasTasks.value,
-        filterActive: props.filterActive,
-        hideCompleted: props.hideCompleted,
+        filterActive: filterActive.value,
+        hideCompleted: hideCompleted.value,
         filterText: '当前筛选条件下本周暂无任务',
         hideCompletedText: '已隐藏已完成任务',
         emptyText: null,
-        onClearFilter: props.onClearFilter,
-        onShowCompleted: props.onShowCompleted
+        onClearFilter,
+        onShowCompleted
     })
 )
 
 // @method 按行高计算可视条数（同月视图 DEF-2 公式；measure 由 useCalendarGrid 提供）
 // @lifecycle 高度观测（ResizeObserver + 防抖）与卸载清理已内置 useCalendarGrid
 watch(
-    [() => props.loading, () => props.error, () => props.tasks, () => weekHasTasks.value],
+    [() => loading.value, () => error.value, () => tasks.value, () => weekHasTasks.value],
     () => {
         void nextTick(measureAndApplyLaneLimit)
     },
@@ -130,7 +120,7 @@ const segShowTime = (seg: { task: TaskViewObject; isStart: boolean; colStart: nu
 
 // @method 回车提交（dateKey 来自所在格条带）
 const quickSubmitCell = (dateKey: string, name: string) => {
-    void props.onQuickSubmit(dateKey, name)
+    void onQuickSubmit(dateKey, name)
 }
 
 // @method 日期格 Enter 激活（O7 焦点管理：与点击同语义；格内交互控件/输入放行原生行为）
@@ -139,7 +129,7 @@ const onCellEnter = (event: KeyboardEvent, dateKey: string): void => {
     if (isInteractiveKeyTarget(event.target)) return
     event.stopPropagation()
     event.preventDefault()
-    props.onOpenDay(dateKey)
+    onOpenDay(dateKey)
 }
 
 // @method 溢出 +N 与 点击日期格（打开当日面板）
@@ -148,15 +138,15 @@ const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateK
 // —— C2-F9 周视图标题年-月跳转（面板弹层状态机；O2 抽取 useMonthJump；跳转不切月视图） ——
 // 面板锚点年/月 = 当前锚点（选中日）所在年月；非法回退今天
 const jumpAnchorYear = computed(() => {
-    const anchor = dayjs(props.selectedKey)
+    const anchor = dayjs(selectedKey.value)
     return anchor.isValid() ? anchor.year() : dayjs().year()
 })
 const jumpAnchorMonth = computed(() => {
-    const anchor = dayjs(props.selectedKey)
+    const anchor = dayjs(selectedKey.value)
     return anchor.isValid() ? anchor.month() + 1 : dayjs().month() + 1
 })
 const wjp = useMonthJump({
-    onSelect: (year, month) => props.onJumpYearMonth(year, month)
+    onSelect: (year, month) => onJumpYearMonth(year, month)
 })
 </script>
 

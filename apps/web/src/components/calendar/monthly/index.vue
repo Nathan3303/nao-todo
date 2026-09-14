@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Loading as LoadingComp } from '@nao-todo/shared'
-import { computed, inject, nextTick, ref, watch } from 'vue'
+import { computed, inject, nextTick, provide, ref, watch } from 'vue'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import CalendarDayDrawer from './day-drawer.vue'
 import CalendarWeekly from '../weekly/index.vue'
@@ -31,6 +31,7 @@ import { usePomodoroBadge, type PomodoroBadgeRange } from './use-pomodoro-badge'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
 import { useScope, useShortcut } from '@/hooks'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
+import { CALENDAR_WEEKLY_CONTEXT_KEY, type CalendarWeeklyContext } from '../weekly-context'
 
 defineOptions({ name: 'CalendarMonthly' })
 
@@ -257,6 +258,44 @@ const showWeekOf = (dateKey: string) => {
     goToWeekView()
     dayDrawerOpen.value = false
 }
+
+// —— O14 周视图上下文 provide（weekly 组件改 inject，消除 33 个 props 穿透） ——
+provide<CalendarWeeklyContext>(CALENDAR_WEEKLY_CONTEXT_KEY, {
+    loading,
+    error,
+    onRetry: retry,
+    tasks,
+    selectedKey,
+    filterActive,
+    hideCompleted,
+    onClearFilter: clearFilter,
+    onShowCompleted: () => (hideCompleted.value = false),
+    onOpenDay: openDay,
+    onOpenTask: openTaskFromPanel,
+    onGoMonth: goToMonthView,
+    onPrevWeek: goPrevWeek,
+    onNextWeek: goNextWeek,
+    onGoToday: goToToday,
+    unscheduledCount: computed(() => unscheduledTasks.value.length),
+    unscheduledDisabled: unscheduledBtnDisabled,
+    onOpenUnscheduled: () => (unscheduledOpen.value = true),
+    quickCreateDate,
+    quickPending: quickCreatePending,
+    onQuickOpen: openQuickCreate,
+    onQuickCancel: closeQuickCreate,
+    onQuickSubmit: inlineCreateTask,
+    weekStart,
+    busyTaskId: rescheduleBusyId,
+    onRescheduleTask: scheduleToDay,
+    dragActive: computed(() => drag.session.active),
+    dragTaskId: computed(() =>
+        drag.session.active && drag.session.kind === 'bar' ? drag.session.taskId : ''
+    ),
+    dragHoverKey: computed(() => drag.session.hoverKey),
+    onDragBar: (task, event) => drag.startPossible(task, 'bar', event),
+    onJumpYearMonth: jumpToWeekOfMonthFirst,
+    onBadgeLabel: badgeLabel
+})
 
 // —— C2-F9 月视图标题年-月跳转（面板弹层状态机；O2 抽取 useMonthJump） ——
 const mjp = useMonthJump({
@@ -526,44 +565,9 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
             </div>
         </template>
 
-        <!-- 周视图（A1） -->
+        <!-- 周视图（A1；O14：状态与动作由 provide 的周视图上下文注入，无 props 穿透） -->
         <template v-else>
-            <calendar-weekly
-                :loading="loading"
-                :error="error"
-                :on-retry="retry"
-                :tasks="tasks"
-                :selected-key="selectedKey"
-                :filter-active="filterActive"
-                :hide-completed="hideCompleted"
-                :on-clear-filter="clearFilter"
-                :on-show-completed="() => (hideCompleted = false)"
-                :on-open-day="openDay"
-                :on-open-task="openTaskFromPanel"
-                :on-go-month="goToMonthView"
-                :on-prev-week="goPrevWeek"
-                :on-next-week="goNextWeek"
-                :on-go-today="goToToday"
-                :unscheduled-count="unscheduledTasks.length"
-                :unscheduled-disabled="unscheduledBtnDisabled"
-                :on-open-unscheduled="() => (unscheduledOpen = true)"
-                :quick-create-date="quickCreateDate"
-                :quick-pending="quickCreatePending"
-                :on-quick-open="openQuickCreate"
-                :on-quick-cancel="closeQuickCreate"
-                :on-quick-submit="inlineCreateTask"
-                :busy-task-id="rescheduleBusyId"
-                :on-reschedule-task="scheduleToDay"
-                :drag-active="drag.session.active"
-                :drag-task-id="
-                    drag.session.active && drag.session.kind === 'bar' ? drag.session.taskId : ''
-                "
-                :drag-hover-key="drag.session.hoverKey"
-                :on-drag-bar="(task, event) => drag.startPossible(task, 'bar', event)"
-                :on-jump-year-month="(year, month) => jumpToWeekOfMonthFirst(year, month)"
-                :on-badge-label="badgeLabel"
-                :week-start="weekStart"
-            />
+            <calendar-weekly />
         </template>
 
         <!-- 当日任务面板 -->
