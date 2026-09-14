@@ -8,6 +8,7 @@ import QuickCreate from './quick-create.vue'
 import TaskBar from './task-bar.vue'
 import UnscheduledDrawer from './unscheduled-drawer.vue'
 import ScheduleUndoToast from './undo-toast.vue'
+import { buildCalendarEmptyState } from './empty-state'
 import { ghostPointOf, useDragSchedule } from './use-drag-schedule'
 import MonthJumpPanel from './month-jump-panel.vue'
 import { CALENDAR_KEY_SCOPE, isCalendarKeyLocked, isInteractiveKeyTarget } from './keyboard-nav'
@@ -149,25 +150,19 @@ const unscheduledBtnDisabled = computed(
     () => unscheduledTasks.value.length === 0 && !filterActive.value && !hideCompleted.value
 )
 const hasMonthTasks = computed(() => model.value.rows.some((row) => row.segments.length > 0))
-const emptyState = computed(() => {
-    // 本月有可见任务：直接渲染网格（筛选/隐藏已完成只是收敛数据，不触发空态）
-    if (hasMonthTasks.value) return null
-    if (filterActive.value) {
-        return {
-            text: '当前筛选条件下，本月暂无任务',
-            action: '清除筛选',
-            run: () => clearFilter()
-        }
-    }
-    if (hideCompleted.value) {
-        return {
-            text: '已隐藏已完成任务，本月暂无未完成任务',
-            action: '显示已完成',
-            run: () => (hideCompleted.value = false)
-        }
-    }
-    return { text: '本月暂无任务', action: '', run: () => {} }
-})
+// @computed 空态（O6 统一工厂：与周视图/未安排抽屉同源；文案按视图注入）
+const emptyState = computed(() =>
+    buildCalendarEmptyState({
+        hasTasks: hasMonthTasks.value,
+        filterActive: filterActive.value,
+        hideCompleted: hideCompleted.value,
+        filterText: '当前筛选条件下，本月暂无任务',
+        hideCompletedText: '已隐藏已完成任务，本月暂无未完成任务',
+        emptyText: '本月暂无任务',
+        onClearFilter: () => clearFilter(),
+        onShowCompleted: () => (hideCompleted.value = false)
+    })
+)
 
 // —— 动态可视轨道数：ResizeObserver + 100ms 防抖，随行高实时调整（DEF-2） ——
 const calBodyEl = ref<HTMLElement | null>(null)

@@ -298,17 +298,6 @@ export const buildWeekGrid = (
     return { anchorKey, year, monthIndex, days, segments, overflow }
 }
 
-/** 获取某日期格在行内被绘制的任务（可视轨道内），供点击命中/样式使用 */
-export const segmentsOnCell = (
-    row: CalendarRow,
-    dateKey: string,
-    maxLanes: number = MAX_VISIBLE_LANES
-): CalendarSegment[] => {
-    const col = row.cells.findIndex((c) => c.dateKey === dateKey)
-    if (col < 0) return []
-    return row.segments.filter((s) => s.lane < maxLanes && s.colStart <= col && s.colEnd >= col)
-}
-
 /** 任务跨度是否覆盖某个日期键 */
 export const spanCoversDate = (task: TaskViewObject, dateKey: string): boolean => {
     const span = buildTaskSpan(task)

@@ -13,6 +13,7 @@ import {
     type CalendarWeekStart
 } from '../monthly/monthly-layout'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
+import { buildCalendarEmptyState } from '../monthly/empty-state'
 
 defineOptions({ name: 'CalendarWeekly' })
 
@@ -101,16 +102,19 @@ const title = computed(() => {
 
 // @computed 空态：真无 vs 筛选导致（出口与月视图一致）
 const weekHasTasks = computed(() => model.value.segments.length > 0)
-const emptyHint = computed<{ text: string; action: string; run: () => void } | null>(() => {
-    if (weekHasTasks.value) return null
-    if (props.filterActive) {
-        return { text: '当前筛选条件下本周暂无任务', action: '清除筛选', run: props.onClearFilter }
-    }
-    if (props.hideCompleted) {
-        return { text: '已隐藏已完成任务', action: '显示已完成', run: props.onShowCompleted }
-    }
-    return null
-})
+// @computed 空态（O6 统一工厂：与月视图/未安排抽屉同源；真无时由视图自行渲染「本周暂无任务」）
+const emptyHint = computed(() =>
+    buildCalendarEmptyState({
+        hasTasks: weekHasTasks.value,
+        filterActive: props.filterActive,
+        hideCompleted: props.hideCompleted,
+        filterText: '当前筛选条件下本周暂无任务',
+        hideCompletedText: '已隐藏已完成任务',
+        emptyText: null,
+        onClearFilter: props.onClearFilter,
+        onShowCompleted: props.onShowCompleted
+    })
+)
 
 // @method 按行高计算可视条数（同月视图 DEF-2 公式）
 const measureAndApplyLaneLimit = () => {

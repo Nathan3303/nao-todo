@@ -8,6 +8,7 @@ import { TaskCheckButton } from '@nao-todo/shared'
 import dayjs from 'dayjs'
 import { computed, reactive, ref, watch } from 'vue'
 import { todayDateKey } from './monthly-layout'
+import { buildCalendarEmptyState } from './empty-state'
 import RescheduleMenu from './reschedule-menu.vue'
 import type { BatchScheduleResult } from './reschedule'
 
@@ -58,21 +59,19 @@ const metaOf = (task: TaskViewObject): RowMeta => ({
         .filter((tag): tag is TagViewObject => !!tag)
 })
 
-// @computed 空态：真无 与 筛选导致 区分（后者给清除出口；B7 语义不回归）
-const emptyHint = computed<{ text: string; action: string; run: () => void } | null>(() => {
-    if (props.tasks.length) return null
-    if (props.filterActive) {
-        return {
-            text: '当前筛选条件下暂无未安排任务',
-            action: '清除筛选',
-            run: props.onClearFilter
-        }
-    }
-    if (props.hideCompleted) {
-        return { text: '已隐藏已完成任务', action: '显示已完成', run: props.onShowCompleted }
-    }
-    return null
-})
+// @computed 空态（O6 统一工厂：与月/周视图同源；真无时抽屉默认空态兜底）
+const emptyHint = computed(() =>
+    buildCalendarEmptyState({
+        hasTasks: props.tasks.length > 0,
+        filterActive: props.filterActive,
+        hideCompleted: props.hideCompleted,
+        filterText: '当前筛选条件下暂无未安排任务',
+        hideCompletedText: '已隐藏已完成任务',
+        emptyText: null,
+        onClearFilter: props.onClearFilter,
+        onShowCompleted: props.onShowCompleted
+    })
+)
 
 // —— 多选模式（F3） ——
 
