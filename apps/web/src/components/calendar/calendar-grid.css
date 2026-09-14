@@ -13,6 +13,8 @@
     --cal-fg: var(--nue-primary-text-color);
     --cal-muted: color-mix(in srgb, var(--nue-primary-text-color) 45%, var(--nue-primary-color-0));
     --cal-border: var(--nue-border-color);
+    /* 网格分隔线（TASK-07：较 --cal-border 淡化约 28%，降低亮度） */
+    --cal-grid-line: color-mix(in srgb, var(--cal-border) 72%, var(--cal-bg));
     --cal-hover: color-mix(in srgb, var(--nue-primary-text-color) 5%, var(--nue-primary-color-0));
     --cal-select-bg: color-mix(
         in srgb,
@@ -164,7 +166,7 @@
     min-height: 120px;
 }
 
-/* 格内竖分隔线用 inset 阴影实现，不挤占列宽，保证任务条百分比定位精确 */
+/* 格内竖分隔线改由 .cal-lines 覆盖层绘制（TASK-07：线在任务条上方）；格仅承载背景/点击 */
 .cal-cell,
 .wk-cell {
     position: relative;
@@ -173,13 +175,8 @@
     align-items: center;
     padding: 3px 2px 2px;
     background: var(--cal-bg);
-    cursor: pointer;
-    box-shadow: inset -1px 0 0 var(--cal-border);
+    cursor: default; /* TASK-07：整格点击不再开抽屉，去除误导性手型 */
     transition: background 50ms;
-}
-.cal-cell--edge,
-.wk-cell--edge {
-    box-shadow: none;
 }
 .cal-cell:hover,
 .wk-cell:hover {
@@ -278,7 +275,45 @@
     inset: 0;
     pointer-events: none;
 }
-/* 任务条视觉（色条/色痕/时刻/续接圆点/周裁剪圆角）已抽至 ./task-bar.vue；--cal-* 令牌由本文件定义 */
+/* 网格分隔线覆盖层（TASK-07：线在任务条上方 + 降亮度）：
+   z-index 仅 1（低于全部浮层/弹层 1000+），pointer-events:none 不拦截
+   任务条/N+ 点击；6 条列分隔线精确定位于 k/7 列界（无左右边线，逐停靠渐变）。 */
+.cal-lines,
+.wk-lines {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background-image: linear-gradient(
+        to right,
+        transparent 0,
+        transparent calc(14.2857% - 1px),
+        var(--cal-grid-line) calc(14.2857% - 1px),
+        var(--cal-grid-line) calc(14.2857%),
+        transparent calc(14.2857%),
+        transparent calc(28.5714% - 1px),
+        var(--cal-grid-line) calc(28.5714% - 1px),
+        var(--cal-grid-line) calc(28.5714%),
+        transparent calc(28.5714%),
+        transparent calc(42.8571% - 1px),
+        var(--cal-grid-line) calc(42.8571% - 1px),
+        var(--cal-grid-line) calc(42.8571%),
+        transparent calc(42.8571%),
+        transparent calc(57.1428% - 1px),
+        var(--cal-grid-line) calc(57.1428% - 1px),
+        var(--cal-grid-line) calc(57.1428%),
+        transparent calc(57.1428%),
+        transparent calc(71.4285% - 1px),
+        var(--cal-grid-line) calc(71.4285% - 1px),
+        var(--cal-grid-line) calc(71.4285%),
+        transparent calc(71.4285%),
+        transparent calc(85.7142% - 1px),
+        var(--cal-grid-line) calc(85.7142% - 1px),
+        var(--cal-grid-line) calc(85.7142%),
+        transparent 100%
+    );
+}
+/* 任务条视觉（色条/色痕/时刻/周裁剪圆角）已抽至 ./task-bar.vue；--cal-* 令牌由本文件定义 */
 /* 格底预留条带（DEF-1：任务条渲染区在其上截断；+/+N/编辑器占用区） */
 .cal-band,
 .wk-band {
@@ -321,7 +356,7 @@
     background: var(--cal-select-bg);
 }
 
-/* ── 溢出 +N（右下） ── */
+/* ── 溢出 +N（右下；TASK-07：颜色增强对比度，清晰可点开当日抽屉） ── */
 .cal-more,
 .wk-more {
     flex: none;
@@ -330,8 +365,9 @@
     border: none;
     border-radius: 999px;
     background: transparent;
-    color: var(--cal-muted);
+    color: color-mix(in srgb, var(--cal-fg) 72%, var(--cal-bg));
     font-size: 0.6875rem;
+    font-weight: 500;
     line-height: 1.4;
     cursor: pointer;
     transition: background 60ms;

@@ -10,8 +10,8 @@ import { GRID_COLUMNS, MAX_VISIBLE_LANES } from './monthly-layout'
 
 /** 日期号区域高度 + 首个任务条上间距（月/周同值） */
 export const GRID_TOP_OFFSET = 26
-/** 单条任务条高度(16) + 纵向间距(2) */
-export const GRID_ITEM_STEP = 18
+/** 单条任务条高度(18，TASK-07 由 16 增加) + 纵向间距(2) */
+export const GRID_ITEM_STEP = 20
 /** 格底预留条带（DEF-1：+/+N/编辑器占用，任务条区其上截断） */
 export const GRID_BAND_HEIGHT = 24
 

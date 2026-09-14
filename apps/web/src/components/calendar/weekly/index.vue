@@ -279,10 +279,8 @@ const {
                         'wk-cell--today': cell.isToday,
                         'wk-cell--selected': cell.isSelected,
                         'wk-cell--weekend': cell.isWeekend,
-                        'wk-cell--edge': cell.cell % 7 === 6,
                         'wk-cell--drop': dragActive && dragHoverKey === cell.dateKey
                     }"
-                    @click="onOpenDay(cell.dateKey)"
                     @keydown="onCellEnter($event, cell.dateKey)"
                 >
                     <span class="wk-cell-top">
@@ -342,6 +340,8 @@ const {
                         @drag-pointer-down="(event) => onDragBar(seg.task, event)"
                     />
                 </div>
+                <!-- 网格分隔线覆盖层（TASK-07：线在任务条上方，pointer-events:none） -->
+                <div class="cal-lines" role="presentation"></div>
             </div>
         </div>
     </nue-div>

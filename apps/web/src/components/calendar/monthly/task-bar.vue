@@ -131,8 +131,6 @@ const onPointerDown = (event: PointerEvent): void => {
         @keydown="onKeyDown"
     >
         <span v-if="timeText" class="cal-item-time">{{ timeText }}</span>
-        <span v-if="contStart" class="cal-cont cal-cont--start" title="承接上一周"></span>
-        <span v-if="contEnd" class="cal-cont cal-cont--end" title="续至下一周"></span>
         <span class="cal-item-text">{{ task.name }}</span>
         <nue-button
             theme="pure,icon"
@@ -162,14 +160,14 @@ const onPointerDown = (event: PointerEvent): void => {
 /* ── 任务条（月/周共用；父级根容器需定义 --cal-* 令牌） ── */
 .cal-item {
     position: absolute;
-    height: 16px;
+    height: 18px; /* TASK-07：16→18 行高增加（GRID_ITEM_STEP 同步 20） */
     display: flex;
     align-items: center;
     padding: 0 8px;
     background: var(--cal-chip-bg);
     color: var(--cal-fg);
     font-size: 0.75rem;
-    line-height: 16px;
+    line-height: 18px;
     white-space: nowrap;
     overflow: hidden;
     cursor: pointer;
@@ -235,37 +233,13 @@ const onPointerDown = (event: PointerEvent): void => {
     margin-right: 6px;
     color: var(--cal-muted);
     font-size: 0.6875rem;
-    line-height: 16px;
+    line-height: 18px;
     font-variant-numeric: tabular-nums;
     overflow: hidden;
     white-space: nowrap;
 }
 
-/* 跨行续接圆点（承接上一行 / 续至下一行；月视图 A4） */
-.cal-cont {
-    position: absolute;
-    top: 50%;
-    width: 5px;
-    height: 5px;
-    margin-top: -2.5px;
-    border-radius: 50%;
-    background: color-mix(in srgb, var(--cal-fg) 58%, var(--cal-bg));
-    pointer-events: none;
-}
-.cal-cont--start {
-    left: 3px;
-}
-.cal-cont--end {
-    right: 3px;
-}
-
-/* 有续接标记的条体：为圆点预留文本间距（名称 ellipsis 不压圆点） */
-.cal-item.has-cont-start {
-    padding-left: 14px;
-}
-.cal-item.has-cont-end {
-    padding-right: 14px;
-}
+/* 跨行续接圆点已移除（TASK-07：仅视觉，contStart/contEnd 数据承接语义保留） */
 
 /* F4 三点按钮（NueButton pure/icon + more-vertical）：悬停/聚焦时才出现（条内小尺寸，不挤名称） */
 .cal-item-more {

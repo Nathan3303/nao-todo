@@ -486,7 +486,8 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                 <!-- 网格 -->
                 <template v-else>
                     <div v-for="rv in rowViews" :key="rv.row.row" class="cal-row" role="row">
-                        <!-- 日期格（点击选中并打开当日面板；O7：gridcell 语义 + 可聚焦/Enter 激活） -->
+                        <!-- 日期格（TASK-07：整格点击不再开当日面板，仅 hover 高亮；
+                             O7：gridcell 语义 + 可聚焦/Enter 激活；N+ 文本为开抽屉唯一入口） -->
                         <div
                             v-for="cv in rv.cells"
                             :key="cv.cell.cell"
@@ -500,10 +501,8 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                                 'cal-cell--today': cv.cell.isToday,
                                 'cal-cell--selected': cv.cell.isSelected,
                                 'cal-cell--weekend': cv.cell.isWeekend,
-                                'cal-cell--edge': cv.cell.cell % 7 === 6,
                                 'cal-cell--drop': drag.isTarget(cv.cell.dateKey)
                             }"
-                            @click="openDay(cv.cell.dateKey)"
                             @keydown="onCellEnter($event, cv.cell.dateKey)"
                         >
                             <span class="cal-cell-top">
@@ -570,6 +569,8 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                                 "
                             />
                         </div>
+                        <!-- 网格分隔线覆盖层（TASK-07：线在任务条上方，pointer-events:none） -->
+                        <div class="cal-lines" role="presentation"></div>
                     </div>
                 </template>
             </div>
