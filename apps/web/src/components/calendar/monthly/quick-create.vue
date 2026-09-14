@@ -50,6 +50,7 @@ onMounted(() => {
             class="quick-create__input"
             type="text"
             placeholder="任务名称"
+            aria-label="任务名称"
             :disabled="pending"
             @keydown="handleKeydown"
             @blur="handleBlur"

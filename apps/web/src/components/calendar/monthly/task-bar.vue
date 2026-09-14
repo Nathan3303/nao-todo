@@ -113,6 +113,7 @@ const onPointerDown = (event: PointerEvent): void => {
 <template>
     <div
         class="cal-item"
+        role="button"
         :class="{
             'is-done': isDone,
             'is-overdue': isOverdue,
@@ -122,6 +123,7 @@ const onPointerDown = (event: PointerEvent): void => {
         }"
         :style="[pos, { '--cal-pri': barColor }]"
         :title="task.name"
+        :aria-label="task.name"
         tabindex="0"
         @click="emit('open')"
         @contextmenu="onContextMenu"

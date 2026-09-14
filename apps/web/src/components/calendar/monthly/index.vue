@@ -290,6 +290,15 @@ const openTaskFromPanel = (taskId: TaskViewObject['id']) => {
     openTaskDetails(taskId)
 }
 
+// @method 日期格 Enter 激活（O7 焦点管理：与点击同语义；格内交互控件/输入放行原生行为）
+const onCellEnter = (event: KeyboardEvent, dateKey: string): void => {
+    if (event.key !== 'Enter') return
+    if (isInteractiveKeyTarget(event.target)) return
+    event.stopPropagation()
+    event.preventDefault()
+    openDay(dateKey)
+}
+
 // @method 当日面板「本周」下钻：锚定该日并切到周视图
 const showWeekOf = (dateKey: string) => {
     selectDate(dateKey)
@@ -434,6 +443,7 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                             theme="small,ghost"
                             class="cal-view-btn is-active"
                             title="当前：月视图"
+                            aria-pressed="true"
                         >
                             月
                         </nue-button>
@@ -441,6 +451,7 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                             theme="small,ghost"
                             class="cal-view-btn"
                             title="切换周视图"
+                            aria-pressed="false"
                             @click="goToWeekView"
                         >
                             周
@@ -494,12 +505,15 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                 </div>
                 <!-- 网格 -->
                 <template v-else>
-                    <div v-for="rv in rowViews" :key="rv.row.row" class="cal-row">
-                        <!-- 日期格（点击选中并打开当日面板） -->
+                    <div v-for="rv in rowViews" :key="rv.row.row" class="cal-row" role="row">
+                        <!-- 日期格（点击选中并打开当日面板；O7：gridcell 语义 + 可聚焦/Enter 激活） -->
                         <div
                             v-for="cv in rv.cells"
                             :key="cv.cell.cell"
                             class="cal-cell"
+                            role="gridcell"
+                            tabindex="0"
+                            :aria-selected="cv.cell.isSelected"
                             :data-cal-drop="cv.cell.dateKey"
                             :class="{
                                 'cal-cell--outside': cv.cell.monthOffset !== 0,
@@ -510,6 +524,7 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                                 'cal-cell--drop': drag.isTarget(cv.cell.dateKey)
                             }"
                             @click="openDay(cv.cell.dateKey)"
+                            @keydown="onCellEnter($event, cv.cell.dateKey)"
                         >
                             <span class="cal-cell-top">
                                 <span class="cal-date">{{ cv.cell.day }}</span>
@@ -552,8 +567,8 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                             </div>
                         </div>
 
-                        <!-- 任务条层（连续条跨格/跨行） -->
-                        <div class="cal-lanes">
+                        <!-- 任务条层（连续条跨格/跨行；O7：栅格行内的呈现层，不影响条 button 语义） -->
+                        <div class="cal-lanes" role="presentation">
                             <task-bar
                                 v-for="seg in rv.segments"
                                 :key="`${seg.task.id}-${seg.colStart}`"
@@ -863,6 +878,11 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
 .cal-cell:hover {
     background: var(--cal-hover);
     z-index: 0;
+}
+/* O7 键盘焦点可达：Tab 聚焦日期格时可见轮廓 */
+.cal-cell:focus-visible {
+    outline: 1px solid var(--cal-border);
+    outline-offset: -1px;
 }
 .cal-cell--outside {
     background: color-mix(in srgb, var(--cal-bg) 92%, var(--cal-border));

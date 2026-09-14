@@ -13,6 +13,7 @@ import {
     type CalendarWeekStart
 } from '../monthly/monthly-layout'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
+import { isInteractiveKeyTarget } from '../monthly/keyboard-nav'
 import { buildCalendarEmptyState } from '../monthly/empty-state'
 
 defineOptions({ name: 'CalendarWeekly' })
@@ -168,6 +169,15 @@ const quickSubmitCell = (dateKey: string, name: string) => {
     void props.onQuickSubmit(dateKey, name)
 }
 
+// @method 日期格 Enter 激活（O7 焦点管理：与点击同语义；格内交互控件/输入放行原生行为）
+const onCellEnter = (event: KeyboardEvent, dateKey: string): void => {
+    if (event.key !== 'Enter') return
+    if (isInteractiveKeyTarget(event.target)) return
+    event.stopPropagation()
+    event.preventDefault()
+    props.onOpenDay(dateKey)
+}
+
 // @method 溢出 +N 与 点击日期格（打开当日面板）
 const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateKey === dateKey)
 
@@ -255,6 +265,7 @@ const onWeekJumpSelect = (targetYear: number, targetMonth: number): void => {
                         theme="small,ghost"
                         class="wk-view-btn"
                         title="切回月视图"
+                        aria-pressed="false"
                         @click="onGoMonth"
                     >
                         月
@@ -263,6 +274,7 @@ const onWeekJumpSelect = (targetYear: number, targetMonth: number): void => {
                         theme="small,ghost"
                         class="wk-view-btn is-active"
                         title="当前：周视图"
+                        aria-pressed="true"
                         @click="onGoMonth"
                     >
                         周
@@ -309,11 +321,14 @@ const onWeekJumpSelect = (targetYear: number, targetMonth: number): void => {
                 <nue-text size="var(--nue-text-sm)">本周暂无任务</nue-text>
             </div>
             <!-- 网格 -->
-            <div v-else class="wk-row">
+            <div v-else class="wk-row" role="row">
                 <div
                     v-for="cell in model.days"
                     :key="cell.dateKey"
                     class="wk-cell"
+                    role="gridcell"
+                    tabindex="0"
+                    :aria-selected="cell.isSelected"
                     :data-cal-drop="cell.dateKey"
                     :class="{
                         'wk-cell--outside': cell.monthOffset !== 0,
@@ -324,6 +339,7 @@ const onWeekJumpSelect = (targetYear: number, targetMonth: number): void => {
                         'wk-cell--drop': dragActive && dragHoverKey === cell.dateKey
                     }"
                     @click="onOpenDay(cell.dateKey)"
+                    @keydown="onCellEnter($event, cell.dateKey)"
                 >
                     <span class="wk-cell-top">
                         <span class="wk-date">{{ cell.day }}</span>
@@ -365,7 +381,7 @@ const onWeekJumpSelect = (targetYear: number, targetMonth: number): void => {
                     </div>
                 </div>
                 <!-- 任务条层 -->
-                <div class="cal-lanes">
+                <div class="cal-lanes" role="presentation">
                     <task-bar
                         v-for="seg in visibleSegments"
                         :key="`${seg.task.id}-${seg.colStart}`"
@@ -540,6 +556,11 @@ const onWeekJumpSelect = (targetYear: number, targetMonth: number): void => {
 .wk-cell:hover {
     background: var(--cal-hover);
     z-index: 0;
+}
+/* O7 键盘焦点可达：Tab 聚焦日期格时可见轮廓 */
+.wk-cell:focus-visible {
+    outline: 1px solid var(--cal-border);
+    outline-offset: -1px;
 }
 .wk-cell--outside {
     background: color-mix(in srgb, var(--cal-bg) 92%, var(--cal-border));

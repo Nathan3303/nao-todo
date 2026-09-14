@@ -48,9 +48,9 @@ onBeforeUnmount(() => {
                 v-if="action"
                 class="utoast"
                 :class="action.tone === 'warning' ? 'utoast--warning' : 'utoast--success'"
-                role="status"
             >
-                <span class="utoast__text">{{ action.text }}</span>
+                <!-- O8：role=status 收窄到文本（live region 不含交互按钮，按钮不被重复播报） -->
+                <span role="status" class="utoast__text">{{ action.text }}</span>
                 <nue-button
                     theme="pure"
                     class="utoast__undo"
