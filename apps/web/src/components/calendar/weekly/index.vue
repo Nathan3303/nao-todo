@@ -5,10 +5,10 @@ import { computed, inject, nextTick, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import QuickCreate from '../monthly/quick-create.vue'
 import TaskBar from '../monthly/task-bar.vue'
-import MonthJumpPanel from '../monthly/month-jump-panel.vue'
 import { buildWeekGrid, GRID_COLUMNS, weekdaysOf } from '../monthly/monthly-layout'
 import { segmentStyleOf, useCalendarGrid } from '../monthly/use-calendar-grid'
 import { useMonthJump } from '../monthly/use-month-jump'
+import CalendarMonthGrid from '../monthly/calendar-month-grid.vue'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { isInteractiveKeyTarget } from '../monthly/keyboard-nav'
 import { buildCalendarEmptyState } from '../monthly/empty-state'
@@ -139,24 +139,19 @@ const onCellEnter = (event: KeyboardEvent, dateKey: string): void => {
 // @method 溢出 +N 与 点击日期格（打开当日面板）
 const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateKey === dateKey)
 
-// —— C2-F9 周视图标题年-月跳转（面板弹层状态机；O2 抽取 useMonthJump；跳转不切月视图） ——
-// 面板锚点年/月 = 当前锚点（选中日）所在年月；非法回退今天
+// —— C2-F9 周视图标题年-月跳转（TASK-09：NueDropdown 触发器；O2 抽取 useMonthJump；落周不切回月视图） ——
+// 面板锚点年 = 当前锚点（选中日）所在年；非法回退今天
 const jumpAnchorYear = computed(() => {
     const anchor = dayjs(selectedKey.value)
     return anchor.isValid() ? anchor.year() : dayjs().year()
 })
-const jumpAnchorMonth = computed(() => {
-    const anchor = dayjs(selectedKey.value)
-    return anchor.isValid() ? anchor.month() + 1 : dayjs().month() + 1
-})
-// 调用点解构为顶层 ref（模板嵌套 ref 不解包；:x="wjpPos.x" 恢复顶层解包语义，REG-01 修复）
+// 调用点解构为顶层 ref（模板嵌套 ref 不解包；:active="wjpOpen" 顶层解包，REG-01）
 const {
-    open: wjpOpen,
-    pos: wjpPos,
     titleEl: wjpTitleEl,
-    toggle: toggleWeekJump,
-    close: closeWeekJump,
-    select: onWeekJumpSelect
+    open: wjpOpen,
+    onOpen: onWeekJumpOpen,
+    onClose: onWeekJumpClose,
+    onExecute: onWeekJumpExecute
 } = useMonthJump({
     onSelect: (year, month) => onJumpYearMonth(year, month)
 })
@@ -178,16 +173,30 @@ const {
                     title="上一周"
                     @click="onPrevWeek"
                 />
-                <button
-                    ref="wjpTitleEl"
-                    type="button"
-                    class="wk-title"
-                    data-mjp-trigger
-                    title="跳转到年月"
-                    @click="toggleWeekJump"
+                <!-- 年-月跳转 NueDropdown（TASK-09：NueDropdown 内建开合/定位/Esc/外点；
+                     closeWhenExecuted 月格即点即跳即关；落周不切回月视图） -->
+                <nue-dropdown
+                    placement="bottom-start"
+                    size="small"
+                    group="calendar-month-jump"
+                    close-when-executed
+                    @open="onWeekJumpOpen"
+                    @close="onWeekJumpClose"
+                    @execute="onWeekJumpExecute"
                 >
-                    {{ title }}
-                </button>
+                    <template #trigger="{ trigger }">
+                        <button
+                            ref="wjpTitleEl"
+                            type="button"
+                            class="wk-title"
+                            title="跳转到年月"
+                            @click="trigger"
+                        >
+                            {{ title }}
+                        </button>
+                    </template>
+                    <calendar-month-grid :anchor-year="jumpAnchorYear" :active="wjpOpen" />
+                </nue-dropdown>
                 <nue-button
                     icon="arrow-right"
                     theme="icon,ghost"
@@ -195,16 +204,6 @@ const {
                     @click="onNextWeek"
                 />
             </nue-div>
-            <!-- 年-月跳转面板（C2-F9；周视图内落周，不切回月视图） -->
-            <month-jump-panel
-                :open="wjpOpen"
-                :x="wjpPos.x"
-                :y="wjpPos.y"
-                :anchor-year="jumpAnchorYear"
-                :anchor-month="jumpAnchorMonth"
-                @select="onWeekJumpSelect"
-                @close="closeWeekJump"
-            />
             <nue-div align="center" gap="6px">
                 <calendar-sort-dropdown v-model="sort" />
                 <nue-div class="wk-view-toggle" role="group" aria-label="视图切换">

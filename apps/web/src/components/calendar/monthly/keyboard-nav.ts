@@ -10,8 +10,9 @@ export const CALENDAR_KEY_SCOPE = 'calendar'
 /**
  * 弹层集合键盘抑制谓词（PM 决议 Q1/Q2：全部导航键在弹层开启期间一律抑制）
  * @description 命中即抑制：① F4 改期菜单/日期面板所在浮层（.rmenu，月/周条与抽屉行同源）
- *              ② 任意 Nue 弹层激活（popup-pool data-actived=true；含日期面板/当日面板/
- *              未安排抽屉/任务详情/对话框/F9 面板等）。
+ *              ② 任一 NueDropdown 激活（TASK-09：标题年月/排序等；弹层容器 data-visible=true）
+ *              ③ 任意 Nue 弹层激活（popup-pool data-actived=true；含日期面板/当日面板/
+ *              未安排抽屉/任务详情/对话框等）。
  *              undo-toast / NueMessage 轻提示不在 pool、不构成抑制（Q2 收窄口径）。
  * @param doc document 或同构查询对象（测试注入假对象）
  */
@@ -19,7 +20,7 @@ export const isCalendarKeyLocked = (doc: {
     querySelector(selector: string): Element | null
 }): boolean =>
     !!doc.querySelector('.rmenu') ||
-    !!doc.querySelector('.month-jump-panel') ||
+    !!doc.querySelector('.nue-dropdown-wrapper[data-visible="true"]') ||
     !!doc.querySelector('.nue-popup-pool[data-actived="true"]')
 
 /** 交互可聚焦控件选择器（Enter 目标守卫：命中则放行原生激活，不执行"开当日面板"） */

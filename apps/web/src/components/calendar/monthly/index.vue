@@ -13,7 +13,7 @@ import { ghostPointOf, useDragSchedule } from './use-drag-schedule'
 import { segmentStyleOf, useCalendarGrid } from './use-calendar-grid'
 import { useMonthJump } from './use-month-jump'
 import CalendarSortDropdown from './calendar-sort-dropdown.vue'
-import MonthJumpPanel from './month-jump-panel.vue'
+import CalendarMonthGrid from './calendar-month-grid.vue'
 import { CALENDAR_KEY_SCOPE, isCalendarKeyLocked, isInteractiveKeyTarget } from './keyboard-nav'
 import useCalendarMonthly from './use-calendar-monthly'
 import {
@@ -63,7 +63,6 @@ const {
     goNextMonth,
     goToToday,
     year,
-    monthIndex,
     jumpToMonth,
     jumpToWeekOfMonthFirst,
     getDayTasks,
@@ -305,15 +304,14 @@ provide<CalendarWeeklyContext>(CALENDAR_WEEKLY_CONTEXT_KEY, {
     onBadgeLabel: badgeLabel
 })
 
-// —— C2-F9 月视图标题年-月跳转（面板弹层状态机；O2 抽取 useMonthJump） ——
-// 调用点解构为顶层 ref（模板嵌套 ref 不解包；:x="mjpPos.x" 恢复顶层解包语义，REG-01 修复）
+// —— C2-F9 月视图标题年-月跳转（TASK-09：NueDropdown 触发器；O2 抽取 useMonthJump；跳转语义不变） ——
+// 调用点解构为顶层 ref（模板嵌套 ref 不解包；:active="mjpOpen" / :anchor-year="year" 顶层解包，REG-01）
 const {
-    open: mjpOpen,
-    pos: mjpPos,
     titleEl: mjpTitleEl,
-    toggle: toggleMonthJump,
-    close: closeMonthJump,
-    select: onMonthJumpSelect
+    open: mjpOpen,
+    onOpen: onMonthJumpOpen,
+    onClose: onMonthJumpClose,
+    onExecute: onMonthJumpExecute
 } = useMonthJump({
     onSelect: (targetYear, targetMonth) => jumpToMonth(targetYear, targetMonth)
 })
@@ -395,16 +393,30 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                         @click="goPrevMonth"
                     >
                     </nue-button>
-                    <button
-                        ref="mjpTitleEl"
-                        type="button"
-                        class="cal-title"
-                        data-mjp-trigger
-                        title="跳转到年月"
-                        @click="toggleMonthJump"
+                    <!-- 年-月跳转 NueDropdown（TASK-09：NueDropdown 内建开合/定位/Esc/外点；
+                         closeWhenExecuted 月格即点即跳即关；双视图同款） -->
+                    <nue-dropdown
+                        placement="bottom-start"
+                        size="small"
+                        group="calendar-month-jump"
+                        close-when-executed
+                        @open="onMonthJumpOpen"
+                        @close="onMonthJumpClose"
+                        @execute="onMonthJumpExecute"
                     >
-                        {{ monthTitle }}
-                    </button>
+                        <template #trigger="{ trigger }">
+                            <button
+                                ref="mjpTitleEl"
+                                type="button"
+                                class="cal-title"
+                                title="跳转到年月"
+                                @click="trigger"
+                            >
+                                {{ monthTitle }}
+                            </button>
+                        </template>
+                        <calendar-month-grid :anchor-year="year" :active="mjpOpen" />
+                    </nue-dropdown>
                     <nue-button
                         icon="arrow-right"
                         theme="icon,ghost"
@@ -413,16 +425,6 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                     >
                     </nue-button>
                 </nue-div>
-                <!-- 年-月跳转面板（C2-F9） -->
-                <month-jump-panel
-                    :open="mjpOpen"
-                    :x="mjpPos.x"
-                    :y="mjpPos.y"
-                    :anchor-year="year"
-                    :anchor-month="monthIndex + 1"
-                    @select="onMonthJumpSelect"
-                    @close="closeMonthJump"
-                />
                 <nue-div align="center">
                     <calendar-sort-dropdown v-model="sort" />
                     <nue-div class="cal-view-toggle" role="group" aria-label="视图切换">
