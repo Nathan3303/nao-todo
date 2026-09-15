@@ -3,14 +3,14 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia } from 'pinia'
 import { nextTick } from 'vue'
-import { NueButton, NueDatePicker } from 'nue-ui'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import UnscheduledDrawer from '../unscheduled-drawer.vue'
 import { todayDateKey } from '../monthly-layout'
 import type { BatchScheduleResult } from '../reschedule'
+import { nueUI } from '@/nue-ui-register'
 
 /**
- * 抽屉单行「安排到…」B7 恢复断言（PM M2 小补丁）
+ * 抽屉单行「安排到…」B7 恢复断言（TASK-10：按钮为 reschedule-menu 的 NueDropdown 触发器）
  * @description done 行（无 endAt）单行可安排：菜单可开、首位「今天」上抛（F4-08/09 done 链路）；
  *              禁用仅随 busy；多选态 done 置灰不可选守卫不放松（F3-02/14）。
  */
@@ -70,13 +70,11 @@ const mountDrawer = (opts: {
             onShowCompleted: vi.fn()
         },
         global: {
-            plugins: [createPinia()],
-            components: { 'nue-button': NueButton },
+            plugins: [createPinia(), nueUI],
             stubs: {
                 'nue-div': slotStub,
                 'nue-text': slotStub,
-                'nue-drawer': drawerStub,
-                'nue-date-picker': NueDatePicker
+                'nue-drawer': drawerStub
             }
         }
     })
@@ -87,11 +85,16 @@ const rowActionBtn = (): HTMLButtonElement | undefined => {
     const el = document.body.querySelector<HTMLButtonElement>('.us-actions .nue-button')
     return el ?? undefined
 }
-const menuItem = (label: string): HTMLElement | undefined => {
-    const el = [...document.body.querySelectorAll<HTMLElement>('.rmenu [role="menuitem"]')].find(
+const isOpen = (): boolean =>
+    !!document.body.querySelector('.nue-dropdown-wrapper[data-visible="true"]')
+const menuItem = (label: string): HTMLElement | undefined =>
+    [...document.body.querySelectorAll<HTMLElement>('.rmenu [role="menuitem"]')].find(
         (b) => b.textContent?.trim() === label
     )
-    return el
+const openRowMenu = async (): Promise<void> => {
+    rowActionBtn()!.click()
+    await nextTick()
+    await nextTick()
 }
 
 describe('CalendarUnscheduledDrawer - 单行「安排到…」B7 语义（done 可安排）', () => {
@@ -104,36 +107,37 @@ describe('CalendarUnscheduledDrawer - 单行「安排到…」B7 语义（done �
         // done 行按钮不禁用（disabled 仅随 busy）
         const btn = rowActionBtn()!
         expect(btn.disabled).toBe(false)
-        btn.click()
-        await nextTick()
+        await openRowMenu()
+        expect(isOpen()).toBe(true)
         const labels = [
             ...document.body.querySelectorAll<HTMLElement>('.rmenu [role="menuitem"]')
         ].map((b) => b.textContent?.trim())
         expect(labels).toEqual(['今天', '明天', '选择日期…'])
         menuItem('今天')!.click()
+        await nextTick()
         expect(onSchedule).toHaveBeenCalledTimes(1)
         expect(onSchedule.mock.calls[0]![0]!.id).toBe('t-done')
         expect(onSchedule.mock.calls[0]![1]).toBe(todayDateKey())
         expect(w.emitted('update:open')).toBeUndefined()
+        expect(isOpen()).toBe(false)
     })
 
     it('再次点击「安排到…」= 收起（触发器 toggle；S23 回归）', async () => {
         mountDrawer({ task: makeTask() })
+        await openRowMenu()
+        expect(isOpen()).toBe(true)
         rowActionBtn()!.click()
         await nextTick()
-        expect(document.body.querySelector('.rmenu')).toBeTruthy()
-        rowActionBtn()!.click()
-        await nextTick()
-        expect(document.body.querySelector('.rmenu')).toBeNull()
+        expect(isOpen()).toBe(false)
     })
 
-    it('busy（busyTaskId=该任务）→「安排到…」禁用，右键路径不可开（防连点）', async () => {
+    it('busy（busyTaskId=该任务）→「安排到…」禁用，不可开（防连点）', async () => {
         mountDrawer({ task: makeTask(), busyTaskId: 't1' })
         const btn = rowActionBtn()!
         expect(btn.disabled).toBe(true)
         btn.click()
         await nextTick()
-        expect(document.body.querySelector('.rmenu')).toBeNull()
+        expect(isOpen()).toBe(false)
     })
 
     it('多选态 done 行守卫不放松：置灰不可选、不进入选择（F3-02/14 无回归）', async () => {
@@ -189,13 +193,11 @@ describe('CalendarUnscheduledDrawer - F1 行拖源上抛', () => {
                 ) => void
             },
             global: {
-                plugins: [createPinia()],
-                components: { 'nue-button': NueButton },
+                plugins: [createPinia(), nueUI],
                 stubs: {
                     'nue-div': slotStub,
                     'nue-text': slotStub,
-                    'nue-drawer': drawerStub,
-                    'nue-date-picker': NueDatePicker
+                    'nue-drawer': drawerStub
                 }
             }
         })

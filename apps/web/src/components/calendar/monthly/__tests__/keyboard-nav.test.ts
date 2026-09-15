@@ -21,16 +21,22 @@ describe('C1-F8 keyboard-nav 纯逻辑', () => {
         expect(CALENDAR_KEY_SCOPE).toBe('calendar')
     })
 
-    it('弹层抑制谓词：F4 菜单(.rmenu)、激活 NueDropdown(.nue-dropdown-wrapper[data-visible=true]) 或 激活弹层(popup-pool[data-actived=true]) 任一命中即抑制', () => {
+    it('弹层抑制谓词：激活 NueDropdown(.nue-dropdown-wrapper[data-visible=true]) 或 激活弹层(popup-pool[data-actived=true]) 任一命中即抑制', () => {
         expect(isCalendarKeyLocked(fakeDoc([]))).toBe(false)
-        expect(isCalendarKeyLocked(fakeDoc(['.rmenu']))).toBe(true)
         expect(isCalendarKeyLocked(fakeDoc(['.nue-dropdown-wrapper[data-visible="true"]']))).toBe(
             true
         )
         expect(isCalendarKeyLocked(fakeDoc(['.nue-popup-pool[data-actived="true"]']))).toBe(true)
         expect(
-            isCalendarKeyLocked(fakeDoc(['.rmenu', '.nue-popup-pool[data-actived="true"]']))
+            isCalendarKeyLocked(
+                fakeDoc([
+                    '.nue-dropdown-wrapper[data-visible="true"]',
+                    '.nue-popup-pool[data-actived="true"]'
+                ])
+            )
         ).toBe(true)
+        // TASK-10：.rmenu 常驻不在判定内（旧选择器已移除），不得因它抑制
+        expect(isCalendarKeyLocked(fakeDoc(['.rmenu']))).toBe(false)
     })
 
     it('未激活 popup-pool（data-actived=false/无）与轻提示不算抑制', () => {
