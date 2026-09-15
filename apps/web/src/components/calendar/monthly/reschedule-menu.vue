@@ -145,7 +145,7 @@ const onClose = (): void => {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    min-width: 112px;
+    min-width: 10rem;
 }
 
 .rmenu__item {
@@ -185,14 +185,18 @@ const onClose = (): void => {
 
 .rmenu__date {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     gap: 6px;
     padding: 4px 2px 2px;
-}
 
-.rmenu__picker {
-    flex: 1;
-    min-width: 0;
+    > .rmenu__picker {
+        width: 100%;
+
+        &:deep(.nue-button) {
+            width: 100%;
+        }
+    }
 }
 
 .rmenu__confirm {
