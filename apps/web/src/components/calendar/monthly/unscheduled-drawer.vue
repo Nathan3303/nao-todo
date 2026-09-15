@@ -6,7 +6,7 @@ import { useProjectsStore } from '@nao-todo/presentation/project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
 import { TaskCheckButton } from '@nao-todo/shared'
 import dayjs from 'dayjs'
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { todayDateKey } from './monthly-layout'
 import { buildCalendarEmptyState } from './empty-state'
 import RescheduleMenu from './reschedule-menu.vue'
@@ -44,9 +44,6 @@ const multiMode = ref(false)
 const selectedIds = ref<Set<TaskViewObject['id']>>(new Set())
 const batchPicking = ref(false)
 const batchPickDate = ref<string>('')
-
-// @states 单行「安排到…」菜单（F4 收敛；抽屉行统一为三项裁剪菜单，共享单实例）
-const rowMenu = reactive({ open: false, x: 0, y: 0, taskId: '' })
 
 // @computed 行上下文（清单名 + 标签，缺数据时优雅降级为空）
 type RowMeta = { project?: ProjectViewObject; tags: TagViewObject[] }
@@ -87,7 +84,6 @@ const isSelected = (taskId: TaskViewObject['id']): boolean => selectedIds.value.
 const toggleMultiMode = (): void => {
     if (props.scheduleBusy) return
     multiMode.value = !multiMode.value
-    closeRowMenu()
     batchPicking.value = false
     batchPickDate.value = ''
     selectedIds.value = new Set()
@@ -120,7 +116,6 @@ const resetSelectionUI = (): void => {
     selectedIds.value = new Set()
     batchPicking.value = false
     batchPickDate.value = ''
-    closeRowMenu()
 }
 
 // @watch 抽屉打开 → 复位（普通模式开始；B7 单行行为不回归）
@@ -165,30 +160,6 @@ const confirmBatchPick = (): void => {
     void runBatch(keyOfIso(batchPickDate.value))
 }
 
-// —— 单行「安排到…」菜单（F4 收敛：三项=今天/明天/选择日期…；首位今天=B7 等价） ——
-
-// @method 以「安排到…」按钮为锚点打开菜单（视口边缘收拢）
-//              同任务再次点击 = 收起（toggle）；换行点击 = 切换到该行菜单
-//              B7 旧行为恢复：done 行单行可安排，disabled 仅随 busy（多选模式 done 排除由 Q4 另管）
-const openRowMenu = (task: TaskViewObject, event: Event): void => {
-    if (props.scheduleBusy || props.busyTaskId === task.id) return
-    if (rowMenu.open && rowMenu.taskId === task.id) {
-        closeRowMenu()
-        return
-    }
-    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
-    rowMenu.taskId = task.id
-    rowMenu.x = Math.min(Math.max(4, rect.left), window.innerWidth - 208)
-    rowMenu.y = Math.min(Math.max(4, rect.bottom + 4), window.innerHeight - 232)
-    rowMenu.open = true
-}
-
-// @method 收起行内菜单
-const closeRowMenu = (): void => {
-    rowMenu.open = false
-    rowMenu.taskId = ''
-}
-
 // @method 行内交互控件不参与拖源（完成勾选/选择勾/「安排到…」/行内其它按钮各自保语义）；
 //              多选态行不可作拖源（互斥声明）；busy/写回期禁起由父级守卫兜底
 const onRowPointerDown = (task: TaskViewObject, event: PointerEvent): void => {
@@ -199,11 +170,9 @@ const onRowPointerDown = (task: TaskViewObject, event: PointerEvent): void => {
     props.onRowDragStart(task, event)
 }
 
-// @method 菜单选中：交给父级内核串行写回（同 B7 单行语义：未安排=endAt 直写目标日末）
-const onRowMenuSelect = (dateKey: string): void => {
-    const task = props.tasks.find((item) => item.id === rowMenu.taskId)
-    closeRowMenu()
-    if (!task) return
+// @method 「安排到…」菜单选中：交给父级内核串行写回（同 B7 单行语义：未安排=endAt 直写目标日末）
+//              （TASK-10：每行一个 reschedule-menu 实例，触发器即该行按钮；开合由 NueDropdown 内建）
+const onRowMenuSelect = (task: TaskViewObject, dateKey: string): void => {
     void props.onScheduleToDay(task, dateKey)
 }
 </script>
@@ -301,31 +270,28 @@ const onRowMenuSelect = (dateKey: string): void => {
                             </div>
                         </div>
 
-                        <!-- 普通模式行内「安排到…」菜单（M2 收敛；B7：done 行单行可安排，禁用仅随 busy；多选模式隐藏） -->
+                        <!-- 普通模式行内「安排到…」（TASK-10：按钮为 reschedule-menu 的 NueDropdown 触发器；
+                             B7：done 行单行可安排，禁用仅随 busy；多选模式隐藏） -->
                         <div v-if="!multiMode" class="us-actions" @click.stop>
-                            <nue-button
-                                theme="small,ghost"
-                                data-rmenu-trigger
-                                :disabled="busyTaskId === task.id"
-                                title="安排到某日（含过去日期）"
-                                @click="openRowMenu(task, $event)"
+                            <reschedule-menu
+                                :scheduled="false"
+                                :busy="busyTaskId === task.id"
+                                @select="(dateKey) => onRowMenuSelect(task, dateKey)"
                             >
-                                {{ busyTaskId === task.id ? '安排中…' : '安排到…' }}
-                            </nue-button>
+                                <template #trigger="{ trigger }">
+                                    <nue-button
+                                        theme="small,ghost"
+                                        :disabled="busyTaskId === task.id"
+                                        title="安排到某日（含过去日期）"
+                                        @click="trigger"
+                                    >
+                                        {{ busyTaskId === task.id ? '安排中…' : '安排到…' }}
+                                    </nue-button>
+                                </template>
+                            </reschedule-menu>
                         </div>
                     </div>
                 </div>
-
-                <!-- 行内「安排到…」菜单（共享单实例；抽屉行=未安排 → 三项裁剪） -->
-                <reschedule-menu
-                    :open="rowMenu.open"
-                    :x="rowMenu.x"
-                    :y="rowMenu.y"
-                    :scheduled="false"
-                    :busy="rowMenu.taskId ? busyTaskId === rowMenu.taskId : false"
-                    @select="onRowMenuSelect"
-                    @close="closeRowMenu"
-                />
             </template>
             <!-- 空态（真无/筛选区分出口，B7 不回归） -->
             <nue-div v-else vertical align="center" class="us-empty" gap="4px">
