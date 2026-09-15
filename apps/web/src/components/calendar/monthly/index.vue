@@ -423,7 +423,7 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                     @select="onMonthJumpSelect"
                     @close="closeMonthJump"
                 />
-                <nue-div align="center" gap="6px">
+                <nue-div align="center">
                     <calendar-sort-dropdown v-model="sort" />
                     <nue-div class="cal-view-toggle" role="group" aria-label="视图切换">
                         <nue-button
@@ -444,16 +444,18 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                             周
                         </nue-button>
                     </nue-div>
-                    <span class="cal-view-sep" aria-hidden="true"></span>
-                    <nue-button
-                        theme="ghost,small"
-                        :disabled="unscheduledBtnDisabled"
-                        title="未安排任务：快速安排到某日"
-                        @click="unscheduledOpen = true"
-                    >
-                        未安排 {{ unscheduledTasks.length }}
-                    </nue-button>
-                    <nue-button theme="ghost,small" @click="goToToday">今天</nue-button>
+                    <nue-divider vertical aria-hidden="true" />
+                    <nue-div gap="var(--nue-gap-xs)">
+                        <nue-button
+                            theme="ghost,small"
+                            :disabled="unscheduledBtnDisabled"
+                            title="未安排任务：快速安排到某日"
+                            @click="unscheduledOpen = true"
+                        >
+                            未安排 {{ unscheduledTasks.length }}
+                        </nue-button>
+                        <nue-button theme="ghost,small" @click="goToToday">今天</nue-button>
+                    </nue-div>
                 </nue-div>
             </nue-div>
 

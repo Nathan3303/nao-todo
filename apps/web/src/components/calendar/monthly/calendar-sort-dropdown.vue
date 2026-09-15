@@ -85,7 +85,7 @@ const onOrder = (value: string): void => {
 <template>
     <nue-dropdown placement="bottom-end" size="small" theme="menu" group="calendar-sort">
         <template #trigger="{ trigger }">
-            <nue-button icon="select" theme="icon,ghost" title="日历排序" @click.stop="trigger" />
+            <nue-button icon="filter" theme="icon,ghost" title="日历排序" @click.stop="trigger" />
         </template>
         <dropdown-div-block title="排序">
             <inner-dropdown title="排序字段" icon="select" @execute="onField">

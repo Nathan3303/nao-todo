@@ -49,7 +49,7 @@
     user-select: none;
     justify-content: space-between;
     flex-wrap: wrap;
-    margin-bottom: var(--nue-gap-sm);
+    margin-bottom: var(--nue-gap-xs);
 }
 
 /* 标题（C2-F9：可点按钮语义，可聚焦/hover 可达；文本样式与旧 h2 一致） */
