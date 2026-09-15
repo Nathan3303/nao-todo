@@ -4,7 +4,7 @@ import {
     INTERACTIVE_KEY_TARGET_SELECTOR,
     isCalendarKeyLocked,
     isInteractiveKeyTarget
-} from './keyboard-nav'
+} from '../keyboard-nav'
 
 /** 假 document：按选择器返回预置元素/空 */
 const fakeDoc = (present: string[]): { querySelector: (selector: string) => Element | null } => ({

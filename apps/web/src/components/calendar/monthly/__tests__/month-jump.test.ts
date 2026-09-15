@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vite-plus/test'
-import { isDateKeyInMonth, MONTH_VALUES, monthFirstDateKey, offsetYear, pad2 } from './month-jump'
+import { isDateKeyInMonth, MONTH_VALUES, monthFirstDateKey, offsetYear, pad2 } from '../month-jump'
 
 describe('C2-F9 month-jump 纯逻辑', () => {
     it('月格数组 1~12 与补零/年偏移', () => {

@@ -4,8 +4,8 @@ import { nextTick } from 'vue'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { NueButton, NueDatePicker, NueDivider } from 'nue-ui'
 import type { TaskViewObject } from '@nao-todo/domain-task'
-import TaskBar from './task-bar.vue'
-import { todayDateKey } from './monthly-layout'
+import TaskBar from '../task-bar.vue'
+import { todayDateKey } from '../monthly-layout'
 
 /**
  * 任务条 F4 入口组件级断言（P3-2 / A1-F4-01/02/12）

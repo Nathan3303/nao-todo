@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vite-plus/test'
-import { buildCalendarListQuery, MAX_PAGES, PAGE_LIMIT } from './list-query'
+import { buildCalendarListQuery, MAX_PAGES, PAGE_LIMIT } from '../list-query'
 
 describe('buildCalendarListQuery - 服务端筛选查询构造', () => {
     const emptyFilter = { projectIds: [], tagIds: [], hideCompleted: false }

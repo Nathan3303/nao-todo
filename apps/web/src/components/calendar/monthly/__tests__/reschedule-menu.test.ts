@@ -2,8 +2,8 @@
 import { afterEach, describe, expect, it } from 'vite-plus/test'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { NueButton, NueDatePicker, NueDivider } from 'nue-ui'
-import RescheduleMenu from './reschedule-menu.vue'
-import { todayDateKey } from './monthly-layout'
+import RescheduleMenu from '../reschedule-menu.vue'
+import { todayDateKey } from '../monthly-layout'
 
 /**
  * F4 快速改期菜单组件级断言（P3-2 / A1-F4-01/02/08/11）

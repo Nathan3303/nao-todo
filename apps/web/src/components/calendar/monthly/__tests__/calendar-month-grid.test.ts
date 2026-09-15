@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vite-plus/test'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import dayjs from 'dayjs'
-import CalendarMonthGrid from './calendar-month-grid.vue'
-import { monthFirstDateKey } from './month-jump'
+import CalendarMonthGrid from '../calendar-month-grid.vue'
+import { monthFirstDateKey } from '../month-jump'
 
 /**
  * TASK-09 年-月跳转网格（month-jump-panel 内容迁移）

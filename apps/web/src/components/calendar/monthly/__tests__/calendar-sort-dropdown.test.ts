@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vite-plus/test'
 import { defineComponent } from 'vue'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { InnerDropdown } from '@nao-todo/shared'
-import CalendarSortDropdown from './calendar-sort-dropdown.vue'
-import type { CalendarSort } from './calendar-sort'
+import CalendarSortDropdown from '../calendar-sort-dropdown.vue'
+import type { CalendarSort } from '../calendar-sort'
 import { nueUI } from '@/nue-ui-register'
 
 /**

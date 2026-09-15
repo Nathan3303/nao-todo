@@ -2,8 +2,8 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
 import { defineComponent, nextTick } from 'vue'
 import { mount, type VueWrapper } from '@vue/test-utils'
-import { useMonthJump } from './use-month-jump'
-import CalendarMonthGrid from './calendar-month-grid.vue'
+import { useMonthJump } from '../use-month-jump'
+import CalendarMonthGrid from '../calendar-month-grid.vue'
 import { nueUI } from '@/nue-ui-register'
 
 /**

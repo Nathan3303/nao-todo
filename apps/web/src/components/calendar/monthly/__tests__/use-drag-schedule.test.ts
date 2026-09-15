@@ -10,7 +10,7 @@ import {
     isDragPastThreshold,
     useDragSchedule,
     type DragScheduleDeps
-} from './use-drag-schedule'
+} from '../use-drag-schedule'
 
 /**
  * F1 拖拽排期可测逻辑（P3-2 / A1-F1-01/07/09）

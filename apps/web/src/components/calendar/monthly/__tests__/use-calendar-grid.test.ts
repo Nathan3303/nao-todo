@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vite-plus/test'
-import { GRID_ITEM_STEP, GRID_TOP_OFFSET, segmentStyleOf } from './use-calendar-grid'
+import { GRID_ITEM_STEP, GRID_TOP_OFFSET, segmentStyleOf } from '../use-calendar-grid'
 
 /**
  * 网格几何纯函数（O2 抽取回归）

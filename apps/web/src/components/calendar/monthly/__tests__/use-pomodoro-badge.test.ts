@@ -8,7 +8,7 @@ import {
     usePomodoroBadge,
     type PomodoroBadgeLoader,
     type PomodoroBadgeRange
-} from './use-pomodoro-badge'
+} from '../use-pomodoro-badge'
 import { usePomodoroRecordsStore } from '@nao-todo/presentation/pomodoro'
 
 /**

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test'
 import dayjs from 'dayjs'
 import type { TaskViewObject } from '@nao-todo/domain-task'
-import { isTaskOverdue } from './overdue'
+import { isTaskOverdue } from '../overdue'
 
 /**
  * 逾期判定纯逻辑（天级口径）

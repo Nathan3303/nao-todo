@@ -2,8 +2,8 @@
 import { beforeEach, describe, expect, it } from 'vite-plus/test'
 import { nextTick } from 'vue'
 import type { TaskViewObject } from '@nao-todo/domain-task'
-import { CALENDAR_SORT_STORAGE_KEY } from './calendar-sort'
-import { useCalendarSort } from './use-calendar-sort'
+import { CALENDAR_SORT_STORAGE_KEY } from '../calendar-sort'
+import { useCalendarSort } from '../use-calendar-sort'
 
 /**
  * TASK-08 日历排序组合式

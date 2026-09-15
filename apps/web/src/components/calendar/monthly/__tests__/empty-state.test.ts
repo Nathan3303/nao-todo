@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vite-plus/test'
-import { buildCalendarEmptyState, type CalendarEmptyStateParams } from './empty-state'
+import { buildCalendarEmptyState, type CalendarEmptyStateParams } from '../empty-state'
 
 /**
  * 空态工厂纯逻辑（O6 统一单源）
