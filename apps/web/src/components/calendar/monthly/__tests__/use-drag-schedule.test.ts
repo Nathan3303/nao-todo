@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
+import { defineComponent, h } from 'vue'
+import { mount } from '@vue/test-utils'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import {
     DRAG_THRESHOLD_PX,
@@ -8,7 +10,7 @@ import {
     isDragPastThreshold,
     useDragSchedule,
     type DragScheduleDeps
-} from './use-drag-schedule'
+} from '../use-drag-schedule'
 
 /**
  * F1 拖拽排期可测逻辑（P3-2 / A1-F1-01/07/09）
@@ -178,5 +180,31 @@ describe('useDragSchedule - 会话控制器', () => {
         const clickB = new MouseEvent('click', { bubbles: true, cancelable: true })
         link.dispatchEvent(clickB)
         expect(clickB.defaultPrevented).toBe(false)
+    })
+
+    it('拖拽会话进行中组件卸载 → window 级监听全部解除（O4 泄漏修复）', () => {
+        const removeSpy = vi.spyOn(window, 'removeEventListener')
+        let drag: ReturnType<typeof useDragSchedule> | null = null
+        const Comp = defineComponent({
+            setup() {
+                drag = useDragSchedule(deps)
+                drag.startPossible(
+                    makeTask(),
+                    'row',
+                    new PointerEvent('pointerdown', { button: 0, clientX: 10, clientY: 10 })
+                )
+                return () => h('div', 'host')
+            }
+        })
+        const wrapper = mount(Comp)
+        // 超阈值 → 拖拽激活 + 点击抑制 armed（4 个 move 监听 + click/pointerdown 抑制监听）
+        window.dispatchEvent(
+            new PointerEvent('pointermove', { bubbles: true, clientX: 100, clientY: 100 })
+        )
+        expect(drag!.session.active).toBe(true)
+        const removalsBefore = removeSpy.mock.calls.length
+        wrapper.unmount()
+        expect(removeSpy.mock.calls.length - removalsBefore).toBeGreaterThanOrEqual(6)
+        removeSpy.mockRestore()
     })
 })

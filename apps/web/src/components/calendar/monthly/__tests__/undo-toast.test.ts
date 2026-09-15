@@ -2,8 +2,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { NueButton } from 'nue-ui'
-import ScheduleUndoToast from './undo-toast.vue'
-import type { ScheduleUndoAction } from './reschedule'
+import ScheduleUndoToast from '../undo-toast.vue'
+import type { ScheduleUndoAction } from '../reschedule'
 
 /**
  * U2 action-toast 组件级断言（P3-2 / A1-U2-06）

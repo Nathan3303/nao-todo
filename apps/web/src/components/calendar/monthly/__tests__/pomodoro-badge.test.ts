@@ -8,7 +8,7 @@ import {
     readPomodoroBadgePref,
     toTimerRecordList,
     writePomodoroBadgePref
-} from './pomodoro-badge'
+} from '../pomodoro-badge'
 
 type Rec = { type: number; startAt: string }
 const iso = (day: string, time = 'T10:00:00') => `${day}T${time}.000`

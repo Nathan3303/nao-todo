@@ -1,20 +1,20 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { todayDateKey } from './monthly-layout'
 import { dateKeyOffset } from './reschedule'
 
 /**
- * F4 快速改期菜单（月/周任务条右键+三点、抽屉行「安排到…」共用同一组件/同一命令）
- * @description Teleport 固定定位小菜单；项=今天/明天/[下周同日（已排期专用）]/选择日期…
- *              （日期面板复用 M1 含过去日期口径，直接落）；外点/Esc 关闭；busy 期全项禁用（防连点）。
+ * F4 快速改期菜单（TASK-10：内建 NueDropdown 承载；月/周任务条三点、抽屉「安排到…」共用同一命令）
+ * @description NueDropdown + #trigger 触发器插槽（触发器由调用方提供：条三点 / 抽屉按钮）；
+ *              项=今天/明天/[下周同日（已排期专用）]/选择日期…（日期面板含过去日期，直接落）。
+ *              开合/定位/Esc/外点/closeWhenExecuted 由 NueDropdown 内建（替换手写 window 监听）；
+ *              菜单项经 data-executeid 交由 NueDropdown execute 委托上抛；busy 期全项禁用（防连点）。
+ *              同组 group="calendar-reschedule" 保证同一时刻仅一个改期菜单展开（跨条/抽屉）。
  */
 defineOptions({ name: 'CalendarRescheduleMenu' })
 
 const props = defineProps<{
-    open: boolean
-    x: number
-    y: number
     /** 已排期（含 endAt）→ 含「下周同日」四项；未安排 → 裁剪为三项 */
     scheduled: boolean
     /** 该任务排期中（写回进行）→ 禁用菜单项防连点 */
@@ -50,77 +50,65 @@ const pickDate = ref('')
 // @method ISO（NueDatePicker 输出）-> YYYY-MM-DD
 const keyOfIso = (iso: string): string => dayjs(iso).format('YYYY-MM-DD')
 
-// @method 「选择日期…」展开/收起
+// @method 「选择日期…」展开/收起（不带 execute-id，点按不关闭弹层）
 const toggleDatePanel = (): void => {
+    if (props.busy) return
     dateOpen.value = !dateOpen.value
     pickDate.value = ''
 }
 
-// @method 快捷项/日期面板确定：上抛目标日键
-const pickQuick = (key: string): void => {
-    if (props.busy || !key) return
-    emit('select', key)
-}
-const confirmDate = (): void => {
-    if (props.busy || !pickDate.value) return
-    emit('select', keyOfIso(pickDate.value))
+// @method 日期面板「确定」哨兵（带此 execute-id 时取 pickDate；其余 execute-id 即日期键）
+const PICK_SENTINEL = '__pick__'
+
+/**
+ * @method NueDropdown execute 委托：快捷项 id = 日期键；确定项 id = 哨兵（取 pickDate）
+ * @description closeWhenExecuted 已由 NueDropdown 负责收起；此处仅归一化目标日键并上抛 select。
+ */
+const onExecute = (id: string): void => {
+    if (props.busy || !id) return
+    if (id === PICK_SENTINEL) {
+        if (!pickDate.value) return
+        emit('select', keyOfIso(pickDate.value))
+        return
+    }
+    emit('select', id)
 }
 
-// —— 外点/Esc 关闭（开启时挂载，关闭/卸载摘除） ——
-
-// 外点判定：命中以下三类不关闭，其余一律视为外点：
-//   ① 本菜单自身（.rmenu）
-//   ② 触发器（data-rmenu-trigger：抽屉「安排到…」/条三点——点击它由触发器自身 toggle 收起）
-//   ③ 展开日期面板后，日期选择弹层（nue-date-picker-panel；其它 popup-pool 内容视为外点，
-//      修复抽屉因整体处于 .nue-popup-pool 内而永不外点关闭的问题）
-const onPointerDown = (event: PointerEvent): void => {
-    const target = event.target as Element | null
-    if (!target) return
-    if (target.closest('.rmenu')) return
-    if (target.closest('[data-rmenu-trigger]')) return
-    if (dateOpen.value && target.closest('.nue-date-picker-panel')) return
+// @method 弹层关闭（NueDropdown 内建 Esc/外点/execute）→ 复位日期面板并上抛 close（调用方复位态）
+const onClose = (): void => {
+    dateOpen.value = false
+    pickDate.value = ''
     emit('close')
 }
-const onKeyDown = (event: KeyboardEvent): void => {
-    if (event.key === 'Escape') emit('close')
-}
-
-watch(
-    () => props.open,
-    (open) => {
-        if (open) {
-            window.addEventListener('pointerdown', onPointerDown, true)
-            window.addEventListener('keydown', onKeyDown)
-        } else {
-            window.removeEventListener('pointerdown', onPointerDown, true)
-            window.removeEventListener('keydown', onKeyDown)
-        }
-    },
-    { immediate: true }
-)
-onBeforeUnmount(() => {
-    window.removeEventListener('pointerdown', onPointerDown, true)
-    window.removeEventListener('keydown', onKeyDown)
-})
 </script>
 
 <template>
-    <teleport to="body">
-        <div v-if="open" class="rmenu" :style="{ left: `${x}px`, top: `${y}px` }" role="menu">
-            <nue-button
+    <nue-dropdown
+        placement="bottom-end"
+        size="small"
+        group="calendar-reschedule"
+        close-when-executed
+        @close="onClose"
+        @execute="onExecute"
+    >
+        <template #trigger="{ trigger, visible }">
+            <slot name="trigger" :trigger="trigger" :visible="visible" />
+        </template>
+        <div class="rmenu" role="menu">
+            <button
                 v-for="item in quickItems"
                 :key="item.label"
-                theme="pure,small"
+                type="button"
                 class="rmenu__item"
                 role="menuitem"
                 :disabled="busy"
-                @click="pickQuick(item.key)"
+                :data-executeid="item.key"
             >
                 {{ item.label }}
-            </nue-button>
+            </button>
             <nue-divider class="rmenu__sep" />
-            <nue-button
-                theme="pure,small"
+            <button
+                type="button"
                 class="rmenu__item"
                 :class="{ 'is-on': dateOpen }"
                 :disabled="busy"
@@ -128,7 +116,7 @@ onBeforeUnmount(() => {
                 @click="toggleDatePanel"
             >
                 选择日期…
-            </nue-button>
+            </button>
             <!-- 选择日期面板（含过去日期，直接落） -->
             <div v-if="dateOpen" class="rmenu__date">
                 <nue-date-picker
@@ -138,31 +126,26 @@ onBeforeUnmount(() => {
                     size="small"
                     placeholder="选择日期"
                 />
-                <nue-button
-                    theme="primary,small"
+                <button
+                    type="button"
+                    class="rmenu__confirm"
                     :disabled="!pickDate || busy"
-                    @click="confirmDate"
+                    :data-executeid="PICK_SENTINEL"
                 >
                     确定
-                </nue-button>
+                </button>
             </div>
         </div>
-    </teleport>
+    </nue-dropdown>
 </template>
 
 <style scoped>
-/* 快速改期菜单（与日历风格一致：主题令牌 + 轻面板） */
+/* 快速改期菜单内容（外层卡片/定位由 NueDropdown 承担；此处仅项布局与项样式） */
 .rmenu {
-    position: fixed;
-    z-index: 1000;
-    min-width: 132px;
-    max-width: 200px;
-    padding: 4px;
-    background: var(--nue-primary-color-0);
-    border: 1px solid var(--nue-border-color);
-    border-radius: var(--nue-primary-radius, 8px);
-    box-shadow: 0 6px 18px color-mix(in srgb, var(--nue-primary-color-900) 14%, transparent);
-    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 10rem;
 }
 
 .rmenu__item {
@@ -171,9 +154,12 @@ onBeforeUnmount(() => {
     justify-content: flex-start;
     width: 100%;
     padding: 5px 8px;
+    border: none;
     border-radius: 4px;
+    background: transparent;
     text-align: left;
     color: var(--nue-primary-text-color);
+    font-family: inherit;
     font-size: var(--nue-text-sm, 0.8125rem);
     line-height: 1.4;
     cursor: pointer;
@@ -194,18 +180,40 @@ onBeforeUnmount(() => {
 }
 
 .rmenu__sep {
-    margin: 4px 2px;
+    margin: 2px 2px;
 }
 
 .rmenu__date {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     gap: 6px;
     padding: 4px 2px 2px;
+
+    > .rmenu__picker {
+        width: 100%;
+
+        &:deep(.nue-button) {
+            width: 100%;
+        }
+    }
 }
 
-.rmenu__picker {
-    flex: 1;
-    min-width: 0;
+.rmenu__confirm {
+    flex: none;
+    padding: 4px 10px;
+    border: none;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--nue-primary-text-color) 88%, var(--nue-primary-color-0));
+    color: var(--nue-primary-color-0);
+    font-family: inherit;
+    font-size: var(--nue-text-sm, 0.8125rem);
+    line-height: 1.4;
+    cursor: pointer;
+}
+
+.rmenu__confirm:disabled {
+    opacity: 0.5;
+    cursor: default;
 }
 </style>

@@ -1,87 +1,77 @@
 <script setup lang="ts">
 import { Loading as LoadingComp } from '@nao-todo/shared'
 import type { TaskViewObject } from '@nao-todo/domain-task'
-import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, inject, nextTick, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import QuickCreate from '../monthly/quick-create.vue'
 import TaskBar from '../monthly/task-bar.vue'
-import MonthJumpPanel from '../monthly/month-jump-panel.vue'
-import {
-    buildWeekGrid,
-    GRID_COLUMNS,
-    MAX_VISIBLE_LANES,
-    type CalendarWeekStart
-} from '../monthly/monthly-layout'
+import { buildWeekGrid, GRID_COLUMNS, weekdaysOf } from '../monthly/monthly-layout'
+import { segmentStyleOf, useCalendarGrid } from '../monthly/use-calendar-grid'
+import { useMonthJump } from '../monthly/use-month-jump'
+import CalendarMonthGrid from '../monthly/calendar-month-grid.vue'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
+import { isInteractiveKeyTarget } from '../monthly/keyboard-nav'
+import { buildCalendarEmptyState } from '../monthly/empty-state'
+import { CALENDAR_WEEKLY_CONTEXT_KEY } from '../weekly-context'
+import CalendarSortDropdown from '../monthly/calendar-sort-dropdown.vue'
+
+import '../calendar-grid.css'
 
 defineOptions({ name: 'CalendarWeekly' })
 
-const props = defineProps<{
-    loading: boolean
-    error: string
-    onRetry: () => void
-    tasks: TaskViewObject[]
-    selectedKey: string
-    filterActive: boolean
-    hideCompleted: boolean
-    onClearFilter: () => void
-    onShowCompleted: () => void
-    onOpenDay: (dateKey: string) => void
-    onOpenTask: (taskId: TaskViewObject['id']) => void
-    onGoMonth: () => void
-    onPrevWeek: () => void
-    onNextWeek: () => void
-    onGoToday: () => void
-    unscheduledCount: number
-    unscheduledDisabled: boolean
-    onOpenUnscheduled: () => void
-    // —— 格内快速新建（B6，由父级共享状态透传） ——
-    quickCreateDate: string
-    quickPending: boolean
-    onQuickOpen: (dateKey: string) => void
-    onQuickCancel: () => void
-    onQuickSubmit: (dateKey: string, name: string) => void | Promise<boolean>
-    /** 周起始口径（C9） */
-    weekStart: CalendarWeekStart
-    /** 单条改期写回中的任务 ID（F4 逐任务 busy） */
-    busyTaskId: string
-    /** F4 快速改期：目标日键上抛（父级走 reschedule 内核 + U2 撤销） */
-    onRescheduleTask: (task: TaskViewObject, dateKey: string) => void | Promise<void>
-    /** F1 拖拽：拖拽会话激活态 / 被拖任务 ID / 当前高亮日期键 / 任务条左键按下（父级接管阈值与会话） */
-    dragActive: boolean
-    dragTaskId: string
-    dragHoverKey: string | null
-    onDragBar: (task: TaskViewObject, event: PointerEvent) => void
-    /** C2-F9 周视图标题年-月跳转：目标年月上抛（父级落含 1 号的周并选中 1 号，不切回月视图） */
-    onJumpYearMonth: (year: number, month: number) => void
-    /** B1-F5 专注角标：取某日标签（'' = 不显示；父级持有区间聚合） */
-    onBadgeLabel: (dateKey: string) => string
-}>()
+// —— O14 props 收敛：周视图上下文由月视图（父）provide，本组件直接 inject 消费 ——
+const {
+    loading,
+    error,
+    onRetry,
+    tasks,
+    sort,
+    selectedKey,
+    filterActive,
+    hideCompleted,
+    onClearFilter,
+    onShowCompleted,
+    onOpenDay,
+    onOpenTask,
+    onGoMonth,
+    onPrevWeek,
+    onNextWeek,
+    onGoToday,
+    unscheduledCount,
+    unscheduledDisabled,
+    onOpenUnscheduled,
+    quickCreateDate,
+    quickPending,
+    onQuickOpen,
+    onQuickCancel,
+    onQuickSubmit,
+    weekStart,
+    busyTaskId,
+    onRescheduleTask,
+    dragActive,
+    dragTaskId,
+    dragHoverKey,
+    onDragBar,
+    onJumpYearMonth,
+    onBadgeLabel
+} = inject(CALENDAR_WEEKLY_CONTEXT_KEY)!
 
 // @viewContext 应用级子侧栏开关（与月视图 header 一致）
 const { isDisplayAside, switchDisplayAside } = inject(INDEX_VIEW_CONTEXT_KEY)!
 
-// —— 周几何常量（与 scoped 样式一致）——
-const WEEK_TOP = 26 // 日期区（日期号+周几）高度 + 首条间距
-const ITEM_STEP = 18 // 条高 16 + 间距 2
-const BAND_HEIGHT = 24 // 格底预留条带（DEF-1：+/+N/编辑器占用，任务条区其上截断）
+// —— O2 网格共享几何 + DEF-2 动态可视轨道数（行高实测；首帧回退 3） ——
+const bodyEl = ref<HTMLElement | null>(null)
+const { laneLimit, measure: measureAndApplyLaneLimit } = useCalendarGrid({
+    containerEl: bodyEl,
+    rowSelector: '.wk-row'
+})
 
 // @computed 星期表头（随周起始口径）
-const weekdays = computed(() =>
-    props.weekStart === 'monday'
-        ? ['一', '二', '三', '四', '五', '六', '日']
-        : ['日', '一', '二', '三', '四', '五', '六']
-)
-
-// @states 动态可视轨道数（DEF-2 语义：行高实测；首帧回退 3）
-const laneLimit = ref<number>(MAX_VISIBLE_LANES)
-const bodyEl = ref<HTMLElement | null>(null)
-let resizeTimer: ReturnType<typeof setTimeout> | undefined
-let bodyObserver: ResizeObserver | undefined
+const weekdays = computed(() => weekdaysOf(weekStart.value))
 
 // @computed 周模型（锚点=selectedKey 所在周；跨周任务裁剪，复用 buildRowContent）
 const model = computed(() =>
-    buildWeekGrid(props.selectedKey, props.tasks, laneLimit.value, props.weekStart)
+    buildWeekGrid(selectedKey.value, tasks.value, laneLimit.value, weekStart.value)
 )
 
 const visibleSegments = computed(() =>
@@ -101,59 +91,32 @@ const title = computed(() => {
 
 // @computed 空态：真无 vs 筛选导致（出口与月视图一致）
 const weekHasTasks = computed(() => model.value.segments.length > 0)
-const emptyHint = computed<{ text: string; action: string; run: () => void } | null>(() => {
-    if (weekHasTasks.value) return null
-    if (props.filterActive) {
-        return { text: '当前筛选条件下本周暂无任务', action: '清除筛选', run: props.onClearFilter }
-    }
-    if (props.hideCompleted) {
-        return { text: '已隐藏已完成任务', action: '显示已完成', run: props.onShowCompleted }
-    }
-    return null
-})
+// @computed 空态（O6 统一工厂：与月视图/未安排抽屉同源；真无时由视图自行渲染「本周暂无任务」）
+const emptyHint = computed(() =>
+    buildCalendarEmptyState({
+        hasTasks: weekHasTasks.value,
+        filterActive: filterActive.value,
+        hideCompleted: hideCompleted.value,
+        filterText: '当前筛选条件下本周暂无任务',
+        hideCompletedText: '已隐藏已完成任务',
+        emptyText: null,
+        onClearFilter,
+        onShowCompleted
+    })
+)
 
-// @method 按行高计算可视条数（同月视图 DEF-2 公式）
-const measureAndApplyLaneLimit = () => {
-    const row = bodyEl.value?.querySelector<HTMLElement>('.wk-row')
-    const rowHeight = row?.clientHeight ?? 0
-    if (rowHeight <= 0) return
-    const next = Math.max(1, Math.floor((rowHeight - WEEK_TOP - BAND_HEIGHT) / ITEM_STEP))
-    if (next !== laneLimit.value) laneLimit.value = next
-}
-const scheduleLaneMeasure = () => {
-    clearTimeout(resizeTimer)
-    resizeTimer = setTimeout(measureAndApplyLaneLimit, 100)
-}
-
-// @lifecycle 高度观测（ResizeObserver + 防抖；数据就绪后补量）
-onMounted(() => {
-    bodyObserver = new ResizeObserver(scheduleLaneMeasure)
-    if (bodyEl.value) bodyObserver.observe(bodyEl.value)
-    measureAndApplyLaneLimit()
-})
-onUnmounted(() => {
-    bodyObserver?.disconnect()
-    bodyObserver = undefined
-    clearTimeout(resizeTimer)
-})
+// @method 按行高计算可视条数（同月视图 DEF-2 公式；measure 由 useCalendarGrid 提供）
+// @lifecycle 高度观测（ResizeObserver + 防抖）与卸载清理已内置 useCalendarGrid
 watch(
-    [() => props.loading, () => props.error, () => props.tasks, () => weekHasTasks.value],
+    [() => loading.value, () => error.value, () => tasks.value, () => weekHasTasks.value],
     () => {
         void nextTick(measureAndApplyLaneLimit)
     },
     { flush: 'post' }
 )
 
-// @method 任务条定位（7 列等分；top 按轨道步进）
-const segStyle = (seg: { colStart: number; colEnd: number; lane: number }) => {
-    const left = (seg.colStart / GRID_COLUMNS) * 100
-    const width = ((seg.colEnd - seg.colStart + 1) / GRID_COLUMNS) * 100
-    return {
-        left: `${left}%`,
-        width: `${width}%`,
-        top: `${WEEK_TOP + seg.lane * ITEM_STEP}px`
-    }
-}
+// @method 任务条定位（7 列等分；top 按轨道步进；O2 共享几何纯函数）
+const segStyle = segmentStyleOf
 
 // @method 段首是否显示开始时刻：仅当任务真起始落在本周内可见列
 const segShowTime = (seg: { task: TaskViewObject; isStart: boolean; colStart: number }): boolean =>
@@ -161,45 +124,37 @@ const segShowTime = (seg: { task: TaskViewObject; isStart: boolean; colStart: nu
 
 // @method 回车提交（dateKey 来自所在格条带）
 const quickSubmitCell = (dateKey: string, name: string) => {
-    void props.onQuickSubmit(dateKey, name)
+    void onQuickSubmit(dateKey, name)
+}
+
+// @method 日期格 Enter 激活（O7 焦点管理：与点击同语义；格内交互控件/输入放行原生行为）
+const onCellEnter = (event: KeyboardEvent, dateKey: string): void => {
+    if (event.key !== 'Enter') return
+    if (isInteractiveKeyTarget(event.target)) return
+    event.stopPropagation()
+    event.preventDefault()
+    onOpenDay(dateKey)
 }
 
 // @method 溢出 +N 与 点击日期格（打开当日面板）
 const overflowOn = (dateKey: string) => model.value.overflow.find((o) => o.dateKey === dateKey)
 
-// —— C2-F9 周视图标题年-月跳转（面板弹层；再点标题 toggle 收起；关闭归还焦点；跳转不切月视图） ——
-const wjpOpen = ref(false)
-const wjpPos = ref({ x: 0, y: 0 })
-const wjpTitleEl = ref<HTMLElement | null>(null)
-// 面板锚点年/月 = 当前锚点（选中日）所在年月；非法回退今天
+// —— C2-F9 周视图标题年-月跳转（TASK-09：NueDropdown 触发器；O2 抽取 useMonthJump；落周不切回月视图） ——
+// 面板锚点年 = 当前锚点（选中日）所在年；非法回退今天
 const jumpAnchorYear = computed(() => {
-    const anchor = dayjs(props.selectedKey)
+    const anchor = dayjs(selectedKey.value)
     return anchor.isValid() ? anchor.year() : dayjs().year()
 })
-const jumpAnchorMonth = computed(() => {
-    const anchor = dayjs(props.selectedKey)
-    return anchor.isValid() ? anchor.month() + 1 : dayjs().month() + 1
+// 调用点解构为顶层 ref（模板嵌套 ref 不解包；:active="wjpOpen" 顶层解包，REG-01）
+const {
+    titleEl: wjpTitleEl,
+    open: wjpOpen,
+    onOpen: onWeekJumpOpen,
+    onClose: onWeekJumpClose,
+    onExecute: onWeekJumpExecute
+} = useMonthJump({
+    onSelect: (year, month) => onJumpYearMonth(year, month)
 })
-const closeWeekJump = (): void => {
-    wjpOpen.value = false
-    void nextTick(() => wjpTitleEl.value?.focus())
-}
-const toggleWeekJump = (event: MouseEvent): void => {
-    if (wjpOpen.value) {
-        closeWeekJump()
-        return
-    }
-    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
-    wjpPos.value = {
-        x: Math.min(Math.max(4, rect.left), window.innerWidth - 248),
-        y: Math.min(Math.max(4, rect.bottom + 4), window.innerHeight - 260)
-    }
-    wjpOpen.value = true
-}
-const onWeekJumpSelect = (targetYear: number, targetMonth: number): void => {
-    props.onJumpYearMonth(targetYear, targetMonth)
-    closeWeekJump()
-}
 </script>
 
 <template>
@@ -218,16 +173,30 @@ const onWeekJumpSelect = (targetYear: number, targetMonth: number): void => {
                     title="上一周"
                     @click="onPrevWeek"
                 />
-                <button
-                    ref="wjpTitleEl"
-                    type="button"
-                    class="wk-title"
-                    data-mjp-trigger
-                    title="跳转到年月"
-                    @click="toggleWeekJump"
+                <!-- 年-月跳转 NueDropdown（TASK-09：NueDropdown 内建开合/定位/Esc/外点；
+                     closeWhenExecuted 月格即点即跳即关；落周不切回月视图） -->
+                <nue-dropdown
+                    placement="bottom-start"
+                    size="small"
+                    group="calendar-month-jump"
+                    close-when-executed
+                    @open="onWeekJumpOpen"
+                    @close="onWeekJumpClose"
+                    @execute="onWeekJumpExecute"
                 >
-                    {{ title }}
-                </button>
+                    <template #trigger="{ trigger }">
+                        <button
+                            ref="wjpTitleEl"
+                            type="button"
+                            class="wk-title"
+                            title="跳转到年月"
+                            @click="trigger"
+                        >
+                            {{ title }}
+                        </button>
+                    </template>
+                    <calendar-month-grid :anchor-year="jumpAnchorYear" :active="wjpOpen" />
+                </nue-dropdown>
                 <nue-button
                     icon="arrow-right"
                     theme="icon,ghost"
@@ -235,22 +204,14 @@ const onWeekJumpSelect = (targetYear: number, targetMonth: number): void => {
                     @click="onNextWeek"
                 />
             </nue-div>
-            <!-- 年-月跳转面板（C2-F9；周视图内落周，不切回月视图） -->
-            <month-jump-panel
-                :open="wjpOpen"
-                :x="wjpPos.x"
-                :y="wjpPos.y"
-                :anchor-year="jumpAnchorYear"
-                :anchor-month="jumpAnchorMonth"
-                @select="onWeekJumpSelect"
-                @close="closeWeekJump"
-            />
             <nue-div align="center" gap="6px">
+                <calendar-sort-dropdown v-model="sort" />
                 <nue-div class="wk-view-toggle" role="group" aria-label="视图切换">
                     <nue-button
                         theme="small,ghost"
                         class="wk-view-btn"
                         title="切回月视图"
+                        aria-pressed="false"
                         @click="onGoMonth"
                     >
                         月
@@ -259,6 +220,7 @@ const onWeekJumpSelect = (targetYear: number, targetMonth: number): void => {
                         theme="small,ghost"
                         class="wk-view-btn is-active"
                         title="当前：周视图"
+                        aria-pressed="true"
                         @click="onGoMonth"
                     >
                         周
@@ -305,21 +267,23 @@ const onWeekJumpSelect = (targetYear: number, targetMonth: number): void => {
                 <nue-text size="var(--nue-text-sm)">本周暂无任务</nue-text>
             </div>
             <!-- 网格 -->
-            <div v-else class="wk-row">
+            <div v-else class="wk-row" role="row">
                 <div
                     v-for="cell in model.days"
                     :key="cell.dateKey"
                     class="wk-cell"
+                    role="gridcell"
+                    tabindex="0"
+                    :aria-selected="cell.isSelected"
                     :data-cal-drop="cell.dateKey"
                     :class="{
                         'wk-cell--outside': cell.monthOffset !== 0,
                         'wk-cell--today': cell.isToday,
                         'wk-cell--selected': cell.isSelected,
                         'wk-cell--weekend': cell.isWeekend,
-                        'wk-cell--edge': cell.cell % 7 === 6,
                         'wk-cell--drop': dragActive && dragHoverKey === cell.dateKey
                     }"
-                    @click="onOpenDay(cell.dateKey)"
+                    @keydown="onCellEnter($event, cell.dateKey)"
                 >
                     <span class="wk-cell-top">
                         <span class="wk-date">{{ cell.day }}</span>
@@ -341,6 +305,7 @@ const onWeekJumpSelect = (targetYear: number, targetMonth: number): void => {
                         </template>
                         <template v-else>
                             <button
+                                v-if="cell.monthOffset === 0"
                                 type="button"
                                 class="wk-quick-add"
                                 title="快速新建"
@@ -361,7 +326,7 @@ const onWeekJumpSelect = (targetYear: number, targetMonth: number): void => {
                     </div>
                 </div>
                 <!-- 任务条层 -->
-                <div class="cal-lanes">
+                <div class="cal-lanes" role="presentation">
                     <task-bar
                         v-for="seg in visibleSegments"
                         :key="`${seg.task.id}-${seg.colStart}`"
@@ -377,294 +342,18 @@ const onWeekJumpSelect = (targetYear: number, targetMonth: number): void => {
                         @drag-pointer-down="(event) => onDragBar(seg.task, event)"
                     />
                 </div>
+                <!-- 网格分隔线覆盖层（TASK-07：线在任务条上方，pointer-events:none） -->
+                <div class="cal-lines" role="presentation"></div>
             </div>
         </div>
     </nue-div>
 </template>
 
 <style scoped>
-/* 设计底座令牌（与月历根一致；task-bar 的 --cal-* 消费） */
+/* ── 周视图根布局（令牌与网格样式已归并至 calendar-grid.css） ── */
 .nue-calendar-weekly {
-    --cal-bg: var(--nue-primary-color-0);
-    --cal-fg: var(--nue-primary-text-color);
-    --cal-muted: color-mix(in srgb, var(--nue-primary-text-color) 45%, var(--nue-primary-color-0));
-    --cal-border: var(--nue-border-color);
-    --cal-hover: color-mix(in srgb, var(--nue-primary-text-color) 5%, var(--nue-primary-color-0));
-    --cal-select-bg: color-mix(
-        in srgb,
-        var(--nue-primary-text-color) 9%,
-        var(--nue-primary-color-0)
-    );
-    --cal-chip-bg: color-mix(in srgb, var(--nue-primary-text-color) 6%, var(--nue-primary-color-0));
-    --cal-chip-bg-hover: color-mix(
-        in srgb,
-        var(--nue-primary-text-color) 18%,
-        var(--nue-primary-color-0)
-    );
-    --cal-chip-done-bg: color-mix(
-        in srgb,
-        var(--nue-primary-text-color) 6%,
-        var(--nue-primary-color-0)
-    );
-    --cal-chip-done-fg: color-mix(
-        in srgb,
-        var(--nue-primary-text-color) 38%,
-        var(--nue-primary-color-0)
-    );
-
     flex: 1;
     min-height: 0;
     overflow: hidden;
-}
-
-.wk-header {
-    user-select: none;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    margin-bottom: var(--nue-gap-sm);
-}
-
-.wk-title {
-    min-width: 132px;
-    text-align: center;
-    letter-spacing: 0.02em;
-    margin: 0;
-    padding: 2px 8px;
-    border: none;
-    border-radius: 6px;
-    background: transparent;
-    color: var(--cal-fg);
-    font-family: inherit;
-    font-size: var(--nue-text-df);
-    font-weight: 600;
-    line-height: inherit;
-    cursor: pointer;
-    transition: background 60ms;
-}
-.wk-title:hover {
-    background: var(--cal-hover);
-}
-.wk-title:focus-visible {
-    outline: 1px solid var(--cal-border);
-}
-
-/* 月/周视图切换（分段按钮：零间隙贴合） */
-.wk-view-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 0;
-    border: 1px solid var(--cal-border);
-    border-radius: var(--nue-primary-radius);
-    overflow: hidden;
-}
-.wk-view-btn {
-    border-radius: 0 !important;
-}
-.wk-view-btn.is-active {
-    background: var(--cal-select-bg);
-    color: var(--cal-fg);
-    font-weight: 600;
-}
-
-/* 切换区与右侧控件之间的垂直分割线 */
-.wk-view-sep {
-    align-self: center;
-    width: 1px;
-    height: 16px;
-    margin: 0 4px;
-    background: var(--cal-border);
-    flex: none;
-}
-
-.wk-weekdays {
-    display: flex;
-    margin-bottom: 4px;
-}
-.wk-weekday {
-    flex: 1;
-    text-align: center;
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--cal-muted);
-    padding: 0.25rem 0;
-    letter-spacing: 0.04em;
-}
-
-.wk-body {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    border: 1px solid var(--cal-border);
-    border-radius: var(--nue-primary-radius);
-    overflow: hidden;
-    background: var(--cal-bg);
-}
-
-.wk-state {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 200px;
-}
-
-/* 单行网格：7 列等分 */
-.wk-row {
-    position: relative;
-    flex: 1;
-    min-height: 120px;
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    overflow: hidden;
-}
-
-.wk-cell {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 3px 2px 2px;
-    background: var(--cal-bg);
-    cursor: pointer;
-    box-shadow: inset -1px 0 0 var(--cal-border);
-    transition: background 50ms;
-}
-.wk-cell--edge {
-    box-shadow: none;
-}
-.wk-cell:hover {
-    background: var(--cal-hover);
-    z-index: 0;
-}
-.wk-cell--outside {
-    background: color-mix(in srgb, var(--cal-bg) 92%, var(--cal-border));
-}
-
-/* 周日期号 + B1-F5 专注角标（列头日期旁；不叠压列头内容、不抢格点击） */
-.wk-cell-top {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    min-height: 20px;
-}
-
-.wk-badge {
-    flex: none;
-    min-width: 14px;
-    padding: 0 4px;
-    border-radius: 7px;
-    background: var(--cal-chip-bg);
-    color: var(--cal-muted);
-    font-size: 0.625rem;
-    line-height: 14px;
-    text-align: center;
-    box-sizing: border-box;
-}
-
-.wk-date {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 20px;
-    font-size: 0.8125rem;
-    font-weight: 450;
-    line-height: 20px;
-    color: var(--cal-fg);
-    border: 1px solid transparent;
-    border-radius: 10px;
-    user-select: none;
-    box-sizing: border-box;
-}
-.wk-cell--today .wk-date {
-    border-color: var(--cal-fg);
-    font-weight: 600;
-}
-.wk-cell--selected .wk-date {
-    background: var(--cal-fg);
-    color: var(--cal-bg);
-    font-weight: 600;
-    border-color: var(--cal-fg);
-}
-.wk-cell--outside .wk-date {
-    color: var(--cal-muted);
-}
-.wk-cell--weekend:not(.wk-cell--selected) .wk-date {
-    opacity: 0.72;
-}
-
-/* F1 drop 目标高亮（周整列格） */
-.wk-cell--drop {
-    background: color-mix(in srgb, var(--nue-success-color-60) 14%, var(--cal-bg));
-    box-shadow: inset 0 0 0 2px var(--nue-success-color-60);
-}
-.wk-cell--drop .wk-date {
-    border-color: var(--nue-success-color-60);
-}
-
-/* 任务条层（task-bar 视觉） */
-.cal-lanes {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-}
-
-/* 格底预留条带（DEF-1：任务条渲染区在其上截断；+/+N/编辑器占用区） */
-.wk-band {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 0 6px;
-    box-sizing: border-box;
-}
-/* 悬停快速新建 +（左下） */
-.wk-quick-add {
-    flex: none;
-    width: 18px;
-    height: 16px;
-    padding: 0;
-    border: none;
-    border-radius: 4px;
-    background: var(--cal-chip-bg-hover);
-    color: var(--cal-fg);
-    font-size: 0.9375rem;
-    line-height: 16px;
-    cursor: pointer;
-    opacity: 0;
-    transition:
-        opacity 60ms,
-        background 60ms;
-}
-.wk-cell:hover .wk-quick-add {
-    opacity: 1;
-}
-.wk-quick-add:hover {
-    background: var(--cal-select-bg);
-}
-
-/* 溢出 +N（右下） */
-.wk-more {
-    flex: none;
-    margin-left: auto;
-    padding: 1px 6px;
-    border: none;
-    border-radius: 999px;
-    background: transparent;
-    color: var(--cal-muted);
-    font-size: 0.6875rem;
-    line-height: 1.4;
-    cursor: pointer;
-    transition: background 60ms;
-}
-.wk-more:hover {
-    background: var(--cal-hover);
-    color: var(--cal-fg);
 }
 </style>

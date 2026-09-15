@@ -1,4 +1,4 @@
-import { reactive } from 'vue'
+import { getCurrentInstance, onUnmounted, reactive } from 'vue'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 
 /**
@@ -116,6 +116,16 @@ export const useDragSchedule = (deps: DragScheduleDeps) => {
         isDrag = false
         document.body.style.userSelect = ''
         if (task && dateKey) void deps.scheduleOne(task, dateKey)
+    }
+
+    // O4 卸载清理：拖拽会话进行中组件卸载 → 解除全部 window 级监听（pointermove/up/cancel、
+    // keydown、click 抑制与 pointerdown 解除），并重置会话（不写库）。
+    // composable 在组件作用域使用（月历根），故在此直接 onUnmounted；测试等无实例场景跳过。
+    if (getCurrentInstance()) {
+        onUnmounted(() => {
+            disarmClickSuppression()
+            reset()
+        })
     }
 
     const onPointerMove = (event: PointerEvent): void => {

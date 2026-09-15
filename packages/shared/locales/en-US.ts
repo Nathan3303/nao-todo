@@ -337,6 +337,8 @@ const enUS: LocaleMessages = {
     'task.details.subTasksLoading': 'Loading sub-tasks...',
     'task.details.subTaskCreate': 'Add Sub-task',
     'task.details.subTaskNamePlaceholder': 'Enter sub-task name...',
+    'task.details.checkItemCount': '{count} check items',
+    'task.details.subtaskCount': '{count} sub-tasks',
     'task.details.moveToSubTask': 'Move to sub-task...',
     'task.details.backToParent': 'Back to Parent Task',
     'task.details.detachFromParent': 'Detach from parent',

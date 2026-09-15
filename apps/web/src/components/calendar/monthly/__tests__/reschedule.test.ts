@@ -7,7 +7,7 @@ import {
     shiftTaskDates,
     snapshotTaskDates,
     type TaskScheduleFields
-} from './reschedule'
+} from '../reschedule'
 
 /** 本地墙钟口径的断言辅助（与 T1「保留时刻 HH:mm:ss.SSS」语义一致） */
 const localDay = (iso: string): string => dayjs(iso).format('YYYY-MM-DD')

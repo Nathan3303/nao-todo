@@ -11,8 +11,6 @@ import { TaskTagBar } from '../../tag-bar'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context'
 import { inject, reactive } from 'vue'
 import type { TaskViewObject } from '@nao-todo/domain-task'
-import { NueConfirm, NueMessage } from 'nue-ui'
-import { translateTaskError } from '../../../utils/error-message'
 import useEventDragger from '../use-event-dragger'
 
 const {
@@ -23,7 +21,6 @@ const {
     switchTaskDetails,
     subTaskHandler,
     createSubTask,
-    detachSubTask,
     resortSubTasks,
     tags
 } = inject(TASK_DETAILS_CONTEXT_KEY)!
@@ -52,7 +49,7 @@ const formatDateTime = (iso: string | null): string => {
     return (iso && parse2RelativeDate(iso)) || ''
 }
 
-// 子任务时间文案（独立行展示于名称下、描述上；格式与文案与改动前一致：
+// 子任务时间文案（与描述合并进摘要行、名称下；格式与文案与改动前一致：
 // 仅拼接非空部分，分隔符只在对应部分存在时出现，避免悬空 ~）
 const timeText = (subTask: TaskViewObject): string => {
     const timeParts: string[] = []
@@ -62,6 +59,11 @@ const timeText = (subTask: TaskViewObject): string => {
         timeParts.push(t('task.details.dueAt', { time: formatDateTime(subTask.endAt) }))
     return timeParts.join(' ~ ')
 }
+
+// 子任务摘要（时间 · 描述，单行合并）：任缺剩另一部分、皆空不渲染，
+// 不产生悬空分隔符；全文由 title 提供（clamped=2 截断）
+const subTaskMeta = (subTask: TaskViewObject): string =>
+    [timeText(subTask), subTask.description].filter(Boolean).join(' · ')
 
 // 正在更新状态的子任务 ID 集合
 const updatingIds = reactive(new Set<TaskViewObject['id']>())
@@ -78,25 +80,6 @@ const toggleState = (subTask: TaskViewObject) => {
 // 创建子任务（提交任务名称）
 const handleCreateSubTask = async (payload: { value: string }) => {
     await createSubTask(payload.value)
-}
-
-// 脱离父任务（提升为顶层任务）：先确认，成功后从列表移除并刷新顶层列表
-const handleDetachSubTask = async (subTask: TaskViewObject) => {
-    if (updatingIds.has(subTask.id)) return
-    const [isByCancel] = await NueConfirm({
-        title: t('task.details.detachFromParent'),
-        content: t('task.details.detachFromParentConfirm'),
-        confirmButtonText: t('common.confirm'),
-        cancelButtonText: t('common.cancel')
-    })
-    if (isByCancel) return
-    updatingIds.add(subTask.id)
-    try {
-        const err = await detachSubTask(subTask.id)
-        if (err !== null) NueMessage.error(translateTaskError(err))
-    } finally {
-        updatingIds.delete(subTask.id)
-    }
 }
 </script>
 
@@ -151,6 +134,18 @@ const handleDetachSubTask = async (subTask: TaskViewObject) => {
                                     >
                                         {{ subTask.name }}
                                     </nue-text>
+                                    <nue-div
+                                        v-if="subTask.checkItemCount > 0"
+                                        class="subtask-row__badge subtask-row__badge--check"
+                                        :title="
+                                            t('task.details.checkItemCount', {
+                                                count: subTask.checkItemCount
+                                            })
+                                        "
+                                    >
+                                        <nue-icon name="check" />
+                                        <span>{{ subTask.checkItemCount }}</span>
+                                    </nue-div>
                                     <task-tag-bar
                                         v-if="subTask.tags && subTask.tags.length"
                                         class="subtask-row__tags"
@@ -160,28 +155,26 @@ const handleDetachSubTask = async (subTask: TaskViewObject) => {
                                         small
                                         :clamped="2"
                                     />
-                                    <nue-button
-                                        class="subtask-row__detach"
-                                        icon="arrow-up"
-                                        theme="small,pure"
-                                        :disabled="updatingIds.has(subTask.id)"
-                                        :title="t('task.details.detachFromParent')"
-                                        @click="handleDetachSubTask(subTask)"
-                                    />
+                                    <nue-div
+                                        v-if="subTask.subtaskCount > 0"
+                                        class="subtask-row__badge subtask-row__badge--subtask"
+                                        :title="
+                                            t('task.details.subtaskCount', {
+                                                count: subTask.subtaskCount
+                                            })
+                                        "
+                                    >
+                                        <nue-icon name="connection" />
+                                        <span>{{ subTask.subtaskCount }}</span>
+                                    </nue-div>
                                 </nue-div>
                                 <nue-text
-                                    v-if="timeText(subTask)"
-                                    class="subtask-row__time"
-                                    :title="timeText(subTask)"
-                                >
-                                    {{ timeText(subTask) }}
-                                </nue-text>
-                                <nue-text
-                                    v-if="subTask.description"
+                                    v-if="subTaskMeta(subTask)"
                                     :clamped="2"
                                     class="subtask-row__meta"
+                                    :title="subTaskMeta(subTask)"
                                 >
-                                    {{ subTask.description }}
+                                    {{ subTaskMeta(subTask) }}
                                 </nue-text>
                             </nue-div>
                         </nue-div>
@@ -265,7 +258,7 @@ const handleDetachSubTask = async (subTask: TaskViewObject) => {
     .subtask-row__title-line {
         display: flex;
         align-items: center;
-        gap: var(--nue-gap-2xs);
+        gap: var(--nue-gap-xs);
         min-width: 0;
         height: 1.5rem; /* 与左右组件等高 */
         flex-wrap: nowrap;
@@ -293,33 +286,30 @@ const handleDetachSubTask = async (subTask: TaskViewObject) => {
         flex-wrap: nowrap;
     }
 
-    /* 时间独立行（名称下、描述上）：整行宽度、超宽省略号截断（不硬裁切）
-       全文由 title 提供；点击不触发详情导航（无独立交互） */
-    .subtask-row__time {
-        overflow: hidden;
+    /* 数量徽标（名称行末尾，标签栏之后）：flex 0 0 auto 防挤压名称（nowrap 下） */
+    .subtask-row__badge {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 0.125rem;
         white-space: nowrap;
-        text-overflow: ellipsis;
         font-size: var(--nue-text-xs);
         font-weight: 500;
         color: var(--nue-primary-color-600);
-        line-height: 1.5;
+        line-height: 1;
+
+        .nue-icon {
+            font-size: var(--nue-text-xs);
+        }
     }
 
-    .subtask-row__detach {
-        flex: none;
-        opacity: 0; /* 预留位：hover / focus-within 才可见，避免行内跳动 */
-    }
-
-    &:hover .subtask-row__detach,
-    &:focus-within .subtask-row__detach {
-        opacity: 1;
-    }
-
+    /* 摘要行（时间 · 描述，单行合并）：clamped=2 两行截断，全文由 title 提供；
+       点击不触发详情导航（无独立交互） */
     .subtask-row__meta {
         font-size: var(--nue-text-xs);
         font-weight: 500;
         color: var(--nue-primary-color-600);
-        line-height: 1.4;
+        line-height: 1.5;
     }
 
     &[data-done='true'] {

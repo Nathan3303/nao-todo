@@ -1,0 +1,383 @@
+/**
+ * 日历网格共享样式（O1 归并）
+ * @description 月视图（cal-*）与周视图（wk-*）近同样式单源：令牌、头部、格、日期、条带、
+ *              快速新建 +、溢出 +N。两视图均以非 scoped `<style>@import` 引入；
+ *              一处修改两处生效，视觉与归并前逐字一致。
+ *              视图独有的根布局与拖拽浮层等保留在各组件 scoped 内。
+ */
+
+/* ── 设计底座令牌（沿用既有 NueUI 黑白灰令牌；task-bar 的 --cal-* 消费） ── */
+.nue-calendar-monthly,
+.nue-calendar-weekly {
+    --cal-bg: var(--nue-primary-color-0);
+    --cal-fg: var(--nue-primary-text-color);
+    --cal-muted: color-mix(in srgb, var(--nue-primary-text-color) 45%, var(--nue-primary-color-0));
+    --cal-border: var(--nue-border-color);
+    /* 网格分隔线（TASK-07：较 --cal-border 淡化约 28%，降低亮度） */
+    --cal-grid-line: color-mix(in srgb, var(--cal-border) 64%, var(--cal-bg));
+    --cal-hover: color-mix(in srgb, var(--nue-primary-text-color) 5%, var(--nue-primary-color-0));
+    --cal-select-bg: color-mix(
+        in srgb,
+        var(--nue-primary-text-color) 9%,
+        var(--nue-primary-color-0)
+    );
+    --cal-chip-bg: color-mix(
+        in srgb,
+        var(--nue-primary-text-color) 12%,
+        var(--nue-primary-color-0)
+    );
+    --cal-chip-bg-hover: color-mix(
+        in srgb,
+        var(--nue-primary-text-color) 18%,
+        var(--nue-primary-color-0)
+    );
+    --cal-chip-done-bg: color-mix(
+        in srgb,
+        var(--nue-primary-text-color) 6%,
+        var(--nue-primary-color-0)
+    );
+    --cal-chip-done-fg: color-mix(
+        in srgb,
+        var(--nue-primary-text-color) 38%,
+        var(--nue-primary-color-0)
+    );
+}
+
+/* ── 视图头部导航 ── */
+.cal-header,
+.wk-header {
+    user-select: none;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin-bottom: var(--nue-gap-xs);
+}
+
+/* 标题（C2-F9：可点按钮语义，可聚焦/hover 可达；文本样式与旧 h2 一致） */
+.cal-title,
+.wk-title {
+    min-width: 132px;
+    text-align: center;
+    letter-spacing: 0.02em;
+    margin: 0;
+    padding: 2px 8px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--cal-fg);
+    font-family: inherit;
+    font-size: var(--nue-text-df);
+    font-weight: 600;
+    line-height: inherit;
+    cursor: pointer;
+    transition: background 60ms;
+}
+.cal-title:hover,
+.wk-title:hover {
+    background: var(--cal-hover);
+}
+.cal-title:focus-visible,
+.wk-title:focus-visible {
+    outline: 1px solid var(--cal-border);
+}
+
+/* 月/周视图切换（分段按钮：零间隙贴合） */
+.cal-view-toggle,
+.wk-view-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--cal-border);
+    border-radius: var(--nue-primary-radius);
+    overflow: hidden;
+}
+.cal-view-btn,
+.wk-view-btn {
+    border-radius: 0 !important;
+}
+.cal-view-btn.is-active,
+.wk-view-btn.is-active {
+    background: var(--cal-select-bg);
+    color: var(--cal-fg);
+    font-weight: 600;
+}
+
+/* 切换区与右侧控件之间的垂直分割线 */
+.cal-view-sep,
+.wk-view-sep {
+    align-self: center;
+    width: 1px;
+    height: 16px;
+    margin: 0 4px;
+    background: var(--cal-border);
+    flex: none;
+}
+
+/* ── 星期表头 ── */
+.cal-weekdays,
+.wk-weekdays {
+    display: flex;
+    margin-bottom: 4px;
+}
+.cal-weekday,
+.wk-weekday {
+    flex: 1;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--cal-muted);
+    padding: 0.25rem 0;
+    letter-spacing: 0.04em;
+}
+
+/* ── 网格主体 ── */
+.cal-body,
+.wk-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--cal-border);
+    border-radius: var(--nue-primary-radius);
+    overflow: hidden;
+    background: var(--cal-bg);
+}
+.cal-body-state,
+.wk-state {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+}
+
+/* ── 行：内部 7 等分 + 独立任务条层 ── */
+.cal-row,
+.wk-row {
+    position: relative;
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    overflow: hidden;
+}
+.cal-row {
+    min-height: 80px;
+    border-top: 1px solid var(--nue-divider-color);
+}
+.cal-row:first-child {
+    border-top: none;
+}
+.wk-row {
+    min-height: 120px;
+}
+
+/* 格内竖分隔线改由 .cal-lines 覆盖层绘制（TASK-07：线在任务条上方）；格仅承载背景/点击 */
+.cal-cell,
+.wk-cell {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 3px 2px 2px;
+    background: var(--cal-bg);
+    cursor: default; /* TASK-07：整格点击不再开抽屉，去除误导性手型 */
+    transition: background 50ms;
+}
+.cal-cell:hover,
+.wk-cell:hover {
+    background: var(--cal-hover);
+    z-index: 0;
+}
+/* O7 键盘焦点可达：Tab 聚焦日期格时可见轮廓 */
+.cal-cell:focus-visible,
+.wk-cell:focus-visible {
+    outline: 1px solid var(--cal-border);
+    outline-offset: -1px;
+}
+.cal-cell--outside,
+.wk-cell--outside {
+    background: color-mix(in srgb, var(--cal-bg) 92%, var(--cal-border));
+}
+
+/* 日期号 + B1-F5 专注角标（同一行，角标不抢日格点击） */
+.cal-cell-top,
+.wk-cell-top {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 20px;
+}
+.cal-badge,
+.wk-badge {
+    flex: none;
+    min-width: 14px;
+    padding: 0 4px;
+    border-radius: 7px;
+    background: var(--cal-chip-bg);
+    color: var(--cal-muted);
+    font-size: 0.625rem;
+    line-height: 14px;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+/* 今日/选中日期号 */
+.cal-date,
+.wk-date {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 20px;
+    font-size: 0.8125rem;
+    font-weight: 450;
+    line-height: 20px;
+    color: var(--cal-fg);
+    border: 1px solid transparent;
+    border-radius: 10px;
+    user-select: none;
+    box-sizing: border-box;
+}
+.cal-cell--today .cal-date,
+.wk-cell--today .wk-date {
+    border-color: var(--cal-fg);
+    font-weight: 600;
+}
+.cal-cell--selected,
+.wk-cell--selected {
+    background: var(--cal-select-bg);
+}
+/* F1 drop 目标高亮（含补位灰格/过去日期格，整格指示） */
+.cal-cell--drop,
+.wk-cell--drop {
+    background: color-mix(in srgb, var(--nue-success-color-60) 14%, var(--cal-bg));
+    box-shadow: inset 0 0 0 2px var(--nue-success-color-60);
+}
+.cal-cell--drop .cal-date,
+.wk-cell--drop .wk-date {
+    border-color: var(--nue-success-color-60);
+}
+.cal-cell--selected .cal-date,
+.wk-cell--selected .wk-date {
+    background: var(--cal-fg);
+    color: var(--cal-bg);
+    font-weight: 600;
+    border-color: var(--cal-fg);
+}
+.cal-cell--outside .cal-date,
+.wk-cell--outside .wk-date {
+    color: var(--cal-muted);
+}
+.cal-cell--weekend:not(.cal-cell--selected) .cal-date,
+.wk-cell--weekend:not(.wk-cell--selected) .wk-date {
+    opacity: 0.72;
+}
+
+/* ── 任务条层 ── */
+.cal-lanes {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+/* 网格分隔线覆盖层（TASK-07：线在任务条上方 + 降亮度）：
+   z-index 仅 1（低于全部浮层/弹层 1000+），pointer-events:none 不拦截
+   任务条/N+ 点击；6 条列分隔线精确定位于 k/7 列界（无左右边线，逐停靠渐变）。 */
+.cal-lines,
+.wk-lines {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background-image: linear-gradient(
+        to right,
+        transparent 0,
+        transparent calc(14.2857% - 1px),
+        var(--cal-grid-line) calc(14.2857% - 1px),
+        var(--cal-grid-line) calc(14.2857%),
+        transparent calc(14.2857%),
+        transparent calc(28.5714% - 1px),
+        var(--cal-grid-line) calc(28.5714% - 1px),
+        var(--cal-grid-line) calc(28.5714%),
+        transparent calc(28.5714%),
+        transparent calc(42.8571% - 1px),
+        var(--cal-grid-line) calc(42.8571% - 1px),
+        var(--cal-grid-line) calc(42.8571%),
+        transparent calc(42.8571%),
+        transparent calc(57.1428% - 1px),
+        var(--cal-grid-line) calc(57.1428% - 1px),
+        var(--cal-grid-line) calc(57.1428%),
+        transparent calc(57.1428%),
+        transparent calc(71.4285% - 1px),
+        var(--cal-grid-line) calc(71.4285% - 1px),
+        var(--cal-grid-line) calc(71.4285%),
+        transparent calc(71.4285%),
+        transparent calc(85.7142% - 1px),
+        var(--cal-grid-line) calc(85.7142% - 1px),
+        var(--cal-grid-line) calc(85.7142%),
+        transparent 0
+    );
+}
+/* 任务条视觉（色条/色痕/时刻/周裁剪圆角）已抽至 ./task-bar.vue；--cal-* 令牌由本文件定义 */
+/* 格底预留条带（DEF-1：任务条渲染区在其上截断；+/+N/编辑器占用区） */
+.cal-band,
+.wk-band {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 6px;
+    box-sizing: border-box;
+}
+/* 悬停快速新建 +（左下；补位格无按钮由 v-if 控制） */
+.cal-quick-add,
+.wk-quick-add {
+    flex: none;
+    width: 18px;
+    height: 16px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: var(--cal-chip-bg-hover);
+    color: var(--cal-fg);
+    font-size: 0.9375rem;
+    line-height: 16px;
+    cursor: pointer;
+    opacity: 0;
+    transition:
+        opacity 60ms,
+        background 60ms;
+}
+.cal-cell:hover .cal-quick-add,
+.wk-cell:hover .wk-quick-add {
+    opacity: 1;
+}
+.cal-quick-add:hover,
+.wk-quick-add:hover {
+    background: var(--cal-select-bg);
+}
+
+/* ── 溢出 +N（右下；TASK-07：颜色增强对比度，清晰可点开当日抽屉） ── */
+.cal-more,
+.wk-more {
+    flex: none;
+    margin-left: auto;
+    padding: 1px 6px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: color-mix(in srgb, var(--cal-fg) 72%, var(--cal-bg));
+    font-size: 0.6875rem;
+    font-weight: 500;
+    line-height: 1.4;
+    cursor: pointer;
+    transition: background 60ms;
+}
+.cal-more:hover,
+.wk-more:hover {
+    background: var(--cal-hover);
+    color: var(--cal-fg);
+}

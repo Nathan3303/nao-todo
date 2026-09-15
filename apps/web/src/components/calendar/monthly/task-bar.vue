@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import dayjs from 'dayjs'
-import { computed, reactive } from 'vue'
+import { computed } from 'vue'
 import RescheduleMenu from './reschedule-menu.vue'
-import { isTaskOverdue } from './use-calendar-monthly'
+import { isTaskOverdue } from './overdue'
 
 defineOptions({ name: 'CalendarTaskBar' })
 
@@ -54,42 +54,15 @@ const timeText = computed(() => {
 // @computed 菜单锚点（endAt 所在日键；「下周同日」= +7）
 const anchorKey = computed(() => dayjs(props.task.endAt).format('YYYY-MM-DD'))
 
-// —— F4 快速改期菜单（右键 contextmenu + 悬停三点，同一命令/同一组件） ——
+// —— F4 快速改期菜单（TASK-10：三点按钮为 NueDropdown 触发器；右键菜单已移除） ——
 
-// @states 菜单开关与锚点坐标
-const menuState = reactive({ open: false, x: 0, y: 0 })
-
-// @method 打开菜单（视口边缘向内收拢，避免溢出）
-const openMenuAt = (x: number, y: number): void => {
-    if (props.busy) return
-    menuState.x = Math.min(Math.max(4, x), window.innerWidth - 208)
-    menuState.y = Math.min(Math.max(4, y), window.innerHeight - 232)
-    menuState.open = true
-}
-
-// @method 右键：拦截原生菜单并打开同款菜单（不开详情）
-const onContextMenu = (event: MouseEvent): void => {
-    event.preventDefault()
-    event.stopPropagation()
-    openMenuAt(event.clientX, event.clientY)
-}
-
-// @method 三点按钮：以按钮位置为锚点（悬停/聚焦出现；条内小尺寸）；已开则收起（toggle）
-const onMoreClick = (event: MouseEvent): void => {
-    event.stopPropagation()
-    if (props.busy) return
-    if (menuState.open) {
-        menuState.open = false
-        return
-    }
-    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
-    openMenuAt(rect.right - 4, rect.bottom + 4)
-}
-
-// @method 选中目标日 → 上抛（父级串行写回 + U2 toast）；立即收起菜单
-const onRescheduleSelect = (dateKey: string): void => {
-    menuState.open = false
-    emit('reschedule', dateKey)
+// @method F1 起拖：左键按下即上抛（F4 三点按钮不受影响；busy 期不起）；
+//              阈值内释放仍为点击 → 开详情（点击语义零回归，消歧由会话控制器裁决）
+const onPointerDown = (event: PointerEvent): void => {
+    const target = event.target as Element | null
+    if (target?.closest('.cal-item-more')) return
+    if (props.busy || props.dragging) return
+    emit('drag-pointer-down', event)
 }
 
 // @method 键盘操作：Enter=开详情（与点击同语义）
@@ -99,20 +72,12 @@ const onKeyDown = (event: KeyboardEvent): void => {
         emit('open')
     }
 }
-
-// @method F1 起拖：左键按下即上抛（F4 三点按钮/右键不受影响；busy 期不起）；
-//              阈值内释放仍为点击 → 开详情（点击语义零回归，消歧由会话控制器裁决）
-const onPointerDown = (event: PointerEvent): void => {
-    const target = event.target as Element | null
-    if (target?.closest('.cal-item-more')) return
-    if (props.busy || props.dragging) return
-    emit('drag-pointer-down', event)
-}
 </script>
 
 <template>
     <div
         class="cal-item"
+        role="button"
         :class="{
             'is-done': isDone,
             'is-overdue': isOverdue,
@@ -122,52 +87,48 @@ const onPointerDown = (event: PointerEvent): void => {
         }"
         :style="[pos, { '--cal-pri': barColor }]"
         :title="task.name"
+        :aria-label="task.name"
         tabindex="0"
         @click="emit('open')"
-        @contextmenu="onContextMenu"
+        @contextmenu.prevent
         @pointerdown="onPointerDown"
         @keydown="onKeyDown"
     >
         <span v-if="timeText" class="cal-item-time">{{ timeText }}</span>
-        <span v-if="contStart" class="cal-cont cal-cont--start" title="承接上一周"></span>
-        <span v-if="contEnd" class="cal-cont cal-cont--end" title="续至下一周"></span>
         <span class="cal-item-text">{{ task.name }}</span>
-        <nue-button
-            theme="pure,icon"
-            icon="more-vertical"
-            data-rmenu-trigger
-            class="cal-item-more"
-            title="改期…"
-            :disabled="busy"
-            @click="onMoreClick"
-        />
+        <!-- F4 三点按钮 = NueDropdown（reschedule-menu）触发器；悬停/聚焦出现；已开再点收起 -->
+        <reschedule-menu
+            :scheduled="true"
+            :busy="busy"
+            :anchor-key="anchorKey"
+            @select="emit('reschedule', $event)"
+        >
+            <template #trigger="{ trigger }">
+                <nue-button
+                    theme="pure,icon"
+                    icon="more-vertical"
+                    class="cal-item-more"
+                    title="改期…"
+                    :disabled="busy"
+                    @click="trigger"
+                />
+            </template>
+        </reschedule-menu>
     </div>
-
-    <!-- F4 快速改期菜单（与右键同命令） -->
-    <reschedule-menu
-        :open="menuState.open"
-        :x="menuState.x"
-        :y="menuState.y"
-        :scheduled="true"
-        :busy="busy"
-        :anchor-key="anchorKey"
-        @select="onRescheduleSelect"
-        @close="menuState.open = false"
-    />
 </template>
 
 <style scoped>
 /* ── 任务条（月/周共用；父级根容器需定义 --cal-* 令牌） ── */
 .cal-item {
     position: absolute;
-    height: 16px;
+    height: 20px; /* TASK-07：16→20 行高增加（GRID_ITEM_STEP 同步 22） */
     display: flex;
     align-items: center;
     padding: 0 8px;
     background: var(--cal-chip-bg);
     color: var(--cal-fg);
     font-size: 0.75rem;
-    line-height: 16px;
+    line-height: 20px;
     white-space: nowrap;
     overflow: hidden;
     cursor: pointer;
@@ -233,37 +194,13 @@ const onPointerDown = (event: PointerEvent): void => {
     margin-right: 6px;
     color: var(--cal-muted);
     font-size: 0.6875rem;
-    line-height: 16px;
+    line-height: 18px;
     font-variant-numeric: tabular-nums;
     overflow: hidden;
     white-space: nowrap;
 }
 
-/* 跨行续接圆点（承接上一行 / 续至下一行；月视图 A4） */
-.cal-cont {
-    position: absolute;
-    top: 50%;
-    width: 5px;
-    height: 5px;
-    margin-top: -2.5px;
-    border-radius: 50%;
-    background: color-mix(in srgb, var(--cal-fg) 58%, var(--cal-bg));
-    pointer-events: none;
-}
-.cal-cont--start {
-    left: 3px;
-}
-.cal-cont--end {
-    right: 3px;
-}
-
-/* 有续接标记的条体：为圆点预留文本间距（名称 ellipsis 不压圆点） */
-.cal-item.has-cont-start {
-    padding-left: 14px;
-}
-.cal-item.has-cont-end {
-    padding-right: 14px;
-}
+/* 跨行续接圆点已移除（TASK-07：仅视觉，contStart/contEnd 数据承接语义保留） */
 
 /* F4 三点按钮（NueButton pure/icon + more-vertical）：悬停/聚焦时才出现（条内小尺寸，不挤名称） */
 .cal-item-more {

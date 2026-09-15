@@ -329,6 +329,8 @@ const zhCN: LocaleMessages = {
     'task.details.subTasksLoading': '正在加载子任务...',
     'task.details.subTaskCreate': '新增子任务',
     'task.details.subTaskNamePlaceholder': '输入子任务名称...',
+    'task.details.checkItemCount': '{count} 个检查项',
+    'task.details.subtaskCount': '{count} 个子任务',
     'task.details.moveToSubTask': '关联父任务',
     'task.details.backToParent': '返回父任务',
     'task.details.detachFromParent': '脱离父任务',
