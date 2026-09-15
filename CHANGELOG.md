@@ -2,6 +2,39 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.7.5] - 2026-09-15
+
+发布批次：日历模块结构 / 视图 UI / 排序下拉 / 标题年月跳转与改期菜单（NueDropdown 化）+ 任务详情子任务节点 UI + 用户样式微调（patch）。**Tag `v1.7.5`** · root `1.7.5` / `@nao-todo/desktopapp` `1.7.5` / `@nao-todo/webapp` `1.7.5`（`@nao-todo/presentation` `0.4.4` / `@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（日历 + 任务详情 UI）。
+
+### 优化 / 重构（日历）
+
+- **结构优化（T6）**：月/周共享样式归并至 `calendar-grid.css`（净减 227 行）；`useCalendarGrid` / `useMonthJump` 抽取为共享 composable；god-composable 拆分（538 → 312 行，`useCalendarTaskQuery` / `useCalendarSchedule`）；周视图 33 个 props 收敛为 provide/inject 上下文；每格派生数据预计算（42 格 × 模板重复调用 → 每格一次）；拖拽卸载清理；死码清理 + 空态工厂（O6）；无障碍语义（`gridcell` / role / `aria-pressed`）。
+- **视图 UI（T9，含用户微调）**：网格分隔线覆盖层（线在任务条上方 + 降亮度）；N+ 文本颜色增强对比；任务条行高 16 → 20px（`GRID_ITEM_STEP` 同步 22）；跨周续接圆点移除（数据语义保留）；整格点击不再开当日抽屉（仅 N+ 触发）；用户后续微调末列分隔线渐变修复（`9bcd9272` / `0c0047e0`）。
+- **排序下拉（TASK-08，`4eb78a4f` / `726ecee3`）**：月/周视图头部新增排序下拉（优先级 / 开始时间 / 截止时间 / 创建时间 + 升降序），未选字段默认按名称升序（`localeCompare`）；独立 localStorage 键 `naotodo.calendar.sort` 持久化、双视图共享；仅影响日历展示顺序，不回写服务端、不改 `sortId`（拖拽改期仅改日期）。
+- **中间标题年月跳转改 NueDropdown（TASK-09，`d6e8b77e` / `4ed8e3fc`）**：废弃手写弹层 `month-jump-panel.vue`（-214 行），新增 `calendar-month-grid.vue` 经 NueDropdown `execute` 委托；开合 / 定位 / Esc / 外点由 NueDropdown 内建；月跳月 / 周落周语义不变。
+- **任务条右键菜单移除 + 改期菜单改 NueDropdown（TASK-10，`3350404f` / `cc175949`）**：任务条右键完全禁用（`@contextmenu.prevent`，阻止原生菜单 + 无响应）；`reschedule-menu.vue` 内部改 NueDropdown（任务条三点 + 抽屉「安排到…」统一触发器插槽，同 group 互斥），「选择日期…」保留内嵌 `NueDatePicker`；键盘弹层抑制谓词同步（移除常驻 `.rmenu` 判定，改由 NueDropdown 容器 / popup-pool 覆盖）。
+- **测试整理（TASK-14，`1be3c939`）**：19 个 calendar 测试文件统一移入 `monthly/__tests__/`（纯路径变更，用例数不变）。
+
+### Added（新增）
+
+- **任务详情子任务节点 UI（TASK-06，`a250cd96` / `3cc7ada2`）**：移除「脱离父任务」按钮；时间与描述合并单行（`·` 分隔，`clamped=2`）；名称行右侧新增检查项 / 子任务数量徽标（>0 渲染）。
+
+### 其他（Chore）
+
+- 用户样式 / 图标调整（iconfont 重新生成，新增 `icon-ntd-disconnect`，移除未引用图标）。
+
+### Changed
+
+- 版本协同 bump（patch）：root / `@nao-todo/desktopapp` / `@nao-todo/webapp` `1.7.4 → 1.7.5`；`@nao-todo/presentation` `0.4.3 → 0.4.4`（T7 / TASK-06 改动 `subtasks.vue`，沿 v1.7.1 先例）。其余包不动（i18n 文案新增不触发 bump，沿 v1.7.3 先例）；无公开 API 导出面破坏。
+
+### 质量门槛
+
+- `vp check`：目标文件 pass（fmt / lint / type）。
+- `vp test`：80 文件 / 691 例全绿（含日历排序 / 年月跳转 / 改期菜单 NueDropdown 迁移与 19 文件 `__tests__/` 迁移）。
+- `pnpm webapp build` ✓ / `pnpm desktopapp build` ✓。
+
+[v1.7.5]: https://github.com/Nathan3303/nao-todo/releases/tag/v1.7.5
+
 ## [v1.7.4] - 2026-09-14
 
 发布批次：子任务行标签栏 flex 压缩修复 + oxfmt 全仓归一化 + .agents 目录重组（patch）。**Tag `v1.7.4`** · root `1.7.4` / `@nao-todo/desktopapp` `1.7.4` / `@nao-todo/webapp` `1.7.4`（`@nao-todo/presentation` `0.4.3` / `@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（presentation 子任务行样式）+ 全仓工程（oxfmt 归一化 / .agents）。

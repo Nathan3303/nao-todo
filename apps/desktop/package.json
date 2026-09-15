@@ -1,6 +1,6 @@
 {
     "name": "@nao-todo/desktopapp",
-    "version": "1.7.4",
+    "version": "1.7.5",
     "description": "Desktop version of NaoTodo",
     "author": "Nathan Lee <Lee1928@outlook.com>",
     "license": "MIT",
