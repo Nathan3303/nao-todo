@@ -13,7 +13,7 @@ import { nueUI } from '@/nue-ui-register'
  *              悬停三点 = reschedule-menu（NueDropdown）触发器；busy 防连点（三点禁用）。
  */
 
-const makeTask = (): TaskViewObject =>
+const makeTask = (overrides: Partial<TaskViewObject> = {}): TaskViewObject =>
     ({
         id: 't1',
         name: '任务 A',
@@ -21,7 +21,8 @@ const makeTask = (): TaskViewObject =>
         priority: 'low',
         startAt: '2026-10-05T09:00:00',
         endAt: '2026-10-05T18:00:00',
-        createdAt: '2026-10-01T00:00:00'
+        createdAt: '2026-10-01T00:00:00',
+        ...overrides
     }) as unknown as TaskViewObject
 
 const isOpen = (): boolean =>
@@ -43,13 +44,18 @@ afterEach(() => {
     document.body.innerHTML = ''
 })
 
-const mountBar = (busy = false): VueWrapper => {
+const mountBar = (
+    busy = false,
+    showTime = false,
+    task: TaskViewObject = makeTask()
+): VueWrapper => {
     wrapper = mount(TaskBar, {
         attachTo: document.body,
         props: {
-            task: makeTask(),
+            task,
             pos: { left: '0%', width: '14.28%', top: '0px' },
-            busy
+            busy,
+            showTime
         },
         global: { plugins: [nueUI] }
     })
@@ -136,5 +142,40 @@ describe('CalendarTaskBar - F4 快速改期入口（TASK-10：右键移除 + 三
         await nextTick()
         expect(isOpen()).toBe(false)
         expect(w.emitted('reschedule')).toBeUndefined()
+    })
+})
+
+describe('CalendarTaskBar - TASK-11 段末截止时刻', () => {
+    it('showTime：渲染 endAt 的 HH:mm（非 startAt），且位于名称之后', () => {
+        const w = mountBar(false, true)
+        const item = w.find('.cal-item')
+        expect(item.find('.cal-item-time').text()).toBe('18:00')
+        expect(item.find('.cal-item-time').text()).not.toBe('09:00')
+        const ordered = [
+            ...item.element.querySelectorAll<HTMLElement>(
+                ':scope > .cal-item-text, :scope > .cal-item-time'
+            )
+        ].map((el) => el.className)
+        expect(ordered).toEqual(['cal-item-text', 'cal-item-time'])
+    })
+
+    it('showTime 缺省 / false → 不渲染时刻', () => {
+        expect(mountBar().find('.cal-item-time').exists()).toBe(false)
+        wrapper?.unmount()
+        expect(mountBar(false, false).find('.cal-item-time').exists()).toBe(false)
+    })
+
+    it('endAt 缺失 / 非法 → 不渲染时刻', () => {
+        expect(
+            mountBar(false, true, makeTask({ endAt: '' }))
+                .find('.cal-item-time')
+                .exists()
+        ).toBe(false)
+        wrapper?.unmount()
+        expect(
+            mountBar(false, true, makeTask({ endAt: 'not-a-date' }))
+                .find('.cal-item-time')
+                .exists()
+        ).toBe(false)
     })
 })
