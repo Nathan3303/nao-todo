@@ -56,7 +56,8 @@ const anchorKey = computed(() => dayjs(props.task.endAt).format('YYYY-MM-DD'))
 
 // —— F4 快速改期菜单（TASK-10：三点按钮为 NueDropdown 触发器；右键菜单已移除） ——
 
-// @method F1 起拖：左键按下即上抛（F4 三点按钮不受影响；busy 期不起）；
+// @method F1 起拖：左键按下即上抛（F4 触发器不受影响；busy 期不起）；
+//              TASK-18：时间/图标两种触发器共用 .cal-item-more，closest 统一跳过；
 //              阈值内释放仍为点击 → 开详情（点击语义零回归，消歧由会话控制器裁决）
 const onPointerDown = (event: PointerEvent): void => {
     const target = event.target as Element | null
@@ -95,8 +96,9 @@ const onKeyDown = (event: KeyboardEvent): void => {
         @keydown="onKeyDown"
     >
         <span class="cal-item-text">{{ task.name }}</span>
-        <span v-if="timeText" class="cal-item-time">{{ timeText }}</span>
-        <!-- F4 三点按钮 = NueDropdown（reschedule-menu）触发器；悬停/聚焦出现；已开再点收起 -->
+        <!-- F4 改期触发器 = NueDropdown（reschedule-menu）：
+             有截止时刻（showTime 且 endAt 合法）→ 触发器显示 HH:mm（常显）；
+             否则 → 三点图标（fallback，悬停/聚焦出现） -->
         <reschedule-menu
             :scheduled="true"
             :busy="busy"
@@ -104,7 +106,18 @@ const onKeyDown = (event: KeyboardEvent): void => {
             @select="emit('reschedule', $event)"
         >
             <template #trigger="{ trigger }">
+                <button
+                    v-if="timeText"
+                    type="button"
+                    class="cal-item-more cal-item-more--time"
+                    title="改期…"
+                    :disabled="busy"
+                    @click="trigger"
+                >
+                    {{ timeText }}
+                </button>
                 <nue-button
+                    v-else
                     theme="pure,icon"
                     icon="more-vertical"
                     class="cal-item-more"
@@ -188,21 +201,10 @@ const onKeyDown = (event: KeyboardEvent): void => {
     opacity: 0.3;
 }
 
-/* 段末截止时刻文本（HH:mm，随条超宽省略） */
-.cal-item-time {
-    flex: none;
-    margin-left: 6px;
-    color: var(--cal-muted);
-    font-size: 0.6875rem;
-    line-height: 18px;
-    font-variant-numeric: tabular-nums;
-    overflow: hidden;
-    white-space: nowrap;
-}
-
 /* 跨行续接圆点已移除（TASK-07：仅视觉，contStart/contEnd 数据承接语义保留） */
 
-/* F4 三点按钮（NueButton pure/icon + more-vertical）：悬停/聚焦时才出现（条内小尺寸，不挤名称） */
+/* F4 改期触发器（NueButton pure/icon 三点 / TASK-18 时间文本）：
+   图标形式悬停/聚焦时才出现；时间形式常显。条内小尺寸，不挤名称 */
 .cal-item-more {
     --nue-button-font-size: 0.75rem;
     --nue-button-color: var(--cal-muted);
@@ -221,6 +223,23 @@ const onKeyDown = (event: KeyboardEvent): void => {
         opacity 60ms,
         background 60ms;
     pointer-events: auto;
+}
+/* 时间形式触发器（TASK-18）：显示段末截止时刻（HH:mm），常显；沿用原按钮 hover 底色提示 */
+.cal-item-more--time {
+    width: auto;
+    height: 18px;
+    padding: 0 2px;
+    margin-left: 6px;
+    border: none;
+    background: transparent;
+    color: var(--cal-muted);
+    font-family: inherit;
+    font-size: 0.6875rem;
+    line-height: 18px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    opacity: 1;
+    cursor: pointer;
 }
 .cal-item:hover .cal-item-more,
 .cal-item:focus-within .cal-item-more,
