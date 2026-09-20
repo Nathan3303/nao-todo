@@ -9,6 +9,7 @@ import TaskBar from './task-bar.vue'
 import UnscheduledDrawer from './unscheduled-drawer.vue'
 import ScheduleUndoToast from './undo-toast.vue'
 import { buildCalendarEmptyState } from './empty-state'
+import { showEndTimeInMonth } from './segment-time'
 import { ghostPointOf, useDragSchedule } from './use-drag-schedule'
 import { segmentStyleOf, useCalendarGrid } from './use-calendar-grid'
 import { useMonthJump } from './use-month-jump'
@@ -221,19 +222,6 @@ const quickSubmit = (dateKey: string, name: string) => {
 
 // @method 任务条定位样式（连续条按列区间铺满；O2 共享几何纯函数）
 const segStyle = segmentStyleOf
-
-// @method 段首是否显示开始时刻：仅真起始段且首格即 startAt 当日（跨行续接/裁剪可见段不显示）
-const segShowTime = (
-    seg: { task: TaskViewObject; isStart: boolean; colStart: number },
-    row: CalendarRow
-): boolean => {
-    const task = seg.task
-    return (
-        !!seg.isStart &&
-        !!task.startAt &&
-        row.cells[seg.colStart]?.dateKey === dateKeyOf(task.startAt)
-    )
-}
 
 // @method 跨行续接标记：行尾（后续行继续）只在与网格内下一行相接处显示
 const isRowEnd = (seg: { colEnd: number; isEnd: boolean }, row: CalendarRow): boolean =>
@@ -564,7 +552,7 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                                 :key="`${seg.task.id}-${seg.colStart}`"
                                 :task="seg.task"
                                 :pos="segStyle(seg)"
-                                :show-time="segShowTime(seg, rv.row)"
+                                :show-time="showEndTimeInMonth(seg, rv.row)"
                                 :cont-start="isRowStart(seg, rv.row)"
                                 :cont-end="isRowEnd(seg, rv.row)"
                                 :busy="rescheduleBusyId === seg.task.id"

@@ -170,7 +170,7 @@
     min-height: 120px;
 }
 
-/* 格内竖分隔线改由 .cal-lines 覆盖层绘制（TASK-07：线在任务条上方）；格仅承载背景/点击 */
+/* 格内竖分隔线改由 .cal-lines 覆盖层绘制（TASK-11：线在任务条下方，任务条整条抬升）；格仅承载背景/点击 */
 .cal-cell,
 .wk-cell {
     position: relative;
@@ -199,11 +199,13 @@
 }
 
 /* 日期号 + B1-F5 专注角标（同一行，角标不抢日格点击） */
+/* TASK-11：撑满格宽两端对齐——日期号靠左、专注角标靠右；无角标时数字仍靠左（列对齐一致） */
 .cal-cell-top,
 .wk-cell-top {
-    display: inline-flex;
+    display: flex;
+    align-self: stretch;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     gap: 2px;
     min-height: 20px;
 }
@@ -274,13 +276,16 @@
 }
 
 /* ── 任务条层 ── */
+/* TASK-11：整层抬升至 z-index 2（网格线 1 之上），使任务条背景/色条/文字均在线之上；
+   容器仍 pointer-events:none，条自身 pointer-events:auto，点击不受影响 */
 .cal-lanes {
     position: absolute;
     inset: 0;
+    z-index: 2;
     pointer-events: none;
 }
-/* 网格分隔线覆盖层（TASK-07：线在任务条上方 + 降亮度）：
-   z-index 仅 1（低于全部浮层/弹层 1000+），pointer-events:none 不拦截
+/* 网格分隔线覆盖层（TASK-11：线在任务条下方 + 降亮度）：
+   z-index 仅 1（低于任务条层 2、浮层/弹层 1000+），pointer-events:none 不拦截
    任务条/N+ 点击；6 条列分隔线精确定位于 k/7 列界（无左右边线，逐停靠渐变）。 */
 .cal-lines,
 .wk-lines {

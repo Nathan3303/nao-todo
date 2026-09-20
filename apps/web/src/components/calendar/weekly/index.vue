@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Loading as LoadingComp } from '@nao-todo/shared'
-import type { TaskViewObject } from '@nao-todo/domain-task'
 import { computed, inject, nextTick, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import QuickCreate from '../monthly/quick-create.vue'
@@ -12,6 +11,7 @@ import CalendarMonthGrid from '../monthly/calendar-month-grid.vue'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { isInteractiveKeyTarget } from '../monthly/keyboard-nav'
 import { buildCalendarEmptyState } from '../monthly/empty-state'
+import { showEndTimeInWeek } from '../monthly/segment-time'
 import { CALENDAR_WEEKLY_CONTEXT_KEY } from '../weekly-context'
 import CalendarSortDropdown from '../monthly/calendar-sort-dropdown.vue'
 
@@ -117,10 +117,6 @@ watch(
 
 // @method 任务条定位（7 列等分；top 按轨道步进；O2 共享几何纯函数）
 const segStyle = segmentStyleOf
-
-// @method 段首是否显示开始时刻：仅当任务真起始落在本周内可见列
-const segShowTime = (seg: { task: TaskViewObject; isStart: boolean; colStart: number }): boolean =>
-    !!seg.isStart && !!seg.task.startAt && dayjs(seg.task.startAt).isValid()
 
 // @method 回车提交（dateKey 来自所在格条带）
 const quickSubmitCell = (dateKey: string, name: string) => {
@@ -332,7 +328,7 @@ const {
                         :key="`${seg.task.id}-${seg.colStart}`"
                         :task="seg.task"
                         :pos="segStyle(seg)"
-                        :show-time="segShowTime(seg)"
+                        :show-time="showEndTimeInWeek(seg)"
                         :cont-start="!seg.isStart && seg.colStart === 0"
                         :cont-end="!seg.isEnd && seg.colEnd === GRID_COLUMNS - 1"
                         :busy="busyTaskId === seg.task.id"

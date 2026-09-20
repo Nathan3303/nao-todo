@@ -12,7 +12,7 @@ const props = withDefaults(
         task: TaskViewObject
         /** 定位样式（父容器按列区间计算 left/width/top） */
         pos: { left: string; width: string; top: string }
-        /** 段首显示开始时刻（父容器仅在真起始可见段置 true） */
+        /** 段末显示截止时刻（父容器仅在真末段可见段置 true） */
         showTime?: boolean
         /** 承接上一行（月视图跨行续接圆点） */
         contStart?: boolean
@@ -44,11 +44,11 @@ const barColor = computed<string>(() => {
     return 'transparent'
 })
 
-// @computed 段首时刻文本（HH:mm）
+// @computed 段末截止时刻文本（HH:mm）
 const timeText = computed(() => {
-    if (!props.showTime || !props.task.startAt) return ''
-    const start = dayjs(props.task.startAt)
-    return start.isValid() ? start.format('HH:mm') : ''
+    if (!props.showTime || !props.task.endAt) return ''
+    const end = dayjs(props.task.endAt)
+    return end.isValid() ? end.format('HH:mm') : ''
 })
 
 // @computed 菜单锚点（endAt 所在日键；「下周同日」= +7）
@@ -94,8 +94,8 @@ const onKeyDown = (event: KeyboardEvent): void => {
         @pointerdown="onPointerDown"
         @keydown="onKeyDown"
     >
-        <span v-if="timeText" class="cal-item-time">{{ timeText }}</span>
         <span class="cal-item-text">{{ task.name }}</span>
+        <span v-if="timeText" class="cal-item-time">{{ timeText }}</span>
         <!-- F4 三点按钮 = NueDropdown（reschedule-menu）触发器；悬停/聚焦出现；已开再点收起 -->
         <reschedule-menu
             :scheduled="true"
@@ -188,10 +188,10 @@ const onKeyDown = (event: KeyboardEvent): void => {
     opacity: 0.3;
 }
 
-/* 段首时刻文本（HH:mm，随条超宽省略） */
+/* 段末截止时刻文本（HH:mm，随条超宽省略） */
 .cal-item-time {
     flex: none;
-    margin-right: 6px;
+    margin-left: 6px;
     color: var(--cal-muted);
     font-size: 0.6875rem;
     line-height: 18px;
