@@ -1,7 +1,7 @@
 {
     "name": "nao-todo",
     "description": "NaoTodo, a simple TODO app, including web, mobile and desktop version",
-    "version": "1.7.6",
+    "version": "1.7.7",
     "author": "Nathan Lee",
     "license": "MIT",
     "private": true,

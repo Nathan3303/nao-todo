@@ -2,6 +2,31 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.7.7] - 2026-09-20
+
+发布批次：任务详情导出 Markdown + footer 样式内聚（patch）。**Tag `v1.7.7`** · root `1.7.7` / `@nao-todo/desktopapp` `1.7.7` / `@nao-todo/webapp` `1.7.7` / `@nao-todo/presentation` `0.4.5`（`@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（任务详情 UI）。
+
+### 新增（任务详情）
+
+- **导出任务文本（T21 / T22，`7281a695` / `d99652a6` / `fd7a49f3` / `431aa14b`）**：详情面板底部「更多」菜单新增「导出」——将任务全部数据（名称/状态/优先级/时间/项目/标签/描述/检查项/子任务）渲染为 Markdown 文本，经 nue-dialog 预览并一键复制到剪贴板；子任务递归导出（逐层分页取尽，深度上限 5 层防环）；无描述/检查项/子任务的段落整段省略；取数/复制失败均有明确提示。生成器为纯函数（`export-markdown.ts`），取数/复制为 composable（`use-export-task.ts`）。
+
+### 优化（样式）
+
+- **任务详情 footer 底部分隔线样式内聚（用户调整，`21d61212`）**：移除 `details.vue` 外层 `> .nue-footer` 的重复定义（padding / height / border-top），`border-top` 内聚至 footer 组件自身。
+
+### 其他（Chore）
+
+- i18n 中英新增 17 键（导出相关：标题 / 按钮 / 复制 / 元信息标签 / 段落标题），zh-CN / en-US / types 三处同步。
+- 测试新增 `export-markdown.test.ts`（7 例）与 `use-export-task.test.ts`（6 例，含递归 / 分页 / 深度上限 / 复制），全量 83 文件 / 716 例。
+
+### 质量门槛
+
+- `vp check`：目标文件 pass（fmt / lint / type）。
+- `vp test`：83 文件 / 716 例全绿。
+- `pnpm webapp build` ✓ / `pnpm desktopapp build` ✓。
+
+[v1.7.7]: https://github.com/Nathan3303/nao-todo/releases/tag/v1.7.7
+
 ## [v1.7.6] - 2026-09-20
 
 发布批次：日历界面 UI 优化（TASK-11 ①③ + 触发器改截止时间修订 + ② 还原）+ 用户样式微调（patch）。**Tag `v1.7.6`** · root `1.7.6` / `@nao-todo/desktopapp` `1.7.6` / `@nao-todo/webapp` `1.7.6`（`@nao-todo/presentation` `0.4.4` / `@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（日历 UI）。
