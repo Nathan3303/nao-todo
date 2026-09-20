@@ -6,7 +6,6 @@ defineOptions({ name: 'TaskExportDialog' })
 const props = defineProps<{
     modelValue: boolean
     markdown: string
-    loading?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -30,7 +29,7 @@ const close = () => emit('update:modelValue', false)
         <template #footer>
             <nue-div gap="var(--nue-gap-xs)" flex="1" justify="flex-end">
                 <nue-button @click="close">{{ t('task.details.close') }}</nue-button>
-                <nue-button theme="primary" :disabled="loading" @click="emit('copy')">
+                <nue-button theme="primary" @click="emit('copy')">
                     {{ t('task.details.export.copy') }}
                 </nue-button>
             </nue-div>

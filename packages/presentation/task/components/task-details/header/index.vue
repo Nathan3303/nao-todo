@@ -1,26 +1,13 @@
 <script setup lang="ts">
 import { TaskCheckButton, t } from '@nao-todo/shared'
 import { TaskDateSelector } from '../../date-selector'
-import { inject, ref } from 'vue'
+import { inject } from 'vue'
 import type { UpdateTaskViewObject } from '@nao-todo/domain-task'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context'
-import TaskExportDialog from '../export-dialog.vue'
-import useExportTask from '../use-export-task'
 
 const emit = defineEmits<{ (e: 'reload'): void }>()
 
 const { vo, refreshKey, closeDetails, updateTaskDetails } = inject(TASK_DETAILS_CONTEXT_KEY)!
-
-// @hook 导出任务文本（Markdown）
-const { exporting, markdown, exportTask, copyMarkdown } = useExportTask()
-const exportVisible = ref(false)
-
-const handleExport = async () => {
-    const text = await exportTask()
-    if (text !== null) exportVisible.value = true
-}
-
-const handleCopy = () => void copyMarkdown(markdown.value)
 
 const switchState = () => {
     if (vo.value === null) return
@@ -50,26 +37,11 @@ const updateDateAndRemind = (updateVO: UpdateTaskViewObject) => {
             <!-- <nue-button-group>
                 <nue-button icon="refresh" theme="icon,small" />
             </nue-button-group> -->
-            <nue-button
-                icon="files"
-                theme="icon,small"
-                :loading="exporting"
-                :title="t('task.details.export.button')"
-                @click="handleExport"
-            >
-                {{ t('task.details.export.button') }}
-            </nue-button>
             <nue-button icon="clear" theme="icon,small" @click="closeDetails">
                 {{ t('task.details.close') }}
             </nue-button>
         </nue-div>
     </nue-header>
-    <task-export-dialog
-        v-model="exportVisible"
-        :markdown="markdown"
-        :loading="exporting"
-        @copy="handleCopy"
-    />
 </template>
 
 <style scoped>
