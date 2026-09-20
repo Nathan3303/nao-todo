@@ -2,6 +2,33 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.7.6] - 2026-09-20
+
+发布批次：日历界面 UI 优化（TASK-11 ①③ + 触发器改截止时间修订 + ② 还原）+ 用户样式微调（patch）。**Tag `v1.7.6`** · root `1.7.6` / `@nao-todo/desktopapp` `1.7.6` / `@nao-todo/webapp` `1.7.6`（`@nao-todo/presentation` `0.4.4` / `@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（日历 UI）。
+
+### 优化（日历）
+
+- **格子头部两端对齐（TASK-11 ①）**：`.cal-cell-top` / `.wk-cell-top` 撑满格宽 `justify-content: space-between`，日期号靠左、专注角标靠右（无角标时数字仍靠左，列对齐一致）。
+- **任务条末尾触发器改显示截止时间（TASK-11 ③ 修订）**：有截止时刻（`showTime` 且 `endAt` 合法）时触发器显示 `HH:mm`（常显），点击仍弹改期下拉；否则回退 `more-vertical` 三点图标（悬停出现，单击仍可改期）；触发器 hover 沿用底色提示；时间/图标共用 `.cal-item-more`，拖拽跳过统一。
+- **段末截止时刻（TASK-11 ③）**：任务条时刻内容由 `startAt` 改为 `endAt` 并移至名称末尾；月/周视图可见性判定由「真起始段」改为「真末段」，抽为共享纯函数模块 `segment-time.ts`（可单测）。
+- **任务条名称文字抬升（用户调整，`7b5c87f4`）**：`.cal-lanes` 内嵌套 `.cal-item-text { z-index: 3 }`，名称文字高于网格分隔线；仅名称，条背景/色条/触发器仍在网格线下方。
+
+### 还原
+
+- **任务条整条抬升撤销（TASK-11 ②，`c36167e0`）**：任务条整条抬升至网格线之上的尝试经用户实测效果不佳，已撤销；网格分隔线回到任务条上方（TASK-07 状态）。
+
+### 其他（Chore）
+
+- 测试同步：新增 `segment-time.test.ts`（7 例）+ `task-bar.test.ts` 触发器/段末时刻断言（全量 81 文件 / 703 例）。
+
+### 质量门槛
+
+- `vp check`：目标文件 pass（fmt / lint / type）。
+- `vp test`：81 文件 / 703 例全绿。
+- `pnpm webapp build` ✓ / `pnpm desktopapp build` ✓。
+
+[v1.7.6]: https://github.com/Nathan3303/nao-todo/releases/tag/v1.7.6
+
 ## [v1.7.5] - 2026-09-15
 
 发布批次：日历模块结构 / 视图 UI / 排序下拉 / 标题年月跳转与改期菜单（NueDropdown 化）+ 任务详情子任务节点 UI + 用户样式微调（patch）。**Tag `v1.7.5`** · root `1.7.5` / `@nao-todo/desktopapp` `1.7.5` / `@nao-todo/webapp` `1.7.5`（`@nao-todo/presentation` `0.4.4` / `@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（日历 + 任务详情 UI）。
