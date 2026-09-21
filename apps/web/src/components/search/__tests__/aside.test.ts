@@ -7,6 +7,7 @@ import { nueUI } from '@/nue-ui-register'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { SEARCH_VIEW_CONTEXT_KEY } from '@/views/index/search/context'
 import type { SavedSearch } from '../saved-search'
+import { QUICK_SEARCH_PRESETS } from '../quick-search'
 import SearchAside from '../aside/aside.vue'
 
 /**
@@ -97,7 +98,7 @@ const mountAside = (
 const slot = (): HTMLElement => document.querySelector('#SubPageAsideTeleportSlot')!
 const textsOf = (selector: string): (string | undefined)[] =>
     [...slot().querySelectorAll(selector)].map((el) => el.textContent?.trim())
-const click = async (el: Element | null) => {
+const click = async (el: Element | null | undefined) => {
     el?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     await nextTick()
 }
@@ -126,7 +127,10 @@ describe('SearchAside - 渲染与单一真源', () => {
 
     it('共享 ref 变化即渲染（单一真源）', async () => {
         const api = mountAside({ saved: [], history: [] })
-        expect(slot().querySelector('.search-saved')).toBeNull()
+        expect(slot().querySelectorAll('.search-saved__reuse').length).toBe(0)
+        expect(slot().querySelector('.search-saved')!.textContent).toContain(
+            t('search.saved.empty')
+        )
 
         api.savedSearches.value = [makeSaved('s1', '新增')]
         api.history.value = ['kw']
@@ -136,10 +140,18 @@ describe('SearchAside - 渲染与单一真源', () => {
         expect(textsOf('.search-history__reuse')).toEqual(['kw'])
     })
 
-    it('两区全空时不渲染空标题', () => {
+    it('两区全空：标题恒显示 + 空态文案（无空白感）', () => {
         mountAside({ saved: [], history: [] })
-        expect(slot().querySelector('.search-saved')).toBeNull()
-        expect(slot().querySelector('.search-history')).toBeNull()
+        const saved = slot().querySelector('.search-saved')!
+        const history = slot().querySelector('.search-history')!
+
+        expect(saved.textContent).toContain(t('search.saved.title'))
+        expect(saved.textContent).toContain(t('search.saved.empty'))
+        expect(saved.textContent).toContain(t('search.saved.emptyHint'))
+        expect(history.textContent).toContain(t('search.history.title'))
+        expect(history.textContent).toContain(t('search.history.empty'))
+        // 无历史 → 不渲染清空按钮
+        expect(history.querySelector('.search-history__clear')).toBeNull()
     })
 })
 
@@ -173,6 +185,97 @@ describe('SearchAside - 动作回抛', () => {
         expect(api.removeSavedSearch).toHaveBeenCalledWith('s1')
         expect(api.removeHistory).toHaveBeenCalledWith('关键词')
         expect(api.clearHistory).toHaveBeenCalledTimes(1)
+    })
+})
+
+describe('SearchAside - 快捷搜索（只读预置）', () => {
+    it('渲染 4 项预置，且置顶于常用/最近搜索之前', () => {
+        mountAside({ saved: [makeSaved('s1', '甲')], history: ['kw'] })
+
+        const labels = textsOf('.search-quick__item')
+        expect(labels).toEqual(QUICK_SEARCH_PRESETS.map((preset) => t(preset.nameKey)))
+
+        const order = [
+            ...slot().querySelectorAll('.search-quick, .search-saved, .search-history')
+        ].map((el) =>
+            ['search-quick', 'search-saved', 'search-history'].find((name) =>
+                el.classList.contains(name)
+            )
+        )
+        expect(order).toEqual(['search-quick', 'search-saved', 'search-history'])
+    })
+
+    it('点预置项 ⇒ applySavedSearch(条件) + 回焦搜索框', async () => {
+        const api = mountAside({})
+
+        await click(slot().querySelectorAll('.search-quick__item')[0])
+
+        expect(api.applySavedSearch).toHaveBeenCalledWith(
+            expect.objectContaining({ query: QUICK_SEARCH_PRESETS[0]!.query })
+        )
+        expect(api.focusSearchBox).toHaveBeenCalledTimes(1)
+    })
+
+    it('预置项只读：无重命名/删除/拖拽手柄（每项仅一个复用按钮）', () => {
+        mountAside({ saved: [makeSaved('s1', '甲')] })
+        const quick = slot().querySelector('.search-quick')!
+
+        expect(quick.querySelectorAll('.search-quick__item').length).toBe(4)
+        expect(quick.querySelectorAll('.search-quick__item button').length).toBe(0)
+        expect(quick.querySelector('.search-saved__handle')).toBeNull()
+        expect(quick.querySelector(`[aria-label="${t('search.saved.rename')}"]`)).toBeNull()
+        expect(quick.querySelector(`[aria-label="${t('search.saved.remove')}"]`)).toBeNull()
+    })
+})
+
+describe('SearchAside - 折叠与无障碍（T27′）', () => {
+    it('快捷搜索固定常显，不包在折叠容器内；仅两区入折叠', () => {
+        mountAside({ saved: [makeSaved('s1', '甲')], history: ['kw'] })
+
+        expect(slot().querySelector('.search-quick')!.closest('.nue-collapse')).toBeNull()
+        expect(slot().querySelectorAll('.nue-collapse-item')).toHaveLength(2)
+    })
+
+    it('默认全展开 + 折叠头具备 role/aria-expanded/aria-controls（id 对应）', () => {
+        mountAside({ saved: [makeSaved('s1', '甲')], history: ['kw'] })
+        const headers = [...slot().querySelectorAll('.search-aside__header')]
+
+        expect(headers).toHaveLength(2)
+        for (const header of headers) {
+            expect(header.getAttribute('role')).toBe('button')
+            expect(header.getAttribute('aria-expanded')).toBe('true')
+            const controls = header.getAttribute('aria-controls')!
+            expect(controls).not.toBe('')
+            expect(slot().querySelector(`#${controls}`)).not.toBeNull()
+        }
+    })
+
+    it('点折叠头 ⇒ 仅该区折叠（非 accordion）', async () => {
+        mountAside({ saved: [makeSaved('s1', '甲')], history: ['kw'] })
+
+        await click(slot().querySelectorAll('.search-aside__header')[0])
+
+        const headers = [...slot().querySelectorAll('.search-aside__header')]
+        expect(headers[0]!.getAttribute('aria-expanded')).toBe('false')
+        expect(headers[1]!.getAttribute('aria-expanded')).toBe('true')
+    })
+
+    it('R3：展开态下新增/删除常用搜索不裁切（DOM 存在性）', async () => {
+        const api = mountAside({ saved: [] })
+        expect(
+            slot().querySelectorAll('.search-aside__header')[0]!.getAttribute('aria-expanded')
+        ).toBe('true')
+
+        api.savedSearches.value = [makeSaved('s1', '甲')]
+        await nextTick()
+        expect(textsOf('.search-saved__reuse')).toEqual(['甲'])
+
+        api.savedSearches.value = []
+        await nextTick()
+        expect(slot().querySelectorAll('.search-saved__reuse').length).toBe(0)
+        expect(slot().querySelector('.search-saved')!.textContent).toContain(
+            t('search.saved.empty')
+        )
     })
 })
 
