@@ -24,6 +24,8 @@ defineProps<{
     active: boolean
     /** S7b：是否纳入已删除/已放弃 */
     includeExcluded: boolean
+    /** 任一条件非空（关键词或筛选），决定「保存为常用搜索」是否可用 */
+    canSave: boolean
 }>()
 
 const emit = defineEmits<{
@@ -33,6 +35,7 @@ const emit = defineEmits<{
     (e: 'toggleState', id: string): void
     (e: 'toggleExcluded', value: boolean): void
     (e: 'clear'): void
+    (e: 'save'): void
 }>()
 
 // @options 清单：收件箱哨兵（projectId=''）+ 用户清单
@@ -253,6 +256,17 @@ const isChecked = (list: string[], id: string) => list.includes(id)
         >
             {{ t('search.filter.clear') }}
         </nue-button>
+
+        <!-- 保存为常用搜索（任一条件非空时可用；靠右） -->
+        <nue-button
+            :disabled="!canSave"
+            theme="small"
+            icon="subscribe"
+            class="search-filter-bar__save"
+            @click="emit('save')"
+        >
+            {{ t('search.saved.saveButton') }}
+        </nue-button>
     </div>
 </template>
 
@@ -332,5 +346,11 @@ const isChecked = (list: string[], id: string) => list.includes(id)
 
 .search-filter-bar__clear {
     flex: none;
+}
+
+/* 靠右（筛选栏为全宽 flex 容器；换行时仍保持末端对齐） */
+.search-filter-bar__save {
+    flex: none;
+    margin-left: auto;
 }
 </style>

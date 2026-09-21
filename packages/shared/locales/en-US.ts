@@ -115,6 +115,18 @@ const enUS: LocaleMessages = {
     'search.filter.noTags': 'No tags',
     'search.filter.selectedCount': '{count} selected',
     'search.filter.clear': 'Clear filters',
+    'search.saved.title': 'Saved searches',
+    'search.saved.saveButton': 'Save search',
+    'search.saved.saveTitle': 'Save search',
+    'search.saved.renameTitle': 'Rename saved search',
+    'search.saved.namePlaceholder': 'Enter a name',
+    'search.saved.nameRequired': 'Please enter a name',
+    'search.saved.defaultName': 'Saved search',
+    'search.saved.saved': 'Saved',
+    'search.saved.limitReached': 'Up to {max} saved searches',
+    'search.saved.rename': 'Rename',
+    'search.saved.remove': 'Delete',
+    'search.saved.dragHandle': 'Drag to reorder',
 
     // Settings
     'settings.profile': 'User Profile',

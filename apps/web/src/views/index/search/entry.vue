@@ -1,13 +1,26 @@
 <script lang="ts" setup>
 import { computed, inject, nextTick, onMounted, ref, watch } from 'vue'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
-import { TaskDetailsAdapter, TaskTagBar } from '@nao-todo/presentation/task'
+import {
+    TaskDetailsAdapter,
+    TaskPrioritySelectOptions,
+    TaskStateSelectOptions,
+    TaskTagBar
+} from '@nao-todo/presentation/task'
 import { LoadingError, assetUrl, t, TaskBasicInfo, TaskDateInfo } from '@nao-todo/shared'
+import { NueMessage, NuePrompt } from 'nue-ui'
 import { type SearchRow } from '@/components/search/search-tasks'
 import type { TaskTagViewObject } from '@nao-todo/domain-task'
 import useSearchEngine from '@/components/search/use-search'
 import SearchFilterBar from '@/components/search/search-filter-bar.vue'
 import { useSearchHistory } from '@/components/search/use-search-history'
+import { useSavedSearch } from '@/components/search/use-saved-search'
+import {
+    deriveSavedSearchName,
+    SAVED_SEARCH_MAX,
+    type SavedSearch,
+    type SavedSearchNameContext
+} from '@/components/search/saved-search'
 import { useTagsStore } from '@nao-todo/presentation/tag'
 import { useSearchView } from './search-view'
 
@@ -38,7 +51,9 @@ const {
     toggleTagFilter,
     togglePriorityFilter,
     toggleStateFilter,
-    clearFilters
+    clearFilters,
+    queryState,
+    applyQuery
 } = useSearchEngine()
 const { init, isLoading: viewLoading, error: viewError } = useSearchView()
 
@@ -53,6 +68,15 @@ const {
     remove: removeSearchHistory,
     clear: clearSearchHistory
 } = useSearchHistory()
+
+// @composable 常用搜索（SEA-05：保存/复现/重命名/删除/拖拽排序）
+const {
+    savedSearches,
+    add: addSavedSearchItem,
+    remove: removeSavedSearchItem,
+    rename: renameSavedSearchItem,
+    reorder: reorderSavedSearches
+} = useSavedSearch()
 
 const searchBoxRef = ref<HTMLElement | null>(null)
 
@@ -112,6 +136,75 @@ const openTaskDetails = (row: SearchRow) => {
 const applyHistory = (value: string) => {
     writeKeyword(value)
     focusSearchBox()
+}
+
+// @computed 保存可用性（任一条件非空：关键词或筛选）
+const canSaveSearch = computed(() => filtersActive.value || keyword.value.trim() !== '')
+
+// @method 自动命名上下文（清单/标签/优先级/状态文案解析）
+const savedSearchNameContext = (): SavedSearchNameContext => ({
+    projectNameOf: (id) => (id === '' ? t('component.taskSelector.inbox') : getProjectName(id)),
+    tagNameOf: (id) => tagsStore.getTag(id)?.name,
+    priorityLabelOf: (value) =>
+        TaskPrioritySelectOptions.value.find((option) => option.value === value)?.label,
+    stateLabelOf: (value) =>
+        TaskStateSelectOptions.value.find((option) => option.value === value)?.label,
+    fallback: t('search.saved.defaultName')
+})
+
+// @method 命名输入（默认自动名可改；空名校验拦截）
+const promptSavedSearchName = async (title: string, initial: string): Promise<string | null> => {
+    const [isByCancel, value] = await NuePrompt({
+        title,
+        inputValue: initial,
+        placeholder: t('search.saved.namePlaceholder'),
+        confirmButtonText: t('common.save'),
+        cancelButtonText: t('common.cancel'),
+        validator: (input) =>
+            typeof input === 'string' && input.trim() !== '' ? null : t('search.saved.nameRequired')
+    })
+    if (isByCancel) return null
+    return String(value ?? '').trim()
+}
+
+// @method 保存当前完整条件为常用搜索
+const onSaveSearch = async () => {
+    if (!canSaveSearch.value) return
+    const name = await promptSavedSearchName(
+        t('search.saved.saveTitle'),
+        deriveSavedSearchName(queryState.value, savedSearchNameContext())
+    )
+    if (name === null) return
+    const result = addSavedSearchItem(name, queryState.value)
+    if (result === 'full') {
+        NueMessage.warn(t('search.saved.limitReached', { max: SAVED_SEARCH_MAX }))
+    } else if (result === 'ok') {
+        NueMessage.success(t('search.saved.saved'))
+    }
+}
+
+// @method 复现常用搜索（完整条件应用 + URL 同步由引擎 watch 负责）
+const applySavedSearch = (item: SavedSearch) => {
+    applyQuery(item.query)
+    focusSearchBox()
+}
+
+// @method 重命名常用搜索
+const onRenameSavedSearch = async (item: SavedSearch) => {
+    const name = await promptSavedSearchName(t('search.saved.renameTitle'), item.name)
+    if (name === null) return
+    renameSavedSearchItem(item.id, name)
+}
+
+// @state 拖拽源下标（原生 HTML5 拖放排序）
+const savedDragIndex = ref<number | null>(null)
+const onSavedDragStart = (index: number, event: DragEvent) => {
+    savedDragIndex.value = index
+    event.dataTransfer?.setData('text/plain', String(index))
+}
+const onSavedDrop = (index: number) => {
+    if (savedDragIndex.value !== null) reorderSavedSearches(savedDragIndex.value, index)
+    savedDragIndex.value = null
 }
 
 // @method 行键盘可达：Enter 开详情 / Esc 回搜索框（SEA-02 SR-3）
@@ -196,12 +289,14 @@ watch(
                             :selected-states="filterStates"
                             :active="filtersActive"
                             :include-excluded="includeExcluded"
+                            :can-save="canSaveSearch"
                             @toggle-project="toggleProjectFilter"
                             @toggle-tag="toggleTagFilter"
                             @toggle-priority="togglePriorityFilter"
                             @toggle-state="toggleStateFilter"
                             @toggle-excluded="includeExcluded = $event"
                             @clear="onClearFilters"
+                            @save="onSaveSearch"
                         />
                         <!-- 结果 N + 子任务补拉/失败/超限/后台刷新轻提示 -->
                         <nue-div
@@ -283,6 +378,52 @@ watch(
                                     t('search.emptyHint')
                                 }}</nue-text>
                             </nue-empty>
+                            <!-- 常用搜索（SEA-05；无条目时不渲染标题，避免空标题） -->
+                            <nue-div v-if="savedSearches.length > 0" vertical class="search-saved">
+                                <nue-div align="center" class="search-saved__head">
+                                    <nue-text size="var(--nue-text-sm)" class="srch-tip">
+                                        {{ t('search.saved.title') }}
+                                    </nue-text>
+                                </nue-div>
+                                <nue-div vertical class="search-saved__list">
+                                    <nue-div
+                                        v-for="(item, index) in savedSearches"
+                                        :key="item.id"
+                                        align="center"
+                                        class="search-saved__item"
+                                        draggable="true"
+                                        @dragstart="onSavedDragStart(index, $event)"
+                                        @dragover.prevent
+                                        @drop="onSavedDrop(index)"
+                                    >
+                                        <nue-button
+                                            theme="icon,ghost,small"
+                                            icon="menu"
+                                            class="search-saved__handle"
+                                            :aria-label="t('search.saved.dragHandle')"
+                                        />
+                                        <nue-button
+                                            theme="small,ghost"
+                                            class="search-saved__reuse"
+                                            @click="applySavedSearch(item)"
+                                        >
+                                            {{ item.name }}
+                                        </nue-button>
+                                        <nue-button
+                                            theme="icon,ghost,small"
+                                            icon="edit"
+                                            :aria-label="t('search.saved.rename')"
+                                            @click="onRenameSavedSearch(item)"
+                                        />
+                                        <nue-button
+                                            theme="icon,ghost,small"
+                                            icon="clear"
+                                            :aria-label="t('search.saved.remove')"
+                                            @click="removeSavedSearchItem(item.id)"
+                                        />
+                                    </nue-div>
+                                </nue-div>
+                            </nue-div>
                             <!-- 最近搜索（AC3/AC4；无历史时不渲染标题，避免空标题） -->
                             <nue-div v-if="history.length > 0" vertical class="search-history">
                                 <nue-div align="center" class="search-history__head">
@@ -580,6 +721,37 @@ watch(
     background: color-mix(in srgb, var(--nue-primary-text-color) 7%, var(--nue-primary-color-0));
 }
 .search-history__reuse {
+    flex: 1;
+    min-width: 0;
+    justify-content: flex-start;
+    text-align: left;
+}
+
+/* —— 空词态：常用搜索（SEA-05） —— */
+.search-saved {
+    width: 100%;
+}
+.search-saved__head {
+    width: 100%;
+    justify-content: space-between;
+}
+.search-saved__list {
+    width: 100%;
+    gap: var(--nue-gap-2xs);
+}
+.search-saved__item {
+    width: 100%;
+    gap: var(--nue-gap-2xs);
+    border-radius: var(--nue-primary-radius);
+}
+.search-saved__item:hover {
+    background: color-mix(in srgb, var(--nue-primary-text-color) 7%, var(--nue-primary-color-0));
+}
+.search-saved__handle {
+    flex: none;
+    cursor: grab;
+}
+.search-saved__reuse {
     flex: 1;
     min-width: 0;
     justify-content: flex-start;

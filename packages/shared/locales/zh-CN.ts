@@ -113,6 +113,18 @@ const zhCN: LocaleMessages = {
     'search.filter.noTags': '暂无标签',
     'search.filter.selectedCount': '已选 {count} 项',
     'search.filter.clear': '清空筛选',
+    'search.saved.title': '常用搜索',
+    'search.saved.saveButton': '保存为常用搜索',
+    'search.saved.saveTitle': '保存为常用搜索',
+    'search.saved.renameTitle': '重命名常用搜索',
+    'search.saved.namePlaceholder': '输入名称',
+    'search.saved.nameRequired': '请输入名称',
+    'search.saved.defaultName': '常用搜索',
+    'search.saved.saved': '已保存为常用搜索',
+    'search.saved.limitReached': '最多保存 {max} 条常用搜索',
+    'search.saved.rename': '重命名',
+    'search.saved.remove': '删除',
+    'search.saved.dragHandle': '拖动排序',
 
     // Settings
     'settings.profile': '用户信息',

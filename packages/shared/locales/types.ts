@@ -110,6 +110,18 @@ export interface LocaleMessages {
     'search.filter.noTags': string
     'search.filter.selectedCount': string
     'search.filter.clear': string
+    'search.saved.title': string
+    'search.saved.saveButton': string
+    'search.saved.saveTitle': string
+    'search.saved.renameTitle': string
+    'search.saved.namePlaceholder': string
+    'search.saved.nameRequired': string
+    'search.saved.defaultName': string
+    'search.saved.saved': string
+    'search.saved.limitReached': string
+    'search.saved.rename': string
+    'search.saved.remove': string
+    'search.saved.dragHandle': string
 
     // Settings
     'settings.profile': string
