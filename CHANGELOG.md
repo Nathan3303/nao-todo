@@ -2,6 +2,37 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.7.8] - 2026-09-21
+
+发布批次：常用搜索（Saved Searches）+ 搜索页侧栏化（AppAsideV2 Adapter / 折叠 / 空态 / 快捷搜索）+ 收集箱搜索缺陷修复（patch）。**Tag `v1.7.8`** · root `1.7.8` / `@nao-todo/desktopapp` `1.7.8` / `@nao-todo/webapp` `1.7.8`（`@nao-todo/presentation` `0.4.5` / `@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（搜索 UI）。
+
+### 新增（搜索）
+
+- **常用搜索（T24，`482970c8` / `22df1b4b` / `0052a37c`）**：将当前完整搜索条件（关键词 / 清单 / 标签 / 优先级 / 状态 / 纳入已删除放弃）存为具名条目（localStorage `naotodo.search.saved`，上限 20，允许重名），侧栏一键复现；支持重命名、删除、桌面端拖拽排序；默认名按条件自动派生（可改）。
+- **搜索页侧栏（T26，`0a5959b2` / `76c98a6e` / `ab7913d3`）**：常用搜索与最近搜索迁至侧边栏常驻（AppAsideV2 Adapter，teleport 两段式）；状态单一真源（provide/inject，主区与侧栏同一实例）。
+- **侧栏折叠 + 空态 + 快捷搜索（T27′，`3d421a7f` / `ca65d8c7` / `4a17ee80`）**：侧栏分区可折叠（`nue-collapse` theme=menu；常用/最近可折叠，默认展开、非 accordion、不持久化；快捷搜索固定常显）；两区空态提示（标题恒显 + 文案 / 创建引导）；置顶只读「快捷搜索」预置四项（高优先级 / 待办 / 进行中 / 已完成），点击即应用条件并搜索。
+
+### 修复
+
+- **收集箱搜索失效（T28，`c2b22384` / `dc8bafa2`）**：搜索页清单选「收集箱」搜不到结果（收集箱哨兵不一致：任务数据为 `'inbox'`、搜索内部为 `''`）——搜索入口归一（Fix B）+ 过滤两端归一（Fix A）；URL 契约（`?project=inbox`）与内建清单查询不变。
+
+### 优化（搜索）
+
+- **折叠头 UI（T29，`b33b9d66` / `f73925fa`）**：指示箭头改用 `nue-icon` 自绘并调小（0.75rem，弃用库类）；「最近搜索」清除按钮移至头部、箭头左侧（`@click.stop` 防误触折叠）。
+
+### 其他（Chore）
+
+- i18n 中英新增搜索相关键（`search.saved.*` / `search.history.empty` / `search.quick.*`）。
+- 测试：新增 `saved-search` / `use-saved-search` / `aside` / `quick-search` 及收集箱回归，全量 87 文件 / 765 例。
+
+### 质量门槛
+
+- `vp check`：目标文件 pass（fmt / lint / type）。
+- `vp test`：87 文件 / 765 例全绿。
+- `pnpm webapp build` ✓ / `pnpm desktopapp build` ✓。
+
+[v1.7.8]: https://github.com/Nathan3303/nao-todo/releases/tag/v1.7.8
+
 ## [v1.7.7] - 2026-09-20
 
 发布批次：任务详情导出 Markdown + footer 样式内聚（patch）。**Tag `v1.7.7`** · root `1.7.7` / `@nao-todo/desktopapp` `1.7.7` / `@nao-todo/webapp` `1.7.7` / `@nao-todo/presentation` `0.4.5`（`@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（任务详情 UI）。
