@@ -24,7 +24,6 @@ watch(
     }
 )
 
-const close = () => emit('update:modelValue', false)
 // 「还原」：恢复为最近一次生成文本（props.markdown）
 const restore = () => (draft.value = props.markdown)
 // 复制来源为编辑后的草稿
@@ -50,7 +49,6 @@ const copy = () => emit('copy', draft.value)
                 <nue-button @click="restore">
                     {{ t('task.details.export.restore') }}
                 </nue-button>
-                <nue-button @click="close">{{ t('task.details.close') }}</nue-button>
                 <nue-button theme="primary" @click="copy">
                     {{ t('task.details.export.copy') }}
                 </nue-button>

@@ -72,52 +72,51 @@ const checkboxLine = (name: string, isDone: boolean, depth: number): string =>
 const inlineDescription = (value: string | undefined): string =>
     (value ?? '').trim().replace(/\s*\n+\s*/g, ' ')
 
-/**
- * 一级子任务行内标量（状态 → 优先级 → 开始时间 → 截止时间 → 标签）
- * @description 空项跳过；全部为空返回空数组（调用方不输出空括号）。
- */
-const inlineScalars = (node: ExportTaskNode, labels: ExportLabels): string[] => {
-    const scalars: string[] = []
-    if (node.stateLabel) scalars.push(`${labels.state}：${node.stateLabel}`)
-    if (node.priorityLabel) scalars.push(`${labels.priority}：${node.priorityLabel}`)
-    const startAt = formatExportDateTime(node.startAt)
-    if (startAt) scalars.push(`${labels.startAt}：${startAt}`)
-    const endAt = formatExportDateTime(node.endAt)
-    if (endAt) scalars.push(`${labels.endAt}：${endAt}`)
-    if (node.tagNames?.length) {
-        scalars.push(`${labels.tags}：${node.tagNames.map((name) => `#${name}`).join(' ')}`)
-    }
-    return scalars
-}
+// 子任务缩进：一级 0 空格，每深一级 +4 空格（见 PRD §5.2 递归规则）
+const subTaskIndent = (depth: number): string => INDENT_UNIT.repeat(depth * 2)
 
 /**
- * 渲染子任务行（含属性子行）
- * @description 一级（depth 0）输出行内标量 + 描述/检查项属性子行；更深层级（depth ≥ 1）一律精简。
+ * 渲染子任务子树
+ * @description 名称行仅「复选框 + 名称」；一级（depth 0）属性走独立子行（缩进 2，顺序固定、空项整行省略）；
+ *              每个含子节点的节点各输出一段 `- 子任务：` 标签段（缩进 +2），其子项缩进 +4；
+ *              更深层级一律精简（无属性子行）。
  */
-const subTaskLines = (node: ExportTaskNode, depth: number, labels: ExportLabels): string[] => {
+const renderSubTask = (node: ExportTaskNode, depth: number, labels: ExportLabels): string[] => {
     const isDone = node.state === 'done'
-    const indent = INDENT_UNIT.repeat(depth)
-    let line = `${indent}- [${isDone ? 'x' : ' '}] ${node.name}`
+    const indent = subTaskIndent(depth)
+    const propertyIndent = indent + INDENT_UNIT
+    const lines = [`${indent}- [${isDone ? 'x' : ' '}] ${node.name}`]
 
-    // 更深层级：仅名称 + 复选框
-    if (depth > 0) return [line]
+    // 一级：属性子行（顺序固定：状态 → 优先级 → 开始 → 截止 → 标签 → 描述 → 检查项）
+    if (depth === 0) {
+        if (node.stateLabel) lines.push(`${propertyIndent}- ${labels.state}：${node.stateLabel}`)
+        if (node.priorityLabel)
+            lines.push(`${propertyIndent}- ${labels.priority}：${node.priorityLabel}`)
+        const startAt = formatExportDateTime(node.startAt)
+        if (startAt) lines.push(`${propertyIndent}- ${labels.startAt}：${startAt}`)
+        const endAt = formatExportDateTime(node.endAt)
+        if (endAt) lines.push(`${propertyIndent}- ${labels.endAt}：${endAt}`)
+        if (node.tagNames?.length) {
+            const tags = node.tagNames.map((name) => `#${name}`).join(' ')
+            lines.push(`${propertyIndent}- ${labels.tags}：${tags}`)
+        }
+        const description = inlineDescription(node.description)
+        if (description) lines.push(`${propertyIndent}- ${labels.description}：${description}`)
 
-    // 一级：行内标量（空项跳过、全空不加括号）
-    const scalars = inlineScalars(node, labels)
-    if (scalars.length) line += `（${scalars.join('；')}）`
-    const lines = [line]
+        const checkItems = node.checkItems ?? []
+        if (checkItems.length) {
+            lines.push(`${propertyIndent}- ${labels.checkItems}：`)
+            for (const item of checkItems) {
+                lines.push(checkboxLine(item.name, item.isDone, depth * 2 + 2))
+            }
+        }
+    }
 
-    // 属性子行：描述
-    const description = inlineDescription(node.description)
-    if (description)
-        lines.push(`${INDENT_UNIT.repeat(depth + 1)}- ${labels.description}：${description}`)
-
-    // 属性子行：检查项（标签行 + 逐项复选框）
-    const checkItems = node.checkItems ?? []
-    if (checkItems.length) {
-        lines.push(`${INDENT_UNIT.repeat(depth + 1)}- ${labels.checkItems}：`)
-        for (const item of checkItems) {
-            lines.push(checkboxLine(item.name, item.isDone, depth + 2))
+    // 子节点：每个含子节点的节点各输出一段 `- 子任务：` 标签段
+    if (node.children?.length) {
+        lines.push(`${propertyIndent}- ${labels.subTasks}：`)
+        for (const child of node.children) {
+            lines.push(...renderSubTask(child, depth + 1, labels))
         }
     }
     return lines
@@ -127,7 +126,7 @@ const subTaskLines = (node: ExportTaskNode, depth: number, labels: ExportLabels)
  * 生成任务 Markdown 文本
  * @description 纯函数：任务树 → Markdown。
  *              空描述 / 空检查项 / 空子任务对应段落整段省略（不留空标题）；
- *              子任务按层级递归输出（直接子任务 0 缩进，逐层 +2 空格）。
+ *              子任务按层级递归输出（一级 0 缩进，每深一级 +4 空格）。
  * @param root 根任务节点（含递归子任务）
  * @param labels 本地化文案
  * @returns Markdown 文本（末尾换行）
@@ -165,13 +164,9 @@ export const generateTaskMarkdown = (root: ExportTaskNode, labels: ExportLabels)
 
     // 子任务（递归）
     const subTaskLinesOut: string[] = []
-    const walk = (nodes: ExportTaskNode[], depth: number) => {
-        for (const node of nodes) {
-            subTaskLinesOut.push(...subTaskLines(node, depth, labels))
-            if (node.children?.length) walk(node.children, depth + 1)
-        }
+    for (const child of root.children ?? []) {
+        subTaskLinesOut.push(...renderSubTask(child, 0, labels))
     }
-    walk(root.children ?? [], 0)
     if (subTaskLinesOut.length) {
         blocks.push(`## ${labels.subTasks}\n\n${subTaskLinesOut.join('\n')}`)
     }
