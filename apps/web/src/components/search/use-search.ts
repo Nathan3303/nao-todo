@@ -145,6 +145,8 @@ const useSearchEngine = () => {
         [...flatTaskIds.value]
             .map((id) => tasksStore.getTask(id))
             .filter((task): task is TaskViewObject => !!task)
+            // Fix B：收集箱真实数据 `'inbox'` 归一为内部哨兵 `''`（不改 URL / 内建清单查询）
+            .map((task) => (task.projectId === 'inbox' ? { ...task, projectId: '' } : task))
     )
     // @results 四维筛选（即时重算）→ 关键词 200ms 去抖 → 纯函数排序/高亮（未就绪输入就绪后自动重放）
     const rows = computed(() => {

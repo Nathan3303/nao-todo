@@ -176,13 +176,27 @@ export const EMPTY_FILTER_SET: SearchFilterSet = {
 }
 
 /**
+ * 收集箱 projectId 归一（Fix A）
+ * @description 真实数据以 `'inbox'` 标记收集箱，搜索内部/URL 以 `''` 为哨兵；
+ *              比较前两端归一，避免 `'inbox'` 与 `''` 不等导致收件箱筛选恒不命中。
+ *              保留 `null`（不强制转 `''`，由调用方按需兜底）。
+ */
+export const normalizeProjectId = (value: string | null | undefined): string | null =>
+    value === 'inbox' ? '' : (value ?? null)
+
+/**
  * 任务是否通过筛选（纯函数）
  * @description 维内 OR（多选任一命中即过）、维间 AND、与关键词由 searchTasks 另行 AND；
  *              空数组=不限（默认含已完成不变）。优先级/状态直接比 string 值。
+ *              清单维两端归一 projectId（Fix A：`'inbox'` ↔ `''`）。
  */
 export const matchTaskFilters = (task: TaskViewObject, filters: SearchFilterSet): boolean => {
     const { projectIds, tagIds, priorities, states } = filters
-    if (projectIds.length > 0 && !projectIds.includes(task.projectId || '')) return false
+    if (projectIds.length > 0) {
+        const taskProjectId = normalizeProjectId(task.projectId) ?? ''
+        const filterProjectIds = projectIds.map((id) => normalizeProjectId(id) ?? '')
+        if (!filterProjectIds.includes(taskProjectId)) return false
+    }
     if (tagIds.length > 0 && !task.tags.some((id) => tagIds.includes(id))) return false
     if (priorities.length > 0 && !priorities.includes(task.priority)) return false
     if (states.length > 0 && !states.includes(task.state)) return false
