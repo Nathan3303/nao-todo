@@ -7,7 +7,9 @@ import {
     useTaskCommentUseCase,
     useTaskUseCase
 } from '@/hooks'
-import { inject, onMounted, provide, ref } from 'vue'
+import { useSavedSearch } from '@/components/search/use-saved-search'
+import { useSearchHistory } from '@/components/search/use-search-history'
+import { inject, provide, ref } from 'vue'
 import {
     useTaskDetailsStore,
     useTasksStore,
@@ -75,11 +77,9 @@ export const useSearchView = () => {
         'SEARCH_OUTLINE_WIDTH'
     )
 
-    // @mounted 搜索页无左栏：浮动模式不受影响；非浮动则隐藏全局左栏
-    onMounted(() => {
-        if (isUseFloatAside.value) return
-        isDisplayAside.value = false
-    })
+    // @hook 搜索页共享状态（单一真源：主区与侧栏注入同一实例）
+    const savedSearch = useSavedSearch()
+    const searchHistory = useSearchHistory()
 
     // @method 选择任务并启动番茄钟计时器（详情抽屉复用）
     const selectTaskAndStartTimer = (
@@ -147,6 +147,8 @@ export const useSearchView = () => {
         error,
         switchDisplayAside,
         isUseFloatAside,
-        isDisplayAside
+        isDisplayAside,
+        savedSearch,
+        searchHistory
     }
 }

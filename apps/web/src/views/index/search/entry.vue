@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, inject, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, inject, nextTick, onMounted, provide, ref, watch } from 'vue'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import {
     TaskDetailsAdapter,
@@ -13,14 +13,14 @@ import { type SearchRow } from '@/components/search/search-tasks'
 import type { TaskTagViewObject } from '@nao-todo/domain-task'
 import useSearchEngine from '@/components/search/use-search'
 import SearchFilterBar from '@/components/search/search-filter-bar.vue'
-import { useSearchHistory } from '@/components/search/use-search-history'
-import { useSavedSearch } from '@/components/search/use-saved-search'
+import { SearchAside } from '@/components/search/aside'
 import {
     deriveSavedSearchName,
     SAVED_SEARCH_MAX,
     type SavedSearch,
     type SavedSearchNameContext
 } from '@/components/search/saved-search'
+import { SEARCH_VIEW_CONTEXT_KEY } from './context'
 import { useTagsStore } from '@nao-todo/presentation/tag'
 import { useSearchView } from './search-view'
 
@@ -55,28 +55,32 @@ const {
     queryState,
     applyQuery
 } = useSearchEngine()
-const { init, isLoading: viewLoading, error: viewError } = useSearchView()
+const {
+    init,
+    isLoading: viewLoading,
+    error: viewError,
+    savedSearch,
+    searchHistory
+} = useSearchView()
 
 // @context UI 级方法/取色（业务依赖已由引擎/视图本地组装）
 const { showTaskDetails, getProjectName } = inject(INDEX_VIEW_CONTEXT_KEY)!
 const tagsStore = useTagsStore()
 
-// @composable 搜索历史（S6：空词态展示 / 点选复用 / 单条·全部清除）
+// @composable 搜索页共享状态（单一真源：由 useSearchView 实例化，侧栏注入同一实例）
 const {
     history,
     record: recordSearchHistory,
     remove: removeSearchHistory,
     clear: clearSearchHistory
-} = useSearchHistory()
-
-// @composable 常用搜索（SEA-05：保存/复现/重命名/删除/拖拽排序）
+} = searchHistory
 const {
     savedSearches,
     add: addSavedSearchItem,
     remove: removeSavedSearchItem,
     rename: renameSavedSearchItem,
     reorder: reorderSavedSearches
-} = useSavedSearch()
+} = savedSearch
 
 const searchBoxRef = ref<HTMLElement | null>(null)
 
@@ -132,10 +136,9 @@ const openTaskDetails = (row: SearchRow) => {
     showTaskDetails(row.task.id)
 }
 
-// @method 历史点选复用（写入关键词并回焦搜索框）
-const applyHistory = (value: string) => {
+// @method 应用关键词（侧栏最近搜索复现；回焦由侧栏负责）
+const applyKeyword = (value: string) => {
     writeKeyword(value)
-    focusSearchBox()
 }
 
 // @computed 保存可用性（任一条件非空：关键词或筛选）
@@ -183,29 +186,24 @@ const onSaveSearch = async () => {
     }
 }
 
-// @method 复现常用搜索（完整条件应用 + URL 同步由引擎 watch 负责）
+// @method 复现常用搜索（完整条件应用 + URL 同步由引擎 watch 负责；回焦由侧栏负责）
 const applySavedSearch = (item: SavedSearch) => {
     applyQuery(item.query)
-    focusSearchBox()
 }
 
-// @method 重命名常用搜索
-const onRenameSavedSearch = async (item: SavedSearch) => {
-    const name = await promptSavedSearchName(t('search.saved.renameTitle'), item.name)
-    if (name === null) return
-    renameSavedSearchItem(item.id, name)
-}
-
-// @state 拖拽源下标（原生 HTML5 拖放排序）
-const savedDragIndex = ref<number | null>(null)
-const onSavedDragStart = (index: number, event: DragEvent) => {
-    savedDragIndex.value = index
-    event.dataTransfer?.setData('text/plain', String(index))
-}
-const onSavedDrop = (index: number) => {
-    if (savedDragIndex.value !== null) reorderSavedSearches(savedDragIndex.value, index)
-    savedDragIndex.value = null
-}
+// @provide 搜索视图上下文（侧栏与主区共享同一份状态 + 跨区回调）
+provide(SEARCH_VIEW_CONTEXT_KEY, {
+    savedSearches,
+    removeSavedSearch: removeSavedSearchItem,
+    renameSavedSearch: renameSavedSearchItem,
+    reorderSavedSearches,
+    history,
+    removeHistory: removeSearchHistory,
+    clearHistory: clearSearchHistory,
+    applyKeyword,
+    applySavedSearch,
+    focusSearchBox
+})
 
 // @method 行键盘可达：Enter 开详情 / Esc 回搜索框（SEA-02 SR-3）
 const handleRowKeydown = (row: SearchRow, event: KeyboardEvent) => {
@@ -270,6 +268,7 @@ watch(
             </template>
             <!-- 内容区域 -->
             <nue-main>
+                <search-aside />
                 <nue-content fill class="search-page">
                     <nue-div vertical class="search-toolbar" gap="var(--nue-gap-sm)">
                         <div ref="searchBoxRef" class="search-input-row">
@@ -378,89 +377,6 @@ watch(
                                     t('search.emptyHint')
                                 }}</nue-text>
                             </nue-empty>
-                            <!-- 常用搜索（SEA-05；无条目时不渲染标题，避免空标题） -->
-                            <nue-div v-if="savedSearches.length > 0" vertical class="search-saved">
-                                <nue-div align="center" class="search-saved__head">
-                                    <nue-text size="var(--nue-text-sm)" class="srch-tip">
-                                        {{ t('search.saved.title') }}
-                                    </nue-text>
-                                </nue-div>
-                                <nue-div vertical class="search-saved__list">
-                                    <nue-div
-                                        v-for="(item, index) in savedSearches"
-                                        :key="item.id"
-                                        align="center"
-                                        class="search-saved__item"
-                                        draggable="true"
-                                        @dragstart="onSavedDragStart(index, $event)"
-                                        @dragover.prevent
-                                        @drop="onSavedDrop(index)"
-                                    >
-                                        <nue-button
-                                            theme="icon,ghost,small"
-                                            icon="menu"
-                                            class="search-saved__handle"
-                                            :aria-label="t('search.saved.dragHandle')"
-                                        />
-                                        <nue-button
-                                            theme="small,ghost"
-                                            class="search-saved__reuse"
-                                            @click="applySavedSearch(item)"
-                                        >
-                                            {{ item.name }}
-                                        </nue-button>
-                                        <nue-button
-                                            theme="icon,ghost,small"
-                                            icon="edit"
-                                            :aria-label="t('search.saved.rename')"
-                                            @click="onRenameSavedSearch(item)"
-                                        />
-                                        <nue-button
-                                            theme="icon,ghost,small"
-                                            icon="clear"
-                                            :aria-label="t('search.saved.remove')"
-                                            @click="removeSavedSearchItem(item.id)"
-                                        />
-                                    </nue-div>
-                                </nue-div>
-                            </nue-div>
-                            <!-- 最近搜索（AC3/AC4；无历史时不渲染标题，避免空标题） -->
-                            <nue-div v-if="history.length > 0" vertical class="search-history">
-                                <nue-div align="center" class="search-history__head">
-                                    <nue-text size="var(--nue-text-sm)" class="srch-tip">
-                                        {{ t('search.history.title') }}
-                                    </nue-text>
-                                    <nue-button
-                                        theme="small,ghost"
-                                        class="search-history__clear"
-                                        @click="clearSearchHistory"
-                                    >
-                                        {{ t('search.history.clear') }}
-                                    </nue-button>
-                                </nue-div>
-                                <nue-div vertical class="search-history__list">
-                                    <nue-div
-                                        v-for="item in history"
-                                        :key="item"
-                                        align="center"
-                                        class="search-history__item"
-                                    >
-                                        <nue-button
-                                            theme="small,ghost"
-                                            class="search-history__reuse"
-                                            @click="applyHistory(item)"
-                                        >
-                                            {{ item }}
-                                        </nue-button>
-                                        <nue-button
-                                            theme="icon,ghost,small"
-                                            icon="clear"
-                                            :aria-label="t('search.history.remove')"
-                                            @click="removeSearchHistory(item)"
-                                        />
-                                    </nue-div>
-                                </nue-div>
-                            </nue-div>
                         </nue-div>
                         <loading-error
                             v-else
@@ -693,69 +609,12 @@ watch(
     min-height: 160px;
 }
 
-/* —— 空词态：引导 + 最近搜索（S6） —— */
+/* —— 空词态：引导 —— */
 .search-empty {
     flex: 1;
     width: 100%;
     min-height: 160px;
     align-items: stretch;
-}
-
-.search-history {
-    width: 100%;
-}
-.search-history__head {
-    width: 100%;
-    justify-content: space-between;
-}
-.search-history__list {
-    width: 100%;
-    gap: var(--nue-gap-2xs);
-}
-.search-history__item {
-    width: 100%;
-    justify-content: space-between;
-    border-radius: var(--nue-primary-radius);
-}
-.search-history__item:hover {
-    background: color-mix(in srgb, var(--nue-primary-text-color) 7%, var(--nue-primary-color-0));
-}
-.search-history__reuse {
-    flex: 1;
-    min-width: 0;
-    justify-content: flex-start;
-    text-align: left;
-}
-
-/* —— 空词态：常用搜索（SEA-05） —— */
-.search-saved {
-    width: 100%;
-}
-.search-saved__head {
-    width: 100%;
-    justify-content: space-between;
-}
-.search-saved__list {
-    width: 100%;
-    gap: var(--nue-gap-2xs);
-}
-.search-saved__item {
-    width: 100%;
-    gap: var(--nue-gap-2xs);
-    border-radius: var(--nue-primary-radius);
-}
-.search-saved__item:hover {
-    background: color-mix(in srgb, var(--nue-primary-text-color) 7%, var(--nue-primary-color-0));
-}
-.search-saved__handle {
-    flex: none;
-    cursor: grab;
-}
-.search-saved__reuse {
-    flex: 1;
-    min-width: 0;
-    justify-content: flex-start;
-    text-align: left;
 }
 
 /* —— 结果列表 —— */
