@@ -31,7 +31,8 @@ const {
 const { markdown, exportTask, copyMarkdown } = useExportTask()
 const exportVisible = ref(false)
 
-const handleCopy = () => void copyMarkdown(markdown.value)
+// 复制对话框内「编辑后」文本（AC2）；对话框未编辑时即本次生成文本
+const handleCopy = (text: string) => void copyMarkdown(text)
 
 const openParentTaskSelector = () => {
     if (!vo.value) return

@@ -68,6 +68,61 @@ const metaLine = (label: string, value: string | null): string | null =>
 const checkboxLine = (name: string, isDone: boolean, depth: number): string =>
     `${INDENT_UNIT.repeat(depth)}- [${isDone ? 'x' : ' '}] ${name}`
 
+// 描述单行化：去首尾空白后，将内部换行折叠为空格
+const inlineDescription = (value: string | undefined): string =>
+    (value ?? '').trim().replace(/\s*\n+\s*/g, ' ')
+
+/**
+ * 一级子任务行内标量（状态 → 优先级 → 开始时间 → 截止时间 → 标签）
+ * @description 空项跳过；全部为空返回空数组（调用方不输出空括号）。
+ */
+const inlineScalars = (node: ExportTaskNode, labels: ExportLabels): string[] => {
+    const scalars: string[] = []
+    if (node.stateLabel) scalars.push(`${labels.state}：${node.stateLabel}`)
+    if (node.priorityLabel) scalars.push(`${labels.priority}：${node.priorityLabel}`)
+    const startAt = formatExportDateTime(node.startAt)
+    if (startAt) scalars.push(`${labels.startAt}：${startAt}`)
+    const endAt = formatExportDateTime(node.endAt)
+    if (endAt) scalars.push(`${labels.endAt}：${endAt}`)
+    if (node.tagNames?.length) {
+        scalars.push(`${labels.tags}：${node.tagNames.map((name) => `#${name}`).join(' ')}`)
+    }
+    return scalars
+}
+
+/**
+ * 渲染子任务行（含属性子行）
+ * @description 一级（depth 0）输出行内标量 + 描述/检查项属性子行；更深层级（depth ≥ 1）一律精简。
+ */
+const subTaskLines = (node: ExportTaskNode, depth: number, labels: ExportLabels): string[] => {
+    const isDone = node.state === 'done'
+    const indent = INDENT_UNIT.repeat(depth)
+    let line = `${indent}- [${isDone ? 'x' : ' '}] ${node.name}`
+
+    // 更深层级：仅名称 + 复选框
+    if (depth > 0) return [line]
+
+    // 一级：行内标量（空项跳过、全空不加括号）
+    const scalars = inlineScalars(node, labels)
+    if (scalars.length) line += `（${scalars.join('；')}）`
+    const lines = [line]
+
+    // 属性子行：描述
+    const description = inlineDescription(node.description)
+    if (description)
+        lines.push(`${INDENT_UNIT.repeat(depth + 1)}- ${labels.description}：${description}`)
+
+    // 属性子行：检查项（标签行 + 逐项复选框）
+    const checkItems = node.checkItems ?? []
+    if (checkItems.length) {
+        lines.push(`${INDENT_UNIT.repeat(depth + 1)}- ${labels.checkItems}：`)
+        for (const item of checkItems) {
+            lines.push(checkboxLine(item.name, item.isDone, depth + 2))
+        }
+    }
+    return lines
+}
+
 /**
  * 生成任务 Markdown 文本
  * @description 纯函数：任务树 → Markdown。
@@ -109,16 +164,16 @@ export const generateTaskMarkdown = (root: ExportTaskNode, labels: ExportLabels)
     }
 
     // 子任务（递归）
-    const subTaskLines: string[] = []
+    const subTaskLinesOut: string[] = []
     const walk = (nodes: ExportTaskNode[], depth: number) => {
         for (const node of nodes) {
-            subTaskLines.push(checkboxLine(node.name, node.state === 'done', depth))
+            subTaskLinesOut.push(...subTaskLines(node, depth, labels))
             if (node.children?.length) walk(node.children, depth + 1)
         }
     }
     walk(root.children ?? [], 0)
-    if (subTaskLines.length) {
-        blocks.push(`## ${labels.subTasks}\n\n${subTaskLines.join('\n')}`)
+    if (subTaskLinesOut.length) {
+        blocks.push(`## ${labels.subTasks}\n\n${subTaskLinesOut.join('\n')}`)
     }
 
     return blocks.join('\n\n') + '\n'

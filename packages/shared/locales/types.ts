@@ -342,6 +342,7 @@ export interface LocaleMessages {
     'task.details.export.copy': string
     'task.details.export.copySuccess': string
     'task.details.export.copyFailed': string
+    'task.details.export.restore': string
     'task.details.export.failed': string
     'task.details.export.label.state': string
     'task.details.export.label.priority': string

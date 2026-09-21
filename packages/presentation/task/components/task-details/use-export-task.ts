@@ -25,8 +25,10 @@ const SUB_TASK_PAGE_LIMIT = 100
 const useExportTask = () => {
     // @context 主任务详情上下文（当前任务 + 检查项）
     const { vo, checkItems } = inject(TASK_DETAILS_CONTEXT_KEY)!
-    // @context 任务详情预上下文（子任务用例 + 标签/清单名解析）
-    const { subTaskUseCase, getTag, getProjectName } = inject(TASK_DETAILS_PRE_CONTEXT_KEY)!
+    // @context 任务详情预上下文（子任务用例 + 检查项只读取数 + 标签/清单名解析）
+    const { subTaskUseCase, taskCheckItemUseCase, getTag, getProjectName } = inject(
+        TASK_DETAILS_PRE_CONTEXT_KEY
+    )!
 
     // @store 任务详情存储（子任务视图对象来源）
     const taskDetailsStore = useTaskDetailsStore()
@@ -119,12 +121,21 @@ const useExportTask = () => {
             .filter((task): task is TaskViewObject => Boolean(task))
             .sort((a, b) => a.sortId - b.sortId || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
 
-        // 3. 递归下钻
+        // 3. 递归下钻；仅一级子任务（depth 0）取检查项（只读取数，不写 store）
         const nodes: ExportTaskNode[] = []
         for (const child of children) {
             const [grandChildren, err] = await fetchChildren(child.id, depth + 1)
             if (err !== null) return [null, err]
-            nodes.push(toExportNode(child, grandChildren))
+            const node = toExportNode(child, grandChildren)
+            if (depth === 0) {
+                const [checkItemVOs, checkItemErr] = await taskCheckItemUseCase.listByTask(child.id)
+                if (checkItemErr !== null) return [null, checkItemErr]
+                node.checkItems = (checkItemVOs ?? []).map((item) => ({
+                    name: item.name,
+                    isDone: item.isDone
+                }))
+            }
+            nodes.push(node)
         }
         return [nodes, null]
     }

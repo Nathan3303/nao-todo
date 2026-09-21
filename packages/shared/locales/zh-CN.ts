@@ -350,6 +350,7 @@ const zhCN: LocaleMessages = {
     'task.details.export.copy': '复制',
     'task.details.export.copySuccess': '已复制到剪贴板',
     'task.details.export.copyFailed': '复制失败，请手动复制',
+    'task.details.export.restore': '还原',
     'task.details.export.failed': '导出失败：{error}',
     'task.details.export.label.state': '状态',
     'task.details.export.label.priority': '优先级',
