@@ -452,7 +452,8 @@ cmd_check() {
       if [[ "$cgst" == *"up to date"* ]]; then
         echo '  ✓ 当前目录索引 up to date'
       elif [[ "$cgst" == *"Pending Changes"* ]]; then
-        echo '  ! 当前目录索引有未同步变更（codegraph sync）'; rc=1
+        # 索引过期仅为提醒（与 check_codegraph 口径一致），不计入退出码，避免误停派发
+        echo '  ! 当前目录索引有未同步变更（codegraph sync）'
       else
         echo '  · 当前目录有索引，状态见 codegraph status'
       fi
