@@ -132,8 +132,8 @@ const onDrop = (index: number) => {
                             :aria-expanded="!state"
                             :aria-controls="ASIDE_SAVED_CONTENT_ID"
                             @click="collapse"
-                            @keydown.enter.prevent="collapse"
-                            @keydown.space.prevent="collapse"
+                            @keydown.enter.self.prevent="collapse"
+                            @keydown.space.self.prevent="collapse"
                         >
                             <nue-text size="var(--nue-text-sm)" class="srch-tip">
                                 {{ t('search.saved.title') }}
@@ -141,7 +141,9 @@ const onDrop = (index: number) => {
                             <nue-icon
                                 name="arrow-down"
                                 aria-hidden="true"
-                                class="nue-collapse-item-state-icon search-aside__chevron"
+                                size="0.75rem"
+                                class="search-aside__chevron"
+                                :class="{ 'search-aside__chevron--expanded': !state }"
                             />
                         </nue-div>
                     </template>
@@ -214,30 +216,37 @@ const onDrop = (index: number) => {
                             :aria-expanded="!state"
                             :aria-controls="ASIDE_RECENT_CONTENT_ID"
                             @click="collapse"
-                            @keydown.enter.prevent="collapse"
-                            @keydown.space.prevent="collapse"
+                            @keydown.enter.self.prevent="collapse"
+                            @keydown.space.self.prevent="collapse"
                         >
                             <nue-text size="var(--nue-text-sm)" class="srch-tip">
                                 {{ t('search.history.title') }}
                             </nue-text>
-                            <nue-icon
-                                name="arrow-down"
-                                aria-hidden="true"
-                                class="nue-collapse-item-state-icon search-aside__chevron"
-                            />
+                            <nue-div
+                                class="search-aside__header-actions"
+                                align="center"
+                                gap="var(--nue-gap-2xs)"
+                            >
+                                <nue-button
+                                    v-if="history.length > 0"
+                                    theme="small,ghost"
+                                    class="search-history__clear"
+                                    @click.stop="clearHistory"
+                                >
+                                    {{ t('search.history.clear') }}
+                                </nue-button>
+                                <nue-icon
+                                    name="arrow-down"
+                                    aria-hidden="true"
+                                    size="0.75rem"
+                                    class="search-aside__chevron"
+                                    :class="{ 'search-aside__chevron--expanded': !state }"
+                                />
+                            </nue-div>
                         </nue-div>
                     </template>
                     <div :id="ASIDE_RECENT_CONTENT_ID" class="search-aside__body">
                         <nue-div v-if="history.length > 0" vertical>
-                            <nue-div align="center" class="search-history__actions">
-                                <nue-button
-                                    theme="small,ghost"
-                                    class="search-history__clear"
-                                    @click="clearHistory"
-                                >
-                                    {{ t('search.history.clear') }}
-                                </nue-button>
-                            </nue-div>
                             <nue-div vertical class="search-history__list">
                                 <nue-div
                                     v-for="item in history"
@@ -293,8 +302,15 @@ const onDrop = (index: number) => {
     justify-content: space-between;
     cursor: pointer;
 }
+.search-aside__header-actions {
+    flex: none;
+}
 .search-aside__chevron {
     flex: none;
+    transition: transform var(--nue-animation-duration) ease-in-out;
+}
+.search-aside__chevron--expanded {
+    transform: rotate(180deg);
 }
 /* R3：不传 maxHeight ⇒ 内容高度由 scrollHeight 过渡，transitionend 后回到 auto，
    展开态下的增删不会因固定高度被裁切（jsdom 无过渡，仅断言 DOM 存在性） */
@@ -351,10 +367,6 @@ const onDrop = (index: number) => {
 }
 
 /* —— 最近搜索（SEA-04 / S6） —— */
-.search-history__actions {
-    width: 100%;
-    justify-content: flex-end;
-}
 .search-history__list {
     width: 100%;
     gap: var(--nue-gap-2xs);
