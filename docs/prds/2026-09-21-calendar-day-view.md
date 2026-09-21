@@ -120,7 +120,7 @@
   anchorKey: string
   columns: { index: number; label: string }[]        // 48 项；整点 label = 两位小时 '09'，半点 label = ''
   timed: { task: TaskViewObject; colStart: number; colEnd: number; lane: number; isStart: boolean; isEnd: boolean }[]
-  allDay: TaskViewObject[]                            // 仅「仅 endAt」任务
+  allDay: TaskViewObject[]                           // 仅 endAt（无 startAt）∪ 当日裁剪后覆盖整天（§5.3）
   overflow: { key: string; count: number }[]          // 日级单探针：长度 0 或 1，key = anchorKey
   isToday: boolean                                    // = anchorKey === todayKey（注入，便于测试，不依赖真实时钟）
 }
@@ -129,6 +129,8 @@
 - 字段名用 **`isStart` / `isEnd`**（与月/周 `CalendarSegment` 同名语义：该跨度真实起/止于本视图内；`!isStart` → 左端续接），**不用**组件 prop 侧的 `contStart/contEnd`。
 - `colStart/colEnd` 为**闭区间且允许小数**（ADR C2）：`colStart = startMin/30`、`colEnd = endMin/30 − 1`。
 - **DOM 契约（供 C6/C12 断言）**：列头容器 `data-testid="day-columns"`（子节点 48、其中有文本者 24）；时间轴背景 `data-testid="day-axis-bg"`（其内 `[data-col]` 数量必须为 0，即禁 48×N DOM）；未安排入口 `data-testid="day-unscheduled-entry"`。
+- **挂载契约（冻结）**：`daily/index.vue` **复用 `CALENDAR_VIEW_CONTEXT_KEY` + Pinia**（与 `monthly/`、`weekly/` 一致），**不得改为 props 直传**。组装点可在既有 `useCalendarMonthly` 内扩 `viewMode = 'day'`（ADR C14）或抽子组合式，但**注入契约不变**。
+- **列头结构口径（冻结）**：`data-testid="day-columns"` 的**直接子元素恰 48 个**（奇数位文本为空字符串）；如需改为「24 整点 + 24 刻度」等结构，**须先报 PM**（否则测试漂移）。
 - 整点文本格式暂定两位小时（`09`）；若实测偏窄可改 `09:00`，属渲染细节、不影响契约形状。
 
 ## 6. NFRs
