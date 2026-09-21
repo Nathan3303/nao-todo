@@ -1,14 +1,19 @@
 <script setup lang="ts">
-import { inject, nextTick, onMounted, ref, watch } from 'vue'
+import { nextTick, onMounted, ref, watch } from 'vue'
 import { NuePrompt } from 'nue-ui'
 import { t } from '@nao-todo/shared'
-import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
-import { SEARCH_VIEW_CONTEXT_KEY } from '@/views/index/search/context'
 import type { SavedSearch } from '../saved-search'
+import { QUICK_SEARCH_PRESETS, type QuickSearchPreset } from '../quick-search'
+import useAside, {
+    ASIDE_RECENT_CONTENT_ID,
+    ASIDE_SAVED_CONTENT_ID,
+    ASIDE_SECTION_RECENT,
+    ASIDE_SECTION_SAVED
+} from './use-aside'
 
 defineOptions({ name: 'SearchAside' })
 
-// @contexts 搜索视图状态（单一真源）+ 首页壳（侧栏控制）
+// @hook 侧栏组合式（注入搜索视图上下文 + 首页壳上下文 + 折叠状态）
 const {
     savedSearches,
     removeSavedSearch,
@@ -19,11 +24,17 @@ const {
     clearHistory,
     applyKeyword,
     applySavedSearch,
-    focusSearchBox
-} = inject(SEARCH_VIEW_CONTEXT_KEY)!
-const { isDisplayAside, isUseFloatAside, setControllOption } = inject(INDEX_VIEW_CONTEXT_KEY)!
+    focusSearchBox,
+    isDisplayAside,
+    isUseFloatAside,
+    setControllOption,
+    collapseItemsRecord
+} = useAside()
 
-// 恢复侧栏显示：展开应用左侧子栏以承载常用搜索/最近搜索
+// @const 只读快捷搜索预置（零模型改动：仅优先级 / 状态）
+const quickSearchPresets = QUICK_SEARCH_PRESETS
+
+// 恢复侧栏显示：展开应用左侧子栏以承载快捷搜索/常用搜索/最近搜索
 onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
 
 /**
@@ -39,6 +50,16 @@ const handleApplySaved = (item: SavedSearch) => {
 }
 const handleApplyKeyword = (keyword: string) => {
     applyKeyword(keyword)
+    focusSearchBox()
+}
+// 预置项复用 applySavedSearch：以瞬态条目承载条件（回调仅消费 query）
+const handleApplyQuick = (preset: QuickSearchPreset) => {
+    applySavedSearch({
+        id: preset.id,
+        name: t(preset.nameKey),
+        query: preset.query,
+        createdAt: ''
+    })
     focusSearchBox()
 }
 
@@ -72,93 +93,182 @@ const onDrop = (index: number) => {
 <template>
     <teleport v-if="isDisplayAside && !teleportDisabled" to="#SubPageAsideTeleportSlot">
         <nue-div theme="aside-wrapper">
-            <!-- 常用搜索（SEA-05；无条目不渲染标题） -->
-            <nue-div v-if="savedSearches.length > 0" vertical class="search-saved">
-                <nue-div align="center" class="search-saved__head">
+            <!-- 快捷搜索（只读预置；固定常显，不折叠） -->
+            <nue-div vertical class="search-quick">
+                <nue-div align="center" class="search-quick__head">
                     <nue-text size="var(--nue-text-sm)" class="srch-tip">
-                        {{ t('search.saved.title') }}
+                        {{ t('search.quick.title') }}
                     </nue-text>
                 </nue-div>
-                <nue-div vertical class="search-saved__list">
-                    <nue-div
-                        v-for="(item, index) in savedSearches"
-                        :key="item.id"
-                        align="center"
-                        class="search-saved__item"
-                        :draggable="!isUseFloatAside"
-                        @dragstart="onDragStart(index, $event)"
-                        @dragover.prevent
-                        @drop="onDrop(index)"
-                    >
-                        <nue-button
-                            v-if="!isUseFloatAside"
-                            theme="icon,ghost,small"
-                            icon="menu"
-                            class="search-saved__handle"
-                            :aria-label="t('search.saved.dragHandle')"
-                        />
-                        <nue-button
-                            theme="small,ghost"
-                            class="search-saved__reuse"
-                            @click="handleApplySaved(item)"
-                        >
-                            {{ item.name }}
-                        </nue-button>
-                        <nue-button
-                            theme="icon,ghost,small"
-                            icon="edit"
-                            :aria-label="t('search.saved.rename')"
-                            @click="handleRename(item)"
-                        />
-                        <nue-button
-                            theme="icon,ghost,small"
-                            icon="clear"
-                            :aria-label="t('search.saved.remove')"
-                            @click="removeSavedSearch(item.id)"
-                        />
-                    </nue-div>
-                </nue-div>
-            </nue-div>
-
-            <nue-divider v-if="savedSearches.length > 0 && history.length > 0" />
-
-            <!-- 最近搜索（无历史不渲染标题） -->
-            <nue-div v-if="history.length > 0" vertical class="search-history">
-                <nue-div align="center" class="search-history__head">
-                    <nue-text size="var(--nue-text-sm)" class="srch-tip">
-                        {{ t('search.history.title') }}
-                    </nue-text>
+                <nue-div vertical class="search-quick__list">
                     <nue-button
+                        v-for="preset in quickSearchPresets"
+                        :key="preset.id"
                         theme="small,ghost"
-                        class="search-history__clear"
-                        @click="clearHistory"
+                        :icon="preset.icon"
+                        class="search-quick__item"
+                        @click="handleApplyQuick(preset)"
                     >
-                        {{ t('search.history.clear') }}
+                        {{ t(preset.nameKey) }}
                     </nue-button>
                 </nue-div>
-                <nue-div vertical class="search-history__list">
-                    <nue-div
-                        v-for="item in history"
-                        :key="item"
-                        align="center"
-                        class="search-history__item"
-                    >
-                        <nue-button
-                            theme="small,ghost"
-                            class="search-history__reuse"
-                            @click="handleApplyKeyword(item)"
-                        >
-                            {{ item }}
-                        </nue-button>
-                        <nue-button
-                            theme="icon,ghost,small"
-                            icon="clear"
-                            :aria-label="t('search.history.remove')"
-                            @click="removeHistory(item)"
-                        />
-                    </nue-div>
-                </nue-div>
             </nue-div>
+
+            <nue-divider />
+
+            <!-- 常用搜索 / 最近搜索：可折叠（默认展开，非 accordion，不持久化） -->
+            <nue-collapse v-model="collapseItemsRecord" theme="menu" class="search-aside__collapse">
+                <!-- 常用搜索（标题恒显示，空态给文案 + 引导） -->
+                <nue-collapse-item
+                    :name="ASIDE_SECTION_SAVED"
+                    theme="menu"
+                    class="search-aside__section search-saved"
+                >
+                    <template #header="{ collapse, state }">
+                        <nue-div
+                            class="search-aside__header"
+                            role="button"
+                            tabindex="0"
+                            :aria-expanded="!state"
+                            :aria-controls="ASIDE_SAVED_CONTENT_ID"
+                            @click="collapse"
+                            @keydown.enter.prevent="collapse"
+                            @keydown.space.prevent="collapse"
+                        >
+                            <nue-text size="var(--nue-text-sm)" class="srch-tip">
+                                {{ t('search.saved.title') }}
+                            </nue-text>
+                            <nue-icon
+                                name="arrow-down"
+                                aria-hidden="true"
+                                class="nue-collapse-item-state-icon search-aside__chevron"
+                            />
+                        </nue-div>
+                    </template>
+                    <div :id="ASIDE_SAVED_CONTENT_ID" class="search-aside__body">
+                        <nue-div
+                            v-if="savedSearches.length > 0"
+                            vertical
+                            class="search-saved__list"
+                        >
+                            <nue-div
+                                v-for="(item, index) in savedSearches"
+                                :key="item.id"
+                                align="center"
+                                class="search-saved__item"
+                                :draggable="!isUseFloatAside"
+                                @dragstart="onDragStart(index, $event)"
+                                @dragover.prevent
+                                @drop="onDrop(index)"
+                            >
+                                <nue-button
+                                    v-if="!isUseFloatAside"
+                                    theme="icon,ghost,small"
+                                    icon="menu"
+                                    class="search-saved__handle"
+                                    :aria-label="t('search.saved.dragHandle')"
+                                />
+                                <nue-button
+                                    theme="small,ghost"
+                                    class="search-saved__reuse"
+                                    @click="handleApplySaved(item)"
+                                >
+                                    {{ item.name }}
+                                </nue-button>
+                                <nue-button
+                                    theme="icon,ghost,small"
+                                    icon="edit"
+                                    :aria-label="t('search.saved.rename')"
+                                    @click="handleRename(item)"
+                                />
+                                <nue-button
+                                    theme="icon,ghost,small"
+                                    icon="clear"
+                                    :aria-label="t('search.saved.remove')"
+                                    @click="removeSavedSearch(item.id)"
+                                />
+                            </nue-div>
+                        </nue-div>
+                        <nue-div v-else vertical class="search-empty-block">
+                            <nue-text size="var(--nue-text-xs)" class="srch-tip">
+                                {{ t('search.saved.empty') }}
+                            </nue-text>
+                            <nue-text size="var(--nue-text-xs)" class="srch-tip">
+                                {{ t('search.saved.emptyHint') }}
+                            </nue-text>
+                        </nue-div>
+                    </div>
+                </nue-collapse-item>
+
+                <!-- 最近搜索（标题恒显示，空态给文案） -->
+                <nue-collapse-item
+                    :name="ASIDE_SECTION_RECENT"
+                    theme="menu"
+                    class="search-aside__section search-history"
+                >
+                    <template #header="{ collapse, state }">
+                        <nue-div
+                            class="search-aside__header"
+                            role="button"
+                            tabindex="0"
+                            :aria-expanded="!state"
+                            :aria-controls="ASIDE_RECENT_CONTENT_ID"
+                            @click="collapse"
+                            @keydown.enter.prevent="collapse"
+                            @keydown.space.prevent="collapse"
+                        >
+                            <nue-text size="var(--nue-text-sm)" class="srch-tip">
+                                {{ t('search.history.title') }}
+                            </nue-text>
+                            <nue-icon
+                                name="arrow-down"
+                                aria-hidden="true"
+                                class="nue-collapse-item-state-icon search-aside__chevron"
+                            />
+                        </nue-div>
+                    </template>
+                    <div :id="ASIDE_RECENT_CONTENT_ID" class="search-aside__body">
+                        <nue-div v-if="history.length > 0" vertical>
+                            <nue-div align="center" class="search-history__actions">
+                                <nue-button
+                                    theme="small,ghost"
+                                    class="search-history__clear"
+                                    @click="clearHistory"
+                                >
+                                    {{ t('search.history.clear') }}
+                                </nue-button>
+                            </nue-div>
+                            <nue-div vertical class="search-history__list">
+                                <nue-div
+                                    v-for="item in history"
+                                    :key="item"
+                                    align="center"
+                                    class="search-history__item"
+                                >
+                                    <nue-button
+                                        theme="small,ghost"
+                                        class="search-history__reuse"
+                                        @click="handleApplyKeyword(item)"
+                                    >
+                                        {{ item }}
+                                    </nue-button>
+                                    <nue-button
+                                        theme="icon,ghost,small"
+                                        icon="clear"
+                                        :aria-label="t('search.history.remove')"
+                                        @click="removeHistory(item)"
+                                    />
+                                </nue-div>
+                            </nue-div>
+                        </nue-div>
+                        <nue-div v-else vertical class="search-empty-block">
+                            <nue-text size="var(--nue-text-xs)" class="srch-tip">
+                                {{ t('search.history.empty') }}
+                            </nue-text>
+                        </nue-div>
+                    </div>
+                </nue-collapse-item>
+            </nue-collapse>
         </nue-div>
     </teleport>
 </template>
@@ -169,14 +279,54 @@ const onDrop = (index: number) => {
     color: var(--nue-secondary-text-color);
 }
 
-/* —— 常用搜索（SEA-05） —— */
-.search-saved {
+/* —— 折叠区（快捷搜索不折叠） —— */
+.search-aside__collapse {
     width: 100%;
 }
-.search-saved__head {
+.search-aside__section {
+    width: 100%;
+}
+.search-aside__header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+}
+.search-aside__chevron {
+    flex: none;
+}
+/* R3：不传 maxHeight ⇒ 内容高度由 scrollHeight 过渡，transitionend 后回到 auto，
+   展开态下的增删不会因固定高度被裁切（jsdom 无过渡，仅断言 DOM 存在性） */
+.search-aside__body {
+    width: 100%;
+}
+
+/* —— 快捷搜索（只读预置） —— */
+.search-quick {
+    width: 100%;
+}
+.search-quick__head {
     width: 100%;
     justify-content: space-between;
 }
+.search-quick__list {
+    width: 100%;
+    gap: var(--nue-gap-2xs);
+}
+.search-quick__item {
+    width: 100%;
+    justify-content: flex-start;
+    text-align: left;
+}
+
+/* —— 空态文案（两区共用） —— */
+.search-empty-block {
+    width: 100%;
+    gap: var(--nue-gap-2xs);
+}
+
+/* —— 常用搜索（SEA-05） —— */
 .search-saved__list {
     width: 100%;
     gap: var(--nue-gap-2xs);
@@ -201,12 +351,9 @@ const onDrop = (index: number) => {
 }
 
 /* —— 最近搜索（SEA-04 / S6） —— */
-.search-history {
+.search-history__actions {
     width: 100%;
-}
-.search-history__head {
-    width: 100%;
-    justify-content: space-between;
+    justify-content: flex-end;
 }
 .search-history__list {
     width: 100%;
