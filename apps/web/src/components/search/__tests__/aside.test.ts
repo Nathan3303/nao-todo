@@ -279,6 +279,52 @@ describe('SearchAside - 折叠与无障碍（T27′）', () => {
     })
 })
 
+describe('SearchAside - 折叠头 UI（T29）', () => {
+    it('箭头为 nue-icon（search-aside__chevron），不再依赖库类', () => {
+        mountAside({ saved: [makeSaved('s1', '甲')], history: ['kw'] })
+
+        const chevrons = [...slot().querySelectorAll('.search-aside__chevron')]
+        expect(chevrons).toHaveLength(2)
+        for (const chevron of chevrons) {
+            expect(chevron.classList.contains('nue-icon')).toBe(true)
+            expect(chevron.classList.contains('nue-collapse-item-state-icon')).toBe(false)
+            expect(chevron.getAttribute('aria-hidden')).toBe('true')
+        }
+    })
+
+    it('最近搜索头部含清除按钮，且位于箭头左侧', () => {
+        mountAside({ history: ['kw'] })
+
+        const recentHeader = slot().querySelectorAll('.search-aside__header')[1]!
+        const clear = recentHeader.querySelector('.search-history__clear')!
+        const chevron = recentHeader.querySelector('.search-aside__chevron')!
+
+        expect(clear).not.toBeNull()
+        expect(chevron).not.toBeNull()
+        // 文档顺序：clear 在 chevron 之前
+        expect(
+            clear.compareDocumentPosition(chevron) & Node.DOCUMENT_POSITION_FOLLOWING
+        ).toBeTruthy()
+    })
+
+    it('常用搜索头部无清除按钮', () => {
+        mountAside({ saved: [makeSaved('s1', '甲')] })
+        const savedHeader = slot().querySelectorAll('.search-aside__header')[0]!
+        expect(savedHeader.querySelector('.search-history__clear')).toBeNull()
+    })
+
+    it('点头部清除不触发区折叠（stopPropagation）', async () => {
+        const api = mountAside({ history: ['kw'] })
+        const recentHeader = () => slot().querySelectorAll('.search-aside__header')[1]!
+        expect(recentHeader().getAttribute('aria-expanded')).toBe('true')
+
+        await click(recentHeader().querySelector('.search-history__clear'))
+
+        expect(api.clearHistory).toHaveBeenCalledTimes(1)
+        expect(recentHeader().getAttribute('aria-expanded')).toBe('true')
+    })
+})
+
 describe('SearchAside - 响应式与传送', () => {
     it('移动端（浮动侧栏）隐藏拖拽手柄', () => {
         mountAside({ saved: [makeSaved('s1', '甲')], isUseFloatAside: true })
