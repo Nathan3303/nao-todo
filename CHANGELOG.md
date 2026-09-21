@@ -2,6 +2,34 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.7.9] - 2026-09-21
+
+发布批次：放弃/提醒同步缺陷链修复（客户端 patch）。**Tag `v1.7.9`** · root `1.7.9` / `@nao-todo/desktopapp` `1.7.9` / `@nao-todo/webapp` `1.7.9` / `@nao-todo/presentation` `0.4.6`（`@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（同步 + 提醒）。
+
+### 修复（同步与提醒）
+
+- **批量「取消放弃」无法同步到后端（T33，`3a0a5a99` / `d2608306`）**：载荷 `givenUpAt` 由 `null` 改为空串（服务端同步契约 `nil`/JSON `null` = 缺省不写列、`""` = 清空置 NULL）——原 `null` 被服务端按「缺省」处理，`given_up_at` 不会清空；现与任务详情页 footer 路径行为对齐。
+- **关闭提醒后服务端提醒时间残留（T34，`79779c13` / `7166721e`）**：提醒设置器关闭分支载荷 `remindAt`/`remindTime` 由 `null` 改为空串（同源语义误用）；Web 端 `PUT /tasks/{id}` 原先无法清空 `remind_at`，而 `remind_repeat='none'` 照写 ⇒ 状态自相矛盾，可能导致已关闭的提醒仍触发。
+- **提醒变更判定基准归一**：当前值 `null`/`undefined`/`''` 统一按「已清空」比较，消除「关-开-关」产生冗余更新事件。
+- **类型收紧**：`TaskRemindSetterUpdateVO.remindAt`/`remindTime` 由 `string | null` 收紧为 `string`；任务日期选择器 `hasReminder` 改真值判定，与「空串视为无提醒」口径一致。
+
+### 配套（服务端 nao-todo-server，已单独部署）
+
+- sync push 契约补齐 `archivedAt`/`starMarkAt`/`givenUpAt`（原先静默丢弃 + 假成功，致桌面端放弃/收藏无法落库）。
+- 提醒扫描排除已完成/已归档/已放弃任务；重复提醒在未设 `end_at` 时正确续期。
+
+### 其他（Chore）
+
+- 测试：新增 7 例（T33 批量取消放弃 4 例 + T34 关闭提醒 3 例，含双红测证明），全量 88 文件 / 772 例。
+
+### 质量门槛
+
+- `vp check`：全绿（fmt / lint / type）。
+- `vp test`：88 文件 / 772 例全绿。
+- `pnpm webapp build` ✓ / `pnpm desktopapp build` ✓。
+
+[v1.7.9]: https://github.com/Nathan3303/nao-todo/releases/tag/v1.7.9
+
 ## [v1.7.8] - 2026-09-21
 
 发布批次：常用搜索（Saved Searches）+ 搜索页侧栏化（AppAsideV2 Adapter / 折叠 / 空态 / 快捷搜索）+ 收集箱搜索缺陷修复（patch）。**Tag `v1.7.8`** · root `1.7.8` / `@nao-todo/desktopapp` `1.7.8` / `@nao-todo/webapp` `1.7.8`（`@nao-todo/presentation` `0.4.5` / `@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（搜索 UI）。
