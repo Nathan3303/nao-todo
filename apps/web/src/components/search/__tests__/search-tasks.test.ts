@@ -10,7 +10,8 @@ import {
     RATE_MAX_ATTEMPTS,
     RATE_PAUSE_THRESHOLD
 } from '../search-tasks'
-import { matchTaskFilters, type SearchFilterSet } from '../search-tasks'
+import { matchTaskFilters, normalizeProjectId, type SearchFilterSet } from '../search-tasks'
+import { parseSearchQuery, serializeSearchQuery } from '../search-query'
 
 /** 构造最小任务 VO（默认顶层/未删除/未归档/未放弃；name 必填） */
 const makeTask = (
@@ -296,6 +297,113 @@ describe('性能实测（5000 条本地过滤基准，供 SEA-01 汇报）', () 
         expect(hits.length).toBeGreaterThan(0)
     })
 })
+describe('收集箱搜索失效回归（T28：Fix A + Fix B）', () => {
+    const make = (o: Partial<TaskViewObject> & { id: string; name: string }) => makeTask(o)
+    const inboxFilter: SearchFilterSet = {
+        projectIds: [''],
+        tagIds: [],
+        priorities: [],
+        states: []
+    }
+
+    it('T28-1 真实数据 projectId="inbox" 命中收件箱哨兵 [""]（关键新增）', () => {
+        expect(
+            matchTaskFilters(make({ id: 'a', name: 'x', projectId: 'inbox' }), inboxFilter)
+        ).toBe(true)
+    })
+
+    it('T28-2 收件箱数据 "" / null / "inbox" 均命中，p1 不命中', () => {
+        expect(matchTaskFilters(make({ id: 'a', name: 'x', projectId: '' }), inboxFilter)).toBe(
+            true
+        )
+        expect(
+            matchTaskFilters(
+                make({ id: 'b', name: 'y', projectId: null as unknown as string }),
+                inboxFilter
+            )
+        ).toBe(true)
+        expect(
+            matchTaskFilters(make({ id: 'c', name: 'z', projectId: 'inbox' }), inboxFilter)
+        ).toBe(true)
+        expect(matchTaskFilters(make({ id: 'd', name: 'w', projectId: 'p1' }), inboxFilter)).toBe(
+            false
+        )
+    })
+
+    it('T28-3 混选 ["", "p1"] 同时命中收件箱与清单任务', () => {
+        const mixed: SearchFilterSet = {
+            projectIds: ['', 'p1'],
+            tagIds: [],
+            priorities: [],
+            states: []
+        }
+        expect(matchTaskFilters(make({ id: 'a', name: 'x', projectId: 'inbox' }), mixed)).toBe(true)
+        expect(matchTaskFilters(make({ id: 'b', name: 'y', projectId: '' }), mixed)).toBe(true)
+        expect(matchTaskFilters(make({ id: 'c', name: 'z', projectId: 'p1' }), mixed)).toBe(true)
+        expect(matchTaskFilters(make({ id: 'd', name: 'w', projectId: 'p2' }), mixed)).toBe(false)
+    })
+
+    it('T28-4 收集箱 + 关键词：结果正确', () => {
+        const tasks = [
+            make({ id: 'a', name: '买菜', projectId: 'inbox' }),
+            make({ id: 'b', name: '买菜', projectId: 'p1' }),
+            make({ id: 'c', name: '写周报', projectId: 'inbox' })
+        ]
+        const base = tasks.filter((task) => matchTaskFilters(task, inboxFilter))
+        const rows = searchTasks(base, '买菜')
+        expect(rows.map((row) => row.task.id)).toEqual(['a'])
+    })
+
+    it('T28-5 收集箱 + 其它维度（维间 AND）正确', () => {
+        const f: SearchFilterSet = {
+            projectIds: [''],
+            tagIds: [],
+            priorities: ['high'],
+            states: ['todo']
+        }
+        expect(
+            matchTaskFilters(
+                make({ id: 'a', name: 'x', projectId: 'inbox', priority: 'high', state: 'todo' }),
+                f
+            )
+        ).toBe(true)
+        expect(
+            matchTaskFilters(
+                make({ id: 'b', name: 'y', projectId: 'inbox', priority: 'low', state: 'todo' }),
+                f
+            )
+        ).toBe(false)
+        expect(
+            matchTaskFilters(
+                make({ id: 'c', name: 'z', projectId: 'p1', priority: 'high', state: 'todo' }),
+                f
+            )
+        ).toBe(false)
+    })
+
+    it('T28-6 ?project=inbox 深链还原后能匹配 inbox 数据，serialize 往返不变', () => {
+        const state = parseSearchQuery({ project: 'inbox' })
+        expect(state.projectIds).toEqual([''])
+        expect(
+            matchTaskFilters(make({ id: 'a', name: 'x', projectId: 'inbox' }), {
+                projectIds: state.projectIds,
+                tagIds: [],
+                priorities: [],
+                states: []
+            })
+        ).toBe(true)
+        expect(serializeSearchQuery(state)).toEqual({ project: 'inbox' })
+    })
+
+    it('T28-7 normalizeProjectId：inbox→""、""→""、null→null、p1→p1', () => {
+        expect(normalizeProjectId('inbox')).toBe('')
+        expect(normalizeProjectId('')).toBe('')
+        expect(normalizeProjectId(null)).toBeNull()
+        expect(normalizeProjectId(undefined)).toBeNull()
+        expect(normalizeProjectId('p1')).toBe('p1')
+    })
+})
+
 describe('matchTaskFilters - SEA-03 结构化筛选（纯函数）', () => {
     const make = (o: Partial<TaskViewObject> & { id: string; name: string }) => makeTask(o)
     it('SEA-3-4a 空数组=不限（默认含已完成/收件箱）', () => {

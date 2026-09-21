@@ -13,7 +13,7 @@ import { nueUI } from '@/nue-ui-register'
  *              悬停三点 = reschedule-menu（NueDropdown）触发器；busy 防连点（三点禁用）。
  */
 
-const makeTask = (): TaskViewObject =>
+const makeTask = (overrides: Partial<TaskViewObject> = {}): TaskViewObject =>
     ({
         id: 't1',
         name: '任务 A',
@@ -21,7 +21,8 @@ const makeTask = (): TaskViewObject =>
         priority: 'low',
         startAt: '2026-10-05T09:00:00',
         endAt: '2026-10-05T18:00:00',
-        createdAt: '2026-10-01T00:00:00'
+        createdAt: '2026-10-01T00:00:00',
+        ...overrides
     }) as unknown as TaskViewObject
 
 const isOpen = (): boolean =>
@@ -43,13 +44,18 @@ afterEach(() => {
     document.body.innerHTML = ''
 })
 
-const mountBar = (busy = false): VueWrapper => {
+const mountBar = (
+    busy = false,
+    showTime = false,
+    task: TaskViewObject = makeTask()
+): VueWrapper => {
     wrapper = mount(TaskBar, {
         attachTo: document.body,
         props: {
-            task: makeTask(),
+            task,
             pos: { left: '0%', width: '14.28%', top: '0px' },
-            busy
+            busy,
+            showTime
         },
         global: { plugins: [nueUI] }
     })
@@ -136,5 +142,65 @@ describe('CalendarTaskBar - F4 快速改期入口（TASK-10：右键移除 + 三
         await nextTick()
         expect(isOpen()).toBe(false)
         expect(w.emitted('reschedule')).toBeUndefined()
+    })
+})
+
+describe('CalendarTaskBar - TASK-18 末尾触发器改截止时间', () => {
+    const timeTrigger = (w: VueWrapper): HTMLElement =>
+        w.find('.cal-item-more--time').element as HTMLElement
+    const iconTrigger = (w: VueWrapper): HTMLElement =>
+        w.find('.cal-item-more:not(.cal-item-more--time)').element as HTMLElement
+
+    it('有截止时刻（showTime + endAt 合法）→ 触发器显示 HH:mm（非 startAt），位于名称之后', () => {
+        const w = mountBar(false, true)
+        const item = w.find('.cal-item')
+        expect(item.find('.cal-item-more--time').exists()).toBe(true)
+        expect(timeTrigger(w).textContent?.trim()).toBe('18:00')
+        expect(timeTrigger(w).textContent?.trim()).not.toBe('09:00')
+        // 文档顺序：名称 → 时间触发器
+        const ordered = [
+            ...item.element.querySelectorAll('.cal-item-text, .cal-item-more--time')
+        ].map((el) => el.className)
+        expect(ordered).toEqual(['cal-item-text', 'cal-item-more cal-item-more--time'])
+        // 时间形式不再渲染三点图标
+        expect(item.find('.cal-item-more:not(.cal-item-more--time)').exists()).toBe(false)
+    })
+
+    it('点击时间触发器 → 打开改期下拉（功能不变），不开详情', async () => {
+        const w = mountBar(false, true)
+        timeTrigger(w).click()
+        await nextTick()
+        await nextTick()
+        expect(isOpen()).toBe(true)
+        expect(menuLabels()).toEqual(['今天', '明天', '下周同日', '选择日期…'])
+        expect(w.emitted('open')).toBeUndefined()
+    })
+
+    it('showTime=false / 无合法 endAt → 回退 more-vertical 图标触发器', () => {
+        const noShow = mountBar(false, false)
+        expect(noShow.find('.cal-item-more--time').exists()).toBe(false)
+        expect(iconTrigger(noShow)).toBeTruthy()
+        wrapper?.unmount()
+
+        const noEnd = mountBar(false, true, makeTask({ endAt: '' }))
+        expect(noEnd.find('.cal-item-more--time').exists()).toBe(false)
+        expect(iconTrigger(noEnd)).toBeTruthy()
+        wrapper?.unmount()
+
+        const badEnd = mountBar(false, true, makeTask({ endAt: 'not-a-date' }))
+        expect(badEnd.find('.cal-item-more--time').exists()).toBe(false)
+        expect(iconTrigger(badEnd)).toBeTruthy()
+    })
+
+    it('busy：时间触发器禁用（防连点）', () => {
+        const w = mountBar(true, true)
+        expect((timeTrigger(w) as HTMLButtonElement).disabled).toBe(true)
+    })
+
+    it('从时间触发器按下 → 不上抛 drag-pointer-down（拖拽跳过触发器）', async () => {
+        const w = mountBar(false, true)
+        timeTrigger(w).dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0 }))
+        await nextTick()
+        expect(w.emitted('drag-pointer-down')).toBeUndefined()
     })
 })

@@ -2,6 +2,89 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.7.8] - 2026-09-21
+
+发布批次：常用搜索（Saved Searches）+ 搜索页侧栏化（AppAsideV2 Adapter / 折叠 / 空态 / 快捷搜索）+ 收集箱搜索缺陷修复（patch）。**Tag `v1.7.8`** · root `1.7.8` / `@nao-todo/desktopapp` `1.7.8` / `@nao-todo/webapp` `1.7.8`（`@nao-todo/presentation` `0.4.5` / `@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（搜索 UI）。
+
+### 新增（搜索）
+
+- **常用搜索（T24，`482970c8` / `22df1b4b` / `0052a37c`）**：将当前完整搜索条件（关键词 / 清单 / 标签 / 优先级 / 状态 / 纳入已删除放弃）存为具名条目（localStorage `naotodo.search.saved`，上限 20，允许重名），侧栏一键复现；支持重命名、删除、桌面端拖拽排序；默认名按条件自动派生（可改）。
+- **搜索页侧栏（T26，`0a5959b2` / `76c98a6e` / `ab7913d3`）**：常用搜索与最近搜索迁至侧边栏常驻（AppAsideV2 Adapter，teleport 两段式）；状态单一真源（provide/inject，主区与侧栏同一实例）。
+- **侧栏折叠 + 空态 + 快捷搜索（T27′，`3d421a7f` / `ca65d8c7` / `4a17ee80`）**：侧栏分区可折叠（`nue-collapse` theme=menu；常用/最近可折叠，默认展开、非 accordion、不持久化；快捷搜索固定常显）；两区空态提示（标题恒显 + 文案 / 创建引导）；置顶只读「快捷搜索」预置四项（高优先级 / 待办 / 进行中 / 已完成），点击即应用条件并搜索。
+
+### 修复
+
+- **收集箱搜索失效（T28，`c2b22384` / `dc8bafa2`）**：搜索页清单选「收集箱」搜不到结果（收集箱哨兵不一致：任务数据为 `'inbox'`、搜索内部为 `''`）——搜索入口归一（Fix B）+ 过滤两端归一（Fix A）；URL 契约（`?project=inbox`）与内建清单查询不变。
+
+### 优化（搜索）
+
+- **折叠头 UI（T29，`b33b9d66` / `f73925fa`）**：指示箭头改用 `nue-icon` 自绘并调小（0.75rem，弃用库类）；「最近搜索」清除按钮移至头部、箭头左侧（`@click.stop` 防误触折叠）。
+
+### 其他（Chore）
+
+- i18n 中英新增搜索相关键（`search.saved.*` / `search.history.empty` / `search.quick.*`）。
+- 测试：新增 `saved-search` / `use-saved-search` / `aside` / `quick-search` 及收集箱回归，全量 87 文件 / 765 例。
+
+### 质量门槛
+
+- `vp check`：目标文件 pass（fmt / lint / type）。
+- `vp test`：87 文件 / 765 例全绿。
+- `pnpm webapp build` ✓ / `pnpm desktopapp build` ✓。
+
+[v1.7.8]: https://github.com/Nathan3303/nao-todo/releases/tag/v1.7.8
+
+## [v1.7.7] - 2026-09-20
+
+发布批次：任务详情导出 Markdown + footer 样式内聚（patch）。**Tag `v1.7.7`** · root `1.7.7` / `@nao-todo/desktopapp` `1.7.7` / `@nao-todo/webapp` `1.7.7` / `@nao-todo/presentation` `0.4.5`（`@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（任务详情 UI）。
+
+### 新增（任务详情）
+
+- **导出任务文本（T21 / T22，`7281a695` / `d99652a6` / `fd7a49f3` / `431aa14b`）**：详情面板底部「更多」菜单新增「导出」——将任务全部数据（名称/状态/优先级/时间/项目/标签/描述/检查项/子任务）渲染为 Markdown 文本，经 nue-dialog 预览并一键复制到剪贴板；子任务递归导出（逐层分页取尽，深度上限 5 层防环）；无描述/检查项/子任务的段落整段省略；取数/复制失败均有明确提示。生成器为纯函数（`export-markdown.ts`），取数/复制为 composable（`use-export-task.ts`）。
+
+### 优化（样式）
+
+- **任务详情 footer 底部分隔线样式内聚（用户调整，`21d61212`）**：移除 `details.vue` 外层 `> .nue-footer` 的重复定义（padding / height / border-top），`border-top` 内聚至 footer 组件自身。
+
+### 其他（Chore）
+
+- i18n 中英新增 17 键（导出相关：标题 / 按钮 / 复制 / 元信息标签 / 段落标题），zh-CN / en-US / types 三处同步。
+- 测试新增 `export-markdown.test.ts`（7 例）与 `use-export-task.test.ts`（6 例，含递归 / 分页 / 深度上限 / 复制），全量 83 文件 / 716 例。
+
+### 质量门槛
+
+- `vp check`：目标文件 pass（fmt / lint / type）。
+- `vp test`：83 文件 / 716 例全绿。
+- `pnpm webapp build` ✓ / `pnpm desktopapp build` ✓。
+
+[v1.7.7]: https://github.com/Nathan3303/nao-todo/releases/tag/v1.7.7
+
+## [v1.7.6] - 2026-09-20
+
+发布批次：日历界面 UI 优化（TASK-11 ①③ + 触发器改截止时间修订 + ② 还原）+ 用户样式微调（patch）。**Tag `v1.7.6`** · root `1.7.6` / `@nao-todo/desktopapp` `1.7.6` / `@nao-todo/webapp` `1.7.6`（`@nao-todo/presentation` `0.4.4` / `@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（日历 UI）。
+
+### 优化（日历）
+
+- **格子头部两端对齐（TASK-11 ①）**：`.cal-cell-top` / `.wk-cell-top` 撑满格宽 `justify-content: space-between`，日期号靠左、专注角标靠右（无角标时数字仍靠左，列对齐一致）。
+- **任务条末尾触发器改显示截止时间（TASK-11 ③ 修订）**：有截止时刻（`showTime` 且 `endAt` 合法）时触发器显示 `HH:mm`（常显），点击仍弹改期下拉；否则回退 `more-vertical` 三点图标（悬停出现，单击仍可改期）；触发器 hover 沿用底色提示；时间/图标共用 `.cal-item-more`，拖拽跳过统一。
+- **段末截止时刻（TASK-11 ③）**：任务条时刻内容由 `startAt` 改为 `endAt` 并移至名称末尾；月/周视图可见性判定由「真起始段」改为「真末段」，抽为共享纯函数模块 `segment-time.ts`（可单测）。
+- **任务条名称文字抬升（用户调整，`7b5c87f4`）**：`.cal-lanes` 内嵌套 `.cal-item-text { z-index: 3 }`，名称文字高于网格分隔线；仅名称，条背景/色条/触发器仍在网格线下方。
+
+### 还原
+
+- **任务条整条抬升撤销（TASK-11 ②，`c36167e0`）**：任务条整条抬升至网格线之上的尝试经用户实测效果不佳，已撤销；网格分隔线回到任务条上方（TASK-07 状态）。
+
+### 其他（Chore）
+
+- 测试同步：新增 `segment-time.test.ts`（7 例）+ `task-bar.test.ts` 触发器/段末时刻断言（全量 81 文件 / 703 例）。
+
+### 质量门槛
+
+- `vp check`：目标文件 pass（fmt / lint / type）。
+- `vp test`：81 文件 / 703 例全绿。
+- `pnpm webapp build` ✓ / `pnpm desktopapp build` ✓。
+
+[v1.7.6]: https://github.com/Nathan3303/nao-todo/releases/tag/v1.7.6
+
 ## [v1.7.5] - 2026-09-15
 
 发布批次：日历模块结构 / 视图 UI / 排序下拉 / 标题年月跳转与改期菜单（NueDropdown 化）+ 任务详情子任务节点 UI + 用户样式微调（patch）。**Tag `v1.7.5`** · root `1.7.5` / `@nao-todo/desktopapp` `1.7.5` / `@nao-todo/webapp` `1.7.5`（`@nao-todo/presentation` `0.4.4` / `@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（日历 + 任务详情 UI）。

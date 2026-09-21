@@ -6,10 +6,12 @@ import {
     t
 } from '@nao-todo/shared'
 import { TaskProjectSelector } from '../../project-selector'
-import { inject } from 'vue'
+import { inject, ref } from 'vue'
 import dayjs from 'dayjs'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context'
+import TaskExportDialog from '../export-dialog.vue'
+import useExportTask from '../use-export-task'
 
 const {
     vo,
@@ -24,6 +26,12 @@ const {
     giveUpTask,
     ungiveUpTask
 } = inject(TASK_DETAILS_CONTEXT_KEY)!
+
+// @hook 导出任务文本（Markdown）
+const { markdown, exportTask, copyMarkdown } = useExportTask()
+const exportVisible = ref(false)
+
+const handleCopy = () => void copyMarkdown(markdown.value)
 
 const openParentTaskSelector = () => {
     if (!vo.value) return
@@ -53,6 +61,11 @@ const handleDropdownExecute = async (executeId: string) => {
                 switchTaskDetails(taskViewObject.id)
             })
             break
+        case 'export-task': {
+            const text = await exportTask()
+            if (text !== null) exportVisible.value = true
+            break
+        }
         case 'move-to-subtask':
             openParentTaskSelector()
             break
@@ -112,6 +125,11 @@ const handleDropdownExecute = async (executeId: string) => {
                     execute-id="copy-todo"
                 />
                 <inner-dropdown-option
+                    :title="t('task.details.export.button')"
+                    icon="share"
+                    execute-id="export-task"
+                />
+                <inner-dropdown-option
                     :title="t('task.details.moveToSubTask')"
                     icon="connection"
                     execute-id="move-to-subtask"
@@ -135,6 +153,7 @@ const handleDropdownExecute = async (executeId: string) => {
             </dropdown-div-block>
         </nue-dropdown>
     </nue-footer>
+    <task-export-dialog v-model="exportVisible" :markdown="markdown" @copy="handleCopy" />
 </template>
 
 <style scoped>
@@ -144,5 +163,6 @@ const handleDropdownExecute = async (executeId: string) => {
     width: 100%;
     align-items: center;
     justify-content: space-between;
+    border-top: 1px solid var(--nue-border-color);
 }
 </style>

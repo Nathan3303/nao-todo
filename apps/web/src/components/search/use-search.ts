@@ -145,6 +145,8 @@ const useSearchEngine = () => {
         [...flatTaskIds.value]
             .map((id) => tasksStore.getTask(id))
             .filter((task): task is TaskViewObject => !!task)
+            // Fix B：收集箱真实数据 `'inbox'` 归一为内部哨兵 `''`（不改 URL / 内建清单查询）
+            .map((task) => (task.projectId === 'inbox' ? { ...task, projectId: '' } : task))
     )
     // @results 四维筛选（即时重算）→ 关键词 200ms 去抖 → 纯函数排序/高亮（未就绪输入就绪后自动重放）
     const rows = computed(() => {
@@ -340,17 +342,18 @@ const useSearchEngine = () => {
         }
     }
 
-    // @url 状态 → URL（replace 不污染后退栈 D2；空值省略；等价则短路避免回环）
-    const currentQueryState = (): SearchQueryState => ({
+    // @computed 当前查询状态（URL 同步 / 保存常用搜索的统一投影）
+    const queryState = computed<SearchQueryState>(() => ({
         keyword: keyword.value,
         projectIds: filterProjectIds.value,
         tagIds: filterTagIds.value,
         priorities: filterPriorities.value,
         states: filterStates.value,
         includeExcluded: includeExcluded.value
-    })
+    }))
+    // @url 状态 → URL（replace 不污染后退栈 D2；空值省略；等价则短路避免回环）
     const writeQueryToUrl = () => {
-        const local = currentQueryState()
+        const local = queryState.value
         if (!needsSearchQueryReExport(local, route.query as RawSearchQuery)) return
         void router.replace({ query: serializeSearchQuery(local) })
     }
@@ -370,6 +373,21 @@ const useSearchEngine = () => {
             writeQueryToUrl()
         }
     )
+
+    /**
+     * 应用完整查询状态（常用搜索复现）
+     * @description 统一写入各 ref（关键词走 writeKeyword 以复用去抖与子任务补拉），
+     *              由既有 watch 负责 URL 同步与结果重算；避免 UI 层逐字段 set。
+     * @param state 目标查询状态
+     */
+    const applyQuery = (state: SearchQueryState) => {
+        writeKeyword(state.keyword)
+        filterProjectIds.value = [...state.projectIds]
+        filterTagIds.value = [...state.tagIds]
+        filterPriorities.value = [...state.priorities]
+        filterStates.value = [...state.states]
+        includeExcluded.value = state.includeExcluded
+    }
 
     /**
      * 顶层快照重拉（激活/刷新/重试统一出口；运行中合并防连点）
@@ -479,6 +497,8 @@ const useSearchEngine = () => {
         togglePriorityFilter,
         toggleStateFilter,
         clearFilters,
+        queryState,
+        applyQuery,
         ready,
         firstLoading,
         refreshing,

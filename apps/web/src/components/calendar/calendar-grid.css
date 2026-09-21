@@ -199,11 +199,13 @@
 }
 
 /* 日期号 + B1-F5 专注角标（同一行，角标不抢日格点击） */
+/* TASK-11：撑满格宽两端对齐——日期号靠左、专注角标靠右；无角标时数字仍靠左（列对齐一致） */
 .cal-cell-top,
 .wk-cell-top {
-    display: inline-flex;
+    display: flex;
+    align-self: stretch;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     gap: 2px;
     min-height: 20px;
 }
@@ -278,6 +280,10 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
+
+    .cal-item-text {
+        z-index: 3;
+    }
 }
 /* 网格分隔线覆盖层（TASK-07：线在任务条上方 + 降亮度）：
    z-index 仅 1（低于全部浮层/弹层 1000+），pointer-events:none 不拦截

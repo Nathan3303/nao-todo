@@ -110,6 +110,26 @@ export interface LocaleMessages {
     'search.filter.noTags': string
     'search.filter.selectedCount': string
     'search.filter.clear': string
+    'search.saved.title': string
+    'search.saved.saveButton': string
+    'search.saved.saveTitle': string
+    'search.saved.renameTitle': string
+    'search.saved.namePlaceholder': string
+    'search.saved.nameRequired': string
+    'search.saved.defaultName': string
+    'search.saved.saved': string
+    'search.saved.limitReached': string
+    'search.saved.rename': string
+    'search.saved.remove': string
+    'search.saved.dragHandle': string
+    'search.saved.empty': string
+    'search.saved.emptyHint': string
+    'search.history.empty': string
+    'search.quick.title': string
+    'search.quick.highPriority': string
+    'search.quick.todo': string
+    'search.quick.inProgress': string
+    'search.quick.done': string
 
     // Settings
     'settings.profile': string
@@ -317,6 +337,23 @@ export interface LocaleMessages {
     'task.details.deleteTask': string
     'task.details.backToList': string
     'task.details.view': string
+    'task.details.export.button': string
+    'task.details.export.title': string
+    'task.details.export.copy': string
+    'task.details.export.copySuccess': string
+    'task.details.export.copyFailed': string
+    'task.details.export.failed': string
+    'task.details.export.label.state': string
+    'task.details.export.label.priority': string
+    'task.details.export.label.startAt': string
+    'task.details.export.label.endAt': string
+    'task.details.export.label.project': string
+    'task.details.export.label.tags': string
+    'task.details.export.label.createdAt': string
+    'task.details.export.label.updatedAt': string
+    'task.details.export.heading.description': string
+    'task.details.export.heading.checkItems': string
+    'task.details.export.heading.subTasks': string
     'task.details.subTasks': string
     'task.details.subTasksLoading': string
     'task.details.subTaskCreate': string

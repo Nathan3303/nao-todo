@@ -66,11 +66,5 @@ watch(
         border: none;
         height: auto;
     }
-
-    > .nue-footer {
-        padding: 1rem;
-        height: auto;
-        border-top: 1px solid var(--nue-border-color);
-    }
 }
 </style>
