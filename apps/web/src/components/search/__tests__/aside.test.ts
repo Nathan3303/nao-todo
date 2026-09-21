@@ -13,7 +13,7 @@ import SearchAside from '../aside/aside.vue'
 /**
  * SEA-05 / T26：搜索侧栏组件断言
  * @description 侧栏从注入上下文读取状态（单一真源），渲染常用搜索/最近搜索并回抛动作；
- *              移动端隐藏拖拽手柄；teleport 随 isDisplayAside 卸载无残留。
+ *              移动端不启用拖拽；teleport 随 isDisplayAside 卸载无残留。
  */
 
 const makeSaved = (id: string, name: string): SavedSearch => ({
@@ -280,30 +280,41 @@ describe('SearchAside - 折叠与无障碍（T27′）', () => {
 })
 
 describe('SearchAside - 折叠头 UI（T29）', () => {
-    it('箭头为 nue-icon（search-aside__chevron），不再依赖库类', () => {
+    it('折叠头为 nue-button，图标随展开态切换（arrow-down/arrow-right）', async () => {
         mountAside({ saved: [makeSaved('s1', '甲')], history: ['kw'] })
 
-        const chevrons = [...slot().querySelectorAll('.search-aside__chevron')]
-        expect(chevrons).toHaveLength(2)
-        for (const chevron of chevrons) {
-            expect(chevron.classList.contains('nue-icon')).toBe(true)
-            expect(chevron.classList.contains('nue-collapse-item-state-icon')).toBe(false)
-            expect(chevron.getAttribute('aria-hidden')).toBe('true')
+        const headers = [...slot().querySelectorAll('.search-aside__header')]
+        expect(headers).toHaveLength(2)
+        for (const header of headers) {
+            const icon = header.querySelector('.nue-button .nue-icon')!
+            expect(icon).not.toBeNull()
+            expect(icon.classList.contains('icon-arrow-down')).toBe(true)
         }
+
+        await click(headers[0])
+
+        expect(
+            headers[0]!
+                .querySelector('.nue-button .nue-icon')!
+                .classList.contains('icon-arrow-right')
+        ).toBe(true)
     })
 
-    it('最近搜索头部含清除按钮，且位于箭头左侧', () => {
+    it('最近搜索头部含清除按钮，位于折叠按钮之后的 header-actions 内', () => {
         mountAside({ history: ['kw'] })
 
         const recentHeader = slot().querySelectorAll('.search-aside__header')[1]!
         const clear = recentHeader.querySelector('.search-history__clear')!
-        const chevron = recentHeader.querySelector('.search-aside__chevron')!
+        const toggle = recentHeader.querySelector('.nue-button')!
 
         expect(clear).not.toBeNull()
-        expect(chevron).not.toBeNull()
-        // 文档顺序：clear 在 chevron 之前
+        expect(toggle).not.toBeNull()
+        expect(recentHeader.querySelector('.search-aside__header-actions')!.contains(clear)).toBe(
+            true
+        )
+        // 文档顺序：clear 在折叠按钮之后
         expect(
-            clear.compareDocumentPosition(chevron) & Node.DOCUMENT_POSITION_FOLLOWING
+            toggle.compareDocumentPosition(clear) & Node.DOCUMENT_POSITION_FOLLOWING
         ).toBeTruthy()
     })
 
@@ -326,15 +337,15 @@ describe('SearchAside - 折叠头 UI（T29）', () => {
 })
 
 describe('SearchAside - 响应式与传送', () => {
-    it('移动端（浮动侧栏）隐藏拖拽手柄', () => {
+    it('移动端（浮动侧栏）不启用拖拽', () => {
         mountAside({ saved: [makeSaved('s1', '甲')], isUseFloatAside: true })
-        expect(slot().querySelector('.search-saved__handle')).toBeNull()
+        expect(slot().querySelector('.search-saved__item')!.getAttribute('draggable')).toBe('false')
         expect(slot().querySelector('.search-saved__reuse')).not.toBeNull()
     })
 
-    it('桌面端渲染拖拽手柄', () => {
+    it('桌面端启用拖拽', () => {
         mountAside({ saved: [makeSaved('s1', '甲')] })
-        expect(slot().querySelector('.search-saved__handle')).not.toBeNull()
+        expect(slot().querySelector('.search-saved__item')!.getAttribute('draggable')).toBe('true')
     })
 
     it('isDisplayAside 关闭 ⇒ teleport 卸载无残留', async () => {

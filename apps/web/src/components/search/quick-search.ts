@@ -34,13 +34,13 @@ export const QUICK_SEARCH_PRESETS: QuickSearchPreset[] = [
     {
         id: 'high-priority',
         nameKey: 'search.quick.highPriority',
-        icon: 'priority-1',
+        icon: 'priority-3',
         query: presetQuery({ priorities: ['high'] })
     },
     {
         id: 'todo',
         nameKey: 'search.quick.todo',
-        icon: 'todo',
+        icon: 'circle',
         query: presetQuery({ states: ['todo'] })
     },
     {

@@ -96,15 +96,15 @@ const onDrop = (index: number) => {
             <!-- 快捷搜索（只读预置；固定常显，不折叠） -->
             <nue-div vertical class="search-quick">
                 <nue-div align="center" class="search-quick__head">
-                    <nue-text size="var(--nue-text-sm)" class="srch-tip">
+                    <nue-text size="var(--nue-text-xs)">
                         {{ t('search.quick.title') }}
                     </nue-text>
                 </nue-div>
-                <nue-div vertical class="search-quick__list">
+                <nue-div class="search-quick__list" wrap="wrap">
                     <nue-button
                         v-for="preset in quickSearchPresets"
                         :key="preset.id"
-                        theme="small,ghost"
+                        theme="small"
                         :icon="preset.icon"
                         class="search-quick__item"
                         @click="handleApplyQuick(preset)"
@@ -135,16 +135,15 @@ const onDrop = (index: number) => {
                             @keydown.enter.self.prevent="collapse"
                             @keydown.space.self.prevent="collapse"
                         >
-                            <nue-text size="var(--nue-text-sm)" class="srch-tip">
+                            <nue-button
+                                theme="small,pure"
+                                :icon="state ? 'arrow-right' : 'arrow-down'"
+                            >
                                 {{ t('search.saved.title') }}
-                            </nue-text>
-                            <nue-icon
-                                name="arrow-down"
-                                aria-hidden="true"
-                                size="0.75rem"
-                                class="search-aside__chevron"
-                                :class="{ 'search-aside__chevron--expanded': !state }"
-                            />
+                                <template v-if="savedSearches.length" #append>
+                                    <nue-text size="xs">{{ savedSearches.length }}</nue-text>
+                                </template>
+                            </nue-button>
                         </nue-div>
                     </template>
                     <div :id="ASIDE_SAVED_CONTENT_ID" class="search-aside__body">
@@ -163,32 +162,25 @@ const onDrop = (index: number) => {
                                 @dragover.prevent
                                 @drop="onDrop(index)"
                             >
-                                <nue-button
-                                    v-if="!isUseFloatAside"
-                                    theme="icon,ghost,small"
-                                    icon="menu"
-                                    class="search-saved__handle"
-                                    :aria-label="t('search.saved.dragHandle')"
-                                />
-                                <nue-button
-                                    theme="small,ghost"
+                                <nue-text
                                     class="search-saved__reuse"
                                     @click="handleApplySaved(item)"
+                                    :clamped="1"
                                 >
                                     {{ item.name }}
-                                </nue-button>
-                                <nue-button
-                                    theme="icon,ghost,small"
-                                    icon="edit"
-                                    :aria-label="t('search.saved.rename')"
-                                    @click="handleRename(item)"
-                                />
-                                <nue-button
-                                    theme="icon,ghost,small"
-                                    icon="clear"
-                                    :aria-label="t('search.saved.remove')"
-                                    @click="removeSavedSearch(item.id)"
-                                />
+                                </nue-text>
+                                <nue-div class="search-saved__item__actions">
+                                    <nue-icon
+                                        name="edit"
+                                        :aria-label="t('search.saved.rename')"
+                                        @click="handleRename(item)"
+                                    />
+                                    <nue-icon
+                                        name="clear"
+                                        :aria-label="t('search.saved.remove')"
+                                        @click="removeSavedSearch(item.id)"
+                                    />
+                                </nue-div>
                             </nue-div>
                         </nue-div>
                         <nue-div v-else vertical class="search-empty-block">
@@ -219,9 +211,15 @@ const onDrop = (index: number) => {
                             @keydown.enter.self.prevent="collapse"
                             @keydown.space.self.prevent="collapse"
                         >
-                            <nue-text size="var(--nue-text-sm)" class="srch-tip">
+                            <nue-button
+                                theme="small,pure"
+                                :icon="state ? 'arrow-right' : 'arrow-down'"
+                            >
                                 {{ t('search.history.title') }}
-                            </nue-text>
+                                <template v-if="history.length" #append>
+                                    <nue-text size="xs">{{ history.length }}</nue-text>
+                                </template>
+                            </nue-button>
                             <nue-div
                                 class="search-aside__header-actions"
                                 align="center"
@@ -229,19 +227,12 @@ const onDrop = (index: number) => {
                             >
                                 <nue-button
                                     v-if="history.length > 0"
-                                    theme="small,ghost"
+                                    theme="small,pure"
                                     class="search-history__clear"
                                     @click.stop="clearHistory"
                                 >
                                     {{ t('search.history.clear') }}
                                 </nue-button>
-                                <nue-icon
-                                    name="arrow-down"
-                                    aria-hidden="true"
-                                    size="0.75rem"
-                                    class="search-aside__chevron"
-                                    :class="{ 'search-aside__chevron--expanded': !state }"
-                                />
                             </nue-div>
                         </nue-div>
                     </template>
@@ -254,15 +245,16 @@ const onDrop = (index: number) => {
                                     align="center"
                                     class="search-history__item"
                                 >
-                                    <nue-button
+                                    <nue-text
+                                        :clamped="1"
                                         theme="small,ghost"
                                         class="search-history__reuse"
                                         @click="handleApplyKeyword(item)"
                                     >
                                         {{ item }}
-                                    </nue-button>
+                                    </nue-text>
                                     <nue-button
-                                        theme="icon,ghost,small"
+                                        theme="icon,pure,small"
                                         icon="clear"
                                         :aria-label="t('search.history.remove')"
                                         @click="removeHistory(item)"
@@ -283,102 +275,117 @@ const onDrop = (index: number) => {
 </template>
 
 <style scoped>
-/* 颜色全走 shadlike 令牌（与主区一致） */
-.srch-tip {
-    color: var(--nue-secondary-text-color);
-}
-
 /* —— 折叠区（快捷搜索不折叠） —— */
 .search-aside__collapse {
     width: 100%;
-}
-.search-aside__section {
-    width: 100%;
-}
-.search-aside__header {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-}
-.search-aside__header-actions {
-    flex: none;
-}
-.search-aside__chevron {
-    flex: none;
-    transition: transform var(--nue-animation-duration) ease-in-out;
-}
-.search-aside__chevron--expanded {
-    transform: rotate(180deg);
-}
-/* R3：不传 maxHeight ⇒ 内容高度由 scrollHeight 过渡，transitionend 后回到 auto，
+
+    .search-aside__section {
+        width: 100%;
+        border: none;
+    }
+
+    .search-aside__header {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        gap: var(--nue-gap-xs);
+        justify-content: space-between;
+
+        > .nue-button {
+            gap: var(--nue-gap-xs);
+        }
+
+        .search-aside__header-actions {
+            flex: none;
+        }
+    }
+
+    /* R3：不传 maxHeight ⇒ 内容高度由 scrollHeight 过渡，transitionend 后回到 auto，
    展开态下的增删不会因固定高度被裁切（jsdom 无过渡，仅断言 DOM 存在性） */
-.search-aside__body {
-    width: 100%;
+    .search-aside__body {
+        width: 100%;
+    }
 }
 
 /* —— 快捷搜索（只读预置） —— */
 .search-quick {
     width: 100%;
-}
-.search-quick__head {
-    width: 100%;
-    justify-content: space-between;
-}
-.search-quick__list {
-    width: 100%;
-    gap: var(--nue-gap-2xs);
-}
-.search-quick__item {
-    width: 100%;
-    justify-content: flex-start;
-    text-align: left;
+
+    .search-quick__head {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .search-quick__list {
+        width: 100%;
+        gap: var(--nue-gap-xs);
+    }
+
+    .search-quick__item {
+        justify-content: flex-start;
+        text-align: left;
+    }
 }
 
 /* —— 空态文案（两区共用） —— */
 .search-empty-block {
     width: 100%;
     gap: var(--nue-gap-2xs);
+    padding: var(--nue-padding-xs) var(--nue-padding-sm);
+    background-color: var(--nue-primary-color-100);
+    border-radius: var(--nue-primary-radius);
+    color: var(--nue-primary-color-700);
 }
 
 /* —— 常用搜索（SEA-05） —— */
 .search-saved__list {
     width: 100%;
     gap: var(--nue-gap-2xs);
-}
-.search-saved__item {
-    width: 100%;
-    gap: var(--nue-gap-2xs);
-    border-radius: var(--nue-primary-radius);
-}
-.search-saved__item:hover {
-    background: color-mix(in srgb, var(--nue-primary-text-color) 7%, var(--nue-primary-color-0));
-}
-.search-saved__handle {
-    flex: none;
-    cursor: grab;
-}
-.search-saved__reuse {
-    flex: 1;
-    min-width: 0;
-    justify-content: flex-start;
-    text-align: left;
+
+    .search-saved__item {
+        width: 100%;
+        border-radius: var(--nue-primary-radius);
+        font-size: var(--nue-text-xs);
+        padding: var(--nue-padding-xs) var(--nue-padding-sm);
+
+        &:hover {
+            cursor: pointer;
+            background: color-mix(
+                in srgb,
+                var(--nue-primary-text-color) 7%,
+                var(--nue-primary-color-0)
+            );
+        }
+
+        .search-saved__item__actions {
+            gap: var(--nue-gap-xs);
+        }
+    }
 }
 
 /* —— 最近搜索（SEA-04 / S6） —— */
 .search-history__list {
     width: 100%;
     gap: var(--nue-gap-2xs);
+
+    .search-history__item {
+        width: 100%;
+        border-radius: var(--nue-primary-radius);
+        font-size: var(--nue-text-xs);
+        padding: var(--nue-padding-xs) var(--nue-padding-sm);
+
+        &:hover {
+            background: color-mix(
+                in srgb,
+                var(--nue-primary-text-color) 7%,
+                var(--nue-primary-color-0)
+            );
+        }
+    }
 }
-.search-history__item {
-    width: 100%;
-    justify-content: space-between;
-    border-radius: var(--nue-primary-radius);
-}
-.search-history__item:hover {
-    background: color-mix(in srgb, var(--nue-primary-text-color) 7%, var(--nue-primary-color-0));
-}
+
+.search-saved__reuse,
 .search-history__reuse {
     flex: 1;
     min-width: 0;
