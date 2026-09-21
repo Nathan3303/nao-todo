@@ -127,6 +127,14 @@ const enUS: LocaleMessages = {
     'search.saved.rename': 'Rename',
     'search.saved.remove': 'Delete',
     'search.saved.dragHandle': 'Drag to reorder',
+    'search.saved.empty': 'No saved searches yet',
+    'search.saved.emptyHint': 'Use “Save search” in the filter bar to create one',
+    'search.history.empty': 'No recent searches',
+    'search.quick.title': 'Quick searches',
+    'search.quick.highPriority': 'High priority',
+    'search.quick.todo': 'To do',
+    'search.quick.inProgress': 'In progress',
+    'search.quick.done': 'Done',
 
     // Settings
     'settings.profile': 'User Profile',

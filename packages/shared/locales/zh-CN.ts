@@ -125,6 +125,14 @@ const zhCN: LocaleMessages = {
     'search.saved.rename': '重命名',
     'search.saved.remove': '删除',
     'search.saved.dragHandle': '拖动排序',
+    'search.saved.empty': '暂无常用搜索',
+    'search.saved.emptyHint': '使用筛选栏的「保存为常用搜索」创建',
+    'search.history.empty': '暂无搜索记录',
+    'search.quick.title': '快捷搜索',
+    'search.quick.highPriority': '高优先级',
+    'search.quick.todo': '待办',
+    'search.quick.inProgress': '进行中',
+    'search.quick.done': '已完成',
 
     // Settings
     'settings.profile': '用户信息',

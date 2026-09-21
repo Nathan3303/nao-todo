@@ -122,6 +122,14 @@ export interface LocaleMessages {
     'search.saved.rename': string
     'search.saved.remove': string
     'search.saved.dragHandle': string
+    'search.saved.empty': string
+    'search.saved.emptyHint': string
+    'search.history.empty': string
+    'search.quick.title': string
+    'search.quick.highPriority': string
+    'search.quick.todo': string
+    'search.quick.inProgress': string
+    'search.quick.done': string
 
     // Settings
     'settings.profile': string
