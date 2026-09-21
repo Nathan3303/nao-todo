@@ -14,9 +14,8 @@ import TaskDetailsFooter from '../footer/index.vue'
 /**
  * T37 独立验收用例（新增，不改 T33 基线）
  * @description 只做证伪/加固：
- *  ① AC1 PRD §5.2 完整拼接示例「逐字符」比对（含 ；/2/4 缩进/#标签/时间）。
- *     注：仓库 PRD 文件内的 fenced 示例被格式化为 4/8 缩进，与本单 §5.2 正文「检查项缩进 4 空格」
- *     及内联示例（描述 2 / 检查项 4 / 孙任务 2）、PM 派单附件（2/4）不一致；本测试以正文/派单口径为准。
+ *  ① AC1 PRD §5.2 完整拼接示例「逐字符」比对（变更 1：名称行仅复选框+名称，属性 2 空格子行，
+ *     检查项/子任务段嵌套缩进 4，更深层级走 `- 子任务：` 标签段）。
  *  ② AC2/AC3 footer 集成：对话框 copy payload → 剪贴板；还原按钮存在且恢复原文。
  *  ③ AC2 空草稿复制不拦截（PRD §5.4）。
  *  ④ AC5 剪贴板不可用（负向）。
@@ -55,18 +54,26 @@ const makeNode = (overrides: Partial<ExportTaskNode> = {}): ExportTaskNode => ({
     ...overrides
 })
 
-/** PRD §5.2 「完整拼接示例」逐字符冻结串（含末尾换行） */
+/** PRD §5.2（2026-09-21 变更 1）「完整拼接示例」逐字符冻结串（含末尾换行） */
 const FROZEN_SUBTASK_BLOCK =
     [
         '## 子任务',
         '',
-        '- [x] 子任务 1（状态：已完成；优先级：高；开始时间：2026-09-20 09:00；截止时间：2026-09-20 18:00；标签：#重要）',
+        '- [x] 子任务 1',
+        '  - 状态：已完成',
+        '  - 优先级：高',
+        '  - 开始时间：2026-09-20 09:00',
+        '  - 截止时间：2026-09-20 18:00',
+        '  - 标签：#重要',
         '  - 描述：子任务描述',
         '  - 检查项：',
         '    - [x] 检查项一',
         '    - [ ] 检查项二',
-        '- [ ] 子任务 2（状态：待办；优先级：低）',
-        '  - [ ] 孙任务'
+        '- [ ] 子任务 2',
+        '  - 状态：待办',
+        '  - 优先级：低',
+        '  - 子任务：',
+        '    - [ ] 孙任务'
     ].join('\n') + '\n'
 
 describe('T37-AC1 PRD §5.2 完整拼接示例逐字符比对', () => {
@@ -112,10 +119,33 @@ describe('T37-AC1 PRD §5.2 完整拼接示例逐字符比对', () => {
 
         // 从 ## 子任务 起至文件末尾，必须与冻结串逐字符相等
         expect(md.slice(md.indexOf('## 子任务'))).toBe(FROZEN_SUBTASK_BLOCK)
-        // 反向：不得残留空括号 / 全角逗号 / 半角括号
-        expect(md).not.toContain('（）')
+        // 反向：不得残留行内括号形态 / 全角逗号
+        expect(md).not.toContain('（')
         expect(md).not.toContain('，')
         expect(md).not.toContain('(状态')
+    })
+
+    it('属性子行分隔符为全角冒号直接接值（与根任务元信息同构）', () => {
+        const md = generateTaskMarkdown(
+            makeNode({
+                children: [
+                    makeNode({
+                        name: '格式',
+                        state: 'done',
+                        stateLabel: '已完成',
+                        priorityLabel: '高',
+                        startAt: null,
+                        endAt: null,
+                        tagNames: []
+                    })
+                ]
+            }),
+            labels
+        )
+        expect(md).toContain('  - 状态：已完成')
+        expect(md).toContain('  - 优先级：高')
+        expect(md).not.toContain('： ')
+        expect(md).not.toContain(': ')
     })
 
     it('时间格式严格 YYYY-MM-DD HH:mm（零填充），标签 #名称 空格连接', () => {
@@ -134,7 +164,9 @@ describe('T37-AC1 PRD §5.2 完整拼接示例逐字符比对', () => {
             }),
             labels
         )
-        expect(md).toContain('（开始时间：2026-01-02 03:04；标签：#a #b）')
+        expect(md).toContain(
+            ['- [ ] 格式', '  - 开始时间：2026-01-02 03:04', '  - 标签：#a #b'].join('\n')
+        )
     })
 })
 

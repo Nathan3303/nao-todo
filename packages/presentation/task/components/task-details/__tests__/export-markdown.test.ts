@@ -7,10 +7,11 @@ import {
 } from '../export-markdown'
 
 /**
- * 导出 Markdown 纯函数断言（T21 基线 + T33 子任务丰富格式）
+ * 导出 Markdown 纯函数断言（T21 根任务基线 + T39 §5.2 变更 1 重写）
  * @description 覆盖根任务契约（名称/元信息/描述/检查项/子任务）、空段省略、时间格式化，
- *              以及 PRD §5.2「子任务输出」冻结基准：一级丰富（行内标量 + 属性子行）、
- *              ≥二级精简、空项/空括号省略、描述换行折叠。
+ *              以及 PRD §5.2「子任务输出」（2026-09-21 变更 1）冻结基准：
+ *              名称行仅「复选框 + 名称」、属性走 `- 名称：值` 子行（顺序固定、空项整行省略）、
+ *              更深层级走 `- 子任务：` 标签段（逐项复选框缩进 4）。
  *              时间一律使用无时区字面量（dayjs 按本地解析），避免断言受运行环境时区影响。
  */
 
@@ -53,7 +54,7 @@ describe('formatExportDateTime', () => {
     })
 })
 
-describe('generateTaskMarkdown - 根任务主路径（契约不变）', () => {
+describe('generateTaskMarkdown - 根任务主路径（§5.1 契约不变）', () => {
     it('输出标题、元信息、描述、检查项与递归子任务', () => {
         const md = generateTaskMarkdown(
             makeNode({
@@ -101,16 +102,25 @@ describe('generateTaskMarkdown - 根任务主路径（契约不变）', () => {
                 '',
                 '## 子任务',
                 '',
-                '- [x] 子任务 1（状态：已完成；优先级：高优先级；开始时间：2026-09-20 09:00；截止时间：2026-09-20 18:00）',
-                '- [ ] 子任务 2（状态：待办；优先级：高优先级；开始时间：2026-09-20 09:00；截止时间：2026-09-20 18:00）',
-                '  - [ ] 孙任务',
+                '- [x] 子任务 1',
+                '  - 状态：已完成',
+                '  - 优先级：高优先级',
+                '  - 开始时间：2026-09-20 09:00',
+                '  - 截止时间：2026-09-20 18:00',
+                '- [ ] 子任务 2',
+                '  - 状态：待办',
+                '  - 优先级：高优先级',
+                '  - 开始时间：2026-09-20 09:00',
+                '  - 截止时间：2026-09-20 18:00',
+                '  - 子任务：',
+                '    - [ ] 孙任务',
                 ''
             ].join('\n')
         )
     })
 })
 
-describe('generateTaskMarkdown - 根任务空段省略（契约不变）', () => {
+describe('generateTaskMarkdown - 根任务空段省略（§5.1 契约不变）', () => {
     it('无描述/检查项/子任务 ⇒ 对应段落整段省略（无空标题）', () => {
         const md = generateTaskMarkdown(
             makeNode({
@@ -153,9 +163,9 @@ describe('generateTaskMarkdown - 根任务空段省略（契约不变）', () =>
 })
 
 /**
- * PRD §5.2「完整拼接示例」为格式冻结基准，勿自行改格式。
+ * PRD §5.2（2026-09-21 变更 1）「完整拼接示例」为格式冻结基准，勿自行改格式。
  */
-describe('generateTaskMarkdown - 子任务丰富格式（PRD §5.2 冻结基准）', () => {
+describe('generateTaskMarkdown - 子任务属性子行格式（§5.2 冻结基准）', () => {
     // 仅保留子任务段：根任务无描述/检查项/标量元信息
     const onlySubTasks = (children: ExportTaskNode[]) =>
         generateTaskMarkdown(
@@ -171,7 +181,7 @@ describe('generateTaskMarkdown - 子任务丰富格式（PRD §5.2 冻结基准�
             labels
         )
 
-    it('完整拼接示例：一级丰富（行内标量 + 属性子行），二级精简', () => {
+    it('完整拼接示例：名称行仅复选框+名称，属性为 `- 名称：值` 子行，更深层级走 `- 子任务：` 标签段', () => {
         const md = onlySubTasks([
             makeNode({
                 name: '子任务 1',
@@ -212,25 +222,72 @@ describe('generateTaskMarkdown - 子任务丰富格式（PRD §5.2 冻结基准�
             })
         ])
 
-        expect(md).toContain(
+        expect(md).toBe(
             [
+                '# 任务 A',
+                '',
+                '- 状态：待办',
+                '- 优先级：高优先级',
+                '- 创建时间：2026-09-19 08:00',
+                '- 更新时间：2026-09-19 20:00',
+                '',
                 '## 子任务',
                 '',
-                '- [x] 子任务 1（状态：已完成；优先级：高；开始时间：2026-09-20 09:00；截止时间：2026-09-20 18:00；标签：#重要）',
+                '- [x] 子任务 1',
+                '  - 状态：已完成',
+                '  - 优先级：高',
+                '  - 开始时间：2026-09-20 09:00',
+                '  - 截止时间：2026-09-20 18:00',
+                '  - 标签：#重要',
                 '  - 描述：子任务描述',
                 '  - 检查项：',
                 '    - [x] 检查项一',
                 '    - [ ] 检查项二',
-                '- [ ] 子任务 2（状态：待办；优先级：低）',
-                '  - [ ] 孙任务'
+                '- [ ] 子任务 2',
+                '  - 状态：待办',
+                '  - 优先级：低',
+                '  - 子任务：',
+                '    - [ ] 孙任务',
+                ''
             ].join('\n')
         )
+        // 名称行不含行内括号属性（Q2′ 废弃形态）
+        expect(md).not.toContain('（')
         // 深度 ≥1（二级及以下）即便携带丰富字段也必须精简
         expect(md).not.toContain('孙任务描述')
         expect(md).not.toContain('孙检查项')
     })
 
-    it('行内标量顺序固定：状态 → 优先级 → 开始时间 → 截止时间 → 标签，空项跳过且不留空括号', () => {
+    it('属性顺序固定：状态 → 优先级 → 开始时间 → 截止时间 → 标签 → 描述 → 检查项', () => {
+        const md = onlySubTasks([
+            makeNode({
+                name: '全属性',
+                state: 'done',
+                stateLabel: '已完成',
+                priorityLabel: '高',
+                startAt: '2026-09-20 09:00:00',
+                endAt: '2026-09-20 18:00:00',
+                tagNames: ['重要'],
+                description: '描述文本',
+                checkItems: [{ name: '项', isDone: false }]
+            })
+        ])
+        const body = md.split('## 子任务\n\n')[1]!
+        const at = (needle: string) => body.indexOf(needle)
+        expect(at('- [x] 全属性')).toBe(0)
+        expect(at('  - 状态：已完成')).toBeGreaterThan(0)
+        expect(at('  - 状态：已完成')).toBeLessThan(at('  - 优先级：高'))
+        expect(at('  - 优先级：高')).toBeLessThan(at('  - 开始时间：2026-09-20 09:00'))
+        expect(at('  - 开始时间：2026-09-20 09:00')).toBeLessThan(
+            at('  - 截止时间：2026-09-20 18:00')
+        )
+        expect(at('  - 截止时间：2026-09-20 18:00')).toBeLessThan(at('  - 标签：#重要'))
+        expect(at('  - 标签：#重要')).toBeLessThan(at('  - 描述：描述文本'))
+        expect(at('  - 描述：描述文本')).toBeLessThan(at('  - 检查项：'))
+        expect(at('  - 检查项：')).toBeLessThan(at('    - [ ] 项'))
+    })
+
+    it('空项整行省略：仅标签 / 仅时间不输出其它空值行，且无空括号', () => {
         const md = onlySubTasks([
             makeNode({
                 name: '仅标签',
@@ -256,16 +313,20 @@ describe('generateTaskMarkdown - 子任务丰富格式（PRD §5.2 冻结基准�
             })
         ])
 
-        expect(md).toContain('- [ ] 仅标签（标签：#重要 #紧急）')
+        expect(md).toContain(['- [ ] 仅标签', '  - 标签：#重要 #紧急'].join('\n'))
         expect(md).toContain(
-            '- [ ] 仅时间（开始时间：2026-09-20 09:00；截止时间：2026-09-20 18:00）'
+            [
+                '- [ ] 仅时间',
+                '  - 开始时间：2026-09-20 09:00',
+                '  - 截止时间：2026-09-20 18:00'
+            ].join('\n')
         )
-        // 仅标签时不得出现被跳过的空项占位
-        expect(md).not.toContain('状态：；')
-        expect(md).not.toContain('优先级：；')
+        expect(md).not.toContain('（）')
+        expect(md).not.toContain('- 状态：\n')
+        expect(md).not.toContain('- 优先级：\n')
     })
 
-    it('一级子任务丰富字段全空 ⇒ 只输出名称 + 复选框，不输出空括号', () => {
+    it('一级子任务属性全空 ⇒ 只输出 `- [ ] 名称` 一行', () => {
         const md = onlySubTasks([
             makeNode({
                 name: '空项子任务',
@@ -280,9 +341,8 @@ describe('generateTaskMarkdown - 子任务丰富格式（PRD §5.2 冻结基准�
             })
         ])
 
-        expect(md).toContain('- [ ] 空项子任务')
+        expect(md.split('## 子任务\n\n')[1]).toBe('- [ ] 空项子任务\n')
         expect(md).not.toContain('（）')
-        expect(md).not.toContain('- [ ] 空项子任务（')
     })
 })
 
@@ -354,7 +414,7 @@ describe('generateTaskMarkdown - 子任务边界（AC4）', () => {
         expect(onlyDesc).not.toContain('检查项：')
     })
 
-    it('属性子行位于一级子任务行之下、更深子任务之前', () => {
+    it('属性子行位于一级子任务行之下、`- 子任务：` 标签段之前', () => {
         const md = onlySubTasks([
             makeNode({
                 name: '父',
@@ -384,10 +444,11 @@ describe('generateTaskMarkdown - 子任务边界（AC4）', () => {
 
         const block = md.split('## 子任务\n\n')[1]!
         expect(block.indexOf('- [ ] 父')).toBeLessThan(block.indexOf('  - 描述：父描述'))
-        expect(block.indexOf('  - 描述：父描述')).toBeLessThan(block.indexOf('  - [ ] 子'))
+        expect(block.indexOf('  - 描述：父描述')).toBeLessThan(block.indexOf('  - 子任务：'))
+        expect(block.indexOf('  - 子任务：')).toBeLessThan(block.indexOf('    - [ ] 子'))
     })
 
-    it('深层子任务保持精简（名称 + 复选框）并逐层缩进 2 空格', () => {
+    it('更深层级精简（名称 + 复选框）且带 `- 子任务：` 标签段，不输出属性', () => {
         const md = onlySubTasks([
             makeNode({
                 name: 'L1',
@@ -416,7 +477,11 @@ describe('generateTaskMarkdown - 子任务边界（AC4）', () => {
             })
         ])
 
-        expect(md).toContain(['- [x] L1', '  - [ ] L2', '    - [x] L3'].join('\n'))
+        expect(md).toContain('- [x] L1')
+        expect(md).toContain('  - 子任务：')
+        expect(md).toContain('    - [ ] L2')
+        // L3 应为比 L2 更深缩进的精简复选框（不规定 ≥2 级是否再套标签段）
+        expect(md).toMatch(/\n {6,}- \[x\] L3\n/)
         expect(md).not.toContain('L2 描述')
         expect(md).not.toContain('L2 检查')
     })

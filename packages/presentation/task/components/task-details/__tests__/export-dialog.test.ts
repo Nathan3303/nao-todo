@@ -112,6 +112,16 @@ describe('TaskExportDialog - 可编辑内容（AC1）', () => {
     })
 })
 
+describe('TaskExportDialog - footer 按钮（UI 变更 1）', () => {
+    it('只保留「还原 + 复制」，不含「关闭」按钮（nue-dialog 自带右上角关闭键）', () => {
+        const w = mountDialog({ modelValue: true, markdown: '# 任务' })
+        const texts = w.findAll('button').map((button) => button.text())
+        expect(texts.some((text) => /复制|Copy/.test(text))).toBe(true)
+        expect(texts.some((text) => /还原|恢复|Restore|Reset/i.test(text))).toBe(true)
+        expect(texts.some((text) => /关闭|Close/.test(text))).toBe(false)
+    })
+})
+
 describe('TaskExportDialog - 复制编辑后文本（AC2）', () => {
     it('未编辑时复制 ⇒ copy 事件携带原始生成文本', async () => {
         const w = mountDialog({ modelValue: true, markdown: '# 原始文本' })

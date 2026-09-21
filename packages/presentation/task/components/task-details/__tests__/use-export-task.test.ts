@@ -181,9 +181,14 @@ describe('useExportTask - 递归取数', () => {
             [
                 '## 子任务',
                 '',
-                '- [x] 子 1（状态：已完成；优先级：低优先级）',
-                '  - [ ] 孙 1',
-                '- [ ] 子 2（状态：待办；优先级：低优先级）'
+                '- [x] 子 1',
+                '  - 状态：已完成',
+                '  - 优先级：低优先级',
+                '  - 子任务：',
+                '    - [ ] 孙 1',
+                '- [ ] 子 2',
+                '  - 状态：待办',
+                '  - 优先级：低优先级'
             ].join('\n')
         )
     })
@@ -200,8 +205,12 @@ describe('useExportTask - 递归取数', () => {
         expect(list).toHaveBeenCalledWith({ parentTaskId: 'root', page: 2, limit: 100 })
         expect(md).toContain(
             [
-                '- [x] 子 1（状态：已完成；优先级：低优先级）',
-                '- [ ] 子 2（状态：待办；优先级：低优先级）'
+                '- [x] 子 1',
+                '  - 状态：已完成',
+                '  - 优先级：低优先级',
+                '- [ ] 子 2',
+                '  - 状态：待办',
+                '  - 优先级：低优先级'
             ].join('\n')
         )
     })
@@ -303,14 +312,21 @@ describe('useExportTask - 一级子任务丰富取数（AC1/AC4/AC5）', () => {
         expect(listByTask).not.toHaveBeenCalledWith('g1')
         expect(md).toContain(
             [
-                '- [x] 子 1（状态：已完成；优先级：低优先级；标签：#重要）',
+                '- [x] 子 1',
+                '  - 状态：已完成',
+                '  - 优先级：低优先级',
+                '  - 标签：#重要',
                 '  - 描述：子 1 描述',
                 '  - 检查项：',
                 '    - [x] 检一',
                 '    - [ ] 检二',
-                '  - [ ] 孙 1'
+                '  - 子任务：',
+                '    - [ ] 孙 1'
             ].join('\n')
         )
+        // 名称行不再含行内括号属性（Q2′）
+        expect(md).not.toContain('（')
+        expect(md).not.toContain('）')
     })
 
     it('子任务无检查项 ⇒ 整段省略（不输出「检查项：」标签行）', async () => {
@@ -325,7 +341,7 @@ describe('useExportTask - 一级子任务丰富取数（AC1/AC4/AC5）', () => {
 
         const md = await api.exportTask()
 
-        expect(md).toContain('- [ ] 子 1（状态：待办；优先级：低优先级）')
+        expect(md).toContain(['- [ ] 子 1', '  - 状态：待办', '  - 优先级：低优先级'].join('\n'))
         expect(md).not.toContain('检查项：')
     })
 
