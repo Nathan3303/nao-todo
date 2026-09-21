@@ -1,6 +1,5 @@
 import { unwrapError } from '@nao-todo/shared'
 import type { TaskViewObject } from '@nao-todo/domain-task'
-import dayjs from 'dayjs'
 import { computed, inject, onMounted, onUnmounted, ref, watch } from 'vue'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
 import { useTasksStore } from '@nao-todo/presentation/task'
@@ -122,16 +121,8 @@ export const useCalendarTaskQuery = (deps: {
             .filter((task): task is TaskViewObject => !!task)
     )
 
-    // @computed 未安排任务（B7：endAt 为空；数据源=当前筛选下全量快照，不限当月；createdAt desc）
-    const unscheduledTasks = computed<TaskViewObject[]>(() =>
-        tasks.value
-            .filter((task) => !task.endAt)
-            .sort(
-                (a, b) =>
-                    dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf() ||
-                    (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
-            )
-    )
+    // 未安排任务（B7：endAt 为空）不再由本组合式排序：展示顺序唯一真源＝用户排序，
+    // 故由组装点（useCalendarMonthly）从 sortedTasks 派生（TASK-15 D4）。
 
-    return { loading, error, retry: resetAndLoad, tasks, unscheduledTasks }
+    return { loading, error, retry: resetAndLoad, tasks }
 }

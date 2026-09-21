@@ -218,8 +218,10 @@ const buildRowContent = (
                 isEnd: s.endKey === endKey
             }
         })
-        // 早开始的在上方/左侧优先；同一开始列长的优先（贪婪轨道分配的前提）
-        .sort((a, b) => a.colStart - b.colStart || b.colEnd - a.colEnd)
+        // 仅保留「起始列升序」这一日历语法必需键；同 colStart 内保持传入顺序
+        // （＝用户排序，由 Array.sort 稳定性承载）。不得再引入 colEnd 比较：
+        // 那会用跨度长度覆盖用户排序（TASK-15 D1）。
+        .sort((a, b) => a.colStart - b.colStart)
 
     // 贪婪分配轨道：每个 span 放入首个与其无重叠的轨道
     const laneEnds: number[][] = [] // lane -> 该轨道已占用区间的结束列

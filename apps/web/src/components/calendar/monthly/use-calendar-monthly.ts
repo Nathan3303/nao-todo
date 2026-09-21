@@ -47,7 +47,7 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
     const taskUseCase = useTaskUseCase(tasksStore)
 
     // —— O12 拆分子组合式：任务拉取+订阅 / 排期+撤销（DI 依赖由本组装点注入） ——
-    const { loading, error, retry, tasks, unscheduledTasks } = useCalendarTaskQuery({
+    const { loading, error, retry, tasks } = useCalendarTaskQuery({
         tasksStore,
         taskUseCase
     })
@@ -67,6 +67,11 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
     const { sort, sortTasks } = useCalendarSort()
     // @computed 排序后的任务快照（月模型/周视图共用；未选字段=默认按名称升序）
     const sortedTasks = computed(() => sortTasks(tasks.value))
+
+    // @computed 未安排任务（B7：endAt 为空；顺序＝用户排序，由 sortedTasks 派生，不再自带 createdAt desc）
+    const unscheduledTasks = computed<TaskViewObject[]>(() =>
+        sortedTasks.value.filter((task) => !task.endAt)
+    )
 
     // @states 视图状态
     const year = ref<number>(dayjs().year())
@@ -88,18 +93,9 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         )
     )
 
-    // @method 某日的任务列表（含跨月任务，按 R6 排序；数据源与网格一致）
-    const getDayTasks = (dateKey: string): TaskViewObject[] => {
-        return tasks.value
-            .filter((task) => spanCoversDate(task, dateKey))
-            .sort((a, b) => {
-                const aStart = dayjs(a.startAt || a.endAt).valueOf()
-                const bStart = dayjs(b.startAt || b.endAt).valueOf()
-                return (
-                    aStart - bStart || dayjs(a.createdAt).valueOf() - dayjs(b.createdAt).valueOf()
-                )
-            })
-    }
+    // @method 某日的任务列表（含跨月任务；顺序＝用户排序，数据源与网格一致）
+    const getDayTasks = (dateKey: string): TaskViewObject[] =>
+        sortedTasks.value.filter((task) => spanCoversDate(task, dateKey))
 
     // @method 翻月/回今天
     const goPrevMonth = () => {
