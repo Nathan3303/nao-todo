@@ -131,7 +131,10 @@
 - **DOM 契约（供 C6/C12 断言）**：列头容器 `data-testid="day-columns"`（子节点 48、其中有文本者 24）；时间轴背景 `data-testid="day-axis-bg"`（其内 `[data-col]` 数量必须为 0，即禁 48×N DOM）；未安排入口 `data-testid="day-unscheduled-entry"`。
 - **挂载契约（冻结）**：`daily/index.vue` **复用 `CALENDAR_VIEW_CONTEXT_KEY` + Pinia**（与 `monthly/`、`weekly/` 一致），**不得改为 props 直传**。组装点可在既有 `useCalendarMonthly` 内扩 `viewMode = 'day'`（ADR C14）或抽子组合式，但**注入契约不变**。
 - **列头结构口径（冻结）**：`data-testid="day-columns"` 的**直接子元素恰 48 个**（奇数位文本为空字符串）；如需改为「24 整点 + 24 刻度」等结构，**须先报 PM**（否则测试漂移）。
-- **交互 DOM 契约（冻结，供 T55/T51）**：任务条 `data-testid="day-task"` + `data-task-id="<id>"`；右侧拉伸把手 `data-testid="day-task-resize"`；时间轴空白点击区 `data-testid="day-axis-track"`（点击 → 快速新建）。拖动期**不得**触发数据刷新（C7），松手才写回并经 U2 撤销内核（C9）。
+- **交互 DOM 契约（冻结，供 T55/T51）**：任务条 `data-testid="day-task"` + `data-task-id="<id>"`；右侧拉伸把手 `data-testid="day-task-resize"`；**交互层 `data-testid="day-axis-track"`**（覆盖在纯视觉的 `day-axis-bg` 之上，承载点击新建与坐标换算；`day-axis-bg` 仍禁子节点，C6）。
+- **撤销契约（冻结）**：日视图**复用**共享 `monthly/undo-toast.vue` + `useCalendarSchedule.undoLast`（C9）；在该共享组件**根元素**加 `data-testid="schedule-undo"`（additive，月/周同受益）。
+- **坐标基准（冻结）**：分钟映射取 **`day-axis-track` 的 `getBoundingClientRect()`**，用**指针绝对位置** `clientX - rect.left` 换算（**不用 `offsetX`**，因拖拽会跨元素）；`1px = 1440/rect.width` 分钟。
+- **写回通道（冻结）**：快速新建 → `taskUseCase.create`（复用既有 quick-create 流程）；拖拽/拉伸 → 既有 `useCalendarSchedule` 内核 + `taskUseCase.update`。拖动期**不得**触发数据刷新（C7），松手才提交；失败 toast + 位置回退（无乐观脏状态）。
 - 整点文本格式暂定两位小时（`09`）；若实测偏窄可改 `09:00`，属渲染细节、不影响契约形状。
 
 ## 6. NFRs
