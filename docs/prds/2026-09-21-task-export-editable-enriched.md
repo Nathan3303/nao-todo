@@ -210,6 +210,16 @@
 
 **变更待定（2026-09-21，用户提出）**：① 子任务条目的层级表达（是否改用 `###` 三级标题，PM 已出 A/B/C 三案待用户定形）；② 移除导出浮层 footer 的「关闭」按钮（右上角 `nue-dialog__header__closebtn` 已具备）。两项均触发 §5.2 冻结基准变更治理，终签状态待变更完成后补。
 
+### 变更 1 验收（2026-09-21，Q2′/Q4′ + footer 去「关闭」）
+
+- **结论：验收通过**。T39 基线重写（46 绿 / 14 红）→ T40 实现（14 红全转绿）→ T41 独立回归（新增 `export-regression-change1.test.ts` 8 例）。
+- **门禁（PM 复跑）**：`vp test --run` **93 文件 / 813 例全绿**；`vp check` 全绿（1284 文件格式 + 1086 文件 lint/类型 0 错）；`guard:ddd` OK；`webapp build` / `desktop:build` exit 0；`presentation-react` 与 `apps/mobileapp` 零改动。
+- **规格↔断言↔实现三方一致**：PM 程序化比对 PRD §5.2 冻结块 ↔ `FROZEN_SUBTASK_BLOCK` **17 行逐行相同**。
+- **递归缩进独立复核**：qa 独立复算 L1–L4 = `0 / 4 / 8 / 12`；PM 另读 `export-markdown.ts`（`subTaskIndent(d)=INDENT_UNIT.repeat(d*2)` ≡ `4d`）交叉验证一致，**未采信实现方自述**。
+- **断言未削弱**：T39 基线文件 mtime（20:59–21:00）早于实现改动（21:06），无 skip/only，反向断言 `not.toContain('（')` / `not.toContain('： ')` 仍在。
+- **提交（未 push）**：`0527461d`（change）/ `facddf27`（test）/ `04d90762`（docs）。
+- **遗留**：4 项视觉需人眼手测（见 §13）。
+
 ## 12. 变更记录
 
 - 2026-09-21：需求提出 → grill-me Q1–Q11 澄清定稿 → PRD 初稿（本文件）。
