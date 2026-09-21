@@ -35,6 +35,8 @@ const {
     todayKey,
     tasks,
     sort,
+    isDisplayAside,
+    switchDisplayAside,
     onOpenTask,
     onTaskCreated,
     onOpenUnscheduled,
@@ -240,6 +242,11 @@ const nowLeft = computed(() => {
         <nue-div align="center" class="day-header" gap="8px">
             <nue-div align="center" gap="2px">
                 <nue-button
+                    :icon="isDisplayAside ? 'menu-close' : 'menu-open'"
+                    theme="icon,ghost"
+                    @click="switchDisplayAside"
+                />
+                <nue-button
                     icon="arrow-left"
                     theme="icon,ghost"
                     title="前一天"
@@ -432,21 +439,6 @@ const nowLeft = computed(() => {
     padding: 1rem;
     background: var(--cal-bg);
     overflow: hidden;
-}
-
-.day-header {
-    margin-bottom: 8px;
-}
-
-.day-title {
-    padding: 4px 8px;
-    border: none;
-    border-radius: 6px;
-    background: transparent;
-    color: var(--cal-fg);
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: default;
 }
 
 .day-allday {

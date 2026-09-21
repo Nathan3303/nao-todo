@@ -45,16 +45,18 @@
 
 /* ── 视图头部导航 ── */
 .cal-header,
-.wk-header {
+.wk-header,
+.day-header {
     user-select: none;
     justify-content: space-between;
     flex-wrap: wrap;
     margin-bottom: var(--nue-gap-xs);
 }
 
-/* 标题（C2-F9：可点按钮语义，可聚焦/hover 可达；文本样式与旧 h2 一致） */
+/* 标题排版（三视图同源；文本样式与旧 h2 一致） */
 .cal-title,
-.wk-title {
+.wk-title,
+.day-title {
     min-width: 132px;
     text-align: center;
     letter-spacing: 0.02em;
@@ -68,6 +70,11 @@
     font-size: var(--nue-text-df);
     font-weight: 600;
     line-height: inherit;
+}
+
+/* 标题可点变体（C2-F9：仅月/周；可聚焦/hover 可达） */
+.cal-title,
+.wk-title {
     cursor: pointer;
     transition: background 60ms;
 }
@@ -80,9 +87,15 @@
     outline: 1px solid var(--cal-border);
 }
 
-/* 月/周视图切换（分段按钮：零间隙贴合） */
+/* 日视图标题为静态变体（D1=(b)：无 cursor/hover/focus 交互暗示） */
+.day-title {
+    cursor: default;
+}
+
+/* 月/周/日视图切换（分段按钮：零间隙贴合） */
 .cal-view-toggle,
-.wk-view-toggle {
+.wk-view-toggle,
+.day-view-toggle {
     display: inline-flex;
     align-items: center;
     gap: 0;
@@ -91,11 +104,13 @@
     overflow: hidden;
 }
 .cal-view-btn,
-.wk-view-btn {
+.wk-view-btn,
+.day-view-btn {
     border-radius: 0 !important;
 }
 .cal-view-btn.is-active,
-.wk-view-btn.is-active {
+.wk-view-btn.is-active,
+.day-view-btn.is-active {
     background: var(--cal-select-bg);
     color: var(--cal-fg);
     font-weight: 600;

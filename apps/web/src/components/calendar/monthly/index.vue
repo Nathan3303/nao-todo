@@ -307,6 +307,8 @@ provide<CalendarDayContext>(CALENDAR_DAY_CONTEXT_KEY, {
     todayKey: todayDateKey(),
     tasks: sortedTasks,
     sort,
+    isDisplayAside,
+    switchDisplayAside,
     onOpenTask: openTaskFromPanel,
     onTaskCreated: (taskId) => subscriber.emit('AddNewTaskId', taskId),
     onOpenUnscheduled: () => (unscheduledOpen.value = true),

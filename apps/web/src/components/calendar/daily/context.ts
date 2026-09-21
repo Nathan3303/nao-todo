@@ -21,6 +21,10 @@ export type CalendarDayContext = {
     tasks: Ref<TaskViewObject[]>
     /** 日历排序状态（复用同一状态源） */
     sort: Ref<CalendarSort>
+    /** 侧边栏展开态（组装点自 INDEX_VIEW_CONTEXT_KEY 转供；无 provider 回退默认展开） */
+    isDisplayAside: Ref<boolean>
+    /** 切换侧边栏展开/收起 */
+    switchDisplayAside: () => void
     onOpenTask: (taskId: TaskViewObject['id']) => void
     /** 快速新建成功后广播（快照联动；月/周同款 AddNewTaskId） */
     onTaskCreated: (taskId: TaskViewObject['id']) => void

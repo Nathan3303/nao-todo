@@ -50,6 +50,8 @@ export const useCalendarDay = (): CalendarDayContext => {
         todayKey: todayDateKey(),
         tasks: sortedTasks,
         sort,
+        isDisplayAside: ref(true),
+        switchDisplayAside: () => {},
         onOpenTask: showTaskDetails,
         onTaskCreated: (taskId) => subscriber.emit('AddNewTaskId', taskId),
         onOpenUnscheduled: () => {},
