@@ -100,6 +100,37 @@
 - 交互提交后不本地乐观改写时长以外的字段；成功后由商店快照联动重渲染（与月/周一致）。
 - 排序下拉（TASK-08/TASK-15）对日视图纵向生效，与月/周同源。
 
+### 5.7 冻结接口与文件落点（2026-09-21 PM 拍板，供 T49/T50 共用）
+
+> 目录家族与既有 `monthly/`、`weekly/` 保持同名 —— 新增 **`daily/`**。
+
+| 项         | 冻结值                                                                                                                                                                           |
+| :--------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 目录       | `apps/web/src/components/calendar/daily/`                                                                                                                                        |
+| 吸附纯函数 | `apps/web/src/components/calendar/snap.ts` → `snapMinutes(value: number, step = 30, mode: 'floor' \| 'round'): number`（跨视图通用，故与 `lane-packing.ts` 同级，不放 `daily/`） |
+| 打包纯函数 | `apps/web/src/components/calendar/lane-packing.ts` → `packLanes(items, maxLanes, probes)`（ADR 已冻结）                                                                          |
+| 几何纯函数 | `monthly/use-calendar-grid.ts` → `segmentStyleInColumns(seg, columnCount, topOffset = GRID_TOP_OFFSET)`（ADR 已冻结；`segmentStyleOf` 委托之）                                   |
+| 日模型     | `apps/web/src/components/calendar/daily/build-day-grid.ts` → `buildDayGrid(anchorKey, tasks, maxLanes = MAX_VISIBLE_LANES, todayKey = todayDateKey())`                           |
+| 日视图组件 | `apps/web/src/components/calendar/daily/index.vue`                                                                                                                               |
+
+**`buildDayGrid` 返回契约（冻结）**
+
+```ts
+{
+  anchorKey: string
+  columns: { index: number; label: string }[]        // 48 项；整点 label = 两位小时 '09'，半点 label = ''
+  timed: { task: TaskViewObject; colStart: number; colEnd: number; lane: number; isStart: boolean; isEnd: boolean }[]
+  allDay: TaskViewObject[]                            // 仅「仅 endAt」任务
+  overflow: { key: string; count: number }[]          // 日级单探针：长度 0 或 1，key = anchorKey
+  isToday: boolean                                    // = anchorKey === todayKey（注入，便于测试，不依赖真实时钟）
+}
+```
+
+- 字段名用 **`isStart` / `isEnd`**（与月/周 `CalendarSegment` 同名语义：该跨度真实起/止于本视图内；`!isStart` → 左端续接），**不用**组件 prop 侧的 `contStart/contEnd`。
+- `colStart/colEnd` 为**闭区间且允许小数**（ADR C2）：`colStart = startMin/30`、`colEnd = endMin/30 − 1`。
+- **DOM 契约（供 C6/C12 断言）**：列头容器 `data-testid="day-columns"`（子节点 48、其中有文本者 24）；时间轴背景 `data-testid="day-axis-bg"`（其内 `[data-col]` 数量必须为 0，即禁 48×N DOM）；未安排入口 `data-testid="day-unscheduled-entry"`。
+- 整点文本格式暂定两位小时（`09`）；若实测偏窄可改 `09:00`，属渲染细节、不影响契约形状。
+
 ## 6. NFRs
 
 - **几何参数化**：任务条定位函数必须接受**列数**参数（现 `segmentStyleOf` 硬编码 7 列），月/周/日三视图共用同一实现，禁复制第二套几何。
