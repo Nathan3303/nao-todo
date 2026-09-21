@@ -142,7 +142,8 @@ export class TaskHandler {
      * @returns 任务视图对象
      */
     async unGiveUp(id: TaskViewObject['id']): GoAsync<void> {
-        return await this.update(id, { isGivenUp: false, givenUpAt: null })
+        // 清空语义须用空串：服务端同步契约 nil/null=缺省不写列、""=清空置 NULL
+        return await this.update(id, { isGivenUp: false, givenUpAt: '' })
     }
 
     /**
