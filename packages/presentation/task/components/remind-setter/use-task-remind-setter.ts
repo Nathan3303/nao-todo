@@ -269,12 +269,12 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
      * 构建任务提醒设置器更新VO
      */
     const buildUpdateVO = (): TaskRemindSetterUpdateVO => {
-        // 关闭提醒功能，返回空的更新 VO
+        // 关闭提醒功能：以空串表达清空（服务端 nil/null=缺省不写列、""=清空置 NULL）
         if (!vo.enabled) {
             return {
-                remindAt: null,
+                remindAt: '',
                 remindRepeat: 'none',
-                remindTime: null,
+                remindTime: '',
                 remindWeekdays: []
             }
         }
@@ -378,14 +378,15 @@ const useTaskRemindSetter = (props: TaskRemindSetterProps, emits: TaskRemindSett
         () => {
             // 构建更新视图对象
             const updateVO = buildUpdateVO()
-            // 判断是否变更（基准归一化：task/remind 均缺失时按无提醒默认值比较，避免 undefined 恒不等导致永不触发）
-            const isRemindAtSame =
-                updateVO.remindAt === (props.task?.remindAt ?? props.remind?.remindAt ?? null)
+            // 判断是否变更（基准归一化：当前值缺省/空串（null/undefined/''）与「已清空」同义，
+            // 均归一为 '' 比较，避免关-开-关后误判为已变更而多发一次更新事件）
+            const currentRemindAt = props.task?.remindAt ?? props.remind?.remindAt ?? ''
+            const currentRemindTime = props.task?.remindTime ?? props.remind?.remindTime ?? ''
+            const isRemindAtSame = updateVO.remindAt === currentRemindAt
             const isRemindRepeatSame =
                 updateVO.remindRepeat ===
                 (props.task?.remindRepeat ?? props.remind?.remindRepeat ?? 'none')
-            const isRemindTimeSame =
-                updateVO.remindTime === (props.task?.remindTime ?? props.remind?.remindTime ?? null)
+            const isRemindTimeSame = updateVO.remindTime === currentRemindTime
             const isRemindWeekdaysSame =
                 updateVO.remindWeekdays.toString() ===
                 (props.task?.remindWeekdays ?? props.remind?.remindWeekdays ?? []).toString()
