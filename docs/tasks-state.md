@@ -5,7 +5,7 @@
 
 - **当前批次**：TASK-13 导出任务文本对话框优化（可编辑 + 子任务数据丰富）
 - **PRD**：`docs/prds/2026-09-21-task-export-editable-enriched.md`
-- **阶段**：**已交付（技术验收闭环）**，等待用户终签（4 项视觉人眼确认）
+- **阶段**：TASK-16 **已交付（技术验收闭环）**，等待用户终签（5 项视觉人眼确认）；TASK-13/TASK-15 亦待终签
 - **上一阶段检查点**：`e4e1064f`（实现）/ `4cc0e34b`（测试）/ `4d7fd0d9`（文档）—— 已验收，可回滚
 - **调度授权**：2026-09-21 用户授权「持续推进到落地」
 - **需求池（撤回/搁置）**：TASK-14「日历视图刷新功能」——用户 2026-09-21 **撤回**，待其自行测试一段时间后再提（**未澄清、未开工、无 PRD**）。
@@ -40,6 +40,7 @@
 | T59      | rd-fe         | 前端 | 按 D5 改为内联命名 + 清理 i18n                                                                      | ✅ 已回执并验收（`calendar.quickCreateName` 三处删除、grep 为空；`quick-create.vue` 加可选 `inputTestid`（additive）；`subscriber` 来源变更经核为行为中性）                                |
 | T61      | qa            | 测试 | 日视图 ←/→ 步长回归守卫（5 例）                                                                     | ✅ 已回执并验收（仅新增 1 文件；全仓 **103 文件 / 890 例全绿**）                                                                                                                           |
 | T62      | rd-fe         | 前端 | 修 ←/→ 三元分支 + label（`上个月/上周/前一天`）                                                     | ✅ 已验收（`navPrev`/`navNext` 三分支在位）—— **待终态回执**                                                                                                                               |
+| T63      | rd-fe         | 前端 | TASK-16 提交（feat `f08530d7` 20 文件 / test `e13ed51c` 7 文件）                                    | ✅ 已回执并验收（**无夹带** `.agents/.codegraph/.pi`；PM 复跑 890 例全绿 / `vp check` 全绿 / `guard:ddd` OK / fleet check 0）                                                              |
 | T52      | qa            | 测试 | 独立验收（AC 全表 + 判别力 + C1–C14 + 双端 build + 性能）                                           | ⏳ 已派发                                                                                                                                                                                  |
 | T56      | rd-fe         | 前端 | 根治 `.agents/**` × 格式化冲突                                                                      | ✅ 已回执并验收（`28992363`，2 文件；**PM 独立复现容错**：26 文件转 CRLF + roles 4/8 → 解析成功/0 ERR/0 frontmatter 失败；`vp check --fix .agents` → NO FILE CHANGED；`vp check` 全绿 1279 | 1100） |
 | T57      | rd-fe         | 前端 | CodeGraph 警告不再计入 check 退出码                                                                 | ✅ 已回执并验收（`02626f23`，1 文件；PM 读码确认该分支已无 `rc=1`、其余 10 处 `rc=1` 全为真硬错误；**实测 `NAO_TMUX_LAYOUT=bogus` 仍 exit 1**；基线复跑 exit 0）                           |
