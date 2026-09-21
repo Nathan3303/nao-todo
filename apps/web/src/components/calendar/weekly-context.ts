@@ -25,6 +25,7 @@ export type CalendarWeeklyContext = {
     onOpenDay: (dateKey: string) => void
     onOpenTask: (taskId: TaskViewObject['id']) => void
     onGoMonth: () => void
+    onGoDay: () => void
     onPrevWeek: () => void
     onNextWeek: () => void
     onGoToday: () => void

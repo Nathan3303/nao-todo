@@ -4,6 +4,8 @@ import { computed, inject, nextTick, provide, ref, watch } from 'vue'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import CalendarDayDrawer from './day-drawer.vue'
 import CalendarWeekly from '../weekly/index.vue'
+import CalendarDaily from '../daily/index.vue'
+import { CALENDAR_DAY_CONTEXT_KEY, type CalendarDayContext } from '../daily/context'
 import QuickCreate from './quick-create.vue'
 import TaskBar from './task-bar.vue'
 import UnscheduledDrawer from './unscheduled-drawer.vue'
@@ -49,7 +51,7 @@ const {
 
 // @viewContext 应用级子侧栏开关（与任务页 header 行为一致）
 const { isDisplayAside, switchDisplayAside } = inject(INDEX_VIEW_CONTEXT_KEY)!
-const { pomodoroBadge } = inject(CALENDAR_VIEW_CONTEXT_KEY)!
+const { pomodoroBadge, subscriber } = inject(CALENDAR_VIEW_CONTEXT_KEY)!
 
 // @viewLogic 月历视图逻辑
 const {
@@ -87,12 +89,15 @@ const {
     clearFilter,
     // —— 周起始口径（C9） ——
     weekStart,
-    // —— 视图态（A1 月/周） ——
+    // —— 视图态（A1 月/周/日） ——
     viewMode,
     goToWeekView,
     goToMonthView,
+    goToDayView,
     goPrevWeek,
     goNextWeek,
+    goPrevDay,
+    goNextDay,
     tasks,
     // —— 格内快速新建（B6） ——
     quickCreateDate,
@@ -268,6 +273,7 @@ provide<CalendarWeeklyContext>(CALENDAR_WEEKLY_CONTEXT_KEY, {
     onOpenDay: openDay,
     onOpenTask: openTaskFromPanel,
     onGoMonth: goToMonthView,
+    onGoDay: goToDayView,
     onPrevWeek: goPrevWeek,
     onNextWeek: goNextWeek,
     onGoToday: goToToday,
@@ -290,6 +296,32 @@ provide<CalendarWeeklyContext>(CALENDAR_WEEKLY_CONTEXT_KEY, {
     onDragBar: (task, event) => drag.startPossible(task, 'bar', event),
     onJumpYearMonth: jumpToWeekOfMonthFirst,
     onBadgeLabel: badgeLabel
+})
+
+// —— TASK-16 日视图上下文 provide（C14：复用同一 sortedTasks 快照，切视图不重拉） ——
+provide<CalendarDayContext>(CALENDAR_DAY_CONTEXT_KEY, {
+    loading,
+    error,
+    onRetry: retry,
+    anchorKey: selectedKey,
+    todayKey: todayDateKey(),
+    tasks: sortedTasks,
+    sort,
+    onOpenTask: openTaskFromPanel,
+    onTaskCreated: (taskId) => subscriber.emit('AddNewTaskId', taskId),
+    onOpenUnscheduled: () => (unscheduledOpen.value = true),
+    onOpenDay: openDay,
+    onPrevDay: goPrevDay,
+    onNextDay: goNextDay,
+    onGoToday: goToToday,
+    onGoMonth: goToMonthView,
+    onGoWeek: goToWeekView,
+    filterActive,
+    hideCompleted,
+    onClearFilter: clearFilter,
+    onShowCompleted: () => (hideCompleted.value = false),
+    unscheduledCount: computed(() => unscheduledTasks.value.length),
+    unscheduledDisabled: unscheduledBtnDisabled
 })
 
 // —— C2-F9 月视图标题年-月跳转（TASK-09：NueDropdown 触发器；O2 抽取 useMonthJump；跳转语义不变） ——
@@ -315,18 +347,29 @@ const guardNav = (action: () => void) => (): void => {
     action()
 }
 const NAV_GROUP = '日历'
-useShortcut(
-    'calendar.nav.prev',
-    'arrowleft',
-    guardNav(() => (viewMode.value === 'month' ? goPrevMonth() : goPrevWeek())),
-    { scope: CALENDAR_KEY_SCOPE, label: '上个月/上周', group: NAV_GROUP, preventDefault: true }
-)
-useShortcut(
-    'calendar.nav.next',
-    'arrowright',
-    guardNav(() => (viewMode.value === 'month' ? goNextMonth() : goNextWeek())),
-    { scope: CALENDAR_KEY_SCOPE, label: '下个月/下周', group: NAV_GROUP, preventDefault: true }
-)
+// TASK-16 C14：月/周/日三态步长分别 ±1 月 / ±1 周 / ±1 天
+const navPrev = (): void => {
+    if (viewMode.value === 'month') goPrevMonth()
+    else if (viewMode.value === 'week') goPrevWeek()
+    else goPrevDay()
+}
+const navNext = (): void => {
+    if (viewMode.value === 'month') goNextMonth()
+    else if (viewMode.value === 'week') goNextWeek()
+    else goNextDay()
+}
+useShortcut('calendar.nav.prev', 'arrowleft', guardNav(navPrev), {
+    scope: CALENDAR_KEY_SCOPE,
+    label: '上个月/上周/前一天',
+    group: NAV_GROUP,
+    preventDefault: true
+})
+useShortcut('calendar.nav.next', 'arrowright', guardNav(navNext), {
+    scope: CALENDAR_KEY_SCOPE,
+    label: '下个月/下周/后一天',
+    group: NAV_GROUP,
+    preventDefault: true
+})
 useShortcut(
     'calendar.nav.today',
     't',
@@ -432,6 +475,15 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
                             @click="goToWeekView"
                         >
                             周
+                        </nue-button>
+                        <nue-button
+                            theme="small,ghost"
+                            class="cal-view-btn"
+                            title="切换日视图"
+                            aria-pressed="false"
+                            @click="goToDayView"
+                        >
+                            日
                         </nue-button>
                     </nue-div>
                     <nue-divider vertical aria-hidden="true" />
@@ -576,8 +628,13 @@ useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || tod
         </template>
 
         <!-- 周视图（A1；O14：状态与动作由 provide 的周视图上下文注入，无 props 穿透） -->
-        <template v-else>
+        <template v-else-if="viewMode === 'week'">
             <calendar-weekly />
+        </template>
+
+        <!-- 日视图（TASK-16；状态与动作由 provide 的日视图上下文注入） -->
+        <template v-else>
+            <calendar-daily />
         </template>
 
         <!-- 当日任务面板 -->

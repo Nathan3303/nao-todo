@@ -1,5 +1,6 @@
 import dayjs from 'dayjs'
 import type { TaskViewObject } from '@nao-todo/domain-task'
+import { packLanes, type LaneProbe } from '../lane-packing'
 
 /**
  * 月历布局纯函数模块
@@ -218,42 +219,30 @@ const buildRowContent = (
                 isEnd: s.endKey === endKey
             }
         })
-        // 仅保留「起始列升序」这一日历语法必需键；同 colStart 内保持传入顺序
-        // （＝用户排序，由 Array.sort 稳定性承载）。不得再引入 colEnd 比较：
-        // 那会用跨度长度覆盖用户排序（TASK-15 D1）。
-        .sort((a, b) => a.colStart - b.colStart)
 
-    // 贪婪分配轨道：每个 span 放入首个与其无重叠的轨道
-    const laneEnds: number[][] = [] // lane -> 该轨道已占用区间的结束列
-    const segments: CalendarSegment[] = []
-    for (const item of rowSpans) {
-        const task = taskBySpanId.get(item.span.taskId)!
-        let lane = 0
-        while (true) {
-            const ends = laneEnds[lane]
-            if (!ends || !ends.some((end) => item.colStart <= end)) break
-            lane++
-        }
-        ;(laneEnds[lane] ??= []).push(item.colEnd)
-        segments.push({
-            task,
-            colStart: item.colStart,
-            colEnd: item.colEnd,
-            lane,
-            isStart: item.isStart,
-            isEnd: item.isEnd
-        })
-    }
+    // 轨道打包 + 溢出：统一走 packLanes（ADR C3–C4），探针 = 本行 7 个日期格；
+    // packLanes 内部仅按 colStart 稳定排序（同起点保持入参＝用户排序，TASK-15 D1）。
+    const probes: LaneProbe[] = rowCells.map((cell, index) => ({
+        key: cell.dateKey,
+        colStart: index,
+        colEnd: index
+    }))
+    const { packed, overflow: packedOverflow } = packLanes(rowSpans, maxLanes, probes)
 
-    // R5 溢出统计：该格内所有任务数 - 落在可视轨道内的任务数
-    const overflow: CalendarOverflow[] = []
-    for (const cell of rowCells) {
-        const col = cell.cell % GRID_COLUMNS
-        const overlapped = segments.filter((s) => s.colStart <= col && s.colEnd >= col)
-        const drawn = overlapped.filter((s) => s.lane < maxLanes).length
-        const hidden = overlapped.length - drawn
-        if (hidden > 0) overflow.push({ cell: cell.cell, dateKey: cell.dateKey, count: hidden })
-    }
+    const segments: CalendarSegment[] = packed.map((item) => ({
+        task: taskBySpanId.get(item.span.taskId)!,
+        colStart: item.colStart,
+        colEnd: item.colEnd,
+        lane: item.lane,
+        isStart: item.isStart,
+        isEnd: item.isEnd
+    }))
+
+    // R5 溢出：packLanes 以 dateKey 为 key 回传，映射回行内格序号与 cell
+    const overflow: CalendarOverflow[] = packedOverflow.map((item) => {
+        const cell = rowCells.find((c) => c.dateKey === item.key)!
+        return { cell: cell.cell, dateKey: item.key, count: item.count }
+    })
     return { segments, overflow }
 }
 

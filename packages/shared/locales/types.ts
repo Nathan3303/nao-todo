@@ -526,6 +526,8 @@ export interface LocaleMessages {
     'calendar.weekday.fri': string
     'calendar.weekday.sat': string
     'calendar.weekday.sun': string
+    'calendar.allDay': string
+    'calendar.noTasksToday': string
 
     // Date relative
     'date.today': string

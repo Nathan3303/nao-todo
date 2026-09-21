@@ -6,6 +6,8 @@ defineOptions({ name: 'CalendarQuickCreate' })
 const props = defineProps<{
     /** 创建请求进行中（Enter 期间防连点；失败保留文本由父保持挂载） */
     pending?: boolean
+    /** 可选：透传到输入框的 data-testid（日视图冻结 DOM 契约用；缺省不影响月/周） */
+    inputTestid?: string
 }>()
 const emit = defineEmits<{
     (e: 'submit', name: string): void
@@ -47,6 +49,7 @@ onMounted(() => {
         <input
             ref="inputEl"
             v-model="draft"
+            :data-testid="inputTestid"
             class="quick-create__input"
             type="text"
             placeholder="任务名称"

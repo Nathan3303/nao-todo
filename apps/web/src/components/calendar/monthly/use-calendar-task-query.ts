@@ -54,6 +54,9 @@ export const useCalendarTaskQuery = (deps: {
                 if (isLastPage) break
             }
             if (!error.value) taskIds.value = nextIds
+        } catch (thrown) {
+            // 仓储/请求层意外抛错（如异常响应形状）不冒泡为未处理拒绝：归一为错误态
+            error.value = unwrapError(thrown as Error)
         } finally {
             loading.value = false
         }

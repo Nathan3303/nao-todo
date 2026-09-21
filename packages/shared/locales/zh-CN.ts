@@ -536,6 +536,8 @@ const zhCN: LocaleMessages = {
     'calendar.weekday.fri': '五',
     'calendar.weekday.sat': '六',
     'calendar.weekday.sun': '日',
+    'calendar.allDay': '全天',
+    'calendar.noTasksToday': '当日暂无任务',
 
     // Date relative
     'date.today': '今天 {time}',

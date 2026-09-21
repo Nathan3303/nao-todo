@@ -549,6 +549,8 @@ const enUS: LocaleMessages = {
     'calendar.weekday.fri': 'Fri',
     'calendar.weekday.sat': 'Sat',
     'calendar.weekday.sun': 'Sun',
+    'calendar.allDay': 'All day',
+    'calendar.noTasksToday': 'No tasks today',
 
     // Date relative
     'date.today': 'Today {time}',

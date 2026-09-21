@@ -133,8 +133,8 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         monthIndex.value = targetMonth - 1
     }
 
-    // @states 视图模式（A1：月/周切换；默认月）
-    const viewMode = ref<'month' | 'week'>('month')
+    // @states 视图模式（A1：月/周/日切换；默认月；TASK-16 C14 切视图不重拉数据）
+    const viewMode = ref<'month' | 'week' | 'day'>('month')
 
     // @method 锚点月同步：切回月视图前把月定位到选中日所在月（跨月周导航后仍准确定位）
     const syncAnchorMonth = () => {
@@ -151,6 +151,17 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
     const goToMonthView = () => {
         syncAnchorMonth()
         viewMode.value = 'month'
+    }
+    const goToDayView = () => {
+        viewMode.value = 'day'
+    }
+
+    // @method 日导航：±1 天移动锚点（日视图头部用；复用同一快照）
+    const goPrevDay = () => {
+        selectedKey.value = dateKeyOf(dayjs(selectedKey.value).subtract(1, 'day').valueOf())
+    }
+    const goNextDay = () => {
+        selectedKey.value = dateKeyOf(dayjs(selectedKey.value).add(1, 'day').valueOf())
     }
 
     // @method 周导航：±7 天移动锚点（周视图头部用；月份由 syncAnchorMonth 延迟对齐）
@@ -288,10 +299,13 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         dismissUndoAction,
         createTaskOnDay,
         openTaskDetails,
-        // —— 视图态（A1 周视图） ——
+        // —— 视图态（A1 月/周/日） ——
         viewMode,
         goToWeekView,
         goToMonthView,
+        goToDayView,
+        goPrevDay,
+        goNextDay,
         goPrevWeek,
         goNextWeek,
         // —— 任务快照（周视图同源数据；含跨月任务，按跨度裁剪） ——

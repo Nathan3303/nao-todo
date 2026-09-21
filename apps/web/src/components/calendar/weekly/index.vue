@@ -34,6 +34,7 @@ const {
     onOpenDay,
     onOpenTask,
     onGoMonth,
+    onGoDay,
     onPrevWeek,
     onNextWeek,
     onGoToday,
@@ -220,6 +221,15 @@ const {
                         @click="onGoMonth"
                     >
                         周
+                    </nue-button>
+                    <nue-button
+                        theme="small,ghost"
+                        class="wk-view-btn"
+                        title="切换日视图"
+                        aria-pressed="false"
+                        @click="onGoDay"
+                    >
+                        日
                     </nue-button>
                 </nue-div>
                 <span class="wk-view-sep" aria-hidden="true"></span>
