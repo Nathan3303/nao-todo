@@ -7,6 +7,9 @@
  */
 
 /* ── 设计底座令牌（沿用既有 NueUI 黑白灰令牌；task-bar 的 --cal-* 消费） ── */
+/* C6.1 令牌随行：唯一承载层 `.nue-calendar-host` 必须在令牌选择器组内
+   （daily 本就不在组内、靠继承 ⇒ 只搬 padding 不搬令牌会让日视图 --cal-* 全失效） */
+.nue-calendar-host,
 .nue-calendar-monthly,
 .nue-calendar-weekly {
     --cal-bg: var(--nue-primary-color-0);
@@ -41,6 +44,15 @@
         var(--nue-primary-text-color) 38%,
         var(--nue-primary-color-0)
     );
+}
+
+/* ── 唯一承载层（C6.1：padding / --cal-* 令牌 / 高度 / 背景 / 溢出） ── */
+.nue-calendar-host {
+    height: 100%;
+    min-height: 0;
+    padding: 1rem;
+    background: var(--cal-bg);
+    overflow: hidden;
 }
 
 /* ── 视图头部导航 ── */

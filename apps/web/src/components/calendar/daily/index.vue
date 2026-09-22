@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Loading as LoadingComp, t } from '@nao-todo/shared'
-import { computed, onUnmounted, ref, watch } from 'vue'
+import { computed, inject, onUnmounted, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { translateTaskError, useTasksStore } from '@nao-todo/presentation/task'
@@ -11,6 +11,7 @@ import QuickCreate from '../monthly/quick-create.vue'
 import CalendarSortDropdown from '../monthly/calendar-sort-dropdown.vue'
 import ScheduleUndoToast from '../monthly/undo-toast.vue'
 import { useCalendarSchedule } from '../monthly/use-calendar-schedule'
+import { CALENDAR_UNDO_SINK_KEY } from '../undo-sink'
 import { useDragSchedule } from '../monthly/use-drag-schedule'
 import { segmentStyleInColumns, useCalendarGrid } from '../monthly/use-calendar-grid'
 import { snapMinutes } from '../snap'
@@ -70,6 +71,29 @@ const {
     dismissUndoAction,
     applyTimePatch
 } = useCalendarSchedule({ taskUseCase: interactionTaskUseCase })
+
+// —— C9 撤销呈现唯一：有宿主时经注入通道上报宿主渲染/转发（全节单 toast）；
+//        无宿主（单测/独立挂载）走自足回退（本地渲染 toast）⇒ daily-interactions.test.ts 零改动 ——
+const undoSink = inject(CALENDAR_UNDO_SINK_KEY, null)
+if (undoSink) {
+    watch(
+        undoAction,
+        (action) => {
+            if (action) {
+                undoSink.report({
+                    action,
+                    busy: undoBusy,
+                    undo: undoLast,
+                    dismiss: dismissUndoAction
+                })
+            } else {
+                undoSink.clear()
+            }
+        },
+        { immediate: true }
+    )
+    onUnmounted(() => undoSink.clear())
+}
 
 // @states 交互层容器与当前手势（move=拖拽改时间 / resize=拉伸改时长）
 const trackEl = ref<HTMLElement | null>(null)
@@ -422,9 +446,9 @@ const nowLeft = computed(() => {
             </div>
         </div>
 
-        <!-- U2 撤销（复用共享撤销条，additive testid） -->
+        <!-- C9 撤销（有宿主时经注入通道上报宿主渲染；无宿主自足回退本地渲染） -->
         <schedule-undo-toast
-            v-if="undoAction"
+            v-if="!undoSink && undoAction"
             :action="undoAction"
             :busy="undoBusy || scheduleBusy"
             @undo="undoLast"

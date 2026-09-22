@@ -133,29 +133,6 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         monthIndex.value = targetMonth - 1
     }
 
-    // @states 视图模式（A1：月/周/日切换；默认月；TASK-16 C14 切视图不重拉数据）
-    const viewMode = ref<'month' | 'week' | 'day'>('month')
-
-    // @method 锚点月同步：切回月视图前把月定位到选中日所在月（跨月周导航后仍准确定位）
-    const syncAnchorMonth = () => {
-        const anchor = dayjs(selectedKey.value)
-        if (!anchor.isValid()) return
-        year.value = anchor.year()
-        monthIndex.value = anchor.month()
-    }
-
-    // @method 视图切换（不重拉数据：复用同一筛选/任务快照）
-    const goToWeekView = () => {
-        viewMode.value = 'week'
-    }
-    const goToMonthView = () => {
-        syncAnchorMonth()
-        viewMode.value = 'month'
-    }
-    const goToDayView = () => {
-        viewMode.value = 'day'
-    }
-
     // @method 日导航：±1 天移动锚点（日视图头部用；复用同一快照）
     const goPrevDay = () => {
         selectedKey.value = dateKeyOf(dayjs(selectedKey.value).subtract(1, 'day').valueOf())
@@ -184,8 +161,9 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         quickCreateDate.value = ''
     }
 
-    // @watch 翻月/翻周/换视图/切日期 → 编辑器自动关闭（随所在格失效，不残留）
-    watch([year, monthIndex, selectedKey, viewMode], () => {
+    // @watch 翻月/翻周/切日期 → 编辑器自动关闭（随所在格失效，不残留）；
+    //        换视图（路由）关闭由宿主 watch viewMode 负责
+    watch([year, monthIndex, selectedKey], () => {
         quickCreateDate.value = ''
     })
 
@@ -299,11 +277,7 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         dismissUndoAction,
         createTaskOnDay,
         openTaskDetails,
-        // —— 视图态（A1 月/周/日） ——
-        viewMode,
-        goToWeekView,
-        goToMonthView,
-        goToDayView,
+        // —— 日/周导航步长（视图切换由宿主按 route.name 派生 + 导航动作） ——
         goPrevDay,
         goNextDay,
         goPrevWeek,
