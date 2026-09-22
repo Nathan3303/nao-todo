@@ -2,6 +2,26 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.9.0] - 2026-09-23
+
+发布批次：任务导出多格式（JSON / HTML 账单）+ 导出框内加载与错误态 + 日视图测试时间炸弹修复。**Tag `v1.9.0`** · root `1.9.0` / `@nao-todo/desktopapp` `1.9.0` / `@nao-todo/webapp` `1.9.0` / `@nao-todo/presentation` `0.6.0` / `@nao-todo/shared` `1.3.2`（`@nao-todo/domain-task` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop。
+
+### 新增（任务导出）
+
+- **JSON 导出格式**（TASK-22，`c25ac0ec`）：`generateTaskJson(root, exportedAt)` 纯函数；固定全量 schema（`formatVersion` / `exportedAt` / `task` 包装），**标量与时间缺失输出 `null`（空串归一为 `null`）、数组缺失输出 `[]`**（机器消费稳定）；时间保持 ISO 与原始枚举值（`state` / `priority` / `isGivenUp` / `projectId` / `tagIds`），另附本地化 `stateLabel` / `priorityLabel` / `projectName` / `tagNames`；描述保留原始换行；递归字段名 `subTasks` 与 Markdown / HTML 段一致。
+- **HTML 账单风格导出（可独立打开的单据）**（TASK-22，`c25ac0ec`）：`generateTaskHtml(root, labels, generatedAt)` 纯函数输出**完整 HTML 文档**（`<!DOCTYPE>` + `<head>` + 内联 `<style>`），**自包含**（零外部资源 / 零脚本）；**固定浅色**（`color-scheme: light` —— 成品 = 纸）以保证「预览所见 = 复制源码所得」；**五字符转义**（`& < > " '`）覆盖全部插值文本；描述 `pre-wrap` 保留换行；空段整段省略；**合计段**给出检查项 / 子任务完成度（判定条件为**对象数 `y > 0`**，`x = 0` 仍输出 `0/y`，`0/0` 永不出现）；视觉规格见 PRD §14（纯灰阶小票：等宽数字 + 右对齐对账列 + 撕口虚线，完成度计量条为唯一记忆点）。
+- **导出对话框：多格式 + 框内加载/错误态**（TASK-22，`2a1df84e` / `af08a270`）：流程**反转**为「点导出**立即开框**」→ 框内 `loading-error` 三态（加载 / 错误 + **「重试」** / 内容），失败保留 toast；顶部格式分段控件（Markdown / JSON / HTML，`data-format`）；**Markdown 可编辑（含「还原」）**、JSON 只读 `<pre>`、HTML 经 `iframe[sandbox=""]` + `srcdoc` 只读预览；**一次取数产三格式**（切格式零重取、`retry` 防重入）；`env.d.ts` 补 `vite/client` 类型（供 `?raw` 源码级断言）。
+
+### 修复
+
+- **日视图测试日期时间炸弹**（DEF-4，`5d2e51f1`，**非本批引入**）：`daily-view.test.ts` 全天任务 fixture 硬编码 `endAt: '2026-09-22'`，而视图按 `todayDateKey()` 建网格 ⇒ 该日之后**恒红**（v1.8.0 验证日恰等于该日故曾绿）；改为相对当天（`const TODAY = dayjs().format('YYYY-MM-DD')`）。
+
+### 工程与治理
+
+- **`.agents/**` 舰队资产同步至 nao-skill v0.6.1**（`ce55edbc` / `7284e116`）：`nao-fleet.sh` 修 `ensure` 无 `--task` 时 `set -u` 崩溃（上游 `a363f12`），并新增**文本契约校验**（`check_eol` + `check_roles_indent`：`.agents/**` 全 LF、`roles.yaml` 缩进 2/4、禁 Tab，失败 rc=1 且报告先于解析 die）⇒ 此前靠人守的「全 LF + 缩进 2/4」不变量**首次有了守卫**。
+- `AGENTS.md` 更正已过期的 `.agents/**` 危险警告（`fmt.ignorePatterns` 已覆盖 ⇒ 全仓 `vp check --fix` 安全）。
+- 工艺规则：PM 不再重复跑终局门禁；由 worker 跑**全量**门禁并回执精确数字（见 `docs/tasks-state.md` §四）。
+
 ## [v1.8.0] - 2026-09-22
 
 发布批次：日历日视图三批（子路由化 / 时间轴缩放 / 交互调整）+ 导出对话框 + 工具与治理。**Tag `v1.8.0`** · root `1.8.0` / `@nao-todo/desktopapp` `1.8.0` / `@nao-todo/webapp` `1.8.0` / `@nao-todo/presentation` `0.5.0` / `@nao-todo/domain-task` `1.3.0` / `@nao-todo/shared` `1.3.1`（`@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop。
