@@ -110,19 +110,30 @@
 
 ## 10. 派发记录
 
-| 任务 | 目标会话      | 角色 | 概要                                                                                                                | 对应 AC     | 状态                    |
-| :--- | :------------ | :--- | :------------------------------------------------------------------------------------------------------------------ | :---------- | :---------------------- |
-| T69  | rd-fe         | 前端 | **先决**：补回 `data-testid="day-unscheduled-entry"` + 提交用户 daily 改动（绿灯基线）                              | AC3         | ✅ `0d1b801e`           |
-| T70  | rd-fe         | 前端 | U1：布局单一基线（C6）+ D7 周 active 误绑                                                                           | AC1/AC2/AC4 | ✅ `c3aa5c1b`           |
-| T74  | arch-designer | 架构 | U2 落点评审裁决：C1 细化 + 撤销栈例外、C6.1 承载层迁 `.nue-calendar-host`、新增 C9–C11、补充 C5、D8/D9              | —           | ✅ `d3fff86a`           |
-| T71  | rd-fe         | 前端 | U2：宿主上移（`.nue-calendar-host` + 令牌随行 + monthly 去 padding）+ 三条子路由 + `viewMode` 派生 + `replace` + D4 | AC5/AC6/AC7 | ⏳ 已派发（2026-09-22） |
-| T72  | PM            | —    | 门禁复核 + 静态核验 + 交付小结（用户手工验收）                                                                      | AC1–AC8     | 依赖 T71                |
+| 任务 | 目标会话      | 角色 | 概要                                                                                                                | 对应 AC     | 状态                                                        |
+| :--- | :------------ | :--- | :------------------------------------------------------------------------------------------------------------------ | :---------- | :---------------------------------------------------------- |
+| T69  | rd-fe         | 前端 | **先决**：补回 `data-testid="day-unscheduled-entry"` + 提交用户 daily 改动（绿灯基线）                              | AC3         | ✅ `0d1b801e`                                               |
+| T70  | rd-fe         | 前端 | U1：布局单一基线（C6）+ D7 周 active 误绑                                                                           | AC1/AC2/AC4 | ✅ `c3aa5c1b`                                               |
+| T74  | arch-designer | 架构 | U2 落点评审裁决：C1 细化 + 撤销栈例外、C6.1 承载层迁 `.nue-calendar-host`、新增 C9–C11、补充 C5、D8/D9              | —           | ✅ `d3fff86a`                                               |
+| T71  | rd-fe         | 前端 | U2：宿主上移（`.nue-calendar-host` + 令牌随行 + monthly 去 padding）+ 三条子路由 + `viewMode` 派生 + `replace` + D4 | AC5/AC6/AC7 | ✅ 已交付（`a15ce8f9` 13 文件）                             |
+| T72  | PM            | —    | 门禁复核 + 静态核验 + 交付小结（用户手工验收）                                                                      | AC1–AC8     | ⏳ 门禁复核已通过；**待用户人眼手工验收**（清单见 §13）     |
+| T75  | arch-designer | 架构 | T71 一致性裁决（零代码）：瞬态态归属 (a)/(b)                                                                        | —           | ✅ 裁决 **(a) 不偏离**（`003c25e6` 落盘 ADR C1 补句 + D10） |
+| T76  | rd-fe         | 前端 | TASK-18 提交（精确 pathspec，禁 push）                                                                              | —           | ✅ 已交付（`a15ce8f9` + `c76bc1fd`，无夹带）                |
 
 **顺序**：严格串行（T69 → T70 → T71 → T72）。U2 必须与宿主上移**同单**（C1/C2），不得拆分。
 
 ## 11. 验收结果
 
-—
+- **交付**：`a15ce8f9`（feat，13 文件）+ `c76bc1fd`（test，3 文件）；**未 push**（发版策略：统一发版时 push + tag）。
+- **AC 核验（PM 独立复跑 + 读码）**：
+    - AC5 路由：三子路由可达/深链（含 `:taskId?`）、默认经 `beforeEnter` 落月、`router.replace` + `resolveViewSwitch` 幂等短路 + params/query 透传、`viewMode` 只读派生无镜像；映射断言用**真实路由表**遍历（含反向穷举）。✓
+    - AC6 零重拉：宿主持 `router-view` 不随子路由卸载、`useCalendarTaskQuery` 单实例；用例真跑 月→周→日→月 断言 `list` **恒 1 次**。✓
+    - AC7 D4：父级去 `redirect` 改 `beforeEnter`，全局 `beforeEach` 能命中 `to.name==='calendar'`；用例复用真实 `resolveSectionRedirect` 真跑内存路由，恢复 `/calendar/weekly/t-9`。✓
+    - AC8 工程/负向：PM 于 HEAD 复跑 **106 文件 / 906 例全绿**、`vp check` 0、`guard:ddd` OK、`pnpm webapp build` 与 `pnpm run desktop:build` 均 exit 0、全仓 grep 无 keep-alive、移动端与 `packages/presentation-react` 零改动、既有 T49/T54/T55/T58/T61 断言未被触碰。✓
+    - C6.1 四条 / C9 / C1（D8/D9/D10）：码上逐条相符。✓
+- **夹具自检**：rd-fe 侧 906 全绿 + check 0 + 双端 build ✓（与 PM 复跑一致）。
+- **未过项**：无（门禁口径）。**待用户人眼验收项**见 §13。
+- **提交纪律**：两提交逐文件精确 pathspec、无 `.agents/**` / `.codegraph/**` / `.pi/**` / `docs/**` 夹带、未 push。✓
 
 ## 12. 变更记录
 
