@@ -59,6 +59,24 @@ const normalizeWidth = (css: string): string => {
     return el.style.width
 }
 
+// —— TASK-20 源级断言辅助（jsdom 不应用 SFC CSS ⇒ 读原始样式文本，见 PM T88 指示） ——
+const DAILY_RAW = import.meta.glob(['../*.vue', '../*.css', '../../monthly/task-bar.vue'], {
+    query: '?raw',
+    import: 'default',
+    eager: true
+}) as Record<string, string>
+const dailyStyle = (): string => Object.values(DAILY_RAW).join('\n')
+
+/** 取 `.selector { ... }` 首块文本（正则转义选择器） */
+const cssRule = (css: string, selector: string): string => {
+    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const match = new RegExp(`${escaped}\\s*\\{`).exec(css)
+    if (!match) return ''
+    const start = match.index + match[0].length
+    const end = css.indexOf('}', start)
+    return end < 0 ? css.slice(start) : css.slice(start, end)
+}
+
 describe('TASK-16 日视图 DOM 契约（C6 / C12）', () => {
     it('列头容器 48 个子节点、其中 24 个有文本（整点）', () => {
         const wrapper = mountDaily()
@@ -113,23 +131,26 @@ describe('TASK-19 档位矩阵列头（D1.1 / C6 / AC2）', () => {
 })
 
 describe('TASK-19 滚动容器与全天泳道（D5 / AC4）', () => {
-    it('.day-scroll 宽度样式 = dayScrollWidthCss(1, 48)（×1 默认）', () => {
+    // TASK-20 变更 E：整数列宽。jsdom 无布局 ⇒ 容器宽 0 ⇒ 落下限 `列数×20px`（与实现同源计算）。
+    it('.day-scroll 宽度样式 = dayScrollWidthCss(1, 48, 0)（×1 默认；整数列宽）', () => {
         const wrapper = mountDaily()
         const scroll = wrapper.find('.day-scroll')
         expect(scroll.exists()).toBe(true)
         expect((scroll.element as HTMLElement).style.width).toBe(
-            normalizeWidth(dayScrollWidthCss(1, 48))
+            normalizeWidth(dayScrollWidthCss(1, 48, 0))
         )
+        expect((scroll.element as HTMLElement).style.width).toBe('960px')
         wrapper.unmount()
     })
 
-    it('×2 ⇒ .day-scroll 宽度样式 = dayScrollWidthCss(2, 96)', () => {
+    it('×2 ⇒ .day-scroll 宽度样式 = dayScrollWidthCss(2, 96, 0)', () => {
         const wrapper = mountDaily(ref(2))
         const scroll = wrapper.find('.day-scroll')
         expect(scroll.exists()).toBe(true)
         expect((scroll.element as HTMLElement).style.width).toBe(
-            normalizeWidth(dayScrollWidthCss(2, 96))
+            normalizeWidth(dayScrollWidthCss(2, 96, 0))
         )
+        expect((scroll.element as HTMLElement).style.width).toBe('1920px')
         wrapper.unmount()
     })
 
@@ -149,7 +170,11 @@ describe('TASK-19 滚动容器与全天泳道（D5 / AC4）', () => {
         expect(scroll.element.contains(grid.element)).toBe(true)
         // 泳道不是 .day-grid 子节点，且位于其之前（时间轴区顶部）
         expect(grid.element.contains(allday.element)).toBe(false)
-        expect(allday.element.nextElementSibling).toBe(grid.element)
+        // TASK-20 变更 D（r5）：均为 .day-scroll 直接子节点、且泳道在前；允许中间存在 <nue-divider />
+        expect(allday.element.parentElement).toBe(scroll.element)
+        expect(grid.element.parentElement).toBe(scroll.element)
+        const children = Array.from(scroll.element.children)
+        expect(children.indexOf(allday.element)).toBeLessThan(children.indexOf(grid.element))
         wrapper.unmount()
     })
 
@@ -180,8 +205,46 @@ describe('TASK-19 滚动容器与全天泳道（D5 / AC4）', () => {
         expect(lane.exists()).toBe(true)
         expect(lane.findAll('.day-allday-chip')).toHaveLength(0)
         expect(lane.findAll('.cal-item').length).toBeGreaterThanOrEqual(1)
-        // 结构契约保持
-        expect(lane.element.nextElementSibling).toBe(wrapper.find('.day-grid').element)
+        // TASK-20 变更 D（r5）：泳道与网格均为 .day-scroll 直接子节点且泳道在前（允许 divider）
+        const scroll = wrapper.find('.day-scroll')
+        const grid = wrapper.find('.day-grid')
+        expect(lane.element.parentElement).toBe(scroll.element)
+        expect(grid.element.parentElement).toBe(scroll.element)
+        const children = Array.from(scroll.element.children)
+        expect(children.indexOf(lane.element)).toBeLessThan(children.indexOf(grid.element))
         wrapper.unmount()
+    })
+})
+
+describe('TASK-20 AC3 纵向可滚 / AC4 列头对齐（源级契约；jsdom 不应用 SFC CSS）', () => {
+    it('AC3 `.day-body` = overflow-y: auto + overflow-x: hidden（纵向可滚、横向由 pan 接管）', () => {
+        const block = cssRule(dailyStyle(), '.day-body')
+        expect(block).not.toBe('')
+        expect(block).toContain('overflow-y: auto')
+        expect(block).toContain('overflow-x: hidden')
+        // 不得残留简写 `overflow:`（会覆盖上面的长写，重新切断纵向）
+        expect(block).not.toMatch(/(^|[;{])\s*overflow\s*:/)
+    })
+
+    it('AC4 `.day-cols-head` 不含 left sticky（保留 top: 0）', () => {
+        const block = cssRule(dailyStyle(), '.day-cols-head')
+        expect(block).not.toBe('')
+        expect(block).toContain('top: 0')
+        expect(block).not.toMatch(/(^|[;{])\s*left\s*:/)
+    })
+})
+
+describe('TASK-20 AC8 SFC 拆分契约（≤400 行 / sticky 锚定链）', () => {
+    it('daily/index.vue ≤ 400 行（拆分目标）', () => {
+        const sfc = DAILY_RAW['../index.vue'] ?? ''
+        expect(sfc.length).toBeGreaterThan(0)
+        expect(sfc.split('\n').length).toBeLessThanOrEqual(400)
+    })
+
+    it('sticky 锚定：日视图条 `.cal-item.is-sticky-label` 用 clip-path + overflow: visible（不建 scroll container）', () => {
+        const block = cssRule(dailyStyle(), '.cal-item.is-sticky-label')
+        expect(block).not.toBe('')
+        expect(block).toContain('overflow: visible')
+        expect(block).toContain('clip-path')
     })
 })

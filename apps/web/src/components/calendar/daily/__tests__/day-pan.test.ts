@@ -72,6 +72,22 @@ const buildContext = () => ({
     applyScope: () => {}
 })
 
+// —— TASK-20 源级断言辅助（jsdom 不应用 SFC CSS ⇒ 读原始样式文本） ——
+const DAILY_RAW = import.meta.glob(['../*.vue', '../*.css'], {
+    query: '?raw',
+    import: 'default',
+    eager: true
+}) as Record<string, string>
+const dailyStyle = (): string => Object.values(DAILY_RAW).join('\n')
+const cssRule = (css: string, selector: string): string => {
+    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const match = new RegExp(`${escaped}\\s*\\{`).exec(css)
+    if (!match) return ''
+    const start = match.index + match[0].length
+    const end = css.indexOf('}', start)
+    return end < 0 ? css.slice(start) : css.slice(start, end)
+}
+
 let wrapper: VueWrapper | null = null
 
 const mountDaily = async (): Promise<VueWrapper> => {
@@ -209,6 +225,103 @@ describe('TASK-19B AC5 目标排除（零抢占）', () => {
             await flushPromises()
         })
     }
+})
+
+describe('TASK-20 AC5/AC6 pan 加固（自愈 / 兜底收尾 / touch-action / preventDefault）', () => {
+    it('陈旧会话自愈：未收尾的 pan 后再次起拖仍生效（按新起点计算）', async () => {
+        const w = await mountDaily()
+        const body = bodyOf(w)
+        body.scrollLeft = 100
+
+        // 第一次会话：起拖 + 超阈值（不释放，模拟卡死）
+        pointer('pointerdown', 200, body)
+        await nextTick()
+        pointer('pointermove', 140, body)
+        await nextTick()
+        expect(body.classList.contains('is-panning')).toBe(true)
+        expect(body.scrollLeft).toBe(160)
+
+        // 未 pointerup，直接第二次 pointerdown ⇒ 先释放陈旧会话，再按新起点工作
+        pointer('pointerdown', 300, body)
+        await nextTick()
+        pointer('pointermove', 200, body) // dx = -100 ⇒ 160 + 100
+        await nextTick()
+        expect(body.classList.contains('is-panning')).toBe(true)
+        expect(body.scrollLeft).toBe(260)
+
+        pointer('pointerup', 200, body)
+        await flushPromises()
+        expect(body.classList.contains('is-panning')).toBe(false)
+    })
+
+    it('pointercancel 收尾后可立即再次 pan（会话不残留）', async () => {
+        const w = await mountDaily()
+        const body = bodyOf(w)
+        body.scrollLeft = 50
+
+        pointer('pointerdown', 200, body)
+        await nextTick()
+        pointer('pointermove', 150, body) // dx = -50 ⇒ 100
+        await nextTick()
+        expect(body.classList.contains('is-panning')).toBe(true)
+
+        pointer('pointercancel', 150, body)
+        await flushPromises()
+        expect(body.classList.contains('is-panning')).toBe(false)
+
+        pointer('pointerdown', 300, body)
+        await nextTick()
+        pointer('pointermove', 320, body) // dx = +20 ⇒ 100 - 20
+        await nextTick()
+        expect(body.classList.contains('is-panning')).toBe(true)
+        expect(body.scrollLeft).toBe(80)
+
+        pointer('pointerup', 320, body)
+        await flushPromises()
+    })
+
+    it('pan 面声明 touch-action（触控不被原生手势抢占）', () => {
+        const blocks = [
+            cssRule(dailyStyle(), '.day-body'),
+            cssRule(dailyStyle(), '.day-axis-track')
+        ]
+            .filter((block) => block !== '')
+            .join('\n')
+        expect(blocks).not.toBe('')
+        expect(blocks).toMatch(/touch-action\s*:/)
+    })
+
+    it('pan 面 pointerdown preventDefault；排除目标上不拦截', async () => {
+        const w = await mountDaily()
+        const body = bodyOf(w)
+
+        const blank = new PointerEvent('pointerdown', {
+            bubbles: true,
+            cancelable: true,
+            button: 0,
+            buttons: 1,
+            clientX: 200,
+            clientY: 50,
+            pointerId: 1
+        })
+        body.dispatchEvent(blank)
+        expect(blank.defaultPrevented).toBe(true)
+
+        const onTask = new PointerEvent('pointerdown', {
+            bubbles: true,
+            cancelable: true,
+            button: 0,
+            buttons: 1,
+            clientX: 200,
+            clientY: 50,
+            pointerId: 1
+        })
+        w.find('[data-task-id="n"]').element.dispatchEvent(onTask)
+        expect(onTask.defaultPrevented).toBe(false)
+
+        pointer('pointerup', 200, body)
+        await flushPromises()
+    })
 })
 
 describe('TASK-19B AC8/AC10② pan 不触发任务列表重拉', () => {

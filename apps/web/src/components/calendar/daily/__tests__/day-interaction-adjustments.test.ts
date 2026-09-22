@@ -196,12 +196,15 @@ describe('TASK-19B AC2 全天只读条（task-bar 复用，无手柄，原因分
         expect(lane.findAll('.day-task-resize--start')).toHaveLength(0)
     })
 
-    it('结构契约保持：泳道为 .day-scroll 直接子节点且 nextElementSibling === .day-grid', async () => {
+    it('结构契约（r5）：泳道与网格均为 .day-scroll 直接子节点且泳道在前（允许 <nue-divider />）', async () => {
         const w = await mountDaily()
+        const scroll = w.find('.day-scroll')
         const lane = w.find('.day-allday-lane')
         const grid = w.find('.day-grid')
-        expect(lane.element.parentElement).toBe(w.find('.day-scroll').element)
-        expect(lane.element.nextElementSibling).toBe(grid.element)
+        expect(lane.element.parentElement).toBe(scroll.element)
+        expect(grid.element.parentElement).toBe(scroll.element)
+        const children = Array.from(scroll.element.children)
+        expect(children.indexOf(lane.element)).toBeLessThan(children.indexOf(grid.element))
     })
 
     it('data-allday-reason ∈ {span-over-24h, end-only} 且两类互异；title 含任务名（r3）', async () => {
@@ -282,6 +285,46 @@ describe('TASK-19B AC4 两侧手柄恒在（含续接段，无 isStart/isEnd 门
         // endAt 保持真实值不变（今 02:00）
         expect(ymd(patch!.endAt)).toBe(TODAY)
         expect(hhmm(patch!.endAt)).toBe('02:00')
+    })
+})
+
+describe('TASK-20 AC2 拖动反馈（浮层 / 源条区分 / 吸附起止预览 / 吸附高亮线）', () => {
+    it('拖动中四项反馈可见；松手写回后消失', async () => {
+        const w = await mountDaily()
+        const track = w.find('[data-testid="day-axis-track"]')
+        stubRect(track.element, 0, 1440) // 1px = 1 分钟
+        const bar = w.find('[data-task-id="n"]')
+
+        pointer('pointerdown', 540, bar.element)
+        await nextTick()
+        pointer('pointermove', 570, window) // +30 分钟
+        await nextTick()
+
+        // ① 跟随指针的浮层
+        expect(w.find('.drag-ghost').exists()).toBe(true)
+        // ② 源条视觉区分
+        expect(w.find('[data-task-id="n"]').classes()).toContain('is-drag-source')
+        // ③ 吸附后起止时刻预览（09:00–10:00 +30 ⇒ 09:30 → 10:30）
+        const preview = w.find('[data-testid="day-drag-preview"]')
+        expect(preview.exists()).toBe(true)
+        expect(preview.text()).toContain('09:30')
+        expect(preview.text()).toContain('10:30')
+        // ④ 吸附刻度高亮线
+        expect(w.find('[data-testid="day-drag-snap-line"]').exists()).toBe(true)
+
+        pointer('pointerup', 570, window)
+        await flushPromises()
+
+        expect(w.find('.drag-ghost').exists()).toBe(false)
+        expect(w.find('[data-testid="day-drag-preview"]').exists()).toBe(false)
+        expect(w.find('[data-testid="day-drag-snap-line"]').exists()).toBe(false)
+        expect(hhmm(lastPatch()?.startAt)).toBe('09:30')
+    })
+
+    it('非拖动状态不渲染预览 / 吸附线（负向）', async () => {
+        const w = await mountDaily()
+        expect(w.find('[data-testid="day-drag-preview"]').exists()).toBe(false)
+        expect(w.find('[data-testid="day-drag-snap-line"]').exists()).toBe(false)
     })
 })
 

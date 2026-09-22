@@ -141,13 +141,16 @@ describe('TASK-19 AC5 缺失 dayZoom ⇒ ×1 自足渲染（D6）', () => {
 })
 
 describe('TASK-19 AC6 总宽下限公式（D3 / §5.4）', () => {
-    it('下限常量 20px，且各档字符串 = max(calc(k * 100%), calc(列数 * 20px))', () => {
+    it('下限常量 20px；各档 = 整数列宽 max(列数×ceil(k×容器宽/列数), 列数×20px)（TASK-20 E）', () => {
         expect(MIN_DAY_COLUMN_PX).toBe(20)
+        const container = 1200
         for (const zoom of [1, 1.5, 2, 3, 4] as const) {
             const spec = dayAxisSpecOf(zoom)
-            expect(dayScrollWidthCss(zoom, spec.columns)).toBe(
-                `max(calc(${zoom} * 100%), calc(${spec.columns} * ${MIN_DAY_COLUMN_PX}px))`
+            const expected = Math.max(
+                spec.columns * Math.ceil((zoom * container) / spec.columns),
+                spec.columns * MIN_DAY_COLUMN_PX
             )
+            expect(dayScrollWidthCss(zoom, spec.columns, container)).toBe(`${expected}px`)
         }
     })
 })
@@ -196,49 +199,44 @@ describe('TASK-19 AC7 月/周视图与宿主零改动（D5 / C8）', () => {
     })
 })
 
-describe('TASK-19 缩放入口①头部按钮（§5.4 / ADR §5.3 #11）', () => {
-    it('+/− 按钮存在且 aria-label 正确；×1 时 − 禁用、+ 可用；不设独立复位按钮', async () => {
-        const { w } = await mountZoomable()
-        const plus = w.find('[data-testid="day-zoom-in"]')
-        const minus = w.find('[data-testid="day-zoom-out"]')
-        expect(plus.exists()).toBe(true)
-        expect(minus.exists()).toBe(true)
-        expect(plus.attributes('aria-label')).toBe('放大时间轴')
-        expect(minus.attributes('aria-label')).toBe('缩小时间轴')
-        expect(minus.attributes('disabled')).toBeDefined()
-        expect(plus.attributes('disabled')).toBeUndefined()
+describe('TASK-20 缩放入口（契约变更 C：两入口；头部按钮退役）', () => {
+    it('负向：`day-zoom-out` / `day-zoom-in` 按钮均不存在；亦无独立复位按钮', async () => {
+        const w = await mountDaily()
+        expect(w.find('[data-testid="day-zoom-in"]').exists()).toBe(false)
+        expect(w.find('[data-testid="day-zoom-out"]').exists()).toBe(false)
         // 负向：不设独立复位按钮（复位 = Ctrl/⌘ 0）
         expect(w.find('[data-testid="day-zoom-reset"]').exists()).toBe(false)
     })
 
-    it('点 + 逐级放大到 ×4（到端 + 禁用）；点 − 逐级返回 ×1（到端 − 禁用）', async () => {
-        const { w, dayZoom } = await mountZoomable()
-        const plus = () => w.find('[data-testid="day-zoom-in"]')
-        const minus = () => w.find('[data-testid="day-zoom-out"]')
+    it('两入口有效：快捷键 Ctrl/⌘± 与 Ctrl/⌘ + 滚轮均可改档（到端稳定）', async () => {
+        const { w, dayZoom } = await mountZoomable(1)
 
-        await plus().trigger('click')
+        // 入口②：快捷键放大
+        registry.execute('calendar.dayzoom.in')
+        await nextTick()
         expect(dayZoom.value).toBe(1.5)
-        expect(scrollWidth(w)).toBe(normalizeWidth(dayScrollWidthCss(1.5, 48)))
+        // 宽度随档位重算（jsdom 无布局 ⇒ 容器宽 0，落下限）
+        expect(scrollWidth(w)).toBe(normalizeWidth(dayScrollWidthCss(1.5, 48, 0)))
 
-        await plus().trigger('click')
-        expect(dayZoom.value).toBe(2)
-        expect(scrollWidth(w)).toBe(normalizeWidth(dayScrollWidthCss(2, 96)))
-
-        await plus().trigger('click')
-        expect(dayZoom.value).toBe(3)
-        await plus().trigger('click')
-        expect(dayZoom.value).toBe(4)
-        expect(plus().attributes('disabled')).toBeDefined()
-
-        await minus().trigger('click')
-        expect(dayZoom.value).toBe(3)
-        await minus().trigger('click')
-        expect(dayZoom.value).toBe(2)
-        await minus().trigger('click')
-        expect(dayZoom.value).toBe(1.5)
-        await minus().trigger('click')
+        // 入口③：Ctrl/⌘ + 滚轮缩小
+        const wheel = (deltaY: number): void => {
+            w.find('.day-body').element.dispatchEvent(
+                new WheelEvent('wheel', {
+                    deltaY,
+                    ctrlKey: true,
+                    bubbles: true,
+                    cancelable: true
+                })
+            )
+        }
+        wheel(100)
+        await nextTick()
         expect(dayZoom.value).toBe(1)
-        expect(minus().attributes('disabled')).toBeDefined()
+
+        // 到端稳定：×1 再缩 = 不动
+        wheel(100)
+        await nextTick()
+        expect(dayZoom.value).toBe(1)
     })
 })
 

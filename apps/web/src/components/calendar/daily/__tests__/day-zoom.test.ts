@@ -141,40 +141,54 @@ describe('TASK-19 总宽公式（D3 / AC1 / AC6）', () => {
         expect(MIN_DAY_COLUMN_PX).toBe(20)
     })
 
-    it('dayScrollWidthCss = max(calc(k * 100%), calc(列数 * 20px))（逐档）', () => {
+    // TASK-20 变更 E（轴 ADR r3 / D3′）：总宽 = max(列数 × ceil(k × 容器宽 ÷ 列数), 列数 × 20px)
+    // 结果以整数 px 字符串返回（容器宽在挂载/resize 读一次后为常量）。
+    const CONTAINER_W = 1200
+    const expectedWidth = (zoom: number, columns: number, containerW: number): number =>
+        Math.max(columns * Math.ceil((zoom * containerW) / columns), columns * MIN_DAY_COLUMN_PX)
+
+    it('dayScrollWidthCss = 整数列宽 max(列数×ceil(k×容器宽/列数), 列数×20px)（逐档）', () => {
         for (const zoom of DAY_ZOOM_LEVELS) {
             const spec = dayAxisSpecOf(zoom)
-            expect(dayScrollWidthCss(zoom, spec.columns)).toBe(
-                `max(calc(${zoom} * 100%), calc(${spec.columns} * ${MIN_DAY_COLUMN_PX}px))`
-            )
+            const expected = expectedWidth(zoom, spec.columns, CONTAINER_W)
+            expect(dayScrollWidthCss(zoom, spec.columns, CONTAINER_W)).toBe(`${expected}px`)
+            // 每列整数像素（可整除）
+            expect(expected % spec.columns).toBe(0)
         }
     })
 
-    it('AC1 由等式降为下界：总宽 ≥ k×容器宽；k×容器宽 ≥ 列数×20px 时取等', () => {
-        // 用公式复算（jsdom 无法算 computed style ⇒ 断言公式/常量，ADR §5.4）
-        const totalWidth = (k: number, container: number, columns: number): number =>
-            Math.max(k * container, columns * MIN_DAY_COLUMN_PX)
-
-        // k=1 且容器 ≥960px ⇒ 无横向滚动（总宽 = 容器宽）
-        expect(totalWidth(1, 1200, 48)).toBe(1200)
-        expect(totalWidth(1, 960, 48)).toBe(960)
-        // 容器更窄 ⇒ 下限抬高，溢出转横向滚动（AC6）
-        expect(totalWidth(1, 800, 48)).toBe(960)
-        expect(totalWidth(2, 400, 96)).toBe(1920)
-        // 高倍档 k×容器宽 ≥ 列数×20px ⇒ 取等（AC1 等式成立）
-        expect(totalWidth(2, 1200, 96)).toBe(2400)
-        expect(totalWidth(4, 1200, 144)).toBe(4800)
+    it('AC1/AC9 下界：总宽 ≥ k×容器宽（向上取整只增不减）', () => {
+        for (const container of [800, 1200, 1440, 1920]) {
+            for (const zoom of DAY_ZOOM_LEVELS) {
+                const { columns } = dayAxisSpecOf(zoom)
+                const px = Number.parseInt(dayScrollWidthCss(zoom, columns, container), 10)
+                expect(px).toBeGreaterThanOrEqual(zoom * container)
+            }
+        }
+        // 窄容器 ⇒ 下限接管（AC6）
+        expect(dayScrollWidthCss(1, 48, 800)).toBe('960px')
+        // 宽容器 + k×容器宽 已过下限 ⇒ 取整数列宽 ≥ k×容器宽
+        expect(dayScrollWidthCss(1, 48, 1200)).toBe('1200px')
+        expect(dayScrollWidthCss(1.5, 48, 1200)).toBe('1824px')
+        expect(dayScrollWidthCss(2, 96, 1200)).toBe('2400px')
     })
 
-    it('×4 档总宽含 calc(288 * 20px)（R2 / AC6）', () => {
-        expect(dayScrollWidthCss(4, 288)).toBe('max(calc(4 * 100%), calc(288 * 20px))')
+    it('×4 档下限接管：dayScrollWidthCss(4, 288, 1200) = 5760px（288×20）', () => {
+        expect(dayScrollWidthCss(4, 288, CONTAINER_W)).toBe('5760px')
     })
 
-    it('dayScrollWidthCss 字符串含 k×100% 与 列数×20px 两个 max 分支', () => {
-        const css = dayScrollWidthCss(1.5, 48)
-        expect(css.startsWith('max(')).toBe(true)
-        expect(css).toContain('calc(1.5 * 100%)')
-        expect(css).toContain('calc(48 * 20px)')
+    it('AC9 整数 px + 可整除 + ≥ k×容器宽（多容器宽）', () => {
+        for (const container of [800, 1200, 1440, 1920]) {
+            for (const zoom of DAY_ZOOM_LEVELS) {
+                const { columns } = dayAxisSpecOf(zoom)
+                const out = dayScrollWidthCss(zoom, columns, container)
+                expect(out).toMatch(/^\d+px$/)
+                const px = Number.parseInt(out, 10)
+                expect(px % columns).toBe(0)
+                expect(px).toBeGreaterThanOrEqual(zoom * container)
+                expect(px).toBeGreaterThanOrEqual(columns * MIN_DAY_COLUMN_PX)
+            }
+        }
     })
 })
 

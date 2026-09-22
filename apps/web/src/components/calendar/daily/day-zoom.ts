@@ -1,7 +1,7 @@
 /**
  * 日视图时间轴档位纯函数（TASK-19 / ADR 2026-09-22 §5.1；D1–D3 / D6 / C2 / C7）
- * @description 无 Vue 依赖：档位阶梯、轴规格（粒度 / 列数）、总宽下限公式、偏好读写。
- *              `max()` 无法在 jsdom 计算 ⇒ 以 CSS 字符串形式产出（单测断言字符串，ADR §5.4）。
+ * @description 无 Vue 依赖：档位阶梯、轴规格（粒度 / 列数）、总宽公式（整数列宽）、偏好读写。
+ *              `max()` 无法在 jsdom 计算 ⇒ 以整数 px 字符串形式产出（单测断言字符串，ADR §5.4）。
  *              粒度枚举 `{30, 15, 5}`（轴 ADR r2；10min 已退役）。
  */
 
@@ -18,7 +18,7 @@ export const DAY_ZOOM_DEFAULT: DayZoom = 1
 export const MIN_DAY_COLUMN_PX = 20
 
 /** 单日总分钟数（坐标换算基准；与 daily/build-day-grid.ts 同口径） */
-const DAY_MINUTES = 1440
+export const DAY_MINUTES = 1440
 
 /** 档位 → 轴规格（列数 = 1440 / 粒度；C4：不新增模型字段） */
 export type DayAxisSpec = {
@@ -54,9 +54,20 @@ export const prevDayZoom = (zoom: DayZoom): DayZoom => {
     return DAY_ZOOM_LEVELS[Math.max(index - 1, 0)]!
 }
 
-/** 时间轴总宽 CSS：`max(k × 容器宽, 列数 × 20px)`（D3 / AC1 / AC6） */
-export const dayScrollWidthCss = (zoom: DayZoom, columns: number): string =>
-    `max(calc(${zoom} * 100%), calc(${columns} * ${MIN_DAY_COLUMN_PX}px))`
+/**
+ * 时间轴总宽（整数列宽，轴 ADR r3 D3′ / r4）：`max(列数 × ceil(k × 容器宽 ÷ 列数), 列数 × 20px)`
+ * @description 每列整数像素 ⇒ 1px 格线整像素落位，消除细层子像素抗锯齿（线消失/闪烁）。
+ *              `containerW <= 0`（未布局 / jsdom）⇒ 自然回退 `列数 × 20px`。
+ *              AC1 下界 `总宽 ≥ k × 容器宽` 恒成立（向上取整只增不减）。
+ * @param zoom 档位 k
+ * @param columns 列数
+ * @param containerW 滚动容器可视宽（挂载 / `ResizeObserver` 读一次；**禁**在 pointermove 读）
+ */
+export const dayScrollWidthCss = (zoom: DayZoom, columns: number, containerW: number): string => {
+    const width = Math.max(0, containerW)
+    const perColumn = Math.ceil((zoom * width) / columns)
+    return `${Math.max(columns * perColumn, columns * MIN_DAY_COLUMN_PX)}px`
+}
 
 /** 档位偏好存储键（PRD §5.5 / D6） */
 const DAY_ZOOM_STORAGE_KEY = 'CALENDAR_DAY_ZOOM'
