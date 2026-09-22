@@ -2119,6 +2119,6 @@ export default defineConfig({
         sortPackageJson: false,
         // Node 工具脚本（QA electron-smoke 等）保留长行风格，避免 formatter 重排噪声；
         // .agents/ 舰队资产与 .codegraph/ 索引另有上游格式约定，不由项目格式化接管
-        ignorePatterns: ['scripts/**', '.agents/**', '.codegraph/**']
+        ignorePatterns: ['scripts/**', '.agents/**', '.codegraph/**', '.pi/**']
     }
 })
