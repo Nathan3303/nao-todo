@@ -61,9 +61,11 @@
     ```
     - `startAt` = `dayjs(anchorKey).startOf('day').add(tickMin, 'minute').toISOString()`；`endAt` = `+ DAY_SNAP_MINUTES`（30 分钟）。**逐字镜像 `createTaskOnDay`**（ISO 格式、同口径）。
     - **落点**：新增 `CalendarDayContext.onCreateTaskAt(startMin)`，宿主侧实现；日视图自足回退实现同一函数（`use-calendar-day.ts` 已注入 context 作兜底）。**禁**日视图直连构造 payload（避免同一功能两套口径）。
-- **可点范围与可访问性**（T83 裁决）：
+- **可点范围与可访问性**（T83 裁决 + **r4 细化**）：
     - 仅**带文本**刻度可点；空文本列**不可点、不参与 tab、不触发 pan**。
     - 原生 **`button`** 语义（唯一新建入口必须键盘可达）：`aria-label="在 14:30 创建任务"` + `title`。
+    - **`aria-hidden` 仅加在空文本列**（带文本列**不隐藏** —— 否则其内 `button` 的 `aria-label` 会被一并移出无障碍树）；`aria-label` 统一 `在 HH:MM 创建任务`（×1 档可见文本为 `HH` 时亦然）。
+    - **自足回退（无宿主直挂）的任务来源** = `tasksStore` 已知任务 ∪ 查询快照（按 `id` 去重）；**仅该路径**，真实应用由宿主 provide（登记见 ADR C5 r4）。
     - DOM：`button` 是 `.day-col-head` 的**孙节点** ⇒ `[data-testid="day-columns"]` 的**直接子节点数仍 === 列数**（冻结契约不受影响）；标签文本仍在 `textContent` ⇒ 「24/48 个有文本」断言口径不变。
     - 标签 `position:absolute; left:0; transform:translateX(-50%)`（**居中于刻度线**，见 §5.6）；**首列 `translateX(0)`、末列 `translateX(-100%)`** 边界保护 ⇒ **点击目标 = 可见标签本身**（消除「点标签左半落到前一列」的错位）。
     - 48 个 tab stop **接受**；若将来嫌噪，另立单做 roving tabindex，**不得**在本单降级为 `tabindex="-1"`。
@@ -76,6 +78,7 @@
 - 复用 `task-bar`（**无 bespoke 复制**）替换 `.day-allday-chip`，保留点击打开详情。
 - **只读**：**无**拖拽/拉伸手柄。
 - **必须说明不可拖拽原因（契约见 ADR C6 r3）**：任务条根元素加 **`data-allday-reason`** ∈ {`span-over-24h`, `end-only`}（机器可断言）；`title` = **`任务名（原因文案）`** —— ⚠️ **不得覆盖任务名**（`task-bar.vue:90` 原为 `:title="task.name"`）；两种文案：`全天任务，跨度超过 24 小时，日视图内不可拖拽` / `全天任务，仅设了截止时间，日视图内不可拖拽`。
+- **载体补充（r4）**：`task-bar` 新增第二个 opt-in prop **`titleSuffix`**（默认 `undefined` ⇒ 月/周零变化），`title = titleSuffix ? \`任务名（后缀）\` : 任务名`；全天泳道用 **`.day-allday-slot`**（`relative`，220×20）承载绝对定位任务条 + `.day-allday-items` `flex-wrap`⇒ 单行换行 + 纵向生长（**未**在`.day-scroll`与`.day-allday-lane` 间插包装层，结构契约保持）。
     1. 跨度超过 24 小时（跨整天）
     2. 仅设了截止时间（无开始时间）
 - **保持既有结构契约**：`.day-allday-lane` 仍为 `.day-scroll` 的**直接子节点**、且 `nextElementSibling === .day-grid`（现有冻结用例已断言）⇒ **不得**插入包装层。
@@ -246,6 +249,8 @@ T83 架构评审（✅）→ T84 用例先行 → T85 实现 → T86 提交 → 
 - 2026-09-22：ADR 拆两份落盘 —— 轴参数 ADR **r2** + 新建**交互契约 ADR** r1（C1–C10），双向互记。
 
 ## 14. 遗留项
+
+- **T85 实现报备 7 项 → PM 处置（r4，全部接受，详见 ADR r4 行）**：① `aria-hidden` 仅空文本列（保 `aria-label` 可访问）；② `aria-label` 统一 `HH:MM`；③ 自足回退任务来源 = store ∪ 查询快照（去重，仅无宿主路径；替代方案 = 用例 `await nextTick`）；④ 新增 `titleSuffix` opt-in prop；⑤ 全天泳道 `.day-allday-slot` + `flex-wrap`（结构契约保持）；⑥ sticky 锚定链审计通过；⑦ jsdom 不可断言项 → 人工验收清单。
 
 - **r3 契约补全（T84 报备 6 项，已裁决）**：① `n` 快捷键 → ADR **C11**（复用 id `calendar.quick-create` + `viewMode` 分支 + 默认时段口径）；② 全天原因 → **`data-allday-reason`** + `title` 含任务名（**不覆盖**）；③ 遮罩类名 `.day-edge-fade.is-start/.is-end`；④ 标签边界类名 `.is-first-tick/.is-last-tick`（居中效果归人工）；⑤ **勘误**：原称「`daily-view` 有 3 处 chip 断言待改」为**误述**（实为 lane 结构断言，chip 断言系 T84 新增）⇒ 契约变更 B 改为**纯新增**；⑥ AC7 的 pan 两端 / 窄容器标注**人工验收**。
 
