@@ -123,5 +123,5 @@
 | 时间轴撤销跨视图存活                            | 无     | daily 本地栈随日视图卸载自动清空（`use-calendar-schedule.ts:175-178`）⇒ 不出现「在月/周视图撤销看不见的时间轴改动」                                                              |
 | 实现期若改为「合并为单栈」（可选强化）          | —      | 允许且更对称（weekly 已由宿主注入 `onRescheduleTask`）；但必须同时：保留自足回退（保 `daily-interactions.test.ts` 零改动）+ 在切离日视图时显式清栈（保「同视图生命周期」不变量） |
 
-- 已同步 TASK-16 ADR（`2026-09-21-calendar-day-view-geometry-and-lane-extraction.md`）**C14** 语义（`viewMode` 将由 `route.name` 派生，不再是组件内可变状态；**A3「不持久化」语义不变**——URL 即视图态，但默认入口仍为月视图）：该 ADR §9 已互记一行，**但其行内「见上文修订说明」所指向的 r3 修订说明与 r3 表行尚未落盘**（其修订记录表止于 r2，且 r2 写的是「C1–C14 技术内容零改动」）⇒ **实施前必须补 r3（两行）**，否则 C14 字面仍要求保留可变 `viewMode`，会与 U2 直接冲突（已报 PM，待 PM 一行落盘；不在本单授权写入范围内）。
+- 已同步 TASK-16 ADR（`2026-09-21-calendar-day-view-geometry-and-lane-extraction.md`）**C14** 语义（`viewMode` 将由 `route.name` 派生，不再是组件内可变状态；**A3「不持久化」语义不变**——URL 即视图态，但默认入口仍为月视图）：该 ADR §9 已互记一行，且其 r3 修订说明与 r3 表行 **✅ 已落盘**（`d3fff86a`，2026-09-22 TASK-18）——二者口径一致（`viewMode` 由 `route.name` 派生只读、A3 语义不变）。
 - 实现期偏离 C1–C8 任一约束 → 回到架构评审，不得就地放宽。

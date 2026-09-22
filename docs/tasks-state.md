@@ -11,7 +11,8 @@
 - **需求池（撤回/搁置）**：TASK-14「日历视图刷新功能」——用户 2026-09-21 **撤回**，待其自行测试一段时间后再提（**未澄清、未开工、无 PRD**）。
 - **当前批次（TASK-15）**：日历视图展示顺序——撤销隐藏排序 + 二次默认排序按名称；PRD `docs/prds/2026-09-21-calendar-display-order.md`；开工确认：用户 2026-09-21 拍板「按推荐（方案 B）」，并授权继续推进。
 - **TASK-15 范围（3 处撤销 + 1 处保留）**：①`monthly-layout.ts` 删 `colEnd desc` 二次键（保留 `colStart asc`）②日内抽屉 `getDayTasks` 撤销「开始时间→创建时间」③未安排列表 `unscheduledTasks` 撤销 `createdAt desc`；**保留** 服务端 `sort:{id asc}`（分页机制）。
-- **TASK-18 进行中（D1–D7 已拍板；严格串行）**：日历**三子路由化（D1=a）+ 三视图布局单一基线**。PRD `docs/prds/2026-09-22-calendar-three-view-routes-and-layout-baseline.md`；ADR `docs/adr/2026-09-22-calendar-view-routes-and-header-layout-baseline.md`（已拍板，C1–C8）；TASK-16 ADR C14 已同步修订。**T69 ✅ `0d1b801e`**（补回 `day-unscheduled-entry` testid + 采纳用户 daily 手改；PM 复跑 890 全绿）；**T73 ✅ `2c173aba`**（治理：`fmt.ignorePatterns` 加 `.pi/**` + gitignore `.pi/.codegraph`；修复「全仓 `vp check` 因 pi 运行时产物变红」；PM 复跑全绿 exit 0）。**用户 2026-09-22 已「开工」**：**T70（U1 布局基线 C6 + D7）✅ `c3aa5c1b`**（4 文件；PM 核验：gap/分隔线/`min-width 11rem`/压平 wrapper/根容器 `height:100%` 逐条相符，D7 周 active 误绑已修且「月」按钮保留 `onGoMonth`；890 全绿、`vp check` 绿；含真浏览器几何实测三视图坐标像素级一致）。**T71-A 已派**（U2 落点与迁移清单，零代码）—— 宿主上移属结构性迁移，先确认落点再实施（C1/C2 为硬红线）。
+- **TASK-18 进行中（D1–D7 已拍板；严格串行）**：日历**三子路由化（D1=a）+ 三视图布局单一基线**。PRD `docs/prds/2026-09-22-calendar-three-view-routes-and-layout-baseline.md`（已同步 T74）；ADR `docs/adr/2026-09-22-calendar-view-routes-and-header-layout-baseline.md`（已拍板，C1–C11）；TASK-16 ADR C14 已同步修订（**r3 已落盘 `d3fff86a`**）。**T69 ✅ `0d1b801e`**；**T73 ✅ `2c173aba`**（治理 `.pi/**`）；**T70 ✅ `c3aa5c1b`**（U1 布局基线 C6 + D7）；**T74 ✅ `d3fff86a`**（arch U2 落点裁决：C6.1 承载层迁 `.nue-calendar-host` + **令牌随行** + `monthly` 根去 `padding:1rem`；C1 撤销栈例外三项条件；新增 C9/C10/C11；D8/D9 —— **不改变 C2/C3/C4/C7/C8 与 D1–D7、不改变任一 AC**）。**T71（U2）已于 2026-09-22 派发 rd-fe**（宿主上移 + 三子路由 + `viewMode` 派生 + `replace` + D4，AC5/AC6/AC7）—— 待终态回执；T72（PM 门禁复核 + 用户手工验收）为其后继。
+- **PM 记账已刷新（2026-09-22）**：PRD §5.1 补 C6.1、§9 补 D8/D9、§10 刷新 T69/T70/T74 状态；baseline ADR §7「r3 尚未落盘」过期描述已修正。C6.1 对 `monthly` 根 padding 的收口属 arch 裁决范围（用户可见布局，**净视觉不变**），已向用户报备，用户同批选择「落记账 + 派 T71」。
 - **工作区未提交的用户手工改动**：`daily/index.vue` 移除 `.nue-calendar-daily{padding:1rem}`（晚于 `9d5f3a77`）；已请 arch 判定是否为「正确修复的一半」。
 - **当前批次（TASK-17）**：日视图头部样式对齐月/周 + 补侧边栏收缩按钮 —— **实现完成待用户手工验收**。PRD `docs/prds/2026-09-21-calendar-day-header-consistency.md`；提交 `9d5f3a77`（未 push）。PM 核验：CSS 归属唯一、标记与月/周逐字一致、**未改测试**、890 例全绿、双端 build ✓、移动端零改动。**待裁决**：工作中存在用户手工微调（`daily/index.vue` 移除 `padding: 1rem`，未提交、未回退）。
   | T65 | rd-fe | 前端 | 接入共享样式层 + 删 bespoke + 静态标题变体 + 侧边栏开关 | ✅ 已回执并（PM）核验 |
@@ -51,6 +52,18 @@
 | T56      | rd-fe         | 前端 | 根治 `.agents/**` × 格式化冲突                                                                      | ✅ 已回执并验收（`28992363`，2 文件；**PM 独立复现容错**：26 文件转 CRLF + roles 4/8 → 解析成功/0 ERR/0 frontmatter 失败；`vp check --fix .agents` → NO FILE CHANGED；`vp check` 全绿 1279 | 1100） |
 | T57      | rd-fe         | 前端 | CodeGraph 警告不再计入 check 退出码                                                                 | ✅ 已回执并验收（`02626f23`，1 文件；PM 读码确认该分支已无 `rc=1`、其余 10 处 `rc=1` 全为真硬错误；**实测 `NAO_TMUX_LAYOUT=bogus` 仍 exit 1**；基线复跑 exit 0）                           |
 | T52      | qa            | 测试 | 独立验收（含双端 build / 红线 / 拖拽性能）                                                          | 排队（等 T51）                                                                                                                                                                             |
+
+## TASK-18 运行时（当前批次）
+
+| 任务编号 | 目标会话      | 角色 | 概要                                                                                                              | 状态                                                                    |
+| :------- | :------------ | :--- | :---------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------- |
+| T69      | rd-fe         | 前端 | 补回 `day-unscheduled-entry` testid + 采纳用户 daily 手改                                                         | ✅ `0d1b801e`（PM 复跑 890 全绿）                                       |
+| T70      | rd-fe         | 前端 | U1：布局单一基线（C6）+ D7 周 active 误绑                                                                         | ✅ `c3aa5c1b`（4 文件；PM 逐条核验 + 真浏览器几何实测三视图像素级一致） |
+| T73      | rd-fe         | 前端 | 治理：`fmt.ignorePatterns` 加 `.pi/**` + gitignore `.pi/.codegraph`                                               | ✅ `2c173aba`（PM 复跑全绿 exit 0）                                     |
+| T71-A    | rd-fe         | 前端 | U2 只读落点清单（零代码）                                                                                         | ✅ 已报备（D-a / D-c）→ 触发 arch T74 裁决                              |
+| T74      | arch-designer | 架构 | U2 落点评审裁决（C1 细化/撤销栈例外、C6.1 承载层迁 host、C9–C11、D8/D9）                                          | ✅ `d3fff86a`                                                           |
+| T71      | rd-fe         | 前端 | U2：宿主上移（`.nue-calendar-host` + 令牌随行 + monthly 去 padding）+ 三子路由 + `viewMode` 派生 + `replace` + D4 | ⏳ 已派发（2026-09-22）—— 待终态回执                                    |
+| T72      | PM            | —    | 门禁复核 + 静态核验 + 交付小结（用户手工验收）                                                                    | 排队（等 T71）                                                          |
 
 ## 待派发队列
 
@@ -103,3 +116,4 @@
 - 2026-09-21：**更正上一条勘误的判断**——此前用 `git diff --ignore-all-space` 测得「差异仅 6 行」即判为「可忽略噪声」，**该口径错误**：`-w` 会**隐藏整文件 EOL 翻转**，近乎为空的 `-w` 差异恰恰是「全文件 CRLF 化」的特征，而非「只动了 6 行」。教训：涉及 `.agents/**` 的格式化统一，必须显式比对 EOL 与缩进，不得只看 `-w` 差异。
 - 2026-09-21：**待决策的根治项**：①`vite.config.ts` 的 `fmt.ignorePatterns` 追加 `'.agents/**'`（现仅 `scripts/**`）——阻断裂队资产被 CRLF 化/重排；②或让 `nao-fleet.sh` 的 awk 解析器 CRLF 容忍（属 nao-skills 资产，宜回流上游）。附带脚本缺陷：`nao-fleet.sh:444` 把 CodeGraph `Pending Changes` 警告记为 `rc=1`，与卡 §六「过期→提醒、不阻塞」冲突，会造成误停。
 - 2026-09-21：PM 误报 ADR 路径勘误（误路径实为 T32 intercom 消息摘要中的省略，ADR 正文引用正确），已向架构澄清并撤销。
+- 2026-09-22：**`nao-fleet.sh ensure` 回归缺陷（阻断派发，已绕行）**——脚本 597 行 `cmd_ensure "$FORCE" "$MODEL" "$TASK" ...` 读取 `TASK`，但 `--task` 是新加入的解析分支（`.agents` 在制品，未提交），**未给 `TASK` 设默认空值**；在 `set -euo pipefail` 下，**不带 `--task` 的常规调用**（即常驻会话 `ensure rd-fe`）直接 `TASK: 未绑定的变量` 退出。绕行：`TASK= bash .agents/scripts/nao-fleet.sh ensure <role>`（导出空值即满足 `set -u`）。修复归属：`.agents/**` 在制品线（nao-skills / fleet 资产），PM 不动手。影响面：任何在 `--task` 分支合入后的 `ensure` 常规路径；`check`/`status` 不受影响。
