@@ -57,8 +57,9 @@
 
 ## 四、治理待办（待用户决定）
 
-- **`.agents/**`（nao 舰队接入在制品，22 项：15 M + 7 未跟踪）**、**`.codegraph/**`**、**`.pi/**`** 仍未提交 —— 属独立治理线，**待用户决定归属与提交时机**（卡 §六 纪律：**不得提交** `.agents/.codegraph/.pi`）。
-- **`.agents` 格式化冲突根治项（未决）**：①`vite.config.ts` 的 `fmt.ignorePatterns` 追加 `'.agents/**'`；或 ②让 `nao-fleet.sh` 的 awk 解析器 CRLF/缩进容忍（宜回流上游 nao-skills）。
+- **`.agents/**` —— ✅ 已纳入版本管理（2026-09-22 用户决定）**：提交 **`2c8cba0d`**（**29 文件**：角色卡 5 / 公共规范 2 / 技能 8 / 清单 5 / 模板 4 / 脚本 2 / `.nao-version` / `roles.yaml`）。**提交后核验**：钩子未改动资产（工作区 = HEAD）、HEAD 内资产 **LF 保持**（CRLF = 0）、`roles.yaml` 缩进 **2/4 保持**、`nao-fleet.sh check` **exit 0**、`vp check` exit 0；敏感信息扫描**干净**（无凭据/私钥）。**⚠️ 仍需人工保持的不变量**：`.agents/**` 在 `fmt.ignorePatterns` 内（oxfmt 不接管）⇒ **LF + `roles.yaml` 2/4 缩进靠人守**，守卫 = `nao-fleet.sh check`（应为 0）。
+- **`.codegraph/**`、`.pi/**`**：已由 `.gitignore` 排除（`.gitignore:47-48`），**不提交**（索引/运行时产物）。
+- **`.agents` 格式化冲突根治项**：① **已完成** —— `.agents/**` 已加入 `vite.config.ts` 的 `fmt.ignorePatterns`（oxfmt 不再接管，CRLF/缩进漂移根因已消除）；② **仍待回流上游（nao-skills）** —— 让 `nao-fleet.sh` 的 awk 解析器容忍 CRLF / 4 空格缩进（防御性）。
 - **上游工具缺陷（建议回流 nao-skills / 报 vite-plus issue）**：**`vp config` 不尊重 `.editorconfig`** —— 版本 `vp v0.2.6`（`vite-plus@0.2.6`，devDependency 走 `catalog:`）。**最小复现（4 步）**：① `.editorconfig` 含 `[*] end_of_line = crlf` 且某文件含 `<!--VITE PLUS START/END-->` 区块；② `vp check --fix <file>` ⇒ 全 CRLF（干净）；③ `vp config`（= `prepare`）⇒ **托管区块被重写为 LF**（CRLF 116 → 101、新增 15 个 LF 行）⇒ 工作区**立刻变脏**；④ 再 `vp check --fix` ⇒ 又回全 CRLF ⇒ **无限 ping-pong**。**期望**：注入器应尊重目标文件既有 EOL / `.editorconfig`。**影响面**：任何「CRLF 项目 + Vite+ 托管区块」每次 `pnpm install` 后必现无意义 diff。**本仓已规避**（`.editorconfig` 对 `AGENTS.md` 指定 LF）。
 - **命中抽检固化 ✅（T92，`149305fe`）**：已落 `scripts/electron-smoke/checks/day-view-hit.mjs`（feature `day-view`）。**待办：端到端实跑**（需注入 `NAO_QA_EMAIL`/`NAO_QA_PASSWORD`）：`node scripts/electron-smoke/run.mjs --launch --feature day-view`；重点 `bars`/`blank`/`allday`/`ticks` 与 `zoom`（×1/×4）。T92 已用**真实渲染 + 仓库真实 CSS 的合成 DOM** 验证各判据，并做**回归有效性实测**（把 track 改回 `pointer-events: auto` ⇒ `stack`/`blank`/`overlay.track` 三条转红）。
 - **「是否引入 Playwright」= 不需要（2026-09-22 核查结论）**：仓库已有 `scripts/electron-smoke/`（CDP 驱动桌面端实机、Node 内置能力、零依赖），README 明写覆盖「真实布局/弹层堆叠/**真实命中测试**」—— 需要真实浏览器的检查（含 TASK-16 **D5** 曾搁置的几何回归）应**扩展该工具**，而非新增依赖。TASK-16 D5「暂不引入 Playwright」据此维持。
