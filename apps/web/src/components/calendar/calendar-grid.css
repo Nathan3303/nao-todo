@@ -15,7 +15,7 @@
     --cal-bg: var(--nue-primary-color-0);
     --cal-fg: var(--nue-primary-text-color);
     --cal-muted: color-mix(in srgb, var(--nue-primary-text-color) 45%, var(--nue-primary-color-0));
-    --cal-border: var(--nue-border-color);
+    --cal-border: var(--nue-primary-color-100);
     /* 网格分隔线（TASK-07：较 --cal-border 淡化约 28%，降低亮度） */
     --cal-grid-line: color-mix(in srgb, var(--cal-border) 64%, var(--cal-bg));
     --cal-hover: color-mix(in srgb, var(--nue-primary-text-color) 5%, var(--nue-primary-color-0));

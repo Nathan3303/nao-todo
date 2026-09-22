@@ -278,7 +278,7 @@ const onKeyDown = (event: KeyboardEvent): void => {
 }
 .cal-item.is-sticky-label .cal-item-text {
     position: sticky;
-    left: 0;
+    left: 12px;
     flex: 0 1 auto;
     width: max-content;
     max-width: 100%;
