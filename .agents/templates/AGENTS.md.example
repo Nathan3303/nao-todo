@@ -1,0 +1,37 @@
+# AGENTS.md — <项目名> 项目上下文
+
+> **本模板仅用于新建**。项目已有非空 AGENTS.md 时，按 PM 卡 §七「接入已有 AGENTS.md」合并规则处理：
+> 保留原文 + 末尾追加 `## nao 舰队接入（日期）` 区块，不覆盖、不新建遮蔽文件。
+>
+> pi 自动加载本文件进所有会话上下文；**保持精简**（<120 行），只放项目级内容。
+> 角色级/团队级内容留在 nao-skills（roles.yaml / common / checklists），这里只写「在哪里」。
+> 维护人：PM（见 PM 卡 §七）。
+
+## 项目属性
+
+- **仓库结构**：<顶层目录一句话，如 前端 packages/presentation-*，后端独立 repo nao-todo-server>
+- **技术栈**：<框架/语言/关键版本>
+- **命令**：
+  - 构建/启动：`<cmd>`
+  - 测试：`<cmd>`
+  - lint/格式：`<cmd>`
+  - 代码索引同步：`codegraph sync`（如已配）
+- **环境**：<关键环境变量 / 运行方式 / 数据依赖>
+
+## 项目约束（红线）
+
+- <领域约束 1，如：任务状态流转只走领域实体方法>
+- <命令纪律，如：禁 cat 全文读代码，用 CodeGraph 或 sed 行段>
+- <依赖限制 / 禁止事项>
+
+## 与 nao 机制衔接
+
+- **CodeGraph**：本仓库 `.codegraph/` 索引；写完代码 `codegraph sync` 保持新鲜。
+- **UI/UX**：Design Tokens 在 `<src/styles/tokens.css>`；UX Playbook 在 `<docs/ux-playbook.md>`；硬编码色值禁入（`ui-tokens-check.sh` 兜底）。
+- **交付核对**：交付前读取 `@.agents/checklists/<role>.md`（完整红线 + 清单）。
+
+## 指针（勿复制内容）
+
+- 团队级协议/角色清单：`$NAO_SKILLS/.agents/common/` + `.agents/roles.yaml`
+- 角色卡：`$NAO_SKILLS/.agents/prompts/`
+- 按需技能：`$NAO_SKILLS/.agents/skills/`

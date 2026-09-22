@@ -4,12 +4,12 @@ description: 按需技能——架构模式速查 + ADR 模板
 
 # 架构模式速查
 
-| 场景        | 推荐架构          | 关键技术                        |
-| :---------- | :---------------- | :------------------------------ |
-| 高并发交易  | 微服务 + 事件驱动 | Kubernetes, Kafka, Redis        |
-| 大数据处理  | Lambda 架构       | Spark, Flink, S3                |
-| 多租户 SaaS | 多租户 + 模块化   | PostgreSQL schemas, API Gateway |
-| 实时系统    | 事件溯源 + CQRS   | Event Store, gRPC               |
+| 场景 | 推荐架构 | 关键技术 |
+| :--- | :--- | :--- |
+| 高并发交易 | 微服务 + 事件驱动 | Kubernetes, Kafka, Redis |
+| 大数据处理 | Lambda 架构 | Spark, Flink, S3 |
+| 多租户 SaaS | 多租户 + 模块化 | PostgreSQL schemas, API Gateway |
+| 实时系统 | 事件溯源 + CQRS | Event Store, gRPC |
 
 ## 最小示例
 
@@ -27,7 +27,6 @@ graph TD
 
 ```md
 # ADR-<编号>: <标题>
-
 - 日期：YYYY-MM-DD
 - 状态：提议 / 已接受 / 已废弃
 - 背景：<问题与约束>

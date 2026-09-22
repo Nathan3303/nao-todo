@@ -106,7 +106,7 @@ Docs are local at `node_modules/vite-plus/docs` or online at https://viteplus.de
 
 - 校验与构建：`vp install` → `vp check`（格式 + lint + 类型）→ `vp test`；`pnpm run guard:ddd`（领域隔离）；`pnpm run desktop:build`、`pnpm webapp build`
 - ⚠️ **`.agents/**` 是舰队资产，必须保持 `LF` + `roles.yaml` 用 2 空格嵌套**：本仓 `.editorconfig` 要求 `end_of_line = crlf`、YAML `indent_size = 4`，与 `nao-fleet.sh` 的 awk 解析器（`^---$` / `^  <role>:` / `^    <field>:`）**不可调和** —— 跑过一次 `vp check --fix` 或提交钩子后，`roles.yaml` 会被重排为 4/8 空格、`.agents/**` 会被转 CRLF，导致 `nao-fleet.sh check` 报「无法解析 / frontmatter 缺失」。**若发生：把 `.agents/**` 全部转回 LF、`roles.yaml` 缩进改回 2/4，再复跑 check。** 根治方案待定（解析器 CRLF/缩进容忍 或 把 `.agents/**` 加入 fmt 忽略）。
-- 提交纪律：**精确 pathspec**，禁 `git add -A`；**不得提交** `.agents/**`（在制品）、`.codegraph/**`、`.pi/**`
+- 提交纪律：**精确 pathspec**，禁 `git add -A`；**`.agents/**` 已纳入版本管理**（2026-09-22 用户决定）；`.codegraph/**`、`.pi/**` 由 `.gitignore` 排除，不提交
 - pre-commit 钩子 `vp staged` 会执行 `vp check --fix`：**以 `markdown` 为语言标记的代码围栏，其内部列表会被按 `.editorconfig` 的 `indent_size = 4` 重排**（曾静默改写 PRD 的冻结格式基准）。需原样保留缩进的示例，请用 `text` 作为围栏语言标记
 
 ### 项目红线

@@ -7,6 +7,7 @@
 #   nao-fleet.sh status                           角色会话在线状态（权威名单见 intercom list）
 #   nao-fleet.sh ensure <别名>[@<repo>] [更多...]  拉起角色窗口（默认工作区=roles.yaml workspace）
 #   nao-fleet.sh ensure -m <model> <别名>...       显式指定模型（须命中白名单）
+#   nao-fleet.sh ensure --task <编号> <别名>[@<repo>]   任务派生会话：--name <别名>-<编号>（并行隔离，避免同名冲突）
 #   nao-fleet.sh ensure --force <别名>...          忽略"已在运行"判重
 #
 # 角色别名 → 角色卡：见 .agents/roles.yaml（单一事实来源）
@@ -48,40 +49,30 @@ warn() { printf '\033[1;33m[fleet]\033[0m %s\n' "$*" >&2; }
 die()  { printf '\033[1;31m[fleet]\033[0m %s\n' "$*" >&2; exit 1; }
 
 # ---------------------------------------------------------------------------
-# roles.yaml 解析（顶层 roles:；角色层级取 roles: 后首个非注释非空行缩进，
-# 更深缩进视为字段 ⇒ 2/4 与 4/8 均可；行尾 \r 容忍（CRLF）；禁 Tab）
+# roles.yaml 解析（严格子集：顶层 roles:，2 空格角色条目 / 4 空格字段，禁 Tab）
 # 填充 ROLE_ORDER / ROLE_CARDS / ROLE_WS / ALIAS_ROLE；解析失败即 die
 load_manifest() {
   local f="$MANIFEST" out
   [[ -f "$f" ]] || die "角色清单缺失: $f（请创建 .agents/roles.yaml）"
   out="$(awk -F'\t' '
     function die(msg) { print "ERR: " FNR ": " msg; bad=1 }
-    BEGIN { bad=0; in_roles=0; role_ind=-1; cur=""; n=0 }
+    BEGIN { bad=0; in_roles=0; cur=""; n=0 }
+    /^[[:space:]]*#/ { next }
+    /^[[:space:]]*$/ { next }
     {
-      sub(/\r$/, "")            # CRLF 容忍：剥离行尾 \r
-      if ($0 ~ /^[[:space:]]*#/) next
-      if ($0 ~ /^[[:space:]]*$/) next
       if ($0 ~ /\t/) { die("禁止 Tab 缩进"); next }
       if (!in_roles) {
-        if ($0 ~ /^[[:space:]]*roles:[[:space:]]*$/) { in_roles=1; next }
+        if ($0 ~ /^roles:[[:space:]]*$/) { in_roles=1; next }
         die("顶层仅允许 roles:，得到: " $0); next
       }
-      match($0, /^ */); ind=RLENGTH   # 当前行缩进宽度（仅空格）
-      line=$0; sub(/^[ ]+/, "", line); sub(/[ ]+$/, "", line)
-      if (role_ind < 0) {
-        # roles: 之后首个非注释非空行 = 角色条目，其缩进即角色层级
-        if (line !~ /^[a-z0-9][a-z0-9-]*:[[:space:]]*$/) { die("roles: 后首行须为角色条目: " $0); next }
-        role_ind=ind
-      }
-      if (ind == role_ind) {
-        if (line !~ /^[a-z0-9][a-z0-9-]*:[[:space:]]*$/) { die("非法角色 id: " line); next }
-        cur=line; sub(/:.*/, "", cur)
+      if ($0 ~ /^  [^ ][^:]*:[[:space:]]*$/) {
+        cur=$0; sub(/^  /, "", cur); sub(/:[[:space:]]*$/, "", cur)
+        if (cur !~ /^[a-z0-9][a-z0-9-]*$/) { die("非法角色 id: " cur); next }
         card[cur]=""; ws[cur]="."; na[cur]=0; order[++n]=cur; next
       }
-      if (ind > role_ind) {
-        if (line !~ /^[a-z_]+:[[:space:]]/) { die("无法解析: " $0); next }
-        key=line; sub(/:.*/, "", key)
-        val=line; sub(/^[a-z_]+:[[:space:]]*/, "", val)
+      if (cur != "" && $0 ~ /^    [a-z_]+:[[:space:]]/) {
+        key=$0; sub(/^    /, "", key); sub(/:.*/, "", key)
+        val=$0; sub(/^    [a-z_]+:[[:space:]]*/, "", val)
         if      (key=="card")      { card[cur]=val }
         else if (key=="workspace") { ws[cur]=val }
         else if (key=="aliases") {
@@ -115,7 +106,6 @@ load_manifest() {
 # 读取卡片 frontmatter 字段（--- 与 --- 之间）
 card_field() {
   awk -v k="$2" '
-    { sub(/\r$/, "") }        # CRLF 容忍：frontmatter 定界符 /^---$/ 方可命中
     /^---$/ { c++; next }
     c == 1 && $0 ~ "^" k ":" { sub("^" k ": *", ""); print; exit }
   ' "$1"
@@ -380,7 +370,7 @@ cmd_check() {
   local wl_problems=0
 
   echo "== 目录 =="
-  for d in "$PROMPTS_DIR" "$COMMON_DIR" "$SKILLS_SUB"; do
+  for d in "$PROMPTS_DIR" "$COMMON_DIR" "$SKILLS_SUB" "$SKILLS_DIR"/.agents/checklists; do
     if [[ -d "$d" ]]; then printf '  ✓ %s\n' "$d"
     else printf '  ✗ 缺失: %s\n' "$d"; rc=1; fi
   done
@@ -452,8 +442,7 @@ cmd_check() {
       if [[ "$cgst" == *"up to date"* ]]; then
         echo '  ✓ 当前目录索引 up to date'
       elif [[ "$cgst" == *"Pending Changes"* ]]; then
-        # 索引过期仅为提醒（与 check_codegraph 口径一致），不计入退出码，避免误停派发
-        echo '  ! 当前目录索引有未同步变更（codegraph sync）'
+        echo '  ! 当前目录索引有未同步变更（codegraph sync）'; rc=1
       else
         echo '  · 当前目录有索引，状态见 codegraph status'
       fi
@@ -532,11 +521,17 @@ cmd_status() {
       printf '  · %-14s 未运行（ensure 拉起）\n' "$a"
     fi
   done
+  echo "== 任务派生会话（--task 拉起，如 rd-be-T1）=="
+  local found=0 line
+  while IFS= read -r line; do
+    [[ -n "$line" ]] && { printf '  · %s\n' "$line"; found=1; }
+  done < <(pgrep -af "pi[[:space:]].*--name (pm|arch-designer|rd-fe|rd-be|qa)-[A-Za-z0-9_-]+" 2>/dev/null | head -10)
+  (( found )) || echo '  （无）'
 }
 
 # ---------------------------------------------------------------------------
 cmd_ensure() {
-  local force="$1" model="$2"; shift 2
+  local force="$1" model="$2" task="$3"; shift 3
   local spec role repo key seen k
   local -a cg_done=()
   [[ $# -eq 0 ]] && die "ensure 需要至少一个角色，如: nao-fleet.sh ensure arch rd-fe"
@@ -548,22 +543,24 @@ cmd_ensure() {
     fi
     resolve_role "$role"
     [[ -n "$repo" ]] || repo="${ROLE_WS[$NAME]:-$PWD}"
+    # 任务派生：会话名 = <角色>-<任务编号>，独立 intercom 身份（并行隔离，避免同名冲突）
+    local disp="$NAME"
+    [[ -n "$task" ]] && disp="${NAME}-${task}"
     # CodeGraph 索引健康（同 repo 只查一次，不阻塞拉起）
     key="$repo"; seen=0
     for k in "${cg_done[@]:-}"; do [[ "$k" == "$key" ]] && seen=1; done
     if (( ! seen )); then check_codegraph "$repo"; cg_done+=("$key"); fi
-    if [[ "$force" != "true" ]] && running "$NAME"; then
-      warn "$NAME 已在运行（--name 识别），跳过；确需重开请加 --force"
+    if [[ "$force" != "true" ]] && running "$disp"; then
+      warn "$disp 已在运行（--name 识别），跳过；确需重开请加 --force"
       continue
     fi
-    spawn_one "$NAME" "$repo" "$model"
+    spawn_one "$disp" "$repo" "$model"
   done
 }
 
 # ---------------------------------------------------------------------------
 usage() {
   awk '
-    { sub(/\r$/, "") }        # CRLF 容忍（脚本自身为 CRLF 时仍可打印用法）
     /^# =+$/ { c++; if (c==2) exit; next }
     c==1 && /^#/ { sub(/^# ?/,""); print }
   ' "$0"
@@ -583,6 +580,7 @@ while [[ $# -gt 0 ]]; do
       check_model "$MODEL" || die "模型 '$MODEL' 不在白名单内。允许: $MODEL_WHITELIST（可通过 NAO_MODEL_WHITELIST 覆盖）"
       shift 2 ;;
     --force)  FORCE=true;  shift ;;
+    --task)   TASK="${2:-}"; [[ -n "$TASK" ]] || die "--task 需要任务编号（如 T1）"; [[ "$TASK" =~ ^[A-Za-z0-9_-]+$ ]] || die "--task 非法: $TASK（仅字母/数字/-/_）"; shift 2 ;;
     --strict) STRICT=true; shift ;;
     -h|--help) usage ;;
     *) TARGETS+=("$1"); shift ;;
@@ -596,6 +594,6 @@ esac
 case "$CMD" in
   check)  cmd_check "$STRICT" ;;
   status) cmd_status ;;
-  ensure) cmd_ensure "$FORCE" "$MODEL" "${TARGETS[@]}" ;;
+  ensure) cmd_ensure "$FORCE" "$MODEL" "$TASK" "${TARGETS[@]}" ;;
   *) usage ;;
 esac

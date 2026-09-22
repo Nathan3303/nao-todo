@@ -31,9 +31,9 @@ description: 按需技能——Git 提交规范（仅在执行 git commit 前读
 
 ## 类型（可扩展）
 
-- feat 新增功能
-- fix 修复缺陷
-- chore 构建/依赖/配置等杂项
+- feat   新增功能
+- fix    修复缺陷
+- chore  构建/依赖/配置等杂项
 - change 其他（重构、性能等）
 - 扩展：refactor（重构）、docs（文档）、test（测试）、style（样式）等
 

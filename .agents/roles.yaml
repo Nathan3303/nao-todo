@@ -1,0 +1,37 @@
+# nao 团队角色清单 —— 单一事实来源
+#
+# 消费方：.agents/scripts/nao-fleet.sh
+#   - ensure <别名>    ：按 aliases 解析出角色 id（intercom 会话名 / --name）
+#   - check            ：校验本文件可解析、卡片 frontmatter 与 id 一致、交叉引用存在
+#   - status           ：按角色 id 展示在线状态
+# 协议文档（intercom-protocol.md）与 README 中的角色表均以此为基准，改动先改这里。
+#
+# 结构（严格缩进，禁 Tab）：
+#   <role-id>:                 # 规范角色 id，即 intercom 会话名（--name）
+#     aliases: [a, b]          # 命令行可用别名；首个为默认
+#     card: <file>.md          # .agents/prompts/ 下文件名
+#     workspace: .             # ensure 未带 @repo 时的默认工作区
+#
+# 注意：角色卡版本不在此维护（避免与卡片 frontmatter 重复）——
+#       version 以 .agents/prompts/<card>.md 的 frontmatter 为准。
+roles:
+  pm:
+    aliases: [pm]
+    card: product-manager.md
+    workspace: .
+  arch-designer:
+    aliases: [arch, arch-designer]
+    card: architecture-designer.md
+    workspace: .
+  rd-fe:
+    aliases: [rd-fe]
+    card: frontend-developer.md
+    workspace: .
+  rd-be:
+    aliases: [rd-be]
+    card: backend-developer.md
+    workspace: .
+  qa:
+    aliases: [qa]
+    card: test-engineer.md
+    workspace: .

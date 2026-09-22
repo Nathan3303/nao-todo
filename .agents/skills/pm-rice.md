@@ -18,12 +18,12 @@ description: 按需技能——优先级决策（战略筛子 / MoSCoW / RICE / 
 
 ## RICE
 
-| 维度       | 说明                   |
-| :--------- | :--------------------- |
-| Reach      | 影响用户数/交易量      |
-| Impact     | 影响程度（3/2/1/0.5）  |
+| 维度 | 说明 |
+| :--- | :--- |
+| Reach | 影响用户数/交易量 |
+| Impact | 影响程度（3/2/1/0.5） |
 | Confidence | 信心度（100%/80%/50%） |
-| Effort     | 总人月/人天            |
+| Effort | 总人月/人天 |
 
 **公式**：RICE = (Reach × Impact × Confidence) / Effort
 
