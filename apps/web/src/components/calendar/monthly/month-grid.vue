@@ -399,33 +399,7 @@ const {
     overflow: hidden;
 }
 
-/* ── 月份导航（header 共享布局见 calendar-grid.css；以下为既有遗留样式，本单不清理） ── */
-.cal-nav-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border: 1px solid transparent;
-    border-radius: 6px;
-    background: transparent;
-    color: var(--cal-fg);
-    cursor: pointer;
-    transition:
-        background 60ms,
-        border-color 60ms;
-}
-.cal-nav-btn:hover {
-    background: var(--cal-hover);
-    border-color: var(--cal-border);
-}
-.cal-nav-btn:active {
-    background: var(--cal-border);
-}
-
-.cal-aside-toggle {
-    margin-right: 4px;
-}
+/* ── 月份导航按钮 / 侧栏开关：TASK-16 登记的零引用死规则已于 T93 清理（模板与脚本均无引用） ── */
 
 .cal-empty-text {
     color: var(--cal-muted);
