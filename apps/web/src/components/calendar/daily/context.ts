@@ -30,6 +30,13 @@ export type CalendarDayContext = {
     onTaskCreated: (taskId: TaskViewObject['id']) => void
     onOpenUnscheduled: () => void
     onOpenDay: (dateKey: string) => void
+    /**
+     * 以锚点日的分钟刻度为起点打开创建对话框（TASK-19B C5：刻度标签 / `n` 快捷键入口）
+     * @param startMin 当日 00:00 起的分钟偏移（刻度值）
+     * @description 落点 = 宿主桥（单一 payload 构造点，与 `createTaskOnDay` 相邻）；
+     *              日视图**不得**自建 payload（避免同一功能两套口径）。
+     */
+    onCreateTaskAt: (startMin: number) => void
     onPrevDay: () => void
     onNextDay: () => void
     onGoToday: () => void

@@ -84,6 +84,7 @@ export const useCalendarHost = (options?: {
         undoLast,
         dismissUndoAction,
         createTaskOnDay,
+        createTaskAt,
         openTaskDetails,
         tasks,
         sortedTasks,
@@ -282,7 +283,14 @@ export const useCalendarHost = (options?: {
     useShortcut(
         'calendar.quick-create',
         'n',
-        guardNav(() => openQuickCreate(selectedKey.value || todayDateKey())),
+        guardNav(() => {
+            // TASK-19B C11：按 viewMode 分支 —— 日视图改开创建对话框（经宿主桥单一 payload 点）；月/周保持内联新建
+            if (viewMode.value === 'day') {
+                createTaskAt(selectedKey.value || todayDateKey(), quickCreateDefaultStartMin())
+                return
+            }
+            openQuickCreate(selectedKey.value || todayDateKey())
+        }),
         { scope: CALENDAR_KEY_SCOPE, label: '在选中日快速新建', group: NAV_GROUP }
     )
     useShortcut('calendar.open-day', 'enter', () => openDay(selectedKey.value || todayDateKey()), {
@@ -293,6 +301,14 @@ export const useCalendarHost = (options?: {
         available: (context) =>
             !calendarKeyLocked() && !isInteractiveKeyTarget(context.event?.target)
     })
+
+    // @method 日视图 `n` 默认时段（TASK-19B C11 / ADR C11）：今天 = 下一个 30 分刻度（≤ 23:30）；非今天 = 09:00
+    const quickCreateDefaultStartMin = (): number => {
+        if ((selectedKey.value || todayDateKey()) !== todayDateKey()) return 540
+        const now = dayjs()
+        const nowMin = now.hour() * 60 + now.minute()
+        return Math.min(23 * 60 + 30, Math.ceil(nowMin / 30) * 30)
+    }
 
     // —— 月视图上下文（渲染件消费；`onGoMonth` 由 active 月按钮自持，不绑导航） ——
     provide<CalendarMonthlyContext>(CALENDAR_MONTHLY_CONTEXT_KEY, {
@@ -323,6 +339,7 @@ export const useCalendarHost = (options?: {
         undoLast,
         dismissUndoAction,
         createTaskOnDay,
+        createTaskAt,
         openTaskDetails,
         goPrevDay,
         goNextDay,
@@ -408,6 +425,7 @@ export const useCalendarHost = (options?: {
         onTaskCreated: (taskId) => subscriber.emit('AddNewTaskId', taskId),
         onOpenUnscheduled: () => (unscheduledOpen.value = true),
         onOpenDay: openDay,
+        onCreateTaskAt: (startMin) => createTaskAt(selectedKey.value || todayDateKey(), startMin),
         onPrevDay: goPrevDay,
         onNextDay: goNextDay,
         onGoToday: goToToday,

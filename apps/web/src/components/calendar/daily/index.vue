@@ -3,14 +3,12 @@ import { Loading as LoadingComp, t } from '@nao-todo/shared'
 import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import type { TaskViewObject } from '@nao-todo/domain-task'
-import { translateTaskError, useTasksStore } from '@nao-todo/presentation/task'
+import { useTasksStore } from '@nao-todo/presentation/task'
 import { useTaskUseCase } from '@/hooks'
 // 相对路径导入（而非 `@/hooks/use-shortcut`）：桌面端 electron.vite 对 `@/hooks` 做前缀别名
 // （→ 桌面装配层 hooks 目录），子路径会解析失败；相对路径指向 webapp 真实文件，两端一致。
 import { useShortcut } from '../../../hooks/use-shortcut'
-import { NueMessage } from 'nue-ui'
 import TaskBar from '../monthly/task-bar.vue'
-import QuickCreate from '../monthly/quick-create.vue'
 import CalendarSortDropdown from '../monthly/calendar-sort-dropdown.vue'
 import ScheduleUndoToast from '../monthly/undo-toast.vue'
 import { useCalendarSchedule } from '../monthly/use-calendar-schedule'
@@ -21,6 +19,7 @@ import { CALENDAR_KEY_SCOPE } from '../monthly/keyboard-nav'
 import { DAY_SNAP_MINUTES, snapMinutes } from '../snap'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
 import { buildDayGrid } from './build-day-grid'
+import { useDayPan } from './use-day-pan'
 import {
     DAY_ZOOM_DEFAULT,
     dayAxisSpecOf,
@@ -50,8 +49,8 @@ const {
     isDisplayAside,
     switchDisplayAside,
     onOpenTask,
-    onTaskCreated,
     onOpenUnscheduled,
+    onCreateTaskAt,
     onPrevDay,
     onNextDay,
     onGoToday,
@@ -114,7 +113,7 @@ if (undoSink) {
 
 // @states 交互层容器与当前手势（move=拖拽改时间 / resize=拉伸改时长）
 const trackEl = ref<HTMLElement | null>(null)
-const gesture = ref<'move' | 'resize' | null>(null)
+const gesture = ref<'move' | 'resize' | 'resize-start' | null>(null)
 
 // @method 坐标基准：day-axis-track 的 rect（指针绝对位置换算；禁 offsetX）
 const trackRect = (): DOMRect | null => trackEl.value?.getBoundingClientRect() ?? null
@@ -124,45 +123,64 @@ const drag = useDragSchedule({
     isBusy: () => rescheduleBusyId.value !== '' || scheduleBusy.value || undoBusy.value,
     closeUnscheduled: () => {},
     scheduleOne: () => {},
-    // 日视图像素级落点（C8）：复用同一手势壳；round、时长不变、拉伸只改 endAt（C13 真实值锚）
+    // 日视图像素级落点（C8）：复用同一手势壳；round、真实值锚（C13）、不夹取可见日边界（D2）
     resolveDrop: async ({ task, clientX, originX }) => {
         const rect = trackRect()
         const mode = gesture.value
         gesture.value = null
-        if (!rect || rect.width <= 0 || !task.startAt) return
+        if (!rect || rect.width <= 0 || !task.startAt || !task.endAt) return
         const perMin = pxPerMinute(rect)
         const realStart = dayjs(task.startAt)
-        if (mode === 'resize') {
-            const startMin = realStart.hour() * 60 + realStart.minute()
-            const endMin = Math.max(
-                snapMinutes((clientX - rect.left) / perMin, DAY_SNAP_MINUTES, 'round'),
-                startMin + DAY_SNAP_MINUTES
-            )
-            // 拉伸只改 endAt；同时回传原 startAt 以便调用方校验 endAt≥startAt 不变量（值不变）
-            await applyTimePatch(
-                task,
-                {
-                    startAt: realStart.toISOString(),
-                    endAt: realStart.startOf('day').add(endMin, 'minute').toISOString()
-                },
-                '已调整时长'
-            )
-        } else {
-            const originMin = realStart.hour() * 60 + realStart.minute()
-            const newStartMin = snapMinutes(
-                originMin + (clientX - originX) / perMin,
+        const realEnd = dayjs(task.endAt)
+        const deltaMin = (clientX - originX) / perMin
+        if (mode === 'resize-start') {
+            // 左缘（C2 r2 / C3）：改 startAt（endAt 不变）；锚真实 startAt + Δ
+            const snapped = snapMinutes(
+                realStart.hour() * 60 + realStart.minute() + deltaMin,
                 DAY_SNAP_MINUTES,
                 'round'
             )
-            const durationMs = dayjs(task.endAt).valueOf() - realStart.valueOf()
-            const newStart = realStart.startOf('day').add(newStartMin, 'minute')
-            const newEnd = newStart.add(durationMs, 'ms')
+            let newStart = realStart.startOf('day').add(snapped, 'minute')
+            const latest = realEnd.subtract(DAY_SNAP_MINUTES, 'minute')
+            if (newStart.isAfter(latest)) newStart = latest
             await applyTimePatch(
                 task,
-                { startAt: newStart.toISOString(), endAt: newEnd.toISOString() },
-                '已调整时间'
+                { startAt: newStart.toISOString(), endAt: realEnd.toISOString() },
+                '已调整开始时间'
             )
+            return
         }
+        if (mode === 'resize') {
+            // 右缘：改 endAt（startAt 不变）；锚真实 endAt + Δ（禁以裁剪后的 24:00 反推）
+            const snapped = snapMinutes(
+                realEnd.hour() * 60 + realEnd.minute() + deltaMin,
+                DAY_SNAP_MINUTES,
+                'round'
+            )
+            let newEnd = realEnd.startOf('day').add(snapped, 'minute')
+            const earliest = realStart.add(DAY_SNAP_MINUTES, 'minute')
+            if (newEnd.isBefore(earliest)) newEnd = earliest
+            await applyTimePatch(
+                task,
+                { startAt: realStart.toISOString(), endAt: newEnd.toISOString() },
+                '已调整时长'
+            )
+            return
+        }
+        // 主体拖拽：改 startAt、时长不变（锚真实 startAt + Δ）
+        const newStartMin = snapMinutes(
+            realStart.hour() * 60 + realStart.minute() + deltaMin,
+            DAY_SNAP_MINUTES,
+            'round'
+        )
+        const durationMs = realEnd.valueOf() - realStart.valueOf()
+        const newStart = realStart.startOf('day').add(newStartMin, 'minute')
+        const newEnd = newStart.add(durationMs, 'ms')
+        await applyTimePatch(
+            task,
+            { startAt: newStart.toISOString(), endAt: newEnd.toISOString() },
+            '已调整时间'
+        )
     }
 })
 
@@ -171,64 +189,15 @@ const startMove = (task: TaskViewObject, event: PointerEvent): void => {
     gesture.value = 'move'
     drag.startPossible(task, 'bar', event)
 }
-// @method 起拉（右缘把手）
+// @method 起拉（右缘把手）：改 endAt（startAt 不变）
 const startResize = (task: TaskViewObject, event: PointerEvent): void => {
     gesture.value = 'resize'
     drag.startPossible(task, 'bar', event)
 }
-
-// @states 内联快速新建（B6/D5）：点击时刻的 floor 分钟；null = 未打开
-const quickCreate = ref<{ startMin: number } | null>(null)
-const quickCreatePending = ref(false)
-
-const openQuickCreateAt = (startMin: number): void => {
-    quickCreate.value = { startMin }
-}
-const closeQuickCreate = (): void => {
-    if (!quickCreatePending.value) quickCreate.value = null
-}
-// @method 提交命名：floor 时刻 + 30 分钟时长；失败保留编辑器（可重试），成功关闭并广播（B6 语义）
-const submitQuickCreate = async (name: string): Promise<void> => {
-    const target = quickCreate.value
-    if (!target) return
-    quickCreatePending.value = true
-    try {
-        const base = dayjs(anchorKey.value).startOf('day')
-        const [task, err] = await interactionTaskUseCase.create({
-            projectId: '',
-            name,
-            description: '',
-            state: 'todo',
-            priority: 'low',
-            startAt: base.add(target.startMin, 'minute').toISOString(),
-            endAt: base.add(target.startMin + DAY_SNAP_MINUTES, 'minute').toISOString(),
-            tags: [],
-            remindAt: null,
-            remindRepeat: 'none',
-            remindTime: null,
-            remindWeekdays: []
-        })
-        if (err !== null) {
-            NueMessage.error(translateTaskError(err))
-            return
-        }
-        if (task) onTaskCreated(task.id)
-        quickCreate.value = null
-    } finally {
-        quickCreatePending.value = false
-    }
-}
-
-// @method 点空白：挂载内联命名编辑器（D5；floor 到 30 分钟，提交时才 create）
-const onTrackClick = (event: MouseEvent): void => {
-    const rect = trackRect()
-    if (!rect || rect.width <= 0) return
-    const startMin = snapMinutes(
-        (event.clientX - rect.left) / pxPerMinute(rect),
-        DAY_SNAP_MINUTES,
-        'floor'
-    )
-    openQuickCreateAt(startMin)
+// @method 起拉（左缘把手，C2 r2）：改 startAt（endAt 不变）——第三种手势，不复用「时长不变」的 move 分支
+const startResizeStart = (task: TaskViewObject, event: PointerEvent): void => {
+    gesture.value = 'resize-start'
+    drag.startPossible(task, 'bar', event)
 }
 
 // @computed 日视图模型（分钟级连续定位；轨道 + 日级 +N 走唯一 packLanes）
@@ -259,6 +228,33 @@ const emptyHint = computed(() => {
         return { text: '已隐藏已完成任务', action: '显示已完成', run: onShowCompleted }
     return { text: t('calendar.noTasksToday'), action: '', run: () => {} }
 })
+
+// —— TASK-19B C5 刻度新建入口（取代 TASK-16 D5 内联编辑器） ——
+/** 刻度值 → `HH:MM`（aria/title 文案；×1 档可见文本为 `HH`，此处仍规范到 `HH:MM`） */
+const tickTextOf = (minutes: number): string =>
+    `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
+
+// @computed 带文本列的索引（首/末列边界保护类名；C5 r3）
+const labelIndices = computed(() =>
+    model.value.columns.filter((col) => col.label !== '').map((col) => col.index)
+)
+const firstLabelIndex = computed(() => labelIndices.value[0] ?? -1)
+const lastLabelIndex = computed(() => labelIndices.value[labelIndices.value.length - 1] ?? -1)
+
+// @method 点击带文本刻度标签 → 经宿主桥打开创建对话框（payload 由宿主桥构造，日视图不自建）
+const onCreateAtTick = (tickMin: number): void => onCreateTaskAt(tickMin)
+
+// —— TASK-19B C6 全天只读条：不可拖拽原因（机器可断言载体 + 人读 title） ——
+type AllDayReason = 'span-over-24h' | 'end-only'
+const alldayReasonOf = (task: TaskViewObject): AllDayReason =>
+    task.startAt ? 'span-over-24h' : 'end-only'
+const ALLDAY_REASON_TEXT: Record<AllDayReason, string> = {
+    'span-over-24h': '全天任务，跨度超过 24 小时，日视图内不可拖拽',
+    'end-only': '全天任务，仅设了截止时间，日视图内不可拖拽'
+}
+
+// @computed 格线档位修饰类（轴 ADR r2：四级嵌套链 60/30/10/5）
+const gridLineModifier = computed(() => `day-col-lines--${axis.value.columnMinutes}`)
 
 // —— 当前时间线（仅锚点日=今天；30 秒更新；非今天不挂载定时器） ——
 const now = ref(dayjs())
@@ -355,6 +351,32 @@ const onWheel = (event: WheelEvent): void => {
     if (event.deltaY < 0) zoomIn()
     else zoomOut()
 }
+
+// —— TASK-19B C4 空白横向平移（pan；独立极小组合式，复用同一阈值） ——
+const { isPanning, onPointerDown, onPointerMove, onPointerUp, onPointerCancel } = useDayPan(bodyEl)
+
+// —— TASK-19B C7 裁切渐隐遮罩（滚动容器之外；rAF 合并，仅该侧有可滚内容时显示） ——
+const showStartFade = ref(false)
+const showEndFade = ref(false)
+let fadeRaf = 0
+const updateFades = (): void => {
+    const el = bodyEl.value
+    if (!el) return
+    showStartFade.value = el.scrollLeft > 0
+    showEndFade.value = el.scrollLeft < el.scrollWidth - el.clientWidth - 1
+}
+const onBodyScroll = (): void => {
+    if (fadeRaf) return
+    fadeRaf = requestAnimationFrame(() => {
+        fadeRaf = 0
+        updateFades()
+    })
+}
+onMounted(() => void nextTick(updateFades))
+watch(dayZoom, () => void nextTick(updateFades))
+onUnmounted(() => {
+    if (fadeRaf) cancelAnimationFrame(fadeRaf)
+})
 </script>
 
 <template>
@@ -441,130 +463,158 @@ const onWheel = (event: WheelEvent): void => {
             </nue-div>
         </nue-div>
 
-        <!-- 时间轴（滚动宿主：双轴；D5 落点 daily/index.vue，host.vue 零改动） -->
-        <div ref="bodyEl" class="day-body" @wheel.ctrl.prevent="onWheel">
-            <div ref="scrollEl" class="day-scroll" :style="{ width: scrollWidthCss }">
-                <!-- 列头：垂直固定（sticky）、随内容层横向滚动；子节点数 = 列数 -->
-                <div
-                    class="day-cols-head"
-                    data-testid="day-columns"
-                    :style="{ gridTemplateColumns: `repeat(${model.columns.length}, 1fr)` }"
-                >
-                    <div v-for="col in model.columns" :key="col.index" class="day-col-head">
-                        {{ col.label }}
-                    </div>
-                </div>
-                <!-- 全天泳道（时间轴区顶部；与 0–24 同列宽基准、跟随横向滚动；纵向生长由主体滚动承接） -->
-                <div
-                    class="day-allday-lane day-col-lines"
-                    :class="{ 'is-fine': axis.columnMinutes < 30 }"
-                    :style="{ '--day-col-count': model.columns.length }"
-                >
-                    <div class="day-allday-inner">
-                        <span class="day-allday-label">{{ t('calendar.allDay') }}</span>
-                        <div class="day-allday-items">
+        <!-- 时间轴（滚动宿主：双轴；D5 落点 daily/index.vue，host.vue 零改动）
+             裁切遮罩置于滚动容器之外（C7），仅在对应侧有可滚内容时显示 -->
+        <div class="day-body-wrap">
+            <div
+                ref="bodyEl"
+                class="day-body"
+                :class="{ 'is-panning': isPanning }"
+                @wheel.ctrl.prevent="onWheel"
+                @pointerdown="onPointerDown"
+                @pointermove="onPointerMove"
+                @pointerup="onPointerUp"
+                @pointercancel="onPointerCancel"
+                @scroll="onBodyScroll"
+            >
+                <div ref="scrollEl" class="day-scroll" :style="{ width: scrollWidthCss }">
+                    <!-- 列头：垂直固定（sticky）、随内容层横向滚动；直接子节点数 = 列数 -->
+                    <div
+                        class="day-cols-head"
+                        data-testid="day-columns"
+                        :style="{ gridTemplateColumns: `repeat(${model.columns.length}, 1fr)` }"
+                    >
+                        <div
+                            v-for="col in model.columns"
+                            :key="col.index"
+                            class="day-col-head"
+                            :class="{
+                                'is-first-tick': col.index === firstLabelIndex,
+                                'is-last-tick': col.index === lastLabelIndex
+                            }"
+                            :aria-hidden="col.label === '' ? 'true' : undefined"
+                        >
+                            <!-- 新建入口（C5）：仅带文本刻度可点（原生 button，键盘可达） -->
                             <button
-                                v-for="task in model.allDay"
-                                :key="task.id"
+                                v-if="col.label"
                                 type="button"
-                                class="day-allday-chip"
-                                :title="task.name"
-                                @click="onOpenTask(task.id)"
+                                class="day-col-label"
+                                :aria-label="`在 ${tickTextOf(col.index * axis.columnMinutes)} 创建任务`"
+                                :title="`在 ${tickTextOf(col.index * axis.columnMinutes)} 创建任务`"
+                                @click="onCreateAtTick(col.index * axis.columnMinutes)"
                             >
-                                {{ task.name }}
+                                {{ col.label }}
                             </button>
                         </div>
                     </div>
-                </div>
-                <!-- 网格：仅 1 个背景层（禁 48×N DOM，C6）；格线用 CSS 渐变 -->
-                <div class="day-grid">
-                    <div
-                        class="day-axis-bg day-col-lines"
-                        :class="{ 'is-fine': axis.columnMinutes < 30 }"
-                        data-testid="day-axis-bg"
-                        :style="{ '--day-col-count': model.columns.length }"
-                    ></div>
-                    <!-- 交互层（覆盖于纯视觉背景之上；day-axis-bg 仍无子节点，C6） -->
-                    <div
-                        ref="trackEl"
-                        class="day-axis-track"
-                        data-testid="day-axis-track"
-                        @click="onTrackClick"
-                    ></div>
-                    <!-- 内联命名编辑器（复用 quick-create；D5） -->
-                    <div
-                        v-if="quickCreate"
-                        class="day-quick-create"
-                        data-testid="day-quick-create"
-                        :style="{ left: `${(quickCreate.startMin / DAY_MINUTES) * 100}%` }"
-                    >
-                        <quick-create
-                            input-testid="day-quick-create-input"
-                            :pending="quickCreatePending"
-                            @submit="submitQuickCreate"
-                            @cancel="closeQuickCreate"
-                        />
-                    </div>
-                    <div class="cal-lanes" role="presentation">
-                        <div
-                            v-for="seg in model.timed"
-                            :key="`${seg.task.id}-${seg.colStart}`"
-                            class="day-seg"
-                            :style="segStyle(seg)"
-                        >
-                            <task-bar
-                                data-testid="day-task"
-                                :data-task-id="seg.task.id"
-                                :task="seg.task"
-                                :pos="{ left: '0', width: '100%', top: '0' }"
-                                :show-time="seg.isEnd"
-                                :cont-start="!seg.isStart"
-                                :cont-end="!seg.isEnd"
-                                :dragging="
-                                    drag.session.active && drag.session.taskId === seg.task.id
-                                "
-                                @open="onOpenTask(seg.task.id)"
-                                @drag-pointer-down="(e) => startMove(seg.task, e)"
-                            />
-                            <span
-                                class="day-task-resize"
-                                data-testid="day-task-resize"
-                                @pointerdown.stop="(e) => startResize(seg.task, e)"
-                            ></span>
+                    <!-- 全天泳道（时间轴区顶部；与 0–24 同列宽基准、跟随横向滚动；纵向生长由主体滚动承接）
+                         只读任务条（C6）：复用 task-bar、无手柄；原因分档由 data-allday-reason 承载 -->
+                    <div class="day-allday-lane day-col-lines" :class="gridLineModifier">
+                        <div class="day-allday-inner">
+                            <span class="day-allday-label">{{ t('calendar.allDay') }}</span>
+                            <div class="day-allday-items">
+                                <div
+                                    v-for="task in model.allDay"
+                                    :key="task.id"
+                                    class="day-allday-slot"
+                                >
+                                    <task-bar
+                                        class="day-allday-item"
+                                        :task="task"
+                                        :pos="{ left: '0', width: '100%', top: '0' }"
+                                        sticky-label
+                                        :title-suffix="ALLDAY_REASON_TEXT[alldayReasonOf(task)]"
+                                        :data-allday-reason="alldayReasonOf(task)"
+                                        @open="onOpenTask(task.id)"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <!-- 当前时间线（仅今天） -->
-                    <div
-                        v-if="model.isToday"
-                        class="day-now-line"
-                        :style="{ left: nowLeft }"
-                        aria-hidden="true"
-                    ></div>
-
-                    <!-- 状态覆盖（列头/背景仍渲染，保 DOM 契约稳定） -->
-                    <div v-if="loading" class="day-state">
-                        <loading-comp height="100%" />
-                    </div>
-                    <div v-else-if="error" class="day-state">
-                        <nue-div vertical align="center" gap="8px">
-                            <nue-text size="var(--nue-text-sm)">{{ error }}</nue-text>
-                            <nue-button theme="primary,small" @click="onRetry">重试</nue-button>
-                        </nue-div>
-                    </div>
-                    <div v-else-if="emptyHint" class="day-state">
-                        <nue-div vertical align="center" gap="8px">
-                            <nue-text size="var(--nue-text-sm)">{{ emptyHint.text }}</nue-text>
-                            <nue-button
-                                v-if="emptyHint.action"
-                                theme="primary,small"
-                                @click="emptyHint.run"
+                    <!-- 网格：仅 1 个背景层（禁 列数×N DOM，C6）；格线用 CSS 渐变 -->
+                    <div class="day-grid">
+                        <div
+                            class="day-axis-bg day-col-lines"
+                            :class="gridLineModifier"
+                            data-testid="day-axis-bg"
+                        ></div>
+                        <!-- 交互层（覆盖于纯视觉背景之上；day-axis-bg 仍无子节点，C6）
+                             光标 grab：空白可拖拽平移（C4） -->
+                        <div
+                            ref="trackEl"
+                            class="day-axis-track"
+                            data-testid="day-axis-track"
+                        ></div>
+                        <div class="cal-lanes" role="presentation">
+                            <div
+                                v-for="seg in model.timed"
+                                :key="`${seg.task.id}-${seg.colStart}`"
+                                class="day-seg"
+                                :style="segStyle(seg)"
                             >
-                                {{ emptyHint.action }}
-                            </nue-button>
-                        </nue-div>
+                                <task-bar
+                                    data-testid="day-task"
+                                    :data-task-id="seg.task.id"
+                                    :task="seg.task"
+                                    :pos="{ left: '0', width: '100%', top: '0' }"
+                                    sticky-label
+                                    :show-time="seg.isEnd"
+                                    :cont-start="!seg.isStart"
+                                    :cont-end="!seg.isEnd"
+                                    :dragging="
+                                        drag.session.active && drag.session.taskId === seg.task.id
+                                    "
+                                    @open="onOpenTask(seg.task.id)"
+                                    @drag-pointer-down="(e) => startMove(seg.task, e)"
+                                />
+                                <!-- 两侧手柄恒在（C2 r2）：左拉改 startAt / 右拉改 endAt；续接段也保留 -->
+                                <span
+                                    class="day-task-resize--start"
+                                    @pointerdown.stop="(e) => startResizeStart(seg.task, e)"
+                                ></span>
+                                <span
+                                    class="day-task-resize"
+                                    data-testid="day-task-resize"
+                                    @pointerdown.stop="(e) => startResize(seg.task, e)"
+                                ></span>
+                            </div>
+                        </div>
+                        <!-- 当前时间线（仅今天） -->
+                        <div
+                            v-if="model.isToday"
+                            class="day-now-line"
+                            :style="{ left: nowLeft }"
+                            aria-hidden="true"
+                        ></div>
+
+                        <!-- 状态覆盖（列头/背景仍渲染，保 DOM 契约稳定） -->
+                        <div v-if="loading" class="day-state">
+                            <loading-comp height="100%" />
+                        </div>
+                        <div v-else-if="error" class="day-state">
+                            <nue-div vertical align="center" gap="8px">
+                                <nue-text size="var(--nue-text-sm)">{{ error }}</nue-text>
+                                <nue-button theme="primary,small" @click="onRetry">重试</nue-button>
+                            </nue-div>
+                        </div>
+                        <div v-else-if="emptyHint" class="day-state">
+                            <nue-div vertical align="center" gap="8px">
+                                <nue-text size="var(--nue-text-sm)">{{ emptyHint.text }}</nue-text>
+                                <nue-button
+                                    v-if="emptyHint.action"
+                                    theme="primary,small"
+                                    @click="emptyHint.run"
+                                >
+                                    {{ emptyHint.action }}
+                                </nue-button>
+                            </nue-div>
+                        </div>
                     </div>
                 </div>
             </div>
+            <!-- 裁切渐隐遮罩（滚动容器之外；C7） -->
+            <div class="day-edge-fade is-start" :class="{ 'is-visible': showStartFade }"></div>
+            <div class="day-edge-fade is-end" :class="{ 'is-visible': showEndFade }"></div>
         </div>
 
         <!-- C9 撤销（有宿主时经注入通道上报宿主渲染；无宿主自足回退本地渲染） -->
@@ -592,7 +642,7 @@ const onWheel = (event: WheelEvent): void => {
 
 .day-allday-inner {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 8px;
     min-height: 28px;
     padding: 0 4px 4px;
@@ -604,35 +654,71 @@ const onWheel = (event: WheelEvent): void => {
     color: var(--cal-muted);
 }
 
+/* 只读任务条（C6）：单行换行 + 泳道纵向生长（task-bar 为绝对定位，用相对槽位承载） */
 .day-allday-items {
     display: flex;
+    flex: 1;
     flex-wrap: wrap;
+    align-content: flex-start;
     gap: 4px;
     min-width: 0;
 }
 
-.day-allday-chip {
-    max-width: 220px;
-    padding: 1px 8px;
-    border: 1px solid var(--cal-border);
-    border-radius: 4px;
-    background: var(--cal-chip-bg);
-    color: var(--cal-fg);
-    font-size: 0.75rem;
-    line-height: 18px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    cursor: pointer;
+.day-allday-slot {
+    position: relative;
+    width: 220px;
+    max-width: 100%;
+    height: 20px;
+}
+
+/* 横向滚动宿主包装（裁切遮罩置于滚动容器之外，C7） */
+.day-body-wrap {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
 }
 
 .day-body {
     flex: 1;
+    min-width: 0;
     min-height: 0;
     display: flex;
     flex-direction: column;
     position: relative;
     overflow: auto;
+}
+
+/* 空白横向平移中（C4） */
+.day-body.is-panning {
+    cursor: grabbing;
+    user-select: none;
+}
+
+/* 裁切渐隐遮罩（C7）：仅该侧有可滚内容时显示；不随内容滚动 */
+.day-edge-fade {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 24px;
+    z-index: 6;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 120ms ease;
+}
+
+.day-edge-fade.is-start {
+    left: 0;
+    background: linear-gradient(to right, var(--cal-bg), transparent);
+}
+
+.day-edge-fade.is-end {
+    right: 0;
+    background: linear-gradient(to left, var(--cal-bg), transparent);
+}
+
+.day-edge-fade.is-visible {
+    opacity: 1;
 }
 
 /* 横向内容层：宽度 = max(k × 容器宽, 列数 × 20px)（D3；inline style 注入） */
@@ -652,12 +738,36 @@ const onWheel = (event: WheelEvent): void => {
 }
 
 .day-col-head {
+    position: relative;
     font-size: 0.65rem;
     color: var(--cal-muted);
     text-align: left;
-    padding-left: 2px;
     white-space: nowrap;
     overflow: visible;
+}
+
+/* 刻度标签（C5）：原生 button，绝对定位居中于刻度线；首/末列边界保护（r3） */
+.day-col-label {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform: translateX(-50%);
+    padding: 0 2px;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.day-col-head.is-first-tick .day-col-label {
+    transform: translateX(0);
+}
+
+.day-col-head.is-last-tick .day-col-label {
+    transform: translateX(-100%);
 }
 
 .day-grid {
@@ -665,12 +775,12 @@ const onWheel = (event: WheelEvent): void => {
     flex: 1 0 auto;
 }
 
-/* 交互层：点击空白快速新建（覆盖在背景层之上；不破坏 day-axis-bg 无子节点，C6） */
+/* 交互层：空白横向平移（C4；背景层之上，不破坏 day-axis-bg 无子节点，C6） */
 .day-axis-track {
     position: absolute;
     inset: 0;
     z-index: 1;
-    cursor: pointer;
+    cursor: grab;
 }
 
 .day-seg {
@@ -679,22 +789,25 @@ const onWheel = (event: WheelEvent): void => {
     pointer-events: auto;
 }
 
-.day-quick-create {
-    position: absolute;
-    top: 2px;
-    z-index: 4;
-    width: 160px;
-}
-
-.day-task-resize {
+/* 两侧手柄恒在（C2 r2）：右缘改 endAt / 左缘（--start）改 startAt；
+   左缘不占用 `.day-task-resize` 类名（保证既有右拉用例唯一命中右缘） */
+.day-task-resize,
+.day-task-resize--start {
     position: absolute;
     top: 0;
-    right: -3px;
     width: 8px;
     height: 20px;
     z-index: 3;
     cursor: ew-resize;
     pointer-events: auto;
+}
+
+.day-task-resize {
+    right: -3px;
+}
+
+.day-task-resize--start {
+    left: -3px;
 }
 
 /* 背景层：定位层（格线由共享类 .day-col-lines 提供，禁 48×N DOM，C6） */
@@ -705,10 +818,14 @@ const onWheel = (event: WheelEvent): void => {
     pointer-events: none;
 }
 
-/* 共享格线（背景层与全天泳道同用，单一来源；三级：60min > 30min > sub-30）
-   sub-30 仅 columnMinutes < 30 时着色（.is-fine），否则透明 ⇒ 不出现冗余格线 */
+/* 共享格线（背景层与全天泳道同用，单一来源；四级嵌套链 60/30/10/5）
+   集合 = 当前粒度 ⊕ 嵌套上级（至 60min）；透明度随粒度变细单调递减；
+   周期 100%/24、/48、/96、/144、/288 只与分钟有关（与档位无关），仍全部 CSS 渐变（禁 列数×N DOM） */
 .day-col-lines {
-    --day-sub-line: transparent;
+    --day-line-3: transparent;
+    --day-line-3-step: calc(100% / 144);
+    --day-line-4: transparent;
+    --day-line-4-step: calc(100% / 288);
     background-image:
         repeating-linear-gradient(
             to right,
@@ -727,15 +844,34 @@ const onWheel = (event: WheelEvent): void => {
         repeating-linear-gradient(
             to right,
             transparent 0,
-            transparent calc(100% / var(--day-col-count) - 1px),
-            var(--day-sub-line) calc(100% / var(--day-col-count) - 1px),
-            var(--day-sub-line) calc(100% / var(--day-col-count))
+            transparent calc(var(--day-line-3-step) - 1px),
+            var(--day-line-3) calc(var(--day-line-3-step) - 1px),
+            var(--day-line-3) var(--day-line-3-step)
+        ),
+        repeating-linear-gradient(
+            to right,
+            transparent 0,
+            transparent calc(var(--day-line-4-step) - 1px),
+            var(--day-line-4) calc(var(--day-line-4-step) - 1px),
+            var(--day-line-4) var(--day-line-4-step)
         );
 }
 
-.day-col-lines.is-fine {
-    --day-sub-line: color-mix(in srgb, var(--cal-border) 30%, transparent);
+/* 15min 档：60/30/15 */
+.day-col-lines--15 {
+    --day-line-3: color-mix(in srgb, var(--cal-border) 40%, transparent);
+    --day-line-3-step: calc(100% / 96);
 }
+
+/* 5min 档：60/30/10/5 */
+.day-col-lines--5 {
+    --day-line-3: color-mix(in srgb, var(--cal-border) 30%, transparent);
+    --day-line-3-step: calc(100% / 144);
+    --day-line-4: color-mix(in srgb, var(--cal-border) 22%, transparent);
+    --day-line-4-step: calc(100% / 288);
+}
+
+/* 30min 档：60/30（与 ×1/×1.5 现状视觉等价）；`.day-col-lines--30` 由模板绑定供结构断言（AC6） */
 
 .day-now-line {
     position: absolute;

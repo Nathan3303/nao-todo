@@ -2,6 +2,7 @@
  * 日视图时间轴档位纯函数（TASK-19 / ADR 2026-09-22 §5.1；D1–D3 / D6 / C2 / C7）
  * @description 无 Vue 依赖：档位阶梯、轴规格（粒度 / 列数）、总宽下限公式、偏好读写。
  *              `max()` 无法在 jsdom 计算 ⇒ 以 CSS 字符串形式产出（单测断言字符串，ADR §5.4）。
+ *              粒度枚举 `{30, 15, 5}`（轴 ADR r2；10min 已退役）。
  */
 
 /** 档位（k）：时间轴总宽 = k × 容器宽 */
@@ -22,17 +23,17 @@ const DAY_MINUTES = 1440
 /** 档位 → 轴规格（列数 = 1440 / 粒度；C4：不新增模型字段） */
 export type DayAxisSpec = {
     zoom: DayZoom
-    columnMinutes: 30 | 15 | 10
+    columnMinutes: 30 | 15 | 5
     columns: number
 }
 
-/** 档位矩阵（D1）：×1/×1.5 = 30min、×2/×3 = 15min、×4 = 10min */
-const COLUMN_MINUTES_OF: Record<DayZoom, 30 | 15 | 10> = {
+/** 档位矩阵（D1 / r2）：×1/×1.5 = 30min、×2/×3 = 15min、×4 = 5min（10min 已退役） */
+const COLUMN_MINUTES_OF: Record<DayZoom, 30 | 15 | 5> = {
     1: 30,
     1.5: 30,
     2: 15,
     3: 15,
-    4: 10
+    4: 5
 }
 
 /** 档位 → 轴规格 */

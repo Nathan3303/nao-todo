@@ -14,6 +14,7 @@ import {
     todayDateKey
 } from './monthly-layout'
 import { isDateKeyInMonth, monthFirstDateKey } from './month-jump'
+import { DAY_SNAP_MINUTES } from '../snap'
 import { useCalendarTaskQuery } from './use-calendar-task-query'
 import { useCalendarSchedule } from './use-calendar-schedule'
 import { useCalendarSort } from './use-calendar-sort'
@@ -239,6 +240,20 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         dialogManager.open(TASK_CREATOR_DIALOG_KEY, payload)
     }
 
+    // @method 以某日的分钟刻度为起点新建任务（TASK-19B C5：日视图刻度标签 / n 入口）
+    // 与 createTaskOnDay 相邻、复用同一 prefillScope() + dialogManager（单一 payload 构造点）
+    const createTaskAt = (dateKey: string, startMin: number) => {
+        const base = dayjs(dateKey).startOf('day')
+        const payload: { startAt: string; endAt: string } & Record<string, unknown> = {
+            startAt: base.add(startMin, 'minute').toISOString(),
+            endAt: base.add(startMin + DAY_SNAP_MINUTES, 'minute').toISOString()
+        }
+        const scope = prefillScope()
+        if (scope.projectId) payload.projectId = scope.projectId
+        if (scope.tags) payload.tags = scope.tags
+        dialogManager.open(TASK_CREATOR_DIALOG_KEY, payload)
+    }
+
     // @method 打开任务详情（日历区内嵌详情适配器）
     const openTaskDetails = (taskId: TaskViewObject['id']) => {
         showTaskDetails(taskId)
@@ -276,6 +291,7 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         undoLast,
         dismissUndoAction,
         createTaskOnDay,
+        createTaskAt,
         openTaskDetails,
         // —— 日/周导航步长（视图切换由宿主按 route.name 派生 + 导航动作） ——
         goPrevDay,

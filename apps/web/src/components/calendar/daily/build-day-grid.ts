@@ -18,8 +18,8 @@ const DAY_MINUTES = 1440
 /** 渲染最小条宽（分钟；不随档位变，10min 档自动为 3 列；C2） */
 export const MIN_SPAN_MIN = DAY_SNAP_MINUTES
 
-/** 轴粒度（列宽基准；C2：`30 % columnMinutes === 0`） */
-export type DayGeometry = { columnMinutes: 30 | 15 | 10 }
+/** 轴粒度（列宽基准；C2：`30 % columnMinutes === 0`；r2 枚举 {30,15,5}） */
+export type DayGeometry = { columnMinutes: 30 | 15 | 5 }
 
 /** 时间轴列头 */
 export type DayColumn = { index: number; label: string }
@@ -46,7 +46,7 @@ export type DayGridModel = {
 
 // 列头标签两型（D1.1 分档两式）：30min 档仅整点 `HH`（24 个，与现状逐字节一致）；
 // 15/10min 档整点 + 半点 `HH:MM`（48 个）；其余列为空。
-const buildColumns = (columnMinutes: 30 | 15 | 10): DayColumn[] => {
+const buildColumns = (columnMinutes: 30 | 15 | 5): DayColumn[] => {
     const columns = DAY_MINUTES / columnMinutes
     return Array.from({ length: columns }, (_, index) => {
         const minutes = index * columnMinutes
