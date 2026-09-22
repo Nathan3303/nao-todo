@@ -3,7 +3,7 @@
 # nao-fleet.sh — 按角色一键拉起 pi 会话窗口（nao 团队工具箱）
 #
 # 用法
-#   nao-fleet.sh check [--strict]                 静态体检：roles.yaml/角色卡/交叉引用/白名单/布局
+#   nao-fleet.sh check [--strict]                 静态体检：roles.yaml/缩进/EOL/角色卡/交叉引用/白名单/布局
 #   nao-fleet.sh status                           角色会话在线状态（权威名单见 intercom list）
 #   nao-fleet.sh ensure <别名>[@<repo>] [更多...]  拉起角色窗口（默认工作区=roles.yaml workspace）
 #   nao-fleet.sh ensure -m <model> <别名>...       显式指定模型（须命中白名单）
@@ -133,6 +133,43 @@ check_cross_refs() {
   done
   [[ $rc -eq 0 ]] && echo '  ✓ 全部引用文件存在'
   return $rc
+}
+
+# .agents/** 文本文件 EOL 契约：必须全为 LF（出现 CR 即 fail，列出文件）
+# 排除 .nao-obsolete/（update 的旧版备份，EOL 不作为契约）
+check_eol() {
+  local rc=0 n=0 f
+  local -a bad=()
+  while IFS= read -r -d '' f; do
+    n=$((n + 1))
+    grep -Iq $'\r' "$f" && bad+=("${f#"$SKILLS_DIR"/}")
+  done < <(find "$SKILLS_DIR/.agents" -type f ! -path '*/.nao-obsolete/*' -print0)
+  if (( ${#bad[@]} == 0 )); then
+    printf '  ✓ %d 个文本文件全 LF\n' "$n"
+  else
+    rc=1
+    printf '  ✗ %d/%d 个文件含 CR（须转 LF；CRLF 会破坏 fleet/awk 解析）:\n' "${#bad[@]}" "$n"
+    printf '      %s\n' "${bad[@]}"
+  fi
+  return $rc
+}
+
+# roles.yaml 缩进契约：角色 id 2 空格 / 字段 4 空格 / 禁 Tab（与 load_manifest 解析器同契约，独立报行号）
+check_roles_indent() {
+  awk '
+    BEGIN { in_roles=0; cur=0; bad=0 }
+    /^[[:space:]]*$/ { next }
+    /^[[:space:]]*#/ { next }
+    /\t/ { printf "  ✗ 行 %d: 含 Tab（禁止 Tab 缩进）\n", FNR; bad=1; next }
+    !in_roles {
+      if ($0 ~ /^roles:[[:space:]]*$/) { in_roles=1; next }
+      printf "  ✗ 行 %d: 顶层仅允许 roles:（得到: %s）\n", FNR, $0; bad=1; next
+    }
+    $0 ~ /^  [^ ][^:]*:[[:space:]]*$/ { cur=1; next }
+    cur && $0 ~ /^    [a-z_]+:[[:space:]]/ { next }
+    { printf "  ✗ 行 %d: 缩进/位置非法（角色 id 须 2 空格、字段须 4 空格且挂在角色下）: %s\n", FNR, $0; bad=1 }
+    END { exit (bad ? 1 : 0) }
+  ' "$MANIFEST"
 }
 
 # CodeGraph 索引健康（ensure 拉起前 / check 用；缺失或过期仅 warn，不阻塞）
@@ -375,7 +412,20 @@ cmd_check() {
     else printf '  ✗ 缺失: %s\n' "$d"; rc=1; fi
   done
 
+  echo "== 文本契约（roles.yaml 缩进 2/4 · .agents/** EOL 全 LF）=="
+  if [[ -f "$MANIFEST" ]]; then
+    if check_roles_indent; then
+      printf '  ✓ roles.yaml 缩进契约（角色 id 2 空格 / 字段 4 空格 / 无 Tab）\n'
+    else
+      rc=1
+    fi
+  else
+    printf '  ✗ roles.yaml 缺失: %s\n' "$MANIFEST"; rc=1
+  fi
+  check_eol || rc=1
+
   echo "== 角色清单 roles.yaml =="
+  load_manifest
   printf '  ✓ 解析成功，%d 个角色: %s\n' "${#ROLE_ORDER[@]}" "${ROLE_ORDER[*]}"
 
   echo "== 常驻角色卡（阈值 ${CARD_MAX_LINES} 行，frontmatter 校验）=="
@@ -588,7 +638,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$CMD" in
-  check|ensure|status) load_manifest ;;
+  check)  : ;;   # cmd_check 自行先做文本契约体检，再 load_manifest（缩进违例时也能先出报告）
+  ensure|status) load_manifest ;;
 esac
 
 case "$CMD" in
