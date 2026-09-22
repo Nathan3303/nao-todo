@@ -2,6 +2,57 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.8.0] - 2026-09-22
+
+发布批次：日历日视图三批（子路由化 / 时间轴缩放 / 交互调整）+ 导出对话框 + 工具与治理。**Tag `v1.8.0`** · root `1.8.0` / `@nao-todo/desktopapp` `1.8.0` / `@nao-todo/webapp` `1.8.0` / `@nao-todo/presentation` `0.5.0` / `@nao-todo/domain-task` `1.3.0` / `@nao-todo/shared` `1.3.1`（`@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop。
+
+### 新增（日历日视图）
+
+- **日视图**（TASK-16，`0d1b801e` 起）：横坐标=时间 48×30 分钟列（整点有文本）、分钟级连续定位（显示不吸附）、轨道打包 + 日级 `+N`、跨日裁剪与续接、全天行、当前时间线、快速新建 / 拖拽改时间 / 拉伸改时长。
+- **三视图子路由化 + 布局单一基线**（TASK-18，`a15ce8f9` / `c76bc1fd`）：`calendar-monthly` / `calendar-weekly` / `calendar-day` 三条子路由（均 `:taskId?`）、状态宿主上移 `.nue-calendar-host`（`--cal-*` 令牌随行、monthly 去重复 padding）、`viewMode` 由 `route.name` 只读派生（无可变镜像）、切视图 `replace` 幂等短路、`LAST_CALENDAR_ROUTE` 恢复子路由（含 `taskId`）。
+- **时间轴档位缩放 + 横向溢出滚动 + 全天任务内嵌泳道**（TASK-19，`c08b7b3c` / `5eac8ff9`）：×1 / ×1.5 / ×2 / ×3 / ×4 五档（列数 48 / 48 / 96 / 96 / 144）、总宽 `max(k × 容器宽, 列数 × 20px)`、刻度密度随档位细化、**日视图不再折叠 `+N`**（全部轨道纵向可滚可达）、全天任务移入网格顶部泳道（与时间轴同横向坐标系）、`CALENDAR_DAY_ZOOM` 持久化（跨会话 / 跨视图沿用）。
+- **日视图交互调整六项**（TASK-19B，`44bb402d` / `99d81aaf`）：
+    - 点击**刻度标签**打开任务创建对话框（预填 `startAt` / `endAt = +30min`，原生 `button` 可键盘可达）；**移除**空白点击新建。
+    - 全天任务改为**只读任务条**（复用 `task-bar`），并给出不可拖拽原因（`data-allday-reason`）。
+    - 任务名 **sticky 贴视口左缘**（不越出自身条）；左右缘渐隐遮罩提示被裁切内容。
+    - 任务条**左右缘均可拖拽**：左缘改 `startAt`、右缘改 `endAt`（真实值锚，不夹取可见日边界）。
+    - 时间轴空白处**拖拽横向平移**（阈值复用 `DRAG_THRESHOLD_PX`，目标排除清单零抢占）。
+    - ×4 档细化为 **5 分钟刻度**（288 列）、标签水平居中于刻度线、格线四级（60/30/10/5）。
+- **pan 加固 / 任务条拖动修复 / 拖动反馈 / 格线像素 / SFC 拆分**（TASK-20，`dee5b8f6` / `70c9723c` / `942116c5`）：
+    - **修复「任务条拖不动」**：根因 = `.day-axis-track` 覆盖层未声明 `pointer-events: none`，静默吞掉任务条命中（jsdom 无法发现）—— 该覆盖层已改为不拦截，并把该约束固化为**覆盖层命中契约**。
+    - 拖动新增**交互反馈**：跟随浮层、源条区分、**吸附后起止时刻预览**、**吸附刻度高亮线**（松手即清）。
+    - 纵向恢复可滚（`overflow-y: auto; overflow-x: hidden`）、列头恢复与列对齐。
+    - 格线改**整数列宽**（消除 1px 线在设备像素网格上的半像素抗锯齿 ⇒ 细线不再消失/闪烁），细层对比提升（10min 55% / 5min 45%）。
+    - `daily/index.vue` **911 → 359 行**（CSS 抽离为 `daily/index.css` + 4 个 composable，DOM / `data-testid` / 结构契约不变）。
+
+### 新增（任务导出）
+
+- **导出浮层可编辑 + 一级子任务字段丰富**（TASK-13，`0527461d` / `facddf27` / `04d90762`）：只读预览改为可编辑 `nue-textarea`（含「还原」）；一级子任务字段丰富（名称行仅复选框 + 名称，属性走 `- 名: 值`）。
+- **`TaskCheckItemUseCase.listByTask`**（domain-task 新增只读原语）：加载任务检查事项列表且**不写 store**，归一排序 `sortId ASC, id ASC`（不依赖底层仓储顺序），供导出等旁路读共享数据使用。
+
+### 修复
+
+- **CodeGraph 索引警告不再计入 `vp check` 退出码**（TASK-16 批次，`02626f23`）：`Pending Changes` 警告原被记为 `rc=1`，与「索引过期 → 提醒、不阻塞」的既定口径冲突，会造成误停。
+- **周视图 active 误绑**（TASK-18，`c3aa5c1b`）：点击已激活的「周」按钮不再跳回月视图。
+- **日视图重复 padding**（TASK-18，`0d1b801e`）：采纳用户手工微调并补回被删的 `data-testid="day-unscheduled-entry"`。
+
+### 其他（Chore / 治理）
+
+- **日视图命中抽检固化**（TASK-21，`149305fe`）：新增 `scripts/electron-smoke/checks/day-view-hit.mjs`（feature `day-view`，基于既有零第三方依赖的 CDP 真实渲染冒烟工具）。回归判据 = **`elementsFromPoint` 命中栈不含覆盖层** + **空白点 `inTrack=false`** + **覆盖层 `pointer-events: none`**；无数据一律 `SKIP`（绝不 `PASS`）。
+- 清理零引用死规则（`.cal-nav-btn` ×3 / `.cal-aside-toggle`，`b32e05a6`）。
+- 测试基础设施：放行 `*.css?raw`（Vitest `css.include`，`dee5b8f6`），使「以 CSS 源码文本断言样式契约」的用例在 CSS 抽离后仍可运行。
+
+### 已知问题（未修，已入池）
+
+- `packages/infrastructure` 的 `sync.test.ts > Q3` 约 1/10 概率失败（`fake-indexeddb` / `syncQueue` 共享状态跨用例泄漏，属**测试隔离**问题）；已核实与本批次改动无因果，单跑该包全绿。待另立单修。
+
+### 质量门槛
+
+- `vp check`：全绿（1313 文件格式 / 1123 文件 0 error 0 warning）。
+- `vp test`：**110 文件 / 993 例全绿**。
+- `pnpm webapp build` ✓ / `pnpm run desktop:build` ✓。
+- 红线：`apps/mobileapp`、`packages/presentation-react` 本批零改动；月/周视图 DOM 与布局零变化。
+
 ## [v1.7.9] - 2026-09-21
 
 发布批次：放弃/提醒同步缺陷链修复（客户端 patch）。**Tag `v1.7.9`** · root `1.7.9` / `@nao-todo/desktopapp` `1.7.9` / `@nao-todo/webapp` `1.7.9` / `@nao-todo/presentation` `0.4.6`（`@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（同步 + 提醒）。
