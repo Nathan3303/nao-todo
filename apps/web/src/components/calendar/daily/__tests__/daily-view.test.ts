@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { ref, type Ref } from 'vue'
+import dayjs from 'dayjs'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { useTasksStore } from '@nao-todo/presentation/task'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
@@ -19,6 +20,8 @@ import { dayScrollWidthCss } from '../day-zoom'
  *  - TASK-19：`.day-scroll` 承载宽高（`.day-cols-head` 与全天泳道同处其中，泳道在 `.day-grid` 之上）。
  *  注：组件挂载依赖的 props/context 若与实现不一致，mount 可能先失败；断言目标以 testid/ADR 类名为准。
  */
+
+const TODAY = dayjs().format('YYYY-MM-DD')
 
 const buildContext = (dayZoom?: Ref<number>) => ({
     dialogManager: { open: () => {} },
@@ -196,7 +199,7 @@ describe('TASK-19 滚动容器与全天泳道（D5 / AC4）', () => {
             state: 'todo',
             priority: 'low',
             startAt: null,
-            endAt: '2026-09-22 10:00:00',
+            endAt: `${TODAY} 10:00:00`,
             createdAt: '2026-09-01 00:00:00',
             tags: []
         } as unknown as TaskViewObject
