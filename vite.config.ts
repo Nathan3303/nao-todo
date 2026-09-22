@@ -12,6 +12,10 @@ export default defineConfig({
         }
     },
     test: {
+        // Vitest 默认 `css: false` 会把**所有** `.css` 模块（含 `?raw`）替换为空串，
+        // 使「以源码文本断言样式」的用例（`import.meta.glob('../*.css', { query: '?raw' })`）恒读到空内容。
+        // 仅放行 `*.css?raw`（其余 CSS 行为不变：不注入样式、不产生 jsdom CSS 解析噪声）。
+        css: { include: [/\.css\?raw$/] },
         include: ['packages/**/*.{test,spec}.ts', 'apps/**/*.{test,spec}.ts']
     },
     staged: {
