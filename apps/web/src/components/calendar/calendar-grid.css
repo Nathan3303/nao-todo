@@ -57,7 +57,7 @@
 .cal-title,
 .wk-title,
 .day-title {
-    min-width: 132px;
+    min-width: 11rem;
     text-align: center;
     letter-spacing: 0.02em;
     margin: 0;
@@ -118,7 +118,8 @@
 
 /* 切换区与右侧控件之间的垂直分割线 */
 .cal-view-sep,
-.wk-view-sep {
+.wk-view-sep,
+.day-view-sep {
     align-self: center;
     width: 1px;
     height: 16px;

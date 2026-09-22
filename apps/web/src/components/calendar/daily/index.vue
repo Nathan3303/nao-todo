@@ -239,7 +239,7 @@ const nowLeft = computed(() => {
 <template>
     <nue-div vertical class="nue-calendar-daily" gap="0">
         <!-- 日导航 -->
-        <nue-div align="center" class="day-header" gap="8px">
+        <nue-div align="center" class="day-header" gap="var(--nue-gap-xs)">
             <nue-div align="center" gap="2px">
                 <nue-button
                     :icon="isDisplayAside ? 'menu-close' : 'menu-open'"
@@ -290,19 +290,17 @@ const nowLeft = computed(() => {
                         日
                     </nue-button>
                 </nue-div>
-                <nue-divider vertical aria-hidden="true" />
-                <nue-div gap="var(--nue-gap-2xs)">
-                    <nue-button
-                        data-testid="day-unscheduled-entry"
-                        theme="ghost,small"
-                        :disabled="unscheduledDisabled"
-                        title="未安排任务：快速安排到某日"
-                        @click="onOpenUnscheduled"
-                    >
-                        未安排 {{ unscheduledCount }}
-                    </nue-button>
-                    <nue-button theme="ghost,small" @click="onGoToday">今天</nue-button>
-                </nue-div>
+                <span class="day-view-sep" aria-hidden="true"></span>
+                <nue-button
+                    data-testid="day-unscheduled-entry"
+                    theme="ghost,small"
+                    :disabled="unscheduledDisabled"
+                    title="未安排任务：快速安排到某日"
+                    @click="onOpenUnscheduled"
+                >
+                    未安排 {{ unscheduledCount }}
+                </nue-button>
+                <nue-button theme="ghost,small" @click="onGoToday">今天</nue-button>
             </nue-div>
         </nue-div>
 
