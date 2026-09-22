@@ -1,10 +1,13 @@
 import { inject, ref } from 'vue'
 import { NueMessage } from 'nue-ui'
-import { t, unwrapError, type GoAsync } from '@nao-todo/shared'
+import dayjs from 'dayjs'
+import { getLocale, t, unwrapError, type GoAsync } from '@nao-todo/shared'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { useTaskDetailsStore } from '../../stores'
 import { TASK_DETAILS_CONTEXT_KEY, TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
 import { generateTaskMarkdown, type ExportLabels, type ExportTaskNode } from './export-markdown'
+import { generateTaskJson } from './export-json'
+import { generateTaskHtml, type ExportHtmlLabels } from './export-html'
 
 /**
  * 导出递归最大深度
@@ -12,14 +15,21 @@ import { generateTaskMarkdown, type ExportLabels, type ExportTaskNode } from './
  */
 export const MAX_EXPORT_DEPTH = 5
 
+/** 导出状态机（PRD §5.1）：`idle` 未开始 / `loading` 取数中 / `error` 失败 / `ready` 可取 */
+export type ExportStatus = 'idle' | 'loading' | 'error' | 'ready'
+
 // 子任务单页拉取上限（不足时按分页续取，直至取尽）
 const SUB_TASK_PAGE_LIMIT = 100
 
+// 单据开具时间格式（HTML 展示口径；JSON 走 ISO）
+const GENERATED_AT_FORMAT = 'YYYY-MM-DD HH:mm'
+
 /**
- * 导出任务文本（Markdown）composable
- * @description 递归拉取子任务 → 组装任务树 → 调用纯函数生成 Markdown → 复制到剪贴板。
+ * 导出任务文本（Markdown / JSON / HTML 单据）composable
+ * @description 递归拉取子任务 → 组装任务树 → 调用纯函数生成三格式 → 复制到剪贴板。
  *              取数走 `subTaskUseCase.list({ parentTaskId })`（逐层分页取尽）；
  *              任务视图对象经 TaskDetailsStore 取回（与子任务加载器同一存储）。
+ *              `startExport()` / `retry()` 共用状态机实现：一次取数产出三格式，格式切换零重取。
  * @returns 导出状态与动作
  */
 const useExportTask = () => {
@@ -34,11 +44,14 @@ const useExportTask = () => {
     const taskDetailsStore = useTaskDetailsStore()
 
     // @states
-    const exporting = ref(false) /** 是否正在生成 */
+    const exporting = ref(false) /** 是否正在生成（TASK-13 兼容字段） */
+    const status = ref<ExportStatus>('idle') /** 导出状态机 */
     const markdown = ref('') /** 生成的 Markdown 文本 */
+    const json = ref('') /** 生成的 JSON 文本 */
+    const html = ref('') /** 生成的 HTML 单据文档 */
     const error = ref('') /** 导出错误信息 */
 
-    // @method 本地化文案（每次调用重取，随 locale 变化）
+    // @method 本地化文案（Markdown）
     const resolveLabels = (): ExportLabels => ({
         state: t('task.details.export.label.state'),
         priority: t('task.details.export.label.priority'),
@@ -51,6 +64,26 @@ const useExportTask = () => {
         description: t('task.details.export.heading.description'),
         checkItems: t('task.details.export.heading.checkItems'),
         subTasks: t('task.details.export.heading.subTasks')
+    })
+
+    // @method 本地化文案（HTML 单据；`lang` 随当前 locale）
+    const resolveHtmlLabels = (): ExportHtmlLabels => ({
+        lang: getLocale().value,
+        total: t('task.details.export.label.total'),
+        checkItems: t('task.details.export.heading.checkItems'),
+        subTasks: t('task.details.export.heading.subTasks'),
+        state: t('task.details.export.label.state'),
+        priority: t('task.details.export.label.priority'),
+        startAt: t('task.details.export.label.startAt'),
+        endAt: t('task.details.export.label.endAt'),
+        project: t('task.details.export.label.project'),
+        tags: t('task.details.export.label.tags'),
+        createdAt: t('task.details.export.label.createdAt'),
+        updatedAt: t('task.details.export.label.updatedAt'),
+        description: t('task.details.export.heading.description'),
+        issuedAt: t('task.details.export.label.issuedAt'),
+        documentNo: t('task.details.export.label.documentNo'),
+        generatedBy: t('task.details.export.label.generatedBy')
     })
 
     // @method 状态文案（已放弃优先；其余走状态键）
@@ -146,10 +179,10 @@ const useExportTask = () => {
     }
 
     /**
-     * 生成当前任务（含递归子任务）的 Markdown
-     * @returns Markdown 文本；失败返回 null
+     * 组装导出节点树（根节点 + 递归子任务 + 根检查项）
+     * @returns 任务树；失败写入 `error` 并返回 null
      */
-    const buildMarkdown = async (): Promise<string | null> => {
+    const buildExportNode = async (): Promise<ExportTaskNode | null> => {
         if (!vo.value) return null
         const root = vo.value
         const [children, err] = await fetchChildren(root.id, 0)
@@ -157,39 +190,89 @@ const useExportTask = () => {
             error.value = unwrapError(err)
             return null
         }
-        const node: ExportTaskNode = {
+        return {
             ...toExportNode(root, children),
             checkItems: checkItems.value.map((item) => ({ name: item.name, isDone: item.isDone }))
         }
-        return generateTaskMarkdown(node, resolveLabels())
+    }
+
+    // @method 失败提示（统一 toast，错误文案空则回退加载失败）
+    const notifyExportFailure = () =>
+        NueMessage.error(
+            t('task.details.export.failed', { error: error.value || t('task.error.loadFailed') })
+        )
+
+    /**
+     * 由同一任务树渲染三格式输出
+     * @description 时间戳在生成时取一次，保证同一次导出内三格式一致。
+     */
+    const renderOutputs = (node: ExportTaskNode) => {
+        const now = dayjs()
+        return {
+            markdown: generateTaskMarkdown(node, resolveLabels()),
+            json: generateTaskJson(node, now.toISOString()),
+            html: generateTaskHtml(node, resolveHtmlLabels(), now.format(GENERATED_AT_FORMAT))
+        }
     }
 
     /**
-     * 执行导出：生成 Markdown 并写入 `markdown`
-     * @returns 生成的 Markdown 文本；失败返回 null（已提示错误）
+     * 执行导出（TASK-13 兼容路径）：生成 Markdown 并写入 `markdown`
+     * @returns Markdown 文本；失败返回 null（已提示错误）
      */
     const exportTask = async (): Promise<string | null> => {
         exporting.value = true
         error.value = ''
         try {
-            const result = await buildMarkdown()
-            if (result === null) {
-                NueMessage.error(
-                    t('task.details.export.failed', {
-                        error: error.value || t('task.error.loadFailed')
-                    })
-                )
+            const node = await buildExportNode()
+            if (node === null) {
+                notifyExportFailure()
                 return null
             }
-            markdown.value = result
-            return result
+            markdown.value = generateTaskMarkdown(node, resolveLabels())
+            return markdown.value
         } finally {
             exporting.value = false
         }
     }
 
     /**
-     * 复制 Markdown 到剪贴板
+     * 开始导出（打开对话框触发）：`idle`/`error` → `loading` → `ready` | `error`
+     * @description 与 `retry()` 共用实现；`loading` 期间重复触发被忽略（防重入）。
+     *              成功后三格式一并缓存，格式切换零重取。
+     * @returns Markdown 文本；失败返回 null（已提示错误）
+     */
+    const startExport = async (): Promise<string | null> => {
+        if (status.value === 'loading') return null
+        status.value = 'loading'
+        error.value = ''
+        const node = await buildExportNode()
+        if (node === null) {
+            status.value = 'error'
+            notifyExportFailure()
+            return null
+        }
+        const outputs = renderOutputs(node)
+        markdown.value = outputs.markdown
+        json.value = outputs.json
+        html.value = outputs.html
+        status.value = 'ready'
+        return outputs.markdown
+    }
+
+    /** 框内重试：复用 `startExport`（loading 期间防重入） */
+    const retry = (): Promise<string | null> => startExport()
+
+    /** 关框重置：回 `idle` 并清空错误与三格式缓存 */
+    const reset = () => {
+        status.value = 'idle'
+        error.value = ''
+        markdown.value = ''
+        json.value = ''
+        html.value = ''
+    }
+
+    /**
+     * 复制文本到剪贴板
      * @param text 待复制文本
      * @returns 是否复制成功（失败不静默：错误提示）
      */
@@ -207,9 +290,15 @@ const useExportTask = () => {
 
     return {
         exporting,
+        status,
         markdown,
+        json,
+        html,
         error,
         exportTask,
+        startExport,
+        retry,
+        reset,
         copyMarkdown
     }
 }

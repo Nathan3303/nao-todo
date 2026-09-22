@@ -359,6 +359,8 @@ const enUS: LocaleMessages = {
     'task.details.export.copySuccess': 'Copied to clipboard',
     'task.details.export.copyFailed': 'Copy failed, please copy manually',
     'task.details.export.restore': 'Restore',
+    'task.details.export.retry': 'Retry',
+    'task.details.export.loading': 'Generating...',
     'task.details.export.failed': 'Export failed: {error}',
     'task.details.export.label.state': 'State',
     'task.details.export.label.priority': 'Priority',
