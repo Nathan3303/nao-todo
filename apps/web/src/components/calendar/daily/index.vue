@@ -260,7 +260,7 @@ const nowLeft = computed(() => {
                     @click="onNextDay"
                 />
             </nue-div>
-            <nue-div align="center" gap="6px">
+            <nue-div align="center" gap="var(--nue-gap-xs)">
                 <calendar-sort-dropdown v-model="sort" />
                 <nue-div class="day-view-toggle" role="group" aria-label="视图切换">
                     <nue-button
@@ -291,16 +291,18 @@ const nowLeft = computed(() => {
                     </nue-button>
                 </nue-div>
                 <nue-divider vertical aria-hidden="true" />
-                <nue-button
-                    data-testid="day-unscheduled-entry"
-                    theme="ghost,small"
-                    :disabled="unscheduledDisabled"
-                    title="未安排任务：快速安排到某日"
-                    @click="onOpenUnscheduled"
-                >
-                    未安排 {{ unscheduledCount }}
-                </nue-button>
-                <nue-button theme="ghost,small" @click="onGoToday">今天</nue-button>
+                <nue-div gap="var(--nue-gap-2xs)">
+                    <nue-button
+                        data-testid="day-unscheduled-entry"
+                        theme="ghost,small"
+                        :disabled="unscheduledDisabled"
+                        title="未安排任务：快速安排到某日"
+                        @click="onOpenUnscheduled"
+                    >
+                        未安排 {{ unscheduledCount }}
+                    </nue-button>
+                    <nue-button theme="ghost,small" @click="onGoToday">今天</nue-button>
+                </nue-div>
             </nue-div>
         </nue-div>
 
@@ -436,7 +438,6 @@ const nowLeft = computed(() => {
 <style scoped>
 .nue-calendar-daily {
     height: 100%;
-    padding: 1rem;
     background: var(--cal-bg);
     overflow: hidden;
 }
