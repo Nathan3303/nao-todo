@@ -170,13 +170,32 @@
 
 ## 11. 派发记录
 
-| 任务 | 目标会话 | 角色 | 概要             | 对应 AC | 状态 |
-| :--- | :------- | :--- | :--------------- | :------ | :--- |
-| —    | —        | —    | 待开工确认后出单 | —       | —    |
+| 任务    | 目标会话      | 角色 | 概要                                                             | 对应 AC | 状态                                                                                                      |
+| :------ | :------------ | :--- | :--------------------------------------------------------------- | :------ | :-------------------------------------------------------------------------------------------------------- |
+| T77     | arch-designer | 架构 | 零代码裁决：档位矩阵 / 吸附步长 / 列宽下限 / 参数化落点          | 前置    | ✅ 落盘 ADR `2026-09-22-day-view-zoom-and-axis-parameterization.md`                                       |
+| T78     | qa            | 测试 | 用例先行（42 例，全红预期）                                      | AC1–AC7 | ✅ 新增 42 例；红灯 5 条均为「实现未接入」型                                                              |
+| T78-B   | qa            | 测试 | 修正断言 + 补缩放入口契约用例                                    | AC1/AC5 | ✅ +5 例（behavior 4→9）                                                                                  |
+| T79     | rd-fe         | 前端 | 实现（滚动容器 / 档位缩放 / 刻度参数化 / 全天内嵌泳道 / 持久化） | AC1–AC8 | ✅ 6 文件（5 改 + 1 新）                                                                                  |
+| ~~T80~~ | —             | —    | qa 独立验收                                                      | —       | ⊘ 取消（用户 2026-09-22 指示改手工验收）                                                                  |
+| T81     | rd-fe         | 前端 | 提交（10 文件拆 2 提交，禁 push）                                | —       | ✅ `c08b7b3c`（feat 6）/ `5eac8ff9`（test 4），无夹带、未 push                                            |
+| T82     | PM / 用户     | —    | 门禁复核 + 交付小结 + **用户手工验收**                           | AC1–AC8 | ⏳ 门禁已通过；**待用户手工验收**（清单 `docs/qa/2026-09-22-task-19-day-view-zoom-manual-acceptance.md`） |
 
 ## 12. 验收结果
 
-—
+- **交付**：`c08b7b3c`（feat，6 文件 / 5 改 + 1 新）+ `5eac8ff9`（test，4 文件 / 2 改 + 2 新）；**未 push**（发版策略：统一发版时 push + tag）。
+- **自动化（PM 独立复跑，HEAD）**：全仓 **108 文件 / 953 例全绿**（906 基线 + qa 47）；`vp check` **exit 0**（1300 文件格式 + 1115 文件 0 lint/0 类型错误）；`guard:ddd` OK；`pnpm webapp build` 与 `pnpm run desktop:build` **均 exit 0**。
+- **AC 核验（PM 读码）**：
+    - AC1 三入口 + 到端禁用 + `dayScrollWidthCss = max(calc(k * 100%), calc(列数 * 20px))` ✓
+    - AC2 `buildDayGrid` 按 `columnMinutes` 出 48/96/144 列；标签分档两式（30min→`HH`×24、15/10min→`HH:MM`×48）；`.day-cols-head` = `repeat(model.columns.length, 1fr)`；任务条字号/高度未动 ✓
+    - AC3 `.day-cols-head` `sticky top:0 z-index:5` + 与列同处 `.day-scroll`（同一横向滚动源）；`scrollToNow`（进入）/ `currentCenterMin` + `nextTick(restoreCenter)`（缩放，禁 smooth、不持久化）—— **无自动化，归用户人眼** ✓
+    - AC4 `.day-allday-lane` 为 `.day-scroll` 内、`.day-grid` **之前的兄弟**（非子节点）；与 grid 共用 `day-col-lines` + `--day-col-count` ⇒ 同列宽基准；上方独立行已消失 ✓
+    - AC5 `readDayZoom` 严格匹配 `String(zoom)`，非法/缺失回退 ×1 并规范写回，storage 异常静默 ✓
+    - AC6 下限由**容器总宽** `max()` 承接，无 per-column `min-width`；k 不被 resize 改写 ✓
+    - AC7 `model` 纯派生、缩放不触发重拉；月/周 DOM 零改动；跨视图持久化 ✓
+    - AC8 新按钮同规格 + `data-testid` + `aria-label` + 无复位按钮；无 keep-alive；移动端零改动 ✓
+- **红线**：`apps/mobileapp` / `packages/presentation-react` / `host.vue` / `monthly/**` / `weekly/**` / `daily-interactions.test.ts` **0 diff** ✓
+- **提交纪律**：两提交逐文件精确 pathspec；`git show --name-only` 复核**无夹带**（无 `.agents/.codegraph/.pi/docs`）；`git status --porcelain -- apps/web` 空；未 push ✓
+- **未过项**：无（自动化口径）。**待用户人眼验收项**：清单 A1–H4（含 **AC3 视口锚定**、三入口手感、刻度密度、全天泳道同横向坐标系、跨视图/跨会话持久化）。
 
 ## 13. 变更记录
 
