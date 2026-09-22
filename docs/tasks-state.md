@@ -68,7 +68,11 @@
 - **PRD 遗留**：TASK-16 §13（死代码 `.cal-aside-toggle`/`.cal-nav-btn`、Playwright 几何回归暂不引入）；TASK-12（`MAX_EXPORT_DEPTH = 5`，超 5 层不导出）；TASK-19 C10③ `replace` 代价（D2 已拍板的用户可见代价）；TASK-13（编辑内容不持久化、「记住上次编辑」需另立单）。
 - **TASK-19/19B/20 的 jsdom 不可断言项**：已全部纳入对应验收清单并**由用户人眼验收通过**（sticky 实贴、`clip-path` 副作用、标签居中像素、遮罩显示条件、pan 手感、续接段两侧手柄、×4 帧率、命中抽检）。
 
-## 七、发版（v1.8.0，2026-09-22 用户指示「完结然后发版」）
+## 七、发版 v1.8.0 —— ✅ **已发布并同步**（2026-09-22）
+
+- **结果**：发布提交 **`fb758cf4`**（7 文件：`CHANGELOG.md` + 6 个 `package.json`）+ **注解 tag `v1.8.0`**（tag 对象 `8c124b3c` → peeled `fb758cf4`）。
+- **远端**：`origin/feat/ocdev` = `fb758cf4`、`refs/tags/v1.8.0` 已推送；**PM 独立核对**：本地领先 **0**、tag peeled SHA 一致、发布提交 7 文件、无夹带。
+- **质量门槛（发布提交上复跑）**：`vp check` exit 0（1313 / 1123，0 error 0 warning）；`vp test` **110 文件 / 993 例全绿**；`webapp build` + `desktop:build` 均 exit 0。
 
 - **版本**：root / `@nao-todo/webapp` / `@nao-todo/desktopapp` → **1.8.0**（功能批次 → minor）；`@nao-todo/presentation` **0.4.6 → 0.5.0**（导出面/功能）；`@nao-todo/domain-task` **1.2.0 → 1.3.0**（新增公开只读原语 `listByTask`）；`@nao-todo/shared` **1.3.0 → 1.3.1**（i18n 键）；`infrastructure` 0.5.0 / `presentation-identity` 1.2.0 / `presentation-react` 0.1.0 **不动**。
 - **范围**：web + desktop（`apps/mobileapp`、`packages/presentation-react` 本批零改动）。
@@ -87,3 +91,4 @@
 - 2026-09-22：**提交分组三轮教训（T90 → T90-B → T90-C）** —— ①「提交 1 漏带 `index.css`」根因 = 我只按「feat vs refactor」切分、未检查 SFC 对抽离文件的**引用依赖**；②「qa 用例留作在制品」⇒ **任何干净检出 TS2554**，说明**同一契约变更的实现与其用例必须同提交**；③被实现依赖的 test-infra 配置（`vite.config.ts` 的 `css.include`）**必须排在其前**；④改写验收 = **逐提交干净检出**（`git worktree --detach`）跑 `vp check` exit 0。**已固化为记账纪律。**
 - 2026-09-22：**PM 派单口径错误（命中抽检）** —— 我写「`(条左缘+2px)` 命中条本身」**几何上不可能**：左手柄 `.day-task-resize--start { left:-3px; width:8px }` ⇒ 手柄盒 = `[缘−3, 缘+5]`，`缘+2` 落在**左手柄**内（真机实测命中 `SPAN.day-task-resize--start`）。rd-fe 已把「条缘归属手柄」写成显式断言 + 用**缘+10px** 判条体。**教训：涉及命中区/手柄盒的派单口径必须给「几何区间」而非「示意点位」。**
 - 2026-09-22：**判别力教训（重要，已入 ADR C12/r8）** —— 「条中点命中 `.cal-item`」**不能**判出覆盖层回归：条内文本 `.cal-item-text`（`z-index: 3`）仍在命中栈顶 ⇒ 覆盖层改回 `auto` 时该断言**仍绿**；必须用 **`elementsFromPoint` 命中栈不含覆盖层** + **空白点 `inTrack=false`** + **覆盖层 computed `pointer-events === 'none'`** 三条判红。**教训：断言要选「只有 bug 存在才失败」的量，而非「bug 存在时仍可能成立」的量。**
+- 2026-09-22：**PM 笔误（CHANGELOG 提交号）** —— 我给 rd-fe 的 CHANGELOG 附件把 TASK-19B 第二个提交写成 **`99eac8ff9`**（**仓库不存在**），实际为 **`99d81aaf`**。rd-fe 逐条核对 19 个 SHA 后把该 token 落为真实 SHA，**未按笔误逐字落盘**（正确处置）。**PM 裁定：接受其修正**；**不改写已发布的 tag**（为一个笔误 force-push tag 得不偿失）。**教训：附件里的提交号必须逐条 `git rev-parse` 校验后再下发。**
