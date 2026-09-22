@@ -53,6 +53,7 @@
 ### 5.2 状态宿主唯一（C1）/ 零重拉（C2）/ 禁 keep-alive（C3）
 
 - 锚点、任务快照、排序、拖拽、抽屉、撤销等状态由**单一宿主**持有；任何「切视图」路径不得触发 `useCalendarTaskQuery` 重建。
+- **瞬态态（T75 裁决，D10）**：`useDragSchedule` 手势会话 / 格内快速新建编辑器**允许上收至宿主单实例**（非必须 view-local），但必须配「视图变更时 `drag.cancel()` + 关闭内联编辑器」与「宿主作用域卸载兜底释放 window 监听」；月视图 `quickCreate` 在宿主、日视图 `quickCreate` 与时间轴拖拽在本地 —— 两种落点并存**不视为不一致**。
 
 ### 5.3 路由契约（C4/C5）
 
@@ -105,6 +106,8 @@
 | D8  | T74/D-a：承载层迁到 host 是否偏离 C6.1？ | **不偏离**（意图不变、字面随结构性迁移更新）⇒ 修订 C6.1：承载层 = `.nue-calendar-host`（入 `--cal-*` 令牌组 + 承接 padding / `height:100%` / `background` / `overflow`）；`monthly` 根同步去 `padding:1rem` | arch T74 裁决；触发源 = rd-fe T71-A 落点清单 |
 | D9  | 撤销栈是否收敛为单栈？                   | **不强制合并**（时长轴栈保持自足回退）；**但呈现层唯一**（C9：同一时刻只允许一个撤销 toast），且两套栈须共用同一 `ScheduleUndoAction` 形状/语义                                                             | arch T74 裁决；风险登记见 ADR §7.1           |
 
+| D10 | 瞬态态上收宿主是否偏离 C1？ | **不偏离**（C1 措辞为「允许」非「必须」）；单实例 + `viewMode` 变更时 `drag.cancel()` + 关闭内联编辑器 + 宿主卸载兜底释放 window 监听 ⇒ ADR 原顾虑（悬挂会话）已被确定性护栏消除；日视图瞬态态仍本地（C1 原义活体实例）⇒ 已在 ADR **C1** 补句 | arch T75 裁决（PM 门禁复核后提出） |
+
 ## 10. 派发记录
 
 | 任务 | 目标会话      | 角色 | 概要                                                                                                                | 对应 AC     | 状态                    |
@@ -125,9 +128,13 @@
 
 - 2026-09-22：用户提出路由与三视图一致性两问 → arch T68 只读诊断（报告 + ADR）→ PM 出开工确认卡 → 用户拍板 D1=(a)、其余按建议 → 本 PRD 定稿。
 - 2026-09-22：T69 ✅ `0d1b801e`、T70 ✅ `c3aa5c1b`；rd-fe T71-A 只读落点清单报备 D-a/D-c → arch **T74 裁决**（`d3fff86a`：C6.1 承载层迁 host + 令牌随行 + monthly 去 padding；C1 撤销栈例外三项条件；新增 C9/C10/C11；D8/D9）→ PM 本行同步：§5.1 补 C6.1、§9 补 D8/D9、§10 状态刷新。**T74 不改变 C2/C3/C4/C7/C8 与 D1–D7、不改变任一 AC**；C6.1 对 monthly 根 padding 的收口为 arch 裁决范围内（PM 已向用户报备，用户同批选择「落记账 + 派 T71」）。
+- 2026-09-22：**T71 ✅**（U2 宿主上移 + 三子路由）—— rd-fe 回执 + **PM 独立复跑门禁通过**（106 文件 / 906 例全绿、`vp check` 0、`guard:ddd` OK、双端 build exit 0、无 keep-alive、移动端零改动、既有 T49/T54/T55/T58/T61 未被触碰）。**T75 裁决 (a)**：瞬态态单实例宿主**不偏离 C1**（D10）⇒ 已在 ADR C1 补句（PM 一行落盘）。
 
 ## 13. 遗留项
 
 - 死代码 `.cal-aside-toggle`、`.cal-nav-btn`（×3 规则）零引用（arch T68 §2-3）——未擅自清理。
 - Playwright 几何回归（D5 暂不引入）——若后续多次出现布局回归再评估。
 - TASK-17 D4 遗留（月视图 `NueDivider` / 周视图 `.wk-view-sep` 不一致）由本单 U1-③ 一并解决，届时可关闭该遗留。
+- **已知可接受（T75 INFO-1，低）**：`calendar.quick-create`（`n`）注册在宿主，目标是 monthly 的 `quickCreateDate`；日视图不消费该字段（`CalendarDayContext` 无 quick-create），故日视图按 `n` 无可见效果。非 C1 偏离（C1 不涉快捷键），日视图本以「点击轨道定位」为新建入口（快捷键无时间落点语义）。本轮**不动**；若后续要补，须先定「落点 = 当前时间还是选中块」。
+- **C10③ `replace` 代价（D2 已拍板，待用户手工验收项）**：切视图后「返回」无法回到切换前 URL（含此前已打开的详情深链 `/calendar/monthly/<taskId>`）。
+- **视觉几何（切视图零位移）**：未跑浏览器，交 T72 用户人眼验收（`.nue-calendar-host` 多一层 flex 列包裹，逻辑与原 `.nue-calendar-monthly` 直挂 `.nue-content` 等价）。
