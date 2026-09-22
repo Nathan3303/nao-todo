@@ -11,6 +11,8 @@
 - **需求池（撤回/搁置）**：TASK-14「日历视图刷新功能」——用户 2026-09-21 **撤回**，待其自行测试一段时间后再提（**未澄清、未开工、无 PRD**）。
 - **当前批次（TASK-15）**：日历视图展示顺序——撤销隐藏排序 + 二次默认排序按名称；PRD `docs/prds/2026-09-21-calendar-display-order.md`；开工确认：用户 2026-09-21 拍板「按推荐（方案 B）」，并授权继续推进。
 - **TASK-15 范围（3 处撤销 + 1 处保留）**：①`monthly-layout.ts` 删 `colEnd desc` 二次键（保留 `colStart asc`）②日内抽屉 `getDayTasks` 撤销「开始时间→创建时间」③未安排列表 `unscheduledTasks` 撤销 `createdAt desc`；**保留** 服务端 `sort:{id asc}`（分页机制）。
+- **诊断中（TASK-18，未开工）**：日历**「月/周/日三路由」可行性** + **三视图头部/容器布局不一致与「切视图元素位移」根因** —— 用户 2026-09-21 提出。**T68 已派 arch-designer（只读诊断）**：PM 已勘察证据（`calendar/routes.ts` 父路由+redirect 已存在、children 仅 1 条；`entry.vue` 已含 `router-view`；三视图实为组件内 `viewMode` + `v-if` 切模板）；**右组 gap 三样**（monthly 无 / weekly 6px / daily `var(--nue-gap-xs)`）、`.cal-aside-toggle` 疑似死代码、根容器三样（`padding:1rem` vs `flex:1` vs `height:100%`）、`is-active{font-weight:600}` 宽度变化疑为位移源。
+- **工作区未提交的用户手工改动**：`daily/index.vue` 移除 `.nue-calendar-daily{padding:1rem}`（晚于 `9d5f3a77`）；已请 arch 判定是否为「正确修复的一半」。
 - **当前批次（TASK-17）**：日视图头部样式对齐月/周 + 补侧边栏收缩按钮 —— **实现完成待用户手工验收**。PRD `docs/prds/2026-09-21-calendar-day-header-consistency.md`；提交 `9d5f3a77`（未 push）。PM 核验：CSS 归属唯一、标记与月/周逐字一致、**未改测试**、890 例全绿、双端 build ✓、移动端零改动。**待裁决**：工作中存在用户手工微调（`daily/index.vue` 移除 `padding: 1rem`，未提交、未回退）。
   | T65 | rd-fe | 前端 | 接入共享样式层 + 删 bespoke + 静态标题变体 + 侧边栏开关 | ✅ 已回执并（PM）核验 |
   | T67 | rd-fe | 前端 | 提交 `style(calendar): …` | ✅ 已回执并验收（5 文件，无夹带，未 push） |
