@@ -254,16 +254,29 @@ const ExportDialogEmitStub = defineComponent({
     name: 'TaskExportDialog',
     props: {
         modelValue: { type: Boolean, default: false },
-        markdown: { type: String, default: '' }
+        markdown: { type: String, default: '' },
+        // TASK-22：footer 以 status 驱动框内三态（supersede 断言需观察框内 error 态 + 重试）
+        status: { type: String, default: 'ready' },
+        errorMessage: { type: String, default: '' }
     },
-    emits: ['copy', 'update:modelValue'],
+    emits: ['copy', 'update:modelValue', 'retry'],
     setup(props) {
         return () =>
-            h('div', {
-                class: props.modelValue
-                    ? 'export-dialog-stub export-open'
-                    : 'export-dialog-stub export-closed'
-            })
+            h(
+                'div',
+                {
+                    class: props.modelValue
+                        ? 'export-dialog-stub export-open'
+                        : 'export-dialog-stub export-closed',
+                    'data-status': props.status
+                },
+                props.modelValue && props.status === 'error'
+                    ? [
+                          h('div', { class: 'export-dialog-error', 'data-error': 'true' }),
+                          h('button', { type: 'button' }, '重试')
+                      ]
+                    : []
+            )
     }
 })
 const footerStubs = {
@@ -381,7 +394,7 @@ describe('T37-AC2/AC5 footer 集成：copy payload → 剪贴板', () => {
         w.unmount()
     })
 
-    it('子任务 listByTask 失败 ⇒ toast「导出失败：boom」、不开浮层、不写剪贴板（AC5 独立复核）', async () => {
+    it('子任务 listByTask 失败 ⇒ toast「导出失败：boom」、浮层已开且为框内错误态、不写剪贴板（AC5 独立复核）', async () => {
         const writeText = vi.fn().mockResolvedValue(undefined)
         Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
         const w = mountFooter({
@@ -443,8 +456,10 @@ describe('T37-AC2/AC5 footer 集成：copy payload → 剪贴板', () => {
         await flushPromises()
 
         expect(NueMessage.error).toHaveBeenCalledWith('导出失败：boom')
-        expect(w.find('.export-open').exists()).toBe(false)
-        expect(w.find('.export-closed').exists()).toBe(true)
+        // supersede（PM 2026-09-23 裁决 A）：流程反转 ⇒ 失败时浮层仍开，错误态在框内（+ 重试）
+        expect(w.find('.export-open').exists()).toBe(true)
+        expect(w.find('.export-dialog-error').exists()).toBe(true)
+        expect(w.findAll('button').some((button) => /重试|Retry/.test(button.text()))).toBe(true)
         expect(writeText).not.toHaveBeenCalled()
         w.unmount()
     })

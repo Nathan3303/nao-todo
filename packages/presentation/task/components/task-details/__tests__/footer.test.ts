@@ -133,22 +133,19 @@ afterEach(() => {
     vi.restoreAllMocks()
 })
 
-describe('TaskDetailsFooter - 导出失败门控（AC5）', () => {
-    it('取数失败 ⇒ 不开浮层（exportTask 返回 null 时 dialog 不渲染）', async () => {
-        const w = mountFooter(async () => [null, 'boom'])
+describe('TaskDetailsFooter - 点导出立即开框（TASK-22 §5.1 流程反转）', () => {
+    // supersede（PM 2026-09-23 裁决 A）：原「取数失败 ⇒ 不开浮层」与 TASK-22 需求③（框内错误态
+    // + 重试）直接互斥，属本单范围内行为替代。新不变量：是否开框**不依赖取数结果**。
+    // 失败路径的 toast 与框内错误态改由 export-acceptance.test.ts（dialog 接线）覆盖；
+    // footer 层不再断言 toast，故此处不再 mock 断言 NueMessage.error。
+    it('点导出 ⇒ 不依赖取数结果，立即开浮层（失败 / 成功双 fetcher 对照，避免门控恒闭）', async () => {
+        const failed = mountFooter(async () => [null, 'boom'])
+        await triggerExport(failed)
+        expect(failed.find('.export-open').exists()).toBe(true)
+        failed.unmount()
 
-        await triggerExport(w)
-
-        expect(NueMessage.error).toHaveBeenCalledTimes(1)
-        expect(w.find('.export-open').exists()).toBe(false)
-        expect(w.find('.export-closed').exists()).toBe(true)
-    })
-
-    it('取数成功 ⇒ 打开浮层（正向对照，避免门控恒闭）', async () => {
-        const w = mountFooter(async () => emptyPage())
-
-        await triggerExport(w)
-
-        expect(w.find('.export-open').exists()).toBe(true)
+        const succeeded = mountFooter(async () => emptyPage())
+        await triggerExport(succeeded)
+        expect(succeeded.find('.export-open').exists()).toBe(true)
     })
 })
