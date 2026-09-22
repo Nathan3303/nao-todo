@@ -217,12 +217,13 @@ describe('generateTaskHtml - 空段省略与合计计量（§5.4 / §14.5）', (
         expect(out).toContain('2/3')
     })
 
-    it('y === 0 的组整行省略；两组皆无 ⇒ 整段省略（不出现 0/0）', () => {
+    it('y === 0 的组整行省略（不出现 0/0）；y > 0 且 x === 0 仍输出 0/y；两组皆无 ⇒ 整段省略', () => {
         const onlyCheck = render(
             makeNode({ name: '仅检查项', checkItems: [{ name: '检一', isDone: false }] })
         )
         expect(onlyCheck).not.toContain('0/0')
-        expect(onlyCheck).not.toContain('0/1')
+        // 分母非零（y = 1）⇒ 合计行存在，即使完成数为 0 也输出 0/1（边界钉死）
+        expect(onlyCheck).toContain('0/1')
 
         const empty = render(makeNode({ name: '全空' }))
         expect(empty).not.toContain('0/0')
