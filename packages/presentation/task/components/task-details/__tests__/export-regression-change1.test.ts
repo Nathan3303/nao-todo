@@ -272,11 +272,18 @@ const DivStub = defineComponent({
         return () => h('div', slots.default?.())
     }
 })
+const ButtonGroupStub = defineComponent({
+    name: 'NueButtonGroup',
+    setup(_, { slots }) {
+        return () => h('div', { class: 'stub-button-group' }, slots.default?.())
+    }
+})
 const ButtonStub = defineComponent({
     name: 'NueButton',
+    inheritAttrs: false,
     emits: ['click'],
-    setup(_, { slots, emit }) {
-        return () => h('button', { onClick: () => emit('click') }, slots.default?.())
+    setup(_, { slots, emit, attrs }) {
+        return () => h('button', { ...attrs, onClick: () => emit('click') }, slots.default?.())
     }
 })
 const TextareaStub = defineComponent({
@@ -299,21 +306,31 @@ const stubs = {
     'nue-div': DivStub,
     NueButton: ButtonStub,
     'nue-button': ButtonStub,
+    NueButtonGroup: ButtonGroupStub,
+    'nue-button-group': ButtonGroupStub,
     NueTextarea: TextareaStub,
     'nue-textarea': TextareaStub
 }
 
 describe('T41-UI 变更 1', () => {
-    it('footer 仅两个按钮：还原 + 复制；无「关闭」', () => {
+    it('footer 仅两个非格式按钮：还原 + 复制；格式选择器 3 项；无「关闭」', () => {
         const w = mount(TaskExportDialog, {
             props: { modelValue: true, markdown: '# 任务' },
             global: { stubs }
         })
-        const texts = w.findAll('button').map((b) => b.text())
-        expect(texts).toHaveLength(2)
-        expect(texts.some((t) => /还原|Restore/i.test(t))).toBe(true)
-        expect(texts.some((t) => /复制|Copy/.test(t))).toBe(true)
-        expect(texts.some((t) => /关闭|Close/.test(t))).toBe(false)
+        // D12 定向 supersede：格式选择器为 3 个带 data-format 的 nue-button，
+        // 故按属性拆分「格式按钮」与「footer 按钮」，原「footer 仅两键、无关闭」意图全保留。
+        const allButtons = w.findAll('button')
+        const formatButtons = w.findAll('[data-format]')
+        const footerTexts = allButtons
+            .filter((b) => b.attributes('data-format') === undefined)
+            .map((b) => b.text())
+
+        expect(formatButtons).toHaveLength(3)
+        expect(footerTexts).toHaveLength(2)
+        expect(footerTexts.some((t) => /还原|Restore/i.test(t))).toBe(true)
+        expect(footerTexts.some((t) => /复制|Copy/.test(t))).toBe(true)
+        expect(allButtons.map((b) => b.text()).some((t) => /关闭|Close/.test(t))).toBe(false)
         w.unmount()
     })
 
