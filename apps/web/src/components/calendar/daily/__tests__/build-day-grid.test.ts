@@ -186,3 +186,101 @@ describe('TASK-16 当前时间线（§5.5 / AC5）', () => {
         expect(buildDayGrid('2000-01-01', [], 3, ANCHOR).isToday).toBe(false)
     })
 })
+
+describe('TASK-19 档位矩阵：列数与标签（D1 / D1.1 / C2 / AC2）', () => {
+    const MATRIX = [
+        { zoom: 1, columnMinutes: 30, columns: 48, labels: 24 },
+        { zoom: 1.5, columnMinutes: 30, columns: 48, labels: 24 },
+        { zoom: 2, columnMinutes: 15, columns: 96, labels: 48 },
+        { zoom: 3, columnMinutes: 15, columns: 96, labels: 48 },
+        { zoom: 4, columnMinutes: 10, columns: 144, labels: 48 }
+    ] as const
+
+    for (const row of MATRIX) {
+        it(`×${row.zoom} ⇒ ${row.columnMinutes}min / ${row.columns} 列 / ${row.labels} 个标签`, () => {
+            const model = buildDayGrid(ANCHOR, [], 3, TODAY, {
+                columnMinutes: row.columnMinutes
+            })
+            // I1：30 分钟必须为整数列
+            expect(30 % row.columnMinutes).toBe(0)
+            expect(model.columns).toHaveLength(row.columns)
+            expect(model.columns).toHaveLength(1440 / row.columnMinutes)
+            const labelled = model.columns.filter((col) => col.label !== '')
+            expect(labelled).toHaveLength(row.labels)
+        })
+    }
+
+    it('30min 档标签为 HH 且仅整点（24 个），与现状逐字节一致', () => {
+        const model = buildDayGrid(ANCHOR, [], 3, TODAY, { columnMinutes: 30 })
+        expect(model.columns[0]!.label).toBe('00')
+        expect(model.columns[1]!.label).toBe('')
+        expect(model.columns[2]!.label).toBe('01')
+        expect(model.columns[47]!.label).toBe('')
+        for (const col of model.columns) {
+            if (col.index % 2 === 0) expect(col.label).toMatch(/^\d{2}$/)
+            else expect(col.label).toBe('')
+        }
+    })
+
+    it('15/10min 档标签为 HH:MM（整点+半点 48 个）；非 30 分钟刻度为空', () => {
+        const model15 = buildDayGrid(ANCHOR, [], 3, TODAY, { columnMinutes: 15 })
+        expect(model15.columns[0]!.label).toBe('00:00')
+        expect(model15.columns[1]!.label).toBe('')
+        expect(model15.columns[2]!.label).toBe('00:30')
+        expect(model15.columns[3]!.label).toBe('')
+        expect(model15.columns[4]!.label).toBe('01:00')
+        for (const col of model15.columns) {
+            const minutes = col.index * 15
+            if (minutes % 30 === 0) expect(col.label).toMatch(/^\d{2}:\d{2}$/)
+            else expect(col.label).toBe('')
+        }
+
+        const model10 = buildDayGrid(ANCHOR, [], 3, TODAY, { columnMinutes: 10 })
+        expect(model10.columns[0]!.label).toBe('00:00')
+        expect(model10.columns[1]!.label).toBe('')
+        expect(model10.columns[2]!.label).toBe('')
+        expect(model10.columns[3]!.label).toBe('00:30')
+        expect(model10.columns[6]!.label).toBe('01:00')
+        for (const col of model10.columns) {
+            const minutes = col.index * 10
+            if (minutes % 30 === 0) expect(col.label).toMatch(/^\d{2}:\d{2}$/)
+            else expect(col.label).toBe('')
+        }
+    })
+
+    it('10min 档最小条宽仍为 30 分钟（3 列）——MIN_SPAN_MIN 不随档位变（C2）', () => {
+        const model = buildDayGrid(
+            ANCHOR,
+            [
+                makeTask({
+                    id: 'ms',
+                    startAt: '2026-09-21 09:00:00',
+                    endAt: '2026-09-21 09:00:00'
+                })
+            ],
+            3,
+            TODAY,
+            { columnMinutes: 10 }
+        )
+        const seg = find(model, 'ms')
+        expect(seg.colStart).toBe(540 / 10)
+        expect(seg.colEnd).toBe(570 / 10 - 1)
+    })
+})
+
+describe('TASK-19 纵向 V1：maxLanes=Infinity 全部轨道渲染（D4 / AC4）', () => {
+    it('8 个同时段任务、maxLanes=Infinity ⇒ overflow 恒空且全部 item 有 lane', () => {
+        const tasks = Array.from({ length: 8 }, (_, i) =>
+            makeTask({
+                id: `v${i}`,
+                startAt: '2026-09-21 09:00:00',
+                endAt: '2026-09-21 10:00:00'
+            })
+        )
+        const model = buildDayGrid(ANCHOR, tasks, Number.POSITIVE_INFINITY, TODAY)
+        expect(model.overflow).toHaveLength(0)
+        expect(model.timed).toHaveLength(8)
+        expect(model.timed.every((seg) => Number.isInteger(seg.lane) && seg.lane >= 0)).toBe(true)
+        expect(new Set(model.timed.map((seg) => seg.lane)).size).toBe(8)
+    })
+})
