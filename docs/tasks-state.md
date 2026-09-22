@@ -59,6 +59,7 @@
 
 - **`.agents/**`（nao 舰队接入在制品，22 项：15 M + 7 未跟踪）**、**`.codegraph/**`**、**`.pi/**`** 仍未提交 —— 属独立治理线，**待用户决定归属与提交时机**（卡 §六 纪律：**不得提交** `.agents/.codegraph/.pi`）。
 - **`.agents` 格式化冲突根治项（未决）**：①`vite.config.ts` 的 `fmt.ignorePatterns` 追加 `'.agents/**'`；或 ②让 `nao-fleet.sh` 的 awk 解析器 CRLF/缩进容忍（宜回流上游 nao-skills）。
+- **上游工具缺陷（建议回流 nao-skills / 报 vite-plus issue）**：**`vp config` 不尊重 `.editorconfig`** —— 版本 `vp v0.2.6`（`vite-plus@0.2.6`，devDependency 走 `catalog:`）。**最小复现（4 步）**：① `.editorconfig` 含 `[*] end_of_line = crlf` 且某文件含 `<!--VITE PLUS START/END-->` 区块；② `vp check --fix <file>` ⇒ 全 CRLF（干净）；③ `vp config`（= `prepare`）⇒ **托管区块被重写为 LF**（CRLF 116 → 101、新增 15 个 LF 行）⇒ 工作区**立刻变脏**；④ 再 `vp check --fix` ⇒ 又回全 CRLF ⇒ **无限 ping-pong**。**期望**：注入器应尊重目标文件既有 EOL / `.editorconfig`。**影响面**：任何「CRLF 项目 + Vite+ 托管区块」每次 `pnpm install` 后必现无意义 diff。**本仓已规避**（`.editorconfig` 对 `AGENTS.md` 指定 LF）。
 - **命中抽检固化 ✅（T92，`149305fe`）**：已落 `scripts/electron-smoke/checks/day-view-hit.mjs`（feature `day-view`）。**待办：端到端实跑**（需注入 `NAO_QA_EMAIL`/`NAO_QA_PASSWORD`）：`node scripts/electron-smoke/run.mjs --launch --feature day-view`；重点 `bars`/`blank`/`allday`/`ticks` 与 `zoom`（×1/×4）。T92 已用**真实渲染 + 仓库真实 CSS 的合成 DOM** 验证各判据，并做**回归有效性实测**（把 track 改回 `pointer-events: auto` ⇒ `stack`/`blank`/`overlay.track` 三条转红）。
 - **「是否引入 Playwright」= 不需要（2026-09-22 核查结论）**：仓库已有 `scripts/electron-smoke/`（CDP 驱动桌面端实机、Node 内置能力、零依赖），README 明写覆盖「真实布局/弹层堆叠/**真实命中测试**」—— 需要真实浏览器的检查（含 TASK-16 **D5** 曾搁置的几何回归）应**扩展该工具**，而非新增依赖。TASK-16 D5「暂不引入 Playwright」据此维持。
 
@@ -71,7 +72,7 @@
 ## 七、发版 v1.8.0 —— ✅ **已发布并同步**（2026-09-22）
 
 - **结果**：发布提交 **`fb758cf4`**（7 文件：`CHANGELOG.md` + 6 个 `package.json`）+ **注解 tag `v1.8.0`**（tag 对象 `8c124b3c` → peeled `fb758cf4`）。
-- **远端**：`origin/feat/ocdev` = `fb758cf4`、`refs/tags/v1.8.0` 已推送；**PM 独立核对**：本地领先 **0**、tag peeled SHA 一致、发布提交 7 文件、无夹带。
+- **远端**：发布时 `origin/feat/ocdev` = `fb758cf4`；**发版后修复提交** `abc92acc`（`AGENTS.md` EOL 归一，见 §四/§六）已 push ⇒ 现 `origin/feat/ocdev` = **`abc92acc`**（**tag `v1.8.0` 仍指向 `fb758cf4`**，未被移动）。**PM 独立核对**：本地领先 **0**、tag peeled SHA 一致、发布提交 7 文件、无夹带。
 - **质量门槛（发布提交上复跑）**：`vp check` exit 0（1313 / 1123，0 error 0 warning）；`vp test` **110 文件 / 993 例全绿**；`webapp build` + `desktop:build` 均 exit 0。
 
 - **版本**：root / `@nao-todo/webapp` / `@nao-todo/desktopapp` → **1.8.0**（功能批次 → minor）；`@nao-todo/presentation` **0.4.6 → 0.5.0**（导出面/功能）；`@nao-todo/domain-task` **1.2.0 → 1.3.0**（新增公开只读原语 `listByTask`）；`@nao-todo/shared` **1.3.0 → 1.3.1**（i18n 键）；`infrastructure` 0.5.0 / `presentation-identity` 1.2.0 / `presentation-react` 0.1.0 **不动**。
@@ -92,4 +93,4 @@
 - 2026-09-22：**PM 派单口径错误（命中抽检）** —— 我写「`(条左缘+2px)` 命中条本身」**几何上不可能**：左手柄 `.day-task-resize--start { left:-3px; width:8px }` ⇒ 手柄盒 = `[缘−3, 缘+5]`，`缘+2` 落在**左手柄**内（真机实测命中 `SPAN.day-task-resize--start`）。rd-fe 已把「条缘归属手柄」写成显式断言 + 用**缘+10px** 判条体。**教训：涉及命中区/手柄盒的派单口径必须给「几何区间」而非「示意点位」。**
 - 2026-09-22：**判别力教训（重要，已入 ADR C12/r8）** —— 「条中点命中 `.cal-item`」**不能**判出覆盖层回归：条内文本 `.cal-item-text`（`z-index: 3`）仍在命中栈顶 ⇒ 覆盖层改回 `auto` 时该断言**仍绿**；必须用 **`elementsFromPoint` 命中栈不含覆盖层** + **空白点 `inTrack=false`** + **覆盖层 computed `pointer-events === 'none'`** 三条判红。**教训：断言要选「只有 bug 存在才失败」的量，而非「bug 存在时仍可能成立」的量。**
 - 2026-09-22：**PM 笔误（CHANGELOG 提交号）** —— 我给 rd-fe 的 CHANGELOG 附件把 TASK-19B 第二个提交写成 **`99eac8ff9`**（**仓库不存在**），实际为 **`99d81aaf`**。rd-fe 逐条核对 19 个 SHA 后把该 token 落为真实 SHA，**未按笔误逐字落盘**（正确处置）。**PM 裁定：接受其修正**；**不改写已发布的 tag**（为一个笔误 force-push tag 得不偿失）。**教训：附件里的提交号必须逐条 `git rev-parse` 校验后再下发。**
-- 2026-09-22：**`AGENTS.md` EOL 抖动（工具行为，勿追）** —— 发版后工作区出现 `AGENTS.md` 的 15 行差异，实测为 **`<!--VITE PLUS START/END-->` 托管区块内 CRLF→LF**（字节少 15、内容逐字相同），由 `vp` 自身重写其托管区块所致。**尝试提交时被 pre-commit 钩子（`vp check --fix`）归一回 CRLF ⇒ 提交判空拦下、工作区自动干净**。⇒ 结论：**该文件会周期性出现纯 EOL 抖动，按 `.editorconfig`（CRLF）为准，不提交、不追查**；如需根治，把该文件或该块加入 `fmt.ignorePatterns`。
+- 2026-09-22：**`AGENTS.md` EOL 抖动 —— 已根治（方案 B，`abc92acc`）**：实测根因 = **`vp config`（= `prepare`，`pnpm install` 必跑）重写 `<!--VITE PLUS START/END-->` 托管区块时写死 LF 且不读 `.editorconfig`** ↔ **oxfmt 按 `.editorconfig` 强制 CRLF** ⇒ ping-pong（`vp config` 后脏 → `vp check --fix` 改回 → 提交判空被拦）。**修复**：`.editorconfig` 增 `[AGENTS.md] end_of_line = lf` + 该文件整文件归一为 LF（**内容逐字不变**，仅行尾）⇒ 注入器/oxfmt/编辑器**三方一致认 LF**。**PM 独立复核**：`vp config` 后 `git status` 空、`vp check` exit 0 后仍空（幂等，不抖）。
