@@ -181,6 +181,8 @@ export const packLanes = <T extends { colStart: number; colEnd: number }>(
 - **C13** 跨日裁剪/续接/全天行判定一律以**真实 `startAt/endAt`** 为锚，禁以裁剪后值反推。
 - **C14** `viewMode` 扩为 `'month' | 'week' | 'day'`；切视图**不重拉数据**（复用同一 `taskIds` 快照）；A3（默认月、不持久化）保持不变。
 
+> **修订（2026-09-22，TASK-18）**：`viewMode` 将改为**由 `route.name` 派生**（只读 computed，导航为唯一写路径），组件内可变 `viewMode` 退役；**「切视图不重拉数据」不变**（TASK-18 C2），**A3 语义不变**（默认入口仍为月视图）。见 ADR `2026-09-22-calendar-view-routes-and-header-layout-baseline.md`。
+
 ## 8. 证据索引
 
 | 类别                     | 位置                                                                           |
@@ -201,6 +203,7 @@ export const packLanes = <T extends { colStart: number; colEnd: number }>(
 - D1–D4 任一拍板结论与本文不一致时，须修订本 ADR 并同步 PRD §0/§5.3/§5.5 与 **AC3/AC4** 用例。
 - 实现期若偏离任一 C1–C14，须回到架构评审并修订本 ADR；尤其 **C3（打包单一实现）与 C11（领域零污染）为硬红线**。
 - 若 D1 选 (c)，须另立单处理 R1 + B7 抽屉口径统一，并登记跨视图不一致。
+- **2026-09-22（TASK-18）**：视图路由化（三子路由 + 状态宿主上移）与三视图布局单一基线改由 ADR `2026-09-22-calendar-view-routes-and-header-layout-baseline.md`（C1–C8）与 PRD `docs/prds/2026-09-22-calendar-three-view-routes-and-layout-baseline.md` 承接；本 ADR 的 C14 见上文修订说明，其余 C1–C13 继续有效。
 
 ## 10. 决策留痕（拍板）
 

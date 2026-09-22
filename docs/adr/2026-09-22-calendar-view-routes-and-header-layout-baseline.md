@@ -1,6 +1,6 @@
 # ADR 2026-09-22 日历三视图路由可行性与头部/容器布局基线（T68）
 
-- **状态**：⏳ **待拍板**（架构可行性裁决已出；decisions 见 §6，**未拍板前不得开工**）
+- **状态**：✅ **已拍板**（2026-09-22 用户裁决：**D1=(a) 三子路由**；D2–D7 全部采纳架构建议）→ 实现单 **TASK-18**，PRD `docs/prds/2026-09-22-calendar-three-view-routes-and-layout-baseline.md`
 - **编号**：T68（TASK-18 第 1 单）；诊断报告：`docs/reports/T68-calendar-three-view-routing-and-header-layout-diagnosis.md`
 - **关联**：TASK-16 日视图（ADR `2026-09-21-calendar-day-view-geometry-and-lane-extraction.md` C14/A3）、TASK-17 日视图头部对齐（PRD `docs/prds/2026-09-21-calendar-day-header-consistency.md` D4 遗留）
 - **基线**：`4818b7c4`；含用户未提交改动 `daily/index.vue`（删根容器 `padding: 1rem`）
@@ -70,7 +70,9 @@
 | 零重拉约束（上游 ADR）     | `docs/adr/2026-09-21-calendar-day-view-geometry-and-lane-extraction.md` C14/A3                                                   |
 | TASK-17 D4 遗留            | `docs/prds/2026-09-21-calendar-day-header-consistency.md` §9/§13                                                                 |
 
-## 6. 待拍板决策（PM）
+## 6. 决策（已拍板 2026-09-22）
+
+> **用户裁决**：D1 = **(a) 三子路由**；D2–D7 均采纳下表「架构建议」。落地**必须与「状态宿主上移」打包同单**（C1/C2），并按 PM 定的严格串行顺序推进。
 
 | #   | 决策点                                                     | 架构建议                                                                                                                                               |
 | :-- | :--------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -84,5 +86,6 @@
 
 ## 7. 变更管理
 
-- 本 ADR 状态为**待拍板**；D1–D7 拍板后由 PM 升级状态并回写决定，若选方案 1 需同步更新 TASK-16 ADR 的 **A3**（`viewMode` 不持久化）语义，并在两篇「变更管理」互记一行。
+- **2026-09-22 已拍板**：D1 选方案 1（三子路由），D2–D7 采纳架构建议；状态由「待拍板」升为「已拍板」，实现单 TASK-18。
+- 已同步 TASK-16 ADR（`2026-09-21-calendar-day-view-geometry-and-lane-extraction.md`）**C14** 语义（`viewMode` 将由 `route.name` 派生，不再是组件内可变状态；**A3「不持久化」语义不变**——URL 即视图态，但默认入口仍为月视图），并在该 ADR §9 互记一行。
 - 实现期偏离 C1–C8 任一约束 → 回到架构评审，不得就地放宽。
