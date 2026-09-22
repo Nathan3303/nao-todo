@@ -188,7 +188,6 @@ const copy = () => {
     width: 100%;
     min-height: min(60vh, 32rem);
     border: 1px solid var(--nue-border-color);
-    background: #ffffff;
 }
 
 .task-export-error {
