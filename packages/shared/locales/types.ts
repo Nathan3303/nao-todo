@@ -352,6 +352,10 @@ export interface LocaleMessages {
     'task.details.export.label.tags': string
     'task.details.export.label.createdAt': string
     'task.details.export.label.updatedAt': string
+    'task.details.export.label.total': string
+    'task.details.export.label.issuedAt': string
+    'task.details.export.label.documentNo': string
+    'task.details.export.label.generatedBy': string
     'task.details.export.heading.description': string
     'task.details.export.heading.checkItems': string
     'task.details.export.heading.subTasks': string

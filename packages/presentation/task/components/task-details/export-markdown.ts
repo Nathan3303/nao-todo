@@ -6,16 +6,26 @@ import dayjs from 'dayjs'
  *              使生成器本身保持纯函数、可单测。
  */
 export type ExportTaskNode = {
+    /** 任务 ID（JSON 机器口径；additive，Markdown 不读取） */
+    id?: string
     name: string
     /** 领域原始状态（`todo` / `in-progress` / `done`），用于子任务复选框判定 */
     state: string
     /** 已本地化的状态文案 */
     stateLabel: string
+    /** 领域原始优先级（`low` / `medium` / `high`；additive，Markdown 不读取） */
+    priority?: string
     /** 已本地化的优先级文案 */
     priorityLabel: string
+    /** 是否已放弃（JSON 保留原始语义；additive，Markdown 不读取） */
+    isGivenUp?: boolean
     startAt: string | null
     endAt: string | null
+    /** 领域原始项目 ID（additive，Markdown 不读取） */
+    projectId?: string | null
     projectName?: string
+    /** 领域原始标签 ID（additive，Markdown 不读取） */
+    tagIds?: string[]
     tagNames?: string[]
     createdAt: string
     updatedAt: string

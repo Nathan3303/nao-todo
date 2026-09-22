@@ -70,13 +70,18 @@ const useExportTask = () => {
 
     // @method 任务视图对象 → 导出节点
     const toExportNode = (task: TaskViewObject, children: ExportTaskNode[]): ExportTaskNode => ({
+        id: task.id,
         name: task.name,
         state: task.state,
         stateLabel: resolveStateLabel(task),
+        priority: task.priority,
         priorityLabel: resolvePriorityLabel(task),
+        isGivenUp: task.isGivenUp,
         startAt: task.startAt,
         endAt: task.endAt,
+        projectId: task.projectId,
         projectName: getProjectName(task.projectId || '') || undefined,
+        tagIds: task.tags ?? [],
         tagNames: (task.tags ?? [])
             .map((tagId) => getTag(tagId)?.name)
             .filter((name): name is string => Boolean(name)),
