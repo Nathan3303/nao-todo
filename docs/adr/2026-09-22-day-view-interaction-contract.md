@@ -14,6 +14,7 @@
 | **r4** | **2026-09-22** | **T85 实现报备 7 项处置（PM 门禁复核后裁决）**：① **C5** `aria-hidden` 精确化为「**仅空文本列**隐藏；带文本列**不**隐藏」（否则唯一新建入口 `button` 的 `aria-label` 会被一并移出无障碍树，与 C5 自相矛盾）；② **C5** `aria-label` 统一用 **`HH:MM`**（×1 档可见文本为 `HH` 时亦然，无障碍更明确）；③ **C5** 自足回退 `tasks` = **store 已知任务 ∪ 查询快照（按 id 去重）**（仅「无宿主独立挂载」路径；真实应用由宿主 provide，不走此路径）—— 接受并登记，替代方案 = 让该用例 `await nextTick`；④ **C6** 新增第二个 opt-in prop **`titleSuffix`**（默认 `undefined` ⇒ 月/周零变化），`title = titleSuffix ? 任务名（后缀） : 任务名`；⑤ **C6** 全天泳道用 `.day-allday-slot`（`relative`，220×20）承载绝对定位 `task-bar` + `.day-allday-items` flex-wrap ⇒ 换行 + 纵向生长，**未**在 `.day-scroll` 与 `.day-allday-lane` 之间插包装层（结构契约保持）；⑥ sticky 锚定链审计通过（新增 CSS 未在 `.day-seg`/`.cal-lanes`/`.day-grid`/`.day-scroll`/`.cal-item` 加 `overflow≠visible`/`contain≠none`/`transform`/`filter`；`.day-col-label` 的 `transform` 只作用于列头按钮自身）；⑦ jsdom 不可断言项（sticky 实贴、`clip-path` 副作用、标签居中像素、遮罩显示条件、pan 手感、×4 帧率、续接段两侧手柄）→ **人工验收清单** |
 | **r5** | **2026-09-22** | **TASK-20 契约修订（用户 2026-09-22 裁决 + 其样式微调登记）**：① **结构契约放宽**：`.day-allday-lane` 与 `.day-grid` **均为 `.day-scroll` 直接子节点且泳道在前**（**允许中间存在 `<nue-divider />`**，原「`nextElementSibling === .day-grid`」作废）；② **`.day-body` overflow 口径**：`overflow: auto` → **`overflow-y: auto; overflow-x: hidden`**（纵向可滚保 V1；横向由 pan 接管、不显示滚动条）；③ **列头恢复与列对齐**（移除 `position: sticky; left: 6px`，保留 `top: 0`）；④ **贴边偏移 0 → 12px**（名称 `.cal-item-text` 与「全天」标签 `.day-allday-label`）；⑤ **遮罩宽 24px → 6px**；⑥ 全天条槽位 `width: 220px → 100%`（`.day-allday-items` 转列向）；⑦ `.day-scroll` 增 `gap: var(--nue-gap-xs)`。缩放入口与总宽/格线见轴 ADR **r3**                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | **r6** | **2026-09-22** | **T88 待裁决落定（拖动反馈契约名 + touch-action）**：① **拖动反馈契约名定死**（qa 固定、T89 照做）：**`data-testid="day-drag-preview"`**（拖动中可见，文本含**吸附后起止两个 `HH:MM`**）、**`data-testid="day-drag-snap-line"`**（吸附刻度高亮线，拖动中可见、**松手即移除**）；浮层复用既有 `.drag-ghost`、源条复用既有 `is-drag-source`（**不新增第二套会话壳**）。② **`touch-action` 落点与取值定死**：**`.day-body` 上 `touch-action: pan-y`** —— 纵向交由浏览器原生滚动（保 AC3 纵向可达），**横向由 JS pan 接管**（不会被判原生手势而 `pointercancel`）。③ 预览文案格式（箭头/分隔符）归人眼；`.day-cols-head` 无 `left:` 为源级近似、真实列对齐归人眼                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| **r7** | **2026-09-22** | **T89 实现报备 5 项处置（PM 门禁复核后裁决）**：① **`.day-axis-track` 的 `cursor: grab` 移交 `.day-grid`**（该层已 `pointer-events: none` ⇒ 其 cursor 失效；空白区光标语义等价、**落点变更**，见 C4 修订）；② 新增 **C12 覆盖层命中契约**（本次「任务条拖不动」根因的机制化沉淀）；③ 删除用户注释掉的 `−`/`+` 按钮死块（轴 ADR r3 已退役，AGENTS §3 清孤儿）；④ **`useDragSchedule` 的 `pending` 自愈不改共享壳**（TASK-16 C8 硬约束）⇒ 登记挂账；⑤ 人工验收新增「真实浏览器复测条能拖 + 能点开详情」                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 ## 1. 事实基线（T83 读码结论）
 
@@ -64,7 +65,7 @@
     - **列头必须显式排除**（TASK-19 的 D5 结构下 header 在 `.day-body` 内）⇒ 解决「从刻度标签起拖既 pan 又开对话框」。
 - 指针捕获：`setPointerCapture` 于 `.day-body` + 结束释放 ⇒ 无需 window 级监听、卸载即释放。
 - **禁**在 `pointermove` 中读取布局（`offsetWidth` / `getBoundingClientRect`）—— pan **起始时**一次性读取除外。
-- `.day-body.is-panning { cursor: grabbing; user-select: none }`；`.day-axis-track` 的 `cursor: pointer`（为已退休的「点击空白新建」服务）**改为 `grab`**。
+- `.day-body.is-panning { cursor: grabbing; user-select: none }`；**空白区 `cursor: grab` 落点（r7 修订）**：由 `.day-grid` 承担（原 `.day-axis-track` 因已 `pointer-events: none` 而 cursor 失效）；任务条/手柄/刻度标签各自覆盖自身 cursor。
 - **不**并入/泛化 `useDragSchedule`（TASK-16 C8 禁第三套**任务拖拽会话壳**；pan 是不同关注点：1D 滚动、无吸附、无写回）。可新建极小 `daily/use-day-pan.ts`，仅复用 `DRAG_THRESHOLD_PX` 与「阈值/取消/卸载清理」形状。
 
 ### C5 刻度创建入口（取代 TASK-16 D5）
@@ -112,6 +113,15 @@
 - **禁止**：在 `scroll`/`pointermove` 回调读布局（pan 起始一次性除外）；给 `.day-seg` **祖先链**加 `overflow`/`contain`/`transform`/`filter`（**会再破 sticky**）；给列头加额外节点/内联样式（除容器 `grid-template-columns`）；`will-change`（层爆炸）。
 - **不引入虚拟化**：① 列头是静态等宽 DOM，288 个空 div 成本可忽略；② 段数不随档位增长；③ 滚动窗口会**打破「列头子节点数 === 列数」契约与 AC6 断言**，并给 pan 引入窗口重算，收益为负。
 - 规模校验：`.day-scroll` 最大宽 5760px（1200 容器）、`scrollLeft` 上限 4560px，远低于浏览器 ~33M px 限制。
+
+### C12 覆盖层命中契约（r7 新增 —— 「任务条拖不动」根因的机制化沉淀）
+
+> **任何 `position: absolute; inset: 0` 的覆盖层，必须显式声明 `pointer-events: none`**（或将该层列入 pan 排除清单），否则会**静默吞掉下层任务条的命中**。
+
+- **本次实证**：`.day-axis-track`（`position:absolute; inset:0; z-index:1`，TASK-19 r1 引入、TASK-19B 移除 `onTrackClick` 后仅剩 cursor 职责）**未声明 `pointer-events: none`**；`.cal-lanes`（`pointer-events:none`）与其内的 `.day-seg`（无 `z-index`）在同一层叠上下文内**低于**该层 ⇒ `.cal-item` 不可命中；指针落到 track ⇒ pan 排除清单不匹配 ⇒ **起的是 pan 会话而非条拖拽**（用户感知「条拖不动」）。真实 Chromium `document.elementFromPoint` 实测：修复前 `bar-mid=track`、修复后 `bar-mid=item`。
+- **仓内既有正确口径（旁证）**：`calendar-grid.css` 的 `.cal-lines`（月/周）**显式** `pointer-events: none`，注释即写明「不拦截任务条/`+N` 点击」——`day-axis-track` 是唯一遗漏项。
+- **⚠️ jsdom 盲区（必读）**：用例以 `dispatchEvent` 直接投递到目标元素，**绕过命中测试** ⇒ 此类缺陷**在 jsdom 中恒绿**。因此：**任何新增/修改覆盖层（`absolute; inset:0`）或改动层叠顺序（`z-index`）后，必须做真实浏览器 `elementFromPoint` 抽检**（至少覆盖：条中部 / 条左缘 / 右缘手柄 / 左缘手柄 / 空白区）。
+- 抽检口径（r7 起纳入人工验收）：`bar-mid` 与 `bar-left` 应命中 `.cal-item`；`handle-r`/`handle-l` 命中手柄；`blank` 命中空白层。
 
 ### C9 锚定破坏清单
 
