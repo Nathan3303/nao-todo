@@ -31,6 +31,7 @@ import {
     writePomodoroBadgePref
 } from '@/components/calendar/monthly/pomodoro-badge'
 import { TaskViewObject } from '@nao-todo/domain-task'
+import { readDayZoom, writeDayZoom, type DayZoom } from '@/components/calendar/daily/day-zoom'
 
 /** 周起始偏好存储键（C9） */
 const CALENDAR_WEEK_START_KEY = 'CALENDAR_WEEKSTART'
@@ -126,6 +127,12 @@ export const useCalendarView = () => {
         writePomodoroBadgePref(localStorage, value)
     })
 
+    // @states 日视图时间轴档位（TASK-19 D6：localStorage CALENDAR_DAY_ZOOM；非法值模块层回退 ×1 并规范写入）
+    const dayZoom = ref<DayZoom>(readDayZoom(localStorage))
+    watch(dayZoom, (value) => {
+        writeDayZoom(localStorage, value)
+    })
+
     // @action 清除清单/标签两组筛选（不影响 hideCompleted）
     const clearFilter = () => {
         selectedProjectIds.value = []
@@ -204,6 +211,10 @@ export const useCalendarView = () => {
         pomodoroBadge,
         setPomodoroBadge: (value: boolean) => {
             pomodoroBadge.value = value
+        },
+        dayZoom,
+        setDayZoom: (value: DayZoom) => {
+            dayZoom.value = value
         },
         clearFilter,
         applyScope

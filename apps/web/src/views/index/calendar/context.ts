@@ -1,4 +1,5 @@
 import type { CalendarWeekStart } from '@/components/calendar/monthly/monthly-layout'
+import type { DayZoom } from '@/components/calendar/daily/day-zoom'
 import { TaskViewObject } from '@nao-todo/domain-task'
 import type { DialogManager, Subscriber } from '@nao-todo/shared'
 import type { InjectionKey, Ref } from 'vue'
@@ -36,6 +37,13 @@ export type CalendarViewContext = {
     pomodoroBadge: Ref<boolean>
     /** 设置专注徽标开关（off=停拉区间记录；on=恢复拉取） */
     setPomodoroBadge: (value: boolean) => void
+    /**
+     * 日视图时间轴档位（TASK-19 D6；localStorage CALENDAR_DAY_ZOOM 持久化，×1–×4）
+     * @optional 独立挂载/旧夹具可能不提供 ⇒ 日视图自足回退 ×1
+     */
+    dayZoom?: Ref<DayZoom>
+    /** 设置日视图时间轴档位（持久化写入；可选，缺省时日视图直改 ref） */
+    setDayZoom?: (zoom: DayZoom) => void
     /** 清除清单/标签两组筛选（不影响 hideCompleted） */
     clearFilter: () => void
     /** 快捷设置单一范围（替换式：仅选中一个清单或标签；all 清空两组） */

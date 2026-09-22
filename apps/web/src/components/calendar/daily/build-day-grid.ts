@@ -2,24 +2,24 @@ import dayjs from 'dayjs'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { packLanes } from '../lane-packing'
 import { MAX_VISIBLE_LANES, todayDateKey } from '../monthly/monthly-layout'
+import { DAY_SNAP_MINUTES } from '../snap'
 
 /**
- * 日视图模型（PRD §5.1–§5.4 / §5.7 冻结契约；ADR C2–C3 / C11 / C13）
- * @description 48 列时间轴（30 分钟/列）；任务按**真实 `startAt/endAt`** 折算为分钟级分数列
- *              （`colStart=startMin/30`、`colEnd=endMin/30−1`，闭区间、连续不吸附）；
- *              跨日裁剪到当日并以 `isStart/isEnd` 标记续接；时长为 0 → 最小 30 分钟宽。
- *              轨道与 +N 走唯一 `packLanes`（日级单探针 `[0,47]`）。
+ * 日视图模型（PRD §5.1–§5.4 / §5.7 冻结契约；ADR C2–C3 / C11 / C13；TASK-19 档位参数化 C2/C4）
+ * @description 时间轴列数由**档位粒度**决定（`1440 / columnMinutes`，默认 30min ⇒ 48 列）；任务按**真实 `startAt/endAt`**
+ *              折算为分钟级分数列（`colStart=startMin/columnMinutes`、`colEnd=endMin/columnMinutes−1`，
+ *              闭区间、连续不吸附）；跨日裁剪到当日并以 `isStart/isEnd` 标记续接；时长为 0 → 最小 30 分钟宽。
+ *              轨道与 +N 走唯一 `packLanes`（日级单探针 `[0, columns−1]`）。
  *              仅 `endAt`（无 `startAt`）→ 全天行；仅 `startAt` / 皆无 → 不进日视图（A4′）。
  */
 
-/** 列数（每列 30 分钟；00:00–23:30） */
-export const DAY_COLUMNS = 48
-/** 单列分钟数 */
-const COLUMN_MINUTES = 30
 /** 全天分钟数 */
 const DAY_MINUTES = 1440
-/** 渲染最小条宽（1 列 = 30 分钟；时长 0/1 分钟被抬到该值） */
-const MIN_SPAN_MIN = 30
+/** 渲染最小条宽（分钟；不随档位变，10min 档自动为 3 列；C2） */
+export const MIN_SPAN_MIN = DAY_SNAP_MINUTES
+
+/** 轴粒度（列宽基准；C2：`30 % columnMinutes === 0`） */
+export type DayGeometry = { columnMinutes: 30 | 15 | 10 }
 
 /** 时间轴列头 */
 export type DayColumn = { index: number; label: string }
@@ -44,26 +44,42 @@ export type DayGridModel = {
     isToday: boolean
 }
 
-// 48 列：偶数列（整点 HH:00）显示两位小时，奇数列（HH:30）不显示文本
-const buildColumns = (): DayColumn[] =>
-    Array.from({ length: DAY_COLUMNS }, (_, index) => ({
-        index,
-        label: index % 2 === 0 ? String(index / 2).padStart(2, '0') : ''
-    }))
+// 列头标签两型（D1.1 分档两式）：30min 档仅整点 `HH`（24 个，与现状逐字节一致）；
+// 15/10min 档整点 + 半点 `HH:MM`（48 个）；其余列为空。
+const buildColumns = (columnMinutes: 30 | 15 | 10): DayColumn[] => {
+    const columns = DAY_MINUTES / columnMinutes
+    return Array.from({ length: columns }, (_, index) => {
+        const minutes = index * columnMinutes
+        if (columnMinutes === 30) {
+            return {
+                index,
+                label: minutes % 60 === 0 ? String(minutes / 60).padStart(2, '0') : ''
+            }
+        }
+        if (minutes % 30 !== 0) return { index, label: '' }
+        const hour = String(Math.floor(minutes / 60)).padStart(2, '0')
+        const minute = String(minutes % 60).padStart(2, '0')
+        return { index, label: `${hour}:${minute}` }
+    })
+}
 
 /**
  * 构建日视图模型
  * @param anchorKey 锚点日键（YYYY-MM-DD）
  * @param tasks 任务快照（入参顺序＝用户排序；同起点保持该顺序）
- * @param maxLanes 可视轨道数（超出计 `+N`）
+ * @param maxLanes 可视轨道数（超出计 `+N`；日视图传 `Infinity` ⇒ 全部渲染，D4/V1）
  * @param todayKey 今天日期键（注入，便于测试；不读取真实时钟）
+ * @param geometry 轴粒度（追加式参数；默认 30min ⇒ 48 列，既有调用不变）
  */
 export const buildDayGrid = (
     anchorKey: string,
     tasks: TaskViewObject[],
     maxLanes: number = MAX_VISIBLE_LANES,
-    todayKey: string = todayDateKey()
+    todayKey: string = todayDateKey(),
+    geometry: DayGeometry = { columnMinutes: 30 }
 ): DayGridModel => {
+    const columnMinutes = geometry.columnMinutes
+    const columns = DAY_MINUTES / columnMinutes
     const dayStart = dayjs(anchorKey).startOf('day')
     const dayStartMs = dayStart.valueOf()
     const dayEndMs = dayStart.add(1, 'day').valueOf()
@@ -113,16 +129,16 @@ export const buildDayGrid = (
         const endMin = Math.max(endMinRaw, startMin + MIN_SPAN_MIN)
         timedItems.push({
             task,
-            colStart: startMin / COLUMN_MINUTES,
-            colEnd: endMin / COLUMN_MINUTES - 1,
+            colStart: startMin / columnMinutes,
+            colEnd: endMin / columnMinutes - 1,
             isStart: startMs >= dayStartMs,
             isEnd: endMs <= dayEndMs
         })
     }
 
-    // 轨道打包 + 日级单探针 +N（唯一实现 packLanes）
+    // 轨道打包 + 日级单探针 +N（唯一实现 packLanes；探针 colEnd = columns − 1，C3）
     const { packed, overflow } = packLanes(timedItems, maxLanes, [
-        { key: anchorKey, colStart: 0, colEnd: DAY_COLUMNS - 1 }
+        { key: anchorKey, colStart: 0, colEnd: columns - 1 }
     ])
     const timed: DayTimedSegment[] = packed.map((item) => ({
         task: item.task,
@@ -135,7 +151,7 @@ export const buildDayGrid = (
 
     return {
         anchorKey,
-        columns: buildColumns(),
+        columns: buildColumns(columnMinutes),
         timed,
         allDay,
         overflow,
