@@ -193,7 +193,7 @@ describe('TASK-19 档位矩阵：列数与标签（D1 / D1.1 / C2 / AC2）', () 
         { zoom: 1.5, columnMinutes: 30, columns: 48, labels: 24 },
         { zoom: 2, columnMinutes: 15, columns: 96, labels: 48 },
         { zoom: 3, columnMinutes: 15, columns: 96, labels: 48 },
-        { zoom: 4, columnMinutes: 10, columns: 144, labels: 48 }
+        { zoom: 4, columnMinutes: 5, columns: 288, labels: 48 }
     ] as const
 
     for (const row of MATRIX) {
@@ -222,7 +222,7 @@ describe('TASK-19 档位矩阵：列数与标签（D1 / D1.1 / C2 / AC2）', () 
         }
     })
 
-    it('15/10min 档标签为 HH:MM（整点+半点 48 个）；非 30 分钟刻度为空', () => {
+    it('15/5min 档标签为 HH:MM（整点+半点 48 个）；非 30 分钟刻度为空', () => {
         const model15 = buildDayGrid(ANCHOR, [], 3, TODAY, { columnMinutes: 15 })
         expect(model15.columns[0]!.label).toBe('00:00')
         expect(model15.columns[1]!.label).toBe('')
@@ -235,20 +235,23 @@ describe('TASK-19 档位矩阵：列数与标签（D1 / D1.1 / C2 / AC2）', () 
             else expect(col.label).toBe('')
         }
 
-        const model10 = buildDayGrid(ANCHOR, [], 3, TODAY, { columnMinutes: 10 })
-        expect(model10.columns[0]!.label).toBe('00:00')
-        expect(model10.columns[1]!.label).toBe('')
-        expect(model10.columns[2]!.label).toBe('')
-        expect(model10.columns[3]!.label).toBe('00:30')
-        expect(model10.columns[6]!.label).toBe('01:00')
-        for (const col of model10.columns) {
-            const minutes = col.index * 10
+        // R2：×4 档 5min ⇒ 每 30 分钟出 1 个标签（第 6 列 = 00:30）
+        const model5 = buildDayGrid(ANCHOR, [], 3, TODAY, { columnMinutes: 5 })
+        expect(model5.columns).toHaveLength(288)
+        expect(model5.columns[0]!.label).toBe('00:00')
+        expect(model5.columns[1]!.label).toBe('')
+        expect(model5.columns[2]!.label).toBe('')
+        expect(model5.columns[5]!.label).toBe('')
+        expect(model5.columns[6]!.label).toBe('00:30')
+        expect(model5.columns[12]!.label).toBe('01:00')
+        for (const col of model5.columns) {
+            const minutes = col.index * 5
             if (minutes % 30 === 0) expect(col.label).toMatch(/^\d{2}:\d{2}$/)
             else expect(col.label).toBe('')
         }
     })
 
-    it('10min 档最小条宽仍为 30 分钟（3 列）——MIN_SPAN_MIN 不随档位变（C2）', () => {
+    it('5min 档最小条宽仍为 30 分钟（6 列）——MIN_SPAN_MIN 不随档位变（C2）', () => {
         const model = buildDayGrid(
             ANCHOR,
             [
@@ -260,11 +263,12 @@ describe('TASK-19 档位矩阵：列数与标签（D1 / D1.1 / C2 / AC2）', () 
             ],
             3,
             TODAY,
-            { columnMinutes: 10 }
+            { columnMinutes: 5 }
         )
         const seg = find(model, 'ms')
-        expect(seg.colStart).toBe(540 / 10)
-        expect(seg.colEnd).toBe(570 / 10 - 1)
+        expect(seg.colStart).toBe(540 / 5)
+        expect(seg.colEnd).toBe(570 / 5 - 1)
+        expect(seg.colEnd - seg.colStart + 1).toBe(6)
     })
 })
 

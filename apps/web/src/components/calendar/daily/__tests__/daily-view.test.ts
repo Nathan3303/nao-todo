@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { createPinia } from 'pinia'
+import { createPinia, setActivePinia } from 'pinia'
 import { ref, type Ref } from 'vue'
+import type { TaskViewObject } from '@nao-todo/domain-task'
+import { useTasksStore } from '@nao-todo/presentation/task'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
 import DailyView from '../index.vue'
 import { dayScrollWidthCss } from '../day-zoom'
@@ -11,7 +13,7 @@ import { dayScrollWidthCss } from '../day-zoom'
  * TASK-16 日视图组件 DOM 契约（PRD §5.7 冻结 / C6 / C12）
  * @description
  *  - `[data-testid="day-columns"]`：×1 时子节点 48、其中有文本者 24（整点 24 个）；
- *    其余档位按 ADR §3-D1 矩阵（×2=96/48、×4=144/48）；
+ *    其余档位按 ADR §3-D1 矩阵（×2=96/48、×4=288/48，R2 起 ×4=5min）；
  *  - `[data-testid="day-axis-bg"]`：其内 `[data-col]` 数量必须为 0（禁 48×N 背景 DOM）；
  *  - `[data-testid="day-unscheduled-entry"]`：日视图自建未安排入口（C12）。
  *  - TASK-19：`.day-scroll` 承载宽高（`.day-cols-head` 与全天泳道同处其中，泳道在 `.day-grid` 之上）。
@@ -37,13 +39,17 @@ const buildContext = (dayZoom?: Ref<number>) => ({
     ...(dayZoom ? { dayZoom } : {})
 })
 
-const mountDaily = (dayZoom?: Ref<number>) =>
-    mount(DailyView, {
+const mountDaily = (dayZoom?: Ref<number>, tasks: TaskViewObject[] = []) => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    if (tasks.length > 0) useTasksStore().addTasks(tasks)
+    return mount(DailyView, {
         global: {
-            plugins: [createPinia()],
+            plugins: [pinia],
             provide: { [CALENDAR_VIEW_CONTEXT_KEY as symbol]: buildContext(dayZoom) }
         }
     })
+}
 
 // jsdom 会归一化 CSS 函数（`max(calc(1 * 100%), calc(48 * 20px))` → `max(100%, 960px)`），
 // 故用同一归一器比较，确保组件确实应用了 `dayScrollWidthCss` 的返回值。
@@ -86,7 +92,7 @@ describe('TASK-19 档位矩阵列头（D1.1 / C6 / AC2）', () => {
         { zoom: 1.5, columns: 48, labels: 24 },
         { zoom: 2, columns: 96, labels: 48 },
         { zoom: 3, columns: 96, labels: 48 },
-        { zoom: 4, columns: 144, labels: 48 }
+        { zoom: 4, columns: 288, labels: 48 }
     ] as const
 
     for (const row of MATRIX) {
@@ -155,6 +161,27 @@ describe('TASK-19 滚动容器与全天泳道（D5 / AC4）', () => {
         expect(direct.some((el) => el.classList.contains('day-cols-head'))).toBe(false)
         expect(direct.some((el) => el.classList.contains('day-allday-lane'))).toBe(false)
         expect(direct.some((el) => el.classList.contains('day-allday'))).toBe(false)
+        wrapper.unmount()
+    })
+
+    it('全天任务渲染为 task-bar（.cal-item），不再有 .day-allday-chip（契约变更 B）', () => {
+        const allDayTask = {
+            id: 'ad',
+            name: '全天任务',
+            state: 'todo',
+            priority: 'low',
+            startAt: null,
+            endAt: '2026-09-22 10:00:00',
+            createdAt: '2026-09-01 00:00:00',
+            tags: []
+        } as unknown as TaskViewObject
+        const wrapper = mountDaily(undefined, [allDayTask])
+        const lane = wrapper.find('.day-allday-lane')
+        expect(lane.exists()).toBe(true)
+        expect(lane.findAll('.day-allday-chip')).toHaveLength(0)
+        expect(lane.findAll('.cal-item').length).toBeGreaterThanOrEqual(1)
+        // 结构契约保持
+        expect(lane.element.nextElementSibling).toBe(wrapper.find('.day-grid').element)
         wrapper.unmount()
     })
 })

@@ -2,9 +2,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { nextTick, ref } from 'vue'
+import { nextTick, ref, type Ref } from 'vue'
 import dayjs from 'dayjs'
 import { NueMessage } from 'nue-ui'
+import { TASK_CREATOR_DIALOG_KEY } from '@nao-todo/shared'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { useTasksStore } from '@nao-todo/presentation/task'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
@@ -16,18 +17,19 @@ import DailyView from '../index.vue'
  *
  * 冻结口径：
  *  - DOM：任务条 `[data-testid="day-task"][data-task-id]`、右缘把手 `[data-testid="day-task-resize"]`、
- *         空白点击区 `[data-testid="day-axis-track"]`；内联新建 `[data-testid="day-quick-create"]`
- *         + 输入框 `[data-testid="day-quick-create-input"]`；共享撤销条 `[data-testid="schedule-undo"]`。
- *  - 快速新建（D5）：点击空白**先出现内联命名编辑器**（Enter 提交 / Esc·失焦取消 / 空名忽略），
- *         提交时 `create` 收到 floor 时间与**用户输入名**；点击不直接建。
+ *         空白点击区 `[data-testid="day-axis-track"]`；共享撤销条 `[data-testid="schedule-undo"]`。
+ *  - 新建入口（T84 契约变更 A，取代 TASK-16 D5 内联新建）：点击**带文本刻度标签**
+ *         （`.day-col-label`，原生 button）⇒ `dialogManager.open(TASK_CREATOR_DIALOG_KEY, { startAt, endAt })`；
+ *         空白不再新建（无 `day-quick-create`）；空文本列无 button / 不可 Tab。
  *  - 坐标基准：`day-axis-track` 的 `getBoundingClientRect()` + 指针绝对位置；mock 宽度 1440 ⇒ 1px = 1 分钟。
- *  - 写回：新建 `create`；拖拽/拉伸 `useCalendarSchedule` 内核 + `update`；撤销 `undoLast`。
+ *  - 写回：拖拽/拉伸 `useCalendarSchedule` 内核 + `update`；撤销 `undoLast`（新建改走对话框，不在本文件）。
  */
 
 const hoisted = vi.hoisted(() => ({
     list: vi.fn(),
     update: vi.fn(),
-    create: vi.fn()
+    create: vi.fn(),
+    open: vi.fn()
 }))
 
 vi.mock('@/hooks', () => ({
@@ -55,8 +57,8 @@ const makeTask = (id: string, start: string, end: string): TaskViewObject =>
 
 const TASKS: TaskViewObject[] = [makeTask('a', '09:00', '10:00')]
 
-const buildContext = () => ({
-    dialogManager: { open: () => {} },
+const buildContext = (dayZoom?: Ref<number>) => ({
+    dialogManager: { open: hoisted.open },
     subscriber: { subscribe: () => {}, unsubscribe: () => {}, emit: () => {} },
     isDisplayAside: ref(false),
     isUseFloatAside: ref(false),
@@ -70,7 +72,8 @@ const buildContext = () => ({
     pomodoroBadge: ref(true),
     setPomodoroBadge: () => {},
     clearFilter: () => {},
-    applyScope: () => {}
+    applyScope: () => {},
+    ...(dayZoom ? { dayZoom } : {})
 })
 
 const stubRect = (el: Element, left: number, width: number): void => {
@@ -116,7 +119,7 @@ const mouseClick = (x: number, target: EventTarget): void => {
 
 let wrapper: VueWrapper | null = null
 
-const mountDaily = async (): Promise<VueWrapper> => {
+const mountDaily = async (dayZoom?: Ref<number>): Promise<VueWrapper> => {
     const pinia = createPinia()
     setActivePinia(pinia)
     useTasksStore().addTasks(TASKS)
@@ -124,7 +127,7 @@ const mountDaily = async (): Promise<VueWrapper> => {
         attachTo: document.body,
         global: {
             plugins: [pinia],
-            provide: { [CALENDAR_VIEW_CONTEXT_KEY as symbol]: buildContext() }
+            provide: { [CALENDAR_VIEW_CONTEXT_KEY as symbol]: buildContext(dayZoom) }
         }
     })
     await flushPromises()
@@ -167,12 +170,6 @@ const dragResize = async (w: VueWrapper, originX: number, targetX: number): Prom
     await flushPromises()
 }
 
-/** 打开内联新建编辑器（点空白 15:20） */
-const openQuickCreate = async (w: VueWrapper): Promise<void> => {
-    mouseClick(920, trackOf(w).element)
-    await flushPromises()
-}
-
 beforeEach(() => {
     hoisted.list.mockReset().mockResolvedValue([
         {
@@ -183,6 +180,7 @@ beforeEach(() => {
     ])
     hoisted.update.mockReset().mockResolvedValue(null)
     hoisted.create.mockReset().mockResolvedValue([{ id: 'new' }, null])
+    hoisted.open.mockReset()
     vi.spyOn(NueMessage, 'error').mockImplementation(() => {})
     vi.spyOn(NueMessage, 'success').mockImplementation(() => {})
 })
@@ -203,54 +201,66 @@ describe('TASK-16 交互 DOM 契约（§5.7）', () => {
     })
 })
 
-describe('TASK-16 快速新建：内联命名（floor，D5 / §5.5 / AC4③）', () => {
-    it('点 15:20 空白 ⇒ 出现内联编辑器，且此时 create 未被调用', async () => {
+describe('TASK-19B AC1 刻度标签 → 创建对话框（契约变更 A，取代 TASK-16 D5）', () => {
+    it('点空白（day-axis-track）不再新建：无 day-quick-create、open/create 均未调用', async () => {
         const w = await mountDaily()
-        await openQuickCreate(w)
-
-        expect(w.find('[data-testid="day-quick-create"]').exists()).toBe(true)
-        expect(w.find('[data-testid="day-quick-create-input"]').exists()).toBe(true)
-        expect(hoisted.create).not.toHaveBeenCalled()
-    })
-
-    it('键入名称 + Enter ⇒ create startAt=15:00 / endAt=15:30 且名称=输入值', async () => {
-        const w = await mountDaily()
-        await openQuickCreate(w)
-        const input = w.find('[data-testid="day-quick-create-input"]')
-        await input.setValue('周会')
-        await input.trigger('keydown', { key: 'Enter' })
+        mouseClick(920, trackOf(w).element)
         await flushPromises()
 
-        const payload = hoisted.create.mock.calls.at(-1)?.[0] as {
-            name?: string
-            startAt?: string
-            endAt?: string
-        }
-        expect(payload).toBeTruthy()
-        expect(payload!.name).toBe('周会')
-        expect(hhmm(payload!.startAt)).toBe('15:00')
-        expect(hhmm(payload!.endAt)).toBe('15:30')
-    })
-
-    it('Esc 取消 ⇒ create 未被调用，编辑器关闭', async () => {
-        const w = await mountDaily()
-        await openQuickCreate(w)
-        await w.find('[data-testid="day-quick-create-input"]').trigger('keydown', { key: 'Escape' })
-        await flushPromises()
-
-        expect(hoisted.create).not.toHaveBeenCalled()
         expect(w.find('[data-testid="day-quick-create"]').exists()).toBe(false)
+        expect(hoisted.open).not.toHaveBeenCalled()
+        expect(hoisted.create).not.toHaveBeenCalled()
     })
 
-    it('空名回车 ⇒ create 未被调用（B6 语义）', async () => {
-        const w = await mountDaily()
-        await openQuickCreate(w)
-        const input = w.find('[data-testid="day-quick-create-input"]')
-        await input.setValue('   ')
-        await input.trigger('keydown', { key: 'Enter' })
+    it('点 14:30 刻度标签 ⇒ dialogManager.open(TASK_CREATOR_DIALOG_KEY, { startAt 14:30, endAt 15:00 })', async () => {
+        const w = await mountDaily(ref(2)) // ×2 = 15min 档 ⇒ 14:30 带文本
+        const label = w
+            .findAll('.day-col-label')
+            .find((btn) => btn.attributes('aria-label') === '在 14:30 创建任务')
+        expect(label, '应存在 14:30 刻度按钮').toBeTruthy()
+
+        await label!.trigger('click')
         await flushPromises()
 
-        expect(hoisted.create).not.toHaveBeenCalled()
+        expect(hoisted.open).toHaveBeenCalledTimes(1)
+        const [key, payload] = hoisted.open.mock.calls[0] as [
+            unknown,
+            { startAt: string; endAt: string }
+        ]
+        expect(key).toBe(TASK_CREATOR_DIALOG_KEY)
+        expect(hhmm(payload.startAt)).toBe('14:30')
+        expect(hhmm(payload.endAt)).toBe('15:00')
+        expect(dayjs(payload.endAt).diff(dayjs(payload.startAt), 'minute')).toBe(30)
+    })
+
+    it('刻度标签为原生 button：仅带文本列有 .day-col-label，aria-label 「在 HH:MM 创建任务」', async () => {
+        const w = await mountDaily() // ×1 ⇒ 24 个整点标签
+        const labels = w.findAll('.day-col-label')
+        expect(labels).toHaveLength(24)
+        for (const btn of labels) {
+            expect(btn.element.tagName).toBe('BUTTON')
+            expect(btn.attributes('type')).toBe('button')
+            expect(btn.attributes('aria-label')).toMatch(/^在 \d{2}:\d{2} 创建任务$/)
+        }
+        // 冻结契约：列头直接子节点数仍 === 列数（button 是孙节点）
+        const container = w.find('[data-testid="day-columns"]')
+        expect(container.element.children).toHaveLength(48)
+
+        // r3：首/末带文本列边界类名（类可落在 .day-col-head 或 .day-col-label 上）
+        const heads = Array.from(container.element.children)
+        const textHeads = heads.filter((el) => (el.textContent ?? '').trim().length > 0)
+        const hasTickClass = (el: Element, cls: string): boolean =>
+            el.classList.contains(cls) || !!el.querySelector(`.${cls}`)
+        expect(hasTickClass(textHeads[0]!, 'is-first-tick')).toBe(true)
+        expect(hasTickClass(textHeads[textHeads.length - 1]!, 'is-last-tick')).toBe(true)
+    })
+
+    it('空文本列无 button（不可点 / 不参与 Tab）', async () => {
+        const w = await mountDaily() // ×1 ⇒ 24 空文本列
+        const heads = Array.from(w.find('[data-testid="day-columns"]').element.children)
+        const empty = heads.filter((el) => (el.textContent ?? '').trim().length === 0)
+        expect(empty).toHaveLength(24)
+        for (const head of empty) expect(head.querySelector('.day-col-label')).toBeNull()
     })
 })
 

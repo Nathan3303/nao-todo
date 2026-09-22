@@ -19,9 +19,9 @@ import {
  *
  * 冻结口径：
  *  - 阶梯 `[1, 1.5, 2, 3, 4]`；`next/prev` 逐级、到端返回自身（按钮 disabled 依据）。
- *  - 档位矩阵（I1–I4 唯一解）：×1/×1.5=30min/48 列；×2/×3=15min/96；×4=10min/144；
+ *  - 档位矩阵（I1–I4 唯一解，r2）：×1/×1.5=30min/48 列；×2/×3=15min/96；×4=5min/288；
  *    量子不变量 `30 % columnMinutes === 0`、`columns === 1440 / columnMinutes`。
- *  - 标签两型：30min 档 `HH`（24 个，与现状逐字节一致）；15/10min 档 `HH:MM`（48 个）——见 build-day-grid.test.ts。
+ *  - 标签两型：30min 档 `HH`（24 个，与现状逐字节一致）；15/5min 档 `HH:MM`（48 个）——见 build-day-grid.test.ts。
  *  - 总宽 `max(k × 容器宽, 列数 × 20px)`：AC1 是下界 `≥ k × 容器宽`（ADR §3-D3）。
  *  - 持久化键 `CALENDAR_DAY_ZOOM`（PRD §5.5）；非法/缺失 → 回退 ×1 并规范写回。
  *
@@ -101,12 +101,13 @@ describe('TASK-19 档位阶梯（D1 / §5.1）', () => {
 })
 
 describe('TASK-19 档位矩阵 → 轴规格（D1 / I1–I4 / C2）', () => {
-    const MATRIX: { zoom: DayZoom; columnMinutes: 30 | 15 | 10; columns: number }[] = [
+    // R2：×4 = 5min / 288 列（C2 枚举 {30,15,5}，10min 已退役）
+    const MATRIX: { zoom: DayZoom; columnMinutes: 30 | 15 | 5; columns: number }[] = [
         { zoom: 1, columnMinutes: 30, columns: 48 },
         { zoom: 1.5, columnMinutes: 30, columns: 48 },
         { zoom: 2, columnMinutes: 15, columns: 96 },
         { zoom: 3, columnMinutes: 15, columns: 96 },
-        { zoom: 4, columnMinutes: 10, columns: 144 }
+        { zoom: 4, columnMinutes: 5, columns: 288 }
     ]
 
     for (const row of MATRIX) {
@@ -126,6 +127,12 @@ describe('TASK-19 档位矩阵 → 轴规格（D1 / I1–I4 / C2）', () => {
 
     it('矩阵覆盖全部档位且无遗漏（5 档）', () => {
         expect(MATRIX.map((row) => row.zoom)).toEqual(DAY_ZOOM_LEVELS)
+    })
+
+    it('DayAxisSpec.columnMinutes 枚举为 {30,15,5}（10min 已退役；类型层断言，C2/r2）', () => {
+        const spec: { columnMinutes: 30 | 15 | 5; columns: number } = dayAxisSpecOf(4)
+        expect(spec.columnMinutes).toBe(5)
+        expect(spec.columns).toBe(288)
     })
 })
 
@@ -157,6 +164,10 @@ describe('TASK-19 总宽公式（D3 / AC1 / AC6）', () => {
         // 高倍档 k×容器宽 ≥ 列数×20px ⇒ 取等（AC1 等式成立）
         expect(totalWidth(2, 1200, 96)).toBe(2400)
         expect(totalWidth(4, 1200, 144)).toBe(4800)
+    })
+
+    it('×4 档总宽含 calc(288 * 20px)（R2 / AC6）', () => {
+        expect(dayScrollWidthCss(4, 288)).toBe('max(calc(4 * 100%), calc(288 * 20px))')
     })
 
     it('dayScrollWidthCss 字符串含 k×100% 与 列数×20px 两个 max 分支', () => {

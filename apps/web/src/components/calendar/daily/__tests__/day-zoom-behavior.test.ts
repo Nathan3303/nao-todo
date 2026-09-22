@@ -169,7 +169,7 @@ describe('TASK-19 AC7 缩放不重拉（useCalendarTaskQuery 不重建 / list �
         dayZoom.value = 4
         await nextTick()
         await flushPromises()
-        expect(columnCount(w)).toBe(144)
+        expect(columnCount(w)).toBe(288)
         expect(hoisted.list).toHaveBeenCalledTimes(1)
     })
 })
