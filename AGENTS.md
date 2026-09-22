@@ -105,7 +105,7 @@ Docs are local at `node_modules/vite-plus/docs` or online at https://viteplus.de
 ### 命令纪律
 
 - 校验与构建：`vp install` → `vp check`（格式 + lint + 类型）→ `vp test`；`pnpm run guard:ddd`（领域隔离）；`pnpm run desktop:build`、`pnpm webapp build`
-- ⚠️ **`.agents/**` 是舰队资产，必须保持 `LF` + `roles.yaml` 用 2 空格嵌套**：本仓 `.editorconfig` 要求 `end_of_line = crlf`、YAML `indent_size = 4`，与 `nao-fleet.sh` 的 awk 解析器（`^---$` / `^  <role>:` / `^    <field>:`）**不可调和** —— 跑过一次 `vp check --fix` 或提交钩子后，`roles.yaml` 会被重排为 4/8 空格、`.agents/**` 会被转 CRLF，导致 `nao-fleet.sh check` 报「无法解析 / frontmatter 缺失」。**若发生：把 `.agents/**` 全部转回 LF、`roles.yaml` 缩进改回 2/4，再复跑 check。** 根治方案待定（解析器 CRLF/缩进容忍 或 把 `.agents/**` 加入 fmt 忽略）。
+- **`.agents/**` 是舰队资产，必须保持 `LF` + `roles.yaml` 嵌套缩进 2/4（角色 id 2 空格、字段 4 空格、禁 Tab）**：与 `nao-fleet.sh` 的 awk 解析器（`^---$` / `^  <role>:` / `^    <field>:`）兼容。**现状（2026-09-23 核实，原「危险警告」已失效，勿再据旧文报警）**：① **fmt 路径已关闭** —— `.agents/**` 在 `vite.config.ts` 的 `fmt.ignorePatterns` 内，**实测全仓 `vp check --fix` 前后 `.agents` 脏项恒为 0**、`roles.yaml` CR=0 且缩进 2/4 保持；② **守卫已有** —— `nao-fleet.sh check`（需 nao-skill ≥ **v0.6.1**）新增文本契约分组，校验 `.agents/**` EOL 全 LF（含 CR 即 fail 并列出文件，`.nao-obsolete/` 除外）+ `roles.yaml` 缩进 2/4 + 禁 Tab，失败 rc=1，且报告先于解析 die；③ **剩余唯一暴露面** —— 编辑器/IDE 按 `.editorconfig` 保存时可能把 `.agents/**` 转 CRLF，但**能被 `check` 发现**。**若真发生：把 `.agents/**` 转回 LF、`roles.yaml` 缩进改回 2/4，再复跑 `check`（应 exit 0）。** ⇒ **无需为避免 fmt 而局限 `--fix` 范围**（全仓 `--fix` 已安全）。
 - 提交纪律：**精确 pathspec**，禁 `git add -A`；**`.agents/**` 已纳入版本管理**（2026-09-22 用户决定）；`.codegraph/**`、`.pi/**` 由 `.gitignore` 排除，不提交
 - pre-commit 钩子 `vp staged` 会执行 `vp check --fix`：**以 `markdown` 为语言标记的代码围栏，其内部列表会被按 `.editorconfig` 的 `indent_size = 4` 重排**（曾静默改写 PRD 的冻结格式基准）。需原样保留缩进的示例，请用 `text` 作为围栏语言标记
 
