@@ -1,6 +1,6 @@
 # 2026-09-23 导出对话框多格式优化：JSON 格式 + HTML 账单单据 + 加载/错误态（TASK-22）
 
-- **状态**：PRD 定稿，待用户开工确认
+- **状态**：**已交付，待用户人眼终签**（技术验收 2026-09-23 全绿：AC 五覆盖 + M1–M5 变异 + 全仓 116 文件 / 1043 例 0 红 + `vp check` 0 错 + 双端 build + 移动端零改动；任务见 §10）
 - **关联**：`packages/presentation/task/components/task-details/`（`export-dialog.vue` / `use-export-task.ts` / `export-markdown.ts` / `footer/index.vue`）；`packages/shared/components/loading-error/`；`packages/shared/locales/`
 - **上游单**：`2026-09-21-task-export-editable-enriched.md`（TASK-13，已终签）→ `2026-09-20-task-export-markdown.md`（TASK-12，v1.7.7）
 - **澄清来源**：grill-me 第 1 层 Q1–Q3 + 第 2 层 Q4–Q7（用户 2026-09-23 全部答复）
@@ -243,7 +243,20 @@
 
 ## 11. 验收结果
 
-待交付后填写（AC 五覆盖核对 + 门禁复跑 + 用户人眼验收 HTML 视觉）。
+**结论：技术验收通过（2026-09-23），待用户人眼终签。** 由 qa **独立执行**（T97，报告 `docs/qa/2026-09-23-task-export-multi-format-acceptance.md`），PM 抽验核算（29 / 43 / `10-0` 三项逐字一致）。
+
+| 项                  | 结论                                                                                                                                                                                                    |
+| :------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| AC1 主路径          | PASS —— 点导出**立即开框**（取数未完成即已开）；默认 Markdown 可编辑；三格式项就位                                                                                                                      |
+| AC2 多格式 + 零重取 | PASS —— JSON 只读（§5.3 schema）/ HTML 只读（iframe srcdoc）/ 切格式**取数调用数不增加**（M5 判别力已证）/ JSON·HTML 下无「还原」                                                                       |
+| AC3 复制            | PASS —— Markdown=编辑后草稿 / JSON=JSON 文本 / HTML=完整文档源码（含 `<style>`、自包含无外链）                                                                                                          |
+| AC4 边界 + 安全     | PASS —— 空段省略（Markdown/HTML）与 `null`/`[]`（JSON）；描述换行 HTML/JSON 保留、Markdown 折叠；五字符转义（M4 变异转红）；5 层深度                                                                    |
+| AC5 负向 + 工程     | PASS —— 失败 ⇒ 框内 error + 「重试」+ 保留 toast + 不写剪贴板；D8/D12 四处 supersede 等强度；门禁全绿；移动端零改动                                                                                     |
+| **变异验证 M1–M5**  | PASS —— 全部按预期转红并还原（**M1 主变异 3 文件 3 类断言同时转红**）；公共不变量 HEAD 恒 `445e4ad8`、工作区干净                                                                                        |
+| Markdown 冻结基准   | PASS —— 源码级 `10/0` 全为 additive 可选字段；T95 后无再触碰；输出文本零变更                                                                                                                            |
+| 门禁                | `vp test` **116 文件 / 1043 例 0 红**；`vp check` **0 错**（1323 格式 / 1131 无 lint·type）；`guard:ddd` OK；`webapp build` + `desktop:build` exit 0；移动端 diff **0**                                 |
+| 附带缺陷            | **DEF-4**（日历 `daily-view.test.ts` fixture 日期时间炸弹，**与本单无因果**，qa 独立归因一致）→ 已作 T98 micro-task 修复（`5d2e51f1`），全仓由此转 0 红                                                 |
+| 遗留                | ① 人眼项（HTML 单据观感 / iframe 跨端一致 / 加载→内容不跳变 / 中英文案 / 长文滚动）**需人眼、勿默认可用**；② 本仓 UX Playbook 尚未实例化 ⇒ 四态按 UX Playbook 核对标 N/A（四态本身由组件/集成用例覆盖） |
 
 ## 12. 变更记录
 
