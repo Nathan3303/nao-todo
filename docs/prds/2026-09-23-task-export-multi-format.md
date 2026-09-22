@@ -1,6 +1,6 @@
 # 2026-09-23 导出对话框多格式优化：JSON 格式 + HTML 账单单据 + 加载/错误态（TASK-22）
 
-- **状态**：**已交付，待用户人眼终签**（技术验收 2026-09-23 全绿：AC 五覆盖 + M1–M5 变异 + 全仓 116 文件 / 1043 例 0 红 + `vp check` 0 错 + 双端 build + 移动端零改动；任务见 §10）
+- **状态**：**✅ 已终签归档（用户 2026-09-23 终签通过）**（技术验收 2026-09-23 全绿：AC 五覆盖 + M1–M5 变异 + 全仓 116 文件 / 1043 例 0 红 + `vp check` 0 错 + 双端 build + 移动端零改动；任务见 §10）
 - **关联**：`packages/presentation/task/components/task-details/`（`export-dialog.vue` / `use-export-task.ts` / `export-markdown.ts` / `footer/index.vue`）；`packages/shared/components/loading-error/`；`packages/shared/locales/`
 - **上游单**：`2026-09-21-task-export-editable-enriched.md`（TASK-13，已终签）→ `2026-09-20-task-export-markdown.md`（TASK-12，v1.7.7）
 - **澄清来源**：grill-me 第 1 层 Q1–Q3 + 第 2 层 Q4–Q7（用户 2026-09-23 全部答复）
