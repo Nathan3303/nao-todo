@@ -51,7 +51,7 @@ description: 前端研发交付核对清单（按需，交付前读取）
 - [ ] 新 UI 用既有原语/基础组件组装；暗色/hover/disabled 走令牌语义
 - [ ] `bash "$NAO_SKILLS/.agents/scripts/ui-tokens-check.sh" <repo>` 通过（若配了 CI 则自动拦截）
 
-## 交付检查清单（完整 9 项）
+## 交付检查清单（完整 11 项）
 
 - [ ] 规模评估（L1/L2/L3）未过度设计
 - [ ] Domain 零框架、充血；用例仅依赖端口；DI 红线全过

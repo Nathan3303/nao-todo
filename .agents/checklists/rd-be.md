@@ -22,7 +22,7 @@ description: 后端研发交付核对清单（按需，交付前读取）
 
 `XxxRepository`（接口）/ `GormXxxRepository`（实现）/ `XxxService`（应用）/ `XxxHandler`（接口）/ `ErrXxx`（哨兵）/ `NewXxx`（工厂）。
 
-## 交付检查清单（完整 9 项）
+## 交付检查清单（完整 11 项）
 
 - [ ] 业务本质已评估（CRUD 走脚本 / 复杂规则选 L1/L2/L3），未过度设计
 - [ ] `internal/domain/` 零外部依赖，实体方法承载业务规则
