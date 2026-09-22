@@ -72,6 +72,8 @@
 - **「红基线提交」显式例外 —— ✅ 已决定（2026-09-23，非待办）**：本仓「用例先行」会产生**红基线**（T94 `60c96a29`：新例 51 中 48 例因 T95/T96 契约未实现而红，含 3 个 suite 因模块缺失未收集）。而 pre-commit 钩子（`vp staged` → `vp check --fix`）的类型检查是**全仓**的 ⇒ 红基线**结构性无法过钩子**。**PM 裁定 = 接受红基线入库，不改写历史**，理由：① `reset --soft` 回退**解决不了问题**（8 个跨角色测试文件留在工作区，rd-fe 的 T95 提交同样被阻断 ⇒ 只是把 `--no-verify` 从 qa 挪到 rd-fe，还丢掉证据）；② **无 CI 门**（`.github/workflows` 仅 `release.yaml`）+ 本批**未推送** ⇒ 无自动化影响；③ 为「逐提交 green」而改写历史，正是本仓**有事故记录**的操作（TASK-20 HEAD 锁、T90-B 教训），为本地未推送的红基线引入改写风险不划算。**三项约束**：**C1** `--no-verify` 仅授权「红基线/红窗口」提交且 message 必须注明原因（非红窗口禁用）；**C2** 每次 `--no-verify` 前必须**单独跑格式化**（钩子同时承担 `vp check --fix`）；**C3** 红窗口必须在本批内闭合——T95+T96 完成后最终 HEAD 必须 `vp check` exit 0（T97 复核），若仍红则停工上报、不得带红交付。**交付验收口径据此修订为**：「最终 HEAD green」+「**自首个实现提交起**逐提交 green」，**`60c96a29` 红基线白名单化**。（此条为对 T90-C 教训「同一契约变更的实现与其用例必须同提交」的**定向例外**，仅适用于「用例先行覆盖多任务」场景。）
 - **「是否引入 Playwright」= 不需要（2026-09-22 核查结论）**：仓库已有 `scripts/electron-smoke/`（CDP 驱动桌面端实机、Node 内置能力、零依赖），README 明写覆盖「真实布局/弹层堆叠/**真实命中测试**」—— 需要真实浏览器的检查（含 TASK-16 **D5** 曾搁置的几何回归）应**扩展该工具**，而非新增依赖。TASK-16 D5「暂不引入 Playwright」据此维持。
 - **PM 不再重复跑终局门禁 —— ✅ 用户 2026-09-23 指示（工艺变更）**：worker（qa / rd-fe）**必须自己跑全量门禁并回执精确数字**（全仓 `vp test` 的文件数/例数/红数、`vp check` 错误数、`guard:ddd`、`webapp build` + `desktop:build`、移动端 diff）；**PM 验收改为「核对回执数字 + 读变更文件核对 AC + 异常时才复跑/抽查」**，不再默认亲跑。**理由**：PM 亲跑与 worker 重复、成本高。**⚠️ 对冲（必须同时成立，否则丢覆盖）**：PM 复跑的增量价值来自**跑的范围比 worker 宽**——**DEF-4 就是 PM 跑全仓才发现**（rd-fe 当时只跑子目录；qa 也只跑导出目录）⇒ 故**「全仓」必须写进 worker 的验收线**（T96 起已如此要求），不得把「省掉 PM 复跑」误等价为「省掉全量门禁」。**最后一次 PM 亲跑**：2026-09-23 TASK-22 终局门禁（全绿，已入 §一）。
+- **该工艺已回流舰队资产 —— ✅ 2026-09-23 完成（nao-skill v0.6.2 / commit `33e8e9c`）**：用户指示后 PM 发出 `[FLEET-CHG]`（含 7 个落点 + **对冲条款必须同时落地**：worker 须自跑**全范围**门禁，跑子目录不算验收），nao-skill-dev 交付 11 文件（`.agents` 10 + `package.json`）。**PM 独立核验**：变更面与声明一致；**计数校正准确**（`rd-fe` 11/11、`rd-be` 11/11、`qa` 13/13、`pm` 18+21=39=checkbox 实数 ⇒ 修的是**既有漂移**）⇒ 接受。**落点实文核验**（同步后 `nao-todo` 副本）：PM 卡 L78/L79、三张 worker 卡 `未跑**全范围门禁**…` 红线、`intercom-protocol` L76「回执测试字段 = 全量门禁精确数字（硬性）…跑子目录不算验收」、`output-format` 模板 L42/L48、`pm.md` 正向核对项 + 反向红线项 —— **逐项到位**。**#7（`skills/codegraph.md`）被明确拒绍**，理由：该技能是**角色无关**的定位工具，写 PM 验收纪律会角色错位，语义已由 PM 卡 + `pm.md` 承载 ⇒ **PM 接受**。**已同步入本仓**：`复制 0 / 覆盖 10 / 相同跳过 18`、`.nao-version` 0.6.1→**0.6.2**，提交 `34633482`；不变量全过（`AGENTS.md` 与 `roles.yaml` md5 不变、`.agents` CR 文件数 0、`roles.yaml` 5 角色行@2 / 15 字段行@4、`check` exit 0 含新文本契约组）。**角色卡版本**：pm **v10** / rd-fe **v8** / rd-be **v8** / qa **v8**。**⚠️ 生效条件**：角色卡经 `--append-system-prompt` 启动期注入、**不热更** ⇒ 常驻会话仍按旧版行为，**下次派单前需 `ensure --force <role>` 重拉**（或要求 worker 重读 `@.agents/prompts/<role>.md`）。
+- **舰队待办（待后续一并处理）**：`architecture-designer.md`（v7）§十三 写「8 项」而其清单实数 red 9 / del 10 —— **同类漂移**，nao-skill-dev 本轮未动（需触发 arch 卡 v7→v8 + 广播），留待下轮顺手或专门一轮。
 
 ## 五、挂账（已知可接受，无需动作）
 
@@ -79,7 +81,18 @@
 - **PRD 遗留**：TASK-16 §13（死代码 `.cal-aside-toggle`/`.cal-nav-btn`、Playwright 几何回归暂不引入）；TASK-12（`MAX_EXPORT_DEPTH = 5`，超 5 层不导出）；TASK-19 C10③ `replace` 代价（D2 已拍板的用户可见代价）；TASK-13（编辑内容不持久化、「记住上次编辑」需另立单）。
 - **TASK-19/19B/20 的 jsdom 不可断言项**：已全部纳入对应验收清单并**由用户人眼验收通过**（sticky 实贴、`clip-path` 副作用、标签居中像素、遮罩显示条件、pan 手感、续接段两侧手柄、×4 帧率、命中抽检）。
 
-## 七、发版 v1.8.0 —— ✅ **已发布并同步**（2026-09-22）
+## 七、发版 v1.9.0 —— ✅ **已发布并同步**（2026-09-23）
+
+- **结果**：发版提交 **`eaad8b2d`**（6 文件：`CHANGELOG.md` + 5 个 `package.json`）+ **注解 tag `v1.9.0`**（tag 对象 `f22f460f` → peeled `eaad8b2d`）。
+- **远端**：`origin/feat/ocdev` = **`eaad8b2d`**（本地领先 **0**）；远端 tag `v1.9.0` peeled = `eaad8b2d` ✅（`git ls-remote --tags origin v1.9.0` 核验）。
+- **版本**：root / webapp / desktopapp → **1.9.0**（发布协同）；`presentation` 0.5.0 → **0.6.0**（新增公开渲染面/组件契约）；`shared` 1.3.1 → **1.3.2**（i18n 键 additive）；`domain-task` 1.3.0 / `infrastructure` 0.5.0 / `presentation-identity` 1.2.0 / `presentation-react` 0.1.0 **不动**（零改动；qa 独立复核同意口径）。
+- **范围**：web + desktop（移动端零改动）。
+- **质量门槛（T99 由 qa 跑全量并回执精确数字；PM 未重复跑 —— 新工艺首次生效）**：`vp check` **exit 0**（1323 格式 / 1131 文件 0 lint·type）；全仓 `vp test` **116 文件 / 1043 例 / 0 红**；`guard:ddd` exit 0；`webapp build` exit 0；`desktop:build` exit 0；移动端 diff 0。
+- **含修复**：DEF-4（`5d2e51f1`，日历测试日期时间炸弹）。
+- **发版后提交（未 push）**：`34633482`（`.agents` 同步 nao-skill v0.6.2，见 §四）+ 本记账提交。
+- **人眼项**：T97 报告 §8 的 5 项（HTML 单据观感 / iframe 跨端一致 / 加载→内容不跳变 / 中英文案 / 长文滚动）→ **用户 2026-09-23 终签未上报异常 ⇒ 按 TASK-19/20 先例一并视为通过**（仍不得视为自动化已验证）。
+
+### v1.8.0（上一版，2026-09-22）
 
 - **结果**：发布提交 **`fb758cf4`**（7 文件：`CHANGELOG.md` + 6 个 `package.json`）+ **注解 tag `v1.8.0`**（tag 对象 `8c124b3c` → peeled `fb758cf4`）。
 - **远端**：发布时 `origin/feat/ocdev` = `fb758cf4`；**发版后修复提交** `abc92acc`（`AGENTS.md` EOL 归一，见 §四/§六）已 push ⇒ 现 `origin/feat/ocdev` = **`abc92acc`**（**tag `v1.8.0` 仍指向 `fb758cf4`**，未被移动）。**PM 独立核对**：本地领先 **0**、tag peeled SHA 一致、发布提交 7 文件、无夹带。
