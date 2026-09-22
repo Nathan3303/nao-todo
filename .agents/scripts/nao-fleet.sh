@@ -568,7 +568,7 @@ usage() {
 }
 
 # ---- 入口 ----
-CMD=""; FORCE=false; STRICT=false; MODEL=""; TARGETS=()
+CMD=""; FORCE=false; STRICT=false; MODEL=""; TASK=""; TARGETS=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
     check)  CMD="check";  shift ;;
