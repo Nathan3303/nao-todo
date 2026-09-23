@@ -3,6 +3,7 @@ import { scopeManager } from '@/commands/instance'
 import { env } from '@/env'
 import { useKeyboardShortcuts } from '@/hooks'
 import router from '@/router'
+import { startWebDataPlane } from '@/data-plane'
 import { useLocaleStore, useThemeStore, useUserStore } from '@nao-todo/presentation-identity'
 import { initRequester, t, useResponsiveFlag } from '@nao-todo/shared'
 import { provide } from 'vue'
@@ -32,6 +33,15 @@ const useApp = () => {
         scopeManager.enter('global')
         registerAppCommands()
         useKeyboardShortcuts()
+        // C-66 / AC8：web 数据面接线 —— 每次进入应用（`bootstrapLocalData` 之后）后台启动一次
+        // `syncService`（`router.afterEach` 覆盖登录/切换账号；`isReady` 覆盖首次进入）。
+        // 不在 `beforeEnter` 内调用：那里 requester 未必已初始化（`initRequester` 在 App setup 同步执行）。
+        router.afterEach(() => {
+            startWebDataPlane()
+        })
+        void router.isReady().then(() => {
+            startWebDataPlane()
+        })
     })()
 
     // @computed 应用侧边栏链接数组
