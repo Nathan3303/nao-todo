@@ -1,7 +1,10 @@
 /**
- * 移动端 import 守卫（禁 persistence-local / persistence-sync）
- * @description 静态断言 `packages/presentation-react/**` 与 `apps/mobile/**` 的 import 说明符
- * **不含** `persistence-local` / `persistence-sync`（含深路径 / 层子路径 / 相对路径等一切形式）。
+ * 移动端 import 守卫（禁 persistence-local / persistence-sync / dexie / infrastructure 根桶）
+ * @description 静态断言 `packages/presentation-react/**` 与 `apps/mobile/**` 的 import 说明符满足：
+ *  1. **不含** `persistence-local` / `persistence-sync`（含深路径 / 层子路径 / 相对路径等一切形式）；
+ *  2. **不直接引用** `dexie`（含 `dexie/*` 子路径）；
+ *  3. **不引用** `@nao-todo/infrastructure` 根桶；**允许** `@nao-todo/infrastructure/src/<layer>...`
+ *     深路径（根桶会把**全部层**含 Dexie 承载层拉进移动端）。
  *
  * 背景（ADR `docs/adr/2026-09-23-barrel-import-surface-narrowing.md` §5.3 / §7-D5）：
  * `persistence-local`（Dexie + 26 个本地仓储模块）一旦被移动端（ReactLynx / `apps/mobile`）
@@ -22,8 +25,24 @@ import process from 'node:process'
 const ROOTS = ['packages/presentation-react', 'apps/mobile']
 const SOURCE_EXTS = ['.ts', '.tsx', '.vue', '.mjs', '.js', '.mts', '.cts']
 const IGNORE_DIRS = new Set(['node_modules', 'dist', 'out', 'build', 'coverage', '.git', '.vite-hooks'])
-/** 移动端红线：这些模块（Dexie / 本地仓储）不得被移动端可达代码引用 */
+/** 移动端红线：这些模块（Dexie / 本地仓储）不得被移动端可达代码引用（按说明符子串判定） */
 const BANNED = ['persistence-local', 'persistence-sync']
+/** 移动端红线：禁直接引用 dexie（含子路径）/ 禁 infrastructure 根桶与非 `src/` 深路径 */
+const BANNED_SPECIFIERS = [
+    {
+        label: 'dexie（移动端禁直接引用）',
+        test: (spec) => spec === 'dexie' || spec.startsWith('dexie/')
+    },
+    {
+        label: '@nao-todo/infrastructure 根桶',
+        test: (spec) => spec === '@nao-todo/infrastructure'
+    },
+    {
+        label: '@nao-todo/infrastructure 非 src/ 深路径（只允许 src/<layer>）',
+        test: (spec) =>
+            spec.startsWith('@nao-todo/infrastructure/') && !spec.startsWith('@nao-todo/infrastructure/src/')
+    }
+]
 /** `from '<spec>'` / `import '<spec>'` / `import('<spec>')` / `require('<spec>')` */
 const SPECIFIER_RE = /(?:\bfrom\s*|\bimport\s*\(\s*|\brequire\s*\(\s*|\bimport\s+)(['"])([^'"]+)\1/g
 
@@ -86,9 +105,11 @@ const walk = (dir) => {
         for (const m of text.matchAll(SPECIFIER_RE)) {
             const spec = m[2]
             const hit = BANNED.find((b) => spec.includes(b))
-            if (hit) {
+            const rule = BANNED_SPECIFIERS.find((r) => r.test(spec))
+            const label = hit ?? rule?.label
+            if (label) {
                 const line = text.slice(0, m.index).split('\n').length
-                offenders.push(`${p}:${line}: 移动端引用 ${hit} → '${spec}'`)
+                offenders.push(`${p}:${line}: 移动端引用 ${label} → '${spec}'`)
             }
         }
     }
@@ -104,10 +125,11 @@ for (const root of ROOTS) {
 if (scanned === 0) offenders.push(`扫描到 0 个源文件（守卫会空转，拒绝）`)
 
 if (offenders.length > 0) {
-    console.error('[guard:mobile-imports] 移动端红线违反（禁 persistence-local / persistence-sync）：')
+    console.error('[guard:mobile-imports] 移动端红线违反（禁 persistence-local / persistence-sync / dexie / infrastructure 根桶）：')
     offenders.forEach((line) => console.error('  - ' + line))
     process.exit(1)
 }
 console.log(
-    `[guard:mobile-imports] OK - ${ROOTS.join(' / ')} 共 ${scanned} 个源文件，未引用 ${BANNED.join(' / ')}`
+    `[guard:mobile-imports] OK - ${ROOTS.join(' / ')} 共 ${scanned} 个源文件，未引用 ` +
+        `${[...BANNED, 'dexie', '@nao-todo/infrastructure(根桶)'].join(' / ')}`
 )
