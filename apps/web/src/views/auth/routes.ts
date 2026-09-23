@@ -1,7 +1,13 @@
 import type { RouteRecordRaw } from 'vue-router'
 import { useUserStore } from '@nao-todo/presentation-identity'
 import { USER_JWT_LOCALSTORAGE_KEY } from '@nao-todo/domain-identity'
-import { localSession, resolveUserIdFromStoredJwt, syncService } from '@nao-todo/infrastructure'
+import {
+    localSession,
+    logStructured,
+    resolveUserIdFromStoredJwt,
+    syncService,
+    STRUCTURED_LOG_EVENTS
+} from '@nao-todo/infrastructure'
 import { isOfflineEntryGranted } from './offline-entry'
 import { evaluateOfflinePrerequisites, hasLocalMirror } from './offline-prerequisites'
 import { bootstrapLocalData } from './bootstrap-local-data'
@@ -31,6 +37,30 @@ const routes: RouteRecordRaw = {
     ]
 }
 
+/**
+ * AC18：web 启动路径结构化日志（禁 PII —— 只记布尔/枚举，不记 userId / token / 正文）
+ * @description 包住 `bootstrapLocalData()`（web 无 `AppRoot` ⇒ 守卫即启动路径）；
+ *              异常**继续上抛**（日志不吞错）。`bootstrapLocalData` 本体保持纯函数、
+ *              不引 logger ⇒ desktop `AppRoot` 的既有调用/测试不受影响。
+ */
+const bootstrapWithLog = async (userId?: string | null): Promise<void> => {
+    const hasExplicitUserId = typeof userId === 'string' && userId.length > 0
+    logStructured('info', STRUCTURED_LOG_EVENTS.LIFECYCLE_BOOTSTRAP_STARTED, {
+        hasExplicitUserId
+    })
+    try {
+        await bootstrapLocalData(userId)
+    } catch (err) {
+        logStructured('error', STRUCTURED_LOG_EVENTS.LIFECYCLE_BOOTSTRAP_FAILED, {
+            errorName: err instanceof Error ? err.name : typeof err
+        })
+        throw err
+    }
+    logStructured('info', STRUCTURED_LOG_EVENTS.LIFECYCLE_BOOTSTRAP_COMPLETED, {
+        hasExplicitUserId
+    })
+}
+
 // @typedef AuthViewRoutesBeforeEnter 身份验证视图路由守卫
 const beforeEnter = async () => {
     // SHELL-03 附录 B-2 / C-62：离线进入放行（**全为本地事实**；任一不满足 ⇒ 落回下方既有三分支）
@@ -49,7 +79,7 @@ const beforeEnter = async () => {
         })
         if (prerequisites.ok) {
             // C-61②：门 B 通过、挂载 App 前的启动收敛点（必须早于 syncService.start()）
-            await bootstrapLocalData(jwtUserId)
+            await bootstrapWithLog(jwtUserId)
             // T108 补充 / AC8 首帧：从 `meta` 恢复镜像新鲜度（T107b 已持久化）⇒ 离线冷启动
             // 首帧即「数据截至 X」，不先闪「尚未同步完成」。必须紧跟 `bootstrapLocalData()`
             // （后者重建 `localSession`，`restoreMirrorStatus` 依赖当前 userId）。
@@ -67,7 +97,7 @@ const beforeEnter = async () => {
     // 若有 JWT 令牌且已登录，放行
     else if (jwt !== null && userStore.getIsAuthenticated()) {
         // C-61②：web 无 AppRoot ⇒ 门 B 通过、挂载 App 前的等价收敛点
-        await bootstrapLocalData()
+        await bootstrapWithLog()
         // T108 补充 / AC8 首帧：同上，先恢复镜像新鲜度再放行
         await syncService.restoreMirrorStatus()
         return true

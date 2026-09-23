@@ -4,6 +4,7 @@
  * @description 三态**互斥穷尽**：在线 ⇒「已更新」；回退镜像 ⇒「离线模式 · 数据截至 {时间}」+「可能不是最新」；
  *              `mirrorPulledAt` 为空/非法 ⇒「尚未同步完成，数据可能不完整」+ 联网引导（AC9：不得呈现为数据丢失）。
  *              覆盖度两条**独立**渲染（未扫完瞬态 / 触顶常驻），不合并成一条。
+ *              触顶 N 取镜像中**实际已加载**行数（AC13b / PM 裁定：不用固定上限，两种截断原因下都真实）。
  *              时间一律经 `formatMirrorPulledAt`（非法值落 ③）⇒ **不会**出现 `null` / `Invalid Date` / 1970。
  * @see docs/adr/2026-09-23-web-offline-local-first-and-security-posture.md（C-59 / C-60）
  */
@@ -15,18 +16,14 @@ import {
     resolveFreshness
 } from '@nao-todo/presentation/offline'
 import { useMirrorStatus } from './use-mirror-status'
+import { useMirrorLoadedCount } from './use-mirror-loaded-count'
 
 defineOptions({ name: 'OfflineStatus' })
 
-const props = withDefaults(
-    defineProps<{
-        /** 触顶上限 N（引擎当前未暴露 ⇒ 缺省时用通用文案，不编造数字） */
-        truncatedLimit?: number
-    }>(),
-    { truncatedLimit: 0 }
-)
-
 const { isOffline, mirrorPulledAt, mirrorTruncated, syncing } = useMirrorStatus()
+
+/** 触顶文案 N：镜像中实际已加载行数（0 ⇒ 用通用文案，不编造数字） */
+const loadedCount = useMirrorLoadedCount()
 
 const freshness = computed(() =>
     resolveFreshness({
@@ -80,8 +77,8 @@ const coverage = computed(() =>
         <!-- 覆盖度：触顶（常驻，独立于上一条） -->
         <nue-text v-if="coverage.truncated" size="xs" color="var(--nue-warning-color-60)">
             {{
-                props.truncatedLimit > 0
-                    ? t('offline.coverage.truncated', { limit: props.truncatedLimit })
+                loadedCount > 0
+                    ? t('offline.coverage.truncated', { count: loadedCount })
                     : t('offline.coverage.truncatedGeneric')
             }}
         </nue-text>

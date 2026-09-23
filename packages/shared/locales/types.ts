@@ -85,6 +85,7 @@ export interface LocaleMessages {
     'common.deleted': string
     'common.unknown': string
     'common.signOut': string
+    'common.sessionRequired': string
     'common.filter': string
     'common.uploadFailed': string
     'common.uploadSuccess': string

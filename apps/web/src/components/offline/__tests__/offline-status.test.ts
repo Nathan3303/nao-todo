@@ -15,7 +15,8 @@ const mocks = vi.hoisted(() => ({
     isOffline: undefined as unknown,
     mirrorPulledAt: undefined as unknown,
     mirrorTruncated: undefined as unknown,
-    syncing: undefined as unknown
+    syncing: undefined as unknown,
+    loadedCount: undefined as unknown
 }))
 
 vi.mock('../use-mirror-status', async () => {
@@ -38,10 +39,18 @@ vi.mock('../use-mirror-status', async () => {
     }
 })
 
+vi.mock('../use-mirror-loaded-count', async () => {
+    const { ref } = await import('vue')
+    const loadedCount = ref(0)
+    mocks.loadedCount = loadedCount
+    return { useMirrorLoadedCount: () => loadedCount }
+})
+
 const offline = (): Ref<boolean> => mocks.isOffline as Ref<boolean>
 const pulledAt = (): Ref<string | null> => mocks.mirrorPulledAt as Ref<string | null>
 const truncated = (): Ref<boolean> => mocks.mirrorTruncated as Ref<boolean>
 const syncing = (): Ref<boolean> => mocks.syncing as Ref<boolean>
+const loadedCount = (): Ref<number> => mocks.loadedCount as Ref<number>
 
 let wrapper: VueWrapper | null = null
 
@@ -59,6 +68,7 @@ beforeEach(() => {
     pulledAt().value = null
     truncated().value = false
     syncing().value = false
+    loadedCount().value = 0
 })
 
 afterEach(() => {
@@ -122,15 +132,24 @@ describe('OfflineStatus - C-60 文案三分', () => {
         expect(t.indexOf('正在加载更多…')).not.toBe(t.indexOf('同步上限'))
     })
 
-    it('触顶且提供上限 N ⇒ 参数化文案「任务超过 N 条，仅显示前 N 条」', async () => {
+    it('触顶且镜像已有实际加载数 ⇒「已加载 N 条，仍有更多未加载」（不编造上限）', async () => {
         offline().value = true
         truncated().value = true
-        wrapper = mount(OfflineStatus, {
-            props: { truncatedLimit: 200 },
-            global: { components: { 'nue-text': NueText } }
-        })
-        await wrapper.vm.$nextTick()
+        loadedCount().value = 200
+        mountStatus()
+        await wrapper!.vm.$nextTick()
 
-        expect(text()).toContain('任务超过 200 条，仅显示前 200 条')
+        expect(text()).toContain('已加载 200 条，仍有更多未加载')
+    })
+
+    it('触顶但取不到实际加载数（0）⇒ 退回通用文案', async () => {
+        offline().value = true
+        truncated().value = true
+        loadedCount().value = 0
+        mountStatus()
+        await wrapper!.vm.$nextTick()
+
+        expect(text()).toContain('同步上限')
+        expect(text()).not.toContain('已加载 0 条')
     })
 })

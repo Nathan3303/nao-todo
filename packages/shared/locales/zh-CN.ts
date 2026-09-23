@@ -63,7 +63,7 @@ const zhCN: LocaleMessages = {
     'offline.freshness.incomplete': '尚未同步完成，数据可能不完整',
     'offline.freshness.incompleteHint': '请连接网络后重试',
     'offline.coverage.loadingMore': '正在加载更多…',
-    'offline.coverage.truncated': '任务超过 {limit} 条，仅显示前 {limit} 条',
+    'offline.coverage.truncated': '已加载 {count} 条，仍有更多未加载',
     'offline.coverage.truncatedGeneric': '任务数量超过同步上限，仅显示部分数据',
 
     // Common
@@ -88,6 +88,7 @@ const zhCN: LocaleMessages = {
     'common.deleted': '已删除',
     'common.unknown': '未知',
     'common.signOut': '退出登录',
+    'common.sessionRequired': '登录状态已失效，请重新登录后再操作',
     'common.filter': '筛选',
     'common.uploadFailed': '上传失败',
     'common.uploadSuccess': '上传成功',

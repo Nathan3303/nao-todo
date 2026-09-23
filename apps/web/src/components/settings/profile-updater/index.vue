@@ -19,6 +19,7 @@ import {
 } from '@nao-todo/infrastructure'
 import { revokeOfflineEntry } from '@/views/auth/offline-entry'
 import { wipeLocalDataOnSignOut } from '@/views/auth/sign-out-wipe'
+import { broadcastSignOut } from '@/views/auth/sign-out-broadcast'
 import { safeReplace } from '@/safe-navigation'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { storeToRefs } from 'pinia'
@@ -59,6 +60,8 @@ const handleSignOut = async () => {
     userStore.clearAuthData()
     localSession.clear()
     cryptoService.lock()
+    // AC16b：本标签登出已完成（清库已过 C-54 护栏 + 清认证）⇒ 通知其它标签清 store + 跳登录页
+    if (userId) broadcastSignOut(userId)
     // 远程登出尽力而为：离线/网络失败不阻断、不弹错误封锁（与 password-updater 语义对齐）
     try {
         await authUseCase.signOut(token)

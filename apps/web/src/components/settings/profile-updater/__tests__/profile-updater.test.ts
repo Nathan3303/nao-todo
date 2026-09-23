@@ -34,7 +34,12 @@ const mocks = vi.hoisted(() => ({
     clearSession: vi.fn(),
     lock: vi.fn(),
     wipeUserData: vi.fn(async () => undefined),
+    broadcastSignOut: vi.fn(),
     cachedNickname: '张三' as string | null
+}))
+
+vi.mock('@/views/auth/sign-out-broadcast', () => ({
+    broadcastSignOut: mocks.broadcastSignOut
 }))
 
 vi.mock('nue-ui', async (importOriginal) => {
@@ -147,6 +152,7 @@ describe('G12 - 离线可退出登录', () => {
         expect(mocks.clearSession).toHaveBeenCalled()
         expect(mocks.lock).toHaveBeenCalled()
         expect(mocks.wipeUserData).toHaveBeenCalledWith('u-1')
+        expect(mocks.broadcastSignOut).toHaveBeenCalledWith('u-1')
         expect(mocks.replace).toHaveBeenCalledWith('/auth/signin')
     })
 
@@ -160,6 +166,8 @@ describe('G12 - 离线可退出登录', () => {
 
         expect(isOfflineEntryGranted()).toBe(true)
         expect(mocks.replace).not.toHaveBeenCalled()
+        // C-54：护栏取消 ⇒ 不清库、不广播（广播不绕过护栏）
+        expect(mocks.broadcastSignOut).not.toHaveBeenCalled()
     })
 })
 

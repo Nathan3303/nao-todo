@@ -22,7 +22,8 @@ const mocks = vi.hoisted(() => ({
     /** T108 补充：镜像新鲜度从 `meta` 恢复（AC8 首帧） */
     restoreMirrorStatus: vi.fn(async () => undefined),
     /** 本地镜像存在（探测替身：任一表 count > 0） */
-    hasLocalMirror: true
+    hasLocalMirror: true,
+    logStructured: vi.fn()
 }))
 
 vi.mock('@nao-todo/infrastructure', () => {
@@ -43,7 +44,13 @@ vi.mock('@nao-todo/infrastructure', () => {
         },
         syncService: { restoreMirrorStatus: mocks.restoreMirrorStatus },
         localDatabase: { syncCursor: mirrorTable, table: () => mirrorTable },
-        BUSINESS_TABLES: ['projects', 'tasks']
+        BUSINESS_TABLES: ['projects', 'tasks'],
+        logStructured: mocks.logStructured,
+        STRUCTURED_LOG_EVENTS: {
+            LIFECYCLE_BOOTSTRAP_STARTED: 'lifecycle.bootstrap.started',
+            LIFECYCLE_BOOTSTRAP_COMPLETED: 'lifecycle.bootstrap.completed',
+            LIFECYCLE_BOOTSTRAP_FAILED: 'lifecycle.bootstrap.failed'
+        }
     }
 })
 
@@ -63,6 +70,7 @@ describe('auth beforeEnter - C-62 离线进入判据', () => {
         mocks.getCurrentUserId.mockReturnValue('u-1')
         mocks.hasLocalMirror = true
         mocks.restoreMirrorStatus.mockClear()
+        mocks.logStructured.mockClear()
     })
 
     it('C-62 正向（守卫级）：授权 + JWT 可解析 + 会话一致 + 镜像存在 ⇒ 放行 index（门退役后仍可达）', async () => {
@@ -74,6 +82,20 @@ describe('auth beforeEnter - C-62 离线进入判据', () => {
         grantOfflineEntry()
         await beforeEnter()
         expect(mocks.checkAndCleanExpired).toHaveBeenCalledWith('u-1')
+    })
+
+    it('AC18：启动路径落结构化日志（started → completed；禁 PII）', async () => {
+        grantOfflineEntry()
+        await beforeEnter()
+        expect(mocks.logStructured).toHaveBeenCalledWith('info', 'lifecycle.bootstrap.started', {
+            hasExplicitUserId: true
+        })
+        expect(mocks.logStructured).toHaveBeenCalledWith('info', 'lifecycle.bootstrap.completed', {
+            hasExplicitUserId: true
+        })
+        const serialized = JSON.stringify(mocks.logStructured.mock.calls)
+        expect(serialized).not.toContain('u-1')
+        expect(serialized.toLowerCase()).not.toContain('token')
     })
 
     it('T108/AC8 首帧：离线门放行时从 meta 恢复镜像新鲜度，且**晚于** checkAndCleanExpired（无首帧闪烁）', async () => {

@@ -64,7 +64,7 @@ const enUS: LocaleMessages = {
     'offline.freshness.incomplete': 'Sync not finished; data may be incomplete',
     'offline.freshness.incompleteHint': 'Please connect to the network and retry',
     'offline.coverage.loadingMore': 'Loading more…',
-    'offline.coverage.truncated': 'More than {limit} tasks; showing the first {limit}',
+    'offline.coverage.truncated': 'Loaded {count}, more not yet loaded',
     'offline.coverage.truncatedGeneric': 'More tasks than the sync limit; showing partial data',
 
     // Common
@@ -89,6 +89,7 @@ const enUS: LocaleMessages = {
     'common.deleted': 'Deleted',
     'common.unknown': 'Unknown',
     'common.signOut': 'Sign Out',
+    'common.sessionRequired': 'Your session has expired. Please sign in again, then retry.',
     'common.filter': 'Filter',
     'common.uploadFailed': 'Upload failed',
     'common.uploadSuccess': 'Upload successful',
