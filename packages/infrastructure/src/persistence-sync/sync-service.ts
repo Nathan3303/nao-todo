@@ -253,13 +253,19 @@ const PULL_LIMIT = 200
  * @description 墓碑计入窗口（`.Unscoped()`）⇒ 续拉轮数可能远大于存活行数，必须有界。
  */
 const PULL_MAX_ROUNDS = 10
-/** 续拉时间预算（DEF-6 护栏 A）：总预算 3s，与轮数上界**先到者**生效 */
-const PULL_TIME_BUDGET_MS = 3000
+/**
+ * 续拉时间预算（DEF-6 护栏 A / arch A5）：总预算 5s，与轮数上界**先到者**生效
+ * @description wall-clock 语义：度量「用户可见启动阻塞时延」（非纯网络耗时）⇒ 慢本地处理也计入。
+ *              ⚠️ **生产调用点必须保持默认值**（禁按设备动态放宽，否则「启动阻塞上界」失效）；
+ *              `SyncServiceOptions` 的注入面**仅限测试**。
+ */
+const PULL_TIME_BUDGET_MS = 5000
 
 /**
- * 续拉上界覆盖（DEF-6 护栏 A；仅供测试注入，缺省取模块常量）
- * @description 测试环境（fake-indexeddb + WebCrypto）单行落库 ~10ms，与真实浏览器差异大 ⇒
+ * 续拉上界覆盖（DEF-6 护栏 A）
+ * @description **仅测试注入**：测试环境（fake-indexeddb + WebCrypto）单行落库 ~10ms，与真实浏览器差异大 ⇒
  *              完成路径测试注入更宽预算、截断路径测试注入更小上界，使判定确定可复现。
+ *              ⚠️ **生产代码不得传该参数**（必须走默认 `PULL_MAX_ROUNDS` / `PULL_TIME_BUDGET_MS`）。
  */
 export interface SyncServiceOptions {
     pullMaxRounds?: number

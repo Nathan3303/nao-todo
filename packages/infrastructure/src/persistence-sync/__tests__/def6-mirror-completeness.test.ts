@@ -488,3 +488,38 @@ describe('DEF-6 护栏 B：上界截断不得谎报完整度（C-60 文案③）
         expect(state.mirrorTruncated).toBe(true)
     }, 30_000)
 })
+
+describe('DEF-6 / AC13b 门后补齐：截断后补拉路径最终拉满（同次会话）', { timeout: 30_000 }, () => {
+    beforeEach(async () => {
+        await setup()
+    })
+
+    it('首启触顶不谎报 ⇒ pullIncomplete→resumeBackfill 最终拉满并推进 mirrorPulledAt', async () => {
+        const total = 500
+        const rows = buildRemote(total)
+        const newestId = `t-${String(total - 1).padStart(4, '0')}`
+        const { requester } = makeRequester(rows)
+        // 注入小轮数上界（仅测试）：首启必被截断
+        const service = newService(requester, { pullMaxRounds: 2 })
+        const before = syncStatus.get().mirrorPulledAt
+
+        await service.start()
+
+        // 首启被上界截断：镜像未拉满 ⇒ 不得谎报完整度
+        const truncatedCount = await localDatabase.tasks.count()
+        expect(truncatedCount).toBeGreaterThan(0)
+        expect(truncatedCount).toBeLessThan(total)
+        expect(syncStatus.get().mirrorTruncated).toBe(true)
+        expect(syncStatus.get().mirrorPulledAt).toBe(before)
+
+        // 门后补拉路径：pullIncomplete ⇒ resumeBackfill（先拉后推）⇒ 最终拉满
+        const recovered = await service.resumeBackfill()
+        expect(recovered.ok).toBe(true)
+        expect(await localDatabase.tasks.count()).toBe(total)
+        expect(await localDatabase.tasks.get(newestId)).toBeDefined()
+        const state = syncStatus.get()
+        expect(state.mirrorTruncated).toBe(false)
+        expect(state.mirrorPulledAt).toBeTruthy()
+        expect(state.mirrorPulledAt).not.toBe(before)
+    })
+})
