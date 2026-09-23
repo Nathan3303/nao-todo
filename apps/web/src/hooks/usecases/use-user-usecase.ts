@@ -33,5 +33,7 @@ export const useUserUseCase = (store: UserStore) => {
         return err
     }
 
-    return useCaseBinding.decorateUserUseCase?.(useCase) ?? useCase
+    // C-59 / AC10：web 离线只读闸门经 binding 注入（web-only；`signOut` 不在清单内 ⇒ 离线仍可登出）
+    const decorated = useCaseBinding.decorateUserUseCase?.(useCase) ?? useCase
+    return useCaseBinding.decorateUseCase?.(decorated, 'user') ?? decorated
 }

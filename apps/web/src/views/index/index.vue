@@ -2,6 +2,8 @@
 import { onMounted } from 'vue'
 import useIndexView from './index-view'
 import { AppDialogAdapter, AppAsideV2Adapter } from '@/components/app/'
+import { OfflineStatus } from '@/components/offline'
+import { OfflineReadOnlyBanner } from '@nao-todo/presentation/offline'
 import { Loading as LoadingComp, assetUrl } from '@nao-todo/shared'
 import { UserDeletionNotifier } from '@nao-todo/presentation-identity'
 
@@ -20,6 +22,10 @@ onMounted(() => {
         <nue-main>
             <app-aside-v2-adapter />
             <nue-content fill style="overflow: hidden">
+                <!-- 离线只读可见提示（C-59 / AC10，仅离线时渲染） -->
+                <offline-read-only-banner />
+                <!-- 离线/镜像状态条（C-60 文案三分 + 覆盖度/触顶） -->
+                <offline-status />
                 <!-- 路由视图 -->
                 <router-view v-slot="{ Component }">
                     <suspense>

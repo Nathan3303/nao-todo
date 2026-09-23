@@ -29,6 +29,18 @@ import {
     withMirrorFallback
 } from '@nao-todo/infrastructure'
 import { getRequesterImpl } from '@nao-todo/shared'
+import {
+    POMODORO_RECORD_WRITE_METHODS,
+    POMODORO_WRITE_METHODS,
+    PROJECT_WRITE_METHODS,
+    TAG_WRITE_METHODS,
+    TASK_CHECK_ITEM_WRITE_METHODS,
+    TASK_COMMENT_WRITE_METHODS,
+    TASK_WRITE_METHODS,
+    USER_WRITE_METHODS,
+    withReadOnlyGuard,
+    type WriteMethodMap
+} from '@nao-todo/presentation/offline'
 
 /**
  * 用例装配绑定（端差异唯一注入点）
@@ -39,9 +51,35 @@ import { getRequesterImpl } from '@nao-todo/shared'
  *              注销调度、密钥重包）经 `decorateAuthUseCase` / `decorateUserUseCase` 注入（web 端不提供）。
  *
  *              **web 读路径 = 远端优先 + 网络类失败回退本地镜像**（C-66 / AC8）：远端仓储为**主读**，
- *              由 `withMirrorFallback` 装饰（只包装读方法）；写路径不变（仍走远端，阶段一由 UI 层禁写，C-59）。
+ *              由 `withMirrorFallback` 装饰（只包装读方法）；写路径保持远端直连（不新增本地写路径）。
+ *              **web 离线只读闸门（C-59 / AC10，ADR-r5）经 `decorateUseCase` 注入 —— web-only**：
+ *              desktop 侧 binding 不提供该钩子 ⇒ 桌面写路径（在线/离线）**逐字不变**。
  *              本地镜像由 `@/data-plane` 后台启动的 `syncService` 填充。
  */
+
+/** 用例种类（端专属装饰的路由键） */
+export type UseCaseKind =
+    | 'task'
+    | 'task-check-item'
+    | 'task-comment'
+    | 'project'
+    | 'tag'
+    | 'pomodoro'
+    | 'pomodoro-record'
+    | 'user'
+
+/** web 离线只读写方法清单（按用例种类；ADR-r5：仅 web 拦截） */
+const WRITE_METHODS_BY_KIND: Record<UseCaseKind, WriteMethodMap> = {
+    task: TASK_WRITE_METHODS,
+    'task-check-item': TASK_CHECK_ITEM_WRITE_METHODS,
+    'task-comment': TASK_COMMENT_WRITE_METHODS,
+    project: PROJECT_WRITE_METHODS,
+    tag: TAG_WRITE_METHODS,
+    pomodoro: POMODORO_WRITE_METHODS,
+    'pomodoro-record': POMODORO_RECORD_WRITE_METHODS,
+    user: USER_WRITE_METHODS
+}
+
 export type UseCaseBinding = {
     createTaskRepository: () => TaskRepository
     createTaskCheckItemRepository: () => TaskCheckItemRepository
@@ -54,6 +92,12 @@ export type UseCaseBinding = {
     createPomodoroRecordRepository: () => PomodoroRecordRepository
     decorateAuthUseCase?: (useCase: AuthUseCase) => AuthUseCase
     decorateUserUseCase?: (useCase: UserUseCase) => UserUseCase
+    /**
+     * 用例装饰（端专属）
+     * @description **web 提供**：套 `withReadOnlyGuard`（离线只读闸门，C-59 / AC10）；
+     *              **desktop 不提供** ⇒ 共享工厂原样返回用例 ⇒ 桌面写路径（在线/离线）逐字不变。
+     */
+    decorateUseCase?: <T extends object>(useCase: T, kind: UseCaseKind) => T
 }
 
 /** web 端绑定：远端仓储为主读，网络类失败回退本地镜像 */
@@ -111,5 +155,7 @@ export const useCaseBinding: UseCaseBinding = {
             newPomodoroRecordRepository(getRequesterImpl()),
             newLocalPomodoroRecordRepository(),
             ['get', 'list']
-        )
+        ),
+    // C-59 / AC10（ADR-r5）：**web-only** 离线只读闸门；desktop binding 不提供本钩子
+    decorateUseCase: (useCase, kind) => withReadOnlyGuard(useCase, WRITE_METHODS_BY_KIND[kind])
 }

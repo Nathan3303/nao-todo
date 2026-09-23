@@ -8,6 +8,7 @@
     "files": [
         "auth/**/*",
         "built-in-project/**/*",
+        "offline/**/*",
         "pomodoro/**/*",
         "project/**/*",
         "tag/**/*",

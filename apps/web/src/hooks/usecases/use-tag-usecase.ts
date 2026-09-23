@@ -10,5 +10,7 @@ export const useTagUseCase = (store: TagStore) => {
     const tagRepo = useCaseBinding.createTagRepository()
     const tagPreferenceRepo = useCaseBinding.createTagPreferenceRepository()
     const domain = new TagService(tagRepo)
-    return new TagUseCase(domain, tagRepo, tagPreferenceRepo, store)
+    const useCase = new TagUseCase(domain, tagRepo, tagPreferenceRepo, store)
+    // C-59 / AC10：web 离线只读闸门经 binding 注入（web-only）
+    return useCaseBinding.decorateUseCase?.(useCase, 'tag') ?? useCase
 }

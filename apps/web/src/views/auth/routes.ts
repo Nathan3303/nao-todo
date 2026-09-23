@@ -1,7 +1,7 @@
 import type { RouteRecordRaw } from 'vue-router'
 import { useUserStore } from '@nao-todo/presentation-identity'
 import { USER_JWT_LOCALSTORAGE_KEY } from '@nao-todo/domain-identity'
-import { localSession, resolveUserIdFromStoredJwt } from '@nao-todo/infrastructure'
+import { localSession, resolveUserIdFromStoredJwt, syncService } from '@nao-todo/infrastructure'
 import { isOfflineEntryGranted } from './offline-entry'
 import { evaluateOfflinePrerequisites, hasLocalMirror } from './offline-prerequisites'
 import { bootstrapLocalData } from './bootstrap-local-data'
@@ -50,6 +50,10 @@ const beforeEnter = async () => {
         if (prerequisites.ok) {
             // C-61②：门 B 通过、挂载 App 前的启动收敛点（必须早于 syncService.start()）
             await bootstrapLocalData(jwtUserId)
+            // T108 补充 / AC8 首帧：从 `meta` 恢复镜像新鲜度（T107b 已持久化）⇒ 离线冷启动
+            // 首帧即「数据截至 X」，不先闪「尚未同步完成」。必须紧跟 `bootstrapLocalData()`
+            // （后者重建 `localSession`，`restoreMirrorStatus` 依赖当前 userId）。
+            await syncService.restoreMirrorStatus()
             return true
         }
     }
@@ -64,6 +68,8 @@ const beforeEnter = async () => {
     else if (jwt !== null && userStore.getIsAuthenticated()) {
         // C-61②：web 无 AppRoot ⇒ 门 B 通过、挂载 App 前的等价收敛点
         await bootstrapLocalData()
+        // T108 补充 / AC8 首帧：同上，先恢复镜像新鲜度再放行
+        await syncService.restoreMirrorStatus()
         return true
     }
     // 若没有 JWT 令牌且已登录，则跳转到检入页

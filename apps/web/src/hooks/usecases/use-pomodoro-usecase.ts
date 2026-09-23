@@ -12,5 +12,7 @@ export const usePomodoroUseCase = (store: PomodoroStore) => {
     const pomodoroRepo = useCaseBinding.createPomodoroRepository()
     const pomodoroRecordRepo = useCaseBinding.createPomodoroRecordRepository()
     const domain = new PomodoroDomain(pomodoroRepo, pomodoroRecordRepo)
-    return new PomodoroUseCase(domain, pomodoroRepo, store)
+    const useCase = new PomodoroUseCase(domain, pomodoroRepo, store)
+    // C-59 / AC10：web 离线只读闸门经 binding 注入（web-only）
+    return useCaseBinding.decorateUseCase?.(useCase, 'pomodoro') ?? useCase
 }

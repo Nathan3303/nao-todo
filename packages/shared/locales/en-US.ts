@@ -55,6 +55,18 @@ const enUS: LocaleMessages = {
     'gate.signInAgain': 'Sign in again',
     'gate.offlineUnavailable': 'Cannot enter offline. Please retry or sign in again.',
 
+    // Offline read-only / mirror freshness（C-59 / C-60 / AC8–AC10）
+    'offline.readOnlyBanner': 'Offline · read-only. Editing is unavailable.',
+    'offline.readOnlyHint': 'Editing is unavailable offline. Please retry when online.',
+    'offline.freshness.updated': 'Up to date',
+    'offline.freshness.mirror': 'Offline · data as of {time}',
+    'offline.freshness.mirrorHint': 'May not be the latest',
+    'offline.freshness.incomplete': 'Sync not finished; data may be incomplete',
+    'offline.freshness.incompleteHint': 'Please connect to the network and retry',
+    'offline.coverage.loadingMore': 'Loading more…',
+    'offline.coverage.truncated': 'More than {limit} tasks; showing the first {limit}',
+    'offline.coverage.truncatedGeneric': 'More tasks than the sync limit; showing partial data',
+
     // Common
     'common.cancel': 'Cancel',
     'common.confirm': 'Confirm',

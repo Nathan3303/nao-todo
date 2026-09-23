@@ -54,6 +54,18 @@ const zhCN: LocaleMessages = {
     'gate.signInAgain': '重新登录',
     'gate.offlineUnavailable': '无法离线进入，请重试或重新登录',
 
+    // Offline read-only / mirror freshness（C-59 / C-60 / AC8–AC10）
+    'offline.readOnlyBanner': '离线模式 · 当前为只读，暂不支持修改数据',
+    'offline.readOnlyHint': '离线模式下暂不支持修改，请联网后重试',
+    'offline.freshness.updated': '已更新',
+    'offline.freshness.mirror': '离线模式 · 数据截至 {time}',
+    'offline.freshness.mirrorHint': '可能不是最新',
+    'offline.freshness.incomplete': '尚未同步完成，数据可能不完整',
+    'offline.freshness.incompleteHint': '请连接网络后重试',
+    'offline.coverage.loadingMore': '正在加载更多…',
+    'offline.coverage.truncated': '任务超过 {limit} 条，仅显示前 {limit} 条',
+    'offline.coverage.truncatedGeneric': '任务数量超过同步上限，仅显示部分数据',
+
     // Common
     'common.cancel': '取消',
     'common.confirm': '确认',

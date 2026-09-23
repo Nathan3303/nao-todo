@@ -4,6 +4,8 @@ import {
     syncService,
     syncStatus
 } from '@nao-todo/infrastructure'
+import { startReadOnlyWatch } from '@nao-todo/presentation/offline'
+import { applySyncConfirmation } from '@/offline-read-only'
 import { withBootstrapRetry } from '@/views/auth/bootstrap-local-data'
 
 /**
@@ -33,10 +35,19 @@ let activeUserId: string | null = null
  *              镜像保持旧值且不谎报完整度）。
  */
 export const startWebDataPlane = (): void => {
+    // C-59 / AC10：启动离线只读监听（navigator.onLine ⇒ 只读状态；幂等）
+    startReadOnlyWatch()
     if (!registered) {
         registered = true
         // C-61③：常驻跨 7 天无冷启动 ⇒ 挂既有回传触发源顺带重跑启动收敛点（不新增定时器）
-        registerBackfillTriggers(withBootstrapRetry(syncService))
+        // C-59 / ADR-r5.1：回传成功（真实执行 pull）⇒ 清除「离线进入」flag（网络恢复即可写）
+        registerBackfillTriggers(
+            withBootstrapRetry({
+                handleOnline: () => void syncService.resumeBackfill().then(applySyncConfirmation),
+                handleVisibility: () =>
+                    void syncService.resumeBackfill().then(applySyncConfirmation)
+            })
+        )
     }
     const userId = resolveUserIdFromStoredJwt()
     // 未登录（JWT 已清，如登出）：重置已拉取标记 ⇒ 同一用户重新登录后会重新拉取
@@ -47,7 +58,8 @@ export const startWebDataPlane = (): void => {
     if (userId === activeUserId) return
     activeUserId = userId
     // 非阻塞：不阻塞进入应用；本条即「web 也用 syncService + 本地镜像」的接线点
-    void syncService.start()
+    // C-59 / ADR-r5.1：仅当**真实执行 pull**（`pullExecuted`）且无错误/凭证失败时清除只读 flag
+    void syncService.start().then(applySyncConfirmation)
 }
 
 /**

@@ -10,5 +10,7 @@ export const useProjectUseCase = (store: ProjectStore) => {
     const projectRepo = useCaseBinding.createProjectRepository()
     const projectPreferenceRepo = useCaseBinding.createProjectPreferenceRepository()
     const projectDomain = new ProjectService(projectRepo, projectPreferenceRepo)
-    return new ProjectUseCase(projectDomain, projectRepo, projectPreferenceRepo, store)
+    const useCase = new ProjectUseCase(projectDomain, projectRepo, projectPreferenceRepo, store)
+    // C-59 / AC10：web 离线只读闸门经 binding 注入（web-only）
+    return useCaseBinding.decorateUseCase?.(useCase, 'project') ?? useCase
 }

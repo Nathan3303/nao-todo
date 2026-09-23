@@ -19,6 +19,8 @@ const mocks = vi.hoisted(() => ({
     getCurrentUserId: vi.fn(),
     setCurrentUserId: vi.fn(),
     checkAndCleanExpired: vi.fn(async () => false),
+    /** T108 补充：镜像新鲜度从 `meta` 恢复（AC8 首帧） */
+    restoreMirrorStatus: vi.fn(async () => undefined),
     /** 本地镜像存在（探测替身：任一表 count > 0） */
     hasLocalMirror: true
 }))
@@ -39,6 +41,7 @@ vi.mock('@nao-todo/infrastructure', () => {
             checkAndCleanExpired: mocks.checkAndCleanExpired,
             resumePendingWipe: async () => false
         },
+        syncService: { restoreMirrorStatus: mocks.restoreMirrorStatus },
         localDatabase: { syncCursor: mirrorTable, table: () => mirrorTable },
         BUSINESS_TABLES: ['projects', 'tasks']
     }
@@ -59,6 +62,7 @@ describe('auth beforeEnter - C-62 离线进入判据', () => {
         mocks.resolveUserIdFromStoredJwt.mockReturnValue('u-1')
         mocks.getCurrentUserId.mockReturnValue('u-1')
         mocks.hasLocalMirror = true
+        mocks.restoreMirrorStatus.mockClear()
     })
 
     it('C-62 正向（守卫级）：授权 + JWT 可解析 + 会话一致 + 镜像存在 ⇒ 放行 index（门退役后仍可达）', async () => {
@@ -70,6 +74,23 @@ describe('auth beforeEnter - C-62 离线进入判据', () => {
         grantOfflineEntry()
         await beforeEnter()
         expect(mocks.checkAndCleanExpired).toHaveBeenCalledWith('u-1')
+    })
+
+    it('T108/AC8 首帧：离线门放行时从 meta 恢复镜像新鲜度，且**晚于** checkAndCleanExpired（无首帧闪烁）', async () => {
+        grantOfflineEntry()
+        await beforeEnter()
+        expect(mocks.restoreMirrorStatus).toHaveBeenCalledTimes(1)
+        // 顺序硬约束：restoreMirrorStatus 依赖 bootstrapLocalData 重建的 localSession
+        expect(mocks.checkAndCleanExpired.mock.invocationCallOrder[0]).toBeLessThan(
+            mocks.restoreMirrorStatus.mock.invocationCallOrder[0]!
+        )
+    })
+
+    it('T108/AC8 首帧：已认证在线放行分支同样恢复镜像新鲜度', async () => {
+        setSessionJwt('jwt')
+        useUserStore().setIsAuthenticated(true)
+        await beforeEnter()
+        expect(mocks.restoreMirrorStatus).toHaveBeenCalledTimes(1)
     })
 
     it('① 未授权 ⇒ 回落三分支（有 JWT 未认证 ⇒ checkin）', async () => {

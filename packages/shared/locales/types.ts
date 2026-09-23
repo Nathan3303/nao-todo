@@ -51,6 +51,18 @@ export interface LocaleMessages {
     'gate.signInAgain': string
     'gate.offlineUnavailable': string
 
+    // Offline read-only / mirror freshness（C-59 / C-60 / AC8–AC10）
+    'offline.readOnlyBanner': string
+    'offline.readOnlyHint': string
+    'offline.freshness.updated': string
+    'offline.freshness.mirror': string
+    'offline.freshness.mirrorHint': string
+    'offline.freshness.incomplete': string
+    'offline.freshness.incompleteHint': string
+    'offline.coverage.loadingMore': string
+    'offline.coverage.truncated': string
+    'offline.coverage.truncatedGeneric': string
+
     // Common
     'common.cancel': string
     'common.confirm': string
