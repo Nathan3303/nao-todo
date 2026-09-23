@@ -16,7 +16,8 @@
         "desktop:build": "pnpm --filter @nao-todo/desktopapp build",
         "desktop:dist": "pnpm --filter @nao-todo/desktopapp dist",
         "guard:ddd": "node scripts/guard-domain-isolation.mjs",
-        "guard:gate-pathspec": "node scripts/guard-gate-pathspec.mjs"
+        "guard:gate-pathspec": "node scripts/guard-gate-pathspec.mjs",
+        "guard:barrel-imports": "node scripts/guard-barrel-imports.mjs"
     },
     "dependencies": {
         "@vitejs/plugin-vue": "^6.0.7",
