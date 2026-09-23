@@ -16,7 +16,7 @@
 # 环境变量
 #   NAO_TERMINAL=ghostty|ptyxis|tmux|screen   强制宿主
 #   NAO_TMUX_LAYOUT=main-row2|grid            tmux 布局（默认 main-row2）
-#   NAO_TMUX_MAIN_WIDTH=<10..90>              main-row2 主 pane 宽度百分比（默认 50）
+#   NAO_TMUX_MAIN_WIDTH=<10..90>              main-row2 主 pane 宽度百分比（默认 35）
 #   NAO_SKILLS=<dir>                          角色卡根目录（默认 <脚本>/../..）
 #   NAO_MODEL_WHITELIST=<glob,...>            -m 白名单（默认空=不校验，支持 glob）
 #
@@ -42,7 +42,9 @@ ROLE_ORDER=()
 declare -A ROLE_CARDS ROLE_WS ALIAS_ROLE
 MODEL_WHITELIST="${NAO_MODEL_WHITELIST:-}"
 TMUX_LAYOUT="${NAO_TMUX_LAYOUT:-main-row2}"
-TMUX_MAIN_WIDTH="${NAO_TMUX_MAIN_WIDTH:-50}"
+# main-row2 主 pane 宽度百分比：默认值与非法值回退共用同一常量（防三处漂移）
+TMUX_MAIN_WIDTH_DEFAULT=35
+TMUX_MAIN_WIDTH="${NAO_TMUX_MAIN_WIDTH:-$TMUX_MAIN_WIDTH_DEFAULT}"
 
 log()  { printf '\033[1;32m[fleet]\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m[fleet]\033[0m %s\n' "$*" >&2; }
@@ -333,7 +335,7 @@ apply_tmux_layout() {
   (( ${#pane_ids[@]} >= 1 )) || return 0
 
   local pct="$TMUX_MAIN_WIDTH"
-  [[ "$pct" =~ ^[0-9]+$ ]] || pct=50
+  [[ "$pct" =~ ^[0-9]+$ ]] || pct="$TMUX_MAIN_WIDTH_DEFAULT"
   (( pct < 10 )) && pct=10
   (( pct > 90 )) && pct=90
 
@@ -548,7 +550,7 @@ cmd_check() {
     if [[ "$TMUX_MAIN_WIDTH" =~ ^[0-9]+$ ]] && (( TMUX_MAIN_WIDTH >= 10 && TMUX_MAIN_WIDTH <= 90 )); then
       printf '  ✓ NAO_TMUX_MAIN_WIDTH=%-3s%% 合法\n' "$TMUX_MAIN_WIDTH"
     else
-      printf '  ! NAO_TMUX_MAIN_WIDTH=%-3s  非法（10..90），运行时会回退 50\n' "$TMUX_MAIN_WIDTH"
+      printf '  ! NAO_TMUX_MAIN_WIDTH=%-3s  非法（10..90）：越界夹取到 10/90，非数字回退 %s\n' "$TMUX_MAIN_WIDTH" "$TMUX_MAIN_WIDTH_DEFAULT"
     fi
   fi
 

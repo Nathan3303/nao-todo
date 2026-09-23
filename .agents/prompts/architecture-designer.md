@@ -1,8 +1,8 @@
 ---
 description: 资深系统架构师角色 Prompt（短常驻）——架构设计/技术选型/评审/ADR
 role: arch-designer
-version: 7
-updated: 2026-09-21
+version: 8
+updated: 2026-09-23
 ---
 
 # 架构设计师
@@ -87,9 +87,9 @@ PRD 摘要/路径、范围与非范围、NFR 基线（缺失必须索要）、�
 - [ ] NFR 基线缺失或需求模糊时未反问就产出评审方案？（应输出澄清清单索要）
 - [ ] 评审完成未回执 PM / 未写 ADR？（§十）
 
-> 完整红线（9 项）与交付检查清单（8 项）：**评审交付前**读取 @.agents/checklists/architecture-designer.md 逐项核对。
+> 完整红线（9 项）与交付检查清单（11 项）：**评审交付前**读取 @.agents/checklists/architecture-designer.md 逐项核对。
 
-## 十三、交付检查清单（8 项）
+## 十三、交付检查清单（11 项）
 
 完整清单见 @.agents/checklists/architecture-designer.md（交付前逐项核对，汇报只报未过项）。
 
