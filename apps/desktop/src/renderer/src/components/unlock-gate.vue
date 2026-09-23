@@ -19,6 +19,7 @@ import {
 } from '@nao-todo/infrastructure'
 import { useUserStore, UserInitialAvatar } from '@nao-todo/presentation-identity'
 import { useUserUseCase } from '@/hooks'
+import { wipeLocalDataOnSignOut } from '@/views/auth/sign-out-wipe'
 import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { getAvatarSrc, Loading as LoadingComp, t } from '@nao-todo/shared'
@@ -164,20 +165,23 @@ const onSubmit = (): void => {
 
 /**
  * 登出当前用户：清 JWT/本地会话/内存密钥，放行后由 App 引导至登录页
+ * @description C-54/C-52：清认证前先跑脏队列护栏 + `wipeUserData`（与 `AppRoot.onSignOut` 同口径）。
+ *              本门位于 AppRoot 之前，`userId` 取自本地检查结果（`checkLocal` 已置）；
+ *              本地检查失败（`userId` 为空）⇒ 跳过清库。护栏取消 ⇒ 中止（保留会话与本地数据）。
  */
-const onSignOut = () => {
-    NueConfirm({
+const onSignOut = async () => {
+    const [isByCancel] = await NueConfirm({
         title: '确认登出吗？',
         content: '登出后将清除本次会话密钥，需重新登录才能访问本地数据。',
         confirmButtonText: '登出',
-        cancelButtonText: '取消',
-        onConfirm: () => {
-            userStore.clearAuthData()
-            localSession.clear()
-            cryptoService.lock()
-            emit('unlocked')
-        }
+        cancelButtonText: '取消'
     })
+    if (isByCancel) return
+    if (userId.value && !(await wipeLocalDataOnSignOut(userId.value))) return
+    userStore.clearAuthData()
+    localSession.clear()
+    cryptoService.lock()
+    emit('unlocked')
 }
 </script>
 
