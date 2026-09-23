@@ -398,6 +398,7 @@ export interface LocaleMessages {
     'task.deleteSuccess': string
     'task.restoreFailed': string
     'task.restoreSuccess': string
+    'task.resortFailed': string
     'task.copyFailed': string
     'task.copySuccess': string
     'task.confirmGiveUpTitle': string
@@ -520,6 +521,9 @@ export interface LocaleMessages {
     'task.error.checkItemNotFound': string
     'task.error.commentContentEmpty': string
     'task.error.commentContentTooLong': string
+
+    // Pomodoro
+    'pomodoro.recordSaveFailed': string
 
     // Calendar
     'calendar.today': string

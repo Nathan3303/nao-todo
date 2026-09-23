@@ -3,11 +3,33 @@ import { LoadingError, TASK_CREATOR_DIALOG_KEY, t, assetUrl } from '@nao-todo/sh
 import { TaskKanban } from '../../kanban'
 import type { KanbanViewAdapterProps } from './types'
 import useKanbanViewAdapter from './use-kanban-view-adapter'
+import { notifyTaskError } from '../../../utils/error-message'
 
 defineOptions({ name: 'KanbanViewAdapter' })
 const props = defineProps<KanbanViewAdapterProps>()
 
 const { tasks, loading, sortOptions, error, noTaskError, handleRetry } = useKanbanViewAdapter(props)
+
+// 看板内联写操作：断网时仓储返回错误码（不 reject）⇒ 必须显式提示，避免静默丢失
+const handleDeleteTask = async (taskId: string) => {
+    const err = await props.taskUseCase.delete(taskId)
+    if (err !== null) notifyTaskError('task.deleteFailed', err)
+}
+
+const handleRestoreTask = async (taskId: string) => {
+    const err = await props.taskUseCase.restore(taskId)
+    if (err !== null) notifyTaskError('task.restoreFailed', err)
+}
+
+const handleFinishTask = async (taskId: string) => {
+    const err = await props.taskUseCase.update(taskId, { state: 'done' })
+    if (err !== null) notifyTaskError('task.updateFailed', err)
+}
+
+const handleUnfinishTask = async (taskId: string) => {
+    const err = await props.taskUseCase.update(taskId, { state: 'todo' })
+    if (err !== null) notifyTaskError('task.updateFailed', err)
+}
 </script>
 
 <template>
@@ -59,10 +81,10 @@ const { tasks, loading, sortOptions, error, noTaskError, handleRetry } = useKanb
                         :task-use-case="taskUseCase"
                         @clear-sort-options="clearSortOptions"
                         @show-task-details="showTaskDetails"
-                        @delete-task="(taskId) => taskUseCase.delete(taskId)"
-                        @restore-task="(taskId) => taskUseCase.delete(taskId)"
-                        @finish-task="(taskId) => taskUseCase.update(taskId, { state: 'done' })"
-                        @unfinish-task="(taskId) => taskUseCase.update(taskId, { state: 'todo' })"
+                        @delete-task="handleDeleteTask"
+                        @restore-task="handleRestoreTask"
+                        @finish-task="handleFinishTask"
+                        @unfinish-task="handleUnfinishTask"
                         @update-columns="updateColumns"
                         @update-sort-options="updateSortOptions"
                     />

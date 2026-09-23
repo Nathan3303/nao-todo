@@ -1,4 +1,5 @@
-import type { GoAsync } from '@nao-todo/shared'
+import { t, unwrapError, type GoAsync } from '@nao-todo/shared'
+import { NueMessage } from 'nue-ui'
 import type {
     CreatePomodoroRecordViewObject,
     PomodoroRecordViewObject,
@@ -88,6 +89,11 @@ export const persistPomodoroRecord = (
     errorTag: string
 ) => {
     createRecordFn(record).then(([, err]) => {
-        if (err !== null) console.error(errorTag, err)
+        if (err !== null) {
+            console.error(errorTag, err)
+            // web 端仓储直连服务端，断网写失败被归一化为业务错误（不 reject）
+            // ⇒ 仅 console.error 会让用户以为记录已保存，必须可见提示
+            NueMessage.error(t('pomodoro.recordSaveFailed', { error: `(${unwrapError(err)})` }))
+        }
     })
 }

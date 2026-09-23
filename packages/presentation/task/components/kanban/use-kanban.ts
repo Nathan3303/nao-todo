@@ -4,6 +4,7 @@ import { KANBAN_GROUP_BY_NAMES, KANBAN_DEFAULT_GROUP_BY } from './constants'
 import type { TaskKanbanVO, TaskKanbanProps, TaskKanbanEmits, TaskKanbanContext } from './types'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { type TaskColumnOptions, type GetTasksSortOptions, useMinuteTask } from '@nao-todo/shared'
+import { notifyTaskError } from '../../utils/error-message'
 
 export const TASK_KANBAN_CONTEXT_KEY = Symbol('TASK_KANBAN_CONTEXT_KEY')
 
@@ -20,7 +21,8 @@ const useKanban = (props: TaskKanbanProps, emit: TaskKanbanEmits) => {
         if (task && task.state !== category) {
             updatingTaskIds.add(taskId)
             try {
-                await props.taskUseCase.update(taskId, { state: category })
+                const err = await props.taskUseCase.update(taskId, { state: category })
+                if (err !== null) notifyTaskError('task.updateFailed', err)
             } finally {
                 updatingTaskIds.delete(taskId)
             }

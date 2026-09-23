@@ -153,7 +153,7 @@ const enUS: LocaleMessages = {
     'settings.appearanceLight': 'Light',
     'settings.appearanceDark': 'Dark',
     'settings.appearanceSystem': 'System',
-    'settings.appearanceSyncFailed': 'Theme sync failed',
+    'settings.appearanceSyncFailed': 'Theme applied locally, but failed to sync to the server',
     'settings.nickname': 'Edit Nickname',
     'settings.nicknameDesc':
         'Your nickname is shown in task creator, assignee, project members and other places. You can change it anytime.',
@@ -416,6 +416,7 @@ const enUS: LocaleMessages = {
     'task.deleteSuccess': 'Task deleted',
     'task.restoreFailed': 'Failed to restore task: {error}',
     'task.restoreSuccess': 'Task restored',
+    'task.resortFailed': 'Failed to reorder: {error}',
     'task.copyFailed': 'Failed to copy task: {error}',
     'task.copySuccess': 'Task copied',
     'task.confirmGiveUpTitle': 'Give up this task?',
@@ -543,6 +544,9 @@ const enUS: LocaleMessages = {
     'task.error.checkItemNotFound': 'Checklist item not found',
     'task.error.commentContentEmpty': 'Comment content cannot be empty',
     'task.error.commentContentTooLong': 'Comment content is too long',
+
+    // Pomodoro
+    'pomodoro.recordSaveFailed': 'Failed to save focus record: {error}',
 
     // Calendar
     'calendar.today': 'Go to Today',

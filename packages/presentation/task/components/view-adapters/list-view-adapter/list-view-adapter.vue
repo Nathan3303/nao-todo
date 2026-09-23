@@ -3,6 +3,7 @@ import { TaskList } from '../../list'
 import { LoadingError, TASK_CREATOR_DIALOG_KEY, t, assetUrl } from '@nao-todo/shared'
 import useListViewAdapter from './use-list-view-adapter'
 import type { ListViewAdapterEmits, ListViewAdapterProps } from './types'
+import { notifyTaskError } from '../../../utils/error-message'
 
 defineOptions({ name: 'ListViewAdapter' })
 const props = defineProps<ListViewAdapterProps>()
@@ -18,6 +19,17 @@ const {
     handleNextPage,
     handleRetry
 } = useListViewAdapter(props)
+
+// 行内删除/恢复：断网时仓储返回错误码（不 reject）⇒ 必须显式提示，避免静默丢失
+const handleDeleteTask = async (taskId: string) => {
+    const err = await props.taskUseCase.delete(taskId)
+    if (err !== null) notifyTaskError('task.deleteFailed', err)
+}
+
+const handleRestoreTask = async (taskId: string) => {
+    const err = await props.taskUseCase.restore(taskId)
+    if (err !== null) notifyTaskError('task.restoreFailed', err)
+}
 </script>
 
 <template>
@@ -73,8 +85,8 @@ const {
                         @show-task-details="showTaskDetails"
                         @task-clicked="taskClicked"
                         @show-multi-select-panel="(payload) => emit('multiSelectChanged', payload)"
-                        @delete-task="(taskId) => taskUseCase.delete(taskId)"
-                        @restore-task="(taskId) => taskUseCase.restore(taskId)"
+                        @delete-task="handleDeleteTask"
+                        @restore-task="handleRestoreTask"
                         @next-page="handleNextPage"
                     >
                         <template #actions="{ task }">

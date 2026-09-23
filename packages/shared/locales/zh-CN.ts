@@ -151,7 +151,7 @@ const zhCN: LocaleMessages = {
     'settings.appearanceLight': '浅色',
     'settings.appearanceDark': '深色',
     'settings.appearanceSystem': '跟随系统',
-    'settings.appearanceSyncFailed': '主题同步失败',
+    'settings.appearanceSyncFailed': '主题已在本地生效，但同步到服务器失败',
     'settings.nickname': '修改用户昵称',
     'settings.nicknameDesc': '昵称会在任务创建者、分配者、项目成员等区块中展示，你可以随时修改。',
     'settings.nicknamePlaceholder': '请输入昵称',
@@ -406,6 +406,7 @@ const zhCN: LocaleMessages = {
     'task.deleteSuccess': '删除任务成功',
     'task.restoreFailed': '恢复任务失败：{error}',
     'task.restoreSuccess': '恢复任务成功',
+    'task.resortFailed': '调整排序失败：{error}',
     'task.copyFailed': '复制任务失败：{error}',
     'task.copySuccess': '复制任务成功',
     'task.confirmGiveUpTitle': '确认放弃该任务吗？',
@@ -530,6 +531,9 @@ const zhCN: LocaleMessages = {
     'task.error.checkItemNotFound': '检查事项不存在',
     'task.error.commentContentEmpty': '评论内容不能为空',
     'task.error.commentContentTooLong': '评论内容过长',
+
+    // Pomodoro
+    'pomodoro.recordSaveFailed': '专注记录保存失败：{error}',
 
     // Calendar
     'calendar.today': '跳转至今天',
