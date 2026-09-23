@@ -41,27 +41,43 @@ PM 派单中的两个数字**是"全库"口径，不是"单账号"口径**，而
 
 ## 1. T1 造数清单与回滚
 
-### 1.1 清单
+### 1.1 清单（**修正：8 次成功建号，非 6 个**；见 §11.2）
 
-| 批次                 | 账号（临时）                                              | 前缀                | 插入行数 | 造数前 | 造数后 | 命名/排序控制                                      |
-| :------------------- | :-------------------------------------------------------- | :------------------ | :------- | :----- | :----- | :------------------------------------------------- |
-| A（dense）           | `qa.defprobe.def6.<ts>@qa.local`（id 471903400456359936） | `[QA-DEF6-<ts>]`    | 620      | 0      | 620    | `updated_at` 间隔 **10ms**；末 3 行为 `NEWEST-*`   |
-| B（sparse，复现）    | 同上（id 471904062669852672）                             | `[QA-DEF6-<ts>]`    | 620      | 0      | 620    | `updated_at` 间隔 **1500ms**；末 3 行为 `NEWEST-*` |
-| C（T3 desktop）      | `qa.defprobe.off.<ts>@qa.local`                           | `[QA-OFFLINE-<ts>]` | 6        | 0      | 6      | 稀疏                                               |
-| D（T3 desktop 精测） | `qa.defprobe.t3.<ts>@qa.local`                            | `[QA-T3-<ts>]`      | 1        | 0      | 1      | —                                                  |
-| E（T3 web）          | `qa.defprobe.web.<ts>@qa.local`                           | `[QA-WEB-T3-<ts>]`  | 1        | 0      | 1      | —                                                  |
-| F（T7）              | `qa.defprobe.t7.<ts>@qa.local`                            | `[QA-T7-<ts>]`      | 8        | 0      | 8      | 含 1 归档 + 1 墓碑；priority 0–4                   |
+| 批次                  | 探针                                     | 账号 id            | 前缀                | 插入行数 | 造数前 | 造数后 | 命名/排序控制                                      |
+| :-------------------- | :--------------------------------------- | :----------------- | :------------------ | :------- | :----- | :----- | :------------------------------------------------- |
+| A（dense）            | `app-probe.mjs` 第 2 次（完成）          | 471903400456359936 | `[QA-DEF6-<ts>]`    | 620      | 0      | 620    | `updated_at` 间隔 **10ms**；末 3 行为 `NEWEST-*`   |
+| B（sparse，复现）     | `app-probe.mjs` 第 3 次（完成）          | 471904062669852672 | `[QA-DEF6-<ts>]`    | 620      | 0      | 620    | `updated_at` 间隔 **1500ms**；末 3 行为 `NEWEST-*` |
+| C（T3 desktop）       | `offline-probe.mjs`                      | 471905973217267712 | `[QA-OFFLINE-<ts>]` | 6        | 0      | 6      | 稀疏                                               |
+| D（T3 desktop 精测）  | `t3-probe.mjs`                           | 471906528685723648 | `[QA-T3-<ts>]`      | 1        | 0      | 1      | —                                                  |
+| E（T3 web）           | `web-t3.mjs`                             | 471907735617671168 | `[QA-WEB-T3-<ts>]`  | 1        | 0      | 1      | —                                                  |
+| F（T7）               | `t7.mjs`                                 | 471901644624236544 | `[QA-T7-<ts>]`      | 8        | 0      | 8      | 含 1 归档 + 1 墓碑；priority 0–4                   |
+| G（**未列入原清单**） | `app-probe.mjs` 第 1 次（**被中断**）    | 471902196460425216 | `[QA-DEF6-<ts>]`    | 620      | 0      | 620    | 同 A（中断于登录阶段，已即时清理业务表）           |
+| H（**未列入原清单**） | 临时 curl 冒烟测试（验证 signup/signin） | 471901425757065216 | —（无造数）         | 0        | 0      | 0      | 同命令内已删 `users/tasks`                         |
 
 ### 1.2 造数方式
 
 SQL 直插（`docker exec naotodo-mysql mysql`）——**绕开写桶限流**（`/tasks` 写桶 = 48 req/min，620 次 API 创建不可行），且 id 走 `AUTO_INCREMENT`、`updated_at` 可控（DEF-6 的排序键）。表结构 `CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci`（后者是 T7 大小写不敏感的根因）。
 
-### 1.3 回滚方式与回退证明
+### 1.3 回滚方式与回退证明（**已修正：原清单漏 `user_configs`**）
+
+**⚠️ 教训**：原回滚清单只删 `tasks / user_sessions / users`，**漏了 `user_configs`**（`userRepoImpl.go:54` 在 `CreateUser` 事务内必建 1 行 `UserConfig{Appearance:"auto"}`）⇒ 留下 **8 行孤儿**（已按 id 白名单精确删除，见 §11.1）。**全库无外键 ⇒ 无级联兜底**，手工回滚必须逐表覆盖。
+
+正确的通用回滚模板（覆盖**全部 11 张业务表 + `user_sessions` + `users`**；与 `userRepoImpl.go:316-412` 注销路径的删除集一致）：
 
 ```text
-DELETE FROM naotodo.tasks         WHERE user_id IN (SELECT id FROM naotodo.users WHERE email LIKE 'qa.defprobe%');
-DELETE FROM naotodo.user_sessions WHERE user_id IN (SELECT id FROM naotodo.users WHERE email LIKE 'qa.defprobe%');
-DELETE FROM naotodo.users         WHERE email LIKE 'qa.defprobe%';
+SET @uid := (SELECT id FROM naotodo.users WHERE email = '<临时账号邮箱>');
+DELETE FROM naotodo.user_sessions        WHERE user_id = @uid;
+DELETE FROM naotodo.task_comments        WHERE user_id = @uid;
+DELETE FROM naotodo.task_check_items     WHERE user_id = @uid;
+DELETE FROM naotodo.tasks                WHERE user_id = @uid;
+DELETE FROM naotodo.project_preferences  WHERE user_id = @uid;
+DELETE FROM naotodo.projects             WHERE user_id = @uid;
+DELETE FROM naotodo.tag_preferences      WHERE user_id = @uid;
+DELETE FROM naotodo.tags                 WHERE user_id = @uid;
+DELETE FROM naotodo.pomodoro_records     WHERE user_id = @uid;
+DELETE FROM naotodo.pomodoros            WHERE user_id = @uid;
+DELETE FROM naotodo.user_configs         WHERE user_id = @uid;   -- ← 原清单漏项
+DELETE FROM naotodo.users                WHERE id = @uid;
 ```
 
 | 校验（清理后）                                  | 值                                                                                                    |
@@ -70,6 +86,7 @@ DELETE FROM naotodo.users         WHERE email LIKE 'qa.defprobe%';
 | `SELECT COUNT(*) FROM users`                    | **14**                                                                                                |
 | `email LIKE 'qa.defprobe%'` 残留账号            | **0**                                                                                                 |
 | 本批各前缀残留任务（DEF6/OFFLINE/T3/WEB-T3/T7） | **均 0**                                                                                              |
+| `user_configs` 孤儿（P1b 修复后）               | **0**（22 → 14 行）                                                                                   |
 | 桌面 profile                                    | 已从 `/tmp/qa-defprobe/userdata-backup-*` **还原**（`IndexedDB/` 4 个 origin 目录齐全，含 `file__0`） |
 
 > 现存 256 条 `[QA-%` 任务属**既有** `467296091008667648`（前轮 QA-Shell03 造数），**非本批产物**。
@@ -282,8 +299,78 @@ DELETE FROM naotodo.users         WHERE email LIKE 'qa.defprobe%';
 
 ---
 
-## 10. 变更记录
+## 10. 收尾清理（DEF-PROBE-P1b）与规程补充
 
-| 日期       | 变更                                                                                                      |
-| :--------- | :-------------------------------------------------------------------------------------------------------- |
-| 2026-09-23 | 首次成文：T0–T7 探针结论 + 造数清单/回滚证明 + T3 分端写入口清单（24 项）+ 5 项误判风险 + 4 项阻塞/未确认 |
+### 10.1 残留清理：`user_configs` 8 行孤儿（已按 id 白名单精确删除）
+
+| 项                           | 值                                                                                                                                 |
+| :--------------------------- | :--------------------------------------------------------------------------------------------------------------------------------- |
+| 删除前 `user_configs` 总行数 | **22**                                                                                                                             |
+| 删除条件                     | `user_id IN (<8 个临时账号 id>) AND id IN (<对应 8 个 config 行 id>)`（**双重白名单**；禁用 `NOT IN (SELECT id FROM users)` 泛删） |
+| `ROW_COUNT()`                | **8**                                                                                                                              |
+| 删除后 `user_configs` 总行数 | **14**                                                                                                                             |
+| 白名单残留                   | **0**                                                                                                                              |
+| 行特征（与 arch 复核一致）   | `appearance='auto'`、`created_at = updated_at`、时间 2026-09-23 12:47:47 – 13:12:51                                                |
+| 未触碰                       | 其它任何数据（含既有账号 `422644611870101504` / `467296091008667648`）                                                             |
+
+### 10.2 收尾门禁：全库 13 表孤儿扫描（删除后，只读）
+
+`user_id NOT IN (SELECT id FROM users)`；`task_id` 两列口径：`raw = NOT IN (tasks)`、`real = task_id <> 0 AND NOT IN (tasks)`。
+
+| #   | 表                    | 总行数 | `orphan_user` |         `orphan_task_raw` | `orphan_task_real` |
+| :-- | :-------------------- | -----: | ------------: | ------------------------: | -----------------: |
+| 1   | `pomodoro_records`    |     61 |         **0** | 1（**假阳性**，见 §10.3） |              **0** |
+| 2   | `pomodoros`           |      2 |         **0** |                         — |                  — |
+| 3   | `project_preferences` |     17 |         **0** |                         — |                  — |
+| 4   | `projects`            |     17 |         **0** |                         — |                  — |
+| 5   | `sessions`            |      4 |         **0** |                         — |                  — |
+| 6   | `tag_preferences`     |     25 |         **0** |                         — |                  — |
+| 7   | `tags`                |     25 |         **0** |                         — |                  — |
+| 8   | `task_check_items`    |    325 |         **0** |                     **0** |              **0** |
+| 9   | `task_comments`       |     33 |         **0** |                     **0** |              **0** |
+| 10  | `tasks`               |    436 |         **0** |                         — |                  — |
+| 11  | `user_configs`        |     14 |         **0** |                         — |                  — |
+| 12  | `user_sessions`       |     61 |         **0** |                         — |                  — |
+| 13  | `users`               |     14 |     —（自身） |                         — |                  — |
+
+**⇒ 门禁通过：`orphan_user` 全 0（12/12 含 `user_id` 的表）；`orphan_task_real` 全 0（3/3 含 `task_id` 的表）。**
+
+### 10.3 计划外发现（**未清理**，按 PM 约定停手回报）
+
+`pomodoro_records` 有 1 行命中 `raw` 口径，但**不是孤儿**：
+
+| 字段         | 值                                                                            |
+| :----------- | :---------------------------------------------------------------------------- |
+| 行 id        | 456066158731202560                                                            |
+| `user_id`    | 422644611870101504（`lee1928@outlook.com`，**开发者本人账号，存在于 users**） |
+| `task_id`    | **0**                                                                         |
+| `created_at` | **2026-08-10 20:04:05**（远早于本批 09-23 12:47–13:12）                       |
+
+根因：`pomodoro_records.task_id` 列定义为 `bigint NOT NULL`（无 NULL、无默认）⇒ **`0` 是「无关联任务」哨兵**（`application/pomodoro/.../createPomodoroRecord.go` 用 `vo.TaskId > 0` 判定）。故正确门禁谓词须为 **`task_id <> 0 AND task_id NOT IN (tasks)`**（`task_check_items` / `task_comments` 的 `task_id` 同为 `bigint NOT NULL`，同口径）。
+**判定：扫描口径假阳性，非本批产物、非真实孤儿 ⇒ 不清理。**
+
+### 10.4 口径澄清：6 vs 8 个临时账号
+
+**结论：是自述漏计，不是「6 个账号 + 2 次重试」**——`/tmp/qa-defprobe/` 证据可逐一对应（§1.1 表）：
+
+| 漏计来源                                     | 说明                                                                                                                                      | 证据                                                                               |
+| :------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------- |
+| **G：`app-probe.mjs` 第 1 次运行（被中断）** | 首轮运行在登录阶段被中断，未产出日志/证据（后续运行覆盖了 `app-run.log` 与 `app-evidence.json`），但其 **signup 已成功** ⇒ 留 1 行 config | user_id 471902196460425216（仅存于 `user_configs`；中断后清理命令已打印该 id）     |
+| **H：临时 curl 冒烟测试**                    | 写 `t7.mjs` 前先用一次性 curl 验证 signup/signin 可用性（非脚本文件）⇒ 留 1 行 config                                                     | user_id 471901425757065216（当时命令输出 email `qa.defprobe.1790138866@qa.local`） |
+
+原报告 T1 表只列了 6 个**批次**（A–F），未含上述两次 ⇒ 「6」是**批次数**而非**建号数**；**实际成功建号 = 8**（与 arch 实测的 8 行 config 完全一致）。**无「失败重试」建号**。
+
+### 10.5 规程补充（纳入后续造数类探针收尾清单）
+
+1. **回滚清单必须覆盖全部 11 张业务表**（`user_sessions` + `task_comments` + `task_check_items` + `tasks` + `project_preferences` + `projects` + `tag_preferences` + `tags` + `pomodoro_records` + `pomodoros` + `user_configs`）+ `users`；**依据** `userRepoImpl.go:316-412` 注销路径的删除集；**全库无外键 ⇒ 无级联兜底**，漏一表即留孤儿。特别提醒：**`signup` 必产生 `user_configs` 1 行**（`userRepoImpl.go:54`，事务内），最易漏。
+2. **每次造数类探针收尾必须跑通用孤儿扫描并附逐表数字**：对**全部 13 张表**跑 `user_id NOT IN (users)`；对含 `task_id` 的表跑 `task_id <> 0 AND task_id NOT IN (tasks)`（**必须排除 `0` 哨兵**，否则假阳性——本轮实测踩到）。
+3. 收尾清理**一律按 id/邮箱白名单精确删除**，禁用 `NOT IN (SELECT …)` 泛删；扫描发现计划外孤儿时**停手回报**，不自行清理。
+
+---
+
+## 11. 变更记录
+
+| 日期       | 变更                                                                                                                                                                                                                            |
+| :--------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-09-23 | 首次成文：T0–T7 探针结论 + 造数清单/回滚证明 + T3 分端写入口清单（24 项）+ 5 项误判风险 + 4 项阻塞/未确认                                                                                                                       |
+| 2026-09-23 | **P1b 修订**：① 回滚清单补齐 `user_configs`（新增 §10.1 清理 8 行 + §10.5 规程）；② 新增 §10.2 全库 13 表孤儿扫描门禁（全 0）；③ 新增 §10.3 `task_id=0` 哨兵假阳性说明；④ 修正 §1.1 建号数为 **8**（原述 6 为批次数，见 §10.4） |
