@@ -21,6 +21,13 @@ export interface SyncRunResult {
     phase: SyncPhase | null
     /** 本次运行是否发生凭证类失败（10041 会话失效）；C-34：结构化判定，替代文案正则 */
     credentialFailure: boolean
+    /**
+     * 本次运行是否**真实进入拉取阶段**（T107c；纯追加、不落盘）
+     * @description 供给「离线进入」只读闸门的**解除条件**判定：`start()` 在注销宽限期 / 无会话
+     *              等路径**早退**时不经拉取，但 `ok`/`lastSyncAt` 仍为成功语义（空运行）
+     *              ⇒ **不得用 `ok`/`lastSyncAt` 反推「真实同步过」**。
+     */
+    pullExecuted: boolean
 }
 
 export interface SyncStatusState {
@@ -77,6 +84,9 @@ export class SyncStatus {
     /** 本次运行是否发生凭证类失败（10041）；运行边界重置（C-34） */
     private runCredentialFailure = false
 
+    /** 本次运行是否真实进入拉取阶段（T107c）；运行边界重置，不回填历史 */
+    private runPullExecuted = false
+
     /** 获取当前状态快照（errors 为副本，防外部直改内部数组） */
     get(): SyncStatusState {
         return { ...this.state, errors: [...this.state.errors] }
@@ -103,6 +113,7 @@ export class SyncStatus {
     beginRun(_phase: SyncPhase): void {
         this.runErrors = []
         this.runCredentialFailure = false
+        this.runPullExecuted = false
         this.set({ syncing: true, lastError: null, errors: [], errorCount: 0 })
     }
 
@@ -121,6 +132,15 @@ export class SyncStatus {
      */
     markCredentialFailure(): void {
         this.runCredentialFailure = true
+    }
+
+    /**
+     * 标记本次运行真实进入拉取阶段（T107c）
+     * @description 仅由同步服务在**真正执行拉取**处调用；仅置运行内字段，**不落定、不通知订阅**
+     *              （避免无意义的重渲染/持久化副作用，C-59）；早退路径无需显式清除。
+     */
+    markPullExecuted(): void {
+        this.runPullExecuted = true
     }
 
     /**
@@ -179,15 +199,18 @@ export class SyncStatus {
         // 仅无错误时推进「上次成功同步」（修正 DEF-SYNC-03）
         if (lastError === null) partial.lastSyncAt = new Date().toISOString()
         const credentialFailure = this.runCredentialFailure
+        const pullExecuted = this.runPullExecuted
         this.runErrors = []
         this.runCredentialFailure = false
+        this.runPullExecuted = false
         this.set(partial)
         return {
             ok: lastError === null,
             errors,
             lastError,
             phase: lastError === null ? null : (first?.phase ?? null),
-            credentialFailure
+            credentialFailure,
+            pullExecuted
         }
     }
 }

@@ -509,6 +509,10 @@ export class SyncService {
     private async pullAllInner(): Promise<void> {
         const userId = this.currentUserId()
         if (!userId) return
+        // T107c：拉取阶段真实进入（唯一设置点）；`start()` 的注销宽限期/无会话早退
+        // 不经过此处 ⇒ `pullExecuted=false`。**禁改为从 ok/lastSyncAt 反推**
+        //（早退经 runFull → endRun 仍返回 ok=true 并推进 lastSyncAt）
+        syncStatus.markPullExecuted()
         // 每表待拉游标：首轮为存储游标回拉窗口；后续轮为上一页末尾回拉窗口
         const pending = new Map<string, PullCursorState>()
         for (const config of SYNC_TABLES) {

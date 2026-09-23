@@ -1074,6 +1074,47 @@ describe('SyncService 运行级语义（SHELL-03：DEF-SYNC-01/02/03、BC-3a/b/c
         expect(await syncTracker.countDue()).toBe(2)
     })
 })
+describe('T107c：SyncRunResult.pullExecuted（web 只读闸门解除判定）', () => {
+    beforeEach(async () => {
+        await setup()
+    })
+
+    /** 空数据成功拉取响应（无脏队列 ⇒ push 阶段无请求） */
+    const emptyOkRequester = (): Requester =>
+        mockRequester(() => ({ data: { data: {} }, serverTime: Date.now() }))
+
+    it('① 注销宽限期（deletionSchedules 命中）早退 ⇒ ok=true 但 pullExecuted=false（反向断言）', async () => {
+        await localDatabase.deletionSchedules.put({
+            id: 'test-user',
+            deadline: new Date(Date.now() + 86400000).toISOString(),
+            createdAt: new Date().toISOString()
+        })
+        const before = syncStatus.get().lastSyncAt
+        const service = new SyncService(emptyOkRequester())
+        const result = await service.start()
+        // 坑的形态：空运行也返回 ok=true 且推进 lastSyncAt —— 故禁从 ok/lastSyncAt 反推
+        expect(result.ok).toBe(true)
+        expect(result.lastError).toBeNull()
+        expect(syncStatus.get().lastSyncAt).not.toBe(before)
+        expect(result.pullExecuted).toBe(false)
+    })
+
+    it('② 无会话（!userId）早退 ⇒ ok=true 但 pullExecuted=false（反向断言）', async () => {
+        localSession.clear()
+        const service = new SyncService(emptyOkRequester())
+        const result = await service.start()
+        expect(result.ok).toBe(true)
+        expect(result.lastError).toBeNull()
+        expect(result.pullExecuted).toBe(false)
+    })
+
+    it('③ 正常路径（真实进入拉取）⇒ pullExecuted=true', async () => {
+        const service = new SyncService(emptyOkRequester())
+        const result = await service.start()
+        expect(result.ok).toBe(true)
+        expect(result.pullExecuted).toBe(true)
+    })
+})
 describe('SyncService 推送载荷计数字段/排序字段（U-C4 回归）', () => {
     beforeEach(async () => {
         await setup()
