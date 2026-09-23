@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto'
-import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { Requester } from '@nao-todo/shared'
 import { cryptoService } from '../../persistence-local/crypto/crypto-service'
 import { localDatabase } from '../../persistence-local/db/local-database'
@@ -53,6 +53,33 @@ const mockRequester = (handler: (url: string, body: unknown) => unknown): Reques
         put: async () => ({ data: {} }),
         delete: async () => ({ data: {} })
     }) as unknown as Requester
+
+/**
+ * DEF-28（flaky）隔离：本文件每个用例都新建独立 `SyncService`，其实例内的**条件退避定时器**
+ * （`scheduleBackfillTick` → `setTimeout(→ resumeBackfill)`）在用例结束后仍存活；一旦落在后续
+ * 用例中途触发，会经**全局单例** `syncStatus.beginRun()` 清空在跑运行的 `runErrors`
+ *（并 `resetFailed`/`clearPaused`），使 `ok`/`lastError`/`errors` 断言随机翻转 ——
+ * BC-3b「首个错误应为拉取」、Q3、SHELL-06 均由此翻红（实测 ~1/6）。
+ * ⇒ 用例结束即清掉本用例创建的定时器（用例内已 await 完成的行为不受影响）。
+ */
+const timersCreatedInTest = new Set<ReturnType<typeof globalThis.setTimeout>>()
+let realSetTimeout: typeof globalThis.setTimeout
+
+beforeEach(() => {
+    realSetTimeout = globalThis.setTimeout
+    const trackingSetTimeout = (...args: Parameters<typeof globalThis.setTimeout>) => {
+        const id = realSetTimeout(...args)
+        timersCreatedInTest.add(id)
+        return id
+    }
+    globalThis.setTimeout = trackingSetTimeout as typeof globalThis.setTimeout
+})
+
+afterEach(() => {
+    for (const id of timersCreatedInTest) clearTimeout(id)
+    timersCreatedInTest.clear()
+    globalThis.setTimeout = realSetTimeout
+})
 
 describe('SyncTracker', () => {
     beforeEach(async () => {
