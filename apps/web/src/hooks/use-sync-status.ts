@@ -1,6 +1,7 @@
 /**
  * 同步状态 hook（Phase 3 可观测）
  * @description 订阅 SyncStatus，返回响应式同步状态；组件卸载时自动取消订阅。
+ *              webapp 单一真源：desktop 经 `@/hooks` 装配缝 re-export 复用（T115b 迁入）。
  */
 import { onMounted, onUnmounted, ref } from 'vue'
 import { syncStatus, type SyncStatusState } from '@nao-todo/infrastructure'

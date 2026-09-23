@@ -7,6 +7,7 @@ import { defineComponent } from 'vue'
  * 触顶文案 N：镜像实际已加载行数（AC13b / PM 裁定）
  * @description N = 当前用户 `tasks` 表实际行数（**不得**取固定上限 / 服务端 Total）。
  *              未触顶 ⇒ 不查库、恒 0（组件退回通用文案）；订阅 syncStatus 后刷新。
+ *              T115b：随 hook 移入 hooks；截断信号读 `syncStatus.get().mirrorTruncated`。
  */
 
 const mocks = vi.hoisted(() => ({
@@ -16,17 +17,14 @@ const mocks = vi.hoisted(() => ({
     table: vi.fn(),
     subscribe: vi.fn(),
     unsubscribe: vi.fn(),
+    get: vi.fn(),
     mirrorTruncated: false
 }))
 
 vi.mock('@nao-todo/infrastructure', () => ({
     localSession: { getCurrentUserId: mocks.getCurrentUserId },
     localDatabase: { table: mocks.table },
-    syncStatus: { subscribe: mocks.subscribe }
-}))
-
-vi.mock('@/data-plane', () => ({
-    getMirrorState: () => ({ mirrorTruncated: mocks.mirrorTruncated })
+    syncStatus: { get: mocks.get, subscribe: mocks.subscribe }
 }))
 
 const { countMirrorRows, useMirrorLoadedCount } = await import('../use-mirror-loaded-count')
@@ -34,6 +32,7 @@ const { countMirrorRows, useMirrorLoadedCount } = await import('../use-mirror-lo
 beforeEach(() => {
     vi.clearAllMocks()
     mocks.mirrorTruncated = false
+    mocks.get.mockImplementation(() => ({ mirrorTruncated: mocks.mirrorTruncated }))
     mocks.getCurrentUserId.mockReturnValue('u-1')
     mocks.count.mockResolvedValue(0)
     mocks.table.mockImplementation(() => ({

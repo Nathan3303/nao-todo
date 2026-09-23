@@ -1,6 +1,7 @@
 /**
  * 手动同步 hook
  * @description 手动触发完整同步（拉取全部 + 推送全部），返回执行状态供 UI 反馈。
+ *              webapp 单一真源：desktop 经 `@/hooks` 装配缝 re-export 复用（T115b 迁入）。
  */
 import { ref } from 'vue'
 import { syncService } from '@nao-todo/infrastructure'

@@ -1,6 +1,5 @@
 import { localDatabase, localSession, syncStatus } from '@nao-todo/infrastructure'
 import { onMounted, onUnmounted, ref, type Ref } from 'vue'
-import { getMirrorState } from '@/data-plane'
 
 /**
  * 触顶文案 N（AC13b / PM 裁定）—— 镜像中**实际已加载**行数
@@ -12,6 +11,10 @@ import { getMirrorState } from '@/data-plane'
  *
  *              仅 `mirrorTruncated` 为真时统计（否则 0 ⇒ 组件退回通用文案）；
  *              订阅 `syncStatus` 在拉取/落盘后刷新。
+ *
+ *              T115b：从 `components/offline/` 移入 hooks（面板共享，两端复用）；
+ *              截断信号改读 `syncStatus.get().mirrorTruncated`（原 `@/data-plane` 的 `getMirrorState()`
+ *              仅是其透传）⇒ 去掉 web-only 运行接线依赖。
  *
  * @see docs/prds/2026-09-23-web-offline-stage1.md（AC13b）
  */
@@ -35,7 +38,7 @@ export const useMirrorLoadedCount = (): Ref<number> => {
     const count = ref(0)
 
     const refresh = async (): Promise<void> => {
-        const { mirrorTruncated } = getMirrorState()
+        const { mirrorTruncated } = syncStatus.get()
         count.value = mirrorTruncated ? await countMirrorRows() : 0
     }
 

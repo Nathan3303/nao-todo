@@ -2,9 +2,7 @@
 import { onMounted } from 'vue'
 import useIndexView from './index-view'
 import { AppDialogAdapter, AppAsideV2Adapter } from '@/components/app/'
-import { OfflineStatus } from '@/components/offline'
-import { PlaintextNoticeBanner } from '@/components/plaintext-notice'
-import { OfflineReadOnlyBanner } from '@nao-todo/presentation/offline'
+import { showPlaintextNoticeConfirm } from '@/components/plaintext-notice'
 import { Loading as LoadingComp, assetUrl } from '@nao-todo/shared'
 import { UserDeletionNotifier } from '@nao-todo/presentation-identity'
 
@@ -14,6 +12,8 @@ const { isLoading, IndexViewInitialize } = useIndexView()
 
 onMounted(() => {
     IndexViewInitialize()
+    // 首启明文告知：一次性 NueConfirm（设备级已读标记；替代原常驻横幅，不占头部）
+    showPlaintextNoticeConfirm()
 })
 </script>
 
@@ -23,12 +23,8 @@ onMounted(() => {
         <nue-main>
             <app-aside-v2-adapter />
             <nue-content fill style="overflow: hidden">
-                <!-- 明文姿态首次进入一次性告知（ADR §4.5 / AC17，可关闭不阻塞；已读后不渲染） -->
-                <plaintext-notice-banner />
-                <!-- 离线只读可见提示（C-59 / AC10，仅离线时渲染） -->
-                <offline-read-only-banner />
-                <!-- 离线/镜像状态条（C-60 文案三分 + 覆盖度/触顶） -->
-                <offline-status />
+                <!-- 头部零挂载（用户裁定）：明文告知走首启 NueConfirm；只读提示走写拦截时 NueMessage；
+                     离线/镜像/覆盖度状态已全部迁入左下角同步状态组件（T115b/r7） -->
                 <!-- 路由视图 -->
                 <router-view v-slot="{ Component }">
                     <suspense>
