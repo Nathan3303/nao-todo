@@ -111,12 +111,14 @@ Docs are local at `node_modules/vite-plus/docs` or online at https://viteplus.de
 - **会话收窗纪律（2026-09-23 新增，用户要求）**：**关会话（`tmux kill-pane`）前必须先确认该会话未在跑 turn** —— ① 先看是否已回**终态回执**（`[编号] done`；**未回执不得关**）；② 再 `tmux capture-pane -p -t <pane>` 看末 5 行状态行：**出现 `Working` / spinner = 正在跑 turn ⇒ 等它停**；③ 关前顺手确认其产物已落盘（`git log` 有提交、工作区干净、dev server / 探针已停），**避免丢失在制工作**
 - 提交纪律：**精确 pathspec**，禁 `git add -A`；**`.agents/**` 已纳入版本管理**（2026-09-22 用户决定）；`.codegraph/**`、`.pi/**` 由 `.gitignore` 排除，不提交
 - pre-commit 钩子 `vp staged` 会执行 `vp check --fix`：**以 `markdown` 为语言标记的代码围栏，其内部列表会被按 `.editorconfig` 的 `indent_size = 4` 重排**（曾静默改写 PRD 的冻结格式基准）。需原样保留缩进的示例，请用 `text` 作为围栏语言标记
-- **「全范围门禁」= 本项目交付验收的完整口径（舰队角色卡所引用的就是本节，2026-09-23 新增）**：① `pnpm exec vp check`（格式 + lint + 类型，须 **0 error**）；② **全仓** `pnpm exec vp test --run`（**非子目录**；须报**文件数 / 例数 / 红数**）；③ `pnpm run guard:ddd`（领域隔离，exit 0）；④ `pnpm exec vp run webapp build` 与 `pnpm run desktop:build`（均 exit 0）；⑤ 移动端红线 `git status --porcelain -- packages/presentation-react apps/mobileapp` = **0**。**worker 回执口径（2026-09-23 精化，测试提速）**：worker **只跑/只报「受影响面 + 其依赖包」**（须给**精确数字/退出码**；**不得**只写「pass」；**只跑子目录而不说明面不算回执**）——**全仓 5 项由批末 PM/qa 统一跑 1–2 次，作为硬闸门**（PM 默认不重复跑 worker 已跑的项，仅异常时复跑/抽查）。**若批末全仓转红 ⇒ 定位到谁的面谁返工。**
+- **「全范围门禁」= 本项目交付验收的完整口径（舰队角色卡所引用的就是本节，2026-09-23 新增）**：① `pnpm exec vp check`（格式 + lint + 类型，须 **0 error**）；② **全仓** `pnpm exec vp test --run`（**非子目录**；须报**文件数 / 例数 / 红数**）；③ `pnpm run guard:ddd`（领域隔离，exit 0）；④ `pnpm exec vp run webapp build` 与 `pnpm run desktop:build`（均 exit 0）；⑤ 移动端红线 `git status --porcelain -- packages/presentation-react apps/mobile` = **0**。**worker 回执口径（2026-09-23 精化，测试提速）**：worker **只跑/只报「受影响面 + 其依赖包」**（须给**精确数字/退出码**；**不得**只写「pass」；**只跑子目录而不说明面不算回执**）——**全仓 5 项由批末 PM/qa 统一跑 1–2 次，作为硬闸门**（PM 默认不重复跑 worker 已跑的项，仅异常时复跑/抽查）。**若批末全仓转红 ⇒ 定位到谁的面谁返工。**
 - **提交纪律（2026-09-23 精化，承接上条 `paths` 要求）**：`git add <pathspec>` **只决定「进 index」**；**裸 `git commit` 提交的是整个 index**，会把他人已 `git add` 但未提交的改动一并带走（本项目 2026-09-23 发生过一次）。⇒ 只提自己文件时用 **`git commit --only <paths>`**，且**提交前必须 `git diff --cached --name-only` 核对 index 实际内容**；其他写者有 staged 未提交改动时，**等其提交完成再提交**（同 cwd 单写者）。
 
 ### 项目红线
 
-- **移动端红线**：`packages/presentation-react` 与 `apps/mobileapp` 不随桌面端 / Web 需求改动，除非用户明确授权
+> **⚠️ 2026-09-23 修正（arch `T121` 发现，PM 核实）**：移动端门禁 pathspec 原写 `apps/mobileapp`，**该目录不存在**（实际是 **`apps/mobile`**）⇒ **`git status --porcelain -- apps/mobileapp` 被 git 静默忽略、门禁恒为 0**（**验收口径漏洞**）。已全部改为 **`apps/mobile`**。**核实结论：本批（近 40 提交）未触碰 `apps/mobile` / `packages/presentation-react`** ⇒ **红线未被违反**，但**门禁此前是空转**。`.agents/**`（舰队角色卡）内的同一路径亦须修 ⇒ **挂 nao-skills 下一批**。
+
+- **移动端红线**：`packages/presentation-react` 与 `apps/mobile` 不随桌面端 / Web 需求改动，除非用户明确授权
 - 服务端契约（如分页稳定排序）不得为展示层需求擅动
 
 <!-- NAO FLEET END -->
