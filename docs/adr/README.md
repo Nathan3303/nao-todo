@@ -31,6 +31,8 @@
 
 | 2026-09-23 | 两端一致的同步状态展示（T115/**T115c**：组件落点 / 数据映射 / **顶部零挂载 + 全部状态入面板**） | **有条件可行**（**r7 用户裁定变更设计**）：组件**迁入 webapp** + hooks（消除 web→desktop 反向依赖）；**同一组件同一状态接口**（否决 web 只读变体）+ `syncTimeSource`；**D-3 = 顶部零挂载**（`index.vue` 移除 `<offline-status />`，`offline-status.vue` **删除**）+ **②③④⑤ 全部迁入面板**；**D-4 = 状态→指示映射表**：新增**正交角标通道**（`::after` 圆点：不完整·触顶=alert / 离线镜像=warn）+ 通道④文案（既有 i18n 键拼接），**C14/D2 三态着色逐字不变**（新增状态**不插入颜色通道**）；**D-5 = AC8/AC9/AC13b 二段式可见性论证** + **N-1（≤445px 抽屉无宿主 ⇒ 无同步状态）/ N-2（时间·N·引导语零交互不可见）显式降级项 + 替代方案**；**D-6** 删除 `offline-status.vue`（面板根为 `<ul>`，子须 `<li>`）+ **i18n 键不增不删**；**D-7 头部另 2 个组件待裁定**（`offline-read-only-banner`/AC10 已上报；**`plaintext-notice-banner`/AC17 本单首次登记**）；连带 S1–S11；DP-1/DP-3/DP-5 **已由用户裁定关闭**，新增 DP-6/DP-7a/DP-7b | ⏳ 有条件通过（DP-2/DP-4/DP-6/DP-7a/DP-7b 待拍板；代码零改动） |
 
+| 2026-09-23 | TASK-26 本地偏好同步（T129：写路径语义 / 服务端契约 / 冲突语义 / 同步时机） | **有条件可行**（**PS-1…PS-9**）：偏好面 = **独立「设置面」**，**不入 `syncQueue`**（不碰业务同步引擎）；**web 不新增本地写路径**（C-59 不放宽）· **desktop 本地写 + 回传远端**；**C-59 只需文档级收窄/登记**（「本地写路径」= 业务数据面 + 偏好面例外）。**服务端契约**：`user_configs` **加 nullable JSON 列 `preferences`**（versioned、服务端不解析）+ `GET /user/config` **补 `updatedAt`** + `UpdateUserConfigReq.appearance` 改可选；**普通清单偏好复用既有 `project_preferences` 表 + REST（零服务端改动；因移动端共用 + 本地合成主键不兼容批量 upsert）**；**内建清单偏好进 `preferences`（不复用 `ProjectPreference`）**；迁移 = AutoMigrate 加列（additive）。**冲突 = LWW**（设置面快照级、服务端 `updated_at` 权威；普通清单偏好按行 `updatedAt`）。**8 处事实更正**（P1 desktop 偏好**既不推也不拉** / P2「随父实体同步」注释不实 / P3 `/projects` 复数 / P4 内建键实为 email / P5 内建偏好未纳入写闸门 / P6 合成主键 / P7 `LocalUserConfigRepoImpl` 死代码 / P8 移动端共用偏好 REST）。连带 S1–S10 | ⏳ 有条件通过（**DP-1 C-59 作用域登记阻塞开工**；DP-2…DP-6 待拍板；代码零改动） |
+
 ## 篇间关系
 
 | 关系                     | 说明                                                                                                                                                                                                                                                                                                                                                                                                   |
@@ -84,6 +86,12 @@
 | 2026-09-23 | WEB-OFFLINE | **C-52 措辞冲突**（`deletionSchedules` 是否在登出/切换清库范围内） | **PM 已裁定 = 保留自身**（仅「注销到期」路径删自己的） | ✅ **已闭环**（ADR **r5** 同步 C-52 / C-64 / §9.1 / §10.3 / §10.5 + §10.8） |
 | 2026-09-23 | WEB-OFFLINE | **C-60 冷启动缺口**（`mirrorPulledAt` 内存态 ⇒ 离线冷启动误显「尚未同步完成」） | **PM 已裁定 = 持久化到 `meta`**（`${userId}:mirror-status`） | ✅ **已闭环**（ADR **r5** 同步 C-60 / §9.3-AC8 / §10.2 + §10.8；实现 `0e095d88`/T107b） |
 | 2026-09-23 | WEB-OFFLINE | **U-7：C-59 作用域强度**（全程只读 vs 外科读法） | **arch 已裁定 = 外科读法**：**web 离线只读 + desktop 写路径一律不变**；LWW 豁免改为「不新增写路径」 | ⏳ **待 PM 拍板（不阻塞开工）**：若收紧为 uniform（desktop 离线也禁写）⇒ **须用户显式知情** + ADR 追加一行（ADR **r5** §10.9） |
+| 2026-09-23 | TASK-26 | **DP-1：C-59 作用域登记**（是否将「不得新增本地写路径」明确为**业务数据面** + 偏好面显式例外） | **是**（文档级修订，**不放宽 web 离线只读**） | ⛔ **阻塞开工**（TASK-26 M1–M5 不得派发） |
+| 2026-09-23 | TASK-26 | **DP-2：PRD AC3「离线改偏好本地生效」端范围** | **限 desktop**（web 离线只读，与 C-59 一致） | ⏳ 待 PM（备选 = web 偏好豁免，须用户知情） |
+| 2026-09-23 | TASK-26 | **DP-3：`UserConfig` 扩展形态**（JSON blob vs 加字段） | **JSON blob `preferences`** | ⏳ 待 PM |
+| 2026-09-23 | TASK-26 | **DP-4：内建偏好归属**（`UserConfig.preferences` vs 新增服务端实体） | **进 `preferences`** | ⏳ 待 PM |
+| 2026-09-23 | TASK-26 | **DP-5：tagPreference**（PRD 非范围）随本批同法处理 vs 后续单 | **随本批同法处理**（否则留缺口） | ⏳ 待 PM |
+| 2026-09-23 | TASK-26 | **DP-6：`CALENDAR_WEEKSTART` 设备级→用户级**（Q3′ 已答「是」） | **接受**（改变现有「登出保留」行为） | ⏳ 待 PM |
 
 ## 计划中的偏离登记（有据偏离，已批准）
 
