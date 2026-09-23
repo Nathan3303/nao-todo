@@ -1,6 +1,5 @@
 import { ProjectService, ProjectStore, ProjectUseCase } from '@nao-todo/domain-project'
-import { ProjectPreferenceRepoImpl, ProjectRepoImpl } from '@nao-todo/infrastructure'
-import { getRequesterImpl } from '@nao-todo/shared'
+import { useCaseBinding } from '@/hooks/usecases/binding'
 
 /**
  * 项目用例
@@ -8,9 +7,8 @@ import { getRequesterImpl } from '@nao-todo/shared'
  * @returns 项目用例
  */
 export const useProjectUseCase = (store: ProjectStore) => {
-    const requester = getRequesterImpl()
-    const projectRepo = new ProjectRepoImpl(requester)
-    const projectPrefereneRepo = new ProjectPreferenceRepoImpl(requester)
-    const projectDomain = new ProjectService(projectRepo, projectPrefereneRepo)
-    return new ProjectUseCase(projectDomain, projectRepo, projectPrefereneRepo, store)
+    const projectRepo = useCaseBinding.createProjectRepository()
+    const projectPreferenceRepo = useCaseBinding.createProjectPreferenceRepository()
+    const projectDomain = new ProjectService(projectRepo, projectPreferenceRepo)
+    return new ProjectUseCase(projectDomain, projectRepo, projectPreferenceRepo, store)
 }

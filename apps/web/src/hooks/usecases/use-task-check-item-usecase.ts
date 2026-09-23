@@ -1,9 +1,7 @@
 import { TaskCheckItemStore, TaskCheckItemUseCase } from '@nao-todo/domain-task'
-import { TaskCheckItemRepoImpl } from '@nao-todo/infrastructure'
-import { getRequesterImpl } from '@nao-todo/shared'
+import { useCaseBinding } from '@/hooks/usecases/binding'
 
 export const useTaskCheckItemUseCase = (store: TaskCheckItemStore) => {
-    const requester = getRequesterImpl()
-    const taskCheckItemRepo = new TaskCheckItemRepoImpl(requester)
+    const taskCheckItemRepo = useCaseBinding.createTaskCheckItemRepository()
     return new TaskCheckItemUseCase(taskCheckItemRepo, store)
 }

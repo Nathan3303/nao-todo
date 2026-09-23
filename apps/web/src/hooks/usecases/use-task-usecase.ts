@@ -1,10 +1,8 @@
 import { TaskDomain, TaskStore, TaskUseCase } from '@nao-todo/domain-task'
-import { TaskRepoImpl } from '@nao-todo/infrastructure'
-import { getRequesterImpl } from '@nao-todo/shared'
+import { useCaseBinding } from '@/hooks/usecases/binding'
 
 export const useTaskUseCase = (store: TaskStore) => {
-    const requester = getRequesterImpl()
-    const taskRepo = new TaskRepoImpl(requester)
+    const taskRepo = useCaseBinding.createTaskRepository()
     const taskDomain = new TaskDomain(taskRepo)
     return new TaskUseCase(taskDomain, taskRepo, store)
 }

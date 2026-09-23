@@ -1,9 +1,12 @@
 import { UserStore, UserUseCase } from '@nao-todo/domain-identity'
 import { cacheNickname, newUserConfigRepository, newUserRepository } from '@nao-todo/infrastructure'
 import { getRequesterImpl } from '@nao-todo/shared'
+import { useCaseBinding } from '@/hooks/usecases/binding'
 
 /**
  * 用户用例工厂
+ * @description 用户资料/账号操作/外观配置两端一致（远程后端 API）；desktop 端专属的
+ *              注销调度与本地密钥包重包经 `decorateUserUseCase` 注入。
  * @param store 用户存储
  * @returns 用户用例
  */
@@ -30,5 +33,5 @@ export const useUserUseCase = (store: UserStore) => {
         return err
     }
 
-    return useCase
+    return useCaseBinding.decorateUserUseCase?.(useCase) ?? useCase
 }

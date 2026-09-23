@@ -1,11 +1,3 @@
-export * from './use-auth-usecase'
-export * from './use-app-handlers'
-export * from './use-built-in-project-usecase'
-export * from './use-tag-usecase'
-export * from './use-project-usecase'
-export * from './use-task-check-item-usecase'
-export * from './use-task-comment-usecase'
-export * from './use-task-usecase'
-export * from './use-user-usecase'
-export * from './use-pomodoro-usecase'
-export * from './use-pomodoro-record-usecase'
+// desktop 装配层：共享用例单一真源在 webapp（apps/web/src/hooks/usecases），
+// 端差异经 `@/hooks/usecases/binding`（electron.vite.config.ts 的 @/hooks 别名）注入本地仓储与桌面端装饰。
+export * from '@nao-todo/webapp/src/hooks/usecases'

@@ -1,6 +1,5 @@
 import { TagService, TagStore, TagUseCase } from '@nao-todo/domain-tag'
-import { TagPreferenceRepoImpl, TagRepoImpl } from '@nao-todo/infrastructure'
-import { getRequesterImpl } from '@nao-todo/shared'
+import { useCaseBinding } from '@/hooks/usecases/binding'
 
 /**
  * 创建标签使用案例
@@ -8,9 +7,8 @@ import { getRequesterImpl } from '@nao-todo/shared'
  * @returns 标签使用案例
  */
 export const useTagUseCase = (store: TagStore) => {
-    const requester = getRequesterImpl()
-    const tagRepo = new TagRepoImpl(requester)
-    const tagPreferenceRepo = new TagPreferenceRepoImpl(requester)
+    const tagRepo = useCaseBinding.createTagRepository()
+    const tagPreferenceRepo = useCaseBinding.createTagPreferenceRepository()
     const domain = new TagService(tagRepo)
     return new TagUseCase(domain, tagRepo, tagPreferenceRepo, store)
 }

@@ -1,9 +1,7 @@
 import { TaskCommentStore, TaskCommentUseCase } from '@nao-todo/domain-task'
-import { TaskCommentRepoImpl } from '@nao-todo/infrastructure'
-import { getRequesterImpl } from '@nao-todo/shared'
+import { useCaseBinding } from '@/hooks/usecases/binding'
 
 export const useTaskCommentUseCase = (store: TaskCommentStore) => {
-    const requester = getRequesterImpl()
-    const taskCommentRepo = new TaskCommentRepoImpl(requester)
+    const taskCommentRepo = useCaseBinding.createTaskCommentRepository()
     return new TaskCommentUseCase(taskCommentRepo, store)
 }
