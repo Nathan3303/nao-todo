@@ -29,6 +29,7 @@ type MockSyncStatus = {
     mirrorTruncated: boolean
     pendingCount: number
     failedCount: number
+    preferenceFailedCount: number
     paused: boolean
     lastError: string | null
 }
@@ -40,6 +41,7 @@ const defaultStatus = (): MockSyncStatus => ({
     mirrorTruncated: false,
     pendingCount: 0,
     failedCount: 0,
+    preferenceFailedCount: 0,
     paused: false,
     lastError: null
 })
@@ -62,6 +64,7 @@ vi.mock('@/hooks', async () => {
         mirrorTruncated: false,
         pendingCount: 0,
         failedCount: 0,
+        preferenceFailedCount: 0,
         paused: false,
         lastError: null
     })
@@ -242,6 +245,22 @@ describe('SyncStatusBar - SHELL-02 轨道同步状态', () => {
         expect(panel()?.querySelector('button.nue-button')).toBeTruthy()
         // C16：@close + nextTick 归还焦点
         expect(document.activeElement).toBe(button)
+    })
+
+    it('偏好同步失败：面板显示计数 + 弹出可见提示（T136 GAP-2 / AC3-04 / AC4-04）', async () => {
+        createHost()
+        mountBar()
+        await settle()
+        openPanel()
+        await settle()
+
+        status().value = { ...status().value, preferenceFailedCount: 2 }
+        await nextTick()
+
+        // 状态面消费方：面板行（AC3-04）
+        expect(panelText()).toContain('偏好同步失败 2 项')
+        // 可见提示（AC4-04：不静默吞）
+        expect(document.querySelector('.nue-message')?.textContent).toContain('偏好同步失败 2 项')
     })
 
     it('三态文案：从未同步 / 同步中 / 失败+计数', async () => {

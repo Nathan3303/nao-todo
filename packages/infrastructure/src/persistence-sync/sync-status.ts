@@ -39,6 +39,12 @@ export interface SyncStatusState {
     pendingCount: number
     /** 推送失败实体数（retryCount > 0，含超限暂停项） */
     failedCount: number
+    /**
+     * 偏好队列推送失败数（TASK-26 / T136 GAP-2；AC3-04）
+     * @description **独立于业务 `failedCount`**，不计入 `pendingCount`（PS-10）；
+     *              仅由 `pushPreferenceQueue` 落定，供状态面/UI 展示。
+     */
+    preferenceFailedCount: number
     /** 最近一次运行的按执行序首个错误信息 */
     lastError: string | null
     /** 最近一次运行的错误列表（保序去重） */
@@ -67,6 +73,7 @@ export class SyncStatus {
         lastSyncAt: null,
         pendingCount: 0,
         failedCount: 0,
+        preferenceFailedCount: 0,
         lastError: null,
         errors: [],
         errorCount: 0,
@@ -141,6 +148,15 @@ export class SyncStatus {
      */
     markPullExecuted(): void {
         this.runPullExecuted = true
+    }
+
+    /**
+     * 落定偏好队列推送结果（TASK-26 / T136 GAP-2；AC3-04）
+     * @description 独立字段：不改变业务 `pendingCount`/`failedCount` 语义（PS-10），
+     *              也**不参与** `beginRun`/`endRun` 运行边界。
+     */
+    reportPreferencePush(result: { pushed: number; failed: number }): void {
+        this.set({ preferenceFailedCount: result.failed })
     }
 
     /**

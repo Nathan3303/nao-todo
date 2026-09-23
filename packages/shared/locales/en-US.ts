@@ -44,6 +44,7 @@ const enUS: LocaleMessages = {
     'sync.lastSyncAt': 'Last sync {time}',
     'sync.pending': '{count} pending',
     'sync.failed': '{count} failed',
+    'sync.preferenceFailed': '{count} preference(s) failed to sync',
     'sync.syncNow': 'Sync now',
     'sync.pendingOffline': '{count} change(s) pending sync (offline, auto-syncs when online)',
     'sync.retryNow': 'Retry now',

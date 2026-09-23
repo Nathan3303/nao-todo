@@ -13,7 +13,7 @@
  * @see docs/adr/2026-09-23-two-end-sync-status-unification.md（D-2 数据映射 / D-3 顶部零挂载 / D-4 指示通道）
  */
 import { computed, nextTick, ref, watch } from 'vue'
-import type { NueDropdown } from 'nue-ui'
+import { NueMessage, type NueDropdown } from 'nue-ui'
 import { locale, t } from '@nao-todo/shared/locales'
 import {
     formatMirrorPulledAt,
@@ -165,6 +165,16 @@ const handleClose = (): void => {
 watch(settingsDialogOpen, (visible) => {
     if (visible) dropdownRef.value?.close()
 })
+
+// @watch 偏好同步失败 ⇒ 可见提示（T136 GAP-2 / AC4-04：不静默吞；同一失败数不重复弹）
+watch(
+    () => status.value.preferenceFailedCount,
+    (count, previous) => {
+        if (count > 0 && count !== previous) {
+            NueMessage.warn(t('sync.preferenceFailed', { count }))
+        }
+    }
+)
 </script>
 
 <template>
@@ -240,6 +250,12 @@ watch(settingsDialogOpen, (visible) => {
             <li v-if="status.failedCount > 0" class="sync-panel__row">
                 <nue-text size="xs" color="var(--nue-error-color-60)">
                     {{ t('sync.failed', { count: status.failedCount }) }}
+                </nue-text>
+            </li>
+            <!-- TASK-26 / T136 GAP-2：偏好队列推送失败（独立于业务失败计数，AC3-04） -->
+            <li v-if="status.preferenceFailedCount > 0" class="sync-panel__row">
+                <nue-text size="xs" color="var(--nue-error-color-60)">
+                    {{ t('sync.preferenceFailed', { count: status.preferenceFailedCount }) }}
                 </nue-text>
             </li>
             <!-- 全文仅经 title 与文本插值输出（禁 v-html）；2 行截断由 CSS 完成；

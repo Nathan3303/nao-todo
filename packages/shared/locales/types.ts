@@ -40,6 +40,7 @@ export interface LocaleMessages {
     'sync.lastSyncAt': string
     'sync.pending': string
     'sync.failed': string
+    'sync.preferenceFailed': string
     'sync.syncNow': string
     'sync.pendingOffline': string
     'sync.retryNow': string

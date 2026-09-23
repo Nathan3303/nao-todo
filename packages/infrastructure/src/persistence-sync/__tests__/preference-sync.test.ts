@@ -8,6 +8,7 @@ import { JsonStringValueObject } from '@nao-todo/shared/valueobjects/json-string
 import { cryptoService } from '../../persistence-local/crypto/crypto-service'
 import { localDatabase } from '../../persistence-local/db/local-database'
 import { projectPreferenceEntityToRecord } from '../../persistence-local/converters/preference'
+import { LocalProjectPreferenceRepoImpl } from '../../persistence-local/repos/project-preference-repo-impl'
 import { localSession } from '../../persistence-local/session/local-session'
 import {
     ASIDE_WIDTH_KEY,
@@ -25,6 +26,7 @@ import {
     writeSettingsSyncedAt
 } from '../preference-sync'
 import { enqueuePreference, loadPreferenceQueue } from '../preference-queue'
+import { syncStatus } from '../sync-status'
 
 /**
  * TASK-26 / M6+M7 —— 偏好同步（快照装配 / LWW / 按行回传 / 防抖 / 不入 syncQueue）
@@ -63,6 +65,8 @@ beforeEach(async () => {
     cryptoService.lock()
     localSession.setCurrentUserId(USER_ID)
     await cryptoService.setup(USER_ID, 'pw')
+    // T136 GAP-2：状态面为单例，用例间重置偏好失败计数
+    syncStatus.reportPreferencePush({ pushed: 0, failed: 0 })
 })
 
 afterEach(() => {
@@ -297,6 +301,212 @@ describe('启动拉取 + LWW 合并（D-4）', () => {
         })
         const items = await loadPreferenceQueue(USER_ID)
         expect(items.map((item) => item.kind)).toContain('userConfig')
+    })
+})
+
+/** 服务端普通清单偏好响应桩（GET /projects/:id/preference，成功码 20080） */
+const serverPreferenceResponse = (overrides: Record<string, unknown> = {}) => ({
+    data: {
+        code: 20080,
+        data: {
+            id: 'srv-1',
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-02T00:00:00.000Z',
+            deletedAt: null,
+            projectId: 'p-1',
+            viewType: 'kanban',
+            getTasksOptions: '{"state":"todo"}',
+            columns: '{"done":true}',
+            ...overrides
+        }
+    }
+})
+
+describe('GAP-1 普通清单偏好拉取/恢复（读时对账，T136）', () => {
+    it('本地缺失 + 服务端有数据 ⇒ 恢复并落本地（不入队）', async () => {
+        const get = vi.fn(async () => serverPreferenceResponse())
+        const repo = new LocalProjectPreferenceRepoImpl(localDatabase, makeRequester({ get }))
+
+        const [pref, err] = await repo.getByProjectId('p-1')
+
+        expect(err).toBeNull()
+        expect(pref!.projectId).toBe('p-1')
+        expect(pref!.viewType).toBe('kanban')
+        // 落本地：下次读取命中本地，不再请求服务端
+        const records = await localDatabase.projectPreferences.toArray()
+        expect(records).toHaveLength(1)
+        expect(records[0]!.viewType).toBe('kanban')
+        // 负向：来源是服务端而非用户改动 ⇒ **不得**入偏好队列（否则会用默认值反向覆盖服务端）
+        expect(await loadPreferenceQueue(USER_ID)).toHaveLength(0)
+    })
+
+    it('登出重登 / 换设备 / 清缓存（本地被清）⇒ 从服务端恢复', async () => {
+        const now = new Date().toISOString()
+        await localDatabase.projectPreferences.put(
+            await projectPreferenceEntityToRecord(
+                new ProjectPreferenceEntity(
+                    '',
+                    now,
+                    now,
+                    null,
+                    'p-1',
+                    'list',
+                    JsonStringValueObject.CreateByJsonString('{}'),
+                    JsonStringValueObject.CreateByJsonString('{}')
+                ),
+                USER_ID
+            )
+        )
+        // 模拟登出/清缓存：本地被清，服务端仍有数据
+        await localDatabase.projectPreferences.clear()
+
+        const get = vi.fn(async () => serverPreferenceResponse())
+        const repo = new LocalProjectPreferenceRepoImpl(localDatabase, makeRequester({ get }))
+        const [pref] = await repo.getByProjectId('p-1')
+
+        expect(get).toHaveBeenCalledTimes(1)
+        expect(pref!.viewType).toBe('kanban')
+    })
+
+    it('恢复后再次读取 ⇒ 命中本地（不再请求服务端）', async () => {
+        const get = vi.fn(async () => serverPreferenceResponse())
+        const repo = new LocalProjectPreferenceRepoImpl(localDatabase, makeRequester({ get }))
+
+        await repo.getByProjectId('p-1')
+        await repo.getByProjectId('p-1')
+
+        expect(get).toHaveBeenCalledTimes(1)
+    })
+
+    it('本地缺失 + 服务端无数据 ⇒ 返回默认且不入队（负向：本地缺失不推送）', async () => {
+        const get = vi.fn(async () => ({ data: { code: 20081, data: null } }))
+        const repo = new LocalProjectPreferenceRepoImpl(localDatabase, makeRequester({ get }))
+
+        const [pref, err] = await repo.getByProjectId('p-1')
+
+        expect(err).toBeNull()
+        expect(pref!.viewType).toBe('table')
+        expect(await loadPreferenceQueue(USER_ID)).toHaveLength(0)
+        // 队列为空 ⇒ 推送不产生任何写请求
+        const post = vi.fn(async () => ({ data: { code: 20090, data: {} } }))
+        const put = vi.fn(async () => ({ data: { code: 10120, data: {} } }))
+        const result = await pushPreferenceQueue({
+            requester: makeRequester({ post, put }),
+            storage: localStorage,
+            email: EMAIL
+        })
+        expect(result).toEqual({ pushed: 0, failed: 0 })
+        expect(post).not.toHaveBeenCalled()
+        expect(put).not.toHaveBeenCalled()
+    })
+
+    it('本地有值 ⇒ 本地优先（不发服务端请求，PS-1b）', async () => {
+        const now = new Date().toISOString()
+        await localDatabase.projectPreferences.put(
+            await projectPreferenceEntityToRecord(
+                new ProjectPreferenceEntity(
+                    '',
+                    now,
+                    now,
+                    null,
+                    'p-1',
+                    'table',
+                    JsonStringValueObject.CreateByJsonString('{}'),
+                    JsonStringValueObject.CreateByJsonString('{}')
+                ),
+                USER_ID
+            )
+        )
+        const get = vi.fn(async () => serverPreferenceResponse())
+        const repo = new LocalProjectPreferenceRepoImpl(localDatabase, makeRequester({ get }))
+
+        const [pref] = await repo.getByProjectId('p-1')
+
+        expect(pref!.viewType).toBe('table')
+        expect(get).not.toHaveBeenCalled()
+    })
+})
+
+describe('GAP-2 失败可见 / 计数接状态面（T136）', () => {
+    it('推送失败 ⇒ 状态面记录失败计数（AC3-04）', async () => {
+        await enqueuePreference(USER_ID, { kind: 'userConfig' })
+        const put = vi.fn(async () => {
+            throw { response: { status: 400 } }
+        })
+
+        const result = await pushPreferenceQueue({
+            requester: makeRequester({ put }),
+            storage: localStorage,
+            email: EMAIL
+        })
+
+        expect(result.failed).toBe(1)
+        expect(syncStatus.get().preferenceFailedCount).toBe(1)
+    })
+
+    it('推送成功 ⇒ 失败计数归零', async () => {
+        syncStatus.reportPreferencePush({ pushed: 0, failed: 3 })
+        await enqueuePreference(USER_ID, { kind: 'userConfig' })
+
+        await pushPreferenceQueue({
+            requester: makeRequester({ put: okPut('2026-01-02T00:00:00.000Z') }),
+            storage: localStorage,
+            email: EMAIL
+        })
+
+        expect(syncStatus.get().preferenceFailedCount).toBe(0)
+    })
+
+    it('偏好失败计数不改变业务计数（PS-10）', async () => {
+        await enqueuePreference(USER_ID, { kind: 'userConfig' })
+        const put = vi.fn(async () => {
+            throw { response: { status: 400 } }
+        })
+
+        await pushPreferenceQueue({
+            requester: makeRequester({ put }),
+            storage: localStorage,
+            email: EMAIL
+        })
+
+        expect(syncStatus.get().pendingCount).toBe(0)
+        expect(syncStatus.get().failedCount).toBe(0)
+        expect(await localDatabase.syncQueue.count()).toBe(0)
+    })
+})
+
+describe('GAP-3 远端胜 ⇒ 清本地脏队列（T136）', () => {
+    it('远端更新 ⇒ 应用远端并清 userConfig 脏队列（消除冗余 PUT）', async () => {
+        localStorage.setItem(`${EMAIL}/all`, JSON.stringify({ viewType: 'kanban' }))
+        await enqueuePreference(USER_ID, { kind: 'userConfig' })
+        const get = vi.fn(async () => ({
+            data: {
+                code: 10110,
+                data: {
+                    updatedAt: '2026-02-01T00:00:00.000Z',
+                    preferences: { builtInProjectPreferences: { all: { viewType: 'list' } } }
+                }
+            }
+        }))
+
+        await pullAndMergeUserConfig({
+            requester: makeRequester({ get }),
+            storage: localStorage,
+            email: EMAIL
+        })
+
+        // 远端胜 ⇒ 本地应用远端
+        expect(JSON.parse(localStorage.getItem(`${EMAIL}/all`)!)).toEqual({ viewType: 'list' })
+        // 本地脏队列已清 ⇒ 随后 flush 不再产生冗余 PUT
+        expect(await loadPreferenceQueue(USER_ID)).toHaveLength(0)
+        const put = vi.fn(async () => ({ data: { code: 10120, data: {} } }))
+        const result = await pushPreferenceQueue({
+            requester: makeRequester({ put }),
+            storage: localStorage,
+            email: EMAIL
+        })
+        expect(result).toEqual({ pushed: 0, failed: 0 })
+        expect(put).not.toHaveBeenCalled()
     })
 })
 

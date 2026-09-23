@@ -24,6 +24,7 @@ import {
     type PreferenceQueueItem
 } from './preference-queue'
 import { classifyPushFailure, type SyncErrorClass } from './sync-retry'
+import { syncStatus } from './sync-status'
 
 /** 偏好推送防抖窗口（ms；ADR §D-4「防抖 ~2s」） */
 export const PREFERENCE_PUSH_DEBOUNCE_MS = 2000
@@ -341,14 +342,8 @@ const pushProjectPreference = async (
     }
 }
 
-/**
- * 推送偏好队列（到期项；失败按三分类处理）
- * @description 网络类 ⇒ 暂停不计数；业务类 ⇒ 指数退避；凭证类 ⇒ 会话失效回调。
- *              **不触碰** `syncQueue` / `markDirty` / `pendingCount`。
- */
-export const pushPreferenceQueue = async (
-    context: PreferenceSyncContext = {}
-): Promise<PreferencePushResult> => {
+/** 单次推送执行（不落状态面；由 `pushPreferenceQueue` 统一上报） */
+const runPreferencePush = async (context: PreferenceSyncContext): Promise<PreferencePushResult> => {
     try {
         const userId = localSession.getCurrentUserId()
         if (!userId) return { pushed: 0, failed: 0 }
@@ -380,9 +375,24 @@ export const pushPreferenceQueue = async (
         }
         return { pushed, failed }
     } catch {
-        /* 存储不可用（隐私模式/库未就绪）：静默降级，不阻断使用（PS-9） */
-        return { pushed: 0, failed: 0 }
+        /* 存储不可用（隐私模式/库未就绪）：**不静默吞** —— 计一次失败入状态面；不阻断使用（PS-9） */
+        return { pushed: 0, failed: 1 }
     }
+}
+
+/**
+ * 推送偏好队列（到期项；失败按三分类处理）
+ * @description 网络类 ⇒ 暂停不计数；业务类 ⇒ 指数退避；凭证类 ⇒ 会话失效回调。
+ *              **不触碰** `syncQueue` / `markDirty` / `pendingCount`；
+ *              结果**落状态面**（`syncStatus.preferenceFailedCount`，T136 GAP-2 / AC3-04）
+ *              并由消费方（状态栏/提示）承接可见提示（AC4-04）。
+ */
+export const pushPreferenceQueue = async (
+    context: PreferenceSyncContext = {}
+): Promise<PreferencePushResult> => {
+    const result = await runPreferencePush(context)
+    syncStatus.reportPreferencePush(result)
+    return result
 }
 
 /**
@@ -422,6 +432,9 @@ export const pullAndMergeUserConfig = async (
             applyUserConfigSnapshot(remotePreferences, storage ?? localStorage, email)
             if (payload.updatedAt)
                 writeSettingsSyncedAt(userId, payload.updatedAt, storage ?? localStorage)
+            // ADR §D-1b「远端胜 ⇒ 应用远端、清本地脏」：清掉本地 `userConfig` 脏队列，
+            // 避免随后用「刚被远端覆盖后的本地快照」再发一次冗余 PUT（T136 GAP-3）
+            await removePreferenceItem(userId, { kind: 'userConfig' })
             return
         }
         // 远端未更新（或无 preferences）：本地有内容 ⇒ 入队回传（以本地为准）
