@@ -4,7 +4,7 @@ import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
 import { useBuiltInProjectsStore } from '@nao-todo/presentation/built-in-project'
 import { useProjectsStore } from '@nao-todo/presentation/project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
-import { NaoSmartListLinkVO } from '@nao-todo/shared'
+import { NaoSmartListLinkVO } from '@nao-todo/shared/components/smart-list'
 import { storeToRefs } from 'pinia'
 import { computed, inject, ref } from 'vue'
 

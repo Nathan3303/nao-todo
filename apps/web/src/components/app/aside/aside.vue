@@ -2,7 +2,8 @@
 import { APP_CONTEXT_KEY } from '@/context'
 import { PomodoroIndicator } from '@nao-todo/presentation/pomodoro'
 import { useUserStore } from '@nao-todo/presentation-identity'
-import { getAvatarSrc, NaoRouterLink, t } from '@nao-todo/shared'
+import { getAvatarSrc, t } from '@nao-todo/shared'
+import { NaoRouterLink } from '@nao-todo/shared/components/router-link'
 import { storeToRefs } from 'pinia'
 import { computed, inject } from 'vue'
 

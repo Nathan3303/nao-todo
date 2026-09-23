@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { InnerDropdown, InnerDropdownOption, t } from '@nao-todo/shared'
+import { InnerDropdown, InnerDropdownOption } from '@nao-todo/shared/components/inner-dropdown'
+import { t } from '@nao-todo/shared'
 import { TaskStateSelectOptions } from '../../constants'
 
 defineOptions({ name: 'TasksDropdownStateFilter' })

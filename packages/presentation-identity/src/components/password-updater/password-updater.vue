@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { PasswordRuleHint, RuleHint, t, unwrapError } from '@nao-todo/shared'
+import { PasswordRuleHint, RuleHint } from '@nao-todo/shared/components/rule-hint'
+import { t, unwrapError } from '@nao-todo/shared'
 import { NueInput, NueMessage } from 'nue-ui'
 import { computed, onMounted, reactive, ref } from 'vue'
 import type {

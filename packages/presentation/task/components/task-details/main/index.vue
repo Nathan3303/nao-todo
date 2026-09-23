@@ -1,11 +1,7 @@
 <script setup lang="ts">
-import {
-    CommentCreator,
-    parse2RelativeDate,
-    t,
-    TAG_CREATOR_DIALOG_KEY,
-    TaskSelector
-} from '@nao-todo/shared'
+import { CommentCreator } from '@nao-todo/shared/components/comment-creator'
+import { parse2RelativeDate, t, TAG_CREATOR_DIALOG_KEY } from '@nao-todo/shared'
+import { TaskSelector } from '@nao-todo/shared/components/task-selector'
 import { TaskTagBar } from '../../tag-bar'
 import { computed, inject } from 'vue'
 import { TaskPrioritySelectOptions, TaskStateSelectOptions } from '../../../constants'

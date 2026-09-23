@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { CalendarAside } from '@/components/calendar/aside'
 import { TaskDetailsAdapter } from '@nao-todo/presentation/task'
-import { LoadingError } from '@nao-todo/shared'
+import { LoadingError } from '@nao-todo/shared/components/loading-error'
 import { onMounted } from 'vue'
 import { useCalendarView } from './calendar-view'
 import CalendarHost from './host.vue'

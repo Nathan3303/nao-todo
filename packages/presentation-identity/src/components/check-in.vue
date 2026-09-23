@@ -8,7 +8,8 @@
  *                 改为**可重试失败态**（含「重试」+「重新登录」两个可前进动作，C-02）；
  *                 **凭证类**（401/403/10041/登录已过期）保持 `replace('/auth/signin')`。
  */
-import { Loading as LoadingComponent, t, unwrapError } from '@nao-todo/shared'
+import { Loading as LoadingComponent } from '@nao-todo/shared/components/loading'
+import { t, unwrapError } from '@nao-todo/shared'
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { NueMessage } from 'nue-ui'

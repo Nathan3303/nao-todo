@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { LoadingError, t } from '@nao-todo/shared'
+import { LoadingError } from '@nao-todo/shared/components/loading-error'
+import { t } from '@nao-todo/shared'
 
 defineOptions({ name: 'TaskExportDialog' })
 

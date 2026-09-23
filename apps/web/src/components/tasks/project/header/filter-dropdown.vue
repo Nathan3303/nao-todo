@@ -5,7 +5,7 @@ import {
     TaskPriorityFilter,
     TaskSortOperator
 } from '@nao-todo/presentation/task'
-import { DropdownDivBlock } from '@nao-todo/shared'
+import { DropdownDivBlock } from '@nao-todo/shared/components/dropdown-div-block'
 import { computed, inject, watch } from 'vue'
 import { PROJECT_VIEW_CONTEXT_KEY } from '../context'
 

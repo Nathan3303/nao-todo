@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { Loading as LoadingComponent, TaskStateInfo } from '@nao-todo/shared'
+import { Loading as LoadingComponent } from '@nao-todo/shared/components/loading'
+import { TaskStateInfo } from '@nao-todo/shared/components/task-state-info'
 import { NueInfiniteScroll } from 'nue-ui'
 import { inject, onMounted } from 'vue'
 import TaskKanbanColumnItem from './kanban-column-item.vue'

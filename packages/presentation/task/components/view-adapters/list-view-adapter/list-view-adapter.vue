@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { TaskList } from '../../list'
-import { LoadingError, TASK_CREATOR_DIALOG_KEY, t, assetUrl } from '@nao-todo/shared'
+import { LoadingError } from '@nao-todo/shared/components/loading-error'
+import { TASK_CREATOR_DIALOG_KEY, t, assetUrl } from '@nao-todo/shared'
 import useListViewAdapter from './use-list-view-adapter'
 import type { ListViewAdapterEmits, ListViewAdapterProps } from './types'
 import { notifyTaskError } from '../../../utils/error-message'

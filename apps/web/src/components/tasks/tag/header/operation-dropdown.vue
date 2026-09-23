@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from 'vue'
 import { TaskOperationsDropdown, TaskColumnDisplayController } from '@nao-todo/presentation/task'
-import { InnerDropdownOption, DropdownDivBlock, TAG_UPDATER_DIALOG_KEY } from '@nao-todo/shared'
+import { InnerDropdownOption } from '@nao-todo/shared/components/inner-dropdown'
+import { DropdownDivBlock } from '@nao-todo/shared/components/dropdown-div-block'
+import { TAG_UPDATER_DIALOG_KEY } from '@nao-todo/shared'
 import { TAG_VIEW_CONTEXT_KEY } from '../context'
 
 defineOptions({ name: 'TasksTagOperationsDropdown' })

@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { NaoSmartList } from '@nao-todo/shared/components/smart-list'
 import {
-    NaoSmartList,
     PROJECT_CREATOR_DIALOG_KEY,
     PROJECT_MANAGER_DIALOG_KEY,
     TAG_CREATOR_DIALOG_KEY,

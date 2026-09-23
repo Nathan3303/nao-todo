@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Loading as LoadingComp } from '@nao-todo/shared'
+import { Loading as LoadingComp } from '@nao-todo/shared/components/loading'
 import { computed, inject, nextTick, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import QuickCreate from '../monthly/quick-create.vue'

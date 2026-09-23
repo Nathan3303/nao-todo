@@ -1,10 +1,10 @@
 <script setup lang="ts">
+import { TAG_COLOR_UPDATER_DIALOG_KEY } from '@nao-todo/shared'
+import { TagColorSelector } from '@nao-todo/shared/components/tag-color-selector'
 import {
-    TAG_COLOR_UPDATER_DIALOG_KEY,
-    TagColorSelector,
     useDialogWrapper,
     type DialogInstanceType
-} from '@nao-todo/shared'
+} from '@nao-todo/shared/components/dialog-wrapper'
 import { onMounted, ref } from 'vue'
 import { TagColorUpdaterDialogProps } from './types'
 import { useTagColorUpdater } from './use-tag-color-updater'

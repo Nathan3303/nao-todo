@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { LoadingError, TASK_CREATOR_DIALOG_KEY, t, assetUrl } from '@nao-todo/shared'
+import { LoadingError } from '@nao-todo/shared/components/loading-error'
+import { TASK_CREATOR_DIALOG_KEY, t, assetUrl } from '@nao-todo/shared'
 import { TaskKanban } from '../../kanban'
 import type { KanbanViewAdapterProps } from './types'
 import useKanbanViewAdapter from './use-kanban-view-adapter'

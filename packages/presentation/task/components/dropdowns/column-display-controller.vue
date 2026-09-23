@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { TaskColumnOptions } from '@nao-todo/shared'
-import { InnerDropdown, InnerDropdownOption, type InnerDropdownOptionVO } from '@nao-todo/shared'
+import { InnerDropdown, InnerDropdownOption } from '@nao-todo/shared/components/inner-dropdown'
+import { type InnerDropdownOptionVO } from '@nao-todo/shared/components/inner-dropdown'
 import { computed } from 'vue'
 
 defineOptions({ name: 'TaskColumnDisplayController' })

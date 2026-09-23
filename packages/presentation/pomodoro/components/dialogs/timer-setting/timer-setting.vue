@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import {
     type DialogInstanceType,
-    DialogManager,
-    POMODORO_TIMER_SETTING_DIALOG_KEY,
     useDialogWrapper
-} from '@nao-todo/shared'
+} from '@nao-todo/shared/components/dialog-wrapper'
+import { DialogManager, POMODORO_TIMER_SETTING_DIALOG_KEY } from '@nao-todo/shared'
 import { onMounted, ref } from 'vue'
 import { useTimerSettingDialog } from './use-timer-setting'
 

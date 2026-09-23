@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { EventRow, InputButton, Loading, t } from '@nao-todo/shared'
+import { EventRow } from '@nao-todo/shared/components/event-row'
+import { InputButton } from '@nao-todo/shared/components/input-button'
+import { Loading } from '@nao-todo/shared/components/loading'
+import { t } from '@nao-todo/shared'
 import { computed, inject, ref, watch } from 'vue'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context'
 import useEventDragger from '../use-event-dragger'

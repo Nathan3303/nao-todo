@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Loading as LoadingComp, assetUrl } from '@nao-todo/shared'
+import { Loading as LoadingComp } from '@nao-todo/shared/components/loading'
+import { assetUrl } from '@nao-todo/shared'
 import CalendarDayDrawer from '@/components/calendar/monthly/day-drawer.vue'
 import UnscheduledDrawer from '@/components/calendar/monthly/unscheduled-drawer.vue'
 import ScheduleUndoToast from '@/components/calendar/monthly/undo-toast.vue'

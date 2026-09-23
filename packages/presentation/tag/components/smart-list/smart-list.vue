@@ -1,5 +1,7 @@
 <script lang="ts" setup>
-import { NaoSmartList, TagColorDot, useDragSorter, t, type SortHandler } from '@nao-todo/shared'
+import { NaoSmartList } from '@nao-todo/shared/components/smart-list'
+import { TagColorDot } from '@nao-todo/shared/components/tag-color-dot'
+import { useDragSorter, t, type SortHandler } from '@nao-todo/shared'
 import { TagSmartListEmits, TagSmartListProps } from './types'
 
 defineOptions({ name: 'TagSmartList' })

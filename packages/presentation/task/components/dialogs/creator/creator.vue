@@ -1,12 +1,10 @@
 <script lang="ts" setup>
 import {
     type DialogInstanceType,
-    TAG_CREATOR_DIALOG_KEY,
-    TASK_CREATOR_DIALOG_KEY,
-    TaskSelector,
-    t,
     useDialogWrapper
-} from '@nao-todo/shared'
+} from '@nao-todo/shared/components/dialog-wrapper'
+import { TAG_CREATOR_DIALOG_KEY, TASK_CREATOR_DIALOG_KEY, t } from '@nao-todo/shared'
+import { TaskSelector } from '@nao-todo/shared/components/task-selector'
 import dayjs from 'dayjs'
 import { computed, onMounted, ref } from 'vue'
 import { TaskDateSelector, TaskProjectSelector, TaskTagBar } from '../../'

@@ -2,7 +2,8 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { NueMessage } from 'nue-ui'
-import { t, PasswordRuleHint, unwrapError } from '@nao-todo/shared'
+import { t, unwrapError } from '@nao-todo/shared'
+import { PasswordRuleHint } from '@nao-todo/shared/components/rule-hint'
 import { AuthUseCase, type SignUpViewObject } from '@nao-todo/domain-identity'
 
 defineOptions({ name: 'AuthSignUp' })

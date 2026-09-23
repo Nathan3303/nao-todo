@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { NaoSmartList, t, useDragSorter } from '@nao-todo/shared'
+import { NaoSmartList } from '@nao-todo/shared/components/smart-list'
+import { t, useDragSorter } from '@nao-todo/shared'
 import type { ProjectSmartListEmits, ProjectSmartListProps } from './types'
 
 defineOptions({ name: 'ProjectSmartList' })

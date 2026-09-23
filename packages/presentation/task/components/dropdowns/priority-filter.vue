@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { InnerDropdown, InnerDropdownOption } from '@nao-todo/shared'
+import { InnerDropdown, InnerDropdownOption } from '@nao-todo/shared/components/inner-dropdown'
 import { TaskPrioritySelectOptions } from '../../constants'
 import { t } from '@nao-todo/shared'
 

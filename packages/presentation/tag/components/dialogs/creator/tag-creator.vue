@@ -1,12 +1,11 @@
 <script lang="ts" setup>
+import { t, TAG_CREATOR_DIALOG_KEY } from '@nao-todo/shared'
+import { TagColorSelector } from '@nao-todo/shared/components/tag-color-selector'
+import { TagForm } from '@nao-todo/shared/components/tag-form'
 import {
-    t,
-    TAG_CREATOR_DIALOG_KEY,
-    TagColorSelector,
-    TagForm,
     useDialogWrapper,
     type DialogInstanceType
-} from '@nao-todo/shared'
+} from '@nao-todo/shared/components/dialog-wrapper'
 import { computed, onMounted, ref } from 'vue'
 import type { TagViewObject } from '@nao-todo/domain-tag'
 import { TagCreatorDialogProps } from './types'

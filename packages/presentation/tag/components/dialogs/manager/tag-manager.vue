@@ -1,13 +1,12 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue'
+import { TagBoard } from '@nao-todo/shared/components/tag-board'
 import {
-    TagBoard,
     type DialogInstanceType,
-    useDialogWrapper,
-    TAG_MANAGER_DIALOG_KEY,
-    TAG_UPDATER_DIALOG_KEY,
-    RuleHint
-} from '@nao-todo/shared'
+    useDialogWrapper
+} from '@nao-todo/shared/components/dialog-wrapper'
+import { TAG_MANAGER_DIALOG_KEY, TAG_UPDATER_DIALOG_KEY } from '@nao-todo/shared'
+import { RuleHint } from '@nao-todo/shared/components/rule-hint'
 import useTagManager from './use-tag-manager'
 import { TagManagerDialogProps } from './types'
 

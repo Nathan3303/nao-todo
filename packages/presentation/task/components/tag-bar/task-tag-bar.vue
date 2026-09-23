@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { TagNode, ComboBox } from '@nao-todo/shared'
+import { TagNode } from '@nao-todo/shared/components/tag-node'
+import { ComboBox } from '@nao-todo/shared/components/combo-box'
 import { useTaskTagBar } from './use-task-tag-bar'
 import type { TaskTagBarEmits, TaskTagBarProps } from './types'
 import { computed } from 'vue'

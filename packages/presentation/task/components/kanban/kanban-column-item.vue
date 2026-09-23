@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import {
-    TaskBasicInfo,
-    TaskCheckButton,
-    TaskDateInfo,
-    TaskPriorityInfo,
-    TaskStateInfo,
-    type TaskColumnOptions
-} from '@nao-todo/shared'
+import { TaskBasicInfo } from '@nao-todo/shared/components/task-basic-info'
+import { TaskCheckButton } from '@nao-todo/shared/components/task-check-button'
+import { TaskDateInfo } from '@nao-todo/shared/components/task-date-info'
+import { TaskPriorityInfo } from '@nao-todo/shared/components/task-priority-info'
+import { TaskStateInfo } from '@nao-todo/shared/components/task-state-info'
+import { type TaskColumnOptions } from '@nao-todo/shared'
 import { TaskTagBar } from '../../'
 import { computed, inject } from 'vue'
 import type { TaskKanbanColumnItemProps, TaskKanbanContext } from './types'

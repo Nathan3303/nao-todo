@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { LoadingError, Pager, TASK_CREATOR_DIALOG_KEY, t, assetUrl } from '@nao-todo/shared'
+import { LoadingError } from '@nao-todo/shared/components/loading-error'
+import { Pager } from '@nao-todo/shared/components/pager'
+import { TASK_CREATOR_DIALOG_KEY, t, assetUrl } from '@nao-todo/shared'
 import { TaskTable } from '../../table'
 import type { TableViewAdapterEmits, TableViewAdapterProps } from './types'
 import useTableViewAdapter from './use-table-view-adapter'

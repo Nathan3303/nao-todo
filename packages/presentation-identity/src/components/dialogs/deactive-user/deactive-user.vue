@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import {
     type DialogInstanceType,
-    RuleHint,
-    t,
-    unwrapError,
-    useDialogWrapper,
-    USER_DEACTIVE_DIALOG_KEY
-} from '@nao-todo/shared'
+    useDialogWrapper
+} from '@nao-todo/shared/components/dialog-wrapper'
+import { RuleHint } from '@nao-todo/shared/components/rule-hint'
+import { t, unwrapError, USER_DEACTIVE_DIALOG_KEY } from '@nao-todo/shared'
 import { NueMessage } from 'nue-ui'
 import { computed, onMounted, reactive, ref } from 'vue'
 import type { UserDeactiveEmits, UserDeactiveFormData, UserDeactiveProps } from './types'

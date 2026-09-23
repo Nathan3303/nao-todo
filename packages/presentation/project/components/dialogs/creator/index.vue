@@ -1,11 +1,10 @@
 <script lang="ts" setup>
 import {
     type DialogInstanceType,
-    PROJECT_CREATOR_DIALOG_KEY,
-    ProjectForm,
-    t,
     useDialogWrapper
-} from '@nao-todo/shared'
+} from '@nao-todo/shared/components/dialog-wrapper'
+import { PROJECT_CREATOR_DIALOG_KEY, t } from '@nao-todo/shared'
+import { ProjectForm } from '@nao-todo/shared/components/project-form'
 import { onMounted, ref } from 'vue'
 import type { ProjectCreatorDialogProps } from './types'
 import useProjectCreator from './use-project-creator'

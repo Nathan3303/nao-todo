@@ -1,11 +1,8 @@
 <script setup lang="ts">
-import {
-    DropdownDivBlock,
-    InnerDropdown,
-    InnerDropdownOption,
-    t,
-    type InnerDropdownOptionVO
-} from '@nao-todo/shared'
+import { DropdownDivBlock } from '@nao-todo/shared/components/dropdown-div-block'
+import { InnerDropdown, InnerDropdownOption } from '@nao-todo/shared/components/inner-dropdown'
+import { t } from '@nao-todo/shared'
+import { type InnerDropdownOptionVO } from '@nao-todo/shared/components/inner-dropdown'
 import { computed } from 'vue'
 import { columnLabels, sortFieldLabels } from '../../constants'
 import { GetTasksOptions, GetTasksSortOptions, TaskColumnOptions } from '@nao-todo/shared'

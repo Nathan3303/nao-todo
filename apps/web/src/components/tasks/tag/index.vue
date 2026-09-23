@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Loading as LoadingComp } from '@nao-todo/shared'
+import { Loading as LoadingComp } from '@nao-todo/shared/components/loading'
 import useTagView from './tag'
 import type { TagViewProps } from './types'
 
