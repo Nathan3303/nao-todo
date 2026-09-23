@@ -8,25 +8,26 @@
 
 ## 一、汇总表
 
-| ID     | 别名  | 标题                                                              | 严重度      | 影响面                                 | 归属            | 前置 / 关联                   | 状态                 |
-| :----- | :---- | :---------------------------------------------------------------- | :---------- | :------------------------------------- | :-------------- | :---------------------------- | :------------------- |
-| DEF-5  | OFF-1 | **离线检入会把 JWT 清掉**（网络类失败也 `localStorage.clear()`）  | **P1**      | web 离线**完全不可用**                 | rd-be           | **门禁 WEB-OFFLINE**          | **已实测确证（T6）** |
-| DEF-6  | OFF-2 | **本地镜像完整性缺口**（≤200 行/表/次启动、最旧优先、无自动补全） | **P1**      | desktop 读不到最新任务                 | rd-be           | **WEB-OFFLINE 阶段一硬前置**  | **已实测确证（T2）** |
-| DEF-7  | OFF-3 | desktop 未启用 `requestSingleInstanceLock`                        | P2          | 多实例并发写                           | rd-be           | WEB-OFFLINE 下升 P1           | 已登记待派单         |
-| DEF-8  | OFF-4 | **全仓零 CSP**                                                    | P2          | XSS 面 / 明文姿态下即边界              | rd-be + rd-fe   | 明文姿态下**升 P1**           | 已登记待派单         |
-| DEF-9  | OFF-5 | `getCurrentUserId() ?? ''` 兜底 + `localSession` 内存态           | **P1**      | **跨用户读到明文**                     | rd-be           | 明文姿态前置                  | 已登记待派单         |
-| DEF-10 | OFF-6 | `checkAndCleanExpired` 唯一生产调用点在 `unlock-gate.vue:75`      | **P1**      | **注销到期清理永久不触发**             | rd-be + rd-fe   | 解锁门退役前置                | 已登记待派单         |
-| DEF-11 | OFF-7 | desktop / index list 的 `priority` 排序为**字母序**               | P2          | 排序语义错误                           | rd-be           | 与 TASK-23 无关（独立发现）   | 已登记待派单         |
-| DEF-12 | OFF-8 | 服务端 `isArchived=false` 空操作 + `sort` 无白名单                | P2 / **P1** | 归档漏入 web / **SQL 注入面**          | rd-be（server） | 两子项可分拆                  | **已实测确证（T7）** |
-| DEF-13 | OFF-9 | `syncStatus.pendingCount` 滞后于 `countDirty`                     | P3          | 未同步数量显示旧值                     | rd-fe + rd-be   | 登出清库护栏**不得读它**      | 已登记待派单         |
-| DEF-14 | —     | 服务端 `user_sessions` 行膨胀 + **无过期会话清理**                | P2          | 会话表永久累积                         | rd-be（server） | 与 DEF-15 / K10 同源          | 已登记待派单         |
-| DEF-15 | —     | 客户端 checkin **仅冷启动触发** ⇒ 常驻 >48h 被 10041 强制回登录页 | P2          | 桌面常驻用户每 48h 被踢                | rd-fe + rd-be   | **与核心诉求直接相关（K8）**  | 已登记待派单         |
-| DEF-16 | —     | **`isUnlocked` 恒假风险**（退役解锁门后无处置位）                 | **P1**      | 桌面「离线进入」永久不可达（静默）     | rd-be + rd-fe   | 门退役前置（K9 / DEF-10）     | 已登记待派单         |
-| DEF-17 | —     | **web 断网写入失败且无任何反馈**（5 项静默误判）                  | **P1**      | **静默数据丢失**（任何网络抖动即触发） | rd-fe + rd-be   | 与 WEB-OFFLINE 无关，独立成立 | 已登记待派单         |
-| DEF-1  | —     | `sync.test.ts > Q3` 偶发失败（测试隔离 / 共享状态泄漏）           | P3          | 门禁噪声                               | rd-be           | 见 `docs/tasks-state.md` §一  | 已登记待排           |
-| DEF-2  | —     | 舰队资产副本滞后（`nao-fleet.sh` `TASK` 未绑定）                  | —           | 已修                                   | —               | 见 `docs/tasks-state.md` §一  | **已闭环**           |
-| DEF-3  | —     | `nao-todo-server/.agents` 为 0.2.0 前旧装                         | P3          | 跨仓资产                               | —               | 用户决定暂不处理              | 挂起                 |
-| DEF-4  | —     | 日历日视图测试**日期时间炸弹**                                    | —           | 已修 `5d2e51f1`                        | —               | 见 `docs/tasks-state.md` §一  | **已闭环**           |
+| ID     | 别名  | 标题                                                                                            | 严重度      | 影响面                                 | 归属                | 前置 / 关联                   | 状态                          |
+| :----- | :---- | :---------------------------------------------------------------------------------------------- | :---------- | :------------------------------------- | :------------------ | :---------------------------- | :---------------------------- |
+| DEF-5  | OFF-1 | **离线检入会把 JWT 清掉**（网络类失败也 `localStorage.clear()`）                                | **P1**      | web 离线**完全不可用**                 | rd-be               | **门禁 WEB-OFFLINE**          | **已修（T102 / `5b9d6bdb`）** |
+| DEF-6  | OFF-2 | **本地镜像完整性缺口**（≤200 行/表/次启动、最旧优先、无自动补全）                               | **P1**      | desktop 读不到最新任务                 | rd-be               | **WEB-OFFLINE 阶段一硬前置**  | **已实测确证（T2）**          |
+| DEF-7  | OFF-3 | desktop 未启用 `requestSingleInstanceLock`                                                      | P2          | 多实例并发写                           | rd-be               | WEB-OFFLINE 下升 P1           | 已登记待派单                  |
+| DEF-8  | OFF-4 | **全仓零 CSP**                                                                                  | P2          | XSS 面 / 明文姿态下即边界              | rd-be + rd-fe       | 明文姿态下**升 P1**           | 已登记待派单                  |
+| DEF-9  | OFF-5 | `getCurrentUserId() ?? ''` 兜底 + `localSession` 内存态                                         | **P1**      | **跨用户读到明文**                     | rd-be               | 明文姿态前置                  | 已登记待派单                  |
+| DEF-10 | OFF-6 | `checkAndCleanExpired` 唯一生产调用点在 `unlock-gate.vue:75`                                    | **P1**      | **注销到期清理永久不触发**             | rd-be + rd-fe       | 解锁门退役前置                | 已登记待派单                  |
+| DEF-11 | OFF-7 | desktop / index list 的 `priority` 排序为**字母序**                                             | P2          | 排序语义错误                           | rd-be               | 与 TASK-23 无关（独立发现）   | 已登记待派单                  |
+| DEF-12 | OFF-8 | 服务端 `isArchived=false` 空操作 + `sort` 无白名单                                              | P2 / **P1** | 归档漏入 web / **SQL 注入面**          | rd-be（server）     | 两子项可分拆                  | **已实测确证（T7）**          |
+| DEF-13 | OFF-9 | `syncStatus.pendingCount` 滞后于 `countDirty`                                                   | P3          | 未同步数量显示旧值                     | rd-fe + rd-be       | 登出清库护栏**不得读它**      | 已登记待派单                  |
+| DEF-14 | —     | 服务端 `user_sessions` 行膨胀 + **无过期会话清理**                                              | P2          | 会话表永久累积                         | rd-be（server）     | 与 DEF-15 / K10 同源          | 已登记待派单                  |
+| DEF-15 | —     | 客户端 checkin **仅冷启动触发** ⇒ 常驻 >48h 被 10041 强制回登录页                               | P2          | 桌面常驻用户每 48h 被踢                | rd-fe + rd-be       | **与核心诉求直接相关（K8）**  | 已登记待派单                  |
+| DEF-16 | —     | **`isUnlocked` 恒假风险**（退役解锁门后无处置位）                                               | **P1**      | 桌面「离线进入」永久不可达（静默）     | rd-be + rd-fe       | 门退役前置（K9 / DEF-10）     | 已登记待派单                  |
+| DEF-17 | —     | **web 断网写入失败且无任何反馈**（5 项静默误判）                                                | **P1**      | **静默数据丢失**（任何网络抖动即触发） | rd-fe + rd-be       | 与 WEB-OFFLINE 无关，独立成立 | 已登记待派单                  |
+| DEF-18 | —     | **移动端同缺陷副本**：`compose-auth-usecase.ts` 的 `checkIn` 同样「任何错误都 `clearAuthData`」 | P2          | 移动端网络抖动 ⇒ 强制登出              | —（**移动端红线**） | 与 **DEF-5** 同源             | 已登记待授权                  |
+| DEF-1  | —     | `sync.test.ts > Q3` 偶发失败（测试隔离 / 共享状态泄漏）                                         | P3          | 门禁噪声                               | rd-be               | 见 `docs/tasks-state.md` §一  | 已登记待排                    |
+| DEF-2  | —     | 舰队资产副本滞后（`nao-fleet.sh` `TASK` 未绑定）                                                | —           | 已修                                   | —                   | 见 `docs/tasks-state.md` §一  | **已闭环**                    |
+| DEF-3  | —     | `nao-todo-server/.agents` 为 0.2.0 前旧装                                                       | P3          | 跨仓资产                               | —                   | 用户决定暂不处理              | 挂起                          |
+| DEF-4  | —     | 日历日视图测试**日期时间炸弹**                                                                  | —           | 已修 `5d2e51f1`                        | —                   | 见 `docs/tasks-state.md` §一  | **已闭环**                    |
 
 ## 二、逐条明细
 
@@ -185,6 +186,16 @@
 | `sort` 白名单      | **确证无白名单**：`sort=id;SELECT 1:asc` → HTTP 200 / code 40052，且**回显 MySQL 语法错误** ⇒ **注入面确证**                  |
 | `pagination`       | 返回 `{total,page,limit,maxPage}` ✓                                                                                           |
 
+### DEF-18 移动端同缺陷副本（`presentation-react`） —— P2
+
+| 项           | 内容                                                                                                                                                                 |
+| :----------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **机制**     | `packages/presentation-react/src/logic/compose-auth-usecase.ts` 的 `checkIn` **同样在任何错误（含网络类）时 `store.clearAuthData()`**（实测 `:69` / `:80` 两处调用） |
+| **影响**     | 移动端网络抖动/离线 ⇒ **强制登出**（与 DEF-5 在 web 侧的后果同源）                                                                                                   |
+| **发现来源** | `rd-be-T102` 修复 DEF-5 时**发现并上报、未擅自改动**（正确处置 —— 移动端为**项目红线**：`packages/presentation-react` / `apps/mobileapp` 不经用户授权不得改动）      |
+| **建议处置** | **需用户授权**后方可修；修法与 DEF-5 一致（复用 `domain-identity` 导出的 `isCredentialError` 做**同一套**失败分流，避免第三份标记集）                                |
+| **验收要点** | 移动端网络类失败保留 JWT；凭证类仍清                                                                                                                                 |
+
 ## 三、前置关系（与 WEB-OFFLINE 立项）
 
 | WEB-OFFLINE 步骤             | 被门禁的缺陷         | 说明                                                                 |
@@ -197,6 +208,8 @@
 > **登出清库护栏注意**：判定「是否有未回传写入」**必须直接调 `countDirty`**，**不得读 `syncStatus.pendingCount`**（DEF-13）。
 
 | 2026-09-23 | **P1 实机探针回执入档**：DEF-5（T6）、DEF-6（T2）、DEF-12（T7）→ **已实测确证**；**新增 DEF-17**（web 断网写无反馈，5 项静默误判，P1）；DEF-8/DEF-12 补实测证据 |
+
+| 2026-09-23 | **T102 验收通过**（DEF-5，提交 `5b9d6bdb`）；**新增 DEF-18**（移动端同缺陷副本，属项目红线 ⇒ 待用户授权）；DEF-5 状态 → **已修（待批内红窗口闭合）** |
 
 ## 四、历史条目（不迁移，仅索引）
 
