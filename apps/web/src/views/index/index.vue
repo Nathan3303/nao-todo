@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import useIndexView from './index-view'
 import { AppDialogAdapter, AppAsideV2Adapter } from '@/components/app/'
 import { OfflineStatus } from '@/components/offline'
+import { PlaintextNoticeBanner } from '@/components/plaintext-notice'
 import { OfflineReadOnlyBanner } from '@nao-todo/presentation/offline'
 import { Loading as LoadingComp, assetUrl } from '@nao-todo/shared'
 import { UserDeletionNotifier } from '@nao-todo/presentation-identity'
@@ -22,6 +23,8 @@ onMounted(() => {
         <nue-main>
             <app-aside-v2-adapter />
             <nue-content fill style="overflow: hidden">
+                <!-- 明文姿态首次进入一次性告知（ADR §4.5 / AC17，可关闭不阻塞；已读后不渲染） -->
+                <plaintext-notice-banner />
                 <!-- 离线只读可见提示（C-59 / AC10，仅离线时渲染） -->
                 <offline-read-only-banner />
                 <!-- 离线/镜像状态条（C-60 文案三分 + 覆盖度/触顶） -->

@@ -67,6 +67,12 @@ const enUS: LocaleMessages = {
     'offline.coverage.truncated': 'Loaded {count}, more not yet loaded',
     'offline.coverage.truncatedGeneric': 'More tasks than the sync limit; showing partial data',
 
+    // Plaintext posture user-visible notice（ADR §4.5 / D1b / AC17）
+    'notice.plaintext.title': 'Local data is stored in plain text',
+    'notice.plaintext.body':
+        'To support offline viewing, data on this device is stored in plain text and is no longer password-protected: anyone who can open this device or browser profile can read it. See “Settings → App Settings” for details.',
+    'notice.plaintext.dismiss': 'Got it',
+
     // Common
     'common.cancel': 'Cancel',
     'common.confirm': 'Confirm',
@@ -154,6 +160,19 @@ const enUS: LocaleMessages = {
     'settings.password': 'Change Password',
     'settings.app': 'App Settings',
     'settings.version': 'Version {version}',
+    'settings.localData.title': 'Local Data & Security',
+    'settings.localData.desc':
+        'To support offline viewing, business data on this device is stored in plain text. Please note the following boundaries:',
+    'settings.localData.plaintext':
+        'Plain text: tasks, projects, tags, comments and other data on this device are no longer password-protected. Your app password is only used to sign in, not to protect local data.',
+    'settings.localData.device':
+        'The device is the credential: anyone who can open this device or browser profile can read this data directly. Avoid keeping sensitive content on shared devices.',
+    'settings.localData.boundary':
+        'Access boundary: on desktop the app runs from local pages, so other local pages under the same user profile may also read its data; on web the boundary is the site origin.',
+    'settings.localData.eviction':
+        'The browser may evict: web local data is best-effort storage and may be cleared after long periods without interaction (e.g. Safari’s 7-day policy); you will then need to reconnect to sync again.',
+    'settings.localData.endDifference':
+        'Platform difference: web local data may be cleared automatically by the browser; desktop data does not expire automatically. Both clear local data when you sign out, after which you need to sign in again online.',
     'settings.userInfo': 'User Profile',
     'settings.passwordChange': 'Change Password',
     'settings.appSettings': 'App Settings',

@@ -63,6 +63,11 @@ export interface LocaleMessages {
     'offline.coverage.truncated': string
     'offline.coverage.truncatedGeneric': string
 
+    // Plaintext posture user-visible notice（ADR §4.5 / D1b / AC17）
+    'notice.plaintext.title': string
+    'notice.plaintext.body': string
+    'notice.plaintext.dismiss': string
+
     // Common
     'common.cancel': string
     'common.confirm': string
@@ -149,6 +154,13 @@ export interface LocaleMessages {
     'settings.password': string
     'settings.app': string
     'settings.version': string
+    'settings.localData.title': string
+    'settings.localData.desc': string
+    'settings.localData.plaintext': string
+    'settings.localData.device': string
+    'settings.localData.boundary': string
+    'settings.localData.eviction': string
+    'settings.localData.endDifference': string
     'settings.userInfo': string
     'settings.passwordChange': string
     'settings.appSettings': string

@@ -4,6 +4,7 @@ import {
     USER_JWT_LOCALSTORAGE_KEY,
     USER_PROFILE_CACHE_KEY
 } from '@nao-todo/domain-identity'
+import { PLAINTEXT_NOTICE_ACK_KEY } from '@nao-todo/shared'
 import {
     SERVER_TIME_OFFSET_KEY,
     SNOWFLAKE_EPOCH_KEY,
@@ -36,7 +37,9 @@ export const DEVICE_LEVEL_STORAGE_KEYS: readonly string[] = [
     // 雪花机器位（设备级持久随机数）
     SNOWFLAKE_MACHINE_ID_KEY,
     // 服务器时间偏移（设备级时间基准校准）
-    SERVER_TIME_OFFSET_KEY
+    SERVER_TIME_OFFSET_KEY,
+    // 明文姿态「首次进入」告知已读标记（设备级；单一真源见 @nao-todo/shared 的 PLAINTEXT_NOTICE_ACK_KEY）
+    PLAINTEXT_NOTICE_ACK_KEY
 ]
 
 /** 身份/会话级 localStorage 键（**必清**，精确键） */

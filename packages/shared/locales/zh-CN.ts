@@ -66,6 +66,12 @@ const zhCN: LocaleMessages = {
     'offline.coverage.truncated': '已加载 {count} 条，仍有更多未加载',
     'offline.coverage.truncatedGeneric': '任务数量超过同步上限，仅显示部分数据',
 
+    // 明文姿态用户可见声明（ADR §4.5 / D1b / AC17）
+    'notice.plaintext.title': '本地数据为明文保存',
+    'notice.plaintext.body':
+        '为支持离线查看，本设备上的数据以明文保存，不再有密码保护：能打开本设备或本浏览器配置的人即可读到。完整说明见「设置 → 应用设置」。',
+    'notice.plaintext.dismiss': '我知道了',
+
     // Common
     'common.cancel': '取消',
     'common.confirm': '确认',
@@ -152,6 +158,18 @@ const zhCN: LocaleMessages = {
     'settings.password': '密码修改',
     'settings.app': '应用设置',
     'settings.version': '版本号 {version}',
+    'settings.localData.title': '本地数据与安全',
+    'settings.localData.desc': '为支持离线查看，本设备上的业务数据以明文保存。请了解以下边界：',
+    'settings.localData.plaintext':
+        '明文保存：本机上的任务、项目、标签、评论等数据不再有密码保护，应用密码只用于登录，不用于保护本地数据。',
+    'settings.localData.device':
+        '设备即凭据：能打开本设备或本浏览器配置的人，都可以直接读到这些数据；请避免在共享设备上保留敏感内容。',
+    'settings.localData.boundary':
+        '访问边界：桌面端以本地页面加载，同一用户配置下的其它本地页面也可能读到本应用的数据；web 端则以站点来源（origin）为边界。',
+    'settings.localData.eviction':
+        '浏览器可能清除：web 端本地数据属于浏览器「尽力而为」存储，长时间无交互可能被清除（如 Safari 的 7 天策略），届时需要联网重新同步。',
+    'settings.localData.endDifference':
+        '两端差异：web 端本地数据可能被浏览器自动清除；桌面端不会自动过期。两端都会在你退出登录时清除本地数据，之后需要联网重新登录。',
     'settings.userInfo': '用户信息',
     'settings.passwordChange': '密码修改',
     'settings.appSettings': '应用设置',

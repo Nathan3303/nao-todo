@@ -3,6 +3,7 @@ import { UserThemeSetter, UserLanguageSetter } from '@nao-todo/presentation-iden
 import { inject } from 'vue'
 import { t } from '@nao-todo/shared'
 import { SETTINGS_VIEW_CONTEXT_KEY } from '../context'
+import { SettingsLocalDataNotice } from '../local-data-notice'
 
 defineOptions({ name: 'SettingsApp' })
 
@@ -30,6 +31,9 @@ const appVersion = import.meta.env.VITE_APP_VERSION || ''
                     <user-language-setter />
                     <nue-divider />
                     <user-theme-setter :user-use-case="userUseCase" />
+                    <nue-divider />
+                    <!-- 明文姿态用户可见声明（ADR §4.5 / AC17）：两端复用 -->
+                    <settings-local-data-notice />
                     <nue-divider />
                     <!-- 应用版本号：只读无交互；Web 显 webapp 版本 / Desktop 显 desktopapp 版本（构建期注入） -->
                     <nue-div class="settings-app__version">

@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from 'vite-plus/test'
 import { syncTracker } from '../../persistence-sync/sync-tracker'
 import { BUSINESS_TABLES, localDatabase } from '../db/local-database'
 import { PENDING_WIPE_META_ID, deletionService } from '../deletion/deletion-service'
+import { PLAINTEXT_NOTICE_ACK_KEY } from '@nao-todo/shared'
 import {
     DEVICE_LEVEL_STORAGE_KEYS,
     USER_SCOPED_STORAGE_KEYS,
@@ -237,5 +238,15 @@ describe('T106 localStorage 黑白名单（C-52）', () => {
         expect(localStorage.getItem('USER_JWT')).toBeNull()
         expect(localStorage.getItem('TABLE_CONFIG_tasks')).toBeNull()
         expect(localStorage.getItem('SOME_FUTURE_KEY')).toBeNull()
+    })
+
+    it('明文告知已读标记为设备级 ⇒ 登出清库后保留（防重复弹出）', () => {
+        localStorage.setItem(PLAINTEXT_NOTICE_ACK_KEY, '1')
+        localStorage.setItem('USER_JWT', 'jwt')
+
+        clearUserScopedLocalStorage()
+
+        expect(localStorage.getItem(PLAINTEXT_NOTICE_ACK_KEY)).toBe('1')
+        expect(localStorage.getItem('USER_JWT')).toBeNull()
     })
 })
