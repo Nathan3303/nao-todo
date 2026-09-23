@@ -1,4 +1,5 @@
-import { GoError, unwrapError } from '@nao-todo/shared'
+import { GoError } from '@nao-todo/shared/types'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { NueMessage } from 'nue-ui'
 import { nextTick, ref, watch } from 'vue'
 import type { UserAvatarCropperDialogEmits, UserAvatarCropperDialogProps } from './types'

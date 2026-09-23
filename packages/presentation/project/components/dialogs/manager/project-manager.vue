@@ -3,7 +3,8 @@ import {
     type DialogInstanceType,
     useDialogWrapper
 } from '@nao-todo/shared/components/dialog-wrapper'
-import { PROJECT_MANAGER_DIALOG_KEY, t } from '@nao-todo/shared'
+import { PROJECT_MANAGER_DIALOG_KEY } from '@nao-todo/shared/constants'
+import { t } from '@nao-todo/shared/locales'
 import { ProjectBoard } from '@nao-todo/shared/components/project-board'
 import { ProjectDeleteButton } from '@nao-todo/shared/components/project-delete-button'
 import { RuleHint } from '@nao-todo/shared/components/rule-hint'

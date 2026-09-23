@@ -1,7 +1,7 @@
 import { ProjectHandler, useProjectsStore } from '@nao-todo/presentation/project'
 import { TagHandler, useTagsStore } from '@nao-todo/presentation/tag'
 import { TaskHandler, useTasksStore } from '@nao-todo/presentation/task'
-import { useSubscriber } from '@nao-todo/shared'
+import { useSubscriber } from '@nao-todo/shared/hooks'
 import { useProjectUseCase } from './use-project-usecase'
 import { useTagUseCase } from './use-tag-usecase'
 import { useTaskUseCase } from './use-task-usecase'

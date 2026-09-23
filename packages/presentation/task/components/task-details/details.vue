@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { LoadingError } from '@nao-todo/shared/components/loading-error'
-import { assetUrl } from '@nao-todo/shared'
+import { assetUrl } from '@nao-todo/shared/utils/asset-url'
 import { computed, watch } from 'vue'
 import DetailsFooter from './footer/index.vue'
 import DetailsHeader from './header/index.vue'

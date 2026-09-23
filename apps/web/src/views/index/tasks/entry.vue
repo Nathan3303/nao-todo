@@ -3,7 +3,7 @@ import { TasksViewAside } from '@/components/tasks'
 import { TaskDetailsAdapter } from '@nao-todo/presentation/task'
 import { Loading as LoadingComp } from '@nao-todo/shared/components/loading'
 import { LoadingError } from '@nao-todo/shared/components/loading-error'
-import { assetUrl } from '@nao-todo/shared'
+import { assetUrl } from '@nao-todo/shared/utils/asset-url'
 import useTasksView from './tasks-view'
 import TaskMultiSelectAdapter from './multi-select-adapter.vue'
 

@@ -21,16 +21,18 @@ import { useTagsStore } from '@nao-todo/presentation/tag'
 import { useStoreInvalidationHub } from '@nao-todo/presentation/task'
 import {
     PROJECT_CREATOR_DIALOG_KEY,
-    responsiveTypes,
-    sendNotification,
     TASK_CREATOR_DIALOG_KEY,
-    TASK_REMINDER_DIALOG_KEY,
-    t,
+    TASK_REMINDER_DIALOG_KEY
+} from '@nao-todo/shared/constants'
+import {
+    responsiveTypes,
     useAsideWidth,
     useDialogManager,
     useResponsiveAside,
     useSubscriber
-} from '@nao-todo/shared'
+} from '@nao-todo/shared/hooks'
+import { sendNotification } from '@nao-todo/shared/utils/notification'
+import { t } from '@nao-todo/shared/locales'
 import { inject, onUnmounted, provide, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { INDEX_VIEW_CONTEXT_KEY } from './context'

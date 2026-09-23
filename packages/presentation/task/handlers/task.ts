@@ -1,4 +1,6 @@
-import { t, type GoAsync, type GoError, type LocaleKey, type Subscriber } from '@nao-todo/shared'
+import { t, type LocaleKey } from '@nao-todo/shared/locales'
+import { type GoAsync, type GoError } from '@nao-todo/shared/types'
+import { type Subscriber } from '@nao-todo/shared/hooks'
 import dayjs from 'dayjs'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import {

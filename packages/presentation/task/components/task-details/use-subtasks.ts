@@ -1,4 +1,5 @@
-import { type GoAsync, unwrapError } from '@nao-todo/shared'
+import { type GoAsync } from '@nao-todo/shared/types'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { computed, inject, onUnmounted, ref, type Ref } from 'vue'
 import { useTasksLoader } from '../../hooks'
 import { notifyTaskError } from '../../utils/error-message'

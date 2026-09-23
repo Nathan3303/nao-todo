@@ -12,7 +12,7 @@ import {
     useTaskDetailsStore,
     useTasksStore
 } from '@nao-todo/presentation/task'
-import { responsiveTypes, useAsideWidth, useResponsiveAside } from '@nao-todo/shared'
+import { responsiveTypes, useAsideWidth, useResponsiveAside } from '@nao-todo/shared/hooks'
 import { inject, provide } from 'vue'
 import { POMODORO_VIEW_CONTEXT_KEY } from './context'
 import {

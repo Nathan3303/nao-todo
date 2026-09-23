@@ -5,7 +5,7 @@ import {
     type DialogInstanceType,
     useDialogWrapper
 } from '@nao-todo/shared/components/dialog-wrapper'
-import { TAG_MANAGER_DIALOG_KEY, TAG_UPDATER_DIALOG_KEY } from '@nao-todo/shared'
+import { TAG_MANAGER_DIALOG_KEY, TAG_UPDATER_DIALOG_KEY } from '@nao-todo/shared/constants'
 import { RuleHint } from '@nao-todo/shared/components/rule-hint'
 import useTagManager from './use-tag-manager'
 import { TagManagerDialogProps } from './types'

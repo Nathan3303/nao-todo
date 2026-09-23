@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TAG_COLOR_UPDATER_DIALOG_KEY } from '@nao-todo/shared'
+import { TAG_COLOR_UPDATER_DIALOG_KEY } from '@nao-todo/shared/constants'
 import { TagColorSelector } from '@nao-todo/shared/components/tag-color-selector'
 import {
     useDialogWrapper,

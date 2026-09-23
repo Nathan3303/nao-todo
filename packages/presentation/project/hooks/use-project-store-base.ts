@@ -1,9 +1,5 @@
-import {
-    useMapperStoreBase,
-    useStoreBase,
-    type GetTasksOptions,
-    type TaskColumnOptions
-} from '@nao-todo/shared'
+import { useMapperStoreBase, useStoreBase } from '@nao-todo/shared/hooks'
+import { type GetTasksOptions, type TaskColumnOptions } from '@nao-todo/shared/constants'
 import dayjs from 'dayjs'
 import type { ProjectPreferenceViewObject, ProjectViewObject } from '@nao-todo/domain-project'
 

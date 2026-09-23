@@ -1,4 +1,6 @@
-import { t, unwrapError, type GoError, type LocaleKey } from '@nao-todo/shared'
+import { t, type LocaleKey } from '@nao-todo/shared/locales'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
+import { type GoError } from '@nao-todo/shared/types'
 import { TaskErrorCode, type TaskErrorCodeValue } from '@nao-todo/domain-task'
 import { NueMessage } from 'nue-ui'
 

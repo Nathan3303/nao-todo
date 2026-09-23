@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { t } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
 import type { TagCardProps } from './types'
 import TagColorDot from '../tag-color-dot/tag-color-dot.vue'
 

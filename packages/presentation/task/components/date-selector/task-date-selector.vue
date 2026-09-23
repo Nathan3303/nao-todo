@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { NueDropdown } from 'nue-ui'
-import { parse2RelativeDate, t } from '@nao-todo/shared'
+import { parse2RelativeDate } from '@nao-todo/shared/utils/relative-date-parser'
+import { t } from '@nao-todo/shared/locales'
 import { computed, ref } from 'vue'
 import type { UpdateTaskViewObject } from '@nao-todo/domain-task'
 import { TaskRemindSetter } from '../remind-setter'

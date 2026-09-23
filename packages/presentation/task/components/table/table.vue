@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import useTaskTable from './use-table'
 import { Loading as LoadingComp } from '@nao-todo/shared/components/loading'
-import { assetUrl } from '@nao-todo/shared'
+import { assetUrl } from '@nao-todo/shared/utils/asset-url'
 import TaskTableHeader from './table-header.vue'
 import TaskTableMain from './table-main.vue'
 import type { TaskTableProps, TaskTableEmits } from './types'

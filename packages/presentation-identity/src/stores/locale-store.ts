@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { setLocale, getLocale, type SupportedLocale } from '@nao-todo/shared'
+import { setLocale, getLocale, type SupportedLocale } from '@nao-todo/shared/locales'
 import { computed } from 'vue'
 import { LANGUAGE_KEY } from '@nao-todo/domain-identity'
 

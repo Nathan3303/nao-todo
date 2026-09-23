@@ -3,7 +3,7 @@ import {
     type DialogInstanceType,
     useDialogWrapper
 } from '@nao-todo/shared/components/dialog-wrapper'
-import { TAG_UPDATER_DIALOG_KEY } from '@nao-todo/shared'
+import { TAG_UPDATER_DIALOG_KEY } from '@nao-todo/shared/constants'
 import { TagColorSelector } from '@nao-todo/shared/components/tag-color-selector'
 import { TagForm } from '@nao-todo/shared/components/tag-form'
 import { onMounted, ref } from 'vue'

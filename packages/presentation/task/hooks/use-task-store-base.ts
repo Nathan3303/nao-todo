@@ -1,5 +1,5 @@
 import type { TaskViewObject } from '@nao-todo/domain-task'
-import { useMapperStoreBase } from '@nao-todo/shared'
+import { useMapperStoreBase } from '@nao-todo/shared/hooks'
 
 export const useTasksStoreBase = () => {
     const {

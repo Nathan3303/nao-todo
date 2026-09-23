@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { TaskDetailsAdapter } from '@nao-todo/presentation/task'
 import { Loading as LoadingComp } from '@nao-todo/shared/components/loading'
-import { assetUrl } from '@nao-todo/shared'
+import { assetUrl } from '@nao-todo/shared/utils/asset-url'
 import { usePomodoroView } from './pomodoro-view'
 import { PomodoroAside, PomodoroDialogAdapter } from '@/components/pomodoro'
 

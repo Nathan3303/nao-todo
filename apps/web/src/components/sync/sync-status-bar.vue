@@ -14,7 +14,7 @@
  */
 import { computed, nextTick, ref, watch } from 'vue'
 import type { NueDropdown } from 'nue-ui'
-import { locale, t } from '@nao-todo/shared'
+import { locale, t } from '@nao-todo/shared/locales'
 import {
     formatMirrorPulledAt,
     resolveCoverageHints,

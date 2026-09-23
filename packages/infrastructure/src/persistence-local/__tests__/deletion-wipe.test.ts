@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from 'vite-plus/test'
 import { syncTracker } from '../../persistence-sync/sync-tracker'
 import { BUSINESS_TABLES, localDatabase } from '../db/local-database'
 import { PENDING_WIPE_META_ID, deletionService } from '../deletion/deletion-service'
-import { PLAINTEXT_NOTICE_ACK_KEY } from '@nao-todo/shared'
+import { PLAINTEXT_NOTICE_ACK_KEY } from '@nao-todo/shared/constants'
 import {
     DEVICE_LEVEL_STORAGE_KEYS,
     USER_SCOPED_STORAGE_KEYS,

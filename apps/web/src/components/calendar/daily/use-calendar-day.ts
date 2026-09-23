@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import { computed, inject, ref } from 'vue'
-import { TASK_CREATOR_DIALOG_KEY } from '@nao-todo/shared'
+import { TASK_CREATOR_DIALOG_KEY } from '@nao-todo/shared/constants'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { useTasksStore } from '@nao-todo/presentation/task'
 import { useTaskUseCase } from '@/hooks'

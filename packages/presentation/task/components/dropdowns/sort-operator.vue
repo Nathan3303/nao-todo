@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { DropdownDivBlock } from '@nao-todo/shared/components/dropdown-div-block'
 import { InnerDropdown, InnerDropdownOption } from '@nao-todo/shared/components/inner-dropdown'
-import { t } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
 import { type InnerDropdownOptionVO } from '@nao-todo/shared/components/inner-dropdown'
 import { computed } from 'vue'
 import { columnLabels, sortFieldLabels } from '../../constants'
-import { GetTasksOptions, GetTasksSortOptions, TaskColumnOptions } from '@nao-todo/shared'
+import { GetTasksOptions, GetTasksSortOptions, TaskColumnOptions } from '@nao-todo/shared/constants'
 
 defineOptions({ name: 'TasksDropdownSortOperator' })
 const props = defineProps<{

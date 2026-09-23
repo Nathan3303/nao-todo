@@ -1,5 +1,5 @@
 import { registry, scopeManager } from '@/commands/instance'
-import { matchesKeyEvent, parseKeys, type KeyEvent, type Platform } from '@nao-todo/shared'
+import { matchesKeyEvent, parseKeys, type KeyEvent, type Platform } from '@nao-todo/shared/commands'
 import { onMounted, onUnmounted } from 'vue'
 
 /**

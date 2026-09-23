@@ -1,5 +1,5 @@
 import { computed, type Ref } from 'vue'
-import { t } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
 import dayjs from 'dayjs'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { segmentStyleInColumns } from '../monthly/use-calendar-grid'

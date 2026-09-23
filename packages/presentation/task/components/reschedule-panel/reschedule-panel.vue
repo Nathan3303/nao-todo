@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { NueConfirm, NueDropdown, NueMessage } from 'nue-ui'
-import { t, unwrapError } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { ref } from 'vue'
 import type { TaskReschedulePanelEmits, TaskReschedulePanelProps } from './types'
 

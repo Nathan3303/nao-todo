@@ -6,7 +6,7 @@ import {
     useTaskCheckItemIdsStoreBase,
     useTasksStoreBase
 } from '../hooks'
-import { useLoadingErrorStoreBase } from '@nao-todo/shared'
+import { useLoadingErrorStoreBase } from '@nao-todo/shared/hooks'
 
 export const useTaskDetailsStore = defineStore('TaskDetailsStore', () => {
     // 检查事项列表以及相关操作

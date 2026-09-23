@@ -9,7 +9,8 @@
  *                 **凭证类**（401/403/10041/登录已过期）保持 `replace('/auth/signin')`。
  */
 import { Loading as LoadingComponent } from '@nao-todo/shared/components/loading'
-import { t, unwrapError } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { NueMessage } from 'nue-ui'

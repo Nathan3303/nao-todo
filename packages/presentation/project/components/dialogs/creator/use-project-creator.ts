@@ -1,6 +1,6 @@
 import { ref, watch } from 'vue'
 import { NueMessage } from 'nue-ui'
-import { unwrapError } from '@nao-todo/shared'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import type { CreateProjectViewObject } from '@nao-todo/domain-project'
 import { ProjectCreatorDialogProps } from './types'
 

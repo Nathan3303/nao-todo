@@ -8,7 +8,8 @@
  * @see docs/adr/2026-09-23-web-offline-local-first-and-security-posture.md（§4.5 / RS-1 / RS-3 / RS-4）
  */
 import { NueConfirm } from 'nue-ui'
-import { PLAINTEXT_NOTICE_ACK_KEY, t } from '@nao-todo/shared'
+import { PLAINTEXT_NOTICE_ACK_KEY } from '@nao-todo/shared/constants'
+import { t } from '@nao-todo/shared/locales'
 
 export { PLAINTEXT_NOTICE_ACK_KEY }
 

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { CommentRow } from '@nao-todo/shared/components/comment-row'
 import { Loading } from '@nao-todo/shared/components/loading'
-import { t } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
 import { useUserStore } from '@nao-todo/presentation-identity'
 import { storeToRefs } from 'pinia'
 import { inject } from 'vue'

@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { getAvatarSrc, t, unwrapError } from '@nao-todo/shared'
+import { getAvatarSrc } from '@nao-todo/shared/utils/avatar'
+import { t } from '@nao-todo/shared/locales'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { NueMessage } from 'nue-ui'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'

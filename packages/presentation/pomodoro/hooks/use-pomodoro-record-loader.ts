@@ -1,4 +1,6 @@
-import { unwrapError, type GoAsync, type Pagination, type Subscriber } from '@nao-todo/shared'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
+import { type GoAsync, type Pagination } from '@nao-todo/shared/types'
+import { type Subscriber } from '@nao-todo/shared/hooks'
 import { computed, onUnmounted, reactive } from 'vue'
 import { usePomodoroRecordsStore } from '../stores'
 import type { GetPomodoroRecordsOptions, PomodoroRecordViewObject } from '@nao-todo/domain-pomodoro'

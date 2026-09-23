@@ -1,4 +1,4 @@
-import { t } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
 import { NueMessage } from 'nue-ui'
 import { translateTaskError } from '../../../utils/error-message'
 import { computed, reactive } from 'vue'

@@ -10,11 +10,8 @@ import {
     usePomodoroSessionStore,
     usePomodoroTimerStore
 } from '@nao-todo/presentation/pomodoro'
-import {
-    POMODORO_TIMER_SETTING_DIALOG_KEY,
-    type DialogManager,
-    type Subscriber
-} from '@nao-todo/shared'
+import { POMODORO_TIMER_SETTING_DIALOG_KEY } from '@nao-todo/shared/constants'
+import { type DialogManager, type Subscriber } from '@nao-todo/shared/hooks'
 import dayjs from 'dayjs'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { computed, inject, onMounted } from 'vue'

@@ -4,7 +4,8 @@ import {
     useDialogWrapper
 } from '@nao-todo/shared/components/dialog-wrapper'
 import { LoadingError } from '@nao-todo/shared/components/loading-error'
-import { PARENT_TASK_SELECTOR_DIALOG_KEY, t } from '@nao-todo/shared'
+import { PARENT_TASK_SELECTOR_DIALOG_KEY } from '@nao-todo/shared/constants'
+import { t } from '@nao-todo/shared/locales'
 import { onMounted, ref } from 'vue'
 import type { ParentTaskSelectorPayload, TaskParentSelectorDialogProps } from './types'
 import { useParentTaskSelector } from './use-parent-selector'

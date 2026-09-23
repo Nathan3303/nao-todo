@@ -5,7 +5,7 @@ import { nextTick, type Ref } from 'vue'
 import { NueButton, NueDropdown, NueText, NueTooltip } from 'nue-ui'
 import SyncStatusBar from '../sync-status-bar.vue'
 import { bindRailBottomHost, unbindRailBottomHost } from '@/components/app/aside-v2/rail-host'
-import { setLocale } from '@nao-todo/shared'
+import { setLocale } from '@nao-todo/shared/locales'
 import {
     resetReadOnlyForTest,
     setOffline,

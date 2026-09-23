@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { t } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
 import { storeToRefs } from 'pinia'
 import { useUserStore } from '../../stores'
 import { computed } from 'vue'

@@ -5,7 +5,7 @@ import {
     type UserDeletion,
     type UserViewObject
 } from '@nao-todo/domain-identity'
-import { useStoreBase } from '@nao-todo/shared'
+import { useStoreBase } from '@nao-todo/shared/hooks'
 import { defineStore } from 'pinia'
 import { computed, watch } from 'vue'
 

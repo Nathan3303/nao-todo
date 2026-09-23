@@ -1,7 +1,7 @@
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
 import { usePomodorosStore } from '@nao-todo/presentation/pomodoro'
 import type { PomodoroViewObject } from '@nao-todo/domain-pomodoro'
-import { unwrapError } from '@nao-todo/shared'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { computed, inject, onMounted, ref } from 'vue'
 import type { PomodoroFocusDependDropdownProps } from './types'
 

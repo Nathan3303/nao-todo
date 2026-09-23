@@ -1,4 +1,4 @@
-import { CommandRegistry, ScopeManager } from '@nao-todo/shared'
+import { CommandRegistry, ScopeManager } from '@nao-todo/shared/commands'
 
 /**
  * 全局命令注册中心实例

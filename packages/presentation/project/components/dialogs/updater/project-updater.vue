@@ -6,7 +6,8 @@ import {
     useDialogWrapper
 } from '@nao-todo/shared/components/dialog-wrapper'
 import { ProjectForm } from '@nao-todo/shared/components/project-form'
-import { PROJECT_UPDATER_DIALOG_KEY, t } from '@nao-todo/shared'
+import { PROJECT_UPDATER_DIALOG_KEY } from '@nao-todo/shared/constants'
+import { t } from '@nao-todo/shared/locales'
 import { ProjectUpdaterDialogProps } from './types'
 
 defineOptions({ name: 'ProjectUpdater' })

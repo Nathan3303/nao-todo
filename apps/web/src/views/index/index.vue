@@ -4,7 +4,7 @@ import useIndexView from './index-view'
 import { AppDialogAdapter, AppAsideV2Adapter } from '@/components/app/'
 import { showPlaintextNoticeConfirm } from '@/components/plaintext-notice'
 import { Loading as LoadingComp } from '@nao-todo/shared/components/loading'
-import { assetUrl } from '@nao-todo/shared'
+import { assetUrl } from '@nao-todo/shared/utils/asset-url'
 import { UserDeletionNotifier } from '@nao-todo/presentation-identity'
 
 defineOptions({ name: 'AppContainer' })

@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 import { NueConfirm, NueMessage } from 'nue-ui'
-import { t } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { useTasksStore } from '../../stores'
 import { useBatchExecutor } from './use-batch-executor'

@@ -3,7 +3,7 @@ import {
     type DialogInstanceType,
     useDialogWrapper
 } from '@nao-todo/shared/components/dialog-wrapper'
-import { POMODORO_UPDATER_DIALOG_KEY } from '@nao-todo/shared'
+import { POMODORO_UPDATER_DIALOG_KEY } from '@nao-todo/shared/constants'
 import { onMounted, ref } from 'vue'
 import { PomodoroForm } from '../../form'
 import type { PomodoroUpdaterDialogProps } from './types'

@@ -1,4 +1,4 @@
-import { assetUrl } from '@nao-todo/shared'
+import { assetUrl } from '@nao-todo/shared/utils/asset-url'
 import type { ViewAdapterNoTaskError } from '@nao-todo/presentation/task'
 /**
  * 用户清单空状态

@@ -68,6 +68,16 @@ vi.mock('@nao-todo/shared', () => ({
     unwrapError: (error: unknown) => String(error)
 }))
 
+// 生产侧已改窄子路径导入 ⇒ 同步注册同名深路径 mock（保留上方两处 mock 语义；其余导出走真实实现）
+vi.mock('@nao-todo/shared/constants', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@nao-todo/shared/constants')>()),
+    TASK_CREATOR_DIALOG_KEY: 'task-creator'
+}))
+vi.mock('@nao-todo/shared/utils/user-facing-go-error', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@nao-todo/shared/utils/user-facing-go-error')>()),
+    unwrapError: (error: unknown) => String(error)
+}))
+
 vi.mock('nue-ui', () => ({
     NueMessage: { error: vi.fn() }
 }))

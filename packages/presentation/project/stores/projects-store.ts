@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed } from 'vue'
-import { useLoadingErrorStoreBase } from '@nao-todo/shared'
+import { useLoadingErrorStoreBase } from '@nao-todo/shared/hooks'
 import { useProjectsStoreBase, useProjectPreferenceStoreBase } from '../hooks'
 
 export const useProjectsStore = defineStore('ProjectsStore', () => {

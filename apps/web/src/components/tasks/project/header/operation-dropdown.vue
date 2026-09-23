@@ -3,7 +3,7 @@ import { inject, onMounted, ref } from 'vue'
 import { TaskOperationsDropdown, TaskColumnDisplayController } from '@nao-todo/presentation/task'
 import { InnerDropdownOption } from '@nao-todo/shared/components/inner-dropdown'
 import { DropdownDivBlock } from '@nao-todo/shared/components/dropdown-div-block'
-import { PROJECT_UPDATER_DIALOG_KEY } from '@nao-todo/shared'
+import { PROJECT_UPDATER_DIALOG_KEY } from '@nao-todo/shared/constants'
 import { PROJECT_VIEW_CONTEXT_KEY } from '../context'
 
 defineOptions({ name: 'TasksProjectOperationsDropdown' })

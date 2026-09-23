@@ -2,7 +2,7 @@ import { computed, reactive, ref } from 'vue'
 import { TagHandler } from '../../../handlers'
 import { useTagsStore } from '../../../stores'
 import { storeToRefs } from 'pinia'
-import { TAG_CREATOR_DIALOG_KEY, TAG_COLOR_UPDATER_DIALOG_KEY } from '@nao-todo/shared'
+import { TAG_CREATOR_DIALOG_KEY, TAG_COLOR_UPDATER_DIALOG_KEY } from '@nao-todo/shared/constants'
 import type { TagManagerDialogProps } from './types'
 
 const useTagManager = (props: TagManagerDialogProps) => {

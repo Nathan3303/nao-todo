@@ -1,4 +1,4 @@
-import { unwrapError } from '@nao-todo/shared'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 
 /**
  * 获取JWT Payload

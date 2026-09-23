@@ -1,4 +1,4 @@
-import { useListStoreBase, useMapperStoreBase } from '@nao-todo/shared'
+import { useListStoreBase, useMapperStoreBase } from '@nao-todo/shared/hooks'
 import dayjs from 'dayjs'
 import { computed } from 'vue'
 import type { TaskCommentViewObject } from '@nao-todo/domain-task'

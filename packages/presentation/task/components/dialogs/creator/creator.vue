@@ -3,7 +3,8 @@ import {
     type DialogInstanceType,
     useDialogWrapper
 } from '@nao-todo/shared/components/dialog-wrapper'
-import { TAG_CREATOR_DIALOG_KEY, TASK_CREATOR_DIALOG_KEY, t } from '@nao-todo/shared'
+import { TAG_CREATOR_DIALOG_KEY, TASK_CREATOR_DIALOG_KEY } from '@nao-todo/shared/constants'
+import { t } from '@nao-todo/shared/locales'
 import { TaskSelector } from '@nao-todo/shared/components/task-selector'
 import dayjs from 'dayjs'
 import { computed, onMounted, ref } from 'vue'

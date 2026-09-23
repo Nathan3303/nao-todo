@@ -1,6 +1,6 @@
 import { PomodoroRecordUseCase, PomodoroUseCase } from '@nao-todo/domain-pomodoro'
 import { TaskUseCase } from '@nao-todo/domain-task'
-import { DialogManager, Subscriber } from '@nao-todo/shared'
+import { DialogManager, Subscriber } from '@nao-todo/shared/hooks'
 import type { InjectionKey, Ref } from 'vue'
 
 // 番茄钟视图上下文

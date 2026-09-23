@@ -1,5 +1,7 @@
 <script lang="ts" setup>
-import { TASK_REMINDER_DIALOG_KEY, t, type SSEReminderEvent } from '@nao-todo/shared'
+import { TASK_REMINDER_DIALOG_KEY } from '@nao-todo/shared/constants'
+import { t } from '@nao-todo/shared/locales'
+import { type SSEReminderEvent } from '@nao-todo/shared/types'
 import {
     useDialogWrapper,
     type DialogInstanceType

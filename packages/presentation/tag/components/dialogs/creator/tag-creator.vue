@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { t, TAG_CREATOR_DIALOG_KEY } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
+import { TAG_CREATOR_DIALOG_KEY } from '@nao-todo/shared/constants'
 import { TagColorSelector } from '@nao-todo/shared/components/tag-color-selector'
 import { TagForm } from '@nao-todo/shared/components/tag-form'
 import {

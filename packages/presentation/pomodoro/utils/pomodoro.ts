@@ -1,4 +1,6 @@
-import { t, unwrapError, type GoAsync } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
+import { type GoAsync } from '@nao-todo/shared/types'
 import { NueMessage } from 'nue-ui'
 import type {
     CreatePomodoroRecordViewObject,
@@ -47,7 +49,7 @@ export const formatClock = (seconds: number): string => {
  * @param title 通知标题（动作语义，如"专注完成"）
  * @param body 通知内容
  */
-export { sendNotification } from '@nao-todo/shared'
+export { sendNotification } from '@nao-todo/shared/utils/notification'
 
 /**
  * 构建一条专注记录 CreatePomodoroRecordViewObject

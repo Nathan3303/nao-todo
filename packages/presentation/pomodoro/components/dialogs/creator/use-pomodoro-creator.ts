@@ -1,4 +1,4 @@
-import { unwrapError } from '@nao-todo/shared'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { NueMessage } from 'nue-ui'
 import { ref, watch } from 'vue'
 import type { PomodoroCreatorDialogFormStates, PomodoroCreatorDialogProps } from './types'

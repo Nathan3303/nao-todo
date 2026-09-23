@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import { InputButton } from '@nao-todo/shared/components/input-button'
 import { Loading } from '@nao-todo/shared/components/loading'
-import { parse2RelativeDate, t } from '@nao-todo/shared'
+import { parse2RelativeDate } from '@nao-todo/shared/utils/relative-date-parser'
+import { t } from '@nao-todo/shared/locales'
 import { TaskCheckButton } from '@nao-todo/shared/components/task-check-button'
 import { TaskPriorityPresets } from '@nao-todo/shared/components/task-priority-info'
 import { TaskTagBar } from '../../tag-bar'

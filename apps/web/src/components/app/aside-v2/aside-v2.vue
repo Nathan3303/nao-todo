@@ -9,7 +9,7 @@ import {
     openSettingsDialog
 } from '@/components/settings/dialog'
 import { bindRailBottomHost, unbindRailBottomHost } from './rail-host'
-import { t } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
 import { nextTick, onBeforeUnmount, watch, type ComponentPublicInstance } from 'vue'
 
 defineOptions({ name: 'AppAsideV2' })

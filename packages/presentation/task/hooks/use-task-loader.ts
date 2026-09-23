@@ -1,6 +1,7 @@
 import type { Pagination } from '@nao-todo/shared/types/pagination'
 import type { GoAsync } from '@nao-todo/shared'
-import { unwrapError, type GetTasksOptions } from '@nao-todo/shared'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
+import { type GetTasksOptions } from '@nao-todo/shared/constants'
 import { reactive } from 'vue'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { TaskUseCase } from '@nao-todo/domain-task'

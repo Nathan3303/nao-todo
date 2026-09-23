@@ -4,7 +4,8 @@ import {
     useDialogWrapper
 } from '@nao-todo/shared/components/dialog-wrapper'
 import { RuleHint } from '@nao-todo/shared/components/rule-hint'
-import { t, USER_RESTORE_DIALOG_KEY } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
+import { USER_RESTORE_DIALOG_KEY } from '@nao-todo/shared/constants'
 import dayjs from 'dayjs'
 import { onMounted, ref } from 'vue'
 import type { UserRestoreEmits, UserRestoreProps } from './types'

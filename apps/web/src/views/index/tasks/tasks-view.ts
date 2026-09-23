@@ -22,7 +22,8 @@ import {
     useTaskDetailsStore,
     useTasksStore
 } from '@nao-todo/presentation/task'
-import { responsiveTypes, unwrapError, useAsideWidth, useResponsiveAside } from '@nao-todo/shared'
+import { responsiveTypes, useAsideWidth, useResponsiveAside } from '@nao-todo/shared/hooks'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { storeToRefs } from 'pinia'
 import { inject, onMounted, onUnmounted, provide, ref, watch } from 'vue'
 import { TASKS_VIEW_CONTEXT_KEY } from './context'

@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import dayjs from 'dayjs'
-import { t, type GoError } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
+import { type GoError } from '@nao-todo/shared/types'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { translateTaskError } from '../../utils/error-message'
 import type { TaskHandler } from '../../handlers'

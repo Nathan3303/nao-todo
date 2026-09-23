@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Loading as LoadingComp } from '@nao-todo/shared/components/loading'
-import { t } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
 import { computed, inject, ref } from 'vue'
 import TaskBar from '../monthly/task-bar.vue'
 import CalendarSortDropdown from '../monthly/calendar-sort-dropdown.vue'

@@ -1,5 +1,5 @@
 import type { GoAsync } from '@nao-todo/shared'
-import { useTimerDriver } from '@nao-todo/shared'
+import { useTimerDriver } from '@nao-todo/shared/hooks'
 import { nanoid } from 'nanoid'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'

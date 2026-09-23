@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { inject, onMounted, onUnmounted } from 'vue'
 import { NueMessage } from 'nue-ui'
-import { unwrapError } from '@nao-todo/shared'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { TagHandler } from '@nao-todo/presentation/tag'
 import { TAG_EMPTY_STATE } from '../constants'
 import {

@@ -1,7 +1,7 @@
 import './themes'
 import { createPinia } from 'pinia'
 import { createApp } from 'vue'
-import { i18n } from '@nao-todo/shared'
+import { i18n } from '@nao-todo/shared/locales'
 import App from './WebRoot.vue'
 import router from './router'
 import { nueUI } from './nue-ui-register'

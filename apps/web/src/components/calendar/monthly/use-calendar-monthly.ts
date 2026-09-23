@@ -1,4 +1,5 @@
-import { TASK_CREATOR_DIALOG_KEY, unwrapError } from '@nao-todo/shared'
+import { TASK_CREATOR_DIALOG_KEY } from '@nao-todo/shared/constants'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { translateTaskError, useTasksStore } from '@nao-todo/presentation/task'
 import { useTaskUseCase } from '@/hooks'

@@ -1,4 +1,5 @@
-import { unwrapError, type SSEReminderEvent } from '@nao-todo/shared'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
+import { type SSEReminderEvent } from '@nao-todo/shared/types'
 import { NueMessage } from 'nue-ui'
 import { computed, ref } from 'vue'
 import { useTasksStore } from '../../../stores'

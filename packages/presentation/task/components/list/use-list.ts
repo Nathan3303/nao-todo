@@ -3,7 +3,8 @@ import type { TaskViewObject } from '@nao-todo/domain-task'
 import type { TaskColumnOptions } from '@nao-todo/shared'
 import type { TaskListContext, TaskListEmits, TaskListProps } from './types'
 import useMultiSelect from './use-multi-select'
-import { isTaskExpired, useMinuteTask } from '@nao-todo/shared'
+import { isTaskExpired } from '@nao-todo/shared/utils/date-checker'
+import { useMinuteTask } from '@nao-todo/shared/hooks'
 
 export const TASK_LIST_CONTEXT_KEY = Symbol('TASK_LIST_CONTEXT_KEY')
 

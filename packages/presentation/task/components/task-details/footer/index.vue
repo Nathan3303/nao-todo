@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { DropdownDivBlock } from '@nao-todo/shared/components/dropdown-div-block'
 import { InnerDropdownOption } from '@nao-todo/shared/components/inner-dropdown'
-import { PARENT_TASK_SELECTOR_DIALOG_KEY, t } from '@nao-todo/shared'
+import { PARENT_TASK_SELECTOR_DIALOG_KEY } from '@nao-todo/shared/constants'
+import { t } from '@nao-todo/shared/locales'
 import { TaskProjectSelector } from '../../project-selector'
 import { inject, ref, watch } from 'vue'
 import dayjs from 'dayjs'

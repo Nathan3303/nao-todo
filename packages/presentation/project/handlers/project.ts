@@ -1,13 +1,12 @@
+import { t } from '@nao-todo/shared/locales'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import {
-    t,
-    unwrapError,
     type GetTasksOptions,
     type GetTasksSortOptions,
-    type Go,
-    type GoAsync,
-    type Subscriber,
     type TaskColumnOptions
-} from '@nao-todo/shared'
+} from '@nao-todo/shared/constants'
+import { type Go, type GoAsync } from '@nao-todo/shared/types'
+import { type Subscriber } from '@nao-todo/shared/hooks'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { useProjectsStore } from '../stores'
 import type {

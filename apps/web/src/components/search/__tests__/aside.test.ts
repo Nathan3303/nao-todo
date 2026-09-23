@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick, ref } from 'vue'
-import { t } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
 import { nueUI } from '@/nue-ui-register'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { SEARCH_VIEW_CONTEXT_KEY } from '@/views/index/search/context'

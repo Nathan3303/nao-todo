@@ -1,5 +1,6 @@
 import { computed } from 'vue'
-import { t, type TaskColumnOptions } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
+import { type TaskColumnOptions } from '@nao-todo/shared/constants'
 import type { TaskSortFields } from '@nao-todo/domain-task'
 
 /**

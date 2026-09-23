@@ -1,4 +1,4 @@
-import { unwrapError } from '@nao-todo/shared'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { computed, inject, onMounted, onUnmounted, ref, watch } from 'vue'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'
