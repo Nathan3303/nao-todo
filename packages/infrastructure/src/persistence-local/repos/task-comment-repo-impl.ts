@@ -22,7 +22,7 @@ export class LocalTaskCommentRepoImpl implements TaskCommentRepository {
 
     /** 当前会话用户 ID（数据归属标识） */
     private get currentUserId(): string {
-        return localSession.getCurrentUserId() ?? ''
+        return localSession.requireCurrentUserId()
     }
 
     async get(id: string): GoAsync<TaskCommentEntity> {
@@ -102,10 +102,12 @@ export class LocalTaskCommentRepoImpl implements TaskCommentRepository {
 
     async list(taskId: string): GoAsync<TaskCommentEntity[]> {
         try {
+            // C-55：先硬失败取数（空会话 ⇒ 不进入库读，避免“无记录 ⇒ 返回 []”的成功路径）
+            const userId = this.currentUserId
             const records = await this.db.taskComments
                 .where('taskId')
                 .equals(taskId)
-                .filter((r) => r.userId === this.currentUserId && isNotDeleted(r.deletedAt))
+                .filter((r) => r.userId === userId && isNotDeleted(r.deletedAt))
                 .toArray()
             const entities: TaskCommentEntity[] = []
             for (const record of records) {

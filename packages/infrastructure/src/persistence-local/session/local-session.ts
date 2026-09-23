@@ -35,6 +35,18 @@ export const extractUserIdFromJwt = (jwt: string): string | null => {
 }
 
 /**
+ * 缺少当前用户会话（C-55 硬失败）
+ * @description `userId` 为 `null`/空时拒绝一切库操作；禁止 `?? ''` 退化为"空用户"读写
+ *              （明文姿态下必须如此，否则跨用户读到明文）。
+ */
+export class MissingUserIdError extends Error {
+    constructor() {
+        super('本地会话缺少 userId：拒绝库操作（C-55 硬失败）')
+        this.name = 'MissingUserIdError'
+    }
+}
+
+/**
  * 本地用户会话
  * @description 记录当前登录用户的 ID，供本地仓储按用户过滤/填充数据。
  */
@@ -42,10 +54,25 @@ export class LocalSession {
     private currentUserId: string | null = null
 
     /**
-     * 当前用户 ID
+     * 当前用户 ID（可空口径）
+     * @description 仅供**需要处理未登录态**的调用方（如 `sync-tracker` 判空提前返回、
+     *              C-62 离线进入判据）使用；**库操作禁止**用它兜底。
      */
     getCurrentUserId(): string | null {
         return this.currentUserId
+    }
+
+    /**
+     * 当前用户 ID（硬失败口径，C-55）
+     * @description `null`/空串时抛 `MissingUserIdError`，**禁止空串兜底**；
+     *              本地仓储统一经此取数 ⇒ 无会话时一切库操作硬失败，错误经既有
+     *              `GoAsync` 错误通道可见。
+     * @throws {MissingUserIdError} 无有效 `userId`
+     */
+    requireCurrentUserId(): string {
+        const userId = this.currentUserId
+        if (!userId) throw new MissingUserIdError()
+        return userId
     }
 
     /**

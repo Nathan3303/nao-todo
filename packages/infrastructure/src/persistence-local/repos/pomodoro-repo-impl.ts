@@ -22,7 +22,7 @@ export class LocalPomodoroRepoImpl implements PomodoroRepository {
 
     /** 当前会话用户 ID（数据归属标识） */
     private get currentUserId(): string {
-        return localSession.getCurrentUserId() ?? ''
+        return localSession.requireCurrentUserId()
     }
 
     async get(id: string): GoAsync<PomodoroEntity> {

@@ -1,5 +1,6 @@
 import { join } from 'node:path'
 import { BrowserWindow, app, shell } from 'electron'
+import { enforceSingleInstance } from './single-instance'
 
 /**
  * Windows toast 通知依赖 AppUserModelID，未设置则打包版系统通知不显示
@@ -41,14 +42,28 @@ const createWindow = () => {
     }
 }
 
-app.whenReady().then(() => {
-    createWindow()
+// C-57 / AC16a：单实例锁必须在创建窗口前获取（第二实例聚焦首实例后退出）。
+// 理由：`(user_id, device_id)` 会话 upsert、pull 游标 RMW、`syncQueue` 单写者、
+//      明文迁移竞态均假定单写者；`navigator.locks` 跨独立 Electron 进程无选主。
+const isPrimaryInstance = enforceSingleInstance(app, {
+    focusMainWindow: () => {
+        const [win] = BrowserWindow.getAllWindows()
+        if (!win) return
+        if (win.isMinimized()) win.restore()
+        win.focus()
+    }
+})
 
-    app.on('activate', () => {
-        if (BrowserWindow.getAllWindows().length === 0) createWindow()
+if (isPrimaryInstance) {
+    app.whenReady().then(() => {
+        createWindow()
+
+        app.on('activate', () => {
+            if (BrowserWindow.getAllWindows().length === 0) createWindow()
+        })
     })
-})
 
-app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') app.quit()
-})
+    app.on('window-all-closed', () => {
+        if (process.platform !== 'darwin') app.quit()
+    })
+}

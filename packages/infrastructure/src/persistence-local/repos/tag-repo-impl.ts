@@ -17,7 +17,7 @@ export class LocalTagRepoImpl implements TagRepository {
 
     /** 当前会话用户 ID（数据归属标识） */
     private get currentUserId(): string {
-        return localSession.getCurrentUserId() ?? ''
+        return localSession.requireCurrentUserId()
     }
 
     async getById(id: string): GoAsync<TagEntity> {
@@ -100,10 +100,17 @@ export class LocalTagRepoImpl implements TagRepository {
 
     async getByIds(ids: string[]): GoAsync<TagEntity[]> {
         try {
+            // C-55：先硬失败取数（空会话 ⇒ 整批拒绝；否则 getById 的 not-found 会被本方法吞成 []）
+            const userId = this.currentUserId
             const entities: TagEntity[] = []
             for (const id of ids) {
-                const [entity, err] = await this.getById(id)
-                if (err === null && entity !== null) entities.push(entity)
+                try {
+                    const record = await this.db.tags.get(id)
+                    if (!record || record.userId !== userId) continue
+                    entities.push(await tagRecordToEntity(record))
+                } catch {
+                    // 单条解密/读取失败不阻断整批（保持原 `getById` 委托语义）
+                }
             }
             return [entities, null]
         } catch (err) {

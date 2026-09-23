@@ -19,15 +19,17 @@ export class LocalProjectPreferenceRepoImpl implements ProjectPreferenceReposito
 
     /** 当前会话用户 ID（数据归属标识） */
     private get currentUserId(): string {
-        return localSession.getCurrentUserId() ?? ''
+        return localSession.requireCurrentUserId()
     }
 
     async getByProjectId(projectId: string): GoAsync<ProjectPreferenceEntity> {
         try {
+            // C-55：先硬失败取数（空会话 ⇒ 不进入库读，避免“无偏好 ⇒ 返回默认”的成功路径）
+            const userId = this.currentUserId
             const record = await this.db.projectPreferences
                 .where('projectId')
                 .equals(projectId)
-                .filter((r) => r.userId === this.currentUserId)
+                .filter((r) => r.userId === userId)
                 .first()
             // 与远程行为一致：无偏好时返回默认偏好（viewType=table），不报错
             if (!record) return [defaultProjectPreferenceRes2Entity(projectId), null]
