@@ -15,12 +15,12 @@ apps/desktop/
 │       ├── index.html
 │       └── src/
 │           ├── main.ts       # 渲染进程入口（挂载 AppRoot）
-│           ├── AppRoot.vue   # 本地数据解锁门 → 渲染主应用
+│           ├── AppRoot.vue   # 启动门（本地就绪判定 + 待升级/迁移入口）→ 渲染主应用
 │           ├── hooks/
 │           │   ├── index.ts  # 装配层：UI hooks 复用 webapp，usecases 走桌面实现
 │           │   └── usecases/ # 10 个装配工厂：认证远程、业务本地
 │           └── components/
-│               └── unlock-gate.vue  # 启动解锁页（输入密码解包 DEK）
+│               └── unlock-gate.vue  # 启动门（待升级/迁移入口 + 登出；密码仅用于迁移窗口）
 └── out/                      # 构建产物（main / preload / renderer）
 ```
 
