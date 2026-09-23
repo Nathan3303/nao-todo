@@ -37,6 +37,7 @@ import {
 } from '../persistence-go/task/converters'
 import { pomodoroRecordRes2Entity, pomodoroRes2Entity } from '../persistence-go/pomodoro/converters'
 import { setServerTimeOffset } from './sync-config'
+import { loadMirrorStatus, saveMirrorStatus } from './mirror-status-store'
 import { syncTracker } from './sync-tracker'
 import { syncStatus, type SyncPhase, type SyncRunResult } from './sync-status'
 import {
@@ -400,6 +401,23 @@ export class SyncService {
         return localSession.getCurrentUserId()
     }
 
+    /**
+     * 读回磁盘镜像新鲜度（T107b/C-60）：冷启动离线也有「数据截至 X」（AC8）
+     * @description 仅在磁盘有记录时覆盖内存态；无记录（从未成功拉取）保持 `null`（AC9）
+     */
+    async restoreMirrorStatus(): Promise<void> {
+        const userId = this.currentUserId()
+        if (!userId) return
+        const persisted = await loadMirrorStatus(userId)
+        if (persisted) syncStatus.restoreMirrorStatus(persisted)
+    }
+
+    /** 落盘当前镜像新鲜度（直连 meta，不触发 markDirty，C-59） */
+    private async persistMirrorStatus(userId: string): Promise<void> {
+        const { mirrorPulledAt, mirrorTruncated } = syncStatus.get()
+        await saveMirrorStatus(userId, { mirrorPulledAt, mirrorTruncated })
+    }
+
     /** 校准服务器时间偏移（响应带回 serverTime，UTC Unix 毫秒；后端可能返回字符串） */
     private calibrateServerTime(serverTime?: number): void {
         if (typeof serverTime === 'number' && Number.isFinite(serverTime) && serverTime > 0) {
@@ -425,6 +443,8 @@ export class SyncService {
             this.runFull(async () => {
                 const userId = this.currentUserId()
                 if (!userId) return
+                // T107b：先读回磁盘镜像新鲜度 ⇒ 离线冷启动亦有「数据截至 X」（AC8）
+                await this.restoreMirrorStatus()
                 // 注销反悔期：deletionSchedules 有调度记录则跳过启动
                 const schedule = await localDatabase.deletionSchedules.get(userId)
                 if (schedule) return
@@ -612,6 +632,8 @@ export class SyncService {
                 // 触顶截断：不推进 mirrorPulledAt（护栏 B），交由回传定时补拉
                 this.pullIncomplete = true
             }
+            // T107b：完整/截断结果落盘 ⇒ 冷启动离线仍可读到（C-59：直连 meta 不入队）
+            await this.persistMirrorStatus(userId)
         } finally {
             // 有实际写入（含续拉中途失败前已落库部分）→ 通知视图刷新（store 缓存绕过，需事件驱动重拉）
             if (writtenCount > 0) this.notifyDataChanged()

@@ -152,6 +152,15 @@ export class SyncStatus {
     }
 
     /**
+     * 从持久化存储恢复镜像新鲜度（冷启动离线；T107b）
+     * @description `null` 仅在「确实从未成功拉取过」时出现（C-60③ / AC9）；
+     *              用户切换时以磁盘事实覆盖内存旧值。
+     */
+    restoreMirrorStatus(status: { mirrorPulledAt: string | null; mirrorTruncated: boolean }): void {
+        this.set({ mirrorPulledAt: status.mirrorPulledAt, mirrorTruncated: status.mirrorTruncated })
+    }
+
+    /**
      * 运行结束：落定 lastError/errors/errorCount、结束 syncing、刷新计数（R3/C-11）
      * @param counts 运行结束时刷新一次的待推送/失败计数（可选；无会话传 0）
      */

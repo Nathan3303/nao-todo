@@ -181,6 +181,10 @@ export interface MetaRecord {
     migratedAt?: string
     /** 清库可重入标记的待清 userId（C-53；仅 `pendingWipe` 记录携带，非索引字段） */
     pendingWipe?: string
+    /** 镜像完整拉取时间（T107b/C-60 冷启动离线；仅 `mirror-status` 记录携带，非索引字段） */
+    mirrorPulledAt?: string
+    /** 镜像是否被续拉上界截断（T107b；同上，非索引字段） */
+    mirrorTruncated?: boolean
 }
 
 export interface DeletionScheduleRecord {
