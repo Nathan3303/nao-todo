@@ -22,6 +22,7 @@ const mocks = vi.hoisted(() => ({
     replace: vi.fn(),
     lock: vi.fn(),
     clearSession: vi.fn(),
+    wipeUserData: vi.fn(async () => undefined),
     sessionExpiredListener: null as null | (() => void)
 }))
 
@@ -53,9 +54,17 @@ vi.mock('@nao-todo/infrastructure', () => ({
     // SHELL-06：装配层回传触发注册（测试桩；返回卸载函数）
     registerBackfillTriggers: () => () => {},
     cryptoService: { lock: mocks.lock, isUnlocked: true },
-    deletionService: { checkAndCleanExpired: vi.fn() },
+    deletionService: {
+        checkAndCleanExpired: vi.fn(),
+        resumePendingWipe: vi.fn(async () => false),
+        wipeUserData: mocks.wipeUserData
+    },
     initSnowflakeEpoch: vi.fn(),
-    localSession: { clear: mocks.clearSession, getCurrentUserId: () => 'u-1' },
+    localSession: {
+        clear: mocks.clearSession,
+        getCurrentUserId: () => 'u-1',
+        setCurrentUserId: vi.fn()
+    },
     readCachedNickname: () => null,
     resolveUserIdFromStoredJwt: () => 'u-1',
     syncService: {
@@ -65,7 +74,7 @@ vi.mock('@nao-todo/infrastructure', () => ({
             mocks.sessionExpiredListener = listener
         }
     },
-    syncTracker: { setDirtyListener: vi.fn() }
+    syncTracker: { setDirtyListener: vi.fn(), countDirty: async () => 0 }
 }))
 
 const UnlockGateStub = defineComponent({
@@ -122,6 +131,8 @@ const mountRoot = (): VueWrapper => {
 const reachSyncGate = async (
     root: VueWrapper
 ): Promise<InstanceType<typeof InitialSyncGateStub>> => {
+    // C-61：先等 AppRoot 启动收敛点完成、解锁门挂载
+    await flushPromises()
     root.findComponent(UnlockGateStub).vm.$emit('unlocked')
     await flushPromises()
     return root.findComponent(InitialSyncGateStub).vm as InstanceType<typeof InitialSyncGateStub>
@@ -188,13 +199,14 @@ describe('AppRoot - SHELL-03 离线进入编排', () => {
         expect(root.find('#app-stub').exists()).toBe(true)
     })
 
-    it('B-1/C-25：登出 ⇒ 清离线授权 + 显式 replace(/auth/signin)', async () => {
+    it('B-1/C-25：登出 ⇒ 清离线授权 + 清库 + 显式 replace(/auth/signin)', async () => {
         grantOfflineEntry()
         const root = mountRoot()
         const gate = await reachSyncGate(root)
         gate.$emit('signOut')
         await flushPromises()
         expect(isOfflineEntryGranted()).toBe(false)
+        expect(mocks.wipeUserData).toHaveBeenCalledWith('u-1')
         expect(mocks.replace).toHaveBeenCalledWith('/auth/signin')
     })
 

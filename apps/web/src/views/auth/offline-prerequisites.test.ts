@@ -2,17 +2,18 @@ import { describe, expect, it } from 'vite-plus/test'
 import { evaluateOfflinePrerequisites } from './offline-prerequisites'
 
 /**
- * SHELL-05 T6 / C-29：离线进入四条件预检（纯函数）
- * @description 仅本地事实：JWT 可解析 + 本地会话一致 + 已解锁；不涉及网络与昵称缓存。
+ * C-62：离线进入预检（纯函数；门退役后判据替换）
+ * @description 仅本地事实：JWT 可解析 + 本地会话一致 + 本地镜像存在；不涉及网络与昵称缓存。
+ *              条件④原 `isUnlocked`（DEF-16 恒假）⇒ 已替换为 `hasLocalMirror`，原因码 `mirror-missing`。
  */
 
-describe('evaluateOfflinePrerequisites - C-29 四条件预检', () => {
+describe('evaluateOfflinePrerequisites - C-62 三条件预检', () => {
     it('全部满足 → ok', () => {
         expect(
             evaluateOfflinePrerequisites({
                 jwtUserId: 'u-1',
                 sessionUserId: 'u-1',
-                isUnlocked: true
+                hasLocalMirror: true
             })
         ).toEqual({ ok: true })
     })
@@ -22,7 +23,7 @@ describe('evaluateOfflinePrerequisites - C-29 四条件预检', () => {
             evaluateOfflinePrerequisites({
                 jwtUserId: null,
                 sessionUserId: 'u-1',
-                isUnlocked: true
+                hasLocalMirror: true
             })
         ).toEqual({ ok: false, reason: 'jwt-unresolvable' })
     })
@@ -32,41 +33,41 @@ describe('evaluateOfflinePrerequisites - C-29 四条件预检', () => {
             evaluateOfflinePrerequisites({
                 jwtUserId: 'u-1',
                 sessionUserId: 'u-2',
-                isUnlocked: true
+                hasLocalMirror: true
             })
         ).toEqual({ ok: false, reason: 'session-mismatch' })
         expect(
             evaluateOfflinePrerequisites({
                 jwtUserId: 'u-1',
                 sessionUserId: null,
-                isUnlocked: true
+                hasLocalMirror: true
             })
         ).toEqual({ ok: false, reason: 'session-mismatch' })
     })
 
-    it('未解锁 → locked', () => {
+    it('本地镜像不存在 → mirror-missing（替换原 locked）', () => {
         expect(
             evaluateOfflinePrerequisites({
                 jwtUserId: 'u-1',
                 sessionUserId: 'u-1',
-                isUnlocked: false
+                hasLocalMirror: false
             })
-        ).toEqual({ ok: false, reason: 'locked' })
+        ).toEqual({ ok: false, reason: 'mirror-missing' })
     })
 
-    it('判定优先级：JWT > 会话 > 解锁（首个不满足即返回）', () => {
+    it('判定优先级：JWT > 会话 > 镜像（首个不满足即返回）', () => {
         expect(
             evaluateOfflinePrerequisites({
                 jwtUserId: null,
                 sessionUserId: null,
-                isUnlocked: false
+                hasLocalMirror: false
             })
         ).toEqual({ ok: false, reason: 'jwt-unresolvable' })
         expect(
             evaluateOfflinePrerequisites({
                 jwtUserId: 'u-1',
                 sessionUserId: 'u-2',
-                isUnlocked: false
+                hasLocalMirror: false
             })
         ).toEqual({ ok: false, reason: 'session-mismatch' })
     })

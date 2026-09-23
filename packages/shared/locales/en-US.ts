@@ -186,6 +186,14 @@ const enUS: LocaleMessages = {
     'settings.avatarViewTitle': 'View Avatar',
     'settings.updateAvatarButtonText': 'Update Avatar',
     'settings.signOutButtonText': 'Sign Out',
+    'signOut.dirtyTitle': 'Unsynced changes',
+    'signOut.dirtyContent':
+        '{count} local change(s) have not been synced. Signing out will permanently lose them.',
+    'signOut.syncFirst': 'Sync first',
+    'signOut.unsavedTitle': 'Still unsynced',
+    'signOut.unsavedContent':
+        'You are offline or syncing failed; {count} change(s) remain unsynced. Signing out now will permanently lose them.',
+    'signOut.signOutAnyway': 'Sign out anyway',
     'settings.deactive.title': 'Deactivate Account',
     'settings.deactive.confirmTitle': 'Confirm account deactivation?',
     'settings.deactive.confirmContent':

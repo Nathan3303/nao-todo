@@ -182,6 +182,13 @@ const zhCN: LocaleMessages = {
     'settings.avatarViewTitle': '头像查看',
     'settings.updateAvatarButtonText': '更新头像',
     'settings.signOutButtonText': '退出登录',
+    'signOut.dirtyTitle': '有未同步的修改',
+    'signOut.dirtyContent': '有 {count} 项本地修改尚未同步。退出登录后这些修改将永久丢失。',
+    'signOut.syncFirst': '先同步',
+    'signOut.unsavedTitle': '仍有未同步的修改',
+    'signOut.unsavedContent':
+        '当前离线或同步失败，仍有 {count} 项修改未同步。继续退出将永久丢失这些修改。',
+    'signOut.signOutAnyway': '仍然退出',
     'settings.deactive.title': '注销账户',
     'settings.deactive.confirmTitle': '确认注销账户吗？',
     'settings.deactive.confirmContent':

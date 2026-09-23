@@ -11,8 +11,7 @@
  */
 import { computed, ref } from 'vue'
 import { LoadingError, t } from '@nao-todo/shared'
-import { cryptoService, localSession, syncService } from '@nao-todo/infrastructure'
-import { useUserStore } from '@nao-todo/presentation-identity'
+import { syncService } from '@nao-todo/infrastructure'
 import { recordShellError } from '@/error-observability'
 import { checkOfflineEntryPrerequisites } from '@/views/auth/offline-prerequisites'
 
@@ -29,14 +28,12 @@ const emit = defineEmits<{
     (e: 'signOut'): void
 }>()
 
-const userStore = useUserStore()
-
 const syncing = ref(true)
 const failed = ref(false)
 const errorMessage = ref('')
 // C-34：凭证类失败由结构化字段判定（不再用文案正则；文案变更不影响按钮可用性）
 const credentialFailure = ref(false)
-// C-29：四条件预检不通过时的显式出口提示（不静默回落）
+// C-62：本地事实预检不通过时的显式出口提示（不静默回落）
 const offlineBlocked = ref(false)
 
 /**
@@ -85,11 +82,12 @@ void runSync()
 /**
  * 离线进入：以本地数据继续（D-1/D-3）
  * @description 仅 emit 意图（B-1：路由跳转唯一点 = AppRoot，gate 不得 import router）。
- *              C-29：点击后先预检四条件；不满足⇒显式文案 + 动作（重试/重新登录），
+ *              C-62：点击后先预检本地事实条件（JWT 可解析 + 会话一致 + 本地镜像存在）；
+ *              不满足⇒显式文案 + 动作（重试/重新登录），
  *              原因码入结构化日志（无 PII），**不得静默回落**。
  */
-const onEnterOffline = () => {
-    const prerequisites = checkOfflineEntryPrerequisites()
+const onEnterOffline = async () => {
+    const prerequisites = await checkOfflineEntryPrerequisites()
     if (!prerequisites.ok) {
         offlineBlocked.value = true
         recordShellError('sync-gate:offline-prerequisites', `原因码=${prerequisites.reason}`)
@@ -99,11 +97,8 @@ const onEnterOffline = () => {
     emit('offline')
 }
 
-/** 登出 / 重新登录：清 JWT + 本地会话 + 内存密钥（本地业务数据保留），意图交 AppRoot 显式跳转 */
+/** 登出 / 重新登录：仅 emit 意图（清认证 + 清库 + 跳转统一由 AppRoot 编排，保证脏队列护栏先于清库） */
 const onSignOut = () => {
-    userStore.clearAuthData()
-    localSession.clear()
-    cryptoService.lock()
     emit('signOut')
 }
 </script>

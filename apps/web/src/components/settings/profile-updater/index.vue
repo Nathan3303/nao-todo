@@ -11,8 +11,14 @@ import {
     UserSessionManager
 } from '@nao-todo/presentation-identity'
 import { t, USER_DEACTIVE_DIALOG_KEY } from '@nao-todo/shared'
-import { cryptoService, localSession, readCachedNickname } from '@nao-todo/infrastructure'
+import {
+    cryptoService,
+    localSession,
+    readCachedNickname,
+    resolveUserIdFromStoredJwt
+} from '@nao-todo/infrastructure'
 import { revokeOfflineEntry } from '@/views/auth/offline-entry'
+import { wipeLocalDataOnSignOut } from '@/views/auth/sign-out-wipe'
 import { safeReplace } from '@/safe-navigation'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { storeToRefs } from 'pinia'
@@ -42,6 +48,10 @@ const handleSignOut = async () => {
         cancelButtonText: '取消'
     })
     if (isByCancel) return
+
+    // C-54/C-52：脏队列护栏 + 清库（先于清认证；取消则中止，保留会话与本地数据）
+    const userId = resolveUserIdFromStoredJwt()
+    if (userId && !(await wipeLocalDataOnSignOut(userId))) return
 
     const token = userToken.value
     // G12：本地清认证优先（离线必达）；C-25：登出必须清离线授权

@@ -178,6 +178,12 @@ export interface LocaleMessages {
     'settings.avatarViewTitle': string
     'settings.updateAvatarButtonText': string
     'settings.signOutButtonText': string
+    'signOut.dirtyTitle': string
+    'signOut.dirtyContent': string
+    'signOut.syncFirst': string
+    'signOut.unsavedTitle': string
+    'signOut.unsavedContent': string
+    'signOut.signOutAnyway': string
     'settings.deactive.title': string
     'settings.deactive.confirmTitle': string
     'settings.deactive.confirmContent': string

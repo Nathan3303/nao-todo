@@ -14,24 +14,26 @@ import InitialSyncGate from './initial-sync-gate.vue'
 
 const mocks = vi.hoisted(() => ({
     start: vi.fn(),
-    clearSession: vi.fn(),
-    lock: vi.fn(),
-    isUnlocked: true,
+    /** 本地镜像存在（C-62 条件③探测替身） */
+    hasLocalMirror: true,
     jwtUserId: 'u-1' as string | null,
     sessionUserId: 'u-1' as string | null
 }))
 
-vi.mock('@nao-todo/infrastructure', () => ({
-    syncService: { start: mocks.start },
-    localSession: { clear: mocks.clearSession, getCurrentUserId: () => mocks.sessionUserId },
-    cryptoService: {
-        lock: mocks.lock,
-        get isUnlocked() {
-            return mocks.isUnlocked
-        }
-    },
-    resolveUserIdFromStoredJwt: () => mocks.jwtUserId
-}))
+vi.mock('@nao-todo/infrastructure', () => {
+    const mirrorTable = {
+        where: () => ({
+            equals: () => ({ count: async () => (mocks.hasLocalMirror ? 1 : 0) })
+        })
+    }
+    return {
+        syncService: { start: mocks.start },
+        localSession: { getCurrentUserId: () => mocks.sessionUserId },
+        resolveUserIdFromStoredJwt: () => mocks.jwtUserId,
+        localDatabase: { syncCursor: mirrorTable, table: () => mirrorTable },
+        BUSINESS_TABLES: ['projects', 'tasks']
+    }
+})
 
 let wrapper: VueWrapper | null = null
 
@@ -65,7 +67,7 @@ const clickButton = (label: string): void => {
 
 beforeEach(() => {
     vi.clearAllMocks()
-    mocks.isUnlocked = true
+    mocks.hasLocalMirror = true
     mocks.jwtUserId = 'u-1'
     mocks.sessionUserId = 'u-1'
 })
@@ -167,7 +169,7 @@ describe('InitialSyncGate - SHELL-03 终态与逃生入口', () => {
         expect(mocks.start).toHaveBeenCalledTimes(2)
     })
 
-    it('C-06 失败分类：会话失效 ⇒ 主按钮语义切「重新登录」并清认证数据', async () => {
+    it('C-06 失败分类：会话失效 ⇒ 主按钮语义切「重新登录」（清认证/清库/跳转由 AppRoot 编排）', async () => {
         mocks.start.mockResolvedValue({
             ok: false,
             errors: ['登录已过期，请重新登录'],
@@ -180,8 +182,6 @@ describe('InitialSyncGate - SHELL-03 终态与逃生入口', () => {
         expect(buttonsText()).toContain('重新登录')
         clickButton('重新登录')
         await flushPromises()
-        expect(mocks.clearSession).toHaveBeenCalled()
-        expect(mocks.lock).toHaveBeenCalled()
         expect(gate.emitted('signOut')).toBeTruthy()
     })
 
@@ -231,8 +231,8 @@ describe('InitialSyncGate - SHELL-03 终态与逃生入口', () => {
         expect(buttonsText()).toContain('登出用户')
     })
 
-    it('C-29：四条件不满足 ⇒ 点离线进入给出显式文案 + 原因码日志，不 emit', async () => {
-        mocks.isUnlocked = false
+    it('C-62：镜像缺失 ⇒ 点离线进入给出显式文案 + 原因码日志，不 emit', async () => {
+        mocks.hasLocalMirror = false
         mocks.start.mockResolvedValue({
             ok: false,
             errors: ['推送失败：网络错误'],

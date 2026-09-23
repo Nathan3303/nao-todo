@@ -33,6 +33,7 @@ const mocks = vi.hoisted(() => ({
     replace: vi.fn(),
     clearSession: vi.fn(),
     lock: vi.fn(),
+    wipeUserData: vi.fn(async () => undefined),
     cachedNickname: '张三' as string | null
 }))
 
@@ -48,7 +49,12 @@ vi.mock('nue-ui', async (importOriginal) => {
 vi.mock('@nao-todo/infrastructure', () => ({
     readCachedNickname: () => mocks.cachedNickname,
     localSession: { clear: mocks.clearSession, getCurrentUserId: () => 'u-1' },
-    cryptoService: { lock: mocks.lock }
+    cryptoService: { lock: mocks.lock },
+    resolveUserIdFromStoredJwt: () => 'u-1',
+    // C-54：无脏队列 ⇒ 护栏不弹窗，直接清库
+    syncTracker: { countDirty: async () => 0 },
+    syncService: { start: vi.fn(async () => ({ ok: true })) },
+    deletionService: { wipeUserData: mocks.wipeUserData }
 }))
 
 vi.mock('vue-router', () => ({
@@ -140,6 +146,7 @@ describe('G12 - 离线可退出登录', () => {
         expect(isOfflineEntryGranted()).toBe(false)
         expect(mocks.clearSession).toHaveBeenCalled()
         expect(mocks.lock).toHaveBeenCalled()
+        expect(mocks.wipeUserData).toHaveBeenCalledWith('u-1')
         expect(mocks.replace).toHaveBeenCalledWith('/auth/signin')
     })
 

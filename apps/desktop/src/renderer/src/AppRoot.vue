@@ -8,15 +8,18 @@ import SyncStatusBar from './components/sync-status-bar.vue'
 import { useLocalReminder } from './hooks/use-local-reminder'
 import { useTaskReminder } from './hooks/usecases/use-task-reminder'
 import { grantOfflineEntry, revokeOfflineEntry } from '@/views/auth/offline-entry'
+import { bootstrapLocalData, withBootstrapRetry } from '@/views/auth/bootstrap-local-data'
+import { wipeLocalDataOnSignOut } from '@/views/auth/sign-out-wipe'
 import { LAST_VISITED_ROUTE_KEY, SECTION_LAST_ROUTE_MAP } from '@/router'
 import { safeReplace, safeReplaceDeepLink } from '@/safe-navigation'
 import { useUserStore } from '@nao-todo/presentation-identity'
 import { TaskReminderDialog, useStoreInvalidationHub } from '@nao-todo/presentation/task'
-import { useDialogManager } from '@nao-todo/shared'
+import { Loading as LoadingComp, useDialogManager } from '@nao-todo/shared'
 import {
     cryptoService,
     localSession,
     registerBackfillTriggers,
+    resolveUserIdFromStoredJwt,
     syncService,
     syncTracker
 } from '@nao-todo/infrastructure'
@@ -29,6 +32,17 @@ reportRouterInjection(routerResolution)
 const router = routerResolution.router
 
 const userStore = useUserStore()
+
+// C-61①：本地数据启动收敛点 —— 渲染**任一门前** await（含早于 InitialSyncGate.start()）
+// 失败不卡门：记录后仍推进 bootstrapped（后续解锁门自身有 error 终态）
+const bootstrapped = ref(false)
+void bootstrapLocalData()
+    .catch((err) => {
+        console.error('[desktop] 启动本地数据收敛失败', err)
+    })
+    .finally(() => {
+        bootstrapped.value = true
+    })
 
 // 本地数据解锁门：解锁完成后才渲染主应用（webapp 复用）
 const unlocked = ref(false)
@@ -103,9 +117,21 @@ const onOffline = async (): Promise<void> => {
     }
 }
 
-/** 登出/重新登录（B-1 同源修正：显式跳转，不依赖 checkin 失败“顺带”跳转） */
+/**
+ * 登出/重新登录（B-1 同源修正：显式跳转，不依赖 checkin 失败“顺带”跳转）
+ * @description C-54/C-52 编排：**先脏队列护栏、再清库、最后清认证 + 跳转**。
+ *              护栏取消 ⇒ 立即中止（保留会话与本地数据，不清库、不跳转）。
+ *              10041 会话失效不在此路径（见上方 listener，K4：只清身份键、不清库）。
+ */
 const onSignOut = async (): Promise<void> => {
+    // C-54：脏队列阻塞确认（先于清库/清认证；取消则中止）
+    const userId = resolveUserIdFromStoredJwt()
+    if (userId && !(await wipeLocalDataOnSignOut(userId))) return
     revokeOfflineEntry() // C-25：登出必须清离线进入授权
+    // 清认证（原 InitialSyncGate.onSignOut 职责；移至此处保证护栏先于清库）
+    userStore.clearAuthData()
+    localSession.clear()
+    cryptoService.lock()
     try {
         await safeReplace(router, '/auth/signin', 'app-root:signout-navigation')
     } finally {
@@ -114,7 +140,8 @@ const onSignOut = async (): Promise<void> => {
 }
 
 // SHELL-06 C-40/C-43：回传触发（online / 前台恢复）仅作触发，不作鉴权；卸载清理防重复注册
-const unregisterBackfillTriggers = registerBackfillTriggers(syncService)
+// C-61③：常驻跨 7 天 ⇒ 顺带重跑启动收敛点（不新增定时器）
+const unregisterBackfillTriggers = registerBackfillTriggers(withBootstrapRetry(syncService))
 
 watch(unlocked, (value) => {
     if (value) {
@@ -128,7 +155,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <UnlockGate v-if="!unlocked" @unlocked="unlocked = true" />
+    <LoadingComp v-if="!bootstrapped" placeholder="正在检查本地数据 ..." />
+    <UnlockGate v-else-if="!unlocked" @unlocked="unlocked = true" />
     <InitialSyncGate
         v-else-if="!gatePassed"
         @synced="onSynced"

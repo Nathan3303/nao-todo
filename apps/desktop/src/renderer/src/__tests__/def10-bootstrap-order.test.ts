@@ -36,7 +36,10 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@nao-todo/infrastructure', () => ({
     registerBackfillTriggers: () => () => {},
     cryptoService: { lock: mocks.lock, isUnlocked: true },
-    deletionService: { checkAndCleanExpired: mocks.checkAndCleanExpired },
+    deletionService: {
+        checkAndCleanExpired: mocks.checkAndCleanExpired,
+        resumePendingWipe: vi.fn(async () => false)
+    },
     initSnowflakeEpoch: vi.fn(),
     localSession: {
         clear: mocks.clearSession,

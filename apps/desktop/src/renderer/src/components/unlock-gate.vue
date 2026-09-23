@@ -10,7 +10,6 @@
  */
 import {
     cryptoService,
-    deletionService,
     initSnowflakeEpoch,
     isPlaintextMigrationDone,
     localSession,
@@ -71,13 +70,11 @@ const checkLocal = async (): Promise<void> => {
             emit('unlocked')
             return
         }
-        localSession.setCurrentUserId(currentUserId)
+        // 注：`localSession` 重建与注销到期清理已收敛至 `bootstrapLocalData`（C-61；AppRoot 渲染门前 await）
         userId.value = currentUserId
         cachedNickname.value = readCachedNickname() ?? ''
         // 冷启动（已有 JWT）：刷新后端雪花 Epoch（失败回退缓存/默认，不阻塞）
         void initSnowflakeEpoch()
-        // 注销反悔期到期：清空该用户本地数据（密钥包一并删除，按全新用户放行）
-        await deletionService.checkAndCleanExpired(currentUserId)
         // 无密钥包 = 该用户首次使用，直接放行（首次登录时由 signIn 建立密钥包）
         const hasBundle = await cryptoService.hasKeyBundle(currentUserId)
         // 已有密钥包但已完成明文迁移 ⇒ 无需密码直接进入（AC1b/AC2：重启后不再需要密码）
