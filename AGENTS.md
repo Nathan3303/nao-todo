@@ -95,7 +95,7 @@ Docs are local at `node_modules/vite-plus/docs` or online at https://viteplus.de
 - 角色清单（单一事实来源）：`.agents/roles.yaml`（pm / arch-designer / rd-fe / rd-be / qa）
 - 角色卡 `.agents/prompts/<role>.md`｜公共规范 `.agents/common/`｜交付核对清单 `.agents/checklists/`｜按需技能 `.agents/skills/`｜模板 `.agents/templates/`
 - 舰队拉起与自检：`bash .agents/scripts/nao-fleet.sh check | status | ensure <role>`；`status` 在本机**不可靠**（pi 进程 argv 被清空，`pgrep --name` 恒失配）→ 在线判定以 `intercom list` 为准
-- 运行时任务状态（PM 维护）：`docs/tasks-state.md`；需求与决策留痕：`docs/prds/`、`docs/adr/`
+- 运行时任务状态（PM 维护）：`docs/tasks-state.md`；需求与决策留痕：`docs/prds/`、`docs/adr/`；**缺陷池（单一登记源，PM 维护）：`docs/reports/defect-pool.md`**
 
 ### 机制衔接
 
