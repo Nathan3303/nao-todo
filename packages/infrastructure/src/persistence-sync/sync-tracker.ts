@@ -2,7 +2,9 @@
  * 脏实体追踪器
  * @description 本地仓储写成功后登记 syncQueue（主键 `${userId}:${table}:${entityId}` 去重，
  *              同实体重复写合并为最新版本）；拉取写入路径不经过 markDirty（避免同步回环）。
- *              projectPreferences/tagPreferences 随父实体同步，不入队（见 data-sync-plan.md §1.3）。
+ *              ⚠️ projectPreferences/tagPreferences **不随父实体同步**（旧注释「随父实体同步」不实，
+ *              TASK-26 / ADR-r2 P2 更正）：普通清单偏好走**独立偏好队列**（`preference-queue`）按行回传
+ *              `POST /projects/:id/preference`，**不入 `syncQueue`**（合成主键与批量 upsert 契约不兼容）。
  */
 import {
     localDatabase,

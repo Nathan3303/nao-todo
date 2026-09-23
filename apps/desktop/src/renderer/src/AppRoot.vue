@@ -22,6 +22,10 @@ import {
     resolveUserIdFromStoredJwt
 } from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
 import { registerBackfillTriggers } from '@nao-todo/infrastructure/src/persistence-sync/backfill-triggers'
+import {
+    flushPreferenceQueue,
+    pullAndMergeUserConfig
+} from '@nao-todo/infrastructure/src/persistence-sync/preference-sync'
 import { syncService } from '@nao-todo/infrastructure/src/persistence-sync/sync-service'
 import { syncTracker } from '@nao-todo/infrastructure/src/persistence-sync/sync-tracker'
 
@@ -38,6 +42,10 @@ const userStore = useUserStore()
 // 失败不卡门：记录后仍推进 bootstrapped（后续解锁门自身有 error 终态）
 const bootstrapped = ref(false)
 void bootstrapLocalData()
+    .then(() => {
+        // TASK-26 / M6：启动先拉取 + LWW 合并设置面，再冲刷偏好队列（非阻塞；失败静默降级）
+        void pullAndMergeUserConfig().then(() => flushPreferenceQueue())
+    })
     .catch((err) => {
         console.error('[desktop] 启动本地数据收敛失败', err)
     })
@@ -142,7 +150,18 @@ const onSignOut = async (): Promise<void> => {
 
 // SHELL-06 C-40/C-43：回传触发（online / 前台恢复）仅作触发，不作鉴权；卸载清理防重复注册
 // C-61③：常驻跨 7 天 ⇒ 顺带重跑启动收敛点（不新增定时器）
-const unregisterBackfillTriggers = registerBackfillTriggers(withBootstrapRetry(syncService))
+// TASK-26 / M6：偏好队列**复用**同一触发源冲刷（不新增重试机制）
+const backfillTarget = {
+    handleOnline: () => {
+        syncService.handleOnline()
+        void flushPreferenceQueue()
+    },
+    handleVisibility: () => {
+        syncService.handleVisibility()
+        void flushPreferenceQueue()
+    }
+}
+const unregisterBackfillTriggers = registerBackfillTriggers(withBootstrapRetry(backfillTarget))
 
 watch(unlocked, (value) => {
     if (value) {

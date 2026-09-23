@@ -30,8 +30,6 @@ export const DEVICE_LEVEL_STORAGE_KEYS: readonly string[] = [
     THEME_MODE_KEY,
     // 语言
     LANGUAGE_KEY,
-    // 日历周起始
-    'CALENDAR_WEEKSTART',
     // 雪花 Epoch（设备级配置）
     SNOWFLAKE_EPOCH_KEY,
     // 雪花机器位（设备级持久随机数）
@@ -58,6 +56,8 @@ export const USER_SCOPED_STORAGE_KEYS: readonly string[] = [
     'POMODORO_SETTINGS',
     // 侧边栏宽度（`useAsideWidth` 默认 storageKey）
     'ASIDE_WIDTH',
+    // 日历周起始（TASK-26 / PS-6：设备级 → 用户级；登出即清，切换账号不串号）
+    'CALENDAR_WEEKSTART',
     // 上次访问路由（按用户）
     'LAST_VISITED_ROUTE',
     // tasks 分区上次路由

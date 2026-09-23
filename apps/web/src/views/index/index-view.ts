@@ -32,6 +32,7 @@ import {
     useSubscriber
 } from '@nao-todo/shared/hooks'
 import { sendNotification } from '@nao-todo/shared/utils/notification'
+import { markPreferenceDirty } from '@nao-todo/infrastructure/src/persistence-sync/preference-sync'
 import { t } from '@nao-todo/shared/locales'
 import { inject, onUnmounted, provide, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -115,7 +116,12 @@ const useIndexView = () => {
         responsiveFlag,
         responsiveTypes.MOBILE_TABLE
     )
-    const { width: asideWidth, updater: handleResizeAside } = useAsideWidth(300, 'ASIDE_WIDTH')
+    const { width: asideWidth, updater: handleResizeAsideBase } = useAsideWidth(300, 'ASIDE_WIDTH')
+    // TASK-26 / M6：侧边栏宽度属设置面偏好 ⇒ 本地写成功后入偏好队列（整快照回传）
+    const handleResizeAside = (newWidth: number) => {
+        handleResizeAsideBase(newWidth)
+        void markPreferenceDirty('userConfig')
+    }
 
     /**
      * 显示任务详情抽屉

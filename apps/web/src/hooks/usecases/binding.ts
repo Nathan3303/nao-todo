@@ -7,7 +7,6 @@ import type {
     TaskCommentRepository,
     TaskRepository
 } from '@nao-todo/domain-task'
-import { ProjectPreferenceRepoImpl } from '@nao-todo/infrastructure/src/persistence-go/project/project-preference-repo-impl'
 import { ProjectRepoImpl } from '@nao-todo/infrastructure/src/persistence-go/project/project-repo-impl'
 import { TagPreferenceRepoImpl } from '@nao-todo/infrastructure/src/persistence-go/tag/tag-preference'
 import { TagRepoImpl } from '@nao-todo/infrastructure/src/persistence-go/tag/tag'
@@ -48,8 +47,11 @@ import {
  *              （本地仓储）。业务数据仓储在此注入；认证/用户用例的端专属装饰（本地解锁、
  *              注销调度、密钥重包）经 `decorateAuthUseCase` / `decorateUserUseCase` 注入（web 端不提供）。
  *
- *              **web 读路径 = 远端优先 + 网络类失败回退本地镜像**（C-66 / AC8）：远端仓储为**主读**，
- *              由 `withMirrorFallback` 装饰（只包装读方法）；写路径保持远端直连（不新增本地写路径）。
+ *              **web 业务数据读路径 = 远端优先 + 网络类失败回退本地镜像**（C-66 / AC8）：业务远端仓储为**主读**，
+ *              由 `withMirrorFallback` 装饰（只包装读方法）；业务写路径保持远端直连（不新增本地写路径）。
+ *              **偏好/设置面为显式例外**（TASK-26 / PS-1a / PS-1b，ADR-r2 §D-1）：两端**同构本地优先** ——
+ *              `createProjectPreferenceRepository` 直接用**本地仓储**（web 不再「远端优先」，否则本地刚写入的值
+ *              会被远端陈旧值覆盖）；偏好回传走**独立偏好队列**（`persistence-sync/preference-sync`）。
  *              **web 离线只读闸门（C-59 / AC10，ADR-r5）经 `decorateUseCase` 注入 —— web-only**：
  *              desktop 侧 binding 不提供该钩子 ⇒ 桌面写路径（在线/离线）**逐字不变**。
  *              本地镜像由 `@/data-plane` 后台启动的 `syncService` 填充。
@@ -124,12 +126,7 @@ export const useCaseBinding: UseCaseBinding = {
             newLocalProjectRepository(),
             ['get', 'list']
         ),
-    createProjectPreferenceRepository: () =>
-        withMirrorFallback<ProjectPreferenceRepository>(
-            new ProjectPreferenceRepoImpl(getRequesterImpl()),
-            newLocalProjectPreferenceRepository(),
-            ['getByProjectId']
-        ),
+    createProjectPreferenceRepository: () => newLocalProjectPreferenceRepository(),
     createTagRepository: () =>
         withMirrorFallback<TagRepository>(
             new TagRepoImpl(getRequesterImpl()),

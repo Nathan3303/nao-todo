@@ -9,6 +9,7 @@ import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
 import { localSession } from '../session/local-session'
 import { defaultProjectPreferenceRes2Entity } from '../../persistence-go/project/converters'
+import { markPreferenceDirty } from '../../persistence-sync/preference-sync'
 
 /**
  * 本地项目偏好仓储实现
@@ -44,6 +45,8 @@ export class LocalProjectPreferenceRepoImpl implements ProjectPreferenceReposito
             await this.db.projectPreferences.put(
                 await projectPreferenceEntityToRecord(updatedEntity, this.currentUserId)
             )
+            // TASK-26 / M6：本地写成功后入偏好队列（**不入 syncQueue**）+ 防抖回传（按行）
+            await markPreferenceDirty('projectPreference', updatedEntity.projectId)
             return null
         } catch (err) {
             return String(err)

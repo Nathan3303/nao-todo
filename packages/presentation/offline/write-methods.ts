@@ -6,7 +6,10 @@ import type { WriteMethodMap } from './write-gate'
  *              映射到用例方法（`'error'` = `GoError` 直返；`'tuple'` = `[null, GoError]`）。
  *              清单会随排查增补（已发生一次：24 → 25）⇒ **禁在本文件/文档内引硬计数**。
  *              仅列**异步**写方法；读方法与同步方法不得列入（否则会破坏读路径/返回类型）。
- * @see docs/adr/2026-09-23-web-offline-local-first-and-security-posture.md（C-59）
+ *              ⚠️ **偏好/设置面显式例外**（TASK-26 / PS-2a，ADR-r2 §D-1 / §10）：
+ *              `saveProjectPreference` / `updateUserConfig` **已移出**本清单；内建 `savePreference`
+ *              **不得列入** —— 偏好面允许离线本地写（本地优先 + 独立偏好队列回传）。
+ * @see docs/adr/2026-09-23-web-offline-local-first-and-security-posture.md（C-59 / §10.10）
  */
 
 /** 任务用例写方法（#1–#13 / #16–#18 / #25） */
@@ -44,8 +47,7 @@ export const PROJECT_WRITE_METHODS: WriteMethodMap = {
     restore: 'error',
     archive: 'error',
     unarchive: 'error',
-    resort: 'error',
-    saveProjectPreference: 'error'
+    resort: 'error'
 }
 
 /** 标签用例写方法（#21） */
@@ -72,7 +74,6 @@ export const POMODORO_RECORD_WRITE_METHODS: WriteMethodMap = {
 export const USER_WRITE_METHODS: WriteMethodMap = {
     updateNickname: 'error',
     updatePassword: 'error',
-    updateUserConfig: 'error',
     updateAvatarFile: 'tuple',
     deactive: 'error',
     restore: 'error',

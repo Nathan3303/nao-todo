@@ -51,7 +51,9 @@ import { isNotDeleted } from '../persistence-local/utils'
 import { logStructured, STRUCTURED_LOG_EVENTS } from '../observability/structured-log'
 
 // ---------------------------------------------------------------------------
-// 同步表配置（7 张业务表；preferences 随父实体、users/userConfigs 走远程用户域，均不入同步）
+// 同步表配置（7 张业务表；⚠️ 偏好 **不随父实体同步**（旧注释不实，TASK-26/ADR-r2 P2 更正）：
+// projectPreferences 走独立偏好队列按行回传、内建偏好/设置面走 `UserConfig.preferences` 快照，均不入本表；
+// users/userConfigs 走远程用户域，均不入同步）
 // ---------------------------------------------------------------------------
 
 interface SyncTableConfig {

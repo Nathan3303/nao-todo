@@ -1,4 +1,8 @@
 import { registerBackfillTriggers } from '@nao-todo/infrastructure/src/persistence-sync/backfill-triggers'
+import {
+    flushPreferenceQueue,
+    pullAndMergeUserConfig
+} from '@nao-todo/infrastructure/src/persistence-sync/preference-sync'
 import { resolveUserIdFromStoredJwt } from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
 import { syncService } from '@nao-todo/infrastructure/src/persistence-sync/sync-service'
 import { syncStatus } from '@nao-todo/infrastructure/src/persistence-sync/sync-status'
@@ -41,9 +45,15 @@ export const startWebDataPlane = (): void => {
         // C-59 / ADR-r5.1：回传成功（真实执行 pull）⇒ 清除「离线进入」flag（网络恢复即可写）
         registerBackfillTriggers(
             withBootstrapRetry({
-                handleOnline: () => void syncService.resumeBackfill().then(applySyncConfirmation),
-                handleVisibility: () =>
+                handleOnline: () => {
                     void syncService.resumeBackfill().then(applySyncConfirmation)
+                    // TASK-26 / M6：偏好队列复用既有触发源（online）冲刷，不新增重试机制
+                    void flushPreferenceQueue()
+                },
+                handleVisibility: () => {
+                    void syncService.resumeBackfill().then(applySyncConfirmation)
+                    void flushPreferenceQueue()
+                }
             })
         )
     }
@@ -58,6 +68,8 @@ export const startWebDataPlane = (): void => {
     // 非阻塞：不阻塞进入应用；本条即「web 也用 syncService + 本地镜像」的接线点
     // C-59 / ADR-r5.1：仅当**真实执行 pull**（`pullExecuted`）且无错误/凭证失败时清除只读 flag
     void syncService.start().then(applySyncConfirmation)
+    // TASK-26 / M6：启动先拉取 + LWW 合并设置面，再冲刷偏好队列（非阻塞；失败静默降级）
+    void pullAndMergeUserConfig().then(() => flushPreferenceQueue())
 }
 
 /**

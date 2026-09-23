@@ -106,6 +106,11 @@ vi.mock(
     '@nao-todo/infrastructure/src/persistence-sync/sync-tracker',
     async () => import('@nao-todo/infrastructure')
 )
+// TASK-26 / M6：偏好同步接线（本文件只锁离线进入编排；偏好模块单独单测覆盖）
+vi.mock('@nao-todo/infrastructure/src/persistence-sync/preference-sync', () => ({
+    flushPreferenceQueue: vi.fn(async () => ({ pushed: 0, failed: 0 })),
+    pullAndMergeUserConfig: vi.fn(async () => {})
+}))
 
 const UnlockGateStub = defineComponent({
     name: 'UnlockGate',

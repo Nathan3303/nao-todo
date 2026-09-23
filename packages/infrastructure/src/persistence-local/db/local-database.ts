@@ -185,6 +185,27 @@ export interface MetaRecord {
     mirrorPulledAt?: string
     /** 镜像是否被续拉上界截断（T107b；同上，非索引字段） */
     mirrorTruncated?: boolean
+    /** 偏好队列（TASK-26/M6；仅 `${userId}:preference-queue` 记录携带，非索引字段 ⇒ 不触 C-44） */
+    preferenceQueue?: PreferenceQueueItem[]
+}
+
+/**
+ * 偏好队列项（TASK-26 / M6；独立于业务 `syncQueue`）
+ * @description 去重键 = 单位：`userConfig` 每用户一条；`projectPreference` 按 `projectId` 一条。
+ *              纯追加字段，字段语义同 `syncQueue`（`attempts`/`nextAttemptAt`/`lastErrorClass`）。
+ */
+export interface PreferenceQueueItem {
+    kind: 'userConfig' | 'projectPreference'
+    /** 仅 `projectPreference` 携带 */
+    projectId?: string
+    /** 首次入队时间（ISO；仅 UI / 队列合并顺序用，**不作 LWW 判据**） */
+    createdAt: string
+    /** 业务类失败累计次数（指数退避用） */
+    attempts?: number
+    /** 下次可推送时间（ISO；业务类退避用；缺失/过期即可推） */
+    nextAttemptAt?: string | null
+    /** 最近一次失败分类（网络/业务/凭证） */
+    lastErrorClass?: 'network' | 'business' | 'credential'
 }
 
 export interface DeletionScheduleRecord {
