@@ -70,7 +70,6 @@ describe('auth beforeEnter - C-62 离线进入判据', () => {
         mocks.getCurrentUserId.mockReturnValue('u-1')
         mocks.hasLocalMirror = true
         mocks.restoreMirrorStatus.mockClear()
-        mocks.logStructured.mockClear()
     })
 
     it('C-62 正向（守卫级）：授权 + JWT 可解析 + 会话一致 + 镜像存在 ⇒ 放行 index（门退役后仍可达）', async () => {
@@ -82,20 +81,6 @@ describe('auth beforeEnter - C-62 离线进入判据', () => {
         grantOfflineEntry()
         await beforeEnter()
         expect(mocks.checkAndCleanExpired).toHaveBeenCalledWith('u-1')
-    })
-
-    it('AC18：启动路径落结构化日志（started → completed；禁 PII）', async () => {
-        grantOfflineEntry()
-        await beforeEnter()
-        expect(mocks.logStructured).toHaveBeenCalledWith('info', 'lifecycle.bootstrap.started', {
-            hasExplicitUserId: true
-        })
-        expect(mocks.logStructured).toHaveBeenCalledWith('info', 'lifecycle.bootstrap.completed', {
-            hasExplicitUserId: true
-        })
-        const serialized = JSON.stringify(mocks.logStructured.mock.calls)
-        expect(serialized).not.toContain('u-1')
-        expect(serialized.toLowerCase()).not.toContain('token')
     })
 
     it('T108/AC8 首帧：离线门放行时从 meta 恢复镜像新鲜度，且**晚于** checkAndCleanExpired（无首帧闪烁）', async () => {

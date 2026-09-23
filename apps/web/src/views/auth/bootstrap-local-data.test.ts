@@ -15,7 +15,8 @@ const mocks = vi.hoisted(() => ({
     checkAndCleanExpired: vi.fn(async () => false),
     resumePendingWipe: vi.fn(async () => false),
     handleOnline: vi.fn(),
-    handleVisibility: vi.fn()
+    handleVisibility: vi.fn(),
+    logStructured: vi.fn()
 }))
 
 vi.mock('@nao-todo/infrastructure', () => ({
@@ -24,6 +25,12 @@ vi.mock('@nao-todo/infrastructure', () => ({
     deletionService: {
         checkAndCleanExpired: mocks.checkAndCleanExpired,
         resumePendingWipe: mocks.resumePendingWipe
+    },
+    logStructured: mocks.logStructured,
+    STRUCTURED_LOG_EVENTS: {
+        LIFECYCLE_BOOTSTRAP_STARTED: 'lifecycle.bootstrap.started',
+        LIFECYCLE_BOOTSTRAP_COMPLETED: 'lifecycle.bootstrap.completed',
+        LIFECYCLE_BOOTSTRAP_FAILED: 'lifecycle.bootstrap.failed'
     }
 }))
 
@@ -89,5 +96,61 @@ describe('withBootstrapRetry - C-61 调用点③（常驻跨 7 天）', () => {
         expect(mocks.handleOnline).toHaveBeenCalledTimes(1)
         expect(mocks.handleVisibility).toHaveBeenCalledTimes(1)
         expect(mocks.checkAndCleanExpired).toHaveBeenCalledTimes(2)
+    })
+})
+
+describe('AC18 - 启动路径结构化日志（禁 PII；单一真源 ⇒ 两端覆盖）', () => {
+    it('成功路径：started（是否显式 userId）→ completed（hasSession=true）', async () => {
+        await bootstrapLocalData()
+        expect(mocks.logStructured).toHaveBeenCalledWith('info', 'lifecycle.bootstrap.started', {
+            hasExplicitUserId: false
+        })
+        expect(mocks.logStructured).toHaveBeenCalledWith('info', 'lifecycle.bootstrap.completed', {
+            hasExplicitUserId: false,
+            hasSession: true
+        })
+    })
+
+    it('无 JWT（未登录）：completed 仍落，但 hasSession=false', async () => {
+        mocks.resolveUserIdFromStoredJwt.mockReturnValue(null)
+        await bootstrapLocalData()
+        expect(mocks.logStructured).toHaveBeenCalledWith('info', 'lifecycle.bootstrap.completed', {
+            hasExplicitUserId: false,
+            hasSession: false
+        })
+    })
+
+    it('异常路径：落 failed（仅错误名）+ 错误继续上抛（不吞）', async () => {
+        const failure = Object.assign(new Error('boom'), { name: 'StorageError' })
+        mocks.resumePendingWipe.mockRejectedValueOnce(failure)
+        await expect(bootstrapLocalData()).rejects.toBe(failure)
+        expect(mocks.logStructured).toHaveBeenCalledWith('error', 'lifecycle.bootstrap.failed', {
+            hasExplicitUserId: false,
+            errorName: 'StorageError'
+        })
+    })
+
+    it('禁 PII：日志字段不含 userId / token / 正文', async () => {
+        await bootstrapLocalData()
+        const serialized = JSON.stringify(mocks.logStructured.mock.calls)
+        expect(serialized).not.toContain('u-1')
+        expect(serialized.toLowerCase()).not.toContain('token')
+    })
+
+    it('顺序不变：resumePendingWipe → 会话重建 → checkAndCleanExpired', async () => {
+        const order: string[] = []
+        mocks.resumePendingWipe.mockImplementationOnce(async () => {
+            order.push('resumePendingWipe')
+            return false
+        })
+        mocks.setCurrentUserId.mockImplementationOnce(() => {
+            order.push('setCurrentUserId')
+        })
+        mocks.checkAndCleanExpired.mockImplementationOnce(async () => {
+            order.push('checkAndCleanExpired')
+            return false
+        })
+        await bootstrapLocalData()
+        expect(order).toEqual(['resumePendingWipe', 'setCurrentUserId', 'checkAndCleanExpired'])
     })
 })

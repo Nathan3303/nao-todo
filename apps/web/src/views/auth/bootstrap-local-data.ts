@@ -1,7 +1,9 @@
 import {
     deletionService,
     localSession,
+    logStructured,
     resolveUserIdFromStoredJwt,
+    STRUCTURED_LOG_EVENTS,
     type BackfillTriggerTarget
 } from '@nao-todo/infrastructure'
 
@@ -19,12 +21,37 @@ import {
  * @see docs/adr/2026-09-23-web-offline-local-first-and-security-posture.md（C-61）
  */
 export const bootstrapLocalData = async (userId?: string | null): Promise<void> => {
-    // C-53：先补完崩溃/强杀遗留的清库（可重入；清库完成后标记自行删除）
-    await deletionService.resumePendingWipe()
-    const uid = userId ?? resolveUserIdFromStoredJwt()
-    if (!uid) return
-    localSession.setCurrentUserId(uid)
-    await deletionService.checkAndCleanExpired(uid)
+    // AC18：启动路径结构化日志（禁 PII —— 只记布尔/枚举，不记 userId / token / 正文）。
+    // 单一真源：两端（web 守卫 / desktop AppRoot）均经本收敛点 ⇒ 启动事件两端覆盖。
+    const hasExplicitUserId = typeof userId === 'string' && userId.length > 0
+    logStructured('info', STRUCTURED_LOG_EVENTS.LIFECYCLE_BOOTSTRAP_STARTED, {
+        hasExplicitUserId
+    })
+    try {
+        // C-53：先补完崩溃/强杀遗留的清库（可重入；清库完成后标记自行删除）
+        await deletionService.resumePendingWipe()
+        const uid = userId ?? resolveUserIdFromStoredJwt()
+        if (!uid) {
+            logStructured('info', STRUCTURED_LOG_EVENTS.LIFECYCLE_BOOTSTRAP_COMPLETED, {
+                hasExplicitUserId,
+                hasSession: false
+            })
+            return
+        }
+        localSession.setCurrentUserId(uid)
+        await deletionService.checkAndCleanExpired(uid)
+        logStructured('info', STRUCTURED_LOG_EVENTS.LIFECYCLE_BOOTSTRAP_COMPLETED, {
+            hasExplicitUserId,
+            hasSession: true
+        })
+    } catch (err) {
+        // 日志不吞错：记录后继续上抛（既有语义不变）
+        logStructured('error', STRUCTURED_LOG_EVENTS.LIFECYCLE_BOOTSTRAP_FAILED, {
+            hasExplicitUserId,
+            errorName: err instanceof Error ? err.name : typeof err
+        })
+        throw err
+    }
 }
 
 /**

@@ -30,7 +30,8 @@ const mocks = vi.hoisted(() => ({
     getCurrentUserId: vi.fn(() => 'u-1'),
     clearSession: vi.fn(),
     lock: vi.fn(),
-    resolveUserIdFromStoredJwt: vi.fn(() => 'u-1')
+    resolveUserIdFromStoredJwt: vi.fn(() => 'u-1'),
+    logStructured: vi.fn()
 }))
 
 vi.mock('@nao-todo/infrastructure', () => ({
@@ -53,7 +54,13 @@ vi.mock('@nao-todo/infrastructure', () => ({
         schedulePush: mocks.schedulePush,
         setSessionExpiredListener: mocks.setSessionExpiredListener
     },
-    syncTracker: { setDirtyListener: mocks.setDirtyListener }
+    syncTracker: { setDirtyListener: mocks.setDirtyListener },
+    logStructured: mocks.logStructured,
+    STRUCTURED_LOG_EVENTS: {
+        LIFECYCLE_BOOTSTRAP_STARTED: 'lifecycle.bootstrap.started',
+        LIFECYCLE_BOOTSTRAP_COMPLETED: 'lifecycle.bootstrap.completed',
+        LIFECYCLE_BOOTSTRAP_FAILED: 'lifecycle.bootstrap.failed'
+    }
 }))
 
 vi.mock('@/App.vue', () => ({
@@ -143,5 +150,21 @@ describe('DEF-10 / AC14：门退役后注销到期清理仍触发（顺序断言
         expect(cleanOrder).toBeDefined()
         expect(startOrder).toBeDefined()
         expect(cleanOrder!).toBeLessThan(startOrder!)
+    })
+
+    it('AC18（证据，新增）：desktop 冷启动经共享 bootstrapLocalData 落 LIFECYCLE_BOOTSTRAP_STARTED / COMPLETED（禁 PII）', async () => {
+        mountRoot()
+        await flushPromises()
+
+        expect(mocks.logStructured).toHaveBeenCalledWith('info', 'lifecycle.bootstrap.started', {
+            hasExplicitUserId: false
+        })
+        expect(mocks.logStructured).toHaveBeenCalledWith('info', 'lifecycle.bootstrap.completed', {
+            hasExplicitUserId: false,
+            hasSession: true
+        })
+        const serialized = JSON.stringify(mocks.logStructured.mock.calls)
+        expect(serialized).not.toContain('u-1')
+        expect(serialized.toLowerCase()).not.toContain('token')
     })
 })
