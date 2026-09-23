@@ -8,11 +8,15 @@
  *                 改为**可重试失败态**（含「重试」+「重新登录」两个可前进动作，C-02）；
  *                 **凭证类**（401/403/10041/登录已过期）保持 `replace('/auth/signin')`。
  */
-import { type GoError, Loading as LoadingComponent, t, unwrapError } from '@nao-todo/shared'
+import { Loading as LoadingComponent, t, unwrapError } from '@nao-todo/shared'
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { NueMessage } from 'nue-ui'
-import { AuthUseCase, USER_JWT_LOCALSTORAGE_KEY } from '@nao-todo/domain-identity'
+import {
+    AuthUseCase,
+    isCredentialError,
+    USER_JWT_LOCALSTORAGE_KEY
+} from '@nao-todo/domain-identity'
 
 defineOptions({ name: 'AuthCheckIn' })
 const props = defineProps<{ authUseCase: AuthUseCase; loadingText: string }>()
@@ -24,10 +28,6 @@ const route = useRoute()
 const loading = ref(true)
 const failed = ref(false)
 const errorMessage = ref('')
-
-/** 凭证类失败（B-3②）：跳登录页重新登录 */
-const isCredentialError = (err: GoError): boolean =>
-    /登录已过期|凭证|401|403|10041/.test(unwrapError(err))
 
 /** 检入（可重试；失败态下点「重试」再次进入本函数） */
 const checkIn = async (): Promise<void> => {
