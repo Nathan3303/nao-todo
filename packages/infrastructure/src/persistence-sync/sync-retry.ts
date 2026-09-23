@@ -52,6 +52,8 @@ export type BackfillDelayInput = {
     earliestNextAttemptAtMs: number | null
     /** 当前退避层级（普通到期路径的指数因子） */
     level: number
+    /** 上轮拉取未取尽（DEF-6 续拉）：无脏队列时也需安排补拉 tick */
+    pullPending?: boolean
 }
 
 /**
@@ -61,10 +63,10 @@ export type BackfillDelayInput = {
  *              上限 120s（PUSH_BACKOFF_MAX_MS）。
  */
 export const computeBackfillDelayMs = (input: BackfillDelayInput): number | null => {
-    const { nowMs, pausedUntilMs, dueCount, earliestNextAttemptAtMs, level } = input
+    const { nowMs, pausedUntilMs, dueCount, earliestNextAttemptAtMs, level, pullPending } = input
     const clamp = (delay: number): number => Math.max(0, Math.min(delay, PUSH_BACKOFF_MAX_MS))
     if (pausedUntilMs > nowMs) return clamp(pausedUntilMs - nowMs)
-    if (dueCount > 0) return clamp(BACKFILL_TICK_MS * 2 ** level)
+    if (dueCount > 0 || pullPending === true) return clamp(BACKFILL_TICK_MS * 2 ** level)
     if (earliestNextAttemptAtMs !== null) return clamp(earliestNextAttemptAtMs - nowMs)
     return null
 }

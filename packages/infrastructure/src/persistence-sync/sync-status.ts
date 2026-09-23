@@ -44,6 +44,14 @@ export interface SyncStatusState {
     paused: boolean
     /** 暂停原因（可选） */
     pausedReason?: 'offline' | 'over-limit'
+    /**
+     * 镜像完整拉取时间（DEF-6 / AC13b / C-60）
+     * @description 仅当一次拉取**所有表均取尽**（未触发续拉上界）时推进；
+     *              截断/失败**不得推进**（不得谎报完整度）⇒ 供 C-60 文案③「尚未同步完成」判定
+     */
+    mirrorPulledAt: string | null
+    /** 镜像是否因续拉上界被截断（触顶提示；下次完整取尽时清除） */
+    mirrorTruncated: boolean
 }
 
 export class SyncStatus {
@@ -56,7 +64,9 @@ export class SyncStatus {
         errors: [],
         errorCount: 0,
         credentialFailure: false,
-        paused: false
+        paused: false,
+        mirrorPulledAt: null,
+        mirrorTruncated: false
     }
 
     private listeners = new Set<() => void>()
@@ -123,6 +133,22 @@ export class SyncStatus {
     /** 清除暂停态（恢复回传/触顶恢复） */
     clearPaused(): void {
         this.set({ paused: false, pausedReason: undefined })
+    }
+
+    /**
+     * 标记镜像完整拉取（所有表取尽）：推进 `mirrorPulledAt` 并清除触顶提示
+     * @description DEF-6 / AC13b：仅完整拉取可推进，截断不得谎报完整度
+     */
+    markMirrorPulled(): void {
+        this.set({ mirrorPulledAt: new Date().toISOString(), mirrorTruncated: false })
+    }
+
+    /**
+     * 标记镜像拉取被续拉上界截断：**不推进** `mirrorPulledAt`，置触顶提示
+     * @description DEF-6 / AC13b 护栏 B
+     */
+    markMirrorTruncated(): void {
+        this.set({ mirrorTruncated: true })
     }
 
     /**

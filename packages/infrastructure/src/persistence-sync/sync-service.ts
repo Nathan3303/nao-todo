@@ -235,11 +235,36 @@ interface PushResult {
     serverUpdatedAt?: string
 }
 
+/** 单表续拉游标状态（DEF-6）：`updatedAt/cursorId` 为**本轮请求**游标，`lastEnd*` 为上一页**原始**末尾 */
+interface PullCursorState {
+    updatedAt: string
+    cursorId: string
+    lastEndAt: string
+    lastEndId: string
+}
+
 // ---------------------------------------------------------------------------
 // SyncService
 // ---------------------------------------------------------------------------
 
 const PULL_LIMIT = 200
+/**
+ * 续拉上界（DEF-6 护栏 A / arch R2）：每表 ≤10 轮（=2000 行）
+ * @description 墓碑计入窗口（`.Unscoped()`）⇒ 续拉轮数可能远大于存活行数，必须有界。
+ */
+const PULL_MAX_ROUNDS = 10
+/** 续拉时间预算（DEF-6 护栏 A）：总预算 3s，与轮数上界**先到者**生效 */
+const PULL_TIME_BUDGET_MS = 3000
+
+/**
+ * 续拉上界覆盖（DEF-6 护栏 A；仅供测试注入，缺省取模块常量）
+ * @description 测试环境（fake-indexeddb + WebCrypto）单行落库 ~10ms，与真实浏览器差异大 ⇒
+ *              完成路径测试注入更宽预算、截断路径测试注入更小上界，使判定确定可复现。
+ */
+export interface SyncServiceOptions {
+    pullMaxRounds?: number
+    pullTimeBudgetMs?: number
+}
 /**
  * 拉取请求游标回拉窗口（DEF-SYNC-05 缺陷2）
  * @description 服务端 keyset 为**严格** `updated_at > cursor`（`query/sync.go:26-36`）：
@@ -294,6 +319,13 @@ export class SyncService {
     /** 退避定时当前间隔索引（成功/清空清零） */
     private backfillLevel = 0
 
+    /**
+     * 上轮拉取是否未取尽（DEF-6）
+     * @description 续拉中途失败/中断 ⇒ true；仅当所有表均取尽（pending 清空）才复位 false。
+     *              用于无脏队列时仍安排回传定时补拉（`scheduleBackfillTick`）。
+     */
+    private pullIncomplete = false
+
     /** 测试可注入 mock；生产不注入则每次动态取全局 requester（避免模块加载时序捕获到 emptyRequester） */
     private readonly injectedRequester: Requester | null
 
@@ -306,8 +338,16 @@ export class SyncService {
     /** 会话失效回调（业务码 10041：凭证验证失败 → 装配层清 JWT 回登录页） */
     private sessionExpiredListener: (() => void) | null = null
 
-    constructor(requester?: Requester) {
+    /** 续拉轮数上界（DEF-6 护栏 A；缺省 PULL_MAX_ROUNDS） */
+    private readonly pullMaxRounds: number
+
+    /** 续拉时间预算 ms（DEF-6 护栏 A；缺省 PULL_TIME_BUDGET_MS） */
+    private readonly pullTimeBudgetMs: number
+
+    constructor(requester?: Requester, options: SyncServiceOptions = {}) {
         this.injectedRequester = requester ?? null
+        this.pullMaxRounds = options.pullMaxRounds ?? PULL_MAX_ROUNDS
+        this.pullTimeBudgetMs = options.pullTimeBudgetMs ?? PULL_TIME_BUDGET_MS
     }
 
     /** 注册拉取写入回调（数据变化 → 视图刷新，见 data-sync-plan.md §8 Phase 3） */
@@ -428,71 +468,147 @@ export class SyncService {
         })
     }
 
-    /** 拉取全部同步表（串行队列内执行） */
+    /**
+     * 拉取全部同步表（串行队列内执行）
+     * @description DEF-6：单轮 `limit=PULL_LIMIT` 在 >200 行账号下会截断（最旧优先）⇒
+     *              按服务端 `nextCursor/nextCursorId` **续拉至无更多数据**：
+     *              终止判据只用 `items.length < PULL_LIMIT`（服务端 `Total` 是**本页条数**、
+     *              非剩余总数，误用会漏拉/多拉，见 arch R2 / `sync.go:212`）。
+     *              续拉游标复用 `rewindIsoCursor`（回拉时 `cursorId` 归零），且**仅在成功应用后推进**；
+     *              以「原始页尾不前进」为兜底终止，避免服务端重复返回同页时死循环。
+     *              护栏 A：每表 ≤`PULL_MAX_ROUNDS` 轮（=2000 行）或总预算 `PULL_TIME_BUDGET_MS`，
+     *              先到者生效；触顶即截断（`markMirrorTruncated`，不推进 `mirrorPulledAt`）。
+     *              任一续拉轮失败即中止（`pullIncomplete=true`，交由回传定时补拉）。
+     */
     private async pullAllInner(): Promise<void> {
         const userId = this.currentUserId()
         if (!userId) return
-        const pullBody: Record<string, Record<string, unknown>> = {}
+        // 每表待拉游标：首轮为存储游标回拉窗口；后续轮为上一页末尾回拉窗口
+        const pending = new Map<string, PullCursorState>()
         for (const config of SYNC_TABLES) {
             const cursor = await localDatabase.syncCursor.get(`${userId}:${config.table}`)
             const cursorAt = cursor?.lastPullAt ?? ''
             const windowAt = rewindIsoCursor(cursorAt, PULL_BACKTRACK_MS)
-            pullBody[config.table] = {
+            pending.set(config.table, {
                 // 回拉窗口（DEF-SYNC-05 缺陷2）：请求按瞬时回拉 Δ，靠 LWW 幂等重放补齐严格 `>` 漏拉的行
                 updatedAt: windowAt,
                 // 回拉改变时间点 ⇒ 边界时刻必须从最小 id 起（服务端 keyset `updated_at = c AND id > cursorId`），
                 // 否则同一时刻较低 id 的行仍会被跳过；未回拉（含不可解析退化）时保持原 keyset 位置
                 cursorId: windowAt === cursorAt ? (cursor?.lastPullId ?? '') : '',
-                limit: PULL_LIMIT
-            }
-        }
-        let response
-        try {
-            response = await this.requester.post('/sync/pull', pullBody, {
-                headers: this.authHeaders()
+                lastEndAt: '',
+                lastEndId: ''
             })
-        } catch (err) {
-            // HTTP 4xx/5xx：区分鉴权失败（不误报网络错误，提示重新登录）
-            const status = (err as { response?: { status?: number } })?.response?.status
-            if (status === 401 || status === 403) {
-                console.error('[sync] 拉取被拒绝：登录已过期（401/403）', status)
-                syncStatus.noteRunError('pull', ERR_PULL_EXPIRED)
-            } else {
-                console.error('[sync] 拉取请求失败（网络/HTTP 错误）', err)
-                syncStatus.noteRunError('pull', ERR_PULL_NETWORK)
-            }
-            return
         }
-        // 归一化网络错误检测：requester 对断网/超时不 reject，而是 resolve 顶层携带字符串 code 的归一化响应，
-        // 不识别会被当作"空数据成功"静默吞掉（见审查报告缺陷 1）
-        const raw = response as { code?: unknown; data?: unknown } | undefined
-        const data = raw?.data as { data?: unknown; serverTime?: string | number } | undefined
-        // 业务码 10041（用户凭证验证失败）：HTTP 可能仍为 200，须在归一化检测前识别
-        if (this.isSessionExpiredCode((data as { code?: unknown })?.code)) {
-            console.error('[sync] 拉取被拒绝：用户凭证验证失败（10041）')
-            syncStatus.markCredentialFailure()
-            this.notifySessionExpired()
-            syncStatus.noteRunError('pull', ERR_SESSION_EXPIRED)
-            return
-        }
-        if (typeof raw?.code === 'string' || data?.data === null) {
-            console.error('[sync] 拉取归一化错误（断网/超时）', raw?.code)
-            syncStatus.noteRunError('pull', ERR_PULL_NETWORK)
-            return
-        }
-        this.calibrateServerTime(Number((data as { serverTime?: string | number }).serverTime))
-        // 后端结构：response.data = { code, message, data: { data: { [table]: { items, total, nextCursor, nextCursorId } } }, serverTime }
-        const inner = (data?.data as { data?: Record<string, PullTableResult> } | undefined)?.data
-        const results = inner ?? {}
+        const startedAtMs = Date.now()
+        let rounds = 0
         let writtenCount = 0
-        for (const config of SYNC_TABLES) {
-            const result = results[config.table]
-            if (!result?.items) continue
-            writtenCount += await this.applyPullBatch(config, result)
-        }
-        // 有实际写入（新增/覆盖/删除墓碑）→ 通知视图刷新（store 缓存绕过，需事件驱动重拉）
-        if (writtenCount > 0) {
-            this.notifyDataChanged()
+        try {
+            while (pending.size > 0) {
+                // 护栏 A（DEF-6）：轮数/时间上界，先到者截断
+                if (
+                    rounds >= this.pullMaxRounds ||
+                    Date.now() - startedAtMs >= this.pullTimeBudgetMs
+                ) {
+                    syncStatus.markMirrorTruncated()
+                    break
+                }
+                rounds += 1
+                const pullBody: Record<string, Record<string, unknown>> = {}
+                for (const [table, cursor] of pending) {
+                    pullBody[table] = {
+                        updatedAt: cursor.updatedAt,
+                        cursorId: cursor.cursorId,
+                        limit: PULL_LIMIT
+                    }
+                }
+                let response
+                try {
+                    response = await this.requester.post('/sync/pull', pullBody, {
+                        headers: this.authHeaders()
+                    })
+                } catch (err) {
+                    // HTTP 4xx/5xx：区分鉴权失败（不误报网络错误，提示重新登录）
+                    this.pullIncomplete = true
+                    const status = (err as { response?: { status?: number } })?.response?.status
+                    if (status === 401 || status === 403) {
+                        console.error('[sync] 拉取被拒绝：登录已过期（401/403）', status)
+                        syncStatus.noteRunError('pull', ERR_PULL_EXPIRED)
+                    } else {
+                        console.error('[sync] 拉取请求失败（网络/HTTP 错误）', err)
+                        syncStatus.noteRunError('pull', ERR_PULL_NETWORK)
+                    }
+                    return
+                }
+                // 归一化网络错误检测：requester 对断网/超时不 reject，而是 resolve 顶层携带字符串 code 的归一化响应，
+                // 不识别会被当作"空数据成功"静默吞掉（见审查报告缺陷 1）
+                const raw = response as { code?: unknown; data?: unknown } | undefined
+                const data = raw?.data as
+                    | { data?: unknown; serverTime?: string | number }
+                    | undefined
+                // 业务码 10041（用户凭证验证失败）：HTTP 可能仍为 200，须在归一化检测前识别
+                if (this.isSessionExpiredCode((data as { code?: unknown })?.code)) {
+                    this.pullIncomplete = true
+                    console.error('[sync] 拉取被拒绝：用户凭证验证失败（10041）')
+                    syncStatus.markCredentialFailure()
+                    this.notifySessionExpired()
+                    syncStatus.noteRunError('pull', ERR_SESSION_EXPIRED)
+                    return
+                }
+                if (typeof raw?.code === 'string' || data?.data === null) {
+                    this.pullIncomplete = true
+                    console.error('[sync] 拉取归一化错误（断网/超时）', raw?.code)
+                    syncStatus.noteRunError('pull', ERR_PULL_NETWORK)
+                    return
+                }
+                this.calibrateServerTime(
+                    Number((data as { serverTime?: string | number }).serverTime)
+                )
+                // 后端结构：response.data = { code, message, data: { data: { [table]: { items, total, nextCursor, nextCursorId } } }, serverTime }
+                const inner = (data?.data as { data?: Record<string, PullTableResult> } | undefined)
+                    ?.data
+                const results = inner ?? {}
+                for (const config of SYNC_TABLES) {
+                    const cursor = pending.get(config.table)
+                    if (!cursor) continue
+                    const result = results[config.table]
+                    if (!result?.items) {
+                        pending.delete(config.table)
+                        continue
+                    }
+                    writtenCount += await this.applyPullBatch(config, result)
+                    // 续拉判定（arch R2）：**只用 `items.length < limit`** 判「无更多」
+                    // （服务端 `Total = int64(len(items))` 是本页条数，非剩余总数）；
+                    // 原始页尾不前进（服务端重复返回同页）也视为取尽，避免死循环。
+                    const nextCursor = result.nextCursor ?? ''
+                    const nextCursorId = result.nextCursorId ?? ''
+                    const advanced =
+                        nextCursor !== '' &&
+                        (nextCursor !== cursor.lastEndAt || nextCursorId !== cursor.lastEndId)
+                    if (result.items.length < PULL_LIMIT || !advanced) {
+                        pending.delete(config.table)
+                    } else {
+                        // 续拉复用同一回拉窗口（回拉时 cursorId 归零）；游标仅在成功应用后推进
+                        const rewound = rewindIsoCursor(nextCursor, PULL_BACKTRACK_MS)
+                        pending.set(config.table, {
+                            updatedAt: rewound,
+                            cursorId: rewound === nextCursor ? nextCursorId : '',
+                            lastEndAt: nextCursor,
+                            lastEndId: nextCursorId
+                        })
+                    }
+                }
+            }
+            if (pending.size === 0) {
+                // 所有表均取尽 ⇒ 镜像完整（DEF-6/AC13b：仅此处推进 mirrorPulledAt）
+                this.pullIncomplete = false
+                syncStatus.markMirrorPulled()
+            } else {
+                // 触顶截断：不推进 mirrorPulledAt（护栏 B），交由回传定时补拉
+                this.pullIncomplete = true
+            }
+        } finally {
+            // 有实际写入（含续拉中途失败前已落库部分）→ 通知视图刷新（store 缓存绕过，需事件驱动重拉）
+            if (writtenCount > 0) this.notifyDataChanged()
         }
     }
 
@@ -795,8 +911,10 @@ export class SyncService {
     }
 
     /**
-     * 恢复回传（网络恢复/前台恢复/手动）：清暂停 + 重置退避 + 经 enqueue 立即推一次
-     * @description C-43：`online`/可见性仅作触发，不得作鉴权/放行；C-40：均经 enqueue 串行
+     * 恢复回传（网络恢复/前台恢复/手动）：清暂停 + 重置退避 + 经 enqueue 先拉后推
+     * @description C-43：`online`/可见性仅作触发，不得作鉴权/放行；C-40：均经 enqueue 串行。
+     *              DEF-6：旧实现只 push 不 pull ⇒ 大账号在无脏队列时永远补不全本地镜像；
+     *              故与 `start()`/`manualSync()` 同口径，先 `pullAllInner()` 再 `pushAllInner()`。
      */
     async resumeBackfill(): Promise<SyncRunResult> {
         const userId = this.currentUserId()
@@ -804,7 +922,12 @@ export class SyncService {
             this.resumeBackfillState()
             await syncTracker.resetFailed(userId)
         }
-        const result = await this.pushAll()
+        const result = await this.enqueue(() =>
+            this.runFull(async () => {
+                await this.pullAllInner()
+                await this.pushAllInner()
+            })
+        )
         await this.scheduleBackfillTick()
         return result
     }
@@ -823,7 +946,8 @@ export class SyncService {
      * 按需启动条件退避定时（C-40 / SHELL-06-DEF-01）
      * @description 暂停期**不得 return**：按 `pausedUntil` 到期安排 tick（clamp ≤120s），
      *              到期自动 `resumeBackfill`；业务退避按最早 `nextAttemptAt` 唤醒；
-     *              有到期项时按指数间隔；无待推送/暂停项时不创建（有界且可停）。
+     *              有到期项时按指数间隔；**拉取未取尽（DEF-6）时也不得跳过补拉**；
+     *              无待推送/暂停/待补拉项时不创建（有界且可停）。
      *              单一定时器：调用即先清旧（可重排，不叠加/泄漏）。
      */
     private async scheduleBackfillTick(): Promise<void> {
@@ -832,7 +956,8 @@ export class SyncService {
         if (!userId) return
         const nowMs = Date.now()
         const pending = await syncTracker.countDirty(userId)
-        if (pending === 0) {
+        // DEF-6：`countDirty === 0` 不得直接 return —— 拉取未取尽仍需安排补拉 tick
+        if (pending === 0 && !this.pullIncomplete) {
             this.backfillLevel = 0
             return
         }
@@ -843,7 +968,8 @@ export class SyncService {
             pausedUntilMs: this.pausedUntil,
             dueCount: due,
             earliestNextAttemptAtMs: earliest,
-            level: this.backfillLevel
+            level: this.backfillLevel,
+            pullPending: this.pullIncomplete
         })
         if (delay === null) return
         if (this.pausedUntil <= nowMs && due > 0) {
