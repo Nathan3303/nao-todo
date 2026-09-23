@@ -98,14 +98,14 @@ describe('LocalProjectRepoImpl', () => {
         expect(fetched!.description).toBe('工作相关的任务')
     })
 
-    it('落库记录中敏感字段为密文（不含明文）', async () => {
+    it('落库记录中敏感字段为明文自描述格式（`plain:` 前缀，C-46）', async () => {
         const repo = new LocalProjectRepoImpl()
         const [created] = await repo.create(
             new CreateProjectValueObject('机密项目', 'more2', '绝密描述')
         )
         const record = await localDatabase.projects.get(created!.id)
-        expect(record!.name).not.toContain('机密项目')
-        expect(record!.description).not.toContain('绝密描述')
+        expect(record!.name).toBe('plain:机密项目')
+        expect(record!.description).toBe('plain:绝密描述')
     })
 
     it('update / archive / restore / delete 语义正确', async () => {
@@ -202,13 +202,13 @@ describe('LocalTaskRepoImpl', () => {
         await setup()
     })
 
-    it('create → list 往返，内容字段加密存储', async () => {
+    it('create → list 往返，内容字段为明文自描述格式（C-46）', async () => {
         const repo = new LocalTaskRepoImpl()
         const [created, err] = await repo.create(makeTaskVO({ name: '买牛奶' }))
         expect(err).toBeNull()
 
         const record = await localDatabase.tasks.get(created!.id)
-        expect(record!.name).not.toContain('买牛奶')
+        expect(record!.name).toBe('plain:买牛奶')
 
         const [listResult] = await repo.list('isDeleted=false')
         expect(listResult!.taskEntities).toHaveLength(1)

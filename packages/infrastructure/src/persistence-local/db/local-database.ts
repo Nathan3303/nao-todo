@@ -173,9 +173,12 @@ export interface UserConfigRecord {
 
 export interface MetaRecord {
     id: string
-    salt: string
-    iv: string
-    wrappedDek: string
+    /** 密钥包字段（仅 `key-bundle` 记录携带；迁移完成标记记录不携带） */
+    salt?: string
+    iv?: string
+    wrappedDek?: string
+    /** 明文迁移完成时间（C-47；仅迁移完成标记记录携带，非索引字段 ⇒ 不触 C-44） */
+    migratedAt?: string
 }
 
 export interface DeletionScheduleRecord {

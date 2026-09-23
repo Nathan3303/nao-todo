@@ -19,7 +19,8 @@ import {
     newLocalTaskCheckItemRepository,
     newLocalTaskCommentRepository,
     newLocalTaskRepository,
-    resolveUserIdFromStoredJwt
+    resolveUserIdFromStoredJwt,
+    runPlaintextMigration
 } from '@nao-todo/infrastructure'
 
 /**
@@ -65,6 +66,13 @@ export const useCaseBinding: UseCaseBinding = {
             } catch (unlockErr) {
                 console.error('[desktop] 本地数据解锁失败', unlockErr)
                 return '本地数据解锁失败，请检查密码'
+            }
+            // C-47/C-56：登录路径已带明文密码 ⇒ 首次登录静默完成全库明文迁移
+            // （失败不阻塞登录：双格式读取兜底，下次启动/登录重试）
+            try {
+                await runPlaintextMigration(userId)
+            } catch (migrateErr) {
+                console.error('[desktop] 本地明文迁移失败', migrateErr)
             }
             return null
         }

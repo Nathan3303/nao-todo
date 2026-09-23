@@ -13,6 +13,13 @@ const PBKDF2_ITERATIONS = 600_000
 const KEY_BUNDLE_ID_PREFIX = 'key-bundle'
 
 /**
+ * 明文自描述前缀（C-46/C-51）
+ * @description 业务数据明文落盘；`encrypt` 产出 `plain:<原文>`，`decrypt` 识别前缀直返。
+ *              历史密文（`base64(iv):base64(ct)`）仍走真解密（迁移窗口内必须保留）。
+ */
+export const PLAIN_PREFIX = 'plain:'
+
+/**
  * 生成某用户密钥包在 meta 表中的主键
  */
 const keyBundleId = (userId: string) => `${userId}:${KEY_BUNDLE_ID_PREFIX}`
@@ -41,10 +48,12 @@ const fromBase64 = (str: string): Uint8Array<ArrayBuffer> => {
 }
 
 /**
- * 本地数据加密服务
- * @description 双层密钥体系：
- *              用户密码经 PBKDF2 派生 KEK（密钥加密密钥），KEK 仅用于解开 DEK（数据加密密钥）；
- *              业务数据全部用 DEK 做 AES-GCM 加密。DEK 只在内存中，登出/锁定时清空。
+ * 本地数据加密服务（passthrough 接缝，C-46）
+ * @description 明文姿态：`encrypt` 直通产出 `plain:<原文>`，`decrypt` 对 `plain:` 前缀直返，
+ *              对历史密文仍走真 AES-GCM 解密（`setup`/`unlock`/`ensureUnlocked` 保留，
+ *              迁移窗口内必须有真解密能力）。
+ *              `isUnlocked` 语义保留（`dek !== null`；置位仅由 `setup`/`unlock` 完成），
+ *              其作为离线进入判据的处置见 C-62（本单不删条件④）。
  *              密钥包（salt + iv + wrappedDek）存于 IndexedDB meta 表。
  */
 export class CryptoService {
@@ -97,7 +106,8 @@ export class CryptoService {
         if (!password) throw new Error('密码不能为空')
         if (!userId) throw new Error('用户 ID 不能为空')
         const bundle = await localDatabase.meta.get(keyBundleId(userId))
-        if (!bundle) throw new Error('本地密钥包不存在，请先初始化')
+        if (!bundle?.salt || !bundle.iv || !bundle.wrappedDek)
+            throw new Error('本地密钥包不存在，请先初始化')
         const kek = await this.deriveKek(password, fromBase64(bundle.salt))
         const dekRaw = await crypto.subtle.decrypt(
             { name: 'AES-GCM', iv: fromBase64(bundle.iv) },
@@ -151,7 +161,8 @@ export class CryptoService {
         if (!newPassword) throw new Error('新密码不能为空')
         if (!userId) throw new Error('用户 ID 不能为空')
         const bundle = await localDatabase.meta.get(keyBundleId(userId))
-        if (!bundle) throw new Error('本地密钥包不存在，请先初始化')
+        if (!bundle?.salt || !bundle.iv || !bundle.wrappedDek)
+            throw new Error('本地密钥包不存在，请先初始化')
         // 1. 旧密码解开 DEK（密码错误在此抛异常）
         const oldKek = await this.deriveKek(oldPassword, fromBase64(bundle.salt))
         const dekRaw = await crypto.subtle.decrypt(
@@ -178,29 +189,25 @@ export class CryptoService {
     }
 
     /**
-     * 加密明文字段
+     * 落库明文字段（passthrough）
      * @param plain 明文
-     * @returns "base64(iv):base64(密文)" 格式
+     * @returns `plain:<原文>` 自描述格式（C-46/C-51）
+     * @description 不依赖 DEK：明文姿态下无需解锁即可写入。
      */
     async encrypt(plain: string): Promise<string> {
-        if (!this.dek) throw new Error('本地密钥未解锁')
-        const iv = crypto.getRandomValues(new Uint8Array(12))
-        const cipher = await crypto.subtle.encrypt(
-            { name: 'AES-GCM', iv },
-            this.dek,
-            textEncoder.encode(plain)
-        )
-        return `${toBase64(iv)}:${toBase64(cipher)}`
+        return `${PLAIN_PREFIX}${plain}`
     }
 
     /**
-     * 解密字段
-     * @param cipher "base64(iv):base64(密文)" 格式
+     * 读取字段（双格式兜底，C-51）
+     * @param input `plain:<原文>` 或历史密文 `base64(iv):base64(密文)`
      * @returns 明文
+     * @description 明文前缀直返（**不得**对明文抛「密文格式无效」）；历史密文走真解密。
      */
-    async decrypt(cipher: string): Promise<string> {
+    async decrypt(input: string): Promise<string> {
+        if (input.startsWith(PLAIN_PREFIX)) return input.slice(PLAIN_PREFIX.length)
         if (!this.dek) throw new Error('本地密钥未解锁')
-        const [ivB64, ctB64] = cipher.split(':')
+        const [ivB64, ctB64] = input.split(':')
         if (!ivB64 || !ctB64) throw new Error('密文格式无效')
         const plain = await crypto.subtle.decrypt(
             { name: 'AES-GCM', iv: fromBase64(ivB64) },

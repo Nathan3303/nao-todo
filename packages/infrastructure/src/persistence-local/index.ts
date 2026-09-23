@@ -1,5 +1,6 @@
 export * from './crypto/crypto-service'
 export * from './db/local-database'
+export * from './migration/plaintext-migration'
 export * from './session/local-session'
 export * from './session/profile-cache'
 export * from './deletion/deletion-service'

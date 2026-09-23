@@ -33,7 +33,9 @@ const mocks = vi.hoisted(() => ({
     readCachedNickname: vi.fn(),
     setCurrentUserId: vi.fn(),
     clearSession: vi.fn(),
-    loadUserProfile: vi.fn()
+    loadUserProfile: vi.fn(),
+    isPlaintextMigrationDone: vi.fn(),
+    runPlaintextMigration: vi.fn()
 }))
 
 vi.mock('@nao-todo/infrastructure', () => ({
@@ -49,7 +51,9 @@ vi.mock('@nao-todo/infrastructure', () => ({
     deletionService: { checkAndCleanExpired: mocks.checkAndCleanExpired },
     initSnowflakeEpoch: vi.fn(),
     readCachedNickname: mocks.readCachedNickname,
-    resolveUserIdFromStoredJwt: mocks.resolveUserIdFromStoredJwt
+    resolveUserIdFromStoredJwt: mocks.resolveUserIdFromStoredJwt,
+    isPlaintextMigrationDone: mocks.isPlaintextMigrationDone,
+    runPlaintextMigration: mocks.runPlaintextMigration
 }))
 
 vi.mock('@/hooks', () => ({
@@ -95,6 +99,9 @@ beforeEach(() => {
     mocks.unlock.mockResolvedValue(undefined)
     mocks.readCachedNickname.mockReturnValue(null)
     mocks.loadUserProfile.mockResolvedValue([null, '拉取失败：网络错误'])
+    // 默认：未迁移（保持既有「显示解锁表单」断言成立）
+    mocks.isPlaintextMigrationDone.mockResolvedValue(false)
+    mocks.runPlaintextMigration.mockResolvedValue({ ran: true, migrated: 0, lockSkipped: false })
 })
 
 afterEach(() => {
@@ -190,5 +197,64 @@ describe('UnlockGate - SHELL-03 终态与离线身份', () => {
         retry?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
         await flushPromises()
         expect(document.querySelector('input[type="password"]')).not.toBeNull()
+    })
+
+    it('AC1b：已有密钥包 + 已完成明文迁移 ⇒ 无密码直接进入', async () => {
+        mocks.resolveUserIdFromStoredJwt.mockReturnValue('u-1')
+        mocks.hasKeyBundle.mockResolvedValue(true)
+        mocks.isPlaintextMigrationDone.mockResolvedValue(true)
+        const gate = mountGate()
+        await flushPromises()
+
+        expect(gate.emitted('unlocked')).toBeTruthy()
+        expect(mocks.unlock).not.toHaveBeenCalled()
+    })
+
+    it('AC4：未迁移 ⇒ UI 标「待升级」；点「跳过迁移」仅解锁且不调迁移', async () => {
+        mocks.resolveUserIdFromStoredJwt.mockReturnValue('u-1')
+        mocks.hasKeyBundle.mockResolvedValue(true)
+        mocks.isPlaintextMigrationDone.mockResolvedValue(false)
+        const gate = mountGate()
+        await flushPromises()
+
+        // 待升级标注可见
+        expect(document.querySelector('.unlock-gate__pending')?.textContent).toContain('待升级')
+        expect(buttonsText()).toContain('跳过迁移')
+
+        const input = wrapper!.findComponent(NueInput)
+        input.vm.$emit('update:modelValue', 'pw')
+        await flushPromises()
+
+        const skip = [...document.querySelectorAll('button')].find(
+            (b) => b.textContent?.trim() === '跳过迁移'
+        )
+        skip?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await flushPromises()
+
+        expect(mocks.unlock).toHaveBeenCalledWith('u-1', 'pw')
+        expect(mocks.runPlaintextMigration).not.toHaveBeenCalled()
+        expect(gate.emitted('unlocked')).toBeTruthy()
+    })
+
+    it('AC2（启动门侧）：未迁移 + 输入密码点「解锁」⇒ 先迁移再放行', async () => {
+        mocks.resolveUserIdFromStoredJwt.mockReturnValue('u-1')
+        mocks.hasKeyBundle.mockResolvedValue(true)
+        mocks.isPlaintextMigrationDone.mockResolvedValue(false)
+        const gate = mountGate()
+        await flushPromises()
+
+        const input = wrapper!.findComponent(NueInput)
+        input.vm.$emit('update:modelValue', 'pw')
+        await flushPromises()
+
+        const unlockButton = [...document.querySelectorAll('button')].find(
+            (b) => b.textContent?.trim() === '解锁'
+        )
+        unlockButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await flushPromises()
+
+        expect(mocks.unlock).toHaveBeenCalledWith('u-1', 'pw')
+        expect(mocks.runPlaintextMigration).toHaveBeenCalledWith('u-1')
+        expect(gate.emitted('unlocked')).toBeTruthy()
     })
 })

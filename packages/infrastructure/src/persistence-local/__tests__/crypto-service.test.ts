@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vite-plus/test'
 import { extractUserIdFromJwt } from '../session/local-session'
 import { cryptoService } from '../crypto/crypto-service'
 import { localDatabase } from '../db/local-database'
+import { seedLegacyCipher } from './legacy-cipher'
 
 /**
  * 清空本地数据库（各表）并锁定密钥
@@ -30,18 +31,26 @@ describe('CryptoService 密钥管理', () => {
         await resetLocalState()
     })
 
-    it('setup 后可加密/解密往返', async () => {
+    it('setup 后加密为明文直通（`plain:` 自描述）且可往返', async () => {
         await cryptoService.setup('user-1', 'test-password')
         expect(cryptoService.isUnlocked).toBe(true)
 
         const cipher = await cryptoService.encrypt('任务名称 🔒')
-        expect(cipher).not.toContain('任务名称')
-        const plain = await cryptoService.decrypt(cipher)
-        expect(plain).toBe('任务名称 🔒')
+        expect(cipher).toBe('plain:任务名称 🔒')
+        expect(await cryptoService.decrypt(cipher)).toBe('任务名称 🔒')
     })
 
-    it('未解锁时加密抛错', async () => {
-        await expect(cryptoService.encrypt('x')).rejects.toThrow('本地密钥未解锁')
+    it('未解锁时 encrypt 仍为明文直通（passthrough 不依赖 DEK）', async () => {
+        expect(await cryptoService.encrypt('x')).toBe('plain:x')
+    })
+
+    it('未解锁时 `plain:` 前缀直返，历史密文抛「本地密钥未解锁」', async () => {
+        const legacy = await seedLegacyCipher('user-1', 'right-password')
+        const legacyCipher = await legacy.encrypt('历史密文')
+        expect(legacyCipher.startsWith('plain:')).toBe(false)
+
+        expect(await cryptoService.decrypt('plain:明文字段')).toBe('明文字段')
+        await expect(cryptoService.decrypt(legacyCipher)).rejects.toThrow('本地密钥未解锁')
     })
 
     it('错误密码 unlock 抛错且不改变锁定状态', async () => {
@@ -53,14 +62,14 @@ describe('CryptoService 密钥管理', () => {
         expect(cryptoService.isUnlocked).toBe(false)
     })
 
-    it('正确密码 unlock 后可解密既有密文', async () => {
-        await cryptoService.setup('user-1', 'right-password')
-        const cipher = await cryptoService.encrypt('持久化密文')
-        cryptoService.lock()
+    it('正确密码 unlock 后可解历史密文（迁移窗口真解密能力保留）', async () => {
+        const legacy = await seedLegacyCipher('user-1', 'right-password')
+        const legacyCipher = await legacy.encrypt('持久化密文')
+        expect(cryptoService.isUnlocked).toBe(false)
 
         await cryptoService.unlock('user-1', 'right-password')
         expect(cryptoService.isUnlocked).toBe(true)
-        expect(await cryptoService.decrypt(cipher)).toBe('持久化密文')
+        expect(await cryptoService.decrypt(legacyCipher)).toBe('持久化密文')
     })
 
     it('lock 后密文不可读', async () => {
