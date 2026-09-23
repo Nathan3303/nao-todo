@@ -1,5 +1,6 @@
 import {
     USER_JWT_LOCALSTORAGE_KEY,
+    USER_PROFILE_CACHE_KEY,
     type UserConfigViewObject,
     type UserDeletion,
     type UserViewObject
@@ -59,12 +60,17 @@ export const useUserStore = defineStore('UserStore', () => {
 
     /**
      * 清除用户数据
+     * @description C-52/DEF-5：**禁** `localStorage.clear()`（会误清 `nao.deviceId` / 主题 / 语言）。
+     *              此处仅清身份/会话级键（10041 / 被顶号路径：只清身份、**不清库**，K4）；
+     *              完整清库（localStorage 业务键 + IndexedDB）由 `deletionService.wipeUserData` 负责。
      */
     const clearUserData = () => {
         setUserProfile({} as UserViewObject)
         setUserConfig({} as UserConfigViewObject)
         setUserDeletion({} as UserDeletion)
-        localStorage.clear()
+        localStorage.removeItem(USER_JWT_LOCALSTORAGE_KEY)
+        localStorage.removeItem(USER_PROFILE_CACHE_KEY)
+        localStorage.removeItem('USER_CONFIRM_UNRESTORE')
     }
 
     /**
@@ -72,7 +78,11 @@ export const useUserStore = defineStore('UserStore', () => {
      */
     watch(
         () => state.value.userToken,
-        (nv) => localStorage.setItem(USER_JWT_LOCALSTORAGE_KEY, nv)
+        (nv) => {
+            // 空 token ⇒ 删除键而非写空串（C-52：USER_JWT 必清）
+            if (nv) localStorage.setItem(USER_JWT_LOCALSTORAGE_KEY, nv)
+            else localStorage.removeItem(USER_JWT_LOCALSTORAGE_KEY)
+        }
     )
 
     // @returns

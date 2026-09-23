@@ -179,6 +179,8 @@ export interface MetaRecord {
     wrappedDek?: string
     /** 明文迁移完成时间（C-47；仅迁移完成标记记录携带，非索引字段 ⇒ 不触 C-44） */
     migratedAt?: string
+    /** 清库可重入标记的待清 userId（C-53；仅 `pendingWipe` 记录携带，非索引字段） */
+    pendingWipe?: string
 }
 
 export interface DeletionScheduleRecord {
