@@ -169,37 +169,42 @@ DELETE FROM naotodo.users                WHERE id = @uid;
 
 图例：**写失败可见性** = `toast`（用户可见错误）/ `静默`（无任何反馈 ⇒ **误判「已保存」**）。严重度按「用户是否会据此做出错误决策 / 是否丢数据」。
 
-| #   | 入口                         | 入口位置                                                                                           | 写失败可见性（web）           | desktop                                | 误判       | 严重度     |
-| :-- | :--------------------------- | :------------------------------------------------------------------------------------------------- | :---------------------------- | :------------------------------------- | :--------- | :--------- |
-| 1   | 详情·状态勾选                | `task-details/header/index.vue:12` → `use-task-view-object.ts:137`                                 | toast（**实测**）             | 入队                                   | 否         | P1（禁写） |
-| 2   | 详情·星标/取消星标           | `task-details/footer/index.vue:58-63`                                                              | toast                         | 入队（**实测**）                       | 否         | P1         |
-| 3   | 详情·放弃/取消放弃           | `task-details/footer/index.vue:83-88` → `use-task-view-object.ts:207/223`                          | toast                         | 入队                                   | 否         | P1         |
-| 4   | 详情·日期/提醒改期           | `task-details/header/index.vue:16`                                                                 | toast                         | 入队                                   | 否         | P1         |
-| 5   | 详情·描述 inline 保存        | `use-task-view-object.ts`（`updateTaskDetails`）                                                   | toast                         | 入队                                   | 否         | P1         |
-| 6   | 详情·所属清单切换            | `task-details/footer/index.vue:103`                                                                | toast                         | 入队                                   | 否         | P1         |
-| 7   | 详情·删除/恢复任务           | `footer/index.vue:77-82` → `handlers/task.ts`                                                      | toast                         | 入队                                   | 否         | P1         |
-| 8   | 列表/表格行·删除/恢复        | `table-main.vue:177`、`list-main.vue:58`                                                           | toast                         | 入队                                   | 否         | P1         |
-| 9   | **看板·拖拽改状态**          | `kanban/use-kanban.ts:23`（`await taskUseCase.update(...)`，**返回值被丢弃**）                     | **静默**                      | 入队                                   | **是**     | **P0**     |
-| 10  | **看板·完成/取消完成**       | `view-adapters/kanban-view-adapter.vue:64-65`（同上丢弃）                                          | **静默**                      | 入队                                   | **是**     | **P0**     |
-| 11  | **详情·创建子任务**          | `task-details/main/subtasks.vue:83` → `use-subtasks.ts:109`（返回 err，调用方 `await` 后**丢弃**） | **静默**                      | 入队                                   | **是**     | **P1**     |
-| 12  | 详情·子任务勾选              | `subtasks.vue:71` → `handlers/task.ts:update`                                                      | toast                         | 入队                                   | 否         | P2         |
-| 13  | 详情·子任务拖拽改序          | `use-subtasks.ts:141 resortSubTasks`（返回 err，**调用方未见 toast**）                             | 静默（待实测）                | 入队                                   | 疑似是     | P2         |
-| 14  | 详情·检查项 增/改/删         | `handlers/task-check-item.ts:31/53/71`                                                             | toast                         | 入队                                   | 否         | P2         |
-| 15  | 详情·评论 增/改/删           | `handlers/task-comment.ts:37/59/77`                                                                | toast                         | 入队                                   | 否         | P2         |
-| 16  | 创建任务对话框               | `dialogs/creator/use-creator.ts:86`                                                                | toast                         | 入队                                   | 否         | P1         |
-| 17  | 多选批量操作                 | `multi-select/use-task-multi-select-panel.ts:49`                                                   | toast（含失败计数）           | 入队                                   | 否         | P1         |
-| 18  | 已过期任务重排               | `reschedule-panel/reschedule-panel.vue:56`                                                         | toast                         | 入队                                   | 否         | P2         |
-| 19  | **番茄结束落库**             | `pomodoro/utils/pomodoro.ts:85` `persistPomodoroRecord`（**仅 `console.error`**）                  | **静默**                      | 入队（local repo）                     | **是**     | **P1**     |
-| 20  | 常用番茄专注 增/改/删/归档   | `pomodoro/handlers/*`（`NueMessage.success` 前置校验）                                             | toast                         | 入队                                   | 否         | P2         |
-| 21  | 标签 增/改/删                | `tag/handlers/tag.ts:142/158/190`                                                                  | toast                         | 入队                                   | 否         | P2         |
-| 22  | 清单 增/改/删/恢复           | `project/handlers/project.ts:156/175/192`                                                          | toast                         | 入队                                   | 否         | P2         |
-| 23  | **外观主题偏好（静默保存）** | `theme-setter.vue:37 debounceUpdateUserTheme`                                                      | toast（**但主题已本地应用**） | **服务端直连**（user-config 非 local） | **部分是** | P2         |
-| 24  | 昵称/密码/头像/会话/注销     | `presentation-identity/**`                                                                         | toast                         | 服务端直连                             | 否         | P2         |
+> **时点说明**：本表记录 **P1 探针时点（2026-09-23 12:00–13:12）** 的读码/实测现状。其中 #8/#9/#10/#11/#13/#19/#23/#25 的**可见失败反馈**已由 `rd-fe-T25`（`f650dd39`，DEF-17）补齐（本表保留探针时点口径，便于追溯）。
+
+| #   | 入口                         | 入口位置                                                                                                                              | 写失败可见性（web）           | desktop                                | 误判       | 严重度     |
+| :-- | :--------------------------- | :------------------------------------------------------------------------------------------------------------------------------------ | :---------------------------- | :------------------------------------- | :--------- | :--------- |
+| 1   | 详情·状态勾选                | `task-details/header/index.vue:12` → `use-task-view-object.ts:137`                                                                    | toast（**实测**）             | 入队                                   | 否         | P1（禁写） |
+| 2   | 详情·星标/取消星标           | `task-details/footer/index.vue:58-63`                                                                                                 | toast                         | 入队（**实测**）                       | 否         | P1         |
+| 3   | 详情·放弃/取消放弃           | `task-details/footer/index.vue:83-88` → `use-task-view-object.ts:207/223`                                                             | toast                         | 入队                                   | 否         | P1         |
+| 4   | 详情·日期/提醒改期           | `task-details/header/index.vue:16`                                                                                                    | toast                         | 入队                                   | 否         | P1         |
+| 5   | 详情·描述 inline 保存        | `use-task-view-object.ts`（`updateTaskDetails`）                                                                                      | toast                         | 入队                                   | 否         | P1         |
+| 6   | 详情·所属清单切换            | `task-details/footer/index.vue:103`                                                                                                   | toast                         | 入队                                   | 否         | P1         |
+| 7   | 详情·删除/恢复任务           | `footer/index.vue:77-82` → `handlers/task.ts`                                                                                         | toast                         | 入队                                   | 否         | P1         |
+| 8   | 列表/表格行·删除/恢复        | `table-main.vue:177`、`list-main.vue:58`（入口）→ `table-view-adapter.vue:26/31`、`list-view-adapter.vue:25/30`（**内联丢弃返回值**） | **静默**                      | 入队                                   | **是**     | P1         |
+| 9   | **看板·拖拽改状态**          | `kanban/use-kanban.ts:23`（`await taskUseCase.update(...)`，**返回值被丢弃**）                                                        | **静默**                      | 入队                                   | **是**     | **P0**     |
+| 10  | **看板·完成/取消完成**       | `view-adapters/kanban-view-adapter.vue:64-65`（同上丢弃）                                                                             | **静默**                      | 入队                                   | **是**     | **P0**     |
+| 11  | **详情·创建子任务**          | `task-details/main/subtasks.vue:83` → `use-subtasks.ts:109`（返回 err，调用方 `await` 后**丢弃**）                                    | **静默**                      | 入队                                   | **是**     | **P1**     |
+| 12  | 详情·子任务勾选              | `subtasks.vue:71` → `handlers/task.ts:update`                                                                                         | toast                         | 入队                                   | 否         | P2         |
+| 13  | 详情·子任务拖拽改序          | `use-subtasks.ts:141 resortSubTasks`（返回 err，**调用方未见 toast**）                                                                | 静默（待实测）                | 入队                                   | 疑似是     | P2         |
+| 14  | 详情·检查项 增/改/删         | `handlers/task-check-item.ts:31/53/71`                                                                                                | toast                         | 入队                                   | 否         | P2         |
+| 15  | 详情·评论 增/改/删           | `handlers/task-comment.ts:37/59/77`                                                                                                   | toast                         | 入队                                   | 否         | P2         |
+| 16  | 创建任务对话框               | `dialogs/creator/use-creator.ts:86`                                                                                                   | toast                         | 入队                                   | 否         | P1         |
+| 17  | 多选批量操作                 | `multi-select/use-task-multi-select-panel.ts:49`                                                                                      | toast（含失败计数）           | 入队                                   | 否         | P1         |
+| 18  | 已过期任务重排               | `reschedule-panel/reschedule-panel.vue:56`                                                                                            | toast                         | 入队                                   | 否         | P2         |
+| 19  | **番茄结束落库**             | `pomodoro/utils/pomodoro.ts:85` `persistPomodoroRecord`（**仅 `console.error`**）                                                     | **静默**                      | 入队（local repo）                     | **是**     | **P1**     |
+| 20  | 常用番茄专注 增/改/删/归档   | `pomodoro/handlers/*`（`NueMessage.success` 前置校验）                                                                                | toast                         | 入队                                   | 否         | P2         |
+| 21  | 标签 增/改/删                | `tag/handlers/tag.ts:142/158/190`                                                                                                     | toast                         | 入队                                   | 否         | P2         |
+| 22  | 清单 增/改/删/恢复           | `project/handlers/project.ts:156/175/192`                                                                                             | toast                         | 入队                                   | 否         | P2         |
+| 23  | **外观主题偏好（静默保存）** | `theme-setter.vue:37 debounceUpdateUserTheme`                                                                                         | toast（**但主题已本地应用**） | **服务端直连**（user-config 非 local） | **部分是** | P2         |
+| 24  | 昵称/密码/头像/会话/注销     | `presentation-identity/**`                                                                                                            | toast                         | 服务端直连                             | 否         | P2         |
+| 25  | **看板·删除/恢复**           | `view-adapters/kanban-view-adapter.vue:84-85`（内联 `delete/restore` **丢弃返回值**）                                                 | **静默**                      | 入队                                   | **是**     | P1         |
+
+> **旁注（DEF-19）**：`kanban-view-adapter.vue` 的 `@restore-task` **原误调 `delete`**（方向性 bug）⇒ 该入口原存在 `@restore-task` → `delete` 的错配，已随 T25 修正（DEF-19）。
 
 **给阶段一的直接结论**：
 
-1. **必须禁写清单 = 上表全部 24 项**（web 无本地队列，任何离线写都丢）。
-2. **误判风险（= 用户不知道丢了）集中在 #9/#10/#11/#13/#19 + #23（部分）** —— 这些入口**即使将来允许离线写，也必须补错误反馈**。
+1. **必须禁写清单 = 上表全部 25 项**（web 无本地队列，任何离线写都丢）。
+2. **误判风险（= 用户不知道丢了）集中在 #8/#9/#10/#11/#13/#19/#25 + #23（部分）** —— 这些入口**即使将来允许离线写，也必须补错误反馈**。
 3. **不要逐个改仓储**（recon 建议成立）：统一在 UI 层开关禁用写入口 + 显式提示。
 4. ⚠️ **desktop 现状是"能写"（本地优先入队）**，与 web 不同；若阶段一要求"只读"，desktop 也需显式禁写，否则会产生 `markDirty`（违反「阶段一不产生任何 `markDirty`」纪律），并触发 C-1（登出清库 ⇒ 未推送队列永久丢失）。
 
@@ -370,7 +375,8 @@ DELETE FROM naotodo.users                WHERE id = @uid;
 
 ## 11. 变更记录
 
-| 日期       | 变更                                                                                                                                                                                                                            |
-| :--------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 2026-09-23 | 首次成文：T0–T7 探针结论 + 造数清单/回滚证明 + T3 分端写入口清单（24 项）+ 5 项误判风险 + 4 项阻塞/未确认                                                                                                                       |
-| 2026-09-23 | **P1b 修订**：① 回滚清单补齐 `user_configs`（新增 §10.1 清理 8 行 + §10.5 规程）；② 新增 §10.2 全库 13 表孤儿扫描门禁（全 0）；③ 新增 §10.3 `task_id=0` 哨兵假阳性说明；④ 修正 §1.1 建号数为 **8**（原述 6 为批次数，见 §10.4） |
+| 日期       | 变更                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| :--------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-23 | 首次成文：T0–T7 探针结论 + 造数清单/回滚证明 + T3 分端写入口清单（25 项）+ 5 项误判风险 + 4 项阻塞/未确认                                                                                                                                                                                                                                                                                                                     |
+| 2026-09-23 | **P1b 修订**：① 回滚清单补齐 `user_configs`（新增 §10.1 清理 8 行 + §10.5 规程）；② 新增 §10.2 全库 13 表孤儿扫描门禁（全 0）；③ 新增 §10.3 `task_id=0` 哨兵假阳性说明；④ 修正 §1.1 建号数为 **8**（原述 6 为批次数，见 §10.4）                                                                                                                                                                                               |
+| 2026-09-23 | **§3.3 修正（来源 `rd-fe-T25` 施工 DEF-17 的读码实测；qa 已复核前像）**：① #8「列表/表格行·删除/恢复」可见性 `toast` → **静默**（view-adapter 内联 `delete/restore` **丢弃返回值**）② 补漏项 **#25「看板·删除/恢复」**（同上丢弃）⇒ 清单 **24 → 25 项**，误判集合同步补入 #8/#25 ③ 新增旁注：kanban `@restore-task` **原误调 `delete`**（**DEF-19**），已随 T25（`f650dd39`）修正 ④ 表头补「时点说明」：可见反馈已由 T25 补齐 |
