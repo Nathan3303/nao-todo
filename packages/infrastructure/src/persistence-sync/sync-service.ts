@@ -48,6 +48,7 @@ import {
     isRetryDue
 } from './sync-retry'
 import { isNotDeleted } from '../persistence-local/utils'
+import { logStructured, STRUCTURED_LOG_EVENTS } from '../observability/structured-log'
 
 // ---------------------------------------------------------------------------
 // 同步表配置（7 张业务表；preferences 随父实体、users/userConfigs 走远程用户域，均不入同步）
@@ -249,6 +250,12 @@ interface PullCursorState {
 // ---------------------------------------------------------------------------
 
 const PULL_LIMIT = 200
+/**
+ * pull 单主锁名前缀（C-66 / AC16a 代偿）
+ * @description 同 origin 多标签并发 pull 会使 `syncCursor` RMW / `syncQueue` 单写者假设失效；
+ *              锁名按 `userId` 隔离（不同账号互不阻塞）。desktop 单实例锁下恒无争用 ⇒ 行为等价。
+ */
+const PULL_LOCK_PREFIX = 'nao-todo:pull:'
 /**
  * 续拉上界（DEF-6 护栏 A / arch R2）：每表 ≤10 轮（=2000 行）
  * @description 墓碑计入窗口（`.Unscoped()`）⇒ 续拉轮数可能远大于存活行数，必须有界。
@@ -478,7 +485,11 @@ export class SyncService {
             // 不可达防御：阶段内已捕获网络/业务错误；此处兜底存储/加解密等意外异常，
             // 仍须结束运行（否则 syncing 永久 true —— DEF-SYNC-02 同族）；
             // 文案归因为「数据异常」（PM 裁定：不得复用“网络错误”以免误导排查）
-            console.error('[sync] 同步运行未预期异常', err)
+            logStructured('error', STRUCTURED_LOG_EVENTS.SYNC_RUN_UNEXPECTED_ERROR, {
+                userId: this.currentUserId() ?? undefined,
+                phase,
+                reason: err instanceof Error ? err.name : typeof err
+            })
             syncStatus.noteRunError(phase, phase === 'pull' ? ERR_PULL_DATA : ERR_PUSH_DATA)
         }
         return await this.finishRun()
@@ -509,10 +520,47 @@ export class SyncService {
     private async pullAllInner(): Promise<void> {
         const userId = this.currentUserId()
         if (!userId) return
+        await this.withPullLock(userId, () => this.pullAllInnerLocked(userId))
+    }
+
+    /**
+     * pull 单主（`navigator.locks`，`ifAvailable` 语义；C-66）
+     * @description web 多标签同 origin 可能并发 pull ⇒ 需跨标签选主（desktop 单实例锁下恒无争用）。
+     *              **未取得锁 ⇒ 跳过本次 pull**（不排队等待、不阻塞 UI）；此时**不得**置
+     *              `pullExecuted`（确实没拉）⇒ 恰好使 web 只读闸门的「离线进入 flag」不被误清
+     *              （T108 解除条件 = `ok && !credentialFailure && pullExecuted`）。
+     *              环境无 `navigator.locks`（老浏览器/测试）⇒ 记日志 + **直接执行**（不得因此失败）。
+     *              锁由 API 在回调结束/异常时自动释放，**不手工 release**。
+     */
+    private async withPullLock(userId: string, run: () => Promise<void>): Promise<void> {
+        const locks = typeof navigator === 'undefined' ? undefined : navigator.locks
+        if (!locks || typeof locks.request !== 'function') {
+            logStructured('warn', STRUCTURED_LOG_EVENTS.SYNC_PULL_LOCK_UNAVAILABLE, { userId })
+            await run()
+            return
+        }
+        let acquired = false
+        await locks.request(`${PULL_LOCK_PREFIX}${userId}`, { ifAvailable: true }, async (lock) => {
+            if (!lock) return
+            acquired = true
+            await run()
+        })
+        if (!acquired) {
+            logStructured('info', STRUCTURED_LOG_EVENTS.SYNC_PULL_LOCK_SKIPPED, { userId })
+        }
+    }
+
+    /**
+     * 拉取主体（已持 pull 单主锁）
+     * @description 锁获取在 `pullAllInner` 完成 ⇒ **未取得锁不会进入本方法**，
+     *              `pullExecuted` 保持 `false`（T107c 自洽性）。
+     */
+    private async pullAllInnerLocked(userId: string): Promise<void> {
         // T107c：拉取阶段真实进入（唯一设置点）；`start()` 的注销宽限期/无会话早退
         // 不经过此处 ⇒ `pullExecuted=false`。**禁改为从 ok/lastSyncAt 反推**
         //（早退经 runFull → endRun 仍返回 ok=true 并推进 lastSyncAt）
         syncStatus.markPullExecuted()
+        logStructured('info', STRUCTURED_LOG_EVENTS.SYNC_PULL_STARTED, { userId })
         // 每表待拉游标：首轮为存储游标回拉窗口；后续轮为上一页末尾回拉窗口
         const pending = new Map<string, PullCursorState>()
         for (const config of SYNC_TABLES) {
@@ -561,10 +609,18 @@ export class SyncService {
                     this.pullIncomplete = true
                     const status = (err as { response?: { status?: number } })?.response?.status
                     if (status === 401 || status === 403) {
-                        console.error('[sync] 拉取被拒绝：登录已过期（401/403）', status)
+                        logStructured('error', STRUCTURED_LOG_EVENTS.SYNC_PULL_FAILED, {
+                            userId,
+                            kind: 'expired',
+                            status
+                        })
                         syncStatus.noteRunError('pull', ERR_PULL_EXPIRED)
                     } else {
-                        console.error('[sync] 拉取请求失败（网络/HTTP 错误）', err)
+                        logStructured('error', STRUCTURED_LOG_EVENTS.SYNC_PULL_FAILED, {
+                            userId,
+                            kind: 'network',
+                            status
+                        })
                         syncStatus.noteRunError('pull', ERR_PULL_NETWORK)
                     }
                     return
@@ -578,7 +634,10 @@ export class SyncService {
                 // 业务码 10041（用户凭证验证失败）：HTTP 可能仍为 200，须在归一化检测前识别
                 if (this.isSessionExpiredCode((data as { code?: unknown })?.code)) {
                     this.pullIncomplete = true
-                    console.error('[sync] 拉取被拒绝：用户凭证验证失败（10041）')
+                    logStructured('error', STRUCTURED_LOG_EVENTS.SYNC_PULL_FAILED, {
+                        userId,
+                        kind: 'credential'
+                    })
                     syncStatus.markCredentialFailure()
                     this.notifySessionExpired()
                     syncStatus.noteRunError('pull', ERR_SESSION_EXPIRED)
@@ -586,7 +645,11 @@ export class SyncService {
                 }
                 if (typeof raw?.code === 'string' || data?.data === null) {
                     this.pullIncomplete = true
-                    console.error('[sync] 拉取归一化错误（断网/超时）', raw?.code)
+                    logStructured('error', STRUCTURED_LOG_EVENTS.SYNC_PULL_FAILED, {
+                        userId,
+                        kind: 'network',
+                        code: raw?.code
+                    })
                     syncStatus.noteRunError('pull', ERR_PULL_NETWORK)
                     return
                 }
@@ -638,6 +701,12 @@ export class SyncService {
             }
             // T107b：完整/截断结果落盘 ⇒ 冷启动离线仍可读到（C-59：直连 meta 不入队）
             await this.persistMirrorStatus(userId)
+            logStructured('info', STRUCTURED_LOG_EVENTS.SYNC_PULL_COMPLETED, {
+                userId,
+                rounds,
+                written: writtenCount,
+                truncated: pending.size > 0
+            })
         } finally {
             // 有实际写入（含续拉中途失败前已落库部分）→ 通知视图刷新（store 缓存绕过，需事件驱动重拉）
             if (writtenCount > 0) this.notifyDataChanged()
@@ -770,7 +839,11 @@ export class SyncService {
                 const config = SYNC_TABLES.find((c) => c.table === item.table)
                 if (!config) {
                     // 不可达防御（与写队列同常量源）：仅诊断，归因并入本阶段同一错误上报（见 ADR A-3）
-                    console.error('[sync] 推送队列项缺少表配置', item.table)
+                    logStructured('error', STRUCTURED_LOG_EVENTS.SYNC_PUSH_FAILED, {
+                        userId,
+                        kind: 'missing-table-config',
+                        table: item.table
+                    })
                     continue
                 }
                 snapshots.set(`${item.table}:${item.entityId}`, item.localUpdatedAt)
@@ -794,13 +867,11 @@ export class SyncService {
                 return
             }
 
-            console.log(
-                '[sync] 推送请求 /sync/push 样本',
-                JSON.stringify({
-                    firstItem: Object.values(pushBody)[0]?.[0] ?? null,
-                    deletions
-                })
-            )
+            logStructured('info', STRUCTURED_LOG_EVENTS.SYNC_PUSH_STARTED, {
+                userId,
+                tables: Object.keys(pushBody).length,
+                deletions: deletions.length
+            })
             let response
             try {
                 response = await this.requester.post(
@@ -813,14 +884,26 @@ export class SyncService {
                 const status = (err as { response?: { status?: number } })?.response?.status
                 const errorClass = classifyPushFailure({ httpStatus: status })
                 if (errorClass === 'credential') {
-                    console.error('[sync] 推送被拒绝：登录已过期（401/403）', status)
+                    logStructured('error', STRUCTURED_LOG_EVENTS.SYNC_PUSH_FAILED, {
+                        userId,
+                        kind: 'expired',
+                        status
+                    })
                     syncStatus.noteRunError('push', ERR_PUSH_EXPIRED)
                 } else if (errorClass === 'network') {
-                    console.error('[sync] 推送请求失败（网络/HTTP 错误）', err)
+                    logStructured('error', STRUCTURED_LOG_EVENTS.SYNC_PUSH_FAILED, {
+                        userId,
+                        kind: 'network',
+                        status
+                    })
                     this.pauseForNetworkFailure()
                     syncStatus.noteRunError('push', ERR_PUSH_NETWORK)
                 } else {
-                    console.error('[sync] 推送请求失败（业务/数据错误）', err)
+                    logStructured('error', STRUCTURED_LOG_EVENTS.SYNC_PUSH_FAILED, {
+                        userId,
+                        kind: 'business',
+                        status
+                    })
                     for (const item of dueQueue) {
                         if (snapshots.has(`${item.table}:${item.entityId}`)) {
                             await syncTracker.markBusinessFailure(
@@ -838,7 +921,10 @@ export class SyncService {
             // 业务码 10041（用户凭证验证失败）：HTTP 可能仍为 200，须在归一化检测前识别
             const dataRaw = raw?.data as { code?: unknown } | undefined
             if (this.isSessionExpiredCode(dataRaw?.code)) {
-                console.error('[sync] 推送被拒绝：用户凭证验证失败（10041）')
+                logStructured('error', STRUCTURED_LOG_EVENTS.SYNC_PUSH_FAILED, {
+                    userId,
+                    kind: 'credential'
+                })
                 syncStatus.markCredentialFailure()
                 this.notifySessionExpired()
                 syncStatus.noteRunError('push', ERR_SESSION_EXPIRED)
@@ -846,14 +932,17 @@ export class SyncService {
             }
             if (typeof raw?.code === 'string') {
                 // C-38：归一化断网/超时 ⇒ 暂停，不消耗重试额度（不 markFailed）
-                console.error('[sync] 推送归一化错误（断网/超时）', raw?.code)
+                logStructured('error', STRUCTURED_LOG_EVENTS.SYNC_PUSH_FAILED, {
+                    userId,
+                    kind: 'network',
+                    code: raw?.code
+                })
                 this.pauseForNetworkFailure()
                 syncStatus.noteRunError('push', ERR_PUSH_NETWORK)
                 return
             }
             const data =
                 (raw?.data as { data?: { results?: PushResult[] }; serverTime?: number }) ?? {}
-            console.log('[sync] 推送响应', JSON.stringify(response?.data))
             this.calibrateServerTime((data as { serverTime?: number }).serverTime)
             const results = data.data?.results ?? []
             const pushed = new Set(results.map((r) => `${r.table}:${r.id}`))
@@ -869,9 +958,10 @@ export class SyncService {
                 } else {
                     // 响应中无该实体：后端拒绝或字段不匹配 ⇒ 业务类退避（C-38/C-39）
                     if (snapshots.has(`${item.table}:${item.entityId}`)) {
-                        console.warn('[sync] 推送未确认的实体', {
+                        logStructured('warn', STRUCTURED_LOG_EVENTS.SYNC_PUSH_UNCONFIRMED, {
+                            userId,
                             table: item.table,
-                            id: item.entityId
+                            entityId: item.entityId
                         })
                         await syncTracker.markBusinessFailure(
                             item.id,
@@ -888,6 +978,11 @@ export class SyncService {
                 this.resumeBackfillState()
                 this.clearBackfillTick()
             }
+            logStructured('info', STRUCTURED_LOG_EVENTS.SYNC_PUSH_COMPLETED, {
+                userId,
+                confirmed: results.length,
+                unconfirmed
+            })
         } finally {
             // C-41 上限可见性（仅提示不阻断）+ C-40 条件退避定时（按需启停）
             await this.refreshQueuePressure()

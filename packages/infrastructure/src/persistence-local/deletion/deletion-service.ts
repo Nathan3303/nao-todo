@@ -1,6 +1,7 @@
 import dayjs from 'dayjs'
 import { BUSINESS_TABLES, localDatabase, type MetaRecord } from '../db/local-database'
 import { clearUserScopedLocalStorage } from './local-storage-policy'
+import { logStructured, STRUCTURED_LOG_EVENTS } from '../../observability/structured-log'
 
 /**
  * 注销反悔期天数（与后端一致：注销后 7 天内可恢复，到期彻底删除）
@@ -55,6 +56,7 @@ export class DeletionService {
      */
     async wipeUserData(userId: string): Promise<void> {
         if (!userId) return
+        logStructured('info', STRUCTURED_LOG_EVENTS.WIPE_STARTED, { userId })
         const tables = BUSINESS_TABLES as readonly string[]
         await localDatabase.transaction(
             'rw',
@@ -84,6 +86,10 @@ export class DeletionService {
         clearUserScopedLocalStorage()
         // C-53：清库完成后删除标记
         await localDatabase.meta.delete(PENDING_WIPE_META_ID)
+        logStructured('info', STRUCTURED_LOG_EVENTS.WIPE_COMPLETED, {
+            userId,
+            tables: tables.length
+        })
     }
 
     /**

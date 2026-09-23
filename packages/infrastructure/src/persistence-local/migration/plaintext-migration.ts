@@ -24,6 +24,7 @@ import {
     taskRecordToEntity
 } from '../converters/task'
 import { userEntityToRecord, userRecordToEntity } from '../converters/user'
+import { logStructured, STRUCTURED_LOG_EVENTS } from '../../observability/structured-log'
 
 /**
  * 历史密文 → 明文迁移器（C-47…C-51 / C-56）
@@ -170,7 +171,8 @@ const withMigrationLock = async (
  */
 export const runPlaintextMigration = async (userId: string): Promise<PlaintextMigrationResult> => {
     if (!userId) return { ran: false, migrated: 0, lockSkipped: false }
-    return withMigrationLock(async () => {
+    logStructured('info', STRUCTURED_LOG_EVENTS.MIGRATION_STARTED, { userId })
+    const result = await withMigrationLock(async () => {
         if (await isPlaintextMigrationDone(userId)) {
             return { ran: false, migrated: 0, lockSkipped: false }
         }
@@ -210,4 +212,11 @@ export const runPlaintextMigration = async (userId: string): Promise<PlaintextMi
         )
         return { ran: true, migrated, lockSkipped: false }
     })
+    logStructured('info', STRUCTURED_LOG_EVENTS.MIGRATION_COMPLETED, {
+        userId,
+        ran: result.ran,
+        migrated: result.migrated,
+        lockSkipped: result.lockSkipped
+    })
+    return result
 }
