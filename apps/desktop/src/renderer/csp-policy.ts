@@ -40,14 +40,29 @@ const PRODUCTION_DIRECTIVES = [
 export const DESKTOP_CSP_POLICY = PRODUCTION_DIRECTIVES.join('; ')
 
 /**
+ * 桌面 dev 本地 API 源（= `.env.development` 的 `VITE_BASE_URL`）
+ *
+ * @description dev 后端 `APP_SERVER_URL=http://localhost:3302`，会把头像相对路径拼成
+ *              `http://localhost:3302/static/uploads/avatars/...`（**http，非同源**）
+ *              ⇒ dev 的 `img-src` 必须放行该源，否则 `<img>` 被 CSP 拦截、头像恒落首字母兜底。
+ *              生产头像恒为 `https://`（`img-src ... https:` 已覆盖）⇒ 仅 dev 放宽，生产禁放宽。
+ */
+const DEV_API_ORIGIN = 'http://localhost:3302'
+
+/**
  * dev 策略（**显式区分，生产禁放宽**）
  *
- * @description 仅放宽 `connect-src`：Vite HMR 需回连 `ws://localhost:<port>`，
- *              本地 API 为 `http://localhost:3302`。`script-src` 仍不含 `'unsafe-eval'`
- *              （Vite dev 用原生 ESM，无需 eval）。由 `electron.vite.config.ts` 的
- *              `apply: 'serve'` 插件在 dev 重写 `index.html` 的 meta；构建产物恒为生产策略。
+ * @description 放宽两项：
+ *              ① `connect-src`：Vite HMR 需回连 `ws://localhost:<port>`、本地 API 为 `http://localhost:3302`；
+ *              ② `img-src`：dev 头像由后端拼为 `http://localhost:3302/...`（见 `DEV_API_ORIGIN`）。
+ *              `script-src` 仍不含 `'unsafe-eval'`（Vite dev 用原生 ESM，无需 eval）。由
+ *              `electron.vite.config.ts` 的 `apply: 'serve'` 插件在 dev 重写 `index.html` 的 meta；
+ *              构建产物恒为生产策略。
  */
 export const DESKTOP_CSP_POLICY_DEV = [
-    ...PRODUCTION_DIRECTIVES.filter((directive) => !directive.startsWith('connect-src')),
-    "connect-src 'self' https://todobe.nathanao.space http://localhost:3302 ws://localhost:* ws://127.0.0.1:*"
+    ...PRODUCTION_DIRECTIVES.filter(
+        (directive) => !directive.startsWith('connect-src') && !directive.startsWith('img-src')
+    ),
+    `img-src 'self' data: blob: https: ${DEV_API_ORIGIN}`,
+    `connect-src 'self' https://todobe.nathanao.space ${DEV_API_ORIGIN} ws://localhost:* ws://127.0.0.1:*`
 ].join('; ')

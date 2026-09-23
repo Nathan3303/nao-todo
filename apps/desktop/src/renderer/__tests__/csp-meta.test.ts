@@ -72,13 +72,20 @@ describe('AC12 desktop `<meta>` CSP', () => {
         }
     })
 
-    it('dev 策略仅在 connect-src 放宽（HMR ws + 本地 API），其余与生产一致', () => {
+    it('dev 策略放宽 connect-src（HMR ws + 本地 API）与 img-src（本地 http 头像），其余与生产一致', () => {
         const prod = parseDirectives(DESKTOP_CSP_POLICY)
         const dev = parseDirectives(DESKTOP_CSP_POLICY_DEV)
+        const envDev = readFileSync(new URL('../../../.env.development', import.meta.url), 'utf-8')
+        const devOrigin = envDev.match(/^VITE_BASE_URL=(.+)$/m)?.[1]?.trim()
+        expect(devOrigin).toBeTruthy()
 
-        expect(dev['connect-src']).toEqual(
-            expect.arrayContaining(['ws://localhost:*', 'http://localhost:3302'])
-        )
+        expect(dev['connect-src']).toEqual(expect.arrayContaining(['ws://localhost:*', devOrigin!]))
+        // dev 头像 URL = 本地 API 源 + `/static/uploads/avatars/...`（http，非同源）
+        // ⇒ `img-src` 不放行该源时 `<img>` 被 CSP 拦截，头像恒落首字母兜底（T116）
+        expect(dev['img-src']).toEqual(expect.arrayContaining([devOrigin!]))
+        // 生产头像恒为 https ⇒ 不得放行 dev 的 http 源（生产禁放宽）
+        expect(prod['img-src']).toEqual(["'self'", 'data:', 'blob:', 'https:'])
+
         expect(dev['script-src']).toEqual(prod['script-src'])
         expect(dev['default-src']).toEqual(prod['default-src'])
         expect(dev['object-src']).toEqual(prod['object-src'])
