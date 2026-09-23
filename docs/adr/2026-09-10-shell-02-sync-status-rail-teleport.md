@@ -234,3 +234,4 @@ Vue 3.5.41 `TeleportImpl`：字符串目标仅在挂载时解析一次，失败�
 3. PRD 侧变更（范围/AC 降级）→ PRD 留痕 + 本 ADR 追加"降级影响"章节；**交互定稿若再改（如 D5 切 B）→ 需更新本 ADR 的 C11/R5 段落**。
 4. skill 偏离只允许 §5 的一种形态；若 nue-ui 未来为 item 补键盘能力（或 desktop 升级版本），需重评并回收偏离。
 5. 归档：本 ADR 落 `docs/adr/`，索引见 `docs/adr/README.md`；日期取评审终签日。
+6. **r6（2026-09-23，T115）互记**：本组件的**物理落点迁入 webapp**（`apps/web/src/components/sync/sync-status-bar.vue` + `apps/web/src/hooks/use-{sync-status,manual-sync}.ts`），两端经既有装配缝引用 ⇒ **D-1 落点描述 / §4 证据路径 / §6 AC-13「web 零可见变化」失效 / §7 R8·R9** 由 `docs/adr/2026-09-23-two-end-sync-status-unification.md` 修订；**C1–C16 行为约束全部继续有效**，两篇冲突以更晚落盘者为准。
