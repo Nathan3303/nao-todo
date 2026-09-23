@@ -1,13 +1,18 @@
+// @vitest-environment jsdom
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { TaskRepository } from '@nao-todo/domain-task'
 import { CreateTaskValueObject } from '@nao-todo/domain-task'
+import type { Requester } from '@nao-todo/shared'
+import { initRequester } from '@nao-todo/shared'
 import { cryptoService } from '../../../persistence-local/crypto/crypto-service'
 import { localDatabase } from '../../../persistence-local/db/local-database'
 import { newLocalTaskRepository } from '../../../persistence-local/repos/task-repo-impl'
 import { localSession } from '../../../persistence-local/session/local-session'
 import { SyncStatus } from '../../../persistence-sync/sync-status'
+import { TaskRepoImpl } from '../../task/task-repo-impl'
 import { withMirrorFallback } from '../mirror-fallback'
+import { isNormalizedNetworkError } from '../network-failure'
 
 /**
  * 远端优先 + 网络类失败回退本地镜像（C-66 / AC8 / AC9 数据面）
@@ -59,6 +64,33 @@ const makeRemote = (error: unknown) => {
         snooze: vi.fn(async () => [null, null])
     } as unknown as TaskRepository
     return { remote, create, list }
+}
+
+/**
+ * requester 归一化网络错误响应（`packages/shared/requester/axios.ts:73-104` 原样产物，**不 reject**）
+ * @description 真实离线形态：`resolve` 顶层字符串 code + 业务码 50300/40800/42900。
+ */
+const NORMALIZED_NETWORK_ERRORS = [
+    { code: 'ERR_NETWORK', message: '网络错误，请检查您的网络连接', bizCode: 50300 },
+    { code: 'ECONNABORTED', message: '请求超时，请稍后再试', bizCode: 40800 },
+    { code: 'TOO_MANY_REQUESTS', message: '请求过于频繁，请稍后再试', bizCode: 42900 }
+] as const
+
+/** 构造**真实** `TaskRepoImpl`（仅替换 requester 为返回指定响应的替身） */
+const makeRealRemote = (response: unknown): TaskRepository =>
+    new TaskRepoImpl({
+        get: vi.fn(async () => response),
+        post: vi.fn(async () => response),
+        put: vi.fn(async () => response),
+        delete: vi.fn(async () => response)
+    } as unknown as Requester)
+
+/** 向真实本地镜像种入一条任务 */
+const seedMirror = async (name: string) => {
+    const mirror = newLocalTaskRepository()
+    const [created, err] = await mirror.create(makeTaskVO({ name }))
+    expect(err).toBeNull()
+    return { mirror, created: created! }
 }
 
 const setup = async (): Promise<void> => {
@@ -165,5 +197,115 @@ describe('withMirrorFallback - 边界', () => {
         await repo.create(makeTaskVO({ name: '写入' }))
         expect(create).toHaveBeenCalledTimes(1)
         expect(mirrorCreate).not.toHaveBeenCalled()
+    })
+})
+
+describe('isNormalizedNetworkError - 网络类判据（requester 归一化产物）', () => {
+    it('断网/超时/限流三文案 ⇒ 网络类', () => {
+        for (const { message } of NORMALIZED_NETWORK_ERRORS) {
+            expect(isNormalizedNetworkError(message)).toBe(true)
+        }
+    })
+
+    it('业务/凭证/空值/近似文案 ⇒ 非网络类（不得误判）', () => {
+        expect(isNormalizedNetworkError('任务不存在')).toBe(false)
+        expect(isNormalizedNetworkError('用户凭证验证失败')).toBe(false)
+        expect(isNormalizedNetworkError(null)).toBe(false)
+        expect(isNormalizedNetworkError('网络错误')).toBe(false)
+    })
+})
+
+describe('withMirrorFallback - 归一化网络错误元组（DEF-21 生产形态）', () => {
+    beforeEach(async () => {
+        await setup()
+    })
+
+    it.each(NORMALIZED_NETWORK_ERRORS)(
+        '真实 TaskRepoImpl 收到归一化 $code 响应 ⇒ 回退本地镜像，err 为 null',
+        async ({ code, message, bizCode }) => {
+            const { mirror, created } = await seedMirror('离线任务')
+            const response = { code, data: { data: null, message, code: bizCode } }
+            const repo = withMirrorFallback<TaskRepository>(makeRealRemote(response), mirror, [
+                'get',
+                'list'
+            ])
+
+            const [result, listErr] = await repo.list('')
+            expect(listErr).toBeNull()
+            expect(result!.taskEntities.map((task) => task.name)).toContain('离线任务')
+
+            const [fetched, fetchErr] = await repo.get(created.id)
+            expect(fetchErr).toBeNull()
+            expect(fetched!.name).toBe('离线任务')
+        }
+    )
+
+    it('远端已应答的业务失败元组 ⇒ 不回退镜像，错误原样透出', async () => {
+        const { mirror } = await seedMirror('不应被读到的镜像')
+        const mirrorList = vi.spyOn(mirror, 'list')
+        const remote = makeRealRemote({
+            data: { code: 40400, message: '任务不存在', data: null }
+        })
+        const repo = withMirrorFallback<TaskRepository>(remote, mirror, ['get', 'list'])
+
+        const [result, err] = await repo.list('')
+        expect(result).toBeNull()
+        expect(err).toBe('任务不存在')
+        expect(mirrorList).not.toHaveBeenCalled()
+    })
+
+    it('凭证失败元组（10041）⇒ 不回退镜像，错误原样透出（不用镜像掩盖）', async () => {
+        const { mirror } = await seedMirror('不应被读到的镜像')
+        const mirrorList = vi.spyOn(mirror, 'list')
+        const remote = makeRealRemote({
+            data: { code: 10041, message: '用户凭证验证失败', data: null }
+        })
+        const repo = withMirrorFallback<TaskRepository>(remote, mirror, ['get', 'list'])
+
+        const [result, err] = await repo.list('')
+        expect(result).toBeNull()
+        expect(err).toBe('用户凭证验证失败')
+        expect(mirrorList).not.toHaveBeenCalled()
+    })
+})
+
+describe('withMirrorFallback - 真实 AxiosRequester 归一化（端到端）', () => {
+    beforeEach(async () => {
+        await setup()
+    })
+
+    it('真实请求器把 ERR_NETWORK 归一化为 resolve ⇒ 判据命中真实产物并回退镜像', async () => {
+        const { mirror, created } = await seedMirror('端到端离线任务')
+        const requester = initRequester({
+            name: 'AxiosRequester',
+            baseURL: 'http://offline.test',
+            enableRetry: false
+        })
+        Object.assign(requester._instance!.defaults, {
+            adapter: async () => {
+                throw Object.assign(new Error('Network Error'), { code: 'ERR_NETWORK' })
+            }
+        })
+
+        // 钉死「判据 ↔ requester 产物」：真实拦截器产出的归一化文案必被判定为网络类
+        const raw = await requester.get('/tasks/')
+        expect(raw).toMatchObject({
+            code: 'ERR_NETWORK',
+            data: { message: '网络错误，请检查您的网络连接', code: 50300 }
+        })
+        expect(isNormalizedNetworkError((raw.data as { message: string }).message)).toBe(true)
+
+        const repo = withMirrorFallback<TaskRepository>(new TaskRepoImpl(requester), mirror, [
+            'get',
+            'list'
+        ])
+
+        const [result, err] = await repo.list('')
+        expect(err).toBeNull()
+        expect(result!.taskEntities.map((task) => task.name)).toContain('端到端离线任务')
+
+        const [fetched, fetchErr] = await repo.get(created.id)
+        expect(fetchErr).toBeNull()
+        expect(fetched!.name).toBe('端到端离线任务')
     })
 })

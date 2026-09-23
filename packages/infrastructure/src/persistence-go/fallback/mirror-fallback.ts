@@ -1,18 +1,23 @@
 import { isCredentialError } from '@nao-todo/domain-identity'
 import type { GoError } from '@nao-todo/shared/types'
+import { isNormalizedNetworkError } from './network-failure'
 
 /**
  * 远端优先 + 网络类失败回退本地镜像（C-66 / AC8）
  * @description 阶段一「只读离线镜像」的读路径装饰器：远端仓储为**主读**，
- *              仅当远端调用**抛出**（transport / HTTP 失败）且**非凭证类**失败时，
- *              改由同接口的本地镜像仓储读取（`mirrorPulledAt` / `mirrorTruncated` 由
- *              `syncStatus` 暴露给 UI，C-60）。
+ *              仅当远端调用**网络类失败**且**非凭证类**时，改由同接口的本地镜像仓储读取
+ *              （`mirrorPulledAt` / `mirrorTruncated` 由 `syncStatus` 暴露给 UI，C-60）。
  *
  *              设计要点：
  *              - **只包装读方法**（`readMethods`）；写方法一律透传远端 ⇒ 阶段一
  *                **数据面不产生 `markDirty`**（C-59）。
- *              - 远端**业务失败**（返回 `[null, message]`）**不触发回退** —— 远端已应答，
- *                其结果为权威（镜像可能过期）；只有抛错（无应答）才回退。
+ *              - **网络类失败有两种形态，均须回退**（DEF-21）：
+ *                ① **抛出型**：transport 层 `reject`（如 HTTP 4xx/5xx 非归一化分支）；
+ *                ② **归一化元组型**：`requester` 对 `ERR_NETWORK` / `ECONNABORTED` /
+ *                `TOO_MANY_REQUESTS` **`resolve`** 归一化响应，Go 仓储据业务码返回
+ *                `[null, message]`。仅识别 ① 会漏掉真实离线形态 ⇒ AC8 数据面失效。
+ *              - 远端**业务失败**（返回 `[null, message]` 且**非**网络文案）**不触发回退**
+ *                —— 远端已应答，其结果为权威（镜像可能过期）；只有网络类失败才回退。
  *              - **凭证类失败必须上抛**（`isCredentialError`，与 T102/DEF-5 同源）：
  *                会话失效须回登录页，不得用镜像掩盖。
  *
@@ -41,16 +46,37 @@ export const withMirrorFallback = <T extends object>(
             if (!reads.has(name)) return (value as (...args: unknown[]) => unknown).bind(target)
 
             return async (...args: unknown[]): Promise<unknown> => {
+                let result: unknown
                 try {
-                    return await (value as (...args: unknown[]) => Promise<unknown>).apply(
+                    result = await (value as (...args: unknown[]) => Promise<unknown>).apply(
                         target,
                         args
                     )
                 } catch (err) {
+                    // ① 抛出型：凭证类上抛；其余（网络类）回退镜像
                     if (isCredentialError(err as GoError)) throw err
                     return await mirrorMethods[name]!(...args)
                 }
+
+                // ② 归一化元组型：`[null, message]` 且 message 属网络类 ⇒ 回退镜像
+                if (isNormalizedNetworkErrorTuple(result)) {
+                    return await mirrorMethods[name]!(...args)
+                }
+                return result
             }
         }
     })
 }
+
+/**
+ * 是否为「归一化网络错误」元组（`[null, message]` 且 message 属网络类）
+ * @description 凭证类（`[null, '用户凭证验证失败']`）与业务类（`[null, '任务不存在']`）
+ *              均不匹配 ⇒ 原样返回（AC8：远端已应答的业务失败不回退、凭证类不用镜像掩盖）。
+ * @param result 远端读方法返回值
+ * @returns 是否应回退镜像
+ */
+const isNormalizedNetworkErrorTuple = (result: unknown): boolean =>
+    Array.isArray(result) &&
+    result.length === 2 &&
+    result[0] === null &&
+    isNormalizedNetworkError(result[1] as GoError)
