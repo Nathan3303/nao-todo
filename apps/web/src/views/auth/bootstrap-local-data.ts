@@ -1,11 +1,13 @@
+import { deletionService } from '@nao-todo/infrastructure/src/persistence-local/deletion/deletion-service'
 import {
-    deletionService,
     localSession,
+    resolveUserIdFromStoredJwt
+} from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
+import {
     logStructured,
-    resolveUserIdFromStoredJwt,
-    STRUCTURED_LOG_EVENTS,
-    type BackfillTriggerTarget
-} from '@nao-todo/infrastructure'
+    STRUCTURED_LOG_EVENTS
+} from '@nao-todo/infrastructure/src/observability/structured-log'
+import type { BackfillTriggerTarget } from '@nao-todo/infrastructure/src/persistence-sync/backfill-triggers'
 
 /**
  * 本地数据启动收敛点（C-61 / DEF-10）

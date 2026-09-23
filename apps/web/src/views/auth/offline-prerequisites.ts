@@ -1,9 +1,11 @@
 import {
     BUSINESS_TABLES,
-    localDatabase,
+    localDatabase
+} from '@nao-todo/infrastructure/src/persistence-local/db/local-database'
+import {
     localSession,
     resolveUserIdFromStoredJwt
-} from '@nao-todo/infrastructure'
+} from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
 
 /**
  * 离线进入预检（C-62 新判据，替代 SHELL-05 C-29 条件④）

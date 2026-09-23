@@ -4,7 +4,7 @@
  *              webapp 单一真源：desktop 经 `@/hooks` 装配缝 re-export 复用（T115b 迁入）。
  */
 import { ref } from 'vue'
-import { syncService } from '@nao-todo/infrastructure'
+import { syncService } from '@nao-todo/infrastructure/src/persistence-sync/sync-service'
 
 export const useManualSync = () => {
     const syncing = ref(false)

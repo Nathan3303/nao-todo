@@ -1,4 +1,6 @@
-import { localDatabase, localSession, syncStatus } from '@nao-todo/infrastructure'
+import { localDatabase } from '@nao-todo/infrastructure/src/persistence-local/db/local-database'
+import { localSession } from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
+import { syncStatus } from '@nao-todo/infrastructure/src/persistence-sync/sync-status'
 import { onMounted, onUnmounted, ref, type Ref } from 'vue'
 
 /**

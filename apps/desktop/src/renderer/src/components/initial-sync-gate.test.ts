@@ -35,6 +35,20 @@ vi.mock('@nao-todo/infrastructure', () => {
     }
 })
 
+// T122：生产侧已改窄子路径导入 ⇒ 同步注册同名深路径 mock（转发上方 barrel mock，语义不变）
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-sync/sync-service',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-local/db/local-database',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-local/session/local-session',
+    async () => import('@nao-todo/infrastructure')
+)
+
 let wrapper: VueWrapper | null = null
 
 const mountGate = (): VueWrapper => {

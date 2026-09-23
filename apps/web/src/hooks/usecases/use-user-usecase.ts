@@ -1,6 +1,8 @@
 import { UserStore, UserUseCase } from '@nao-todo/domain-identity'
-import { cacheNickname, newUserConfigRepository, newUserRepository } from '@nao-todo/infrastructure'
-import { getRequesterImpl } from '@nao-todo/shared'
+import { cacheNickname } from '@nao-todo/infrastructure/src/persistence-local/session/profile-cache'
+import { newUserConfigRepository } from '@nao-todo/infrastructure/src/persistence-go/identity/user-config-repo-impl'
+import { newUserRepository } from '@nao-todo/infrastructure/src/persistence-go/identity/user-repo-impl'
+import { getRequesterImpl } from '@nao-todo/shared/requester'
 import { useCaseBinding } from '@/hooks/usecases/binding'
 
 /**

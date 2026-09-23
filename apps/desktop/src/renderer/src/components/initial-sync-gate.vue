@@ -10,8 +10,9 @@
  * @see docs/adr/2026-09-10-shell-03-offline-availability.md
  */
 import { computed, ref } from 'vue'
-import { LoadingError, t } from '@nao-todo/shared'
-import { syncService } from '@nao-todo/infrastructure'
+import { LoadingError } from '@nao-todo/shared/components/loading-error'
+import { t } from '@nao-todo/shared/locales'
+import { syncService } from '@nao-todo/infrastructure/src/persistence-sync/sync-service'
 import { recordShellError } from '@/error-observability'
 import { checkOfflineEntryPrerequisites } from '@/views/auth/offline-prerequisites'
 

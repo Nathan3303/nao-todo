@@ -27,6 +27,20 @@ vi.mock('@nao-todo/infrastructure', () => ({
     syncStatus: { get: mocks.get, subscribe: mocks.subscribe }
 }))
 
+// T122：生产侧已改窄子路径导入 ⇒ 同步注册同名深路径 mock（转发上方 barrel mock，语义不变）
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-local/session/local-session',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-local/db/local-database',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-sync/sync-status',
+    async () => import('@nao-todo/infrastructure')
+)
+
 const { countMirrorRows, useMirrorLoadedCount } = await import('../use-mirror-loaded-count')
 
 beforeEach(() => {

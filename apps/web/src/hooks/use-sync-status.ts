@@ -4,7 +4,10 @@
  *              webapp 单一真源：desktop 经 `@/hooks` 装配缝 re-export 复用（T115b 迁入）。
  */
 import { onMounted, onUnmounted, ref } from 'vue'
-import { syncStatus, type SyncStatusState } from '@nao-todo/infrastructure'
+import {
+    syncStatus,
+    type SyncStatusState
+} from '@nao-todo/infrastructure/src/persistence-sync/sync-status'
 
 export const useSyncStatus = () => {
     // 组件挂载时取值（避免模块级快照副作用，见审查报告建议 N4）

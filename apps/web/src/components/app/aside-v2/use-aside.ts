@@ -1,8 +1,9 @@
 import { APP_CONTEXT_KEY } from '@/context'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { useUserStore } from '@nao-todo/presentation-identity'
-import { readCachedNickname } from '@nao-todo/infrastructure'
-import { getAvatarSrc, t } from '@nao-todo/shared'
+import { readCachedNickname } from '@nao-todo/infrastructure/src/persistence-local/session/profile-cache'
+import { getAvatarSrc } from '@nao-todo/shared/utils/avatar'
+import { t } from '@nao-todo/shared/locales'
 import { storeToRefs } from 'pinia'
 import { computed, inject } from 'vue'
 

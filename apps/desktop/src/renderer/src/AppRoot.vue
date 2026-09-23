@@ -14,15 +14,16 @@ import { LAST_VISITED_ROUTE_KEY, SECTION_LAST_ROUTE_MAP } from '@/router'
 import { safeReplace, safeReplaceDeepLink } from '@/safe-navigation'
 import { useUserStore } from '@nao-todo/presentation-identity'
 import { TaskReminderDialog, useStoreInvalidationHub } from '@nao-todo/presentation/task'
-import { Loading as LoadingComp, useDialogManager } from '@nao-todo/shared'
+import { Loading as LoadingComp } from '@nao-todo/shared/components/loading'
+import { useDialogManager } from '@nao-todo/shared/hooks/use-dialog-manager'
+import { cryptoService } from '@nao-todo/infrastructure/src/persistence-local/crypto/crypto-service'
 import {
-    cryptoService,
     localSession,
-    registerBackfillTriggers,
-    resolveUserIdFromStoredJwt,
-    syncService,
-    syncTracker
-} from '@nao-todo/infrastructure'
+    resolveUserIdFromStoredJwt
+} from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
+import { registerBackfillTriggers } from '@nao-todo/infrastructure/src/persistence-sync/backfill-triggers'
+import { syncService } from '@nao-todo/infrastructure/src/persistence-sync/sync-service'
+import { syncTracker } from '@nao-todo/infrastructure/src/persistence-sync/sync-tracker'
 
 defineOptions({ name: 'AppRoot' })
 

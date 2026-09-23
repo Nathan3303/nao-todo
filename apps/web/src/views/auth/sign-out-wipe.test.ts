@@ -26,6 +26,21 @@ vi.mock('@nao-todo/infrastructure', () => ({
     deletionService: { wipeUserData: mocks.wipeUserData }
 }))
 
+// 生产侧已改窄子路径导入 ⇒ 同步注册同名深路径 mock（转发到上方 barrel mock，语义不变）
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-sync/sync-tracker',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-sync/sync-service',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-local/deletion/deletion-service',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock('@nao-todo/shared/locales', async () => import('@nao-todo/shared'))
+
 beforeEach(() => {
     vi.clearAllMocks()
     mocks.countDirty.mockResolvedValue(0)

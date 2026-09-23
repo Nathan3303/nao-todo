@@ -1,6 +1,6 @@
 import { ProjectPreferenceEntity } from '@nao-todo/domain-project'
 import { TagPreferenceEntity } from '@nao-todo/domain-tag'
-import { JsonStringValueObject } from '@nao-todo/shared'
+import { JsonStringValueObject } from '@nao-todo/shared/valueobjects/json-string'
 import { cryptoService } from '../crypto/crypto-service'
 import type { ProjectPreferenceRecord, TagPreferenceRecord } from '../db/local-database'
 

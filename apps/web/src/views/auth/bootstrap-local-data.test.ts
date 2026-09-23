@@ -34,6 +34,20 @@ vi.mock('@nao-todo/infrastructure', () => ({
     }
 }))
 
+// T122：生产侧已改窄子路径导入 ⇒ 同步注册同名深路径 mock（转发上方 barrel mock，语义不变）
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-local/deletion/deletion-service',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-local/session/local-session',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/observability/structured-log',
+    async () => import('@nao-todo/infrastructure')
+)
+
 beforeEach(() => {
     vi.clearAllMocks()
     mocks.resolveUserIdFromStoredJwt.mockReturnValue('u-1')

@@ -1,7 +1,11 @@
 import type { RouteRecordRaw } from 'vue-router'
 import { useUserStore } from '@nao-todo/presentation-identity'
 import { USER_JWT_LOCALSTORAGE_KEY } from '@nao-todo/domain-identity'
-import { localSession, resolveUserIdFromStoredJwt, syncService } from '@nao-todo/infrastructure'
+import {
+    localSession,
+    resolveUserIdFromStoredJwt
+} from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
+import { syncService } from '@nao-todo/infrastructure/src/persistence-sync/sync-service'
 import { isOfflineEntryGranted } from './offline-entry'
 import { evaluateOfflinePrerequisites, hasLocalMirror } from './offline-prerequisites'
 import { bootstrapLocalData } from './bootstrap-local-data'

@@ -120,6 +120,17 @@ vi.mock('@nao-todo/infrastructure', async (importOriginal) => {
     return { ...actual, syncService: new actual.SyncService(fx.requester as never) }
 })
 
+// T122：生产侧已改窄子路径导入 ⇒ 同名深路径 mock 必需。
+// 注：此处**不能**转发到上方 barrel mock —— 其工厂用 `importOriginal()` 加载真实 barrel，
+// 而真实 barrel 会加载本深模块 ⇒ 与转发形成循环等待（已实测死锁）。改为自建同语义实例。
+vi.mock('@nao-todo/infrastructure/src/persistence-sync/sync-service', async (importOriginal) => {
+    const actual =
+        await importOriginal<
+            typeof import('@nao-todo/infrastructure/src/persistence-sync/sync-service')
+        >()
+    return { ...actual, syncService: new actual.SyncService(fx.requester as never) }
+})
+
 const { cryptoService, localDatabase, localSession } = await import('@nao-todo/infrastructure')
 
 let wrapper: VueWrapper | null = null

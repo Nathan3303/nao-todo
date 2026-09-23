@@ -7,28 +7,26 @@ import type {
     TaskCommentRepository,
     TaskRepository
 } from '@nao-todo/domain-task'
-import {
-    ProjectPreferenceRepoImpl,
-    ProjectRepoImpl,
-    TagPreferenceRepoImpl,
-    TagRepoImpl,
-    TaskCheckItemRepoImpl,
-    TaskCommentRepoImpl,
-    TaskRepoImpl,
-    newLocalPomodoroRecordRepository,
-    newLocalPomodoroRepository,
-    newLocalProjectPreferenceRepository,
-    newLocalProjectRepository,
-    newLocalTagPreferenceRepository,
-    newLocalTagRepository,
-    newLocalTaskCheckItemRepository,
-    newLocalTaskCommentRepository,
-    newLocalTaskRepository,
-    newPomodoroRecordRepository,
-    newPomodoroRepository,
-    withMirrorFallback
-} from '@nao-todo/infrastructure'
-import { getRequesterImpl } from '@nao-todo/shared'
+import { ProjectPreferenceRepoImpl } from '@nao-todo/infrastructure/src/persistence-go/project/project-preference-repo-impl'
+import { ProjectRepoImpl } from '@nao-todo/infrastructure/src/persistence-go/project/project-repo-impl'
+import { TagPreferenceRepoImpl } from '@nao-todo/infrastructure/src/persistence-go/tag/tag-preference'
+import { TagRepoImpl } from '@nao-todo/infrastructure/src/persistence-go/tag/tag'
+import { TaskCheckItemRepoImpl } from '@nao-todo/infrastructure/src/persistence-go/task/task-check-item-repo-impl'
+import { TaskCommentRepoImpl } from '@nao-todo/infrastructure/src/persistence-go/task/task-comment-repo-impl'
+import { TaskRepoImpl } from '@nao-todo/infrastructure/src/persistence-go/task/task-repo-impl'
+import { newLocalPomodoroRecordRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/pomodoro-record-repo-impl'
+import { newLocalPomodoroRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/pomodoro-repo-impl'
+import { newLocalProjectPreferenceRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/project-preference-repo-impl'
+import { newLocalProjectRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/project-repo-impl'
+import { newLocalTagPreferenceRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/tag-preference-repo-impl'
+import { newLocalTagRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/tag-repo-impl'
+import { newLocalTaskCheckItemRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/task-check-item-repo-impl'
+import { newLocalTaskCommentRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/task-comment-repo-impl'
+import { newLocalTaskRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/task-repo-impl'
+import { newPomodoroRecordRepository } from '@nao-todo/infrastructure/src/persistence-go/pomodoro/pomodoro-record-repo-impl'
+import { newPomodoroRepository } from '@nao-todo/infrastructure/src/persistence-go/pomodoro/pomodoro-repo-impl'
+import { withMirrorFallback } from '@nao-todo/infrastructure/src/persistence-go/fallback/mirror-fallback'
+import { getRequesterImpl } from '@nao-todo/shared/requester'
 import {
     POMODORO_RECORD_WRITE_METHODS,
     POMODORO_WRITE_METHODS,

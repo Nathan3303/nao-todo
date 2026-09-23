@@ -1,5 +1,7 @@
-import { deletionService, syncService, syncTracker } from '@nao-todo/infrastructure'
-import { t } from '@nao-todo/shared'
+import { deletionService } from '@nao-todo/infrastructure/src/persistence-local/deletion/deletion-service'
+import { syncService } from '@nao-todo/infrastructure/src/persistence-sync/sync-service'
+import { syncTracker } from '@nao-todo/infrastructure/src/persistence-sync/sync-tracker'
+import { t } from '@nao-todo/shared/locales'
 import { NueConfirm } from 'nue-ui'
 
 /**

@@ -1,9 +1,7 @@
-import {
-    registerBackfillTriggers,
-    resolveUserIdFromStoredJwt,
-    syncService,
-    syncStatus
-} from '@nao-todo/infrastructure'
+import { registerBackfillTriggers } from '@nao-todo/infrastructure/src/persistence-sync/backfill-triggers'
+import { resolveUserIdFromStoredJwt } from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
+import { syncService } from '@nao-todo/infrastructure/src/persistence-sync/sync-service'
+import { syncStatus } from '@nao-todo/infrastructure/src/persistence-sync/sync-status'
 import { startReadOnlyWatch } from '@nao-todo/presentation/offline'
 import { applySyncConfirmation } from '@/offline-read-only'
 import { withBootstrapRetry } from '@/views/auth/bootstrap-local-data'

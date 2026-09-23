@@ -4,7 +4,7 @@ import {
     USER_JWT_LOCALSTORAGE_KEY,
     USER_PROFILE_CACHE_KEY
 } from '@nao-todo/domain-identity'
-import { PLAINTEXT_NOTICE_ACK_KEY } from '@nao-todo/shared'
+import { PLAINTEXT_NOTICE_ACK_KEY } from '@nao-todo/shared/constants/storage-keys'
 import {
     SERVER_TIME_OFFSET_KEY,
     SNOWFLAKE_EPOCH_KEY,

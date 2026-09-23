@@ -8,21 +8,25 @@
  *              → 无缓存则通用图标占位（C-18/C-20）；失败终态恒含「重试」+「登出」（C-02）。
  * @see docs/adr/2026-09-10-shell-03-offline-availability.md
  */
+import { cryptoService } from '@nao-todo/infrastructure/src/persistence-local/crypto/crypto-service'
+import { initSnowflakeEpoch } from '@nao-todo/infrastructure/src/persistence-sync/epoch'
 import {
-    cryptoService,
-    initSnowflakeEpoch,
     isPlaintextMigrationDone,
-    localSession,
-    readCachedNickname,
-    resolveUserIdFromStoredJwt,
     runPlaintextMigration
-} from '@nao-todo/infrastructure'
+} from '@nao-todo/infrastructure/src/persistence-local/migration/plaintext-migration'
+import {
+    localSession,
+    resolveUserIdFromStoredJwt
+} from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
+import { readCachedNickname } from '@nao-todo/infrastructure/src/persistence-local/session/profile-cache'
 import { useUserStore, UserInitialAvatar } from '@nao-todo/presentation-identity'
 import { useUserUseCase } from '@/hooks'
 import { wipeLocalDataOnSignOut } from '@/views/auth/sign-out-wipe'
 import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { getAvatarSrc, Loading as LoadingComp, t } from '@nao-todo/shared'
+import { getAvatarSrc } from '@nao-todo/shared/utils/avatar'
+import { Loading as LoadingComp } from '@nao-todo/shared/components/loading'
+import { t } from '@nao-todo/shared/locales'
 import { NueConfirm } from 'nue-ui'
 
 defineOptions({ name: 'UnlockGate' })

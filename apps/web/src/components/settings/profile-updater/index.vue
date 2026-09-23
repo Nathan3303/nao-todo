@@ -10,13 +10,14 @@ import {
     UserDeactiveManager,
     UserSessionManager
 } from '@nao-todo/presentation-identity'
-import { t, USER_DEACTIVE_DIALOG_KEY } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
+import { USER_DEACTIVE_DIALOG_KEY } from '@nao-todo/shared/constants/dialog-keys'
+import { cryptoService } from '@nao-todo/infrastructure/src/persistence-local/crypto/crypto-service'
 import {
-    cryptoService,
     localSession,
-    readCachedNickname,
     resolveUserIdFromStoredJwt
-} from '@nao-todo/infrastructure'
+} from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
+import { readCachedNickname } from '@nao-todo/infrastructure/src/persistence-local/session/profile-cache'
 import { revokeOfflineEntry } from '@/views/auth/offline-entry'
 import { wipeLocalDataOnSignOut } from '@/views/auth/sign-out-wipe'
 import { broadcastSignOut } from '@/views/auth/sign-out-broadcast'

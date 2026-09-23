@@ -5,23 +5,23 @@ import type {
     UpdatePasswordViewObject
 } from '@nao-todo/domain-identity'
 import type { UseCaseBinding } from '@nao-todo/webapp/src/hooks/usecases/binding'
+import { cryptoService } from '@nao-todo/infrastructure/src/persistence-local/crypto/crypto-service'
+import { deletionService } from '@nao-todo/infrastructure/src/persistence-local/deletion/deletion-service'
+import { initSnowflakeEpoch } from '@nao-todo/infrastructure/src/persistence-sync/epoch'
 import {
-    cryptoService,
-    deletionService,
-    initSnowflakeEpoch,
     localSession,
-    newLocalPomodoroRecordRepository,
-    newLocalPomodoroRepository,
-    newLocalProjectPreferenceRepository,
-    newLocalProjectRepository,
-    newLocalTagPreferenceRepository,
-    newLocalTagRepository,
-    newLocalTaskCheckItemRepository,
-    newLocalTaskCommentRepository,
-    newLocalTaskRepository,
-    resolveUserIdFromStoredJwt,
-    runPlaintextMigration
-} from '@nao-todo/infrastructure'
+    resolveUserIdFromStoredJwt
+} from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
+import { newLocalPomodoroRecordRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/pomodoro-record-repo-impl'
+import { newLocalPomodoroRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/pomodoro-repo-impl'
+import { newLocalProjectPreferenceRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/project-preference-repo-impl'
+import { newLocalProjectRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/project-repo-impl'
+import { newLocalTagPreferenceRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/tag-preference-repo-impl'
+import { newLocalTagRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/tag-repo-impl'
+import { newLocalTaskCheckItemRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/task-check-item-repo-impl'
+import { newLocalTaskCommentRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/task-comment-repo-impl'
+import { newLocalTaskRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/task-repo-impl'
+import { runPlaintextMigration } from '@nao-todo/infrastructure/src/persistence-local/migration/plaintext-migration'
 
 /**
  * 桌面端用例装配绑定

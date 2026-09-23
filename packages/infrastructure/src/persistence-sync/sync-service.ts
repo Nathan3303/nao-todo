@@ -5,7 +5,7 @@
  *              见 data-sync-plan-backend-implementation.md 阶段 C）。
  *              拉取写入直连表 + converters（不触发 markDirty，避免同步回环）。
  */
-import { getRequesterImpl, type Requester } from '@nao-todo/shared'
+import { getRequesterImpl, type Requester } from '@nao-todo/shared/requester'
 import { getJWTFromLocalStorage } from '../persistence-go/utils'
 import { localDatabase, type SyncQueueRecord } from '../persistence-local/db/local-database'
 import { localSession } from '../persistence-local/session/local-session'

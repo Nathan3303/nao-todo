@@ -1,6 +1,6 @@
 import { AuthService, AuthStore, AuthUseCase } from '@nao-todo/domain-identity'
-import { useAuthRepository } from '@nao-todo/infrastructure'
-import { getRequesterImpl } from '@nao-todo/shared'
+import { useAuthRepository } from '@nao-todo/infrastructure/src/persistence-go/identity/auth-repo-impl'
+import { getRequesterImpl } from '@nao-todo/shared/requester'
 import { useCaseBinding } from '@/hooks/usecases/binding'
 
 /**

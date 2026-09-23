@@ -1,4 +1,5 @@
-import { cryptoService, localSession } from '@nao-todo/infrastructure'
+import { cryptoService } from '@nao-todo/infrastructure/src/persistence-local/crypto/crypto-service'
+import { localSession } from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
 import { useUserStore } from '@nao-todo/presentation-identity'
 import { safeReplace, type SafeNavigationRouter } from '@/safe-navigation'
 import { revokeOfflineEntry } from './offline-entry'
