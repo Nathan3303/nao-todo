@@ -7,7 +7,6 @@ import type {
     TaskCommentRepository,
     TaskRepository
 } from '@nao-todo/domain-task'
-import { TagPreferenceRepoImpl } from '@nao-todo/infrastructure/src/persistence-go/tag/tag-preference'
 import { newLocalPomodoroRecordRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/pomodoro-record-repo-impl'
 import { newLocalPomodoroRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/pomodoro-repo-impl'
 import { newLocalProjectPreferenceRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/project-preference-repo-impl'
@@ -17,8 +16,6 @@ import { newLocalTagRepository } from '@nao-todo/infrastructure/src/persistence-
 import { newLocalTaskCheckItemRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/task-check-item-repo-impl'
 import { newLocalTaskCommentRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/task-comment-repo-impl'
 import { newLocalTaskRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/task-repo-impl'
-import { withMirrorFallback } from '@nao-todo/infrastructure/src/persistence-go/fallback/mirror-fallback'
-import { getRequesterImpl } from '@nao-todo/shared/requester'
 import {
     USER_WRITE_METHODS,
     withReadOnlyGuard,
@@ -40,8 +37,9 @@ import {
  *              - **身份域（W5）不切**：`useUserUseCase` 的用户资料/账号操作仍**远端直连**（用户域不在业务数据面），
  *                仍受离线写闸门约束（ADR §2.6 W5；闸门组件退役属 M6，另行推进）。
  *              **偏好/设置面为显式例外**（TASK-26 / PS-1a / PS-1b，ADR-r2 §D-1）：两端**同构本地优先** ——
- *              `createProjectPreferenceRepository` 直接用**本地仓储**（web 不再「远端优先」，否则本地刚写入的值
- *              会被远端陈旧值覆盖）；偏好回传走**独立偏好队列**（`persistence-sync/preference-sync`）。
+ *              `createProjectPreferenceRepository` / `createTagPreferenceRepository`（DP-5）直接用**本地仓储**
+ *              （web 不再「远端优先」，否则本地刚写入的值会被远端陈旧值覆盖）；偏好回传走**独立偏好队列**
+ *              （`persistence-sync/preference-sync`）。
  *              **web 离线只读闸门（C-59 / AC10，ADR-r5）经 `decorateUseCase` 注入 —— web-only**：
  *              desktop 侧 binding 不提供该钩子 ⇒ 桌面写路径（在线/离线）**逐字不变**；
  *              **阶段二 2A M6 收敛：业务 7 域已全部切本地优先 ⇒ 闸门仅保留身份域 `user`**
@@ -100,12 +98,7 @@ export const useCaseBinding: UseCaseBinding = {
     createProjectRepository: () => newLocalProjectRepository(),
     createProjectPreferenceRepository: () => newLocalProjectPreferenceRepository(),
     createTagRepository: () => newLocalTagRepository(),
-    createTagPreferenceRepository: () =>
-        withMirrorFallback<TagPreferenceRepository>(
-            new TagPreferenceRepoImpl(getRequesterImpl()),
-            newLocalTagPreferenceRepository(),
-            ['get']
-        ),
+    createTagPreferenceRepository: () => newLocalTagPreferenceRepository(),
     createPomodoroRepository: () => newLocalPomodoroRepository(),
     createPomodoroRecordRepository: () => newLocalPomodoroRecordRepository(),
     // C-59 / AC10（ADR-r5）：**web-only** 离线只读闸门；desktop binding 不提供本钩子

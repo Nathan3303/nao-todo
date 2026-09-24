@@ -368,14 +368,17 @@ describe('GAP-1 普通清单偏好拉取/恢复（读时对账，T136）', () =>
         expect(pref!.viewType).toBe('kanban')
     })
 
-    it('恢复后再次读取 ⇒ 命中本地（不再请求服务端）', async () => {
+    it('恢复后再次读取 ⇒ 服务端未更新 ⇒ 返回本地（读时对账不覆盖）', async () => {
         const get = vi.fn(async () => serverPreferenceResponse())
         const repo = new LocalProjectPreferenceRepoImpl(localDatabase, makeRequester({ get }))
 
-        await repo.getByProjectId('p-1')
-        await repo.getByProjectId('p-1')
+        await repo.getByProjectId('p-1') // 本地缺失 ⇒ 恢复并落 base
+        const [pref] = await repo.getByProjectId('p-1') // 本地有值 + base ⇒ 读时对账
 
-        expect(get).toHaveBeenCalledTimes(1)
+        expect(pref!.viewType).toBe('kanban')
+        // T168 定向 supersede（§9.4.1 读时对账）：本地有 base ⇒ 每次读取向服务端核对版本；
+        // 服务端未更新 ⇒ **不覆盖本地**（旧断言「零额外 GET」是 R-10b v1 局限）
+        expect(get).toHaveBeenCalledTimes(2)
     })
 
     it('本地缺失 + 服务端无数据 ⇒ 返回默认且不入队（负向：本地缺失不推送）', async () => {
@@ -400,14 +403,16 @@ describe('GAP-1 普通清单偏好拉取/恢复（读时对账，T136）', () =>
         expect(put).not.toHaveBeenCalled()
     })
 
-    it('本地有值 ⇒ 本地优先（不发服务端请求，PS-1b）', async () => {
-        const now = new Date().toISOString()
-        await localDatabase.projectPreferences.put(
-            await projectPreferenceEntityToRecord(
+    // T168 定向 supersede（§9.4.1，PM 已批准，推翻 R-10b 的 v1 局限）：
+    // 原「本地有值 ⇒ 本地优先（零 get）」⇒ 改为「本地有值 + 服务端更新 ⇒ 拉取并应用（远端胜）」
+    it('本地有值 + 服务端更新 ⇒ 读时对账拉取并应用（远端胜，§9.4.1）', async () => {
+        const old = '2026-01-02T00:00:00.000Z'
+        await localDatabase.projectPreferences.put({
+            ...(await projectPreferenceEntityToRecord(
                 new ProjectPreferenceEntity(
                     '',
-                    now,
-                    now,
+                    old,
+                    old,
                     null,
                     'p-1',
                     'table',
@@ -415,15 +420,19 @@ describe('GAP-1 普通清单偏好拉取/恢复（读时对账，T136）', () =>
                     JsonStringValueObject.CreateByJsonString('{}')
                 ),
                 USER_ID
-            )
+            )),
+            syncedServerUpdatedAt: old
+        })
+        const get = vi.fn(async () =>
+            serverPreferenceResponse({ updatedAt: '2026-01-03T00:00:00.000Z' })
         )
-        const get = vi.fn(async () => serverPreferenceResponse())
         const repo = new LocalProjectPreferenceRepoImpl(localDatabase, makeRequester({ get }))
 
         const [pref] = await repo.getByProjectId('p-1')
 
-        expect(pref!.viewType).toBe('table')
-        expect(get).not.toHaveBeenCalled()
+        // 服务端 base 更新 ⇒ 远端胜（应用远端视图）
+        expect(pref!.viewType).toBe('kanban')
+        expect(get).toHaveBeenCalled()
     })
 })
 

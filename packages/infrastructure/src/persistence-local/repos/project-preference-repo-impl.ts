@@ -6,7 +6,7 @@ import {
     projectPreferenceEntityToRecord,
     projectPreferenceRecordToEntity
 } from '../converters/preference'
-import type { NaoTodoLocalDatabase } from '../db/local-database'
+import type { NaoTodoLocalDatabase, ProjectPreferenceRecord } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
 import { putWithSyncBase } from './put-with-sync-base'
 import { localSession } from '../session/local-session'
@@ -16,7 +16,8 @@ import {
 } from '../../persistence-go/project/converters'
 import type { ProjectPreferenceRes, ResponseData } from '../../persistence-go/models'
 import { getJWTFromLocalStorage } from '../../persistence-go/utils'
-import { markPreferenceDirty } from '../../persistence-sync/preference-sync'
+import { markPreferenceDirty, isRemoteNewer } from '../../persistence-sync/preference-sync'
+import { loadPreferenceQueue } from '../../persistence-sync/preference-queue'
 
 /** 服务端普通清单偏好获取成功码（T130 契约） */
 const PROJECT_PREFERENCE_GET_CODE = 20080
@@ -33,7 +34,7 @@ const authHeaders = (): Record<string, string> => {
 /**
  * 本地项目偏好仓储实现
  * @description JSON 配置字段加密存储，按 projectId 查询；
- *              读路径 = **本地优先 + 本地缺失时读时对账**（TASK-26 / T136 GAP-1）。
+ *              读路径 = **本地优先 + 读时对账**（本地缺失 ⇒ 拉取恢复；本地 base 落后服务端 ⇒ 远端胜）。
  */
 export class LocalProjectPreferenceRepoImpl implements ProjectPreferenceRepository {
     constructor(
@@ -55,8 +56,12 @@ export class LocalProjectPreferenceRepoImpl implements ProjectPreferenceReposito
                 .equals(projectId)
                 .filter((r) => r.userId === userId)
                 .first()
-            // 本地有值 ⇒ 本地优先（PS-1b）
-            if (record) return [await projectPreferenceRecordToEntity(record), null]
+            if (record) {
+                // §9.4.1 读时对账升级：本地 base 落后服务端 ⇒ 远端胜（未推本地修改除外，PS-1b）
+                const reconciled = await this.reconcileWithRemote(projectId, userId, record)
+                if (reconciled) return [reconciled, null]
+                return [await projectPreferenceRecordToEntity(record), null]
+            }
             // 本地缺失（换设备 / 清缓存 / 登出重登）⇒ 读时对账：拉服务端并落本地（恢复路径）
             const restored = await this.restoreFromRemote(projectId, userId)
             if (restored) return [restored, null]
@@ -77,23 +82,60 @@ export class LocalProjectPreferenceRepoImpl implements ProjectPreferenceReposito
         projectId: string,
         userId: string
     ): Promise<ProjectPreferenceEntity | null> {
+        const entity = await this.fetchRemotePreference(projectId)
+        if (!entity) return null
+        await this.persistRemotePreference(entity, userId)
+        return entity
+    }
+
+    /**
+     * 读时对账（§9.4.1）：本地已有行 ⇒ 核对服务端版本，服务端更新则**远端胜**。
+     * @description - 本地无 per-row base（未确认过服务端版本的新写/存量）⇒ **本地优先**，不发请求；
+     *              - 本地有**待推修改**（偏好队列中）⇒ **不覆盖**（否则未推本地值被冲掉，PS-1b）；
+     *              - 服务端 `updatedAt > base` ⇒ 应用远端并落新 base；否则返回 null（本地优先）。
+     */
+    private async reconcileWithRemote(
+        projectId: string,
+        userId: string,
+        record: ProjectPreferenceRecord
+    ): Promise<ProjectPreferenceEntity | null> {
+        const base = record.syncedServerUpdatedAt
+        if (!base) return null
+        const queue = await loadPreferenceQueue(userId)
+        if (queue.some((item) => item.kind === 'projectPreference' && item.projectId === projectId))
+            return null
+        const remote = await this.fetchRemotePreference(projectId)
+        if (!remote || !isRemoteNewer(remote.updatedAt, base)) return null
+        await this.persistRemotePreference(remote, userId)
+        return remote
+    }
+
+    /** 拉取服务端普通清单偏好（仅 GET；失败/无数据/非成功码 ⇒ null） */
+    private async fetchRemotePreference(
+        projectId: string
+    ): Promise<ProjectPreferenceEntity | null> {
         try {
             const response = await this.requester.get(`/projects/${projectId}/preference`, {
                 headers: authHeaders()
             })
             const res = response.data as ResponseData
             if (res?.code !== PROJECT_PREFERENCE_GET_CODE) return null
-            const entity = projectPreferenceRes2Entity(res.data as ProjectPreferenceRes)
-            const record = await projectPreferenceEntityToRecord(entity, userId)
-            // §9.4.1：读时对账落库的远端记录同时落 per-row 版本基线（与业务面 pull 同源）
-            await this.db.projectPreferences.put({
-                ...record,
-                syncedServerUpdatedAt: entity.updatedAt
-            })
-            return entity
+            return projectPreferenceRes2Entity(res.data as ProjectPreferenceRes)
         } catch {
             return null
         }
+    }
+
+    /** 落库远端记录并同时落 per-row 版本基线（§9.4.1；与业务面 pull 同源） */
+    private async persistRemotePreference(
+        entity: ProjectPreferenceEntity,
+        userId: string
+    ): Promise<void> {
+        const record = await projectPreferenceEntityToRecord(entity, userId)
+        await this.db.projectPreferences.put({
+            ...record,
+            syncedServerUpdatedAt: entity.updatedAt
+        })
     }
 
     async save(updatedEntity: ProjectPreferenceEntity): GoAsync<void> {

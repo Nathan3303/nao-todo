@@ -64,6 +64,8 @@ export interface TagPreferenceRecord {
     createdAt: string
     updatedAt: string
     deletedAt: string | null
+    /** 服务端 per-row 版本基线（OCC base；非索引字段 ⇒ 不 bump Dexie version / 不触 C-44） */
+    syncedServerUpdatedAt?: string
 }
 
 export interface TaskRecord {
@@ -233,13 +235,16 @@ export interface ConflictJournalEntry {
 
 /**
  * 偏好队列项（TASK-26 / M6；独立于业务 `syncQueue`）
- * @description 去重键 = 单位：`userConfig` 每用户一条；`projectPreference` 按 `projectId` 一条。
+ * @description 去重键 = 单位：`userConfig` 每用户一条；`projectPreference` 按 `projectId` 一条；
+ *              `tagPreference` 按 `tagId` 一条。
  *              纯追加字段，字段语义同 `syncQueue`（`attempts`/`nextAttemptAt`/`lastErrorClass`）。
  */
 export interface PreferenceQueueItem {
-    kind: 'userConfig' | 'projectPreference'
+    kind: 'userConfig' | 'projectPreference' | 'tagPreference'
     /** 仅 `projectPreference` 携带 */
     projectId?: string
+    /** 仅 `tagPreference` 携带（DP-5） */
+    tagId?: string
     /** 首次入队时间（ISO；仅 UI / 队列合并顺序用，**不作 LWW 判据**） */
     createdAt: string
     /** 业务类失败累计次数（指数退避用） */
