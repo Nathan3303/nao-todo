@@ -154,8 +154,9 @@ export class ProjectUseCase {
      * @returns 无
      */
     async archive(projectId: ProjectViewObject['id']): GoAsync<void> {
-        // 直接调用，不做确认
-        return await this.projectRepo.delete(projectId)
+        // DEF-36 / PA-3：委托仓储归档方法（写 archivedAt）；
+        // 归档路径绝不写 deletedAt / deactivedAt（PA-4 数据零丢失红线）
+        return await this.projectRepo.archive(projectId)
     }
 
     /**
@@ -164,8 +165,8 @@ export class ProjectUseCase {
      * @returns 无
      */
     async unarchive(projectId: ProjectViewObject['id']): GoAsync<void> {
-        // 直接调用，不做确认
-        return await this.projectRepo.delete(projectId)
+        // DEF-36 / PA-3：委托仓储取消归档方法（清 archivedAt）；同样不触碰删除位
+        return await this.projectRepo.unarchive(projectId)
     }
 
     /**
