@@ -111,13 +111,29 @@
 - [ ] **C-57 desktop 单实例锁（P0）**：启用 `requestSingleInstanceLock`（实测**当前未启用**）。理由：`(user_id, device_id)` 会话 upsert、pull 游标 RMW、`syncQueue` 单写者、迁移竞态**都假设单写者**。
 - [ ] **C-58 CSP 必须（P0，DEF-8）**：两端**均须有生效 CSP**。**desktop**：生产走 `win.loadFile`（`file://`，**无 HTTP 响应头**）⇒ CSP **只能**落 `<meta http-equiv="Content-Security-Policy">`。**web**：SPA **不由 `nao-todo-server` 托管**（服务端无 Static/NoRoute）⇒ CSP 必须落**静态托管侧**（**不在本仓可验收**，见 §9.3-AC12）。明文姿态下 CSP 从"建议"升为**准入条件**。
 - [ ] **C-58b DB 改名暂缓**：保留 `nao-todo-desktop`（`local-database.ts:264`）。**改名 = 新库 ⇒ 存量数据被孤立**；**迁移完成前不得改名**。
-- [ ] **C-59 业务数据面阶段一不得新增本地写路径（P0；⚠️ r9 作用域裁定 + 偏好/设置面例外，见 §10.10）**：
+- [ ] **C-59【⛔ 历史条款 · r10 正式退场】业务数据面阶段一不得新增本地写路径（P0；⚠️ 阶段二 2A 已撤销；仅余身份域例外，见 §10.11）**：
+      **r10 现行口径（2026-09-24）**：**业务 7 域（任务 / 子实体 / 清单 / 标签 / 番茄）在 web 端已切本地优先**
+      （与 desktop 同构；**`markDirty` 不再恒 0** —— 见下「r10 现行口径」与 §10.11）。
+      **本条保留为历史条款**，记录阶段一（过渡态）口径，**不得**再被引用为「web 业务只读 / web 业务不得接本地写仓储」的依据；
+      **其唯一残留效力 = 身份域例外**（`user` 仍远端直连 + 离线写闸门）。**适用域（r10 后）= 仅身份域 `user`**
+      （外观 / 昵称 / 密码 / 头像 / 会话；用户域不在 `SYNC_TABLES`）。
+
+    - **r10 现行口径（阶段二 2A 撤销后，2026-09-24）**：
+      · **业务 7 域（web 与 desktop 同构）= 本地优先（local-first）**：写路径 = **本地仓储**（`newLocal*Repository()`）
+      → `syncTracker.markDirty` → `syncQueue` → 回传（PS-12）；**离线写合法**（不再拦截、不报 `OFFLINE_READONLY`）；
+      **web 业务 `markDirty` 不再恒 0**（`pendingCount = countDirty(userId)`，成功同步回 0 —— PS-13，见 §10.11）。
+      · **身份域 `user`（唯一残留）= 远端直连**：写路径不变（`USER_WRITE_METHODS`）；**离线时仍统一拦截 + 可见提示**
+      （`OFFLINE_READONLY`）⇒ `withReadOnlyGuard` / `OFFLINE_READONLY_ERROR` **保留以服务身份域**。
+      · **`isReadOnly` / `read-only-state.ts` 保留**（离线 UI 角标 + `offlineEntry` flag 生命周期），**仅退役「写拦截」对业务域的作用**。
+      · 撤销步骤见阶段二 ADR §2.4（顺序不可颠倒）；**条款 r10 由本篇 §10.11 落地**。
+
+    - **阶段一（历史）口径**（保留原文以存证；**已由 2A 撤销**）：
       作用域 = **业务数据面**（任务 / 清单 / 标签 / 番茄 / 评论 / 检查项等）。读法 = **外科读法**
       （**离线只读** + **禁新增本地写**），**不是**「两端全程禁写」。分端口径：
 
-    - **web（业务数据面）**：写路径保持**远端直连**（**不得**接本地写仓储）⇒ web 端业务 `markDirty`
+    - **web（业务数据面，历史）**：写路径保持**远端直连**（**不得**接本地写仓储）⇒ web 端业务 `markDirty`
       **恒 0**（含离线）；**离线时**（`navigator.onLine === false` 或会话级「离线进入」）业务写入口
-      **统一拦截 + 可见提示**（稳定错误码 `OFFLINE_READONLY`，**禁**依赖文案判定）。
+      **统一拦截 + 可见提示**（稳定错误码 `OFFLINE_READONLY`，**禁**依赖文案判定）。**（r10：此半句已撤销 ⇒ 见上方现行口径）**
     - **desktop（业务数据面）**：写路径**一律不变**（在线：本地仓储 + `markDirty` + push；离线：同上 +
       SHELL-06 入队回传）⇒ **不得**在 desktop 侧套用 web 的离线写闸门。
 
@@ -133,22 +149,25 @@
       ⇒ **偏好写入口（`saveProjectPreference` / `updateUserConfig` / 内建 `savePreference`）必须移出 /
       不得列入 web 离线写闸门清单。**
 
-    - **过渡态定性（用户 2026-09-23 裁定，见 §10.10）**：**web 业务只读为过渡态，不是终态** ——
+    - **过渡态定性（用户 2026-09-23 裁定；r10 已兑现，见 §10.11）**：**web 业务只读为过渡态，不是终态** ——
       产品整体方向 = **Web 与 Desktop 都是读写本地 + 同步服务同步 + 与后端解决更新冲突**
-      （**Desktop 只是给 Web 套了一层桌面壳**）⇒ **阶段二将撤销 web 业务只读、两端统一 local-first**。
+      （**Desktop 只是给 Web 套了一层桌面壳**）⇒ **阶段二 2A 已撤销 web 业务只读、两端统一 local-first（r10 落地）**。
       故本条**不得**被引用为「web 永久只读」的依据。
 
     - **拦截落点**：用例装配层**统一包装**（**禁**逐个改仓储、**禁**逐个 UI 入口各写一套判定）；
       **禁写开关不得拦截** `signOut` / 登出清库 / 迁移 / 离线进入 / 镜像读取等**非写**路径。
-    - ⚠️ **阶段二 2A 进度指针（2026-09-24）**：**2A 已启动**；**W1（任务域）已切本地** —— web 任务域**不再套写闸门**（⇒ 该域**离线可写**、`markDirty` 不再恒 0），**其余 6 域仍套闸门**（未出现「无闸门的远端直连写窗口」）✓。⇒ **`markDirty`「全量非 0」的口径同步（ADR §5 M6）待 7 域全切后统一进行** —— 避免「**部分域仍恒 0 却声明全量非 0**」的**假绿** ✓。（本指针**不改 C-59 口径**，仅记录进度；撤销步骤见 ADR `2026-09-24-stage2-both-ends-local-first.md` §2.4/§5）
-    - **LWW 豁免（r5 重新表述，r9 补充）**：豁免 = 「阶段一**不新增**依赖写缓冲/冲突语义的路径」，
+    - ✅ **阶段二 2A 完成指针（2026-09-24，r10）**：**W1–W4 全部完成 ⇒ 业务 7 域全部切本地**（`LOCAL_FIRST_KINDS` = `{task, task-check-item, task-comment, project, tag, pomodoro, pomodoro-record}`；**身份域 `user` 不切**，W5）✓；**M6 条款 r10 已落地**（C-59 业务只读正式退场、C-66 同批修订、`markDirty` 口径全量同步 —— 见 §10.11；代码侧写闸门收敛由 `T149` 承担）。撤销步骤见 ADR `2026-09-24-stage2-both-ends-local-first.md` §2.4/§5。
+    - **LWW 豁免（r5 重新表述，r9 补充，r10 收束）**：豁免 = 「阶段一**不新增**依赖写缓冲/冲突语义的路径」，
       **不是**「无写 / `syncQueue` 恒空」（desktop 既有写路径**在线也**产生 `markDirty` ⇒ 原前提**不成立**）。
       **r9 补充**：**偏好/设置面为显式例外**（本地优先 + 独立偏好队列 + 服务端权威 LWW）——
       因其**不入 `syncQueue`、不产生业务 `markDirty`** ⇒ **不使业务面的豁免判定失效**；
       阶段二两端统一 local-first 时，**偏好面无需翻改**（见 §10.10）。
+      **r10 收束**：阶段一豁免**随 C-59 业务面退场而终结** —— 业务 7 域现**依赖** `syncQueue` + 服务端 LWW（PS-12/PS-13），
+      冲突**必须可观测**（PS-14 冲突 journal 含败方快照）⇒「不新增依赖写缓冲/冲突语义的路径」不再作为业务面约束；
+      **身份域 `user`**（不入 `SYNC_TABLES`）与**偏好面**（独立队列）**仍适用**该豁免精神。
 
-    - **「离线进入」flag 生命周期（PM 补定 + arch 技术约束，r5.1 补记）**：**解除条件 = 本会话「真实」成功同步后清除**（否则网络恢复仍永久只读）；**技术约束**：(a) 判据须 `ok === true` **且** `!credentialFailure`（`ok` 已隐含排除 10041，显式判以防回归）；(b) ⚠️ **不得**用 `runResult.ok` / `syncStatus.lastSyncAt` **反推**「会话已确认」—— `start()` 在**注销宽限期**（`deletionSchedules` 命中）与 **`!userId`** 时**早退但仍报 `ok=true`**（且 `endRun` 照推 `lastSyncAt`，已读码确认）⇒ 须由引擎在**真实执行 `pullAllInner()` 之后**置一个**运行时**「本次已确认」信号（纯追加、不落盘）；退而求其次可用「`mirrorPulledAt` 推进」作代理，**但慢/截断环境可能永不推进 ⇒ 不可作唯一判据**；(c) 清除后**仍以 `navigator.onLine` 兜底**（再次断网 ⇒ 立即回只读）；该 flag **不落盘**（刷新即失效，保持现状）；**仅 web 语义**（desktop 不套用闸门，见 §10.9）。
-    - **清单唯一真源**：**P1 探针报告 `docs/reports/2026-09-23-DEF-PROBE-P1-offline-probes.md` §3.3**（**当前 25 项**；⚠️ **禁在本 ADR/PRD 内引硬计数** —— 清单会随排查增补（已发生一次：原 24 → 25，`#8` 改标「静默」+ 补「看板·删除/恢复」）⇒ 计数写入文档必漂移）。 ⚠️ **偏好写入口已移出**该清单（`S7`/`S11`，`T131` 落地；**清单本身仍以探针 §3.3 为唯一真源**）。
+    - **「离线进入」flag 生命周期（PM 补定 + arch 技术约束，r5.1 补记）**：**解除条件 = 本会话「真实」成功同步后清除**（否则网络恢复仍永久只读）；**技术约束**：(a) 判据须 `ok === true` **且** `!credentialFailure`（`ok` 已隐含排除 10041，显式判以防回归）；(b) ⚠️ **不得**用 `runResult.ok` / `syncStatus.lastSyncAt` **反推**「会话已确认」—— `start()` 在**注销宽限期**（`deletionSchedules` 命中）与 **`!userId`** 时**早退但仍报 `ok=true`**（且 `endRun` 照推 `lastSyncAt`，已读码确认）⇒ 须由引擎在**真实执行 `pullAllInner()` 之后**置一个**运行时**「本次已确认」信号（纯追加、不落盘）；退而求其次可用「`mirrorPulledAt` 推进」作代理，**但慢/截断环境可能永不推进 ⇒ 不可作唯一判据**；(c) 清除后**仍以 `navigator.onLine` 兜底**（再次断网 ⇒ 立即回只读）；该 flag **不落盘**（刷新即失效，保持现状）；**仅 web 语义**（desktop 不套用闸门，见 §10.9）。**r10**：业务 7 域已撤闸门 ⇒ 该 flag **现行仅约束身份域 `user`**；业务域离线写**不受其影响**（离线可写，经 `syncQueue` 回传）。
+    - **清单唯一真源**：**P1 探针报告 `docs/reports/2026-09-23-DEF-PROBE-P1-offline-probes.md` §3.3**（**当前 25 项**；⚠️ **禁在本 ADR/PRD 内引硬计数** —— 清单会随排查增补（已发生一次：原 24 → 25，`#8` 改标「静默」+ 补「看板·删除/恢复」）⇒ 计数写入文档必漂移）。 ⚠️ **偏好写入口已移出**该清单（`S7`/`S11`，`T131` 落地；**清单本身仍以探针 §3.3 为唯一真源**）。 ⚠️ **r10**：业务 7 域条目已随 `T149` 从 `write-methods.ts` 清理 ⇒ **清单现行效力仅覆盖身份域 `user`**（`USER_WRITE_METHODS`）；探针 §3.3 保留为**阶段一历史真源**。
 
 - [ ] **C-60 数据新鲜度文案三分（P0）**：① 在线·远端数据 ⇒「**已更新**」；② 回退镜像 ⇒「**离线模式 · 数据截至 {时间}**」+「可能不是最新」；③ `mirrorPulledAt === null` 或空镜像 ⇒「**尚未同步完成，数据可能不完整**」（**禁止**显示"截至 X"）。**web 必须新引入 `mirrorPulledAt`**（**探针 Z12**：web 无 `syncService` 接线 ⇒ 复用 `syncStatus.lastSyncAt` 恒 `null`；且 `lastSyncAt` 语义 = "最后一次**完全成功**同步"（`endRun` 仅 `lastError === null` 时推进），**不等价"远端最新"**）。**空库 vs 未同步完成必须可区分**。**⚠️ r2 补强——截断不得谎报**：若因护栏 A 的上界未拉完 ⇒ **`mirrorPulledAt` 不得推进**（文案落 ③「尚未同步完成，数据可能不完整」）+ **触顶提示**；**禁止**在未完整拉取时显示「数据截至 X」（C-60 三分为**互斥穷尽**）。**⚠️ r5 补注——`mirrorPulledAt` / `mirrorTruncated` 必须持久化到 `meta`**：原设计为**内存态** ⇒ **离线冷启动**（本会话未成功拉取）时 `mirrorPulledAt === null` ⇒ 按 ③ 显示「尚未同步完成」——**即使磁盘上明明有镜像**；而 **AC8 承诺「离线打开即可读到数据 + 显示数据截至 X」** ⇒ **实质缺口** ⇒ **须持久化**：键 `${userId}:mirror-status`（`MetaRecord` **纯追加 2 个可选非索引字段**，**不触 C-44**）；`syncService.start()` **先读回**（**须早于「注销反悔期」早退**，否则宽限期内冷启动又回到 `null`）+ **完整拉取 / 截断后落盘**；**不得产生 `markDirty`**（C-59）。**语义保留**：`mirrorPulledAt === null` **仅在「确实从未成功拉取过」**时出现（仍用于区分「空库」与「未同步完成」，AC9）。读码核实 `0e095d88`（T107b）：`mirror-status-store.ts`（`saveMirrorStatus`/`loadMirrorStatus`）+ `sync-service.start()` 的 `restoreMirrorStatus()`（位于 `deletionSchedules` 早退**之前**）+ `pullAllInner` 末尾 `persistMirrorStatus()`。
 
@@ -157,7 +176,9 @@
 - [ ] **C-63 不可逆的上线纪律**：姿态不可逆 ⇒ **DEF-5 / DEF-6 必须先合入并验证**，再切姿态；**阶段一单独发版**；上线前完成 §4.5 的残余风险接受记录。
 - [ ] **C-64 账号切换 = 先清库（P0，r2 新增）**：**切换账号必须先执行登出清库语义**（复用 `wipeUserData(userId)`，见 C-52）——理由：① 明文下「用户 A 数据留在设备」即 **RS-1（共享设备）实质暴露**（`userId` 隔离只防串读，不防同设备他人可见）；② 保持**清理触发点单一**（C-53 的 `pendingWipe` 可重入机制不必复制）；③ 与 **U-2/K4（10041 不清库）不冲突**（切换账号是用户主动动作，非被顶号）。**禁**整库清、**禁**清他人记录（**含**他人 `deletionSchedules`）；**本用户自己的 `deletionSchedules` 保留**（登出/切换不清，见 **C-52 r5**）。
 - [ ] **C-65 `hooks/usecases/**` 共享化（P0，r2 新增）**：web 接线（C-66）之前**必须**先把 `apps/desktop/src/renderer/src/hooks/usecases/**`（**13 个文件**）共享化为**单一真源**（提取到共享包或等价机制）；该步为**纯搬迁、零行为变更、可独立验证**（`vp check` + 既有测试全绿 + 桌面回归）。**禁**在 web 侧复制第二份同构文件（违反 D-1「两端一致」且制造双真源）。
-- [ ] **C-66 web 数据面接线 = 接 `syncService`（P0，r2 新增，D-7）**：web 采用与 desktop **同一份** `hooks/usecases/**`（本地仓储接线）+ 接入 `syncService`/`localSession`/`deletionService`/`cryptoService`（passthrough）。**连带前置**：**C-59 必须覆盖 web**（**web 不得接本地写仓储** ⇒ 写路径保持远端直连、`markDirty` 恒 0；**离线写入口须拦截 + 可见提示**；若接本地写则新增写路径 ⇒ 阶段一 LWW 豁免失效且 C-1 立即可达；**r5**：desktop 写路径不变）；**C-61 调用点②**（web 的 `bootstrapLocalData` 等价物，保证 `checkAndCleanExpired` 早于 `syncService.start()`）；**pull 单主**（`navigator.locks`）。
+- [ ] **C-66 web 数据面接线 = 接 `syncService`（P0，r2 新增，D-7；⚠️ r10 业务面修订）**：web 采用与 desktop **同一份** `hooks/usecases/**`（本地仓储接线）+ 接入 `syncService`/`localSession`/`deletionService`/`cryptoService`（passthrough）。**连带前置**：**C-59 必须覆盖 web**；**C-61 调用点②**（web 的 `bootstrapLocalData` 等价物，保证 `checkAndCleanExpired` 早于 `syncService.start()`）；**pull 单主**（`navigator.locks`）。
+
+      - **r10 修订（2026-09-24，阶段二 2A）**：原「**web 不得接本地写仓储**」**限于业务数据面的阶段一口径**；**阶段二业务面 web 已接本地写仓储** —— 业务 **7 域**（任务 / 子实体 / 清单 / 标签 / 番茄）binding = `newLocal*Repository()`（与 desktop 同构），`markDirty` 经 `syncQueue` 回传（PS-12/PS-13），**离线写不再拦截**（`OFFLINE_READONLY` 对业务域退役）。**身份域 `user` 仍远端直连**（`USER_WRITE_METHODS` + 离线写闸门保留）；**偏好/设置面**接本地仓储（r9 例外，§10.10）。⇒ 原文「写路径保持远端直连、`markDirty` 恒 0、离线写入口须拦截」**对业务 7 域已失效**，仅对身份域 `user` 仍成立。
 
 ---
 
@@ -545,10 +566,73 @@
 | r6         | 2026-09-23                                                                                                                                                                                                                                                                            | **门退役 = 语义退役（T114/DEF-23）**：新增 **§5.4**（`unlock-gate.vue` **保留**为承载面：迁移门/待升级 + T105b 登出清库接线 + SHELL-03 终态 + 既有文档引用；硬约束：**进入前提不得依赖密码**、密码**仅用于迁移窗口**（C-51）、`checkAndCleanExpired` **不得回填**、C-62 走一号方案 ⇒ 备选声明不触发；**否决真删除**：净收益零 / 回归面正 / 与 C-51 互斥）· **§5.3 步骤 3 改写**（删除 → 语义退役）· §0 DEF-10 硬约束行 · §2.1-X-2（桌面侧对应物）· §3.5-C-61（调用点已迁出）· 新增 **§10.10**（含连带同步项）+ README 同步                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | r7         | 2026-09-23                                                                                                                                                                                                                                                                            | **T115 互记（同步状态展示两端一致）**：**C-60 ① 的「已更新」渲染退役**（文案键保留；**②③ 与 `resolveFreshness`/`formatMirrorPulledAt` 不变、渲染点仍唯一 = `offline-status.vue`**）+ **AC8/AC9 可测性口径补**（在线且无告警时整条不渲染）· 本批**只改条款 + 口径，不改代码**（DP-5 待 PM 拍板）· 另**更正**边界③「web 上 `lastSyncAt` 恒 `null`」已过时（C-66 后 web 已接 `syncService`；但**仍不得**作新鲜度：截断时会推进 ⇒ 谎报，须取 `mirrorPulledAt`）· 详见 `docs/adr/2026-09-23-two-end-sync-status-unification.md`（§10-S2）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | r8         | 2026-09-23                                                                                                                                                                                                                                                                            | **T115c 用户裁定互记（顶部零挂载 + 全部状态入面板）**：**C-60 ②③ 的渲染点由「内容区 `offline-status.vue`」改为「状态组件面板」**（文案键、`resolveFreshness` 互斥穷尽语义与 `formatMirrorPulledAt` 负向纪律**均不变**；`offline-status.vue` 删除）；**AC8/AC9/AC13b 可测性口径改「二段式」**（零交互 = 轨道按钮角标 + 状态名；点开 = 原文案含时间/N/引导语）⇒ PRD Then 修订归 PM（S3）；**新增显式降级项**：N-1（≤445px 抽屉无 rail 宿主 ⇒ 完全无同步状态，DP-6 待裁定）、N-2（时间/N/引导语零交互不可见）· **C-59/AC10 不受影响**（`OfflineReadOnlyBanner` 待 DP-7a；`plaintext-notice-banner`/AC17 待 DP-7b）· **banner 裁定（T115c 追加）**：`offline-read-only-banner` **已删除**（AC10 可见性由**既有** `write-gate.notifyReadOnly()` → `NueMessage.warn` 在**写被拦截时**承担，**无需新增代码**）+ `plaintext-notice-banner` **已删除**（AC17 改 **`NueConfirm`** 首启一次性确认，`unuseCancelButton` 单按钮；**真实 Chromium + CDP 实测通过**：单按钮 + `nao.plaintextNoticeAck=1` + 零 console warn/error）⇒ **DP-7a/DP-7b 关闭**；详见 `docs/adr/2026-09-23-two-end-sync-status-unification.md`（§3–§8，r9） |
-| 2026-09-23 | **r9（T133）**：**C-59 作用域收窄为「业务数据面」+ 偏好/设置面显式例外（本地优先 + 同步）**；**web 业务只读定为「过渡态」**（阶段二撤销、两端统一 local-first，用户 2026-09-23 定方向）。**业务数据面实质不变**。确切措辞见 `docs/adr/2026-09-23-local-preference-sync.md` §10/§10.10 |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| 2026-09-23 | **r9（T133）**：**C-59 作用域收窄为「业务数据面」+ 偏好/设置面显式例外（本地优先 + 同步）**；**web 业务只读定为「过渡态」**（阶段二撤销、两端统一 local-first，用户 2026-09-23 定方向）。**业务数据面实质不变**。确切措辞见 `docs/adr/2026-09-23-local-preference-sync.md` §10/§10.10 |
+| r10        | 2026-09-24                                                                                                                                                                                                                                                                            | **T150（arch，doc-only）—— 条款 r10 落地**：**C-59 业务只读正式退场**（降为**历史条款** + **唯一残留效力 = 身份域 `user` 例外**）；**C-66 同批修订**（「web 不得接本地写仓储」→ **阶段二业务面 web 已接本地写仓储**，业务 7 域 binding = `newLocal*Repository()`）；**`markDirty` 新语义**（web 业务**不再恒 0** · `pendingCount = countDirty(userId)` · 成功同步回 0 · PS-12/PS-13；身份域区分；替代旧「web 恒 0」不变量）；新增 **§10.11**（现行口径表 + 保留项 + 连带同步清单）。**保留**：`withReadOnlyGuard`/`OFFLINE_READONLY_ERROR`/`isReadOnly`（服务身份域 + 离线 UI/flag）。依据阶段二 ADR §5 M6 / §2.4；代码侧由 `T149` 同批收敛                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |     |
 
 ## 10.10 偏好/设置面 = 终态 local-first（阶段二无需翻改，r9 新增）
 
 > 内容 = `docs/adr/2026-09-23-local-preference-sync.md` **§D-1b + §D-1c** 的浓缩：偏好/设置面两端**本地优先 + 独立偏好队列回传 + 服务端权威 LWW**；**web 业务只读为过渡态**，阶段二两端统一 local-first 时**偏好面不在被切换集合内**（4 条依据见该 ADR §D-1c）。**确切措辞与契约见该 ADR §10（单一真源）**。
 
 ⚠️ **对 C-66 的 r9 限定**：C-66 中「**web 不得接本地写仓储**」**限于业务数据面**；**偏好/设置面必须接本地仓储**（本地优先 + 独立偏好队列 + 服务端 LWW）—— 否则无法满足「本地优先 + 同步」。
+
+## 10.11 r10 修订：C-59 业务只读正式退场 + C-66 同批修订 + `markDirty` 新语义（2026-09-24，T150）
+
+> **依据**：阶段二 ADR `docs/adr/2026-09-24-stage2-both-ends-local-first.md` **§5 M6** · 阶段二 PRD §18 · 用户 2026-09-24「开始（阶段二）」授权。
+> **前置已满足**：W1–W4 完成 ⇒ **业务 7 域全部切本地**（`LOCAL_FIRST_KINDS` = 7 域）✓；**身份域 `user` 不切**（W5）✓。
+> **本批为纯文档（⛔ 未改代码）**；代码侧写闸门收敛 + `markDirty` 测试口径同步由 `T149` 承担。
+
+### 一、C-59 r10（业务只读正式退场）
+
+**定性**：阶段一「web 业务只读」**已完成过渡使命、正式退场**；C-59 **降为历史条款**（保留原文以存证），
+**不得**再被引用为「web 业务只读 / web 业务不得接本地写仓储」的依据。
+
+**现行口径（r10）**：
+
+| 面                                  | 写路径                                                      | `markDirty`                                                       | 离线写                                          |
+| :---------------------------------- | :---------------------------------------------------------- | :---------------------------------------------------------------- | :---------------------------------------------- |
+| **业务 7 域**（web + desktop 同构） | **本地仓储**（`newLocal*Repository()`）→ `syncQueue` → 回传 | **不再恒 0**（`pendingCount = countDirty(userId)`，成功同步回 0） | **合法**（不拦截、不报 `OFFLINE_READONLY`）     |
+| **身份域 `user`**（唯一残留）       | **远端直连**（`USER_WRITE_METHODS`）                        | 不适用（用户域不在 `SYNC_TABLES`）                                | **仍统一拦截 + 可见提示**（`OFFLINE_READONLY`） |
+| **偏好/设置面**（r9 例外）          | **本地优先** + 独立偏好队列                                 | 不产生业务 `markDirty`（PS-1/PS-10）                              | **合法**（不拦截）                              |
+
+**保留项（不得删）**：`withReadOnlyGuard` / `OFFLINE_READONLY_ERROR` / `isReadOnly` / `read-only-state.ts` ——
+**保留以服务身份域 `user` 的离线写闸门** + **离线 UI 角标 / `offlineEntry` flag 生命周期**。
+⇒ 阶段二 ADR §2.4 步骤 5「写闸门组件退役」**收窄为「业务域条目退役」**：`write-methods.ts` 业务 7 域条目删除
+（闸门仅保留 `USER_WRITE_METHODS`；`TAG_WRITE_METHODS.savePreference` 死条目一并删除）；
+**`withReadOnlyGuard` / `OFFLINE_READONLY_ERROR` 不得整体删除**。
+
+> ⚠️ **与阶段二 ADR §2.6 W5 措辞的差异（待 PM 拍板）**：该 ADR W5 说明写「`USER_WRITE_METHODS` **退役后不再拦截**，离线身份写将**远端失败 + toast**」；
+> 而 PM `T149`/`T150` 口径为「**闸门仅保留身份域 `user`**（离线身份写仍被拦截）」⇒ 二者**不一致**。
+> 本篇按 **PM 口径**（身份域保留闸门）落地；**阶段二 ADR §2.6 W5 说明需同步修订**（Owner：arch，待 PM 确认；见下方连带清单）。
+
+### 二、C-66 r10（同批修订，否则自相矛盾）
+
+原文「**web 不得接本地写仓储**」→ **阶段二业务面 web 接本地写仓储**（业务 7 域 binding = `newLocal*Repository()`）。
+**r10 限定**：该修订**限于业务数据面**；**身份域 `user` 仍远端直连**；**偏好/设置面**接本地仓储（r9 例外，§10.10）。
+
+### 三、`markDirty` 语义条款（替代 C-59「web 恒 0」不变量）
+
+- **旧（阶段一，历史）**：web 业务 `markDirty` **恒 0**（写路径远端直连，不入 `syncQueue`）。
+- **新（r10 现行，PS-12/PS-13）**：
+  · `markDirty` 语义 = 「**本地业务写已发生、待服务端确认**」；
+  · **web 业务 `markDirty` 不再恒 0**（业务 7 域本地写即置脏）；
+  · `pendingCount = countDirty(userId)`（**按实体去重**），**成功同步（出队）后回 0**；
+  · `failedCount` 语义**不变**（`retryCount > 0`）；`preferenceFailedCount` / `conflictCount` **独立**（不计入 `pendingCount`）；
+  · **身份域 `user` 区分**：不在 `SYNC_TABLES` ⇒ 不产生业务 `markDirty`；
+  · **C-54 登出护栏**继续直调 `syncTracker.countDirty(userId)`（**禁**读 `syncStatus.pendingCount`）—— 不变。
+- **可验证不变量（PS-13，替代 C-59 恒 0）**：每次本地业务写**最终收敛**为「服务端确认（出队）」或「可见失败（退避 / 暂停 / 凭证计数）」；
+  **不存在无提示的永久滞留**。
+- **口径对齐**：与 `T149`（代码侧写闸门收敛 + 测试口径同步）**同批**；测试断言不得再出现「web 业务 `markDirty` 恒 0」。
+
+### 四、连带同步清单（含 Owner）
+
+| #   | 位置                                                                                | Owner          | 须同步内容                                                                                                          | 状态           |
+| :-- | :---------------------------------------------------------------------------------- | :------------- | :------------------------------------------------------------------------------------------------------------------ | :------------- |
+| S1  | 本篇（C-59 / C-66 / 变更记录 r10 / §10.11）                                         | **arch**       | 条款 r10 落地                                                                                                       | ✅ 本单 `T150` |
+| S13 | `docs/adr/README.md`（WEB-OFFLINE 索引行 + 篇间关系行）                             | **arch**       | 索引/关系行标注 r10 已落地                                                                                          | ✅ 本单 `T150` |
+| S3  | `docs/prds/2026-09-23-web-offline-stage1.md`（AC10 / 不变量 ④ / 终签前向指针）      | **PM**         | 前向指针 → **落地修订**：AC10 对业务 7 域**已撤销**、**仅身份域例外**；不变量 ④「web 恒 0」标注为**阶段一历史口径** | ⏳ 待 PM       |
+| S2  | `docs/prds/2026-09-23-stage2-local-first-both-ends.md`（§18）                       | **PM**         | 补 r10 落地注记（C-59/C-66 条款已同步）                                                                             | ⏳ 待 PM       |
+| S4  | `AGENTS.md`                                                                         | **PM**         | **无需改**（已核实：不含 web 只读 / C-59 / `markDirty` 描述）                                                       | ✅ N/A         |
+| S12 | `docs/tasks-state.md`                                                               | **PM**         | 台账登记 `T150` r10 落地 + 与 `T149` 对账                                                                           | ⏳ 待 PM       |
+| S7  | `packages/presentation/offline/{write-gate,write-methods}.ts` + `binding.ts`        | **rd-fe**      | 业务 7 域条目清理（闸门仅留身份域）；`withReadOnlyGuard`/`OFFLINE_READONLY` 保留                                    | ⏳ `T149`      |
+| S11 | 测试（`write-gate-wiring` / `local-first-dirty-scope` 等）                          | **rd-fe / qa** | `markDirty` 口径全量同步（业务 7 域非 0；身份域区分）+ 负向对照                                                     | ⏳ `T149`      |
+| S14 | `docs/adr/2026-09-24-stage2-both-ends-local-first.md`（§2.6 W5 说明 / §2.4 步骤 5） | **arch**       | 与 PM 口径对齐：闸门**保留身份域 `user`**（非「`USER_WRITE_METHODS` 退役后不再拦截」）—— **待 PM 确认后修订**       | ⏳ 待 PM 拍板  |
