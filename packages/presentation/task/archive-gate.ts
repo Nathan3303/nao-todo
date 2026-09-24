@@ -1,4 +1,6 @@
 import { t } from '@nao-todo/shared/locales'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
+import type { GoError } from '@nao-todo/shared/types'
 import { NueMessage } from 'nue-ui'
 import type { WriteMethodMap, WriteReturnShape } from '../offline/write-gate'
 
@@ -24,6 +26,18 @@ import type { WriteMethodMap, WriteReturnShape } from '../offline/write-gate'
 
 /** 归档只读错误码（稳定标识；不随文案变化） */
 export const ARCHIVED_READONLY_ERROR = 'ARCHIVED_READONLY'
+
+/**
+ * 是否归档只读守卫产出的错误（稳定码判定）
+ * @description `T191`：`ARCHIVED_READONLY` 的**唯一用户可见提示**来自守卫
+ *              （`archive.readOnlyHint`，本地化，见 `notifyArchivedReadOnly`）⇒ 通知层命中该码时
+ *              **跳过提示**（不再提示、也不透出原始错误码）；该码本身仍**原样返回**调用方
+ *              （机器判定/测试/调用方分支用）⇒ 本判定**只约束展示、不约束返回值**。
+ *              仅按稳定码判定 ⇒ 不误伤其它错误码（`OFFLINE_READONLY` 等行为不变）；
+ *              全仓唯一产出点 = 本模块守卫 `archivedReadOnlyResult`。
+ */
+export const isArchivedReadOnlyError = (err: unknown): boolean =>
+    unwrapError(err as GoError) === ARCHIVED_READONLY_ERROR
 
 /** 归档目标判据：由装配层提供（读任务 `archivedAt` 非空 ⇒ true） */
 export type ArchivedTargetJudge = (method: string, args: unknown[]) => Promise<boolean>

@@ -1,7 +1,15 @@
-import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { createPinia, setActivePinia } from 'pinia'
 import { nextTick } from 'vue'
+import { NueMessage } from 'nue-ui'
 import type { TaskUseCase, TaskViewObject } from '@nao-todo/domain-task'
+import {
+    ARCHIVED_READONLY_ERROR,
+    TASK_ARCHIVE_WRITE_METHODS,
+    resetArchiveGateForTest,
+    withArchivedReadOnlyGuard
+} from '../../../archive-gate'
+import { OFFLINE_READONLY_ERROR } from '../../../../offline/write-gate'
 import { useTasksStore } from '../../../stores'
 import useTaskViewObject from '../use-task-view-object'
 
@@ -153,5 +161,60 @@ describe('useTaskViewObject - store 联动保护未保存输入', () => {
 
         expect(task.value!.name).toBe('提交后的名字')
         expect(task.value!.priority).toBe('urgent')
+    })
+})
+
+describe('T191 · 归档只读码在详情面板静默（守卫已提示）', () => {
+    beforeEach(() => {
+        setActivePinia(createPinia())
+        resetArchiveGateForTest()
+    })
+    afterEach(() => {
+        resetArchiveGateForTest()
+        vi.restoreAllMocks()
+    })
+
+    it('updateTaskDetails 收到 ARCHIVED_READONLY → 仅守卫 warn 1 条、无原始错误码', async () => {
+        const warn = vi.spyOn(NueMessage, 'warn').mockImplementation(() => {})
+        const error = vi.spyOn(NueMessage, 'error').mockImplementation(() => {})
+        useTasksStore().addTask(makeTask())
+        const guarded = withArchivedReadOnlyGuard(
+            makeUseCase(makeTask()) as unknown as object,
+            TASK_ARCHIVE_WRITE_METHODS,
+            { isArchivedTarget: async () => true }
+        ) as unknown as TaskUseCase
+        const { updateTaskDetails } = useTaskViewObject(
+            guarded,
+            () => undefined,
+            () => ''
+        )
+
+        const result = await updateTaskDetails('t1', { name: 'x' })
+
+        expect(result).toBe(ARCHIVED_READONLY_ERROR) // 返回值不变
+        expect(warn).toHaveBeenCalledTimes(1)
+        expect(error).not.toHaveBeenCalled()
+        expect(warn.mock.calls.length + error.mock.calls.length).toBe(1) // 恰好 1 条
+        expect(String(warn.mock.calls[0]?.[0] ?? '')).not.toContain(ARCHIVED_READONLY_ERROR)
+    })
+
+    it('其它错误码仍原样透出（防过度静默）', async () => {
+        const warn = vi.spyOn(NueMessage, 'warn').mockImplementation(() => {})
+        const error = vi.spyOn(NueMessage, 'error').mockImplementation(() => {})
+        useTasksStore().addTask(makeTask())
+        const useCase = makeUseCase(makeTask())
+        ;(useCase.update as ReturnType<typeof vi.fn>).mockResolvedValue(OFFLINE_READONLY_ERROR)
+        const { updateTaskDetails } = useTaskViewObject(
+            useCase,
+            () => undefined,
+            () => ''
+        )
+
+        const result = await updateTaskDetails('t1', { name: 'x' })
+
+        expect(result).toBe(OFFLINE_READONLY_ERROR)
+        expect(warn).not.toHaveBeenCalled()
+        expect(error).toHaveBeenCalledTimes(1)
+        expect(String(error.mock.calls[0]?.[0] ?? '')).toContain(OFFLINE_READONLY_ERROR)
     })
 })

@@ -10,6 +10,7 @@ import {
     type UpdateTaskViewObject
 } from '@nao-todo/domain-task'
 import { translateTaskError } from '../utils/error-message'
+import { isArchivedReadOnlyError } from '../archive-gate'
 
 /**
  * 任务操作器
@@ -38,6 +39,8 @@ export class TaskHandler {
      */
     private notifyError(key: LocaleKey, error: unknown) {
         if (this.silent) return
+        // 归档只读码的提示由守卫负责（本地化）；此处跳过，避免重复 + 原始错误码外泄（T191）
+        if (isArchivedReadOnlyError(error)) return
         NueMessage.error(t(key, { error: `(${translateTaskError(error as GoError)})` }))
     }
 

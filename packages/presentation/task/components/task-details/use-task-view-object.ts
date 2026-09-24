@@ -11,6 +11,7 @@ import {
 } from '@nao-todo/domain-task'
 import { TaskDetailsPreContext } from './context'
 import { translateTaskError } from '../../utils/error-message'
+import { isArchivedReadOnlyError } from '../../archive-gate'
 import { useTasksStore } from '../../stores'
 import type { TaskDetailsViewObject } from './types'
 
@@ -141,7 +142,10 @@ const useTaskViewObject = (
         if (!id) return null
         const updateError = await taskUseCase.update(id, updateVO)
         if (updateError !== null) {
-            NueMessage.error(translateTaskError(updateError))
+            // 归档只读码的提示由守卫负责（本地化）；此处跳过，避免重复 + 原始错误码外泄（T191）
+            if (!isArchivedReadOnlyError(updateError)) {
+                NueMessage.error(translateTaskError(updateError))
+            }
             return updateError
         }
         if (task.value === null) return null
@@ -206,7 +210,9 @@ const useTaskViewObject = (
         const updateVO = { givenUpAt: dayjs().toISOString() }
         const giveUpError = await taskUseCase.update(id, updateVO)
         if (giveUpError !== null) {
-            NueMessage.error(translateTaskError(giveUpError))
+            // T191：归档只读码静默（守卫已提示）
+            if (!isArchivedReadOnlyError(giveUpError))
+                NueMessage.error(translateTaskError(giveUpError))
             return
         }
         if (task.value === null) return
@@ -222,7 +228,10 @@ const useTaskViewObject = (
         const updateVO = { givenUpAt: '' }
         const ungiveUpError = await taskUseCase.update(id, updateVO)
         if (ungiveUpError !== null) {
-            NueMessage.error(translateTaskError(ungiveUpError))
+            // T191：归档只读码静默（守卫已提示）
+            if (!isArchivedReadOnlyError(ungiveUpError)) {
+                NueMessage.error(translateTaskError(ungiveUpError))
+            }
             return
         }
         if (task.value === null) return

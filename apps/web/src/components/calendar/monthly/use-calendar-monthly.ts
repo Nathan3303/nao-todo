@@ -2,6 +2,7 @@ import { TASK_CREATOR_DIALOG_KEY } from '@nao-todo/shared/constants'
 import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { translateTaskError, useTasksStore } from '@nao-todo/presentation/task'
+import { isArchivedReadOnlyError } from '@nao-todo/presentation/task/archive-gate'
 import { useTaskUseCase } from '@/hooks'
 import { NueMessage } from 'nue-ui'
 import dayjs from 'dayjs'
@@ -202,7 +203,8 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
                 remindWeekdays: []
             })
             if (err !== null) {
-                NueMessage.error(translateTaskError(err))
+                // T191：归档只读码静默（守卫已提示）
+                if (!isArchivedReadOnlyError(err)) NueMessage.error(translateTaskError(err))
                 return false
             }
             if (task) subscriber.emit('AddNewTaskId', task.id)

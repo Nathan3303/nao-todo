@@ -1,6 +1,7 @@
 import { t } from '@nao-todo/shared/locales'
 import { NueMessage } from 'nue-ui'
 import { translateTaskError } from '../../../utils/error-message'
+import { isArchivedReadOnlyError } from '../../../archive-gate'
 import { computed, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import type { UpdateTaskViewObject } from '@nao-todo/domain-task'
@@ -79,7 +80,8 @@ const useTaskCreator = (props: TaskCreatorDialogProps) => {
         })
         createStates.creating = false
         if (err !== null) {
-            NueMessage.error(translateTaskError(err))
+            // T191：归档只读码静默（守卫已提示）
+            if (!isArchivedReadOnlyError(err)) NueMessage.error(translateTaskError(err))
             createStates.disabled = false
             return false
         }

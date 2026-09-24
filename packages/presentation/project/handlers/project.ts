@@ -9,6 +9,7 @@ import { type Go, type GoAsync } from '@nao-todo/shared/types'
 import { type Subscriber } from '@nao-todo/shared/hooks'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { useProjectsStore } from '../stores'
+import { isArchivedReadOnlyError } from '../../task/archive-gate'
 import type {
     ProjectUseCase,
     ProjectViewObject,
@@ -148,7 +149,12 @@ export class ProjectHandler {
         const deleteError = await this.projectUseCase.delete(projectId)
         // 处理错误
         if (deleteError !== null) {
-            NueMessage.error(t('dialog.projectDeleteFailed', { error: unwrapError(deleteError) }))
+            // 归档只读码的提示由守卫负责（本地化）；此处跳过，避免重复 + 原始错误码外泄（T191）
+            if (!isArchivedReadOnlyError(deleteError)) {
+                NueMessage.error(
+                    t('dialog.projectDeleteFailed', { error: unwrapError(deleteError) })
+                )
+            }
             return deleteError
         }
         // 成功
@@ -167,7 +173,12 @@ export class ProjectHandler {
         const restoreError = await this.projectUseCase.restore(projectId)
         // 处理错误
         if (restoreError !== null) {
-            NueMessage.error(t('dialog.projectRestoreFailed', { error: unwrapError(restoreError) }))
+            // T191：归档只读码静默（守卫已提示）
+            if (!isArchivedReadOnlyError(restoreError)) {
+                NueMessage.error(
+                    t('dialog.projectRestoreFailed', { error: unwrapError(restoreError) })
+                )
+            }
             return restoreError
         }
         // 成功
@@ -205,7 +216,10 @@ export class ProjectHandler {
         // updateVO.id = projectId
         const err = await this.projectUseCase.update(projectId, updateVO)
         if (err !== null) {
-            NueMessage.error(t('dialog.projectUpdateFailed', { error: unwrapError(err) }))
+            // T191：归档只读码静默（守卫已提示）
+            if (!isArchivedReadOnlyError(err)) {
+                NueMessage.error(t('dialog.projectUpdateFailed', { error: unwrapError(err) }))
+            }
             return err
         }
         NueMessage.success(t('dialog.projectUpdateSuccess'))

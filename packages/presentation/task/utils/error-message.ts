@@ -3,6 +3,7 @@ import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { type GoError } from '@nao-todo/shared/types'
 import { TaskErrorCode, type TaskErrorCodeValue } from '@nao-todo/domain-task'
 import { NueMessage } from 'nue-ui'
+import { isArchivedReadOnlyError } from '../archive-gate'
 
 /**
  * 领域错误码 → i18n key 映射
@@ -63,5 +64,7 @@ export const translateTaskError = (err: GoError): string => {
  * @param err 错误对象
  */
 export const notifyTaskError = (key: LocaleKey, err: GoError): void => {
+    // 归档只读码的提示由守卫负责（本地化）；此处跳过，避免重复 + 原始错误码外泄（T191）
+    if (isArchivedReadOnlyError(err)) return
     NueMessage.error(t(key, { error: `(${translateTaskError(err)})` }))
 }
