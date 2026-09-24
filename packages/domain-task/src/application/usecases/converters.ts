@@ -138,6 +138,7 @@ export const updateTaskViewObjectToValueObject = (
     if (viewObject.remindTime !== void 0) valueObject.remindTime = viewObject.remindTime
     if (viewObject.remindWeekdays !== void 0) valueObject.remindWeekdays = viewObject.remindWeekdays
     if (viewObject.sortId !== void 0) valueObject.sortId = viewObject.sortId
+    if (viewObject.archivedAt !== void 0) valueObject.archivedAt = viewObject.archivedAt
     return valueObject
 }
 

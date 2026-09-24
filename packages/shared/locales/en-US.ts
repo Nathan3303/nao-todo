@@ -93,6 +93,9 @@ const enUS: LocaleMessages = {
     'offline.coverage.truncated': 'Loaded {count}, more not yet loaded',
     'offline.coverage.truncatedGeneric': 'More tasks than the sync limit; showing partial data',
 
+    // Archive read-only（ADR 2026-09-24-project-archive §15.3）
+    'archive.readOnlyHint': 'This project is archived — unarchive it first',
+
     // Plaintext posture user-visible notice（ADR §4.5 / D1b / AC17）
     'notice.plaintext.title': 'Local data is stored in plain text',
     'notice.plaintext.body':
@@ -426,6 +429,7 @@ const enUS: LocaleMessages = {
     'task.details.giveUp': 'Give Up Task',
     'task.details.ungiveUp': 'Undo Give Up',
     'task.details.restore': 'Restore Task',
+    'task.details.unarchive': 'Unarchive',
     'task.details.deleteTask': 'Delete Task',
     'task.details.backToList': 'Back to Task List',
     'task.details.view': 'View Details',
@@ -495,6 +499,9 @@ const enUS: LocaleMessages = {
     'task.resortFailed': 'Failed to reorder: {error}',
     'task.copyFailed': 'Failed to copy task: {error}',
     'task.copySuccess': 'Task copied',
+    'task.unarchivedToInbox': 'Moved to Inbox',
+    'task.unarchivedToInboxHint': 'Its project is still archived',
+    'task.unarchiveFailed': 'Failed to unarchive: {error}',
     'task.confirmGiveUpTitle': 'Give up this task?',
     'task.confirmGiveUpContent': 'The task will be moved to "Given Up" list. Continue?',
     'task.confirmGiveUp': 'Confirm',

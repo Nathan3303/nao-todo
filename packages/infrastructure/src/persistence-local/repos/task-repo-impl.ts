@@ -151,6 +151,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
             if (updateVO.remindWeekdays !== undefined)
                 entity.remindWeekdays = updateVO.remindWeekdays
             if (updateVO.sortId !== undefined) entity.sortId = updateVO.sortId
+            if (updateVO.archivedAt !== undefined) entity.archivedAt = updateVO.archivedAt
             entity.updatedAt = nowCalibratedIso()
             await putWithSyncBase(
                 this.db.tasks,
@@ -271,6 +272,47 @@ export class LocalTaskRepoImpl implements TaskRepository {
 
     async unarchiveByProjectId(projectId: string): GoAsync<void> {
         return await cascadeProjectArchive(this.db, projectId, this.currentUserId, 'unarchive')
+    }
+
+    /**
+     * 单任务「取消归档」（脱归档）
+     * @description 同一 Dexie `rw` 事务内读任务 + 读其清单归档态（无 TOCTOU）：
+     *              清单仍归档 ⇒ `movedToInbox=true` + `archivedAt=null` + `projectId='inbox'`；
+     *              清单已恢复 ⇒ `movedToInbox=false`，`projectId` 不变。
+     *              `archivedAt` 严格写 `null`、收集箱写**字面 `'inbox'`**（ADR §15.1 / Q4）。
+     */
+    async unarchive(id: string): GoAsync<{ movedToInbox: boolean }> {
+        try {
+            const outcome = await this.db.transaction(
+                'rw',
+                this.db.tasks,
+                this.db.projects,
+                this.db.syncQueue,
+                async () => {
+                    const record = await this.db.tasks.get(id)
+                    if (!record || record.userId !== this.currentUserId)
+                        return { ok: false as const, message: '任务不存在' }
+                    // 判据 = 任务所属清单当前是否归档（读项目行，非任务推导；PA-10 禁止清单二次推导）
+                    const project = record.projectId
+                        ? await this.db.projects.get(record.projectId)
+                        : undefined
+                    const movedToInbox = !isAbsentStamp(project?.archivedAt)
+                    const now = nowCalibratedIso()
+                    await putWithSyncBase(this.db.tasks, {
+                        ...record,
+                        archivedAt: null,
+                        projectId: movedToInbox ? 'inbox' : record.projectId,
+                        updatedAt: now
+                    })
+                    await syncTracker.markDirty('tasks', id, 'upsert', now)
+                    return { ok: true as const, movedToInbox }
+                }
+            )
+            if (!outcome.ok) return [null, outcome.message]
+            return [{ movedToInbox: outcome.movedToInbox }, null]
+        } catch (err) {
+            return [null, String(err)]
+        }
     }
 
     async list(

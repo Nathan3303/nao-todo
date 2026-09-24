@@ -88,6 +88,9 @@ const handleDropdownExecute = async (executeId: string) => {
         case 'un-giveup-todo':
             await ungiveUpTask(vo.value.id)
             break
+        case 'unarchive-todo':
+            await taskHandler.unarchiveTask(vo.value.id)
+            break
     }
 }
 </script>
@@ -112,6 +115,12 @@ const handleDropdownExecute = async (executeId: string) => {
                 </nue-button>
             </template>
             <dropdown-div-block :title="t('task.details.moreOperations')">
+                <inner-dropdown-option
+                    v-if="vo.archivedAt"
+                    :title="t('task.details.unarchive')"
+                    icon="archive"
+                    execute-id="unarchive-todo"
+                />
                 <inner-dropdown-option
                     :disabled="vo.isDeleted"
                     :title="

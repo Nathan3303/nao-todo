@@ -33,6 +33,7 @@ export class UpdateTaskValueObject {
     public remindTime?: string | null // 提醒时刻
     public remindWeekdays?: number[] // 提醒星期几
     public sortId?: number // 组内排序值（sort_id ASC, id ASC；0 = 未设置，不产出）
+    public archivedAt?: string | null // 归档时间（null = 取消归档；ADR 2026-09-24 §15.1）
 
     /**s
      * 更新任务值对象构造函数

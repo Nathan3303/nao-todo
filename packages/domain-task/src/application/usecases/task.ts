@@ -138,6 +138,47 @@ export class TaskUseCase {
     }
 
     /**
+     * 单任务「取消归档」（脱归档）
+     * @description 清单仍归档 ⇒ 任务移入收集箱（`movedToInbox=true`）；清单已恢复 ⇒ 回原清单。
+     *              仓储方法为**可选**（远端/mobile 不必实现）⇒ 缺失时返回「当前环境不支持」。
+     *              恢复项 `sortId` 与同组活动项碰撞时以恢复值作锚归一（PA-10）。
+     * @param id 任务 ID
+     * @returns 是否移入收集箱
+     */
+    async unarchive(id: TaskViewObject['id']): GoAsync<{ movedToInbox: boolean }> {
+        // 仓储可选方法守卫（远端/移动端未实现 ⇒ 明确「不支持」而非抛异常）
+        if (typeof this.taskRepo.unarchive !== 'function') return [null, '当前环境不支持取消归档']
+        const [result, err] = await this.taskRepo.unarchive(id)
+        if (err !== null) return [null, err]
+        // 同步内存数据：可见性判据只认任务自身字段（PA-9：不改清单 archivedAt）
+        this.taskStore.updateTask(id, {
+            archivedAt: null,
+            isArchived: false,
+            ...(result.movedToInbox ? { projectId: 'inbox' } : {})
+        })
+        // 复位归一：恢复项与同组活动项 sortId 碰撞 ⇒ 以恢复值为锚重排（两阶段 PA-10）
+        const normalizeError = await this.normalizeSortAfterUnarchive(id)
+        if (normalizeError !== null) return [null, normalizeError]
+        return [result, null]
+    }
+
+    /** 取消归档后的 `sortId` 碰撞归一（以恢复项 sortId 为锚，语义 = 回最近位置） */
+    private async normalizeSortAfterUnarchive(id: TaskViewObject['id']): GoAsync<void> {
+        const restored = this.taskStore.getTask(id)
+        if (!restored) return null
+        const group = this.groupTasksOf(restored.parentTaskId ?? '').filter((t) => !t.isArchived)
+        const members = group.some((t) => t.id === id) ? group : [...group, restored]
+        const collision = members.some((t) => t.id !== id && t.sortId === restored.sortId)
+        if (!collision) return null
+        const sorted = [...members].sort(
+            (a, b) => a.sortId - b.sortId || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+        )
+        const updates = sorted.map((task, index) => ({ id: task.id, sortId: (index + 1) * 1000 }))
+        const [, err] = await this.batchUpdate(updates)
+        return err
+    }
+
+    /**
      * 创建任务
      * @param createTaskViewObject 创建任务视图对象
      * @returns 任务视图对象

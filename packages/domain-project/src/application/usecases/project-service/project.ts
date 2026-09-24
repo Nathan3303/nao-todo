@@ -202,6 +202,34 @@ export class ProjectUseCase {
         if (err !== null) return err
         // 同步 presentation store（与 delete/restore 同口径）
         this.store.unarchiveProject?.(projectId)
+        // 复位归一：恢复项与活动项 sortId 碰撞 ⇒ 以恢复值作锚重排（PA-10「回最近位置」）
+        return await this.normalizeSortAfterUnarchive(projectId)
+    }
+
+    /** 取消归档后的 `sortId` 碰撞归一（以恢复项 sortId 为锚重排活动清单） */
+    private async normalizeSortAfterUnarchive(projectId: string): GoAsync<void> {
+        // 部分调用方只提供最小 store（如 DEF-36 单测）⇒ 无读能力即跳过归一
+        if (typeof this.store.getProject !== 'function') return null
+        const restored = this.store.getProject(projectId)
+        if (!restored) return null
+        const active = this.store.getAllProjects().filter((p) => !p.isDeleted && !p.isArchived)
+        // 恢复项可能仍带归档标记（可选 store 方法缺席）⇒ 主动并入活动组，保证参与重排
+        const members = active.some((p) => p.id === projectId) ? active : [...active, restored]
+        const collision = members.some((p) => p.id !== projectId && p.sortId === restored.sortId)
+        if (!collision) return null
+        const sorted = [...members].sort(
+            (a, b) => a.sortId - b.sortId || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+        )
+        const updates = sorted.map((project, index) => ({
+            ...project,
+            sortId: (index + 1) * 1000
+        }))
+        this.store.updateProjects(updates)
+        const [batchResult, err] = await this.projectService.batchUpdateProject(
+            updates.map((project) => updateProjectViewObjectToValueObject(project.id, project))
+        )
+        if (err !== null) return err
+        this.store.updateProjects(batchResult.map(projectEntityToViewObject))
         return null
     }
 

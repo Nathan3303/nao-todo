@@ -22,6 +22,11 @@ import { newLocalTaskCheckItemRepository } from '@nao-todo/infrastructure/src/pe
 import { newLocalTaskCommentRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/task-comment-repo-impl'
 import { newLocalTaskRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/task-repo-impl'
 import { runPlaintextMigration } from '@nao-todo/infrastructure/src/persistence-local/migration/plaintext-migration'
+import {
+    TASK_ARCHIVE_WRITE_METHODS,
+    createTaskArchivedTargetJudge,
+    withArchivedReadOnlyGuard
+} from '@nao-todo/presentation/task/archive-gate'
 
 /**
  * 桌面端用例装配绑定
@@ -39,6 +44,27 @@ export const useCaseBinding: UseCaseBinding = {
     createTagPreferenceRepository: () => newLocalTagPreferenceRepository(),
     createPomodoroRepository: () => newLocalPomodoroRepository(),
     createPomodoroRecordRepository: () => newLocalPomodoroRecordRepository(),
+
+    /**
+     * 任务域归档态只读守卫（P3 / ADR `2026-09-24-project-archive.md` §15.3）
+     * @description 与 web binding 同逻辑（同一 `archive-gate` 实现）⇒ **两端行为一致**；
+     *              desktop 不提供 web 的离线只读闸门（`decorateUseCase` 仅叠加归档守卫）。
+     */
+    decorateUseCase: (useCase, kind) => {
+        if (kind !== 'task') return useCase
+        return withArchivedReadOnlyGuard(useCase, TASK_ARCHIVE_WRITE_METHODS, {
+            isArchivedTarget: createTaskArchivedTargetJudge({
+                isTaskArchived: async (taskId) => {
+                    const [entity] = await useCaseBinding.createTaskRepository().get(taskId)
+                    return Boolean(entity?.archivedAt)
+                },
+                isProjectArchived: async (projectId) => {
+                    const [entity] = await useCaseBinding.createProjectRepository().get(projectId)
+                    return Boolean(entity?.archivedAt)
+                }
+            })
+        })
+    },
 
     /**
      * 认证用例装饰（桌面版保持远程后端认证，并联动本地数据解锁）

@@ -92,6 +92,9 @@ const zhCN: LocaleMessages = {
     'offline.coverage.truncated': '已加载 {count} 条，仍有更多未加载',
     'offline.coverage.truncatedGeneric': '任务数量超过同步上限，仅显示部分数据',
 
+    // 归档只读（ADR 2026-09-24-project-archive §15.3）
+    'archive.readOnlyHint': '该清单已归档，请先取消归档',
+
     // 明文姿态用户可见声明（ADR §4.5 / D1b / AC17）
     'notice.plaintext.title': '本地数据为明文保存',
     'notice.plaintext.body':
@@ -416,6 +419,7 @@ const zhCN: LocaleMessages = {
     'task.details.giveUp': '放弃待办任务',
     'task.details.ungiveUp': '取消放弃待办任务',
     'task.details.restore': '恢复待办任务',
+    'task.details.unarchive': '取消归档',
     'task.details.deleteTask': '删除待办任务',
     'task.details.backToList': '返回任务列表',
     'task.details.view': '查看详情',
@@ -483,6 +487,9 @@ const zhCN: LocaleMessages = {
     'task.resortFailed': '调整排序失败：{error}',
     'task.copyFailed': '复制任务失败：{error}',
     'task.copySuccess': '复制任务成功',
+    'task.unarchivedToInbox': '已移入收集箱',
+    'task.unarchivedToInboxHint': '原清单仍处于归档状态',
+    'task.unarchiveFailed': '取消归档失败：{error}',
     'task.confirmGiveUpTitle': '确认放弃该任务吗？',
     'task.confirmGiveUpContent': '放弃后该任务将移至「已放弃的待办」清单中。是否继续？',
     'task.confirmGiveUp': '确认放弃',

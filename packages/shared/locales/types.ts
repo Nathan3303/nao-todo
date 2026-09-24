@@ -88,6 +88,8 @@ export interface LocaleMessages {
     'offline.coverage.loadingMore': string
     'offline.coverage.truncated': string
     'offline.coverage.truncatedGeneric': string
+    // Archive read-only（ADR 2026-09-24-project-archive §15.3）
+    'archive.readOnlyHint': string
 
     // Plaintext posture user-visible notice（ADR §4.5 / D1b / AC17）
     'notice.plaintext.title': string
@@ -399,6 +401,7 @@ export interface LocaleMessages {
     'task.details.giveUp': string
     'task.details.ungiveUp': string
     'task.details.restore': string
+    'task.details.unarchive': string
     'task.details.deleteTask': string
     'task.details.backToList': string
     'task.details.view': string
@@ -466,6 +469,9 @@ export interface LocaleMessages {
     'task.resortFailed': string
     'task.copyFailed': string
     'task.copySuccess': string
+    'task.unarchivedToInbox': string
+    'task.unarchivedToInboxHint': string
+    'task.unarchiveFailed': string
     'task.confirmGiveUpTitle': string
     'task.confirmGiveUpContent': string
     'task.confirmGiveUp': string

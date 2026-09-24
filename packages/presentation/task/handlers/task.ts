@@ -139,6 +139,28 @@ export class TaskHandler {
     }
 
     /**
+     * 任务取消归档（脱归档）
+     * @description 清单仍归档 ⇒ 任务移入收集箱，并提示「原清单仍归档」；
+     *              清单已恢复 ⇒ 回原清单（ADR `2026-09-24-project-archive.md` §15.1）。
+     * @param taskId 任务 ID
+     * @returns 错误信息
+     */
+    async unarchiveTask(taskId: string): GoAsync<void> {
+        const [payload, unarchiveError] = await this.taskUseCase.unarchive(taskId)
+        if (unarchiveError !== null) {
+            this.notifyError('task.unarchiveFailed', unarchiveError)
+            return unarchiveError
+        }
+        // 移入收集箱 ⇒ 可见提醒（说明原清单仍处于归档状态）
+        if (payload?.movedToInbox && !this.silent) {
+            NueMessage.warn(
+                `${t('task.unarchivedToInbox')} \u00b7 ${t('task.unarchivedToInboxHint')}`
+            )
+        }
+        return null
+    }
+
+    /**
      * 任务取消放弃
      * @param id 任务 ID
      * @returns 任务视图对象

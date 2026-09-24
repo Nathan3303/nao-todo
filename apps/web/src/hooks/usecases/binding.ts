@@ -21,6 +21,11 @@ import {
     withReadOnlyGuard,
     type WriteMethodMap
 } from '@nao-todo/presentation/offline'
+import {
+    TASK_ARCHIVE_WRITE_METHODS,
+    createTaskArchivedTargetJudge,
+    withArchivedReadOnlyGuard
+} from '@nao-todo/presentation/task/archive-gate'
 
 /**
  * 用例装配绑定（端差异唯一注入点）
@@ -103,8 +108,26 @@ export const useCaseBinding: UseCaseBinding = {
     createPomodoroRecordRepository: () => newLocalPomodoroRecordRepository(),
     // C-59 / AC10（ADR-r5）：**web-only** 离线只读闸门；desktop binding 不提供本钩子
     // 阶段二 2A M6：业务 7 域已切本地优先 ⇒ 闸门仅保留身份域 `user`（ADR §5 M4/M5/M6）
+    // P3（ADR 2026-09-24 §15.3）：任务域叠加**归档态只读守卫**（与 desktop 同逻辑，两端一致）
     decorateUseCase: (useCase, kind) => {
         const writeMethods = WRITE_METHODS_BY_KIND[kind]
-        return writeMethods ? withReadOnlyGuard(useCase, writeMethods) : useCase
+        let decorated = writeMethods ? withReadOnlyGuard(useCase, writeMethods) : useCase
+        if (kind === 'task') {
+            decorated = withArchivedReadOnlyGuard(decorated, TASK_ARCHIVE_WRITE_METHODS, {
+                isArchivedTarget: createTaskArchivedTargetJudge({
+                    isTaskArchived: async (taskId) => {
+                        const [entity] = await useCaseBinding.createTaskRepository().get(taskId)
+                        return Boolean(entity?.archivedAt)
+                    },
+                    isProjectArchived: async (projectId) => {
+                        const [entity] = await useCaseBinding
+                            .createProjectRepository()
+                            .get(projectId)
+                        return Boolean(entity?.archivedAt)
+                    }
+                })
+            })
+        }
+        return decorated
     }
 }

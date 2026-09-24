@@ -58,6 +58,19 @@ export interface TaskRepository {
     unarchiveByProjectId?(projectId: string): GoAsync<void>
 
     /**
+     * unarchive 单任务「取消归档」（脱归档）
+     * @description 可选方法 ⇒ 远端（`persistence-go`）/mobile 实现**不必提供**；
+     *              用例层以 `typeof === 'function'` 守卫，缺失返回「当前环境不支持」。
+     *              本地实现须在同一 Dexie `rw` 事务内判归档：清单仍归档 ⇒
+     *              `archivedAt=null` + `projectId='inbox'`（`movedToInbox=true`）；
+     *              清单已恢复 ⇒ 只清 `archivedAt`，`projectId` 不变。
+     *              （ADR `2026-09-24-project-archive.md` §15.1 / Q4）
+     * @param id 任务 ID
+     * @returns 是否移入收集箱
+     */
+    unarchive?(id: string): GoAsync<{ movedToInbox: boolean }>
+
+    /**
      * list 获取任务列表
      * @param queryString 查询字符串
      * @returns 任务实体列表和分页信息
