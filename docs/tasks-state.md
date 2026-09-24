@@ -22,14 +22,19 @@
 
 > 细则见 `@.agents/skills/github-flow.md`；本区只记**运行时**状态。
 
-- Issue：**降级：无 Issue**（摘要见 `docs/prds/`）
-- 需求分支：**降级：`feat/ocdev`**（集成分支，非 `feat/<issue-id>-<slug>`）
-- PR owner / Reviewer：**无 PR**（降级）
-- PR / 预览环境：无
-- 合并：**降级：本地 `--only` 路径级提交**（PM 记账 / worker 交付；无 squash 合并动作）
+- **流程状态：✅ 已启用 GitHub flow（2026-09-24 用户拍板）** —— 约束已落 `AGENTS.md` 项目红线；PR 模板已建 `.github/pull_request_template.md`（同时消掉 v0.7.0 体检的唯一 warn）
+- **⚠️ 会话名/任务号不一致（有意，勿误回收）**：`T157`（`DEF-33/34` 修复）由**会话 `rd-fe-T155`**执行（复用诊断会话，避免同 cwd 双写者）⇒ `nao-fleet.sh status` 会报「`rd-fe-T155` ? `T155` 仅散文提及 → 核对后 `close`」，**此为预期**；按本项目收窗纪律（终态回执 + `capture-pane` 无 `Working` + 产物落盘）核对后再回收，**不得**仅凭该提示回收
+- **待办①（baseline 追平 —— ✅ 用户 2026-09-24 已确认：push + merge commit 例外）：`feat/ocdev` → `main` 的 baseline PR** —— 本地领先 `origin/main` **429** 提交（含**未 push 的 205** 提交）；**特例白名单 = 用 merge commit 一次性**（理由：429 提交 squash 成 1 条会丢批次历史；与 main 既有 `11baf002 Merge pull request #83 from Nathan3303/feat/ocdev` 先例一致）
+- **待办②（发布 —— ✅ 用户 2026-09-24 已确认「按 PM 建议」即时发）：baseline 合并后在 `main` 上发 `v1.10.0`** —— `gh release create` + notes 落 `docs/releases/v1.10.0.md`，**tag 指向 main 合并提交**
+- **待办③（切换后）**：新需求一律 **Issue + `feat/<issue-id>-<slug>` + PR + RD squash**；**`feat/ocdev` 于 baseline 合并后退役**；在制的 `T157`（`DEF-33/34` 修复）**随 baseline 一并进 main**（不单独开分支，避免 P0 修复延迟）
+- Issue：**#88**（已建 2026-09-24：「web 离线能力（阶段一 + 2A）追平 main ＋ 本轮 P0 登录缺陷修复」；body = TL;DR + AC 编号 + 优先级 + `docs/` 指针，**正文不抄进 Issue**）⇒ baseline PR 用 `Closes #88`
+- 需求分支：**`feat/ocdev`（退役中）** → 之后 `feat/<issue-id>-<slug>`
+- PR owner / Reviewer：**RD / `arch-designer`**（纯 CRUD 可写「无」并注明理由）
+- PR / 预览环境：**无预览环境**（本项目未建；以门禁精确数字 + PM 读 diff 替代）—— 待办①的 baseline PR 为**首个 PR**
+- 合并：**待 baseline PR 合并**（**RD** 执行 `gh pr merge --merge`；**PM 不合并**）；合并后 main 上本需求 = **1 条 merge 提交**（例外），其后 = 1 条 squash
 - 版本 / Tag：**v1.9.0 已发布**（tag 指向 `eaad8b2d` @ `feat/ocdev`）· 下一次待发 **v1.10.0**（本地领先 `origin/feat/ocdev` **205+** 提交，未 push）
-- 降级标注：**无 gh 不成立（`gh auth status` exit 0 可用）· 实为「未启用 Issue/PR 流程」** + 无预览环境
-- 特例提交（白名单）：无
+- 降级标注：**`gh` 可用（`gh auth status` exit 0）· 仍余 2 项：无预览环境 · baseline 前无 Issue**
+- 特例提交（白名单）：**baseline `feat/ocdev → main` 用 merge commit（一次性；✅ 用户 2026-09-24 已批准；其后严格 squash）** —— 分支沿用既有 `feat/ocdev`（不另开 `feat/88-*`）
 
 ## 一、当前状态（2026-09-24）
 
@@ -230,6 +235,14 @@
 
 - **T156 已验收 ✅（arch-designer，commit `2b057eb7`（arch 同单勘误：原 `77a240ab` 因补「参考来源/备选模式」一行而 amend，内容差异仅该行；`77a240ab` 作废），doc-only ⛔ 未改码；`docs/adr/2026-09-23-web-offline-local-first-and-security-posture.md` **+196/−20** + `docs/adr/README.md` 索引行；全仓 `vp check` rc0（1422/1210），声明未跑全仓 `vp test`）—— 三项缺陷条款级裁定（ADR **r11** + 新增 **§10.12**）**：**② `DEF-34` ＝ 方案 a（采纳，否决「b 替代 a」）**：`wipeUserData(userId, { preserveActiveSessionCredentials })` —— 默认 `false` = **终结会话语境**（C-52 逐字不变）；**补清传 `true`**（IndexedDB 侧不变、localStorage 侧**保留 `USER_JWT` + `USER_PROFILE_CACHE_KEY`**）；`checkAndCleanExpired` / `sign-out-wipe.ts:52` 保持 `false`；**判据＝调用语境，不以 userId 相等**（同用户重登 / 上一账号中断两情形都必须保留）。**关键事实（决定方案 a 精准有效）**：`pendingWipe` 标记与清库**同事务提交**（`deletion-service.ts:63-83`）⇒ 崩溃后库其实已清，`resumePendingWipe` 实际补的就是 `clearUserScopedLocalStorage()`（`:86`）那一步 ⇒ **本缺陷全部危害恰是「删掉刚建立的 JWT」**；否决 b 的理由 = **C-61③ 常驻跨 7 天必在会话后 ⇒ 补清必须会话感知**；**存量自愈无需新 UI**（下一次 `bootstrapLocalData` 即「只清库不删 JWT」；web 侧 `deletionSchedules` **无写入点** ⇒ 该分支对纯 web 为空操作）✓。**① `DEF-33` ＝ 判据反转 + 仓储透传 `code` 同批（新 `C-67`）**：仅**归一化网络类**（`ERR_NETWORK`/`ECONNABORTED`/`50300`/`40800`/`42900`/`10051`）保留认证、**其余一律凭证类**（= **v1.9.0 等价 + DEF-5 豁免**）；**单独反转会把 DEF-25 的文案耦合搬到网络侧** ⇒ 必须同批透传 code（以 `Error` 携带、**不改 `GoError` 联合类型**、用户可见文案不变）⇒ **闭合 DEF-25**；`isCredentialError(null)` 须显式 `false` ✓。**③ `DEF-35` ＝ 暴露面否证 + 新 `C-68`**：读码证明 **web binding 无 `decorateAuthUseCase`/`decorateUserUseCase`** ⇒ **从不 setup/unlock、从不写 `key-bundle`**；`cryptoService.encrypt` 自 `9ee0c08b`（T104）即 `plain:` 直通 ⇒ **纯 web origin 不可能产生密文**（残余仅「同 origin 曾被 desktop 渲染层用过」= dev `localhost:5173`）⇒ 处置 = **否决 web 密码门 + 不做 web 明文迁移路径** + **一次性自愈**（检测非 `plain:`/`key-bundle` ⇒ C-54 同口径护栏 ⇒ 丢弃本地密文 + 全量重拉 + 可见告知；**禁删 `key-bundle`**，C-51）✓。**⭐ PM 裁定**：**`DEF-35` 严重度 = P2（有条件）** —— 先跑**证伪探针**（`FIX-D`），探针若发现 web 历史写入密文路径 ⇒ **回 P0**；**`FIX-E`（方案 b 时序加固）= 暂不做（挂账）**。**PM 已完成 arch「只报不改」的 S3–S6 回写**：阶段一 PRD「web 无迁移面」加 C-68 限定 · 缺陷池**三处锚点/处置更正**（`usecase.ts:68` → **`auth-service/error-classification.ts:9`**；`crypto-service.ts:207` → **`:209`**；DEF-33/34/35 处置列按裁定回写）✓。
 - **🚀 已派修复单**：**`T157`（rd-fe）＝ `FIX-A`（`DEF-34`，P0 解阻塞）+ `FIX-B`（`DEF-33`，P0 解阻塞）+ `FIX-C`（SSE 空 token 显式失败态，P1）**，两个 P0 **各自独立提交**；**验收硬要求**：① **在 fixture 旧数据态验证**（`pendingWipe` 预置 + 失效 JWT；复用 `/tmp/t155-*.mjs` 探针）② 受影响面 + 依赖包 `vp test --run <paths>` 报**文件/例/红精确数字** ③ 移动端红线 diff = 0 ④ 全仓 `vp test`/双端 build 留批末。**`T158`（qa）待派 = `FIX-D` 证伪探针**（web origin 是否可能残留密文；须用**旧密文 fixture**（`packages/infrastructure/.../__tests__/legacy-cipher.ts` 的 `seedLegacyCipher`））+ **`DEF-35` 验收口径**：该缺陷是**静默数据不可见**（decrypt 抛错被 `GoAsync` 错误通道吞掉）⇒ **必须断言「repo 返回的错误」或「迁移后该行可渲染」，纯 UI 目视不够** ✓。
+- **T157 已验收 ✅（rd-fe，3 提交 `c7c782d3`(FIX-A) / `453fd076`(FIX-B) / `85e3278b`(FIX-C)，7 改 + 3 新 = 10 文件；各自独立提交、`--only` + index 核对、未触碰 `docs/**`/`AGENTS.md`/`.agents/**`）**：
+    - **FIX-A（`DEF-34`）**：`wipeUserData(userId, { preserveActiveSessionCredentials })` **语境分流** —— 补清 `true` ⇒ 只清库、**保留 `USER_JWT` + `USER_PROFILE_CACHE_KEY`**；终结会话/登出/到期清理默认 `false`（C-52 逐字不变）✓；`deletion-wipe.test.ts` **+4**：**同用户补清** / **他人账号补清** / 登出默认语境不回归 / 注销到期清认证 —— **正是 arch 指定的唯一可证伪面（判据＝调用语境而非 userId 相等）** ✓
+    - **FIX-B（`DEF-33` / `C-67`）**：`NETWORK_ERROR_CODES` 白名单（`ERR_NETWORK` / `ECONNABORTED` / `50300` / `40800` / `42900` / `10051`）+ `extractErrorCodes`（**顶层归一化 code + 服务端业务 code 透传**，以 `Error` 携带）⇒ **其余一律凭证类**（含未知码/文案 ⇒ **安全默认凭证**）；`isCredentialError(null) === false` **显式保留**；`checkin-failure-split.test.ts` **+3**（`10022`/`10021` ⇒ 凭证 · 网络类 ⇒ 非凭证 · code 缺失回落语义）+ `checkin-network-auth-retention.test.ts` **+2** 端到端透传 ✓
+    - **FIX-C**：SSE 抽到 `apps/web/src/views/index/reminder-sse.ts`（**空 token ⇒ 不建连**、返回 `null`；`error` ⇒ **仅关连接**，认证清理仍由 requester `10041` **单源**兜底）+ `reminder-sse.test.ts` **+3** —— **PM 裁定：保留此设计**（避免 SSE 瞬断误登出；若要求 error 直接清认证请另提）✓
+    - **门禁/数字**：受影响面 + 依赖包 **30 文件 / 226 例 / 0 红**；4 guards rc0；移动端红线 **0**；本单 10 文件 `vp check` 0 error；**PM 复跑全仓 `vp check` rc0（1425 格式 / 1212 文件 0 warning·lint·type）** ✓（rd-fe 当时报的唯一全仓错误 = **我在制的 `docs/tasks-state.md` 格式**，已由我 `--fix` 修掉）。**全仓 `vp test` / 双端 build 留批末**（随 baseline PR 验收跑）✓
+    - ⭐ **负向对照（三处，均「转红 ⇒ 还原 ⇒ sha256 OK」）**：FIX-A 去掉 flag ⇒ 2 例转红 · FIX-B 改回旧文案白名单 ⇒ 2 例转红 · FIX-C 删空 token 守卫 ⇒ 1 例转红 ✓
+    - ⭐ **fixture 旧数据态验证（复用 `/tmp/t155-*.mjs`，dev 5173 + server 3302）**：FIX-A **前** = 登录后被弹回 `#/auth/checkin`「参数错误」且 `USER_JWT=<none>`；**后** = 登录成功进 `#/tasks/all/table`、`USER_JWT` present、`/user/profile` · `/config` · `sync/pull` 正常、**SSE 两次均带 token** ✓；FIX-B **前** = 卡「检入失败 · 重试 · 重新登录」；**后** = **自动清失效 JWT 并落 `#/auth/signin`** ⇒ **用户无需手动清数据** ✓
+    - **未过项：无** ✓
 - **🐞 用户报障现场进展（2026-09-24）**：**旧数据已不存在**（用户已清、无备份）⇒ `DEF-35` 现场不可得（改 fixture）；用户**当前登不进去（阻塞）** ⇒ `T155-b`（rd-fe，仅探针、未改码）已**实测交付「零数据损失」的最小解锁步骤**：**先**在 Console 删 `USER_JWT`（localStorage）+ `meta.pendingWipe` 单键 + **仅已到期**的 `deletionSchedules` 记录，**再**登录（**顺序关键**；实测预置业务数据完好）；⚠️ **若先登录**则那次登录已触发清库 ⇒ 业务数据被清（**一次性标记被消费后**再次登录即正常）；判别特征（signin 页 / 「检入失败」= DEF-33 / 「参数错误」= DEF-34 / Console `wipe.user-data.*` = DEF-34 / checkin 请求体 `{"jwt":"<旧值>"}` vs `{"jwt":""}`）已转用户 ✓。**另**：`T155` 的明文 fixture **不能**用于 `DEF-35` 验收（已明说）✓。
 - **更新**：2026-09-24
 
@@ -262,7 +275,7 @@
 
 | 任务编号 | 目标会话                                    | 角色  | 概要                                                                                                                                                                                             | 派发时间          | 对应 AC   |
 | :------- | :------------------------------------------ | :---- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------- | :-------- |
-| `T157`   | `rd-fe-T155`（**复用会话**，回执写 `T157`） | rd-fe | **FIX-A/B/C**：`DEF-34`（方案 a：补清保留当前会话凭据键）→ `DEF-33`（判据反转 `C-67` + 仓储透传 `code`）→ FIX-C（SSE 空 token 显式失败态）；两 P0 各自提交 + **fixture 旧数据态验证** + 负向对照 | 2026-09-24 ~13:4x | DEF-33/34 |
+| `T159`   | `rd-fe-T155`（**复用会话**，回执写 `T159`） | rd-fe | **baseline PR（Issue #88）**：push `feat/ocdev` → `gh pr create --base main`（Draft→Ready，body 用 PR 模板 + `Closes #88`）⇒ 待 PM 验收授权后 **RD `gh pr merge --merge`（一次性例外）+ 删分支** | 2026-09-24 ~14:0x | Issue #88 |
 
 ### 已回执待验收
 
