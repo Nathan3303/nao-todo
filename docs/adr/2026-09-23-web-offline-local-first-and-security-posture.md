@@ -1,7 +1,7 @@
 # 2026-09-23 WEB-OFFLINE：web 本地优先 + 安全姿态选择（两端一致明文）
 
 - **评审对象**：`docs/prds/2026-09-23-web-offline-stage1.md`（TASK-24 阶段一 PRD）；勘察与决策依据 `docs/prds/2026-09-23-web-offline-recon.md`
-- **结论**：⚠️ **有条件可行** —— 决策方向成立（约束 **C-46…C-66**）；R1/R2/R4 **已裁决闭合**（§10）· R3 **已裁定 = 接受不可逆**（r3，§10.6）· **AC13a/b/c + AC5b 已补齐（AC 共 24 行）** · **r5 修订 C-52 / C-60 + C-59 作用域裁定**（§10.8–§10.9）· **r11 裁定 C-52/C-53（DEF-34）+ 新增 C-67（DEF-33）/ C-68（DEF-35）**（§10.12）⇒ **无剩余阻塞项**
+- **结论**：⚠️ **有条件可行** —— 决策方向成立（约束 **C-46…C-66**）；R1/R2/R4 **已裁决闭合**（§10）· R3 **已裁定 = 接受不可逆**（r3，§10.6）· **AC13a/b/c + AC5b 已补齐（AC 共 24 行）** · **r5 修订 C-52 / C-60 + C-59 作用域裁定**（§10.8–§10.9）· **r11 裁定 C-52/C-53（DEF-34）+ 新增 C-67（DEF-33）/ C-68（DEF-35）**（§10.12）· **r12 收口 C-67 适用范围（不外溢至读路径）+ 读路径回退 = fail-soft**（§10.12-六，T160）⇒ **无剩余阻塞项**
 - **范围**：两端数据面姿态（`packages/infrastructure/src/persistence-local/*` + `persistence-sync/*`）+ 启动门链（`apps/desktop/src/renderer/src/AppRoot.vue`、`apps/web/src/views/auth/*`）+ 登出清库接线 + 迁移器 + 护栏（CSP / `userId` 隔离 / 单实例锁）
 - **代码边界**：本 ADR 为**纯文档产出**，评审方**未修改任何仓库代码**（只读评审）
 - **前序**：`docs/adr/2026-09-10-shell-03-offline-availability.md`（C-01…C-25，离线进入四条件）、`docs/adr/2026-09-13-shell-05-offline-entry-hardening.md`（C-26…C-37）、`docs/adr/2026-09-13-shell-06-offline-backfill.md`（C-38…C-45）、`docs/adr/2026-09-21-sync-nullable-time-tri-state-contract.md`
@@ -102,7 +102,7 @@
 
 - [ ] **C-55 `userId` 硬失败（P0，DEF-9）**：`getCurrentUserId() ?? ''` 兜底**必须移除**；`userId` 为 `null`/空时**拒绝一切库操作**（硬失败 + 可见错误），**不得**退化为"空用户"读写。明文姿态下这是**准入条件**（否则跨用户读到明文）。启动时须从 JWT 重建 `localSession`（web 现无重建点）。
 - [ ] **C-62 离线进入判据替换（P0，DEF-16 / K9）**：删除 C-23 条件④；新判据 = **`offlineEntryGranted && JWT 可解析 && localSession.getCurrentUserId() === jwtUserId && 本地镜像存在`**（**两处实现同步改**：`routes.ts` 真守卫 + `offline-prerequisites.ts`）。**必须补正向单测**（现有测试只覆盖 `isUnlocked === false` 的**拒绝**路径 ⇒ 删除后无守护）。若改走"passthrough 仍置位 `isUnlocked`"的备选方案 ⇒ **必须在本 ADR 变更记录中显式声明**，否则离线进入静默失效。
-- [ ] **C-67 认证失败分类判据 = 「网络白名单 + code 优先」（P0，r11，DEF-33）**：`checkIn`（及同口径凭证校验）失败分流**必须**满足两条：① **判据方向 = 网络类白名单**：**仅**归一化网络类（`ERR_NETWORK` / `ECONNABORTED` / `50300` / `40800` / `42900` / `10051`）**保留认证**（**DEF-5 / AC7 不回归**）；**其余一切失败（含未知 / 新增业务码、5xx、解析失败）一律按凭证类**（清认证 + 跳 `auth/signin`）—— 与 `v1.9.0` 的「任何失败都清」等价，且**不依赖服务端文案**。② **判据数据源 = 结构化 `code` 优先**：仓储边界（`auth-repo-impl`）**必须**透传**顶层归一化 code** 与**业务 code**；分类器**以 code 为准、文案仅兜底**（防 **DEF-25** 复发）。**禁止**新增第二套文案标记集（`check-in.vue` 与 `AuthUseCase` **必须**共用同一分类器）。**契约**：`isCredentialError` 对 `null`/空串**必须显式返回 `false`**（防御性，避免误清）。
+- [ ] **C-67 认证失败分类判据 = 「网络白名单 + code 优先」（P0，r11，DEF-33）**：`checkIn`（及同口径凭证校验）失败分流**必须**满足两条：① **判据方向 = 网络类白名单**：**仅**归一化网络类（`ERR_NETWORK` / `ECONNABORTED` / `50300` / `40800` / `42900` / `10051`）**保留认证**（**DEF-5 / AC7 不回归**）；**其余一切失败（含未知 / 新增业务码、5xx、解析失败）一律按凭证类**（清认证 + 跳 `auth/signin`）—— 与 `v1.9.0` 的「任何失败都清」等价，且**不依赖服务端文案**。② **判据数据源 = 结构化 `code` 优先**：仓储边界（`auth-repo-impl`）**必须**透传**顶层归一化 code** 与**业务 code**；分类器**以 code 为准、文案仅兜底**（防 **DEF-25** 复发）。**禁止**新增第二套文案标记集（`check-in.vue` 与 `AuthUseCase` **必须**共用同一分类器）。**契约**：`isCredentialError` 对 `null`/空串**必须显式返回 `false`**（防御性，避免误清）。**⚠️ r12 适用范围（2026-09-24，T160）**：**本条仅约束「认证失败分类」**（`checkIn` / `AuthUseCase` / `check-in.vue`）；**读路径回退资格（`withMirrorFallback`）不适用本条** —— 其判据方向**相反**（fail-soft：仅**已知凭证**才上抛，其余含未知一律回退镜像），见 **§10.12-六**。r11 落地时因**共用实现**（读路径曾引用同一 `isCredentialError`）使本条**意外外溢**至读路径 ⇒ **禁**以本条作读路径回退门。
 
 ### 3.5 启动门与调用点
 
@@ -571,8 +571,9 @@
 | r7         | 2026-09-23                                                                                                                                                                                                                                                                            | **T115 互记（同步状态展示两端一致）**：**C-60 ① 的「已更新」渲染退役**（文案键保留；**②③ 与 `resolveFreshness`/`formatMirrorPulledAt` 不变、渲染点仍唯一 = `offline-status.vue`**）+ **AC8/AC9 可测性口径补**（在线且无告警时整条不渲染）· 本批**只改条款 + 口径，不改代码**（DP-5 待 PM 拍板）· 另**更正**边界③「web 上 `lastSyncAt` 恒 `null`」已过时（C-66 后 web 已接 `syncService`；但**仍不得**作新鲜度：截断时会推进 ⇒ 谎报，须取 `mirrorPulledAt`）· 详见 `docs/adr/2026-09-23-two-end-sync-status-unification.md`（§10-S2）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | r8         | 2026-09-23                                                                                                                                                                                                                                                                            | **T115c 用户裁定互记（顶部零挂载 + 全部状态入面板）**：**C-60 ②③ 的渲染点由「内容区 `offline-status.vue`」改为「状态组件面板」**（文案键、`resolveFreshness` 互斥穷尽语义与 `formatMirrorPulledAt` 负向纪律**均不变**；`offline-status.vue` 删除）；**AC8/AC9/AC13b 可测性口径改「二段式」**（零交互 = 轨道按钮角标 + 状态名；点开 = 原文案含时间/N/引导语）⇒ PRD Then 修订归 PM（S3）；**新增显式降级项**：N-1（≤445px 抽屉无 rail 宿主 ⇒ 完全无同步状态，DP-6 待裁定）、N-2（时间/N/引导语零交互不可见）· **C-59/AC10 不受影响**（`OfflineReadOnlyBanner` 待 DP-7a；`plaintext-notice-banner`/AC17 待 DP-7b）· **banner 裁定（T115c 追加）**：`offline-read-only-banner` **已删除**（AC10 可见性由**既有** `write-gate.notifyReadOnly()` → `NueMessage.warn` 在**写被拦截时**承担，**无需新增代码**）+ `plaintext-notice-banner` **已删除**（AC17 改 **`NueConfirm`** 首启一次性确认，`unuseCancelButton` 单按钮；**真实 Chromium + CDP 实测通过**：单按钮 + `nao.plaintextNoticeAck=1` + 零 console warn/error）⇒ **DP-7a/DP-7b 关闭**；详见 `docs/adr/2026-09-23-two-end-sync-status-unification.md`（§3–§8，r9） |
 | 2026-09-23 | **r9（T133）**：**C-59 作用域收窄为「业务数据面」+ 偏好/设置面显式例外（本地优先 + 同步）**；**web 业务只读定为「过渡态」**（阶段二撤销、两端统一 local-first，用户 2026-09-23 定方向）。**业务数据面实质不变**。确切措辞见 `docs/adr/2026-09-23-local-preference-sync.md` §10/§10.10 |
-| r10        | 2026-09-24                                                                                                                                                                                                                                                                            | **T150（arch，doc-only）—— 条款 r10 落地**：**C-59 业务只读正式退场**（降为**历史条款** + **唯一残留效力 = 身份域 `user` 例外**）；**C-66 同批修订**（「web 不得接本地写仓储」→ **阶段二业务面 web 已接本地写仓储**，业务 7 域 binding = `newLocal*Repository()`）；**`markDirty` 新语义**（web 业务**不再恒 0** · `pendingCount = countDirty(userId)` · 成功同步回 0 · PS-12/PS-13；身份域区分；替代旧「web 恒 0」不变量）；新增 **§10.11**（现行口径表 + 保留项 + 连带同步清单）。**保留**：`withReadOnlyGuard`/`OFFLINE_READONLY_ERROR`/`isReadOnly`（服务身份域 + 离线 UI/flag）。依据阶段二 ADR §5 M6 / §2.4；代码侧由 `T149` 同批收敛                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |     |
+| r10        | 2026-09-24                                                                                                                                                                                                                                                                            | **T150（arch，doc-only）—— 条款 r10 落地**：**C-59 业务只读正式退场**（降为**历史条款** + **唯一残留效力 = 身份域 `user` 例外**）；**C-66 同批修订**（「web 不得接本地写仓储」→ **阶段二业务面 web 已接本地写仓储**，业务 7 域 binding = `newLocal*Repository()`）；**`markDirty` 新语义**（web 业务**不再恒 0** · `pendingCount = countDirty(userId)` · 成功同步回 0 · PS-12/PS-13；身份域区分；替代旧「web 恒 0」不变量）；新增 **§10.11**（现行口径表 + 保留项 + 连带同步清单）。**保留**：`withReadOnlyGuard`/`OFFLINE_READONLY_ERROR`/`isReadOnly`（服务身份域 + 离线 UI/flag）。依据阶段二 ADR §5 M6 / §2.4；代码侧由 `T149` 同批收敛                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |      |
 | r11        | 2026-09-24                                                                                                                                                                                                                                                                            | **T156（arch，doc-only）—— 三项缺陷条款级裁定（DEF-33 / DEF-34 / DEF-35）**：**① DEF-34 ⇒ C-52 / C-53 r11 修订**（清库分「终结会话」/「补清」语境；`resumePendingWipe` 不得删当前会话凭据键；**采纳方案 a**，b 仅作可选加固且**不足以替代 a**）· **② DEF-33 ⇒ 新增 C-67**（认证失败分类 = **网络白名单 + code 优先**；判据反转与仓储透传 code **同批**）· **③ DEF-35 ⇒ 新增 C-68**（web 不引密码门；旧密文一次性自愈；**暴露面否证** ⇒ 防御性条款、不构成发布阻塞）· §0 关系表补 SHELL-03（r11）· §10.1-AC2 更正 · 新增 **§10.12**（三项裁定 + 依据 + 影响面 + 回归矩阵 + 修复单拆分 + 连带同步清单）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| r12        | 2026-09-24                                                                                                                                                                                                                                                                            | **T160（arch，doc-only）—— 读路径回退资格裁定（C-67 外溢回归修复）**：**C-67 明确适用范围**（仅认证失败分类，**不外溢**至读路径；§3.4 加注）· 新增 **§10.12-六**（**B-2**：`mirror-fallback` 抛出分支 = **fail-soft**「仅已知凭证**结构**信号上抛，其余含非归一化 HTTP 5xx/4xx·未知一律回退」；元组分支**不变**（远端已应答 ⇒ fail-closed）；**否决 A/B-1**（收窄 P0 AC8 超 doc-only 权限）；证据 = pre-FIX-B 谓词对照 + T107/T112 注释；连带 **S9–S12**）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | arch |
 
 ## 10.10 偏好/设置面 = 终态 local-first（阶段二无需翻改，r9 新增）
 
@@ -816,3 +817,67 @@
 | S6  | `docs/reports/defect-pool.md`（DEF-35 机制行锚点 `crypto-service.ts:207`）               | **PM**   | 实为 **`:209`**（`本地密钥未解锁`）                                                                        | ⏳ PM          |
 | S7  | `docs/tasks-state.md`                                                                    | **PM**   | `T156` 回执 + FIX-A…FIX-E 派发登记                                                                         | ⏳ PM          |
 | S8  | `docs/adr/2026-09-10-shell-03-offline-availability.md`（附录 B-3 ②）                     | **arch** | 判据表述按 **C-67** 读（文案标记表 → 网络白名单 + code 优先）；**待 PM 批准后**落                          | ⏳ 后续        |
+
+---
+
+#### 六、r12 裁定（T160）：**读路径回退资格 = fail-soft（`mirror-fallback` 抛出分支）—— C-67 不外溢至读路径**
+
+**触发**：`T157` FIX-B（C-67）落地后，全仓门禁在 baseline HEAD `c057f8b5` 转红 **2 例**，唯一红面 = `packages/infrastructure/src/persistence-go/fallback/__tests__/mirror-fallback.test.ts`（AC8「远端抛网络错误 ⇒ 回退镜像」/ AC9「无镜像 ⇒ 空集」）。**非 flaky**（`error-classification.ts` 临时回退到 FIX-B 前 ⇒ 13/13 绿）。
+
+**根因（读码 + git 历史对照）**：`mirror-fallback.ts:57` 抛出分支以 `isCredentialError(err)` 作「凭证 ⇒ 上抛 / 其余 ⇒ 回退」的**总门**。C-67 反转该谓词方向（网络白名单；未知 ⇒ 凭证）后，**共用实现被意外改语义**：`axios.ts:107-109` 的 `default:` 分支对**非归一化 HTTP 错误** `reject`（axios v1：4xx=`ERR_BAD_REQUEST` / 5xx=`ERR_BAD_RESPONSE`）⇒ **生产可命中**抛出分支 ⇒ 代理/网关 `502/504`、服务端 `500` 等由「**回退镜像**」（T107 原意）变为「**上抛**」（**读路径可用性回归**）。
+
+**关键证据（FIX-B 前后两版谓词对照，`git show 453fd076^:.../error-classification.ts`）**：
+
+- **pre-FIX-B**（`CREDENTIAL_ERROR_MARKERS = ['10041','401','403','登录已过期','凭证']`，`message.includes`）⇒ 抛出分支实际语义 = **仅命中凭证信号才上抛，其余（5xx / 非凭证 4xx / 未知）一律回退**；`'401'/'403'` 恰好匹配 axios 文案「Request failed with status code 401」⇒ 凭证类仍上抛。**这正是 AC8/T107 验收时的行为**（`33901b90` 原注释：「仅当远端调用**抛出**（transport / HTTP 失败）且**非凭证类**时…」；`9f0228ba` 注释：「① 抛出型：transport 层 reject（如 HTTP 4xx/5xx 非归一化分支）…**均须回退**」）。
+- **post-FIX-B**（网络白名单）⇒ `ERR_BAD_RESPONSE` / `ERR_BAD_REQUEST` 均不在白名单 ⇒ 判为凭证 ⇒ 上抛。
+- C-67 的正文（§10.12-二，标题 = 「认证失败分类判据」）**从未提及** `mirror-fallback` ⇒ **属意外外溢，非有意覆盖**。
+
+**裁定 = B-2**（恢复 T107/T112 原意；**否决 A / B-1**）：
+
+> **抛出分支回退资格（读路径专用，r12）**：**仅**当错误携带**已知凭证结构信号**时**上抛**，**其余一切抛出型错误**（含非归一化 HTTP **5xx / 网关 502·504 / 非凭证 4xx**、**未知 / 无 code** 异常）**一律回退镜像**。
+
+**AC8/AC9 在 C-67 反转下的应有语义（一句话）**：AC8/AC9 的「网络类失败」= **远端不可用 / 未给出权威应答**（归一化网络元组 ∪ 抛出型 transport / HTTP 5xx·4xx）；它与 C-67 的「认证失败分类」是**两个不同语境的判据**（读路径 fail-soft，认证路径 fail-closed），**C-67 不覆盖读路径**。
+
+**为什么否决 A / B-1**：A/B-1 净效果 = 「**归一化网络错误才回退，非归一化 5xx / 未知一律上抛**」⇒ 相对 AC8 已验收口径**收窄 P0 离线可用性的覆盖范围**（`502/504/500` 恰是镜像回退的**典型**场景）。**收窄一条 P0 AC 的覆盖 = 产品需求变更，超出本 doc-only 裁定的权限**（须走 PRD/AC 变更）；B-2 是**恢复既有 AC8 口径**，**不涉产品面变更**。且 2 红用例**真实编码了 AC8 原意**，改替身消红 = **弱化正确守护**。
+
+**为什么不构成「第二套文案标记集」（对 C-67 约束的合规说明）**：
+
+- 读路径判据**只用结构证据、不用文案标记**：HTTP `response.status ∈ {401,403}` 或**凭证业务码**（`10041` / `10021` / `10022`）。
+- 该结构**证据集只在单一模块定义一次**（落 `error-classification.ts` 或与之同源的单一导出，由 RD 择定；**禁**散落第二处、**禁**文案 marker）⇒ C-67「禁第二套**文案**标记集」**仍成立**。
+- 方向差异**是有意的**：C-67 的 fail-closed 是**认证清除**语境的安全默认（未知 ⇒ 清，可恢复）；读路径是**只读、可逆**语境 ⇒ fail-soft（未知 ⇒ 回退，可用性优先）。**会话失效的权威判定在认证层**，不在本装饰器。
+
+**元组分支不变（有意的不对称，须在注释写明）**：元组 = **远端已应答** ⇒ 结果为权威 ⇒ **仅**归一化网络元组回退（fail-closed）；抛出 = **远端未应答** ⇒ 无权威结果 ⇒ **除已知凭证外一律回退**（fail-soft）。**两分支方向相反是「远端是否已应答」的推论，非不一致。**
+
+**与 C-46 / C-59 / C-67 的一致性**：C-46 **不涉**；C-59 **不回归**（`withMirrorFallback` 只包读方法 ⇒ 回退不产生 `markDirty`）；C-67 **认证侧语义逐字不变**（**不得**改 `isCredentialError` 的 auth 投影；`null`/空串 ⇒ `false` 契约保持）。
+
+**影响面**：`packages/infrastructure/src/persistence-go/fallback/mirror-fallback.ts`（抛出分支门谓词 + 注释）；**唯一消费者** = `apps/web/src/hooks/usecases/binding.ts:103-109`（`createTagPreferenceRepository` 的 `get`）。
+
+**回归矩阵（r12）**：
+
+| #   | 抛出 / 返回形态                                         | 期望                             | 守护                                                |
+| :-- | :------------------------------------------------------ | :------------------------------- | :-------------------------------------------------- |
+| 1   | 抛出 `code:'ERR_NETWORK'`                               | **回退镜像**                     | `mirror-fallback.test.ts`（AC8/AC9 替身改真实结构） |
+| 2   | 抛出 `ERR_BAD_RESPONSE` / `response.status 500·502·504` | **回退镜像**（**新增显式用例**） | 新增                                                |
+| 3   | 抛出 `response.status 401` / 凭证业务码 `10041`         | **上抛**（不得用镜像掩盖）       | 既有凭证例（替身改真实结构）+ 新增                  |
+| 4   | 抛出未知 / 无 code 异常                                 | **回退镜像**（**新增显式用例**） | 新增                                                |
+| 5   | 归一化网络元组（50300/40800/42900）                     | 回退镜像                         | 既有 `it.each`（不变）                              |
+| 6   | 业务失败元组（如 40400） / 凭证元组（10041）            | **不回退**，原样透出             | 既有 2 例（不变）                                   |
+
+**验收 / 授权（PM 据此派 `rd-fe`，记 `T157` 追补单）**：① 生产改判据（B-2）；② 测试替身统一改**真实结构**（抛出型生产错误**必为 axios Error，带 `code` 与 `response`**）；③ 新增第 2/3/4 行显式用例，替代「靠 2 个替身间接表达」。
+
+**是否需重跑 `T157` fixture 旧数据态验证：不需要**。T157 的 fixture（`pendingWipe` + 失效 JWT）验的是 **DEF-34 清库语境**与 **DEF-33 checkin 分类**，两者**均不在** `mirror-fallback` 抛出分支路径上。**但必须**：① 复跑 **FIX-B 认证守护**（`checkin-failure-split.test.ts` **全例** + `checkin-network-auth-retention.test.ts`）证明 auth 投影**逐字不变**；② 受影响面 `vp test --run` 覆盖 `persistence-go/fallback/**` +（若触分类器）`domain-identity/.../auth-service/**` +（若触 binding）`apps/web/src/hooks/usecases/**`。
+
+**需 PM 拍板**：① 授权 `rd-fe` 落地 **B-2**（`T157` 追补）；② （**可选、不阻塞**）是否后续把「非凭证 4xx / 未知异常」**收紧为上抛** —— 该收紧属**产品口径**（需 PRD 确认），**本单不动**。
+
+**参考来源**：**未检索**（仓内契约 / 代码事实 + git 历史对照推导：`mirror-fallback.ts:57`、`axios.ts:73-109`、`T107 33901b90`、`T112 9f0228ba`、`FIX-B 453fd076`）。
+
+**对照过的备选模式（含不采纳理由）**：① **A（只改替身，接受收窄）**（❌：需收窄 P0 AC8 覆盖 = 产品变更，超 doc-only 权限；且弱化正确守护）· ② **B-1（显式网络谓词、未知仍上抛）**（❌：净效果同 A，且不解决 5xx 回归）· ③ **读路径改「可用性信号」正向枚举 + 未知上抛**（⏸️ 可作后续收紧，需产品确认）· ④ **读路径新增凭证文案 marker 集**（❌：构成第二套标记集，违 C-67）· ⑤ **把 `isCredentialError` 直接改为 fail-soft**（❌：破坏 C-67 auth 投影）。
+
+**连带同步清单（r12）**：
+
+| #   | 位置                           | Owner    | 须同步内容                                       | 状态    |
+| :-- | :----------------------------- | :------- | :----------------------------------------------- | :------ |
+| S9  | 本篇 C-67（§3.4）              | **arch** | 加 **r12 适用范围**注（不外溢至读路径）          | ✅ 本单 |
+| S10 | `docs/adr/README.md`（索引行） | **arch** | 索引行标注 **r12**                               | ✅ 本单 |
+| S11 | `docs/reports/defect-pool.md`  | **PM**   | 登记 `mirror-fallback` 回归（C-67 外溢）+ 追补单 | ⏳ PM   |
+| S12 | `docs/tasks-state.md`          | **PM**   | `T160` 回执 + `T157` 追补单登记                  | ⏳ PM   |
