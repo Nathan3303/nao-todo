@@ -380,6 +380,7 @@
 
 ## 六、勘误（教训类保留）
 
+- 2026-09-24：**PM 事故（裸 `git commit` 再次把他人 staged 改动带走 —— 同款复发）** —— 我提交台账时用 `git add <3 个 docs>` + **裸 `git commit`**，而 `rd-fe-T179` 已 `git add` 其 5 个在制文件（2 新测试 + 3 实现）⇒ 提交 **`6d97c291`** 把**它（可能未完成）的在制工作一并提交**。**内容无丢失**（同分支同文件正确）⇒ **未回退、未改写历史**（分支已 push 且并发写者活跃 ⇒ 保留原状最安全）。**处置**：① 即时通报该会话（继续完成 + 自验 + 回执以最终状态为准，勿 revert）② 我仍须按门禁验收其最终产物 ③ 记入本勘误。**⭐ 纪律（第二次强调，必须杜绝）**：**一律 `git commit --only <精确 paths>`**；`git add` **仅**用于新增（未跟踪）文件，**且随后仍用 `--only`**；提交前 `git diff --cached --name-only` 核对。**根因**：我为「提交新增文件」改用 `git add + commit` 后，把该模式误用到**全为已跟踪文件**的场景 ⇒ 裸 `commit` 提交了整个 index。
 - 2026-09-24：**PM 事故（目录级 pathspec 吃掉他人在制工作）** —— 我提交自己的 PM 文档（`9f767ebd`）后执行 `git checkout HEAD -- docs/` 清残留（**意图**：清我自己 `commit --only` + 钩子造成的 index/工作区 `MM` 残留），但用了**目录级** pathspec ⇒ 把 **`arch-designer` 当时未提交的 `docs/adr/**` 三处 r4 改动一并回退**（内容不可恢复；已即时通报，arch 原样重做为 `e783833d`，零设计损失）。**纪律**：① 清残留**一律精确到文件**（`git checkout HEAD -- docs/tasks-state.md`）—— **禁用目录级 `-- docs/`**；② 提交前后先 `git status --porcelain` **甄别哪些是他人在制**再动手；③ 并发写者面进一步收敛（**PM 不碰 `docs/adr/**`**；arch 不碰 PM 台账文件）。
 - 2026-09-24：**PM 复发（关窗前未等 `Working` 消失）** —— 回收 `rd-fe-T155` 时其状态行仍为 `Working`（=1）却照关；已核无损（回执已发 · 产物已 merge · `reflog` 无多余动作 · 无 stash），但违反自己刚登记的收窗纪律。**纪律**：收窗先判 `Working` 为 0，非 0 则等待重试。
 - 2026-09-21：**`nao-fleet.sh status` 假阴性** —— `running()` 用 `pgrep -f 'pi … --name <role>'`，但 pi 进程 argv 被清空 ⇒ 恒报「未运行」。**派发前判定一律以 `intercom list` 为准**；`ensure` 判重同样失效。（待上游修）
