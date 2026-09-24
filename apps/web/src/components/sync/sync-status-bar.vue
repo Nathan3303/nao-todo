@@ -261,9 +261,11 @@ watch(
                 </nue-text>
             </li>
             <!-- PS-14 / DP-1：冲突记账条数（独立于业务 pending/failed 计数；本行只读展示计数，
-                 冲突对比与恢复 UX 属 2B，不在此提供交互） -->
+                 冲突对比与恢复 UX 属 2B，不在此提供交互）。
+                 warning 色：冲突为 LWW **已收敛**的结果事件（非同步失败；败方快照已入 journal），
+                 与 `paused`（离线/超限）同属「状态性、需知情但非失败」⇒ 不用 error 色 -->
             <li v-if="status.conflictCount > 0" class="sync-panel__row">
-                <nue-text size="xs" color="var(--nue-error-color-60)">
+                <nue-text size="xs" color="var(--nue-warning-color-60)">
                     {{ t('sync.conflict', { count: status.conflictCount }) }}
                 </nue-text>
             </li>
