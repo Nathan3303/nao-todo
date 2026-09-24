@@ -8,15 +8,15 @@
 > 本区是 PM 的**悬空状态**（任务状态见下方五栏）。每次重开前更新；重开后逐行回读确认（当前阶段 · 未决决策 · 口头约束）。
 > ⚠️ 本仓当前**未启用 GitHub flow**（v18 PM 卡 §十三）：无 Issue / 无 PR / 无预览环境，工作在既有集成分支 `feat/ocdev` 上直推 —— **降级标注见下「需求分支 / PR / 发布」**，是否切换待用户拍板。
 
-- 当前阶段：**P0 缺陷修复中**（用户报障：web 登录/检入/SSE）—— `T155` 诊断已回执并登记 **DEF-33/34/35**，已派 `T156`（arch 裁定）⇒ 待裁定后派修；**阶段二 2A 已于 2026-09-24 收批**
+- 当前阶段：**v1.10.0 发布中** —— baseline 已合并 `main`（merge commit `c5309dcb` / PR **#89** / `Closes #88`）；本发布 PR（`nao/release-v1.10.0`：版本号 + CHANGELOG + `docs/releases/v1.10.0.md` + 台账）待合并 ⇒ 合并后**打 tag `v1.10.0` + `gh release create`**。**P0 修复（DEF-33/34）+ r12 读路径纠正已全绿上台**；阶段二 2A 已于 2026-09-24 收批 ✓
 - 当前 PRD：`docs/prds/2026-09-23-stage2-local-first-both-ends.md`（状态：**2A 已开工并收批**，2B 未开工）；相关 ADR `docs/adr/2026-09-24-stage2-both-ends-local-first.md`（r2）
-- 未决决策点：**arch `T156`** → ① 清库抹 JWT 取方案 a / b（触 C-52/C-53）② 「检入失败」判据反转是否采纳 ③ web 明文迁移条款；**用户** → 进 2B / 先发 v1.10.0；**用户** → 是否启用 GitHub flow（Issue/分支/PR/squash）
-- 待用户回答：Q1 登录失败现场 dump（`DEF-34` 定性：一次性 vs 每次必坏，脚本见 T155 回执 §5）；Q2 发版 / 2B 二选一；Q3 是否启用 GitHub flow
+- 未决决策点：**用户** → ① 下一批走 **2B**（冲突 UX / R-2 消费 / OCC / 多标签 / `T141`+`DP-5`）还是先停一轮实测 ② 「读路径对**非凭证 4xx / 未知异常**是否也收紧为上抛」= **产品口径（PRD 级）挂账**（arch 在 `T160` 提出，本单未做）
+- 待用户回答：Q1 下一批方向（2B / 停一轮）；Q2 `feat/ocdev` 退役确认（已合并，可默认删）；Q3 `T158`（DEF-35 离线密文证伪探针）是否要现在跑
 - 未派发队列：见下方「待派发队列」（`2B` 候选批次 + `DEF-33/34/35` 修复 + web 迁移单）
-- 下次唤醒条件：`T156` 回执 / 用户答复 Q1–Q3
+- 下次唤醒条件：本发布 PR 合并结果 → PM 打 tag + `gh release`；或用户答复 Q1–Q3
 - 口头约束已落盘：**移动端红线**（`AGENTS.md` 项目红线）· **发版策略**「新需求做完统一发一次版」· **DEF-18 不修（登记保留）** · **PM 技术调研边界**（`AGENTS.md` §四 + PM 卡 §九）· 服务端契约**不得**为展示层需求擅动（`AGENTS.md`）
 - 需求分支 / PR：`feat/ocdev`（**降级：无 Issue / 无 PR / 无预览环境**；待用户定是否切 GitHub flow）
-- 会话体检：contextTokens≈245k（窗口 1000k 的 **约 25%**）· 压缩次数 **0** · cacheRead ≈99%
+- 会话体检：**2026-09-24 发布时 contextTokens≈400k（约 40%）· 压缩 0 · cacheRead ≈99% ⇒ 已到新卡 §六 重开阈值（>40% 或批次终态）⇒ v1.10.0 发布完成后应 `ensure --force pm` 重开**；环境 = **dev server 已关（用户要求）· 后端 3302 在跑 · MySQL/Redis 在 · 探针浏览器已清**；**nao-skill npm 0.7.1 暂缓发布（同步须走源仓 CLI，`pnpx @latest` 仍是 0.7.0）**
 
 ## 需求分支 / PR / 发布（PM 维护）
 
@@ -24,17 +24,17 @@
 
 - **流程状态：✅ 已启用 GitHub flow（2026-09-24 用户拍板）** —— 约束已落 `AGENTS.md` 项目红线；PR 模板已建 `.github/pull_request_template.md`（同时消掉 v0.7.0 体检的唯一 warn）
 - **⚠️ 会话名/任务号不一致（有意，勿误回收）**：`T157`（`DEF-33/34` 修复）由**会话 `rd-fe-T155`**执行（复用诊断会话，避免同 cwd 双写者）⇒ `nao-fleet.sh status` 会报「`rd-fe-T155` ? `T155` 仅散文提及 → 核对后 `close`」，**此为预期**；按本项目收窗纪律（终态回执 + `capture-pane` 无 `Working` + 产物落盘）核对后再回收，**不得**仅凭该提示回收
-- **待办①（baseline 追平 —— ✅ 用户 2026-09-24 已确认：push + merge commit 例外）：`feat/ocdev` → `main` 的 baseline PR** —— 本地领先 `origin/main` **429** 提交（含**未 push 的 205** 提交）；**特例白名单 = 用 merge commit 一次性**（理由：429 提交 squash 成 1 条会丢批次历史；与 main 既有 `11baf002 Merge pull request #83 from Nathan3303/feat/ocdev` 先例一致）
-- **待办②（发布 —— ✅ 用户 2026-09-24 已确认「按 PM 建议」即时发）：baseline 合并后在 `main` 上发 `v1.10.0`** —— `gh release create` + notes 落 `docs/releases/v1.10.0.md`，**tag 指向 main 合并提交**
-- **待办③（切换后）**：新需求一律 **Issue + `feat/<issue-id>-<slug>` + PR + RD squash**；**`feat/ocdev` 于 baseline 合并后退役**；在制的 `T157`（`DEF-33/34` 修复）**随 baseline 一并进 main**（不单独开分支，避免 P0 修复延迟）
+- ✅ **待办① 已完成（2026-09-24）**：baseline 追平 —— PR **#89**（`feat/ocdev` → `main`，`Closes #88`）已 **MERGED**，方式 = **merge commit（一次性白名单）**，`main` 新 HEAD = **`c5309dcb`**（父 = `cf3559fa`(合并前 main) + `37cac094`(feat/ocdev)）；已核 `git diff --stat 37cac094 origin/main` = **空**（无夹带）；**push 成功**（`7852a8e7..37cac094`，首次上台 218 提交，**未 `--force`**）
+- **待办②（发布，进行中）**：本发布 PR（`nao/release-v1.10.0`：8 个 `package.json` 版本号 + `CHANGELOG.md` v1.10.0 段 + 新增 `docs/releases/v1.10.0.md` + 本台账）⇒ 合并后在 `main` 上打 **tag `v1.10.0`**（annotated，指向该次合并提交）+ `gh release create v1.10.0 --notes-file docs/releases/v1.10.0.md`
+- **待办③**：**下一批（2B 或用户指定）一律 `feat/<issue-id>-<slug>` 从 `main` 起** + PR + **RD squash**；**`feat/ocdev` 已合并 ⇒ 待退役**（远端 + 本地删除，须用户确认时机）
 - Issue：**#88**（已建 2026-09-24：「web 离线能力（阶段一 + 2A）追平 main ＋ 本轮 P0 登录缺陷修复」；body = TL;DR + AC 编号 + 优先级 + `docs/` 指针，**正文不抄进 Issue**）⇒ baseline PR 用 `Closes #88`
-- 需求分支：**`feat/ocdev`（退役中）** → 之后 `feat/<issue-id>-<slug>`
+- 需求分支：**`nao/release-v1.10.0`（本发布，降级命名：发布类无 Issue）**；`feat/ocdev` 已合并待退役 → 之后一律 `feat/<issue-id>-<slug>`
 - PR owner / Reviewer：**RD / `arch-designer`**（纯 CRUD 可写「无」并注明理由）
-- PR / 预览环境：**无预览环境**（本项目未建；以门禁精确数字 + PM 读 diff 替代）—— 待办①的 baseline PR 为**首个 PR**
-- 合并：**待 baseline PR 合并**（**RD** 执行 `gh pr merge --merge`；**PM 不合并**）；合并后 main 上本需求 = **1 条 merge 提交**（例外），其后 = 1 条 squash
-- 版本 / Tag：**v1.9.0 已发布**（tag 指向 `eaad8b2d` @ `feat/ocdev`）· 下一次待发 **v1.10.0**（本地领先 `origin/feat/ocdev` **205+** 提交，未 push）
+- PR：**#89 已 MERGED**（baseline）· 本发布 PR = **#2 个 PR**（编号以创建为准）；预览环境 = **无**（以门禁精确数字 + PM 读 diff 替代）
+- 合并：baseline = **merge commit**（一次性例外，已完成）→ **本发布 PR 及其后一律 `--squash`**（**RD 执行**，**PM 不合并**）
+- 版本 / Tag：上一版 **v1.9.0**（`eaad8b2d`）· 本次 **v1.10.0**：root/webapp/desktop **1.9.0→1.10.0** · `presentation` **0.6.0→0.7.0** · `shared` **1.3.2→1.3.3** · `domain-identity` **1.1.0→1.2.0** · `infrastructure` **0.5.0→0.6.0** · `presentation-identity` **1.2.0→1.2.1**（`domain-task`/`presentation-react`/`apps/mobile` 零改动不 bump）· **tag 待打（指向发布 PR 的 main 合并提交）**
 - 降级标注：**`gh` 可用（`gh auth status` exit 0）· 仍余 2 项：无预览环境 · baseline 前无 Issue**
-- 特例提交（白名单）：**baseline `feat/ocdev → main` 用 merge commit（一次性；✅ 用户 2026-09-24 已批准；其后严格 squash）** —— 分支沿用既有 `feat/ocdev`（不另开 `feat/88-*`）
+- 特例提交（白名单）：**① baseline `feat/ocdev → main` 用 merge commit（一次性；✅ 用户已批准；已完成 `c5309dcb`）** ② 发布类文档 PR（`nao/release-v1.10.0`：版本号/CHANGELOG/release notes/台账，**PM-owned 文档**，评审人 = 无（PM 自核，理由：纯文档+版本元数据、无源码/测试/构建逻辑改动））· **其后所有需求 PR 一律 squash**
 
 ## 一、当前状态（2026-09-24）
 
@@ -242,6 +242,11 @@
     - **门禁/数字**：受影响面 + 依赖包 **30 文件 / 226 例 / 0 红**；4 guards rc0；移动端红线 **0**；本单 10 文件 `vp check` 0 error；**PM 复跑全仓 `vp check` rc0（1425 格式 / 1212 文件 0 warning·lint·type）** ✓（rd-fe 当时报的唯一全仓错误 = **我在制的 `docs/tasks-state.md` 格式**，已由我 `--fix` 修掉）。**全仓 `vp test` / 双端 build 留批末**（随 baseline PR 验收跑）✓
     - ⭐ **负向对照（三处，均「转红 ⇒ 还原 ⇒ sha256 OK」）**：FIX-A 去掉 flag ⇒ 2 例转红 · FIX-B 改回旧文案白名单 ⇒ 2 例转红 · FIX-C 删空 token 守卫 ⇒ 1 例转红 ✓
     - ⭐ **fixture 旧数据态验证（复用 `/tmp/t155-*.mjs`，dev 5173 + server 3302）**：FIX-A **前** = 登录后被弹回 `#/auth/checkin`「参数错误」且 `USER_JWT=<none>`；**后** = 登录成功进 `#/tasks/all/table`、`USER_JWT` present、`/user/profile` · `/config` · `sync/pull` 正常、**SSE 两次均带 token** ✓；FIX-B **前** = 卡「检入失败 · 重试 · 重新登录」；**后** = **自动清失效 JWT 并落 `#/auth/signin`** ⇒ **用户无需手动清数据** ✓
+
+- **T160 已验收 ✅（arch-designer，commit `08594b0a`，doc-only ⛔ 未改码；ADR **r12**：`§3.4-C-67` 适用范围注 + 新增 **§10.12-六** + 变更记录 r12 + `docs/adr/README.md` 索引行；全仓 `vp check` rc0）—— 读路径回退资格裁定**：**裁定 = B-2**（**恢复 T107/T112 原意：读路径 fail-soft**）。**问题**：`T157 FIX-B` 反转共享谓词 ⇒ `mirror-fallback` 抛出分支把**网关 502/504、服务端 5xx、非凭证 4xx、未知**也判为凭证 ⇒ **上抛、不再回退镜像** ⇒ 收窄 P0 的 AC8 覆盖（全仓 2 红）。**依据（arch 用 `git show 453fd076^:…` 对照改动前判据）**：pre-FIX-B 实际语义 = 「**仅凭证信号上抛，其余一律回退**」，正是 AC8 验收时行为（T107 `33901b90` / T112 `9f0228ba` 注释可证）；**`C-67` 标题 = 「认证失败分类」、正文从未提及 `mirror-fallback` ⇒ 意外外溢，非有意覆盖**。**否决 A / B-1**：其净效果 = **收窄 P0 AC = 产品需求变更**，超出 doc-only 权限；2 红用例**真实编码 AC8 原意**，改替身消红 = 弱化守护。**r12 判据**：读路径**仅**「已知凭证**结构**信号」（HTTP `response.status ∈ {401,403}` 或业务码 `10041/10021/10022`）上抛，**其余一切抛出型错误一律回退镜像**；**元组分支不变**（远端已应答 ⇒ fail-closed）；**合规写法** = 只用**结构证据**且证据集**单一定义** ⇒ 不构成第二套「文案」标记集，`C-67` 仍成立，**`isCredentialError` 认证投影逐字不改** ✓。
+- **T159 已验收 ✅（rd-fe，追补 `37cac094` + baseline PR 合并）—— 门禁全绿 + 首次上台 + PR 合并**：**① 追补 `37cac094`**（`T157` 追补 / `T160` / ADR `08594b0a`，3 文件 +138/−10）：`error-classification.ts` 新增 **`CREDENTIAL_HTTP_STATUSES=[401,403]`** / **`CREDENTIAL_FAILURE_CODES=[10041,10021,10022]`** / **`hasCredentialFailureSignal`（只认结构、不用文案）**；`mirror-fallback.ts` 抛出分支改用它并注释「**不得**改用 `isCredentialError`」；测试替身改真实抛出型 axios 形态（`ERR_BAD_RESPONSE`/500）+ **新增 3 例**（5xx/502/504/`ERR_NETWORK` ⇒ 回退 · 401/10041 ⇒ 上抛 · 未知无 code ⇒ 回退）；**负向对照**（判据改回 post-FIX-B ⇒ **4 例转红**）还原后 `sha256sum -c` 逐字节一致 ✓。**② 全范围门禁（`37cac094`，串行）**：`vp check` **exit 0**（1425 格式 / 1212 文件 0 warning·lint·type）· **全仓 `vp test` exit 0：164 文件 / 1382 例 / 0 红** · 4 guards rc0 · 双端 build rc0（15.58s / 18.98s）· 移动端 diff **0** ✓。**③ push**：`git push origin feat/ocdev` → `7852a8e7..37cac094` **rc0**（**首次上台 218 提交**、FF、**无 `--force`**）✓。**④ PR #89**（https://github.com/Nathan3303/nao-todo/pull/89，标题用户可读、body 按模板含 `Closes #88` / PRD 双指针 / AC / 门禁数字 / 风险回滚 / baseline 例外注明）⇒ **已 MERGED**（`gh pr merge 89 --merge`，**非 squash**、**未删分支**），`main` 新 HEAD = **`c5309dcb`**（父 = `cf3559fa` + `37cac094`），`git diff --stat 37cac094 origin/main` = **空**（**无夹带**）✓。**⭐ PM 独立核**（不采信回执）：远端 `ls-remote refs/heads/feat/ocdev` = `37cac094` = 本地 HEAD ✓ · `gh pr view 89` = OPEN/Ready/MERGEABLE（合并前）✓ · 追补 diff 逐行核（结构证据 + `isCredentialError` 零改动）✓ · **PM 抽验**：`mirror-fallback` + `checkin-failure-split` + `checkin-network-auth-retention` = **3 文件 / 32 例 / 0 红** ✓。
+- **📦 v1.10.0 发布（进行中，2026-09-24）**：发布 PR 分支 **`nao/release-v1.10.0`**（从 `main` 起）＝ **8 个 `package.json` 版本号**（root/webapp/desktop `1.9.0→1.10.0` · `presentation` `0.6.0→0.7.0` · `shared` `1.3.2→1.3.3` · `domain-identity` `1.1.0→1.2.0` · `infrastructure` `0.5.0→0.6.0` · `presentation-identity` `1.2.0→1.2.1`；**`domain-task` / `presentation-react` / `apps/mobile` 零改动不 bump**）+ **`CHANGELOG.md` v1.10.0 段** + **新增 `docs/releases/v1.10.0.md`**（用户可读：亮点 / 兼容与数据 / 已知限制 / 验证 / 回滚）+ 本台账。**合并后**：PM 在 main 该合并提交上打 **annotated tag `v1.10.0`** + `gh release create v1.10.0 --notes-file docs/releases/v1.10.0.md`（notes 落盘与 Release 同源）。**范围** = web + desktop；**移动端零改动**（红线保持）。
+- **挂账（新增，产品口径待用户定）**：**读路径对「非凭证 4xx / 未知异常」是否也收紧为上抛** —— arch 在 `T160` 提出：当前 r12 取 **fail-soft**（回退镜像，保 AC8）；若产品希望"任何非明确网络类的远端失败都不静默回退"，则属 **PRD 级 AC 变更**（须走 PRD/AC 流程，**本单未做**）。
     - **未过项：无** ✓
 - **🐞 用户报障现场进展（2026-09-24）**：**旧数据已不存在**（用户已清、无备份）⇒ `DEF-35` 现场不可得（改 fixture）；用户**当前登不进去（阻塞）** ⇒ `T155-b`（rd-fe，仅探针、未改码）已**实测交付「零数据损失」的最小解锁步骤**：**先**在 Console 删 `USER_JWT`（localStorage）+ `meta.pendingWipe` 单键 + **仅已到期**的 `deletionSchedules` 记录，**再**登录（**顺序关键**；实测预置业务数据完好）；⚠️ **若先登录**则那次登录已触发清库 ⇒ 业务数据被清（**一次性标记被消费后**再次登录即正常）；判别特征（signin 页 / 「检入失败」= DEF-33 / 「参数错误」= DEF-34 / Console `wipe.user-data.*` = DEF-34 / checkin 请求体 `{"jwt":"<旧值>"}` vs `{"jwt":""}`）已转用户 ✓。**另**：`T155` 的明文 fixture **不能**用于 `DEF-35` 验收（已明说）✓。
 - **更新**：2026-09-24
