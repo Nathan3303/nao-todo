@@ -239,3 +239,173 @@
 - [x] 未覆盖/部分覆盖逐项给理由与缺口（非笼统「pass」）
 - [x] 造数/探针类测试：无（未造数，无需回滚）
 - [x] 未过项如实列出（GAP-1/2/3 + 登记遗留），未粉饰
+
+---
+
+# T136/T138/T139 复核（T137 最终复核 · 追加章节）
+
+- **任务**：T137（qa 最终复核；**只复核，⛔ 未改实现代码**）
+- **复核对象**：`3ef6448b`（T136 GAP-1/2/3）· `1ce5d279`（T138 flaky 修复）· `8fdf02e0`（T139 同族隔离）
+- **基线**：本报告前文（T135，`ee543eb1`）§0–§10
+- **方式**：读码（客户端实现 + 测试）· 定向单跑 · **独立变异 3 项** · **串行全仓 3× flake 猎捕（独占，PM 已避让）** · **门禁 8 项独立复跑 1 次**
+- **工作区**：复核结束 `git status --porcelain` = **0**（变异全部还原）
+
+## 11.0 结论摘要（先看这里）
+
+| 项                  | 结论                                                                                                                              |
+| :------------------ | :-------------------------------------------------------------------------------------------------------------------------------- |
+| **GAP-1 闭合**      | ✅ **成立**（读码 + 单跑）；⭐ 负向「**本地缺失不入队、不推送**」成立（`POST`/`PUT` 未被调用）                                    |
+| **GAP-2 闭合**      | ✅ **成立**（`preferenceFailedCount` + 面板行 + `NueMessage.warn`；业务 `pendingCount`/`failedCount`/`syncQueue` **不变**）       |
+| **GAP-3 闭合**      | ✅ **成立**（远端胜清 `userConfig` 脏队列 ⇒ 随后 flush `PUT` **0 次**）                                                           |
+| **flaky 修复**      | ✅ **独立证实**：`sync.test.ts` 单跑 **×5 = 34 例/次全绿**；`mirror-status-persistence.test.ts` 单跑 **×5 = 4 例/次全绿**         |
+| **残余 flake 猎捕** | ✅ **未见残余 flake**：串行全仓 **×3 = 155 文件 / 1296 例 / 0 红**（85.65s / 82.07s / 79.88s），逐次无失败用例名                  |
+| **AC 矩阵终稿**     | **✅ 35 / 🟡 11 / ⛔ 5 / 🧭 1 = 52**；⭐ **AC1/AC2 成立**（普通清单偏好亦有从服务端恢复路径）                                     |
+| **变异（重做）**    | **3/3 转红**（红数 **2 / 3 / 1**），已还原                                                                                        |
+| **门禁 8 项**       | **全绿**，与 PM 数字**逐项一致**（见 §11.6）                                                                                      |
+| **未过项**          | ⚠️ **新发现 GAP-4（P2 残余）**：普通清单偏好「**按行 LWW（读时/推送前对账）**」未落地；＋既有 5 项 ⛔ 用例缺口；＋ R-14/DP-5 登记 |
+
+> **一句话**：GAP-1/2/3 三项**均已闭合且独立证实**（含 GAP-1 的负向断言）；DEF-28 flaky 修复**独立复现 5×2 全绿、全仓串行 3 次零红 ⇒ 未见残余 flake**；AC1/AC2 终判**成立**。唯一新增未过项 = **GAP-4**（ADR §D-3「按行 LWW」仍只落地了「本地缺失读时恢复」一半），**不影响 AC1/AC2**，但 **AC3-03 / R-10 对普通清单偏好仍不成立**。
+
+## 11.1 GAP-1 闭合独立验证（读码 + 单跑）
+
+**读码**（`persistence-local/repos/project-preference-repo-impl.ts`）：
+
+| 环节        | 事实                                                                                                                                                                                             |
+| :---------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 读路径      | 本地 `where('projectId').equals(projectId).filter(userId).first()` **有值 ⇒ 直接返回**（PS-1b 本地优先）；**本地缺失 ⇒ `restoreFromRemote()`**                                                   |
+| 恢复        | `GET /projects/${projectId}/preference`（**复数路由**，与既有远端实现同路径）；成功码 **20080** —— 与 `persistence-go/project/project-preference-repo-impl.ts:31` **同一码**（契约一致，非自造） |
+| 落库        | 命中 ⇒ `db.projectPreferences.put(projectPreferenceEntityToRecord(entity, userId))` ⇒ **恢复后再次读命中本地**（不再请求服务端）                                                                 |
+| ⭐ **负向** | `restoreFromRemote` **不调用** `save()` / `markPreferenceDirty()` / `enqueuePreference()` ⇒ **不入偏好队列 ⇒ 不会以默认/陈旧值反向 `POST`/`PUT` 覆盖服务端**                                     |
+| 降级        | 网络不可达 / 非 20080 / 无数据 ⇒ 返回 `null` ⇒ 返回默认偏好（`viewType=table`），**不阻断读路径、不报错**                                                                                        |
+| 注入        | `newLocalProjectPreferenceRepository(requester?)`；web/desktop binding 均**不传** ⇒ `getRequesterImpl()`（未初始化时为 `emptyRequester`，**不抛**）                                              |
+
+**单跑**：`preference-sync.test.ts` = **23 例全绿**（GAP-1 组 5 例：服务端有数据 ⇒ 恢复并落库 / 登出重登清库 ⇒ 恢复 / 恢复后命中本地 / 服务端无数据 ⇒ 默认且不入队 / 本地有值 ⇒ 本地优先不发请求）。其中「本地缺失 + 服务端无数据」例含 ⭐ **负向断言**：`loadPreferenceQueue` 长度 0、`pushPreferenceQueue()` 结果 `{pushed:0, failed:0}`、**`post` 与 `put` 均 `not.toHaveBeenCalled()`**。
+
+⇒ **换设备 / 清缓存 / 登出重登 ⇒ 普通清单偏好从服务端恢复 ✅；本地缺失不得推送 ✅。**
+
+## 11.2 GAP-2 闭合（读码 + 单跑）
+
+- **读码**：`pushPreferenceQueue` = `runPreferencePush()` + `syncStatus.reportPreferencePush(result)`；`reportPreferencePush` 仅 `set({ preferenceFailedCount: result.failed })` ⇒ **不写** `pendingCount`/`failedCount`，**不参与** `beginRun`/`endRun`，**不触** `syncQueue`/`markDirty`（PS-10 保持）。
+- **不静默吞**：存储不可用原返回 `{pushed:0,failed:0}`（静默）⇒ 改 **`{pushed:0,failed:1}`**。
+- **可见面**：web `sync-status-bar.vue` 新增面板行（`v-if preferenceFailedCount > 0`）+ `watch` ⇒ `NueMessage.warn(t('sync.preferenceFailed',{count}))`（同计数不重复弹）；⭐ **desktop 复用同一组件**（`apps/desktop/electron.vite.config.ts` alias `@ → apps/web/src`，`AppRoot.vue:7` 直接 import）⇒ **两端可见面一致**。
+- **单跑**：`preference-sync.test.ts` GAP-2 组 3 例（失败 ⇒ 计数 1 / 成功 ⇒ 归零 / 业务 `pendingCount`=0 + `failedCount`=0 + `syncQueue.count()`=0）+ `apps/web/.../sync-status-bar.test.ts` 偏好失败可见 1 例（面板文案 + `.nue-message` 文案）⇒ **全绿**。
+
+## 11.3 GAP-3 闭合（读码 + 单跑）
+
+- **读码**：`pullAndMergeUserConfig` 远端胜分支在 `applyUserConfigSnapshot` + `writeSettingsSyncedAt` 之后新增 `await removePreferenceItem(userId, { kind: 'userConfig' })` 再 `return` ⇒ 调用方随后的 `flushPreferenceQueue()` **无队列项可推**。
+- **单跑**：GAP-3 例断言 —— 本地应用远端（`{viewType:'list'}`）+ `loadPreferenceQueue` 长度 0 + `put` **未被调用** ⇒ **全绿**。
+
+## 11.4 flaky 修复独立验证（⛔ 不采信自述）
+
+| 目标文件                                                       | 单跑次数 | 结果                         | 判定 |
+| :------------------------------------------------------------- | :------- | :--------------------------- | :--- |
+| `persistence-sync/__tests__/sync.test.ts`                      | **5**    | 34 例/次 · **5/5 rc=0 全绿** | ✅   |
+| `persistence-sync/__tests__/mirror-status-persistence.test.ts` | **5**    | 4 例/次 · **5/5 rc=0 全绿**  | ✅   |
+
+**读码核对**（`git show 1ce5d279` / `8fdf02e0`）：修法 = 文件级 `beforeEach` 包装 `globalThis.setTimeout` 记录本用例定时器 + `afterEach` 全部 `clearTimeout` 并还原 —— **生产代码 0 改动、断言未放宽/未跳过**。生效前提核对：`sync-service.ts` 用**裸 `setTimeout`**（`1010` 推送定时、`1107` 退避 tick）⇒ 全局包装**能覆盖**该泄漏面。
+
+**同族面完整性（独立 grep）**：全仓 `new SyncService` 仅 4 个测试文件（`sync.test.ts` / `mirror-status-persistence.test.ts` / `def6-mirror-completeness.test.ts` / `pull-single-master.test.ts`）⇒ T139 已覆盖前三个中「会排退避 tick」的两处 + 预防性兜底一处；`pull-single-master` 仅完整 pull（无 tick），**无遗漏面**。
+
+## 11.5 ⭐ 残余 flake 猎捕（串行全仓 ×3，独占）
+
+| 次  | 命令                      | 文件    | 例数     | 红    | 耗时   | 捕获到的失败用例名 |
+| :-- | :------------------------ | :------ | :------- | :---- | :----- | :----------------- |
+| 1   | `pnpm exec vp test --run` | **155** | **1296** | **0** | 85.65s | **无**             |
+| 2   | `pnpm exec vp test --run` | **155** | **1296** | **0** | 82.07s | **无**             |
+| 3   | `pnpm exec vp test --run` | **155** | **1296** | **0** | 79.88s | **无**             |
+
+- **逐次捕获失败用例名**：三次均**未出现任何 `FAIL`/`✕` 行**（日志以 `grep` 复核）。
+- ⇒ **结论：未见残余 flake** ✓（不存在独立于并发的残余 flake 证据）。
+- ⚠️ **口径说明**：本次 3 次全仓由 **qa 独占**串行跑（PM 期间未跑全仓，符合「同一时刻仅一个会话跑全仓」纪律）；同机 **ambient 负载 load avg ≈ 8.9**（IDE / 浏览器 / 其它 pi 会话），属常态噪声；例数与文件数 3 次**恒定** ⇒ 无非确定性抖动。
+
+## 11.6 门禁 8 项独立复跑（1 次 · 工作区干净）
+
+| #   | 门禁                                                                           | 我的结果                                                  | PM 数字                 | 一致 |
+| :-- | :----------------------------------------------------------------------------- | :-------------------------------------------------------- | :---------------------- | :--- |
+| ①   | `pnpm exec vp check`                                                           | **1409 格式 OK · 1199 文件 0 error**                      | 1409 / 1199             | ✅   |
+| ②   | 全仓 `pnpm exec vp test --run`                                                 | **155 文件 / 1296 例 / 0 红**（另见 §11.5 连跑 3 次同值） | 155 / 1296 / 0 红       | ✅   |
+| ③   | `pnpm run guard:ddd`                                                           | rc=0 OK                                                   | OK                      | ✅   |
+| ④   | `pnpm exec vp run webapp build`                                                | rc=0（built **14.35s**）                                  | rc=0                    | ✅   |
+| ④   | `pnpm run desktop:build`                                                       | rc=0（built **17.59s**）                                  | rc=0                    | ✅   |
+| ⑤   | 移动端红线 `git status --porcelain -- packages/presentation-react apps/mobile` | **0**                                                     | 0                       | ✅   |
+| ⑥   | `pnpm run guard:gate-pathspec`                                                 | rc=0 OK                                                   | OK                      | ✅   |
+| ⑦   | `pnpm run guard:barrel-imports`                                                | rc=0（1199 文件 / **1256** 导入 / **1819** 命名 OK）      | OK（T135 时 1255/1817） | ✅   |
+| ⑧   | `pnpm run guard:mobile-imports`                                                | rc=0（72 文件未引 persistence-local/sync/dexie）          | OK                      | ✅   |
+
+> ⑦ 导入/命名数 **+1/+2** = T136 新增 `getRequesterImpl`/`Requester` 导入被守卫**实际覆盖**（非空转）。
+
+## 11.7 AC 矩阵终稿（52 用例 · 更新 4 项）
+
+| 用例 ID      | 原  | 终稿 | 依据                                                                                        |
+| :----------- | :-- | :--- | :------------------------------------------------------------------------------------------ |
+| PSYNC-AC2-04 | 🟡  | ✅   | 「本地有值 ⇒ 本地优先（不发服务端请求，PS-1b）」行为断言（T136 GAP-1 组）                   |
+| PSYNC-AC3-02 | 🟡  | ✅   | 「服务端有更新快照 ⇒ 应用远端并记录 SETTINGS_SYNCED_AT」+ GAP-3 远端胜清脏队列 + 无冗余 PUT |
+| PSYNC-AC3-04 | 🟡  | ✅   | `syncStatus.preferenceFailedCount` 状态面 + 面板行消费方 + 断言（AC3-04 闭合）              |
+| PSYNC-AC4-04 | ⛔  | ✅   | `NueMessage.warn` 可见提示 + 面板行 + 测试断言（不静默吞）                                  |
+| PSYNC-AC3-03 | 🟡  | 🟡   | **仍不成立**（见 GAP-4）：普通清单偏好**仅「本地缺失」对账**，无「按行 updatedAt LWW」      |
+
+**统计：✅ 35 · 🟡 11 · ⛔ 5 · 🧭 1 = 52**（原 31/14/6/1）
+
+### ⭐ AC1 / AC2 终判
+
+| AC      | 判定        | 依据（两偏好类分别核）                                                                                                                           |
+| :------ | :---------- | :----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **AC1** | ✅ **成立** | 设置面（内建/侧边栏/日历）⇒ `GET /user/config` + LWW 合并；普通清单偏好 ⇒ **T136 读时对账 GET `/projects/:id/preference` 恢复**                  |
+| **AC2** | ✅ **成立** | 换设备 / 本地被清 / 登出重登 ⇒ 本地缺失 ⇒ **恢复路径拉服务端并落本地**（web 与 desktop **同 binding**：`newLocalProjectPreferenceRepository()`） |
+
+> ⚠️ **AC1/AC2 成立的边界**（不得外推）：AC1/AC2 只要求「**偏好能恢复**」，**已满足**；但**「他端更新 ⇒ 本端按行 LWW 收敛」不属于 AC1/AC2**，属 **AC3-03**，**仍不成立**（GAP-4）。
+
+### DP-5 / R-14 登记（**不得声称偏好面全一致** ✓）
+
+- 读码确认 `packages/presentation/offline/write-methods.ts`：`TAG_WRITE_METHODS.savePreference = 'error'` **仍在**，`PROJECT_WRITE_METHODS` / `USER_WRITE_METHODS` **均无**偏好写入口（`saveProjectPreference` / `updateUserConfig` 已移出）。
+- ⇒ **`tagPreference` 仍被 web 离线写闸门拦截 ⇒ 偏好面（projectPreference/userConfig/tagPreference）未全部一致**；本报告**不声称**「偏好面全一致」。
+
+## 11.8 变异测试（独立重做 3 项 · 不采信自述）
+
+| #   | 变异                                                                                  | 目标套件                                              | 结果     | 红数                      | 还原 |
+| :-- | :------------------------------------------------------------------------------------ | :---------------------------------------------------- | :------- | :------------------------ | :--- |
+| M1  | 偏好写入口**放回**离线写闸门（`PROJECT_WRITE_METHODS.saveProjectPreference='error'`） | `apps/web/.../preference-write-gate.test.ts`          | **转红** | **2 红 / 4 绿（共 6）**   | ✅   |
+| M2  | LWW 改**客户端时间**（`isRemoteNewer` 内 `synced = Date.now()`）                      | `persistence-sync/__tests__/preference-sync.test.ts`  | **转红** | **3 红 / 20 绿（共 23）** | ✅   |
+| M3  | 偏好**入 `syncQueue`**（`savePreferenceQueue` 内追加 `syncTracker.markDirty`）        | `persistence-sync/__tests__/preference-queue.test.ts` | **转红** | **1 红 / 7 绿（共 8）**   | ✅   |
+
+**变异后工作区 `git status --porcelain` = 0**（三次均确认；M2 红数较 T135 的 2 增为 3，因 T136 新增 GAP-3 例同样依赖服务端时间判据 ⇒ **断言有效性未减弱**）。
+
+## 11.9 未过项（请 PM 裁定登记）
+
+### ⚠️ GAP-4（新发现 · P2 残余）普通清单偏好「按行 LWW（读时 / 推送前对账）」未落地
+
+- **ADR 要求**（§D-1b / §D-3）：「普通清单偏好 = **按行 `updatedAt` LWW（读时 / 推送前对账：服务端行 `updated_at` 更新 ⇒ 应用远端；否则本地脏 ⇒ 回传）**」+「远端更新 ⇒ 远端胜（应用远端、清本地脏）」。
+- **实测**：只落地了**一半** ——
+    1. **读时**：**仅本地缺失**才拉取（T136 新增）；**本地有行 ⇒ 永不拉服务端**（无 `updatedAt` 比对）。
+    2. **推送前**：`pushProjectPreference` **直接 POST 本地行**，**不与服务端 `updated_at` 对账** ⇒ 他端已改时，本端（含离线改动）会**覆盖他端**，与 ADR「远端胜」**方向相反**。
+- **后果**：**AC3-03 / R-10（离线期间他端已改 ⇒ 本端改动按 LWW 被丢弃）对普通清单偏好仍不成立**；双端并发改同一清单偏好 = 后推者覆盖（ADR 期望 = 远端胜）。
+- **结构性原因（非一行可补）**：本地 `ProjectPreferenceRecord` **无 per-row `syncedUpdatedAt` 标记**（只有客户端侧 `updatedAt`，而 ADR **禁**用客户端时间作判据）⇒ 需按行持久化「上次同步到的服务端版本」（类 `SETTINGS_SYNCED_AT` 的按行版本）+ 推送前 GET 对账，属**小设计 + 实现**。
+- **建议（二选一，请 PM 裁定）**：
+    - **(a) 本批补**：按行 `syncedUpdatedAt` + 推送前对账（估 rd 小单）；或
+    - **(b) 修 ADR §D-3 措辞**为「本地优先 + **仅本地缺失**读时对账」并把「按行 LWW / 他端更新收敛」显式登记为**已知局限（R-10 扩展）**、挂后续单。
+- **不影响**：AC1/AC2（恢复）、GAP-1/2/3 闭合、门禁、不变量（PS-1/PS-10）。
+
+### 既有未过项（未变）
+
+- **⚠️ 5 项 ⛔ 用例缺口**：PSYNC-AC2-02（离线普通清单偏好本地写+队列项）· AC2-03（`online` 自动回传行为断言）· AC2-05（store/computed 即时反映）· AC3-05（数据守恒/白名单）· AC4-05（重试触发源接线）—— 属**用例/实现缺口**，非复核未做。
+- **R-14 / DP-5**：`tagPreference` 仍不一致（§11.7 读码确认）。
+- **R-5**：内建偏好键用 email（本批不改键）；**R-11**：登出清库丢弃未回传偏好（v1 接受）。
+
+## 11.10 未做项与原因（不阻塞）
+
+| 未做项                                             | 原因                                                              |
+| :------------------------------------------------- | :---------------------------------------------------------------- |
+| 服务端 DB 集成测试复跑（`//go:build integration`） | 需 UTC 测试库（PM 已挂账）；上一轮已独立复跑非集成层契约/路由全绿 |
+| 真实双端（web + desktop）端到端冒烟                | 本窗口未做；AC2-03/AC4-05 以读码 + 现有单测判定（同前轮口径）     |
+| GAP-4 的修复与回归验证                             | ⛔ **复核不改实现**；已给出判定与建议，待 PM 裁定后另派单         |
+
+## 11.11 复核自检
+
+- [x] ⛔ 未修改任何实现代码（3 次变异全部还原，`git status --porcelain` = 0）
+- [x] GAP-1/2/3 逐一**读码 + 单跑**，含 ⭐ GAP-1 负向（POST/PUT 未被调用）
+- [x] flaky 修复**独立验证**（≥5 次/文件，未采信自述；读码确认未放宽断言）
+- [x] 残余 flake 猎捕：**串行全仓 ×3（独占）**，逐次捕获失败用例名 ⇒ **无**
+- [x] 变异独立重做 3 项并给红数（2/3/1）
+- [x] 8 项门禁独立复跑 1 次，数字与 PM 逐项对照
+- [x] AC 矩阵终稿更新（4 项）+ **AC1/AC2 明确结论** + **未声称偏好面全一致**（DP-5 登记）
+- [x] 未过项如实列出（新增 GAP-4 + 既有 5 ⛔ + R-14/R-5/R-11），未粉饰
