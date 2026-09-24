@@ -12,27 +12,27 @@ import { SyncService } from '../sync-service'
 import { syncTracker } from '../sync-tracker'
 
 /**
- * T187 · R-5 受控探针（受控往返，不改实现）
+ * T187 · R-5 受控往返探针
  *
- * 命题（终验报告 §7④ 静态推断）：本批单任务脱归档 ⇒ `projectId='inbox'`，经 push/pull
+ * 命题（终验报告 §7④ 静态推断）：单任务脱归档 ⇒ `projectId='inbox'`，经 push/pull
  * 往返后被服务端归一为 `userId` ⇒ 本地按字面 `'inbox'` 过滤的收集箱视图**不再命中**。
  *
- * 本探针把该推断拆成两段独立证据：
- *  S1（**实际同步链路**，服务端 HEAD `1c29a69` 语义）：
- *     `CreateTaskReqToValueObject` 对 `'inbox'` **报错**（`ParseID('inbox')` 失败）——
- *     sync push 走 `CreateTask`（`interfaces/controllers/sync.go`）⇒ 该行 push outcome=error，
- *     归一**从未发生**；本地队列项保留，pull 因 LWW（本地脏且更新）不覆盖 ⇒ 任务**不消失**。
- *  S2（**counterfactual：归一成立**，即服务端 update 路径语义 / 未来修复后）：
- *     若 `'inbox'` 被归一为 `userId` 且回传，本地 `taskRecordToEntity` 原样落库 `userId`
- *     ⇒ 收集箱字面过滤失效 ⇒ 任务**从收集箱消失**（客户侧半程缺口成立）。
+ * 原始结论（T187，修复前）：② 实测**未消失** —— sync push 走 `CreateTask`（create 路径），
+ * 对 `'inbox'` 直接报错（`ParseID('inbox')` 失败）、归一**从未发生**；但该变更**永远同步不到服务端**
+ * （队列项业务退避、长期积压），且读侧字面过滤缺口为真（R-5 既有）。
  *
- * 结论口径见 `docs/qa/2026-09-25-r5-inbox-roundtrip-probe.md`。
- * 均为**绿**：S1 断言「当前真实链路不消失」；S2 断言「归一旦回传则消失」。
+ * **T188（修法 C + B）已闭环该缺陷** ⇒ 本文件断言随之**正向化**（S1/S2 分组语义不变）：
+ *  S1（**实际同步链路**）：写侧 `'inbox'` ⇒ 载荷 `''`（服务端 create 归一到 `userId`）⇒ push
+ *     `applied` + 队列出队；读侧 pull 回 `userId` ⇒ 落库归一为 `'inbox'` ⇒ 收集箱命中（**往返闭环**）。
+ *  S2（**读侧半程 · 正向不变量**；原为 counterfactual）：服务端归一结果（`projectId = userId`）
+ *     经 pull 落库 ⇒ 本地**必须**为字面 `'inbox'` ⇒ 收集箱**必须命中**（防读侧归一被静默回退）。
+ *
+ * 结论口径见 `docs/qa/2026-09-25-r5-inbox-roundtrip-probe.md`（T187 原始结论）与 T188 派单。
+ * S1/S2 均为**绿**。
  */
 
 const USER = '1001' // 与服务器 userId 同为十进制字符串（FormatID 语义一致）
 const ARCHIVED_AT = '2026-09-01T00:00:00.000Z' // 远程/本地归档态（早于本地 updatedAt）
-const REMOTE_UPDATED_AT = '2026-09-01T00:00:00.000Z'
 const INBOX_QUERY = 'projectId=inbox'
 
 const clearAll = async (): Promise<void> => {
@@ -139,10 +139,11 @@ describe('T187 · R-5 收集箱往返探针', () => {
         await setup()
     })
 
-    it("S1 实际链路：push 发送 'inbox' ⇒ 服务端 create 路径拒绝 ⇒ 本地不消失", async () => {
-        const { taskId, projectId } = await seedArchivedTask()
+    it("S1 实际链路：脱归档 ⇒ push 载荷 '' ⇒ applied/出队 ⇒ pull 归一回 'inbox' ⇒ 收集箱命中", async () => {
+        const { taskId } = await seedArchivedTask()
         await unarchiveToInbox(taskId)
 
+        const appliedAt = new Date(Date.now() + 60_000).toISOString() // 服务端版本更新
         const captured: {
             pushedBody: PushBody | null
             pushResults: { table: string; id: string; outcome?: string; error?: string }[]
@@ -150,11 +151,11 @@ describe('T187 · R-5 收集箱往返探针', () => {
         const service = new SyncService(
             mockRequester((url, body) => {
                 if (url === '/sync/pull') {
-                    // 服务端行未被改动：仍是原清单 projectId + 归档态
+                    // 服务端已按 create 路径把 `''` 归一为 userId（隐式桶）并落库 ⇒ pull 回 userId
                     const remoteTask = {
                         id: taskId,
-                        createdAt: ARCHIVED_AT,
-                        updatedAt: REMOTE_UPDATED_AT,
+                        createdAt: appliedAt,
+                        updatedAt: appliedAt,
                         deletedAt: null,
                         parentTaskId: '',
                         name: '归档任务',
@@ -164,8 +165,8 @@ describe('T187 · R-5 收集箱往返探针', () => {
                         startAt: '',
                         endAt: '',
                         tags: [],
-                        projectId, // FormatID(清单 id) —— 非 'inbox'
-                        archivedAt: ARCHIVED_AT,
+                        projectId: USER, // FormatID(userId) —— 隐式桶
+                        archivedAt: null,
                         starMarkAt: null,
                         givenUpAt: null,
                         remindAt: null,
@@ -189,38 +190,40 @@ describe('T187 · R-5 收集箱往返探针', () => {
                     }
                 }
                 // /sync/push：复现 Go `CreateTaskReqToValueObject`（create 路径）——
-                // projectId 非空 ⇒ idutil.ParseID ⇒ 'inbox' 失败 ⇒ 该行 error（不归一、不落库）
+                // projectId `''` ⇒ 归一为 userId ⇒ applied；字面 `'inbox'` ⇒ ParseID 失败 ⇒ error
                 captured.pushedBody = body as PushBody
-                const rows = captured.pushedBody.tasks ?? []
-                const results = rows.map((row) => ({
+                const rows = (captured.pushedBody.tasks ?? []).map((row) => ({
                     table: 'tasks',
                     id: row.id,
-                    error: 'strconv.ParseInt: parsing "inbox": invalid syntax',
-                    outcome: Number.isFinite(Number(row.projectId)) ? 'applied' : 'error'
+                    ...(row.projectId === 'inbox'
+                        ? {
+                              outcome: 'error',
+                              error: 'strconv.ParseInt: parsing "inbox": invalid syntax'
+                          }
+                        : { outcome: 'applied', serverUpdatedAt: appliedAt })
                 }))
-                captured.pushResults = results
-                return { data: { results }, serverTime: Date.now() }
+                captured.pushResults = rows
+                return { data: { results: rows }, serverTime: Date.now() }
             })
         )
 
         await service.pushAll()
-        // 证据 1：线上载荷确为字面 'inbox'
-        expect(captured.pushedBody?.tasks?.[0]?.projectId).toBe('inbox')
-        // 证据 2：服务端 create 路径判定为 error（未归一、未落库）
-        expect(captured.pushResults.find((r) => r.id === taskId)?.outcome).toBe('error')
-        // 证据 3：服务端拒绝 ⇒ 队列项保留（本地改动未被确认）
+        // C（写侧）：载荷为 `''`（非字面 'inbox'）⇒ 服务端 create 路径不再 error
+        expect(captured.pushedBody?.tasks?.[0]?.projectId).toBe('')
+        expect(captured.pushResults.find((r) => r.id === taskId)?.outcome).toBe('applied')
+        // 确认 ⇒ 出队（不再业务退避、长期积压）
         const dirty = await syncTracker.listDirty()
-        expect(dirty.some((item) => item.entityId === taskId)).toBe(true)
+        expect(dirty.some((item) => item.entityId === taskId)).toBe(false)
 
         await service.pullAll()
-        // 证据 3：pull 因本地脏且更新（LWW）不覆盖 ⇒ 本地仍为 'inbox'
+        // B（读侧）：服务端隐式桶 userId ⇒ 落库归一为字面 'inbox'
         const record = (await localDatabase.tasks.get(taskId))!
         expect(record.projectId).toBe('inbox')
-        // 结论：任务仍在收集箱（未消失）
+        // 结论：任务仍在收集箱（往返闭环）
         expect(await inboxContains(taskId)).toBe(true)
     })
 
-    it('S2 归一旦回传：服务端把 inbox 归一为 userId 并回传 ⇒ 收集箱字面过滤不再命中', async () => {
+    it('S2 读侧半程（正向不变量）：服务端归一结果 userId 经 pull 落库 ⇒ 收集箱必须命中', async () => {
         const { taskId } = await seedArchivedTask()
         await unarchiveToInbox(taskId)
 
@@ -280,10 +283,10 @@ describe('T187 · R-5 收集箱往返探针', () => {
         await service.pushAll()
         await service.pullAll()
 
-        // 证据：pull 原样落库 `userId`（`persistence-local/converters/task.ts` 无 'inbox' 反归一）
+        // B：pull 落库把隐式桶 userId 归一为字面 'inbox'（不再原样落库 userId）
         const record = (await localDatabase.tasks.get(taskId))!
-        expect(record.projectId).toBe(USER)
-        // 结论：「归一旦回传」成立时，收集箱字面过滤不再命中 ⇒ 任务消失
-        expect(await inboxContains(taskId)).toBe(false)
+        expect(record.projectId).toBe('inbox')
+        // 正向不变量：收集箱字面过滤**必须命中**（读侧归一被静默回退即转红）
+        expect(await inboxContains(taskId)).toBe(true)
     })
 })
