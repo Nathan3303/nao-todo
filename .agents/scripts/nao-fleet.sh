@@ -5,7 +5,7 @@
 # 用法
 #   nao-fleet.sh check [--strict] [-v]            静态体检：roles.yaml/缩进/EOL/角色卡/交叉引用/PR 模板/白名单/布局
 #                                                 默认单行摘要（含 warn 计数）；-v 展开完整报告；失败始终展开
-#   nao-fleet.sh status                           角色会话在线状态（权威名单见 intercom list）
+#   nao-fleet.sh status                           角色会话在线状态（按终端标题/名册判定；权威名单见 intercom list）
 #   nao-fleet.sh ensure <别名>[@<repo>] [更多...]  拉起角色窗口（默认工作区=roles.yaml workspace）
 #   nao-fleet.sh ensure -m <model> <别名>...       显式指定模型（须命中白名单）
 #   nao-fleet.sh ensure --task <编号> <别名>[@<repo>]   任务派生会话：--name <别名>-<编号>（并行隔离，避免同名冲突）
@@ -24,6 +24,13 @@
 #   NAO_MODEL_WHITELIST=<glob,...>            -m 白名单（默认空=不校验，支持 glob）
 #   NAO_CLOSE_BUSY_PATTERN=<ERE>             close 的在跑 turn 判定正则（默认内置 pi 状态行标记）
 #   NAO_TASKS_STATE=<path>                   任务状态文件（默认 docs/tasks-state.md，供残留检测/回收闸门）
+#
+# 在线判定（status / close / ensure 判重共用）
+#   pi 启动后用 OSC 0 把终端标题设为 "π - <会话名> - <cwd basename>" 并改写 argv
+#   （/proc/<pid>/cmdline 只剩 "pi"）⇒ 判定一律面向「终端标题 / pi-intercom 名册 /
+#   tmux·screen 会话名」，不使用 `pgrep --name`（历史假阴性根因）。
+#   名册经 $PI_AGENT_DIR/npm/node_modules/pi-intercom/cli.ts（一次调用、进程内缓存），
+#   不可用时回退 tmux/screen；仍无法确认「不在线」时 close 不做静默 no-op（exit 非 0）。
 #
 # tmux 宿主行为
 #   - 已在 tmux 内（$TMUX 存在）：当前窗口分屏拉起，不新建窗口。
@@ -223,25 +230,128 @@ detect_host() {
   echo screen
 }
 
-# 该会话名对应的真实 pi 进程 PID（过滤 shell/tmux 等误匹配，避免误命中宿主命令行、误杀包装进程）
+# ---------------------------------------------------------------------------
+# 会话在线判定
+#
+# 历史假阴性根因：pi 启动后用 OSC 0 把终端标题设为
+#   "π - <会话名> - <cwd basename>"（pi 源码 updateTerminalTitle），
+# 并同步改写 argv —— /proc/<pid>/cmdline 只剩 "pi"，`pgrep -f --name` 恒失配，
+# 于是 status/close 长期判「不在线」（close 退化为静默空转、exit 0）。
+# 现改为按「终端标题契约」取句柄，argv 扫描一律不用：
+#   ① pi-intercom 名册（权威在线名单；跨 tmux/ghostty/ptyxis/screen 宿主）
+#   ② tmux pane_title（pi 自设；与 pane_start_command 是否为空无关）
+#   ③ tmux detached 会话 / screen 会话名 nao-<会话名>
+# repo（可选）：给出时要求标题 basename / 名册 cwd 一致，避免跨项目同名会话互串。
+
+PI_AGENT_DIR="${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}"
+PI_TITLE="π"
+_INTERCOM_JSON=""; _INTERCOM_PROBED=0
+
+repo_abspath() { ( cd "$1" >/dev/null 2>&1 && pwd ) 2>/dev/null || true; }
+repo_basename() {
+  local abs; abs="$(repo_abspath "$1")"
+  [[ -n "$abs" ]] && printf '%s\n' "${abs##*/}"
+  return 0
+}
+
+# intercom 名册 JSON（一次调用、进程内缓存）；不可用返回 1（不 die）
+intercom_list_json() {
+  if (( _INTERCOM_PROBED )); then
+    [[ -n "$_INTERCOM_JSON" ]] && printf '%s' "$_INTERCOM_JSON"
+    return
+  fi
+  _INTERCOM_PROBED=1
+  local dir="$PI_AGENT_DIR/npm/node_modules/pi-intercom"
+  local tsx="$PI_AGENT_DIR/npm/node_modules/tsx/dist/cli.mjs"
+  [[ -f "$dir/cli.ts" && -f "$tsx" ]] || return 1
+  command -v node >/dev/null 2>&1 || return 1
+  local out
+  if command -v timeout >/dev/null 2>&1; then
+    out="$(timeout 15 node "$tsx" "$dir/cli.ts" list --json 2>/dev/null)" || return 1
+  else
+    out="$(node "$tsx" "$dir/cli.ts" list --json 2>/dev/null)" || return 1
+  fi
+  [[ -n "$out" ]] || return 1
+  _INTERCOM_JSON="$out"
+  printf '%s' "$out"
+}
+
+# 名册 → "会话名<TAB>cwd"（每行一条）
+intercom_roster() {
+  local json; json="$(intercom_list_json)" || return 1
+  awk '
+    /"name":[[:space:]]*"/ { s=$0; sub(/.*"name":[[:space:]]*"/,"",s); sub(/".*/,"",s); n=s }
+    /"cwd":[[:space:]]*"/  { s=$0; sub(/.*"cwd":[[:space:]]*"/,"",s);  sub(/".*/,"",s);  print n "\t" s }
+  ' <<< "$json"
+}
+
+# 名册中是否在线；repo 给出时须 cwd 精确匹配
+intercom_online() {
+  local name="$1" repo="${2:-}" abs="" n c
+  intercom_list_json >/dev/null 2>&1 || return 1
+  if [[ -n "$repo" ]]; then abs="$(repo_abspath "$repo")"; fi
+  while IFS=$'\t' read -r n c; do
+    [[ "$n" == "$name" ]] || continue
+    if [[ -z "$abs" || "$c" == "$abs" ]]; then return 0; fi
+  done < <(intercom_roster)
+  return 1
+}
+
+# 会话所在的 tmux pane（pi 自设标题 "π - <会话名> - <repo basename>"）
+find_pane_for() {
+  local name="$1" repo="${2:-}" base=""
+  command -v tmux >/dev/null 2>&1 || return 0
+  if [[ -n "$repo" ]]; then base="$(repo_basename "$repo")"; fi
+  tmux list-panes -a -F "#{pane_id}"$'\t'"#{pane_title}" 2>/dev/null \
+    | awk -F'\t' -v p="$PI_TITLE" -v n="$name" -v b="$base" '
+        { t=$2
+          if (b != "") { if (t == p " - " n " - " b) { print $1; exit } }
+          else if (index(t, p " - " n " - ") == 1) { print $1; exit }
+        }'
+}
+
+# 该会话名对应的 pi 进程 PID（经 pane 句柄取 pane_pid 及其子进程中 comm=pi 者）
 pi_pids_for() {
-  local pid comm
-  pgrep -f -- "pi[[:space:]].*--name $1([[:space:]]|$)" 2>/dev/null | while IFS= read -r pid; do
-    comm="$(ps -o comm= -p "$pid" 2>/dev/null | tr -d ' ')"
-    case "$comm" in
-      bash|sh|dash|zsh|fish|tmux|screen|sudo|env) continue ;;
-    esac
+  local pane root pid
+  pane="$(find_pane_for "$1" "${2:-}")"
+  [[ -n "$pane" ]] || return 0
+  root="$(tmux display-message -p -t "$pane" '#{pane_pid}' 2>/dev/null)"
+  [[ -n "$root" ]] || return 0
+  { printf '%s\n' "$root"; pgrep -P "$root" 2>/dev/null || true; } | while IFS= read -r pid; do
+    [[ "$(ps -o comm= -p "$pid" 2>/dev/null | tr -d ' ')" == "pi" ]] || continue
     printf '%s\n' "$pid"
   done
 }
 
-running() { [[ -n "$(pi_pids_for "$1")" ]]; }
+running() {
+  local name="$1" repo="${2:-}"
+  if intercom_online "$name" "$repo"; then return 0; fi
+  if [[ -n "$(find_pane_for "$name" "$repo")" ]]; then return 0; fi
+  if command -v tmux >/dev/null 2>&1 && tmux has-session -t "nao-$name" 2>/dev/null; then return 0; fi
+  if command -v screen >/dev/null 2>&1 && screen -ls 2>/dev/null | grep -q "[0-9]\.nao-$name\b"; then return 0; fi
+  return 1
+}
 
-# 定位会话所在 tmux pane（靠启动命令里的 --name；边界避免 rd-be 误命中 rd-be-T1）
-find_pane_for() {
-  command -v tmux >/dev/null 2>&1 || return 0
-  tmux list-panes -a -F '#{pane_id} #{pane_start_command}' 2>/dev/null \
-    | awk -v n="$1" '$0 ~ ("--name[ =]" n "([^A-Za-z0-9_-]|$)") { print $1; exit }'
+# 能否可信地断言「不在线」：名册可用（完整），或本机就是 tmux/screen 宿主（句柄可枚举）
+offline_verifiable() {
+  intercom_list_json >/dev/null 2>&1 && return 0
+  [[ -n "${TMUX:-}" ]] && return 0
+  case "${NAO_TERMINAL:-}" in tmux|screen) return 0 ;; esac
+  return 1
+}
+
+# 本机可见的会话名（tmux 标题 + tmux/screen 会话 + 名册），供 status 枚举；已去重
+visible_session_names() {
+  { if command -v tmux >/dev/null 2>&1; then
+      tmux list-panes -a -F '#{pane_title}' 2>/dev/null \
+        | sed -n "s/^${PI_TITLE} - \([A-Za-z0-9_-]*\) - .*/\1/p"
+      tmux list-sessions -F '#{session_name}' 2>/dev/null | sed -n 's/^nao-//p'
+    fi
+    if command -v screen >/dev/null 2>&1; then
+      screen -ls 2>/dev/null | sed -n 's/.*[0-9]\.nao-\([A-Za-z0-9_-]*\).*/\1/p'
+    fi
+    intercom_roster 2>/dev/null | awk -F'\t' 'NF {print $1}'
+  } | awk '!seen[$0]++'
 }
 
 # 该 pane 末 3 行是否显示在跑 turn（启发式：状态行标记；回执/产物以 PM 核对清单为准）
@@ -252,23 +362,34 @@ pane_busy() {
   grep -qE "$CLOSE_BUSY_PATTERN" <<< "$tail3"
 }
 
-# 任务在 tasks-state 的归处：active（进行态）/ closed（已验收·已归档）/ absent（无记录）/ nofile
+# 任务在 tasks-state 的归处：
+#   active（在表内进行态）/ closed（在归档区表内）/ mentioned（仅散文提及）
+#   / absent（全文无记录）/ nofile
+# 归一处：表内单元格可选带反引号/**（常见写法 `T157` / **T157**）→ 去首尾空白与标记后比较。
+# 标题级别不限（`##` 与 `###` 子表都算）；归档区 = 标题含「已验收|已归档|归档」。
+# 边界：先按非 [A-Za-z0-9_-] 切词再比较，避免 T15 命中 T155。
 task_state_class() {
   local id="$1"
   [[ -f "$TASKS_STATE" ]] || { echo nofile; return; }
   awk -v id="$id" '
-    /^## / { sec=$0; sub(/^##[[:space:]]*/, "", sec); next }
+    function norm(s) { gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); gsub(/`/, "", s); gsub(/\*\*/, "", s); return s }
+    /^#+[[:space:]]/ { sec=$0; sub(/^#+[[:space:]]*/, "", sec); next }
     {
       n=split($0, cells, "|")
       for (i=1;i<=n;i++) {
-        c=cells[i]; gsub(/^[[:space:]]+|[[:space:]]+$/, "", c)
-        if (c==id) { hit=sec; break }
+        if (norm(cells[i]) != id) continue
+        if (sec ~ /已验收|已归档|归档/) arch=1; else cell=1
+        break
       }
+      line=$0; gsub(/[^A-Za-z0-9_-]/, " ", line)
+      m=split(line, toks, " ")
+      for (j=1;j<=m;j++) if (toks[j]==id) { seen=1; break }
     }
     END {
-      if (hit=="") { print "absent"; exit }
-      if (hit ~ /已验收|已归档/) { print "closed"; exit }
-      print "active"
+      if (arch) { print "closed"; exit }
+      if (cell) { print "active"; exit }
+      if (seen) { print "mentioned"; exit }
+      print "absent"
     }
   ' "$TASKS_STATE"
 }
@@ -663,33 +784,33 @@ cmd_check() {
 # ---------------------------------------------------------------------------
 cmd_status() {
   local a
-  echo "== 角色会话在线状态（权威名单以 intercom({action:'list'}) 为准）=="
+  intercom_list_json >/dev/null 2>&1 || true   # 预热名册缓存（后续子 shell 复用）
+  echo "== 角色会话在线状态（权威名单见 intercom({action:'list'})；本表按终端标题/名册判定）=="
   for a in "${ROLE_ORDER[@]}"; do
-    if running "$a"; then
+    if running "$a" "${ROLE_WS[$a]:-}"; then
       printf '  ✓ %-14s 在线（--name %s；卡片 %s）\n' "$a" "$a" "${ROLE_CARDS[$a]}"
     else
       printf '  · %-14s 未运行（ensure 拉起）\n' "$a"
     fi
   done
   echo "== 任务派生会话（--task 拉起，如 rd-be-T1）=="
-  local found=0 line dname role id cls tag
-  while IFS= read -r line; do
-    [[ -n "$line" ]] || continue
-    dname="$(awk '{for(i=1;i<=NF;i++) if($i=="--name") {print $(i+1); exit}}' <<< "$line")"
+  local found=0 dname role id cls tag
+  while IFS= read -r dname; do
     [[ -n "$dname" ]] || continue
-    id=""; tag=""
+    id=""
     for role in "${ROLE_ORDER[@]}"; do [[ "$dname" == "$role-"* ]] && { id="${dname#"$role"-}"; break; }; done
-    if [[ -n "$id" ]]; then
-      cls="$(task_state_class "$id")"
-      case "$cls" in
-        closed) tag="  ! 残留（$id 已归档）→ close --task $id ${dname%-*}" ;;
-        absent) tag="  ! 残留（tasks-state 无 $id 记录）→ 核对后 close --task $id ${dname%-*}" ;;
-        active) tag="  · $id 进行态" ;;
-      esac
-    fi
+    [[ -n "$id" ]] || continue
+    cls="$(task_state_class "$id")"
+    tag=""
+    case "$cls" in
+      closed)    tag="  ! 残留（$id 已归档）→ close --task $id ${dname%-*}" ;;
+      active)    tag="  · $id 进行态" ;;
+      mentioned) tag="  ? $id 仅散文提及（非表内记录）→ 核对后 close --task $id ${dname%-*}" ;;
+      absent)    tag="  ! 残留（tasks-state 无 $id 记录）→ 核对后 close --task $id ${dname%-*}" ;;
+    esac
     printf '  · %s%s\n' "$dname" "$tag"
     found=1
-  done < <(pgrep -af "pi[[:space:]].*--name (pm|arch-designer|rd-fe|rd-be|qa)-[A-Za-z0-9_-]+" 2>/dev/null | head -10)
+  done < <(visible_session_names)
   (( found )) || echo '  （无）'
   [[ -f "$TASKS_STATE" ]] || echo "  （$TASKS_STATE 不存在，残留判定已跳过）"
 }
@@ -700,6 +821,7 @@ cmd_close() {
   local force="$1" task="$2" target="$3"
   [[ -n "$target" ]] || die "close 需要目标：角色别名或派生会话名（如 rd-be / rd-be-T1）"
   local name repo cls bus pane pids r ok
+  intercom_list_json >/dev/null 2>&1 || true   # 预热名册缓存
   if [[ -n "$task" ]]; then
     resolve_role "$target"
     name="${NAME}-${task}"
@@ -711,7 +833,8 @@ cmd_close() {
       warn "  先把 $task 移入「已验收/已归档」再回收（或 --force：将丢失打回返工所需上下文）"
       return 1
     fi
-    [[ "$cls" == "absent" ]] && warn "tasks-state 无 $task 记录（仅按会话名回收）"
+    [[ "$cls" == "absent" ]] && warn "tasks-state 全文无 $task 记录（仅按会话名回收）"
+    [[ "$cls" == "mentioned" ]] && log "tasks-state 仅散文提及 $task（非表内记录，不阻塞回收）"
     [[ "$cls" == "nofile" ]] && log "未启用 $TASKS_STATE（跳过状态闸门）"
   elif [[ -n "${ALIAS_ROLE[$target]:-}" ]]; then
     name="${ALIAS_ROLE[$target]}"; repo="${ROLE_WS[$name]:-$PWD}"
@@ -726,10 +849,18 @@ cmd_close() {
     repo="$PWD"
   fi
 
-  running "$name" || { log "$name 未运行（无需回收）"; return 0; }
+  if ! running "$name" "$repo"; then
+    if offline_verifiable; then
+      log "$name 未运行（无需回收）"; return 0
+    fi
+    warn "无法确认 $name 在线状态：宿主无 tmux/screen 句柄，且 pi-intercom 名册不可用"
+    warn "  pi 启动后 argv 被改写为 \"pi\"，进程扫描不可信 ⇒ 不做静默 no-op（本命令 exit 非 0）"
+    warn "  请用 intercom list 人工核对；确认已退出后忽略本提示，或用 --force 跳过闸门"
+    return 1
+  fi
 
   # 闸门②：在跑 turn（tmux 可判；非 tmux 宿主无法判 → 需 --force）
-  pane="$(find_pane_for "$name")"
+  pane="$(find_pane_for "$name" "$repo")"
   if [[ -n "$pane" ]]; then
     pane_busy "$pane" && bus="tmux pane $pane 末行显示在跑 turn"
   else
@@ -750,7 +881,7 @@ cmd_close() {
   if command -v screen >/dev/null 2>&1 && screen -ls 2>/dev/null | grep -q "nao-$name" && screen -S "nao-$name" -X quit 2>/dev/null; then
     log "已回收 $name（screen 会话 nao-$name）@ $repo"; return 0
   fi
-  pids="$(pi_pids_for "$name" | tr '\n' ' ')"
+  pids="$(pi_pids_for "$name" "$repo" | tr '\n' ' ')"
   if [[ -n "$pids" ]] && kill $pids 2>/dev/null; then
     log "已回收 $name（结束进程: $pids）@ $repo"; return 0
   fi
@@ -778,8 +909,8 @@ cmd_ensure() {
     key="$repo"; seen=0
     for k in "${cg_done[@]:-}"; do [[ "$k" == "$key" ]] && seen=1; done
     if (( ! seen )); then check_codegraph "$repo"; cg_done+=("$key"); fi
-    if [[ "$force" != "true" ]] && running "$disp"; then
-      warn "$disp 已在运行（--name 识别），跳过；确需重开请加 --force"
+    if [[ "$force" != "true" ]] && running "$disp" "$repo"; then
+      warn "$disp 已在运行（终端标题/名册命中），跳过；确需重开请加 --force"
       continue
     fi
     spawn_one "$disp" "$repo" "$model"
