@@ -1,4 +1,4 @@
-import { isCredentialError } from '@nao-todo/domain-identity'
+import { hasCredentialFailureSignal } from '@nao-todo/domain-identity'
 import type { GoError } from '@nao-todo/shared/types'
 import { isNormalizedNetworkError } from './network-failure'
 
@@ -18,8 +18,13 @@ import { isNormalizedNetworkError } from './network-failure'
  *                `[null, message]`。仅识别 ① 会漏掉真实离线形态 ⇒ AC8 数据面失效。
  *              - 远端**业务失败**（返回 `[null, message]` 且**非**网络文案）**不触发回退**
  *                —— 远端已应答，其结果为权威（镜像可能过期）；只有网络类失败才回退。
- *              - **凭证类失败必须上抛**（`isCredentialError`，与 T102/DEF-5 同源）：
+ *              - **凭证类失败必须上抛**（仅认**结构信号**：HTTP `response.status` 401/403 或
+ *                凭证业务码 10041/10021/10022；`hasCredentialFailureSignal`，ADR r12）：
  *                会话失效须回登录页，不得用镜像掩盖。
+ *              - **抛出分支 = fail-soft**（r12 / T160）：远端**未应答** ⇒ 除已知凭证结构信号外，
+ *                **一切抛出型错误**（非归一化 HTTP 5xx / 网关 502·504 / 非凭证 4xx / 未知无 code）
+ *                **一律回退镜像**（可用性优先）。⚠️ **不得**改用认证分类器 `isCredentialError`
+ *                （其 fail-closed「未知 ⇒ 凭证」方向会把 5xx/未知也上抛 ⇒ AC8 回归）。
  *
  * @param remote 远端仓储（主读）
  * @param mirror 本地镜像仓储（同接口；仅读方法会被调用）
@@ -53,8 +58,10 @@ export const withMirrorFallback = <T extends object>(
                         args
                     )
                 } catch (err) {
-                    // ① 抛出型：凭证类上抛；其余（网络类）回退镜像
-                    if (isCredentialError(err as GoError)) throw err
+                    // ① 抛出型（远端未应答 ⇒ fail-soft，ADR r12）：**仅已知凭证结构信号上抛**
+                    //    （HTTP 401/403 或业务码 10041/10021/10022）；其余（非归一化 HTTP 5xx /
+                    //    网关 502·504 / 非凭证 4xx / 未知无 code）一律回退镜像。
+                    if (hasCredentialFailureSignal(err)) throw err
                     return await mirrorMethods[name]!(...args)
                 }
 

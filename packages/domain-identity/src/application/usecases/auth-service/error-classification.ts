@@ -68,3 +68,52 @@ export const isCredentialError = (err: GoError): boolean => {
     const message = unwrapError(err)
     return !NETWORK_ERROR_MESSAGES.some((marker) => message.includes(marker))
 }
+
+/**
+ * 凭证 HTTP 状态（读路径回退门专用；r12 / T160）
+ * @description 抛出型 axios Error 的 `response.status` 命中即视为「已知凭证信号」。
+ */
+export const CREDENTIAL_HTTP_STATUSES: readonly number[] = [401, 403]
+
+/**
+ * 凭证业务码（读路径回退门专用；r12 / T160）
+ * @description 顶层归一化 `code` 或仓储透传的 `businessCode` 命中即视为「已知凭证信号」。
+ */
+export const CREDENTIAL_FAILURE_CODES: readonly (string | number)[] = [10041, 10021, 10022]
+
+/** 携带结构信号的抛出型错误（axios Error 形态 + 仓储透传字段） */
+type CredentialSignalCarrier = Error & {
+    code?: unknown
+    businessCode?: unknown
+    response?: { status?: unknown } | null
+}
+
+/**
+ * 是否携带「已知凭证*结构*信号」（**读路径回退门专用**，r12 / T160）
+ * @description **只认结构证据，不认文案**（故不构成 C-67 所禁的「第二套文案标记集」）：
+ *              - HTTP `response.status ∈ {401, 403}`；
+ *              - 凭证业务码 `10041` / `10021` / `10022`（`code` 或 `businessCode`）。
+ *              **单一来源**：证据集与判定只在本模块定义一次（禁散落第二处）。
+ *              ⚠️ 与 `isCredentialError` **方向相反、语境不同**（ADR r12）：后者是**认证失败分类**
+ *              （fail-closed：未知 ⇒ 凭证，用于清认证）；本谓词是**读路径回退门**（fail-soft：
+ *              未知 ⇒ 回退镜像，用于 `withMirrorFallback` 抛出分支）。**不得**用本谓词改认证投影。
+ * @param err 抛出型错误
+ */
+export const hasCredentialFailureSignal = (err: unknown): boolean => {
+    if (!(err instanceof Error)) return false
+    const carrier = err as CredentialSignalCarrier
+    if (
+        (typeof carrier.code === 'string' || typeof carrier.code === 'number') &&
+        CREDENTIAL_FAILURE_CODES.includes(carrier.code)
+    ) {
+        return true
+    }
+    if (
+        (typeof carrier.businessCode === 'string' || typeof carrier.businessCode === 'number') &&
+        CREDENTIAL_FAILURE_CODES.includes(carrier.businessCode)
+    ) {
+        return true
+    }
+    const status = carrier.response?.status
+    return typeof status === 'number' && CREDENTIAL_HTTP_STATUSES.includes(status)
+}

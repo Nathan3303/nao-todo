@@ -67,6 +67,16 @@ const makeRemote = (error: unknown) => {
 }
 
 /**
+ * 构造真实抛出型 axios Error（axios v1：4xx=`ERR_BAD_REQUEST` / 5xx=`ERR_BAD_RESPONSE`）
+ * @description 抛出分支的真实生产形态（`packages/shared/requester/axios.ts:107-109` 的 `default:` reject）。
+ */
+const makeThrownHttpError = (status: number, code: string): Error =>
+    Object.assign(new Error(`Request failed with status code ${status}`), {
+        code,
+        response: { status }
+    })
+
+/**
  * requester 归一化网络错误响应（`packages/shared/requester/axios.ts:73-104` 原样产物，**不 reject**）
  * @description 真实离线形态：`resolve` 顶层字符串 code + 业务码 50300/40800/42900。
  */
@@ -117,7 +127,7 @@ describe('withMirrorFallback - AC8（离线 + 有镜像）', () => {
         status.markMirrorPulled()
         status.endRun({ pendingCount: 0, failedCount: 0 })
 
-        const { remote, list } = makeRemote(new Error('Network Error'))
+        const { remote, list } = makeRemote(makeThrownHttpError(500, 'ERR_BAD_RESPONSE'))
         const repo = withMirrorFallback<TaskRepository>(remote, mirror, ['get', 'list'])
 
         const [result, err] = await repo.list('')
@@ -141,7 +151,7 @@ describe('withMirrorFallback - AC9（离线 + 无镜像）', () => {
     it('无镜像 ⇒ 回退返回空集（不抛错、不呈现数据丢失），且 mirrorPulledAt 为 null 以区分「未同步完成」', async () => {
         const mirror = newLocalTaskRepository()
         const status = new SyncStatus()
-        const { remote } = makeRemote(new Error('Network Error'))
+        const { remote } = makeRemote(makeThrownHttpError(500, 'ERR_BAD_RESPONSE'))
         const repo = withMirrorFallback<TaskRepository>(remote, mirror, ['get', 'list'])
 
         const [result, err] = await repo.list('')
@@ -179,13 +189,13 @@ describe('withMirrorFallback - 边界', () => {
         expect(result!.taskEntities[0]!.name).toBe('远端任务')
     })
 
-    it('凭证类失败（10041/401/过期文案）必须上抛，不得用镜像掩盖', async () => {
+    it('凭证结构信号（HTTP 401 / 业务码 10041）必须上抛，不得用镜像掩盖', async () => {
         const mirror = newLocalTaskRepository()
-        const { remote } = makeRemote(new Error('登录已过期，请重新登录'))
+        const { remote } = makeRemote(Object.assign(new Error('用户凭证验证失败'), { code: 10041 }))
         const repo = withMirrorFallback<TaskRepository>(remote, mirror, ['get', 'list'])
 
-        await expect(repo.get('task-1')).rejects.toThrow('登录已过期')
-        await expect(repo.list('')).rejects.toThrow('登录已过期')
+        await expect(repo.get('task-1')).rejects.toThrow('用户凭证验证失败')
+        await expect(repo.list('')).rejects.toThrow('用户凭证验证失败')
     })
 
     it('写方法一律透传远端（C-59：阶段一数据面不产生 markDirty）', async () => {
@@ -197,6 +207,68 @@ describe('withMirrorFallback - 边界', () => {
         await repo.create(makeTaskVO({ name: '写入' }))
         expect(create).toHaveBeenCalledTimes(1)
         expect(mirrorCreate).not.toHaveBeenCalled()
+    })
+})
+
+/**
+ * r12 / T160：读路径回退门 = **fail-soft**（抛出分支仅已知凭证**结构**信号上抛）
+ * @description 抛出 = 远端未应答 ⇒ 除已知凭证结构信号外一律回退镜像；
+ *              元组分支不变（远端已应答 ⇒ 仅归一化网络元组回退）。
+ */
+describe('withMirrorFallback - 抛出型回退门（r12 / T160 fail-soft）', () => {
+    beforeEach(async () => {
+        await setup()
+    })
+
+    it('非归一化 HTTP 5xx / 网关 502·504 / 抛出型 ERR_NETWORK ⇒ 回退镜像', async () => {
+        const { mirror, created } = await seedMirror('回退任务')
+        const thrownCases = [
+            makeThrownHttpError(500, 'ERR_BAD_RESPONSE'),
+            makeThrownHttpError(502, 'ERR_BAD_RESPONSE'),
+            makeThrownHttpError(504, 'ERR_BAD_RESPONSE'),
+            Object.assign(new Error('Network Error'), { code: 'ERR_NETWORK' })
+        ]
+
+        for (const thrown of thrownCases) {
+            const { remote, list } = makeRemote(thrown)
+            const repo = withMirrorFallback<TaskRepository>(remote, mirror, ['get', 'list'])
+
+            const [result, err] = await repo.list('')
+            expect(err).toBeNull()
+            expect(result!.taskEntities.map((task) => task.name)).toContain('回退任务')
+            expect(list).toHaveBeenCalled()
+
+            const [fetched, fetchErr] = await repo.get(created.id)
+            expect(fetchErr).toBeNull()
+            expect(fetched!.name).toBe('回退任务')
+        }
+    })
+
+    it('凭证结构信号（HTTP 401 / 业务码 10041）⇒ 上抛，不得用镜像掩盖', async () => {
+        const credentialCases = [
+            makeThrownHttpError(401, 'ERR_BAD_REQUEST'),
+            Object.assign(new Error('用户凭证验证失败'), { code: 10041 })
+        ]
+
+        for (const thrown of credentialCases) {
+            const mirror = newLocalTaskRepository()
+            const mirrorList = vi.spyOn(mirror, 'list')
+            const { remote } = makeRemote(thrown)
+            const repo = withMirrorFallback<TaskRepository>(remote, mirror, ['get', 'list'])
+
+            await expect(repo.list('')).rejects.toThrow()
+            expect(mirrorList).not.toHaveBeenCalled()
+        }
+    })
+
+    it('未知 / 无 code 异常 ⇒ 回退镜像（fail-soft）', async () => {
+        const mirror = newLocalTaskRepository()
+        const { remote } = makeRemote(new Error('未知异常'))
+        const repo = withMirrorFallback<TaskRepository>(remote, mirror, ['get', 'list'])
+
+        const [result, err] = await repo.list('')
+        expect(err).toBeNull()
+        expect(result!.taskEntities).toEqual([])
     })
 })
 
