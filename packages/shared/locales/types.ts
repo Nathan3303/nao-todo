@@ -69,6 +69,11 @@ export interface LocaleMessages {
     'notice.plaintext.title': string
     'notice.plaintext.body': string
     'notice.plaintext.dismiss': string
+    'notice.legacyCipher.rebuiltTitle': string
+    'notice.legacyCipher.rebuiltBody': string
+    'notice.legacyCipher.blockedTitle': string
+    'notice.legacyCipher.blockedBody': string
+    'notice.legacyCipher.dismiss': string
 
     // Common
     'common.cancel': string

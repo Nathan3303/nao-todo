@@ -73,6 +73,13 @@ const zhCN: LocaleMessages = {
     'notice.plaintext.body':
         '为支持离线查看，本设备上的数据以明文保存，不再有密码保护：能打开本设备或本浏览器配置的人即可读到。完整说明见「设置 → 应用设置」。',
     'notice.plaintext.dismiss': '我知道了',
+    'notice.legacyCipher.rebuiltTitle': '本地数据已重建',
+    'notice.legacyCipher.rebuiltBody':
+        '检测到旧版本的加密数据，当前浏览器无法读取，已重建本地副本；数据将从服务器重新同步，已同步的数据不受影响。',
+    'notice.legacyCipher.blockedTitle': '检测到旧版本的加密数据',
+    'notice.legacyCipher.blockedBody':
+        '当前浏览器无法读取旧版本的加密数据，但本地仍有 {count} 项修改尚未同步。请先联网完成同步，再重建本地副本，以免丢失未回传的修改。',
+    'notice.legacyCipher.dismiss': '我知道了',
 
     // Common
     'common.cancel': '取消',

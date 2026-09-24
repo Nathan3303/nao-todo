@@ -48,6 +48,9 @@ export const STRUCTURED_LOG_EVENTS = {
     /** 历史密文 → 明文迁移 */
     MIGRATION_STARTED: 'migration.plaintext.started',
     MIGRATION_COMPLETED: 'migration.plaintext.completed',
+    /** web 旧密文一次性自愈（DEF-35 / C-68） */
+    LEGACY_CIPHER_SELF_HEALED: 'migration.legacy-cipher.self-healed',
+    LEGACY_CIPHER_SELF_HEAL_BLOCKED: 'migration.legacy-cipher.self-heal-blocked',
     /** 登出 / 注销到期 / 切换账号清库 */
     WIPE_STARTED: 'wipe.user-data.started',
     WIPE_COMPLETED: 'wipe.user-data.completed',

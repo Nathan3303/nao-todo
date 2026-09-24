@@ -7,7 +7,12 @@ import { resolveUserIdFromStoredJwt } from '@nao-todo/infrastructure/src/persist
 import { syncService } from '@nao-todo/infrastructure/src/persistence-sync/sync-service'
 import { syncStatus } from '@nao-todo/infrastructure/src/persistence-sync/sync-status'
 import { syncTracker } from '@nao-todo/infrastructure/src/persistence-sync/sync-tracker'
+import { selfHealLegacyCipherMirror } from '@nao-todo/infrastructure/src/persistence-local/migration/legacy-cipher-self-heal'
 import { startReadOnlyWatch } from '@nao-todo/presentation/offline'
+import {
+    showLegacyCipherBlockedNotice,
+    showLegacyCipherRebuiltNotice
+} from '@/components/legacy-cipher-notice'
 import { applySyncConfirmation } from '@/offline-read-only'
 import { withBootstrapRetry } from '@/views/auth/bootstrap-local-data'
 
@@ -18,6 +23,10 @@ import { withBootstrapRetry } from '@/views/auth/bootstrap-local-data'
  *              ② 每个登录用户**首次进入时后台启动一次** `syncService.start()`，把远端数据拉入本地镜像
  *                 （拉取游标 / `mirrorPulledAt` / `mirrorTruncated` 由 T103 引擎与 `syncStatus` 落定）；
  *              ③ 注册本地写回传监听（`syncTracker.setDirtyListener` ⇒ `schedulePush`，PS-12）。
+ *
+ *              **旧密文一次性自愈（DEF-35 / C-68）**：拉取前先自愈（`selfHealLegacyCipherMirror`）——
+ *              无残留时零行为变化；有残留且无未回传写入 ⇒ 丢弃本地密文副本 + 重置游标/新鲜度
+ *              （⇒ 本次 `start()` 全量重拉）并可见告知；有未回传写入 ⇒ **阻塞**（绝不静默丢弃）。
  *
  *              **阶段二 2A 口径（ADR `2026-09-24-stage2-both-ends-local-first` §2.4 / §2.6）**：
  *              业务 7 域 binding = 本地仓储（读写均本地优先；本地写经 `syncTracker.markDirty` 入
@@ -79,13 +88,20 @@ export const startWebDataPlane = (): void => {
     // 非阻塞：不阻塞进入应用；本条即「web 也用 syncService + 本地镜像」的接线点
     // C-59 / ADR-r5.1：仅当**真实执行 pull**（`pullExecuted`）且无错误/凭证失败时清除只读 flag
     // PS-16 首拉门：暴露「首次拉取已落定」信号（成功/失败均落定，不抛出）
-    firstPullSettled = syncService
-        .start()
-        .then(applySyncConfirmation)
-        .then(
-            () => undefined,
-            () => undefined
-        )
+    // DEF-35 / C-68：① 拉取前先做旧密文一次性自愈（丢弃不可读副本 + 标记）⇒ ② 再全量重拉
+    firstPullSettled = (async () => {
+        try {
+            const outcome = await selfHealLegacyCipherMirror(userId)
+            if (outcome.action === 'healed') showLegacyCipherRebuiltNotice()
+            else if (outcome.action === 'blocked') showLegacyCipherBlockedNotice(outcome.pending)
+        } catch {
+            // 自愈失败不得阻断数据面（不可读密文仍由渲染层拒读，不会被当空值/默认值）
+        }
+        await syncService.start().then(applySyncConfirmation)
+    })().then(
+        () => undefined,
+        () => undefined
+    )
     void firstPullSettled
     // TASK-26 / M6：启动先拉取 + LWW 合并设置面，再冲刷偏好队列（非阻塞；失败静默降级）
     void pullAndMergeUserConfig().then(() => flushPreferenceQueue())
