@@ -17,7 +17,7 @@
 export type MirrorFreshness = 'updated' | 'mirror' | 'incomplete'
 
 export type ResolveFreshnessInput = {
-    /** 是否处于离线（只读）态 */
+    /** 是否处于离线态（网络离线 / 离线进入） */
     isOffline: boolean
     /** 镜像完整拉取时间（ISO；`null` = 从未成功完整拉取） */
     mirrorPulledAt: string | null

@@ -1,17 +1,24 @@
 import { computed, ref } from 'vue'
 
 /**
- * 阶段一离线只读状态（C-59 / AC10 单一真源）
- * @description 阶段一「只读离线镜像」的**唯一开关**：写入口统一经 `write-gate` 读取本模块判定，
- *              不得逐个改仓储、不得逐个 UI 入口各写一套判定。
+ * 离线状态（C-59 / AC10；阶段二 2A M6 后作用面收敛至身份域）
+ * @description 端离线状态的**单一真源**：离线判定集中在此，消费方经 `write-gate`（写拦截）
+ *              或本模块（离线 UI 角标 / C-60 freshness）读取，不得各处自写一套判定。
  *
- *              判定口径（离线 ⇒ 只读）：
+ *              判定口径（离线）：
  *              ① `navigator.onLine === false`（浏览器网络状态，`online`/`offline` 事件同步）；
  *              ② **会话级离线进入 flag**（web 用户显式选择「离线进入」，见 `offline-entry`）。
- *              两者取或；在线写照常（web 走远端、desktop 走本地 + push）。
+ *              两者取或。
  *
- *              注意：本模块**只读**，不产生任何 `markDirty`（C-59）。
- * @see docs/adr/2026-09-23-web-offline-local-first-and-security-posture.md（C-59 / C-60 / C-66）
+ *              **消费面（阶段二 2A M6 收敛后）**：业务 7 域已切本地优先 ⇒ 离线**可写**（经
+ *              `syncQueue` 回传），本模块**不再**约束业务写；现行作用面 = ① 身份域 `user` 离线写
+ *              拦截（`write-gate` / `WRITE_METHODS_BY_KIND`）② 离线 UI 角标与 C-60 镜像新鲜度
+ *              判定 ③ `offlineEntry` flag 生命周期（`offline-read-only.ts`）。
+ *              （阶段一「离线 ⇒ 业务只读」口径已随 C-59 退场，见下方 ADR；本模块为保留项。）
+ *
+ *              注意：本模块只做状态判定，不产生任何 `markDirty`。
+ * @see docs/adr/2026-09-23-web-offline-local-first-and-security-posture.md（C-59 r10 / C-60 / C-66）
+ * @see docs/adr/2026-09-24-stage2-both-ends-local-first.md（§2.4 步骤 5 / §2.6 W5）
  */
 
 /** 网络离线（由 `online`/`offline` 事件维护；冷启动时由 `startReadOnlyWatch` 同步） */

@@ -13,18 +13,21 @@ import { withBootstrapRetry } from '@/views/auth/bootstrap-local-data'
 
 /**
  * web 数据面运行接线（C-66 / AC8 / AC9）
- * @description web 侧**只读离线镜像**的后台运行入口（web 无 desktop 的 `AppRoot`/`InitialSyncGate`）：
+ * @description web 侧**本地优先数据面**的后台运行入口（web 无 desktop 的 `AppRoot`/`InitialSyncGate`）：
  *              ① 注册回传触发源（`online` / 前台恢复 ⇒ 顺带重跑 `bootstrapLocalData`，C-61③）；
  *              ② 每个登录用户**首次进入时后台启动一次** `syncService.start()`，把远端数据拉入本地镜像
- *                 （拉取游标 / `mirrorPulledAt` / `mirrorTruncated` 由 T103 引擎与 `syncStatus` 落定）。
+ *                 （拉取游标 / `mirrorPulledAt` / `mirrorTruncated` 由 T103 引擎与 `syncStatus` 落定）；
+ *              ③ 注册本地写回传监听（`syncTracker.setDirtyListener` ⇒ `schedulePush`，PS-12）。
  *
- *              与读路径的分工：`@/hooks/usecases/binding` 保持**远端优先**、网络类失败回退本地镜像；
- *              本模块只负责**填充镜像**，不改变任何鉴权状态，也不触碰写路径
- *              （C-59：阶段一数据面不得产生 `markDirty`，UI 层禁写另由 T108 承担）。
+ *              **阶段二 2A 口径（ADR `2026-09-24-stage2-both-ends-local-first` §2.4 / §2.6）**：
+ *              业务 7 域 binding = 本地仓储（读写均本地优先；本地写经 `syncTracker.markDirty` 入
+ *              `syncQueue` 回传 ⇒ **`markDirty` 非 0 合法**，阶段一「web 业务恒 0」随 C-59 退场）；
+ *              身份域 `user` 仍远端直连（W5）。本模块只负责**填充镜像 + 回传触发**，不改变任何鉴权状态。
  *
  *              调用时机：`main.ts` 挂载后（`app.ts`）经路由 `afterEach` + `router.isReady()` 触发，
  *              保证 `bootstrapLocalData`（`checkAndCleanExpired`）**先于** `syncService.start()`（C-61 顺序）。
  * @see docs/adr/2026-09-23-web-offline-local-first-and-security-posture.md（C-60/C-66）
+ * @see docs/adr/2026-09-24-stage2-both-ends-local-first.md（§2.4 步骤 2 / §2.6 W5）
  */
 
 /** 回传触发源是否已注册（整应用生命周期一次） */

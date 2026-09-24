@@ -42,7 +42,9 @@ const props = withDefaults(
 
 const { status } = useSyncStatus()
 const { syncing: manualSyncing, run: runManualSync } = useManualSync()
-const { isReadOnly } = useReadOnlyState()
+// `read-only-state.ts` 为 ADR 保留项（兼服务身份域离线闸门 / 离线 UI 角标）；本面板消费的是
+// C-60 的「离线」判定（`resolveFreshness({ isOffline })`），非「业务只读」语义（业务 7 域 2A 已撤闸门）⇒ 别名
+const { isReadOnly: isOffline } = useReadOnlyState()
 
 /** 触顶文案 N：镜像中实际已加载行数（0 ⇒ 用通用文案，不编造数字） */
 const loadedCount = useMirrorLoadedCount()
@@ -71,7 +73,7 @@ const statusTheme = computed(() => {
 // @computed 镜像新鲜度（C-60 判定函数零改动）：'updated' | 'mirror' | 'incomplete'
 const freshness = computed(() =>
     resolveFreshness({
-        isOffline: isReadOnly.value,
+        isOffline: isOffline.value,
         mirrorPulledAt: status.value.mirrorPulledAt,
         mirrorTruncated: status.value.mirrorTruncated
     })

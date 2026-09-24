@@ -3,19 +3,23 @@ import { NueMessage } from 'nue-ui'
 import { isReadOnly } from './read-only-state'
 
 /**
- * 阶段一统一写闸门（C-59 / AC10）
- * @description 离线（只读）时，**统一**在用例装配层拦截写方法：不改仓储、不逐个改 UI 入口。
- *              写方法清单见 `write-methods.ts`（依据 `docs/reports/2026-09-23-DEF-PROBE-P1-offline-probes.md`
- *              §3.3，唯一真源；清单会随排查增补，**禁在本模块引硬计数**）。
+ * 离线写闸门（C-59 / AC10；阶段二 2A M6 后作用面收敛至身份域）
+ * @description 离线时在用例装配层拦截写方法：不改仓储、不逐个改 UI 入口。
+ *              **阶段二 2A M6 收敛**：业务 7 域已切本地优先（离线**可写**，经 `syncQueue` 回传）
+ *              ⇒ 现行**仅身份域 `user`** 经此闸门拦截（清单见 `write-methods.ts`；本组件与
+ *              `OFFLINE_READONLY` 均为 ADR §2.4 步骤 5 明列的**保留项**）。写方法清单依据
+ *              `docs/reports/2026-09-23-DEF-PROBE-P1-offline-probes.md` §3.3（阶段一历史真源；
+ *              清单会随排查增补，**禁在本模块引硬计数**）。
  *
  *              拦截语义：
  *              - 返回形态与原方法一致（`'error'` = `GoError` 直返；`'tuple'` = `[null, GoError]`），
  *                使既有调用方（handler / adapter / composable）无需改动即可收到「离线只读」错误；
  *              - 同时弹**可见提示**（`NueMessage.warning`），覆盖调用方静默丢弃返回值的入口（DEF-17）；
- *              - 不调用原方法 ⇒ 仓储零写入 ⇒ **不产生 `markDirty`**（C-59）。
+ *              - 不调用原方法 ⇒ 仓储零写入 ⇒ **不产生 `markDirty`**（离线身份写不落队列）。
  *
  *              离线只读错误码为稳定字符串（`OFFLINE_READONLY`），调用方**不得**依赖文案判定。
- * @see docs/adr/2026-09-23-web-offline-local-first-and-security-posture.md（C-59）
+ * @see docs/adr/2026-09-23-web-offline-local-first-and-security-posture.md（C-59 r10）
+ * @see docs/adr/2026-09-24-stage2-both-ends-local-first.md（§2.4 步骤 5 / §2.6 W5）
  */
 
 /** 离线只读错误码（稳定标识；不随文案变化） */
