@@ -14,6 +14,9 @@ import {
     type ConflictJournalEntry,
     type MetaRecord
 } from '../persistence-local/db/local-database'
+import { findConflictEntity } from './conflict-entity-registry'
+import { nowCalibratedIso } from './sync-config'
+import { syncTracker } from './sync-tracker'
 
 export type { ConflictJournalEntry }
 
@@ -58,7 +61,8 @@ export const appendConflict = async (
     input: ConflictJournalInput
 ): Promise<number> => {
     if (!userId) return 0
-    const entries = await loadConflictJournal(userId)
+    const record = await localDatabase.meta.get(conflictJournalId(userId))
+    const entries = record?.conflictJournal ?? []
     const entry: ConflictJournalEntry = {
         kind: input.kind,
         table: input.table,
@@ -69,9 +73,14 @@ export const appendConflict = async (
         at: new Date().toISOString()
     }
     const next = [...entries, entry].slice(-CONFLICT_JOURNAL_LIMIT)
+    // R-15：环形淘汰累计计数（与 journal 同一 meta 记录的**同一次** RMW ⇒ 无第二处写点，
+    // 天然处于调用方（pull/push 锁内）的同一临界区）
+    const evicted = entries.length + 1 - CONFLICT_JOURNAL_LIMIT
+    const evictedCount = (record?.conflictJournalEvictedCount ?? 0) + (evicted > 0 ? evicted : 0)
     await localDatabase.meta.put({
         id: conflictJournalId(userId),
-        conflictJournal: next
+        conflictJournal: next,
+        conflictJournalEvictedCount: evictedCount
     } satisfies MetaRecord)
     return next.length
 }
@@ -84,8 +93,7 @@ export const clearConflictJournal = async (userId: string): Promise<void> => {
 
 // ---------------------------------------------------------------------------
 // T165 / W3 —— 冲突解决 UX API（ADR §9.2）
-// 第一段（T165-api）：导出签名 + 类型 + 最小实现；第二段：`compareConflict` /
-// `resolveConflictRetryLocal` 落地（需「表名 → 本地表 / 转换器」映射）。
+// 第二段：列表/对比/两种恢复动作 + 折叠信号（`folded` / `foldedReason`）。
 // ---------------------------------------------------------------------------
 
 /** 折叠提示阈值（journal 达此条数 ⇒ UI 提示「更早冲突已折叠」；≤ `CONFLICT_JOURNAL_LIMIT`） */
@@ -97,9 +105,6 @@ const SNAPSHOT_KINDS: ReadonlySet<ConflictJournalEntry['kind']> = new Set([
     'push-noop',
     'stale'
 ])
-
-/** T165 第一段占位：消费参数以免 lint 未使用告警（第二段落地后移除） */
-const pendingConflictApi = (...args: unknown[]): number => args.length
 
 /** 冲突列表项（UI 渲染用；只读快照） */
 export interface ConflictListItem {
@@ -118,8 +123,10 @@ export interface ConflictListItem {
 /** 冲突列表结果（含折叠信号） */
 export interface ConflictListResult {
     items: ConflictListItem[]
-    /** 折叠信号：journal 已达折叠阈值（更早冲突可能已被环形淘汰） */
+    /** 折叠信号：`foldedReason !== null`（= 已达上限 或 曾淘汰） */
     folded: boolean
+    /** 折叠原因：`'limit'` = 达 `CONFLICT_FOLD_HINT_THRESHOLD`；`'evicted'` = 曾淘汰过；皆否 ⇒ `null` */
+    foldedReason: 'limit' | 'evicted' | null
 }
 
 /** 只读字段级差异（仅展示，不自动合并） */
@@ -148,14 +155,19 @@ export interface ConflictResolutionResult {
     remaining: number
 }
 
-/** 落盘整份 journal（**直连 meta，不触发 `markDirty`**；供恢复动作删条） */
+/** 落盘整份 journal（**直连 meta，不触发 `markDirty`**；供恢复动作删条）
+ * @description **保留**淘汰累计计数（纯追加字段，不因删条归零） */
 const saveConflictJournal = async (
     userId: string,
     entries: ConflictJournalEntry[]
 ): Promise<void> => {
+    const record = await localDatabase.meta.get(conflictJournalId(userId))
     await localDatabase.meta.put({
         id: conflictJournalId(userId),
-        conflictJournal: entries
+        conflictJournal: entries,
+        ...(record?.conflictJournalEvictedCount === undefined
+            ? {}
+            : { conflictJournalEvictedCount: record.conflictJournalEvictedCount })
     } satisfies MetaRecord)
 }
 
@@ -173,27 +185,78 @@ const toConflictListItem = (entry: ConflictJournalEntry): ConflictListItem => ({
 
 /**
  * 列表：读冲突记账（含折叠信号）—— 供冲突列表 UI 渲染
- * @returns `items` 按记账顺序（末尾最新）；`folded` = 条数达 `CONFLICT_FOLD_HINT_THRESHOLD`
+ * @returns `items` 按记账顺序（末尾最新）；`folded`/`foldedReason` 区分「已达上限」与「曾淘汰」
  */
 export const listConflicts = async (userId: string): Promise<ConflictListResult> => {
-    const entries = await loadConflictJournal(userId)
+    if (!userId) return { items: [], folded: false, foldedReason: null }
+    const record = await localDatabase.meta.get(conflictJournalId(userId))
+    const entries = record?.conflictJournal ?? []
+    const evicted = (record?.conflictJournalEvictedCount ?? 0) > 0
+    const atLimit = entries.length >= CONFLICT_FOLD_HINT_THRESHOLD
     return {
         items: entries.map(toConflictListItem),
-        folded: entries.length >= CONFLICT_FOLD_HINT_THRESHOLD
+        folded: evicted || atLimit,
+        foldedReason: evicted ? 'evicted' : atLimit ? 'limit' : null
     }
 }
 
+/** 深比较（数组/对象按 JSON 比较；`undefined`/缺失 视为不相等） */
+const valuesEqual = (a: unknown, b: unknown): boolean => {
+    if (a === b) return true
+    if (a === null || b === null || a === undefined || b === undefined) return false
+    if (typeof a !== 'object' || typeof b !== 'object') return false
+    try {
+        return JSON.stringify(a) === JSON.stringify(b)
+    } catch {
+        return false
+    }
+}
+
+/** 逐字段差异（**仅差异**入列；任一侧缺失时以 `null` 呈现） */
+const diffFields = (
+    loser: Record<string, unknown> | null,
+    current: Record<string, unknown> | null
+): ConflictFieldDiff[] => {
+    const fields = new Set([...Object.keys(loser ?? {}), ...Object.keys(current ?? {})])
+    const diffs: ConflictFieldDiff[] = []
+    for (const field of fields) {
+        const loserValue = loser ? (loser[field] ?? null) : null
+        const currentValue = current ? (current[field] ?? null) : null
+        if (!valuesEqual(loserValue, currentValue)) {
+            diffs.push({ field, loser: loserValue, current: currentValue })
+        }
+    }
+    return diffs
+}
+
+/** 取该实体**最新**一条 journal 条目（末尾最新） */
+const latestEntry = (
+    entries: ConflictJournalEntry[],
+    table: string,
+    entityId: string
+): ConflictJournalEntry | undefined =>
+    [...entries].reverse().find((entry) => entry.table === table && entry.entityId === entityId)
+
 /**
  * 只读对比：`table:entityId` 的败方快照 vs 本地当前行（字段级差异仅展示，不自动合并）
- * @description **T165 第一段：签名占位（返回 `null`）**；第二段落地（需表名 → 本地表映射）。
+ * @returns 无该条目 ⇒ `null`；本地当前行缺失 ⇒ `current: null`（不抛错、不臆造结论）
  */
 export const compareConflict = async (
     userId: string,
     table: string,
     entityId: string
 ): Promise<ConflictComparison | null> => {
-    pendingConflictApi(userId, table, entityId)
-    return null
+    if (!userId) return null
+    const entry = latestEntry(await loadConflictJournal(userId), table, entityId)
+    if (!entry) return null
+    const loser = SNAPSHOT_KINDS.has(entry.kind) ? entry.loser : null
+    const config = findConflictEntity(table)
+    let current: Record<string, unknown> | null = null
+    if (config) {
+        const record = await config.getRecord(entityId)
+        if (record) current = await config.recordToEntity(record)
+    }
+    return { table, entityId, loser, current, diffs: diffFields(loser, current) }
 }
 
 /**
@@ -216,13 +279,30 @@ export const resolveConflictKeepServer = async (
 /**
  * 恢复动作 B「以我的版本重试」：败方快照写回本地表（`updatedAt` = 服务端校准 now）+ `markDirty`
  * ⇒ 下轮 push 以**新 base**（当前服务端版本）重推；仍不匹配 ⇒ 再次 journal（不死循环）
- * @description **T165 第一段：签名占位（返回 `ok:false`）**；第二段落地（需表名 → 本地表/转换器映射）。
+ * @description 缺「表名 → 本地表/转换器」映射 ⇒ 显式失败（`ok:false`）且**不吞条目**（`remaining` = 现有条数）；
+ *              成功后删除该实体**全部** journal 条目（动作 A/B 对称）。
  */
 export const resolveConflictRetryLocal = async (
     userId: string,
     table: string,
     entityId: string
 ): Promise<ConflictResolutionResult> => {
-    pendingConflictApi(userId, table, entityId)
-    return { ok: false, remaining: 0 }
+    if (!userId) return { ok: false, remaining: 0 }
+    const entries = await loadConflictJournal(userId)
+    const config = findConflictEntity(table)
+    if (!config) return { ok: false, remaining: entries.length }
+    const entry = latestEntry(entries, table, entityId)
+    if (!entry || !SNAPSHOT_KINDS.has(entry.kind)) {
+        return { ok: false, remaining: entries.length }
+    }
+    // 败方作为一次**新的本地写**：`updatedAt` = 服务端校准 now；`putRecord` 保留当前 base
+    const updatedAt = nowCalibratedIso()
+    const record = await config.entityToRecord({ ...entry.loser, updatedAt }, userId)
+    await config.putRecord(record)
+    await syncTracker.markDirty(table, entityId, 'upsert', updatedAt)
+    const remaining = entries.filter(
+        (candidate) => candidate.table !== table || candidate.entityId !== entityId
+    )
+    await saveConflictJournal(userId, remaining)
+    return { ok: true, remaining: remaining.length }
 }

@@ -205,6 +205,8 @@ export interface MetaRecord {
     preferenceQueue?: PreferenceQueueItem[]
     /** 冲突记账（PS-14/DP-1；仅 `${userId}:conflict-journal` 记录携带，非索引字段 ⇒ 不触 C-44） */
     conflictJournal?: ConflictJournalEntry[]
+    /** 冲突记账环形淘汰累计计数（T165/R-15；非索引字段 ⇒ 不触 C-44） */
+    conflictJournalEvictedCount?: number
 }
 
 /**

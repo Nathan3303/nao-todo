@@ -24,6 +24,8 @@ import {
 import { railBottomHost } from '@/components/app/aside-v2/rail-host'
 import { open as settingsDialogOpen } from '@/components/settings/dialog/state'
 import { useManualSync, useMirrorLoadedCount, useSyncStatus } from '@/hooks'
+import ConflictList from './conflict-list.vue'
+import { CONFLICT_JOURNAL_LIMIT } from '@nao-todo/infrastructure/src/persistence-sync/conflict-journal'
 
 defineOptions({ name: 'SyncStatusBar' })
 
@@ -54,6 +56,9 @@ const panelOpen = ref(false)
 
 // @state 下拉实例（C11 设置对话框开启时收起；C16 焦点归还时定位轨道按钮）
 const dropdownRef = ref<InstanceType<typeof NueDropdown> | null>(null)
+
+// @state 冲突列表展开（T165/W3：入口可交互；数据面经 ConflictList → useConflictUx）
+const conflictOpen = ref(false)
 
 // @computed 同步中（含手动触发）
 const syncing = computed(() => status.value.syncing || manualSyncing.value)
@@ -260,13 +265,27 @@ watch(
                     {{ t('sync.preferenceFailed', { count: status.preferenceFailedCount }) }}
                 </nue-text>
             </li>
-            <!-- PS-14 / DP-1：冲突记账条数（独立于业务 pending/failed 计数；本行只读展示计数，
-                 冲突对比与恢复 UX 属 2B，不在此提供交互）。
-                 warning 色：冲突为 LWW **已收敛**的结果事件（非同步失败；败方快照已入 journal），
-                 与 `paused`（离线/超限）同属「状态性、需知情但非失败」⇒ 不用 error 色 -->
+            <!-- PS-14 / DP-1 + T165/W3：冲突记账条数入口（可交互 ⇒ 展开冲突列表：
+                 只读对比 + 两种恢复动作）；warning 色：冲突为 LWW **已收敛**的结果事件
+                 （非同步失败；败方快照已入 journal），与 `paused` 同属「状态性、需知情但非失败」 -->
             <li v-if="status.conflictCount > 0" class="sync-panel__row">
-                <nue-text size="xs" color="var(--nue-warning-color-60)">
+                <nue-button
+                    class="sync-conflict-entry"
+                    theme="pure,small"
+                    :aria-expanded="conflictOpen"
+                    @click="conflictOpen = !conflictOpen"
+                >
                     {{ t('sync.conflict', { count: status.conflictCount }) }}
+                </nue-button>
+            </li>
+            <!-- T165/W3：冲突列表/只读对比/恢复动作（弹层内展开；数据面经 useConflictUx） -->
+            <li v-if="conflictOpen" class="sync-panel__row">
+                <ConflictList />
+            </li>
+            <!-- DP-2B-5 / R-15：达上限 ⇒ 面板级折叠提示（未展开列表亦可见） -->
+            <li v-if="status.conflictCount >= CONFLICT_JOURNAL_LIMIT" class="sync-panel__row">
+                <nue-text size="xs" color="var(--nue-warning-color-60)">
+                    {{ t('sync.conflict.foldLimit') }}
                 </nue-text>
             </li>
             <!-- 全文仅经 title 与文本插值输出（禁 v-html）；2 行截断由 CSS 完成；
