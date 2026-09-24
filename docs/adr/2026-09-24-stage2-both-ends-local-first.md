@@ -18,7 +18,7 @@
 | **Q1** | **冲突解决策略**      | **沿用 LWW（服务端权威、per-row）**，**不引入版本向量 / 字段级合并**（过度设计）。⚠️ **关键更正：per-row LWW 服务端已实现**（`DecideUpsert`），**无需新增版本标记**；真正缺口 = ① **时间基准**（客户端 `updatedAt` 未按服务端校准，`SERVER_TIME_OFFSET_KEY` 只写不读 ⇒ 死代码）② **覆盖不可观测**（静默丢败方）。⇒ **2A = 校准时间基准 + 冲突记账（含败方快照）**；**2B = 升级为服务端签发 per-row 版本 + 客户端回传 base 版本（OCC）**，彻底去掉客户端时钟依赖。**`T141`（偏好面 per-row LWW）不是阶段二业务数据面的前置**（业务面已有 per-row 机制）。 |
 | **Q2** | **回传机制**          | **复用业务 `syncQueue`**（不新建业务队列）。web 写路径切本地仓储后**自动** `markDirty` ⇒ 零新管线。**`markDirty` / `pendingCount` 新语义**：web 业务 `markDirty` **不再恒 0**，改为「**有未确认本地写 ⇒ 非 0**」，`pendingCount = countDirty`（按实体去重），**成功同步后回 0**。**偏好面继续走独立偏好队列**（合成主键不兼容批量 upsert，PS-1/PS-10 不变）。                                                                                                                                                                                            |
 | **Q3** | **迁移方案**          | **无数据迁移**（web 本地库与 desktop 同表同仓储，**不改 Dexie version、不加索引**）。切换 = **binding 换本地仓储 + 撤闸门 + 补 dirty 监听**。存量只读镜像**天然合法**（无 `syncQueue` 项 = 远端权威，下次 pull 覆盖）。**desktop 零改动**。**回滚路径**：回退 binding + 重挂闸门；回滚前 best-effort `pushAll()` 冲刷，未冲刷项保留在 `syncQueue`（未来 local-first 版本可续推）。                                                                                                                                                                       |
-| **Q4** | **C-59 撤销路径**     | **分步退役**：① binding 换本地（业务）② 补 `syncTracker.setDirtyListener`（web 当前**缺失**）③ 撤 `decorateUseCase` 写闸门 ④ **写闸门组件退役**（`withReadOnlyGuard` / `OFFLINE_READONLY` / `write-methods`），**`isReadOnly` 保留**（离线 UI 角标 / `offlineEntry` flag 生命周期仍需要）⑤ `markDirty` 语义切换 + 文档/测试口径同步。**顺序不可颠倒**（先换写路径再撤闸门，否则出现无闸门的远端直连写窗口）。                                                                                                                                            |
+| **Q4** | **C-59 撤销路径**     | **分步退役**：① binding 换本地（业务）② 补 `syncTracker.setDirtyListener`（web 当前**缺失**）③ 撤 `decorateUseCase` 写闸门 ④ **写闸门作用面收敛至身份域**（业务 7 域条目退役；**`withReadOnlyGuard` / `OFFLINE_READONLY` / `write-methods`（身份域条目）/ `isReadOnly` 保留** —— 服务身份域 + 离线 UI 角标 / `offlineEntry` flag 生命周期）⑤ `markDirty` 语义切换 + 文档/测试口径同步。**顺序不可颠倒**（先换写路径再撤闸门，否则出现无闸门的远端直连写窗口）。                                                                                          |
 | **Q5** | **回归矩阵**          | **6 大项逐项给出「如何不回归 + 验证方式 + 守护测试 + Owner」**（见 §2.5）。核心控制 = **阶段一功能不依赖业务写路径语义**（只依赖：镜像表 / 迁移器 / 清库 / 明文接缝 / 状态面 / 偏好队列），而本单**只改业务写路径接线** ⇒ 回归面天然隔离；再加**绑定级断言**（web 仓储类型 + 闸门存在性）。                                                                                                                                                                                                                                                              |
 | **Q6** | **分期建议（2A/2B）** | **2A**：web 业务写路径切本地（**按域推进**：任务 → 子实体 → 容器 → 番茄）+ 队列复用 + dirty 监听 + 时间校准 + 冲突记账 + 撤闸门 + web 首拉门；**零/极小服务端改动**（仅 `SyncResult` 增 `Outcome`，additive）。**2B**：OCC per-row 版本（去时钟依赖）+ 冲突解决 UX（journal 恢复）+ 多标签 push 协调硬化 + 偏好面 `T141`/`DP-5` 收口 + 迁移优化。                                                                                                                                                                                                        |
 
@@ -157,21 +157,21 @@
 
 **顺序（不可颠倒）**：
 
-| 步  | 动作                                                                                                                             | 为何在此序                                                   |
-| :-- | :------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------- |
-| 1   | **binding 业务仓储换本地**（7 域）                                                                                               | 先具备本地写能力                                             |
-| 2   | **补 web dirty 监听**（`setDirtyListener` + `schedulePush`）                                                                     | 否则本地写**永不回传**（当前 web 缺失，§1.3）                |
-| 3   | **撤 `decorateUseCase` 写闸门**（web binding 不再注入 `withReadOnlyGuard`）                                                      | 闸门必须在写路径就绪后撤，否则出现「无闸门的远端直连写」窗口 |
-| 4   | **`markDirty` 语义切换 + 口径同步**（C-59/AC10/PRD/AGENTS.md/测试断言）                                                          | 与步骤 3 同批，避免「闸门已撤、不变量未改」的验证空窗        |
-| 5   | **写闸门组件退役**（`withReadOnlyGuard` / `OFFLINE_READONLY_ERROR` / `write-methods.ts` / 相关测试）                             | **先停用、后删除**（跨一个发布周期，避免不可逆删错）         |
-| 6   | **C-59 / C-66 条款修订**（r10：作用域=业务数据面**阶段一**；C-66「web 不得接本地写仓储」→「阶段二业务面 web **接**本地写仓储」） | 条款是文档事实源，必须与实现同步                             |
+| 步  | 动作                                                                                                                                                           | 为何在此序                                                                                     |
+| :-- | :------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------- |
+| 1   | **binding 业务仓储换本地**（7 域）                                                                                                                             | 先具备本地写能力                                                                               |
+| 2   | **补 web dirty 监听**（`setDirtyListener` + `schedulePush`）                                                                                                   | 否则本地写**永不回传**（当前 web 缺失，§1.3）                                                  |
+| 3   | **撤 `decorateUseCase` 写闸门**（web binding 不再注入 `withReadOnlyGuard`）                                                                                    | 闸门必须在写路径就绪后撤，否则出现「无闸门的远端直连写」窗口                                   |
+| 4   | **`markDirty` 语义切换 + 口径同步**（C-59/AC10/PRD/AGENTS.md/测试断言）                                                                                        | 与步骤 3 同批，避免「闸门已撤、不变量未改」的验证空窗                                          |
+| 5   | **业务域闸门条目退役**（`write-methods.ts` 业务 7 域条目删除；**`withReadOnlyGuard` / `OFFLINE_READONLY_ERROR` / `isReadOnly` 保留**以服务身份域，见 §2.6 W5） | 与步骤 3 同批（避免残留空转闸门）；**闸门作用面收敛至身份域**（原「组件停用→删除」**不成立**） |
+| 6   | **C-59 / C-66 条款修订**（r10：作用域=业务数据面**阶段一**；C-66「web 不得接本地写仓储」→「阶段二业务面 web **接**本地写仓储」）                               | 条款是文档事实源，必须与实现同步                                                               |
 
 **保留项（不得删）**：
 
-- `isReadOnly` / `read-only-state.ts`：仍供**离线 UI 角标**与 `offlineEntry` flag 生命周期（`offline-read-only.ts`）使用 ⇒ **只退役「写拦截」语义**。
+- `isReadOnly` / `read-only-state.ts`：仍供**离线 UI 角标**与 `offlineEntry` flag 生命周期（`offline-read-only.ts`）使用 ⇒ **写拦截语义保留（服务身份域）**；**仅业务域不再受其约束**（见 §2.6 W5）。
 - `sync-status-bar.vue` 的离线/镜像/触顶展示（C-60）不变。
-- `OFFLINE_READONLY` 退役前须确认**零调用方依赖**（当前仅 `write-gate.ts` 定义 + 测试 + `write-methods` 清单）⇒ 退役安全。
-- **`signOut` / 登出清库 / 迁移 / 离线进入 / 镜像读取** 从不受闸门约束（`write-methods.ts:81` 已排除 `signOut`）⇒ 退役后行为不变。
+- `OFFLINE_READONLY` **保留**（服务身份域离线拦截，见 §2.6 W5）；其调用方 = `write-gate.ts` 定义 + 测试 + `write-methods.ts` **身份域条目** ⇒ **不得整体删除**。
+- **`signOut` / 登出清库 / 迁移 / 离线进入 / 镜像读取** 从不受闸门约束（`write-methods.ts:81` 已排除 `signOut`）⇒ 作用面收敛后行为不变。
 
 ### 2.5 D-5 回归矩阵（阶段一功能逐项「如何保证不回归」）
 
@@ -216,7 +216,13 @@
 | **W4** | **番茄**（#19 记录 / #20 常用番茄）                   | `POMODORO_RECORD_WRITE_METHODS` / `POMODORO_WRITE_METHODS`                          | 追加型、低风险、无级联 ⇒ 最后                                                                                                              | rd-fe |
 | **W5** | **身份**（#23 外观 / #24 昵称密码头像会话）           | `USER_WRITE_METHODS`（**保持远端直连**，不切本地）                                  | 身份域**不在**业务同步（`SYNC_TABLES` 无 users/userConfigs）；#23 已由 TASK-26 偏好面接管；#24 与 desktop 同口径（远端直连、离线失败可见） | rd-fe |
 
-> **W5 说明**：`USER_WRITE_METHODS` 退役后不再拦截，离线身份写将**远端失败 + toast**（与 desktop 一致）；**不是** local-first（用户域不在业务数据面）。
+> **W5 说明（r2 修订，2026-09-24，依据 PM 拍板 S14=(a)）**：`USER_WRITE_METHODS` **保留**为 web 离线写闸门的**唯一条目** —— **身份域保留离线写闸门**：**离线身份写 = 写前拦停 + 明确提示**（`OFFLINE_READONLY` + `NueMessage.warn`）；**desktop** 同场景 = **远端失败 toast**；**两者均属「可见失败」—— PS-13 只要求「可见」、不要求形态一致**。**不是** local-first（用户域不在业务数据面，不切本地）。
+>
+> **PM 拍板 S14=(a) 的四条理由（原样留档）**：① **低 churn 且已实现已验证** —— (b) 需回改 C-59 r10 残留句 + 删 `USER_WRITE_METHODS` + 重跑闸门/绑定级断言；现有实现 `b4960a4d` 已自验。② **与阶段一 web「离线明确告知」姿态一致** —— 离线身份写在**写之前**被明确拦停（`OFFLINE_READONLY` + 提示），优于「发出去再 toast 失败」；desktop 同场景为远端失败 toast ⇒ **两者均属可见失败，PS-13 只要求「可见」不要求形态一致**。③ **不构成「两端同构」违约** —— 身份域本就不在业务数据面（W5 = 保持远端直连、不切本地），local-first 同构只约束业务 7 域。④ **保留项本就是身份域用途**（`withReadOnlyGuard` / `OFFLINE_READONLY_ERROR` / `isReadOnly` / `read-only-state.ts`）⇒ 删表项不减基建，收益仅「形式统一」，代价是可见性略降。
+>
+> **⭐ 核验结论（按域核验、非假信号）**：业务 7 域**无**「离线只读 / 禁用」假信号 —— `isReadOnly` / `useReadOnlyState` 消费方**仅** ① `packages/presentation/offline/write-gate.ts` 内部（现仅包装 `USER_WRITE_METHODS`）② `apps/web/src/components/sync/sync-status-bar.vue`（`isReadOnly` → `resolveFreshness({ isOffline })`，驱动**数据新鲜度**文案/角标，离线时恒正确、与可否写无关）；**无任何 UI 把 `isReadOnly` 接 `disabled` / 只读文案**；`offline.readOnlyBanner` 为**死键**（零消费者）；desktop 不调 `startReadOnlyWatch`、binding 无 `decorateUseCase` ⇒ 零影响。**方法** = 全仓 grep + codegraph 影响面核对（证据见 `T151` 回执）。
+>
+> **双向互记**：本条 ↔ `docs/adr/2026-09-23-web-offline-local-first-and-security-posture.md` **C-59 r10「现行口径」块**（§10.11 一）；两条口径以本篇 **S14=(a)** 为准。
 
 **2B 边界**（"精细化冲突 + 迁移优化"）：
 
@@ -263,17 +269,17 @@
 
 ## 5. 分阶段里程碑（实施顺序）
 
-| 阶段   | 内容                                                                                      | Owner                | 依赖    |
-| :----- | :---------------------------------------------------------------------------------------- | :------------------- | :------ |
-| **M0** | PM 拍板 DP-1…DP-4 + PRD 口径修订（§5 业务规则 / AC / 范围）+ C-59·C-66 修订定稿           | PM                   | 本 ADR  |
-| **M1** | 服务端（**仅**）：`SyncResult.Outcome` additive 字段 + 测试（**若 DP-2 = 纳入**）         | rd-be                | M0      |
-| **M2** | 客户端基础件：`getServerTimeOffset` 接线（PS-15）+ 冲突 journal（存储/写入点/计数/UI 行） | rd-fe                | M0      |
-| **M3** | web 首拉门（PS-16）+ dirty 监听接线（`setDirtyListener` + push 单主）                     | rd-fe                | M0      |
-| **M4** | **W1 任务域**：binding 换本地 + 撤该域闸门 + 回归                                         | rd-fe                | M2/M3   |
-| **M5** | **W2/W3/W4**：子实体 / 容器 / 番茄逐波切换 + 回归                                         | rd-fe                | M4      |
-| **M6** | 闸门组件退役（停用→删除）+ C-59/C-66 条款 r10 + `markDirty` 口径全量同步                  | rd-fe / PM           | M4/M5   |
-| **M7** | 回归：§2.5 矩阵逐项 + 全范围门禁 8 项 + 移动端 0                                          | qa                   | M1–M6   |
-| **2B** | OCC per-row 版本 + 冲突 UX + 多标签协调 + `T141`/`DP-5` 收口 + 迁移优化                   | rd-fe / rd-be / arch | 2A 发布 |
+| 阶段   | 内容                                                                                                                                       | Owner                | 依赖    |
+| :----- | :----------------------------------------------------------------------------------------------------------------------------------------- | :------------------- | :------ |
+| **M0** | PM 拍板 DP-1…DP-4 + PRD 口径修订（§5 业务规则 / AC / 范围）+ C-59·C-66 修订定稿                                                            | PM                   | 本 ADR  |
+| **M1** | 服务端（**仅**）：`SyncResult.Outcome` additive 字段 + 测试（**若 DP-2 = 纳入**）                                                          | rd-be                | M0      |
+| **M2** | 客户端基础件：`getServerTimeOffset` 接线（PS-15）+ 冲突 journal（存储/写入点/计数/UI 行）                                                  | rd-fe                | M0      |
+| **M3** | web 首拉门（PS-16）+ dirty 监听接线（`setDirtyListener` + push 单主）                                                                      | rd-fe                | M0      |
+| **M4** | **W1 任务域**：binding 换本地 + 撤该域闸门 + 回归                                                                                          | rd-fe                | M2/M3   |
+| **M5** | **W2/W3/W4**：子实体 / 容器 / 番茄逐波切换 + 回归                                                                                          | rd-fe                | M4      |
+| **M6** | **闸门作用面收敛至身份域**（组件与 `OFFLINE_READONLY` **保留**；原「停用→删除」**不成立**）+ C-59/C-66 条款 r10 + `markDirty` 口径全量同步 | rd-fe / PM           | M4/M5   |
+| **M7** | 回归：§2.5 矩阵逐项 + 全范围门禁 8 项 + 移动端 0                                                                                           | qa                   | M1–M6   |
+| **2B** | OCC per-row 版本 + 冲突 UX + 多标签协调 + `T141`/`DP-5` 收口 + 迁移优化                                                                    | rd-fe / rd-be / arch | 2A 发布 |
 
 ---
 
@@ -281,21 +287,21 @@
 
 > 本评审**改变/更正既有结论**，以下文档与代码须同步（禁只改一处）。
 
-| #   | 文件 / 位置                                                                                                           | Owner      | 须同步内容                                                                                                           |
-| :-- | :-------------------------------------------------------------------------------------------------------------------- | :--------- | :------------------------------------------------------------------------------------------------------------------- |
-| S1  | `docs/adr/2026-09-23-web-offline-local-first-and-security-posture.md`（C-59 / C-66 / 变更记录 r10）                   | arch / PM  | C-59 作用域加「阶段一」限定 + 指向本篇；**C-66「web 不得接本地写仓储」→「阶段二业务面 web 接本地写仓储」**；追加 r10 |
-| S2  | `docs/prds/2026-09-23-stage2-local-first-both-ends.md`（§5/§7 AC/§17）                                                | PM         | 冲突策略（LWW + 时间校准 + journal）、回传（复用 `syncQueue`）、`markDirty` 新语义、首拉门、分期 2A/2B               |
-| S3  | `docs/prds/2026-09-23-web-offline-stage1.md`（AC10 / 不变量 ④）                                                       | PM         | 「web 业务 `markDirty` 恒 0」标注为**阶段一**口径；补新不变量指针                                                    |
-| S4  | `AGENTS.md`（项目红线 / 门禁口径）                                                                                    | PM         | 若新增守卫（绑定级断言 / 冲突 journal）则补；`markDirty` 口径更新                                                    |
-| S5  | `apps/web/src/hooks/usecases/binding.ts`                                                                              | rd-fe      | 业务仓储 `withMirrorFallback` → `newLocal*Repository()`；移除 `decorateUseCase`（写闸门）                            |
-| S6  | `apps/web/src/data-plane.ts`                                                                                          | rd-fe      | 补 `syncTracker.setDirtyListener(() => syncService.schedulePush())`；首拉门接线；push 单主                           |
-| S7  | `packages/presentation/offline/{write-gate,write-methods}.ts`                                                         | rd-fe      | 先停用后删除；保留 `read-only-state.ts`（UI/flag）                                                                   |
-| S8  | `packages/infrastructure/src/persistence-sync/sync-config.ts` + 本地仓储（`repos/*-repo-impl.ts`）                    | rd-fe      | 接线 `getServerTimeOffset`；本地写 `updatedAt` 用校准时间（PS-15）                                                   |
-| S9  | `packages/infrastructure/src/persistence-sync/{sync-service,sync-status}.ts` + `db/local-database.ts`                 | rd-fe      | 冲突 journal 写入点/存储/计数（`meta` 纯追加字段）；`SyncResult.Outcome` 消费                                        |
-| S10 | `nao-todo-server`：`interfaces/types/sync.go` + `interfaces/controllers/sync.go` + `domain/types/upsert.go`           | rd-be      | `SyncResult` 增 `Outcome`（applied/noop/conflict，additive）；**不改既有 LWW 语义**                                  |
-| S11 | 测试：`apps/web/src/hooks/usecases/__tests__/write-gate-wiring.test.ts` + `packages/presentation/offline/__tests__/*` | rd-fe / qa | 闸门测试 → 接线断言；新增冲突 journal / 时间校准 / 首拉门用例                                                        |
-| S12 | `docs/tasks-state.md` + `docs/reports/defect-pool.md`                                                                 | PM         | `T142` 结论 + `T141`/`DP-5` 与 2B 关系；标签偏好非 local-first 登记                                                  |
-| S13 | `docs/adr/README.md`                                                                                                  | arch       | 本篇索引行 + 篇间关系（↔ C-59 / TASK-26）                                                                            |
+| #   | 文件 / 位置                                                                                                           | Owner      | 须同步内容                                                                                                                            |
+| :-- | :-------------------------------------------------------------------------------------------------------------------- | :--------- | :------------------------------------------------------------------------------------------------------------------------------------ |
+| S1  | `docs/adr/2026-09-23-web-offline-local-first-and-security-posture.md`（C-59 / C-66 / 变更记录 r10）                   | arch / PM  | C-59 作用域加「阶段一」限定 + 指向本篇；**C-66「web 不得接本地写仓储」→「阶段二业务面 web 接本地写仓储」**；追加 r10                  |
+| S2  | `docs/prds/2026-09-23-stage2-local-first-both-ends.md`（§5/§7 AC/§17）                                                | PM         | 冲突策略（LWW + 时间校准 + journal）、回传（复用 `syncQueue`）、`markDirty` 新语义、首拉门、分期 2A/2B                                |
+| S3  | `docs/prds/2026-09-23-web-offline-stage1.md`（AC10 / 不变量 ④）                                                       | PM         | 「web 业务 `markDirty` 恒 0」标注为**阶段一**口径；补新不变量指针                                                                     |
+| S4  | `AGENTS.md`（项目红线 / 门禁口径）                                                                                    | PM         | 若新增守卫（绑定级断言 / 冲突 journal）则补；`markDirty` 口径更新                                                                     |
+| S5  | `apps/web/src/hooks/usecases/binding.ts`                                                                              | rd-fe      | 业务仓储 `withMirrorFallback` → `newLocal*Repository()`；移除 `decorateUseCase`（写闸门）                                             |
+| S6  | `apps/web/src/data-plane.ts`                                                                                          | rd-fe      | 补 `syncTracker.setDirtyListener(() => syncService.schedulePush())`；首拉门接线；push 单主                                            |
+| S7  | `packages/presentation/offline/{write-gate,write-methods}.ts`                                                         | rd-fe      | 业务 7 域条目删除（`write-methods.ts`）；**保留** `write-gate.ts` / `OFFLINE_READONLY` / `read-only-state.ts`（服务身份域 + UI/flag） |
+| S8  | `packages/infrastructure/src/persistence-sync/sync-config.ts` + 本地仓储（`repos/*-repo-impl.ts`）                    | rd-fe      | 接线 `getServerTimeOffset`；本地写 `updatedAt` 用校准时间（PS-15）                                                                    |
+| S9  | `packages/infrastructure/src/persistence-sync/{sync-service,sync-status}.ts` + `db/local-database.ts`                 | rd-fe      | 冲突 journal 写入点/存储/计数（`meta` 纯追加字段）；`SyncResult.Outcome` 消费                                                         |
+| S10 | `nao-todo-server`：`interfaces/types/sync.go` + `interfaces/controllers/sync.go` + `domain/types/upsert.go`           | rd-be      | `SyncResult` 增 `Outcome`（applied/noop/conflict，additive）；**不改既有 LWW 语义**                                                   |
+| S11 | 测试：`apps/web/src/hooks/usecases/__tests__/write-gate-wiring.test.ts` + `packages/presentation/offline/__tests__/*` | rd-fe / qa | 闸门测试 → 接线断言；新增冲突 journal / 时间校准 / 首拉门用例                                                                         |
+| S12 | `docs/tasks-state.md` + `docs/reports/defect-pool.md`                                                                 | PM         | `T142` 结论 + `T141`/`DP-5` 与 2B 关系；标签偏好非 local-first 登记                                                                   |
+| S13 | `docs/adr/README.md`                                                                                                  | arch       | 本篇索引行 + 篇间关系（↔ C-59 / TASK-26）                                                                                             |
 
 **移动端**：`packages/presentation-react` / `apps/mobile` **零改动**；服务端 `project_preferences`/`tag_preferences` REST **语义不变**（移动端共用，PS-3 延续）。
 
@@ -322,6 +328,7 @@
 
 ## 变更记录
 
-| 版本 | 日期       | 变更                                                                                                                                                                                                                                | 作者 |
-| :--- | :--------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--- |
-| r1   | 2026-09-24 | 首次评审（`T142`）：6 项结论（Q1 冲突策略 / Q2 回传机制 / Q3 迁移 / Q4 C-59 撤销 / Q5 回归矩阵 / Q6 分期）+ 事实基线（含 **P1 更正：per-row LWW 服务端已实现**）+ 风险 R-1…R-13 + 里程碑 + 连带 S1–S13 + DP-1…DP-4；**⛔ 未改代码** | arch |
+| 版本 | 日期       | 变更                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | 作者 |
+| :--- | :--------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--- |
+| r1   | 2026-09-24 | 首次评审（`T142`）：6 项结论（Q1 冲突策略 / Q2 回传机制 / Q3 迁移 / Q4 C-59 撤销 / Q5 回归矩阵 / Q6 分期）+ 事实基线（含 **P1 更正：per-row LWW 服务端已实现**）+ 风险 R-1…R-13 + 里程碑 + 连带 S1–S13 + DP-1…DP-4；**⛔ 未改代码**                                                                                                                                                                                                                                                       | arch |
+| r2   | 2026-09-24 | **S14=(a) 修订（PM 拍板；arch `T151`）**：§2.6 **W5 说明**改为「**身份域保留离线写闸门**（web 写前拦停 + 明确提示；desktop 远端失败 toast；两者均属可见失败，PS-13 只要求可见）」+ PM 四条理由原样留档 + ⭐ 假信号按域核验结论；§5 **M6** 改为「**闸门作用面收敛至身份域**（组件与 `OFFLINE_READONLY` 保留；原「停用→删除」不成立）」；§2.4 **步骤 5** 收窄为「**业务域闸门条目退役**」+ 同文件旧措辞（Q4 / 保留项 / S7）连带修正；与 C-59 r10「现行口径」块**双向互记**。**⛔ 未改代码** | arch |

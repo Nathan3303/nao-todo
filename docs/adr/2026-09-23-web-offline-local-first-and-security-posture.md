@@ -126,6 +126,7 @@
       （`OFFLINE_READONLY`）⇒ `withReadOnlyGuard` / `OFFLINE_READONLY_ERROR` **保留以服务身份域**。
       · **`isReadOnly` / `read-only-state.ts` 保留**（离线 UI 角标 + `offlineEntry` flag 生命周期），**仅退役「写拦截」对业务域的作用**。
       · 撤销步骤见阶段二 ADR §2.4（顺序不可颠倒）；**条款 r10 由本篇 §10.11 落地**。
+      · **互记（S14=(a)，2026-09-24）**：身份域**保留**离线写闸门的口径 + PM 拍板理由见阶段二 ADR **§2.6 W5 说明**（`2026-09-24-stage2-both-ends-local-first.md`）；两处以该篇 S14=(a) 为准。
 
     - **阶段一（历史）口径**（保留原文以存证；**已由 2A 撤销**）：
       作用域 = **业务数据面**（任务 / 清单 / 标签 / 番茄 / 评论 / 检查项等）。读法 = **外科读法**
@@ -600,9 +601,8 @@
 （闸门仅保留 `USER_WRITE_METHODS`；`TAG_WRITE_METHODS.savePreference` 死条目一并删除）；
 **`withReadOnlyGuard` / `OFFLINE_READONLY_ERROR` 不得整体删除**。
 
-> ⚠️ **与阶段二 ADR §2.6 W5 措辞的差异（待 PM 拍板）**：该 ADR W5 说明写「`USER_WRITE_METHODS` **退役后不再拦截**，离线身份写将**远端失败 + toast**」；
-> 而 PM `T149`/`T150` 口径为「**闸门仅保留身份域 `user`**（离线身份写仍被拦截）」⇒ 二者**不一致**。
-> 本篇按 **PM 口径**（身份域保留闸门）落地；**阶段二 ADR §2.6 W5 说明需同步修订**（Owner：arch，待 PM 确认；见下方连带清单）。
+> ✅ **原措辞差异已闭合（PM 拍板 S14=(a)，2026-09-24；arch `T151` 落地）**：原阶段二 ADR §2.6 W5 说明「`USER_WRITE_METHODS` 退役后不再拦截，离线身份写 → 远端失败 + toast」**已修订**为「**身份域保留离线写闸门（web）**：离线身份写 = 写前拦停 + 明确提示（`OFFLINE_READONLY` + `NueMessage.warn`）；desktop 同场景 = 远端失败 toast；两者均属可见失败（PS-13 只要求「可见」、不要求形态一致）」。
+> 理由（4 条）与 ⭐ 假信号按域核验结论见阶段二 ADR **§2.6 W5 说明**；本条与之**双向互记**。
 
 ### 二、C-66 r10（同批修订，否则自相矛盾）
 
@@ -625,14 +625,14 @@
 
 ### 四、连带同步清单（含 Owner）
 
-| #   | 位置                                                                                | Owner          | 须同步内容                                                                                                          | 状态           |
-| :-- | :---------------------------------------------------------------------------------- | :------------- | :------------------------------------------------------------------------------------------------------------------ | :------------- |
-| S1  | 本篇（C-59 / C-66 / 变更记录 r10 / §10.11）                                         | **arch**       | 条款 r10 落地                                                                                                       | ✅ 本单 `T150` |
-| S13 | `docs/adr/README.md`（WEB-OFFLINE 索引行 + 篇间关系行）                             | **arch**       | 索引/关系行标注 r10 已落地                                                                                          | ✅ 本单 `T150` |
-| S3  | `docs/prds/2026-09-23-web-offline-stage1.md`（AC10 / 不变量 ④ / 终签前向指针）      | **PM**         | 前向指针 → **落地修订**：AC10 对业务 7 域**已撤销**、**仅身份域例外**；不变量 ④「web 恒 0」标注为**阶段一历史口径** | ⏳ 待 PM       |
-| S2  | `docs/prds/2026-09-23-stage2-local-first-both-ends.md`（§18）                       | **PM**         | 补 r10 落地注记（C-59/C-66 条款已同步）                                                                             | ⏳ 待 PM       |
-| S4  | `AGENTS.md`                                                                         | **PM**         | **无需改**（已核实：不含 web 只读 / C-59 / `markDirty` 描述）                                                       | ✅ N/A         |
-| S12 | `docs/tasks-state.md`                                                               | **PM**         | 台账登记 `T150` r10 落地 + 与 `T149` 对账                                                                           | ⏳ 待 PM       |
-| S7  | `packages/presentation/offline/{write-gate,write-methods}.ts` + `binding.ts`        | **rd-fe**      | 业务 7 域条目清理（闸门仅留身份域）；`withReadOnlyGuard`/`OFFLINE_READONLY` 保留                                    | ⏳ `T149`      |
-| S11 | 测试（`write-gate-wiring` / `local-first-dirty-scope` 等）                          | **rd-fe / qa** | `markDirty` 口径全量同步（业务 7 域非 0；身份域区分）+ 负向对照                                                     | ⏳ `T149`      |
-| S14 | `docs/adr/2026-09-24-stage2-both-ends-local-first.md`（§2.6 W5 说明 / §2.4 步骤 5） | **arch**       | 与 PM 口径对齐：闸门**保留身份域 `user`**（非「`USER_WRITE_METHODS` 退役后不再拦截」）—— **待 PM 确认后修订**       | ⏳ 待 PM 拍板  |
+| #   | 位置                                                                                        | Owner          | 须同步内容                                                                                                                 | 状态                 |
+| :-- | :------------------------------------------------------------------------------------------ | :------------- | :------------------------------------------------------------------------------------------------------------------------- | :------------------- |
+| S1  | 本篇（C-59 / C-66 / 变更记录 r10 / §10.11）                                                 | **arch**       | 条款 r10 落地                                                                                                              | ✅ 本单 `T150`       |
+| S13 | `docs/adr/README.md`（WEB-OFFLINE 索引行 + 篇间关系行）                                     | **arch**       | 索引/关系行标注 r10 已落地                                                                                                 | ✅ 本单 `T150`       |
+| S3  | `docs/prds/2026-09-23-web-offline-stage1.md`（AC10 / 不变量 ④ / 终签前向指针）              | **PM**         | 前向指针 → **落地修订**：AC10 对业务 7 域**已撤销**、**仅身份域例外**；不变量 ④「web 恒 0」标注为**阶段一历史口径**        | ✅ PM `68a19891`     |
+| S2  | `docs/prds/2026-09-23-stage2-local-first-both-ends.md`（§18）                               | **PM**         | 补 r10 落地注记（C-59/C-66 条款已同步）                                                                                    | ✅ PM `68a19891`     |
+| S4  | `AGENTS.md`                                                                                 | **PM**         | **无需改**（已核实：不含 web 只读 / C-59 / `markDirty` 描述）                                                              | ✅ N/A               |
+| S12 | `docs/tasks-state.md`                                                                       | **PM**         | 台账登记 `T150` r10 落地 + 与 `T149` 对账                                                                                  | ✅ PM `68a19891`     |
+| S7  | `packages/presentation/offline/{write-gate,write-methods}.ts` + `binding.ts`                | **rd-fe**      | 业务 7 域条目清理（闸门仅留身份域）；`withReadOnlyGuard`/`OFFLINE_READONLY` 保留                                           | ✅ `T149` `b4960a4d` |
+| S11 | 测试（`write-gate-wiring` / `local-first-dirty-scope` 等）                                  | **rd-fe / qa** | `markDirty` 口径全量同步（业务 7 域非 0；身份域区分）+ 负向对照                                                            | ✅ `T149` `b4960a4d` |
+| S14 | `docs/adr/2026-09-24-stage2-both-ends-local-first.md`（§2.6 W5 说明 / §2.4 步骤 5 / §5 M6） | **arch**       | 已按 PM 拍板 **S14=(a)** 修订：身份域**保留**离线写闸门 + 组件保留；原「退役后不再拦截」/「停用→删除」措辞已撤销（`T151`） | ✅ 已落地 `T151`     |
