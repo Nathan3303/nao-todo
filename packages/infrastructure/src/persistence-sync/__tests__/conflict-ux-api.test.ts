@@ -13,6 +13,7 @@ import { localSession } from '../../persistence-local/session/local-session'
 import {
     CONFLICT_FOLD_HINT_THRESHOLD,
     CONFLICT_JOURNAL_LIMIT,
+    type ConflictListResult,
     appendConflict,
     compareConflict,
     conflictJournalId,
@@ -41,6 +42,11 @@ import {
  * ⚠️ 边界：本文件**只读** `conflict-journal.ts` 导出面（不碰实现，实现属 `rd-fe-T164`）。
  * ⚠️ `conflictJournalEvictedCount` 属**未落地**契约 ⇒ 经 `MetaWithEvictedCount` 类型扩展访问，
  *    不修改 `MetaRecord`（避免与实现方冲突 / 不臆造已冻结类型）。
+ *
+ * **T162c（PM 裁定，additive）**：
+ * ① `ConflictListResult` 增 `foldedReason: 'limit' | 'evicted' | null`（未落地 ⇒ 经类型扩展访问）；
+ * ② 动作 B 成功 ⇒ **删除该实体全部条目** + `remaining` = 删除后剩余；
+ * ③ 动作 B 失败 ⇒ `remaining` = 现有条数（不吞条目；已由「无映射」用例覆盖）。
  */
 
 const USER_ID = 'conflict-ux-api-user'
@@ -48,6 +54,11 @@ const SERVER_BASE = '2026-01-05T00:00:00.000Z'
 
 /** 未落地契约：`meta` 纯追加淘汰计数器（T162b 第 3 条 PM 裁定） */
 type MetaWithEvictedCount = MetaRecord & { conflictJournalEvictedCount?: number }
+
+/** T162c 裁定：`foldedReason` 为 additive 契约（实现未落地 ⇒ 经类型扩展访问，不臆造已冻结类型） */
+type FoldedReason = 'limit' | 'evicted' | null
+const foldedReasonOf = (result: ConflictListResult): FoldedReason | undefined =>
+    (result as unknown as { foldedReason?: FoldedReason }).foldedReason
 
 const setup = async (): Promise<void> => {
     await localDatabase.projects.clear()
@@ -270,6 +281,39 @@ describe('面 ③ API - ③ folded：达阈值 vs 曾淘汰（两信号分列）
             | undefined
         expect(record?.conflictJournalEvictedCount).toBe(5)
     })
+
+    it('① foldedReason 三态：达 200 ⇒ limit · 曾淘汰 ⇒ evicted · 皆否 ⇒ null（additive 契约未实现 ⇒ 红）', async () => {
+        // 皆否（1 条，未达阈值、未淘汰）
+        await localDatabase.meta.put({
+            id: conflictJournalId(USER_ID),
+            conflictJournal: [entry({ entityId: 'r-below' })]
+        } satisfies MetaRecord)
+        const below = await listConflicts(USER_ID)
+        expect(below.folded).toBe(false)
+        expect(foldedReasonOf(below)).toBeNull()
+
+        // 达上限（200 条，未淘汰）
+        await localDatabase.meta.put({
+            id: conflictJournalId(USER_ID),
+            conflictJournal: Array.from({ length: CONFLICT_FOLD_HINT_THRESHOLD }, (_, i) =>
+                entry({ entityId: `r-${i}` })
+            )
+        } satisfies MetaRecord)
+        const atLimit = await listConflicts(USER_ID)
+        expect(atLimit.folded).toBe(true)
+        expect(foldedReasonOf(atLimit)).toBe('limit')
+
+        // 曾淘汰（1 条 + 计数器 > 0）
+        const evictedRecord: MetaWithEvictedCount = {
+            id: conflictJournalId(USER_ID),
+            conflictJournal: [entry({ entityId: 'r-evicted' })],
+            conflictJournalEvictedCount: 3
+        }
+        await localDatabase.meta.put(evictedRecord)
+        const evicted = await listConflicts(USER_ID)
+        expect(evicted.folded).toBe(true)
+        expect(foldedReasonOf(evicted)).toBe('evicted')
+    })
 })
 
 describe('面 ③ API - ④ resolveConflictKeepServer：清实体全部条目', () => {
@@ -343,7 +387,41 @@ describe('面 ③ API - ⑤ resolveConflictRetryLocal：写回 + markDirty + 新
         expect(record?.syncedServerUpdatedAt).toBe(SERVER_BASE)
     })
 
-    it('无 table→repo/转换器 映射 ⇒ 明确失败（ok:false）且**保留**条目、不写队列 —— 现状吞条目 ⇒ 红', async () => {
+    it('动作 B 成功 ⇒ 删除该实体**全部** journal 条目 + remaining=删除后剩余（PM T162c 裁定）—— 未实现 ⇒ 红', async () => {
+        const taskId = await createLocalTask('胜方名')
+        const current = await plaintextSnapshot(taskId)
+        await localDatabase.tasks.update(taskId, { syncedServerUpdatedAt: SERVER_BASE })
+        await appendConflict(USER_ID, {
+            kind: 'stale',
+            table: 'tasks',
+            entityId: taskId,
+            loser: { ...current, name: '败方名1' },
+            winnerUpdatedAt: SERVER_BASE
+        })
+        await appendConflict(USER_ID, {
+            kind: 'push-noop',
+            table: 'tasks',
+            entityId: taskId,
+            loser: { ...current, name: '败方名2' },
+            winnerUpdatedAt: SERVER_BASE
+        })
+        await appendConflict(USER_ID, {
+            kind: 'stale',
+            table: 'tasks',
+            entityId: 'other-entity',
+            loser: { id: 'other-entity', name: '别实体败方' }
+        })
+
+        const result = await resolveConflictRetryLocal(USER_ID, 'tasks', taskId)
+        expect(result.ok).toBe(true)
+        // 该实体全部条目已删除 ⇒ remaining = 删除后剩余（仅别实体 1 条）
+        expect(result.remaining).toBe(1)
+        const remaining = await loadConflictJournal(USER_ID)
+        expect(remaining).toHaveLength(1)
+        expect(remaining[0]!.entityId).toBe('other-entity')
+    })
+
+    it('无 table→repo/转换器 映射 ⇒ 明确失败（ok:false）且**保留**条目、不写队列（含 ③ remaining=现有条数）—— 现状吞条目 ⇒ 红', async () => {
         await appendConflict(USER_ID, {
             kind: 'remote-wins',
             table: 'unknown-table',
