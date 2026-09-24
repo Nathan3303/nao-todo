@@ -21,6 +21,8 @@ export interface ProjectRecord {
     deactivedAt: string | null
     sortId: number
     taskCount: number
+    /** 服务端 per-row 版本基线（OCC base；非索引字段 ⇒ 不 bump Dexie version / 不触 C-44） */
+    syncedServerUpdatedAt?: string
 }
 
 export interface ProjectPreferenceRecord {
@@ -33,6 +35,8 @@ export interface ProjectPreferenceRecord {
     createdAt: string
     updatedAt: string
     deletedAt: string | null
+    /** 服务端 per-row 版本基线（OCC base；非索引字段 ⇒ 不 bump Dexie version / 不触 C-44） */
+    syncedServerUpdatedAt?: string
 }
 
 export interface TagRecord {
@@ -43,6 +47,8 @@ export interface TagRecord {
     description: string
     color: string
     sortId: number
+    /** 服务端 per-row 版本基线（OCC base；非索引字段 ⇒ 不 bump Dexie version / 不触 C-44） */
+    syncedServerUpdatedAt?: string
     createdAt: string
     updatedAt: string
     deletedAt: string | null
@@ -79,6 +85,8 @@ export interface TaskRecord {
     remindRepeat: string
     remindTime: string
     remindWeekdays: number[]
+    /** 服务端 per-row 版本基线（OCC base；非索引字段 ⇒ 不 bump Dexie version / 不触 C-44） */
+    syncedServerUpdatedAt?: string
     checkItemCount: number
     commentCount: number
     subtaskCount: number
@@ -95,6 +103,8 @@ export interface TaskCheckItemRecord {
     name: string
     isDone: boolean
     sortId: number
+    /** 服务端 per-row 版本基线（OCC base；非索引字段 ⇒ 不 bump Dexie version / 不触 C-44） */
+    syncedServerUpdatedAt?: string
     createdAt: string
     updatedAt: string
     deletedAt: string | null
@@ -107,6 +117,8 @@ export interface TaskCommentRecord {
     content: string
     attachments: string[]
     isTopUp: boolean
+    /** 服务端 per-row 版本基线（OCC base；非索引字段 ⇒ 不 bump Dexie version / 不触 C-44） */
+    syncedServerUpdatedAt?: string
     avatar: string
     nickname: string
     createdAt: string
@@ -123,6 +135,8 @@ export interface PomodoroRecord {
     duration: number
     archivedAt: string | null
     totalDuration: number
+    /** 服务端 per-row 版本基线（OCC base；非索引字段 ⇒ 不 bump Dexie version / 不触 C-44） */
+    syncedServerUpdatedAt?: string
     createdAt: string
     updatedAt: string
     deletedAt: string | null
@@ -133,6 +147,8 @@ export interface PomodoroRecordItem {
     userId: string
     sessionId: string
     pomodoroId: string | null
+    /** 服务端 per-row 版本基线（OCC base；非索引字段 ⇒ 不 bump Dexie version / 不触 C-44） */
+    syncedServerUpdatedAt?: string
     type: number
     taskId: string
     taskName: string
@@ -197,8 +213,8 @@ export interface MetaRecord {
  *              满足「不得静默覆盖丢数据」硬约束。纯追加、有界（环形淘汰）⇒ 不 bump Dexie version / 不加索引。
  */
 export interface ConflictJournalEntry {
-    /** 冲突类型：远端胜（pull 覆盖本地未推修改）/ 服务端 no-op（push 被拒） */
-    kind: 'remote-wins' | 'push-noop'
+    /** 冲突类型：远端胜（pull 覆盖本地未推修改）/ 服务端 no-op / OCC base 不匹配 / ID 碰撞 / 服务端忽略 */
+    kind: 'remote-wins' | 'push-noop' | 'stale' | 'conflict' | 'skipped'
     /** 业务表名（如 'tasks'） */
     table: string
     /** 实体 id */

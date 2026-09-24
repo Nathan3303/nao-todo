@@ -9,6 +9,7 @@ import { taskCheckItemEntityToRecord, taskCheckItemRecordToEntity } from '../con
 import { isNotDeleted } from '../utils'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
+import { putWithSyncBase } from './put-with-sync-base'
 import { localSession } from '../session/local-session'
 import { snowflake } from '../../persistence-sync/snowflake'
 import { nowCalibratedIso } from '../../persistence-sync/sync-config'
@@ -75,7 +76,8 @@ export class LocalTaskCheckItemRepoImpl implements TaskCheckItemRepository {
             if (updateVO.isDone !== undefined) entity.isDone = updateVO.isDone
             if (updateVO.sortId !== undefined) entity.sortId = updateVO.sortId
             entity.updatedAt = nowCalibratedIso()
-            await this.db.taskCheckItems.put(
+            await putWithSyncBase(
+                this.db.taskCheckItems,
                 await taskCheckItemEntityToRecord(entity, this.currentUserId)
             )
             await syncTracker.markDirty('taskCheckItems', id, 'upsert', entity.updatedAt)
@@ -92,7 +94,8 @@ export class LocalTaskCheckItemRepoImpl implements TaskCheckItemRepository {
             const entity = await taskCheckItemRecordToEntity(record)
             entity.deletedAt = nowCalibratedIso()
             entity.updatedAt = entity.deletedAt
-            await this.db.taskCheckItems.put(
+            await putWithSyncBase(
+                this.db.taskCheckItems,
                 await taskCheckItemEntityToRecord(entity, this.currentUserId)
             )
             await syncTracker.markDirty(
@@ -138,7 +141,8 @@ export class LocalTaskCheckItemRepoImpl implements TaskCheckItemRepository {
                 if (updateVO.isDone !== undefined) current.isDone = updateVO.isDone
                 if (updateVO.sortId !== undefined) current.sortId = updateVO.sortId
                 current.updatedAt = nowCalibratedIso()
-                await this.db.taskCheckItems.put(
+                await putWithSyncBase(
+                    this.db.taskCheckItems,
                     await taskCheckItemEntityToRecord(current, this.currentUserId)
                 )
                 await syncTracker.markDirty(

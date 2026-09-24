@@ -17,8 +17,8 @@ import {
 
 export type { ConflictJournalEntry }
 
-/** 每用户冲突记账上限（环形淘汰，保留最新） */
-export const CONFLICT_JOURNAL_LIMIT = 50
+/** 每用户冲突记账上限（环形淘汰，保留最新；DP-2B-5：50 → 200 + 折叠提示） */
+export const CONFLICT_JOURNAL_LIMIT = 200
 
 /** 冲突记账在 `meta` 表中的主键后缀（非索引字段 ⇒ 不触 C-44） */
 const CONFLICT_JOURNAL_SUFFIX = 'conflict-journal'

@@ -3,6 +3,7 @@ import type { GoAsync } from '@nao-todo/shared'
 import { tagEntityToRecord, tagRecordToEntity } from '../converters/tag'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
+import { putWithSyncBase } from './put-with-sync-base'
 import { localSession } from '../session/local-session'
 import { isNotDeleted } from '../utils'
 import { snowflake } from '../../persistence-sync/snowflake'
@@ -57,7 +58,10 @@ export class LocalTagRepoImpl implements TagRepository {
     async update(updatedEntity: TagEntity): GoAsync<void> {
         try {
             updatedEntity.updatedAt = nowCalibratedIso()
-            await this.db.tags.put(await tagEntityToRecord(updatedEntity, this.currentUserId))
+            await putWithSyncBase(
+                this.db.tags,
+                await tagEntityToRecord(updatedEntity, this.currentUserId)
+            )
             await syncTracker.markDirty('tags', updatedEntity.id, 'upsert', updatedEntity.updatedAt)
             return null
         } catch (err) {
@@ -72,7 +76,7 @@ export class LocalTagRepoImpl implements TagRepository {
             const entity = await tagRecordToEntity(record)
             entity.deletedAt = nowCalibratedIso()
             entity.updatedAt = entity.deletedAt
-            await this.db.tags.put(await tagEntityToRecord(entity, this.currentUserId))
+            await putWithSyncBase(this.db.tags, await tagEntityToRecord(entity, this.currentUserId))
             await syncTracker.markDirty('tags', id, 'delete', entity.deletedAt ?? entity.updatedAt)
             return null
         } catch (err) {
@@ -124,7 +128,10 @@ export class LocalTagRepoImpl implements TagRepository {
             const entities: TagEntity[] = []
             for (const entity of updatedEntities) {
                 entity.updatedAt = nowCalibratedIso()
-                await this.db.tags.put(await tagEntityToRecord(entity, this.currentUserId))
+                await putWithSyncBase(
+                    this.db.tags,
+                    await tagEntityToRecord(entity, this.currentUserId)
+                )
                 await syncTracker.markDirty('tags', entity.id, 'upsert', entity.updatedAt)
                 entities.push(entity)
             }

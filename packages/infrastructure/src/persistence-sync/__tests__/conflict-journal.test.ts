@@ -60,6 +60,53 @@ const setup = async (): Promise<void> => {
     syncStatus.setConflictCount(0)
 }
 
+/** 建一条本地任务，并以指定 outcome 推送（供 outcome 消费断言复用） */
+const runPushOutcome = async (outcome: string): Promise<string> => {
+    const repo = newLocalTaskRepository()
+    const [task, taskErr] = await repo.create(
+        new CreateTaskValueObject(
+            null,
+            null,
+            '本地名',
+            '',
+            'todo',
+            'medium',
+            null,
+            null,
+            'p-1',
+            [],
+            null,
+            'none',
+            null,
+            []
+        )
+    )
+    expect(taskErr).toBeNull()
+    const taskId = (task as { id: string }).id
+    const service = new SyncService(
+        mockRequester((url) => {
+            if (url === '/sync/push') {
+                return {
+                    data: {
+                        results: [
+                            {
+                                table: 'tasks',
+                                id: taskId,
+                                serverUpdatedAt: '2026-01-02T00:00:00.000Z',
+                                outcome
+                            }
+                        ]
+                    },
+                    serverTime: Date.now()
+                }
+            }
+            return { data: {} }
+        })
+    )
+    await service.pushAll()
+    return taskId
+}
+
 describe('T144 / PS-14 冲突记账 - 存储与有界', () => {
     beforeEach(async () => {
         await setup()
@@ -301,54 +348,24 @@ describe('T144 / PS-14 pull 远端胜 ⇒ 自动记账败方快照', () => {
         expect(syncStatus.get().conflictCount).toBe(1)
     })
 
-    it('push outcome=applied / skipped ⇒ 不记 journal（仅 noop 记，不自判谁赢）', async () => {
-        for (const outcome of ['applied', 'skipped']) {
-            await setup()
-            const repo = newLocalTaskRepository()
-            const [task, taskErr] = await repo.create(
-                new CreateTaskValueObject(
-                    null,
-                    null,
-                    '本地名',
-                    '',
-                    'todo',
-                    'medium',
-                    null,
-                    null,
-                    'p-1',
-                    [],
-                    null,
-                    'none',
-                    null,
-                    []
-                )
-            )
-            expect(taskErr).toBeNull()
-            const taskId = (task as { id: string }).id
-            const service = new SyncService(
-                mockRequester((url) => {
-                    if (url === '/sync/push') {
-                        return {
-                            data: {
-                                results: [
-                                    {
-                                        table: 'tasks',
-                                        id: taskId,
-                                        serverUpdatedAt: '2026-01-02T00:00:00.000Z',
-                                        outcome
-                                    }
-                                ]
-                            },
-                            serverTime: Date.now()
-                        }
-                    }
-                    return { data: {} }
-                })
-            )
-            await service.pushAll()
-            expect(await loadConflictJournal(USER_ID)).toEqual([])
-            expect(syncStatus.get().conflictCount).toBe(0)
-            expect(await syncTracker.countDirty(USER_ID)).toBe(0)
-        }
+    it('push outcome=applied ⇒ 不记 journal（不自判谁赢；§9.1.4）', async () => {
+        await runPushOutcome('applied')
+        expect(await loadConflictJournal(USER_ID)).toEqual([])
+        expect(syncStatus.get().conflictCount).toBe(0)
+        expect(await syncTracker.countDirty(USER_ID)).toBe(0)
+    })
+
+    it('push outcome=skipped ⇒ 记 journal（kind=skipped）+ 出队 + 可见计数（§9.1.4 登记 / T164 定向 supersede）', async () => {
+        const taskId = await runPushOutcome('skipped')
+        const entries = await loadConflictJournal(USER_ID)
+        expect(entries).toHaveLength(1)
+        expect(entries[0]).toMatchObject({
+            kind: 'skipped',
+            table: 'tasks',
+            entityId: taskId,
+            winnerUpdatedAt: '2026-01-02T00:00:00.000Z'
+        })
+        expect(await syncTracker.countDirty(USER_ID)).toBe(0)
+        expect(syncStatus.get().conflictCount).toBe(1)
     })
 })

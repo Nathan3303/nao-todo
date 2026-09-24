@@ -238,7 +238,7 @@ interface PushResult {
     table?: string
     id?: string
     serverUpdatedAt?: string
-    /** 服务端判定（T143 additive）：`noop` = 请求更旧、未写入（被服务端现有版本覆盖） */
+    /** 服务端判定（T143 additive + 2B `stale`）：`applied`/`noop`/`stale`/`conflict`/`skipped`/`error` */
     outcome?: string
 }
 
@@ -451,8 +451,44 @@ export class SyncService {
     private tableOf(config: SyncTableConfig): {
         put: (record: unknown) => Promise<unknown>
         get: (id: string) => Promise<Record<string, unknown> | undefined>
+        update: (id: string, changes: Record<string, unknown>) => Promise<unknown>
     } {
         return localDatabase[config.table as keyof typeof localDatabase] as never
+    }
+
+    /**
+     * 落库一条拉取记录，并同时落 per-row 同步版本基线
+     * @description §9.1.5 / R-20：pull 写入时 `syncedServerUpdatedAt` = 该行服务端 `updatedAt`，
+     *              作为下轮 push 的 `baseUpdatedAt`。直连表写入，不触发 markDirty。
+     */
+    private async putPulledRecord(
+        config: SyncTableConfig,
+        entity: Record<string, unknown>,
+        userId: string
+    ): Promise<void> {
+        const record = (await config.entityToRecord(entity, userId)) as {
+            syncedServerUpdatedAt?: string
+        }
+        const serverUpdatedAt = typeof entity.updatedAt === 'string' ? entity.updatedAt : ''
+        if (serverUpdatedAt) record.syncedServerUpdatedAt = serverUpdatedAt
+        await this.tableOf(config).put(record)
+    }
+
+    /**
+     * 以服务端回执版本写回该行 per-row base（§9.1.6 写回点）
+     * @description `applied`/`noop`/`stale` 回执均带 `serverUpdatedAt`；`stale` 时即为库中当前版本，
+     *              写回后使下次 push 以新 base 命中。仅更新 base 字段（不改业务字段/不触发 markDirty）。
+     */
+    private async writeBackSyncBase(
+        table: string,
+        entityId: string,
+        serverUpdatedAt: string
+    ): Promise<void> {
+        const config = SYNC_TABLES.find((c) => c.table === table)
+        if (!config) return
+        await this.tableOf(config).update(entityId, {
+            syncedServerUpdatedAt: serverUpdatedAt
+        })
     }
 
     /**
@@ -775,14 +811,14 @@ export class SyncService {
                         syncStatus.setConflictCount(count)
                     }
                     // 远程胜：覆盖本地 + 移除队列项（本地修改作废）
-                    await this.tableOf(config).put(await config.entityToRecord(entity, userId))
+                    await this.putPulledRecord(config, entity, userId)
                     await syncTracker.removeQueued(config.table, id)
                     written += 1
                 }
                 // 本地胜：跳过（保留 queue，交给推送）
             } else {
                 // 本地未改：远程胜直接覆盖（含删除墓碑）
-                await this.tableOf(config).put(await config.entityToRecord(entity, userId))
+                await this.putPulledRecord(config, entity, userId)
                 written += 1
             }
         }
@@ -891,7 +927,15 @@ export class SyncService {
                 }
                 const entity = await config.recordToEntity(record)
                 const target = (pushBody[item.table] ??= [])
-                target.push({ id: item.entityId, ...config.entityToPush(entity) })
+                const pushRecord: Record<string, unknown> = {
+                    id: item.entityId,
+                    ...config.entityToPush(entity)
+                }
+                // §9.1.2 / R-12：逐条回传 per-row base；缺失 ⇒ **不产出**该字段 ⇒ 服务端维持现行 LWW（向后兼容）
+                const baseUpdatedAt = (record as { syncedServerUpdatedAt?: string })
+                    .syncedServerUpdatedAt
+                if (baseUpdatedAt) pushRecord.baseUpdatedAt = baseUpdatedAt
+                target.push(pushRecord)
             }
             if (Object.keys(pushBody).length === 0 && deletions.length === 0) {
                 // 到期项均缺表配置（不可达防御）：必须上报运行错误，否则 syncing 卡死且门读到 null ⇒ 假成功
@@ -981,36 +1025,11 @@ export class SyncService {
             const pushed = new Set(resultByKey.keys())
             let unconfirmed = false
             for (const item of dueQueue) {
-                if (pushed.has(`${item.table}:${item.entityId}`)) {
-                    const result = resultByKey.get(`${item.table}:${item.entityId}`)
-                    // PS-14 / DP-1：服务端 no-op（请求更旧、未写入）⇒ 记录**败方（本地被拒内容）快照**
-                    if (result?.outcome === 'noop' && item.action === 'upsert') {
-                        const config = SYNC_TABLES.find((c) => c.table === item.table)
-                        const record = config
-                            ? await this.tableOf(config).get(item.entityId)
-                            : undefined
-                        if (config && record) {
-                            const loser = await config.recordToEntity(record)
-                            const count = await appendConflict(userId, {
-                                kind: 'push-noop',
-                                table: item.table,
-                                entityId: item.entityId,
-                                loser,
-                                winnerUpdatedAt: result.serverUpdatedAt,
-                                loserUpdatedAt: item.localUpdatedAt
-                            })
-                            syncStatus.setConflictCount(count)
-                        }
-                    }
-                    const snapshot = snapshots.get(`${item.table}:${item.entityId}`)
-                    // 推送期间本地对同一实体有新修改（localUpdatedAt 已变化）：保留队列项下轮重推，防止本地修改丢失
-                    const current = await localDatabase.syncQueue.get(item.id)
-                    if (current && snapshot !== undefined && current.localUpdatedAt === snapshot) {
-                        await syncTracker.removeQueued(item.table, item.entityId)
-                    }
-                } else {
+                const key = `${item.table}:${item.entityId}`
+                const snapshot = snapshots.get(key)
+                if (!pushed.has(key)) {
                     // 响应中无该实体：后端拒绝或字段不匹配 ⇒ 业务类退避（C-38/C-39）
-                    if (snapshots.has(`${item.table}:${item.entityId}`)) {
+                    if (snapshot !== undefined) {
                         logStructured('warn', STRUCTURED_LOG_EVENTS.SYNC_PUSH_UNCONFIRMED, {
                             userId,
                             table: item.table,
@@ -1022,6 +1041,65 @@ export class SyncService {
                         )
                         unconfirmed = true
                     }
+                    continue
+                }
+                const result = resultByKey.get(key)
+                const outcome = result?.outcome
+                // §9.1.4 / R-15 / R-18 / DP-2B-4：`error` 必须消费 —— **不出队** + 业务退避
+                //   （否则 2A 窄窗：服务端失败但客户端已出队 ⇒ 本地改动静默丢失）
+                if (outcome === 'error') {
+                    logStructured('warn', STRUCTURED_LOG_EVENTS.SYNC_PUSH_UNCONFIRMED, {
+                        userId,
+                        table: item.table,
+                        entityId: item.entityId,
+                        outcome
+                    })
+                    await syncTracker.markBusinessFailure(item.id, this.businessNextAttemptAt(item))
+                    unconfirmed = true
+                    continue
+                }
+                // §9.1.4：`noop` / `stale` / `conflict` / `skipped` 全部登记（journal + 可见计数），不静默出队
+                //   `noop` / `stale` 带**败方快照**（本地被拒内容）；`conflict` / `skipped` 无快照（仅登记）
+                if (
+                    outcome === 'noop' ||
+                    outcome === 'stale' ||
+                    outcome === 'conflict' ||
+                    outcome === 'skipped'
+                ) {
+                    const config = SYNC_TABLES.find((c) => c.table === item.table)
+                    const record =
+                        config && item.action === 'upsert'
+                            ? await this.tableOf(config).get(item.entityId)
+                            : undefined
+                    if (config) {
+                        const withSnapshot = outcome === 'noop' || outcome === 'stale'
+                        const loser =
+                            withSnapshot && record ? await config.recordToEntity(record) : {}
+                        const count = await appendConflict(userId, {
+                            kind: outcome === 'noop' ? 'push-noop' : outcome,
+                            table: item.table,
+                            entityId: item.entityId,
+                            loser,
+                            ...(result?.serverUpdatedAt === undefined
+                                ? {}
+                                : { winnerUpdatedAt: result.serverUpdatedAt }),
+                            loserUpdatedAt: item.localUpdatedAt
+                        })
+                        syncStatus.setConflictCount(count)
+                    }
+                }
+                // §9.1.6 写回点：`applied`/`noop`/`stale` 以 `result.serverUpdatedAt` 落回该行 base
+                //   （`stale` 时即为库中当前版本，使下次推送以新 base 命中，防 R-20 灾难路径）
+                if (
+                    (outcome === 'applied' || outcome === 'noop' || outcome === 'stale') &&
+                    result?.serverUpdatedAt
+                ) {
+                    await this.writeBackSyncBase(item.table, item.entityId, result.serverUpdatedAt)
+                }
+                // 推送期间本地对同一实体有新修改（localUpdatedAt 已变化）：保留队列项下轮重推，防止本地修改丢失
+                const current = await localDatabase.syncQueue.get(item.id)
+                if (current && snapshot !== undefined && current.localUpdatedAt === snapshot) {
+                    await syncTracker.removeQueued(item.table, item.entityId)
                 }
             }
             // 部分数据未确认 ⇒ 运行失败（否则门会假成功）；同阶段同类错误只上报一次（见 ADR A-2）

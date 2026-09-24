@@ -8,6 +8,7 @@ import {
 } from '../converters/preference'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
+import { putWithSyncBase } from './put-with-sync-base'
 import { localSession } from '../session/local-session'
 import {
     defaultProjectPreferenceRes2Entity,
@@ -83,9 +84,12 @@ export class LocalProjectPreferenceRepoImpl implements ProjectPreferenceReposito
             const res = response.data as ResponseData
             if (res?.code !== PROJECT_PREFERENCE_GET_CODE) return null
             const entity = projectPreferenceRes2Entity(res.data as ProjectPreferenceRes)
-            await this.db.projectPreferences.put(
-                await projectPreferenceEntityToRecord(entity, userId)
-            )
+            const record = await projectPreferenceEntityToRecord(entity, userId)
+            // §9.4.1：读时对账落库的远端记录同时落 per-row 版本基线（与业务面 pull 同源）
+            await this.db.projectPreferences.put({
+                ...record,
+                syncedServerUpdatedAt: entity.updatedAt
+            })
             return entity
         } catch {
             return null
@@ -94,7 +98,8 @@ export class LocalProjectPreferenceRepoImpl implements ProjectPreferenceReposito
 
     async save(updatedEntity: ProjectPreferenceEntity): GoAsync<void> {
         try {
-            await this.db.projectPreferences.put(
+            await putWithSyncBase(
+                this.db.projectPreferences,
                 await projectPreferenceEntityToRecord(updatedEntity, this.currentUserId)
             )
             // TASK-26 / M6：本地写成功后入偏好队列（**不入 syncQueue**）+ 防抖回传（按行）
