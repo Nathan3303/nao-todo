@@ -1,7 +1,7 @@
 # 2026-09-23 WEB-OFFLINE：web 本地优先 + 安全姿态选择（两端一致明文）
 
 - **评审对象**：`docs/prds/2026-09-23-web-offline-stage1.md`（TASK-24 阶段一 PRD）；勘察与决策依据 `docs/prds/2026-09-23-web-offline-recon.md`
-- **结论**：⚠️ **有条件可行** —— 决策方向成立（约束 **C-46…C-66**）；R1/R2/R4 **已裁决闭合**（§10）· R3 **已裁定 = 接受不可逆**（r3，§10.6）· **AC13a/b/c + AC5b 已补齐（AC 共 24 行）** · **r5 修订 C-52 / C-60 + C-59 作用域裁定**（§10.8–§10.9）⇒ **无剩余阻塞项**
+- **结论**：⚠️ **有条件可行** —— 决策方向成立（约束 **C-46…C-66**）；R1/R2/R4 **已裁决闭合**（§10）· R3 **已裁定 = 接受不可逆**（r3，§10.6）· **AC13a/b/c + AC5b 已补齐（AC 共 24 行）** · **r5 修订 C-52 / C-60 + C-59 作用域裁定**（§10.8–§10.9）· **r11 裁定 C-52/C-53（DEF-34）+ 新增 C-67（DEF-33）/ C-68（DEF-35）**（§10.12）⇒ **无剩余阻塞项**
 - **范围**：两端数据面姿态（`packages/infrastructure/src/persistence-local/*` + `persistence-sync/*`）+ 启动门链（`apps/desktop/src/renderer/src/AppRoot.vue`、`apps/web/src/views/auth/*`）+ 登出清库接线 + 迁移器 + 护栏（CSP / `userId` 隔离 / 单实例锁）
 - **代码边界**：本 ADR 为**纯文档产出**，评审方**未修改任何仓库代码**（只读评审）
 - **前序**：`docs/adr/2026-09-10-shell-03-offline-availability.md`（C-01…C-25，离线进入四条件）、`docs/adr/2026-09-13-shell-05-offline-entry-hardening.md`（C-26…C-37）、`docs/adr/2026-09-13-shell-06-offline-backfill.md`（C-38…C-45）、`docs/adr/2026-09-21-sync-nullable-time-tri-state-contract.md`
@@ -12,12 +12,13 @@
 
 ## 0. 与 SHELL-03 / SHELL-05 / SHELL-06 的关系（修订关系表）
 
-| 关系                  | 说明                                                                                                                                                                                                                                                                                                 |
-| :-------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **本 ADR → SHELL-03** | **修订**：删除 C-23 条件④ 与附录 B-2 安全论证③（§2 三分表）；**改写** B-2 安全论证（"门槛 = 本地密码"消失）；**加范围限定**（"业务数据加密存 IndexedDB" → "**desktop 历史姿态**，web 见本 ADR"）。**不改** C-07…C-11（run 边界）、C-22（禁 `navigator.onLine` 鉴权）、C-24/C-25（check-in 终态完备） |
-| **本 ADR → SHELL-05** | **修订** C-29（四条件预检 → 判据替换后重写）；`shell-05:344`「数据面 = IndexedDB（加密）本地真源」加范围限定；`shell-05:338/385` 审计结论补 **web 列**（当前 web 无本地数据面 ⇒ 该表结论在 web 不适用）。**不改** C-26…C-37 的导航/注入/打包约束                                                     |
-| **本 ADR → SHELL-06** | **不改** C-38…C-45 的推送重试生命周期；但 **C-45「所有推送入口经 `enqueue` 串行」的单写者假设在两端都被削弱**（desktop 未启用单实例锁；web 多标签）⇒ 本 ADR 以 **C-57（desktop 单实例锁）** 与 **C-59（阶段一**不新增本地写路径**，r5）** 作为阶段一的**代偿约束**，把跨标签协调显式推给**阶段二**   |
-| **冲突裁决**          | 若本 ADR 与 SHELL-03/05/06 冲突，以**更晚落盘并经评审**者为准，并在两篇「变更管理」互记一行（SHELL-03 与 SHELL-05 需各加一行指向本 ADR）                                                                                                                                                             |
+| 关系                         | 说明                                                                                                                                                                                                                                                                                                 |
+| :--------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **本 ADR → SHELL-03**        | **修订**：删除 C-23 条件④ 与附录 B-2 安全论证③（§2 三分表）；**改写** B-2 安全论证（"门槛 = 本地密码"消失）；**加范围限定**（"业务数据加密存 IndexedDB" → "**desktop 历史姿态**，web 见本 ADR"）。**不改** C-07…C-11（run 边界）、C-22（禁 `navigator.onLine` 鉴权）、C-24/C-25（check-in 终态完备） |
+| **本 ADR → SHELL-05**        | **修订** C-29（四条件预检 → 判据替换后重写）；`shell-05:344`「数据面 = IndexedDB（加密）本地真源」加范围限定；`shell-05:338/385` 审计结论补 **web 列**（当前 web 无本地数据面 ⇒ 该表结论在 web 不适用）。**不改** C-26…C-37 的导航/注入/打包约束                                                     |
+| **本 ADR → SHELL-06**        | **不改** C-38…C-45 的推送重试生命周期；但 **C-45「所有推送入口经 `enqueue` 串行」的单写者假设在两端都被削弱**（desktop 未启用单实例锁；web 多标签）⇒ 本 ADR 以 **C-57（desktop 单实例锁）** 与 **C-59（阶段一**不新增本地写路径**，r5）** 作为阶段一的**代偿约束**，把跨标签协调显式推给**阶段二**   |
+| **本 ADR → SHELL-03（r11）** | **修订** SHELL-03 附录 B-3 ②（check-in 失败分类，`C-24` 邻接）：判据由「**凭证类文案标记表**」改为 **C-67**「**网络类白名单 + code 优先**」；SHELL-03 侧 B-3② 的表述按 C-67 读（§10.12-二）。**不改** C-01/C-02（终态完备 / 可前进动作）与 C-24/C-25。                                               |
+| **冲突裁决**                 | 若本 ADR 与 SHELL-03/05/06 冲突，以**更晚落盘并经评审**者为准，并在两篇「变更管理」互记一行（SHELL-03 与 SHELL-05 需各加一行指向本 ADR）                                                                                                                                                             |
 
 **⚠️ DEF-10 调用点迁移顺序（硬约束，§5.3）**：`checkAndCleanExpired` 从 `unlock-gate.vue:75` 迁往新启动路径，**必须早于**门退役（**r6：= 语义退役，组件保留**，见 §5.4）；同一 PR 须「**先加新调用点 + 单测 → 再改门判据**」（r6：**非删除组件**）。违反即**静默回归**（注销到期清理永久不触发）。
 
@@ -89,17 +90,19 @@
 - [ ] **C-49 迁移期禁同步**：迁移期间**必须**阻止 `syncService` 的 pull/push（否则 pull 把明文覆盖回密文 ⇒ **永不收敛**）。实现方式与解锁顺序一并设计，**不得**依赖"迁移很快"的时序假设。
 - [ ] **C-50 幂等可续跑**：迁移必须可在任意中断点续跑（逐表/逐批进度可判定）；**不得**依赖"一次跑完"。中断后重启**不得**出现混合格式读失败。
 - [ ] **C-51 双格式双向读取兜底（P0）**：读取侧必须**同时接受** `plain:<原文>` 与历史密文；`cryptoService.decrypt` **对明文输入不得抛错**（现状 `cipher.split(':')` 会抛"密文格式无效" ⇒ **必须修**）。**`key-bundle` 的删除是唯一不可逆开关**：仅在 C-47 标记写入后允许，**且必须长期保留密码入口**（本仓无遥测）。
+- [ ] **C-68 web 无 DEK 时的旧密文处置（r11，DEF-35）**：**web 端不引入密码门、不做明文迁移路径**（web 无密码入口 ⇒ 拿不到 DEK ⇒ 「迁移」不可实现；引入密码门与 **D-6 / K8**「冷启动不输密码」姿态互斥）。⇒ web 对**不可读旧密文**的处置 = **一次性自愈**：① **检测**（启动收敛点内、`syncService.start()` 之前）：当前 `userId` 的业务表存在**非 `plain:` 值**，或存在 `${userId}:key-bundle` 且无 `${userId}:plaintext-migrated`；② **护栏**：按 **C-54 同口径**先判 `syncTracker.countDirty(userId)`，`> 0` ⇒ 阻塞确认 / 先同步（**绝不静默丢本地未回传写入**）；③ **处置**：**丢弃本地密文副本 + 从服务端重新拉全量镜像**（服务端为权威真源；web 本地本就是镜像）；④ **告知**：可见文案（旧版本加密数据无法在 web 读取 ⇒ 本地副本重建；已同步数据不受影响）；⑤ **禁**：**不得**删除 `key-bundle`（C-51 唯一不可逆开关；同 origin 的 desktop 可能仍需它）；**不得**静默丢弃；**不得**把不可读密文当空值/默认值继续渲染。**暴露面（读码核实，见 §10.12-三）**：web 绑定**不提供** `decorateAuthUseCase`/`decorateUserUseCase` ⇒ web **从不** `cryptoService.setup/unlock`、**从不**写 `key-bundle`；且 `cryptoService.encrypt` 自 `9ee0c08b`（T104）起即为 `plain:` 直通 ⇒ **纯 web origin 不可能产生密文**。⇒ 本条对**纯 web 生产 origin 无实际触发**，属**防御性条款**；仅当**同一 origin 曾被 desktop 渲染层使用过**（dev `localhost:5173`，或任何以 http origin 托管 desktop 渲染层的形态）时生效。
 
 ### 3.3 登出清库
 
-- [ ] **C-52 按键删除黑白名单（P0）**：登出清库**禁止** `localStorage.clear()`，必须按**键白名单/黑名单**逐键 `removeItem`。**白名单（必留）**：`nao.deviceId`（P2-Z7 实测：误清 ⇒ 设备漂移 + 服务端"同设备覆盖旧会话"失效 ⇒ 会话行膨胀）。**建议保留**（设备级偏好）：`THEME_MODE_KEY` / `LANGUAGE_KEY` / `CALENDAR_WEEK_START_KEY`。**黑名单（必清）**：`USER_JWT_LOCALSTORAGE_KEY`、`USER_PROFILE_CACHE_KEY`、`POMODORO_TIMER_SNAPSHOT_KEY` / `POMODORO_FOCUS_SNAPSHOT_KEY` / `POMODORO_SETTINGS_KEY`、`'USER_CONFIRM_UNRESTORE'`、`getStorageKey(tableId)`/`storageKey` 类（键名完备性见探针 **Z13**）。IndexedDB 侧清 11 业务表 + `meta` + `syncQueue` + `syncCursor`（复用 `deletionService` 既有事务原语）。**⚠️ r5 修订 —— `deletionSchedules` 不在清库范围**：`deletionSchedules` = 「**注销宽限期**」状态 ⇒ **登出 / 切换账号清库必须保留目标用户自己的**（丢了会让用户回来后误以为没申请过注销，从而触发恢复同步）；**仅「注销到期」路径**（`checkAndCleanExpired`）在 `wipeUserData` 返回后**删自己的**调度；**禁清任何其它用户的记录**（含 `deletionSchedules`）。与 PRD **AC5b** 对齐（AC5b 已同批收紧；矛盾源头在 PM 分别采纳 ⇒ **非笔误**）。读码核实 `a8480151`（T106）：`wipeUserData` 事务表集 = `[...BUSINESS_TABLES, 'meta', 'syncQueue', 'syncCursor']`，**不含** `deletionSchedules`。**⚠️ r2 补强**：必须抽出 **`wipeUserData(userId)`** 作**单一真源**，供 **登出 / 注销到期 / 切换账号** 三处共用（依据：`checkAndCleanExpired` 带前置条件——须存在 `deletionSchedules` 且已到期 ⇒ 登出与切换账号**无法直接调用它**）。清库**必须按 `userId` 过滤**（11 业务表 + `meta` + `syncQueue` + `syncCursor`；`deletionSchedules` **不在清库范围**，见上）⇒ **禁**整库清、**禁**清他人记录。
-- [ ] **C-53 清库可重入（P0）**：清库前置 `meta.pendingWipe = <userId>`（**单事务**内与清库同提交），启动时若存在该标记则**补清**；清库完成后删除标记。⇒ 崩溃/强杀/掉电后重启**必然收敛**（"登出"是唯一清理触发点 ⇒ **登出的可靠性即安全边界**）。
+- [ ] **C-52 按键删除黑白名单（P0）**：登出清库**禁止** `localStorage.clear()`，必须按**键白名单/黑名单**逐键 `removeItem`。**白名单（必留）**：`nao.deviceId`（P2-Z7 实测：误清 ⇒ 设备漂移 + 服务端"同设备覆盖旧会话"失效 ⇒ 会话行膨胀）。**建议保留**（设备级偏好）：`THEME_MODE_KEY` / `LANGUAGE_KEY` / `CALENDAR_WEEK_START_KEY`。**黑名单（必清）**：`USER_JWT_LOCALSTORAGE_KEY`、`USER_PROFILE_CACHE_KEY`、`POMODORO_TIMER_SNAPSHOT_KEY` / `POMODORO_FOCUS_SNAPSHOT_KEY` / `POMODORO_SETTINGS_KEY`、`'USER_CONFIRM_UNRESTORE'`、`getStorageKey(tableId)`/`storageKey` 类（键名完备性见探针 **Z13**）。IndexedDB 侧清 11 业务表 + `meta` + `syncQueue` + `syncCursor`（复用 `deletionService` 既有事务原语）。**⚠️ r5 修订 —— `deletionSchedules` 不在清库范围**：`deletionSchedules` = 「**注销宽限期**」状态 ⇒ **登出 / 切换账号清库必须保留目标用户自己的**（丢了会让用户回来后误以为没申请过注销，从而触发恢复同步）；**仅「注销到期」路径**（`checkAndCleanExpired`）在 `wipeUserData` 返回后**删自己的**调度；**禁清任何其它用户的记录**（含 `deletionSchedules`）。与 PRD **AC5b** 对齐（AC5b 已同批收紧；矛盾源头在 PM 分别采纳 ⇒ **非笔误**）。读码核实 `a8480151`（T106）：`wipeUserData` 事务表集 = `[...BUSINESS_TABLES, 'meta', 'syncQueue', 'syncCursor']`，**不含** `deletionSchedules`。**⚠️ r2 补强**：必须抽出 **`wipeUserData(userId)`** 作**单一真源**，供 **登出 / 注销到期 / 切换账号** 三处共用（依据：`checkAndCleanExpired` 带前置条件——须存在 `deletionSchedules` 且已到期 ⇒ 登出与切换账号**无法直接调用它**）。清库**必须按 `userId` 过滤**（11 业务表 + `meta` + `syncQueue` + `syncCursor`；`deletionSchedules` **不在清库范围**，见上）⇒ **禁**整库清、**禁**清他人记录。**⚠️ r11 修订（2026-09-24，DEF-34）—— 清库分「终结会话」与「补清」两种语境**：上述 localStorage 黑名单（含 `USER_JWT_LOCALSTORAGE_KEY`）**仅适用于「终结会话」语境**（登出 / 切换账号 / 注销到期）。**「补清」语境**（`resumePendingWipe`，C-53）**不得删除当前已建立会话的凭据键**（`USER_JWT_LOCALSTORAGE_KEY` + `USER_PROFILE_CACHE_KEY`）：该语境下 **IndexedDB 侧清库不变**，localStorage 侧改为「设备级白名单保留 + 当前会话凭据保留 + 其余按键清除」。判据 = **调用语境（调用方显式传入 flag）**，**不以 `userId` 相等为判据**（两种 userId 情形都必须保留当前凭据，理由见 §10.12-一）。实现 = `wipeUserData(userId, { preserveActiveSessionCredentials })`。
+- [ ] **C-53 清库可重入（P0）**：清库前置 `meta.pendingWipe = <userId>`（**单事务**内与清库同提交），启动时若存在该标记则**补清**；清库完成后删除标记。⇒ 崩溃/强杀/掉电后重启**必然收敛**（"登出"是唯一清理触发点 ⇒ **登出的可靠性即安全边界**）。**⚠️ r11 修订（2026-09-24，DEF-34）**：**「补清」必须只清「上一次登出所属账号」的库与键，不得销毁「比它更晚建立」的当前会话**。补清在 **IndexedDB 侧不变**（标记与清库同事务 ⇒ 崩溃时库已清，补清实际补的是事务之外那一步 localStorage 清除）；localStorage 侧按 **C-52 r11** 的「补清语境」执行。⇒ **可重入性 / 收敛性不变**，新增不变量：**补清不得使一个刚建立的有效会话失效**。
 - [ ] **C-54 脏队列阻塞确认（P0）**：登出前判定"是否有未回传写入"**必须直接调 `syncTracker.countDirty(userId)`**；**禁止**读 `syncStatus.pendingCount`（**DEF-13**：仅在 `endRun()` 刷新 ⇒ 滞后）。`>0` ⇒ **阻塞确认**（显示 N + 「先同步」）；离线且 `>0` ⇒ 二次确认并明示不可恢复。**绝不静默清**。
 
 ### 3.4 身份与隔离
 
 - [ ] **C-55 `userId` 硬失败（P0，DEF-9）**：`getCurrentUserId() ?? ''` 兜底**必须移除**；`userId` 为 `null`/空时**拒绝一切库操作**（硬失败 + 可见错误），**不得**退化为"空用户"读写。明文姿态下这是**准入条件**（否则跨用户读到明文）。启动时须从 JWT 重建 `localSession`（web 现无重建点）。
 - [ ] **C-62 离线进入判据替换（P0，DEF-16 / K9）**：删除 C-23 条件④；新判据 = **`offlineEntryGranted && JWT 可解析 && localSession.getCurrentUserId() === jwtUserId && 本地镜像存在`**（**两处实现同步改**：`routes.ts` 真守卫 + `offline-prerequisites.ts`）。**必须补正向单测**（现有测试只覆盖 `isUnlocked === false` 的**拒绝**路径 ⇒ 删除后无守护）。若改走"passthrough 仍置位 `isUnlocked`"的备选方案 ⇒ **必须在本 ADR 变更记录中显式声明**，否则离线进入静默失效。
+- [ ] **C-67 认证失败分类判据 = 「网络白名单 + code 优先」（P0，r11，DEF-33）**：`checkIn`（及同口径凭证校验）失败分流**必须**满足两条：① **判据方向 = 网络类白名单**：**仅**归一化网络类（`ERR_NETWORK` / `ECONNABORTED` / `50300` / `40800` / `42900` / `10051`）**保留认证**（**DEF-5 / AC7 不回归**）；**其余一切失败（含未知 / 新增业务码、5xx、解析失败）一律按凭证类**（清认证 + 跳 `auth/signin`）—— 与 `v1.9.0` 的「任何失败都清」等价，且**不依赖服务端文案**。② **判据数据源 = 结构化 `code` 优先**：仓储边界（`auth-repo-impl`）**必须**透传**顶层归一化 code** 与**业务 code**；分类器**以 code 为准、文案仅兜底**（防 **DEF-25** 复发）。**禁止**新增第二套文案标记集（`check-in.vue` 与 `AuthUseCase` **必须**共用同一分类器）。**契约**：`isCredentialError` 对 `null`/空串**必须显式返回 `false`**（防御性，避免误清）。
 
 ### 3.5 启动门与调用点
 
@@ -405,15 +408,15 @@
 
 **影响面裁决**：
 
-| 影响面                           | 结论                                                                                                                                            |
-| :------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------- |
-| DEF-6 / C5                       | **变 web 前置**，但**修一次两端同受益**                                                                                                         |
-| 单写者（C-45）                   | 变前置；**阶段一可降级为软前置**（只读 ⇒ 无 push；多标签 pull 游标 RMW 后果 = 重复拉取（幂等）而非丢数据）⇒ 建议 `navigator.locks` 给 pull 单主 |
-| 多标签（登出复活 N1）            | **阶段一不可复现**（只读 ⇒ 标签 B 无法写回），与阶段二绑定                                                                                      |
-| `syncCursor`                     | **需要**（引擎自带，含 DEF-SYNC-05 修复）                                                                                                       |
-| `deletionSchedules` 跳过启动同步 | **自动继承 ⇒ 端语义一致**；但**必须补 C-61 调用点②**                                                                                            |
-| AC2 适用范围                     | **desktop only**（web 是新 origin/新库、**无历史密文 ⇒ 无迁移面**）；web 仅需"首次进入明文告知"                                                 |
-| 人天                             | 阶段一 **+3–5**（hooks 共享化 1–1.5 + web 门/离线回退读 1–2 + 禁写开关覆盖 web 1–1.5）⇒ **19–30 → 22–35**（推断）                               |
+| 影响面                           | 结论                                                                                                                                                                                                                                                                                           |
+| :------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DEF-6 / C5                       | **变 web 前置**，但**修一次两端同受益**                                                                                                                                                                                                                                                        |
+| 单写者（C-45）                   | 变前置；**阶段一可降级为软前置**（只读 ⇒ 无 push；多标签 pull 游标 RMW 后果 = 重复拉取（幂等）而非丢数据）⇒ 建议 `navigator.locks` 给 pull 单主                                                                                                                                                |
+| 多标签（登出复活 N1）            | **阶段一不可复现**（只读 ⇒ 标签 B 无法写回），与阶段二绑定                                                                                                                                                                                                                                     |
+| `syncCursor`                     | **需要**（引擎自带，含 DEF-SYNC-05 修复）                                                                                                                                                                                                                                                      |
+| `deletionSchedules` 跳过启动同步 | **自动继承 ⇒ 端语义一致**；但**必须补 C-61 调用点②**                                                                                                                                                                                                                                           |
+| AC2 适用范围                     | **desktop only**（web 是新 origin/新库、**无历史密文 ⇒ 无迁移面**）；web 仅需"首次进入明文告知"。**⚠️ r11 更正**：该结论对**纯 web origin** 成立（web 从不写密文，读码核实见 §10.12-三）；但**同一 origin 曾被 desktop 渲染层使用过**时会出现 web 不可读的旧密文 ⇒ 处置见 **C-68 / §10.12-三** |
+| 人天                             | 阶段一 **+3–5**（hooks 共享化 1–1.5 + web 门/离线回退读 1–2 + 禁写开关覆盖 web 1–1.5）⇒ **19–30 → 22–35**（推断）                                                                                                                                                                              |
 
 **① 的三条硬前置**：**P1 = C-65**（hooks 共享化，step 0，**排在 web 接线之前**）· **P2 = C-59 覆盖 web**（**r5 释义**：= web **不得接本地写仓储** + **离线**写入口统一拦截 + 可见提示；**不含** desktop，见 §10.9） · **P3 = C-61 调用点② + pull 单主**。
 
@@ -569,6 +572,7 @@
 | r8         | 2026-09-23                                                                                                                                                                                                                                                                            | **T115c 用户裁定互记（顶部零挂载 + 全部状态入面板）**：**C-60 ②③ 的渲染点由「内容区 `offline-status.vue`」改为「状态组件面板」**（文案键、`resolveFreshness` 互斥穷尽语义与 `formatMirrorPulledAt` 负向纪律**均不变**；`offline-status.vue` 删除）；**AC8/AC9/AC13b 可测性口径改「二段式」**（零交互 = 轨道按钮角标 + 状态名；点开 = 原文案含时间/N/引导语）⇒ PRD Then 修订归 PM（S3）；**新增显式降级项**：N-1（≤445px 抽屉无 rail 宿主 ⇒ 完全无同步状态，DP-6 待裁定）、N-2（时间/N/引导语零交互不可见）· **C-59/AC10 不受影响**（`OfflineReadOnlyBanner` 待 DP-7a；`plaintext-notice-banner`/AC17 待 DP-7b）· **banner 裁定（T115c 追加）**：`offline-read-only-banner` **已删除**（AC10 可见性由**既有** `write-gate.notifyReadOnly()` → `NueMessage.warn` 在**写被拦截时**承担，**无需新增代码**）+ `plaintext-notice-banner` **已删除**（AC17 改 **`NueConfirm`** 首启一次性确认，`unuseCancelButton` 单按钮；**真实 Chromium + CDP 实测通过**：单按钮 + `nao.plaintextNoticeAck=1` + 零 console warn/error）⇒ **DP-7a/DP-7b 关闭**；详见 `docs/adr/2026-09-23-two-end-sync-status-unification.md`（§3–§8，r9） |
 | 2026-09-23 | **r9（T133）**：**C-59 作用域收窄为「业务数据面」+ 偏好/设置面显式例外（本地优先 + 同步）**；**web 业务只读定为「过渡态」**（阶段二撤销、两端统一 local-first，用户 2026-09-23 定方向）。**业务数据面实质不变**。确切措辞见 `docs/adr/2026-09-23-local-preference-sync.md` §10/§10.10 |
 | r10        | 2026-09-24                                                                                                                                                                                                                                                                            | **T150（arch，doc-only）—— 条款 r10 落地**：**C-59 业务只读正式退场**（降为**历史条款** + **唯一残留效力 = 身份域 `user` 例外**）；**C-66 同批修订**（「web 不得接本地写仓储」→ **阶段二业务面 web 已接本地写仓储**，业务 7 域 binding = `newLocal*Repository()`）；**`markDirty` 新语义**（web 业务**不再恒 0** · `pendingCount = countDirty(userId)` · 成功同步回 0 · PS-12/PS-13；身份域区分；替代旧「web 恒 0」不变量）；新增 **§10.11**（现行口径表 + 保留项 + 连带同步清单）。**保留**：`withReadOnlyGuard`/`OFFLINE_READONLY_ERROR`/`isReadOnly`（服务身份域 + 离线 UI/flag）。依据阶段二 ADR §5 M6 / §2.4；代码侧由 `T149` 同批收敛                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |     |
+| r11        | 2026-09-24                                                                                                                                                                                                                                                                            | **T156（arch，doc-only）—— 三项缺陷条款级裁定（DEF-33 / DEF-34 / DEF-35）**：**① DEF-34 ⇒ C-52 / C-53 r11 修订**（清库分「终结会话」/「补清」语境；`resumePendingWipe` 不得删当前会话凭据键；**采纳方案 a**，b 仅作可选加固且**不足以替代 a**）· **② DEF-33 ⇒ 新增 C-67**（认证失败分类 = **网络白名单 + code 优先**；判据反转与仓储透传 code **同批**）· **③ DEF-35 ⇒ 新增 C-68**（web 不引密码门；旧密文一次性自愈；**暴露面否证** ⇒ 防御性条款、不构成发布阻塞）· §0 关系表补 SHELL-03（r11）· §10.1-AC2 更正 · 新增 **§10.12**（三项裁定 + 依据 + 影响面 + 回归矩阵 + 修复单拆分 + 连带同步清单）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 
 ## 10.10 偏好/设置面 = 终态 local-first（阶段二无需翻改，r9 新增）
 
@@ -636,3 +640,179 @@
 | S7  | `packages/presentation/offline/{write-gate,write-methods}.ts` + `binding.ts`                | **rd-fe**      | 业务 7 域条目清理（闸门仅留身份域）；`withReadOnlyGuard`/`OFFLINE_READONLY` 保留                                           | ✅ `T149` `b4960a4d` |
 | S11 | 测试（`write-gate-wiring` / `local-first-dirty-scope` 等）                                  | **rd-fe / qa** | `markDirty` 口径全量同步（业务 7 域非 0；身份域区分）+ 负向对照                                                            | ✅ `T149` `b4960a4d` |
 | S14 | `docs/adr/2026-09-24-stage2-both-ends-local-first.md`（§2.6 W5 说明 / §2.4 步骤 5 / §5 M6） | **arch**       | 已按 PM 拍板 **S14=(a)** 修订：身份域**保留**离线写闸门 + 组件保留；原「退役后不再拦截」/「停用→删除」措辞已撤销（`T151`） | ✅ 已落地 `T151`     |
+
+---
+
+### 10.12 r11 裁定（T156）：DEF-33 / DEF-34 / DEF-35 三项条款级处置（2026-09-24）
+
+> **背景**：用户 2026-09-24 报 web 三症状（刷新「检入失败」· 登录成功后仍被弹回登录 · `EventSource` MIME `application/json`）。`T155`（rd-fe，**未改码**）live 复现并给出机制链，登记 **DEF-33/34/35**（均 P0，`docs/reports/defect-pool.md` §二）。**服务端契约无问题**（新鲜 token → `10020` / SSE 流式；旧 token → `10022` / `10041` JSON 为设计行为）⇒ **不涉 rd-be**。
+> **本批为纯文档（⛔ 未改代码 / 测试）**；代码侧修复由 PM 据本节拆单派 `rd-fe`。
+> **现场不可得**（用户已清浏览器数据且无备份）⇒ **修复验收必须用 fixture 造的「旧数据态」**（复用 `T155` 的 `pendingWipe` fixture + CDP 探针 `/tmp/t155-*.mjs`）。
+
+**参考来源**：**未检索**（本裁定为**仓内契约 / 代码事实**推导，无外部资料；依据均为仓内文件行号 + 缺陷池登记，见下各条「证据」）。
+
+**对照过的备选模式（含不采纳理由）**：① 方案 b 替代 a（❌：C-61③ 必然在会话后 ⇒ 不充分，§10.12-一）· ② 以「被清 `userId` == 当前 JWT `userId`」为判据（❌：两种 userId 情形都须保留当前凭据）· ③ 单做「判据反转」文案白名单（❌：`10051` 匹配不到 + DEF-25 文案耦合复发）· ④ 单做「仓储透传 code」而不反转方向（❌：需显式枚举凭证码，新增码即漏判）· ⑤ web 明文迁移路径 / web 密码门（❌：无密码入口拿不到 DEK + 与 D-6/K8 互斥）· ⑥ 为 DEF-35 新开独立 ADR（❌：与 C-46/C-51/C-56 强耦合 ⇒ 迁移语义双轨）。
+
+#### 一、DEF-34（②，影响最大）：**采纳方案 a** —— 清库分「终结会话」/「补清」两语境
+
+**裁定**：**采纳方案 a**（最小、充分）；**否决「以方案 b 替代方案 a」**（b 可作后续时序加固，但不构成 a 的替代，理由见下）。
+
+**方案 a 的精确语义**（`packages/infrastructure/src/persistence-local/deletion/**`）：
+
+1. `wipeUserData(userId, options?: { preserveActiveSessionCredentials?: boolean })`：
+    - **默认（`false`）=「终结会话」语境**：**完全保持 C-52 现行行为**（localStorage 黑名单含 `USER_JWT_LOCALSTORAGE_KEY`）。
+    - **`true` =「补清」语境**：**IndexedDB 侧清库不变**；localStorage 侧 = **设备级白名单保留 + 当前已建立会话的凭据键保留 + 其余按键清除**。保留键 = `USER_JWT_LOCALSTORAGE_KEY` 与 `USER_PROFILE_CACHE_KEY`（后者由 `readCachedNickname` 按 `userId` 自校验 ⇒ 保留无串号风险）。
+2. **调用点映射（唯一真源，共 3 处）**：
+    - `resumePendingWipe()`（`deletion-service.ts:99-105`）⇒ **`preserveActiveSessionCredentials: true`**（本裁定核心）。
+    - `checkAndCleanExpired(userId)`（`:112-121`）⇒ **默认 `false`**（注销宽限期到期 = 账号已删 ⇒ 清认证是正确语义，服务端 `10041` 兜底）。
+    - `sign-out-wipe.ts:52`（登出 / 切换账号 / 门内登出，经 `wipeLocalDataOnSignOut`）⇒ **默认 `false`**（调用方随后即 `clearAuthData()`）。
+3. `clearUserScopedLocalStorage(options?)`（`local-storage-policy.ts:91`）承接该 flag。
+
+**为什么不以「被清 `userId` == 当前 JWT `userId`」为判据**（对 T155 措辞的收紧）：两种情形都必须保留当前凭据 —— ① 标记属于**同一用户**（登出被中断 → 重新登录同一账号）：这正是 DEF-34 现场，**必须保留**；② 标记属于**上一账号**（共享设备 A 登出被中断 → B 登录）：当前会话是 B 的，**也必须保留**。⇒ 唯一正确的判据是**调用语境**（该 wipe 是否正在终结「当前这个会话」），**不是 `userId` 比较**。故由调用方显式传 flag。
+
+**与 C-52 / C-53 / C-54 的一致性论证**：
+
+| 条款     | 一致性论证                                                                                                                                                                                                                                                                                |
+| :------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **C-52** | C-52 的黑/白名单**本为「登出清库」而写**（语境 = 会话终结）。r11 **不放松该语境**（默认行为逐字不变），只**新增语境限定**：**补清不得删当前会话凭据**。与 r5 对 `deletionSchedules` 的语境限定（「保留自身」）**同构**。`禁 localStorage.clear()` / 按键删除 / 设备级白名单**全部不变**。 |
+| **C-53** | 机制（`meta.pendingWipe` + 同事务提交 + 补清 + 删标记）**不变**；收敛保证针对 **IndexedDB 侧明文**，该侧**完全不变**。新增不变量：**补清不得使一个「比它更晚建立」的有效会话失效**（否则收敛保证反噬可用性）。                                                                            |
+| **C-54** | **不触碰**。C-54 管「登出前脏队列护栏」；补清发生在**登出之后**，护栏义务已履行。**新增前置义务**：`bootstrapLocalData`（承载补清）**必须仍早于该会话的任何本地写**（现由 C-61 顺序约束保证）⇒ 补清不可能静默丢弃**新会话**的未回传写入。                                                 |
+
+**关键事实（读码核实 `a8480151`）**：`wipeUserData` 的 `meta.pendingWipe` 标记**与 IndexedDB 清库在同一事务内提交**（`deletion-service.ts:63-83`）⇒ 崩溃点若在事务之后，**库其实已经清干净**；`resumePendingWipe` 实际补的是**事务之外那一步**（`clearUserScopedLocalStorage()`，`:86`）⇒ **本缺陷的全部危害恰是「补清删掉刚建立的 JWT」**。方案 a 直接消除该危害，且**不削弱任何安全性质**。
+
+**为什么「方案 b 不足以替代 a」**：C-61 的**调用点③**（常驻跨 7 天，`withBootstrapRetry` → `bootstrapLocalData()`，`bootstrap-local-data.ts:66-73`）**必然发生在会话已建立之后**（这正是它的用途）⇒ 把调用点从「已登录守卫」移到「会话建立前」**无法消除**会话中途的补清。⇒ **补清必须是会话感知的（a）**；b 只能作**额外时序加固**。
+
+**方案 b 的处置建议（可选加固，不阻塞本批）**：把 web 守卫已登录分支（`routes.ts:74`）的 `bootstrapLocalData()` 调用**前移到应用引导（挂载前、`syncService.start()` 之前）**，使补清在**任何本地写之前**完成。⚠️ 该改动**修订 C-61 调用点②**（现为「门 B 通过后的等价收敛点」）⇒ 须 PM 批准 + 补顺序断言；**且不得以 b 替代 a**。**推荐：本批只做 a，b 记入后续单（FIX-E）**。
+
+**存量用户自愈（硬要求）**：受影响用户（浏览器内残留 `meta.pendingWipe` + 有效新 JWT）**必须无需手动清数据即可自愈**：
+
+- **不需要新 UI**：方案 a 生效后，其下一次 `bootstrapLocalData`（守卫或 C-61③）即 **只清库、不删当前 JWT**，随后 `syncService` 重建镜像。
+- **到期 `deletionSchedules`（同路径 `checkAndCleanExpired`）**：语义不同（账号已删）⇒ 允许清认证；**但不得静默**（服务端 `10041` 兜底跳登录页）。⚠️ **web 侧现状**：web binding **不提供** `decorateUserUseCase` ⇒ web **从不写** `deletionSchedules`（该表在 web 只能是**同 origin 的 desktop 数据**，见 C-68）⇒ 对纯 web 用户该分支为空操作。
+
+**影响面**：`deletion-service.ts`（签名 + 1 处调用传参）· `local-storage-policy.ts`（`clearUserScopedLocalStorage` 收 flag）· web 守卫**不改**（仅采纳 b 才改）· **两端共享**（desktop 同受益）。
+
+**回归矩阵（DEF-34）**：
+
+| #   | 场景                                                | 期望                                               | 守护                                                                  |
+| :-- | :-------------------------------------------------- | :------------------------------------------------- | :-------------------------------------------------------------------- |
+| 1   | 残留 `pendingWipe`（= 当前 `userId`）⇒ 新会话已建立 | DB 清、**当前 `USER_JWT` 保留**、可继续进入        | **新增**：`deletion-wipe.test.ts`                                     |
+| 2   | 残留 `pendingWipe`（≠ 当前 `userId`）⇒ B 已登录     | A 的 DB 清、**B 的 JWT 保留**                      | **新增**                                                              |
+| 3   | 正常登出（`wipeLocalDataOnSignOut`）                | JWT 清 + 业务键清（**C-52 不回归**）               | 既有 `deletion-wipe.test.ts`（6 例）· `sign-out-wipe.test.ts`         |
+| 4   | 切换账号 A→B                                        | A 的 11 表零残留、A 的 `deletionSchedules` 保留    | 既有 AC5b 例                                                          |
+| 5   | 注销到期（`checkAndCleanExpired`）                  | DB 清 + 调度删 + **认证清**（默认语境）            | 既有 `deletion-service.test.ts` + 新增                                |
+| 6   | 崩溃补清（有标记 ⇒ true / 无标记 ⇒ false）          | 不变；DB 清；**JWT 保留**                          | 既有 C-53 例（补断言）                                                |
+| 7   | C-54 脏队列护栏                                     | 仍**直调** `syncTracker.countDirty(userId)`        | 既有 `sign-out-wipe.test.ts`                                          |
+| 8   | 补清不得丢新写入                                    | `bootstrapLocalData` 早于任何本地写                | 既有 `bootstrap-local-data.test.ts` / `def10-bootstrap-order.test.ts` |
+| 9   | **现场复现（fixture）**                             | 造 `pendingWipe` + 有效 JWT ⇒ 登录后**不弹回登录** | 复用 `/tmp/t155-*.mjs`（CDP）                                         |
+
+**需同步调整的既有断言（明确清单）**：
+
+- `packages/infrastructure/src/persistence-local/__tests__/deletion-wipe.test.ts`：**6 例全部保留**（默认语境逐字不变）；**新增**场景 1/2/5/6 的「JWT 保留 / 认证清」断言。
+- `apps/web/src/views/auth/bootstrap-local-data.test.ts`：`resumePendingWipe` / `checkAndCleanExpired` 为 mock ⇒ **预期不改**（仅采纳 b 才改）。
+- `apps/web/src/views/auth/routes.test.ts`：mock `deletionService` ⇒ **预期不改**。
+- `packages/presentation-identity/src/stores/__tests__/user-store.test.ts`：`clearAuthData` 路径**不涉清库** ⇒ **不改**。
+- C-54 直调 `countDirty`：`sign-out-wipe.ts:24,40` ⇒ **不改**。
+
+#### 二、DEF-33（①）：**采纳「判据反转」的语义，但判据数据源必须走「仓储透传 code」**（两项同批）
+
+**裁定**：**方向 = 判据反转（网络白名单；未知 ⇒ 凭证类）**；**数据源 = 仓储边界透传 code**。二者**不是替代关系**：单独做「判据反转」会把 **DEF-25 的文案耦合从「凭证侧」搬到「网络侧」**（同一类缺陷复发），故**必须同批**落地。新增 **C-67**。
+
+**比较**：
+
+| 维度                            | ① 判据反转（文案白名单）                                                                | ② 仓储透传 code                                                                     |
+| :------------------------------ | :-------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------- |
+| 判据方向                        | **网络类白名单** ⇒ **未知失败一律按凭证类**（= v1.9.0「任何失败都清」+ DEF-5 网络豁免） | 按业务码分类（须显式枚举凭证码 `10021`/`10022`/`10041`）                            |
+| 数据来源                        | `message`（**当前只拿得到文案**）                                                       | **结构化 `code`**（顶层归一化 code + 业务 code）                                    |
+| `DEF-25`                        | **未修**（仍耦合文案）                                                                  | **修根因**                                                                          |
+| `10051`（服务端限流，文案未知） | **匹配不到** ⇒ 误判凭证类 ⇒ 清认证（副作用）                                            | **精确匹配**                                                                        |
+| 改动面                          | `error-classification.ts` 1 文件                                                        | `auth-repo-impl/impl.ts` + `error-classification.ts` + `check-in.vue`（共用分类器） |
+| 风险                            | 服务端文案漂移不影响**网络侧**（归一化文案在仓内 `axios.ts`）；但 `10051` 是洞          | code 契约稳定；须防「未知码」误判 —— 由**白名单方向**兜住                           |
+
+**结论**：**① 的语义 + ② 的实现**，同一修复单内完成：
+
+- 仓储（`packages/infrastructure/src/persistence-go/identity/auth-repo-impl/impl.ts:55`）**保留顶层归一化 code**（`response.code`，如 `ERR_NETWORK`）与**业务 code**（`result.code`），以 `Error` 携带 `code` 返回（**不改** `GoError` 联合类型；展示文案仍走 `unwrapError` ⇒ 用户可见文案不变）。
+- 分类器（`packages/domain-identity/src/application/usecases/auth-service/error-classification.ts`）：`isCredentialError(err)` = **`code ∈ 网络白名单 ? false : true`**；网络白名单 = `ERR_NETWORK` / `ECONNABORTED` / `50300` / `40800` / `42900` / `10051`（**文案兜底**仅保留仓内归一化文案，**不再依赖服务端文案**）。
+- `check-in.vue` 继续复用同一分类器（`5b9d6bdb` 已单源化）⇒ **禁**出现第二套标记集（**DEF-18** 已在移动端登记同缺陷副本，属项目红线，**需用户授权**）。
+
+**与 DEF-5 / DEF-25 / v1.9.0 的关系**：
+
+- **DEF-5 不回归**：断网 / 超时 / 限流仍保留认证（`ERR_NETWORK` / `ECONNABORTED` / `42900` / `10051` 在白名单内）⇒ AC7 语义不变。
+- **v1.9.0 对齐**：v1.9.0 是**任何 checkin 失败都 `clearAuthData()`**（可恢复）；反转后 = **除网络类外一律清** ⇒ **等价于 v1.9.0 + DEF-5 豁免**，且不依赖服务端文案。
+- **DEF-25 闭合**：判据以 `code` 为准、文案仅兜底 ⇒ 「判据耦合文案」的复发路径被切断。
+
+**回归矩阵（DEF-33）**：
+
+| 输入（code / 文案）                              | 现判                           | **新判**                     | 期望                                  |
+| :----------------------------------------------- | :----------------------------- | :--------------------------- | :------------------------------------ |
+| `ERR_NETWORK` / 「网络错误，请检查您的网络连接」 | 非凭证                         | 非凭证                       | **保留认证**（DEF-5）                 |
+| `ECONNABORTED` / 「请求超时，请稍后再试」        | 非凭证                         | 非凭证                       | 保留认证                              |
+| `42900` / 「请求过于频繁，请稍后再试」           | 非凭证                         | 非凭证                       | 保留认证                              |
+| `10051`（服务端限流）                            | **非凭证**（文案无 marker 时） | **非凭证**（按 code）        | 保留认证（**修复**）                  |
+| `10022` / 「检入失败」                           | **非凭证（BUG）**              | **凭证**                     | 清认证 + 跳 `auth/signin`（**修复**） |
+| `10021` / 「参数错误」                           | **非凭证（BUG）**              | **凭证**                     | 清认证 + 跳 signin（**修复**）        |
+| `10041` / 「用户凭证验证失败」/「登录已过期」    | 凭证                           | 凭证                         | 清认证                                |
+| `401` / `403`                                    | 凭证                           | 凭证                         | 清认证                                |
+| 未知码 / `'请求失败'`                            | 非凭证                         | **凭证**                     | 清认证（**安全默认**，v1.9.0 等价）   |
+| `null` / 空串（仅单测可达）                      | 非凭证                         | **必须显式 `false`**（防御） | 既有断言保持                          |
+
+**需同步调整的既有断言**：
+
+- `packages/domain-identity/src/application/usecases/auth-service/__tests__/checkin-failure-split.test.ts`：现有例**全部保持**（凭证 / 网络两侧样例在两套判据下同结论）；**新增** `10022`/`10021` ⇒ 凭证、`10051` ⇒ 非凭证、未知码 ⇒ 凭证；`isCredentialError(null)` 断言**保留**（要求实现显式 `false`）。
+- 若采用「文案兜底」实现，则「服务端文案漂移」用例（`T112` 的 `network-failure.ts` 全等匹配先例）**必须**改为 code 驱动。
+
+#### 三、DEF-35（③）：**不引 web 密码门；一次性自愈（C-68）**；且**暴露面否证** ⇒ 建议降级为防御性条款
+
+**暴露面事实（读码核实，⛔ 未采信转述）**：
+
+| #   | 事实                                                                                                                                                      | 证据                                                                                       |
+| :-- | :-------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------- |
+| A   | web 绑定**不提供** `decorateAuthUseCase` / `decorateUserUseCase` ⇒ web **从不** `cryptoService.setup/unlock`、**从不**写 `key-bundle`/`deletionSchedules` | `apps/web/src/hooks/usecases/binding.ts`（仅 `decorateUseCase`）· `use-auth-usecase.ts:18` |
+| B   | `cryptoService.encrypt` 自 **`9ee0c08b`（T104）** 起即为 `plain:` 直通 ⇒ **web 写入的一切都是明文**                                                       | `crypto-service.ts:185-187`                                                                |
+| C   | `runPlaintextMigration` 调用点**仅在 `apps/desktop/**`**（`unlock-gate.vue:154`、desktop `binding.ts:73`）                                                | 全仓 grep（web 零调用）                                                                    |
+| D   | 本 ADR **§10.1 早已记录**该结论：「web 是新 origin/新库、**无历史密文 ⇒ 无迁移面**」                                                                      | 本篇 §10.1（AC2 适用范围行）                                                               |
+
+⇒ **技术结论**：**纯 web origin 不可能存在密文** ⇒ DEF-35 对**纯 web 生产 origin 无实际触发**，**不构成发布阻塞**（**严重度归 PM**）。残余暴露面 = **同一 origin 曾被 desktop 渲染层使用过**（dev `localhost:5173`：electron-vite 渲染层与 `vp dev` web 共用 origin；或任何以 http origin 托管 desktop 渲染层的部署形态）⇒ 此时 web 读到旧密文会抛「本地密钥未解锁」（`crypto-service.ts:209`）。
+
+**处置方向（推荐 = 一次性处置 + 防御性守卫；**否决** web 迁移路径）**：
+
+- **否决 web 迁移路径**：web 无密码入口 ⇒ 拿不到 DEK ⇒ 「迁移」技术上不可实现；引入 web 密码门与 **D-6 / K8**（冷启动不输密码）**互斥**，且对纯 web 用户毫无意义。
+- **采纳一次性自愈（新增 C-68）**：检测 → **C-54 同口径护栏** → 丢弃本地密文副本 + **从服务端重新拉全量镜像**（服务端为权威真源）→ 可见告知；**禁**删 `key-bundle`（C-51 唯一不可逆开关）、**禁**静默丢弃。
+- **建议的落地次序（PM 定）**：① 先跑一条**证伪探针**（在生产 origin 上扫描业务表是否存在非 `plain:` 值 / 是否存在 `key-bundle`）；② 若证伪 ⇒ **C-68 按防御性（P2）实现，不阻塞发布**；③ 若证实（部署形态共享 origin，或现场为 `localhost` 开发环境）⇒ 升 **P0** 并随本批修复。
+- **现场不可得**（用户已清数据）⇒ 验收**只能**用 fixture 造「旧数据态」（复用 `/tmp/t155-*.mjs` 的 `version99` fixture，或直接向业务表写入密文样例）。
+
+**是否需要 ADR 条款 / 独立 ADR**：**条款（C-68）+ 本节（§10.12），不新开独立 ADR**。理由：与 **C-46 / C-51 / C-56**（明文姿态 + 迁移红线 + 启动门）强耦合，须同处可查；新开 ADR 会造成迁移语义双轨。
+
+**回归矩阵（DEF-35）**：
+
+| #   | 场景                          | 期望                                                         |
+| :-- | :---------------------------- | :----------------------------------------------------------- |
+| 1   | 纯 web origin（无密文）       | **零行为变化**（检测不触发、无额外拉取）                     |
+| 2   | 存在密文 + `countDirty === 0` | 丢弃本地副本 → 全量重拉 → 可见告知；不抛「本地密钥未解锁」   |
+| 3   | 存在密文 + `countDirty > 0`   | **阻塞确认 / 先同步**（C-54 口径）；**不得**静默丢未回传写入 |
+| 4   | 存在 `key-bundle`             | **不删**（C-51）；仅处置业务表密文                           |
+| 5   | `plain:` 记录                 | **不得**被误判为密文（前缀判据）                             |
+
+#### 四、建议的修复单拆分（PM 据此派 `rd-fe`）
+
+| 单                | 缺陷                           | 优先级                 | 交付面（预计）                                                                                                                                                                                          | 依赖     |
+| :---------------- | :----------------------------- | :--------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------- |
+| **FIX-A**         | **DEF-34**                     | **P0（解阻塞）**       | `packages/infrastructure/src/persistence-local/deletion/{deletion-service,local-storage-policy}.ts` + `__tests__/deletion-wipe.test.ts`（+4 例）                                                        | 无       |
+| **FIX-B**         | **DEF-33**                     | **P0（解阻塞）**       | `packages/infrastructure/src/persistence-go/identity/auth-repo-impl/impl.ts` + `packages/domain-identity/.../auth-service/error-classification.ts` + `__tests__/checkin-failure-split.test.ts`（+3 例） | 无       |
+| **FIX-C**         | DEF-34 ③ 下游（空 token 加固） | P1                     | 与 FIX-A 同批「随手加固」：确认 `check-in.vue` 取 token 为空时走**显式失败态**（非静默）                                                                                                                | FIX-A    |
+| **FIX-D**         | DEF-35                         | **P2 待证伪**（PM 定） | 检测 + 处置 + 文案（按 C-68）                                                                                                                                                                           | 证伪探针 |
+| **FIX-E**（可选） | DEF-34 方案 b 时序加固         | P2                     | `apps/web/src/{main.ts,views/auth/routes.ts}`（**修订 C-61 调用点②，须 PM 批准**）                                                                                                                      | FIX-A    |
+
+**统一验收口径**：① 全仓 `pnpm exec vp check` 0 error；② 受影响面 + 依赖包 `pnpm exec vp test --run <paths>`（**报文件 / 例 / 红数**）；③ 移动端红线 `git status --porcelain -- packages/presentation-react apps/mobile` = 0；④ **DEF-34/33 必须在 fixture 造的旧数据态上验证**（`pendingWipe` + 失效 JWT），不得只在干净环境跑绿。
+
+#### 五、连带同步清单（含 Owner）
+
+| #   | 位置                                                                                     | Owner    | 须同步内容                                                                                                 | 状态           |
+| :-- | :--------------------------------------------------------------------------------------- | :------- | :--------------------------------------------------------------------------------------------------------- | :------------- |
+| S1  | 本篇（C-52 / C-53 r11 · C-67 / C-68 · §0 关系表 · §10.1-AC2 · §11 r11 · §10.12）         | **arch** | 条款 r11 落地                                                                                              | ✅ 本单 `T156` |
+| S2  | `docs/adr/README.md`（WEB-OFFLINE 索引行）                                               | **arch** | 索引行标注 r11                                                                                             | ✅ 本单 `T156` |
+| S3  | `docs/prds/2026-09-23-web-offline-stage1.md`（§NFR 性能行「web 无历史密文 ⇒ 无迁移面」） | **PM**   | 加限定：**纯 web origin** 成立；同 origin desktop 情形见 C-68                                              | ⏳ PM          |
+| S4  | `docs/reports/defect-pool.md`（DEF-33 机制行锚点）                                       | **PM**   | `usecase.ts:68（CREDENTIAL_ERROR_MARKERS）` **已失效** ⇒ 改为 `.../auth-service/error-classification.ts:9` | ⏳ PM          |
+| S5  | `docs/reports/defect-pool.md`（DEF-34 / DEF-35 行 + 处置列）                             | **PM**   | 回写裁定结论（a；①+②；C-68 + 严重度建议）                                                                  | ⏳ PM          |
+| S6  | `docs/reports/defect-pool.md`（DEF-35 机制行锚点 `crypto-service.ts:207`）               | **PM**   | 实为 **`:209`**（`本地密钥未解锁`）                                                                        | ⏳ PM          |
+| S7  | `docs/tasks-state.md`                                                                    | **PM**   | `T156` 回执 + FIX-A…FIX-E 派发登记                                                                         | ⏳ PM          |
+| S8  | `docs/adr/2026-09-10-shell-03-offline-availability.md`（附录 B-3 ②）                     | **arch** | 判据表述按 **C-67** 读（文案标记表 → 网络白名单 + code 优先）；**待 PM 批准后**落                          | ⏳ 后续        |
