@@ -10,6 +10,13 @@ export type GetTasksOptions = {
     projectId?: NullableString
     tagId?: string
     isArchived?: boolean
+    /**
+     * 包含已归档（ADR `docs/adr/2026-09-24-project-archive.md` §15.2）
+     * @description true ⇒ **不按归档态过滤**（包含已归档）；**优先级高于 `isArchived`**
+     *              （L1 使「未传 isArchived」= 排除 ⇒「包含」必须用正向信号）；
+     *              **web-only**（服务端无该参数）。
+     */
+    includeArchived?: boolean
     isDeleted?: boolean
     isStarMarked?: boolean
     isGivenUp?: boolean

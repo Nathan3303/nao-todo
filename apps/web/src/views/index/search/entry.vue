@@ -50,6 +50,7 @@ const {
     filterPriorities,
     filterStates,
     includeExcluded,
+    includeArchived,
     filtersActive,
     toggleProjectFilter,
     toggleTagFilter,
@@ -292,12 +293,14 @@ watch(
                             :selected-states="filterStates"
                             :active="filtersActive"
                             :include-excluded="includeExcluded"
+                            :include-archived="includeArchived"
                             :can-save="canSaveSearch"
                             @toggle-project="toggleProjectFilter"
                             @toggle-tag="toggleTagFilter"
                             @toggle-priority="togglePriorityFilter"
                             @toggle-state="toggleStateFilter"
                             @toggle-excluded="includeExcluded = $event"
+                            @toggle-archived="includeArchived = $event"
                             @clear="onClearFilters"
                             @save="onSaveSearch"
                         />
@@ -508,6 +511,14 @@ watch(
                                             class="search-row__badge search-row__badge--excluded"
                                         >
                                             {{ t('search.state.givenUp') }}
+                                        </nue-text>
+                                        <!-- P2：已纳入的归档状态标识 -->
+                                        <nue-text
+                                            v-if="row.task.isArchived"
+                                            size="var(--nue-text-xs)"
+                                            class="search-row__badge search-row__badge--excluded"
+                                        >
+                                            {{ t('search.state.archived') }}
                                         </nue-text>
                                         <task-basic-info
                                             v-if="row.task.projectId"

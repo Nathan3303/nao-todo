@@ -136,8 +136,10 @@ export interface LocaleMessages {
     'search.history.clear': string
     'search.history.remove': string
     'search.includeExcluded': string
+    'search.includeArchived': string
     'search.hitInDescription': string
     'search.state.deleted': string
+    'search.state.archived': string
     'search.state.givenUp': string
     'search.placeholder': string
     'search.foundCount': string

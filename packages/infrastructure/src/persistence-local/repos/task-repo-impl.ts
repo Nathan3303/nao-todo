@@ -286,7 +286,10 @@ export class LocalTaskRepoImpl implements TaskRepository {
                 // 默认（未传）或 isDeleted=false：不查询已删除任务（含子任务——行级过滤，父/子一视同仁；对齐项目仓库默认语义）
                 records = records.filter((r) => isNotDeleted(r.deletedAt))
             }
-            if (query.isArchived === 'true') {
+            if (query.includeArchived === 'true') {
+                // P2 / ADR §15.2：`includeArchived=true` ⇒ **不按归档态过滤**（包含已归档），
+                // 优先级高于 `isArchived`（正向信号，覆盖 L1 默认排除）
+            } else if (query.isArchived === 'true') {
                 records = records.filter((r) => !isAbsentStamp(r.archivedAt))
             } else {
                 // L1（ADR §3.2 / Q2）：`isArchived` 未传 ⇒ **默认排除归档**（视同 'false'）

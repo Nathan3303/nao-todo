@@ -14,7 +14,8 @@ const EMPTY_QUERY: SearchQueryState = {
     tagIds: [],
     priorities: [],
     states: [],
-    includeExcluded: false
+    includeExcluded: false,
+    includeArchived: false
 }
 
 beforeEach(() => {
