@@ -549,6 +549,8 @@ DecideUpsert(existingCreated, existingUpdated, voCreated, voUpdated, baseUpdated
 | S21 | `AGENTS.md`                                                                                                                   | **PM**    | 若 2B 新增守卫（冲突 UX 断言 / push 单主断言）则补                                             | ⏳ PM         |
 
 > **Issue 指针**：`#94`（`feat/94-stage2-2b`）—— 正文权威在本篇 §9（**禁双源**）。
+>
+> **2026-09-24（`T175` 互记，清单归档）**：**归档级联 × OCC 的隐式契约** —— 服务端 `Push` 的条目处理序 **`tasks → … → projects`** 使客户端级联的 task upsert（带级联前 base）先于 project upsert 被应用，**不会成批 `stale`**；该序为**隐式契约**（若把 `projects` 提前 ⇒ 级联 upsert 成批 `stale` ⇒ journal 噪声，**须回评审**）。另：级联后 base 存在**短暂陈旧窗口**（服务端级联推进任务 `updated_at`）⇒ 由「pull 先于 push」+ 归档态**只读**覆盖。详见 `docs/adr/2026-09-24-project-archive.md` **§4.1（PA-8）/ §9（R-4 / R-10）**。
 
 ### 9.10 DP-2B 裁定（**PM 2026-09-24 拍板 —— 全部采纳 arch 建议**）
 
