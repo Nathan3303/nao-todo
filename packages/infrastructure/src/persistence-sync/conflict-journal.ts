@@ -17,6 +17,7 @@ import {
 import { findConflictEntity } from './conflict-entity-registry'
 import { nowCalibratedIso } from './sync-config'
 import { syncTracker } from './sync-tracker'
+import { logStructured, STRUCTURED_LOG_EVENTS } from '../observability/structured-log'
 
 export type { ConflictJournalEntry }
 
@@ -40,13 +41,49 @@ const JOURNAL_LOCK_PREFIX = 'nao-todo:journal:'
 
 /**
  * 在 journal 专用锁内执行 `run`（**等待**取锁，非 `ifAvailable`：journal 写入**不得跳过**）。
- * @description 无 `navigator.locks`（desktop / 老浏览器 / 测试）⇒ 直接执行（退化为现状）。
+ * @description 无 `navigator.locks`（desktop / 老浏览器 / 测试）⇒ 记日志 + 直接执行（退化为现状）。
  */
 const withJournalLock = async <T>(userId: string, run: () => Promise<T>): Promise<T> => {
     const locks = typeof navigator === 'undefined' ? undefined : navigator.locks
-    if (!locks || typeof locks.request !== 'function') return run()
+    if (!locks || typeof locks.request !== 'function') {
+        logStructured('warn', STRUCTURED_LOG_EVENTS.SYNC_JOURNAL_LOCK_UNAVAILABLE, { userId })
+        return run()
+    }
     return (await locks.request(`${JOURNAL_LOCK_PREFIX}${userId}`, () => run())) as T
 }
+
+/** journal 变更结果（`entries` = 新条目集；`evictedCount` 缺省 ⇒ 保留原值） */
+interface JournalMutation {
+    entries: ConflictJournalEntry[]
+    evictedCount?: number
+}
+
+/**
+ * journal 锁内的**原子读-改-写**（ADR §9.3：journal `meta` 单记录的**所有**写者互斥）
+ * @description 读与写同在锁内 ⇒ 消除「读在锁外、写在锁内」的丢更新窗口（恢复动作 A/B 曾有此窗口）。
+ * @param write 收到锁内读到的条目与记录，返回变更（`null` ⇒ 不落盘）
+ * @returns 变更后的条目集（`write` 返回 `null` ⇒ 锁内读到的原条目）
+ */
+const withJournalRmw = async (
+    userId: string,
+    write: (context: {
+        entries: ConflictJournalEntry[]
+        record: MetaRecord | undefined
+    }) => JournalMutation | null | Promise<JournalMutation | null>
+): Promise<ConflictJournalEntry[]> =>
+    withJournalLock(userId, async () => {
+        const record = await localDatabase.meta.get(conflictJournalId(userId))
+        const entries = record?.conflictJournal ?? []
+        const mutation = await write({ entries, record })
+        if (!mutation) return entries
+        const evictedCount = mutation.evictedCount ?? record?.conflictJournalEvictedCount
+        await localDatabase.meta.put({
+            id: conflictJournalId(userId),
+            conflictJournal: mutation.entries,
+            ...(evictedCount === undefined ? {} : { conflictJournalEvictedCount: evictedCount })
+        } satisfies MetaRecord)
+        return mutation.entries
+    })
 
 /** 记账输入（`at` 由本模块生成） */
 export interface ConflictJournalInput {
@@ -82,9 +119,7 @@ export const appendConflict = async (
     if (!userId) return 0
     // 跨路径互斥（ADR §9.3）：pull 的 remote-wins 与 push 的 stale/noop/... 均经本入口 ⇒
     // 同一 `meta` 单记录的 RMW 在 journal 锁内串行（锁序：pull/push 锁 → journal 锁，最内层）
-    return withJournalLock(userId, async () => {
-        const record = await localDatabase.meta.get(conflictJournalId(userId))
-        const entries = record?.conflictJournal ?? []
+    const next = await withJournalRmw(userId, ({ entries, record }) => {
         const entry: ConflictJournalEntry = {
             kind: input.kind,
             table: input.table,
@@ -96,18 +131,15 @@ export const appendConflict = async (
             ...(input.loserUpdatedAt === undefined ? {} : { loserUpdatedAt: input.loserUpdatedAt }),
             at: new Date().toISOString()
         }
-        const next = [...entries, entry].slice(-CONFLICT_JOURNAL_LIMIT)
+        const appended = [...entries, entry].slice(-CONFLICT_JOURNAL_LIMIT)
         // R-15：环形淘汰累计计数（与 journal 同一 meta 记录的**同一次** RMW ⇒ 无第二处写点）
         const evicted = entries.length + 1 - CONFLICT_JOURNAL_LIMIT
-        const evictedCount =
-            (record?.conflictJournalEvictedCount ?? 0) + (evicted > 0 ? evicted : 0)
-        await localDatabase.meta.put({
-            id: conflictJournalId(userId),
-            conflictJournal: next,
-            conflictJournalEvictedCount: evictedCount
-        } satisfies MetaRecord)
-        return next.length
+        return {
+            entries: appended,
+            evictedCount: (record?.conflictJournalEvictedCount ?? 0) + (evicted > 0 ? evicted : 0)
+        }
     })
+    return next.length
 }
 
 /** 清空冲突记账（登出/清库随 `meta` 一并清除；此处供显式清理） */
@@ -178,22 +210,6 @@ export interface ConflictResolutionResult {
     ok: boolean
     /** 动作后该用户 journal 剩余条数（供状态面计数刷新） */
     remaining: number
-}
-
-/** 落盘整份 journal（**直连 meta，不触发 `markDirty`**；供恢复动作删条）
- * @description **保留**淘汰累计计数（纯追加字段，不因删条归零） */
-const saveConflictJournal = async (
-    userId: string,
-    entries: ConflictJournalEntry[]
-): Promise<void> => {
-    const record = await localDatabase.meta.get(conflictJournalId(userId))
-    await localDatabase.meta.put({
-        id: conflictJournalId(userId),
-        conflictJournal: entries,
-        ...(record?.conflictJournalEvictedCount === undefined
-            ? {}
-            : { conflictJournalEvictedCount: record.conflictJournalEvictedCount })
-    } satisfies MetaRecord)
 }
 
 /** 冲突条目 → 列表项（UI 面） */
@@ -293,12 +309,15 @@ export const resolveConflictKeepServer = async (
     table: string,
     entityId: string
 ): Promise<ConflictResolutionResult> => {
-    const entries = await loadConflictJournal(userId)
-    const remaining = entries.filter(
-        (entry) => entry.table !== table || entry.entityId !== entityId
-    )
-    if (remaining.length !== entries.length) await saveConflictJournal(userId, remaining)
-    return { ok: true, remaining: remaining.length }
+    if (!userId) return { ok: true, remaining: 0 }
+    // 读-改-写同在 journal 锁内 ⇒ 与后台 `appendConflict` 并发不丢条目（ADR §9.3）
+    const next = await withJournalRmw(userId, ({ entries }) => {
+        const remaining = entries.filter(
+            (entry) => entry.table !== table || entry.entityId !== entityId
+        )
+        return remaining.length === entries.length ? null : { entries: remaining }
+    })
+    return { ok: true, remaining: next.length }
 }
 
 /**
@@ -313,21 +332,24 @@ export const resolveConflictRetryLocal = async (
     entityId: string
 ): Promise<ConflictResolutionResult> => {
     if (!userId) return { ok: false, remaining: 0 }
-    const entries = await loadConflictJournal(userId)
-    const config = findConflictEntity(table)
-    if (!config) return { ok: false, remaining: entries.length }
-    const entry = latestEntry(entries, table, entityId)
-    if (!entry || !SNAPSHOT_KINDS.has(entry.kind)) {
-        return { ok: false, remaining: entries.length }
-    }
-    // 败方作为一次**新的本地写**：`updatedAt` = 服务端校准 now；`putRecord` 保留当前 base
-    const updatedAt = nowCalibratedIso()
-    const record = await config.entityToRecord({ ...entry.loser, updatedAt }, userId)
-    await config.putRecord(record)
-    await syncTracker.markDirty(table, entityId, 'upsert', updatedAt)
-    const remaining = entries.filter(
-        (candidate) => candidate.table !== table || candidate.entityId !== entityId
-    )
-    await saveConflictJournal(userId, remaining)
-    return { ok: true, remaining: remaining.length }
+    let resolved = false
+    // 读-改-写同在 journal 锁内（含败方写回本地表的 `putRecord`/`markDirty`）⇒
+    // 与后台 `appendConflict` 并发不丢条目（ADR §9.3）；无映射/条目不适用 ⇒ `null` ⇒ 不落盘
+    const next = await withJournalRmw(userId, async ({ entries }) => {
+        const config = findConflictEntity(table)
+        const entry = config ? latestEntry(entries, table, entityId) : undefined
+        if (!config || !entry || !SNAPSHOT_KINDS.has(entry.kind)) return null
+        // 败方作为一次**新的本地写**：`updatedAt` = 服务端校准 now；`putRecord` 保留当前 base
+        const updatedAt = nowCalibratedIso()
+        const record = await config.entityToRecord({ ...entry.loser, updatedAt }, userId)
+        await config.putRecord(record)
+        await syncTracker.markDirty(table, entityId, 'upsert', updatedAt)
+        resolved = true
+        return {
+            entries: entries.filter(
+                (candidate) => candidate.table !== table || candidate.entityId !== entityId
+            )
+        }
+    })
+    return { ok: resolved, remaining: next.length }
 }
