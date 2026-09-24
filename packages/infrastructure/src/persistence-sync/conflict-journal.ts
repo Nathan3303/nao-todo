@@ -81,3 +81,148 @@ export const clearConflictJournal = async (userId: string): Promise<void> => {
     if (!userId) return
     await localDatabase.meta.delete(conflictJournalId(userId))
 }
+
+// ---------------------------------------------------------------------------
+// T165 / W3 —— 冲突解决 UX API（ADR §9.2）
+// 第一段（T165-api）：导出签名 + 类型 + 最小实现；第二段：`compareConflict` /
+// `resolveConflictRetryLocal` 落地（需「表名 → 本地表 / 转换器」映射）。
+// ---------------------------------------------------------------------------
+
+/** 折叠提示阈值（journal 达此条数 ⇒ UI 提示「更早冲突已折叠」；≤ `CONFLICT_JOURNAL_LIMIT`） */
+export const CONFLICT_FOLD_HINT_THRESHOLD = 200
+
+/** 有快照的冲突类型（`loser` = 被覆盖内容）；其余（`conflict`/`skipped`）无快照 */
+const SNAPSHOT_KINDS: ReadonlySet<ConflictJournalEntry['kind']> = new Set([
+    'remote-wins',
+    'push-noop',
+    'stale'
+])
+
+/** T165 第一段占位：消费参数以免 lint 未使用告警（第二段落地后移除） */
+const pendingConflictApi = (...args: unknown[]): number => args.length
+
+/** 冲突列表项（UI 渲染用；只读快照） */
+export interface ConflictListItem {
+    /** 条目稳定 id：`${table}:${entityId}:${at}` */
+    id: string
+    kind: ConflictJournalEntry['kind']
+    table: string
+    entityId: string
+    /** 败方（被覆盖方）快照；无快照的 kind（`conflict`/`skipped`）⇒ `null` */
+    loser: Record<string, unknown> | null
+    winnerUpdatedAt?: string
+    loserUpdatedAt?: string
+    at: string
+}
+
+/** 冲突列表结果（含折叠信号） */
+export interface ConflictListResult {
+    items: ConflictListItem[]
+    /** 折叠信号：journal 已达折叠阈值（更早冲突可能已被环形淘汰） */
+    folded: boolean
+}
+
+/** 只读字段级差异（仅展示，不自动合并） */
+export interface ConflictFieldDiff {
+    field: string
+    loser: unknown
+    current: unknown
+}
+
+/** 只读对比数据面：败方快照 vs 本地当前行 */
+export interface ConflictComparison {
+    table: string
+    entityId: string
+    /** 败方（journal 快照；无快照 ⇒ `null`） */
+    loser: Record<string, unknown> | null
+    /** 本地当前行（胜方；明文；行不存在 ⇒ `null`） */
+    current: Record<string, unknown> | null
+    /** 字段级差异（仅展示，不自动合并） */
+    diffs: ConflictFieldDiff[]
+}
+
+/** 恢复动作结果 */
+export interface ConflictResolutionResult {
+    ok: boolean
+    /** 动作后该用户 journal 剩余条数（供状态面计数刷新） */
+    remaining: number
+}
+
+/** 落盘整份 journal（**直连 meta，不触发 `markDirty`**；供恢复动作删条） */
+const saveConflictJournal = async (
+    userId: string,
+    entries: ConflictJournalEntry[]
+): Promise<void> => {
+    await localDatabase.meta.put({
+        id: conflictJournalId(userId),
+        conflictJournal: entries
+    } satisfies MetaRecord)
+}
+
+/** 冲突条目 → 列表项（UI 面） */
+const toConflictListItem = (entry: ConflictJournalEntry): ConflictListItem => ({
+    id: `${entry.table}:${entry.entityId}:${entry.at}`,
+    kind: entry.kind,
+    table: entry.table,
+    entityId: entry.entityId,
+    loser: SNAPSHOT_KINDS.has(entry.kind) ? entry.loser : null,
+    ...(entry.winnerUpdatedAt === undefined ? {} : { winnerUpdatedAt: entry.winnerUpdatedAt }),
+    ...(entry.loserUpdatedAt === undefined ? {} : { loserUpdatedAt: entry.loserUpdatedAt }),
+    at: entry.at
+})
+
+/**
+ * 列表：读冲突记账（含折叠信号）—— 供冲突列表 UI 渲染
+ * @returns `items` 按记账顺序（末尾最新）；`folded` = 条数达 `CONFLICT_FOLD_HINT_THRESHOLD`
+ */
+export const listConflicts = async (userId: string): Promise<ConflictListResult> => {
+    const entries = await loadConflictJournal(userId)
+    return {
+        items: entries.map(toConflictListItem),
+        folded: entries.length >= CONFLICT_FOLD_HINT_THRESHOLD
+    }
+}
+
+/**
+ * 只读对比：`table:entityId` 的败方快照 vs 本地当前行（字段级差异仅展示，不自动合并）
+ * @description **T165 第一段：签名占位（返回 `null`）**；第二段落地（需表名 → 本地表映射）。
+ */
+export const compareConflict = async (
+    userId: string,
+    table: string,
+    entityId: string
+): Promise<ConflictComparison | null> => {
+    pendingConflictApi(userId, table, entityId)
+    return null
+}
+
+/**
+ * 恢复动作 A「保留服务端版本」：清除该实体的 journal 条目（本地已是胜方，无副作用）
+ * @returns `remaining` = 清除后剩余条数（供状态面计数刷新）
+ */
+export const resolveConflictKeepServer = async (
+    userId: string,
+    table: string,
+    entityId: string
+): Promise<ConflictResolutionResult> => {
+    const entries = await loadConflictJournal(userId)
+    const remaining = entries.filter(
+        (entry) => entry.table !== table || entry.entityId !== entityId
+    )
+    if (remaining.length !== entries.length) await saveConflictJournal(userId, remaining)
+    return { ok: true, remaining: remaining.length }
+}
+
+/**
+ * 恢复动作 B「以我的版本重试」：败方快照写回本地表（`updatedAt` = 服务端校准 now）+ `markDirty`
+ * ⇒ 下轮 push 以**新 base**（当前服务端版本）重推；仍不匹配 ⇒ 再次 journal（不死循环）
+ * @description **T165 第一段：签名占位（返回 `ok:false`）**；第二段落地（需表名 → 本地表/转换器映射）。
+ */
+export const resolveConflictRetryLocal = async (
+    userId: string,
+    table: string,
+    entityId: string
+): Promise<ConflictResolutionResult> => {
+    pendingConflictApi(userId, table, entityId)
+    return { ok: false, remaining: 0 }
+}
