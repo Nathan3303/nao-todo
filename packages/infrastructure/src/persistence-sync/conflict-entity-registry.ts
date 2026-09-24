@@ -2,11 +2,12 @@
  * 冲突实体注册表（T165 / W3 · PM 裁定「单一事实源」）
  *
  * @description `resolveConflictRetryLocal` / `compareConflict` 需要「表名 → 本地表 / 转换器」映射，
- *              而 `SYNC_TABLES` 定义在 `sync-service.ts`（且 **未导出**；该文件属 `T166` 在制，不得改）。
- *              故本文件是**独立注册表**，只读复用各域既有转换器与本地表，不复制第二套真源。
+ *              而 `SYNC_TABLES` 定义在 `sync-service.ts`（T166b 起**已导出**；但本文件直接 import 会构成
+ *              `sync-service → conflict-journal → 本文件` 的循环，故**仍不 import**，只读复用各域既有
+ *              转换器与本地表，不复制第二套真源）。
  *
- *              **一致性守护**：`__tests__/conflict-entity-registry.test.ts` 以源码扫描断言本表
- *              key 集 ≡ `sync-service.ts` 的 `SYNC_TABLES`（防漂移）。
+ *              **一致性守护**：`__tests__/conflict-entity-registry.test.ts` 直接 import `SYNC_TABLES`
+ *              做**集合级**断言（本表 key 集 ≡ `SYNC_TABLES` 表集，防漂移），**无文本耦合**。
  *
  * @see docs/adr/2026-09-24-stage2-both-ends-local-first.md §9.1.6 / §9.2
  */

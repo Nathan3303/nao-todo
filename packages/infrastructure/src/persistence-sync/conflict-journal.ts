@@ -29,6 +29,25 @@ const CONFLICT_JOURNAL_SUFFIX = 'conflict-journal'
 /** 某用户冲突记账在 `meta` 表中的主键 */
 export const conflictJournalId = (userId: string): string => `${userId}:${CONFLICT_JOURNAL_SUFFIX}`
 
+/**
+ * journal 专用锁名前缀（ADR §9.3：journal 写入须在锁内，**与 pull 侧互斥**）
+ * @description pull 单主锁（`nao-todo:pull:`）与 push 单主锁（`nao-todo:push:`）**锁名不同** ⇒
+ *              两路径仍可并发对同一 `meta` 单记录（`${userId}:conflict-journal`）做 RMW ⇒
+ *              可丢条目。本锁包裹 journal 的 RMW 写入，使**跨路径**写入串行。
+ *              锁序固定 `pull/push 锁 → journal 锁`（本锁恒为**最内层**）⇒ 无死锁。
+ */
+const JOURNAL_LOCK_PREFIX = 'nao-todo:journal:'
+
+/**
+ * 在 journal 专用锁内执行 `run`（**等待**取锁，非 `ifAvailable`：journal 写入**不得跳过**）。
+ * @description 无 `navigator.locks`（desktop / 老浏览器 / 测试）⇒ 直接执行（退化为现状）。
+ */
+const withJournalLock = async <T>(userId: string, run: () => Promise<T>): Promise<T> => {
+    const locks = typeof navigator === 'undefined' ? undefined : navigator.locks
+    if (!locks || typeof locks.request !== 'function') return run()
+    return (await locks.request(`${JOURNAL_LOCK_PREFIX}${userId}`, () => run())) as T
+}
+
 /** 记账输入（`at` 由本模块生成） */
 export interface ConflictJournalInput {
     kind: ConflictJournalEntry['kind']
@@ -61,28 +80,34 @@ export const appendConflict = async (
     input: ConflictJournalInput
 ): Promise<number> => {
     if (!userId) return 0
-    const record = await localDatabase.meta.get(conflictJournalId(userId))
-    const entries = record?.conflictJournal ?? []
-    const entry: ConflictJournalEntry = {
-        kind: input.kind,
-        table: input.table,
-        entityId: input.entityId,
-        loser: input.loser,
-        ...(input.winnerUpdatedAt === undefined ? {} : { winnerUpdatedAt: input.winnerUpdatedAt }),
-        ...(input.loserUpdatedAt === undefined ? {} : { loserUpdatedAt: input.loserUpdatedAt }),
-        at: new Date().toISOString()
-    }
-    const next = [...entries, entry].slice(-CONFLICT_JOURNAL_LIMIT)
-    // R-15：环形淘汰累计计数（与 journal 同一 meta 记录的**同一次** RMW ⇒ 无第二处写点，
-    // 天然处于调用方（pull/push 锁内）的同一临界区）
-    const evicted = entries.length + 1 - CONFLICT_JOURNAL_LIMIT
-    const evictedCount = (record?.conflictJournalEvictedCount ?? 0) + (evicted > 0 ? evicted : 0)
-    await localDatabase.meta.put({
-        id: conflictJournalId(userId),
-        conflictJournal: next,
-        conflictJournalEvictedCount: evictedCount
-    } satisfies MetaRecord)
-    return next.length
+    // 跨路径互斥（ADR §9.3）：pull 的 remote-wins 与 push 的 stale/noop/... 均经本入口 ⇒
+    // 同一 `meta` 单记录的 RMW 在 journal 锁内串行（锁序：pull/push 锁 → journal 锁，最内层）
+    return withJournalLock(userId, async () => {
+        const record = await localDatabase.meta.get(conflictJournalId(userId))
+        const entries = record?.conflictJournal ?? []
+        const entry: ConflictJournalEntry = {
+            kind: input.kind,
+            table: input.table,
+            entityId: input.entityId,
+            loser: input.loser,
+            ...(input.winnerUpdatedAt === undefined
+                ? {}
+                : { winnerUpdatedAt: input.winnerUpdatedAt }),
+            ...(input.loserUpdatedAt === undefined ? {} : { loserUpdatedAt: input.loserUpdatedAt }),
+            at: new Date().toISOString()
+        }
+        const next = [...entries, entry].slice(-CONFLICT_JOURNAL_LIMIT)
+        // R-15：环形淘汰累计计数（与 journal 同一 meta 记录的**同一次** RMW ⇒ 无第二处写点）
+        const evicted = entries.length + 1 - CONFLICT_JOURNAL_LIMIT
+        const evictedCount =
+            (record?.conflictJournalEvictedCount ?? 0) + (evicted > 0 ? evicted : 0)
+        await localDatabase.meta.put({
+            id: conflictJournalId(userId),
+            conflictJournal: next,
+            conflictJournalEvictedCount: evictedCount
+        } satisfies MetaRecord)
+        return next.length
+    })
 }
 
 /** 清空冲突记账（登出/清库随 `meta` 一并清除；此处供显式清理） */

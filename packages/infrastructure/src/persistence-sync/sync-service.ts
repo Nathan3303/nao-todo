@@ -57,7 +57,7 @@ import { logStructured, STRUCTURED_LOG_EVENTS } from '../observability/structure
 // users/userConfigs 走远程用户域，均不入同步）
 // ---------------------------------------------------------------------------
 
-interface SyncTableConfig {
+export interface SyncTableConfig {
     /** 本地表名（= 远程资源名，批量接口的 key） */
     table: string
     /** 远程 res → domain 实体（明文） */
@@ -112,7 +112,12 @@ const buildTaskPush = (entity: Record<string, unknown>): Record<string, unknown>
     return record
 }
 
-const SYNC_TABLES: SyncTableConfig[] = [
+/**
+ * 业务同步表配置（**单一事实源**；`conflict-entity-registry` 一致性测试直接 import 本表）
+ * @description 导出供 `__tests__/conflict-entity-registry.test.ts` 做集合级断言，
+ *              消除对 `sync-service.ts` 源码的文本扫描耦合。
+ */
+export const SYNC_TABLES: SyncTableConfig[] = [
     {
         table: 'projects',
         resToEntity: projectRes2Entity as unknown as SyncTableConfig['resToEntity'],

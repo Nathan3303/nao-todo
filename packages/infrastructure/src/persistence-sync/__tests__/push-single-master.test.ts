@@ -245,24 +245,24 @@ describe('面 ④ 多标签 push 单主（navigator.locks）', () => {
     })
 
     it('⑤ journal 写入发生在 push 锁内（ADR §9.3：meta RMW 互斥守护）', async () => {
-        let lockHeld = false
-        const request = vi.fn(
-            async (
-                _name: string,
-                _options: unknown,
-                callback: (lock: unknown) => Promise<void>
-            ): Promise<void> => {
-                lockHeld = true
-                try {
-                    await callback({ name: 'fake-lock' })
-                } finally {
-                    lockHeld = false
-                }
+        let pushLockHeld = false
+        const request = vi.fn(async (name: string, a: unknown, b?: unknown): Promise<void> => {
+            const callback = (typeof a === 'function' ? a : b) as (lock: unknown) => Promise<void>
+            // 仅跟踪 push 单主锁；journal 专用锁（T166b）为其**内层**，直接执行
+            if (!name.startsWith('nao-todo:push:')) {
+                await callback({ name })
+                return
             }
-        )
+            pushLockHeld = true
+            try {
+                await callback({ name })
+            } finally {
+                pushLockHeld = false
+            }
+        })
         vi.stubGlobal('navigator', { locks: { request } })
 
-        // 记录 journal 落 `meta` 单记录（`conflictJournal`）那一刻是否持锁
+        // 记录 journal 落 `meta` 单记录（`conflictJournal`）那一刻是否持 push 锁
         const journalWriteLockHeld: boolean[] = []
         const originalPut = localDatabase.meta.put.bind(localDatabase.meta)
         vi.spyOn(localDatabase.meta, 'put').mockImplementation((async (
@@ -270,7 +270,7 @@ describe('面 ④ 多标签 push 单主（navigator.locks）', () => {
             ...rest: unknown[]
         ) => {
             if ((record as { conflictJournal?: unknown }).conflictJournal !== undefined) {
-                journalWriteLockHeld.push(lockHeld)
+                journalWriteLockHeld.push(pushLockHeld)
             }
             return originalPut(record as never, ...(rest as never[]))
         }) as never)
