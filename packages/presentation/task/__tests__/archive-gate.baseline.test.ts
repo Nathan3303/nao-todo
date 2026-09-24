@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from 'vite-plus/test'
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test'
 import { NueMessage } from 'nue-ui'
 import { messages } from '@nao-todo/shared/locales/messages'
 import { OFFLINE_READONLY_ERROR } from '../../offline/write-gate'
@@ -22,6 +22,12 @@ import { OFFLINE_READONLY_ERROR } from '../../offline/write-gate'
 
 const ARCHIVE_GATE_PATH = '/packages/presentation/task/archive-gate.ts'
 const archiveGateModules = import.meta.glob('/packages/presentation/task/archive-gate.ts')
+
+// 测试隔离（基线机制修正，PM 批准；断言未变）：`vi.spyOn(NueMessage,'warn')` 不 restore 会跨用例
+// 泄漏调用记录 ⇒ 用例5「非归档目标」会误读用例1 的调用。
+afterEach(() => {
+    vi.restoreAllMocks()
+})
 
 type WriteShape = 'error' | 'tuple'
 
@@ -106,7 +112,7 @@ describe('T178b · 面8 withArchivedReadOnlyGuard（ADR §15.3，行为级）', 
             isArchivedTarget: makeIsArchivedTarget()
         })
 
-        await expect(guarded.create('新任务')).resolves.toEqual([
+        await expect(guarded.create('archived-1')).resolves.toEqual([
             null,
             gate.ARCHIVED_READONLY_ERROR
         ])
