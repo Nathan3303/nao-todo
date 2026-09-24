@@ -37,6 +37,7 @@ import { t } from '@nao-todo/shared/locales'
 import { inject, onUnmounted, provide, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { INDEX_VIEW_CONTEXT_KEY } from './context'
+import { startReminderSse } from './reminder-sse'
 import { taskDetailsLocation } from './task-details-location'
 
 /**
@@ -140,27 +141,20 @@ const useIndexView = () => {
 
     /**
      * SSE 提醒连接
-     * @description 桌面版通过 VITE_DISABLE_SSE=true 禁用（本地定时扫描替代）
+     * @description 桌面版通过 VITE_DISABLE_SSE=true 禁用（本地定时扫描替代）；
+     *              token 缺失/空串 ⇒ 不建连（DEF-33 下游，见 `./reminder-sse`）
      */
     const connectReminderSSE = async () => {
-        // 请求通知权限
         if (import.meta.env.VITE_DISABLE_SSE === 'true') return
-        if ('Notification' in window && Notification.permission === 'default') {
-            await Notification.requestPermission()
-        }
-        // 连接 SSE 事件源
-        const token = localStorage.getItem('USER_JWT')
-        const url = `${import.meta.env.VITE_API_BASE_URL}/sse/reminders?token=${token}`
-        const es = new EventSource(url)
-        // 监听提醒事件
-        es.addEventListener('reminder', (event: MessageEvent) => {
-            const data = JSON.parse(event.data)
-            appDialogManager.open(TASK_REMINDER_DIALOG_KEY, data)
-            // 系统通知仅显示任务名称（不含描述，见需求）
-            sendNotification(t('task.reminder.title'), data.taskName)
+        await startReminderSse({
+            token: localStorage.getItem('USER_JWT'),
+            apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
+            onReminder: (data) => {
+                appDialogManager.open(TASK_REMINDER_DIALOG_KEY, data)
+                // 系统通知仅显示任务名称（不含描述，见需求）
+                sendNotification(t('task.reminder.title'), data.taskName)
+            }
         })
-        // 监听错误事件，关闭连接
-        es.addEventListener('error', () => es.close())
     }
 
     /**
