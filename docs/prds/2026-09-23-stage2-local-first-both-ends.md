@@ -134,7 +134,7 @@ TASK-27（阶段二：两端同构 local-first + 冲突解决）  ← 本 PRD
 1. **冲突 = LWW（服务端权威、per-row）**；不做版本向量/字段级。⚠️ **关键更正**：**per-row LWW 服务端已实现**（`DecideUpsert` / `task/repoImpl.go`）⇒ **业务面无需新增 per-row 版本标记**；真缺口 = ① **时间基准**（本地写用裸 `new Date()`；`getServerTimeOffset` **只写不读**）② **覆盖不可观测**（`sync-service.ts:742-757` 静默移除队列）⇒ **2A = 时间校准（PS-15）+ 冲突 journal（含败方快照，`meta` 纯追加，PS-14）**；**2B = OCC** ⇒ **`T141` 非阶段二业务面前置**
 2. **回传 = 复用业务 `syncQueue`**（偏好面因**合成主键**不兼容批量 upsert 才独立）；**新语义 = web 业务 `markDirty` 不再恒 0 · `pendingCount = countDirty` · 成功同步回 0（PS-12/PS-13）**；⚠️ web **缺 `setDirtyListener`** ⇒ 必须补
 3. **迁移 = 接线级、无数据迁移**（同表同仓储、**Dexie 不 bump**）；**回滚 = 回退 binding + 重挂闸门 + 先 `pushAll()` flush**；⚠️ **新风险 P6**：web 无 `InitialSyncGate` ⇒ 「本地空 = 首屏空」⇒ **PS-16 web 首拉门**（`hasLocalMirror`）
-4. **C-59 撤销 = 分步不可颠倒**（换本地 → 补 dirty 监听 → 撤闸门 → `markDirty` 口径同步 → 组件退役 → **条款 r10，C-66 必须同批修订**）；`isReadOnly` **保留**
+4. **C-59 撤销 = 分步不可颠倒**（换本地 → 补 dirty 监听 → 撤闸门 → `markDirty` 口径同步 → **闸门作用面收敛至身份域**（组件与 `OFFLINE_READONLY` **保留**；原「停用→删除」不成立）→ **条款 r10，C-66 必须同批修订**）；`isReadOnly` **保留**
 5. **回归矩阵（6 大项）**：离线读镜像 · 迁移门 · 清库 · 明文姿态 · 两端一致状态展示 · 偏好同步 ⇒ 逐项给出「不回归保证 + 验证方式 + 守护测试 + Owner」；**核心控制 = 只改业务写路径接线、阶段一六项实现零触碰 + 绑定级断言**
 6. **分期**：**2A** = 7 域切本地（W1 任务→W2 子实体→W3 容器→W4 番茄；W5 身份**不切**）+ 时间校准 + 冲突记账 + 首拉门 + dirty 监听；服务端**仅** `SyncResult.Outcome`（additive）· **2B** = OCC + 冲突 UX + 多标签协调 + `T141`/`DP-5` 收口 + 迁移优化
 
@@ -150,4 +150,4 @@ TASK-27（阶段二：两端同构 local-first + 冲突解决）  ← 本 PRD
 **⇒ 2A 首批已派**：`T143`（rd-be，服务端 `SyncResult.Outcome`，additive）+ `T144`（rd-fe，客户端基础设施四件：**PS-15 时间校准读取** · **PS-14 冲突 journal** · **PS-16 首拉门** · **`setDirtyListener`**）
 
 > ✅ **2A 落地（2026-09-24）**：**W1–W4 全部完成 ⇒ 业务 7 域全切本地**（`LOCAL_FIRST_KINDS` = 7 域，后于 M6 随闸门收敛一并移除）· **M6** = 闸门收敛至身份域（`T149` `b4960a4d`）+ **条款 r10**（`T150` `56b2b951`）· **`markDirty` 现行语义**见 C-59 r10 / §10.11（web 业务**不再恒 0**；`pendingCount = countDirty`；成功同步出队回 0；`user` 不在 `SYNC_TABLES` ⇒ 不产生业务 `markDirty`）。**M7 回归**（§2.5 矩阵 + 8 项门禁 + 移动端 0）待跑（`T152`）。
-> ⚠️ **待修订（arch `T151`）**：**阶段二 ADR §2.6 的 W5 说明**（原文「`USER_WRITE_METHODS` 退役后不再拦截」）与 **M6 行「闸门组件退役（停用→删除）」** 及 **§2.4 步骤 5** —— PM 2026-09-24 拍板 **(a)：身份域保留闸门**（理由：离线身份写写前明确拦停、与阶段一 web「离线明确告知」一致；desktop 同场景为远端失败 toast ⇒ **两者均属可见失败，PS-13 只要求「可见」不要求形态一致**；身份域本不在业务数据面 ⇒ 不构成「两端同构」违约）。
+> ✅ **已修订（arch `T151`，`cd97f604`；PM 拍板 S14=(a)）**：**阶段二 ADR §2.6 的 W5 说明**（原文「`USER_WRITE_METHODS` 退役后不再拦截」）· **§5 M6 行**（原「闸门组件退役（停用→删除）」→**作用面收敛至身份域**）· **§2.4 步骤 5**（→**业务域闸门条目退役**）· **C-59 r10 双向互记** 已全部对齐。**裁定 = (a)：身份域保留闸门**（理由：离线身份写**写前明确拦停**、与阶段一 web「离线明确告知」一致；desktop 同场景为远端失败 toast ⇒ **两者均属可见失败，PS-13 只要求「可见」不要求形态一致**；身份域本不在业务数据面 ⇒ 不构成「两端同构」违约）。**⭐ 附带核验（假信号）**：业务 7 域**不存在**「离线只读/禁用」假信号（`isReadOnly` 消费方仅 `write-gate.ts` 内部 + `sync-status-bar.vue` 的 `resolveFreshness({isOffline})`；无 UI 接 `disabled`；`readOnlyBanner` 为死键）。
