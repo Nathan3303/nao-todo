@@ -10,6 +10,7 @@ import {
     USER_SCOPED_STORAGE_KEYS,
     clearUserScopedLocalStorage
 } from '../deletion/local-storage-policy'
+import { USER_JWT_LOCALSTORAGE_KEY, USER_PROFILE_CACHE_KEY } from '@nao-todo/domain-identity'
 
 /**
  * T106 登出清库（AC5 / AC5b / C-52 / C-53 / C-54）
@@ -248,5 +249,81 @@ describe('T106 localStorage 黑白名单（C-52）', () => {
 
         expect(localStorage.getItem(PLAINTEXT_NOTICE_ACK_KEY)).toBe('1')
         expect(localStorage.getItem('USER_JWT')).toBeNull()
+    })
+})
+
+/**
+ * T157 / C-52 · C-53 r11（DEF-34）：清库分「终结会话」与「补清」两种语境
+ * @description 判据 = **调用语境**（调用方显式传 flag），**不以 `userId` 相等为判据**：
+ *              补清时无论标记属于当前用户还是上一账号，当前会话凭据键都必须保留。
+ *              默认语境（登出 / 切换账号 / 注销到期）逐字保持 C-52。
+ */
+describe('T157 r11 清库语境分流（DEF-34）', () => {
+    const PROFILE_CACHE = JSON.stringify({ id: USER_A, nickname: 'A' })
+
+    beforeEach(async () => {
+        await resetDatabase()
+        localStorage.clear()
+        localStorage.setItem('nao.deviceId', 'device-1')
+        localStorage.setItem(USER_JWT_LOCALSTORAGE_KEY, 'jwt-current')
+        localStorage.setItem(USER_PROFILE_CACHE_KEY, PROFILE_CACHE)
+        localStorage.setItem('UNKNOWN_BUSINESS_KEY', 'x')
+    })
+
+    it('同用户补清 ⇒ 只清库、保留当前会话凭据（存量自愈）', async () => {
+        await seedUser(USER_A)
+        await localDatabase.meta.put({ id: PENDING_WIPE_META_ID, pendingWipe: USER_A })
+
+        expect(await deletionService.resumePendingWipe()).toBe(true)
+
+        // IndexedDB 侧照常清空
+        expect(await countOwned('projects', USER_A)).toBe(0)
+        expect(await localDatabase.meta.get(PENDING_WIPE_META_ID)).toBeUndefined()
+        // localStorage 侧：当前会话凭据保留（下一次 bootstrapLocalData 即自愈，无需手动清数据）
+        expect(localStorage.getItem(USER_JWT_LOCALSTORAGE_KEY)).toBe('jwt-current')
+        expect(localStorage.getItem(USER_PROFILE_CACHE_KEY)).toBe(PROFILE_CACHE)
+        expect(localStorage.getItem('nao.deviceId')).toBe('device-1')
+        // 其余按键照清
+        expect(localStorage.getItem('UNKNOWN_BUSINESS_KEY')).toBeNull()
+    })
+
+    it('他人账号补清 ⇒ 同样保留当前会话凭据', async () => {
+        await seedUser(USER_A)
+        await seedUser(USER_B)
+        // 标记属于上一账号 A，但当前会话是 B
+        await localDatabase.meta.put({ id: PENDING_WIPE_META_ID, pendingWipe: USER_A })
+
+        expect(await deletionService.resumePendingWipe()).toBe(true)
+
+        expect(await countOwned('projects', USER_A)).toBe(0)
+        expect(await countOwned('projects', USER_B)).toBe(1)
+        expect(localStorage.getItem(USER_JWT_LOCALSTORAGE_KEY)).toBe('jwt-current')
+        expect(localStorage.getItem(USER_PROFILE_CACHE_KEY)).toBe(PROFILE_CACHE)
+    })
+
+    it('登出（终结会话语境，默认）⇒ 凭据键仍清（C-52 不回归）', async () => {
+        await seedUser(USER_A)
+
+        await deletionService.wipeUserData(USER_A)
+
+        expect(localStorage.getItem(USER_JWT_LOCALSTORAGE_KEY)).toBeNull()
+        expect(localStorage.getItem(USER_PROFILE_CACHE_KEY)).toBeNull()
+        expect(localStorage.getItem('nao.deviceId')).toBe('device-1')
+    })
+
+    it('注销到期（checkAndCleanExpired，默认语境）⇒ 清认证', async () => {
+        await seedUser(USER_A)
+        await localDatabase.deletionSchedules.put({
+            id: USER_A,
+            deadline: '2020-01-01T00:00:00.000Z',
+            createdAt: '2020-01-01T00:00:00.000Z'
+        })
+
+        expect(await deletionService.checkAndCleanExpired(USER_A)).toBe(true)
+
+        expect(await countOwned('projects', USER_A)).toBe(0)
+        expect(await localDatabase.deletionSchedules.get(USER_A)).toBeUndefined()
+        expect(localStorage.getItem(USER_JWT_LOCALSTORAGE_KEY)).toBeNull()
+        expect(localStorage.getItem(USER_PROFILE_CACHE_KEY)).toBeNull()
     })
 })

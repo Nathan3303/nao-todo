@@ -1,6 +1,9 @@
 import dayjs from 'dayjs'
 import { BUSINESS_TABLES, localDatabase, type MetaRecord } from '../db/local-database'
-import { clearUserScopedLocalStorage } from './local-storage-policy'
+import {
+    clearUserScopedLocalStorage,
+    type ClearUserScopedStorageOptions
+} from './local-storage-policy'
 import { logStructured, STRUCTURED_LOG_EVENTS } from '../../observability/structured-log'
 
 /**
@@ -13,6 +16,14 @@ const GRACE_DAYS = 7
  * @description 值 = 待清 `userId`；与清库同事务提交，启动时据此补清，清库完成后删除。
  */
 export const PENDING_WIPE_META_ID = 'pendingWipe'
+
+/**
+ * `wipeUserData` 选项（清库语境，C-52 / C-53 r11，DEF-34）
+ * @description 判据 = **调用语境**（调用方显式传入），**不以 `userId` 相等为判据**：
+ *              补清（`resumePendingWipe`）时无论标记属于当前用户还是上一账号，
+ *              都必须保留**当前已建立会话**的凭据键。
+ */
+export type WipeUserDataOptions = ClearUserScopedStorageOptions
 
 /**
  * 本地数据删除调度服务
@@ -52,9 +63,13 @@ export class DeletionService {
      *              业务键，最后删除标记。
      *              **不删** `deletionSchedules`（PM [T106] Q1=(a)：登出/切换须保留「注销宽限期」状态；
      *              仅 `checkAndCleanExpired` 在本方法返回后删自己的调度）。
+     *              **语境分流（C-52 / C-53 r11，DEF-34）**：`options.preserveActiveSessionCredentials`
+     *              = `true`（补清语境）⇒ localStorage 侧保留当前会话凭据键；默认 `false` = 终结会话语境
+     *              （C-52 逐字不变）。IndexedDB 侧两种语境完全一致。
      * @param userId 用户 ID
+     * @param options 清库语境选项（默认 = 终结会话语境）
      */
-    async wipeUserData(userId: string): Promise<void> {
+    async wipeUserData(userId: string, options: WipeUserDataOptions = {}): Promise<void> {
         if (!userId) return
         logStructured('info', STRUCTURED_LOG_EVENTS.WIPE_STARTED, { userId })
         const tables = BUSINESS_TABLES as readonly string[]
@@ -83,7 +98,8 @@ export class DeletionService {
             }
         )
         // C-52：按键删除 localStorage 业务键（禁 clear()；设备级键保留）
-        clearUserScopedLocalStorage()
+        // C-52 / r11：补清语境额外保留当前会话凭据键（DEF-34）
+        clearUserScopedLocalStorage(options)
         // C-53：清库完成后删除标记
         await localDatabase.meta.delete(PENDING_WIPE_META_ID)
         logStructured('info', STRUCTURED_LOG_EVENTS.WIPE_COMPLETED, {
@@ -94,13 +110,16 @@ export class DeletionService {
 
     /**
      * 启动补清：存在 `meta.pendingWipe` 标记则补完清库（C-53）
+     * @description **补清语境**（C-53 / r11）：补的是上一次登出的收尾；其间若已重新登录，
+     *              当前会话凭据**不得**被删除 ⇒ `preserveActiveSessionCredentials: true`。
+     *              IndexedDB 侧清库不变（仍按标记里的 `userId` 过滤）。
      * @returns 是否执行了补清
      */
     async resumePendingWipe(): Promise<boolean> {
         const marker = await localDatabase.meta.get(PENDING_WIPE_META_ID)
         const userId = marker?.pendingWipe
         if (!userId) return false
-        await this.wipeUserData(userId)
+        await this.wipeUserData(userId, { preserveActiveSessionCredentials: true })
         return true
     }
 

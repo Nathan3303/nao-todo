@@ -84,14 +84,39 @@ const listStorageKeys = (): string[] => {
 }
 
 /**
- * 按键清除身份/会话级 localStorage（C-52：**禁** `localStorage.clear()`）
- * @description 登出 / 注销到期 / 切换账号三处共用（由 `deletionService.wipeUserData` 调用）。
- *              设备级白名单键保留；其余（含未登记业务键）一律清除。
+ * 「当前会话凭据」键（**补清语境**必留，C-52 / r11）
+ * @description `resumePendingWipe` 补的是**上一次登出**的收尾（C-53）；若其间用户已重新
+ *              登录（同账号重登，或共享设备上另一账号登录），当前会话凭据**不得**被该次补清删除
+ *              —— 否则补清反噬可用性（DEF-34）。
+ *              `USER_PROFILE_CACHE_KEY` 由 `readCachedNickname` 按 `userId` 自校验 ⇒ 保留无串号风险。
  */
-export const clearUserScopedLocalStorage = (): void => {
+export const ACTIVE_SESSION_CREDENTIAL_KEYS: readonly string[] = [
+    USER_JWT_LOCALSTORAGE_KEY,
+    USER_PROFILE_CACHE_KEY
+]
+
+/** `clearUserScopedLocalStorage` 选项（清库语境，C-52 / r11） */
+export type ClearUserScopedStorageOptions = {
+    /**
+     * 补清语境（C-53 / r11，DEF-34）：`true` ⇒ 设备级白名单 + **当前会话凭据键**保留，其余按键清除。
+     * 默认 `false` = **终结会话语境**（C-52 逐字不变：凭据键必清）。
+     */
+    preserveActiveSessionCredentials?: boolean
+}
+
+/**
+ * 按键清除身份/会话级 localStorage（C-52：**禁** `localStorage.clear()`）
+ * @description 登出 / 注销到期 / 切换账号 / **补清**（C-53）共用（由 `deletionService.wipeUserData` 调用）。
+ *              设备级白名单键保留；其余（含未登记业务键）一律清除。
+ *              补清语境（`preserveActiveSessionCredentials: true`）额外保留当前会话凭据键（r11）。
+ */
+export const clearUserScopedLocalStorage = (options: ClearUserScopedStorageOptions = {}): void => {
     if (typeof localStorage === 'undefined') return
+    const preserveActiveSessionCredentials = options.preserveActiveSessionCredentials === true
     for (const key of listStorageKeys()) {
         if (DEVICE_LEVEL_STORAGE_KEYS.includes(key)) continue
+        if (preserveActiveSessionCredentials && ACTIVE_SESSION_CREDENTIAL_KEYS.includes(key))
+            continue
         localStorage.removeItem(key)
     }
 }
