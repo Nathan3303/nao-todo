@@ -23,12 +23,16 @@
 - <领域约束 1，如：任务状态流转只走领域实体方法>
 - <命令纪律，如：禁 cat 全文读代码，用 CodeGraph 或 sed 行段>
 - <依赖限制 / 禁止事项>
+- **Git 流程（GitHub Flow）**：一个需求一条分支 `feat/<issue-id>-<slug>`；工作期 `wip()` 小步提交 + 路径级暂存（禁 `git add -A`）；**PM 验收通过后由 RD 在 PR 上 squash 合并**（main = 1 条/需求）；**禁直推 main**。
+- **发布与仓库治理**：PM 负责 Issue / PR 验收评论 / tag / release / `.github/` 模板（优先 `gh`，不可用降级 `git`）。
 
 ## 与 nao 机制衔接
 
 - **CodeGraph**：本仓库 `.codegraph/` 索引；写完代码 `codegraph sync` 保持新鲜。
 - **UI/UX**：Design Tokens 在 `<src/styles/tokens.css>`；UX Playbook 在 `<docs/ux-playbook.md>`；硬编码色值禁入（`ui-tokens-check.sh` 兜底）。
 - **交付核对**：交付前读取 `@.agents/checklists/<role>.md`（完整红线 + 清单）。
+- **Git 纪律**：提交前读取 `@.agents/skills/commit.md`（需求分支 / 路径级暂存 / 可读信息）；流水线见 `@.agents/skills/github-flow.md`。
+- **流水线**：Issue → 需求分支 → PR → 验收 → squash 合并 → Release，见 `@.agents/skills/github-flow.md`（含离线降级）。
 
 ## 指针（勿复制内容）
 

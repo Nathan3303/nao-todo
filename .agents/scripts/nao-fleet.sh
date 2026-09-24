@@ -3,12 +3,15 @@
 # nao-fleet.sh — 按角色一键拉起 pi 会话窗口（nao 团队工具箱）
 #
 # 用法
-#   nao-fleet.sh check [--strict]                 静态体检：roles.yaml/缩进/EOL/角色卡/交叉引用/白名单/布局
+#   nao-fleet.sh check [--strict] [-v]            静态体检：roles.yaml/缩进/EOL/角色卡/交叉引用/PR 模板/白名单/布局
+#                                                 默认单行摘要（含 warn 计数）；-v 展开完整报告；失败始终展开
 #   nao-fleet.sh status                           角色会话在线状态（权威名单见 intercom list）
 #   nao-fleet.sh ensure <别名>[@<repo>] [更多...]  拉起角色窗口（默认工作区=roles.yaml workspace）
 #   nao-fleet.sh ensure -m <model> <别名>...       显式指定模型（须命中白名单）
 #   nao-fleet.sh ensure --task <编号> <别名>[@<repo>]   任务派生会话：--name <别名>-<编号>（并行隔离，避免同名冲突）
 #   nao-fleet.sh ensure --force <别名>...          忽略"已在运行"判重
+#   nao-fleet.sh close <别名|会话名> [--task <编号>] [--force]
+#                                                 回收已完成会话（闸门：在跑 turn / tasks-state 未推进 → 拒绝，--force 跳过）
 #
 # 角色别名 → 角色卡：见 .agents/roles.yaml（单一事实来源）
 #   当前：pm / arch-designer(arch) / rd-fe / rd-be / qa
@@ -19,6 +22,8 @@
 #   NAO_TMUX_MAIN_WIDTH=<10..90>              main-row2 主 pane 宽度百分比（默认 35）
 #   NAO_SKILLS=<dir>                          角色卡根目录（默认 <脚本>/../..）
 #   NAO_MODEL_WHITELIST=<glob,...>            -m 白名单（默认空=不校验，支持 glob）
+#   NAO_CLOSE_BUSY_PATTERN=<ERE>             close 的在跑 turn 判定正则（默认内置 pi 状态行标记）
+#   NAO_TASKS_STATE=<path>                   任务状态文件（默认 docs/tasks-state.md，供残留检测/回收闸门）
 #
 # tmux 宿主行为
 #   - 已在 tmux 内（$TMUX 存在）：当前窗口分屏拉起，不新建窗口。
@@ -45,6 +50,12 @@ TMUX_LAYOUT="${NAO_TMUX_LAYOUT:-main-row2}"
 # main-row2 主 pane 宽度百分比：默认值与非法值回退共用同一常量（防三处漂移）
 TMUX_MAIN_WIDTH_DEFAULT=35
 TMUX_MAIN_WIDTH="${NAO_TMUX_MAIN_WIDTH:-$TMUX_MAIN_WIDTH_DEFAULT}"
+# check 输出契约：默认单行摘要（省 PM 上下文），-v 展开完整报告；失败始终展开
+VERBOSE=false
+# close 的在跑 turn 判定（pi 默认状态行：Working (esc to interrupt) / Thinking... / Retrying / Compacting）
+CLOSE_BUSY_PATTERN="${NAO_CLOSE_BUSY_PATTERN:-Working \(|Thinking\.\.\.|to interrupt|to cancel|Retrying \(|Compacting|Summarizing branch}"
+# 任务状态文件（相对当前目录；供残留检测与回收闸门）
+TASKS_STATE="${NAO_TASKS_STATE:-docs/tasks-state.md}"
 
 log()  { printf '\033[1;32m[fleet]\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m[fleet]\033[0m %s\n' "$*" >&2; }
@@ -212,7 +223,55 @@ detect_host() {
   echo screen
 }
 
-running() { pgrep -f -- "pi[[:space:]].*--name $1([[:space:]]|$)" >/dev/null 2>&1; }
+# 该会话名对应的真实 pi 进程 PID（过滤 shell/tmux 等误匹配，避免误命中宿主命令行、误杀包装进程）
+pi_pids_for() {
+  local pid comm
+  pgrep -f -- "pi[[:space:]].*--name $1([[:space:]]|$)" 2>/dev/null | while IFS= read -r pid; do
+    comm="$(ps -o comm= -p "$pid" 2>/dev/null | tr -d ' ')"
+    case "$comm" in
+      bash|sh|dash|zsh|fish|tmux|screen|sudo|env) continue ;;
+    esac
+    printf '%s\n' "$pid"
+  done
+}
+
+running() { [[ -n "$(pi_pids_for "$1")" ]]; }
+
+# 定位会话所在 tmux pane（靠启动命令里的 --name；边界避免 rd-be 误命中 rd-be-T1）
+find_pane_for() {
+  command -v tmux >/dev/null 2>&1 || return 0
+  tmux list-panes -a -F '#{pane_id} #{pane_start_command}' 2>/dev/null \
+    | awk -v n="$1" '$0 ~ ("--name[ =]" n "([^A-Za-z0-9_-]|$)") { print $1; exit }'
+}
+
+# 该 pane 末 3 行是否显示在跑 turn（启发式：状态行标记；回执/产物以 PM 核对清单为准）
+pane_busy() {
+  local pane="$1" tail3
+  tail3="$(tmux capture-pane -p -t "$pane" 2>/dev/null | grep -v '^[[:space:]]*$' | tail -3)"
+  [[ -n "$tail3" ]] || return 1
+  grep -qE "$CLOSE_BUSY_PATTERN" <<< "$tail3"
+}
+
+# 任务在 tasks-state 的归处：active（进行态）/ closed（已验收·已归档）/ absent（无记录）/ nofile
+task_state_class() {
+  local id="$1"
+  [[ -f "$TASKS_STATE" ]] || { echo nofile; return; }
+  awk -v id="$id" '
+    /^## / { sec=$0; sub(/^##[[:space:]]*/, "", sec); next }
+    {
+      n=split($0, cells, "|")
+      for (i=1;i<=n;i++) {
+        c=cells[i]; gsub(/^[[:space:]]+|[[:space:]]+$/, "", c)
+        if (c==id) { hit=sec; break }
+      }
+    }
+    END {
+      if (hit=="") { print "absent"; exit }
+      if (hit ~ /已验收|已归档/) { print "closed"; exit }
+      print "active"
+    }
+  ' "$TASKS_STATE"
+}
 
 # 白名单命中返回 0，否则返回 1；未设白名单=放行
 check_model() {
@@ -476,6 +535,33 @@ cmd_check() {
     else printf '  ✗ %s 缺失\n' "$f"; rc=1; fi
   done
 
+  echo "== PR 模板（GitHub Flow）=="
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo '  · 非 git 仓库（跳过）'
+  else
+    local remote_url prtpl="" cand
+    remote_url="$(git config --get remote.origin.url 2>/dev/null || true)"
+    if [[ -z "$remote_url" ]]; then
+      echo '  · 无 remote.origin（跳过）'
+    elif [[ "$remote_url" != *github.com* ]]; then
+      echo '  · 远端非 GitHub（跳过；PR 模板不适用）'
+    else
+      shopt -s nullglob
+      for cand in .github/pull_request_template.md .github/PULL_REQUEST_TEMPLATE.md \
+                  .github/PULL_REQUEST_TEMPLATE \
+                  pull_request_template.md PULL_REQUEST_TEMPLATE.md \
+                  docs/pull_request_template.md docs/PULL_REQUEST_TEMPLATE.md; do
+        [[ -e "$cand" ]] && { prtpl="$cand"; break; }
+      done
+      shopt -u nullglob
+      if [[ -n "$prtpl" ]]; then
+        printf '  ✓ PR 模板已就位：%s\n' "$prtpl"
+      else
+        echo '  ! 未找到 PR 模板（GitHub 远端）：PM 立项时从 .agents/templates/github/pull_request_template.md.example 复制为 .github/pull_request_template.md（见 skills/github-flow.md）'
+      fi
+    fi
+  fi
+
   echo "== 按需技能 =="
   if [[ -d "$SKILLS_SUB" ]]; then
     shopt -s nullglob
@@ -503,6 +589,18 @@ cmd_check() {
     fi
   else
     echo '  · codegraph 未安装（回退 grep 属预期行为）'
+  fi
+
+  echo "== pi 插件（业界调研能力）=="
+  local piset="$HOME/.pi/agent/settings.json"
+  if [[ -f "$piset" ]]; then
+    if grep -q 'pi-web-access' "$piset" 2>/dev/null; then
+      echo '  · pi-web-access ✓ 已装（PM/arch 业界调研可用）'
+    else
+      echo '  ! pi-web-access 未装（业界调研不可用；nao-skill plugins install web-access）'
+    fi
+  else
+    echo "  · 未找到 $piset（跳过插件检测）"
   fi
 
   echo "== 模型白名单 =="
@@ -559,7 +657,7 @@ cmd_check() {
     rc=1
   fi
 
-  exit $rc
+  return $rc
 }
 
 # ---------------------------------------------------------------------------
@@ -574,11 +672,89 @@ cmd_status() {
     fi
   done
   echo "== 任务派生会话（--task 拉起，如 rd-be-T1）=="
-  local found=0 line
+  local found=0 line dname role id cls tag
   while IFS= read -r line; do
-    [[ -n "$line" ]] && { printf '  · %s\n' "$line"; found=1; }
+    [[ -n "$line" ]] || continue
+    dname="$(awk '{for(i=1;i<=NF;i++) if($i=="--name") {print $(i+1); exit}}' <<< "$line")"
+    [[ -n "$dname" ]] || continue
+    id=""; tag=""
+    for role in "${ROLE_ORDER[@]}"; do [[ "$dname" == "$role-"* ]] && { id="${dname#"$role"-}"; break; }; done
+    if [[ -n "$id" ]]; then
+      cls="$(task_state_class "$id")"
+      case "$cls" in
+        closed) tag="  ! 残留（$id 已归档）→ close --task $id ${dname%-*}" ;;
+        absent) tag="  ! 残留（tasks-state 无 $id 记录）→ 核对后 close --task $id ${dname%-*}" ;;
+        active) tag="  · $id 进行态" ;;
+      esac
+    fi
+    printf '  · %s%s\n' "$dname" "$tag"
+    found=1
   done < <(pgrep -af "pi[[:space:]].*--name (pm|arch-designer|rd-fe|rd-be|qa)-[A-Za-z0-9_-]+" 2>/dev/null | head -10)
   (( found )) || echo '  （无）'
+  [[ -f "$TASKS_STATE" ]] || echo "  （$TASKS_STATE 不存在，残留判定已跳过）"
+}
+
+# ---------------------------------------------------------------------------
+# 回收已完成会话：闸门（tasks-state 已推进 + 无在跑 turn）+ 落地（pane/会话/screen/进程）
+cmd_close() {
+  local force="$1" task="$2" target="$3"
+  [[ -n "$target" ]] || die "close 需要目标：角色别名或派生会话名（如 rd-be / rd-be-T1）"
+  local name repo cls bus pane pids r ok
+  if [[ -n "$task" ]]; then
+    resolve_role "$target"
+    name="${NAME}-${task}"
+    repo="${ROLE_WS[$NAME]:-$PWD}"
+    # 闸门①：tasks-state 未推进 → 拒绝（验收未过需原会话返工，回收会丢上下文）
+    cls="$(task_state_class "$task")"
+    if [[ "$cls" == "active" && "$force" != true ]]; then
+      warn "拒绝回收 $name：tasks-state 中 $task 仍在进行态（未验收/未归档）"
+      warn "  先把 $task 移入「已验收/已归档」再回收（或 --force：将丢失打回返工所需上下文）"
+      return 1
+    fi
+    [[ "$cls" == "absent" ]] && warn "tasks-state 无 $task 记录（仅按会话名回收）"
+    [[ "$cls" == "nofile" ]] && log "未启用 $TASKS_STATE（跳过状态闸门）"
+  elif [[ -n "${ALIAS_ROLE[$target]:-}" ]]; then
+    name="${ALIAS_ROLE[$target]}"; repo="${ROLE_WS[$name]:-$PWD}"
+    warn "常驻会话 $name：任务闭环后应 ensure --force 重开，而非回收（仅在本批不再需要该角色时回收）"
+  else
+    name="$target"
+    [[ "$name" =~ ^[A-Za-z0-9][A-Za-z0-9_-]*$ ]] || die "非法会话名: $name"
+    # 非别名的目标必须是 <已知角色>-<编号>，否则视为拼错（防静默 no-op）
+    ok=0
+    for r in "${ROLE_ORDER[@]}"; do [[ "$name" == "$r-"* ]] && ok=1; done
+    (( ok )) || die "未知角色或派生会话名: $name（可用: ${ROLE_ORDER[*]}；派生名形如 rd-be-T1）"
+    repo="$PWD"
+  fi
+
+  running "$name" || { log "$name 未运行（无需回收）"; return 0; }
+
+  # 闸门②：在跑 turn（tmux 可判；非 tmux 宿主无法判 → 需 --force）
+  pane="$(find_pane_for "$name")"
+  if [[ -n "$pane" ]]; then
+    pane_busy "$pane" && bus="tmux pane $pane 末行显示在跑 turn"
+  else
+    bus="非 tmux 宿主，无法确认是否在跑 turn"
+  fi
+  if [[ -n "$bus" && "$force" != true ]]; then
+    warn "拒绝回收 $name：$bus"
+    warn "  等它停；回执与产物核对见 checklists/pm.md「会话回收 / 收窗核对」（或 --force 强制）"
+    return 1
+  fi
+
+  if [[ -n "$pane" ]] && tmux kill-pane -t "$pane" 2>/dev/null; then
+    log "已回收 $name（tmux pane $pane）@ $repo"; return 0
+  fi
+  if command -v tmux >/dev/null 2>&1 && tmux has-session -t "nao-$name" 2>/dev/null && tmux kill-session -t "nao-$name" 2>/dev/null; then
+    log "已回收 $name（tmux 会话 nao-$name）@ $repo"; return 0
+  fi
+  if command -v screen >/dev/null 2>&1 && screen -ls 2>/dev/null | grep -q "nao-$name" && screen -S "nao-$name" -X quit 2>/dev/null; then
+    log "已回收 $name（screen 会话 nao-$name）@ $repo"; return 0
+  fi
+  pids="$(pi_pids_for "$name" | tr '\n' ' ')"
+  if [[ -n "$pids" ]] && kill $pids 2>/dev/null; then
+    log "已回收 $name（结束进程: $pids）@ $repo"; return 0
+  fi
+  warn "未找到 $name 的 pane/会话/进程（可能刚好退出）"; return 1
 }
 
 # ---------------------------------------------------------------------------
@@ -625,6 +801,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     check)  CMD="check";  shift ;;
     status) CMD="status"; shift ;;
+    close)  CMD="close";  shift ;;
     ensure) CMD="ensure"; shift ;;
     -m|--model)
       MODEL="${2:-}"
@@ -634,6 +811,7 @@ while [[ $# -gt 0 ]]; do
     --force)  FORCE=true;  shift ;;
     --task)   TASK="${2:-}"; [[ -n "$TASK" ]] || die "--task 需要任务编号（如 T1）"; [[ "$TASK" =~ ^[A-Za-z0-9_-]+$ ]] || die "--task 非法: $TASK（仅字母/数字/-/_）"; shift 2 ;;
     --strict) STRICT=true; shift ;;
+    -v|--verbose) VERBOSE=true; shift ;;
     -h|--help) usage ;;
     *) TARGETS+=("$1"); shift ;;
   esac
@@ -641,12 +819,37 @@ done
 
 case "$CMD" in
   check)  : ;;   # cmd_check 自行先做文本契约体检，再 load_manifest（缩进违例时也能先出报告）
-  ensure|status) load_manifest ;;
+  ensure|status|close) load_manifest ;;
 esac
 
 case "$CMD" in
-  check)  cmd_check "$STRICT" ;;
+  check)
+    # 默认单行摘要（派发前自检只需 exit code + 计数；完整报告 30+ 行不进 PM 上下文）；-v 或失败时展开
+    # 子 shell 隔离：cmd_check 内部 die/exit 不得吞掉报告（计数从报告解析，不靠子 shell 内变量）
+    REPFILE="$(mktemp)"
+    set +e
+    ( cmd_check "$STRICT" ) >"$REPFILE" 2>&1
+    CHECK_RC=$?
+    set -e
+    if (( CHECK_RC == 0 )) && ! $VERBOSE; then
+      WARNS="$(grep -c '^  !' "$REPFILE" || true)"
+      ROLES_N="$(grep -oE '解析成功，[0-9]+ 个角色' "$REPFILE" | grep -oE '[0-9]+' | head -1 || true)"
+      FILES_N="$(grep -oE '[0-9]+ 个文本文件全 LF' "$REPFILE" | grep -oE '^[0-9]+' | head -1 || true)"
+      if (( WARNS > 0 )); then
+        printf 'check: OK · roles=%s · files=%s · layout=%s · warn=%d（-v 看详情）\n' \
+          "${ROLES_N:-?}" "${FILES_N:-?}" "$TMUX_LAYOUT" "$WARNS"
+      else
+        printf 'check: OK · roles=%s · files=%s · layout=%s\n' \
+          "${ROLES_N:-?}" "${FILES_N:-?}" "$TMUX_LAYOUT"
+      fi
+    else
+      cat "$REPFILE"
+    fi
+    rm -f "$REPFILE"
+    exit $CHECK_RC
+    ;;
   status) cmd_status ;;
+  close)  cmd_close "$FORCE" "$TASK" "${TARGETS[0]:-}" ;;
   ensure) cmd_ensure "$FORCE" "$MODEL" "$TASK" "${TARGETS[@]}" ;;
   *) usage ;;
 esac

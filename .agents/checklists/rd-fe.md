@@ -51,7 +51,7 @@ description: 前端研发交付核对清单（按需，交付前读取）
 - [ ] 新 UI 用既有原语/基础组件组装；暗色/hover/disabled 走令牌语义
 - [ ] `bash "$NAO_SKILLS/.agents/scripts/ui-tokens-check.sh" <repo>` 通过（若配了 CI 则自动拦截）
 
-## 交付检查清单（完整 11 项）
+## 交付检查清单（完整 14 项）
 
 - [ ] 规模评估（L1/L2/L3）未过度设计
 - [ ] Domain 零框架、充血；用例仅依赖端口；DI 红线全过
@@ -63,4 +63,7 @@ description: 前端研发交付核对清单（按需，交付前读取）
 - [ ] 无 Context 传业务依赖；无组件/Store 内 `new` 仓储
 - [ ] 已遵守 AGENTS.md 项目约束（含 UI tokens/ux-playbook 位置）
 - [ ] 定位/变更代码已用 CodeGraph（回退 grep 有注明）
+- [ ] 需求分支 `feat/<issue-id>-<slug>` 已 push，Draft PR 已开（填 PR 模板）
+- [ ] 提交为 `wip()` 检查点 + 路径级暂存（禁 `-A`）；无 WIP 提交落到 main
 - [ ] 通过上面全部红线
+- [ ] PM 验收通过后才合并（`gh pr merge --squash --delete-branch` / 降级本地 squash）；未过验收未合并
