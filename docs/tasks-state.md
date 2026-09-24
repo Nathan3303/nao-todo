@@ -8,14 +8,14 @@
 > 本区是 PM 的**悬空状态**（任务状态见下方五栏）。每次重开前更新；重开后逐行回读确认（当前阶段 · 未决决策 · 口头约束）。
 > 流程：**GitHub flow 已启用**（用户 2026-09-24 拍板；约束见 `AGENTS.md` 项目红线）—— 新需求一律 `feat/<issue-id>-<slug>` + PR + **RD 执行 squash 合并**（PM 只验收授权）；**`feat/ocdev` 已于 2026-09-24 退役删除**（远端 + 本地）。**降级标注**：无预览环境（见下「需求分支 / PR / 发布」）。
 
-- 当前阶段：**🎉 v1.10.0 已发布（2026-09-24）—— 本批次终态**：`main` = **`a9d710dd`**（PR #90 squash 合并）· tag **`v1.10.0`** → **`a9d710dd`** · GitHub Release 已发布（https://github.com/Nathan3303/nao-todo/releases/tag/v1.10.0）。**P0 修复（DEF-33/34）+ r12 读路径纠正 + 阶段一离线能力 + 阶段二 2A 全部上台** ✓。**⇒ 2B 已立项并开工** —— Issue **#94** · 分支 **`feat/94-stage2-2b`** · **W0 已完成**（`T161` 设计 ✅ + `T167` `FIX-D` ✅）· **W1 在制**：`T163`（rd-be 服务端 OCC，跨仓 `nao-todo-server` @ `arch/go-ddd`）· **`T162`（qa 用例先行）即派**
+- 当前阶段：**🚀 v1.11.0 发版中（2026-09-24）—— 阶段二 2B 已合并、发版 PR 待并**：`main` = **`95a8cbb0`**（PR #95 squash · 52 文件 · 无夹带）· 发版分支 `nao/release-v1.11.0`（版本号 5 文件 + CHANGELOG + release notes + 本台账）· 上一批次终态：**v1.10.0 已发布（2026-09-24）—— 本批次终态**：`main` = **`a9d710dd`**（PR #90 squash 合并）· tag **`v1.10.0`** → **`a9d710dd`** · GitHub Release 已发布（https://github.com/Nathan3303/nao-todo/releases/tag/v1.10.0）。**P0 修复（DEF-33/34）+ r12 读路径纠正 + 阶段一离线能力 + 阶段二 2A 全部上台** ✓。**⇒ 2B 已立项并开工** —— Issue **#94** · 分支 **`feat/94-stage2-2b`** · **W0 已完成**（`T161` 设计 ✅ + `T167` `FIX-D` ✅）· **W1 在制**：`T163`（rd-be 服务端 OCC，跨仓 `nao-todo-server` @ `arch/go-ddd`）· **`T162`（qa 用例先行）即派**
 - 当前 PRD：`docs/prds/2026-09-23-stage2-local-first-both-ends.md`（状态：**2A 已收批 · 2B 已开工**）；相关 ADR `docs/adr/2026-09-24-stage2-both-ends-local-first.md`（r2，`T161` 将追 r3）
 - 未决决策点（**Q1–Q4 已裁定，用户 2026-09-24「按 PM 建议」**）：① 下一批 = **先停一轮实测**（不进 2B）✓；② 读路径对**非凭证 4xx / 未知异常** = **维持 fail-soft、不收紧**（如需收紧须另开 PRD/AC 变更单，**不在 2B 顺手改**）✓；③ **`feat/ocdev` 已删除**（远端 + 本地；删前 `merge-base --is-ancestor` 通过）✓；④ **`T158`（DEF-35 证伪探针）已派 `qa-T158` 并已验收** ⇒ **证伪 ⇒ DEF-35 维持 P2（防御性）** ✓（见 §一）
 - 待用户回答：**无**（Q1–Q4 已裁定）
 - 未派发队列：见下方「待派发队列」（**2B 后续波次 `T162`–`T169`** —— 待 W0 回执；`FIX-D` 已随 W0 派出）
 - 下次唤醒条件：**`T170`（arch PR #95 评审）回执** ⇒ 通过后由 **RD `gh pr merge 95 --squash --delete-branch`** ⇒ 报用户终签 ⇒ 发 `v1.11.0` · 用户追加需求 · 或临时小修
 - 口头约束已落盘：**移动端红线**（`AGENTS.md` 项目红线）· **发版策略**「新需求做完统一发一次版」· **DEF-18 不修（登记保留）** · **PM 技术调研边界**（`AGENTS.md` §四 + PM 卡 §九）· 服务端契约**不得**为展示层需求擅动（`AGENTS.md`）
-- 需求分支 / PR：**在制 = `feat/94-stage2-2b`**（Issue **#94**，已建并 push；2B）· 已合并：**#92**（批次收尾）· **#93**（治理执行）· **预览环境 = 有（Vercel Preview）** —— 每次 PR/push 自动部署（此前记的「无」不准，2026-09-24 更正）
+- 需求分支 / PR：**2B 已合并：PR #95**（`feat/94-stage2-2b` → `main`，`Closes #94`，52 文件 ⇒ `main` = **`95a8cbb0`**，分支已删）· **发版中：`nao/release-v1.11.0`**（PR 待建）· 已合并：**#92**（批次收尾）· **#93**（治理执行）· **预览环境 = 有（Vercel Preview）** —— 每次 PR/push 自动部署（此前记的「无」不准，2026-09-24 更正）
 - 会话体检：**2026-09-24 发布完成 = 批次终态 + 上下文约 40% ⇒ 已按新卡 §六 执行 `ensure --force pm` 重开**（本文件即交接凭据；重开后须向用户回读确认 3 行）。**✅ 交接已执行（2026-09-24）**：接管会话 = **`01a0d227` / tmux `%71`**；旧 PM 会话 **`01a0d187` / `%61`** 已按收窗纪律核对（无在跑 turn · 无未落盘产物 · `main` = `cf89070e` · 工作区 clean）后 `tmux kill-pane` 关闭 ✓；向用户回读 3 行（当前阶段 / 未决决策 Q1–Q4 / 口头约束）**已发**，等用户答复后调度。历史会话体检：发布前 ≈400k（约 40%）· 压缩 0 · cacheRead ≈99%。**环境**：dev server **已关**（用户要求）· 后端 3302 在跑 · MySQL/Redis 在 · 探针浏览器已清 · **nao-skill npm 0.7.1 暂缓发布**（同步走源仓 CLI；`pnpx @latest` 仍是 0.7.0）· **`gh` 已恢复可用**（用户 2026-09-24 修复 token；期间曾 token 失效 + 到 GitHub 网络间歇不稳，重试可通）· **预览环境 = Vercel Preview（有）** · 会话：`rd-fe-T155` **已回收**（合并辅助任务完成；⚠️ 关闭时状态行仍 `Working` —— PM 自捕纪律偏差，已核无产物丢失）
 
 ## 需求分支 / PR / 发布（PM 维护）
@@ -32,9 +32,9 @@
 - Issue：**#88**（已建 2026-09-24：「web 离线能力（阶段一 + 2A）追平 main ＋ 本轮 P0 登录缺陷修复」；body = TL;DR + AC 编号 + 优先级 + `docs/` 指针，**正文不抄进 Issue**）⇒ baseline PR 用 `Closes #88`
 - 需求分支：**无在制需求分支** · `feat/ocdev` **已退役删除（2026-09-24）** · `nao/t158-def35-probe` **已随 PR #92 合并并删除** ⇒ 下一批一律 `feat/<issue-id>-<slug>`（从 `main` 起）
 - PR owner / Reviewer：**RD / `arch-designer`**（纯 CRUD 可写「无」并注明理由）
-- PR：**#89 已 MERGED**（baseline）· 本发布 PR = **#2 个 PR**（编号以创建为准）；预览环境 = **无**（以门禁精确数字 + PM 读 diff 替代）
+- PR：**#89 已 MERGED**（baseline）· **#92**（批次收尾）· **#93**（治理）· **#95 已 MERGED**（2B，`95a8cbb0`）· **本发布 PR = #96（待建）**；预览环境 = **有（Vercel Preview）**
 - 合并：baseline = **merge commit**（一次性例外，已完成）→ **本发布 PR 及其后一律 `--squash`**（**RD 执行**，**PM 不合并**）
-- 版本 / Tag：上一版 **v1.9.0**（`eaad8b2d`）· **本次 v1.10.0 已发布**：root/webapp/desktop **1.10.0** · `presentation` **0.7.0** · `shared` **1.3.3** · `domain-identity` **1.2.0** · `infrastructure` **0.6.0** · `presentation-identity` **1.2.1**（`domain-task`/`presentation-react`/`apps/mobile` 零改动不 bump）· **tag `v1.10.0` → `a9d710dd`（main HEAD）** · Release 已发布
+- 版本 / Tag：**本次 v1.11.0（发版中）**：root / webapp / desktopapp **1.11.0** · `infrastructure` **0.7.0** · `shared` **1.3.4**（其余包零改动不 bump）· 上一版 **v1.10.0** 已发布：root/webapp/desktop **1.10.0** · `presentation` **0.7.0** · `shared` **1.3.3** · `domain-identity` **1.2.0** · `infrastructure` **0.6.0** · `presentation-identity` **1.2.1**（`domain-task`/`presentation-react`/`apps/mobile` 零改动不 bump）· **tag `v1.10.0` → `a9d710dd`（main HEAD）** · Release 已发布
 - 降级标注：**`gh` 可用（`gh auth status` exit 0）· 仍余 2 项：无预览环境 · baseline 前无 Issue**
 - 特例提交（白名单）：**① baseline `feat/ocdev → main` 用 merge commit（一次性；✅ 用户已批准；已完成 `c5309dcb`）** ② 发布类文档 PR（`nao/release-v1.10.0`：版本号/CHANGELOG/release notes/台账，**PM-owned 文档**，评审人 = 无（PM 自核，理由：纯文档+版本元数据、无源码/测试/构建逻辑改动））· **其后所有需求 PR 一律 squash**
 
