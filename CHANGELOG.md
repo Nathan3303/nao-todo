@@ -2,6 +2,41 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.10.0] - 2026-09-24
+
+发布批次：**web 离线能力（阶段一）** + **业务数据面两端同构 local-first（阶段二 2A）** + 本轮用户报障的 P0 登录缺陷修复。**Tag `v1.10.0`** · root `1.10.0` · `apps/web` / `apps/desktop` `1.10.0` · `packages/presentation` `0.6.0 → 0.7.0` · `packages/shared` `1.3.2 → 1.3.3` · `packages/domain-identity` `1.1.0 → 1.2.0` · `packages/infrastructure` `0.5.0 → 0.6.0` · `packages/presentation-identity` `1.2.0 → 1.2.1`（`domain-task` / `presentation-react` / `apps/mobile` 零改动，不 bump）。详见 `docs/releases/v1.10.0.md`。
+
+### 新增（web 离线 · 阶段一）
+
+- **离线进入 + 离线可读**（`0e095d88` / `ebc2e87b` / `33901b90`）：本地镜像 + 新鲜度提示（「离线模式 · 数据截至 X」/「尚未同步完成」），冷启动读 `meta` 落盘值；镜像续拉至无更多。
+- **安全姿态与迁移**（`9ee0c08b` / `b7612b86` / `a8480151`）：两端一致的明文本地存储 + 启动门内历史密文迁移 + **按键白名单清库**（`wipeUserData` 单一真源，禁 `localStorage.clear()`）。
+- **统一禁写 + 可见反馈**（`3af3b854` / `f650dd39`）：离线写入口统一拦截并给可见提示（不再 5 项静默失败）。
+- **多标签登出广播**（`c368fe63`）：一个标签登出，其他标签同步清库并跳登录。
+
+### 新增（两端同构 local-first · 阶段二 2A）
+
+- **业务 7 域写路径切本地**（`1c31e09d` / `5e19565e` / `c2459a4a` / `09c7cdff`）：任务 / 检查项 / 评论 / 清单 / 标签 / 番茄 / 番茄记录 ⇒ 本地仓储 + `syncQueue` 回传；**离线写合法**。
+- **前置四件**（`6a75a0de` / `68b336b6`）：**服务端时间校准**（PS-15）· **冲突 journal（含败方快照，有界 50）**（PS-14）· **web 首拉门**（PS-16）· **dirty 监听 → 自动推送**（PS-12）。
+- **闸门作用面收敛至身份域**（`b4960a4d`）：写闸门仅保留 `USER_WRITE_METHODS`（身份域仍远端直连 + 离线拦截）；`withReadOnlyGuard` / `OFFLINE_READONLY` 保留。
+- **`markDirty` 语义变更**（ADR r10）：web 业务**不再恒 0**；`pendingCount = countDirty`，成功同步出队回 0；身份域不产生业务 `markDirty`。
+- **同步面板冲突计数**（`1bed1d8d` / `ba2c189e`）：新增只读「冲突 N」行（warning 语义，不做交互）。
+- **服务端**（跨仓 `nao-todo-server` `ed4abdf`）：`SyncResult.Outcome` **additive** 字段（`applied` / `noop` / `conflict` / `skipped` / `error`，与 `DecideUpsert` 同源）。
+
+### 修复
+
+- **登录成功后被弹回登录页**（DEF-34，`c7c782d3`）：守卫内「补清上次登出」不再删除**当前会话凭据键**（按调用语境区分「终结会话」/「补清」）⇒ 存量残留态**无需手动清数据**即可自愈。
+- **刷新「检入失败」且无法自愈**（DEF-33，`453fd076`）：检入失败分类改为「网络白名单 + 结构化 code 优先」——只有明确网络类保留认证，其余按凭证失效处理（含未知码安全默认）；仓储边界透传 `code`（闭合 DEF-25 的文案耦合）。
+- **SSE 空/失效令牌报 MIME 错误**（`85e3278b`）：无令牌不建连；失效由请求层单一出口处理（避免 SSE 瞬断误登出）。
+- **读路径回退语义纠正**（`37cac094`，ADR r12）：`mirror-fallback` 抛出分支仅对**明确凭证结构信号**（HTTP 401/403 或业务码 10041/10021/10022）上抛，**网关 502/504、5xx、非凭证 4xx、未知错误一律回退本地镜像**。
+
+### 工程与治理
+
+- **启用 GitHub flow**（`c057f8b5`）：1 需求 = Issue + 分支 + PR（squash）· `main` 始终可发布 · 合并由 RD 执行、PM 只验收授权 · 发布 tag 指向 main 合并提交；**baseline 追平一次性使用 merge commit**（PR #89）。
+- **PR 模板**：新增 `.github/pull_request_template.md`。
+- **ADR 修订**：C-59 业务只读**正式退场**（r10）· C-52/C-53 清库语境（r11）· 新增 **C-67**（认证失败分类）与 **C-68**（web 无 DEK 时旧密文处置）· **r12**（读路径回退 fail-soft）。
+- **舰队资产**：同步 nao-skill **v0.7.0 / v0.7.1**（`c9144a22` / `3924552e`）—— 含 `close` 回收闸门修复；`nao-fleet.sh check` exit 0。
+- **门禁**：4 个新增守卫（导入面可解析 · 移动端红线 · 门禁 pathspec · 领域隔离）全部纳入批末验收。
+
 ## [v1.9.0] - 2026-09-23
 
 发布批次：任务导出多格式（JSON / HTML 账单）+ 导出框内加载与错误态 + 日视图测试时间炸弹修复。**Tag `v1.9.0`** · root `1.9.0` / `@nao-todo/desktopapp` `1.9.0` / `@nao-todo/webapp` `1.9.0` / `@nao-todo/presentation` `0.6.0` / `@nao-todo/shared` `1.3.2`（`@nao-todo/domain-task` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop。
