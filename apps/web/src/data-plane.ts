@@ -6,6 +6,7 @@ import {
 import { resolveUserIdFromStoredJwt } from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
 import { syncService } from '@nao-todo/infrastructure/src/persistence-sync/sync-service'
 import { syncStatus } from '@nao-todo/infrastructure/src/persistence-sync/sync-status'
+import { syncTracker } from '@nao-todo/infrastructure/src/persistence-sync/sync-tracker'
 import { startReadOnlyWatch } from '@nao-todo/presentation/offline'
 import { applySyncConfirmation } from '@/offline-read-only'
 import { withBootstrapRetry } from '@/views/auth/bootstrap-local-data'
@@ -30,6 +31,8 @@ import { withBootstrapRetry } from '@/views/auth/bootstrap-local-data'
 let registered = false
 /** 已触发过拉取的用户（切换账号需重拉；同一用户不重复拉） */
 let activeUserId: string | null = null
+/** 当前用户首次拉取已落定（成功/失败均落定）的 Promise（PS-16 首拉门；未启动为 null） */
+let firstPullSettled: Promise<void> | null = null
 
 /**
  * 幂等启动 web 数据面（可多次调用）
@@ -41,6 +44,11 @@ export const startWebDataPlane = (): void => {
     startReadOnlyWatch()
     if (!registered) {
         registered = true
+        // PS-12 前置：本地写 → `markDirty` → 2s 防抖推送（desktop 同款，见 `AppRoot.vue`）。
+        // web 阶段一缺此接线 ⇒ 切本地写路径后本地修改永不回传。
+        syncTracker.setDirtyListener(() => {
+            syncService.schedulePush()
+        })
         // C-61③：常驻跨 7 天无冷启动 ⇒ 挂既有回传触发源顺带重跑启动收敛点（不新增定时器）
         // C-59 / ADR-r5.1：回传成功（真实执行 pull）⇒ 清除「离线进入」flag（网络恢复即可写）
         registerBackfillTriggers(
@@ -67,7 +75,15 @@ export const startWebDataPlane = (): void => {
     activeUserId = userId
     // 非阻塞：不阻塞进入应用；本条即「web 也用 syncService + 本地镜像」的接线点
     // C-59 / ADR-r5.1：仅当**真实执行 pull**（`pullExecuted`）且无错误/凭证失败时清除只读 flag
-    void syncService.start().then(applySyncConfirmation)
+    // PS-16 首拉门：暴露「首次拉取已落定」信号（成功/失败均落定，不抛出）
+    firstPullSettled = syncService
+        .start()
+        .then(applySyncConfirmation)
+        .then(
+            () => undefined,
+            () => undefined
+        )
+    void firstPullSettled
     // TASK-26 / M6：启动先拉取 + LWW 合并设置面，再冲刷偏好队列（非阻塞；失败静默降级）
     void pullAndMergeUserConfig().then(() => flushPreferenceQueue())
 }
@@ -78,7 +94,15 @@ export const startWebDataPlane = (): void => {
 export const resetWebDataPlaneForTest = (): void => {
     registered = false
     activeUserId = null
+    firstPullSettled = null
 }
+
+/**
+ * 当前用户首次拉取已落定（成功或失败）的 Promise（PS-16 web 首拉门）
+ * @description 未登录/未启动时为 `null`；同一用户切换账号后指向新用户的首拉。
+ *              仅作**等待信号**，不改变同步语义。
+ */
+export const getFirstPullSettled = (): Promise<void> | null => firstPullSettled
 
 /**
  * 镜像新鲜度（C-60 文案三分 / 覆盖度-触顶 的 UI 输入）

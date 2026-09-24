@@ -7,6 +7,7 @@
  * @see docs/adr/2026-09-23-two-end-sync-status-unification.md
  */
 import App from './App.vue'
+import InitialPullGate from './components/initial-pull-gate.vue'
 import SyncStatusBar from './components/sync/sync-status-bar.vue'
 
 defineOptions({ name: 'WebRoot' })
@@ -14,5 +15,7 @@ defineOptions({ name: 'WebRoot' })
 
 <template>
     <App />
+    <!-- PS-16 web 首拉门：本地镜像缺失且在线时覆盖加载态（非阻塞，超时放行） -->
+    <InitialPullGate />
     <SyncStatusBar :sync-time-source="'mirrorPulledAt'" />
 </template>

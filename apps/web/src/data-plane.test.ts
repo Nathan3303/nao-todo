@@ -9,6 +9,8 @@ import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 
 const mocks = vi.hoisted(() => ({
     start: vi.fn(async () => ({ ok: true })),
+    schedulePush: vi.fn(),
+    setDirtyListener: vi.fn(),
     unregister: vi.fn(),
     registerBackfillTriggers: vi.fn(),
     resolveUserIdFromStoredJwt: vi.fn(),
@@ -20,7 +22,8 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@nao-todo/infrastructure', () => ({
     registerBackfillTriggers: mocks.registerBackfillTriggers,
     resolveUserIdFromStoredJwt: mocks.resolveUserIdFromStoredJwt,
-    syncService: { start: mocks.start },
+    syncService: { start: mocks.start, schedulePush: mocks.schedulePush },
+    syncTracker: { setDirtyListener: mocks.setDirtyListener },
     syncStatus: {
         get: () => ({
             mirrorPulledAt: mocks.mirrorPulledAt,
@@ -46,6 +49,10 @@ vi.mock(
     '@nao-todo/infrastructure/src/persistence-sync/sync-status',
     async () => import('@nao-todo/infrastructure')
 )
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-sync/sync-tracker',
+    async () => import('@nao-todo/infrastructure')
+)
 // TASK-26 / M6：偏好同步接线（本文件只锁数据面接线行为，偏好模块单独单测覆盖）
 vi.mock('@nao-todo/infrastructure/src/persistence-sync/preference-sync', () => ({
     flushPreferenceQueue: vi.fn(async () => ({ pushed: 0, failed: 0 })),
@@ -56,7 +63,8 @@ vi.mock('@/views/auth/bootstrap-local-data', () => ({
     withBootstrapRetry: mocks.withBootstrapRetry
 }))
 
-const { startWebDataPlane, resetWebDataPlaneForTest, getMirrorState } = await import('./data-plane')
+const { startWebDataPlane, resetWebDataPlaneForTest, getMirrorState, getFirstPullSettled } =
+    await import('./data-plane')
 
 describe('startWebDataPlane - C-66 web 数据面接线', () => {
     beforeEach(() => {
@@ -114,6 +122,31 @@ describe('startWebDataPlane - C-66 web 数据面接线', () => {
         mocks.resolveUserIdFromStoredJwt.mockReturnValue('u-1')
         mocks.start.mockResolvedValueOnce({ ok: false, lastError: '网络错误' } as never)
         expect(() => startWebDataPlane()).not.toThrow()
+    })
+
+    it('PS-12 前置：注册 dirty 监听 ⇒ 本地写（markDirty）触发防抖推送', () => {
+        mocks.resolveUserIdFromStoredJwt.mockReturnValue('u-1')
+        startWebDataPlane()
+        expect(mocks.setDirtyListener).toHaveBeenCalledTimes(1)
+        const listener = mocks.setDirtyListener.mock.calls[0]![0] as () => void
+        listener()
+        expect(mocks.schedulePush).toHaveBeenCalledTimes(1)
+    })
+
+    it('PS-12 前置：dirty 监听仅注册一次（重复调用不叠加）', () => {
+        mocks.resolveUserIdFromStoredJwt.mockReturnValue('u-1')
+        startWebDataPlane()
+        startWebDataPlane()
+        expect(mocks.setDirtyListener).toHaveBeenCalledTimes(1)
+    })
+
+    it('PS-16：暴露当前用户首拉已落定的 Promise（未登录为 null）', () => {
+        mocks.resolveUserIdFromStoredJwt.mockReturnValue(null)
+        startWebDataPlane()
+        expect(getFirstPullSettled()).toBeNull()
+        mocks.resolveUserIdFromStoredJwt.mockReturnValue('u-1')
+        startWebDataPlane()
+        expect(getFirstPullSettled()).toBeInstanceOf(Promise)
     })
 })
 
