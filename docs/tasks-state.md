@@ -16,7 +16,7 @@
 - 下次唤醒条件：**用户实机实测反馈**（据此决定是否/何时进 2B）· 用户口令追加需求 · 或用户要临时小修（`T158` 已闭环）
 - 下次唤醒条件：**用户实机实测反馈**（据此决定是否/何时进 2B）· **`T158` 回执**（DEF-35 定级 P2/P0）· 或用户要临时小修
 - 口头约束已落盘：**移动端红线**（`AGENTS.md` 项目红线）· **发版策略**「新需求做完统一发一次版」· **DEF-18 不修（登记保留）** · **PM 技术调研边界**（`AGENTS.md` §四 + PM 卡 §九）· 服务端契约**不得**为展示层需求擅动（`AGENTS.md`）
-- 需求分支 / PR：**无在制需求分支**（`feat/ocdev` 已退役）· **`T158` 探针分支 = `nao/t158-def35-probe`**（从 `main` `cf89070e` 起 · Draft PR · **无 Issue** —— 探针单降级标注）· 预览环境 = **无**
+- 需求分支 / PR：**无在制需求分支**（`feat/ocdev` 已退役）· **`T158` 探针/台账分支 = `nao/t158-def35-probe`**（分支基 = `cf89070e` + PM 台账 `cef07d82`；**PR 待建** —— `gh` 不可用 · 见「待办④」）· 预览环境 = **无**
 - 会话体检：**2026-09-24 发布完成 = 批次终态 + 上下文约 40% ⇒ 已按新卡 §六 执行 `ensure --force pm` 重开**（本文件即交接凭据；重开后须向用户回读确认 3 行）。**✅ 交接已执行（2026-09-24）**：接管会话 = **`01a0d227` / tmux `%71`**；旧 PM 会话 **`01a0d187` / `%61`** 已按收窗纪律核对（无在跑 turn · 无未落盘产物 · `main` = `cf89070e` · 工作区 clean）后 `tmux kill-pane` 关闭 ✓；向用户回读 3 行（当前阶段 / 未决决策 Q1–Q4 / 口头约束）**已发**，等用户答复后调度。历史会话体检：发布前 ≈400k（约 40%）· 压缩 0 · cacheRead ≈99%。**环境**：dev server **已关**（用户要求）· 后端 3302 在跑 · MySQL/Redis 在 · 探针浏览器已清 · **nao-skill npm 0.7.1 暂缓发布**（同步走源仓 CLI；`pnpx @latest` 仍是 0.7.0）
 
 ## 需求分支 / PR / 发布（PM 维护）
@@ -28,10 +28,10 @@
 - ✅ **待办① 已完成（2026-09-24）**：baseline 追平 —— PR **#89**（`feat/ocdev` → `main`，`Closes #88`）已 **MERGED**，方式 = **merge commit（一次性白名单）**，`main` 新 HEAD = **`c5309dcb`**（父 = `cf3559fa`(合并前 main) + `37cac094`(feat/ocdev)）；已核 `git diff --stat 37cac094 origin/main` = **空**（无夹带）；**push 成功**（`7852a8e7..37cac094`，首次上台 218 提交，**未 `--force`**）
 - ✅ **待办② 已完成（2026-09-24）**：发布 PR **#90**（`nao/release-v1.10.0` → `main`，11 文件 +124/−21）**已 squash 合并** ⇒ `main` = **`a9d710dd`**（单父 = `c5309dcb`）· **annotated tag `v1.10.0`** → peeled **`a9d710dd`**（已 push；`git ls-remote` 核过）· **`gh release create v1.10.0 --verify-tag --notes-file docs/releases/v1.10.0.md`** 已发布（非 draft / 非 prerelease）· 发布 HEAD `1543c603` 上**复跑全范围门禁 8 项全绿**（`vp check` 1426/1212 · **全仓 `vp test` 164 文件 / 1382 例 / 0 红** · 4 guards rc0 · 双端 build rc0 · 移动端 0）✓
 - **待办③ 已完成（2026-09-24）**：**`feat/ocdev` 已退役删除**（删前 `merge-base --is-ancestor feat/ocdev main` 通过；`git push origin --delete feat/ocdev` = **`[deleted]`** + `git branch -d` = 原 `37cac094`）—— 用户 2026-09-24 授权（Q2）。下一批一律 **`feat/<issue-id>-<slug>` 从 `main` 起** + PR + **RD squash**
-- **待办④（在制）**：`T158` 探针分支 **`nao/t158-def35-probe`**（从 `main` `cf89070e` 起，Draft PR，**无 Issue** —— 探针单降级标注）；PM 验收后由 **RD** squash 合并
+- **待办④（待落地 · ⛔ 被环境阻塞）**：**批次收尾 PR 待建 —— 分支 `nao/t158-def35-probe`**（已 push，含 3 提交：`cef07d82` PM 台账 + ADR 索引 DP 同步 · `a83e6ec4` qa DEF-35 探针报告 · `12ca7526` T158 验收入档；**无 Issue** —— 探针/台账类降级标注）。**⛔ 阻塞**：`gh` token 失效（`gh auth status` **exit 1**，**PM 不自动 `gh auth login`**）+ 到 GitHub 网络间歇不稳 ⇒ **PR 未创建**。**待用户选**：(A) 恢复 gh 后 PM 建 PR + **RD squash 合并**（推荐，2B/发版亦需 gh）· (B) 一次性授权 PM 直推 `main`（**纯文档**，红线例外）· (C) 用户在网页建/并合并 PR。**另**：原独立台账分支 `nao/pm-ledger-2026-09-24` 已冗余（其提交含于 `nao/t158-def35-probe`）⇒ **已于 2026-09-24 删除（本地 + 远端）**
 - **残存远端分支（待用户决定，未动）**：`origin/new/desktop-app`（`e4f15ea0`）· `origin/refactor/domains`（`d38bad44`）—— 历史分支，合并状态未核；另 `origin/nao/release-v1.10.0` / `nao/release-done-v1.10.0` **已随 PR 合并删除**（本次 `git fetch --prune` 已清本地 tracking ref）
 - Issue：**#88**（已建 2026-09-24：「web 离线能力（阶段一 + 2A）追平 main ＋ 本轮 P0 登录缺陷修复」；body = TL;DR + AC 编号 + 优先级 + `docs/` 指针，**正文不抄进 Issue**）⇒ baseline PR 用 `Closes #88`
-- 需求分支：**无在制需求分支** · `feat/ocdev` **已退役删除（2026-09-24，远端+本地）** → 下一批一律 `feat/<issue-id>-<slug>`（从 `main` 起）· `T158` 探针分支 = **`nao/t158-def35-probe`**
+- 需求分支：**无在制需求分支** · `feat/ocdev` **已退役删除（2026-09-24，远端+本地）** → 下一批一律 `feat/<issue-id>-<slug>`（从 `main` 起）· `T158` 探针/台账分支 = **`nao/t158-def35-probe`**（**PR 待建**）
 - PR owner / Reviewer：**RD / `arch-designer`**（纯 CRUD 可写「无」并注明理由）
 - PR：**#89 已 MERGED**（baseline）· 本发布 PR = **#2 个 PR**（编号以创建为准）；预览环境 = **无**（以门禁精确数字 + PM 读 diff 替代）
 - 合并：baseline = **merge commit**（一次性例外，已完成）→ **本发布 PR 及其后一律 `--squash`**（**RD 执行**，**PM 不合并**）
