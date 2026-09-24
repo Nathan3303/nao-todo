@@ -258,3 +258,108 @@
 | presentation   | `task/archive-gate.ts`（`ARCHIVED_READONLY` + 守卫）· `task/handlers/task.ts` · `project/handlers/project.ts` · `project/stores/projects-store.ts` · `project/components/dialogs/manager/*` |
 | apps           | web/desktop `binding.ts`（双端注入）· web `aside/*` · `header/operation-dropdown.vue` · `archive-project-action.ts` · `search/*` · `dialog-adapter.vue`                                     |
 | shared         | `locales/{zh-CN,en-US,types}.ts` · `components/project-card/*` · `components/project-archive-button/*` · `constants/task.ts`                                                                |
+
+---
+
+## 9. T190 复验增补（新 HEAD `44b464f1` —— `T185`/`T186`/`T188` 之后）
+
+> **任务**：`T190`（qa，派生会话 `qa-T190`）｜触发：`T184` 终验通过后**又落 3 个改动**（`T185` 服务端清单面 · `T186` 清单只读 · `T188` `DEF-37` C+B 修复）⇒ 终验结论须在新 HEAD 上重新成立。
+> **HEAD**：`44b464f1`（最新代码提交 = `e4b0bbe7`；其后的 `3e09c84d` / `44b464f1` 为交付报告 / 台账 docs）。
+> **方法**：8 项门禁由 qa **独立实跑**；`DEF-37` 由 qa **自建独立探针**（不复用 `T188` 用例）复现；「双重提示」由**行为级探针**判定。
+
+### 9.0 结论（明确句）
+
+**✅ 仍可发布 —— 无阻塞项。** `AC1–AC6` 在新 HEAD 上**继续成立**；8 项全范围门禁**全绿**；`T184` §7 的 4 条非阻塞项中 **① / ② / ④ 已分别被 `T186` / `T185` / `T188` 闭环**，第 ③ 条（N 口径补充）已随 PRD v0.3 登记，不阻塞发布。**新登记（非阻塞）**：`DEF-38` 移动端 R-5 残留（本批零改动，须用户授权）。
+
+### 9.1 8 项全范围门禁（新 HEAD `44b464f1`，含 T190 新增探针）
+
+| #   | 门禁                 | 命令                                                                | 结果（精确）                                                                               | exit  |
+| :-- | :------------------- | :------------------------------------------------------------------ | :----------------------------------------------------------------------------------------- | :---- |
+| ①   | 格式 + lint + 类型   | `pnpm exec vp check`                                                | **1477 文件格式 OK / 1254 文件 0 warning·lint·type error**                                 | 0     |
+| ②   | **全仓**单测         | `pnpm exec vp test --run`                                           | **195 文件 / 1570 例 / 0 红**（`195 passed` / `1570 passed`）；wall **105.63s**            | 0     |
+| ③   | 领域隔离             | `pnpm run guard:ddd`                                                | OK（domain 未引用 shared 根桶 / 展示层）                                                   | 0     |
+| ④   | 门禁 pathspec 存在性 | `pnpm run guard:gate-pathspec`                                      | OK（门禁命令 pathspec 均存在）                                                             | 0     |
+| ⑤   | 导入面可解析性       | `pnpm run guard:barrel-imports`                                     | OK（**1254 文件 · 校验 1352 条 `@nao-todo` 导入 / 1957 命名**，含 type-only）              | 0     |
+| ⑥   | 移动端红线守卫       | `pnpm run guard:mobile-imports`                                     | OK（**72 源文件**，未引 `persistence-local`/`persistence-sync`/`dexie`/infrastructure 桶） | 0     |
+| ⑦   | 双端构建             | `pnpm exec vp run webapp build` / `pnpm run desktop:build`          | webapp ✓ built（**14.04s**）· desktop ✓ built（**17.79s**）                                | 0 / 0 |
+| ⑧   | 移动端工作区零改动   | `git status --porcelain -- packages/presentation-react apps/mobile` | **0 行**                                                                                   | —     |
+
+**对照首轮**（仅产品 HEAD `44b464f1`，未含 T190 探针）：① 1475 文件 / 1252 文件 · ② **193 文件 / 1563 例 / 0 红**（wall 105.39s）。两次差值恰为 T190 新增 **2 个探针文件 / 7 例**，无红 ⇒ 探针为**纯测试侧新增**，不改变门禁结论。
+
+**受影响面单跑**（探针 + 功能基线）：29 文件 / 235 例 / 0 红（32.56s）。
+
+### 9.2 三个新改动对终验结论的影响
+
+| 改动                                | 提交 / 位置                                                                        | 作用面                                                                                                                                                                                                                                                                | 对 `T184` 结论的影响                                                                                                                                                                                                                                                                                       |
+| :---------------------------------- | :--------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`T185` 服务端清单面默认排除归档** | `nao-todo-server` `5fcbc60`（分支 `feat/99-archive-server`，提交信息 `wip(T185)`） | `GET /projects` 未传 / 显式 `false` ⇒ `archived_at IS NULL`；仅显式 `true` 返回归档；`/sync/pull`（ListSync）与按 id 单取、取消归档**不受影响**                                                                                                                       | **闭环 §7② / §6.1**：已归档**清单**在默认列表（移动端亦然）**不再出现** ⇒ 发布说明可统一为「任务 + 清单均不再显示已归档内容」，移动端仍零改动。⚠️ **发布排序**：服务端 PR #31 仍 Draft 且提交为 `wip`；本改动**不构成客户端依赖**（客户端仅消费「任务面 `1c29a69` + 清单面 `5fcbc60`」的最终服务端行为）。 |
+| **`T186` 项目域归档只读守卫**       | `013652bd`                                                                         | 复用 `archive-gate`：`PROJECT_ARCHIVE_WRITE_METHODS`（update / delete / restore / archive / unarchive / resort / resortSingle / resortWithRebuild）+ `createProjectArchivedTargetJudge`；web/desktop binding 对 `kind==='project'` 注入；`saveProjectPreference` 豁免 | **闭环 §7①**：ADR §7.2「清单自身写亦应拦截（除 `unarchive`）」**已实现** ⇒ 「补项目域守卫 或 收窄措辞」二选一**不再需要**。                                                                                                                                                                                |
+| **`T188` `DEF-37` C+B 修复**        | `e4b0bbe7`                                                                         | 写侧 `buildTaskPush`：`'inbox'` ⇒ `''`；读侧 `putPulledRecord`：`projectId === userId` ⇒ `'inbox'`；**C 与 B 同一提交**                                                                                                                                               | **闭环 §7④（R-5 / `DEF-37`）**：脱归档到收集箱的变更**可同步到服务端**（`applied` + 出队），跨端不再永久不一致；读侧归一命中（S2 正向不变量）。                                                                                                                                                            |
+
+对 **AC1–AC6 无回归**；AC5（收集箱）由「本地正确、跨端不一致」升级为**跨端一致**。
+
+### 9.3 `DEF-37` 端到端实证（T190 独立探针，qa 自跑）
+
+探针：`packages/infrastructure/src/persistence-sync/__tests__/t190-def37-e2e.probe.test.ts`（**4 例 / 0 红**）。
+
+| #      | 断言                                                                            | 实测                                                             |
+| :----- | :------------------------------------------------------------------------------ | :--------------------------------------------------------------- |
+| ①      | 脱归档（清单仍归档）⇒ push 载荷 `projectId === ''`                              | ✅（附带 `archivedAt === null`，证明变更内容完整，非仅 swap id） |
+| ②      | mock server 回执 `outcome === 'applied'`（修前为 `error`：`ParseInt "inbox"`）  | ✅                                                               |
+| ③      | 队列项**已出队**                                                                | ✅（`syncTracker.listDirty` 不含该任务；端到端强证据）           |
+| ④      | pull 后本地 `projectId === 'inbox'`（远端回 `userId`）                          | ✅                                                               |
+| ⑤      | `list('projectId=inbox')` **命中**                                              | ✅                                                               |
+| 反向 A | 真清单 id（`p-42`）写侧**原样发送**，不被改写为 `''`                            | ✅                                                               |
+| 反向 B | 真清单 id 读侧**不被误归一**（pull 后仍 `p-42`，收集箱不命中）                  | ✅                                                               |
+| 顺带   | 既有 `''`（无清单）创建任务经 pull **受益**（`userId` ⇒ `'inbox'`，命中收集箱） | ✅                                                               |
+
+- **C 与 B 同批核验**：`git show --stat e4b0bbe7` = `sync-service.ts | 27 +-` · `t187-…probe.test.ts | 83 +-` · `t188-r5-inbox-sync-fix.test.ts | 246 +` ⇒ **C 与 B 在同一提交**（满足 ADR §16.1「必须同批」硬不变量）。
+- **既有探针/回归复跑**：`t187-…probe.test.ts` + `t188-…test.ts` + T190 新探针合跑 = **4 文件 / 13 例 / 0 红**。
+
+### 9.4 遗留观察项复核
+
+**① 「双重提示」—— 结论：会弹两条（行为级证据）**
+
+- **证据**：`packages/presentation/task/__tests__/t190-notice-stacking.probe.test.ts`（3 例 / 0 红）——按生产组合（`use-task-usecase.ts` 先套守卫 → `use-app-handlers.ts` 再交 `TaskHandler`）串联，对归档任务调用 `handler.update()`：守卫 `NueMessage.warn('archive.readOnlyHint')` **1 条**（原方法零调用）+ `TaskHandler.notifyError → translateTaskError → unwrapError('ARCHIVED_READONLY')` **error 1 条** ⇒ **一次操作弹两条**。
+- **第二条文案泄漏稳定错误码**：`ARCHIVED_READONLY` 未落入 `CODE_TO_LOCALE_KEY`（`task/utils/error-message.ts`）⇒ error 文案内**原样透出 `ARCHIVED_READONLY`**（非用户可读文案）。
+- **节流**：`NOTICE_THROTTLE_MS = 1200` ⇒ 窗口内**重复操作**仅余 error 一条（探针第 2 例实测 warn 0 / error 1）。
+- **项目域同型**（源码路径判定，未做行为探针）：`ProjectHandler` 对 update/delete/restore 亦 `NueMessage.error(t('dialog.project*Failed', { error: unwrapError(err) }))`（`packages/presentation/project/handlers/project.ts:151 / 170 / 208`）。
+- **裁定建议（非阻塞，交 PM）**：AC4 只要求「命中提示可见」，双提示不违反 AC。若要收敛，建议在 handler 层对 `ARCHIVED_READONLY` 静默或映射为只读文案；若接受，则「守卫解释为何不可写 + error 表示操作未成功」可视为互补。**不确定项**：真实 UI 两条 Toast 的视觉叠加 / 是否被组件库合并 ⇒ **建议发布前人工烟测 1 次**确认观感。
+
+**② 4 处基线机制修正仍有效 ✅**
+
+| 修正                                                                                               | 现状                                                             |
+| :------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------- |
+| `61e7a9a1` ①（`local-project-archive-cascade.baseline.test.ts`：先读 `rwCall` 再 `mockRestore`）   | 在位（`:131-144`）；该文件最后改动 = `61e7a9a1` 本身，无后续提交 |
+| `61e7a9a1` ②（取 `before` 前清 `tasks` 队列：`syncQueue.where('table').equals('tasks').delete()`） | 在位（`:155`）                                                   |
+| `eeb0b7b5` ①（用例2 入参 `archived-1`，期望 `[null, ARCHIVED_READONLY]`）                          | 在位（判据 `args[0] === 'archived-1'`，`:81 / 100 / 115`）       |
+| `eeb0b7b5` ②（`afterEach(() => vi.restoreAllMocks())`）                                            | 在位（`:29`）                                                    |
+
+两文件最后改动提交均为上述修正本身（`git log -3 -- <files>`）；后续 3 个改动（`T185` / `T186` / `T188`）**未触碰**，全仓 195 文件 / 1570 例 0 红 ⇒ **判别力未破**。
+
+**③ N 口径补充**：已在 PRD v0.3 登记（`dc8c30da`），本批未再变化 ⇒ 维持原登记。
+
+### 9.5 `T185` / `T186` 新面独立复核（各 ≥1 证据）
+
+**`T185` 服务端清单面默认排除归档**
+
+- **可运行证据（qa 实跑，非转述）**：`cd nao-todo-server && go test ./infrastructure/persistence/project/... ./interfaces/controllers/... -count=1` ⇒ `ok`；`-v` 共 **31 条 PASS**（含子测试），含：
+    - `TestByProjectArchived`（`true ⇒ archived_at IS NOT NULL`；`false ⇒ archived_at IS NULL`，clause 级精确谓词）；
+    - `TestByProjectArchivedUnsetIsZeroValue`（「未传」= 零值 `false`，与显式 `false` **同谓词**，无隐性分叉）；
+    - `TestParseIsArchivedFilter`（未传 / `false` 同 `false`；`true ⇒ true`；非法值报错）。
+- **源码走查**：`repoImpl.GetByUserId(userId, isArchived)` 统一 `Scopes(ByProjectArchived(isArchived))`；**仅默认视图读写缓存**（`if !isArchived`）；`/sync/pull` 走 `ListSync`（不经此 scope ⇒ 镜像完整）；按 id 单取 / 取消归档路径未改。
+- **未跑项（如实）**：`archive_filter_integration_test.go` 为 `//go:build integration`（需测试 MySQL），本环境**未实跑** ⇒ 三态 SQL 端到端由上述 clause 级单测覆盖，DB 级留待服务端流水线。
+
+**`T186` 项目域归档只读**
+
+- **可运行证据（qa 实跑）**：`pnpm exec vp test --run apps/web/src/hooks/usecases/__tests__/project-archive-gate-wiring.test.ts apps/web/src/hooks/usecases/__tests__/write-gate-wiring.test.ts` ⇒ **2 文件 / 22 例 / 0 红**。其中 `project-archive-gate-wiring` 覆盖：web + desktop **双端注入**、归档清单 `update/delete/restore/resort/archive` 被拒（`ARCHIVED_READONLY` + 原方法零调用 + 可见提示）、`unarchive` 放行、非归档不误伤、`useProjectUseCase` URL 直达接线。
+- **源码走查**：`PROJECT_ARCHIVE_WRITE_METHODS` 全为 `'error'` 形态（项目域无 tuple 落点）；`saveProjectPreference` **未列入**（只读查看时视图偏好仍可保存）；`archive` 不列入 `allow`（唯一放行口 = `unarchive`）。
+
+### 9.6 新增探针文件与保留范围
+
+| 文件                                                                                  | 例数 | 保留理由                                                                                                    |
+| :------------------------------------------------------------------------------------ | :--- | :---------------------------------------------------------------------------------------------------------- |
+| `packages/infrastructure/src/persistence-sync/__tests__/t190-def37-e2e.probe.test.ts` | 4    | `DEF-37` 修复的**独立端到端回归**（qa 自写，不复用 `t188`）：正向 5 点 + 写/读两侧负向 + 既有 `''` 创建受益 |
+| `packages/presentation/task/__tests__/t190-notice-stacking.probe.test.ts`             | 3    | 固定「双重提示」**行为事实**（1 次操作 = warn 1 + error 1；节流窗口内 error 1），供 PM 裁定后增删           |
+
+两文件均为**测试侧新增**（⛔ 未改实现、⛔ 未改基线断言）；§9.1 的门禁数字**已包含**它们（195 文件 / 1570 例）。§8 未过项「PR 评论未贴」在 T190 后**仍成立**（客户端分支尚无 PR）；本节即为其可引用的**最新精确数字来源**。

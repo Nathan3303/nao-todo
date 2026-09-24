@@ -6,6 +6,16 @@
 - **边界遵守**：⛔ 不改实现 · ⛔ 不改基线 · ⛔ 移动端零改动（`git status --porcelain -- packages/presentation-react apps/mobile` = **0**）· 只跑探针相关面
 - **结论**：**② 实测未消失（推断的「推送侧归一」不成立）** —— 见 §0 / §4
 
+> **【T188 修复后注记 · T190 复验，2026-09-25】**（本报告为**修复前（基线 `b7bb3305`）实测留痕**，§0/§4 的判定与 §3 的 S2「反事实」口径**全部保留为历史**）
+>
+> `T188`（`rd-fe`，代码提交 **`e4b0bbe7`**，父 `a7d5aa85`）已按 ADR §16 落地 **C（写侧 `'inbox'` → `''`）+ B（读侧 `userId` → `'inbox'`）**，且 **C 与 B 同一提交**（`git show --stat e4b0bbe7`：`sync-service.ts` +26/−1、探针 `+43/−40`、新增回归 `+246`）⇒ **`DEF-37` 闭环**。含义：
+>
+> 1. 本报告 §4「本路径实际缺陷：变更同步不到服务端」**已消除** —— 写侧归一后服务端 create/push 不再 `error`；
+> 2. **S1 由「不消失」升级为「往返闭环」证据**（载荷 `''` · `outcome applied` · 队列**已出队** · pull 归一回 `'inbox'` · 收集箱命中）；
+> 3. **S2 由「反事实：不命中」转为「正向不变量：必须命中」**（防读侧归一被静默回退）。
+>
+> `T190` 已在新 HEAD `44b464f1` 独立复跑全部 8 项门禁 + 自建端到端探针复现上述 5 点（见 `docs/qa/2026-09-25-project-archive-acceptance.md` §9）。
+
 ---
 
 ## 0. 结论（一句）
@@ -91,6 +101,8 @@ pnpm exec vp test --run packages/infrastructure/src/persistence-sync/__tests__/t
 
 **读侧链路**：`persistence-sync` `putPulledRecord` → `persistence-local/converters/task.ts` `taskEntityToRecord`（`projectId` 原样透传）→ `persistence-local/repos/task-repo-impl.ts` `list()` `r.projectId === query.projectId`（字面比较）。
 
+> **【T190 注记 · 上表为修复前口径】**：`T188` 落地 C+B 后，探针文件 `t187-r5-inbox-roundtrip.probe.test.ts` 的断言已**正向化**（分组语义 S1/S2 保留）：**S1** = 写侧 `''` ⇒ `applied` ⇒ **出队**；读侧 pull 回 `userId` ⇒ 落库归一回 `'inbox'` ⇒ **命中**（闭环）；**S2** = 读侧归一结果经 pull ⇒ 本地**必须** `'inbox'` ⇒ 收集箱**必须命中**。⇒ §3 上表的 S1「不消失」与 S2「不命中」**均为历史**，现状见 `T188` 报告与 `T190` 独立探针（`t190-def37-e2e.probe.test.ts`，4 例）。
+
 ---
 
 ## 4. 判定与归因
@@ -135,6 +147,7 @@ pnpm exec vp test --run packages/infrastructure/src/persistence-sync/__tests__/t
 - **保留**：`packages/infrastructure/src/persistence-sync/__tests__/t187-r5-inbox-roundtrip.probe.test.ts`
     - **红/绿**：S1 = 绿（断言当前真实链路**不消失**）；S2 = 绿（断言**归一成立时**读侧不命中）。
     - ⚠️ **S2 是「反事实守卫」**：修法 A/B/C 落地后，S2 的「不命中」断言会**转红** ⇒ 届时应把 S2 改为「**必须命中**」的正向不变量（防止修复被静默回退）。已在文件头注明。
+    - **【T190 注记】**：`T188` 落地后本文件已按上述预告执行 —— **S2 已改为「必须命中」正向不变量**、**S1 已升级为「写侧 `''`/`applied`/出队 + 读侧回 `'inbox'`/命中」的往返闭环**；`T190` 实测 **1 文件 / 2 例 / 0 红**。分歧仅存在于历史文档（本报告 §3），探针文件本身与现状一致。
 - **一次性**：服务端 Go 探针 `application/task/zz_t187_r5_probe_test.go` 已**测后删除**（`git status` 无残留）；server repo 现存改动均为**他人**在制（project archived 过滤），与本探针无关。
 - **面回归（精确数字）**：
     - 探针文件：**1 文件 / 2 例 / 0 红**（`pnpm exec vp test --run <probe>`）。
