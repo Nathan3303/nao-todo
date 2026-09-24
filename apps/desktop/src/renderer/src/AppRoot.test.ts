@@ -22,6 +22,7 @@ const mocks = vi.hoisted(() => ({
     replace: vi.fn(),
     lock: vi.fn(),
     clearSession: vi.fn(),
+    wipeUserData: vi.fn(async () => undefined),
     sessionExpiredListener: null as null | (() => void)
 }))
 
@@ -53,9 +54,17 @@ vi.mock('@nao-todo/infrastructure', () => ({
     // SHELL-06：装配层回传触发注册（测试桩；返回卸载函数）
     registerBackfillTriggers: () => () => {},
     cryptoService: { lock: mocks.lock, isUnlocked: true },
-    deletionService: { checkAndCleanExpired: vi.fn() },
+    deletionService: {
+        checkAndCleanExpired: vi.fn(),
+        resumePendingWipe: vi.fn(async () => false),
+        wipeUserData: mocks.wipeUserData
+    },
     initSnowflakeEpoch: vi.fn(),
-    localSession: { clear: mocks.clearSession, getCurrentUserId: () => 'u-1' },
+    localSession: {
+        clear: mocks.clearSession,
+        getCurrentUserId: () => 'u-1',
+        setCurrentUserId: vi.fn()
+    },
     readCachedNickname: () => null,
     resolveUserIdFromStoredJwt: () => 'u-1',
     syncService: {
@@ -65,7 +74,42 @@ vi.mock('@nao-todo/infrastructure', () => ({
             mocks.sessionExpiredListener = listener
         }
     },
-    syncTracker: { setDirtyListener: vi.fn() }
+    syncTracker: { setDirtyListener: vi.fn(), countDirty: async () => 0 }
+}))
+
+// T122：生产侧已改窄子路径导入 ⇒ 同步注册同名深路径 mock（转发上方 barrel mock，语义不变）
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-local/crypto/crypto-service',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-local/session/local-session',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-local/deletion/deletion-service',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/observability/structured-log',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-sync/backfill-triggers',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-sync/sync-service',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-sync/sync-tracker',
+    async () => import('@nao-todo/infrastructure')
+)
+// TASK-26 / M6：偏好同步接线（本文件只锁离线进入编排；偏好模块单独单测覆盖）
+vi.mock('@nao-todo/infrastructure/src/persistence-sync/preference-sync', () => ({
+    flushPreferenceQueue: vi.fn(async () => ({ pushed: 0, failed: 0 })),
+    pullAndMergeUserConfig: vi.fn(async () => {})
 }))
 
 const UnlockGateStub = defineComponent({
@@ -122,6 +166,8 @@ const mountRoot = (): VueWrapper => {
 const reachSyncGate = async (
     root: VueWrapper
 ): Promise<InstanceType<typeof InitialSyncGateStub>> => {
+    // C-61：先等 AppRoot 启动收敛点完成、解锁门挂载
+    await flushPromises()
     root.findComponent(UnlockGateStub).vm.$emit('unlocked')
     await flushPromises()
     return root.findComponent(InitialSyncGateStub).vm as InstanceType<typeof InitialSyncGateStub>
@@ -188,13 +234,14 @@ describe('AppRoot - SHELL-03 离线进入编排', () => {
         expect(root.find('#app-stub').exists()).toBe(true)
     })
 
-    it('B-1/C-25：登出 ⇒ 清离线授权 + 显式 replace(/auth/signin)', async () => {
+    it('B-1/C-25：登出 ⇒ 清离线授权 + 清库 + 显式 replace(/auth/signin)', async () => {
         grantOfflineEntry()
         const root = mountRoot()
         const gate = await reachSyncGate(root)
         gate.$emit('signOut')
         await flushPromises()
         expect(isOfflineEntryGranted()).toBe(false)
+        expect(mocks.wipeUserData).toHaveBeenCalledWith('u-1')
         expect(mocks.replace).toHaveBeenCalledWith('/auth/signin')
     })
 

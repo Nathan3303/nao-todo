@@ -4,6 +4,20 @@ import vue from '@vitejs/plugin-vue'
 import type { Plugin } from 'vite'
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import { visualizer } from 'rollup-plugin-visualizer'
+import { DESKTOP_CSP_POLICY, DESKTOP_CSP_POLICY_DEV } from './src/renderer/csp-policy'
+
+/**
+ * dev 专用 CSP 放宽（C-58 / AC12，**生产禁放宽**）
+ * @description `index.html` 内的 `<meta>` 是**生产策略**；dev 下 Vite HMR 需回连
+ *              `ws://localhost:<port>`、本地 API 为 `http://localhost:3302` ⇒ 仅在
+ *              `serve` 阶段重写 meta 为 `DESKTOP_CSP_POLICY_DEV`（策略文本同源单一处：
+ *              `src/renderer/csp-policy.ts`）。构建产物恒为生产策略。
+ */
+const cspDevRelaxPlugin = (): Plugin => ({
+    name: 'nao-desktop-csp-dev-relax',
+    apply: 'serve',
+    transformIndexHtml: (html) => html.replace(DESKTOP_CSP_POLICY, DESKTOP_CSP_POLICY_DEV)
+})
 
 export default defineConfig({
     main: {
@@ -37,6 +51,7 @@ export default defineConfig({
         publicDir: resolve(__dirname, '../web/public'),
         plugins: [
             vue() as unknown as Plugin,
+            cspDevRelaxPlugin(),
             // 体积分析报告（stats.html），构建时不在桌面端自动打开浏览器
             visualizer({ open: false }) as unknown as Plugin
         ],

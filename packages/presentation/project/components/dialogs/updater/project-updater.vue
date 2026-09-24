@@ -3,11 +3,11 @@ import { onMounted, ref } from 'vue'
 import useProjectUpdater from './use-project-updater'
 import {
     type DialogInstanceType,
-    useDialogWrapper,
-    ProjectForm,
-    PROJECT_UPDATER_DIALOG_KEY,
-    t
-} from '@nao-todo/shared'
+    useDialogWrapper
+} from '@nao-todo/shared/components/dialog-wrapper'
+import { ProjectForm } from '@nao-todo/shared/components/project-form'
+import { PROJECT_UPDATER_DIALOG_KEY } from '@nao-todo/shared/constants'
+import { t } from '@nao-todo/shared/locales'
 import { ProjectUpdaterDialogProps } from './types'
 
 defineOptions({ name: 'ProjectUpdater' })

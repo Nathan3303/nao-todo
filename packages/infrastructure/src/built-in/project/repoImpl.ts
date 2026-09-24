@@ -6,6 +6,7 @@ import type {
 import type { Go } from '@nao-todo/shared'
 import { bipRes2bipEntity, bippRes2bippVO, bippVO2bippRes } from './converters'
 import { defaultBuiltInProjectPreferences, defaultBuiltInProjects } from './default'
+import { markPreferenceDirty } from '../../persistence-sync/preference-sync'
 
 export const useBuiltInProjectRepository = (): BuiltInProjectRepository => {
     /**
@@ -97,7 +98,9 @@ export const useBuiltInProjectRepository = (): BuiltInProjectRepository => {
         const builtInPp = bippVO2bippRes(bippvo)
         // 3. 更新
         localStorage.setItem(key, JSON.stringify(builtInPp))
-        // 4. 返回
+        // 4. TASK-26 / M6：本地写成功后入偏好队列（设置面整快照回传）+ 防抖
+        void markPreferenceDirty('userConfig')
+        // 5. 返回
         return null
     }
 

@@ -14,13 +14,13 @@ description: 按需技能——用例设计、缺陷管理、性能安全、DDD 
 
 ## DDD 分层对齐表
 
-| 层             | 测试方式                     | 覆盖内容                             |
-| :------------- | :--------------------------- | :----------------------------------- |
-| domain         | 纯单测（Vitest / `go test`） | 实体规则、状态流转、不变量、VO       |
-| application    | mock 仓储/端口               | UseCase 编排顺序、端口调用、异常传播 |
-| infrastructure | MSW / 集成（内存/真实 DB）   | Mapper 双向、HTTP 映射、乐观锁冲突   |
-| presentation   | VTU / Testing Library        | 组件渲染与交互                       |
-| E2E            | Playwright / Cypress         | 关键路径、跨模块流程                 |
+| 层 | 测试方式 | 覆盖内容 |
+| :--- | :--- | :--- |
+| domain | 纯单测（Vitest / `go test`） | 实体规则、状态流转、不变量、VO |
+| application | mock 仓储/端口 | UseCase 编排顺序、端口调用、异常传播 |
+| infrastructure | MSW / 集成（内存/真实 DB） | Mapper 双向、HTTP 映射、乐观锁冲突 |
+| presentation | VTU / Testing Library | 组件渲染与交互 |
+| E2E | Playwright / Cypress | 关键路径、跨模块流程 |
 
 ## 缺陷管理
 
@@ -29,6 +29,12 @@ description: 按需技能——用例设计、缺陷管理、性能安全、DDD 
 - 优先级：P0 / P1 / P2 / P3
 - 报告要素：标题、环境版本、复现步骤、预期 vs 实际、日志/截图、影响范围
 - 不 Verify 不关闭；Reopen 有依据
+
+## 测试报告（≤80 行）
+
+- 结构：范围 / 不测 → 环境与命令 → 结果（用例数/通过/失败/exit code）→ 缺陷表 → 未覆盖与风险 → 发布建议
+- **用例集单列文件**（`docs/reports/<编号>-cases.md`）；报告只放汇总与失败项，通过项不罗列（`未过：无` 即可）
+- 完整骨架与必写/可省/禁写见 @.agents/checklists/deliverable-docs.md §五
 
 ## 自动化与 CI/CD
 

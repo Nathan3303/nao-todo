@@ -1,11 +1,11 @@
 <script lang="ts" setup>
+import { TASK_REMINDER_DIALOG_KEY } from '@nao-todo/shared/constants'
+import { t } from '@nao-todo/shared/locales'
+import { type SSEReminderEvent } from '@nao-todo/shared/types'
 import {
-    TASK_REMINDER_DIALOG_KEY,
-    t,
     useDialogWrapper,
-    type DialogInstanceType,
-    type SSEReminderEvent
-} from '@nao-todo/shared'
+    type DialogInstanceType
+} from '@nao-todo/shared/components/dialog-wrapper'
 import { onMounted, ref } from 'vue'
 import { TaskReminderDialogProps } from './type'
 import useTaskReminder, { SNOOZE_OPTIONS } from './use-task-reminder'

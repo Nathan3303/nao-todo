@@ -1,7 +1,7 @@
 import { BuiltInProjectDomain } from '@nao-todo/domain-built-in-project'
 import type { BuiltInProjectStore } from '@nao-todo/domain-built-in-project'
 import { BuiltInProjectUseCase } from '@nao-todo/domain-built-in-project'
-import { useBuiltInProjectRepository } from '@nao-todo/infrastructure'
+import { useBuiltInProjectRepository } from '@nao-todo/infrastructure/src/built-in/project/repoImpl'
 
 /**
  * 创建内建项目用例

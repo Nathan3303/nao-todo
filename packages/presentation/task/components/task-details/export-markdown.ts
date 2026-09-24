@@ -6,16 +6,26 @@ import dayjs from 'dayjs'
  *              使生成器本身保持纯函数、可单测。
  */
 export type ExportTaskNode = {
+    /** 任务 ID（JSON 机器口径；additive，Markdown 不读取） */
+    id?: string
     name: string
     /** 领域原始状态（`todo` / `in-progress` / `done`），用于子任务复选框判定 */
     state: string
     /** 已本地化的状态文案 */
     stateLabel: string
+    /** 领域原始优先级（`low` / `medium` / `high`；additive，Markdown 不读取） */
+    priority?: string
     /** 已本地化的优先级文案 */
     priorityLabel: string
+    /** 是否已放弃（JSON 保留原始语义；additive，Markdown 不读取） */
+    isGivenUp?: boolean
     startAt: string | null
     endAt: string | null
+    /** 领域原始项目 ID（additive，Markdown 不读取） */
+    projectId?: string | null
     projectName?: string
+    /** 领域原始标签 ID（additive，Markdown 不读取） */
+    tagIds?: string[]
     tagNames?: string[]
     createdAt: string
     updatedAt: string
@@ -68,11 +78,65 @@ const metaLine = (label: string, value: string | null): string | null =>
 const checkboxLine = (name: string, isDone: boolean, depth: number): string =>
     `${INDENT_UNIT.repeat(depth)}- [${isDone ? 'x' : ' '}] ${name}`
 
+// 描述单行化：去首尾空白后，将内部换行折叠为空格
+const inlineDescription = (value: string | undefined): string =>
+    (value ?? '').trim().replace(/\s*\n+\s*/g, ' ')
+
+// 子任务缩进：一级 0 空格，每深一级 +4 空格（见 PRD §5.2 递归规则）
+const subTaskIndent = (depth: number): string => INDENT_UNIT.repeat(depth * 2)
+
+/**
+ * 渲染子任务子树
+ * @description 名称行仅「复选框 + 名称」；一级（depth 0）属性走独立子行（缩进 2，顺序固定、空项整行省略）；
+ *              每个含子节点的节点各输出一段 `- 子任务：` 标签段（缩进 +2），其子项缩进 +4；
+ *              更深层级一律精简（无属性子行）。
+ */
+const renderSubTask = (node: ExportTaskNode, depth: number, labels: ExportLabels): string[] => {
+    const isDone = node.state === 'done'
+    const indent = subTaskIndent(depth)
+    const propertyIndent = indent + INDENT_UNIT
+    const lines = [`${indent}- [${isDone ? 'x' : ' '}] ${node.name}`]
+
+    // 一级：属性子行（顺序固定：状态 → 优先级 → 开始 → 截止 → 标签 → 描述 → 检查项）
+    if (depth === 0) {
+        if (node.stateLabel) lines.push(`${propertyIndent}- ${labels.state}：${node.stateLabel}`)
+        if (node.priorityLabel)
+            lines.push(`${propertyIndent}- ${labels.priority}：${node.priorityLabel}`)
+        const startAt = formatExportDateTime(node.startAt)
+        if (startAt) lines.push(`${propertyIndent}- ${labels.startAt}：${startAt}`)
+        const endAt = formatExportDateTime(node.endAt)
+        if (endAt) lines.push(`${propertyIndent}- ${labels.endAt}：${endAt}`)
+        if (node.tagNames?.length) {
+            const tags = node.tagNames.map((name) => `#${name}`).join(' ')
+            lines.push(`${propertyIndent}- ${labels.tags}：${tags}`)
+        }
+        const description = inlineDescription(node.description)
+        if (description) lines.push(`${propertyIndent}- ${labels.description}：${description}`)
+
+        const checkItems = node.checkItems ?? []
+        if (checkItems.length) {
+            lines.push(`${propertyIndent}- ${labels.checkItems}：`)
+            for (const item of checkItems) {
+                lines.push(checkboxLine(item.name, item.isDone, depth * 2 + 2))
+            }
+        }
+    }
+
+    // 子节点：每个含子节点的节点各输出一段 `- 子任务：` 标签段
+    if (node.children?.length) {
+        lines.push(`${propertyIndent}- ${labels.subTasks}：`)
+        for (const child of node.children) {
+            lines.push(...renderSubTask(child, depth + 1, labels))
+        }
+    }
+    return lines
+}
+
 /**
  * 生成任务 Markdown 文本
  * @description 纯函数：任务树 → Markdown。
  *              空描述 / 空检查项 / 空子任务对应段落整段省略（不留空标题）；
- *              子任务按层级递归输出（直接子任务 0 缩进，逐层 +2 空格）。
+ *              子任务按层级递归输出（一级 0 缩进，每深一级 +4 空格）。
  * @param root 根任务节点（含递归子任务）
  * @param labels 本地化文案
  * @returns Markdown 文本（末尾换行）
@@ -109,16 +173,12 @@ export const generateTaskMarkdown = (root: ExportTaskNode, labels: ExportLabels)
     }
 
     // 子任务（递归）
-    const subTaskLines: string[] = []
-    const walk = (nodes: ExportTaskNode[], depth: number) => {
-        for (const node of nodes) {
-            subTaskLines.push(checkboxLine(node.name, node.state === 'done', depth))
-            if (node.children?.length) walk(node.children, depth + 1)
-        }
+    const subTaskLinesOut: string[] = []
+    for (const child of root.children ?? []) {
+        subTaskLinesOut.push(...renderSubTask(child, 0, labels))
     }
-    walk(root.children ?? [], 0)
-    if (subTaskLines.length) {
-        blocks.push(`## ${labels.subTasks}\n\n${subTaskLines.join('\n')}`)
+    if (subTaskLinesOut.length) {
+        blocks.push(`## ${labels.subTasks}\n\n${subTaskLinesOut.join('\n')}`)
     }
 
     return blocks.join('\n\n') + '\n'

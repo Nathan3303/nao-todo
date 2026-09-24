@@ -1,4 +1,4 @@
-import { useSubscriber } from '@nao-todo/shared'
+import { useSubscriber } from '@nao-todo/shared/hooks'
 
 /**
  * 应用级失效中心（DEF-STORE-06 方向 1/4）

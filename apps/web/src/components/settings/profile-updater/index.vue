@@ -10,9 +10,17 @@ import {
     UserDeactiveManager,
     UserSessionManager
 } from '@nao-todo/presentation-identity'
-import { t, USER_DEACTIVE_DIALOG_KEY } from '@nao-todo/shared'
-import { cryptoService, localSession, readCachedNickname } from '@nao-todo/infrastructure'
+import { t } from '@nao-todo/shared/locales'
+import { USER_DEACTIVE_DIALOG_KEY } from '@nao-todo/shared/constants/dialog-keys'
+import { cryptoService } from '@nao-todo/infrastructure/src/persistence-local/crypto/crypto-service'
+import {
+    localSession,
+    resolveUserIdFromStoredJwt
+} from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
+import { readCachedNickname } from '@nao-todo/infrastructure/src/persistence-local/session/profile-cache'
 import { revokeOfflineEntry } from '@/views/auth/offline-entry'
+import { wipeLocalDataOnSignOut } from '@/views/auth/sign-out-wipe'
+import { broadcastSignOut } from '@/views/auth/sign-out-broadcast'
 import { safeReplace } from '@/safe-navigation'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { storeToRefs } from 'pinia'
@@ -43,12 +51,18 @@ const handleSignOut = async () => {
     })
     if (isByCancel) return
 
+    // C-54/C-52：脏队列护栏 + 清库（先于清认证；取消则中止，保留会话与本地数据）
+    const userId = resolveUserIdFromStoredJwt()
+    if (userId && !(await wipeLocalDataOnSignOut(userId))) return
+
     const token = userToken.value
     // G12：本地清认证优先（离线必达）；C-25：登出必须清离线授权
     revokeOfflineEntry()
     userStore.clearAuthData()
     localSession.clear()
     cryptoService.lock()
+    // AC16b：本标签登出已完成（清库已过 C-54 护栏 + 清认证）⇒ 通知其它标签清 store + 跳登录页
+    if (userId) broadcastSignOut(userId)
     // 远程登出尽力而为：离线/网络失败不阻断、不弹错误封锁（与 password-updater 语义对齐）
     try {
         await authUseCase.signOut(token)

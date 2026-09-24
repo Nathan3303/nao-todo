@@ -1,4 +1,4 @@
-import { useLoadingErrorStoreBase } from '@nao-todo/shared'
+import { useLoadingErrorStoreBase } from '@nao-todo/shared/hooks'
 import { defineStore } from 'pinia'
 import { useTagPreferenceStoreBase, useTagsStoreBase } from '../hooks'
 

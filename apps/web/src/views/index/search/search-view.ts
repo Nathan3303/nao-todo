@@ -1,4 +1,5 @@
-import { responsiveTypes, unwrapError, useAsideWidth, useResponsiveAside } from '@nao-todo/shared'
+import { responsiveTypes, useAsideWidth, useResponsiveAside } from '@nao-todo/shared/hooks'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import {
     useProjectUseCase,

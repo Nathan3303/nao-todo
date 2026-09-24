@@ -1,4 +1,4 @@
-import { PROJECT_CREATOR_DIALOG_KEY } from '@nao-todo/shared'
+import { PROJECT_CREATOR_DIALOG_KEY } from '@nao-todo/shared/constants'
 import { storeToRefs } from 'pinia'
 import { computed, reactive, ref } from 'vue'
 import { ProjectHandler } from '../../../handlers'

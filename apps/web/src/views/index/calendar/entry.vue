@@ -1,9 +1,10 @@
 <script lang="ts" setup>
 import { CalendarAside } from '@/components/calendar/aside'
 import { TaskDetailsAdapter } from '@nao-todo/presentation/task'
-import { Loading as LoadingComp, LoadingError, assetUrl } from '@nao-todo/shared'
+import { LoadingError } from '@nao-todo/shared/components/loading-error'
 import { onMounted } from 'vue'
 import { useCalendarView } from './calendar-view'
+import CalendarHost from './host.vue'
 
 defineOptions({ name: 'CalendarView' })
 
@@ -26,26 +27,9 @@ onMounted(() => init())
             <nue-main>
                 <!-- 侧边栏 -->
                 <calendar-aside />
-                <!-- 日历主体 -->
+                <!-- 日历主体（状态宿主 + 三视图子路由） -->
                 <nue-content fill style="overflow: hidden">
-                    <router-view v-slot="{ Component }">
-                        <suspense>
-                            <component :is="Component" />
-                            <template #pending>
-                                <loading-comp height="100%" />
-                            </template>
-                            <template #fallback>
-                                <nue-empty
-                                    :image-src="assetUrl('/images/error.webp')"
-                                    image-size="6rem"
-                                >
-                                    <nue-text size="var(--nue-text-sm)">
-                                        加载失败, 请刷新页面重试
-                                    </nue-text>
-                                </nue-empty>
-                            </template>
-                        </suspense>
-                    </router-view>
+                    <calendar-host />
                 </nue-content>
                 <!-- 任务详情适配器（Q5-B：日历区内嵌） -->
                 <task-details-adapter />

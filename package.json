@@ -1,7 +1,7 @@
 {
     "name": "nao-todo",
     "description": "NaoTodo, a simple TODO app, including web, mobile and desktop version",
-    "version": "1.7.8",
+    "version": "1.9.0",
     "author": "Nathan Lee",
     "license": "MIT",
     "private": true,
@@ -15,7 +15,10 @@
         "desktop:dev": "pnpm --filter @nao-todo/desktopapp dev",
         "desktop:build": "pnpm --filter @nao-todo/desktopapp build",
         "desktop:dist": "pnpm --filter @nao-todo/desktopapp dist",
-        "guard:ddd": "node scripts/guard-domain-isolation.mjs"
+        "guard:ddd": "node scripts/guard-domain-isolation.mjs",
+        "guard:gate-pathspec": "node scripts/guard-gate-pathspec.mjs",
+        "guard:barrel-imports": "node scripts/guard-barrel-imports.mjs",
+        "guard:mobile-imports": "node scripts/guard-mobile-imports.mjs"
     },
     "dependencies": {
         "@vitejs/plugin-vue": "^6.0.7",

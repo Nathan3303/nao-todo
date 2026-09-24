@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { useLoadingErrorStoreBase } from '@nao-todo/shared'
+import { useLoadingErrorStoreBase } from '@nao-todo/shared/hooks'
 import { useBuiltInProjectsStoreBase, useBuiltInProjectPreferenceStoreBase } from '../hooks'
 import { computed } from 'vue'
 

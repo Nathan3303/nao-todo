@@ -1,5 +1,5 @@
 import { useTasksStore } from '@nao-todo/presentation/task'
-import { useTaskUseCase } from './use-task-usecase'
+import { useTaskUseCase } from '@/hooks/usecases'
 
 /**
  * 任务提醒用例装配（桌面版：本地仓储 + pinia store 适配，供 TaskReminderDialog 使用）

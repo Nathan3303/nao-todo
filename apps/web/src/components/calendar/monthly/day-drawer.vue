@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type { TaskViewObject } from '@nao-todo/domain-task'
-import { TaskCheckButton } from '@nao-todo/shared'
+import { TaskCheckButton } from '@nao-todo/shared/components/task-check-button'
 import dayjs from 'dayjs'
 import { computed, ref } from 'vue'
 import { isTaskOverdue } from './overdue'

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { TaskCheckButton, t } from '@nao-todo/shared'
+import { TaskCheckButton } from '@nao-todo/shared/components/task-check-button'
+import { t } from '@nao-todo/shared/locales'
 import { TaskDateSelector } from '../../date-selector'
 import { inject } from 'vue'
 import type { UpdateTaskViewObject } from '@nao-todo/domain-task'

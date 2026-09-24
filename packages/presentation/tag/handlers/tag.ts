@@ -6,7 +6,8 @@ import type {
     Subscriber,
     TaskColumnOptions
 } from '@nao-todo/shared'
-import { t, unwrapError } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import type { useTagsStore } from '../stores'
 import type {

@@ -44,6 +44,8 @@ const enUS: LocaleMessages = {
     'sync.lastSyncAt': 'Last sync {time}',
     'sync.pending': '{count} pending',
     'sync.failed': '{count} failed',
+    'sync.preferenceFailed': '{count} preference(s) failed to sync',
+    'sync.conflict': '{count} conflict(s)',
     'sync.syncNow': 'Sync now',
     'sync.pendingOffline': '{count} change(s) pending sync (offline, auto-syncs when online)',
     'sync.retryNow': 'Retry now',
@@ -54,6 +56,24 @@ const enUS: LocaleMessages = {
     'gate.enterOffline': 'Enter offline',
     'gate.signInAgain': 'Sign in again',
     'gate.offlineUnavailable': 'Cannot enter offline. Please retry or sign in again.',
+
+    // Offline read-only / mirror freshness（C-59 / C-60 / AC8–AC10）
+    'offline.readOnlyBanner': 'Offline · read-only. Editing is unavailable.',
+    'offline.readOnlyHint': 'Editing is unavailable offline. Please retry when online.',
+    'offline.freshness.updated': 'Up to date',
+    'offline.freshness.mirror': 'Offline · data as of {time}',
+    'offline.freshness.mirrorHint': 'May not be the latest',
+    'offline.freshness.incomplete': 'Sync not finished; data may be incomplete',
+    'offline.freshness.incompleteHint': 'Please connect to the network and retry',
+    'offline.coverage.loadingMore': 'Loading more…',
+    'offline.coverage.truncated': 'Loaded {count}, more not yet loaded',
+    'offline.coverage.truncatedGeneric': 'More tasks than the sync limit; showing partial data',
+
+    // Plaintext posture user-visible notice（ADR §4.5 / D1b / AC17）
+    'notice.plaintext.title': 'Local data is stored in plain text',
+    'notice.plaintext.body':
+        'To support offline viewing, data on this device is stored in plain text and is no longer password-protected: anyone who can open this device or browser profile can read it. See “Settings → App Settings” for details.',
+    'notice.plaintext.dismiss': 'Got it',
 
     // Common
     'common.cancel': 'Cancel',
@@ -77,6 +97,7 @@ const enUS: LocaleMessages = {
     'common.deleted': 'Deleted',
     'common.unknown': 'Unknown',
     'common.signOut': 'Sign Out',
+    'common.sessionRequired': 'Your session has expired. Please sign in again, then retry.',
     'common.filter': 'Filter',
     'common.uploadFailed': 'Upload failed',
     'common.uploadSuccess': 'Upload successful',
@@ -141,6 +162,19 @@ const enUS: LocaleMessages = {
     'settings.password': 'Change Password',
     'settings.app': 'App Settings',
     'settings.version': 'Version {version}',
+    'settings.localData.title': 'Local Data & Security',
+    'settings.localData.desc':
+        'To support offline viewing, business data on this device is stored in plain text. Please note the following boundaries:',
+    'settings.localData.plaintext':
+        'Plain text: tasks, projects, tags, comments and other data on this device are no longer password-protected. Your app password is only used to sign in, not to protect local data.',
+    'settings.localData.device':
+        'The device is the credential: anyone who can open this device or browser profile can read this data directly. Avoid keeping sensitive content on shared devices.',
+    'settings.localData.boundary':
+        'Access boundary: on desktop the app runs from local pages, so other local pages under the same user profile may also read its data; on web the boundary is the site origin.',
+    'settings.localData.eviction':
+        'The browser may evict: web local data is best-effort storage and may be cleared after long periods without interaction (e.g. Safari’s 7-day policy); you will then need to reconnect to sync again.',
+    'settings.localData.endDifference':
+        'Platform difference: web local data may be cleared automatically by the browser; desktop data does not expire automatically. Both clear local data when you sign out, after which you need to sign in again online.',
     'settings.userInfo': 'User Profile',
     'settings.passwordChange': 'Change Password',
     'settings.appSettings': 'App Settings',
@@ -153,7 +187,7 @@ const enUS: LocaleMessages = {
     'settings.appearanceLight': 'Light',
     'settings.appearanceDark': 'Dark',
     'settings.appearanceSystem': 'System',
-    'settings.appearanceSyncFailed': 'Theme sync failed',
+    'settings.appearanceSyncFailed': 'Theme applied locally, but failed to sync to the server',
     'settings.nickname': 'Edit Nickname',
     'settings.nicknameDesc':
         'Your nickname is shown in task creator, assignee, project members and other places. You can change it anytime.',
@@ -186,6 +220,14 @@ const enUS: LocaleMessages = {
     'settings.avatarViewTitle': 'View Avatar',
     'settings.updateAvatarButtonText': 'Update Avatar',
     'settings.signOutButtonText': 'Sign Out',
+    'signOut.dirtyTitle': 'Unsynced changes',
+    'signOut.dirtyContent':
+        '{count} local change(s) have not been synced. Signing out will permanently lose them.',
+    'signOut.syncFirst': 'Sync first',
+    'signOut.unsavedTitle': 'Still unsynced',
+    'signOut.unsavedContent':
+        'You are offline or syncing failed; {count} change(s) remain unsynced. Signing out now will permanently lose them.',
+    'signOut.signOutAnyway': 'Sign out anyway',
     'settings.deactive.title': 'Deactivate Account',
     'settings.deactive.confirmTitle': 'Confirm account deactivation?',
     'settings.deactive.confirmContent':
@@ -358,6 +400,9 @@ const enUS: LocaleMessages = {
     'task.details.export.copy': 'Copy',
     'task.details.export.copySuccess': 'Copied to clipboard',
     'task.details.export.copyFailed': 'Copy failed, please copy manually',
+    'task.details.export.restore': 'Restore',
+    'task.details.export.retry': 'Retry',
+    'task.details.export.loading': 'Generating...',
     'task.details.export.failed': 'Export failed: {error}',
     'task.details.export.label.state': 'State',
     'task.details.export.label.priority': 'Priority',
@@ -367,6 +412,10 @@ const enUS: LocaleMessages = {
     'task.details.export.label.tags': 'Tags',
     'task.details.export.label.createdAt': 'Created At',
     'task.details.export.label.updatedAt': 'Updated At',
+    'task.details.export.label.total': 'Total',
+    'task.details.export.label.issuedAt': 'Issued At',
+    'task.details.export.label.documentNo': 'Document No.',
+    'task.details.export.label.generatedBy': 'Generated by nao-todo at',
     'task.details.export.heading.description': 'Description',
     'task.details.export.heading.checkItems': 'Checklist',
     'task.details.export.heading.subTasks': 'Sub-tasks',
@@ -409,6 +458,7 @@ const enUS: LocaleMessages = {
     'task.deleteSuccess': 'Task deleted',
     'task.restoreFailed': 'Failed to restore task: {error}',
     'task.restoreSuccess': 'Task restored',
+    'task.resortFailed': 'Failed to reorder: {error}',
     'task.copyFailed': 'Failed to copy task: {error}',
     'task.copySuccess': 'Task copied',
     'task.confirmGiveUpTitle': 'Give up this task?',
@@ -537,6 +587,9 @@ const enUS: LocaleMessages = {
     'task.error.commentContentEmpty': 'Comment content cannot be empty',
     'task.error.commentContentTooLong': 'Comment content is too long',
 
+    // Pomodoro
+    'pomodoro.recordSaveFailed': 'Failed to save focus record: {error}',
+
     // Calendar
     'calendar.today': 'Go to Today',
     'calendar.createTask': 'New Task',
@@ -548,6 +601,8 @@ const enUS: LocaleMessages = {
     'calendar.weekday.fri': 'Fri',
     'calendar.weekday.sat': 'Sat',
     'calendar.weekday.sun': 'Sun',
+    'calendar.allDay': 'All day',
+    'calendar.noTasksToday': 'No tasks today',
 
     // Date relative
     'date.today': 'Today {time}',

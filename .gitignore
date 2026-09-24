@@ -42,3 +42,7 @@ apps/desktop/stats.html
 
 # 环境目录
 .reasonix/
+
+# 运行时 / 派生目录（AGENTS.md 明令不得提交）
+.pi/
+.codegraph/

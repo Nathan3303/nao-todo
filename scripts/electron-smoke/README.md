@@ -57,6 +57,53 @@ node scripts/electron-smoke/run.mjs --only smoke-2,d5b
 - 截图（仅在实现截图的分组）：`<out>/*.png`
 - 退出码：有 `FAIL` 返回 1，否则 0（可直接接 CI / 脚本门禁）
 
+## 检查集：日视图「真实命中」抽检（`--feature day-view`）
+
+**保护的契约**：`docs/adr/2026-09-22-day-view-interaction-contract.md` **C12** ——
+「任何 `position: absolute; inset: 0` 的覆盖层必须 `pointer-events: none`（或进入 pan 排除清单），
+且**任何堆叠关系变更都必须做一次真实浏览器 `elementFromPoint` 抽检**」。
+本检查集即该抽检的**常驻实现**（此前只活在验收清单的一段手工代码里）。
+
+**为什么 jsdom 发现不了**：`vp test`（Vitest + jsdom）没有布局/堆叠/命中测试，单测用 `dispatchEvent`
+**直接派发到任务条上，绕过命中测试** ⇒ 条被覆盖层吞掉也照绿。TASK-20 用户报「任务条拖不动」
+的根因正是这类盲区：`.day-axis-track`（`z-index: 1` + `inset: 0` + 可命中）盖住 `.cal-lanes`（`z-index: auto`）。
+
+```bash
+# 完整跑（含夹具创建/清理）
+node scripts/electron-smoke/run.mjs --launch --feature day-view
+# 只看分组
+node scripts/electron-smoke/run.mjs --feature day-view --list
+# 改动后定向复跑（setup 必须一起跑：夹具与「可见条」由它准备，否则其余组 SKIP）
+node scripts/electron-smoke/run.mjs --feature day-view --only setup,overlay,bars,handles,blank,ticks,cleanup
+```
+
+| 分组       | 断言                                                                                       |
+| ---------- | ------------------------------------------------------------------------------------------ |
+| `setup`    | 导航 `#/calendar/daily` + 保证 ≥1 个**日内**条；**无数据 ⇒ SKIP 并写明原因，绝不 PASS**      |
+| `overlay`  | `.day-axis-track` / `.day-edge-fade` / `.day-axis-bg` / `.day-now-line` 的 `pointer-events === 'none'`（C12 硬约束） |
+| `bars`     | 每条可见 `.day-seg .cal-item`：中点命中**该条本身**、条体左内侧命中自身、**中点命中栈不含任何覆盖层**、条左缘命中**左手柄** |
+| `handles`  | 每条（含**续接段**）左/右手柄均在 DOM 且中点命中自身                                        |
+| `blank`    | 条右/下方空白命中**非** `.cal-item`、非手柄，且命中层为 `.day-grid`（**不是** `.day-axis-track`） |
+| `allday`   | 全天泳道 `.cal-item` 可命中；且**无**拖拽/拉伸手柄、不在 `.day-seg` 内、带 `data-allday-reason` |
+| `ticks`    | 带文本刻度标签 `.day-col-label`（原生 button）中点命中自身（首/中/末各 1）                  |
+| `zoom`     | **×1 与 ×4 两档各跑一遍 bars/blank**（经 `Ctrl/⌘ + 滚轮` 真实处理器；跑完复位 ×1）           |
+| `cleanup`  | `[QA-DAYHIT]` 夹具经 API DELETE 清理 + 核 `0 pending / 0 failed`                            |
+
+**口径说明（与初版派单的唯一差异，已实测证据）**：派单写「`(left+2, midY)` 命中条本身」；实测**几何上不可能** ——
+左手柄 CSS 为 `.day-task-resize--start { left: -3px; width: 8px }` ⇒ 手柄盒 = `[条左缘−3, 条左缘+5]`，
+`left+2` 落在**左手柄**内。故本检查断言 `left+2` ⇒ **左手柄**（把「左缘归属手柄」写成显式断言），
+另以 `left+10` 断言条体本身可命中。
+
+**回归有效性实测（真实 Chromium，合成日视图 DOM + 仓库真实 CSS）**：
+把 `.day-axis-track` 的 `pointer-events` 改回 `auto`（模拟 TASK-20 修复前）后重跑 ——
+条中点命中栈出现 `day-axis-track`、空白点命中 `day-axis-track`（`inTrack=true`）、
+`overlay.track` 报 `auto` ⇒ `bars.stack` / `bars.blank` / `overlay.track` **三条同时转红**；
+还原 `none` 后全绿。**注意**：单看 `bars.mid` **不会**转红（条内文本 `z-index: 3` 仍在栈顶），
+故回归判据以 `stack` + `blank` + `overlay` 三条为准。
+
+**数据纪律**：夹具前缀 `[QA-DAYHIT]`；**先只读探测**，确无日内条才创建 1 条（避免无谓写数据）；
+`cleanup` 组按前缀清理。档位偏好跑完复位 ×1。
+
 ## 环境陷阱（会造出**假失败**，务必先读）
 
 1. **窗口必须在前台**。被其它窗口完全遮挡/最小化时 Chromium 判定 `document.visibilityState === 'hidden'`，

@@ -1,3 +1,4 @@
+export * from './fallback'
 export * from './identity'
 export * from './models'
 export * from './pomodoro'

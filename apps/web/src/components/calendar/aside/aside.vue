@@ -1,11 +1,11 @@
 <script setup lang="ts">
+import { NaoSmartList } from '@nao-todo/shared/components/smart-list'
 import {
-    NaoSmartList,
     PROJECT_CREATOR_DIALOG_KEY,
     PROJECT_MANAGER_DIALOG_KEY,
     TAG_CREATOR_DIALOG_KEY,
     TAG_MANAGER_DIALOG_KEY
-} from '@nao-todo/shared'
+} from '@nao-todo/shared/constants'
 import { ref, inject, watch, nextTick, onMounted } from 'vue'
 import useCalendarSmartList from './use-calendar-smart-list'
 import { CALENDAR_VIEW_CONTEXT_KEY } from '@/views/index/calendar/context'

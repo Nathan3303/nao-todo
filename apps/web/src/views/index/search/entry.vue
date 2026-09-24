@@ -7,7 +7,11 @@ import {
     TaskStateSelectOptions,
     TaskTagBar
 } from '@nao-todo/presentation/task'
-import { LoadingError, assetUrl, t, TaskBasicInfo, TaskDateInfo } from '@nao-todo/shared'
+import { LoadingError } from '@nao-todo/shared/components/loading-error'
+import { assetUrl } from '@nao-todo/shared/utils/asset-url'
+import { t } from '@nao-todo/shared/locales'
+import { TaskBasicInfo } from '@nao-todo/shared/components/task-basic-info'
+import { TaskDateInfo } from '@nao-todo/shared/components/task-date-info'
 import { NueMessage, NuePrompt } from 'nue-ui'
 import { type SearchRow } from '@/components/search/search-tasks'
 import type { TaskTagViewObject } from '@nao-todo/domain-task'

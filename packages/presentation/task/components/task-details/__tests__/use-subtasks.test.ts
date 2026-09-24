@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { defineComponent, ref, type Ref } from 'vue'
+import { NueMessage } from 'nue-ui'
 import type { TaskUseCase, TaskViewObject } from '@nao-todo/domain-task'
 import { useTaskDetailsStore } from '../../../stores'
 import { TASK_DETAILS_PRE_CONTEXT_KEY } from '../context'
@@ -318,5 +319,78 @@ describe('useSubTasks - 组内排序与重建守卫（U-C）', () => {
         const { api, resort } = await mountApi(tasks, tasks.length)
         await api.resortSubTasks('t65', 't0', true)
         expect(resort).toHaveBeenCalledWith('t65', 't0', true, { allowRebuild: false })
+    })
+})
+
+/**
+ * DEF-17：web 断网写失败必须可见（无「看似成功实则丢失」）
+ * @description 仓储直连服务端，断网被 requester 归一化为业务错误（不 reject）
+ *              ⇒ 子任务创建/拖拽改序的调用方必须显式提示。
+ */
+describe('useSubTasks - DEF-17 写失败可见反馈', () => {
+    const mountWithUseCase = async (
+        subTaskUseCase: Partial<TaskUseCase>,
+        tasks: TaskViewObject[] = []
+    ) => {
+        setActivePinia(createPinia())
+        const store = useTaskDetailsStore()
+        tasks.forEach((task) => store.addTask(task))
+        const list = vi.fn().mockResolvedValue([
+            {
+                taskIds: tasks.map((task) => task.id),
+                pagination: { total: tasks.length, page: 1, limit: 100, maxPage: 1 }
+            },
+            null
+        ])
+        const useCase = { list, ...subTaskUseCase } as unknown as TaskUseCase
+
+        let api: ReturnType<typeof useSubTasks> | null = null
+        const wrapper = mount(
+            defineComponent({
+                setup() {
+                    api = useSubTasks(store, ref(null) as Ref<TaskDetailsViewObject | null>)
+                    return () => null
+                }
+            }),
+            {
+                global: {
+                    provide: {
+                        [TASK_DETAILS_PRE_CONTEXT_KEY as symbol]: {
+                            subTaskUseCase: useCase,
+                            subscriber: { emit: vi.fn(), subscribe: vi.fn(), unsubscribe: vi.fn() }
+                        }
+                    }
+                }
+            }
+        )
+        wrappers.push(wrapper)
+        await api!.loadSubTasks(PARENT_ID)
+        return { api: api! }
+    }
+
+    it('createSubTask 失败 ⇒ 返回错误码且 toast（不静默）', async () => {
+        const errorSpy = vi.spyOn(NueMessage, 'error').mockImplementation(() => {})
+        const create = vi.fn().mockResolvedValue([null, '网络错误，请检查您的网络连接'])
+        const { api } = await mountWithUseCase({ create })
+
+        const err = await api.createSubTask('子任务')
+
+        expect(err).toBe('网络错误，请检查您的网络连接')
+        expect(errorSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('resortSubTasks 失败 ⇒ 返回错误码且 toast（不静默）', async () => {
+        const errorSpy = vi.spyOn(NueMessage, 'error').mockImplementation(() => {})
+        const resort = vi.fn().mockResolvedValue('网络错误，请检查您的网络连接')
+        const tasks = [
+            { id: 'a', parentTaskId: PARENT_ID, sortId: 1000, name: 'a', tags: [] },
+            { id: 'b', parentTaskId: PARENT_ID, sortId: 2000, name: 'b', tags: [] }
+        ] as unknown as TaskViewObject[]
+        const { api } = await mountWithUseCase({ resort }, tasks)
+
+        const err = await api.resortSubTasks('b', 'a', true)
+
+        expect(err).toBe('网络错误，请检查您的网络连接')
+        expect(errorSpy).toHaveBeenCalledTimes(1)
     })
 })

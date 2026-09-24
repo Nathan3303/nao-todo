@@ -1,4 +1,5 @@
-import { t, unwrapError } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { storeToRefs } from 'pinia'
 import { inject, ref } from 'vue'
 import { TaskCommentHandler } from '../../handlers'

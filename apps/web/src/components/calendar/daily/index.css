@@ -1,0 +1,329 @@
+.nue-calendar-daily {
+    height: 100%;
+    background: var(--cal-bg);
+    overflow: hidden;
+}
+
+.day-allday-lane {
+    flex: none;
+}
+
+.day-allday-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-height: 28px;
+    gap: 0;
+}
+
+.day-allday-label {
+    flex: none;
+    font-size: var(--nue-text-sm);
+    color: var(--nue-primary-color-600);
+    position: sticky;
+    left: 12px;
+    line-height: 1.5;
+}
+
+/* 只读任务条（C6）：单行换行 + 泳道纵向生长（task-bar 为绝对定位，用相对槽位承载） */
+.day-allday-items {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 2px;
+    min-width: 0;
+    width: 100%;
+}
+
+.day-allday-slot {
+    position: relative;
+    width: 100%;
+    height: 20px;
+}
+
+/* 横向滚动宿主包装（裁切遮罩置于滚动容器之外，C7） */
+.day-body-wrap {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+}
+
+.day-body {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    /* AC3：纵向可滚（保 V1 全部轨道可达）、横向由 pan 接管（不显示滚动条） */
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* r6 定案：纵向交浏览器原生（保 AC3）、横向交 JS pan（不被判原生手势而 pointercancel） */
+    touch-action: pan-y;
+}
+
+/* 空白横向平移中（C4） */
+.day-body.is-panning {
+    cursor: grabbing;
+    user-select: none;
+}
+
+/* 裁切渐隐遮罩（C7）：仅该侧有可滚内容时显示；不随内容滚动 */
+.day-edge-fade {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    z-index: 6;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 120ms ease;
+}
+
+.day-edge-fade.is-start {
+    left: 0;
+    background: linear-gradient(to right, var(--cal-bg), transparent);
+}
+
+.day-edge-fade.is-end {
+    right: 0;
+    background: linear-gradient(to left, var(--cal-bg), transparent);
+}
+
+.day-edge-fade.is-visible {
+    opacity: 1;
+}
+
+/* 横向内容层：宽度 = 整数列宽 max(列数 × ceil(k × 容器宽 ÷ 列数), 列数 × 20px)（D3′；inline style 注入） */
+.day-scroll {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    gap: var(--nue-gap-xs);
+}
+
+.day-cols-head {
+    display: grid;
+    flex: none;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--cal-bg);
+}
+
+.day-col-head {
+    position: relative;
+    font-size: 0.65rem;
+    color: var(--cal-muted);
+    text-align: left;
+    white-space: nowrap;
+    overflow: visible;
+    padding-top: var(--nue-padding-df);
+}
+
+/* 刻度标签（C5）：原生 button，绝对定位居中于刻度线；首/末列边界保护（r3） */
+.day-col-label {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform: translateX(-50%);
+    padding: 0 6px;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.day-col-head.is-first-tick .day-col-label {
+    transform: translateX(0);
+}
+
+.day-col-head.is-last-tick .day-col-label {
+    transform: translateX(-100%);
+}
+
+.day-grid {
+    position: relative;
+    flex: 1 0 auto;
+    /* 空白区平移光标（C4）；条 / 手柄 / 刻度标签各自覆盖自己的 cursor */
+    cursor: grab;
+}
+
+/* 交互层：空白横向平移（C4）的几何锚（`trackRect`）。
+   ⚠️ 必须 `pointer-events: none`：本层 z-index 1 会盖住 `.cal-lanes`（z-index auto），
+   若可命中则时间轴任务条在真实浏览器中不可点/不可拖（指针落到本层 ⇒ 误起 pan）。
+   同 `.cal-lines` / `.day-axis-bg` 口径：覆盖层不拦截指针，空白区由 `.day-body` 冒泡承接。 */
+.day-axis-track {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.day-seg {
+    position: absolute;
+    height: 20px;
+    pointer-events: auto;
+}
+
+/* 两侧手柄恒在（C2 r2）：右缘改 endAt / 左缘（--start）改 startAt；
+   左缘不占用 `.day-task-resize` 类名（保证既有右拉用例唯一命中右缘） */
+.day-task-resize,
+.day-task-resize--start {
+    position: absolute;
+    top: 0;
+    width: 8px;
+    height: 20px;
+    z-index: 3;
+    cursor: ew-resize;
+    pointer-events: auto;
+    user-select: none;
+}
+
+.day-task-resize {
+    right: -3px;
+}
+
+.day-task-resize--start {
+    left: -3px;
+}
+
+/* 背景层：定位层（格线由共享类 .day-col-lines 提供，禁 48×N DOM，C6） */
+.day-axis-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* 共享格线（背景层与全天泳道同用，单一来源；四级嵌套链 60/30/10/5）
+   集合 = 当前粒度 ⊕ 嵌套上级（至 60min）；透明度随粒度变细单调递减；
+   周期 100%/24、/48、/96、/144、/288 只与分钟有关（与档位无关），仍全部 CSS 渐变（禁 列数×N DOM） */
+.day-col-lines {
+    --day-line-3: transparent;
+    --day-line-3-step: calc(100% / 144);
+    --day-line-4: transparent;
+    --day-line-4-step: calc(100% / 288);
+    background-image:
+        repeating-linear-gradient(
+            to right,
+            transparent 0,
+            transparent calc(100% / 24 - 1px),
+            var(--cal-border) calc(100% / 24 - 1px),
+            var(--cal-border) calc(100% / 24)
+        ),
+        repeating-linear-gradient(
+            to right,
+            transparent 0,
+            transparent calc(100% / 48 - 1px),
+            color-mix(in srgb, var(--cal-border) 55%, transparent) calc(100% / 48 - 1px),
+            color-mix(in srgb, var(--cal-border) 55%, transparent) calc(100% / 48)
+        ),
+        repeating-linear-gradient(
+            to right,
+            transparent 0,
+            transparent calc(var(--day-line-3-step) - 1px),
+            var(--day-line-3) calc(var(--day-line-3-step) - 1px),
+            var(--day-line-3) var(--day-line-3-step)
+        ),
+        repeating-linear-gradient(
+            to right,
+            transparent 0,
+            transparent calc(var(--day-line-4-step) - 1px),
+            var(--day-line-4) calc(var(--day-line-4-step) - 1px),
+            var(--day-line-4) var(--day-line-4-step)
+        );
+}
+
+/* 15min 档：60/30/15 */
+.day-col-lines--15 {
+    --day-line-3: color-mix(in srgb, var(--cal-border) 40%, transparent);
+    --day-line-3-step: calc(100% / 96);
+}
+
+/* 5min 档：60/30/10/5（r3：细层对比提升 10min 55% / 5min 45%） */
+.day-col-lines--5 {
+    --day-line-3: color-mix(in srgb, var(--cal-border) 55%, transparent);
+    --day-line-3-step: calc(100% / 144);
+    --day-line-4: color-mix(in srgb, var(--cal-border) 45%, transparent);
+    --day-line-4-step: calc(100% / 288);
+}
+
+/* 30min 档：60/30（与 ×1/×1.5 现状视觉等价）；`.day-col-lines--30` 由模板绑定供结构断言（AC6） */
+
+.day-now-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--nue-error-color-60);
+    pointer-events: none;
+}
+
+.day-now-line::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--nue-error-color-60);
+}
+
+.day-state {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--cal-bg) 82%, transparent);
+}
+
+/* 拖动中吸附刻度高亮线（AC2）：与 `DAY_SNAP_MINUTES` 对齐，松手即移除；不拦截指针 */
+.day-drag-snap-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    margin-left: -1px;
+    z-index: 4;
+    pointer-events: none;
+    background: var(--nue-primary-color-400);
+}
+
+/* F1 浮空胶囊（拖拽跟随，fixed 非 DOM 克隆）——日视图自有会话（宿主会话不覆盖日视图拖拽） */
+.drag-ghost {
+    position: fixed;
+    z-index: 1300;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 260px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    background: var(--nue-primary-color-200);
+    color: var(--nue-primary-text-color);
+    font-size: 0.75rem;
+    line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--nue-primary-text-color) 20%, transparent);
+    border: 1px solid var(--nue-border-color);
+    box-sizing: border-box;
+}
+
+/* 吸附后的起止时刻预览（AC2）：拖动中可见，随浮层跟随指针 */
+.drag-ghost .day-drag-preview {
+    flex: none;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}

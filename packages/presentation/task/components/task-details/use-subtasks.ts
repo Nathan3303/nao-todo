@@ -1,6 +1,8 @@
-import { type GoAsync, unwrapError } from '@nao-todo/shared'
+import { type GoAsync } from '@nao-todo/shared/types'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { computed, inject, onUnmounted, ref, type Ref } from 'vue'
 import { useTasksLoader } from '../../hooks'
+import { notifyTaskError } from '../../utils/error-message'
 import type { useTaskDetailsStore } from '../../stores'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { TASK_DETAILS_PRE_CONTEXT_KEY } from './context'
@@ -111,7 +113,10 @@ const useSubTasks = (
         const [task, err] = await subTaskUseCase.create(
             resolveSubTaskDraft(parentTask.value, name, currentParentTaskId.value)
         )
-        if (err !== null) return err
+        if (err !== null) {
+            notifyTaskError('task.createFailed', err)
+            return err
+        }
         subTaskLoader.states.taskIds.add(task.id)
         return null
     }
@@ -146,7 +151,9 @@ const useSubTasks = (
         const loadedCount = subTasks.value.length
         const total = subTaskLoader.states.pagination.total
         const allowRebuild = loadedCount >= total && total <= 65
-        return await subTaskUseCase.resort(originalId, boundId, isBefore, { allowRebuild })
+        const err = await subTaskUseCase.resort(originalId, boundId, isBefore, { allowRebuild })
+        if (err !== null) notifyTaskError('task.resortFailed', err)
+        return err
     }
 
     // @returns

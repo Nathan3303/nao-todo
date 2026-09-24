@@ -1,9 +1,14 @@
 import { UserStore, UserUseCase } from '@nao-todo/domain-identity'
-import { cacheNickname, newUserConfigRepository, newUserRepository } from '@nao-todo/infrastructure'
-import { getRequesterImpl } from '@nao-todo/shared'
+import { cacheNickname } from '@nao-todo/infrastructure/src/persistence-local/session/profile-cache'
+import { newUserConfigRepository } from '@nao-todo/infrastructure/src/persistence-go/identity/user-config-repo-impl'
+import { newUserRepository } from '@nao-todo/infrastructure/src/persistence-go/identity/user-repo-impl'
+import { getRequesterImpl } from '@nao-todo/shared/requester'
+import { useCaseBinding } from '@/hooks/usecases/binding'
 
 /**
  * 用户用例工厂
+ * @description 用户资料/账号操作/外观配置两端一致（远程后端 API）；desktop 端专属的
+ *              注销调度与本地密钥包重包经 `decorateUserUseCase` 注入。
  * @param store 用户存储
  * @returns 用户用例
  */
@@ -30,5 +35,7 @@ export const useUserUseCase = (store: UserStore) => {
         return err
     }
 
-    return useCase
+    // C-59 / AC10：web 离线只读闸门经 binding 注入（web-only；`signOut` 不在清单内 ⇒ 离线仍可登出）
+    const decorated = useCaseBinding.decorateUserUseCase?.(useCase) ?? useCase
+    return useCaseBinding.decorateUseCase?.(decorated, 'user') ?? decorated
 }

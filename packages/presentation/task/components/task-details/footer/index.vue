@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import {
-    DropdownDivBlock,
-    InnerDropdownOption,
-    PARENT_TASK_SELECTOR_DIALOG_KEY,
-    t
-} from '@nao-todo/shared'
+import { DropdownDivBlock } from '@nao-todo/shared/components/dropdown-div-block'
+import { InnerDropdownOption } from '@nao-todo/shared/components/inner-dropdown'
+import { PARENT_TASK_SELECTOR_DIALOG_KEY } from '@nao-todo/shared/constants'
+import { t } from '@nao-todo/shared/locales'
 import { TaskProjectSelector } from '../../project-selector'
-import { inject, ref } from 'vue'
+import { inject, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { TASK_DETAILS_CONTEXT_KEY } from '../context'
@@ -27,11 +25,20 @@ const {
     ungiveUpTask
 } = inject(TASK_DETAILS_CONTEXT_KEY)!
 
-// @hook 导出任务文本（Markdown）
-const { markdown, exportTask, copyMarkdown } = useExportTask()
+// @hook 导出任务文本（Markdown / JSON / HTML 单据）
+const { status, markdown, json, html, error, startExport, retry, reset, copyMarkdown } =
+    useExportTask()
 const exportVisible = ref(false)
+const exportFormat = ref('markdown')
 
-const handleCopy = () => void copyMarkdown(markdown.value)
+// 打开即取数（loading → ready | error）；关闭重置（清缓存、回 idle）
+watch(exportVisible, (visible) => {
+    if (visible) void startExport()
+    else reset()
+})
+
+// 复制对话框内「编辑后」文本（AC2）；对话框未编辑时即本次生成文本
+const handleCopy = (text: string) => void copyMarkdown(text)
 
 const openParentTaskSelector = () => {
     if (!vo.value) return
@@ -62,8 +69,8 @@ const handleDropdownExecute = async (executeId: string) => {
             })
             break
         case 'export-task': {
-            const text = await exportTask()
-            if (text !== null) exportVisible.value = true
+            // 流程反转（PRD §5.1）：立即开框，取数由框内 LoadingError 触发
+            exportVisible.value = true
             break
         }
         case 'move-to-subtask':
@@ -153,7 +160,17 @@ const handleDropdownExecute = async (executeId: string) => {
             </dropdown-div-block>
         </nue-dropdown>
     </nue-footer>
-    <task-export-dialog v-model="exportVisible" :markdown="markdown" @copy="handleCopy" />
+    <task-export-dialog
+        v-model="exportVisible"
+        v-model:format="exportFormat"
+        :markdown="markdown"
+        :status="status"
+        :json="json"
+        :html="html"
+        :error-message="error"
+        @retry="retry"
+        @copy="handleCopy"
+    />
 </template>
 
 <style scoped>

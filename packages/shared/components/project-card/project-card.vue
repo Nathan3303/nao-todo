@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { ProjectCardProps, ProjectCardEmits } from './types'
-import { parse2RelativeDate } from '@nao-todo/shared'
+import { parse2RelativeDate } from '@nao-todo/shared/utils/relative-date-parser'
 
 defineOptions({ name: 'ProjectCard' })
 const props = defineProps<ProjectCardProps>()

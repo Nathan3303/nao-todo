@@ -1,5 +1,8 @@
-import { t, unwrapError, type GoError, type LocaleKey } from '@nao-todo/shared'
+import { t, type LocaleKey } from '@nao-todo/shared/locales'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
+import { type GoError } from '@nao-todo/shared/types'
 import { TaskErrorCode, type TaskErrorCodeValue } from '@nao-todo/domain-task'
+import { NueMessage } from 'nue-ui'
 
 /**
  * 领域错误码 → i18n key 映射
@@ -49,4 +52,16 @@ export const translateTaskError = (err: GoError): string => {
     const errString = unwrapError(err)
     const localeKey = CODE_TO_LOCALE_KEY[errString as TaskErrorCodeValue]
     return localeKey ? t(localeKey) : errString
+}
+
+/**
+ * 展示任务写操作失败提示
+ * @description 与 TaskHandler 的错误提示同口径：领域错误翻译为文案，网络类错误原样透出。
+ *              web 端仓储直连服务端，断网写失败会被归一化为业务错误（不 reject）
+ *              ⇒ 调用方必须显式检查返回值并提示，否则构成「看似成功实则丢失」。
+ * @param key 错误文案键
+ * @param err 错误对象
+ */
+export const notifyTaskError = (key: LocaleKey, err: GoError): void => {
+    NueMessage.error(t(key, { error: `(${translateTaskError(err)})` }))
 }

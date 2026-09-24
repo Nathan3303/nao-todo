@@ -9,16 +9,21 @@
  * @see docs/adr/2026-09-10-shell-03-offline-availability.md（附录 B-1/B-2）
  */
 
+import { setOfflineEntryActive } from '@nao-todo/presentation/offline'
+
 let granted = false
 
 /** 授予离线进入（仅由 AppRoot 在用户显式选择「离线进入」时调用） */
 export const grantOfflineEntry = (): void => {
     granted = true
+    // C-59 / AC10：同步到只读状态（离线进入 ⇒ 写入口统一拦截）
+    setOfflineEntryActive(true)
 }
 
 /** 撤销离线进入授权（登录/检入成功、清认证数据、10041、登出） */
 export const revokeOfflineEntry = (): void => {
     granted = false
+    setOfflineEntryActive(false)
 }
 
 /** 当前会话是否已授予离线进入（auth 守卫读取） */

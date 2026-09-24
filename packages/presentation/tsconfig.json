@@ -3,6 +3,7 @@
     "include": [
         "../../env.d.ts",
         "built-in-project/**/*",
+        "offline/**/*",
         "pomodoro/**/*",
         "project/**/*",
         "tag/**/*",

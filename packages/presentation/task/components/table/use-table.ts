@@ -7,12 +7,9 @@ import type {
     TaskTableProps
 } from './types'
 import type { TaskViewObject } from '@nao-todo/domain-task'
-import {
-    type GetTasksSortOptions,
-    type TaskColumnOptions,
-    isTaskExpired,
-    useMinuteTask
-} from '@nao-todo/shared'
+import { type GetTasksSortOptions, type TaskColumnOptions } from '@nao-todo/shared/constants'
+import { isTaskExpired } from '@nao-todo/shared/utils/date-checker'
+import { useMinuteTask } from '@nao-todo/shared/hooks'
 import useMultiSelect from './use-multi-select'
 import useColumnConfig from './use-column-config'
 

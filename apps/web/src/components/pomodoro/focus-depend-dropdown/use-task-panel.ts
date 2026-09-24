@@ -1,7 +1,9 @@
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
 import { useTagsStore } from '@nao-todo/presentation/tag'
 import { ViewAdapterNoTaskError } from '@nao-todo/presentation/task'
-import { debounce, GetTasksOptions, assetUrl } from '@nao-todo/shared'
+import { debounce } from '@nao-todo/shared/utils/commons'
+import { GetTasksOptions } from '@nao-todo/shared/constants'
+import { assetUrl } from '@nao-todo/shared/utils/asset-url'
 import { storeToRefs } from 'pinia'
 import { inject, reactive, watch } from 'vue'
 

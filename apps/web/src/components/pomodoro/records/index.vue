@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { LoadingError, Pager, t } from '@nao-todo/shared'
+import { LoadingError } from '@nao-todo/shared/components/loading-error'
+import { Pager } from '@nao-todo/shared/components/pager'
+import { t } from '@nao-todo/shared/locales'
 import StatsCards from './stats-cards.vue'
 import FilterPanel from './filter-panel.vue'
 import TableMain from './table-main.vue'

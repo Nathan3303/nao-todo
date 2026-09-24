@@ -10,6 +10,7 @@ import { isNotDeleted } from '../utils'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
 import { snowflake } from '../../persistence-sync/snowflake'
+import { nowCalibratedIso } from '../../persistence-sync/sync-config'
 import { syncTracker } from '../../persistence-sync/sync-tracker'
 import { localSession } from '../session/local-session'
 
@@ -22,7 +23,7 @@ export class LocalProjectRepoImpl implements ProjectRepository {
 
     /** 当前会话用户 ID（数据归属标识） */
     private get currentUserId(): string {
-        return localSession.getCurrentUserId() ?? ''
+        return localSession.requireCurrentUserId()
     }
 
     async get(id: string): GoAsync<ProjectEntity> {
@@ -37,7 +38,7 @@ export class LocalProjectRepoImpl implements ProjectRepository {
 
     async create(createVO: CreateProjectValueObject): GoAsync<ProjectEntity> {
         try {
-            const now = new Date().toISOString()
+            const now = nowCalibratedIso()
             const entity = new ProjectEntity(
                 snowflake.nextId(),
                 now,
@@ -67,7 +68,7 @@ export class LocalProjectRepoImpl implements ProjectRepository {
             if (updateVO.icon !== undefined) entity.icon = updateVO.icon
             if (updateVO.description !== undefined) entity.description = updateVO.description
             if (updateVO.sortId !== undefined) entity.sortId = updateVO.sortId
-            entity.updatedAt = new Date().toISOString()
+            entity.updatedAt = nowCalibratedIso()
             await this.db.projects.put(await projectEntityToRecord(entity, this.currentUserId))
             await syncTracker.markDirty('projects', updateVO.id, 'upsert', entity.updatedAt)
             return null
@@ -81,7 +82,7 @@ export class LocalProjectRepoImpl implements ProjectRepository {
             const record = await this.db.projects.get(id)
             if (!record || record.userId !== this.currentUserId) return '项目不存在'
             const entity = await projectRecordToEntity(record)
-            entity.deletedAt = new Date().toISOString()
+            entity.deletedAt = nowCalibratedIso()
             entity.updatedAt = entity.deletedAt
             await this.db.projects.put(await projectEntityToRecord(entity, this.currentUserId))
             await syncTracker.markDirty(
@@ -102,7 +103,7 @@ export class LocalProjectRepoImpl implements ProjectRepository {
             if (!record || record.userId !== this.currentUserId) return '项目不存在'
             const entity = await projectRecordToEntity(record)
             entity.deletedAt = null
-            entity.updatedAt = new Date().toISOString()
+            entity.updatedAt = nowCalibratedIso()
             await this.db.projects.put(await projectEntityToRecord(entity, this.currentUserId))
             await syncTracker.markDirty('projects', id, 'upsert', entity.updatedAt)
             return null
@@ -116,7 +117,7 @@ export class LocalProjectRepoImpl implements ProjectRepository {
             const record = await this.db.projects.get(id)
             if (!record || record.userId !== this.currentUserId) return '项目不存在'
             const entity = await projectRecordToEntity(record)
-            entity.archivedAt = new Date().toISOString()
+            entity.archivedAt = nowCalibratedIso()
             entity.updatedAt = entity.archivedAt
             await this.db.projects.put(await projectEntityToRecord(entity, this.currentUserId))
             await syncTracker.markDirty('projects', id, 'upsert', entity.updatedAt)
@@ -132,7 +133,7 @@ export class LocalProjectRepoImpl implements ProjectRepository {
             if (!record || record.userId !== this.currentUserId) return '项目不存在'
             const entity = await projectRecordToEntity(record)
             entity.archivedAt = null
-            entity.updatedAt = new Date().toISOString()
+            entity.updatedAt = nowCalibratedIso()
             await this.db.projects.put(await projectEntityToRecord(entity, this.currentUserId))
             await syncTracker.markDirty('projects', id, 'upsert', entity.updatedAt)
             return null
@@ -171,7 +172,7 @@ export class LocalProjectRepoImpl implements ProjectRepository {
                 if (updateVO.icon !== undefined) current.icon = updateVO.icon
                 if (updateVO.description !== undefined) current.description = updateVO.description
                 if (updateVO.sortId !== undefined) current.sortId = updateVO.sortId
-                current.updatedAt = new Date().toISOString()
+                current.updatedAt = nowCalibratedIso()
                 await this.db.projects.put(await projectEntityToRecord(current, this.currentUserId))
                 await syncTracker.markDirty('projects', current.id, 'upsert', current.updatedAt)
                 entities.push(current)

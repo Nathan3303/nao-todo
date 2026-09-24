@@ -43,6 +43,8 @@ const zhCN: LocaleMessages = {
     'sync.lastSyncAt': '上次同步 {time}',
     'sync.pending': '待推送 {count}',
     'sync.failed': '失败 {count}',
+    'sync.preferenceFailed': '偏好同步失败 {count} 项',
+    'sync.conflict': '冲突 {count}',
     'sync.syncNow': '立即同步',
     'sync.pendingOffline': '有 {count} 项修改待同步（离线，联网后自动同步）',
     'sync.retryNow': '立即重试',
@@ -53,6 +55,24 @@ const zhCN: LocaleMessages = {
     'gate.enterOffline': '离线进入',
     'gate.signInAgain': '重新登录',
     'gate.offlineUnavailable': '无法离线进入，请重试或重新登录',
+
+    // Offline read-only / mirror freshness（C-59 / C-60 / AC8–AC10）
+    'offline.readOnlyBanner': '离线模式 · 当前为只读，暂不支持修改数据',
+    'offline.readOnlyHint': '离线模式下暂不支持修改，请联网后重试',
+    'offline.freshness.updated': '已更新',
+    'offline.freshness.mirror': '离线模式 · 数据截至 {time}',
+    'offline.freshness.mirrorHint': '可能不是最新',
+    'offline.freshness.incomplete': '尚未同步完成，数据可能不完整',
+    'offline.freshness.incompleteHint': '请连接网络后重试',
+    'offline.coverage.loadingMore': '正在加载更多…',
+    'offline.coverage.truncated': '已加载 {count} 条，仍有更多未加载',
+    'offline.coverage.truncatedGeneric': '任务数量超过同步上限，仅显示部分数据',
+
+    // 明文姿态用户可见声明（ADR §4.5 / D1b / AC17）
+    'notice.plaintext.title': '本地数据为明文保存',
+    'notice.plaintext.body':
+        '为支持离线查看，本设备上的数据以明文保存，不再有密码保护：能打开本设备或本浏览器配置的人即可读到。完整说明见「设置 → 应用设置」。',
+    'notice.plaintext.dismiss': '我知道了',
 
     // Common
     'common.cancel': '取消',
@@ -76,6 +96,7 @@ const zhCN: LocaleMessages = {
     'common.deleted': '已删除',
     'common.unknown': '未知',
     'common.signOut': '退出登录',
+    'common.sessionRequired': '登录状态已失效，请重新登录后再操作',
     'common.filter': '筛选',
     'common.uploadFailed': '上传失败',
     'common.uploadSuccess': '上传成功',
@@ -139,6 +160,18 @@ const zhCN: LocaleMessages = {
     'settings.password': '密码修改',
     'settings.app': '应用设置',
     'settings.version': '版本号 {version}',
+    'settings.localData.title': '本地数据与安全',
+    'settings.localData.desc': '为支持离线查看，本设备上的业务数据以明文保存。请了解以下边界：',
+    'settings.localData.plaintext':
+        '明文保存：本机上的任务、项目、标签、评论等数据不再有密码保护，应用密码只用于登录，不用于保护本地数据。',
+    'settings.localData.device':
+        '设备即凭据：能打开本设备或本浏览器配置的人，都可以直接读到这些数据；请避免在共享设备上保留敏感内容。',
+    'settings.localData.boundary':
+        '访问边界：桌面端以本地页面加载，同一用户配置下的其它本地页面也可能读到本应用的数据；web 端则以站点来源（origin）为边界。',
+    'settings.localData.eviction':
+        '浏览器可能清除：web 端本地数据属于浏览器「尽力而为」存储，长时间无交互可能被清除（如 Safari 的 7 天策略），届时需要联网重新同步。',
+    'settings.localData.endDifference':
+        '两端差异：web 端本地数据可能被浏览器自动清除；桌面端不会自动过期。两端都会在你退出登录时清除本地数据，之后需要联网重新登录。',
     'settings.userInfo': '用户信息',
     'settings.passwordChange': '密码修改',
     'settings.appSettings': '应用设置',
@@ -151,7 +184,7 @@ const zhCN: LocaleMessages = {
     'settings.appearanceLight': '浅色',
     'settings.appearanceDark': '深色',
     'settings.appearanceSystem': '跟随系统',
-    'settings.appearanceSyncFailed': '主题同步失败',
+    'settings.appearanceSyncFailed': '主题已在本地生效，但同步到服务器失败',
     'settings.nickname': '修改用户昵称',
     'settings.nicknameDesc': '昵称会在任务创建者、分配者、项目成员等区块中展示，你可以随时修改。',
     'settings.nicknamePlaceholder': '请输入昵称',
@@ -182,6 +215,13 @@ const zhCN: LocaleMessages = {
     'settings.avatarViewTitle': '头像查看',
     'settings.updateAvatarButtonText': '更新头像',
     'settings.signOutButtonText': '退出登录',
+    'signOut.dirtyTitle': '有未同步的修改',
+    'signOut.dirtyContent': '有 {count} 项本地修改尚未同步。退出登录后这些修改将永久丢失。',
+    'signOut.syncFirst': '先同步',
+    'signOut.unsavedTitle': '仍有未同步的修改',
+    'signOut.unsavedContent':
+        '当前离线或同步失败，仍有 {count} 项修改未同步。继续退出将永久丢失这些修改。',
+    'signOut.signOutAnyway': '仍然退出',
     'settings.deactive.title': '注销账户',
     'settings.deactive.confirmTitle': '确认注销账户吗？',
     'settings.deactive.confirmContent':
@@ -350,6 +390,9 @@ const zhCN: LocaleMessages = {
     'task.details.export.copy': '复制',
     'task.details.export.copySuccess': '已复制到剪贴板',
     'task.details.export.copyFailed': '复制失败，请手动复制',
+    'task.details.export.restore': '还原',
+    'task.details.export.retry': '重试',
+    'task.details.export.loading': '正在生成...',
     'task.details.export.failed': '导出失败：{error}',
     'task.details.export.label.state': '状态',
     'task.details.export.label.priority': '优先级',
@@ -359,6 +402,10 @@ const zhCN: LocaleMessages = {
     'task.details.export.label.tags': '标签',
     'task.details.export.label.createdAt': '创建时间',
     'task.details.export.label.updatedAt': '更新时间',
+    'task.details.export.label.total': '合计',
+    'task.details.export.label.issuedAt': '开具于',
+    'task.details.export.label.documentNo': '单据号',
+    'task.details.export.label.generatedBy': '本单据由 nao-todo 生成于',
     'task.details.export.heading.description': '描述',
     'task.details.export.heading.checkItems': '检查项',
     'task.details.export.heading.subTasks': '子任务',
@@ -399,6 +446,7 @@ const zhCN: LocaleMessages = {
     'task.deleteSuccess': '删除任务成功',
     'task.restoreFailed': '恢复任务失败：{error}',
     'task.restoreSuccess': '恢复任务成功',
+    'task.resortFailed': '调整排序失败：{error}',
     'task.copyFailed': '复制任务失败：{error}',
     'task.copySuccess': '复制任务成功',
     'task.confirmGiveUpTitle': '确认放弃该任务吗？',
@@ -524,6 +572,9 @@ const zhCN: LocaleMessages = {
     'task.error.commentContentEmpty': '评论内容不能为空',
     'task.error.commentContentTooLong': '评论内容过长',
 
+    // Pomodoro
+    'pomodoro.recordSaveFailed': '专注记录保存失败：{error}',
+
     // Calendar
     'calendar.today': '跳转至今天',
     'calendar.createTask': '新增待办事项',
@@ -535,6 +586,8 @@ const zhCN: LocaleMessages = {
     'calendar.weekday.fri': '五',
     'calendar.weekday.sat': '六',
     'calendar.weekday.sun': '日',
+    'calendar.allDay': '全天',
+    'calendar.noTasksToday': '当日暂无任务',
 
     // Date relative
     'date.today': '今天 {time}',

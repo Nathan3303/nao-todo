@@ -1,4 +1,4 @@
-import { DialogManager } from '@nao-todo/shared'
+import { DialogManager } from '@nao-todo/shared/hooks'
 import type { TaskUseCase } from '@nao-todo/domain-task'
 
 // 任务提醒弹窗属性

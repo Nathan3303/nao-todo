@@ -36,16 +36,32 @@ export class TaskCheckItemUseCase {
     ) {}
 
     /**
+     * 只读取数：加载任务的检查事项列表（不写 store）
+     * @description 归一排序 `sortId ASC, id ASC`，不依赖底层仓储顺序（本地仓储排序、Go 仓储不排序）。
+     *              供导出等旁路读共享数据场景使用（约束 C1/C2/C3），不得在导出路径改调写型用例。
+     * @param taskId 任务ID
+     * @returns 已排序的检查事项视图对象列表
+     */
+    async listByTask(taskId: TaskViewObject['id']): GoAsync<TaskCheckItemViewObject[]> {
+        // 获取任务检查事项实体列表
+        const [checkItemEntities, err] = await this.repo.list(taskId)
+        if (err !== null) return [null, err]
+        // 转换为视图对象并归一排序（sortId ASC, id ASC）
+        const checkItems = checkItemEntities
+            .map(taskCheckItemEntityToViewObject)
+            .sort((a, b) => a.sortId - b.sortId || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+        return [checkItems, null]
+    }
+
+    /**
      * 加载任务的检查事项列表
      * @param taskId 任务ID
      * @returns 检查事项ID列表
      */
     async list(taskId: TaskViewObject['id']): GoAsync<TaskCheckItemViewObject['id'][]> {
-        // 获取任务检查事项实体列表
-        const [checkItemEntities, err] = await this.repo.list(taskId)
+        // 只读取数原语（repo.list → VO → 归一排序），保证转换/排序单一真源
+        const [checkItems, err] = await this.listByTask(taskId)
         if (err !== null) return [null, err]
-        // 转换为视图对象
-        const checkItems = checkItemEntities.map(taskCheckItemEntityToViewObject)
         // 提取检查事项ID列表
         const checkItemIds = checkItems.map((item) => item.id)
         // 存储检查事项列表

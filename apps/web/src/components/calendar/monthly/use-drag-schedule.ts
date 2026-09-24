@@ -59,6 +59,17 @@ export type DragScheduleDeps = {
     isBusy: () => boolean
     closeUnscheduled: () => void
     scheduleOne: (task: TaskViewObject, dateKey: string) => void | Promise<void>
+    /**
+     * 可选：像素级落点解析（日视图横向拖拽 C8）。提供时接管释放，不再走 dateKey 命中；
+     * 复用同一手势会话壳（阈值/点击抑制/Esc/卸载清理），不新建第三套。
+     */
+    resolveDrop?: (context: {
+        task: TaskViewObject
+        clientX: number
+        clientY: number
+        originX: number
+        originY: number
+    }) => void | Promise<void>
 }
 
 const initialSession = (): DragSessionState => ({
@@ -86,6 +97,8 @@ export const useDragSchedule = (deps: DragScheduleDeps) => {
     let isDrag = false
     // 点击抑制：拖拽手势释放所触发的 click 吃一次（防止误开详情/日期格/完成勾选）
     let clickArmed = false
+    // 抑制自动解除计时器：避免吞掉后续无关点击（如新建的撤销条）
+    let clickDisarmTimer: ReturnType<typeof setTimeout> | undefined
 
     const detachMoveListeners = (): void => {
         window.removeEventListener('pointermove', onPointerMove)
@@ -102,8 +115,15 @@ export const useDragSchedule = (deps: DragScheduleDeps) => {
     }
     const disarmClickSuppression = (): void => {
         clickArmed = false
+        clearTimeout(clickDisarmTimer)
+        clickDisarmTimer = undefined
         window.removeEventListener('click', onClickCapture, true)
         window.removeEventListener('pointerdown', onNextPointerDown, true)
+    }
+    // 拖拽松手后：仅保留抑制至本手势合成 click；下一宏任务自动解除（后续无关点击不被误吞）
+    const scheduleClickDisarm = (): void => {
+        clearTimeout(clickDisarmTimer)
+        clickDisarmTimer = setTimeout(() => disarmClickSuppression(), 0)
     }
 
     const reset = (drop: { task: TaskViewObject; dateKey: string } | null = null): void => {
@@ -149,7 +169,7 @@ export const useDragSchedule = (deps: DragScheduleDeps) => {
         session.hoverKey = dropDateKeyOf(event.target)
     }
 
-    const onPointerUp = (): void => {
+    const onPointerUp = (event: PointerEvent): void => {
         if (!pending) return
         if (!isDrag) {
             // 阈值内释放 = 纯点击：彻底放行（click 照常触发既有语义）
@@ -157,6 +177,17 @@ export const useDragSchedule = (deps: DragScheduleDeps) => {
             return
         }
         const dragTask = pending.task
+        const originX = pending.originX
+        const originY = pending.originY
+        scheduleClickDisarm()
+        // 日视图像素级落点（提供 resolveDrop 时接管）
+        if (deps.resolveDrop) {
+            const clientX = event.clientX
+            const clientY = event.clientY
+            reset()
+            void deps.resolveDrop({ task: dragTask, clientX, clientY, originX, originY })
+            return
+        }
         const targetKey = session.hoverKey
         reset(targetKey ? { task: dragTask, dateKey: targetKey } : null)
     }

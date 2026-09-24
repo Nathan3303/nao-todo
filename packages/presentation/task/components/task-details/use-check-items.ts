@@ -1,4 +1,6 @@
-import { type DialogManager, TASK_CREATOR_DIALOG_KEY, unwrapError } from '@nao-todo/shared'
+import { type DialogManager } from '@nao-todo/shared/hooks'
+import { TASK_CREATOR_DIALOG_KEY } from '@nao-todo/shared/constants'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { storeToRefs } from 'pinia'
 import { computed, inject } from 'vue'
 import { TaskCheckItemHandler } from '../../handlers'

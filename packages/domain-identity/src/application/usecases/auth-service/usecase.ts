@@ -6,6 +6,7 @@ import {
     signInViewObject2ValueObject,
     signUpViewObject2ValueObject
 } from './converters'
+import { isCredentialError } from './error-classification'
 
 /**
  * 认证用例
@@ -67,7 +68,10 @@ export class AuthUseCase {
     async checkIn(token: string): GoAsync<void> {
         const [authSession, checkInError] = await this.authService.checkIn(token)
         if (checkInError !== null) {
-            this.authStore.clearAuthData()
+            // 失败分流（DEF-5 / AC7）：仅凭证类失败清认证；网络类/未知失败保留 JWT 与设备标识，允许重试
+            if (isCredentialError(checkInError)) {
+                this.authStore.clearAuthData()
+            }
             return checkInError
         }
         const sessionViewObject = sessionValueObject2ViewObject(authSession)

@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import RuleHint from './rule-hint.vue'
-import { t } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
 
 defineOptions({ name: 'PasswordRuleHint' })
 </script>

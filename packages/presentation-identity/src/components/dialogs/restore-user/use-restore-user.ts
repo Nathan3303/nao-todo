@@ -1,6 +1,8 @@
 import { computed, reactive, ref } from 'vue'
 import { UserRestoreEmits, UserRestoreFormData, UserRestoreProps } from './types'
-import { DialogCloser, t, unwrapError } from '@nao-todo/shared'
+import { DialogCloser } from '@nao-todo/shared/hooks'
+import { t } from '@nao-todo/shared/locales'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { NueMessage } from 'nue-ui'
 
 /**

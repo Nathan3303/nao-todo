@@ -6,7 +6,7 @@ import {
     TableViewAdapter,
     type ViewAdapterNoTaskError
 } from '@nao-todo/presentation/task'
-import { unwrapError } from '@nao-todo/shared'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { NueMessage } from 'nue-ui'
 import { computed, inject, onMounted, onUnmounted } from 'vue'
 import { PROJECT_EMPTY_STATE } from '../constants'

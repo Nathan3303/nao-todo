@@ -1,9 +1,5 @@
-import {
-    type GetTasksOptions,
-    type TaskColumnOptions,
-    useMapperStoreBase,
-    useStoreBase
-} from '@nao-todo/shared'
+import { type GetTasksOptions, type TaskColumnOptions } from '@nao-todo/shared/constants'
+import { useMapperStoreBase, useStoreBase } from '@nao-todo/shared/hooks'
 import type { TagPreferenceViewObject, TagViewObject } from '@nao-todo/domain-tag'
 
 export const useTagsStoreBase = () => {

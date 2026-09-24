@@ -4,7 +4,7 @@
  *              缓存到 localStorage 并配置雪花生成器；失败时静默降级（缓存/默认常量兜底，不阻塞登录）。
  *              认证流程不创建业务实体，无循环依赖（见 data-sync-plan.md §1.4）。
  */
-import { getRequesterImpl } from '@nao-todo/shared'
+import { getRequesterImpl } from '@nao-todo/shared/requester'
 import { getJWTFromLocalStorage } from '../persistence-go/utils'
 import { setSnowflakeEpoch } from './sync-config'
 import { snowflake } from './snowflake'

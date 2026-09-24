@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { debounce, t, unwrapError, assetUrl } from '@nao-todo/shared'
+import { debounce } from '@nao-todo/shared/utils/commons'
+import { t } from '@nao-todo/shared/locales'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
+import { assetUrl } from '@nao-todo/shared/utils/asset-url'
 import { NueMessage } from 'nue-ui'
 import { computed, ref } from 'vue'
 import { useThemeStore } from '../../stores'

@@ -7,7 +7,9 @@ import {
     type ViewAdapterNoTaskError
 } from '@nao-todo/presentation/task'
 import type { TableLayoutConfig } from '@nao-todo/presentation/task/components/table/types'
-import { TASK_CREATOR_DIALOG_KEY, t, unwrapError } from '@nao-todo/shared'
+import { TASK_CREATOR_DIALOG_KEY } from '@nao-todo/shared/constants'
+import { t } from '@nao-todo/shared/locales'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { NueMessage } from 'nue-ui'
 import { computed, inject, onMounted, onUnmounted } from 'vue'
 import { BUILT_IN_EMPTY_STATE_MAP } from '../constants'

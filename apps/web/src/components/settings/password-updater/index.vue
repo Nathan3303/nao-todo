@@ -2,7 +2,7 @@
 import { SETTINGS_VIEW_CONTEXT_KEY } from '../context'
 import { UserPasswordUpdater } from '@nao-todo/presentation-identity'
 import { USER_JWT_LOCALSTORAGE_KEY } from '@nao-todo/domain-identity'
-import { t } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
 import { inject } from 'vue'
 import { useRouter } from 'vue-router'
 

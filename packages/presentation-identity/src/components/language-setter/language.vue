@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { t } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
 import { useLocaleStore } from '../../stores'
 
 defineOptions({ name: 'SettingsAppLanguage' })

@@ -6,7 +6,7 @@ import {
     PROJECT_MANAGER_DIALOG_KEY,
     TAG_CREATOR_DIALOG_KEY,
     TAG_MANAGER_DIALOG_KEY
-} from '@nao-todo/shared'
+} from '@nao-todo/shared/constants'
 import dayjs from 'dayjs'
 import { nextTick, onMounted, ref, watch } from 'vue'
 import { useAside } from './use-aside'

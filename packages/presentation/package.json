@@ -1,6 +1,6 @@
 {
     "name": "@nao-todo/presentation",
-    "version": "0.4.5",
+    "version": "0.6.0",
     "author": "Nathan Lee",
     "license": "MIT",
     "type": "module",
@@ -8,6 +8,7 @@
     "files": [
         "auth/**/*",
         "built-in-project/**/*",
+        "offline/**/*",
         "pomodoro/**/*",
         "project/**/*",
         "tag/**/*",

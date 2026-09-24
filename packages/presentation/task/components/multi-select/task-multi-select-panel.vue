@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { ComboBox, Loading, t, TaskSelector } from '@nao-todo/shared'
+import { ComboBox } from '@nao-todo/shared/components/combo-box'
+import { Loading } from '@nao-todo/shared/components/loading'
+import { t } from '@nao-todo/shared/locales'
+import { TaskSelector } from '@nao-todo/shared/components/task-selector'
 import { TaskPrioritySelectOptions, TaskStateSelectOptions } from '../../constants'
 import { TaskProjectSelector } from '../project-selector'
 import { useTaskMultiSelectPanel } from './use-task-multi-select-panel'

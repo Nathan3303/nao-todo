@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { NueDropdown } from 'nue-ui'
-import { parse2RelativeDate, t } from '@nao-todo/shared'
+import { parse2RelativeDate } from '@nao-todo/shared/utils/relative-date-parser'
+import { t } from '@nao-todo/shared/locales'
 import { computed, ref } from 'vue'
 import type { UpdateTaskViewObject } from '@nao-todo/domain-task'
 import { TaskRemindSetter } from '../remind-setter'
@@ -54,11 +55,8 @@ const triggerText = computed(() => {
         range = t('task.details.dueAt', { time: end })
     }
     const remindData = props.task ?? props.remind
-    const hasReminder = !!(
-        remindData &&
-        remindData.remindAt !== null &&
-        remindData.remindTime !== null
-    )
+    // 空串与 null 同义（均为无提醒）：与 remindDataToSetterVO 的「空串视为无提醒」口径一致
+    const hasReminder = !!(remindData && remindData.remindAt && remindData.remindTime)
     const remind =
         hasReminder && remindData?.remindTime
             ? t('task.details.remindAt', { time: nextRemindTime.value || '' })

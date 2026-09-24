@@ -1,4 +1,5 @@
-import { responsiveTypes, unwrapError, useAsideWidth, useResponsiveAside } from '@nao-todo/shared'
+import { responsiveTypes, useAsideWidth, useResponsiveAside } from '@nao-todo/shared/hooks'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import {
     useBuiltInProjectUseCase,
@@ -31,6 +32,8 @@ import {
     writePomodoroBadgePref
 } from '@/components/calendar/monthly/pomodoro-badge'
 import { TaskViewObject } from '@nao-todo/domain-task'
+import { readDayZoom, writeDayZoom, type DayZoom } from '@/components/calendar/daily/day-zoom'
+import { markPreferenceDirty } from '@nao-todo/infrastructure/src/persistence-sync/preference-sync'
 
 /** 周起始偏好存储键（C9） */
 const CALENDAR_WEEK_START_KEY = 'CALENDAR_WEEKSTART'
@@ -118,12 +121,21 @@ export const useCalendarView = () => {
         } catch {
             /* ignore */
         }
+        void markPreferenceDirty('userConfig')
     })
 
     // @states 专注徽标开关（B1-F5：default on；localStorage 持久化，非法值模块层回退并规范写入）
     const pomodoroBadge = ref<boolean>(readPomodoroBadgePref(localStorage))
     watch(pomodoroBadge, (value) => {
         writePomodoroBadgePref(localStorage, value)
+        void markPreferenceDirty('userConfig')
+    })
+
+    // @states 日视图时间轴档位（TASK-19 D6：localStorage CALENDAR_DAY_ZOOM；非法值模块层回退 ×1 并规范写入）
+    const dayZoom = ref<DayZoom>(readDayZoom(localStorage))
+    watch(dayZoom, (value) => {
+        writeDayZoom(localStorage, value)
+        void markPreferenceDirty('userConfig')
     })
 
     // @action 清除清单/标签两组筛选（不影响 hideCompleted）
@@ -204,6 +216,10 @@ export const useCalendarView = () => {
         pomodoroBadge,
         setPomodoroBadge: (value: boolean) => {
             pomodoroBadge.value = value
+        },
+        dayZoom,
+        setDayZoom: (value: DayZoom) => {
+            dayZoom.value = value
         },
         clearFilter,
         applyScope

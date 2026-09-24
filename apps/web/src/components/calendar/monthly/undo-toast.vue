@@ -46,6 +46,7 @@ onBeforeUnmount(() => {
         <transition name="utoast">
             <div
                 v-if="action"
+                data-testid="schedule-undo"
                 class="utoast"
                 :class="action.tone === 'warning' ? 'utoast--warning' : 'utoast--success'"
             >

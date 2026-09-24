@@ -1,8 +1,14 @@
 import type { RouteRecordRaw } from 'vue-router'
 import { useUserStore } from '@nao-todo/presentation-identity'
 import { USER_JWT_LOCALSTORAGE_KEY } from '@nao-todo/domain-identity'
-import { cryptoService, localSession, resolveUserIdFromStoredJwt } from '@nao-todo/infrastructure'
+import {
+    localSession,
+    resolveUserIdFromStoredJwt
+} from '@nao-todo/infrastructure/src/persistence-local/session/local-session'
+import { syncService } from '@nao-todo/infrastructure/src/persistence-sync/sync-service'
 import { isOfflineEntryGranted } from './offline-entry'
+import { evaluateOfflinePrerequisites, hasLocalMirror } from './offline-prerequisites'
+import { bootstrapLocalData } from './bootstrap-local-data'
 
 // @typedef AuthViewRoutes 身份验证视图路由
 const routes: RouteRecordRaw = {
@@ -31,19 +37,27 @@ const routes: RouteRecordRaw = {
 
 // @typedef AuthViewRoutesBeforeEnter 身份验证视图路由守卫
 const beforeEnter = async () => {
-    // SHELL-03 附录 B-2 / C-22：离线进入放行（四条件**全为本地事实**；任一不满足 ⇒ 落回下方既有三分支）
+    // SHELL-03 附录 B-2 / C-62：离线进入放行（**全为本地事实**；任一不满足 ⇒ 落回下方既有三分支）
     // ① 用户本会话显式授予（会话级内存 flag，不落盘）
-    // ② JWT 存在且可解析出 userId  ③ 内存会话与 JWT 同一用户（解锁门已置位）
-    // ④ 本地保险库已解锁（= 用户已输入密码）
+    // ② JWT 存在且可解析出 userId  ③ 内存会话与 JWT 同一用户
+    // ④ 本地镜像存在（原「本地保险库已解锁」= DEF-16 恒假 ⇒ 已替换，原因码 mirror-missing）
     // 禁用项：不得用 navigator.onLine（网通但服务端不可达时不可靠）、不得用昵称缓存（C-19 明文禁参与守卫）
     if (isOfflineEntryGranted()) {
         const jwtUserId = resolveUserIdFromStoredJwt()
         const sessionUserId = localSession.getCurrentUserId()
-        if (
-            jwtUserId !== null &&
-            sessionUserId === jwtUserId &&
-            cryptoService.isUnlocked === true
-        ) {
+        const hasMirror = jwtUserId !== null ? await hasLocalMirror(jwtUserId) : false
+        const prerequisites = evaluateOfflinePrerequisites({
+            jwtUserId,
+            sessionUserId,
+            hasLocalMirror: hasMirror
+        })
+        if (prerequisites.ok) {
+            // C-61②：门 B 通过、挂载 App 前的启动收敛点（必须早于 syncService.start()）
+            await bootstrapLocalData(jwtUserId)
+            // T108 补充 / AC8 首帧：从 `meta` 恢复镜像新鲜度（T107b 已持久化）⇒ 离线冷启动
+            // 首帧即「数据截至 X」，不先闪「尚未同步完成」。必须紧跟 `bootstrapLocalData()`
+            // （后者重建 `localSession`，`restoreMirrorStatus` 依赖当前 userId）。
+            await syncService.restoreMirrorStatus()
             return true
         }
     }
@@ -55,7 +69,13 @@ const beforeEnter = async () => {
     // 若没有 JWT 令牌且未登录，跳转到登录页
     else if (jwt === null && !userStore.getIsAuthenticated()) return { name: 'auth-signin' }
     // 若有 JWT 令牌且已登录，放行
-    else if (jwt !== null && userStore.getIsAuthenticated()) return true
+    else if (jwt !== null && userStore.getIsAuthenticated()) {
+        // C-61②：web 无 AppRoot ⇒ 门 B 通过、挂载 App 前的等价收敛点
+        await bootstrapLocalData()
+        // T108 补充 / AC8 首帧：同上，先恢复镜像新鲜度再放行
+        await syncService.restoreMirrorStatus()
+        return true
+    }
     // 若没有 JWT 令牌且已登录，则跳转到检入页
     else return { name: 'auth-checkin' }
 }

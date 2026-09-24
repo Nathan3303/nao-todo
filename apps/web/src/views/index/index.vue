@@ -2,7 +2,9 @@
 import { onMounted } from 'vue'
 import useIndexView from './index-view'
 import { AppDialogAdapter, AppAsideV2Adapter } from '@/components/app/'
-import { Loading as LoadingComp, assetUrl } from '@nao-todo/shared'
+import { showPlaintextNoticeConfirm } from '@/components/plaintext-notice'
+import { Loading as LoadingComp } from '@nao-todo/shared/components/loading'
+import { assetUrl } from '@nao-todo/shared/utils/asset-url'
 import { UserDeletionNotifier } from '@nao-todo/presentation-identity'
 
 defineOptions({ name: 'AppContainer' })
@@ -11,6 +13,8 @@ const { isLoading, IndexViewInitialize } = useIndexView()
 
 onMounted(() => {
     IndexViewInitialize()
+    // 首启明文告知：一次性 NueConfirm（设备级已读标记；替代原常驻横幅，不占头部）
+    showPlaintextNoticeConfirm()
 })
 </script>
 
@@ -20,6 +24,8 @@ onMounted(() => {
         <nue-main>
             <app-aside-v2-adapter />
             <nue-content fill style="overflow: hidden">
+                <!-- 头部零挂载（用户裁定）：明文告知走首启 NueConfirm；只读提示走写拦截时 NueMessage；
+                     离线/镜像/覆盖度状态已全部迁入左下角同步状态组件（T115b/r7） -->
                 <!-- 路由视图 -->
                 <router-view v-slot="{ Component }">
                     <suspense>

@@ -2,6 +2,105 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.9.0] - 2026-09-23
+
+发布批次：任务导出多格式（JSON / HTML 账单）+ 导出框内加载与错误态 + 日视图测试时间炸弹修复。**Tag `v1.9.0`** · root `1.9.0` / `@nao-todo/desktopapp` `1.9.0` / `@nao-todo/webapp` `1.9.0` / `@nao-todo/presentation` `0.6.0` / `@nao-todo/shared` `1.3.2`（`@nao-todo/domain-task` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop。
+
+### 新增（任务导出）
+
+- **JSON 导出格式**（TASK-22，`c25ac0ec`）：`generateTaskJson(root, exportedAt)` 纯函数；固定全量 schema（`formatVersion` / `exportedAt` / `task` 包装），**标量与时间缺失输出 `null`（空串归一为 `null`）、数组缺失输出 `[]`**（机器消费稳定）；时间保持 ISO 与原始枚举值（`state` / `priority` / `isGivenUp` / `projectId` / `tagIds`），另附本地化 `stateLabel` / `priorityLabel` / `projectName` / `tagNames`；描述保留原始换行；递归字段名 `subTasks` 与 Markdown / HTML 段一致。
+- **HTML 账单风格导出（可独立打开的单据）**（TASK-22，`c25ac0ec`）：`generateTaskHtml(root, labels, generatedAt)` 纯函数输出**完整 HTML 文档**（`<!DOCTYPE>` + `<head>` + 内联 `<style>`），**自包含**（零外部资源 / 零脚本）；**固定浅色**（`color-scheme: light` —— 成品 = 纸）以保证「预览所见 = 复制源码所得」；**五字符转义**（`& < > " '`）覆盖全部插值文本；描述 `pre-wrap` 保留换行；空段整段省略；**合计段**给出检查项 / 子任务完成度（判定条件为**对象数 `y > 0`**，`x = 0` 仍输出 `0/y`，`0/0` 永不出现）；视觉规格见 PRD §14（纯灰阶小票：等宽数字 + 右对齐对账列 + 撕口虚线，完成度计量条为唯一记忆点）。
+- **导出对话框：多格式 + 框内加载/错误态**（TASK-22，`2a1df84e` / `af08a270`）：流程**反转**为「点导出**立即开框**」→ 框内 `loading-error` 三态（加载 / 错误 + **「重试」** / 内容），失败保留 toast；顶部格式分段控件（Markdown / JSON / HTML，`data-format`）；**Markdown 可编辑（含「还原」）**、JSON 只读 `<pre>`、HTML 经 `iframe[sandbox=""]` + `srcdoc` 只读预览；**一次取数产三格式**（切格式零重取、`retry` 防重入）；`env.d.ts` 补 `vite/client` 类型（供 `?raw` 源码级断言）。
+
+### 修复
+
+- **日视图测试日期时间炸弹**（DEF-4，`5d2e51f1`，**非本批引入**）：`daily-view.test.ts` 全天任务 fixture 硬编码 `endAt: '2026-09-22'`，而视图按 `todayDateKey()` 建网格 ⇒ 该日之后**恒红**（v1.8.0 验证日恰等于该日故曾绿）；改为相对当天（`const TODAY = dayjs().format('YYYY-MM-DD')`）。
+
+### 工程与治理
+
+- **`.agents/**` 舰队资产同步至 nao-skill v0.6.1**（`ce55edbc` / `7284e116`）：`nao-fleet.sh` 修 `ensure` 无 `--task` 时 `set -u` 崩溃（上游 `a363f12`），并新增**文本契约校验**（`check_eol` + `check_roles_indent`：`.agents/**` 全 LF、`roles.yaml` 缩进 2/4、禁 Tab，失败 rc=1 且报告先于解析 die）⇒ 此前靠人守的「全 LF + 缩进 2/4」不变量**首次有了守卫**。
+- `AGENTS.md` 更正已过期的 `.agents/**` 危险警告（`fmt.ignorePatterns` 已覆盖 ⇒ 全仓 `vp check --fix` 安全）。
+- 工艺规则：PM 不再重复跑终局门禁；由 worker 跑**全量**门禁并回执精确数字（见 `docs/tasks-state.md` §四）。
+
+## [v1.8.0] - 2026-09-22
+
+发布批次：日历日视图三批（子路由化 / 时间轴缩放 / 交互调整）+ 导出对话框 + 工具与治理。**Tag `v1.8.0`** · root `1.8.0` / `@nao-todo/desktopapp` `1.8.0` / `@nao-todo/webapp` `1.8.0` / `@nao-todo/presentation` `0.5.0` / `@nao-todo/domain-task` `1.3.0` / `@nao-todo/shared` `1.3.1`（`@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop。
+
+### 新增（日历日视图）
+
+- **日视图**（TASK-16，`0d1b801e` 起）：横坐标=时间 48×30 分钟列（整点有文本）、分钟级连续定位（显示不吸附）、轨道打包 + 日级 `+N`、跨日裁剪与续接、全天行、当前时间线、快速新建 / 拖拽改时间 / 拉伸改时长。
+- **三视图子路由化 + 布局单一基线**（TASK-18，`a15ce8f9` / `c76bc1fd`）：`calendar-monthly` / `calendar-weekly` / `calendar-day` 三条子路由（均 `:taskId?`）、状态宿主上移 `.nue-calendar-host`（`--cal-*` 令牌随行、monthly 去重复 padding）、`viewMode` 由 `route.name` 只读派生（无可变镜像）、切视图 `replace` 幂等短路、`LAST_CALENDAR_ROUTE` 恢复子路由（含 `taskId`）。
+- **时间轴档位缩放 + 横向溢出滚动 + 全天任务内嵌泳道**（TASK-19，`c08b7b3c` / `5eac8ff9`）：×1 / ×1.5 / ×2 / ×3 / ×4 五档（列数 48 / 48 / 96 / 96 / 144）、总宽 `max(k × 容器宽, 列数 × 20px)`、刻度密度随档位细化、**日视图不再折叠 `+N`**（全部轨道纵向可滚可达）、全天任务移入网格顶部泳道（与时间轴同横向坐标系）、`CALENDAR_DAY_ZOOM` 持久化（跨会话 / 跨视图沿用）。
+- **日视图交互调整六项**（TASK-19B，`44bb402d` / `99d81aaf`）：
+    - 点击**刻度标签**打开任务创建对话框（预填 `startAt` / `endAt = +30min`，原生 `button` 可键盘可达）；**移除**空白点击新建。
+    - 全天任务改为**只读任务条**（复用 `task-bar`），并给出不可拖拽原因（`data-allday-reason`）。
+    - 任务名 **sticky 贴视口左缘**（不越出自身条）；左右缘渐隐遮罩提示被裁切内容。
+    - 任务条**左右缘均可拖拽**：左缘改 `startAt`、右缘改 `endAt`（真实值锚，不夹取可见日边界）。
+    - 时间轴空白处**拖拽横向平移**（阈值复用 `DRAG_THRESHOLD_PX`，目标排除清单零抢占）。
+    - ×4 档细化为 **5 分钟刻度**（288 列）、标签水平居中于刻度线、格线四级（60/30/10/5）。
+- **pan 加固 / 任务条拖动修复 / 拖动反馈 / 格线像素 / SFC 拆分**（TASK-20，`dee5b8f6` / `70c9723c` / `942116c5`）：
+    - **修复「任务条拖不动」**：根因 = `.day-axis-track` 覆盖层未声明 `pointer-events: none`，静默吞掉任务条命中（jsdom 无法发现）—— 该覆盖层已改为不拦截，并把该约束固化为**覆盖层命中契约**。
+    - 拖动新增**交互反馈**：跟随浮层、源条区分、**吸附后起止时刻预览**、**吸附刻度高亮线**（松手即清）。
+    - 纵向恢复可滚（`overflow-y: auto; overflow-x: hidden`）、列头恢复与列对齐。
+    - 格线改**整数列宽**（消除 1px 线在设备像素网格上的半像素抗锯齿 ⇒ 细线不再消失/闪烁），细层对比提升（10min 55% / 5min 45%）。
+    - `daily/index.vue` **911 → 359 行**（CSS 抽离为 `daily/index.css` + 4 个 composable，DOM / `data-testid` / 结构契约不变）。
+
+### 新增（任务导出）
+
+- **导出浮层可编辑 + 一级子任务字段丰富**（TASK-13，`0527461d` / `facddf27` / `04d90762`）：只读预览改为可编辑 `nue-textarea`（含「还原」）；一级子任务字段丰富（名称行仅复选框 + 名称，属性走 `- 名: 值`）。
+- **`TaskCheckItemUseCase.listByTask`**（domain-task 新增只读原语）：加载任务检查事项列表且**不写 store**，归一排序 `sortId ASC, id ASC`（不依赖底层仓储顺序），供导出等旁路读共享数据使用。
+
+### 修复
+
+- **CodeGraph 索引警告不再计入 `vp check` 退出码**（TASK-16 批次，`02626f23`）：`Pending Changes` 警告原被记为 `rc=1`，与「索引过期 → 提醒、不阻塞」的既定口径冲突，会造成误停。
+- **周视图 active 误绑**（TASK-18，`c3aa5c1b`）：点击已激活的「周」按钮不再跳回月视图。
+- **日视图重复 padding**（TASK-18，`0d1b801e`）：采纳用户手工微调并补回被删的 `data-testid="day-unscheduled-entry"`。
+
+### 其他（Chore / 治理）
+
+- **日视图命中抽检固化**（TASK-21，`149305fe`）：新增 `scripts/electron-smoke/checks/day-view-hit.mjs`（feature `day-view`，基于既有零第三方依赖的 CDP 真实渲染冒烟工具）。回归判据 = **`elementsFromPoint` 命中栈不含覆盖层** + **空白点 `inTrack=false`** + **覆盖层 `pointer-events: none`**；无数据一律 `SKIP`（绝不 `PASS`）。
+- 清理零引用死规则（`.cal-nav-btn` ×3 / `.cal-aside-toggle`，`b32e05a6`）。
+- 测试基础设施：放行 `*.css?raw`（Vitest `css.include`，`dee5b8f6`），使「以 CSS 源码文本断言样式契约」的用例在 CSS 抽离后仍可运行。
+
+### 已知问题（未修，已入池）
+
+- `packages/infrastructure` 的 `sync.test.ts > Q3` 约 1/10 概率失败（`fake-indexeddb` / `syncQueue` 共享状态跨用例泄漏，属**测试隔离**问题）；已核实与本批次改动无因果，单跑该包全绿。待另立单修。
+
+### 质量门槛
+
+- `vp check`：全绿（1313 文件格式 / 1123 文件 0 error 0 warning）。
+- `vp test`：**110 文件 / 993 例全绿**。
+- `pnpm webapp build` ✓ / `pnpm run desktop:build` ✓。
+- 红线：`apps/mobileapp`、`packages/presentation-react` 本批零改动；月/周视图 DOM 与布局零变化。
+
+## [v1.7.9] - 2026-09-21
+
+发布批次：放弃/提醒同步缺陷链修复（客户端 patch）。**Tag `v1.7.9`** · root `1.7.9` / `@nao-todo/desktopapp` `1.7.9` / `@nao-todo/webapp` `1.7.9` / `@nao-todo/presentation` `0.4.6`（`@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（同步 + 提醒）。
+
+### 修复（同步与提醒）
+
+- **批量「取消放弃」无法同步到后端（T33，`3a0a5a99` / `d2608306`）**：载荷 `givenUpAt` 由 `null` 改为空串（服务端同步契约 `nil`/JSON `null` = 缺省不写列、`""` = 清空置 NULL）——原 `null` 被服务端按「缺省」处理，`given_up_at` 不会清空；现与任务详情页 footer 路径行为对齐。
+- **关闭提醒后服务端提醒时间残留（T34，`79779c13` / `7166721e`）**：提醒设置器关闭分支载荷 `remindAt`/`remindTime` 由 `null` 改为空串（同源语义误用）；Web 端 `PUT /tasks/{id}` 原先无法清空 `remind_at`，而 `remind_repeat='none'` 照写 ⇒ 状态自相矛盾，可能导致已关闭的提醒仍触发。
+- **提醒变更判定基准归一**：当前值 `null`/`undefined`/`''` 统一按「已清空」比较，消除「关-开-关」产生冗余更新事件。
+- **类型收紧**：`TaskRemindSetterUpdateVO.remindAt`/`remindTime` 由 `string | null` 收紧为 `string`；任务日期选择器 `hasReminder` 改真值判定，与「空串视为无提醒」口径一致。
+
+### 配套（服务端 nao-todo-server，已单独部署）
+
+- sync push 契约补齐 `archivedAt`/`starMarkAt`/`givenUpAt`（原先静默丢弃 + 假成功，致桌面端放弃/收藏无法落库）。
+- 提醒扫描排除已完成/已归档/已放弃任务；重复提醒在未设 `end_at` 时正确续期。
+
+### 其他（Chore）
+
+- 测试：新增 7 例（T33 批量取消放弃 4 例 + T34 关闭提醒 3 例，含双红测证明），全量 88 文件 / 772 例。
+
+### 质量门槛
+
+- `vp check`：全绿（fmt / lint / type）。
+- `vp test`：88 文件 / 772 例全绿。
+- `pnpm webapp build` ✓ / `pnpm desktopapp build` ✓。
+
+[v1.7.9]: https://github.com/Nathan3303/nao-todo/releases/tag/v1.7.9
+
 ## [v1.7.8] - 2026-09-21
 
 发布批次：常用搜索（Saved Searches）+ 搜索页侧栏化（AppAsideV2 Adapter / 折叠 / 空态 / 快捷搜索）+ 收集箱搜索缺陷修复（patch）。**Tag `v1.7.8`** · root `1.7.8` / `@nao-todo/desktopapp` `1.7.8` / `@nao-todo/webapp` `1.7.8`（`@nao-todo/presentation` `0.4.5` / `@nao-todo/shared` `1.3.0` / `@nao-todo/infrastructure` `0.5.0` / `@nao-todo/presentation-identity` `1.2.0` / `@nao-todo/domain-task` `1.2.0` / `@nao-todo/presentation-react` `0.1.0` 不动）。范围：web + desktop（搜索 UI）。

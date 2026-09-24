@@ -1,11 +1,9 @@
-import {
-    TASK_REMINDER_DIALOG_KEY,
-    sendNotification,
-    t,
-    type SSEReminderEvent
-} from '@nao-todo/shared'
-import type { DialogManager } from '@nao-todo/shared'
-import { LocalTaskRepoImpl } from '@nao-todo/infrastructure'
+import { TASK_REMINDER_DIALOG_KEY } from '@nao-todo/shared/constants/dialog-keys'
+import { sendNotification } from '@nao-todo/shared/utils/notification'
+import { t } from '@nao-todo/shared/locales'
+import type { SSEReminderEvent } from '@nao-todo/shared/types/sse'
+import type { DialogManager } from '@nao-todo/shared/hooks/use-dialog-manager'
+import { LocalTaskRepoImpl } from '@nao-todo/infrastructure/src/persistence-local/repos/task-repo-impl'
 
 /**
  * 本地任务提醒扫描器

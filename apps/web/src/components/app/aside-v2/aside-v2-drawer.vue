@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { PomodoroIndicator } from '@nao-todo/presentation/pomodoro'
-import { NaoRouterLink } from '@nao-todo/shared'
+import { NaoRouterLink } from '@nao-todo/shared/components/router-link'
 import { UserInitialAvatar } from '@nao-todo/presentation-identity'
 import { computed } from 'vue'
 import { useAppAsideV2 } from './use-aside'

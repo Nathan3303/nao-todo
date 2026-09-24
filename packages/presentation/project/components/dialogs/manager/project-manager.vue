@@ -1,13 +1,13 @@
 <script lang="ts" setup>
 import {
     type DialogInstanceType,
-    PROJECT_MANAGER_DIALOG_KEY,
-    ProjectBoard,
-    ProjectDeleteButton,
-    t,
-    useDialogWrapper,
-    RuleHint
-} from '@nao-todo/shared'
+    useDialogWrapper
+} from '@nao-todo/shared/components/dialog-wrapper'
+import { PROJECT_MANAGER_DIALOG_KEY } from '@nao-todo/shared/constants'
+import { t } from '@nao-todo/shared/locales'
+import { ProjectBoard } from '@nao-todo/shared/components/project-board'
+import { ProjectDeleteButton } from '@nao-todo/shared/components/project-delete-button'
+import { RuleHint } from '@nao-todo/shared/components/rule-hint'
 import { onMounted, ref } from 'vue'
 import type { ProjectManagerDialogProps } from './types'
 import useProjectManager from './use-project-manager'

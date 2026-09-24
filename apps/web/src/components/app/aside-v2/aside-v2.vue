@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useAppAsideV2 } from './use-aside'
 import { PomodoroIndicator } from '@nao-todo/presentation/pomodoro'
-import { NaoRouterLink } from '@nao-todo/shared'
+import { NaoRouterLink } from '@nao-todo/shared/components/router-link'
 import { UserInitialAvatar } from '@nao-todo/presentation-identity'
 import {
     AppSettingsDialog,
@@ -9,7 +9,7 @@ import {
     openSettingsDialog
 } from '@/components/settings/dialog'
 import { bindRailBottomHost, unbindRailBottomHost } from './rail-host'
-import { t } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
 import { nextTick, onBeforeUnmount, watch, type ComponentPublicInstance } from 'vue'
 
 defineOptions({ name: 'AppAsideV2' })

@@ -4,7 +4,12 @@ import { mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { computed, defineComponent, ref } from 'vue'
 import { NueMessage } from 'nue-ui'
-import type { TaskUseCase, TaskViewObject } from '@nao-todo/domain-task'
+import type {
+    TaskCheckItemUseCase,
+    TaskCheckItemViewObject,
+    TaskUseCase,
+    TaskViewObject
+} from '@nao-todo/domain-task'
 import { useTaskDetailsStore } from '../../../stores'
 import { TASK_DETAILS_CONTEXT_KEY, TASK_DETAILS_PRE_CONTEXT_KEY } from '../context'
 import type { TaskDetailsViewObject } from '../types'
@@ -71,15 +76,47 @@ type ListResult = [
     string | null
 ]
 
+/** 只读取数结果：[检查项视图对象列表 | null, 错误 | null] */
+type CheckResult = [TaskCheckItemViewObject[] | null, string | null]
+
+const makeCheckItem = (
+    name: string,
+    isDone: boolean,
+    taskId: string,
+    sortId = 0
+): TaskCheckItemViewObject => ({
+    id: `${taskId}-${name}`,
+    taskId,
+    name,
+    description: null,
+    isDone,
+    sortId,
+    createdAt: '2026-09-19 08:00:00',
+    updatedAt: '2026-09-19 20:00:00',
+    deletedAt: null
+})
+
+type SetupOptions = {
+    /** 覆盖默认任务集合（用于构造描述/标签等丰富字段） */
+    tasks?: Record<string, TaskViewObject>
+    /** 子任务检查项只读取数（D1：不得写共享 store） */
+    listByTask?: (taskId: TaskViewObject['id']) => Promise<CheckResult>
+    /** 标签 ID → 视图对象（名称解析） */
+    getTag?: (tagId: string) => { name: string } | undefined
+}
+
 const setup = (
-    listImpl: (options: { parentTaskId?: string; page?: number }) => Promise<ListResult>
+    listImpl: (options: { parentTaskId?: string; page?: number }) => Promise<ListResult>,
+    options: SetupOptions = {}
 ) => {
     setActivePinia(createPinia())
     const store = useTaskDetailsStore()
-    store.addTasks(Object.values(TASKS))
+    store.addTasks(Object.values(options.tasks ?? TASKS))
 
     const list = vi.fn(listImpl)
+    const listByTask = vi.fn(options.listByTask ?? (async () => [[], null] as CheckResult))
     const subTaskUseCase = { list } as unknown as TaskUseCase
+    const taskCheckItemUseCase = { listByTask } as unknown as TaskCheckItemUseCase
     const vo = ref<TaskDetailsViewObject | null>(ROOT as TaskDetailsViewObject)
 
     let api: ReturnType<typeof useExportTask> | null = null
@@ -99,7 +136,8 @@ const setup = (
                     },
                     [TASK_DETAILS_PRE_CONTEXT_KEY as symbol]: {
                         subTaskUseCase,
-                        getTag: () => undefined,
+                        taskCheckItemUseCase,
+                        getTag: options.getTag ?? (() => undefined),
                         getProjectName: () => ''
                     }
                 }
@@ -107,7 +145,7 @@ const setup = (
         }
     )
     wrappers.push(wrapper)
-    return { api: api!, list }
+    return { api: api!, list, listByTask, store }
 }
 
 const pageOf = (taskIds: string[], maxPage = 1, page = 1) =>
@@ -140,7 +178,18 @@ describe('useExportTask - 递归取数', () => {
         expect(list).toHaveBeenCalledTimes(4)
         expect(list).toHaveBeenCalledWith({ parentTaskId: 'root', page: 1, limit: 100 })
         expect(md).toContain(
-            ['## 子任务', '', '- [x] 子 1', '  - [ ] 孙 1', '- [ ] 子 2'].join('\n')
+            [
+                '## 子任务',
+                '',
+                '- [x] 子 1',
+                '  - 状态：已完成',
+                '  - 优先级：低优先级',
+                '  - 子任务：',
+                '    - [ ] 孙 1',
+                '- [ ] 子 2',
+                '  - 状态：待办',
+                '  - 优先级：低优先级'
+            ].join('\n')
         )
     })
 
@@ -154,7 +203,16 @@ describe('useExportTask - 递归取数', () => {
 
         expect(list).toHaveBeenCalledWith({ parentTaskId: 'root', page: 1, limit: 100 })
         expect(list).toHaveBeenCalledWith({ parentTaskId: 'root', page: 2, limit: 100 })
-        expect(md).toContain(['- [x] 子 1', '- [ ] 子 2'].join('\n'))
+        expect(md).toContain(
+            [
+                '- [x] 子 1',
+                '  - 状态：已完成',
+                '  - 优先级：低优先级',
+                '- [ ] 子 2',
+                '  - 状态：待办',
+                '  - 优先级：低优先级'
+            ].join('\n')
+        )
     })
 
     it('深度上限：异常数据（自引用）不会无限递归', async () => {
@@ -210,5 +268,118 @@ describe('useExportTask - 复制到剪贴板', () => {
 
         expect(ok).toBe(false)
         expect(NueMessage.error).toHaveBeenCalledTimes(1)
+    })
+})
+
+/**
+ * 一级子任务丰富取数（PRD §5.2 / §5.3，D1 只读约束）
+ * @description 契约：预上下文提供 `taskCheckItemUseCase.listByTask(taskId)` 只读取数，
+ *              不得调用会写共享 store 的 `list(taskId)`；仅对一级子任务取检查项。
+ */
+describe('useExportTask - 一级子任务丰富取数（AC1/AC4/AC5）', () => {
+    it('一级子任务取回描述/检查项/标签并丰富输出；二级不取检查项', async () => {
+        const tasks: Record<string, TaskViewObject> = {
+            root: ROOT,
+            c1: makeTask({
+                id: 'c1',
+                parentTaskId: 'root',
+                name: '子 1',
+                state: 'done',
+                sortId: 1000,
+                tags: ['t1'],
+                description: '子 1 描述'
+            }),
+            g1: makeTask({ id: 'g1', parentTaskId: 'c1', name: '孙 1', sortId: 1000 })
+        }
+        const listByTask = vi.fn(async (taskId: string): Promise<CheckResult> => {
+            if (taskId === 'c1') {
+                return [
+                    [makeCheckItem('检一', true, 'c1'), makeCheckItem('检二', false, 'c1', 1)],
+                    null
+                ]
+            }
+            return [[], null]
+        })
+        const { api } = setup(
+            async ({ parentTaskId }) =>
+                pageOf(parentTaskId === 'root' ? ['c1'] : parentTaskId === 'c1' ? ['g1'] : []),
+            { tasks, listByTask, getTag: (id) => (id === 't1' ? { name: '重要' } : undefined) }
+        )
+
+        const md = await api.exportTask()
+
+        expect(listByTask).toHaveBeenCalledWith('c1')
+        expect(listByTask).not.toHaveBeenCalledWith('g1')
+        expect(md).toContain(
+            [
+                '- [x] 子 1',
+                '  - 状态：已完成',
+                '  - 优先级：低优先级',
+                '  - 标签：#重要',
+                '  - 描述：子 1 描述',
+                '  - 检查项：',
+                '    - [x] 检一',
+                '    - [ ] 检二',
+                '  - 子任务：',
+                '    - [ ] 孙 1'
+            ].join('\n')
+        )
+        // 名称行不再含行内括号属性（Q2′）
+        expect(md).not.toContain('（')
+        expect(md).not.toContain('）')
+    })
+
+    it('子任务无检查项 ⇒ 整段省略（不输出「检查项：」标签行）', async () => {
+        const tasks: Record<string, TaskViewObject> = {
+            root: ROOT,
+            c1: makeTask({ id: 'c1', parentTaskId: 'root', name: '子 1', sortId: 1000 })
+        }
+        const { api } = setup(
+            async ({ parentTaskId }) => pageOf(parentTaskId === 'root' ? ['c1'] : []),
+            { tasks, listByTask: async () => [[], null] }
+        )
+
+        const md = await api.exportTask()
+
+        expect(md).toContain(['- [ ] 子 1', '  - 状态：待办', '  - 优先级：低优先级'].join('\n'))
+        expect(md).not.toContain('检查项：')
+    })
+
+    it('子任务检查项取数失败 ⇒ 整体失败：返回 null、记录错误、toast 一次', async () => {
+        const tasks: Record<string, TaskViewObject> = {
+            root: ROOT,
+            c1: makeTask({ id: 'c1', parentTaskId: 'root', name: '子 1', sortId: 1000 })
+        }
+        const { api } = setup(
+            async ({ parentTaskId }) => pageOf(parentTaskId === 'root' ? ['c1'] : []),
+            { tasks, listByTask: async () => [null, 'check boom'] }
+        )
+
+        const md = await api.exportTask()
+
+        expect(md).toBeNull()
+        expect(api.error.value).toBe('check boom')
+        expect(NueMessage.error).toHaveBeenCalledTimes(1)
+    })
+
+    it('取数不污染 TaskDetailsStore 的检查项（AC5 / D1 只读约束）', async () => {
+        const tasks: Record<string, TaskViewObject> = {
+            root: ROOT,
+            c1: makeTask({ id: 'c1', parentTaskId: 'root', name: '子 1', sortId: 1000 })
+        }
+        const sentinel = makeCheckItem('根任务检查项', false, 'root')
+        const { api, store } = setup(
+            async ({ parentTaskId }) => pageOf(parentTaskId === 'root' ? ['c1'] : []),
+            { tasks, listByTask: async () => [[makeCheckItem('子检查项', true, 'c1')], null] }
+        )
+        store.setCheckItems([sentinel])
+        store.setCheckItemIds([sentinel.id])
+        const beforeItems = [...store.checkItems]
+        const beforeIds = [...store.checkItemIds]
+
+        await api.exportTask()
+
+        expect(store.checkItems).toEqual(beforeItems)
+        expect(store.checkItemIds).toEqual(beforeIds)
     })
 })

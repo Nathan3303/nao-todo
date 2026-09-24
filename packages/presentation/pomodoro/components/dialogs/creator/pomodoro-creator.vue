@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import {
     type DialogInstanceType,
-    POMODORO_CREATOR_DIALOG_KEY,
     useDialogWrapper
-} from '@nao-todo/shared'
+} from '@nao-todo/shared/components/dialog-wrapper'
+import { POMODORO_CREATOR_DIALOG_KEY } from '@nao-todo/shared/constants'
 import { onMounted, ref } from 'vue'
 import { PomodoroForm } from '../../form'
 import type { PomodoroCreatorDialogProps } from './types'

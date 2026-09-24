@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { PasswordRuleHint, RuleHint, t, unwrapError } from '@nao-todo/shared'
+import { PasswordRuleHint, RuleHint } from '@nao-todo/shared/components/rule-hint'
+import { t } from '@nao-todo/shared/locales'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { NueInput, NueMessage } from 'nue-ui'
 import { computed, onMounted, reactive, ref } from 'vue'
 import type {

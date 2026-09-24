@@ -1,4 +1,4 @@
-import { useResponsiveAside, responsiveTypes } from '@nao-todo/shared'
+import { useResponsiveAside, responsiveTypes } from '@nao-todo/shared/hooks'
 import { nextTick, Ref, shallowRef, watch } from 'vue'
 
 export type AppAsideV2ControlOption = {

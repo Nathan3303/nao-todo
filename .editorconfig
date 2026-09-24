@@ -18,3 +18,8 @@ indent_size = 4
 
 [{*.yaml,*.yml}]
 indent_size = 4
+
+# AGENTS.md 由 Vite+ CLI（`vp config` / prepare）托管注入 `<!--VITE PLUS START/END-->` 区块，
+# 该注入器以 LF 写入且不读 .editorconfig ⇒ 与全局 CRLF 冲突造成 EOL 抖动。此处显式指定 LF 使三方一致。
+[AGENTS.md]
+end_of_line = lf

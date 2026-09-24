@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { t, throttle } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
+import { throttle } from '@nao-todo/shared/utils/commons'
 import type { UserSessionValueObject, UserUseCase } from '@nao-todo/domain-identity'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import { storeToRefs } from 'pinia'

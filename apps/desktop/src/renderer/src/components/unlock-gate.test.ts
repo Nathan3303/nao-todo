@@ -29,11 +29,24 @@ const mocks = vi.hoisted(() => ({
     hasKeyBundle: vi.fn(),
     unlock: vi.fn(),
     lock: vi.fn(),
-    checkAndCleanExpired: vi.fn(),
     readCachedNickname: vi.fn(),
     setCurrentUserId: vi.fn(),
     clearSession: vi.fn(),
-    loadUserProfile: vi.fn()
+    loadUserProfile: vi.fn(),
+    isPlaintextMigrationDone: vi.fn(),
+    runPlaintextMigration: vi.fn(),
+    // C-54/C-52：登出护栏 + 清库（helper 自身行为见 `views/auth/sign-out-wipe.test.ts`）
+    confirm: vi.fn(),
+    wipeLocalDataOnSignOut: vi.fn()
+}))
+
+vi.mock('nue-ui', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('nue-ui')>()
+    return { ...actual, NueConfirm: mocks.confirm }
+})
+
+vi.mock('@/views/auth/sign-out-wipe', () => ({
+    wipeLocalDataOnSignOut: mocks.wipeLocalDataOnSignOut
 }))
 
 vi.mock('@nao-todo/infrastructure', () => ({
@@ -46,11 +59,34 @@ vi.mock('@nao-todo/infrastructure', () => ({
         setCurrentUserId: mocks.setCurrentUserId,
         clear: mocks.clearSession
     },
-    deletionService: { checkAndCleanExpired: mocks.checkAndCleanExpired },
     initSnowflakeEpoch: vi.fn(),
     readCachedNickname: mocks.readCachedNickname,
-    resolveUserIdFromStoredJwt: mocks.resolveUserIdFromStoredJwt
+    resolveUserIdFromStoredJwt: mocks.resolveUserIdFromStoredJwt,
+    isPlaintextMigrationDone: mocks.isPlaintextMigrationDone,
+    runPlaintextMigration: mocks.runPlaintextMigration
 }))
+
+// T122：生产侧已改窄子路径导入 ⇒ 同步注册同名深路径 mock（转发上方 barrel mock，语义不变）
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-local/crypto/crypto-service',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-sync/epoch',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-local/migration/plaintext-migration',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-local/session/local-session',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-local/session/profile-cache',
+    async () => import('@nao-todo/infrastructure')
+)
 
 vi.mock('@/hooks', () => ({
     useUserUseCase: () => ({ loadUserProfile: mocks.loadUserProfile })
@@ -91,10 +127,15 @@ beforeEach(() => {
     localStorage.clear()
     vi.clearAllMocks()
     mocks.hasKeyBundle.mockResolvedValue(true)
-    mocks.checkAndCleanExpired.mockResolvedValue(false)
     mocks.unlock.mockResolvedValue(undefined)
     mocks.readCachedNickname.mockReturnValue(null)
     mocks.loadUserProfile.mockResolvedValue([null, '拉取失败：网络错误'])
+    // 默认：未迁移（保持既有「显示解锁表单」断言成立）
+    mocks.isPlaintextMigrationDone.mockResolvedValue(false)
+    mocks.runPlaintextMigration.mockResolvedValue({ ran: true, migrated: 0, lockSkipped: false })
+    // C-54/C-52：默认确认登出 + 护栏/清库放行
+    mocks.confirm.mockResolvedValue([false])
+    mocks.wipeLocalDataOnSignOut.mockResolvedValue(true)
 })
 
 afterEach(() => {
@@ -190,5 +231,101 @@ describe('UnlockGate - SHELL-03 终态与离线身份', () => {
         retry?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
         await flushPromises()
         expect(document.querySelector('input[type="password"]')).not.toBeNull()
+    })
+
+    it('AC1b：已有密钥包 + 已完成明文迁移 ⇒ 无密码直接进入', async () => {
+        mocks.resolveUserIdFromStoredJwt.mockReturnValue('u-1')
+        mocks.hasKeyBundle.mockResolvedValue(true)
+        mocks.isPlaintextMigrationDone.mockResolvedValue(true)
+        const gate = mountGate()
+        await flushPromises()
+
+        expect(gate.emitted('unlocked')).toBeTruthy()
+        expect(mocks.unlock).not.toHaveBeenCalled()
+    })
+
+    it('AC4：未迁移 ⇒ UI 标「待升级」；点「跳过迁移」仅解锁且不调迁移', async () => {
+        mocks.resolveUserIdFromStoredJwt.mockReturnValue('u-1')
+        mocks.hasKeyBundle.mockResolvedValue(true)
+        mocks.isPlaintextMigrationDone.mockResolvedValue(false)
+        const gate = mountGate()
+        await flushPromises()
+
+        // 待升级标注可见
+        expect(document.querySelector('.unlock-gate__pending')?.textContent).toContain('待升级')
+        expect(buttonsText()).toContain('跳过迁移')
+
+        const input = wrapper!.findComponent(NueInput)
+        input.vm.$emit('update:modelValue', 'pw')
+        await flushPromises()
+
+        const skip = [...document.querySelectorAll('button')].find(
+            (b) => b.textContent?.trim() === '跳过迁移'
+        )
+        skip?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await flushPromises()
+
+        expect(mocks.unlock).toHaveBeenCalledWith('u-1', 'pw')
+        expect(mocks.runPlaintextMigration).not.toHaveBeenCalled()
+        expect(gate.emitted('unlocked')).toBeTruthy()
+    })
+
+    it('AC2（启动门侧）：未迁移 + 输入密码点「解锁」⇒ 先迁移再放行', async () => {
+        mocks.resolveUserIdFromStoredJwt.mockReturnValue('u-1')
+        mocks.hasKeyBundle.mockResolvedValue(true)
+        mocks.isPlaintextMigrationDone.mockResolvedValue(false)
+        const gate = mountGate()
+        await flushPromises()
+
+        const input = wrapper!.findComponent(NueInput)
+        input.vm.$emit('update:modelValue', 'pw')
+        await flushPromises()
+
+        const unlockButton = [...document.querySelectorAll('button')].find(
+            (b) => b.textContent?.trim() === '解锁'
+        )
+        unlockButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await flushPromises()
+
+        expect(mocks.unlock).toHaveBeenCalledWith('u-1', 'pw')
+        expect(mocks.runPlaintextMigration).toHaveBeenCalledWith('u-1')
+        expect(gate.emitted('unlocked')).toBeTruthy()
+    })
+
+    it('C-52：登出用户 ⇒ 脏队列护栏/清库 helper + 清会话（不经过 AppRoot）', async () => {
+        mocks.resolveUserIdFromStoredJwt.mockReturnValue('u-1')
+        mocks.hasKeyBundle.mockResolvedValue(true)
+        mocks.isPlaintextMigrationDone.mockResolvedValue(false)
+        mountGate()
+        await flushPromises()
+
+        const signOutButton = [...document.querySelectorAll('button')].find(
+            (b) => b.textContent?.trim() === '登出用户'
+        )
+        signOutButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await flushPromises()
+
+        expect(mocks.wipeLocalDataOnSignOut).toHaveBeenCalledWith('u-1')
+        expect(mocks.clearSession).toHaveBeenCalled()
+        expect(mocks.lock).toHaveBeenCalled()
+    })
+
+    it('C-52：护栏取消 ⇒ 不清库、不清会话、不放行', async () => {
+        mocks.resolveUserIdFromStoredJwt.mockReturnValue('u-1')
+        mocks.hasKeyBundle.mockResolvedValue(true)
+        mocks.isPlaintextMigrationDone.mockResolvedValue(false)
+        mocks.wipeLocalDataOnSignOut.mockResolvedValue(false)
+        const gate = mountGate()
+        await flushPromises()
+
+        const signOutButton = [...document.querySelectorAll('button')].find(
+            (b) => b.textContent?.trim() === '登出用户'
+        )
+        signOutButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        await flushPromises()
+
+        expect(mocks.wipeLocalDataOnSignOut).toHaveBeenCalledWith('u-1')
+        expect(mocks.clearSession).not.toHaveBeenCalled()
+        expect(gate.emitted('unlocked')).toBeFalsy()
     })
 })

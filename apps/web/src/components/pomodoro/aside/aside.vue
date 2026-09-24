@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject, onMounted, ref, watch, nextTick } from 'vue'
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
-import { POMODORO_CREATOR_DIALOG_KEY } from '@nao-todo/shared'
+import { POMODORO_CREATOR_DIALOG_KEY } from '@nao-todo/shared/constants'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 
 defineOptions({ name: 'PomodoroAside' })

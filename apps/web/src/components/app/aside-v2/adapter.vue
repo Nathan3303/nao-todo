@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { APP_CONTEXT_KEY } from '@/context'
-import { responsiveTypes } from '@nao-todo/shared'
+import { responsiveTypes } from '@nao-todo/shared/hooks'
 import { computed, inject } from 'vue'
 import AsideV2 from './aside-v2.vue'
 import AsideV2Drawer from './aside-v2-drawer.vue'

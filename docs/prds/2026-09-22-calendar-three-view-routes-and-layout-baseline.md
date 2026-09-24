@@ -1,0 +1,151 @@
+# 2026-09-22 日历三视图：路由三子路由化 + 头部/容器布局单一基线（TASK-18）
+
+- **状态**：PRD 定稿；**用户 2026-09-22 已开工确认**；T69/T70 已交付，T71 已派发（进行中）
+- **关联**：诊断报告 `docs/reports/T68-calendar-three-view-routing-and-header-layout-diagnosis.md`；ADR `docs/adr/2026-09-22-calendar-view-routes-and-header-layout-baseline.md`（C1–C8 为实现期硬约束）；上游 TASK-16 ADR C14/A3；TASK-17 PRD D4 遗留
+- **拍板**：用户 2026-09-22 决定 **D1=(a) 三子路由**，其余按架构建议（D2 `replace`／D3 保留 `taskId`／D4 修 `LAST_CALENDAR_ROUTE`／D5 不引入 Playwright／D6 采纳用户 daily 改动并补回 testid／D7 同批修周 active 误绑）；**D8/D9 由 arch 在 T74（U2 落点评审）裁决**（见 §9）
+
+## 1. 问题证据与 5 Whys
+
+**来源**：用户提问「不能月/周/日分别三个字路由吗？」「三视图头部样式不一致，包括 gap 什么的，点击切换视图时会有元素位移」。
+
+| 层  | 追问                                                                                                                                    |
+| :-- | :-------------------------------------------------------------------------------------------------------------------------------------- |
+| ①   | 三视图应共享同一布局基线与同一状态宿主                                                                                                  |
+| ②   | 现状：三份根容器规则、右组 gap 三样（16/6/8）、未安排↔今天 8/6/4、分隔线两种实现、标题宽度 132 vs 145–165                               |
+| ③   | 视图是 `monthly/index.vue` 内部 `viewMode` + `v-if`；weekly/daily **渲染在 `.nue-calendar-monthly` 根容器内部**                         |
+| ④   | 于是日视图自带 `padding:1rem` = **双重 padding**（内缩 16px、网格窄 32px）；右组 gap 差异导致 `sort`/`toggle` 横移 +24/+28px、+14/+20px |
+| ⑤   | **命题：确立单一布局基线（padding 归属 / 三层 gap / 单一分隔线 / 标题宽度稳定 / 根容器口径）+ 视图状态宿主上移并三子路由化**            |
+
+**实测证据（arch T68）**：P0 双重 padding（已由用户手改消除，实测三视图此后像素级一致）；**已证伪**「active 字重致位移」（三按钮恒 30.02px）。
+
+## 2. 目标指标
+
+| 项       | 口径                                                                                                        |
+| :------- | :---------------------------------------------------------------------------------------------------------- |
+| 中间指标 | 三视图头部与根容器**规则唯一**（同一 `calendar-grid.css` + 同一容器口径）；视图状态**单一宿主**；URL 可深链 |
+| 成功口径 | 切月→周→日时 `sort`/`toggle` **水平位置不变**；三条路径可直达并可回退/分享；切视图**不重拉数据**；门禁全绿  |
+
+## 3. 范围 / 非范围
+
+**做（两个实施单元）**
+
+- **U1 布局单一基线（C6）**：① padding 只由路由根容器 `.nue-calendar-monthly` 提供，weekly/daily 根**不得**声明 padding（用户手改已达成，需**保留**）；② 头部三层 gap 统一（外层 `var(--nue-gap-xs)`、左组 `2px`、右组 `var(--nue-gap-xs)`）且「未安排 / 今天」为右组**直接子元素**（**压平**日视图新增的 wrapper；monthly 的同类 wrapper 一并移除——按其内层亦为 `xs`，视觉中立）；③ 分隔线统一共享 `.view-sep` span（删头部内 `NueDivider`，`calendar-grid.css` 补 `.day-view-sep`，`.cal-view-sep` 转为在用）；④ 标题 `min-width ≥ 176px(11rem)` 三视图同值；⑤ 根容器统一 `height:100%` + `min-height:0`，**禁**依赖 `flex:1`（实测父级非 flex 时 486→88px 塌陷）。
+- **U2 路由三子路由化（C1–C5、C8）**：① **状态宿主上移**（`useCalendarMonthly()` 及其 provide 从 `monthly/index.vue` 上移到 entry 子层宿主），三视图只 `inject` 渲染契约；② 新增子路由 `calendar-weekly` / `calendar-day`（**保持** `calendar` 父名与 `calendar-monthly` 现名），三条子路由**都带 `:taskId?`**；③ `viewMode` **由 `route.name` 派生**（只读 computed，导航为唯一写路径，**禁**可变镜像双向同步）；④ 切视图用 `router.replace`（不污染返回栈）；⑤ 切视图**保留打开的 `taskId`**；⑥ **D4**：修 `LAST_CALENDAR_ROUTE` 失效（照抄 `tasks/routes.ts:8-16` 的父级 `beforeEnter` 范式，恢复 sub-route + taskId）。
+- **随单小修**：**D7** 周视图 active「周」按钮误绑 `@click="onGoMonth"`（`weekly/index.vue:213-221`）；**D6** 恢复 `data-testid="day-unscheduled-entry"`。
+
+**不做**：不引入 `keep-alive`（C3，会退化为三份状态 + 三次拉取）；不引入 Playwright（D5，本单以人眼 + 结构断言验证）；不清理既有死代码 `.cal-aside-toggle` / `.cal-nav-btn`（§3 外科手术原则，另记遗留）；不改服务端/领域契约；**不动** `packages/presentation-react`、`apps/mobileapp`（移动端红线）。
+
+## 4. 用户场景
+
+- **场景卡 1（位移）**：用户切月→周→日，头部控件**不再横向跳动**，网格不再下移。
+- **场景卡 2（深链）**：把 `/calendar/daily/2026-09-22` 发给同事，对方打开即日视图且详情已开；浏览器后退回到图片前一步（视图切换不写历史）。
+- **场景卡 3（零重拉）**：切视图时网络面板**无新请求**，滚动与选中态保留。
+- **页面状态清单**：三视图 × 加载/空态/错误；`taskId` 有无；窄窗 wrap；侧边栏收起/展开。
+- **边界数据**：最长标题 `2026 年 12 月 31 日`（实测 165.41px）；530px 窄窗（wrap 阈值）；无 provider 的独立挂载（单测）。
+
+## 5. 业务规则
+
+### 5.1 布局基线唯一（C6）
+
+- padding 只属路由根容器；三层 gap 与分隔线、标题宽度、根容器高度口径三视图同值（细则见 ADR C6）。
+- **T74 修订（C6.1）**：三视图成为兄弟路由后，唯一承载层 = `host.vue` 根容器 **`.nue-calendar-host`**（padding / `--cal-*` 令牌 / `height:100%` / `background` / `overflow` 全部由它提供）；`.nue-calendar-host` 必须加入 `calendar-grid.css` 令牌选择器组（**令牌随行**，否则日视图 `--cal-*` 全失效）；`monthly` 根须在**同一次改动内**删掉 `padding:1rem`（防止重演双重 padding）；`weekly`/`daily` 根不得声明 padding。**净视觉效果不变**（padding 由宿主承接）。
+
+### 5.2 状态宿主唯一（C1）/ 零重拉（C2）/ 禁 keep-alive（C3）
+
+- 锚点、任务快照、排序、拖拽、抽屉、撤销等状态由**单一宿主**持有；任何「切视图」路径不得触发 `useCalendarTaskQuery` 重建。
+- **瞬态态（T75 裁决，D10）**：`useDragSchedule` 手势会话 / 格内快速新建编辑器**允许上收至宿主单实例**（非必须 view-local），但必须配「视图变更时 `drag.cancel()` + 关闭内联编辑器」与「宿主作用域卸载兜底释放 window 监听」；月视图 `quickCreate` 在宿主、日视图 `quickCreate` 与时间轴拖拽在本地 —— 两种落点并存**不视为不一致**。
+
+### 5.3 路由契约（C4/C5）
+
+- 路由名：父 `calendar`；子 `calendar-monthly`（现名保留）、`calendar-weekly`、`calendar-day`；三者均 `:taskId?`。
+- 默认入口 `redirect → calendar-monthly`（A3：默认月视图，不变）。
+- `viewMode` = 只读派生自 `route.name`；切视图 = `router.replace`。
+- 回退/分享：三条路径均可直达；`LAST_CALENDAR_ROUTE` 恢复子路由 + `taskId`（D4）。
+
+## 6. NFRs
+
+- 零重拉（C2）为硬红线：路由化**必须**与宿主上移同单落地，否则 weekly 崩（`inject(...)!` 无兜底）、daily 自行重拉。
+- 既有测试全绿且**不得修改测试文件**；`.day-*`/`.cal-*`/`.wk-*` 排版规则只允许出现在 `calendar-grid.css`。
+- 门禁：`vp test` / `vp check` / `guard:ddd` / 双端 build ✓。
+
+## 7. AC（五覆盖）
+
+| #   | 覆盖      | Given                   | When                                         | Then                                                                                                                                                                                |
+| :-- | :-------- | :---------------------- | :------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC1 | 布局基线  | 三视图已渲染            | 静态检查                                     | 头部外层/左组/右组 gap 三视图同值；「未安排/今天」为右组**直接子元素**（无 wrapper）；分隔线为共享 `.view-sep`；标题 `min-width` 三视图同值且 ≥176px；weekly/daily 根**无** padding |
+| AC2 | 位移消除  | 月→周→日                | 切换视图                                     | `sort` 下拉与视图切换控件的**水平位置不变**（人眼 + 结构/几何断言）；网格不再整体下移；根容器高度不塌陷                                                                             |
+| AC3 | D6 回归   | 日视图渲染              | 查询 `[data-testid="day-unscheduled-entry"]` | 存在；`daily-view.test.ts` 绿                                                                                                                                                       |
+| AC4 | D7 行为   | 处于周视图              | 点 active 的「周」按钮                       | **不再跳回月视图**（无副作用 / 行为正确）                                                                                                                                           |
+| AC5 | 路由      | 三条子路由              | 直达 / 切换                                  | `calendar-monthly`、`calendar-weekly`、`calendar-day` 均可直达与深链（含 `:taskId?`）；默认 redirect 落月；切视图 `replace`（返回栈不增长）；`viewMode` 无可变镜像                  |
+| AC6 | 零重拉    | 已加载数据              | 切视图                                       | **无新请求**（`useCalendarTaskQuery` 不重建）；选中/滚动保留                                                                                                                        |
+| AC7 | D4        | 从其他 section 返回日历 | 触发 section 恢复                            | 恢复到**上次的日历子路由（含 taskId）**；不再失效                                                                                                                                   |
+| AC8 | 工程+负向 | 全部改动                | 执行                                         | 全仓测试全绿（890 + 新增）；`vp check`/`guard:ddd`/双端 build ✓；**未引入 keep-alive**；移动端零改动；无三份状态                                                                    |
+
+**不达标处置预案**：weekly 崩 → 检查宿主上移是否漏项（`inject` 无兜底）；重拉 → 检查宿主是否仍随路由卸载；位移仍在 → 复查右组 gap/标题 min-width 是否真正共用；测试红 → 立即回退到绿灯基线再定位。
+
+## 8. 优先级
+
+| 筛子     | 结论                                                                            |
+| :------- | :------------------------------------------------------------------------------ |
+| 战略筛子 | 通过（用户直提；三视图一致性 + 可深链）                                         |
+| MoSCoW   | Should                                                                          |
+| Kano     | U1 基本型（不一致即缺陷）／U2 期望型                                            |
+| RICE     | U1：R3 × I2 × C95% / 0.5 人天 ≈ **11.4**；U2：R3 × I2 × C80% / 2 人天 ≈ **2.4** |
+
+## 9. 决策留痕（D1–D7 拍板）
+
+| #   | 决策                                     | 结论                                                                                                                                                                                                        | 依据                                         |
+| :-- | :--------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------- |
+| D1  | 路由方案                                 | **(a) 三子路由**                                                                                                                                                                                            | 用户拍板；须与宿主上移打包（C1/C2）          |
+| D2  | 切视图写历史                             | `replace`（不污染返回栈）                                                                                                                                                                                   | 架构建议，用户采纳                           |
+| D3  | 保留打开的 `taskId`                      | 保留                                                                                                                                                                                                        | 同上                                         |
+| D4  | `LAST_CALENDAR_ROUTE` 恢复 sub-route     | 修（含 taskId）                                                                                                                                                                                             | 既有缺陷，tasks 段有范式                     |
+| D5  | Playwright 几何回归                      | 不引入（人眼 + 结构断言）                                                                                                                                                                                   | 用户"手工测试"取向                           |
+| D6  | 用户 daily 改动                          | **采纳**（padding 修复正确且完整，不推广 monthly）+ **补回被删 `data-testid`**                                                                                                                              | 实测三视图像素级一致；缺口令 C12 契约测试红  |
+| D7  | 周 active 误绑                           | 同批修                                                                                                                                                                                                      | 复制粘贴缺陷                                 |
+| D8  | T74/D-a：承载层迁到 host 是否偏离 C6.1？ | **不偏离**（意图不变、字面随结构性迁移更新）⇒ 修订 C6.1：承载层 = `.nue-calendar-host`（入 `--cal-*` 令牌组 + 承接 padding / `height:100%` / `background` / `overflow`）；`monthly` 根同步去 `padding:1rem` | arch T74 裁决；触发源 = rd-fe T71-A 落点清单 |
+| D9  | 撤销栈是否收敛为单栈？                   | **不强制合并**（时长轴栈保持自足回退）；**但呈现层唯一**（C9：同一时刻只允许一个撤销 toast），且两套栈须共用同一 `ScheduleUndoAction` 形状/语义                                                             | arch T74 裁决；风险登记见 ADR §7.1           |
+
+| D10 | 瞬态态上收宿主是否偏离 C1？ | **不偏离**（C1 措辞为「允许」非「必须」）；单实例 + `viewMode` 变更时 `drag.cancel()` + 关闭内联编辑器 + 宿主卸载兜底释放 window 监听 ⇒ ADR 原顾虑（悬挂会话）已被确定性护栏消除；日视图瞬态态仍本地（C1 原义活体实例）⇒ 已在 ADR **C1** 补句 | arch T75 裁决（PM 门禁复核后提出） |
+
+## 10. 派发记录
+
+| 任务 | 目标会话      | 角色 | 概要                                                                                                                | 对应 AC     | 状态                                                        |
+| :--- | :------------ | :--- | :------------------------------------------------------------------------------------------------------------------ | :---------- | :---------------------------------------------------------- |
+| T69  | rd-fe         | 前端 | **先决**：补回 `data-testid="day-unscheduled-entry"` + 提交用户 daily 改动（绿灯基线）                              | AC3         | ✅ `0d1b801e`                                               |
+| T70  | rd-fe         | 前端 | U1：布局单一基线（C6）+ D7 周 active 误绑                                                                           | AC1/AC2/AC4 | ✅ `c3aa5c1b`                                               |
+| T74  | arch-designer | 架构 | U2 落点评审裁决：C1 细化 + 撤销栈例外、C6.1 承载层迁 `.nue-calendar-host`、新增 C9–C11、补充 C5、D8/D9              | —           | ✅ `d3fff86a`                                               |
+| T71  | rd-fe         | 前端 | U2：宿主上移（`.nue-calendar-host` + 令牌随行 + monthly 去 padding）+ 三条子路由 + `viewMode` 派生 + `replace` + D4 | AC5/AC6/AC7 | ✅ 已交付（`a15ce8f9` 13 文件）                             |
+| T72  | PM            | —    | 门禁复核 + 静态核验 + 交付小结（用户手工验收）                                                                      | AC1–AC8     | ⏳ 门禁复核已通过；**待用户人眼手工验收**（清单见 §13）     |
+| T75  | arch-designer | 架构 | T71 一致性裁决（零代码）：瞬态态归属 (a)/(b)                                                                        | —           | ✅ 裁决 **(a) 不偏离**（`003c25e6` 落盘 ADR C1 补句 + D10） |
+| T76  | rd-fe         | 前端 | TASK-18 提交（精确 pathspec，禁 push）                                                                              | —           | ✅ 已交付（`a15ce8f9` + `c76bc1fd`，无夹带）                |
+
+**顺序**：严格串行（T69 → T70 → T71 → T72）。U2 必须与宿主上移**同单**（C1/C2），不得拆分。
+
+## 11. 验收结果
+
+- **交付**：`a15ce8f9`（feat，13 文件）+ `c76bc1fd`（test，3 文件）；**未 push**（发版策略：统一发版时 push + tag）。
+- **AC 核验（PM 独立复跑 + 读码）**：
+    - AC5 路由：三子路由可达/深链（含 `:taskId?`）、默认经 `beforeEnter` 落月、`router.replace` + `resolveViewSwitch` 幂等短路 + params/query 透传、`viewMode` 只读派生无镜像；映射断言用**真实路由表**遍历（含反向穷举）。✓
+    - AC6 零重拉：宿主持 `router-view` 不随子路由卸载、`useCalendarTaskQuery` 单实例；用例真跑 月→周→日→月 断言 `list` **恒 1 次**。✓
+    - AC7 D4：父级去 `redirect` 改 `beforeEnter`，全局 `beforeEach` 能命中 `to.name==='calendar'`；用例复用真实 `resolveSectionRedirect` 真跑内存路由，恢复 `/calendar/weekly/t-9`。✓
+    - AC8 工程/负向：PM 于 HEAD 复跑 **106 文件 / 906 例全绿**、`vp check` 0、`guard:ddd` OK、`pnpm webapp build` 与 `pnpm run desktop:build` 均 exit 0、全仓 grep 无 keep-alive、移动端与 `packages/presentation-react` 零改动、既有 T49/T54/T55/T58/T61 断言未被触碰。✓
+    - C6.1 四条 / C9 / C1（D8/D9/D10）：码上逐条相符。✓
+- **夹具自检**：rd-fe 侧 906 全绿 + check 0 + 双端 build ✓（与 PM 复跑一致）。
+- **未过项**：无（门禁口径）。**待用户人眼验收项**见 §13。
+- **提交纪律**：两提交逐文件精确 pathspec、无 `.agents/**` / `.codegraph/**` / `.pi/**` / `docs/**` 夹带、未 push。✓
+
+## 12. 变更记录
+
+- 2026-09-22：用户提出路由与三视图一致性两问 → arch T68 只读诊断（报告 + ADR）→ PM 出开工确认卡 → 用户拍板 D1=(a)、其余按建议 → 本 PRD 定稿。
+- 2026-09-22：T69 ✅ `0d1b801e`、T70 ✅ `c3aa5c1b`；rd-fe T71-A 只读落点清单报备 D-a/D-c → arch **T74 裁决**（`d3fff86a`：C6.1 承载层迁 host + 令牌随行 + monthly 去 padding；C1 撤销栈例外三项条件；新增 C9/C10/C11；D8/D9）→ PM 本行同步：§5.1 补 C6.1、§9 补 D8/D9、§10 状态刷新。**T74 不改变 C2/C3/C4/C7/C8 与 D1–D7、不改变任一 AC**；C6.1 对 monthly 根 padding 的收口为 arch 裁决范围内（PM 已向用户报备，用户同批选择「落记账 + 派 T71」）。
+- 2026-09-22：**T71 ✅**（U2 宿主上移 + 三子路由）—— rd-fe 回执 + **PM 独立复跑门禁通过**（106 文件 / 906 例全绿、`vp check` 0、`guard:ddd` OK、双端 build exit 0、无 keep-alive、移动端零改动、既有 T49/T54/T55/T58/T61 未被触碰）。**T75 裁决 (a)**：瞬态态单实例宿主**不偏离 C1**（D10）⇒ 已在 ADR C1 补句（PM 一行落盘）。
+
+## 13. 遗留项
+
+- 死代码 `.cal-aside-toggle`、`.cal-nav-btn`（×3 规则）零引用（arch T68 §2-3）——未擅自清理。
+- Playwright 几何回归（D5 暂不引入）——若后续多次出现布局回归再评估。
+- TASK-17 D4 遗留（月视图 `NueDivider` / 周视图 `.wk-view-sep` 不一致）由本单 U1-③ 一并解决，届时可关闭该遗留。
+- **已知可接受（T75 INFO-1，低）**：`calendar.quick-create`（`n`）注册在宿主，目标是 monthly 的 `quickCreateDate`；日视图不消费该字段（`CalendarDayContext` 无 quick-create），故日视图按 `n` 无可见效果。非 C1 偏离（C1 不涉快捷键），日视图本以「点击轨道定位」为新建入口（快捷键无时间落点语义）。本轮**不动**；若后续要补，须先定「落点 = 当前时间还是选中块」。
+- **C10③ `replace` 代价（D2 已拍板，待用户手工验收项）**：切视图后「返回」无法回到切换前 URL（含此前已打开的详情深链 `/calendar/monthly/<taskId>`）。
+- **视觉几何（切视图零位移）**：未跑浏览器，交 T72 用户人眼验收（`.nue-calendar-host` 多一层 flex 列包裹，逻辑与原 `.nue-calendar-monthly` 直挂 `.nue-content` 等价）。

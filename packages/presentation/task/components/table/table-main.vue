@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { inject, onMounted, onUnmounted } from 'vue'
-import { TaskPriorityInfo, TaskStateInfo, TaskDateInfo, TaskBasicInfo } from '@nao-todo/shared'
+import { TaskPriorityInfo } from '@nao-todo/shared/components/task-priority-info'
+import { TaskStateInfo } from '@nao-todo/shared/components/task-state-info'
+import { TaskDateInfo } from '@nao-todo/shared/components/task-date-info'
+import { TaskBasicInfo } from '@nao-todo/shared/components/task-basic-info'
 import { TaskTagBar } from '../tag-bar'
 import { parse2RelativeDate } from '@nao-todo/shared/utils/relative-date-parser'
 import { TASK_TABLE_CONTEXT_KEY } from './use-table'

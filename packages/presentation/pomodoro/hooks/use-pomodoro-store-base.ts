@@ -1,4 +1,4 @@
-import { useMapperStoreBase } from '@nao-todo/shared'
+import { useMapperStoreBase } from '@nao-todo/shared/hooks'
 import type { PomodoroViewObject } from '@nao-todo/domain-pomodoro'
 
 export const usePomodorosStoreBase = () => {

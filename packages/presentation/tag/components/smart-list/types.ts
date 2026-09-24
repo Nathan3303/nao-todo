@@ -1,4 +1,4 @@
-import type { NaoSmartListLinkVO } from '@nao-todo/shared'
+import { type NaoSmartListLinkVO } from '@nao-todo/shared/components/smart-list'
 
 // 标签智能列表属性
 export type TagSmartListProps = {

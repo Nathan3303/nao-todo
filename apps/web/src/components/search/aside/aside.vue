@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onMounted, ref, watch } from 'vue'
 import { NuePrompt } from 'nue-ui'
-import { t } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
 import type { SavedSearch } from '../saved-search'
 import { QUICK_SEARCH_PRESETS, type QuickSearchPreset } from '../quick-search'
 import useAside, {

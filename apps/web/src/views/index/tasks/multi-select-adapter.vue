@@ -5,7 +5,7 @@ import { useProjectsStore } from '@nao-todo/presentation/project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
 import { TaskHandler, useTasksStore, TaskMultiSelectPanel } from '@nao-todo/presentation/task'
 import { useTaskUseCase } from '@/hooks'
-import { useSubscriber } from '@nao-todo/shared'
+import { useSubscriber } from '@nao-todo/shared/hooks'
 import { MULTI_SELECT_CONTEXT_KEY } from './multi-select-context'
 
 defineOptions({ name: 'TaskMultiSelectAdapter' })

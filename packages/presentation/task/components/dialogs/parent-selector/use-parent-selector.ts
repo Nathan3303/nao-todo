@@ -1,4 +1,4 @@
-import { unwrapError } from '@nao-todo/shared'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { computed, reactive } from 'vue'
 import { useTasksStore } from '../../../stores'
 import type { TaskViewObject } from '@nao-todo/domain-task'

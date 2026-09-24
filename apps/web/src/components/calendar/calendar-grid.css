@@ -7,12 +7,15 @@
  */
 
 /* ── 设计底座令牌（沿用既有 NueUI 黑白灰令牌；task-bar 的 --cal-* 消费） ── */
+/* C6.1 令牌随行：唯一承载层 `.nue-calendar-host` 必须在令牌选择器组内
+   （daily 本就不在组内、靠继承 ⇒ 只搬 padding 不搬令牌会让日视图 --cal-* 全失效） */
+.nue-calendar-host,
 .nue-calendar-monthly,
 .nue-calendar-weekly {
     --cal-bg: var(--nue-primary-color-0);
     --cal-fg: var(--nue-primary-text-color);
     --cal-muted: color-mix(in srgb, var(--nue-primary-text-color) 45%, var(--nue-primary-color-0));
-    --cal-border: var(--nue-border-color);
+    --cal-border: var(--nue-primary-color-100);
     /* 网格分隔线（TASK-07：较 --cal-border 淡化约 28%，降低亮度） */
     --cal-grid-line: color-mix(in srgb, var(--cal-border) 64%, var(--cal-bg));
     --cal-hover: color-mix(in srgb, var(--nue-primary-text-color) 5%, var(--nue-primary-color-0));
@@ -43,19 +46,30 @@
     );
 }
 
+/* ── 唯一承载层（C6.1：padding / --cal-* 令牌 / 高度 / 背景 / 溢出） ── */
+.nue-calendar-host {
+    height: 100%;
+    min-height: 0;
+    padding: 1rem;
+    background: var(--cal-bg);
+    overflow: hidden;
+}
+
 /* ── 视图头部导航 ── */
 .cal-header,
-.wk-header {
+.wk-header,
+.day-header {
     user-select: none;
     justify-content: space-between;
     flex-wrap: wrap;
     margin-bottom: var(--nue-gap-xs);
 }
 
-/* 标题（C2-F9：可点按钮语义，可聚焦/hover 可达；文本样式与旧 h2 一致） */
+/* 标题排版（三视图同源；文本样式与旧 h2 一致） */
 .cal-title,
-.wk-title {
-    min-width: 132px;
+.wk-title,
+.day-title {
+    min-width: 11rem;
     text-align: center;
     letter-spacing: 0.02em;
     margin: 0;
@@ -68,6 +82,11 @@
     font-size: var(--nue-text-df);
     font-weight: 600;
     line-height: inherit;
+}
+
+/* 标题可点变体（C2-F9：仅月/周；可聚焦/hover 可达） */
+.cal-title,
+.wk-title {
     cursor: pointer;
     transition: background 60ms;
 }
@@ -80,9 +99,15 @@
     outline: 1px solid var(--cal-border);
 }
 
-/* 月/周视图切换（分段按钮：零间隙贴合） */
+/* 日视图标题为静态变体（D1=(b)：无 cursor/hover/focus 交互暗示） */
+.day-title {
+    cursor: default;
+}
+
+/* 月/周/日视图切换（分段按钮：零间隙贴合） */
 .cal-view-toggle,
-.wk-view-toggle {
+.wk-view-toggle,
+.day-view-toggle {
     display: inline-flex;
     align-items: center;
     gap: 0;
@@ -91,11 +116,13 @@
     overflow: hidden;
 }
 .cal-view-btn,
-.wk-view-btn {
+.wk-view-btn,
+.day-view-btn {
     border-radius: 0 !important;
 }
 .cal-view-btn.is-active,
-.wk-view-btn.is-active {
+.wk-view-btn.is-active,
+.day-view-btn.is-active {
     background: var(--cal-select-bg);
     color: var(--cal-fg);
     font-weight: 600;
@@ -103,7 +130,8 @@
 
 /* 切换区与右侧控件之间的垂直分割线 */
 .cal-view-sep,
-.wk-view-sep {
+.wk-view-sep,
+.day-view-sep {
     align-self: center;
     width: 1px;
     height: 16px;

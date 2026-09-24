@@ -12,6 +12,10 @@ export default defineConfig({
         }
     },
     test: {
+        // Vitest 默认 `css: false` 会把**所有** `.css` 模块（含 `?raw`）替换为空串，
+        // 使「以源码文本断言样式」的用例（`import.meta.glob('../*.css', { query: '?raw' })`）恒读到空内容。
+        // 仅放行 `*.css?raw`（其余 CSS 行为不变：不注入样式、不产生 jsdom CSS 解析噪声）。
+        css: { include: [/\.css\?raw$/] },
         include: ['packages/**/*.{test,spec}.ts', 'apps/**/*.{test,spec}.ts']
     },
     staged: {
@@ -2117,7 +2121,8 @@ export default defineConfig({
         printWidth: 100,
         trailingComma: 'none',
         sortPackageJson: false,
-        // Node 工具脚本（QA electron-smoke 等）保留长行风格，避免 formatter 重排噪声
-        ignorePatterns: ['scripts/**']
+        // Node 工具脚本（QA electron-smoke 等）保留长行风格，避免 formatter 重排噪声；
+        // .agents/ 舰队资产与 .codegraph/ 索引另有上游格式约定，不由项目格式化接管
+        ignorePatterns: ['scripts/**', '.agents/**', '.codegraph/**', '.pi/**']
     }
 })

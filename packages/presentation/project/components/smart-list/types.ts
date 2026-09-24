@@ -1,4 +1,4 @@
-import { NaoSmartListLinkVO } from '@nao-todo/shared'
+import { NaoSmartListLinkVO } from '@nao-todo/shared/components/smart-list'
 
 export type ProjectSmartListProps = {
     links: NaoSmartListLinkVO[]

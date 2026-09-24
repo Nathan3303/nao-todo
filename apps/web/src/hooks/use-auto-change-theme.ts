@@ -1,4 +1,4 @@
-import { useMinuteTask } from '@nao-todo/shared'
+import { useMinuteTask } from '@nao-todo/shared/hooks'
 import { ref, watch } from 'vue'
 
 export const useAutoChangeTheme = (defaultIsAutoChange: boolean) => {

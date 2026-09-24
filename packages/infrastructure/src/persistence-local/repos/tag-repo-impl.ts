@@ -6,6 +6,7 @@ import { localDatabase } from '../db/local-database'
 import { localSession } from '../session/local-session'
 import { isNotDeleted } from '../utils'
 import { snowflake } from '../../persistence-sync/snowflake'
+import { nowCalibratedIso } from '../../persistence-sync/sync-config'
 import { syncTracker } from '../../persistence-sync/sync-tracker'
 
 /**
@@ -17,7 +18,7 @@ export class LocalTagRepoImpl implements TagRepository {
 
     /** 当前会话用户 ID（数据归属标识） */
     private get currentUserId(): string {
-        return localSession.getCurrentUserId() ?? ''
+        return localSession.requireCurrentUserId()
     }
 
     async getById(id: string): GoAsync<TagEntity> {
@@ -37,7 +38,7 @@ export class LocalTagRepoImpl implements TagRepository {
             const entity = new TagEntity(
                 snowflake.nextId(),
                 createdEntity.createdAt,
-                createdEntity.updatedAt,
+                nowCalibratedIso(),
                 createdEntity.deletedAt,
                 createdEntity.icon,
                 createdEntity.name,
@@ -55,7 +56,7 @@ export class LocalTagRepoImpl implements TagRepository {
 
     async update(updatedEntity: TagEntity): GoAsync<void> {
         try {
-            updatedEntity.updatedAt = new Date().toISOString()
+            updatedEntity.updatedAt = nowCalibratedIso()
             await this.db.tags.put(await tagEntityToRecord(updatedEntity, this.currentUserId))
             await syncTracker.markDirty('tags', updatedEntity.id, 'upsert', updatedEntity.updatedAt)
             return null
@@ -69,7 +70,7 @@ export class LocalTagRepoImpl implements TagRepository {
             const record = await this.db.tags.get(id)
             if (!record || record.userId !== this.currentUserId) return '标签不存在'
             const entity = await tagRecordToEntity(record)
-            entity.deletedAt = new Date().toISOString()
+            entity.deletedAt = nowCalibratedIso()
             entity.updatedAt = entity.deletedAt
             await this.db.tags.put(await tagEntityToRecord(entity, this.currentUserId))
             await syncTracker.markDirty('tags', id, 'delete', entity.deletedAt ?? entity.updatedAt)
@@ -100,10 +101,17 @@ export class LocalTagRepoImpl implements TagRepository {
 
     async getByIds(ids: string[]): GoAsync<TagEntity[]> {
         try {
+            // C-55：先硬失败取数（空会话 ⇒ 整批拒绝；否则 getById 的 not-found 会被本方法吞成 []）
+            const userId = this.currentUserId
             const entities: TagEntity[] = []
             for (const id of ids) {
-                const [entity, err] = await this.getById(id)
-                if (err === null && entity !== null) entities.push(entity)
+                try {
+                    const record = await this.db.tags.get(id)
+                    if (!record || record.userId !== userId) continue
+                    entities.push(await tagRecordToEntity(record))
+                } catch {
+                    // 单条解密/读取失败不阻断整批（保持原 `getById` 委托语义）
+                }
             }
             return [entities, null]
         } catch (err) {
@@ -115,7 +123,7 @@ export class LocalTagRepoImpl implements TagRepository {
         try {
             const entities: TagEntity[] = []
             for (const entity of updatedEntities) {
-                entity.updatedAt = new Date().toISOString()
+                entity.updatedAt = nowCalibratedIso()
                 await this.db.tags.put(await tagEntityToRecord(entity, this.currentUserId))
                 await syncTracker.markDirty('tags', entity.id, 'upsert', entity.updatedAt)
                 entities.push(entity)

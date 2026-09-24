@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto'
-import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { Requester } from '@nao-todo/shared'
 import { cryptoService } from '../../persistence-local/crypto/crypto-service'
 import { localDatabase } from '../../persistence-local/db/local-database'
@@ -53,6 +53,33 @@ const mockRequester = (handler: (url: string, body: unknown) => unknown): Reques
         put: async () => ({ data: {} }),
         delete: async () => ({ data: {} })
     }) as unknown as Requester
+
+/**
+ * DEF-28（flaky）隔离：本文件每个用例都新建独立 `SyncService`，其实例内的**条件退避定时器**
+ * （`scheduleBackfillTick` → `setTimeout(→ resumeBackfill)`）在用例结束后仍存活；一旦落在后续
+ * 用例中途触发，会经**全局单例** `syncStatus.beginRun()` 清空在跑运行的 `runErrors`
+ *（并 `resetFailed`/`clearPaused`），使 `ok`/`lastError`/`errors` 断言随机翻转 ——
+ * BC-3b「首个错误应为拉取」、Q3、SHELL-06 均由此翻红（实测 ~1/6）。
+ * ⇒ 用例结束即清掉本用例创建的定时器（用例内已 await 完成的行为不受影响）。
+ */
+const timersCreatedInTest = new Set<ReturnType<typeof globalThis.setTimeout>>()
+let realSetTimeout: typeof globalThis.setTimeout
+
+beforeEach(() => {
+    realSetTimeout = globalThis.setTimeout
+    const trackingSetTimeout = (...args: Parameters<typeof globalThis.setTimeout>) => {
+        const id = realSetTimeout(...args)
+        timersCreatedInTest.add(id)
+        return id
+    }
+    globalThis.setTimeout = trackingSetTimeout as typeof globalThis.setTimeout
+})
+
+afterEach(() => {
+    for (const id of timersCreatedInTest) clearTimeout(id)
+    timersCreatedInTest.clear()
+    globalThis.setTimeout = realSetTimeout
+})
 
 describe('SyncTracker', () => {
     beforeEach(async () => {
@@ -1072,6 +1099,47 @@ describe('SyncService 运行级语义（SHELL-03：DEF-SYNC-01/02/03、BC-3a/b/c
         await syncTracker.resetFailed()
         expect(await syncTracker.countPaused()).toBe(0)
         expect(await syncTracker.countDue()).toBe(2)
+    })
+})
+describe('T107c：SyncRunResult.pullExecuted（web 只读闸门解除判定）', () => {
+    beforeEach(async () => {
+        await setup()
+    })
+
+    /** 空数据成功拉取响应（无脏队列 ⇒ push 阶段无请求） */
+    const emptyOkRequester = (): Requester =>
+        mockRequester(() => ({ data: { data: {} }, serverTime: Date.now() }))
+
+    it('① 注销宽限期（deletionSchedules 命中）早退 ⇒ ok=true 但 pullExecuted=false（反向断言）', async () => {
+        await localDatabase.deletionSchedules.put({
+            id: 'test-user',
+            deadline: new Date(Date.now() + 86400000).toISOString(),
+            createdAt: new Date().toISOString()
+        })
+        const before = syncStatus.get().lastSyncAt
+        const service = new SyncService(emptyOkRequester())
+        const result = await service.start()
+        // 坑的形态：空运行也返回 ok=true 且推进 lastSyncAt —— 故禁从 ok/lastSyncAt 反推
+        expect(result.ok).toBe(true)
+        expect(result.lastError).toBeNull()
+        expect(syncStatus.get().lastSyncAt).not.toBe(before)
+        expect(result.pullExecuted).toBe(false)
+    })
+
+    it('② 无会话（!userId）早退 ⇒ ok=true 但 pullExecuted=false（反向断言）', async () => {
+        localSession.clear()
+        const service = new SyncService(emptyOkRequester())
+        const result = await service.start()
+        expect(result.ok).toBe(true)
+        expect(result.lastError).toBeNull()
+        expect(result.pullExecuted).toBe(false)
+    })
+
+    it('③ 正常路径（真实进入拉取）⇒ pullExecuted=true', async () => {
+        const service = new SyncService(emptyOkRequester())
+        const result = await service.start()
+        expect(result.ok).toBe(true)
+        expect(result.pullExecuted).toBe(true)
     })
 })
 describe('SyncService 推送载荷计数字段/排序字段（U-C4 回归）', () => {

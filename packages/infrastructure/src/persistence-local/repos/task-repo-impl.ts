@@ -20,6 +20,7 @@ import { localDatabase } from '../db/local-database'
 import { localSession } from '../session/local-session'
 import { isAbsentStamp, isNotDeleted } from '../utils'
 import { snowflake } from '../../persistence-sync/snowflake'
+import { nowCalibratedIso } from '../../persistence-sync/sync-config'
 import { syncTracker } from '../../persistence-sync/sync-tracker'
 
 /**
@@ -76,7 +77,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
 
     /** 当前会话用户 ID（数据归属标识） */
     private get currentUserId(): string {
-        return localSession.getCurrentUserId() ?? ''
+        return localSession.requireCurrentUserId()
     }
 
     async get(id: string): GoAsync<TaskEntity> {
@@ -91,7 +92,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
 
     async create(createVO: CreateTaskValueObject): GoAsync<TaskEntity> {
         try {
-            const now = new Date().toISOString()
+            const now = nowCalibratedIso()
             const entity = new TaskEntity(
                 snowflake.nextId(),
                 now,
@@ -148,7 +149,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
             if (updateVO.remindWeekdays !== undefined)
                 entity.remindWeekdays = updateVO.remindWeekdays
             if (updateVO.sortId !== undefined) entity.sortId = updateVO.sortId
-            entity.updatedAt = new Date().toISOString()
+            entity.updatedAt = nowCalibratedIso()
             await this.db.tasks.put(await taskEntityToRecord(entity, this.currentUserId))
             await syncTracker.markDirty('tasks', id, 'upsert', entity.updatedAt)
             return null
@@ -162,7 +163,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
             const record = await this.db.tasks.get(id)
             if (!record || record.userId !== this.currentUserId) return '任务不存在'
             const entity = await taskRecordToEntity(record)
-            entity.deletedAt = new Date().toISOString()
+            entity.deletedAt = nowCalibratedIso()
             entity.updatedAt = entity.deletedAt
             await this.db.tasks.put(await taskEntityToRecord(entity, this.currentUserId))
             await syncTracker.markDirty('tasks', id, 'delete', entity.deletedAt ?? entity.updatedAt)
@@ -238,7 +239,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
             if (!record || record.userId !== this.currentUserId) return '任务不存在'
             const entity = await taskRecordToEntity(record)
             entity.deletedAt = null
-            entity.updatedAt = new Date().toISOString()
+            entity.updatedAt = nowCalibratedIso()
             await this.db.tasks.put(await taskEntityToRecord(entity, this.currentUserId))
             await syncTracker.markDirty('tasks', id, 'upsert', entity.updatedAt)
             return null
@@ -355,7 +356,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
             const record = await this.db.tasks.get(id)
             if (!record || record.userId !== this.currentUserId) return [null, '任务不存在']
             const entity = await taskRecordToEntity(record)
-            const now = new Date().toISOString()
+            const now = nowCalibratedIso()
             const copyEntity = new TaskEntity(
                 snowflake.nextId(),
                 now,
@@ -396,7 +397,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
             // 同步提醒时刻：DateSelector 显示条件要求 remindTime 非空（task-date-selector.vue），
             // Snooze 场景任务常无 remindTime，不同步会导致详情面板不显示下一次提醒时间
             entity.remindTime = dayjs(newRemindAt).format('HH:mm')
-            entity.updatedAt = new Date().toISOString()
+            entity.updatedAt = nowCalibratedIso()
             await this.db.tasks.put(await taskEntityToRecord(entity, this.currentUserId))
             await syncTracker.markDirty('tasks', id, 'upsert', entity.updatedAt)
             return [newRemindAt, null]

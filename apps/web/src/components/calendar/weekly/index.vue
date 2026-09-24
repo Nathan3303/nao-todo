@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Loading as LoadingComp } from '@nao-todo/shared'
+import { Loading as LoadingComp } from '@nao-todo/shared/components/loading'
 import { computed, inject, nextTick, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import QuickCreate from '../monthly/quick-create.vue'
@@ -34,6 +34,7 @@ const {
     onOpenDay,
     onOpenTask,
     onGoMonth,
+    onGoDay,
     onPrevWeek,
     onNextWeek,
     onGoToday,
@@ -156,7 +157,7 @@ const {
 <template>
     <nue-div vertical class="nue-calendar-weekly" gap="0">
         <!-- 周导航 -->
-        <nue-div align="center" class="wk-header" gap="8px">
+        <nue-div align="center" class="wk-header" gap="var(--nue-gap-xs)">
             <nue-div align="center" gap="2px">
                 <nue-button
                     :icon="isDisplayAside ? 'menu-close' : 'menu-open'"
@@ -200,7 +201,7 @@ const {
                     @click="onNextWeek"
                 />
             </nue-div>
-            <nue-div align="center" gap="6px">
+            <nue-div align="center" gap="var(--nue-gap-xs)">
                 <calendar-sort-dropdown v-model="sort" />
                 <nue-div class="wk-view-toggle" role="group" aria-label="视图切换">
                     <nue-button
@@ -217,9 +218,17 @@ const {
                         class="wk-view-btn is-active"
                         title="当前：周视图"
                         aria-pressed="true"
-                        @click="onGoMonth"
                     >
                         周
+                    </nue-button>
+                    <nue-button
+                        theme="small,ghost"
+                        class="wk-view-btn"
+                        title="切换日视图"
+                        aria-pressed="false"
+                        @click="onGoDay"
+                    >
+                        日
                     </nue-button>
                 </nue-div>
                 <span class="wk-view-sep" aria-hidden="true"></span>
@@ -348,7 +357,7 @@ const {
 <style scoped>
 /* ── 周视图根布局（令牌与网格样式已归并至 calendar-grid.css） ── */
 .nue-calendar-weekly {
-    flex: 1;
+    height: 100%;
     min-height: 0;
     overflow: hidden;
 }

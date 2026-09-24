@@ -1,11 +1,9 @@
 import { POMODORO_VIEW_CONTEXT_KEY } from '@/views/index/pomodoro/context'
 import type { PomodoroRecordViewObject, PomodoroViewObject } from '@nao-todo/domain-pomodoro'
 import { usePomodoroRecordsStore, usePomodorosStore } from '@nao-todo/presentation/pomodoro'
-import {
-    POMODORO_UPDATER_DIALOG_KEY,
-    unwrapError,
-    useLoadingErrorStoreBase
-} from '@nao-todo/shared'
+import { POMODORO_UPDATER_DIALOG_KEY } from '@nao-todo/shared/constants'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
+import { useLoadingErrorStoreBase } from '@nao-todo/shared/hooks'
 import { computed, inject, onMounted, ref, watch } from 'vue'
 
 /**

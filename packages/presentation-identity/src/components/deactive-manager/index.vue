@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import {
-    type DialogManager,
-    t,
-    USER_DEACTIVE_DIALOG_KEY,
-    USER_RESTORE_DIALOG_KEY
-} from '@nao-todo/shared'
+import { type DialogManager } from '@nao-todo/shared/hooks'
+import { t } from '@nao-todo/shared/locales'
+import { USER_DEACTIVE_DIALOG_KEY, USER_RESTORE_DIALOG_KEY } from '@nao-todo/shared/constants'
 import { NueConfirm } from 'nue-ui'
 import { storeToRefs } from 'pinia'
 import { useUserStore } from '../../stores'

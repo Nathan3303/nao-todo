@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import {
-    DropdownDivBlock,
-    InnerDropdown,
-    InnerDropdownOption,
-    type InnerDropdownOptionVO
-} from '@nao-todo/shared'
+import { DropdownDivBlock } from '@nao-todo/shared/components/dropdown-div-block'
+import { InnerDropdown, InnerDropdownOption } from '@nao-todo/shared/components/inner-dropdown'
+import { type InnerDropdownOptionVO } from '@nao-todo/shared/components/inner-dropdown'
 import { computed } from 'vue'
 import {
     CALENDAR_SORT_DEFAULT_ORDER,

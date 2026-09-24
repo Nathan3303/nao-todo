@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { LoadingError, Pager, t } from '@nao-todo/shared'
+import { LoadingError } from '@nao-todo/shared/components/loading-error'
+import { Pager } from '@nao-todo/shared/components/pager'
+import { t } from '@nao-todo/shared/locales'
 import dayjs from 'dayjs'
 import { PomodoroHeader } from '../header'
 import { PomodoroRecordListItem } from '@nao-todo/presentation/pomodoro'

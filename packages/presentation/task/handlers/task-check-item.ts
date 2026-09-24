@@ -1,4 +1,6 @@
-import { t, unwrapErrors, type GoAsync } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
+import { unwrapErrors } from '@nao-todo/shared/utils/user-facing-go-error'
+import { type GoAsync } from '@nao-todo/shared/types'
 import { NueMessage } from 'nue-ui'
 import type {
     CreateTaskCheckItemViewObject,

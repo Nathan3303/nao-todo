@@ -33,7 +33,13 @@ const mocks = vi.hoisted(() => ({
     replace: vi.fn(),
     clearSession: vi.fn(),
     lock: vi.fn(),
+    wipeUserData: vi.fn(async () => undefined),
+    broadcastSignOut: vi.fn(),
     cachedNickname: '张三' as string | null
+}))
+
+vi.mock('@/views/auth/sign-out-broadcast', () => ({
+    broadcastSignOut: mocks.broadcastSignOut
 }))
 
 vi.mock('nue-ui', async (importOriginal) => {
@@ -48,8 +54,39 @@ vi.mock('nue-ui', async (importOriginal) => {
 vi.mock('@nao-todo/infrastructure', () => ({
     readCachedNickname: () => mocks.cachedNickname,
     localSession: { clear: mocks.clearSession, getCurrentUserId: () => 'u-1' },
-    cryptoService: { lock: mocks.lock }
+    cryptoService: { lock: mocks.lock },
+    resolveUserIdFromStoredJwt: () => 'u-1',
+    // C-54：无脏队列 ⇒ 护栏不弹窗，直接清库
+    syncTracker: { countDirty: async () => 0 },
+    syncService: { start: vi.fn(async () => ({ ok: true })) },
+    deletionService: { wipeUserData: mocks.wipeUserData }
 }))
+
+// T122：生产侧已改窄子路径导入 ⇒ 同步注册同名深路径 mock（转发上方 barrel mock，语义不变）
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-local/crypto/crypto-service',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-local/session/local-session',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-local/session/profile-cache',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-local/deletion/deletion-service',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-sync/sync-service',
+    async () => import('@nao-todo/infrastructure')
+)
+vi.mock(
+    '@nao-todo/infrastructure/src/persistence-sync/sync-tracker',
+    async () => import('@nao-todo/infrastructure')
+)
 
 vi.mock('vue-router', () => ({
     useRouter: () => ({
@@ -140,6 +177,8 @@ describe('G12 - 离线可退出登录', () => {
         expect(isOfflineEntryGranted()).toBe(false)
         expect(mocks.clearSession).toHaveBeenCalled()
         expect(mocks.lock).toHaveBeenCalled()
+        expect(mocks.wipeUserData).toHaveBeenCalledWith('u-1')
+        expect(mocks.broadcastSignOut).toHaveBeenCalledWith('u-1')
         expect(mocks.replace).toHaveBeenCalledWith('/auth/signin')
     })
 
@@ -153,6 +192,8 @@ describe('G12 - 离线可退出登录', () => {
 
         expect(isOfflineEntryGranted()).toBe(true)
         expect(mocks.replace).not.toHaveBeenCalled()
+        // C-54：护栏取消 ⇒ 不清库、不广播（广播不绕过护栏）
+        expect(mocks.broadcastSignOut).not.toHaveBeenCalled()
     })
 })
 

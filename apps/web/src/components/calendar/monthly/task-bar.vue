@@ -22,8 +22,15 @@ const props = withDefaults(
         busy?: boolean
         /** F1：本任务条正在被拖起（原条半透明占位视觉） */
         dragging?: boolean
+        /**
+         * 日视图贴边名称（TASK-19B C1，opt-in）：`.cal-item` 用 `clip-path` 代替 `overflow:hidden`
+         * 并让名称 `position:sticky` 贴视口左缘；**默认 false ⇒ 月/周 DOM/CSS 逐字节零变化**。
+         */
+        stickyLabel?: boolean
+        /** 追加在任务名后的 title 后缀（如全天不可拖拽原因）；**不覆盖任务名** */
+        titleSuffix?: string
     }>(),
-    { busy: false, dragging: false }
+    { busy: false, dragging: false, stickyLabel: false }
 )
 const emit = defineEmits<{
     (e: 'open'): void
@@ -84,10 +91,11 @@ const onKeyDown = (event: KeyboardEvent): void => {
             'is-overdue': isOverdue,
             'has-cont-start': contStart,
             'has-cont-end': contEnd,
-            'is-drag-source': dragging
+            'is-drag-source': dragging,
+            'is-sticky-label': stickyLabel
         }"
         :style="[pos, { '--cal-pri': barColor }]"
-        :title="task.name"
+        :title="titleSuffix ? `${task.name}（${titleSuffix}）` : task.name"
         :aria-label="task.name"
         tabindex="0"
         @click="emit('open')"
@@ -258,5 +266,23 @@ const onKeyDown = (event: KeyboardEvent): void => {
 .cal-item.is-drag-source {
     opacity: 0.35;
     cursor: grabbing;
+}
+
+/* ── TASK-19B C1 贴边名称（opt-in，仅日视图启用） ──
+   1) `.cal-item` 自身 `overflow:hidden` 即最近 scrollport ⇒ sticky 偏移恒 0；
+      改用 `clip-path: inset(0)`（视觉剪裁等价、不建立 scroll container/包含块）；
+   2) 名称须收缩到内容宽（`width:max-content`）才产生「条宽 − 名称宽」的滑动余量。 */
+.cal-item.is-sticky-label {
+    overflow: visible;
+    clip-path: inset(0);
+}
+.cal-item.is-sticky-label .cal-item-text {
+    position: sticky;
+    left: 12px;
+    flex: 0 1 auto;
+    width: max-content;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 </style>

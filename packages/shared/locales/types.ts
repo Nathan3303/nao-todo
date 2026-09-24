@@ -40,6 +40,8 @@ export interface LocaleMessages {
     'sync.lastSyncAt': string
     'sync.pending': string
     'sync.failed': string
+    'sync.preferenceFailed': string
+    'sync.conflict': string
     'sync.syncNow': string
     'sync.pendingOffline': string
     'sync.retryNow': string
@@ -50,6 +52,23 @@ export interface LocaleMessages {
     'gate.enterOffline': string
     'gate.signInAgain': string
     'gate.offlineUnavailable': string
+
+    // Offline read-only / mirror freshness（C-59 / C-60 / AC8–AC10）
+    'offline.readOnlyBanner': string
+    'offline.readOnlyHint': string
+    'offline.freshness.updated': string
+    'offline.freshness.mirror': string
+    'offline.freshness.mirrorHint': string
+    'offline.freshness.incomplete': string
+    'offline.freshness.incompleteHint': string
+    'offline.coverage.loadingMore': string
+    'offline.coverage.truncated': string
+    'offline.coverage.truncatedGeneric': string
+
+    // Plaintext posture user-visible notice（ADR §4.5 / D1b / AC17）
+    'notice.plaintext.title': string
+    'notice.plaintext.body': string
+    'notice.plaintext.dismiss': string
 
     // Common
     'common.cancel': string
@@ -73,6 +92,7 @@ export interface LocaleMessages {
     'common.deleted': string
     'common.unknown': string
     'common.signOut': string
+    'common.sessionRequired': string
     'common.filter': string
     'common.uploadFailed': string
     'common.uploadSuccess': string
@@ -136,6 +156,13 @@ export interface LocaleMessages {
     'settings.password': string
     'settings.app': string
     'settings.version': string
+    'settings.localData.title': string
+    'settings.localData.desc': string
+    'settings.localData.plaintext': string
+    'settings.localData.device': string
+    'settings.localData.boundary': string
+    'settings.localData.eviction': string
+    'settings.localData.endDifference': string
     'settings.userInfo': string
     'settings.passwordChange': string
     'settings.appSettings': string
@@ -178,6 +205,12 @@ export interface LocaleMessages {
     'settings.avatarViewTitle': string
     'settings.updateAvatarButtonText': string
     'settings.signOutButtonText': string
+    'signOut.dirtyTitle': string
+    'signOut.dirtyContent': string
+    'signOut.syncFirst': string
+    'signOut.unsavedTitle': string
+    'signOut.unsavedContent': string
+    'signOut.signOutAnyway': string
     'settings.deactive.title': string
     'settings.deactive.confirmTitle': string
     'settings.deactive.confirmContent': string
@@ -342,6 +375,9 @@ export interface LocaleMessages {
     'task.details.export.copy': string
     'task.details.export.copySuccess': string
     'task.details.export.copyFailed': string
+    'task.details.export.restore': string
+    'task.details.export.retry': string
+    'task.details.export.loading': string
     'task.details.export.failed': string
     'task.details.export.label.state': string
     'task.details.export.label.priority': string
@@ -351,6 +387,10 @@ export interface LocaleMessages {
     'task.details.export.label.tags': string
     'task.details.export.label.createdAt': string
     'task.details.export.label.updatedAt': string
+    'task.details.export.label.total': string
+    'task.details.export.label.issuedAt': string
+    'task.details.export.label.documentNo': string
+    'task.details.export.label.generatedBy': string
     'task.details.export.heading.description': string
     'task.details.export.heading.checkItems': string
     'task.details.export.heading.subTasks': string
@@ -391,6 +431,7 @@ export interface LocaleMessages {
     'task.deleteSuccess': string
     'task.restoreFailed': string
     'task.restoreSuccess': string
+    'task.resortFailed': string
     'task.copyFailed': string
     'task.copySuccess': string
     'task.confirmGiveUpTitle': string
@@ -514,6 +555,9 @@ export interface LocaleMessages {
     'task.error.commentContentEmpty': string
     'task.error.commentContentTooLong': string
 
+    // Pomodoro
+    'pomodoro.recordSaveFailed': string
+
     // Calendar
     'calendar.today': string
     'calendar.createTask': string
@@ -525,6 +569,8 @@ export interface LocaleMessages {
     'calendar.weekday.fri': string
     'calendar.weekday.sat': string
     'calendar.weekday.sun': string
+    'calendar.allDay': string
+    'calendar.noTasksToday': string
 
     // Date relative
     'date.today': string

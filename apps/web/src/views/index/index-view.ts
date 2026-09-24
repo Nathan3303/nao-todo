@@ -21,19 +21,23 @@ import { useTagsStore } from '@nao-todo/presentation/tag'
 import { useStoreInvalidationHub } from '@nao-todo/presentation/task'
 import {
     PROJECT_CREATOR_DIALOG_KEY,
-    responsiveTypes,
-    sendNotification,
     TASK_CREATOR_DIALOG_KEY,
-    TASK_REMINDER_DIALOG_KEY,
-    t,
+    TASK_REMINDER_DIALOG_KEY
+} from '@nao-todo/shared/constants'
+import {
+    responsiveTypes,
     useAsideWidth,
     useDialogManager,
     useResponsiveAside,
     useSubscriber
-} from '@nao-todo/shared'
+} from '@nao-todo/shared/hooks'
+import { sendNotification } from '@nao-todo/shared/utils/notification'
+import { markPreferenceDirty } from '@nao-todo/infrastructure/src/persistence-sync/preference-sync'
+import { t } from '@nao-todo/shared/locales'
 import { inject, onUnmounted, provide, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { INDEX_VIEW_CONTEXT_KEY } from './context'
+import { startReminderSse } from './reminder-sse'
 import { taskDetailsLocation } from './task-details-location'
 
 /**
@@ -113,7 +117,12 @@ const useIndexView = () => {
         responsiveFlag,
         responsiveTypes.MOBILE_TABLE
     )
-    const { width: asideWidth, updater: handleResizeAside } = useAsideWidth(300, 'ASIDE_WIDTH')
+    const { width: asideWidth, updater: handleResizeAsideBase } = useAsideWidth(300, 'ASIDE_WIDTH')
+    // TASK-26 / M6：侧边栏宽度属设置面偏好 ⇒ 本地写成功后入偏好队列（整快照回传）
+    const handleResizeAside = (newWidth: number) => {
+        handleResizeAsideBase(newWidth)
+        void markPreferenceDirty('userConfig')
+    }
 
     /**
      * 显示任务详情抽屉
@@ -132,27 +141,20 @@ const useIndexView = () => {
 
     /**
      * SSE 提醒连接
-     * @description 桌面版通过 VITE_DISABLE_SSE=true 禁用（本地定时扫描替代）
+     * @description 桌面版通过 VITE_DISABLE_SSE=true 禁用（本地定时扫描替代）；
+     *              token 缺失/空串 ⇒ 不建连（DEF-33 下游，见 `./reminder-sse`）
      */
     const connectReminderSSE = async () => {
-        // 请求通知权限
         if (import.meta.env.VITE_DISABLE_SSE === 'true') return
-        if ('Notification' in window && Notification.permission === 'default') {
-            await Notification.requestPermission()
-        }
-        // 连接 SSE 事件源
-        const token = localStorage.getItem('USER_JWT')
-        const url = `${import.meta.env.VITE_API_BASE_URL}/sse/reminders?token=${token}`
-        const es = new EventSource(url)
-        // 监听提醒事件
-        es.addEventListener('reminder', (event: MessageEvent) => {
-            const data = JSON.parse(event.data)
-            appDialogManager.open(TASK_REMINDER_DIALOG_KEY, data)
-            // 系统通知仅显示任务名称（不含描述，见需求）
-            sendNotification(t('task.reminder.title'), data.taskName)
+        await startReminderSse({
+            token: localStorage.getItem('USER_JWT'),
+            apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
+            onReminder: (data) => {
+                appDialogManager.open(TASK_REMINDER_DIALOG_KEY, data)
+                // 系统通知仅显示任务名称（不含描述，见需求）
+                sendNotification(t('task.reminder.title'), data.taskName)
+            }
         })
-        // 监听错误事件，关闭连接
-        es.addEventListener('error', () => es.close())
     }
 
     /**

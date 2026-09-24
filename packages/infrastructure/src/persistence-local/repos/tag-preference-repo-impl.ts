@@ -15,16 +15,18 @@ export class LocalTagPreferenceRepoImpl implements TagPreferenceRepository {
 
     /** 当前会话用户 ID（数据归属标识） */
     private get currentUserId(): string {
-        return localSession.getCurrentUserId() ?? ''
+        return localSession.requireCurrentUserId()
     }
 
     async get(id: string): GoAsync<TagPreferenceEntity> {
         try {
+            // C-55：先硬失败取数（空会话 ⇒ 不进入库读，避免“无偏好 ⇒ 返回默认”的成功路径）
+            const userId = this.currentUserId
             // 接口语义：参数为 tagId（与远程 /tags/{tagId}/preference 一致），按 tagId 索引查询
             const record = await this.db.tagPreferences
                 .where('tagId')
                 .equals(id)
-                .filter((r) => r.userId === this.currentUserId)
+                .filter((r) => r.userId === userId)
                 .first()
             // 与远程行为一致：无偏好时返回默认偏好（viewType=table，getTasksOptions 含 tagId 过滤），不报错
             if (!record) return [defaultTagPreferenceRes2Entity(id), null]

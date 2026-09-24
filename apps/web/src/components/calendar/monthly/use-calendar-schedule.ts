@@ -125,6 +125,26 @@ export const useCalendarSchedule = (deps: { taskUseCase: ReturnType<typeof useTa
         }
     }
 
+    // @method 分钟级时间写回（日视图横向拖拽/拉伸，C9）：快照 + 单次 update；
+    //              失败 toast（无乐观脏状态）、成功入 U2 撤销栈。
+    const applyTimePatch = async (
+        task: TaskViewObject,
+        patch: { startAt?: string; endAt?: string },
+        label = '已调整时间'
+    ): Promise<boolean> => {
+        const snapshot = snapshotTaskDates(task)
+        const err = await taskUseCase.update(task.id, {
+            ...patch,
+            updatedAt: dayjs().toISOString()
+        })
+        if (err !== null) {
+            NueMessage.error(translateTaskError(err))
+            return false
+        }
+        showUndoAction({ text: label, tone: 'success', snapshots: [snapshot] })
+        return true
+    }
+
     // @method 撤销最近一次动作：以快照原值回写（串行、busy 防连点、失败 toast）；成功/失败均不再保留入口
     //              P3-1：与批量排期互斥——批量写回进行中不执行撤销（慢网批量中入口禁用/串行化）
     const undoLast = async (): Promise<void> => {
@@ -169,6 +189,8 @@ export const useCalendarSchedule = (deps: { taskUseCase: ReturnType<typeof useTa
         undoLast,
         dismissUndoAction,
         scheduleToDay,
-        deferToToday
+        deferToToday,
+        // —— 分钟级时间写回（日视图 T51；复用同一 U2 撤销栈） ——
+        applyTimePatch
     }
 }

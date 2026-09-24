@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { NueTextarea } from 'nue-ui'
-import { getAvatarSrc, parse2RelativeDate } from '@nao-todo/shared'
+import { getAvatarSrc } from '@nao-todo/shared/utils/avatar'
+import { parse2RelativeDate } from '@nao-todo/shared/utils/relative-date-parser'
 import type { CommentRowProps, CommentRowEmits } from './types'
 
 defineOptions({ name: 'CommentRow' })

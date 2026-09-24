@@ -1,0 +1,28 @@
+<!-- 由 PM 在立项时复制为项目 .github/pull_request_template.md（见 @.agents/skills/github-flow.md） -->
+## 需求
+
+- Issue：Closes #<id>
+- PRD：`docs/prds/<file>.md#<section>`
+- 验收标准：AC1 / AC2 / …
+
+## 用户可见变化
+
+<!-- 一句话，用户可读；将作为 squash 提交的标题主体 -->
+
+## 变更点
+
+- <行为变化 1>
+- <行为变化 2>
+
+## 门禁（全量精确数字）
+
+- `<命令>` → exit=<n> · 文件数/例数/红数：<n>/<n>/<n>
+
+## 验收 / 预览
+
+- 预览环境：<URL 或「无」>
+- PM 验收：<待验收 / 通过（日期）>
+
+## 风险 / 回滚
+
+- <风险 + 应对；无则写「无」>

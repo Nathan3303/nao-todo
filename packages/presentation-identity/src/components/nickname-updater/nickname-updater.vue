@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { t } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
 import { NueInput } from 'nue-ui'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'

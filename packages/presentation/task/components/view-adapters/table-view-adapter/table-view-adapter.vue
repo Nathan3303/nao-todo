@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import { LoadingError, Pager, TASK_CREATOR_DIALOG_KEY, t, assetUrl } from '@nao-todo/shared'
+import { LoadingError } from '@nao-todo/shared/components/loading-error'
+import { Pager } from '@nao-todo/shared/components/pager'
+import { TASK_CREATOR_DIALOG_KEY } from '@nao-todo/shared/constants'
+import { t } from '@nao-todo/shared/locales'
+import { assetUrl } from '@nao-todo/shared/utils/asset-url'
 import { TaskTable } from '../../table'
 import type { TableViewAdapterEmits, TableViewAdapterProps } from './types'
 import useTableViewAdapter from './use-table-view-adapter'
+import { notifyTaskError } from '../../../utils/error-message'
 
 defineOptions({ name: 'TableViewAdapter' })
 const props = defineProps<TableViewAdapterProps>()
@@ -19,6 +24,17 @@ const {
     handleUpdatePerPage,
     handleRetry
 } = useTableViewAdapter(props)
+
+// 行内删除/恢复：断网时仓储返回错误码（不 reject）⇒ 必须显式提示，避免静默丢失
+const handleDeleteTask = async (taskId: string) => {
+    const err = await props.taskUseCase.delete(taskId)
+    if (err !== null) notifyTaskError('task.deleteFailed', err)
+}
+
+const handleRestoreTask = async (taskId: string) => {
+    const err = await props.taskUseCase.restore(taskId)
+    if (err !== null) notifyTaskError('task.restoreFailed', err)
+}
 </script>
 
 <template>
@@ -73,8 +89,8 @@ const {
                         @update-columns="updateColumns"
                         @update-sort-options="updateSortOptions"
                         @clear-sort-options="clearSortOptions"
-                        @delete-task="(taskId) => taskUseCase.delete(taskId)"
-                        @restore-task="(taskId) => taskUseCase.restore(taskId)"
+                        @delete-task="handleDeleteTask"
+                        @restore-task="handleRestoreTask"
                     />
                 </nue-content>
             </nue-main>

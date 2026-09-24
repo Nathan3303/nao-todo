@@ -1,4 +1,5 @@
-import { TASK_CREATOR_DIALOG_KEY, unwrapError } from '@nao-todo/shared'
+import { TASK_CREATOR_DIALOG_KEY } from '@nao-todo/shared/constants'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { translateTaskError, useTasksStore } from '@nao-todo/presentation/task'
 import { useTaskUseCase } from '@/hooks'
@@ -14,6 +15,7 @@ import {
     todayDateKey
 } from './monthly-layout'
 import { isDateKeyInMonth, monthFirstDateKey } from './month-jump'
+import { DAY_SNAP_MINUTES } from '../snap'
 import { useCalendarTaskQuery } from './use-calendar-task-query'
 import { useCalendarSchedule } from './use-calendar-schedule'
 import { useCalendarSort } from './use-calendar-sort'
@@ -47,7 +49,7 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
     const taskUseCase = useTaskUseCase(tasksStore)
 
     // —— O12 拆分子组合式：任务拉取+订阅 / 排期+撤销（DI 依赖由本组装点注入） ——
-    const { loading, error, retry, tasks, unscheduledTasks } = useCalendarTaskQuery({
+    const { loading, error, retry, tasks } = useCalendarTaskQuery({
         tasksStore,
         taskUseCase
     })
@@ -67,6 +69,11 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
     const { sort, sortTasks } = useCalendarSort()
     // @computed 排序后的任务快照（月模型/周视图共用；未选字段=默认按名称升序）
     const sortedTasks = computed(() => sortTasks(tasks.value))
+
+    // @computed 未安排任务（B7：endAt 为空；顺序＝用户排序，由 sortedTasks 派生，不再自带 createdAt desc）
+    const unscheduledTasks = computed<TaskViewObject[]>(() =>
+        sortedTasks.value.filter((task) => !task.endAt)
+    )
 
     // @states 视图状态
     const year = ref<number>(dayjs().year())
@@ -88,18 +95,9 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         )
     )
 
-    // @method 某日的任务列表（含跨月任务，按 R6 排序；数据源与网格一致）
-    const getDayTasks = (dateKey: string): TaskViewObject[] => {
-        return tasks.value
-            .filter((task) => spanCoversDate(task, dateKey))
-            .sort((a, b) => {
-                const aStart = dayjs(a.startAt || a.endAt).valueOf()
-                const bStart = dayjs(b.startAt || b.endAt).valueOf()
-                return (
-                    aStart - bStart || dayjs(a.createdAt).valueOf() - dayjs(b.createdAt).valueOf()
-                )
-            })
-    }
+    // @method 某日的任务列表（含跨月任务；顺序＝用户排序，数据源与网格一致）
+    const getDayTasks = (dateKey: string): TaskViewObject[] =>
+        sortedTasks.value.filter((task) => spanCoversDate(task, dateKey))
 
     // @method 翻月/回今天
     const goPrevMonth = () => {
@@ -137,24 +135,12 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         monthIndex.value = targetMonth - 1
     }
 
-    // @states 视图模式（A1：月/周切换；默认月）
-    const viewMode = ref<'month' | 'week'>('month')
-
-    // @method 锚点月同步：切回月视图前把月定位到选中日所在月（跨月周导航后仍准确定位）
-    const syncAnchorMonth = () => {
-        const anchor = dayjs(selectedKey.value)
-        if (!anchor.isValid()) return
-        year.value = anchor.year()
-        monthIndex.value = anchor.month()
+    // @method 日导航：±1 天移动锚点（日视图头部用；复用同一快照）
+    const goPrevDay = () => {
+        selectedKey.value = dateKeyOf(dayjs(selectedKey.value).subtract(1, 'day').valueOf())
     }
-
-    // @method 视图切换（不重拉数据：复用同一筛选/任务快照）
-    const goToWeekView = () => {
-        viewMode.value = 'week'
-    }
-    const goToMonthView = () => {
-        syncAnchorMonth()
-        viewMode.value = 'month'
+    const goNextDay = () => {
+        selectedKey.value = dateKeyOf(dayjs(selectedKey.value).add(1, 'day').valueOf())
     }
 
     // @method 周导航：±7 天移动锚点（周视图头部用；月份由 syncAnchorMonth 延迟对齐）
@@ -177,8 +163,9 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         quickCreateDate.value = ''
     }
 
-    // @watch 翻月/翻周/换视图/切日期 → 编辑器自动关闭（随所在格失效，不残留）
-    watch([year, monthIndex, selectedKey, viewMode], () => {
+    // @watch 翻月/翻周/切日期 → 编辑器自动关闭（随所在格失效，不残留）；
+    //        换视图（路由）关闭由宿主 watch viewMode 负责
+    watch([year, monthIndex, selectedKey], () => {
         quickCreateDate.value = ''
     })
 
@@ -254,6 +241,20 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         dialogManager.open(TASK_CREATOR_DIALOG_KEY, payload)
     }
 
+    // @method 以某日的分钟刻度为起点新建任务（TASK-19B C5：日视图刻度标签 / n 入口）
+    // 与 createTaskOnDay 相邻、复用同一 prefillScope() + dialogManager（单一 payload 构造点）
+    const createTaskAt = (dateKey: string, startMin: number) => {
+        const base = dayjs(dateKey).startOf('day')
+        const payload: { startAt: string; endAt: string } & Record<string, unknown> = {
+            startAt: base.add(startMin, 'minute').toISOString(),
+            endAt: base.add(startMin + DAY_SNAP_MINUTES, 'minute').toISOString()
+        }
+        const scope = prefillScope()
+        if (scope.projectId) payload.projectId = scope.projectId
+        if (scope.tags) payload.tags = scope.tags
+        dialogManager.open(TASK_CREATOR_DIALOG_KEY, payload)
+    }
+
     // @method 打开任务详情（日历区内嵌详情适配器）
     const openTaskDetails = (taskId: TaskViewObject['id']) => {
         showTaskDetails(taskId)
@@ -291,11 +292,11 @@ const useCalendarMonthly = (laneLimit?: Ref<number>) => {
         undoLast,
         dismissUndoAction,
         createTaskOnDay,
+        createTaskAt,
         openTaskDetails,
-        // —— 视图态（A1 周视图） ——
-        viewMode,
-        goToWeekView,
-        goToMonthView,
+        // —— 日/周导航步长（视图切换由宿主按 route.name 派生 + 导航动作） ——
+        goPrevDay,
+        goNextDay,
         goPrevWeek,
         goNextWeek,
         // —— 任务快照（周视图同源数据；含跨月任务，按跨度裁剪） ——

@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { t, unwrapError } from '@nao-todo/shared'
+import { t } from '@nao-todo/shared/locales'
+import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { NueMessage } from 'nue-ui'
 import { reactive, ref } from 'vue'
 import { AuthUseCase, type SignInViewObject } from '@nao-todo/domain-identity'

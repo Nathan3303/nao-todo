@@ -81,6 +81,14 @@ describe('computeBackfillDelayMs - 暂停到期安排 tick（SHELL-06-DEF-01）'
         expect(computeBackfillDelayMs({ ...base, earliestNextAttemptAtMs: 500 })).toBe(0)
     })
 
+    it('拉取未取尽（DEF-6）：无脏队列/无暂停也安排补拉 tick（复用同一指数退避）', () => {
+        expect(computeBackfillDelayMs({ ...base, pullPending: true })).toBe(5000)
+        expect(computeBackfillDelayMs({ ...base, pullPending: true, level: 2 })).toBe(20000)
+        expect(computeBackfillDelayMs({ ...base, pullPending: true, level: 9 })).toBe(120000)
+        // 未标记 pullPending 时仍为 null（不创建定时器）
+        expect(computeBackfillDelayMs({ ...base, pullPending: false })).toBeNull()
+    })
+
     it('无待推送/暂停项 ⇒ null（不创建定时器）', () => {
         expect(computeBackfillDelayMs(base)).toBeNull()
     })
