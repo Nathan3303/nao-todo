@@ -314,6 +314,20 @@ describe('面 ③ API - ③ folded：达阈值 vs 曾淘汰（两信号分列）
         expect(evicted.folded).toBe(true)
         expect(foldedReasonOf(evicted)).toBe('evicted')
     })
+
+    it('① 两信号同真（达 200 且曾淘汰）⇒ `evicted` 优先（R-15 更严重信号优先 · PM T165 裁定）', async () => {
+        await localDatabase.meta.put({
+            id: conflictJournalId(USER_ID),
+            conflictJournal: Array.from({ length: CONFLICT_FOLD_HINT_THRESHOLD }, (_, i) =>
+                entry({ entityId: `both-${i}` })
+            ),
+            conflictJournalEvictedCount: 4
+        } satisfies MetaWithEvictedCount)
+
+        const both = await listConflicts(USER_ID)
+        expect(both.folded).toBe(true)
+        expect(foldedReasonOf(both)).toBe('evicted')
+    })
 })
 
 describe('面 ③ API - ④ resolveConflictKeepServer：清实体全部条目', () => {
