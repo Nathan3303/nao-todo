@@ -21,7 +21,8 @@ import { useCaseBinding as webBinding } from '../binding'
  *              且有**负向断言**（desktop 闸门恒不生效）。
  *              - web binding 提供 `decorateUseCase`（未切本地优先的域套 `withReadOnlyGuard`）；
  *              - **业务 7 域（W1 任务 / W2 子实体 / W3 容器 / W4 番茄）全部切本地优先
- *                ⇒ 这些域不套闸门**（ADR §5 M5）；仅**身份域（W5）不切**、仍受闸门约束；
+ *                ⇒ 这些域不套闸门**（ADR §5 M5）；**阶段二 2A M6 收敛后 web 闸门作用域仅身份域（W5）**，
+ *                身份域不切、仍受闸门约束；
  *              - desktop binding **不提供** ⇒ 共享工厂 `useCaseBinding.decorateUseCase?.(...) ?? useCase`
  *                原样返回用例 ⇒ 桌面写路径（在线/离线）逐字不变。
  *              - **绑定级断言（ADR §2.5 正向）**：web 已切域仓储 = 本地仓储。
@@ -46,6 +47,24 @@ afterEach(() => {
 })
 
 describe('闸门注入点 - web-only（ADR-r5）', () => {
+    it('表级（M6 收敛）：闸门作用域仅身份域 —— 7 业务域 `decorateUseCase` 原样返回同一引用', () => {
+        for (const kind of [
+            'task',
+            'task-check-item',
+            'task-comment',
+            'project',
+            'tag',
+            'pomodoro',
+            'pomodoro-record'
+        ] as const) {
+            const useCase = fakeUseCase()
+            // 引用相同 = 未套闸门（若某域被重新加回闸门表 ⇒ 返回 Proxy ⇒ 本断言转红）
+            expect(webBinding.decorateUseCase!(useCase, kind)).toBe(useCase)
+        }
+        const userCase = fakeUseCase()
+        expect(webBinding.decorateUseCase!(userCase, 'user')).not.toBe(userCase)
+    })
+
     it('web binding 提供 decorateUseCase；未切本地优先的域（身份域 W5）离线写被拦截、原方法零调用', async () => {
         expect(typeof webBinding.decorateUseCase).toBe('function')
 
@@ -96,7 +115,7 @@ describe('闸门注入点 - web-only（ADR-r5）', () => {
     })
 
     it('W4 番茄域（番茄/番茄记录）已切本地优先 ⇒ 撤闸门（离线写透传）', async () => {
-        // 用各域**写方法表内**的方法（pomodoro.update / pomodoro-record.createRecord）
+        // 用各域**代表性写方法**（pomodoro.update / pomodoro-record.createRecord）
         // ⇒ 若该域未从闸门豁免，离线必被拦截；透传即证明豁免生效（非空转）
         const pomodoro = fakeUseCase()
         const decoratedPomodoro = webBinding.decorateUseCase!(pomodoro, 'pomodoro')

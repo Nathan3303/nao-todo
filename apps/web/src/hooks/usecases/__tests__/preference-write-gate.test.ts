@@ -3,11 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { NueMessage } from 'nue-ui'
 import {
     OFFLINE_READONLY_ERROR,
-    PROJECT_WRITE_METHODS,
     USER_WRITE_METHODS,
     resetReadOnlyForTest,
-    setOffline,
-    withReadOnlyGuard
+    setOffline
 } from '@nao-todo/presentation/offline'
 import type { BuiltInProjectPreferenceViewObject } from '@nao-todo/domain-built-in-project'
 import { useBuiltInProjectUseCase } from '../use-built-in-project-usecase'
@@ -20,9 +18,10 @@ import { useCaseBinding as webBinding } from '../binding'
  * - `saveProjectPreference` / `updateUserConfig` **必须移出** web 离线写闸门清单；
  * - 离线调用**不被拦截**、**不返回** `OFFLINE_READONLY`、**不弹**只读提示；
  * - 内建 `savePreference` **本就不在**清单 ⇒ 保持不在；
- * - **业务数据面实质不变**（负向）：业务写仍被拦截（C-59 作用域收窄，非放宽）。
+ * - **业务数据面实质不变**（负向）：身份域写仍被拦截（C-59 作用域收窄，非放宽）。
  *
- * **红窗口**：本文件前 4 例预期**红**（T131 未落地）；内建与业务负向例预期**绿**。
+ * **阶段二 2A M6（ADR §5 M6）**：业务 7 域全部切本地优先 ⇒ 闸门表收敛为仅身份域 `user`；
+ * 清单域（`project`）不再经 binding 套闸门，**离线写透传**（比原「不在清单」更强）。
  */
 
 type ProjectFake = {
@@ -40,9 +39,9 @@ afterEach(() => {
     vi.restoreAllMocks()
 })
 
-describe('PS-2a 偏好写入口移出离线写闸门（红基线）', () => {
-    it('静态清单：saveProjectPreference 不在 PROJECT_WRITE_METHODS', () => {
-        expect(PROJECT_WRITE_METHODS.saveProjectPreference).toBeUndefined()
+describe('PS-2a 偏好写入口移出离线写闸门', () => {
+    it('静态清单：saveProjectPreference 不在身份域闸门表（业务域已整体不套闸门）', () => {
+        expect(USER_WRITE_METHODS.saveProjectPreference).toBeUndefined()
     })
 
     it('静态清单：updateUserConfig 不在 USER_WRITE_METHODS', () => {
@@ -52,12 +51,11 @@ describe('PS-2a 偏好写入口移出离线写闸门（红基线）', () => {
     it('行为：离线调用 saveProjectPreference 透传（不拦截 / 不返回 OFFLINE_READONLY / 不弹提示）', async () => {
         const warn = vi.spyOn(NueMessage, 'warn').mockImplementation(() => {})
         const useCase: ProjectFake = { saveProjectPreference: vi.fn(async () => null) }
-        // W3 起清单域整体切本地 ⇒ 不再经 binding 套闸门；此处直接以 PROJECT_WRITE_METHODS 套闸，
-        // 保持断言非空转（清单：PROJECT_WRITE_METHODS 不含 saveProjectPreference ⇒ 离线仍透传）
-        const guarded = withReadOnlyGuard(useCase, PROJECT_WRITE_METHODS)
+        // 阶段二 2A：清单域整体切本地 ⇒ binding 对 `project` 不套闸门，离线直接透传（非空转）
+        const decorated = webBinding.decorateUseCase!(useCase, 'project')
 
         setOffline(true)
-        await expect(guarded.saveProjectPreference('p-1', {})).resolves.toBeNull()
+        await expect(decorated.saveProjectPreference('p-1', {})).resolves.toBeNull()
         expect(useCase.saveProjectPreference).toHaveBeenCalledTimes(1)
         expect(warn).not.toHaveBeenCalled()
     })
@@ -73,8 +71,8 @@ describe('PS-2a 偏好写入口移出离线写闸门（红基线）', () => {
 })
 
 describe('PS-2a 负向：业务面闸门不因收窄而放宽（回归，预期绿）', () => {
-    it('离线业务写仍被拦截 + 稳定码 OFFLINE_READONLY + 原方法零调用', async () => {
-        // 用仍未切本地优先的域（身份域 W5，ADR §2.6 明确不切；业务 7 域 W1–W4 已切 ⇒ 不再受闸门约束）
+    it('离线身份域写仍被拦截 + 稳定码 OFFLINE_READONLY + 原方法零调用', async () => {
+        // 身份域 W5（ADR §2.6 明确不切、仍远端直连）；业务 7 域 W1–W4 已切 ⇒ 不再受闸门约束
         const useCase: UserWriteFake = { updateNickname: vi.fn(async () => null) }
         const guarded = webBinding.decorateUseCase!(useCase, 'user')
 

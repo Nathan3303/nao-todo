@@ -20,13 +20,6 @@ import { newLocalTaskRepository } from '@nao-todo/infrastructure/src/persistence
 import { withMirrorFallback } from '@nao-todo/infrastructure/src/persistence-go/fallback/mirror-fallback'
 import { getRequesterImpl } from '@nao-todo/shared/requester'
 import {
-    POMODORO_RECORD_WRITE_METHODS,
-    POMODORO_WRITE_METHODS,
-    PROJECT_WRITE_METHODS,
-    TAG_WRITE_METHODS,
-    TASK_CHECK_ITEM_WRITE_METHODS,
-    TASK_COMMENT_WRITE_METHODS,
-    TASK_WRITE_METHODS,
     USER_WRITE_METHODS,
     withReadOnlyGuard,
     type WriteMethodMap
@@ -51,7 +44,8 @@ import {
  *              会被远端陈旧值覆盖）；偏好回传走**独立偏好队列**（`persistence-sync/preference-sync`）。
  *              **web 离线只读闸门（C-59 / AC10，ADR-r5）经 `decorateUseCase` 注入 —— web-only**：
  *              desktop 侧 binding 不提供该钩子 ⇒ 桌面写路径（在线/离线）**逐字不变**；
- *              **已切本地优先的域不再套闸门**（`LOCAL_FIRST_KINDS`，ADR §5 M4/M5「撤该域闸门」）。
+ *              **阶段二 2A M6 收敛：业务 7 域已全部切本地优先 ⇒ 闸门仅保留身份域 `user`**
+ *              （ADR §5 M4/M5「撤该域闸门」+ M6「闸门收敛」）。
  *              本地镜像由 `@/data-plane` 后台启动的 `syncService` 填充。
  */
 
@@ -66,32 +60,15 @@ export type UseCaseKind =
     | 'pomodoro-record'
     | 'user'
 
-/** web 离线只读写方法清单（按用例种类；ADR-r5：仅 web 拦截） */
-const WRITE_METHODS_BY_KIND: Record<UseCaseKind, WriteMethodMap> = {
-    task: TASK_WRITE_METHODS,
-    'task-check-item': TASK_CHECK_ITEM_WRITE_METHODS,
-    'task-comment': TASK_COMMENT_WRITE_METHODS,
-    project: PROJECT_WRITE_METHODS,
-    tag: TAG_WRITE_METHODS,
-    pomodoro: POMODORO_WRITE_METHODS,
-    'pomodoro-record': POMODORO_RECORD_WRITE_METHODS,
+/**
+ * web 离线只读写方法清单（按用例种类；ADR-r5：仅 web 拦截）
+ * @description 阶段二 2A M6 收敛：业务 7 域（W1–W4）全部切本地优先 ⇒ 已从本表移除；
+ *              **仅身份域 `user`（W5 不切、仍远端直连）保留** ⇒ 离线写仍被拦截。
+ *              本表是「只读闸门作用域」的**唯一真源**（键缺失 = 该域不套闸门）。
+ */
+const WRITE_METHODS_BY_KIND: Partial<Record<UseCaseKind, WriteMethodMap>> = {
     user: USER_WRITE_METHODS
 }
-
-/**
- * 已切本地优先（local-first）的域 —— 该域离线写闸门已撤（ADR §5 M4「撤该域闸门」）
- * @description 阶段二 2A 按域推进（W1 任务 → W2 子实体 → W3 容器 → W4 番茄；W5 身份不切）。
- *              切本地后写路径为「本地仓储 + `syncQueue` 回传」（PS-12）⇒ 离线写合法，**不得**再被只读闸门拦截。
- */
-const LOCAL_FIRST_KINDS: ReadonlySet<UseCaseKind> = new Set<UseCaseKind>([
-    'task',
-    'task-check-item',
-    'task-comment',
-    'project',
-    'tag',
-    'pomodoro',
-    'pomodoro-record'
-])
 
 export type UseCaseBinding = {
     createTaskRepository: () => TaskRepository
@@ -107,8 +84,9 @@ export type UseCaseBinding = {
     decorateUserUseCase?: (useCase: UserUseCase) => UserUseCase
     /**
      * 用例装饰（端专属）
-     * @description **web 提供**：未切本地优先的域套 `withReadOnlyGuard`（离线只读闸门，C-59 / AC10）；
-     *              已切本地优先的域（`LOCAL_FIRST_KINDS`）**不套闸门**（ADR §5 M4/M5）；
+     * @description **web 提供**：`WRITE_METHODS_BY_KIND` 中的域（阶段二 2A M6 后**仅身份域 `user`**）
+     *              套 `withReadOnlyGuard`（离线只读闸门，C-59 / AC10）；其余域（业务 7 域已切本地优先）
+     *              **不套闸门**（ADR §5 M4/M5/M6）；
      *              **desktop 不提供** ⇒ 共享工厂原样返回用例 ⇒ 桌面写路径（在线/离线）逐字不变。
      */
     decorateUseCase?: <T extends object>(useCase: T, kind: UseCaseKind) => T
@@ -131,9 +109,9 @@ export const useCaseBinding: UseCaseBinding = {
     createPomodoroRepository: () => newLocalPomodoroRepository(),
     createPomodoroRecordRepository: () => newLocalPomodoroRecordRepository(),
     // C-59 / AC10（ADR-r5）：**web-only** 离线只读闸门；desktop binding 不提供本钩子
-    // 阶段二 2A：已切本地优先的域撤闸门（ADR §5 M4/M5），其余域照旧
-    decorateUseCase: (useCase, kind) =>
-        LOCAL_FIRST_KINDS.has(kind)
-            ? useCase
-            : withReadOnlyGuard(useCase, WRITE_METHODS_BY_KIND[kind])
+    // 阶段二 2A M6：业务 7 域已切本地优先 ⇒ 闸门仅保留身份域 `user`（ADR §5 M4/M5/M6）
+    decorateUseCase: (useCase, kind) => {
+        const writeMethods = WRITE_METHODS_BY_KIND[kind]
+        return writeMethods ? withReadOnlyGuard(useCase, writeMethods) : useCase
+    }
 }
