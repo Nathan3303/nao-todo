@@ -12,7 +12,13 @@ import type { GoAsync } from '@nao-todo/shared/types'
  *   - 取消 ⇒ 不归档（无副作用）；失败 ⇒ 可见错误提示。
  */
 
-/** 统计「将一并归档」的任务数（N） */
+/**
+ * 统计「将一并归档」的任务数（N）
+ * @description 口径 = 本地任务仓储 `list()` 默认：排除归档 + 排除删除 + **排除已放弃（givenUp）**
+ *              （ADR §4.2 / DP-3）。⚠️ 级联 `archiveByProjectId` 会归档已放弃任务
+ *              （PA-6 仅跳过已归档/已删除）⇒ **N 可能略小于实际归档数**（差值 = 该清单已放弃任务数），
+ *              已由 PM 裁定接受并登记为已知微差。
+ */
 export const countArchivableTasks = async (
     taskUseCase: Pick<TaskUseCase, 'list'>,
     projectId: string

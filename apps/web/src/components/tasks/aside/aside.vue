@@ -27,7 +27,8 @@ const {
     contextMenu,
     openProjectContextMenu,
     closeProjectContextMenu,
-    executeProjectContextMenu
+    executeProjectContextMenu,
+    openProjectManager
 } = useAside()
 
 /**
@@ -89,6 +90,13 @@ onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
                     theme="route"
                 >
                     {{ link.title }}
+                </nue-link>
+            </nue-div>
+            <nue-divider />
+            <!-- 清单区底部：已归档入口 ⇒ 清单管理弹窗 archived tab（PRD §3-3） -->
+            <nue-div vertical gap="0.25rem">
+                <nue-link icon="archive" theme="route" @click="openProjectManager('archived')">
+                    {{ t('common.archived') }}
                 </nue-link>
             </nue-div>
         </nue-div>

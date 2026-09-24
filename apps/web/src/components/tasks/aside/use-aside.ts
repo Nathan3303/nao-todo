@@ -7,6 +7,7 @@ import { useProjectsStore } from '@nao-todo/presentation/project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
 import { useTasksStore } from '@nao-todo/presentation/task'
 import { NaoSmartListLinkVO } from '@nao-todo/shared/components/smart-list'
+import { PROJECT_MANAGER_DIALOG_KEY } from '@nao-todo/shared/constants'
 import { storeToRefs } from 'pinia'
 import { computed, inject, onMounted, onUnmounted, reactive, ref } from 'vue'
 
@@ -143,6 +144,16 @@ export const useAside = () => {
         })
     }
 
+    /**
+     * 打开清单管理弹窗（可指定初始 tab）
+     * @description 侧栏底部「已归档」入口 ⇒ 直达 `archived` tab（PRD §3-3 / DP-5）
+     */
+    const openProjectManager = (
+        activeTab: 'all' | 'active' | 'deleted' | 'archived' = 'all'
+    ): void => {
+        appDialogManager.open(PROJECT_MANAGER_DIALOG_KEY, { activeTab })
+    }
+
     // 键盘可达：Esc 关闭右键菜单
     const handleContextMenuKeydown = (event: KeyboardEvent) => {
         if (event.key === 'Escape') closeProjectContextMenu()
@@ -167,6 +178,7 @@ export const useAside = () => {
         contextMenu,
         openProjectContextMenu,
         closeProjectContextMenu,
-        executeProjectContextMenu
+        executeProjectContextMenu,
+        openProjectManager
     }
 }

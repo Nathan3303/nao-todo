@@ -10,7 +10,7 @@ import { ProjectArchiveButton } from '@nao-todo/shared/components/project-archiv
 import { ProjectDeleteButton } from '@nao-todo/shared/components/project-delete-button'
 import { RuleHint } from '@nao-todo/shared/components/rule-hint'
 import { onMounted, ref } from 'vue'
-import type { ProjectManagerDialogProps } from './types'
+import type { ProjectManagerDialogProps, ProjectManagerVO } from './types'
 import useProjectManager from './use-project-manager'
 
 defineOptions({ name: 'ProjectManager' })
@@ -34,8 +34,11 @@ const {
 // 对话框实例
 const { visible, close } = useDialogWrapper(dialogRef)
 
-// 打开项目管理器对话框
-const open = () => (visible.value = true)
+// 打开项目管理器对话框（可选指定初始 tab，供侧栏「已归档」入口直达）
+const open = (payload?: { activeTab?: ProjectManagerVO['activeTab'] }) => {
+    if (payload?.activeTab) setActiveTab(payload.activeTab)
+    visible.value = true
+}
 
 // @Mounted
 onMounted(() => {
