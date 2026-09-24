@@ -21,6 +21,26 @@ import {
 } from './converters'
 
 /**
+ * 内建清单（收集箱）ID
+ * @description 内建清单不可归档（ADR `2026-09-24-project-archive.md` §7.1 / Q4）。
+ *              收集箱是数据面单一真源 `'inbox'`（非 `''`）⇒ 此处按字面判定。
+ */
+const INBOX_PROJECT_ID = 'inbox'
+
+/**
+ * 清单-任务归档级联端口（可选）
+ * @description 本地优先端注入：清单归档/取消归档需与其下任务在同一 Dexie `rw` 事务内
+ *              级联完成（ADR §4 Q1 / PA-5）。
+ *              ⚠️ 不跨域 import ⇒ 以结构类型定义在本域（实现由 infrastructure 提供）。
+ */
+export type ProjectTaskCascadePort = {
+    /** 归清单下「未删除且未归档」的任务（同事务） */
+    archiveByProjectId: (projectId: string) => GoAsync<void>
+    /** 恢复清单下「未删除且仍归档」的任务（同事务） */
+    unarchiveByProjectId: (projectId: string) => GoAsync<void>
+}
+
+/**
  * 项目用例
  * @description 负责处理项目相关的业务逻辑，包括加载项目、创建项目、加载项目偏好等
  */
@@ -36,7 +56,9 @@ export class ProjectUseCase {
         private projectService: ProjectService,
         private projectRepo: ProjectRepository,
         private projectPreferenceRepo: ProjectPreferenceRepository,
-        private store: ProjectStore
+        private store: ProjectStore,
+        // 可选级联端口：存在时归档/取消归档走「清单 + 任务同事务」；缺省回退单表写入
+        private taskCascade?: ProjectTaskCascadePort
     ) {}
 
     /**
@@ -154,9 +176,17 @@ export class ProjectUseCase {
      * @returns 无
      */
     async archive(projectId: ProjectViewObject['id']): GoAsync<void> {
-        // DEF-36 / PA-3：委托仓储归档方法（写 archivedAt）；
-        // 归档路径绝不写 deletedAt / deactivedAt（PA-4 数据零丢失红线）
-        return await this.projectRepo.archive(projectId)
+        // 内建清单（收集箱）不可归档（面10 / PRD §5-8）
+        if (projectId === INBOX_PROJECT_ID) return '内建清单不可归档'
+        // DEF-36 / PA-3：归档写 archivedAt（绝不写 deletedAt / deactivedAt，PA-4）；
+        // 有级联端口时由任务仓储在**同一事务**内完成「清单 + 其下任务」（PA-5）
+        const err = this.taskCascade
+            ? await this.taskCascade.archiveByProjectId(projectId)
+            : await this.projectRepo.archive(projectId)
+        if (err !== null) return err
+        // 同步 presentation store（与 delete/restore 同口径，避免侧栏需刷新才收敛）
+        this.store.archiveProject?.(projectId)
+        return null
     }
 
     /**
@@ -165,8 +195,14 @@ export class ProjectUseCase {
      * @returns 无
      */
     async unarchive(projectId: ProjectViewObject['id']): GoAsync<void> {
-        // DEF-36 / PA-3：委托仓储取消归档方法（清 archivedAt）；同样不触碰删除位
-        return await this.projectRepo.unarchive(projectId)
+        // DEF-36 / PA-3：清 archivedAt（不触碰 deletedAt / deactivedAt）
+        const err = this.taskCascade
+            ? await this.taskCascade.unarchiveByProjectId(projectId)
+            : await this.projectRepo.unarchive(projectId)
+        if (err !== null) return err
+        // 同步 presentation store（与 delete/restore 同口径）
+        this.store.unarchiveProject?.(projectId)
+        return null
     }
 
     /**

@@ -119,6 +119,7 @@ export interface LocaleMessages {
     'common.all': string
     'common.normal': string
     'common.deleted': string
+    'common.archived': string
     'common.unknown': string
     'common.signOut': string
     'common.sessionRequired': string
@@ -666,6 +667,13 @@ export interface LocaleMessages {
     'dialog.projectNotFound': string
     'dialog.projectIdRequired': string
     'dialog.projectNameRequired': string
+    'dialog.projectArchiveConfirmTitle': string
+    'dialog.projectArchiveConfirmContent': string
+    'dialog.confirmArchive': string
+    'dialog.projectArchiveSuccess': string
+    'dialog.projectArchiveFailed': string
+    'dialog.projectUnarchiveSuccess': string
+    'dialog.projectUnarchiveFailed': string
     'dialog.tagDeleteConfirmTitle': string
     'dialog.tagDeleteConfirmContent': string
     'dialog.tagDeleteFailed': string
@@ -740,6 +748,8 @@ export interface LocaleMessages {
     'component.projectCard.noDescription': string
     'component.projectCard.deletedAt': string
     'component.projectCard.createdAt': string
+    'component.projectCard.archivedAt': string
+    'component.projectCard.archivedTaskCount': string
     'component.tagBoard.deleteTag': string
     'component.tagColorSelector.current': string
     'component.tagColorSelector.unknown': string

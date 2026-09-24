@@ -159,7 +159,7 @@ export class ProjectHandler {
 
     /**
      * 恢复项目
-     * @param projectId 项目ID
+     * @param projectId 项目 ID
      * @returns 无
      */
     async restoreProject(projectId: string): GoAsync<void> {
@@ -172,6 +172,26 @@ export class ProjectHandler {
         }
         // 成功
         NueMessage.success(t('dialog.projectRestoreSuccess'))
+        return null
+    }
+
+    /**
+     * 取消归档项目（归档面板动作）
+     * @description 用例层同步级联恢复其下仍归档的任务（ADR §4 Q1）；
+     *              `sortId` 保留 ⇒ 侧栏回最近位置（归一属 P3）。
+     * @param projectId 项目 ID
+     * @returns 无
+     */
+    async unarchiveProject(projectId: string): GoAsync<void> {
+        const unarchiveError = await this.projectUseCase.unarchive(projectId)
+        if (unarchiveError !== null) {
+            NueMessage.error(
+                t('dialog.projectUnarchiveFailed', { error: unwrapError(unarchiveError) })
+            )
+            return unarchiveError
+        }
+        NueMessage.success(t('dialog.projectUnarchiveSuccess'))
+        this.subscriber.emit('project:unarchived', projectId)
         return null
     }
 

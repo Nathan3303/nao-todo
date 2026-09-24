@@ -18,6 +18,7 @@ import {
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
 import { putWithSyncBase } from './put-with-sync-base'
+import { cascadeProjectArchive } from './project-archive-cascade'
 import { localSession } from '../session/local-session'
 import { isAbsentStamp, isNotDeleted } from '../utils'
 import { snowflake } from '../../persistence-sync/snowflake'
@@ -263,6 +264,15 @@ export class LocalTaskRepoImpl implements TaskRepository {
         }
     }
 
+    async archiveByProjectId(projectId: string): GoAsync<void> {
+        // 清单 + 其下任务同事务级联（ADR §4 Q1 / PA-5/PA-6/PA-7）
+        return await cascadeProjectArchive(this.db, projectId, this.currentUserId, 'archive')
+    }
+
+    async unarchiveByProjectId(projectId: string): GoAsync<void> {
+        return await cascadeProjectArchive(this.db, projectId, this.currentUserId, 'unarchive')
+    }
+
     async list(
         queryString?: string
     ): GoAsync<{ taskEntities: TaskEntity[]; pagination?: Pagination }> {
@@ -278,7 +288,9 @@ export class LocalTaskRepoImpl implements TaskRepository {
             }
             if (query.isArchived === 'true') {
                 records = records.filter((r) => !isAbsentStamp(r.archivedAt))
-            } else if (query.isArchived === 'false') {
+            } else {
+                // L1（ADR §3.2 / Q2）：`isArchived` 未传 ⇒ **默认排除归档**（视同 'false'）
+                // ⇒ 单一杠杆覆盖清单视图 + 内置视图；显式 'true' 才包含
                 records = records.filter((r) => isAbsentStamp(r.archivedAt))
             }
             if (query.isStarMarked === 'true') {

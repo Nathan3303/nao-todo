@@ -8,6 +8,7 @@ import {
     TAG_MANAGER_DIALOG_KEY
 } from '@nao-todo/shared/constants'
 import dayjs from 'dayjs'
+import { t } from '@nao-todo/shared/locales'
 import { nextTick, onMounted, ref, watch } from 'vue'
 import { useAside } from './use-aside'
 
@@ -22,7 +23,11 @@ const {
     collapseItemsRecord,
     dialogManager,
     isDisplayAside,
-    setControllOption
+    setControllOption,
+    contextMenu,
+    openProjectContextMenu,
+    closeProjectContextMenu,
+    executeProjectContextMenu
 } = useAside()
 
 /**
@@ -54,7 +59,11 @@ onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
                 </nue-link>
             </nue-div>
             <nue-divider />
-            <nue-collapse theme="menu" v-model="collapseItemsRecord">
+            <nue-collapse
+                theme="menu"
+                v-model="collapseItemsRecord"
+                @contextmenu.prevent="openProjectContextMenu"
+            >
                 <project-smart-list
                     :links="projectLinks"
                     draggable
@@ -84,6 +93,31 @@ onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
             </nue-div>
         </nue-div>
     </teleport>
+
+    <!-- 入口二：清单右键菜单（项 id = archive-project，与头部 execute-id 同一 id） -->
+    <teleport to="body">
+        <div
+            v-if="contextMenu.visible"
+            class="project-context-menu-layer"
+            @pointerdown="closeProjectContextMenu"
+            @contextmenu.prevent="closeProjectContextMenu"
+        >
+            <nue-div
+                class="project-context-menu"
+                :style="{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }"
+                @pointerdown.stop
+            >
+                <nue-button
+                    class="project-context-menu__item"
+                    icon="archive"
+                    theme="pure"
+                    @click="executeProjectContextMenu('archive-project')"
+                >
+                    {{ t('component.archiveProject') }}
+                </nue-button>
+            </nue-div>
+        </div>
+    </teleport>
 </template>
 
 <style scoped>
@@ -97,6 +131,31 @@ onMounted(() => setControllOption({ useSlot: true, useDrawerSlot: true }))
 
     .nue-collapse-item {
         border: none;
+    }
+}
+
+/* 清单右键菜单：固定于光标处，随视口滚动即关闭（不跟随） */
+.project-context-menu-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+}
+
+.project-context-menu {
+    position: fixed;
+    flex-direction: column;
+    min-width: 9rem;
+    padding: var(--nue-padding-xs);
+    background-color: var(--nue-primary-color-0);
+    border: 1px solid var(--nue-divider-color);
+    border-radius: var(--nue-primary-radius);
+    box-shadow: var(--nue-secondary-shadow);
+
+    .project-context-menu__item {
+        justify-content: flex-start;
+        width: 100%;
+        color: var(--nue-primary-text-color);
+        font-size: var(--nue-text-df);
     }
 }
 </style>

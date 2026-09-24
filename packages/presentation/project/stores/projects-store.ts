@@ -14,6 +14,8 @@ export const useProjectsStore = defineStore('ProjectsStore', () => {
         softDeleteProject,
         deleteProject,
         restoreProject,
+        archiveProject,
+        unarchiveProject,
         updateProject
     } = useProjectsStoreBase()
 
@@ -55,6 +57,8 @@ export const useProjectsStore = defineStore('ProjectsStore', () => {
         softDeleteProject,
         deleteProject,
         restoreProject,
+        archiveProject,
+        unarchiveProject,
         updateProject,
         avaliableProjects,
         // --- Project Preference ---

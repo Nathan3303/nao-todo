@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '@nao-todo/shared/locales'
 import type { ProjectArchiveButtonProps, ProjectArchiveButtonEmits } from './types'
 
 defineOptions({ name: 'ProjectArchiveButton' })
@@ -6,6 +7,7 @@ const props = defineProps<ProjectArchiveButtonProps>()
 const emit = defineEmits<ProjectArchiveButtonEmits>()
 
 const handleClick = () => {
+    if (props.loading) return
     if (props.isArchived) {
         emit('unarchive')
         return
@@ -15,12 +17,16 @@ const handleClick = () => {
 </script>
 
 <template>
-    <nue-tooltip size="small" :content="isArchived ? '取消归档清单' : '归档清单'">
+    <nue-tooltip
+        size="small"
+        :content="isArchived ? t('component.unarchiveProject') : t('component.archiveProject')"
+    >
         <nue-button
             class="project-archive-button"
             :theme="$slots.default ? 'small' : 'pure'"
             :icon="isArchived ? 'unarchive' : 'archive'"
-            @click="handleClick"
+            :loading="loading"
+            @click.stop="handleClick"
         >
             <slot />
         </nue-button>

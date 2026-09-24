@@ -1,12 +1,14 @@
-import { useProjectUseCase, useTagUseCase } from '@/hooks'
+import { useProjectUseCase, useTagUseCase, useTaskUseCase } from '@/hooks'
 import { INDEX_VIEW_CONTEXT_KEY } from '@/views/index/context'
 import { TASKS_VIEW_CONTEXT_KEY } from '@/views/index/tasks/context'
+import { runProjectArchive } from '@/components/tasks/project/archive-project-action'
 import { useBuiltInProjectsStore } from '@nao-todo/presentation/built-in-project'
 import { useProjectsStore } from '@nao-todo/presentation/project'
 import { useTagsStore } from '@nao-todo/presentation/tag'
+import { useTasksStore } from '@nao-todo/presentation/task'
 import { NaoSmartListLinkVO } from '@nao-todo/shared/components/smart-list'
 import { storeToRefs } from 'pinia'
-import { computed, inject, ref } from 'vue'
+import { computed, inject, onMounted, onUnmounted, reactive, ref } from 'vue'
 
 /**
  * 侧边栏状态 Hook
@@ -29,6 +31,7 @@ export const useAside = () => {
     // @usecase 业务依赖本地组装（DI 入口；不来自父视图上下文）
     const projectUseCase = useProjectUseCase(projectsStore)
     const tagUseCase = useTagUseCase(tagsStore)
+    const taskUseCase = useTaskUseCase(useTasksStore())
 
     /**
      * 前置数据
@@ -100,6 +103,53 @@ export const useAside = () => {
         await tagUseCase.resort(originalId, boundId, isBefore)
     }
 
+    /**
+     * @state 清单右键菜单
+     * @description 入口二（PRD §3-1）：侧栏清单链接右键弹出菜单（项 id = `archive-project`，
+     *              与头部 execute-id 同一 id ⇒ 一次 handler 覆盖两处入口，ADR §15.3）
+     */
+    const contextMenu = reactive<{
+        visible: boolean
+        x: number
+        y: number
+        projectId: string | null
+    }>({ visible: false, x: 0, y: 0, projectId: null })
+
+    const closeProjectContextMenu = () => {
+        contextMenu.visible = false
+        contextMenu.projectId = null
+    }
+
+    /** 右键打开清单菜单（事件委派：`data-drag-id` = 清单 ID） */
+    const openProjectContextMenu = (event: MouseEvent) => {
+        const link = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-drag-id]')
+        const projectId = link?.dataset.dragId ?? null
+        if (!projectId || !projects.value.some((p) => p.id === projectId)) return
+        contextMenu.projectId = projectId
+        contextMenu.x = event.clientX
+        contextMenu.y = event.clientY
+        contextMenu.visible = true
+    }
+
+    /** 执行菜单项（与头部归档同一实现：二次确认 N + 归档） */
+    const executeProjectContextMenu = async (executeId: string): Promise<void> => {
+        const projectId = contextMenu.projectId
+        closeProjectContextMenu()
+        if (executeId !== 'archive-project' || !projectId) return
+        await runProjectArchive({
+            taskUseCase,
+            projectId,
+            archive: (id) => projectUseCase.archive(id)
+        })
+    }
+
+    // 键盘可达：Esc 关闭右键菜单
+    const handleContextMenuKeydown = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') closeProjectContextMenu()
+    }
+    onMounted(() => document.addEventListener('keydown', handleContextMenuKeydown))
+    onUnmounted(() => document.removeEventListener('keydown', handleContextMenuKeydown))
+
     // @returns
     return {
         builtInProjectLinks,
@@ -113,6 +163,10 @@ export const useAside = () => {
         handleResizeAside,
         isDisplayAside,
         isUseFloatAside,
-        setControllOption
+        setControllOption,
+        contextMenu,
+        openProjectContextMenu,
+        closeProjectContextMenu,
+        executeProjectContextMenu
     }
 }

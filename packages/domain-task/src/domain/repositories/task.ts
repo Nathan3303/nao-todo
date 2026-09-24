@@ -44,6 +44,20 @@ export interface TaskRepository {
     restore(id: string): GoAsync<void>
 
     /**
+     * archiveByProjectId 归档清单下「未删除且未归档」的任务（批量级联）
+     * @description 可选方法 ⇒ 远端/mobile 实现不必提供；调用方以 `typeof === 'function'` 守卫。
+     *              本地实现与清单行写入在**同一 Dexie `rw` 事务**内完成
+     *              （ADR `2026-09-24-project-archive.md` §4 Q1 / PA-5）。
+     */
+    archiveByProjectId?(projectId: string): GoAsync<void>
+
+    /**
+     * unarchiveByProjectId 恢复清单下「未删除且仍归档」的任务（批量级联）
+     * @description 同 `archiveByProjectId`（可选 + 同事务）
+     */
+    unarchiveByProjectId?(projectId: string): GoAsync<void>
+
+    /**
      * list 获取任务列表
      * @param queryString 查询字符串
      * @returns 任务实体列表和分页信息

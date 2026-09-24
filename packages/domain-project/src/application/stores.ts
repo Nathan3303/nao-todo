@@ -16,6 +16,13 @@ export type ProjectStore = {
     softDeleteProject: (id: string) => void
     deleteProject: (id: string) => void
     restoreProject: (id: string) => void
+    /**
+     * 归档项目（可选：本地优先端在 store 内置归档态收敛）
+     * @description 可选方法 ⇒ 远端/mobile 存储实现不必实现；调用方以 `?.` 守卫。
+     */
+    archiveProject?: (id: string) => void
+    /** 取消归档项目（可选，同 `archiveProject`） */
+    unarchiveProject?: (id: string) => void
     updateProject: (id: string, update: Partial<UpdateProjectViewObject>) => void
     projectPreference: ProjectPreferenceViewObject | undefined
     setProjectPreference: (preference: ProjectPreferenceViewObject) => void
