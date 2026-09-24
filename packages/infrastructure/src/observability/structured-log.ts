@@ -65,6 +65,8 @@ export const STRUCTURED_LOG_EVENTS = {
     SYNC_PUSH_COMPLETED: 'sync.push.completed',
     SYNC_PUSH_FAILED: 'sync.push.failed',
     SYNC_PUSH_UNCONFIRMED: 'sync.push.unconfirmed',
+    SYNC_PUSH_LOCK_SKIPPED: 'sync.push.lock.skipped',
+    SYNC_PUSH_LOCK_UNAVAILABLE: 'sync.push.lock.unavailable',
     /** 运行级不可达防御（存储/加解密等意外异常） */
     SYNC_RUN_UNEXPECTED_ERROR: 'sync.run.unexpected-error'
 } as const

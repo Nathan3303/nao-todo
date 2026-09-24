@@ -98,6 +98,34 @@ const pushEchoRequester = (): { requester: Requester; post: ReturnType<typeof vi
     return { requester, post }
 }
 
+/** push 回显请求体 id 且 outcome 为 `stale` 的 requester（触发 journal 写入） */
+const stalePushRequester = (): { requester: Requester } => {
+    const post = vi.fn(async (url: string, body: unknown) => {
+        if (url !== '/sync/push') return { data: {} }
+        const tasks = (body as { tasks?: { id: string }[] }).tasks ?? []
+        return {
+            data: {
+                data: {
+                    results: tasks.map((task) => ({
+                        table: 'tasks',
+                        id: task.id,
+                        serverUpdatedAt: '2026-01-05T00:00:00.000Z',
+                        outcome: 'stale'
+                    }))
+                },
+                serverTime: Date.now()
+            }
+        }
+    })
+    const requester = {
+        post,
+        get: vi.fn(async () => ({ data: {} })),
+        put: vi.fn(async () => ({ data: {} })),
+        delete: vi.fn(async () => ({ data: {} }))
+    } as unknown as Requester
+    return { requester }
+}
+
 /** 把唯一队列项改为「已退避未到期」→ 仍 due（nextAttemptAt 过期）；attempts 预置 2 */
 const seedBackoff = async (): Promise<void> => {
     const [item] = await syncTracker.listDirty(USER_ID)
@@ -214,5 +242,45 @@ describe('面 ④ 多标签 push 单主（navigator.locks）', () => {
         expect(request).toHaveBeenCalledTimes(2)
         expect(post).toHaveBeenCalledTimes(2)
         expect(await syncTracker.countDirty(USER_ID)).toBe(0)
+    })
+
+    it('⑤ journal 写入发生在 push 锁内（ADR §9.3：meta RMW 互斥守护）', async () => {
+        let lockHeld = false
+        const request = vi.fn(
+            async (
+                _name: string,
+                _options: unknown,
+                callback: (lock: unknown) => Promise<void>
+            ): Promise<void> => {
+                lockHeld = true
+                try {
+                    await callback({ name: 'fake-lock' })
+                } finally {
+                    lockHeld = false
+                }
+            }
+        )
+        vi.stubGlobal('navigator', { locks: { request } })
+
+        // 记录 journal 落 `meta` 单记录（`conflictJournal`）那一刻是否持锁
+        const journalWriteLockHeld: boolean[] = []
+        const originalPut = localDatabase.meta.put.bind(localDatabase.meta)
+        vi.spyOn(localDatabase.meta, 'put').mockImplementation((async (
+            record: unknown,
+            ...rest: unknown[]
+        ) => {
+            if ((record as { conflictJournal?: unknown }).conflictJournal !== undefined) {
+                journalWriteLockHeld.push(lockHeld)
+            }
+            return originalPut(record as never, ...(rest as never[]))
+        }) as never)
+
+        await makeDirtyTask()
+        const { requester } = stalePushRequester()
+
+        await new SyncService(requester).pushAll()
+
+        // outcome=stale 被消费 ⇒ journal 确实写入，且写入时刻**持 push 锁**（与 pull 侧互斥）
+        expect(journalWriteLockHeld).toEqual([true])
     })
 })

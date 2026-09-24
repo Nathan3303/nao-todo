@@ -262,6 +262,13 @@ const PULL_LIMIT = 200
  */
 const PULL_LOCK_PREFIX = 'nao-todo:pull:'
 /**
+ * push 单主锁名前缀（ADR §9.3 / R-3）
+ * @description 同 origin 多标签并发 push 会使 `syncQueue` 单写者假设失效，且 push 临界区内含
+ *              journal 写入（`appendConflict` 对 `meta` 单记录 RMW）⇒ 需跨标签选主；
+ *              锁名按 `userId` 隔离（不同账号互不阻塞）。desktop 单实例锁下恒无争用 ⇒ 行为等价。
+ */
+const PUSH_LOCK_PREFIX = 'nao-todo:push:'
+/**
  * 续拉上界（DEF-6 护栏 A / arch R2）：每表 ≤10 轮（=2000 行）
  * @description 墓碑计入窗口（`.Unscoped()`）⇒ 续拉轮数可能远大于存活行数，必须有界。
  */
@@ -885,10 +892,49 @@ export class SyncService {
         return this.enqueue(() => this.runFull(() => this.pushAllInner(), 'push'))
     }
 
-    /** 推送脏队列（串行队列内执行） */
+    /** 推送脏队列（串行队列内执行；已加 push 单主锁） */
     private async pushAllInner(): Promise<void> {
         const userId = this.currentUserId()
         if (!userId) return
+        await this.withPushLock(userId, () => this.pushAllInnerLocked(userId))
+    }
+
+    /**
+     * push 单主（`navigator.locks`，`ifAvailable` 语义；ADR §9.3 / R-3）
+     * @description 与 `withPullLock` **同构**：web 多标签同 origin 可能并发 push ⇒ 需跨标签选主
+     *              （desktop 单实例锁下恒无争用）。**未取得锁 ⇒ 跳过本次 push**（不排队等待、
+     *              不发请求、不消耗重试、不改 `nextAttemptAt`），队列保留 ⇒ 由他标签 / 既有触发源
+     *              （启动 · `online` · 前台恢复 · 条件退避）补推（守护 R-17「不丢」）。
+     *              环境无 `navigator.locks`（老浏览器/测试）⇒ 记日志 + **直接执行**（不得因此失败，
+     *              退化为 2A 现状）。锁由 API 在回调结束/异常时自动释放，**不手工 release**。
+     *              临界区内含网络往返 + journal 写入（`appendConflict`）⇒ push 侧 journal `meta`
+     *              RMW 在多标签间串行（pull 侧 journal 写位于其 pull 锁内；两锁名不同，跨路径并发
+     *              见 T166 回执风险）。
+     */
+    private async withPushLock(userId: string, run: () => Promise<void>): Promise<void> {
+        const locks = typeof navigator === 'undefined' ? undefined : navigator.locks
+        if (!locks || typeof locks.request !== 'function') {
+            logStructured('warn', STRUCTURED_LOG_EVENTS.SYNC_PUSH_LOCK_UNAVAILABLE, { userId })
+            await run()
+            return
+        }
+        let acquired = false
+        await locks.request(`${PUSH_LOCK_PREFIX}${userId}`, { ifAvailable: true }, async (lock) => {
+            if (!lock) return
+            acquired = true
+            await run()
+        })
+        if (!acquired) {
+            logStructured('info', STRUCTURED_LOG_EVENTS.SYNC_PUSH_LOCK_SKIPPED, { userId })
+        }
+    }
+
+    /**
+     * 推送主体（已持 push 单主锁）
+     * @description 锁获取在 `pushAllInner` 完成 ⇒ **未取得锁不会进入本方法**（无网络请求、
+     *              不消耗重试、队列保留）。
+     */
+    private async pushAllInnerLocked(userId: string): Promise<void> {
         const queue = await syncTracker.listDirty(userId)
         try {
             if (queue.length === 0) return
