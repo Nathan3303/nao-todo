@@ -28,7 +28,7 @@ type ProjectFake = {
     saveProjectPreference: (projectId: string, viewObject: unknown) => Promise<unknown>
 }
 type UserFake = { updateUserConfig: (viewObject: unknown) => Promise<unknown> }
-type TaskFake = { delete: (id: string) => Promise<unknown> }
+type ProjectWriteFake = { delete: (id: string) => Promise<unknown> }
 
 beforeEach(() => {
     resetReadOnlyForTest()
@@ -71,8 +71,9 @@ describe('PS-2a 偏好写入口移出离线写闸门（红基线）', () => {
 
 describe('PS-2a 负向：业务面闸门不因收窄而放宽（回归，预期绿）', () => {
     it('离线业务写仍被拦截 + 稳定码 OFFLINE_READONLY + 原方法零调用', async () => {
-        const useCase: TaskFake = { delete: vi.fn(async () => null) }
-        const guarded = webBinding.decorateUseCase!(useCase, 'task')
+        // 用仍未切本地优先的业务域（project；W1 任务域已切本地 ⇒ 不再受闸门约束）
+        const useCase: ProjectWriteFake = { delete: vi.fn(async () => null) }
+        const guarded = webBinding.decorateUseCase!(useCase, 'project')
 
         setOffline(true)
         await expect(guarded.delete('t-1')).resolves.toBe(OFFLINE_READONLY_ERROR)
