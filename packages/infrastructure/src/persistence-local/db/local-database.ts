@@ -187,6 +187,30 @@ export interface MetaRecord {
     mirrorTruncated?: boolean
     /** 偏好队列（TASK-26/M6；仅 `${userId}:preference-queue` 记录携带，非索引字段 ⇒ 不触 C-44） */
     preferenceQueue?: PreferenceQueueItem[]
+    /** 冲突记账（PS-14/DP-1；仅 `${userId}:conflict-journal` 记录携带，非索引字段 ⇒ 不触 C-44） */
+    conflictJournal?: ConflictJournalEntry[]
+}
+
+/**
+ * 冲突记账项（PS-14 / DP-1）
+ * @description 记录「本地待推修改被远端覆盖」或「push 被服务端 no-op」时的**败方（被覆盖方）快照**，
+ *              满足「不得静默覆盖丢数据」硬约束。纯追加、有界（环形淘汰）⇒ 不 bump Dexie version / 不加索引。
+ */
+export interface ConflictJournalEntry {
+    /** 冲突类型：远端胜（pull 覆盖本地未推修改）/ 服务端 no-op（push 被拒） */
+    kind: 'remote-wins' | 'push-noop'
+    /** 业务表名（如 'tasks'） */
+    table: string
+    /** 实体 id */
+    entityId: string
+    /** 败方（被覆盖方）实体快照（明文，沿用本地明文姿态） */
+    loser: Record<string, unknown>
+    /** 胜方时间（服务端 updatedAt；push-noop 为 serverUpdatedAt） */
+    winnerUpdatedAt?: string
+    /** 败方本地 updatedAt */
+    loserUpdatedAt?: string
+    /** 记账时间（ISO） */
+    at: string
 }
 
 /**

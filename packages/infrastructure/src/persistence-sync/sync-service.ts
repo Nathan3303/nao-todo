@@ -38,6 +38,7 @@ import {
 import { pomodoroRecordRes2Entity, pomodoroRes2Entity } from '../persistence-go/pomodoro/converters'
 import { setServerTimeOffset } from './sync-config'
 import { loadMirrorStatus, saveMirrorStatus } from './mirror-status-store'
+import { appendConflict, countConflicts } from './conflict-journal'
 import { syncTracker } from './sync-tracker'
 import { syncStatus, type SyncPhase, type SyncRunResult } from './sync-status'
 import {
@@ -237,6 +238,8 @@ interface PushResult {
     table?: string
     id?: string
     serverUpdatedAt?: string
+    /** 服务端判定（T143 additive）：`noop` = 请求更旧、未写入（被服务端现有版本覆盖） */
+    outcome?: string
 }
 
 /** 单表续拉游标状态（DEF-6）：`updatedAt/cursorId` 为**本轮请求**游标，`lastEnd*` 为上一页**原始**末尾 */
@@ -421,6 +424,16 @@ export class SyncService {
         if (persisted) syncStatus.restoreMirrorStatus(persisted)
     }
 
+    /**
+     * 从磁盘恢复冲突记账条数（PS-14 / DP-1；冷启动状态面计数）
+     * @description 同 `restoreMirrorStatus`：内存态冷启动归零 ⇒ 启动时以磁盘事实覆盖。
+     */
+    async restoreConflictCount(): Promise<void> {
+        const userId = this.currentUserId()
+        if (!userId) return
+        syncStatus.setConflictCount(await countConflicts(userId))
+    }
+
     /** 落盘当前镜像新鲜度（直连 meta，不触发 markDirty，C-59） */
     private async persistMirrorStatus(userId: string): Promise<void> {
         const { mirrorPulledAt, mirrorTruncated } = syncStatus.get()
@@ -454,6 +467,8 @@ export class SyncService {
                 if (!userId) return
                 // T107b：先读回磁盘镜像新鲜度 ⇒ 离线冷启动亦有「数据截至 X」（AC8）
                 await this.restoreMirrorStatus()
+                // PS-14/DP-1：恢复冲突记账条数（冷启动状态面可见「冲突 N」）
+                await this.restoreConflictCount()
                 // 注销反悔期：deletionSchedules 有调度记录则跳过启动
                 const schedule = await localDatabase.deletionSchedules.get(userId)
                 if (schedule) return
@@ -744,6 +759,21 @@ export class SyncService {
             if (queued) {
                 const localTs = Date.parse(queued.localUpdatedAt) || 0
                 if (remoteTs > localTs) {
+                    // PS-14 / DP-1：远端胜 ⇒ 覆盖前记录**败方（本地被覆盖记录）快照**（不静默丢数据）
+                    const localRecord = await this.tableOf(config).get(id)
+                    if (localRecord) {
+                        const loser = await config.recordToEntity(localRecord)
+                        const count = await appendConflict(userId, {
+                            kind: 'remote-wins',
+                            table: config.table,
+                            entityId: id,
+                            loser,
+                            winnerUpdatedAt:
+                                typeof entity.updatedAt === 'string' ? entity.updatedAt : undefined,
+                            loserUpdatedAt: queued.localUpdatedAt
+                        })
+                        syncStatus.setConflictCount(count)
+                    }
                     // 远程胜：覆盖本地 + 移除队列项（本地修改作废）
                     await this.tableOf(config).put(await config.entityToRecord(entity, userId))
                     await syncTracker.removeQueued(config.table, id)
@@ -947,10 +977,31 @@ export class SyncService {
                 (raw?.data as { data?: { results?: PushResult[] }; serverTime?: number }) ?? {}
             this.calibrateServerTime((data as { serverTime?: number }).serverTime)
             const results = data.data?.results ?? []
-            const pushed = new Set(results.map((r) => `${r.table}:${r.id}`))
+            const resultByKey = new Map(results.map((r) => [`${r.table}:${r.id}`, r]))
+            const pushed = new Set(resultByKey.keys())
             let unconfirmed = false
             for (const item of dueQueue) {
                 if (pushed.has(`${item.table}:${item.entityId}`)) {
+                    const result = resultByKey.get(`${item.table}:${item.entityId}`)
+                    // PS-14 / DP-1：服务端 no-op（请求更旧、未写入）⇒ 记录**败方（本地被拒内容）快照**
+                    if (result?.outcome === 'noop' && item.action === 'upsert') {
+                        const config = SYNC_TABLES.find((c) => c.table === item.table)
+                        const record = config
+                            ? await this.tableOf(config).get(item.entityId)
+                            : undefined
+                        if (config && record) {
+                            const loser = await config.recordToEntity(record)
+                            const count = await appendConflict(userId, {
+                                kind: 'push-noop',
+                                table: item.table,
+                                entityId: item.entityId,
+                                loser,
+                                winnerUpdatedAt: result.serverUpdatedAt,
+                                loserUpdatedAt: item.localUpdatedAt
+                            })
+                            syncStatus.setConflictCount(count)
+                        }
+                    }
                     const snapshot = snapshots.get(`${item.table}:${item.entityId}`)
                     // 推送期间本地对同一实体有新修改（localUpdatedAt 已变化）：保留队列项下轮重推，防止本地修改丢失
                     const current = await localDatabase.syncQueue.get(item.id)

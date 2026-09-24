@@ -45,6 +45,12 @@ export interface SyncStatusState {
      *              仅由 `pushPreferenceQueue` 落定，供状态面/UI 展示。
      */
     preferenceFailedCount: number
+    /**
+     * 冲突记账条数（PS-14 / DP-1；独立字段）
+     * @description **不计入**业务 `pendingCount`/`failedCount`（同 `preferenceFailedCount` 范式）；
+     *              由 `conflict-journal` 写入后落定，供状态面可见「冲突 N」。
+     */
+    conflictCount: number
     /** 最近一次运行的按执行序首个错误信息 */
     lastError: string | null
     /** 最近一次运行的错误列表（保序去重） */
@@ -74,6 +80,7 @@ export class SyncStatus {
         pendingCount: 0,
         failedCount: 0,
         preferenceFailedCount: 0,
+        conflictCount: 0,
         lastError: null,
         errors: [],
         errorCount: 0,
@@ -157,6 +164,15 @@ export class SyncStatus {
      */
     reportPreferencePush(result: { pushed: number; failed: number }): void {
         this.set({ preferenceFailedCount: result.failed })
+    }
+
+    /**
+     * 落定冲突记账条数（PS-14 / DP-1）
+     * @description 独立字段：不改变业务 `pendingCount`/`failedCount` 语义，
+     *              也**不参与** `beginRun`/`endRun` 运行边界（同 `preferenceFailedCount`）。
+     */
+    setConflictCount(count: number): void {
+        this.set({ conflictCount: count })
     }
 
     /**

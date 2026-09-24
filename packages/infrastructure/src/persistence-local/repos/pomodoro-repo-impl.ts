@@ -12,6 +12,7 @@ import { localDatabase } from '../db/local-database'
 import { localSession } from '../session/local-session'
 import { isAbsentStamp, isNotDeleted } from '../utils'
 import { snowflake } from '../../persistence-sync/snowflake'
+import { nowCalibratedIso } from '../../persistence-sync/sync-config'
 import { syncTracker } from '../../persistence-sync/sync-tracker'
 
 /**
@@ -37,7 +38,7 @@ export class LocalPomodoroRepoImpl implements PomodoroRepository {
 
     async create(createVO: CreatePomodoroValueObject): GoAsync<PomodoroEntity> {
         try {
-            const now = new Date().toISOString()
+            const now = nowCalibratedIso()
             const entity = new PomodoroEntity(
                 snowflake.nextId(),
                 now,
@@ -67,7 +68,7 @@ export class LocalPomodoroRepoImpl implements PomodoroRepository {
             if (updateVO.name !== undefined) entity.name = updateVO.name
             if (updateVO.description !== undefined) entity.description = updateVO.description
             if (updateVO.duration !== undefined) entity.duration = updateVO.duration
-            entity.updatedAt = new Date().toISOString()
+            entity.updatedAt = nowCalibratedIso()
             await this.db.pomodoros.put(await pomodoroEntityToRecord(entity, this.currentUserId))
             await syncTracker.markDirty('pomodoros', updateVO.id, 'upsert', entity.updatedAt)
             return null
@@ -81,7 +82,7 @@ export class LocalPomodoroRepoImpl implements PomodoroRepository {
             const record = await this.db.pomodoros.get(id)
             if (!record || record.userId !== this.currentUserId) return '番茄钟不存在'
             const entity = await pomodoroRecordToEntity(record)
-            entity.deletedAt = new Date().toISOString()
+            entity.deletedAt = nowCalibratedIso()
             entity.updatedAt = entity.deletedAt
             await this.db.pomodoros.put(await pomodoroEntityToRecord(entity, this.currentUserId))
             await syncTracker.markDirty(
@@ -101,7 +102,7 @@ export class LocalPomodoroRepoImpl implements PomodoroRepository {
             const record = await this.db.pomodoros.get(id)
             if (!record || record.userId !== this.currentUserId) return '番茄钟不存在'
             const entity = await pomodoroRecordToEntity(record)
-            entity.archivedAt = new Date().toISOString()
+            entity.archivedAt = nowCalibratedIso()
             entity.updatedAt = entity.archivedAt
             await this.db.pomodoros.put(await pomodoroEntityToRecord(entity, this.currentUserId))
             await syncTracker.markDirty('pomodoros', id, 'upsert', entity.updatedAt)
@@ -117,7 +118,7 @@ export class LocalPomodoroRepoImpl implements PomodoroRepository {
             if (!record || record.userId !== this.currentUserId) return '番茄钟不存在'
             const entity = await pomodoroRecordToEntity(record)
             entity.archivedAt = null
-            entity.updatedAt = new Date().toISOString()
+            entity.updatedAt = nowCalibratedIso()
             await this.db.pomodoros.put(await pomodoroEntityToRecord(entity, this.currentUserId))
             await syncTracker.markDirty('pomodoros', id, 'upsert', entity.updatedAt)
             return null

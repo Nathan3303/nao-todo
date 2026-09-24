@@ -11,6 +11,7 @@ import { localDatabase } from '../db/local-database'
 import { localSession } from '../session/local-session'
 import { isNotDeleted } from '../utils'
 import { snowflake } from '../../persistence-sync/snowflake'
+import { nowCalibratedIso } from '../../persistence-sync/sync-config'
 import { syncTracker } from '../../persistence-sync/sync-tracker'
 
 /**
@@ -36,7 +37,7 @@ export class LocalPomodoroRecordRepoImpl implements PomodoroRecordRepository {
 
     async create(createVO: CreatePomodoroRecordValueObject): GoAsync<PomodoroRecordEntity> {
         try {
-            const now = new Date().toISOString()
+            const now = nowCalibratedIso()
             const entity = new PomodoroRecordEntity(
                 snowflake.nextId(),
                 now,

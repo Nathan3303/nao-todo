@@ -6,6 +6,7 @@ import { localDatabase } from '../db/local-database'
 import { localSession } from '../session/local-session'
 import { isNotDeleted } from '../utils'
 import { snowflake } from '../../persistence-sync/snowflake'
+import { nowCalibratedIso } from '../../persistence-sync/sync-config'
 import { syncTracker } from '../../persistence-sync/sync-tracker'
 
 /**
@@ -37,7 +38,7 @@ export class LocalTagRepoImpl implements TagRepository {
             const entity = new TagEntity(
                 snowflake.nextId(),
                 createdEntity.createdAt,
-                createdEntity.updatedAt,
+                nowCalibratedIso(),
                 createdEntity.deletedAt,
                 createdEntity.icon,
                 createdEntity.name,
@@ -55,7 +56,7 @@ export class LocalTagRepoImpl implements TagRepository {
 
     async update(updatedEntity: TagEntity): GoAsync<void> {
         try {
-            updatedEntity.updatedAt = new Date().toISOString()
+            updatedEntity.updatedAt = nowCalibratedIso()
             await this.db.tags.put(await tagEntityToRecord(updatedEntity, this.currentUserId))
             await syncTracker.markDirty('tags', updatedEntity.id, 'upsert', updatedEntity.updatedAt)
             return null
@@ -69,7 +70,7 @@ export class LocalTagRepoImpl implements TagRepository {
             const record = await this.db.tags.get(id)
             if (!record || record.userId !== this.currentUserId) return '标签不存在'
             const entity = await tagRecordToEntity(record)
-            entity.deletedAt = new Date().toISOString()
+            entity.deletedAt = nowCalibratedIso()
             entity.updatedAt = entity.deletedAt
             await this.db.tags.put(await tagEntityToRecord(entity, this.currentUserId))
             await syncTracker.markDirty('tags', id, 'delete', entity.deletedAt ?? entity.updatedAt)
@@ -122,7 +123,7 @@ export class LocalTagRepoImpl implements TagRepository {
         try {
             const entities: TagEntity[] = []
             for (const entity of updatedEntities) {
-                entity.updatedAt = new Date().toISOString()
+                entity.updatedAt = nowCalibratedIso()
                 await this.db.tags.put(await tagEntityToRecord(entity, this.currentUserId))
                 await syncTracker.markDirty('tags', entity.id, 'upsert', entity.updatedAt)
                 entities.push(entity)

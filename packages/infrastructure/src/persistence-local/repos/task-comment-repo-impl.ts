@@ -11,6 +11,7 @@ import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
 import { localSession } from '../session/local-session'
 import { snowflake } from '../../persistence-sync/snowflake'
+import { nowCalibratedIso } from '../../persistence-sync/sync-config'
 import { syncTracker } from '../../persistence-sync/sync-tracker'
 
 /**
@@ -37,7 +38,7 @@ export class LocalTaskCommentRepoImpl implements TaskCommentRepository {
 
     async create(createVO: CreateTaskCommentValueObject): GoAsync<TaskCommentEntity> {
         try {
-            const now = new Date().toISOString()
+            const now = nowCalibratedIso()
             const entity = new TaskCommentEntity(
                 snowflake.nextId(),
                 now,
@@ -67,7 +68,7 @@ export class LocalTaskCommentRepoImpl implements TaskCommentRepository {
             const entity = await taskCommentRecordToEntity(record)
             if (updateVO.content !== undefined) entity.content = updateVO.content
             if (updateVO.isTopUp !== undefined) entity.isTopUp = updateVO.isTopUp
-            entity.updatedAt = new Date().toISOString()
+            entity.updatedAt = nowCalibratedIso()
             await this.db.taskComments.put(
                 await taskCommentEntityToRecord(entity, this.currentUserId)
             )
@@ -83,7 +84,7 @@ export class LocalTaskCommentRepoImpl implements TaskCommentRepository {
             const record = await this.db.taskComments.get(id)
             if (!record || record.userId !== this.currentUserId) return '评论不存在'
             const entity = await taskCommentRecordToEntity(record)
-            entity.deletedAt = new Date().toISOString()
+            entity.deletedAt = nowCalibratedIso()
             entity.updatedAt = entity.deletedAt
             await this.db.taskComments.put(
                 await taskCommentEntityToRecord(entity, this.currentUserId)

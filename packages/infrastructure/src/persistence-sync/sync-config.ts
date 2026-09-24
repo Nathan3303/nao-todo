@@ -64,6 +64,17 @@ export const setServerTimeOffset = (offset: number): void => {
 }
 
 /**
+ * 服务端校准后的当前时间（ISO）
+ * @description PS-15：本地业务写的时间基准（实体 `updatedAt` / 删除 `deletedAt`）必须走
+ *              服务端校准值（`getServerTimeOffset`，由同步响应 `serverTime` 写入）。
+ *              **禁**以裸 `new Date()` 作为 LWW 输入 —— 客户端时钟偏移会直接决定服务端
+ *              `DecideUpsert` 的冲突结果（落后 ⇒ 本地写被静默 no-op；超前 ⇒ 覆盖他端较新写）。
+ *              服务端仍以 `time.Now()` 为唯一权威（PS-8）。
+ */
+export const nowCalibratedIso = (): string =>
+    new Date(Date.now() + getServerTimeOffset()).toISOString()
+
+/**
  * 获取（或首次创建并持久化）设备级机器位
  * @description 持久随机数 ∈ [MACHINE_ID_MIN, MACHINE_ID_MAX]，避开后端 machineID=1
  */

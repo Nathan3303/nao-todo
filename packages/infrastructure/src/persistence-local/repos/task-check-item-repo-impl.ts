@@ -11,6 +11,7 @@ import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
 import { localSession } from '../session/local-session'
 import { snowflake } from '../../persistence-sync/snowflake'
+import { nowCalibratedIso } from '../../persistence-sync/sync-config'
 import { syncTracker } from '../../persistence-sync/sync-tracker'
 
 /**
@@ -36,7 +37,7 @@ export class LocalTaskCheckItemRepoImpl implements TaskCheckItemRepository {
 
     async create(createVO: CreateTaskCheckItemValueObject): GoAsync<TaskCheckItemEntity> {
         try {
-            const now = new Date().toISOString()
+            const now = nowCalibratedIso()
             // 默认排最后：取该任务下最大 sortId + 1（首个为 1）
             const existing = await this.db.taskCheckItems
                 .where('taskId')
@@ -73,7 +74,7 @@ export class LocalTaskCheckItemRepoImpl implements TaskCheckItemRepository {
             if (updateVO.name !== undefined) entity.name = updateVO.name
             if (updateVO.isDone !== undefined) entity.isDone = updateVO.isDone
             if (updateVO.sortId !== undefined) entity.sortId = updateVO.sortId
-            entity.updatedAt = new Date().toISOString()
+            entity.updatedAt = nowCalibratedIso()
             await this.db.taskCheckItems.put(
                 await taskCheckItemEntityToRecord(entity, this.currentUserId)
             )
@@ -89,7 +90,7 @@ export class LocalTaskCheckItemRepoImpl implements TaskCheckItemRepository {
             const record = await this.db.taskCheckItems.get(id)
             if (!record || record.userId !== this.currentUserId) return '检查项不存在'
             const entity = await taskCheckItemRecordToEntity(record)
-            entity.deletedAt = new Date().toISOString()
+            entity.deletedAt = nowCalibratedIso()
             entity.updatedAt = entity.deletedAt
             await this.db.taskCheckItems.put(
                 await taskCheckItemEntityToRecord(entity, this.currentUserId)
@@ -136,7 +137,7 @@ export class LocalTaskCheckItemRepoImpl implements TaskCheckItemRepository {
                 if (updateVO.name !== undefined) current.name = updateVO.name
                 if (updateVO.isDone !== undefined) current.isDone = updateVO.isDone
                 if (updateVO.sortId !== undefined) current.sortId = updateVO.sortId
-                current.updatedAt = new Date().toISOString()
+                current.updatedAt = nowCalibratedIso()
                 await this.db.taskCheckItems.put(
                     await taskCheckItemEntityToRecord(current, this.currentUserId)
                 )
