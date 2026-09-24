@@ -1,4 +1,5 @@
 import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
+import { isArchivedReadOnlyError } from '../../../../task/archive-gate'
 import { NueMessage } from 'nue-ui'
 import { computed, reactive } from 'vue'
 import { useProjectsStore } from '../../../stores'
@@ -60,7 +61,10 @@ const useProjectUpdater = (props: ProjectUpdaterDialogProps) => {
         })
         states.updating = false
         if (err !== null) {
-            NueMessage.error('清单更新失败：' + unwrapError(err))
+            // T193：归档只读码静默（守卫已本地化提示；非该码仍原样透出）
+            if (!isArchivedReadOnlyError(err)) {
+                NueMessage.error('清单更新失败：' + unwrapError(err))
+            }
             states.disabled = false
             return false
         }

@@ -243,4 +243,26 @@ describe('T188 · R-5 同步边界闭环（C 写侧 / B 读侧）', () => {
         expect(record.projectId).toBe(project!.id)
         expect(await inboxContains(task!.id)).toBe(false)
     })
+
+    it("B 负向：空值（'' / undefined）不得被归一为 inbox（T193 空值守门）", async () => {
+        const taskRepo = new LocalTaskRepoImpl()
+        const [task, err] = await taskRepo.create(makeCreateVO('无清单任务', ''))
+        expect(err).toBeNull()
+
+        // `''` = 「无清单」的合法本地表示 ⇒ 不得归一
+        await localDatabase.syncQueue.clear()
+        await pullOnly([remoteTask(task!.id, '')]).pullAll()
+        expect((await localDatabase.tasks.get(task!.id))!.projectId).toBe('')
+        expect(await inboxContains(task!.id)).toBe(false)
+
+        // 缺失（undefined）同样不得归一（防裸 `String()` 的 'undefined' === 'undefined' 误判）
+        await localDatabase.syncQueue.clear()
+        await pullOnly([
+            { ...remoteTask(task!.id, ''), projectId: undefined } as unknown as ReturnType<
+                typeof remoteTask
+            >
+        ]).pullAll()
+        expect((await localDatabase.tasks.get(task!.id))!.projectId).not.toBe('inbox')
+        expect(await inboxContains(task!.id)).toBe(false)
+    })
 })

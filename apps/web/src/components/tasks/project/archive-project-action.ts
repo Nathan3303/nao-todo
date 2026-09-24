@@ -3,6 +3,7 @@ import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { NueConfirm, NueMessage } from 'nue-ui'
 import type { TaskUseCase } from '@nao-todo/domain-task'
 import type { GoAsync } from '@nao-todo/shared/types'
+import { isArchivedReadOnlyError } from '@nao-todo/presentation/task/archive-gate'
 
 /**
  * 清单归档二次确认与执行（web 入口统一实现）
@@ -46,7 +47,10 @@ export const runProjectArchive = async (options: RunProjectArchiveOptions): Prom
     if (isByCancel) return
     const err = await options.archive(options.projectId)
     if (err !== null) {
-        NueMessage.error(t('dialog.projectArchiveFailed', { error: unwrapError(err) }))
+        // T193：归档只读码静默（守卫已本地化提示；成功路径不受影响）
+        if (!isArchivedReadOnlyError(err)) {
+            NueMessage.error(t('dialog.projectArchiveFailed', { error: unwrapError(err) }))
+        }
         return
     }
     NueMessage.success(t('dialog.projectArchiveSuccess'))

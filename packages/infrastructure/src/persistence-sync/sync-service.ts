@@ -93,8 +93,12 @@ const toPushProjectId = (projectId: unknown): unknown =>
     projectId === INBOX_PROJECT_ID ? '' : projectId
 
 /** 读侧（pull 落库）：服务端隐式桶 `userId` ⇒ 本地字面 `'inbox'` */
+// 空值守门（T193）：仅当两侧都是「非空标量」且相等时才归一 —— `''` 是「无清单」的合法本地表示，
+//   不得归一；也防未来类型漂移（如 `projectId` 缺失时 `String(undefined) === 'undefined'`）导致静默误归一。
 const toLocalProjectId = (projectId: unknown, userId: string): unknown =>
-    projectId === userId ? INBOX_PROJECT_ID : projectId
+    projectId != null && projectId !== '' && String(projectId as string) === String(userId)
+        ? INBOX_PROJECT_ID
+        : projectId
 
 /**
  * 构建任务推送记录
