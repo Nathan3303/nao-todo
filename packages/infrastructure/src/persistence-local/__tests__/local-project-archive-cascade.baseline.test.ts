@@ -128,18 +128,19 @@ describe('T178 · 面2 客户端级联（archiveByProjectId / unarchiveByProject
             throw new Error('archiveByProjectId 未实现（ADR Q1 客户端级联）')
         }
         const txSpy = vi.spyOn(localDatabase, 'transaction')
+        let rwCall: unknown[] | undefined
         try {
             await repo.archiveByProjectId(project.id)
+            // ⚠️ T180 修正：`mockRestore()` 会清空 `mock.calls` ⇒ 必须在 restore 前读取
+            rwCall = (txSpy.mock.calls as unknown[][]).find(
+                (call) =>
+                    call[0] === 'rw' &&
+                    call.includes(localDatabase.projects) &&
+                    call.includes(localDatabase.tasks)
+            )
         } finally {
             txSpy.mockRestore()
         }
-        const calls = txSpy.mock.calls as unknown[][]
-        const rwCall = calls.find(
-            (call) =>
-                call[0] === 'rw' &&
-                call.includes(localDatabase.projects) &&
-                call.includes(localDatabase.tasks)
-        )
         expect(rwCall).toBeDefined()
     })
 
@@ -149,6 +150,9 @@ describe('T178 · 面2 客户端级联（archiveByProjectId / unarchiveByProject
         await repo.create(makeTaskVO({ name: '任务1', projectId: project.id }))
         await repo.create(makeTaskVO({ name: '任务2', projectId: project.id }))
         await repo.create(makeTaskVO({ name: '任务3', projectId: project.id }))
+        // ⚠️ T180 修正：markDirty 按 `${userId}:tasks:${id}` 主键去重（覆盖写不增计数），
+        // create 已各入队 1 项 ⇒ 先清空以隔离「级联是否逐任务重新 markDirty」
+        await localDatabase.syncQueue.where('table').equals('tasks').delete()
         const before = await countTaskQueue()
 
         if (typeof repo.archiveByProjectId !== 'function') {
