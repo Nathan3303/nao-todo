@@ -10,11 +10,17 @@ import { describe, expect, it } from 'vite-plus/test'
  *                  只读判据 = 任务 `archivedAt` 非空（用例层拦截 ⇒ URL 直达亦不可写）。
  *   - §3.2 ①③⑥⑦：侧栏 / 搜索默认 / 日历 / 番茄选择器 / 新建下拉 **已排除**（保守护栏）。
  *
- * ⚠️ 红基线：入口（未接线）/ 右键菜单（不存在）/ 搜索开关（不存在）/ `ARCHIVED_READONLY`（不存在）
- *    应 **红**；5 处已排除点 + 头部 handler 已注册为 **绿**保守护栏。不改任何实现文件。
+ * ⚠️ 红基线：入口（未接线）/ 右键菜单（不存在）应 **红**；
+ *    5 处已排除点 + 头部 handler 已注册 + 搜索默认排除为 **绿**保守护栏。不改任何实现文件。
  *
  * 说明：本文件为**接线契约**（ADR 允诺「结构级断言」）——对源码做静态存在性断言，
  *      用于在实现落地前先钉死「必须有」的接线点；实现落地后由行为用例接管。
+ *
+ * **T178b 收窄**：删去「搜索开关（`includeArchived`）」「只读 `ARCHIVED_READONLY`」两组
+ * **偏脆的文本接线断言**（易因改名/换行恒红或恒绿），改由行为级用例承载：
+ *   - 面7 ⇒ `apps/web/src/components/search/__tests__/search-include-archived.baseline.test.ts`
+ *     （URL `archived=1` 往返 + i18n 键）+ `.../local-task-archive-search.baseline.test.ts`（仓储命中）；
+ *   - 面8 ⇒ `packages/presentation/task/__tests__/archive-gate.baseline.test.ts`（`withArchivedReadOnlyGuard`）。
  */
 
 const sourceModules: Record<string, string> = {
@@ -59,51 +65,22 @@ describe('T178 · 面4 入口两处（头部菜单 + 右键菜单）', () => {
         expect(header).toContain('.archive(')
     })
 
-    it('存在「清单右键菜单」入口（contextmenu + archive 接线）', () => {
+    it('存在「清单右键菜单」入口，且项 id = archive-project（与头部同一 id ⇒ 一次注册覆盖两处）', () => {
         const candidates = nonTestModules.filter(([path, source]) => {
             if (path.includes('calendar')) return false
-            return /contextmenu/i.test(source) && /archive/i.test(source)
+            return /contextmenu/i.test(source) && source.includes("'archive-project'")
         })
-        expect(candidates.map(([path]) => path)).not.toEqual([])
+        expect(
+            candidates.map(([path]) => path),
+            '清单右键菜单项 id 应为 ADR §15.3 冻结名 archive-project（与头部 execute-id 同 id）'
+        ).not.toEqual([])
     })
 })
 
-describe('T178 · 面7 搜索：默认排除（保守护栏）+「包含已归档」开关（待实现）', () => {
+describe('T178b · 面7 搜索默认排除（保守护栏；行为级另见 search-include-archived.baseline.test.ts）', () => {
     it('搜索默认查询显式排除归档（保守护栏）', () => {
         const search = readSource('apps/web/src/components/search/use-search.ts')
         expect(search).toContain('isArchived: false')
-    })
-
-    it('存在「包含已归档」开关接线（includeArchived）', () => {
-        const searchModules = nonTestModules.filter(
-            ([path]) => path.includes('/search/') || path.includes('search-view')
-        )
-        const hasToggle = searchModules.some(([, source]) => /includeArchived/.test(source))
-        expect(
-            hasToggle,
-            '搜索「包含已归档」开关（includeArchived）尚未接线（ADR §3.2 ② / AC）'
-        ).toBe(true)
-    })
-
-    it('搜索结果「已归档」标识存在（中英 i18n 键齐备）', () => {
-        const zh = readSource('packages/shared/locales/zh-CN.ts')
-        const en = readSource('packages/shared/locales/en-US.ts')
-        const zhHasMarker = /search[\s\S]{0,2000}已归档/.test(zh)
-        const enHasMarker = /search[\s\S]{0,2000}(archived|Archived)/.test(en)
-        expect(zhHasMarker && enHasMarker).toBe(true)
-    })
-})
-
-describe('T178 · 面8 只读错误码 ARCHIVED_READONLY（DP-4，不复用 OFFLINE_READONLY）', () => {
-    it('存在独立错误码 ARCHIVED_READONLY，且判据绑定任务 archivedAt', () => {
-        const guardModules = nonTestModules.filter(([, source]) =>
-            source.includes('ARCHIVED_READONLY')
-        )
-        expect(
-            guardModules.map(([path]) => path),
-            'ARCHIVED_READONLY 尚未落地（ADR §7.2 / DP-4）'
-        ).not.toEqual([])
-        expect(guardModules.some(([, source]) => source.includes('archivedAt'))).toBe(true)
     })
 })
 
