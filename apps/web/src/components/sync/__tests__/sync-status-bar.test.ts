@@ -30,6 +30,7 @@ type MockSyncStatus = {
     pendingCount: number
     failedCount: number
     preferenceFailedCount: number
+    conflictCount: number
     paused: boolean
     lastError: string | null
 }
@@ -42,6 +43,7 @@ const defaultStatus = (): MockSyncStatus => ({
     pendingCount: 0,
     failedCount: 0,
     preferenceFailedCount: 0,
+    conflictCount: 0,
     paused: false,
     lastError: null
 })
@@ -65,6 +67,7 @@ vi.mock('@/hooks', async () => {
         pendingCount: 0,
         failedCount: 0,
         preferenceFailedCount: 0,
+        conflictCount: 0,
         paused: false,
         lastError: null
     })
@@ -261,6 +264,35 @@ describe('SyncStatusBar - SHELL-02 轨道同步状态', () => {
         expect(panelText()).toContain('偏好同步失败 2 项')
         // 可见提示（AC4-04：不静默吞）
         expect(document.querySelector('.nue-message')?.textContent).toContain('偏好同步失败 2 项')
+    })
+
+    it('冲突计数：面板新增「冲突 N」行；仅计数可见、不改业务 pending/failed 行（PS-14 / ADR R-05）', async () => {
+        await openWithPanel()
+
+        // 基线：无冲突 ⇒ 不渲染冲突行
+        expect(panelText()).not.toContain('冲突')
+
+        // 冲突 > 0 ⇒ 行可见且含 N；业务计数各行独立呈现
+        status().value = { ...status().value, pendingCount: 3, failedCount: 1, conflictCount: 2 }
+        await nextTick()
+        expect(panelText()).toContain('冲突 2')
+        expect(panelText()).toContain('待推送 3')
+        expect(panelText()).toContain('失败 1')
+
+        // 负向（ADR R-05 明列）：仅 conflictCount 变化，不得影响 pendingCount/failedCount 行
+        status().value = { ...status().value, conflictCount: 5 }
+        await nextTick()
+        expect(panelText()).toContain('冲突 5')
+        expect(panelText()).not.toContain('冲突 2')
+        expect(panelText()).toContain('待推送 3')
+        expect(panelText()).toContain('失败 1')
+
+        // 归零 ⇒ 行移除（v-if）
+        status().value = { ...status().value, conflictCount: 0 }
+        await nextTick()
+        expect(panelText()).not.toContain('冲突')
+        expect(panelText()).toContain('待推送 3')
+        expect(panelText()).toContain('失败 1')
     })
 
     it('三态文案：从未同步 / 同步中 / 失败+计数', async () => {

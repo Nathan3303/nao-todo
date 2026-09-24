@@ -44,6 +44,7 @@ const zhCN: LocaleMessages = {
     'sync.pending': '待推送 {count}',
     'sync.failed': '失败 {count}',
     'sync.preferenceFailed': '偏好同步失败 {count} 项',
+    'sync.conflict': '冲突 {count}',
     'sync.syncNow': '立即同步',
     'sync.pendingOffline': '有 {count} 项修改待同步（离线，联网后自动同步）',
     'sync.retryNow': '立即重试',

@@ -258,6 +258,13 @@ watch(
                     {{ t('sync.preferenceFailed', { count: status.preferenceFailedCount }) }}
                 </nue-text>
             </li>
+            <!-- PS-14 / DP-1：冲突记账条数（独立于业务 pending/failed 计数；本行只读展示计数，
+                 冲突对比与恢复 UX 属 2B，不在此提供交互） -->
+            <li v-if="status.conflictCount > 0" class="sync-panel__row">
+                <nue-text size="xs" color="var(--nue-error-color-60)">
+                    {{ t('sync.conflict', { count: status.conflictCount }) }}
+                </nue-text>
+            </li>
             <!-- 全文仅经 title 与文本插值输出（禁 v-html）；2 行截断由 CSS 完成；
                          live region 只播摘要（见下方常驻活动区域），此处不带 aria-live -->
             <li v-if="status.lastError" class="sync-panel__row">
