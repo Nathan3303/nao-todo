@@ -1,6 +1,6 @@
 {
     "name": "@nao-todo/webapp",
-    "version": "1.10.0",
+    "version": "1.11.0",
     "description": "WEB version of NaoTodo",
     "author": "Nathan Lee",
     "license": "MIT",

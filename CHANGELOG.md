@@ -2,6 +2,24 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.11.0] - 2026-09-24
+
+发布批次：**阶段二 2B —— 冲突精细化（OCC + 冲突解决 UX）+ 多标签协调 + 偏好面收口**（+ `FIX-D`）。**Tag `v1.11.0`** · root `1.11.0` · `apps/web` / `apps/desktop` `1.11.0` · `packages/infrastructure` `0.6.0 → 0.7.0` · `packages/shared` `1.3.3 → 1.3.4`（其余包零改动，不 bump）。详见 `docs/releases/v1.11.0.md`。
+
+### 新增（冲突精细化 · OCC）
+
+- **服务端 OCC（additive，跨仓 `nao-todo-server` `54e843d` / `ac72a37`）**：`/sync/push` 条目支持 `baseUpdatedAt`（缺失 ⇒ 与现行 LWW 逐字一致）；base 不等 ⇒ **不写** + 回库中版本 + outcome **`stale`**（与 `conflict`=ID 碰撞 semantic 区分）。**无 DB 迁移、无新错误码**（HTTP 200 + 既有 `90010` + 逐条 outcome）；OCC 字段仅落在 7 个 sync 专用条目，共享 create DTO 加 `json:"-"`（C-44）。
+- **客户端 OCC 基建**（`5db13f5b`）：7 表 + `projectPreferences` 记 `syncedServerUpdatedAt`（**不 bump Dexie version**）；pull 落 base · push 回传 base · `applied`/`noop`/`stale` 确认写回。
+- **全 outcome 消费**（`5db13f5b`，闭合 2A 登记的 `error` 窄窗）：**`error` 不出队 + 业务退避**（不再静默丢数据）；`noop`/`stale`/`conflict`/`skipped` 记 journal + 可见计数。
+- **冲突解决 UX**（`355aa7d2`）：「冲突 N」入口 → 列表 / 只读对比（败方快照 vs 本地当前）→ **两种恢复动作**（保留服务端版本 / 以我的版本重试）；折叠信号（上限 **50 → 200**，`limit`/`evicted` 两文案区分）；web/desktop **同组件同 hook**；i18n 中英齐备。
+- **多标签协调**（`5178fe37` / `795f3c13`）：push 加 `navigator.locks` **单主**（未取锁 ⇒ 跳过且**不消耗重试**、队列保留）；journal `meta` **读写原子**（`nao-todo:journal:<uid>` 专用锁覆盖全部写者，锁序 `pull/push → journal`）。
+- **偏好面收口**（`17e56016` / `f89d0aea`）：普通清单偏好**按行 LWW**（base 写回 + **触发点对账**远端胜）；`tagPreference` 纳入本地优先（web 撤 `withMirrorFallback`，与 desktop 同构）；**偏好面仍不入业务 `syncQueue`**；**读路径本地优先**（本地有行 ⇒ 立即返回、不发网络）。
+- **`FIX-D`（DEF-35 / C-68）**（`852cdde1`）：web 端旧版本密文一次性自愈（检测 ⇒ `countDirty` 护栏 ⇒ 丢弃本地密文副本 + 全量重拉 + 可见告知；**不删 `key-bundle`**）。
+
+### 行为变更（请留意）
+
+- **OCC 全局启用**：离线期间基于陈旧 base 的本地修改，推送时会得到 `stale` 并进入**可见的冲突列表**（服务端权威版本保留、本地改动不丢，可「以我的版本重试」）⇒ **可见冲突数可能上升**（R-16，设计使然，**非缺陷**）。
+
 ## [v1.10.0] - 2026-09-24
 
 发布批次：**web 离线能力（阶段一）** + **业务数据面两端同构 local-first（阶段二 2A）** + 本轮用户报障的 P0 登录缺陷修复。**Tag `v1.10.0`** · root `1.10.0` · `apps/web` / `apps/desktop` `1.10.0` · `packages/presentation` `0.6.0 → 0.7.0` · `packages/shared` `1.3.2 → 1.3.3` · `packages/domain-identity` `1.1.0 → 1.2.0` · `packages/infrastructure` `0.5.0 → 0.6.0` · `packages/presentation-identity` `1.2.0 → 1.2.1`（`domain-task` / `presentation-react` / `apps/mobile` 零改动，不 bump）。详见 `docs/releases/v1.10.0.md`。
