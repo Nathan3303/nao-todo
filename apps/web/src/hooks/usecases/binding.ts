@@ -22,7 +22,9 @@ import {
     type WriteMethodMap
 } from '@nao-todo/presentation/offline'
 import {
+    PROJECT_ARCHIVE_WRITE_METHODS,
     TASK_ARCHIVE_WRITE_METHODS,
+    createProjectArchivedTargetJudge,
     createTaskArchivedTargetJudge,
     withArchivedReadOnlyGuard
 } from '@nao-todo/presentation/task/archive-gate'
@@ -89,8 +91,9 @@ export type UseCaseBinding = {
      * 用例装饰（端专属）
      * @description **web 提供**：`WRITE_METHODS_BY_KIND` 中的域（阶段二 2A M6 后**仅身份域 `user`**）
      *              套 `withReadOnlyGuard`（离线只读闸门，C-59 / AC10）；其余域（业务 7 域已切本地优先）
-     *              **不套闸门**（ADR §5 M4/M5/M6）；
-     *              **desktop 不提供** ⇒ 共享工厂原样返回用例 ⇒ 桌面写路径（在线/离线）逐字不变。
+     *              **不套离线闸门**（ADR §5 M4/M5/M6）；
+     *              **任务域 / 项目域**另叠加**归档态只读守卫**（P3 / P3b，ADR §15.3 / §7.2，两端同逻辑）；
+     *              **desktop 不提供离线闸门**（但同样提供归档守卫）⇒ 桌面写路径（在线/离线）逐字不变。
      */
     decorateUseCase?: <T extends object>(useCase: T, kind: UseCaseKind) => T
 }
@@ -109,6 +112,8 @@ export const useCaseBinding: UseCaseBinding = {
     // C-59 / AC10（ADR-r5）：**web-only** 离线只读闸门；desktop binding 不提供本钩子
     // 阶段二 2A M6：业务 7 域已切本地优先 ⇒ 闸门仅保留身份域 `user`（ADR §5 M4/M5/M6）
     // P3（ADR 2026-09-24 §15.3）：任务域叠加**归档态只读守卫**（与 desktop 同逻辑，两端一致）
+    // P3b（ADR §7.2 / T184 §7②）：项目域（清单自身）同型守卫 —— 归档清单 `update/delete/...` 拦截
+    // （`unarchive` 唯一例外），两端一致
     decorateUseCase: (useCase, kind) => {
         const writeMethods = WRITE_METHODS_BY_KIND[kind]
         let decorated = writeMethods ? withReadOnlyGuard(useCase, writeMethods) : useCase
@@ -119,6 +124,18 @@ export const useCaseBinding: UseCaseBinding = {
                         const [entity] = await useCaseBinding.createTaskRepository().get(taskId)
                         return Boolean(entity?.archivedAt)
                     },
+                    isProjectArchived: async (projectId) => {
+                        const [entity] = await useCaseBinding
+                            .createProjectRepository()
+                            .get(projectId)
+                        return Boolean(entity?.archivedAt)
+                    }
+                })
+            })
+        }
+        if (kind === 'project') {
+            decorated = withArchivedReadOnlyGuard(decorated, PROJECT_ARCHIVE_WRITE_METHODS, {
+                isArchivedTarget: createProjectArchivedTargetJudge({
                     isProjectArchived: async (projectId) => {
                         const [entity] = await useCaseBinding
                             .createProjectRepository()

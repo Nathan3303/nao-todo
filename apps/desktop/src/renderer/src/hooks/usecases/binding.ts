@@ -23,7 +23,9 @@ import { newLocalTaskCommentRepository } from '@nao-todo/infrastructure/src/pers
 import { newLocalTaskRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/task-repo-impl'
 import { runPlaintextMigration } from '@nao-todo/infrastructure/src/persistence-local/migration/plaintext-migration'
 import {
+    PROJECT_ARCHIVE_WRITE_METHODS,
     TASK_ARCHIVE_WRITE_METHODS,
+    createProjectArchivedTargetJudge,
     createTaskArchivedTargetJudge,
     withArchivedReadOnlyGuard
 } from '@nao-todo/presentation/task/archive-gate'
@@ -46,24 +48,40 @@ export const useCaseBinding: UseCaseBinding = {
     createPomodoroRecordRepository: () => newLocalPomodoroRecordRepository(),
 
     /**
-     * 任务域归档态只读守卫（P3 / ADR `2026-09-24-project-archive.md` §15.3）
+     * 归档态只读守卫（P3 任务域 + P3b 项目域 / ADR `2026-09-24-project-archive.md` §15.3 / §7.2）
      * @description 与 web binding 同逻辑（同一 `archive-gate` 实现）⇒ **两端行为一致**；
      *              desktop 不提供 web 的离线只读闸门（`decorateUseCase` 仅叠加归档守卫）。
      */
     decorateUseCase: (useCase, kind) => {
-        if (kind !== 'task') return useCase
-        return withArchivedReadOnlyGuard(useCase, TASK_ARCHIVE_WRITE_METHODS, {
-            isArchivedTarget: createTaskArchivedTargetJudge({
-                isTaskArchived: async (taskId) => {
-                    const [entity] = await useCaseBinding.createTaskRepository().get(taskId)
-                    return Boolean(entity?.archivedAt)
-                },
-                isProjectArchived: async (projectId) => {
-                    const [entity] = await useCaseBinding.createProjectRepository().get(projectId)
-                    return Boolean(entity?.archivedAt)
-                }
+        if (kind === 'task') {
+            return withArchivedReadOnlyGuard(useCase, TASK_ARCHIVE_WRITE_METHODS, {
+                isArchivedTarget: createTaskArchivedTargetJudge({
+                    isTaskArchived: async (taskId) => {
+                        const [entity] = await useCaseBinding.createTaskRepository().get(taskId)
+                        return Boolean(entity?.archivedAt)
+                    },
+                    isProjectArchived: async (projectId) => {
+                        const [entity] = await useCaseBinding
+                            .createProjectRepository()
+                            .get(projectId)
+                        return Boolean(entity?.archivedAt)
+                    }
+                })
             })
-        })
+        }
+        if (kind === 'project') {
+            return withArchivedReadOnlyGuard(useCase, PROJECT_ARCHIVE_WRITE_METHODS, {
+                isArchivedTarget: createProjectArchivedTargetJudge({
+                    isProjectArchived: async (projectId) => {
+                        const [entity] = await useCaseBinding
+                            .createProjectRepository()
+                            .get(projectId)
+                        return Boolean(entity?.archivedAt)
+                    }
+                })
+            })
+        }
+        return useCase
     },
 
     /**

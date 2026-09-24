@@ -48,11 +48,10 @@ afterEach(() => {
 })
 
 describe('闸门注入点 - web-only（ADR-r5）', () => {
-    it('表级（M6 收敛）：离线闸门作用域仅身份域 —— 任务域仅叠加归档守卫（P3），其余 6 业务域原样返回同一引用', () => {
+    it('表级（M6 收敛）：离线闸门作用域仅身份域 —— 任务域/项目域仅叠加归档守卫（P3/P3b），其余 5 业务域原样返回同一引用', () => {
         for (const kind of [
             'task-check-item',
             'task-comment',
-            'project',
             'tag',
             'pomodoro',
             'pomodoro-record'
@@ -66,6 +65,9 @@ describe('闸门注入点 - web-only（ADR-r5）', () => {
         // 任务域：仅叠加 P3 归档守卫（Proxy ⇒ 引用不同），离线闸门仍未套（下方 W1 行为断言）
         const taskCase = fakeUseCase()
         expect(webBinding.decorateUseCase!(taskCase, 'task')).not.toBe(taskCase)
+        // 项目域（P3b / ADR §7.2）：仅叠加归档守卫（Proxy ⇒ 引用不同），离线闸门未套（下方 W3 行为断言）
+        const projectCase = fakeUseCase()
+        expect(webBinding.decorateUseCase!(projectCase, 'project')).not.toBe(projectCase)
     })
 
     it('web binding 提供 decorateUseCase；未切本地优先的域（身份域 W5）离线写被拦截、原方法零调用', async () => {
@@ -146,7 +148,7 @@ describe('闸门注入点 - web-only（ADR-r5）', () => {
         )
     })
 
-    it('负向：desktop **不套离线只读闸门**（P3 后仅套归档守卫）⇒ 离线写仍透传；任务域已注入归档守卫', async () => {
+    it('负向：desktop **不套离线只读闸门**（P3/P3b 后仅套归档守卫）⇒ 离线写仍透传；任务/项目域已注入归档守卫', async () => {
         expect(typeof desktopBinding.decorateUseCase).toBe('function')
         const useCase = fakeUseCase()
         const decorated = desktopBinding.decorateUseCase!(useCase, 'user')
@@ -158,6 +160,9 @@ describe('闸门注入点 - web-only（ADR-r5）', () => {
         // P3：任务域两端一致 ⇒ desktop 亦注入归档守卫（Proxy ⇒ 引用不同）
         const taskCase = fakeUseCase()
         expect(desktopBinding.decorateUseCase!(taskCase, 'task')).not.toBe(taskCase)
+        // P3b：项目域亦两端一致 ⇒ desktop 注入项目归档守卫
+        const projectCase = fakeUseCase()
+        expect(desktopBinding.decorateUseCase!(projectCase, 'project')).not.toBe(projectCase)
     })
 
     it('负向（行为）：desktop 形态 binding（无 decorateUseCase）⇒ 共享工厂原样返回用例，离线写仍透传', async () => {
