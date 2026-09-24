@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto'
-import { beforeEach, describe, expect, it } from 'vite-plus/test'
+import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test'
 import type { Requester } from '@nao-todo/shared'
 import { cryptoService } from '../../persistence-local/crypto/crypto-service'
 import { localDatabase } from '../../persistence-local/db/local-database'
@@ -118,6 +118,32 @@ const setup = async (): Promise<void> => {
     // 模拟冷启动：内存态归零（磁盘事实由各用例单独布置）
     syncStatus.restoreMirrorStatus({ mirrorPulledAt: null, mirrorTruncated: false })
 }
+
+/**
+ * T139（同族 DEF-28）隔离：本文件 3 例离线 `start()`（`offlineRequester`）会置 `pullIncomplete=true`，
+ * `pushAllInner` 的 `finally` 随即 `scheduleBackfillTick()` 排下 5s 退避定时器；用例结束无 `resumeBackfill`
+ * 清理 ⇒ 定时器存活到后续用例中途，经**全局单例** `syncStatus.beginRun()` 清空在跑运行的 `runErrors`
+ *（DEF-28 机制）。实测 afterEach 存活定时器 = 1（离线 3 例）/ 0（在线 1 例）。
+ * ⇒ 用例结束即清掉本用例创建的定时器（不改生产代码、不放宽任何断言）。
+ */
+const timersCreatedInTest = new Set<ReturnType<typeof globalThis.setTimeout>>()
+let realSetTimeout: typeof globalThis.setTimeout
+
+beforeEach(() => {
+    realSetTimeout = globalThis.setTimeout
+    const trackingSetTimeout = (...args: Parameters<typeof globalThis.setTimeout>) => {
+        const id = realSetTimeout(...args)
+        timersCreatedInTest.add(id)
+        return id
+    }
+    globalThis.setTimeout = trackingSetTimeout as typeof globalThis.setTimeout
+})
+
+afterEach(() => {
+    for (const id of timersCreatedInTest) clearTimeout(id)
+    timersCreatedInTest.clear()
+    globalThis.setTimeout = realSetTimeout
+})
 
 describe('T107b：镜像新鲜度持久化（AC8 冷启动离线）', () => {
     beforeEach(async () => {
