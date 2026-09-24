@@ -44,6 +44,33 @@ export interface TaskRepository {
     restore(id: string): GoAsync<void>
 
     /**
+     * archiveByProjectId 归档清单下「未删除且未归档」的任务（批量级联）
+     * @description 可选方法 ⇒ 远端/mobile 实现不必提供；调用方以 `typeof === 'function'` 守卫。
+     *              本地实现与清单行写入在**同一 Dexie `rw` 事务**内完成
+     *              （ADR `2026-09-24-project-archive.md` §4 Q1 / PA-5）。
+     */
+    archiveByProjectId?(projectId: string): GoAsync<void>
+
+    /**
+     * unarchiveByProjectId 恢复清单下「未删除且仍归档」的任务（批量级联）
+     * @description 同 `archiveByProjectId`（可选 + 同事务）
+     */
+    unarchiveByProjectId?(projectId: string): GoAsync<void>
+
+    /**
+     * unarchive 单任务「取消归档」（脱归档）
+     * @description 可选方法 ⇒ 远端（`persistence-go`）/mobile 实现**不必提供**；
+     *              用例层以 `typeof === 'function'` 守卫，缺失返回「当前环境不支持」。
+     *              本地实现须在同一 Dexie `rw` 事务内判归档：清单仍归档 ⇒
+     *              `archivedAt=null` + `projectId='inbox'`（`movedToInbox=true`）；
+     *              清单已恢复 ⇒ 只清 `archivedAt`，`projectId` 不变。
+     *              （ADR `2026-09-24-project-archive.md` §15.1 / Q4）
+     * @param id 任务 ID
+     * @returns 是否移入收集箱
+     */
+    unarchive?(id: string): GoAsync<{ movedToInbox: boolean }>
+
+    /**
      * list 获取任务列表
      * @param queryString 查询字符串
      * @returns 任务实体列表和分页信息

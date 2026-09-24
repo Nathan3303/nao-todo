@@ -1,5 +1,6 @@
 import { unwrapError } from '@nao-todo/shared/utils/user-facing-go-error'
 import { type SSEReminderEvent } from '@nao-todo/shared/types'
+import { isArchivedReadOnlyError } from '../../../archive-gate'
 import { NueMessage } from 'nue-ui'
 import { computed, ref } from 'vue'
 import { useTasksStore } from '../../../stores'
@@ -62,7 +63,10 @@ const useTaskReminder = (props: TaskReminderDialogProps) => {
         const snoozeError = await taskUseCase.snooze(taskId, minutes)
         snoozing.value = false
         if (snoozeError !== null) {
-            NueMessage.error(unwrapError(snoozeError))
+            // T193：归档只读码静默（守卫已本地化提示；非该码仍原样透出）
+            if (!isArchivedReadOnlyError(snoozeError)) {
+                NueMessage.error(unwrapError(snoozeError))
+            }
             return
         }
         NueMessage.success('延时提醒已设置', 8000)

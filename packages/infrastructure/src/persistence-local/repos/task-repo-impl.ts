@@ -18,6 +18,7 @@ import {
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
 import { putWithSyncBase } from './put-with-sync-base'
+import { cascadeProjectArchive } from './project-archive-cascade'
 import { localSession } from '../session/local-session'
 import { isAbsentStamp, isNotDeleted } from '../utils'
 import { snowflake } from '../../persistence-sync/snowflake'
@@ -150,6 +151,7 @@ export class LocalTaskRepoImpl implements TaskRepository {
             if (updateVO.remindWeekdays !== undefined)
                 entity.remindWeekdays = updateVO.remindWeekdays
             if (updateVO.sortId !== undefined) entity.sortId = updateVO.sortId
+            if (updateVO.archivedAt !== undefined) entity.archivedAt = updateVO.archivedAt
             entity.updatedAt = nowCalibratedIso()
             await putWithSyncBase(
                 this.db.tasks,
@@ -263,6 +265,56 @@ export class LocalTaskRepoImpl implements TaskRepository {
         }
     }
 
+    async archiveByProjectId(projectId: string): GoAsync<void> {
+        // 清单 + 其下任务同事务级联（ADR §4 Q1 / PA-5/PA-6/PA-7）
+        return await cascadeProjectArchive(this.db, projectId, this.currentUserId, 'archive')
+    }
+
+    async unarchiveByProjectId(projectId: string): GoAsync<void> {
+        return await cascadeProjectArchive(this.db, projectId, this.currentUserId, 'unarchive')
+    }
+
+    /**
+     * 单任务「取消归档」（脱归档）
+     * @description 同一 Dexie `rw` 事务内读任务 + 读其清单归档态（无 TOCTOU）：
+     *              清单仍归档 ⇒ `movedToInbox=true` + `archivedAt=null` + `projectId='inbox'`；
+     *              清单已恢复 ⇒ `movedToInbox=false`，`projectId` 不变。
+     *              `archivedAt` 严格写 `null`、收集箱写**字面 `'inbox'`**（ADR §15.1 / Q4）。
+     */
+    async unarchive(id: string): GoAsync<{ movedToInbox: boolean }> {
+        try {
+            const outcome = await this.db.transaction(
+                'rw',
+                this.db.tasks,
+                this.db.projects,
+                this.db.syncQueue,
+                async () => {
+                    const record = await this.db.tasks.get(id)
+                    if (!record || record.userId !== this.currentUserId)
+                        return { ok: false as const, message: '任务不存在' }
+                    // 判据 = 任务所属清单当前是否归档（读项目行，非任务推导；PA-10 禁止清单二次推导）
+                    const project = record.projectId
+                        ? await this.db.projects.get(record.projectId)
+                        : undefined
+                    const movedToInbox = !isAbsentStamp(project?.archivedAt)
+                    const now = nowCalibratedIso()
+                    await putWithSyncBase(this.db.tasks, {
+                        ...record,
+                        archivedAt: null,
+                        projectId: movedToInbox ? 'inbox' : record.projectId,
+                        updatedAt: now
+                    })
+                    await syncTracker.markDirty('tasks', id, 'upsert', now)
+                    return { ok: true as const, movedToInbox }
+                }
+            )
+            if (!outcome.ok) return [null, outcome.message]
+            return [{ movedToInbox: outcome.movedToInbox }, null]
+        } catch (err) {
+            return [null, String(err)]
+        }
+    }
+
     async list(
         queryString?: string
     ): GoAsync<{ taskEntities: TaskEntity[]; pagination?: Pagination }> {
@@ -276,9 +328,14 @@ export class LocalTaskRepoImpl implements TaskRepository {
                 // 默认（未传）或 isDeleted=false：不查询已删除任务（含子任务——行级过滤，父/子一视同仁；对齐项目仓库默认语义）
                 records = records.filter((r) => isNotDeleted(r.deletedAt))
             }
-            if (query.isArchived === 'true') {
+            if (query.includeArchived === 'true') {
+                // P2 / ADR §15.2：`includeArchived=true` ⇒ **不按归档态过滤**（包含已归档），
+                // 优先级高于 `isArchived`（正向信号，覆盖 L1 默认排除）
+            } else if (query.isArchived === 'true') {
                 records = records.filter((r) => !isAbsentStamp(r.archivedAt))
-            } else if (query.isArchived === 'false') {
+            } else {
+                // L1（ADR §3.2 / Q2）：`isArchived` 未传 ⇒ **默认排除归档**（视同 'false'）
+                // ⇒ 单一杠杆覆盖清单视图 + 内置视图；显式 'true' 才包含
                 records = records.filter((r) => isAbsentStamp(r.archivedAt))
             }
             if (query.isStarMarked === 'true') {

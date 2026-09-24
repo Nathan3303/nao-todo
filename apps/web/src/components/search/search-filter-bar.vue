@@ -25,6 +25,8 @@ defineProps<{
     active: boolean
     /** S7b：是否纳入已删除/已放弃 */
     includeExcluded: boolean
+    /** P2：是否包含已归档 */
+    includeArchived: boolean
     /** 任一条件非空（关键词或筛选），决定「保存为常用搜索」是否可用 */
     canSave: boolean
 }>()
@@ -35,6 +37,7 @@ const emit = defineEmits<{
     (e: 'togglePriority', id: string): void
     (e: 'toggleState', id: string): void
     (e: 'toggleExcluded', value: boolean): void
+    (e: 'toggleArchived', value: boolean): void
     (e: 'clear'): void
     (e: 'save'): void
 }>()
@@ -245,6 +248,16 @@ const isChecked = (list: string[], id: string) => list.includes(id)
             @update:model-value="(value: boolean) => emit('toggleExcluded', value)"
         >
             {{ t('search.includeExcluded') }}
+        </nue-switch>
+
+        <!-- P2：包含已归档（默认关；开 ⇒ 结果纳入归档任务） -->
+        <nue-switch
+            :model-value="includeArchived"
+            size="small"
+            class="search-filter-bar__archived"
+            @update:model-value="(value: boolean) => emit('toggleArchived', value)"
+        >
+            {{ t('search.includeArchived') }}
         </nue-switch>
 
         <!-- 一键清空（任一维度激活时出现） -->

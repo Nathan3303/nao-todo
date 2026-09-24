@@ -88,6 +88,8 @@ export interface LocaleMessages {
     'offline.coverage.loadingMore': string
     'offline.coverage.truncated': string
     'offline.coverage.truncatedGeneric': string
+    // Archive read-only（ADR 2026-09-24-project-archive §15.3）
+    'archive.readOnlyHint': string
 
     // Plaintext posture user-visible notice（ADR §4.5 / D1b / AC17）
     'notice.plaintext.title': string
@@ -119,6 +121,7 @@ export interface LocaleMessages {
     'common.all': string
     'common.normal': string
     'common.deleted': string
+    'common.archived': string
     'common.unknown': string
     'common.signOut': string
     'common.sessionRequired': string
@@ -135,8 +138,10 @@ export interface LocaleMessages {
     'search.history.clear': string
     'search.history.remove': string
     'search.includeExcluded': string
+    'search.includeArchived': string
     'search.hitInDescription': string
     'search.state.deleted': string
+    'search.state.archived': string
     'search.state.givenUp': string
     'search.placeholder': string
     'search.foundCount': string
@@ -396,6 +401,7 @@ export interface LocaleMessages {
     'task.details.giveUp': string
     'task.details.ungiveUp': string
     'task.details.restore': string
+    'task.details.unarchive': string
     'task.details.deleteTask': string
     'task.details.backToList': string
     'task.details.view': string
@@ -463,6 +469,9 @@ export interface LocaleMessages {
     'task.resortFailed': string
     'task.copyFailed': string
     'task.copySuccess': string
+    'task.unarchivedToInbox': string
+    'task.unarchivedToInboxHint': string
+    'task.unarchiveFailed': string
     'task.confirmGiveUpTitle': string
     'task.confirmGiveUpContent': string
     'task.confirmGiveUp': string
@@ -666,6 +675,13 @@ export interface LocaleMessages {
     'dialog.projectNotFound': string
     'dialog.projectIdRequired': string
     'dialog.projectNameRequired': string
+    'dialog.projectArchiveConfirmTitle': string
+    'dialog.projectArchiveConfirmContent': string
+    'dialog.confirmArchive': string
+    'dialog.projectArchiveSuccess': string
+    'dialog.projectArchiveFailed': string
+    'dialog.projectUnarchiveSuccess': string
+    'dialog.projectUnarchiveFailed': string
     'dialog.tagDeleteConfirmTitle': string
     'dialog.tagDeleteConfirmContent': string
     'dialog.tagDeleteFailed': string
@@ -740,6 +756,8 @@ export interface LocaleMessages {
     'component.projectCard.noDescription': string
     'component.projectCard.deletedAt': string
     'component.projectCard.createdAt': string
+    'component.projectCard.archivedAt': string
+    'component.projectCard.archivedTaskCount': string
     'component.tagBoard.deleteTag': string
     'component.tagColorSelector.current': string
     'component.tagColorSelector.unknown': string

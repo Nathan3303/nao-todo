@@ -45,6 +45,16 @@ const userUseCase = useUserUseCase(userStore)
 // 从 pinia 中获取项目和标签列表
 const { avaliableProjects } = storeToRefs(projectsStore)
 const { tags: avaliableTags } = storeToRefs(tagsStore)
+
+/**
+ * 已归档清单的任务数（已归档且未删除）
+ * @description 归档面板展示口径（DP-3）；用本地任务仓储 `isArchived=true` 计数
+ *              （L1 默认排除归档 ⇒ 必须显式传 true）
+ */
+const countArchivedTasks = async (projectId: string): Promise<number> => {
+    const [result] = await taskUseCase.list({ projectId, isArchived: true, limit: 1 })
+    return result?.pagination?.total ?? 0
+}
 </script>
 
 <template>
@@ -64,6 +74,7 @@ const { tags: avaliableTags } = storeToRefs(tagsStore)
         :project-use-case="projectUseCase"
         :dialog-manager="appDialogManager"
         :subscriber="appSubscriber"
+        :count-archived-tasks="countArchivedTasks"
     />
     <project-updater-dialog :project-use-case="projectUseCase" :dialog-manager="appDialogManager" />
     <tag-creator-dialog

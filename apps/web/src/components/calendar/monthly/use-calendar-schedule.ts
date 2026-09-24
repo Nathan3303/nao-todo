@@ -1,4 +1,5 @@
 import { translateTaskError } from '@nao-todo/presentation/task'
+import { isArchivedReadOnlyError } from '@nao-todo/presentation/task/archive-gate'
 import { useTaskUseCase } from '@/hooks'
 import { NueMessage } from 'nue-ui'
 import dayjs from 'dayjs'
@@ -72,7 +73,10 @@ export const useCalendarSchedule = (deps: { taskUseCase: ReturnType<typeof useTa
             const snapshots: TaskScheduleSnapshot[] = []
             const { ok, err } = await writeScheduleOnce(task, dateKey, snapshots)
             if (!ok) {
-                if (err !== null) NueMessage.error(translateTaskError(err))
+                // T191：归档只读码静默（守卫已提示）
+                if (err !== null && !isArchivedReadOnlyError(err)) {
+                    NueMessage.error(translateTaskError(err))
+                }
                 return
             }
             showUndoAction({
@@ -138,7 +142,8 @@ export const useCalendarSchedule = (deps: { taskUseCase: ReturnType<typeof useTa
             updatedAt: dayjs().toISOString()
         })
         if (err !== null) {
-            NueMessage.error(translateTaskError(err))
+            // T191：归档只读码静默（守卫已提示）
+            if (!isArchivedReadOnlyError(err)) NueMessage.error(translateTaskError(err))
             return false
         }
         showUndoAction({ text: label, tone: 'success', snapshots: [snapshot] })
@@ -167,7 +172,9 @@ export const useCalendarSchedule = (deps: { taskUseCase: ReturnType<typeof useTa
                 if (err !== null && firstErr === null) firstErr = err
             }
             dismissUndoAction()
-            if (firstErr !== null) NueMessage.error(translateTaskError(firstErr))
+            if (firstErr !== null && !isArchivedReadOnlyError(firstErr)) {
+                NueMessage.error(translateTaskError(firstErr))
+            }
         } finally {
             undoBusy.value = false
         }

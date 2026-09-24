@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import type { ProjectCardProps, ProjectCardEmits } from './types'
 import { parse2RelativeDate } from '@nao-todo/shared/utils/relative-date-parser'
+import { t } from '@nao-todo/shared/locales'
 
 defineOptions({ name: 'ProjectCard' })
 const props = defineProps<ProjectCardProps>()
@@ -11,9 +12,9 @@ const isDeleted = computed(() => props.project.isDeleted)
 const isArchived = computed(() => props.project.isArchived)
 
 const statusText = computed(() => {
-    if (props.project.isDeleted) return '已删除'
-    if (props.project.isArchived) return '已归档'
-    return '正常'
+    if (props.project.isDeleted) return t('component.projectCard.deleted')
+    if (props.project.isArchived) return t('component.projectCard.archived')
+    return t('component.projectCard.normal')
 })
 
 const statusColor = computed(() => {
@@ -42,16 +43,35 @@ const statusColor = computed(() => {
                 :clamped="3"
                 style="word-break: break-word"
             >
-                {{ project.description || '无描述' }}
+                {{ project.description || t('component.projectCard.noDescription') }}
             </nue-text>
         </nue-div>
         <!-- 底部信息 -->
         <nue-div theme="info">
             <nue-text v-if="isDeleted" color="var(--nue-primary-color-600)">
-                删除于{{ parse2RelativeDate(project.deactivedAt!) }}
+                {{ t('component.projectCard.deletedAt')
+                }}{{ parse2RelativeDate(project.deactivedAt!) }}
+            </nue-text>
+            <nue-text
+                v-else-if="isArchived && project.archivedAt"
+                color="var(--nue-primary-color-400)"
+            >
+                {{ t('component.projectCard.archivedAt')
+                }}{{ parse2RelativeDate(project.archivedAt) }}
             </nue-text>
             <nue-text v-else color="var(--nue-primary-color-400)">
-                创建于{{ parse2RelativeDate(project.createdAt) }}
+                {{ t('component.projectCard.createdAt')
+                }}{{ parse2RelativeDate(project.createdAt) }}
+            </nue-text>
+            <nue-text
+                v-if="isArchived && project.archivedTaskCount !== undefined"
+                color="var(--nue-primary-color-400)"
+            >
+                {{
+                    t('component.projectCard.archivedTaskCount', {
+                        count: project.archivedTaskCount
+                    })
+                }}
             </nue-text>
             <nue-text :color="statusColor">{{ statusText }}</nue-text>
         </nue-div>

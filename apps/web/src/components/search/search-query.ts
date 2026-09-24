@@ -17,6 +17,7 @@ export type SearchQueryState = {
     priorities: string[]
     states: string[]
     includeExcluded: boolean
+    includeArchived: boolean
 }
 
 /** URL query 原始值域（vue-router LocationQuery 的宽松对账口径） */
@@ -29,7 +30,8 @@ export const EMPTY_SEARCH_QUERY: SearchQueryState = {
     tagIds: [],
     priorities: [],
     states: [],
-    includeExcluded: false
+    includeExcluded: false,
+    includeArchived: false
 }
 
 /** 收件箱哨兵 token（D1） */
@@ -37,6 +39,9 @@ const INBOX_TOKEN = 'inbox'
 
 /** 纳入已删除/已放弃开关的 URL 编码值（S7b） */
 const EXCLUDED_ON = '1'
+
+/** 包含已归档开关的 URL 编码值（P2，镜像 EXCLUDED_ON） */
+const ARCHIVED_ON = '1'
 
 /** 数组维度分隔符 */
 const LIST_SEPARATOR = ','
@@ -69,7 +74,8 @@ export const parseSearchQuery = (raw: RawSearchQuery): SearchQueryState => ({
     tagIds: dedupe(toTokens(raw.tag)),
     priorities: dedupe(toTokens(raw.priority).filter((value) => isAllowed(TASK_PRIORITIES, value))),
     states: dedupe(toTokens(raw.state).filter((value) => isAllowed(TASK_STATES, value))),
-    includeExcluded: toSingle(raw.excluded) === EXCLUDED_ON
+    includeExcluded: toSingle(raw.excluded) === EXCLUDED_ON,
+    includeArchived: toSingle(raw.archived) === ARCHIVED_ON
 })
 
 /** 搜索状态 → URL query（空值省略；收件箱哨兵回写 token） */
@@ -86,6 +92,7 @@ export const serializeSearchQuery = (state: SearchQueryState): Record<string, st
     if (state.priorities.length > 0) query.priority = state.priorities.join(LIST_SEPARATOR)
     if (state.states.length > 0) query.state = state.states.join(LIST_SEPARATOR)
     if (state.includeExcluded) query.excluded = EXCLUDED_ON
+    if (state.includeArchived) query.archived = ARCHIVED_ON
     return query
 }
 
@@ -99,7 +106,8 @@ export const searchQueryEquals = (a: SearchQueryState, b: SearchQueryState): boo
         sameList(a.tagIds, b.tagIds) &&
         sameList(a.priorities, b.priorities) &&
         sameList(a.states, b.states) &&
-        a.includeExcluded === b.includeExcluded
+        a.includeExcluded === b.includeExcluded &&
+        a.includeArchived === b.includeArchived
     )
 }
 

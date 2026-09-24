@@ -93,6 +93,9 @@ const enUS: LocaleMessages = {
     'offline.coverage.truncated': 'Loaded {count}, more not yet loaded',
     'offline.coverage.truncatedGeneric': 'More tasks than the sync limit; showing partial data',
 
+    // Archive read-only（ADR 2026-09-24-project-archive §15.3）
+    'archive.readOnlyHint': 'This project is archived — unarchive it first',
+
     // Plaintext posture user-visible notice（ADR §4.5 / D1b / AC17）
     'notice.plaintext.title': 'Local data is stored in plain text',
     'notice.plaintext.body':
@@ -126,6 +129,7 @@ const enUS: LocaleMessages = {
     'common.all': 'All',
     'common.normal': 'Normal',
     'common.deleted': 'Deleted',
+    'common.archived': 'Archived',
     'common.unknown': 'Unknown',
     'common.signOut': 'Sign Out',
     'common.sessionRequired': 'Your session has expired. Please sign in again, then retry.',
@@ -142,8 +146,10 @@ const enUS: LocaleMessages = {
     'search.history.clear': 'Clear',
     'search.history.remove': 'Remove',
     'search.includeExcluded': 'Include deleted / given up',
+    'search.includeArchived': 'Include archived',
     'search.hitInDescription': 'Note match',
     'search.state.deleted': 'Deleted',
+    'search.state.archived': 'Archived',
     'search.state.givenUp': 'Given up',
     'search.placeholder': 'Search all task names / notes…',
     'search.foundCount': '{count} results',
@@ -423,6 +429,7 @@ const enUS: LocaleMessages = {
     'task.details.giveUp': 'Give Up Task',
     'task.details.ungiveUp': 'Undo Give Up',
     'task.details.restore': 'Restore Task',
+    'task.details.unarchive': 'Unarchive',
     'task.details.deleteTask': 'Delete Task',
     'task.details.backToList': 'Back to Task List',
     'task.details.view': 'View Details',
@@ -492,6 +499,9 @@ const enUS: LocaleMessages = {
     'task.resortFailed': 'Failed to reorder: {error}',
     'task.copyFailed': 'Failed to copy task: {error}',
     'task.copySuccess': 'Task copied',
+    'task.unarchivedToInbox': 'Moved to Inbox',
+    'task.unarchivedToInboxHint': 'Its project is still archived',
+    'task.unarchiveFailed': 'Failed to unarchive: {error}',
     'task.confirmGiveUpTitle': 'Give up this task?',
     'task.confirmGiveUpContent': 'The task will be moved to "Given Up" list. Continue?',
     'task.confirmGiveUp': 'Confirm',
@@ -702,6 +712,14 @@ const enUS: LocaleMessages = {
     'dialog.projectNotFound': 'Project not found',
     'dialog.projectIdRequired': 'Project ID is required',
     'dialog.projectNameRequired': 'Project name is required',
+    'dialog.projectArchiveConfirmTitle': 'Archive this project?',
+    'dialog.projectArchiveConfirmContent':
+        '{count} task(s) in this project will be archived too. You can unarchive it later from Archived.',
+    'dialog.confirmArchive': 'Archive',
+    'dialog.projectArchiveSuccess': 'Project archived',
+    'dialog.projectArchiveFailed': 'Failed to archive project{error}',
+    'dialog.projectUnarchiveSuccess': 'Project unarchived',
+    'dialog.projectUnarchiveFailed': 'Failed to unarchive project{error}',
     'dialog.tagDeleteConfirmTitle': 'Delete this tag?',
     'dialog.tagDeleteConfirmContent':
         'Cannot be recovered. Tasks will be kept but the tag will be removed.',
@@ -779,6 +797,8 @@ const enUS: LocaleMessages = {
     'component.projectCard.noDescription': 'No description',
     'component.projectCard.deletedAt': 'Deleted at',
     'component.projectCard.createdAt': 'Created at',
+    'component.projectCard.archivedAt': 'Archived at',
+    'component.projectCard.archivedTaskCount': '{count} task(s)',
     'component.tagBoard.deleteTag': 'Delete tag',
     'component.tagColorSelector.current': 'Current: ',
     'component.tagColorSelector.unknown': 'Unknown color',

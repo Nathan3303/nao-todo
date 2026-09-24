@@ -25,7 +25,8 @@ const makeSaved = (id: string, name: string): SavedSearch => ({
         tagIds: [],
         priorities: [],
         states: [],
-        includeExcluded: false
+        includeExcluded: false,
+        includeArchived: false
     },
     createdAt: '2026-09-21T00:00:00.000Z'
 })

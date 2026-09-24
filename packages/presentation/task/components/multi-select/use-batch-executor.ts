@@ -4,6 +4,7 @@ import { t } from '@nao-todo/shared/locales'
 import { type GoError } from '@nao-todo/shared/types'
 import type { TaskViewObject } from '@nao-todo/domain-task'
 import { translateTaskError } from '../../utils/error-message'
+import { isArchivedReadOnlyError } from '../../archive-gate'
 import type { TaskHandler } from '../../handlers'
 import type { BatchOpResult, BatchOperation } from './types'
 
@@ -79,8 +80,15 @@ export const useBatchExecutor = ({ handler, getTask }: BatchExecutorOptions) => 
         for (const taskId of taskIds) {
             try {
                 const err = await executeOne(taskId, op)
-                if (err) errors.push({ taskId, message: translateTaskError(err) })
-                else succeeded++
+                if (err) {
+                    // T191：归档只读码的提示由守卫负责 ⇒ 汇总中用本地化提示替代原始码（不改失败计数）
+                    errors.push({
+                        taskId,
+                        message: isArchivedReadOnlyError(err)
+                            ? t('archive.readOnlyHint')
+                            : translateTaskError(err)
+                    })
+                } else succeeded++
             } catch (error) {
                 errors.push({ taskId, message: translateTaskError(error as GoError) })
             }

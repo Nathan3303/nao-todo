@@ -35,7 +35,8 @@ describe('parseSearchQuery - URL → 状态', () => {
             tagIds: ['t1'],
             priorities: ['high', 'medium'],
             states: ['todo', 'in-progress'],
-            includeExcluded: false
+            includeExcluded: false,
+            includeArchived: false
         })
     })
 
@@ -90,7 +91,8 @@ describe('serializeSearchQuery - 状态 → URL', () => {
             tagIds: ['t1', 't2'],
             priorities: ['high'],
             states: ['todo'],
-            includeExcluded: true
+            includeExcluded: true,
+            includeArchived: false
         }
         expect(serializeSearchQuery(state)).toEqual({
             q: '买菜',
@@ -114,7 +116,8 @@ describe('往返一致与等价判定', () => {
             tagIds: ['t1'],
             priorities: ['medium', 'low'],
             states: ['done'],
-            includeExcluded: true
+            includeExcluded: true,
+            includeArchived: false
         }
         expect(parseSearchQuery(serializeSearchQuery(state))).toEqual(state)
     })
@@ -131,7 +134,8 @@ describe('往返一致与等价判定', () => {
             tagIds: [],
             priorities: [],
             states: [],
-            includeExcluded: false
+            includeExcluded: false,
+            includeArchived: false
         }
         expect(searchQueryEquals(base, { ...base })).toBe(true)
         expect(searchQueryEquals(base, { ...base, keyword: 'b' })).toBe(false)
@@ -148,7 +152,8 @@ describe('needsSearchQueryReExport - 本地真源对账（SEA-04-DEF-02 B 方案
         tagIds: [],
         priorities: ['high'],
         states: [],
-        includeExcluded: true
+        includeExcluded: true,
+        includeArchived: false
     }
 
     it('本地有状态而路由 query 丢失（关详情/切详情场景）→ 需再导出', () => {

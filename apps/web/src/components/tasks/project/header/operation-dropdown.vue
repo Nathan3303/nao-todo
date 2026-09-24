@@ -4,12 +4,15 @@ import { TaskOperationsDropdown, TaskColumnDisplayController } from '@nao-todo/p
 import { InnerDropdownOption } from '@nao-todo/shared/components/inner-dropdown'
 import { DropdownDivBlock } from '@nao-todo/shared/components/dropdown-div-block'
 import { PROJECT_UPDATER_DIALOG_KEY } from '@nao-todo/shared/constants'
+import { t } from '@nao-todo/shared/locales'
 import { PROJECT_VIEW_CONTEXT_KEY } from '../context'
+import { runProjectArchive } from '../archive-project-action'
 
 defineOptions({ name: 'TasksProjectOperationsDropdown' })
 
 const {
     projectUseCase,
+    taskUseCase,
     project,
     subscriber,
     preference,
@@ -37,9 +40,13 @@ onMounted(() => {
         if (!project.value) return
         projectUseCase.delete(project.value.id)
     })
-    dropdownRef.value.register('archive-project', () => {
+    dropdownRef.value.register('archive-project', async () => {
         if (!project.value) return
-        projectUseCase.archive(project.value.id)
+        await runProjectArchive({
+            taskUseCase,
+            projectId: project.value.id,
+            archive: (id) => projectUseCase.archive(id)
+        })
     })
     dropdownRef.value.register('update-project', () => {
         if (!project.value) return
@@ -102,12 +109,11 @@ onMounted(() => {
                 title="删除清单"
                 execute-id="delete-project"
             />
-            <!-- <inner-dropdown-option
-                disabled
+            <inner-dropdown-option
                 icon="archive"
-                title="归档清单"
+                :title="t('component.archiveProject')"
                 execute-id="archive-project"
-            /> -->
+            />
         </dropdown-div-block>
     </task-operations-dropdown>
 </template>

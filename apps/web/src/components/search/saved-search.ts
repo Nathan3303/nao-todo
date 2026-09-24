@@ -56,7 +56,8 @@ const normalizeQuery = (raw: unknown): SearchQueryState => {
         tagIds: dedupe(toStringArray(source.tagIds)),
         priorities: dedupe(toStringArray(source.priorities).filter(isPriority)),
         states: dedupe(toStringArray(source.states).filter(isState)),
-        includeExcluded: source.includeExcluded === true
+        includeExcluded: source.includeExcluded === true,
+        includeArchived: source.includeArchived === true
     }
 }
 

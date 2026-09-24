@@ -10,6 +10,10 @@ export type ProjectCardVO = {
     createdAt: string
     isArchived: boolean
     isDeleted: boolean
+    /** 归档时间（归档面板展示用） */
+    archivedAt?: NullableDateString
+    /** 归档清单的「已归档且未删除」任务数（归档面板展示用，DP-3） */
+    archivedTaskCount?: number
 }
 
 export type ProjectCardProps = {

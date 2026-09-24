@@ -23,7 +23,8 @@ const EMPTY_QUERY: SearchQueryState = {
     tagIds: [],
     priorities: [],
     states: [],
-    includeExcluded: false
+    includeExcluded: false,
+    includeArchived: false
 }
 
 const makeQuery = (overrides: Partial<SearchQueryState> = {}): SearchQueryState => ({

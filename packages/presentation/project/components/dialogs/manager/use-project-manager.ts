@@ -30,6 +30,12 @@ const useProjectManager = (props: ProjectManagerDialogProps) => {
     const loadingProjects = ref<Map<string, boolean>>(new Map())
 
     /**
+     * 已归档清单的任务数（已归档且未删除）
+     * @description 仅供「已归档」面板展示；懒加载（切到 archived tab 时拉取）
+     */
+    const archivedTaskCounts = reactive<Record<string, number>>({})
+
+    /**
      * 项目管理器状态
      */
     const states = reactive<ProjectManagerVO>({ filterInfo: { name: '' }, activeTab: 'all' })
@@ -54,16 +60,43 @@ const useProjectManager = (props: ProjectManagerDialogProps) => {
                 statusMatch = !project.isDeleted
             } else if (states.activeTab === 'deleted') {
                 statusMatch = project.isDeleted
+            } else if (states.activeTab === 'archived') {
+                statusMatch = project.isArchived
             }
             return nameMatch && statusMatch
         })
     })
 
+    /** 注入归档任务数与归档时间，供卡片展示 */
+    const displayProjects = computed(() =>
+        filteredProjects.value.map((project) =>
+            project.isArchived
+                ? { ...project, archivedTaskCount: archivedTaskCounts[project.id] }
+                : project
+        )
+    )
+
+    /** 懒加载已归档清单的任务数（未提供 loader 则跳过） */
+    const loadArchivedTaskCounts = async () => {
+        if (!props.countArchivedTasks) return
+        for (const project of projects.value) {
+            if (!project.isArchived) continue
+            try {
+                archivedTaskCounts[project.id] = await props.countArchivedTasks(project.id)
+            } catch {
+                archivedTaskCounts[project.id] = 0
+            }
+        }
+    }
+
     /**
      * 设置当前选中的标签页
      * @param tab 要设置的标签页
      */
-    const setActiveTab = (tab: 'all' | 'active' | 'deleted') => (states.activeTab = tab)
+    const setActiveTab = (tab: ProjectManagerVO['activeTab']) => {
+        states.activeTab = tab
+        if (tab === 'archived') void loadArchivedTaskCounts()
+    }
 
     /**
      * 删除清单
@@ -88,6 +121,18 @@ const useProjectManager = (props: ProjectManagerDialogProps) => {
     }
 
     /**
+     * 取消归档清单（回最近位置；任务级联恢复由用例层同事务完成）
+     * @param projectId 清单 ID
+     */
+    const unarchiveProject = (projectId: string) => {
+        loadingProjects.value.set(projectId, true)
+        projectHandler.unarchiveProject(projectId).finally(() => {
+            loadingProjects.value.set(projectId, false)
+            void loadArchivedTaskCounts()
+        })
+    }
+
+    /**
      * 打开项目创建器对话框
      * @description 打开项目创建器对话框，用于创建新项目
      */
@@ -99,10 +144,13 @@ const useProjectManager = (props: ProjectManagerDialogProps) => {
     return {
         states,
         filteredProjects,
+        displayProjects,
+        archivedTaskCounts,
         loadingProjects,
         setActiveTab,
         deleteProject,
         restoreProject,
+        unarchiveProject,
         openProjectCreatorDialog
     }
 }

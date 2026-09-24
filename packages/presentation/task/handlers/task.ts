@@ -10,6 +10,7 @@ import {
     type UpdateTaskViewObject
 } from '@nao-todo/domain-task'
 import { translateTaskError } from '../utils/error-message'
+import { isArchivedReadOnlyError } from '../archive-gate'
 
 /**
  * 任务操作器
@@ -38,6 +39,8 @@ export class TaskHandler {
      */
     private notifyError(key: LocaleKey, error: unknown) {
         if (this.silent) return
+        // 归档只读码的提示由守卫负责（本地化）；此处跳过，避免重复 + 原始错误码外泄（T191）
+        if (isArchivedReadOnlyError(error)) return
         NueMessage.error(t(key, { error: `(${translateTaskError(error as GoError)})` }))
     }
 
@@ -135,6 +138,28 @@ export class TaskHandler {
             return restoreError
         }
         this.notifySuccess('task.restoreSuccess')
+        return null
+    }
+
+    /**
+     * 任务取消归档（脱归档）
+     * @description 清单仍归档 ⇒ 任务移入收集箱，并提示「原清单仍归档」；
+     *              清单已恢复 ⇒ 回原清单（ADR `2026-09-24-project-archive.md` §15.1）。
+     * @param taskId 任务 ID
+     * @returns 错误信息
+     */
+    async unarchiveTask(taskId: string): GoAsync<void> {
+        const [payload, unarchiveError] = await this.taskUseCase.unarchive(taskId)
+        if (unarchiveError !== null) {
+            this.notifyError('task.unarchiveFailed', unarchiveError)
+            return unarchiveError
+        }
+        // 移入收集箱 ⇒ 可见提醒（说明原清单仍处于归档状态）
+        if (payload?.movedToInbox && !this.silent) {
+            NueMessage.warn(
+                `${t('task.unarchivedToInbox')} \u00b7 ${t('task.unarchivedToInboxHint')}`
+            )
+        }
         return null
     }
 

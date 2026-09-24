@@ -81,9 +81,31 @@ const buildPush =
     }
 
 /**
+ * 收集箱本地哨兵（单一口径：数据面一律字面 `'inbox'`；ADR `2026-09-24-project-archive.md` §15.1 / Q4）
+ * @description 服务端隐式桶以 `userId` 承载（create/update 对 `''` 归一为 `userId`）。
+ *              R-5 闭环（T188）在**同步边界**做对称映射：写侧 `'inbox'` → `''`、读侧 `userId` → `'inbox'`；
+ *              两端**唯一落点**分别为 `buildTaskPush` / `putPulledRecord`（⛔ 勿在调用点散落映射）。
+ */
+const INBOX_PROJECT_ID = 'inbox'
+
+/** 写侧（push 载荷构造）：本地收集箱 `'inbox'` ⇒ 空串（服务端 create/update 归一为 `userId`） */
+const toPushProjectId = (projectId: unknown): unknown =>
+    projectId === INBOX_PROJECT_ID ? '' : projectId
+
+/** 读侧（pull 落库）：服务端隐式桶 `userId` ⇒ 本地字面 `'inbox'` */
+// 空值守门（T193）：仅当两侧都是「非空标量」且相等时才归一 —— `''` 是「无清单」的合法本地表示，
+//   不得归一；也防未来类型漂移（如 `projectId` 缺失时 `String(undefined) === 'undefined'`）导致静默误归一。
+const toLocalProjectId = (projectId: unknown, userId: string): unknown =>
+    projectId != null && projectId !== '' && String(projectId as string) === String(userId)
+        ? INBOX_PROJECT_ID
+        : projectId
+
+/**
  * 构建任务推送记录
  * @description `sortId = 0` 表示未设置（服务端分配）⇒ 不产出该字段，
  *              否则存量本地记录的 0 会在服务端覆盖分支把组内序清零（ADR B1 / G4）。
+ *              R-5 / T188-C：收集箱 `'inbox'` 发送为 `''`（服务端 create 路径对 `'inbox'`
+ *              报错且不归一 ⇒ 载荷构造处一处生效，覆盖全部 `'inbox'` 写者）。
  */
 const buildTaskPush = (entity: Record<string, unknown>): Record<string, unknown> => {
     const record = buildPush([
@@ -109,6 +131,7 @@ const buildTaskPush = (entity: Record<string, unknown>): Record<string, unknown>
         'deletedAt'
     ])(entity)
     if (!record.sortId) delete record.sortId
+    record.projectId = toPushProjectId(record.projectId)
     return record
 }
 
@@ -478,7 +501,13 @@ export class SyncService {
         entity: Record<string, unknown>,
         userId: string
     ): Promise<void> {
-        const record = (await config.entityToRecord(entity, userId)) as {
+        // R-5 / T188-B：拉取落库边界把服务端隐式桶（`projectId === userId`）归一为本地字面 `'inbox'`
+        //   （仅 tasks 表有 projectId；唯一落点，供本地字面 `'inbox'` 过滤命中）
+        const source =
+            config.table === 'tasks'
+                ? { ...entity, projectId: toLocalProjectId(entity.projectId, userId) }
+                : entity
+        const record = (await config.entityToRecord(source, userId)) as {
             syncedServerUpdatedAt?: string
         }
         const serverUpdatedAt = typeof entity.updatedAt === 'string' ? entity.updatedAt : ''

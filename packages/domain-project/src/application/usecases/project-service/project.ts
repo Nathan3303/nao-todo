@@ -21,6 +21,26 @@ import {
 } from './converters'
 
 /**
+ * 内建清单（收集箱）ID
+ * @description 内建清单不可归档（ADR `2026-09-24-project-archive.md` §7.1 / Q4）。
+ *              收集箱是数据面单一真源 `'inbox'`（非 `''`）⇒ 此处按字面判定。
+ */
+const INBOX_PROJECT_ID = 'inbox'
+
+/**
+ * 清单-任务归档级联端口（可选）
+ * @description 本地优先端注入：清单归档/取消归档需与其下任务在同一 Dexie `rw` 事务内
+ *              级联完成（ADR §4 Q1 / PA-5）。
+ *              ⚠️ 不跨域 import ⇒ 以结构类型定义在本域（实现由 infrastructure 提供）。
+ */
+export type ProjectTaskCascadePort = {
+    /** 归清单下「未删除且未归档」的任务（同事务） */
+    archiveByProjectId: (projectId: string) => GoAsync<void>
+    /** 恢复清单下「未删除且仍归档」的任务（同事务） */
+    unarchiveByProjectId: (projectId: string) => GoAsync<void>
+}
+
+/**
  * 项目用例
  * @description 负责处理项目相关的业务逻辑，包括加载项目、创建项目、加载项目偏好等
  */
@@ -36,7 +56,9 @@ export class ProjectUseCase {
         private projectService: ProjectService,
         private projectRepo: ProjectRepository,
         private projectPreferenceRepo: ProjectPreferenceRepository,
-        private store: ProjectStore
+        private store: ProjectStore,
+        // 可选级联端口：存在时归档/取消归档走「清单 + 任务同事务」；缺省回退单表写入
+        private taskCascade?: ProjectTaskCascadePort
     ) {}
 
     /**
@@ -154,8 +176,17 @@ export class ProjectUseCase {
      * @returns 无
      */
     async archive(projectId: ProjectViewObject['id']): GoAsync<void> {
-        // 直接调用，不做确认
-        return await this.projectRepo.delete(projectId)
+        // 内建清单（收集箱）不可归档（面10 / PRD §5-8）
+        if (projectId === INBOX_PROJECT_ID) return '内建清单不可归档'
+        // DEF-36 / PA-3：归档写 archivedAt（绝不写 deletedAt / deactivedAt，PA-4）；
+        // 有级联端口时由任务仓储在**同一事务**内完成「清单 + 其下任务」（PA-5）
+        const err = this.taskCascade
+            ? await this.taskCascade.archiveByProjectId(projectId)
+            : await this.projectRepo.archive(projectId)
+        if (err !== null) return err
+        // 同步 presentation store（与 delete/restore 同口径，避免侧栏需刷新才收敛）
+        this.store.archiveProject?.(projectId)
+        return null
     }
 
     /**
@@ -164,8 +195,42 @@ export class ProjectUseCase {
      * @returns 无
      */
     async unarchive(projectId: ProjectViewObject['id']): GoAsync<void> {
-        // 直接调用，不做确认
-        return await this.projectRepo.delete(projectId)
+        // DEF-36 / PA-3：清 archivedAt（不触碰 deletedAt / deactivedAt）
+        const err = this.taskCascade
+            ? await this.taskCascade.unarchiveByProjectId(projectId)
+            : await this.projectRepo.unarchive(projectId)
+        if (err !== null) return err
+        // 同步 presentation store（与 delete/restore 同口径）
+        this.store.unarchiveProject?.(projectId)
+        // 复位归一：恢复项与活动项 sortId 碰撞 ⇒ 以恢复值作锚重排（PA-10「回最近位置」）
+        return await this.normalizeSortAfterUnarchive(projectId)
+    }
+
+    /** 取消归档后的 `sortId` 碰撞归一（以恢复项 sortId 为锚重排活动清单） */
+    private async normalizeSortAfterUnarchive(projectId: string): GoAsync<void> {
+        // 部分调用方只提供最小 store（如 DEF-36 单测）⇒ 无读能力即跳过归一
+        if (typeof this.store.getProject !== 'function') return null
+        const restored = this.store.getProject(projectId)
+        if (!restored) return null
+        const active = this.store.getAllProjects().filter((p) => !p.isDeleted && !p.isArchived)
+        // 恢复项可能仍带归档标记（可选 store 方法缺席）⇒ 主动并入活动组，保证参与重排
+        const members = active.some((p) => p.id === projectId) ? active : [...active, restored]
+        const collision = members.some((p) => p.id !== projectId && p.sortId === restored.sortId)
+        if (!collision) return null
+        const sorted = [...members].sort(
+            (a, b) => a.sortId - b.sortId || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+        )
+        const updates = sorted.map((project, index) => ({
+            ...project,
+            sortId: (index + 1) * 1000
+        }))
+        this.store.updateProjects(updates)
+        const [batchResult, err] = await this.projectService.batchUpdateProject(
+            updates.map((project) => updateProjectViewObjectToValueObject(project.id, project))
+        )
+        if (err !== null) return err
+        this.store.updateProjects(batchResult.map(projectEntityToViewObject))
+        return null
     }
 
     /**

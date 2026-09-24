@@ -6,10 +6,11 @@ import {
 import { PROJECT_MANAGER_DIALOG_KEY } from '@nao-todo/shared/constants'
 import { t } from '@nao-todo/shared/locales'
 import { ProjectBoard } from '@nao-todo/shared/components/project-board'
+import { ProjectArchiveButton } from '@nao-todo/shared/components/project-archive-button'
 import { ProjectDeleteButton } from '@nao-todo/shared/components/project-delete-button'
 import { RuleHint } from '@nao-todo/shared/components/rule-hint'
 import { onMounted, ref } from 'vue'
-import type { ProjectManagerDialogProps } from './types'
+import type { ProjectManagerDialogProps, ProjectManagerVO } from './types'
 import useProjectManager from './use-project-manager'
 
 defineOptions({ name: 'ProjectManager' })
@@ -21,19 +22,23 @@ const dialogRef = ref<DialogInstanceType>()
 // 项目管理器
 const {
     states,
-    filteredProjects,
+    displayProjects,
     loadingProjects,
     setActiveTab,
     deleteProject,
     restoreProject,
+    unarchiveProject,
     openProjectCreatorDialog
 } = useProjectManager(props)
 
 // 对话框实例
 const { visible, close } = useDialogWrapper(dialogRef)
 
-// 打开项目管理器对话框
-const open = () => (visible.value = true)
+// 打开项目管理器对话框（可选指定初始 tab，供侧栏「已归档」入口直达）
+const open = (payload?: { activeTab?: ProjectManagerVO['activeTab'] }) => {
+    if (payload?.activeTab) setActiveTab(payload.activeTab)
+    visible.value = true
+}
 
 // @Mounted
 onMounted(() => {
@@ -77,6 +82,12 @@ onMounted(() => {
                         >
                             {{ t('common.deleted') }}
                         </nue-button>
+                        <nue-button
+                            :theme="states.activeTab === 'archived' ? 'primary,small' : 'small'"
+                            @click="setActiveTab('archived')"
+                        >
+                            {{ t('common.archived') }}
+                        </nue-button>
                     </nue-button-group>
                     <nue-divider vertical />
                     <nue-input
@@ -100,12 +111,19 @@ onMounted(() => {
             <nue-main>
                 <nue-content fill style="overflow: hidden">
                     <project-board
-                        :projects="filteredProjects"
+                        :projects="displayProjects"
                         @delete-project="deleteProject"
                         @restore-project="restoreProject"
                     >
                         <template #ops="{ project }">
+                            <project-archive-button
+                                v-if="project.isArchived && !project.isDeleted"
+                                :is-archived="true"
+                                :loading="loadingProjects.get(project.id)"
+                                @unarchive="unarchiveProject(project.id)"
+                            />
                             <project-delete-button
+                                v-else
                                 :is-deleted="project.isDeleted"
                                 :loading="loadingProjects.get(project.id)"
                                 @delete="deleteProject(project.id)"
