@@ -123,3 +123,65 @@ describe('AuthUseCase.checkIn - DEF-5 失败分流', () => {
         expect(clearAuthData).not.toHaveBeenCalled()
     })
 })
+
+/**
+ * C-67 / r11（DEF-33）：判据方向 = **网络白名单 + code 优先**
+ * @description 仅归一化网络类（`ERR_NETWORK` / `ECONNABORTED` / `50300` / `40800` / `42900` / `10051`）
+ *              保留认证；**其余一律凭证类**（含未知/新增业务码）—— 等价 `v1.9.0` + DEF-5 豁免，
+ *              且不依赖服务端文案（闭合 DEF-25）。
+ */
+describe('C-67：checkin 分类 = 网络白名单 + code 优先（DEF-33）', () => {
+    it('业务码 10022 / 10021（检入失败 / 参数错误）⇒ 凭证类 ⇒ 清认证', async () => {
+        for (const [code, message] of [
+            [10022, '检入失败'],
+            [10021, '参数错误']
+        ] as const) {
+            const { store, clearAuthData } = createStore()
+            const failure = Object.assign(new Error(message), { code, businessCode: code })
+            const useCase = new AuthUseCase(
+                createService(async () => [null, failure]),
+                store
+            )
+
+            const err = await useCase.checkIn('jwt-stale')
+
+            expect(err).toBe(failure)
+            expect(isCredentialError(err)).toBe(true)
+            expect(clearAuthData).toHaveBeenCalledTimes(1)
+        }
+    })
+
+    it('归一化网络类（ERR_NETWORK / 50300 / 10051）⇒ 非凭证 ⇒ 保留认证', async () => {
+        const networkFailures = [
+            Object.assign(new Error('网络错误，请检查您的网络连接'), {
+                code: 'ERR_NETWORK',
+                businessCode: 50300
+            }),
+            Object.assign(new Error('请求失败'), { code: 10051, businessCode: 10051 })
+        ]
+        for (const failure of networkFailures) {
+            const { store, clearAuthData } = createStore()
+            const useCase = new AuthUseCase(
+                createService(async () => [null, failure]),
+                store
+            )
+
+            const err = await useCase.checkIn('jwt-kept')
+
+            expect(isCredentialError(err)).toBe(false)
+            expect(clearAuthData).not.toHaveBeenCalled()
+        }
+    })
+
+    it('code 缺失时的回落语义：未知文案 ⇒ 凭证（安全默认）；仓内归一化文案 ⇒ 非凭证', () => {
+        // 未知文案 / 未知码 ⇒ 凭证（不得被网络白名单漏判）
+        expect(isCredentialError('请求失败')).toBe(true)
+        expect(isCredentialError(Object.assign(new Error('未知'), { code: 99999 }))).toBe(true)
+        // 仓内归一化网络文案 ⇒ 非凭证
+        expect(isCredentialError('网络错误，请检查您的网络连接')).toBe(false)
+        expect(isCredentialError('请求超时，请稍后再试')).toBe(false)
+        // 空值防御：显式 false
+        expect(isCredentialError(null)).toBe(false)
+        expect(isCredentialError('')).toBe(false)
+    })
+})

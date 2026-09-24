@@ -33,6 +33,9 @@ const NETWORK_FAILURE = {
 /** 凭证类失败（服务端业务码 10041：用户凭证验证失败） */
 const CREDENTIAL_FAILURE = { data: { code: 10041, message: '用户凭证验证失败' } }
 
+/** checkin 业务失败（服务端业务码 10022：检入失败；DEF-33 现场文案） */
+const CHECKIN_FAILURE = { data: { code: 10022, message: '检入失败' } }
+
 /** 成功（业务码 10020） */
 const SUCCESS = {
     data: {
@@ -128,5 +131,30 @@ describe('DEF-5 / AC7：checkin 网络类失败 ⇒ 保留认证（凭证类仍�
         expect(error).toBeNull()
         expect(store.getIsAuthenticated()).toBe(true)
         expect(localStorage.getItem(USER_JWT_LOCALSTORAGE_KEY)).toBe('jwt-after-retry')
+    })
+
+    it('C-67：仓储透传业务 code（10022 检入失败 ⇒ Error.code/businessCode = 10022）', async () => {
+        const repo = useAuthRepository(requesterWith(async () => CHECKIN_FAILURE))
+
+        const [session, error] = await repo.checkIn('jwt-stale')
+
+        expect(session).toBeNull()
+        expect(error).toBeInstanceOf(Error)
+        const carrier = error as Error & { code?: unknown; businessCode?: unknown }
+        expect(carrier.code).toBe(10022)
+        expect(carrier.businessCode).toBe(10022)
+        // 用户可见文案不变
+        expect(carrier.message).toBe('检入失败')
+    })
+
+    it('C-67：仓储透传顶层归一化 code（ERR_NETWORK + 业务 50300）', async () => {
+        const repo = useAuthRepository(requesterWith(async () => NETWORK_FAILURE))
+
+        const [, error] = await repo.checkIn('jwt-stale')
+
+        const carrier = error as Error & { code?: unknown; businessCode?: unknown }
+        expect(carrier.code).toBe('ERR_NETWORK')
+        expect(carrier.businessCode).toBe(50300)
+        expect(carrier.message).toBe('网络错误，请检查您的网络连接')
     })
 })

@@ -2,20 +2,69 @@ import type { GoError } from '@nao-todo/shared/types'
 import { unwrapError } from '@nao-todo/shared/utils/unwrap-go-error'
 
 /**
- * 凭证类失败特征（SHELL-03 附录 B-3 / C-24）
- * @description 401/403、业务码 10041 及服务端凭证失效文案（如「用户凭证验证失败」「登录已过期」）。
- *              与 presentation-identity 的 `check-in.vue` 共用同一分类，避免分层判定不一致。
+ * 网络类失败白名单（C-67 / r11，DEF-33）
+ * @description **仅**命中本白名单的 code 视为「网络类」⇒ **保留认证**（DEF-5 / AC7 不回归）；
+ *              **其余一切失败（含未知 / 新增业务码、5xx、解析失败）一律按凭证类**
+ *              （清认证 + 跳 `auth/signin`）—— 等价 `v1.9.0` 的「任何失败都清」+ DEF-5 网络豁免，
+ *              且**不依赖服务端文案**。
+ *              - `ERR_NETWORK` / `ECONNABORTED` = `packages/shared/requester/axios.ts` 归一化**顶层 code**；
+ *              - `50300` / `40800` / `42900` = 同上归一化**业务 code**（网络错误 / 超时 / 限流）；
+ *              - `10051` = 服务端限流**业务 code**（文案未知 ⇒ 只能靠 code，DEF-25 修复点）。
  */
-const CREDENTIAL_ERROR_MARKERS = ['10041', '401', '403', '登录已过期', '凭证'] as const
+const NETWORK_ERROR_CODES: readonly (string | number)[] = [
+    'ERR_NETWORK',
+    'ECONNABORTED',
+    50300,
+    40800,
+    42900,
+    10051
+]
+
+/**
+ * 仓内归一化网络文案（**仅兜底**；**不再依赖服务端文案**，DEF-25）
+ * @description 与 `packages/shared/requester/axios.ts` 的归一化产物逐字一致。
+ *              仅在错误**无结构化 code** 时使用（正常链路 `auth-repo-impl` 必透传 code）。
+ */
+const NETWORK_ERROR_MESSAGES: readonly string[] = [
+    '网络错误，请检查您的网络连接',
+    '请求超时，请稍后再试',
+    '请求过于频繁，请稍后再试'
+]
+
+/**
+ * 从错误上收集结构化 code
+ * @description `code` = 顶层归一化 code（字符串，如 `ERR_NETWORK`）优先，否则业务 code；
+ *              `businessCode` = 服务端业务 code（由 `auth-repo-impl` 透传，C-67）。
+ */
+const extractErrorCodes = (err: unknown): (string | number)[] => {
+    if (!(err instanceof Error)) return []
+    const carrier = err as Error & { code?: unknown; businessCode?: unknown }
+    const codes: (string | number)[] = []
+    if (typeof carrier.code === 'string' || typeof carrier.code === 'number') {
+        codes.push(carrier.code)
+    }
+    if (typeof carrier.businessCode === 'string' || typeof carrier.businessCode === 'number') {
+        codes.push(carrier.businessCode)
+    }
+    return codes
+}
 
 /**
  * 是否凭证类失败（会话失效：需清认证并回登录页）
- * @description 网络类（`ERR_NETWORK` / `ECONNABORTED` / 超时 / 5xx / 10051 限流）
- *              的归一化文案不含上述特征，判定为 `false`（DEF-5：不得因此清认证）。
+ * @description 判据方向 = **网络白名单**：命中 ⇒ `false`（保留认证）；**其余 ⇒ `true`**。
+ *              `null` / `undefined` / 空串**显式 `false`**（防御性，避免误清）。
+ *              数据源 = 结构化 `code` 优先（`code` / `businessCode`），无 code 时仅以
+ *              **仓内归一化网络文案**兜底。与 `presentation-identity` 的 `check-in.vue`
+ *              共用同一分类器（`5b9d6bdb` 已单源化；**禁**第二套标记集）。
  * @param err 错误（Go 风格，字符串或 Error）
  * @returns 是否为凭证类失败
  */
 export const isCredentialError = (err: GoError): boolean => {
+    if (err === null || err === undefined || err === '') return false
+    const codes = extractErrorCodes(err)
+    if (codes.length > 0) {
+        return !codes.some((code) => NETWORK_ERROR_CODES.includes(code))
+    }
     const message = unwrapError(err)
-    return CREDENTIAL_ERROR_MARKERS.some((marker) => message.includes(marker))
+    return !NETWORK_ERROR_MESSAGES.some((marker) => message.includes(marker))
 }
