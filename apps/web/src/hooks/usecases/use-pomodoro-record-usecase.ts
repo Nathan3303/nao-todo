@@ -8,6 +8,7 @@ export const usePomodoroRecordUseCase = (store: PomodoroRecordStore) => {
     const pomodoroRecordRepo = useCaseBinding.createPomodoroRecordRepository()
     const domain = new PomodoroDomain(pomodoroRepo, pomodoroRecordRepo)
     const useCase = new PomodoroRecordUseCase(domain, pomodoroRecordRepo, store)
-    // C-59 / AC10：web 离线只读闸门经 binding 注入（web-only；#19 番茄结束落库经 createRecord）
+    // 阶段二 2A / W4：番茄记录域已切本地优先 ⇒ web binding 对该域**不再套**离线只读闸门（ADR §5 M5）
+    // （钩子仍保留给身份域；desktop binding 不提供该钩子 ⇒ 写路径不变）
     return useCaseBinding.decorateUseCase?.(useCase, 'pomodoro-record') ?? useCase
 }

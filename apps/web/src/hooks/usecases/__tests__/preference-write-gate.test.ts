@@ -29,7 +29,7 @@ type ProjectFake = {
     saveProjectPreference: (projectId: string, viewObject: unknown) => Promise<unknown>
 }
 type UserFake = { updateUserConfig: (viewObject: unknown) => Promise<unknown> }
-type PomodoroWriteFake = { update: (id: string) => Promise<unknown> }
+type UserWriteFake = { updateNickname: (viewObject: unknown) => Promise<unknown> }
 
 beforeEach(() => {
     resetReadOnlyForTest()
@@ -74,13 +74,15 @@ describe('PS-2a 偏好写入口移出离线写闸门（红基线）', () => {
 
 describe('PS-2a 负向：业务面闸门不因收窄而放宽（回归，预期绿）', () => {
     it('离线业务写仍被拦截 + 稳定码 OFFLINE_READONLY + 原方法零调用', async () => {
-        // 用仍未切本地优先的业务域（pomodoro；清单/标签 W3 已切 ⇒ 不再受闸门约束）
-        const useCase: PomodoroWriteFake = { update: vi.fn(async () => null) }
-        const guarded = webBinding.decorateUseCase!(useCase, 'pomodoro')
+        // 用仍未切本地优先的域（身份域 W5，ADR §2.6 明确不切；业务 7 域 W1–W4 已切 ⇒ 不再受闸门约束）
+        const useCase: UserWriteFake = { updateNickname: vi.fn(async () => null) }
+        const guarded = webBinding.decorateUseCase!(useCase, 'user')
 
         setOffline(true)
-        await expect(guarded.update('t-1')).resolves.toBe(OFFLINE_READONLY_ERROR)
-        expect(useCase.update).not.toHaveBeenCalled()
+        await expect(guarded.updateNickname({ nickname: 'n' })).resolves.toBe(
+            OFFLINE_READONLY_ERROR
+        )
+        expect(useCase.updateNickname).not.toHaveBeenCalled()
     })
 })
 

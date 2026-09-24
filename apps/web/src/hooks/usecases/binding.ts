@@ -17,8 +17,6 @@ import { newLocalTagRepository } from '@nao-todo/infrastructure/src/persistence-
 import { newLocalTaskCheckItemRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/task-check-item-repo-impl'
 import { newLocalTaskCommentRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/task-comment-repo-impl'
 import { newLocalTaskRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/task-repo-impl'
-import { newPomodoroRecordRepository } from '@nao-todo/infrastructure/src/persistence-go/pomodoro/pomodoro-record-repo-impl'
-import { newPomodoroRepository } from '@nao-todo/infrastructure/src/persistence-go/pomodoro/pomodoro-repo-impl'
 import { withMirrorFallback } from '@nao-todo/infrastructure/src/persistence-go/fallback/mirror-fallback'
 import { getRequesterImpl } from '@nao-todo/shared/requester'
 import {
@@ -43,11 +41,11 @@ import {
  *              注销调度、密钥重包）经 `decorateAuthUseCase` / `decorateUserUseCase` 注入（web 端不提供）。
  *
  *              **web 业务数据面（阶段二 2A 按域切本地，ADR `2026-09-24-stage2-both-ends-local-first`）**：
- *              - **任务域（W1）+ 子实体域（W2：检查项 / 评论）+ 容器域（W3：清单 / 标签）**：
+ *              - **业务 7 域全部切本地优先（W1 任务 / W2 子实体 / W3 容器 / W4 番茄）**：
  *                仓储 = **本地仓储**（与 desktop 同构），读写均本地优先；本地写经 `syncTracker.markDirty`
  *                入 `syncQueue` 回传（PS-12）⇒ **这些域离线写闸门已撤**。
- *              - **其余 2 域（W4 待切：番茄 / 番茄记录）**：读 = 远端优先 +
- *                网络类失败回退本地镜像（`withMirrorFallback`，C-66 / AC8）；写 = 远端直连，仍受离线写闸门约束。
+ *              - **身份域（W5）不切**：`useUserUseCase` 的用户资料/账号操作仍**远端直连**（用户域不在业务数据面），
+ *                仍受离线写闸门约束（ADR §2.6 W5；闸门组件退役属 M6，另行推进）。
  *              **偏好/设置面为显式例外**（TASK-26 / PS-1a / PS-1b，ADR-r2 §D-1）：两端**同构本地优先** ——
  *              `createProjectPreferenceRepository` 直接用**本地仓储**（web 不再「远端优先」，否则本地刚写入的值
  *              会被远端陈旧值覆盖）；偏好回传走**独立偏好队列**（`persistence-sync/preference-sync`）。
@@ -90,7 +88,9 @@ const LOCAL_FIRST_KINDS: ReadonlySet<UseCaseKind> = new Set<UseCaseKind>([
     'task-check-item',
     'task-comment',
     'project',
-    'tag'
+    'tag',
+    'pomodoro',
+    'pomodoro-record'
 ])
 
 export type UseCaseBinding = {
@@ -114,7 +114,7 @@ export type UseCaseBinding = {
     decorateUseCase?: <T extends object>(useCase: T, kind: UseCaseKind) => T
 }
 
-/** web 端绑定：任务域（W1）+ 子实体域（W2）+ 容器域（W3）已切本地仓储；其余 2 域仍远端主读 + 网络类失败回退本地镜像 */
+/** web 端绑定：业务 7 域（W1–W4）全部切本地仓储；身份域（W5）不切，仍远端直连 */
 export const useCaseBinding: UseCaseBinding = {
     createTaskRepository: () => newLocalTaskRepository(),
     createTaskCheckItemRepository: () => newLocalTaskCheckItemRepository(),
@@ -128,18 +128,8 @@ export const useCaseBinding: UseCaseBinding = {
             newLocalTagPreferenceRepository(),
             ['get']
         ),
-    createPomodoroRepository: () =>
-        withMirrorFallback<PomodoroRepository>(
-            newPomodoroRepository(getRequesterImpl()),
-            newLocalPomodoroRepository(),
-            ['get', 'list']
-        ),
-    createPomodoroRecordRepository: () =>
-        withMirrorFallback<PomodoroRecordRepository>(
-            newPomodoroRecordRepository(getRequesterImpl()),
-            newLocalPomodoroRecordRepository(),
-            ['get', 'list']
-        ),
+    createPomodoroRepository: () => newLocalPomodoroRepository(),
+    createPomodoroRecordRepository: () => newLocalPomodoroRecordRepository(),
     // C-59 / AC10（ADR-r5）：**web-only** 离线只读闸门；desktop binding 不提供本钩子
     // 阶段二 2A：已切本地优先的域撤闸门（ADR §5 M4/M5），其余域照旧
     decorateUseCase: (useCase, kind) =>
