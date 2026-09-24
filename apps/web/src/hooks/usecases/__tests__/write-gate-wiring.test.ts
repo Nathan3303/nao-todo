@@ -5,6 +5,8 @@ import {
     resetReadOnlyForTest,
     setOffline
 } from '@nao-todo/presentation/offline'
+import { LocalProjectRepoImpl } from '@nao-todo/infrastructure/src/persistence-local/repos/project-repo-impl'
+import { LocalTagRepoImpl } from '@nao-todo/infrastructure/src/persistence-local/repos/tag-repo-impl'
 import { LocalTaskCheckItemRepoImpl } from '@nao-todo/infrastructure/src/persistence-local/repos/task-check-item-repo-impl'
 import { LocalTaskCommentRepoImpl } from '@nao-todo/infrastructure/src/persistence-local/repos/task-comment-repo-impl'
 import { LocalTaskRepoImpl } from '@nao-todo/infrastructure/src/persistence-local/repos/task-repo-impl'
@@ -12,11 +14,12 @@ import { useCaseBinding as desktopBinding } from '@nao-todo/desktopapp/src/rende
 import { useCaseBinding as webBinding } from '../binding'
 
 /**
- * 闸门落点断言（C-59 / AC10 / ADR-r5）+ 阶段二 2A W1/W2 接线断言
+ * 闸门落点断言（C-59 / AC10 / ADR-r5）+ 阶段二 2A W1/W2/W3 接线断言
  * @description arch 5 点验收第 1 条：**注入点仅 web**，desktop `hooks/usecases/**` 逐字不变，
  *              且有**负向断言**（desktop 闸门恒不生效）。
  *              - web binding 提供 `decorateUseCase`（未切本地优先的域套 `withReadOnlyGuard`）；
- *              - **W1 任务域 + W2 子实体域（检查项/评论）已切本地优先 ⇒ 这些域不套闸门**（ADR §5 M4/M5）；
+ *              - **W1 任务域 + W2 子实体域（检查项/评论）+ W3 容器域（清单/标签）已切本地优先
+ *                ⇒ 这些域不套闸门**（ADR §5 M4/M5）；
  *              - desktop binding **不提供** ⇒ 共享工厂 `useCaseBinding.decorateUseCase?.(...) ?? useCase`
  *                原样返回用例 ⇒ 桌面写路径（在线/离线）逐字不变。
  *              - **绑定级断言（ADR §2.5 正向）**：web 已切域仓储 = 本地仓储。
@@ -24,6 +27,7 @@ import { useCaseBinding as webBinding } from '../binding'
 
 const fakeUseCase = () => ({
     delete: vi.fn(async (_id: string) => null),
+    update: vi.fn(async (_id: string) => null),
     list: vi.fn(async () => [[], null])
 })
 
@@ -42,16 +46,16 @@ describe('闸门注入点 - web-only（ADR-r5）', () => {
         expect(typeof webBinding.decorateUseCase).toBe('function')
 
         const useCase = fakeUseCase()
-        // project 属 W3（尚未切本地）⇒ 仍受闸门约束；delete 返回 error 形态
-        const guarded = webBinding.decorateUseCase!(useCase, 'project')
+        // pomodoro 属 W4（尚未切本地）⇒ 仍受闸门约束；update 返回 error 形态
+        const guarded = webBinding.decorateUseCase!(useCase, 'pomodoro')
 
         setOffline(true)
-        await expect(guarded.delete('p-1')).resolves.toBe(OFFLINE_READONLY_ERROR)
-        expect(useCase.delete).not.toHaveBeenCalled()
+        await expect(guarded.update('p-1')).resolves.toBe(OFFLINE_READONLY_ERROR)
+        expect(useCase.update).not.toHaveBeenCalled()
 
         setOffline(false)
-        await expect(guarded.delete('p-1')).resolves.toBeNull()
-        expect(useCase.delete).toHaveBeenCalledTimes(1)
+        await expect(guarded.update('p-1')).resolves.toBeNull()
+        expect(useCase.update).toHaveBeenCalledTimes(1)
     })
 
     it('W1 任务域已切本地优先 ⇒ 撤该域闸门（离线写透传、不返回 OFFLINE_READONLY）', async () => {
@@ -74,12 +78,25 @@ describe('闸门注入点 - web-only（ADR-r5）', () => {
         }
     })
 
+    it('W3 容器域（清单/标签）已切本地优先 ⇒ 撤闸门（离线写透传）', async () => {
+        for (const kind of ['project', 'tag'] as const) {
+            const useCase = fakeUseCase()
+            const decorated = webBinding.decorateUseCase!(useCase, kind)
+
+            setOffline(true)
+            await expect(decorated.delete('c-1')).resolves.toBeNull()
+            expect(useCase.delete).toHaveBeenCalledTimes(1)
+        }
+    })
+
     it('绑定级断言（ADR §2.5 正向）：web 已切域仓储 = 本地仓储', () => {
         expect(webBinding.createTaskRepository()).toBeInstanceOf(LocalTaskRepoImpl)
         expect(webBinding.createTaskCheckItemRepository()).toBeInstanceOf(
             LocalTaskCheckItemRepoImpl
         )
         expect(webBinding.createTaskCommentRepository()).toBeInstanceOf(LocalTaskCommentRepoImpl)
+        expect(webBinding.createProjectRepository()).toBeInstanceOf(LocalProjectRepoImpl)
+        expect(webBinding.createTagRepository()).toBeInstanceOf(LocalTagRepoImpl)
     })
 
     it('负向：desktop binding **不提供** decorateUseCase（闸门恒不生效）', () => {

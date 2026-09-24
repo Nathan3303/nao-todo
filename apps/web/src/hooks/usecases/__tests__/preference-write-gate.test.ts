@@ -6,7 +6,8 @@ import {
     PROJECT_WRITE_METHODS,
     USER_WRITE_METHODS,
     resetReadOnlyForTest,
-    setOffline
+    setOffline,
+    withReadOnlyGuard
 } from '@nao-todo/presentation/offline'
 import type { BuiltInProjectPreferenceViewObject } from '@nao-todo/domain-built-in-project'
 import { useBuiltInProjectUseCase } from '../use-built-in-project-usecase'
@@ -28,7 +29,7 @@ type ProjectFake = {
     saveProjectPreference: (projectId: string, viewObject: unknown) => Promise<unknown>
 }
 type UserFake = { updateUserConfig: (viewObject: unknown) => Promise<unknown> }
-type ProjectWriteFake = { delete: (id: string) => Promise<unknown> }
+type PomodoroWriteFake = { update: (id: string) => Promise<unknown> }
 
 beforeEach(() => {
     resetReadOnlyForTest()
@@ -51,7 +52,9 @@ describe('PS-2a 偏好写入口移出离线写闸门（红基线）', () => {
     it('行为：离线调用 saveProjectPreference 透传（不拦截 / 不返回 OFFLINE_READONLY / 不弹提示）', async () => {
         const warn = vi.spyOn(NueMessage, 'warn').mockImplementation(() => {})
         const useCase: ProjectFake = { saveProjectPreference: vi.fn(async () => null) }
-        const guarded = webBinding.decorateUseCase!(useCase, 'project')
+        // W3 起清单域整体切本地 ⇒ 不再经 binding 套闸门；此处直接以 PROJECT_WRITE_METHODS 套闸，
+        // 保持断言非空转（清单：PROJECT_WRITE_METHODS 不含 saveProjectPreference ⇒ 离线仍透传）
+        const guarded = withReadOnlyGuard(useCase, PROJECT_WRITE_METHODS)
 
         setOffline(true)
         await expect(guarded.saveProjectPreference('p-1', {})).resolves.toBeNull()
@@ -71,13 +74,13 @@ describe('PS-2a 偏好写入口移出离线写闸门（红基线）', () => {
 
 describe('PS-2a 负向：业务面闸门不因收窄而放宽（回归，预期绿）', () => {
     it('离线业务写仍被拦截 + 稳定码 OFFLINE_READONLY + 原方法零调用', async () => {
-        // 用仍未切本地优先的业务域（project；W1 任务域已切本地 ⇒ 不再受闸门约束）
-        const useCase: ProjectWriteFake = { delete: vi.fn(async () => null) }
-        const guarded = webBinding.decorateUseCase!(useCase, 'project')
+        // 用仍未切本地优先的业务域（pomodoro；清单/标签 W3 已切 ⇒ 不再受闸门约束）
+        const useCase: PomodoroWriteFake = { update: vi.fn(async () => null) }
+        const guarded = webBinding.decorateUseCase!(useCase, 'pomodoro')
 
         setOffline(true)
-        await expect(guarded.delete('t-1')).resolves.toBe(OFFLINE_READONLY_ERROR)
-        expect(useCase.delete).not.toHaveBeenCalled()
+        await expect(guarded.update('t-1')).resolves.toBe(OFFLINE_READONLY_ERROR)
+        expect(useCase.update).not.toHaveBeenCalled()
     })
 })
 

@@ -7,9 +7,7 @@ import type {
     TaskCommentRepository,
     TaskRepository
 } from '@nao-todo/domain-task'
-import { ProjectRepoImpl } from '@nao-todo/infrastructure/src/persistence-go/project/project-repo-impl'
 import { TagPreferenceRepoImpl } from '@nao-todo/infrastructure/src/persistence-go/tag/tag-preference'
-import { TagRepoImpl } from '@nao-todo/infrastructure/src/persistence-go/tag/tag'
 import { newLocalPomodoroRecordRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/pomodoro-record-repo-impl'
 import { newLocalPomodoroRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/pomodoro-repo-impl'
 import { newLocalProjectPreferenceRepository } from '@nao-todo/infrastructure/src/persistence-local/repos/project-preference-repo-impl'
@@ -45,10 +43,10 @@ import {
  *              注销调度、密钥重包）经 `decorateAuthUseCase` / `decorateUserUseCase` 注入（web 端不提供）。
  *
  *              **web 业务数据面（阶段二 2A 按域切本地，ADR `2026-09-24-stage2-both-ends-local-first`）**：
- *              - **任务域（W1）+ 子实体域（W2：检查项 / 评论）**：仓储 = **本地仓储**（与 desktop 同构），
- *                读写均本地优先；本地写经 `syncTracker.markDirty` 入 `syncQueue` 回传（PS-12）
- *                ⇒ **这些域离线写闸门已撤**。
- *              - **其余 4 域（W3/W4 待切：清单 / 标签 / 番茄 / 番茄记录）**：读 = 远端优先 +
+ *              - **任务域（W1）+ 子实体域（W2：检查项 / 评论）+ 容器域（W3：清单 / 标签）**：
+ *                仓储 = **本地仓储**（与 desktop 同构），读写均本地优先；本地写经 `syncTracker.markDirty`
+ *                入 `syncQueue` 回传（PS-12）⇒ **这些域离线写闸门已撤**。
+ *              - **其余 2 域（W4 待切：番茄 / 番茄记录）**：读 = 远端优先 +
  *                网络类失败回退本地镜像（`withMirrorFallback`，C-66 / AC8）；写 = 远端直连，仍受离线写闸门约束。
  *              **偏好/设置面为显式例外**（TASK-26 / PS-1a / PS-1b，ADR-r2 §D-1）：两端**同构本地优先** ——
  *              `createProjectPreferenceRepository` 直接用**本地仓储**（web 不再「远端优先」，否则本地刚写入的值
@@ -90,7 +88,9 @@ const WRITE_METHODS_BY_KIND: Record<UseCaseKind, WriteMethodMap> = {
 const LOCAL_FIRST_KINDS: ReadonlySet<UseCaseKind> = new Set<UseCaseKind>([
     'task',
     'task-check-item',
-    'task-comment'
+    'task-comment',
+    'project',
+    'tag'
 ])
 
 export type UseCaseBinding = {
@@ -108,30 +108,20 @@ export type UseCaseBinding = {
     /**
      * 用例装饰（端专属）
      * @description **web 提供**：未切本地优先的域套 `withReadOnlyGuard`（离线只读闸门，C-59 / AC10）；
-     *              已切本地优先的域（`LOCAL_FIRST_KINDS`）**不套闸门**（ADR §5 M4）；
+     *              已切本地优先的域（`LOCAL_FIRST_KINDS`）**不套闸门**（ADR §5 M4/M5）；
      *              **desktop 不提供** ⇒ 共享工厂原样返回用例 ⇒ 桌面写路径（在线/离线）逐字不变。
      */
     decorateUseCase?: <T extends object>(useCase: T, kind: UseCaseKind) => T
 }
 
-/** web 端绑定：任务域（W1）+ 子实体域（W2）已切本地仓储；其余业务域仍远端主读 + 网络类失败回退本地镜像 */
+/** web 端绑定：任务域（W1）+ 子实体域（W2）+ 容器域（W3）已切本地仓储；其余 2 域仍远端主读 + 网络类失败回退本地镜像 */
 export const useCaseBinding: UseCaseBinding = {
     createTaskRepository: () => newLocalTaskRepository(),
     createTaskCheckItemRepository: () => newLocalTaskCheckItemRepository(),
     createTaskCommentRepository: () => newLocalTaskCommentRepository(),
-    createProjectRepository: () =>
-        withMirrorFallback<ProjectRepository>(
-            new ProjectRepoImpl(getRequesterImpl()),
-            newLocalProjectRepository(),
-            ['get', 'list']
-        ),
+    createProjectRepository: () => newLocalProjectRepository(),
     createProjectPreferenceRepository: () => newLocalProjectPreferenceRepository(),
-    createTagRepository: () =>
-        withMirrorFallback<TagRepository>(
-            new TagRepoImpl(getRequesterImpl()),
-            newLocalTagRepository(),
-            ['getById', 'list', 'getByIds']
-        ),
+    createTagRepository: () => newLocalTagRepository(),
     createTagPreferenceRepository: () =>
         withMirrorFallback<TagPreferenceRepository>(
             new TagPreferenceRepoImpl(getRequesterImpl()),
@@ -151,7 +141,7 @@ export const useCaseBinding: UseCaseBinding = {
             ['get', 'list']
         ),
     // C-59 / AC10（ADR-r5）：**web-only** 离线只读闸门；desktop binding 不提供本钩子
-    // 阶段二 2A：已切本地优先的域撤闸门（ADR §5 M4），其余域照旧
+    // 阶段二 2A：已切本地优先的域撤闸门（ADR §5 M4/M5），其余域照旧
     decorateUseCase: (useCase, kind) =>
         LOCAL_FIRST_KINDS.has(kind)
             ? useCase
