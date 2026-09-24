@@ -12,7 +12,7 @@ import { LocalProjectPreferenceRepoImpl } from '../../persistence-local/repos/pr
 import { newLocalTagPreferenceRepository } from '../../persistence-local/repos/tag-preference-repo-impl'
 import { localSession } from '../../persistence-local/session/local-session'
 import { enqueuePreference, loadPreferenceQueue } from '../preference-queue'
-import { cancelPreferencePush, pushPreferenceQueue } from '../preference-sync'
+import { cancelPreferencePush, pushPreferenceQueue, reconcilePreferences } from '../preference-sync'
 import { syncStatus } from '../sync-status'
 
 /**
@@ -29,6 +29,10 @@ import { syncStatus } from '../sync-status'
  *   `preference-sync.test.ts`「本地有值 ⇒ 本地优先（不发服务端请求，PS-1b）」断言
  *   `get` **零调用**，与 §9.4.1「服务端 `updatedAt > syncedServerUpdatedAt` ⇒ 拉取并应用」
  *   **直接冲突** ⇒ 后者需 T168 同批修订既有用例，方能转绿。
+ *
+ * ✅ **T168/T168b 已闭合**：`preference-sync.test.ts` 已定向 supersede（原「零 get」⇒「触发点对账远端胜」）；
+ *   T168b 进一步将远端胜改为**触发点后台对账**（读路径本地优先、不发网络），故本文件「读时对账」用例
+ *   改为「读立即返回本地 + `reconcilePreferences()` 后台对账 ⇒ 远端胜」（等强度：仍验证远端胜 + base 写回）。
  *
  * **红窗口**：DP-5 队列项、T141 写回 / 读时对账预期**红**（T168/W4 落地后转绿）。
  */
@@ -132,7 +136,7 @@ describe('面 ⑤ T141 普通清单偏好 per-row 版本（复用 §9.1 基建�
         expect(await localDatabase.syncQueue.count()).toBe(0)
     })
 
-    it('读时对账升级：本地 base 落后服务端 ⇒ 远端胜（§9.4.1；⚠️ 与既有 PS-1b 用例冲突，见文件头）', async () => {
+    it('触发点对账：本地 base 落后服务端 ⇒ 后台对账应用远端（远端胜，§9.4.1）', async () => {
         await localProjectPreference('table')
         await setProjectPreferenceBase(OLD)
         const get = vi.fn(async () => ({
@@ -152,10 +156,17 @@ describe('面 ⑤ T141 普通清单偏好 per-row 版本（复用 §9.1 基建�
         }))
         const repo = new LocalProjectPreferenceRepoImpl(localDatabase, makeRequester({ get }))
 
-        const [pref] = await repo.getByProjectId('p-1')
+        // T168b 读路径本地优先：本地有行 ⇒ 立即返回本地，不发网络请求（不阻塞）
+        const [immediate] = await repo.getByProjectId('p-1')
+        expect(immediate!.viewType).toBe('table')
+        expect(get).not.toHaveBeenCalled()
 
-        expect(pref!.viewType).toBe('kanban')
+        // 触发点对账（启动 / online / 前台复用；此处直接调用）⇒ 远端胜并落 base
+        await reconcilePreferences({ requester: makeRequester({ get }) })
         expect(get).toHaveBeenCalled()
         expect(await projectPreferenceBase()).toBe(NEW)
+
+        const [after] = await repo.getByProjectId('p-1')
+        expect(after!.viewType).toBe('kanban')
     })
 })

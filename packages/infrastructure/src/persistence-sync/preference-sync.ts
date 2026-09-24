@@ -13,7 +13,9 @@
 import { getRequesterImpl, type Requester } from '@nao-todo/shared/requester'
 import { defaultBuiltInProjects } from '../built-in/project/default'
 import {
+    projectPreferenceEntityToRecord,
     projectPreferenceRecordToEntity,
+    tagPreferenceEntityToRecord,
     tagPreferenceRecordToEntity
 } from '../persistence-local/converters/preference'
 import { localDatabase } from '../persistence-local/db/local-database'
@@ -29,6 +31,7 @@ import {
 } from './preference-queue'
 import { classifyPushFailure, type SyncErrorClass } from './sync-retry'
 import { syncStatus } from './sync-status'
+import { fetchRemoteProjectPreference, fetchRemoteTagPreference } from './preference-remote'
 
 /** 偏好推送防抖窗口（ms；ADR §D-4「防抖 ~2s」） */
 export const PREFERENCE_PUSH_DEBOUNCE_MS = 2000
@@ -503,7 +506,8 @@ let pushTimer: ReturnType<typeof setTimeout> | null = null
 
 /**
  * 入队偏好变更并调度防抖推送
- * @description 本地写成功**之后**调用；`userConfig` 每用户一条、`projectPreference` 按 `projectId` 一条。
+ * @description 本地写成功**之后**调用；`userConfig` 每用户一条、`projectPreference` 按 `projectId` 一条、
+ *              `tagPreference` 按 `tagId` 一条。
  */
 export const markPreferenceDirty = async (
     kind: PreferenceQueueItem['kind'],
@@ -536,8 +540,101 @@ export const schedulePreferencePush = (): void => {
     }, PREFERENCE_PUSH_DEBOUNCE_MS)
 }
 
-/** 立即冲刷（`online` / 前台恢复 / 启动 / 定时触发；不新增触发机制） */
-export const flushPreferenceQueue = async (): Promise<PreferencePushResult> => pushPreferenceQueue()
+/* —— 触发点对账（读路径不参与；PS-12 / 本地即时） —— */
+
+/** 触发点对账结果（可观测） */
+export interface PreferenceReconcileResult {
+    /** 已核对服务端版本的行数（每行 ≤ 1 次 GET） */
+    checked: number
+    /** 远端胜并已应用的行数 */
+    applied: number
+}
+
+let reconcileInFlight: Promise<PreferenceReconcileResult> | null = null
+
+/**
+ * 触发点对账（启动 / online / 前台 —— 经 `flushPreferenceQueue` 复用既有触发源）
+ * @description **读路径不参与**：本地有行 ⇒ 读**立即返回本地值**（PS-12 / PRD 本地即时）。
+ *              后台逐行核对服务端 `updatedAt`：`> 本地 base` ⇒ 远端胜并落库（供后续读取）；
+ *              本地有**待推修改**（偏好队列中）⇒ 跳过（不覆盖未推本地值，PS-1b）。
+ *              并发触发去重（同一时刻至多一轮）⇒ 每行 GET 上界 = 1/轮。
+ */
+export const reconcilePreferences = async (
+    context: PreferenceSyncContext = {}
+): Promise<PreferenceReconcileResult> => {
+    if (reconcileInFlight) return reconcileInFlight
+    reconcileInFlight = runPreferenceReconcile(context).finally(() => {
+        reconcileInFlight = null
+    })
+    return reconcileInFlight
+}
+
+const runPreferenceReconcile = async (
+    context: PreferenceSyncContext
+): Promise<PreferenceReconcileResult> => {
+    try {
+        const userId = localSession.getCurrentUserId()
+        if (!userId) return { checked: 0, applied: 0 }
+        const { requester } = resolveContext(context)
+        const queue = await loadPreferenceQueue(userId)
+        let checked = 0
+        let applied = 0
+
+        const projects = (await localDatabase.projectPreferences.toArray()).filter(
+            (record) => record.userId === userId && !!record.syncedServerUpdatedAt
+        )
+        for (const record of projects) {
+            if (
+                queue.some(
+                    (item) =>
+                        item.kind === 'projectPreference' && item.projectId === record.projectId
+                )
+            )
+                continue
+            checked += 1
+            const remote = await fetchRemoteProjectPreference(requester, record.projectId)
+            if (!remote || !isRemoteNewer(remote.updatedAt, record.syncedServerUpdatedAt)) continue
+            const next = await projectPreferenceEntityToRecord(remote, userId)
+            await localDatabase.projectPreferences.put({
+                ...next,
+                syncedServerUpdatedAt: remote.updatedAt
+            })
+            applied += 1
+        }
+
+        const tags = (await localDatabase.tagPreferences.toArray()).filter(
+            (record) => record.userId === userId && !!record.syncedServerUpdatedAt
+        )
+        for (const record of tags) {
+            if (queue.some((item) => item.kind === 'tagPreference' && item.tagId === record.tagId))
+                continue
+            checked += 1
+            const remote = await fetchRemoteTagPreference(requester, record.tagId)
+            if (!remote || !isRemoteNewer(remote.updatedAt, record.syncedServerUpdatedAt)) continue
+            const next = await tagPreferenceEntityToRecord(remote, userId)
+            await localDatabase.tagPreferences.put({
+                ...next,
+                syncedServerUpdatedAt: remote.updatedAt
+            })
+            applied += 1
+        }
+
+        return { checked, applied }
+    } catch {
+        /* 存储不可用 / 网络异常：对账静默降级，不得阻断（PS-9） */
+        return { checked: 0, applied: 0 }
+    }
+}
+
+/**
+ * 立即冲刷（`online` / 前台恢复 / 启动 / 定时触发；不新增触发机制）
+ * @description 先回传本地脏项，再**后台**触发一次偏好对账（不 `await`；读路径不受影响）。
+ */
+export const flushPreferenceQueue = async (): Promise<PreferencePushResult> => {
+    const result = await pushPreferenceQueue()
+    void reconcilePreferences()
+    return result
+}
 
 /** 取消待发防抖定时器（登出/卸载；**仅测试**亦可调用） */
 export const cancelPreferencePush = (): void => {
