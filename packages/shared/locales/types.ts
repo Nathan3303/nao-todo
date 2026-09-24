@@ -45,6 +45,30 @@ export interface LocaleMessages {
     'sync.syncNow': string
     'sync.pendingOffline': string
     'sync.retryNow': string
+    'sync.conflict.title': string
+    'sync.conflict.foldLimit': string
+    'sync.conflict.foldEvicted': string
+    'sync.conflict.empty': string
+    'sync.conflict.loading': string
+    'sync.conflict.compareTitle': string
+    'sync.conflict.loserLabel': string
+    'sync.conflict.currentLabel': string
+    'sync.conflict.keepServer': string
+    'sync.conflict.retryLocal': string
+    'sync.conflict.retryFailed': string
+    'sync.conflict.close': string
+    'sync.conflict.table.projects': string
+    'sync.conflict.table.tags': string
+    'sync.conflict.table.tasks': string
+    'sync.conflict.table.taskCheckItems': string
+    'sync.conflict.table.taskComments': string
+    'sync.conflict.table.pomodoros': string
+    'sync.conflict.table.pomodoroRecords': string
+    'sync.conflict.kind.remote-wins': string
+    'sync.conflict.kind.push-noop': string
+    'sync.conflict.kind.stale': string
+    'sync.conflict.kind.conflict': string
+    'sync.conflict.kind.skipped': string
 
     // Offline identity / gates（SHELL-03）
     'identity.offline': string
@@ -69,6 +93,11 @@ export interface LocaleMessages {
     'notice.plaintext.title': string
     'notice.plaintext.body': string
     'notice.plaintext.dismiss': string
+    'notice.legacyCipher.rebuiltTitle': string
+    'notice.legacyCipher.rebuiltBody': string
+    'notice.legacyCipher.blockedTitle': string
+    'notice.legacyCipher.blockedBody': string
+    'notice.legacyCipher.dismiss': string
 
     // Common
     'common.cancel': string

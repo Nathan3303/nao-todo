@@ -17,6 +17,7 @@ import {
 } from '../converters/task'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
+import { putWithSyncBase } from './put-with-sync-base'
 import { localSession } from '../session/local-session'
 import { isAbsentStamp, isNotDeleted } from '../utils'
 import { snowflake } from '../../persistence-sync/snowflake'
@@ -150,7 +151,10 @@ export class LocalTaskRepoImpl implements TaskRepository {
                 entity.remindWeekdays = updateVO.remindWeekdays
             if (updateVO.sortId !== undefined) entity.sortId = updateVO.sortId
             entity.updatedAt = nowCalibratedIso()
-            await this.db.tasks.put(await taskEntityToRecord(entity, this.currentUserId))
+            await putWithSyncBase(
+                this.db.tasks,
+                await taskEntityToRecord(entity, this.currentUserId)
+            )
             await syncTracker.markDirty('tasks', id, 'upsert', entity.updatedAt)
             return null
         } catch (err) {
@@ -165,7 +169,10 @@ export class LocalTaskRepoImpl implements TaskRepository {
             const entity = await taskRecordToEntity(record)
             entity.deletedAt = nowCalibratedIso()
             entity.updatedAt = entity.deletedAt
-            await this.db.tasks.put(await taskEntityToRecord(entity, this.currentUserId))
+            await putWithSyncBase(
+                this.db.tasks,
+                await taskEntityToRecord(entity, this.currentUserId)
+            )
             await syncTracker.markDirty('tasks', id, 'delete', entity.deletedAt ?? entity.updatedAt)
             // 级联软删：子任务（递归）+ 检查项 + 评论（与删除一起入队，防远程残留孤儿子实体，见 data-sync-plan.md §5）
             await this.cascadeRemove(id, entity.deletedAt)
@@ -197,7 +204,10 @@ export class LocalTaskRepoImpl implements TaskRepository {
             const subEntity = await taskRecordToEntity(sub)
             subEntity.deletedAt = deletedAt
             subEntity.updatedAt = deletedAt
-            await this.db.tasks.put(await taskEntityToRecord(subEntity, this.currentUserId))
+            await putWithSyncBase(
+                this.db.tasks,
+                await taskEntityToRecord(subEntity, this.currentUserId)
+            )
             await syncTracker.markDirty('tasks', sub.id, 'delete', deletedAt)
             await this.cascadeRemove(sub.id, deletedAt)
         }
@@ -211,7 +221,8 @@ export class LocalTaskRepoImpl implements TaskRepository {
             const itemEntity = await taskCheckItemRecordToEntity(item)
             itemEntity.deletedAt = deletedAt
             itemEntity.updatedAt = deletedAt
-            await this.db.taskCheckItems.put(
+            await putWithSyncBase(
+                this.db.taskCheckItems,
                 await taskCheckItemEntityToRecord(itemEntity, this.currentUserId)
             )
             await syncTracker.markDirty('taskCheckItems', item.id, 'delete', deletedAt)
@@ -226,7 +237,8 @@ export class LocalTaskRepoImpl implements TaskRepository {
             const commentEntity = await taskCommentRecordToEntity(comment)
             commentEntity.deletedAt = deletedAt
             commentEntity.updatedAt = deletedAt
-            await this.db.taskComments.put(
+            await putWithSyncBase(
+                this.db.taskComments,
                 await taskCommentEntityToRecord(commentEntity, this.currentUserId)
             )
             await syncTracker.markDirty('taskComments', comment.id, 'delete', deletedAt)
@@ -240,7 +252,10 @@ export class LocalTaskRepoImpl implements TaskRepository {
             const entity = await taskRecordToEntity(record)
             entity.deletedAt = null
             entity.updatedAt = nowCalibratedIso()
-            await this.db.tasks.put(await taskEntityToRecord(entity, this.currentUserId))
+            await putWithSyncBase(
+                this.db.tasks,
+                await taskEntityToRecord(entity, this.currentUserId)
+            )
             await syncTracker.markDirty('tasks', id, 'upsert', entity.updatedAt)
             return null
         } catch (err) {
@@ -398,7 +413,10 @@ export class LocalTaskRepoImpl implements TaskRepository {
             // Snooze 场景任务常无 remindTime，不同步会导致详情面板不显示下一次提醒时间
             entity.remindTime = dayjs(newRemindAt).format('HH:mm')
             entity.updatedAt = nowCalibratedIso()
-            await this.db.tasks.put(await taskEntityToRecord(entity, this.currentUserId))
+            await putWithSyncBase(
+                this.db.tasks,
+                await taskEntityToRecord(entity, this.currentUserId)
+            )
             await syncTracker.markDirty('tasks', id, 'upsert', entity.updatedAt)
             return [newRemindAt, null]
         } catch (err) {

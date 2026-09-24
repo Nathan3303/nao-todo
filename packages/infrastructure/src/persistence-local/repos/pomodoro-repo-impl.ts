@@ -9,6 +9,7 @@ import type { GoAsync } from '@nao-todo/shared'
 import { pomodoroEntityToRecord, pomodoroRecordToEntity } from '../converters/pomodoro'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
+import { putWithSyncBase } from './put-with-sync-base'
 import { localSession } from '../session/local-session'
 import { isAbsentStamp, isNotDeleted } from '../utils'
 import { snowflake } from '../../persistence-sync/snowflake'
@@ -69,7 +70,10 @@ export class LocalPomodoroRepoImpl implements PomodoroRepository {
             if (updateVO.description !== undefined) entity.description = updateVO.description
             if (updateVO.duration !== undefined) entity.duration = updateVO.duration
             entity.updatedAt = nowCalibratedIso()
-            await this.db.pomodoros.put(await pomodoroEntityToRecord(entity, this.currentUserId))
+            await putWithSyncBase(
+                this.db.pomodoros,
+                await pomodoroEntityToRecord(entity, this.currentUserId)
+            )
             await syncTracker.markDirty('pomodoros', updateVO.id, 'upsert', entity.updatedAt)
             return null
         } catch (err) {
@@ -84,7 +88,10 @@ export class LocalPomodoroRepoImpl implements PomodoroRepository {
             const entity = await pomodoroRecordToEntity(record)
             entity.deletedAt = nowCalibratedIso()
             entity.updatedAt = entity.deletedAt
-            await this.db.pomodoros.put(await pomodoroEntityToRecord(entity, this.currentUserId))
+            await putWithSyncBase(
+                this.db.pomodoros,
+                await pomodoroEntityToRecord(entity, this.currentUserId)
+            )
             await syncTracker.markDirty(
                 'pomodoros',
                 id,
@@ -104,7 +111,10 @@ export class LocalPomodoroRepoImpl implements PomodoroRepository {
             const entity = await pomodoroRecordToEntity(record)
             entity.archivedAt = nowCalibratedIso()
             entity.updatedAt = entity.archivedAt
-            await this.db.pomodoros.put(await pomodoroEntityToRecord(entity, this.currentUserId))
+            await putWithSyncBase(
+                this.db.pomodoros,
+                await pomodoroEntityToRecord(entity, this.currentUserId)
+            )
             await syncTracker.markDirty('pomodoros', id, 'upsert', entity.updatedAt)
             return null
         } catch (err) {
@@ -119,7 +129,10 @@ export class LocalPomodoroRepoImpl implements PomodoroRepository {
             const entity = await pomodoroRecordToEntity(record)
             entity.archivedAt = null
             entity.updatedAt = nowCalibratedIso()
-            await this.db.pomodoros.put(await pomodoroEntityToRecord(entity, this.currentUserId))
+            await putWithSyncBase(
+                this.db.pomodoros,
+                await pomodoroEntityToRecord(entity, this.currentUserId)
+            )
             await syncTracker.markDirty('pomodoros', id, 'upsert', entity.updatedAt)
             return null
         } catch (err) {

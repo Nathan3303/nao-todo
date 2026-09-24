@@ -4,6 +4,7 @@
  *              - 本地写成功 ⇒ `markPreferenceDirty` 入队 + ~2s 防抖推送；
  *              - 设置面（内建清单偏好 / 侧边栏宽度 / 日历偏好）⇒ **推送时装配全量快照** `PUT /user/config`；
  *              - 普通清单偏好 ⇒ 从本地行解密后 `POST /projects/:id/preference`（**按行**）；
+ *              - 标签偏好（DP-5）⇒ 从本地行解密后 `POST /tags/:tagId/preference`（**按行**）；
  *              - 冲突 = **LWW，服务端时间为权威**（客户端时间戳**仅**用于 UI / 队列合并顺序，**不作判据**）；
  *              - **不入 `syncQueue`**、**不产生业务 `markDirty`**、**不计入 `syncStatus.pendingCount`**（PS-1/PS-10）；
  *              - 失败三分类与退避**复用** `sync-retry`（SHELL-06 C-38/C-39），触发源复用既有注册（不新增机制）。
@@ -11,7 +12,12 @@
  */
 import { getRequesterImpl, type Requester } from '@nao-todo/shared/requester'
 import { defaultBuiltInProjects } from '../built-in/project/default'
-import { projectPreferenceRecordToEntity } from '../persistence-local/converters/preference'
+import {
+    projectPreferenceEntityToRecord,
+    projectPreferenceRecordToEntity,
+    tagPreferenceEntityToRecord,
+    tagPreferenceRecordToEntity
+} from '../persistence-local/converters/preference'
 import { localDatabase } from '../persistence-local/db/local-database'
 import { localSession } from '../persistence-local/session/local-session'
 import { getJWTFromLocalStorage } from '../persistence-go/utils'
@@ -25,6 +31,7 @@ import {
 } from './preference-queue'
 import { classifyPushFailure, type SyncErrorClass } from './sync-retry'
 import { syncStatus } from './sync-status'
+import { fetchRemoteProjectPreference, fetchRemoteTagPreference } from './preference-remote'
 
 /** 偏好推送防抖窗口（ms；ADR §D-4「防抖 ~2s」） */
 export const PREFERENCE_PUSH_DEBOUNCE_MS = 2000
@@ -49,6 +56,8 @@ const USER_CONFIG_GET_CODE = 10110
 const USER_CONFIG_UPDATE_CODE = 10120
 /** 服务端普通清单偏好保存成功码 */
 const PROJECT_PREFERENCE_SAVE_CODE = 20090
+/** 服务端标签偏好保存成功码（DP-5） */
+const TAG_PREFERENCE_SAVE_CODE = 30060
 
 /** 可注入的最小存储面（默认 `localStorage`；测试可传内存实现） */
 export interface PreferenceStorage {
@@ -332,11 +341,53 @@ const pushProjectPreference = async (
             },
             { headers: authHeaders() }
         )
-        const { code, network } = readResponse(response)
+        const { code, data, network } = readResponse(response)
         if (network) return { ok: false, errorClass: 'network' }
         if (code === 10041) return { ok: false, errorClass: 'credential' }
         if (code !== PROJECT_PREFERENCE_SAVE_CODE) return { ok: false, errorClass: 'business' }
-        return { ok: true }
+        // §9.4.1：服务端响应回传权威 `updatedAt`（T163 additive）⇒ 落该行 per-row 版本基线
+        const serverUpdatedAt = (data as { updatedAt?: string } | undefined)?.updatedAt
+        if (serverUpdatedAt) {
+            await localDatabase.projectPreferences.put({
+                ...record,
+                syncedServerUpdatedAt: serverUpdatedAt
+            })
+        }
+        return { ok: true, serverUpdatedAt }
+    } catch (err) {
+        return { ok: false, errorClass: classifyError(err) }
+    }
+}
+
+/** 推送单个 `tagPreference` 项（DP-5；从本地行解密后按行回传） */
+const pushTagPreference = async (requester: Requester, tagId: string): Promise<PushOutcome> => {
+    try {
+        const record = await localDatabase.tagPreferences.where('tagId').equals(tagId).first()
+        if (!record) return { ok: true } // 本地行已不存在：视为已同步，出队
+        const entity = await tagPreferenceRecordToEntity(record)
+        const response = await requester.post(
+            `/tags/${tagId}/preference`,
+            {
+                viewType: entity.viewType,
+                getTasksOptions: entity.getTasksOptions.unmarshal(),
+                columns: entity.columns.unmarshal()
+            },
+            { headers: authHeaders() }
+        )
+        const { code, data, network } = readResponse(response)
+        if (network) return { ok: false, errorClass: 'network' }
+        if (code === 10041) return { ok: false, errorClass: 'credential' }
+        if (code !== TAG_PREFERENCE_SAVE_CODE) return { ok: false, errorClass: 'business' }
+        // 服务端当前 `POST /tags/:tagId/preference` 不回 `updatedAt`（Data = tagId）⇒ 仅在回传时落基线，
+        // 否则由读时对账刷新（§9.4.1；无需服务端增量）
+        const serverUpdatedAt = (data as { updatedAt?: string } | undefined)?.updatedAt
+        if (serverUpdatedAt) {
+            await localDatabase.tagPreferences.put({
+                ...record,
+                syncedServerUpdatedAt: serverUpdatedAt
+            })
+        }
+        return { ok: true, serverUpdatedAt }
     } catch (err) {
         return { ok: false, errorClass: classifyError(err) }
     }
@@ -355,7 +406,9 @@ const runPreferencePush = async (context: PreferenceSyncContext): Promise<Prefer
             const outcome: PushOutcome =
                 item.kind === 'userConfig'
                     ? await pushUserConfig(requester, storage, email)
-                    : await pushProjectPreference(requester, item.projectId ?? '')
+                    : item.kind === 'tagPreference'
+                      ? await pushTagPreference(requester, item.tagId ?? '')
+                      : await pushProjectPreference(requester, item.projectId ?? '')
             if (outcome.ok) {
                 await removePreferenceItem(userId, item)
                 if (item.kind === 'userConfig' && outcome.serverUpdatedAt) {
@@ -453,18 +506,24 @@ let pushTimer: ReturnType<typeof setTimeout> | null = null
 
 /**
  * 入队偏好变更并调度防抖推送
- * @description 本地写成功**之后**调用；`userConfig` 每用户一条、`projectPreference` 按 `projectId` 一条。
+ * @description 本地写成功**之后**调用；`userConfig` 每用户一条、`projectPreference` 按 `projectId` 一条、
+ *              `tagPreference` 按 `tagId` 一条。
  */
 export const markPreferenceDirty = async (
     kind: PreferenceQueueItem['kind'],
-    projectId?: string
+    projectId?: string,
+    tagId?: string
 ): Promise<void> => {
     try {
         const userId = localSession.getCurrentUserId()
         if (!userId) return
         await enqueuePreference(
             userId,
-            kind === 'projectPreference' ? { kind, projectId } : { kind }
+            kind === 'projectPreference'
+                ? { kind, projectId }
+                : kind === 'tagPreference'
+                  ? { kind, tagId }
+                  : { kind }
         )
         schedulePreferencePush()
     } catch {
@@ -481,8 +540,101 @@ export const schedulePreferencePush = (): void => {
     }, PREFERENCE_PUSH_DEBOUNCE_MS)
 }
 
-/** 立即冲刷（`online` / 前台恢复 / 启动 / 定时触发；不新增触发机制） */
-export const flushPreferenceQueue = async (): Promise<PreferencePushResult> => pushPreferenceQueue()
+/* —— 触发点对账（读路径不参与；PS-12 / 本地即时） —— */
+
+/** 触发点对账结果（可观测） */
+export interface PreferenceReconcileResult {
+    /** 已核对服务端版本的行数（每行 ≤ 1 次 GET） */
+    checked: number
+    /** 远端胜并已应用的行数 */
+    applied: number
+}
+
+let reconcileInFlight: Promise<PreferenceReconcileResult> | null = null
+
+/**
+ * 触发点对账（启动 / online / 前台 —— 经 `flushPreferenceQueue` 复用既有触发源）
+ * @description **读路径不参与**：本地有行 ⇒ 读**立即返回本地值**（PS-12 / PRD 本地即时）。
+ *              后台逐行核对服务端 `updatedAt`：`> 本地 base` ⇒ 远端胜并落库（供后续读取）；
+ *              本地有**待推修改**（偏好队列中）⇒ 跳过（不覆盖未推本地值，PS-1b）。
+ *              并发触发去重（同一时刻至多一轮）⇒ 每行 GET 上界 = 1/轮。
+ */
+export const reconcilePreferences = async (
+    context: PreferenceSyncContext = {}
+): Promise<PreferenceReconcileResult> => {
+    if (reconcileInFlight) return reconcileInFlight
+    reconcileInFlight = runPreferenceReconcile(context).finally(() => {
+        reconcileInFlight = null
+    })
+    return reconcileInFlight
+}
+
+const runPreferenceReconcile = async (
+    context: PreferenceSyncContext
+): Promise<PreferenceReconcileResult> => {
+    try {
+        const userId = localSession.getCurrentUserId()
+        if (!userId) return { checked: 0, applied: 0 }
+        const { requester } = resolveContext(context)
+        const queue = await loadPreferenceQueue(userId)
+        let checked = 0
+        let applied = 0
+
+        const projects = (await localDatabase.projectPreferences.toArray()).filter(
+            (record) => record.userId === userId && !!record.syncedServerUpdatedAt
+        )
+        for (const record of projects) {
+            if (
+                queue.some(
+                    (item) =>
+                        item.kind === 'projectPreference' && item.projectId === record.projectId
+                )
+            )
+                continue
+            checked += 1
+            const remote = await fetchRemoteProjectPreference(requester, record.projectId)
+            if (!remote || !isRemoteNewer(remote.updatedAt, record.syncedServerUpdatedAt)) continue
+            const next = await projectPreferenceEntityToRecord(remote, userId)
+            await localDatabase.projectPreferences.put({
+                ...next,
+                syncedServerUpdatedAt: remote.updatedAt
+            })
+            applied += 1
+        }
+
+        const tags = (await localDatabase.tagPreferences.toArray()).filter(
+            (record) => record.userId === userId && !!record.syncedServerUpdatedAt
+        )
+        for (const record of tags) {
+            if (queue.some((item) => item.kind === 'tagPreference' && item.tagId === record.tagId))
+                continue
+            checked += 1
+            const remote = await fetchRemoteTagPreference(requester, record.tagId)
+            if (!remote || !isRemoteNewer(remote.updatedAt, record.syncedServerUpdatedAt)) continue
+            const next = await tagPreferenceEntityToRecord(remote, userId)
+            await localDatabase.tagPreferences.put({
+                ...next,
+                syncedServerUpdatedAt: remote.updatedAt
+            })
+            applied += 1
+        }
+
+        return { checked, applied }
+    } catch {
+        /* 存储不可用 / 网络异常：对账静默降级，不得阻断（PS-9） */
+        return { checked: 0, applied: 0 }
+    }
+}
+
+/**
+ * 立即冲刷（`online` / 前台恢复 / 启动 / 定时触发；不新增触发机制）
+ * @description 先回传本地脏项，再**后台**触发一次偏好对账（不 `await`；读路径不受影响）。
+ */
+export const flushPreferenceQueue = async (): Promise<PreferencePushResult> => {
+    const result = await pushPreferenceQueue()
+    void reconcilePreferences()
+    return result
+}
 
 /** 取消待发防抖定时器（登出/卸载；**仅测试**亦可调用） */
 export const cancelPreferencePush = (): void => {

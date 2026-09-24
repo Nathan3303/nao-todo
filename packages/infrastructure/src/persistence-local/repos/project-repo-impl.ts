@@ -9,6 +9,7 @@ import { projectEntityToRecord, projectRecordToEntity } from '../converters/proj
 import { isNotDeleted } from '../utils'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
+import { putWithSyncBase } from './put-with-sync-base'
 import { snowflake } from '../../persistence-sync/snowflake'
 import { nowCalibratedIso } from '../../persistence-sync/sync-config'
 import { syncTracker } from '../../persistence-sync/sync-tracker'
@@ -69,7 +70,10 @@ export class LocalProjectRepoImpl implements ProjectRepository {
             if (updateVO.description !== undefined) entity.description = updateVO.description
             if (updateVO.sortId !== undefined) entity.sortId = updateVO.sortId
             entity.updatedAt = nowCalibratedIso()
-            await this.db.projects.put(await projectEntityToRecord(entity, this.currentUserId))
+            await putWithSyncBase(
+                this.db.projects,
+                await projectEntityToRecord(entity, this.currentUserId)
+            )
             await syncTracker.markDirty('projects', updateVO.id, 'upsert', entity.updatedAt)
             return null
         } catch (err) {
@@ -84,7 +88,10 @@ export class LocalProjectRepoImpl implements ProjectRepository {
             const entity = await projectRecordToEntity(record)
             entity.deletedAt = nowCalibratedIso()
             entity.updatedAt = entity.deletedAt
-            await this.db.projects.put(await projectEntityToRecord(entity, this.currentUserId))
+            await putWithSyncBase(
+                this.db.projects,
+                await projectEntityToRecord(entity, this.currentUserId)
+            )
             await syncTracker.markDirty(
                 'projects',
                 id,
@@ -104,7 +111,10 @@ export class LocalProjectRepoImpl implements ProjectRepository {
             const entity = await projectRecordToEntity(record)
             entity.deletedAt = null
             entity.updatedAt = nowCalibratedIso()
-            await this.db.projects.put(await projectEntityToRecord(entity, this.currentUserId))
+            await putWithSyncBase(
+                this.db.projects,
+                await projectEntityToRecord(entity, this.currentUserId)
+            )
             await syncTracker.markDirty('projects', id, 'upsert', entity.updatedAt)
             return null
         } catch (err) {
@@ -119,7 +129,10 @@ export class LocalProjectRepoImpl implements ProjectRepository {
             const entity = await projectRecordToEntity(record)
             entity.archivedAt = nowCalibratedIso()
             entity.updatedAt = entity.archivedAt
-            await this.db.projects.put(await projectEntityToRecord(entity, this.currentUserId))
+            await putWithSyncBase(
+                this.db.projects,
+                await projectEntityToRecord(entity, this.currentUserId)
+            )
             await syncTracker.markDirty('projects', id, 'upsert', entity.updatedAt)
             return null
         } catch (err) {
@@ -134,7 +147,10 @@ export class LocalProjectRepoImpl implements ProjectRepository {
             const entity = await projectRecordToEntity(record)
             entity.archivedAt = null
             entity.updatedAt = nowCalibratedIso()
-            await this.db.projects.put(await projectEntityToRecord(entity, this.currentUserId))
+            await putWithSyncBase(
+                this.db.projects,
+                await projectEntityToRecord(entity, this.currentUserId)
+            )
             await syncTracker.markDirty('projects', id, 'upsert', entity.updatedAt)
             return null
         } catch (err) {
@@ -173,7 +189,10 @@ export class LocalProjectRepoImpl implements ProjectRepository {
                 if (updateVO.description !== undefined) current.description = updateVO.description
                 if (updateVO.sortId !== undefined) current.sortId = updateVO.sortId
                 current.updatedAt = nowCalibratedIso()
-                await this.db.projects.put(await projectEntityToRecord(current, this.currentUserId))
+                await putWithSyncBase(
+                    this.db.projects,
+                    await projectEntityToRecord(current, this.currentUserId)
+                )
                 await syncTracker.markDirty('projects', current.id, 'upsert', current.updatedAt)
                 entities.push(current)
             }

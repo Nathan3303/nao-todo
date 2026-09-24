@@ -48,6 +48,30 @@ const zhCN: LocaleMessages = {
     'sync.syncNow': '立即同步',
     'sync.pendingOffline': '有 {count} 项修改待同步（离线，联网后自动同步）',
     'sync.retryNow': '立即重试',
+    'sync.conflict.title': '冲突记录',
+    'sync.conflict.foldLimit': '冲突记录已达上限，更早的记录可能已折叠',
+    'sync.conflict.foldEvicted': '更早的冲突记录已折叠（最旧记录已丢弃）',
+    'sync.conflict.empty': '暂无冲突记录',
+    'sync.conflict.loading': '加载中…',
+    'sync.conflict.compareTitle': '对比（只读）',
+    'sync.conflict.loserLabel': '我的版本（败方）',
+    'sync.conflict.currentLabel': '当前版本',
+    'sync.conflict.keepServer': '保留服务端版本',
+    'sync.conflict.retryLocal': '以我的版本重试',
+    'sync.conflict.retryFailed': '无法重试：不支持的数据类型',
+    'sync.conflict.close': '关闭',
+    'sync.conflict.table.projects': '项目',
+    'sync.conflict.table.tags': '标签',
+    'sync.conflict.table.tasks': '任务',
+    'sync.conflict.table.taskCheckItems': '检查项',
+    'sync.conflict.table.taskComments': '评论',
+    'sync.conflict.table.pomodoros': '专注',
+    'sync.conflict.table.pomodoroRecords': '专注记录',
+    'sync.conflict.kind.remote-wins': '远端覆盖',
+    'sync.conflict.kind.push-noop': '服务端未写入',
+    'sync.conflict.kind.stale': '版本不匹配',
+    'sync.conflict.kind.conflict': 'ID 冲突',
+    'sync.conflict.kind.skipped': '服务端忽略',
 
     // Offline identity / gates（SHELL-03）
     'identity.offline': '离线',
@@ -73,6 +97,13 @@ const zhCN: LocaleMessages = {
     'notice.plaintext.body':
         '为支持离线查看，本设备上的数据以明文保存，不再有密码保护：能打开本设备或本浏览器配置的人即可读到。完整说明见「设置 → 应用设置」。',
     'notice.plaintext.dismiss': '我知道了',
+    'notice.legacyCipher.rebuiltTitle': '本地数据已重建',
+    'notice.legacyCipher.rebuiltBody':
+        '检测到旧版本的加密数据，当前浏览器无法读取，已重建本地副本；数据将从服务器重新同步，已同步的数据不受影响。',
+    'notice.legacyCipher.blockedTitle': '检测到旧版本的加密数据',
+    'notice.legacyCipher.blockedBody':
+        '当前浏览器无法读取旧版本的加密数据，但本地仍有 {count} 项修改尚未同步。请先联网完成同步，再重建本地副本，以免丢失未回传的修改。',
+    'notice.legacyCipher.dismiss': '我知道了',
 
     // Common
     'common.cancel': '取消',

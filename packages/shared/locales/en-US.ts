@@ -49,6 +49,30 @@ const enUS: LocaleMessages = {
     'sync.syncNow': 'Sync now',
     'sync.pendingOffline': '{count} change(s) pending sync (offline, auto-syncs when online)',
     'sync.retryNow': 'Retry now',
+    'sync.conflict.title': 'Conflict records',
+    'sync.conflict.foldLimit': 'Conflict records reached the limit; older records may be folded',
+    'sync.conflict.foldEvicted': 'Older conflict records were folded (oldest dropped)',
+    'sync.conflict.empty': 'No conflict records',
+    'sync.conflict.loading': 'Loading…',
+    'sync.conflict.compareTitle': 'Comparison (read-only)',
+    'sync.conflict.loserLabel': 'My version (losing side)',
+    'sync.conflict.currentLabel': 'Current version',
+    'sync.conflict.keepServer': 'Keep server version',
+    'sync.conflict.retryLocal': 'Retry with my version',
+    'sync.conflict.retryFailed': 'Cannot retry: unsupported data type',
+    'sync.conflict.close': 'Close',
+    'sync.conflict.table.projects': 'Projects',
+    'sync.conflict.table.tags': 'Tags',
+    'sync.conflict.table.tasks': 'Tasks',
+    'sync.conflict.table.taskCheckItems': 'Check items',
+    'sync.conflict.table.taskComments': 'Comments',
+    'sync.conflict.table.pomodoros': 'Pomodoros',
+    'sync.conflict.table.pomodoroRecords': 'Pomodoro records',
+    'sync.conflict.kind.remote-wins': 'Remote wins',
+    'sync.conflict.kind.push-noop': 'Server did not write',
+    'sync.conflict.kind.stale': 'Version mismatch',
+    'sync.conflict.kind.conflict': 'ID conflict',
+    'sync.conflict.kind.skipped': 'Server ignored',
 
     // Offline identity / gates (SHELL-03)
     'identity.offline': 'Offline',
@@ -74,6 +98,13 @@ const enUS: LocaleMessages = {
     'notice.plaintext.body':
         'To support offline viewing, data on this device is stored in plain text and is no longer password-protected: anyone who can open this device or browser profile can read it. See “Settings → App Settings” for details.',
     'notice.plaintext.dismiss': 'Got it',
+    'notice.legacyCipher.rebuiltTitle': 'Local data was rebuilt',
+    'notice.legacyCipher.rebuiltBody':
+        'Encrypted data from an older version was detected and cannot be read in this browser. The local copy has been rebuilt and will resync from the server; already-synced data is unaffected.',
+    'notice.legacyCipher.blockedTitle': 'Encrypted data from an older version detected',
+    'notice.legacyCipher.blockedBody':
+        'Encrypted data from an older version cannot be read in this browser, but you still have {count} local change(s) not yet synced. Please go online and sync first, then rebuild the local copy, so unsent changes are not lost.',
+    'notice.legacyCipher.dismiss': 'Got it',
 
     // Common
     'common.cancel': 'Cancel',

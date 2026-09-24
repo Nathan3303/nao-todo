@@ -9,6 +9,7 @@ import { taskCommentEntityToRecord, taskCommentRecordToEntity } from '../convert
 import { isNotDeleted } from '../utils'
 import type { NaoTodoLocalDatabase } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
+import { putWithSyncBase } from './put-with-sync-base'
 import { localSession } from '../session/local-session'
 import { snowflake } from '../../persistence-sync/snowflake'
 import { nowCalibratedIso } from '../../persistence-sync/sync-config'
@@ -69,7 +70,8 @@ export class LocalTaskCommentRepoImpl implements TaskCommentRepository {
             if (updateVO.content !== undefined) entity.content = updateVO.content
             if (updateVO.isTopUp !== undefined) entity.isTopUp = updateVO.isTopUp
             entity.updatedAt = nowCalibratedIso()
-            await this.db.taskComments.put(
+            await putWithSyncBase(
+                this.db.taskComments,
                 await taskCommentEntityToRecord(entity, this.currentUserId)
             )
             await syncTracker.markDirty('taskComments', updateVO.id, 'upsert', entity.updatedAt)
@@ -86,7 +88,8 @@ export class LocalTaskCommentRepoImpl implements TaskCommentRepository {
             const entity = await taskCommentRecordToEntity(record)
             entity.deletedAt = nowCalibratedIso()
             entity.updatedAt = entity.deletedAt
-            await this.db.taskComments.put(
+            await putWithSyncBase(
+                this.db.taskComments,
                 await taskCommentEntityToRecord(entity, this.currentUserId)
             )
             await syncTracker.markDirty(

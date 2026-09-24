@@ -1,4 +1,4 @@
-import { PLAIN_PREFIX } from '../crypto/crypto-service'
+import { PLAIN_PREFIX, cryptoService } from '../crypto/crypto-service'
 import type { MetaRecord } from '../db/local-database'
 import { localDatabase } from '../db/local-database'
 import {
@@ -120,6 +120,14 @@ const MIGRATION_TABLES: readonly MigrationTableConfig[] = [
     }
 ]
 
+/**
+ * 含密文列的业务表名（= `MIGRATION_TABLES` 的表，供 web 一次性自愈复用）
+ * @description 只列**可能含历史密文**的表；`userConfigs` 无密文字段，不在内。
+ */
+export const LEGACY_CIPHER_TABLES: readonly string[] = MIGRATION_TABLES.map(
+    (config) => config.table
+)
+
 /** 迁移完成标记记录主键 */
 export const plaintextMigrationMarkerId = (userId: string): string =>
     `${userId}:${MIGRATION_MARKER_SUFFIX}`
@@ -150,6 +158,29 @@ const isRecordMigrated = (config: MigrationTableConfig, record: RecordLike): boo
             (typeof value === 'string' && value.startsWith(PLAIN_PREFIX))
         )
     })
+
+/**
+ * 检测当前用户业务表是否残留旧实现密文（DEF-35 / C-68 web 一次性自愈判据）
+ * @description 判据（证伪探针报告 §五.1）：**任一含密文列的业务表存在非 `plain:` 值**，
+ *              或**存在密钥包（`${userId}:key-bundle`）且无明文迁移完成标记**。
+ *              只扫密文字段（结构字段 id/时间戳等天然非 `plain:`，不得据此误判）。
+ * @param userId 用户 ID
+ */
+export const hasLegacyCipherResidue = async (userId: string): Promise<boolean> => {
+    if (!userId) return false
+    for (const config of MIGRATION_TABLES) {
+        const records = (await localDatabase
+            .table(config.table)
+            .where('userId')
+            .equals(userId)
+            .toArray()) as RecordLike[]
+        if (records.some((record) => !isRecordMigrated(config, record))) return true
+    }
+    if (await cryptoService.hasKeyBundle(userId)) {
+        return !(await isPlaintextMigrationDone(userId))
+    }
+    return false
+}
 
 /** 跨实例选主（navigator.locks 不可用时直接执行；迁移本身幂等） */
 const withMigrationLock = async (

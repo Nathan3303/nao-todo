@@ -4,6 +4,7 @@
  *              - 存储 = `meta` 表**单记录** `${userId}:preference-queue`（纯追加字段，
  *                **不 bump Dexie version、不加索引** ⇒ 不触 C-44，同 `mirror-status` 先例）；
  *              - 队列项**按单位去重**：`userConfig` 每用户一条；`projectPreference` 按 `projectId` 一条；
+ *                `tagPreference` 按 `tagId` 一条；
  *              - **不入 `syncQueue`**、**不产生业务 `markDirty`**、**不计入 `syncStatus.pendingCount`**（PS-1 / PS-10）；
  *              - 失败分类与退避**复用** `sync-retry` 原语（SHELL-06 C-38/C-39），不新增重试机制。
  * @see docs/adr/2026-09-23-local-preference-sync.md（§D-1b / §D-4 / PS-1 / PS-10）
@@ -23,12 +24,16 @@ const PREFERENCE_QUEUE_SUFFIX = 'preference-queue'
 /** 某用户偏好队列在 `meta` 表中的主键 */
 export const preferenceQueueId = (userId: string): string => `${userId}:${PREFERENCE_QUEUE_SUFFIX}`
 
-/** 队列项去重键（单位）：`userConfig` 每用户一条；`projectPreference` 按 `projectId` 一条 */
+/** 队列项去重键（单位）：`userConfig` 每用户一条；`projectPreference` 按 `projectId` 一条；`tagPreference` 按 `tagId` 一条 */
 export const preferenceUnitKey = (item: {
     kind: PreferenceQueueItem['kind']
     projectId?: string
-}): string =>
-    item.kind === 'userConfig' ? 'userConfig' : `projectPreference:${item.projectId ?? ''}`
+    tagId?: string
+}): string => {
+    if (item.kind === 'userConfig') return 'userConfig'
+    if (item.kind === 'tagPreference') return `tagPreference:${item.tagId ?? ''}`
+    return `projectPreference:${item.projectId ?? ''}`
+}
 
 /** 读取偏好队列（无记录 ⇒ 空数组） */
 export const loadPreferenceQueue = async (userId: string): Promise<PreferenceQueueItem[]> => {
@@ -73,6 +78,7 @@ export const enqueuePreference = async (
     const next: PreferenceQueueItem = {
         kind: item.kind,
         ...(item.projectId === undefined ? {} : { projectId: item.projectId }),
+        ...(item.tagId === undefined ? {} : { tagId: item.tagId }),
         // `createdAt` 保留**首次入队**时间（ADR §D-1b）；再次变更重置退避（attempts 清空）⇒ 立即重推
         createdAt: item.createdAt ?? existing?.createdAt ?? new Date().toISOString()
     }
@@ -84,7 +90,7 @@ export const enqueuePreference = async (
 /** 出队（推送成功后按单位移除） */
 export const removePreferenceItem = async (
     userId: string,
-    item: { kind: PreferenceQueueItem['kind']; projectId?: string }
+    item: { kind: PreferenceQueueItem['kind']; projectId?: string; tagId?: string }
 ): Promise<PreferenceQueueItem[]> => {
     if (!userId) return []
     const key = preferenceUnitKey(item)

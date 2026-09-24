@@ -4,10 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import type { Requester } from '@nao-todo/shared/requester'
 import { getRequesterImpl } from '@nao-todo/shared/requester'
 import { ProjectPreferenceEntity } from '@nao-todo/domain-project'
+import { TagPreferenceEntity } from '@nao-todo/domain-tag'
 import { JsonStringValueObject } from '@nao-todo/shared/valueobjects/json-string'
 import { cryptoService } from '../../persistence-local/crypto/crypto-service'
 import { localDatabase } from '../../persistence-local/db/local-database'
 import { projectPreferenceEntityToRecord } from '../../persistence-local/converters/preference'
+import { tagPreferenceEntityToRecord } from '../../persistence-local/converters/preference'
 import { LocalProjectPreferenceRepoImpl } from '../../persistence-local/repos/project-preference-repo-impl'
 import { localSession } from '../../persistence-local/session/local-session'
 import {
@@ -22,6 +24,7 @@ import {
     pullAndMergeUserConfig,
     pushPreferenceQueue,
     readSettingsSyncedAt,
+    reconcilePreferences,
     schedulePreferencePush,
     writeSettingsSyncedAt
 } from '../preference-sync'
@@ -62,6 +65,7 @@ beforeEach(async () => {
     await localDatabase.meta.clear()
     await localDatabase.syncQueue.clear()
     await localDatabase.projectPreferences.clear()
+    await localDatabase.tagPreferences.clear()
     cryptoService.lock()
     localSession.setCurrentUserId(USER_ID)
     await cryptoService.setup(USER_ID, 'pw')
@@ -368,13 +372,16 @@ describe('GAP-1 普通清单偏好拉取/恢复（读时对账，T136）', () =>
         expect(pref!.viewType).toBe('kanban')
     })
 
-    it('恢复后再次读取 ⇒ 命中本地（不再请求服务端）', async () => {
+    it('恢复后再次读取 ⇒ 返回本地且读路径不发请求（触发点对账）', async () => {
         const get = vi.fn(async () => serverPreferenceResponse())
         const repo = new LocalProjectPreferenceRepoImpl(localDatabase, makeRequester({ get }))
 
-        await repo.getByProjectId('p-1')
-        await repo.getByProjectId('p-1')
+        await repo.getByProjectId('p-1') // 本地缺失 ⇒ 恢复并落 base（GET 1 次）
+        expect(get).toHaveBeenCalledTimes(1)
+        const [pref] = await repo.getByProjectId('p-1') // 本地有行 ⇒ 立即返回本地，不发请求
 
+        expect(pref!.viewType).toBe('kanban')
+        // T168b 定向 supersede（§9.4.1 读路径本地优先）：本地有行 ⇒ 读路径**零 GET**（不 await 网络）
         expect(get).toHaveBeenCalledTimes(1)
     })
 
@@ -400,14 +407,17 @@ describe('GAP-1 普通清单偏好拉取/恢复（读时对账，T136）', () =>
         expect(put).not.toHaveBeenCalled()
     })
 
-    it('本地有值 ⇒ 本地优先（不发服务端请求，PS-1b）', async () => {
-        const now = new Date().toISOString()
-        await localDatabase.projectPreferences.put(
-            await projectPreferenceEntityToRecord(
+    // T168/T168b 定向 supersede（§9.4.1，PM 已批准，推翻 R-10b 的 v1 局限）：
+    // 原「本地有值 ⇒ 本地优先（零 get）」⇒「本地有值 + 服务端更新 ⇒ 远端胜」；
+    // T168b 进一步：读路径**不发请求**，远端胜由**触发点后台对账**完成
+    it('本地有值 + 服务端更新 ⇒ 触发点对账应用远端（远端胜，§9.4.1）', async () => {
+        const old = '2026-01-02T00:00:00.000Z'
+        await localDatabase.projectPreferences.put({
+            ...(await projectPreferenceEntityToRecord(
                 new ProjectPreferenceEntity(
                     '',
-                    now,
-                    now,
+                    old,
+                    old,
                     null,
                     'p-1',
                     'table',
@@ -415,15 +425,134 @@ describe('GAP-1 普通清单偏好拉取/恢复（读时对账，T136）', () =>
                     JsonStringValueObject.CreateByJsonString('{}')
                 ),
                 USER_ID
-            )
+            )),
+            syncedServerUpdatedAt: old
+        })
+        const get = vi.fn(async () =>
+            serverPreferenceResponse({ updatedAt: '2026-01-03T00:00:00.000Z' })
         )
-        const get = vi.fn(async () => serverPreferenceResponse())
+        const repo = new LocalProjectPreferenceRepoImpl(localDatabase, makeRequester({ get }))
+
+        // 读路径本地优先：立即返回本地，不发请求
+        const [immediate] = await repo.getByProjectId('p-1')
+        expect(immediate!.viewType).toBe('table')
+        expect(get).not.toHaveBeenCalled()
+
+        // 触发点对账（启动 / online / 前台）⇒ 远端胜并落新 base
+        const result = await reconcilePreferences({ requester: makeRequester({ get }) })
+        expect(result.applied).toBe(1)
+        expect(get).toHaveBeenCalled()
+
+        const [pref] = await repo.getByProjectId('p-1')
+        expect(pref!.viewType).toBe('kanban')
+    })
+})
+
+describe('T168b 读路径本地优先 + 触发点对账（§9.4.1 / PS-12）', () => {
+    const seedProjectPreference = async (base: string): Promise<void> => {
+        await localDatabase.projectPreferences.put({
+            ...(await projectPreferenceEntityToRecord(
+                new ProjectPreferenceEntity(
+                    '',
+                    base,
+                    base,
+                    null,
+                    'p-1',
+                    'table',
+                    JsonStringValueObject.CreateByJsonString('{}'),
+                    JsonStringValueObject.CreateByJsonString('{}')
+                ),
+                USER_ID
+            )),
+            syncedServerUpdatedAt: base
+        })
+    }
+
+    it('请求上界：同一行连续读 10 次 ⇒ 读路径 0 次 GET；对账 1 轮 ≤ 1 次', async () => {
+        await seedProjectPreference('2026-01-02T00:00:00.000Z')
+        const get = vi.fn(async () =>
+            serverPreferenceResponse({ updatedAt: '2026-01-03T00:00:00.000Z' })
+        )
+        const repo = new LocalProjectPreferenceRepoImpl(localDatabase, makeRequester({ get }))
+
+        for (let i = 0; i < 10; i += 1) await repo.getByProjectId('p-1')
+        expect(get).not.toHaveBeenCalled() // 读路径不发网络请求
+
+        await reconcilePreferences({ requester: makeRequester({ get }) })
+        expect(get).toHaveBeenCalledTimes(1) // 触发点对账：每行 ≤ 1 次 GET
+    })
+
+    it('离线 / 慢网 ⇒ 读立即返回本地值（不依赖网络）', async () => {
+        await seedProjectPreference('2026-01-02T00:00:00.000Z')
+        // 永不 resolve（模拟慢网 / 断网）：读若 await 网络会挂起
+        const get = vi.fn(() => new Promise<never>(() => {}))
         const repo = new LocalProjectPreferenceRepoImpl(localDatabase, makeRequester({ get }))
 
         const [pref] = await repo.getByProjectId('p-1')
 
         expect(pref!.viewType).toBe('table')
         expect(get).not.toHaveBeenCalled()
+    })
+
+    it('对账不覆盖有待推修改的本地值（PS-1b）', async () => {
+        await seedProjectPreference('2026-01-02T00:00:00.000Z')
+        await enqueuePreference(USER_ID, { kind: 'projectPreference', projectId: 'p-1' })
+        const get = vi.fn(async () =>
+            serverPreferenceResponse({ updatedAt: '2026-01-03T00:00:00.000Z' })
+        )
+
+        const result = await reconcilePreferences({ requester: makeRequester({ get }) })
+
+        expect(result).toEqual({ checked: 0, applied: 0 })
+        expect(get).not.toHaveBeenCalled() // 待推 ⇒ 连 GET 都不发
+        const record = await localDatabase.projectPreferences
+            .where('projectId')
+            .equals('p-1')
+            .first()
+        expect(record!.viewType).toBe('table')
+    })
+
+    it('触发点对账覆盖标签偏好（DP-5）', async () => {
+        const old = '2026-01-02T00:00:00.000Z'
+        const next = '2026-01-03T00:00:00.000Z'
+        await localDatabase.tagPreferences.put({
+            ...(await tagPreferenceEntityToRecord(
+                new TagPreferenceEntity(
+                    '',
+                    old,
+                    old,
+                    null,
+                    'tag-1',
+                    'table',
+                    JsonStringValueObject.CreateByJsonString('{}'),
+                    JsonStringValueObject.CreateByJsonString('{}')
+                ),
+                USER_ID
+            )),
+            syncedServerUpdatedAt: old
+        })
+        const get = vi.fn(async () => ({
+            data: {
+                code: 30050,
+                data: {
+                    id: 'srv-t',
+                    createdAt: old,
+                    updatedAt: next,
+                    deletedAt: null,
+                    tagId: 'tag-1',
+                    viewType: 'kanban',
+                    getTasksOptions: '{}',
+                    columns: '{}'
+                }
+            }
+        }))
+
+        const result = await reconcilePreferences({ requester: makeRequester({ get }) })
+
+        expect(result).toEqual({ checked: 1, applied: 1 })
+        const record = await localDatabase.tagPreferences.where('tagId').equals('tag-1').first()
+        expect(record!.viewType).toBe('kanban')
+        expect(record!.syncedServerUpdatedAt).toBe(next)
     })
 })
 
