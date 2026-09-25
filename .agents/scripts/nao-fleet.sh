@@ -3,7 +3,7 @@
 # nao-fleet.sh — 按角色一键拉起 pi 会话窗口（nao 团队工具箱）
 #
 # 用法
-#   nao-fleet.sh check [--strict] [-v]            静态体检：roles.yaml/缩进/EOL/角色卡/交叉引用/PR 模板/白名单/布局
+#   nao-fleet.sh check [--strict] [-v]            静态体检：roles.yaml/缩进/EOL/角色卡/交叉引用/PR 模板/qq-notify/白名单/布局
 #                                                 默认单行摘要（含 warn 计数）；-v 展开完整报告；失败始终展开
 #   nao-fleet.sh status                           角色会话在线状态（按终端标题/名册判定；权威名单见 intercom list）
 #   nao-fleet.sh ensure <别名>[@<repo>] [更多...]  拉起角色窗口（默认工作区=roles.yaml workspace）
@@ -190,6 +190,41 @@ check_roles_indent() {
     { printf "  ✗ 行 %d: 缩进/位置非法（角色 id 须 2 空格、字段须 4 空格且挂在角色下）: %s\n", FNR, $0; bad=1 }
     END { exit (bad ? 1 : 0) }
   ' "$MANIFEST"
+}
+
+# qq-notify 主动推送器契约：存在 + 可执行 + EOL 全 LF + 无 Tab + node --check 语法
+check_qq_notify() {
+  local rc=0 f="$SKILLS_DIR/.agents/scripts/qq-notify"
+  if [[ ! -f "$f" ]]; then
+    printf '  ✗ 缺失: .agents/scripts/qq-notify\n'
+    return 1
+  fi
+  printf '  ✓ 存在: .agents/scripts/qq-notify\n'
+  if [[ -x "$f" ]]; then
+    printf '  ✓ 可执行位已设置\n'
+  else
+    printf '  ✗ 缺少可执行位（修复：chmod +x .agents/scripts/qq-notify）\n'; rc=1
+  fi
+  if grep -Iq $'\r' "$f"; then
+    printf '  ✗ 含 CR（须转 LF；CRLF 会破坏 shebang/管道）\n'; rc=1
+  else
+    printf '  ✓ 行尾 LF\n'
+  fi
+  if grep -Iq $'\t' "$f"; then
+    printf '  ✗ 含 Tab（禁止 Tab 缩进）\n'; rc=1
+  else
+    printf '  ✓ 无 Tab\n'
+  fi
+  if command -v node >/dev/null 2>&1; then
+    if node --check "$f" >/dev/null 2>&1; then
+      printf '  ✓ node --check 语法通过\n'
+    else
+      printf '  ✗ node --check 语法失败\n'; rc=1
+    fi
+  else
+    printf '  ! node 未安装（跳过语法校验）\n'
+  fi
+  return $rc
 }
 
 # CodeGraph 索引健康（ensure 拉起前 / check 用；缺失或过期仅 warn，不阻塞）
@@ -605,6 +640,9 @@ cmd_check() {
     printf '  ✗ roles.yaml 缺失: %s\n' "$MANIFEST"; rc=1
   fi
   check_eol || rc=1
+
+  echo "== 主动推送器（qq-notify，可选能力）=="
+  check_qq_notify || rc=1
 
   echo "== 角色清单 roles.yaml =="
   load_manifest
