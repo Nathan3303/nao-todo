@@ -58,10 +58,6 @@ jobs:
         name: test
         runs-on: ubuntu-latest
         timeout-minutes: 20
-        # 与开发机一致（本地 LANG=zh_CN.UTF-8）：仓内 calendar-sort 测试依赖 ICU 中文（拼音）排序；
-        # Node 自带 full-icu ⇒ 无需在 runner 生成系统 locale（实测 ICU 会遵循未安装的 LANG 值）。
-        env:
-            LANG: zh_CN.UTF-8
         steps:
             - name: Checkout
               uses: actions/checkout@v4
@@ -77,7 +73,8 @@ jobs:
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
 
-            # 打印生效的 locale / ICU（诊断用，非门禁条件）：locale 敏感测试的排障入口
+            # 打印生效的 locale / ICU（诊断用，非门禁条件）：**CI 不锁定 locale** ⇒
+            # 该行即「测试与运行环境 locale 无关」的证据（曾经为 DEF-40 锁过 zh_CN.UTF-8，修复后摘除）
             - name: Show locale
               run: node -e "console.log('LANG=' + process.env.LANG + ' | ICU=' + Intl.Collator().resolvedOptions().locale)"
 

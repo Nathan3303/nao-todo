@@ -4,7 +4,7 @@ import type { TaskViewObject } from '@nao-todo/domain-task'
 /**
  * 日历排序（TASK-08）
  * @description 月/周视图头部排序下拉的纯逻辑：四项排序字段 + 升降序两级；
- *              未选字段（默认）按名称升序（localeCompare）；localStorage 独立键持久化，
+ *              未选字段（默认）按名称升序（`localeCompare`，**固定 `zh-CN`**）；localStorage 独立键持久化，
  *              与任务列表 getTasksOptions.sort 互不串扰；仅影响日历展示顺序，
  *              不写回服务端、不改 sortId（拖拽改期只改日期，显示始终按当前排序重排）。
  */
@@ -90,9 +90,15 @@ export const writeCalendarSort = (
     }
 }
 
-/** 名称比较（localeCompare 中文自然序；同名/空名按 id 稳定兜底） */
+/**
+ * 名称比较（中文自然序 = 拼音序；同名/空名按 id 稳定兜底）
+ * @description **显式指定 `zh-CN`**（DEF-40）：`localeCompare` 不传 locale 时取**运行环境**的 ICU 默认值
+ *              （`LC_ALL`/`LANG` ⇒ 拼音序 / 码点序 / 其他），同一份数据的展示顺序会**随环境变化**；
+ *              固定口径保证跨平台、跨环境**确定性一致**。
+ *              ⛔ 不要改回 `localeCompare(b.name)` / `undefined`（那等于退回跨环境不一致）。
+ */
 const compareByName = (a: TaskViewObject, b: TaskViewObject): number =>
-    a.name.localeCompare(b.name) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+    a.name.localeCompare(b.name, 'zh-CN') || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
 
 /** 字段取值归一：时间字段缺失/无效 → null（排序居末尾）；优先级 → 权重 */
 const fieldValueOf = (task: TaskViewObject, field: CalendarSortField): number | null => {

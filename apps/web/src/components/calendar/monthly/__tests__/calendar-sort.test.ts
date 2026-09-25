@@ -53,6 +53,24 @@ describe('sortCalendarTasks - 默认名称升序（未选字段）', () => {
         expect(ids(sorted)).toEqual(['l', 'a', 'b', 'w', 'z'])
     })
 
+    it('名称排序固定 zh-CN ⇒ 与运行环境 locale 无关（本用例在 LANG=C 下亦应通过）', () => {
+        // 该输入下「拼音序（zh-CN）」与「码点序 / en-US 序」必然不同 ⇒ 可区分实现是否固定了 locale
+        const tasks = [
+            makeTask({ id: 'w', name: '王五' }),
+            makeTask({ id: 'z', name: '张三' }),
+            makeTask({ id: 'l', name: '李四' }),
+            makeTask({ id: 'r', name: '任六' })
+        ]
+        const byLocale = (locale: string): string[] =>
+            [...tasks].sort((a, b) => a.name.localeCompare(b.name, locale)).map((t) => t.id)
+
+        // 前提：两种口径确实不同（否则本用例无区分力）
+        expect(byLocale('en-US')).not.toEqual(byLocale('zh-CN'))
+        // 实现必须取固定 zh-CN 口径，而非「环境默认 locale」（DEF-40）
+        expect(ids(sortCalendarTasks(tasks, { order: 'asc' }))).toEqual(byLocale('zh-CN'))
+        expect(ids(sortCalendarTasks(tasks, { order: 'asc' }))).toEqual(['l', 'r', 'w', 'z'])
+    })
+
     it('同名/空名 → 按 id 稳定兜底', () => {
         const tasks = [
             makeTask({ id: 'b', name: '同名' }),
