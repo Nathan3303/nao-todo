@@ -1,0 +1,85 @@
+name: CI
+
+# PR 代码闸门（轻量）：与 release.yaml（tag 触发打包发版）互补。
+# 触发：所有 PR（含 draft）+ main 上的 push（合并后回归）。
+on:
+    pull_request:
+    push:
+        branches: [main]
+
+# 只读：本 workflow 不写仓库、不推分支（⛔ 勿加写权限步骤）。
+permissions:
+    contents: read
+
+# 同一 ref 的新运行取消旧运行（省额度，避免 PR 反复 push 堆积）。
+concurrency:
+    group: ci-${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+# electron 二进制在 CI 用不到（仓内 0 个测试 import electron）⇒ 跳过 ~100MB 下载，降低耗时与下载抖动。
+env:
+    ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+
+jobs:
+    # job 1：格式 + lint + 类型 + 四个守卫
+    check:
+        name: check
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  # 与开发机一致（本地为 v24.20.0；release.yaml 打包用 24.18.0，二者同为 24.x）
+                  node-version: '24.20.0'
+
+            - name: Install pnpm
+              # 不引第三方 action（仓内 Actions 白名单为 selected/verified）；沿用 release.yaml 既有做法
+              run: npm install -g pnpm@11.18.0
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Format / lint / type check
+              run: pnpm exec vp check
+
+            - name: Guards (domain isolation / gate pathspec / barrel imports / mobile red line)
+              run: |
+                  pnpm run guard:ddd
+                  pnpm run guard:gate-pathspec
+                  pnpm run guard:barrel-imports
+                  pnpm run guard:mobile-imports
+
+    # job 2：全仓测试（与 check 并行）
+    test:
+        name: test
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        # 与开发机一致（本地 LANG=zh_CN.UTF-8）：仓内 calendar-sort 测试依赖 ICU 中文（拼音）排序；
+        # Node 自带 full-icu ⇒ 无需在 runner 生成系统 locale（实测 ICU 会遵循未安装的 LANG 值）。
+        env:
+            LANG: zh_CN.UTF-8
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '24.20.0'
+
+            - name: Install pnpm
+              run: npm install -g pnpm@11.18.0
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            # 打印生效的 locale / ICU（诊断用，非门禁条件）：locale 敏感测试的排障入口
+            - name: Show locale
+              run: node -e "console.log('LANG=' + process.env.LANG + ' | ICU=' + Intl.Collator().resolvedOptions().locale)"
+
+            - name: Tests
+              run: pnpm exec vp test --run
