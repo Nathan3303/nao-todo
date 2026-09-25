@@ -14,12 +14,13 @@
 #                                                 回收已完成会话（闸门：在跑 turn / tasks-state 未推进 → 拒绝，--force 跳过）
 #
 # 角色别名 → 角色卡：见 .agents/roles.yaml（单一事实来源）
-#   当前：pm / arch-designer(arch) / rd-fe / rd-be / qa
+#   当前：pm / arch-designer(arch) / rd-fe / rd-be / qa / rd-infra(infra)
 #
 # 环境变量
 #   NAO_TERMINAL=ghostty|ptyxis|tmux|screen   强制宿主
-#   NAO_TMUX_LAYOUT=main-row2|grid            tmux 布局（默认 main-row2）
-#   NAO_TMUX_MAIN_WIDTH=<10..90>              main-row2 主 pane 宽度百分比（默认 35）
+#   NAO_TMUX_LAYOUT=main-row2|main-col|grid   tmux 布局（默认 main-row2）
+#   NAO_TMUX_MAIN_WIDTH=<10..90>             主 pane 宽度百分比（默认 35；main-row2/main-col 共用）
+#   NAO_TMUX_MIN_PANE_WIDTH=<10..80>         最小非主 pane 列宽守卫（默认 30；低于则回退）
 #   NAO_SKILLS=<dir>                          角色卡根目录（默认 <脚本>/../..）
 #   NAO_MODEL_WHITELIST=<glob,...>            -m 白名单（默认空=不校验，支持 glob）
 #   NAO_CLOSE_BUSY_PATTERN=<ERE>             close 的在跑 turn 判定正则（默认内置 pi 状态行标记）
@@ -35,10 +36,16 @@
 # tmux 宿主行为
 #   - 已在 tmux 内（$TMUX 存在）：当前窗口分屏拉起，不新建窗口。
 #   - 不在 tmux 内：创建 detached 会话 nao-<角色>，需 tmux attach -t nao-<角色>。
-#   - main-row2：第 1 个 pane 全高占左，后续每角色往右开列、每列上下 2 个：
+#   - main-row2：第 1 个 pane 全高占左，后续每角色往右开列、每列上下 2 个（默认）：
 #                 1 | 2 | 4
 #                 1 | 3 | 5
-#   - grid：所有 pane 等大网格（tmux 内建 tiled）。
+#   - main-col：第 1 个 pane 全高占左，其余 pane 在右列纵向堆叠（委托内建 main-vertical）：
+#                 1 | 2
+#                 1 | 3
+#                 1 | 4
+#   - grid：所有 pane 等大网格（tmux 内建 tiled），宽度最优。
+#   - 窄列守卫：main-row2 的最窄非主 pane < NAO_TMUX_MIN_PANE_WIDTH ⇒ 回退 main-col；
+#              回退后右列仍不足 ⇒ 再回退 grid（带 warn，不中断 ensure）。
 # =============================================================================
 set -euo pipefail
 
@@ -57,6 +64,9 @@ TMUX_LAYOUT="${NAO_TMUX_LAYOUT:-main-row2}"
 # main-row2 主 pane 宽度百分比：默认值与非法值回退共用同一常量（防三处漂移）
 TMUX_MAIN_WIDTH_DEFAULT=35
 TMUX_MAIN_WIDTH="${NAO_TMUX_MAIN_WIDTH:-$TMUX_MAIN_WIDTH_DEFAULT}"
+# 最小非主 pane 列宽守卫：默认值与非法值回退共用同一常量（防漂移）
+TMUX_MIN_PANE_WIDTH_DEFAULT=30
+TMUX_MIN_PANE_WIDTH="${NAO_TMUX_MIN_PANE_WIDTH:-$TMUX_MIN_PANE_WIDTH_DEFAULT}"
 # check 输出契约：默认单行摘要（省 PM 上下文），-v 展开完整报告；失败始终展开
 VERBOSE=false
 # close 的在跑 turn 判定（pi 默认状态行：Working (esc to interrupt) / Thinking... / Retrying / Compacting）
@@ -214,6 +224,15 @@ check_qq_notify() {
     printf '  ✗ 含 Tab（禁止 Tab 缩进）\n'; rc=1
   else
     printf '  ✓ 无 Tab\n'
+  fi
+  # shell 转交守卫：禁止 `bash/sh <本脚本>` 逐行解释注释（防误执行示例/误发）
+  local l1 l2
+  l1="$(head -n 1 "$f")"
+  l2="$(sed -n '2p' "$f")"
+  if [[ "$l1" == '#!/bin/sh' ]] && [[ "$l2" == *'exec node "$0" "$@"'* ]]; then
+    printf '  ✓ shell 转交守卫（#!/bin/sh + exec node）\n'
+  else
+    printf '  ✗ 缺少 shell 转交守卫（第 1 行须 #!/bin/sh、第 2 行须含 exec node "$0" "$@"）\n'; rc=1
   fi
   if command -v node >/dev/null 2>&1; then
     if node --check "$f" >/dev/null 2>&1; then
@@ -457,6 +476,48 @@ _layout_checksum() {
   printf '%04x' "$c"
 }
 
+# main-row2 / main-col 共用几何（单一源头，防守卫与构建两处漂移）
+# 输入：窗口宽 win_w · pane 数 n · 主宽百分比 pct
+# 输出（空格分隔）：main_w right_w right_x cols cw_base cw_last
+main_row2_geom() {
+  local win_w="$1" n="$2" pct="$3"
+  local usable_w=$(( win_w - 1 ))
+  (( usable_w < 2 )) && usable_w=2
+  local main_w=$(( usable_w * pct / 100 ))
+  (( main_w < 1 )) && main_w=1
+  (( main_w > usable_w - 1 )) && main_w=$(( usable_w - 1 ))
+  local right_w=$(( usable_w - main_w ))
+  (( right_w < 1 )) && right_w=1
+  local right_x=$(( main_w + 1 ))
+  local m=$(( n - 1 ))
+  (( m < 1 )) && m=1
+  local cols=$(( (m + 1) / 2 ))
+  (( cols < 1 )) && cols=1
+  local r_usable=$(( right_w - (cols - 1) ))
+  (( r_usable < 1 )) && r_usable=1
+  local cw_base=$(( r_usable / cols ))
+  (( cw_base < 1 )) && cw_base=1
+  local cw_last=$(( r_usable - cw_base * (cols - 1) ))
+  (( cw_last < 1 )) && cw_last=1
+  printf '%s %s %s %s %s %s' "$main_w" "$right_w" "$right_x" "$cols" "$cw_base" "$cw_last"
+}
+
+# main-row2 最窄非主 pane 列宽（窄列守卫用；与 build 共用 main_row2_geom）
+main_row2_min_col() {
+  local win_w="$1" n="$2" pct="$3"
+  (( n >= 2 )) || { printf '%s' "$win_w"; return 0; }
+  local main_w right_w right_x cols cw_base cw_last
+  read -r main_w right_w right_x cols cw_base cw_last < <(main_row2_geom "$win_w" "$n" "$pct")
+  if (( cw_base < cw_last )); then printf '%s' "$cw_base"; else printf '%s' "$cw_last"; fi
+}
+
+# main-col 右列宽（tmux main-vertical 百分比语义；与 main_row2_geom 的 right_w 同源）
+main_col_right_w() {
+  local main_w right_w right_x cols cw_base cw_last
+  read -r main_w right_w right_x cols cw_base cw_last < <(main_row2_geom "$1" 2 "$2")
+  printf '%s' "$right_w"
+}
+
 # main-row2：主 pane 全高占左；往右每列 2 个上下堆叠
 #   1 | 2 | 4
 #   1 | 3 | 5
@@ -472,26 +533,9 @@ build_main_row2_layout() {
     return 0
   fi
 
-  # 根：水平分割，主 pane + 右侧容器，中间 1 gap
-  local usable_w=$(( win_w - 1 ))
-  (( usable_w < 2 )) && usable_w=2
-  local main_w=$(( usable_w * pct / 100 ))
-  (( main_w < 1 )) && main_w=1
-  (( main_w > usable_w - 1 )) && main_w=$(( usable_w - 1 ))
-  local right_w=$(( usable_w - main_w ))
-  (( right_w < 1 )) && right_w=1
-  local right_x=$(( main_w + 1 ))
-
-  # 右侧 cols 列
-  local m=$(( n - 1 ))
-  local cols=$(( (m + 1) / 2 ))
-  (( cols < 1 )) && cols=1
-  local r_usable=$(( right_w - (cols - 1) ))
-  (( r_usable < 1 )) && r_usable=1
-  local cw_base=$(( r_usable / cols ))
-  (( cw_base < 1 )) && cw_base=1
-  local cw_last=$(( r_usable - cw_base * (cols - 1) ))
-  (( cw_last < 1 )) && cw_last=1
+  # 几何统一来自 main_row2_geom（守卫与构建同源，防漂移）
+  local main_w right_w right_x cols cw_base cw_last
+  read -r main_w right_w right_x cols cw_base cw_last < <(main_row2_geom "$win_w" "$n" "$pct")
 
   # 每列内部：上下 2 个，中间 1 gap
   local v_usable=$(( win_h - 1 ))
@@ -531,6 +575,31 @@ build_main_row2_layout() {
     "$right_body"
 }
 
+# main-col：委托 tmux 内建 main-vertical（主 pane 左全高 + 右列纵向堆叠）
+#   坑：tmux 默认 main-pane-width=80（格）⇒ 必须显式设百分比
+apply_main_col() {
+  local pct="$1" n="$2" min_w="$3" win_w="$4" from="$5"
+  if (( n >= 2 )); then
+    local right_w; right_w="$(main_col_right_w "$win_w" "$pct")"
+    if (( right_w < min_w )); then
+      if [[ "$from" == "main-col" ]]; then
+        warn "main-col 右列 ${right_w} < 最小 ${min_w}（${n} pane @ ${win_w} 列）→ 回退 grid"
+      else
+        warn "${from} → main-col 右列 ${right_w} < 最小 ${min_w}（${n} pane @ ${win_w} 列）→ 再回退 grid"
+      fi
+      tmux select-layout tiled >/dev/null 2>&1 || true
+      return 0
+    fi
+  fi
+  tmux set-window-option main-pane-width "${pct}%" >/dev/null 2>&1 || true
+  local err
+  if ! err=$(tmux select-layout main-vertical 2>&1); then
+    warn "main-col（main-vertical）应用失败，回退 grid"
+    warn "  tmux:   ${err:-<no message>}"
+    tmux select-layout tiled >/dev/null 2>&1 || true
+  fi
+}
+
 apply_tmux_layout() {
   [[ -n "${TMUX:-}" ]] || return 0
   if [[ "$TMUX_LAYOUT" == "grid" ]]; then
@@ -547,12 +616,31 @@ apply_tmux_layout() {
   while IFS= read -r line; do
     [[ -n "$line" ]] && pane_ids+=("$line")
   done < <(tmux list-panes -F '#{pane_id}' 2>/dev/null | sed 's/^%//')
-  (( ${#pane_ids[@]} >= 1 )) || return 0
+  local n=${#pane_ids[@]}
+  (( n >= 1 )) || return 0
 
   local pct="$TMUX_MAIN_WIDTH"
   [[ "$pct" =~ ^[0-9]+$ ]] || pct="$TMUX_MAIN_WIDTH_DEFAULT"
   (( pct < 10 )) && pct=10
   (( pct > 90 )) && pct=90
+
+  local min_w="$TMUX_MIN_PANE_WIDTH"
+  [[ "$min_w" =~ ^[0-9]+$ ]] || min_w="$TMUX_MIN_PANE_WIDTH_DEFAULT"
+  (( min_w < 10 )) && min_w=10
+  (( min_w > 80 )) && min_w=80
+
+  if [[ "$TMUX_LAYOUT" == "main-col" ]]; then
+    apply_main_col "$pct" "$n" "$min_w" "$win_w" "main-col"
+    return
+  fi
+
+  # 窄列守卫：main-row2 最窄非主 pane < 阈值 ⇒ 回退 main-col（再不足⇒grid）
+  local narrow; narrow="$(main_row2_min_col "$win_w" "$n" "$pct")"
+  if (( narrow < min_w )); then
+    warn "${n} pane @ ${win_w} 列：main-row2 最窄列 ${narrow} < 最小 ${min_w} → 回退 main-col"
+    apply_main_col "$pct" "$n" "$min_w" "$win_w" "main-row2"
+    return
+  fi
 
   local full; full="$(build_main_row2_layout "$win_w" "$win_h" "$pct" "${pane_ids[@]}")"
   [[ -n "$full" ]] || return 0
@@ -570,12 +658,19 @@ apply_tmux_layout() {
 spawn_tmux() {
   local name="$1" inner="$2"
   case "$TMUX_LAYOUT" in
-    main-row2|grid) ;;
-    *) die "NAO_TMUX_LAYOUT 无效: $TMUX_LAYOUT（可选 main-row2|grid）" ;;
+    main-row2|main-col|grid) ;;
+    *) die "NAO_TMUX_LAYOUT 无效: $TMUX_LAYOUT（可选 main-row2|main-col|grid）" ;;
   esac
   local wrapped="bash -lc $(printf %q "$inner")"
   if [[ -n "${TMUX:-}" ]]; then
-    tmux split-window -h "$wrapped" >/dev/null
+    # 窄窗口/宿主上限会让 split-window 失败（no space for new pane）；
+    # 捕获后 warn 并继续，不因单个 pane 失败中断整轮 ensure。
+    local serr
+    if ! serr=$(tmux split-window -h "$wrapped" 2>&1); then
+      warn "pane 创建失败（窗口过窄或宿主已达上限）：${serr:-<no message>}"
+      warn "  已跳过该 pane，其余角色继续拉起；可放大窗口后重跑 ensure"
+      return 0
+    fi
     apply_tmux_layout
   else
     tmux new-session -d -s "nao-$name" "$wrapped"
@@ -798,17 +893,22 @@ cmd_check() {
     echo "  （当前不在 tmux 内；若宿主命中 tmux 会创建 detached 会话）"
   fi
   case "$TMUX_LAYOUT" in
-    main-row2|grid)
+    main-row2|main-col|grid)
       printf '  ✓ NAO_TMUX_LAYOUT=%-10s 合法\n' "$TMUX_LAYOUT" ;;
     *)
-      printf '  ✗ NAO_TMUX_LAYOUT=%-10s 非法（可选 main-row2|grid）\n' "$TMUX_LAYOUT"; rc=1 ;;
+      printf '  ✗ NAO_TMUX_LAYOUT=%-10s 非法（可选 main-row2|main-col|grid）\n' "$TMUX_LAYOUT"; rc=1 ;;
   esac
-  if [[ "$TMUX_LAYOUT" == "main-row2" ]]; then
+  if [[ "$TMUX_LAYOUT" == "main-row2" || "$TMUX_LAYOUT" == "main-col" ]]; then
     if [[ "$TMUX_MAIN_WIDTH" =~ ^[0-9]+$ ]] && (( TMUX_MAIN_WIDTH >= 10 && TMUX_MAIN_WIDTH <= 90 )); then
       printf '  ✓ NAO_TMUX_MAIN_WIDTH=%-3s%% 合法\n' "$TMUX_MAIN_WIDTH"
     else
       printf '  ! NAO_TMUX_MAIN_WIDTH=%-3s  非法（10..90）：越界夹取到 10/90，非数字回退 %s\n' "$TMUX_MAIN_WIDTH" "$TMUX_MAIN_WIDTH_DEFAULT"
     fi
+  fi
+  if [[ "$TMUX_MIN_PANE_WIDTH" =~ ^[0-9]+$ ]] && (( TMUX_MIN_PANE_WIDTH >= 10 && TMUX_MIN_PANE_WIDTH <= 80 )); then
+    printf '  ✓ NAO_TMUX_MIN_PANE_WIDTH=%-3s 合法\n' "$TMUX_MIN_PANE_WIDTH"
+  else
+    printf '  ! NAO_TMUX_MIN_PANE_WIDTH=%-3s 非法（10..80）：越界夹取到 10/80，非数字回退 %s\n' "$TMUX_MIN_PANE_WIDTH" "$TMUX_MIN_PANE_WIDTH_DEFAULT"
   fi
 
   if [[ "$strict" == "true" && $wl_problems -gt 0 ]]; then
@@ -831,7 +931,7 @@ cmd_status() {
       printf '  · %-14s 未运行（ensure 拉起）\n' "$a"
     fi
   done
-  echo "== 任务派生会话（--task 拉起，如 rd-be-T1）=="
+  echo "== 任务派生会话（--task 拉起，如 rd-be-T1 / rd-infra-T1）=="
   local found=0 dname role id cls tag
   while IFS= read -r dname; do
     [[ -n "$dname" ]] || continue
@@ -857,7 +957,7 @@ cmd_status() {
 # 回收已完成会话：闸门（tasks-state 已推进 + 无在跑 turn）+ 落地（pane/会话/screen/进程）
 cmd_close() {
   local force="$1" task="$2" target="$3"
-  [[ -n "$target" ]] || die "close 需要目标：角色别名或派生会话名（如 rd-be / rd-be-T1）"
+  [[ -n "$target" ]] || die "close 需要目标：角色别名或派生会话名（如 rd-be / rd-be-T1 或 rd-infra / rd-infra-T1）"
   local name repo cls bus pane pids r ok
   intercom_list_json >/dev/null 2>&1 || true   # 预热名册缓存
   if [[ -n "$task" ]]; then
@@ -883,7 +983,7 @@ cmd_close() {
     # 非别名的目标必须是 <已知角色>-<编号>，否则视为拼错（防静默 no-op）
     ok=0
     for r in "${ROLE_ORDER[@]}"; do [[ "$name" == "$r-"* ]] && ok=1; done
-    (( ok )) || die "未知角色或派生会话名: $name（可用: ${ROLE_ORDER[*]}；派生名形如 rd-be-T1）"
+    (( ok )) || die "未知角色或派生会话名: $name（可用: ${ROLE_ORDER[*]}；派生名形如 rd-be-T1 / rd-infra-T1）"
     repo="$PWD"
   fi
 
@@ -931,7 +1031,7 @@ cmd_ensure() {
   local force="$1" model="$2" task="$3"; shift 3
   local spec role repo key seen k
   local -a cg_done=()
-  [[ $# -eq 0 ]] && die "ensure 需要至少一个角色，如: nao-fleet.sh ensure arch rd-fe"
+  [[ $# -eq 0 ]] && die "ensure 需要至少一个角色，如: nao-fleet.sh ensure arch rd-fe rd-infra"
   for spec in "$@"; do
     if [[ "$spec" == *"@"* ]]; then
       role="${spec%%@*}"; repo="${spec#*@}"

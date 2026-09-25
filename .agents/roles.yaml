@@ -35,3 +35,7 @@ roles:
     aliases: [qa]
     card: test-engineer.md
     workspace: .
+  rd-infra:
+    aliases: [infra, rd-infra]
+    card: infra-engineer.md
+    workspace: .

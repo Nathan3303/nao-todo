@@ -1,23 +1,28 @@
-#!/usr/bin/env node
-/**
- * qq-notify —— QQ 官方机器人「主动消息」推送器（舰队可选能力）
- *
- * 用法
- *   qq-notify "文本"                 发给配置里的 ownerOpenId（默认收件人）
- *   qq-notify --to <openid> "文本"   发给指定 openid
- *   echo "文本" | qq-notify          从 stdin 读文本
- *   qq-notify --dry-run "文本"       只取 token、不发送（连通性自检）
- *   qq-notify --config <path> ...    指定配置文件
- *   qq-notify -h | --help            显示帮助
- *
- * 配置优先级：--config <path> > 环境变量 QQ_NOTIFY_CONFIG > ~/.pi/agent/pi-agent-qqbot.json
- * 退出码：0 成功 · 1 参数/配置错 · 2 取 token 失败 · 3 发送失败
- * 安全：绝不打印/落盘 clientSecret 与 access_token；错误输出截断。
- *
- * 实现说明：本文件无扩展名，需同时兼容宿主项目 package.json 的
- * "type": "module" 与 CommonJS 两种解析；因此只用动态 import()（两种格式都合法）
- * 并包在 async IIFE 中，避免静态 import / 顶层 await / require。
- */
+#!/bin/sh
+//bin/true; exec node "$0" "$@"
+//
+// qq-notify —— QQ 官方机器人「主动消息」推送器（舰队可选能力）
+//
+// 用法（三种形式等价：./qq-notify · node qq-notify · sh qq-notify）
+//   ./qq-notify "文本"                发给配置中的 ownerOpenId（默认收件人）
+//   ./qq-notify --to OPENID "文本"    发给指定 openid
+//   ./qq-notify --dry-run "文本"      只取 token、不发送（连通性自检）
+//   ./qq-notify --config PATH "文本"  指定配置文件
+//   ./qq-notify --help                显示帮助
+//   stdin 管道                         无参数时从标准输入读取文本
+//
+// 配置优先级：--config PATH > 环境变量 QQ_NOTIFY_CONFIG > ~/.pi/agent/pi-agent-qqbot.json
+// 退出码：0 成功 · 1 参数/配置错 · 2 取 token 失败 · 3 发送失败
+// 安全：绝不打印/落盘 clientSecret 与 access_token；错误输出截断。
+//
+// ⛔ 禁用 `bash <本脚本>` 这类「用 shell 逐行解释 Node 脚本」的调用方式：
+//    shell 会把注释里的示例当命令执行（管道、重定向、glob），可能触发意外发送
+//    （本仓历史上正因此误发过一条真实消息）。正确形式：./qq-notify 或 node qq-notify。
+//    第 2 行的 exec 守卫已使 sh/bash 调用自动转交 node，但仍不建议依赖该行为。
+//
+// 实现说明：本文件无扩展名，需同时兼容宿主项目 package.json 的
+// "type": "module" 与 CommonJS 两种解析；因此只用动态 import()（两种格式都合法）
+// 并包在 async IIFE 中，避免静态 import / 顶层 await / require。
 ;(async () => {
   const fs = await import('node:fs')
   const os = await import('node:os')

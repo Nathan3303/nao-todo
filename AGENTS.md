@@ -92,14 +92,15 @@ Docs are local at `node_modules/vite-plus/docs` or online at https://viteplus.de
 
 ### 角色与流程（指针）
 
-- 角色清单（单一事实来源）：`.agents/roles.yaml`（pm / arch-designer / rd-fe / rd-be / qa）
+- 角色清单（单一事实来源）：`.agents/roles.yaml`（pm / arch-designer / rd-fe / rd-be / qa / **rd-infra**）—— **共 6 个角色**；`rd-infra` 别名 `infra`，为舰队 v0.9.0 新增的「工程基座」角色（卡 `.agents/prompts/infra-engineer.md` · 清单 `.agents/checklists/rd-infra.md`）
 - 角色卡 `.agents/prompts/<role>.md`｜公共规范 `.agents/common/`｜交付核对清单 `.agents/checklists/`｜按需技能 `.agents/skills/`｜模板 `.agents/templates/`
 - 舰队拉起与自检：`bash .agents/scripts/nao-fleet.sh check | status | ensure <role>`；`status` 在本机**不可靠**（pi 进程 argv 被清空，`pgrep --name` 恒失配）→ 在线判定以 `intercom list` 为准
+- **tmux 布局开关（舰队 v0.9.0+，`ensure` 用；多会话不再被挤成多列）**：`NAO_TMUX_LAYOUT=main-row2|main-col|grid`（默认 `main-row2`）· `NAO_TMUX_MIN_PANE_WIDTH=<10..80>`（最小非主 pane 列宽，默认 30；低于则自动回退）· `NAO_TMUX_MAIN_WIDTH=<10..90>`（主 pane 宽度百分比，默认 35）。**窄窗口下自动降级（不中断）** ⇒ 用 `NAO_TMUX_LAYOUT=main-col` 可让后续会话在右列**纵向堆叠**（原「挤成 4 列」问题的解）
 - 运行时任务状态（PM 维护）：`docs/tasks-state.md`；需求与决策留痕：`docs/prds/`、`docs/adr/`；**缺陷池（单一登记源，PM 维护）：`docs/reports/defect-pool.md`**
 
 ### 机制衔接
 
-- **PM 关键节点主动推送**（2026-09-25 用户批准，最小方案 / 常驻能力）：**`.agents/scripts/qq-notify "文本"`**（**项目内、版本化、可审计**；= 舰队上游 v0.8.1 **产品化版本**，另支持 `--config <path>` / `QQ_NOTIFY_CONFIG` / `-h|--help`；**若项目内脚本缺失 ⇒ 回退 `~/.pi/agent/bin/qq-notify "文本"`**）—— QQ 官方机器人**主动消息**（默认收件人 = 配置 `ownerOpenId`；可选 `--to <openid>` / `--dry-run`；退出码 **0** 成功 / **1** 参数或配置错 / **2** 取 token 失败 / **3** 发送失败）。**调用形式（2026-09-25 实测教训，⛔ 勿踩）**：该文件是 **Node** 脚本（shebang `#!/usr/bin/env node`、mode `775`）⇒ 用 `.agents/scripts/qq-notify "文本"` 或 `node .agents/scripts/qq-notify "文本"`；**禁 `bash <脚本>`** —— bash 会把脚本内的**文档注释**当 shell 解析（`*` 被 glob 展开、注释里的 `echo "文本" | qq-notify …` 变成**真实命令**），**实测已触发意外发送**。**仅用于关键节点**（批次进度汇总 · 验收结论 · 发版或合并完成 · 异常与阻塞），**禁刷屏**。**当前 `sandbox: true`（用户已决定不切正式环境）** ⇒ 受沙箱与「主动消息」配额限制，失败以非 0 退出码 + 错误体回报。实现 = 读 `~/.pi/agent/pi-agent-qqbot.json` → `POST bots.qq.com/app/getAppAccessToken` → `POST {sandbox|prod}.api.sgroup.qq.com/v2/users/{openid}/messages`（体 `{content,msg_type:0}`，**不带 `msg_id` = 主动消息**）。
+- **PM 关键节点主动推送**（2026-09-25 用户批准，最小方案 / 常驻能力）：**`.agents/scripts/qq-notify "文本"`**（**项目内、版本化、可审计**；= 舰队上游 **v0.9.2** 产品化版本，另支持 `--config <path>` / `QQ_NOTIFY_CONFIG` / `-h|--help`；**若项目内脚本缺失 ⇒ 回退 `~/.pi/agent/bin/qq-notify "文本"`**）—— QQ 官方机器人**主动消息**（默认收件人 = 配置 `ownerOpenId`；可选 `--to <openid>` / `--dry-run`；退出码 **0** 成功 / **1** 参数或配置错 / **2** 取 token 失败 / **3** 发送失败）。**调用形式（2026-09-25 实测教训，⛔ 勿踩）**：该文件是 **Node** 脚本，首两行加 **shell 转交守卫**（`#!/bin/sh` + `//bin/true; exec node "$0" "$@"`，mode `775`）⇒ **即使被 `bash` / `sh` 调起也会自动 `exec node`**（`bash` / `sh` / `node` / 直接执行 **四种形式实测均 rc=0**）。**仍推荐** `./.agents/scripts/qq-notify "文本"` 或 `node .agents/scripts/qq-notify "文本"`；**`bash <Node 脚本>` 仍不推荐** —— 加固前它会**把脚本内的文档注释当 shell 解析**（`*` 被 glob 展开、注释里的 `echo "文本" | qq-notify …` 变成**真实命令**）⇒ **0.9.2 之前实测已触发意外发送**；0.9.2 起由守卫兜住，但**不要依赖兜底**。**仅用于关键节点**（批次进度汇总 · 验收结论 · 发版或合并完成 · 异常与阻塞），**禁刷屏**。**当前 `sandbox: true`（用户已决定不切正式环境）** ⇒ 受沙箱与「主动消息」配额限制，失败以非 0 退出码 + 错误体回报。实现 = 读 `~/.pi/agent/pi-agent-qqbot.json` → `POST bots.qq.com/app/getAppAccessToken` → `POST {sandbox|prod}.api.sgroup.qq.com/v2/users/{openid}/messages`（体 `{content,msg_type:0}`，**不带 `msg_id` = 主动消息**）。
 - 代码结构检索：**CodeGraph** 索引位于 `.codegraph/`。结构性提问（谁调用谁 / 影响面 / 符号签名）优先 codegraph；grep 仅查字面文本
 - UI 令牌 / UX playbook：本项目**尚未实例化**，模板见 `.agents/templates/frontend-ui/`
 

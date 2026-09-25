@@ -32,6 +32,28 @@ description: 按需技能——QQ 主动推送（关键节点通知；PM 在里�
 - 用户未回应不重复推；阻塞未解除才允许在**跨天**时补一条。
 - **默认 sandbox**，仅在正式发布通知用户时考虑 prod（须用户明确知情）。
 
+## 调用禁令（⛔ 重要：曾因此误发过真实消息）
+
+本脚本是 **Node 程序**，文件头部的注释里写着用法示例。⛔ **禁止用 shell 把它当 shell 脚本逐行解释**：
+
+```text
+⛔ bash .agents/scripts/qq-notify "文本"     ← 错：shell 会执行注释里的示例
+```
+
+原因（实测）：`bash <本脚本>` 会把注释当命令执行——注释里的 `*` 触发 **glob 展开**（把 `AGENTS.md apps docs …` 当命令跑）、`--to <openid>` 变成 **重定向**、`echo "文本" | qq-notify` 变成 **真实管道**（PATH 命中同名脚本即**真发**）——本仓历史上正因此误发过一条真实 QQ 消息。
+
+**正确形式（三者等价，均 rc=0 且输出一致）**：
+
+```bash
+.agents/scripts/qq-notify "文本"      # ./ 直接执行（推荐）
+node .agents/scripts/qq-notify "文本"  # 显式用 node
+sh .agents/scripts/qq-notify "文本"    # 已加固：头部 exec 守卫自动转交 node
+```
+
+> 加固方式（v0.9.2）：第 1 行 `#!/bin/sh` + 第 2 行 `//bin/true; exec node "$0" "$@"`。
+> `sh/bash` 执行时第 2 行即 `exec node`（**自动转交**，注释不会再被 shell 解析）；`node` 执行时第 2 行是 JS 注释。
+> `nao-fleet.sh check` 已增加该守卫的存在性校验（缺失 ⇒ rc=1）。
+
 ## 用法
 
 ```bash
