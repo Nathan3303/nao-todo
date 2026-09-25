@@ -37,6 +37,7 @@
 - 版本 / Tag：**本次 v1.11.0 已发布**（**注解 tag `v1.11.0`**（`4ae4bc5c`）→ peeled `b00d7f84`）：root / webapp / desktopapp **1.11.0** · `infrastructure` **0.7.0** · `shared` **1.3.4**（其余包零改动不 bump）· 上一版 **v1.10.0** 已发布：root/webapp/desktop **1.10.0** · `presentation` **0.7.0** · `shared` **1.3.3** · `domain-identity` **1.2.0** · `infrastructure` **0.6.0** · `presentation-identity` **1.2.1**（`domain-task`/`presentation-react`/`apps/mobile` 零改动不 bump）· **tag `v1.10.0` → `a9d710dd`（main HEAD）** · Release 已发布
 - 降级标注：**`gh` 可用（`gh auth status` exit 0）· 仍余 2 项：无预览环境 · baseline 前无 Issue**
 - 特例提交（白名单）：**① baseline `feat/ocdev → main` 用 merge commit（一次性；✅ 用户已批准；已完成 `c5309dcb`）** ② 发布类文档 PR（`nao/release-v1.10.0`：版本号/CHANGELOG/release notes/台账，**PM-owned 文档**，评审人 = 无（PM 自核，理由：纯文档+版本元数据、无源码/测试/构建逻辑改动））· **其后所有需求 PR 一律 squash**
+- **🚦 CI 真闸门已上线（2026-09-25，用户批准 · `T315`）**：`main` 分支保护**已 require CI 的 `check` job** —— `required_status_checks = { "strict": false, "contexts": ["check"] }`（app = GitHub Actions）。`test` **暂缓**（理由：既有 flake + 时长 ⇒ 先观察若干 PR 稳定性）。`strict=false` = **不要求** PR 分支与 `main` 保持最新（避免 “update branch” 摩擦；与 `nao-todo-server` 的 `strict=true` **有意不同**）。**三条纪律（后人必守）**：① **`check` 已是 required** ⇒ PR 合并前该检查**必须出现在该 PR 上且为 success**（Vercel `pending` / 非必需检查未收敛只显示 `UNSTABLE`，**不阻塞**）；② ⚠️ **若要改 `ci.yml` 的 `jobs.check.name`，必须同步更新保护设置**（否则出现「永不出现的检查 ⇒ PR 永久不可合」）；③ **应急解除**：`gh api -X DELETE repos/Nathan3303/nao-todo/branches/main/protection/required_status_checks` ⇒ **事后必须重设 + 本文件留痕**。附带：改 `ci.yml` 触发条件时须保留 `pull_request`（否则 required 检查不上报 ⇒ 同②）
 
 ## 一、当前状态（2026-09-24）
 
