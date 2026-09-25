@@ -99,6 +99,7 @@ Docs are local at `node_modules/vite-plus/docs` or online at https://viteplus.de
 
 ### 机制衔接
 
+- **PM 关键节点主动推送**（2026-09-25 用户批准，最小方案 / 常驻能力）：**`~/.pi/agent/bin/qq-notify "文本"`** —— QQ 官方机器人**主动消息**（默认收件人 = 配置 `ownerOpenId`；可选 `--to <openid>` / `--dry-run`；退出码 **0** 成功 / **1** 参数或配置错 / **2** 取 token 失败 / **3** 发送失败）。**仅用于关键节点**（批次进度汇总 · 验收结论 · 发版或合并完成 · 异常与阻塞），**禁刷屏**。**当前 `sandbox: true`（用户已决定不切正式环境）** ⇒ 受沙箱与「主动消息」配额限制，失败以非 0 退出码 + 错误体回报。实现 = 读 `~/.pi/agent/pi-agent-qqbot.json` → `POST bots.qq.com/app/getAppAccessToken` → `POST {sandbox|prod}.api.sgroup.qq.com/v2/users/{openid}/messages`（体 `{content,msg_type:0}`，**不带 `msg_id` = 主动消息**）。
 - 代码结构检索：**CodeGraph** 索引位于 `.codegraph/`。结构性提问（谁调用谁 / 影响面 / 符号签名）优先 codegraph；grep 仅查字面文本
 - UI 令牌 / UX playbook：本项目**尚未实例化**，模板见 `.agents/templates/frontend-ui/`
 
