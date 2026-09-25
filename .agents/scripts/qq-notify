@@ -1,0 +1,194 @@
+#!/usr/bin/env node
+/**
+ * qq-notify —— QQ 官方机器人「主动消息」推送器（舰队可选能力）
+ *
+ * 用法
+ *   qq-notify "文本"                 发给配置里的 ownerOpenId（默认收件人）
+ *   qq-notify --to <openid> "文本"   发给指定 openid
+ *   echo "文本" | qq-notify          从 stdin 读文本
+ *   qq-notify --dry-run "文本"       只取 token、不发送（连通性自检）
+ *   qq-notify --config <path> ...    指定配置文件
+ *   qq-notify -h | --help            显示帮助
+ *
+ * 配置优先级：--config <path> > 环境变量 QQ_NOTIFY_CONFIG > ~/.pi/agent/pi-agent-qqbot.json
+ * 退出码：0 成功 · 1 参数/配置错 · 2 取 token 失败 · 3 发送失败
+ * 安全：绝不打印/落盘 clientSecret 与 access_token；错误输出截断。
+ *
+ * 实现说明：本文件无扩展名，需同时兼容宿主项目 package.json 的
+ * "type": "module" 与 CommonJS 两种解析；因此只用动态 import()（两种格式都合法）
+ * 并包在 async IIFE 中，避免静态 import / 顶层 await / require。
+ */
+;(async () => {
+  const fs = await import('node:fs')
+  const os = await import('node:os')
+  const path = await import('node:path')
+
+  const EXIT = { OK: 0, ARG: 1, TOKEN: 2, SEND: 3 }
+  const DEFAULT_CFG = path.join(os.homedir(), '.pi/agent/pi-agent-qqbot.json')
+  const TOKEN_URL = 'https://bots.qq.com/app/getAppAccessToken'
+  const BODY_LIMIT = 300
+
+  const USAGE = [
+    'qq-notify —— QQ 官方机器人「主动消息」推送器',
+    '',
+    '用法',
+    '  qq-notify "文本"                 发给配置中的 ownerOpenId',
+    '  qq-notify --to <openid> "文本"   发给指定 openid',
+    '  echo "文本" | qq-notify          从 stdin 读取文本',
+    '  qq-notify --dry-run "文本"       只取 token、不发送（连通性自检）',
+    '  qq-notify --config <path> ...    指定配置文件',
+    '  qq-notify -h | --help            显示本帮助',
+    '',
+    '配置（优先级从高到低）',
+    '  1) --config <path>',
+    '  2) 环境变量 QQ_NOTIFY_CONFIG',
+    '  3) ' + DEFAULT_CFG,
+    '  字段：{ "appId": "...", "clientSecret": "...", "ownerOpenId": "...", "sandbox": true }',
+    '',
+    '退出码',
+    '  0 成功   1 参数/配置错   2 取 token 失败   3 发送失败',
+    '',
+    '说明',
+    '  · 主动消息受 QQ 开放平台权限与月度配额限制；sandbox 与 prod 权限不通用',
+    '  · 绝不打印或落盘 clientSecret / access_token',
+  ].join('\n')
+
+  const trunc = (v, n = BODY_LIMIT) => {
+    const s = String(v ?? '')
+    return s.length > n ? s.slice(0, n) + '…(截断)' : s
+  }
+  // 从任何即将打印的文本中抹去已知凭证值（客户端密钥 / access_token）
+  const redact = (v, secrets = [], n = BODY_LIMIT) => {
+    let s = String(v ?? '')
+    for (const sec of secrets) {
+      if (sec && String(sec).length >= 6) s = s.split(String(sec)).join('***')
+    }
+    return trunc(s, n)
+  }
+  const maskId = (v) => (v ? String(v).slice(0, 6) + '…' : '<无>')
+  const fail = (code, msg, hint) => {
+    process.stderr.write('FAIL: ' + msg + '\n')
+    if (hint) process.stderr.write('  → ' + hint + '\n')
+    process.exit(code)
+  }
+
+  // ---- 参数解析 -----------------------------------------------------------
+  const argv = process.argv.slice(2)
+  let to = null
+  let cfgPath = null
+  let dry = false
+  let text = null
+  let endOpts = false
+
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i]
+    if (endOpts) {
+      if (text === null) { text = a; continue }
+      fail(EXIT.ARG, '多余的位置参数: ' + trunc(a, 60), '文本请用引号括起为一个参数')
+    }
+    if (a === '-h' || a === '--help') { process.stdout.write(USAGE + '\n'); process.exit(EXIT.OK) }
+    else if (a === '--dry-run') dry = true
+    else if (a === '--') endOpts = true
+    else if (a === '--to') {
+      const v = argv[++i]
+      if (!v || v.startsWith('--')) fail(EXIT.ARG, '--to 缺少 openid', '用法：qq-notify --to <openid> "文本"')
+      to = v
+    } else if (a.startsWith('--to=')) {
+      to = a.slice(5)
+      if (!to) fail(EXIT.ARG, '--to 缺少 openid', '用法：qq-notify --to <openid> "文本"')
+    } else if (a === '--config') {
+      const v = argv[++i]
+      if (!v || v.startsWith('--')) fail(EXIT.ARG, '--config 缺少路径', '用法：qq-notify --config <path> "文本"')
+      cfgPath = v
+    } else if (a.startsWith('--config=')) {
+      cfgPath = a.slice(9)
+      if (!cfgPath) fail(EXIT.ARG, '--config 缺少路径', '用法：qq-notify --config <path> "文本"')
+    } else if (a.startsWith('-') && a !== '-') {
+      fail(EXIT.ARG, '未知参数: ' + trunc(a, 60), '查看帮助：qq-notify --help')
+    } else {
+      if (text === null) text = a
+      else fail(EXIT.ARG, '多余的位置参数: ' + trunc(a, 60), '文本请用引号括起为一个参数')
+    }
+  }
+
+  if (!text && !process.stdin.isTTY) {
+    try {
+      const piped = fs.readFileSync(0, 'utf8').trim()
+      if (piped) text = piped
+    } catch { /* 无 stdin：忽略 */ }
+  }
+  if (!text) fail(EXIT.ARG, '缺少推送文本', '用法：qq-notify "文本"  或  echo "文本" | qq-notify')
+
+  // ---- 配置 ---------------------------------------------------------------
+  const cfgFile = cfgPath || process.env.QQ_NOTIFY_CONFIG || DEFAULT_CFG
+  let cfg
+  try {
+    cfg = JSON.parse(fs.readFileSync(cfgFile, 'utf8'))
+  } catch (e) {
+    if (e && e.code === 'ENOENT') {
+      fail(EXIT.ARG, '读不到配置：' + cfgFile,
+        '创建该 JSON（appId / clientSecret / ownerOpenId / sandbox），或用 --config <path> / QQ_NOTIFY_CONFIG=<path> 指定')
+    }
+    fail(EXIT.ARG, '配置解析失败：' + cfgFile + '：' + trunc(e && e.message, 160), '确认该文件是合法 JSON')
+  }
+  if (!cfg || typeof cfg !== 'object') fail(EXIT.ARG, '配置内容非法：' + cfgFile, '应为 JSON 对象')
+  if (!cfg.appId || !cfg.clientSecret) fail(EXIT.ARG, '配置缺少 appId 或 clientSecret', '检查 ' + cfgFile)
+
+  const target = to || cfg.ownerOpenId
+  if (!target) {
+    fail(EXIT.ARG, '没有收件人：配置缺 ownerOpenId，且未传 --to',
+      '在配置中填 ownerOpenId，或 qq-notify --to <openid> "文本"')
+  }
+  const env = cfg.sandbox ? 'sandbox' : 'prod'
+  const base = cfg.sandbox ? 'https://sandbox.api.sgroup.qq.com' : 'https://api.sgroup.qq.com'
+
+  // ---- 取 access token（绝不打日志） --------------------------------------
+  let tokenRes
+  try {
+    tokenRes = await fetch(TOKEN_URL, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ appId: cfg.appId, clientSecret: cfg.clientSecret }),
+    })
+  } catch (e) {
+    fail(EXIT.TOKEN, '取 token 网络错误：' + trunc(e && e.message, 160), '检查网络/代理后重试')
+  }
+  let tokenJson = {}
+  try { tokenJson = await tokenRes.json() } catch { /* 非 JSON 响应 */ }
+  if (!tokenRes.ok || !tokenJson.access_token) {
+    fail(EXIT.TOKEN, '取 token 失败：status=' + tokenRes.status + ' body=' + redact(JSON.stringify(tokenJson), [cfg.clientSecret]),
+      '核对 appId/clientSecret，并确认 QQ 开放平台应用已开通机器人能力')
+  }
+
+  if (dry) {
+    process.stdout.write('OK (dry-run) 取 token 成功 · env=' + env + ' · to=' + maskId(target) + '\n')
+    process.exit(EXIT.OK)
+  }
+
+  // ---- 发送主动消息（不带 msg_id） ----------------------------------------
+  let res
+  try {
+    res = await fetch(base + '/v2/users/' + encodeURIComponent(target) + '/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: 'QQBot ' + tokenJson.access_token,
+      },
+      body: JSON.stringify({ content: text, msg_type: 0 }),
+    })
+  } catch (e) {
+    fail(EXIT.SEND, '发送网络错误：' + trunc(e && e.message, 160), '检查网络后重试')
+  }
+  const body = await res.text().catch(() => '')
+  if (res.ok) {
+    process.stdout.write('OK env=' + env + ' to=' + maskId(target) + ' ' + redact(body, [cfg.clientSecret, tokenJson.access_token], 120) + '\n')
+    process.exit(EXIT.OK)
+  }
+  fail(EXIT.SEND, '发送失败：status=' + res.status + ' body=' + redact(body, [cfg.clientSecret, tokenJson.access_token]),
+    '核对收件人 openid、主动消息权限与月度配额；sandbox 与 prod 权限不通用')
+})().catch((e) => {
+  // 兜底：任何未预期错误都不抛栈（此处不依赖 IIFE 内作用域）
+  const msg = String((e && e.message) ? e.message : e)
+  process.stderr.write('FAIL: 未预期错误：' + (msg.length > 200 ? msg.slice(0, 200) + '…(截断)' : msg) + '\n')
+  process.exit(1)
+})
