@@ -28,6 +28,9 @@ export const projectEntityToRecord = async (
 
 /**
  * ProjectRecord → ProjectEntity（解密敏感字段）
+ * @description 空串时间戳归一为 null：远程同步空字段以 "" 落库（与 tasks 的
+ *              `taskRecordToEntity` 同口径）⇒ 读边界统一归一，避免下游 `=== null` 严格比较误判，
+ *              并保证 push 载荷对「未归档」发**显式 `null`**（服务端三态清空）而非空串哨兵（T323/DEF-42）。
  */
 export const projectRecordToEntity = async (record: ProjectRecord): Promise<ProjectEntity> =>
     new ProjectEntity(
@@ -38,7 +41,7 @@ export const projectRecordToEntity = async (record: ProjectRecord): Promise<Proj
         await cryptoService.decrypt(record.name),
         record.icon,
         record.description === null ? null : await cryptoService.decrypt(record.description),
-        record.archivedAt,
+        record.archivedAt === '' ? null : record.archivedAt,
         record.deactivedAt,
         record.sortId,
         // 存量记录无计数字段（旧库）时兜底 0
