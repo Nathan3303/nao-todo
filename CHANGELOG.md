@@ -2,6 +2,39 @@
 
 本仓库为私有 monorepo（root `private: true`，内部依赖 `workspace:*`）。版本策略：功能批次 → minor（root 协同版本 + 实际变更包各自语义化 bump）；发布以注解 tag 记录。历史 PRD 明细见 [docs/prds/](docs/prds/)。
 
+## [v1.12.1] - 2026-09-28
+
+发布批次：**同步冲突客户端侧修复**（`T325` / `T326` / `T329`）—— 消除「desktop 频繁修改后概率性同步冲突」与「无提示静默覆盖」窗口。**Tag `v1.12.1`** · root `1.12.1` · `apps/web` / `apps/desktop` `1.12.1` · `packages/infrastructure` `0.8.0 → 0.8.1`（`apps/mobile` / `packages/presentation-react` 零改动，不动；其余包本批无改动，不 bump）。详见 `docs/releases/v1.12.1.md`。
+
+### 修复（同步冲突 · 客户端侧）
+
+- **服务端时间校准接线修复**（`RC-2`，`617c3f72`）：push/pull 读取 `serverTime` 少了一层（实际在 `body.data.serverTime`）⇒ `getServerTimeOffset()` 恒 0、本地写用**裸客户端时钟**；修复后本地写时间基准随服务端校准生效，消除时钟偏斜导致的**伪 `noop` / `stale`**。
+- **pull「本地胜」回写 base**（`RC-3`，`617c3f72`）：本地有未推改动且本地时间更新时，原实现整段跳过且**不回写 base** ⇒ OCC 下下一次推送必然 `stale`；现把 base 收敛到服务端当前版本。
+- **写库与入队同事务**（`RC-5` / `DEF-50`，`617c3f72` + `2241a31a`）：本地业务行写入与同步入队原为两次独立 await ⇒ 拉取/对账可在「行已写、队列未入队」窗口内**无提示覆盖**本地改动。现已收进**同一 Dexie 事务**，入队失败整体回滚；覆盖 `tasks` / `projects` / check-items / comments / `tags` / `pomodoros` / `pomodoroRecords` / **冲突「以我的版本重试」** / 偏好队列（含**对账覆盖侧事务内再确认**）⇒ **静默覆盖窗口归零**。
+- **同毫秒出队竞态**（`AC-T325-8`，`617c3f72`）：推送在飞时同毫秒的新写原会被误判「未变」而误删队列项；改用入队修订号（`revision`）比较。
+- **消费服务端派生行回执**（`RC-1` 客户端半边，`617c3f72`）：读取 `/sync/push` 的 `data.derivedUpdates[]`（缺省 ⇒ 完全 no-op，向后兼容旧服务端），把被计数联动改写的父任务/清单 base 收敛到**库中最终版本**；**脏行也收敛**；**先应用 `results`、后应用 `derivedUpdates`**（后者覆盖前者）。
+- **清单 pull 边界 `'' → null` 归一**（`DEF-42`，`ccd7c659`）：项目 pull 时把服务端空串 `archivedAt` 归一为 `null`，避免「空串哨兵」误判。
+- **日历名称排序固定 `zh-CN`**（`DEF-40`，`59b0b012`）：消除随运行环境 locale 变化导致的排序不一致。
+
+### 行为变更（请留意）
+
+- **偏好保存失败会报错并回滚**：原偏好入队失败被静默吞掉（本地行仍写入）；现与业务行**同事务**，入队失败 ⇒ 返回错误并回滚。web 端清单/标签偏好视图已有可见反馈（`NueMessage.error` toast）。
+- **`stale` 冲突更「可见」**：服务端部署 OCC 后，陈旧 base 的推送会得到**可见冲突**（而非静默覆盖）⇒ **可见冲突数可能上升**（设计使然，非缺陷）。
+
+### 前置与协同（跨仓 `nao-todo-server`）
+
+- **需与服务端配套**（OCC + 派生行回传，已部署 `5cb30c5`）：客户端 A / B① / B③ 修复独立生效；`derivedUpdates` 消费端在**旧服务端**下自动 no-op（行为逐字不变）。
+- 旧客户端在**新服务端**下：陈旧 base 会得到可见 `stale`（不再静默覆盖），属预期且更安全。
+
+### 已知未做（已登记）
+
+- `DEF-49`：主行 `create` 时间戳 1ms 舍入（7 处，按发布口径本批不改）。
+- `deletions` 不参与 OCC（`R-15b`，既有局限）。
+
+### 验证
+
+- 全仓 **202 文件 / 1626 例 / 0 红**；四守卫（领域隔离 / 门禁 pathspec / 导入面可解析 / 移动端红线）全绿；**移动端 diff = 0**；`apps/web` / `apps/desktop` 构建 exit 0；CI `check` + `test` 双绿。
+
 ## [v1.12.0] - 2026-09-25
 
 发布批次：**清单归档**（Issue #99）—— 归档 = **收起但可找回**，**绝不删数据**。web 与 desktop 行为一致，**移动端零改动**。**Tag `v1.12.0`** · root `1.12.0` · `apps/web` / `apps/desktop` `1.12.0` · `packages/infrastructure` `0.7.0 → 0.8.0` · `packages/shared` `1.3.4 → 1.4.0` · `packages/domain-project` `1.1.0 → 1.2.0` · `packages/domain-task` `1.3.0 → 1.4.0` · `packages/presentation` `0.7.0 → 0.8.0`（`presentation-react` / `apps/mobile` 零改动，不 bump）。详见 `docs/releases/v1.12.0.md`。
