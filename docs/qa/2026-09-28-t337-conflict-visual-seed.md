@@ -6,14 +6,53 @@
 
 ## 1. 开发服务器（交付 1）
 
-| 项       | 值                                                                                                                       |
-| -------- | ------------------------------------------------------------------------------------------------------------------------ |
-| URL      | **http://localhost:5173/**                                                                                               |
-| 启动命令 | `cd /home/nathan/Project/nao-todo && pnpm --filter @nao-todo/webapp dev`                                                 |
-| 停止方式 | 前台 `Ctrl+C`；当前为后台进程，可 `kill 2722899`（或 `ss -ltnp                                                           | grep 5173` 查 pid） |
-| API base | `http://localhost:3302/api`（`apps/web/.env`；本机 Docker `naotodoserver` 已在 3302 监听）                               |
-| 前后端   | **均就绪**：后端本机 3302 实测 `POST /api/auth/signin` 返回 `10010 登录成功`；前端 dev server 实测 `HTTP 200`            |
-| 登录方式 | 打开 URL → 未登录会跳 `#/auth/signin` → 用**本机 3302 服务端上的账号**邮箱 + 密码登录（无账号可在 `#/auth/signup` 注册） |
+| 项         | 值                                                                                           |
+| ---------- | -------------------------------------------------------------------------------------------- |
+| 本机 URL   | **http://localhost:5173/**                                                                   |
+| 局域网 URL | **http://192.168.2.211:5173/**（dev server 已绑 `0.0.0.0`；用户需与本机同网段）              |
+| 停止方式   | 前台 `Ctrl+C`；后台进程用 `ss -ltnp                                                          | grep 5173`查 pid 后`kill <pid>`（当前 pid 见回执） |
+| API base   | 页面同源 `/api`，由 dev server 反代到 `http://127.0.0.1:3302`（本机 Docker `naotodoserver`） |
+| 前后端     | **均就绪**：后端 3302 实测 `POST /api/auth/signin` → `10010 登录成功`；前端 `HTTP 200`       |
+| 登录方式   | 打开 URL → 未登录跳 `#/auth/signin` → 用本机 3302 账号登录（见 §4 现成账号）                 |
+
+### LAN 启动（后端 CORS 仅允许 localhost:5173/5174 时的解）
+
+后端 `gin-cors` 仅允许 `http://localhost:5173` / `http://localhost:5174` / 两个线上域名 ⇒ 局域网来源
+`http://192.168.2.211:5173` 直连 3302 会被 **403** 拦（实测）。解法 = 浏览器**同源**请求 `/api`，
+由 dev server 反代（并剥掉 `Origin`）到本机后端：
+
+```text
+// /tmp/t337-vite.config.mts（临时配置，不落仓）
+import base from '/home/nathan/Project/nao-todo/apps/web/vite.config.ts'
+export default {
+    ...base,
+    server: {
+        host: '0.0.0.0',
+        port: 5173,
+        strictPort: true,
+        proxy: {
+            '/api': {
+                target: 'http://127.0.0.1:3302',
+                changeOrigin: true,
+                configure: (proxy) => {
+                    // 剥掉 Origin ⇒ 后端视为非 CORS 请求（同源由 dev server 保证）
+                    proxy.on('proxyReq', (proxyReq) => proxyReq.removeHeader('origin'))
+                }
+            }
+        }
+    }
+}
+```
+
+```text
+# 启动（同源 /api；VITE_API_BASE_URL 走 shell env 注入）
+cd /home/nathan/Project/nao-todo/apps/web && VITE_API_BASE_URL=/api pnpm exec vp dev --config /tmp/t337-vite.config.mts
+```
+
+> 实测：`curl http://192.168.2.211:5173/` → **200**；`curl http://192.168.2.211:5173/api/ping` → `{"code":200,"message":"success"}`；
+> 带浏览器 `Origin` 的 `POST /api/auth/signin` 经反代 → `10010`。真机端到端（CDP 走 LAN URL）：signin → 注入 → 面板「冲突 9」✓。
+> 防火墙：本机无 `sudo` 核对 ufw/iptables 的权限；`5173` 已确认绑 `0.0.0.0`，外部可达性取决于主机防火墙放行。
+> 头像注意：后端 `uploads.serverURL` 固定 `http://localhost:3302` ⇒ 远程访问时头像图可能不显示（仅装饰，不影响走查）。
 
 > 若你的账号只存在于线上（`todobe.nathanao.space`）：把 `apps/web/.env` 的 `VITE_BASE_URL` / `VITE_API_BASE_URL` 改指向线上后重启 dev server。
 
@@ -451,7 +490,7 @@ __t337Reset()
 
 ## 4. 给用户的操作步骤（交付 4）
 
-1. 打开 **http://localhost:5173/** → 用**本机 3302 服务端**上的账号登录（未登录会跳登录页）。
+1. 打开 **http://192.168.2.211:5173/**（本机则 http://localhost:5173/，两者等效）→ 用现成账号登录：`qa-t337@example.com` / 密码见回执（未登录会跳 `#/auth/signin`）。
 2. 在 DevTools Console 粘贴**片段**并回车 → 打开左侧栏底部「**同步**」按钮 → 面板出现「**冲突 9**」（如未显示，F5 一次）。
 3. 展开「冲突 9」→ 点第一个组头/条目 → 勾选清单：
     - 分组：组头「任务 · 我的登录模块改动 · 3 条冲突」，可折叠、默认展开；
